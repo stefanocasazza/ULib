@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <link href='https://fonts.googleapis.com/css?family=Architects+Daughter' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/pygment_trac.css" media="screen" />
+    <link rel="stylesheet" type="text/css" href="stylesheets/print.css" media="print" />
+
+    <!--[if lt IE 9]>
+    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <title>Ulib by stefanocasazza</title>
+  </head>
+
+  <body>
+    <header>
+      <div class="inner">
+        <h1>Ulib</h1>
+        <h2>C++ application development framework, to help developers create and deploy applications very fast and more simple</h2>
+        <a href="https://github.com/stefanocasazza/ULib" class="button"><small>View project on</small>GitHub</a>
+      </div>
+    </header>
+
+    <div id="content-wrapper">
+      <div class="inner clearfix">
+        <section id="main-content">
+          <h1>ULib - C++ library</h1>
+
+<p>ULib is a highly optimized class framework for writing C++ applications. I wrote this framework as my tool for writing applications in various contexts. It is a result of many years of work as C++ programmer. I think, in my opinion, that its strongest points are simplicity, efficiency and sophisticate debugging. This framework offers a class foundation that disables language features that consume memory or introduce runtime overhead, such as rtti and exception handling, and assumes one will mostly be linking applications with other pure C based libraries rather than using the overhead of the standard C++ library and other similar class frameworks. It include as application example a powerful search engine with relative <a href="https://github.com/stefanocasazza/ULib/blob/master/examples/IR/ir_web.usp">web interface</a> and a multi purpose server (plugin oriented) which results, out of <a href="http://john.freml.in/ulib-fast-io-framework">John Fremlin accurate investigations</a>, to be one of the fastest web application frameworks for serving small dynamic webpages (and also make easier the usage of shell scripts for CGI application)</p>
+
+<h2>Quickstart</h2>
+
+<p>Take a look at:</p>
+
+<pre><code>$ ./configure --help
+</code></pre>
+
+<ul>
+<li>......</li>
+<li>--enable-zip            enable build of ZIP support - require libz <code>[default: use if present libz]</code>
+</li>
+<li>--enable-thread         enable build of thread support - require libpthread <code>[default: use if present libpthread]</code>
+</li>
+<li>--with-libz             use system     LIBZ library - [will check /usr /usr/local] <code>[default=use if present]</code>
+</li>
+<li>--with-libuuid          use system  libuuid library - [will check /usr /usr/local] <code>[default=use if present]</code>
+</li>
+<li>--with-magic            use system libmagic library - [will check /usr /usr/local] <code>[default=use if present]</code>
+</li>
+<li>--with-ssl              use system      SSL library - [will check /usr /usr/local] <code>[default=use if present]</code>
+</li>
+<li>--with-pcre             use system     PCRE library - [will check /usr /usr/local] <code>[default=use if present]</code>
+</li>
+<li>--with-expat            use system    EXPAT library - [will check /usr /usr/local] <code>[default=use if present]</code>
+</li>
+<li>--with-ssh              use system      SSH library - [will check /usr /usr/local]</li>
+<li>--with-curl             use system     cURL library - [will check /usr /usr/local]</li>
+<li>--with-ldap             use system openLDAP library - [will check /usr /usr/local]</li>
+<li>--with-mysql            use system    MySQL library - [will check /usr /usr/local]</li>
+<li>--with-dbi              use system      DBI library - [will check /usr /usr/local]</li>
+<li>--with-libevent         use system libevent library - [will check /usr /usr/local]</li>
+<li>--with-libxml2          use system  libxml2 library - [will check /usr /usr/local]</li>
+<li>--with-page-speed       use google page-speed SDK   - [will check /usr /usr/local]</li>
+<li>--with-v8-javascript    use V8 JavaScript Engine    - [will check /usr /usr/local]</li>
+</ul><p>if you desire wrapping of some system library installed.</p>
+
+<h2>userver (<code>_tcp</code> | <code>_ssl</code> | <code>_ipc</code>) application server (<code>plugin oriented</code>)</h2>
+
+<p>The current version offers the following features :</p>
+
+<ul>
+<li>HTTP/1.0 and 1.1 protocols supported.</li>
+<li>Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.</li>
+<li>Browser cache management (headers: If-Modified-Since/Last-modified).</li>
+<li>Chunk-encoding transfers support.</li>
+<li>HTTP multi-range request support.</li>
+<li>Memory caching of document root for (small) static pages with smart gzip compression and CSS/JS reduction.</li>
+<li>Support for automatic update of caching document root with inotify (on Linux).</li>
+<li>Support for pipelining.</li>
+<li>Support for virtual hosts (also with SSL).</li>
+<li>Support for basic/digest authentication.</li>
+<li>Support for directory listings via basic/digest authentication.</li>
+<li>Support for uri protection.</li>
+<li>Support for aliases/redirection.</li>
+<li>Support for switch the site to a maintenance page only.</li>
+<li>Support for overriden of error messages by local document (ErrorDocument/40x|500.html).</li>
+<li>Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache, some CMS (SilverStripe) require it.</li>
+<li>Support for (apache-like) log <a href="http://httpd.apache.org/docs/2.0/mod/mod_log_config.html">NCSA extended/combined format</a>
+</li>
+<li>Support for <a href="http://json.org/JSONRequest.html">JSONRequest</a>.</li>
+<li>Accept HTTP uploads up to 4 GB without increasing memory usage.</li>
+<li>Support for upload progress via USP (ULib Servlet Page).</li>
+<li>General <a href="http://it.wikipedia.org/wiki/Common_Gateway_Interface">CGI</a> support (run any CGI script) with automatic output compression (using gzip method).</li>
+<li>CGI support for shell script processes (with automatic management of form and cookie).</li>
+<li>CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.</li>
+<li>Support for minify HTML CGI output with wrapping <a href="http://code.google.com/speed/page-speed/download.html#pagespeed-sdk">google page speed SDK</a>.</li>
+<li>Support for running JavaScript code with wrapping <a href="http://code.google.com/apis/v8/intro.html">google V8 JavaScript Engine</a>.</li>
+<li>
+<a href="http://www.phpmotionwiz.com/what-is-pseudo-streaming">HTTP pseudo-streaming</a> for FLV video managed transparently.</li>
+<li>
+<a href="http://bellard.org/tcc/">C Servlet Support</a> with libtcc (if available) as a backend for dynamic code generation (experimental).</li>
+<li>Support for Windows (without preforking).</li>
+<li>Requests cut in phases for modular architecture (apache-like).</li>
+<li>Configuration file with dedicated section.</li>
+<li>Built-in modules :
+
+<ul>
+<li>
+<code>mod_echo</code> : echo features.</li>
+<li>
+<code>mod_rpc</code> : generic Remote Procedure Call.</li>
+<li>
+<code>mod_http</code> : core features, static file handler and dynamic page (ULib Servlet Page).</li>
+<li>
+<code>mod_ssi</code> : <a href="http://en.wikipedia.org/wiki/Server_Side_Include">Server Side Includes</a> support with enhanced #set, direct include and #exec servlet (C/ULib Servlet Page).</li>
+<li>
+<code>mod_nocat</code> : <a href="http://nocat.net/">captive portal</a> implementation.</li>
+<li>
+<code>mod_proxy</code> : multi-features reverse proxy support.</li>
+<li>
+<code>mod_tsa</code> : server side <a href="http://www.opentsa.org">Time Stamp</a> support.</li>
+<li>
+<code>mod_soap</code> : generic <a href="http://java.sun.com/developer/technicalArticles/xml/webservices">SOAP</a> server services support.</li>
+<li>
+<code>mod_fcgi</code> : third-party applications support thru <a href="http://www.fastcgi.com/drupal">FastCGI</a> interface.</li>
+<li>
+<code>mod_scgi</code> : module that implements the client side of the <a href="http://www.mems-exchange.org/software/scgi">SCGI</a> protocol (experimental).</li>
+<li>
+<code>mod_shib</code> : <a href="http://shibboleth.internet2.edu">web single sign-on support</a> (experimental).</li>
+<li>
+<code>mod_geoip</code> : <a href="http://www.maxmind.com/geoip/api/c.shtml">geolocation support</a> (experimental).</li>
+<li>
+<code>mod_stream</code> : simple streaming support (experimental).</li>
+<li>
+<code>mod_socket</code> : <a href="http://dev.w3.org/html5/websockets">Web Socket</a> application framework (experimental).</li>
+</ul>
+</li>
+<li>Security protection :
+
+<ul>
+<li>
+<a href="http://cleverlogic.net/articles/kochure">HTTP Session Hijacking</a> mitigation.</li>
+<li>
+<a href="http://lwn.net/Articles/474365/">Algorithmic Complexity Attacks</a> prevention by randomizing hash seed.</li>
+<li>
+<a href="http://en.wikipedia.org/wiki/DNS_rebinding">DNS rebinding</a> prevention by RFC1918 filtering and Host header validation.</li>
+<li>support for <a href="https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security">HTTP Strict Transport Security</a>.</li>
+</ul>
+</li>
+<li>Immune to <a href="http://code.google.com/p/slowhttptest/">Slow Read DoS attack</a>
+</li>
+<li><a href="https://www.ssllabs.com/ssltest/analyze.html?d=wifi-aaa.comune.fi.it">High SSL server quality score</a></li>
+</ul><h2>Benchmarking</h2>
+
+<pre><code>$ ./configure &amp;&amp; make
+$ cd tests/examples
+$ ./benchmarking.sh (or hello_world.sh)
+</code></pre>
+
+<p>Use apachebench (ab)</p>
+
+<pre><code>$ ab -n 100000 -c10 http://127.0.0.1/servlet/benchmarking?name=stefano (or)
+$ ab -n 100000 -c10 http://127.0.0.1/servlet/hello_world
+</code></pre>
+
+<h2><a href="https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark">Comparative Benchmarking</a></h2>
+
+<p>I consider in this benchmark the server <a href="http://www.gwan.ch/">G-WAN 3.2.24 (64 bit)</a> and <a href="http://nginx.net/">NGINX 1.1.16</a>.</p>
+
+<h2>gwan run with the follow options:</h2>
+
+<pre><code>-b: enable the TCP_DEFER_ACCEPT option
+-d: daemon mode (with an 'angel' process)
+</code></pre>
+
+<h2>nginx is configured in this way:</h2>
+
+<pre><code>nginx version: nginx/1.1.16
+TLS SNI support enabled
+configure arguments: --prefix=/usr --sbin-path=/usr/sbin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error_log --pid-path=/var/run/nginx.pid
+--lock-path=/var/lock/nginx.lock --user=nginx --group=nginx --with-cc-opt=-I/usr/include --with-ld-opt=-L/usr/lib --http-log-path=/var/log/nginx/access_log
+--http-client-body-temp-path=/var/tmp/nginx/client --http-proxy-temp-path=/var/tmp/nginx/proxy --http-fastcgi-temp-path=/var/tmp/nginx/fastcgi
+--http-scgi-temp-path=/var/tmp/nginx/scgi --http-uwsgi-temp-path=/var/tmp/nginx/uwsgi --with-ipv6 --with-pcre --with-http_realip_module --with-http_ssl_module
+--without-mail_imap_module --without-mail_pop3_module --without-mail_smtp_module
+</code></pre>
+
+<h2>nginx run with the follow configuration:</h2>
+
+<pre><code>user nginx nginx;
+worker_processes 2;
+
+events {
+     use epoll;
+     worker_connections 1024;
+     multi_accept on;
+}
+
+http {
+    include /etc/nginx/mime.types;
+    default_type application/octet-stream;
+
+    log_format main
+        '$remote_addr - $remote_user [$time_local] '
+        '"$request" $status $bytes_sent '
+        '"$http_referer" "$http_user_agent" '
+        '"$gzip_ratio"';
+
+    client_header_timeout 10m;
+    client_body_timeout 10m;
+    send_timeout 10m;
+
+    connection_pool_size 256;
+    client_header_buffer_size 1k;
+    large_client_header_buffers 4 2k;
+    request_pool_size 4k;
+
+    gzip off;
+    gzip_min_length 1100;
+    gzip_buffers 4 8k;
+    gzip_types text/plain;
+
+    output_buffers 1 32k;
+    postpone_output 1460;
+
+    error_log   off;
+    access_log  off;
+
+    open_file_cache max=1000 inactive=20s;
+    open_file_cache_valid 30s;
+    open_file_cache_min_uses 2;
+
+    server_tokens off;
+
+    tcp_nopush on;
+    tcp_nodelay on;
+
+    keepalive_timeout 75 20;
+
+    ignore_invalid_headers on;
+
+    index index.html;
+
+    server {
+        listen 8080;
+        server_name localhost;
+
+        access_log  off;
+        error_log   off;
+
+        root /usr/src/ULib-1.1.0/tests/examples/benchmark/docroot;
+    }
+}
+</code></pre>
+
+<p>All tests are performed on an Intel Pentium 4 2.8 Ghz, Hard drive 5400 rpm, Memory: 2GB DDR2 800MHz running <code>Gentoo 2.0.3 AMD64 (kernel 3.2.7)</code>.
+Yes, this CPU is 11-year old (single-core) P4, but some test on more recent processor (dual-core AMD) give similar results.</p>
+
+<p>The client <a href="https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/bin/ab.c">ab.c</a>
+relies on ApacheBench (ab) and it is a slightly modified version of <a href="http://gwan.ch/source/ab.c.txt">G-WAN client</a>.</p>
+
+<p>I have considered two scenario for benchmarking:</p>
+
+<ul>
+<li>The client as well as the web server tested are hosted on the same computer.</li>
+<li>The client is running on different computer than the web server (networking is involved).</li>
+</ul><p>I had to increase the local port range on client (because of the TIME_WAIT status of the TCP ports).</p>
+
+<ul>
+<li>HTTP Keep-Alives: yes/no</li>
+<li>Concurrency: from 0 to 1000, step 10</li>
+<li>Requests: up to 1000000 - within a fixed total amount of time (1 sec)</li>
+</ul><p>For serving static content I use 3 file of different size:</p>
+
+<ul>
+<li>
+<a href="https://github.com/stefanocasazza/ULib/tree/master/tests/examples/benchmark/docroot/100.html">100.html</a> (100 bytes - only 'XXX...' without CR/LF)</li>
+<li>
+<a href="https://github.com/stefanocasazza/ULib/tree/master/tests/examples/benchmark/docroot/1000.html">1000.html</a> (1000 bytes - only 'XXX...' without CR/LF)</li>
+<li>
+<a href="https://github.com/stefanocasazza/ULib/tree/master/tests/examples/benchmark/docroot/ws/flash-bridge/WebSocketMain.swf">WebSocketMain.swf</a> (80K bytes)</li>
+</ul><p>For serving dynamic content I use a simple request: <code>Hello {name}</code></p>
+
+<h2>userver_tcp is the winner of this benchmark for almost all level of concurrency.</h2>
+
+<p>The raw data are <a href="https://github.com/stefanocasazza/ULib/tree/master/doc/benchmark/current">here</a>.</p>
+
+<p><img src="https://github.com/stefanocasazza/ULib/blob/master/doc/benchmark/img/AB/net_keep_alive.png?raw=true" alt="Networking-KeepAlive-498-x-499"><img src="https://github.com/stefanocasazza/ULib/blob/master/doc/benchmark/img/AB/net_no_keep_alive.png?raw=true" alt="Networking-NoKeepAlive-498-x-499"><img src="https://github.com/stefanocasazza/ULib/blob/master/doc/benchmark/img/AB/localhost_keep_alive.png?raw=true" alt="Localhost-KeepAlive-498-x-499"><img src="https://github.com/stefanocasazza/ULib/blob/master/doc/benchmark/img/AB/localhost_no_keep_alive.png?raw=true" alt="Localhost-NoKeepAlive-498-x-499"></p>
+
+<h2>More info</h2>
+
+<p>ULib is normally built and installed as a set of shared object libraries and header files. These libraries and headers are installed using directories selected through a "configure" script that has been prepared with automake and autoconf. As such, they should build and install similarly to and in a manner compatible and consistent with most other GNU software. ULib is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA</p>
+
+<p>Comments and suggestions are welcome.</p>
+
+<pre><code>stefano casazza &lt;stefano.casazza@gmail.com&gt;
+</code></pre>
+        </section>
+
+        <aside id="sidebar">
+          <a href="https://github.com/stefanocasazza/ULib/zipball/master" class="button">
+            <small>Download</small>
+            .zip file
+          </a>
+          <a href="https://github.com/stefanocasazza/ULib/tarball/master" class="button">
+            <small>Download</small>
+            .tar.gz file
+          </a>
+
+          <p class="repo-owner"><a href="https://github.com/stefanocasazza/ULib"></a> is maintained by <a href="https://github.com/stefanocasazza">stefanocasazza</a>.</p>
+
+          <p>This page was generated by <a href="pages.github.com">GitHub Pages</a> using the Architect theme by <a href="http://twitter.com/jasonlong">Jason Long</a>.</p>
+        </aside>
+      </div>
+    </div>
+
+  
+  </body>
+</html>
