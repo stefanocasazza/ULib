@@ -405,9 +405,9 @@ void UClientImage_Base::handlerDelete()
 
    U_DUMP("UEventFd::fd = %d socket->iSockDesc = %d "
           "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-          "UServer_Base::isParallelizationChild() = %b",
+          "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
           UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-          UServer_Base::isParallelizationChild());
+          UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(UNotifier::num_connection <= UNotifier::min_connection))
@@ -415,9 +415,9 @@ void UClientImage_Base::handlerDelete()
       U_WARNING("handlerDelete(): "
                 "UEventFd::fd = %d socket->iSockDesc = %d "
                 "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                "UServer_Base::isParallelizationChild() = %b",
+                "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
                 UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                UServer_Base::isParallelizationChild());
+                UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
       return;
       }
@@ -448,9 +448,9 @@ void UClientImage_Base::handlerDelete()
          U_WARNING("handlerDelete(): "
                    "UEventFd::fd = %d socket->iSockDesc = %d "
                    "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                   "UServer_Base::isParallelizationChild() = %b logbuf->strtol() = %d",
+                   "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B logbuf->strtol() = %d",
                    UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                   UServer_Base::isParallelizationChild(), fd_logbuf);
+                   UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask, fd_logbuf);
          }
 #  endif
       }
@@ -517,9 +517,9 @@ void UClientImage_Base::handlerError()
 
    U_DUMP("UEventFd::fd = %d socket->iSockDesc = %d "
           "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-          "UServer_Base::isParallelizationChild() = %b",
+          "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
           UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-          UServer_Base::isParallelizationChild());
+          UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(socket->iSockDesc == -1))
@@ -527,9 +527,9 @@ void UClientImage_Base::handlerError()
       U_WARNING("handlerError(): "
                 "UEventFd::fd = %d socket->iSockDesc = %d "
                 "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                "UServer_Base::isParallelizationChild() = %b",
+                "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
                 UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                UServer_Base::isParallelizationChild());
+                UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
       return;
       }
@@ -552,9 +552,9 @@ int UClientImage_Base::handlerTimeout()
 
    U_DUMP("UEventFd::fd = %d socket->iSockDesc = %d "
           "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-          "UServer_Base::isParallelizationChild() = %b",
+          "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
           UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-          UServer_Base::isParallelizationChild());
+          UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(socket->iSockDesc == -1))
@@ -562,9 +562,9 @@ int UClientImage_Base::handlerTimeout()
       U_WARNING("handlerTimeout(): "
                 "UEventFd::fd = %d socket->iSockDesc = %d "
                 "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                "UServer_Base::isParallelizationChild() = %b",
+                "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
                 UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                UServer_Base::isParallelizationChild());
+                UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
       last_event = u_now->tv_sec;
 
@@ -843,9 +843,9 @@ bool UClientImage_Base::genericRead()
 
    U_DUMP("UEventFd::fd = %d socket->iSockDesc = %d "
           "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-          "UServer_Base::isParallelizationChild() = %b",
+          "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
           UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-          UServer_Base::isParallelizationChild());
+          UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
 #ifdef DEBUG
    if (UNLIKELY(socket->iSockDesc == -1))
@@ -853,9 +853,9 @@ bool UClientImage_Base::genericRead()
       U_WARNING("genericRead(): "
                 "UEventFd::fd = %d socket->iSockDesc = %d "
                 "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                "UServer_Base::isParallelizationChild() = %b",
+                "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
                 UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                UServer_Base::isParallelizationChild());
+                UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
       U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
 
@@ -910,21 +910,14 @@ bool UClientImage_Base::genericRead()
 #  ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
       U_MESSAGE("UClientImage_Base::genericRead(): time_between_request(%ld) < time_run(%ld)", time_between_request, time_run);
 #  else
-      if (U_ClientImage_parallelization != 1) // 1 => child of parallelization
+      if (U_ClientImage_parallelization != 1 && // 1 => child of parallelization
+          UServer_Base::startParallelization())
          {
-         if (UServer_Base::startParallelization())
-            {
-            // parent
+         // parent
 
-            U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+         U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
 
-            U_RETURN(false);
-            }
-
-         // NB: better because it is unexpected by the server...
-
-         U_ClientImage_close     = true;
-         UServer_Base::flag_loop = false;
+         U_RETURN(false);
          }
 #  endif
       }
@@ -1466,7 +1459,11 @@ int UClientImage_Base::handlerWrite()
 {
    U_TRACE(0, "UClientImage_Base::handlerWrite()")
 
-   U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B", sfd, count, UEventFd::op_mask)
+   U_DUMP("UEventFd::fd = %d socket->iSockDesc = %d "
+          "UNotifier::num_connection = %d UNotifier::min_connection = %d "
+          "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
+          UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
+          UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(count == 0))
@@ -1474,9 +1471,11 @@ int UClientImage_Base::handlerWrite()
       U_WARNING("handlerWrite(): "
                 "UEventFd::fd = %d socket->iSockDesc = %d "
                 "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                "UServer_Base::isParallelizationChild() = %b sfd = %d",
+                "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
                 UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                UServer_Base::isParallelizationChild(), sfd);
+                UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
+
+      if (UNotifier::num_connection > UNotifier::min_connection) U_RETURN(U_NOTIFIER_DELETE);
 
       U_RETURN(U_NOTIFIER_OK);
       }

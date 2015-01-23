@@ -217,7 +217,9 @@ private:
    UString cfg_str, upload, user, password;
    bool follow_redirects;
 
+#ifndef U_COVERITY_FALSE_POSITIVE
    U_APPLICATION_PRIVATE
+#endif
 };
 
 U_MAIN

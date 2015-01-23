@@ -43,8 +43,8 @@ bool USOAPParser::parse(const UString& msg)
 
 #  ifndef U_COVERITY_FALSE_POSITIVE // Explicit null dereferenced (FORWARD_NULL)
       method              = body->childAt(0);
-#  endif
       envelope.methodName = method->elem()->getAccessorName();
+#  endif
 
       // load the parameters for the method to execute
 

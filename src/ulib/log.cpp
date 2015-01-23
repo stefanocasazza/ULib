@@ -67,7 +67,9 @@ ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(
 
    if (UFile::creat(O_RDWR | O_APPEND, 0664) == false)
       {
+#  ifndef U_COVERITY_FALSE_POSITIVE
       U_ERROR("cannot creat log file %.*S", U_FILE_TO_TRACE(*this));
+#  endif
 
       return;
       }

@@ -580,10 +580,15 @@ void UNoCatPlugIn::sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UStr
       if (UServer_Base::isLog())
          {
          char log_msg[4096];
+         uint32_t sz = msg.size();
 
-         UString str = UStringExt::substitute(msg, '%', U_CONSTANT_TO_PARAM("%%")); // NB: we need this because we have many url encoded char...
+         // NB: we need this because we have a message with many url encoded char...
 
-         (void) u__snprintf(log_msg, sizeof(log_msg), "[nocat] Sent info %%s after %%d attempts to AUTH(%u): %.*S", index_AUTH, U_STRING_TO_TRACE(str));
+         UString str = UStringExt::substitute(msg.data(), U_min(sz,200), '%', U_CONSTANT_TO_PARAM("%%"));
+
+         (void) u__snprintf(log_msg, sizeof(log_msg),
+                            "[nocat] Sent info %%s (%u bytes) after %%d attempts to AUTH(%u): %.*S",
+                            sz, index_AUTH, U_STRING_TO_TRACE(str));
 
          (void) client->sendRequestAsync(url, false, log_msg);
          }

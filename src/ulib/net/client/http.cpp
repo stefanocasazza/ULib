@@ -213,8 +213,7 @@ void UHttpClient_Base::reset()
 {
    U_TRACE(0, "UHttpClient_Base::reset()")
 
-     body.clear();
-   method.clear();
+   body.clear();
 
     requestHeader->clear();
    responseHeader->clear();
@@ -395,7 +394,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
       // MD5(method : uri)
 
-      a2.snprintf("%.*s:%.*s", U_STRING_TO_TRACE(method), U_STRING_TO_TRACE(UClient_Base::uri));
+      a2.snprintf("%.*s:%.*s", u_http_method_list[method_num].len, u_http_method_list[method_num].name, U_STRING_TO_TRACE(UClient_Base::uri));
 
       UServices::generateDigest(U_HASH_MD5, 0, a2, ha2, false);
 
@@ -585,7 +584,7 @@ bool UHttpClient_Base::putRequestOnQueue() // In general, if sendRequest() faile
       {
       // we need to compose the request to the HTTP server...
 
-      method = *UString::str_GET;
+      method_num = 0; // GET
 
       composeRequest();
       }
@@ -620,7 +619,7 @@ int UHttpClient_Base::sendRequestAsync(const UString& _url, bool bqueue, const c
       {
       // we need to compose the request to the HTTP server...
 
-      method = *UString::str_GET;
+      method_num = 0; // GET
 
       composeRequest();
 
@@ -714,17 +713,14 @@ void UHttpClient_Base::parseRequest()
    UClient_Base::iov[2].iov_len  = last_request.size() - startHeader;
 }
 
-UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port,
-                                      const char* method, uint32_t method_len,
-                                      const char* _uri,    uint32_t   uri_len,
-                                      const char* extension, const char* content_type)
+UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, uint32_t method_num,
+                                      const char* _uri, uint32_t uri_len, const char* extension, const char* content_type)
 {
-   U_TRACE(0, "UHttpClient_Base::wrapRequest(%p,%.*S,%.*S,%u,%.*S,%u,%S,%S)", req, U_STRING_TO_TRACE(host_port),
-                                                                              method_len, method, method_len,
-                                                                              uri_len, _uri, uri_len, extension, content_type)
+   U_TRACE(0, "UHttpClient_Base::wrapRequest(%p,%.*S,%u,%.*S,%u,%S,%S)", req, U_STRING_TO_TRACE(host_port), method_num,
+                                                                         uri_len, _uri, uri_len, extension, content_type)
 
    U_INTERNAL_ASSERT_MAJOR(uri_len, 0)
-   U_INTERNAL_ASSERT_MAJOR(method_len, 0)
+   U_INTERNAL_ASSERT_MINOR(method_num, U_NUM_ELEMENTS(u_http_method_list))
 
    // Add the MIME-type headers to the request for HTTP server
 
@@ -734,7 +730,7 @@ UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port,
                 "Host: %.*s\r\n"
                 "User-Agent: " PACKAGE_NAME "/" PACKAGE_VERSION "\r\n"
                 "%s",
-                method_len, method, 
+                u_http_method_list[method_num].len, u_http_method_list[method_num].name,
                 uri_len, _uri,
                 U_STRING_TO_TRACE(host_port),
                 extension);
@@ -760,10 +756,9 @@ void UHttpClient_Base::composeRequest()
 {
    U_TRACE(0, "UHttpClient_Base::composeRequest()")
 
-   U_INTERNAL_ASSERT(method)
    U_INTERNAL_ASSERT(UClient_Base::uri)
 
-   last_request = wrapRequest(0, UClient_Base::host_port, U_STRING_TO_PARAM(method), U_STRING_TO_PARAM(UClient_Base::uri), "\r\n");
+   last_request = wrapRequest(0, UClient_Base::host_port, method_num, U_STRING_TO_PARAM(UClient_Base::uri), "\r\n");
 
    parseRequest();
 }
@@ -856,7 +851,7 @@ bool UHttpClient_Base::sendRequest()
       {
       // we need to compose the request to the HTTP server...
 
-      method = *UString::str_GET;
+      method_num = 0; // GET
 
       composeRequest();
       }
@@ -886,11 +881,11 @@ bool UHttpClient_Base::sendRequest(const UString& req)
 
    if (UHTTP::scanfHeader((const char*)UClient_Base::iov[0].iov_base, UClient_Base::iov[0].iov_len))
       {
-      U_INTERNAL_DUMP("method_type = %B", U_http_method_type)
+      U_INTERNAL_DUMP("U_http_method_type = %B", U_http_method_type)
 
       U_INTERNAL_ASSERT(UHTTP::isGETorPOST())
 
-      method = (U_http_method_type == HTTP_GET ? *UString::str_GET : *UString::str_POST);
+      method_num = (U_http_method_type == HTTP_GET ? 0 : 2); // GET|POST
 
       (void) UClient_Base::uri.assign(U_HTTP_URI_QUERY_TO_PARAM);
 
@@ -937,7 +932,7 @@ bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const
 
    // send post request to server and get response
 
-   method = *UString::str_POST;
+   method_num = 2; // POST
 
    if (sendRequest()) U_RETURN(true);
 
@@ -1009,7 +1004,7 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
 
    // send upload request to server and get response
 
-   method = *UString::str_POST;
+   method_num = 2; // POST
 
    if (sendRequest()) U_RETURN(true);
 
@@ -1025,10 +1020,10 @@ const char* UHttpClient_Base::dump(bool _reset) const
 
    *UObjectIO::os << '\n'
                   << "bproxy                              " << bproxy                << '\n'
+                  << "method_num                          " << method_num            << ")\n"
                   << "bFollowRedirects                    " << bFollowRedirects      << '\n'
                   << "body           (UString             " << (void*)&body          << ")\n"
                   << "user           (UString             " << (void*)&user          << ")\n"
-                  << "method         (UString             " << (void*)&method        << ")\n"
                   << "password       (UString             " << (void*)&password      << ")\n"
                   << "setcookie      (UString             " << (void*)&setcookie     << ")\n"
                   << "last_request   (UString             " << (void*)&last_request  << ")\n"

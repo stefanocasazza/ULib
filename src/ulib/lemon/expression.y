@@ -253,6 +253,7 @@ multiplicativeExpression(A) ::= multiplicativeExpression(B) multiplicativeCond(C
 
 	U_INTERNAL_DUMP("B = %.*S C = %d D = %.*S", U_STRING_TO_TRACE(*B), C, U_STRING_TO_TRACE(*D))
 
+#ifndef U_COVERITY_FALSE_POSITIVE
    long Blo = B->strtol(),
         Dlo = D->strtol(),
 		   lo = (C == U_TK_MULT ? Blo * Dlo :
@@ -265,6 +266,7 @@ multiplicativeExpression(A) ::= multiplicativeExpression(B) multiplicativeCond(C
 	delete D;
 
 	U_INTERNAL_DUMP("A = %.*S", U_STRING_TO_TRACE(*A))
+#endif
 }
 
 multiplicativeExpression(A) ::= unaryExpression(B). {

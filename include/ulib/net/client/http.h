@@ -147,7 +147,8 @@ public:
 protected:
    UMimeHeader* requestHeader;
    UMimeHeader* responseHeader;
-   UString method, body, user, password, setcookie, last_request;
+   UString body, user, password, setcookie, last_request;
+   uint32_t method_num;
    bool bFollowRedirects, bproxy;
 
    static struct uhttpinfo u_http_info_save;
@@ -158,10 +159,8 @@ protected:
 
    // Add the MIME-type headers to the request for HTTP server
 
-   static UString wrapRequest(UString* req, const UString& host_port,
-                              const char* method,    uint32_t method_len,
-                              const char* uri,       uint32_t    uri_len,
-                              const char* extension, const char* content_type = 0);
+   static UString wrapRequest(UString* req, const UString& host_port, uint32_t method_num,
+                              const char* uri, uint32_t uri_len, const char* extension, const char* content_type = 0);
 
    // In response to a HTTP_UNAUTHORISED response from the HTTP server, this function will attempt
    // to generate an Authentication header to satisfy the server.
@@ -178,8 +177,9 @@ protected:
       requestHeader  = U_NEW(UMimeHeader);
       responseHeader = U_NEW(UMimeHeader);
 
-      bproxy           = false;
+      method_num       = 0;
       bFollowRedirects = true;
+      bproxy           = false;
       }
 
    ~UHttpClient_Base()

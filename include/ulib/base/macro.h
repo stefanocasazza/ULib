@@ -112,14 +112,20 @@
 
 /* Manage message info */
 
-#  define U_ERROR(fmt,args...) {u_flag_exit=-1;u__printf(STDERR_FILENO,"%W%N%W: %WERROR: (pid %P) " fmt " - Exiting...%W",BRIGHTCYAN,RESET,RED, ##args,RESET);}
-#  define U_ABORT(fmt,args...) {u_flag_exit=-2;u__printf(STDERR_FILENO,"%W%N%W: %WABORT: (pid %P) " fmt "%W",BRIGHTCYAN,RESET,RED, ##args,RESET);}
-#  define U_WARNING(fmt,args...) {u_flag_exit=2;u__printf(STDERR_FILENO,"%W%N%W: %WWARNING: (pid %P) " fmt "%W",BRIGHTCYAN,RESET,YELLOW, ##args,RESET);}
-#  define U_MESSAGE(fmt,args...) u__printf(STDERR_FILENO, "%W%N%W: " fmt,BRIGHTCYAN,RESET, ##args)
+# define U_ERROR(fmt,args...) \
+{ u_flag_exit = -1; u__printf(STDERR_FILENO, "%W%N%W: %WERROR: %9D (pid %P) " fmt " - Exiting...%W", BRIGHTCYAN, RESET, RED, ##args, RESET); }
 
-#  define   U_ERROR_SYSCALL(msg)      U_ERROR("%R",msg)
-#  define   U_ABORT_SYSCALL(msg)      U_ABORT("%R",msg)
-#  define U_WARNING_SYSCALL(msg)    U_WARNING("%R",msg)
+#define U_ABORT(fmt,args...) \
+{ u_flag_exit = -2; u__printf(STDERR_FILENO, "%W%N%W: %WABORT: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, RED, ##args, RESET); }
+
+#define U_WARNING(fmt,args...) \
+{ u_flag_exit = 2; u__printf(STDERR_FILENO, "%W%N%W: %WWARNING: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET); }
+
+#define U_MESSAGE(fmt,args...) u__printf(STDERR_FILENO, "%W%N%W: " fmt, BRIGHTCYAN, RESET, ##args)
+
+#define   U_ERROR_SYSCALL(msg)      U_ERROR("%R",msg)
+#define   U_ABORT_SYSCALL(msg)      U_ABORT("%R",msg)
+#define U_WARNING_SYSCALL(msg)    U_WARNING("%R",msg)
 
 /* Get string costant size from compiler */
 

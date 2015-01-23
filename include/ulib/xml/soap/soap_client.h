@@ -14,7 +14,6 @@
 #ifndef ULIB_SOAP_CLIENT_H
 #define ULIB_SOAP_CLIENT_H 1
 
-#include <ulib/utility/uhttp.h>
 #include <ulib/net/client/http.h>
 #include <ulib/net/server/server.h>
 #include <ulib/net/rpc/rpc_client.h>
@@ -60,10 +59,8 @@ public:
 
       request = URPCMethod::encoder->encodeMethodCall(method, *UString::str_ns);
 
-      request = UHttpClient_Base::wrapRequest(&request, UClient_Base::host_port,
-                                                        U_CONSTANT_TO_PARAM("POST"),
-                                                        U_CONSTANT_TO_PARAM("/soap"), "",
-                                                        "application/soap+xml; charset=\"utf-8\"");
+      request = UHttpClient_Base::wrapRequest(&request, UClient_Base::host_port, 2,
+                                              U_CONSTANT_TO_PARAM("/soap"), "", "application/soap+xml; charset=\"utf-8\"");
 
       if (sendRequest()  &&
           readResponse() &&
@@ -72,7 +69,9 @@ public:
          if (parser.getMethodName() == *UString::str_fault) UClient_Base::response = parser.getFaultResponse();
          else
             {
+#        ifndef U_COVERITY_FALSE_POSITIVE // Explicit null dereferenced (FORWARD_NULL)
             UClient_Base::response = parser.getResponse();
+#        endif
 
             U_RETURN(true);
             }

@@ -1944,8 +1944,8 @@ try_accept:
 #  endif
 #  ifdef U_LOG_ENABLE
       if (isLog()                   &&
-          flag_loop                 && // NB: check to avoid SIGTERM event...
-          csocket->iState != -EINTR && // NB: to avoid log spurious EINTR on accept() by timer...
+          flag_loop                 && // NB: we check to avoid SIGTERM event...
+          csocket->iState != -EINTR && // NB: we check to avoid log spurious EINTR on accept() by timer...
           csocket->iState != -EAGAIN)
          {
          csocket->setMsgError();
@@ -2041,26 +2041,31 @@ try_accept:
 #if defined(HAVE_EPOLL_WAIT) || defined(USE_LIBEVENT)
    if (UNLIKELY(UNotifier::num_connection >= UNotifier::max_connection))
       {
-      csocket->close();
+      if (startParallelization()) U_RETURN(U_NOTIFIER_OK); // parent of parallelization
 
-      --UNotifier::num_connection;
-
-      U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by MAX_KEEP_ALIVE (%d)",
-                U_CLIENT_ADDRESS_TO_TRACE, UNotifier::max_connection - UNotifier::min_connection);
-
-      if (timeoutMS != -1 &&
-          isPreForked() == false)
+      if (U_ClientImage_parallelization != 1) // 1 => child of parallelization
          {
-         // NB: we check for idle connection in the middle of a burst of new connections (DOS attack)
+         csocket->close();
 
-         U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+         --UNotifier::num_connection;
 
-         last_event = u_now->tv_sec;
+         U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by MAX_KEEP_ALIVE (%d)",
+                   U_CLIENT_ADDRESS_TO_TRACE, UNotifier::max_connection - UNotifier::min_connection);
 
-         UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
+         if (timeoutMS != -1 &&
+             isPreForked() == false)
+            {
+            // NB: we check for idle connection in the middle of a burst of new connections (DOS attack)
+
+            U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+            last_event = u_now->tv_sec;
+
+            UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
+            }
+
+         U_RETURN(U_NOTIFIER_OK);
          }
-
-      U_RETURN(U_NOTIFIER_OK);
       }
 #else
    if (UNLIKELY(csocket->iSockDesc >= FD_SETSIZE))
@@ -2184,6 +2189,8 @@ retry:
       goto next;
       }
    }
+
+   U_INTERNAL_ASSERT_MINOR(UNotifier::num_connection, UNotifier::max_connection)
 
 #ifdef DEBUG
    if (UServer_Base::max_depth < UNotifier::num_connection) UServer_Base::max_depth = UNotifier::num_connection;

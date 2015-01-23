@@ -64,8 +64,6 @@ const UString* UString::str_user;
 const UString* UString::str_name;
 const UString* UString::str_localhost;
 const UString* UString::str_http;
-const UString* UString::str_GET;
-const UString* UString::str_POST;
 const UString* UString::str_filename;
 const UString* UString::str_msg_rfc;
 const UString* UString::str_txt_plain;
@@ -129,8 +127,6 @@ void UString::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_name, 0)
    U_INTERNAL_ASSERT_EQUALS(str_localhost, 0)
    U_INTERNAL_ASSERT_EQUALS(str_http, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_GET, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_POST, 0)
    U_INTERNAL_ASSERT_EQUALS(str_filename, 0)
    U_INTERNAL_ASSERT_EQUALS(str_msg_rfc, 0)
    U_INTERNAL_ASSERT_EQUALS(str_txt_plain, 0)
@@ -293,11 +289,6 @@ void UString::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(*str_without_mac,      "00:00:00:00:00:00")
    U_INTERNAL_ASSERT_EQUALS(*str_CLIENT_QUEUE_DIR, "/tmp/uclient")
    U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 58)
-
-   U_NEW_ULIB_OBJECT(str_GET,  UString(u_http_method_list[0].name, u_http_method_list[0].len));
-   U_NEW_ULIB_OBJECT(str_POST, UString(u_http_method_list[2].name, u_http_method_list[2].len));
-
-   U_INTERNAL_ASSERT_EQUALS(*str_POST, "POST")
 }
 
 U_NO_EXPORT void UStringRep::set(uint32_t __length, uint32_t __capacity, const char* ptr)

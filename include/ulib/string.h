@@ -646,8 +646,6 @@ public:
    static const UString* str_name;
    static const UString* str_localhost;
    static const UString* str_http;
-   static const UString* str_GET;
-   static const UString* str_POST;
    static const UString* str_filename;
    static const UString* str_msg_rfc;
    static const UString* str_txt_plain;
