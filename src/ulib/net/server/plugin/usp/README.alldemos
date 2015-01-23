@@ -1,0 +1,25 @@
+There are some demo-applications that I taked from Tntnet for comparison.
+Tntnet is a web application server for web applications written in C++.
+
+Demo-application "calc" 
+========================
+
+This application shows, how arguments are converted to streameable types. It
+demonstrates a simple calculator-application.
+
+Demo-application "cookie" 
+========================
+
+This application extends the "hello"-demo-application with cookie-support. The
+entered name is stored in a session cookie.
+
+Demo-application "hello" 
+========================
+
+This application shows a very simple form and how to process arguments 
+received from the form.
+
+Demo-application "upload" 
+=========================
+
+This application demostrates how to handle an upload-button

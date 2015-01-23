@@ -1,0 +1,55 @@
+#!/bin/sh
+
+. ../.function
+
+## client_server.test -- Test client server feature
+
+start_msg server
+start_msg client
+
+rm -f server.log client.log
+
+#UTRACE="0 10M 1"
+#UOBJDUMP="0 1M 100"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+cat <<EOF >inp/server.cf
+userver {
+ PORT 10001
+ WELCOME_MSG "generic server ready."
+ ALLOWED_IP localhost 
+#ALLOWED_IP localhost,10.30.0.0/16
+ LOG_FILE server.log
+ LOG_FILE_SZ 1M
+ PLUGIN echo
+ PLUGIN_DIR ../../src/ulib/net/server/plugin/.libs
+ PREFORK_CHILD 0
+}
+# valid request and response
+[ @STRING:"GET / HTTP/1.?*\r\n\r\n" @FILE:inp/forbiddenMessage.html
+  @STRING:"GET /buldog.gif HTTP/1.?*\r\n\r\n" @FILE:inp/buldog.html ]
+EOF
+
+cat <<EOF >inp/client.cf
+uclient {
+  SERVER_ADDRESS localhost
+  MSG_WELCOME "generic server ready."
+}
+# valid request and response
+[ @FILE:inp/http/get0.req @FILE:inp/forbiddenMessage.html
+  @STRING:"GET /buldog.gif HTTP/1.1\r\nConnection: Keep-Alive\r\nUser-Agent: Mozilla/5.0 (compatible; Konqueror/3.1; Linux; it, en_US, en)\r\nAccept: text/*, image/jpeg, image/png, image/*, */*\r\nAccept-Encoding: x-gzip, x-deflate, gzip, deflate, identity\r\nAccept-Charset: iso-8859-1, utf-8;q=0.5, *;q=0.5\r\nAccept-Language: it, en\r\nHost: localhost\r\n\r\n" @FILE:inp/buldog.html ]
+EOF
+
+DIR_CMD="../../examples/simple_client_server"
+
+start_prg_background server											  inp/server.cf
+start_prg 				client --log client.log --max_length 256 inp/client.cf
+$SLEEP
+kill_prg server TERM
+$SLEEP
+$SYNC
+cat client.log server.log > out/client_server.out
+
+# Test against expected output
+test_output_wc l client_server

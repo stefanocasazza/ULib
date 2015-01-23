@@ -1,0 +1,45 @@
+<pre>
+SSI_BEGIN
+Name of user: <!--#echo var="USER_NAME" -->
+
+Document name: <!--#echo var="DOCUMENT_NAME" -->
+
+Document URI: <!--#echo var="DOCUMENT_URI" -->
+
+It's now: <!--#echo var="DATE_GMT" -->
+
+It's now: <!--#config timefmt="%A, %d-%b-%Y %H:%M:%S %Z" --><!--#echo var="DATE_LOCAL" -->
+
+This page is: <!--#fsize file="embed.c" -->
+
+This file last modified: <!--#config timefmt="%B %d, %Y" --><!--#flastmod file="embed.c" -->
+
+You're using: <!--#echo var="$HTTP_USER_AGENT" -->
+
+$HTTP_X_SENDFILE: <!--#echo var="$HTTP_X_SENDFILE" --><!--#set var="HTTP_X_SENDFILE" value="puppamelo" -->
+
+<!--#if expr="${HTTP_X_SENDFILE} = 'puppamelo'" -->
+start PRINTENV
+--------------
+<!--#printenv -->--------------
+end   PRINTENV
+<!--#elif expr="$HTTP_X_SENDFILE != puppamelo" -->
+error
+<!--#else -->
+ssi conditional expression don't work...!
+<!--#endif --> 
+
+start LS
+--------------
+<!--#exec cmd="ls -la SSI" -->--------------
+end   LS
+
+start CGI
+--------------
+<!--#exec cgi="cgi-bin/msie-test.cgi" -->--------------
+end   CGI<!--#config errmsg="SSI include failed!" -->
+<!--#include file="/etc/passwd" -->
+<!--#include file="c:\boot.ini" -->
+<!--#include virtual="/SSI/embed.c" -->
+SSI_END
+</pre>

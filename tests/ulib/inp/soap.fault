@@ -1,0 +1,1 @@
+<?xml version='1.0' ?><env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope"><env:Body><env:Fault><env:Code><env:Value>env:Client</env:Value></env:Code><env:Reason>not well-formed (invalid token)</env:Reason><env:Detail>The fault occurred near position (line: 13 col: 59) within the message</env:Detail></env:Fault></env:Body></env:Envelope>

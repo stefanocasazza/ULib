@@ -1,0 +1,58 @@
+  <div id="containerBig">
+    <div id="wrapperAuto">
+      <div id="loginbox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
+        <div id="menulogo" class="menurow">
+			 <img src="images/logo_fiwifi-n.png" alt="FirenzeWiFI"/>
+			 <br/>
+			 <img src="images/btn_reserved.png" style="height:6em;width:auto;margin-top:2em;" alt="Reserved Access"/>
+		  </div>
+
+        <form method="post" name="form" action="%s" id="form">
+          <input type="hidden" name="mac" value="%s">
+			 <input type="hidden" name="ip" value="%s">
+			 <input type="hidden" name="redirect" value="%s">
+          <input type="hidden" name="gateway" value="%s">
+			 <input type="hidden" name="timeout" value="%s">
+			 <input type="hidden" name="token" value="%s">
+			 <input type="hidden" name="ap" value="%s">
+			 <input type="hidden" name="realm" value="%s">
+			 <input type="hidden" name="redir_to" value="%s">
+
+          <div id="pageWrap">
+            <div id="inside">
+              <div id="left-sidebar">
+                <p>Inserire le credenziali</p>
+					 <br />
+                <br />
+              </div>
+
+              <div id="main-content">
+				  </div>
+
+              <p>Login (numero del cellulare):</p>
+
+              <p><input class="login_input" type="text" name="uid" /></p>
+
+				  <br />
+              <p>Password:</p>
+
+              <p><input class="login_input" type="password" name="pass" />
+				  </p>
+				  <input type="hidden" name="submit_x" value="10">
+				  <p><input id="login_button" type="submit" name="submit" value="Entra" style="display:block;height:3em;width:10em;margin:2em auto;"/></p>
+				  %s
+				  <br>
+				  %s
+            </div><br />
+            <br />
+          </div>
+        </form>
+
+        <div style="clear: both;"></div>
+
+        <div id="footer"></div>
+      </div>
+
+      <div style="clear: both;"></div>
+    </div>
+  </div>

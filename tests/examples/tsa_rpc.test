@@ -1,0 +1,80 @@
+#!/bin/sh
+
+. ../.function
+
+## tsa_rpc.test -- Test TSA feature
+
+start_msg tsa_rpc
+
+#UTRACE="0 50M 0"
+#UOBJDUMP="0 1M 100"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+DOC_ROOT=TSA
+
+rm -rf $DOC_ROOT/*log \
+		 out/userver_ssl.out err/userver_ssl.err \
+                trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
+
+CAPATH="../ulib/CA/CApath"
+CACERT="../ulib/CA/username.crt"
+USER_KEY="../ulib/CA/username.key"
+LCMD="$OPENSSL s_client -no_ssl2 -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -verify 0 -connect localhost:443"
+
+creat_link . $DOC_ROOT/$DOC_ROOT
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 443
+ REQ_TIMEOUT 5
+ MAX_KEEP_ALIVE 256
+ LOG_FILE tsa_rpc.log
+ LOG_FILE_SZ 1M
+ DOCUMENT_ROOT TSA
+ PLUGIN rpc
+ PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+ CERT_FILE ../../ulib/CA/server.crt
+  KEY_FILE ../../ulib/CA/server.key
+ PASSWORD caciucco
+ CA_PATH ../../ulib/CA/CApath
+ CA_FILE ../../ulib/CA/cacert.pem
+ VERIFY_MODE 1
+}
+rpc {
+#include "soap_or_rpc_tsa.cfg"
+}
+EOF
+
+DIR_CMD="../../examples/userver"
+
+start_prg_background userver_ssl -c inp/webserver.cfg
+$SLEEP
+
+rm -f TSA/response/rpc*
+
+TIMEOUT 4 $LCMD <TSA/request/rpc.req.bin >TSA/response/rpc.res 2>>err/tsa_rpc.err
+tail -c +13 TSA/response/rpc.res > TSA/response/rpc.tsr
+
+TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
+						 -in TSA/response/rpc.tsr -CApath TSA/CA/CApath > out/tsa_rpc.out
+
+rm -f TSA/response/rpc*
+
+TIMEOUT 4 $LCMD <TSA/request/rpc.req.b64 >TSA/response/rpc.res 2>>err/tsa_rpc.err
+tail -c +13 TSA/response/rpc.res > TSA/response/rpc.tsr
+
+$SLEEP
+kill_prg userver_ssl TERM
+
+mv err/userver_ssl.err err/tsa_rpc.err
+
+TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
+						 -in TSA/response/rpc.tsr -CApath TSA/CA/CApath >> out/tsa_rpc.out
+
+rm -f $DOC_ROOT/$DOC_ROOT
+
+# Test against expected output
+test_output_diff tsa_rpc

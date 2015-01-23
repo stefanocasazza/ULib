@@ -1,0 +1,16 @@
+HTTP/1.0 401 Unauthorised
+Server: SokEvo/1.0
+Date: Sat, 27 Nov 2004 10:18:15 GMT
+WWW-Authenticate: Basic realm="SokEvo"
+Content-Type: text/html
+Content-Length: 311
+
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/1999/REC-html401-19991224/loose.dtd">
+<HTML>
+  <HEAD>
+    <TITLE>Error</TITLE>
+    <META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=ISO-8859-1">
+  </HEAD>
+  <BODY><H1>401 Unauthorised.</H1></BODY>
+</HTML>

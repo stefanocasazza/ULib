@@ -1,0 +1,3 @@
+<?xml version="1.0"?>
+<!DOCTYPE wfeng:handler-request SYSTEM "workflow-engine.dtd">
+<wfeng:handler-request xmlns:wfeng="http://www.t-bizcom.com/WorkflowEngine" wfeng:id="%[^"]"><wfeng:data wfeng:error="%*[^"]"><tservices:cpe-production xmlns:tservices="http://www.trust-engine.com/Workflow"><tservices:customer>%[^<]</tservices:customer><tservices:installationAddress>%[^<]</tservices:installationAddress><tservices:request>%[^<]</tservices:request><tservices:uid>%[^<]</tservices:uid></tservices:cpe-production></wfeng:data></wfeng:handler-request>

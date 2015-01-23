@@ -1,0 +1,434 @@
+// ============================================================================
+//
+// = LIBRARY
+//    ULib - c++ library
+//
+// = FILENAME
+//    orm_driver_sqlite.h
+//
+// = AUTHOR
+//    Stefano Casazza
+//
+// ============================================================================
+
+#ifndef U_ORM_DRIVER_SQLITE_H
+#define U_ORM_DRIVER_SQLITE_H 1
+
+#include <ulib/orm/orm_driver.h>
+
+class U_EXPORT USqliteStatementBindParam : public USqlStatementBindParam {
+public:
+
+   USqliteStatementBindParam()
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "", 0)
+
+      type = NULL_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(bool* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = BOOLEAN_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(char* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = CHAR_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(unsigned char* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = CHAR_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(short* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = SHORT_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(unsigned short* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = SHORT_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(int* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = INT_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(unsigned int* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = INT_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(long* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+#  if SIZEOF_LONG == 4
+      type = INT_VALUE;
+#  else
+      type = LLONG_VALUE;
+#  endif
+      }
+
+   explicit USqliteStatementBindParam(unsigned long* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+#  if SIZEOF_LONG == 4
+      type = INT_VALUE;
+#  else
+      type = LLONG_VALUE;
+#  endif
+      }
+
+   explicit USqliteStatementBindParam(long long* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = LLONG_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(unsigned long long* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = LLONG_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(float* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = FLOAT_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(double* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = REAL_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(long double* v) : USqlStatementBindParam(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%p", v)
+
+      type = REAL_VALUE;
+      }
+
+   explicit USqliteStatementBindParam(const char* s, int n, bool bstatic) : USqlStatementBindParam(s, n, bstatic)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindParam, "%.*S,%u,%b", n, s, n, bstatic)
+
+      type = STRING_VALUE;
+      }
+
+   virtual ~USqliteStatementBindParam()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, USqliteStatementBindParam)
+      }
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const { return USqlStatementBindParam::dump(reset); }
+#endif
+};
+
+class U_EXPORT USqliteStatementBindResult : public USqlStatementBindResult {
+public:
+
+   explicit USqliteStatementBindResult(bool* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = BOOLEAN_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(char* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = CHAR_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(unsigned char* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = CHAR_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(short* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = SHORT_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(unsigned short* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = SHORT_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(int* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = INT_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(unsigned int* v) : USqlStatementBindResult(v) 
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = INT_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(long* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+#  if SIZEOF_LONG == 4
+      type = INT_VALUE;
+#  else
+      type = LLONG_VALUE;
+#  endif
+      }
+
+   explicit USqliteStatementBindResult(unsigned long* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+#  if SIZEOF_LONG == 4
+      type = INT_VALUE;
+#  else
+      type = LLONG_VALUE;
+#  endif
+      }
+
+   explicit USqliteStatementBindResult(long long* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = LLONG_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(unsigned long long* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = LLONG_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(float* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = FLOAT_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(double* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = REAL_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(long double* v) : USqlStatementBindResult(v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%p", v)
+
+      type = REAL_VALUE;
+      }
+
+   explicit USqliteStatementBindResult(UStringRep& s) : USqlStatementBindResult(s)
+      {
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%.*S", U_STRING_TO_TRACE(s))
+
+      type = STRING_VALUE;
+      }
+
+   virtual ~USqliteStatementBindResult()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, USqliteStatementBindResult)
+      }
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const { return USqlStatementBindResult::dump(reset); }
+#endif
+};
+
+struct sqlite3_stmt;
+
+class U_EXPORT USqliteStatement : public USqlStatement {
+public:
+
+            USqliteStatement(sqlite3_stmt* ptr, uint32_t nbind, uint32_t nresult) : USqlStatement(ptr, nbind, nresult) { param_binded = false; }
+   virtual ~USqliteStatement()                                                                                         { USqlStatement::reset(); }
+
+   // SERVICES
+
+   void reset()
+      {
+      U_TRACE(0, "USqliteStatement::reset()")
+
+      U_ASSERT_EQUALS(num_bind_param,  vparam.size())
+      U_ASSERT_EQUALS(num_bind_result, vresult.size())
+
+      param_binded = false;
+      }
+
+   bool setBindParam( UOrmDriver* pdrv);
+   bool setBindResult(UOrmDriver* pdrv);
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const;
+#endif
+
+   bool param_binded;
+};
+
+/*
+ * SQLite is a smart library that implements an embeddable SQL database engine. No need for an external database server
+ * an application linked against libsqlite can do it all by itself. Of course there are a few limitations of this approach
+ * compared to "real" SQL database servers, mostly for massively parallel high-throughput database applications, but on the
+ * other hand, installation and administration are a breeze. 
+ *
+ * SQLite3 is a redesign of SQLite which is incompatible with the older 2.x versions.
+ * Your application should support the sqlite3 driver if one of the following applies:
+ *
+ * You want to offer the simplest possible installation of your application.
+ * You want to support potential users of your application who don't have the skills to administer a database server.
+ * You want to let users test-drive your application without the need to fiddle with their production database servers.
+ */
+ 
+class U_EXPORT UOrmDriverSqlite : public UOrmDriver {
+public:
+
+   static const UString* str_name;
+   static const UString* str_dbdir;
+   static const UString* str_memory;
+
+   static void str_allocate();
+
+   // COSTRUTTORE
+
+   UOrmDriverSqlite()
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriverSqlite, "")
+
+      str_allocate();
+
+      encoding_UTF16 = false;
+
+      UOrmDriver::name = *str_name;
+      }
+
+   UOrmDriverSqlite(const UString& name_drv) : UOrmDriver(name_drv)
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriverSqlite, "%.*S", U_STRING_TO_TRACE(name_drv))
+
+      encoding_UTF16 = false;
+      }
+
+   virtual ~UOrmDriverSqlite();
+
+   // define method VIRTUAL of class UOrmDriver
+
+   virtual void handlerError() U_DECL_OVERRIDE;
+   virtual void handlerDisConnect() U_DECL_OVERRIDE;
+   virtual void execute(USqlStatement* pstmt) U_DECL_OVERRIDE;
+   virtual bool nextRow(USqlStatement* pstmt) U_DECL_OVERRIDE;
+   virtual void handlerStatementReset(USqlStatement* pstmt) U_DECL_OVERRIDE;
+   virtual void handlerStatementRemove(USqlStatement* pstmt) U_DECL_OVERRIDE;
+   virtual bool handlerQuery(const char* query, uint32_t query_len) U_DECL_OVERRIDE;
+
+   virtual unsigned int cols(USqlStatement* pstmt) U_DECL_OVERRIDE;
+   virtual unsigned long long affected(USqlStatement* pstmt) U_DECL_OVERRIDE;
+   virtual unsigned long long last_insert_rowid(USqlStatement* pstmt, const char* sequence) U_DECL_OVERRIDE;
+
+   virtual UOrmDriver*    handlerConnect(const UString& option) U_DECL_OVERRIDE;
+   virtual USqlStatement* handlerStatementCreation(const char* stmt, uint32_t len) U_DECL_OVERRIDE;
+
+   // CREATE BIND PARAM
+
+   virtual USqlStatementBindParam* creatSqlStatementBindParam()                       { return U_NEW(USqliteStatementBindParam()); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(int* v)                 { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(bool* v)                { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(char* v)                { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long* v)                { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(short* v)               { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(float* v)               { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(double* v)              { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long long* v)           { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long double* v)         { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  int* v)       { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  char* v)      { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  long* v)      { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  short* v)     { return U_NEW(USqliteStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v)  { return U_NEW(USqliteStatementBindParam(v)); }
+
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind);
+
+   // CREATE BIND RESULT
+
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(int* v)                { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(bool* v)               { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(char* v)               { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(long* v)               { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(short* v)              { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(float* v)              { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)             { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& str)       { return U_NEW(USqliteStatementBindResult(str)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)          { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)        { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned char* v)      { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned short* v)     { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned int* v)       { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long* v)      { return U_NEW(USqliteStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long long* v) { return U_NEW(USqliteStatementBindResult(v)); }
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const;
+#endif
+
+protected:
+   bool encoding_UTF16;
+
+#ifdef U_COMPILER_DELETE_MEMBERS
+   UOrmDriverSqlite(const UOrmDriverSqlite&) = delete;
+   UOrmDriverSqlite& operator=(const UOrmDriverSqlite&) = delete;
+#else
+   UOrmDriverSqlite(const UOrmDriverSqlite&) : UOrmDriver(UString::getStringNull()) {}
+   UOrmDriverSqlite& operator=(const UOrmDriverSqlite&)                             { return *this; }
+#endif
+
+   friend class USqliteStatement;
+};
+
+#endif

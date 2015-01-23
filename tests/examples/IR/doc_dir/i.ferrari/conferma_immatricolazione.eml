@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="http://www.test.eraclito.net/crm_dtd/operation.xsl"?>
+<!DOCTYPE operation SYSTEM "http://www.test.eraclito.net/crm_dtd/user-folder.dtd">
+
+<operation>
+<description>Conferma immatricolazione</description>
+<uid>i.ferrari</uid>
+<id>conferma_immatricolazione</id>
+<date>25/10/2006 14:55:51</date>
+<holder>Sandra Ceccarelli</holder>
+<author>workflow</author>
+<academic-year>2006/2007</academic-year>
+<enrolment-year>01</enrolment-year>
+<registration-number>01/00002</registration-number>
+</operation>

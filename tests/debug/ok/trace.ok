@@ -1,0 +1,6 @@
+{Call   routine1(2,3)
+}Return routine1(2,3) = 6
+{Call   manage_sigpipe(4)
+	::open("/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp"...,2,666) = -1 - ENOENT (2, No such file or directory)
+	::open("tmp/prova",102,666) = 4
+}Return manage_sigpipe(4)

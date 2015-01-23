@@ -1,0 +1,2 @@
+some text
+  with spaces and CR-LF.

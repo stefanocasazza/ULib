@@ -1,0 +1,81 @@
+#!/bin/sh
+
+. ../.function
+
+## tsa_http.test -- Test TSA feature
+
+start_msg tsa_http
+
+#UTRACE="0 75M 0"
+#UOBJDUMP="0 10M 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+DOC_ROOT=TSA
+
+rm -rf $DOC_ROOT/*log \
+		 out/userver_tcp.out err/userver_tcp.err \
+                trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
+
+creat_link . $DOC_ROOT/$DOC_ROOT
+
+check_for_netcat
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 8080
+ REQ_TIMEOUT 5
+ MAX_KEEP_ALIVE 256
+ LOG_FILE tsa_http.log
+ LOG_FILE_SZ 1M
+ DOCUMENT_ROOT TSA
+ PLUGIN "tsa http"
+ PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+#CERT_FILE ../../ulib/CA/server.crt
+# KEY_FILE ../../ulib/CA/server.key
+#PASSWORD caciucco
+#CA_PATH ../../ulib/CA/CApath
+#CA_FILE ../../ulib/CA/cacert.pem
+#VERIFY_MODE 1
+}
+http {
+#include "http.cfg"
+ CACHE_FILE_MASK _off_
+}
+#include "tsa.cfg"
+EOF
+
+DIR_CMD="../../examples/userver"
+
+start_prg_background userver_tcp -c inp/webserver.cfg
+
+rm -f out/TSA_response*
+
+#../../tmp/openssl/ssl/misc/tsget -h http://localhost:8443/tsa TSA/request/tsq.req
+send_req $NCAT localhost 8080 TSA/request/http.req TSA_response 2
+
+tail -c +155 out/TSA_response.out > TSA/response/response.tsr
+
+TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
+						 -in TSA/response/response.tsr -CApath TSA/CA/CApath > out/tsa_http.out 2>&1
+
+rm -f out/TSA_response*
+
+#../../tmp/openssl/ssl/misc/tsget -h http://localhost:8443/tsa TSA/request/tsq.req
+send_req $NCAT localhost 8080 TSA/request/http.req TSA_response 2
+
+tail -c +155 out/TSA_response.out > TSA/response/response.tsr
+
+kill_prg userver_tcp TERM
+
+mv err/userver_tcp.err err/tsa_http.err
+
+TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
+						 -in TSA/response/response.tsr -CApath TSA/CA/CApath >> out/tsa_http.out
+
+rm -f $DOC_ROOT/$DOC_ROOT
+
+# Test against expected output
+test_output_diff tsa_http

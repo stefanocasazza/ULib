@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## tokenizer.test -- Test tokenizer feature
+
+start_msg tokenizer
+
+#UTRACE="0 5M 1"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg tokenizer <inp/tokenizer.input
+
+# Test against expected output
+test_output_diff tokenizer

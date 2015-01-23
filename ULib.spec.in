@@ -1,0 +1,87 @@
+Name: ULib
+Summary: ULib C++ library - A package for creating small and fast C++ programs
+Version: @ULIB_VERSION@
+Release: 1
+Epoch: 0
+License: GPL
+Group: Development/Libraries
+URL: http://www.unirel.com
+Source0: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}
+Provides: ULib
+Packager: Stefano Casazza <stefano.casazza@gmail.com>
+
+@RPM_REQUIRE@
+
+%package devel
+Requires: %{name} = %{epoch}:%{version}-%{release}
+Requires: libstdc++-devel
+Group: Development/Libraries
+Summary: Headers and link library for ULib
+
+%description
+ULib C++ offers abstraction of system services such as sockets.
+ULib C++ also provides a class framework for strings, config file and XML parsing, and SOAP protocol.
+
+%description devel
+This package provides the header files, link libraries and documentation for building ULib C++ applications.
+
+%prep
+%setup
+
+%build
+%configure @RPM_CONFIGURE@
+make LDFLAGS="-s"
+
+%install
+rm -rf %{buildroot}
+%makeinstall
+mkdir -p %{_sysconfdir}/ulib
+mkdir -p %{buildroot}/usr/share/aclocal
+mkdir -p %{buildroot}/usr/libexec/ulib/usp
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root,-)
+%doc AUTHORS COPYING NEWS README TODO ChangeLog
+%{_bindir}/uclient
+%{_bindir}/userver_*
+%{_libdir}/*.so.*
+%{_sysconfdir}/*.cfg*
+%{_libexecdir}/ulib/mod_*.*
+%{_libexecdir}/ulib/usp/*.*
+%dir %{_libexecdir}/ulib/usp
+
+%files devel
+%defattr(-,root,root,-)
+%{_bindir}/uclient
+%{_bindir}/userver_*
+%{_libdir}/*.a
+%{_libdir}/*.so
+%{_libdir}/*.la
+%{_sysconfdir}/*.cfg*
+%dir %{_includedir}/ulib
+%{_includedir}/ulib/*.h
+%{_includedir}/ulib/README
+%{_includedir}/ulib/*/*.h
+%{_includedir}/ulib/*/*/*.h
+%{_includedir}/ulib/*/*/*/*.h
+%{_includedir}/ulib/flex/flex.skl
+%{_includedir}/ulib/flex/bison.skl
+%{_includedir}/ulib/flex/bison_head.yy
+%{_includedir}/ulib/flex/flexer_head.ll
+%{_datadir}/aclocal/*.m4
+%{_libdir}/pkgconfig/*.pc
+%{_libexecdir}/ulib/mod_*.a
+%{_libexecdir}/ulib/mod_*.so
+%{_libexecdir}/ulib/mod_*.la
+%{_libexecdir}/ulib/usp/*.a
+%{_libexecdir}/ulib/usp/*.so
+%{_libexecdir}/ulib/usp/*.la
+%dir %{_libexecdir}/ulib/usp
+
+%post -p /sbin/ldconfig
+
+%postun -p /sbin/ldconfig

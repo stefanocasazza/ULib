@@ -1,0 +1,42 @@
+  <div id="containerBig">
+    <div id="wrapperAuto">
+      <div id="loginbox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
+        <div id="menulogo" class="menurow">
+				<img src="images/logo_fiwifi-n.png" />
+		  </div>
+
+        <center><h1>Registrazione completa!</h1></center>
+
+        <div style="clear: both;"></div>
+        <div id="footer"></div>
+      </div>
+
+        <p>Effettua una chiamata gratuita al numero:</p>
+
+        <center>
+          <p style="font-weight:bold;font-size:large;color:green">%s</p>
+        </center>
+
+        <p>La chiamata va effettuata con lo stesso cellulare inserito in registrazione. Poiché il numero deve essere visibile al sistema, verificare
+        che il tuo cellulare non abbia attivata la funzione "Numero nascosto".</p>
+
+        <p>Dopo il primo squillo la linea cade automaticamente. Quindi conferma che hai fatto la chiamata cliccando il bottone "Conferma". Una volta
+        confermato, un server, dopo aver verificato la validitá del contatto, ti invierá on line le credenziali per l'accesso che saranno:</p>
+
+        <p style="font-weight:bold;">Login: il numero del cellulare indicato ( %s )</p>
+
+		  <!--
+        <p style="font-weight:bold;">Password: %s</p>
+		  -->
+
+        <form method="get" name="form" action="%s" id="form">
+          <input id="wa_cell" type="hidden" name="wa_cell" value="%s">
+          <input id="password" type="hidden" name="password" value="%s">
+			 <input id="confirm_call_button" type="submit" name="submit" value="Conferma" style="height:3em;width:10em;margin:1em;">
+        </form>
+			<br>
+			<br>
+			<br>
+      <div style="clear: both;"></div>
+    </div>
+  </div>

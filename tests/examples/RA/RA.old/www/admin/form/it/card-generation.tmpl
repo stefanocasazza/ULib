@@ -1,0 +1,77 @@
+<html>
+<head>
+  <title>RA station</title>
+  <meta name="generator" content="HTML Tidy for Linux (vers 25 March 2009), see www.w3.org">
+  <link rel="stylesheet" href="/ra-station/css/style.css" type="text/css">
+  <script type="text/javascript" src="/ra-station/js/livevalidation_standalone.js">
+</script>
+</head>
+
+<body>
+  <blockquote>
+    <h1>RA station</h1>
+  </blockquote>
+
+  <table>
+    <col width="140">
+    <col width="500">
+
+    <tr>
+      <td><img src="/ra-station/images/sx-logo.jpg"></td>
+
+      <td>
+        <h3 class="center">GENERAZIONE CARTE</h3>
+
+        <h2 class="center">T-UNWIRED FLAT</h2>
+      </td>
+      <td><img src="/ra-station/images/dx-logo.png"></td>
+
+      </td>
+    </tr>
+  </table><br>
+
+  <table width="800" border="1" bordercolor="#C0C0C0">
+    <tr>
+      <td colspan="2"><span class="Stile3">I campi contrassegnati dal simbolo * non possono essere omessi</span></td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style=
+        "font-size: 9pt"><b>DATI:</b></font></font></p>
+      </td>
+    </tr>
+  </table><br>
+
+  <form method="post" name="form" action="/admin">
+    <table width="800" class="racss_formtable">
+      <tr>
+        <td class="racss_label">Numero di carte da generare:</td>
+
+        <td class="racss_field"><input type="text" id="dati_numero_carte" name="dati_numero_carte"> <strong class="Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Validita' (in giorni):</td>
+
+        <td class="racss_field"><input type="text" id="dati_validita" name="dati_validita"> <strong class="Stile3">*</strong></td>
+      </tr>
+    </table><br>
+    <input type="reset" value="Reset"> <input type="submit" name="submit" value="Invia richiesta">
+  </form><script type="text/javascript">
+var valComm = new LiveValidation( 'dati_numero_carte', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il numero di carte da generare"} );
+  valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "Numero di carte da generare non valido"} );
+  var valComm = new LiveValidation( 'dati_validita', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire la validita'"} );
+  valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "Validita' (in giorni) non valida"} );
+
+  var automaticOnSubmit = valComm.form.onsubmit;
+  valComm.form.onsubmit = function() {
+        var valid = automaticOnSubmit();
+        if (valid) return true; 
+        return false;
+  }
+  </script>
+</body>
+</html>

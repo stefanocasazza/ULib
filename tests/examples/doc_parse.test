@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../.function
+
+## doc_parse.test -- Test doc_parse feature
+
+start_msg doc_parse
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#EXEC_ON_EXIT="/utility/stack_dump.sh"
+ export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT
+
+#STRACE=$TRUSS
+start_prg doc_parse -p inp/pkcs7_nested_in_tbote_signed_with_certs_from_different_chain.eml
+
+# Test against expected output
+test_output_diff doc_parse

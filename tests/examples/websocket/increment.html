@@ -1,0 +1,47 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html>
+  <head>
+    <title>WebSocket Dumb Increment</title>
+    <script type="text/javascript">
+    <!--
+      var ws;
+
+      if ((typeof(WebSocket) == 'undefined') &&
+          (typeof(MozWebSocket) != 'undefined')) {
+        WebSocket = MozWebSocket;
+      }
+
+      function init() {
+        ws = new WebSocket(((window.location.protocol == "https:") ? "wss:" : "ws:") + "//" + window.location.host + "/dumb-increment", "dumb-increment-protocol");
+        ws.onopen = function(event) {
+          document.getElementById("main").style.visibility = "visible";
+          document.getElementById("connected").innerHTML = "Connected to WebSocket server";
+        };
+        ws.onmessage = function(event) {
+          document.getElementById("output").innerHTML = event.data;
+        };
+        ws.onerror = function(event) { alert("Received error"); };
+        ws.onclose = function(event) {
+          ws = null;
+          document.getElementById("main").style.visibility = "hidden";
+          document.getElementById("connected").innerHTML = "Connection Closed";
+        }
+      }
+
+      function send(message) {
+        if (ws) {
+          ws.send(message);
+        }
+      }
+    // -->
+    </script>
+  </head>
+  <body onload="init();">
+    <h1>WebSocket Dumb Increment</h1>
+    <div id="connected">Not Connected</div>
+    <div id="main" style="visibility:hidden">
+    <button type="button" onclick="send('reset\n')">Reset</button><br/>
+    Count:<div id="output"></div>
+    </div>
+  </body>
+</html>

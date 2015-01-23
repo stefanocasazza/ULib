@@ -1,0 +1,19 @@
+.TH cdb_firstkey 3
+.SH NAME
+cdb_firstkey \- find first physical record in constant database
+.SH SYNTAX
+.B #include <cdb.h>
+.br
+.B #include <uint32.h>
+
+int cdb_firstkey(struct cdb *\fIc\fR,uint32 *\fIkpos\fR);
+
+.SH DESCRIPTION
+\fBcdb_firstkey\fR finds the physically first record in the constant
+database.
+
+You can use cdb_datapos or cdb_keypos to get \fIposition\fR and
+cdb_datalen and cdb_keylen to get \fIlen\fR.
+
+.SH "SEE ALSO"
+cdb_nextkey(3), cdb_successor(3)

@@ -1,0 +1,21 @@
+<!--#args
+name("World");
+-->
+<html>
+ <head>
+  <title>Hello World-application for Ulib</title>
+ </head>
+
+ <body bgcolor="#FFFFFF">
+  <img src="/images/ulib_logo.jpg" align="right">
+
+   <h1>Hello <!--#puts name --></h1>
+
+  <form>
+   What's your name?
+   <input type="text" name="name" value="<!--#puts name -->" ><br>
+   <input type="submit">
+  </form>
+
+ </body>
+</html>

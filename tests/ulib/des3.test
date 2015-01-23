@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## des3.test -- Test des3 feature
+
+start_msg des3
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg des3 pippo <inp/des3.input
+
+# Test against expected output
+test_output_diff des3

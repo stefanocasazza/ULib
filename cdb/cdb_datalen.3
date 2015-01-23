@@ -1,0 +1,17 @@
+.TH cdb_datalen 3
+.SH NAME
+cdb_datalen \- get length of data
+.SH SYNTAX
+.B #include <cdb.h>
+
+unsigned int cdb_datalen(struct cdb *\fIc\fR);
+
+.SH DESCRIPTION
+.B cdb_datalen
+returns the length of the data associated with the last key you looked
+up with cdb_find or cdb_findnext.
+
+Use cdb_datapos to get the position of the data.
+
+.SH "SEE ALSO"
+cdb_datapos(3), cdb_keylen(3), cdb_keypos(3)

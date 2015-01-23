@@ -1,0 +1,5 @@
+# userver config
+config USERVER_DEBUG
+   bool "Enable compilation of debugging features"
+   depends on DEVEL && PACKAGE_userver
+   default n

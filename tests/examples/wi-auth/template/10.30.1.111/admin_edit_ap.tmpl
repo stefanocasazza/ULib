@@ -1,0 +1,91 @@
+  <div id="containerBig">
+    <div id="wrapperAuto">
+      <div id="registerbox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
+
+        <div id="menulogo" class="menurow">
+		  <img src="images/logo_fiwifi-n.png" />
+		  </div>
+
+        <table width="100%%">
+          <tbody>
+            <tr>
+              <td>
+                <h3 class="center">Registrazione Access Point</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table width="100%%" bordercolor="#C0C0C0">
+          <tr>
+            <td colspan="2"><span class="Stile3">I campi contrassegnati dal simbolo * non possono essere omessi</span></td>
+          </tr>
+
+          <tr>
+            <td valign="top">
+              <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>DATI ACCESS POINT:</b></font></font></p>
+            </td>
+          </tr>
+        </table><br />
+
+        <form method="post" name="form" action="admin_edit_ap">
+          <table width="100%%" class="racss_formtable">
+            <tr>
+              <td class="racss_label">Label: *</td>
+
+              <td class="racss_field"><input type="text" id="ap_label" name="ap_label" value="%.*s" %s /></td>
+            </tr>
+            <tr>
+              <td class="racss_label">IP address: *</td>
+
+              <td class="racss_field"><input type="text" id="ap_address" name="ap_address" value="%.*s" %s /></td>
+            </tr>
+            <tr>
+              <td class="racss_label">Hostname: *</td>
+
+              <td class="racss_field"><input type="text" id="ap_hostname" name="ap_hostname" value="%.*s" %s /></td>
+            </tr>
+            <tr>
+              <td class="racss_label">MAC authorized:</td>
+
+              <td class="racss_field"><input type="text" id="ap_mac_mask" name="ap_mac_mask" value="%.*s" /></td>
+            </tr>
+            <tr>
+              <td class="racss_label">Group account:</td>
+
+              <td class="racss_field"><input type="text" id="ap_group_account" name="ap_group_account" value="%.*s" /></td>
+            </tr>
+            <tr>
+              <td class="racss_label">REBOOT:</td> 
+
+              <td class="racss_field"><input type="checkbox" id="ap_up" name="ap_up"></td>
+            </tr>
+            <tr>
+              <td class="racss_label">Consume:</td>
+
+              <td class="racss_field"><input type="checkbox" id="ap_consume" name="ap_consume" %s></td>
+            </tr>
+          </table>
+          <hr />
+          <br />
+			 <div style="text-align:center;">
+          <input type="reset"						value="Reset"			 style="height:3em;width:10em;margin:1em;" />
+			 <input type="submit" name="submit" value="Registrazione" style="height:3em;width:10em;margin:1em;" />
+		    </div>
+        </form>
+		  <script type="text/javascript">
+//<![CDATA[
+var valComm1 = new LiveValidation( 'ap_label', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm1.add( Validate.Presence, {failureMessage: "Devi inserire il campo <label>"} );
+var valComm2 = new LiveValidation( 'ap_address', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm2.add( Validate.Presence, {failureMessage: "Devi inserire il campo <ip address>"} );
+var valComm3 = new LiveValidation( 'ap_hostname', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm3.add( Validate.Presence, {failureMessage: "Devi inserire il campo <hostname>"} );
+//]]>
+        </script>
+		  <br />
+		  <br />
+		  <br />
+      </div>
+    </div>
+  </div>

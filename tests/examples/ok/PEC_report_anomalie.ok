@@ -1,0 +1,1012 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoDestinatariMultipliNessunaAnomaliaTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoBustaTrasportoMancanteTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Busta di trasporto mancante</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoAvvenutaConsegnaOErroreConsegnaMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoNessunaAnomaliaTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoPresaInCaricoIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoAvvenutaConsegnaOErroreConsegnaMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna o rilevazione virus mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoAvvenutaConsegnaIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoNessunaAnomaliaTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoAccettazioneMancanteTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Accettazione mancante</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoBustaTrasportoMancanteTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Busta di trasporto mancante</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoPresaInCaricoMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoErroreConsegnaIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoRilevazioneVirusIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Rilevazione virus incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoDestinatariMultipliNessunaAnomaliaTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user1@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user3@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user4@nonpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoPresaInCaricoIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoPresaInCaricoMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoAvvenutaConsegnaIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoRilevazioneVirusMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Rilevazione virus mancante per un destinatario</NumMsgExceptionInOut-Exception>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoRilevazioneVirusIncoerentePerDuplicazioneTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user1@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user3@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user4@nonpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Rilevazione virus duplicata per un destinatario</NumMsgExceptionInOut-Exception>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>TestCaseTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20070119123227.399684@actaliscertymail.it</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>Jan 19 12:32:27 2007</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>prov.bo.uma@cert.provincia.bo.it</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>soisi3@cert.provincia.bo.it</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Accettazione incoerente</NumMsgExceptionInOut-Exception>
+          <NumMsgExceptionInOut-Exception>Presa in carico incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoAvvenutaConsegnaMancanteConDestinatarioEsternoInPrimaPosizioneTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user3@notpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoDestinatariMultipliNessunaAnomaliaTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoBustaTrasportoMancanteTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Busta di trasporto mancante</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoAvvenutaConsegnaOErroreConsegnaMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoNessunaAnomaliaTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoPresaInCaricoIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoAvvenutaConsegnaOErroreConsegnaMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna o rilevazione virus mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoAvvenutaConsegnaIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoNessunaAnomaliaTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoAccettazioneMancanteTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Accettazione mancante</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoBustaTrasportoMancanteTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Busta di trasporto mancante</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoPresaInCaricoMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoErroreConsegnaIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoRilevazioneVirusIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Rilevazione virus incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoDestinatariMultipliNessunaAnomaliaTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user1@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user3@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user4@nonpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoPresaInCaricoIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoPresaInCaricoMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgRicevutoAvvenutaConsegnaIncoerentePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@anotherpec.external.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:54 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.external.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoRilevazioneVirusMancantePerAlmenoUnDestinatarioTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Rilevazione virus mancante per un destinatario</NumMsgExceptionInOut-Exception>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoRilevazioneVirusIncoerentePerDuplicazioneTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user1@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user2@anotherpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user3@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user4@nonpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Rilevazione virus duplicata per un destinatario</NumMsgExceptionInOut-Exception>
+          <NumMsgExceptionInOut-Exception>Presa in carico mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>TestCaseTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Input>
+          <NumMsgExceptionInOut-Identifier>20070119123227.399684@actaliscertymail.it</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>Jan 19 12:32:27 2007</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>prov.bo.uma@cert.provincia.bo.it</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>soisi3@cert.provincia.bo.it</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Accettazione incoerente</NumMsgExceptionInOut-Exception>
+          <NumMsgExceptionInOut-Exception>Presa in carico incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna incoerente per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Input>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>MsgSpeditoAvvenutaConsegnaMancanteConDestinatarioEsternoInPrimaPosizioneTest</NAME>
+  <QUERY>
+    <START-DATE>10/05/2006</START-DATE>
+    <END-DATE>02/07/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgExceptionInOut>
+      <NumMsgExceptionInOut-Entry>
+        <NumMsgExceptionInOut-Output>
+          <NumMsgExceptionInOut-Identifier>20060510110152.637634@pec.internal.domain</NumMsgExceptionInOut-Identifier>
+          <NumMsgExceptionInOut-Date>May 10 11:01:52 2006</NumMsgExceptionInOut-Date>
+          <NumMsgExceptionInOut-InstallationId>PEC_Milter</NumMsgExceptionInOut-InstallationId>
+          <NumMsgExceptionInOut-Sender>user1@pec.internal.domain</NumMsgExceptionInOut-Sender>
+          <NumMsgExceptionInOut-Recipients>user3@notpec.external.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Recipients>user2@pec.internal.domain</NumMsgExceptionInOut-Recipients>
+          <NumMsgExceptionInOut-Exception>Avvenuta consegna o errore consegna mancante per almeno un destinatario</NumMsgExceptionInOut-Exception>
+        </NumMsgExceptionInOut-Output>
+      </NumMsgExceptionInOut-Entry>
+    </NumMsgExceptionInOut>
+  </RESULTS>
+</REPORT>

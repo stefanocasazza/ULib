@@ -1,0 +1,60 @@
+#!/bin/sh
+
+. ../.function
+
+## misc.test -- Test misc feature
+
+start_msg misc
+
+rm -f /var/spool/mail/trace.*test_misc*.[0-9]* /var/spool/mail/object.*test_misc*.[0-9]* /var/spool/mail/stack.*test_misc*.[0-9]*
+
+type whoami >/dev/null 2>&1
+RESULT=$?
+
+if [ $RESULT -eq 0 ]; then
+   ARG1=`whoami`
+else
+#  ARG1="Administrator" # WIN2000AS
+#  ARG1='"stefano casazza"' # WINXP
+#  ARG1='"admin"' # laptop
+   ARG1='"stefano"' # ridwhan
+fi
+
+type hostname >/dev/null 2>&1
+RESULT=$?
+
+if [ $RESULT -eq 0 ]; then
+   ARG2=`hostname`
+else
+   ARG2='"david"'
+fi
+
+if [ "$TERM" = "msys"   ] || \
+   [ "$TERM" = "cygwin" ]
+then
+   ARG2='"localhost"'
+fi
+
+ARG3=`date +'%d/%m/%y %H:%M:%S'`
+ARG4=/var/spool/mail
+
+cat << EOF >tmp/c
+c
+c
+c
+c
+c
+EOF
+
+#STRACE=$LTRUSS
+start_prg misc "$ARG1" "$ARG2" $ARG3 $ARG4 < tmp/c
+
+# Test against expected output
+RESULT=0
+if [ -n "$WINELOADER" ]
+then
+	N1=`grep expect out/misc.out`
+	test_output "$N1"
+else
+	test_output_diff misc
+fi

@@ -1,0 +1,33 @@
+<!--#session
+unsigned access_count(0);
+-->
+<html>
+ <head><title>Example of USP with HTTP session</title></head>
+ <body bgcolor="#FDF5E6">
+
+   <h1 align="center">Welcome<!--#puts (UHTTP::isNewSession() ?  ", Newcomer" : " Back") --></h1>
+   <h2>Information on Your Session:</h2>
+   <table border=1 align=center>
+   <tr bgcolor="#ffad00">
+     <th>Info Type</th><th>Value</th>
+   </tr>
+   <tr>
+     <td>keyIdDataSession</td>
+     <td><!--#puts UHTTP::getKeyIdDataSession() --></td>
+   </tr>
+   <tr>
+     <td>Creation Time</td>
+     <td><!--#puts UHTTP::getSessionCreationTime() --></td>
+   </tr>
+   <tr>
+     <td>Time of Last Access</td>
+     <td><!--#puts UHTTP::getSessionLastAccessedTime() --></td>
+   </tr>
+   <tr>
+     <td>Number of Previous Accesses</td>
+     <td><!--#number access_count++ --></td>
+   </tr>
+   </table>
+   <br><a href="session">reload</a>
+</body> 
+</html>

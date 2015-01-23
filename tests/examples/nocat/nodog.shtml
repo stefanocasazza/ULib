@@ -1,0 +1,97 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+  <title>Firenze WiFi</title>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <style type="text/css">
+  .link {
+        color:#666666;
+        font-size: 20px;
+        TEXT-DECORATION: none;
+        font-family: Verdana, Arial, Helvetica, sans-serif;
+        font-weight: bold;
+        background-color: #CCCCCC;
+  }
+  .link:hover {color:#990000; TEXT-DECORATION: none
+  }
+  .tabella {
+        background-image: none;
+        /*border: 1px solid #666666;*/
+  }
+ .rssbutton{
+	background-color: #ff6600;
+	border: 1px #ff6600 outset;
+	padding: 0 2px;
+	color: white;
+	text-decoration: none;
+	font: bold 10px Verdana;
+ }
+
+ .rssbutton:visited, .rssbutton:hover, .rssbutton:active {
+	color: white;
+ }
+
+ .cssbutton{
+	background-color: red;
+	border: 2px #d1ec4c outset;
+	padding: 1px 4px;
+	color: white;
+	text-decoration: none;
+	font: bold 150%% "Lucida Grande", "Trebuchet MS", Verdana, Helvetica, sans-serif;
+ }
+
+ .cssbutton:visited {
+	color: white;
+	}
+
+	.cssbutton:hover {
+	border-style: inset;
+	background-color: #CECFD1;
+	padding: 2px 3px 0 5px; /*shift text 1px to the right and down*/
+	}
+
+ .cssbutton:active {
+	color: black;
+ }
+  </style>
+
+	<!--#set cgi=cgi-bin/peer.sh -->
+</head>
+
+<body>
+
+    <table width="700" border="0" align="center" class="tabella">
+
+      <tr>
+        <td colspan="2"><center><span style="font: bold 20pt 'Lucida Grande', 'Trebuchet MS', Verdana, Helvetica, sans-serif;color:#3a5896;">Benvenuti a</span></center></td>
+      </tr>
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td colspan="2">
+          <div align="center">
+			 <a class="link" href="http://10.30.1.131:5280/cgi-bin/allow.sh?link=<!--#echo var=$LINK -->&mac=<!--#echo var=$REMOTE_MAC -->"><img src="<!--#echo var=$IMAGE -->" /></div>
+        </td>
+      </tr>
+
+      <tr>
+        <td>&nbsp;</td>
+      </tr>
+
+      <tr>
+        <td>
+		<div align="center"><img src="<!--#echo var=$LOGO -->" /></div>
+        </td>
+	<td>
+	    <a class="cssbutton" href="http://10.30.1.131:5280/cgi-bin/allow.sh?link=<!--#echo var=$INTERNET -->&mac=<!--#echo var=$REMOTE_MAC -->">&nbsp;NAVIGA IN INTERNET&nbsp;</a>
+	</td>
+      </tr>
+
+    </table>
+
+</body>
+</html>

@@ -1,0 +1,42 @@
+<html>
+<head>
+  <title>ULib start page</title>
+</head>
+<body>
+  <blockquote>
+    <blockquote>
+      <table width="750" cellpadding="5">
+        <tr>
+          <td bgcolor="white">
+            <center>
+              <h3>Welcome to Ulib (Ver. <!--#puts ULIB_VERSION -->)!</h3>
+            </center>
+          </td>
+        </tr>
+      </table>
+    </blockquote>
+
+    <blockquote>
+      <table width="750" cellpadding="5">
+        <tr>
+          <td bgcolor="#E0E0FF"><!--#code USP_PRINTF("ULib Servlet Page (USP): %N (pid %P) [%U@%H] - %D", 0); --></td>
+        </tr>
+      </table>
+    </blockquote>
+
+    <p>About Ulib:</p>
+
+    <blockquote>
+      <table width="750" cellpadding="5">
+        <tr>
+          <td bgcolor="#E0E0FF">
+          <a href="http://www.unirel.com/ULib/index.html">Info</a><br>
+          <a href="http://www.unirel.com/ULib/features.html">Features</a><br>
+          <a href="http://www.unirel.com/ULib/tut.html">Tutorial</a><br>
+          <a href="http://www.unirel.com/ULib/support.html">Support</a><br></td>
+        </tr>
+      </table>
+    </blockquote><font size="-1">Copyright (c) 2009 by <a href="http://www.unirel.com">Unirel s.r.l.</a> - All rights reserved.</font>
+  </blockquote>
+</body>
+</html>

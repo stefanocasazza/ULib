@@ -1,0 +1,41 @@
+<!--#args
+filepath;
+-->
+<html>
+ <body>
+
+  <!--# for upload we need to use this enctype-attribute -->
+  <form method="post" enctype="multipart/form-data">
+   <input type="file" name="upload">
+   <input type="submit">
+  </form>
+
+<!--#code
+   if (UHTTP::isPOST() &&
+       UHTTP::form_name_value->size() == 2)
+   {
+   UString md5sum(33U), dump(10000U),
+           content  = UFile::contentOf(filepath);
+
+   uint32_t size   = content.size();
+   const char* ptr = content.data();
+
+   UServices::generateDigest(U_HASH_MD5, 0, (unsigned char*)ptr, size, md5sum, false);
+
+   dump.snprintf("%M", ptr, U_min(size,1024));
+-->
+
+    <p>
+    file received:<br>
+    <!--#puts UStringExt::basename(filepath) --> (<!--#number size --> bytes)<br>
+    md5sum: <!--#puts md5sum --><br>
+    data:
+    <pre><!--#xputs dump --></pre>
+    </p>
+
+<!--#code
+  }
+-->
+
+ </body>
+</html>

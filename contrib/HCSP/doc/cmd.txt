@@ -1,0 +1,1 @@
+openssl smime -engine HCSP -sign -signer 'My Certificate.cer' -keyform engine -inkey 'My Certificate' -nodetach -out signed_con_engine -in testo.txt

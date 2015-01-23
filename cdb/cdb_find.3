@@ -1,0 +1,42 @@
+.TH cdb_find 3
+.SH NAME
+cdb_find \- look up a key in a constant database
+.SH SYNTAX
+.B #include <cdb.h>
+.br
+.B #include <uint32.h>
+
+int cdb_find(struct cdb *\fIc\fR,char *\fIkey\fR,unsigned int \fIkeylen\fR);
+.br
+int cdb_datalen(struct cdb *\fIc\fR);
+.br
+int cdb_datapos(struct cdb *\fIc\fR);
+.br
+int cdb_findnext(struct cdb *\fIc\fR,char *\fIkey\fR,unsigned int \fIkeylen\fR);
+
+.SH DESCRIPTION
+\fBcdb_find\fR looks for \fIkey\fR. If cdb_find returns 0, the database
+does not contain that key; stop. If cdb_find returns -1, there was a
+read error; abort.
+
+\fBcdb_datalen\fR returns the length of the data associated with the
+\fIkey\fR.  Use it to allocate a pointer \fIp\fR with enough space to
+hold the data.
+
+\fBcdb_datapos\fR returns the position of the data inside the file.  Use
+it as argument to cdb_read to retrieve the data.
+
+There may be several records under a single key. You can use
+\fBcdb_findnext\fR to find the next record under this key.
+
+.SH EXAMPLE
+static struct cdb;
+
+if (cdb_find(&c,key,strlen(key)>0) {
+  char *buf=alloca(cdb_datalen(&c));
+  cdb_read(&c,buf,cdb_datalen(&c),cdb_datapos(&c));
+  write(1,buf,cdb_datalen(&c));
+.br
+}
+.SH "SEE ALSO"
+cdb_read(3), cdb_init(3), cdb_free(3), cdbmake(1)

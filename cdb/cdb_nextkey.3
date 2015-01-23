@@ -1,0 +1,19 @@
+.TH cdb_nextkey 3
+.SH NAME
+cdb_nextkey \- find next physical record in constant database
+.SH SYNTAX
+.B #include <cdb.h>
+.br
+.B #include <uint32.h>
+
+int cdb_nextkey(struct cdb *\fIc\fR,uint32 *\fIkpos\fR);
+
+.SH DESCRIPTION
+\fBcdb_nextkey\fR finds the next physical record in the constant
+database.
+
+You can use cdb_datapos or cdb_keypos to get \fIposition\fR and
+cdb_datalen and cdb_keylen to get \fIlen\fR.
+
+.SH "SEE ALSO"
+cdb_firstkey(3), cdb_successor(3)

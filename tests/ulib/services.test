@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. ../.function
+
+## services.test -- Test services feature
+
+start_msg services
+
+#UTRACE="0 5M 1"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+#STRACE=$TRUSS
+#VALGRIND='valgrind' #  --leak-check=full
+start_prg services
+
+if [ -n "$WINELOADER" ]; then
+	mv out/services.out out/services.out1
+	grep -v "test_services.cpp:" out/services.out1 > out/services.out
+fi
+
+# Test against expected output
+test_output_wc w services

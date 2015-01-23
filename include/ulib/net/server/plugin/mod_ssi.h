@@ -1,0 +1,96 @@
+// ============================================================================
+//
+// = LIBRARY
+//    ULib - c++ library
+//
+// = FILENAME
+//    mod_ssi.h - Server Side Includes (SSI)
+//
+// = AUTHOR
+//    Stefano Casazza
+//
+// ============================================================================
+
+#ifndef U_MOD_SSI_H
+#define U_MOD_SSI_H 1
+
+#include <ulib/net/server/server_plugin.h>
+
+class U_EXPORT USSIPlugIn : public UServerPlugIn {
+public:
+
+   static const UString* str_cgi;
+   static const UString* str_var;
+
+   static void str_allocate();
+
+   // COSTRUTTORI
+
+            USSIPlugIn();
+   virtual ~USSIPlugIn();
+
+   // define method VIRTUAL of class UServerPlugIn
+
+   // Server-wide hooks
+
+   virtual int handlerConfig(UFileConfig& cfg) U_DECL_OVERRIDE;
+   virtual int handlerInit() U_DECL_OVERRIDE;
+
+   // Connection-wide hooks
+
+   virtual int handlerRequest() U_DECL_OVERRIDE;
+
+   // SERVICES
+
+   static UString* environment;
+   static int alternative_response;
+   static UString* alternative_include;
+
+   static void setMessagePage(const UString& tmpl, const char* title_txt, const char* message)
+      {
+      U_TRACE(0, "USSIPlugIn::setMessagePage(%.*S,%S,%S)", U_STRING_TO_TRACE(tmpl), title_txt, message)
+
+      setAlternativeInclude(tmpl, 1024, false, title_txt, 0, 0, title_txt, message);
+      }
+
+   static void setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, ...);
+
+   static void setBadRequest();
+   static void setAlternativeResponse();
+   static void setAlternativeResponse(const UString& body);
+   static void setAlternativeRedirect(const char* fmt, ...);
+   static void setAlternativeInclude(const UString& tmpl, uint32_t estimated_size, bool bprocess,
+                                     const char* title_txt, const char* ssi_head, const char* body_style, ...);
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const;
+#endif
+
+protected:
+   static UString* body;
+   static UString* header;
+   static UString* errmsg;
+   static UString* timefmt;
+   static UString* docname;
+   static bool use_size_abbrev;
+   static time_t last_modified;
+
+private:
+   static UString processSSIRequest(const UString& content, int include_level) U_NO_EXPORT;
+   static UString getInclude(const UString& include, int include_level, bool bssi) U_NO_EXPORT;
+
+   static bool    callService(const UString& name, const UString& value) U_NO_EXPORT;
+   static UString getPathname(const UString& name, const UString& value, const UString& directory) U_NO_EXPORT;
+
+#ifdef U_COMPILER_DELETE_MEMBERS
+   USSIPlugIn(const USSIPlugIn&) = delete;
+   USSIPlugIn& operator=(const USSIPlugIn&) = delete;
+#else
+   USSIPlugIn(const USSIPlugIn&) : UServerPlugIn() {}
+   USSIPlugIn& operator=(const USSIPlugIn&)        { return *this; }
+#endif
+};
+
+#endif

@@ -1,0 +1,136 @@
+RANDFILE = $ENV::HOME/.rnd
+oid_file = /etc/openssl/.oid
+oid_section = new_oids
+
+[ new_oids ]
+dnQualifier = 2.5.4.46
+surName = 2.5.4.4
+givenName = 2.5.4.42
+initials = 2.5.4.43
+generationQualifier = 2.5.4.44
+
+[ req ]
+default_bits = 4096
+distinguished_name = CA_req_dn
+encrypt_rsa_key = yes
+
+[ CA_req_dn ]
+countryName                     = ISO country code
+countryName_default             = "IT"
+localityName                    = Location
+localityName_default            = "Rome"
+organizationName                = Organization
+organizationName_default        = "T-Services S.r.L."
+commonName                      = Common Name
+commonName_default              = "T-Services ServerCerts"
+commonName_max                  = 64
+
+[ CA_x509_extensions ]
+basicConstraints=critical,CA:true,pathlen:0
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer:always
+keyUsage = cRLSign, keyCertSign
+extendedKeyUsage = nsSGC,msSGC
+subjectAltName = URI:"https://register.trust-engine.com/pyca/get-cert.py/ServerCerts/ca.crt"
+issuerAltName = issuer:copy
+crlDistributionPoints = URI:"https://register.trust-engine.com/pyca/get-cert.py/Root/crl.crl"
+certificatePolicies=ia5org,@manual_enrolment_policy
+
+[ manual_enrolment_policy ]
+policyIdentifier=1.3.76.35.1.1
+CPS.1="https://www.trust-engine.com/documents/policies/1.3.76.35.1.1.pdf"
+
+[ ca ]
+ServerCerts = CA_%b
+
+[ CA_%b ]
+dir = %b
+certs = $dir/certs
+crl_dir = $dir/crl
+database = $dir/index.txt
+new_certs_dir = $dir/newcerts
+pend_reqs_dir = $dir/pendreqs
+acpt_reqs_dir = $dir/acptreqs
+new_reqs_dir = $dir/newreqs
+certificate = $dir/cacert.pem
+serial = $dir/serial
+crl = $dir/crl.pem
+private_key = $dir/private/cakey.pem
+RANDFILE = $dir/private/.rand
+default_days = 1780
+default_crl_days= 30
+default_md = sha1
+preserve = no
+policy = policy_ServerCerts
+x509_extensions = x509v3_ext_ServerCerts
+req = req_ServerCerts
+unique_subject = yes
+copy_extensions = copy
+
+[ policy_ServerCerts ]
+countryName = optional
+stateOrProvinceName = optional
+localityName = optional
+organizationName = optional
+organizationalUnitName = optional
+commonName = supplied
+emailAddress = optional
+
+[ policy_anything ]
+countryName = optional
+stateOrProvinceName = optional
+localityName = optional
+organizationName = optional
+organizationalUnitName = optional
+commonName = supplied
+emailAddress = optional
+
+[ req_ServerCerts ]
+distinguished_name = req_distinguished_name_ServerCerts
+
+[ req_distinguished_name_ServerCerts ]
+countryName = country ISO code
+countryName_min = 2
+countryName_max = 2
+countryName_regex = "[a-zA-Z][a-zA-Z]"
+stateOrProvinceName = State/Province Name
+localityName = Location
+organizationName = Organization
+organizationalUnitName = Organizational Unit Name
+commonName = Common Name
+commonName_max = 64
+emailAddress = Email Address
+emailAddress_max = 64
+emailAddress_regex = "^([\w@.=/_ +-]+)@([\w-]+)(\.[\w-]+)*$"
+
+[ req_attributes_ServerCerts ]
+challengePassword = A challenge password
+challengePassword_min = 4
+challengePassword_max = 20
+
+[ req_short_and_empty ]
+distinguished_name = req_distinguished_name_short_and_empty
+
+[ req_distinguished_name_short_and_empty ]
+countryName = country ISO code
+countryName_min = 2
+countryName_max = 2
+countryName_regex = "[a-zA-Z][a-zA-Z]"
+stateOrProvinceName = State/Province Name
+localityName = Location
+organizationName = Organization
+organizationalUnitName = Organizational Unit Name
+commonName = Common Name
+commonName_max = 64
+emailAddress = Email Address
+emailAddress_max = 64
+emailAddress_regex = "^([\w@.=/_ +-]+)@([\w-]+)(\.[\w-]+)*$"
+
+[ x509v3_ext_ServerCerts ]
+subjectKeyIdentifier = hash
+authorityKeyIdentifier = keyid:always,issuer:always
+keyUsage = keyEncipherment
+extendedKeyUsage = serverAuth,nsSGC,msSGC
+issuerAltName = URI:"https://register.trust-engine.com/pyca/get-cert.py/ServerCerts/ca.crt"
+crlDistributionPoints = URI:"https://register.trust-engine.com/pyca/get-cert.py/ServerCerts/crl.crl"
+certificatePolicies=ia5org,@manual_enrolment_policy

@@ -1,0 +1,137 @@
+#!/bin/sh
+
+. ../.function
+
+## csp.test -- Test CSP feature
+
+start_msg cspclient
+
+#UTRACE="0 150M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+rm -rf CSP/cspserver.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA CSP/CSP/DB_CA/CA_1 \
+		 out/userver_ssl.out err/userver_ssl.err \
+       CSP/trace.*userver_ssl*.[0-9]* CSP/object.*userver_ssl*.[0-9]* CSP/stack.*userver_ssl*.[0-9]* CSP/mempool.*userver_ssl*.[0-9]*
+
+# usage: openssl s_client args
+# ----------------------------------------------------------------
+# -host host    - use -connect instead
+# -port port    - use -connect instead
+# -connect host:port - who to connect to (default is 10.30.1.131:4433)
+# -verify arg   - turn on peer certificate verification
+# -cert arg     - certificate file to use, PEM format assumed
+# -key arg      - Private key file to use, PEM format assumed, in cert file if not specified but cert file is.
+# -CApath arg   - PEM format directory of CA's
+# -CAfile arg   - PEM format file of CA's
+# -reconnect    - Drop and re-make the connection with the same Session-ID
+# -pause        - sleep(1) after each read(2) and write(2) system call
+# -showcerts    - show all certificates in the chain
+# -debug        - extra output
+# -msg          - Show protocol messages
+# -nbio_test    - more ssl protocol testing
+# -state        - print the 'ssl' states
+# -nbio         - Run with non-blocking IO
+# -crlf         - convert LF from terminal into CRLF
+# -quiet        - no s_client output
+# -ign_eof      - ignore input eof (default when -quiet)
+# -ssl2         - just use SSLv2
+# -ssl3         - just use SSLv3
+# -tls1         - just use TLSv1
+# -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol
+# -bugs         - Switch on all SSL implementation bug workarounds
+# -serverpref   - Use server's cipher preferences (only SSLv2)
+# -cipher       - preferred cipher to use, use the 'openssl ciphers' command to see what is available
+# -starttls prot - use the STARTTLS command before starting TLS for those protocols that support it, where 'prot'
+#						 defines which one to assume.  Currently, only "smtp" and "pop3" are supported.
+# -engine id    - Initialise and use the specified engine
+# -rand file:file:...
+# ----------------------------------------------------------------
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 443
+ REQ_TIMEOUT 5
+ MAX_KEEP_ALIVE 256
+ LOG_FILE cspserver.log
+ LOG_FILE_SZ 1M
+ DOCUMENT_ROOT CSP
+ PLUGIN "soap http"
+ PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+ CERT_FILE ../../ulib/CA/server.crt
+  KEY_FILE ../../ulib/CA/server.key
+ PASSWORD caciucco
+ CA_PATH ../../ulib/CA/CApath
+ CA_FILE ../../ulib/CA/cacert.pem
+ VERIFY_MODE 1
+}
+http {
+#include "http.cfg"
+}
+soap {
+#include "soap_or_rpc_csp.cfg"
+}
+EOF
+
+DIR_CMD="../../examples/userver"
+
+#STRACE=$TRUSS
+start_prg_background userver_ssl -c inp/webserver.cfg
+#unset STRACE
+$SLEEP
+
+## ./CSP/CSP/request/run.sh > out/inp/webclient.out
+
+#CNF=`cat CSP/CSP/request/openssl.cnf`
+#CNF=`cat inp/openssl.cnf`
+CNF=inp/openssl.cnf
+#P10=`cat CSP/request/newreq.pem`
+P10=CSP/CSP/request/newreq.pem
+SPKAC='inp/cert-req-SPKAC.UserCerts.FymAB+BowBNRs2aSfJvFow==.spkac'
+
+cat <<EOF >inp/webclient.cfg
+uclient {
+ PORT 443
+ SERVER localhost
+ CA_PATH ../ulib/CA/CApath
+ CA_FILE ../ulib/CA/cacert.pem
+ PASSWORD caciucco
+ CERT_FILE ../ulib/CA/server.crt
+  KEY_FILE ../ulib/CA/server.key
+ VERIFY_MODE 0
+#VERIFY_MODE 7
+}
+EOF
+
+DIR_CMD="../../examples/csp"
+
+ start_prg cspclient -c inp/webclient.cfg --  1 CA   300
+ start_prg cspclient -c inp/webclient.cfg --  1 CA_1 400 '"$CNF"'
+ start_prg cspclient -c inp/webclient.cfg --  1 CA   300
+#exit 0
+ start_prg cspclient -c inp/webclient.cfg --  2
+ start_prg cspclient -c inp/webclient.cfg --  3 CA   '"$P10"' policy_ServerCerts
+ start_prg cspclient -c inp/webclient.cfg --  5 CA 1
+ start_prg cspclient -c inp/webclient.cfg --  6 CA 1
+ start_prg cspclient -c inp/webclient.cfg --  3 CA_1 '"$P10"' policy_ServerCerts
+ start_prg cspclient -c inp/webclient.cfg --  7 CA
+#exit 0
+ start_prg cspclient -c inp/webclient.cfg -- 10 CA
+ start_prg cspclient -c inp/webclient.cfg --  4 CA '"$SPKAC"' policy_ServerCerts
+ start_prg cspclient -c inp/webclient.cfg --  4 CA '"$SPKAC"' policy_ServerCerts
+ start_prg cspclient -c inp/webclient.cfg --  4 CA '"$SPKAC"' policy_ServerCerts
+ start_prg cspclient -c inp/webclient.cfg --  4 CA '"$SPKAC"' policy_ServerCerts
+
+ start_prg cspclient -c inp/webclient.cfg -- 11 CA_1 1 
+ start_prg cspclient -c inp/webclient.cfg --  8 CA_1
+ start_prg cspclient -c inp/webclient.cfg --  9 CA_1
+
+$SLEEP
+kill_prg userver_ssl TERM
+
+mv err/userver_ssl.err err/cspserver.err
+
+# Test against expected output
+test_output_wc w cspclient

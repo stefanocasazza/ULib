@@ -1,0 +1,61 @@
+#!/bin/sh
+
+. ../.function
+
+## workflow.test -- Test workflow feature
+
+start_msg workflow
+
+rm -f err/validation.err trace.*validation*.[0-9]* object.*validation*.[0-9]* stack.*validation*.[0-9]* mempool.*validation*.[0-9]* \
+		err/production.err trace.*production*.[0-9]* object.*production*.[0-9]* stack.*production*.[0-9]* mempool.*production*.[0-9]* \
+		err/error.err		 trace.*error*.[0-9]*		object.*error*.[0-9]*      stack.*error*.[0-9]*      mempool.*error*.[0-9]*
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#VALGRIND=valgrind
+ export UTRACE UOBJDUMP USIMERR VALGRIND
+
+DIR_CMD="../../examples/workflow"
+
+ifconfig eth0:220 192.168.220.102 up					2>/dev/null
+ip route add 192.168.220.0/24 via 192.168.220.254  2>/dev/null
+
+rm -f out/validation.out
+start_prg validation -c workflow/validation.cfg < workflow/validation/validation-request-error.xml
+cat   out/validation.out						> out/workflow.out
+echo "---------------------------------" >> out/workflow.out
+
+rm -f out/validation.out
+start_prg validation -c workflow/validation.cfg < workflow/validation/validation-request.xml
+cat	out/validation.out					  >> out/workflow.out
+echo "---------------------------------" >> out/workflow.out
+
+##tcpflow -i eth0 host 192.168.220.1   and port 19001 &
+##tcpflow -i eth0 host 192.168.220.10  and port    25 &
+##tcpflow -i eth0 host mail.unirel.com and port    25 &
+##LPID=$!
+
+rm -f out/production.out
+start_prg production -c workflow/production.cfg < workflow/production/production-request-error.xml
+cat	out/production.out					  >> out/workflow.out
+echo "---------------------------------" >> out/workflow.out
+
+rm -f out/production.out
+start_prg production -c workflow/production.cfg < workflow/production/production-request.xml
+cat	out/production.out					  >> out/workflow.out
+echo "---------------------------------" >> out/workflow.out
+
+rm -f out/error.out
+start_prg error -c workflow/error.cfg < workflow/error/error-request1.xml
+cat	out/error.out							  >> out/workflow.out
+echo "---------------------------------" >> out/workflow.out
+
+##kill $LPID
+
+ip route del 192.168.220.0/24 via 192.168.220.254  2>/dev/null
+ifconfig eth0:220 192.168.220.102 down				   2>/dev/null
+
+# Test against expected output
+RESULT=0
+test_output_diff workflow

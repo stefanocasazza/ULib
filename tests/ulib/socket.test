@@ -1,0 +1,43 @@
+#!/bin/sh
+
+. ../.function
+
+## socket.test -- Test socket feature
+
+start_msg socket
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+# test_socket   serv [ip4 | ip6] [tcp | udp] portnum
+# test_socket client [ip4 | ip6] [tcp | udp] servname portnum echostring
+
+start_prg_background socket serv ip4 tcp 11011
+
+rm -f					out/socket.out1
+mv out/socket.out out/socket.out1
+
+#STRACE=$TRUSS
+start_prg socket client ip4 tcp localhost 11011 hello_World 10.1.1.21 eth0
+mv out/socket.out out/socket.out2
+
+$SLEEP
+kill_prg test_socket TERM
+
+start_prg_background socket serv ip4 udp 11011
+
+rm -f					out/socket.out3
+mv out/socket.out out/socket.out3
+start_prg socket client ip4 udp localhost 11011 hello_World www.gnu.org
+mv out/socket.out out/socket.out4
+
+$SLEEP
+kill_prg test_socket TERM
+
+cat 	 out/socket.out[1-4] > out/socket.out
+rm -rf out/socket.out[1-4]
+
+# Test against expected output
+test_output_wc l socket

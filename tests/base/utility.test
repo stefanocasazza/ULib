@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## utility.test -- Test utility feature
+
+start_msg utility
+
+rm -rf tmp/*
+mkdir -p tmp/tmp1
+touch tmp/aaa
+touch tmp/tmp1/bbb
+
+start_prg utility
+
+# Test against expected output
+test_output_wc l utility

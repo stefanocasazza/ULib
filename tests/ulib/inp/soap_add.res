@@ -1,0 +1,1 @@
+<?xml version='1.0' ?><env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope"><env:Header></env:Header><env:Body><env:addResponse env:encodingStyle="http://www.w3.org/2003/05/soap-encoding"><returnValue xsi:type="xsd:int">30</returnValue></env:addResponse></env:Body></env:Envelope>

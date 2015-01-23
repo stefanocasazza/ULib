@@ -1,0 +1,14 @@
+userver {
+ PORT 10001
+ WELCOME_MSG "generic server ready."
+ ALLOWED_IP localhost 
+#ALLOWED_IP localhost,10.30.0.0/16
+ LOG_FILE server.log
+ LOG_FILE_SZ 1M
+ PLUGIN echo
+ PLUGIN_DIR ../../src/ulib/net/server/plugin/.libs
+ PREFORK_CHILD 0
+}
+# valid request and response
+[ @STRING:"GET / HTTP/1.?*\r\n\r\n" @FILE:inp/forbiddenMessage.html
+  @STRING:"GET /buldog.gif HTTP/1.?*\r\n\r\n" @FILE:inp/buldog.html ]

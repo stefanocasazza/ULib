@@ -1,0 +1,21 @@
+.TH cdb_successor 3
+.SH NAME
+cdb_successor \- find next record
+.SH SYNTAX
+.B #include <cdb.h>
+
+int cdb_successor(struct cdb *\fIc\fR,char *\fIkey\fR,unsigned int \fIklen\fR);
+
+.SH DESCRIPTION
+\fBcdb_successor\fR finds the record that follows \fIkey\fR.  If
+\fIkey\fR is NULL, cdb_successor finds the first record.
+
+\fBNOTE!\fR  The database must not contain keys with more than one
+associated record or this API will lead to infinite loops!  Use
+cdb_firstkey and cdb_nextkey instead.
+
+You can use cdb_datapos or cdb_keypos to get \fIposition\fR and
+cdb_datalen and cdb_keylen to get \fIlen\fR.
+
+.SH "SEE ALSO"
+cdb_firstkey(3), cdb_nextkey(3)

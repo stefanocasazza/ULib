@@ -1,0 +1,140 @@
+
+  registrazione-ra-station-residenziale
+  TUnwired: registrazione utente residenziale
+  cddf1fed-0d30-4d9a-9a0d-b2b2d1dee7f2
+  2007-12-20 19:31:04+01:00
+  
+    
+      UnwiredPonza
+      cddf1fed-0d30-4d9a-9a0d-b2b2d1dee7f2
+    
+    
+      SafeMessaging
+      arturo.verdi@test.trust-engine.com
+      6c0241f8-af29-11dc-b4fd-000c291d9685
+    
+  
+  
+    
+      
+         value arturo
+         value verdi
+         value 342343424
+         value 22/10/1970
+         value ci
+         value 32432424443
+         value prefetto di roma
+         value 01/01/2020
+         value 1
+         value 1
+      
+    
+    
+      
+         value arturo.verdi@test.trust-engine.com
+         value 1
+      
+    
+    
+      
+         value no
+         value no
+         value no
+         value si
+         value no
+         value no
+      
+    
+    
+      
+         value roma
+         value rm
+         value via cavour
+         value 3
+         value 00184
+      
+    
+    
+      
+         value contratto_residenziali.html
+         value 1
+      
+    
+  
+  34ccb260-413d-493c-8ce7-561e19351d9c
+  
+    CN=arturo verdi,emailAddress=arturo.verdi@test.trust-engine.com
+    C=IT,L=Rome,O=T-Services S.r.L.,CN=T-Services TUnwiredCerts
+    56
+    Nov  3 18:27:44 2012 GMT
+  
+
+        
+        
+        
+        34ccb260-413d-493c-8ce7-561e19351d9c
+  registrazione-ra-station-residenziale
+  TUnwired: registrazione utente residenziale
+  cddf1fed-0d30-4d9a-9a0d-b2b2d1dee7f2
+  2007-12-20 19:31:04+01:00
+  
+    
+      UnwiredPonza
+      cddf1fed-0d30-4d9a-9a0d-b2b2d1dee7f2
+    
+    
+      SafeMessaging
+      arturo.verdi@test.trust-engine.com
+      6c0241f8-af29-11dc-b4fd-000c291d9685
+    
+  
+  
+    
+       value arturo
+         value verdi
+         value 342343424
+         value 22/10/1970
+         value ci
+         value 32432424443
+         value prefetto di roma
+         value 01/01/2020
+         value 1
+         value 1
+      
+    
+    
+       value arturo.verdi@test.trust-engine.com
+         value 1
+      
+    
+    
+      
+         value no
+         value no
+         value no
+         value si
+         value no
+         value no
+      
+    
+    
+       value roma
+         value rm
+         value via cavour
+         value 3
+         value 00184
+      
+    
+    
+       value contratto_residenziali.html
+         value 1
+      
+    
+  
+  
+  
+    CN=arturo verdi,emailAddress=arturo.verdi@test.trust-engine.com
+    C=IT,L=Rome,O=T-Services S.r.L.,CN=T-Services TUnwiredCerts
+    56
+    Nov  3 18:27:44 2012 GMT
+  

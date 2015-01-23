@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<!DOCTYPE wfeng:handler-request SYSTEM "workflow-engine.dtd">
+<wfeng:handler-request xmlns:wfeng="http://www.t-bizcom.com/WorkflowEngine" wfeng:id="validated+validation+0903271419101kz1+398505@cpe.production.wf"><wfeng:data wfeng:error="0">From administrator@test.t-unwired.com Wed Apr 29 19:13:45 2009
+From: "Administrator Test T-Unwired" &lt;administrator@test.t-unwired.com&gt;
+X-KMail-Identity: 464085227
+To: cpe.production@auth.test.t-unwired.com
+Subject: Re: TUnwired processo di registrazione utente residenziale con CPE: notifica produzione CPE cliente "workflow test", indirizzo installazione "Via Volturno, 12 50100 Firenze (FI)", UID "d9155647-3fee-4ec8-90f3-03b8ab60dd6d"
+Date: Wed, 29 Apr 2009 19:13:45 +0200
+User-Agent: KMail/1.11.2 (Linux/2.6.27.21-170.2.56.fc10.x86_64; KDE/4.2.2; x86_64; ; )
+References: &lt;49F88A5A.mailCEZ11AOFY@test.trust-engine.com&gt;
+In-Reply-To: &lt;49F88A5A.mailCEZ11AOFY@test.trust-engine.com&gt;
+X-KMail-QuotePrefix: &gt;
+X-KMail-Link-Message: 10797
+X-KMail-Link-Type: reply
+X-KMail-Transport: administrator@test.t-unwired.com
+MIME-Version: 1.0
+Content-Type: Text/Plain;
+  charset="iso-8859-15"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline
+X-KMail-Recipients: cpe.production@auth.test.t-unwired.com
+Message-Id: &lt;200904291913.46045.administrator@test.t-unwired.com&gt;
+Status: R
+X-Status: NQ
+X-KMail-EncryptionState:  
+X-KMail-SignatureState:  
+X-KMail-MDN-Sent:  
+
+On Wednesday 29 April 2009 19:11:54 workfloweng@test.trust-engine.com wrote:
+&gt; Produzione della CPE.
+&gt; * cliente
+&gt;   workflow test
+&gt;
+&gt; * indirizzo installazione:
+&gt;   Via Volturno, 12
+&gt;   50100 Firenze (FI)
+&gt;
+&gt; * email:
+&gt;   workflow.test@test.trust-engine.com
+&gt;
+&gt; * codice identificativo TUnwired (UID):
+&gt;   d9155647-3fee-4ec8-90f3-03b8ab60dd6d
+&gt;
+&gt; In allegato il certificato da installare sulla CPE e il file leggimi.txt
+&gt; contente le informazioni necessarie per l'installazione. A produzione
+&gt; completata effettuare un reply-to all'indirizzo pre-impostato
+
+</wfeng:data></wfeng:handler-request>

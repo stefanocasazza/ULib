@@ -1,0 +1,20 @@
+.TH cdb_read 3
+.SH NAME
+cdb_read \- read bytes from a constant database
+.SH SYNTAX
+.B #include <cdb.h>
+.br
+.B #include <uint32.h>
+
+int cdb_read(struct cdb *\fIc\fR,char *\fIbuf\fR,unsigned int \fIlen\fR,uint32 \fIposition\fR);
+
+.SH DESCRIPTION
+\fBcdb_read\fR reads \fIlen\fR bytes starting at \fIposition\fR from
+\fIc\fR to buf.  You can use cdb_datapos or cdb_keypos to get
+\fIposition\fR and cdb_datalen and cdb_keylen to get \fIlen\fR.
+
+\fIbuf\fR needs to point to a memory region large enough to hold
+\fIlen\fR bytes.
+
+.SH "SEE ALSO"
+cdb_find(3), cdb_init(3), cdb_free(3), cdbmake(1)

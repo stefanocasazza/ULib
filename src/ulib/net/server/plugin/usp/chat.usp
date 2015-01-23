@@ -1,0 +1,45 @@
+<html>
+ <head>
+  <title>USP application chat</title>
+  <link type="text/css" href="/css/chat.css" rel="stylesheet">
+  <script src="/js/chat.js" type="text/javascript"></script>
+ </head>
+ <body>
+  <h1>Ajaxchat</h1>
+  <form>
+   <table>
+    <tr>
+     <td>
+      your Name
+     </td>
+     <td>
+      <input type="text" name="person" id="person" size="20">
+     </td>
+    </tr>
+    <tr>
+     <td>
+      your Message
+     </td>
+     <td>
+      <input type="text" name="message" id="message" size="80"><br>
+     </td>
+    </tr>
+   </table>
+   <input type="button" value="talk" onClick="sendMessage()">
+   <img src="/images/sad.png"   onClick='addText(" :( ")'>
+   <img src="/images/wink.png"  onClick='addText(" ;) ")'>
+   <img src="/images/smile.png" onClick='addText(" :) ")'>
+  </form>
+  <script type="text/javascript">
+   document.getElementById("person").focus();
+  </script>
+  <hr>
+  <div id="chat">
+
+<!--#code
+(void) UHTTP::callService(U_STRING_FROM_CONSTANT("servlet/cchat"));
+-->
+
+  </div>
+ </body>
+</html>

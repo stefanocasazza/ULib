@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. ../.function
+
+## unixsocket_client_server.test -- Test unixsocket client server feature
+
+start_msg unixsocket_server
+start_msg unixsocket_client
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 10M 100"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+#STRACE=$TRUSS
+start_prg_background unixsocket_server "tmp/socket" ../../src/ulib/net/server/plugin/.libs echo
+
+$SLEEP
+ start_prg 				unixsocket_client "tmp/socket"
+$SLEEP
+kill_prg test_unixsocket_server TERM
+
+# Test against expected output
+test_output_diff unixsocket_client

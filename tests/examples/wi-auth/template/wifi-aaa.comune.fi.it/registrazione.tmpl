@@ -1,0 +1,339 @@
+  <div id="containerBig">
+    <div id="wrapperAuto">
+      <div id="registerbox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
+
+        <div id="menulogo" class="menurow">
+		  <img src="images/logo_fiwifi-n.png" />
+		  </div>
+
+        <table width="100%%">
+          <tbody>
+            <tr>
+              <td>
+                <h3 class="center">MODULO DI REGISTRAZIONE</h3>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table width="100%%" bordercolor="#C0C0C0">
+          <tr>
+            <td colspan="2"><span class="Stile3">I campi contrassegnati dal simbolo * non possono essere omessi</span></td>
+          </tr>
+
+          <tr>
+            <td valign="top">
+              <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>DATI UTENTE:</b></font></font></p>
+            </td>
+          </tr>
+        </table><br />
+
+        <form method="post" name="form" action="%s">
+          <table width="100%%" class="racss_formtable">
+            <tr>
+              <td class="racss_label">Nome: *</td>
+
+              <td class="racss_field"><input type="text" id="dati_utente_nome" name="dati_utente_nome" /></td>
+            </tr>
+
+            <tr>
+              <td class="racss_label">Cognome: *</td>
+
+              <td class="racss_field"><input type="text" id="dati_utente_cognome" name="dati_utente_cognome" /></td>
+            </tr>
+
+            <tr>
+              <td class="racss_label">Nato a:</td>
+
+              <td class="racss_field"><input type="text" id="dati_utente_luogo_di_nascita" name="dati_utente_luogo_di_nascita" /></td>
+            </tr>
+
+            <tr>
+              <td class="racss_label">Data di Nascita (dd/mm/yyyy):</td>
+
+              <td class="racss_field"><input type="text" id="dati_utente_data_di_nascita" name="dati_utente_data_di_nascita" /></td>
+            </tr>
+
+			   <tr>
+					<td class="racss_label">Email:</td>
+
+					<td class="racss_field"><input type="text" id="dati_utente_email" name="dati_utente_email" /></td>
+				</tr>
+
+            <tr>
+              <td valign="top" colspan="2">
+                <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style=
+                "font-size: 9pt"><b>CREDENZIALI DI ACCESSO:</b></font></font></p>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="racss_label">Cellulare: *</td>
+
+              <td class="racss_field">+39
+					 <input type="hidden" id="cellulare_prefisso" name="cellulare_prefisso" value="">
+				    <!--
+				    <select id="cellulare_prefisso" name="cellulare_prefisso">
+                <option value="xxx">
+                  Scegli
+                </option>
+				    -->
+
+<!--
+Da wikipedia risultano attivi i seguenti prefissi:
+
+I prefissi seguiti da un asterisco sono prefissi tecnici, non destinati alla clientela. (DIREI DI ESCLUDERLI)
+La rete non commerciale GSM-R gestita da Rete Ferroviaria Italiana opera con il prefisso 313. (DIREI DI ESCLUDERLO)
+
+313
+320
+322*
+323*
+324
+327
+328
+329
+330
+331
+333
+334
+335
+336
+337
+338
+339
+340
+341*
+342
+343*
+345
+346
+347
+348
+349
+350
+360
+361*
+362*
+363*
+366
+368
+370
+373
+377
+380
+381
+383*
+388
+389
+390*
+391
+392
+393
+397*
+-->
+				    <!--
+                <option value="313">
+                  313
+                </option>
+                <option value="320">
+                  320
+                </option>
+                <option value="324">
+                  323
+                </option>
+                <option value="324">
+                  323
+                </option>
+                <option value="327">
+                  327
+                </option>
+                <option value="328">
+                  328
+                </option>
+                <option value="329">
+                  329
+                </option>
+                <option value="330">
+                  330
+                </option>
+                <option value="331">
+                  331
+                </option>
+                <option value="333">
+                  333
+                </option>
+                <option value="334">
+                  334
+                </option>
+                <option value="335">
+                  335
+                </option>
+                <option value="336">
+                  336
+                </option>
+                <option value="337">
+                  337
+                </option>
+                <option value="338">
+                  338
+                </option>
+                <option value="339">
+                  339
+                </option>
+                <option value="340">
+                  340
+                </option>
+                <option value="342">
+                  342
+                </option>
+                <option value="345">
+                  345
+                </option>
+                <option value="346">
+                  346
+                </option>
+                <option value="347">
+                  347
+                </option>
+                <option value="348">
+                  348
+                </option>
+                <option value="349">
+                  349
+                </option>
+                <option value="350">
+                  350
+                </option>
+                <option value="360">
+                  360
+                </option>
+                <option value="363">
+                  363
+                </option>
+                <option value="366">
+                  366
+                </option>
+                <option value="368">
+                  368
+                </option>
+                <option value="370">
+                  370
+                </option>
+                <option value="373">
+                  373
+                </option>
+                <option value="377">
+                  377
+                </option>
+                <option value="380">
+                  380
+                </option>
+                <option value="381">
+                  381
+                </option>
+                <option value="388">
+                  388
+                </option>
+                <option value="389">
+                  389
+                </option>
+                <option value="391">
+                  391
+                </option>
+                <option value="392">
+                  392
+                </option>
+                <option value="393">
+                  393
+                </option>
+              </select>
+				  -->
+				  <input type="text" id="dati_utente_telefono_cellulare" name="dati_utente_telefono_cellulare" />
+				  </td>
+            </tr>
+
+            <tr>
+              <td valign="top" colspan="2">
+                <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style=
+                "font-size: 9pt"><b>PASSWORD: dovrà essere di almeno 6 caratteri</b></font></font></p>
+              </td>
+            </tr>
+            <tr>
+              <td class="racss_label">Password: *</td>
+              <td class="racss_field"><input type="password" id="dati_utente_password" name="dati_utente_password" value="" />
+				  </td>
+            </tr>
+            <tr>
+              <td class="racss_label">Conferma password: *</td>
+              <td class="racss_field"><input type="password" id="dati_utente_password_conferma" name="dati_utente_password_conferma" value="" />
+				  </td>
+            </tr>
+          </table>
+
+          <table width="100%%" border="1" bordercolor="#C0C0C0">
+            <tr>
+              <td valign="top">
+                <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style=
+                "font-size: 9pt"><b>Tutela privacy</b></font></font></p>
+              </td>
+            </tr>
+          </table>
+
+          <table width="100%%" border="1" bordercolor="#C0C0C0">
+            <tr valign="top">
+              <td width="100%%" style="padding:0.2em;">
+              <textarea style="width:100%%;border:0px solid gray;" rows="10">
+%s
+</textarea></td>
+            </tr>
+
+            <tr>
+              <td class="racss_field">Sono consapevole che in mancanza del mio consenso il servizio non potra' essere erogato.</td>
+            </tr>
+
+            <tr>
+				  <td nowrap="" style="text-align:center;padding:1em;">
+                <strong>Accetto</strong>
+                <input type="checkbox" id="privacy_accepted" value="1" class="checkbox" />
+				  </td>
+            </tr>
+          </table>
+          <hr />
+          <br />
+			 <div style="text-align:center;">
+          <input type="reset"						value="Reset"			 style="height:3em;width:10em;margin:1em;" />
+			 <input type="submit" name="submit" value="Registrazione" style="height:3em;width:10em;margin:1em;" />
+		    </div>
+        </form>
+		  <script type="text/javascript">
+//<![CDATA[
+var valComm1 = new LiveValidation( 'dati_utente_nome', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm1.add( Validate.Presence, {failureMessage: "Devi inserire il nome"} );
+var valComm2 = new LiveValidation( 'dati_utente_cognome', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm2.add( Validate.Presence, {failureMessage: "Devi inserire il cognome"} );
+var valComm3 = new LiveValidation( 'dati_utente_luogo_di_nascita', {onlyOnSubmit: true, validMessage: "OK" } );
+var valComm4 = new LiveValidation( 'dati_utente_data_di_nascita', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm4.add( Validate.Format, {pattern: /^[\d]{1,2}\/[\d]{1,2}\/[\d]{4}$/, failureMessage: "data di nascita non valida"} );
+var valComm14 = new LiveValidation( 'dati_utente_telefono_cellulare', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm14.add( Validate.Presence, {failureMessage: "Devi inserire il numero di cellulare"} );
+valComm14.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "numero di cellulare non valido"} );
+valComm14.add( Validate.Exclusion, { within:[' '],allowNull:true,partialMatch:true,caseSensitive:false,failureMessage:"sono presenti spazi nel numero" } );
+var valComm15 = new LiveValidation( 'dati_utente_password', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm15.add( Validate.Presence, {failureMessage: "Devi inserire la password"} );
+var valComm16 = new LiveValidation( 'dati_utente_password_conferma', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm16.add( Validate.Presence, {failureMessage: "Devi inserire la conferma password"} );
+var valComm17 = new LiveValidation('privacy_accepted', {onlyOnSubmit: true, validMessage: "OK" });
+valComm17.add(Validate.Acceptance, {failureMessage: "Devi confermare di aver letto ed accettare la privacy"} );
+//]]>
+        </script>
+<!--
+var valComm13 = new LiveValidation('cellulare_prefisso', {onlyOnSubmit: true, validMessage: "OK" });
+valComm13.add( Validate.Format, {pattern: /^([0-9]+)/, failureMessage: "Devi scegliere il prefisso"} );
+-->
+		  <br />
+		  <br />
+		  <br />
+      </div>
+    </div>
+  </div>

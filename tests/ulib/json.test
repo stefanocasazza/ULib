@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../.function
+
+## json.test -- Test json feature
+
+start_msg json
+
+#UTRACE="0 5M 1"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR 
+
+unset UMEMPOOL
+#STRACE=$LTRUSS
+start_prg json < inp/json.input
+
+# Test against expected output
+test_output_wc w json

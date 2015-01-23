@@ -1,0 +1,38 @@
+.TH cdbget 1
+.SH NAME
+cdbget \- look up one key in a constant database
+.SH SYNOPSIS
+.B cdbget
+.I key
+.SH DESCRIPTION
+.B cdbget
+searches for a record indexed by
+.I key
+in a constant database.
+The constant database must be readable (and seekable)
+on
+.BR cdbget 's
+standard input.
+
+.B cdbget
+normally (1) prints the data in the first matching record
+and (2) exits 0.
+Note that
+.B cdbget
+does not check for write errors,
+so it should be used only inside a pipe.
+
+If
+.I key
+is not in the database,
+.B cdbget
+exits 1 without printing anything.
+
+If
+.B cdbget
+encounters a read error,
+it complains and exits 111.
+.SH "SEE ALSO"
+cdbdump(1),
+cdbmake(1),
+cdb(3)

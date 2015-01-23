@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="http://www.test.eraclito.net/crm_dtd/operation.xsl"?>
+<!DOCTYPE operation SYSTEM "http://www.test.eraclito.net/crm_dtd/user-folder.dtd">
+
+<operation>
+<description>Pagamento prima rata</description>
+<uid>i.ferrari</uid>
+<id>pagamento_prima_rata</id>
+<date>25/10/2006 14:47:51</date>
+<holder>Sandra Ceccarelli</holder>
+<author>workflow</author>
+</operation>

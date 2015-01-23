@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. ../.function
+
+## base64.test -- Test base64 feature
+
+start_msg base64
+
+$WINELOADER ./crypto_base64$SUFFIX    > err/base64.err < inp/base64.inp
+$WINELOADER ./crypto_base64$SUFFIX -d > out/base64.out < err/base64.err
+
+RESULT=$?
+export RESULT
+
+# Test against expected output
+test_output_diff base64

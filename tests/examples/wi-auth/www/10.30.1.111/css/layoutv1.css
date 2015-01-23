@@ -1,0 +1,234 @@
+/*
+* {
+	margin: 0;
+	padding: 0;
+}
+*/
+
+body {
+	font-size: 62.5%;
+	background: white;
+}
+
+p, li {
+	font: 1.2em/1.8em Tahoma, sans-serif;
+	margin-bottom: 10px;
+}
+
+p.bigger {
+	font: 1.2em/1.8em Tahoma, sans-serif;
+	font-weight: bold;
+	font-size: large;
+	text-align: center;
+}
+
+h3 {
+  margin:1.5em 0 .75em;
+  font:88%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#119;
+}
+
+h2 {
+  margin:1.5em 0 .75em;
+  font:110%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#119;
+}
+
+h1 {
+  margin:1.5em 0 .75em;
+  font:180%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#119;
+}
+
+ul {
+	margin-left: 25px;
+}
+
+img {
+	border: none;
+}
+
+a.back {
+	font-size:150%;
+	font-weight:bold;
+	position:absolute;
+	left:20px;
+}
+
+#page-wrap {
+	background: white;
+	/*min-width: 780px;*/
+	min-width: 800px;
+	max-width: 1260px;
+	/*margin: 10px auto;*/
+	}
+	#page-wrap #inside {
+		/*margin: 10px 10px 0px 10px;*/
+		padding-top: 10px;
+		padding-bottom: 10px;
+	}
+	
+#main-content {
+	background: url(images/left-sidebar.png) repeat-y white;
+	padding-left: 230px;
+	padding-top: 20px;
+}
+
+#main-content-without-sidebar {
+	background: repeat-y white;
+	padding-left: 0px;
+	padding-top: 20px;
+}
+	
+#header {
+	background: #267f23; /* green */
+	background: #FFFFFF; /* white */
+	text-align: center;
+}
+	
+#left-sidebar {
+	width: 150px;
+	float: left;
+	padding-left: 15px;
+	padding-top: 20px;
+}
+
+#left-sidebar-no-dimension {
+	width: 0px;
+	float: left;
+	padding-left: 15px;
+	padding-top: 20px;
+}
+
+#footer {
+	background: #267f23; /* green */
+	background: #FFFFFF; /* green */
+	text-align: center;
+	padding-top: 20px;
+	padding-bottom: 20px;
+	color: white;
+}
+
+table.centered
+{ 
+	margin-left: auto;
+	margin-right: auto;
+}
+
+td.padded
+{ 
+	margin-left: auto;
+	margin-right: auto;
+	padding: 5px;
+}
+
+td.data
+{
+	font-size:150%;
+	font-style:italic;
+	padding: 5px;
+}
+
+td.data_smaller
+{
+	font-size:80%;
+	font-style:italic;
+	padding: 5px;
+}
+
+td.data_italic
+{
+	font-size:150%;
+	font-style:italic;
+	text-align:right;
+	padding: 5px;
+}
+
+td.header
+{
+	font-size:150%;
+	font-weight:bold;
+	padding: 5px;
+}
+
+td.header_smaller
+{
+	font-size:80%;
+	font-weight:bold;
+	padding: 5px;
+}
+
+th.header {
+	font-size:150%;
+	padding: 5px;
+}
+
+th.header_smaller {
+	font-size:80%;
+	padding: 5px;
+}
+
+th.header_bigger {
+	font-size:200%;
+	text-align:center;
+	padding: 10px;
+}
+
+td.header_bigger
+{
+	font-size:200%;
+	font-weight:bold;
+	padding: 5px;
+}
+
+td.data_bigger_italic
+{
+	font-size:200%;
+	font-style:italic;
+	text-align:right;
+	padding: 5px;
+}
+/********************************* LiveValidation *************************************/
+/* Classe che si applica ai messaggi di validità */
+.LV_valid {
+    color:#00CC00;
+}
+
+/* Classe che si applica ai messaggi di non validità */	
+.LV_invalid {
+	color:#CC0000;
+}
+
+/* Classe che si applica a tutti i messaggi di validazione */	
+.LV_validation_message{
+    font-weight:bold;
+    margin:0 0 0 5px;
+}
+
+/* Stili applicati ai campi validi */    
+.LV_valid_field,
+input.LV_valid_field:hover, 
+input.LV_valid_field:active,
+textarea.LV_valid_field:hover, 
+textarea.LV_valid_field:active,
+.fieldWithErrors input.LV_valid_field,
+.fieldWithErrors textarea.LV_valid_field {
+    border: 1px solid #00CC00;
+}
+
+/* Stili applicati ai campi non validi */ 
+.LV_invalid_field, 
+input.LV_invalid_field:hover, 
+input.LV_invalid_field:active,
+textarea.LV_invalid_field:hover, 
+textarea.LV_invalid_field:active,
+.fieldWithErrors input.LV_invalid_field,
+.fieldWithErrors textarea.LV_invalid_field {
+    border: 1px solid #CC0000;
+}

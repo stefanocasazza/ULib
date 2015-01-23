@@ -1,0 +1,7 @@
+uclient {
+  SERVER_ADDRESS localhost
+  MSG_WELCOME "generic server ready."
+}
+# valid request and response
+[ @FILE:inp/http/get0.req @FILE:inp/forbiddenMessage.html
+  @STRING:"GET /buldog.gif HTTP/1.1\r\nConnection: Keep-Alive\r\nUser-Agent: Mozilla/5.0 (compatible; Konqueror/3.1; Linux; it, en_US, en)\r\nAccept: text/*, image/jpeg, image/png, image/*, */*\r\nAccept-Encoding: x-gzip, x-deflate, gzip, deflate, identity\r\nAccept-Charset: iso-8859-1, utf-8;q=0.5, *;q=0.5\r\nAccept-Language: it, en\r\nHost: localhost\r\n\r\n" @FILE:inp/buldog.html ]

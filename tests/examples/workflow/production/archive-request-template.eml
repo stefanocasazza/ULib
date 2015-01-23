@@ -1,0 +1,54 @@
+--4MYWPDUi9kH5-ipE_f6CiZXFFn4SaQQOj
+Content-Disposition: form-data; name="folder_id"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+
+%s
+
+--4MYWPDUi9kH5-ipE_f6CiZXFFn4SaQQOj
+Content-Disposition: form-data; name="folder_label"
+Content-Type: text/xml; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="http://www.test.trust-engine.com/xsl/folder.xsl"?>
+<!DOCTYPE folder SYSTEM "http://www.test.trust-engine.com/dtd/folder.dtd">
+
+<folder>
+   <description>Processo di produzione del CD per i servizi</description>
+   <uid>%s</uid>
+   <owner>TUnwired</owner>
+   <timestamp>%5D</timestamp>
+</folder>
+
+--4MYWPDUi9kH5-ipE_f6CiZXFFn4SaQQOj
+Content-Disposition: form-data; name="subfolder_filename"
+Content-Type: text/plain; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+
+production.eml
+
+--4MYWPDUi9kH5-ipE_f6CiZXFFn4SaQQOj
+Content-Disposition: form-data; name="subfolder_label"
+Content-Type: text/xml; charset=US-ASCII
+Content-Transfer-Encoding: 8bit
+
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="http://www.test.trust-engine.com/xsl/operation.xsl"?>
+<!DOCTYPE operation SYSTEM "http://www.test.trust-engine.com/dtd/operation.dtd">
+
+<operation>
+   <description>TUnwired: processo di produzione del CD per i servizi</description>
+   <uid>%s</uid>
+   <owner>Processo di produzione del CD per i servizi</owner>
+   <timestamp>%5D</timestamp>
+</operation>
+
+--4MYWPDUi9kH5-ipE_f6CiZXFFn4SaQQOj
+Content-Disposition: form-data; name="request.eml"; filename="request.eml"
+Content-Type: text/plain; charset=ISO-8859-1
+Content-Transfer-Encoding: binary
+
+%.*s
+
+--4MYWPDUi9kH5-ipE_f6CiZXFFn4SaQQOj--

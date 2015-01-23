@@ -1,0 +1,15 @@
+#!/bin/sh
+
+. ../.function
+
+## memerror.test -- Test memerror feature
+
+start_msg memerror
+
+UTRACE="5 100k 2"
+export UTRACE
+
+start_prg memerror
+
+# Test against expected output
+test_output_wc l memerror trace.*test_memerror*.[0-9]*

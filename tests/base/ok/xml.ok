@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<!DOCTYPE wfeng:object SYSTEM "workflow-engine.dtd">
+<wfeng:object xmlns:wfeng="http://www.t-bizcom.com/WorkflowEngine" wfeng:id="080411140525loim"><wfeng:history wfeng:workspace="cards-generation-mobile-users.wf" wfeng:state="validation" wfeng:event="validate">Fri, 11 Apr 2008 12:05:25 +0200</wfeng:history><wfeng:data><tservices:cardsreq xmlns:tservices="http://www.trust-engine.com/Workflow"><tservices:arguments><tservices:count>1</tservices:count><tservices:validity>2</tservices:validity><tservices:cards_list>5d33ef60 2 3beb453a
+</tservices:cards_list><tservices:delivery-status>to-be-delivered</tservices:delivery-status><tservices:generationUid>0a39a32a-b039-45b5-b5e8-b8b386be0670</tservices:generationUid></tservices:arguments><tservices:request>From cards-request@tb4.unirel.com  Fri Apr 11 14:05:25 2008
+Return-Path: <cards-request@tb4.unirel.com>
+Received: from workflow.unirel.com (localhost [127.0.0.1])      by unirel.com (8.12.10/8.12.10/SuSE Linux 0.7) with ESMTP id m3BC5Ocp032173        for <validation+validate@cards-generation-mobile-users.wf>; Fri, 11 Apr 2008 14:05:25 +0200
+Received: (from cards-request@localhost)        by workflow.unirel.com (8.12.10/8.12.10/Submit) id m3BC5NLW032172       for validation+validate@cards-generation-mobile-users.wf; Fri, 11 Apr 2008 14:05:23 +0200
+Received: from wi [10.30.248.246]       by localhost with IMAP (fetchmail-6.2.5)        for cards-request@localhost (single-drop); Fri, 11 Apr 2008 14:05:23 +0200 (CEST)
+Received: from wi.unirel.com (localhost [127.0.0.1])    by unirel.com (8.12.10/8.12.10/Safe-Messaging Linux 0.1) with ESMTP id m3BC40ue013737      (version=TLSv1/SSLv3 cipher=DHE-RSA-AES256-SHA bits=256 verify=NO)      for <cards-request@wi.unirel.com>; Fri, 11 Apr 2008 14:04:01 +0200
+Received: (from root@localhost)         by wi.unirel.com (8.12.10/8.12.10/Submit) id m3BC40YW013736     for cards-request@wi.unirel.com; Fri, 11 Apr 2008 14:04:00 +0200
+Date: Fri, 11 Apr 2008 14:04:00 +0200
+From: root <root@wi.unirel.com>
+Message-Id: <200804111204.m3BC40YW013736@wi.unirel.com>
+MIME-Version: 1.0
+Content-Disposition: attachment; filename="smime.p7m"
+Content-Type: application/x-pkcs7-mime; name="smime.p7m"
+Content-Transfer-Encoding: base64
+To: undisclosed-recipients:;
+
+MIILgAYJKoZIhvcNAQcCoIILcTCCC20CAQExCzAJBgUrDgMCGgUAMIICngYJKoZI
+hvcNAQcBoIICjwSCAotTdWJqZWN0OiBjYXJkc3JlcQ0KVG86IGNhcmRzLXJlcXVl
+c3RAbG9jYWxob3N0DQpGcm9tOiByb290QGxvY2FsaG9zdA0KQ29udGVudC1UeXBl
+OiBtdWx0aXBhcnQvbWl4ZWQ7DQoJYm91bmRhcnk9Ii0tLS1PbGxIaEQ3YUNLa2xj
+SXlQQWY3T3FVSVhYLTY2Y1Z2LmRTR3VzTkczdzBxSUktdWk9XzJfIg0KDQotLS0t
+LS1PbGxIaEQ3YUNLa2xjSXlQQWY3T3FVSVhYLTY2Y1Z2LmRTR3VzTkczdzBxSUkt
+dWk9XzJfDQpDb250ZW50LVR5cGU6IG11bHRpcGFydC9taXhlZDsNCglib3VuZGFy
+eT0iLS0tLU9sbEhoRDdhQ0trbGNJeVBBZjdPcVVJWFgtNjZjVnYuZFNHdXNORzN3
+MHFJSS11aT1fNF8iDQoNCi0tLS0tLU9sbEhoRDdhQ0trbGNJeVBBZjdPcVVJWFgt
+NjZjVnYuZFNHdXNORzN3MHFJSS11aT1fNF8NCkNvbnRlbnQtVHlwZTogdGV4dC94
+bWwNCkNvbnRlbnQtVHJhbnNmZXItRW5jb2Rpbmc6IDhiaXQNCg0KPHJlcXVlc3Q+
+DQo8Y291bnQgdmFsdWU9IjEiLz4NCjx2YWxpZGl0eSB2YWx1ZT0iMiIvPg0KPC9y
+ZXF1ZXN0Pg0KDQotLS0tLS1PbGxIaEQ3YUNLa2xjSXlQQWY3T3FVSVhYLTY2Y1Z2
+LmRTR3VzTkczdzBxSUktdWk9XzRfLS0NCg0KLS0tLS0tT2xsSGhEN2FDS2tsY0l5
+UEFmN09xVUlYWC02NmNWdi5kU0d1c05HM3cwcUlJLXVpPV8yXy0tDQqgggZ7MIIG
+dzCCBF+gAwIBAgIBATANBgkqhkiG9w0BAQUFADBYMQswCQYDVQQGEwJJVDENMAsG
+A1UEBxMEUm9tZTEaMBgGA1UEChMRVC1TZXJ2aWNlcyBTLnIuTC4xHjAcBgNVBAMT
+FVQtU2VydmljZXMgQWRtaW5DZXJ0czAeFw0wODAzMTMxMzExMjhaFw0xMzAxMjYx
+MzExMjhaMIGyMQswCQYDVQQGEwJJVDELMAkGA1UECBMCSVQxGTAXBgNVBAcTEFNl
+c3RvIGZpb3JlbnRpbm8xFTATBgNVBAoTDFVuaXJlbCBTLnIubDEVMBMGA1UECxMM
+VW5pcmVsIFMuci5sMRYwFAYDVQQDEw13b3JrZmxvdyB0ZXN0MR0wGwYJKoZIhvcN
+AQkBFg5yb290QGxvY2FsaG9zdDEWMBQGCgmSJomT8ixkAQETBndmdGVzdDCCASIw
+DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAOsIWZdyXfUktedKJDx5Af0vSb5o
+CvmZkDWfFgxuQg+tk9f4Pu0w1j0qUnm7vD0nF1PcSZTsHQ7QfyaQ+NVmcmRTVi7U
+jPecNyhjeH77evx5f8wSgq1TZkuVmNnSdd0TRypHr3JP2QqOSX3bedcoV37R3g7l
+Zyw1SmT1EJVNu/OwLgtLmhr2XtsfZTtcXxzoDEEbT3ae71SlcyWCNM0xtm/4o9oA
+7TALKsEtqkySHcjhB+y8RVKLs5OGgL3g7XYQceLdoAdUJyTJeXDyEOiAxsjVZWsA
+qwsMvG2eIk6SFKUXKvGXjdnCZ0rpmNxKPFYFQGNlag329K0vYrPYowFA2e8CAwEA
+AaOCAe8wggHrMB0GA1UdDgQWBBRhfMUWYQ5mn+BtO4S9PBspv2TOJDCBgAYDVR0j
+BHkwd4AUwMcJrTMA92IeVtb412TyIhADHtqhXKRaMFgxCzAJBgNVBAYTAklUMQ0w
+CwYDVQQHEwRSb21lMRowGAYDVQQKExFULVNlcnZpY2VzIFMuci5MLjEeMBwGA1UE
+AxMVVC1TZXJ2aWNlcyBBZG1pbkNlcnRzggEAMAsGA1UdDwQEAwIF4DAdBgNVHSUE
+FjAUBggrBgEFBQcDAgYIKwYBBQUHAwQwVAYDVR0SBE0wS4ZJaHR0cHM6Ly9yZWdp
+c3Rlci50ZXN0LnRydXN0LWVuZ2luZS5jb20vcHljYS9nZXQtY2VydC5weS9BZG1p
+bkNlcnRzL2NhLmNydDBbBgNVHR8EVDBSMFCgTqBMhkpodHRwczovL3JlZ2lzdGVy
+LnRlc3QudHJ1c3QtZW5naW5lLmNvbS9weWNhL2dldC1jZXJ0LnB5L0FkbWluQ2Vy
+dHMvY3JsLmNybDBoBgNVHSAEYTBfMF0GBStMIwEBMFQwUgYIKwYBBQUHAgEWRmh0
+dHBzOi8vd3d3LnRlc3QudHJ1c3QtZW5naW5lLmNvbS9kb2N1bWVudHMvcG9saWNp
+ZXMvMS4zLjc2LjM1LjEuMS5wZGYwDQYJKoZIhvcNAQEFBQADggIBAEIJv6P1Al25
+UOuk5hzG5LmaWPn/vJoRh/n0cpTBny1DfiCk0+WVpjjIAb+gWfWWijQmehZGbLAa
+d7PPDbMvgrwRMDc6Ftr6z2buCNAg82HR1T5j4CfgWjkvPI1UvmN9zF1cbX7Z2oHt
+s9frhuA0DN+D/nZ76xNHpZzktLX/H7ZOCIqu/ViX7yzkqnOBPUnQ2nM6epRNmioR
+7nnsWLPu8J4IzthA+rrTFinEj9BCpmJO3E4ueo2w4XdFPpLXPXjyJFTvBgmMDquA
+CyEsAMJZEfJoeALMjX7MgLoswroFKQ27JlFGLVkSFiZlN+NgaEWa/6CI8MfE4EmU
+MRvTCTJ9gK+M0VkEddtWHXIteJUhoGXV8lbtjKCKuhVF0ijCzlN+MOTInigCQ6LZ
+HmjYFyRofr+zzjFgVz/wRPoA5EOeB82bRN0VgCVrdyvhMdZoqQCtbYGzFY9pbkym
+mPMZABm9vxHqQ+UkhrpuChXqv2cZx2jr0MOFGoNSIbHn9a5xnxRZaOPL/MRwjD8k
+PS2R3giLo9r++Z0CFXsfel63Y1B5vA4ZS9AUy2ZBPLjb99OHy65+kshbMPbsa699
+a9N8w4EqqYSeEk5JYNYNNyxUCC3go6Whwk7u3Pv5NLWt8B/VF5BN4C5O0J1LQfaS
+CPCwi3lozBs4tgGjZpXkdcevYGNr/+03MYICODCCAjQCAQEwXTBYMQswCQYDVQQG
+EwJJVDENMAsGA1UEBxMEUm9tZTEaMBgGA1UEChMRVC1TZXJ2aWNlcyBTLnIuTC4x
+HjAcBgNVBAMTFVQtU2VydmljZXMgQWRtaW5DZXJ0cwIBATAJBgUrDgMCGgUAoIGx
+MBgGCSqGSIb3DQEJAzELBgkqhkiG9w0BBwEwHAYJKoZIhvcNAQkFMQ8XDTA4MDMx
+MzEzMTcxMFowIwYJKoZIhvcNAQkEMRYEFM9g4wVED/mQAn1EzgY3xr+jeAZDMFIG
+CSqGSIb3DQEJDzFFMEMwCgYIKoZIhvcNAwcwDgYIKoZIhvcNAwICAgCAMA0GCCqG
+SIb3DQMCAgFAMAcGBSsOAwIHMA0GCCqGSIb3DQMCAgEoMA0GCSqGSIb3DQEBAQUA
+BIIBAAKLKveWRJiLUsXPgggOSE17EA4vmjOwRelGvs99iyyGbCPNQBbj10B1QkYm
+qcgE8X10IVZAZZujtGb4aQDLNuE+qF7K53aK8VWg7/qvzpt6v2Q2/v57y2eSJzEs
+Jpvmv+7IKwV9yBan1FXv/E0ibcDeCyyojVz1FSDBj65/PYVO3M4GM357ZTUNXiUz
+5hWB5c8+1H9jtiJR4Ql1mHQkLv2VWi4RHGRxWn9ILRiaJB2T1lWjm685XFUvPeKm
+0t74x18pT3lwLmu31jT0vb/NrhzVtGxVGol/ie7u6GSeNe1RIUgAo4AeQium/ajy
+nNZeXY02o35sS2r+UjKpQvBtl9s=
+
+</tservices:request><tservices:ra-documents><document>
+<request>
+<count value="1"/>
+<validity value="2"/>
+</request>
+</document>
+</tservices:ra-documents></tservices:cardsreq></wfeng:data></wfeng:object>

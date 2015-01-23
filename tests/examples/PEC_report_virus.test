@@ -1,0 +1,51 @@
+#!/bin/sh
+
+. ../.function
+
+## PEC.test -- Test PEC feature
+
+#UTRACE="5 30M 1"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#VALGRIND=valgrind
+ export UTRACE UOBJDUMP USIMERR VALGRIND
+
+DIR=`pwd`
+DIR_CMD="../../examples/PEC_log"
+
+start_msg PEC_report_virus
+
+start_prg PEC_report_virus -T '"Report_InvalidMessageID"' \
+									-d inp/PEC/2/InvalidMessageID \
+									-e log.p7m -n inp/PEC/domains.txt -i PEC_Milter -f 09/10/2009 -t 11/10/2009
+start_prg PEC_report_virus -T '"Report_TipoRecordScorretto"' \
+									-d inp/PEC/2/TipoRecordScorretto \
+									-e log.p7m -n inp/PEC/domains-actalis.txt -i PEC_Milter -f 01/11/2008 -t 10/11/2008
+start_prg PEC_report_virus -c PEC_report_virus.cfg
+start_prg PEC_report_virus -T '"Report_AllVirusMultiIIDTest"' \
+									-d inp/PEC/2/AllVirusMultiIIDTest \
+									-e log.p7m -n inp/PEC/domain.txt -i PEC_Milter1,PEC_Milter2 -f 01/12/2006 -t 02/06/2007
+start_prg PEC_report_virus -T '"Report_AllVirusTest"' \
+									-d inp/PEC/2/AllVirusTest \
+  									-e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 01/12/2006 -t 02/06/2007
+start_prg PEC_report_virus -T '"Report_EmptyTest"' \
+									-d inp/PEC/2/EmptyTest \
+  									-e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 01/12/2006 -t 02/06/2007
+start_prg PEC_report_virus -T '"Report_InvalidIIDTest"' \
+									-d inp/PEC/2/InvalidIIDTest \
+									-e log.p7m -n inp/PEC/domain.txt -i PEC_Milter_Unexistent -f 01/12/2006 -t 02/06/2007
+start_prg PEC_report_virus -T '"Report_MultiRicezioneTest"' \
+									-d inp/PEC/2/MultiRicezioneTest \
+									-e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 01/12/2006 -t 02/06/2007
+start_prg PEC_report_virus -T '"Report_NonAccettazioneVirusTest"' \
+									-d inp/PEC/2/NonAccettazioneVirusTest \
+									-e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 01/12/2006 -t 02/06/2007
+start_prg PEC_report_virus -T '"Report_RilevazioneVirusInputTest"' \
+									-d inp/PEC/2/RilevazioneVirusInputTest \
+									-e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 01/12/2006 -t 02/06/2007
+start_prg PEC_report_virus -T '"Report_RilevazioneVirusOutputTest"' \
+									-d inp/PEC/2/RilevazioneVirusOutputTest \
+									-e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 01/12/2006 -t 02/06/2007
+
+# Test against expected output
+test_output_diff PEC_report_virus

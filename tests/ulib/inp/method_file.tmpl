@@ -1,0 +1,19 @@
+# method_file.tmpl - example for SOAP services
+
+Sezione di configurazione
+{
+	INPUT stdin
+}
+
+Example_1
+	{
+	METHOD_NAME		example
+
+	ENVIRONMENT 	 "VAR_1=VALUE_1 \
+						\"VAR_2=VALUE 2\""
+
+	COMMAND  		 "sh -c \
+						\"env | grep VAR_\""
+
+	RESPONSE_TYPE	standard_output
+	}

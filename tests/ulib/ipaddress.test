@@ -1,0 +1,69 @@
+#!/bin/sh
+
+. ../.function
+
+## ipaddress.test -- Test ipaddress feature
+
+start_msg ipaddress
+
+#UTRACE="0 5M 1"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+if [ "$TERM" = "msys"   ] || \
+	[ "$TERM" = "cygwin" ]; then
+ 	ARG1=david
+ 	ARG2="unirel.intranet"
+#	echo "This test failed because this system lacks the functionality..."
+else
+	type hostname >/dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		ARG1=`hostname -s 2>/dev/null`
+		if [ $? -ne 0 ]; then
+			ARG1=`hostname`
+		fi
+	elif [ -f /etc/hostname ]; then
+		ARG1=`cat /etc/hostname`
+	else
+		ARG1="stefano"
+	fi
+	hostname --version 2>&1 | grep net-tools >/dev/null 2>&1
+	if [ $? -eq 0 ]; then
+		ARG2=`hostname -d`
+		echo $ARG2 | grep -i Unknown >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			ARG2=""
+		fi
+	else
+		type domainname >/dev/null 2>&1
+		if [ $? -eq 0 ]; then
+			ARG2=`domainname`
+			if [ "$ARG2" = "(none)" ]; then
+				ARG2=""
+			fi
+		fi
+		if [ -z "$ARG2" ]; then
+			if [ -f /etc/domainname ]; then
+				ARG2=`cat /etc/domainname`
+			else
+				ARG2="unirel.intranet"
+			fi
+		fi
+	fi
+
+	if [ -z "$ARG1" ]
+	then
+		ARG1=localhost
+		ARG2=localdomain
+		hostname   localhost
+		domainname localdomain
+	fi
+fi
+
+#VALGRIND=valgrind # --gen-suppressions=all
+#STRACE=$TRUSS
+start_prg ipaddress $ARG1 $ARG2
+
+# Test against expected output
+test_output_wc w ipaddress

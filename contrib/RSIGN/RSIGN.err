@@ -1,0 +1,86 @@
+/* RSIGN.err: Handle error for openssl engine */
+
+static void ERR_load_RSIGN_strings(void);
+static void ERR_unload_RSIGN_strings(void);
+static void ERR_RSIGN_error(int function, int reason, char* file, int line);
+
+#define RSIGN_err(f,r) ERR_RSIGN_error((f),(r),__FILE__,__LINE__)
+
+/* Error codes for the RSIGN functions. */
+
+/* Function codes. */
+#define RSIGN_F_RSA_SIGN					 100
+
+/* Reason codes. */
+#define RSIGN_R_UNKNOWN_FAULT				 101
+#define RSIGN_R_COMMAND_NOT_IMPLEMENTED 102
+#define RSIGN_ERROR_INVALID_PARAMETER	 103
+#define RSIGN_ERROR_NOT_ENOUGH_MEMORY	 104
+#define RSIGN_R_UNKNOWN_PADDING_TYPE	 105
+
+static ERR_STRING_DATA RSIGN_str_functs[] = {
+{ ERR_PACK(0, RSIGN_F_RSA_SIGN, 0), "RSIGN_RSA_SIGN" },
+{ 0, NULL } };
+
+static ERR_STRING_DATA RSIGN_str_reasons[] = {
+{ RSIGN_R_UNKNOWN_FAULT,				"unknown fault" },
+{ RSIGN_R_COMMAND_NOT_IMPLEMENTED,	"ctrl command not implemented" },
+{ RSIGN_ERROR_INVALID_PARAMETER,		"one of the parameters contains an invalid value" },
+{ RSIGN_ERROR_NOT_ENOUGH_MEMORY,		"the operating system ran out of memory during the operation" },
+{ RSIGN_R_UNKNOWN_PADDING_TYPE,		"unknown padding type" },
+{ 0, NULL } };
+
+static ERR_STRING_DATA RSIGN_lib_name[] = {
+{ 0, "RSIGN engine" },
+{ 0, NULL } };
+
+static int RSIGN_error_init 	  = 1;
+static int RSIGN_lib_error_code = 0;
+
+static void ERR_load_RSIGN_strings(void)
+{
+	if (RSIGN_lib_error_code == 0)
+		{
+		RSIGN_lib_error_code = ERR_get_next_error_library();
+		}
+
+	if (RSIGN_error_init)
+		{
+		RSIGN_error_init = 0;
+
+		ERR_load_strings(RSIGN_lib_error_code, RSIGN_str_functs);
+		ERR_load_strings(RSIGN_lib_error_code, RSIGN_str_reasons);
+
+		RSIGN_lib_name->error = ERR_PACK(RSIGN_lib_error_code, 0, 0);
+
+		ERR_load_strings(0, RSIGN_lib_name);
+		}
+}
+
+static void ERR_unload_RSIGN_strings(void)
+{
+	if (RSIGN_error_init == 0)
+		{
+		ERR_unload_strings(RSIGN_lib_error_code, RSIGN_str_functs);
+		ERR_unload_strings(RSIGN_lib_error_code, RSIGN_str_reasons);
+
+		ERR_unload_strings(0, RSIGN_lib_name);
+
+		RSIGN_error_init = 1;
+		}
+}
+
+static void ERR_RSIGN_error(int function, int reason, char* file, int line)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Error at function %s(%s:%d) - (%d,%x)\n", routine, file, line, function, reason);
+	ERR_print_errors(err);
+#endif
+
+	if (RSIGN_lib_error_code == 0)
+		{
+		RSIGN_lib_error_code = ERR_get_next_error_library();
+		}
+
+	ERR_PUT_error(RSIGN_lib_error_code, function, reason, file, line);
+}

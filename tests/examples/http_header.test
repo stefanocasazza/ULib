@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. ../.function
+
+## http_header.test -- Test http_header feature
+
+start_msg http_header
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg http_header
+
+cat out/http_header.out | $WINELOADER ../base/crypto_base64$SUFFIX -d > out/http_header.out.enc
+$OPENSSL des3 -in out/http_header.out.enc -out out/http_header.out -pass pass:pippo -d
+
+# Test against expected output
+test_output_diff http_header

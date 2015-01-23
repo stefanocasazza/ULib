@@ -1,0 +1,16 @@
+20000215
+	api: rewrote almost everything from scratch. tnx Ken Lalonde for
+		suggesting mmap.
+20000216
+	ui: cdbget supports skip.
+	version: cdb 0.70, beta.
+20000219
+	bug: cdb_make_addbegin() didn't explicitly return 0. impact:
+		database creation could fail on systems that didn't
+		follow the traditional C return behavior. fix: obvious.
+		tnx Uwe Ohse.
+	internal: increased bspace in cdb_make.h from 1024 to 8192.
+	internal: switched cdbmake to PUTC, GETC. 3x speedup here.
+	internal: added testzero to rts.
+	ui: posplus() sets nomem if it passes 4GB.
+	version: cdb 0.75, beta.

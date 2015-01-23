@@ -1,0 +1,28 @@
+<div id="main-content-without-sidebar">
+  <br />
+  <center>
+	 <h1>%s</h1>
+  </center>
+  <br />
+  <br />
+  <br />
+  <form method="post" name="form" action="%s" id="form">
+	 <p>Login (numero del cellulare):</p>
+	 <p><input class="login_input" type="text" id="uid" name="uid" /></p><input id="confirm" type="submit" name="submit" value="Conferma" />
+  </form>
+  <script type="text/javascript">
+//<![CDATA[
+var valComm = new LiveValidation( 'uid', {onlyOnSubmit: true, validMessage: "OK" } );
+	 valComm.add( Validate.Presence, {failureMessage: "Devi inserire il numero di cellulare"} );
+	 valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "sono presenti spazi nel numero"} );
+	 valComm.add( Validate.Exclusion, {within: [' '],allowNull:true,partialMatch:true,caseSensitive:false,failureMessage:"sono presenti spazi nel numero" } );
+//]]>
+  </script>
+  <br />
+  <br />
+  <br />
+  <br />
+  <br />
+  <br />
+</div>
+</div>

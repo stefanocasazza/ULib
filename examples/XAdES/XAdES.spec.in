@@ -1,0 +1,73 @@
+Name: XAdES
+Summary: XAdES by ULib
+Version: @VERSION@
+Release: 1
+Epoch: 0
+License: GPL
+Group: Applications
+URL: http://www.unirel.com
+Source0: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}
+Provides: verify
+Packager: Stefano Casazza <stefano.casazza@unirel.com>
+Requires: zlib
+Requires: libcurl
+Requires: libxml2
+Requires: expat
+Requires: openssl
+Requires: libstdc++
+Requires: libstdc++
+BuildRequires: libcurl-devel
+BuildRequires: libxml2-devel
+BuildRequires: expat-devel
+BuildRequires: zlib-devel
+BuildRequires: openssl-devel
+BuildRequires: libstdc++-devel
+
+%description
+This package provides utility program for manage XAdES
+
+%prep
+%setup
+
+%build
+%configure --enable-static --disable-shared --with-libxml2 --with-curl --with-expat
+cd src/ulib
+make LDFLAGS="-s"
+cd ../../examples/XAdES
+make LDFLAGS="-s"
+cd ../..
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/srv/XAdES/bin
+mkdir -p %{buildroot}/srv/XAdES/etc
+mkdir -p %{buildroot}/srv/XAdES/var
+SRC=tests/examples
+DST=%{buildroot}/srv/XAdES
+autoconf/install-sh -c -m 755 examples/XAdES/archive					$DST/bin/archive
+autoconf/install-sh -c -m 755 examples/XAdES/client					$DST/bin/client
+autoconf/install-sh -c -m 755 examples/XAdES/feed						$DST/bin/feed
+autoconf/install-sh -c -m 755 examples/XAdES/sign						$DST/bin/sign
+autoconf/install-sh -c -m 755 examples/XAdES/verify					$DST/bin/verify
+autoconf/install-sh -c -m 644 $SRC/XAdES/XAdES-API.cfg				$DST/etc/XAdES-API.cfg.dist
+autoconf/install-sh -c -m 644 $SRC/XAdES/XAdESclient.cfg				$DST/etc/XAdESclient.cfg.dist
+autoconf/install-sh -c -m 644 $SRC/XAdES/XAdES.ini						$DST/etc/XAdES.ini.dist
+autoconf/install-sh -c -m 644 $SRC/XAdES/XAdESv141.xsd				$DST/etc/XAdESv141.xsd
+autoconf/install-sh -c -m 644 $SRC/XAdES/xmldsig-core-schema.xsd	$DST/etc/xmldsig-core-schema.xsd
+autoconf/install-sh -c -m 644 $SRC/XAdES/XAdES.xsd						$DST/etc/XAdES.xsd
+autoconf/install-sh -c -m 644 $SRC/XAdES/XAdES.wsdl					$DST/etc/XAdES.wsdl
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root,-)
+/srv/XAdES/bin/archive
+/srv/XAdES/bin/client
+/srv/XAdES/bin/feed
+/srv/XAdES/bin/sign
+/srv/XAdES/bin/verify
+/srv/XAdES/etc/*.dist
+/srv/XAdES/etc/*.xsd
+/srv/XAdES/etc/XAdES.wsdl

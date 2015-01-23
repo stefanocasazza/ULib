@@ -1,0 +1,30 @@
+#!/bin/sh
+
+. ../.function
+
+## HCSP.test -- Test HCSP feature
+
+start_msg HCSP
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+if [ -n "$WINELOADER" ]; then
+	ENGINE="../../contrib/HCSP/.libs/HCSP.dll"
+else
+	ENGINE="../../contrib/HCSP/.libs/HCSP.so"
+fi
+
+# Come si puo' vedere dalla riga di comando le informazioni necessarie sono il nome del
+# certificato (parametro -inkey) da utilizzare per la firma e il certificato stesso
+# esportato contenente la chiave pubblica (parametro -signer)
+
+$WINE_OPENSSL smime -engine $ENGINE -sign -signer inp/TArchive_test.pem -keyform engine \
+						  -inkey "T-Archive test" -nodetach -out out/HCSP.out -in inp/pippo.txt 2>err/HCSP.err
+
+$OPENSSL smime -verify -noverify -in out/HCSP.out 2>>err/HCSP.err
+
+# Test against expected output
+test_output_wc c HCSP

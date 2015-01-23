@@ -1,0 +1,35 @@
+#!/bin/sh
+
+. ../.function
+
+## rdb.test -- Test rdb feature
+
+start_msg rdb
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+# fallisce se NFS...
+
+if [ "$TERM" = "msys"   ] || \
+   [ "$TERM" = "cygwin" ]
+then
+	ARG1="/c/tmp/test_rdb"
+	rm -f /c/tmp/test_rdb*
+else
+	ARG1="tmp/test_rdb"
+	rm -f tmp/test_rdb*
+fi
+
+start_prg rdb "$ARG1" 3150 <inp/cdb.input
+
+if [ "$TERM" = "msys"   ] || \
+   [ "$TERM" = "cygwin" ]
+then
+	rm -f /c/tmp/test_rdb*
+fi
+
+# Test against expected output
+test_output_wc l rdb

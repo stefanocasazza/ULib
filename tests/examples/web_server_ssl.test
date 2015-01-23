@@ -1,0 +1,224 @@
+#!/bin/sh
+
+. ../.function
+
+# set -x
+
+## web_server_ssl.test -- Test web_server feature
+
+start_msg web_server_ssl
+
+(cd benchmark; rm -f db; creat_link FrameworkBenchmarks/ULib/db  db; sync)
+(cd ..;        rm -f db; creat_link examples/benchmark/db		  db; sync)
+                         creat_link				benchmark/db        db
+								 creat_link				benchmark/libraries libraries
+
+DOC_ROOT=docroot
+
+rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/*.memusage.* \
+		$DOC_ROOT/webserver_ssl*.log* $DOC_ROOT/uploads/* /var/log/httpd/access_log \
+      out/userver_ssl.out err/userver_ssl.err web_server_ssl.err \
+					 trace.*userver_ssl*.[0-9]*			  object.*userver_ssl*.[0-9]*				 stack.*userver_ssl*.[0-9]* mempool.*userver_ssl*.[0-9]* \
+      $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* $DOC_ROOT/mempool.*userver_ssl*.[0-9]*
+
+#UTRACE="0 110M 0"
+#UOBJDUMP="0 10M 500"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+if [ "$TERM" = "msys" ]; then
+   export TMPDIR="c:/tmp"
+fi
+
+DIR_CMD="../../examples/userver"
+
+compile_usp
+
+check_for_netcat
+
+CAPATH="../ulib/CA/CApath"
+CACERT="../ulib/CA/username.crt"
+USER_KEY="../ulib/CA/username.key"
+LCMD="$OPENSSL s_client -no_ssl2 -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -verify 0 -connect"
+LCMD1="$LCMD localhost:443"
+
+# function : start_test
+start_test() {
+
+$SLEEP
+
+#STRACE=$TRUSS
+ start_prg_background userver_ssl -c inp/webserver.cfg 
+
+for i in 1 2 3 4 5; do
+	$NC -c localhost 443 </dev/null 2>/dev/null
+	if [ $? -eq 0 ]; then
+		break
+	fi
+	$SLEEP
+done
+
+#LS=tst_90
+#LS=`ls inp/http/and`
+#mkdir -p /tmp/web_server
+#for i in $LS
+#do
+# TIMEOUT 10 $LCMD1 <inp/http/and/$i >/tmp/web_server/$i
+#done
+
+#TIMEOUT 10 $LCMD 10.30.1.111:443 <inp/http/all6.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+#exit 0
+#TIMEOUT 10 $LCMD1					 <inp/http/all5.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+#return
+
+LS=`ls inp/http/close`
+for i in $LS; do
+	TIMEOUT 10 $LCMD1 <inp/http/close/$i >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+   EXIT_VALUE=$?
+   if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
+     kill_prg userver_ssl TERM
+  	  exit 1
+   fi
+done
+
+ TIMEOUT 10 $LCMD1 <inp/http/all.inp  >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ EXIT_VALUE=$?
+ if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
+   kill_prg userver_ssl TERM
+	exit 1
+ fi
+ TIMEOUT 10 $LCMD1 <inp/http/all1.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ EXIT_VALUE=$?
+ if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
+   kill_prg userver_ssl TERM
+	exit 1
+ fi
+ TIMEOUT 10  $LCMD1 <inp/http/post.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ EXIT_VALUE=$?
+ if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
+   kill_prg userver_ssl TERM
+	exit 1
+ fi
+
+# test upload
+
+rm    -rf      uploads
+mkdir -p		   uploads
+$CHOWN apache: uploads
+chmod 777      uploads
+
+TIMEOUT 10 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://localhost:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+TIMEOUT 10 $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" -k https://localhost:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+
+ kill_prg userver_ssl TERM
+ if [ $? -ne 0 ]; then
+	for i in 1 2 3 4 5; do
+		pgrep userver_ssl >/dev/null 2>/dev/null
+		if [ $? -ne 0 ]; then
+			return
+		fi
+		$SLEEP
+	done
+	exit 1
+ fi
+}
+
+# function : creat_config
+creat_config() {
+
+if [ -z "$2" ]; then
+	N=$1
+else
+	N=$2
+fi
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 443
+ RUN_AS_USER apache
+ REQ_TIMEOUT 30
+ LOG_FILE webserver_ssl$1.log
+ LOG_FILE_SZ 1M
+ LOG_MSG_SIZE -1
+ DOCUMENT_ROOT $DOC_ROOT
+ PLUGIN "ssi http"
+ PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+ PREFORK_CHILD $N
+ CERT_FILE ../../ulib/CA/server.crt
+  KEY_FILE ../../ulib/CA/server.key
+ PASSWORD caciucco
+ CA_PATH ../../ulib/CA/CApath
+ CA_FILE ../../ulib/CA/cacert.pem
+ VERIFY_MODE 0
+}
+http {
+ ALIAS [ /                                                    /index.php
+			/www.sito1.com/benchmark/docroot/servlet/jsonrequest /benchmark/docroot/servlet/jsonrequest ]
+ TELNET_ENABLE yes
+ ENABLE_INOTIFY yes
+ LIMIT_REQUEST_BODY 700K
+ REQUEST_READ_TIMEOUT 30
+ DIGEST_AUTHENTICATION no
+ APACHE_LIKE_LOG /var/log/httpd/access_log
+ CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz
+ CACHE_AVOID_MASK www.sito1.com|ruby
+}
+EOF
+}
+
+# ---------------------------------------------------------
+# virtual host
+# ---------------------------------------------------------
+rm -rf $DOC_ROOT/www.sito1.com 2>/dev/null
+
+grep 'www.sito1.com' /etc/hosts >/dev/null 2>/dev/null
+
+if [ $? -ne 0 ]; then
+   echo '# virtual host userver' >> /etc/hosts
+   echo localhost www.sito1.com	>> /etc/hosts
+   echo localhost www.sito2.com	>> /etc/hosts
+fi
+
+mkdir -p $DOC_ROOT/inp/http \
+			$DOC_ROOT/www.sito1.com/inp/http \
+         $DOC_ROOT/www.sito1.com/benchmark/docroot
+
+creat_link ../ok											 $DOC_ROOT/ok
+creat_link ../tmp											 $DOC_ROOT/tmp
+creat_link ../uploads									 $DOC_ROOT/uploads
+creat_link ../../../benchmark/docroot/servlet	 $DOC_ROOT/benchmark/docroot/servlet
+creat_link inp												 $DOC_ROOT/www.sito1.com/inp
+creat_link ../../tmp									    $DOC_ROOT/www.sito1.com/tmp
+creat_link ../SSI											 $DOC_ROOT/www.sito1.com/SSI
+creat_link ../cgi-bin									 $DOC_ROOT/www.sito1.com/cgi-bin
+creat_link ../../uploads								 $DOC_ROOT/www.sito1.com/uploads
+creat_link ../../../../benchmark/docroot/servlet $DOC_ROOT/www.sito1.com/benchmark/docroot/servlet
+
+touch vuoto.txt $DOC_ROOT/vuoto.txt $DOC_ROOT/www.sito1.com/vuoto.txt
+cat << EOF >tmp/c
+c
+c
+EOF
+
+# webserver_ssl0
+ creat_config 0 
+ start_test
+#exit 0
+# webserver_ssl1 - openssl s_client close the connection in pipeline...
+#creat_config 1 
+#start_test
+# webserver_ssl2
+creat_config 2 
+start_test
+# webserver_sslN
+creat_config N 2 
+start_test
+
+diff inp/xml2txt/operazione.xml uploads/operazione.xml
+RESULT=$?
+
+mv err/userver_ssl.err err/web_server_ssl.err
+
+# Test against expected output
+test_output_wc l web_server_ssl

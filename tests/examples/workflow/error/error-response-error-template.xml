@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!DOCTYPE wfeng:handler-response SYSTEM "workflow-engine.dtd">
+<wfeng:handler-response xmlns:wfeng="http://www.t-bizcom.com/WorkflowEngine" wfeng:request-id="error+error+%s">
+<wfeng:result>1</wfeng:result>
+<wfeng:data wfeng:error="event=error:state=error:action-name=error:error-message=%.*s">%.*s</wfeng:data>
+</wfeng:handler-response>

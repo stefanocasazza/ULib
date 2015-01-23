@@ -1,0 +1,182 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for Linux (vers 1 September 2005), see www.w3.org">
+
+  <title>Crea la tua coppia di chiavi per la tua richiesta di certificato</title>
+  <link type="text/css" href="/CSP/WEB/css/t-services.css" rel="stylesheet"><object classid="clsid:43F8F289-7A20-11D0-8F06-00C04FC295E1" codebase="xenroll.dll" id="oldCertHelper">
+    </object><object classid="clsid:127698e4-e730-4e5c-a2b1-21490a70c8a1" sxenrollversion="5,131,3659,0" codebase="xenroll.dll" id="certHelper">
+    </object>
+<script type="text/vbscript">
+  <!--
+  Sub KeySizeSelectList
+    Dim certHelper
+    Err.Clear
+    On Error Resume Next
+    Set certHelper = CreateObject("CEnroll.CEnroll.2")
+    if ( (Err.Number = 438) OR (Err.Number = 429) ) Then
+      Err.Clear
+      Set certHelper = CreateObject("CEnroll.CEnroll.1")
+    End If
+    Dim i
+    Dim providers()
+    Dim KeySizeOption
+    Dim cryptoprovider
+    Dim DefaultKeySize
+    Dim enhanced
+    On Error Resume Next
+    i = 0
+    DefaultKeySize = 0
+    certHelper.providerType = 1
+    Do
+      cryptoprovider = ""
+      cryptoprovider = certHelper.enumProviders(i,0)
+      If Len(cryptoprovider) = 0 Then
+        Exit Do
+      Else
+        enhanced = InStr(1,cryptoprovider,"Enhanced",1)
+        set KeySizeOption = document.createElement("OPTION")
+        If enhanced = 0 Then
+          KeySizeOption.text = "512 bit, " & cryptoprovider
+          KeySizeOption.value = "2"&cryptoprovider
+        Else
+          KeySizeOption.text = "1024 bit, " & cryptoprovider
+          KeySizeOption.value = "4" & cryptoprovider
+          document.KeyGenForm.KeySize.add(KeySizeOption)
+          DefaultKeySize = i
+          i = i+1
+          set KeySizeOption = document.createElement("OPTION")
+          KeySizeOption.text = "512 bit, " & cryptoprovider
+          KeySizeOption.value = "2" & cryptoprovider
+        End If
+        document.KeyGenForm.KeySize.add(KeySizeOption)
+      End If
+      i = i+1
+    Loop
+    document.KeyGenForm.KeySize.DefaultKeySizeIndex = DefaultKeySize
+  End Sub
+
+  Function GenTheKeyPair()
+
+    Const PROV_RSA_FULL = &H1
+    Const CRYPT_EXPORTABLE = &H1
+    Const CRYPT_USER_PROTECTED = &H2
+    Const AT_KEYEXCHANGE = &H1
+    Const AT_SIGNATURE = &H2
+
+    Dim certHelper
+    Err.Clear
+    On Error Resume Next
+    Set certHelper = CreateObject("CEnroll.CEnroll.2")
+    if ( (Err.Number = 438) OR (Err.Number = 429) ) Then
+      Err.Clear
+      Set certHelper = CreateObject("CEnroll.CEnroll.1")
+    End If
+    Dim keyprov, key, prov, pkcs10data, dwModulusSizeInBits
+    keyprov = document.KeyGenForm.KeySize.value
+    key     = Mid(keyprov,1,1)
+    prov    = Mid(keyprov,2)
+    If key = "4" Then
+      dwModulusSizeInBits = CLng ( 1024 )
+    Else
+      dwModulusSizeInBits = CLng ( 512 )
+    End If
+    certHelper.providerType = PROV_RSA_FULL
+    certHelper.providerName = prov
+    certHelper.GenKeyFlags = (65536 * dwModulusSizeInBits ) + CRYPT_EXPORTABLE + CRYPT_USER_PROTECTED
+    certHelper.HashAlgorithm = "SHA1" // or MD2,MD5
+    certHelper.KeySpec = AT_KEYEXCHANGE
+    certHelper.EnableT61DNEncoding = True
+    pkcs10data = certHelper.createPKCS10( _
+        "CN=%s;" & _
+        "1.2.840.113549.1.9.1=%s;" & _
+        "","")
+    If (pkcs10data = Empty) Then
+      Alert "Error " & Hex(Err) & ": Le sue credenziali non possono essere generate."
+    Else
+      Alert "The following certificate request was generated:" & chr(13) & chr(10) &_
+          "CN=%s" & chr(13) & chr(10) & _
+          "1.2.840.113549.1.9.1=%s" & chr(13) & chr(10) & _
+          ""
+      Document.KeyGenForm.PKCS10.value = pkcs10data
+      Document.KeyGenForm.submit()
+    End If
+  End Function
+// -->
+</script>
+</head>
+
+<body text="#000000" link="red" vlink="green" bgcolor="#FFFFFF" onload="KeySizeSelectList()">
+  <div id="keygenform">
+    <h1>Crea la tua coppia di chiavi</h1>
+    <h1>per la tua richiesta di certificato</h1>
+
+    <div id="enrollinfo">
+      La sua coppia di chiavi e la sua richiesta di certificato dovrebbero essere generate adesso.<br>
+      Per cortesia controlli che i dati riportati di seguito siano corretti.
+    </div><br>
+
+    <div id="enrollparams">
+      <form name="KeyGenForm" action="/CSP/WEB/cgi-bin/client-enroll.sh" method="post" accept-charset="iso-8859-1" id="KeyGenForm">
+        <div class="param">
+          <div class="lparam">
+            <a href="/CSP/WEB/help/client-enroll-en.html#browsertype">Browser Software</a>
+          </div>
+
+          <div class="cparam">
+            Microsoft Internet Explorer <input type="hidden" name="browsertype" value="Microsoft Internet Explorer">
+          </div>
+        </div>
+
+        <div class="param">
+          <div class="lparam">
+            <a href="/CSP/WEB/help/client-enroll-en.html#challenge">Initial Master Secret</a>
+          </div>
+
+          <div class="cparam">
+            ******** <input type="hidden" name="challenge" value="%s">
+          </div>
+        </div>
+
+        <div class="param">
+          <div class="lparam">
+            <a href="/CSP/WEB/help/client-enroll-en.html#commonName">Common Name</a>
+          </div>
+
+          <div class="cparam">
+            %s <input type="hidden" name="commonName" value="%s">
+          </div>
+        </div>
+
+        <div class="param">
+          <div class="lparam">
+            <a href="/CSP/WEB/help/client-enrollen-en.html#emailAddress">Email Address</a>
+          </div>
+
+          <div class="cparam">
+            %s <input type="hidden" name="emailAddress" value="%s">
+          </div>
+        </div>
+
+        <div class="param">
+          <div class="cparam">
+            <input type="hidden" name="CA_name" value="UserCerts">
+          </div>
+        </div><br>
+
+        <div id="keygen">
+          <div id="lkeygen">
+            Gestore delle chiavi da utilizzare:
+          </div>
+
+          <div id="ckeygen">
+            <select name="KeySize">
+              </select> <input type="hidden" name="PKCS10" value=""> <input type="button" onclick="GenTheKeyPair()" value="Generi la sua coppia di chiavi">
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<html>
+<head>
+  <meta http-equiv="Pragma" content="no-cache">
+<!--#set cgi=/cgi-bin/main.bash -->
+<!--#if expr=$REDIRECT -->
+  <meta http-equiv="Refresh" content="1; url=<!--#echo var=$REDIRECT -->.shtml">
+<!--#endif -->
+  <title><!--#echo var=$TITLE_TXT --></title>
+  <link type="text/css" href="/css/style.css" rel="stylesheet">
+  <!--#include direct=$SSI_FILE_HEAD -->
+</head>
+<body <!--#echo var=$BODY_STYLE -->>
+<!--#if expr="! ($REQUEST_URI ^= /stampa-rid)" -->
+  <table>
+    <col width=140>
+    <col width=500>
+    <tr>
+      <td><img src="/images/sx-logo.png"></td>
+      <td>
+        <h2 class="center"><!--#echo var=$TITLE_HTML --></h2>
+      </td>
+      <td><img src="/images/dx-logo.png"></td>
+    </tr>
+  </table>
+  <hr>
+<!--#endif -->
+  <!--#include direct=$SSI_FILE_BODY -->
+<!--#if expr="! ($REQUEST_URI ^= /stampa)" -->
+  <hr><address>ULib Server</address>
+<!--#endif -->
+</body>
+</html>

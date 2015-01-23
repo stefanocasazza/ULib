@@ -1,0 +1,79 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for Linux (vers 1 September 2005), see www.w3.org">
+
+  <title>Installazione del certificato</title>
+  <link type="text/css" href="/CSP/WEB/css/t-services.css" rel="stylesheet">
+</head>
+
+<body text="#000000" link="red" vlink="green" bgcolor="#FFFFFF">
+  <div id="getcert">
+    <h1>Installazione del certificato</h1>
+
+    <div id="crtinfo">
+      <div class="param">
+        <div class="lparam">
+          Certification authority
+        </div>
+
+        <div class="cparam">
+          <strong>UserCerts</strong>
+        </div>
+      </div><br>
+
+      <div class="param">
+        <div class="lparam">
+          Subject DN
+        </div>
+
+        <div class="cparam">
+          <strong>%s</strong>
+        </div>
+      </div><br>
+
+      <div class="param">
+        <div class="lparam">
+          Valido fino a
+        </div>
+
+        <div class="cparam">
+          <strong>%s</strong>
+        </div>
+      </div>
+    </div>
+  </div><object classid="clsid:43F8F289-7A20-11D0-8F06-00C04FC295E1" codebase="xenroll.dll" id="oldCertHelper">
+    </object> <object classid="clsid:127698e4-e730-4e5c-a2b1-21490a70c8a1" sxenrollversion="5,131,3659,0" codebase="xenroll.dll" id="certHelper">
+    </object> <script type="text/vbscript">
+  <!--
+  Function InstallPKCS7Cert()
+    Dim certHelper
+    Err.Clear
+    On Error Resume Next
+    Set certHelper = CreateObject("CEnroll.CEnroll.2")
+    if ( (Err.Number = 438) OR (Err.Number = 429) ) Then
+      Err.Clear
+      Set certHelper = CreateObject("CEnroll.CEnroll.1")
+    End If
+    Dim PKCS7Cert
+    PKCS7Cert = "%s"
+    On Error Resume Next
+    MsgBox "Il seguente certificato sara' installato:" & chr(13) & chr(10) & _
+           "Seriale: %s" & chr(13) & chr(10) & _
+           "Subject: %s" & chr(13) & chr(10) & _
+           "Valido fino a: %s" & chr(13) & chr(10)
+    err.clear
+    certHelper.AcceptPKCS7(PKCS7Cert)
+    If Err.Number <> 0 Then
+      Alert "Error " & Hex(Err) & ": Il certificato non puo' essere installato."
+    Else
+      MsgBox "Il certificato installato con successo."
+    End If
+  End Function
+
+  Call InstallPKCS7Cert()
+  // -->
+</script>
+</body>
+</html>

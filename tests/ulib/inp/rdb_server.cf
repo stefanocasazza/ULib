@@ -1,0 +1,12 @@
+SERVER {
+
+   PORT 8080
+
+   LOG_FILE    rdb_server.log
+   LOG_FILE_SZ 1M
+
+   PLUGIN      echo
+   PLUGIN_DIR  ../../src/ulib/net/server/plugin/.libs
+
+   PREFORK_CHILD 0
+}

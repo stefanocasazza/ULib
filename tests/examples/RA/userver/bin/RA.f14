@@ -1,0 +1,87 @@
+#!/bin/bash
+#
+# $Id: RA,v 1.5 2005/04/05 10:06:01 bastian Exp $
+#
+### BEGIN INIT INFO
+# Provides: RA station
+### END INIT INFO
+
+# chkconfig: - 41 89
+# config: /srv/userver/etc/RA.cfg
+
+# Source function library.
+. /etc/init.d/functions
+. /etc/sysconfig/network
+
+#UTRACE="0 10M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.accept"
+ export UTRACE UOBJDUMP USIMERR
+
+mkdir -p /var/run /var/log /tmp/client/scan # /tmp/scan /tmp/mail
+chown -R ra: /srv/RA /tmp/client
+
+start() {
+	# Check that networking is configured.
+	[ ${NETWORKING} = "no" ] && exit 1
+
+	echo -n $"Starting ra station: "
+	if [ $UID -ne 0 ]; then
+                RETVAL=4
+                failure
+        else
+		daemon /srv/userver/bin/userver_tcp -c /srv/userver/etc/RA.cfg >/tmp/userver_tcp.err 2>&1 &
+		RETVAL=$?
+		[ $RETVAL -eq 0 ]
+	fi;
+	echo
+	return $RETVAL
+}
+
+stop() {
+	echo -n $"Shutting down ra station: "
+	if [ $UID -ne 0 ]; then
+                RETVAL=4
+                failure
+        else
+        	killproc /srv/userver/bin/userver_tcp
+		RETVAL=$?
+	        [ $RETVAL -eq 0 ]
+        fi;
+	echo
+	return $RETVAL
+}
+
+restart() {
+	stop
+	start
+}
+
+RETVAL=0
+
+# See how we were called.
+case "$1" in
+  start)
+	start
+	;;
+  stop)
+	stop
+	;;
+  status)
+	status userver_tcp
+	;;
+  restart|reload)
+	restart
+	;;
+  condrestart)
+	if status $prog > /dev/null; then
+	    stop
+	    start
+	fi
+	;;
+  *)
+	echo $"Usage: $0 {start|stop|status|restart|reload}"
+	exit 2
+esac
+
+exit $?

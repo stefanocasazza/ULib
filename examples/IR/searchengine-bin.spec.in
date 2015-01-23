@@ -1,0 +1,46 @@
+Name: searchengine-bin
+Summary: search engine to manage search
+Version: @VERSION@ 
+Release: 1
+Epoch: 0
+License: GPL
+Group: Applications
+URL: http://www.unirel.com
+Source0: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}
+Provides: searchengine-bin
+Packager: Stefano Casazza <stefano.casazza@unirel.com>
+Requires: ULib
+@RPM_REQUIRE@
+
+%description
+This package provides the programs search engine for general search 
+
+%prep
+%setup
+
+%build
+%configure @RPM_CONFIGURE@
+cd src/ulib
+make LDFLAGS="-s" 
+cd ../../examples/IR
+make LDFLAGS="-s"
+cd ../..
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/srv/searchengine/bin
+autoconf/install-sh -c -m 755 examples/IR/.libs/index1		%{buildroot}/srv/searchengine/bin
+autoconf/install-sh -c -m 755 examples/IR/.libs/query			%{buildroot}/srv/searchengine/bin
+autoconf/install-sh -c -m 755 examples/IR/.libs/update		%{buildroot}/srv/searchengine/bin
+autoconf/install-sh -c -m 755 examples/IR/.libs/db_check		%{buildroot}/srv/searchengine/bin
+autoconf/install-sh -c -m 755 examples/IR/.libs/db_dump		%{buildroot}/srv/searchengine/bin
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root,-)
+/srv/searchengine/bin/*
+%doc tests/examples/index.cfg
+%doc tests/examples/index_dir.cfg

@@ -1,0 +1,121 @@
+GET /test HTTP/1.1
+User-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1
+Host: 0.0.0.0=5000
+Accept: */*
+
+GET /favicon.ico HTTP/1.1
+Host: 0.0.0.0:5000
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.9) Gecko/2008061015 Firefox/3.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip,deflate
+Accept-Charset: ISO-8859-1,utf-8;q=0.7,*;q=0.7
+Keep-Alive: 300
+Connection: keep-alive
+
+GET /dumbfuck HTTP/1.0
+aaaaaaaaaaaaa:++++++++++
+
+GET /forums/1/topics/2375?page=1#posts-17408 HTTP/1.1
+Host: 0.0.0.0=5000
+
+GET /get_no_headers_no_body/world HTTP/1.0
+
+GET /get_one_header_no_body HTTP/1.0
+Accept: */*
+
+GET /get_funky_content_length_body_hello HTTP/1.0
+content-length: 5
+
+HELLO
+POST /post_identity_body_world?q=search#hey HTTP/1.0
+Accept: */*
+Transfer-Encoding: identity
+Content-Length: 5
+
+World
+POST /post_chunked_all_your_base HTTP/1.0
+Transfer-Encoding: chunked
+
+1e
+all your base are belong to us
+0
+
+POST /two_chunks_mult_zero_end HTTP/1.0
+Transfer-Encoding: chunked
+
+5
+hello
+6
+world
+000
+
+POST /chunked_w_trailing_headers HTTP/1.0
+Transfer-Encoding: chunked
+
+5
+hello
+6
+world
+0
+Vary: *
+Content-Type: text/plain
+
+POST /chunked_w_bullshit_after_length HTTP/1.0
+Transfer-Encoding: chunked
+
+5; ihatew3;whatthefuck=aretheseparametersfor
+hello
+6; blahblah; blah
+world
+0
+
+GET /test HTTP/1.1
+Host: 0.0.0.0:5000
+User-Agent: ApacheBench/2.3
+Accept: */*
+
+GET /test.cgi?foo=bar?baz HTTP/1.0
+
+
+GET /test HTTP/1.0
+
+GET /demo HTTP/1.1
+Host: example.com
+Connection: Upgrade
+Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
+Sec-WebSocket-Protocol: sample
+Upgrade: WebSocket
+Origin: http://example.com
+
+GET * HTTP/1.1
+HOST: 239.255.255.250:1900
+MAN: \ssdp:discover\r
+ST: \ssdp:all\r
+
+GET / HTTP/1.0
+Line1: abc
+	def
+ghi
+		jkl
+mno 
+	 	qrs
+Line2: 	 line2	
+
+GET /file.txt HTTP/1.1
+Host: www.example.com
+Content-Type: application/example
+If-Match: 0023aa4e\r
+Content-Length: 10
+
+cccccccccc
+GET / HTTP/1.1
+X-SSL-Bullshit: -----BEGIN CERTIFICATE-----
+MIIFbTCCBFWgAwIBAgICH4cwDQYJKoZIhvcNAQEFBQAwcDELMAkGA1UEBhMCVUsx
+cHBvcnQuYWMudmT4sopwqlBWsvcHViL2NybC9jYWNybC5jcmwwPQYJYIZIAYb4QgEDBDAWLmh0
+dHA6Ly9jYS5ncmlkLXN1cHBvcnQuYWMudWsvcHViL2NybC9jYWNybC5jcmwwPwYD
+VR0fBDgwNjA0oDKgMIYuaHR0cDovL2NhLmdyaWQt5hYy51ay9wdWIv
+Yhixw1aKEPzNjNowuIseVogKOLXxWI5vAi5HgXdS0/ES5gDGsABo4fqovUKlgop3
+RA==
+-----END CERTIFICATE-----
+

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. ../.function
+
+## ldap.test -- Test ldap feature
+
+start_msg ldap
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR 
+
+# ldapsearch -LLL -x -h billsjail.unirel.intranet -D 'dc=unirel,dc=it' -s sub "(objectclass=*)"
+# ldapsearch -LLL -x -h www.unirel.com -w caciucco -D 'cn=admin,o=mail' -b 'o=mail'
+
+start_prg ldap "ldap://www.unirel.com:389/cn=admin,o=mail??sub?o=mail" "cn=admin,o=mail" caciucco "o=mail"
+
+# Test against expected output
+test_output_diff ldap

@@ -1,0 +1,72 @@
+<?xml version="1.0"?>
+<operation>
+  <id>registrazione-ra-station-residenziale</id>
+  <description>TUnwired: registrazione utente residenziale</description>
+  <uid>cddf1fed-0d30-4d9a-9a0d-b2b2d1dee7f2</uid>
+  <timestamp>2007-12-20 19:31:04+01:00</timestamp>
+  <subscribed-services>
+    <service>
+      <name>UnwiredPonza</name>
+      <uid>cddf1fed-0d30-4d9a-9a0d-b2b2d1dee7f2</uid>
+    </service>
+    <service>
+      <name>SafeMessaging</name>
+      <email>arturo.verdi@test.trust-engine.com</email>
+      <uid>6c0241f8-af29-11dc-b4fd-000c291d9685</uid>
+    </service>
+  </subscribed-services>
+  <ra-documents>
+    <document>
+      <di>
+        <nome value="arturo"/>
+        <cognome value="verdi"/>
+        <cf value="342343424"/>
+        <data_n value="22/10/1970"/>
+        <tipo value="ci"/>
+        <n_doc value="32432424443"/>
+        <emesso value="prefetto di roma"/>
+        <scadenza value="01/01/2020"/>
+        <scan_fronte value="1"/>
+        <scan_retro value="1"/>
+      </di>
+    </document>
+    <document>
+      <token>
+        <emailAddress value="arturo.verdi@test.trust-engine.com"/>
+        <usercred value="1"/>
+      </token>
+    </document>
+    <document>
+      <tservices>
+        <legalmsg value="no"/>
+        <tokenarc value="no"/>
+        <tokenbld value="no"/>
+        <safemsg value="si"/>
+        <trustmsg value="no"/>
+        <sigobjan value="no"/>
+      </tservices>
+    </document>
+    <document>
+      <domiciliazione>
+        <comune value="roma"/>
+        <provincia value="rm"/>
+        <via value="via cavour"/>
+        <civico value="3"/>
+        <cap value="00184"/>
+      </domiciliazione>
+    </document>
+    <document>
+      <contratto>
+        <stampa value="contratto_residenziali.html"/>
+        <scansione value="1"/>
+      </contratto>
+    </document>
+  </ra-documents>
+  <long-term-id>34ccb260-413d-493c-8ce7-561e19351d9c</long-term-id>
+  <x509-certificate>
+    <dn-subject>CN=arturo verdi,emailAddress=arturo.verdi@test.trust-engine.com</dn-subject>
+    <dn-issuer>C=IT,L=Rome,O=T-Services S.r.L.,CN=T-Services TUnwiredCerts</dn-issuer>
+    <serial-number>56</serial-number>
+    <not-after>Nov  3 18:27:44 2012 GMT</not-after>
+  </x509-certificate>
+</operation>

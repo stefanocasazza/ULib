@@ -1,0 +1,21 @@
+#!/bin/sh
+
+. ../.function
+
+## curl.test -- Test curl feature
+
+start_msg curl
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR 
+
+# (need password...)
+# ldap://www.unirel.com:389/cn=admin,o=mail??o=mail
+
+#STRACE=$LTRUSS
+start_prg curl < inp/curl.input
+
+# Test against expected output
+test_output_wc w curl

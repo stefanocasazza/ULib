@@ -1,0 +1,101 @@
+#!/bin/sh
+
+. ../../.function
+
+start_msg XAdES
+
+rm -f tsa_http.log TSA/log \
+		out/sign.out err/sign.err \
+		out/client*.out err/client*.err \
+		out/archive.out err/archive.err \
+		out/verify.out err/verify.err \
+		trace.*sign*.[0-9]* object.*sign*.[0-9]* stack.*sign*.[0-9]* \
+		trace.*client*.[0-9]* object.*client*.[0-9]* stack.*client*.[0-9]* \
+		trace.*archive*.[0-9]* object.*archive*.[0-9]* stack.*archive*.[0-9]* \
+		trace.*verify*.[0-9]* object.*verify*.[0-9]* stack.*verify*.[0-9]* \
+		out/userver_tcp.out err/userver_tcp.err \
+		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
+
+ UTRACE="0 10M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#VALGRIND="valgrind -v --leak-check=full"
+ export UTRACE UOBJDUMP USIMERR
+
+#export TMPDIR="C:/TMP"
+
+ DIR_TOP="../../.."
+#DIR_CMD="C:/XADES/sbin"
+ DIR_CMD="$DIR_TOP/examples/XAdES"
+
+SCHEMA=XAdESv141.xsd
+#DOCUMENT=TESTOPROVA.docx
+ DOCUMENT=TESTOPROVA.odt
+#DOCUMENT=xmldsig-input.txt
+
+DATA_URI=$DOCUMENT
+X509=`cat ../../ulib/CA/server.crt`
+KEY_HANDLE=`pwd`/../../ulib/CA/server_nopass.key
+DIGEST_ALGORITHM=sha256
+SIGNING_TIME=1
+CLAIMED_ROLE="Amministratore UNIREL"
+PRODUCTION_PLACE_CITY="sesto fiorentino"
+PRODUCTION_PLACE_STATE_OR_PROVINCE=SI
+PRODUCTION_PLACE_POSTAL_CODE=11111
+PRODUCTION_PLACE_COUNTRY_NAME=Italy
+
+SIGNATURE_TIMESTAMP="http://10.30.1.131/tsa"
+CA_STORE=`pwd`/../../ulib/CA/CApath
+
+#ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/LISTACER_20100907.zip.p7m
+ ZIPPONE=file:///stefano/XAdES/zippone/LISTACER_20101103.zip.p7m
+
+#start_prg feed -c XAdES.ini -- $ZIPPONE
+#exit 0
+
+#STRACE=$TRUSS
+start_prg sign -c XAdES.ini -- \
+ $DATA_URI \
+ '"$X509"' \
+ $KEY_HANDLE \
+ $DIGEST_ALGORITHM \
+ $SIGNING_TIME \
+ '"$CLAIMED_ROLE"' \
+ '"$PRODUCTION_PLACE_CITY"' \
+ $PRODUCTION_PLACE_STATE_OR_PROVINCE \
+ $PRODUCTION_PLACE_POSTAL_CODE \
+ $PRODUCTION_PLACE_COUNTRY_NAME \
+  < inp/$DOCUMENT.b64
+  #$SIGNATURE_TIMESTAMP
+ # $CA_STORE 
+
+INPUT=inp/sign.out.b64
+
+# ------------------------------------------------------------
+# sha1 check:
+# ------------------------------------------------------------
+# openssl dgst -sha1 -binary < content.xml | openssl base64 -e
+# ------------------------------------------------------------
+$OPENSSL base64 -e -in out/sign.out -out $INPUT
+
+#STRACE=$TRUSS
+ start_prg verify -c XAdES.ini -- $SCHEMA < $INPUT
+
+#openssl base64 -d -in verify.out > verify.der
+#openssl x509 -text -in verify.der -inform DER
+
+ exit 0
+
+$SLEEP
+kill_prg userver_tcp TERM
+
+$OPENSSL base64 -e -in out/archive.out -out $INPUT
+
+#STRACE=$LTRUSS
+start_prg archive -c XAdES.ini -- \
+		 "http://10.30.1.131/tsa" < $INPUT
+
+mv err/userver_tcp.err err/XAdES.err
+
+# Test against expected output
+test_output_wc w archive

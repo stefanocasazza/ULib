@@ -1,0 +1,108 @@
+/* CSP.fld: MinGW does not yet include all the needed definitions for CryptoAPI, so define here whatever extra is needed */
+
+#define CERT_SYSTEM_STORE_CURRENT_USER_ID				1
+#define sz_CERT_STORE_PROV_SYSTEM_W						"System"
+#define CERT_SYSTEM_STORE_LOCATION_MASK				0x00FF0000
+#define CERT_SYSTEM_STORE_LOCATION_SHIFT				16
+#define CERT_SYSTEM_STORE_MASK							0xFFFF0000
+#define CERT_SYSTEM_STORE_RELOCATE_FLAG				0x80000000
+#define CERT_PHYSICAL_STORE_PREDEFINED_ENUM_FLAG	0x1
+
+typedef struct _CERT_PHYSICAL_STORE_INFO {
+    DWORD               cbSize;
+    LPSTR               pszOpenStoreProvider;   // REG_SZ
+    DWORD               dwOpenEncodingType;     // REG_DWORD
+    DWORD               dwOpenFlags;            // REG_DWORD
+    CRYPT_DATA_BLOB     OpenParameters;         // REG_BINARY
+    DWORD               dwFlags;                // REG_DWORD
+    DWORD               dwPriority;             // REG_DWORD
+} CERT_PHYSICAL_STORE_INFO, *PCERT_PHYSICAL_STORE_INFO;
+
+typedef struct _CERT_SYSTEM_STORE_INFO {
+    DWORD   cbSize;
+} CERT_SYSTEM_STORE_INFO, *PCERT_SYSTEM_STORE_INFO;
+
+typedef BOOL (*PFN_CERT_ENUM_SYSTEM_STORE)(const void* pvSystemStore, DWORD dwFlags, PCERT_SYSTEM_STORE_INFO pStoreInfo,
+														 void* pvReserved, void* pvArg);
+
+typedef BOOL (*PFN_CERT_ENUM_PHYSICAL_STORE)(const void* pvSystemStore, DWORD dwFlags, LPCWSTR pwszStoreName,
+															PCERT_PHYSICAL_STORE_INFO pStoreInfo, void* pvReserved, void* pvArg);
+
+typedef BOOL (*PFN_CERT_ENUM_SYSTEM_STORE_LOCATION)(LPCWSTR pwszStoreLocation, DWORD dwFlags, void *pvReserved, void *pvArg);
+
+static BOOL WINAPI
+(*CertEnumSystemStoreLocation)(DWORD dwFlags, void* pvArg, PFN_CERT_ENUM_SYSTEM_STORE_LOCATION pfnEnum) = NULL;
+
+static BOOL WINAPI
+(*CertEnumSystemStore)(DWORD dwFlags, void* pvSystemStoreLocationPara, void* pvArg, PFN_CERT_ENUM_SYSTEM_STORE pfnEnum) = NULL;
+
+static BOOL WINAPI
+(*CertEnumPhysicalStore)(const void* pvSystemStore, DWORD dwFlags, void* pvArg, PFN_CERT_ENUM_PHYSICAL_STORE pfnEnum) = NULL;
+
+static int mingw_load_crypto_func(void)
+{
+	HINSTANCE dll;
+	int result = TRUE;
+
+#ifdef DEBUG
+	BIO_printf(err, "Call mingw_load_crypto_func()\n");
+#endif
+
+	dll = LoadLibrary("crypt32");
+
+	if (dll == NULL)
+		{
+#	ifdef DEBUG
+		routine = "LoadLibrary";
+#	endif
+
+		goto error;
+		}
+
+	CertEnumSystemStoreLocation = GetProcAddress(dll, "CertEnumSystemStoreLocation");
+
+	if (CertEnumSystemStoreLocation == NULL)
+		{
+#	ifdef DEBUG
+		routine = "GetProcAddress";
+#	endif
+
+		goto error;
+		}
+
+	CertEnumSystemStore = (void*) GetProcAddress(dll, "CertEnumSystemStore");
+
+	if (CertEnumSystemStore == NULL)
+		{
+#	ifdef DEBUG
+		routine = "GetProcAddress";
+#	endif
+
+		goto error;
+		}
+
+	CertEnumPhysicalStore = (void*) GetProcAddress(dll, "CertEnumPhysicalStore");
+
+	if (CertEnumPhysicalStore == NULL)
+		{
+#	ifdef DEBUG
+		routine = "GetProcAddress";
+#	endif
+
+		goto error;
+		}
+
+	goto end;
+
+error:
+
+	result = FALSE;
+
+end:
+
+#ifdef DEBUG
+	BIO_printf(err, "Return mingw_load_crypto_func(%d)\n", result);
+#endif
+
+	return result;
+}

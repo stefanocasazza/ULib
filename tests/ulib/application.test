@@ -1,0 +1,29 @@
+#!/bin/sh
+
+. ../.function
+
+## application.test -- Test application feature
+
+start_msg application
+
+#UTRACE="0 5M 1"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+cat << EOF >tmp/c
+c
+c
+c
+c
+c
+EOF
+
+#VALGRIND=valgrind
+start_prg application -a -b pippo -c --option_with_no_short_1 --option_with_no_short_2 Bucaiolo_a_te argument_1 argument_2 < tmp/c
+
+# Test against expected output
+
+RESULT=0
+
+test_output_wc w application

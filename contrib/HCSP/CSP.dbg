@@ -1,0 +1,251 @@
+/* CSP.dbg */
+
+static void writeData(void* data, unsigned size, const char* name)
+{
+	FILE* hOutputFile;
+
+	hOutputFile = fopen(name, "wb");
+
+	fwrite(data, size, 1, hOutputFile);
+
+	fclose(hOutputFile);
+}
+
+static void printInfo(void)
+{
+#ifdef __MINGW32__
+
+	DWORD dwDataLen = 256;
+
+	/* Read the name of the CSP.
+   */
+ 
+	if (CryptGetProvParam(hCryptProvider, PP_NAME, (PBYTE)pCryptProvider, &dwDataLen, 0))
+		{
+		BIO_printf(err, "\nProvider name: %s\n", pCryptProvider);
+		}
+	else
+		{
+		BIO_printf(err, "\nError reading CSP name\n");
+		}
+
+	/* Read the name of the key container.
+   */
+
+	dwDataLen = 256;
+
+	if (CryptGetProvParam(hCryptProvider, PP_CONTAINER, (PBYTE)pCryptContainer, &dwDataLen, 0))
+		{
+		BIO_printf(err, "Nome del Key Container: %s\n", pCryptContainer);
+		}
+	else
+		{
+		BIO_printf(err, "Error reading key container name\n");
+		}
+
+	/*
+	writeFileConfig();
+	*/
+#endif
+}
+
+static void enumKeyContainers(void)
+{
+#ifdef __MINGW32__
+
+	BYTE pbData[1000];
+	DWORD i, dwDataLen, dwFlags;
+
+	BIO_printf(err, "\ndwKeySpec: %d\n", dwKeySpec);
+	BIO_printf(err, "\nEnumerating the key containers name for the CSP\n");
+	BIO_printf(err, "-----------------------------------------------------------\n");
+
+	/* Enumerate the key containers name */
+
+	for (i = 0; ; ++i)
+		{
+		/* Set the CRYPT_FIRST flag the first time through the loop. */
+
+		if (i == 0)
+			{
+			dwFlags = CRYPT_FIRST;
+			}
+		else
+			{
+			dwFlags = 0;
+			}
+
+		/* Retrieve information about an algorithm. */
+
+		dwDataLen = 1000;
+
+		if (!CryptGetProvParam(hCryptProvider, PP_ENUMCONTAINERS, pbData, &dwDataLen, dwFlags))
+			{
+			if (GetLastError() == ERROR_NO_MORE_ITEMS)
+				{
+				/* Exit the loop. */
+
+				break;
+				}
+			else
+				{
+				BIO_printf(err, "Reading Key Containers Name Error\n");
+				}
+			}
+		else
+			{
+			/* Print Key Containers Name  */
+
+			BIO_printf(err, "Key Containers Name: %s\n", pbData);
+			}
+		}
+
+	BIO_printf(err, "-----------------------------------------------------------\n\n");
+
+#endif
+}
+
+static void enumAlgorithms(void)
+{
+#ifdef __MINGW32__
+
+	ALG_ID aiAlgid;
+	BYTE* ptr = NULL;
+	CHAR szName[100];
+	BYTE pbData[1000];
+	CHAR* pszAlgType = NULL;
+	DWORD i, dwBits, dwNameLen, dwDataLen, dwFlags;
+
+	/*Print header for algorithm information table
+ 	*/
+
+	BIO_printf(err, "\nEnumerating the supported algorithms\n\n");
+	BIO_printf(err, "Algid           Bits      Type           Algorithm\n");
+	BIO_printf(err, "                                         Name\n");
+	BIO_printf(err, "----------------------------------------------------------\n");
+
+	/* Enumerate the supported algorithms. */
+
+	for (i = 0; ; ++i)
+		{
+		/* Set the CRYPT_FIRST flag the first time through the loop. */
+
+		if (i == 0)
+			{
+			dwFlags = CRYPT_FIRST;
+			}
+		else
+			{
+			dwFlags = 0;
+			}
+
+		/* Retrieve information about an algorithm. */
+
+		dwDataLen = 1000;
+
+		if (!CryptGetProvParam(hCryptProvider, PP_ENUMALGS, pbData, &dwDataLen, dwFlags))
+			{
+			if (GetLastError() == ERROR_NO_MORE_ITEMS)
+				{
+				/* Exit the loop. */
+
+				break;
+				}
+			else
+				{
+				BIO_printf(err, "Reading Algorithm Error\n");
+				}
+			}
+
+		/* Extract algorithm information from 'pbData' buffer. */
+
+		ptr = pbData;
+		aiAlgid = *(ALG_ID*)ptr;
+		ptr += sizeof(ALG_ID);
+		dwBits = *(DWORD*)ptr;
+		ptr += sizeof(DWORD);
+		dwNameLen = *(DWORD*)ptr;
+		ptr += sizeof(DWORD);
+		strncpy((LPSTR)szName, (LPSTR)ptr, dwNameLen);
+
+		/* Determine algorithm type. */
+
+		switch (GET_ALG_CLASS(aiAlgid))
+			{
+			case ALG_CLASS_DATA_ENCRYPT:
+				pszAlgType = "Encrypt  ";
+			break;
+
+			case ALG_CLASS_HASH:
+				pszAlgType = "Hash     ";
+			break;
+
+			case ALG_CLASS_KEY_EXCHANGE:
+				pszAlgType = "Exchange ";
+			break;
+
+			case ALG_CLASS_SIGNATURE:
+				pszAlgType = "Signature";
+			break;
+
+			default:
+				pszAlgType = "Unknown  ";
+			break;
+			}
+		
+		/* Print information about algorithm. */
+
+		BIO_printf(err, "Algid:%8.8xh Bits:%-4d Type:%s Name:%-14s\n",
+							aiAlgid, dwBits, pszAlgType, szName);
+		}
+
+	BIO_printf(err, "----------------------------------------------------------\n");
+
+#endif
+}
+
+static void printCertificate(PCCERT_CONTEXT ctx)
+{
+#ifdef __MINGW32__
+
+	char buf[128];
+
+	/* ctx->pbCertEncoded is the cert X509 DER encoded */
+
+	X509* cert = d2i_X509(NULL, (OPENSSL_d2i_TYPE) &ctx->pbCertEncoded, ctx->cbCertEncoded);
+
+	if (cert == NULL)
+		{
+		BIO_printf(err, "Could not process X509 DER encoding for certificate\n");
+		}
+
+	X509_NAME_oneline(X509_get_subject_name(cert), buf, sizeof(buf));
+
+	BIO_printf(err, "subject='%s'\n", buf);
+
+	X509_free(cert);
+
+#endif
+}
+
+static void enumCertificate(void)
+{
+#ifdef __MINGW32__
+
+	PCCERT_CONTEXT ctx = NULL;
+
+	BIO_printf(err, "\nCertificate Store: \"%s\"\n", pSubsystemProtocol);
+	BIO_printf(err, "\nEnumerating the certificate for the CSP\n");
+	BIO_printf(err, "-----------------------------------------------------------\n");
+
+	/* Enumerate the certificate */
+
+	while ((ctx = CertEnumCertificatesInStore(hCertStore, ctx)))
+		{
+		printCertificate(ctx);
+		}
+
+	BIO_printf(err, "-----------------------------------------------------------\n");
+
+#endif
+}

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## query_parser.test -- Test query parser feature
+
+start_msg query_parser
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="-1 1M 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg query_parser <inp/query_parser.inp
+
+# Test against expected output
+test_output_diff query_parser

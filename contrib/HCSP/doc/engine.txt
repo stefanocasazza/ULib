@@ -1,0 +1,99 @@
+
+Obiettivo:
+Trovare il modo di fare utilizzare all'OpenSSL in ambiente Windows l'architettura CSP.
+
+CSP (Cryptographic Service Provider)
+An independent software module that performs cryptography algorithms for authentication,
+encoding, and encryption.
+
+Storia:
+La prima considerazione e' stata di utilizzare una release OpenSSL con l'estensione
+'ENGINE':
+
+ENGINE
+======
+With OpenSSL 0.9.6, a new component was added to support alternative
+cryptography implementations, most commonly for interfacing with external
+crypto devices (eg. accelerator cards). This component is called ENGINE.
+
+There are currently built-in ENGINE implementations for the following crypto devices:
+
+o CryptoSwift
+o Compaq Atalla
+o nCipher CHIL
+o Nuron
+o Broadcom uBSec
+o .....
+
+In addition, dynamic binding to external ENGINE implementations is now
+provided by a special ENGINE called "dynamic".
+
+DYNAMIC ENGINES
+===============
+The new "dynamic" ENGINE provides a low-overhead way to support ENGINE
+implementations that aren't pre-compiled and linked into OpenSSL-based
+applications. This could be because existing compiled-in implementations
+have known problems and you wish to use a newer version with an existing
+application. It could equally be because the application (or OpenSSL
+library) you are using simply doesn't have support for the ENGINE you
+wish to use, and the ENGINE provider (eg. hardware vendor) is providing
+you with a self-contained implementation in the form of a shared-library.
+The other use-case for "dynamic" is with applications that wish to
+maintain the smallest foot-print possible and so do not link in various
+ENGINE implementations from OpenSSL, but instead leaves you to provide
+them, if you want them, in the form of "dynamic"-loadable
+shared-libraries. It should be possible for hardware vendors to provide
+their own shared-libraries to support arbitrary hardware to work with
+applications based on OpenSSL 0.9.7 or later.
+
+Il cuore dell'ENGINE e' la definizione di una struttura C che specifica quali
+funzioni crittografiche sono a carico dell'ENGINE stesso:
+
+static RSA_METHOD HCSP_rsa = {
+   "HCSP RSA method",
+
+	BASSO LIVELLO
+	==========================================
+   NULL,                /* rsa_pub_encrypt */
+   NULL,                /* rsa_pub_decrypt */
+   NULL,                /* rsa_priv_encrypt */
+   NULL,                /* rsa_priv_decrypt */
+   NULL,                /* rsa_mod_exp */
+   NULL,                /* mod_exp_mont */
+
+   NULL,                /* init */
+   NULL,                /* finish */
+   RSA_FLAG_SIGN_VER,   /* flags alto/basso livello */
+   NULL,                /* app_data */
+
+	ALTO LIVELLO
+	==========================================
+   HCSP_rsa_sign,       /* rsa_sign */
+   HCSP_rsa_verify      /* rsa_verify */
+};
+
+Il primo step e' stato di creare un estensione 'ENGINE' software all'OpenSSL in ambiente
+Linux utilizzando il toolkit crittografico RSAREF 2.0 e successivamente verificandone la
+funzionalita' anche in ambiente Windows utilizzando l'ambiente MINGW.
+
+A questo punto e' iniziato lo studio delle caratteristiche del framework CSP su Windows
+principalmente attraverso il sito di microsoft http://msdn.microsoft.com/library/
+
+Gli scogli da superare sono stati molti ma alla fine abbiamo realizzato un modulo 'ENGINE'
+HCSP.dll compilato con compilatore microsoft da utilizzare con l'eseguibile openssl
+per firmare:
+
+openssl smime -engine HCSP -sign -signer "Stefano Casazza.pem" -keyform engine
+              -inkey "Stefano Casazza" -nodetach -out signed_con_engine -in pippo.txt
+
+Come si puo' vedere dalla riga di comando le informazioni necessarie sono il nome del
+certificato (parametro -inkey) da utilizzare per la firma e il certificato stesso
+esportato contenente la chiave pubblica (parametro -signer)
+
+Una conseguenza dell'utilizzo del framework CSP su Windows e' di rendere trasparente la
+provenienza del certificato e' quindi di gestire per esempio le smart card...
+
+TODO:
+In ambiente Linux il discorso per le smart card e' ovviamente diverso.
+E' necessario esplorare la problematica. Una possibilita' potrebbe essere quella di
+implementare un 'ENGINE' generico basato su interfaccia PKCS11.

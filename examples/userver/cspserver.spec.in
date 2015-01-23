@@ -1,0 +1,86 @@
+Name: cspserver
+Summary: general server SOAP for manage CA
+Version: @VERSION@
+Release: 1
+Epoch: 0
+License: GPL
+Group: Applications
+URL: http://www.unirel.com
+Source0: %{name}-%{version}.tar.gz
+Source1: cspserver.start
+BuildRoot: %{_tmppath}/%{name}-%{version}
+Provides: cspserver
+Packager: Stefano Casazza <stefano.casazza@unirel.com>
+Requires: ULib
+@RPM_REQUIRE@
+
+%description
+This package provides the program server for manage one general server SOAP for manage CA
+
+%prep
+%setup
+
+%build
+%configure @RPM_CONFIGURE@
+cd src/ulib
+make LDFLAGS="-s"
+cd ../../examples/userver
+make LDFLAGS="-s"
+cd ../..
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/srv/CSP/bin
+mkdir -p %{buildroot}/srv/CSP/etc
+mkdir -p %{buildroot}/srv/CSP/var/DB_CA
+mkdir -p %{buildroot}/srv/CSP/var/LCSP_command
+mkdir -p $RPM_BUILD_ROOT/%{_initrddir}
+mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
+SRC=tests/examples
+DST=%{buildroot}/srv/CSP
+autoconf/install-sh -c -m 755 examples/userver/cspserver.start					$RPM_BUILD_ROOT/%{_initrddir}/cspserver
+autoconf/install-sh -c -m 755 examples/userver/.libs/userver_ssl				$DST/bin/cspserver
+autoconf/install-sh -c -m 644 $SRC/userver.cfg                             $DST/etc/userver.cfg.dist
+autoconf/install-sh -c -m 644 $SRC/mod_http.cfg                            $DST/etc/mod_http.cfg.dist
+autoconf/install-sh -c -m 644 $SRC/mod_soap_or_rpc_csp.cfg						$DST/etc/mod_soap_or_rpc_csp.cfg.dist
+autoconf/install-sh -c -m 644 $SRC/cspserver.cfg									$DST/etc/cspserver.cfg.dist
+autoconf/install-sh -c -m 644 $SRC/cspserver_rpc.cfg								$DST/etc/cspserver_rpc.cfg.dist
+autoconf/install-sh -c -m 644 $SRC/CSP/DB_CA/openssl.cnf.tmpl					$DST/var/DB_CA
+autoconf/install-sh -c -m 644 $SRC/CSP/LCSP_command/.function					$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_CA.sh					$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_EMIT_CRL.sh			$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_GET_CA.sh				$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_GET_CRL.sh			$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_LIST_CA.sh			$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_LIST_CERTS.sh		$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_REMOVE_CERT.sh		$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_REVOKE_CERT.sh		$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_SIGN_P10.sh			$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_SIGN_SPACK.sh		$DST/var/LCSP_command
+autoconf/install-sh -c -m 755 $SRC/CSP/LCSP_command/csp_ZERO_CERTS.sh		$DST/var/LCSP_command
+
+cat > $RPM_BUILD_ROOT/etc/sysconfig/cspserver << EOF
+#ld_library_path=/usr/lib64
+exe=/srv/CSP/bin/cspserver
+confdir=/srv/CSP/etc
+EOF
+
+%post
+/sbin/chkconfig --add cspserver
+
+%preun
+%{_initrddir}/cspserver stop
+/sbin/chkconfig --del cspserver
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root,-)
+%{_initrddir}/cspserver
+/etc/sysconfig/cspserver
+/srv/CSP/bin/cspserver
+/srv/CSP/etc/*.cfg.dist
+/srv/CSP/var/DB_CA/openssl.cnf.tmpl
+/srv/CSP/var/LCSP_command/.function
+/srv/CSP/var/LCSP_command/*.sh

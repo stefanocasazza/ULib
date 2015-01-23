@@ -1,0 +1,8 @@
+ASCII text
+text/plain; charset=us-ascii
+Zip archive data, at least v2.0 to extract
+application/zip; charset=binary
+ISO-8859 text, with very long lines
+text/plain; charset=iso-8859-1
+lzop compressed data - version 1.020, LZO1X-1, os: Unix
+application/octet-stream; charset=binary

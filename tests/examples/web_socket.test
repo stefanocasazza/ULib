@@ -1,0 +1,55 @@
+#!/bin/sh
+
+. ../.function
+
+start_msg web_socket
+
+DOC_ROOT=websocket
+
+rm -f $DOC_ROOT/web_socket.log \
+		/tmp/UWebSocketPlugIn.err \
+      out/userver_tcp.out err/userver_tcp.err \
+                trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
+
+#UTRACE="0 50M 0"
+#UOBJDUMP="0 50M 1000"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 8787
+ RUN_AS_USER apache
+ MAX_KEEP_ALIVE 6
+ LOG_FILE web_socket.log
+ LOG_FILE_SZ 1M
+ LOG_MSG_SIZE -1
+ PLUGIN "socket http"
+ DOCUMENT_ROOT websocket
+ PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+ PREFORK_CHILD 1
+}
+socket {
+ COMMAND ../my_websocket.sh
+}
+EOF
+
+DIR_CMD="../../examples/userver"
+
+#STRACE=$TRUSS
+start_prg_background userver_tcp -c inp/webserver.cfg
+$SLEEP
+
+check_for_netcat
+send_req $NCAT localhost 8787 inp/http/websocket.req web_socket 6
+
+$SLEEP
+
+kill_prg userver_tcp TERM
+
+mv err/userver_tcp.err err/web_socket.err
+
+# Test against expected output
+test_output_wc l web_socket

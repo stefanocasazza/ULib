@@ -1,0 +1,1028 @@
+/* include/ulib/internal/config.h.in.  Generated from configure.ac by autoheader.  */
+
+/* C Flags */
+#undef CFLAGS_VAR
+
+/* Define to 1 if the `closedir' function returns void instead of `int'. */
+#undef CLOSEDIR_VOID
+
+/* Preprocessor Flags */
+#undef CPPFLAGS_VAR
+
+/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
+   systems. This function is required for `alloca.c' support on those systems.
+   */
+#undef CRAY_STACKSEG_END
+
+/* C++ Flags */
+#undef CXXFLAGS_VAR
+
+/* Compiler */
+#undef CXX_VAR
+
+/* Define to 1 if using `alloca.c'. */
+#undef C_ALLOCA
+
+/* debugging model */
+#undef DEBUG
+
+/* Define if you have d_namlen in struct dirent */
+#undef DIRENT_HAVE_D_NAMLEN
+
+/* Define if you have d_reclen in struct dirent */
+#undef DIRENT_HAVE_D_RECLEN
+
+/* Define if disable ipv6 support */
+#undef DISABLE_IPV6
+
+/* disable Large File Support features */
+#undef DISABLE_LFS
+
+/* disable memory pool features */
+#undef DISABLE_MEMPOOL
+
+/* Define if disable ZIP support */
+#undef DISABLE_ZIP
+
+/* Define if enable ipv6 support */
+#undef ENABLE_IPV6
+
+/* enable Large File Support features */
+#undef ENABLE_LFS
+
+/* enable memory pool features */
+#undef ENABLE_MEMPOOL
+
+/* Define if enable thread support */
+#undef ENABLE_THREAD
+
+/* Define if enable ZIP support */
+#undef ENABLE_ZIP
+
+/* Define to 1 if the fallocate() function is supported */
+#undef FALLOCATE_IS_SUPPORTED
+
+/* GNU C/C++ Compiler version */
+#undef GCC_VERSION
+
+/* has accept4 */
+#undef HAVE_ACCEPT4
+
+/* Define to 1 if you have the `alarm' function. */
+#undef HAVE_ALARM
+
+/* Define to 1 if you have `alloca', as a function or macro. */
+#undef HAVE_ALLOCA
+
+/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
+   */
+#undef HAVE_ALLOCA_H
+
+/* Define if we are on 64 bit architecture */
+#undef HAVE_ARCH64
+
+/* Define to 1 if you have the <arpa/inet.h> header file. */
+#undef HAVE_ARPA_INET_H
+
+/* Define to 1 if you have the <assert.h> header file. */
+#undef HAVE_ASSERT_H
+
+/* has atexit */
+#undef HAVE_ATEXIT
+
+/* C++ atomic header */
+#undef HAVE_ATOMIC_H
+
+/* there are the built-in functions to detect run-time CPU type and ISA */
+#undef HAVE_BUILTIN_CPU_INIT
+
+/* Define to 1 if you have the <byteswap.h> header file. */
+#undef HAVE_BYTESWAP_H
+
+/* Define to 1 if your system has a working `chown' function. */
+#undef HAVE_CHOWN
+
+/* enable cpp preprocessor features */
+#undef HAVE_CPP
+
+/* Define if exist type cpu_set_t */
+#undef HAVE_CPU_SET_T
+
+/* define if the compiler supports basic C++11 syntax */
+#undef HAVE_CXX11
+
+/* has daemon */
+#undef HAVE_DAEMON
+
+/* Define to 1 if you have the <dirent.h> header file. */
+#undef HAVE_DIRENT_H
+
+/* Define to 1 if you have the <dlfcn.h> header file. */
+#undef HAVE_DLFCN_H
+
+/* has dup3 */
+#undef HAVE_DUP3
+
+/* Define to 1 if you have the <endian.h> header file. */
+#undef HAVE_ENDIAN_H
+
+/* has epoll_create1 */
+#undef HAVE_EPOLL_CREATE1
+
+/* has epoll_wait */
+#undef HAVE_EPOLL_WAIT
+
+/* Define to 1 if you have the <execinfo.h> header file. */
+#undef HAVE_EXECINFO_H
+
+/* has fallocate */
+#undef HAVE_FALLOCATE
+
+/* has fallocate64 */
+#undef HAVE_FALLOCATE64
+
+/* Define to 1 if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define to 1 if you have the <float.h> header file. */
+#undef HAVE_FLOAT_H
+
+/* has fnmatch */
+#undef HAVE_FNMATCH
+
+/* Define to 1 if you have the `fork' function. */
+#undef HAVE_FORK
+
+/* cannot test in autoconf safely */
+#undef HAVE_GCC_ATOMICS
+
+/* has getaddrinfo */
+#undef HAVE_GETADDRINFO
+
+/* ipv6 host lookup */
+#undef HAVE_GETHOSTBYNAME2
+
+/* has getnameinfo */
+#undef HAVE_GETNAMEINFO
+
+/* has getopt_long */
+#undef HAVE_GETOPT_LONG
+
+/* Define to 1 if you have the `getpagesize' function. */
+#undef HAVE_GETPAGESIZE
+
+/* has getpriority */
+#undef HAVE_GETPRIORITY
+
+/* has gmtime_r */
+#undef HAVE_GMTIME_R
+
+/* enable gcc visibility features */
+#undef HAVE_GNUC_VISIBILTY
+
+/* Define to 1 if you have the <ifaddrs.h> header file. */
+#undef HAVE_IFADDRS_H
+
+/* has inet_ntop */
+#undef HAVE_INET_NTOP
+
+/* ipv6 support */
+#undef HAVE_INET_PTON
+
+/* Define to 1 if you have the `inotify_init1' function. */
+#undef HAVE_INOTIFY_INIT1
+
+/* Define to 1 if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* struct iphdr needed for IPv6 support */
+#undef HAVE_IPHDR
+
+/* Define to 1 if you have the `GeoIP' library (-lGeoIP). */
+#undef HAVE_LIBGEOIP
+
+/* Define to 1 if you have the <libintl.h> header file. */
+#undef HAVE_LIBINTL_H
+
+/* Define to 1 if you have the
+   <libnetfilter_conntrack/libnetfilter_conntrack.h> header file. */
+#undef HAVE_LIBNETFILTER_CONNTRACK_LIBNETFILTER_CONNTRACK_H
+
+/* Define to 1 if you have the `tcc' library (-ltcc). */
+#undef HAVE_LIBTCC
+
+/* Define to 1 if you have the `z' library (-lz). */
+#undef HAVE_LIBZ
+
+/* Define to 1 if you have the <limits.h> header file. */
+#undef HAVE_LIMITS_H
+
+/* Define to 1 if you have the <linux/in6.h> header file. */
+#undef HAVE_LINUX_IN6_H
+
+/* Define to 1 if you have the <linux/netfilter_ipv4/ipt_ACCOUNT.h> header
+   file. */
+#undef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
+
+/* have lstat */
+#undef HAVE_LSTAT
+
+/* Define to 1 if you have the <malloc.h> header file. */
+#undef HAVE_MALLOC_H
+
+/* Define to 1 if you have the <mcheck.h> header file. */
+#undef HAVE_MCHECK_H
+
+/* enable mcpp preprocessor features */
+#undef HAVE_MCPP
+
+/* Define if you have si_addr in siginfo_t */
+#undef HAVE_MEMBER_SI_ADDR
+
+/* has memmem */
+#undef HAVE_MEMMEM
+
+/* Define to 1 if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* has memrchr */
+#undef HAVE_MEMRCHR
+
+/* has mkdtemp */
+#undef HAVE_MKDTEMP
+
+/* Define to 1 if you have a working `mmap' system call. */
+#undef HAVE_MMAP
+
+/* has mremap */
+#undef HAVE_MREMAP
+
+/* Define if compiler recognizes nanosleep function */
+#undef HAVE_NANOSLEEP
+
+/* Define to 1 if you have the <ndir.h> header file. */
+#undef HAVE_NDIR_H
+
+/* Define to 1 if you have the <netdb.h> header file. */
+#undef HAVE_NETDB_H
+
+/* Define to 1 if you have the <netinet6/in6.h> header file. */
+#undef HAVE_NETINET6_IN6_H
+
+/* Define to 1 if you have the <netinet/in.h> header file. */
+#undef HAVE_NETINET_IN_H
+
+/* Define to 1 if you have the <netpacket/packet.h> header file. */
+#undef HAVE_NETPACKET_PACKET_H
+
+/* define if the compiler implements old style iostreams */
+#undef HAVE_OLD_IOSTREAM
+
+/* has pipe2 */
+#undef HAVE_PIPE2
+
+/* Define to 1 if you have the <poll.h> header file. */
+#undef HAVE_POLL_H
+
+/* posix memory alignment */
+#undef HAVE_POSIX_MEMALIGN
+
+/* has posix_spawn */
+#undef HAVE_POSIX_SPAWN
+
+/* has pread */
+#undef HAVE_PREAD
+
+/* pthread inherit scheduling attribute */
+#undef HAVE_PTHREAD_ATTR_SETINHRITSCHED
+
+/* pthread clocking */
+#undef HAVE_PTHREAD_CONDATTR_SETCLOCK
+
+/* pthread delay */
+#undef HAVE_PTHREAD_DELAY
+
+/* pthread delay np */
+#undef HAVE_PTHREAD_DELAY_NP
+
+/* pthread concurrency */
+#undef HAVE_PTHREAD_SETCONCURRENCY
+
+/* pthread scheduling */
+#undef HAVE_PTHREAD_SETSCHEDPRIO
+
+/* pthread yield */
+#undef HAVE_PTHREAD_YIELD
+
+/* Define to 1 if the system has the type `ptrdiff_t'. */
+#undef HAVE_PTRDIFF_T
+
+/* has sched_getaffinity */
+#undef HAVE_SCHED_GETAFFINITY
+
+/* Define to 1 if you have the <sched.h> header file. */
+#undef HAVE_SCHED_H
+
+/* Define to 1 if you have the <semaphore.h> header file. */
+#undef HAVE_SEMAPHORE_H
+
+/* has sem_getvalue */
+#undef HAVE_SEM_GETVALUE
+
+/* has sem_init */
+#undef HAVE_SEM_INIT
+
+/* has sendfile64 */
+#undef HAVE_SENDFILE64
+
+/* alternate dyn loader */
+#undef HAVE_SHL_LOAD
+
+/* has shm_open */
+#undef HAVE_SHM_OPEN
+
+/* Define if exist type siginfo_t */
+#undef HAVE_SIGINFO_T
+
+/* have socketpair in libsocket */
+#undef HAVE_SOCKETPAIR
+
+/* Define if we have time stamp support in openssl */
+#undef HAVE_SSL_TS
+
+/* Define to 1 if you have the <stddef.h> header file. */
+#undef HAVE_STDDEF_H
+
+/* Define to 1 if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define to 1 if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define to 1 if you have the `std::future`. */
+#undef HAVE_STD_FUTURE
+
+/* Define to 1 if you have the `std::chrono::steady_clock`. */
+#undef HAVE_STEADY_CLOCK
+
+/* string collation */
+#undef HAVE_STRCOLL
+
+/* Define to 1 if you have the <streambuf.h> header file. */
+#undef HAVE_STREAMBUF_H
+
+/* has strerror */
+#undef HAVE_STRERROR
+
+/* string icmp */
+#undef HAVE_STRICMP
+
+/* Define to 1 if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define to 1 if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* string istr */
+#undef HAVE_STRISTR
+
+/* has strndup */
+#undef HAVE_STRNDUP
+
+/* has strptime */
+#undef HAVE_STRPTIME
+
+/* has strsignal */
+#undef HAVE_STRSIGNAL
+
+/* Define to 1 if you have the <strstream.h> header file. */
+#undef HAVE_STRSTREAM_H
+
+/* has strtof */
+#undef HAVE_STRTOF
+
+/* has strtold */
+#undef HAVE_STRTOLD
+
+/* has strtoull */
+#undef HAVE_STRTOULL
+
+/* Define to 1 if `st_blksize' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BLKSIZE
+
+/* Define to 1 if `st_blocks' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BLOCKS
+
+/* Define to 1 if `st_rdev' is a member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_RDEV
+
+/* Define to 1 if your `struct stat' has `st_blocks'. Deprecated, use
+   `HAVE_STRUCT_STAT_ST_BLOCKS' instead. */
+#undef HAVE_ST_BLOCKS
+
+/* system config */
+#undef HAVE_SYSCONF
+
+/* Define to 1 if you have the <sysexits.h> header file. */
+#undef HAVE_SYSEXITS_H
+
+/* Define to 1 if you have the <syslog.h> header file. */
+#undef HAVE_SYSLOG_H
+
+/* Define to 1 if you have the <sys/dir.h> header file. */
+#undef HAVE_SYS_DIR_H
+
+/* Define to 1 if you have the <sys/inotify.h> header file. */
+#undef HAVE_SYS_INOTIFY_H
+
+/* Define to 1 if you have the <sys/ioctl.h> header file. */
+#undef HAVE_SYS_IOCTL_H
+
+/* Define to 1 if you have the <sys/ndir.h> header file. */
+#undef HAVE_SYS_NDIR_H
+
+/* Define to 1 if you have the <sys/param.h> header file. */
+#undef HAVE_SYS_PARAM_H
+
+/* Define to 1 if you have the <sys/sched.h> header file. */
+#undef HAVE_SYS_SCHED_H
+
+/* Define to 1 if you have the <sys/sendfile.h> header file. */
+#undef HAVE_SYS_SENDFILE_H
+
+/* Define to 1 if you have the <sys/socket.h> header file. */
+#undef HAVE_SYS_SOCKET_H
+
+/* Define to 1 if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define to 1 if you have the <sys/syscall.h> header file. */
+#undef HAVE_SYS_SYSCALL_H
+
+/* Define to 1 if you have the <sys/timeb.h> header file. */
+#undef HAVE_SYS_TIMEB_H
+
+/* Define to 1 if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define to 1 if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define to 1 if you have <sys/wait.h> that is POSIX.1 compatible. */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to 1 if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
+/* has timegm */
+#undef HAVE_TIMEGM
+
+/* Define to 1 if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the `vfork' function. */
+#undef HAVE_VFORK
+
+/* Define to 1 if you have the <vfork.h> header file. */
+#undef HAVE_VFORK_H
+
+/* Define to 1 if you have the <wchar.h> header file. */
+#undef HAVE_WCHAR_H
+
+/* Define to 1 if `fork' works. */
+#undef HAVE_WORKING_FORK
+
+/* Define if socket option SO_RCVTIMEO is implemented */
+#undef HAVE_WORKING_SOCKET_OPTION_SO_RCVTIMEO
+
+/* Define to 1 if `vfork' works. */
+#undef HAVE_WORKING_VFORK
+
+/* Define to 1 if the system has the type `_Bool'. */
+#undef HAVE__BOOL
+
+/* Define to 1 if you have the
+   </usr/src/linux/include/generated/uapi/linux/version.h> header file. */
+#undef HAVE__USR_SRC_LINUX_INCLUDE_GENERATED_UAPI_LINUX_VERSION_H
+
+/* Linker Flags */
+#undef LDFLAGS_VAR
+
+/* Linker */
+#undef LD_VAR
+
+/* LD Linker version */
+#undef LD_VERSION
+
+/* Standard C lib version */
+#undef LIBC_VERSION
+
+/* Libraries */
+#undef LIBS_VAR
+
+/* Define to 1 if `lstat' dereferences a symlink specified with a trailing
+   slash. */
+#undef LSTAT_FOLLOWS_SLASHED_SYMLINK
+
+/* Define to the sub-directory in which libtool stores uninstalled libraries.
+   */
+#undef LT_OBJDIR
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in <mkdev.h>.
+   */
+#undef MAJOR_IN_MKDEV
+
+/* Define to 1 if `major', `minor', and `makedev' are declared in
+   <sysmacros.h>. */
+#undef MAJOR_IN_SYSMACROS
+
+/* Define to the address where bug reports for this package should be sent. */
+#undef PACKAGE_BUGREPORT
+
+/* Define to the full name of this package. */
+#undef PACKAGE_NAME
+
+/* Define to the full name and version of this package. */
+#undef PACKAGE_STRING
+
+/* Define to the one symbol short name of this package. */
+#undef PACKAGE_TARNAME
+
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
+/* Define to the version of this package. */
+#undef PACKAGE_VERSION
+
+/* Platform */
+#undef PLATFORM_VAR
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* The size of `int', as computed by sizeof. */
+#undef SIZEOF_INT
+
+/* The size of `long', as computed by sizeof. */
+#undef SIZEOF_LONG
+
+/* The size of `long long', as computed by sizeof. */
+#undef SIZEOF_LONG_LONG
+
+/* The size of `off_t', as computed by sizeof. */
+#undef SIZEOF_OFF_T
+
+/* The size of `ptrdiff_t', as computed by sizeof. */
+#undef SIZEOF_PTRDIFF_T
+
+/* The size of `short', as computed by sizeof. */
+#undef SIZEOF_SHORT
+
+/* The size of `size_t', as computed by sizeof. */
+#undef SIZEOF_SIZE_T
+
+/* The size of `time_t', as computed by sizeof. */
+#undef SIZEOF_TIME_T
+
+/* The size of `unsigned char', as computed by sizeof. */
+#undef SIZEOF_UNSIGNED_CHAR
+
+/* The size of `void *', as computed by sizeof. */
+#undef SIZEOF_VOID_P
+
+/* The size of `__int64', as computed by sizeof. */
+#undef SIZEOF___INT64
+
+/* If using the C implementation of alloca, define if you know the
+   direction of stack growth for your system; otherwise it will be
+   automatically deduced at runtime.
+	STACK_DIRECTION > 0 => grows toward higher addresses
+	STACK_DIRECTION < 0 => grows toward lower addresses
+	STACK_DIRECTION = 0 => direction of growth unknown */
+#undef STACK_DIRECTION
+
+/* Define to 1 if the `S_IS*' macros in <sys/stat.h> do not work properly. */
+#undef STAT_MACROS_BROKEN
+
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Stardard GNU C++ Library version */
+#undef STDGPP_VERSION
+
+/* sys/inotify.h exists and works correctly */
+#undef SYS_INOTIFY_H_EXISTS_AND_WORKS
+
+/* Define to 1 if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Define if you have tm_gmtoff in struct tm */
+#undef TM_HAVE_TM_GMTOFF
+
+/* Define to 1 if your <sys/time.h> declares `struct tm'. */
+#undef TM_IN_SYS_TIME
+
+/* ULib version */
+#undef ULIB_VERSION
+
+/* Define if enable c-ares support */
+#undef USE_C_ARES
+
+/* Define if we have support for crc32 intrinsics */
+#undef USE_HARDWARE_CRC32
+
+/* Define if enable libcurL support */
+#undef USE_LIBCURL
+
+/* Define if enable libdbi support */
+#undef USE_LIBDBI
+
+/* Define if enable libevent support */
+#undef USE_LIBEVENT
+
+/* Define if enable libexpat support */
+#undef USE_LIBEXPAT
+
+/* Define if enable libldap support */
+#undef USE_LIBLDAP
+
+/* Define if enable libmagic support */
+#undef USE_LIBMAGIC
+
+/* Define if enable libpcre support */
+#undef USE_LIBPCRE
+
+/* Define if enable libssh support */
+#undef USE_LIBSSH
+
+/* Define if enable libssl support */
+#undef USE_LIBSSL
+
+/* Define if enable libuuid support */
+#undef USE_LIBUUID
+
+/* Define if enable libv8 support */
+#undef USE_LIBV8
+
+/* Define if enable libxml2 support */
+#undef USE_LIBXML2
+
+/* Define if enable libz support */
+#undef USE_LIBZ
+
+/* Define if enable MySQL database support */
+#undef USE_MYSQL
+
+/* Define if enable libpagespeed support */
+#undef USE_PAGE_SPEED
+
+/* Define if use parser generator bison/yacc */
+#undef USE_PARSER
+
+/* Define if enable PostgreSQL database support */
+#undef USE_PGSQL
+
+/* Define if enable php support */
+#undef USE_PHP
+
+/* Define if enable ruby support */
+#undef USE_RUBY
+
+/* Define if enable SQLite database support */
+#undef USE_SQLITE
+
+/* Enable extensions on AIX 3, Interix.  */
+#ifndef _ALL_SOURCE
+# undef _ALL_SOURCE
+#endif
+/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif
+/* Enable threading extensions on Solaris.  */
+#ifndef _POSIX_PTHREAD_SEMANTICS
+# undef _POSIX_PTHREAD_SEMANTICS
+#endif
+/* Enable extensions on HP NonStop.  */
+#ifndef _TANDEM_SOURCE
+# undef _TANDEM_SOURCE
+#endif
+/* Enable general extensions on Solaris.  */
+#ifndef __EXTENSIONS__
+# undef __EXTENSIONS__
+#endif
+
+
+/* enable ACL filtering support */
+#undef U_ACL_SUPPORT
+
+/* enable alias URI support */
+#undef U_ALIAS
+
+/* disable cache request support */
+#undef U_CACHE_REQUEST_DISABLE
+
+/* enable server classic model support */
+#undef U_CLASSIC_SUPPORT
+
+/* enable client response partial write support */
+#undef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+
+/* enable GDB stack dump support */
+#undef U_GDB_STACK_DUMP_ENABLE
+
+/* enable HTML pagination support */
+#undef U_HTML_PAGINATION_SUPPORT
+
+/* enable HTTP inotify support */
+#undef U_HTTP_INOTIFY_SUPPORT
+
+/* enable HTTP Strict Transport Security support */
+#undef U_HTTP_STRICT_TRANSPORT_SECURITY
+
+/* enable HTTP upload progress support */
+#undef U_HTTP_UPLOAD_PROGRESS_SUPPORT
+
+/* install directory for plugins */
+#undef U_LIBEXECDIR
+
+/* disable client and server log support */
+#undef U_LOG_DISABLE
+
+/* disable homogeneous pipeline request support */
+#undef U_PIPELINE_HOMOGENEOUS_DISABLE
+
+/* install directory */
+#undef U_PREFIXDIR
+
+/* enable RFC1918 filtering support */
+#undef U_RFC1918_SUPPORT
+
+/* enable server captive portal mode */
+#undef U_SERVER_CAPTIVE_PORTAL
+
+/* enable server check time between request for parallelization */
+#undef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+
+/* enable server thread approach support */
+#undef U_SERVER_THREAD_APPROACH_SUPPORT
+
+/* STATIC_HANDLER_ECHO */
+#undef U_STATIC_HANDLER_ECHO
+
+/* STATIC_HANDLER_FCGI */
+#undef U_STATIC_HANDLER_FCGI
+
+/* STATIC_HANDLER_GEOIP */
+#undef U_STATIC_HANDLER_GEOIP
+
+/* STATIC_HANDLER_HTTP */
+#undef U_STATIC_HANDLER_HTTP
+
+/* STATIC_HANDLER_NOCAT */
+#undef U_STATIC_HANDLER_NOCAT
+
+/* STATIC_HANDLER_PROXY */
+#undef U_STATIC_HANDLER_PROXY
+
+/* STATIC_HANDLER_RPC */
+#undef U_STATIC_HANDLER_RPC
+
+/* STATIC_HANDLER_SCGI */
+#undef U_STATIC_HANDLER_SCGI
+
+/* STATIC_HANDLER_SHIB */
+#undef U_STATIC_HANDLER_SHIB
+
+/* STATIC_HANDLER_SOAP */
+#undef U_STATIC_HANDLER_SOAP
+
+/* STATIC_HANDLER_SOCKET */
+#undef U_STATIC_HANDLER_SOCKET
+
+/* STATIC_HANDLER_SSI */
+#undef U_STATIC_HANDLER_SSI
+
+/* STATIC_HANDLER_STREAM */
+#undef U_STATIC_HANDLER_STREAM
+
+/* STATIC_HANDLER_TSA */
+#undef U_STATIC_HANDLER_TSA
+
+/* STATIC_ONLY */
+#undef U_STATIC_ONLY
+
+/* STATIC_ORM_DRIVER_MYSQL */
+#undef U_STATIC_ORM_DRIVER_MYSQL
+
+/* STATIC_ORM_DRIVER_PGSQL */
+#undef U_STATIC_ORM_DRIVER_PGSQL
+
+/* STATIC_ORM_DRIVER_SQLITE */
+#undef U_STATIC_ORM_DRIVER_SQLITE
+
+/* STATIC_SERVLET */
+#undef U_STATIC_SERVLET
+
+/* STATIC_SERVLET_WI_AUTH */
+#undef U_STATIC_SERVLET_WI_AUTH
+
+/* full c++ support and linking model */
+#undef U_STDCPP_ENABLE
+
+/* install directory for configuration data */
+#undef U_SYSCONFDIR
+
+/* enable welcome message support */
+#undef U_WELCOME_SUPPORT
+
+/* Define if we have zlib with this function */
+#undef U_ZLIB_DEFLATE_WORKSPACESIZE
+
+/* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
+   `char[]'. */
+#undef YYTEXT_POINTER
+
+/* Bison version */
+#undef _BISON_VERSION
+
+/* libcURL - multiprotocol file transfer library version */
+#undef _CURL_VERSION
+
+/* version of c-ares library for asynchronous DNS requests */
+#undef _C_ARES_VERSION
+
+/* libdbi - Database Independent Abstraction Layer version */
+#undef _DBI_VERSION
+
+/* Expat version */
+#undef _EXPAT_VERSION
+
+/* Flex version */
+#undef _FLEX_VERSION
+
+/* Ldap version */
+#undef _LDAP_VERSION
+
+/* libevent - event notification library version */
+#undef _LIBEVENT_VERSION
+
+/* libSSH version */
+#undef _LIBSSH_VERSION
+
+/* libuuid - version library to create a new UUID value */
+#undef _LIBUUID_VERSION
+
+/* libxml2 - version 2 of the library to manipulate XML files */
+#undef _LIBXML2_VERSION
+
+/* libz - general purpose compression library version */
+#undef _LIBZ_VERSION
+
+/* libmagic - magic number recognition library version */
+#undef _MAGIC_VERSION
+
+/* Define to 1 if on MINIX. */
+#undef _MINIX
+
+/* libmysql - MySQL Database System library version */
+#undef _MYSQL_VERSION
+
+/* Operating System version */
+#undef _OS_VERSION
+
+/* PageSpeed - version of Google page speed SDK */
+#undef _PAGE_SPEED_VERSION
+
+/* PCRE - Perl compatible regular expressions version */
+#undef _PCRE_VERSION
+
+/* version of PostgreSQL database support */
+#undef _PGSQL_VERSION
+
+/* version of PHP language runtime engine embed SAPIs */
+#undef _PHP_VERSION
+
+/* Define to 2 if the system does not provide POSIX.1 features except with
+   this defined. */
+#undef _POSIX_1_SOURCE
+
+/* Define to 1 if you need to in order for `stat' and other things to work. */
+#undef _POSIX_SOURCE
+
+/* version of RUBY language runtime engine embed */
+#undef _RUBY_VERSION
+
+/* libsqlite - SQLITE Database System library version */
+#undef _SQLITE_VERSION
+
+/* SSL version */
+#undef _SSL_VERSION
+
+/* Define for Solaris 2.5.1 so the uint32_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+#undef _UINT32_T
+
+/* Define for Solaris 2.5.1 so the uint64_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+#undef _UINT64_T
+
+/* Define for Solaris 2.5.1 so the uint8_t typedef from <sys/synch.h>,
+   <pthread.h>, or <semaphore.h> is not used. If the typedef were allowed, the
+   #define below would cause a syntax error. */
+#undef _UINT8_T
+
+/* V8 - version of Google V8 JavaScript Engine */
+#undef _V8_VERSION
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef gid_t
+
+/* Define to `__inline__' or `__inline' if that's what the C compiler
+   calls it, or to nothing if 'inline' is not supported under any name.  */
+#ifndef __cplusplus
+#undef inline
+#endif
+
+/* Define to the type of a signed integer type of width exactly 16 bits if
+   such a type exists and the standard includes do not define it. */
+#undef int16_t
+
+/* Define to the type of a signed integer type of width exactly 32 bits if
+   such a type exists and the standard includes do not define it. */
+#undef int32_t
+
+/* Define to the type of a signed integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
+#undef int64_t
+
+/* Define to the type of a signed integer type of width exactly 8 bits if such
+   a type exists and the standard includes do not define it. */
+#undef int8_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef mode_t
+
+/* Define to `long int' if <sys/types.h> does not define. */
+#undef off_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* Define to `long' if <sys/types.h> does not define. */
+#undef ptrdiff_t
+
+/* Define to the equivalent of the C99 'restrict' keyword, or to
+   nothing if this is not supported.  Do not define if restrict is
+   supported directly.  */
+#undef restrict
+/* Work around a bug in Sun C++: it does not support _Restrict or
+   __restrict__, even though the corresponding Sun C compiler ends up with
+   "#define restrict _Restrict" or "#define restrict __restrict__" in the
+   previous line.  Perhaps some future version of Sun C++ will work with
+   restrict; if so, hopefully it defines __RESTRICT like Sun C does.  */
+#if defined __SUNPRO_CC && !defined __RESTRICT
+# define _Restrict
+# define __restrict__
+#endif
+
+/* Define to `unsigned int' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef ssize_t
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef uid_t
+
+/* Define to the type of an unsigned integer type of width exactly 16 bits if
+   such a type exists and the standard includes do not define it. */
+#undef uint16_t
+
+/* Define to the type of an unsigned integer type of width exactly 32 bits if
+   such a type exists and the standard includes do not define it. */
+#undef uint32_t
+
+/* Define to the type of an unsigned integer type of width exactly 64 bits if
+   such a type exists and the standard includes do not define it. */
+#undef uint64_t
+
+/* Define to the type of an unsigned integer type of width exactly 8 bits if
+   such a type exists and the standard includes do not define it. */
+#undef uint8_t
+
+/* Define as `fork' if `vfork' does not work. */
+#undef vfork
+
+/* Define to empty if the keyword `volatile' does not work. Warning: valid
+   code using `volatile' can become incorrect without. Disable with care. */
+#undef volatile
+
+
+#include <ulib/internal/platform.h>
+

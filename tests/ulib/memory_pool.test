@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## memory_pool.test -- Test memory pool feature
+
+start_msg memory_pool
+
+#UTRACE="0 25M 1"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg memory_pool 1
+
+# Test against expected output
+test_output_wc l memory_pool

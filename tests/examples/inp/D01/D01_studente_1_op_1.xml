@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<!DOCTYPE operation SYSTEM "dtdUrl_556adfbc-0107-5000-ede4-d208">
+<operation>
+<description>Inserimento di ritiro certificato</description>
+<uid>01_rossi_1</uid>
+<id>D01_studente_1_op_1</id>
+<date>03/11/2005 10:17:46</date>
+<holder>Mario_1 Rossi_1</holder>
+<author>workflow</author>
+</operation>

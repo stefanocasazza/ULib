@@ -1,0 +1,47 @@
+/* questa serie di macro rappresentano la strutturazione dell'area di memoria
+ * definita da 'U_SPACE' (mem_block) come insieme di blocchi di memoria di
+ * dimensione definita da 'U_TYPE' (4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096)
+ * i cui puntatori vengono qui calcolati e quindi permettono l'inizializzazione
+ * dell'area di memoria  'mem_pointer_block' come insieme di stack contenenti puntatori.
+ * *************************************************************************************
+ * NB: l'inizializzazione seguente dipende strettamente da 'U_NUM_ENTRY_BLOCK'
+ * che normalmente e' uguale a 32, altrimenti (per test si assegna a 2...) si
+ * devono commentare nel file "./memory_pool.dat" le righe eccessive...
+ * *************************************************************************************
+ */
+U_SPACE + U_TYPE *   0, U_SPACE + U_TYPE *   1,
+U_SPACE + U_TYPE *   2, U_SPACE + U_TYPE *   3, U_SPACE + U_TYPE *   4, U_SPACE + U_TYPE *   5, U_SPACE + U_TYPE *   6,
+U_SPACE + U_TYPE *   7, U_SPACE + U_TYPE *   8, U_SPACE + U_TYPE *   9, U_SPACE + U_TYPE *  10, U_SPACE + U_TYPE *  11,
+U_SPACE + U_TYPE *  12, U_SPACE + U_TYPE *  13, U_SPACE + U_TYPE *  14, U_SPACE + U_TYPE *  15, U_SPACE + U_TYPE *  16,
+U_SPACE + U_TYPE *  17, U_SPACE + U_TYPE *  18, U_SPACE + U_TYPE *  19, U_SPACE + U_TYPE *  20, U_SPACE + U_TYPE *  21,
+U_SPACE + U_TYPE *  22, U_SPACE + U_TYPE *  23, U_SPACE + U_TYPE *  24, U_SPACE + U_TYPE *  25, U_SPACE + U_TYPE *  26,
+U_SPACE + U_TYPE *  27, U_SPACE + U_TYPE *  28, U_SPACE + U_TYPE *  29, U_SPACE + U_TYPE *  30, U_SPACE + U_TYPE *  31,
+/*
+U_SPACE + U_TYPE *  32, U_SPACE + U_TYPE *  33, U_SPACE + U_TYPE *  34, U_SPACE + U_TYPE *  35, U_SPACE + U_TYPE *  36,
+U_SPACE + U_TYPE *  37, U_SPACE + U_TYPE *  38, U_SPACE + U_TYPE *  39, U_SPACE + U_TYPE *  40, U_SPACE + U_TYPE *  41,
+U_SPACE + U_TYPE *  42, U_SPACE + U_TYPE *  43, U_SPACE + U_TYPE *  44, U_SPACE + U_TYPE *  45, U_SPACE + U_TYPE *  46,
+U_SPACE + U_TYPE *  47, U_SPACE + U_TYPE *  48, U_SPACE + U_TYPE *  49, U_SPACE + U_TYPE *  50, U_SPACE + U_TYPE *  51,
+U_SPACE + U_TYPE *  52, U_SPACE + U_TYPE *  53, U_SPACE + U_TYPE *  54, U_SPACE + U_TYPE *  55, U_SPACE + U_TYPE *  56,
+U_SPACE + U_TYPE *  57, U_SPACE + U_TYPE *  58, U_SPACE + U_TYPE *  59, U_SPACE + U_TYPE *  60, U_SPACE + U_TYPE *  61,
+U_SPACE + U_TYPE *  62, U_SPACE + U_TYPE *  63, U_SPACE + U_TYPE *  64, U_SPACE + U_TYPE *  65, U_SPACE + U_TYPE *  66,
+U_SPACE + U_TYPE *  67, U_SPACE + U_TYPE *  68, U_SPACE + U_TYPE *  69, U_SPACE + U_TYPE *  70, U_SPACE + U_TYPE *  71,
+U_SPACE + U_TYPE *  72, U_SPACE + U_TYPE *  73, U_SPACE + U_TYPE *  74, U_SPACE + U_TYPE *  75, U_SPACE + U_TYPE *  76,
+U_SPACE + U_TYPE *  77, U_SPACE + U_TYPE *  78, U_SPACE + U_TYPE *  79, U_SPACE + U_TYPE *  80, U_SPACE + U_TYPE *  81,
+U_SPACE + U_TYPE *  82, U_SPACE + U_TYPE *  83, U_SPACE + U_TYPE *  84, U_SPACE + U_TYPE *  85, U_SPACE + U_TYPE *  86,
+U_SPACE + U_TYPE *  87, U_SPACE + U_TYPE *  88, U_SPACE + U_TYPE *  89, U_SPACE + U_TYPE *  90, U_SPACE + U_TYPE *  91,
+U_SPACE + U_TYPE *  92, U_SPACE + U_TYPE *  93, U_SPACE + U_TYPE *  94, U_SPACE + U_TYPE *  95, U_SPACE + U_TYPE *  96,
+U_SPACE + U_TYPE *  97, U_SPACE + U_TYPE *  98, U_SPACE + U_TYPE *  99, U_SPACE + U_TYPE * 100, U_SPACE + U_TYPE * 101,
+U_SPACE + U_TYPE * 102, U_SPACE + U_TYPE * 103, U_SPACE + U_TYPE * 104, U_SPACE + U_TYPE * 105, U_SPACE + U_TYPE * 106,
+U_SPACE + U_TYPE * 107, U_SPACE + U_TYPE * 108, U_SPACE + U_TYPE * 109, U_SPACE + U_TYPE * 110, U_SPACE + U_TYPE * 111,
+U_SPACE + U_TYPE * 112, U_SPACE + U_TYPE * 113, U_SPACE + U_TYPE * 114, U_SPACE + U_TYPE * 115, U_SPACE + U_TYPE * 116,
+U_SPACE + U_TYPE * 117, U_SPACE + U_TYPE * 118, U_SPACE + U_TYPE * 119, U_SPACE + U_TYPE * 120, U_SPACE + U_TYPE * 121,
+U_SPACE + U_TYPE * 122, U_SPACE + U_TYPE * 123, U_SPACE + U_TYPE * 124, U_SPACE + U_TYPE * 125, U_SPACE + U_TYPE * 126,
+U_SPACE + U_TYPE * 127,
+*/
+0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/*
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+*/

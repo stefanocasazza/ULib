@@ -1,0 +1,30 @@
+# PiazzeAperte
+
+# +CRING: VOICE
+# +CLIP: "+39055340773",145,,,,0
+
+verbose on
+timeout 864000
+goto main
+
+caller:
+#	print \ncaller
+	expect {
+	'LIP: "+39"'	goto close
+	timeout 3		goto close
+	}
+
+close:
+#	print \nclose
+	send ath
+	! ./ABILITA_CALLER_ID.sh
+#	! killall -9 minicom
+#	exit 0
+
+main:
+#	print main
+	send ""
+	expect {
+	"RING: VOICE"	goto caller
+ 	timeout 86400	goto main
+	}

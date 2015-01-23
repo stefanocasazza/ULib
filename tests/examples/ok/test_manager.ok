@@ -1,0 +1,22 @@
+
+Start TestID <[I] test ok>
+--------------------------------------------------------------------
+--------------------------------------------------------------------
+End   TestID <[I] test ok> - PASS
+
+
+Start TestID <[II] test ko>
+--------------------------------------------------------------------
+VAR_2=VALUE 2
+VAR_1=VALUE_1
+--------------------------------------------------------------------
+End   TestID <[II] test ko> - FAIL
+Expected exit code <EX_OSERR>, returned <0>
+
+
+Start TestID <[III] test no command>
+--------------------------------------------------------------------
+command 'pippo' didn't start  - ENOENT (2, No such file or directory)
+--------------------------------------------------------------------
+End   TestID <[III] test no command> - PASS
+

@@ -1,0 +1,48 @@
+***********************************************
+* Testing class Thread without syncronization *
+***********************************************
+Testing thread creation
+
+- thread should set n to 1...ok
+
+Testing thread is working
+
+- thread should change n...ok
+- thread should change n...ok
+
+Testing suspend & resume
+
+- thread should not change n...ok
+- thread should not change n...ok
+- thread should change n...ok
+- thread should change n...ok
+
+Testing recursive suspend & resume
+
+- thread should not change n...ok
+- thread should not change n...ok
+- thread should not change n...ok
+- thread should not change n...ok
+- thread should change n...ok
+- thread should change n...ok
+
+Testing no suspend on resume
+
+- thread should change n...ok
+- thread should change n...ok
+
+Testing resuspend
+
+- thread should not change n...ok
+- thread should not change n...ok
+
+starting father thread
+starting child thread
+child start
+father end
+
+starting thread
+created auto object on stack
+ending thread
+
+Now program should finish... :)

@@ -1,0 +1,30 @@
+See http://www.debian.org/ for information about Debian GNU/Linux.
+Four Debian releases are available on the main site:
+
+Debian 6.0.10, or squeeze.  Access this release through dists/oldstable
+Debian 6.0.10 was released Saturday, 19th July 2014. Please note that
+the 6.0 distribution is no longer receiving security support. If you
+are using the amd64 or i386 architecture and not able to upgrade to the
+current stable release, you may wish to investigate the "squeeze-lts"
+distribution. More information is available at:
+https://wiki.debian.org/LTS/ 
+
+Debian 7.8, or wheezy.  Access this release through dists/stable
+Debian 7.8 was released Saturday, 10th January 2015.
+
+Testing, or jessie.  Access this release through dists/testing.  The
+current tested development snapshot is named jessie.  Packages which
+have been tested in unstable and passed automated tests propagate to
+this release.
+
+Unstable, or sid.  Access this release through dists/unstable.  The
+current development snapshot is named sid.  Untested candidate
+packages for future releases.
+
+Older releases of Debian are at http://archive.debian.org/debian-archive
+
+--- Other directories:
+doc             Debian documentation.
+indices         Various indices of the site.
+project         Experimental packages and other miscellaneous files.
+tools           Tools for creating boot disks and booting Linux.

@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. ../.function
+
+## command.test -- Test command feature
+
+start_msg command
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+#VALGRIND=valgrind
+ export UTRACE UOBJDUMP USIMERR
+
+#STRACE=$TRUSS
+start_prg command
+
+if [ -n "$WINELOADER" ]; then
+	mv out/command.out out/command.out1
+	grep -v "test_command.cpp:" out/command.out1 > out/command.out
+fi
+
+# Test against expected output
+test_output_wc w command

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it" lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width; initial-scale=1; minimum-scale=1; maximum-scale=1" />
+  <link rel="stylesheet" href="css/masterv7.css" />
+  <noscript>
+  <link rel="stylesheet" href="css/mobilev5.css" />
+  </noscript>
+  <script src="js/mobile.js"></script>
+  <script src="js/wimove.js"></script>
+  <script>
+<!--
+ loadCss("css/fullv5.css","css/mobilev5.css");
+//-->
+  </script>
+  <!--#exec servlet=$VIRTUAL_HOST/servlet/wi_auth -->
+  <!--#if expr="$HTTP_RESPONSE_CODE == 0" -->
+    <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
+  <!--#endif -->
+  <title><!--#echo var=$TITLE_TXT --></title>
+  <!--#echo var=$SSI_HEAD -->
+</head>
+<body <!--#echo var=$BODY_STYLE -->>
+  <!--#include direct=$SSI_FILE_BODY -->
+</body>
+</html>

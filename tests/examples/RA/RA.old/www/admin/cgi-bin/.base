@@ -1,0 +1,172 @@
+#!/bin/bash
+
+# .base
+
+uscita() {
+
+	if [ -s $TMPFILE.out ]; then
+		rm -f $TMPFILE.out
+	fi
+	if [ -s $TMPFILE.err ]; then
+		rm -f $TMPFILE.err
+	fi
+
+	exit $EXIT_VALUE
+}
+
+print_page() {
+
+	OUTPUT=`cat $FORM_FILE_DIR/$BASE_NAME.tmpl 2>/dev/null`
+
+	if [ $# -ne 0 ]; then
+		OUTPUT=`printf "$OUTPUT" "$@" 2>/dev/null`
+	fi
+}
+
+write_OUTPUT() {
+
+	if [ -n "$OUTPUT" ]; then
+
+		if [ -n "$CONNECTION_CLOSE" ]; then
+			echo -e "Connection: close\r"
+		fi
+
+		if [ -n "$SET_COOKIE" ]; then
+			# REQ: Set-Cookie: TODO[ data expire path domain secure HttpOnly ]
+			# ----------------------------------------------------------------------------------------------------------------------------
+			# string -- Data to put into the cookie         -- must
+			# int    -- Lifetime of the cookie in HOURS     -- must (0 -> valid until browser exit)
+			# string -- Path where the cookie can be used   --  opt
+			# string -- Domain which can read the cookie    --  opt
+			# bool   -- Secure mode                         --  opt
+			# bool   -- Only allow HTTP usage               --  opt
+			# ----------------------------------------------------------------------------------------------------------------------------
+			# RET: Set-Cookie: ulib_sid=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+
+			echo -e "Set-Cookie: TODO[ $SET_COOKIE 4320 ]\r" # 180 days
+		fi
+
+		echo -e "Content-Type: text/html; charset=utf-8\r\n\r"
+		echo -n -E "$OUTPUT"
+
+	else
+		# BAD REQUEST
+		echo -e "Status: 400\r\n\r\n" \
+				  "<!DOCTYPE HTML PUBLIC \"-//IETF//DTD HTML 2.0//EN\">\r\n" \
+				  "<html><head>\r\n" \
+				  "<title>400 Bad Request</title>\r\n" \
+				  "</head><body>\r\n" \
+				  "<h1>Bad Request</h1>\r\n" \
+				  "<p>Your browser sent a request that this server could not understand.<br />\r\n" \
+				  "</p>\r\n" \
+				  "<hr>\r\n" \
+				  "<address>ULib Server</address>\r\n" \
+				  "</body></html>\r"
+
+		EXIT_VALUE=1
+	fi
+
+	uscita
+}
+
+send_MAIL() {
+
+	# 1 -> NAME
+	# 2 -> DIR_SCAN
+
+	if [ ! -f $1.eml ]; then
+		exit 1
+	fi
+
+	  TO=`head $1.eml | grep To   | cut -d' ' -f2 | tr -d "[:space:]"`
+	FROM=`head $1.eml | grep From | cut -d' ' -f2 | tr -d "[:space:]"`
+
+	if [ ! -f $1.p7m ]; then
+		openssl smime -in $1.eml -sign -signer $RA_OPERATOR_CERTIFICATE -inkey $RA_OPERATOR_KEY -nodetach -binary -outform SMIME >$1.p7m 2>/dev/null
+
+		if [ $? -eq 0 ]; then
+			rm -f $1.eml
+
+			if [ -n "$2" ]; then
+				rm -f $2/*.tiff $2/*.png $2/*.pdf
+			fi
+		fi
+
+		# command for extract mail
+		# openssl smime -verify -noverify -in $1.p7m > $1.eml
+	fi
+
+	# --------------------------------------------
+	# smtp configuration
+	# --------------------------------------------
+	# TEST
+	# openssl s_client -connect ${SMTP_HOST}:${SMTP_PORT} -starttls smtp
+	# exit 0
+	# --------------------------------------------
+
+	msmtp --tls=on --tls-certcheck=off --tls-min-dh-prime-bits=512 \
+			--host="${SMTP_HOST}" --port="${SMTP_PORT}" --from="${FROM}" -- "${TO}" <$1.p7m >/dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		#rm -f $1.p7m
+		exit 0
+	fi
+
+	exit 1
+}
+
+send_MAIL_and_goto_MAIN_MENU() {
+
+	send_MAIL $1 $2 &
+
+	# goto main menu...
+
+	echo -e "Location: /\r\n\r"
+
+	exit 0
+}
+
+# set -x
+
+# global var
+BASE_NAME=$(basename $0 .bash)
+
+if [ -z "$HTTP_ACCEPT_LANGUAGE" -o ! -d ../form/$HTTP_ACCEPT_LANGUAGE ]; then
+	HTTP_ACCEPT_LANGUAGE=en
+fi
+
+FORM_FILE_DIR=../form/$HTTP_ACCEPT_LANGUAGE
+
+# set +x
+
+# --------------------------------
+#  session cookie (no NAT)
+# --------------------------------
+SESSION_ID=$REMOTE_ADDR
+# --------------------------------
+#  session cookie (with NAT)
+# --------------------------------
+#	if [ -n "$HTTP_COOKIE" ]; then
+#		SESSION_ID=$HTTP_COOKIE
+#	else
+#     SET_COOKIE=SESS_$$
+#		SESSION_ID=$SET_COOKIE
+#	fi
+# --------------------------------
+
+# ---------------------------------------------------------------------
+# NB: se cambia qualcosa qui, bisogna cambiarlo anche nel .env di admin
+# ---------------------------------------------------------------------
+DIR_MAIL=$HOME_DIR/mail
+DIR_SCAN=../../scan/$SESSION_ID/$BASE_NAME
+# ---------------------------------------------------------------------
+
+EXIT_VALUE=0
+
+export OUTPUT BASE_NAME FORM_FILE_DIR TMP_FORM_FILE SET_COOKIE SESSION_ID EXIT_VALUE CONNECTION_CLOSE TMPFILE \
+		 DIR_SCAN DIR_MAIL NUM_START NUM_END NUM_DOC FOR_PAGE pagina_corrente link_paginazione
+
+# more environment...
+if [ -n "$FILE_TO_SOURCE" ]; then
+   . $FILE_TO_SOURCE
+fi

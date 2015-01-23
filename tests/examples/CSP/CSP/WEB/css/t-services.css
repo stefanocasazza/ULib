@@ -1,0 +1,87 @@
+	body { 
+	 background: url(/CSP/WEB/images/ecumene.png) top right no-repeat; 
+	 background-attachment: fixed; 
+	}
+
+  #header {
+   width: 100%;
+   }
+
+  .logo {
+	height: 92px;
+	padding-left: 90px;
+    }
+
+	#main_menu { list-style-position: inside;
+    text-align: justify;
+    width: 100%;
+    }
+
+  .top_bar ul { margin: 0px;
+    padding: 0px;
+    list-style-type: none;
+    display: table;
+    background-color: rgb(33, 202, 248);
+    width: 100%;
+    }
+
+  .top_bar ul li { border-style: groove;
+    list-style-type: none;
+    background-color: rgb(152, 230, 253);
+    margin-left: 5px;
+    margin-right: 5px;
+    display: table-cell;
+    text-align: center;
+    }
+
+  .footer { text-align: center;
+    background-color: rgb(152, 230, 253);
+    width: 100%;
+    clear: both;
+/*	 bottom-margin: 0%; */
+    }
+
+  #link_menu {
+    width: 20%;
+    float: right;
+    }
+
+  #content {
+    width: 80%;
+    float: left;
+    }
+
+  #services_menu {
+    width: 25%;
+    float: left;
+    }
+
+  .right_bar ul {
+    margin: 0px;
+    padding: 0px;
+    list-style-type: none;
+	 background: url(/CSP/WEB/images/cyan.png) top right;
+    width: 100%;
+    }
+
+  .right_bar ul li {
+    list-style-type: none;
+    margin-left: 5px;
+    margin-right: 5px;
+    }
+
+  #text_area {
+	background: url(/CSP/WEB/images/white.png);
+   width: 65%;
+   float: right;
+   }
+
+/*
+*/
+h1 {
+  margin:1.5em 0 .75em;
+  font:150%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#119;
+  }

@@ -1,0 +1,251 @@
+--- cdbmake handles simple example
+0
+--- cdbmake-12 handles simple example
+0
+--- cdbmake-sv handles simple example
+0
+--- cdbdump handles simple examples
++3,5:one->Hello
++3,7:two->Goodbye
+
+0
++3,5:one->Hello
++3,7:two->Goodbye
+
+0
++6,4:@7/tcp->echo
++8,1:echo/tcp->7
++6,4:@7/udp->echo
++8,1:echo/udp->7
++6,7:@9/tcp->discard
++11,1:discard/tcp->9
++8,1:sink/tcp->9
++8,1:null/tcp->9
++6,7:@9/udp->discard
++11,1:discard/udp->9
++8,1:sink/udp->9
++8,1:null/udp->9
++7,6:@11/tcp->systat
++10,2:systat/tcp->11
++9,2:users/tcp->11
++7,6:@11/udp->systat
++10,2:systat/udp->11
++9,2:users/udp->11
+
+0
+--- cdbtest handles simple examples
+found: 2
+different record: 0
+bad length: 0
+not found: 0
+untested: 0
+0
+found: 2
+different record: 0
+bad length: 0
+not found: 0
+untested: 0
+0
+found: 18
+different record: 0
+bad length: 0
+not found: 0
+untested: 0
+0
+--- cdbstats handles simple examples
+records          2
+d0               2
+d1               0
+d2               0
+d3               0
+d4               0
+d5               0
+d6               0
+d7               0
+d8               0
+d9               0
+>9               0
+0
+records          2
+d0               2
+d1               0
+d2               0
+d3               0
+d4               0
+d5               0
+d6               0
+d7               0
+d8               0
+d9               0
+>9               0
+0
+records         18
+d0              18
+d1               0
+d2               0
+d3               0
+d4               0
+d5               0
+d6               0
+d7               0
+d8               0
+d9               0
+>9               0
+0
+--- cdbget retrieves data successfully
+Hello
+0
+Goodbye
+0
+echo
+0
+echo
+0
+7
+0
+7
+0
+discard
+0
+discard
+0
+9
+0
+9
+0
+9
+0
+9
+0
+9
+0
+9
+0
+systat
+0
+systat
+0
+11
+0
+11
+0
+11
+0
+11
+0
+--- cdbget exits 100 on nonexistent data
+100
+100
+--- cdbmake handles repeated keys
+0
++3,5:one->Hello
++3,7:one->Goodbye
++3,7:one->Another
+
+0
+--- cdbget handles repeated keys
+Hello
+0
+Hello
+0
+Goodbye
+0
+Another
+0
+
+100
+
+100
+--- cdbmake handles long keys and data
+0
+--- cdbdump handles long keys and data
++320,320:ba483b3442e75cace82def4b5df25bfca887b41687537c21dc4b82cb4c36315e2f6a0661d1af2e05e686c4c595c16561d8c1b3fbee8a6b99c54b3d10d61948445298e97e971f85a600c88164d6b0b09
+b5169a54910232db0a56938de61256721667bddc1c0a2b14f5d063ab586a87a957e87f704acb7246c5e8c25becef713a365efef79bb1f406fecee88f3261f68e239c5903e3145961eb0fbc538ff506a
+->152e113d5deec3638ead782b93e1b9666d265feb5aebc840e79aa69e2cfc1a2ce4b3254b79fa73c338d22a75e67cfed4cd17b92c405e204a48f21c31cdcf7da46312dc80debfbdaf6dc39d74694a711
+6d170c5fde1a81806847cf71732c7f3217a38c6234235951af7b7c1d32e62d480d7c82a63a9d94291d92767ed97dd6a6809d1eb856ce23eda20268cb53fda31c016a19fc20e80aec3bd594a3eb82a5a
+
+
+0
+--- cdbtest handles long keys and data
+found: 1
+different record: 0
+bad length: 0
+not found: 0
+untested: 0
+0
+--- cdbstats handles long keys and data
+records          1
+d0               1
+d1               0
+d2               0
+d3               0
+d4               0
+d5               0
+d6               0
+d7               0
+d8               0
+d9               0
+>9               0
+0
+--- cdbget handles long keys and data
+152e113d5deec3638ead782b93e1b9666d265feb5aebc840e79aa69e2cfc1a2ce4b3254b79fa73c338d22a75e67cfed4cd17b92c405e204a48f21c31cdcf7da46312dc80debfbdaf6dc39d74694a711
+6d170c5fde1a81806847cf71732c7f3217a38c6234235951af7b7c1d32e62d480d7c82a63a9d94291d92767ed97dd6a6809d1eb856ce23eda20268cb53fda31c016a19fc20e80aec3bd594a3eb82a5a
+
+0
+--- cdbmake handles unwritable tmp
+cdbmake: fatal: unable to create loop: symbolic link loop
+111
+--- cdbmake handles unmovable cdb
+cdbmake: fatal: unable to rename test.tmp to loop/test.cdb: symbolic link loop
+111
+--- cdbmake handles nomem
+cdbmake: fatal: unable to create test.tmp: out of memory
+111
+--- cdbmake handles full disk
+cdbmake: fatal: unable to create test.tmp: file too big
+111
+--- cdbmake handles absurd klen
+cdbmake: fatal: unable to create test.tmp: out of memory
+111
+--- cdbget handles empty file
+cdbget: fatal: unable to read input: protocol error
+111
+--- cdbdump and cdbmake handle random.cdb
+0
+--- cdbtest handles random.cdb
+found: 100
+different record: 0
+bad length: 0
+not found: 0
+untested: 0
+0
+--- cdbstats handles random.cdb
+records        100
+d0              96
+d1               4
+d2               0
+d3               0
+d4               0
+d5               0
+d6               0
+d7               0
+d8               0
+d9               0
+>9               0
+0
+--- testzero works
+0
+found: 5
+different record: 0
+bad length: 0
+not found: 0
+untested: 0
+0
+--- testzero can build a database very close to 4GB
+0
+--- testzero complains if hash table passes 4GB
+testzero: fatal: unable to write: out of memory
+111
+--- testzero complains if records pass 4GB
+testzero: fatal: unable to write: out of memory
+111

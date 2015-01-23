@@ -1,0 +1,2 @@
+00 05 * * * /etc/init.d/nodog stop; reboot
+00  * * * * /usr/lib/nodog/bin/upload-logs.sh

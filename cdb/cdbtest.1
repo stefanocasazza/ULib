@@ -1,0 +1,36 @@
+.TH cdbtest 1
+.SH NAME
+cdbtest \- check retrieval from a constant database
+.SH SYNOPSIS
+.B cdbtest
+.SH DESCRIPTION
+.B cdbtest
+reads a (seekable) constant database from its standard input.
+For each record in the database, it feeds the record's key to
+.B cdb_seek()
+and checks the result.
+It prints tallies in several categories:
+.TP 5
+.B found
+is the number of records found correctly by their keys.
+.TP
+.B different record
+is the number of records where a different record was found
+with the same key. This should not happen unless the database
+has multiple records with the same key.
+.TP
+.B bad length
+is the number of records found but with the wrong data length.
+This should never happen.
+.TP
+.B not found
+is the number of records not found.
+This should never happen.
+.TP
+.B too long to test
+is the number of records with keys longer than 1024 bytes.
+.B cdbtest
+doesn't bother testing these records.
+.SH "SEE ALSO"
+cdbget(1),
+cdb(3)

@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../.function
+
+## file_config.test -- Test file_config feature
+
+start_msg file_config
+
+#UTRACE="0 10M 1"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+#STRACE=$LTRUSS
+#VALGRIND=valgrind
+start_prg file_config 100 <inp/file_config.input
+
+# Test against expected output
+test_output_wc l file_config

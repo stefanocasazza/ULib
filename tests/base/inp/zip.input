@@ -1,0 +1,12 @@
+.deps/test_zip.Po
+.deps/test_sprintf.Po
+.deps/test_misc.Po
+.deps/test_random.Po
+.deps/crypto_qp.Po
+.deps/crypto_base64.Po
+.deps/crypto_des3.Po
+.deps/crypto_dgst.Po
+.deps/crypto_url.Po
+.deps/crypto_xml.Po
+.deps/test_utility.Po
+.deps/test_gzio.Po

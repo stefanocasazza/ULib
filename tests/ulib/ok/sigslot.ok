@@ -1,0 +1,9 @@
+There are aliens in the carpark!
+prova signal with one argument
+prova signal with two argument 10
+prova slot con classe A
+prova slot con classe A: p1 = 10
+prova slot con classe A: p1 = 10 p2 = 20
+prova slot con classe B
+prova slot con classe B: p1 = 10
+prova slot con classe B: p1 = 10 p2 = 20

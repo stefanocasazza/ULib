@@ -1,0 +1,241 @@
+#!/bin/sh
+
+. ../.function
+
+# set -x
+
+## web_server.test -- Test web_server feature
+
+start_msg web_server
+
+(cd benchmark; rm -f db; creat_link FrameworkBenchmarks/ULib/db  db; sync)
+(cd ..;        rm -f db; creat_link examples/benchmark/db		  db; sync)
+								 creat_link				benchmark/db		  db
+								 creat_link				benchmark/libraries libraries
+
+DOC_ROOT=docroot
+
+rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/*.memusage.* \
+		$DOC_ROOT/webserver*.log* $DOC_ROOT/uploads/* /var/log/httpd/access_log \
+      out/userver_tcp.out err/userver_tcp.err web_server.err \
+					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
+
+#UTRACE="0 100M 0"
+#UOBJDUMP="0 50M 5000"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+if [ "$TERM" = "msys" ]; then
+   export TMPDIR="c:/tmp"
+fi
+
+DIR_CMD="../../examples/userver"
+
+compile_usp
+
+check_for_netcat
+
+# function : upload_test
+upload_test() {
+
+rm    -rf      uploads
+mkdir -p		   uploads
+$CHOWN apache: uploads
+chmod 777      uploads
+
+$CURL -s -F 'file=@vuoto.txt'											 -F "name=prova" http://$1/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
+$CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$1/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
+
+if [ $? -ne 0 ]; then
+   kill_prg userver_tcp TERM
+	exit 1
+fi
+}
+
+# function : kill_server
+kill_server() {
+kill_prg userver_tcp TERM
+if [ $? -ne 0 ]; then
+	for i in 1 2 3 4 5; do
+		pgrep userver_tcp >/dev/null 2>/dev/null
+		if [ $? -ne 0 ]; then
+			return
+		fi
+		$SLEEP
+	done
+	exit 1
+fi
+}
+
+# function : start_test
+start_test() {
+
+#chmod 666 /proc/sys/net/ipv4/tcp_fin_timeout /proc/sys/net/core/somaxconn /proc/sys/net/ipv4/tcp_max_syn_backlog
+
+$SLEEP
+
+#STRACE=$TRUSS
+#MALLOC_CHECK_=3
+#VALGRIND="valgrind"
+#MUDFLAP_OPTIONS="-ignore-reads -backtrace=8"
+ start_prg_background userver_tcp -c inp/webserver.cfg
+
+for i in 1 2 3 4 5; do
+	$NC -c localhost 80 </dev/null 2>/dev/null
+	if [ $? -eq 0 ]; then
+		break
+	fi
+	$SLEEP
+done
+
+#LS=tst_90
+#LS=`ls inp/http/and`
+#mkdir -p /tmp/web_server
+#for i in $LS; do
+# $NC -w 10 localhost 80 <inp/http/and/$i >/tmp/web_server/$i
+#done
+
+#./sendbytes.pl
+#$NC -w 10 10.10.100.115 80 < inp/http/all4.inp		  >>out/web_server.out
+#$NC -w 10 10.30.1.111   80 < inp/http/SSL_Labs2.req >>out/web_server.out
+#$CURL http://$1/browserconfig.xml						  >>out/web_server.out 2>>err/web_server.err
+#exit 0
+#send_req $1 $2 80 inp/http/request.18895 web_server 2
+#return
+
+LS=`ls inp/http/close`
+for i in $LS; do
+	send_req $1 $2 80 inp/http/close/$i web_server 2
+	if [ $? -ne 0 ]; then
+	   kill_prg userver_tcp TERM
+		exit 1
+	fi
+done
+
+for i in all.inp all0.inp all01.inp all1.inp all2.inp plaintext.inp post.inp; do
+	send_req $1 $2 80 inp/http/$i web_server 4
+	if [ $? -ne 0 ]; then
+	   kill_prg userver_tcp TERM
+		exit 1
+	fi
+done
+
+upload_test $2
+
+kill_server
+}
+
+# function : creat_config
+creat_config() {
+
+if [ -z "$2" ]; then
+	N=$1
+else
+	N=$2
+fi
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ RUN_AS_USER apache
+ REQ_TIMEOUT 30
+ LOG_FILE webserver$1.log
+ LOG_FILE_SZ 1M
+ LOG_MSG_SIZE -1
+ DOCUMENT_ROOT $DOC_ROOT
+ PLUGIN "ssi http"
+ PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+ PREFORK_CHILD $N
+}
+http {
+ ALIAS [ /                                                    /index.php
+			/fortunes                                            /benchmark/docroot/servlet/fortunes
+			/plaintext                                           /benchmark/docroot/servlet/plaintext
+			/www.sito1.com/benchmark/docroot/servlet/jsonrequest /benchmark/docroot/servlet/jsonrequest ]
+ TELNET_ENABLE yes
+ ENABLE_INOTIFY yes
+ LIMIT_REQUEST_BODY 700K
+ REQUEST_READ_TIMEOUT 30
+ DIGEST_AUTHENTICATION no
+ APACHE_LIKE_LOG /var/log/httpd/access_log
+ CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz
+ CACHE_AVOID_MASK www.sito1.com|ruby
+}
+EOF
+}
+
+# ---------------------------------------------------------
+# virtual host
+# ---------------------------------------------------------
+rm -rf $DOC_ROOT/www.sito1.com 2>/dev/null
+
+grep 'www.sito1.com' /etc/hosts >/dev/null 2>/dev/null
+
+if [ $? -ne 0 ]; then
+   echo '# virtual host userver' >> /etc/hosts
+   echo localhost www.sito1.com	>> /etc/hosts
+   echo localhost www.sito2.com	>> /etc/hosts
+fi
+
+mkdir -p $DOC_ROOT/inp/http \
+			$DOC_ROOT/www.sito1.com/inp/http \
+         $DOC_ROOT/www.sito1.com/benchmark/docroot
+
+creat_link ../ok												$DOC_ROOT/ok
+creat_link ../tmp												$DOC_ROOT/tmp
+creat_link ../uploads										$DOC_ROOT/uploads
+creat_link ../../../benchmark/docroot/servlet		$DOC_ROOT/benchmark/docroot/servlet
+creat_link inp													$DOC_ROOT/www.sito1.com/inp
+creat_link ../../tmp											$DOC_ROOT/www.sito1.com/tmp
+creat_link ../SSI												$DOC_ROOT/www.sito1.com/SSI
+creat_link ../cgi-bin										$DOC_ROOT/www.sito1.com/cgi-bin
+creat_link ../../uploads									$DOC_ROOT/www.sito1.com/uploads
+creat_link ../../../../benchmark/docroot/servlet	$DOC_ROOT/www.sito1.com/benchmark/docroot/servlet
+
+touch vuoto.txt $DOC_ROOT/vuoto.txt $DOC_ROOT/www.sito1.com/vuoto.txt
+cat << EOF >tmp/c
+c
+c
+EOF
+
+# webserver-1
+ creat_config -1
+ start_test $NCAT localhost
+# webserver0
+ creat_config 0 
+ start_test $NCAT localhost
+#exit 0
+# webserver1
+ creat_config 1 
+ start_test $NCAT localhost
+# webserver2
+ creat_config 2 
+ start_test $NCAT localhost
+# webserverN
+ creat_config N 2
+ start_test $NCAT localhost
+# webserverV
+ creat_config V 2
+ start_test $NCAT www.sito1.com
+
+# ---------------------------------------------------------------------------
+# for GDB
+# ---------------------------------------------------------------------------
+# sed "s/Host: 10.30.1.131/Host: www.sito1.com/" inp/http/all.inp | nc localhost 80
+# ---------------------------------------------------------------------------
+
+diff inp/xml2txt/operazione.xml uploads/operazione.xml
+RESULT=$?
+
+mv err/userver_tcp.err err/web_server.err
+
+# -------------------------------------------------------------------------------------------------------------------------------------------------------
+# cut -d ' ' -f7 /var/log/httpd/access_log > /tmp/urls.txt
+# siege -c<concurreny rate> -b -f urls.txt
+# -------------------------------------------------------------------------------------------------------------------------------------------------------
+# curl -v -0 -k -H "Host:"  -H "Accept:" -H "User-Agent: SSL Labs (https://www.ssllabs.com/about/assessment.html)" https://wifi-aaa.comune.fi.it
+# -------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# Test against expected output
+test_output_wc l web_server

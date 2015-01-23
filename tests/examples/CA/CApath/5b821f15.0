@@ -1,0 +1,72 @@
+Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+        Signature Algorithm: md5WithRSAEncryption
+        Issuer: C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=CA ROOT/emailAddress=pongo@unirel.com
+        Validity
+            Not Before: Jan 25 11:56:49 2005 GMT
+            Not After : Jan 25 11:56:49 2006 GMT
+        Subject: C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=Customer CA/emailAddress=pongo@unirel.com
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+            RSA Public Key: (1024 bit)
+                Modulus (1024 bit):
+                    00:d8:a7:c7:93:b6:94:17:e6:56:5c:70:8a:15:fd:
+                    a3:ca:92:9b:51:67:d7:da:ae:65:b1:e8:4b:92:d2:
+                    98:c0:b0:9d:b3:1d:7e:c5:ff:35:00:4c:98:65:cd:
+                    0e:4f:7e:78:52:0e:3c:1c:95:26:d5:93:06:63:7e:
+                    84:ef:e5:12:f3:18:62:4a:78:b3:53:44:80:d5:27:
+                    d2:91:82:ad:52:6e:b0:3f:c1:90:fa:f0:ce:9f:fd:
+                    14:8d:c2:42:80:44:dd:20:77:85:26:fd:36:8b:19:
+                    62:bf:4b:db:ca:bd:78:59:ce:d2:11:c9:b0:7d:e2:
+                    3a:0a:ef:2f:00:20:c9:82:4b
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+            CA:TRUE
+            X509v3 Key Usage: 
+            Certificate Sign, CRL Sign
+            Netscape Cert Type: 
+            SSL CA, S/MIME CA
+            Netscape Comment: 
+            OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+            BB:35:87:02:8F:E5:1F:69:8D:7B:50:93:A5:80:D6:E6:53:78:47:8C
+            X509v3 Authority Key Identifier: 
+            keyid:97:1A:49:83:2A:9E:B6:CD:BD:0A:9D:9D:5F:F1:5B:2B:62:CB:25:61
+            DirName:/C=IT/ST=Firenze/L=Sesto Fiorentino/O=Unirel srl/OU=Pongo/CN=CA ROOT/emailAddress=pongo@unirel.com
+            serial:00
+
+    Signature Algorithm: md5WithRSAEncryption
+        a7:b3:c1:cb:08:7b:82:da:e1:c0:07:10:9d:47:c7:1e:04:7e:
+        e2:0e:96:e3:a1:66:4a:48:f6:53:7c:5c:a7:25:10:6d:4f:73:
+        7a:82:5d:ce:fd:ac:0d:b7:6b:b3:8c:4d:9a:ad:6b:3b:24:57:
+        4a:d1:f9:a4:40:0a:df:00:7a:ca:d4:29:5d:2c:a5:86:6b:33:
+        4c:c5:8e:ed:fc:08:42:17:bf:5b:44:01:44:d9:50:a1:d1:70:
+        aa:8e:bc:b7:a9:9b:de:67:e8:42:ca:14:b3:4c:69:c2:ff:85:
+        09:24:95:aa:a7:ef:44:f7:3a:e6:a6:59:ea:99:05:90:be:67:
+        80:89
+-----BEGIN CERTIFICATE-----
+MIID4zCCA0ygAwIBAgIBATANBgkqhkiG9w0BAQQFADCBkjELMAkGA1UEBhMCSVQx
+EDAOBgNVBAgTB0ZpcmVuemUxGTAXBgNVBAcTEFNlc3RvIEZpb3JlbnRpbm8xEzAR
+BgNVBAoTClVuaXJlbCBzcmwxDjAMBgNVBAsTBVBvbmdvMRAwDgYDVQQDEwdDQSBS
+T09UMR8wHQYJKoZIhvcNAQkBFhBwb25nb0B1bmlyZWwuY29tMB4XDTA1MDEyNTEx
+NTY0OVoXDTA2MDEyNTExNTY0OVowgZYxCzAJBgNVBAYTAklUMRAwDgYDVQQIEwdG
+aXJlbnplMRkwFwYDVQQHExBTZXN0byBGaW9yZW50aW5vMRMwEQYDVQQKEwpVbmly
+ZWwgc3JsMQ4wDAYDVQQLEwVQb25nbzEUMBIGA1UEAxMLQ3VzdG9tZXIgQ0ExHzAd
+BgkqhkiG9w0BCQEWEHBvbmdvQHVuaXJlbC5jb20wgZ8wDQYJKoZIhvcNAQEBBQAD
+gY0AMIGJAoGBANinx5O2lBfmVlxwihX9o8qSm1Fn19quZbHoS5LSmMCwnbMdfsX/
+NQBMmGXNDk9+eFIOPByVJtWTBmN+hO/lEvMYYkp4s1NEgNUn0pGCrVJusD/BkPrw
+zp/9FI3CQoBE3SB3hSb9NosZYr9L28q9eFnO0hHJsH3iOgrvLwAgyYJLAgMBAAGj
+ggFBMIIBPTAMBgNVHRMEBTADAQH/MAsGA1UdDwQEAwIBBjARBglghkgBhvhCAQEE
+BAMCAQYwLAYJYIZIAYb4QgENBB8WHU9wZW5TU0wgR2VuZXJhdGVkIENlcnRpZmlj
+YXRlMB0GA1UdDgQWBBS7NYcCj+UfaY17UJOlgNbmU3hHjDCBvwYDVR0jBIG3MIG0
+gBSXGkmDKp62zb0KnZ1f8VsrYsslYaGBmKSBlTCBkjELMAkGA1UEBhMCSVQxEDAO
+BgNVBAgTB0ZpcmVuemUxGTAXBgNVBAcTEFNlc3RvIEZpb3JlbnRpbm8xEzARBgNV
+BAoTClVuaXJlbCBzcmwxDjAMBgNVBAsTBVBvbmdvMRAwDgYDVQQDEwdDQSBST09U
+MR8wHQYJKoZIhvcNAQkBFhBwb25nb0B1bmlyZWwuY29tggEAMA0GCSqGSIb3DQEB
+BAUAA4GBAKezwcsIe4La4cAHEJ1Hxx4EfuIOluOhZkpI9lN8XKclEG1Pc3qCXc79
+rA23a7OMTZqtazskV0rR+aRACt8AesrUKV0spYZrM0zFju38CEIXv1tEAUTZUKHR
+cKqOvLepm95n6ELKFLNMacL/hQkklaqn70T3OuamWeqZBZC+Z4CJ
+-----END CERTIFICATE-----

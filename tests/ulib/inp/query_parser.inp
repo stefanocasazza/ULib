@@ -1,0 +1,18 @@
+NOT (a OR b)
+NOT (a AND b)
+a AND (b OR c)
+(a OR b) AND NOT c
+NOT (NOT (a AND m))
+a AND b AND (c OR d)
+(a OR b) AND c AND d
+(a OR b) AND (c OR d)
+(a OR b) AND (c AND d)
+(a OR b) AND NOT (c AND d)
+(a OR b) AND (c OR d) AND (e OR f)
+(a OR b) AND (c OR d) AND (e OR f) AND (g OR h)
+a OR b AND (c OR d AND (e OR f AND g AND (h OR i)))
+a AND (b OR c AND (d OR (e AND (f OR g OR (h AND i)))))
+NOT (a OR b) AND NOT (c OR d) AND (e OR f) AND NOT (g OR h)
+a AND (b OR c AND (d OR (e AND (f OR g OR (h AND i) OR j))))
+a AND (b OR c AND (d OR (e AND (f OR g OR (h AND i)) OR j)))
+NOT (a OR b) AND NOT (c OR d) AND NOT (e OR f) AND NOT (g OR h)

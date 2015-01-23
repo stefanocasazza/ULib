@@ -1,0 +1,13 @@
+POST /soap HTTP/1.1
+Host: localhost
+User-Agent: ULib/1.4.2
+Content-Type: application/soap+xml; charset="utf-8"
+Content-Length: 350
+
+<?xml version='1.0' ?><env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><env:Header></env:Header><env:Body><ns:add env:encodingStyle="http://www.w3.org/2003/05/soap-encoding" xmlns:ns="ns"><a xsi:type="xsd:int">10</a><b xsi:type="xsd:int">20</b></ns:add></env:Body></env:Envelope>POST /soap HTTP/1.1
+Host: localhost
+User-Agent: ULib/1.4.2
+Content-Type: application/soap+xml; charset="utf-8"
+Content-Length: 345
+
+<?xml version='1.0' ?><env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><env:Header></env:Header><env:Body><ns:reverse env:encodingStyle="http://www.w3.org/2003/05/soap-encoding" xmlns:ns="ns"><str xsi:type="xsd:string">0123456789</str></ns:reverse></env:Body></env:Envelope>

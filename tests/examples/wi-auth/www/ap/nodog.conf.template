@@ -1,0 +1,75 @@
+## ap/nodog.conf.template
+
+#define  QUOTE(x) #x
+#define XQUOTE(x) QUOTE(x)
+
+#include "ap/<AAA.BBB.CCC.DDD>/nodog.conf.local"
+
+#ifndef FW_ENV_VALUE
+#ifndef LOCAL_NETWORK_DEF
+#define LOCAL_NETWORK_DEF    LocalNetwork=172.16.<DDD>.0/24
+#endif
+#ifndef INTERNAL_DEVICE_DEF
+#define INTERNAL_DEVICE_DEF  InternalDevice=<LAN>
+#endif
+#ifndef ALLOWED_WEB_HOST_DEF
+#define ALLOWED_WEB_HOST_DEF
+#endif
+#ifndef FW_CONF_DEF
+#define FW_CONF_DEF
+#endif
+#define FW_ENV_VALUE \
+	MasqueradeDevice=eth0 \
+	'ExternalDevice=eth0 tun0' \
+	'AuthServiceAddr=http://wifi-aaa.comune.fi.it' \
+	FullPrivateNetwork=172.16.0.0/12 \
+	FW_CONF_DEF \
+	LOCAL_NETWORK_DEF \
+	INTERNAL_DEVICE_DEF \
+	ALLOWED_WEB_HOST_DEF
+#endif
+
+#define FW_ENV_DEF FW_ENV XQUOTE(FW_ENV_VALUE)
+
+#ifndef LOCAL_NETWORK_LABEL_DEF
+#define LOCAL_NETWORK_LABEL_DEF LOCAL_NETWORK_LABEL ap
+#endif
+
+#ifndef COMMENT
+#define COMMENT
+#endif
+
+userver {
+			IP_ADDRESS		  <AAA.BBB.CCC.DDD> 
+			DOCUMENT_ROOT    /usr/lib/nodog
+			PID_FILE         /tmp/nodog.pid
+			LOG_FILE         /tmp/nodog.log
+COMMENT	LOG_FILE_SZ      1M
+			LOG_MSG_SIZE     -1
+			PLUGIN           "nocat http"
+			REQ_TIMEOUT      5
+			PREFORK_CHILD    0
+			MAX_KEEP_ALIVE  50
+}
+http {
+	TELNET_ENABLE         yes
+	CACHE_FILE_MASK       _off_
+   CACHE_FILE_STORE      webif.gz
+	LIMIT_REQUEST_BODY    100K
+	REQUEST_READ_TIMEOUT  5
+}
+nocat {
+	FW_CMD                firewall/nodog.fw
+	DECRYPT_KEY           vivalatopa
+	CHECK_TYPE 	          4
+	CHECK_EXPIRE_INTERVAL 60
+	FW_ENV_DEF
+	LOCAL_NETWORK_LABEL_DEF
+}
+proxy {
+   Service_GOOGLE_MAP {
+		METHOD_NAME GET
+		HOST        *.googleapis.com|*.googlecode.com|maps.google.com|maps.gstatic.com|csi.gstatic.com
+		SERVER      $<
+   }
+}

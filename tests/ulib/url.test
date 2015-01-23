@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## url.test -- Test url feature
+
+start_msg url
+
+#UTRACE="0 1M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg url <inp/url.input
+
+# Test against expected output
+test_output_wc w url

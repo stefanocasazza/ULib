@@ -1,0 +1,118 @@
+HEAD /Z/x,validate HTTP/1.1
+Host: 10.30.1.131
+
+GET /xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx HTTP/1.0
+
+GET /../../../../linux/include/generated/uapi/linux/version.h HTTP/1.0
+
+GET /cgi-bin/internal-error.sh HTTP/1.0
+
+GET /cgi-bin/sendfile.sh HTTP/1.1
+Host: 10.30.1.131
+
+GET /ok HTTP/1.0
+
+GET /inp/http/data HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+
+GET /inp/http/data/file HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+Range: bytes=0-63
+
+GET /inp/http/data/file HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+Range: bytes=0-31
+
+GET /inp/http/data/file HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+Range: bytes=32-63
+
+GET /inp/http/data/file1 HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+Range: bytes=32-63
+
+GET /inp/http/data/file1 HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+Range: bytes=0-0,-1
+
+GET /inp/http/data/file1 HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+Range: bytes=50-70,60-79
+
+GET /inp/http/data/file1 HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+Range: bytes=10-19,50-59
+
+GET /inp/http/data/file1 HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+If-Range: Sat, 29 Oct 1994 19:43:31 GMT
+Range: bytes=10-19,50-59
+
+GET /vuoto.txt HTTP/1.1
+Connection: Keep-Alive
+Host: 10.30.1.131
+
+GET /vuoto%2Etxt HTTP/1.1
+Connection: Keep-Alive
+Host: 10.30.1.131
+
+head  /tmp   HTTP/1.1
+Host: 10.30.1.131
+Accept-Encoding: gzip,deflate
+Connection: Keep-Alive
+Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
+
+get  /tmp   HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
+
+get  /tmp   HTTP/1.1
+Host: 10.30.1.131
+Accept-Encoding: gzip,deflate
+If-Modified-Since: Tue, 15 Sep 2020 16:22:19 GMT
+Connection: Keep-Alive
+Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
+Authorization: Digest username="s.casazza", realm="Protected Area", nonce="1235411342", uri="/tmp", algorithm=MD5, response="409f91ad888cc96aea0cec4491677075",qop=auth, nc=00000001, cnonce="00603edc385b7a70"
+
+GET /cgi-bin/index.cgi HTTP/1.1
+Host: 10.30.1.131
+
+GET /SSI/ssi1.shtml HTTP/1.1
+Host: 10.30.1.131
+
+GET /cgi-bin/postlogin.sh?user=Steve+Johnson HTTP/1.1
+Host: 10.30.1.131
+Connection: Keep-Alive
+Cookie: name1=value1, name2=value2; ulib.s1=5374657665204a6f686e736f6e263133323536313433363726e1915127131465eab401a9ce75b993bc; name3=value3, name4=value4;
+
+GET /cgi-bin/index.cgi HTTP/1.1
+Host: 10.30.1.131
+Accept-Encoding: gzip,deflate
+
+GET /cgi-bin/cgi.rb HTTP/1.1
+Host: 10.30.1.131
+Accept-Encoding: gzip,deflate
+
+POST /www.sito1.com/benchmark/docroot/servlet/jsonrequest HTTP/1.1
+Host: 10.30.1.131
+Accept: application/jsonrequest
+Content-Encoding: identity
+Content-Type: application/jsonrequest
+Content-Length: 72
+
+{"user":"doctoravatar@penzance.com","forecast":7,"t":"vlIj","zip":94089}
+
+GET /cgi-bin/redirect.sh HTTP/1.1
+x-wap-profile:
+Host: 10.30.1.131
+

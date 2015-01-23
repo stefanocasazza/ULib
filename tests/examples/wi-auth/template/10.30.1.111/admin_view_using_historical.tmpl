@@ -1,0 +1,38 @@
+<div id="main-content-without-sidebar">
+<br/>
+   <center>
+	 <h1>Visualizzazione dati utilizzo per data</h1>
+   </center>
+  <table class="centered" border="1">
+	<tr>
+		<th class="header_smaller">
+			Data
+		</th>
+		<th class="header_smaller">
+		   Utenti connessi giornaliero
+		</th>
+		<th class="header_smaller">
+		   Tempo medio di permanenza degli utenti giornaliero (min.)
+		</th>
+		<th class="header_smaller">
+		   Traffico generato giornaliero (GB) 
+		</th>
+	</tr>
+	%.*s
+	<tr>
+		<td class="data_smaller" align="right">
+			Totale
+		</td>
+		<td class="data_smaller" align="right">
+			%u
+		</td>
+		<td class="data_smaller" align="right">
+		   %u
+		</td>
+		<td class="data_smaller" align="right">
+		   %u
+		</td>
+	</tr>
+  </table>
+</div>
+<div id="footer"><a class="back" href="admin_export_view_using_historical_as_csv">Esporta in formato CSV</a></div>

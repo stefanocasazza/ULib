@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="TSA"
+ targetNamespace="tsa"
+ xmlns:tns="tsa"
+ xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+ xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ xmlns:ns="tsa"
+ xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap12/"
+ xmlns:MIME="http://schemas.xmlsoap.org/wsdl/mime/"
+ xmlns:DIME="http://schemas.xmlsoap.org/ws/2002/04/dime/wsdl/"
+ xmlns:WSDL="http://schemas.xmlsoap.org/wsdl/"
+ xmlns="http://schemas.xmlsoap.org/wsdl/">
+
+<types>
+
+ <schema targetNamespace="tsa"
+  xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+  xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns="tsa"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="unqualified"
+  attributeFormDefault="unqualified">
+  <import namespace="http://www.w3.org/2003/05/soap-encoding"/>
+  <!-- operation request element -->
+  <element name="TSA-REPLY">
+   <complexType>
+    <sequence>
+     <element name="request" type="xsd:base64Binary" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="token" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="section" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="policy" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation response element -->
+  <element name="TSA-REPLYResponse">
+   <complexType>
+    <sequence>
+     <element name="response" type="xsd:base64Binary" minOccurs="0" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+ </schema>
+
+</types>
+
+<message name="TSA-REPLYRequest">
+ <part name="parameters" element="ns:TSA-REPLY"/>
+</message>
+
+<message name="TSA-REPLYResponse">
+ <part name="parameters" element="ns:TSA-REPLYResponse"/>
+</message>
+
+<portType name="TSAPortType">
+ <operation name="TSA-REPLY">
+  <documentation>Service definition of function ns__TSA_REPLY</documentation>
+  <input message="tns:TSA-REPLYRequest"/>
+  <output message="tns:TSA-REPLYResponse"/>
+ </operation>
+</portType>
+
+<binding name="TSA" type="tns:TSAPortType">
+ <SOAP:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="TSA-REPLY">
+  <SOAP:operation/>
+  <input>
+     <SOAP:body parts="parameters" use="literal"/>
+  </input>
+  <output>
+     <SOAP:body parts="parameters" use="literal"/>
+  </output>
+ </operation>
+</binding>
+
+<service name="TSA">
+ <documentation>gSOAP 2.7.6c generated service definition</documentation>
+ <port name="TSA" binding="tns:TSA">
+  <SOAP:address location="http://10.30.1.131:4433/"/>
+ </port>
+</service>
+
+</definitions>

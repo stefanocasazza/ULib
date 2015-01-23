@@ -1,0 +1,63 @@
+MIME-Version: 1.0
+Subject: %s
+From: %s
+To: %s
+Content-Type: multipart/mixed; boundary="_-_as978sd78fd912y_-_1_"
+
+--_-_as978sd78fd912y_-_1_
+Content-Type: multipart/mixed; boundary="_-_as978sd78fd912y_-_2_"
+
+--_-_as978sd78fd912y_-_2_
+Content-Type: text/xml
+Content-Transfer-Encoding: 8bit
+
+<document>
+<azienda>
+<ragione_sociale value="%s"/>
+<rappresentante value="%s"/>
+<indirizzo value="%s"/>
+<comune value="%s"/>
+<provincia value="%s"/>
+<cap value="%s"/>
+<piva value="%s"/>
+<telefono_fisso value="%s"/>
+<fax value="%s"/>
+<telefono_cellulare value="%s"/>
+</azienda>
+<cpe>
+<cn value="%s"/>
+<emailAddress value="%s"/>
+</cpe>
+<installazione>
+<indirizzo value="%s"/>
+<comune value="%s"/>
+<provincia value="%s"/>
+<cap value="%s"/>
+</installazione>
+<spedizione_fattura>
+<destinazione value="%s"/>
+<indirizzo value="%s"/>
+<comune value="%s"/>
+<provincia value="%s"/>
+<cap value="%s"/>
+<email value="%s"/>
+</spedizione_fattura>
+<contratto>
+<profilo value="%s"/>
+<note value="%s"/>
+</contratto>
+<services>
+<name value="Connettivita' internet"/>
+</services>
+<network>
+<name value="%s"/>
+</network>
+</document>
+--_-_as978sd78fd912y_-_2_
+Content-Transfer-Encoding: Base64
+Content-Type: application/pdf; name="contratto.pdf"
+Content-Disposition: attachment; filename="contratto.pdf"
+
+%s
+--_-_as978sd78fd912y_-_2_--
+--_-_as978sd78fd912y_-_1_--

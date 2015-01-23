@@ -1,0 +1,82 @@
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for Linux (vers 1 September 2005), see www.w3.org">
+
+  <title>Create key pair and certificate request</title>
+  <link type="text/css" href="/CSP/WEB/css/t-services.css" rel="stylesheet">
+</head>
+
+<body text="#000000" link="red" vlink="green" bgcolor="#FFFFFF">
+  <div id="header">
+    <h1>Create key pair and certificate request</h1>
+  </div>
+
+  <div id="content">
+    <div id="services_menu" class="left_bar">
+      Your key pair and certificate request can be generated now.<br>
+      Please have a look below to check if your input data was correct.
+    </div><br>
+
+    <div id="text_area">
+      <form name="KeyGenForm" action="/CSP/WEB/cgi-bin/client-enroll.sh" method="POST" accept-charset="iso-8859-1">
+        <div class="param">
+          <div class="lparam">
+            <a href="/CSP/WEB/help/client-enroll-en.html#browser">Browser Software</a>
+          </div>
+
+          <div class="cparam">
+            %s <input type="hidden" name="browsertype" value="%s">
+          </div>
+        </div>
+
+        <div class="param">
+          <div class="lparam">
+            <a href="/CSP/WEB/help/client-enroll-en.html#challenge">Initial Master Secret</a>
+          </div>
+
+          <div class="cparam">
+            ******** <input type="hidden" name="challenge" value="%s">
+          </div>
+        </div>
+
+        <div class="param">
+          <div class="lparam">
+            <a href="/CSP/WEB/help/client-enroll-en.html#commonName">Common Name</a>
+          </div>
+
+          <div class="cparam">
+            %s <input type="hidden" name="commonName" value="%s">
+          </div>
+        </div>
+
+        <div class="param">
+          <div class="lparam">
+            <a href="/CSP/WEB/help/client-enroll-en.html#emailAddress">Email Address</a>
+          </div>
+
+          <div class="cparam">
+            %s <input type="hidden" name="emailAddress" value="%s">
+          </div>
+        </div><br>
+
+        <div class="param">
+          <div class="cparam">
+            <input type="hidden" name="CA_name" value="UserCerts">
+          </div>
+        </div>
+
+		  <br>
+        <div id="keygen">
+          <div id="lkeygen">
+            Key size:
+          </div>
+
+          <div id="ckeygen">
+            <keygen id="SPKAC" name="SPKAC" challenge="%s"> <input type="submit" value="Generate key pair">
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</body>
+</html>

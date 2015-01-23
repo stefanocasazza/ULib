@@ -1,0 +1,113 @@
+.TH cdbmake 1
+.SH NAME
+cdbmake \- create a constant database
+.SH SYNOPSIS
+.B cdbmake
+.I file
+.I temp
+.SH DESCRIPTION
+.B cdbmake
+reads a series of encoded records from its standard input
+and writes a constant database to
+.IR file .
+
+Records are indexed by
+.BR keys .
+A key is a string.
+.I file
+is structured so that another program, starting from a key,
+can quickly find the relevant record.
+.B cdbmake
+allows several records with the same key,
+although (1) most readers only take the first record
+and (2)
+.B cdbmake
+slows down somewhat if there are many records with the same key.
+Note that
+.B cdbmake
+preserves the order of records in
+.IR file .
+
+A record is encoded for
+.B cdbmake
+as
+.B +\fIklen\fB,\fIdlen\fB:\fIkey\fB->\fIdata
+followed by a newline.
+Here
+.I klen
+is the number of bytes in
+.IR key
+and
+.I dlen
+is the number of bytes in
+.IR data .
+The end of data is indicated by an extra newline.
+For example:
+
+.EX
+   +3,5:one->Hello
+.br
+   +3,7:two->Goodbye
+.br
+   
+.EE
+
+.I key
+and
+.I data
+may contain any characters, including colons, dashes, newlines, and nulls.
+
+.B cdbmake
+ensures that
+.I file
+is updated atomically,
+so programs reading
+.I file
+never have to wait for
+.B cdbmake
+to finish.
+It does this by first writing the database to
+.I temp
+and then moving
+.I temp
+on top of
+.IR file .
+If
+.I temp
+already exists,
+it is destroyed.
+The directories containing
+.I temp
+and
+.I file
+must be writable to
+.BR cdbmake ;
+they must also be on the same filesystem.
+
+.B cdbmake
+always makes sure that
+.I temp
+is safely written to disk before it replaces
+.IR file .
+If the input is in a bad format or if
+.B cdbmake
+has any trouble writing
+.I temp
+to disk,
+.B cdbmake
+complains and leaves
+.I file
+alone.
+
+Keys and data do not have to fit into memory,
+but
+.B cdbmake
+needs roughly 16 bytes of memory per record.
+A database cannot exceed 4 gigabytes.
+
+.I file
+is portable across machines.
+.SH "SEE ALSO"
+cdbdump(1),
+cdbget(1),
+cdbstats(1)

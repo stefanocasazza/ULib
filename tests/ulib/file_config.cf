@@ -1,0 +1,67 @@
+## -----------------------------------------------------------------------------
+## ldap_update - configuration parameters
+## -----------------------------------------------------------------------------
+## LOG_FILE          	  		  path of log message file
+## LOG_FILE_MAX_SIZE 	  		  max size of log message file
+##
+## LDAP_SERVER_ADDRESS  		  TCP/IP address:port of ldap server
+## ROOT_DN              		  entry root dn of ldap database
+## ADMIN_DN             		  administrator dn of ldap database
+## PASSWORD             		  administrator password of ldap database
+##
+## LDAP_SERVER_ADDRESS_MAIL   TCP/IP address:port of ldap server for mail
+## ROOT_DN_MAIL               entry root dn of ldap database for mail
+## ADMIN_DN_MAIL              administrator dn of ldap database for mail
+## PASSWORD_MAIL              administrator password of ldap database for mail
+## MAILHOST                   value of attribute entry ldap for mail
+## MAILDELIVERYOPTION         value of attribute entry ldap for mail
+##
+## FILE_WRONG_MESSAGE         path of file to write wrong message
+## MESSAGE_QUEUE_NAME   		  name of Message Queue
+## MESSAGE_QUEUE_SERVER 		  path address of Message Queue Server
+## MESSAGE_QUEUE_MANAGER   	  name of Message Queue Manager
+## MAX_ERROR_FOR_CONNECT      max number of attempt to connect at MQ
+##
+## TIME_LOOK_FOR_CHANGE       time to monitor for change in config file
+## TIME_SLEEP_LDAP_ERROR      time to sleep for LDAP error
+## TIME_SLEEP_MQSERIES_ERROR  time to sleep for MQSERIES error
+## -----------------------------------------------------------------------------
+
+LDAP_UPDATE {
+
+	LOG_FILE 						ldap_update.log
+## LOG_FILE_MAX_SIZE 			1M
+
+	## linux slapd (david)
+	## ---------------------------------------------
+	LDAP_SERVER_ADDRESS  10.10.15.1:389
+	ROOT_DN              "o=BNL,c=IT"
+	ADMIN_DN             "cn=Manager,o=BNL,c=IT"
+	PASSWORD            	secret
+
+	## iplanet slapd (valery)
+	## ---------------------------------------------
+##	LDAP_SERVER_ADDRESS  	   194.91.224.73:389
+##	ROOT_DN              	   "o=BNL,c=IT"
+##	ADMIN_DN             	   "cn=Manager"
+##	PASSWORD            		   penniwyse
+
+	LDAP_SERVER_ADDRESS_MAIL   10.10.15.1:389
+	ROOT_DN_MAIL               "ou=Utenti,ou=e-family.it,o=BNL,c=IT"
+	ADMIN_DN_MAIL              "cn=Manager,o=BNL,c=IT"
+	PASSWORD_MAIL              secret
+	MAILHOST                   mailsrv.bf.bnl.it
+	MAILDELIVERYOPTION      	mailbox
+
+	FILE_WRONG_MESSAGE        	ldap_update.wrg
+	MESSAGE_QUEUE_NAME			LDAP.UPDATE.QUEUE
+	MESSAGE_QUEUE_SERVER 		JAVA.CHANNEL/TCP/lobelia(1414)
+	MESSAGE_QUEUE_MANAGER		frontend
+	MAX_ERROR_FOR_CONNECT      2
+
+## TIME_LOOK_FOR_CHANGE       10
+	TIME_SLEEP_LDAP_ERROR      10
+	TIME_SLEEP_MQSERIES_ERROR  60
+
+	CHECK_QUOTING              "str = \"Manager of my caz\"..."
+}

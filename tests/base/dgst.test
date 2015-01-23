@@ -1,0 +1,32 @@
+#!/bin/sh
+
+. ../.function
+
+## dgst.test -- Test dgst feature
+
+start_msg dgst
+
+#U_HASH_MD2       = 0,
+#U_HASH_MD5       = 1,
+#U_HASH_SHA       = 2,
+#U_HASH_SHA1      = 3,
+#U_HASH_SHA224    = 4,
+#U_HASH_SHA256    = 5,
+#U_HASH_SHA384    = 6,
+#U_HASH_SHA512    = 7,
+#U_HASH_MDC2      = 8,
+#U_HASH_RIPEMD160 = 9
+
+$WINELOADER ./crypto_dgst$SUFFIX 1     0 0 < inp/dgst.inp  >out/dgst.out 2> err/dgst.err
+echo																		 >>out/dgst.out
+$WINELOADER ./crypto_dgst$SUFFIX 1 pippo 5 < inp/dgst.inp >>out/dgst.out 2>>err/dgst.err
+
+RESULT=$?
+export RESULT
+
+# openssl dgst -md5				  < inp/dgst.inp  >ok/dgst.ok
+# echo													  >>ok/dgst.ok
+# openssl dgst -md5 -hmac pippo < inp/dgst.inp >>ok/dgst.ok
+
+# Test against expected output
+test_output_diff dgst

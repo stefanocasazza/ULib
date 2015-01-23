@@ -1,0 +1,173 @@
+#!/bin/sh
+
+. ../.function
+
+## IR.test -- Test IR feature
+
+start_msg query
+
+#UTRACE="0 50M 0"
+#UOBJDUMP="0 5M 1k"
+#USIMERR="error.sim"
+#VALGRIND=valgrind
+#EXEC_ON_EXIT="/utility/stack_dump.sh"
+ export UTRACE UOBJDUMP USIMERR VALGRIND EXEC_ON_EXIT
+
+DIR=`pwd`
+DIR_CMD="../../examples/IR"
+
+#if [ "$TERM" = "msys" ]; then
+#  rm -rf /c/msys/1.0/IR/d*
+#  DB_DIR=/c/msys/1.0/IR/db
+#  DOC_DIR=/c/msys/1.0/IR/doc
+#else
+   DB_DIR=IR/db
+   DOC_DIR=IR/doc
+#fi
+
+# exit 0
+
+# mkdir /doc
+# mount -t tmpfs -o defaults,noatime,nodiratime,size=2g,nr_inodes=64m tmpfs /doc
+# $DIR_CMD/gendoc 1000 0 /doc/
+
+# rm -rf $DOC_DIR/*
+  rm -rf trace.*gendoc*.[0-9]*   object.*gendoc*.[0-9]*   stack.*gendoc*.[0-9]*   mempool.*gendoc*.[0-9]* \
+         trace.*index*.[0-9]*    object.*index*.[0-9]*    stack.*index*.[0-9]*    mempool.*index*.[0-9]*    out/index*.out   err/index*.err \
+         trace.*update*.[0-9]*   object.*update*.[0-9]*   stack.*update*.[0-9]*   mempool.*update*.[0-9]*   out/update.out   err/update.err \
+         trace.*db_dump*.[0-9]*  object.*db_dump*.[0-9]*  stack.*db_dump*.[0-9]*  mempool.*db_dump*.[0-9]*  out/db_dump.out  err/db_dump.err \
+         trace.*db_check*.[0-9]* object.*db_check*.[0-9]* stack.*db_check*.[0-9]* mempool.*db_check*.[0-9]* out/db_check.out err/db_check.err \
+         trace.*mquery*.[0-9]*   object.*mquery*.[0-9]*   stack.*mquery*.[0-9]*   mempool.*mquery*.[0-9]*   out/mquery.out   err/mquery.err
+
+if [ ! -d $DOC_DIR ]; then
+   # 2 -> 20 directory, 1 directory = 2 cartelle, 1 cartella = 20 files
+   mkdir -p $DOC_DIR
+   $WINELOADER $DIR_CMD/gendoc$SUFFIX 2 $DOC_DIR/ >/dev/null 2>/dev/null # 800 file in 20 directory di 40 file
+
+#  cp inp/TestComment.html \
+#     inp/test_reviewed.doc \
+#     inp/xmltutorial.pdf IR/doc/
+fi
+
+# rm -rf $DB_DIR/*
+# start_prg index1  -c index.cfg
+# start_prg db_dump -c index.cfg
+# exit 0
+
+if [ ! -d $DB_DIR ]; then
+   mkdir -p $DB_DIR
+
+#export UTRACE="0 10M 1"
+#export UOBJDUMP="0 5M 1k"
+   start_prg index1 -c index.cfg
+#unset UOBJDUMP UTRACE
+#exit 0
+
+   if [ -x ../../cdb/cdbdump ]; then
+      ../../cdb/cdbdump < $DB_DIR/tbl_names.cdb >> err/index.err
+      ../../cdb/cdbdump < $DB_DIR/tbl_words.cdb >> err/index.err
+   fi
+
+#  start_prg db_dump  -c index.cfg
+#  start_prg db_check -c index.cfg
+#  exit 0
+fi
+#export UTRACE="0 30M 0"
+#start_prg db_check -c index.cfg
+#exit 0
+
+#  start_prg mquery -c index.cfg '"{ Prova } INT { certificato } INT { NOT Pagamento }"'
+#  start_prg mquery -c index.cfg '"{ ?AUre? } INT { certificato } NINT { Pagamento rata }"'
+#  start_prg mquery -c index.cfg '"{ (Prova AND valutazione) AND Rossi_2 } INT { ?AUre? } INT { Pagamento rata }"'
+#  test_output_diff mquery
+
+DEL_FILE="D01/D01_studente_1.xml,D01/D01_studente_1_op_1.xml"
+ADD_FILE="$DEL_FILE,D01/D01_studente_1_op_2?.xml"
+SUB_FILE="D01/D01_studente_1_op_2?.xml"
+
+#export UTRACE="0 30M 0"
+ if [ -f $DOC_DIR/D01/D01_studente_1_op_20.xml ]; then
+   start_prg update -c index.cfg -d "$ADD_FILE"
+ else
+   start_prg update -c index.cfg -d "$DEL_FILE"
+ fi
+
+ cp inp/D01/D01_studente_1.xml \
+    inp/D01/D01_studente_1_op_1.xml \
+    inp/D01/D01_studente_1_op_20.xml $DOC_DIR/D01/
+
+ start_prg update -c index.cfg -a "$ADD_FILE" -s "$SUB_FILE"
+#unset UTRACE
+#exit 0
+
+# start_prg db_check -c index.cfg
+# exit 0
+
+ if [ ! -f ok/query.ok ]; then
+   cd $DOC_DIR
+   QSTR="Pagamento prima rata con bollettino"
+
+   egrep -i -w -l -e ".aure."                                           */*   >> $DIR/ok/query.ok
+   egrep -i -w -l -e "certificato"                                      */*   >> $DIR/ok/query.ok
+   egrep -i -w -l -e "Pagamento.*rata"                                  */*   >> $DIR/ok/query.ok
+   egrep -i -w -l -e "$QSTR"                                            */*   >> $DIR/ok/query.ok
+   egrep -i -w -l -e "Rossi_1" `egrep -i -w -l -e "$QSTR"               */*`  >> $DIR/ok/query.ok
+
+   egrep -i -w -l -e "Rossi_2" `egrep -i -w -l -e "Prova.*valutazione"  */*`  >> $DIR/ok/query.ok
+   echo "D01/D01_studente_1_op_20.xml"                                        >> $DIR/ok/query.ok
+   echo "D01/D01_studente_1_op_20.xml"                                        >> $DIR/ok/query.ok
+   ls -1 */*1_op_18.xml                                                       >> $DIR/ok/query.ok
+
+#  echo "test_reviewed.doc xmltutorial.pdf TestComment.html"                  >> $DIR/ok/query.ok
+
+   cd $DIR
+ fi
+
+#export UTRACE="0 10M 0"
+   # meta caratteri...
+   start_prg query -c index.cfg '?AUre?'
+   start_prg query -c index.cfg 'certIFIcato'
+
+   # NEAR...
+   start_prg query -c index.cfg '"Pagamento rata"'
+
+   # Parola composta...
+   start_prg query -c index.cfg '"\"Pagamento prima rata con bollettino\""'
+   start_prg query -c index.cfg '"\"Pagamento prima rata con bollettino\" AND Rossi_1"'
+   start_prg query -c index.cfg '"\"Pagamento prima rata con bollettino\" AND \"Iscrizione alla prova\""'
+
+   # raggruppamenti...
+   start_prg query -c index.cfg '"(Prova AND valutazione) AND Rossi_2"'
+   start_prg query -c index.cfg '"(D01_studente_1_op_20 AND Ritiro AND certificato20) AND NOT 01_rossi_2"'
+   start_prg query -c index.cfg '"(D01_STUDENTE_1_OP_20 and RITIRO and Certificato20) and NOT 01_Rossi_2"'
+   start_prg query -c index.cfg '"(*Studente*_18 AND ?AUre?) AND NOT Rossi*2"'
+#  start_prg query -c index.cfg 'Trivial OR pleased OR XPath'
+#unset UTRACE
+
+# Test index database
+#  start_prg db_dump  -c index.cfg
+   start_prg db_check -c index.cfg
+
+# Test modalita' directory
+   mkdir -p IR/db_dir
+   start_prg index1   -c index_dir.cfg
+#export UTRACE="0 10M 0"
+   start_prg query    -c index_dir.cfg '"Domanda AND Prima"'
+#unset UTRACE
+   start_prg query    -c index_dir.cfg 'Altro'
+   start_prg query    -c index_dir.cfg '"Domanda AND Prima AND Altro"'
+   start_prg query    -c index_dir.cfg '"Domanda AND Prima AND NOT Altro"'
+   start_prg query    -c index_dir.cfg '"Domanda AND Prima AND NOT Conferma"'
+   start_prg query    -c index_dir.cfg '"\"Sandra Ceccarelli\"  AND NOT Conferma"'
+   start_prg query    -c index_dir.cfg '"\"Studente Ceccarelli\" AND NOT Conferma"'
+   start_prg query    -c index_dir.cfg '"Conferma AND \"Domanda di immatricolazione\""'
+#  start_prg db_check -c index_dir.cfg
+#unset UTRACE
+
+# Test modalita' xml
+#  mkdir -p IR/db_xml
+#  start_prg index1   -c index_xml.cfg
+#  start_prg query    -c index_xml.cfg 'Verdi AND Roma'
+
+# Test against expected output
+test_output_wc l query

@@ -1,0 +1,199 @@
+/* CSP.fcfg: Handle file config for CSP engine */
+
+static int HCSP_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)()); 
+
+/* The definitions for control commands specific to this engine */
+
+#define HCSP_CMD_SET_NAME_OF_CSP   	    ENGINE_CMD_BASE
+#define HCSP_CMD_SET_TYPE_OF_PROVIDER  (ENGINE_CMD_BASE + 1)
+#define HCSP_CMD_SET_KEY_CONTAINER     (ENGINE_CMD_BASE + 2)
+#define HCSP_CMD_SET_CERTIFICATE_STORE (ENGINE_CMD_BASE + 3)
+#define HCSP_CMD_SET_CERTIFICATE_NAME  (ENGINE_CMD_BASE + 4)
+
+/* openssl engine initialization structures */
+
+static const ENGINE_CMD_DEFN HCSP_cmd_defns[] = {
+{ HCSP_CMD_SET_NAME_OF_CSP,
+  "SET_NAME_OF_CSP",
+  "Specifies the string that specifies the name of the CSP to be used",
+  ENGINE_CMD_FLAG_STRING },
+{ HCSP_CMD_SET_TYPE_OF_PROVIDER,
+  "SET_TYPE_OF_PROVIDER",
+  "Specifies the type of provider to acquire",
+  ENGINE_CMD_FLAG_NUMERIC },
+{ HCSP_CMD_SET_KEY_CONTAINER,
+  "SET_KEY_CONTAINER",
+  "Specifies the string that identifies the key container into the CSP",
+  ENGINE_CMD_FLAG_STRING },
+{ HCSP_CMD_SET_CERTIFICATE_STORE,
+  "SET_CERTIFICATE_STORE",
+  "Specifies the name of the system certificate store",
+  ENGINE_CMD_FLAG_STRING },
+{ HCSP_CMD_SET_CERTIFICATE_NAME,
+  "SET_CERTIFICATE_NAME",
+  "Specifies the certificate subject name of the message signer",
+  ENGINE_CMD_FLAG_STRING },
+{ 0, NULL, NULL, 0 } };
+
+/*
+# ---------------------------
+# 		file config example
+# ---------------------------
+CRYPT_PROVIDER    = Microsoft Strong Cryptographic Provider
+PROVIDER_TYPE 	   = 1
+CRYPT_CONTAINER   = stefano
+CERTIFICATE_STORE = My
+CERTIFICATE_NAME  = Stefano Casazza
+*/
+
+/*
+szSubsystemProtocol [in]
+
+A string that names a system store. If the system store name provided in
+this parameter is not the name of an existing system store, a new system
+store will be created and used. CertEnumSystemStore can be used to list
+the names of existing system stores. Some example system stores:
+
+CA		Certification authority certificates.
+MY		A certificate store that holds certificates with associated private keys.
+ROOT	Root certificates.
+SPC	Software Publisher Certificate.
+*/
+
+static void readFileConfig()
+{
+	FILE* fd = fopen(file_config, "r");
+
+#ifdef DEBUG
+	BIO_printf(err, "Call readFileConfig(\"%s\")\n", file_config);
+#endif
+
+	if (fd)
+		{
+		fscanf(fd,
+				  "CRYPT_PROVIDER%*[ =\t]%[^\n]\n" 	 	/* CRYPT_PROVIDER  = ... */
+				  "PROVIDER_TYPE%*[ =\t]%ld\n"   	 	/* PROVIDER_TYPE   = ... */
+				  "CRYPT_CONTAINER%*[ =\t]%[^\n]\n"  	/* CRYPT_CONTAINER = ... */
+				  "CERTIFICATE_STORE%*[ =\t]%[^\n]\n"  /* CERTIFICATE_STORE = ... */
+				  "CERTIFICATE_NAME%*[ =\t]%[^\n]\n",  /* CERTIFICATE_NAME = ... */
+					&pCryptProvider[0],
+					&dwProviderType,
+					&pCryptContainer[0],
+					&pSubsystemProtocol[0],
+					&pFindPara[0]
+					);
+
+		fclose(fd);
+		}
+
+#ifdef DEBUG
+   BIO_printf(err, "pCryptProvider: \"%s\"\n", pCryptProvider);
+   BIO_printf(err, "dwProviderType: %d\n", dwProviderType);
+   BIO_printf(err, "pCryptContainer: \"%s\"\n", pCryptContainer);
+   BIO_printf(err, "pSubsystemProtocol: \"%s\"\n", pSubsystemProtocol);
+   BIO_printf(err, "pFindPara: \"%s\"\n", pFindPara);
+
+   BIO_printf(err, "Return readFileConfig()\n", 0);
+#endif
+}
+
+static void writeFileConfig()
+{
+	FILE* fd = fopen(file_config, "w");
+
+	fprintf(fd,
+			  "CRYPT_PROVIDER    = %s\n"  	/* CRYPT_PROVIDER  = ... */
+			  "PROVIDER_TYPE     = %ld\n" 	/* PROVIDER_TYPE   = ... */
+			  "CRYPT_CONTAINER   = %s\n"  	/* CRYPT_CONTAINER = ... */
+			  "CERTIFICATE_STORE = %s\n"  	/* CERTIFICATE_STORE = ... */
+			  "CERTIFICATE_NAME  = %s\n",  	/* CERTIFICATE_NAME = ... */
+				pCryptProvider,
+				dwProviderType,
+				pCryptContainer,
+				pSubsystemProtocol,
+				pFindPara
+				);
+
+	fclose(fd);
+}
+
+static long set_HCSP_paramvalue(LPSTR param, const char* value)
+{
+	if (value == NULL)
+		{
+#ifdef DEBUG
+		routine = "set_HCSP_paramvalue";
+#endif
+
+		HCSP_err(HCSP_F_CTRL, ERR_R_PASSED_NULL_PARAMETER);
+
+		return 0;
+		}
+
+	strcpy(param, value);
+
+	return 1;
+}
+
+static int HCSP_ctrl(ENGINE* e, int cmd, long i, void* p, void (*f)())
+{
+	int result = 1;
+
+#ifdef FULL_DEBUG
+	BIO_printf(err, "Call HCSP_ctrl(%d,%ld,%s)\n", cmd, i, p);
+	ERR_print_errors(err);
+#endif
+
+	readFileConfig();
+
+	switch (cmd)
+		{
+		case HCSP_CMD_SET_NAME_OF_CSP:
+			{
+			result = set_HCSP_paramvalue(pCryptProvider, (const char*)p);
+			}
+		break;
+
+		case HCSP_CMD_SET_TYPE_OF_PROVIDER:
+			{
+			dwProviderType = (DWORD) i;
+			}
+		break;
+
+		case HCSP_CMD_SET_KEY_CONTAINER:
+			{
+			result = set_HCSP_paramvalue(pCryptContainer, (const char*)p);
+			}
+		break;
+
+		case HCSP_CMD_SET_CERTIFICATE_STORE:
+			{
+			result = set_HCSP_paramvalue(pSubsystemProtocol, (const char*)p);
+			}
+		break;
+
+		case HCSP_CMD_SET_CERTIFICATE_NAME:
+			{
+			result = set_HCSP_paramvalue(pFindPara, (const char*)p);
+			}
+		break;
+
+		default:
+		break;
+		}
+
+	if (result == 1)
+		{
+		writeFileConfig();
+		}
+	else
+		{
+#ifdef DEBUG
+		routine = "HCSP_ctrl";
+#endif
+
+		HCSP_err(HCSP_F_CTRL, HCSP_R_COMMAND_NOT_IMPLEMENTED);
+		}
+
+	return result;
+}

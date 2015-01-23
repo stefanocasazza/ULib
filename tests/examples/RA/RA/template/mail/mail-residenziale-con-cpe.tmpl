@@ -1,0 +1,71 @@
+MIME-Version: 1.0
+Subject: %s
+From: %s
+To: %s
+Content-Type: multipart/mixed; boundary="_-_as978sd78fd912y_-_1_"
+
+--_-_as978sd78fd912y_-_1_
+Content-Type: multipart/mixed; boundary="_-_as978sd78fd912y_-_2_"
+
+--_-_as978sd78fd912y_-_2_
+Content-Type: text/xml
+Content-Transfer-Encoding: 8bit
+
+<document>
+<dati_utente>
+<nome value="%s"/>
+<cognome value="%s"/>
+<luogo_di_nascita value="%s"/>
+<data_di_nascita value="%s"/>
+<sesso value="%s"/>
+<cf value="%s"/>
+<indirizzo value="%s"/>
+<comune value="%s"/>
+<provincia value="%s"/>
+<cap value="%s"/>
+<tipo_di_documento value="%s"/>
+<numero_documento value="%s"/>
+<ente_di_emissione value="%s"/>
+<data_rilascio value="%s"/>
+<telefono_fisso value="%s"/>
+<telefono_fax value="%s"/>
+<telefono_cellulare value="%s"/>
+</dati_utente>
+<installazione>
+<indirizzo value="%s"/>
+<comune value="%s"/>
+<provincia value="%s"/>
+<cap value="%s"/>
+</installazione>
+<spedizione_fattura>
+<destinazione value="%s"/>
+<indirizzo value="%s"/>
+<comune value="%s"/>
+<provincia value="%s"/>
+<cap value="%s"/>
+<email value="%s"/>
+</spedizione_fattura>
+<contratto>
+<note value="%s"/>
+</contratto>
+<cpe>
+<emailAddress value="%s"/>
+</cpe>
+<tservices>
+<safemsg value="si"/>
+</tservices>
+<services>
+<name value="Connettivita' internet"/>
+</services>
+<network>
+<name value="%s"/>
+</network>
+</document>
+--_-_as978sd78fd912y_-_2_
+Content-Transfer-Encoding: Base64
+Content-Type: application/pdf; name="contratto.pdf"
+Content-Disposition: attachment; filename="contratto.pdf"
+
+%s
+--_-_as978sd78fd912y_-_2_--
+--_-_as978sd78fd912y_-_1_--

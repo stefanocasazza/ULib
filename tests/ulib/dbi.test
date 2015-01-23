@@ -1,0 +1,18 @@
+#!/bin/sh
+
+. ../.function
+
+## dbi.test -- Test wrapping libdbi features
+
+start_msg dbi
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+#STRACE=$TRUSS
+start_prg dbi
+
+# Test against expected output
+test_output_wc w dbi

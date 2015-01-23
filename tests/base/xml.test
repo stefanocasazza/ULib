@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. ../.function
+
+## xml.test -- Test xml feature
+
+start_msg xml
+
+cat inp/xml.inp | $WINELOADER ./crypto_xml$SUFFIX    > err/xml.err
+cat err/xml.err | $WINELOADER ./crypto_xml$SUFFIX -d > out/xml.out
+
+RESULT=$?
+export RESULT
+
+# Test against expected output
+test_output_diff xml

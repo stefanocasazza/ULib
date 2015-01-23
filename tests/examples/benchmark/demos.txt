@@ -1,0 +1,18 @@
+hello|Hello|famous greeting application
+cookie|Cookie|famous greeting application with session cookie to remember visitor
+example|Example|sample application
+example_form|Example Form|sample application with a form
+calc|Calc|online desktop-calculator
+calcmvc|Calcmvc|online desktop-calculator, model-view-controller-enterprise-architecture
+calcajax|Calcajax|ajax-version of the desktop-calculator
+session|Session|example of a session
+strings|Strings|sample application, which uses session to collect input from the client
+upload|Upload|how to upload files
+chat|Chat|simple chat-program using ajax
+remove|RemoveSessionCookie|you need to run this before to run the demos that use a session cookie
+json|Test 1 - JSON serialization|This test exercises the framework fundamentals including keep-alive support, request routing, request header parsing, object instantiation, JSON serialization, response header generation, and request count throughput
+db|Test 2 - Single database query|This test exercises the framework's object-relational mapper (ORM), random number generator, database driver, and database connection pool
+queries|Test 3 - Multiple database queries|This test is a variation of Test #2 and also uses the World table. Multiple rows are fetched to more dramatically punish the database driver and connection pool. At the highest queries-per-request tested (20), this test demonstrates all frameworks' convergence toward zero requests-per-second as database activity increases
+fortunes|Test 4 - Fortunes|This test exercises the ORM, database connectivity, dynamic-size collections, sorting, server-side templates, XSS countermeasures, and character encoding
+updates|Test 5 - Database updates|This test is a variation of Test #3 that exercises the ORM's persistence of objects and the database driver's performance at running UPDATE statements or similar
+plaintext|Test 6 - Plaintext|This test is an exercise of the request-routing fundamentals only, designed to demonstrate the capacity of high-performance platforms in particular. The response payload is still small, meaning good performance is still necessary in order to saturate the gigabit Ethernet of the test environment

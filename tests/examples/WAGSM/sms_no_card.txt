@@ -1,0 +1,9 @@
+From: 3397363258
+From_SMSC: 3297006992
+Sent: 00-02-21 22:26:23
+Received: 00-02-21 22:26:29
+Subject: modem1
+Alphabet: ISO
+UDH: false
+
+ppop7d69b3f

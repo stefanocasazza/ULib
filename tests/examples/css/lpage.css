@@ -1,0 +1,23 @@
+div.paging {
+  color:#111111;
+  margin: 2em 1em; text-align: right;
+  font-size: smaller;
+}
+span.pnow {
+  margin: 0em 0em; padding: 0em 0.2em;
+  background: #ffeedd none; border: solid 1pt #bbbbcc;
+  -moz-border-radius: 0.25em;
+}
+a.pnum {
+  margin: 0em 0em; padding: 0em 0.2em;
+  background: #eeeeff none; border: solid 1pt #bbbbcc;
+  -moz-border-radius: 0.25em;
+  font-size: smaller; color: #0022aa; text-decoration: none;
+}
+span.void {
+  margin: 0em 0.2em; padding: 0em 0.5em;
+  background: #eeeeee none; border: solid 1pt #bbbbcc;
+  -moz-border-radius: 0.25em;
+  color: #aaaaaa;
+  opacity: 0.70;
+}

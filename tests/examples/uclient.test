@@ -1,0 +1,78 @@
+#!/bin/sh
+
+. ../.function
+
+start_msg uclient
+
+DOC_ROOT=docroot
+
+rm -f uclient.log $DOC_ROOT//webserver_uclient.log \
+		out/uclient.out err/uclient.err out/userver_tcp.out err/userver_tcp.err \
+					 trace.*uclient*.[0-9]*					  object.*uclient*.[0-9]*					 stack.*uclient*.[0-9]*					  mempool.*uclient*.[0-9]* \
+					 trace.*userver_*.[0-9]*				  object.*userver_*.[0-9]*					 stack.*userver_*.[0-9]*				  mempool.*userver_*.[0-9]* \
+	   $DOC_ROOT/trace.*userver_tcp*.[0-9]* $DOC_ROOT/object.*userver_tcp*.[0-9]* $DOC_ROOT/stack.*userver_tcp*.[0-9]* $DOC_ROOT/mempool.*userver_tcp*.[0-9]*
+
+#UTRACE="0 85M 0"
+#UOBJDUMP="0 10M 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+creat_link ../uploads $DOC_ROOT/uploads
+
+cat <<EOF >inp/webserver.cfg
+userver {
+#RUN_AS_USER apache
+ LOG_FILE webserver_uclient.log
+ LOG_FILE_SZ 1M
+ LOG_MSG_SIZE -1
+ DOCUMENT_ROOT $DOC_ROOT
+ PLUGIN_DIR     ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+}
+http {
+ TELNET_ENABLE yes
+#ENABLE_INOTIFY yes
+ LIMIT_REQUEST_BODY 700K
+ REQUEST_READ_TIMEOUT 30
+ DIGEST_AUTHENTICATION no
+ APACHE_LIKE_LOG /var/log/httpd/access_log
+ CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz
+ CACHE_AVOID_MASK SSI|benchmark|www.sito1.com|www.sito2.com
+}
+EOF
+
+DIR_CMD="../../examples/userver"
+
+#STRACE=$TRUSS
+start_prg_background userver_tcp -c inp/webserver.cfg
+
+cat <<EOF >inp/webclient.cfg
+uclient {
+ LOG_FILE uclient.log
+ LOG_FILE_SZ 1M
+ FOLLOW_REDIRECTS yes
+#USER Aladdin
+#PASSWORD_AUTH "open sesame"
+}
+EOF
+
+$SLEEP
+DIR_CMD="../../examples/uclient"
+
+#UTRACE="0 85M 0"
+#UOBJDUMP="0 10M 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+mkdir -p uploads
+
+start_prg uclient -u inp/PEC/PEC.log -c inp/webclient.cfg http://localhost/cgi-bin/uploader.sh # -q 10
+
+diff inp/PEC/PEC.log uploads/PEC.log
+RESULT=$?
+
+$SLEEP
+kill_prg userver_tcp TERM
+
+# Test against expected output
+test_output_diff uclient

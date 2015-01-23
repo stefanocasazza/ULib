@@ -1,0 +1,72 @@
+<!--#declaration
+class calcBean {
+   double arg1;
+   double arg2;
+   double result;
+   char op;
+   bool resultOk;
+
+public:
+   calcBean() : arg1(0), arg2(0), op('+'), resultOk(false) { }
+
+   double getArg1() const    { return arg1; }
+   double getArg2() const    { return arg2; }
+   char   getOp() const      { return op; }
+   bool   isResultOk() const { return resultOk; }
+   double getResult() const  { return result; }
+
+   void set(double arg1_, double arg2_, char op_)
+      {
+      op   = op_;
+      arg1 = arg1_;
+      arg2 = arg2_;
+
+      resultOk = true;
+
+      switch (op)
+         {
+         case '+': result = arg1 + arg2; break;
+         case '-': result = arg1 - arg2; break;
+         case '*': result = arg1 * arg2; break;
+         case '/': result = arg1 / arg2; break;
+
+         default:  resultOk = false;
+         }
+      }
+};
+-->
+<!--#args
+arg1("0");
+arg2("0");
+opval(" ");
+-->
+<!--#code
+calcBean calc;
+
+calc.set(arg1.strtod(), arg2.strtod(), opval.first_char());
+-->
+<html>
+ <head>
+  <title>Calculator</title>
+ </head>
+ <body bgcolor=#ffffcc>
+  <h1>Tommi's Calculator</h1>
+
+  <form>
+   <input type="text"   name="arg1" value="<!--#puts arg1 -->" ><br>
+   <input type="text"   name="arg2" value="<!--#puts arg2 -->" ><br>
+   <input type="submit" name="op"   value="+">
+   <input type="submit" name="op"   value="-">
+   <input type="submit" name="op"   value="*">
+   <input type="submit" name="op"   value="/">
+  </form>
+
+<!--#code
+if (calc.isResultOk())
+   {
+   USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), calc.getResult());
+   }
+-->
+
+ </body>
+</html>

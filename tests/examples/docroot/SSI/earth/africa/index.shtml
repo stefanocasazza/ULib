@@ -1,0 +1,8 @@
+<html>
+<head><title>Solar System</title></head>
+<body>
+<!--#include virtual="/SSI/menu.shtml" -->
+
+<p>Content particular to the Solar System...
+
+</body></html>

@@ -1,0 +1,22 @@
+#!/bin/sh
+
+. ../.function
+
+## engine.test -- Test engine feature
+
+start_msg crypto_des3
+
+$WINELOADER ./crypto_des3$SUFFIX      password < inp/engine.inp | \
+$WINELOADER ./crypto_base64$SUFFIX    			  > err/engine.err
+$WINELOADER ./crypto_base64$SUFFIX -d 		     < err/engine.err | \
+$WINELOADER ./crypto_des3$SUFFIX   -d password > out/engine.out
+
+# openssl des3 -in inp/engine.inp -out out/engine.out -pass pass:password -e
+
+# ./crypto_base64 -d < tmp/ticket | ./crypto_des3 -d 200912281747
+
+RESULT=$?
+export RESULT
+
+# Test against expected output
+test_output_diff engine

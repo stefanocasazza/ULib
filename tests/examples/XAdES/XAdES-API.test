@@ -1,0 +1,93 @@
+#!/bin/sh
+
+. ../../.function
+
+start_msg XAdES-API
+
+rm -f XAdES-API.log /tmp/URPCGenericMethod.err \
+		out/sign.out err/sign.err \
+		out/archive.out err/archive.err \
+		out/verify.out err/verify.err \
+		out/XAdES-API.out out/client.out out/client1.out \
+		trace.*sign*.[0-9]* object.*sign*.[0-9]* stack.*sign*.[0-9]* \
+		trace.*archive*.[0-9]* object.*archive*.[0-9]* stack.*archive*.[0-9]* \
+		trace.*verify*.[0-9]* object.*verify*.[0-9]* stack.*verify*.[0-9]* \
+		out/client.out err/client.err \
+		trace.*client*.[0-9]* object.*client*.[0-9]* stack.*client*.[0-9]* \
+		out/userver_tcp.out err/userver_tcp.err \
+      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
+
+ UTRACE="0 10M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#VALGRIND="valgrind -v --leak-check=full"
+ export UTRACE UOBJDUMP USIMERR
+
+DIR_CMD="../../../examples/userver"
+
+#STRACE=$LTRUSS
+start_prg_background userver_tcp -c XAdES-API.cfg
+
+$SLEEP
+DIR_CMD="../../../examples/XAdES"
+
+DATA_URI=xmldsig-input.txt
+X509=../../ulib/CA/server.crt
+KEY_HANDLE=../../ulib/CA/server_nopass.key
+DIGEST_ALGORITHM=sha1
+SIGNING_TIME=0
+
+CLAIMED_ROLE="Amministratore UNIREL"
+PRODUCTION_PLACE_CITY="sesto fiorentino"
+PRODUCTION_PLACE_STATE_OR_PROVINCE=SI
+PRODUCTION_PLACE_POSTAL_CODE=11111
+PRODUCTION_PLACE_COUNTRY_NAME=Italy
+CA_STORE=../../ulib/CA/CApath
+SIGNATURE_TIMESTAMP="http://10.30.1.131/tsa"
+
+#STRACE=$LTRUSS
+start_prg client -c XAdESclient.cfg -- 1 \
+									 $DATA_URI \
+									 $X509 \
+									 $KEY_HANDLE \
+									 $DIGEST_ALGORITHM \
+									 $SIGNING_TIME 
+								  # '"$CLAIMED_ROLE"' \
+								  # '"$PRODUCTION_PLACE_CITY"' \
+								  # $PRODUCTION_PLACE_STATE_OR_PROVINCE \
+								  # $PRODUCTION_PLACE_POSTAL_CODE \
+								  # $PRODUCTION_PLACE_COUNTRY_NAME
+
+mv out/client.out out/client1.out
+
+#start_prg client -c XAdESclient.cfg -- 2 \
+#									 $DATA_URI \
+#									 $X509 \
+#									 $KEY_HANDLE \
+#									 $DIGEST_ALGORITHM \
+#									 $SIGNING_TIME \
+#									 '"$CLAIMED_ROLE"' \
+#									 '"$PRODUCTION_PLACE_CITY"' \
+#									 $PRODUCTION_PLACE_STATE_OR_PROVINCE \
+#									 $PRODUCTION_PLACE_POSTAL_CODE \
+#									 $PRODUCTION_PLACE_COUNTRY_NAME \
+#									 $CA_STORE \
+#									 $SIGNATURE_TIMESTAMP
+
+#ARCHIVE_TIMESTAMP="http://10.30.1.131/tsa"
+#SCHEMA=/mnt/storage/stefano/XAdES/XAdESv141.xsd
+
+#start_prg client -c XAdESclient.cfg -- 3 \
+#									 out/client.out \
+#									 $ARCHIVE_TIMESTAMP \
+#									 $SCHEMA
+
+cat out/client1.out out/client.out >out/XAdES-API.out 2>/dev/null
+
+mv err/userver_tcp.err err/XAdES-API.err
+
+$SLEEP
+kill_prg userver_tcp TERM
+
+# Test against expected output
+test_output_wc w XAdES-API

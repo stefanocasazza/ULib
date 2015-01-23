@@ -1,0 +1,7 @@
+    <dl class="doc">
+      <dt><a href="%s" class="doc_title">%s</a></dt>
+
+		<dd class="doc_text">%s <code class="delim">...</code></dd>
+
+      <dd class="doc_navi"><span class="doc_link">file://%s</span></dd>
+    </dl>

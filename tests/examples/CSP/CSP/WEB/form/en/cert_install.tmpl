@@ -1,0 +1,69 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+  <meta name="generator" content="HTML Tidy for Linux (vers 1 September 2005), see www.w3.org">
+
+  <title>Installazione del certificato</title>
+  <link type="text/css" href="/CSP/WEB/css/t-services.css" rel="stylesheet">
+</head>
+
+<body text="#000000" link="red" vlink="green" bgcolor="#FFFFFF">
+  <div id="getcert">
+    <h1>Install certificate</h1>
+
+    <div id="crtinfo">
+      <div class="param">
+        <div class="lparam">
+          Certification authority
+        </div>
+
+        <div class="cparam">
+          <strong>UserCerts</strong>
+        </div>
+      </div><br>
+
+      <div class="param">
+        <div class="lparam">
+          Subject DN
+        </div>
+
+        <div class="cparam">
+          <strong>%s</strong>
+        </div>
+      </div><br>
+
+      <div class="param">
+        <div class="lparam">
+          Valid until
+        </div>
+
+        <div class="cparam">
+          <strong>%s</strong>
+        </div>
+      </div>
+    </div>
+  </div><script type="text/javascript">
+<!--
+    function loadCert()
+                {
+                input_box = confirm("The following certificate will be installed:\\r\\nSerial: %s\\r\\nSubject: %s\\r\\nValid until: %s\\r\\n\\r\\nClick OK to continue or Cancel to abort.");
+
+                if (input_box == true)
+                        {
+                        certframe.location.href = "http://10.30.1.131:4433/CSP/WEB/cgi-bin/get-cert.sh?cert=%s";
+                        }
+                }
+
+    if (document.layers)
+                 {
+                 document.write('<il'+'ayer src="" name="certframe" width="1" height="1" onLoad="loadCert()"><\/il'+'ayer>');
+                 }
+         else
+                 {
+                 document.write('<ifr'+'ame src="" name="certframe" width="1" height="1" onLoad="loadCert()" frameborder="0"><\/ifr'+'ame>');
+                 }
+//-->
+</script>
+</body>
+</html>

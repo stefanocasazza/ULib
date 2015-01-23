@@ -1,0 +1,17 @@
+.TH cdb_free 3
+.SH NAME
+cdb_free \- close a constant databased
+.SH SYNTAX
+.B #include <cdb.h>
+
+int cdb_free(struct cdb *\fIc\fR);
+
+.SH DESCRIPTION
+.B cdb_free
+removes any memory mapping that cdb_init might have established.
+
+It will not close the file descriptor that you passed to cdb_init or
+attempt to call free() on the struct cdb pointer.
+
+.SH "SEE ALSO"
+cdb_free(3), cdb_read(3), cdb_find(3), cdbmake(1)

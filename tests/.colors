@@ -1,0 +1,88 @@
+# -----------------------------------------------------------------------------
+# Set a few variables that influence the text that's printed on the screen.
+# -----------------------------------------------------------------------------
+# \033         ascii ESCape
+# \033[<NUM>G  move to column <NUM> (linux console, xterm, not vt100)
+# \033[<NUM>C  move <NUM> columns forward but only upto last column
+# \033[<NUM>D  move <NUM> columns backward but only upto first column
+# \033[<NUM>A  move <NUM> rows up
+# \033[<NUM>B  move <NUM> rows down
+# \033[1m      switch bold on
+# \033[31m     switch red on
+# \033[32m     switch green on
+# \033[33m     switch yellow on
+# \033[m       switch color/bold off
+# \017         exit alternate mode (xterm, vt100, linux console)
+# \033[10m     exit alternate mode (linux console)
+# \015         carriage return (without newline)
+# -----------------------------------------------------------------------------
+# NORMAL  prints text in normal mode
+# FAILURE prints text in a red colour
+# SUCCESS prints text in a green colour
+# WARNING prints text in a yellow colour
+# -----------------------------------------------------------------------------
+
+SUCCESS="$ECHO \\033[1;32m"
+WARNING="$ECHO \\033[1;33m"
+FAILURE="$ECHO \\033[1;31m"
+
+if [ "x$ECHO" = "x" ]; then
+	export ECHO=printf
+#	export ECHO="/bin/echo -e -n"
+fi
+
+if [ "$TERM" = "cygwin" ]; then
+	NORMAL="$ECHO \\033[37m"
+else
+	NORMAL="$ECHO \\033[m"
+fi
+
+export NORMAL SUCCESS WARNING FAILURE
+
+#for h in 0 1; do
+#  echo -e "\\033[0;${h}m\\c"
+#  case $h in
+#  0) echo -e "Normal\\c" ;;
+#  1) echo -e "High\\c" ;;
+#  esac
+#  echo -e " intensity foreground (background color in parentheses)\\033[m"
+#  for f in 0 1 2 3 4 5 6 7; do
+#    for b in 0 1 2 3 4 5 6 7 8; do
+#      echo -e "\\033[${h};3${f}\\c"
+#      if [ $b -lt 8 ]; then
+#        echo -e ";4${b}m\\c"
+#      else
+#        echo -e "m\\c"
+#      fi
+#      case $f in
+#      0) echo -e " BLACK \\c" ;;
+##      1) echo -e "  RED  \\c" ;;
+#      2) echo -e " GREEN \\c" ;;
+#      3) echo -e " YELLOW\\c" ;;
+#      4) echo -e "  BLUE \\c" ;;
+#      5) echo -e "MAGENTA\\c" ;;
+#      6) echo -e "  CYAN \\c" ;;
+#      7) echo -e " WHITE \\c" ;;
+#      esac
+#      case $b in
+#      8) echo -e "\\033[m" ;;
+#      *) echo -e " \\033[m \\c" ;;
+#      esac
+#    done
+#  done
+#  echo -e "\\033[${h}m\\c"
+#  for b in 0 1 2 3 4 5 6 7 8; do
+#    case $b in
+#    0) echo -e "(black)  \\c" ;;
+#    1) echo -e " (red)   \\c" ;;
+#    2) echo -e "(green)  \\c" ;;
+#    3) echo -e "(yellow) \\c" ;;
+#    4) echo -e " (blue)  \\c" ;;
+#    5) echo -e "(magenta)\\c" ;;
+#    6) echo -e " (cyan)  \\c" ;;
+#    7) echo -e "(white)  \\c" ;;
+#    8) echo -e " (none)\\c" ;;
+#    esac
+#  done
+#  echo -e "\\033[m\\n"
+#done

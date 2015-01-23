@@ -1,0 +1,3 @@
+./inp/simple-signed-object-con-due-smime-allegati.eml
+./inp/simple-signed-object-con-due-smime-allegati_same_ca.eml
+./inp/pkcs7_nested_in_tbote_signed_with_certs_from_different_chain.eml

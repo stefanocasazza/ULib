@@ -1,0 +1,25 @@
+// usage.txt
+
+#undef  ARGS
+#define ARGS "number_of_command <parameters>"
+
+#define PURPOSE \
+"client to interface server managing CA\n" \
+"--------------------------------------------------------------------------------------------------------\n" \
+"List of commands:\n" \
+"\n" \
+" 1 - CA creation                           - parameters: <CA name> <days> [openssl.cnf]\n" \
+" 2 - CA list                               - no parameter\n" \
+" 3 - Emit certificate                      - parameters: <CA name> <PKCS10-request>.pem [policy]\n" \
+" 4 - Emit certificate                      - parameters: <CA name>  <SPKAC-request>.pem [policy]\n" \
+" 5 - CA certificates list                  - parameter:  <CA name> [compress]\n" \
+" 6 - Remove certificate                    - parameters: <CA name> <cert-serial (number value)>\n" \
+" 7 - Physically remove all CA certificates - parameter:  <CA name>\n" \
+" 8 - Emit crl                              - parameter:  <CA name>\n" \
+" 9 - Get crl                               - parameter:  <CA name>\n" \
+"10 - Get CA certificate                    - parameter:  <CA name>\n" \
+"11 - Revoke certificate                    - parameters: <CA name> <cert-serial (number value)>\n" \
+"--------------------------------------------------------------------------------------------------------"
+
+#define U_OPTIONS \
+"option c config 1 \"path of configuration file\" \"\"\n"

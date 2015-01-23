@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it" lang="it">
+<head>
+  <meta http-equiv="Cache Control" content="max-age=0, no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="Sat, 1 Jan 2000 00:00:00 GMT" />
+  <meta http-equiv="x-ua-compatible" content="ie=edge" />
+  <meta name="viewport" content="width=device-width; initial-scale=1; minimum-scale=1; maximum-scale=1" />
+  <link type="text/css" rel="stylesheet" href="css/masterv4.css" />
+  <!--#if expr="$HTTP_USER_AGENT_MOBILE == 1" -->
+	<link type="text/css" rel="stylesheet" href="css/mobilev4.css" />
+  <!--#else -->
+	<link type="text/css" rel="stylesheet" href="css/fullv4.css" />
+  <!--#endif -->
+  <!--#exec servlet=$VIRTUAL_HOST/servlet/wi_auth -->
+  <!--#if expr="$HTTP_RESPONSE_CODE == 0" -->
+    <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
+  <!--#endif -->
+  <title><!--#echo var=$TITLE_TXT --></title>
+  <!--#echo var=$SSI_HEAD -->
+</head>
+<body <!--#echo var=$BODY_STYLE -->>
+  <!--#include direct=$SSI_FILE_BODY -->
+</body>
+</html>

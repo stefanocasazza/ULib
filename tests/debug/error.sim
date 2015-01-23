@@ -1,0 +1,9 @@
+# -----------------------------------------------------------------------------
+# error.sim: file for simulation of error
+# -----------------------------------------------------------------------------
+# <classname>::method <random range> <return type> <return value> <errno value>
+# -----------------------------------------------------------------------------
+ 	          ::stat		 	  5   			  i 				-1 				13 		# (EACCES - Permission denied)
+ 	          ::malloc	 	  0   			  p 				0x0 				12 		# (ENOMEM - Not enough space)
+ 	          ::setitimer	  0   			  i 				-1 				14 		# (EFAULT - Bad address)
+# -----------------------------------------------------------------------------

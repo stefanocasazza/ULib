@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<!DOCTYPE wfeng:handler-response SYSTEM "workflow-engine.dtd">
+<wfeng:handler-response xmlns:wfeng="http://www.t-bizcom.com/WorkflowEngine" wfeng:request-id="%s">
+<wfeng:result>1</wfeng:result>
+<wfeng:data wfeng:error="event=validate:state=validated:action-name=validation:error-message=%.*s">%.*s</wfeng:data>
+</wfeng:handler-response>

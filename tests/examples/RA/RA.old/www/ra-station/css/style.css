@@ -1,0 +1,596 @@
+body {
+  background:white;
+  background-position:95px 30px;
+  margin:10px 5px;
+  width:700px;
+  font-family:Verdana,Arial,Serif,Verdana,Georgia,Serif;
+  color:#333;
+  font-size:medium;
+  }
+  
+/* Links
+----------------------------------------------- */
+a:link {
+  color:#000;
+  text-decoration:none;
+  }
+a:visited {
+  color:#000;
+  text-decoration:none;
+  }
+a:hover {
+  color:#000;
+  }
+a img {
+  border-width:0;
+  }
+
+/* Header
+----------------------------------------------- */
+#header {
+  margin:20px 0;
+  vertical-align:middle;
+  width:756px;
+  border-top:1px solid #ccc;
+  border-bottom:1px solid #ccc;
+  }
+  
+#title {
+  text-align: right;
+  margin:25px 5px 0;
+  padding:10px 10px .25em;
+  border:0px solid #eee;
+  border-width:0px 0px 0;
+  font-size:200%;
+  line-height:1.2em;
+  font-weight:normal;
+  color:#119;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  }
+
+#description {
+  text-align: right;
+  margin:0 10px 30px;
+  padding:0 10px 0px;
+  border:0px solid #eee;
+  font:78%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#555;
+  }
+
+#private {
+  text-align: center;
+  padding:10px 0 0;
+  height:10px;
+  font:88%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  color:#999;
+  }
+
+#msg {
+  text-align: left;
+  padding:5px 0 0;
+  max-width:700px;
+  height:10px;
+  font:78%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  letter-spacing:.1em;
+  color:#944;
+  }
+
+#splash {
+  width:660px;
+  padding-top:160px;
+  margin:0 50px;
+}
+
+/* Headings
+----------------------------------------------- */
+h3 {
+  margin:1.5em 0 .75em;
+  font:88%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#119;
+  }
+
+h2 {
+  margin:1.5em 0 .75em;
+  font:110%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#119;
+  }
+
+h1 {
+  margin:1.5em 0 .75em;
+  font:150%/1.4em "Trebuchet MS",Trebuchet,Arial,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.2em;
+  color:#119;
+  }
+
+
+/* Footer
+----------------------------------------------- */
+#footer {
+  text-align:center;
+  }
+#footer hr {
+  display:none;
+  }
+#footer p {
+  margin:0;
+  padding-top:30px;
+  font:78%/1.6em "Trebuchet MS",Trebuchet,Verdana,Sans-serif;
+  text-transform:uppercase;
+  letter-spacing:.1em;
+  }
+  
+
+div.webpage {
+  width:750px;
+}
+
+p.navtoc {
+  font-size:small; 
+  font-family:Verdana,Arial,Serif,Verdana,Georgia,Serif;
+  font-weight:bold;
+}
+
+/* Various things
+----------------------------------------------- */
+div.center {
+  text-align:center;
+  }
+
+div.center table {
+  margin-left:auto; 
+  margin-right:auto; 
+  text-align:left;
+  }
+
+div.fragment {
+  background-color: #E0E0E0; 
+  }
+
+pre.screen { 
+  background-color: #E0E0E0; 
+  }
+
+
+/* Doxygen settings 
+----------------------------------------------- */
+DIV.qindex {
+	width: 100%;
+	background-color: #eeeeff;
+	border: 1px solid #b0b0b0;
+	text-align: center;
+	margin: 2px;
+	padding: 2px;
+	line-height: 140%;
+}
+DIV.nav {
+	width: 100%;
+	background-color: #eeeeff;
+	border: 1px solid #b0b0b0;
+	text-align: center;
+	margin: 2px;
+	padding: 2px;
+	line-height: 140%;
+}
+DIV.navtab {
+       background-color: #eeeeff;
+       border: 1px solid #b0b0b0;
+       text-align: center;
+       margin: 2px;
+       margin-right: 15px;
+       padding: 2px;
+}
+TD.navtab {
+       font-size: 70%;
+}
+A.qindex {
+       text-decoration: none;
+       font-weight: bold;
+       color: #1A419D;
+}
+A.qindex:visited {
+       text-decoration: none;
+       font-weight: bold;
+       color: #1A419D
+}
+A.qindex:hover {
+	text-decoration: none;
+	background-color: #ddddff;
+}
+A.qindexHL {
+	text-decoration: none;
+	font-weight: bold;
+	background-color: #6666cc;
+	color: #ffffff;
+	border: 1px double #9295C2;
+}
+A.qindexHL:hover {
+	text-decoration: none;
+	background-color: #6666cc;
+	color: #ffffff;
+}
+A.qindexHL:visited { text-decoration: none; background-color: #6666cc; color: #ffffff }
+A.el { text-decoration: none; font-weight: bold }
+A.elRef { font-weight: bold }
+A.code:link { text-decoration: none; font-weight: normal; color: #0000FF}
+A.code:visited { text-decoration: none; font-weight: normal; color: #0000FF}
+A.codeRef:link { font-weight: normal; color: #0000FF}
+A.codeRef:visited { font-weight: normal; color: #0000FF}
+A:hover { text-decoration: none; background-color: #f2f2ff }
+DL.el { margin-left: -1cm }
+.fragment {
+       font-family: Fixed, monospace;
+       font-size: 95%;
+}
+PRE.fragment {
+	border: 1px solid #CCCCCC;
+	background-color: #f5f5f5;
+	margin-top: 4px;
+	margin-bottom: 4px;
+	margin-left: 2px;
+	margin-right: 8px;
+	padding-left: 6px;
+	padding-right: 6px;
+	padding-top: 4px;
+	padding-bottom: 4px;
+}
+DIV.ah { background-color: black; font-weight: bold; color: #ffffff; margin-bottom: 3px; margin-top: 3px }
+TD.md { background-color: #F4F4FB; font-weight: bold; }
+TD.mdPrefix {
+       background-color: #F4F4FB;
+       color: #606060;
+	font-size: 80%;
+}
+TD.mdname1 { background-color: #F4F4FB; font-weight: bold; color: #602020; }
+TD.mdname { background-color: #F4F4FB; font-weight: bold; color: #602020; }
+DIV.groupHeader {
+       margin-left: 16px;
+       margin-top: 12px;
+       margin-bottom: 6px;
+       font-weight: bold;
+}
+DIV.groupText { margin-left: 16px; font-style: italic; font-size: 90% }
+TD.indexkey {
+	background-color: #eeeeff;
+	font-weight: bold;
+	padding-right  : 10px;
+	padding-top    : 2px;
+	padding-left   : 10px;
+	padding-bottom : 2px;
+	margin-left    : 0px;
+	margin-right   : 0px;
+	margin-top     : 2px;
+	margin-bottom  : 2px;
+	border: 1px solid #CCCCCC;
+}
+TD.indexvalue {
+	background-color: #eeeeff;
+	font-style: italic;
+	padding-right  : 10px;
+	padding-top    : 2px;
+	padding-left   : 10px;
+	padding-bottom : 2px;
+	margin-left    : 0px;
+	margin-right   : 0px;
+	margin-top     : 2px;
+	margin-bottom  : 2px;
+	border: 1px solid #CCCCCC;
+}
+TR.memlist {
+   background-color: #f0f0f0; 
+}
+P.formulaDsp { text-align: center; }
+IMG.formulaDsp { }
+IMG.formulaInl { vertical-align: middle; }
+SPAN.keyword       { color: #008000 }
+SPAN.keywordtype   { color: #604020 }
+SPAN.keywordflow   { color: #e08000 }
+SPAN.comment       { color: #800000 }
+SPAN.preprocessor  { color: #806020 }
+SPAN.stringliteral { color: #002080 }
+SPAN.charliteral   { color: #008080 }
+.mdTable {
+  width: 700px;
+	border: 1px solid #868686;
+	background-color: #F4F4FB;
+}
+.mdRow {
+	padding: 8px 10px;
+}
+.mdescLeft {
+       padding: 0px 8px 4px 8px;
+	font-size: 80%;
+	font-style: italic;
+	background-color: #FAFAFA;
+	border-top: 1px none #E0E0E0;
+	border-right: 1px none #E0E0E0;
+	border-bottom: 1px none #E0E0E0;
+	border-left: 1px none #E0E0E0;
+	margin: 0px;
+}
+.mdescRight {
+       padding: 0px 8px 4px 8px;
+	font-size: 80%;
+	font-style: italic;
+	background-color: #FAFAFA;
+	border-top: 1px none #E0E0E0;
+	border-right: 1px none #E0E0E0;
+	border-bottom: 1px none #E0E0E0;
+	border-left: 1px none #E0E0E0;
+	margin: 0px;
+}
+.memItemLeft {
+	padding: 1px 0px 0px 8px;
+	margin: 4px;
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	border-top-color: #E0E0E0;
+	border-right-color: #E0E0E0;
+	border-bottom-color: #E0E0E0;
+	border-left-color: #E0E0E0;
+	border-top-style: solid;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	background-color: #FAFAFA;
+	font-size: 80%;
+}
+.memItemRight {
+	padding: 1px 8px 0px 8px;
+	margin: 4px;
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	border-top-color: #E0E0E0;
+	border-right-color: #E0E0E0;
+	border-bottom-color: #E0E0E0;
+	border-left-color: #E0E0E0;
+	border-top-style: solid;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	background-color: #FAFAFA;
+	font-size: 80%;
+}
+.memTemplItemLeft {
+	padding: 1px 0px 0px 8px;
+	margin: 4px;
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	border-top-color: #E0E0E0;
+	border-right-color: #E0E0E0;
+	border-bottom-color: #E0E0E0;
+	border-left-color: #E0E0E0;
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	background-color: #FAFAFA;
+	font-size: 80%;
+}
+.memTemplItemRight {
+	padding: 1px 8px 0px 8px;
+	margin: 4px;
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	border-top-color: #E0E0E0;
+	border-right-color: #E0E0E0;
+	border-bottom-color: #E0E0E0;
+	border-left-color: #E0E0E0;
+	border-top-style: none;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+	background-color: #FAFAFA;
+	font-size: 80%;
+}
+.memTemplParams {
+	padding: 1px 0px 0px 8px;
+	margin: 4px;
+	border-top-width: 1px;
+	border-right-width: 1px;
+	border-bottom-width: 1px;
+	border-left-width: 1px;
+	border-top-color: #E0E0E0;
+	border-right-color: #E0E0E0;
+	border-bottom-color: #E0E0E0;
+	border-left-color: #E0E0E0;
+	border-top-style: solid;
+	border-right-style: none;
+	border-bottom-style: none;
+	border-left-style: none;
+  color: #606060;
+	background-color: #FAFAFA;
+	font-size: 80%;
+}
+.search     { color: #003399;
+              font-weight: bold;
+}
+FORM.search {
+              margin-bottom: 0px;
+              margin-top: 0px;
+}
+INPUT.search { font-size: 75%;
+               color: #000080;
+               font-weight: normal;
+               background-color: #eeeeff;
+}
+TD.tiny      { font-size: 75%;
+}
+.dirtab { padding: 4px;
+          border-collapse: collapse;
+          border: 1px solid #b0b0b0;
+}
+TH.dirtab { background: #eeeeff;
+            font-weight: bold;
+}
+HR { height: 1px;
+     border: none;
+     border-top: 1px solid black;
+}
+
+.center {text-align: center}
+
+.standard-font {
+        font-family: "URW Bookman L","Times New Roman";
+        font-size: 8pt;
+}
+
+.title-font {
+        font-family: "URW Bookman L","Times New Roman";
+        font-size: 12pt;
+        font-weight:bold;
+}
+
+.subtitle-font {
+        font-family: "URW Bookman L","Times New Roman";
+        font-size: 9pt;
+        font-weight:bold;
+}
+
+.Stile3 {color: #CC0000}
+
+/********************************* LiveValidation *************************************/
+/* Classe che si applica ai messaggi di validità */
+.LV_valid {
+    color:#00CC00;
+}
+
+/* Classe che si applica ai messaggi di non validità */	
+.LV_invalid {
+	color:#CC0000;
+}
+
+/* Classe che si applica a tutti i messaggi di validazione */	
+.LV_validation_message{
+    font-weight:bold;
+    margin:0 0 0 5px;
+}
+
+/* Stili applicati ai campi validi */    
+.LV_valid_field,
+input.LV_valid_field:hover, 
+input.LV_valid_field:active,
+textarea.LV_valid_field:hover, 
+textarea.LV_valid_field:active,
+.fieldWithErrors input.LV_valid_field,
+.fieldWithErrors textarea.LV_valid_field {
+    border: 1px solid #00CC00;
+}
+
+/* Stili applicati ai campi non validi */ 
+.LV_invalid_field, 
+input.LV_invalid_field:hover, 
+input.LV_invalid_field:active,
+textarea.LV_invalid_field:hover, 
+textarea.LV_invalid_field:active,
+.fieldWithErrors input.LV_invalid_field,
+.fieldWithErrors textarea.LV_invalid_field {
+    border: 1px solid #CC0000;
+}
+/********************************* paginazione *************************************/
+div.paging {
+  color:#111111;
+  margin: 2em 1em; text-align: right;
+  font-size: smaller;
+}
+span.pnow {
+  margin: 0em 0em; padding: 0em 0.2em;
+  background: #ffeedd none; border: solid 1pt #bbbbcc;
+  -moz-border-radius: 0.25em;
+}
+a.pnum {
+  margin: 0em 0em; padding: 0em 0.2em;
+  background: #eeeeff none; border: solid 1pt #bbbbcc;
+  -moz-border-radius: 0.25em;
+  font-size: smaller; color: #0022aa; text-decoration: none;
+}
+span.void {
+  margin: 0em 0.2em; padding: 0em 0.5em;
+  background: #eeeeee none; border: solid 1pt #bbbbcc;
+  -moz-border-radius: 0.25em;
+  color: #aaaaaa;
+  opacity: 0.70;
+}
+
+/********************************* marco *************************************/
+.western {
+  font-size:50%;
+}
+
+.table_header {
+	 height: 10px;
+	 font-size: 6pt;
+	 font-family:"URW Bookman L, Times New Roman";
+	 font-weight:bold;
+	 background: #b3b3b3;
+}
+
+.table_data_header {
+	 height: 14px;
+	 font-size: 6pt;
+	 font-family:"URW Bookman L, Times New Roman";
+	 font-style: italic;
+	 font-weight:bold;
+}
+
+.table_data_content {
+	 height: 10px;
+	 font-size: 7pt;
+	 font-family:"URW Bookman L, Times New Roman";
+	 font-weight:bold;
+}
+
+.table_data_content_small {
+	 height: 10px;
+	 font-size: 6pt;
+	 font-family:"URW Bookman L, Times New Roman";
+	 font-style:italic;
+}
+
+.table_data_content_bigger {
+	 height: 14px;
+	 font-size: 7pt;
+	 font-family:"URW Bookman L, Times New Roman";
+	 font-weight:bold;
+}
+
+.table_data_content_normal {
+	 height: 14px;
+	 font-size: 6pt;
+	 font-family:"URW Bookman L, Times New Roman";
+}
+
+.div_data_content_7 {
+	 font-size: 7pt;
+	 font-family:"URW Bookman L, Times New Roman";
+}
+
+.div_data_content_7_bold {
+	 font-size: 7pt;
+	 font-family:"URW Bookman L, Times New Roman";
+	 font-weight:bold;
+}
+
+.div_data_content_10 {
+	 font-size: 10pt;
+	 font-family:"URW Bookman L, Times New Roman";
+	 font-weight:bold;
+}
+/********************************* marco *************************************/

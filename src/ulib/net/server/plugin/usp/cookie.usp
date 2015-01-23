@@ -1,0 +1,37 @@
+<!--#
+  This is a simple hello-world-application with cookie-support
+  It stores the name in a cookie
+-->
+<!--#args
+name;
+delete_cookie;
+-->
+<!--#session
+UString ses_name;
+-->
+<!--#code
+if (name.empty()) name     = ses_name;
+else              ses_name = name;
+
+if (delete_cookie) UHTTP::removeDataSession();
+-->
+<html>
+ <head>
+  <title>Hello World-application for Ulib</title>
+ </head>
+
+ <body bgcolor="#FFFFFF">
+
+  <h1>Hello <!--#puts name.empty() ? "World" : name.data() --></h1>
+
+  <form>
+   What's your name?
+   <input type="text" name="name" value="<!--#puts name -->"> <br>
+   <input type="submit">
+   <input type="submit" name="clearcookie" value="delete cookie">
+  </form>
+
+  <a href="cookie">reload</a>
+
+ </body>
+</html>

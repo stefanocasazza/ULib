@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="SigID">
+  <ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
+    <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>
+    <ds:Reference xmlns:ds="http://www.w3.org/2000/09/xmldsig#" URI="inp/XAdES/xmldsig-input.txt">
+      <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+      <ds:DigestValue>lKGoyvW8Y5l6cZaBWxn41VEcmD8=</ds:DigestValue>
+    </ds:Reference>
+    <ds:Reference xmlns:ds="http://www.w3.org/2000/09/xmldsig#" URI="#SigID-SignedProperties" Type="http://uri.etsi.org/01903#SignedProperties">
+      <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+      <ds:DigestValue>kEz6kETmjbYaEizw4spU7PBO9p4=</ds:DigestValue>
+    </ds:Reference>
+  </ds:SignedInfo>
+  <ds:SignatureValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+qtr2PnwHtM5cKy4RYqbnEGupBef161VcWyIvy6v9JoPBDjb2H0hcmIltBl63Kf+n
+AYOqUHHMOGGEW/qZp2E7WlA/Rs+peanCow9c3O3RAUA4Wx+iEDfPdcATM4ci3tQ2
+PxTMXzOlrhC2R20nsU+bU7/yWACok8d47HJVD10j3e4=
+  </ds:SignatureValue>
+  <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:KeyValue>
+      <ds:RSAKeyValue>
+        <ds:Modulus>
+xtEKK4+Dc/nJO4t16kqnttmnKkFKHiyAZ0Khmy7gvF5DJ6UoRHoB8HE/HnBdlsHA
+2sveA3cbGoQGf7LDCqgOU1ZeypvQtxzhXZ+ZejhcsLB6YS0ECsL3AXDquqeWmo0E
+6tgi2nmMHS3fiXjX1Ahvg17bnrYIDMKJQT/DuQbvnak=
+        </ds:Modulus>
+        <ds:Exponent>AQAB</ds:Exponent>
+      </ds:RSAKeyValue>
+    </ds:KeyValue>
+    <ds:X509Data>
+      <ds:X509SubjectName>
+        C=IT, ST=FIRENZE, O=Unirel spa, OU=ULIB, CN=server/emailAddress=emailAddress=me@you.com
+      </ds:X509SubjectName>
+      <ds:X509IssuerSerial>
+        <ds:X509IssuerName>
+          C=IT, ST=FIRENZE, L=FIRENZE, O=Unirel spa, OU=ULIB, CN=CA test/emailAddress=stefano.casazza@gmail.com
+        </ds:X509IssuerName>
+        <ds:X509SerialNumber>1</ds:X509SerialNumber>
+      </ds:X509IssuerSerial>
+      <ds:X509Certificate>
+MIIDqzCCAxSgAwIBAgIBATANBgkqhkiG9w0BAQQFADCBkTELMAkGA1UEBhMCSVQx
+EDAOBgNVBAgTB0ZJUkVOWkUxEDAOBgNVBAcTB0ZJUkVOWkUxEzARBgNVBAoTClVu
+aXJlbCBzcGExDTALBgNVBAsTBFVMSUIxEDAOBgNVBAMTB0NBIHRlc3QxKDAmBgkq
+hkiG9w0BCQEWGXN0ZWZhbm8uY2FzYXp6YUBnbWFpbC5jb20wHhcNMTAwMjEyMTI0
+NTM3WhcNMjEwMTI1MTI0NTM3WjB8MQswCQYDVQQGEwJJVDEQMA4GA1UECBMHRklS
+RU5aRTETMBEGA1UEChMKVW5pcmVsIHNwYTENMAsGA1UECxMEVUxJQjEPMA0GA1UE
+AxMGc2VydmVyMSYwJAYJKoZIhvcNAQkBFhdlbWFpbEFkZHJlc3M9bWVAeW91LmNv
+bTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAxtEKK4+Dc/nJO4t16kqnttmn
+KkFKHiyAZ0Khmy7gvF5DJ6UoRHoB8HE/HnBdlsHA2sveA3cbGoQGf7LDCqgOU1Ze
+ypvQtxzhXZ+ZejhcsLB6YS0ECsL3AXDquqeWmo0E6tgi2nmMHS3fiXjX1Ahvg17b
+nrYIDMKJQT/DuQbvnakCAwEAAaOCASUwggEhMAkGA1UdEwQCMAAwLAYJYIZIAYb4
+QgENBB8WHU9wZW5TU0wgR2VuZXJhdGVkIENlcnRpZmljYXRlMB0GA1UdDgQWBBTs
+lrkwjTybL7nRjhO/zOFTmUcVfTCBxgYDVR0jBIG+MIG7gBT0iEA7nWRt2wFBvO4y
+e7b8c+GKpKGBl6SBlDCBkTELMAkGA1UEBhMCSVQxEDAOBgNVBAgTB0ZJUkVOWkUx
+EDAOBgNVBAcTB0ZJUkVOWkUxEzARBgNVBAoTClVuaXJlbCBzcGExDTALBgNVBAsT
+BFVMSUIxEDAOBgNVBAMTB0NBIHRlc3QxKDAmBgkqhkiG9w0BCQEWGXN0ZWZhbm8u
+Y2FzYXp6YUBnbWFpbC5jb22CCQDjV7O6g9C9bzANBgkqhkiG9w0BAQQFAAOBgQAi
+HbpiEEi/meaIvtuHC/DfiqGSOtQhCAKeanFMbPNYzttNYGS5kpePYu8c1YAZiF44
+1I33Bmh+dSPs1nMXsVwKta644DvXe6hgIK0fnkVF1wDbBj8YqGnVBuSAT1qG68Jg
+m8yhWPbEfqYMAHZTzFvDxCV8Kfu7gb3UVS0ecALL0g==
+      </ds:X509Certificate>
+    </ds:X509Data>
+  </ds:KeyInfo>
+  <ds:Object xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <xades:QualifyingProperties Target="#SigID">
+      <xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="SigID-SignedProperties">
+        <xades:SignedSignatureProperties>
+          <xades:SigningCertificate>
+            <xades:Cert>
+              <xades:CertDigest>
+                <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+                <ds:DigestValue>hwWUEdTDEvUK5O6K9K4Yhc4VABo=</ds:DigestValue>
+              </xades:CertDigest>
+              <xades:IssuerSerial>
+                <ds:X509IssuerName>
+                  C=IT, ST=FIRENZE, L=FIRENZE, O=Unirel spa, OU=ULIB, CN=CA test/emailAddress=stefano.casazza@gmail.com
+                </ds:X509IssuerName>
+                <ds:X509SerialNumber>1</ds:X509SerialNumber>
+              </xades:IssuerSerial>
+            </xades:Cert>
+          </xades:SigningCertificate>
+          <xades:SignaturePolicyIdentifier>
+            <xades:SignaturePolicyImplied></xades:SignaturePolicyImplied>
+          </xades:SignaturePolicyIdentifier>
+          <xades:SignatureProductionPlace>
+            <xades:City>sesto fiorentino</xades:City>
+            <xades:StateOrProvince>SI</xades:StateOrProvince>
+            <xades:PostalCode>11111</xades:PostalCode>
+            <xades:CountryName>Italy</xades:CountryName>
+          </xades:SignatureProductionPlace>
+          <xades:SignerRole>
+            <xades:ClaimedRoles>
+              <xades:ClaimedRole>Amministratore UNIREL</xades:ClaimedRole>
+            </xades:ClaimedRoles>
+          </xades:SignerRole>
+        </xades:SignedSignatureProperties>
+        <xades:SignedDataObjectProperties>
+         <xades:DataObjectFormat ObjectReference="inp/XAdES/xmldsig-input.txt">
+           <xades:MimeType>application/msword</xades:MimeType>
+         </xades:DataObjectFormat>
+        </xades:SignedDataObjectProperties>
+      </xades:SignedProperties>
+      <xades:UnsignedProperties>
+        <xades:UnsignedSignatureProperties>
+        </xades:UnsignedSignatureProperties>
+      </xades:UnsignedProperties>
+    </xades:QualifyingProperties>
+  </ds:Object>
+</ds:Signature>
+<?xml version="1.0" encoding="UTF-8"?>
+<ds:Signature xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="SigID">
+  <ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
+    <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>
+    <ds:Reference xmlns:ds="http://www.w3.org/2000/09/xmldsig#" URI="inp/XAdES/xmldsig-input.txt">
+      <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+      <ds:DigestValue>lKGoyvW8Y5l6cZaBWxn41VEcmD8=</ds:DigestValue>
+    </ds:Reference>
+    <ds:Reference xmlns:ds="http://www.w3.org/2000/09/xmldsig#" URI="#SigID-SignedProperties" Type="http://uri.etsi.org/01903#SignedProperties">
+      <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+      <ds:DigestValue>kEz6kETmjbYaEizw4spU7PBO9p4=</ds:DigestValue>
+    </ds:Reference>
+  </ds:SignedInfo>
+  <ds:SignatureValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+qtr2PnwHtM5cKy4RYqbnEGupBef161VcWyIvy6v9JoPBDjb2H0hcmIltBl63Kf+n
+AYOqUHHMOGGEW/qZp2E7WlA/Rs+peanCow9c3O3RAUA4Wx+iEDfPdcATM4ci3tQ2
+PxTMXzOlrhC2R20nsU+bU7/yWACok8d47HJVD10j3e4=
+  </ds:SignatureValue>
+  <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:KeyValue>
+      <ds:RSAKeyValue>
+        <ds:Modulus>
+xtEKK4+Dc/nJO4t16kqnttmnKkFKHiyAZ0Khmy7gvF5DJ6UoRHoB8HE/HnBdlsHA
+2sveA3cbGoQGf7LDCqgOU1ZeypvQtxzhXZ+ZejhcsLB6YS0ECsL3AXDquqeWmo0E
+6tgi2nmMHS3fiXjX1Ahvg17bnrYIDMKJQT/DuQbvnak=
+        </ds:Modulus>
+        <ds:Exponent>AQAB</ds:Exponent>
+      </ds:RSAKeyValue>
+    </ds:KeyValue>
+    <ds:X509Data>
+      <ds:X509SubjectName>
+        C=IT, ST=FIRENZE, O=Unirel spa, OU=ULIB, CN=server/emailAddress=emailAddress=me@you.com
+      </ds:X509SubjectName>
+      <ds:X509IssuerSerial>
+        <ds:X509IssuerName>
+          C=IT, ST=FIRENZE, L=FIRENZE, O=Unirel spa, OU=ULIB, CN=CA test/emailAddress=stefano.casazza@gmail.com
+        </ds:X509IssuerName>
+        <ds:X509SerialNumber>1</ds:X509SerialNumber>
+      </ds:X509IssuerSerial>
+      <ds:X509Certificate>
+MIIDqzCCAxSgAwIBAgIBATANBgkqhkiG9w0BAQQFADCBkTELMAkGA1UEBhMCSVQx
+EDAOBgNVBAgTB0ZJUkVOWkUxEDAOBgNVBAcTB0ZJUkVOWkUxEzARBgNVBAoTClVu
+aXJlbCBzcGExDTALBgNVBAsTBFVMSUIxEDAOBgNVBAMTB0NBIHRlc3QxKDAmBgkq
+hkiG9w0BCQEWGXN0ZWZhbm8uY2FzYXp6YUBnbWFpbC5jb20wHhcNMTAwMjEyMTI0
+NTM3WhcNMjEwMTI1MTI0NTM3WjB8MQswCQYDVQQGEwJJVDEQMA4GA1UECBMHRklS
+RU5aRTETMBEGA1UEChMKVW5pcmVsIHNwYTENMAsGA1UECxMEVUxJQjEPMA0GA1UE
+AxMGc2VydmVyMSYwJAYJKoZIhvcNAQkBFhdlbWFpbEFkZHJlc3M9bWVAeW91LmNv
+bTCBnzANBgkqhkiG9w0BAQEFAAOBjQAwgYkCgYEAxtEKK4+Dc/nJO4t16kqnttmn
+KkFKHiyAZ0Khmy7gvF5DJ6UoRHoB8HE/HnBdlsHA2sveA3cbGoQGf7LDCqgOU1Ze
+ypvQtxzhXZ+ZejhcsLB6YS0ECsL3AXDquqeWmo0E6tgi2nmMHS3fiXjX1Ahvg17b
+nrYIDMKJQT/DuQbvnakCAwEAAaOCASUwggEhMAkGA1UdEwQCMAAwLAYJYIZIAYb4
+QgENBB8WHU9wZW5TU0wgR2VuZXJhdGVkIENlcnRpZmljYXRlMB0GA1UdDgQWBBTs
+lrkwjTybL7nRjhO/zOFTmUcVfTCBxgYDVR0jBIG+MIG7gBT0iEA7nWRt2wFBvO4y
+e7b8c+GKpKGBl6SBlDCBkTELMAkGA1UEBhMCSVQxEDAOBgNVBAgTB0ZJUkVOWkUx
+EDAOBgNVBAcTB0ZJUkVOWkUxEzARBgNVBAoTClVuaXJlbCBzcGExDTALBgNVBAsT
+BFVMSUIxEDAOBgNVBAMTB0NBIHRlc3QxKDAmBgkqhkiG9w0BCQEWGXN0ZWZhbm8u
+Y2FzYXp6YUBnbWFpbC5jb22CCQDjV7O6g9C9bzANBgkqhkiG9w0BAQQFAAOBgQAi
+HbpiEEi/meaIvtuHC/DfiqGSOtQhCAKeanFMbPNYzttNYGS5kpePYu8c1YAZiF44
+1I33Bmh+dSPs1nMXsVwKta644DvXe6hgIK0fnkVF1wDbBj8YqGnVBuSAT1qG68Jg
+m8yhWPbEfqYMAHZTzFvDxCV8Kfu7gb3UVS0ecALL0g==
+      </ds:X509Certificate>
+    </ds:X509Data>
+  </ds:KeyInfo>
+  <ds:Object xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <xades:QualifyingProperties Target="#SigID">
+      <xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="SigID-SignedProperties">
+        <xades:SignedSignatureProperties>
+          <xades:SigningCertificate>
+            <xades:Cert>
+              <xades:CertDigest>
+                <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+                <ds:DigestValue>hwWUEdTDEvUK5O6K9K4Yhc4VABo=</ds:DigestValue>
+              </xades:CertDigest>
+              <xades:IssuerSerial>
+                <ds:X509IssuerName>
+                  C=IT, ST=FIRENZE, L=FIRENZE, O=Unirel spa, OU=ULIB, CN=CA test/emailAddress=stefano.casazza@gmail.com
+                </ds:X509IssuerName>
+                <ds:X509SerialNumber>1</ds:X509SerialNumber>
+              </xades:IssuerSerial>
+            </xades:Cert>
+          </xades:SigningCertificate>
+          <xades:SignaturePolicyIdentifier>
+            <xades:SignaturePolicyImplied></xades:SignaturePolicyImplied>
+          </xades:SignaturePolicyIdentifier>
+          <xades:SignatureProductionPlace>
+            <xades:City>sesto fiorentino</xades:City>
+            <xades:StateOrProvince>SI</xades:StateOrProvince>
+            <xades:PostalCode>11111</xades:PostalCode>
+            <xades:CountryName>Italy</xades:CountryName>
+          </xades:SignatureProductionPlace>
+          <xades:SignerRole>
+            <xades:ClaimedRoles>
+              <xades:ClaimedRole>Amministratore UNIREL</xades:ClaimedRole>
+            </xades:ClaimedRoles>
+          </xades:SignerRole>
+        </xades:SignedSignatureProperties>
+        <xades:SignedDataObjectProperties>
+         <xades:DataObjectFormat ObjectReference="inp/XAdES/xmldsig-input.txt">
+           <xades:MimeType>application/msword</xades:MimeType>
+         </xades:DataObjectFormat>
+        </xades:SignedDataObjectProperties>
+      </xades:SignedProperties>
+      <xades:UnsignedProperties>
+        <xades:UnsignedSignatureProperties>
+          <xades:CompleteCertificateRefs xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+            <xades:Cert>
+              <xades:CertDigest>
+                <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+                <ds:DigestValue>Kk2mxxANqftNpLlcAPgFQyD/MA0=</ds:DigestValue>
+              </xades:CertDigest>
+              <xades:IssuerSerial>
+                <ds:X509IssuerName>
+                  C=IT, ST=FIRENZE, L=FIRENZE, O=Unirel spa, OU=ULIB, CN=CA test/emailAddress=stefano.casazza@gmail.com
+                </ds:X509IssuerName>
+                <ds:X509SerialNumber>-2064984290469298833</ds:X509SerialNumber>
+              </xades:IssuerSerial>
+            </xades:Cert>
+          </xades:CompleteCertificateRefs>
+          <xades:CertificateValues xmlns:xades="http://uri.etsi.org/01903/v1.4.1#">
+            <xades:EncapsulatedX509Certificate>
+MIIDnDCCAwWgAwIBAgIJAONXs7qD0L1vMA0GCSqGSIb3DQEBBQUAMIGRMQswCQYD
+VQQGEwJJVDEQMA4GA1UECBMHRklSRU5aRTEQMA4GA1UEBxMHRklSRU5aRTETMBEG
+A1UEChMKVW5pcmVsIHNwYTENMAsGA1UECxMEVUxJQjEQMA4GA1UEAxMHQ0EgdGVz
+dDEoMCYGCSqGSIb3DQEJARYZc3RlZmFuby5jYXNhenphQGdtYWlsLmNvbTAeFw0x
+MDAyMTIxMjQ0MjFaFw0yMTAxMjUxMjQ0MjFaMIGRMQswCQYDVQQGEwJJVDEQMA4G
+A1UECBMHRklSRU5aRTEQMA4GA1UEBxMHRklSRU5aRTETMBEGA1UEChMKVW5pcmVs
+IHNwYTENMAsGA1UECxMEVUxJQjEQMA4GA1UEAxMHQ0EgdGVzdDEoMCYGCSqGSIb3
+DQEJARYZc3RlZmFuby5jYXNhenphQGdtYWlsLmNvbTCBnzANBgkqhkiG9w0BAQEF
+AAOBjQAwgYkCgYEAqpmObBQ/o630r2Eqvi2ke83zQW04MdPJwe9p124C1uqNJm9u
+54ETdEh2IwdnpRuzTC9x6q0S/HnuBS4/Z/zVWCV9XD0fKF+JfPEaC8A6v3CTyy3X
+OeMc8aNuCT6ZihQzoGwGP9NxwdXvUChrCtfvpWI4Ga3S/jkx+7lJBqKIeDMCAwEA
+AaOB+TCB9jAdBgNVHQ4EFgQU9IhAO51kbdsBQbzuMnu2/HPhiqQwgcYGA1UdIwSB
+vjCBu4AU9IhAO51kbdsBQbzuMnu2/HPhiqShgZekgZQwgZExCzAJBgNVBAYTAklU
+MRAwDgYDVQQIEwdGSVJFTlpFMRAwDgYDVQQHEwdGSVJFTlpFMRMwEQYDVQQKEwpV
+bmlyZWwgc3BhMQ0wCwYDVQQLEwRVTElCMRAwDgYDVQQDEwdDQSB0ZXN0MSgwJgYJ
+KoZIhvcNAQkBFhlzdGVmYW5vLmNhc2F6emFAZ21haWwuY29tggkA41ezuoPQvW8w
+DAYDVR0TBAUwAwEB/zANBgkqhkiG9w0BAQUFAAOBgQArRLuNIjXwmuSAzCfqkMjB
+qI9fMF9bzuHhPMqWdCmLrFh9Kr4Z8n2vre4gQjPNb0SNraXNwgHctRUzNYgACkPA
+W1/tOxVvoR6p1JD3oDCNkTDv+jwr6HH2j4uEbzGX6S1wWLYG1h2h1fEaSd/7D/37
+VonB0ViFwewzzgTI1dSb8g==
+            </xades:EncapsulatedX509Certificate>
+          </xades:CertificateValues>
+          <xades:CompleteRevocationRefs xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+            <xades:CRLRefs>
+              <xades:CRLRef>
+                <xades:DigestAlgAndValue>
+                  <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+                  <ds:DigestValue>uNt2wzrTLLG5PSYxP7fZh9xQu1A=</ds:DigestValue>
+                </xades:DigestAlgAndValue>
+                <xades:CRLIdentifier>
+                  <xades:Issuer>
+                    C=IT, ST=FIRENZE, L=FIRENZE, O=Unirel spa, OU=ULIB, CN=CA test/emailAddress=stefano.casazza@gmail.com
+                  </xades:Issuer>
+                  <xades:IssueTime>2010-02-12T12:45:50Z</xades:IssueTime>
+                  <xades:Number>0</xades:Number>
+                </xades:CRLIdentifier>
+              </xades:CRLRef>
+            </xades:CRLRefs>
+          </xades:CompleteRevocationRefs>
+          <xades:RevocationValues xmlns:xades="http://uri.etsi.org/01903/v1.4.1#">
+            <xades:EncapsulatedCRLValue>
+MIIBVzCBwTANBgkqhkiG9w0BAQQFADCBkTELMAkGA1UEBhMCSVQxEDAOBgNVBAgT
+B0ZJUkVOWkUxEDAOBgNVBAcTB0ZJUkVOWkUxEzARBgNVBAoTClVuaXJlbCBzcGEx
+DTALBgNVBAsTBFVMSUIxEDAOBgNVBAMTB0NBIHRlc3QxKDAmBgkqhkiG9w0BCQEW
+GXN0ZWZhbm8uY2FzYXp6YUBnbWFpbC5jb20XDTEwMDIxMjEyNDU1MFoXDTIxMDEy
+NTEyNDU1MFowDQYJKoZIhvcNAQEEBQADgYEAYjLPsWGMIPPpHTS/5AqcFnpWaZ8Q
+KWVR8TQrS0jc3y1MPZUZTlrh3F7V2488QCkd++J4SUewCbHTCycAD8zHEYluETWM
+mVT00roSSLUvb6T13b51nYCepq09uZW8BDNb6QVscaOBWlCq/8SulIeQykn+PIWW
+GpzkLW4uWpeQNd0=
+            </xades:EncapsulatedCRLValue>
+          </xades:RevocationValues>
+          <xades:SignatureTimeStamp xmlns:xades="http://uri.etsi.org/01903/v1.4.1#">
+          </xades:SignatureTimeStamp>
+        </xades:UnsignedSignatureProperties>
+      </xades:UnsignedProperties>
+    </xades:QualifyingProperties>
+  </ds:Object>
+</ds:Signature>

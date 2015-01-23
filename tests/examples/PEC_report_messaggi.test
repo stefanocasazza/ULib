@@ -1,0 +1,60 @@
+#!/bin/sh
+
+. ../.function
+
+## PEC_report.test -- Test PEC_report feature
+
+#UTRACE="5 5M 1"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#VALGRIND=valgrind
+ export UTRACE UOBJDUMP USIMERR VALGRIND
+
+DIR=`pwd`
+DIR_CMD="../../examples/PEC_log"
+
+start_msg PEC_report_messaggi
+
+#start_prg PEC_report_messaggi -T actalis -d /utility/varie/actalis \
+#									    -e log.p7m \
+#										 -b gds@actalis
+#exit 0
+#start_prg PEC_report_messaggi -T prova -d inp/PEC/1/tmp -e log.p7m -i PEC_Milter -f 01/01/2007 -t 01/06/2007 \
+#										 -n inp/PEC/domain.txt -b gds@actalis.it
+#exit 0
+#start_prg PEC_report_messaggi -T prova -d inp/PEC/1/tmp -e log.p7m -i PEC_Milter -f 06/09/2009 -t 08/09/2009 \
+#										 -n inp/PEC/domains.txt -b gds@actalis.it
+#exit 0
+
+start_prg PEC_report_messaggi -T BustaAnomaliaConPiuDestinatariTest -d inp/PEC/1/BustaAnomaliaConPiuDestinatari \
+									   -e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+										-b GDS@actalis.it -F pippo
+start_prg PEC_report_messaggi -c PEC_report_messaggi.cfg \
+										-b GDS@actalis.it -F pippo
+start_prg PEC_report_messaggi -T FilenameFilterTest -d inp/PEC/1/FilenameFilterTest \
+									   -e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+										-b GDS@actalis.it -F pippo
+start_prg PEC_report_messaggi -T Report_EmptyTest -d inp/PEC/1/Report_EmptyTest \
+										-e log.p7m -i PEC_Milter					-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+										-b GDS@actalis.it -F pippo
+start_prg PEC_report_messaggi -T Report_MsgAccettazioneTest -d inp/PEC/1/Report_MsgAccettazioneTest \
+										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+										-b GDS@actalis.it -F pippo
+start_prg PEC_report_messaggi -T Report_MsgAllTest -d inp/PEC/1/Report_MsgAllTest \
+										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+										-b GDS@actalis.it -F pippo
+start_prg PEC_report_messaggi -T Report_MsgInputTest -d inp/PEC/1/Report_MsgInputTest \
+ 										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+										-b GDS@actalis.it -F pippo
+start_prg PEC_report_messaggi -T WithoutDomainInInputTest -d inp/PEC/1/WithoutDomainInInputTest \
+										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+										-b GDS@actalis.it -F pippo
+start_prg PEC_report_messaggi -T TwoFilesTest -d inp/PEC/1/TwoFilesTest \
+									   -e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+										-b GDS@actalis.it -F pippo
+start_prg PEC_report_messaggi -T RilevazioneVirusTest -d inp/PEC/1/RilevazioneVirusTest \
+									   -e log.p7m -i PEC_Milter	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+										-b GDS@actalis.it -F pippo
+
+# Test against expected output
+test_output_diff PEC_report_messaggi

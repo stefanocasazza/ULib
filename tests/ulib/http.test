@@ -1,0 +1,28 @@
+#!/bin/sh
+
+. ../.function
+
+## http.test -- Test client http feature
+
+start_msg http
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+check_for_netcat
+
+ NC_CMD1="$NC -l -w 6 $NC_ARG_LISTEN_PORT 9080"
+#NC_CMD2="$NC -l -w 6 $NC_ARG_LISTEN_PORT 9081"
+
+$NC_CMD1 < inp/http/response.chunked > out/request.http &
+$SLEEP
+start_prg http http://localhost:9080
+
+#$NC_CMD2 < inp/http/response.auth >> out/request.http &
+#$SLEEP
+#start_prg http http://localhost:9081
+
+# Test against expected output
+test_output_diff http

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## soap_server.test -- Test soap server feature
+
+start_msg soap_server
+
+#UTRACE="0 50M 0"
+#UOBJDUMP="0 100k 500"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg soap_server inp/method_file.tmpl < inp/soap.input
+
+# Test against expected output
+test_output_wc w soap_server

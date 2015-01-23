@@ -1,0 +1,75 @@
+## Makefile.am for examples/IR
+
+.NOTPARALLEL:
+
+DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
+
+EXTRA_DIST = wi_auth.cpp wi_auth.usp cdbmake.cpp rdbgen.cpp login_adjust.cpp count_traffic.cpp count_traffic1.cpp
+
+ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
+
+cdbmake_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+cdbmake_SOURCES = cdbmake.cpp
+cdbmake_LDFLAGS = $(PRG_LDFLAGS)
+
+rdbgen_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+rdbgen_SOURCES = rdbgen.cpp
+rdbgen_LDFLAGS = $(PRG_LDFLAGS)
+
+check_binary_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+check_binary_SOURCES = check_binary.cpp
+check_binary_LDFLAGS = $(PRG_LDFLAGS)
+
+login_adjust_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+login_adjust_SOURCES = login_adjust.cpp
+login_adjust_LDFLAGS = $(PRG_LDFLAGS)
+
+count_traffic_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+count_traffic_SOURCES = count_traffic.cpp
+count_traffic_LDFLAGS = $(PRG_LDFLAGS)
+
+count_traffic1_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+count_traffic1_SOURCES = count_traffic1.cpp
+count_traffic1_LDFLAGS = $(PRG_LDFLAGS)
+
+bin_PROGRAMS = cdbmake rdbgen
+noinst_PROGRAMS = login_adjust count_traffic count_traffic1 check_binary
+
+moduledir = $(libexecdir)/ulib/usp
+MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
+
+if !MINGW
+if !STATIC_SERVLET_WI_AUTH
+module_LTLIBRARIES = wi_auth.la
+wi_auth_la_SOURCES = wi_auth.cpp
+wi_auth_la_LIBADD  = $(ulib_la) @ULIB_LIBS@
+wi_auth_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+endif
+endif
+
+if !CROSS_COMPILING
+SUFFIXES = .cpp .usp .lo .la
+
+../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT):
+	cd ../../src/ulib/net/server/plugin/usp; $(MAKE) $(AM_MAKEFLAGS) ./usp_translator$(EXEEXT)
+
+.usp.cpp: ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT)
+	@$(WINELOADER) ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT) $<
+
+wi_auth.cpp: wi_auth.usp ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT)
+
+.lo.la:
+	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la) @ULIB_LIBS@
+
+if !STATIC_ONLY
+if !STATIC_SERVLET_WI_AUTH
+##FOR_ALL = .libs/wi_auth.so
+
+##all: $(FOR_ALL)
+endif
+endif
+endif
+## ----------------------------------------------------------------------------------------------------
+
+clean-local:
+	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out

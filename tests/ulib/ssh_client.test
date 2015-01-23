@@ -1,0 +1,29 @@
+#!/bin/sh
+
+. ../.function
+
+## ssh_client.test -- Test ssh client feature
+
+start_msg ssh_client
+
+#UTRACE="-0 5M 1"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+# chmod go-w ~/
+# chmod 700  ~/.ssh
+# chmod 600  ~/.ssh/authorized_keys
+
+/etc/init.d/sshd start > /dev/null 2>&1
+$SLEEP
+
+#VALGRIND=valgrind # --gen-suppressions=all
+#STRACE=$LTRUSS
+#start_prg 	ssh_client lrpadmin laptop 	'private/id_rsa' 'private/id_rsa.pub'	inp/ssh_request.xml
+ start_prg 	ssh_client lrpadmin localhost 'private/id_rsa' 'private/id_rsa.pub'	inp/ssh_request.xml
+
+/etc/init.d/sshd stop > /dev/null 2>&1
+
+# Test against expected output
+test_output_diff ssh_client

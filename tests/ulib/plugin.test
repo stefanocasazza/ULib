@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## plugin.test -- Test plugin feature
+
+start_msg plugin
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg plugin .libs product1 product2
+
+# Test against expected output
+test_output_diff plugin

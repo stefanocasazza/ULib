@@ -1,0 +1,48 @@
+#!/bin/sh
+
+. ../.function
+
+## lrp_session.test -- Test lrp_session feature
+
+start_msg lrp_session
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#EXEC_ON_EXIT="/utility/stack_dump.sh"
+ export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT
+
+rm -rf WebServices*
+
+#start_prg lrp_session -H billsjail.unirel.intranet -D 'uid=guest,ou=People,dc=unirel,dc=it' -w caciucco
+
+# ----------------------------------------------------------------------------------------------------------------------------
+# COMMAND="ldapsearch -LLL -x -h tnetadmin.t-bizcom.com -D 'cn=admin,o=tnet' -w password -b"
+# ----------------------------------------------------------------------------------------------------------------------------
+# Ricerca Filtri: $COMMAND 'o=Filters,o=tnet'  '(objectClass=tnetLrpFilter)'
+# Ricerca Policy: $COMMAND 'o=Policies,o=tnet' '(objectClass=tnetLrpPolicy)'
+# Ricerca Device: $COMMAND 'o=Devices,o=tnet'  '(&(objectClass=tnetLrpDevice)(tnetLrpIpHostNumber=10.10.1.44))'
+# ----------------------------------------------------------------------------------------------------------------------------
+# Example: DN filtro: cn=WebServices,cn=Connessioni ipsec,o=Filters,o=tnet
+# dato filtro avvio ricerca policy usando valore attributo filtro <tnetLrpFilterRule>
+# ----------------------------------------------------------------------------------------------------------------------------
+# $COMMAND 'o=Policies,o=tnet' // valore attributo filtro <tnetLrpFilterRule>
+# ottengo lista policy: cn=webservices,ou=VPN ipsec,o=Policies,o=tnet ....
+# avvio ricerca lista device usando valore attributo policy <tnetLrpIpNetworkNumber>
+# $COMMAND 'o=Devices,o=tnet' // '(ipHostNumber= valore attributo policy <tnetLrpIpNetworkNumber> + '*'
+# ottengo lista device:
+# cn=Lucy,ou=TNet Project sede di Sesto Fiorentino,ou=TNet Project,o=T-Business S.r.L.,o=Devices,o=tnet
+# cn=TNet1,ou=TNet Project sede di Sesto Fiorentino,ou=TNet Project,o=T-Business S.r.L.,o=Devices,o=tnet
+# ----------------------------------------------------------------------------------------------------------------------------
+
+# 					 		  -b 'cn=Full\ OpenVPN,o=Filters,o=tnet' \
+#					 		  -b 'cn=VPN\ OpenVPN,o=Filters,o=tnet' \
+
+#start_prg lrp_session -H tnetadmin.t-bizcom.com -D 'cn=admin,o=tnet' -w password \
+# 					 		  -b 'cn=WebServices,o=Filters,o=tnet' \
+# 					 		  -u lrpadmin apply
+
+start_prg lrp_session -c lrp.cfg apply
+
+# Test against expected output
+test_output_wc w lrp_session

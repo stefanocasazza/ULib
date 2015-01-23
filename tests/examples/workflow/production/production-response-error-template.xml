@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!DOCTYPE wfeng:handler-response SYSTEM "workflow-engine.dtd">
+<wfeng:handler-response xmlns:wfeng="http://www.t-bizcom.com/WorkflowEngine" wfeng:request-id="%s">
+<wfeng:result>1</wfeng:result>
+<wfeng:data wfeng:error="event=validate:state=validated:action-name=validation:error-message=%.*s">
+<tservices:cpe-production xmlns:tservices="http://www.trust-engine.com/Workflow">
+<tservices:customer>%s</tservices:customer>
+<tservices:installationAddress>%s</tservices:installationAddress>
+<tservices:request>%.*s</tservices:request>
+<tservices:uid>%s</tservices:uid>
+</tservices:cpe-production>
+</wfeng:data>
+</wfeng:handler-response>

@@ -1,0 +1,191 @@
+#!/bin/sh /etc/rc.common
+#
+# lg's changelog:
+#
+#	2013/05/10: one client for conf get + dequeuer
+#
+#	2013/05/09: wait for public ip only if nodog key undefined
+#	2013/05/09: processes cycle for check start stop
+#	2013/05/09: dequeuer
+#
+#	2012/12/08: no openvpn: publiciface: tun0 -> eth0
+#
+#	2012/12/05: x86 rtc fix: wait for date greater equal 2012
+#
+#	2012/11/22: start() waits for process to be started
+#	2012/11/22: conffile(), pidfile()... now are errors tolerant
+#
+#	2012/11/21: reiterate portal conf get
+#	2012/11/21: try using pidfile first, _pgrep otherwise
+#	2012/11/21: _pgrep() busybox ps 52 chars max workaround
+#
+#	2012/10/08: stop(): SIGTERM first, SIGKILL otherwise
+#
+#	2012/10/05: stop file, to stop waiting
+#	2012/10/05: _pgrep() skip me update
+#
+#	2012/10/04: wait for public ip and use it as key, if undefined
+#	2012/10/04: strip()
+#
+
+START=99
+STOP=39
+
+descr=nodog
+
+#publiciface=eth0
+ publiciface=tun0
+  portalfile=/etc/nodog.portal
+     keyfile=/etc/nodog.key
+
+      stopfile=/tmp/nodog.stop
+portalconffile=/tmp/nodog.conf.portal
+
+          dequeuerdir=/tmp/uclient
+persistantdequeuerdir=/uclient.queue
+     dequeuerinterval=60
+
+clientcmdline='/usr/sbin/uclient -c /etc/uclient.conf'
+clientmempool=53,0,0,0,0,0,0,0,0
+
+servercmdline='/usr/sbin/userver_tcp -c /etc/nodog.conf'
+servermempool=199,79,0,98,254,0,-8,0,108
+
+## automagically from cmdlines
+#
+conffile() { expr "$*" : '.*-c[ 	]\([^ 	]*\)' || echo unknown ; }   ### ... -c xxx
+pidfile()  { awk '/^[ \t]*PID_FILE[ \t]/ { print $2 }' `conffile $*` 2> /dev/null ; }
+outfile()  { echo /tmp/`basename \`conffile $*\` .conf`.out ; }   ### ... xxx.conf -> /tmp/xxx.out
+errfile()  { echo /tmp/`basename \`conffile $*\` .conf`.err ; }   ### ... xxx.conf -> /tmp/xxx.err
+
+
+## you should't need to put your beloved hands below, thanx
+#
+
+log() { logger -st "$descr" -- $* ; }
+
+running() { local pid ; pid=`cat "$1" 2> /dev/null` && kill -0 $pid 2> /dev/null && echo $pid ; }
+
+_pgrep() { local pids=`{ ps -efw || ps -w ; } 2> /dev/null | awk '         
+	### skip me ###                                                    
+	NR == 1 { pid=($1 == "PID" ? 1 : 2) ; next }                       
+	match($0, "### skip me ###") { next }                              
+	match($0, "'"${*:0:52}"'") { print $pid }'` ; test "$pids" && echo $pids ; }
+	                   #                                                        
+	                   ## busybox ps prints out 52 chars max cmdline ...
+
+strip() { echo -n "`$* 2> /dev/null`" ; }
+
+
+start() { { log starting
+
+	## processes already running ???
+	#
+	local cmdline running ; for cmdline in "$clientcmdline" "$servercmdline" ; do
+
+		local pidfile=`pidfile $cmdline` pids ; pids=`running "$pidfile"` ||
+			pids=`_pgrep "$cmdline"` && {
+				log "'$cmdline' is ALREADY running ($pids)." ; running=1 ; } ; done
+
+	test $running && return 1
+	
+	rm -f $stopfile
+
+	## date set ???
+	#
+	until test `date '+%Y'` -ge 2012 ; do
+		test -f $stopfile && return
+		log 'waiting for date ...' ; sleep 3 ; done
+	
+	## nodog key undefined ???
+	#
+	test ! -f $keyfile -o "`cat $keyfile 2> /dev/null`" = undefined && {
+
+		## let's wait for public ip ...
+		#
+		local publicip ; until publicip=`ifconfig $publiciface 2> /dev/null |
+			awk '/inet addr:/ { sub("inet addr:", "") ; print $1 }'` &&
+			test $publicip ; do
+				test -f $stopfile && return
+				log "waiting for public ip ($publiciface) ..." ; sleep 3 ; done
+
+		## ... and set it as key
+		#
+		log "setting $publicip as nodog key ($keyfile)"
+
+		echo $publicip > $keyfile
+	} ||
+		log "using `cat $keyfile` as nodog key ($keyfile)"
+	
+	## let's init dequeuer dir
+	#
+	test -d $persistantdequeuerdir && {
+		log "using $persistantdequeuerdir as persistant dequeuer dir"
+		rm -rf $dequeuerdir ; ln -sf $persistantdequeuerdir $dequeuerdir
+	} || {
+		log "using $dequeuerdir as dequeuer dir"
+		mkdir -p $dequeuerdir ; }
+	
+	## let's start one client for conf get + dequeuer ...
+	#
+	log "using `cat $portalfile` as nodog portal ($portalfile)"
+	
+	export UMEMPOOL=$clientmempool
+	$clientcmdline -o $portalconffile -q $dequeuerinterval \
+	"https://`strip cat $portalfile`/get_config?ap=`strip uname -n`&key=`strip cat $keyfile`" \
+		>> `outfile $clientcmdline` 2>> `errfile $clientcmdline` &
+
+	## ... wait for conf file ...
+	#
+	until sleep 3 && test -s $portalconffile ; do
+		test -f $stopfile && return
+		log "waiting for conf file (`cat $portalfile` `cat $keyfile`) ..." ; done
+	
+	## ... now it's time to start server
+	#
+	#export UTRACE="-0 10M 0"
+	#export UOBJDUMP="0 100k 10"
+	#export USIMERR="error.sim"
+	export DIR_LOG_GZ=/tmp
+	export UMEMPOOL=$servermempool
+	$servercmdline \
+		>> `outfile $servercmdline` 2>> `errfile $servercmdline` &
+	
+	## and let's wait for processes to be started
+	#
+	local cmdline ; for cmdline in "$clientcmdline" "$servercmdline" ; do
+
+		until sleep 3 && pidfile=`pidfile $cmdline` && pids=`running "$pidfile"` ; do
+			test -f $stopfile && return
+			log "still waiting for '$cmdline' to be started ..." ; done
+
+		log "'$cmdline' started ($pids)." ; done ; } & }
+
+
+stop() { log stopping
+	
+	## just in case start is still waiting
+	#
+	date > $stopfile
+	
+	### let's stop processes
+	#
+	local cmdline ; for cmdline in "$clientcmdline" "$servercmdline" ; do
+
+		local pidfile=`pidfile $cmdline` pids ; pids=`running "$pidfile"` ||
+			pids=`_pgrep "$cmdline"` || {
+				log "'$cmdline' is NOT running." ; continue ; }
+			
+		log "stopping '$cmdline' ($pids)"
+
+		kill -TERM $pids   ### SIGTERM first ...
+
+		sleep 3 ; pids=`running "$pidfile"` ||
+			pids=`_pgrep "$cmdline"` && {
+				log "'$cmdline' is STILL running ($pids), sending SIGKILL"
+				kill -KILL $pids ; }   ### ... SIGKILL otherwise
+
+		log "'$cmdline' stopped." ; done ; }
+
+restart() {
+	stop ; sleep 3 ; start ; }

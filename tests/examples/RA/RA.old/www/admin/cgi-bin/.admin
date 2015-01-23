@@ -1,0 +1,22 @@
+#!/bin/bash
+
+send_mail() {
+
+	# load specific script env, for signing and sending message to workflow...
+
+	. $HOME_DIR/etc/${BASE_NAME}.conf
+
+	# directory to put mail to send...
+
+	cd $DIR_MAIL
+
+	DIR_SESSION=$BASE_NAME
+
+	mkdir -p $DIR_SESSION
+
+	NAME=$DIR_SESSION/send_to_$$
+
+	printf "`cat $BASE_NAME.tmpl`" "$WORKFLOW_SUBJECT" "$WORKFLOW_FROM_ADDRESS" "$WORKFLOW_TO_ADDRESS" "$1" "$2" > $NAME.eml
+
+	send_MAIL_and_goto_MAIN_MENU $NAME
+}

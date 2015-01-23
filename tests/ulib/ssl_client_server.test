@@ -1,0 +1,50 @@
+#!/bin/sh
+
+. ../.function
+
+rm -rf /tmp/ssl_session.txt
+
+## ssl_client_server.test -- Test ssl client server feature
+
+start_msg ssl_server
+start_msg ssl_client
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+#----------------------------------------------------------------------------------------------------------------------
+# use either SSL_VERIFY_NONE or SSL_VERIFY_PEER, the last 2 options are 'ored' with SSL_VERIFY_PEER if they are desired
+#----------------------------------------------------------------------------------------------------------------------
+#define SSL_VERIFY_NONE       				0x00
+#define SSL_VERIFY_PEER       				0x01
+#define SSL_VERIFY_FAIL_IF_NO_PEER_CERT   0x02
+#define SSL_VERIFY_CLIENT_ONCE      		0x04
+#----------------------------------------------------------------------------------------------------------------------
+
+#CApath_rehash
+
+#if [ "$TERM" = "msys" ]; then
+#else
+CAPATH="CA/CApath"
+CACERT="CA/cacert.pem"
+USER_KEY="CA/username.key"
+USER_CERT="CA/username.crt"
+SERVER_KEY="CA/server.key"
+SERVER_CERT="CA/server.crt"
+#fi
+
+start_prg_background ssl_server "$SERVER_CERT" "$SERVER_KEY" "caciucco" "$CACERT" "$CAPATH" 1 ../../src/ulib/net/server/plugin/.libs echo
+
+$SLEEP
+$SLEEP
+$SLEEP
+#start_prg ssl_client 	\'\' 			  \'\' 		    \'\' 	   \'\' 	    \'\'	    0 "Hello"
+ start_prg ssl_client "$USER_CERT"   "$USER_KEY"   "caciucco" "$CACERT" "$CAPATH" 0 "Hello" localhost 
+$SLEEP
+$SLEEP
+kill_prg test_ssl_server TERM
+
+# Test against expected output
+test_output_diff ssl_client

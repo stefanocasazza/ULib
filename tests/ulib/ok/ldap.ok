@@ -1,0 +1,116 @@
+dn:   uid=leonardo.secci,o=mail
+cn:   Leonardo Secci
+mail: leonardo.secci@unirel.com; leonardo.secci@t-bizcom.com; leonardo.secci@unirel.it
+
+dn:   uid=cyrus,o=mail
+cn:   Cyrus Administrator
+mail: postmaster@unirel.com; postmaster@unirel.it; abuse@unirel.com; abuse@unirel.it; spam@unirel.com; spam@unirel.it; webmaster@unirel.com; webmaster@unirel.it
+
+dn:   uid=alberico.gualfetti,o=mail
+cn:   Alberico Gualfetti
+mail: alberico.gualfetti@unirel.com; alberico.gualfetti@unirel.it; alberico@unirel.com; alberico@unirel.it; alberico.gualfetti@t-bizcom.com; alberico@t-bizcom.com
+
+dn:   uid=marco.crescioli,o=mail
+cn:   Marco Crescioli
+mail: marco.crescioli@unirel.com; marco@unirel.com; marco.crescioli@unirel.it; marco@unirel.it
+
+dn:   uid=leonardo.ghivizzani,o=mail
+cn:   Leonardo Ghivizzani
+mail: leonardo.ghivizzani@unirel.com; leonardo@unirel.com; lg@unirel.com; leonardo.ghivizzani@unirel.it; leonardo@unirel.it; lg@unirel.it; ghivizzani@unirel.com; leonardo.ghivizzani@t-bizcom.com
+
+dn:   uid=stefano.casazza,o=mail
+cn:   Stefano Casazza
+mail: stefano.casazza@unirel.com; stefano@unirel.com; stefano.casazza@unirel.it; stefano@unirel.it
+
+dn:   uid=marco.dani,o=mail
+cn:   Marco Dani
+mail: marco.dani@unirel.com; marcod@unirel.com; marco.dani@unirel.it; marcod@unirel.it
+
+dn:   uid=pongo,o=mail
+cn:   Team Pongo
+mail: pongo@unirel.com; pongo@unirel.it
+
+dn:   uid=sabrina.papucci,o=mail
+cn:   Sabrina Papucci
+mail: sabrina.papucci@unirel.com; sabrina@unirel.com; saab@unirel.com
+
+dn:   uid=info,o=mail
+cn:   Info
+mail: info@unirel.com; info@unirel.it
+
+dn:   uid=remo.tabanelli,o=mail
+cn:   Remo Tabanelli
+mail: remo.tabanelli@t-bizcom.com; remo@t-bizcom.com; remo.tabanelli@unirel.com
+
+dn:   uid=tuttiquanti,o=mail
+cn:   Tutti Quanti
+mail: tuttiquanti@unirel.com; tuttiquanti@unirel.it
+
+dn:   ou=personal_addressbook,o=mail
+cn:   
+mail: 
+
+dn:   ou=shared_addressbook,o=mail
+cn:   
+mail: 
+
+dn:   uid=daniele.pelliccioni,o=mail
+cn:   Daniele Pelliccioni
+mail: daniele.pelliccioni@unirel.com
+
+dn:   uid=valentino.ditoma,o=mail
+cn:   Valentino Ditoma
+mail: valentino.ditoma@unirel.com
+
+dn:   uid=tickets,o=mail
+cn:   tickets
+mail: tickets@unirel.com
+
+dn:   uid=paolo.lai,o=mail
+cn:   Paolo Lai
+mail: paolo.lai@unirel.com
+
+dn:   uid=provahorde,o=mail
+cn:   Prova Horde
+mail: provahorde@unirel.com
+
+dn:   ou=hordeprefs,o=mail
+cn:   
+mail: 
+
+dn:   ou=hordegroups,o=mail
+cn:   
+mail: 
+
+dn:   uid=test.numera,o=mail
+cn:   Test Numera
+mail: test.numera@unirel.com
+
+dn:   uid=caterina.guzzi,o=mail
+cn:   Caterina Guzzi
+mail: caterina.guzzi@unirel.com
+
+dn:   uid=amministrazione,o=mail
+cn:   Amministrazione
+mail: amministrazione@unirel.com
+
+dn:   uid=bnlbanca,o=mail
+cn:   BNL Banca
+mail: bnlbanca@unirel.com
+
+dn:   uid=serviziobonifici,o=mail
+cn:   BNL Banca Servizio Bonifici
+mail: serviziobonifici@unirel.com
+
+dn:   uid=clientebanca,o=mail
+cn:   Cliente Banca
+mail: clientebanca@unirel.com
+
+dn:   uid=voicemail,o=mail
+cn:   Voice Mail
+mail: voicemail@unirel.com
+
+dn:   uid=segreteria,o=mail
+cn:   Segreteria
+mail: segreteria@unirel.com
+

@@ -1,0 +1,40 @@
+Name: xml2txt
+Summary: Expects xml as input, outputs text only
+Version: @VERSION@
+Release: 1
+Epoch: 0
+License: GPL
+Group: Applications
+URL: http://www.unirel.com
+Source0: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}
+Provides: xml2txt
+Packager: Stefano Casazza <stefano.casazza@unirel.com>
+Requires: ULib
+@RPM_REQUIRE@
+
+%description
+This package provides the program for to print only text from xml files
+
+%prep
+%setup
+
+%build
+%configure @RPM_CONFIGURE@
+cd src/ulib
+make LDFLAGS="-s"
+cd ../../examples/xml2txt
+make LDFLAGS="-s"
+cd ../..
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/srv/searchengine/bin
+autoconf/install-sh -c -m 755 examples/xml2txt/.libs/xml2txt	%{buildroot}/srv/searchengine/bin
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root,-)
+/srv/searchengine/bin/xml2txt

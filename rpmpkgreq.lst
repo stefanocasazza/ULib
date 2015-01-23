@@ -1,0 +1,13 @@
+Requires: zlib
+Requires: expat
+Requires: file
+Requires: pcre
+Requires: uuid
+Requires: openssl
+Requires: libstdc++
+BuildRequires: expat
+BuildRequires: zlib-devel
+BuildRequires: file-devel
+BuildRequires: pcre-devel
+BuildRequires: openssl-devel
+BuildRequires: libstdc++-devel

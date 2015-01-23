@@ -1,0 +1,1 @@
+<?xml version='1.0' ?><env:Envelope xmlns:env="http://www.w3.org/2003/05/soap-envelope"><env:Header></env:Header><env:Body><env:add env:encodingStyle="http://www.w3.org/2003/05/soap-encoding"><a xsi:type="xsd:int">10</a><b xsi:type="xsd:int">20</b></env:add></env:Body></env:Envelope>

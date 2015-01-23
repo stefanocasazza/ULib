@@ -1,0 +1,16 @@
+.TH cdb_keylen 3
+.SH NAME
+cdb_keylen \- get length of key
+.SH SYNTAX
+.B #include <cdb.h>
+
+unsigned int cdb_keylen(struct cdb *\fIc\fR);
+
+.SH DESCRIPTION
+.B cdb_keylen
+returns the length of the key cdb_firstkey or cdb_nextkey found.
+
+Use cdb_keypos to get the position of the key.
+
+.SH "SEE ALSO"
+cdb_keypos(3), cdb_datalen(3), cdb_datapos(3)

@@ -1,0 +1,36 @@
+MIME-Version: 1.0
+Content-Type: multipart/mixed; 
+	boundary="----=_Part_0_10774273.1133173337508"
+
+------=_Part_0_10774273.1133173337508
+Content-Type: text/xml; charset=us-ascii
+Content-Transfer-Encoding: 7bit
+
+<?xml version="1.0"?>
+<!DOCTYPE operation SYSTEM "http://ilias.eraclito.net/giustino_operativo/user-folder.dtd">
+<operation>
+<description>TEST</description>
+<uid>emi200</uid>
+<id>d664ed4c-0107-5000-f6cb-07eb</id>
+<date>28/11/2005 11:22:17</date>
+<holder>a a</holder>
+<author>workflow</author>
+</operation>
+
+------=_Part_0_10774273.1133173337508
+Content-Type: application/octet-stream; name=benchmark.log
+Content-Transfer-Encoding: 7bit
+Content-Disposition: attachment; filename=benchmark.log
+
+========================================================================================================================
+* Benchmark reindex Harvest for files count = 320000
+========================================================================================================================
+
+** Rimozione file nella directory di input del gatherer
+*** times
+Command terminated by signal 2
+0.00user 0.00system 0:00.32elapsed 1%CPU (0avgtext+0avgdata 0maxresident)k
+0inputs+0outputs (0major+127minor)pagefaults 0swaps
+
+
+------=_Part_0_10774273.1133173337508--

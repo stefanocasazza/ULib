@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="http://www.test.eraclito.net/crm_dtd/operation.xsl"?>
+<!DOCTYPE operation SYSTEM "http://www.test.eraclito.net/crm_dtd/user-folder.dtd">
+
+<operation>
+<description>Informativa sulla privacy</description>
+<uid>f.neri</uid>
+<id>informativa_sulla_privacy</id>
+<date>25/10/2006 14:49:37</date>
+<holder>Sandra Ceccarelli</holder>
+<author>workflow</author>
+</operation>

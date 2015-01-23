@@ -1,0 +1,183 @@
+/* CSP.func */
+
+static HCERTSTORE CertOpenSystemStore(HCRYPTPROV a, LPSTR b)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CertOpenSystemStore()\n");
+#endif
+
+return 0;
+}
+
+static PCCERT_CONTEXT CertFindCertificateInStore(HCERTSTORE a, DWORD b, DWORD c, DWORD d, const void* e, PCCERT_CONTEXT f)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CertFindCertificateInStore()\n");
+#endif
+
+return 0;
+}
+
+static BOOL CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT a, DWORD b, void* c, HCRYPTPROV* d, DWORD* e, BOOL* f)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptAcquireCertificatePrivateKey()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CertFreeCertificateContext(PCCERT_CONTEXT a)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CertFreeCertificateContext()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CertCloseStore(HCERTSTORE a, DWORD b)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CertCloseStore()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptCreateHash(HCRYPTPROV a, ALG_ID b, HCRYPTKEY c, DWORD d, HCRYPTHASH* e)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptCreateHash()\n");
+#endif
+
+return FALSE;
+}
+
+static BOOL CryptSetHashParam(HCRYPTHASH a, DWORD b, PBYTE c, DWORD d)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptSetHashParam()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptSignHash(HCRYPTHASH a, DWORD b, LPSTR c, DWORD d, PBYTE e, PDWORD f)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptSignHash()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptDestroyHash(HCRYPTHASH a)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptDestroyHash()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptReleaseContext(HCRYPTPROV a, DWORD b)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptReleaseContext()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptGetUserKey(HCRYPTPROV a, DWORD b, HCRYPTKEY* c)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptGetUserKey()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptVerifySignature(HCRYPTHASH a, PBYTE b, DWORD c, HCRYPTKEY d, LPSTR e, DWORD f)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptVerifySignature()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptDestroyKey(HCRYPTKEY a)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptDestroyKey()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptExportKey(HCRYPTKEY a,HCRYPTKEY b,DWORD c,DWORD d,PBYTE e,PDWORD f)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptExportKey()\n");
+#endif
+
+return TRUE;
+}
+
+static DWORD GetLastError(void)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call GetLastError()\n");
+#endif
+
+return NTE_PROVIDER_DLL_FAIL;
+}
+
+/*
+static int MultiByteToWideChar(UINT i,DWORD a, LPCSTR b, int c, LPWSTR d, int e)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call MultiByteToWideChar()\n");
+#endif
+
+	return TRUE;
+}
+
+static HCERTSTORE CertOpenStore(LPCSTR a, DWORD b, HCRYPTPROV c, DWORD d, const void* e)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CertOpenStore()\n");
+#endif
+
+return 0;
+}
+
+static BOOL CryptAcquireContext(HCRYPTPROV* a, LPSTR b, LPSTR c, DWORD d, DWORD e)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptAcquireContext()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptSetProviderEx(LPCSTR a, DWORD b, DWORD* c, DWORD d)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptSetProviderEx()\n");
+#endif
+
+return TRUE;
+}
+
+static BOOL CryptSetProvParam(HCRYPTPROV hProv, DWORD dwParam, BYTE* pbData, DWORD dwFlags)
+{
+#ifdef DEBUG
+	BIO_printf(err, "Call CryptSetProvParam()\n");
+#endif
+
+return TRUE;
+}
+*/

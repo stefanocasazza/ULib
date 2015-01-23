@@ -1,0 +1,29 @@
+/********************************* LiveValidation *************************************/
+/* Classe che si applica ai messaggi di validità */
+.LV_valid {
+	color: #00CC00;
+	display: none;
+}
+
+/* Classe che si applica ai messaggi di non validità */
+.LV_invalid { /* color: #CC0000; */
+	color: #FECF03;
+}
+
+/* Classe che si applica a tutti i messaggi di validazione */
+.LV_validation_message {
+	font-weight: bold;
+	margin: 0 0 0 5px;
+}
+
+/* Stili applicati ai campi validi */
+.LV_valid_field,input.LV_valid_field:hover,input.LV_valid_field:active,textarea.LV_valid_field:hover,textarea.LV_valid_field:active,.fieldWithErrors input.LV_valid_field,.fieldWithErrors textarea.LV_valid_field
+	{
+	border: 1px solid #00CC00;
+}
+
+/* Stili applicati ai campi non validi */
+.LV_invalid_field,input.LV_invalid_field:hover,input.LV_invalid_field:active,textarea.LV_invalid_field:hover,textarea.LV_invalid_field:active,.fieldWithErrors input.LV_invalid_field,.fieldWithErrors textarea.LV_invalid_field
+	{
+	border: 1px solid #FECF03;
+}

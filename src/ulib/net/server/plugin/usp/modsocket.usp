@@ -1,0 +1,4 @@
+<!--#code
+if (UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(*UClientImage_Base::wbuffer))) return 0;
+                                                                                                                          return 1;
+-->

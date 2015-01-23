@@ -1,0 +1,53 @@
+  <div class="help">
+    <h1 class="title">Help</h1>
+
+    <h2>What is This?</h2>
+
+    <p>This is a full-text search system. You can search for documents including some specified words.</p>
+
+    <h2>How to Use</h2>
+
+    <p>Input search phrase into the field at the top of the page. For example, if you search for documents including "computer", input the
+    following.</p>
+    <pre>computer</pre>
+
+    <p>If you search for documents including both of "network" and "socket", input the following.</p>
+    <pre>network socket</pre>
+
+    <p>It is the same as the following.</p>
+    <pre>network AND socket</pre>
+
+    <p>If you search for documents including "network" followed by "socket", input the following.</p>
+    <pre>"network socket"</pre>
+
+    <p>If you search for documents including one or both of "network" and "socket", input the following.</p>
+    <pre>network OR socket</pre>
+
+    <p>If you search for documents including "network" but without "socket", input the following.</p>
+    <pre>network AND NOT socket</pre>
+
+    <p>For more complex query, you can use "<code>(</code>". Note that the priority of "<code>(</code>" is higher than that of "<code>AND</code>",
+    "<code>OR</code>" and "<code>NOT</code>". So, the following is to search for documents including one of "F1", "F-1", "Formula One", and including
+    one of "champion" and "victory".</p>
+    <pre>(F1 OR F-1 OR "Formula One") AND (champion OR victory)</pre>
+
+    <h2>You can use DOS wildcard characters</h2>
+
+    <p>If you search for documents including some words beginning with "inter", input the following.</p>
+    <pre>inter*</pre>
+
+    <p>If you search for documents including some words ending with "sphere", input the following.</p>
+    <pre>*sphere</pre>
+
+    <p>If you search for documents matching some words matching "?n*able" (unable, unavoidable, inevitable, ...), input the following.</p>
+    <pre>?n*able</pre>
+
+    <h2>Other Faculties</h2>
+
+    <p>"<code>[...] per page</code>" specifies the number of shown documents per page. If documents over one page correspond, you can move to another
+    page via anchors of "<code>PREV</code>" and "<code>NEXT</code>" at the bottom of the page.</p>
+
+    <h2>Information</h2>
+
+    <p>See <a href="http://www.unirel.com/">the project site</a> for more detail.</p>
+  </div>

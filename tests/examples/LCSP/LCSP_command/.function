@@ -1,0 +1,140 @@
+#!/bin/sh
+
+chk_ENV() {
+
+if [ -z "${FILE_LOG}" ]; then
+   FILE_LOG=log
+	export FILE_LOG 
+fi
+
+test -f "${FILE_LOG}" || touch "${FILE_LOG}"
+
+if [ $? != 0 ]; then
+	echo "Unable to create log file \"${FILE_LOG}\"" >&2
+	exit 1
+fi
+
+if [ -z "${MSG_LOG}" ]; then
+   MSG_LOG="***** $1 *****"
+	export MSG_LOG 
+fi
+if [ -z "${OPENSSL}" ]; then
+	OPENSSL="openssl"
+	export OPENSSL 
+fi
+if [ ! -z "${ENGINE}" ]; then
+	ENGINE="-engine ${ENGINE}"
+	export ENGINE 
+fi
+
+ESITO=0
+export ESITO
+}
+
+begin_CMD() {
+
+echo "$MSG_LOG: BEGIN ON " `date` >>${FILE_LOG}
+
+if [ ! -z "${DEBUG}" -a "${DEBUG}" != "0" ]; then
+	echo \
+"--- DEBUG INFORMATION ---
+ENV[HOME]         = \"${HOME}\"
+ENV[FILE_LOG]     = \"${FILE_LOG}\"
+ENV[MSG_LOG]      = \"${MSG_LOG}\"
+ENV[OPENSSL]      = \"${OPENSSL}\"
+ENV[ENGINE]       = \"${ENGINE}\"
+${DEBUG_INFORMATION}--- DEBUG INFORMATION ---" >>${FILE_LOG}
+fi
+
+STR_CMD=COMMAND
+export STR_CMD
+}
+
+echo_CMD() {
+
+echo $STR_CMD: $1 >>${FILE_LOG}
+}
+
+print_CMD() {
+
+if [ -z "$2" ]; then
+	eval echo  $STR_CMD: $1			>>${FILE_LOG}
+else
+		  echo "$STR_CMD: $1 > $2" >>${FILE_LOG}
+fi
+}
+
+exec_CMD() {
+
+if [ -z "$2" ]; then
+	eval $1		 2>>${FILE_LOG}
+else
+	eval $1 > $2 2>>${FILE_LOG}
+fi
+}
+
+print_exec_CMD() {
+
+print_CMD "$1" $2
+ exec_CMD "$1" $2
+}
+
+end_CMD() {
+
+if [ -n "${EXIT_CMD}" ]; then
+	STR_CMD=EXIT_COMMAND
+	print_exec_CMD "$EXIT_CMD"
+fi
+
+if [ -n "$1" ]; then
+	ESITO=$1
+fi
+
+echo "$MSG_LOG: END WITH CODE $ESITO ON "`date` >>${FILE_LOG}
+
+exit ${ESITO}
+}
+
+check_CMD() {
+
+ESITO=$?
+
+if [ $ESITO -ne 0 -a -n "${EXIT_CMD}" ]; then
+	STR_CMD=EXIT_COMMAND
+	print_exec_CMD "$EXIT_CMD"
+	unset EXIT_CMD
+			 end_CMD
+fi
+}
+
+run_CMD() {
+
+print_exec_CMD "$1" $2
+	  check_CMD
+}
+
+proc_CMD() {
+
+begin_CMD
+  run_CMD "$1"
+  end_CMD
+}
+
+# extra
+
+run_CMD_with_input() {
+
+	echo_CMD "$2"
+	$2 <<END >>${FILE_LOG} 2>>${FILE_LOG}
+$1
+END
+	check_CMD
+}
+
+run_CMD_with_output() {
+
+	echo_CMD "$2"
+	STR_CMD="OUTPUT "
+	 run_CMD "$1=\"`$2`\""
+	STR_CMD=COMMAND
+}

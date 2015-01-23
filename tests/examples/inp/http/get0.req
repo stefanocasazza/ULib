@@ -1,0 +1,9 @@
+GET / HTTP/1.1
+Connection: Keep-Alive
+User-Agent: Mozilla/5.0 (compatible; Konqueror/3.1; Linux; it, en_US, en)
+Accept: text/*, image/jpeg, image/png, image/*, */*
+Accept-Encoding: x-gzip, x-deflate, gzip, deflate, identity
+Accept-Charset: iso-8859-1, utf-8;q=0.5, *;q=0.5
+Accept-Language: it, en
+Host: 10.30.1.131
+

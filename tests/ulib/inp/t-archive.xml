@@ -1,0 +1,12 @@
+<token-index>
+<uri>keyBoardingMatteo</uri>
+<label>esterna</label>
+<expiration-date>20050908134001Z</expiration-date>
+<document filename="keyBoardingMatteo">keyBoardingMatteo</document>
+<certificate issuer="C=IT, ST=Roma, L=Roma, O=T-Business S.R.L., OU=T-Business - PyCA TestCA, CN=T-Business - Root TestCA" serial="00" filename="two-level_tsa_issuer_level2_cert.pem">
+<certificate issuer="C=IT, ST=Roma, L=Roma, O=T-Business S.R.L., OU=T-Business - PyCA TestCA, CN=T-Business - Root TestCA" serial="06" filename="two-level_tsa_issuer_level1_cert.pem">
+<crl filename="two-level_tsa_issuer_level1_crl.pem"/>
+</certificate>
+<crl filename="two-level_tsa_issuer_level2_crl.pem"/>
+</certificate>
+</token-index>

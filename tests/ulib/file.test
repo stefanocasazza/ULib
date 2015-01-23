@@ -1,0 +1,34 @@
+#!/bin/sh
+
+. ../.function
+
+## file.test -- Test file feature
+
+start_msg file
+
+#UTRACE="0 1M 1"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+if [ "$TERM" = "cygwin" ]
+then
+#	ARG1="/home/admin"
+	ARG1="/home/Administrator" # WIN2000AS
+	ARG2="/"
+else
+	ARG1="`echo ~`"
+	if [ "$ARG1" = "~" ]
+	then
+		ARG1="/"
+		ARG2="//"
+	else 
+		ARG2="`echo ~root/`"
+	fi
+fi
+ARG3=`echo $PWD`
+
+start_prg file "$ARG1" "$ARG2" "$ARG3"
+
+# Test against expected output
+test_output_wc w file

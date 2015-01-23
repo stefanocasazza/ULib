@@ -1,0 +1,453 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html>
+<head>
+  <title>RA station</title>
+  <meta name="generator" content="HTML Tidy for Linux (vers 25 March 2009), see www.w3.org">
+  <link rel="stylesheet" href="/ra-station/css/style.css" type="text/css">
+  <script type="text/javascript" src="/ra-station/js/livevalidation_standalone.js">
+</script>
+  <script type="text/javascript">
+
+ function compose_email() {
+        document.form.cpe_emailAddress.value=document.form.dati_utente_nome.value.toLowerCase() + "." + document.form.dati_utente_cognome.value.toLowerCase() + "@" + document.form.dominio.value;
+     }
+
+ function compose_email_spedizione_fattura() {
+	if(document.form.spedizione_emailAddress.value=='')
+	document.form.spedizione_emailAddress.value=document.form.dati_utente_nome.value.toLowerCase() + "." + document.form.dati_utente_cognome.value.toLowerCase() + "@" + document.form.dominio.value;
+
+     }
+  </script>
+  <script type="text/javascript">
+ function compose_destinazione() {
+        document.form.spedizione_destinazione.value=document.form.dati_utente_nome.value + " " + document.form.dati_utente_cognome.value;
+     }
+  </script>
+</head>
+
+<body>
+  <blockquote>
+    <h1>RA station</h1>
+  </blockquote>
+
+  <table>
+    <col width="140">
+    <col width="500">
+
+    <tr>
+      <td><img src="/ra-station/images/sx-logo.jpg"></td>
+
+      <td>
+        <h3 class="center">MODULO DI ADESIONE<br>
+        ABBONAMENTO RESIDENZIALE CON CPE</h3>
+
+        <h2 class="center">T-UNWIRED FLAT</h2>
+      </td>
+      <td><img src="/ra-station/images/dx-logo.png"></td>
+
+      </td>
+    </tr>
+  </table><br>
+
+  <table width="800" border="1" bordercolor="#C0C0C0">
+    <tr>
+      <td colspan="2"><span class="Stile3">I campi contrassegnati dal simbolo * non possono essere omessi</span></td>
+    </tr>
+
+    <tr>
+      <td valign="top">
+        <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>DATI
+        UTENTE:</b></font></font></p>
+      </td>
+    </tr>
+  </table><br>
+
+  <table width="800" border="1" bordercolor="#C0C0C0">
+    <tr>
+      <td valign="top">
+        <p class="western"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>Intestazione
+        contratto</b></font></font></p>
+      </td>
+    </tr>
+  </table>
+
+  <form method="post" name="form" action="/registrazione-residenziale-con-cpe">
+    <table width="800" class="racss_formtable">
+      <tr>
+        <td class="racss_label">Nome:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_nome" name="dati_utente_nome" value="%s" onblur="compose_email()"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Cognome:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_cognome" name="dati_utente_cognome" value="%s" onblur="compose_email()">
+        <strong class="Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Nato a:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_luogo_di_nascita" name="dati_utente_luogo_di_nascita" value="%s"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Data di Nascita (dd/mm/yyyy):</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_data_di_nascita" name="dati_utente_data_di_nascita" value="%s"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Sesso:</td>
+
+        <td class="racss_field"><select id="dati_utente_sesso" name="dati_utente_sesso">
+          <option value="M">
+            M
+          </option>
+
+          <option value="F">
+            F
+          </option>
+        </select></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Codice Fiscale:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_cf" name="dati_utente_cf" value="%s"> <strong class="Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Indirizzo:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_indirizzo" name="dati_utente_indirizzo" value="%s"> <strong class="Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Comune:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_comune" name="dati_utente_comune" value="%s"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Provincia:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_provincia" name="dati_utente_provincia" value="%s"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Cap:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_cap" name="dati_utente_cap" value="%s"> <strong class="Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Tipo di documento:</td>
+
+        <td class="racss_field"><select id="dati_utente_tipo_di_documento" name="dati_utente_tipo_di_documento">
+          <option value="ci">
+            Carta di identita'
+          </option>
+
+          <option value="patente">
+            Patente di guida
+          </option>
+
+          <option value="passaporto">
+            Passaporto
+          </option>
+
+          <option value="altro">
+            Altro
+          </option>
+
+        </select></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Num. documento:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_numero_documento" name="dati_utente_numero_documento" value="%s"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Emesso da:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_ente_di_emissione" name="dati_utente_ente_di_emissione" value="%s"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Rilasciato il (dd/mm/yyyy):</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_data_rilascio" name="dati_utente_data_rilascio" value="%s"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Telefono:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_telefono_fisso" name="dati_utente_telefono_fisso" value="%s"></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Fax:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_fax" name="dati_utente_fax" value="%s"></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Cellulare:</td>
+
+        <td class="racss_field"><input type="text" id="dati_utente_telefono_cellulare" name="dati_utente_telefono_cellulare" value="%s"></td>
+      </tr>
+    </table><br>
+
+    <table width="800" border="1" bordercolor="#C0C0C0">
+      <tr>
+        <td valign="top">
+          <p class="western"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>Installazione</b></font></font></p>
+        </td>
+      </tr>
+    </table>
+
+    <table width="800" class="racss_formtable">
+      <tr>
+        <td class="racss_label">Indirizzo:</td>
+
+        <td class="racss_field"><input type="text" id="installazione_indirizzo" name="installazione_indirizzo" value="%s" onfocus="if(this.value=='') this.value=dati_utente_indirizzo.value"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Comune:</td>
+
+        <td class="racss_field"><input type="text" id="installazione_comune" name="installazione_comune" value="%s" onfocus="if(this.value=='') this.value=dati_utente_comune.value"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Provincia:</td>
+
+        <td class="racss_field"><input type="text" id="installazione_provincia" name="installazione_provincia" value="%s" onfocus="if(this.value=='') this.value=dati_utente_provincia.value"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Cap:</td>
+
+        <td class="racss_field"><input type="text" id="installazione_cap" name="installazione_cap" value="%s" onfocus="if(this.value=='') this.value=dati_utente_cap.value"> <strong class="Stile3">*</strong></td>
+      </tr>
+    </table>
+    <br>
+
+<!-- Indirizzo fatturazione: start -->
+
+    <table width="800" border="1" bordercolor="#C0C0C0">
+      <tr>
+        <td valign="top">
+          <p class="western"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>Spedizione
+          Fattura</b></font></font></p>
+        </td>
+      </tr>
+    </table>
+
+    <table width="800" class="racss_formtable">
+      <tr>
+        <td class="racss_label">Destinazione:</td>
+
+        <td class="racss_field"><input type="text" id="spedizione_destinazione" name="spedizione_destinazione" value="%s" size="40" onfocus="if(this.value=='') compose_destinazione()"> <strong class="Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Indirizzo:</td>
+
+        <td class="racss_field"><input type="text" id="spedizione_indirizzo" name="spedizione_indirizzo" value="%s" size="40" onfocus="if(this.value=='') this.value=dati_utente_indirizzo.value"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Comune:</td>
+
+        <td class="racss_field"><input type="text" id="spedizione_comune" name="spedizione_comune" value="%s" onfocus="if(this.value=='') this.value=dati_utente_comune.value"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Provincia:</td>
+
+        <td class="racss_field"><input type="text" id="spedizione_provincia" name="spedizione_provincia" value="%s" onfocus="if(this.value=='') this.value=dati_utente_provincia.value"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Cap:</td>
+
+        <td class="racss_field"><input type="text" id="spedizione_cap" name="spedizione_cap" value="%s" onfocus="if(this.value=='') this.value=dati_utente_cap.value"> <strong class="Stile3">*</strong></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Email:</td>
+
+        <td class="racss_field"><input type="text" id="spedizione_emailAddress" name="spedizione_emailAddress" value="%s" size="40" onblur="compose_email_spedizione_fattura()"> <strong class="Stile3">*</strong></td>
+      </tr>
+    </table><br>
+<!-- Indirizzo fatturazione: end -->
+
+    <table width="800" border="1" bordercolor="#C0C0C0">
+      <tr>
+        <td valign="top">
+          <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style=
+          "font-size: 9pt"><b>SERVIZI/PRODOTTI:</b></font></font></p>
+        </td>
+      </tr>
+    </table><br>
+
+    <table width="800" border="1" bordercolor="#C0C0C0">
+      <tr valign="top">
+        <td width="400">
+          <p class="western"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>Abbonamento Residenziale con CPE
+          "T-Unwired FLAT"</b></font></font></p>
+        </td>
+
+        <td width="340">
+          <p class="western" align="left"><font face="URW Bookman L, Times New Roman"><font size="1" style="font-size: 8pt">(prezzo come da
+          condizioni promozionali)</font></font></p>
+        </td>
+      </tr>
+
+      <tr valign="top">
+        <td width="400">
+          <p class="western"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>Costo Attivazione (una
+          tantum)</b></font></font></p>
+        </td>
+
+        <td width="340">
+          <p class="western" align="left"><font face="URW Bookman L, Times New Roman"><font size="1" style="font-size: 8pt">(prezzo come da
+          condizioni promozionali)</font></font></p>
+        </td>
+      </tr>
+    </table>
+
+    <table class="racss_formtable">
+      <tr>
+        <td class="racss_label">Note sull'installazione:</td>
+
+        <td class="racss_field"><input size="80" type="text" id="contratto_note" name="contratto_note" value="%s"></td>
+      </tr>
+    </table>
+    <hr>
+    <br>
+
+    <table width="800" border="1" bordercolor="#C0C0C0">
+      <tr valign="top">
+        <td valign="top">
+          <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style=
+          "font-size: 9pt"><b>Richiesta di certificato CPE:</b></font></font></p>
+        </td>
+      </tr>
+    </table>
+
+    <table class="racss_formtable">
+      <tr>
+        <td class="racss_label">Dominio:</td>
+
+        <td class="racss_field"><select name="dominio" onblur="compose_email()">
+          <option value="trust-engine.com">
+            trust-engine.com
+          </option>
+
+        </select></td>
+      </tr>
+
+      <tr>
+        <td class="racss_label">Email:</td>
+
+        <td class="racss_field"><input type="text" id="cpe_emailAddress" name="cpe_emailAddress" value="%s" size="40"> <strong class=
+        "Stile3">*</strong></td>
+      </tr>
+    </table><br>
+    <input type="reset" value="Reset"> <input type="submit" name="submit" value="Visualizza contratto">
+  </form><script type="text/javascript">
+var valComm = new LiveValidation( 'dati_utente_nome', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il nome"} );
+  var valComm = new LiveValidation( 'dati_utente_cognome', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il cognome"} );
+  var valComm = new LiveValidation( 'dati_utente_luogo_di_nascita', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il luogo di nascita"} );
+  valComm.add( Validate.Format, {pattern: /^([A-Za-z '\-.]+)$/, failureMessage: "luogo di nascita non valido"} );
+  var valComm = new LiveValidation( 'dati_utente_data_di_nascita', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire la data di nascita"} );
+  valComm.add( Validate.Format, {pattern: /^[\d]{1,2}\/[\d]{1,2}\/[\d]{4}$/, failureMessage: "data di nascita non valida"} );
+  var valComm = new LiveValidation( 'dati_utente_cf', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il codice fiscale"} );
+  valComm.add( Validate.Format, {pattern: /^[A-Za-z]{6}[\d]{2}[A-Za-z]{1}[\d]{2}[A-Za-z]{1}[\d]{3}[A-Za-z]{1}$/, failureMessage: "codice fiscale non valido"} );
+  var valComm = new LiveValidation( 'dati_utente_indirizzo', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire l'indirizzo"} );
+  var valComm = new LiveValidation( 'dati_utente_comune', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il comune"} );
+  valComm.add( Validate.Format, {pattern: /^([A-Za-z '\-.]+)$/, failureMessage: "comune non valido"} );
+  var valComm = new LiveValidation( 'dati_utente_provincia', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire la provincia"} );
+  valComm.add( Validate.Format, {pattern: /^([A-Za-z ]+)$/, failureMessage: "provincia non valida"} );
+  var valComm = new LiveValidation( 'dati_utente_cap', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il cap"} );
+  valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "cap non valido"} );
+  var valComm = new LiveValidation( 'dati_utente_numero_documento', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il numero documento"} );
+  var valComm = new LiveValidation( 'dati_utente_ente_di_emissione', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire l'ente di emissione"} );
+  var valComm = new LiveValidation( 'dati_utente_data_rilascio', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire la data di rilascio"} );
+  valComm.add( Validate.Format, {pattern: /^[\d]{1,2}\/[\d]{1,2}\/[\d]{4}$/, failureMessage: "data di rilascio non valida"} );
+
+  var valComm = new LiveValidation( 'installazione_indirizzo', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire indirizzo installazione"} );
+  var valComm = new LiveValidation( 'installazione_comune', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire comune installazione"} );
+  valComm.add( Validate.Format, {pattern: /^([A-Za-z '\-.]+)$/, failureMessage: "comune installazione non valido"} );
+  var valComm = new LiveValidation( 'installazione_provincia', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire provincia installazione"} );
+  valComm.add( Validate.Format, {pattern: /^([A-Za-z ]+)$/, failureMessage: "provincia installazione non valida"} );
+  var valComm = new LiveValidation( 'installazione_cap', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il cap installazione"} );
+  valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "cap installazione non valido"} );
+
+  var valComm = new LiveValidation( 'spedizione_destinazione', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire destinazione"} );
+  var valComm = new LiveValidation( 'spedizione_indirizzo', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire indirizzo spedizione"} );
+  var valComm = new LiveValidation( 'spedizione_comune', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire comune spedizione"} );
+  valComm.add( Validate.Format, {pattern: /^([A-Za-z '\-.]+)$/, failureMessage: "comune spedizione non valido"} );
+  var valComm = new LiveValidation( 'spedizione_provincia', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire provincia spedizione"} );
+  valComm.add( Validate.Format, {pattern: /^([A-Za-z ]+)$/, failureMessage: "provincia spedizione non valida"} );
+  var valComm = new LiveValidation( 'spedizione_cap', {onlyOnSubmit: true, validMessage: "OK" } );
+  valComm.add( Validate.Presence, {failureMessage: "Devi inserire il cap spedizione"} );
+  valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "cap spedizione non valido"} );
+  var valMail = new LiveValidation( 'spedizione_emailAddress', {onlyOnSubmit: true, validMessage: "OK" } );
+  valMail.add( Validate.Presence, {failureMessage: "Devi inserire l'e-mail"} );
+  valMail.add( Validate.Email, {failureMessage: "indirizzo e-mail non valido"} );
+
+  var valMail = new LiveValidation( 'cpe_emailAddress', {onlyOnSubmit: true, validMessage: "OK" } );
+  valMail.add( Validate.Presence, {failureMessage: "Devi inserire l'e-mail"} );
+  valMail.add( Validate.Email, {failureMessage: "indirizzo e-mail non valido"} );
+
+  var automaticOnSubmit = valMail.form.onsubmit;
+  valMail.form.onsubmit = function() {
+        var valid = automaticOnSubmit();
+        if (valid) return true; 
+        return false;
+  }
+  </script>
+</body>
+</html>

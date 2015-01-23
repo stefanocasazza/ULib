@@ -1,0 +1,19 @@
+<!--#declaration
+static void usp_init_upload_progress()
+{
+U_TRACE(5, "::usp_init_upload_progress()")
+
+if (UServer_Base::isPreForked())
+   {
+   UHTTP::ptr_upload_progress = (UHTTP::upload_progress*) UServer_Base::getPointerToDataShare(UHTTP::ptr_upload_progress);
+
+   U_INTERNAL_ASSERT_EQUALS(UHTTP::ptr_upload_progress->byte_read, 0)
+   }
+}
+-->
+<!--#header
+Content-Type: application/json
+Cache Control: max-age=0
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+-->
+<!--#puts UHTTP::getUploadProgress() -->

@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## base64.test -- Test base64 feature
+
+start_msg base64
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg base64 <inp/base64.input
+
+# Test against expected output
+test_output_diff base64

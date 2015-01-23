@@ -1,0 +1,71 @@
+Call HCSP_init(0x9d3b20)
+engine "HCSP" set.
+Loading 'screen' into random state - done
+Call HCSP_load_key("My Certificate")
+Call HCSP_setContext()
+pCryptProvider: "Microsoft Enhanced Cryptographic Provider v1.0"
+dwProviderType: 1
+pCryptContainer: "<NULL>"
+pSubsystemProtocol: "My"
+pFindPara: "localhost.localdomain"
+
+Certificate Store: "My"
+
+Enumerating the certificate for the CSP
+-----------------------------------------------------------
+subject='/C=IT/ST=Italy/O=Unirel spa/OU=server/CN=localhost.localdomain/emailAddress=root@localhost.localdomain'
+-----------------------------------------------------------
+
+Provider name: Microsoft Enhanced Cryptographic Provider v1.0
+Nome del Key Container: {9DD2B6F0-42A8-4703-8C53-471CD3B6063B}
+
+dwKeySpec: 1
+
+Enumerating the key containers name for the CSP
+-----------------------------------------------------------
+Key Containers Name: {38B58C76-73AD-4635-B772-F8BD3F5637C8}
+Key Containers Name: {D5D6BD99-4E3A-41D5-A762-915606F89E1F}
+Key Containers Name: {7B11953E-E300-45BB-9345-1138194F1C14}
+Key Containers Name: JavaWebStart
+Key Containers Name: J2SE
+Key Containers Name: {75E24FBA-B62F-4092-979E-3E7F226A5BE3}
+Key Containers Name: TestSuiteContainer
+Key Containers Name: {9DD2B6F0-42A8-4703-8C53-471CD3B6063B}
+-----------------------------------------------------------
+
+
+Enumerating the supported algorithms
+
+Algid           Bits      Type           Algorithm
+                                         Name
+----------------------------------------------------------
+Algid:00006602h Bits:128  Type:Encrypt   Name:RC2           
+Algid:00006801h Bits:128  Type:Encrypt   Name:RC4           
+Algid:00006601h Bits:56   Type:Encrypt   Name:DES           
+Algid:00006609h Bits:112  Type:Encrypt   Name:3DES TWO KEY  
+Algid:00006603h Bits:168  Type:Encrypt   Name:3DES          
+Algid:00008004h Bits:160  Type:Hash      Name:SHA-1         
+Algid:00008001h Bits:128  Type:Hash      Name:MD2           
+Algid:00008002h Bits:128  Type:Hash      Name:MD4           
+Algid:00008003h Bits:128  Type:Hash      Name:MD5           
+Algid:00008008h Bits:288  Type:Hash      Name:SSL3 SHAMD5   
+Algid:00008005h Bits:0    Type:Hash      Name:MAC           
+Algid:00002400h Bits:1024 Type:Signature Name:RSA_SIGN      
+Algid:0000a400h Bits:1024 Type:Exchange  Name:RSA_KEYX      
+Algid:00008009h Bits:0    Type:Hash      Name:HMAC          
+----------------------------------------------------------
+subject='/C=IT/ST=Italy/O=Unirel spa/OU=server/CN=localhost.localdomain/emailAddress=root@localhost.localdomain'
+Return HCSP_setContext(1)
+Call HCSP_getKeyHandle()
+Return HCSP_getKeyHandle(1)
+BLOB size 148 - modulus size 128 
+Return HCSP_load_key(0x9da9e0)
+Call HCSP_rsa_sign(64)
+Call HCSP_setHashContext()
+size of signature 128
+Return HCSP_setHashContext(1)
+siglen 2292652 - len 20 
+size of signature 128
+Return HCSP_rsa_sign(1)
+Call HCSP_finish(0x9d3b20)
+Call HCSP_destroy(0x9d3b20)

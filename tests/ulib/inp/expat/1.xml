@@ -1,0 +1,14 @@
+
+<token-index>
+<uri>archive/f45cd769a2dfc8fbaf7a53a97c65a9b8394c82a9</uri>
+<label>Questo e' il mio documento</label>
+<expiration-date>20050826144936Z</expiration-date>
+<document filename="documento.txt">documento.txt</document>
+<certificate issuer="C=IT, ST=Roma, L=Roma, O=T-Business S.R.L., OU=T-Business - PyCA TestCA, CN=T-Business - Root TestCA" serial="00">
+<certificate issuer="C=IT, ST=Roma, L=Roma, O=T-Business S.R.L., OU=T-Business - PyCA TestCA, CN=T-Business - Root TestCA" serial="06">
+<crl filename="two-level_tsa_issuer_level1_crl.pem"/>
+</certificate>
+<crl filename="two-level_tsa_issuer_level2_crl.pem"/>
+</certificate>
+</token-index>
+

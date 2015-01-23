@@ -1,0 +1,12 @@
+#!/bin/sh
+
+. ../.function
+
+## random.test -- Test random feature
+
+start_msg random
+
+start_prg random 10 10000
+
+# Test against expected output
+test_output_wc w random

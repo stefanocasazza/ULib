@@ -1,0 +1,11 @@
+<ul>
+<li><a href="/SSI/earth/africa/index.shtml">Africa</a>
+   <!--#if expr="$REQUEST_URI ^= /SSI/earth/africa" -->
+       <!--#include virtual="/SSI/earth/africa/menu.shtml" -->
+   <!--#endif -->
+</li>
+
+<li><a href="/antarctica">Antarctica</a></li>
+
+...
+</ul>

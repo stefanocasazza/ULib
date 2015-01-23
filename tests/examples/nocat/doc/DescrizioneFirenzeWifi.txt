@@ -1,0 +1,361 @@
+Descrizione Firenze Wifi
+------------------------------------------------------------
+3 oggetti:
+
+a) browser utente
+b) captive portal point (nodog) - http server listen 5280 - gestione firewall tramite script
+c) portale autorizzativo
+
+browser utente <=> captive portal point <=> portale autorizzativo (comunicazioni tramite protocollo http(s))
+
+dopo che un utente si associa a un access point, effettuando una qualche richiesta http su porta 80 tramite
+un browser (provando a navigare in rete) ottiene una risposta http che lo redirige sul portale al servizio GET_login():
+
+HTTP/1.1 511 Network authentication required
+Server: ULib
+Date: Fri, 21 Feb 2014 18:45:50 GMT
+Cache-Control: no-cache
+Connection: close
+Content-Length: 523
+Content-Type: text/html; charset=UTF-8
+Refresh: 1; url=http://wifi-aaa.comune.fi.it/login?mac=00%3A14%3Aa5%3A6e%3A9c%3Acb&ip=172.16.1.172&redirect=http%3A//start.fedoraproject.org/&gateway=172.16.1.254%3A5280&timeout=0&token=1412216317&ap=ap@10.10.100.115
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>511 Network authentication required</title>
+</head><body>
+<h1>Network authentication required</h1>
+<p>You need to <a href="http://wifi-aaa.comune.fi.it/login?mac=00%3A14%3Aa5%3A6e%3A9c%3Acb&ip=172.16.1.172&redirect=http%3A//start.fedoraproject.org/&gateway=172.16.1.254%3A5280&timeout=0&token=1412216317&ap=ap@10.10.100.115">authenticate with the local network</a> in order to get access</p>
+<hr>
+<address>ULib Server</address>
+</body></html>
+
+GET_login() (http)
+------------------------------------------------------------
+presentazione della pagina di accoglienza come effetto della redirect fatta dal nodog al portale autorizzativo. 
+
+Parametri (opzionali)
+------------------------------------------------------------
+mac: mac address della scheda di rete dell'utente
+ip: indirizzo ip assegnato dal dhcp server
+redirect: url richiesta dall'utente
+gateway: indirizzo ip del gateway (nodog) che ha fatto la redirect al portale autorizzativo (es: 172.16.1.254:5280)
+timeout: informazione attualmente non utilizzata
+token: numero randomico che viene associato all'ip dell'utente e che viene controllato dal nodog al ricevimento del ticket autorizzativo
+ap: <label local network> '@' <indirizzo ip dell'access point>
+------------------------------------------------------------
+GET /login?mac=00%3A14%3Aa5%3A6e%3A9c%3Acb&ip=172.16.1.172&redirect=http%3A//start.fedoraproject.org/&gateway=172.16.1.254%3A5280&timeout=0&token=1412216317&ap=ap@10.10.100.115
+------------------------------------------------------------
+
+dalla pagina di accoglienza si puo' richiede l'autenticazione cliccando sui relativi 'bottoni':
+
+GET_login_request() (https)
+------------------------------------------------------------
+viene controllato il cookie WCID=<id> e se non presente o non valido
+viene presentata la pagina specifica per il realm indicato (all, firenzecard) con una form per l'autenticazione. 
+
+GET_login_request_IdP() (http)
+------------------------------------------------------------
+viene presentata la pagina specifica per il realm indicato (all, firenzecard) con una form per l'autenticazione. 
+
+GET_login_request_by_MAC() (http)
+------------------------------------------------------------
+viene controllato che il parametro mac abbia un valore, nel caso sia
+'00:00:00:00:00:00' viene controllato che il parametro ip abbia un valore
+
+Parametri (opzionali)
+------------------------------------------------------------
+mac: mac address della scheda di rete dell'utente
+ip: indirizzo ip assegnato dal dhcp server
+redirect: url richiesta dall'utente
+gateway: indirizzo ip del gateway (nodog) che ha fatto la redirect al portale autorizzativo (es: 172.16.1.254:5280)
+timeout: informazione attualmente non utilizzata
+token: numero randomico che viene associato all'ip dell'utente e che viene controllato dal nodog al ricevimento del ticket autorizzativo
+ap: <label local network> '@' <indirizzo ip dell'access point>
+realm: dominio autorizzazione (all, firenzecard)
+redir_to: nel caso di GET_login_request_IdP() contiene un dato specifico altrimenti corrisponde alla url richiesta dall'utente
+------------------------------------------------------------
+
+POST_login_request() (https)
+------------------------------------------------------------
+ricezione form per l'autenticazione.
+
+Parametri (opzionali)
+------------------------------------------------------------
+mac: mac address della scheda di rete dell'utente
+ip: indirizzo ip assegnato dal dhcp server
+redirect: url richiesta dall'utente
+gateway: indirizzo ip del gateway (nodog) che ha fatto la redirect al portale autorizzativo (es: 172.16.1.254:5280)
+timeout: informazione attualmente non utilizzata
+token: numero randomico che viene associato all'ip dell'utente e che viene controllato dal nodog al ricevimento del ticket autorizzativo
+ap: <label local network> '@' <indirizzo ip dell'access point>
+---------------------------------------------------------------------------------------------------
+*** this params CANNOT be empty ***
+---------------------------------------------------------------------------------------------------
+realm: dominio autorizzazione (all, firenzecard)
+redir_to: nel caso di GET_login_request_IdP() contiene un dato specifico altrimenti corrisponde alla url richiesta dall'utente
+uid: id utente (telefono, mac, ip) 
+password: ...
+---------------------------------------------------------------------------------------------------
+submit.x 
+submit.y - if it came from main.bash...
+submit   - if it came from some mobile device...
+---------------------------------------------------------------------------------------------------
+
+superati i necessari controlli nella fase di autenticazione si risponde al browser
+dell'utente con una redirect al servizio 'login_validate' sulla tnet concentratore
+con i seguenti parametri cryptati des3
+
+Parametri
+------------------------------------------------------------
+uid: id utente (telefono, mac, ip) 
+policy: (DAILY, TRAFFIC, FLAT)
+auth_domain: dominio autorizzazione (all, firenzecard) 
+max_time: tempo disponibile definito dalla policy  
+max_traffic: traffico disponibile definito dalla policy
+UserDownloadRate: informazione attualmente non utilizzata 
+UserUploadRate: informazione attualmente non utilizzata 
+redir_to: url richiesta dall'utente  
+------------------------------------------------------------
+
+A questo punto se l'utente e' gia' loggato viene rediretto sul portale autorizzativo al servizio GET_fake_login_validate():
+
+GET_fake_login_validate() (http)
+------------------------------------------------------------
+semplicemente estrae ll parametro url di 'redir_to' e risponde con la redirect sulla stessa.
+------------------------------------------------------------
+
+altrimenti la redirect tramite il firewall ripassa dal nodog che controlla i
+parametri cryptati (registra il parametro 'uid' in una lista interna che
+viene usata nella validazione successiva del ticket autorizzativo) e redirige
+nuovamente il browser verso il portale autorizzativo al servizio GET_login_validate()
+inserendo i parametri cryptati come campo 'redirect' nei nuovi parametri della
+redirect, in questo modo ritorniamo sul portale con i dati rinnovati per l'autorizzazione
+
+GET_login_validate() (http)
+------------------------------------------------------------
+valida la richiesta di login controllando le risorse dell'utente
+
+Parametri
+---------------------------------------------------------------------------------------------------
+come back from the gateway (NoDog) after the POST of login_request, the params CANNOT be empty
+---------------------------------------------------------------------------------------------------
+mac: mac address della scheda di rete dell'utente
+ip: indirizzo ip assegnato dal dhcp server
+redirect: dati cryptati des3
+========================================
+uid: id utente (telefono, mac, ip)
+policy: (DAILY, TRAFFIC, FLAT)
+auth_domain: dominio autorizzazione (all, firenzecard)
+max_time: tempo disponibile definito dalla policy
+max_traffic: traffico disponibile definito dalla policy
+UserDownloadRate: informazione attualmente non utilizzata
+UserUploadRate: informazione attualmente non utilizzata
+redir_to: url richiesta dall'utente
+========================================
+gateway: indirizzo ip del gateway (nodog) che ha fatto la redirect al portale autorizzativo (es: 172.16.1.254:5280)
+timeout: informazione attualmente non utilizzata
+token: numero randomico che viene associato all'ip dell'utente e che viene controllato dal nodog al ricevimento del ticket autorizzativo
+ap: <label local network> '@' <indirizzo ip dell'access point>
+// ---------------------------------------------------------------------------------------------------
+
+Viene preparato il ticket autorizzativo cryptato des3 inviato come redirect al nodog al servizio 'ticket'
+------------------------
+"Mac %.*s\n"
+"Timeout %.*s\n"
+"Traffic %.*s\n"
+"Token %.*s\n"
+"User	%.*s\n"
+"Policy %.*s\n"
+"NoTraffic %.*s\n"
+"UserUploadRate %.*s\n"
+"UserDownloadRate %.*s\n"
+"Redirect http://wifi-aaa.comune.fi.it/postlogin?<....>\n" => stessi parametri della richiesta (GET /login_validate?...)
+------------------------
+
+il nodog controlla le informazioni nel ticket, apre il firewall e redirige il
+browser alla url indicata come 'Redirect' nel ticket che risulta essere il
+servizio GET_postlogin() sul portale autorizzativo
+
+GET_postlogin() (http)
+------------------------------------------------------------
+registra il login (apertura del firewall) dell'utente
+
+Parametri
+---------------------------------------------------------------------------------------------------
+mac: mac address della scheda di rete dell'utente
+ip: indirizzo ip assegnato dal dhcp server
+redirect: dati cryptati des3
+========================================
+uid: id utente (telefono, mac, ip)
+policy: (DAILY, TRAFFIC, FLAT)
+auth_domain: dominio autorizzazione (all, firenzecard)
+max_time: tempo disponibile definito dalla policy
+max_traffic: traffico disponibile definito dalla policy
+UserDownloadRate: informazione attualmente non utilizzata
+UserUploadRate: informazione attualmente non utilizzata
+redir_to: url richiesta dall'utente
+========================================
+gateway: indirizzo ip del gateway (nodog) che ha fatto la redirect al portale autorizzativo (es: 172.16.1.254:5280)
+timeout: informazione attualmente non utilizzata
+token: numero randomico che viene associato all'ip dell'utente e che viene controllato dal nodog al ricevimento del ticket autorizzativo
+ap: <label local network> '@' <indirizzo ip dell'access point>
+// ---------------------------------------------------------------------------------------------------
+
+come risposta si invia un html con messaggio di login riuscito e tramite
+javascript si prova ad aprire una popup per il logout e finalmente si redirige
+il browser all url originale salvo per gli utenti di firenzecard che vengono
+rediretti su "http://159.213.248.2/wxfi/?ap=X0067Rap"
+
+COMUNICAZIONI NODOG <==> PORTALE
+--------------------------------------------------------------
+richieste from AUTH, which may be:
+--------------------------------------------------------------
+GET /checkZombies          - check for zombies and report info
+GET /checkFirewall         - check firewall and report info
+GET /check			         - check system and report info
+GET /logout?ip=...&mac=...	- logout specific user
+--------------------------------------------------------------
+HTTP/1.1 302 Moved Temporarily
+Server: ULib
+Date: Wed, 26 Feb 2014 16:32:40 GMT
+Cache-Control: no-cache
+Connection: close
+Content-Length: 223
+Content-Type: text/plain; charset=UTF-8
+Location: http://wifi-aaa.comune.fi.it/info?Mac=00%3A00%3A00%3A00%3A00%3A00&ip=172.22.3.63&gateway=151.11.47.120%3A5280&ap=01%40151.11.47.120&User=3284020512&logout=-1&connected=360&traffic=0
+
+The document has moved <a href="http://wifi-aaa.comune.fi.it/info?Mac=00%3A00%3A00%3A00%3A00%3A00&ip=172.22.3.63&gateway=151.11.47.120%3A5280&ap=01%40151.11.47.120&User=3284020512&logout=-1&connected=360&traffic=0">here</a>
+--------------------------------------------------------------
+GET /uptime	- report uptime info 
+--------------------------------------------------------------
+HTTP/1.1 200 OK
+Server: ULib
+Date: Wed, 26 Feb 2014 16:32:40 GMT
+Content-Type: text/plain; charset=UTF-8
+Content-Length: 5
+
+95248
+--------------------------------------------------------------
+GET /status?ip=172.16.61.45 - report status user
+--------------------------------------------------------------
+HTTP/1.1 200 OK
+Server: ULib
+Date: Wed, 26 Feb 2014 16:16:54 GMT
+Content-Length: 131
+Content-Type: text/html; charset=UTF-8
+
+<tr>
+<td>ec:35:86:01:94:33</td>
+<td>172.16.61.45</td>
+<td>Wed, 26 Feb 2014 16:23:28 CET</td>
+<td>00:49:06</td>
+<td>00:00:00</td>
+<td>5382 KBytes</td>
+<td>292 MBytes</td>
+<td><a href="http://standards.ieee.org/cgi-bin/ouisearch?ec3586">ec:35:86:01:94:33</a></td>
+<td style="color:green">PERMIT</td>
+</tr>
+--------------------------------------------------------------
+GET /status?label=ap - report status users for local network
+--------------------------------------------------------------
+HTTP/1.1 200 OK
+Server: ULib
+Date: Wed, 26 Feb 2014 16:16:54 GMT
+Content-Length: 431
+Content-Type: text/html; charset=UTF-8
+
+<html>
+<head>
+<meta http-equiv="Cache Control" content="max-age=0">
+<title>Access Point: wimoGhiberti-r29587_rspro</title></head>
+<body bgcolor="#FFFFFF" text="#000000">
+<h1>Access Point: wimoGhiberti-r29587_rspro</h1>
+<hr noshade="1"/>
+<table border="0" cellpadding="5" cellspacing="0">
+<tr><td>Current Time</td><td>Wed, 26 Feb 2014 17:12:34 CET</td></tr>
+<tr><td>Gateway Up Since</td><td>Wed, 12 Feb 2014 12:17:24 CET</td></tr>
+<tr><td>GatewayVersion</td><td>1.2.0</td></tr>
+<tr><td>ExternalDevice</td><td>eth0 tun0</td></tr>
+<tr><td>InternalDevice</td><td>br-lan</td></tr>
+<tr><td>LocalNetwork</td><td>172.16.61.0/24</td></tr>
+<tr><td>GatewayPort</td><td>5280</td></tr>
+<tr><td>AuthServiceAddr</td><td>http://wifi-aaa.comune.fi.it</td></tr>
+<tr><td>Label (Local Network Mask)</td><td>ap (172.16.61.0/24)</td></tr>
+</table>
+<hr noshade="1"/>
+<table border="0" cellpadding="5" cellspacing="0">
+<tr><td>Users</td><td>2</td></tr>
+<tr><td>Users Connected</td><td>1</td></tr>
+<tr><td></td><td></td></tr>
+<tr><td align="center"><h2>Current Users</h2></td>
+<table border="1" cellpadding="5">
+<tr><th>User UID</th>
+<th>IP address</th>
+<th>Connection time</th>
+<th>Elapsed connection time</th>
+<th>Left connection time</th>
+<th>Consumed traffic</th>
+<th>Left traffic</th>
+<th>MAC address</th>
+<th>Status</th></tr>
+<tr>
+<td>70:1a:04:df:6c:39</td>
+<td>172.16.61.213</td>
+<td>Thu, 20 Feb 2014 08:57:28 CET</td>
+<td>01:51:32</td>
+<td>00:08:28</td>
+<td>72183 KBytes</td>
+<td>229 MBytes</td>
+<td><a href="http://standards.ieee.org/cgi-bin/ouisearch?847a88">84:7a:88:71:a3:b5</a></td>
+<td style="color:red">DENY</td>
+</tr>
+<tr>
+<td>ec:35:86:01:94:33</td>
+<td>172.16.61.45</td>
+<td>Wed, 26 Feb 2014 16:23:28 CET</td>
+<td>00:49:06</td>
+<td>00:00:00</td>
+<td>5382 KBytes</td>
+<td>292 MBytes</td>
+<td><a href="http://standards.ieee.org/cgi-bin/ouisearch?ec3586">ec:35:86:01:94:33</a></td>
+<td style="color:green">PERMIT</td>
+</tr>
+<tr>
+</table></td></tr>
+</table>
+<hr noshade="1"/>
+<img src=/images/auth_logo.png width="112" height="35">
+<p style="text-align:right">Powered by ULib</p>
+</body>
+</html>
+--------------------------------------------------------------
+GET /users - report list of peers permitted
+--------------------------------------------------------------
+HTTP/1.1 200 OK
+Server: ULib
+Date: Wed, 26 Feb 2014 16:25:36 GMT
+Content-Type: text/plain; charset=UTF-8
+Content-Length: 813
+ 
+10:d5:42:27:5d:4f 172.16.184.146 10:d5:42:27:5d:4f 171 4395390
+04:f7:e4:c8:3c:a2 172.16.184.31 04:f7:e4:c8:3c:a2 171 2375276
+88:1f:a1:a1:24:50 172.16.184.105 88:1f:a1:a1:24:50 171 24308499
+e4:25:e7:04:e6:d9 172.16.184.62 e4:25:e7:04:e6:d9 171 875199
+0c:3e:9f:21:d7:ee 172.16.184.163 0c:3e:9f:21:d7:ee 171 11893262
+f8:27:93:2a:02:dc 172.16.184.99 f8:27:93:2a:02:dc 171 7665863
+b8:e8:56:db:90:32 172.16.184.119 b8:e8:56:db:90:32 171 916099
+54:ea:a8:5d:5e:ad 172.16.184.244 54:ea:a8:5d:5e:ad 171 3159367
+00:f4:b9:79:53:4d 172.16.184.128 00:f4:b9:79:53:4d 171 7659066
+b4:18:d1:56:66:d7 172.16.184.200 b4:18:d1:56:66:d7 171 15393744
+78:a3:e4:64:d4:17 172.16.184.130 78:a3:e4:64:d4:17 171 588007
+04:db:56:0f:f3:de 172.16.184.83 04:db:56:0f:f3:de 171 228625
+bc:f5:ac:f7:ff:9b 172.16.184.102 bc:f5:ac:f7:ff:9b 171 684978
+--------------------------------------------------------------
+other kind of message (from user), which may be:
+--------------------------------------------------------------
+GET /cpe				  - specific request, force redirect via https 
+GET /test			  - force redirect even without a firewall
+GET /ticket			  - authorization ticket with info
+GET /login_validate - before authorization ticket with info
+--------------------------------------------------------------

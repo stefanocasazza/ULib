@@ -1,0 +1,22 @@
+From:  Nathaniel Borenstein <nsb@bellcore.com> 
+To: Ned Freed <ned@innosoft.com> 
+Subject: Formatted text mail 
+MIME-Version: 1.0 
+Content-Type: multipart/alternative; boundary=boundary42 
+
+
+--boundary42 
+Content-Type: text/plain; charset=us-ascii 
+
+...plain text version of message goes here.... 
+
+--boundary42 
+Content-Type: text/richtext 
+
+.... richtext version of same message goes here ... 
+
+--boundary42 
+Content-Type: text/x-whatever 
+
+.... fanciest formatted version of same  message  goes  here ... 
+--boundary42-- 

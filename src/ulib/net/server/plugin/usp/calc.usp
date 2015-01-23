@@ -1,0 +1,41 @@
+<!--#args
+arg1("0");
+arg2("0");
+opval;
+-->
+<!--#code
+UString op    = USP_FORM_NAME(2);
+double val1   = arg1.strtod(),
+       val2   = arg2.strtod(),
+       result = 0.0;
+
+     if (op == "plus")  result = val1 + val2;
+else if (op == "minus") result = val1 - val2;
+else if (op == "mul")   result = val1 * val2;
+else if (op == "div")   result = val1 / val2;
+-->
+<html>
+ <head>
+  <title>Calculator</title>
+ </head>
+ <body bgcolor=#ffffcc>
+  <h1>Tommi's Calculator</h1>
+
+  <form>
+   <input type="text"   name="arg1"  value="<!--#puts arg1 -->" > <br>
+   <input type="text"   name="arg2"  value="<!--#puts arg2 -->" > <br>
+   <input type="submit" name="plus"  value="+">
+   <input type="submit" name="minus" value="-">
+   <input type="submit" name="mul"   value="*">
+   <input type="submit" name="div"   value="/">
+  </form>
+
+<!--#code
+if (op)
+   {
+   USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), result);
+   }
+-->
+
+ </body>
+</html>

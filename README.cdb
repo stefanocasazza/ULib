@@ -1,0 +1,2 @@
+The directory cdb contains the modified cdb package, which is not part of ULib but
+shipped with ULib as convenience. For compiling see cdb_compile.sh

@@ -1,0 +1,4 @@
+#!/bin/sh
+. ../.colors
+$NORMAL
+exit 0

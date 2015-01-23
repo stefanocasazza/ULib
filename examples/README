@@ -1,0 +1,4 @@
+This directory will include demo programs that were used for testing out the ULib library.
+These demos are not necessarly meant to serve any purpose other than educational.
+They are not normally "built" unless you enter this directory, and they are not meant to be "installed" for general use.
+They are here both to educate how ULib works and for internal testing.

@@ -1,0 +1,30 @@
+#!/bin/sh
+
+. ../.function
+
+## PEC.test -- Test PEC feature
+
+#UTRACE="0 5M 1"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#VALGRIND=valgrind
+ export UTRACE UOBJDUMP USIMERR VALGRIND
+
+DIR=`pwd`
+DIR_CMD="../../examples/PEC_log"
+
+start_msg PEC_report_rejected
+
+start_prg PEC_report_rejected -c PEC_report_rejected.cfg
+start_prg PEC_report_rejected -T '"RejectDomainOfSenderAddressDoesNotExistTest"' \
+										-d inp/PEC/7/TestCase_2 \
+										-e gz -i www -f 01/04/2007 -t 30/04/2007
+start_prg PEC_report_rejected -T '"QueryRangeOfDateAcrossOfChangeOfTheYearTest"' \
+										-d inp/PEC/7/TestCase_3 \
+										-e gz -i www -f 31/12/2006 -t 01/01/2007
+start_prg PEC_report_rejected -T '"QueryRangeOfDateNotAcrossOfChangeOfTheYearTest"' \
+										-d inp/PEC/7/TestCase_4 \
+										-e gz -i www -f 01/01/2007 -t 01/01/2007
+
+# Test against expected output
+test_output_diff PEC_report_rejected

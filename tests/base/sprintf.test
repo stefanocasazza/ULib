@@ -1,0 +1,12 @@
+#!/bin/sh
+
+. ../.function
+
+## sprintf.test -- Test u_sprintf feature
+
+start_msg sprintf
+
+start_prg sprintf
+
+# Test against expected output
+test_output_wc w sprintf

@@ -1,0 +1,4 @@
+HTTP/1.1 302 Found
+Date: %s
+Location: https://subscribe.test.trust-engine.com/pyreg/unregistered-user.py?urlReq=/webmail/src/redirect.php&srvReq=TokenBuilder&errCode=ERROR%5fA%5fX509%5fREJECTED
+

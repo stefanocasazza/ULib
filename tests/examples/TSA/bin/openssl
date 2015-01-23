@@ -1,0 +1,10 @@
+#!/bin/sh
+
+chmod 666 ~/.rnd
+
+# 193de24e.0
+#DIR=`arch`
+#exec /mnt/home/stefano/openssl/bin/$DIR/openssl "$@"
+
+# 611b805d.0
+exec /usr/bin/openssl "$@"

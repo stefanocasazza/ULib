@@ -1,0 +1,17 @@
+.TH cdb_datapos 3
+.SH NAME
+cdb_datapos \- get position of data
+.SH SYNTAX
+.B #include <cdb.h>
+
+uint32 cdb_datapos(struct cdb *\fIc\fR);
+
+.SH DESCRIPTION
+.B cdb_datapos
+returns the position of the data associated with the last key you looked
+up using cdb_find or cdb_findnext.
+
+Use cdb_datalen to get the length of the data.
+
+.SH "SEE ALSO"
+cdb_datalen(3), cdb_keypos(3), cdb_keylen(3)

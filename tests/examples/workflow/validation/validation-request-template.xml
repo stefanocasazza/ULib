@@ -1,0 +1,3 @@
+<?xml version="1.0"?>
+<!DOCTYPE wfeng:handler-request SYSTEM "workflow-engine.dtd">
+<wfeng:handler-request xmlns:wfeng="http://www.t-bizcom.com/WorkflowEngine" wfeng:id="%[^"]"><wfeng:data wfeng:error="%*[^"]">%[^<]</wfeng:data></wfeng:handler-request>

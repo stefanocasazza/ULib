@@ -1,0 +1,18 @@
+#!/bin/sh
+
+. ../.function
+
+## pcre.test -- Test pcre feature
+
+start_msg pcre
+
+#UTRACE="0 25M 0"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+#VALGRIND='valgrind'
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg pcre inp/pcre.input
+
+# Test against expected output
+test_output_wc w pcre

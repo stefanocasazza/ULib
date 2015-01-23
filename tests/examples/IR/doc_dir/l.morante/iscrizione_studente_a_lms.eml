@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="http://www.test.eraclito.net/crm_dtd/operation.xsl"?>
+<!DOCTYPE operation SYSTEM "http://www.test.eraclito.net/crm_dtd/user-folder.dtd">
+
+<operation>
+<description>Iscrizione studente a LMS</description>
+<uid>l.morante</uid>
+<id>iscrizione_studente_a_lms</id>
+<date>25/10/2006 15:00:41</date>
+<holder>Sandra Ceccarelli</holder>
+<author>workflow</author>
+<university-email-address>l.morante@test.eraclito.net</university-email-address>
+</operation>

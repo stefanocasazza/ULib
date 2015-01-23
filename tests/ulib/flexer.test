@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## flexer.test -- Test flexer feature
+
+start_msg flexer
+
+#UTRACE="-5 5M 0"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg flexer test_url.cpp
+
+# Test against expected output
+test_output_wc w flexer

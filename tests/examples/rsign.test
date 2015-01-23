@@ -1,0 +1,115 @@
+#!/bin/sh
+
+. ../.function
+
+## rsign.test -- Test RSIGN feature
+
+start_msg rsignclient
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+rm -rf RSIGN/rsignserver.log RSIGN/RSIGN/log \
+		 out/userver_ssl.out err/userver_ssl.err \
+       RSIGN/trace.*userver_ssl*.[0-9]* RSIGN/object.*userver_ssl*.[0-9]* RSIGN/stack.*userver_ssl*.[0-9]* RSIGN/mempool.*userver_ssl*.[0-9]*
+
+# usage: openssl s_client args
+# ----------------------------------------------------------------
+# -host host    - use -connect instead
+# -port port    - use -connect instead
+# -connect host:port - who to connect to (default is 10.30.1.131:4433)
+# -verify arg   - turn on peer certificate verification
+# -cert arg     - certificate file to use, PEM format assumed
+# -key arg      - Private key file to use, PEM format assumed, in cert file if not specified but cert file is.
+# -CApath arg   - PEM format directory of CA's
+# -CAfile arg   - PEM format file of CA's
+# -reconnect    - Drop and re-make the connection with the same Session-ID
+# -pause        - sleep(1) after each read(2) and write(2) system call
+# -showcerts    - show all certificates in the chain
+# -debug        - extra output
+# -msg          - Show protocol messages
+# -nbio_test    - more ssl protocol testing
+# -state        - print the 'ssl' states
+# -nbio         - Run with non-blocking IO
+# -crlf         - convert LF from terminal into CRLF
+# -quiet        - no s_client output
+# -ign_eof      - ignore input eof (default when -quiet)
+# -ssl2         - just use SSLv2
+# -ssl3         - just use SSLv3
+# -tls1         - just use TLSv1
+# -no_tls1/-no_ssl3/-no_ssl2 - turn off that protocol
+# -bugs         - Switch on all SSL implementation bug workarounds
+# -serverpref   - Use server's cipher preferences (only SSLv2)
+# -cipher       - preferred cipher to use, use the 'openssl ciphers' command to see what is available
+# -starttls prot - use the STARTTLS command before starting TLS for those protocols that support it, where 'prot'
+#						 defines which one to assume.  Currently, only "smtp" and "pop3" are supported.
+# -engine id    - Initialise and use the specified engine
+# -rand file:file:...
+# ----------------------------------------------------------------
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 443
+ REQ_TIMEOUT 5
+ MAX_KEEP_ALIVE 256
+ LOG_FILE rsignserver.log
+ LOG_FILE_SZ 1M
+ DOCUMENT_ROOT RSIGN
+ PLUGIN "soap http"
+ PLUGIN_DIR ../../../src/ulib/net/server/plugin/.libs
+ ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
+ CERT_FILE ../../ulib/CA/server.crt
+  KEY_FILE ../../ulib/CA/server.key
+ PASSWORD caciucco
+ CA_PATH ../../ulib/CA/CApath
+ CA_FILE ../../ulib/CA/cacert.pem
+ VERIFY_MODE 1
+}
+http {
+#include "http.cfg"
+}
+soap {
+#include "soap_or_rpc_rsign.cfg"
+}
+EOF
+
+DIR_CMD="../../examples/userver"
+
+$SLEEP
+start_prg_background userver_ssl -c inp/webserver.cfg 
+
+## ./RSIGN/RSIGN/request/run.sh > out/rsignclient.out
+
+INKEY=../ulib/CA/username.key
+
+cat <<EOF >inp/webclient.cfg
+uclient {
+ PORT 443
+ SERVER localhost 
+ CA_PATH ../ulib/CA/CApath
+ CA_FILE ../ulib/CA/cacert.pem
+ PASSWORD caciucco
+ CERT_FILE ../ulib/CA/server.crt
+  KEY_FILE ../ulib/CA/server.key
+ VERIFY_MODE 0
+#VERIFY_MODE 7
+}
+EOF
+
+DIR_CMD="../../examples/rsign"
+
+$SLEEP
+$SLEEP
+start_prg rsignclient -c inp/webclient.cfg -k $INKEY < inp/digest
+ 
+$SLEEP
+kill_prg userver_ssl TERM
+
+mv err/userver_ssl.err err/rsignserver.err
+
+$OPENSSL rsautl -verify -in out/rsignclient.out -inkey $INKEY -passin pass:caciucco -out out/rsignserver.out 2>>err/rsignclient.err
+
+# Test against expected output
+test_output_diff rsignserver

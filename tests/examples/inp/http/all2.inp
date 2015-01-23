@@ -1,0 +1,35 @@
+
+GET /bag.xml?ix=2 HTTP/1.1
+Host: phobos.apple.com
+User-Agent: iTunes-iPhone/5.1 (3; 16GB; dt:24)
+Accept: */*
+Cookie: s_vnum_n2_it=12%7C4%2C3%7C4%2C19%7C2; mz_at0=AwQAAAEYAADDtAAAAABPewGfEZmp74W/1bMf8ObhpNJ7BJkS6XE=; s_vi=[CS]v1|26F72F6A051633CB-40000181A002EFCD[CE]; NSC_JO0a5lf4eoypi2vegro1cvbkilyz0cq=ffffffff12a5af0f45525d5f4f58455e445a4a423660; NSC_JO0gjswpb0uyrt0dhez2nnbvnb53oeq=ffffffff12a5af0645525d5f4f58455e445a4a423660; s_cvp35b=%5B%5B'google%253A%2520organic'%2C'1332337912346'%5D%2C%5B'CDM-EU-35561'%2C'1332932049097'%5D%2C%5B'cdm-eu-35561'%2C'1332932085349'%5D%5D; X-Dsid=1054885268; Pod=6; dssid2=e4c0011c-ce2e-400d-ab00-6bbc2e411c42
+Accept-Language: it;q=1.0,en;q=1.0,fr;q=0.9,de;q=0.9,ja;q=0.9,nl;q=0.9,es;q=0.8,pt;q=0.8,pt-PT;q=0.8,da;q=0.7,fi;q=0.7,nb;q=0.7,sv;q=0.7,ko;q=0.6,zh-Hans;q=0.6,zh-Hant;q=0.6,ru;q=0.5,pl;q=0.5,tr;q=0.5,uk;q=0.5,ar;q=0.4,hr;q=0.4,cs;q=0.4,el;q=0.3,he;q=0.3,ro;q=0.3,sk;q=0.3,th;q=0.2,id;q=0.2,ms;q=0.2,en-GB;q=0.1,ca;q=0.1,hu;q=0.1,vi;q=0.1
+X-Apple-Connection-Type: WiFi
+X-Apple-Cuid: b7f84d9eb2923bf44cfb804e75f438b9
+X-Apple-Software-Cuid: 1abd7eb75fd4e582b9ca323836b9ea8b
+X-Apple-Client-Versions: GameCenter/2.0
+X-Dsid: 1054885268
+X-Apple-Store-Front: 143450,2
+Accept-Encoding: gzip, deflate
+Connection: keep-alive
+
+GET /help.html HTTP/1.1
+Connection: Keep-Alive
+Host: wifi-aaa.comune.fi.it
+Accept: text/xml,application/xml,application/xhtml+xml,text/html;q=0.9,image/png,application/java-archive,application/java,application/x-java-archive,text/vnd.sun.j2me.app-descriptor,application/vnd.oma.drm.message,application/vnd.oma.drm.content,application/vnd.oma.dd+xml,application/vnd.oma.drm.rights+xml,application/vnd.oma.drm.rights+wbxml,application/x-nokia-widget,text/x-opml,text/xml,application/vnd.nokia.headwrapper,*/*;q=0.5
+Accept-Charset: iso-8859-1,utf-8;q=0.7,*;q=0.7
+Accept-Encoding: gzip, deflate, x-gzip, identity; q=0.9
+Accept-Language: it;q=1.0,en;q=0.5,fr;q=0.5,de;q=0.5,pt;q=0.5,es;q=0.5
+Cookie: __utmc=12873125
+Cookie2: $Version=1
+Referer: http://wifi-aaa.comune.fi.it/login?mac=9c%3A4a%3A7b%3Ac3%3A9d%3Aa5&ip=172.16.9.230&redirect=http%3A%2F%2Fwww.google.it%2Fm&gateway=10.8.0.9%3A5280&timeout=0&token=39633a34613a37623a63333a39643a613526313333333534323432342641dcee8c824e0cd9bf43bd58d2a0a3f7&ap=ap@Beccaria-r29587_rspro
+User-Agent: Mozilla/5.0 (Symbian/3; Series60/5.2 NokiaC7-00/012.003; Profile/MIDP-2.1 Configuration/CLDC-1.1 ) AppleWebKit/525 (KHTML, like Gecko) Version/3.0 BrowserNG/7.2.7.3 3gpp-gba
+X-Nokia-MusicShop-Bearer: WLAN
+X-Nokia-MusicShop-Version: 13.1036.15
+x-wap-profile: "http://nds1.nds.nokia.com/uaprof/NC7-00r100.xml"
+
+cc=__utma%3D1.1469286449.1293816537.1322904284.1322904285.138%3B&utmht=1322904285732&utmqt=10642539067 HTTP/1.1
+Host: www.google-analytics.com
+User-Agent: GoogleAnalytics/1.3.1 (Linux; U; Android 2.2.1; it-it; HTC Wildfire Build/FRG83D)
+

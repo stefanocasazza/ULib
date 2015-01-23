@@ -1,0 +1,210 @@
+# Requirements:
+# You have softlimit in your path.
+# XFSZ is signal 25.
+#
+# Some features not tested here:
+# cdbmake traps 4GB overflows.
+
+
+umask 022
+
+rm -rf rts-tmp
+mkdir rts-tmp
+cd rts-tmp
+
+
+echo '--- cdbmake handles simple example'
+echo '+3,5:one->Hello
++3,7:two->Goodbye
+' | cdbmake test.cdb test.tmp
+echo $?
+
+echo '--- cdbmake-12 handles simple example'
+echo '
+  one  Hello
+# comment line
+  two  Goodbye
+' | cdbmake-12 12.cdb 12.tmp
+echo $?
+
+echo '--- cdbmake-sv handles simple example'
+echo '
+# Network services, Internet style
+echo              7/tcp
+echo              7/udp
+discard           9/tcp    sink null
+discard           9/udp    sink null
+systat           11/tcp    users        #Active Users
+systat           11/udp    users        #Active Users
+' | cdbmake-sv sv.cdb sv.tmp
+echo $?
+
+echo '--- cdbdump handles simple examples'
+cdbdump < test.cdb
+echo $?
+cdbdump < 12.cdb
+echo $?
+cdbdump < sv.cdb
+echo $?
+
+echo '--- cdbtest handles simple examples'
+cdbtest < test.cdb
+echo $?
+cdbtest < 12.cdb
+echo $?
+cdbtest < sv.cdb
+echo $?
+
+echo '--- cdbstats handles simple examples'
+cdbstats < test.cdb
+echo $?
+cdbstats < 12.cdb
+echo $?
+cdbstats < sv.cdb
+echo $?
+
+echo '--- cdbget retrieves data successfully'
+cdbget one < test.cdb
+echo '
+'$?
+cdbget two < test.cdb
+echo '
+'$?
+for i in @7 echo @9 discard sink null @11 systat users
+do
+  cdbget $i/tcp < sv.cdb
+  echo '
+'$?
+  cdbget $i/udp < sv.cdb
+  echo '
+'$?
+done
+
+echo '--- cdbget exits 100 on nonexistent data'
+cdbget three < test.cdb
+echo $?
+cdbget '#Active' < sv.cdb
+echo $?
+
+
+echo '--- cdbmake handles repeated keys'
+echo '+3,5:one->Hello
++3,7:one->Goodbye
++3,7:one->Another
+' | cdbmake rep.cdb rep.tmp
+echo $?
+cdbdump < rep.cdb
+echo $?
+
+echo '--- cdbget handles repeated keys'
+cdbget one < rep.cdb
+echo '
+'$?
+cdbget one 0 < rep.cdb
+echo '
+'$?
+cdbget one 1 < rep.cdb
+echo '
+'$?
+cdbget one 2 < rep.cdb
+echo '
+'$?
+cdbget one 3 < rep.cdb
+echo '
+'$?
+cdbget one 4 < rep.cdb
+echo '
+'$?
+
+echo '--- cdbmake handles long keys and data'
+echo '+320,320:ba483b3442e75cace82def4b5df25bfca887b41687537c21dc4b82cb4c36315e2f6a0661d1af2e05e686c4c595c16561d8c1b3fbee8a6b99c54b3d10d61948445298e97e971f85a600c88164d6b0b09
+b5169a54910232db0a56938de61256721667bddc1c0a2b14f5d063ab586a87a957e87f704acb7246c5e8c25becef713a365efef79bb1f406fecee88f3261f68e239c5903e3145961eb0fbc538ff506a
+->152e113d5deec3638ead782b93e1b9666d265feb5aebc840e79aa69e2cfc1a2ce4b3254b79fa73c338d22a75e67cfed4cd17b92c405e204a48f21c31cdcf7da46312dc80debfbdaf6dc39d74694a711
+6d170c5fde1a81806847cf71732c7f3217a38c6234235951af7b7c1d32e62d480d7c82a63a9d94291d92767ed97dd6a6809d1eb856ce23eda20268cb53fda31c016a19fc20e80aec3bd594a3eb82a5a
+
+' | cdbmake test.cdb test.tmp
+echo $?
+
+echo '--- cdbdump handles long keys and data'
+cdbdump < test.cdb
+echo $?
+
+echo '--- cdbtest handles long keys and data'
+cdbtest < test.cdb
+echo $?
+
+echo '--- cdbstats handles long keys and data'
+cdbstats < test.cdb
+echo $?
+
+echo '--- cdbget handles long keys and data'
+cdbget 'ba483b3442e75cace82def4b5df25bfca887b41687537c21dc4b82cb4c36315e2f6a0661d1af2e05e686c4c595c16561d8c1b3fbee8a6b99c54b3d10d61948445298e97e971f85a600c88164d6b0b09
+b5169a54910232db0a56938de61256721667bddc1c0a2b14f5d063ab586a87a957e87f704acb7246c5e8c25becef713a365efef79bb1f406fecee88f3261f68e239c5903e3145961eb0fbc538ff506a
+' < test.cdb
+echo '
+'$?
+
+echo '--- cdbmake handles unwritable tmp'
+ln -s loop loop
+echo '' | cdbmake test.cdb loop
+echo $?
+
+echo '--- cdbmake handles unmovable cdb'
+echo '' | cdbmake loop/test.cdb test.tmp
+echo $?
+
+echo '--- cdbmake handles nomem'
+csh -cf 'repeat 5000 echo "+3,5:one->Hello"' \
+| softlimit -d 50000 cdbmake test.cdb test.tmp
+echo $?
+
+echo '--- cdbmake handles full disk'
+(
+  trap '' 25
+  echo '' | softlimit -f 2047 cdbmake test.cdb test.tmp
+  echo $?
+)
+
+echo '--- cdbmake handles absurd klen'
+echo '+4294967210' | cdbmake test.cdb test.tmp
+echo $?
+
+echo '--- cdbget handles empty file'
+cdbget foo </dev/null
+echo $?
+
+
+echo '--- cdbdump and cdbmake handle random.cdb'
+cdbdump < ../random.cdb | cdbmake test.cdb test.tmp
+echo $?
+cmp ../random.cdb test.cdb
+
+echo '--- cdbtest handles random.cdb'
+cdbtest < ../random.cdb
+echo $?
+
+echo '--- cdbstats handles random.cdb'
+cdbstats < ../random.cdb
+echo $?
+
+
+echo '--- testzero works'
+testzero 5 > test.cdb
+echo $?
+cdbtest < test.cdb
+echo $?
+
+echo '--- testzero can build a database very close to 4GB'
+testzero 65507 > /dev/null
+echo $?
+
+echo '--- testzero complains if hash table passes 4GB'
+testzero 65508 > /dev/null
+echo $?
+
+echo '--- testzero complains if records pass 4GB'
+testzero 66000 > /dev/null
+echo $?
+
+
+exit 0

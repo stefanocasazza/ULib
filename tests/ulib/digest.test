@@ -1,0 +1,17 @@
+#!/bin/sh
+
+. ../.function
+
+## digest.test -- Test vector feature
+
+start_msg digest
+
+#UTRACE="0 1M 0"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+start_prg digest
+
+# Test against expected output
+test_output_diff digest

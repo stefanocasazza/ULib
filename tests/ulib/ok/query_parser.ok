@@ -1,0 +1,285 @@
+Original expression     : NOT (a OR b)
+Disjunctive normal form :  NOT a AND  NOT b
+Term       :  NOT a AND  NOT b
+  Positives: ( )
+  Negatives: ( a b )
+Evaluate   : true
+--------------------------------------------------------------------------------------
+Original expression     : NOT (a AND b)
+Disjunctive normal form :  NOT a OR  NOT b
+Term       :  NOT a
+  Positives: ( )
+  Negatives: ( a )
+Term       :  NOT b
+  Positives: ( )
+  Negatives: ( b )
+Evaluate   : true
+--------------------------------------------------------------------------------------
+Original expression     : a AND (b OR c)
+Disjunctive normal form : a AND b OR a AND c
+Term       : a AND b
+  Positives: ( a b )
+  Negatives: ( )
+Term       : a AND c
+  Positives: ( a c )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : (a OR b) AND NOT c
+Disjunctive normal form : a AND  NOT c OR b AND  NOT c
+Term       : a AND  NOT c
+  Positives: ( a )
+  Negatives: ( c )
+Term       : b AND  NOT c
+  Positives: ( b )
+  Negatives: ( c )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : NOT (NOT (a AND m))
+Disjunctive normal form : a AND m
+Term       : a AND m
+  Positives: ( a m )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : a AND b AND (c OR d)
+Disjunctive normal form : a AND b AND c OR a AND b AND d
+Term       : a AND b AND c
+  Positives: ( a b c )
+  Negatives: ( )
+Term       : a AND b AND d
+  Positives: ( a b d )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : (a OR b) AND c AND d
+Disjunctive normal form : a AND c AND d OR b AND c AND d
+Term       : a AND c AND d
+  Positives: ( a c d )
+  Negatives: ( )
+Term       : b AND c AND d
+  Positives: ( b c d )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : (a OR b) AND (c OR d)
+Disjunctive normal form : a AND c OR a AND d OR b AND c OR b AND d
+Term       : a AND c
+  Positives: ( a c )
+  Negatives: ( )
+Term       : a AND d
+  Positives: ( a d )
+  Negatives: ( )
+Term       : b AND c
+  Positives: ( b c )
+  Negatives: ( )
+Term       : b AND d
+  Positives: ( b d )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : (a OR b) AND (c AND d)
+Disjunctive normal form : a AND c AND d OR b AND c AND d
+Term       : a AND c AND d
+  Positives: ( a c d )
+  Negatives: ( )
+Term       : b AND c AND d
+  Positives: ( b c d )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : (a OR b) AND NOT (c AND d)
+Disjunctive normal form : a AND  NOT c OR a AND  NOT d OR b AND  NOT c OR b AND  NOT d
+Term       : a AND  NOT c
+  Positives: ( a )
+  Negatives: ( c )
+Term       : a AND  NOT d
+  Positives: ( a )
+  Negatives: ( d )
+Term       : b AND  NOT c
+  Positives: ( b )
+  Negatives: ( c )
+Term       : b AND  NOT d
+  Positives: ( b )
+  Negatives: ( d )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : (a OR b) AND (c OR d) AND (e OR f)
+Disjunctive normal form : a AND c AND e OR a AND c AND f OR a AND d AND e OR a AND d AND f OR b AND c AND e OR b AND c AND f OR b AND d AND e OR b AND d AND f
+Term       : a AND c AND e
+  Positives: ( a c e )
+  Negatives: ( )
+Term       : a AND c AND f
+  Positives: ( a c f )
+  Negatives: ( )
+Term       : a AND d AND e
+  Positives: ( a d e )
+  Negatives: ( )
+Term       : a AND d AND f
+  Positives: ( a d f )
+  Negatives: ( )
+Term       : b AND c AND e
+  Positives: ( b c e )
+  Negatives: ( )
+Term       : b AND c AND f
+  Positives: ( b c f )
+  Negatives: ( )
+Term       : b AND d AND e
+  Positives: ( b d e )
+  Negatives: ( )
+Term       : b AND d AND f
+  Positives: ( b d f )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : (a OR b) AND (c OR d) AND (e OR f) AND (g OR h)
+Disjunctive normal form : a AND c AND e AND g OR a AND c AND e AND h OR a AND c AND f AND g OR a AND c AND f AND h OR a AND d AND e AND g OR a AND d AND e AND h OR a AND d AND f AND g OR a AND d AND f AND h OR b AND c AND e AND g OR b AND c AND e AND h OR b AND c AND f AND g OR b AND c AND f AND h OR b AND d AND e AND g OR b AND d AND e AND h OR b AND d AND f AND g OR b AND d AND f AND h
+Term       : a AND c AND e AND g
+  Positives: ( a c e g )
+  Negatives: ( )
+Term       : a AND c AND e AND h
+  Positives: ( a c e h )
+  Negatives: ( )
+Term       : a AND c AND f AND g
+  Positives: ( a c f g )
+  Negatives: ( )
+Term       : a AND c AND f AND h
+  Positives: ( a c f h )
+  Negatives: ( )
+Term       : a AND d AND e AND g
+  Positives: ( a d e g )
+  Negatives: ( )
+Term       : a AND d AND e AND h
+  Positives: ( a d e h )
+  Negatives: ( )
+Term       : a AND d AND f AND g
+  Positives: ( a d f g )
+  Negatives: ( )
+Term       : a AND d AND f AND h
+  Positives: ( a d f h )
+  Negatives: ( )
+Term       : b AND c AND e AND g
+  Positives: ( b c e g )
+  Negatives: ( )
+Term       : b AND c AND e AND h
+  Positives: ( b c e h )
+  Negatives: ( )
+Term       : b AND c AND f AND g
+  Positives: ( b c f g )
+  Negatives: ( )
+Term       : b AND c AND f AND h
+  Positives: ( b c f h )
+  Negatives: ( )
+Term       : b AND d AND e AND g
+  Positives: ( b d e g )
+  Negatives: ( )
+Term       : b AND d AND e AND h
+  Positives: ( b d e h )
+  Negatives: ( )
+Term       : b AND d AND f AND g
+  Positives: ( b d f g )
+  Negatives: ( )
+Term       : b AND d AND f AND h
+  Positives: ( b d f h )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : a OR b AND (c OR d AND (e OR f AND g AND (h OR i)))
+Disjunctive normal form : a OR b AND c OR b AND d AND e OR b AND d AND f AND g AND h OR b AND d AND f AND g AND i
+Term       : a
+  Positives: ( a )
+  Negatives: ( )
+Term       : b AND c
+  Positives: ( b c )
+  Negatives: ( )
+Term       : b AND d AND e
+  Positives: ( b d e )
+  Negatives: ( )
+Term       : b AND d AND f AND g AND h
+  Positives: ( b d f g h )
+  Negatives: ( )
+Term       : b AND d AND f AND g AND i
+  Positives: ( b d f g i )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : a AND (b OR c AND (d OR (e AND (f OR g OR (h AND i)))))
+Disjunctive normal form : a AND b OR a AND c AND d OR a AND c AND e AND f OR a AND c AND e AND g OR a AND c AND e AND h AND i
+Term       : a AND b
+  Positives: ( a b )
+  Negatives: ( )
+Term       : a AND c AND d
+  Positives: ( a c d )
+  Negatives: ( )
+Term       : a AND c AND e AND f
+  Positives: ( a c e f )
+  Negatives: ( )
+Term       : a AND c AND e AND g
+  Positives: ( a c e g )
+  Negatives: ( )
+Term       : a AND c AND e AND h AND i
+  Positives: ( a c e h i )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : NOT (a OR b) AND NOT (c OR d) AND (e OR f) AND NOT (g OR h)
+Disjunctive normal form :  NOT a AND  NOT b AND  NOT c AND  NOT d AND e AND  NOT g AND  NOT h OR  NOT a AND  NOT b AND  NOT c AND  NOT d AND f AND  NOT g AND  NOT h
+Term       :  NOT a AND  NOT b AND  NOT c AND  NOT d AND e AND  NOT g AND  NOT h
+  Positives: ( e )
+  Negatives: ( a b c d g h )
+Term       :  NOT a AND  NOT b AND  NOT c AND  NOT d AND f AND  NOT g AND  NOT h
+  Positives: ( f )
+  Negatives: ( a b c d g h )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : a AND (b OR c AND (d OR (e AND (f OR g OR (h AND i) OR j))))
+Disjunctive normal form : a AND b OR a AND c AND d OR a AND c AND e AND f OR a AND c AND e AND g OR a AND c AND e AND j OR a AND c AND e AND h AND i
+Term       : a AND b
+  Positives: ( a b )
+  Negatives: ( )
+Term       : a AND c AND d
+  Positives: ( a c d )
+  Negatives: ( )
+Term       : a AND c AND e AND f
+  Positives: ( a c e f )
+  Negatives: ( )
+Term       : a AND c AND e AND g
+  Positives: ( a c e g )
+  Negatives: ( )
+Term       : a AND c AND e AND j
+  Positives: ( a c e j )
+  Negatives: ( )
+Term       : a AND c AND e AND h AND i
+  Positives: ( a c e h i )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : a AND (b OR c AND (d OR (e AND (f OR g OR (h AND i)) OR j)))
+Disjunctive normal form : a AND b OR a AND c AND d OR a AND c AND j OR a AND c AND e AND f OR a AND c AND e AND g OR a AND c AND e AND h AND i
+Term       : a AND b
+  Positives: ( a b )
+  Negatives: ( )
+Term       : a AND c AND d
+  Positives: ( a c d )
+  Negatives: ( )
+Term       : a AND c AND j
+  Positives: ( a c j )
+  Negatives: ( )
+Term       : a AND c AND e AND f
+  Positives: ( a c e f )
+  Negatives: ( )
+Term       : a AND c AND e AND g
+  Positives: ( a c e g )
+  Negatives: ( )
+Term       : a AND c AND e AND h AND i
+  Positives: ( a c e h i )
+  Negatives: ( )
+Evaluate   : false
+--------------------------------------------------------------------------------------
+Original expression     : NOT (a OR b) AND NOT (c OR d) AND NOT (e OR f) AND NOT (g OR h)
+Disjunctive normal form :  NOT a AND  NOT b AND  NOT c AND  NOT d AND  NOT e AND  NOT f AND  NOT g AND  NOT h
+Term       :  NOT a AND  NOT b AND  NOT c AND  NOT d AND  NOT e AND  NOT f AND  NOT g AND  NOT h
+  Positives: ( )
+  Negatives: ( a b c d e f g h )
+Evaluate   : true
+--------------------------------------------------------------------------------------

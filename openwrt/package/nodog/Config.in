@@ -1,0 +1,25 @@
+# nodog config
+config NODOG_UUID
+   bool "Enable use of libuuid features"
+   depends on DEVEL && PACKAGE_libuuid
+   default y
+
+config NODOG_DEBUG
+   bool "Enable compilation of debugging features"
+   depends on DEVEL && PACKAGE_nodog
+   default n
+
+#config NODOG_OPENSSL
+#   bool "Enable use of openssl features"
+#   depends on DEVEL && PACKAGE_libopenssl
+#   default n
+
+#config NODOG_CYASSL
+#   bool "Enable use of cyassl features"
+#   depends on DEVEL && PACKAGE_libcyassl
+#   default y
+
+#config NODOG_ZLIB
+#   bool "Enable use of zlib features"
+#   depends on DEVEL && PACKAGE_zlib
+#   default y

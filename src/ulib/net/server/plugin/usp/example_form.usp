@@ -1,0 +1,46 @@
+<!--#args
+first_name;
+last_name;
+email;
+comments;
+-->
+<html>
+<head>
+  <title>Welcome to ULib Web Server!</title>
+</head>
+<body bgcolor="white" text="black">
+  <center>
+    <h1>Welcome to ULib Web Server! (Ver. <!--#puts ULIB_VERSION -->)</h1>
+  </center>
+<!--#code
+if (UHTTP::isGET())
+{
+-->
+  <form action="example_form" method="post">
+    <p>First Name <input name="name" type="text" class="inputbox" title="Enter your first name"></p>
+    <p>Last Name <input name="last" type="text" class="inputbox" title="Enter your last name"></p>
+    <p>Email <input name="email" type="text" class="inputbox" title="Enter your email address"></p>
+    <p>Enter your comments below:</p>
+    <p><textarea name="comments" title="Enter your comments" rows="10" cols="10"></textarea></p>
+    <p><input type="submit" value="Send Data"></p>
+  </form>
+<!--#code
+}
+else
+{
+-->
+   <blockquote>
+   <table width="750" cellpadding="5">
+     <tr>
+       <td bgcolor="#E0E0FF">First Name: <!--#puts first_name --></td>
+       <td bgcolor="#E0E0FF">Last Name: <!--#puts last_name --></td>
+       <td bgcolor="#E0E0FF">Email: <!--#puts email --></td>
+       <td bgcolor="#E0E0FF">your comments: <!--#xputs comments --></td>
+     </tr>
+   </table>
+   </blockquote>
+<!--#code
+}
+-->
+</body>
+</html>

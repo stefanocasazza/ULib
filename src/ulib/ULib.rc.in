@@ -1,0 +1,30 @@
+#include <winver.h>
+
+VS_VERSION_INFO VERSIONINFO
+  FILEVERSION 1,4,2,0
+  PRODUCTVERSION 1,4,2,0
+  FILEFLAGSMASK 0
+  FILEFLAGS 0
+  FILEOS VOS__WINDOWS32
+  FILETYPE VFT_DLL
+  FILESUBTYPE VFT2_UNKNOWN
+  BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+      BLOCK "040904B0"
+      BEGIN
+	VALUE "CompanyName", "Unirel srl"
+	VALUE "FileDescription", "ULib"
+	VALUE "FileVersion", "@ULIB_VERSION@.0"
+	VALUE "InternalName", "libulib-1.4-2"
+	VALUE "LegalCopyright", "Copyright © 2014 Unirel"
+	VALUE "OriginalFilename", "libulib-1.4-2.dll"
+	VALUE "ProductName", "Ulib"
+	VALUE "ProductVersion", "1.4.2"
+      END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+      VALUE "Translation", 0x409, 1200
+    END
+  END

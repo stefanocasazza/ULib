@@ -1,0 +1,83 @@
+Name: doc_parse
+Summary: general parse document for manage tbote
+Version: @VERSION@
+Release: 1
+Epoch: 0
+License: GPL
+Group: Applications
+URL: http://www.unirel.com
+Source0: %{name}-%{version}.tar.gz
+Source1: doc_parse.start
+BuildRoot: %{_tmppath}/%{name}-%{version}
+Provides: doc_parse
+Packager: Stefano Casazza <stefano.casazza@unirel.com>
+Requires: ULib
+@RPM_REQUIRE@
+
+%description
+This package provides the program for manage tbote document
+
+%prep
+%setup
+
+%build
+%configure @RPM_CONFIGURE@
+cd src/ulib
+make LDFLAGS="-s"
+cd ../../examples/doc_parse
+make LDFLAGS="-s"
+cd ../..
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/srv/doc_parse/bin
+mkdir -p %{buildroot}/srv/doc_parse/etc
+mkdir -p %{buildroot}/srv/doc_parse/var/doc_parse/cgi-bin
+mkdir -p %{buildroot}/srv/doc_parse/var/doc_parse/storage
+mkdir -p %{buildroot}/srv/doc_parse/var/doc_parse/tmp
+mkdir -p %{buildroot}/srv/doc_parse/var/icons
+mkdir -p $RPM_BUILD_ROOT/%{_initrddir}
+mkdir -p $RPM_BUILD_ROOT/etc/sysconfig
+SRC=tests/examples
+DST=%{buildroot}/srv/doc_parse
+autoconf/install-sh -c -m 755 examples/doc_parse/doc_parse.start	$RPM_BUILD_ROOT/%{_initrddir}/doc_parse
+autoconf/install-sh -c -m 755 examples/doc_parse/.libs/doc_parse	$DST/bin/doc_parse
+autoconf/install-sh -c -m 644 $SRC/userver.cfg							$DST/etc/userver.cfg.dist
+autoconf/install-sh -c -m 644 $SRC/web_doc_parse.cfg					$DST/etc/web_doc_parse.cfg.dist
+autoconf/install-sh -c -m 644 $SRC/doc_parse/cgi-bin/.env			$DST/var/doc_parse/cgi-bin
+autoconf/install-sh -c -m 644 $SRC/doc_parse/cgi-bin/doc_parse.sh	$DST/var/doc_parse/cgi-bin
+autoconf/install-sh -c -m 644 $SRC/icons/open.gif						$DST/var/icons
+autoconf/install-sh -c -m 644 $SRC/icons/closed.gif					$DST/var/icons
+autoconf/install-sh -c -m 644 $SRC/icons/doc.gif						$DST/var/icons
+autoconf/install-sh -c -m 644 $SRC/icons/img.png						$DST/var/icons
+autoconf/install-sh -c -m 644 $SRC/icons/xml.gif						$DST/var/icons
+autoconf/install-sh -c -m 644 $SRC/icons/x.gif							$DST/var/icons
+autoconf/install-sh -c -m 644 $SRC/icons/pdf.gif						$DST/var/icons
+autoconf/install-sh -c -m 644 $SRC/icons/timestamp.gif				$DST/var/icons
+
+cat > $RPM_BUILD_ROOT/etc/sysconfig/doc_parse << EOF
+#ld_library_path=/usr/lib64
+exe=/srv/doc_parse/bin/doc_parse
+confdir=/srv/doc_parse/etc
+EOF
+
+%post
+/sbin/chkconfig --add doc_parse
+
+%preun
+%{_initrddir}/doc_parse stop
+/sbin/chkconfig --del doc_parse
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root,-)
+%{_initrddir}/doc_parse
+/etc/sysconfig/doc_parse
+/srv/doc_parse/bin/doc_parse
+/srv/doc_parse/etc/*.cfg.dist
+/srv/doc_parse/var/doc_parse/cgi-bin/*.sh
+/srv/doc_parse/var/doc_parse/cgi-bin/.env
+/srv/doc_parse/var/icons/*.gif
+/srv/doc_parse/var/icons/*.png

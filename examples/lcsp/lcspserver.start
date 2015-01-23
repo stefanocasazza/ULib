@@ -1,0 +1,76 @@
+#! /bin/sh
+#
+### BEGIN INIT INFO
+# Provides: lcspserver
+# Required-Start:
+# Required-Stop:
+# X-UnitedLinux-Should-Start:
+# X-UnitedLinux-Should-Stop:
+# Default-Start: 3 5
+# Default-Stop:
+# Description: Start Marvelous LCSP server
+### END INIT INFO
+
+# Check for existence of needed config file and read it
+lcspserver_CONFIG=/etc/sysconfig/lcspserver
+test -r $lcspserver_CONFIG || { echo "$lcspserver_CONFIG not existing";
+        if [ "$1" = "stop" ]; then exit 0;
+        else exit 6; fi; }
+
+# Read config
+. $lcspserver_CONFIG
+
+#            exe=/srv/LCSP/bin/lcspserver
+#        confdir=/srv/LCSP/etc
+#ld_library_path=/srv/LCSP/lib
+
+test -x $exe || exit 0
+test -d $confdir || exit 0
+
+conffiles=$confdir/*server*.conf
+
+. /etc/rc.status
+rc_reset
+case "$1" in
+    start)
+        for conffile in $conffiles ; do
+                echo -n "Starting Marvelous LCSP server ($conffile) "
+                                                   $exe -c $conffile &> /dev/null &
+#               LD_LIBRARY_PATH=$ld_library_path   $exe -c $conffile &> /dev/null &
+                sleep 1 ; kill -0 $! &> /dev/null
+                rc_status -v
+        done
+        ;;
+    stop)
+        for conffile in $conffiles ; do
+                echo -n "Stopping Marvelous LCSP server ($conffile) "
+                pkill -f   "$exe -c $conffile" &> /dev/null
+                rc_status -v
+        done
+        ;;
+    status)
+        for conffile in $conffiles ; do
+                echo -n "Checking for Marvelous LCSP server ($conffile) "
+                pgrep -f   "$exe -c $conffile" &> /dev/null
+                rc_status -v
+        done
+        ;;
+    kill)
+        echo -n "Killing Marvelous LCSP server"
+        pkill -f   "$exe"
+        rc_status -v
+        ;;
+    try-restart)
+        $0 stop && $0 start
+        rc_status
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        rc_status
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status|try-restart|restart}"
+        exit 1
+esac
+rc_exit

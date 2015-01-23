@@ -1,0 +1,686 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_InvalidMessageID</NAME>
+  <QUERY>
+    <START-DATE>09/10/2009</START-DATE>
+    <END-DATE>11/10/2009</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_TipoRecordScorretto</NAME>
+  <QUERY>
+    <START-DATE>01/11/2008</START-DATE>
+    <END-DATE>10/11/2008</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>TRN01N1LU2R6L828WWYDP.ISTI-PEC@mx.pec-test.isti.cnr.it</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Nov  6 11:07:41 2008</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user4@test.cert.cnipa.it</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>istipec@isti.cnr.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>testcnipa1@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>istipec@gmail.com</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>testcnipa2@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>testcnipa1@postacertificata.notariato.it</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>TRN01N1LU2R6L828WWYDP.ISTI-PEC@mx.pec-test.isti.cnr.it</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Nov  6 11:07:42 2008</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user4@test.cert.cnipa.it</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>istipec@isti.cnr.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>testcnipa1@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>istipec@gmail.com</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>testcnipa2@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>testcnipa2@postacertificata.notariato.it</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>TRN01N1LU2Y8RF68WWYDT.ISTI-PEC@mx.pec-test.isti.cnr.it</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Nov  6 11:07:52 2008</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user4@test.cert.cnipa.it</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>istipec@isti.cnr.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>testcnipa1@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>istipec@gmail.com</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>testcnipa2@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>testcnipa1@postacertificata.notariato.it</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>TRN01N1LU2Y8RF68WWYDT.ISTI-PEC@mx.pec-test.isti.cnr.it</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Nov  6 11:07:53 2008</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user4@test.cert.cnipa.it</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>istipec@isti.cnr.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>testcnipa1@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>istipec@gmail.com</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>testcnipa2@postacertificata.notariato.it</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>testcnipa2@postacertificata.notariato.it</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20081106115112.294296@postacertificata.notariato.it</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Nov  6 11:51:13 2008</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>testcnipa1@postacertificata.notariato.it</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user4@test.cert.cnipa.it</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_AllVirusMultiDomainTest</NAME>
+  <QUERY>
+    <START-DATE>01/12/2006</START-DATE>
+    <END-DATE>02/06/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229164514.672075@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 16:45:14 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20070302155030.166724@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Mar  2 15:50:31 2007</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_AllVirusMultiIIDTest</NAME>
+  <QUERY>
+    <START-DATE>01/12/2006</START-DATE>
+    <END-DATE>02/06/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter1</INSTALLATION-ID>
+    <INSTALLATION-ID>PEC_Milter2</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229164514.672075@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 16:45:14 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter1</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20070302155030.166724@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Mar  2 15:50:31 2007</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter1</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter1</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter1</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter1</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter1</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter1</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter1</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229164514.672075@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 16:45:14 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter2</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20070302155030.166724@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Mar  2 15:50:31 2007</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter2</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter2</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter2</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter2</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter2</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter2</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter2</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_AllVirusTest</NAME>
+  <QUERY>
+    <START-DATE>01/12/2006</START-DATE>
+    <END-DATE>02/06/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229164514.672075@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 16:45:14 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20070302155030.166724@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Mar  2 15:50:31 2007</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user3@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+          <NumMsgVirusInOut-Rejected>user3@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_EmptyTest</NAME>
+  <QUERY>
+    <START-DATE>01/12/2006</START-DATE>
+    <END-DATE>02/06/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_InvalidIIDTest</NAME>
+  <QUERY>
+    <START-DATE>01/12/2006</START-DATE>
+    <END-DATE>02/06/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter_Unexistent</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_MultiRicezioneTest</NAME>
+  <QUERY>
+    <START-DATE>01/12/2006</START-DATE>
+    <END-DATE>02/06/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user3@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+          <NumMsgVirusInOut-Rejected>user3@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061228152412.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 28 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user3@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user5@pec.external.domain</NumMsgVirusInOut-Rejected>
+          <NumMsgVirusInOut-Rejected>user6@pec.external.domain</NumMsgVirusInOut-Rejected>
+          <NumMsgVirusInOut-Rejected>user7@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_NonAccettazioneVirusTest</NAME>
+  <QUERY>
+    <START-DATE>01/12/2006</START-DATE>
+    <END-DATE>02/06/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229164514.672075@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 16:45:14 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20070302155030.166724@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>Mar  2 15:50:31 2007</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_RilevazioneVirusInputTest</NAME>
+  <QUERY>
+    <START-DATE>01/12/2006</START-DATE>
+    <END-DATE>02/06/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Input>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.external.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.external.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.internal.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Input>
+      </NumMsgVirusInOut-Entry>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>Report_RilevazioneVirusOutputTest</NAME>
+  <QUERY>
+    <START-DATE>01/12/2006</START-DATE>
+    <END-DATE>02/06/2007</END-DATE>
+    <INSTALLATION-ID>PEC_Milter</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgVirusInOut>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:24:16 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152751.815863@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:32 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+      <NumMsgVirusInOut-Entry>
+        <NumMsgVirusInOut-Output>
+          <NumMsgVirusInOut-Identifier>20061229152411.373178@pec.internal.domain</NumMsgVirusInOut-Identifier>
+          <NumMsgVirusInOut-Date>dic 29 15:38:36 2006</NumMsgVirusInOut-Date>
+          <NumMsgVirusInOut-InstallationId>PEC_Milter</NumMsgVirusInOut-InstallationId>
+          <NumMsgVirusInOut-Sender>user1@pec.internal.domain</NumMsgVirusInOut-Sender>
+          <NumMsgVirusInOut-Recipients>user2@pec.internal.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Recipients>user2@pec.external.domain</NumMsgVirusInOut-Recipients>
+          <NumMsgVirusInOut-Rejected>user2@pec.external.domain</NumMsgVirusInOut-Rejected>
+        </NumMsgVirusInOut-Output>
+      </NumMsgVirusInOut-Entry>
+    </NumMsgVirusInOut>
+  </RESULTS>
+</REPORT>

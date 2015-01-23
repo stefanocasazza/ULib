@@ -1,0 +1,33 @@
+#!/bin/sh
+
+. ../.function
+
+## options.test -- Test options feature
+
+start_msg options
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+# ----------------------------------------------------------------------------
+# sample2.ggo
+# ----------------------------------------------------------------------------
+# purpose "this is just a test program for gengetopt"
+# option  "str-opt"         s "A string option"      string     no
+# option  "int-opt"         i "A int option"         int        yes
+# option  "short-opt"       S "A short option"       short      no
+# option  "long-opt"        l "A long option"        long       yes
+# option  "float-opt"       f "A float option"       float      no
+# option  "double-opt"      d "A double option"      double     no
+# option  "long-double-opt" L "A long double option" longdouble no
+# option  "long-long-opt"   y "A long long option"   longlong   no
+# option  "func-opt"        F "A function option"    no 
+# option  "flag-opt"        x "A flag option"        flag       off
+# ----------------------------------------------------------------------------
+
+start_prg options -h
+
+# Test against expected output
+test_output_wc w options

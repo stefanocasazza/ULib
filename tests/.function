@@ -1,0 +1,485 @@
+#!/bin/sh
+
+# trap "exit 0" 1 2 6 15
+mkdir -p out err tmp
+
+ ECHO=printf
+#ECHO="/bin/echo -e -n"
+test -f ../.colors && . ../.colors
+
+#UTRACE="0 10M 0"
+UTRACE_SIGNAL="0 30M 0"
+#UOBJDUMP="0 5M 500"
+#USIMERR="error.sim"
+#EXEC_ON_EXIT="/utility/stack_dump.sh"
+#WINELOADER=wine
+#MALLOC_CHECK_=3
+#VALGRIND=valgrind
+TZ='CET-1CEST,M3.5.0/2,M10.5.0/3'
+ORM_DRIVER="sqlite"
+ORM_OPTION="dbname=../db/hello_world"
+MUDFLAP_OPTIONS="-ignore-reads -backtrace=8"
+UMEMPOOL=802,1025,-30,1512,2052,-12,-10,-26,102:67108864,16384
+
+# core dump
+# ulimit -c unlimited
+
+# context
+
+if [ "$TERM" = "cygwin" ]; then
+	NC=/usr/bin/nc.exe
+	SYNC=/usr/bin/sync.exe
+	CURL=/usr/bin/curl.exe
+	CHOWN=/usr/bin/chown.exe
+	TRUSS="/usr/bin/strace.exe -t -f"
+	SLEEP="sleep 3"
+elif [ "$TERM" = "msys" ]; then
+	NC=/c/cygwin/bin/nc.exe
+	SYNC=/c/cygwin/bin/sync.exe
+	CURL=/c/cygwin/bin/curl.exe
+	CHOWN=/c/cygwin/bin/chown.exe
+	TRUSS="/c/cygwin/bin/strace.exe -t -f"
+	SLEEP="sleep 3"
+	SUFFIX=".exe"
+else
+	SYNC=sync
+	CURL=curl
+	CHOWN=chown
+	TRUSS="strace -t -f -s 100"
+	SLEEP="sleep 1"
+	OPENSSL=openssl
+fi
+
+LTRUSS="ltrace -f -S --demangle -n 3"
+#STRACE="$LTRUSS"
+
+if [ -z "$OPENSSL" ]; then
+	if [ -x /mingw/bin/openssl.exe ]; then
+		OPENSSL=/mingw/bin/openssl.exe
+	else
+		OPENSSL=/c/cygwin/bin/openssl.exe
+	fi
+fi
+
+if [ -z "$WINELOADER" ]; then
+	WINE_OPENSSL="$OPENSSL"
+else
+	SUFFIX=".exe"
+	WINE_OPENSSL="wine /usr/i686-pc-mingw32/sys-root/mingw/bin/openssl.exe"
+fi
+
+export UTRACE UTRACE_SIGNAL UOBJDUMP USIMERR EXEC_ON_EXIT WINELOADER PID TZ \
+		 RESULT MALLOC_CHECK_ VALGRIND MUDFLAP_OPTIONS ECHO UMEMPOOL ORM_DRIVER ORM_OPTION \
+		 NC NC_ARG_LISTEN_PORT NCAT SYNC CURL OPENSSL SLEEP SUFFIX CHOWN TRUSS LTRUSS STRACE WINE_OPENSSL
+
+# function : CApath_rehash
+CApath_rehash() {
+
+	cd CA/CApath
+#	if [ "$TERM" = "msys" ]; then
+#		mv cacert.pem 						02d518e4.0  >/dev/null 2>/dev/null
+#		mv server_cert.pem 				eb5837e7.0  >/dev/null 2>/dev/null
+#		mv user1_cert.pem 				dffce256.0  >/dev/null 2>/dev/null
+#		mv user2_cert.pem 				587a7086.0  >/dev/null 2>/dev/null
+#		mv crl_with_user1_revoked.pem 02d518e4.r0 >/dev/null 2>/dev/null
+#		mv ca_sub_crl.pem 				2caa674a.r0 >/dev/null 2>/dev/null
+#		mv luigi_cert.pem 				298b9ba0.0  >/dev/null 2>/dev/null
+#		mv ca_root_crl.pem 				1bd9bd82.r0 >/dev/null 2>/dev/null
+#		mv ca_sub_cert.pem 				2caa674a.0  >/dev/null 2>/dev/null
+#		mv matteo_cert.pem 				9003168b.0  >/dev/null 2>/dev/null
+#		mv ca_root_cert.pem 				1bd9bd82.0  >/dev/null 2>/dev/null
+#		mv leonardo_cert.pem 			43962c66.0  >/dev/null 2>/dev/null
+#		mv ca_selfsigned_crl.pem 		6dc6fd02.r0 >/dev/null 2>/dev/null
+#		mv ca_selfsigned_cert.pem 		6dc6fd02.0  >/dev/null 2>/dev/null
+#	else
+		c_rehash . >/dev/null 2>/dev/null
+#	fi
+	cd ../..
+}
+
+# function : set_ADDRESS
+set_ADDRESS() {
+
+	ADDRESS_WITH_NL=`ifconfig eth0 | grep inet | awk -F ' ' '{print $2}' | head -1`
+
+	export ADDRESS=`echo -n $ADDRESS_WITH_NL`
+}
+
+# function : prepare_usp
+prepare_usp() {
+
+	if [ "$TERM" != "cygwin" ]; then
+		if [ ! -d ../db ]; then
+			mkdir -p ../db
+		fi
+		rm -f ../db/session.ssl.jnl
+		( cd ../../src/ulib/net/server/plugin/usp/; ./usp2so.sh >/tmp/usp2so.sh.out 2>&1 || exit 1; \
+		  test -d ../.libs && cd ../.libs; \
+		  ln -sf ../v8/.libs/server_plugin_v8.so; \
+		  ln -sf ../php/.libs/server_plugin_php.so; \
+		  ln -sf ../ruby/.libs/server_plugin_ruby.so; \
+		  ln -sf ../mod_shib/.libs/server_plugin_shib.so; \
+		  ln -sf ../mod_geoip/.libs/server_plugin_geoip.so; \
+		  ln -sf ../page_speed/.libs/server_plugin_pagespeed.so )
+	fi
+}
+
+# function : compile_usp
+compile_usp() {
+
+	prepare_usp
+
+	if [ "$TERM" != "cygwin" ]; then
+		( cd benchmark/docroot; mkdir -p servlet; cd servlet; rm -f *.so *.usp; \
+		  for i in `ls ../../../../../src/ulib/net/server/plugin/usp/.libs/*.so`; do ln -sf $i; done; \
+		  for i in `ls ../../../../../src/ulib/net/server/plugin/usp/*.usp`;      do ln -sf $i; done )
+	fi
+}
+
+# function : spawn_fcgi
+spawn_fcgi() {
+
+	PRG=`basename $1`
+	UNIXSOCK=tmp/fcgi.socket
+
+   PIDS=`ps x | grep $PRG | grep -v grep | awk '{ print $1 }'`
+
+   if [ -z "$PIDS" ]; then
+      rm -f $UNIXSOCK
+      spawn-fcgi -s $UNIXSOCK -S -f $1 -C 1 -P /var/run/spawn-fcgi.pid
+      chmod 777 $UNIXSOCK
+   fi
+}
+
+# function : creat_link
+creat_link() {
+
+   if [ ! -L $2 ]; then
+      ln -sf $1 $2 # ln [OPTION]... TARGET LINK_NAME
+   fi
+}
+
+# function : start_msg
+start_msg() {
+
+	$NORMAL
+	$ECHO "=== Running test "
+	$WARNING
+	$ECHO $1.test
+	$NORMAL
+	echo
+
+	if [ -n "$2" ]; then
+		PARAM="$2"
+	else
+		PARAM="$1"
+	fi
+
+	rm -f trace.*${PARAM}*.[0-9]* \
+		   object.*${PARAM}*.[0-9]* \
+		   stack.*${PARAM}*.[0-9]* \
+		   mempool.*${PARAM}*.[0-9]* \
+		   dmalloc.${PARAM}.[0-9]* \
+			${PARAM}.trs \
+			out/${PARAM}.out* \
+			err/${PARAM}.err*
+}
+
+export DIR_CMD
+export DIR_TOP
+
+# function : test_prg
+test_prg() {
+
+	if [ -z "$DIR_TOP" ]; then
+		DIR_TOP=../..
+	fi
+
+	if [ -z "$DIR_CMD" ]; then
+		DIR_CMD=$DIR_TOP/examples/$1
+	fi
+
+	if [ -x "./test_$1$SUFFIX" ]; then
+		# tests
+
+		PRG=test_$1
+		CMD="./$PRG$SUFFIX"
+
+		if [ -n "$STRACE" ]; then
+			CMD=".libs/$CMD"
+			export LD_LIBRARY_PATH=$DIR_TOP/src/ulib/.libs
+		fi
+
+	elif [ -x "$DIR_CMD/$1$SUFFIX" ]; then
+		# examples
+
+		PRG=$1
+		CMD="$DIR_CMD/$PRG$SUFFIX"
+
+		if [ -n "$STRACE" ]; then
+			CMD="$DIR_CMD/.libs/$PRG$SUFFIX"
+			export LD_LIBRARY_PATH=$DIR_TOP/src/ulib/.libs
+		fi
+
+	elif [ -x "../src/$1$SUFFIX" ]; then
+		# application
+
+		PRG=$1
+		CMD="../src/$PRG$SUFFIX"
+
+	else
+		# user
+
+		PRG=$1
+		CMD="$DIR_CMD/$PRG$SUFFIX"
+	fi
+
+	shift
+	CMD="$CMD $*"
+
+	export PRG CMD
+}
+
+# function : start_prg
+start_prg() {
+
+	test_prg "$@"
+
+	eval $VALGRIND $WINELOADER $STRACE $CMD >>out/$1.out 2>>err/$1.err
+
+	RESULT=$?
+}
+
+# function : start_prg_background
+start_prg_background() {
+
+	test_prg "$@"
+
+	PID=`( eval "$VALGRIND $WINELOADER $STRACE $CMD >>out/$1.out 2>>err/$1.err &"; echo $! )`
+
+	$SLEEP
+}
+
+# function : start_cmd
+start_cmd() {
+
+	test_prg "$@"
+
+	( eval "$VALGRIND $CMD >>out/$1.out 2>>err/$1.err" ) 2>/dev/null
+
+	RESULT=$?
+}
+
+# function : start_cmd_background
+start_cmd_background() {
+
+	PID=`( eval "$VALGRIND $WINELOADER $STRACE $* &"; echo $! )`
+
+	$SLEEP
+}
+
+# function : kill_cmd
+kill_cmd() {
+
+	# -------------------------------------------------------------------------------------------------
+	# An AND list has the form: command1 && command2
+	#
+	# command2 is executed if, and only if, command1 returns an exit status of zero.
+	# -------------------------------------------------------------------------------------------------
+	# An OR  list has the form: command1 || command2
+	#
+	# command2 is executed if and only if command1 returns a non-zero exit status.
+	# -------------------------------------------------------------------------------------------------
+	# The return status of AND and OR lists is the exit status of the last command executed in the list
+
+	if [ -n "$PID" ]; then
+		kill -0 $PID 2>/dev/null && kill -s $1 $PID 2>/dev/null && return 0
+	fi
+
+	return 1
+}
+
+# function : check_for_netcat
+check_for_netcat() {
+
+	NC_ARG_LISTEN_PORT="-p"
+
+	type nc >/dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		NC_TEST=`nc -h 2>&1 | head -n 1 | cut -d'(' -f1`
+
+		if [ "$NC_TEST" = "[v1.10]" ]	|| \
+			[ "$NC_TEST" = "OpenBSD netcat " ]; then
+			NC=nc
+		fi
+		if [ "$NC_TEST" = "Ncat 6.45 " ] || \
+			[ "$NC_TEST" = "usage: nc [-46DdhklnrStUuvzC] [-i interval] [-p source_port]" ]; then
+			NC=nc
+			NC_ARG_LISTEN_PORT=""
+		fi
+	else
+		type netcat >/dev/null 2>&1
+
+		if [ $? -eq 0 ]; then
+			NC_TEST=`netcat -h 2>&1 | head -n 1`
+
+			if [ "$NC_TEST" = "[v1.10]" ]; then
+				NC=netcat
+			elif [ "`echo $NC_TEST | cut -d' ' -f1`" = "GNU" ]; then
+				NC=netcat
+			fi
+		fi
+	fi
+
+	if [ -z "$NC" ]; then
+		echo "I don't find a valid netcat program, going down..."
+		exit 1
+	fi
+
+	type ncat >/dev/null 2>&1
+
+	if [ $? -eq 0 ]; then
+		NCAT=ncat
+	else
+		NCAT=$NC
+	fi
+}
+
+# function : send_req ncat|netcat www.sito1.com 8080 inp/http/all4.inp web_server 2
+send_req() {
+
+	if [ "$1" = "ncat" ]; then
+#$TRUSS ncat -4 $2 $3 <$4 >>/tmp/ncat.trace 2>&1
+  	     ncat -4 $2 $3 <$4 >>out/${5}.out 2>>err/${5}.err
+		  return $? 
+	fi
+
+	$NC -w $6 $2 $3 <$4 >>out/${5}.out 2>>err/${5}.err &
+
+	REQ=`echo $!`
+
+	sleep $6
+
+	kill -s TERM $REQ 2>/dev/null
+
+	wait	  $REQ 2>/dev/null
+	kill -0 $REQ 2>/dev/null || return 0
+
+	return 1
+}
+
+# function : wait_prg
+wait_prg() {
+
+	wait	  $PID 2>/dev/null
+	kill -0 $PID 2>/dev/null || return 0
+
+	return 1
+}
+
+# function : kill_prg
+kill_prg() {
+
+	if [ -n "$WINELOADER" ]; then
+		pkill $1 2>/dev/null		&& return 0
+	else
+		kill_cmd $2 && wait_prg && return 0
+	fi
+
+	return 1
+}
+
+# function : post_processing
+post_processing() {
+
+	if [ -z "$RESULT" ]; then
+		RESULT=$?
+	fi
+
+	if [ -n "$2" ]; then
+		FILE_OUT="$2"
+	else
+		FILE_OUT="out/$1.out"
+	fi
+
+#	mv $FILE_OUT $FILE_OUT.tmp
+
+#	if [ -z "$WINELOADER" ]
+#	then
+#		grep -v "^$PRG: DEBUG MODE\|^$PRG: SIMERR\|^$PRG: OBJDUMP\|^$PRG: TRACE" $FILE_OUT.tmp 			  >$FILE_OUT
+#	else
+#		grep -v "^$PRG: DEBUG MODE\|^$PRG: SIMERR\|^$PRG: OBJDUMP\|^$PRG: TRACE" $FILE_OUT.tmp | dos2unix >$FILE_OUT
+#	fi
+
+	export FILE_OUT
+
+	if [ -n "$3" ]; then
+		FILE_OK="$3"
+	else
+		FILE_OK="ok/$1.ok"
+	fi
+
+	if [ ! -f $FILE_OK ]; then
+		cp $FILE_OUT $FILE_OK 
+	fi
+
+	export FILE_OK
+
+	$SYNC # nfs delay...
+}
+
+# function : test_output
+test_output() {
+
+	if [ "$RESULT" = "0" ] && [ "$1" = "$2" ]; then
+		$SUCCESS
+		kill_cmd TERM
+ 		exit 0
+	else
+		echo "RESULT = $RESULT"
+		if [ "$RESULT" = "0" ]; then
+			echo "N1     = $1"
+			echo "N2     = $2"
+		fi
+		$FAILURE
+		kill_cmd TERM
+		exit 1
+	fi
+}
+
+# function : test_output_diff
+test_output_diff() {
+
+	post_processing $1 $2 $3
+
+	N1=`diff -bB $FILE_OUT $FILE_OK`
+
+	test_output "$N1" ""
+}
+
+# function : test_output_wc
+test_output_wc() {
+
+	post_processing $2 $3 $4
+
+	N1=`cat $FILE_OUT | wc -$1 2>/dev/null`
+	N2=`cat $FILE_OK  | wc -$1 2>/dev/null`
+
+	test_output "$N1" "$N2"
+}
+
+# function : TIMEOUT
+TIMEOUT() {
+
+   type timeout >/dev/null 2>&1
+
+   if [ $? -eq 0 ]; then
+      timeout "$@"
+   else
+      shift
+      eval "$@"
+   fi
+}
+
+# grep -v 'Not a GIF file' err/* | grep --colour -i -E -e 'ERROR|ABORT|ASSERT|SIGSEGV|OVERLAP|genericRead|handler|epoll_ctl'

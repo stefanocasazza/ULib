@@ -1,0 +1,6 @@
+150.217.6.125   # www.unifi.it
+95.110.142.234  # firenze_parcheggi
+159.213.0.0/16  # telematica_regione_toscana
+195.110.124.133 # www.055055.it
+#94.86.41.16    # www.inps.it
+

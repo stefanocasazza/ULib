@@ -1,0 +1,8 @@
+inp/entity/pkcs7.eml
+inp/entity/multipart.eml
+inp/entity/multipart_dos.eml
+inp/entity/simple_multipart-mixed.eml
+inp/entity/simple_multipart-digest.eml
+inp/entity/parseable_multipart_error.eml
+inp/entity/simple_multipart-alternative.eml
+inp/entity/email_with_verified_and_signature-not-matching.eml

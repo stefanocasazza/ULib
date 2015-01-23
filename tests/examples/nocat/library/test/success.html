@@ -1,0 +1,9 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
+<HTML>
+<HEAD>
+	<TITLE>Success</TITLE>
+</HEAD>
+<BODY>
+Success
+</BODY>
+</HTML>

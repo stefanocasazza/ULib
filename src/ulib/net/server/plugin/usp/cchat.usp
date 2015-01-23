@@ -1,0 +1,37 @@
+<!--#header
+Pragma: no-cache
+Expires: Thu, 19 Nov 1981 08:52:00 GMT
+Cache-Control: no-store, no-cache, must-revalidate, post-check=0, pre-check=0
+-->
+<!--#storage
+UVector<UString> chat_message;
+-->
+<!--#args
+person;
+message;
+-->
+<table>
+<!--#code
+if (message)
+   {
+   message = UStringExt::substitute(message, U_CONSTANT_TO_PARAM(":("), U_CONSTANT_TO_PARAM("<img src=\"/images/sad.png\">"));
+   message = UStringExt::substitute(message, U_CONSTANT_TO_PARAM(";)"), U_CONSTANT_TO_PARAM("<img src=\"/images/wink.png\">"));
+   message = UStringExt::substitute(message, U_CONSTANT_TO_PARAM(":)"), U_CONSTANT_TO_PARAM("<img src=\"/images/smile.png\">"));
+
+   chat_message.push_back(person);
+   chat_message.push_back(message);
+
+   if (chat_message.size() > 20) chat_message.erase(0, 2);
+   }
+
+for (uint32_t i = 0, n = chat_message.size(); i < n; i += 2)
+   {
+   person  = chat_message[i];
+   message = chat_message[i+1];
+
+   USP_PRINTF("<tr><td class=\"person\">%.*s</td>"
+                  "<td class=\"message\">%.*s</td>"
+              "</tr>", U_STRING_TO_TRACE(person), U_STRING_TO_TRACE(message));
+   }
+-->
+</table>

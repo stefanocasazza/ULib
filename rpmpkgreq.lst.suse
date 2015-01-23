@@ -1,0 +1,12 @@
+Requires: zlib
+Requires: expat
+Requires: file
+Requires: pcre
+Requires: openssl
+Requires: libstdc++
+Requires: e2fsprogs
+BuildRequires: expat
+BuildRequires: zlib-devel
+BuildRequires: pcre-devel
+BuildRequires: openssl-devel
+BuildRequires: libstdc++-devel

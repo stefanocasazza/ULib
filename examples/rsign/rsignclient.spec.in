@@ -1,0 +1,50 @@
+Name: rsignclient
+Summary: general client SOAP for manage Remote Sign
+Version: @VERSION@
+Release: 1
+Epoch: 0
+License: GPL
+Group: Applications
+URL: http://www.unirel.com
+Source0: %{name}-%{version}.tar.gz
+BuildRoot: %{_tmppath}/%{name}-%{version}
+Provides: rsignclient
+Packager: Stefano Casazza <stefano.casazza@unirel.com>
+Requires: ULib
+@RPM_REQUIRE@
+
+%description
+This package provides the program client for manage one general server SOAP for manage Remote Sign
+
+%prep
+%setup
+
+%build
+%configure @RPM_CONFIGURE@
+cd src/ulib
+make LDFLAGS="-s"
+cd ../../contrib/RSIGN
+make LDFLAGS="-s"
+cd ../../examples/rsign
+make LDFLAGS="-s"
+cd ../..
+
+%install
+rm -rf %{buildroot}
+mkdir -p %{buildroot}/srv/RSIGN/bin
+mkdir -p %{buildroot}/srv/RSIGN/lib
+mkdir -p %{buildroot}/srv/RSIGN/etc
+SRC=tests/examples
+DST=%{buildroot}/srv/RSIGN
+autoconf/install-sh -c -m 755 examples/rsign/.libs/rsignclient	$DST/bin
+autoconf/install-sh -c -m 644 contrib/RSIGN/.libs/RSIGN.so		$DST/lib
+autoconf/install-sh -c -m 644 $SRC/rsignclient.cfg					$DST/etc/rsignclient.cfg.dist
+
+%clean
+rm -rf %{buildroot}
+
+%files
+%defattr(-,root,root,-)
+/srv/RSIGN/lib/RSIGN.so
+/srv/RSIGN/bin/rsignclient
+/srv/RSIGN/etc/rsignclient.cfg.dist

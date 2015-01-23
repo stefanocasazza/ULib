@@ -1,0 +1,4 @@
+  <div id="estresult" class="estresult">
+    <div class="resinfo">
+      Results of <strong>%u</strong> - <strong>%u</strong> of about <strong>%u</strong> for <strong>%s</strong> (%s sec.)
+    </div>

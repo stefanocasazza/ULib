@@ -1,0 +1,75 @@
+#! /bin/sh
+#
+### BEGIN INIT INFO
+# Provides: doc_parse
+# Required-Start: $network $remote_fs
+# Required-Stop: $network
+# X-UnitedLinux-Should-Start: portmap autofs
+# Default-Start: 3 5
+# Default-Stop:
+# Description: Start Marvelous doc_parse server
+### END INIT INFO
+
+# Check for existence of needed config file and read it
+doc_parse_CONFIG=/etc/sysconfig/doc_parse
+test -r $doc_parse_CONFIG || { echo "$doc_parse_CONFIG not existing";
+        if [ "$1" = "stop" ]; then exit 0;
+        else exit 6; fi; }
+
+# Read config
+. $doc_parse_CONFIG
+
+#            exe=/srv/doc_parse/bin/doc_parse
+#        confdir=/srv/doc_parse/etc
+#ld_library_path=/srv/doc_parse/lib
+
+test -x $exe || exit 0
+test -d $confdir || exit 0
+
+conffiles=$confdir/*.conf
+
+. /etc/rc.status
+rc_reset
+case "$1" in
+    start)
+        for conffile in $conffiles ; do
+                echo -n "Starting Marvelous doc_parse server ($conffile) "
+                                                   $exe -c $conffile &> /dev/null &
+#               LD_LIBRARY_PATH=$ld_library_path   $exe -c $conffile &> /dev/null &
+                sleep 1 ; kill -0 $! &> /dev/null
+                rc_status -v
+        done
+        ;;
+    stop)
+        for conffile in $conffiles ; do
+                echo -n "Stopping Marvelous doc_parse server ($conffile) "
+                pkill -f   "$exe -c $conffile" &> /dev/null
+                rc_status -v
+        done
+        ;;
+    status)
+        for conffile in $conffiles ; do
+                echo -n "Checking for Marvelous doc_parse server ($conffile) "
+                pgrep -f   "$exe -c $conffile" &> /dev/null
+                rc_status -v
+        done
+        ;;
+    kill)
+        echo -n "Killing Marvelous doc_parse server"
+        pkill -f   "$exe"
+        rc_status -v
+        ;;
+    try-restart)
+        $0 stop && $0 start
+        rc_status
+        ;;
+    restart)
+        $0 stop
+        $0 start
+        rc_status
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|status|try-restart|restart}"
+        exit 1
+esac
+rc_exit

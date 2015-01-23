@@ -1,0 +1,18 @@
+.TH cdbstats 1
+.SH NAME
+cdbstats \- summarize the contents of a constant database
+.SH SYNOPSIS
+.B cdbstats
+.SH DESCRIPTION
+.B cdbstats
+reads a (seekable) constant database from its standard input
+and prints a few statistics:
+.B slots
+is the number of hash positions;
+.B records
+is the number of records in the database;
+.B d0
+is the number of records at distance 0 from their hash.
+.SH "SEE ALSO"
+cdbdump(1),
+cdbmake(1)

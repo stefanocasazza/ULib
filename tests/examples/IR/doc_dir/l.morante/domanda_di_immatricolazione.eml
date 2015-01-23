@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="http://www.test.eraclito.net/crm_dtd/operation.xsl"?>
+<!DOCTYPE operation SYSTEM "http://www.test.eraclito.net/crm_dtd/user-folder.dtd">
+
+<operation>
+<description>Domanda di immatricolazione</description>
+<uid>l.morante</uid>
+<id>domanda_di_immatricolazione</id>
+<date>25/10/2006 14:44:59</date>
+<holder>Sandra Ceccarelli</holder>
+<author>workflow</author>
+<course-id>01</course-id>
+</operation>

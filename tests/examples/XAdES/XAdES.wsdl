@@ -1,0 +1,260 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="XAdES"
+ targetNamespace="xades"
+ xmlns:tns="xades"
+ xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+ xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+ xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+ xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+ xmlns:ns="xades"
+ xmlns:SOAP="http://schemas.xmlsoap.org/wsdl/soap12/"
+ xmlns:MIME="http://schemas.xmlsoap.org/wsdl/mime/"
+ xmlns:DIME="http://schemas.xmlsoap.org/ws/2002/04/dime/wsdl/"
+ xmlns:WSDL="http://schemas.xmlsoap.org/wsdl/"
+ xmlns="http://schemas.xmlsoap.org/wsdl/">
+
+<types>
+
+ <schema targetNamespace="xades"
+  xmlns:SOAP-ENV="http://www.w3.org/2003/05/soap-envelope"
+  xmlns:SOAP-ENC="http://www.w3.org/2003/05/soap-encoding"
+  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+  xmlns:xsd="http://www.w3.org/2001/XMLSchema"
+  xmlns:ns="xades"
+  xmlns="http://www.w3.org/2001/XMLSchema"
+  elementFormDefault="unqualified"
+  attributeFormDefault="unqualified">
+  <import namespace="http://www.w3.org/2003/05/soap-encoding"/>
+  <!-- operation request element -->
+  <element name="XAdES-BES">
+   <complexType>
+    <sequence>
+     <element name="DATA" type="xsd:base64Binary" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="DATA_URI" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="X509" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="KEY_HANDLE" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="DIGEST_ALGORITHM" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="SIGNING_TIME" type="xsd:unsignedInt" minOccurs="1" maxOccurs="1"/>
+     <element name="CLAIMED_ROLE" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="PRODUCTION_PLACE_CITY" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="PRODUCTION_PLACE_STATE_OR_PROVINCE" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="PRODUCTION_PLACE_POSTAL_CODE" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="PRODUCTION_PLACE_COUNTRY_NAME" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation response element -->
+  <element name="XAdES-BESResponse">
+   <complexType>
+    <sequence>
+     <element name="response" type="xsd:base64Binary" minOccurs="0" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation request element -->
+  <element name="XAdES-C">
+   <complexType>
+    <sequence>
+     <element name="DATA" type="xsd:base64Binary" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="DATA_URI" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="X509" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="KEY_HANDLE" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="DIGEST_ALGORITHM" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="SIGNING_TIME" type="xsd:unsignedInt" minOccurs="1" maxOccurs="1"/>
+     <element name="CLAIMED_ROLE" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="PRODUCTION_PLACE_CITY" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="PRODUCTION_PLACE_STATE_OR_PROVINCE" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="PRODUCTION_PLACE_POSTAL_CODE" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="PRODUCTION_PLACE_COUNTRY_NAME" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="CA_STORE" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="SIGNATURE_TIMESTAMP" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation response element -->
+  <element name="XAdES-CResponse">
+   <complexType>
+    <sequence>
+     <element name="response" type="xsd:base64Binary" minOccurs="0" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation request element -->
+  <element name="XAdES-L">
+   <complexType>
+    <sequence>
+     <element name="XAdES-C" type="xsd:base64Binary" minOccurs="1" maxOccurs="1" nillable="false"/>
+     <element name="ARCHIVE_TIMESTAMP" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+     <element name="SCHEMA" type="xsd:string" minOccurs="0" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation response element -->
+  <element name="XAdES-LResponse">
+   <complexType>
+    <sequence>
+     <element name="response" type="xsd:base64Binary" minOccurs="0" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation request element -->
+  <element name="BASE64-ENCODING">
+   <complexType>
+    <sequence>
+     <element name="data" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="false"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation response element -->
+  <element name="BASE64-ENCODINGResponse">
+   <complexType>
+    <sequence>
+     <element name="response" type="xsd:base64Binary" minOccurs="0" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation request element -->
+  <element name="BASE64-DECODING">
+   <complexType>
+    <sequence>
+     <element name="data" type="xsd:base64Binary" minOccurs="1" maxOccurs="1" nillable="false"/>
+    </sequence>
+   </complexType>
+  </element>
+  <!-- operation response element -->
+  <element name="BASE64-DECODINGResponse">
+   <complexType>
+    <sequence>
+     <element name="response" type="xsd:string" minOccurs="1" maxOccurs="1" nillable="true"/>
+    </sequence>
+   </complexType>
+  </element>
+ </schema>
+
+</types>
+
+<message name="XAdES-BESRequest">
+ <part name="parameters" element="ns:XAdES-BES"/>
+</message>
+
+<message name="XAdES-BESResponse">
+ <part name="parameters" element="ns:XAdES-BESResponse"/>
+</message>
+
+<message name="XAdES-CRequest">
+ <part name="parameters" element="ns:XAdES-C"/>
+</message>
+
+<message name="XAdES-CResponse">
+ <part name="parameters" element="ns:XAdES-CResponse"/>
+</message>
+
+<message name="XAdES-LRequest">
+ <part name="parameters" element="ns:XAdES-L"/>
+</message>
+
+<message name="XAdES-LResponse">
+ <part name="parameters" element="ns:XAdES-LResponse"/>
+</message>
+
+<message name="BASE64-ENCODINGRequest">
+ <part name="parameters" element="ns:BASE64-ENCODING"/>
+</message>
+
+<message name="BASE64-ENCODINGResponse">
+ <part name="parameters" element="ns:BASE64-ENCODINGResponse"/>
+</message>
+
+<message name="BASE64-DECODINGRequest">
+ <part name="parameters" element="ns:BASE64-DECODING"/>
+</message>
+
+<message name="BASE64-DECODINGResponse">
+ <part name="parameters" element="ns:BASE64-DECODINGResponse"/>
+</message>
+
+<portType name="XAdESPortType">
+ <operation name="XAdES-BES">
+  <documentation>Service definition of function ns__XAdES_BES</documentation>
+  <input message="tns:XAdES-BESRequest"/>
+  <output message="tns:XAdES-BESResponse"/>
+ </operation>
+ <operation name="XAdES-C">
+  <documentation>Service definition of function ns__XAdES_C</documentation>
+  <input message="tns:XAdES-CRequest"/>
+  <output message="tns:XAdES-CResponse"/>
+ </operation>
+ <operation name="XAdES-L">
+  <documentation>Service definition of function ns__XAdES_L</documentation>
+  <input message="tns:XAdES-LRequest"/>
+  <output message="tns:XAdES-LResponse"/>
+ </operation>
+ <operation name="BASE64-ENCODING">
+  <documentation>Service definition of function ns__BASE64-ENCODING</documentation>
+  <input message="tns:BASE64-ENCODINGRequest"/>
+  <output message="tns:BASE64-ENCODINGResponse"/>
+ </operation>
+ <operation name="BASE64-DECODING">
+  <documentation>Service definition of function ns__BASE64-DECODING</documentation>
+  <input message="tns:BASE64-DECODINGRequest"/>
+  <output message="tns:BASE64-DECODINGResponse"/>
+ </operation>
+</portType>
+
+<binding name="XAdES" type="tns:XAdESPortType">
+ <SOAP:binding style="document" transport="http://schemas.xmlsoap.org/soap/http"/>
+ <operation name="XAdES-BES">
+  <SOAP:operation/>
+  <input>
+     <SOAP:body parts="parameters" use="literal"/>
+  </input>
+  <output>
+     <SOAP:body parts="parameters" use="literal"/>
+  </output>
+ </operation>
+ <operation name="XAdES-C">
+  <SOAP:operation/>
+  <input>
+     <SOAP:body parts="parameters" use="literal"/>
+  </input>
+  <output>
+     <SOAP:body parts="parameters" use="literal"/>
+  </output>
+ </operation>
+ <operation name="XAdES-L">
+  <SOAP:operation/>
+  <input>
+     <SOAP:body parts="parameters" use="literal"/>
+  </input>
+  <output>
+     <SOAP:body parts="parameters" use="literal"/>
+  </output>
+ </operation>
+ <operation name="BASE64-ENCODING">
+  <SOAP:operation/>
+  <input>
+     <SOAP:body parts="parameters" use="literal"/>
+  </input>
+  <output>
+     <SOAP:body parts="parameters" use="literal"/>
+  </output>
+ </operation>
+ <operation name="BASE64-DECODING">
+  <SOAP:operation/>
+  <input>
+     <SOAP:body parts="parameters" use="literal"/>
+  </input>
+  <output>
+     <SOAP:body parts="parameters" use="literal"/>
+  </output>
+ </operation>
+</binding>
+
+<service name="XAdES">
+ <documentation>gSOAP 2.7.6c generated service definition</documentation>
+ <port name="XAdES" binding="tns:XAdES">
+  <SOAP:address location="http://10.30.1.131:4433/"/>
+ </port>
+</service>
+
+</definitions>

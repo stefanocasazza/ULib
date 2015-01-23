@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. ../.function
+
+## test_manager.test -- Test test_manager feature
+
+start_msg test_manager
+
+rm -f ls.out
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#EXEC_ON_EXIT="/utility/stack_dump.sh"
+ export UTRACE UOBJDUMP USIMERR EXEC_ON_EXIT
+
+# --log test_manager.log
+
+start_prg test_manager inp/test.tmpl
+
+$SLEEP
+
+# Test against expected output
+test_output_wc l test_manager

@@ -1,0 +1,16 @@
+name = Moshe
+1	Moshe
+2	Yossi
+There are 2 users
+Fri Jan 28 19:25:09 2011
+ID: 1, Affected rows: 1
+ID: 2, Affected rows: 1
+Rows: 2
+Cols: 5
+1 10 3.14159 Hello 'World' Fri Jan 28 19:25:09 2011
+
+has 5 columns
+2 0 0 Hello 'World' Thu Jan  1 00:00:00 1970
+
+has 5 columns
+Deleted 2 rows

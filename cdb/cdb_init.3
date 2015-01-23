@@ -1,0 +1,20 @@
+.TH cdb_init 3
+.SH NAME
+cdb_init \- open a constant database
+.SH SYNTAX
+.B #include <cdb.h>
+
+int cdb_init(struct cdb *\fIc\fR,int \fIfd\fR);
+
+.SH DESCRIPTION
+.B cdb_init
+places information about \fIfd\fR into a struct cdb variable \fIc\fR.
+\fIfd\fR has to be a seekable file previously opened for reading.
+
+On systems that support mmap, cdb_init will try to map the whole
+constant database into memory.
+
+The inverse operation to cdb_init is cdb_free.
+
+.SH "SEE ALSO"
+cdb_free(3), cdb_read(3), cdb_find(3), cdbmake(1)

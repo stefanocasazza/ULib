@@ -1,0 +1,18 @@
+#!/bin/sh
+
+. ../.function
+
+## pop3.test -- Test pop3 feature
+
+start_msg pop3
+
+#UTRACE="0 50M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+#STRACE=$TRUSS
+start_prg pop3 mail.unirel.com stefano.casazza caciucco
+
+# Test against expected output
+test_output_diff pop3

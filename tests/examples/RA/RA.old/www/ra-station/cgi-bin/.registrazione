@@ -1,0 +1,600 @@
+#!/bin/bash
+
+# .registrazione
+
+view_form_input() {
+
+	# eventuali dati pre form input
+
+	TMP_FORM_FILE=/tmp/$BASE_NAME.prev
+
+	if [ -f $TMP_FORM_FILE ]; then
+		load_value_session $TMP_FORM_FILE
+	elif [ -f $HOME_DIR/etc/${BASE_NAME}.default ]; then
+		load_value_session $HOME_DIR/etc/${BASE_NAME}.default
+	fi
+
+	if [ "$BASE_NAME" = "registrazione-business" ]; then
+
+		# --------------------------------------
+		# value to skip: (input type select)
+		# --------------------------------------
+		# "contratto_profilo	= $v23"
+		# --------------------------------------
+
+		printf -v OUTPUT "`cat $FORM_FILE_DIR/$BASE_NAME.tmpl`" \
+							  "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" "${v13}" "${v14}" \
+							  "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}"          "${v24}"
+
+	else
+
+		# --------------------------------------
+		# value to skip: (input type select)
+		# --------------------------------------
+		# "dati_utente_sesso					= $v5"
+		# "dati_utente_tipo_di_documento = $v11"
+		# "dominio								= $v29"
+		# --------------------------------------
+
+		printf -v OUTPUT "`cat $FORM_FILE_DIR/$BASE_NAME.tmpl`" \
+			"$v2" "$v1" "$v3" "$v4"    "$v6" "$v7" "$v8" "$v9" "${v10}"    "${v12}" \
+			"${v13}" "${v14}" "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" \
+			"${v25}" "${v26}" "${v27}" "${v28}"          "${v30}"
+
+	fi
+}
+
+load_value_session() {
+
+	i=0
+	while read LINE
+	do
+		LINE=${LINE//\"/\\\"}
+
+		eval v$i=\"$LINE\"
+
+		let "i = i + 1"
+	done < $1
+}
+
+load_value_session_with_xml_escape() {
+
+	i=0
+	while read LINE
+	do
+		LINE=${LINE//&/&amp;}
+		LINE=${LINE//</&lt;}
+		LINE=${LINE//>/&gt;}
+		LINE=${LINE//\'/&apos;}
+		LINE=${LINE//\"/&quot;}
+
+		eval v$i=\"$LINE\"
+
+		let "i = i + 1"
+	done < $1
+}
+
+save_value_session() {
+
+	cat <<END >$TMP_FORM_FILE
+$1
+$2
+$3
+$4
+$5
+$6
+$7
+$8
+$9
+${10}
+${11}
+${12}
+${13}
+${14}
+${15}
+${16}
+${17}
+${18}
+${19}
+${20}
+${21}
+${22}
+${23}
+${24}
+${25}
+${26}
+${27}
+${28}
+${29}
+${30}
+${31}
+${32}
+${33}
+${34}
+END
+}
+
+visualizza_contratto() {
+
+	if [ ! -d $DIR_SCAN ]; then
+		mkdir -p $DIR_SCAN
+	fi
+
+	FORM_STAMPA="`cat $FORM_FILE_DIR/stampa.js`"
+	FORM_1="`cat $FORM_FILE_DIR/contratto-privacy.html`"
+	FORM_2="`cat $FORM_FILE_DIR/contratto-informativa.html`"
+
+	if [ ! -f $DIR_SCAN/page01.tiff ]; then
+		DISABLE='disabled="1"'
+	fi
+
+	printf -v FORM_BOTTONI "`cat $FORM_FILE_DIR/contratto-bottoni.tmpl`" $BASE_NAME "$ATTIVA_SCANSIONE_MULTIPLA" $DISABLE $DISABLE
+
+	TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
+
+	FORM_FILE="`cat $FORM_FILE_DIR/contratto-$BASE_NAME.tmpl`"
+
+	if [ "$BASE_NAME" = "registrazione-business" ]; then
+
+		# --------------------------------------
+		# value to skip
+		# --------------------------------------
+		# "cn				= $11"
+		# "email_altro = $12"
+		# --------------------------------------
+
+		if [ $# -eq 25 ]; then
+
+			printf -v OUTPUT "$FORM_FILE" "$FORM_STAMPA" \
+								  "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" \
+								  "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" "${21}" "${22}" "${23}" "${24}" \
+								  "$FORM_1" "$FORM_2" "$FORM_BOTTONI"
+
+			save_value_session "" "$@"
+
+		elif [ $# -eq 0 ]; then
+
+			if [ -f $TMP_FORM_FILE ]; then
+				load_value_session $TMP_FORM_FILE
+			fi
+
+			printf -v OUTPUT "$FORM_FILE" "$FORM_STAMPA" \
+								  "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" \
+								  "${v13}" "${v14}" "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" \
+								  "$FORM_1" "$FORM_2" "$FORM_BOTTONI"
+		fi
+	else
+		if [ $# -eq 31 ]; then
+
+			printf -v OUTPUT "$FORM_FILE" "$FORM_STAMPA" \
+			  "$1" "$2" "$3" "$4" "$5" "$6" "$7" "$8" "$9" "${10}" \
+			  "${11}" "${12}" "${13}" "${14}" "${15}" "${16}" "${17}" "${18}" "${19}" "${20}" "${21}" "${22}" "${23}" "${24}" \
+			  "${25}" "${26}" "${27}" "${28}" "$FORM_1" "$FORM_2" "$FORM_BOTTONI"
+
+			save_value_session "" "$@"
+
+		elif [ $# -eq 0 ]; then
+
+			if [ -f $TMP_FORM_FILE ]; then
+				load_value_session $TMP_FORM_FILE
+			fi
+
+			printf -v OUTPUT "$FORM_FILE" "$FORM_STAMPA" \
+			  "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" \
+			  "${v13}" "${v14}" "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" \
+			  "${v25}" "${v26}" "${v27}" "${v28}" "$FORM_1" "$FORM_2" "$FORM_BOTTONI"
+		fi
+	fi
+}
+
+visualizza_rid() {
+
+	FORM_STAMPA="`cat $FORM_FILE_DIR/stampa.js`"
+
+	printf -v FORM_BOTTONI "`cat $FORM_FILE_DIR/rid-bottoni.tmpl`" $BASE_NAME
+
+	TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
+
+	if [ -f $TMP_FORM_FILE ]; then
+		load_value_session $TMP_FORM_FILE
+	fi
+
+	CODICE_FISCALE=$(eval "echo \$$(echo v${1})")
+
+	printf -v OUTPUT "`cat $FORM_FILE_DIR/rid.tmpl`" "$FORM_STAMPA" "$2" $CODICE_FISCALE "$FORM_BOTTONI"
+}
+
+errore_scansione() {
+
+	if [ "$BASE_NAME" = "registrazione-business" ]; then
+		TIPO="BUSINESS"
+	else
+		TIPO="RESIDENZIALE CON CPE"
+	fi
+
+	printf -v OUTPUT "`cat $FORM_FILE_DIR/error.tmpl`" "$TIPO" "$DEVICE_SCANNER" "`scanimage -L 2>/dev/null`" $BASE_NAME
+}
+
+# ---------------------------------------------------------------------------------------------
+# scanimage --help -d $DEVICE_SCANNER
+# ---------------------------------------------------------------------------------------------
+# Options specific to device `net:ra-station:hpaio:/usb/HP_LaserJet_3055?serial=00CNCK343927':
+#  Scan mode:
+#    --mode Lineart|Gray|Color [Color]
+#        Selects the scan mode (e.g., lineart, monochrome, or color).
+#    --resolution 75|100|150|200|300|600|1200dpi [75]
+#        Sets the resolution of the scanned image.
+#  Advanced:
+#    --contrast 0..100 [inactive]
+#        Controls the contrast of the acquired image.
+#    --compression None|JPEG [JPEG]
+#        Selects the scanner compression method for faster scans, possibly at
+#        the expense of image quality.
+#    --jpeg-quality 0..100 [10]
+#        Sets the scanner JPEG compression factor. Larger numbers mean better
+#        compression, and smaller numbers mean better image quality.
+#    --batch-scan[=(yes|no)] [no]
+#        Enables continuous scanning with automatic document feeder (ADF).
+#    --source Auto|ADF [Auto]
+#        Selects the scan source (such as a document-feeder).
+#  Geometry:
+#    --length-measurement Unknown|Unlimited|Approximate|Padded [Padded]
+#        Selects how the scanned image length is measured and reported, which
+#        is impossible to know in advance for scrollfed scans.
+#    -l 0..228.6mm [0]
+#        Top-left x position of scan area.
+#    -t 0..381mm [0]
+#        Top-left y position of scan area.
+#    -x 0..228.6mm [228.6]
+#        Width of scan-area.
+#    -y 0..381mm [381]
+#        Height of scan-area.
+# ---------------------------------------------------------------------------------------------
+# X=210
+# Y=297
+# SCANMODE=Lineart
+# --------------------------------------------------
+# RESOLUTION=75
+# --------------------------------------------------
+# 72K prova.tiff
+# 20K prova.pdf
+# 16K prova.png
+# X=210 Y=297 Image Width: 621 Image Length: 876
+#
+# 96K prova.tiff
+# 20K prova.pdf
+# 20K prova.png
+# X=228.6 Y=381 Image Width: 640 Image Length: 1125
+# --------------------------------------------------
+# RESOLUTION=200
+# --------------------------------------------------
+# 480K prova.tiff
+#  64K prova.pdf
+#  40K prova.png
+# X=210 Y=297 Image Width: 1654 Image Length: 2338
+# --------------------------------------------------
+# RESOLUTION=300
+# --------------------------------------------------
+# 1.1M prova.tiff
+#  76K prova.pdf
+#  60K prova.png
+# X=210 Y=297 Image Width: 2481 Image Length: 3507
+# --------------------------------------------------
+# RESOLUTION=600
+# --------------------------------------------------
+# 4.2M prova.tiff
+# 84K  prova.pdf
+# 56K  prova.png
+# X=210 Y=297 Image Width: 4961 Image Length: 7015
+# --------------------------------------------------
+
+reset_scansione() {
+
+	rm -f $DIR_SCAN/*.tiff $DIR_SCAN/*.png
+
+	visualizza_contratto
+}
+
+rascan_image() {
+
+	# $1 -> parametri scansione multipla (opt)
+
+#	X=210				# A4
+#	Y=297				# A4
+#	RESOLUTION=$1	# 75|100|150|200|300|600|1200dpi [75]
+
+#	set -x
+
+	# 1-bit multipage TIFF
+	SCANMODE=Lineart
+
+	NUM_PAGE=`ls -f $DIR_SCAN/page[0-9]*.tiff 2>/dev/null | wc -l`
+
+	let "NUM_DOC = $NUM_PAGE + 1"
+
+	rm -f /tmp/scan.log
+
+	if [ -n "$1" ]; then
+		OUTPUT=/tmp/scan.log
+		SCANIMAGE_PARAM="$SCANIMAGE_MULTI_PARAM --batch-start=$NUM_DOC"
+	else
+		printf -v OUTPUT "$DIR_SCAN/page%02d.tiff" $NUM_DOC
+		SCANIMAGE_PARAM=$SCANIMAGE_SINGLE_PARAM
+	fi
+
+	scanimage -d $DEVICE_SCANNER --format=tiff --mode $SCANMODE --resolution $RESOLUTION -x $X -y $Y $1 $SCANIMAGE_PARAM > $OUTPUT 2>&1
+	
+	NUM_DOC=`ls -f $DIR_SCAN/page[0-9]*.tiff 2>/dev/null | wc -l`
+
+	if [ $NUM_DOC -eq 0 ]; then
+		errore_scansione
+	else
+		TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
+
+		if [ -f $TMP_FORM_FILE ]; then
+			load_value_session $TMP_FORM_FILE
+		fi
+
+		save_value_session $NUM_DOC \
+			 "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" "${v13}" "${v14}" "${v15}" \
+			 "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" "${v25}" "${v26}" "${v27}" "${v28}" "${v29}" "${v30}" "${v31}"
+
+		FOR_PAGE=1
+
+		set_paginazione 1
+
+		view_page
+	fi
+}
+
+rascan_image_multipla()
+{
+	rascan_image "--batch=$DIR_SCAN/page%02d.tiff --source ADF"
+}
+
+rascan_image_singola() {
+
+	rascan_image
+}
+
+view_page() {
+
+	printf -v FILE $DIR_SCAN/page%02d $pagina_corrente
+
+	if [ ! -f ${FILE}.tiff ]; then
+		errore_scansione
+	fi
+
+	if [ ! -f ${FILE}.png ]; then
+
+		# Create the page PNG file
+
+		if [ "$SCANMODE" = "Lineart" ]; then
+			fax2png ${FILE}.tiff ${FILE}.png -w 621 -a >/dev/null 2>&1
+		else
+			tifftopnm ${FILE}.tiff >${FILE}.pnm 2>/dev/null
+			pnmtopng  ${FILE}.pnm  >${FILE}.png 2>/dev/null
+			rm -f		 ${FILE}.pnm
+		fi
+
+		optimize_image_bin ${FILE}.png ${FILE}.png
+	fi
+
+	if [ -f ${FILE}.png ]; then
+		printf -v OUTPUT "`cat $FORM_FILE_DIR/view.tmpl`" ${FILE}.png $BASE_NAME "$link_paginazione"
+	fi
+}
+
+view_page_prepare() {
+
+	TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
+
+	if [ -f $TMP_FORM_FILE ]; then
+		load_value_session $TMP_FORM_FILE
+	fi
+
+	FOR_PAGE=1
+	NUM_DOC=$v0
+
+	if [ -z "$NUM_DOC" ]; then
+
+		NUM_DOC=`ls -f $DIR_SCAN/page[0-9]*.tiff 2>/dev/null | wc -l`
+
+		save_value_session $NUM_DOC \
+			 "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" "${v13}" "${v14}" "${v15}" \
+			 "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" "${v25}" "${v26}" "${v27}" "${v28}" "${v29}" "${v30}" "${v31}"
+
+	fi
+}
+
+view_page_image() {
+
+# 	set -x
+
+	view_page_prepare
+
+	set_paginazione $1
+
+	view_page
+}
+
+registrazione_contratto() {
+
+# 	set -x
+
+	# load specific script env, for signing and sending message to workflow...
+
+	. $HOME_DIR/etc/${BASE_NAME}.conf
+
+	TMP_FORM_FILE=$DIR_SCAN/$BASE_NAME.curr
+
+	if [ -f $TMP_FORM_FILE ]; then
+		load_value_session_with_xml_escape $TMP_FORM_FILE
+	fi
+
+	# create PDF...
+
+	tiffcp -a $DIR_SCAN/page[0-9]*.tiff $DIR_SCAN/out.tiff >/dev/null 2>&1
+
+	tiff2pdf -p A4 -q 100 -j $DIR_SCAN/out.tiff >$DIR_SCAN/out.pdf	2>/dev/null  # Creating PDF file...
+
+	PDF=`openssl base64 -in $DIR_SCAN/out.pdf -e 2>/dev/null`						 # ...and convert in base64
+
+	# directory to put mail to send...
+
+	DIR_SAVE=`pwd`
+
+	cd $DIR_MAIL
+
+	DIR_SESSION=$SESSION_ID/$BASE_NAME
+
+	if [ ! -d $DIR_SESSION ]; then
+		mkdir -p $DIR_SESSION
+	fi
+
+	NAME=$DIR_SESSION/send_to_$$
+
+	if [ "$BASE_NAME" = "registrazione-business" ]; then
+
+		printf "`cat mail-business.tmpl`" "$WORKFLOW_SUBJECT" "$WORKFLOW_FROM_ADDRESS" "$WORKFLOW_TO_ADDRESS" \
+			 "$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" "${v13}" "${v14}" \
+			 "${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" ${NETWORK} \
+			 "$PDF" > $NAME.eml
+
+	else
+
+		printf "`cat mail-cpe.tmpl`" "$WORKFLOW_SUBJECT" "$WORKFLOW_FROM_ADDRESS" "$WORKFLOW_TO_ADDRESS" \
+			"$v1" "$v2" "$v3" "$v4" "$v5" "$v6" "$v7" "$v8" "$v9" "${v10}" "${v11}" "${v12}" "${v13}" "${v14}" \
+			"${v15}" "${v16}" "${v17}" "${v18}" "${v19}" "${v20}" "${v21}" "${v22}" "${v23}" "${v24}" "${v25}" "${v26}" "${v27}" "${v28}" "${v30}" \
+			"${NETWORK}" "$PDF" > $NAME.eml
+	fi
+
+	send_MAIL_and_goto_MAIN_MENU $NAME $DIR_SAVE/$DIR_SCAN
+}
+
+# funzioni che creano i link alle pagine dei risultati
+# ----------------------------------------------------
+
+crea_link() {
+
+	if [ $pagina_corrente -eq $1 ]; then
+		ADD="<span class=\"pnow\">$1</span>"
+	else
+		ADD="<a href=\"?page=$1\" class=\"pnum\">$1</a>"
+	fi
+
+	link_paginazione=$link_paginazione$ADD" "
+}
+
+set_paginazione() {
+
+	pagina_corrente=$1
+
+	if [ $NUM_DOC -le $FOR_PAGE ]; then
+
+		if [ $NUM_DOC -eq 0 ]; then
+			NUM_START=0
+		else
+			NUM_START=1
+		fi
+
+		NUM_END=$NUM_DOC
+
+ 		link_paginazione="<span class=\"void\">PREV</span><span class=\"void\">NEXT</span>"
+
+		return
+
+	fi
+
+	let "pagina_precedente = $pagina_corrente - 1"
+	let "pagina_successiva = $pagina_corrente + 1"
+
+	let "tot_pagine = $NUM_DOC / $FOR_PAGE"
+	let "resto		 = $NUM_DOC % $FOR_PAGE"
+
+	if [ $resto -ne 0 ]; then
+		let "tot_pagine = $tot_pagine + 1"
+	fi
+
+	let "ultima_pagina = $tot_pagine - 1"
+	let "penultima_pagina = $ultima_pagina - 1"
+
+	# link alla pagina precedente
+
+	if [ $pagina_corrente -eq 1 ]; then
+		NUM_START=1
+
+ 		link_paginazione="<span class=\"void\">PREV</span> "
+	else
+		let "NUM_START = 1 + $pagina_precedente * $FOR_PAGE"
+
+ 		link_paginazione="<a href=\"?page=$pagina_precedente\" class=\"pnum\">PREV</a> "
+	fi
+
+	# mostriamo sempre il link alla prima pagina
+
+	crea_link 1
+
+	# se il prossimo link non è alla seconda pagina aggiungo dei puntini ... oppure la sola pagina mancante
+
+	if [ $pagina_precedente -gt 2 ]; then
+
+		if [ $pagina_precedente -eq 3 ]; then
+			crea_link 2
+		else
+			link_paginazione=$link_paginazione" ... "
+		fi
+
+	fi
+
+	# creo i link alla pagina corrente ed a quelle ad essa vicine
+
+	for (( i=$pagina_precedente; i<=$pagina_successiva; i+=1 )); do
+
+		# se tra quelle vicine c'è la prima pagina (già riportata)
+
+		if [ $i -lt 2 ]; then
+			continue
+		fi
+
+		# se tra quelle vicine c'è l'ultima pagina (che mostrerò con le prossime istruzioni)
+
+		if [ $i -gt $ultima_pagina ]; then
+			continue
+		fi
+
+		crea_link $i
+	done
+
+	# se il precedente link non era alla penultima pagina aggiungo dei puntini ... oppure la sola pagina mancante
+
+	if [ $pagina_successiva -lt $ultima_pagina ]; then
+
+		if [ $pagina_successiva -eq $penultima_pagina ]; then
+			crea_link $ultima_pagina
+		else
+			link_paginazione=$link_paginazione" ... "
+		fi
+
+	fi
+
+	# mostriamo il link all'ultima pagina se questa non coincide con la prima
+
+	if [ $tot_pagine -ne 1 ]; then
+		crea_link $tot_pagine
+	fi
+
+	# link alla pagina successiva
+
+	if [ $pagina_corrente -eq $tot_pagine ]; then
+		NUM_END=$NUM_DOC
+
+		link_paginazione=$link_paginazione"<span class=\"void\">NEXT</span>"
+	else
+		let "NUM_END = $NUM_START + $FOR_PAGE - 1"
+
+		link_paginazione=$link_paginazione"<a href=\"?page=$pagina_successiva\" class=\"pnum\">NEXT</a>"
+	fi
+}
+
+# ------------------------------------------------------

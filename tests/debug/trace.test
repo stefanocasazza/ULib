@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. ../.function
+
+## trace.test -- Test trace feature
+
+start_msg trace
+
+rm -f trace.*test_trace*.[0-9]*
+
+## gli argomenti commentati sono per la simulazione degli errori
+
+unset VALGRIND
+UTRACE_SIGNAL="5 10k 0"
+
+#STRACE=$TRUSS
+start_prg trace # per_simulazione_errori 30
+
+# Test against expected output
+test_output_wc l trace trace.*test_trace*.[0-9]*

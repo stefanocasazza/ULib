@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>StatUserUnknownTest</NAME>
+  <QUERY>
+    <START-DATE>01/04/2007</START-DATE>
+    <END-DATE>30/04/2007</END-DATE>
+    <INSTALLATION-ID>www</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgRejected>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l3C834YF002031</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Apr 12 10:03:22 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+    </NumMsgRejected>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>RejectDomainOfSenderAddressDoesNotExistTest</NAME>
+  <QUERY>
+    <START-DATE>01/04/2007</START-DATE>
+    <END-DATE>30/04/2007</END-DATE>
+    <INSTALLATION-ID>www</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgRejected>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l3CACSML002960</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Apr 12 12:12:33 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-ProtocolError>553</NumMsgRejected-ProtocolError>
+        <NumMsgRejected-ErrorReason>5.1.8</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+    </NumMsgRejected>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>QueryRangeOfDateAcrossOfChangeOfTheYearTest</NAME>
+  <QUERY>
+    <START-DATE>31/12/2006</START-DATE>
+    <END-DATE>01/01/2007</END-DATE>
+    <INSTALLATION-ID>www</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgRejected>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>kBVLx0nb024018</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Dec 31 22:59:18 2006</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>kBVLxInb024022</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Dec 31 22:59:23 2006</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l011Lknb024301</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Jan  1 02:21:49 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l011Lnnb024303</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Jan  1 02:21:49 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l012xenb024427</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Jan  1 03:59:44 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l012xinb024429</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Jan  1 03:59:44 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+    </NumMsgRejected>
+  </RESULTS>
+</REPORT>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!DOCTYPE REPORT SYSTEM "PEC_Report.dtd">
+
+<REPORT>
+  <NAME>QueryRangeOfDateNotAcrossOfChangeOfTheYearTest</NAME>
+  <QUERY>
+    <START-DATE>01/01/2007</START-DATE>
+    <END-DATE>01/01/2007</END-DATE>
+    <INSTALLATION-ID>www</INSTALLATION-ID>
+  </QUERY>
+  <RESULTS>
+    <NumMsgRejected>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l011Lknb024301</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Jan  1 02:21:49 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l011Lnnb024303</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Jan  1 02:21:49 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l012xenb024427</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Jan  1 03:59:44 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+      <NumMsgRejected-Entry>
+        <NumMsgRejected-Identifier>l012xinb024429</NumMsgRejected-Identifier>
+        <NumMsgRejected-Date>Jan  1 03:59:44 2007</NumMsgRejected-Date>
+        <NumMsgRejected-InstallationId>www</NumMsgRejected-InstallationId>
+        <NumMsgRejected-DeliveryError>User unknown</NumMsgRejected-DeliveryError>
+        <NumMsgRejected-ErrorReason>5.1.1</NumMsgRejected-ErrorReason>
+      </NumMsgRejected-Entry>
+    </NumMsgRejected>
+  </RESULTS>
+</REPORT>

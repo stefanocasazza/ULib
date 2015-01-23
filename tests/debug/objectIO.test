@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../.function
+
+## objectIO.test -- Test objectIO feature
+
+start_msg objectIO
+
+#UTRACE="5 50k 0"
+#UOBJDUMP="-1 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+unset MEMPOOL
+#STRACE=$LTRUSS
+start_prg objectIO
+
+# Test against expected output
+test_output_wc w objectIO trace.*test_objectIO*.[0-9]*

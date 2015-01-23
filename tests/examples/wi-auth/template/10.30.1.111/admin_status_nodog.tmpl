@@ -1,0 +1,44 @@
+<div id="main-content-without-sidebar">
+<br/>
+	<center>
+	<h1>Status Access Point</h1>
+	</center>
+  <hr noshade="1" />
+  <table border="0" cellpadding="5" cellspacing="5">
+	 <tr><td>Version</td><td>1.1.0</td></tr>
+	 <tr><td>Current Time</td><td>%5D</td></tr>
+  </table>
+  <hr noshade="1"/>
+  <br />
+  <table border="0" cellpadding="5" cellspacing="5">
+	<tr><td>Access Points</td><td>%u</td></tr>
+	<tr><td style="color:green">Up</td><td>%u</td></tr>
+	<tr><td style="color:red">Down</td><td>%u</td></tr>
+	<tr><td style="color:orange">Unreachable</td><td>%u</td></tr>
+	<tr><td style="color:blue">Open</td><td>%u</td></tr>
+	<tr><td style="color:orange">No Consume</td><td>%u</td></tr>
+	<tr><td>
+	<tr><td align="center"><h2>Current Status</h2></td>
+	<table border="1" cellpadding="5">
+	 <tr>
+	 <th rowspan=2>Label</th>
+	 <th colspan=3>Access Point reference</th>
+	 <th colspan=7>Nodog reference</th>
+	 </tr>
+	 <tr>
+	 <th>IP address</th>
+	 <th>Hostname</th>
+	 <th>Uptime</th>
+	 <th>Up</th>
+	 <th>Since</th>
+	 <th>Last update</th>
+	 <th>Consume</th>
+	 <th>MAC authorized</th>
+	 <th>Group account</th>
+	 <th><a href="https://%s/admin_edit_ap">Insert</a></th>
+	 </tr>
+    %.*s
+   </table>
+  </table>
+  <br />
+</div>

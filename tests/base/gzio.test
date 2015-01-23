@@ -1,0 +1,18 @@
+#!/bin/sh
+
+. ../.function
+
+## gzio.test -- Test gzio feature
+
+start_msg gzio
+
+# WINELOADER='ltrace -f -S --demangle -n 3'
+
+$WINELOADER ./test_gzio$SUFFIX    inp/base64.inp > err/gzio.err
+$WINELOADER ./test_gzio$SUFFIX -d err/gzio.err   > out/gzio.out
+
+RESULT=$?
+export RESULT
+
+# Test against expected output
+test_output_diff gzio

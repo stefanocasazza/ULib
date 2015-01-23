@@ -1,0 +1,19 @@
+#!/bin/sh
+
+. ../.function
+
+## crl.test -- Test crl feature
+
+start_msg crl
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+#CApath_rehash
+
+start_prg crl < inp/crl.input
+
+# Test against expected output
+test_output_wc w crl

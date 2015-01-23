@@ -1,0 +1,34 @@
+#!/bin/sh
+
+. ../.function
+
+## server_rpc.test -- Test server RPC feature
+
+start_msg server_rpc
+
+rm -rf err/server_rpc.err \
+		 trace.*server*.[0-9]* object.*server*.[0-9]* stack.*server*.[0-9]*
+
+#UTRACE="0 50M 0"
+#UOBJDUMP="0 10M 100"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+mv err/server.err err/server_old.err
+
+#STRACE=$TRUSS
+start_prg_background server ../../src/ulib/net/server/plugin/.libs rpc server_rpc.cfg
+$SLEEP
+
+check_for_netcat
+send_req $NCAT localhost 8080 inp/rpc_request server_rpc 3
+
+$SLEEP
+
+kill_prg test_server TERM
+
+mv err/server.err		 err/server_rpc.err
+mv err/server_old.err err/server.err
+
+# Test against expected output
+test_output_diff server_rpc

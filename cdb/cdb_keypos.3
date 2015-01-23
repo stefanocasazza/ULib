@@ -1,0 +1,16 @@
+.TH cdb_keypos 3
+.SH NAME
+cdb_keypos \- get position of key
+.SH SYNTAX
+.B #include <cdb.h>
+
+uint32 cdb_keypos(struct cdb *\fIc\fR);
+
+.SH DESCRIPTION
+.B cdb_keypos
+returns the position of the key cdb_firstkey or cdb_nextkey found.
+
+Use cdb_keylen to get the length of the key.
+
+.SH "SEE ALSO"
+cdb_keylen(3), cdb_datapos(3), cdb_datalen(3)

@@ -1,0 +1,114 @@
+{ Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 1 (0x1)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=IT, ST=Italy, L=Sesto Fiorentino, O=Unirel spa, OU=CA, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+        Validity
+            Not Before: Jul 15 15:30:55 2010 GMT
+            Not After : Jun 27 15:30:55 2021 GMT
+        Subject: C=IT, ST=Italy, O=Unirel spa, OU=server, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:e5:83:d1:9f:19:40:25:1b:a9:6f:25:b1:4d:ef:
+                    ad:76:b1:ae:99:d5:d2:28:8c:9b:7f:e8:67:28:a3:
+                    8c:4e:84:b6:bd:ab:88:74:f3:1a:22:8a:08:94:03:
+                    31:cd:24:bc:65:b2:37:5f:5b:d9:ca:1a:b6:fe:58:
+                    1f:6f:37:80:42:37:14:02:38:91:b8:47:ca:e8:8d:
+                    e7:c0:15:10:44:91:84:71:79:5a:9d:11:e0:f8:fc:
+                    c0:78:49:b2:53:ce:2b:fa:16:38:91:92:83:1c:a5:
+                    43:d1:a0:3b:08:75:b7:98:fc:b8:4f:1d:2f:5d:c0:
+                    8a:8a:d3:5f:71:2e:4d:ab:61
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                FC:B7:3C:64:67:D6:EF:EC:B5:8F:F9:08:5F:C2:FF:CA:2C:7E:B2:9B
+            X509v3 Authority Key Identifier: 
+                keyid:C3:B4:79:0A:D0:CA:3A:3C:AC:68:99:A7:DB:CB:0C:DF:1D:0B:FB:9F
+
+    Signature Algorithm: sha1WithRSAEncryption
+        1c:a0:d3:06:e2:e8:51:cf:42:59:48:e2:a4:83:56:81:40:74:
+        f0:ea:92:37:4b:15:98:8b:7a:a2:7f:33:ea:c2:5a:6a:b9:f9:
+        cf:00:84:90:c2:52:bd:29:db:03:15:e4:a3:19:0f:0e:ea:41:
+        0e:7b:1b:8d:86:e0:e5:26:df:e0:88:7c:1c:a3:69:b2:3d:2e:
+        73:7e:30:6b:41:62:b7:31:ff:45:c6:33:3d:73:2b:24:f3:91:
+        bf:0c:ca:4d:64:23:35:af:17:14:f6:ca:4e:5e:4a:63:e1:45:
+        20:69:0a:8f:36:32:25:a0:33:cb:ce:11:23:e6:ac:b8:67:28:
+        e8:a0
+ }
+0
+0
+/C=IT/ST=Italy/L=Sesto Fiorentino/O=Unirel spa/OU=CA/CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+/C=IT/ST=Italy/O=Unirel spa/OU=server/CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+2
+1
+2094012269
+RSA-SHA1
+100715153055Z
+210627153055Z
+0
+( )
+( )
+{ Certificate:
+    Data:
+        Version: 3 (0x2)
+        Serial Number: 2 (0x2)
+        Signature Algorithm: sha1WithRSAEncryption
+        Issuer: C=IT, ST=Italy, L=Sesto Fiorentino, O=Unirel spa, OU=CA, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+        Validity
+            Not Before: Jul 15 15:31:02 2010 GMT
+            Not After : Jun 27 15:31:02 2021 GMT
+        Subject: C=IT, ST=Italy, O=Unirel spa, OU=username, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+        Subject Public Key Info:
+            Public Key Algorithm: rsaEncryption
+                Public-Key: (1024 bit)
+                Modulus:
+                    00:d8:8f:63:13:ed:e3:a7:74:52:14:a7:e9:73:42:
+                    c8:ff:82:29:08:c7:aa:6c:ee:c5:cc:b7:2c:e1:55:
+                    5a:e0:68:7d:ee:ef:e7:11:0c:b4:43:0a:98:66:c4:
+                    3e:71:00:14:90:5f:fa:d3:0f:fd:bd:ae:52:4d:55:
+                    fb:b7:c9:70:07:66:86:2f:6a:4b:ba:e9:0f:f2:7a:
+                    2c:41:13:6a:a6:18:43:01:6b:e7:25:cf:49:fe:79:
+                    f5:ea:17:16:35:91:6f:64:dd:85:3a:a7:f0:5e:a2:
+                    34:4a:b6:34:f4:c1:ce:09:f8:b1:0b:a2:d2:1b:8f:
+                    dc:55:b7:5d:c8:1b:57:dd:99
+                Exponent: 65537 (0x10001)
+        X509v3 extensions:
+            X509v3 Basic Constraints: 
+                CA:FALSE
+            Netscape Comment: 
+                OpenSSL Generated Certificate
+            X509v3 Subject Key Identifier: 
+                DA:E9:09:6B:64:FF:83:E1:F4:F6:7A:6A:B5:14:C0:AE:DB:CE:AD:1B
+            X509v3 Authority Key Identifier: 
+                keyid:C3:B4:79:0A:D0:CA:3A:3C:AC:68:99:A7:DB:CB:0C:DF:1D:0B:FB:9F
+
+    Signature Algorithm: sha1WithRSAEncryption
+        57:f8:c1:05:fc:bc:2c:5f:c6:d8:9a:9e:38:da:9e:2d:a0:29:
+        27:ad:17:1c:13:d4:dd:46:e2:55:6c:8e:27:8d:04:a7:50:b2:
+        91:33:68:dd:13:d7:55:e1:b3:2b:43:a6:88:f1:57:6c:ad:04:
+        4a:c5:90:50:af:96:1f:90:49:25:c6:5c:ce:f4:d0:c1:2d:b9:
+        d5:ef:d7:21:de:17:09:44:dc:7c:50:de:0a:59:c6:be:0b:74:
+        b2:f5:e0:8a:e3:c2:2d:1d:85:cf:94:00:c4:eb:ac:5b:82:67:
+        28:94:1f:7e:d4:36:5c:39:5e:7e:8e:b4:b5:8a:a4:e8:96:22:
+        7a:a5
+ }
+0
+0
+/C=IT/ST=Italy/L=Sesto Fiorentino/O=Unirel spa/OU=CA/CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+/C=IT/ST=Italy/O=Unirel spa/OU=username/CN=localhost.localdomain/emailAddress=root@localhost.localdomain
+2
+2
+2747996067
+RSA-SHA1
+100715153102Z
+210627153102Z
+0
+( )
+( )

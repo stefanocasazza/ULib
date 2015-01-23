@@ -1,0 +1,6 @@
+<REQUEST sid="sid1" version="1">
+  <EXPORT-POLICYLABEL name="openvpn-server"/>
+</REQUEST>
+<REQUEST sid="sid2" version="1">
+  <EXPORT-POLICYLABEL name="openvpn-default"/>
+</REQUEST>

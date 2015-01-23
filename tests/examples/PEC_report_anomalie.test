@@ -1,0 +1,153 @@
+#!/bin/sh
+
+. ../.function
+
+## PEC.test -- Test PEC feature
+
+#UTRACE="5 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+#VALGRIND=valgrind
+ export UTRACE UOBJDUMP USIMERR VALGRIND
+
+rm -rf out/PEC_report_anomalie*.out err/PEC_report_anomalie*.err \
+       trace.*PEC_report_anomalie*.[0-9]* object.*PEC_report_anomalie*.[0-9]* stack.*PEC_report_anomalie*.[0-9]* mempool.*PEC_report_anomalie*.[0-9]*
+
+DIR=`pwd`
+DIR_CMD="../../examples/PEC_log"
+
+cat << EOF >tmp/c
+c
+c
+EOF
+
+start_msg PEC_report_anomalie
+start_prg PEC_report_anomalie1 -c PEC_report_anomalie1.cfg
+start_prg PEC_report_anomalie1 -T '"MsgRicevutoBustaTrasportoMancanteTest"' \
+										 -d inp/PEC/6/TestCase_10 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoAvvenutaConsegnaOErroreConsegnaMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_11 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgRicevutoNessunaAnomaliaTest"' \
+										 -d inp/PEC/6/TestCase_12 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgRicevutoPresaInCaricoIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_13 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgRicevutoAvvenutaConsegnaOErroreConsegnaMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_14 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoAvvenutaConsegnaIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_15 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoNessunaAnomaliaTest"' \
+										 -d inp/PEC/6/TestCase_16 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoAccettazioneMancanteTest"' \
+										 -d inp/PEC/6/TestCase_17 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoBustaTrasportoMancanteTest"' \
+										 -d inp/PEC/6/TestCase_18 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoPresaInCaricoMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_2 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoErroreConsegnaIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_3 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoRilevazioneVirusIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_4 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoDestinatariMultipliNessunaAnomaliaTest"' \
+										 -d inp/PEC/6/TestCase_5 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoPresaInCaricoIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_6 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgRicevutoPresaInCaricoMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_7 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgRicevutoAvvenutaConsegnaIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_8 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoRilevazioneVirusMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6/TestCase_9 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoRilevazioneVirusIncoerentePerDuplicazioneTest"' \
+										 -d inp/PEC/6/TestCase_19 -F pippo \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie1 -T '"TestCaseTest"' -F pippo \
+										 -d inp/PEC/6/TestCase_20 \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007 < tmp/c
+start_prg PEC_report_anomalie1 -T '"MsgSpeditoAvvenutaConsegnaMancanteConDestinatarioEsternoInPrimaPosizioneTest"' \
+										 -d inp/PEC/6/TestCase_21 \
+										 -e log.p7m -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+
+start_prg PEC_report_anomalie2 -c PEC_report_anomalie2.cfg
+
+start_prg PEC_report_anomalie2 -T '"MsgRicevutoBustaTrasportoMancanteTest"' \
+										 -d inp/PEC/6S/TestCase_10 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoAvvenutaConsegnaOErroreConsegnaMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_11 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgRicevutoNessunaAnomaliaTest"' \
+										 -d inp/PEC/6S/TestCase_12 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgRicevutoPresaInCaricoIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_13 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgRicevutoAvvenutaConsegnaOErroreConsegnaMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_14 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoAvvenutaConsegnaIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_15 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoNessunaAnomaliaTest"' \
+										 -d inp/PEC/6S/TestCase_16 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoAccettazioneMancanteTest"' \
+										 -d inp/PEC/6S/TestCase_17 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoBustaTrasportoMancanteTest"' \
+										 -d inp/PEC/6S/TestCase_18 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoPresaInCaricoMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_2 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoErroreConsegnaIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_3 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoRilevazioneVirusIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_4 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoDestinatariMultipliNessunaAnomaliaTest"' \
+										 -d inp/PEC/6S/TestCase_5 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoPresaInCaricoIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_6 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgRicevutoPresaInCaricoMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_7 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgRicevutoAvvenutaConsegnaIncoerentePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_8 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoRilevazioneVirusMancantePerAlmenoUnDestinatarioTest"' \
+										 -d inp/PEC/6S/TestCase_9 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoRilevazioneVirusIncoerentePerDuplicazioneTest"' \
+										 -d inp/PEC/6S/TestCase_19 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+start_prg PEC_report_anomalie2 -T '"TestCaseTest"' \
+										 -d inp/PEC/6S/TestCase_20 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007 < tmp/c
+start_prg PEC_report_anomalie2 -T '"MsgSpeditoAvvenutaConsegnaMancanteConDestinatarioEsternoInPrimaPosizioneTest"' \
+										 -d inp/PEC/6S/TestCase_21 \
+										 -e log -n inp/PEC/domain.txt -i PEC_Milter -f 10/05/2006 -t 02/07/2007
+
+cat out/PEC_report_anomalie1.out out/PEC_report_anomalie2.out > out/PEC_report_anomalie.out
+
+#Test against expected output
+test_output_diff PEC_report_anomalie

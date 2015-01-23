@@ -1,0 +1,49 @@
+<table width="800" border="1" bordercolor="#C0C0C0">
+ <tr>
+	<td colspan="2"><span class="Stile3">I campi contrassegnati dal simbolo * non possono essere omessi</span></td>
+ </tr>
+ <tr>
+	<td valign="top">
+	  <p class="western" style="background: #b3b3b3"><font face="URW Bookman L, Times New Roman"><font size="2" style="font-size: 9pt"><b>DATI:</b></font></font></p>
+	</td>
+ </tr>
+</table>
+<br>
+<form method="post" name="form" action="/card-generation">
+ <table width="800" class="racss_formtable">
+	<tr>
+	  <td class="racss_label">Numero di carte da generare:</td>
+	  <td class="racss_field"><input type="text" id="dati_numero_carte" name="dati_numero_carte"> <strong class="Stile3">*</strong></td>
+	</tr>
+	<tr>
+	  <td class="racss_label">Validita':</td>
+	 
+	  <td class="racss_field">
+	    <select id="tipo_validita" name="tipo_validita">
+			<option value="M">minuti</option>
+			<option value="O">ore</option>
+			<option value="G" selected="selected">giorni</option>
+			<option value="A">anni</option>
+		 </select>
+	  <input type="text" id="dati_validita" name="dati_validita"> <strong class="Stile3">*</strong>
+	</td>
+	</tr>
+ </table>
+ <br>
+ <input type="reset" value="Reset"> <input type="submit" name="submit" value="Invia richiesta">
+</form>
+<script type="text/javascript">
+var valComm = new LiveValidation( 'dati_numero_carte', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm.add( Validate.Presence, {failureMessage: "Devi inserire il numero di carte da generare"} );
+valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "Numero di carte da generare non valido"} );
+var valComm = new LiveValidation( 'dati_validita', {onlyOnSubmit: true, validMessage: "OK" } );
+valComm.add( Validate.Presence, {failureMessage: "Devi inserire la validita'"} );
+valComm.add( Validate.Numericality, {onlyInteger: true, notANumberMessage: "Validita' non numerica"} );
+
+var automaticOnSubmit = valComm.form.onsubmit;
+valComm.form.onsubmit = function() {
+	  var valid = automaticOnSubmit();
+	  if (valid) return true; 
+	  return false;
+}
+</script>

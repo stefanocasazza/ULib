@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. ../.function
+
+## qp.test -- Test qp feature
+
+start_msg qp
+
+cat inp/qp.inp | $WINELOADER ./crypto_qp$SUFFIX    > err/qp.err
+cat err/qp.err | $WINELOADER ./crypto_qp$SUFFIX -d > out/qp.out
+
+RESULT=$?
+export RESULT
+
+# Test against expected output
+test_output_diff qp

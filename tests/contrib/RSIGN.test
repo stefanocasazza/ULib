@@ -1,0 +1,42 @@
+#!/bin/sh
+
+. ../.function
+
+## RSIGN.test -- Test RSIGN feature
+
+start_msg RSIGN
+
+#UTRACE="0 5M 0"
+#UOBJDUMP="0 100k 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+if [ -n "$WINELOADER" ]; then
+	ENGINE="../../contrib/RSIGN/.libs/RSIGN.dll"
+else
+	ENGINE="../../contrib/RSIGN/.libs/RSIGN.so"
+fi
+
+INKEY=../ulib/CA/username.key
+DIGEST=tmp/digest
+
+cat << EOF >rsa_priv_enc.sh
+#!/bin/sh
+openssl rsautl -sign -inkey $INKEY -passin pass:caciucco -in $DIGEST$$
+EOF
+
+chmod 777 rsa_priv_enc.sh
+
+export RSIGN_CMD="./rsa_priv_enc.sh -c rsa_priv_enc.cfg -k $INKEY < $DIGEST$$"
+
+CRT=../ulib/CA/username.crt
+
+$WINE_OPENSSL smime -engine $ENGINE -sign -signer $CRT -passin pass:caciucco \
+						  -inkey $INKEY -nodetach -out out/RSIGN.out -in inp/pippo.txt 2>err/RSIGN.err
+
+$OPENSSL smime -verify -noverify -in out/RSIGN.out 2>>err/RSIGN.err
+
+cat err/RSIGN.err >>out/RSIGN.out
+
+# Test against expected output
+test_output_wc w RSIGN

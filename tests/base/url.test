@@ -1,0 +1,16 @@
+#!/bin/sh
+
+. ../.function
+
+## url.test -- Test url feature
+
+start_msg url
+
+cat inp/url.inp | $WINELOADER ./crypto_url$SUFFIX    > err/url.err
+cat err/url.err | $WINELOADER ./crypto_url$SUFFIX -d > out/url.out
+
+RESULT=$?
+export RESULT
+
+# Test against expected output
+test_output_diff url

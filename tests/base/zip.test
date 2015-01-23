@@ -1,0 +1,23 @@
+#!/bin/sh
+
+. ../.function
+
+## zip.test -- Test zip feature
+
+start_msg zip
+
+rm -rf tmp/*
+mkdir  tmp/tmp
+
+#( cd tmp/tmp; $WINELOADER ../../test_zip$SUFFIX ../../inp/openoffice_test.odt extract )
+#exit 0
+
+start_prg zip tmp/tmp/zipfile < inp/zip.input
+
+# ( cd tmp/tmp; unzip -o								  zipfile 			>/dev/null 2>/dev/null )
+  ( cd tmp/tmp; $WINELOADER ../../test_zip$SUFFIX zipfile extract >/dev/null 2>/dev/null )
+
+# Test against expected output
+diff -rab .deps tmp/tmp/.deps
+RESULT=$?
+test_output

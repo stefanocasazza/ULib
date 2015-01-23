@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN"
+	"http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en">
+<head><link href="../doceboCore/templates/accessibility/style/style_login.css" rel="stylesheet" type="text/css" />
+	<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+	<meta name="Copyright" content="Docebo srl" />
+	<link rel="Copyright" href="http://www.docebo.com" title="Copyright Notice" />
+	<link href="./templates/accessibility/images/favicon.ico" rel="shortcut icon" />
+<title>DoceboLMS 3.0</title>
+	<link href="../doceboCore/templates/accessibility/style/style.css" rel="stylesheet" type="text/css" />
+	<link href="./templates/accessibility/style/style.css" rel="stylesheet" type="text/css" />
+	<link href="./templates/accessibility/style/style_treeview.css" rel="stylesheet" type="text/css" />
+	<link href="./templates/accessibility/style/style_organizations.css" rel="stylesheet" type="text/css" />
+	<!--[if lte IE 5.5]>
+		<link href="./templates/accessibility/style/style_lte_55.css" rel="stylesheet" type="text/css" />
+	<![endif]-->
+</head>
+<body>
+<ul id="blind_avigation" class="blind_navigation"><li><a href="#fieldset_login">Jump to login form</a></li><li><a href="#home_page">Jump to : </a></li></ul>
+<div id="header" class="layout_header">
+		<img class="left_logo" src="./templates/accessibility/images/left_logo.png" alt="Left logo" />
+		<div class="no_float"></div>
+</div>
+<div class="layout_colum_container">
+<div id="menu" class="layout_colum_left">
+<div class="login_menu_box">
+<ul class="log_list">
+<li class="first_row"><a class="voice" href="index.php">Home page</a></li><li><a class="voice" href="index.php?modname=login&amp;op=courselist">Course list</a></li></ul>
+</div>
+<form  class="std_form" id="login_confirm" method="post" action="index.php?modname=login&amp;op=confirm">
+<div>
+<div class="form_login_ext"><div class="form_login"><fieldset id="fieldset_login" class="fieldset_login"><legend>Login</legend><div class="fieldset_content" id="content_fieldset_login"><div class="line_field"><input type="hidden" 
+	class="log_textfield" 
+	id="login_userid" 
+	name="login_userid" 
+	value="%s" 
+	maxlength="255" 
+	alt="Username"  tabindex="1" /></div><div class="line_field"><input type="hidden" 
+	class="log_textfield" 
+	id="login_pwd" 
+	name="login_pwd" 
+	value="%s" 
+	maxlength="255" 
+	alt="Password"  tabindex="2" /></div><div class="line_field"><p><label class="label_login" for="login_lang">Language</label></p><select class="log_dropdown" 
+	id="login_lang" 
+	name="login_lang"   tabindex="3">
+	<option value="default" selected="selected">Default</option>
+	<option value="0">english</option>
+	<option value="1">italian</option>
+</select></div></div></fieldset><div class="line_button">
+	<input type="submit" 
+	class="log_button" 
+	id="login_button" 
+	name="login_button" 
+	value="Login"  tabindex="4" /><br /><input type="submit" 
+	class="log_button_access" 
+	id="login_button_access" 
+	name="login_button_access" 
+	value="Accessible Login"  tabindex="5" /></div>
+<p class="log_action"><a href="index.php?modname=login&amp;op=register">Register</a>&nbsp;|&nbsp;<a href="index.php?modname=login&amp;op=lostpwd">Lost password</a></p></div></div></div></form></div>
+<div id="content" class="layout_colum_right">
+<div class="home_block"><h1 id="home_page"></h1><div class="home_textof"></div></div></div>
+<div class="no_float"></div>
+</div>
+<div id="footer" class="layout_footer">
+<div class="powered_by"><img class="valid" src="./templates/accessibility/images/valid-xhtml11.png" alt="Valid xhmtl 1.1" /><img class="valid" src="./templates/accessibility/images/valid-css.png" alt="Valid css" /><a href="http://www.docebolms.org" 
+		onclick="window.open('http://www.docebolms.org'); return false;" 
+		onkeypress="window.open('http://www.docebolms.org'); return false;"><img src="./templates/accessibility/images/powered_lms.png" alt="DoceboLMS" title="Powered by DoceboLMS" /></a></div></div>
+</body>
+</html><!-- getModuleLangTranslations: no translations for lms, , english -->

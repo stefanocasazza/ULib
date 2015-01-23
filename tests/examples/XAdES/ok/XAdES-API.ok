@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ds:Signature Id="idPackageSignature" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+  <ds:SignedInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:CanonicalizationMethod Algorithm="http://www.w3.org/TR/2001/REC-xml-c14n-20010315"></ds:CanonicalizationMethod>
+    <ds:SignatureMethod Algorithm="http://www.w3.org/2000/09/xmldsig#rsa-sha1"></ds:SignatureMethod>
+    <ds:Reference xmlns:ds="http://www.w3.org/2000/09/xmldsig#" URI="xmldsig-input.txt">
+      <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+      <ds:DigestValue>lKGoyvW8Y5l6cZaBWxn41VEcmD8=</ds:DigestValue>
+    </ds:Reference>
+    <ds:Reference xmlns:ds="http://www.w3.org/2000/09/xmldsig#" URI="#idPackageSignature-SignedProperties" Type="http://uri.etsi.org/01903#SignedProperties">
+      <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+      <ds:DigestValue>YYxVeknp0gkrkLtrnY/h5rF8y+Q=</ds:DigestValue>
+    </ds:Reference>
+  </ds:SignedInfo>
+  <ds:SignatureValue xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+TIuCJjjq9cUt/Uay3MxiBJxurjpBTFgJB2JFupN+UsPLuWXQURMR5B+71tqNz/17
+vnIsvbA2R2cTt/SjxbKsEp4oxu9JUCfCquu01mxOFcVcZ6fVT8iiI+tFgrDBIF06
+ghD1wFqS4g/t98XO/xLHaG3pHcWnxudr1JPYCTFgYUE=
+  </ds:SignatureValue>
+  <ds:KeyInfo xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <ds:KeyValue>
+      <ds:RSAKeyValue>
+        <ds:Modulus>
+5YPRnxlAJRupbyWxTe+tdrGumdXSKIybf+hnKKOMToS2vauIdPMaIooIlAMxzSS8
+ZbI3X1vZyhq2/lgfbzeAQjcUAjiRuEfK6I3nwBUQRJGEcXlanRHg+PzAeEmyU84r
++hY4kZKDHKVD0aA7CHW3mPy4Tx0vXcCKitNfcS5Nq2E=
+        </ds:Modulus>
+        <ds:Exponent>AQAB</ds:Exponent>
+      </ds:RSAKeyValue>
+    </ds:KeyValue>
+    <ds:X509Data>
+      <ds:X509SubjectName>
+        C=IT, ST=Italy, O=Unirel spa, OU=server, CN=10.30.1.131.localdomain/emailAddress=root@10.30.1.131.localdomain
+      </ds:X509SubjectName>
+      <ds:X509IssuerSerial>
+        <ds:X509IssuerName>
+          C=IT, ST=Italy, L=Sesto Fiorentino, O=Unirel spa, OU=CA, CN=10.30.1.131.localdomain/emailAddress=root@10.30.1.131.localdomain
+        </ds:X509IssuerName>
+        <ds:X509SerialNumber>1</ds:X509SerialNumber>
+      </ds:X509IssuerSerial>
+      <ds:X509Certificate>
+MIIDJjCCAo+gAwIBAgIBATANBgkqhkiG9w0BAQUFADCBpTELMAkGA1UEBhMCSVQx
+DjAMBgNVBAgMBUl0YWx5MRkwFwYDVQQHDBBTZXN0byBGaW9yZW50aW5vMRMwEQYD
+VQQKDApVbmlyZWwgc3BhMQswCQYDVQQLDAJDQTEeMBwGA1UEAwwVbG9jYWxob3N0
+LmxvY2FsZG9tYWluMSkwJwYJKoZIhvcNAQkBFhpyb290QGxvY2FsaG9zdC5sb2Nh
+bGRvbWFpbjAeFw0xMDA3MTUxNTMwNTVaFw0yMTA2MjcxNTMwNTVaMIGOMQswCQYD
+VQQGEwJJVDEOMAwGA1UECAwFSXRhbHkxEzARBgNVBAoMClVuaXJlbCBzcGExDzAN
+BgNVBAsMBnNlcnZlcjEeMBwGA1UEAwwVbG9jYWxob3N0LmxvY2FsZG9tYWluMSkw
+JwYJKoZIhvcNAQkBFhpyb290QGxvY2FsaG9zdC5sb2NhbGRvbWFpbjCBnzANBgkq
+hkiG9w0BAQEFAAOBjQAwgYkCgYEA5YPRnxlAJRupbyWxTe+tdrGumdXSKIybf+hn
+KKOMToS2vauIdPMaIooIlAMxzSS8ZbI3X1vZyhq2/lgfbzeAQjcUAjiRuEfK6I3n
+wBUQRJGEcXlanRHg+PzAeEmyU84r+hY4kZKDHKVD0aA7CHW3mPy4Tx0vXcCKitNf
+cS5Nq2ECAwEAAaN7MHkwCQYDVR0TBAIwADAsBglghkgBhvhCAQ0EHxYdT3BlblNT
+TCBHZW5lcmF0ZWQgQ2VydGlmaWNhdGUwHQYDVR0OBBYEFPy3PGRn1u/stY/5CF/C
+/8osfrKbMB8GA1UdIwQYMBaAFMO0eQrQyjo8rGiZp9vLDN8dC/ufMA0GCSqGSIb3
+DQEBBQUAA4GBAByg0wbi6FHPQllI4qSDVoFAdPDqkjdLFZiLeqJ/M+rCWmq5+c8A
+hJDCUr0p2wMV5KMZDw7qQQ57G42G4OUm3+CIfByjabI9LnN+MGtBYrcx/0XGMz1z
+KyTzkb8Myk1kIzWvFxT2yk5eSmPhRSBpCo82MiWgM8vOESPmrLhnKOig
+      </ds:X509Certificate>
+    </ds:X509Data>
+  </ds:KeyInfo>
+  <ds:Object Id="idPackageObject" xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#">
+    <xades:QualifyingProperties Target="#idPackageSignature">
+      <xades:SignedProperties xmlns:xades="http://uri.etsi.org/01903/v1.4.1#" xmlns:ds="http://www.w3.org/2000/09/xmldsig#" Id="idPackageSignature-SignedProperties">
+        <xades:SignedSignatureProperties>
+          <xades:SigningCertificate>
+            <xades:Cert>
+              <xades:CertDigest>
+                <ds:DigestMethod Algorithm="http://www.w3.org/2000/09/xmldsig#sha1"></ds:DigestMethod>
+                <ds:DigestValue>PhBcX1iLt/j/S+8Fo94JVipX93I=</ds:DigestValue>
+              </xades:CertDigest>
+              <xades:IssuerSerial>
+                <ds:X509IssuerName>
+                  C=IT, ST=Italy, L=Sesto Fiorentino, O=Unirel spa, OU=CA, CN=10.30.1.131.localdomain/emailAddress=root@10.30.1.131.localdomain
+                </ds:X509IssuerName>
+                <ds:X509SerialNumber>1</ds:X509SerialNumber>
+              </xades:IssuerSerial>
+            </xades:Cert>
+          </xades:SigningCertificate>
+          <xades:SignaturePolicyIdentifier>
+            <xades:SignaturePolicyImplied></xades:SignaturePolicyImplied>
+          </xades:SignaturePolicyIdentifier>
+          <xades:SignatureProductionPlace>
+            <xades:City>Trieste</xades:City>
+            <xades:StateOrProvince>UD</xades:StateOrProvince>
+            <xades:PostalCode>34100</xades:PostalCode>
+            <xades:CountryName>Italy</xades:CountryName>
+          </xades:SignatureProductionPlace>
+          <xades:SignerRole>
+            <xades:ClaimedRoles>
+              <xades:ClaimedRole>Project Manager TEOREMA</xades:ClaimedRole>
+            </xades:ClaimedRoles>
+          </xades:SignerRole>
+        </xades:SignedSignatureProperties>
+        <xades:SignedDataObjectProperties>
+         <xades:DataObjectFormat ObjectReference="xmldsig-input.txt">
+           <xades:MimeType>application/msword</xades:MimeType>
+         </xades:DataObjectFormat>
+        </xades:SignedDataObjectProperties>
+      </xades:SignedProperties>
+      <xades:UnsignedProperties>
+        <xades:UnsignedSignatureProperties>
+        </xades:UnsignedSignatureProperties>
+      </xades:UnsignedProperties>
+    </xades:QualifyingProperties>
+  </ds:Object>
+</ds:Signature>

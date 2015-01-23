@@ -1,0 +1,21 @@
+{
+ROOT_DN							o=BNL,c=IT
+PASSWORD							secret
+ROOT_DN_MAIL					ou=Utenti,ou=e-family.it,o=BNL,c=IT
+PASSWORD_MAIL					secret
+CHECK_QUOTING					"str = \"Manager of my caz\"..."
+LDAP_SERVER_ADDRESS			10.10.15.1:389
+LOG_FILE							ldap_update.log
+LDAP_SERVER_ADDRESS_MAIL	10.10.15.1:389
+ADMIN_DN							cn=Manager,o=BNL,c=IT
+ADMIN_DN_MAIL					cn=Manager,o=BNL,c=IT
+TIME_SLEEP_LDAP_ERROR		10
+TIME_SLEEP_MQSERIES_ERROR	60
+FILE_WRONG_MESSAGE			ldap_update.wrg
+MAILDELIVERYOPTION			mailbox
+MESSAGE_QUEUE_SERVER			JAVA.CHANNEL/TCP/lobelia(1414)
+MESSAGE_QUEUE_MANAGER		frontend
+MAILHOST							mailsrv.bf.bnl.it
+MESSAGE_QUEUE_NAME			LDAP.UPDATE.QUEUE
+MAX_ERROR_FOR_CONNECT		2
+}

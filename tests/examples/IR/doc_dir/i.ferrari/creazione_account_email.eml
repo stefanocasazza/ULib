@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="http://www.test.eraclito.net/crm_dtd/operation.xsl"?>
+<!DOCTYPE operation SYSTEM "http://www.test.eraclito.net/crm_dtd/user-folder.dtd">
+
+<operation>
+<description>Creazione account email</description>
+<uid>i.ferrari</uid>
+<id>creazione_account_email</id>
+<date>25/10/2006 14:59:34</date>
+<holder>Sandra Ceccarelli</holder>
+<author>workflow</author>
+<university-email-address>i.ferrari@test.eraclito.net</university-email-address>
+</operation>
