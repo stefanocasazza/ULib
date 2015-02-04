@@ -27,6 +27,7 @@
 class UHTTP;
 class UHttpPlugIn;
 class UFileConfig;
+class UNoCatPlugIn;
 
 template <class T> class UVector;
 template <class T> class UOrmTypeHandler;
@@ -415,7 +416,7 @@ public:
 
    void clear() // erase all element
       {
-      U_TRACE(0, "UVector<T*>::clear()")
+      U_TRACE(0+256, "UVector<T*>::clear()")
 
       U_CHECK_MEMORY
 
@@ -1202,6 +1203,8 @@ public:
 protected:
    uint32_t loadFromData(const char* start, uint32_t size);
 
+   UStringRep* getStringRep(uint32_t pos) { return UVector<UStringRep*>::at(pos); }
+
 private:
    static void mksort(UStringRep** a, int n, int depth);
           bool _isEqual(UVector<UString>& vec, bool ignore_case);
@@ -1217,6 +1220,7 @@ private:
    friend class UHTTP;
    friend class UHttpPlugIn;
    friend class UFileConfig;
+   friend class UNoCatPlugIn;
 };
 
 #endif

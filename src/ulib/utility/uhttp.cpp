@@ -2185,7 +2185,7 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
           * be much larger than the examples here. The size-line parameters are rarely used, but you should at
           * least ignore them correctly. Footers are also rare, but might be appropriate for things like checksums
           * or digital signatures
-         */
+          */
 
          count = pbuffer->find(U_CRLF2, u_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
 
@@ -2224,7 +2224,7 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
 
             chunkSize = strtol(inp, 0, 16);
 
-         // U_INTERNAL_DUMP("chunkSize = %u inp[0] = %C", chunkSize, inp[0])
+            // U_INTERNAL_DUMP("chunkSize = %u inp[0] = %C", chunkSize, inp[0])
 
             // The last chunk is followed by zero or more trailers, followed by a blank line
 
@@ -5313,7 +5313,7 @@ UString UHTTP::getHeaderForResponse(const UString& ext)
    U_RETURN_STRING(result);
 }
 
-void UHTTP::setResponse(const UString* content_type, const UString* pbody)
+void UHTTP::setResponse(const UString* content_type, UString* pbody)
 {
    U_TRACE(0, "UHTTP::setResponse(%p,%p)", content_type, pbody)
 
@@ -5348,7 +5348,35 @@ void UHTTP::setResponse(const UString* content_type, const UString* pbody)
       ptr += U_CONSTANT_SIZE("Content-Length: ");
 
       if (pbody == 0) *ptr++ = '0';
-      else             ptr  += u_num2str32(ptr, pbody->size());
+      else
+         {
+         sz = pbody->size();
+
+#     ifdef USE_LIBZ
+         if (UStringExt::isGzip(*pbody))
+            {
+            if (U_http_is_accept_gzip == false)
+               {
+               *pbody = UStringExt::gunzip(*pbody);
+
+               sz = pbody->size();
+               }
+
+            ptr += u_num2str32(ptr, sz);
+
+            if (U_http_is_accept_gzip)
+               {
+               *(int64_t*) ptr     = U_MULTICHAR_CONSTANT64('\r','\n','C','o','n','t','e','n');
+               *(int64_t*)(ptr+8)  = U_MULTICHAR_CONSTANT64( 't', '-','E','n','c','o','d','i');
+               *(int64_t*)(ptr+16) = U_MULTICHAR_CONSTANT64( 'n', 'g',':',' ','g','z','i','p');
+
+               ptr += U_CONSTANT_SIZE("\r\nContent-Encoding: gzip");
+               }
+            }
+         else
+#     endif
+         ptr += u_num2str32(ptr, sz);
+         }
 
       *(int32_t*)ptr  = U_MULTICHAR_CONSTANT32('\r','\n','\r','\n');
                  ptr += U_CONSTANT_SIZE(U_CRLF2);

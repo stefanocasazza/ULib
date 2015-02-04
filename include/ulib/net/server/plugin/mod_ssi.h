@@ -57,7 +57,7 @@ public:
 
    static void setBadRequest();
    static void setAlternativeResponse();
-   static void setAlternativeResponse(const UString& body);
+   static void setAlternativeResponse(UString& body);
    static void setAlternativeRedirect(const char* fmt, ...);
    static void setAlternativeInclude(const UString& tmpl, uint32_t estimated_size, bool bprocess,
                                      const char* title_txt, const char* ssi_head, const char* body_style, ...);

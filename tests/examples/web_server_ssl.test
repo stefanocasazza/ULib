@@ -201,6 +201,8 @@ c
 c
 EOF
 
+killall userver_ssl 2>/dev/null
+
 # webserver_ssl0
  creat_config 0 
  start_test

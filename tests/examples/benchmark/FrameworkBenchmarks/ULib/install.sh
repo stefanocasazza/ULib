@@ -16,9 +16,9 @@
 #    . $FWROOT/ULib/install.sh (cwd=$FWROOT//installs)
 # --------------------------------------------------------------------------------------------------------
 
-export ULIB_VERSION=1.4.2
-export ULIB_ROOT=$IROOT/ULib
-export ULIB_DOCUMENT_ROOT=${ULIB_ROOT}/ULIB_DOCUMENT_ROOT
+ULIB_VERSION=1.4.2
+ULIB_ROOT=$IROOT/ULib
+ULIB_DOCUMENT_ROOT=${ULIB_ROOT}/ULIB_DOCUMENT_ROOT
 
 # Check if ULib is already installed
 ULIB_INSTALLED_FILE="${IROOT}/ULib-${ULIB_VERSION}.installed"

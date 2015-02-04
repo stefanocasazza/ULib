@@ -24,6 +24,7 @@ class UProxyPlugIn;
 class UNoCatPlugIn;
 class UServer_Base;
 class UClient_Base;
+class UHttpClient_Base;
 class UClientImage_Base;
 
 // Logging is the process of recording application actions and state to a secondary interface
@@ -157,8 +158,8 @@ protected:
    static void startup();
    static void initStaticDate();
    static void _updateStaticDate(char* ptr, int which);
-   static void logResponse(const UString& data, const char* name,                                                     const char* format, ...);
-   static void log(const struct iovec* iov,     const char* name, const char* type, int ncount, const char* pipeline, const char* format, ...);
+   static void logResponse(const UString& data, const char* name,                                                                  const char* format, ...);
+   static void log(const struct iovec* iov,     const char* name, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, ...);
 
    static void updateStaticDate(char* ptr, int which)
       {
@@ -194,6 +195,7 @@ private:
    friend class UNoCatPlugIn;
    friend class UServer_Base;
    friend class UClient_Base;
+   friend class UHttpClient_Base;
    friend class UClientImage_Base;
 };
 

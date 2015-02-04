@@ -953,6 +953,8 @@ start:
       if (U_ClientImage_state           == U_PLUGIN_HANDLER_AGAIN &&
           U_ClientImage_parallelization != 1) // 1 => child of parallelization
          {
+         U_INTERNAL_ASSERT(socket->isOpen())
+
          U_RETURN(U_NOTIFIER_OK); // NOT BLOCKING...
          }
 
@@ -1010,6 +1012,9 @@ dmiss:
          {
          // TODO
          }
+
+      U_INTERNAL_ASSERT(socket->isOpen())
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
 
       U_RETURN(U_NOTIFIER_OK);
       }
@@ -1076,7 +1081,21 @@ dmiss:
 
    U_INTERNAL_ASSERT(socket->isOpen())
 
-   if (U_ClientImage_data_missing) goto dmiss;
+   if (U_ClientImage_data_missing)
+      {
+      if (U_ClientImage_parallelization == 1)
+         {
+         if (UNotifier::waitForRead(socket->iSockDesc, U_TIMEOUT_MS) != 1 ||
+             USocketExt::read(socket, *rbuffer, U_SINGLE_READ, 0) == false)
+            {
+            goto death;
+            }
+
+         goto loop;
+         }
+
+      goto dmiss;
+      }
 
    if (LIKELY(size_request))
       {
@@ -1293,22 +1312,27 @@ error:
 
    if (U_ClientImage_close)
       {
-end:  if (U_ClientImage_parallelization == 1) UServer_Base::endNewChild(); // 1 => child of parallelization
+end:  if (U_ClientImage_parallelization == 1) goto death; // 1 => child of parallelization
 
       U_RETURN(U_NOTIFIER_DELETE);
       }
 
    // NB: maybe we have some more request to services on the same connection...
 
-   if (U_ClientImage_parallelization == 1 &&
-       UNotifier::waitForRead(socket->iSockDesc, U_TIMEOUT_MS) == 1)
+   if (U_ClientImage_parallelization == 1)
       {
-      goto start;
+      U_INTERNAL_ASSERT_EQUALS(count, 0) // NB: we must not have pending write...
+      U_INTERNAL_ASSERT_DIFFERS(socket->iSockDesc, -1)
+
+      if (UNotifier::waitForRead(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto start;
+death:
+      UServer_Base::endNewChild(); // no return;
       }
 
    last_event = u_now->tv_sec;
 
    U_INTERNAL_ASSERT(socket->isOpen())
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -1317,13 +1341,16 @@ bool UClientImage_Base::writeResponse()
 {
    U_TRACE(0, "UClientImage_Base::writeResponse()")
 
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_close = %b nrequest = %u", U_ClientImage_pipeline, U_ClientImage_close, nrequest)
+
    U_INTERNAL_ASSERT(*wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 2) // 2 => parent of parallelization
 
    int iBytesWrite;
-   uint32_t sz1 = wbuffer->size(),
-            sz2 = (U_http_method_type == HTTP_HEAD ? 0 : body->size());
+   uint32_t sz1     = wbuffer->size(),
+            sz2     = (U_http_method_type == HTTP_HEAD ? 0 : body->size()),
+            msg_len = (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0);
 
    iov_vec[2].iov_len  = sz1;
    iov_vec[2].iov_base = (caddr_t) wbuffer->data();
@@ -1331,8 +1358,6 @@ bool UClientImage_Base::writeResponse()
    iov_vec[3].iov_base = (caddr_t) body->data();
 
    ncount = sz1 + sz2;
-
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_close = %b nrequest = %u", U_ClientImage_pipeline, U_ClientImage_close, nrequest)
 
    if (LIKELY(response_len)) // HTTP/1.1 200 OK\r\n
       {
@@ -1361,22 +1386,44 @@ bool UClientImage_Base::writeResponse()
    if (LIKELY(iBytesWrite == (int)ncount))
       {
 #  ifdef U_LOG_ENABLE
-      if (logbuf)
-         {
-         ULog::log(iov_vec, UServer_Base::mod_name[0], "response", ncount,
-                   (U_ClientImage_pipeline ? "[pipeline] " : ""), " to %.*s", U_STRING_TO_TRACE(*logbuf));
-         }
+      if (logbuf) ULog::log(iov_vec, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, " to %.*s", U_STRING_TO_TRACE(*logbuf));
 #  endif
 
       U_RETURN(true);
       }
 
+loop:
    if (iBytesWrite > 0)
       {
-      U_SRV_LOG_WITH_ADDR("sent partial response (%u bytes of %u: sock_fd %d)%.*s to",
-                           iBytesWrite, ncount, socket->iSockDesc, (U_ClientImage_pipeline ? U_CONSTANT_SIZE(" [pipeline]") : 0), " [pipeline]");
+      U_SRV_LOG_WITH_ADDR("sent partial response (%u bytes of %u: sock_fd %d)%.*s to", iBytesWrite, ncount, socket->iSockDesc, msg_len, " [pipeline]");
 
       ncount -= iBytesWrite;
+
+      if (U_ClientImage_parallelization != 1 && // 1 => child of parallelization
+          UServer_Base::startParallelization())
+         {
+         // parent
+
+         U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+
+         U_RETURN(false);
+         }
+
+      if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
+         {
+         if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) != 1) U_RETURN(false);
+
+         iBytesWrite = USocketExt::writev(socket, iov_vec, 4, ncount, UServer_Base::timeoutMS);
+
+         if (LIKELY(iBytesWrite == (int)ncount))
+            {
+            U_SRV_LOG_WITH_ADDR("sending partial response completed (%u bytes of %u: sock_fd %d)%.*s to", iBytesWrite, ncount, socket->iSockDesc, msg_len, " [pipeline]");
+
+            U_RETURN(false);
+            }
+
+         goto loop;
+         }
       }
 
    U_RETURN(false);
@@ -1388,7 +1435,8 @@ int UClientImage_Base::handlerResponse()
 
    if (writeResponse()) U_RETURN(U_NOTIFIER_OK);
 
-   if (socket->isOpen())
+   if (socket->isOpen() &&
+       U_ClientImage_parallelization == 0) // 1/2 => child/parent of parallelization
       {
 #  ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
       resetPipelineAndClose();

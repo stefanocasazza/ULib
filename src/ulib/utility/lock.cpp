@@ -51,17 +51,17 @@ void ULock::lock(time_t timeout)
       {
       if (spinlock)
          {
-         uint32_t cnt = 100;
+      // uint32_t cnt = 100;
 
-         do {
+      // do {
             if (spinLockAcquire(spinlock))
                {
                locked = -1;
 
                return;
                }
-            }
-         while (cnt--);
+      //    }
+      // while (cnt--);
          }
 
       if (sem &&

@@ -126,8 +126,12 @@ loop:
 
       if (result)
          {
-         if (outpath.empty()) (void) write(1, U_STRING_TO_PARAM(result));
-         else                 UFile::writeTo(outpath, result);
+#     ifdef USE_LIBZ
+         if (UStringExt::isGzip(result)) result = UStringExt::gunzip(result);
+#     endif
+
+         if (outpath) UFile::writeTo(outpath, result);
+         else         (void) write(1, U_STRING_TO_PARAM(result));
          }
 
       if (queue_time)

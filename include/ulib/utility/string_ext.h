@@ -66,6 +66,9 @@ public:
 
    // GZIP method
 
+   static bool isGzip(const char* s)        { return (*(int16_t*)s == U_MULTICHAR_CONSTANT16('\x1F','\x8B')); }
+   static bool isGzip(const UString& s)     { return isGzip(s.data()); }
+
    static UString deflate(const char* s, uint32_t n, int type);         // .gz   compress
    static UString  gunzip(const char* s, uint32_t n, uint32_t sz_orig); // .gz uncompress
 

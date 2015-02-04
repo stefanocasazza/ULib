@@ -181,11 +181,11 @@ protected:
    static UString* peer_present_in_arp_cache;
 
    static UVector<Url*>* vauth_url;
-   static UVector<Url*>* vinfo_url;
    static UVector<UString>* vauth;
    static UVector<UString>* vauth_ip;
    static UVector<UString>* openlist;
    static UVector<UString>* varp_cache;
+   static UVector<UString>* vinfo_data;
    static UVector<UIPAddress*>** vaddr;
    static UHttpClient<UTCPSocket>* client;
    static UHashMap<UModNoCatPeer*>* peers;
@@ -210,26 +210,41 @@ protected:
 
    // VARIE
 
+   static void getTraffic();
    static void setNewPeer();
+   static void checkSystem();
    static void checkOldPeer();
    static void creatNewPeer();
-   static bool creatNewPeer(uint32_t index_AUTH);
-
-   static void preallocatePeers() { U_NEW_VECTOR_ULIB_OBJECT(peers_preallocate, num_peers_preallocate, UModNoCatPeer, 0); } 
+   static bool checkFirewall();
    static bool preallocatePeersFault();
-
-   static bool     checkFirewall();
-   static uint32_t checkFirewall(UString& output);
-   static uint32_t getIndexAUTH(const char* ip_address) __pure;
-
-   static void checkSystem();
+   static void deny(bool disconnected);
+   static void executeCommand(int type);
    static void addPeerInfo(time_t logout);
    static bool getPeer(uint32_t i) __pure;
    static void uploadFileToPortal(UFile& file);
+   static bool creatNewPeer(uint32_t index_AUTH);
+   static void sendInfoData(uint32_t index_AUTH);
    static bool getPeerFromMAC(const UString& mac);
    static bool checkAuthMessage(const UString& msg);
    static void setStatusContent(const UString& label);
+   static void setHTTPResponse(const UString& content);
+   static void notifyAuthOfUsersInfo(uint32_t index_AUTH);
+   static bool getPeerStatus(UStringRep* key, void* value);
+   static bool checkPeerInfo(UStringRep* key, void* value);
+   static bool checkPeerStatus(UStringRep* key, void* value);
+   static bool getPeerListInfo(UStringRep* key, void* value);
    static void setRedirectLocation(const UString& redirect, const Url& auth);
+   static void permit(const UString& UserDownloadRate, const UString& UserUploadRate);
+   static void sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UString* poutput);
+   static void setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const UString& ip);
+
+   static uint32_t checkFirewall(UString& output);
+   static uint32_t getIndexAUTH(const char* ip_address) __pure;
+   static UString  getIPAddress(const char* ptr, uint32_t len);
+   static UString  getSignedData(const char* ptr, uint32_t len);
+   static UString  getUrlForSendMsgToPortal(uint32_t index_AUTH, const char* msg, uint32_t msg_len);
+
+   static void preallocatePeers() { U_NEW_VECTOR_ULIB_OBJECT(peers_preallocate, num_peers_preallocate, UModNoCatPeer, 0); } 
 
    static void getARPCache()
       {
@@ -238,31 +253,12 @@ protected:
       (void) USocketExt::getARPCache(*arp_cache, *varp_cache);
       }
 
-   static void sendMsgToPortal(const UString& msg)
+   static void sendMsgToAllPortal(const UString& msg)
       {
-      U_TRACE(0, "UNoCatPlugIn::sendMsgToPortal(%.*S)", U_STRING_TO_TRACE(msg))
+      U_TRACE(0, "UNoCatPlugIn::sendMsgToAllPortal(%.*S)", U_STRING_TO_TRACE(msg))
 
-      for (uint32_t i = 0, n = vinfo_url->size(); i < n; ++i) sendMsgToPortal(i, msg, 0, false);
+      for (uint32_t i = 0, n = vauth_url->size(); i < n; ++i) sendMsgToPortal(i, msg, 0);
       }
-
-   static void sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UString* poutput, bool basync);
-
-   static UString getIPAddress(const char* ptr, uint32_t len);
-   static UString getSignedData(const char* ptr, uint32_t len);
-   static UString getUrlForSendMsgToPortal(uint32_t index_AUTH, const char* msg, uint32_t msg_len);
-
-   static void   deny(bool disconnected);
-   static void permit(const UString& UserDownloadRate, const UString& UserUploadRate);
-
-   static void getTraffic();
-   static void executeCommand(int type);
-   static void setHTTPResponse(const UString& content);
-   static void notifyAuthOfUsersInfo(uint32_t index_AUTH);
-   static bool getPeerStatus(UStringRep* key, void* value);
-   static bool checkPeerInfo(UStringRep* key, void* value);
-   static bool checkPeerStatus(UStringRep* key, void* value);
-   static bool getPeerListInfo(UStringRep* key, void* value);
-   static void setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const UString& ip);
 
    static bool isPingAsyncPending()
       {

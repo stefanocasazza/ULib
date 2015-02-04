@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/net/rpc/rpc_client.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/client/client_rdb.h>
 
@@ -47,7 +48,7 @@ bool URDBClient_Base::readResponse()
 
    response.setBuffer(U_CAPACITY);
 
-   if (this->UClient_Base::readRPCResponse())
+   if (URPCClient_Base::readResponse(socket, buffer, response))
       {
       nResponseCode = strtol(buffer.data(), 0, 10);
 
@@ -77,10 +78,13 @@ bool URDBClient_Base::processRequest(const char* token)
 
    UStringExt::buildTokenVector(token, *URPC::rpc_info, request);
 
-   bool result = this->UClient_Base::sendRequest(request, false) &&
-                 this->readResponse();
+   if (sendRequest(request, false) &&
+       readResponse())
+      {
+      U_RETURN(true);
+      }
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 bool URDBClient_Base::closeReorganize()

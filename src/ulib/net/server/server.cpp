@@ -1881,6 +1881,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
 loop:
    U_INTERNAL_ASSERT_MINOR(pClientIndex, eClientImage)
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
 
    U_INTERNAL_DUMP("----------------------------------------", 0)
    U_INTERNAL_DUMP("vClientImage[%d].last_event    = %#3D",  (pClientIndex - vClientImage),
@@ -1930,6 +1931,7 @@ try_next:
 
 try_accept:
    U_INTERNAL_ASSERT(csocket->isClosed())
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
 
    if (socket->acceptClient(csocket) == false)
       {
@@ -2195,6 +2197,9 @@ retry:
 #ifdef DEBUG
    if (UServer_Base::max_depth < UNotifier::num_connection) UServer_Base::max_depth = UNotifier::num_connection;
 #endif
+
+   U_INTERNAL_ASSERT(csocket->isOpen())
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
 
    UNotifier::insert((UEventFd*)pClientIndex);
 
@@ -2832,6 +2837,10 @@ bool UServer_Base::startParallelization()
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d U_CNT_PARALLELIZATION = %d max_num_process_parallelization = %d",
                     U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_CNT_PARALLELIZATION,     max_num_process_parallelization)
 
+#ifdef USE_LIBSSL
+// if (bssl == false)
+#endif
+   {
    if (U_ClientImage_pipeline        == false &&
        U_ClientImage_parallelization == false &&
        U_CNT_PARALLELIZATION < max_num_process_parallelization) // NB: thread approach => (max_num_process_parallelization == 0)
@@ -2857,6 +2866,7 @@ bool UServer_Base::startParallelization()
 
       U_ASSERT(isParallelizationChild())
       }
+   }
 
    U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
 

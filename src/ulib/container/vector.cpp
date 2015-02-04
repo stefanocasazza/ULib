@@ -228,7 +228,7 @@ __pure uint32_t UVector<UString>::find(const char* s, uint32_t n)
 
 __pure uint32_t UVector<UString>::findRange(const char* s, uint32_t n, uint32_t start, uint32_t _end)
 {
-   U_TRACE(0, "UVector<UString>::findRange(%.*S,%u,%u,%u)", n, s, n, start, _end)
+   U_TRACE(0+256, "UVector<UString>::findRange(%.*S,%u,%u,%u)", n, s, n, start, _end)
 
    U_CHECK_MEMORY
 

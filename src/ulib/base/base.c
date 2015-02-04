@@ -1016,14 +1016,16 @@ uint32_t u_strftime2(char* restrict s, uint32_t maxsize, const char* restrict fo
 
 #ifdef DEBUG
    {
-   char dbg[4096];
    uint32_t result = u_strftime1(s, maxsize, format);
 
+   /*
+   char dbg[4096];
    if (strftime(dbg, maxsize, format, &u_strftime_tm) &&
        strcmp(s,dbg))
       {
       U_WARNING("DIFFERENT: u_strftime2() = \"%s\" strftime() = \"%s\" format = \"%s\"", s, dbg, format);
       }
+   */
 
    return result;
    }

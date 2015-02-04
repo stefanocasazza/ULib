@@ -136,7 +136,7 @@ void USSIPlugIn::setAlternativeResponse()
    UHTTP::setResponse(0, 0);
 }
 
-void USSIPlugIn::setAlternativeResponse(const UString& _body)
+void USSIPlugIn::setAlternativeResponse(UString& _body)
 {
    U_TRACE(0, "USSIPlugIn::setAlternativeResponse(%.*S)", U_STRING_TO_TRACE(_body))
 

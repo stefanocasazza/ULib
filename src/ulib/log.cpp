@@ -610,9 +610,9 @@ void ULog::log(int _fd, const char* fmt, ...)
    (void) U_SYSCALL(writev, "%d,%p,%d", _fd, iov_vec, 5);
 }
 
-void ULog::log(const struct iovec* iov, const char* name, const char* type, int ncount, const char* pipeline, const char* format, ...)
+void ULog::log(const struct iovec* iov, const char* name, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, ...)
 {
-   U_TRACE(0, "ULog::log(%p,%S,%S,%d,%S,%S)", iov, name, type, ncount, pipeline, format)
+   U_TRACE(0, "ULog::log(%p,%S,%S,%d,%.*S,%u,%S)", iov, name, type, ncount, msg_len, msg, msg_len, format)
 
    U_INTERNAL_ASSERT_MAJOR(ncount, 0)
 
@@ -674,7 +674,7 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
       ptr = buffer1;
       }
 
-   len = u__snprintf(buffer2, sizeof(buffer2), "%ssend %s (%u bytes) %s%.*S", name, type, ncount, pipeline, sz, ptr);
+   len = u__snprintf(buffer2, sizeof(buffer2), "%ssend %s (%u bytes) %.*s%.*S", name, type, ncount, msg_len, msg, sz, ptr);
 
    va_list argp;
    va_start(argp, format);

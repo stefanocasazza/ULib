@@ -511,8 +511,8 @@ resend:
 
          if (log)
             {
-            ULog::log(iov,                                   name, "request", ncount, "", " to %.*s", U_STRING_TO_TRACE(host_port));
-            ULog::log("%serror on reading data from %.*S%R", name,                                    U_STRING_TO_TRACE(host_port), 0); // 0 is necessary...
+            ULog::log(iov,                                   name, "request", ncount, "", 0, " to %.*s", U_STRING_TO_TRACE(host_port));
+            ULog::log("%serror on reading data from %.*S%R", name,                                       U_STRING_TO_TRACE(host_port), 0); // 0 is necessary
             }
 
          U_RETURN(false);
@@ -520,8 +520,8 @@ resend:
 
       if (log)
          {
-                       ULog::log(iov,              name, "request", ncount, "", " to %.*s",   U_STRING_TO_TRACE(host_port));
-         if (response) ULog::logResponse(response, name,                        " from %.*s", U_STRING_TO_TRACE(host_port));
+                       ULog::log(iov,              name, "request", ncount, "", 0, " to %.*s",   U_STRING_TO_TRACE(host_port));
+         if (response) ULog::logResponse(response, name,                           " from %.*s", U_STRING_TO_TRACE(host_port));
          }
 
       reset();
@@ -551,6 +551,7 @@ bool UClient_Base::readResponse(uint32_t count)
 
    U_RETURN(false);
 }
+
 
 bool UClient_Base::readHTTPResponse()
 {
@@ -583,31 +584,6 @@ bool UClient_Base::readHTTPResponse()
             }
          }
       }
-
-   U_RETURN(false);
-}
-
-bool UClient_Base::readRPCResponse()
-{
-   U_TRACE(0, "UClient_Base::readRPCResponse()")
-
-   // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
-
-     buffer.setEmptyForce();
-   response.setEmptyForce();
-
-   uint32_t rstart = 0;
-
-   if (URPC::readTokenString(socket, 0, buffer, rstart, response))
-      {
-      // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
-
-      buffer.size_adjust_force(U_TOKEN_NM);
-      }
-
-   U_INTERNAL_DUMP("buffer = %.*S response = %.*S)", U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(response))
-
-   if (buffer) U_RETURN(true);
 
    U_RETURN(false);
 }

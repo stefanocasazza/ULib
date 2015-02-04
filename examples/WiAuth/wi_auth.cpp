@@ -101,6 +101,7 @@ extern U_EXPORT int runDynamicPage_wi_auth(UClientImage_Base* client_image);
       POST_ENTRY(admin_execute_recovery),
       POST_ENTRY(admin_recovery),
       POST_ENTRY(admin_view_user),
+      POST_ENTRY(info),
       POST_ENTRY(login_request),
       POST_ENTRY(login_request_IdP),
       POST_ENTRY(password),

@@ -394,7 +394,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
       // MD5(method : uri)
 
-      a2.snprintf("%.*s:%.*s", u_http_method_list[method_num].len, u_http_method_list[method_num].name, U_STRING_TO_TRACE(UClient_Base::uri));
+      a2.snprintf("%.*s:%.*s", U_HTTP_METHOD_NUM_TO_TRACE(method_num), U_STRING_TO_TRACE(UClient_Base::uri));
 
       UServices::generateDigest(U_HASH_MD5, 0, a2, ha2, false);
 
@@ -619,9 +619,7 @@ int UHttpClient_Base::sendRequestAsync(const UString& _url, bool bqueue, const c
       {
       // we need to compose the request to the HTTP server...
 
-      method_num = 0; // GET
-
-      composeRequest();
+      composeRequest("application/x-www-form-urlencoded");
 
       UClient_Base::adjustTimeOut();
 
@@ -689,9 +687,9 @@ next:
 // We do not process Location headers when accompanying a 200 OK response.
 //=============================================================================
 
-void UHttpClient_Base::parseRequest()
+void UHttpClient_Base::parseRequest(uint32_t n)
 {
-   U_TRACE(0, "UHttpClient_Base::parseRequest()")
+   U_TRACE(0, "UHttpClient_Base::parseRequest(%u)", n)
 
    U_INTERNAL_DUMP("last_request = %.*S", U_STRING_TO_TRACE(last_request))
 
@@ -703,7 +701,7 @@ void UHttpClient_Base::parseRequest()
 
    const char* ptr = last_request.data();
 
-   UClient_Base::iovcnt = 3;
+   UClient_Base::iovcnt = n;
 
    UClient_Base::iov[0].iov_base = (caddr_t)ptr;
    UClient_Base::iov[0].iov_len  = startHeader;
@@ -728,10 +726,12 @@ UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, ui
 
    tmp.snprintf("%.*s %.*s HTTP/1.1\r\n"
                 "Host: %.*s\r\n"
+#              ifdef USE_LIBZ
+                "Accept-Encoding: gzip\r\n"
+#              endif
                 "User-Agent: " PACKAGE_NAME "/" PACKAGE_VERSION "\r\n"
                 "%s",
-                u_http_method_list[method_num].len, u_http_method_list[method_num].name,
-                uri_len, _uri,
+                U_HTTP_METHOD_NUM_TO_TRACE(method_num), uri_len, _uri,
                 U_STRING_TO_TRACE(host_port),
                 extension);
 
@@ -752,15 +752,46 @@ UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, ui
    U_RETURN_STRING(tmp);
 }
 
-void UHttpClient_Base::composeRequest()
+void UHttpClient_Base::composeRequest(const char* content_type)
 {
-   U_TRACE(0, "UHttpClient_Base::composeRequest()")
+   U_TRACE(0, "UHttpClient_Base::composeRequest(%S)", content_type)
 
    U_INTERNAL_ASSERT(UClient_Base::uri)
 
-   last_request = wrapRequest(0, UClient_Base::host_port, method_num, U_STRING_TO_PARAM(UClient_Base::uri), "\r\n");
+   U_INTERNAL_DUMP("method_num = %u", method_num)
 
-   parseRequest();
+   if (method_num == 0) // GET
+      {
+      last_request = wrapRequest(0, UClient_Base::host_port, method_num, U_STRING_TO_PARAM(UClient_Base::uri), "\r\n");
+
+      parseRequest(3);
+      }
+   else
+      {
+      U_INTERNAL_ASSERT_EQUALS(method_num, 2) // POST 
+
+      uint32_t sz = body.size();
+
+      U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+      UClient_Base::iov[3].iov_base = (caddr_t)body.data();
+      UClient_Base::iov[3].iov_len  = sz;
+
+      (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
+
+      last_request.snprintf("POST %.*s HTTP/1.1\r\n"
+                            "Host: %.*s:%u\r\n"
+                            "User-Agent: ULib/1.0\r\n"
+                            "Content-Length: %d\r\n"
+                            "Content-Type: %s\r\n"
+                            "\r\n",
+                            U_STRING_TO_TRACE(UClient_Base::uri),
+                            U_STRING_TO_TRACE(UClient_Base::server), UClient_Base::port,
+                            sz,
+                            content_type);
+
+      parseRequest(4);
+      }
 }
 
 bool UHttpClient_Base::sendRequestEngine()
@@ -906,33 +937,12 @@ bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const
       U_RETURN(false);
       }
 
-   uint32_t sz = _body.size();
+   body       = _body;
+   method_num = 2; // POST
 
-   UClient_Base::iov[3].iov_base = (caddr_t)_body.data();
-   UClient_Base::iov[3].iov_len  = sz;
-
-   U_INTERNAL_ASSERT(UClient_Base::uri)
-
-   (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
-
-   last_request.snprintf("POST %.*s HTTP/1.1\r\n"
-                         "Host: %.*s:%u\r\n"
-                         "User-Agent: ULib/1.0\r\n"
-                         "Content-Length: %d\r\n"
-                         "Content-Type: %s\r\n"
-                         "\r\n",
-                         U_STRING_TO_TRACE(UClient_Base::uri),
-                         U_STRING_TO_TRACE(UClient_Base::server), UClient_Base::port,
-                         sz,
-                         content_type);
-
-   parseRequest();
-
-   UClient_Base::iovcnt = 4;
+   composeRequest(content_type);
 
    // send post request to server and get response
-
-   method_num = 2; // POST
 
    if (sendRequest()) U_RETURN(true);
 
@@ -949,6 +959,8 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
 
       U_RETURN(false);
       }
+
+   method_num = 2; // POST
 
    UString content = file.getContent();
 
@@ -998,13 +1010,9 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
                          U_STRING_TO_TRACE(UClient_Base::server), UClient_Base::port,
                          _body.size() + sz + UClient_Base::iov[5].iov_len);
 
-   parseRequest();
-
-   UClient_Base::iovcnt = 6;
+   parseRequest(6);
 
    // send upload request to server and get response
-
-   method_num = 2; // POST
 
    if (sendRequest()) U_RETURN(true);
 

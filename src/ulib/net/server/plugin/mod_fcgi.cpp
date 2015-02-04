@@ -471,7 +471,7 @@ int UFCGIPlugIn::handlerRequest()
          U_INTERNAL_DUMP("pos = %u response.size() = %u", pos, connection->response.size())
 
          if ((connection->response.size() - pos) < FCGI_HEADER_LEN &&
-             connection->readResponse() == false)
+             connection->readResponse(U_SINGLE_READ) == false)
             {
             break;
             }

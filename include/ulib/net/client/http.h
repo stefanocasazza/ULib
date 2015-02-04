@@ -125,7 +125,11 @@ public:
 
    // ASYNC MODE (it creates a copy of itself, return pid child if parent)
 
-   int sendRequestAsync(const UString& url, bool bqueue = true, const char* log_msg = 0, int log_fd = -1);
+   int sendGETRequestAsync(const UString& _url, bool bqueue, const char* log_msg, int log_fd = -1)
+      { method_num = 0; return sendRequestAsync(_url, bqueue, log_msg, log_fd); }
+
+   int sendPOSTRequestAsync(const UString& _body, const UString& _url, bool bqueue, const char* log_msg, int log_fd = -1)
+      { body = _body; method_num = 2; return sendRequestAsync(_url, bqueue, log_msg, log_fd); }
 
    // QUEUE MODE
 
@@ -153,9 +157,10 @@ protected:
 
    static struct uhttpinfo u_http_info_save;
 
-   void parseRequest();
-   void composeRequest();
    bool sendRequestEngine();
+   void parseRequest(uint32_t n = 3);
+   void composeRequest(const char* content_type = 0);
+   int  sendRequestAsync(const UString& url, bool bqueue, const char* log_msg, int log_fd);
 
    // Add the MIME-type headers to the request for HTTP server
 
@@ -163,7 +168,7 @@ protected:
                               const char* uri, uint32_t uri_len, const char* extension, const char* content_type = 0);
 
    // In response to a HTTP_UNAUTHORISED response from the HTTP server, this function will attempt
-   // to generate an Authentication header to satisfy the server.
+   // to generate an Authentication header to satisfy the server
 
    bool createAuthorizationHeader();
    int  checkResponse(int& redirectCount);

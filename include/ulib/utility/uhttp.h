@@ -271,7 +271,7 @@ public:
       NETWORK_AUTHENTICATION_REQUIRED = 0x008
    };
 
-   static void setResponse(const UString* content_type, const UString* body);
+   static void setResponse(const UString* content_type, UString* pbody);
    static void setRedirectResponse(int mode, const UString& ext, const char* ptr_location, uint32_t len_location);
 
    // get HTTP response message

@@ -1,6 +1,6 @@
 GET /test HTTP/1.1
 User-Agent: curl/7.18.0 (i486-pc-linux-gnu) libcurl/7.18.0 OpenSSL/0.9.8g zlib/1.2.3.3 libidn/1.1
-Host: 0.0.0.0=5000
+Host: 0.0.0.0:5000
 Accept: */*
 
 GET /favicon.ico HTTP/1.1
@@ -15,9 +15,6 @@ Connection: keep-alive
 
 GET /dumbfuck HTTP/1.0
 aaaaaaaaaaaaa:++++++++++
-
-GET /forums/1/topics/2375?page=1#posts-17408 HTTP/1.1
-Host: 0.0.0.0=5000
 
 GET /get_no_headers_no_body/world HTTP/1.0
 

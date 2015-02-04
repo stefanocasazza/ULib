@@ -14,20 +14,21 @@
 #ifndef ULIB_CHTTP_H
 #define ULIB_CHTTP_H 1
 
-/* -------------------------------------------------------------------------------------------------------
-   _     _   _
-  | |__ | |_| |_ _ __
-  | '_ \| __| __| '_ \
-  | | | | |_| |_| |_) |
-  |_| |_|\__|\__| .__/
-                  |_|
-
- ---------------------------------------------------------------------------------------------------------
- HTTP message handler
-
- The status code is a three-digit integer, and the first digit identifies the general category of response
- ---------------------------------------------------------------------------------------------------------
-*/
+/**
+ * -------------------------------------------------------------------------------------------------------
+ *  _     _   _
+ * | |__ | |_| |_ _ __
+ * | '_ \| __| __| '_ \
+ * | | | | |_| |_| |_) |
+ * |_| |_|\__|\__| .__/
+ *                 |_|
+ *
+ * ---------------------------------------------------------------------------------------------------------
+ * HTTP message handler
+ *
+ * The status code is a three-digit integer, and the first digit identifies the general category of response
+ * ---------------------------------------------------------------------------------------------------------
+ */
 
 /* 1xx indicates an informational message only */
 #define HTTP_CONTINUE                        100
@@ -43,7 +44,7 @@
 #define HTTP_RESET                           205
 #define HTTP_PARTIAL                         206
 #define HTTP_STATUS_207                      207 /* "Multi-Status" */
-#define HTTP_OPTIONS_RESPONSE                222 /* internal use, not standard */
+#define HTTP_OPTIONS_RESPONSE                222 /* only internal use, not standard */
 
 /* 3xx redirects the client to another URL */
 #define HTTP_MULT_CHOICE                     300
@@ -159,7 +160,7 @@ typedef struct uhttpinfo {
 #define U_http_ip_client_len           u_http_info.flag[ 8]
 #define U_http_websocket_len           u_http_info.flag[ 9]
 #define U_http2_settings_len           u_http_info.flag[10]
-#define U_http_is_accept_gzip          u_http_info.flag[11] /* NB: this pos is locked by mod_proxy (UHttpClient_Base::u_http_info_save)... */
+#define U_http_is_accept_gzip          u_http_info.flag[11] /* NB: this position(11) is locked by mod_proxy (UHttpClient_Base::u_http_info_save)... */
 #define U_http_content_type_len        u_http_info.flag[12]
 #define U_http_is_request_nostat       u_http_info.flag[13]
 #define U_http_accept_language_len     u_http_info.flag[14]
@@ -205,9 +206,6 @@ typedef struct uhttpmethodtype {
    uint32_t len;
 } uhttpmethodtype;
 
-#define U_HTTP_METHOD_TO_PARAM          u_http_method_list[U_http_method_num].name, u_http_method_list[U_http_method_num].len
-#define U_HTTP_METHOD_TO_TRACE          u_http_method_list[U_http_method_num].len,  u_http_method_list[U_http_method_num].name
-
 #define U_HTTP_URI_TO_PARAM             u_http_info.uri, u_http_info.uri_len
 #define U_HTTP_URI_TO_TRACE             u_http_info.uri_len, u_http_info.uri
 
@@ -248,6 +246,12 @@ typedef struct uhttpmethodtype {
 
 #define U_HTTP_ACCEPT_LANGUAGE_TO_PARAM u_http_info.accept_language, U_http_accept_language_len
 #define U_HTTP_ACCEPT_LANGUAGE_TO_TRACE U_http_accept_language_len, u_http_info.accept_language
+
+#define U_HTTP_METHOD_TO_PARAM          U_HTTP_METHOD_NUM_TO_PARAM(U_http_method_num)
+#define U_HTTP_METHOD_TO_TRACE          U_HTTP_METHOD_NUM_TO_TRACE(U_http_method_num)
+
+#define U_HTTP_METHOD_NUM_TO_PARAM(num) u_http_method_list[num].name, u_http_method_list[num].len
+#define U_HTTP_METHOD_NUM_TO_TRACE(num) u_http_method_list[num].len,  u_http_method_list[num].name
 
 /**
  * The hostname of your server from header's request.

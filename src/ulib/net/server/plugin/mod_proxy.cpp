@@ -145,10 +145,10 @@ int UProxyPlugIn::handlerRequest()
 
          // --------------------------------------------------------------------------------------------------------------------
          // A WebSocket is a long-lived connection, lasting hours or days. If each WebSocket proxy holds the original thread,
-         // won't that consume all of the workers very quickly ? It looks as if my server, with 16 workers, will be unable to
+         // won't that consume all of the workers very quickly? It looks as if my server, with 16 workers, will be unable to
          // handle either the 17th WebSocket proxy or any other HTTP request. That's not really practical in a production system.
          // A WebSocket server could potentially handle hundreds or even thousands of simultaneous connections, which would mean
-         // the same number of proxies in server
+         // the same number of proxies in server...
          // --------------------------------------------------------------------------------------------------------------------
 
          if (UHTTP::service->isWebSocket())
@@ -212,18 +212,6 @@ int UProxyPlugIn::handlerRequest()
                if (body.size() > U_MIN_SIZE_FOR_DEFLATE &&
                    UHttpClient_Base::u_http_info_save.flag[11]) // U_http_is_accept_gzip
                   {
-                  UString header(U_CAPACITY);
-
-                  char* ptr1   = header.data();
-                  uint32_t sz1 = U_CONSTANT_SIZE("Content-Encoding: gzip\r\n");
-
-                  u__memcpy(ptr1,    content_type.data(),           sz, __PRETTY_FUNCTION__);
-                  u__memcpy(ptr1+sz, "Content-Encoding: gzip\r\n", sz1, __PRETTY_FUNCTION__);
-
-                  header.size_adjust(sz + sz1);
-
-                  content_type = header;
-
                   body = UStringExt::deflate(body, 1);
                   }
 #           endif

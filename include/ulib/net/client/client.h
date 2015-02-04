@@ -155,7 +155,6 @@ public:
 
    bool connect();
    void clearData();
-   bool readHTTPResponse();
    bool readResponse(uint32_t count = U_SINGLE_READ);
    bool sendRequest(const UString& req, bool bread_response);
 
@@ -178,10 +177,8 @@ public:
    // Very simple RPC-like layer
    //
    // Requests and responses are build of little packets each containing a 4-byte ascii token, an 8-byte hex value or length,
-   // and optionally data corresponding to the length.
+   // and optionally data corresponding to the length
    // -----------------------------------------------------------------------------------------------------------------------
-
-   bool readRPCResponse();
 
    // Transmit token name (4 characters) and value (32-bit int, as 8 hex characters)
 
@@ -230,7 +227,9 @@ protected:
    static bool log_shared_with_server, bIPv6;
 
    bool connectServer();
+   bool readHTTPResponse();
    bool setUrl(const UString& url); // NB: return if it has modified host or port...
+
    bool sendRequest(bool bread_response);
 
 #ifdef USE_LIBSSL

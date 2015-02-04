@@ -1425,9 +1425,7 @@ UString UStringExt::gunzip(const char* ptr, uint32_t sz, uint32_t space) // .gz 
 
    if (space == 0)
       {
-      // check magic byte
-
-      if (*(int16_t*)ptr == U_MULTICHAR_CONSTANT16('\x1F','\x8B'))
+      if (isGzip(ptr)) // check magic byte
          {
          uint32_t* psize_original = (uint32_t*)(ptr + sz - 4); // read original size
 
@@ -1770,7 +1768,7 @@ static inline bool isExtendableOnLeft(char c)
 
 UString UStringExt::minifyCssJs(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UStringExt::minifyCssJs(%.*S,%u)", n, s, n)
+   U_TRACE(0+256, "UStringExt::minifyCssJs(%.*S,%u)", n, s, n)
 
    U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 

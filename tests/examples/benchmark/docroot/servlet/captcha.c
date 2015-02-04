@@ -24,8 +24,6 @@ int main(int argc, char* argv[])
    captcha(im, l);
    makegif(im, gif);
 
-   U_ClientImage_request_nocache = true;
-
    set_reply_capacity(1024 + GIF_SIZE * 3);
 
    (void) u__snprintf(get_reply(), get_reply_capacity(), "<img src=\"data:img/gif;base64,%.*s\">", u_base64_encode(gif, GIF_SIZE, encoded), encoded);

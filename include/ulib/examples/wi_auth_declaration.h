@@ -973,6 +973,10 @@ public:
                if (result &&
                    U_IS_HTTP_ERROR(u_http_info.nResponseCode) == false)
                   {
+#              ifdef USE_LIBZ
+                  if (UStringExt::isGzip(result)) result = UStringExt::gunzip(result);
+#              endif
+
                   UVector<UString> vec(result);
 
                   for (uint32_t i = 0, n = vec.size(); i < n; i += 5)
@@ -2735,6 +2739,10 @@ static bool askNodogToLogoutUser(const UString& _ip, const UString& _mac, bool b
 
       U_INTERNAL_ASSERT(U_IS_HTTP_SUCCESS(u_http_info.nResponseCode))
 
+#  ifdef USE_LIBZ
+      if (UStringExt::isGzip(result)) result = UStringExt::gunzip(result);
+#  endif
+
       if (U_STRING_FIND(result, 0, "DENY") == U_NOT_FOUND)
          {
          U_LOGGER("*** USER STATUS NOT DENY: UID(%.*s) IP(%.*s) MAC(%.*s) AP(%.*s) ***",
@@ -2757,7 +2765,7 @@ static bool askNodogToLogoutUser(const UString& _ip, const UString& _mac, bool b
                             U_STRING_TO_TRACE(*UClientImage_Base::request_uri),
                             U_STRING_TO_TRACE(*uid), U_STRING_TO_TRACE(_ip), U_STRING_TO_TRACE(_mac), U_STRING_TO_TRACE(*ap_address));
 
-         (void) client->sendRequestAsync(*url_nodog, false, log_msg, file_WARNING->getFd());
+         (void) client->sendGETRequestAsync(*url_nodog, false, log_msg, file_WARNING->getFd());
 
          U_RETURN(false);
          }
@@ -3491,7 +3499,12 @@ static void GET_admin_export_view_using_historical_as_csv()
    U_TRACE(5, "::GET_admin_export_view_using_historical_as_csv()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
-   else                             USSIPlugIn::setAlternativeResponse(file_UTILIZZO->_getContent());
+   else
+      {
+      UString body = file_UTILIZZO->_getContent();
+
+      USSIPlugIn::setAlternativeResponse(body);
+      }
 }
 
 static void GET_admin_historical_statistics_login()
@@ -3784,6 +3797,10 @@ static void GET_error_ap()
                U_ASSERT(          vuid->empty())
                U_ASSERT(vallow_IP_user->empty())
 
+#           ifdef USE_LIBZ
+               if (UStringExt::isGzip(result)) result = UStringExt::gunzip(result);
+#           endif
+
                UIPAllow* elem;
                UVector<UString> vec(result);
 
@@ -4029,9 +4046,20 @@ static void GET_get_config()
 
                UFileConfig cfg(_body, true);
 
-               if (cfg.processData()) _body = cfg.getData();
-
                UHTTP::mime_index = U_know;
+
+               if (cfg.processData())
+                  {
+                  _body = cfg.getData();
+
+#              ifdef USE_LIBZ
+                  if (U_http_is_accept_gzip &&
+                      _body.size() > U_MIN_SIZE_FOR_DEFLATE)
+                     {
+                     _body = UStringExt::deflate(_body, 1);
+                     }
+#              endif
+                  }
                }
             }
          }
@@ -4251,6 +4279,17 @@ next:
    USSIPlugIn::setAlternativeResponse();
 
    if (vec.empty() == false) askNodogToLogoutUser(vec, false);
+}
+
+static void POST_info()
+{
+   U_TRACE(5, "::POST_info()")
+
+#ifdef USE_LIBZ
+   if (UStringExt::isGzip(*UClientImage_Base::body)) *UClientImage_Base::body = UStringExt::gunzip(*UClientImage_Base::body);
+#endif
+
+   GET_info();
 }
 
 static void GET_logged()
@@ -4651,6 +4690,10 @@ static void GET_login_validate()
          if (result &&
              U_IS_HTTP_ERROR(u_http_info.nResponseCode) == false)
             {
+#        ifdef USE_LIBZ
+            if (UStringExt::isGzip(result)) result = UStringExt::gunzip(result);
+#        endif
+
             UVector<UString> vec1(result);
 
             for (uint32_t i = 0, n = vec1.size(); i < n; i += 5)

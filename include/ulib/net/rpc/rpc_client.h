@@ -17,6 +17,8 @@
 #include <ulib/net/client/client.h>
 #include <ulib/net/rpc/rpc_encoder.h>
 
+class URDBClient_Base;
+
 class U_EXPORT URPCClient_Base : public UClient_Base {
 public:
 
@@ -30,9 +32,9 @@ public:
 
       UString request = URPCMethod::encoder->encodeMethodCall(method, UString::getStringNull());
 
-      if (UClient_Base::sendRequest(request, false) &&
-          UClient_Base::readRPCResponse()           &&
-          UClient_Base::buffer.equal(U_CONSTANT_TO_PARAM("DONE")))
+      if (sendRequest(request, false)            &&
+          readResponse(socket, buffer, response) &&
+          buffer.equal(U_CONSTANT_TO_PARAM("DONE")))
          {
          U_RETURN(true);
          }
@@ -64,6 +66,31 @@ protected:
       delete URPCMethod::encoder;
       }
 
+   static bool readResponse(USocket* sk, UString& buffer, UString& response)
+      {
+      U_TRACE(0, "URPCClient_Base::readResponse(%p,%.*S,%.*S)", sk, U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(response))
+
+      uint32_t rstart = 0;
+
+      // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+
+        buffer.setEmptyForce();
+      response.setEmptyForce();
+
+      if (URPC::readTokenString(sk, 0, buffer, rstart, response))
+         {
+         // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
+
+         buffer.size_adjust_force(U_TOKEN_NM);
+         }
+
+      U_INTERNAL_DUMP("buffer = %.*S response = %.*S)", U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(response))
+
+      if (buffer) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS
    URPCClient_Base(const URPCClient_Base&) = delete;
@@ -72,6 +99,8 @@ private:
    URPCClient_Base(const URPCClient_Base&) : UClient_Base(0) {}
    URPCClient_Base& operator=(const URPCClient_Base&)        { return *this; }
 #endif
+
+   friend class URDBClient_Base;
 };
 
 template <class Socket> class U_EXPORT URPCClient : public URPCClient_Base {

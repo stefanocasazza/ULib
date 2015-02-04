@@ -188,7 +188,7 @@ void UError::stackDump()
 
    FILE* f = fdopen(fd, "w");
 
-   (void) fwrite(U_CONSTANT_TO_PARAM("=== STACK TRACE ===\n"), 1, f);
+   (void) fwrite(buffer, u__snprintf(buffer, sizeof(buffer), "%9D: %N (pid %P) === STACK TRACE ===\n", 0), 1, f);
 
 #  ifdef HAVE_DLFCN_H
    Dl_info dlinf;
