@@ -429,8 +429,10 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
    U_INTERNAL_ASSERT_MAJOR(byte_written, 0)
 
-   if (byte_written < (int)count)
+   if ((uint32_t)value < count)
       {
+      count -= value;
+
       while ((size_t)value >= iov[idx].iov_len)
          {
          value -= iov[idx].iov_len;
@@ -451,7 +453,6 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
       iov    += idx;
       iovcnt -= idx;
 
-      count    -= value;
       timeoutMS = 0;
 
       goto write;
