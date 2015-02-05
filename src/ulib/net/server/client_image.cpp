@@ -1392,6 +1392,8 @@ bool UClientImage_Base::writeResponse()
       U_RETURN(true);
       }
 
+   int idx = 0, iovcnt = 4;
+
 loop:
    if (iBytesWrite > 0)
       {
@@ -1413,7 +1415,16 @@ loop:
          {
          if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) != 1) U_RETURN(false);
 
-         iBytesWrite = USocketExt::writev(socket, iov_vec, 4, ncount, UServer_Base::timeoutMS);
+         while (iov_vec[idx].iov_len == 0)
+            {
+            ++idx;
+            --iovcnt;
+
+            U_INTERNAL_ASSERT_MINOR(idx, 4)
+            U_INTERNAL_ASSERT_MAJOR(iovcnt, 0)
+            }
+
+         iBytesWrite = USocketExt::writev(socket, iov_vec+idx, iovcnt, ncount, UServer_Base::timeoutMS);
 
          if (LIKELY(iBytesWrite == (int)ncount))
             {

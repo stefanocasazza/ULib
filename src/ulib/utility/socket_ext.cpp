@@ -439,8 +439,6 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
                   iov[idx].iov_len = 0;
 
          ++idx;
-
-         U_INTERNAL_ASSERT_MINOR(idx, iovcnt)
          }
 
       U_INTERNAL_DUMP("iov[%d].iov_len = %d", idx, iov[idx].iov_len)
@@ -452,6 +450,8 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
       iov    += idx;
       iovcnt -= idx;
+
+      U_INTERNAL_ASSERT_MAJOR(iovcnt, 0)
 
       timeoutMS = 0;
 

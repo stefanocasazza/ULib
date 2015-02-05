@@ -651,6 +651,7 @@ int UNoCatPlugIn::handlerTime()
       UTimeVal::setSecond(next_event_time);
       }
 
+   // ---------------
    // return value:
    // ---------------
    // -1 - normal
