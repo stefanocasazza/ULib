@@ -15,6 +15,7 @@ rm -rf CSP/cspserver_rpc.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA* \
 		 out/userver_ssl.out err/userver_ssl.err \
        CSP/trace.*userver_ssl*.[0-9]* CSP/object.*userver_ssl*.[0-9]* CSP/stack.*userver_ssl*.[0-9]* CSP/mempool.*userver_ssl*.[0-9]*
 
+# ----------------------------------------------------------------
 # usage: openssl s_client args
 # ----------------------------------------------------------------
 # -host host    - use -connect instead
@@ -52,8 +53,6 @@ rm -rf CSP/cspserver_rpc.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA* \
 cat <<EOF >inp/webserver.cfg
 userver {
  PORT 443
- REQ_TIMEOUT 5
- MAX_KEEP_ALIVE 256
  LOG_FILE cspserver_rpc.log
  LOG_FILE_SZ 1M
  DOCUMENT_ROOT CSP

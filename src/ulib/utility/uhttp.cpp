@@ -1,4 +1,4 @@
-// ============================================================================
+   // ============================================================================
 //
 // = LIBRARY
 //    ULib - c++ library
@@ -68,11 +68,11 @@ int         UHTTP::mime_index;
 int         UHTTP::cgi_timeout;
 bool        UHTTP::bsendfile;
 bool        UHTTP::data_chunked;
-bool        UHTTP::telnet_enable;
 bool        UHTTP::bcallInitForAllUSP;
 bool        UHTTP::bcallResetForAllUSP;
 bool        UHTTP::digest_authentication;
 bool        UHTTP::enable_caching_by_proxy_servers;
+char        UHTTP::response_buffer[64];
 URDB*       UHTTP::db_not_found;
 UFile*      UHTTP::file;
 UString*    UHTTP::geoip;
@@ -96,6 +96,7 @@ UString*    UHTTP::string_HTTP_Variables;
 uint32_t    UHTTP::npathinfo;
 uint32_t    UHTTP::range_size;
 uint32_t    UHTTP::range_start;
+uint32_t    UHTTP::response_code;
 uint32_t    UHTTP::sid_counter_cur;
 uint32_t    UHTTP::usp_page_key_len;
 uint32_t    UHTTP::limit_request_body = U_STRING_MAX_SIZE;
@@ -103,7 +104,6 @@ uint32_t    UHTTP::request_read_timeout;
 uint32_t    UHTTP::min_size_for_sendfile; // NB: for major size we assume is better to use sendfile()...
 const char* UHTTP::usp_page_key;
 
-uint32_t                          UHTTP::upload_progress_index;
 UDataSession*                     UHTTP::data_session;
 UDataSession*                     UHTTP::data_storage;
 UMimeMultipart*                   UHTTP::formMulti;
@@ -111,7 +111,6 @@ UModProxyService*                 UHTTP::service;
 UVector<UString>*                 UHTTP::vmsg_error;
 UVector<UString>*                 UHTTP::form_name_value;
 UHTTP::UServletPage*              UHTTP::usp_page_ptr;
-UHTTP::upload_progress*           UHTTP::ptr_upload_progress;
 UVector<UModProxyService*>*       UHTTP::vservice;
 URDBObjectHandler<UDataStorage*>* UHTTP::db_session;
 
@@ -795,7 +794,7 @@ void UHTTP::ctor()
 
    if (cache_file_mask       == 0) cache_file_mask       = U_NEW(U_STRING_FROM_CONSTANT("*.css|*.js|*.*html|*.png|*.gif|*.jpg"));
    if (cgi_cookie_option     == 0) cgi_cookie_option     = U_NEW(U_STRING_FROM_CONSTANT("[\"\" 0]"));
-   if (min_size_for_sendfile == 0) min_size_for_sendfile = 2 * 1024 * 1024; // 2M
+   if (min_size_for_sendfile == 0) min_size_for_sendfile = 500 * 1024; // 500k
 
    U_INTERNAL_ASSERT_POINTER(UString::str_host)
    U_INTERNAL_ASSERT_POINTER(UString::str_accept)
@@ -1281,6 +1280,22 @@ next:
          }
       }
 #endif
+
+   // various setting...
+
+   u_http_info.nResponseCode = HTTP_OK;
+
+   setStatusDescription();
+
+   u_http_info.nResponseCode = 0;
+
+   U_INTERNAL_ASSERT_EQUALS(response_code, HTTP_OK)
+
+   (void) memcpy(response_buffer,
+                 UClientImage_Base::iov_vec[0].iov_base,
+                 UClientImage_Base::iov_vec[0].iov_len);
+
+   U_INTERNAL_ASSERT_EQUALS(strncmp(response_buffer, U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\n")), 0)
 }
 
 #ifdef DEBUG
@@ -1508,9 +1523,9 @@ GET  is equivalent to: x = r;   - retrieve   object (list objects)
 ====================================================================================
 */
 
-__pure int UHTTP::isValidRequest(const char* ptr, int32_t size)
+__pure bool UHTTP::isValidRequest(const char* ptr)
 {
-   U_TRACE(0, "UHTTP::isValidRequest(%.*S,%u)", (size ? size : 30), ptr, size)
+   U_TRACE(0, "UHTTP::isValidRequest(%.*S)", 30, ptr)
 
    if (*ptr != 'G')
       {
@@ -1525,56 +1540,64 @@ __pure int UHTTP::isValidRequest(const char* ptr, int32_t size)
       // DELETE
       // OPTIONS
 
-      if (u__ismethod(*ptr) == false) U_RETURN(0);
+      if (u__ismethod(*ptr) == false) U_RETURN(false);
       }
-
-   int result;
 
    switch (*(int32_t*)ptr)
       {
       case U_MULTICHAR_CONSTANT32('g','e','t',' '):
-      case U_MULTICHAR_CONSTANT32('G','E','T',' '): result = HTTP_GET;         ptr +=  4; size -=  4; break;
+      case U_MULTICHAR_CONSTANT32('G','E','T',' '):
       case U_MULTICHAR_CONSTANT32('h','e','a','d'):
-      case U_MULTICHAR_CONSTANT32('H','E','A','D'): result = HTTP_HEAD;        ptr +=  5; size -=  5; break;
+      case U_MULTICHAR_CONSTANT32('H','E','A','D'):
       case U_MULTICHAR_CONSTANT32('p','o','s','t'):
-      case U_MULTICHAR_CONSTANT32('P','O','S','T'): result = HTTP_POST;        ptr +=  5; size -=  5; break;
+      case U_MULTICHAR_CONSTANT32('P','O','S','T'):
       case U_MULTICHAR_CONSTANT32('p','u','t',' '):
-      case U_MULTICHAR_CONSTANT32('P','U','T',' '): result = HTTP_PUT;         ptr +=  4; size -=  4; break;
+      case U_MULTICHAR_CONSTANT32('P','U','T',' '):
       case U_MULTICHAR_CONSTANT32('d','e','l','e'):
-      case U_MULTICHAR_CONSTANT32('D','E','L','E'): result = HTTP_DELETE;      ptr +=  7; size -=  7; break;
+      case U_MULTICHAR_CONSTANT32('D','E','L','E'):
       case U_MULTICHAR_CONSTANT32('o','p','t','i'):
-      case U_MULTICHAR_CONSTANT32('O','P','T','I'): result = HTTP_OPTIONS;     ptr +=  8; size -=  8; break;
+      case U_MULTICHAR_CONSTANT32('O','P','T','I'):
       // NOT IMPLEMENTED
-      case U_MULTICHAR_CONSTANT32('T','R','A','C'): result = HTTP_TRACE;       ptr +=  6; size -=  6; break;
-      case U_MULTICHAR_CONSTANT32('C','O','N','N'): result = HTTP_CONNECT;     ptr +=  8; size -=  8; break;
-      case U_MULTICHAR_CONSTANT32('C','O','P','Y'): result = HTTP_COPY;        ptr +=  5; size -=  5; break;
-      case U_MULTICHAR_CONSTANT32('M','O','V','E'): result = HTTP_MOVE;        ptr +=  5; size -=  5; break;
-      case U_MULTICHAR_CONSTANT32('L','O','C','K'): result = HTTP_LOCK;        ptr +=  5; size -=  5; break;
-      case U_MULTICHAR_CONSTANT32('U','N','L','O'): result = HTTP_UNLOCK;      ptr +=  7; size -=  7; break;
-      case U_MULTICHAR_CONSTANT32('M','K','C','O'): result = HTTP_MKCOL;       ptr +=  6; size -=  6; break;
-      case U_MULTICHAR_CONSTANT32('S','E','A','R'): result = HTTP_SEARCH;      ptr +=  7; size -=  7; break;
-      case U_MULTICHAR_CONSTANT32('P','R','O','P'): result = HTTP_PROPFIND;    ptr +=  9; size -=  9; break;
-      case U_MULTICHAR_CONSTANT32('P','A','T','C'): result = HTTP_PATCH;       ptr +=  6; size -=  6; break;
-      case U_MULTICHAR_CONSTANT32('P','U','R','G'): result = HTTP_PURGE;       ptr +=  6; size -=  6; break;
-      case U_MULTICHAR_CONSTANT32('M','E','R','G'): result = HTTP_MERGE;       ptr +=  6; size -=  6; break;
-      case U_MULTICHAR_CONSTANT32('R','E','P','O'): result = HTTP_REPORT;      ptr +=  7; size -=  7; break;
-      case U_MULTICHAR_CONSTANT32('C','H','E','C'): result = HTTP_CHECKOUT;    ptr +=  9; size -=  9; break;
-      case U_MULTICHAR_CONSTANT32('M','K','A','C'): result = HTTP_MKACTIVITY;  ptr += 11; size -= 11; break;
-      case U_MULTICHAR_CONSTANT32('N','O','T','I'): result = HTTP_NOTIFY;      ptr +=  7; size -=  7; break;
-      case U_MULTICHAR_CONSTANT32('M','S','E','A'): result = HTTP_MSEARCH;     ptr +=  8; size -=  8; break;
-      case U_MULTICHAR_CONSTANT32('S','U','B','S'): result = HTTP_SUBSCRIBE;   ptr += 10; size -= 10; break;
-      case U_MULTICHAR_CONSTANT32('U','N','S','U'): result = HTTP_UNSUBSCRIBE; ptr += 12; size -= 12; break;
-
-      default: U_RETURN(0);
+      case U_MULTICHAR_CONSTANT32('T','R','A','C'):
+      case U_MULTICHAR_CONSTANT32('C','O','N','N'):
+      case U_MULTICHAR_CONSTANT32('C','O','P','Y'):
+      case U_MULTICHAR_CONSTANT32('M','O','V','E'):
+      case U_MULTICHAR_CONSTANT32('L','O','C','K'):
+      case U_MULTICHAR_CONSTANT32('U','N','L','O'):
+      case U_MULTICHAR_CONSTANT32('M','K','C','O'):
+      case U_MULTICHAR_CONSTANT32('S','E','A','R'):
+      case U_MULTICHAR_CONSTANT32('P','R','O','P'):
+      case U_MULTICHAR_CONSTANT32('P','A','T','C'):
+      case U_MULTICHAR_CONSTANT32('P','U','R','G'):
+      case U_MULTICHAR_CONSTANT32('M','E','R','G'):
+      case U_MULTICHAR_CONSTANT32('R','E','P','O'):
+      case U_MULTICHAR_CONSTANT32('C','H','E','C'):
+      case U_MULTICHAR_CONSTANT32('M','K','A','C'):
+      case U_MULTICHAR_CONSTANT32('N','O','T','I'):
+      case U_MULTICHAR_CONSTANT32('M','S','E','A'):
+      case U_MULTICHAR_CONSTANT32('S','U','B','S'):
+      case U_MULTICHAR_CONSTANT32('U','N','S','U'): U_RETURN(true);
       }
 
-   if (size > 0 &&
-       u_findEndHeader(ptr, size) == U_NOT_FOUND)
+   U_RETURN(false);
+}
+
+__pure bool UHTTP::isValidRequestExt(const char* ptr, uint32_t sz)
+{
+   U_TRACE(0, "UHTTP::isValidRequestExt(%.*S,%u)", 30, ptr, sz)
+
+// if (sz == 0)
       {
-      U_RETURN(-1); // partial valid (not complete)
+      if (*(int32_t*)(ptr+UClientImage_Base::size_request) != U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) U_RETURN(false);
       }
+   /*
+   else
+      {
+      if (u_findEndHeader(ptr, sz) == U_NOT_FOUND) U_RETURN(false);
+      }
+   */
 
-   U_RETURN(result);
+   U_RETURN(true);
 }
 
 bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
@@ -1828,9 +1851,9 @@ response:
 
 #if defined(DEBUG) && defined(U_LOG_ENABLE) && !defined(U_CACHE_REQUEST_DISABLE)
    UClientImage_Base::uri_len = u_http_info.uri_len;
-
-   U_INTERNAL_DUMP("UClientImage_Base::uri_len = %u", UClientImage_Base::uri_len)
 #endif
+
+   U_INTERNAL_DUMP("UClientImage_Base::uri_len = %u u_line_terminator_len = %u", UClientImage_Base::uri_len, u_line_terminator_len)
 
    U_RETURN(true);
 }
@@ -1868,8 +1891,10 @@ bool UHTTP::readHeader(USocket* sk, UString& buffer)
 {
    U_TRACE(0, "UHTTP::readHeader(%p,%.*S)", sk, U_STRING_TO_TRACE(buffer))
 
+   U_INTERNAL_ASSERT_POINTER(sk)
+
    uint32_t sz;
-   bool bresponse = (sk == UClientImage_Base::psocket);
+   bool bWaitEndHeader, bserver = (sk == UClientImage_Base::psocket);
 
 loop:
    sz = buffer.size();
@@ -1882,7 +1907,7 @@ loop:
       if (buffer &&
           buffer.isPrintable(0, true) == false)
          {
-         if (bresponse)
+         if (bserver)
             {
             sk->close();
 
@@ -1893,18 +1918,16 @@ loop:
 
          U_RETURN(false);
          }
+
 read:
-      if (USocketExt::read(sk, buffer, (sz < 18 ? 18 - sz : U_SINGLE_READ), UServer_Base::timeoutMS, request_read_timeout)) goto loop;
-
-      if (bresponse &&
-          sk->isTimeout())
+      if (bserver)
          {
-         u_http_info.nResponseCode = HTTP_CLIENT_TIMEOUT;
+         U_ClientImage_data_missing = true;
 
-         UClientImage_Base::setCloseConnection();
-
-         setResponse(0, 0);
+         U_RETURN(false);
          }
+
+      if (USocketExt::read(sk, buffer, (sz < 18 ? 18 - sz : U_SINGLE_READ), UServer_Base::timeoutMS, request_read_timeout)) goto loop;
 
       U_RETURN(false);
       }
@@ -1923,31 +1946,16 @@ start:
          sz1  = buffer.remain(ptr1);
          }
 
-      if (scanfHeader(ptr1, sz1) == false)
+      u_line_terminator_len = 1;
+
+      if (scanfHeader(ptr1, sz1) == false ||
+          (bserver && u_line_terminator_len != 2))
          {
-#     ifndef U_SERVER_CAPTIVE_PORTAL
-         U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-         if (U_http_version != '2')
+         if (bserver &&
+             U_http_version)
             {
-            sz1 = u_findEndHeader(ptr1, sz1); // NB: check for pipeline fragmented...
-
-            if (sz1 < sz           &&
-                sz1 != U_NOT_FOUND &&
-                isValidRequest(ptr1+sz1, 0))
-               {
-               U_INTERNAL_ASSERT_EQUALS(U_ClientImage_pipeline, false)
-
-               U_http_method_type        =
-               u_http_info.startHeader   = 0;
-               UClientImage_Base::rstart = sz1;
-
-               UClientImage_Base::resetReadBuffer();
-
-               goto loop;
-               }
+            U_ClientImage_data_missing = true;
             }
-#     endif
 
          U_RETURN(false);
          }
@@ -2009,7 +2017,7 @@ start:
 
    // NB: endHeader includes also the blank line...
 
-   if (buffer.isEndHeader(u_http_info.startHeader))
+   if (*(int32_t*)buffer.c_pointer(u_http_info.startHeader) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
       {
       u_http_info.endHeader = u_http_info.startHeader + 4;
 
@@ -2018,25 +2026,38 @@ start:
       U_RETURN(true);
       }
 
-   U_INTERNAL_DUMP("telnet_enable = %b sz = %u", telnet_enable, sz)
+   bWaitEndHeader = (bserver == false);
 
-   if ((sz >= 500 ||
-        telnet_enable) &&
+#ifdef USE_LIBSSL
+   if (sk->isSSL(true) &&
+       bWaitEndHeader == false)
+      {
+      bWaitEndHeader = true;
+      }
+#endif
+
+   U_INTERNAL_DUMP("sz = %u bWaitEndHeader = %b", sz, bWaitEndHeader)
+
+   if (bWaitEndHeader &&
        findEndHeader(buffer) == false)
       {
-      if (USocketExt::readWhileNotToken(sk, buffer, U_CONSTANT_TO_PARAM(U_CRLF2), UServer_Base::timeoutMS) == U_NOT_FOUND)
+      sz = USocketExt::readWhileNotToken(sk, buffer, U_CONSTANT_TO_PARAM(U_CRLF2), UServer_Base::timeoutMS);
+
+      if (sz == U_NOT_FOUND)
          {
-         U_ClientImage_data_missing = true;
+         if (bserver) U_ClientImage_data_missing = true;
 
          U_RETURN(false);
          }
+
+      u_http_info.endHeader = sz + U_CONSTANT_SIZE(U_CRLF2); // NB: u_http_info.endHeader comprende anche la blank line...
       }
 
    u_http_info.startHeader += 2;
    u_http_info.szHeader     = buffer.size() - u_http_info.startHeader;
 
-   U_INTERNAL_DUMP("u_http_info.szHeader = %u u_http_info.startHeader(%u) = %.20S",
-                    u_http_info.szHeader,     u_http_info.startHeader, buffer.c_pointer(u_http_info.startHeader))
+   U_INTERNAL_DUMP("u_http_info.szHeader = %u u_http_info.startHeader(%u) = %.20S u_http_info.endHeader(%u) = %.20S",
+                    u_http_info.szHeader,     u_http_info.startHeader, buffer.c_pointer(u_http_info.startHeader), u_http_info.endHeader, buffer.c_pointer(u_http_info.endHeader))
 
    U_RETURN(true);
 }
@@ -2061,6 +2082,8 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
 
    U_ASSERT(body.empty())
    U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len, 2)
+
+   bool bserver = (sk == UClientImage_Base::psocket);
 
    // NB: check if request includes an entity-body (as indicated by the presence of Content-Length or Transfer-Encoding)...
 
@@ -2094,37 +2117,32 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
             U_RETURN(false);
             }
 
-#     ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
-         if (USocketExt::byte_read_hook)
+         if (bserver &&
+             UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization))
             {
-            (void) initUploadProgress(u_http_info.clength);
+            // parent
 
-            if (body_byte_read) updateUploadProgress(body_byte_read);
-            }
-#     endif
+            sk->close();
 
-         // NB: wait for other data to complete the read of the request of size...
-
-         if (USocketExt::read(sk, *pbuffer, u_http_info.clength - body_byte_read, UServer_Base::timeoutMS, request_read_timeout) == false)
-            {
-            U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u Content-Length = %u", pbuffer->size(),
-                             pbuffer->size() - u_http_info.endHeader, u_http_info.clength)
-
-            if (sk->isTimeout())
-               {
-               u_http_info.nResponseCode = HTTP_CLIENT_TIMEOUT;
-
-               UClientImage_Base::setCloseConnection();
-
-               setResponse(0, 0);
-               }
+            U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
 
             U_RETURN(false);
             }
 
-#     ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
-         if (USocketExt::byte_read_hook) updateUploadProgress(u_http_info.clength); // done...
-#     endif
+         // NB: wait for other data to complete the read of the request...
+
+         if (USocketExt::read(sk, *pbuffer, u_http_info.clength - body_byte_read, 3000, request_read_timeout) == false)
+            {
+            U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u Content-Length = %u", pbuffer->size(), pbuffer->size() - u_http_info.endHeader, u_http_info.clength)
+
+            if (bserver &&
+                sk->isTimeout())
+               {
+               U_ClientImage_data_missing = true;
+               }
+
+            U_RETURN(false);
+            }
          }
       }
    else
@@ -2189,11 +2207,30 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
 
          count = pbuffer->find(U_CRLF2, u_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
 
-         if (count == U_NOT_FOUND) count = USocketExt::readWhileNotToken(sk, *pbuffer, U_CONSTANT_TO_PARAM(U_CRLF2), UServer_Base::timeoutMS);
+         if (count == U_NOT_FOUND)
+            {
+            if (bserver &&
+                UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization))
+               {
+               // parent
+
+               sk->close();
+
+               U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+
+               U_RETURN(false);
+               }
+
+            count = USocketExt::readWhileNotToken(sk, *pbuffer, U_CONSTANT_TO_PARAM(U_CRLF2), 3000);
+            }
 
          if (count == U_NOT_FOUND)
             {
-            if (sk->isConnected()) setBadRequest();
+            if (bserver &&
+                sk->isConnected())
+               {
+               U_ClientImage_data_missing = true;
+               }
 
             U_RETURN(false);
             }
@@ -2204,7 +2241,11 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
 
          if (count <= u_http_info.endHeader)
             {
-            if (sk->isConnected()) setBadRequest();
+            if (bserver &&
+                sk->isConnected())
+               {
+               setBadRequest();
+               }
 
             U_RETURN(false);
             }
@@ -2258,7 +2299,8 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
 
       if (U_http_version == '1')
          {
-         if (sk->isConnected())
+         if (bserver &&
+             sk->isConnected())
             {
             // HTTP/1.1 compliance: no missing Content-Length on POST requests
 
@@ -2274,7 +2316,11 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
 
       if (u_http_info.szHeader == 0)
          {
-         if (sk->isConnected()) setBadRequest();
+         if (bserver &&
+             sk->isConnected())
+            {
+            setBadRequest();
+            }
 
          U_RETURN(false);
          }
@@ -2285,7 +2331,8 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
          {
          U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u", pbuffer->size(), pbuffer->size() - u_http_info.endHeader)
 
-         if (sk->isTimeout())
+         if (bserver &&
+             sk->isTimeout())
             {
             u_http_info.nResponseCode = HTTP_CLIENT_TIMEOUT;
 
@@ -2350,7 +2397,22 @@ bool UHTTP::checkRequestForHeader(const UString& request)
    const char* ptr;
    const char* pend;
    unsigned char c, c1;
-   uint32_t n, pos1, pos2, end = ((result = u_http_info.endHeader) ? u_http_info.endHeader - 2 : request.size());
+   uint32_t n, pos1, pos2, end;
+
+   if (u_http_info.endHeader)
+      {
+      result = true;
+
+      end = u_http_info.endHeader - 2;
+      }
+   else
+      {
+      result = false;
+
+      end = request.size();
+
+      U_ClientImage_data_missing = true;
+      }
 
    U_INTERNAL_DUMP("result = %b end = %u", result, end)
 
@@ -2825,6 +2887,8 @@ next1:
 
             U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.20S", u_http_info.szHeader, u_http_info.endHeader, request.c_pointer(u_http_info.endHeader))
 
+            U_ClientImage_data_missing = false;
+
             if (U_http_version == '2')
                {
                if (USocketExt::write(UClientImage_Base::psocket,
@@ -3192,7 +3256,25 @@ bool UHTTP::handlerCache()
       default: U_RETURN(false);
       }
 
-#  ifdef USE_LIBZ
+   if (U_ClientImage_pipeline)
+      {
+      uint32_t sz = UClientImage_Base::request->size();
+
+      U_INTERNAL_ASSERT(UClientImage_Base::size_request <= sz)
+
+      if ((UClientImage_Base::size_request+UClientImage_Base::size_request) <= sz)
+         {
+         const char* ptr1 = ptr + UClientImage_Base::size_request;
+
+         if (isValidRequest(ptr1) == false ||
+                *(int32_t*)(ptr1+UClientImage_Base::size_request) != U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+            {
+            U_RETURN(false);
+            }
+         }
+      }
+
+# ifdef USE_LIBZ
    const char* p;
    unsigned char c;
    bool http_gzip = false;
@@ -3275,6 +3357,8 @@ next2:
       UClientImage_Base::setSendfile(UClientImage_Base::csfd, range_start, range_size);
       }
 
+   UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+
    U_RETURN(true);
 #endif
 
@@ -3289,10 +3373,12 @@ int UHTTP::handlerREAD()
 
    U_ASSERT(UClientImage_Base::request_uri->empty())
 
+   // ------------------------------
    // u_http_info.uri
    // ....
    // u_http_info.if_modified_since;
    // ....
+   // ------------------------------
 
    U_HTTP_INFO_RESET(0);
 
@@ -3317,6 +3403,10 @@ int UHTTP::handlerREAD()
           readBody())
 #  endif
          {
+         U_INTERNAL_DUMP("U_ClientImage_data_missing = %b", U_ClientImage_data_missing)
+
+         if (U_ClientImage_data_missing) goto dmiss;
+
          result = U_PLUGIN_HANDLER_FINISHED;
          }
 
@@ -3354,7 +3444,7 @@ int UHTTP::handlerREAD()
 
       if (U_ClientImage_data_missing)
          {
-         UClientImage_Base::setRequestProcessed();
+dmiss:   UClientImage_Base::setRequestProcessed();
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
@@ -3686,9 +3776,6 @@ file_exist_and_need_to_be_processed:
 #  endif
       }
 
-   U_DUMP("UClientImage_Base::isRequestNotFound() = %b UClientImage_Base::isRequestAlreadyProcessed() = %b",
-           UClientImage_Base::isRequestNotFound(),     UClientImage_Base::isRequestAlreadyProcessed())
-
 #if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
    if (UClientImage_Base::isRequestNotFound() == false) // => 4
       {
@@ -3755,9 +3842,6 @@ need_to_be_processed:
 #endif
 
 end: // NB: we check if we can shortcut the http request processing...
-
-   U_DUMP("UClientImage_Base::callerHandlerRequest = %p UClientImage_Base::isRequestNeedProcessing() = %b",
-           UClientImage_Base::callerHandlerRequest,     UClientImage_Base::isRequestNeedProcessing())
 
    if (UClientImage_Base::isRequestNeedProcessing() &&
        UClientImage_Base::callerHandlerRequest == 0)
@@ -5141,22 +5225,132 @@ void UHTTP::setStatusDescription()
 {
    U_TRACE(0, "UHTTP::setStatusDescription()")
 
-   if (UClientImage_Base::response_code != u_http_info.nResponseCode)
+   if (response_code != u_http_info.nResponseCode)
       {
-      uint32_t sz;
-      const char* status = getStatusDescription(&sz);
+      switch ((response_code = u_http_info.nResponseCode))
+         {
+         // 1xx indicates an informational message only
+         case HTTP_SWITCH_PROT:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 101 Switching Protocols\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 101 Switching Protocols\r\n");
+            }
+         break;
 
-      // "HTTP/1.1 206 Partial Content\r\n"
+         // 2xx indicates success of some kind
+         case HTTP_OK:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 200 OK\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 200 OK\r\n");
+            }
+         break;
+         case HTTP_NO_CONTENT:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 204 No Content\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 204 No Content\r\n");
+            }
+         break;
+         case HTTP_PARTIAL:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 206 Partial Content\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 206 Partial Content\r\n");
+            }
+         break;
 
-      UClientImage_Base::response_len = 9 +
-                        u__snprintf(UClientImage_Base::iov_buffer + 9, sizeof(UClientImage_Base::iov_buffer) - 9,
-                           "%d %.*s\r\n",
-                           (UClientImage_Base::response_code = u_http_info.nResponseCode), sz, status);
+         // 3xx Redirection - Further action must be taken in order to complete the request
+         case HTTP_MOVED_TEMP:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 302 Moved Temporarily\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 302 Moved Temporarily\r\n");
+            }
+         break;
+         case HTTP_NOT_MODIFIED:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 304 Not Modified\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 304 Not Modified\r\n");
+            }
+         break;
+
+         // 4xx indicates an error on the client's part
+         case HTTP_BAD_REQUEST:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 400 Bad Request\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 400 Bad Request\r\n");
+            }
+         break;
+         case HTTP_UNAUTHORIZED:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 401 Authorization Required\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 401 Authorization Required\r\n");
+            }
+         break;
+         case HTTP_FORBIDDEN:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 403 Forbidden\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 403 Forbidden\r\n");
+            }
+         break;
+         case HTTP_NOT_FOUND:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 404 Not Found\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 404 Not Found\r\n");
+            }
+         break;
+         case HTTP_LENGTH_REQUIRED:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 411 Length Required\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 411 Length Required\r\n");
+            }
+         break;
+         case HTTP_ENTITY_TOO_LARGE:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 413 Request Entity Too Large\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 413 Request Entity Too Large\r\n");
+            }
+         break;
+
+         // 5xx indicates an error on the server's part
+         case HTTP_INTERNAL_ERROR:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 500 Internal Server Error\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 500 Internal Server Error\r\n");
+            }
+         break;
+         case HTTP_NOT_IMPLEMENTED:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 501 Not Implemented\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 501 Not Implemented\r\n");
+            }
+         break;
+         case HTTP_VERSION:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 505 HTTP Version Not Supported\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 505 HTTP Version Not Supported\r\n");
+            }
+         break;
+#     ifdef U_SERVER_CAPTIVE_PORTAL
+         case HTTP_NETWORK_AUTHENTICATION_REQUIRED:
+            {
+            UClientImage_Base::iov_vec[0].iov_base =       (caddr_t) "HTTP/1.1 511 Network authentication required\r\n";  
+            UClientImage_Base::iov_vec[0].iov_len  = U_CONSTANT_SIZE("HTTP/1.1 511 Network authentication required\r\n");
+            }
+         break;
+#     endif
+
+         default:
+            {
+            uint32_t sz;
+            const char* status = getStatusDescription(&sz);
+
+            UClientImage_Base::iov_vec[0].iov_base = response_buffer;
+            UClientImage_Base::iov_vec[0].iov_len  = 9+u__snprintf(response_buffer+9, sizeof(response_buffer)-9, "%u %.*s\r\n", response_code, sz, status);
+            }
+         }
       }
 
-   U_INTERNAL_ASSERT_MAJOR(UClientImage_Base::response_len, 0)
+   U_INTERNAL_ASSERT_MAJOR(UClientImage_Base::iov_vec[0].iov_len, 0)
 
-   U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %.*S", UClientImage_Base::response_len, UClientImage_Base::iov_vec[0].iov_base)
+   U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %.*S", UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base)
 }
 
 UString UHTTP::getHeaderForResponse(const UString& ext)
@@ -5177,6 +5371,8 @@ UString UHTTP::getHeaderForResponse(const UString& ext)
 #endif
 
    UClientImage_Base::setRequestProcessed();
+
+   UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
    if (u_http_info.nResponseCode == HTTP_NOT_IMPLEMENTED ||
        u_http_info.nResponseCode == HTTP_OPTIONS_RESPONSE)
@@ -7347,23 +7543,6 @@ no_usp:
          U_SRV_LOG("USP found: %S%s, USP service registered (URI): %.*S", buffer, link, U_STRING_TO_TRACE(*pathname));
 
          if (bcallInitForAllUSP) callInitForAllUSP(pathname->rep, file_data);
-
-#     ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
-         if (UServer_Base::isPreForked() &&
-             UStringExt::endsWith(*pathname, U_CONSTANT_TO_PARAM("upload_progress")) &&
-             USocketExt::byte_read_hook == 0)
-            {
-            // UPLOAD PROGRESS
-
-            U_SRV_LOG("USP upload progress registered");
-
-            USocketExt::byte_read_hook = updateUploadProgress;
-
-            U_INTERNAL_ASSERT_EQUALS(ptr_upload_progress, 0)
-
-            ptr_upload_progress = (upload_progress*) UServer_Base::getOffsetToDataShare(sizeof(upload_progress) * U_MAX_UPLOAD_PROGRESS);
-            }
-#     endif
          }
 #  ifdef HAVE_LIBTCC
       else if (suffix->equal(U_CONSTANT_TO_PARAM("c")))
@@ -8421,7 +8600,7 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len, UString& ext)
                           U_STRING_TO_TRACE(*pathname),
                           U_STRING_TO_TRACE(ext));
 
-         (void) readHeader(0, request);
+         (void) readHeader(UClientImage_Base::psocket, request);
          (void) checkRequestForHeader(request);
 
 #     ifdef DEBUG
@@ -8918,7 +9097,7 @@ loop:
       {
       UClientImage_Base::body->clear();
 
-      UClientImage_Base::resetResponse();
+      UClientImage_Base::setNoHeaderForResponse();
 
       U_RETURN(true);
       }
@@ -9760,180 +9939,6 @@ void UHTTP::writeApacheLikeLog()
    UServer_Base::apache_like_log->write(iov_vec, 10);
 }
 #endif
-
-// ------------------------------------------------------------------------------------------------------------------------------
-// UPLOAD PROGRESS
-// ------------------------------------------------------------------------------------------------------------------------------
-// The basic technique is simple: on the page containing your upload form is some JavaScript to generate a unique identifier
-// for the upload request. When the form is submitted, that identifier is passed along with the rest of the data. When the
-// server starts receiving the POST request, it starts logging the bytes received for the identifier. While the file's being
-// uploaded, the JavaScript on the upload page makes periodic requests asking for the upload progress, and updates a progress
-// widget accordingly. On the server, you need two views: one to handle the upload form, and one to respond to progress requests.
-// ------------------------------------------------------------------------------------------------------------------------------
-
-U_NO_EXPORT bool UHTTP::initUploadProgress(int byte_read)
-{
-   U_TRACE(0, "UHTTP::initUploadProgress(%d)", byte_read)
-
-   U_ASSERT(UServer_Base::isPreForked())
-   U_INTERNAL_ASSERT(*UClientImage_Base::request)
-
-#ifndef U_HTTP_UPLOAD_PROGRESS_SUPPORT
-   U_RETURN(false);
-#else
-   int i;
-   in_addr_t client     = UClientImage_Base::psocket->remoteIPAddress().getInAddr();
-   upload_progress* ptr = ptr_upload_progress;
-
-   U_INTERNAL_DUMP("ptr = %p", ptr)
-
-   U_INTERNAL_ASSERT_POINTER(ptr)
-
-   if (byte_read > 0)
-      {
-      int uuid_key_size = UString::str_X_Progress_ID->size() + 1;
-
-      // find first available slot
-
-      for (i = 0; i < U_MAX_UPLOAD_PROGRESS; ++i)
-         {
-         U_INTERNAL_DUMP("i = %2d uuid = %.32S byte_read = %d count = %d",
-                          i, ptr[i].uuid, ptr[i].byte_read, ptr[i].count)
-
-         if (ptr[i].byte_read ==
-             ptr[i].count)
-            {
-            ptr += i;
-
-            ptr->count      = byte_read;
-            ptr->client     = client;
-            ptr->user_agent = getUserAgent();
-            ptr->byte_read  = 0;
-
-            // The HTTP POST request can contain a query parameter, 'X-Progress-ID', which should contain a
-            // unique string to identify the upload to be tracked.
-
-            if (u_http_info.query_len ==                  32U ||
-                u_http_info.query_len == (uuid_key_size + 32U))
-               {
-               U_INTERNAL_DUMP("query(%u) = %.*S", u_http_info.query_len, U_HTTP_QUERY_TO_TRACE)
-
-               U_MEMCPY(ptr->uuid, u_http_info.query + (u_http_info.query_len == 32 ? 0 : uuid_key_size), 32);
-
-               U_INTERNAL_DUMP("uuid = %.32S", ptr->uuid)
-               }
-
-            break;
-            }
-         }
-      }
-   else
-      {
-      // find current slot: The HTTP request to this location must have either an X-Progress-ID parameter or
-      // X-Progress-ID HTTP header containing the unique identifier as specified in your upload/POST request
-      // to the relevant tracked zone. If you are using the X-Progress-ID as a query-string parameter, ensure
-      // it is the LAST argument in the URL.
-
-      uint32_t n = form_name_value->size();
-
-      const char* uuid_ptr = (n >= 2 && form_name_value->isEqual(n-2, *UString::str_X_Progress_ID, true)
-                                 ? form_name_value->c_pointer(n-1)
-                                 : getHeaderValuePtr(*UString::str_X_Progress_ID, true));
-
-      U_INTERNAL_DUMP("uuid = %.32S", uuid_ptr)
-
-      for (i = 0; i < U_MAX_UPLOAD_PROGRESS; ++i)
-         {
-         U_INTERNAL_DUMP("i = %2d uuid = %.32S byte_read = %d count = %d",
-                          i, ptr[i].uuid, ptr[i].byte_read, ptr[i].count)
-
-         if ((uuid_ptr ? memcmp(uuid_ptr, ptr[i].uuid, 32)  == 0
-                       :                  ptr[i].client     == client &&
-                                          ptr[i].user_agent == getUserAgent()))
-            {
-            ptr += i;
-
-            break;
-            }
-         }
-      }
-
-   upload_progress_index = i;
-
-   U_RETURN(upload_progress_index < U_MAX_UPLOAD_PROGRESS);
-#endif
-}
-
-U_NO_EXPORT void UHTTP::updateUploadProgress(int byte_read)
-{
-   U_TRACE(0, "UHTTP::updateUploadProgress(%d)", byte_read)
-
-   U_INTERNAL_ASSERT_MAJOR(byte_read, 0)
-
-   U_ASSERT(UServer_Base::isPreForked())
-
-#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
-   if (upload_progress_index < U_MAX_UPLOAD_PROGRESS)
-      {
-      upload_progress* ptr = ptr_upload_progress + upload_progress_index;
-
-      U_INTERNAL_DUMP("ptr = %p", ptr)
-
-      U_INTERNAL_ASSERT_POINTER(ptr)
-
-      U_INTERNAL_DUMP("byte_read = %d count = %d", ptr->byte_read, ptr->count)
-
-      ptr->byte_read = byte_read;
-      }
-#endif
-}
-
-// Return JSON object with information about the progress of an upload.
-// The JSON returned is what the JavaScript uses to render the progress bar...
-
-UString UHTTP::getUploadProgress()
-{
-   U_TRACE(0, "UHTTP::getUploadProgress()")
-
-   U_ASSERT(UServer_Base::isPreForked())
-
-   UString result(100U);
-
-#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
-   if (upload_progress_index >= U_MAX_UPLOAD_PROGRESS)
-      {
-      UTimeVal to_sleep(0L, 300 * 1000L);
-
-      for (int i = 0; i < 10 && initUploadProgress(0) == false; ++i) to_sleep.nanosleep();
-      }
-
-   if (upload_progress_index >= U_MAX_UPLOAD_PROGRESS)
-#endif
-
-   (void) result.assign(U_CONSTANT_TO_PARAM("{ 'state' : 'error' }"));
-
-#ifdef U_HTTP_UPLOAD_PROGRESS_SUPPORT
-   else
-      {
-      upload_progress* ptr = ptr_upload_progress + upload_progress_index;
-
-      U_INTERNAL_DUMP("ptr = %p", ptr)
-
-      U_INTERNAL_ASSERT_POINTER(ptr)
-
-      U_INTERNAL_DUMP("byte_read = %d count = %d", ptr->byte_read, ptr->count)
-
-      U_INTERNAL_ASSERT_MAJOR(ptr->count,0)
-
-      result.snprintf("{ 'state' : '%s', 'received' : %d, 'size' : %d }",
-                              (ptr->byte_read < ptr->count ? "uploading" : "done"),
-                               ptr->byte_read,
-                               ptr->count);
-      }
-#endif
-
-   U_RETURN_STRING(result);
-}
 
 // STREAM
 

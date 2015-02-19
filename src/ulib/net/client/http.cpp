@@ -604,8 +604,7 @@ int UHttpClient_Base::sendRequestAsync(const UString& _url, bool bqueue, const c
 {
    U_TRACE(0, "UHttpClient_Base::sendRequestAsync(%.*S,%b,%S,%d)", U_STRING_TO_TRACE(_url), bqueue, log_msg, log_fd)
 
-   UProcess proc;
-   pid_t pid = UServer_Base::startNewChild(&proc);
+   pid_t pid = UServer_Base::startNewChild();
 
    if (pid) U_RETURN(pid); // parent
 
@@ -659,7 +658,7 @@ next:
       (void) putRequestOnQueue();
       }
 
-   if (proc.child()) UServer_Base::endNewChild();
+   UServer_Base::endNewChild();
 
    U_RETURN(0);
 }

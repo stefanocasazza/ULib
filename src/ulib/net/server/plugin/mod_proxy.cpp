@@ -176,12 +176,12 @@ int UProxyPlugIn::handlerRequest()
 
          bool result = client_http->sendRequest(*UClientImage_Base::wbuffer);
 
-         UClientImage_Base::resetResponse();
-
          *UClientImage_Base::wbuffer = client_http->getResponse();
 
          if (result)
             {
+            UClientImage_Base::setNoHeaderForResponse();
+
             U_INTERNAL_DUMP("UHTTP::data_chunked = %b U_ClientImage_close = %b", UHTTP::data_chunked, U_ClientImage_close)
 
             if (UHTTP::data_chunked == false)

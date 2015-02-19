@@ -238,17 +238,6 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_RFC1918])
 
-	AC_MSG_CHECKING(if you want to enable HTTP upload progress support)
-	AC_ARG_ENABLE(HUPS,
-				[  --enable-HUPS             enable HTTP Upload Progress Support [[default=no]]])
-	if test -z "$enable_HUPS"; then
-		enable_HUPS="no"
-	fi
-	if test "$enable_HUPS" = "yes"; then
-		AC_DEFINE(U_HTTP_UPLOAD_PROGRESS_SUPPORT, 1, [enable HTTP upload progress support])
-	fi
-	AC_MSG_RESULT([$enable_HUPS])
-
 	AC_MSG_CHECKING(if you want to enable HTTP Strict Transport Security support)
 	AC_ARG_ENABLE(HSTS,
 				[  --enable-HSTS             enable HTTP Strict Transport Security support [[default=no]]])

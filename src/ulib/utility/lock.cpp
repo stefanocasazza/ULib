@@ -19,11 +19,14 @@ void ULock::init(sem_t* ptr_lock, char* ptr_spinlock)
 
    U_CHECK_MEMORY
 
-   sem = U_NEW(USemaphore);
+   if (ptr_lock)
+      {
+      sem = U_NEW(USemaphore);
 
-   sem->init(ptr_lock);
+      sem->init(ptr_lock);
+      }
 
-   if ((spinlock = ptr_spinlock)) *spinlock = 0;
+   if ((plock = ptr_spinlock)) *plock = 0;
 }
 
 void ULock::destroy()
@@ -41,35 +44,47 @@ void ULock::destroy()
       }
 }
 
-void ULock::lock(time_t timeout)
+bool ULock::spinlock(uint32_t cnt)
+{
+   U_TRACE(0+256, "ULock::spinlock(%u)", cnt)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT_POINTER(plock)
+
+   if (locked) U_RETURN(true);
+
+   do {
+      if (spinLockAcquire(plock))
+         {
+         locked = -1;
+
+         U_RETURN(true);
+         }
+      }
+   while (cnt--);
+
+   U_RETURN(false);
+}
+
+bool ULock::lock(time_t timeout)
 {
    U_TRACE(0, "ULock::lock(%ld)", timeout)
 
    U_CHECK_MEMORY
 
-   if (locked == 0)
+   U_INTERNAL_ASSERT_POINTER(sem)
+
+   if (locked) U_RETURN(true);
+
+   if (sem->wait(timeout))
       {
-      if (spinlock)
-         {
-      // uint32_t cnt = 100;
+      locked = 1;
 
-      // do {
-            if (spinLockAcquire(spinlock))
-               {
-               locked = -1;
-
-               return;
-               }
-      //    }
-      // while (cnt--);
-         }
-
-      if (sem &&
-          sem->wait(timeout))
-         {
-         locked = 1;
-         }
+      U_RETURN(true);  
       }
+
+   U_RETURN(false);
 }
 
 void ULock::unlock()
@@ -82,9 +97,9 @@ void ULock::unlock()
       {
       if (locked == -1)
          {
-         U_INTERNAL_ASSERT_POINTER(spinlock)
+         U_INTERNAL_ASSERT_POINTER(plock)
 
-         spinLockRelease(spinlock);
+         spinLockRelease(plock);
          }
       else
          {
@@ -101,9 +116,9 @@ void ULock::unlock()
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* ULock::dump(bool reset) const
 {
-   *UObjectIO::os << "locked          " << locked          << '\n'
-                  << "spinlock        " << (void*)spinlock << '\n'
-                  << "sem (USemaphore " << (void*)sem      << ')';
+   *UObjectIO::os << "plock           " << (void*)plock << '\n'
+                  << "locked          " << locked       << '\n'
+                  << "sem (USemaphore " << (void*)sem   << ')';
 
    if (reset)
       {

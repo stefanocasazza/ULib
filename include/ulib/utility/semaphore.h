@@ -84,9 +84,8 @@ public:
     * @param  timeout period in milliseconds to wait
     */
 
+   void lock();
    bool wait(time_t timeoutMS);
-
-   void lock() { (void) wait(0); }
 
    /**
     * Posting to a semaphore increments its current value and releases the first thread waiting for the semaphore
@@ -94,8 +93,6 @@ public:
     * to release multiple waiting threads in either pthread. Hence, if one wants to release a semaphore to enable multiple
     * threads to execute, one must perform multiple post operations
     */
-
-   void post();
 
    void unlock() { post(); }
 
@@ -110,7 +107,9 @@ protected:
    static UFile* flock;
    static USemaphore* first;
 
-   static bool checkForDeadLock(UTimeVal& time); // NB: check if process has restarted and it had a lock locked...
+   void post();
+
+   static bool checkForDeadLock(UTimeVal& time); // NB: check if process has restarted and it had a lock active...
    
 #ifdef HAVE_SEM_GETVALUE
    int getValue() { int value = -1; (void) sem_getvalue(psem, &value); return value; }

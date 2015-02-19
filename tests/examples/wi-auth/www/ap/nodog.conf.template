@@ -52,7 +52,6 @@ COMMENT	LOG_FILE_SZ      1M
 			MAX_KEEP_ALIVE  50
 }
 http {
-	TELNET_ENABLE         yes
 	CACHE_FILE_MASK       _off_
    CACHE_FILE_STORE      webif.gz
 	LIMIT_REQUEST_BODY    100K

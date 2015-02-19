@@ -16,16 +16,6 @@
 
 #include <ulib/net/ipaddress.h>
 
-#ifdef HAVE_SYS_SENDFILE_H
-#  ifndef HAVE_SENDFILE64
-#     undef __USE_FILE_OFFSET64
-#  endif
-#  include <sys/sendfile.h>
-#  ifndef HAVE_SENDFILE64
-#     define __USE_FILE_OFFSET64
-#  endif
-#endif
-
 #ifdef _MSWINDOWS_
 #  include <ws2tcpip.h>
 #  define CAST(a) (char*)a
@@ -192,8 +182,8 @@ public:
       U_INTERNAL_DUMP("U_socket_Type = %d", U_socket_Type(this))
 
 #  ifdef USE_LIBSSL
-      if (U_socket_Type(this) >= SK_SSL &&
-          (bcheck == false              ||
+      if (U_socket_Type(this)  >= SK_SSL &&
+          (bcheck == false               ||
            U_socket_Type(this) == SK_SSL_ACTIVE))
          {
          U_RETURN(true);
@@ -560,16 +550,6 @@ public:
     */
 
    bool sendBinary32Bits(uint32_t lData);
-
-   /**
-    * sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.
-    * OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from
-    * which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following
-    * the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within
-    * the kernel, sendfile() does not need to spend time transferring data to and from user space.
-    */
-
-   bool sendfile(int in_fd, off_t* poffset, uint32_t count, int timeoutMS);
 
    // -----------------------------------------------------------------------------------------------------------
    // VIRTUAL METHOD

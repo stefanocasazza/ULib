@@ -22,15 +22,6 @@ clean-local:
 moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
-if HUPS
-if !MINGW
-module_LTLIBRARIES 			   = libupload_progress.la
-libupload_progress_la_SOURCES = upload_progress.cpp
-libupload_progress_la_LIBADD  = $(ulib_la)
-libupload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
-endif
-endif
-
 if !CROSS_COMPILING
 AM_CPPFLAGS = @USP_FLAGS@
 
@@ -52,9 +43,8 @@ plaintext.cpp: ./usp_translator$(EXEEXT)
 	@$(WINELOADER) ./usp_translator$(EXEEXT) $<
 
 .lo.la:
-	$(CXXLINK) @USP_LDFLAGS@ -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la) @USP_LIBS@ @ULIB_LIBS@ \
-	mv .libs/libupload_progress.so .libs/upload_progress.so
+	$(CXXLINK) @USP_LDFLAGS@ -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la) @USP_LIBS@ @ULIB_LIBS@
 
-all: usp_translator upload_progress.la db.la fortune.la json.la plaintext.la query.la update.la
+all: usp_translator db.la fortune.la json.la plaintext.la query.la update.la
 endif
 ## ----------------------------------------------------------------------------------------------------

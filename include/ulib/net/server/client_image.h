@@ -59,6 +59,27 @@ public:
       U_RETURN(false);
       }
 
+   static void setNoHeaderForResponse()
+      {
+      U_TRACE(0, "UClientImage_Base::setNoHeaderForResponse()")
+
+      iov_vec[1].iov_len = 0;
+      }
+
+   static void setHeaderForResponse(uint32_t len)
+      {
+      U_TRACE(0, "UClientImage_Base::setHeaderForResponse(%u)", len)
+
+      iov_vec[1].iov_len = len;
+      }
+
+   static void init();
+   static void clear();
+
+   static const char* getRequestUri(uint32_t& len);
+
+   static bool isAllowed(UVector<UIPAllow*>& vallow_IP) __pure; // Check whether the ip address client ought to be allowed
+
    // define method VIRTUAL of class UEventFd
 
    virtual int handlerRead() U_DECL_OVERRIDE;
@@ -67,14 +88,6 @@ public:
 
    virtual void handlerError() U_DECL_OVERRIDE;
    virtual void handlerDelete() U_DECL_OVERRIDE;
-
-   static void init();
-   static void clear();
-
-   static void resetResponse();
-   static bool isAllowed(UVector<UIPAllow*>& vallow_IP) __pure; // Check whether the ip address client ought to be allowed
-
-   static const char* getRequestUri(uint32_t& len);
 
    // manage if other data already available... (pipelining)
 
@@ -89,8 +102,14 @@ public:
          {
          U_INTERNAL_ASSERT(request->same(*rbuffer) == false)
 
-         size_request           = 0; // NB: we don't want to process further the read buffer...
          U_ClientImage_pipeline = false;
+
+#     ifndef U_CACHE_REQUEST_DISABLE
+         U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
+
+         if (U_ClientImage_request_is_cached == false)
+#     endif
+         size_request = 0; // NB: we don't want to process further the read buffer...
          }
       }
 
@@ -261,6 +280,8 @@ public:
 
 #  ifndef U_CACHE_REQUEST_DISABLE
       U_ClientImage_request |= NO_CACHE;
+
+      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 #  endif
       }
 
@@ -283,15 +304,16 @@ public:
    static USocket* psocket;
 
    static char cbuffer[128];
-   static char iov_buffer[64];
    static UString* request_uri;
    static UString* environment;
    static bPF callerHandlerCache;
+   static struct iovec iov_sav[4];
    static struct iovec iov_vec[4];
    static UClientImage_Base* pthis;
-   static iPFpci callerIsValidRequest;
+   static bPFpc callerIsValidRequest;
+   static bPFpcu callerIsValidRequestExt;
    static vPF callerHandlerEndRequest;
-   static uint32_t rstart, size_request, response_len, response_code;
+   static uint32_t rstart, size_request;
    static iPF callerHandlerRead, callerHandlerRequest, callerHandlerReset;
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
@@ -366,7 +388,8 @@ protected:
 #endif
 
 private:
-   static int  isValidRequest(const char* ptr, int32_t) U_NO_EXPORT;
+   static bool isValidRequest(   const char* ptr)              U_NO_EXPORT;
+   static bool isValidRequestExt(const char* ptr, uint32_t sz) U_NO_EXPORT;
 
    UClientImage_Base(const UClientImage_Base&) : UEventFd() {}
    UClientImage_Base& operator=(const UClientImage_Base&)   { return *this; }

@@ -706,6 +706,7 @@ LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
@@ -1674,6 +1675,10 @@ uninstall-am:
 	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
 	pdf pdf-am ps ps-am tags uninstall uninstall-am
 
+
+test: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
+	../make_test.sh application.test base64.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test magic.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test thread.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test
 
 clean-local:
 	-rm -rf out err core .libs *.bb* *.da *.gcov *.log test_log.log* tmp/* \

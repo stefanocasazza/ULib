@@ -153,10 +153,10 @@ http {
 			/fortunes                                            /benchmark/docroot/servlet/fortunes
 			/plaintext                                           /benchmark/docroot/servlet/plaintext
 			/www.sito1.com/benchmark/docroot/servlet/jsonrequest /benchmark/docroot/servlet/jsonrequest ]
- TELNET_ENABLE yes
  ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 700K
  REQUEST_READ_TIMEOUT 30
+#MIN_SIZE_FOR_SENDFILE 2k
  DIGEST_AUTHENTICATION no
  APACHE_LIKE_LOG /var/log/httpd/access_log
  CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz
@@ -209,12 +209,16 @@ EOF
 # webserver1
  creat_config 1 
  start_test $NCAT localhost
+#exit 0
 # webserver2
  creat_config 2 
  start_test $NCAT localhost
+#exit 0
+# webserver2
 # webserverN
  creat_config N 2
  start_test $NCAT localhost
+#exit 0
 # webserverV
  creat_config V 2
  start_test $NCAT www.sito1.com

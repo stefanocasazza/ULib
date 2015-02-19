@@ -137,6 +137,7 @@ userver {
  PORT 443
  RUN_AS_USER apache
  REQ_TIMEOUT 30
+#MIN_SIZE_FOR_SENDFILE 2k
  LOG_FILE webserver_ssl$1.log
  LOG_FILE_SZ 1M
  LOG_MSG_SIZE -1
@@ -155,7 +156,6 @@ userver {
 http {
  ALIAS [ /                                                    /index.php
 			/www.sito1.com/benchmark/docroot/servlet/jsonrequest /benchmark/docroot/servlet/jsonrequest ]
- TELNET_ENABLE yes
  ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 700K
  REQUEST_READ_TIMEOUT 30

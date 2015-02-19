@@ -169,7 +169,7 @@ next:
 #  if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
       U_INTERNAL_ASSERT_EQUALS(events, 0)
 
-      pevents = events = (struct epoll_event*) UMemoryPool::_malloc(max_connection + 1, sizeof(struct epoll_event), true);
+      pevents = events = (struct epoll_event*) UMemoryPool::_malloc(max_connection+1, sizeof(struct epoll_event), true);
 #  endif
       }
 }
@@ -1051,8 +1051,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
    U_INTERNAL_DUMP("revents = %d %B", fds[0].revents, fds[0].revents)
 
    if (ret == 1 &&
-       (((fds[0].revents & POLLERR) != 0) ||
-        ((fds[0].revents & POLLHUP) != 0)))
+       (fds[0].revents & (POLLERR | POLLHUP)) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(::write(fd,fds,1), -1)
 

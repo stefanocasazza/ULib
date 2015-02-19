@@ -642,33 +642,48 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
 
    if (sz1)
       {
-      uint32_t maxlen = (u_printf_string_max_length > 0 ? u_printf_string_max_length : 128) - sz1;
+      int maxlen = (u_printf_string_max_length > 0 ? u_printf_string_max_length : 128) - sz1;
 
-      if (sz > maxlen) sz = maxlen;
+      if (maxlen  > 0 &&
+          (int)sz > maxlen)
+         {
+         sz = maxlen;
 
-      uint32_t length = sizeof(buffer1) - sz - 1;
+         U_INTERNAL_ASSERT_POINTER(ptr)
+         }
+
+      int length = sizeof(buffer1)-sz-1;
 
       if (iov[0].iov_len)
          {
          length -= iov[0].iov_len;
 
-         if (length > iov[0].iov_len) length = iov[0].iov_len;
+              if (length > (int)iov[0].iov_len) length = iov[0].iov_len;
+         else if (length <= 1)                  length = 128;
 
-         U_INTERNAL_ASSERT(length < sizeof(buffer1))
+         U_INTERNAL_DUMP("length = %d maxlen = %d", length, maxlen)
+
+         U_INTERNAL_ASSERT_MAJOR(length, 0)
+         U_INTERNAL_ASSERT_MINOR(length, (int)sizeof(buffer1))
 
          u__memcpy(buffer1, (const char*)iov[0].iov_base, length, __PRETTY_FUNCTION__);
          }
 
       if (iov[1].iov_len)
          {
-         U_INTERNAL_ASSERT((length+iov[1].iov_len) < sizeof(buffer1))
+         U_INTERNAL_ASSERT_MINOR(length+iov[1].iov_len, sizeof(buffer1))
 
          u__memcpy(buffer1+length, (const char*)iov[1].iov_base, iov[1].iov_len, __PRETTY_FUNCTION__);
          }
 
-      U_INTERNAL_ASSERT((length+iov[1].iov_len+sz) < sizeof(buffer1))
+      U_INTERNAL_ASSERT_MINOR(length+iov[1].iov_len+sz, sizeof(buffer1))
 
-      if (sz) u__memcpy(buffer1+length+iov[1].iov_len, ptr, sz, __PRETTY_FUNCTION__);
+      if (sz)
+         {
+         U_INTERNAL_ASSERT_POINTER(ptr)
+
+         u__memcpy(buffer1+length+iov[1].iov_len, ptr, sz, __PRETTY_FUNCTION__);
+         }
 
       sz += sz1;
       ptr = buffer1;
@@ -836,8 +851,6 @@ void ULog::closeLog()
 
    if (log_gzip_sz == sizeof(log_data))
       {
-      U_ASSERT(lock->isShared())
-
       uint32_t length = (sizeof(log_data) + U_PAGEMASK) & ~U_PAGEMASK;
 
       U_INTERNAL_ASSERT_EQUALS(length & U_PAGEMASK, 0)

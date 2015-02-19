@@ -59,7 +59,7 @@ DIST_COMMON = README $(am__configure_deps) $(srcdir)/Makefile.am \
 	$(srcdir)/rpm.sh.in $(top_srcdir)/configure \
 	$(top_srcdir)/include/ulib/internal/config.h.in AUTHORS \
 	COPYING ChangeLog INSTALL NEWS THANKS TODO config.guess \
-	config.sub depcomp install-sh ltmain.sh missing ylwrap
+	config.sub install-sh ltmain.sh missing ylwrap
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
 	$(top_srcdir)/m4/ac_compilation_environment.m4 \
@@ -238,6 +238,7 @@ LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
@@ -910,7 +911,10 @@ uninstall-am: uninstall-aclocalDATA
 	uninstall-am
 
 
-.phony:  doxy todo
+.phony: doxy todo
+
+test:
+	@cd $(top_builddir)/tests; $(MAKE) $(AM_MAKEFLAGS) test 
 
 doc: $(top_builddir)/doc/Doxyfile
 	@cd $(top_builddir)/doc; -rm -rf doc; $(MAKE) $(AM_MAKEFLAGS) doxy 

@@ -44,10 +44,12 @@ endef
 
 NODOG_OPTIONS:= --with-ssl --with-libz \
 					 --without-expat --without-magic --without-pcre \
+					 --disable-static --disable-new-ldflags --disable-zip --disable-LFS \
 					 --enable-log --enable-captive-portal --enable-static-server-plugin="nocat http" \
 					 --disable-stdcpp --disable-gcc-optimized --disable-thread --disable-HCRS --disable-HPRS \
-					 --disable-memory-pool --disable-static --disable-new-ldflags --disable-zip --disable-LFS \
-					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) $(if $(CONFIG_NODOG_DEBUG),--enable-debug)
+					 $(if $(CONFIG_NODOG_DEBUG),--enable-debug) \
+					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) \
+					 $(if $(CONFIG_NODOG_MEMPOOL),--enable-memory-pool,--disable-memory-pool)
 
 define Build/Configure
 	$(call Build/Configure/Default, \

@@ -109,8 +109,8 @@ const char* u_months[]    = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "
 const char* u_months_it[] = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
 
 /* Scan services */
-const char* restrict u_line_terminator     = U_LF;
 uint32_t             u_line_terminator_len = 1;
+const char* restrict u_line_terminator     = U_LF;
 
 /* Services */
 int                  u_errno; /* An errno value */
@@ -386,7 +386,8 @@ bool u_setStartTime(void)
 
    tzset();
 
-   /* The localtime() function converts the calendar time to broken-time representation, expressed relative
+   /**
+    * The localtime() function converts the calendar time to broken-time representation, expressed relative
     * to the user's specified timezone. The function acts as if it called tzset(3) and sets the external
     * variables tzname with information about the current timezone, timezone with the difference between
     * Coordinated Universal Time (UTC) and local standard time in seconds, and daylight to a non-zero value
@@ -411,7 +412,8 @@ bool u_setStartTime(void)
    u_daylight = (daylight && (timezone != -u_strftime_tm.tm_gmtoff));
 #endif
 
-   /* The timegm() function converts the broken-down time representation, expressed in Coordinated Universal
+   /**
+    * The timegm() function converts the broken-down time representation, expressed in Coordinated Universal
     * Time (UTC) to calendar time
     */
 
@@ -448,7 +450,8 @@ bool u_setStartTime(void)
       {
       u_start_time = lnow; /* u_now->tv_sec + u_now_adjust */
 
-      /* The mktime() function modifies the fields of the tm structure as follows: tm_wday and tm_yday are set to values
+      /**
+       * The mktime() function modifies the fields of the tm structure as follows: tm_wday and tm_yday are set to values
        * determined from the contents of the other fields; if structure members are outside their valid interval, they will
        * be normalized (so that, for example, 40 October is changed into 9 November); tm_isdst is set (regardless of its
        * initial value) to a positive value or to 0, respectively, to indicate whether DST is or is not in effect at the
@@ -502,57 +505,6 @@ void u_init_ulib(char** restrict argv)
 
       U_INTERNAL_ERROR(h, "hardware crc32 failed (h = %u). Exiting...", h);
       }
-#endif
-
-#ifdef DEBUG
-   {
-   char buffer[20];
-   union uucflag64 num;
-
-   U_NUM2STR16(&num, 36);
-
-   U_INTERNAL_ERROR(memcmp(num.c,U_CONSTANT_TO_PARAM("36")) == 0, "U_NUM2STR16 failed (buffer = \"%.2s\"). Exiting...", num.c);
-
-   U_NUM2STR32(&num,12,34);
-
-   U_INTERNAL_ERROR(memcmp(num.c,U_CONSTANT_TO_PARAM("1234")) == 0, "U_NUM2STR32 failed (buffer = \"%.4s\"). Exiting...", num.c);
-
-   U_NUM2STR64(&num,':',12,34,56);
-
-   U_INTERNAL_ERROR(memcmp(num.c,U_CONSTANT_TO_PARAM("12:34:56")) == 0, "U_NUM2STR64 failed (buffer = \"%.8s\"). Exiting...", num.c);
-
-   (void) u_num2str32(buffer, 4294967295U);
-
-   U_INTERNAL_ERROR(memcmp(buffer,U_CONSTANT_TO_PARAM("4294967295")) == 0, "u_num2str32 failed (buffer = \"%.20s\"). Exiting...", buffer);
-
-   (void) u__snprintf(buffer, sizeof(buffer), "%u", 4294967295U);
-
-   U_INTERNAL_ERROR(memcmp(buffer,U_CONSTANT_TO_PARAM("4294967295")) == 0, "u__sprintf failed (buffer = \"%.20s\"). Exiting...", buffer);
-
-   (void) u_num2str32s(buffer, -2134967295);
-
-   U_INTERNAL_ERROR(memcmp(buffer,U_CONSTANT_TO_PARAM("-2134967295")) == 0, "u_num2str32 failed (buffer = \"%.20s\"). Exiting...", buffer);
-
-   (void) u__snprintf(buffer, sizeof(buffer), "%d", -2134967295);
-
-   U_INTERNAL_ERROR(memcmp(buffer,U_CONSTANT_TO_PARAM("-2134967295")) == 0, "u__sprintf failed (buffer = \"%.20s\"). Exiting...", buffer);
-
-   (void) u_num2str64(buffer, 18446744073709551615ULL);
-
-   U_INTERNAL_ERROR(memcmp(buffer,U_CONSTANT_TO_PARAM("18446744073709551615")) == 0, "u_num2str64 failed (buffer = \"%.20s\"). Exiting...", buffer);
-
-   (void) u__snprintf(buffer, sizeof(buffer), "%llu", 18446744073709551615ULL);
-
-   U_INTERNAL_ERROR(memcmp(buffer,U_CONSTANT_TO_PARAM("18446744073709551615")) == 0, "u__sprintf failed (buffer = \"%.20s\"). Exiting...", buffer);
-
-   (void) u_num2str64s(buffer, -1908815619842915700LL);
-
-   U_INTERNAL_ERROR(memcmp(buffer,U_CONSTANT_TO_PARAM("-1908815619842915700")) == 0, "u_num2str64 failed (buffer = \"%.20s\"). Exiting...", buffer);
-
-   (void) u__snprintf(buffer, sizeof(buffer), "%lld", -1908815619842915700LL);
-
-   U_INTERNAL_ERROR(memcmp(buffer,U_CONSTANT_TO_PARAM("-1908815619842915700")) == 0, "u__sprintf failed (buffer = \"%.20s\"). Exiting...", buffer);
-   }
 #endif
 
 #ifdef _MSWINDOWS_
@@ -1014,24 +966,7 @@ uint32_t u_strftime2(char* restrict s, uint32_t maxsize, const char* restrict fo
 
    (void) gmtime_r(&t, &u_strftime_tm);
 
-#ifdef DEBUG
-   {
-   uint32_t result = u_strftime1(s, maxsize, format);
-
-   /*
-   char dbg[4096];
-   if (strftime(dbg, maxsize, format, &u_strftime_tm) &&
-       strcmp(s,dbg))
-      {
-      U_WARNING("DIFFERENT: u_strftime2() = \"%s\" strftime() = \"%s\" format = \"%s\"", s, dbg, format);
-      }
-   */
-
-   return result;
-   }
-#else
    return u_strftime1(s, maxsize, format);
-#endif
 }
 
 uint32_t u_num2str32(char* restrict cp, uint32_t num)
@@ -1418,11 +1353,6 @@ minus:
             goto rflag;
             }
 
-         /* For decimal integer conversion (i,d,u) the output uses the locale alternative output digits
-         case 'I':
-         break;
-         */
-
          /* End field flag characters: # 0 - ' ' + ' I */
 
          /* Start field width: [1-9]... */
@@ -1447,8 +1377,10 @@ minus:
 
          case '*':
             {
-            /* A negative field width argument is taken as a - flag followed by a positive field width.
-               They don't exclude field widths read from args */
+            /**
+             * A negative field width argument is taken as a - flag followed by a positive field width.
+             * They don't exclude field widths read from args
+             */
 
             if ((width = VA_ARG(int)) >= 0) goto rflag;
 

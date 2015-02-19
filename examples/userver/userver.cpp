@@ -76,8 +76,9 @@ public:
       // ENABLE_RFC1918_FILTER reject request from private IP to public server address
       // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
       //
-      // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
-      // SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+      // LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
+      // SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+      // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization 
       //
       // PID_FILE       write pid on file indicated
       // WELCOME_MSG    message of welcome to send initially to client

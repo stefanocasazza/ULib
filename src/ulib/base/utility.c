@@ -92,8 +92,14 @@ const struct uhttpmethodtype u_http_method_list[26] = {
 };
 #undef ENTRY
 
-/* Random number generator */ 
-uint32_t u_m_w, u_m_z;
+/**
+ * Random number generator
+ * these values are not magical, just the default values
+ * Marsaglia used. Any pair of unsigned integers should be fine
+ */ 
+
+uint32_t u_m_w = 521288629,
+         u_m_z = 362436069;
 
 bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n)
 {

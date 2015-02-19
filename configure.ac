@@ -200,7 +200,7 @@ case "$target_os" in
 		AM_CONDITIONAL(SOLARIS, false)
 	;;
 
-	mingw32*)
+	mingw*)
 		AC_MSG_RESULT([ok ($target_os)])
 
 		enable_stdcpp="no"
@@ -1137,7 +1137,7 @@ if test "$USE_C_ARES" = "yes"; then
 fi
 
 case "$target_os" in
-	mingw32*)
+	mingw*)
 		if test "$with_gnu_ld" = "yes"; then
 			LDFLAGS="${LDFLAGS} -Wl,--enable-auto-import -Wl,--stack=10485760"
 		fi

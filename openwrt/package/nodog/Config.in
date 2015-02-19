@@ -9,6 +9,11 @@ config NODOG_DEBUG
    depends on DEVEL && PACKAGE_nodog
    default n
 
+config NODOG_MEMPOOL
+   bool "Enable compilation of memory pool features"
+   depends on DEVEL && PACKAGE_nodog
+   default n
+
 #config NODOG_OPENSSL
 #   bool "Enable use of openssl features"
 #   depends on DEVEL && PACKAGE_libopenssl

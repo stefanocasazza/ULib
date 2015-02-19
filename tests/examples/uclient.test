@@ -30,7 +30,6 @@ userver {
  ORM_DRIVER_DIR ../../../src/ulib/orm/driver/.libs
 }
 http {
- TELNET_ENABLE yes
 #ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 700K
  REQUEST_READ_TIMEOUT 30

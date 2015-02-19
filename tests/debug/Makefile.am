@@ -21,5 +21,8 @@ EXTRA_DIST = error.sim ok $(TESTS)
 
 LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 
+test:
+	-make check
+
 clean-local:
 	-rm -rf out err core tmp/* .libs *.bb* *.da *.gcov trace.*.[0-9]* object.*.[0-9]* stack.*.[0-9]* *.log

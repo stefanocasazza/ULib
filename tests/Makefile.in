@@ -184,6 +184,7 @@ LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
@@ -306,11 +307,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dependencies
-EXTRA_DIST = .colors .function reset.color make_check.sh
+EXTRA_DIST = .colors .function reset.color make_test.sh
 MAINTAINERCLEANFILES = Makefile.in
 SUBDIRS1 = base $(am__append_1)
 SUBDIRS = $(SUBDIRS1) ulib $(am__append_2)
-DIST_SUBDIRS = base debug  ulib examples contrib
+DIST_SUBDIRS = base debug ulib examples contrib
 all: all-recursive
 
 .SUFFIXES:
@@ -655,6 +656,9 @@ uninstall-am:
 	mostlyclean mostlyclean-generic mostlyclean-libtool pdf pdf-am \
 	ps ps-am tags tags-recursive uninstall uninstall-am
 
+
+test:
+	@for i in $(SUBDIRS); do cd $(abs_top_builddir)/tests/$$i; $(MAKE) $(AM_MAKEFLAGS) test; done 
 
 dist-hook:
 	find $(distdir) -type f -name \*.c   -exec /utility/expand_tab '{}' ';'

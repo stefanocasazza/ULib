@@ -132,8 +132,9 @@ public:
    // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
    // ENABLE_RFC1918_FILTER reject request from private IP to public server address
    //
-   // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
-   // SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+   // LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
+   // SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+   // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization 
    //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
@@ -326,11 +327,11 @@ public:
    static pid_t pid;
    static ULock* lock_user1;
    static ULock* lock_user2;
+   static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
    static shared_data* ptr_shared_data;
    static ULog::static_date* ptr_static_date;
    static uint32_t shared_data_add, map_size;
    static bool update_date1, update_date2, update_date3;
-   static int max_num_process_parallelization, preforked_num_kids; // keeping a pool of children and that they accept connections themselves
 
    static void setLockUser1()
       {
@@ -430,12 +431,7 @@ public:
       U_INTERNAL_DUMP("U_ClientImage_parallelization = %d proc->child() = %b",
                        U_ClientImage_parallelization,     proc->child())
 
-      if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
-         {
-         U_INTERNAL_ASSERT(proc->child())
-
-         U_RETURN(true);
-         }
+      if (U_ClientImage_parallelization == 1) U_RETURN(true); // 1 => child of parallelization
 
       U_RETURN(false);
       }
@@ -447,21 +443,16 @@ public:
       U_INTERNAL_DUMP("U_ClientImage_parallelization = %d proc->parent() = %b",
                        U_ClientImage_parallelization,     proc->parent())
 
-      if (U_ClientImage_parallelization == 2) // 2 => parent of parallelization
-         {
-         U_INTERNAL_ASSERT(proc->parent())
-
-         U_RETURN(true);
-         }
+      if (U_ClientImage_parallelization == 2) U_RETURN(true); // 2 => parent of parallelization
 
       U_RETURN(false);
       }
 
    // it creates a copy of itself, return true if parent...
 
+   static int  startNewChild();
    static void   endNewChild() __noreturn;
-   static int  startNewChild(UProcess* p);
-   static bool startParallelization();
+   static bool startParallelization(uint32_t nclient = 1);
 
    // manage log server...
 
@@ -529,7 +520,7 @@ protected:
    static UString* cenvironment;
    static UString* senvironment;
    static UString* str_preforked_num_kids;
-   static uint32_t max_depth, wakeup_for_nothing;
+   static uint32_t max_depth, wakeup_for_nothing, num_client_for_parallelization;
    static bool flag_loop, flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert;
 
 #ifdef U_WELCOME_SUPPORT
@@ -611,7 +602,9 @@ protected:
    static void runLoop(const char* user);
    static bool handlerTimeoutConnection(void* cimg);
 
+#ifdef U_LOG_ENABLE
    static uint32_t getNumConnection(char* buffer);
+#endif
 
    // define method VIRTUAL of class UEventFd
 

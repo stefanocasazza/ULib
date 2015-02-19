@@ -179,6 +179,7 @@ LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
@@ -304,7 +305,7 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 EXTRA_DIST = RSIGN.err
 RSIGN_la_SOURCES = RSIGN.c
 RSIGN_la_LIBADD = -lcrypto -lz $(am__append_1)
-RSIGN_la_LDFLAGS = -module -rpath /nowhere $(MODULE_LIBTOOL_OPTIONS)
+RSIGN_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 noinst_moduledir = $(libexecdir)/ulib
 noinst_LTLIBRARIES = RSIGN.la
 all: all-am

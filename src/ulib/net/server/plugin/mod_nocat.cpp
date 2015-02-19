@@ -2477,31 +2477,22 @@ int UNoCatPlugIn::handlerRequest()
                }
 
             notifyAuthOfUsersInfo(index_AUTH);
-
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
             }
-
-         if (U_HTTP_URI_STREQ("/check"))
+         else if (U_HTTP_URI_STREQ("/check"))
             {
             if (flag_check_system == false) checkSystem();
 
             notifyAuthOfUsersInfo(index_AUTH);
-
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
             }
-
-         if (U_HTTP_URI_STREQ("/uptime"))
+         else if (U_HTTP_URI_STREQ("/uptime"))
             {
             status_content->setBuffer(U_CAPACITY);
 
             status_content->snprintf("%u", u_get_uptime());
 
             setHTTPResponse(*status_content);
-
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
             }
-
-         if (U_HTTP_URI_STREQ("/status"))
+         else if (U_HTTP_URI_STREQ("/status"))
             {
             UString ap_label;
 
@@ -2524,7 +2515,7 @@ int UNoCatPlugIn::handlerRequest()
                   {
                   UHTTP::setBadRequest();
 
-                  U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+                  goto end;
                   }
                }
             else if (U_HTTP_QUERY_MEMEQ("label="))
@@ -2544,12 +2535,9 @@ int UNoCatPlugIn::handlerRequest()
             getARPCache();
 
             setStatusContent(ap_label); // NB: peer == 0 -> request from AUTH to get status access point...
-
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
             }
-
-         if (U_HTTP_URI_STREQ("/logout") &&
-             u_http_info.query_len)
+         else if (U_HTTP_URI_STREQ("/logout") &&
+                  u_http_info.query_len)
             {
             // NB: request from AUTH to logout user (ip=192.168.301.223&mac=00:e0:4c:d4:63:f5)
 
@@ -2605,28 +2593,25 @@ next:          getARPCache();
                   notifyAuthOfUsersInfo(index_AUTH);
                   }
                }
-
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
             }
-
-         if (U_HTTP_URI_STREQ("/users"))
+         else
             {
-            // NB: request from AUTH to get list info on peers permitted
+            if (U_HTTP_URI_STREQ("/users") == false) UHTTP::setBadRequest();
+            else
+               {
+               // NB: request from AUTH to get list info on peers permitted
 
-            status_content->setBuffer(U_CAPACITY);
+               status_content->setBuffer(U_CAPACITY);
 
-            peers->callForAllEntry(getPeerListInfo);
+               peers->callForAllEntry(getPeerListInfo);
 
-            setHTTPResponse(*status_content);
+               setHTTPResponse(*status_content);
 
-            U_SRV_LOG("AUTH request to get list info on peers permitted");
-
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+               U_SRV_LOG("AUTH request to get list info on peers permitted");
+               }
             }
 
-         UHTTP::setBadRequest();
-
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         goto end;
          }
 
       // ---------------------------
@@ -2665,7 +2650,7 @@ next:          getARPCache();
             {
             setHTTPResponse(str_IPHONE_SUCCESS);
 
-            U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+            goto end;
             }
          */
             
@@ -2682,7 +2667,7 @@ next:          getARPCache();
 
          UHTTP::setForbidden();
 
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         goto end;
          }
 
       // ---------------------------------------------------------------
@@ -2808,7 +2793,7 @@ set_redirect_to_AUTH:
          {
          UClientImage_Base::resetAndClose();
 
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         goto end;
          }
 
       if (mode == UHTTP::NO_BODY          && // login_validate
@@ -2830,6 +2815,8 @@ set_redirect_to_AUTH:
 
 redirect:
       UHTTP::setRedirectResponse(mode, UString::getStringNull(), U_STRING_TO_PARAM(*location));
+end:
+      U_ClientImage_close = true;
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
       }

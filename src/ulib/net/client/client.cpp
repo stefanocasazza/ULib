@@ -60,6 +60,8 @@ void UClient_Base::closeLog()
       {
       u_unatexit(&ULog::close); // unregister function of close at exit()...
                   ULog::close();
+
+      log = 0;
       }
 }
 
@@ -72,6 +74,8 @@ UClient_Base::~UClient_Base()
    if (log &&
        log_shared_with_server == false)
       {
+      u_unatexit(&ULog::close); // unregister function of close at exit()...
+
       delete log;
       }
 
@@ -561,8 +565,7 @@ bool UClient_Base::readHTTPResponse()
 
    clearData();
 
-   if (UHTTP::readHeader(socket, buffer) &&
-       UHTTP::findEndHeader(     buffer))
+   if (UHTTP::readHeader(socket, buffer))
       {
       uint32_t pos = buffer.find(*UString::str_content_length, u_http_info.startHeader, u_http_info.szHeader);
 

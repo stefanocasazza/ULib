@@ -13,6 +13,7 @@
 
 #include <ulib/file.h>
 #include <ulib/timeval.h>
+#include <ulib/utility/interrupt.h>
 #include <ulib/utility/semaphore.h>
 
 #ifndef __clang__
@@ -168,39 +169,76 @@ bool USemaphore::wait(time_t timeoutMS)
 {
    U_TRACE(1, "USemaphore::wait(%ld)", timeoutMS) // problem with sanitize address
 
-#if defined(HAVE_SEM_INIT) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
-   int rc;
+   U_INTERNAL_ASSERT_MAJOR(timeoutMS, 0)
 
+#if defined(HAVE_SEM_INIT) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
    U_INTERNAL_ASSERT_POINTER(psem)
 
    U_INTERNAL_DUMP("value = %d", getValue())
 
-   if (timeoutMS == 0) rc = U_SYSCALL(sem_wait, "%p", psem);
-   else
-      {
-      // Wait for sem being posted
+   // Wait for sem being posted
 
-      U_INTERNAL_ASSERT(u_now->tv_sec > 1260183779) // 07/12/2009
+   U_INTERNAL_ASSERT(u_now->tv_sec > 1260183779) // 07/12/2009
 
-      struct timespec abs_timeout = { u_now->tv_sec + timeoutMS / 1000L, 0 };
+   struct timespec abs_timeout = { u_now->tv_sec + timeoutMS / 1000L, 0 };
 
-      U_INTERNAL_DUMP("abs_timeout = { %d, %d }", abs_timeout.tv_sec, abs_timeout.tv_nsec)
+   U_INTERNAL_DUMP("abs_timeout = { %d, %d }", abs_timeout.tv_sec, abs_timeout.tv_nsec)
 
-      rc = U_SYSCALL(sem_timedwait, "%p,%p", psem, &abs_timeout);
-      }
+   int rc = U_SYSCALL(sem_timedwait, "%p,%p", psem, &abs_timeout);
 
    U_INTERNAL_DUMP("value = %d", getValue())
 
    if (rc == 0) U_RETURN(true);
 #else
 #  ifdef _MSWINDOWS_
-   if (::WaitForSingleObject((HANDLE)psem, (timeoutMS ? timeoutMS : INFINITE)) == WAIT_OBJECT_0) U_RETURN(true);
+   if (::WaitForSingleObject((HANDLE)psem, timeoutMS) == WAIT_OBJECT_0) U_RETURN(true);
 #  else
    if (flock->unlock()) U_RETURN(true);
 #  endif
 #endif
 
    U_RETURN(false);
+}
+
+void USemaphore::lock()
+{
+   U_TRACE(1, "USemaphore::lock()")
+
+#if defined(HAVE_SEM_INIT) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
+   U_INTERNAL_ASSERT_POINTER(psem)
+
+   /**
+    * sem_wait() decrements (locks) the semaphore pointed to by sem. If the semaphore's value is greater than zero, then the decrement proceeds, and the function returns, immediately.
+    * If the semaphore currently has the value zero, then the call blocks until either it becomes possible to perform the decrement (i.e., the semaphore value rises above zero), or a
+    * signal handler interrupts the call
+    */
+
+wait:
+   U_INTERNAL_DUMP("value = %d", getValue())
+
+   int rc = U_SYSCALL(sem_wait, "%p", psem);
+
+   if (rc == -1)
+      {
+      U_INTERNAL_DUMP("errno = %d", errno)
+
+      if (errno == EINTR &&
+          UInterrupt::checkForEventSignalPending())
+         {
+         goto wait;
+         }
+      }
+
+   U_INTERNAL_DUMP("value = %d", getValue())
+
+   U_INTERNAL_ASSERT_EQUALS(rc, 0)
+#else
+#  ifdef _MSWINDOWS_
+   (void) ::WaitForSingleObject((HANDLE)psem, INFINITE);
+#  else
+   (void) flock->unlock();
+#  endif
+#endif
 }
 
 // DEBUG

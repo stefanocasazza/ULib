@@ -2664,8 +2664,7 @@ static bool runAuthCmd(const char* password, const char* realm)
        output->empty())
       {
       /*
-      U_LOGGER("*** AUTH_CMD failed: EXIT_VALUE=%d RESPONSE=%.*S - realm=%s uid=%s pass=%s ***",
-                           UCommand::exit_value, U_STRING_TO_TRACE(*output), realm, _uid, password);
+      U_LOGGER("*** AUTH_CMD failed: EXIT_VALUE=%d RESPONSE=%.*S - realm=%s uid=%s pass=%s ***", UCommand::exit_value, U_STRING_TO_TRACE(*output), realm, _uid, password);
       */
 
 error:
@@ -2799,8 +2798,7 @@ static void askNodogToLogoutUser(UVector<UString>& vec, bool bcheck)
 {
    U_TRACE(5, "::askNodogToLogoutUser(%p,%b)", &vec, bcheck)
 
-   UProcess proc;
-   pid_t pid = UServer_Base::startNewChild(&proc);
+   pid_t pid = UServer_Base::startNewChild();
 
    if (pid) return; // parent
 
@@ -2815,7 +2813,7 @@ static void askNodogToLogoutUser(UVector<UString>& vec, bool bcheck)
       (void) askNodogToLogoutUser(vec[i+1], vec[i+2], bcheck);
       }
 
-   if (proc.child()) UServer_Base::endNewChild();
+   UServer_Base::endNewChild();
 }
 
 static bool setAccessPointAddress()

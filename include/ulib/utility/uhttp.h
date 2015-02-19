@@ -79,8 +79,9 @@ public:
    static void ctor();
    static void dtor();
 
+   static bool isValidRequest(const char* ptr) __pure;
    static bool scanfHeader(const char* ptr, uint32_t size);
-   static int  isValidRequest(const char* ptr, int32_t size) __pure;
+   static bool isValidRequestExt(const char* ptr, uint32_t size) __pure;
 
    static void        setStatusDescription();
    static const char* getStatusDescription(uint32_t* plen = 0);
@@ -211,9 +212,10 @@ public:
    static UVector<UString>* vmsg_error;
    static UVector<UModProxyService*>* vservice;
 
+   static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
-   static bool enable_caching_by_proxy_servers, telnet_enable, data_chunked, bsendfile;
-   static uint32_t npathinfo, limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size;
+   static bool enable_caching_by_proxy_servers, data_chunked, bsendfile;
+   static uint32_t npathinfo, limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size, response_code;
 
 
    static int  handlerREAD();
@@ -533,20 +535,6 @@ public:
    static void   writeApacheLikeLog();
    static void prepareApacheLikeLog();
 #endif
-
-   // UPLOAD PROGRESS
-
-   typedef struct upload_progress {
-      char uuid[32];
-      in_addr_t client;
-      uint32_t user_agent;
-      int byte_read, count;
-   } upload_progress;
-
-   static uint32_t upload_progress_index;
-   static upload_progress* ptr_upload_progress;
-
-   static UString getUploadProgress();
 
    // CSP (C Servlet Page)
 

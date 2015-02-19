@@ -192,7 +192,7 @@ int USCGIPlugIn::handlerRequest()
           * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
           */
 
-         if (connection->shutdown() == false)
+         if (connection->shutdown(SHUT_WR) == false)
             {
             UHTTP::setInternalError();
 

@@ -240,7 +240,7 @@ public:
 
    // LOCK
 
-   void   lock() { _lock.lock(0); }
+   void   lock() { _lock.lock(); }
    void unlock() { _lock.unlock(); }
 
    void setShared(sem_t* psem, char* spinlock);

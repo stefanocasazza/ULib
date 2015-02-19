@@ -114,7 +114,7 @@ void UError::stackDump()
 
    if (n > 0)
       {
-      struct timespec req = { 3, 0 };
+      struct timespec req = { 2, 0 };
 
       name_buf[n] = 0;
 
@@ -122,44 +122,30 @@ void UError::stackDump()
 
       if (pid == 0)
          {
-         pid_t _pid = fork();
+         char buf[32];
 
-         if (_pid == 0)
-            {
-            char buf[32];
-            int fd_stderr = open("/tmp/gbd.err", O_CREAT | O_WRONLY, 0666);
+         (void) u__snprintf(buf, sizeof(buf), "--pid=%P", 0);
 
-#        ifndef HAVE_DUP3
-            (void) dup2(fd,        STDOUT_FILENO);
-            (void) dup2(fd_stderr, STDERR_FILENO);
-#        else
-            (void) dup3(fd,        STDOUT_FILENO, O_CLOEXEC);
-            (void) dup3(fd_stderr, STDERR_FILENO, O_CLOEXEC);
-#        endif
+         (void) dup2(fd,                                             STDOUT_FILENO);
+         (void) dup2(open("/tmp/gbd.err", O_CREAT | O_WRONLY, 0666), STDERR_FILENO);
 
-            (void) u__snprintf(buf, sizeof(buf), "--pid=%P", 0);
+         (void) execlp("gdb", "gdb", "--nx", "--batch", "-ex", "thread apply all bt full", buf, name_buf, (char*)0); // thread apply all bt full 20
 
-            // thread apply all bt full 20
-
-            (void) execlp("gdb", "gdb", "--nx", "--batch", "-ex", "thread apply all bt full", buf, name_buf, (char*)0);
-
-            abort();
-            }
-
-         (void) nanosleep(&req, 0);
-
-         if (waitpid(_pid, 0, WNOHANG) < 0) (void) kill(_pid, SIGKILL);
-
-         (void) kill(u_pid, SIGCONT);
-
-         exit(0);
+         abort();
          }
 
       (void) nanosleep(&req, 0);
 
-      if (waitpid(pid, 0, WNOHANG) < 0) (void) kill(pid, SIGKILL);
+      if (waitpid(pid, 0, WNOHANG) < 0)
+         {
+         (void) kill(u_pid, SIGCONT);
 
-      if (lseek(fd, U_SEEK_BEGIN, SEEK_END) > 350)
+         (void) nanosleep(&req, 0);
+
+         if (waitpid(pid, 0, WNOHANG) < 0) (void) kill(pid, SIGKILL);
+         }
+
+      if (lseek(fd, U_SEEK_BEGIN, SEEK_END) > 650)
          {
          (void) close(fd);
 

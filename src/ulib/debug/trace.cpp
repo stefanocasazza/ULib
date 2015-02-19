@@ -154,9 +154,9 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
    U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_syscall), 1019)
 
 #ifdef _MSWINDOWS_
-   if (error == false &&
+   if (format         &&
        active[0]      &&
-       format         &&
+       error == false &&
        format[1] == 'd') // int (BOOL for mingw)
       {
       va_list argp;
@@ -216,7 +216,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                u_errno = errno;
                }
 
-            U_WARNING("%s", buffer_syscall);
+            if (errno != EAGAIN) U_WARNING("%s", buffer_syscall);
             }
          }
 

@@ -313,7 +313,7 @@ check_for_netcat() {
 			[ "$NC_TEST" = "OpenBSD netcat " ]; then
 			NC=nc
 		fi
-		if [ "$NC_TEST" = "Ncat 6.45 " ] || \
+		if [ "$NC_TEST" = "Ncat 6.47 " ] || \
 			[ "$NC_TEST" = "usage: nc [-46DdhklnrStUuvzC] [-i interval] [-p source_port]" ]; then
 			NC=nc
 			NC_ARG_LISTEN_PORT=""

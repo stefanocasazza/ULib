@@ -211,8 +211,10 @@ int UStreamPlugIn::handlerRequest()
 
          if (readd != -1)
             {
-            if (fmetadata &&
-                UClientImage_Base::psocket->sendfile(fmetadata->getFd(), 0, fmetadata->getSize(), 5 * 1000) == false)
+            uint32_t sz = (fmetadata ? fmetadata->getSize() : 0);
+
+            if (sz &&
+                USocketExt::sendfile(UClientImage_Base::psocket, fmetadata->getFd(), 0, sz, UServer_Base::timeoutMS) == (int)sz)
                {
                UTimeVal to_sleep(0L, 10 * 1000L);
 

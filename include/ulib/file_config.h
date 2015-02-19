@@ -84,13 +84,15 @@ public:
       U_RETURN(default_value);
       }
 
-   bool readBoolean(const char* key, uint32_t keylen)
+   bool readBoolean(const char* key, uint32_t keylen, bool default_value = false)
       {
-      U_TRACE(0, "UFileConfig::readBoolean(%.*S,%u)", keylen, key, keylen)
+      U_TRACE(0, "UFileConfig::readBoolean(%.*S,%u,%b)", keylen, key, keylen, default_value)
 
-      bool result = at(key, keylen).strtob();
+      UString value = at(key, keylen);
 
-      U_RETURN(result);
+      if (value) default_value = value.strtob();
+
+      U_RETURN(default_value);
       }
 
    long readLong(   const UString& key, long default_value = 0) { return readLong(   U_STRING_TO_PARAM(key), default_value); }

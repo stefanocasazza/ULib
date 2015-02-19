@@ -15,7 +15,8 @@ rm -f /tmp/*.memusage.* \
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --trace-children=yes"
- export UTRACE UOBJDUMP USIMERR VALGRIND
+ UMEMUSAGE=yes
+ export UTRACE UOBJDUMP USIMERR VALGRIND UMEMUSAGE
 
  ORM_DRIVER="sqlite"
  ORM_OPTION="host=10.30.1.131 dbname=../db/hello_world"
@@ -24,7 +25,7 @@ rm -f /tmp/*.memusage.* \
 #ORM_DRIVER="pgsql"
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass dbname=hello_world"
 
-UMEMPOOL="545,0,0,37,8465,0,-17,-22,34"
+UMEMPOOL="152,85,0,37,8265,0,-17,-22,40"
  export ORM_DRIVER ORM_OPTION UMEMPOOL
 
 DIR_CMD="../../examples/userver"
@@ -90,6 +91,7 @@ fi
 #STRACE=$TRUSS
 #VALGRIND="valgrind --tool=exp-dhat"
 #MUDFLAP_OPTIONS="-ignore-reads  -backtrace=8"
+echo 16384 > /proc/sys/net/core/somaxconn
  start_prg_background userver_tcp -c benchmark/FrameworkBenchmarks/fbenchmark.cfg
 
 #run command on another computer

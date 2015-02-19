@@ -96,17 +96,6 @@ public:
 
    // manage shared log
 
-   static bool isShared()
-      {
-      U_TRACE(0, "ULog::isShared()")
-
-      U_INTERNAL_ASSERT_POINTER(pthis)
-
-      if (pthis->lock->isShared()) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
    static bool isMemoryMapped()
       {
       U_TRACE(0, "ULog::isMemoryMapped()")

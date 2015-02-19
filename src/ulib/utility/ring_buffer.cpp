@@ -43,14 +43,10 @@ U_NO_EXPORT void URingBuffer::checkLocking()
 
    U_INTERNAL_DUMP("readd_cnt = %d", ptr->readd_cnt)
 
-   if (lock.isShared())
-      {
-      if (ptr->readd_cnt <= 1) lock.destroy();
-      }
-   else
-      {
-      if (ptr->readd_cnt  > 1) lock.init(&(ptr->lock_readers), ptr->spinlock_readers);
-      }
+   // If there is exactly one reader and one writer, there is no need to lock read or write operations
+
+                           _lock.destroy();
+   if (ptr->readd_cnt > 1) _lock.init(&(ptr->lock_readers), ptr->spinlock_readers);
 }
 
 // Returns a read descriptor
@@ -151,7 +147,7 @@ int URingBuffer::write(const char* buf, int len, bool pkt)
       len += U_RINGBUFFER_PKTHDRSIZE;
       }
 
-   lock.lock();
+   lock();
 
    // NB: check write size and number of bytes free...
 
@@ -201,7 +197,7 @@ int URingBuffer::write(const char* buf, int len, bool pkt)
    ptr->pwrite = (ptr->pwrite + todo) % size;
 
 end:
-   lock.unlock();
+   unlock();
 
    if (pkt) len -= U_RINGBUFFER_PKTHDRSIZE;
 
@@ -218,7 +214,7 @@ int URingBuffer::readFromFdAndWrite(int fd)
 
    int todo, split, nread = -1;
 
-   lock.lock();
+   lock();
 
    // NB: check write size and number of bytes free...
 
@@ -253,7 +249,7 @@ int URingBuffer::readFromFdAndWrite(int fd)
       }
 
 end:
-   lock.unlock();
+   unlock();
 
    U_RETURN(nread);
 }
@@ -287,7 +283,7 @@ int URingBuffer::read(int readd, char* buf, int len)
 
    int todo = len, _avail, split;
 
-   lock.lock();
+   lock();
 
    // NB: check read size and number of bytes available...
 
@@ -316,7 +312,7 @@ int URingBuffer::read(int readd, char* buf, int len)
    ptr->pread[readd] = (ptr->pread[readd] + todo) % size;
 
 end:
-   lock.unlock();
+   unlock();
 
    U_RETURN(len);
 }
@@ -333,7 +329,7 @@ int URingBuffer::readAndWriteToFd(int readd, int fd)
 
    int todo, split, nwrite = 0;
 
-   lock.lock();
+   lock();
 
    // NB: check write size and number of bytes free...
 
@@ -372,7 +368,7 @@ int URingBuffer::readAndWriteToFd(int readd, int fd)
       }
 
 end:
-   lock.unlock();
+   unlock();
 
    U_RETURN(nwrite);
 }
@@ -380,10 +376,10 @@ end:
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* URingBuffer::dump(bool reset) const
 {
-   *UObjectIO::os << "ptr         " << (void*)ptr   << '\n'
-                  << "size        " << size         << '\n'
-                  << "map_size    " << map_size     << '\n'
-                  << "lock (ULock " << (void*)&lock << ')';
+   *UObjectIO::os << "ptr          " << (void*)ptr    << '\n'
+                  << "size         " << size          << '\n'
+                  << "map_size     " << map_size      << '\n'
+                  << "_lock (ULock " << (void*)&_lock << ')';
 
    if (reset)
       {

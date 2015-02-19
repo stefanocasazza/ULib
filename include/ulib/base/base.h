@@ -123,7 +123,6 @@ extern "C" {
 
 typedef int   (*iPF)     (void);
 typedef int   (*iPFpv)   (void*);
-typedef int   (*iPFpci)  (const char*,int32_t);
 typedef int   (*iPFpvpv) (      void*,      void*);
 typedef int   (*qcompare)(const void*,const void*);
 typedef bool  (*bPFi)    (int);
@@ -131,6 +130,7 @@ typedef bool  (*bPF)     (void);
 typedef bool  (*bPFpv)   (void*);
 typedef bool  (*bPFpvpv) (void*,void*);
 typedef bool  (*bPFpc)   (const char*);
+typedef bool  (*bPFpcu)  (const char*, uint32_t);
 typedef bool  (*bPFpcpc) (const char*,const char*);
 typedef bool  (*bPFpcpv) (const char*,const void*);
 typedef void  (*vPF)     (void);

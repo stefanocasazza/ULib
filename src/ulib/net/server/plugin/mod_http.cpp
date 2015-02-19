@@ -121,7 +121,6 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // LOG_FILE_SZ            memory size for file apache like log
    //
    // ENABLE_INOTIFY         enable automatic update of document root image with inotify
-   // TELNET_ENABLE          accept fragmentation of header request (as happen with telnet)
    // CACHE_FILE_MASK        mask (DOS regexp) of pathfile that content      be cached in memory (default: "*.css|*.js|*.*html|*.png|*.gif|*.jpg")
    // CACHE_AVOID_MASK       mask (DOS regexp) of pathfile that presence NOT be cached in memory 
    // CACHE_FILE_STORE       pathfile of memory cache stored on filesystem
@@ -210,7 +209,6 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       UString x;
 
       UHTTP::cgi_timeout                     = cfg.readLong(U_CONSTANT_TO_PARAM("CGI_TIMEOUT"));
-      UHTTP::telnet_enable                   = cfg.readBoolean(U_CONSTANT_TO_PARAM("TELNET_ENABLE"));
       UHTTP::limit_request_body              = cfg.readLong(U_CONSTANT_TO_PARAM("LIMIT_REQUEST_BODY"), U_STRING_MAX_SIZE);
       UHTTP::request_read_timeout            = cfg.readLong(U_CONSTANT_TO_PARAM("REQUEST_READ_TIMEOUT"));
       UHTTP::min_size_for_sendfile           = cfg.readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"));
@@ -543,23 +541,22 @@ int UHttpPlugIn::handlerRun() // NB: we use this method because now we have the 
       {
       UServer_Base::update_date3 = true;
 
+      UClientImage_Base::iov_vec[1].iov_base = (caddr_t) UServer_Base::ptr_static_date->date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n...
+      UClientImage_Base::iov_vec[1].iov_len  = 6+29+2+12+2+17+2;
+
+      U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %.*S UClientImage_Base::iov_vec[1] = %.*S",
+                       UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base,
+                       UClientImage_Base::iov_vec[1].iov_len, UClientImage_Base::iov_vec[1].iov_base)
+
+      u__memcpy(UClientImage_Base::iov_sav, UClientImage_Base::iov_vec, sizeof(struct iovec) * 4, __PRETTY_FUNCTION__);
+
       // NB: we can shortcut the http request processing...
 
       UClientImage_Base::callerHandlerRead       = UHTTP::handlerREAD;
       UClientImage_Base::callerHandlerCache      = UHTTP::handlerCache;
       UClientImage_Base::callerIsValidRequest    = UHTTP::isValidRequest;
+      UClientImage_Base::callerIsValidRequestExt = UHTTP::isValidRequestExt;
       UClientImage_Base::callerHandlerEndRequest = UHTTP::setEndRequestProcessing;
-
-      UClientImage_Base::iov_vec[0].iov_base = (caddr_t) UClientImage_Base::iov_buffer;        // HTTP/1.1 206 Partial Content\r\n
-      UClientImage_Base::iov_vec[1].iov_base = (caddr_t) UServer_Base::ptr_static_date->date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n...
-
-      (void) memcpy(UClientImage_Base::iov_buffer, U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\n"));
-
-      UClientImage_Base::response_len  = U_CONSTANT_SIZE("HTTP/1.1 200 OK\r\n");
-      UClientImage_Base::response_code = HTTP_OK;
-
-      U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %S UClientImage_Base::iov_vec[1] = %.*S",
-                       UClientImage_Base::iov_vec[0].iov_base, 6+29+2+12+2+17+2, UClientImage_Base::iov_vec[1].iov_base)
       }
 
    U_ASSERT(UHTTP::cache_file_check_memory())

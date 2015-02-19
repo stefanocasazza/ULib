@@ -15,8 +15,9 @@
 # ENABLE_RFC1918_FILTER reject request from private IP to public server address
 # ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
 #
-# LISTEN_BACKLOG			max number of ready to be delivered connections to accept()
-# SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+# LISTEN_BACKLOG				  max number of ready to be delivered connections to accept()
+# SET_REALTIME_PRIORITY		  flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+# CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization 
 #
 # PID_FILE      write pid on file indicated
 # WELCOME_MSG   message of welcome to send initially to client
@@ -132,7 +133,6 @@ userver {
 # LOG_FILE_SZ					  memory size for file apache like log
 #
 # ENABLE_INOTIFY             enable automatic update of cached document root image with inotify
-# TELNET_ENABLE              accept fragmentation of header request (as happen with telnet)
 # CACHE_FILE_MASK            mask (DOS regexp) of pathfile that content      be cached in memory (default: "*.css|*.js|*.*html|*.png|*.gif|*.jpg")
 # CACHE_AVOID_MASK           mask (DOS regexp) of pathfile that presence NOT be cached in memory 
 # CACHE_FILE_STORE           pathfile of memory cache stored on filesystem
@@ -185,7 +185,6 @@ http {
 # APACHE_LIKE_LOG  /var/log/httpd/access_log
 # LOG_FILE_SZ      1M
  
-# TELNET_ENABLE   yes
 # ENABLE_INOTIFY  yes
 
 # CGI_TIMEOUT 60

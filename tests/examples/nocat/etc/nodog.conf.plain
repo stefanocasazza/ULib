@@ -229,7 +229,6 @@ nocat {
 ## APACHE_LIKE_LOG            file to write NCSA extended/combined log format: "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
 ## 
 ## ENABLE_INOTIFY             enable automatic update of cached document root image with inotify
-## TELNET_ENABLE              accept fragmentation of header request (as happen with telnet)
 ## CACHE_FILE_MASK            mask (DOS regexp) of pathfile that be cached in memory (default: "*.css|*.js|*.*html|*.png|*.gif|*.jpg")
 ##
 ## MIN_SIZE_FOR_SENDFILE      for major size it is better to use sendfile() to serve static content
@@ -275,7 +274,6 @@ http {
 
 ## VIRTUAL_HOST           yes
 ## ENABLE_INOTIFY         yes
-   TELNET_ENABLE			  yes
    DIGEST_AUTHENTICATION  yes
 
    URI_PROTECTED_MASK       /cgi-bin/*

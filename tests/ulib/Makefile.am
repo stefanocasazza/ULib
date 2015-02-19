@@ -209,6 +209,11 @@ endif
 check_PROGRAMS = $(PRG)
 TESTS = $(TST) ../reset.color
 
+## arping.test event.test curl.test ftp.test imap.test ldap.test pop3.test sigslot.test smtp.test ssh_client.test
+test: all-am
+	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
+	../make_test.sh application.test base64.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test magic.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test thread.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test
+
 clean-local:
 	-rm -rf out err core .libs *.bb* *.da *.gcov *.log test_log.log* tmp/* \
 			trace.*.[0-9]*  object.*.[0-9]* stack.*.[0-9]* mempool.*.[0-9]*

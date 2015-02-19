@@ -378,3 +378,5 @@ end:
 
       if (result) U_WARNING("%.*s", U_STRING_TO_TRACE(result));
       }
+
+   client->closeLog();

@@ -60,7 +60,6 @@ public:
     * @param time_limit specified the maximum execution time, in seconds. If set to zero, no time limit is imposed
     */
 
-   static vPFi byte_read_hook; // it allows the generation of a progress meter during upload...
    static vPFsu read_buffer_resize;
 
    // read while not received almost count data
@@ -87,8 +86,19 @@ public:
 
    // write data from multiple buffers
 
-   static int writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS);
-   static int writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS, uint32_t cloop);
+   static int  writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS);
+   static int _writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS);
+   static int  writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS, uint32_t cloop);
+
+   /**
+    * sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.
+    * OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from
+    * which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following
+    * the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within
+    * the kernel, sendfile() does not need to spend time transferring data to and from user space.
+    */
+
+   static int sendfile(USocket* sk, int in_fd, off_t* poffset, uint32_t count, int timeoutMS);
 
    // Send a command to a server and wait for a response (single line)
 

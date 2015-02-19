@@ -29,7 +29,7 @@ USOAPParser::~USOAPParser()
 
 bool USOAPParser::parse(const UString& msg)
 {
-   U_TRACE(0, "USOAPParser::parse(%.*S)", U_STRING_TO_TRACE(msg))
+   U_TRACE(0+256, "USOAPParser::parse(%.*S)", U_STRING_TO_TRACE(msg))
 
    initParser();
 

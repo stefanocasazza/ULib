@@ -32,9 +32,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, ULock, "")
 
-      spinlock = 0;
-      sem      = 0;
-      locked   = 0;
+      plock  = 0;
+      sem    = 0;
+      locked = 0;
       }
 
    ~ULock()
@@ -46,28 +46,26 @@ public:
 
    // SERVICES
 
+   void   unlock();
+   bool spinlock(uint32_t cnt);
+   bool     lock(time_t timeout);
+
    void destroy();
    void init(sem_t* ptr_lock, char* ptr_spinlock = 0);
 
-   void   lock(time_t timeout = 0);
-   void unlock();
-
-   bool isShared()
+   void lock()
       {
-      U_TRACE(0, "ULock::isShared()")
+      U_TRACE(0, "ULock::lock()")
 
-      if (sem) U_RETURN(true);  
+      U_CHECK_MEMORY
 
-      U_RETURN(false);
-      }
+      if (sem &&
+          locked == 0)
+         {
+         sem->lock();
 
-   bool isLocked()
-      {
-      U_TRACE(0, "ULock::isLocked()")
-
-      if (locked) U_RETURN(true);  
-
-      U_RETURN(false);
+         locked = 1;
+         }
       }
 
    // ATOMIC COUNTER
@@ -101,7 +99,7 @@ public:
 #endif
 
 protected:
-   char* spinlock;
+   char* plock;
    USemaphore* sem;
    int locked; // manage lock recursivity...
 

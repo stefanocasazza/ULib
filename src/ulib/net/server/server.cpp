@@ -73,11 +73,10 @@
 #define U_DEFAULT_PORT 80
 
 int           UServer_Base::rkids;
+int           UServer_Base::timeoutMS;
 int           UServer_Base::iAddressType;
-int           UServer_Base::timeoutMS = -1;
 int           UServer_Base::verify_mode;
 int           UServer_Base::preforked_num_kids;
-int           UServer_Base::max_num_process_parallelization;
 bool          UServer_Base::bssl;
 bool          UServer_Base::bipc;
 bool          UServer_Base::binsert;
@@ -105,6 +104,7 @@ uint32_t      UServer_Base::shared_data_add;
 uint32_t      UServer_Base::client_address_len;
 uint32_t      UServer_Base::wakeup_for_nothing;
 uint32_t      UServer_Base::document_root_size;
+uint32_t      UServer_Base::num_client_for_parallelization;
 sigset_t      UServer_Base::mask;
 UString*      UServer_Base::host;
 UString*      UServer_Base::server;
@@ -528,8 +528,9 @@ void UServer_Base::loadConfigParam()
    // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
    // ENABLE_RFC1918_FILTER reject request from private IP to public server address
    //
-   // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
-   // SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+   // LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
+   // SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+   // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization
    //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
@@ -580,18 +581,13 @@ void UServer_Base::loadConfigParam()
 
    *IP_address = cfg->at(U_CONSTANT_TO_PARAM("IP_ADDRESS"));
 
-   timeoutMS                  = cfg->readLong(U_CONSTANT_TO_PARAM("REQ_TIMEOUT"));
-   USocket::iBackLog          = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
-   set_realtime_priority      = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"));
-   UNotifier::max_connection  = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
-   u_printf_string_max_length = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
-
 #ifdef ENABLE_IPV6
-   UClientImage_Base::bIPv6   = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_IPV6"));
+   UClientImage_Base::bIPv6 = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_IPV6"));
 #endif
 
-   if (timeoutMS) timeoutMS *= 1000;
-   else           timeoutMS  = -1;
+   timeoutMS = cfg->readLong(U_CONSTANT_TO_PARAM("REQ_TIMEOUT"), -1);
+
+   if (timeoutMS > 0) timeoutMS *= 1000;
 
    port = cfg->readLong(*UString::str_PORT, U_DEFAULT_PORT);
 
@@ -602,6 +598,12 @@ void UServer_Base::loadConfigParam()
 
       U_WARNING("Sorry, it is required root privilege to listen on port 80 but I am not setuid root, I must try 8080");
       }
+
+   USocket::iBackLog              = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
+   set_realtime_priority          = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), true);
+   UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
+   u_printf_string_max_length     = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
+   num_client_for_parallelization = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_FOR_PARALLELIZATION"));
 
    x = cfg->at(U_CONSTANT_TO_PARAM("PREFORK_CHILD"));
 
@@ -628,7 +630,7 @@ void UServer_Base::loadConfigParam()
    // supplied optionally after a trailing slash, e.g. 192.168.0.0/24, in which case addresses that
    // match in the most significant MASK bits will be allowed. If no options are specified, all clients
    // are allowed. Unauthorized connections are rejected by closing the TCP connection immediately. A
-   // warning is logged on the server but nothing is sent to the client.
+   // warning is logged on the server but nothing is sent to the client
 
 #ifdef U_ACL_SUPPORT
    x = cfg->at(U_CONSTANT_TO_PARAM("ALLOWED_IP"));
@@ -678,7 +680,7 @@ void UServer_Base::loadConfigParam()
 
    // If you want the webserver to run as a process of a defined user, you can do it.
    // For the change of user to work, it's necessary to execute the server with root privileges.
-   // If it's started by a user that that doesn't have root privileges, this step will be omitted.
+   // If it's started by a user that that doesn't have root privileges, this step will be omitted
 
 #ifdef U_LOG_ENABLE
    bool bmsg = false;
@@ -932,7 +934,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
    /**
     * I do know that to include code in the middle of a function is hacky and dirty,
     * but this is the best solution that I could figure out. If you have some idea to
-    * clean it up, please, don't hesitate and let me know.
+    * clean it up, please, don't hesitate and let me know
     */
 
 #  include "plugin/loader.autoconf.cpp"
@@ -1424,9 +1426,12 @@ void UServer_Base::init()
       }
 #endif
 
-   if (isPreForked()) monitoring_process = true;
+   if (preforked_num_kids > 1)
+      {
+      monitoring_process = true;
 
-   max_num_process_parallelization = (preforked_num_kids + 1) * 8;
+      if (num_client_for_parallelization == 0) num_client_for_parallelization = preforked_num_kids;
+      }
 
    U_INTERNAL_ASSERT_EQUALS(proc, 0)
 
@@ -1438,7 +1443,11 @@ void UServer_Base::init()
 
    UClientImage_Base::init();
 
+#ifdef U_SERVER_CAPTIVE_PORTAL
+   USocket::accept4_flags = SOCK_CLOEXEC;
+#else
    USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
+#endif
 
 #ifdef U_LOG_ENABLE
    uint32_t log_rotate_size = 0;
@@ -1556,9 +1565,11 @@ void UServer_Base::init()
 
    last_event = u_now->tv_sec;
 
+#ifdef U_LOG_ENABLE
    U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION, 0)
+#endif
 
-   if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
+   if (timeoutMS > 0) ptime = U_NEW(UTimeoutConnection);
 
    // ---------------------------------------------------------------------------------------------------------
    // init notifier event manager
@@ -1570,7 +1581,7 @@ void UServer_Base::init()
 
    if (preforked_num_kids != -1)
       {
-      if (timeoutMS != -1 ||
+      if (timeoutMS > 0 ||
           isClassic() == false)
          {
          UNotifier::min_connection = 1;
@@ -1579,32 +1590,9 @@ void UServer_Base::init()
       if (handler_inotify) UNotifier::min_connection++;
       }
 
-   UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : 1020) + (UNotifier::num_connection = UNotifier::min_connection);
+   UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog / 2) + (UNotifier::num_connection = UNotifier::min_connection);
 
    U_INTERNAL_DUMP("UNotifier::max_connection = %u", UNotifier::max_connection)
-
-/*
-#if defined(ENABLE_MEMPOOL) && !defined(_MSWINDOWS_) && !defined(ENABLE_THREAD) // && !defined(DEBUG)
-   int num_mem_block[U_NUM_STACK_TYPE] = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-
-   uint32_t n = (((UNotifier::max_connection * sizeof(UClientImage_Base)) + U_PAGEMASK) & ~U_PAGEMASK) / sizeof(UClientImage_Base);
-
-   U_INTERNAL_DUMP("n = %u", n)
-
-#ifdef U_LOG_ENABLE
-   if (isLog()) num_mem_block[U_SIZE_TO_STACK_INDEX(U_STACK_TYPE_5)]             = n; // logbuf => UString(200U)
-#endif
-                num_mem_block[U_SIZE_TO_STACK_INDEX(sizeof(UClientImage_Base))] += n;
-
-#  ifdef USE_LIBSSL
-   if (bssl) num_mem_block[U_SIZE_TO_STACK_INDEX(sizeof(USSLSocket))] += n;
-   else
-#  endif
-             num_mem_block[U_SIZE_TO_STACK_INDEX(sizeof(USocket))]    += n;
-
-   for (uint32_t i = 1; i < U_NUM_STACK_TYPE; ++i) if (num_mem_block[i]) UMemoryPool::allocateMemoryBlocks(i, num_mem_block[i]);
-#endif
-*/
 
    pthis->preallocate();
 
@@ -1624,7 +1612,7 @@ void UServer_Base::init()
 
       USocket::server_flags |= O_NONBLOCK;
 
-      if (timeoutMS != -1 ||
+      if (timeoutMS > 0 ||
           isClassic() == false)
          {
          binsert = true; // NB: we ask to be notified for request of connection (=> accept)
@@ -1782,10 +1770,12 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
       }
 #endif
 
+#ifdef U_LOG_ENABLE
    U_TOT_CONNECTION = 0;
+#endif
 
-   if (isPreForked()) rkids = 0;
-   else               manageSigHUP();
+   if (preforked_num_kids > 1) rkids = 0;
+   else                        manageSigHUP();
 }
 
 RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
@@ -1817,11 +1807,9 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       UInterrupt::erase(SIGTERM); // async signal
 #  endif
 
-#  ifdef DEBUG
-      if (UObjectDB::fd > 0) U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.sigTERM", 0); // to get the value to base WiAuth portal
-      else
+#  if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+      if (U_SYSCALL(getenv, "%S", "UMEMUSAGE"))
          {
-#     ifdef U_STDCPP_ENABLE
          uint32_t len;
          char buffer[4096];
          unsigned long vsz, rss;
@@ -1845,7 +1833,6 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
          U_INTERNAL_ASSERT_MINOR(len, sizeof(buffer))
 
          (void) UFile::writeToTmp(buffer, len, false, "%N.memusage.%P", 0);
-#     endif
          }
 #  endif
 
@@ -1873,6 +1860,7 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
 
+   int cround = 0;
    USocket* csocket;
 
 #ifdef DEBUG
@@ -1899,9 +1887,9 @@ loop:
 
    csocket = pClientIndex->socket;
 
-   if (UNLIKELY(csocket->isOpen())) // busy
+   if (csocket->isOpen()) // busy
       {
-      if (timeoutMS != -1) // NB: we check if the connection is idle...
+      if (timeoutMS > 0) // NB: we check if the connection is idle...
          {
          U_INTERNAL_ASSERT_POINTER(ptime)
 
@@ -1919,9 +1907,11 @@ loop:
 #if !defined(U_SERVER_CAPTIVE_PORTAL) && (defined(U_ACL_SUPPORT) || defined(U_RFC1918_SUPPORT))
 try_next:
 #endif
-      if (UNLIKELY(++pClientIndex >= eClientImage))
+      if (++pClientIndex >= eClientImage)
          {
          U_INTERNAL_ASSERT_POINTER(vClientImage)
+
+         if (++cround >= 2) U_ERROR("out of space on client image: preallocation(%u) - connection(%u)", UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
 
          pClientIndex = vClientImage;
          }
@@ -2038,53 +2028,15 @@ try_accept:
       }
 #endif
 
-   ++UNotifier::num_connection;
-
-#if defined(HAVE_EPOLL_WAIT) || defined(USE_LIBEVENT)
-   if (UNLIKELY(UNotifier::num_connection >= UNotifier::max_connection))
-      {
-      if (startParallelization()) U_RETURN(U_NOTIFIER_OK); // parent of parallelization
-
-      if (U_ClientImage_parallelization != 1) // 1 => child of parallelization
-         {
-         csocket->close();
-
-         --UNotifier::num_connection;
-
-         U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by MAX_KEEP_ALIVE (%d)",
-                   U_CLIENT_ADDRESS_TO_TRACE, UNotifier::max_connection - UNotifier::min_connection);
-
-         if (timeoutMS != -1 &&
-             isPreForked() == false)
-            {
-            // NB: we check for idle connection in the middle of a burst of new connections (DOS attack)
-
-            U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-            last_event = u_now->tv_sec;
-
-            UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
-            }
-
-         U_RETURN(U_NOTIFIER_OK);
-         }
-      }
-#else
-   if (UNLIKELY(csocket->iSockDesc >= FD_SETSIZE))
-      {
-      csocket->close();
-
-      --UNotifier::num_connection;
-
-      U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by FD_SETSIZE (%d)", U_CLIENT_ADDRESS_TO_TRACE, FD_SETSIZE);
-
-      U_RETURN(U_NOTIFIER_OK);
-      }
-#endif
-
+#ifdef U_LOG_ENABLE
    U_TOT_CONNECTION++;
 
-   U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+   U_INTERNAL_DUMP("U_TOT_CONNECTION = %u", U_TOT_CONNECTION)
+#endif
+
+   ++UNotifier::num_connection;
+
+   U_INTERNAL_DUMP("UNotifier::num_connection = %u", UNotifier::num_connection)
 
    /**
     * PREFORK_CHILD number of child server processes created at startup:
@@ -2098,8 +2050,6 @@ try_accept:
 #ifdef U_CLASSIC_SUPPORT
    if (isClassic())
       {
-      U_INTERNAL_ASSERT_POINTER(proc)
-
       if (proc->fork() &&
           proc->parent())
          {
@@ -2107,12 +2057,9 @@ try_accept:
 
          csocket->close();
 
-         U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
-
          U_SRV_LOG("Started new child (pid %d), up to %u children", proc->pid(), UNotifier::num_connection - UNotifier::min_connection);
 
-retry:
-         pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much zombie...
+retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much zombie...
 
          if (pid > 0)
             {
@@ -2137,7 +2084,7 @@ retry:
          {
          UNotifier::init(false);
 
-         if (timeoutMS != -1) ptime = U_NEW(UTimeoutConnection);
+         if (timeoutMS > 0) ptime = U_NEW(UTimeoutConnection);
          }
       }
 #endif
@@ -2184,7 +2131,12 @@ retry:
    {
    if (pClientIndex->handlerRead() == U_NOTIFIER_DELETE)
       {
-      if (csocket->isOpen()) csocket->close();
+      if (csocket->isOpen())
+         {
+         csocket->iState = USocket::CONNECT;
+
+         csocket->close();
+         }
 
       pClientIndex->UClientImage_Base::handlerDelete();
 
@@ -2192,18 +2144,50 @@ retry:
       }
    }
 
-   U_INTERNAL_ASSERT_MINOR(UNotifier::num_connection, UNotifier::max_connection)
-
-#ifdef DEBUG
-   if (UServer_Base::max_depth < UNotifier::num_connection) UServer_Base::max_depth = UNotifier::num_connection;
-#endif
-
    U_INTERNAL_ASSERT(csocket->isOpen())
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
 
+#if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(_MSWINDOWS_)
+   if (csocket->iSockDesc >= FD_SETSIZE)
+      {
+      csocket->close();
+
+      --UNotifier::num_connection;
+
+      U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by FD_SETSIZE(%u)", U_CLIENT_ADDRESS_TO_TRACE, FD_SETSIZE);
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
+#endif
+
+   if (UNotifier::num_connection >= UNotifier::max_connection)
+      {
+      U_SRV_LOG("WARNING: new client connected from %.*S, num_connection(%u) greater than MAX_KEEP_ALIVE(%u)",
+                   U_CLIENT_ADDRESS_TO_TRACE, UNotifier::num_connection, UNotifier::max_connection - UNotifier::min_connection);
+
+#  ifdef U_SERVER_CAPTIVE_PORTAL // NB: we check for idle connection in the middle of a burst of new connections (DOS attack)...
+      if (timeoutMS > 0)
+         {
+         U_INTERNAL_ASSERT_EQUALS(preforked_num_kids, 0)
+
+         U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+         last_event = u_now->tv_sec;
+
+         UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
+         }
+#  endif
+      }
+
+#ifdef DEBUG
+   if (max_depth < UNotifier::num_connection) max_depth = UNotifier::num_connection;
+#endif
+
+   pClientIndex->last_event = u_now->tv_sec;
+
    UNotifier::insert((UEventFd*)pClientIndex);
 
-   if (UNLIKELY(++pClientIndex >= eClientImage))
+   if (++pClientIndex >= eClientImage)
       {
       U_INTERNAL_ASSERT_POINTER(vClientImage)
 
@@ -2211,7 +2195,7 @@ retry:
       }
 
 next:
-   pClientIndex->last_event = last_event = u_now->tv_sec;
+   last_event = u_now->tv_sec;
 
 #ifdef USE_LIBSSL
    if (bssl == false)
@@ -2226,6 +2210,8 @@ next:
 #if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_)
    U_INTERNAL_ASSERT(UNotifier::add_mask & EPOLLET)
 
+   cround = 0;
+
    goto loop; // NB: we try to manage optimally a burst of new connections...
 #endif
    }
@@ -2234,13 +2220,14 @@ next:
    U_RETURN(U_NOTIFIER_OK);
 }
 
+#ifdef U_LOG_ENABLE
 uint32_t UServer_Base::getNumConnection(char* ptr)
 {
    U_TRACE(0, "UServer_Base::getNumConnection(%p)", ptr)
 
    uint32_t len;
 
-   if (isPreForked() == false) len = u_num2str32(ptr, UNotifier::num_connection - UNotifier::min_connection - 1);
+   if (preforked_num_kids <= 0) len = u_num2str32(ptr, UNotifier::num_connection - UNotifier::min_connection - 1);
    else
       {
       char* start = ptr;
@@ -2256,6 +2243,7 @@ uint32_t UServer_Base::getNumConnection(char* ptr)
 
    U_RETURN(len);
 }
+#endif
 
 bool UServer_Base::handlerTimeoutConnection(void* cimg)
 {
@@ -2280,21 +2268,11 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          U_RETURN(false);
          }
 
-      // NB: we check for idle connection in the middle of a burst of new connections (DOS attack)
-
-      if ((UNotifier::num_connection+1) >= UNotifier::max_connection)
-         {
-         if ((last_event - ((UClientImage_Base*)cimg)->last_event) >= ptime->UTimeVal::tv_sec) goto next;
-
-         U_RETURN(false);
-         }
-
 #  ifdef U_LOG_ENABLE
       from_handlerTime = true;
 #  endif
       }
 
-next:
    if (((UClientImage_Base*)cimg)->handlerTimeout() == U_NOTIFIER_DELETE) // NB: this call set also UClientImage_Base::pthis...
       {
       U_INTERNAL_ASSERT_EQUALS(cimg, UClientImage_Base::pthis) // NB: U_SRV_LOG_WITH_ADDR macro depend on UClientImage_Base::pthis...
@@ -2355,7 +2333,10 @@ int UServer_Base::UTimeoutConnection::handlerTime()
       UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
       }
 
-   if (U_CNT_PARALLELIZATION) removeZombies();
+#ifdef U_LOG_ENABLE
+   if (U_CNT_PARALLELIZATION)
+#endif
+   removeZombies();
 
    // ---------------
    // return value:
@@ -2567,7 +2548,7 @@ void UServer_Base::run()
 
       U_INTERNAL_ASSERT_EQUALS(rkids, 0)
 
-      if (isPreForked() == false) nkids = 1;
+      if (preforked_num_kids <= 0) nkids = 1;
       else
          {
          pid_to_wait  = -1;
@@ -2575,10 +2556,6 @@ void UServer_Base::run()
          }
 
       U_INTERNAL_DUMP("nkids = %d", nkids)
-
-#  if defined(ENABLE_MEMPOOL) && !defined(_MSWINDOWS_) && !defined(ENABLE_THREAD)
-   // U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.beforeFork", 0); // to get the value to base nodog
-#  endif
 
       while (flag_loop)
          {
@@ -2619,7 +2596,7 @@ void UServer_Base::run()
                   }
 #           endif
 
-               if (isPreForked() == false) pid_to_wait = pid;
+               if (preforked_num_kids <= 0) pid_to_wait = pid;
  
 #           ifdef ENABLE_THREAD
                if (u_pthread_time)
@@ -2775,7 +2752,7 @@ void UServer_Base::removeZombies()
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
 
 #ifndef U_LOG_ENABLE
-   (void) UProcess::removeZombies();
+         (void) UProcess::removeZombies();
 #else
    uint32_t n = UProcess::removeZombies();
 
@@ -2785,21 +2762,23 @@ void UServer_Base::removeZombies()
 
 // it creates a copy of itself, return true if parent...
 
-int UServer_Base::startNewChild(UProcess* p)
+int UServer_Base::startNewChild()
 {
-   U_TRACE(0, "UServer_Base::startNewChild(%p)", p)
+   U_TRACE(0, "UServer_Base::startNewChild()")
 
-   if (p->fork() &&
-       p->parent())
+   UProcess p;
+
+   if (p.fork() &&
+       p.parent())
       {
-      pid_t pid = p->pid();
-
-      U_CNT_PARALLELIZATION++;
+      pid_t pid = p.pid();
 
 #  ifndef U_LOG_ENABLE
             (void) UProcess::removeZombies();
 #  else
       uint32_t n = UProcess::removeZombies();
+
+      U_CNT_PARALLELIZATION++;
 
       U_SRV_LOG("Started new child (pid %d) for parallelization (%d) - removed %u zombies", pid, U_CNT_PARALLELIZATION, n);
 #  endif
@@ -2819,35 +2798,36 @@ __noreturn void UServer_Base::endNewChild()
    UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)SIG_IGN);
 #endif
 
+#ifdef U_LOG_ENABLE
    if (LIKELY(U_CNT_PARALLELIZATION)) U_CNT_PARALLELIZATION--;
 
    U_INTERNAL_DUMP("cnt_parallelization = %d", U_CNT_PARALLELIZATION)
 
    U_SRV_LOG("child for parallelization ended (%d)", U_CNT_PARALLELIZATION);
+#endif
 
    U_EXIT(0);
 }
 
-bool UServer_Base::startParallelization()
+bool UServer_Base::startParallelization(uint32_t nclient)
 {
-   U_TRACE(0, "UServer_Base::startParallelization()")
+   U_TRACE(0, "UServer_Base::startParallelization(%u)", nclient)
 
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
 
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d U_CNT_PARALLELIZATION = %d max_num_process_parallelization = %d",
-                    U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_CNT_PARALLELIZATION,     max_num_process_parallelization)
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
+                    U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
 
-#ifdef USE_LIBSSL
-// if (bssl == false)
-#endif
-   {
-   if (U_ClientImage_pipeline        == false &&
-       U_ClientImage_parallelization == false &&
-       U_CNT_PARALLELIZATION < max_num_process_parallelization) // NB: thread approach => (max_num_process_parallelization == 0)
+#ifndef U_SERVER_CAPTIVE_PORTAL
+   if (U_ClientImage_parallelization != 1 && // 1 => child of parallelization
+#  ifdef USE_LIBSSL
+   // bssl == false                       &&
+#  endif
+       (UNotifier::num_connection - UNotifier::min_connection) > nclient)
       {
       U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
 
-      if (startNewChild(proc))
+      if (startNewChild())
          {
          // NB: from now it is responsability of the child to services the request from the client on the same connection...
 
@@ -2866,7 +2846,7 @@ bool UServer_Base::startParallelization()
 
       U_ASSERT(isParallelizationChild())
       }
-   }
+#endif
 
    U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
 

@@ -6,15 +6,16 @@
 
 start_msg cspclient
 
-#UTRACE="0 150M 0"
+#UTRACE="0 50M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
-rm -rf CSP/cspserver.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA CSP/CSP/DB_CA/CA_1 \
+rm -rf cspclient.log CSP/cspserver.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA CSP/CSP/DB_CA/CA_1 \
 		 out/userver_ssl.out err/userver_ssl.err \
        CSP/trace.*userver_ssl*.[0-9]* CSP/object.*userver_ssl*.[0-9]* CSP/stack.*userver_ssl*.[0-9]* CSP/mempool.*userver_ssl*.[0-9]*
 
+# ----------------------------------------------------------------
 # usage: openssl s_client args
 # ----------------------------------------------------------------
 # -host host    - use -connect instead
@@ -52,8 +53,6 @@ rm -rf CSP/cspserver.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA CSP/CSP/DB_CA/CA_1 \
 cat <<EOF >inp/webserver.cfg
 userver {
  PORT 443
- REQ_TIMEOUT 5
- MAX_KEEP_ALIVE 256
  LOG_FILE cspserver.log
  LOG_FILE_SZ 1M
  DOCUMENT_ROOT CSP
@@ -95,6 +94,7 @@ cat <<EOF >inp/webclient.cfg
 uclient {
  PORT 443
  SERVER localhost
+ LOG_FILE cspclient.log
  CA_PATH ../ulib/CA/CApath
  CA_FILE ../ulib/CA/cacert.pem
  PASSWORD caciucco

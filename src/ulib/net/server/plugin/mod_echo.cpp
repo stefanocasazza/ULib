@@ -37,7 +37,7 @@ int UEchoPlugIn::handlerRequest()
 
    UClientImage_Base::body->clear();
 
-   UClientImage_Base::resetResponse();
+   UClientImage_Base::setNoHeaderForResponse();
 
 #ifdef U_RESPONSE_FOR_TEST
    UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM(U_RESPONSE_FOR_TEST));

@@ -47,6 +47,11 @@ public:
    int  open();            // Returns a read descriptor
    void close(int readd);  // Close a read descriptor
 
+   // LOCK
+
+   void   lock() { _lock.lock(); }
+   void unlock() { _lock.unlock(); }
+
    /**
     * Test whether buffer is empty
     */
@@ -153,7 +158,7 @@ public:
 protected:
    char* ptrd;
    rbuf_data* ptr;
-   ULock lock;
+   ULock _lock;
    int size;
    uint32_t map_size;
 

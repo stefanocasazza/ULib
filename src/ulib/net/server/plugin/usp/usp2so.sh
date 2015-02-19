@@ -17,8 +17,6 @@ rm -f .libs/lib*.so
 
 chmod 777 usp_compile.sh
 
-# make upload_progress.la
-
 # echo "  CXX   " upload.lo;/bin/sh ../../../../../../libtool --silent --tag=CXX   --mode=compile g++ -DHAVE_CONFIG_H -I. -I../../../../../../include   -DDEBUG
 # -I/usr/include/libxml2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -pipe -D_GNU_SOURCE  -fstrict-aliasing -fno-stack-protector -fomit-frame-pointer -finline -findirect-inlining
 # -ftree-switch-conversion -Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op -Wmissing-declarations -Wpacked -Wswitch-enum

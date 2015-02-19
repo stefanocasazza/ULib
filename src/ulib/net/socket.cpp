@@ -14,6 +14,7 @@
 #include <ulib/file.h>
 #include <ulib/timeval.h>
 #include <ulib/notifier.h>
+#include <ulib/internal/chttp.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/string_ext.h>
 
@@ -659,7 +660,7 @@ int USocket::sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, U
  *           automatically transmitted.
  *
  * This is a no-op if we don't think this platform has corks.
- ***/
+ */
 
 void USocket::setTcpCork(USocket* sk, uint32_t value)
 {
@@ -855,7 +856,7 @@ void USocket::_closesocket()
 #endif
 
    iSockDesc   = -1;
-   iRemotePort = 0;
+   iRemotePort =  0;
 }
 
 void USocket::close()
@@ -874,6 +875,15 @@ void USocket::closesocket()
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT(isOpen())
+
+   U_INTERNAL_DUMP("U_ClientImage_parallelization = %u", U_ClientImage_parallelization)
+
+   if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
+      {
+      iSockDesc = -1;
+
+      return;
+      }
 
 #ifdef USE_LIBSSL
    if (isSSL(true)) ((USSLSocket*)this)->closesocket();
@@ -1254,57 +1264,6 @@ loop:
       }
 
    U_RETURN(-1);
-}
-
-// sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.
-// OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from
-// which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following
-// the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within
-// the kernel, sendfile() does not need to spend time transferring data to and from user space
-
-bool USocket::sendfile(int in_fd, off_t* poffset, uint32_t count, int timeoutMS)
-{
-   U_TRACE(1, "USocket::sendfile(%d,%p,%u,%d)", in_fd, poffset, count, timeoutMS)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT(isOpen())
-   U_INTERNAL_ASSERT_MAJOR(count,0)
-
-   ssize_t value;
-
-   do {
-      U_INTERNAL_DUMP("count = %u", count)
-
-      value = U_SYSCALL(sendfile, "%d,%d,%p,%u", getFd(), in_fd, poffset, count);
-
-      if (value == (ssize_t)count) U_RETURN(true);
-
-      if (value <= 0L)
-         {
-         U_INTERNAL_DUMP("errno = %d", errno)
-
-         if (errno     == EAGAIN &&
-             timeoutMS != 0      &&
-             UNotifier::waitForWrite(iSockDesc, timeoutMS) == 1)
-            {
-            continue;
-            }
-
-         iState = BROKEN;
-
-         _closesocket();
-
-         U_RETURN(false);
-         }
-
-      count -= value;
-      }
-   while (count);
-
-   U_INTERNAL_ASSERT_EQUALS(count,0)
-
-   U_RETURN(true);
 }
 
 // DEBUG

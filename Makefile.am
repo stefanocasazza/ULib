@@ -25,10 +25,13 @@ DIST_SUBDIRS = include src/ulib src/ulib/net/server/plugin src/ulib/orm/driver m
 aclocaldir = $(datadir)/aclocal
 aclocal_DATA = ULib.m4
 
-.phony:  doxy todo
+.phony: doxy todo
 
 ##README.html: README.md
 ##@Markdown.pl README.md > README.html
+
+test:
+	@cd $(top_builddir)/tests; $(MAKE) $(AM_MAKEFLAGS) test 
 
 doc: $(top_builddir)/doc/Doxyfile
 	@cd $(top_builddir)/doc; -rm -rf doc; $(MAKE) $(AM_MAKEFLAGS) doxy 

@@ -14,7 +14,6 @@
 
 @SET_MAKE@
 
-
 VPATH = @srcdir@
 am__make_dryrun = \
   { \
@@ -75,55 +74,15 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/ulib/internal/config.h
 CONFIG_CLEAN_FILES = usp_compile.sh
 CONFIG_CLEAN_VPATH_FILES =
-am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
-am__vpath_adj = case $$p in \
-    $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
-    *) f=$$p;; \
-  esac;
-am__strip_dir = f=`echo $$p | sed -e 's|^.*/||'`;
-am__install_max = 40
-am__nobase_strip_setup = \
-  srcdirstrip=`echo "$(srcdir)" | sed 's/[].[^$$\\*|]/\\\\&/g'`
-am__nobase_strip = \
-  for p in $$list; do echo "$$p"; done | sed -e "s|$$srcdirstrip/||"
-am__nobase_list = $(am__nobase_strip_setup); \
-  for p in $$list; do echo "$$p $$p"; done | \
-  sed "s| $$srcdirstrip/| |;"' / .*\//!s/ .*/ ./; s,\( .*\)/[^/]*$$,\1,' | \
-  $(AWK) 'BEGIN { files["."] = "" } { files[$$2] = files[$$2] " " $$1; \
-    if (++n[$$2] == $(am__install_max)) \
-      { print $$2, files[$$2]; n[$$2] = 0; files[$$2] = "" } } \
-    END { for (dir in files) print dir, files[dir] }'
-am__base_list = \
-  sed '$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;$$!N;s/\n/ /g' | \
-  sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
-am__uninstall_files_from_dir = { \
-  test -z "$$files" \
-    || { test ! -d "$$dir" && test ! -f "$$dir" && test ! -r "$$dir"; } \
-    || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
-         $(am__cd) "$$dir" && rm -f $$files; }; \
-  }
-am__installdirs = "$(DESTDIR)$(moduledir)" "$(DESTDIR)$(bindir)"
-LTLIBRARIES = $(module_LTLIBRARIES)
-@HUPS_TRUE@@MINGW_FALSE@libupload_progress_la_DEPENDENCIES =  \
-@HUPS_TRUE@@MINGW_FALSE@	$(ulib_la)
-am__libupload_progress_la_SOURCES_DIST = upload_progress.cpp
-@HUPS_TRUE@@MINGW_FALSE@am_libupload_progress_la_OBJECTS =  \
-@HUPS_TRUE@@MINGW_FALSE@	upload_progress.lo
-libupload_progress_la_OBJECTS = $(am_libupload_progress_la_OBJECTS)
-AM_V_lt = $(am__v_lt_@AM_V@)
-am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
-am__v_lt_0 = --silent
-am__v_lt_1 = 
-libupload_progress_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
-	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
-	$(AM_CXXFLAGS) $(CXXFLAGS) $(libupload_progress_la_LDFLAGS) \
-	$(LDFLAGS) -o $@
-@HUPS_TRUE@@MINGW_FALSE@am_libupload_progress_la_rpath = -rpath \
-@HUPS_TRUE@@MINGW_FALSE@	$(moduledir)
+am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_usp_translator_OBJECTS = usp_translator.$(OBJEXT)
 usp_translator_OBJECTS = $(am_usp_translator_OBJECTS)
 usp_translator_DEPENDENCIES = $(ulib_la)
+AM_V_lt = $(am__v_lt_@AM_V@)
+am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
+am__v_lt_0 = --silent
+am__v_lt_1 = 
 usp_translator_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=link $(CXXLD) \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(usp_translator_LDFLAGS) \
@@ -161,9 +120,8 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libupload_progress_la_SOURCES) $(usp_translator_SOURCES)
-DIST_SOURCES = $(am__libupload_progress_la_SOURCES_DIST) \
-	$(usp_translator_SOURCES)
+SOURCES = $(usp_translator_SOURCES)
+DIST_SOURCES = $(usp_translator_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -222,6 +180,7 @@ LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
@@ -351,10 +310,6 @@ usp_translator_LDADD = $(ulib_la) @ULIB_LIBS@
 usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
 moduledir = $(libexecdir)/ulib/usp
-@HUPS_TRUE@@MINGW_FALSE@module_LTLIBRARIES = libupload_progress.la
-@HUPS_TRUE@@MINGW_FALSE@libupload_progress_la_SOURCES = upload_progress.cpp
-@HUPS_TRUE@@MINGW_FALSE@libupload_progress_la_LIBADD = $(ulib_la)
-@HUPS_TRUE@@MINGW_FALSE@libupload_progress_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 @CROSS_COMPILING_FALSE@AM_CPPFLAGS = @USP_FLAGS@
 @CROSS_COMPILING_FALSE@SUFFIXES = .cpp .usp .lo .la
 all: all-am
@@ -393,42 +348,6 @@ $(ACLOCAL_M4): @MAINTAINER_MODE_TRUE@ $(am__aclocal_m4_deps)
 $(am__aclocal_m4_deps):
 usp_compile.sh: $(top_builddir)/config.status $(srcdir)/usp_compile.sh.in
 	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
-install-moduleLTLIBRARIES: $(module_LTLIBRARIES)
-	@$(NORMAL_INSTALL)
-	@list='$(module_LTLIBRARIES)'; test -n "$(moduledir)" || list=; \
-	list2=; for p in $$list; do \
-	  if test -f $$p; then \
-	    list2="$$list2 $$p"; \
-	  else :; fi; \
-	done; \
-	test -z "$$list2" || { \
-	  echo " $(MKDIR_P) '$(DESTDIR)$(moduledir)'"; \
-	  $(MKDIR_P) "$(DESTDIR)$(moduledir)" || exit 1; \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 '$(DESTDIR)$(moduledir)'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=install $(INSTALL) $(INSTALL_STRIP_FLAG) $$list2 "$(DESTDIR)$(moduledir)"; \
-	}
-
-uninstall-moduleLTLIBRARIES:
-	@$(NORMAL_UNINSTALL)
-	@list='$(module_LTLIBRARIES)'; test -n "$(moduledir)" || list=; \
-	for p in $$list; do \
-	  $(am__strip_dir) \
-	  echo " $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f '$(DESTDIR)$(moduledir)/$$f'"; \
-	  $(LIBTOOL) $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=uninstall rm -f "$(DESTDIR)$(moduledir)/$$f"; \
-	done
-
-clean-moduleLTLIBRARIES:
-	-test -z "$(module_LTLIBRARIES)" || rm -f $(module_LTLIBRARIES)
-	@list='$(module_LTLIBRARIES)'; \
-	locs=`for p in $$list; do echo $$p; done | \
-	      sed 's|^[^/]*$$|.|; s|/[^/]*$$||; s|$$|/so_locations|' | \
-	      sort -u`; \
-	test -z "$$locs" || { \
-	  echo rm -f $${locs}; \
-	  rm -f $${locs}; \
-	}
-libupload_progress.la: $(libupload_progress_la_OBJECTS) $(libupload_progress_la_DEPENDENCIES) $(EXTRA_libupload_progress_la_DEPENDENCIES) 
-	$(AM_V_CXXLD)$(libupload_progress_la_LINK) $(am_libupload_progress_la_rpath) $(libupload_progress_la_OBJECTS) $(libupload_progress_la_LIBADD) $(LIBS)
 install-binPROGRAMS: $(bin_PROGRAMS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_PROGRAMS)'; test -n "$(bindir)" || list=; \
@@ -485,7 +404,6 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/upload_progress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/usp_translator.Po@am__quote@
 
 .cpp.o:
@@ -613,9 +531,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(LTLIBRARIES) $(PROGRAMS)
+all-am: Makefile $(PROGRAMS)
 installdirs:
-	for dir in "$(DESTDIR)$(moduledir)" "$(DESTDIR)$(bindir)"; do \
+	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -652,7 +570,7 @@ maintainer-clean-generic:
 clean: clean-am
 
 clean-am: clean-binPROGRAMS clean-generic clean-libtool clean-local \
-	clean-moduleLTLIBRARIES mostlyclean-am
+	mostlyclean-am
 
 distclean: distclean-am
 	-rm -rf ./$(DEPDIR)
@@ -672,7 +590,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-moduleLTLIBRARIES
+install-data-am:
 
 install-dvi: install-dvi-am
 
@@ -718,25 +636,23 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binPROGRAMS uninstall-moduleLTLIBRARIES
+uninstall-am: uninstall-binPROGRAMS
 
 .MAKE: install-am install-strip
 
 .PHONY: CTAGS GTAGS all all-am check check-am clean clean-binPROGRAMS \
-	clean-generic clean-libtool clean-local \
-	clean-moduleLTLIBRARIES cscopelist ctags distclean \
-	distclean-compile distclean-generic distclean-libtool \
-	distclean-tags distdir dvi dvi-am html html-am info info-am \
-	install install-am install-binPROGRAMS install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-moduleLTLIBRARIES \
-	install-pdf install-pdf-am install-ps install-ps-am \
-	install-strip installcheck installcheck-am installdirs \
-	maintainer-clean maintainer-clean-generic mostlyclean \
-	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
-	pdf pdf-am ps ps-am tags uninstall uninstall-am \
-	uninstall-binPROGRAMS uninstall-moduleLTLIBRARIES
+	clean-generic clean-libtool clean-local cscopelist ctags \
+	distclean distclean-compile distclean-generic \
+	distclean-libtool distclean-tags distdir dvi dvi-am html \
+	html-am info info-am install install-am install-binPROGRAMS \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags uninstall uninstall-am uninstall-binPROGRAMS
 
 
 clean-local:
@@ -758,10 +674,9 @@ clean-local:
 @CROSS_COMPILING_FALSE@	@$(WINELOADER) ./usp_translator$(EXEEXT) $<
 
 @CROSS_COMPILING_FALSE@.lo.la:
-@CROSS_COMPILING_FALSE@	$(CXXLINK) @USP_LDFLAGS@ -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la) @USP_LIBS@ @ULIB_LIBS@ \
-@CROSS_COMPILING_FALSE@	mv .libs/libupload_progress.so .libs/upload_progress.so
+@CROSS_COMPILING_FALSE@	$(CXXLINK) @USP_LDFLAGS@ -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la) @USP_LIBS@ @ULIB_LIBS@
 
-@CROSS_COMPILING_FALSE@all: usp_translator upload_progress.la db.la fortune.la json.la plaintext.la query.la update.la
+@CROSS_COMPILING_FALSE@all: usp_translator db.la fortune.la json.la plaintext.la query.la update.la
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

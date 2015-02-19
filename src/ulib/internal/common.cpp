@@ -207,9 +207,4 @@ void ULib_init()
 #endif
 
    UString::str_allocate();
-
-   // These values are not magical, just the default values Marsaglia used. Any pair of unsigned integers should be fine
-
-   u_m_w = 521288629;
-   u_m_z = 362436069;
 }

@@ -17,6 +17,16 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/net/server/client_image.h>
 
+#ifdef HAVE_SYS_SENDFILE_H
+#  ifndef HAVE_SENDFILE64
+#     undef __USE_FILE_OFFSET64
+#  endif
+#  include <sys/sendfile.h>
+#  ifndef HAVE_SENDFILE64
+#     define __USE_FILE_OFFSET64
+#  endif
+#endif
+
 #ifdef _MSWINDOWS_
 #  include <ws2tcpip.h>
 #elif defined(HAVE_NETPACKET_PACKET_H) && !defined(U_ALL_CPP)
@@ -31,7 +41,6 @@
 #  include <ares.h>
 #endif
 
-vPFi  USocketExt::byte_read_hook; // it allows the generation of a progress meter during upload...
 vPFsu USocketExt::read_buffer_resize = UString::_reserve;
 
 /**
@@ -56,7 +65,12 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
    uint32_t start  = buffer.size(), // NB: read buffer can have previous data...
             ncount = buffer.space(),
             chunk  = count;
+
    bool blocking = sk->isBlocking();
+
+#ifdef USE_LIBSSL
+   bool bssl = sk->isSSL(true);
+#endif
 
    if (LIKELY(chunk < U_CAPACITY)) chunk = U_CAPACITY;
 
@@ -70,8 +84,34 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
    ptr = buffer.c_pointer(start);
 
 read:
+   /** 
+    * When packets in SSL arrive at a destination, they are pulled off the socket in chunks of sizes
+    * controlled by the encryption protocol being used, decrypted, and placed in SSL-internal buffers.
+    * The buffer content is then transferred to the application program through SSL_read(). If you've
+    * read only part of the decrypted data, there will still be pending input data on the SSL connection,
+    * but it won't show up on the underlying file descriptor via select(). Your code needs to call
+    * SSL_pending() explicitly to see if there is any pending data to be read...
+    */
+
+#ifdef USE_LIBSSL
+   if (bssl)
+      {
+      uint32_t available = ((USSLSocket*)sk)->pending();
+
+      if (available)
+         {
+         value = sk->recv(ptr + byte_read, available);
+
+         goto next;
+         }
+      }
+#endif
+
    if (blocking       &&
        timeoutMS != 0 &&
+#     ifdef USE_LIBSSL
+       bssl == false  &&
+#     endif
        UNotifier::waitForRead(sk->iSockDesc, timeoutMS) != 1)
       {
       goto error;
@@ -89,9 +129,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
             {
             sk->iState = (errno == ECONNRESET ? USocket::EPOLLERROR : USocket::BROKEN);
 close:
-            sk->closesocket();
-
-            sk->iState = USocket::CLOSE;
+            sk->close();
             }
          else if (timeoutMS != 0)
             {
@@ -120,6 +158,9 @@ close:
       goto done;
       }
 
+#ifdef USE_LIBSSL
+next:
+#endif
    byte_read += value;
 
    U_INTERNAL_DUMP("byte_read = %d", byte_read)
@@ -138,8 +179,6 @@ close:
          goto done;
          }
 
-      if (byte_read_hook) byte_read_hook(byte_read);
-
       ncount -= value;
 
       goto read;
@@ -147,41 +186,13 @@ close:
 
    if (value == (ssize_t)ncount)
       {
-#  ifdef DEBUG
-   // U_MESSAGE("USocketExt::read(%u) ran out of buffer space(%u)", count, ncount);
-#  endif
-
       buffer.size_adjust_force(start + byte_read); // NB: we force because string can be referenced...
 
       // NB: may be there are available more bytes to read...
 
       read_buffer_resize(buffer, ncount * 2);
 
-      ptr = buffer.c_pointer(start);
-
-#  ifdef USE_LIBSSL
-      if (sk->isSSL(true))
-         {
-         /** 
-          * When packets in SSL arrive at a destination, they are pulled off the socket in chunks of sizes
-          * controlled by the encryption protocol being used, decrypted, and placed in SSL-internal buffers.
-          * The buffer content is then transferred to the application program through SSL_read(). If you've
-          * read only part of the decrypted data, there will still be pending input data on the SSL connection,
-          * but it won't show up on theunderlying file descriptor via select(). Your code needs to call
-          * SSL_pending() explicitly to see if there is any pending data to be read
-          */
-
-         uint32_t available = ((USSLSocket*)sk)->pending();
-
-         if (available)
-            {
-            byte_read += sk->recv(ptr + byte_read, available);
-
-            goto done;
-            }
-         }
-#  endif
-
+      ptr       = buffer.c_pointer(start);
       ncount    = buffer.space();
       timeoutMS = 0;
 
@@ -189,7 +200,7 @@ close:
       }
 
 #ifdef USE_LIBSSL
-   if (sk->isSSL(true) == false)
+   if (bssl == false)
 #endif
    {
 #if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_) && defined(HAVE_EPOLL_WAIT)
@@ -283,14 +294,7 @@ write:
          {
 error:   U_INTERNAL_DUMP("errno = %d", errno)
 
-         if (errno != EAGAIN)
-            {
-            sk->iState = USocket::BROKEN;
-
-            sk->closesocket();
-
-            sk->iState = USocket::CLOSE;
-            }
+              if (errno != EAGAIN) sk->close();
          else if (timeoutMS != 0)
             {
             if (UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) == 1) goto write;
@@ -312,8 +316,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
    if (byte_written < (int)count)
       {
-      count    -= value;
-      timeoutMS = 0;
+      count -= value;
 
       goto write;
       }
@@ -321,66 +324,25 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
    U_RETURN(byte_written);
 }
 
-// write data from multiple buffers
+// sendfile() copies data between one file descriptor and another. Either or both of these file descriptors may refer to a socket.
+// OUT_FD should be a descriptor opened for writing. POFFSET is a pointer to a variable holding the input file pointer position from
+// which sendfile() will start reading data. When sendfile() returns, this variable will be set to the offset of the byte following
+// the last byte that was read. COUNT is the number of bytes to copy between file descriptors. Because this copying is done within
+// the kernel, sendfile() does not need to spend time transferring data to and from user space
 
-int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS)
+int USocketExt::sendfile(USocket* sk, int in_fd, off_t* poffset, uint32_t count, int timeoutMS)
 {
-   U_TRACE(0, "USocketExt::writev(%p,%p,%d,%u,%d)", sk, iov, iovcnt, count, timeoutMS)
+   U_TRACE(1, "USocketExt::sendfile(%p,%d,%p,%u,%d)", sk, in_fd, poffset, count, timeoutMS)
 
    U_INTERNAL_ASSERT_POINTER(sk)
    U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT(sk->isConnected())
 
-   if (iovcnt == 1) return write(sk, (const char*)iov[0].iov_base, iov[0].iov_len, timeoutMS);
-
-   U_INTERNAL_ASSERT_MAJOR(iovcnt, 1)
-
-   bool blocking;
    ssize_t value;
-   int i, idx, byte_written = 0;
+   int byte_written = 0;
+   bool blocking = sk->isBlocking();
 
-#if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
-#if defined(USE_LIBSSL)
-   if (sk->isSSL(true))
-      {
-      int sz;
-
-      if (count <= U_CAPACITY)
-         {
-         UString buffer(U_CAPACITY);
-
-         for (i = 0; i < iovcnt; ++i)
-            {
-            if ((sz = iov[i].iov_len)) (void) buffer.append((const char*)iov[i].iov_base, sz);
-            }
-
-         return write(sk, buffer, timeoutMS);
-         }
-#endif
-      for (i = 0; i < iovcnt; ++i)
-         {
-         if ((sz = iov[i].iov_len))
-            {
-            value = write(sk, (const char*)iov[i].iov_base, sz, timeoutMS);
-
-            if (value <= 0) break;
-
-            byte_written += value;
-
-            if (value != sz) break;
-            }
-         }
-
-      U_RETURN(byte_written);
-#  ifdef USE_LIBSSL
-      }
-#  endif
-#endif
-
-   idx      = 0;
-   blocking = sk->isBlocking();
-
-write:
+loop:
    if (blocking       &&
        timeoutMS != 0 &&
        UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1)
@@ -388,7 +350,7 @@ write:
       goto error;
       }
 
-   value = U_SYSCALL(writev, "%d,%p,%d", sk->iSockDesc, iov, iovcnt);
+   value = U_SYSCALL(sendfile, "%d,%d,%p,%u", sk->getFd(), in_fd, poffset, count);
 
    if (value <= 0)
       {
@@ -401,18 +363,14 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
             if (errno == EINTR &&
                 UInterrupt::checkForEventSignalPending())
                {
-               goto write;
+               goto loop;
                }
 
-            sk->iState = USocket::BROKEN;
-
-            sk->closesocket();
-
-            sk->iState = USocket::CLOSE;
+            sk->close();
             }
          else if (timeoutMS != 0)
             {
-            if (UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) == 1) goto write;
+            if (UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) == 1) goto loop;
 
             sk->iState |= USocket::TIMEOUT;
             }
@@ -429,34 +387,157 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
    U_INTERNAL_ASSERT_MAJOR(byte_written, 0)
 
-   if ((uint32_t)value < count)
+   if (byte_written < (int)count)
       {
       count -= value;
 
-      while ((size_t)value >= iov[idx].iov_len)
+      goto loop;
+      }
+
+   U_RETURN(byte_written);
+}
+
+// write data from multiple buffers
+
+int USocketExt::_writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS)
+{
+   U_TRACE(0, "USocketExt::_writev(%p,%p,%d,%u,%d)", sk, iov, iovcnt, count, timeoutMS)
+
+   U_INTERNAL_ASSERT_POINTER(sk)
+   U_INTERNAL_ASSERT_MAJOR(count, 0)
+   U_INTERNAL_ASSERT(sk->isConnected())
+
+   ssize_t value;
+   int idx, byte_written = 0;
+   bool blocking = sk->isBlocking();
+
+#ifdef DEBUG
+   int i;
+   uint32_t sum;
+   for (i = sum = 0; i < iovcnt; ++i) sum += iov[i].iov_len;
+   U_INTERNAL_ASSERT_EQUALS(sum, count)
+#endif
+
+loop:
+   if (blocking       &&
+       timeoutMS != 0 &&
+       UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1)
+      {
+      goto error;
+      }
+
+#if defined(USE_LIBSSL) && !defined(_MSWINDOWS_)
+   if (sk->isSSL(true))
+#endif
+#if defined(USE_LIBSSL) ||  defined(_MSWINDOWS_)
+   {
+   U_INTERNAL_ASSERT_EQUALS(iovcnt, 1)
+
+   value = write(sk, (const char*)iov[0].iov_base, iov[0].iov_len, timeoutMS);
+
+   goto check;
+   }
+#endif
+   value = U_SYSCALL(writev, "%d,%p,%d", sk->iSockDesc, iov, iovcnt);
+
+check:
+   if (value <= 0)
+      {
+      if (value == -1)
+         {
+error:   U_INTERNAL_DUMP("errno = %d", errno)
+
+         if (errno != EAGAIN)
+            {
+            if (errno == EINTR &&
+                UInterrupt::checkForEventSignalPending())
+               {
+               goto loop;
+               }
+
+            sk->close();
+            }
+         else if (timeoutMS != 0)
+            {
+            if (UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) == 1) goto loop;
+
+            sk->iState |= USocket::TIMEOUT;
+            }
+
+         U_INTERNAL_DUMP("sk->state = %d %B", sk->iState, sk->iState)
+         }
+
+      U_RETURN(byte_written);
+      }
+
+   byte_written += value;
+
+   U_INTERNAL_DUMP("byte_written = %d", byte_written)
+
+   U_INTERNAL_ASSERT_MAJOR(byte_written, 0)
+
+   if (byte_written < (int)count)
+      {
+      for (idx = 0; (size_t)value >= iov[idx].iov_len; ++idx)
          {
          value -= iov[idx].iov_len;
                   iov[idx].iov_len = 0;
-
-         ++idx;
          }
 
       U_INTERNAL_DUMP("iov[%d].iov_len = %d", idx, iov[idx].iov_len)
 
       U_INTERNAL_ASSERT_MAJOR(iov[idx].iov_len, (size_t)value)
 
-      iov[idx].iov_len -= value;
-      iov[idx].iov_base = value + (char*)iov[idx].iov_base;
-
       iov    += idx;
       iovcnt -= idx;
 
       U_INTERNAL_ASSERT_MAJOR(iovcnt, 0)
 
-      timeoutMS = 0;
+             iov[0].iov_base =
+      (char*)iov[0].iov_base + value;
+             iov[0].iov_len -= value;
 
-      goto write;
+      goto loop;
       }
+
+   U_RETURN(byte_written);
+}
+
+int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS)
+{
+   U_TRACE(0, "USocketExt::writev(%p,%p,%d,%u,%d)", sk, iov, iovcnt, count, timeoutMS)
+
+   U_INTERNAL_ASSERT_POINTER(sk)
+   U_INTERNAL_ASSERT_MAJOR(count, 0)
+   U_INTERNAL_ASSERT(sk->isConnected())
+
+#if defined(USE_LIBSSL) && !defined(_MSWINDOWS_)
+   if (sk->isSSL(true))
+#endif
+#if defined(USE_LIBSSL) ||  defined(_MSWINDOWS_)
+   {
+   ssize_t value;
+   int sz, byte_written = 0;
+
+   for (int i = 0; i < iovcnt; ++i)
+      {
+      if ((sz = iov[i].iov_len))
+         {
+         value = _writev(sk, iov+i, 1, sz, timeoutMS);
+
+         byte_written += value;
+
+         if (value < sz) break;
+
+         iov[i].iov_len = 0;
+         }
+      }
+
+   U_RETURN(byte_written);
+   }
+#endif
+
+   int byte_written = _writev(sk, iov, iovcnt, count, timeoutMS);
 
    U_RETURN(byte_written);
 }
@@ -485,7 +566,7 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
       {
       for (uint32_t i = 1; i < cloop; ++i)
          {
-                   ptr += sz;
+                   ptr +=    sz;
          u__memcpy(ptr, iov, sz, __PRETTY_FUNCTION__);
          }
 
@@ -496,9 +577,38 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
 
    U_INTERNAL_DUMP("iov[0].iov_len = %d iov[1].iov_len = %d", iov[0].iov_len, iov[1].iov_len)
 
-   int byte_written = writev(sk, iov, iovcnt, count, timeoutMS);
+#if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
+   int byte_written =  writev(sk, iov, iovcnt, count, timeoutMS);
+#else
+   int byte_written = _writev(sk, iov, iovcnt, count, timeoutMS);
+#endif
 
-   if (cloop == 1) u__memcpy(iov, _iov, sz, __PRETTY_FUNCTION__);
+        if (cloop == 1) u__memcpy(iov, _iov, sz, __PRETTY_FUNCTION__);
+#ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
+   else if (cloop > 1                 &&
+            byte_written < (int)count &&
+            byte_written > 0)
+      {
+      U_INTERNAL_ASSERT(sk->isOpen())
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
+
+      ptr = u_buffer;
+
+      for (int i = 0; i < iovcnt; ++i)
+         {
+         if (iov[i].iov_len)
+            {
+            u__memcpy(ptr, iov[i].iov_base, iov[i].iov_len, __PRETTY_FUNCTION__);
+                      ptr                += iov[i].iov_len;
+            }
+         }
+
+      u_buffer_len = ptr - u_buffer;
+
+      U_INTERNAL_ASSERT_MINOR( u_buffer_len, U_BUFFER_SIZE)
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, count - byte_written)
+      }
+#endif
 
    U_INTERNAL_DUMP("iov[0].iov_len = %d iov[1].iov_len = %d", iov[0].iov_len, iov[1].iov_len)
 
