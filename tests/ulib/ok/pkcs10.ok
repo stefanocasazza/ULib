@@ -4,8 +4,8 @@
         Subject: C=IT, ST=Firenze, L=Sesto Fiorentino, O=UniRel S.R.L., OU=TMail Project, CN=Alice/emailAddress=alice@unirel.com
         Subject Public Key Info:
             Public Key Algorithm: rsaEncryption
-            RSA Public Key: (1024 bit)
-                Modulus (1024 bit):
+                Public-Key: (1024 bit)
+                Modulus:
                     00:c6:b6:83:7f:68:16:45:c8:7f:ef:4f:8c:ea:75:
                     c9:68:13:c0:ed:ea:10:1f:87:4a:72:c4:e2:2a:0c:
                     2c:3f:9d:3e:a6:07:f4:7a:9d:52:92:62:55:13:5f:
@@ -28,14 +28,14 @@
             X509v3 Extended Key Usage: 
                 TLS Web Client Authentication, E-mail Protection
     Signature Algorithm: md5WithRSAEncryption
-        33:dd:e0:25:2a:f5:e6:de:2c:f3:18:c1:0e:c0:57:53:22:f3:
-        33:c0:c0:8a:9c:1e:39:10:29:f4:49:44:95:b2:b0:c4:09:5e:
-        ee:a1:c4:30:f8:2c:1a:b7:e5:30:d3:76:4c:a1:d4:25:ce:e5:
-        e9:66:93:e1:a5:f1:9e:d1:e5:d7:76:01:d1:ae:4c:96:f0:3f:
-        43:bf:fe:cc:8d:2f:73:86:c2:d8:db:9c:da:94:01:d7:2c:5b:
-        8d:a6:c9:e4:a6:d2:6d:4a:21:fb:c6:11:a1:f0:96:41:81:93:
-        cf:39:4f:6e:4e:b6:6f:e0:af:a7:a3:c5:1e:6c:c5:dd:1b:80:
-        c1:14
+         33:dd:e0:25:2a:f5:e6:de:2c:f3:18:c1:0e:c0:57:53:22:f3:
+         33:c0:c0:8a:9c:1e:39:10:29:f4:49:44:95:b2:b0:c4:09:5e:
+         ee:a1:c4:30:f8:2c:1a:b7:e5:30:d3:76:4c:a1:d4:25:ce:e5:
+         e9:66:93:e1:a5:f1:9e:d1:e5:d7:76:01:d1:ae:4c:96:f0:3f:
+         43:bf:fe:cc:8d:2f:73:86:c2:d8:db:9c:da:94:01:d7:2c:5b:
+         8d:a6:c9:e4:a6:d2:6d:4a:21:fb:c6:11:a1:f0:96:41:81:93:
+         cf:39:4f:6e:4e:b6:6f:e0:af:a7:a3:c5:1e:6c:c5:dd:1b:80:
+         c1:14
  }
 /C=IT/ST=Firenze/L=Sesto Fiorentino/O=UniRel S.R.L./OU=TMail Project/CN=Alice/emailAddress=alice@unirel.com
 0

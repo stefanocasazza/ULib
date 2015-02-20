@@ -2,7 +2,7 @@
     Data:
         Version: 3 (0x2)
         Serial Number: 1 (0x1)
-        Signature Algorithm: sha1WithRSAEncryption
+    Signature Algorithm: sha1WithRSAEncryption
         Issuer: C=IT, ST=Italy, L=Sesto Fiorentino, O=Unirel spa, OU=CA, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
         Validity
             Not Before: Jul 15 15:30:55 2010 GMT
@@ -33,14 +33,14 @@
                 keyid:C3:B4:79:0A:D0:CA:3A:3C:AC:68:99:A7:DB:CB:0C:DF:1D:0B:FB:9F
 
     Signature Algorithm: sha1WithRSAEncryption
-        1c:a0:d3:06:e2:e8:51:cf:42:59:48:e2:a4:83:56:81:40:74:
-        f0:ea:92:37:4b:15:98:8b:7a:a2:7f:33:ea:c2:5a:6a:b9:f9:
-        cf:00:84:90:c2:52:bd:29:db:03:15:e4:a3:19:0f:0e:ea:41:
-        0e:7b:1b:8d:86:e0:e5:26:df:e0:88:7c:1c:a3:69:b2:3d:2e:
-        73:7e:30:6b:41:62:b7:31:ff:45:c6:33:3d:73:2b:24:f3:91:
-        bf:0c:ca:4d:64:23:35:af:17:14:f6:ca:4e:5e:4a:63:e1:45:
-        20:69:0a:8f:36:32:25:a0:33:cb:ce:11:23:e6:ac:b8:67:28:
-        e8:a0
+         1c:a0:d3:06:e2:e8:51:cf:42:59:48:e2:a4:83:56:81:40:74:
+         f0:ea:92:37:4b:15:98:8b:7a:a2:7f:33:ea:c2:5a:6a:b9:f9:
+         cf:00:84:90:c2:52:bd:29:db:03:15:e4:a3:19:0f:0e:ea:41:
+         0e:7b:1b:8d:86:e0:e5:26:df:e0:88:7c:1c:a3:69:b2:3d:2e:
+         73:7e:30:6b:41:62:b7:31:ff:45:c6:33:3d:73:2b:24:f3:91:
+         bf:0c:ca:4d:64:23:35:af:17:14:f6:ca:4e:5e:4a:63:e1:45:
+         20:69:0a:8f:36:32:25:a0:33:cb:ce:11:23:e6:ac:b8:67:28:
+         e8:a0
  }
 0
 0
@@ -59,7 +59,7 @@ RSA-SHA1
     Data:
         Version: 3 (0x2)
         Serial Number: 2 (0x2)
-        Signature Algorithm: sha1WithRSAEncryption
+    Signature Algorithm: sha1WithRSAEncryption
         Issuer: C=IT, ST=Italy, L=Sesto Fiorentino, O=Unirel spa, OU=CA, CN=localhost.localdomain/emailAddress=root@localhost.localdomain
         Validity
             Not Before: Jul 15 15:31:02 2010 GMT
@@ -90,14 +90,14 @@ RSA-SHA1
                 keyid:C3:B4:79:0A:D0:CA:3A:3C:AC:68:99:A7:DB:CB:0C:DF:1D:0B:FB:9F
 
     Signature Algorithm: sha1WithRSAEncryption
-        57:f8:c1:05:fc:bc:2c:5f:c6:d8:9a:9e:38:da:9e:2d:a0:29:
-        27:ad:17:1c:13:d4:dd:46:e2:55:6c:8e:27:8d:04:a7:50:b2:
-        91:33:68:dd:13:d7:55:e1:b3:2b:43:a6:88:f1:57:6c:ad:04:
-        4a:c5:90:50:af:96:1f:90:49:25:c6:5c:ce:f4:d0:c1:2d:b9:
-        d5:ef:d7:21:de:17:09:44:dc:7c:50:de:0a:59:c6:be:0b:74:
-        b2:f5:e0:8a:e3:c2:2d:1d:85:cf:94:00:c4:eb:ac:5b:82:67:
-        28:94:1f:7e:d4:36:5c:39:5e:7e:8e:b4:b5:8a:a4:e8:96:22:
-        7a:a5
+         57:f8:c1:05:fc:bc:2c:5f:c6:d8:9a:9e:38:da:9e:2d:a0:29:
+         27:ad:17:1c:13:d4:dd:46:e2:55:6c:8e:27:8d:04:a7:50:b2:
+         91:33:68:dd:13:d7:55:e1:b3:2b:43:a6:88:f1:57:6c:ad:04:
+         4a:c5:90:50:af:96:1f:90:49:25:c6:5c:ce:f4:d0:c1:2d:b9:
+         d5:ef:d7:21:de:17:09:44:dc:7c:50:de:0a:59:c6:be:0b:74:
+         b2:f5:e0:8a:e3:c2:2d:1d:85:cf:94:00:c4:eb:ac:5b:82:67:
+         28:94:1f:7e:d4:36:5c:39:5e:7e:8e:b4:b5:8a:a4:e8:96:22:
+         7a:a5
  }
 0
 0

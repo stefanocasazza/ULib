@@ -1194,7 +1194,7 @@ ok:      setLocal();
             {
             _closesocket();
 
-             _socket();
+            _socket();
 
             goto loop;
             }

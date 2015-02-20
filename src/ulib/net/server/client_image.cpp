@@ -552,8 +552,7 @@ void UClientImage_Base::handlerError()
 #endif
 
     pthis   = this;
-   (psocket = socket)->iState = USocket::BROKEN |
-                                USocket::EPOLLERROR;
+   (psocket = socket)->iState = USocket::EPOLLERROR;
 
    UNotifier::handlerDelete(UEventFd::fd, UEventFd::op_mask);
 
@@ -594,9 +593,7 @@ int UClientImage_Base::handlerTimeout()
 
    pthis = this; // NB: U_SRV_LOG_WITH_ADDR macro depend on UClientImage_Base::pthis...
 
-   socket->iState = USocket::BROKEN  |
-                    USocket::TIMEOUT |
-                    USocket::EPOLLERROR;
+   socket->iState = USocket::TIMEOUT | USocket::EPOLLERROR;
 
    U_RETURN(U_NOTIFIER_DELETE);
 }
@@ -836,9 +833,15 @@ void UClientImage_Base::resetReadBuffer()
    U_TRACE(0, "UClientImage_Base::resetReadBuffer()")
 
    request->clear();
-   rbuffer->moveToBeginDataInBuffer(rstart);
 
-   *request = *rbuffer;
+   U_INTERNAL_DUMP("rstart = %u size_request = %u", rstart, size_request)
+
+   if (rstart)
+      {
+      rbuffer->moveToBeginDataInBuffer(rstart);
+
+      *request = *rbuffer;
+      }
 
    U_ClientImage_pipeline = false;
 }
@@ -995,7 +998,13 @@ loop:
          {
          resetReadBuffer();
 
-      // if (callerIsValidRequestExt(request->data(), sz) == false) U_ClientImage_data_missing = true; // partial valid (not complete)
+         const char* ptr = request->data();
+
+         if (callerIsValidRequestExt(ptr, sz) == false &&
+                     u_findEndHeader(ptr, sz) == U_NOT_FOUND)
+            {
+            U_ClientImage_data_missing = true; // partial valid (not complete)
+            }
          }
       }
 
@@ -1034,7 +1043,7 @@ dmiss:
          if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
             {
             if (UNotifier::waitForRead(socket->iSockDesc, U_TIMEOUT_MS) != 1 ||
-                (request->clear(), USocketExt::read(socket, *rbuffer, U_SINGLE_READ, 0)) == false) // reset buffer before read
+                (resetReadBuffer(), USocketExt::read(socket, *rbuffer, size_request == 0 ? U_SINGLE_READ : size_request - rbuffer->size(), 0)) == false)
                {
                goto death;
                }
@@ -1058,26 +1067,31 @@ dmiss:
 
    if (U_ClientImage_request_is_cached)
       {
+      uint32_t sz     = request->size();
       const char* ptr = request->data();
 
       U_INTERNAL_DUMP("cbuffer(%u) = %.*S", u_http_info.startHeader, u_http_info.startHeader, cbuffer)
-      U_INTERNAL_DUMP("request(%u) = %.*S", request->size(), request->size(), ptr)
+      U_INTERNAL_DUMP("request(%u) = %.*S", sz, sz, ptr)
 
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b UClientImage_Base::size_request = %u UClientImage_Base::uri_offset = %u",
-                       U_ClientImage_pipeline,     UClientImage_Base::size_request,     UClientImage_Base::uri_offset)
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u uri_offset = %u",
+                       U_ClientImage_pipeline,     size_request,     uri_offset)
 
       U_INTERNAL_ASSERT_MAJOR(size_request, 0)
       U_INTERNAL_ASSERT_MAJOR(u_http_info.uri_len, 0)
       U_INTERNAL_ASSERT_MAJOR(u_http_info.startHeader, 0)
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
 
-      if (u__isblank((ptr+uri_offset)[u_http_info.startHeader])         &&
-          memcmp(ptr+uri_offset, cbuffer, u_http_info.startHeader) == 0 &&
-          callerHandlerCache())
+      if (u__isblank((ptr+uri_offset)[u_http_info.startHeader]) &&
+          memcmp(ptr+uri_offset, cbuffer, u_http_info.startHeader) == 0)
          {
-         setRequestProcessed();
+         if (size_request > sz) goto dmiss; // partial valid (not complete)
 
-         goto next;
+         if (callerHandlerCache())
+            {
+            setRequestProcessed();
+
+            goto next;
+            }
          }
 
       csfd                            = -1;
@@ -1142,9 +1156,9 @@ next:
 
             U_INTERNAL_DUMP("n = %u resto = %u size_request = %u", n, resto, size_request)
 
-            if (n > 1                            &&
-                *wbuffer                         &&
-                callerIsValidRequestExt(ptr1, 0) &&
+            if (n > 1                                       &&
+                *wbuffer                                    &&
+                callerIsValidRequestExt(ptr1, size_request) &&
                 (resto == 0 || callerIsValidRequest(rbuffer->c_pointer(sz-resto))))
                {
                U_INTERNAL_ASSERT_EQUALS(nrequest, 0)

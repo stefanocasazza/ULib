@@ -292,7 +292,7 @@ bool UClient_Base::connect()
 
    response.setBuffer(U_CAPACITY);
 
-   if (socket->isConnected()) U_RETURN(true); // Guard against multiple connections
+   if (isConnected()) U_RETURN(true); // Guard against multiple connections
 
    socket->iRemotePort = 0;
 
@@ -330,11 +330,7 @@ bool UClient_Base::connectServer(const UString& _url)
 
    reset();
 
-   if (setUrl(_url) &&
-       isOpen())
-      {
-      socket->close(); // NB: is changed server and/or port to connect...
-      }
+   if (setUrl(_url)) close(); // NB: is changed server and/or port to connect...
 
    // QUEUE MODE
 

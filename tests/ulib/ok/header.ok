@@ -1,16 +1,16 @@
-WWW-Authenticate: Basic realm="WallyWorld"
+Last-Modified: Thu, 07 Nov 2002 08:40:12 GMT
+Accept-Ranges: bytes
+Authorization: Digest Name1=Value1
 Server: Apache/1.3.23 (Unix)  (Red-Hat/Linux) mod_ssl/2.8.7 OpenSSL/0.9.6b DAV/1.0.3 PHP/4.1.2 mod_perl/1.26
+Date: Fri, 14 Nov 2003 10:57:35 GMT
 Location: https://user:passwd@dummy/path?query=value
 Cookie: $Version=1; NameA=valueA;NameB = ValueB;$Path="/" ; $Domain=domain1;NameC = ValueC;$Domain="/" ; $Path=domain1;$Port="123"
-Date: Fri, 14 Nov 2003 10:57:35 GMT
 Set-Cookie: Version=1; NameA=valueA;NameB = ValueB;Path="/" ; Domain=domain1;NameC = ValueC;Domain="/" ; Path=domain1;Port="123"
-ETag: "13b94-15f9-3dca26ec"
-Accept-Ranges: bytes
-Content-Type: text/html
-Last-Modified: Thu, 07 Nov 2002 08:40:12 GMT
-Host: dummy
 Set-Cookie2: Version=1; NameA=valueA;NameB = ValueB;Path="/" ; Domain=domain1;NameC = ValueC;Domain="/" ; Path=domain1;Port="123"
-Authorization: Digest Name1=Value1
+Content-Type: text/html
 Content-Length: 1200
+Host: dummy
+ETag: "13b94-15f9-3dca26ec"
+WWW-Authenticate: Basic realm="WallyWorld"
 
 

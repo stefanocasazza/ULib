@@ -1775,15 +1775,15 @@
 /^[^bcd]*(c+)/
    1:   aexycd
 
-/^[a-\d]/
-   1:   abcde
-   1:   -things
-   1:   0digit
-   0:   *** Failers
-   0:   bcdef    
-
 /^[a-c]{12}/
    1:   abcabcabcabc
+
+/^[a-d]/
+   1:   abcde
+   0:   -things
+   0:   0digit
+   0:   *** Failers
+   1:   bcdef    
 
 /^[a-zA-Z\d][a-zA-Z\d\-]*(\.[a-zA-Z\d][a-zA-z\d\-]*)*\.$/
    1:   a.
@@ -1984,7 +1984,7 @@
    0:    
    0:   > \x09\x0a\x0c\x0d\x0b<
    0:    
-   0:   ab
+   1:   ab
 
 /a(?!b)./
    1:   abad

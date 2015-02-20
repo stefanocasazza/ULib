@@ -127,7 +127,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno != EAGAIN)
             {
-            sk->iState = (errno == ECONNRESET ? USocket::EPOLLERROR : USocket::BROKEN);
+            if (sk == UClientImage_Base::psocket) sk->iState = (errno == ECONNRESET ? USocket::EPOLLERROR : USocket::BROKEN);
 close:
             sk->close();
             }

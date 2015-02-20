@@ -250,8 +250,6 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT(isOpen())
-
       U_INTERNAL_DUMP("O_NONBLOCK = %B, flags = %B", O_NONBLOCK, flags)
 
       bool blocking = ((flags & O_NONBLOCK) != O_NONBLOCK);

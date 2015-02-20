@@ -55,27 +55,31 @@ public:
       {
       U_TRACE(0, "UClient_Base::isOpen()")
 
-      bool result = socket->isOpen();
+      if (socket->isOpen()) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isClosed() const
       {
       U_TRACE(0, "UClient_Base::isClosed()")
 
-      bool result = socket->isClosed();
+      if (socket->isClosed()) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isConnected() const
       {
       U_TRACE(0, "UClient_Base::isConnected()")
 
-      bool result = socket->isConnected();
+      if (socket->isOpen() &&
+          socket->isConnected())
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    void reserve(uint32_t n)
@@ -91,7 +95,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(socket)
 
-      if (isOpen()) socket->close();
+      if (isOpen()) socket->_closesocket();
       }
 
    bool shutdown(int how = SHUT_WR)

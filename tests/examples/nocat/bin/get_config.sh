@@ -5,6 +5,7 @@
 ## ==================================================================================================================================================================
 ## UTRACE=0 /usr/sbin/uclient -c /etc/uclient.conf -o /tmp/nodog.conf.portal -q 60 'https://wifi-aaa.comune.fi.it/get_config?ap=unifi-r29587_x86&key=159.213.248.230'
 ## UTRACE=0 /usr/sbin/uclient -c /etc/uclient.conf -o /tmp/nodog.conf.portal -q 60 'https://wifi-aaa.comune.fi.it/get_config?ap=lab5-r29587_rs&key=10.10.100.115'
+##   strace /usr/sbin/uclient -c /etc/uclient.conf -o /tmp/nodog.conf.portal -q 60 'https://wifi-aaa.comune.fi.it/get_config?ap=parcEuropa-r29587_rspro&key=10.8.0.2'
 ## ==================================================================================================================================================================
 ## ssh -L10443:192.168.1.20:443 lab5
 ## ==================================================================================================================================================================

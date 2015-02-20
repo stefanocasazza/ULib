@@ -51,8 +51,8 @@ current stable release, you may wish to investigate the "squeeze-lts"
 distribution. More information is available at:
 https://wiki.debian.org/LTS/ 
 
-Debian 7.7, or wheezy.  Access this release through dists/stable
-Debian 7.7 was released Saturday, 18th October 2014.
+Debian 7.8, or wheezy.  Access this release through dists/stable
+Debian 7.8 was released Saturday, 10th January 2015.
 
 Testing, or jessie.  Access this release through dists/testing.  The
 current tested development snapshot is named jessie.  Packages which
@@ -110,7 +110,7 @@ the <a href="mailto:webmaster@unirel.com">webmaster</a>.
 <address>
   <a href="/">www.unirel.com</a><br />
   
-  <span>Mon Oct 20 14:47:46 2014<br />
+  <span>Fri Feb 20 20:31:00 2015<br />
   Apache/2.0.49 (Linux/SuSE)</span>
 </address>
 </body>

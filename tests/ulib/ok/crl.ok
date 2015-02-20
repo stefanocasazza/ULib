@@ -1,26 +1,26 @@
 { Certificate Revocation List (CRL):
         Version 2 (0x1)
-        Signature Algorithm: sha1WithRSAEncryption
+    Signature Algorithm: sha1WithRSAEncryption
         Issuer: /C=IT/ST=Italy/L=Sesto Fiorentino/O=Unirel spa/OU=CA/CN=localhost.localdomain/emailAddress=root@localhost.localdomain
-        Last Update: Jul 15 15:31:09 2010 GMT
-        Next Update: Aug 14 15:31:09 2010 GMT
+        Last Update: Aug 16 12:20:07 2010 GMT
+        Next Update: Jul 29 12:20:07 2021 GMT
         CRL extensions:
             X509v3 CRL Number: 
-                1
+                2
 No Revoked Certificates.
     Signature Algorithm: sha1WithRSAEncryption
-        ab:63:e1:49:93:b7:99:6d:ef:42:bf:d1:90:bb:15:92:43:85:
-        b4:fa:78:ee:9a:cb:50:33:c2:7c:98:c2:ef:18:d4:0a:41:7c:
-        cb:8e:51:b6:da:35:14:d3:9c:ab:69:e0:55:d6:e2:20:00:48:
-        ee:c7:b5:eb:07:2c:4c:5d:5a:72:0d:dd:86:e0:51:a2:af:8a:
-        57:35:69:5c:ad:27:ac:cc:7c:76:4c:80:77:74:10:40:02:26:
-        ad:96:47:f4:88:05:f7:0e:8e:d6:a8:6f:d4:98:bc:4c:48:4d:
-        5e:de:ed:32:6e:5f:75:c9:16:dd:6a:23:d6:1b:c7:6d:53:61:
-        33:55
+         6d:b5:15:52:14:4d:f7:c1:43:99:0f:71:48:9c:15:ac:c7:6d:
+         81:82:d8:b0:f8:0c:5c:2f:59:85:4d:7d:32:d8:f5:fc:7a:0c:
+         41:e5:fd:f4:41:58:5e:8e:24:0b:5d:28:4e:cc:aa:9c:c3:a9:
+         34:aa:6f:e5:02:7a:16:30:25:a8:71:68:b2:0d:f3:0b:0a:2f:
+         fd:a2:84:95:10:29:99:34:c1:cd:ec:13:a8:18:d7:b0:8e:e7:
+         dd:84:69:76:9e:e3:3b:aa:07:e7:9b:89:87:95:9b:a2:50:66:
+         0c:05:0f:fe:16:24:b9:36:f2:01:73:07:d7:06:70:cf:ad:f7:
+         aa:ad
  }
 1
 /C=IT/ST=Italy/L=Sesto Fiorentino/O=Unirel spa/OU=CA/CN=localhost.localdomain/emailAddress=root@localhost.localdomain
 1
 1
-100715153109Z
-100814153109Z
+100816122007Z
+210729122007Z

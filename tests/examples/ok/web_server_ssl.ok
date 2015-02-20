@@ -1,11 +1,11 @@
 HTTP/1.1 505 HTTP Version Not Supported
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -21,7 +21,7 @@ Content-Length: 253
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -37,7 +37,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -53,7 +53,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -69,19 +69,19 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 411 Length Required
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 413 Request Entity Too Large
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -97,7 +97,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -113,7 +113,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -129,7 +129,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -145,7 +145,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -161,7 +161,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -177,14 +177,14 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS, TRACE, CONNECT, COPY, MOVE, LOCK, UNLOCK, MKCOL, PROPFIND, PATCH, PURGE, MERGE, REPORT, CHECKOUT, MKACTIVITY, NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE
 Content-Length: 0
 
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -200,13 +200,13 @@ Content-Length: 253
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 256
 
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 343
@@ -221,7 +221,7 @@ Content-Length: 343
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 403 Forbidden
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 304
@@ -236,7 +236,7 @@ Content-Length: 304
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 500 Internal Server Error
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 548
@@ -251,14 +251,14 @@ Content-Length: 548
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/plain; charset=UTF-8
 Content-Length: 21
 
 pippo pluto paperino
 HTTP/1.1 401 Authorization Required
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 WWW-Authenticate: Basic realm="Protected Area"
@@ -274,10 +274,10 @@ Content-Length: 444
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:30 GMT
+Expires: Sat, 20 Feb 2016 19:37:54 GMT
 Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -286,11 +286,11 @@ Content-Length: 63
 
 this is the web_server testsuite inp/http/data/index.html file
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Range: bytes 0-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:31 GMT
+Expires: Sat, 20 Feb 2016 19:37:55 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -302,11 +302,11 @@ Content-Length: 64
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Range: bytes 0-31/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:31 GMT
+Expires: Sat, 20 Feb 2016 19:37:55 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -316,11 +316,11 @@ Content-Length: 32
 123456781234567
 345678903456789
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:31 GMT
+Expires: Sat, 20 Feb 2016 19:37:55 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -330,11 +330,11 @@ Content-Length: 32
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:31 GMT
+Expires: Sat, 20 Feb 2016 19:37:55 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -344,29 +344,29 @@ Content-Length: 32
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Length: 230
-Content-Type: multipart/byteranges; boundary="=_13186633029991213689"
+Content-Type: multipart/byteranges; boundary="=_11313135585004361414"
 
 
---=_13186633029991213689
+--=_11313135585004361414
 Content-Range: bytes 0-0/64
 Content-Type: text/html; charset=UTF-8
 
 1
---=_13186633029991213689
+--=_11313135585004361414
 Content-Range: bytes 63-63/64
 Content-Type: text/html; charset=UTF-8
 
 
 
---=_13186633029991213689--HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+--=_11313135585004361414--HTTP/1.1 206 Partial Content
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Range: bytes 50-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:31 GMT
+Expires: Sat, 20 Feb 2016 19:37:55 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -375,28 +375,28 @@ Content-Length: 14
 
 2345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:31 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Length: 250
-Content-Type: multipart/byteranges; boundary="=_13186633029991213690"
+Content-Type: multipart/byteranges; boundary="=_11313135585004361415"
 
 
---=_13186633029991213690
+--=_11313135585004361415
 Content-Range: bytes 10-19/64
 Content-Type: text/html; charset=UTF-8
 
 34567
 3456
---=_13186633029991213690
+--=_11313135585004361415
 Content-Range: bytes 50-59/64
 Content-Type: text/html; charset=UTF-8
 
 2345670123
---=_13186633029991213690--HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+--=_11313135585004361415--HTTP/1.1 200 OK
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:31 GMT
+Expires: Sat, 20 Feb 2016 19:37:55 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -408,43 +408,43 @@ Content-Length: 64
 234567892345678
 012345670123456
 HTTP/1.1 204 No Content
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Length: 0
 
 HTTP/1.1 204 No Content
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Length: 0
 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Encoding: gzip
 Content-Type: text/html; charset=UTF-8
-Last-Modified: Mon, 16 Feb 2015 15:28:09 GMT
+Last-Modified: Fri, 20 Feb 2015 19:37:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
 Accept-Ranges: bytes
 Content-Length: 294
 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
-Last-Modified: Mon, 16 Feb 2015 15:28:09 GMT
+Last-Modified: Fri, 20 Feb 2015 19:37:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
 Accept-Ranges: bytes
 Content-Length: 562
 
-<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/dir.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/generic.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">16/02/2015 15:48:29</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/dir.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/generic.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">20/02/2015 19:37:53</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Length: 0
 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 1669
@@ -491,7 +491,7 @@ Content-Length: 1669
 </body>
 </html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 1935
@@ -521,9 +521,9 @@ Document name: ssi1.shtml
 
 Document URI: /SSI/ssi1.shtml
 
-It's now: Monday, 16-Feb-2015 15:48:32 GMT
+It's now: Friday, 20-Feb-2015 19:37:55 GMT
 
-It's now: Monday, 16-Feb-2015 16:48:32 CET
+It's now: Friday, 20-Feb-2015 20:37:55 CET
 
 This page is:     173 Bytes
 
@@ -551,10 +551,10 @@ DOCUMENT_ROOT=/usr/src/ULib-1.4.2/tests/examples/docroot
 GATEWAY_INTERFACE=CGI/1.1
 SERVER_SOFTWARE=ULib/1.4.2
 HTTPS=on
-REMOTE_PORT=59578
+REMOTE_PORT=51828
 REMOTE_ADDR=127.0.0.1
 SESSION_ID=127.0.0.1:0
-REQUEST_ID=127.0.0.1:59578:0
+REQUEST_ID=127.0.0.1:51828:0
 PWD=/usr/src/ULib-1.4.2/tests/examples/docroot
 PATH=/usr/local/bin:/usr/bin:/bin
 HTTP_X_SENDFILE=puppamelo
@@ -566,7 +566,7 @@ start LS
 --------------
 total 32
 drwxr-xr-x 3 apache apache 4096 Aug 25 17:19 .
-drwxr-xr-x 8 apache apache 4096 Feb 16 16:48 ..
+drwxr-xr-x 8 apache apache 4096 Feb 20 20:37 ..
 drwxr-xr-x 3 apache apache 4096 Aug 25 17:13 earth
 -rw-r--r-- 1 apache apache  173 Sep 28  2010 embed.c
 -rw-r--r-- 3 apache apache  160 Mar 28  2011 index.shtml
@@ -602,12 +602,12 @@ SSI_END
 ssi_end
 </pre></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Length: 115
 X-Real-IP: 10.30.1.131
-Set-Cookie: ulib.s1=; expires=Sun, 15 Feb 2015 15:48:32 GMT
-Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e263134323431383831313226eb275d9d9fdcee932f1d9be6d112c1dd; expires=Tue, 17 Feb 2015 15:48:32 GMT
+Set-Cookie: ulib.s1=; expires=Thu, 19 Feb 2015 19:37:55 GMT
+Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e263134323435343734373526bbe14a8c38e098902400b7e763be94b1; expires=Sat, 21 Feb 2015 19:37:55 GMT
 Set-Cookie: TestCookie=pippo
 Content-Type: text/html; charset=iso-8859-1
 
@@ -615,26 +615,26 @@ UID          = Steve+Johnson
 HTTP_COOKIE  = name1=value1, name2=value2; name3=value3, name4=value4
 ULIB_SESSION = 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Encoding: gzip
 Content-Type: text/html; charset=UTF-8
 Content-Length: 718
 
 ã      ïUQO€0~ÔØ8≤Im%ö40^äSi⁄‡	Ìë„\'Œ'mÖ¯Ô;'i⁄≤D%*cwﬂÁÔÓ\ñ⁄LÕ,EûÃ ÃJ´p˛àJË¡j¯}'cxƒÓ—‘hŒX–BÏl2∞RYXP<_V|âë∑‚5o7=(ç†ç2X˝©–l˝UÈÅ›≤∏±¡rŒÇv5ˇ „¬Iy˚˘:J¥®2ÃÌÿ7tßÌU.¨‘˘h/=.`âËBr!wÁ tÇ∞ñ6ÖÔ+æŸßÙ	9“◊ìHQ<À|ÈêOEZœ·n˘Ã[:ií·ı|O{DH‚ã[«z3˚Œˇc»5º∫?_ˆÆL&‰L–Vi¿bùl!&∏“&Ú÷©¥H÷ê)ë+.ûCò –¥ﬁ∞4|ø®tÓbÇ]PS]⁄Xhìonyb)'±ÃÉFÔì;Ú…2¥©N"Ø–ÂÆ¨òﬂJSZ¯≈âí…º®,‰¥éº∞å≈À2ÚyBáÆø"Ô∆	Å≠Æ,öL.⁄uJ—3‹Òìü&P¸d˛õåKuú˚Ú”π±I¬ìƒ`Yæ…øGQe\◊ñ£“ÎŸ!ä9*N›‹I¯väeÔÅ—kRNIúVÌäHw9¯YÉ§™uÕËP¥’”>Œ∆¬Ãéù∏:v¢›tπzW€˙çfõ"X◊R?I‰Rûò∆c∑:ˆñ¥¨‚LmÕUEˇﬁcû¿Oöƒ>ÑÆ?€…t∑Ìt=»ıÆOuºBaiÓõí∑SÚ-EπLiñ..Æ˙ßÖ‹¨ªe¶kâ=wjm1ÇpÍ_N˝–/Crª¥˛B’ß√π¢ﬂVJ›Éò˜â¨©ùàˆ-‡B∏>⁄≈pµÊ€rÖYåI˚æß´s±vNõI≥ıIüΩKﬁ §ªltwÇ?∞é≠√mMöcÅ{¿ö≠˘ı˘*ä±Ö  HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Length: 211
 Content-Type: text/html
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><HTML><BODY><H2>Esempio di CGI</H2><I>scritto in </I><A HREF="http://www.ruby-lang.org">linguaggio ruby</A></BODY></HTML>HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Length: 72
 Content-Type: application/jsonrequest
 
 {"zip":94089,"user":"doctoravatar@penzance.com","t":"vlIj","forecast":7}HTTP/1.1 302 Moved Temporarily
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -653,7 +653,7 @@ Content-Length: 365
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -668,10 +668,10 @@ Content-Length: 248
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: image/x-icon
-Expires: Tue, 16 Feb 2016 15:48:30 GMT
+Expires: Sat, 20 Feb 2016 19:37:54 GMT
 Last-Modified: Fri, 24 Jul 2009 16:01:29 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -679,7 +679,7 @@ Accept-Ranges: bytes
 Content-Length: 318
 
          (     (                Ä                  ˇ    ¨F ˇˇˇ iˇˇ                                                             "    "           " "          "                  33333                                                                HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 252
@@ -694,7 +694,7 @@ Content-Length: 252
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 272
@@ -709,7 +709,7 @@ Content-Length: 272
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 266
@@ -724,7 +724,7 @@ Content-Length: 266
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 279
@@ -739,7 +739,7 @@ Content-Length: 279
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 281
@@ -754,7 +754,7 @@ Content-Length: 281
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 270
@@ -769,7 +769,7 @@ Content-Length: 270
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 268
@@ -784,7 +784,7 @@ Content-Length: 268
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 270
@@ -799,7 +799,7 @@ Content-Length: 270
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 275
@@ -814,7 +814,7 @@ Content-Length: 275
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -829,7 +829,7 @@ Content-Length: 248
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 264
@@ -844,7 +844,7 @@ Content-Length: 264
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -861,10 +861,10 @@ Content-Length: 248
 HTTP/1.1 101 Switching Protocols
 Upgrade: websocket
 Connection: Upgrade
-Sec-WebSocket-Accept: TjC31jRzMhjx4aXT0zfNgg==
+Sec-WebSocket-Accept: kJWwrDaTL8aNDJvx/eimgg==
 
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 263
@@ -879,7 +879,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 403 Forbidden
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -894,7 +894,7 @@ Content-Length: 248
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 253
@@ -909,7 +909,7 @@ Content-Length: 253
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 252
@@ -924,7 +924,7 @@ Content-Length: 252
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -940,10 +940,10 @@ Content-Length: 272
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 204 No Content
-Date: Mon, 16 Feb 2015 15:48:32 GMT
+Date: Fri, 20 Feb 2015 19:37:55 GMT
 Server: ULib
 Connection: close
-Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e263134323431383831313226eb275d9d9fdcee932f1d9be6d112c1dd; expires=Tue, 17 Feb 2015 15:48:32 GMT
+Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e263134323435343734373526bbe14a8c38e098902400b7e763be94b1; expires=Sat, 21 Feb 2015 19:37:55 GMT
 Content-Length: 0
 
 <html>
@@ -985,13 +985,13 @@ Content-Length: 0
 </body>
 </html>
 HTTP/1.1 505 HTTP Version Not Supported
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1007,7 +1007,7 @@ Content-Length: 253
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1023,7 +1023,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1039,7 +1039,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1055,19 +1055,19 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 411 Length Required
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 413 Request Entity Too Large
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1083,7 +1083,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1099,7 +1099,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1115,7 +1115,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1131,7 +1131,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1147,7 +1147,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1163,14 +1163,14 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS, TRACE, CONNECT, COPY, MOVE, LOCK, UNLOCK, MKCOL, PROPFIND, PATCH, PURGE, MERGE, REPORT, CHECKOUT, MKACTIVITY, NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE
 Content-Length: 0
 
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1186,13 +1186,13 @@ Content-Length: 253
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 256
 
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 343
@@ -1207,7 +1207,7 @@ Content-Length: 343
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 403 Forbidden
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 304
@@ -1222,7 +1222,7 @@ Content-Length: 304
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 500 Internal Server Error
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 548
@@ -1237,14 +1237,14 @@ Content-Length: 548
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/plain; charset=UTF-8
 Content-Length: 21
 
 pippo pluto paperino
 HTTP/1.1 401 Authorization Required
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 WWW-Authenticate: Basic realm="Protected Area"
@@ -1260,10 +1260,10 @@ Content-Length: 444
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:34 GMT
+Expires: Sat, 20 Feb 2016 19:37:57 GMT
 Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -1272,11 +1272,11 @@ Content-Length: 63
 
 this is the web_server testsuite inp/http/data/index.html file
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Range: bytes 0-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:35 GMT
+Expires: Sat, 20 Feb 2016 19:37:58 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -1288,11 +1288,11 @@ Content-Length: 64
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Range: bytes 0-31/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:35 GMT
+Expires: Sat, 20 Feb 2016 19:37:58 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -1302,11 +1302,11 @@ Content-Length: 32
 123456781234567
 345678903456789
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:35 GMT
+Expires: Sat, 20 Feb 2016 19:37:58 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -1316,11 +1316,11 @@ Content-Length: 32
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:35 GMT
+Expires: Sat, 20 Feb 2016 19:37:58 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -1330,29 +1330,29 @@ Content-Length: 32
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Length: 227
-Content-Type: multipart/byteranges; boundary="=_2522109112377335881"
+Content-Type: multipart/byteranges; boundary="=_3891203399098237839"
 
 
---=_2522109112377335881
+--=_3891203399098237839
 Content-Range: bytes 0-0/64
 Content-Type: text/html; charset=UTF-8
 
 1
---=_2522109112377335881
+--=_3891203399098237839
 Content-Range: bytes 63-63/64
 Content-Type: text/html; charset=UTF-8
 
 
 
---=_2522109112377335881--HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+--=_3891203399098237839--HTTP/1.1 206 Partial Content
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Range: bytes 50-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:35 GMT
+Expires: Sat, 20 Feb 2016 19:37:58 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -1361,28 +1361,28 @@ Content-Length: 14
 
 2345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Length: 247
-Content-Type: multipart/byteranges; boundary="=_2522109112377335882"
+Content-Type: multipart/byteranges; boundary="=_3891203399098237840"
 
 
---=_2522109112377335882
+--=_3891203399098237840
 Content-Range: bytes 10-19/64
 Content-Type: text/html; charset=UTF-8
 
 34567
 3456
---=_2522109112377335882
+--=_3891203399098237840
 Content-Range: bytes 50-59/64
 Content-Type: text/html; charset=UTF-8
 
 2345670123
---=_2522109112377335882--HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+--=_3891203399098237840--HTTP/1.1 200 OK
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:35 GMT
+Expires: Sat, 20 Feb 2016 19:37:58 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -1394,43 +1394,43 @@ Content-Length: 64
 234567892345678
 012345670123456
 HTTP/1.1 204 No Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Length: 0
 
 HTTP/1.1 204 No Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Length: 0
 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Encoding: gzip
 Content-Type: text/html; charset=UTF-8
-Last-Modified: Mon, 16 Feb 2015 15:28:09 GMT
+Last-Modified: Fri, 20 Feb 2015 19:37:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
 Accept-Ranges: bytes
 Content-Length: 294
 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
-Last-Modified: Mon, 16 Feb 2015 15:28:09 GMT
+Last-Modified: Fri, 20 Feb 2015 19:37:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
 Accept-Ranges: bytes
 Content-Length: 562
 
-<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/dir.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/generic.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">16/02/2015 15:48:29</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/dir.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/generic.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">20/02/2015 19:37:53</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Length: 0
 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 1669
@@ -1477,7 +1477,7 @@ Content-Length: 1669
 </body>
 </html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 1935
@@ -1507,9 +1507,9 @@ Document name: ssi1.shtml
 
 Document URI: /SSI/ssi1.shtml
 
-It's now: Monday, 16-Feb-2015 15:48:35 GMT
+It's now: Friday, 20-Feb-2015 19:37:58 GMT
 
-It's now: Monday, 16-Feb-2015 16:48:35 CET
+It's now: Friday, 20-Feb-2015 20:37:58 CET
 
 This page is:     173 Bytes
 
@@ -1537,10 +1537,10 @@ DOCUMENT_ROOT=/usr/src/ULib-1.4.2/tests/examples/docroot
 GATEWAY_INTERFACE=CGI/1.1
 SERVER_SOFTWARE=ULib/1.4.2
 HTTPS=on
-REMOTE_PORT=59601
+REMOTE_PORT=51851
 REMOTE_ADDR=127.0.0.1
 SESSION_ID=127.0.0.1:0
-REQUEST_ID=127.0.0.1:59601:0
+REQUEST_ID=127.0.0.1:51851:0
 PWD=/usr/src/ULib-1.4.2/tests/examples/docroot
 PATH=/usr/local/bin:/usr/bin:/bin
 HTTP_X_SENDFILE=puppamelo
@@ -1552,7 +1552,7 @@ start LS
 --------------
 total 32
 drwxr-xr-x 3 apache apache 4096 Aug 25 17:19 .
-drwxr-xr-x 8 apache apache 4096 Feb 16 16:48 ..
+drwxr-xr-x 8 apache apache 4096 Feb 20 20:37 ..
 drwxr-xr-x 3 apache apache 4096 Aug 25 17:13 earth
 -rw-r--r-- 1 apache apache  173 Sep 28  2010 embed.c
 -rw-r--r-- 3 apache apache  160 Mar 28  2011 index.shtml
@@ -1588,12 +1588,12 @@ SSI_END
 ssi_end
 </pre></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Length: 115
 X-Real-IP: 10.30.1.131
-Set-Cookie: ulib.s1=; expires=Sun, 15 Feb 2015 15:48:35 GMT
-Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e26313432343138383131352643e60efcafe51f984a1a1edb9212b557; expires=Tue, 17 Feb 2015 15:48:35 GMT
+Set-Cookie: ulib.s1=; expires=Thu, 19 Feb 2015 19:37:58 GMT
+Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e263134323435343734373826e41b3d883698ce6199b55938109a04c9; expires=Sat, 21 Feb 2015 19:37:58 GMT
 Set-Cookie: TestCookie=pippo
 Content-Type: text/html; charset=iso-8859-1
 
@@ -1601,26 +1601,26 @@ UID          = Steve+Johnson
 HTTP_COOKIE  = name1=value1, name2=value2; name3=value3, name4=value4
 ULIB_SESSION = 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Encoding: gzip
 Content-Type: text/html; charset=UTF-8
 Content-Length: 718
 
 ã      ïUQO€0~ÔØ8≤Im%ö40^äSi⁄‡	Ìë„\'Œ'mÖ¯Ô;'i⁄≤D%*cwﬂÁÔÓ\ñ⁄LÕ,EûÃ ÃJ´p˛àJË¡j¯}'cxƒÓ—‘hŒX–BÏl2∞RYXP<_V|âë∑‚5o7=(ç†ç2X˝©–l˝UÈÅ›≤∏±¡rŒÇv5ˇ „¬Iy˚˘:J¥®2ÃÌÿ7tßÌU.¨‘˘h/=.`âËBr!wÁ tÇ∞ñ6ÖÔ+æŸßÙ	9“◊ìHQ<À|ÈêOEZœ·n˘Ã[:ií·ı|O{DH‚ã[«z3˚Œˇc»5º∫?_ˆÆL&‰L–Vi¿bùl!&∏“&Ú÷©¥H÷ê)ë+.ûCò –¥ﬁ∞4|ø®tÓbÇ]PS]⁄Xhìonyb)'±ÃÉFÔì;Ú…2¥©N"Ø–ÂÆ¨òﬂJSZ¯≈âí…º®,‰¥éº∞å≈À2ÚyBáÆø"Ô∆	Å≠Æ,öL.⁄uJ—3‹Òìü&P¸d˛õåKuú˚Ú”π±I¬ìƒ`Yæ…øGQe\◊ñ£“ÎŸ!ä9*N›‹I¯väeÔÅ—kRNIúVÌäHw9¯YÉ§™uÕËP¥’”>Œ∆¬Ãéù∏:v¢›tπzW€˙çfõ"X◊R?I‰Rûò∆c∑:ˆñ¥¨‚LmÕUEˇﬁcû¿Oöƒ>ÑÆ?€…t∑Ìt=»ıÆOuºBaiÓõí∑SÚ-EπLiñ..Æ˙ßÖ‹¨ªe¶kâ=wjm1ÇpÍ_N˝–/Crª¥˛B’ß√π¢ﬂVJ›Éò˜â¨©ùàˆ-‡B∏>⁄≈pµÊ€rÖYåI˚æß´s±vNõI≥ıIüΩKﬁ §ªltwÇ?∞é≠√mMöcÅ{¿ö≠˘ı˘*ä±Ö  HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Length: 211
 Content-Type: text/html
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><HTML><BODY><H2>Esempio di CGI</H2><I>scritto in </I><A HREF="http://www.ruby-lang.org">linguaggio ruby</A></BODY></HTML>HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Length: 72
 Content-Type: application/jsonrequest
 
 {"zip":94089,"user":"doctoravatar@penzance.com","t":"vlIj","forecast":7}HTTP/1.1 302 Moved Temporarily
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1639,7 +1639,7 @@ Content-Length: 365
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -1654,10 +1654,10 @@ Content-Length: 248
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: image/x-icon
-Expires: Tue, 16 Feb 2016 15:48:34 GMT
+Expires: Sat, 20 Feb 2016 19:37:57 GMT
 Last-Modified: Fri, 24 Jul 2009 16:01:29 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -1665,7 +1665,7 @@ Accept-Ranges: bytes
 Content-Length: 318
 
          (     (                Ä                  ˇ    ¨F ˇˇˇ iˇˇ                                                             "    "           " "          "                  33333                                                                HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 252
@@ -1680,7 +1680,7 @@ Content-Length: 252
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 272
@@ -1695,7 +1695,7 @@ Content-Length: 272
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 266
@@ -1710,7 +1710,7 @@ Content-Length: 266
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 279
@@ -1725,7 +1725,7 @@ Content-Length: 279
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 281
@@ -1740,7 +1740,7 @@ Content-Length: 281
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 270
@@ -1755,7 +1755,7 @@ Content-Length: 270
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 268
@@ -1770,7 +1770,7 @@ Content-Length: 268
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 270
@@ -1785,7 +1785,7 @@ Content-Length: 270
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 275
@@ -1800,7 +1800,7 @@ Content-Length: 275
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -1815,7 +1815,7 @@ Content-Length: 248
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 264
@@ -1830,7 +1830,7 @@ Content-Length: 264
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -1847,10 +1847,10 @@ Content-Length: 248
 HTTP/1.1 101 Switching Protocols
 Upgrade: websocket
 Connection: Upgrade
-Sec-WebSocket-Accept: Oe9sgJQ83YaNfxQftOoNBg==
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
 
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 263
@@ -1865,7 +1865,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 403 Forbidden
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -1880,7 +1880,7 @@ Content-Length: 248
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 253
@@ -1895,7 +1895,7 @@ Content-Length: 253
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 252
@@ -1910,7 +1910,7 @@ Content-Length: 252
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1926,10 +1926,10 @@ Content-Length: 272
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 204 No Content
-Date: Mon, 16 Feb 2015 15:48:35 GMT
+Date: Fri, 20 Feb 2015 19:37:58 GMT
 Server: ULib
 Connection: close
-Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e26313432343138383131352643e60efcafe51f984a1a1edb9212b557; expires=Tue, 17 Feb 2015 15:48:35 GMT
+Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e263134323435343734373826e41b3d883698ce6199b55938109a04c9; expires=Sat, 21 Feb 2015 19:37:58 GMT
 Content-Length: 0
 
 <html>
@@ -1971,13 +1971,13 @@ Content-Length: 0
 </body>
 </html>
 HTTP/1.1 505 HTTP Version Not Supported
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:01 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:01 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -1993,7 +1993,7 @@ Content-Length: 253
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:01 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2009,7 +2009,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2025,7 +2025,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2041,19 +2041,19 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 411 Length Required
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 413 Request Entity Too Large
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2069,7 +2069,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2085,7 +2085,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2101,7 +2101,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2117,7 +2117,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2133,7 +2133,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2149,14 +2149,14 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Allow: GET, HEAD, POST, PUT, DELETE, OPTIONS, TRACE, CONNECT, COPY, MOVE, LOCK, UNLOCK, MKCOL, PROPFIND, PATCH, PURGE, MERGE, REPORT, CHECKOUT, MKACTIVITY, NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE
 Content-Length: 0
 
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2172,13 +2172,13 @@ Content-Length: 253
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 256
 
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 343
@@ -2193,7 +2193,7 @@ Content-Length: 343
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 403 Forbidden
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 304
@@ -2208,7 +2208,7 @@ Content-Length: 304
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 500 Internal Server Error
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 548
@@ -2223,14 +2223,14 @@ Content-Length: 548
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/plain; charset=UTF-8
 Content-Length: 21
 
 pippo pluto paperino
 HTTP/1.1 401 Authorization Required
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 WWW-Authenticate: Basic realm="Protected Area"
@@ -2246,10 +2246,10 @@ Content-Length: 444
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:37 GMT
+Expires: Sat, 20 Feb 2016 19:38:00 GMT
 Last-Modified: Fri, 20 Feb 2009 14:50:49 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -2258,11 +2258,11 @@ Content-Length: 63
 
 this is the web_server testsuite inp/http/data/index.html file
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Range: bytes 0-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:38 GMT
+Expires: Sat, 20 Feb 2016 19:38:02 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -2274,11 +2274,11 @@ Content-Length: 64
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Range: bytes 0-31/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:38 GMT
+Expires: Sat, 20 Feb 2016 19:38:02 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -2288,11 +2288,11 @@ Content-Length: 32
 123456781234567
 345678903456789
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:38 GMT
+Expires: Sat, 20 Feb 2016 19:38:02 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -2302,11 +2302,11 @@ Content-Length: 32
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Range: bytes 32-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:38 GMT
+Expires: Sat, 20 Feb 2016 19:38:02 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -2316,29 +2316,29 @@ Content-Length: 32
 234567892345678
 012345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
-Content-Length: 227
-Content-Type: multipart/byteranges; boundary="=_9223465357905073663"
+Content-Length: 230
+Content-Type: multipart/byteranges; boundary="=_11241077990966344631"
 
 
---=_9223465357905073663
+--=_11241077990966344631
 Content-Range: bytes 0-0/64
 Content-Type: text/html; charset=UTF-8
 
 1
---=_9223465357905073663
+--=_11241077990966344631
 Content-Range: bytes 63-63/64
 Content-Type: text/html; charset=UTF-8
 
 
 
---=_9223465357905073663--HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+--=_11241077990966344631--HTTP/1.1 206 Partial Content
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Range: bytes 50-63/64
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:38 GMT
+Expires: Sat, 20 Feb 2016 19:38:02 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -2347,28 +2347,28 @@ Content-Length: 14
 
 2345670123456
 HTTP/1.1 206 Partial Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
-Content-Length: 247
-Content-Type: multipart/byteranges; boundary="=_9223465357905073664"
+Content-Length: 250
+Content-Type: multipart/byteranges; boundary="=_11241077990966344632"
 
 
---=_9223465357905073664
+--=_11241077990966344632
 Content-Range: bytes 10-19/64
 Content-Type: text/html; charset=UTF-8
 
 34567
 3456
---=_9223465357905073664
+--=_11241077990966344632
 Content-Range: bytes 50-59/64
 Content-Type: text/html; charset=UTF-8
 
 2345670123
---=_9223465357905073664--HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+--=_11241077990966344632--HTTP/1.1 200 OK
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/plain; charset=us-ascii
-Expires: Tue, 16 Feb 2016 15:48:38 GMT
+Expires: Sat, 20 Feb 2016 19:38:02 GMT
 Last-Modified: Sun, 02 Mar 2008 09:26:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -2380,43 +2380,43 @@ Content-Length: 64
 234567892345678
 012345670123456
 HTTP/1.1 204 No Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Length: 0
 
 HTTP/1.1 204 No Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Length: 0
 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Encoding: gzip
 Content-Type: text/html; charset=UTF-8
-Last-Modified: Mon, 16 Feb 2015 15:28:09 GMT
+Last-Modified: Fri, 20 Feb 2015 19:37:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
 Accept-Ranges: bytes
 Content-Length: 294
 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
-Last-Modified: Mon, 16 Feb 2015 15:28:09 GMT
+Last-Modified: Fri, 20 Feb 2015 19:37:05 GMT
 Cache-Control: public
 Vary: Accept-Encoding
 Accept-Ranges: bytes
 Content-Length: 562
 
-<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/dir.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/generic.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">16/02/2015 15:48:29</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+<html><head><title>Index of tmp</title></head><body><h1>Index of directory: tmp</h1><hr><table><tr><td><a href="/tmp/..?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/dir.png"> Up one level</a></td><td></td><td></td></tr><tr><td><strong><a href="/tmp/c?_nav_"><img width="20" height="21" align="absbottom" border="0" src="/icons/generic.gif"> c</a></strong></td><td align="right" valign="bottom">      4 Bytes</td><td align="right" valign="bottom">20/02/2015 19:37:53</td></tr></table><hr><address>ULib Server</address></body></html>HTTP/1.1 304 Not Modified
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Length: 0
 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 1669
@@ -2463,7 +2463,7 @@ Content-Length: 1669
 </body>
 </html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 1935
@@ -2493,9 +2493,9 @@ Document name: ssi1.shtml
 
 Document URI: /SSI/ssi1.shtml
 
-It's now: Monday, 16-Feb-2015 15:48:38 GMT
+It's now: Friday, 20-Feb-2015 19:38:02 GMT
 
-It's now: Monday, 16-Feb-2015 16:48:38 CET
+It's now: Friday, 20-Feb-2015 20:38:02 CET
 
 This page is:     173 Bytes
 
@@ -2523,10 +2523,10 @@ DOCUMENT_ROOT=/usr/src/ULib-1.4.2/tests/examples/docroot
 GATEWAY_INTERFACE=CGI/1.1
 SERVER_SOFTWARE=ULib/1.4.2
 HTTPS=on
-REMOTE_PORT=59624
+REMOTE_PORT=51874
 REMOTE_ADDR=127.0.0.1
 SESSION_ID=127.0.0.1:0
-REQUEST_ID=127.0.0.1:59624:0
+REQUEST_ID=127.0.0.1:51874:0
 PWD=/usr/src/ULib-1.4.2/tests/examples/docroot
 PATH=/usr/local/bin:/usr/bin:/bin
 HTTP_X_SENDFILE=puppamelo
@@ -2538,7 +2538,7 @@ start LS
 --------------
 total 32
 drwxr-xr-x 3 apache apache 4096 Aug 25 17:19 .
-drwxr-xr-x 8 apache apache 4096 Feb 16 16:48 ..
+drwxr-xr-x 8 apache apache 4096 Feb 20 20:38 ..
 drwxr-xr-x 3 apache apache 4096 Aug 25 17:13 earth
 -rw-r--r-- 1 apache apache  173 Sep 28  2010 embed.c
 -rw-r--r-- 3 apache apache  160 Mar 28  2011 index.shtml
@@ -2574,12 +2574,12 @@ SSI_END
 ssi_end
 </pre></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Length: 115
 X-Real-IP: 10.30.1.131
-Set-Cookie: ulib.s1=; expires=Sun, 15 Feb 2015 15:48:38 GMT
-Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e263134323431383831313826e389117c613b52193ecdf1221942ef5b; expires=Tue, 17 Feb 2015 15:48:38 GMT
+Set-Cookie: ulib.s1=; expires=Thu, 19 Feb 2015 19:38:02 GMT
+Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e2631343234353437343832268773c98f5ab4b456d02b6e8f65e9b27c; expires=Sat, 21 Feb 2015 19:38:02 GMT
 Set-Cookie: TestCookie=pippo
 Content-Type: text/html; charset=iso-8859-1
 
@@ -2587,26 +2587,26 @@ UID          = Steve+Johnson
 HTTP_COOKIE  = name1=value1, name2=value2; name3=value3, name4=value4
 ULIB_SESSION = 
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Encoding: gzip
 Content-Type: text/html; charset=UTF-8
 Content-Length: 718
 
 ã      ïUQO€0~ÔØ8≤Im%ö40^äSi⁄‡	Ìë„\'Œ'mÖ¯Ô;'i⁄≤D%*cwﬂÁÔÓ\ñ⁄LÕ,EûÃ ÃJ´p˛àJË¡j¯}'cxƒÓ—‘hŒX–BÏl2∞RYXP<_V|âë∑‚5o7=(ç†ç2X˝©–l˝UÈÅ›≤∏±¡rŒÇv5ˇ „¬Iy˚˘:J¥®2ÃÌÿ7tßÌU.¨‘˘h/=.`âËBr!wÁ tÇ∞ñ6ÖÔ+æŸßÙ	9“◊ìHQ<À|ÈêOEZœ·n˘Ã[:ií·ı|O{DH‚ã[«z3˚Œˇc»5º∫?_ˆÆL&‰L–Vi¿bùl!&∏“&Ú÷©¥H÷ê)ë+.ûCò –¥ﬁ∞4|ø®tÓbÇ]PS]⁄Xhìonyb)'±ÃÉFÔì;Ú…2¥©N"Ø–ÂÆ¨òﬂJSZ¯≈âí…º®,‰¥éº∞å≈À2ÚyBáÆø"Ô∆	Å≠Æ,öL.⁄uJ—3‹Òìü&P¸d˛õåKuú˚Ú”π±I¬ìƒ`Yæ…øGQe\◊ñ£“ÎŸ!ä9*N›‹I¯väeÔÅ—kRNIúVÌäHw9¯YÉ§™uÕËP¥’”>Œ∆¬Ãéù∏:v¢›tπzW€˙çfõ"X◊R?I‰Rûò∆c∑:ˆñ¥¨‚LmÕUEˇﬁcû¿Oöƒ>ÑÆ?€…t∑Ìt=»ıÆOuºBaiÓõí∑SÚ-EπLiñ..Æ˙ßÖ‹¨ªe¶kâ=wjm1ÇpÍ_N˝–/Crª¥˛B’ß√π¢ﬂVJ›Éò˜â¨©ùàˆ-‡B∏>⁄≈pµÊ€rÖYåI˚æß´s±vNõI≥ıIüΩKﬁ §ªltwÇ?∞é≠√mMöcÅ{¿ö≠˘ı˘*ä±Ö  HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Length: 211
 Content-Type: text/html
 
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd"><HTML><BODY><H2>Esempio di CGI</H2><I>scritto in </I><A HREF="http://www.ruby-lang.org">linguaggio ruby</A></BODY></HTML>HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Length: 72
 Content-Type: application/jsonrequest
 
 {"zip":94089,"user":"doctoravatar@penzance.com","t":"vlIj","forecast":7}HTTP/1.1 302 Moved Temporarily
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2625,7 +2625,7 @@ Content-Length: 365
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -2640,10 +2640,10 @@ Content-Length: 248
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 200 OK
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: image/x-icon
-Expires: Tue, 16 Feb 2016 15:48:37 GMT
+Expires: Sat, 20 Feb 2016 19:38:00 GMT
 Last-Modified: Fri, 24 Jul 2009 16:01:29 GMT
 Cache-Control: public
 Vary: Accept-Encoding
@@ -2651,7 +2651,7 @@ Accept-Ranges: bytes
 Content-Length: 318
 
          (     (                Ä                  ˇ    ¨F ˇˇˇ iˇˇ                                                             "    "           " "          "                  33333                                                                HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 252
@@ -2666,7 +2666,7 @@ Content-Length: 252
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 272
@@ -2681,7 +2681,7 @@ Content-Length: 272
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 266
@@ -2696,7 +2696,7 @@ Content-Length: 266
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 279
@@ -2711,7 +2711,7 @@ Content-Length: 279
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 281
@@ -2726,7 +2726,7 @@ Content-Length: 281
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 270
@@ -2741,7 +2741,7 @@ Content-Length: 270
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 268
@@ -2756,7 +2756,7 @@ Content-Length: 268
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 270
@@ -2771,7 +2771,7 @@ Content-Length: 270
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 275
@@ -2786,7 +2786,7 @@ Content-Length: 275
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -2801,7 +2801,7 @@ Content-Length: 248
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 264
@@ -2816,7 +2816,7 @@ Content-Length: 264
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -2833,10 +2833,10 @@ Content-Length: 248
 HTTP/1.1 101 Switching Protocols
 Upgrade: websocket
 Connection: Upgrade
-Sec-WebSocket-Accept: L1z7bnwYhTcGw5/8NWpcvQ==
+Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
 
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 263
@@ -2851,7 +2851,7 @@ Content-Length: 263
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 403 Forbidden
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 248
@@ -2866,7 +2866,7 @@ Content-Length: 248
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 253
@@ -2881,7 +2881,7 @@ Content-Length: 253
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 404 Not Found
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Content-Type: text/html; charset=UTF-8
 Content-Length: 252
@@ -2896,7 +2896,7 @@ Content-Length: 252
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 400 Bad Request
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8
@@ -2912,10 +2912,10 @@ Content-Length: 272
 <address>ULib Server</address>
 </body></html>
 HTTP/1.1 204 No Content
-Date: Mon, 16 Feb 2015 15:48:38 GMT
+Date: Fri, 20 Feb 2015 19:38:02 GMT
 Server: ULib
 Connection: close
-Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e263134323431383831313826e389117c613b52193ecdf1221942ef5b; expires=Tue, 17 Feb 2015 15:48:38 GMT
+Set-Cookie: ulib.s0=53746576652b4a6f686e736f6e2631343234353437343832268773c98f5ab4b456d02b6e8f65e9b27c; expires=Sat, 21 Feb 2015 19:38:02 GMT
 Content-Length: 0
 
 <html>

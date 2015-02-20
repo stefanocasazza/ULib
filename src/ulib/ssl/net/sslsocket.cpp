@@ -918,8 +918,8 @@ loop:
       pcNewConnection->iState         = CONNECT;
       pcNewConnection->renegotiations = 0;
 
-      ssl                            = 0;
-      U_socket_Type(pcNewConnection) = USocket::SK_SSL_ACTIVE;
+      ssl                             = 0;
+      U_socket_Type(pcNewConnection)  = USocket::SK_SSL_ACTIVE;
 
       U_RETURN(true);
       }

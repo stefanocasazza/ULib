@@ -142,9 +142,8 @@ int UModNoCatPeer::handlerTime()
       {
       UNoCatPlugIn::peer = this;
 
-      UString* tmp =
-      UNoCatPlugIn::login_timeout;
-      UNoCatPlugIn::login_timeout = 0;
+      UString* tmp = UNoCatPlugIn::login_timeout;
+                     UNoCatPlugIn::login_timeout = 0;
 
       UNoCatPlugIn::deny(false);
 
@@ -311,8 +310,9 @@ bool UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
    const char* status;
    time_t how_much_connected;
    UString buffer(U_CAPACITY);
+   bool btraffic = (key == 0);
 
-   (void) peer->checkPeerInfo((key == 0));
+   (void) peer->checkPeerInfo(btraffic);
 
    U_INTERNAL_DUMP("now    = %#5D", u_now->tv_sec)
    U_INTERNAL_DUMP("logout = %#5D", peer->logout)

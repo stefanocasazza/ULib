@@ -6,28 +6,28 @@ UNKNOWN OBJECT
 1.3 Part 3: Content-type='message/rfc822' - Filename='smime2.eml'
 1.3.1 MIME: smime signed
 
-<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="0" filename="ca_selfsigned_cert.pem">
-<crl filename="ca_selfsigned_crl.pem"/>
-<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="1" filename="leonardo_cert.pem">
+<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="0" filename="18f4587b.0">
+<crl filename="18f4587b.r0"/>
+<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="1" filename="e0a095f8.0">
 </certificate>
 </certificate>
-<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=CA ROOT/emailAddress=pongo@unirel.com" serial="0" filename="ca_root_cert.pem">
-<crl filename="ca_root_crl.pem"/>
-<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=CA ROOT/emailAddress=pongo@unirel.com" serial="1" filename="ca_sub_cert.pem">
-<crl filename="ca_sub_crl.pem"/>
-<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=Customer CA/emailAddress=pongo@unirel.com" serial="1" filename="matteo_cert.pem">
+<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=CA ROOT/emailAddress=pongo@unirel.com" serial="0" filename="3b7d4f58.0">
+<crl filename="3b7d4f58.r0"/>
+<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=CA ROOT/emailAddress=pongo@unirel.com" serial="1" filename="5b821f15.0">
+<crl filename="5b821f15.r0"/>
+<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=Customer CA/emailAddress=pongo@unirel.com" serial="1" filename="09469b05.0">
 </certificate>
 </certificate>
 </certificate>
 
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_selfsigned_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_selfsigned_crl.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/leonardo_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_root_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_root_crl.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_sub_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_sub_crl.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/matteo_cert.pem
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/18f4587b.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/18f4587b.r0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/e0a095f8.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/3b7d4f58.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/3b7d4f58.r0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/5b821f15.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/5b821f15.r0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/09469b05.0
 
 UNKNOWN OBJECT
 1 MIME: multipart - 3 parts
@@ -37,18 +37,18 @@ UNKNOWN OBJECT
 1.3 Part 3: Content-type='message/rfc822' - Filename='smime2.eml'
 1.3.1 MIME: smime signed
 
-<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="0" filename="ca_selfsigned_cert.pem">
-<crl filename="ca_selfsigned_crl.pem"/>
-<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="1" filename="leonardo_cert.pem">
+<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="0" filename="18f4587b.0">
+<crl filename="18f4587b.r0"/>
+<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="1" filename="e0a095f8.0">
 </certificate>
-<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="2" filename="luigi_cert.pem">
+<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="2" filename="d7ce0a03.0">
 </certificate>
 </certificate>
 
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_selfsigned_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_selfsigned_crl.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/leonardo_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/luigi_cert.pem
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/18f4587b.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/18f4587b.r0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/e0a095f8.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/d7ce0a03.0
 
 TBOTE SIGNED
 1 TBOTE: signed - 2 parts
@@ -56,26 +56,26 @@ TBOTE SIGNED
 1.2 Part 2: Content-type='text/plain' - Filename='pkcs7.pem'
 1.2.1 PKCS7
 
-<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=CA ROOT/emailAddress=pongo@unirel.com" serial="0" filename="ca_root_cert.pem">
-<crl filename="ca_root_crl.pem"/>
-<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=CA ROOT/emailAddress=pongo@unirel.com" serial="1" filename="ca_sub_cert.pem">
-<crl filename="ca_sub_crl.pem"/>
-<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=Customer CA/emailAddress=pongo@unirel.com" serial="1" filename="matteo_cert.pem">
+<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=CA ROOT/emailAddress=pongo@unirel.com" serial="0" filename="3b7d4f58.0">
+<crl filename="3b7d4f58.r0"/>
+<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=CA ROOT/emailAddress=pongo@unirel.com" serial="1" filename="5b821f15.0">
+<crl filename="5b821f15.r0"/>
+<certificate issuer="C=IT, ST=Firenze, L=Sesto Fiorentino, O=Unirel srl, OU=Pongo, CN=Customer CA/emailAddress=pongo@unirel.com" serial="1" filename="09469b05.0">
 </certificate>
 </certificate>
 </certificate>
-<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="0" filename="ca_selfsigned_cert.pem">
-<crl filename="ca_selfsigned_crl.pem"/>
-<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="1" filename="leonardo_cert.pem">
+<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="0" filename="18f4587b.0">
+<crl filename="18f4587b.r0"/>
+<certificate issuer="C=IT, ST=FIRENZE, L=FIRENZE, O=Pongo Team, OU=TArchive project, CN=CA test/emailAddress=me@you.com" serial="1" filename="e0a095f8.0">
 </certificate>
 </certificate>
 
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_root_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_root_crl.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_sub_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_sub_crl.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/matteo_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_selfsigned_cert.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/ca_selfsigned_crl.pem
-/usr/src/ULib-1.0.5/tests/examples/CA/CApath/leonardo_cert.pem
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/3b7d4f58.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/3b7d4f58.r0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/5b821f15.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/5b821f15.r0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/09469b05.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/18f4587b.0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/18f4587b.r0
+/usr/src/ULib-1.4.2/tests/examples/CA/CApath/e0a095f8.0
 

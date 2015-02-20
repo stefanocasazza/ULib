@@ -1586,18 +1586,15 @@ __pure bool UHTTP::isValidRequestExt(const char* ptr, uint32_t sz)
 {
    U_TRACE(0, "UHTTP::isValidRequestExt(%.*S,%u)", 30, ptr, sz)
 
-// if (sz == 0)
-      {
-      if (*(int32_t*)(ptr+UClientImage_Base::size_request) != U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) U_RETURN(false);
-      }
-   /*
-   else
-      {
-      if (u_findEndHeader(ptr, sz) == U_NOT_FOUND) U_RETURN(false);
-      }
-   */
+   U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
-   U_RETURN(true);
+   if (isValidRequest(ptr) &&
+       *(int32_t*)(ptr+sz-4) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+      {
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
@@ -3262,15 +3259,10 @@ bool UHTTP::handlerCache()
 
       U_INTERNAL_ASSERT(UClientImage_Base::size_request <= sz)
 
-      if ((UClientImage_Base::size_request+UClientImage_Base::size_request) <= sz)
+      if ((UClientImage_Base::size_request+UClientImage_Base::size_request) <= sz &&
+          isValidRequestExt(ptr+UClientImage_Base::size_request, UClientImage_Base::size_request) == false)
          {
-         const char* ptr1 = ptr + UClientImage_Base::size_request;
-
-         if (isValidRequest(ptr1) == false ||
-                *(int32_t*)(ptr1+UClientImage_Base::size_request) != U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
-            {
-            U_RETURN(false);
-            }
+         U_RETURN(false);
          }
       }
 

@@ -1443,11 +1443,7 @@ void UServer_Base::init()
 
    UClientImage_Base::init();
 
-#ifdef U_SERVER_CAPTIVE_PORTAL
-   USocket::accept4_flags = SOCK_CLOEXEC;
-#else
    USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
-#endif
 
 #ifdef U_LOG_ENABLE
    uint32_t log_rotate_size = 0;
@@ -2762,7 +2758,7 @@ void UServer_Base::removeZombies()
 
 // it creates a copy of itself, return true if parent...
 
-int UServer_Base::startNewChild()
+pid_t UServer_Base::startNewChild()
 {
    U_TRACE(0, "UServer_Base::startNewChild()")
 
@@ -2786,7 +2782,9 @@ int UServer_Base::startNewChild()
       U_RETURN(pid); // parent
       }
 
-   U_RETURN(0); // child
+   if (p.child()) U_RETURN(0);
+
+   U_RETURN(-1);
 }
 
 __noreturn void UServer_Base::endNewChild()
@@ -2813,21 +2811,11 @@ bool UServer_Base::startParallelization(uint32_t nclient)
 {
    U_TRACE(0, "UServer_Base::startParallelization(%u)", nclient)
 
-   U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
-                    U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
-
-#ifndef U_SERVER_CAPTIVE_PORTAL
-   if (U_ClientImage_parallelization != 1 && // 1 => child of parallelization
-#  ifdef USE_LIBSSL
-   // bssl == false                       &&
-#  endif
-       (UNotifier::num_connection - UNotifier::min_connection) > nclient)
+   if (isParallelizationGoingToStart(nclient))
       {
-      U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
+      pid_t pid = startNewChild();
 
-      if (startNewChild())
+      if (pid > 0)
          {
          // NB: from now it is responsability of the child to services the request from the client on the same connection...
 
@@ -2842,11 +2830,13 @@ bool UServer_Base::startParallelization(uint32_t nclient)
          U_RETURN(true);
          }
 
-      U_ClientImage_parallelization = 1; // 1 => child of parallelization
+      if (pid == 0)
+         {
+         U_ClientImage_parallelization = 1; // 1 => child of parallelization
 
-      U_ASSERT(isParallelizationChild())
+         U_ASSERT(isParallelizationChild())
+         }
       }
-#endif
 
    U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
 

@@ -2800,7 +2800,7 @@ static void askNodogToLogoutUser(UVector<UString>& vec, bool bcheck)
 
    pid_t pid = UServer_Base::startNewChild();
 
-   if (pid) return; // parent
+   if (pid > 0) return; // parent
 
    // child
 
@@ -2813,7 +2813,7 @@ static void askNodogToLogoutUser(UVector<UString>& vec, bool bcheck)
       (void) askNodogToLogoutUser(vec[i+1], vec[i+2], bcheck);
       }
 
-   UServer_Base::endNewChild();
+   if (pid == 0) UServer_Base::endNewChild();
 }
 
 static bool setAccessPointAddress()
@@ -3962,8 +3962,8 @@ static void GET_get_config()
 {
    U_TRACE(5, "::GET_get_config()")
 
-   if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
-   else
+// if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
+// else
       {
       // $1 -> ap (without localization => '@')
       // $2 -> key

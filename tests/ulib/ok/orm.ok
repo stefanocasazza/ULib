@@ -2,15 +2,15 @@ name = Moshe
 1	Moshe
 2	Yossi
 There are 2 users
-Wed Nov 13 15:09:15 2013
+Fri Feb 20 20:31:02 2015
 ID: 1, Affected rows: 0
 ID: 2, Affected rows: 0
-Rows: 2
+Rows: 1
 Cols: 5
-1 10 3.14159 Hello 'World' Wed Nov 13 14:09:15 2013
+1 10 3.14159 Hello 'World' Fri Feb 20 19:31:02 2015
 
 has 5 columns
-2 10 3.14159 Hello 'World' Wed Nov 13 14:09:15 2013
+2 10 3.14159 Hello 'World' Fri Feb 20 19:31:02 2015
 
 has 5 columns
 Deleted 2 rows

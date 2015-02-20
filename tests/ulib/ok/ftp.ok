@@ -9,8 +9,8 @@ current stable release, you may wish to investigate the "squeeze-lts"
 distribution. More information is available at:
 https://wiki.debian.org/LTS/ 
 
-Debian 7.7, or wheezy.  Access this release through dists/stable
-Debian 7.7 was released Saturday, 18th October 2014.
+Debian 7.8, or wheezy.  Access this release through dists/stable
+Debian 7.8 was released Saturday, 10th January 2015.
 
 Testing, or jessie.  Access this release through dists/testing.  The
 current tested development snapshot is named jessie.  Packages which

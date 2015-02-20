@@ -108,8 +108,7 @@ public:
 
       UApplication::exit_value = 1;
 
-loop:
-      if (upload)
+loop: if (upload)
          {
          UFile file(upload);
 

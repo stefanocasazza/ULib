@@ -450,9 +450,35 @@ public:
 
    // it creates a copy of itself, return true if parent...
 
-   static int  startNewChild();
-   static void   endNewChild() __noreturn;
+   static void    endNewChild() __noreturn;
+   static pid_t startNewChild();
+
    static bool startParallelization(uint32_t nclient = 1);
+
+   static bool isParallelizationGoingToStart(uint32_t nclient = 1)
+      {
+      U_TRACE(0, "UServer_Base::isParallelizationGoingToStart(%u)", nclient)
+
+      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
+                       U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
+
+#  ifndef U_SERVER_CAPTIVE_PORTAL
+      if (U_ClientImage_parallelization != 1 && // 1 => child of parallelization
+#     ifdef USE_LIBSSL
+       // bssl == false                      &&
+#     endif
+          (UNotifier::num_connection - UNotifier::min_connection) > nclient)
+         {
+         U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
+
+         U_RETURN(true);
+         }
+#  endif
+
+      U_RETURN(false);
+      }
 
    // manage log server...
 
