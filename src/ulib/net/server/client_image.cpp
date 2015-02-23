@@ -839,6 +839,7 @@ void UClientImage_Base::resetReadBuffer()
    if (rstart)
       {
       rbuffer->moveToBeginDataInBuffer(rstart);
+                                       rstart = 0;
 
       *request = *rbuffer;
       }
@@ -917,7 +918,7 @@ bool UClientImage_Base::genericRead()
 #  ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
       U_MESSAGE("UClientImage_Base::genericRead(): time_between_request(%ld) < time_run(%ld)", time_between_request, time_run);
 #  else
-      if (UServer_Base::startParallelization(1000))
+      if (UServer_Base::startParallelization(UNotifier::max_connection-(UNotifier::max_connection/10)))
          {
          // parent
 
@@ -998,13 +999,7 @@ loop:
          {
          resetReadBuffer();
 
-         const char* ptr = request->data();
-
-         if (callerIsValidRequestExt(ptr, sz) == false &&
-                     u_findEndHeader(ptr, sz) == U_NOT_FOUND)
-            {
-            U_ClientImage_data_missing = true; // partial valid (not complete)
-            }
+         if (callerIsValidRequestExt(request->data(), sz) == false) U_ClientImage_data_missing = true; // partial valid (not complete)
          }
       }
 
@@ -1084,7 +1079,11 @@ dmiss:
       if (u__isblank((ptr+uri_offset)[u_http_info.startHeader]) &&
           memcmp(ptr+uri_offset, cbuffer, u_http_info.startHeader) == 0)
          {
-         if (size_request > sz) goto dmiss; // partial valid (not complete)
+         if (size_request > sz &&
+             callerIsValidRequestExt(ptr, sz) == false)
+            {
+            goto dmiss; // partial valid (not complete)
+            }
 
          if (callerHandlerCache())
             {

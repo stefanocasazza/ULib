@@ -1588,10 +1588,13 @@ __pure bool UHTTP::isValidRequestExt(const char* ptr, uint32_t sz)
 
    U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
-   if (isValidRequest(ptr) &&
-       *(int32_t*)(ptr+sz-4) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+   if (isValidRequest(ptr))
       {
-      U_RETURN(true);
+      if (*(int32_t*)(ptr+sz-4) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n') ||
+          (sz < UClientImage_Base::size_request && u_findEndHeader(ptr, sz) != U_NOT_FOUND))
+         {
+         U_RETURN(true);
+         }
       }
 
    U_RETURN(false);
@@ -4158,7 +4161,8 @@ void UHTTP::setEndRequestProcessing()
                     U_ClientImage_request,     u_http_info.nResponseCode,     U_ClientImage_request_is_cached,    u_http_info.startHeader)
 
 #ifndef U_CACHE_REQUEST_DISABLE
-   if (UClientImage_Base::isRequestCacheable() &&
+   if (isGETorHEAD()                           &&
+       UClientImage_Base::isRequestCacheable() &&
        U_IS_HTTP_SUCCESS(u_http_info.nResponseCode))
       {
       U_INTERNAL_DUMP("U_ClientImage_pipeline = %b UClientImage_Base::size_request = %u UClientImage_Base::uri_offset = %u",

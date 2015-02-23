@@ -259,8 +259,7 @@ public:
             else           (void) u_strftime2(U_HTTP_DATE3, 29-4, "%a, %d %b %Y %T", u_now->tv_sec); // GMT can't change...
             }
 
-         if (bchange) tv_sec_old = u_now->tv_sec;
-         else       ++tv_sec_old;
+         tv_sec_old = u_now->tv_sec;
 
          U_INTERNAL_ASSERT_EQUALS(u_now->tv_sec, tv_sec_old)
          }

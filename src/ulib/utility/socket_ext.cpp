@@ -440,7 +440,9 @@ loop:
 #endif
    value = U_SYSCALL(writev, "%d,%p,%d", sk->iSockDesc, iov, iovcnt);
 
+#if defined(USE_LIBSSL) ||  defined(_MSWINDOWS_)
 check:
+#endif
    if (value <= 0)
       {
       if (value == -1)

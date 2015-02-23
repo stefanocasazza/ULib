@@ -38,7 +38,6 @@ userver {
  DOCUMENT_ROOT benchmark/docroot
  PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
- PREFORK_CHILD 2 
 }
 http {
  ALIAS [ / /index.php ]
