@@ -888,7 +888,7 @@ UString UStringExt::trim(const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringExt::trim(%.*S,%u)", n, s, n)
 
-   U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+   if (n == 0) U_RETURN_STRING(UString::getStringNull());
 
    int32_t i = 0;
    UString result(n);

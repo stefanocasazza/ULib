@@ -424,6 +424,8 @@ public:
 
    // PARALLELIZATION
 
+   static uint32_t num_client_for_parallelization;
+
    static bool isParallelizationChild()
       {
       U_TRACE(0, "UServer_Base::isParallelizationChild()")
@@ -546,8 +548,8 @@ protected:
    static UString* cenvironment;
    static UString* senvironment;
    static UString* str_preforked_num_kids;
-   static uint32_t max_depth, wakeup_for_nothing, num_client_for_parallelization;
-   static bool flag_loop, flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert;
+   static uint32_t max_depth, wakeup_for_nothing;
+   static bool flag_loop, flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive;
 
 #ifdef U_WELCOME_SUPPORT
    static UString* msg_welcome;

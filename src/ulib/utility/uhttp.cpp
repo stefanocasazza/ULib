@@ -1,4 +1,4 @@
-   // ============================================================================
+// ============================================================================
 //
 // = LIBRARY
 //    ULib - c++ library
@@ -2994,10 +2994,13 @@ U_NO_EXPORT bool UHTTP::runDynamicPage(bool as_service)
       if (as_service) (void) usp_page->runDynamicPage(0);
       else
          {
-         as_service                = true;
          u_http_info.nResponseCode = usp_page->runDynamicPage(UClientImage_Base::pthis);
 
+         if (U_ClientImage_parallelization == 2) goto next; // 2 => parent of parallelization
+
          setCgiResponse();
+
+         as_service = true;
          }
 
       U_RESET_MODULE_NAME;
@@ -4058,18 +4061,32 @@ check_file: // now we check the file...
 
    if (file_data == file_not_in_cache_data) goto empty_file;
 
+   errno = 0;
+
    if (file->modified())
       {
       file_data->mode  = file->st_mode;
       file_data->size  = file->st_size;
       file_data->mtime = file->st_mtime;
-
-      U_INTERNAL_DUMP("file_data->fd = %d st_mode = %d st_size = %I st_mtime = %ld", file_data->fd, file->st_mode, file->st_size, file->st_mtime)
       }
+   else
+      {
+      U_INTERNAL_DUMP("errno = %d", errno)
+
+      if (errno == EBADF &&
+          file->open())
+         {
+         file_data->fd = file->fd;
+         }
+      }
+
+   U_INTERNAL_DUMP("file_data->fd = %d file_data->size = %u st_mode = %d st_size = %u st_mtime = %ld", file_data->fd, file_data->size, file->st_mode, file->st_size, file->st_mtime)
+
+   U_INTERNAL_ASSERT_EQUALS(file->st_size, file_data->size)
 
    if (checkGetRequestIfModified())
       {
-empty_file: // NB: check for empty file...
+empty_file: // NB: now we check for empty file...
 
       if (file_data->size) processGetRequest(etag, ext);
       else
@@ -6999,8 +7016,7 @@ next2:
       }
 
 end:
-   U_SRV_LOG("File cached: %.*S - %u bytes - (%d%%) compression ratio%s", U_STRING_TO_TRACE(*pathname),
-                  file_data->size, 100 - ratio, (motivation ? motivation : ""));
+   U_SRV_LOG("File cached: %.*S - %u bytes - (%d%%) compression ratio%s", U_STRING_TO_TRACE(*pathname), file_data->size, 100 - ratio, (motivation ? motivation : ""));
 }
 
 bool UHTTP::callInitForAllUSP(UStringRep* key, void* value)

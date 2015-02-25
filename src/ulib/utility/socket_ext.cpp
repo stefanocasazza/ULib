@@ -127,11 +127,17 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno != EAGAIN)
             {
-            if (sk == UClientImage_Base::psocket) sk->iState = (errno == ECONNRESET ? USocket::EPOLLERROR : USocket::BROKEN);
-close:
-            sk->close();
+            if (U_ClientImage_parallelization != 1) // 1 => child of parallelization
+               {
+               if (sk == UClientImage_Base::psocket) sk->iState = (errno == ECONNRESET ? USocket::EPOLLERROR : USocket::BROKEN);
+
+               sk->close();
+               }
+
+            U_RETURN(false);
             }
-         else if (timeoutMS != 0)
+
+         if (timeoutMS != 0)
             {
             if (UNotifier::waitForRead(sk->iSockDesc, timeoutMS) == 1) goto read;
 
@@ -144,12 +150,25 @@ close:
          {
          U_INTERNAL_ASSERT_EQUALS(value, 0)
 
+         errno = 0;
+
          if (byte_read == 0 ||
              sk->shutdown(SHUT_RD) == false)
             {
-            if (U_ClientImage_parallelization == 1) U_RETURN(false); // 1 => child of parallelization
+            U_INTERNAL_DUMP("byte_read = %d errno = %d", byte_read, errno)
 
-            goto close;
+            if (U_ClientImage_parallelization != 1) // 1 => child of parallelization
+               {
+               if (errno == ENOTCONN &&
+                   sk == UClientImage_Base::psocket)
+                  {
+                  sk->iState = USocket::EPOLLERROR;
+                  }
+
+               sk->close();
+               }
+
+            U_RETURN(false);
             }
 
          UClientImage_Base::setCloseConnection();

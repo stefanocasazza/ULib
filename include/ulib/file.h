@@ -267,9 +267,9 @@ public:
 
       U_CHECK_MEMORY
 
-      bool result = (fd != -1);
+      if (fd != -1) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    void close()
@@ -313,25 +313,24 @@ public:
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
-      bool result = (U_SYSCALL(access, "%S,%d", U_PATH_CONV(path_relativ), mode) == 0);
+      if (U_SYSCALL(access, "%S,%d", U_PATH_CONV(path_relativ), mode) == 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool stat();
 
-#ifdef _MSWINDOWS_
-   bool slink() const { return false; }
-#else
    bool slink() const
       {
       U_TRACE(0, "UFile::slink()")
 
       U_CHECK_MEMORY
 
-      bool result = S_ISLNK(st_mode);
+#  ifndef _MSWINDOWS_
+      if (S_ISLNK(st_mode)) U_RETURN(true);
+#  endif
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool lstat()
@@ -344,11 +343,12 @@ public:
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
-      bool result = (U_SYSCALL(lstat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0);
+#  ifndef _MSWINDOWS_
+      if (U_SYSCALL(lstat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0) U_RETURN(true);
+#  endif
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
-#endif
 
    void fstat()
       {
@@ -450,9 +450,9 @@ public:
 
       U_CHECK_MEMORY
 
-      bool result = S_ISREG(st_mode);
+      if (S_ISREG(st_mode)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool dir() const
@@ -461,9 +461,9 @@ public:
 
       U_CHECK_MEMORY
 
-      bool result = S_ISDIR(st_mode);
+      if (S_ISDIR(st_mode)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool socket() const
@@ -474,9 +474,9 @@ public:
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
-      bool result = S_ISSOCK(st_mode);
+      if (S_ISSOCK(st_mode)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // Etag (HTTP/1.1)
@@ -547,9 +547,9 @@ public:
       {
       U_TRACE(1, "UFile::_mkdir(%S,%d)", path, mode)
 
-      bool result = (U_SYSCALL(mkdir, "%S,%d", U_PATH_CONV(path), mode) != -1 || errno == EEXIST);
+      if (U_SYSCALL(mkdir, "%S,%d", U_PATH_CONV(path), mode) != -1 || errno == EEXIST) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // unlink
@@ -558,9 +558,9 @@ public:
       {
       U_TRACE(1, "UFile::_unlink(%S)", _pathname)
 
-      bool result = (U_SYSCALL(unlink, "%S", U_PATH_CONV(_pathname)) == 0);
+      if (U_SYSCALL(unlink, "%S", U_PATH_CONV(_pathname)) == 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool _unlink()
@@ -573,9 +573,9 @@ public:
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
-      bool result = UFile::_unlink(path_relativ);
+      if (UFile::_unlink(path_relativ)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // rename
@@ -585,9 +585,9 @@ public:
       {
       U_TRACE(1, "UFile::_rename(%S,%S)", oldpath, newpath)
 
-      bool result = (U_SYSCALL(rename, "%S,%S", oldpath, newpath) != -1);
+      if (U_SYSCALL(rename, "%S,%S", oldpath, newpath) != -1) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    void fsync()
@@ -679,18 +679,18 @@ public:
       {
       U_TRACE(1, "UFile::pread(%d,%p,%u,%u)", _fd, buf, count, offset)
 
-      bool result = (U_SYSCALL(pread, "%d,%p,%u,%u", _fd, buf, count, offset) == (ssize_t)count);
+      if (U_SYSCALL(pread, "%d,%p,%u,%u", _fd, buf, count, offset) == (ssize_t)count) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool pwrite(int _fd, const void* buf, uint32_t count, uint32_t offset)
       {
       U_TRACE(1, "UFile::pwrite(%d,%p,%u,%u)", _fd, buf, count, offset)
 
-      bool result = (U_SYSCALL(pwrite, "%d,%p,%u,%u", _fd, buf, count, offset) == (ssize_t)count);
+      if (U_SYSCALL(pwrite, "%d,%p,%u,%u", _fd, buf, count, offset) == (ssize_t)count) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool pread(       void* buf, uint32_t count, uint32_t offset);
@@ -702,27 +702,27 @@ public:
       {
       U_TRACE(1, "UFile::access(%S,%d)", path, mode)
 
-      bool result = (U_SYSCALL(access, "%S,%d", U_PATH_CONV(path), mode) == 0);
+      if (U_SYSCALL(access, "%S,%d", U_PATH_CONV(path), mode) == 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool stat(const char* path, struct stat* st)
       {
       U_TRACE(1, "UFile::stat(%S,%p)", path, st)
 
-      bool result = (U_SYSCALL(stat, "%S,%p", U_PATH_CONV(path), st) == 0);
+      if (U_SYSCALL(stat, "%S,%p", U_PATH_CONV(path), st) == 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool write(int _fd, const void* buf, uint32_t count)
       {
       U_TRACE(1, "UFile::write(%d,%p,%u)", _fd, buf, count)
 
-      bool result = (U_SYSCALL(write, "%d,%p,%u", _fd, buf, count) == (ssize_t)count);
+      if (U_SYSCALL(write, "%d,%p,%u", _fd, buf, count) == (ssize_t)count) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static int writev(int _fd, const struct iovec* iov, int n)
@@ -778,13 +778,11 @@ public:
       {
       U_TRACE(1, "UFile::symlink(%S,%S)", oldpath, newpath)
 
-#  ifdef _MSWINDOWS_
-      U_RETURN(false);
-#  else
-      bool result = (U_SYSCALL(symlink, "%S,%S", oldpath, newpath) != -1);
-
-      U_RETURN(result);
+#  ifndef _MSWINDOWS_
+      if (U_SYSCALL(symlink, "%S,%S", oldpath, newpath) != -1) U_RETURN(true);
 #  endif
+
+      U_RETURN(false);
       }
 
    bool symlink(const char* newpath)
@@ -795,13 +793,11 @@ public:
 
       U_INTERNAL_ASSERT(pathname.isNullTerminated())
 
-#  ifdef _MSWINDOWS_
-      U_RETURN(false);
-#  else
-      bool result = symlink(pathname.data(), newpath);
-
-      U_RETURN(result);
+#  ifndef _MSWINDOWS_
+      if (symlink(pathname.data(), newpath)) U_RETURN(true);
 #  endif
+
+      U_RETURN(false);
       }
 
    // make a FIFO special file (a named pipe)
@@ -810,13 +806,11 @@ public:
       {
       U_TRACE(1, "UFile::mkfifo(%S,%d)", _pathname, mode)
 
-#  ifdef _MSWINDOWS_
-      U_RETURN(false);
-#  else
-      bool result = (U_SYSCALL(mkfifo, "%S,%d", _pathname, mode) == 0);
-
-      U_RETURN(result);
+#  ifndef _MSWINDOWS_
+      if (U_SYSCALL(mkfifo, "%S,%d", _pathname, mode) == 0) U_RETURN(true);
 #  endif
+
+      U_RETURN(false);
       }
 
    // Expands all symbolic links and resolves references to '/./', '/../' and extra '/' characters in the null

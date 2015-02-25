@@ -25,7 +25,7 @@ rm -f /tmp/*.memusage.* \
 #ORM_DRIVER="pgsql"
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass dbname=hello_world"
 
-UMEMPOOL="152,85,0,37,8265,0,-17,-22,40"
+UMEMPOOL="152,85,0,37,8315,105,-17,-22,40"
  export ORM_DRIVER ORM_OPTION UMEMPOOL
 
 DIR_CMD="../../examples/userver"

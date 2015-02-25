@@ -21,7 +21,9 @@
 #  define U_IOV_TO_SAVE (sizeof(struct iovec) * 4)
 #endif
 
+int                UClientImage_Base::idx;
 int                UClientImage_Base::csfd;
+int                UClientImage_Base::iovcnt;
 iPF                UClientImage_Base::callerHandlerRead;
 iPF                UClientImage_Base::callerHandlerRequest;
 iPF                UClientImage_Base::callerHandlerReset;
@@ -49,6 +51,7 @@ UString*           UClientImage_Base::request_uri;
 UString*           UClientImage_Base::environment;
 USocket*           UClientImage_Base::psocket;
 UTimeVal*          UClientImage_Base::chronometer;
+struct iovec*      UClientImage_Base::piov;
 struct iovec       UClientImage_Base::iov_sav[4];
 struct iovec       UClientImage_Base::iov_vec[4];
 UClientImage_Base* UClientImage_Base::pthis;
@@ -1300,18 +1303,6 @@ write:
          U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
          U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP)
 
-#     ifdef DEBUG
-         if (body)
-            {
-            U_ERROR("handlerRead(): "
-                    "UEventFd::fd = %d socket->iSockDesc = %d "
-                    "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                    "U_ClientImage_parallelization = %d sfd = %d UEventFd::op_mask = %B",
-                    UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                    U_ClientImage_parallelization, sfd, UEventFd::op_mask);
-            }
-#     endif
-
          if (writeResponse() == false ||
              UClientImage_Base::handlerWrite() == U_NOTIFIER_DELETE)
             {
@@ -1396,7 +1387,7 @@ bool UClientImage_Base::writeResponse()
    U_INTERNAL_ASSERT(socket->isOpen())
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 2) // 2 => parent of parallelization
 
-   int iBytesWrite, idx, iovcnt;
+   int iBytesWrite;
    uint32_t sz1     = wbuffer->size(),
             sz2     = (U_http_method_type == HTTP_HEAD ? 0 : body->size()),
             msg_len = (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0);
@@ -1414,6 +1405,8 @@ bool UClientImage_Base::writeResponse()
 
       idx    = 2;
       iovcnt = 2;
+
+      U_SRV_LOG_WITH_ADDR("send response (%u bytes) %.*s%#.*S to", ncount, msg_len, "[pipeline] ", iov_vec[2].iov_len, iov_vec[2].iov_base);
       }
    else
       {
@@ -1432,6 +1425,10 @@ bool UClientImage_Base::writeResponse()
       u__memcpy(iov_sav, iov_vec, U_IOV_TO_SAVE, __PRETTY_FUNCTION__);
 
       ULog::updateStaticDate(UServer_Base::ptr_static_date->date3+6, 3);
+
+#  ifdef U_LOG_ENABLE
+      if (logbuf) ULog::log(iov_vec+idx, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, " to %.*s", U_STRING_TO_TRACE(*logbuf));
+#  endif
       }
 
 #ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
@@ -1453,14 +1450,7 @@ bool UClientImage_Base::writeResponse()
 #endif
    }
 
-   if (iBytesWrite == (int)ncount)
-      {
-#  ifdef U_LOG_ENABLE
-      if (logbuf) ULog::log(iov_sav, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, " to %.*s", U_STRING_TO_TRACE(*logbuf));
-#  endif
-
-      U_RETURN(true);
-      }
+   if (iBytesWrite == (int)ncount) U_RETURN(true);
 
    if (iBytesWrite == 0 ||
        socket->isClosed())
@@ -1497,22 +1487,15 @@ bool UClientImage_Base::writeResponse()
    uint32_t sum;
 #endif
    bool bopen;
-   struct iovec* piov;
 
 loop:
    U_INTERNAL_ASSERT(socket->isOpen())
    U_INTERNAL_ASSERT_MAJOR(iBytesWrite, 0)
 
-   U_SRV_LOG_WITH_ADDR("sent partial response (%u bytes of %u)%.*s to", iBytesWrite, ncount, msg_len, " [pipeline]");
+   U_SRV_LOG_WITH_ADDR("sent partial response: (%u bytes of %u)%.*s parallelization(%u,%u) - to",
+                        iBytesWrite, ncount, msg_len, " [pipeline]", U_ClientImage_parallelization, U_CNT_PARALLELIZATION);
 
-#ifdef USE_LIBSSL
-   if (UServer_Base::bssl == false)
-#endif
-   {
-#ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
-   if (U_ClientImage_parallelization != 1) goto end; // 1 => child of parallelization
-#endif
-   }
+   ncount -= iBytesWrite;
 
    while (iov_vec[idx].iov_len == 0)
       {
@@ -1525,8 +1508,6 @@ loop:
 
    piov = iov_vec+idx;
 
-   ncount -= iBytesWrite;
-
 #ifdef DEBUG
    for (i = sum = 0; i < iovcnt; ++i) sum += piov[i].iov_len;
 
@@ -1535,6 +1516,15 @@ loop:
       U_ERROR("sum = %u ncount = %u nrequest = %u iBytesWrite = %u iov_vec[%u].iov_len = %u iovcnt = %u", sum, ncount, nrequest, iBytesWrite, idx, iov_vec[idx].iov_len, iovcnt);
       }
 #endif
+
+#ifdef USE_LIBSSL
+   if (UServer_Base::bssl == false)
+#endif
+   {
+#ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
+   if (U_ClientImage_parallelization != 1) goto end; // 1 => child of parallelization
+#endif
+   }
 
 #if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
    iBytesWrite = USocketExt::writev( socket, piov, iovcnt, ncount, U_TIMEOUT_MS);
@@ -1563,7 +1553,7 @@ loop:
       bflag = false;
       bopen = socket->isOpen();
 
-      U_SRV_LOG_WITH_ADDR("sending partial response failed - sk %s, (%u bytes of %u)%.*s to", bopen ? "open" : "close", iBytesWrite, ncount, msg_len, " [pipeline]");
+      U_SRV_LOG_WITH_ADDR("sending partial response: failed - sk %s, (%u bytes of %u)%.*s to", bopen ? "open" : "close", iBytesWrite, ncount, msg_len, " [pipeline]");
 
       if (bopen) socket->close();
 
@@ -1572,7 +1562,7 @@ loop:
 
    result = true;
 
-   U_SRV_LOG_WITH_ADDR("sending partial response completed (%u bytes of %u)%.*s to", iBytesWrite, ncount, msg_len, " [pipeline]");
+   U_SRV_LOG_WITH_ADDR("sending partial response: completed (%u bytes of %u)%.*s to", iBytesWrite, ncount, msg_len, " [pipeline]");
 
 end:
 #ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
@@ -1582,6 +1572,28 @@ end:
    if (bflag) socket->setNonBlocking(); // restore file status flags
 
    U_RETURN(result);
+}
+
+void UClientImage_Base::prepareForSendfile()
+{
+   U_TRACE(0, "UClientImage_Base::prepareForSendfile()")
+
+   U_INTERNAL_ASSERT_MAJOR(count, 0)
+   U_INTERNAL_ASSERT_DIFFERS(sfd, -1)
+
+   resetPipeline();
+
+   if (U_ClientImage_close)
+      {
+      pending_close       = U_YES;
+      U_ClientImage_close = false;
+      }
+
+   UEventFd::op_mask = EPOLLOUT;
+
+   if (UNotifier::isHandler(UEventFd::fd)) UNotifier::modify(this);
+
+   U_INTERNAL_DUMP("start = %u count = %u", start, count)
 }
 
 int UClientImage_Base::handlerResponse()
@@ -1594,6 +1606,7 @@ int UClientImage_Base::handlerResponse()
       {
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
       U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // NB: we must not have pending write...
+      U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP)
 
 #  ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
       resetPipelineAndClose();
@@ -1611,40 +1624,38 @@ int UClientImage_Base::handlerResponse()
 
       sfd = UFile::creat(path);
 
-      if (sfd != -1)
+      if (sfd == -1)
          {
-         if (UFile::_unlink(path) &&
-             UFile::writev(sfd, iov_vec, 4) == (int)ncount)
-            {
-            U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP)
+         U_SRV_LOG("partial write failed: (remain %u bytes) - error on create temporary file %.*S sock_fd %d sfd %d", ncount, len, path, socket->iSockDesc, sfd);
 
-            count = ncount; // NB: pending sendfile...
+         U_RETURN(U_NOTIFIER_DELETE);
+         }
 
-            resetPipeline();
+      (void) UFile::_unlink(path);
 
-            if (U_ClientImage_close)
-               {
-               pending_close       = U_YES;
-               U_ClientImage_close = false;
-               }
+      int iBytesWrite = UFile::writev(sfd, piov, iovcnt);
 
-            pending_close |= U_CLOSE;
-
-            UEventFd::op_mask = EPOLLOUT;
-
-            if (UNotifier::isHandler(UEventFd::fd)) UNotifier::modify(this);
-
-            U_INTERNAL_DUMP("start = %u", start)
-
-            U_SRV_LOG("partial write: (remain %u bytes) create temporary file %.*S sock_fd %d sfd %d", ncount, len, path, socket->iSockDesc, sfd);
-
-            U_RETURN(U_NOTIFIER_OK);
-            }
+      if (iBytesWrite != (int)ncount)
+         {
+         U_SRV_LOG("partial write failed: (remain %u bytes) - error on write (%d bytes) on temporary file %.*S sock_fd %d sfd %d", ncount, iBytesWrite, len, path, socket->iSockDesc, sfd);
 
          UFile::close(sfd);
+                      sfd = -1;
 
-         sfd = -1;
+         U_RETURN(U_NOTIFIER_DELETE);
          }
+
+      U_SRV_LOG("partial write: (remain %u bytes) - create temporary file %.*S sock_fd %d sfd %d", ncount, len, path, socket->iSockDesc, sfd);
+
+      // NB: we have a pending sendfile...
+
+      count = ncount;
+
+      prepareForSendfile();
+
+      pending_close |= U_CLOSE;
+
+      U_RETURN(U_NOTIFIER_OK);
 #  endif
       }
 
@@ -1688,6 +1699,10 @@ int UClientImage_Base::handlerWrite()
    bool bwrite = (UEventFd::op_mask == EPOLLOUT);
 
    U_INTERNAL_DUMP("bwrite = %b", bwrite)
+
+#ifdef U_LOG_ENABLE
+   pthis = this; // NB: U_SRV_LOG_WITH_ADDR macro depend on UClientImage_Base::pthis...
+#endif
 
 write:
    offset      = start;
@@ -1751,9 +1766,7 @@ wait:    if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto
 
       if (U_ClientImage_parallelization == 1) goto wait; // 1 => child of parallelization
 
-      UEventFd::op_mask = EPOLLOUT;
-
-      if (UNotifier::isHandler(UEventFd::fd)) UNotifier::modify(this);
+      prepareForSendfile();
 
       U_RETURN(U_NOTIFIER_OK);
       }

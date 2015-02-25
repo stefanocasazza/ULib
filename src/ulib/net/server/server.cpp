@@ -84,6 +84,7 @@ bool          UServer_Base::flag_loop;
 bool          UServer_Base::flag_sigterm;
 bool          UServer_Base::public_address;
 bool          UServer_Base::monitoring_process;
+bool          UServer_Base::set_tcp_keep_alive;
 bool          UServer_Base::set_realtime_priority;
 bool          UServer_Base::update_date1;
 bool          UServer_Base::update_date2;
@@ -238,8 +239,7 @@ public:
 
          U_INTERNAL_ASSERT_DIFFERS(u_now->tv_sec, tv_sec_old)
 
-         bchange = (((u_now->tv_sec - tv_sec_old) != 1) ||
-                    ((u_now->tv_sec % U_ONE_HOUR_IN_SECOND) == 0));
+         bchange = ((u_now->tv_sec % U_ONE_HOUR_IN_SECOND) == 0);
 
          if (UServer_Base::update_date1)
             {
@@ -260,8 +260,6 @@ public:
             }
 
          tv_sec_old = u_now->tv_sec;
-
-         U_INTERNAL_ASSERT_EQUALS(u_now->tv_sec, tv_sec_old)
          }
       }
 };
@@ -547,6 +545,7 @@ void UServer_Base::loadConfigParam()
    // ORM_DRIVER_DIR directory where there are ORM drivers to load
    //
    // REQ_TIMEOUT    timeout for request from client
+   // TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel.
    // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
    //                (Value <= 0 will disable Keep-Alive) (default 1020)
    //
@@ -599,6 +598,7 @@ void UServer_Base::loadConfigParam()
       }
 
    USocket::iBackLog              = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
+   set_tcp_keep_alive             = cfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
    set_realtime_priority          = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), true);
    UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
    u_printf_string_max_length     = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
@@ -2386,6 +2386,8 @@ void UServer_Base::runLoop(const char* user)
       socket->setTcpFastOpen();
       socket->setTcpQuickAck();
       socket->setTcpDeferAccept();
+
+      if (set_tcp_keep_alive) socket->setTcpKeepAlive(); 
       }
 #endif
 

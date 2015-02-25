@@ -74,6 +74,7 @@
 "%s" \
 "%s" \
 "%s" \
+"%s" \
 "%.*s" \
 "%s" \
 "\t\t}\n\t" \
@@ -118,7 +119,7 @@ public:
       UString token, declaration, http_header(U_CAPACITY), buffer(U_CAPACITY),
               bufname(100U), output(U_CAPACITY), output1(U_CAPACITY), xoutput(U_CAPACITY);
       bool bgroup, binit = false, breset = false, bend = false, bsighup = false, bfork = false, bcomment = false,
-           bvar = false, bform = false, test_if_html = false, is_html = false, bsession = false, bstorage = false;
+           bvar = false, bform = false, test_if_html = false, is_html = false, bsession = false, bstorage = false, bparallelization = false;
 
       // Anything that is not enclosed in <!-- ... --> tags is assumed to be HTML
 
@@ -346,18 +347,6 @@ public:
                (void) output.append(buffer);
                }
             }
-         else if (strncmp(directive, U_CONSTANT_TO_PARAM("code")) == 0)
-            {
-            n = token.size() - U_CONSTANT_SIZE("code") - 2;
-
-            token = UStringExt::trim(directive + U_CONSTANT_SIZE("code"), n);
-
-            (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
-
-            (void) output.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
-
-            (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
-            }
          else if (strncmp(directive, U_CONSTANT_TO_PARAM("xcode")) == 0)
             {
             bvar = true;
@@ -420,6 +409,34 @@ public:
                             "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t", U_STRING_TO_TRACE(token));
 
             (void) output.append(buffer);
+            }
+         else
+            {
+            n = 0;
+
+            if (strncmp(directive, U_CONSTANT_TO_PARAM("pcode")) == 0)
+               {
+               bparallelization = true;
+
+               n = token.size() - U_CONSTANT_SIZE("pcode") - 2;
+
+               token = UStringExt::trim(directive + U_CONSTANT_SIZE("pcode"), n);
+               }
+            else if (strncmp(directive, U_CONSTANT_TO_PARAM("code")) == 0)
+               {
+               n = token.size() - U_CONSTANT_SIZE("code") - 2;
+
+               token = UStringExt::trim(directive + U_CONSTANT_SIZE("code"), n);
+               }
+
+            if (n)
+               {
+               (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
+
+               (void) output.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
+
+               (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
+               }
             }
 
          // no trailing \n...
@@ -492,7 +509,8 @@ public:
             char ptr4[100] = { '\0' };
             char ptr5[100] = { '\0' };
       const char* ptr6     = "";
-      const char* ptr7     = (bcomment ? "\n\t\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
+      const char* ptr7     = "";
+      const char* ptr8     = (bcomment ? "\n\t\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
 
       // ------------------------------
       // special argument value:
@@ -520,6 +538,8 @@ public:
          ptr6 = "\n\t\tif (client_image >= (void*)-5) U_RETURN(0);\n\t\n";
          }
 
+      if (bparallelization) ptr7 = "\n\t\tif (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization)) U_RETURN(0);\n\t\n";
+
       UString result(800U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output.size() + output1.size() + xoutput.size());
 
       result.snprintf(USP_TEMPLATE,
@@ -538,12 +558,13 @@ public:
                       ptr4,
                       ptr5,
                       ptr6,
+                      ptr7,
                       U_STRING_TO_TRACE(http_header),
                       bform ? "\t\n\t\t(void) UHTTP::processForm();\n" : "",
                       U_STRING_TO_TRACE(output),
                       U_STRING_TO_TRACE(output1),
                       U_STRING_TO_TRACE(xoutput),
-                      ptr7);
+                      ptr8);
 
       (void) UFile::writeTo(bufname, UStringExt::removeEmptyLine(result));
       }

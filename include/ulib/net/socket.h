@@ -379,18 +379,7 @@ public:
     * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
     */
 
-   bool shutdown(int how = SHUT_WR)
-      {
-      U_TRACE(1, "USocket::shutdown(%d)", how)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT(isOpen())
-
-      if (U_SYSCALL(shutdown, "%d,%d", getFd(), how) == 0) U_RETURN(true);
-
-      U_RETURN(false);
-      }
+   bool shutdown(int how = SHUT_WR);
 
    /**
     * Stick a TCP cork in the socket. It's not clear that this will help performance, but it might.
@@ -473,7 +462,7 @@ public:
     * but does not change or enhance the way the information is delivered to you. You'll find out when you try to actually do something
     * (for example "write"), and you'll find out right away since the kernel is now just reporting the status of a previously set flag,
     * rather than having to wait a few seconds (or much longer in some cases) for network activity to fail. The exact same code logic you
-    * had for handling the "other side went away unexpectedly" condition will still be used; what changes is the timing (not the method).
+    * had for handling the "other side went away unexpectedly" condition will still be used; what changes is the timing (not the method)
     */
 
    void setTcpKeepAlive()

@@ -139,6 +139,45 @@ void USocket::_socket(int iSocketType, int domain, int protocol)
       }
 }
 
+/**
+ * The shutdown() tells the receiver the server is done sending data. No
+ * more data is going to be send. More importantly, it doesn't close the
+ * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
+ */
+
+bool USocket::shutdown(int how)
+{
+   U_TRACE(1, "USocket::shutdown(%d)", how)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT(isOpen())
+
+   if (U_SYSCALL(shutdown, "%d,%d", getFd(), how) == 0)
+      {
+      /**
+       * SO_KEEPALIVE makes the kernel more aggressive about continually verifying the connection even when you're not doing anything,
+       * but does not change or enhance the way the information is delivered to you. You'll find out when you try to actually do something
+       * (for example "write"), and you'll find out right away since the kernel is now just reporting the status of a previously set flag,
+       * rather than having to wait a few seconds (or much longer in some cases) for network activity to fail. The exact same code logic you
+       * had for handling the "other side went away unexpectedly" condition will still be used; what changes is the timing (not the method)
+       *
+       * Ref1: FIN_WAIT2 [https://kb.iu.edu/d/ajmi]
+       * Ref2: tcp_fin_timeout [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN370]
+       * Ref3: tcp_retries2 [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN444]
+       * Ref4: tcp_max_orphans [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN388]
+       */
+
+   // const int value = 1;
+
+   // (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 bool USocket::connectServer(const UIPAddress& cAddr, unsigned int iServPort)
 {
    U_TRACE(1, "USocket::connectServer(%p,%d)", &cAddr, iServPort)

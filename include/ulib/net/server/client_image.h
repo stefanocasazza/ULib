@@ -341,6 +341,8 @@ protected:
       sfd   = -1;
       }
 
+   void prepareForSendfile();
+
    static void setSendfile(int _sfd, uint32_t _start, uint32_t _count)
       {
       U_TRACE(0, "UClientImage_Base::setSendfile(%d,%u,%u)", _sfd, _start, _count)
@@ -360,7 +362,8 @@ protected:
    bool logCertificate(); // append on log the peer certicate of client ("issuer","serial")
    bool askForClientCertificate();
 
-   static int csfd;
+   static struct iovec* piov;
+   static int csfd, idx, iovcnt;
    static UTimeVal* chronometer;
    static bool log_request_partial;
    static long time_between_request, time_run;

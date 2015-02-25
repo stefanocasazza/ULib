@@ -35,6 +35,7 @@
 # ORM_DRIVER_DIR directory where there are ORM drivers to load
 #
 # REQ_TIMEOUT    timeout for request from client
+# TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel.
 # MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
 #                (Value <= 0 will disable Keep-Alive)
 #
