@@ -74,19 +74,26 @@ bool UFileConfig::processData()
 #  define DBG_DEF
 #  endif
 
-#  ifdef HAVE_MCPP
-      command.snprintf("mcpp                    -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
-#  else
-      command.snprintf("cpp -undef -nostdinc -w -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
-#  endif
-
       if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/cpp.err");
+
+      command.snprintf("cpp -undef -nostdinc -w -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
 
       if (UFile::isOpen())
          {
          (void) UFile::lseek(U_SEEK_BEGIN, SEEK_SET);
 
          data = UCommand::outputCommand(command, environ, UFile::getFd(), fd_stderr);
+
+#     ifdef HAVE_MCPP
+         if (data.empty())
+            {
+            command.snprintf("mcpp -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
+
+            (void) UFile::lseek(U_SEEK_BEGIN, SEEK_SET);
+
+            data = UCommand::outputCommand(command, environ, UFile::getFd(), fd_stderr);
+            }
+#     endif
          }
       else
          {
@@ -99,11 +106,20 @@ bool UFileConfig::processData()
          UServer_Base::logCommandMsgError(cmd.getCommand(), true);
 #     endif
 
-         // ------------------------------------------
-         // NB: sometime we have problem with comments
-         // ------------------------------------------
-         // if (esito == false) U_RETURN(false);
-         // ------------------------------------------
+#     ifdef HAVE_MCPP
+         if (data.empty())
+            {
+            UCommand _cmd(command);
+
+            command.snprintf("mcpp -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
+
+            (void) _cmd.execute(&data, &output, -1, fd_stderr);
+
+#        ifndef U_LOG_DISABLE
+            UServer_Base::logCommandMsgError(_cmd.getCommand(), true);
+#        endif
+            }
+#     endif
 
          data = output;
          }

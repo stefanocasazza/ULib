@@ -113,17 +113,19 @@ public:
 
       if (usp.empty()) U_ERROR("filename not valid");
 
+      bool bpreprocessing_failed = false;
+
       if (usp.find(U_CONSTANT_TO_PARAM("\n#ifdef DEBUG")) != U_NOT_FOUND)
          {
-         UString before = UStringExt::substitute(usp, U_CONSTANT_TO_PARAM("#include"), U_CONSTANT_TO_PARAM("//#include"));
+         UFileConfig cfg(UStringExt::substitute(usp, U_CONSTANT_TO_PARAM("#include"), U_CONSTANT_TO_PARAM("//#include")), true);
 
-         UFileConfig cfg(before, true);
+         if (cfg.processData()) usp = UStringExt::substitute(cfg.getData(), U_CONSTANT_TO_PARAM("//#include"), U_CONSTANT_TO_PARAM("#include"));
+         else
+            {
+            bpreprocessing_failed = true;
 
-         if (cfg.processData() == false) U_ERROR("preprocessing filename failed");
-
-         UString after = cfg.getData();
-
-         usp = UStringExt::substitute(after, U_CONSTANT_TO_PARAM("//#include"), U_CONSTANT_TO_PARAM("#include"));
+            U_WARNING("preprocessing filename failed");
+            }
          }
       
       const char* ptr;
@@ -538,9 +540,17 @@ public:
 
       if (binit)   (void) u__snprintf(ptr1, 100, "\n\t\tif (client_image == (void*)-1) { usp_init_%.*s(); U_RETURN(0); }\n\t",   size, ptr);
       if (breset)  (void) u__snprintf(ptr2, 100, "\n\t\tif (client_image == (void*)-2) { usp_reset_%.*s(); U_RETURN(0); }\n\t",  size, ptr);
-      if (bend)    (void) u__snprintf(ptr3, 100, "\n\t\tif (client_image == (void*)-3) { usp_end_%.*s(); U_RETURN(0); }\n\t",    size, ptr);
       if (bsighup) (void) u__snprintf(ptr4, 100, "\n\t\tif (client_image == (void*)-4) { usp_sighup_%.*s(); U_RETURN(0); }\n\t", size, ptr);
       if (bfork)   (void) u__snprintf(ptr5, 100, "\n\t\tif (client_image == (void*)-5) { usp_fork_%.*s(); U_RETURN(0); }\n\t",   size, ptr);
+
+      if (bend)
+         {
+#     ifndef DEBUG
+         if (bpreprocessing_failed) bend = false;
+         else
+#     endif
+         (void) u__snprintf(ptr3, 100, "\n\t\tif (client_image == (void*)-3) { usp_end_%.*s(); U_RETURN(0); }\n\t", size, ptr);
+         }
 
       if (binit   == false ||
           bend    == false ||
