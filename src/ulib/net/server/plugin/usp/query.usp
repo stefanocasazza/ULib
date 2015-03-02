@@ -38,6 +38,7 @@ static void usp_fork_query()
    pstmt_query->into(pworld_query->randomNumber);
 }
 
+#ifdef DEBUG
 static void usp_end_query()
 {
    U_TRACE(5, "::usp_end_query()")
@@ -50,6 +51,7 @@ static void usp_end_query()
    delete pvalue;
 #endif
 }
+#endif
 -->
 <!--#args
 queries;

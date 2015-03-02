@@ -32,6 +32,7 @@ static void usp_fork_fortune()
    pstmt_fortune->into(*pfortune);
 }
 
+#ifdef DEBUG
 static void usp_end_fortune()
 {
    U_TRACE(5, "::usp_end_fortune()")
@@ -42,6 +43,7 @@ static void usp_end_fortune()
    delete pfortune;
    delete pmessage;
 }
+#endif
 -->
 <!doctype html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr><!--#code
 Fortune* elem;

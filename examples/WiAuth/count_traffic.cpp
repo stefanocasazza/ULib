@@ -80,12 +80,14 @@ public:
             n     = request.size();
             start = U_CONSTANT_SIZE("GET /info?");
 
+#        ifdef DEBUG
             u_printf_string_max_length_save = u_printf_string_max_length;
                                               u_printf_string_max_length = n;
 
             U_INTERNAL_DUMP("request = %.*S", n, s)
 
             u_printf_string_max_length = u_printf_string_max_length_save;
+#        endif
 
             while ((p = u_find(s + start, n - start, U_CONSTANT_TO_PARAM("traffic="))))
                {

@@ -168,9 +168,7 @@ bool USocket::shutdown(int how)
        * Ref4: tcp_max_orphans [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN388]
        */
 
-   // const int value = 1;
-
-   // (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
+   // (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 }, sizeof(int));
 
       U_RETURN(true);
       }
@@ -312,9 +310,7 @@ void USocket::setTcpFastOpen()
 #  define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
 #  endif
 
-   uint32_t val = 1;
-
-   (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const void*)&val, sizeof(uint32_t));
+   (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const int[]){ 5 }, sizeof(int));
 #endif
 }
 
@@ -337,10 +333,8 @@ void USocket::setReusePort()
 #  define SO_REUSEPORT 15
 #  endif
 
-   uint32_t val = 1;
-
-   tcp_reuseport = (U_socket_Type(this) != SK_UNIX                                            &&
-                    setSockOpt(SOL_SOCKET, SO_REUSEPORT, (const void*)&val, sizeof(uint32_t)) &&
+   tcp_reuseport = (U_socket_Type(this) != SK_UNIX                                        &&
+                    setSockOpt(SOL_SOCKET, SO_REUSEPORT, (const int[]){ 1 }, sizeof(int)) &&
                     U_socket_Type(this) != SK_DGRAM);
 
    U_INTERNAL_DUMP("tcp_reuseport = %b", tcp_reuseport)
@@ -358,9 +352,7 @@ void USocket::setReuseAddress()
     * the same port, by binding to a specific address as opposed to INADDR_ANY.
     */
 
-   uint32_t value = 1;
-
-   (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, (const void*)&value, sizeof(uint32_t)); 
+   (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, (const int[]){ 1 }, sizeof(int)); 
 }
 
 void USocket::setAddress(void* address)

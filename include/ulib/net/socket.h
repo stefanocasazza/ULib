@@ -405,9 +405,7 @@ public:
       U_TRACE(0, "USocket::setTcpDeferAccept()")
 
 #  if defined(TCP_DEFER_ACCEPT) && !defined(_MSWINDOWS_)
-      uint32_t val = 1;
-
-      (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const void*)&val, sizeof(uint32_t));
+      (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 1 }, sizeof(int));
 #  endif
       }
 
@@ -416,9 +414,8 @@ public:
       U_TRACE(0, "USocket::setTcpQuickAck()")
 
 #  if defined(TCP_QUICKACK) && !defined(_MSWINDOWS_)
-      uint32_t val = 0;
-
-      (void) setSockOpt(SOL_TCP, TCP_QUICKACK, (const void*)&val, sizeof(uint32_t));
+      (void) setSockOpt(SOL_TCP, TCP_QUICKACK,     (const int[]){ 0 }, sizeof(int));
+      (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 0 }, sizeof(int));
 #  endif
       }
 
@@ -427,9 +424,7 @@ public:
       U_TRACE(0, "USocket::setTcpNoDelay()")
 
 #  ifdef TCP_NODELAY
-      uint32_t val = 1;
-
-      (void) setSockOpt(SOL_TCP, TCP_NODELAY, (const void*)&val, sizeof(uint32_t));
+      (void) setSockOpt(SOL_TCP, TCP_NODELAY, (const int[]){ 1 }, sizeof(int));
 #  endif
       }
 
@@ -452,9 +447,9 @@ public:
       {
       U_TRACE(0, "USocket::setTcpLingerOff()")
 
-      struct linger ling = { 0, 0 };
+      const struct linger l = { 1, 1 };
 
-      (void) setSockOpt(SOL_SOCKET, SO_LINGER, &ling, sizeof(ling));
+      (void) setSockOpt(SOL_SOCKET, SO_LINGER, &l, sizeof(struct linger));
       }
 
    /**
@@ -469,9 +464,9 @@ public:
       {
       U_TRACE(0, "USocket::setTcpKeepAlive()")
 
-      const int value = 1;
-
-      (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, &value, sizeof(value));
+#  ifdef SO_KEEPALIVE
+      (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 }, sizeof(int));
+#  endif
       }
 
    void setTcpFastOpen();

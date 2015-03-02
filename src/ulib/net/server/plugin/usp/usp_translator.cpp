@@ -11,9 +11,9 @@
 //
 // =======================================================================================
 
-#include <ulib/file.h>
 #include <ulib/tokenizer.h>
 #include <ulib/net/socket.h>
+#include <ulib/file_config.h>
 #include <ulib/utility/escape.h>
 #include <ulib/utility/string_ext.h>
 
@@ -113,6 +113,19 @@ public:
 
       if (usp.empty()) U_ERROR("filename not valid");
 
+      if (usp.find(U_CONSTANT_TO_PARAM("\n#ifdef DEBUG")) != U_NOT_FOUND)
+         {
+         UString before = UStringExt::substitute(usp, U_CONSTANT_TO_PARAM("#include"), U_CONSTANT_TO_PARAM("//#include"));
+
+         UFileConfig cfg(before, true);
+
+         if (cfg.processData() == false) U_ERROR("preprocessing filename failed");
+
+         UString after = cfg.getData();
+
+         usp = UStringExt::substitute(after, U_CONSTANT_TO_PARAM("//#include"), U_CONSTANT_TO_PARAM("#include"));
+         }
+      
       const char* ptr;
       const char* directive;
       uint32_t i, n, distance, pos, size;
@@ -503,14 +516,14 @@ public:
 
       http_header = x;
 
-            char ptr1[100] = { '\0' };
-            char ptr2[100] = { '\0' };
-            char ptr3[100] = { '\0' };
-            char ptr4[100] = { '\0' };
-            char ptr5[100] = { '\0' };
-      const char* ptr6     = "";
-      const char* ptr7     = "";
-      const char* ptr8     = (bcomment ? "\n\t\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
+            char  ptr1[100] = { '\0' };
+            char  ptr2[100] = { '\0' };
+            char  ptr3[100] = { '\0' };
+            char  ptr4[100] = { '\0' };
+            char  ptr5[100] = { '\0' };
+      const char* ptr6      = "";
+      const char* ptr7      = "";
+      const char* ptr8      = (bcomment ? "\n\t\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
 
       // ------------------------------
       // special argument value:

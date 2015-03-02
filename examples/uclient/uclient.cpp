@@ -4,6 +4,7 @@
 #include <ulib/net/client/http.h>
 #include <ulib/ssl/certificate.h>
 #include <ulib/utility/dir_walk.h>
+#include <ulib/utility/services.h>
 #include <ulib/ssl/net/sslsocket.h>
 #include <ulib/net/server/server.h>
 
@@ -18,6 +19,7 @@
 "option u upload  1 'path of file to upload to url' ''\n" \
 "option o output  1 'path of file to write output' ''\n" \
 "option q queue   1 'time polling of queue mode' ''\n" \
+"option s stdin   0 'read the request to send from standard input' ''\n" \
 "option i include 0 'include the HTTP-header in the output. The HTTP-header includes things like server-name, date of the document, HTTP-version' ''\n"
 
 #include <ulib/application.h>
@@ -48,14 +50,15 @@ public:
 
       // manage options
 
-      bool include = false;
       time_t queue_time = 0;
       UString outpath, result;
+      bool include = false, bstdin = false;
 
       if (UApplication::isOptions())
          {
          cfg_str    =  opt['c'];
          upload     =  opt['u'];
+         bstdin     = (opt['s'] == U_STRING_FROM_CONSTANT("1"));
          include    = (opt['i'] == U_STRING_FROM_CONSTANT("1"));
          outpath    =  opt['o'];
          queue_time =  opt['q'].strtol();
@@ -114,10 +117,23 @@ loop: if (upload)
 
          if (client->upload(url, file)) UApplication::exit_value = 0;
          }
-      else if (client->connectServer(url) &&
-               client->sendRequest())
+      else if (client->connectServer(url))
          {
-         UApplication::exit_value = 0;
+         bool ok;
+
+         if (bstdin == false) ok = client->sendRequest();
+         else
+            {
+            UString req(U_CAPACITY);
+
+            UServices::readEOF(STDIN_FILENO, req);
+
+            if (req.empty()) U_ERROR("cannot read data from <stdin>");
+
+            ok = client->sendRequest(req);
+            }
+
+         if (ok) UApplication::exit_value = 0;
          }
 
       result = (include ? client->getResponse()

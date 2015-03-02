@@ -123,11 +123,15 @@ void UError::stackDump()
       if (pid == 0)
          {
          char buf[32];
+         int fd_err = open("/tmp/gbd.err", O_CREAT | O_WRONLY, 0666);
 
          (void) u__snprintf(buf, sizeof(buf), "--pid=%P", 0);
 
-         (void) dup2(fd,                                             STDOUT_FILENO);
-         (void) dup2(open("/tmp/gbd.err", O_CREAT | O_WRONLY, 0666), STDERR_FILENO);
+         (void) dup2(fd, STDOUT_FILENO);
+#     ifdef U_COVERITY_FALSE_POSITIVE
+         if (fd > 0)
+#     endif
+         (void) dup2(fd_err, STDERR_FILENO);
 
          (void) execlp("gdb", "gdb", "--nx", "--batch", "-ex", "thread apply all bt full", buf, name_buf, (char*)0); // thread apply all bt full 20
 

@@ -25,19 +25,19 @@ MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 if !CROSS_COMPILING
 AM_CPPFLAGS = @USP_FLAGS@
 
-SUFFIXES = .cpp .usp .lo .la
+#SUFFIXES = .cpp .usp .lo .la
 
-db.cpp: ./usp_translator$(EXEEXT)
+#db.cpp: ./usp_translator$(EXEEXT)
 
-json.cpp: ./usp_translator$(EXEEXT)
+#json.cpp: ./usp_translator$(EXEEXT)
 
-query.cpp: ./usp_translator$(EXEEXT)
+#query.cpp: ./usp_translator$(EXEEXT)
 
-update.cpp: ./usp_translator$(EXEEXT)
+#update.cpp: ./usp_translator$(EXEEXT)
 
-fortune.cpp: ./usp_translator$(EXEEXT)
+#fortune.cpp: ./usp_translator$(EXEEXT)
 
-plaintext.cpp: ./usp_translator$(EXEEXT)
+#plaintext.cpp: ./usp_translator$(EXEEXT)
 
 .usp.cpp: ./usp_translator$(EXEEXT)
 	@$(WINELOADER) ./usp_translator$(EXEEXT) $<
@@ -45,6 +45,8 @@ plaintext.cpp: ./usp_translator$(EXEEXT)
 .lo.la:
 	$(CXXLINK) @USP_LDFLAGS@ -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la) @USP_LIBS@ @ULIB_LIBS@
 
-all: usp_translator db.la fortune.la json.la plaintext.la query.la update.la
+#all: usp_translator db.la fortune.la json.la plaintext.la query.la update.la
+
+all: usp_translator
 endif
 ## ----------------------------------------------------------------------------------------------------

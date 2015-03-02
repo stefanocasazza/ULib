@@ -311,11 +311,10 @@ usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
 moduledir = $(libexecdir)/ulib/usp
 @CROSS_COMPILING_FALSE@AM_CPPFLAGS = @USP_FLAGS@
-@CROSS_COMPILING_FALSE@SUFFIXES = .cpp .usp .lo .la
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .cpp .usp .lo .la .o .obj
+.SUFFIXES: .cpp .la .lo .o .obj .usp
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -658,17 +657,19 @@ uninstall-am: uninstall-binPROGRAMS
 clean-local:
 	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe trace.usp_translator* gmon.out usp_compile.sh
 
-@CROSS_COMPILING_FALSE@db.cpp: ./usp_translator$(EXEEXT)
+#SUFFIXES = .cpp .usp .lo .la
 
-@CROSS_COMPILING_FALSE@json.cpp: ./usp_translator$(EXEEXT)
+#db.cpp: ./usp_translator$(EXEEXT)
 
-@CROSS_COMPILING_FALSE@query.cpp: ./usp_translator$(EXEEXT)
+#json.cpp: ./usp_translator$(EXEEXT)
 
-@CROSS_COMPILING_FALSE@update.cpp: ./usp_translator$(EXEEXT)
+#query.cpp: ./usp_translator$(EXEEXT)
 
-@CROSS_COMPILING_FALSE@fortune.cpp: ./usp_translator$(EXEEXT)
+#update.cpp: ./usp_translator$(EXEEXT)
 
-@CROSS_COMPILING_FALSE@plaintext.cpp: ./usp_translator$(EXEEXT)
+#fortune.cpp: ./usp_translator$(EXEEXT)
+
+#plaintext.cpp: ./usp_translator$(EXEEXT)
 
 @CROSS_COMPILING_FALSE@.usp.cpp: ./usp_translator$(EXEEXT)
 @CROSS_COMPILING_FALSE@	@$(WINELOADER) ./usp_translator$(EXEEXT) $<
@@ -676,7 +677,9 @@ clean-local:
 @CROSS_COMPILING_FALSE@.lo.la:
 @CROSS_COMPILING_FALSE@	$(CXXLINK) @USP_LDFLAGS@ -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la) @USP_LIBS@ @ULIB_LIBS@
 
-@CROSS_COMPILING_FALSE@all: usp_translator db.la fortune.la json.la plaintext.la query.la update.la
+#all: usp_translator db.la fortune.la json.la plaintext.la query.la update.la
+
+@CROSS_COMPILING_FALSE@all: usp_translator
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

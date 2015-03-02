@@ -46,6 +46,7 @@ static void usp_fork_update()
    pstmt2->use( pworld_update->randomNumber, pworld_update->id);
 }
 
+#ifdef DEBUG
 static void usp_end_update()
 {
    U_TRACE(5, "::usp_end_update()")
@@ -59,6 +60,7 @@ static void usp_end_update()
    delete pvalue;
 #endif
 }
+#endif
 -->
 <!--#args
 queries;

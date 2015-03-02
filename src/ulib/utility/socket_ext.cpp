@@ -112,7 +112,7 @@ read:
 #     ifdef USE_LIBSSL
        bssl == false  &&
 #     endif
-       UNotifier::waitForRead(sk->iSockDesc, timeoutMS) != 1)
+       (errno = 0, UNotifier::waitForRead(sk->iSockDesc, timeoutMS) != 1))
       {
       goto error;
       }
@@ -300,7 +300,7 @@ int USocketExt::write(USocket* sk, const char* ptr, uint32_t count, int timeoutM
 write:
    if (blocking       &&
        timeoutMS != 0 &&
-       UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1)
+       (errno = 0, UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1))
       {
       goto error;
       }
@@ -364,7 +364,7 @@ int USocketExt::sendfile(USocket* sk, int in_fd, off_t* poffset, uint32_t count,
 loop:
    if (blocking       &&
        timeoutMS != 0 &&
-       UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1)
+       (errno = 0, UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1))
       {
       goto error;
       }
@@ -440,7 +440,7 @@ int USocketExt::_writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t cou
 loop:
    if (blocking       &&
        timeoutMS != 0 &&
-       UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1)
+       (errno = 0, UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) != 1))
       {
       goto error;
       }
