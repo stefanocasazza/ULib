@@ -588,7 +588,7 @@ uninstall-am:
 
 test: all-am
 	$(MAKE) $(AM_MAKEFLAGS) $(check_PROGRAMS)
-	../make_test.sh client_server.test test_manager.test IR.test web_server.test web_socket.test tsa_http.test tsa_https.test csp_rpc.test rsign_rpc.test tsa_rpc.test uclient.test csp.test tsa_ssoap.test rsign.test lcsp_rpc.test lcsp.test web_server_ssl.test PEC_report_rejected.test PEC_report_messaggi.test PEC_report_virus.test PEC_report_anomalie.test PEC_check_namefile.test doc_parse.test doc_classifier.test xml2txt.test
+	../make_test.sh client_server.test test_manager.test IR.test web_server.test web_socket.test tsa_http.test tsa_https.test rsign_rpc.test tsa_rpc.test uclient.test tsa_ssoap.test rsign.test web_server_ssl.test PEC_report_rejected.test PEC_report_messaggi.test PEC_report_virus.test PEC_report_anomalie.test PEC_check_namefile.test doc_parse.test xml2txt.test
 
 clean-local:
 	-rm -rf out err core .libs *.bb* *.da *.gcov IR/db* TSA/gSOAP/tsa_client \

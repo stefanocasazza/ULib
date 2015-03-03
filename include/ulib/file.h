@@ -333,6 +333,7 @@ public:
       U_RETURN(false);
       }
 
+#ifndef _MSWINDOWS_
    bool lstat()
       {
       U_TRACE(1, "UFile::lstat()")
@@ -343,12 +344,11 @@ public:
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
-#  ifndef _MSWINDOWS_
       if (U_SYSCALL(lstat, "%S,%p", U_PATH_CONV(path_relativ), (struct stat*)this) == 0) U_RETURN(true);
-#  endif
 
       U_RETURN(false);
       }
+#endif
 
    void fstat()
       {

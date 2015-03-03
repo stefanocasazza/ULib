@@ -113,7 +113,9 @@ public:
 
       if (usp.empty()) U_ERROR("filename not valid");
 
+#  ifndef DEBUG
       bool bpreprocessing_failed = false;
+#  endif
 
       if (usp.find(U_CONSTANT_TO_PARAM("\n#ifdef DEBUG")) != U_NOT_FOUND)
          {
@@ -122,7 +124,9 @@ public:
          if (cfg.processData()) usp = UStringExt::substitute(cfg.getData(), U_CONSTANT_TO_PARAM("//#include"), U_CONSTANT_TO_PARAM("#include"));
          else
             {
+#        ifndef DEBUG
             bpreprocessing_failed = true;
+#        endif
 
             U_WARNING("preprocessing filename failed");
             }
