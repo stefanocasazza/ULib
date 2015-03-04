@@ -95,7 +95,7 @@ public:
       // REQ_TIMEOUT    timeout for request from client
       // TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel.
       // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-      //                (Value <= 0 will disable Keep-Alive) (default 1020)
+      //                (Value <= 0 will disable Keep-Alive)
       //
       // DH_FILE        DH param
       // CERT_FILE      certificate of server

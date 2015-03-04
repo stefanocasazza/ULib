@@ -79,6 +79,7 @@ public:
    static void ctor();
    static void dtor();
 
+   static int  handlerDataPending();
    static bool isValidRequest(const char* ptr) __pure;
    static bool scanfHeader(const char* ptr, uint32_t size);
    static bool isValidRequestExt(const char* ptr, uint32_t size) __pure;

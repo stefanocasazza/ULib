@@ -1600,6 +1600,22 @@ __pure bool UHTTP::isValidRequestExt(const char* ptr, uint32_t sz)
    U_RETURN(false);
 }
 
+int UHTTP::handlerDataPending()
+{
+   U_TRACE(0, "UHTTP::handlerDataPending()")
+
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+   if (U_http_version == '2')
+      {
+      // TODO
+
+      U_RETURN(-1);
+      }
+
+   return UClientImage_Base::handlerDataPending();
+}
+
 bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
 {
    U_TRACE(0, "UHTTP::scanfHeader(%.*S,%u)", size, ptr, size)

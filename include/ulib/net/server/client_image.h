@@ -311,10 +311,10 @@ public:
    static struct iovec iov_vec[4];
    static UClientImage_Base* pthis;
    static bPFpc callerIsValidRequest;
-   static bPFpcu callerIsValidRequestExt;
    static vPF callerHandlerEndRequest;
+   static bPFpcu callerIsValidRequestExt;
    static uint32_t rstart, size_request;
-   static iPF callerHandlerRead, callerHandlerRequest, callerHandlerReset;
+   static iPF callerHandlerRead, callerHandlerRequest, callerHandlerReset, callerHandlerDataPending;
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
@@ -391,6 +391,8 @@ protected:
 #endif
 
 private:
+   static int handlerDataPending() U_NO_EXPORT;
+
    static bool isValidRequest(   const char* ptr)              U_NO_EXPORT;
    static bool isValidRequestExt(const char* ptr, uint32_t sz) U_NO_EXPORT;
 

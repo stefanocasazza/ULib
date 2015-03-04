@@ -29,6 +29,7 @@ iPF                UClientImage_Base::callerHandlerRequest;
 iPF                UClientImage_Base::callerHandlerReset;
 bPF                UClientImage_Base::callerHandlerCache;
 vPF                UClientImage_Base::callerHandlerEndRequest;
+iPF                UClientImage_Base::callerHandlerDataPending;
 bool               UClientImage_Base::bIPv6;
 bool               UClientImage_Base::log_request_partial;
 char               UClientImage_Base::cbuffer[128];
@@ -257,6 +258,35 @@ void UClientImage_Base::saveRequestResponse()
 U_NO_EXPORT bool UClientImage_Base::isValidRequest(   const char* ptr)              { return true; }
 U_NO_EXPORT bool UClientImage_Base::isValidRequestExt(const char* ptr, uint32_t sz) { return sz; }
 
+U_NO_EXPORT int UClientImage_Base::handlerDataPending()
+{
+   U_TRACE(0, "UClientImage_Base::handlerDataPending()")
+
+   U_INTERNAL_ASSERT_POINTER(psocket)
+
+   if (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization))
+      {
+      // parent
+
+      U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+
+      U_RETURN(-1);
+      }
+
+   if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
+      {
+      if (UNotifier::waitForRead(psocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
+          (resetReadBuffer(), USocketExt::read(psocket, *rbuffer, size_request == 0 ? U_SINGLE_READ : size_request - rbuffer->size(), 0)) == false)
+         {
+         U_RETURN(-1);
+         }
+
+      U_RETURN(1);
+      }
+
+   U_RETURN(0);
+}
+
 void UClientImage_Base::init()
 {
    U_TRACE(0, "UClientImage_Base::init()")
@@ -286,8 +316,9 @@ void UClientImage_Base::init()
 
    chronometer->start();
 
-   callerIsValidRequest    = isValidRequest;
-   callerIsValidRequestExt = isValidRequestExt;
+   callerIsValidRequest     = isValidRequest;
+   callerIsValidRequestExt  = isValidRequestExt;
+   callerHandlerDataPending = handlerDataPending;
 
 #ifdef DEBUG
    UError::callerDataDump = saveRequestResponse;
@@ -410,12 +441,6 @@ void UClientImage_Base::handlerDelete()
 {
    U_TRACE(0, "UClientImage_Base::handlerDelete()")
 
-   U_DUMP("UEventFd::fd = %d socket->iSockDesc = %d "
-          "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-          "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
-          UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-          UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
-
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(UNotifier::num_connection <= UNotifier::min_connection))
       {
@@ -532,11 +557,9 @@ void UClientImage_Base::handlerError()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
-   U_DUMP("UEventFd::fd = %d socket->iSockDesc = %d "
-          "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-          "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
-          UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-          UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
+   pthis = this;
+
+   UNotifier::handlerDelete(UEventFd::fd, UEventFd::op_mask);
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(socket->iSockDesc == -1))
@@ -554,23 +577,12 @@ void UClientImage_Base::handlerError()
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 #endif
 
-    pthis   = this;
-   (psocket = socket)->iState = USocket::EPOLLERROR;
-
-   UNotifier::handlerDelete(UEventFd::fd, UEventFd::op_mask);
-
    UClientImage_Base::handlerDelete();
 }
 
 int UClientImage_Base::handlerTimeout()
 {
    U_TRACE(0, "UClientImage_Base::handlerTimeout()")
-
-   U_DUMP("UEventFd::fd = %d socket->iSockDesc = %d "
-          "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-          "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
-          UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-          UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(socket->iSockDesc == -1))
@@ -596,7 +608,7 @@ int UClientImage_Base::handlerTimeout()
 
    pthis = this; // NB: U_SRV_LOG_WITH_ADDR macro depend on UClientImage_Base::pthis...
 
-   socket->iState = USocket::TIMEOUT | USocket::EPOLLERROR;
+   socket->iState = USocket::TIMEOUT;
 
    U_RETURN(U_NOTIFIER_DELETE);
 }
@@ -950,6 +962,10 @@ int UClientImage_Base::handlerRead() // Connection-wide hooks
 {
    U_TRACE(0, "UClientImage_Base::handlerRead()")
 
+   int result;
+   uint32_t sz;
+   const char* ptr;
+
    u_clientimage_flag.u = 0;
 
 #ifdef U_CLASSIC_SUPPORT
@@ -989,7 +1005,7 @@ loop:
    if (LIKELY(U_ClientImage_pipeline == false)) *request = *rbuffer;
    else
       {
-      uint32_t sz = rbuffer->size();
+      sz = rbuffer->size();
 
       U_ASSERT_MINOR(rstart, sz)
       U_INTERNAL_ASSERT_MAJOR(rstart, 0)
@@ -1017,42 +1033,26 @@ loop:
    if (U_ClientImage_data_missing)
       {
 dmiss:
+      result = callerHandlerDataPending();
+
+      if (result)
+         {
+         if (result ==  1) goto loop;
+         if (result == -1)
+            {
+            if ((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0) U_RETURN(U_NOTIFIER_DELETE);
+
+            goto death;
+            }
+         }
+
       U_ClientImage_data_missing = false;
 
       U_INTERNAL_ASSERT_EQUALS(data_pending, 0)
 
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+      data_pending = U_NEW(UString((void*)U_STRING_TO_PARAM(*request)));
 
-      if (U_http_version == '2')
-         {
-         // TODO
-         }
-      else
-         {
-         if (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization))
-            {
-            // parent
-
-            U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
-
-            U_RETURN(U_NOTIFIER_DELETE);
-            }
-
-         if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
-            {
-            if (UNotifier::waitForRead(socket->iSockDesc, U_TIMEOUT_MS) != 1 ||
-                (resetReadBuffer(), USocketExt::read(socket, *rbuffer, size_request == 0 ? U_SINGLE_READ : size_request - rbuffer->size(), 0)) == false)
-               {
-               goto death;
-               }
-
-            goto loop;
-            }
-
-         data_pending = U_NEW(UString((void*)U_STRING_TO_PARAM(*request)));
-
-         U_INTERNAL_DUMP("data_pending(%u) = %.*S", data_pending->size(), U_STRING_TO_TRACE(*data_pending))
-         }
+      U_INTERNAL_DUMP("data_pending(%u) = %.*S", data_pending->size(), U_STRING_TO_TRACE(*data_pending))
 
       U_INTERNAL_ASSERT(socket->isOpen())
       U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
@@ -1065,8 +1065,8 @@ dmiss:
 
    if (U_ClientImage_request_is_cached)
       {
-      uint32_t sz     = request->size();
-      const char* ptr = request->data();
+      sz  = request->size();
+      ptr = request->data();
 
       U_INTERNAL_DUMP("cbuffer(%u) = %.*S", u_http_info.startHeader, u_http_info.startHeader, cbuffer)
       U_INTERNAL_DUMP("request(%u) = %.*S", sz, sz, ptr)
@@ -1139,7 +1139,7 @@ dmiss:
 #  ifndef U_CACHE_REQUEST_DISABLE
 next:
 #  endif
-      uint32_t sz = rbuffer->size();
+      sz = rbuffer->size();
 
       if (LIKELY(U_ClientImage_pipeline == false))
          {
@@ -1165,7 +1165,7 @@ next:
                {
                U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 
-               const char* ptr = rbuffer->data();
+                           ptr = rbuffer->data();
                const char* end = ptr + sz;
 
                while (true)
@@ -1349,18 +1349,6 @@ end:  if (U_ClientImage_parallelization == 1) goto death; // 1 => child of paral
 
    if (U_ClientImage_parallelization == 1)
       {
-#  ifdef DEBUG
-      if (count) // NB: we must not have pending write...
-         {
-         U_ERROR("handlerRead(): "
-                 "UEventFd::fd = %d socket->iSockDesc = %d "
-                 "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                 "count = %u sfd = %d UEventFd::op_mask = %B",
-                 UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                 count, sfd, UEventFd::op_mask);
-         }
-#  endif
-
       U_INTERNAL_ASSERT_DIFFERS(socket->iSockDesc, -1)
 
       if (UNotifier::waitForRead(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto start;

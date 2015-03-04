@@ -202,7 +202,7 @@ bool USocket::checkErrno()
       U_RETURN(true);
       }
 
-   iState = (errno == ECONNRESET ? EPOLLERROR : BROKEN);
+   if (errno != ECONNRESET) iState = BROKEN;
 
    closesocket();
 

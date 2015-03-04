@@ -129,7 +129,11 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
             {
             if (U_ClientImage_parallelization != 1) // 1 => child of parallelization
                {
-               if (sk == UClientImage_Base::psocket) sk->iState = (errno == ECONNRESET ? USocket::EPOLLERROR : USocket::BROKEN);
+               if (errno != ECONNRESET &&
+                   sk == UClientImage_Base::psocket)
+                  {
+                  sk->iState = USocket::BROKEN;
+                  }
 
                sk->close();
                }
@@ -157,16 +161,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
             {
             U_INTERNAL_DUMP("byte_read = %d errno = %d", byte_read, errno)
 
-            if (U_ClientImage_parallelization != 1) // 1 => child of parallelization
-               {
-               if (errno == ENOTCONN &&
-                   sk == UClientImage_Base::psocket)
-                  {
-                  sk->iState = USocket::EPOLLERROR;
-                  }
-
-               sk->close();
-               }
+            if (U_ClientImage_parallelization != 1) sk->close(); // 1 => child of parallelization
 
             U_RETURN(false);
             }
