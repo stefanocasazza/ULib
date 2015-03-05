@@ -67,7 +67,7 @@ err:  loadDriverFail(backend, len);
       }
 }
 
-UOrmSession::UOrmSession(const char* dbname,  uint32_t len)
+UOrmSession::UOrmSession(const char* dbname, uint32_t len)
 {
    U_TRACE_REGISTER_OBJECT(0, UOrmSession, "%.*S,%u", len, dbname, len)
 
@@ -91,6 +91,19 @@ UOrmSession::UOrmSession(const char* dbname,  uint32_t len)
       loadDriver(UOrmDriver::env_driver, UOrmDriver::env_driver_len, option);
       }
 #endif
+}
+
+__pure bool UOrmSession::isReady() const
+{
+   U_TRACE(0, "UOrmSession::isReady()")
+
+   if (pdrv != 0 &&
+       UOrmDriver::env_driver_len)
+      {
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 __pure UOrmSession::~UOrmSession()
@@ -176,10 +189,10 @@ UOrmStatement::UOrmStatement(UOrmSession& session, const char* stmt, uint32_t le
    U_TRACE_REGISTER_OBJECT(0, UOrmStatement, "%p,%.*S,%u", &session, len, stmt, len)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   if (session.pdrv == 0) UOrmSession::loadDriverFail(UOrmDriver::env_driver, UOrmDriver::env_driver_len);
+   pdrv = session.pdrv;
 
-   pdrv  = session.pdrv;
-   pstmt = pdrv->handlerStatementCreation(stmt, len);
+        if (pdrv) pstmt = pdrv->handlerStatementCreation(stmt, len);
+   else if (UOrmDriver::env_driver_len) UOrmSession::loadDriverFail(UOrmDriver::env_driver, UOrmDriver::env_driver_len);
 #else
    pdrv  = 0;
    pstmt = 0;

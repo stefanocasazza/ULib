@@ -50,6 +50,7 @@ public:
 
    // will be typecast into conn-specific type
 
+   bool  isReady() const __pure;
    void* getConnection() __pure;
    bool  connect(const UString& option);
 

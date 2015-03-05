@@ -343,6 +343,24 @@ protected:
 
    void prepareForSendfile();
 
+   static uint32_t getCountToRead()
+      {
+      U_TRACE(0, "UClientImage_Base::getCountToRead()")
+
+      if (size_request == 0) U_RETURN(U_SINGLE_READ);
+
+      uint32_t sz = rbuffer->size();
+
+      if (size_request > sz)
+         {
+         sz = size_request - sz;
+
+         U_RETURN(sz);
+         }
+
+      U_RETURN(U_SINGLE_READ);
+      }
+
    static void setSendfile(int _sfd, uint32_t _start, uint32_t _count)
       {
       U_TRACE(0, "UClientImage_Base::setSendfile(%d,%u,%u)", _sfd, _start, _count)

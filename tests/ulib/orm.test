@@ -6,13 +6,14 @@
 
 start_msg orm
 
-#UTRACE="0 50M 1"
+#UTRACE="0 50M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
-#ORM_DRIVER="sqlite"
-#ORM_OPTION="dbname=../db/hello_world"
+ORM_DRIVER="sqlite"
+ORM_OPTION="dbname=../db/hello_world"
+export ORM_DRIVER ORM_OPTION
 
  SQLITE="sqlite \"sample\""
 #PGSQL="pgsql \"host='localhost' user='benchmarkdbuser' password='benchmarkdbpass' dbname='sample' client_encoding='UTF8' sslmode='allow'\""

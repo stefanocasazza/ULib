@@ -276,7 +276,7 @@ U_NO_EXPORT int UClientImage_Base::handlerDataPending()
    if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
       {
       if (UNotifier::waitForRead(psocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
-          (resetReadBuffer(), USocketExt::read(psocket, *rbuffer, size_request == 0 ? U_SINGLE_READ : size_request - rbuffer->size(), 0)) == false)
+          (resetReadBuffer(), USocketExt::read(psocket, *rbuffer, getCountToRead(), 0)) == false)
          {
          U_RETURN(-1);
          }

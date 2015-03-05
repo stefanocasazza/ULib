@@ -155,6 +155,8 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
    U_TRACE(0, "UOrmDriver::loadDriver(%.*S,%.*S)", U_STRING_TO_TRACE(dir), U_STRING_TO_TRACE(driver_list))
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
+   if (str_host) U_RETURN(true);
+
    str_allocate();
 
    if (dir) setDriverDirectory(dir);

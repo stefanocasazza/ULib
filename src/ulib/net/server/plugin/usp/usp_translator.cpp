@@ -111,7 +111,7 @@ public:
 
       UString usp = UFile::contentOf(filename);
 
-      if (usp.empty()) U_ERROR("filename not valid");
+      if (usp.empty()) U_ERROR(" %.*S not valid", U_STRING_TO_TRACE(filename));
 
 #  ifndef DEBUG
       bool bpreprocessing_failed = false;
@@ -128,7 +128,7 @@ public:
             bpreprocessing_failed = true;
 #        endif
 
-            U_WARNING("preprocessing filename failed");
+            U_WARNING("preprocessing %.*S failed", U_STRING_TO_TRACE(filename));
             }
          }
       

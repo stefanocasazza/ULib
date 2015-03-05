@@ -32,18 +32,21 @@ static void usp_fork_update()
 
    psql_update = U_NEW(UOrmSession(U_CONSTANT_TO_PARAM("hello_world")));
 
-   pstmt1 = U_NEW(UOrmStatement(*psql_update, U_CONSTANT_TO_PARAM("SELECT randomNumber FROM World WHERE id = ?")));
-   pstmt2 = U_NEW(UOrmStatement(*psql_update, U_CONSTANT_TO_PARAM("UPDATE World SET randomNumber = ? WHERE id = ?")));
-
-   if (pstmt1 == 0 ||
-       pstmt2 == 0)
+   if (psql_update->isReady())
       {
-      U_ERROR("usp_fork_update(): we cound't connect to db");
-      }
+      pstmt1 = U_NEW(UOrmStatement(*psql_update, U_CONSTANT_TO_PARAM("SELECT randomNumber FROM World WHERE id = ?")));
+      pstmt2 = U_NEW(UOrmStatement(*psql_update, U_CONSTANT_TO_PARAM("UPDATE World SET randomNumber = ? WHERE id = ?")));
 
-   pstmt1->use( pworld_update->id);
-   pstmt1->into(pworld_update->randomNumber);
-   pstmt2->use( pworld_update->randomNumber, pworld_update->id);
+      if (pstmt1 == 0 ||
+          pstmt2 == 0)
+         {
+         U_ERROR("usp_fork_update(): we cound't connect to db");
+         }
+
+      pstmt1->use( pworld_update->id);
+      pstmt1->into(pworld_update->randomNumber);
+      pstmt2->use( pworld_update->randomNumber, pworld_update->id);
+      }
 }
 
 #ifdef DEBUG
@@ -51,8 +54,9 @@ static void usp_end_update()
 {
    U_TRACE(5, "::usp_end_update()")
 
-   delete pstmt1;
-   delete pstmt2;
+   if (pstmt1) delete pstmt1;
+   if (pstmt2) delete pstmt2;
+
    delete psql_update;
    delete pvworld_update;
    delete pworld_update;
