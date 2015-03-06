@@ -1,30 +1,19 @@
 <!--#
-TechEmpower Web Framework Benchmarks
 Test type 5: Database updates
+TechEmpower Web Framework Benchmarks
 -->
 <!--#declaration
 #include "world.h"
 
-#ifndef AS_cpoll_cppsp_DO
-static UValue* pvalue;
-#endif
+static World*           pworld_update;
 static UOrmSession*     psql_update;
 static UOrmStatement*   pstmt1;
 static UOrmStatement*   pstmt2;
-static World*           pworld_update;
 static UVector<World*>* pvworld_update;
 
-static void usp_init_update()
-{
-   U_TRACE(5, "::usp_init_update()")
-
-   pworld_update  = U_NEW(World);
-   pvworld_update = U_NEW(UVector<World*>(500));
-
 #ifndef AS_cpoll_cppsp_DO
-   pvalue = U_NEW(UValue(ARRAY_VALUE));
+static UValue* pvalue;
 #endif
-}
 
 static void usp_fork_update()
 {
@@ -43,9 +32,17 @@ static void usp_fork_update()
          U_ERROR("usp_fork_update(): we cound't connect to db");
          }
 
+      pworld_update = U_NEW(World);
+
       pstmt1->use( pworld_update->id);
       pstmt1->into(pworld_update->randomNumber);
       pstmt2->use( pworld_update->randomNumber, pworld_update->id);
+
+      pvworld_update = U_NEW(UVector<World*>(500));
+
+#  ifndef AS_cpoll_cppsp_DO
+      pvalue = U_NEW(UValue(ARRAY_VALUE));
+#  endif
       }
 }
 
@@ -54,15 +51,20 @@ static void usp_end_update()
 {
    U_TRACE(5, "::usp_end_update()")
 
-   if (pstmt1) delete pstmt1;
-   if (pstmt2) delete pstmt2;
+   if (pstmt1 &&
+       pstmt2)
+      {
+      delete pstmt1;
+      delete pstmt2;
 
-   delete psql_update;
-   delete pvworld_update;
-   delete pworld_update;
-#ifndef AS_cpoll_cppsp_DO
-   delete pvalue;
-#endif
+      delete    psql_update;
+      delete pvworld_update;
+      delete  pworld_update;
+
+#  ifndef AS_cpoll_cppsp_DO
+      delete pvalue;
+#  endif
+      }
 }
 #endif
 -->
@@ -87,8 +89,6 @@ while (true)
    pworld_update->id = u_get_num_random(10000);
 
    pstmt1->execute();
-
-   U_INTERNAL_DUMP("pworld_update->randomNumber = %u", pworld_update->randomNumber)
 
    pworld_update->randomNumber = u_get_num_random(10000);
 

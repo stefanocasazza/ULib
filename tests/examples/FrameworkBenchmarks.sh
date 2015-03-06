@@ -20,14 +20,14 @@ rm -f /tmp/*.memusage.* \
 
 unset ORM_DRIVER ORM_OPTION
 
-#ORM_DRIVER="sqlite"
-#ORM_OPTION="host=10.30.1.131 dbname=../db/hello_world"
+ ORM_DRIVER="sqlite"
+ ORM_OPTION="host=10.30.1.131 dbname=../db/hello_world"
 #ORM_DRIVER="mysql"
 #ORM_OPTION="host=10.30.1.131 user=benchmarkdbuser password=benchmarkdbpass character-set=utf8 dbname=hello_world"
 #ORM_DRIVER="pgsql"
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass dbname=hello_world"
 
-UMEMPOOL="152,85,0,37,8330,105,-17,-22,40"
+UMEMPOOL="176,100,0,37,1110,105,-17,-22,40"
  export ORM_DRIVER ORM_OPTION UMEMPOOL
 
 DIR_CMD="../../examples/userver"

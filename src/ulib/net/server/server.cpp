@@ -1477,7 +1477,7 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
 #ifdef ENABLE_THREAD
-   bool bpthread_time = (preforked_num_kids >= 8); // intuitive heuristic...
+   bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
 #else
    bool bpthread_time = false; 
 #endif

@@ -32,15 +32,14 @@ The current version offers the following features :
    * Support for (apache-like) log [NCSA extended/combined format](http://httpd.apache.org/docs/2.0/mod/mod_log_config.html)
    * Support for [JSONRequest](http://json.org/JSONRequest.html).
    * Accept HTTP uploads up to 4 GB without increasing memory usage.
-   * Support for upload progress via USP (ULib Servlet Page).
    * General [CGI](http://it.wikipedia.org/wiki/Common_Gateway_Interface) support (run any CGI script) with automatic output compression (using gzip method).
    * CGI support for shell script processes (with automatic management of form and cookie).
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
-   * Support for minify HTML CGI output with wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
-   * Support for running JavaScript code with wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
+   * Support for minify HTML CGI output by wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
+   * Support for running JavaScript code by wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
    * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video managed transparently.
    * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
-   * Preforking mode to improve concurrency.
+   * Preforking mode to improve concurrency with dedicated process for long-time request.
    * Support for Windows (without preforking).
    * Customizable builds (you can remove unneeded functionality).
    * Requests cut in phases for modular architecture (apache-like).
@@ -67,6 +66,8 @@ The current version offers the following features :
        * selective uri support (DOS regex) for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
    * Immune to [Slow Read DoS attack](http://code.google.com/p/slowhttptest/)
    * [High SSL server quality score](https://www.ssllabs.com/ssltest/analyze.html?d=wifi-aaa.comune.fi.it)
+
+It is the main software component of [city of Florence wireless network](http://wifi-aaa.comune.fi.it/login?mac=00%3A00%3A00%3A00%3A00%3A00&ip=172.22.11.124&redirect=http%3A//pasta.dianxinos.com/api/data&gateway=159.213.248.230%3A5280&timeout=0&token=1810300063&ap=05@159.213.248.230)
 
 We're hoping to get included in [TechEmpower's](http://techempower.com/) [next round of benchmarks](http://www.techempower.com/benchmarks/). A pull request has been already issued.
 
