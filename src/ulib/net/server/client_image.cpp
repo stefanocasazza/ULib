@@ -933,7 +933,7 @@ bool UClientImage_Base::genericRead()
 #  ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
       U_MESSAGE("UClientImage_Base::genericRead(): time_between_request(%ld) < time_run(%ld)", time_between_request, time_run);
 #  else
-      if (UServer_Base::startParallelization(UNotifier::max_connection-(UNotifier::max_connection/10)))
+      if (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization_queue))
          {
          // parent
 

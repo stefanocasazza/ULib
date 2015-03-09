@@ -1606,14 +1606,11 @@ int UHTTP::handlerDataPending()
 
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
-   if (U_http_version == '2')
-      {
-      // TODO
+   if (U_http_version != '2') return UClientImage_Base::handlerDataPending();
 
-      U_RETURN(-1);
-      }
+   // TODO
 
-   return UClientImage_Base::handlerDataPending();
+   U_RETURN(-1);
 }
 
 bool UHTTP::scanfHeader(const char* ptr, uint32_t size)

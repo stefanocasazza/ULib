@@ -424,7 +424,7 @@ public:
 
    // PARALLELIZATION
 
-   static uint32_t num_client_for_parallelization;
+   static uint32_t num_client_for_parallelization, num_client_for_parallelization_queue;
 
    static bool isParallelizationChild()
       {

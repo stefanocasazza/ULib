@@ -106,6 +106,7 @@ uint32_t      UServer_Base::client_address_len;
 uint32_t      UServer_Base::wakeup_for_nothing;
 uint32_t      UServer_Base::document_root_size;
 uint32_t      UServer_Base::num_client_for_parallelization;
+uint32_t      UServer_Base::num_client_for_parallelization_queue;
 sigset_t      UServer_Base::mask;
 UString*      UServer_Base::host;
 UString*      UServer_Base::server;
@@ -600,7 +601,7 @@ void UServer_Base::loadConfigParam()
    USocket::iBackLog              = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
    set_tcp_keep_alive             = cfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
    set_realtime_priority          = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), true);
-   UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
+   UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"), 1023);
    u_printf_string_max_length     = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
    num_client_for_parallelization = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_FOR_PARALLELIZATION"));
 
@@ -1425,12 +1426,7 @@ void UServer_Base::init()
       }
 #endif
 
-   if (preforked_num_kids > 1)
-      {
-      monitoring_process = true;
-
-      if (num_client_for_parallelization == 0) num_client_for_parallelization = preforked_num_kids;
-      }
+   if (preforked_num_kids > 1) monitoring_process = true;
 
    U_INTERNAL_ASSERT_EQUALS(proc, 0)
 
@@ -1587,7 +1583,12 @@ void UServer_Base::init()
 
    UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog / 2) + (UNotifier::num_connection = UNotifier::min_connection);
 
-   U_INTERNAL_DUMP("UNotifier::max_connection = %u", UNotifier::max_connection)
+   num_client_for_parallelization_queue = UNotifier::max_connection - (UNotifier::max_connection / 10);
+
+   if (num_client_for_parallelization == 0) num_client_for_parallelization = UNotifier::max_connection / 2;
+
+   U_INTERNAL_DUMP("UNotifier::max_connection = %u num_client_for_parallelization = %u num_client_for_parallelization_queue = %u",
+                    UNotifier::max_connection,     num_client_for_parallelization,     num_client_for_parallelization_queue)
 
    pthis->preallocate();
 
