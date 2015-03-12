@@ -490,7 +490,7 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
    char* _ptr;
    bool _abort = false;
 
-   if (*plength >= rlimit_memalloc) // NB: to save some swap pressure...
+   if (*plength >= rlimit_memalloc) // NB: we try to save some swap pressure...
       {
 #if defined(__linux__) && !defined(U_SERVER_CAPTIVE_PORTAL)
 try_from_file_system:
@@ -499,25 +499,20 @@ try_from_file_system:
       char _template[32];
 
 #  ifdef DEBUG
-      U_WARNING("we are going to allocate from file system %u bytes (%u KB) (pid %P)", *plength, *plength / 1024);
+      U_WARNING("we are going to allocate from file system (%u KB - %u bytes) (pid %P)", *plength / 1024, *plength);
 #  endif
 
       // By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp.
-      // This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem. 
+      // This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem 
 
       (void) strcpy(_template, "/var/tmp/mapXXXXXX");
 
-      if (tmp.mkTemp(_template) &&
-          tmp.fallocate(*plength))
-         {
-         _ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, tmp.st_size, prot, MAP_PRIVATE | MAP_NORESERVE, tmp.fd, 0);
-         }
-      else
-         {
-         _ptr = (char*)MAP_FAILED;
-         }
+      _ptr = (tmp.mkTemp(_template)   == false ||
+              tmp.fallocate(*plength) == false
+                  ? (char*)MAP_FAILED
+                  : (char*)U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, tmp.st_size, prot, MAP_PRIVATE | MAP_NORESERVE, tmp.fd, 0));
 
-      tmp.close();
+      if (tmp.isOpen()) tmp.close();
 
       if (_ptr != (char*)MAP_FAILED) return _ptr;
 
@@ -571,7 +566,7 @@ try_from_file_system:
    if (*plength > nfree)
       {
 #  ifdef DEBUG
-      U_WARNING("we are going to allocate %u bytes (%u KB) (pid %P) - nfree = %u", *plength, *plength / 1024, nfree);
+      U_WARNING("we are going to allocate (%u KB - %u bytes) (pid %P) - nfree = %u", *plength / 1024, *plength, nfree);
 #  endif
 
       _ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, U_MAP_ANON, -1, 0);

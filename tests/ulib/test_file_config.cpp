@@ -166,7 +166,7 @@ U_EXPORT main (int argc, char* argv[])
 
    UString tmp = U_STRING_FROM_CONSTANT("{ \"key1\" : \"riga 1\", \"key2\" : \"riga 2\", \"key3\" : \"riga 3\", \"key4\" : \"riga 4\" }");
 
-   bool result = JSON_parse( tmp, x );
+   bool result = JSON_parse(tmp, x);
 
    U_INTERNAL_ASSERT( result )
 
@@ -190,7 +190,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_INTERNAL_ASSERT( result )
 
-   UValue json;
+   UValue json(OBJECT_VALUE);
    tmp = JSON_stringify(json, x);
 
    U_ASSERT( tmp.size() == U_CONSTANT_SIZE("{\"key4\":\"riga 4\",\"key3\":\"riga 3\",\"key1\":\"riga 1\",\"key2\":\"riga 2\"}") )

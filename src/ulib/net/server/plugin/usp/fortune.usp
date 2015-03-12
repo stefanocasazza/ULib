@@ -38,14 +38,14 @@ static void usp_end_fortune()
    U_TRACE(5, "::usp_end_fortune()")
 
    if (pstmt_fortune)
-   {
-   delete pstmt_fortune;
+      {
+      delete pstmt_fortune;
 
-   delete psql_fortune;
-   delete pvfortune;
-   delete pfortune;
-   delete pmessage;
-   }
+      delete psql_fortune;
+      delete pvfortune;
+      delete pfortune;
+      delete pmessage;
+      }
 }
 #endif
 -->

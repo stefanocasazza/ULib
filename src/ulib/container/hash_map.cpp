@@ -14,29 +14,9 @@
 #include <ulib/container/vector.h>
 #include <ulib/container/hash_map.h>
 
-typedef struct uhashmapnode {
-#ifdef DEBUG
-   const void* _this;
-#endif
-   void* elem;
-   ustringrep* key;
-   struct uhashmapnode* next;
-   uint32_t hash;
-} uhashmapnode;
-
-static uhashmapnode uhashmapnode_storage;
-
-union uuhashmapnode {
-   uhashmapnode* p1;
-   UHashMapNode* p2;
-};
-
-static uuhashmapnode uuhashmapnodetmp = { &uhashmapnode_storage };
-
-bool          UHashMap<void*>::istream_loading;
-uPFpcu        UHashMap<void*>::gperf;
-UStringRep*   UHashMap<void*>::pkey;
-UHashMapNode* UHashMap<void*>::tmpnode = uuhashmapnodetmp.p2;
+bool        UHashMap<void*>::istream_loading;
+uPFpcu      UHashMap<void*>::gperf;
+UStringRep* UHashMap<void*>::pkey;
 
 UHashMap<void*>::UHashMap(uint32_t n, bool _ignore_case)
 {
@@ -47,31 +27,6 @@ UHashMap<void*>::UHashMap(uint32_t n, bool _ignore_case)
    ignore_case = _ignore_case;
 
    _allocate(n);
-}
-
-UHashMap<void*>::UHashMap(const UString& _key, const void* _elem)
-{
-   U_TRACE_REGISTER_OBJECT(0, UHashMap<void*>, "%.*S,%p", U_STRING_TO_TRACE(_key), _elem)
-
-   // NB: special case for json object
-
-                  tmpnode->elem = _elem;
-   ((UStringRep*)(tmpnode->key  = _key.rep))->hold();
-            hash =
-   tmpnode->hash = _key.hash((ignore_case = false));
-
-   node  =  tmpnode;
-   table = &tmpnode;
-
-   _space    = index   = 0;
-   _capacity = _length = 1;
-
-   U_ASSERT_EQUALS(at(_key.rep), _elem)
-
-   U_INTERNAL_ASSERT_EQUALS(_length, 1)
-   U_INTERNAL_ASSERT_EQUALS(_capacity, 1)
-   U_INTERNAL_ASSERT_EQUALS(node, tmpnode)
-   U_INTERNAL_ASSERT_EQUALS(table, &tmpnode)
 }
 
 void UHashMap<void*>::allocate(uint32_t n)

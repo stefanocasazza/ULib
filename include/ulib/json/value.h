@@ -34,7 +34,7 @@
  * The type of the held value is represented by a #ValueType and can be obtained using type().
  * Values of an #OBJECT_VALUE or #ARRAY_VALUE can be accessed using operator[]() methods.
  * The sequence of an #ARRAY_VALUE will be automatically resize and initialized with #NULL_VALUE.
- * It is possible to iterate over the list of a #OBJECT_VALUE values using the getMemberNames() method.
+ * It is possible to iterate over the list of a #OBJECT_VALUE values using the getMemberNames() method
  */
 
 class UValue;
@@ -64,7 +64,7 @@ public:
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-   const char* dump(bool reset) const;
+   const char* dump(bool _reset) const;
 #endif
 
 protected:
@@ -153,6 +153,8 @@ public:
 
       type_       = NULL_VALUE;
       value.real_ = 0.0;
+
+      reset();
       }
 
    UValue(bool value_)
@@ -161,6 +163,8 @@ public:
 
       type_       = BOOLEAN_VALUE;
       value.bool_ = value_;
+
+      reset();
       }
 
    UValue(int value_)
@@ -169,6 +173,8 @@ public:
 
       type_      = INT_VALUE;
       value.int_ = value_;
+
+      reset();
       }
 
    UValue(unsigned int value_)
@@ -177,6 +183,8 @@ public:
 
       type_       = UINT_VALUE;
       value.uint_ = value_;
+
+      reset();
       }
 
    UValue(double value_)
@@ -185,6 +193,8 @@ public:
 
       type_       = REAL_VALUE;
       value.real_ = value_;
+
+      reset();
       }
 
    UValue(UStringRep* value_)
@@ -193,6 +203,8 @@ public:
 
       type_      = STRING_VALUE;
       value.ptr_ = U_NEW(UString(value_));
+
+      reset();
       }
 
    UValue(const UString& value_)
@@ -201,41 +213,25 @@ public:
 
       type_      = STRING_VALUE;
       value.ptr_ = U_NEW(UString(value_));
+
+      reset();
       }
 
     UValue(ValueType type);
     UValue(const UString& key, const UString& value_);
-   ~UValue();
 
-   // ASSEGNAZIONI
-
-   void set(UValue& value_)
+   ~UValue()
       {
-      type_      = value_.type_;
-                   value_.type_ = NULL_VALUE;
-      value.ptr_ = value_.value.ptr_;
-                   value_.value.ptr_ = 0;
-      }
+      U_TRACE_UNREGISTER_OBJECT(0, UValue)
 
-   UValue(const UValue& value_)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%p", &value_)
+      U_INTERNAL_DUMP("type_ = %u", type_)
 
-      set(*(UValue*)&value_);
-      }
-
-   UValue& operator=(UValue& value_)
-      {
-      U_TRACE(0, "UValue::operator=(%p)", &value_)
-
-      U_MEMORY_TEST_COPY(value_)
-
-      set(value_);
-
-      return *this;
+      clear(); 
       }
 
    // SERVICES
+
+   void clear();
 
    bool isNull()
       {
@@ -243,9 +239,9 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ == NULL_VALUE);
+      if (type_ == NULL_VALUE) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isBool()
@@ -254,9 +250,9 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ == BOOLEAN_VALUE);
+      if (type_ == BOOLEAN_VALUE) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isInt()
@@ -265,9 +261,9 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ == INT_VALUE);
+      if (type_ == INT_VALUE) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isUInt()
@@ -276,9 +272,9 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ == UINT_VALUE);
+      if (type_ == UINT_VALUE) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isIntegral()
@@ -287,11 +283,14 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ ==     INT_VALUE ||
-                     type_ ==    UINT_VALUE ||
-                     type_ == BOOLEAN_VALUE);
+      if (type_ ==     INT_VALUE ||
+          type_ ==    UINT_VALUE ||
+          type_ == BOOLEAN_VALUE)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isDouble()
@@ -300,9 +299,9 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ == REAL_VALUE);
+      if (type_ == REAL_VALUE) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isNumeric()
@@ -311,12 +310,15 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ ==     INT_VALUE ||
-                     type_ ==    UINT_VALUE ||
-                     type_ == BOOLEAN_VALUE ||
-                     type_ ==    REAL_VALUE);
+      if (type_ ==     INT_VALUE ||
+          type_ ==    UINT_VALUE ||
+          type_ == BOOLEAN_VALUE ||
+          type_ ==    REAL_VALUE)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isString() const
@@ -325,9 +327,9 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ == STRING_VALUE);
+      if (type_ == STRING_VALUE) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isArray() const
@@ -336,9 +338,9 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ == ARRAY_VALUE);
+      if (type_ == ARRAY_VALUE) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isObject() const
@@ -347,9 +349,9 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      bool result = (type_ == OBJECT_VALUE);
+      if (type_ == OBJECT_VALUE) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    ValueType type() const { return (ValueType)type_; }
@@ -366,14 +368,10 @@ public:
 
    // manage values in array or object
 
-   uint32_t size() const __pure;
-
    UValue& operator[](uint32_t pos) __pure;
    UValue& operator[](const UString& key) __pure;
 
-             UString* getString() const { return (          UString*)value.ptr_; }
-    UVector<UValue*>* getArray()  const { return ( UVector<UValue*>*)value.ptr_; }
-   UHashMap<UValue*>* getObject() const { return (UHashMap<UValue*>*)value.ptr_; }
+   UString* getString() const { return (UString*)value.ptr_; }
 
    // \brief Return a list of the member names.
    //
@@ -427,21 +425,17 @@ public:
       {
       U_TRACE(0, "UValue::toJSON<T>(%.*S,%u,%p)", len, name, len, &member)
 
-      if (isNull())
-         {
-         type_      = OBJECT_VALUE;
-         value.ptr_ = U_NEW(UHashMap<UValue*>);
-         }
+      U_INTERNAL_DUMP("type_ = %d", type_)
 
-      U_INTERNAL_ASSERT_EQUALS(type_, OBJECT_VALUE)
+      type_ = OBJECT_VALUE;
 
-      UValue* pval = U_NEW(UValue);
+      UValue* child = U_NEW(UValue);
 
-      member.toJSON(*pval);
+      child->key = U_NEW(UString(name, len));
 
-      UString str(name, len);
+      member.toJSON(*child);
 
-      getObject()->insert(str, pval);
+      appendNode(this, child);
       }
 
    template <typename T> void fromJSON(UJsonTypeHandler<T> t)
@@ -462,30 +456,40 @@ public:
       {
       U_TRACE(0, "UValue::fromJSON<T>(%.*S,%u,%p)", len, name, len, &member)
 
+      U_INTERNAL_DUMP("type_ = %d", type_)
+
       U_INTERNAL_ASSERT_EQUALS(type_, OBJECT_VALUE)
 
       UString str(name, len);
 
-      UValue* result = getObject()->operator[](str);
+      UValue& json = operator[](str);
 
-      U_DUMP("hash map size = %u result = %p", getObject()->size(), result)
-
-      U_INTERNAL_ASSERT_POINTER(result)
-
-      member.fromJSON(*result);
+      member.fromJSON(json);
       }
 
    static void stringify(UString& result, UValue& value);
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-   const char* dump(bool reset) const;
+   const char* dump(bool _reset) const;
 #endif
 
 protected:
+   // only if parent is an object or array (0 otherwise)
+   UValue* parent;
+   UValue* prev;
+   UValue* next;
+   // only if parent is an object (0 otherwise)
+   UString* key; // must be valid UTF-8
+   // ARRAY_VALUE - OBJECT_VALUE
+   struct { UValue* head; UValue* tail; } children;
+
    union anyvalue value;
    int type_;
 
+   void reset();
+
 private:
+   static void appendNode(UValue* parent, UValue* child);
    static bool readValue(UTokenizer& tok, UValue* value) U_NO_EXPORT;
 
    template <class T> friend class UVector;
@@ -866,29 +870,21 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<uvector>::toJSON(%p)", &json)
 
-      uvector* pvec = (uvector*)pval;
-
-      if (json.isNull() == false) json.getArray()->clear();
-      else
-         {
-         json.type_      = ARRAY_VALUE;
-         json.value.ptr_ = U_NEW(UVector<UValue*>(pvec->_length));
-         }
-
       U_ASSERT(json.isArray())
 
-      UValue* item;
+      uvector* pvec = (uvector*)pval;
+
+      UValue* child;
       const void** ptr = pvec->vec;
       const void** end = pvec->vec + pvec->_length;
-      UVector<UValue*>* array = json.getArray();
 
       for (; ptr < end; ++ptr)
          {
-         item = U_NEW(UValue);
+         child = U_NEW(UValue);
 
-         item->toJSON(UJsonTypeHandler<T>(*(T*)(*ptr)));
+         child->toJSON(UJsonTypeHandler<T>(*(T*)(*ptr)));
 
-         array->push_back(item);
+         UValue::appendNode(&json, child);
          }
       }
 
@@ -898,19 +894,13 @@ public:
 
       U_ASSERT(json.isArray())
 
-      T* elem;
-      UValue* item;
-      uvector* pvec = (uvector*)pval;
-      UVector<UValue*>* array = json.getArray();
-
-      for (unsigned i = 0, n = array->size(); i < n; ++i)
+      for (UValue* child = json.children.head; child; child = child->next)
          {
-         elem = U_NEW(T);
-         item = (*array)[i];
+         T* elem = U_NEW(T);
 
-         item->fromJSON(UJsonTypeHandler<T>(*elem));
+         child->fromJSON(UJsonTypeHandler<T>(*elem));
 
-         pvec->push_back(elem);
+         ((uvector*)pval)->push_back(elem);
          }
       }
 };
@@ -935,22 +925,15 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<uhashmap>::toJSON(%p)", &json)
 
-      uhashmap* pmap = (uhashmap*)pval;
-
-      if (json.isNull())
-         {
-         json.type_      = OBJECT_VALUE;
-         json.value.ptr_ = U_NEW(UHashMap<UValue*>(pmap->_capacity));
-         }
-
       U_ASSERT(json.isObject())
 
-      UValue* item;
+      uhashmap* pmap = (uhashmap*)pval;
+
+      UValue* child;
       UHashMapNode* node;
       UHashMapNode* next;
       UHashMapNode** ptr = pmap->table;
       UHashMapNode** end = pmap->table + pmap->_capacity;
-      UHashMap<UValue*>* t1 = json.getObject();
 
       for (; ptr < end; ++ptr)
          {
@@ -961,13 +944,13 @@ public:
             do {
                next = node->next;
 
-               item = U_NEW(UValue);
+               child = U_NEW(UValue);
 
-               item->toJSON(UJsonTypeHandler<T>(*(T*)node->elem)); // *item << *((T*)node->elem);
+               child->key = U_NEW(UString((UStringRep*)node->key));
 
-               t1->lookup(node->key);
+               child->toJSON(UJsonTypeHandler<T>(*(T*)node->elem)); // *child << *((T*)node->elem);
 
-               t1->insertAfterFind(node->key, item);
+               UValue::appendNode(&json, child);
                }
             while ((node = next));
             }
@@ -980,36 +963,19 @@ public:
 
       U_ASSERT(json.isObject())
 
-      T* elem;
-      UHashMapNode* node;
-      UHashMapNode* next;
       uhashmap* pmap = (uhashmap*)pval;
-      UHashMap<UValue*>* t1 = json.getObject();
 
-      U_DUMP("json hash map size = %u", t1->size())
-
-      UHashMapNode** ptr = t1->table;
-      UHashMapNode** end = t1->table + t1->_capacity;
-
-      for (; ptr < end; ++ptr)
+      for (UValue* child = json.children.head; child; child = child->next)
          {
-         if (*ptr)
-            {
-            node = *ptr;
+         T* elem = U_NEW(T);
 
-            do {
-               next = node->next;
+         child->fromJSON(UJsonTypeHandler<T>(*elem)); // *elem << *child;
 
-               elem = U_NEW(T);
+         U_INTERNAL_ASSERT_POINTER(child->key)
 
-               ((UValue*)node->elem)->fromJSON(UJsonTypeHandler<T>(*elem)); // *elem << *((UValue*)node->elem);
+         pmap->lookup(*(child->key));
 
-               pmap->lookup(node->key);
-
-               pmap->insertAfterFind(node->key, elem);
-               }
-            while ((node = next));
-            }
+         pmap->insertAfterFind(*(child->key), elem);
          }
       }
 };

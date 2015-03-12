@@ -548,7 +548,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_INTERNAL_ASSERT( result )
 
-   UValue json;
+   UValue json(ARRAY_VALUE);
    tmp = JSON_stringify(json, y);
 
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("[\"riga 1\",\"riga 2\",\"riga 3\",\"riga 4\"]") )

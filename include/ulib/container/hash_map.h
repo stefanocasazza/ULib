@@ -102,14 +102,11 @@ public:
 
    // Costruttori e distruttore
 
-   UHashMap(const UString& _key, const void* _elem);
    UHashMap(uint32_t n = 53, bool _ignore_case = false);
 
    ~UHashMap()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UHashMap<void*>)
-
-      if (_capacity > 1) _deallocate();
       }
 
    // allocate and deallocate methods
@@ -117,8 +114,6 @@ public:
    void deallocate()
       {
       U_TRACE(0, "UHashMap<void*>::deallocate()")
-
-      if (_capacity > 1) _deallocate();
 
       _capacity = 0;
       }
@@ -279,7 +274,6 @@ protected:
    bool ignore_case;
 
    static UStringRep* pkey;
-   static UHashMapNode* tmpnode;
 
    void _allocate(uint32_t n)
       {
@@ -758,23 +752,6 @@ public:
 #endif
 
 protected:
-   void clearTmpNode()
-      {
-      U_TRACE(0, "UHashMap<T*>::clearTmpNode()")
-
-      U_INTERNAL_DUMP("_length = %u _capacity = %u table = %p", _length, _capacity, table)
-
-      U_INTERNAL_ASSERT_EQUALS(_length, 1)
-      U_INTERNAL_ASSERT_EQUALS(_capacity, 1)
-      U_INTERNAL_ASSERT_EQUALS(node, tmpnode)
-      U_INTERNAL_ASSERT_EQUALS(table, &tmpnode)
-
-      _length = 0;
-
-      u_destroy<T>((const T*)node->elem);
-
-      ((UStringRep*)node->key)->release(); // NB: we decreases the reference string...
-      }
 
    // find a elem in the array with <key>
 

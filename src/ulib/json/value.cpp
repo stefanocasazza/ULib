@@ -23,30 +23,79 @@ UValue::UValue(ValueType _type)
 
    switch ((type_ = _type))
       {
-      case BOOLEAN_VALUE: value.bool_ = false;                    break;
+      case BOOLEAN_VALUE: value.bool_ = false;                break;
       case     INT_VALUE:
-      case    UINT_VALUE: value.int_  = 0;                        break;
+      case    UINT_VALUE: value.int_  = 0;                    break;
       case    NULL_VALUE:
-      case    REAL_VALUE: value.real_ = 0.0;                      break;
-      case  STRING_VALUE: value.ptr_  = UString::string_null;     break;
-      case   ARRAY_VALUE: value.ptr_  = U_NEW( UVector<UValue*>); break;
-      case  OBJECT_VALUE: value.ptr_  = U_NEW(UHashMap<UValue*>); break;
+      case    REAL_VALUE: value.real_ = 0.0;                  break;
+      case  STRING_VALUE: value.ptr_  = UString::string_null; break;
+      case   ARRAY_VALUE: value.ptr_  = 0;                    break;
+      case  OBJECT_VALUE: value.ptr_  = 0;                    break;
       }
+
+   reset();
 }
 
-UValue::UValue(const UString& key, const UString& value_)
+UValue::UValue(const UString& _key, const UString& value_)
 {
-   U_TRACE_REGISTER_OBJECT(0, UValue, "%.*S,%.*S", U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(value_))
+   U_TRACE_REGISTER_OBJECT(0, UValue, "%.*S,%.*S", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(value_))
 
+   UValue* child = U_NEW(UValue(value_));
+
+   child->key = U_NEW(UString(_key));
+
+   parent     =
+   prev       =
+   next       = 0;
+   key        = 0;
    type_      = OBJECT_VALUE;
-   value.ptr_ = U_NEW(UHashMap<UValue*>(key, U_NEW(UValue(value_))));
+   value.ptr_ = 0;
+
+   children.head =
+   children.tail = child;
 }
 
-UValue::~UValue()
+void UValue::reset()
 {
-   U_TRACE_UNREGISTER_OBJECT(0, UValue)
+   U_TRACE(0, "UValue::reset()")
+
+   parent =
+   prev   =
+   next   = 0;
+   key    = 0;
+
+   children.head =
+   children.tail = 0;
+}
+
+void UValue::clear()
+{
+   U_TRACE(0, "UValue::clear()")
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
+
+   U_INTERNAL_DUMP("parent = %p prev = %p next = %p key = %p", parent, prev, next, key)
+
+   if (parent)
+      {
+      if (key)
+         {
+         U_INTERNAL_DUMP("key = %.*S", U_STRING_TO_TRACE(*key))
+
+         delete key;
+                key = 0;
+         }
+
+      if (prev) prev->next            = next;
+      else      parent->children.head = next;
+
+      if (next) next->prev            = prev;
+      else      parent->children.tail = prev;
+
+      parent =
+      prev   =
+      next   = 0;
+      }
 
    switch (type_)
       {
@@ -55,26 +104,29 @@ UValue::~UValue()
          U_INTERNAL_ASSERT_POINTER(value.ptr_)
 
          delete getString();
+
+         type_ = NULL_VALUE;
          }
       break;
 
       case ARRAY_VALUE:
-         {
-         U_INTERNAL_ASSERT_POINTER(value.ptr_)
-
-         delete getArray();
-         }
-      break;
-
       case OBJECT_VALUE:
          {
-         U_INTERNAL_ASSERT_POINTER(value.ptr_)
+         UValue* _next;
 
-         UHashMap<UValue*>* ptr = getObject();
+         U_INTERNAL_DUMP("children.head = %p", children.head)
 
-         if (ptr->capacity() == 1) ptr->clearTmpNode();
+         for (UValue* child = children.head; child; child = _next)
+            {
+            _next = child->next;
 
-         delete ptr;
+            U_INTERNAL_DUMP("_next = %p", _next)
+
+            delete child;
+            }
+
+         children.head =
+         children.tail = 0;
          }
       break;
       }
@@ -99,8 +151,8 @@ __pure bool UValue::asBool() const
       case BOOLEAN_VALUE:                         result = value.bool_;     break;
 
       case  STRING_VALUE: result = getString()->empty(); break;
-      case   ARRAY_VALUE: result =  getArray()->empty(); break;
-      case  OBJECT_VALUE: result = getObject()->empty(); break;
+      case   ARRAY_VALUE:
+      case  OBJECT_VALUE: result = (children.head == 0); break;
       }
 
    U_RETURN(result);
@@ -259,26 +311,13 @@ __pure bool UValue::isConvertibleTo(ValueType other) const
       case  STRING_VALUE: result = (other == NULL_VALUE && getString()->empty()) ||
                                     other == STRING_VALUE;
       break;
-      case   ARRAY_VALUE: result = (other == NULL_VALUE &&  getArray()->empty()) ||
+      case   ARRAY_VALUE: result = (other == NULL_VALUE && (children.head == 0)) ||
                                     other == ARRAY_VALUE;
       break;
-      case  OBJECT_VALUE: result = (other == NULL_VALUE && getObject()->empty()) ||
+      case  OBJECT_VALUE: result = (other == NULL_VALUE && (children.head == 0)) ||
                                     other == OBJECT_VALUE;
       break;
       }
-
-   U_RETURN(result);
-}
-
-__pure uint32_t UValue::size() const
-{
-   U_TRACE(0, "UValue::size()")
-
-   uint32_t result = 0;
-
-        if (type_ == STRING_VALUE) result = getString()->size();
-   else if (type_ ==  ARRAY_VALUE) result =  getArray()->size();
-   else if (type_ == OBJECT_VALUE) result = getObject()->size();
 
    U_RETURN(result);
 }
@@ -287,18 +326,36 @@ __pure UValue& UValue::operator[](uint32_t pos)
 {
    U_TRACE(0, "UValue::operator[](%u)", pos)
 
-   UValue* result = (type_ == ARRAY_VALUE ? getArray()->at(pos) : this);
+   if (type_ == ARRAY_VALUE)
+      {
+      uint32_t i = 0;
 
-   return *result;
+      for (UValue* child = children.head; child; child = child->next)
+         {
+         if (i == pos) return *child;
+
+         i++;
+         }
+      }
+
+   return *this;
 }
 
-__pure UValue& UValue::operator[](const UString& key)
+__pure UValue& UValue::operator[](const UString& _key)
 {
-   U_TRACE(0, "UValue::operator[](%.*S)", U_STRING_TO_TRACE(key))
+   U_TRACE(0, "UValue::operator[](%.*S)", U_STRING_TO_TRACE(_key))
 
-   UValue* result = (type_ == OBJECT_VALUE ? getObject()->operator[](key) : this);
+   if (type_ == OBJECT_VALUE)
+      {
+      for (UValue* child = children.head; child; child = child->next)
+         {
+         U_INTERNAL_ASSERT_POINTER(child->key)
 
-   return *result;
+         if (child->key->equal(_key)) return *child;
+         }
+      }
+
+   return *this;
 }
 
 uint32_t UValue::getMemberNames(UVector<UString>& members) const
@@ -312,7 +369,12 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
 
    if (type_ != NULL_VALUE)
       {
-      getObject()->getKeys(members);
+      for (UValue* child = children.head; child; child = child->next)
+         {
+         U_INTERNAL_ASSERT_POINTER(child->key)
+
+         members.push(child->key->rep);
+         }
 
       _size = members.size() - n;
       }
@@ -364,7 +426,7 @@ void UValue::stringify(UString& result, UValue& _value)
                   case '7':
                   case '8':
                   case '9': --ch; continue;
-                  case '.': n = last_nonzero - buffer + 2; // Truncate zeroes to save bytes in output, but keep one.
+                  case '.': n = last_nonzero - buffer + 2; // Truncate zeroes to save bytes in output, but keep one
                   default: goto end;
                   }
                }
@@ -389,20 +451,11 @@ end:
          {
          result.push_back('[');
 
-         uint32_t sz = _value.size();
-
-         if (sz)
+         for (UValue* element = _value.children.head; element; element = element->next)
             {
-            uint32_t index = 0;
+            stringify(result, *element);
 
-            while (true)
-               {
-               stringify(result, _value[index]);
-
-               if (++index == sz) break;
-
-               result.push_back(',');
-               }
+            if (element->next) result.push_back(',');
             }
 
          result.push_back(']');
@@ -413,60 +466,64 @@ end:
          {
          char* presult;
          const char* keyptr;
-         UHashMapNode** ptr;
-         UHashMapNode** end;
-         UHashMapNode* _node;
-         UHashMapNode* _next;
          bool bcomma = false;
          uint32_t pos, sz, keysz;
-         UHashMap<UValue*>* t = _value.getObject();
-
-         U_INTERNAL_DUMP("t->_length = %u t->_capacity = %u", t->_length, t->_capacity)
 
          result.push_back('{');
 
-         for (end = (ptr = t->table) + t->_capacity; ptr < end; ++ptr)
+         for (UValue* member = _value.children.head; member; member = member->next)
             {
-            if (*ptr)
+            sz = result.size();
+
+            U_INTERNAL_ASSERT_POINTER(member->key)
+
+            keysz  = member->key->size();
+            keyptr = member->key->data();
+
+            (void) result.reserve(sz + keysz * 6);
+
+            presult = result.c_pointer(sz);
+
+            if (bcomma == false) bcomma = true;
+            else
                {
-               _node = *ptr;
+               ++sz;
 
-               do {
-                  sz = result.size();
-
-                  keysz  = ((UStringRep*)_node->key)->size();
-                  keyptr = ((UStringRep*)_node->key)->data();
-
-                  (void) result.reserve(sz + keysz * 6);
-
-                  presult = result.c_pointer(sz);
-
-                  if (bcomma == false) bcomma = true;
-                  else
-                     {
-                     ++sz;
-
-                     *presult++ = ',';
-                     }
-
-                  pos = u_escape_encode((const unsigned char*)keyptr, keysz, presult, result.space(), true);
-
-                  presult[pos] = ':';
-
-                  result.size_adjust(sz + 1 + pos);
-
-                  stringify(result, *((UValue*)_node->elem));
-
-                  _next = _node->next;
-                  }
-               while ((_node = _next));
+               *presult++ = ',';
                }
+
+            pos = u_escape_encode((const unsigned char*)keyptr, keysz, presult, result.space(), true);
+
+            presult[pos] = ':';
+
+            result.size_adjust(sz + 1 + pos);
+
+            stringify(result, *member);
             }
 
          result.push_back('}');
          }
       break;
       }
+}
+
+void UValue::appendNode(UValue* parent, UValue* child)
+{
+   U_TRACE(0, "UValue::appendNode(%p,%p)", parent, child)
+
+   U_INTERNAL_DUMP("child->parent = %p parent->children.head = %p parent->children.tail = %p",
+                    child->parent,     parent->children.head,     parent->children.tail)
+
+   child->parent = parent;
+   child->prev   = parent->children.tail;
+   child->next   = 0;
+
+   if (parent->children.tail) parent->children.tail->next = child;
+   else                       parent->children.head       = child;
+                              parent->children.tail       = child;
+
+   U_INTERNAL_DUMP("child->parent = %p parent->children.head = %p parent->children.tail = %p",
+                    child->parent,     parent->children.head,     parent->children.tail)
 }
 
 U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
@@ -586,10 +643,9 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
       case '[':
          {
-         uint32_t sz;
+         UValue* child;
 
-         _value->type_      = ARRAY_VALUE;
-         _value->value.ptr_ = U_NEW(UVector<UValue*>);
+         _value->type_ = ARRAY_VALUE;
 
          while (true)
             {
@@ -605,34 +661,28 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
             if (c != ',') tok.back();
 
-            UValue* item = U_NEW(UValue);
+            child = U_NEW(UValue);
 
-            if (readValue(tok, item) == false)
+            if (readValue(tok, child) == false)
                {
-               delete item;
+               delete child;
 
                U_RETURN(false);
                }
 
-            _value->getArray()->push(item);
+            appendNode(_value, child);
             }
 
          result = true;
-
-         sz = _value->getArray()->size();
-
-         U_INTERNAL_DUMP("sz = %u", sz)
-
-         if (sz) _value->getArray()->reserve(sz);
          }
       break;
 
       case '{':
          {
          UValue name;
+         UValue* child;
 
-         _value->type_      = OBJECT_VALUE;
-         _value->value.ptr_ = U_NEW(UHashMap<UValue*>);
+         _value->type_ = OBJECT_VALUE;
 
          while (true)
             {
@@ -658,29 +708,27 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
                U_RETURN(false);
                }
 
-            UValue* item = U_NEW(UValue);
+            child = U_NEW(UValue);
 
-            if (readValue(tok, item) == false)
+            if (readValue(tok, child) == false)
                {
-               delete item;
+               delete child;
 
                U_RETURN(false);
                }
 
             U_INTERNAL_ASSERT_EQUALS(name.type_, STRING_VALUE)
 
-            UString* pstring = name.getString();
+            child->key = name.getString();
 
-            _value->getObject()->insert(*pstring, item);
+            appendNode(_value, child);
 
-            delete pstring;
+            name.type_ = NULL_VALUE;
             }
 
          result = true;
 
-         name.type_ = NULL_VALUE;
-
-         U_DUMP("hash map size = %u", _value->getObject()->size())
+         U_INTERNAL_ASSERT_EQUALS(name.type_, NULL_VALUE)
          }
       break;
 
@@ -709,6 +757,8 @@ bool UValue::parse(const UString& document)
       U_RETURN(true);
       }
 
+   U_INTERNAL_DUMP("type_ = %u", type_)
+
    U_RETURN(false);
 }
 
@@ -722,24 +772,10 @@ void UJsonTypeHandler<UStringRep>::toJSON(UValue& json)
 
    U_INTERNAL_DUMP("pval(%p) = %.*S", pval, U_STRING_TO_TRACE(*rep))
 
-   // TODO: we need to check if this code is yet necessary...
+   U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
 
-   if (json.isObject())
-      {
-      U_DUMP("hash map size = %u", json.getObject()->size())
-
-      U_ASSERT(json.getObject()->elem()->isNull() ||
-               json.getObject()->elem()->isString())
-
-      json.getObject()->replaceAfterFind(U_NEW(UValue(rep)));
-      }
-   else
-      {
-      U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
-
-      json.type_      = STRING_VALUE;
-      json.value.ptr_ = U_NEW(UString(rep));
-      }
+   json.type_      = STRING_VALUE;
+   json.value.ptr_ = U_NEW(UString(rep));
 }
 
 void UJsonTypeHandler<UStringRep>::fromJSON(UValue& json)
@@ -760,11 +796,16 @@ void UJsonTypeHandler<UStringRep>::fromJSON(UValue& json)
 // DEBUG
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-const char* UValue::dump(bool reset) const
+const char* UValue::dump(bool _reset) const
 {
-   *UObjectIO::os << "type_ " << type_;
+   *UObjectIO::os << "key        " << key    << '\n'
+                  << "prev       " << prev   << '\n'
+                  << "next       " << next   << '\n'
+                  << "parent     " << parent << '\n'
+                  << "type_      " << type_  << '\n'
+                  << "value.ptr_ " << value.ptr_;
 
-   if (reset)
+   if (_reset)
       {
       UObjectIO::output();
 

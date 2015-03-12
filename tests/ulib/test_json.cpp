@@ -25,5 +25,7 @@ U_EXPORT main (int argc, char* argv[])
 
          cout << result << '\n';
          }
+
+      json.clear();
       }
 }
