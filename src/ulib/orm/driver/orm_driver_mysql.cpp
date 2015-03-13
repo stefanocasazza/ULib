@@ -242,10 +242,6 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
       (void) U_SYSCALL(mysql_set_character_set, "%p,%S", (MYSQL*)pdrv->connection, ptr);
       }
 
-#if !defined(U_PIPELINE_HOMOGENEOUS_DISABLE) && !defined(U_LOG_ENABLE) && !defined(U_CACHE_REQUEST_DISABLE) && !defined(USE_LIBZ)
-   (void) U_SYSCALL(mysql_real_query, "%p,%S,%lu", (MYSQL*)UOrmDriver::connection, U_CONSTANT_TO_PARAM("BEGIN TRANSACTION"));
-#endif
-
    U_RETURN_POINTER(pdrv, UOrmDriver);
 }
 

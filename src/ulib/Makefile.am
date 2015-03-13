@@ -3,8 +3,7 @@
 MAINTAINERCLEANFILES = Makefile.in Makefile
 
 EXTRA_DIST = base/* container/* db/* debug/* dynamic/* flex/* internal/* ldap/* mime/* net/* pcre/* \
-			 	 replace/* ssl/* ssh/* ui/* utility/* xml/expat/* xml/libxml2/* zip/* \
-				 lemon/Makefile.* lemon/*.c lemon/*.cpp lemon/*.y \
+			 	 replace/* ssl/* ssh/* ui/* utility/* xml/expat/* xml/libxml2/* zip/* lemon/*.cpp \
 				 orm/driver/*.cpp orm/driver/Makefile.* \
              net/server/plugin/*.cpp net/server/plugin/Makefile.* \
 				 *.cpp all_c.c ULib.pc.in ULib.rc.in utility/*_store.bin

@@ -255,6 +255,39 @@ public:
    static bool loadDriver()                           { return loadDriver(UString::getStringNull(), UString::getStringNull()); }
    static bool loadDriver(const UString& driver_list) { return loadDriver(UString::getStringNull(),              driver_list); }
 
+   static bool isSQLite()
+      {
+      U_TRACE(0, "UOrmDriver::isSQLite()")
+
+      U_INTERNAL_ASSERT_MAJOR(env_driver_len, 0)
+
+      if (U_STREQ(env_driver, env_driver_len, "sqlite")) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool isMYSQL()
+      {
+      U_TRACE(0, "UOrmDriver::isMYSQL()")
+
+      U_INTERNAL_ASSERT_MAJOR(env_driver_len, 0)
+
+      if (U_STREQ(env_driver, env_driver_len, "mysql")) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool isPGSQL()
+      {
+      U_TRACE(0, "UOrmDriver::isPGSQL()")
+
+      U_INTERNAL_ASSERT_MAJOR(env_driver_len, 0)
+
+      if (U_STREQ(env_driver, env_driver_len, "pgsql")) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    void reset(USqlStatement* pstmt) // Resets a prepared statement on client and server to state after creation
       {
       U_TRACE(0, "UOrmDriver::reset(%p)", pstmt)

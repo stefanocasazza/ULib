@@ -105,10 +105,6 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 
 // (void) U_SYSCALL(PQsetClientEncoding, "%p,%S", (PGconn*)pdrv->connection, "UTF8");
 
-#if !defined(U_PIPELINE_HOMOGENEOUS_DISABLE) && !defined(U_LOG_ENABLE) && !defined(U_CACHE_REQUEST_DISABLE) && !defined(USE_LIBZ)
-   (void) U_SYSCALL(PQexec, "%p,%S", (PGconn*)UOrmDriver::connection, "BEGIN ISOLATION LEVEL SERIALIZABLE; COMMIT; BEGIN TRANSACTION");
-#endif
-
    U_RETURN_POINTER(pdrv, UOrmDriver);
 }
 

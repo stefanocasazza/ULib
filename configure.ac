@@ -2237,7 +2237,6 @@ AC_OUTPUT(Makefile \
 			 src/ulib/Makefile \
 			 src/ulib/ULib.rc \
 			 src/ulib/ULib.pc \
-			 src/ulib/lemon/Makefile \
 			 src/ulib/orm/driver/Makefile \
 			 src/ulib/net/server/plugin/Makefile \
 			 src/ulib/net/server/plugin/v8/Makefile \
