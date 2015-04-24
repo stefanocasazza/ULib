@@ -176,7 +176,7 @@ public:
       {
       U_TRACE(0, "UStackMemoryPool::deallocatePointerBlock()")
 
-#  if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#  if defined(ENABLE_MEMPOOL)
       U_INTERNAL_DUMP("&mem_pointer_block[  0] = %p", &mem_pointer_block[0])
       U_INTERNAL_DUMP("     pointer_block      = %p",      pointer_block)
       U_INTERNAL_DUMP("&mem_pointer_block[%3u] = %p",                    U_NUM_STACK_TYPE * U_NUM_ENTRY_MEM_BLOCK * 2,
@@ -242,7 +242,7 @@ public:
          len = space   = (size / type);
 
 #     if defined(DEBUG)
-#        if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#        if defined(ENABLE_MEMPOOL)
          (void) U_SYSCALL(memset, "%p,%d,%u", pointer_block, 0, size); // NB: for check duplicate entry...
 #        endif
 #     endif
@@ -325,7 +325,7 @@ public:
       if (len == space) growPointerBlock(space << 1); // NB: this call can change len...
 
 #  if defined(DEBUG)
-#     if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#     if defined(ENABLE_MEMPOOL)
       if (ptr < &mem_block[0] ||
           ptr > &mem_block[U_SIZE_MEM_BLOCK])
          {
@@ -354,7 +354,7 @@ public:
    // NB: inizialmente viene allocato lo spazio per il doppio dei
    //     puntatori necessari (quelli cioe' che vengono inizializzati)...
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#if defined(ENABLE_MEMPOOL)
    static char  mem_block[U_SIZE_MEM_BLOCK];
    static void* mem_pointer_block[U_NUM_STACK_TYPE * U_NUM_ENTRY_MEM_BLOCK * 2];
 
@@ -362,7 +362,7 @@ public:
 #endif
 };
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__) && defined(DEBUG)
+#if defined(ENABLE_MEMPOOL) && defined(DEBUG)
 bool UMemoryPool::check(void* ptr)
 {
    U_TRACE(0, "UMemoryPool::check(%p)", ptr)
@@ -405,7 +405,7 @@ void UMemoryPool::allocateMemoryBlocks(int stack_index, uint32_t n)
    U_INTERNAL_ASSERT_MAJOR(stack_index, 0)
    U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#if defined(ENABLE_MEMPOOL)
    UStackMemoryPool* pstack = (UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index);
 
    U_INTERNAL_DUMP("stack[%u]: type = %4u len = %5u space = %5u depth = %4u max_depth = %4u pop_cnt = %5u push_cnt = %5u allocateMemoryBlocks = %u",
@@ -424,7 +424,7 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#if defined(ENABLE_MEMPOOL)
    int value;
    void* addr;
    uint32_t i;
@@ -493,7 +493,7 @@ void UMemoryPool::push(void* ptr, int stack_index)
 
    U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#if !defined(ENABLE_MEMPOOL)
    U_SYSCALL_VOID(free, "%p", ptr);
 #else
    if (stack_index) ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->push(ptr);
@@ -506,7 +506,7 @@ void* UMemoryPool::pop(int stack_index)
 
    U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#if !defined(ENABLE_MEMPOOL)
    void* ptr = U_SYSCALL(malloc, "%u", U_STACK_INDEX_TO_SIZE(stack_index));
 #else
    UStackMemoryPool* pstack = (UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index);
@@ -539,7 +539,7 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
 
    U_INTERNAL_DUMP("length = %u", length)
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#if !defined(ENABLE_MEMPOOL)
 #  ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_RANGE(4, length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
 #  endif
@@ -574,7 +574,7 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
 
    U_INTERNAL_DUMP("length = %u", length)
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#if !defined(ENABLE_MEMPOOL)
 #  ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_MINOR(length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
 #  endif
@@ -606,7 +606,7 @@ void UMemoryPool::deallocate(void* ptr, uint32_t length)
 {
    U_TRACE(1, "UMemoryPool::deallocate(%p,%u)", ptr, length)
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__) || defined(U_SERVER_CAPTIVE_PORTAL)
+#if !defined(ENABLE_MEMPOOL) || defined(U_SERVER_CAPTIVE_PORTAL)
    U_SYSCALL_VOID(free, "%p", ptr);
 #else
    if (UFile::isLastAllocation(ptr, length))
@@ -642,22 +642,15 @@ void UMemoryPool::_free(void* ptr, uint32_t num, uint32_t type_size)
 {
    U_TRACE(1, "UMemoryPool::_free(%p,%u,%u)", ptr, num, type_size) // problem with sanitize address
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#if !defined(ENABLE_MEMPOOL)
    U_SYSCALL_VOID(free, "%p", ptr);
 #else
    uint32_t length = (num * type_size);
 
    U_INTERNAL_DUMP("length = %u", length)
 
-   if (length <= U_MAX_SIZE_PREALLOCATE) UMemoryPool::push(ptr, U_SIZE_TO_STACK_INDEX(length));
-   else
-      {
-#  if defined(DEBUG) && defined(ENABLE_NEW_VECTOR)
-      if ((length & U_PAGEMASK) != 0) U_INTERNAL_ASSERT_MAJOR(type_size, 1)
-#  endif
-
-      deallocate(ptr, (length + U_PAGEMASK) & ~U_PAGEMASK);
-      }
+   if (length <= U_MAX_SIZE_PREALLOCATE)       push(ptr, U_SIZE_TO_STACK_INDEX(length));
+   else                                  deallocate(ptr, (length + U_PAGEMASK) & ~U_PAGEMASK);
 #endif
 }
 
@@ -666,7 +659,7 @@ void UStackMemoryPool::paint(ostream& os) // paint info
 {
    U_TRACE(0, "UStackMemoryPool::paint(%p)", &os)
 
-#  if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#  if defined(ENABLE_MEMPOOL)
    char buffer[256];
    uint32_t max_space = 0;
    UStackMemoryPool* pstack;
@@ -788,7 +781,7 @@ void UMemoryPool::writeInfoTo(const char* format, ...)
 }
 #endif
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#if defined(ENABLE_MEMPOOL)
 char UStackMemoryPool::mem_block[U_SIZE_MEM_BLOCK];
 // ----------------------------------------------------------------------------
 // NB: l'inizializzazione seguente dipende strettamente da 'U_NUM_ENTRY_MEM_BLOCK'

@@ -15,69 +15,15 @@
 #include <ulib/command.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/uhttp.h>
-#include <ulib/net/client/client.h>
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 #include <ulib/net/server/plugin/mod_http.h>
-
-#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-#  include <ulib/thread.h>
-#  include <ulib/net/tcpsocket.h>
-
-class UOCSPStapling : public UThread {
-public:
-
-   UOCSPStapling() : UThread(true, false) {}
-
-   virtual void run()
-      {
-      U_TRACE(0, "UOCSPStapling::run()")
-
-      struct timespec ts;
-      bool result = false;
-
-      U_SRV_LOG("SSL: OCSP Stapling thread activated (pid %u)", UThread::getTID());
-
-      errno = 0;
-      ts.tv_nsec = 0L;
-
-      while (UServer_Base::flag_loop)
-         {
-         if (errno != EINTR)
-            {
-            result = USSLSocket::doStapling();
-
-            U_SRV_LOG("SSL: OCSP request for stapling to %.*S has %s", U_STRING_TO_TRACE(*USSLSocket::staple.url), (result ? "success" : "FAILED"));
-            }
-
-         ts.tv_sec = (result ? U_min(USSLSocket::staple.valid - u_now->tv_sec, 3600L) : 300L);
-
-         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
-         }
-      }
-};
-
-static UOCSPStapling* u_pthread_ocsp;
-#endif
 
 U_CREAT_FUNC(server_plugin_http, UHttpPlugIn)
 
 UHttpPlugIn::~UHttpPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UHttpPlugIn)
-
-#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (u_pthread_ocsp)
-      {
-      u_pthread_ocsp->suspend();
-
-      delete u_pthread_ocsp; // delete to join
-      }
-
-   USSLSocket::cleanupStapling();
-
-   if (UServer_Base::lock_ocsp_staple) delete UServer_Base::lock_ocsp_staple;
-#endif
 
    UHTTP::dtor(); // delete global HTTP context...
 }
@@ -87,8 +33,10 @@ UHttpPlugIn::~UHttpPlugIn()
 int UHttpPlugIn::handlerRead()
 {
    U_TRACE(0, "UHttpPlugIn::handlerRead()")
-
+   
 #if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
+   U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
+
    UHTTP::in_READ();
 #endif
 
@@ -502,37 +450,7 @@ int UHttpPlugIn::handlerRun() // NB: we use this method because now we have the 
    U_TRACE(0, "UHttpPlugIn::handlerRun()")
 
 #ifdef USE_LIBSSL
-   if (UServer_Base::bssl)
-      {
-#  if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-      if (USSLSocket::setDataForStapling())
-         {
-         USSLSocket::staple.data = UServer_Base::getPointerToDataShare(USSLSocket::staple.data);
-
-         UServer_Base::setLockOCSPStaple();
-
-         U_INTERNAL_ASSERT_EQUALS(USSLSocket::staple.client, 0)
-
-         USSLSocket::staple.client = U_NEW(UClient<UTCPSocket>(0));
-
-         (void) USSLSocket::staple.client->setUrl(*USSLSocket::staple.url);
-
-         U_INTERNAL_ASSERT_EQUALS(u_pthread_ocsp, 0)
-
-         U_NEW_ULIB_OBJECT(u_pthread_ocsp, UOCSPStapling);
-
-         U_INTERNAL_DUMP("u_pthread_ocsp = %p", u_pthread_ocsp)
-
-         u_pthread_ocsp->start(0);
-         }
-      else
-         {
-         U_WARNING("SSL: OCSP stapling ignored, some error occured...");
-         }
-#  endif
-
-      UHTTP::initSessionSSL();
-      }
+   if (UServer_Base::bssl) UHTTP::initSessionSSL();
    else
 #endif
    if (UServer_Base::handler_inotify) UHTTP::initDbNotFound();
@@ -637,26 +555,16 @@ int UHttpPlugIn::handlerSigHUP()
    U_TRACE(0, "UHttpPlugIn::handlerSigHUP()")
 
 #ifdef USE_LIBSSL
-   if (UServer_Base::bssl)
+   if (UServer_Base::bssl &&
+       UHTTP::db_session_ssl->compactionJournal() == false)
       {
-#  if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-      if (u_pthread_ocsp) u_pthread_ocsp->suspend();
-#  endif
+      U_WARNING("SSL: compaction of db SSL session failed");
 
-      if (UHTTP::db_session_ssl->compactionJournal() == false)
-         {
-         U_WARNING("SSL: compaction of db SSL session failed");
-
-         (void) U_SYSCALL(SSL_CTX_set_session_cache_mode, "%p,%d", USSLSocket::sctx, SSL_SESS_CACHE_OFF);
-         }
+      (void) U_SYSCALL(SSL_CTX_set_session_cache_mode, "%p,%d", USSLSocket::sctx, SSL_SESS_CACHE_OFF);
       }
 #endif
 
    if (UHTTP::bcallInitForAllUSP) UHTTP::cache_file->callForAllEntry(UHTTP::callSigHUPForAllUSP);
-
-#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (u_pthread_ocsp) u_pthread_ocsp->resume();
-#endif
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }

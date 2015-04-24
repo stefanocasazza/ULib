@@ -55,10 +55,10 @@ const char* dump(bool reset) const { return UServer<socket_type>::dump(reset); }
 protected: \
 virtual void preallocate() U_DECL_OVERRIDE { \
 U_TRACE(5+256, #server_class "::preallocate()") \
-(void) U_NEW_VECTOR(UNotifier::max_connection, client_type, &oClientImage); } \
+vClientImage = new client_type[UNotifier::max_connection]; } \
 virtual void deallocate() U_DECL_OVERRIDE { \
 U_TRACE(5+256, #server_class "::deallocate()") \
-u_delete_vector<client_type>((client_type*)vClientImage, oClientImage, UNotifier::max_connection); }  \
+delete[] (client_type*)vClientImage; }  \
 virtual bool check_memory() U_DECL_OVERRIDE { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); } }
 #else
 #  define U_MACROSERVER(server_class,client_type,socket_type) \
@@ -68,7 +68,7 @@ public: \
 ~server_class()                                               {} \
 protected: \
 virtual void preallocate() U_DECL_OVERRIDE { \
-(void) U_NEW_VECTOR(UNotifier::max_connection, client_type, &oClientImage); } }
+vClientImage = new client_type[UNotifier::max_connection]; } }
 #endif
 // ---------------------------------------------------------------------------------------------
 
@@ -94,6 +94,7 @@ virtual void preallocate() U_DECL_OVERRIDE { \
 #endif
 
 class UHTTP;
+class UHTTP2;
 class UCommand;
 class USSLSocket;
 class USSIPlugIn;
@@ -118,6 +119,13 @@ class UModProxyService;
 
 class U_EXPORT UServer_Base : public UEventFd {
 public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
 
    // -----------------------------------------------------------------------------------------------------------------------------
    // UServer - configuration parameters
@@ -257,9 +265,9 @@ public:
       sem_t lock_rdb_server;
 #  ifdef USE_LIBSSL
       sem_t lock_ssl_session;
-#     ifdef ENABLE_THREAD
+#    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
       sem_t lock_ocsp_staple;
-#     endif
+#    endif
 #  endif
       sem_t lock_static_date;
       sem_t lock_data_session;
@@ -269,9 +277,9 @@ public:
       char spinlock_rdb_server[1];
 #  ifdef USE_LIBSSL
       char spinlock_ssl_session[1];
-#     ifdef ENABLE_THREAD
+#    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
       char spinlock_ocsp_staple[1];
-#     endif
+#    endif
 #  endif
       char spinlock_static_date[1];
       char spinlock_data_session[1];
@@ -566,8 +574,9 @@ protected:
    static UVector<UIPAllow*>* vallow_IP_prv;
 #endif
 
-#if defined(USE_LIBSSL) && defined(ENABLE_THREAD)
+#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    static ULock* lock_ocsp_staple;
+   static UOCSPStapling* pthread_ocsp;
 
    static void setLockOCSPStaple()
       {
@@ -590,10 +599,6 @@ protected:
 
    class U_NO_EXPORT UTimeoutConnection : public UEventTime {
    public:
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
 
    // COSTRUTTORI
 
@@ -676,6 +681,7 @@ protected:
 
 private:
    friend class UHTTP;
+   friend class UHTTP2;
    friend class USSLSocket;
    friend class USSIPlugIn;
    friend class UWebSocket;
@@ -748,7 +754,11 @@ protected:
 
       // NB: array are not pointers (virtual table can shift the address of this)...
 
-      (void) U_NEW_VECTOR(UNotifier::max_connection, client_type, &oClientImage);
+      vClientImage = new client_type[UNotifier::max_connection];
+
+      U_INTERNAL_DUMP("vClientImage = %p pClientIndex = %p", vClientImage, pClientIndex)
+
+      U_INTERNAL_ASSERT_EQUALS(vClientImage, pClientIndex)
       }
 
 #ifdef DEBUG
@@ -758,7 +768,7 @@ protected:
 
       // NB: array are not pointers (virtual table can shift the address of this)...
 
-      u_delete_vector<client_type>((client_type*)vClientImage, oClientImage, UNotifier::max_connection);
+      delete[] (client_type*)vClientImage;
       }
 
    virtual bool check_memory() U_DECL_OVERRIDE { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); }
@@ -822,7 +832,7 @@ protected:
 
       // NB: array are not pointers (virtual table can shift the address of this)...
 
-      (void) U_NEW_VECTOR(UNotifier::max_connection, client_type, &oClientImage);
+      vClientImage = new client_type[UNotifier::max_connection];
       }
 
 #ifdef DEBUG
@@ -832,7 +842,7 @@ protected:
 
       // NB: array are not pointers (virtual table can shift the address of this)...
 
-      u_delete_vector<client_type>((client_type*)vClientImage, oClientImage, UNotifier::max_connection);
+      delete[] (client_type*)vClientImage;
       }
 
    virtual bool check_memory() U_DECL_OVERRIDE { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); }

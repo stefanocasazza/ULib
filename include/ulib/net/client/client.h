@@ -37,6 +37,7 @@ class UFCGIPlugIn;
 class USCGIPlugIn;
 class UProxyPlugIn;
 class UNoCatPlugIn;
+class UServer_Base;
 class UHttpClient_Base;
 
 class U_EXPORT UClient_Base {
@@ -265,6 +266,7 @@ private:
    friend class UHttpPlugIn;
    friend class UProxyPlugIn;
    friend class UNoCatPlugIn;
+   friend class UServer_Base;
    friend class UHttpClient_Base;
 };
 

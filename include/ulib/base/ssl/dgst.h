@@ -65,7 +65,7 @@ extern U_EXPORT EVP_PKEY* restrict     u_pkey;                       /* private 
 extern U_EXPORT EVP_MD_CTX             u_mdctx;                      /* Context for digest */
 extern U_EXPORT const EVP_MD* restrict u_md;                         /* Digest instance */
 extern U_EXPORT unsigned char          u_mdValue[U_MAX_HASH_SIZE];   /* Final output */
-extern U_EXPORT uint32_t               u_mdLen;                      /* Length of digest */
+extern U_EXPORT int                    u_mdLen;                      /* Length of digest */
 
 extern U_EXPORT HMAC_CTX               u_hctx;                       /* Context for HMAC */
 extern U_EXPORT const char* restrict   u_hmac_key;                   /* The loaded key */
@@ -112,14 +112,14 @@ static inline void u_dgst_hash(unsigned char* restrict data, uint32_t length)
  * @returns    The number of bytes copied into the hash buffer
  */
 
-U_EXPORT uint32_t u_dgst_finish(unsigned char* restrict hash, int base64); /* Finish and get hash */
+U_EXPORT int u_dgst_finish(unsigned char* restrict hash, int base64); /* Finish and get hash */
 
 U_EXPORT void u_dgst_reset(void); /* Reset the hash */
 
 /* The EVP signature routines are a high level interface to digital signatures
  */
 
-U_EXPORT void u_dgst_sign_init(int alg, ENGINE* restrict impl);
+U_EXPORT void u_dgst_sign_init(  int alg, ENGINE* restrict impl);
 U_EXPORT void u_dgst_verify_init(int alg, ENGINE* restrict impl);
 
 static inline void u_dgst_sign_hash(unsigned char* restrict data, uint32_t length)
@@ -136,8 +136,8 @@ static inline void u_dgst_verify_hash(unsigned char* restrict data, uint32_t len
    (void) EVP_VerifyUpdate(&u_mdctx, data, length);
 }
 
-uint32_t u_dgst_sign_finish(unsigned char* restrict sig, int base64); /* Finish and get signature */
-int      u_dgst_verify_finish(unsigned char* restrict sigbuf, uint32_t siglen);
+int u_dgst_sign_finish(  unsigned char* restrict sig, int base64); /* Finish and get signature */
+int u_dgst_verify_finish(unsigned char* restrict sigbuf, uint32_t siglen);
 
 #ifdef __cplusplus
 }

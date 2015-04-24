@@ -90,10 +90,12 @@ void UOrmDriver::clear()
 {
    U_TRACE(0, "UOrmDriver::clear()")
 
-#if defined(USE_SQLITE) || defined(USE_MYSQL)
+   if (driver_dir) delete driver_dir;
+
+#if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    if (vdriver)
       {
-      delete driver_dir;
+      delete vdriver;
       delete vdriver_name;
       }
 #endif

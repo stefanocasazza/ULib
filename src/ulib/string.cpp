@@ -344,7 +344,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
 
    // NB: we don't use new (ctor) because we want an allocation with more space for string data...
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#if !defined(ENABLE_MEMPOOL)
       r = (UStringRep*) U_SYSCALL(malloc, "%u", capacity + (1 + sizeof(UStringRep)));
    _ptr = (char*)(r + 1);
 #else
@@ -451,7 +451,7 @@ bool UString::shrink()
    //     plus a terminating null char element,
    //     plus enough for the UStringRep data structure...
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#if defined(ENABLE_MEMPOOL)
    uint32_t _length = rep->_length, sz = _length + (1 + sizeof(UStringRep));
 
    U_INTERNAL_DUMP("capacity = %u length = %u sz = %u", rep->_capacity, _length, sz)
@@ -609,7 +609,7 @@ void UStringRep::release()
 #  endif
 #endif
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
+#if !defined(ENABLE_MEMPOOL)
    U_SYSCALL_VOID(free, "%p", (void*)this);
 #else
    if (_capacity <= U_CAPACITY)
@@ -1156,15 +1156,6 @@ UString& UString::operator=(const UString& str)
    return *this;
 }
 
-UString UString::substr(const char* t, uint32_t tlen) const
-{
-   U_TRACE(0, "UString::substr(%.*S,%u)", tlen, t, tlen)
-
-   UString result(rep, t, tlen);
-
-   U_RETURN_STRING(result);
-}
-
 char* UString::c_strdup() const                             { return strndup(rep->str, rep->_length); }
 char* UString::c_strndup(uint32_t pos, uint32_t n) const    { return strndup(rep->str + pos, rep->fold(pos, n)); }
 
@@ -1200,15 +1191,6 @@ void UString::setEmptyForce()
    ((char*)rep->str)[0] = '\0';
 }
 
-UString UString::substr(uint32_t pos, uint32_t n) const
-{
-   U_TRACE(0, "UString::substr(%u,%u)", pos, n)
-
-   U_INTERNAL_ASSERT(pos <= rep->_length)
-
-   return substr(rep->str + pos, rep->fold(pos, n));
-}
-
 UString& UString::operator+=(const UString& str)   { return append(str.data(), str.size()); }
 
 UString& UString::erase(uint32_t pos, uint32_t n)  { return replace(pos, rep->fold(pos, n), "", 0); }
@@ -1242,17 +1224,6 @@ UString UString::copy() const
 }
 
 // SERVICES
-
-UString::UString(uint32_t n)
-{
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u", n) // problem with sanitize address
-
-   if (n < U_CAPACITY) n = U_CAPACITY;
-
-   rep = UStringRep::create(0U, n, 0);
-
-   U_INTERNAL_ASSERT(invariant())
-}
 
 UString::UString(uint32_t n, unsigned char c)
 {
@@ -1388,7 +1359,7 @@ void UString::mmap(const char* map, uint32_t len)
 
       rep->_capacity = U_NOT_FOUND;
 
-#  if defined(MADV_SEQUENTIAL) && defined(__linux__)
+#  if defined(MADV_SEQUENTIAL)
       if (len > (64 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", (void*)map, len, MADV_SEQUENTIAL);
 #  endif
       }
@@ -2715,10 +2686,9 @@ void UString::vsnprintf_check(const char* format) const
         ok_references = (rep->references == 0),
         ok_format     = (rep->_capacity > u__strlen(format, __PRETTY_FUNCTION__));
 
-   if (ok_writeable  == false ||
-       ok_isNull     == false ||
-       ok_references == false ||
-       ok_format     == false)
+   if (ok_writeable == false ||
+       ok_isNull    == false ||
+       ok_format    == false)
       {
       // -----------------------------------------------------------------------------------------------------------------------------------------
       // Ex: userver_tcp: ERROR: UString::vsnprintf_check() this = 0xa79bbd18 parent = (nil) references = 2126 child = 0 _capacity = 0 str(0) = ""
@@ -2729,6 +2699,13 @@ void UString::vsnprintf_check(const char* format) const
               "ok_writeable = %b ok_isNull = %b ok_references = %b ok_format = %b",
                this, rep->parent, rep->references, rep->child, rep->_capacity, rep->_length, rep->_length, rep->str, format,
                ok_writeable, ok_isNull, ok_references, ok_format);
+      }
+   else if (ok_references == false)
+      {
+      U_WARNING("UString::vsnprintf_check() this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %.*S format = %S - "
+                "ok_writeable = %b ok_isNull = %b ok_references = %b ok_format = %b",
+                this, rep->parent, rep->references, rep->child, rep->_capacity, rep->_length, rep->_length, rep->str, format,
+                ok_writeable, ok_isNull, ok_references, ok_format);
       }
 }
 #endif

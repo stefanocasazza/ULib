@@ -225,9 +225,11 @@ public:
    static void setMimeIndex();
    static int  processRequest();
    static void initDbNotFound();
+
    static void setEndRequestProcessing();
    static bool callService(const UString& path);
    static bool isUriRequestNeedCertificate() __pure;
+   static void setHostname(const char* ptr, uint32_t len);
    static bool checkRequestForHeader(const UString& request);
    static bool manageSendfile(const char* ptr, uint32_t len, UString& ext);
    static bool checkContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);

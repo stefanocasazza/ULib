@@ -277,15 +277,12 @@ public:
 
    handlerOutput()
       {
-      U_TRACE_REGISTER_OBJECT(0, handlerOutput, "", 0)
-
       fd      = fd_output;
       op_mask = EPOLLOUT;
       }
 
    ~handlerOutput()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, handlerOutput)
       }
 
    int handlerWrite()
@@ -320,14 +317,11 @@ public:
 
    handlerInput()
       {
-      U_TRACE_REGISTER_OBJECT(0, handlerInput, "", 0)
-
       fd = fd_input;
       }
 
    ~handlerInput()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, handlerInput)
       }
 
    int handlerRead()

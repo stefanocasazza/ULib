@@ -54,6 +54,7 @@ public:
 
    static UString* rbuffer;
    static uint32_t max_message_size;
+   static const char* upgrade_settings;
    static int message_type, status_code;
 
    typedef struct _WebSocketFrameData {

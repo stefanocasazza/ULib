@@ -34,10 +34,6 @@ typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
 #  include <uuid/uuid.h>
 #endif
 
-#ifdef HAVE_FNMATCH
-#  include <fnmatch.h>
-#endif
-
 #ifndef FNM_CASEFOLD
 #define FNM_CASEFOLD FNM_IGNORECASE
 #endif

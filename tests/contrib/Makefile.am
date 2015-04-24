@@ -23,7 +23,8 @@ endif
 TESTS = $(TST) ../reset.color
 
 test:
-	-make check
+##	-make check
+	../reset.color
 
 clean-local:
 	-rm -rf out err core .libs *.bb* *.da *.gcov trace.*.[0-9]* object.*.[0-9]* stack.*.[0-9]* *.log

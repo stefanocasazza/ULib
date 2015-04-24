@@ -20,9 +20,8 @@
 class U_EXPORT UHttpPlugIn : public UServerPlugIn, UEventFd {
 public:
 
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
+   // Check for memory error
+   U_MEMORY_TEST
 
    // COSTRUTTORI
 

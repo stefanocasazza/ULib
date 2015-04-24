@@ -317,13 +317,18 @@ protected:
 #endif
 
 private:
+   static int nextProto(SSL* ssl, const unsigned char** data, unsigned int* len, void* arg) U_NO_EXPORT;
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L
+   static int selectProto(SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in, unsigned int inlen, void* arg) U_NO_EXPORT;
+#endif
+
 #ifdef U_COMPILER_DELETE_MEMBERS
    USSLSocket(const USSLSocket&) = delete;
    USSLSocket& operator=(const USSLSocket&) = delete;
 #else
    USSLSocket(const USSLSocket&) : USocket(false) {}
    USSLSocket& operator=(const USSLSocket&)       { return *this; }
-#endif      
+#endif
 
                       friend class UHTTP;
                       friend class USocket;

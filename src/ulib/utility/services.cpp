@@ -578,22 +578,18 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
       U_INTERNAL_ASSERT_POINTER(u_pkey)
       }
 
-   UString output(2000U);
+   UString output(U_CAPACITY);
 
    if (base64 == -2)
       {
-      (void) u_dgst_sign_finish(0, 0);
-
-      output.setConstant((const char*)u_mdValue, u_mdLen);
+      if (u_dgst_sign_finish(0, 0) > 0) output.setConstant((const char*)u_mdValue, u_mdLen);
       }
    else
       {
-      uint32_t bytes_written = u_dgst_sign_finish((unsigned char*)output.data(), base64);
-
-      output.size_adjust(bytes_written);
+      if (u_dgst_sign_finish((unsigned char*)output.data(), base64) > 0) output.size_adjust(u_mdLen);
       }
 
-   U_INTERNAL_DUMP("u_mdLen = %u output = %.*S", u_mdLen, U_STRING_TO_TRACE(output))
+   U_INTERNAL_DUMP("u_mdLen = %d output = %.*S", u_mdLen, U_STRING_TO_TRACE(output))
 
    if (pkey &&
        u_pkey)
@@ -646,7 +642,7 @@ void UServices::generateDigest(int alg, unsigned char* data, uint32_t size)
 
    (void) u_dgst_finish(0, 0);
 
-   U_INTERNAL_DUMP("u_mdLen = %u", u_mdLen)
+   U_INTERNAL_DUMP("u_mdLen = %d", u_mdLen)
 }
 #endif // USE_LIBSSL
 
@@ -688,7 +684,7 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
       output.size_adjust(output.size() + bytes_written);
       }
 
-   U_INTERNAL_DUMP("u_mdLen = %u output = %.*S", u_mdLen, U_STRING_TO_TRACE(output))
+   U_INTERNAL_DUMP("u_mdLen = %d output = %.*S", u_mdLen, U_STRING_TO_TRACE(output))
 #endif
 }
 

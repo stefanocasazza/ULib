@@ -17,7 +17,7 @@ rm -f $DOC_ROOT/web_server_multiclient.log* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
 #UTRACE="0 100M 0"
-#UOBJDUMP="0 1M 100"
+#UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
 
@@ -36,14 +36,24 @@ userver {
  MAX_KEEP_ALIVE 3
  PID_FILE /var/run/userver_tcp.pid
  DOCUMENT_ROOT benchmark/docroot
+#PLUGIN "nocat ssi http"
  PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
+#PREFORK_CHILD 0 
 }
 http {
  ALIAS [ / /index.php ]
  ENABLE_INOTIFY yes
  APACHE_LIKE_LOG /var/log/httpd/access_log
  CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz
+}
+nocat {
+   FW_CMD firewall/nodog.fw
+   DECRYPT_KEY puppamelo
+   CHECK_TYPE 4
+   CHECK_EXPIRE_INTERVAL 360
+   FW_ENV "ExternalDevice=eth0 MasqueradeDevice=eth0 MasqueradeAuthServiceIP=0 'AuthServiceAddr=http://test' LocalNetwork=192.168.119.0/24 InternalDevice=eth0:1"
+   LOCAL_NETWORK_LABEL ap
 }
 EOF
 
@@ -52,7 +62,8 @@ DIR_CMD="../../examples/userver"
 compile_usp
 
 #STRACE=$TRUSS
-#VALGRIND=valgrind
+#STRACE=$LTRUSS
+#VALGRIND='valgrind --leak-check=yes --track-origins=yes'
 start_prg_background userver_tcp -c inp/webserver.cfg
 $SLEEP
 $SLEEP

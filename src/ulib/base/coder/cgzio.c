@@ -200,11 +200,11 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
 #  if __BYTE_ORDER == __LITTLE_ENDIAN
       size_original = *psize_original;
 
-      U_INTERNAL_PRINT("size original = %u (le)",                 *psize_original)
+      U_INTERNAL_PRINT("size original = %u (LE)",            *psize_original)
 #  else
-      size_original = u_invert_uint32(*psize_original);
+      size_original = u_invert32(*psize_original);
 
-      U_INTERNAL_PRINT("size original = %u (be)", u_invert_uint32(*psize_original))
+      U_INTERNAL_PRINT("size original = %u (BE)", u_invert32(*psize_original))
 #  endif
 
       U_INTERNAL_ASSERT_EQUALS(len, size_original)

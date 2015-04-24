@@ -79,6 +79,7 @@ public:
 
    static UString printSize(off_t n);
    static UString numberToString(double n);
+   static UString numberToString(uint32_t n);
    static UString numberToString(uint64_t n);
 
    static UString stringFromNumber(long n);
@@ -179,29 +180,16 @@ public:
       U_RETURN(result);
       }
 
-   // SUBSTITUTE: sostituzione di tutte le occorrenze di 'a' con 'b'
+   // SUBSTITUTE: replace all occurrences of 'a' with 'b'
 
-   static UString substitute(const char* s, uint32_t n,
-                             const char* a, uint32_t n1,
-                             const char* b, uint32_t n2);
+   static UString substitute(const char* s, uint32_t n, const char* a, uint32_t n1, const char* b, uint32_t n2);
+   static UString substitute(const UString& s,                char  a,                    char  b)              { return substitute(U_STRING_TO_PARAM(s), &a,  1, &b,  1); }
+   static UString substitute(const char* s, uint32_t n,       char  a,              const char* b, uint32_t n2) { return substitute(s, n,                 &a,  1,  b, n2); }
+   static UString substitute(const UString& s,                char  a,              const char* b, uint32_t n2) { return substitute(U_STRING_TO_PARAM(s), &a,  1,  b, n2); }
+   static UString substitute(const UString& s,          const char* a, uint32_t n1,       char  b)              { return substitute(U_STRING_TO_PARAM(s),  a, n1, &b,  1); }
+   static UString substitute(const UString& s,          const char* a, uint32_t n1, const char* b, uint32_t n2) { return substitute(U_STRING_TO_PARAM(s),  a, n1,  b, n2); }
 
-   static UString substitute(const UString& s,          char a, char b)
-      { return substitute(U_STRING_TO_PARAM(s), &a, 1, &b, 1); }
-
-   static UString substitute(const char* s, uint32_t n, char a, const char* b, uint32_t n2)
-      { return substitute(s, n,                 &a, 1, b, n2); }
-
-   static UString substitute(const UString& s,          char a, const char* b, uint32_t n2)
-      { return substitute(U_STRING_TO_PARAM(s), &a, 1, b, n2); }
-
-   static UString substitute(const UString& s, const char* a, uint32_t n1, char b)
-      { return substitute(U_STRING_TO_PARAM(s), a, n1, &b, 1); }
-
-   static UString substitute(const UString& s, const char* a, uint32_t n1, const char* b, uint32_t n2)
-      { return substitute(U_STRING_TO_PARAM(s), a, n1, b, n2); }
-
-   static UString substitute(const UString& s, const UString& a, const UString& b)
-      { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), U_STRING_TO_PARAM(b)); }
+   static UString substitute(const UString& s, const UString& a, const UString& b) { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), U_STRING_TO_PARAM(b)); }
 
    // ERASE
 

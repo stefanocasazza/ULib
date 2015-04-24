@@ -52,75 +52,76 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@STDCPP_TRUE@am__append_1 = internal/objectIO.cpp 
-@PTHREAD_TRUE@am__append_2 = thread.cpp
-@DEBUG_TRUE@am__append_3 = base/base_trace.c
-@DEBUG_TRUE@am__append_4 = debug/trace.cpp debug/error_memory.cpp debug/error_simulation.cpp
-@DEBUG_TRUE@@STDCPP_TRUE@am__append_5 = debug/objectDB.cpp
-@GETOPT_LONG_FALSE@am__append_6 = replace/getopt_long.c
-@MREMAP_FALSE@am__append_7 = replace/mremap.c
-@NANOSLEEP_FALSE@am__append_8 = replace/nanosleep.c
-@SENDFILE_FALSE@am__append_9 = replace/sendfile.c
-@STRNDUP_FALSE@am__append_10 = replace/strndup.c
-@SEMAPHORE_FALSE@am__append_11 = replace/sem.c
-@STRPTIME_FALSE@am__append_12 = replace/strptime.c
-@MKDTEMP_FALSE@am__append_13 = replace/mkdtemp.c
-@MEMRCHR_FALSE@am__append_14 = replace/memrchr.c
-@GMTIME_R_FALSE@am__append_15 = replace/gmtime.c
-@TIMEGM_FALSE@am__append_16 = replace/timegm.c
-@FNMATCH_FALSE@am__append_17 = replace/fnmatch.c
-@FALLOCATE_FALSE@am__append_18 = replace/fallocate.c
-@FALLOCATE64_FALSE@am__append_19 = replace/fallocate64.c
-@PREAD_FALSE@am__append_20 = replace/pread.c
-@ASSERT_FALSE@am__append_21 = replace/assert.c
-@MEMORY_POOL_TRUE@am__append_22 = internal/memory_pool.cpp
-@ZIP_TRUE@am__append_23 = base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c base/zip/ziptool.c
-@ZIP_TRUE@am__append_24 = zip/zip.cpp
-@LIBZ_TRUE@am__append_25 = base/coder/cgzio.c base/coder/zopfli.c
-@USE_PARSER_TRUE@am__append_26 = flex/flexer.cpp flex/bison.cpp
-@PCRE_TRUE@am__append_27 = pcre/pcre.cpp
-@SSL_TRUE@am__append_28 = base/ssl/cdes3.c base/ssl/dgst.c
-@SSL_TRUE@am__append_29 = ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
+@HTTP2_TRUE@am__append_1 = utility/http2.cpp
+@STDCPP_TRUE@am__append_2 = internal/objectIO.cpp 
+@PTHREAD_TRUE@am__append_3 = thread.cpp
+@DEBUG_TRUE@am__append_4 = base/base_trace.c
+@DEBUG_TRUE@am__append_5 = debug/trace.cpp debug/error_memory.cpp debug/error_simulation.cpp
+@DEBUG_TRUE@@STDCPP_TRUE@am__append_6 = debug/objectDB.cpp
+@GETOPT_LONG_FALSE@am__append_7 = replace/getopt_long.c
+@MREMAP_FALSE@am__append_8 = replace/mremap.c
+@NANOSLEEP_FALSE@am__append_9 = replace/nanosleep.c
+@SENDFILE_FALSE@am__append_10 = replace/sendfile.c
+@STRNDUP_FALSE@am__append_11 = replace/strndup.c
+@SEMAPHORE_FALSE@am__append_12 = replace/sem.c
+@STRPTIME_FALSE@am__append_13 = replace/strptime.c
+@MKDTEMP_FALSE@am__append_14 = replace/mkdtemp.c
+@MEMRCHR_FALSE@am__append_15 = replace/memrchr.c
+@GMTIME_R_FALSE@am__append_16 = replace/gmtime.c
+@TIMEGM_FALSE@am__append_17 = replace/timegm.c
+@FNMATCH_FALSE@am__append_18 = replace/fnmatch.c
+@FALLOCATE_FALSE@am__append_19 = replace/fallocate.c
+@FALLOCATE64_FALSE@am__append_20 = replace/fallocate64.c
+@PREAD_FALSE@am__append_21 = replace/pread.c
+@ASSERT_FALSE@am__append_22 = replace/assert.c
+@MEMORY_POOL_TRUE@am__append_23 = internal/memory_pool.cpp
+@ZIP_TRUE@am__append_24 = base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c base/zip/ziptool.c
+@ZIP_TRUE@am__append_25 = zip/zip.cpp
+@LIBZ_TRUE@am__append_26 = base/coder/cgzio.c base/coder/zopfli.c
+@USE_PARSER_TRUE@am__append_27 = flex/flexer.cpp flex/bison.cpp
+@PCRE_TRUE@am__append_28 = pcre/pcre.cpp
+@SSL_TRUE@am__append_29 = base/ssl/cdes3.c base/ssl/dgst.c
+@SSL_TRUE@am__append_30 = ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
 @SSL_TRUE@		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp utility/des3.cpp
 
-@SSL_TRUE@@SSL_TS_TRUE@am__append_30 = ssl/timestamp.cpp
-@SSH_TRUE@am__append_31 = ssh/net/sshsocket.cpp
-@LDAP_TRUE@am__append_32 = ldap/ldap.cpp
-@CURL_TRUE@am__append_33 = curl/curl.cpp
-@EXPAT_TRUE@am__append_34 = xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
+@SSL_TRUE@@SSL_TS_TRUE@am__append_31 = ssl/timestamp.cpp
+@SSH_TRUE@am__append_32 = ssh/net/sshsocket.cpp
+@LDAP_TRUE@am__append_33 = ldap/ldap.cpp
+@CURL_TRUE@am__append_34 = curl/curl.cpp
+@EXPAT_TRUE@am__append_35 = xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
 @EXPAT_TRUE@		     xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp xml/soap/soap_client.cpp
 
-@LIBXML2_TRUE@am__append_35 = xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp
-@MAGIC_TRUE@am__append_36 = magic/magic.cpp
-@DBI_TRUE@am__append_37 = dbi/dbi.cpp
-@LIBEVENT_TRUE@am__append_38 = libevent/event.cpp
-@MINGW_TRUE@am__append_39 = base/win32/mingw32.c
-@MINGW_FALSE@am__append_40 = net/unixsocket.cpp
+@LIBXML2_TRUE@am__append_36 = xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp
+@MAGIC_TRUE@am__append_37 = magic/magic.cpp
+@DBI_TRUE@am__append_38 = dbi/dbi.cpp
+@LIBEVENT_TRUE@am__append_39 = libevent/event.cpp
+@MINGW_TRUE@am__append_40 = base/win32/mingw32.c
+@MINGW_FALSE@am__append_41 = net/unixsocket.cpp
 
 # Handler static plugin
-@STATIC_HANDLER_RPC_TRUE@am__append_41 = net/server/plugin/mod_rpc.cpp
-@MOD_SHIB_TRUE@@STATIC_HANDLER_SHIB_TRUE@am__append_42 = net/server/plugin/mod_shib/mod_shib.cpp
-@STATIC_HANDLER_STREAM_TRUE@am__append_43 = net/server/plugin/mod_stream.cpp
-@STATIC_HANDLER_NOCAT_TRUE@am__append_44 = net/server/plugin/mod_nocat.cpp
-@STATIC_HANDLER_SOCKET_TRUE@am__append_45 = net/server/plugin/mod_socket.cpp
-@STATIC_HANDLER_SCGI_TRUE@am__append_46 = net/server/plugin/mod_scgi.cpp
-@STATIC_HANDLER_FCGI_TRUE@am__append_47 = net/server/plugin/mod_fcgi.cpp
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__append_48 = net/server/plugin/mod_geoip/mod_geoip.cpp
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__append_49 = net/server/plugin/mod_proxy.cpp
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__append_50 = net/server/plugin/mod_soap.cpp
-@STATIC_HANDLER_SSI_TRUE@am__append_51 = net/server/plugin/mod_ssi.cpp
-@STATIC_HANDLER_TSA_TRUE@am__append_52 = net/server/plugin/mod_tsa.cpp
-@STATIC_HANDLER_HTTP_TRUE@am__append_53 = net/server/plugin/mod_http.cpp
-@STATIC_HANDLER_ECHO_TRUE@am__append_54 = net/server/plugin/mod_echo.cpp
-@STATIC_ORM_DRIVER_SQLITE_TRUE@am__append_55 = orm/driver/orm_driver_sqlite.cpp
-@STATIC_ORM_DRIVER_MYSQL_TRUE@am__append_56 = orm/driver/orm_driver_mysql.cpp
-@STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_57 = orm/driver/orm_driver_pgsql.cpp
+@STATIC_HANDLER_RPC_TRUE@am__append_42 = net/server/plugin/mod_rpc.cpp
+@MOD_SHIB_TRUE@@STATIC_HANDLER_SHIB_TRUE@am__append_43 = net/server/plugin/mod_shib/mod_shib.cpp
+@STATIC_HANDLER_STREAM_TRUE@am__append_44 = net/server/plugin/mod_stream.cpp
+@STATIC_HANDLER_NOCAT_TRUE@am__append_45 = net/server/plugin/mod_nocat.cpp
+@STATIC_HANDLER_SOCKET_TRUE@am__append_46 = net/server/plugin/mod_socket.cpp
+@STATIC_HANDLER_SCGI_TRUE@am__append_47 = net/server/plugin/mod_scgi.cpp
+@STATIC_HANDLER_FCGI_TRUE@am__append_48 = net/server/plugin/mod_fcgi.cpp
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__append_49 = net/server/plugin/mod_geoip/mod_geoip.cpp
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__append_50 = net/server/plugin/mod_proxy.cpp
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__append_51 = net/server/plugin/mod_soap.cpp
+@STATIC_HANDLER_SSI_TRUE@am__append_52 = net/server/plugin/mod_ssi.cpp
+@STATIC_HANDLER_TSA_TRUE@am__append_53 = net/server/plugin/mod_tsa.cpp
+@STATIC_HANDLER_HTTP_TRUE@am__append_54 = net/server/plugin/mod_http.cpp
+@STATIC_HANDLER_ECHO_TRUE@am__append_55 = net/server/plugin/mod_echo.cpp
+@STATIC_ORM_DRIVER_SQLITE_TRUE@am__append_56 = orm/driver/orm_driver_sqlite.cpp
+@STATIC_ORM_DRIVER_MYSQL_TRUE@am__append_57 = orm/driver/orm_driver_mysql.cpp
+@STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_58 = orm/driver/orm_driver_pgsql.cpp
 
 # Handler static http servlet
-@STATIC_ONLY_TRUE@@STATIC_SERVLET_TRUE@am__append_58 = net/server/plugin/usp/loader.autoconf.inc 
+@STATIC_ONLY_TRUE@@STATIC_SERVLET_TRUE@am__append_59 = net/server/plugin/usp/loader.autoconf.inc 
 
 # ---------- Win32 stuff ----------
-@MINGW_TRUE@am__append_59 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
+@MINGW_TRUE@am__append_60 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
 subdir = src/ulib
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(srcdir)/ULib.pc.in $(srcdir)/ULib.rc.in \
@@ -213,7 +214,7 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	query/query_parser.cpp event/event_time.cpp timeval.cpp \
 	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
 	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
-	date.cpp url.cpp tokenizer.cpp command.cpp \
+	date.cpp url.cpp tokenizer.cpp command.cpp utility/http2.cpp \
 	internal/objectIO.cpp thread.cpp debug/trace.cpp \
 	debug/error_memory.cpp debug/error_simulation.cpp \
 	debug/objectDB.cpp internal/memory_pool.cpp zip/zip.cpp \
@@ -275,48 +276,49 @@ am__objects_22 = base.lo base_error.lo hash.lo utility.lo minilzo.lo \
 	$(am__objects_15) $(am__objects_16) $(am__objects_17) \
 	$(am__objects_18) $(am__objects_19) $(am__objects_20) \
 	$(am__objects_21)
-@STDCPP_TRUE@am__objects_23 = objectIO.lo
-@PTHREAD_TRUE@am__objects_24 = thread.lo
-@DEBUG_TRUE@am__objects_25 = trace.lo error_memory.lo \
+@HTTP2_TRUE@am__objects_23 = http2.lo
+@STDCPP_TRUE@am__objects_24 = objectIO.lo
+@PTHREAD_TRUE@am__objects_25 = thread.lo
+@DEBUG_TRUE@am__objects_26 = trace.lo error_memory.lo \
 @DEBUG_TRUE@	error_simulation.lo
-@DEBUG_TRUE@@STDCPP_TRUE@am__objects_26 = objectDB.lo
-@MEMORY_POOL_TRUE@am__objects_27 = memory_pool.lo
-@ZIP_TRUE@am__objects_28 = zip.lo
-@USE_PARSER_TRUE@am__objects_29 = flexer.lo bison.lo
-@PCRE_TRUE@am__objects_30 = pcre.lo
-@SSL_TRUE@am__objects_31 = certificate.lo pkcs7.lo crl.lo pkcs10.lo \
+@DEBUG_TRUE@@STDCPP_TRUE@am__objects_27 = objectDB.lo
+@MEMORY_POOL_TRUE@am__objects_28 = memory_pool.lo
+@ZIP_TRUE@am__objects_29 = zip.lo
+@USE_PARSER_TRUE@am__objects_30 = flexer.lo bison.lo
+@PCRE_TRUE@am__objects_31 = pcre.lo
+@SSL_TRUE@am__objects_32 = certificate.lo pkcs7.lo crl.lo pkcs10.lo \
 @SSL_TRUE@	mime_pkcs7.lo sslsocket.lo ssl_session.lo des3.lo
-@SSL_TRUE@@SSL_TS_TRUE@am__objects_32 = timestamp.lo
-@SSH_TRUE@am__objects_33 = sshsocket.lo
-@LDAP_TRUE@am__objects_34 = ldap.lo
-@CURL_TRUE@am__objects_35 = curl.lo
-@EXPAT_TRUE@am__objects_36 = attribute.lo element.lo xml_parser.lo \
+@SSL_TRUE@@SSL_TS_TRUE@am__objects_33 = timestamp.lo
+@SSH_TRUE@am__objects_34 = sshsocket.lo
+@LDAP_TRUE@am__objects_35 = ldap.lo
+@CURL_TRUE@am__objects_36 = curl.lo
+@EXPAT_TRUE@am__objects_37 = attribute.lo element.lo xml_parser.lo \
 @EXPAT_TRUE@	xml2txt.lo soap_fault.lo soap_gen_method.lo \
 @EXPAT_TRUE@	soap_parser.lo soap_encoder.lo soap_client.lo
-@LIBXML2_TRUE@am__objects_37 = node.lo document.lo schema.lo
-@MAGIC_TRUE@am__objects_38 = magic.lo
-@DBI_TRUE@am__objects_39 = dbi.lo
-@LIBEVENT_TRUE@am__objects_40 = event.lo
-@MINGW_FALSE@am__objects_41 = unixsocket.lo
-@STATIC_HANDLER_RPC_TRUE@am__objects_42 = mod_rpc.lo
-@MOD_SHIB_TRUE@@STATIC_HANDLER_SHIB_TRUE@am__objects_43 = mod_shib.lo
-@STATIC_HANDLER_STREAM_TRUE@am__objects_44 = mod_stream.lo
-@STATIC_HANDLER_NOCAT_TRUE@am__objects_45 = mod_nocat.lo
-@STATIC_HANDLER_SOCKET_TRUE@am__objects_46 = mod_socket.lo
-@STATIC_HANDLER_SCGI_TRUE@am__objects_47 = mod_scgi.lo
-@STATIC_HANDLER_FCGI_TRUE@am__objects_48 = mod_fcgi.lo
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__objects_49 = mod_geoip.lo
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__objects_50 = mod_proxy.lo
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__objects_51 = mod_soap.lo
-@STATIC_HANDLER_SSI_TRUE@am__objects_52 = mod_ssi.lo
-@STATIC_HANDLER_TSA_TRUE@am__objects_53 = mod_tsa.lo
-@STATIC_HANDLER_HTTP_TRUE@am__objects_54 = mod_http.lo
-@STATIC_HANDLER_ECHO_TRUE@am__objects_55 = mod_echo.lo
-@STATIC_ORM_DRIVER_SQLITE_TRUE@am__objects_56 = orm_driver_sqlite.lo
-@STATIC_ORM_DRIVER_MYSQL_TRUE@am__objects_57 = orm_driver_mysql.lo
-@STATIC_ORM_DRIVER_PGSQL_TRUE@am__objects_58 = orm_driver_pgsql.lo
-am__objects_59 =
-am__objects_60 = common.lo dialog.lo cdb.lo rdb.lo debug_common.lo \
+@LIBXML2_TRUE@am__objects_38 = node.lo document.lo schema.lo
+@MAGIC_TRUE@am__objects_39 = magic.lo
+@DBI_TRUE@am__objects_40 = dbi.lo
+@LIBEVENT_TRUE@am__objects_41 = event.lo
+@MINGW_FALSE@am__objects_42 = unixsocket.lo
+@STATIC_HANDLER_RPC_TRUE@am__objects_43 = mod_rpc.lo
+@MOD_SHIB_TRUE@@STATIC_HANDLER_SHIB_TRUE@am__objects_44 = mod_shib.lo
+@STATIC_HANDLER_STREAM_TRUE@am__objects_45 = mod_stream.lo
+@STATIC_HANDLER_NOCAT_TRUE@am__objects_46 = mod_nocat.lo
+@STATIC_HANDLER_SOCKET_TRUE@am__objects_47 = mod_socket.lo
+@STATIC_HANDLER_SCGI_TRUE@am__objects_48 = mod_scgi.lo
+@STATIC_HANDLER_FCGI_TRUE@am__objects_49 = mod_fcgi.lo
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__objects_50 = mod_geoip.lo
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__objects_51 = mod_proxy.lo
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__objects_52 = mod_soap.lo
+@STATIC_HANDLER_SSI_TRUE@am__objects_53 = mod_ssi.lo
+@STATIC_HANDLER_TSA_TRUE@am__objects_54 = mod_tsa.lo
+@STATIC_HANDLER_HTTP_TRUE@am__objects_55 = mod_http.lo
+@STATIC_HANDLER_ECHO_TRUE@am__objects_56 = mod_echo.lo
+@STATIC_ORM_DRIVER_SQLITE_TRUE@am__objects_57 = orm_driver_sqlite.lo
+@STATIC_ORM_DRIVER_MYSQL_TRUE@am__objects_58 = orm_driver_mysql.lo
+@STATIC_ORM_DRIVER_PGSQL_TRUE@am__objects_59 = orm_driver_pgsql.lo
+am__objects_60 =
+am__objects_61 = common.lo dialog.lo cdb.lo rdb.lo debug_common.lo \
 	error.lo dynamic.lo plugin.lo header.lo entity.lo multipart.lo \
 	vector.lo hash_map.lo tree.lo interrupt.lo compress.lo \
 	services.lo semaphore.lo base64.lo hexdump.lo lock.lo \
@@ -343,9 +345,9 @@ am__objects_60 = common.lo dialog.lo cdb.lo rdb.lo debug_common.lo \
 	$(am__objects_50) $(am__objects_51) $(am__objects_52) \
 	$(am__objects_53) $(am__objects_54) $(am__objects_55) \
 	$(am__objects_56) $(am__objects_57) $(am__objects_58) \
-	$(am__objects_59)
+	$(am__objects_59) $(am__objects_60)
 @FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_22) \
-@FINAL_FALSE@	$(am__objects_60)
+@FINAL_FALSE@	$(am__objects_61)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo all_cpp.lo
 lib@ULIB@_la_OBJECTS = $(am_lib@ULIB@_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -603,14 +605,14 @@ SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
 	base/lzo/minilzo.c base/coder/cbase64.c \
 	base/coder/cquoted_printable.c base/coder/curl_coder.c \
 	base/coder/cxml_coder.c base/coder/cescape.c \
-	base/coder/chexdump.c $(am__append_3) $(am__append_6) \
-	$(am__append_7) $(am__append_8) $(am__append_9) \
-	$(am__append_10) $(am__append_11) $(am__append_12) \
-	$(am__append_13) $(am__append_14) $(am__append_15) \
-	$(am__append_16) $(am__append_17) $(am__append_18) \
-	$(am__append_19) $(am__append_20) $(am__append_21) \
-	$(am__append_23) $(am__append_25) $(am__append_28) \
-	$(am__append_39)
+	base/coder/chexdump.c $(am__append_4) $(am__append_7) \
+	$(am__append_8) $(am__append_9) $(am__append_10) \
+	$(am__append_11) $(am__append_12) $(am__append_13) \
+	$(am__append_14) $(am__append_15) $(am__append_16) \
+	$(am__append_17) $(am__append_18) $(am__append_19) \
+	$(am__append_20) $(am__append_21) $(am__append_22) \
+	$(am__append_24) $(am__append_26) $(am__append_29) \
+	$(am__append_40)
 SRC_CPP = internal/common.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
 	debug/debug_common.cpp debug/error.cpp dynamic/dynamic.cpp \
 	dynamic/plugin.cpp mime/header.cpp mime/entity.cpp \
@@ -637,24 +639,25 @@ SRC_CPP = internal/common.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
 	timer.cpp notifier.cpp string.cpp file.cpp process.cpp \
 	file_config.cpp log.cpp options.cpp application.cpp cache.cpp \
 	date.cpp url.cpp tokenizer.cpp command.cpp $(am__append_1) \
-	$(am__append_2) $(am__append_4) $(am__append_5) \
-	$(am__append_22) $(am__append_24) $(am__append_26) \
-	$(am__append_27) $(am__append_29) $(am__append_30) \
+	$(am__append_2) $(am__append_3) $(am__append_5) \
+	$(am__append_6) $(am__append_23) $(am__append_25) \
+	$(am__append_27) $(am__append_28) $(am__append_30) \
 	$(am__append_31) $(am__append_32) $(am__append_33) \
 	$(am__append_34) $(am__append_35) $(am__append_36) \
-	$(am__append_37) $(am__append_38) $(am__append_40) \
+	$(am__append_37) $(am__append_38) $(am__append_39) \
 	$(am__append_41) $(am__append_42) $(am__append_43) \
 	$(am__append_44) $(am__append_45) $(am__append_46) \
 	$(am__append_47) $(am__append_48) $(am__append_49) \
 	$(am__append_50) $(am__append_51) $(am__append_52) \
 	$(am__append_53) $(am__append_54) $(am__append_55) \
-	$(am__append_56) $(am__append_57) $(am__append_58)
+	$(am__append_56) $(am__append_57) $(am__append_58) \
+	$(am__append_59)
 
 # Handler static orm driver
 
 #lib@ULIB@_la_CXXFLAGS =
 lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ -version-info 1:0:0 -release \
-	@ULIB_VERSION@ $(am__append_59)
+	@ULIB_VERSION@ $(am__append_60)
 @FINAL_FALSE@lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 @FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c all_cpp.cpp
 lib_LTLIBRARIES = lib@ULIB@.la
@@ -806,6 +809,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/header.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/hexdump.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/imap.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/inflate.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/interrupt.Plo@am__quote@
@@ -1625,6 +1629,13 @@ event_time.lo: event/event_time.cpp
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='event/event_time.cpp' object='event_time.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o event_time.lo `test -f 'event/event_time.cpp' || echo '$(srcdir)/'`event/event_time.cpp
+
+http2.lo: utility/http2.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT http2.lo -MD -MP -MF $(DEPDIR)/http2.Tpo -c -o http2.lo `test -f 'utility/http2.cpp' || echo '$(srcdir)/'`utility/http2.cpp
+@am__fastdepCXX_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/http2.Tpo $(DEPDIR)/http2.Plo
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='utility/http2.cpp' object='http2.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o http2.lo `test -f 'utility/http2.cpp' || echo '$(srcdir)/'`utility/http2.cpp
 
 objectIO.lo: internal/objectIO.cpp
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)$(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT objectIO.lo -MD -MP -MF $(DEPDIR)/objectIO.Tpo -c -o objectIO.lo `test -f 'internal/objectIO.cpp' || echo '$(srcdir)/'`internal/objectIO.cpp

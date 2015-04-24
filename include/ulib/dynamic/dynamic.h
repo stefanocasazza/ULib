@@ -35,7 +35,7 @@ typedef void* HINSTANCE;
 
 /**
  * @class UDynamic
- * @short  Dynamic class file loader.
+ * @short  Dynamic class file loader
  *
  * This class is used to load object files. On elf based systems this is typically done with dlopen
  */
@@ -70,25 +70,30 @@ public:
       U_TRACE(0, "UDynamic::~UDynamic()")
       }
 
-   /** Load a object file
-       @param name of object to load
-   */
+   /**
+    * Load a object file
+    *
+    * @param name of object to load
+    */
 
    bool load(const char* pathname);
    bool load(const char* name, uint32_t name_len);
 
-   /** Detach a DSO object from running memory
-   */
+   /**
+    * Detach a DSO object from running memory
+    */
 
    void close();
 
-   /** Lookup a symbol in the loaded file
-   */
+   /**
+    * Lookup a symbol in the loaded file
+    */
 
    void* operator[](const char* sym);
 
-   /** Retrieve error indicator associated with DSO failure.
-   */
+   /**
+    * Retrieve error indicator associated with DSO failure
+    */
 
    const char* getError() const { return err; }
 

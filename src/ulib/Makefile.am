@@ -44,6 +44,10 @@ SRC_CPP = internal/common.cpp \
 			 timeval.cpp timer.cpp notifier.cpp string.cpp file.cpp process.cpp file_config.cpp log.cpp \
 			 options.cpp application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp command.cpp
 
+if HTTP2
+SRC_CPP += utility/http2.cpp
+endif
+
 if STDCPP
 SRC_CPP += internal/objectIO.cpp 
 endif

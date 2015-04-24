@@ -327,11 +327,7 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
 
 /* Endian order (network byte order is big endian) */
 
-#if __BYTE_ORDER == __LITTLE_ENDIAN
-#  define u_byte4(n)      ( (n) << 24)
-#  define u_byte3(n)      (((n) <<  8) & 0x00ff0000)
-#  define u_byte2(n)      (((n) >>  8) & 0x0000ff00)
-#  define u_byte1(n)      ( (n) >> 24)
+#if __BYTE_ORDER == __LITTLE_ENDIAN /* the host byte order is Least Significant Byte first */
 #  define u_test_bit(n,c) (((c) & (1 << n)) != 0)
 
 #  define u_htonll(x) (((uint64_t)htonl((uint32_t)x))<<32 | htonl((uint32_t)(x>>32)))
@@ -368,12 +364,13 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
                                                              ((int64_t)(f))<<40|\
                                                              ((int64_t)(g))<<48|\
                                                              ((int64_t)(h))<<56))
-#else
-#  define u_byte4(n)      ( (n) >> 24)
-#  define u_byte3(n)      (((n) >>  8) & 0x0000ff00)
-#  define u_byte2(n)      (((n) <<  8) & 0x00ff0000)
-#  define u_byte1(n)      ( (n) << 24)
+#else /* the host byte order is Most Significant Byte first */
 #  define u_test_bit(n,c) ((((c) >> n) & 1) != 0)
+
+#  define u_invert32(n) (((n) >> 24)               | \
+                        (((n) >>  8) & 0x0000ff00) | \
+                        (((n) <<  8) & 0x00ff0000) | \
+                        ( (n) << 24))
 
 #  define u_htonll(x) (x)
 #  define u_ntohll(x) (x)
@@ -415,14 +412,6 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
                                                              ((int64_t)(g))<<48|\
                                                              ((int64_t)(h))<<56))
 #endif
-
-#define u_invert_uint16(s) (((s) >> 8) | \
-                            ((s) << 8))
-
-#define u_invert_uint32(n) (u_byte4(n) | \
-                            u_byte3(n) | \
-                            u_byte2(n) | \
-                            u_byte1(n))
 
 /* Check for dot entry in directory */
 

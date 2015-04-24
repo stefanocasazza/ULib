@@ -36,6 +36,40 @@
 #endif
 
 #include <time.h>
+/*
+#if !HAVE_GMTIME_R && !defined(gmtime_r)
+static inline struct tm* gmtime_r(const time_t* clock, struct tm* result)
+{
+   struct tm* ptr = gmtime(clock);
+
+   if (ptr)
+      {
+      *result = *ptr;
+
+      return result;
+      }
+
+   return 0;
+}
+#endif
+
+#if !HAVE_LOCALTIME_R && !defined(localtime_r)
+static inline struct tm* localtime_r(const time_t* clock, struct tm* result)
+{
+   struct tm* ptr = localtime(clock);
+
+   if (ptr)
+      {
+      *result = *ptr;
+
+      return result;
+      }
+
+   return 0;
+}
+#endif
+*/
+
 #include <stdio.h>
 #include <sys/stat.h>
 
@@ -188,40 +222,6 @@ struct flock {
 /* Read, write, and execute by others. */
 #define S_IRWXO  (S_IRWXG >> 3)
 #endif
-
-/*
-#if !HAVE_GMTIME_R && !defined(gmtime_r)
-static inline struct tm* gmtime_r(const time_t* clock, struct tm* result)
-{
-   struct tm* ptr = gmtime(clock);
-
-   if (ptr)
-      {
-      *result = *ptr;
-
-      return result;
-      }
-
-   return 0;
-}
-#endif
-
-#if !HAVE_LOCALTIME_R && !defined(localtime_r)
-static inline struct tm* localtime_r(const time_t* clock, struct tm* result)
-{
-   struct tm* ptr = localtime(clock);
-
-   if (ptr)
-      {
-      *result = *ptr;
-
-      return result;
-      }
-
-   return 0;
-}
-#endif
-*/
 
 #define mkdir(path,mode) mkdir(path)
 /* win32 doesn't have symbolic link, so just #define it to stat */

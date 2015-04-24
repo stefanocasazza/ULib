@@ -87,7 +87,7 @@ void ULib_init()
 
    // allocation from memory pool
 
-#if defined(ENABLE_MEMPOOL) && defined(__linux__)   // check if we want some preallocation for memory pool
+#if defined(ENABLE_MEMPOOL) // check if we want some preallocation for memory pool
    char* ptr = U_SYSCALL(getenv, "%S", "UMEMPOOL"); // start from 1... (Ex: 768,768,0,1536,2085,0,0,0,121)
 
    // coverity[tainted_scalar]

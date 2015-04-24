@@ -54,7 +54,7 @@ void URDBServer::preallocate()
 {
    U_TRACE(0+256, "URDBServer::preallocate()")
 
-   (void) U_NEW_VECTOR(UNotifier::max_connection, URDBClientImage, &UServer_Base::oClientImage);
+   UServer_Base::vClientImage = new URDBClientImage[UNotifier::max_connection];
 }
 
 #ifdef DEBUG
@@ -64,7 +64,7 @@ void URDBServer::deallocate()
 
    // NB: array are not pointers (virtual table can shift the address of this)...
 
-   u_delete_vector<URDBClientImage>((URDBClientImage*)UServer_Base::vClientImage, UServer_Base::oClientImage, UNotifier::max_connection);
+   delete[] (URDBClientImage*)UServer_Base::vClientImage;
 }
 
 bool URDBServer::check_memory() { return u_check_memory_vector<URDBClientImage>((URDBClientImage*)UServer_Base::vClientImage, UNotifier::max_connection); }

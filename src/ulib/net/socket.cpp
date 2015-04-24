@@ -27,8 +27,16 @@
 U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #  endif
 #endif
+
 #ifdef USE_LIBSSL
 #  include <ulib/ssl/net/sslsocket.h>
+#endif
+
+#ifdef HAVE_SYS_IOCTL_H
+#  include <sys/ioctl.h>
+#endif
+#ifdef HAVE_ARPA_INET_H
+#  include <net/if_arp.h>
 #endif
 
 int            USocket::iBackLog = SOMAXCONN;
@@ -139,43 +147,6 @@ void USocket::_socket(int iSocketType, int domain, int protocol)
       }
 }
 
-/**
- * The shutdown() tells the receiver the server is done sending data. No
- * more data is going to be send. More importantly, it doesn't close the
- * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
- */
-
-bool USocket::shutdown(int how)
-{
-   U_TRACE(1, "USocket::shutdown(%d)", how)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT(isOpen())
-
-   if (U_SYSCALL(shutdown, "%d,%d", getFd(), how) == 0)
-      {
-      /**
-       * SO_KEEPALIVE makes the kernel more aggressive about continually verifying the connection even when you're not doing anything,
-       * but does not change or enhance the way the information is delivered to you. You'll find out when you try to actually do something
-       * (for example "write"), and you'll find out right away since the kernel is now just reporting the status of a previously set flag,
-       * rather than having to wait a few seconds (or much longer in some cases) for network activity to fail. The exact same code logic you
-       * had for handling the "other side went away unexpectedly" condition will still be used; what changes is the timing (not the method)
-       *
-       * Ref1: FIN_WAIT2 [https://kb.iu.edu/d/ajmi]
-       * Ref2: tcp_fin_timeout [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN370]
-       * Ref3: tcp_retries2 [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN444]
-       * Ref4: tcp_max_orphans [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN388]
-       */
-
-   // (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 }, sizeof(int));
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
 bool USocket::connectServer(const UIPAddress& cAddr, unsigned int iServPort)
 {
    U_TRACE(1, "USocket::connectServer(%p,%d)", &cAddr, iServPort)
@@ -265,6 +236,76 @@ void USocket::setLocal(const UIPAddress& addr)
    U_socket_LocalSet(this) = true;
 }
 
+UString USocket::getMacAddress(const char* device)
+{
+   U_TRACE(1, "USocket::getMacAddress(%S)", device)
+
+   U_INTERNAL_ASSERT_POINTER(device)
+
+   UString result(100U);
+
+#if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_ARPA_INET_H)
+   U_INTERNAL_ASSERT(isOpen())
+
+   /* ARP ioctl request
+   struct arpreq {
+      struct sockaddr arp_pa;       // Protocol address
+      struct sockaddr arp_ha;       // Hardware address
+      int arp_flags;                // Flags
+      struct sockaddr arp_netmask;  // Netmask (only for proxy arps)
+      char arp_dev[16];
+   };
+   */
+
+   struct arpreq arpreq;
+
+   (void) U_SYSCALL(memset, "%p,%d,%u", &arpreq, 0, sizeof(arpreq));
+
+   union uupsockaddr {
+      struct sockaddr*    p;
+      struct sockaddr_in* psin;
+   };
+
+   union uupsockaddr u = { &arpreq.arp_pa };
+
+   // arp_pa must be an AF_INET address
+   // arp_ha must have the same type as the device which is specified in arp_dev
+   // arp_dev is a zero-terminated string which names a device
+
+   u.psin->sin_family      = AF_INET;
+   u.psin->sin_addr.s_addr = cRemoteAddress.getInAddr();
+   arpreq.arp_ha.sa_family = AF_INET;
+
+   (void) u__strncpy(arpreq.arp_dev, device, 15);
+
+   if (U_SYSCALL(ioctl, "%d,%d,%p", iSockDesc, SIOCGARP, &arpreq) == 0)
+      {
+      if ((arpreq.arp_flags & ATF_COM) != 0)
+         {
+         unsigned char* hwaddr = (unsigned char*)arpreq.arp_ha.sa_data;
+
+         result.snprintf("%02x:%02x:%02x:%02x:%02x:%02x",
+            hwaddr[0] & 0xFF,
+            hwaddr[1] & 0xFF,
+            hwaddr[2] & 0xFF,
+            hwaddr[3] & 0xFF,
+            hwaddr[4] & 0xFF,
+            hwaddr[5] & 0xFF);
+
+         /*
+         if (arpreq.arp_flags & ATF_PERM)        printf("PERM");
+         if (arpreq.arp_flags & ATF_PUBL)        printf("PUBLISHED");
+         if (arpreq.arp_flags & ATF_USETRAILERS) printf("TRAILERS");
+         if (arpreq.arp_flags & ATF_PROXY)       printf("PROXY");
+         */
+         }
+      // else printf("*** INCOMPLETE ***");
+      }
+#endif
+
+   U_RETURN_STRING(result);
+}
+
 /**
  * The method is called with a local IP address and port number to bind the socket to.
  * A default port number of zero is a wildcard and lets the OS choose the port number
@@ -305,11 +346,9 @@ void USocket::setTcpFastOpen()
    U_TRACE(0, "USocket::setTcpFastOpen()")
 
 #if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
-
 #  ifndef TCP_FASTOPEN
 #  define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
 #  endif
-
    (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const int[]){ 5 }, sizeof(int));
 #endif
 }
@@ -328,11 +367,9 @@ void USocket::setReusePort()
     */
 
 #if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
-
 #  ifndef SO_REUSEPORT
 #  define SO_REUSEPORT 15
 #  endif
-
    tcp_reuseport = (U_socket_Type(this) != SK_UNIX                                        &&
                     setSockOpt(SOL_SOCKET, SO_REUSEPORT, (const int[]){ 1 }, sizeof(int)) &&
                     U_socket_Type(this) != SK_DGRAM);
@@ -538,12 +575,6 @@ void USocket::reusePort()
 #endif
 
    setFlags(server_flags);
-
-   if (isOpen() &&
-       isUDP() == false)
-      {
-      setTcpLingerOff();
-      }
 }
 
 void USocket::setRemote()
@@ -876,6 +907,10 @@ void USocket::_closesocket()
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT(isOpen())
+
+#ifdef U_SERVER_CAPTIVE_PORTAL
+   (void) U_SYSCALL(shutdown, "%d,%d", iSockDesc, SHUT_WR);
+#endif
 
 #ifdef _MSWINDOWS_
    (void) U_SYSCALL(closesocket, "%d", fh);

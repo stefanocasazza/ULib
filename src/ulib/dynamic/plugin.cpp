@@ -72,10 +72,10 @@ __pure UPlugIn<void*>* UPlugIn<void*>::getObjWrapper(void* _obj)
 
    for (UPlugIn<void*>* item = first; item; item = item->next)
       {
-      if (item->obj == _obj) U_RETURN_POINTER(item,UPlugIn<void*>);
+      if (item->obj == _obj) U_RETURN_POINTER(item, UPlugIn<void*>);
       }
 
-   U_RETURN_POINTER(0,UPlugIn<void*>);
+   U_RETURN_POINTER(0, UPlugIn<void*>);
 }
 
 // DEBUG

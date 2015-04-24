@@ -492,7 +492,7 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
    if (*plength >= rlimit_memalloc) // NB: we try to save some swap pressure...
       {
-#if defined(__linux__) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if !defined(U_SERVER_CAPTIVE_PORTAL)
 try_from_file_system:
 #endif
       UFile tmp;
@@ -530,7 +530,7 @@ try_from_file_system:
          }
       }
 
-#if !defined(__linux__) || defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(U_SERVER_CAPTIVE_PORTAL)
 #  ifdef DEBUG
    U_WARNING("we are going to malloc %u bytes (%u KB) (pid %P)", *plength, *plength / 1024);
 #  endif

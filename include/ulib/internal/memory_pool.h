@@ -509,64 +509,6 @@ private:
    template <class T> friend class UVector;
 };
 
-//#define ENABLE_NEW_VECTOR yes // I don't understand what happen with this...
-
-template <class T> T* u_new_vector(uint32_t& n, int32_t* poffset, uint32_t sz)
-{
-   U_TRACE(0+256, "u_new_vector<T>(%u,%p,%u)", n, poffset, sz)
-
-   U_INTERNAL_ASSERT_EQUALS(sz, sizeof(T))
-
-   sz = ((n * sizeof(T)) + U_PAGEMASK) & ~U_PAGEMASK;
-
-   U_INTERNAL_ASSERT_EQUALS(sz & U_PAGEMASK, 0)
-
-   n = sz / sizeof(T);
-
-   U_INTERNAL_DUMP("n = %u", n)
-
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__) || !defined(ENABLE_NEW_VECTOR)
-   T* _vec = new T[n];
-#else
-   char* area = UFile::mmap(&sz, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
-
-   if (area == 0) U_RETURN_POINTER(0, T);
-
-   T* _vec = new(area) T[n]; // NB: Initializers cannot be specified for arrays...
-
-   // NB: array are not pointers (virtual table can shift the address of this)...
-
-   if (poffset)
-      {
-      *poffset = ((char*)_vec - area);
-
-      U_INTERNAL_DUMP("offset = %d", *poffset)
-      }
-#endif
-
-   U_RETURN_POINTER(_vec, T);
-}
-
-template <class T> void u_delete_vector(T* _vec, uint32_t offset, uint32_t n)
-{
-   U_TRACE(0+256, "u_delete_vector<T>(%p,%u,%u)", _vec, offset, n)
-
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__) || !defined(ENABLE_NEW_VECTOR)
-   delete[] _vec;
-#else
-   uint32_t i = n;
-
-   do {
-      _vec[--i].~T();
-
-      if (i == 0) break;
-      }
-   while (true);
-
-   UMemoryPool::_free((char*)_vec - offset, n, sizeof(T));
-#endif
-}
-
 #ifdef DEBUG
 template <class T> bool u_check_memory_vector(T* _vec, uint32_t n)
 {
@@ -578,31 +520,22 @@ template <class T> bool u_check_memory_vector(T* _vec, uint32_t n)
 }
 #endif
 
-#if !defined(ENABLE_MEMPOOL) || !defined(__linux__)
-#  define U_MEMORY_ALLOCATOR
-#  define U_MEMORY_DEALLOCATOR
-#  define U_MALLOC_TYPE(  type) (type*)malloc(sizeof(type))
-#  define U_FREE_TYPE(ptr,type) { free(ptr); }
-#else
+#ifdef ENABLE_MEMPOOL
 #  define U_MALLOC_TYPE(  type) (type*)UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE)
 #  define U_FREE_TYPE(ptr,type)      { UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE) } 
 
-#  ifdef ENABLE_NEW_VECTOR
-#     define U_MEMORY_ALLOCATOR \
-void* operator new(  size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
-void* operator new[](size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
-void* operator new[](size_t sz, void* p) { return p; }
-#     define U_MEMORY_DEALLOCATOR \
-void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
-void  operator delete[](void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); }
-#  else
-#     define U_MEMORY_ALLOCATOR \
+#  define U_MEMORY_ALLOCATOR \
 void* operator new(  size_t sz)          { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); return UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(sz)); } \
 void* operator new[](size_t sz)          {                                                  return UMemoryPool::_malloc(sz); }
 #     define U_MEMORY_DEALLOCATOR \
 void  operator delete(  void* _ptr, size_t sz) { U_INTERNAL_ASSERT(sz <= U_MAX_SIZE_PREALLOCATE); UMemoryPool::push( _ptr, U_SIZE_TO_STACK_INDEX(sz)); } \
-void  operator delete[](void* _ptr, size_t sz) {                                                  UMemoryPool::_free( _ptr, sz); }
-#  endif
+void  operator delete[](void* _ptr, size_t sz) {                                                  UMemoryPool::_free(_ptr, sz); }
+#else
+#  define U_MALLOC_TYPE(  type) (type*)malloc(sizeof(type))
+#  define U_FREE_TYPE(ptr,type) { free(ptr); }
+
+#  define U_MEMORY_ALLOCATOR
+#  define U_MEMORY_DEALLOCATOR
 #endif
 
 #endif

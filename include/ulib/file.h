@@ -861,7 +861,7 @@ public:
       {
       U_TRACE(0, "UFile::isAllocableFromPool(%u)", sz)
 
-#  if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#  if defined(ENABLE_MEMPOOL)
       U_INTERNAL_DUMP("nfree = %u pfree = %p", nfree, pfree)
 
       if (sz > U_CAPACITY &&
@@ -878,7 +878,7 @@ public:
       {
       U_TRACE(0, "UFile::isLastAllocation(%p,%lu)", ptr, sz)
 
-#  if defined(ENABLE_MEMPOOL) && defined(__linux__)
+#  if defined(ENABLE_MEMPOOL)
       U_INTERNAL_ASSERT_EQUALS(sz & U_PAGEMASK, 0)
       U_INTERNAL_ASSERT(sz >= U_MAX_SIZE_PREALLOCATE)
 

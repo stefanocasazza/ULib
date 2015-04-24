@@ -136,8 +136,6 @@ typedef struct uhttpinfo {
    const char* user_agent;
    const char* content_type;
    const char* accept_language;
-   const char* websocket;
-   const char* http2_settings;
 
    time_t if_modified_since;
    uint16_t nResponseCode, cookie_len, referer_len, user_agent_len;
@@ -147,7 +145,7 @@ typedef struct uhttpinfo {
 
 #define U_http_method_type u_http_info.method_type
 
-/* NB: sizeof(struct uhttpinfo) 64bit == 160 - RESET ==> 56 */
+/* NB: sizeof(struct uhttpinfo) 64bit == 144 - RESET ==> 56 */
 
 #define U_http_user1                   u_http_info.flag[ 0]
 #define U_http_version                 u_http_info.flag[ 1]
@@ -157,9 +155,9 @@ typedef struct uhttpinfo {
 #define U_http_accept_len              u_http_info.flag[ 5]
 #define U_http_keep_alive              u_http_info.flag[ 6]
 #define U_http_method_num              u_http_info.flag[ 7]
-#define U_http_ip_client_len           u_http_info.flag[ 8]
-#define U_http_websocket_len           u_http_info.flag[ 9]
-#define U_http2_settings_len           u_http_info.flag[10]
+#define U_http_websocket_len           u_http_info.flag[ 8]
+#define U_http2_settings_len           u_http_info.flag[ 9]
+#define U_http_ip_client_len           u_http_info.flag[10]
 #define U_http_is_accept_gzip          u_http_info.flag[11] /* NB: this position(11) is locked by mod_proxy (UHttpClient_Base::u_http_info_save)... */
 #define U_http_content_type_len        u_http_info.flag[12]
 #define U_http_is_request_nostat       u_http_info.flag[13]
@@ -228,12 +226,6 @@ typedef struct uhttpmethodtype {
 
 #define U_HTTP_REFERER_TO_PARAM         u_http_info.referer, u_http_info.referer_len
 #define U_HTTP_REFERER_TO_TRACE         u_http_info.referer_len, u_http_info.referer
-
-#define U_HTTP2_SETTINGS_TO_PARAM       u_http_info.http2_settings, U_http2_settings_len
-#define U_HTTP2_SETTINGS_TO_TRACE       U_http2_settings_len, u_http_info.http2_settings
-
-#define U_HTTP_WEBSOCKET_TO_PARAM       u_http_info.websocket, U_http_websocket_len
-#define U_HTTP_WEBSOCKET_TO_TRACE       U_http_websocket_len, u_http_info.websocket
 
 #define U_HTTP_IP_CLIENT_TO_PARAM       u_http_info.ip_client, U_http_ip_client_len
 #define U_HTTP_IP_CLIENT_TO_TRACE       U_http_ip_client_len, u_http_info.ip_client

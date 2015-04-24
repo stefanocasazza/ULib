@@ -50,20 +50,11 @@
 class U_EXPORT UEventFd {
 public:
 
-   // Check for memory error
-   U_MEMORY_TEST
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
-
    int fd;
    uint32_t op_mask; // [ EPOLLIN | EPOLLOUT ]
 
    UEventFd()
       {
-      U_TRACE_REGISTER_OBJECT(0, UEventFd, "", 0)
-   
       fd      = -1;
       op_mask = EPOLLIN | EPOLLRDHUP;
 
@@ -74,8 +65,6 @@ public:
 
    virtual ~UEventFd() __pure
       {
-      U_TRACE_UNREGISTER_OBJECT(0, UEventFd)
-
 #  ifdef USE_LIBEVENT
       if (pevent)
          {

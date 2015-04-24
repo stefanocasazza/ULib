@@ -41,6 +41,10 @@ typedef uint32_t in_addr_t;
 #  endif
 #endif
 
+#ifdef HAVE_FNMATCH
+#  include <fnmatch.h>
+#endif
+
 #ifdef HAVE_SCHED_H
 #  include <sched.h>
 #elif defined(HAVE_SYS_SCHED_H)
@@ -330,42 +334,43 @@ static inline unsigned char u__toupper(unsigned char c) { return u__ct_tou[c]; }
                                                                      /* 0x00000040              __G character          ':' (58 0x3A) */
                                                                      /* 0x00000080              __Q character underbar '_' (95 0x5F) */
                                                                      /* 0x00000100)             __B character tab      \t  (09 0x09) */
-static inline bool u__islterm(unsigned char c) { return ((u_cttab(c)  & 0x00000200) != 0); } /* __R carriage return | new line (\r | \n) */
-static inline bool u__isspace(unsigned char c) { return ((u_cttab(c)  & 0x00000400) != 0); } /* __W WhiteSpace */
-static inline bool u__iscntrl(unsigned char c) { return ((u_cttab(c)  & 0x00000800) != 0); } /* __C Control character */
-static inline bool u__isdigit(unsigned char c) { return ((u_cttab(c)  & 0x00001000) != 0); } /* __D Digit */
-static inline bool u__islower(unsigned char c) { return ((u_cttab(c)  & 0x00002000) != 0); } /* __L Lowercase */
-static inline bool u__ispunct(unsigned char c) { return ((u_cttab(c)  & 0x00004000) != 0); } /* __I Punctuation */
-static inline bool u__isupper(unsigned char c) { return ((u_cttab(c)  & 0x00008000) != 0); } /* __U Uppercase */
-static inline bool u__isoctal(unsigned char c) { return ((u_cttab(c)  & 0x00010000) != 0); } /* __Z Octal */
-static inline bool u__istext( unsigned char c) { return ((u_cttab(c)  & 0x00020000) == 0); } /* __F character never appears in plain ASCII text */
+static inline bool u__islterm(unsigned char c)   { return ((u_cttab(c) & 0x00000200) != 0); } /* __R carriage return | new line (\r | \n) */
+static inline bool u__isspace(unsigned char c)   { return ((u_cttab(c) & 0x00000400) != 0); } /* __W WhiteSpace */
+static inline bool u__iscntrl(unsigned char c)   { return ((u_cttab(c) & 0x00000800) != 0); } /* __C Control character */
+static inline bool u__isdigit(unsigned char c)   { return ((u_cttab(c) & 0x00001000) != 0); } /* __D Digit */
+static inline bool u__islower(unsigned char c)   { return ((u_cttab(c) & 0x00002000) != 0); } /* __L Lowercase */
+static inline bool u__ispunct(unsigned char c)   { return ((u_cttab(c) & 0x00004000) != 0); } /* __I Punctuation */
+static inline bool u__isupper(unsigned char c)   { return ((u_cttab(c) & 0x00008000) != 0); } /* __U Uppercase */
+static inline bool u__isoctal(unsigned char c)   { return ((u_cttab(c) & 0x00010000) != 0); } /* __Z Octal */
+static inline bool u__istext( unsigned char c)   { return ((u_cttab(c) & 0x00020000) == 0); } /* __F character never appears in plain ASCII text */
                                                                      /* 0x00040000              __T character       appears in plain ASCII text */
                                                                      /* 0x00080000              __X Hexadecimal */
                                                                      /* 0x00100000              __A BASE64 encoded: '+' | '/' (47 0x2F) | '=' (61 0x3D) */
-static inline bool u__ismethod(unsigned char c) { return ((u_cttab(c) & 0x00200000) != 0); } /* __M HTTP (COPY,DELETE,GET,HEAD|HTTP,OPTIONS,POST/PUT/PATCH) */
-static inline bool u__isheader(unsigned char c) { return ((u_cttab(c) & 0x00400000) != 0); } /* __Y HTTP header (Host,Range,...) */
-static inline bool u__isquote( unsigned char c) { return ((u_cttab(c) & 0x00800000) != 0); } /* __K string quote: '"' (34 0x22) | ''' (39 0x27) */
-static inline bool u__ishtmlc( unsigned char c) { return ((u_cttab(c) & 0x01000000) != 0); } /* __J HTML: '&' (38 0x26) | '<' (60 0x3C) | '>' (62 0x3E) */
-static inline bool u__isurlenc(unsigned char c) { return ((u_cttab(c) & 0x02000000) != 0); } /* __UE URL: char TO encoded ... */ 
-static inline bool u__isurlqry(unsigned char c) { return ((u_cttab(c) & 0x04000000) != 0); } /* __UQ URL: char FROM query '&' (38 0x26) | '=' ( 61 0x3D)...*/
-static inline bool u__isfname( unsigned char c) { return ((u_cttab(c) & 0x08000000) != 0); } /* __UF filename: char > 31 except: ":<>*?\| */
+static inline bool u__ismethod( unsigned char c) { return ((u_cttab(c) & 0x00200000) != 0); } /* __M HTTP (COPY,DELETE,GET,HEAD|HTTP,OPTIONS,POST/PUT/PATCH) */
+static inline bool u__isheader( unsigned char c) { return ((u_cttab(c) & 0x00400000) != 0); } /* __Y HTTP header (Host,Range,...) */
+static inline bool u__isquote(  unsigned char c) { return ((u_cttab(c) & 0x00800000) != 0); } /* __K string quote: '"' (34 0x22) | ''' (39 0x27) */
+static inline bool u__ishtmlc(  unsigned char c) { return ((u_cttab(c) & 0x01000000) != 0); } /* __J HTML: '&' (38 0x26) | '<' (60 0x3C) | '>' (62 0x3E) */
+static inline bool u__is2urlenc(unsigned char c) { return ((u_cttab(c) & 0x02000000) != 0); } /* __UE URL: char TO encoded ... */ 
+static inline bool u__isurlqry( unsigned char c) { return ((u_cttab(c) & 0x04000000) != 0); } /* __UQ URL: char FROM query '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
+static inline bool u__isfname(  unsigned char c) { return ((u_cttab(c) & 0x08000000) != 0); } /* __UF filename: char > 31 except: ":<>*?\| */
 
-static inline bool u__isipv4(  unsigned char c) { return ((u_cttab(c) & 0x00001020) != 0); } /* (__N | __D)                         */
-static inline bool u__isreal(  unsigned char c) { return ((u_cttab(c) & 0x00000024) != 0); } /* (__H | __N)                         */
-static inline bool u__isblank( unsigned char c) { return ((u_cttab(c) & 0x00000101) != 0); } /* (__S | __B)                         */
-static inline bool u__isalpha( unsigned char c) { return ((u_cttab(c) & 0x0000A000) != 0); } /* (__L | __U)                         */
-static inline bool u__isxdigit(unsigned char c) { return ((u_cttab(c) & 0x00081000) != 0); } /* (__X | __D)                         */
-static inline bool u__isnumber(unsigned char c) { return ((u_cttab(c) & 0x00001010) != 0); } /* (__O | __D)                         */
-static inline bool u__isalnum( unsigned char c) { return ((u_cttab(c) & 0x0000B000) != 0); } /* (__L | __U | __D)                   */
-static inline bool u__isename( unsigned char c) { return ((u_cttab(c) & 0x00000141) != 0); } /* (__S | __B | __G)                   */
-static inline bool u__islitem( unsigned char c) { return ((u_cttab(c) & 0x00000109) != 0); } /* (__S | __V | __B)                   */
-static inline bool u__ispecial(unsigned char c) { return ((u_cttab(c) & 0x00000034) != 0); } /* (__H | __O | __N)                   */
-static inline bool u__isname(  unsigned char c) { return ((u_cttab(c) & 0x0000B080) != 0); } /* (__Q | __L | __U | __D)             */
-static inline bool u__isipv6(  unsigned char c) { return ((u_cttab(c) & 0x00081060) != 0); } /* (__N | __G | __X | __D)             */
-static inline bool u__isgraph( unsigned char c) { return ((u_cttab(c) & 0x0000F000) != 0); } /* (__L | __U | __D | __I)             */
-static inline bool u__isbase64(unsigned char c) { return ((u_cttab(c) & 0x0010B000) != 0); } /* (__A | __L | __U | __D)             */
-static inline bool u__isprint( unsigned char c) { return ((u_cttab(c) & 0x0000F001) != 0); } /* (__S | __L | __U | __D | __I)       */
-static inline bool u__ishname( unsigned char c) { return ((u_cttab(c) & 0x0000B0B0) != 0); } /* (__O | __N | __Q | __L | __U | __D) */
+static inline bool u__isipv4(  unsigned char c)  { return ((u_cttab(c) & 0x00001020) != 0); } /* (__N | __D)                           */
+static inline bool u__isreal(  unsigned char c)  { return ((u_cttab(c) & 0x00000024) != 0); } /* (__H | __N)                           */
+static inline bool u__isblank( unsigned char c)  { return ((u_cttab(c) & 0x00000101) != 0); } /* (__S | __B)                           */
+static inline bool u__isalpha( unsigned char c)  { return ((u_cttab(c) & 0x0000A000) != 0); } /* (__L | __U)                           */
+static inline bool u__isxdigit(unsigned char c)  { return ((u_cttab(c) & 0x00081000) != 0); } /* (__X | __D)                           */
+static inline bool u__isnumber(unsigned char c)  { return ((u_cttab(c) & 0x00001010) != 0); } /* (__O | __D)                           */
+static inline bool u__isalnum( unsigned char c)  { return ((u_cttab(c) & 0x0000B000) != 0); } /* (__L | __U | __D)                     */
+static inline bool u__isename( unsigned char c)  { return ((u_cttab(c) & 0x00000141) != 0); } /* (__S | __B | __G)                     */
+static inline bool u__islitem( unsigned char c)  { return ((u_cttab(c) & 0x00000109) != 0); } /* (__S | __V | __B)                     */
+static inline bool u__ispecial(unsigned char c)  { return ((u_cttab(c) & 0x00000034) != 0); } /* (__H | __O | __N)                     */
+static inline bool u__isname(  unsigned char c)  { return ((u_cttab(c) & 0x0000B080) != 0); } /* (__Q | __L | __U | __D)               */
+static inline bool u__isipv6(  unsigned char c)  { return ((u_cttab(c) & 0x00081060) != 0); } /* (__N | __G | __X | __D)               */
+static inline bool u__isgraph( unsigned char c)  { return ((u_cttab(c) & 0x0000F000) != 0); } /* (__L | __U | __D | __I)               */
+static inline bool u__isprint( unsigned char c)  { return ((u_cttab(c) & 0x0000F001) != 0); } /* (__S | __L | __U | __D | __I)         */
+static inline bool u__ishname( unsigned char c)  { return ((u_cttab(c) & 0x0000B0B0) != 0); } /* (__O | __N | __Q | __L | __U | __D)   */
+static inline bool u__isbase64(unsigned char c)  { return ((u_cttab(c) & 0x0010B000) != 0); } /* (__A | __L | __U | __D)               */
+static inline bool u__isb64url(unsigned char c)  { return ((u_cttab(c) & 0x0000B090) != 0); } /* (      __L | __U | __D | __O | __Q)   */
 
 /* buffer type identification - Assumed an ISO-1 character set */
 
@@ -379,8 +384,8 @@ U_EXPORT bool u_isFileName(  const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isWhiteSpace(const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isPrintable( const char* restrict s, uint32_t n, bool bline) __pure;
 
-U_EXPORT bool u_isUrlEncoded(     const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isUrlEncodeNeeded(const char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isUrlEncoded(     const char* restrict s, uint32_t n, bool bquery) __pure;
 
 U_EXPORT const char* u_isUrlScheme(const char* restrict url, uint32_t len) __pure;
 

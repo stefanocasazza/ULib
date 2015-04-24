@@ -2676,69 +2676,65 @@ __pure bool u_isFileName(const char* restrict s, uint32_t n)
    return true;
 }
 
-__pure bool u_isUrlEncoded(const char* restrict s, uint32_t n)
+__pure bool u_isUrlEncoded(const char* restrict s, uint32_t n, bool bquery)
 {
-   bool isbase64   = true;
+   bool result = false;
    unsigned char c = *s;
 
-   U_INTERNAL_TRACE("u_isUrlEncoded(%.*s,%u)", U_min(n,128), s, n)
+   U_INTERNAL_TRACE("u_isUrlEncoded(%.*s,%u,%d)", U_min(n,128), s, n, bquery)
+
+   U_INTERNAL_ASSERT_MAJOR(n,0)
 
    while (n--)
       {
-      if (   isbase64 &&
-          u__isbase64(c) == false)
-         {
-         isbase64 = false;
-         }
+      U_INTERNAL_PRINT("c = %c n = %u", c, n)
 
-      if (c == '+' &&
-          isbase64 == false)
+      if (u__is2urlenc(c)          &&
+          (bquery         == false ||
+           u__isurlqry(c) == false)) /* URL: char FROM query '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
          {
-         return true;
-         }
+         if (c == '%')
+            {
+            if (u__isxdigit(s[1]) == false ||
+                u__isxdigit(s[2]) == false)
+               {
+               return false;
+               }
 
-      if (c == '%'          &&
-          u__isxdigit(s[1]) &&
-          u__isxdigit(s[2]))
-         {
-         U_INTERNAL_ASSERT_EQUALS(isbase64, false)
+            if (n == 2) return true;
+            if (n <  2) return false;
 
-         return true;
-         }
+            s += 2;
+            n -= 2;
+            }
+         else if (c != '+')
+            {
+            return false;
+            }
 
-      if (u__isurlenc(c) &&
-          u__isurlqry(c) == false)
-         {
-         return true;
+         result = true;
          }
 
       c = *(++s);
       }
 
-   return false;
+   return result;
 }
 
 __pure bool u_isUrlEncodeNeeded(const char* restrict s, uint32_t n)
 {
-   bool isbase64   = true;
    unsigned char c = *s;
 
    U_INTERNAL_TRACE("u_isUrlEncodeNeeded(%.*s,%u)", U_min(n,128), s, n)
 
    while (n--)
       {
-      if (   isbase64 &&
-          u__isbase64(c) == false)
-         {
-         isbase64 = false;
-         }
-
-      if (u__isurlenc(c)              &&
+      if (u__is2urlenc(c)             &&
           (c != '%'                   ||
            u__isxdigit(s[1]) == false ||
            u__isxdigit(s[2]) == false))
          {
-         if (isbase64 == false) return true;
+         return true;
          }
 
       c = *(++s);
@@ -3278,7 +3274,7 @@ const unsigned char u_uri_encoded_char[256] = {
 #define __K  0x00800000 /* string quote:    '"' (34 0x22) | ''' (39 0x27) */
 #define __J  0x01000000 /* HTML special:    '&' (38 0x26) | '<' (60 0x3C) | '>' (62 0x3E) */
 #define __UE 0x02000000 /* TO   URL encode: ' ' (32 0x20) | ... */
-#define __UQ 0x04000000 /* FROM URL query:  '%' (37 0x25) | '&' (38 0x26) | '+' (43 0x2B) | '=' (61 0x3D) */
+#define __UQ 0x04000000 /* FROM URL query:  '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
 #define __UF 0x08000000 /* filename: char >= 0x20 except: '"' '*' ':' '<' '>' '?' '\' '|' */
 
 #define DT    (__D | __T)
@@ -3324,10 +3320,10 @@ const unsigned char u_uri_encoded_char[256] = {
 #define CWBT  (__C | __W | __B | __T | __UE)
 #define CWRT  (__C | __W | __R | __T | __UE)
 
-#define ITUQ  (__I | __T |             __UE | __UQ)
-#define ITAU  (__I | __T | __A |       __UE | __UQ)
-#define ITJU  (__I | __T | __J |       __UE | __UQ)
-#define ITAH  (__I | __T | __A | __H | __UE | __UQ)
+#define ITUQ  (__I | __T |             __UE | __UF)
+#define ITAH  (__I | __T | __A | __H | __UE | __UF)
+#define ITAU  (__I | __T | __A |       __UE | __UF | __UQ)
+#define ITJU  (__I | __T | __J |       __UE | __UF | __UQ)
 
 const unsigned int u__ct_tab[256] = {
 /*                         BEL  BS    HT    LF        FF    CR                 */
@@ -3336,9 +3332,9 @@ CF, CF, CF, CF, CF, CF, CF, CT, CT, CWBT, CWRT, CWF, CWT, CWRT, CF, CF,/* 0x00 *
 CF, CF, CF, CF, CF, CF, CF, CF, CF,   CF,   CF,  CT,  CF,  CF,  CF, CF,/* 0x10 */
 
 /* ' '    '!'      '"'       '#'     '$'       '%'       '&'      '''     '('     ')'     '*'       '+'      ','      '-'      '.'      '/'            */
-SWT|__UF,IT|__UF,  ITK,   ITUE|__UF,IT|__UF,ITUQ|__UF,ITJU|__UF,ITK|__UF,IT|__UF,IT|__UF, IT,    ITAH|__UF,ITV|__UF,ITO|__UF,ITN|__UF,ITA|__UF,  /*0x20*/
+SWT|__UF,IT|__UF,  ITK,ITUE|__UF|__UQ,IT|__UF,  ITUQ,     ITJU, ITK|__UF,IT|__UF,IT|__UF,   IT,      ITAH,  ITV|__UF,ITO|__UF,ITN|__UF,ITA|__UF,    /*0x20*/
 /* '0'     '1'      '2'      '3'      '4'      '5'      '6'      '7'     '8'     '9'      ':'       ';'      '<'       '='      '>'       '?'          */
-DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DT|__UF,DT|__UF,  ITG,   ITUE|__UF,  ITJ,   ITAU|__UF,  ITJ,      ITUE,  /*0x30*/
+DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DT|__UF,DT|__UF,  ITG,   ITUE|__UF,  ITJ,     ITAU,     ITJ,      ITUE,  /*0x30*/
 /* '@'     'A'      'B'        'C'       'D'      'E'      'F'       'G'       'H'      'I'     'J'     'K'     'L'     'M'     'N'      'O'           */
 IT|__UF,UXTY|__UF,UXT|__UF,UXTMY|__UF,UXTM|__UF,UXT|__UF,UXT|__UF, UTM|__UF,UTMY|__UF,UTY|__UF,UT|__UF,UT|__UF,UT|__UF,UT|__UF,UT|__UF,UTM|__UF, /*0x40*/
 /* 'P'    'Q'      'R'      'S'     'T'      'U'     'V'     'W'      'X'     'Y'     'Z'       '['       '\'       ']'       '^'      '_'            */

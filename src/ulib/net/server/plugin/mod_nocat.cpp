@@ -150,6 +150,7 @@ int UModNoCatPeer::handlerTime()
       UNoCatPlugIn::login_timeout = tmp;
       }
 
+   // ---------------
    // return value:
    // ---------------
    // -1 - normal
@@ -290,6 +291,8 @@ UNoCatPlugIn::~UNoCatPlugIn()
       }
 
    if (dirwalk) delete dirwalk;
+
+   if (peers_preallocate) delete[] peers_preallocate;
 }
 
 // status
@@ -854,7 +857,7 @@ bool UNoCatPlugIn::checkFirewall()
          {
          // send msg to portal for resync
 
-         msg.snprintf("/error_ap?ap=%.*s@%.*s&public=%.*s:%u",
+         msg.snprintf("/error_ap?ap=%.*s@%.*s&public=%.*s%%3A%u",
                         U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*hostname), U_STRING_TO_TRACE(*UServer_Base::IP_address), UServer_Base::port);
 
          sendMsgToAllPortal(msg);
@@ -890,7 +893,7 @@ void UNoCatPlugIn::checkSystem()
       goto end;
       }
 
-   getARPCache();
+   (void) getARPCache();
 
    U_SET_MODULE_NAME(nocat);
 
@@ -960,8 +963,7 @@ result:
 #           ifdef HAVE_NETPACKET_PACKET_H
                if ((check_type & U_CHECK_ARP_PING) != 0)
                   {
-                  U_SRV_LOG("Peer IP %.*s MAC %.*s don't return ARP reply, I assume he is disconnected...",
-                                 U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
+                  U_SRV_LOG("Peer IP %.*s MAC %.*s don't return ARP reply, I assume he is disconnected...", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
                   }
 #           endif
 
@@ -1102,37 +1104,33 @@ void UNoCatPlugIn::setRedirectLocation(const UString& redirect, const Url& auth)
 
    U_INTERNAL_ASSERT_POINTER(peer)
 
-   uint32_t sz = redirect.size() + 1024U;
+   UString str = UStringExt::substitute(peer->mac, ':', U_CONSTANT_TO_PARAM("%3A"));
 
-   UString value_encoded(sz * 3U);
-
-   Url::encode(peer->mac, value_encoded);
+   uint32_t sz = (redirect.size() * 3);
 
    (void) location->reserve(sz + 1024U);
 
-   location->snprintf("%.*s%s?mac=%.*s&ip=", U_URL_TO_TRACE(auth), (auth.isPath() ? "" : "/login"), U_STRING_TO_TRACE(value_encoded));
+   location->snprintf("%.*s%s?mac=%.*s&ip=", U_URL_TO_TRACE(auth), (auth.isPath() ? "" : "/login"), U_STRING_TO_TRACE(str));
 
-   if (u_isUrlEncodeNeeded(U_STRING_TO_PARAM(peer->ip)) == false) location->snprintf_add("%.*s&redirect=", U_STRING_TO_TRACE(peer->ip));
-   else
-      {
-      Url::encode(peer->ip, value_encoded);
+   U_INTERNAL_ASSERT_EQUALS(u_isUrlEncodeNeeded(U_STRING_TO_PARAM(peer->ip)), false)
 
-      location->snprintf_add("%.*s&redirect=", U_STRING_TO_TRACE(value_encoded));
-      }
+   location->snprintf_add("%.*s&redirect=", U_STRING_TO_TRACE(peer->ip));
 
    // NB: redirect can be signed data for example (base64)...
 
    if (u_isUrlEncodeNeeded(U_STRING_TO_PARAM(redirect)) == false) location->snprintf_add("%.*s&gateway=", U_STRING_TO_TRACE(redirect));
    else
       {
+      UString value_encoded(sz);
+
       Url::encode(redirect, value_encoded);
 
       location->snprintf_add("%.*s&gateway=", U_STRING_TO_TRACE(value_encoded));
       }
 
-   Url::encode(peer->gateway, value_encoded);
+   str = UStringExt::substitute(peer->gateway, ':', U_CONSTANT_TO_PARAM("%3A"));
 
-   location->snprintf_add("%.*s&timeout=%u&token=", U_STRING_TO_TRACE(value_encoded), time_available);
+   location->snprintf_add("%.*s&timeout=%u&token=", U_STRING_TO_TRACE(str), time_available);
 
    U_INTERNAL_ASSERT(peer->token)
 
@@ -1227,7 +1225,7 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
        * ---------------------------------------------------------------------------------------------------------------------
        */
 
-      peer->token.snprintf("%u", u_random(u_now->tv_usec));
+      peer->token = UStringExt::numberToString(u_random(u_now->tv_usec));
 
       goto end;
       }
@@ -1247,8 +1245,7 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
 
    if (pos != U_NOT_FOUND)
       {
-      U_SRV_LOG("Validation of user id %.*S in ticket from peer: IP %.*s MAC %.*s",
-                  U_STRING_TO_TRACE(peer->user), U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
+      U_SRV_LOG("Validation of user id %.*S in ticket from peer: IP %.*s MAC %.*s", U_STRING_TO_TRACE(peer->user), U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
 
       vLoginValidate->erase(pos);
       }
@@ -1361,8 +1358,7 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
       }
    else
       {
-      U_SRV_LOG("WARNING: can't make sense of Action: %.*S in ticket from peer: IP %.*s MAC %.*s",
-                  U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
+      U_SRV_LOG("WARNING: can't make sense of Action: %.*S in ticket from peer: IP %.*s MAC %.*s", U_STRING_TO_TRACE(action), U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
       }
 
 end:
@@ -1433,6 +1429,9 @@ bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
    U_peer_index_AUTH    = index_AUTH;
    U_peer_index_network = index_network;
 
+   peer->ifname        = (*vInternalDevice)[(index_network < num_radio ? index_network : 0)];
+   U_peer_index_device =   vInternalDevice->find(peer->ifname);
+
    *((UIPAddress*)peer) = UClientImage_Base::psocket->remoteIPAddress();
 
    (void) peer->ip.assign(peer->UIPAddress::pcStrAddress);
@@ -1441,25 +1440,32 @@ bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
 
    (void) peer->user.assign(U_CONSTANT_TO_PARAM("anonymous"));
 
-   if (USocketExt::getARPCache(*arp_cache, *varp_cache) ||
-       (check_type & U_CHECK_MAC) != 0)
+   if ((check_type & U_CHECK_MAC) != 0) // not unifi (L2)
       {
-      for (uint32_t i = 0, n = varp_cache->size(); i < n; i += 3)
+      U_INTERNAL_ASSERT(peer->ifname.isNullTerminated())
+
+      UString mac = UClientImage_Base::psocket->getMacAddress(peer->ifname.data());
+
+      if (mac) peer->mac = mac;
+      else
          {
-         if ((*varp_cache)[i].equal(peer->ip))
+         (void) USocketExt::getARPCache(*arp_cache, *varp_cache);
+
+         for (uint32_t i = 0, n = varp_cache->size(); i < n; i += 3)
             {
-            peer->mac    = (*varp_cache)[i+1].copy();
-            peer->ifname = (*varp_cache)[i+2].copy();
+            if ((*varp_cache)[i].equal(peer->ip))
+               {
+               peer->mac = (*varp_cache)[i+1].copy();
 
-            U_peer_index_device = vInternalDevice->find(peer->ifname);
+               U_INTERNAL_ASSERT(peer->mac)
+               U_ASSERT_EQUALS(peer->ifname, (*varp_cache)[i+2])
 
-            U_INTERNAL_ASSERT(peer->mac)
-
-            U_ASSERT_EQUALS(peer->mac, USocketExt::getMacAddress(peer->ip))
-
-            break;
+               break;
+               }
             }
          }
+
+      U_ASSERT_EQUALS(peer->mac, USocketExt::getMacAddress(peer->ip))
       }
 
    setNewPeer();
@@ -1489,9 +1495,11 @@ void UNoCatPlugIn::setNewPeer()
 
    UIPAllow* pallow = vLocalNetworkMask->at(U_peer_index_network);
 
-   UString x = (pallow->isEmpty() == false || UIPAllow::getNetworkInterface(*vLocalNetworkMask) ? pallow->host : *UServer_Base::IP_address);
+   UString tmp(32), x = (pallow->isEmpty() == false || UIPAllow::getNetworkInterface(*vLocalNetworkMask) ? pallow->host : *UServer_Base::IP_address);
 
-   peer->gateway.snprintf("%.*s:%d", U_STRING_TO_TRACE(x), UServer_Base::port);
+   tmp.snprintf("%.*s:%d", U_STRING_TO_TRACE(x), UServer_Base::port);
+
+   peer->gateway = tmp;
 
    U_INTERNAL_DUMP("peer->gateway = %.*S", U_STRING_TO_TRACE(peer->gateway))
 
@@ -1521,7 +1529,7 @@ void UNoCatPlugIn::setNewPeer()
     * ---------------------------------------------------------------------------------------------------------------------
     */
 
-   peer->token.snprintf("%u", u_random(u_now->tv_usec));
+   peer->token = UStringExt::numberToString(u_random(u_now->tv_usec));
 
    peers->insert(peer->ip, peer);
 }
@@ -1533,32 +1541,22 @@ void UNoCatPlugIn::checkOldPeer()
    U_INTERNAL_ASSERT_POINTER(peer)
    U_ASSERT(peer->ip.equal(U_CLIENT_ADDRESS_TO_PARAM))
 
-   // NB: we get the MAC for peer IP address from the ARP cache...
-
    UString mac = peer->mac;
 
-   getARPCache();
-
-   for (uint32_t i = 0, n = varp_cache->size(); i < n; i += 3)
+   if ((check_type & U_CHECK_MAC) != 0) // not unifi (L2)
       {
-      if ((*varp_cache)[i].equal(peer->ip))
-         {
-         mac = (*varp_cache)[i+1];
+      mac = UClientImage_Base::psocket->getMacAddress(peer->ifname.data());
 
-         U_INTERNAL_ASSERT(mac)
-
-         U_ASSERT_EQUALS(mac, USocketExt::getMacAddress(peer->ip))
-
-         break;
-         }
+      U_ASSERT_EQUALS(mac, USocketExt::getMacAddress(peer->ip))
       }
 
    if (mac != peer->mac)
       {
       // NB: we assume that the current peer is a different user that has acquired the same IP address from the DHCP...
 
-      U_SRV_LOG("WARNING: different MAC (%.*s) from arp cache for peer: IP %.*s MAC %.*s",
-                     U_STRING_TO_TRACE(mac), U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
+      U_SRV_LOG("WARNING: different MAC (%.*s) for peer: IP %.*s MAC %.*s", U_STRING_TO_TRACE(mac), U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac));
+
+      (void) getARPCache();
 
       (void) peer->checkPeerInfo(true);
 
@@ -1573,7 +1571,8 @@ void UNoCatPlugIn::checkOldPeer()
       // questo introduce la possibilita' che durante la fase di autorizzazione il token generato per il ticket autorizzativo
       // non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
       // ---------------------------------------------------------------------------------------------------------------------
-      peer->token.snprintf("%u", u_random(u_now->tv_usec));
+
+      peer->token = UStringExt::numberToString(u_random(u_now->tv_usec));
       }
 }
 
@@ -1605,7 +1604,7 @@ void UNoCatPlugIn::addPeerInfo(time_t logout)
    // /info?Mac=98%3A0c%3A82%3A76%3A3b%3A39&ip=172.16.1.8&gateway=172.16.1.254%3A5280&ap=ap%4010.8.0.1&User=1212&logout=1&connected=3&traffic=0
    // -----------------------------------------------------------------------------------------------------------------------------------------
 
-   info.reserve(sz + 200);
+   (void) info.reserve(sz + 200);
 
    info.snprintf_add("%sMac=%.*s&ip=%.*s&", (sz ? "&" : ""),
                         u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->mac), (unsigned char*)buffer), buffer, U_STRING_TO_TRACE(peer->ip));
@@ -1645,7 +1644,7 @@ void UNoCatPlugIn::addPeerInfo(time_t logout)
 
    U_INTERNAL_DUMP("info(%u) = %.*S", info.size(), U_STRING_TO_TRACE(info))
 
-   vinfo_data->replace(U_peer_index_AUTH, info);
+   (void) vinfo_data->replace(U_peer_index_AUTH, info);
 
    peer->ctime = u_now->tv_sec;
 
@@ -1682,8 +1681,7 @@ bool UModNoCatPeer::checkPeerInfo(bool btraffic)
             }
          }
 
-      U_INTERNAL_DUMP("UNoCatPlugIn::peer_present_in_arp_cache = %.*S peer->ifname = %.*S",
-                       U_STRING_TO_TRACE(*UNoCatPlugIn::peer_present_in_arp_cache), U_STRING_TO_TRACE(ifname))
+      U_INTERNAL_DUMP("UNoCatPlugIn::peer_present_in_arp_cache = %.*S peer->ifname = %.*S", U_STRING_TO_TRACE(*UNoCatPlugIn::peer_present_in_arp_cache), U_STRING_TO_TRACE(ifname))
 
       if (ctraffic == 0) time_no_traffic += (u_now->tv_sec - ctime);
 
@@ -1765,8 +1763,7 @@ bool UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
          U_RETURN(true);
          }
 
-      U_SRV_LOG("Peer IP %.*s MAC %.*s remain: %ld secs %llu bytes",
-                  U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac), peer->time_remain, peer->traffic_remain);
+      U_SRV_LOG("Peer IP %.*s MAC %.*s remain: %ld secs %llu bytes", U_STRING_TO_TRACE(peer->ip), U_STRING_TO_TRACE(peer->mac), peer->time_remain, peer->traffic_remain);
 
       uint32_t index_device = U_peer_index_device;
 
@@ -1777,7 +1774,7 @@ bool UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
          index_device = vInternalDevice->find(*peer_present_in_arp_cache);
          }
 
-      U_INTERNAL_DUMP("index_device = %u U_peer_index_device = %u", index_device, U_peer_index_device)
+      U_INTERNAL_DUMP("index_device = %u U_peer_index_device = %u num_radio = %u", index_device, U_peer_index_device, num_radio)
 
       U_INTERNAL_ASSERT(index_device <= num_radio)
 
@@ -2049,35 +2046,6 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (tmp) port = tmp.strtol();
 
-      /*
-      =========================================================================================
-      NON piace a Ghivizzani
-      =========================================================================================
-      UString pathconf = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("FW_CONF"), fw_env);
-
-      if (pathconf)
-         {
-         // UploadRate=10240
-         // DownloadRate=10240
-         // UserUploadRate=1024
-         // UserDownloadRate=10240
-         // EnableBandwidthLimits=1
-         // 
-         // DosPrevention=0
-         // DosTimeInterval=60
-         // DosAllowTries=5
-
-         UString data      = UFile::contentOf(pathconf);
-         const char* end   = data.end();
-         const char* start = data.data();
-
-         cfg.clear();
-
-         if (UFileConfig::loadProperties(cfg.table, start, end) == false) goto err;
-         }
-      =========================================================================================
-      */
-
       (void) vauth->split(U_STRING_TO_PARAM(*auth_login));
 
       if (extdev->empty())
@@ -2261,9 +2229,9 @@ bool UNoCatPlugIn::preallocatePeersFault()
    double _vsz = (double)vsz / (1024.0 * 1024.0),
           _rss = (double)rss / (1024.0 * 1024.0);
 
-   msg.snprintf("/error_ap?ap=%.*s@%.*s&public=%.*s:%u&msg="
-                           "address+space+usage:+%.2f+MBytes+-+"
-                                     "rss+usage:+%.2f+MBytes",
+   msg.snprintf("/error_ap?ap=%.*s@%.*s&public=%.*s%%3A%u&msg="
+                           "address+space+usage%%3A%2f+MBytes+-+"
+                                     "rss+usage%%3A%2f+MBytes",
                   U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*hostname),
                   U_STRING_TO_TRACE(*UServer_Base::IP_address), UServer_Base::port, _vsz, _rss);
 
@@ -2342,7 +2310,7 @@ int UNoCatPlugIn::handlerFork()
 
    UString msg(300U), output(U_CAPACITY), allowed_web_hosts(U_CAPACITY);
 
-   msg.snprintf("/start_ap?ap=%.*s@%.*s&public=%.*s:%u&pid=%u",
+   msg.snprintf("/start_ap?ap=%.*s@%.*s&public=%.*s%%3A%u&pid=%u",
                      U_STRING_TO_TRACE(*label), U_STRING_TO_TRACE(*hostname),
                      U_STRING_TO_TRACE(*UServer_Base::IP_address), UServer_Base::port, UServer_Base::pid);
 
@@ -2388,8 +2356,7 @@ int UNoCatPlugIn::handlerFork()
 
          if (index_network == U_NOT_FOUND)
             {
-            U_SRV_LOG("WARNING: IP address for allowed_members %.*S not found in LocalNetworkMask %.*S",
-                           U_STRING_TO_TRACE(ip), U_STRING_TO_TRACE(*localnet));
+            U_SRV_LOG("WARNING: IP address for allowed_members %.*S not found in LocalNetworkMask %.*S", U_STRING_TO_TRACE(ip), U_STRING_TO_TRACE(*localnet));
 
             continue;
             }
@@ -2465,13 +2432,15 @@ int UNoCatPlugIn::handlerRequest()
 
       if (index_AUTH != U_NOT_FOUND)
          {
+         (void) UClientImage_Base::psocket->shutdown(SHUT_RD);
+
          U_SRV_LOG("AUTH(%u) request: %.*S", index_AUTH, U_HTTP_URI_TO_TRACE);
 
          if (U_HTTP_URI_STREQ("/checkFirewall"))
             {
             if (flag_check_system == false)
                {
-               getARPCache();
+               (void) getARPCache();
 
                checkFirewall();
                }
@@ -2532,7 +2501,7 @@ int UNoCatPlugIn::handlerRequest()
 
             // status
 
-            getARPCache();
+            (void) getARPCache();
 
             setStatusContent(ap_label); // NB: peer == 0 -> request from AUTH to get status access point...
             }
@@ -2581,7 +2550,7 @@ int UNoCatPlugIn::handlerRequest()
             if (peer == 0) UHTTP::setBadRequest();
             else
                {
-next:          getARPCache();
+next:          (void) getARPCache();
 
                if (U_peer_status != UModNoCatPeer::PEER_PERMIT) setStatusContent(UString::getStringNull()); // NB: peer == 0 -> request from AUTH to get status access point...
                else
@@ -2797,7 +2766,7 @@ set_redirect_to_AUTH:
          }
 
       if (mode == UHTTP::NO_BODY          && // login_validate
-          (check_type & U_CHECK_MAC) != 0 &&
+          (check_type & U_CHECK_MAC) != 0 && // not unifi (L2)
           peer->mac == *UString::str_without_mac)
          {
          mode = UHTTP::REFRESH | UHTTP::NO_BODY;

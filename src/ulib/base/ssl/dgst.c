@@ -21,7 +21,7 @@ EVP_PKEY* restrict     u_pkey;                     /* private key to sign the di
 EVP_MD_CTX             u_mdctx;                    /* Context for digest */
 const EVP_MD* restrict u_md;                       /* Digest instance */
 unsigned char          u_mdValue[U_MAX_HASH_SIZE]; /* Final output */
-uint32_t               u_mdLen;                    /* Length of digest */
+int                    u_mdLen;                    /* Length of digest */
 
 HMAC_CTX             u_hctx;                       /* Context for HMAC */
 const char* restrict u_hmac_key;                   /* The loaded key */
@@ -136,12 +136,12 @@ void u_dgst_reset(void) /* Reset the hash */
       }
 }
 
-static uint32_t u_finish(unsigned char* restrict ptr, int base64)
+static int u_finish(unsigned char* restrict ptr, int base64)
 {
    U_INTERNAL_TRACE("u_finish(%p,%d)", ptr, base64)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
-   U_INTERNAL_ASSERT_MINOR(u_mdLen,U_MAX_HASH_SIZE)
+   U_INTERNAL_ASSERT_MINOR(u_mdLen, U_MAX_HASH_SIZE)
 
    if (base64 ==  0) return u_hexdump_encode(u_mdValue, u_mdLen, ptr);
    if (base64 ==  1) return u_base64_encode( u_mdValue, u_mdLen, ptr);
@@ -150,7 +150,7 @@ static uint32_t u_finish(unsigned char* restrict ptr, int base64)
    return u_mdLen;
 }
 
-uint32_t u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and get hash */
+int u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and get hash */
 {
    U_INTERNAL_TRACE("u_dgst_finish(%p,%d)", hash, base64)
 
@@ -158,11 +158,11 @@ uint32_t u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and g
 
    if (u_hmac_keylen)
       {
-      HMAC_Final(&u_hctx, u_mdValue, &u_mdLen);
+      HMAC_Final(&u_hctx, u_mdValue, (unsigned int*)&u_mdLen);
       }
    else
       {
-      (void) EVP_DigestFinal(&u_mdctx, u_mdValue, &u_mdLen);
+      (void) EVP_DigestFinal(&u_mdctx, u_mdValue, (unsigned int*)&u_mdLen);
       }
 
    if (hash) return u_finish(hash, base64);
@@ -182,8 +182,10 @@ void u_dgst_sign_init(int alg, ENGINE* impl)
 
    EVP_MD_CTX_init(&u_mdctx);
 
-   /* sets up signing context ctx to use digest type from ENGINE impl.
-    * u_mdctx must be initialized with EVP_MD_CTX_init() before calling this function. */
+   /**
+    * sets up signing context ctx to use digest type from ENGINE impl.
+    * u_mdctx must be initialized with EVP_MD_CTX_init() before calling this function
+    */
 
    EVP_SignInit_ex(&u_mdctx, u_md, impl);
 }
@@ -198,19 +200,21 @@ void u_dgst_verify_init(int alg, ENGINE* restrict impl)
 
    EVP_MD_CTX_init(&u_mdctx);
 
-   /* sets up signing context ctx to use digest type from ENGINE impl.
-    * u_mdctx must be initialized with EVP_MD_CTX_init() before calling this function. */
+   /**
+    * sets up signing context ctx to use digest type from ENGINE impl.
+    * u_mdctx must be initialized with EVP_MD_CTX_init() before calling this function
+    */
 
    EVP_VerifyInit_ex(&u_mdctx, u_md, impl);
 }
 
-uint32_t u_dgst_sign_finish(unsigned char* restrict sig, int base64) /* Finish and get signature */
+int u_dgst_sign_finish(unsigned char* restrict sig, int base64) /* Finish and get signature */
 {
    U_INTERNAL_TRACE("u_dgst_sign_finish(%p,%d)", sig, base64)
 
    U_INTERNAL_ASSERT_POINTER(u_pkey)
 
-   (void) EVP_SignFinal(&u_mdctx, u_mdValue, &u_mdLen, u_pkey);
+   (void) EVP_SignFinal(&u_mdctx, u_mdValue, (unsigned int*)&u_mdLen, u_pkey);
 
    if (sig) return u_finish(sig, base64);
 

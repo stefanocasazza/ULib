@@ -548,9 +548,7 @@ U_EXPORT uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, bPFp
    U_INTERNAL_ASSERT(lbuf >= buffer)
    U_INTERNAL_ASSERT_MINOR(lbuf, lend)
 
-   uint32_t result = (lbuf - buffer);
-
-   return result;
+   return (lbuf - buffer);
 }
 
 uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, const void* ptr_object)
@@ -567,9 +565,7 @@ uint32_t UObjectDB::dumpObject(char* buffer, uint32_t buffer_size, const void* p
    U_INTERNAL_ASSERT(lbuf >= buffer)
    U_INTERNAL_ASSERT_MINOR(lbuf, lend)
 
-   uint32_t result = (lbuf - buffer);
-
-   return result;
+   return (lbuf - buffer);
 }
 
 // sorting object live for time creation...

@@ -190,7 +190,7 @@ case "$target_os" in
 
 			*)
 				AC_MSG_RESULT([unsupported ($kernel)])
-				AC_MSG_ERROR([ULib works on kernels 2.4.x,2.6.x,3.x.x])
+				AC_MSG_ERROR([ULib works on kernels 2.\[4,6\].x,\[3-4\].x.x])
 			;;
 		esac
 
@@ -525,7 +525,7 @@ AC_FUNC_ALLOCA
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h \
 						string.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h sys/timeb.h syslog.h termios.h unistd.h wchar.h \
 						assert.h byteswap.h endian.h execinfo.h ifaddrs.h mcheck.h ndir.h dirent.h ndir.h string.h netpacket/packet.h \
-						sched.h semaphore.h sysexits.h streambuf.h poll.h \
+						sched.h semaphore.h sysexits.h streambuf.h poll.h net/if_arp.h \
 						sys/dir.h sys/ndir.h sys/inotify.h sys/sendfile.h sys/sched.h sys/syscall.h \
 						linux/netfilter_ipv4/ipt_ACCOUNT.h libnetfilter_conntrack/libnetfilter_conntrack.h \
 						/usr/src/linux/include/generated/uapi/linux/version.h])
@@ -1840,6 +1840,7 @@ AM_CONDITIONAL(STATIC_SERVLET_WI_AUTH, test "$static_servlet_wi_auth" = "yes")
 
 AM_CONDITIONAL(HUPS, false)
 AM_CONDITIONAL(FINAL, false)
+AM_CONDITIONAL(HTTP2, false)
 AM_CONDITIONAL(MEMORY_POOL, false)
 
 if test "$enable_memory_pool" = "yes"; then
@@ -1862,6 +1863,10 @@ fi
 
 if test "$enable_HUPS" = "yes"; then
 	AM_CONDITIONAL(HUPS, true)
+fi
+
+if test "$enable_http2" = "yes"; then
+	AM_CONDITIONAL(HTTP2, true)
 fi
 
 # If gcc compiler add values to *FLAGS...
@@ -1909,7 +1914,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 				## Graphite loop optimizations: -fgraphite, -fgraphite-identity, -floop-block, -floop-flatten,
 				##										  -floop-interchange, -floop-strip-mine, -floop-parallelize-all, -ftree-loop-linear
 				## ----------------------------------------------------------------------------------------------------------------------------------
-				MAYBE_FLAGS="$MAYBE_FLAGS -fstrict-aliasing -fno-stack-protector -finline \
+				MAYBE_FLAGS="$MAYBE_FLAGS -fstrict-aliasing -fno-stack-protector -fno-stack-protector-all -finline \
 										  -findirect-inlining -ftree-switch-conversion -fno-math-errno \
 										  -Ofast -ftree-partial-pre -freorder-functions" ## -ffunction-sections -fdata-sections
 

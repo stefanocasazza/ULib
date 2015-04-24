@@ -153,13 +153,13 @@ static void TCPEchoServer(unsigned int iPortNumber, bool bIPv6)
       PrintIPAddress("Is Connected to",                pcClientSocket->remoteIPAddress());
       printf(        " - Port    : %u\n\n",            pcClientSocket->remotePortNumber());
 
-      cout << "Host name       = " << cServerSocket.localIPAddress().getHostName()        << '\n'
-           << "Host address    = " << cServerSocket.localIPAddress().getAddressString()   << '\n'
-           << "Node name       = " << USocketExt::getNodeName()                           << '\n'
-           << "MAC address     = " << USocketExt::getMacAddress(fd, "eth0")               << '\n'
-           << "Network device  = " << USocketExt::getNetworkDevice("eth0")                << '\n'
+      cout << "Host name       = " << cServerSocket.localIPAddress().getHostName()                         << '\n'
+           << "Host address    = " << cServerSocket.localIPAddress().getAddressString()                    << '\n'
+           << "Node name       = " << USocketExt::getNodeName()                                            << '\n'
+           << "MAC address     = " << pcClientSocket->getMacAddress("eth0")                                << '\n'
+           << "Network device  = " << USocketExt::getNetworkDevice("eth0")                                 << '\n'
            << "Gateway address = " << USocketExt::getGatewayAddress(U_CONSTANT_TO_PARAM("192.168.1.0/24")) << '\n'
-           << "Network address = " << USocketExt::getNetworkAddress(fd, "eth0")           << "\n\n";
+           << "Network address = " << USocketExt::getNetworkAddress(fd, "eth0")                            << "\n\n";
 
       iBytesTransferred = pcClientSocket->recv(pcBuffer, 65535);
       printf("Received %d bytes of data\n", iBytesTransferred);

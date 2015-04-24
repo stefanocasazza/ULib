@@ -43,6 +43,7 @@ userver {
 #LOG_FILE_SZ 20k
  LOG_MSG_SIZE -1
  PID_FILE /var/run/userver_tcp.pid
+ PREFORK_CHILD 1
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
@@ -60,9 +61,9 @@ userver {
 #ORM_DRIVER_DIR ../../../../../src/ulib/orm/driver/.libs
 }
 http {
- ALIAS [ / /index.php ]
- VIRTUAL_HOST yes
- ENABLE_INOTIFY yes
+#ALIAS [ / /index.php ]
+#VIRTUAL_HOST yes
+#ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 1M 
  REQUEST_READ_TIMEOUT 30
 #MIN_SIZE_FOR_SENDFILE 2k

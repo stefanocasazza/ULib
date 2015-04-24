@@ -122,9 +122,13 @@ int U_EXPORT main(int argc, char* argv[])
 
    cout  << '"' << info << "\"\n";
 
-#define URL_BASE64   "U2FsdGVkX18CtybN+EswQN4oGqmRmH7OWMvKC+ilxpxcjzTKOGEbkZfq+UlZXtX/+IZx6d3nf/MXiDX6Exp6V5AAQLRquwujP6ZqOVNqJYxc8weXv8X1e0z1rykGr75k1AAjhl411QzESBTLxW7r+1V59mD6r3LKGxdFQj3hJ7UxntSyVzkMW9wjAmc2mffbqsauh2s2TFClAO/gzLnOt5OCmQ/bWbsdITU+d+8H/AHXPVGSMKHFtg=="
+#define URL_BASE64    "U2FsdGVkX18CtybN+EswQN4oGqmRmH7OWMvKC+ilxpxcjzTKOGEbkZfq+UlZXtX/+IZx6d3nf/MXiDX6Exp6V5AAQLRquwujP6ZqOVNqJYxc8weXv8X1e0z1rykGr75k1AAjhl411QzESBTLxW7r+1V59mD6r3LKGxdFQj3hJ7UxntSyVzkMW9wjAmc2mffbqsauh2s2TFClAO/gzLnOt5OCmQ/bWbsdITU+d+8H/AHXPVGSMKHFtg=="
+
+#define URL_BASE64URL "U2FsdGVkX18CtybN-EswQN4oGqmRmH7OWMvKC-ilxpxcjzTKOGEbkZfq-UlZXtX_-IZx6d3nf_MXiDX6Exp6V5AAQLRquwujP6ZqOVNqJYxc8weXv8X1e0z1rykGr75k1AAjhl411QzESBTLxW7r-1V59mD6r3LKGxdFQj3hJ7UxntSyVzkMW9wjAmc2mffbqsauh2s2TFClAO_gzLnOt5OCmQ_bWbsdITU-d-8H_AHXPVGSMKHFtg"
 
 #define URL_ENDCODED "U2FsdGVkX18CtybN%2BEswQN4oGqmRmH7OWMvKC%2BilxpxcjzTKOGEbkZfq%2BUlZXtX/%2BIZx6d3nf/MXiDX6Exp6V5AAQLRquwujP6ZqOVNqJYxc8weXv8X1e0z1rykGr75k1AAjhl411QzESBTLxW7r%2B1V59mD6r3LKGxdFQj3hJ7UxntSyVzkMW9wjAmc2mffbqsauh2s2TFClAO/gzLnOt5OCmQ/bWbsdITU%2Bd%2B8H/AHXPVGSMKHFtg%3D%3D"
+
+#define URL_ENDCODED_BASE64URL "U2FsdGVkX1808rcrEGMANm0PQYLvNaoTBgfLjgnPI68jOshyAcHRgBBe9OcJ-2sU-PoM_mFzlkMECF9fiXdbVf0CgVYc3AWmS43m9_tSPF7eFUlsWApYKv-LvPjbcNXLJltNgAXVc71XuVKqPqB6mSjIhmcJAtFZ86TB3FXLkNVz0QcQLcSCQ_UFQ0kNOe89TJ3dHvQ-Wkx8JfPu8qEotnxUourW6xVq3Vrp_9ArkB_1dK9Ag8Okz7AEv9v-AZw9011syWIY57E_jx_IkGNEWA"
 
    bool result = u_isBase64(U_CONSTANT_TO_PARAM(URL_BASE64));
 
@@ -132,13 +136,25 @@ int U_EXPORT main(int argc, char* argv[])
 
    result = u_isUrlEncodeNeeded(U_CONSTANT_TO_PARAM(URL_BASE64));
 
+   U_INTERNAL_ASSERT(result)
+
+   result = u_isUrlEncodeNeeded(U_CONSTANT_TO_PARAM(URL_BASE64URL));
+
    U_INTERNAL_ASSERT_EQUALS(result, false)
 
-   result = u_isUrlEncoded(U_CONSTANT_TO_PARAM(URL_ENDCODED));
+   result = u_isUrlEncoded(U_CONSTANT_TO_PARAM(URL_ENDCODED), false);
 
    U_INTERNAL_ASSERT(result)
 
    result = u_isBase64(U_CONSTANT_TO_PARAM(URL_ENDCODED));
+
+   U_INTERNAL_ASSERT_EQUALS(result, false)
+
+   result = u_isBase64(U_CONSTANT_TO_PARAM("name=stefano"));
+
+   U_INTERNAL_ASSERT(result)
+
+   result = u_isUrlEncoded(U_CONSTANT_TO_PARAM("name=stefano"), false);
 
    U_INTERNAL_ASSERT_EQUALS(result, false)
 
@@ -148,23 +164,46 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_INTERNAL_ASSERT(value_decoded.equal(U_CONSTANT_TO_PARAM(URL_BASE64)))
 
-   result = u_isUrlEncoded(U_CONSTANT_TO_PARAM(URL_BASE64));
+   result = u_isUrlEncoded(U_CONSTANT_TO_PARAM(URL_BASE64), false);
 
    U_INTERNAL_ASSERT_EQUALS(result, false)
 
-   result = u_isUrlEncoded(U_CONSTANT_TO_PARAM("address+space+usage:+12.81+MBytes+-+rss+usage:+3.59+MBytes"));
+   result = u_isUrlEncoded(U_CONSTANT_TO_PARAM(URL_BASE64URL), false);
+
+   U_INTERNAL_ASSERT_EQUALS(result, false)
+
+   result = u_isUrlEncoded(U_CONSTANT_TO_PARAM("address+space+usage%3A12.81+MBytes+-+rss+usage%3A3.59+MBytes"), false);
 
    U_INTERNAL_ASSERT(result)
-
-   result = u_isUrlEncodeNeeded(U_CONSTANT_TO_PARAM(URL_BASE64));
-
-   U_INTERNAL_ASSERT_EQUALS(result, false)
 
    result = u_isUrlEncodeNeeded(U_CONSTANT_TO_PARAM(URL_ENDCODED));
 
    U_INTERNAL_ASSERT_EQUALS(result, false)
 
-   result = UBase64::decode(U_CONSTANT_TO_PARAM("U2FsdGVkX1808rcrEGMANm0PQYLvNaoTBgfLjgnPI68jOshyAcHRgBBe9OcJ+2sU+PoM/mFzlkMECF9fiXdbVf0CgVYc3AWmS43m9/tSPF7eFUlsWApYKv+LvPjbcNXLJltNgAXVc71XuVKqPqB6mSjIhmcJAtFZ86TB3FXLkNVz0QcQLcSCQ/UFQ0kNOe89TJ3dHvQ+Wkx8JfPu8qEotnxUourW6xVq3Vrp/9ArkB/1dK9Ag8Okz7AEv9v+AZw9011syWIY57E/jx/IkGNEWA=="), value_decoded);
+   result = UBase64::decode(U_CONSTANT_TO_PARAM(URL_BASE64), value_decoded);
+
+   U_INTERNAL_ASSERT(result)
+
+   result = UBase64::decodeUrl(U_CONSTANT_TO_PARAM(URL_BASE64URL), output);
+
+   U_INTERNAL_ASSERT(result)
+   U_INTERNAL_ASSERT_EQUALS(value_decoded, output)
+
+   result = UBase64::decodeAll(U_CONSTANT_TO_PARAM(URL_BASE64), output);
+
+   U_INTERNAL_ASSERT(result)
+   U_INTERNAL_ASSERT_EQUALS(value_decoded, output)
+
+   result = UBase64::decodeAll(U_CONSTANT_TO_PARAM(URL_BASE64URL), output);
+
+   U_INTERNAL_ASSERT(result)
+   U_INTERNAL_ASSERT_EQUALS(value_decoded, output)
+
+   result = u_isUrlEncoded(U_CONSTANT_TO_PARAM(URL_ENDCODED_BASE64URL), false);
+
+   U_INTERNAL_ASSERT_EQUALS(result, false)
+
+   result = UBase64::decodeUrl(U_CONSTANT_TO_PARAM(URL_ENDCODED_BASE64URL), value_decoded);
 
    U_INTERNAL_ASSERT(result)
 
@@ -174,7 +213,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_INTERNAL_ASSERT(result)
 
-   result = u_isUrlEncoded(U_STRING_TO_PARAM(output));
+   result = u_isUrlEncoded(U_STRING_TO_PARAM(output), true);
 
    U_INTERNAL_DUMP("output = %#.*S", U_STRING_TO_TRACE(output))
 

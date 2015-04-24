@@ -134,7 +134,7 @@ uint32_t u_url_encode(const unsigned char* restrict input, uint32_t len, unsigne
       {
       ch = input[i];
 
-      if (u__isurlenc(ch) == false) *r++ = ch;
+      if (u__is2urlenc(ch) == false) *r++ = ch;
       else
          {
          if (ch == ' ') *r++ = '+';

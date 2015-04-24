@@ -142,9 +142,6 @@ UVector<UServerPlugIn*>*          UServer_Base::vplugin;
 UServer_Base::shared_data*        UServer_Base::ptr_shared_data;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
-#if defined(USE_LIBSSL) && defined(ENABLE_THREAD)
-ULock*              UServer_Base::lock_ocsp_staple;
-#endif
 #ifdef U_WELCOME_SUPPORT
 UString*            UServer_Base::msg_welcome;
 #endif
@@ -277,6 +274,47 @@ public:
       while (UServer_Base::flag_loop) UNotifier::waitForEvent(UServer_Base::ptime);
       }
 };
+
+#if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#include <ulib/net/tcpsocket.h>
+#include <ulib/net/client/client.h>
+
+class UOCSPStapling : public UThread {
+public:
+
+   UOCSPStapling() : UThread(true, false) {}
+
+   virtual void run()
+      {
+      U_TRACE(0, "UOCSPStapling::run()")
+
+      struct timespec ts;
+      bool result = false;
+
+      U_SRV_LOG("SSL: OCSP Stapling thread activated (pid %u)", UThread::getTID());
+
+      errno = 0;
+      ts.tv_nsec = 0L;
+
+      while (UServer_Base::flag_loop)
+         {
+         if (errno != EINTR)
+            {
+            result = USSLSocket::doStapling();
+
+            U_SRV_LOG("SSL: OCSP request for stapling to %.*S has %s", U_STRING_TO_TRACE(*USSLSocket::staple.url), (result ? "success" : "FAILED"));
+            }
+
+         ts.tv_sec = (result ? U_min(USSLSocket::staple.valid - u_now->tv_sec, 3600L) : 300L);
+
+         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+         }
+      }
+};
+
+ULock*         UServer_Base::lock_ocsp_staple;
+UOCSPStapling* UServer_Base::pthread_ocsp;
+#endif
 #endif
 
 #ifndef _MSWINDOWS_
@@ -352,19 +390,36 @@ UServer_Base::~UServer_Base()
 
       delete (UTimeThread*)u_pthread_time; // delete to join
       }
+
+#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (bssl)
+      {
+      if (pthread_ocsp)
+         {
+         pthread_ocsp->suspend();
+
+         delete pthread_ocsp; // delete to join
+         }
+
+      USSLSocket::cleanupStapling();
+
+      if (UServer_Base::lock_ocsp_staple) delete UServer_Base::lock_ocsp_staple;
+      }
+#  endif
 #endif
 
    UClientImage_Base::clear();
 
    delete socket;
-   delete vplugin;
    delete vplugin_name;
+#ifndef U_SERVER_CAPTIVE_PORTAL
+   delete vplugin;
+#endif
 
    UOrmDriver::clear();
 
    U_INTERNAL_ASSERT_POINTER(cenvironment)
    U_INTERNAL_ASSERT_POINTER(senvironment)
-   U_INTERNAL_ASSERT_EQUALS(handler_inotify, 0)
 
    delete cenvironment;
    delete senvironment;
@@ -1291,91 +1346,92 @@ void UServer_Base::init()
       }
 #else
    /**
-    * The above code does NOT make a connection or send any packets (to 64.233.187.99 which is google).
+    * This code does NOT make a connection or send any packets (to 64.233.187.99 which is google).
     * Since UDP is a stateless protocol connect() merely makes a system call which figures out how to
     * route the packets based on the address and what interface (and therefore IP address) it should
     * bind to. Returns an array containing the family (AF_INET), local port, and local address (which
     * is what we want) of the socket
     */
 
-   UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
-
-   if (cClientSocket.connectServer(U_STRING_FROM_CONSTANT("8.8.8.8"), 1001))
-      {
-      socket->setLocal(cClientSocket.cLocalAddress);
-
-      UString ip = UString(socket->getLocalInfo());
-
-           if ( IP_address->empty()) *IP_address = ip;
-      else if (*IP_address != ip)
-         {
-         U_SRV_LOG("WARNING: SERVER IP ADDRESS from configuration : %.*S differ from system interface: %.*S", U_STRING_TO_TRACE(*IP_address), U_STRING_TO_TRACE(ip));
-         }
-      }
-#endif
-
-#ifndef _MSWINDOWS_
    if (bipc == false)
-#endif
-   {
-   struct in_addr ia;
-
-   if (inet_aton(IP_address->c_str(), &ia) == 0) U_ERROR("IP_ADDRESS conversion fail");
-
-   socket->setAddress(&ia);
-
-   public_address = (socket->cLocalAddress.isPrivate() == false);
-
-   U_SRV_LOG("SERVER IP ADDRESS registered as: %.*s (%s)", U_STRING_TO_TRACE(*IP_address), (public_address ? "public" : "private"));
-
-#ifndef _MSWINDOWS_
-   u_need_root(false);
-
-   USocket::tcp_autocorking = UFile::getSysParam("/proc/sys/net/ipv4/tcp_autocorking");
-
-   /**
-    * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
-    * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
-    * maximum segment lifetime (2MSL) state. During this time, reopening the connection to the client and server cost
-    * less than establishing a new connection. By reducing the value of this entry, TCP/IP can release closed connections
-    * faster, providing more resources for new connections. Adjust this parameter if the running application requires rapid
-    * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state
-    */
-
-                             tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
-   if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
-
-   /**
-    * sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
-    * At listen(2) time the backlog is adjusted to this limit if bigger then that.
-    *
-    * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
-    * Default is 256, 128 for small systems and up to 1024 for bigger systems.
-    *
-    * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
-    * The backlog argument for listen on the other  hand  specify a _minimum_
-    */
-
-   if (USocket::iBackLog == 1)
       {
-      // sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted
+      UUDPSocket cClientSocket(UClientImage_Base::bIPv6);
 
-      tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
+      if (cClientSocket.connectServer(U_STRING_FROM_CONSTANT("8.8.8.8"), 1001))
+         {
+         socket->setLocal(cClientSocket.cLocalAddress);
+
+         UString ip = UString(socket->getLocalInfo());
+
+              if ( IP_address->empty()) *IP_address = ip;
+         else if (*IP_address != ip)
+            {
+            U_SRV_LOG("WARNING: SERVER IP ADDRESS from configuration : %.*S differ from system interface: %.*S", U_STRING_TO_TRACE(*IP_address), U_STRING_TO_TRACE(ip));
+            }
+         }
+
+      struct in_addr ia;
+
+      if (inet_aton(IP_address->c_str(), &ia) == 0)
+         {
+         U_WARNING("IP_ADDRESS conversion fail, we try using localhost");
+
+         (void) inet_aton("localhost", &ia);
+         }
+
+      socket->setAddress(&ia);
+
+      public_address = (socket->cLocalAddress.isPrivate() == false);
+
+      U_SRV_LOG("SERVER IP ADDRESS registered as: %.*s (%s)", U_STRING_TO_TRACE(*IP_address), (public_address ? "public" : "private"));
+
+      u_need_root(false);
+
+      USocket::tcp_autocorking = UFile::getSysParam("/proc/sys/net/ipv4/tcp_autocorking");
+
+      /**
+       * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
+       * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
+       * maximum segment lifetime (2MSL) state. During this time, reopening the connection to the client and server cost
+       * less than establishing a new connection. By reducing the value of this entry, TCP/IP can release closed connections
+       * faster, providing more resources for new connections. Adjust this parameter if the running application requires rapid
+       * release, the creation of new connections, and a low throughput due to many connections sitting in the TIME_WAIT state
+       */
+
+                                tcp_fin_timeout = UFile::getSysParam("/proc/sys/net/ipv4/tcp_fin_timeout");
+      if (tcp_fin_timeout > 30) tcp_fin_timeout = UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", 30, true);
+
+      /**
+       * sysctl_somaxconn (SOMAXCONN: 128) specifies the maximum number of sockets in state SYN_RECV per listen socket queue.
+       * At listen(2) time the backlog is adjusted to this limit if bigger then that.
+       *
+       * sysctl_max_syn_backlog on the other hand is dynamically adjusted, depending on the memory characteristic of the system.
+       * Default is 256, 128 for small systems and up to 1024 for bigger systems.
+       *
+       * The system limits (somaxconn & tcp_max_syn_backlog) specify a _maximum_, the user cannot exceed this limit with listen(2).
+       * The backlog argument for listen on the other  hand  specify a _minimum_
+       */
+
+      if (USocket::iBackLog == 1)
+         {
+         // sysctl_tcp_abort_on_overflow when its on, new connections are reset once the backlog is exhausted
+
+         tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
+         }
+      else if (USocket::iBackLog >= SOMAXCONN)
+         {
+         int value = USocket::iBackLog * 2;
+
+         // NB: take a look at `netstat -s | grep overflowed`
+
+         sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn",           value);
+         sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
+         }
+
+      U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d USocket::tcp_autocorking = %d",
+                       sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog,     USocket::tcp_autocorking)
       }
-   else if (USocket::iBackLog >= SOMAXCONN)
-      {
-      int value = USocket::iBackLog * 2;
-
-      // NB: take a look at `netstat -s | grep overflowed`
-
-      sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn",           value);
-      sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
-      }
-
-   U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d USocket::tcp_autocorking = %d",
-                    sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog,     USocket::tcp_autocorking)
 #endif
-   }
 
    if (str_preforked_num_kids)
       {
@@ -1632,7 +1688,7 @@ void UServer_Base::init()
           * see: https://raw.githubusercontent.com/dankamongmen/libtorque/master/doc/mteventqueues
           */
 
-#     if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#     if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
          if (bssl == false) UNotifier::add_mask |= EPOLLET; // NB: we try to manage optimally a burst of new connections...
 #     endif
          }
@@ -1735,6 +1791,9 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
 #ifdef ENABLE_THREAD
+#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (pthread_ocsp) pthread_ocsp->suspend();
+#  endif
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 #endif
 
@@ -1753,6 +1812,9 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 #endif
 
 #ifdef ENABLE_THREAD
+#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (pthread_ocsp) pthread_ocsp->resume();
+#  endif
    if (u_pthread_time)
       {
 #  ifdef DEBUG
@@ -1900,7 +1962,7 @@ loop:
             }
          }
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && (defined(U_ACL_SUPPORT) || defined(U_RFC1918_SUPPORT))
+#if defined(U_ACL_SUPPORT) || defined(U_RFC1918_SUPPORT)
 try_next:
 #endif
       if (++pClientIndex >= eClientImage)
@@ -1979,7 +2041,7 @@ try_accept:
 #  endif
       {
       U_INTERNAL_ASSERT((USocket::server_flags & O_NONBLOCK) != 0)
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_)
+#  ifndef _MSWINDOWS
       U_INTERNAL_ASSERT(UNotifier::add_mask & EPOLLET)
 
       goto try_next; // NB: we try to manage optimally a burst of new connections...
@@ -2012,7 +2074,7 @@ try_accept:
 #  endif
       {
       U_INTERNAL_ASSERT((USocket::server_flags & O_NONBLOCK) != 0)
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_)
+#  ifndef _MSWINDOWS
       U_INTERNAL_ASSERT(UNotifier::add_mask & EPOLLET)
 
       goto try_next; // NB: we try to manage optimally a burst of new connections...
@@ -2203,7 +2265,7 @@ next:
    {
    U_INTERNAL_ASSERT((USocket::server_flags & O_NONBLOCK) != 0)
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_)
+#ifndef _MSWINDOWS
    U_INTERNAL_ASSERT(UNotifier::add_mask & EPOLLET)
 
    cround = 0;
@@ -2350,13 +2412,17 @@ void UServer_Base::runLoop(const char* user)
 
    socket->reusePort();
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_)
+#ifndef _MSWINDOWS
    if (bipc == false)
       {
+      U_ASSERT_EQUALS(socket->isUDP(), false)
+
+#  ifdef U_SERVER_CAPTIVE_PORTAL
+      U_INTERNAL_ASSERT_EQUALS(preforked_num_kids, 0)
+
+      socket->setTcpLingerOff();
+#  else
       /**
-       * socket->setBufferRCV(128 * 1024);
-       * socket->setBufferSND(128 * 1024);
-       *
        * Let's say an application just issued a request to send a small block of data. Now, we could
        * either send the data immediately or wait for more data. Some interactive and client-server
        * applications will benefit greatly if we send the data right away. For example, when we are
@@ -2381,6 +2447,9 @@ void UServer_Base::runLoop(const char* user)
        * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
        * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
        * NB: Takes an integer value (seconds)
+       *
+       * socket->setBufferRCV(128 * 1024);
+       * socket->setBufferSND(128 * 1024);
        */
 
       socket->setTcpNoDelay();
@@ -2389,6 +2458,7 @@ void UServer_Base::runLoop(const char* user)
       socket->setTcpDeferAccept();
 
       if (set_tcp_keep_alive) socket->setTcpKeepAlive(); 
+#  endif
       }
 #endif
 
@@ -2489,6 +2559,36 @@ void UServer_Base::run()
    U_INTERNAL_ASSERT_POINTER(pthis)
 
    init();
+
+#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (UServer_Base::bssl)
+      {
+      if (USSLSocket::setDataForStapling() == false)
+         {
+         U_WARNING("SSL: OCSP stapling ignored, some error occured...");
+         }
+      else
+         {
+         USSLSocket::staple.data = getPointerToDataShare(USSLSocket::staple.data);
+
+         setLockOCSPStaple();
+
+         U_INTERNAL_ASSERT_EQUALS(USSLSocket::staple.client, 0)
+
+         USSLSocket::staple.client = U_NEW(UClient<UTCPSocket>(0));
+
+         (void) USSLSocket::staple.client->setUrl(*USSLSocket::staple.url);
+
+         U_INTERNAL_ASSERT_EQUALS(pthread_ocsp, 0)
+
+         U_NEW_ULIB_OBJECT(pthread_ocsp, UOCSPStapling);
+
+         U_INTERNAL_DUMP("pthread_ocsp = %p", pthread_ocsp)
+
+         pthread_ocsp->start(0);
+         }
+      }
+#endif
 
    if (pluginsHandlerRun() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage run failed");
 

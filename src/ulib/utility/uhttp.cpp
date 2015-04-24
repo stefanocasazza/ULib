@@ -30,6 +30,9 @@
 #include <ulib/net/server/plugin/mod_proxy.h>
 #include <ulib/net/server/plugin/mod_proxy_service.h>
 
+#ifndef U_HTTP2_DISABLE
+#  include <ulib/utility/http2.h>
+#endif
 #ifdef USE_LIBZ // check for crc32
 #  include <ulib/base/coder/gzio.h>
 #  include <ulib/utility/interrupt.h>
@@ -1296,6 +1299,10 @@ next:
                  UClientImage_Base::iov_vec[0].iov_len);
 
    U_INTERNAL_ASSERT_EQUALS(strncmp(response_buffer, U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\n")), 0)
+
+#ifndef U_HTTP2_DISABLE
+   UHTTP2::ctor();
+#endif
 }
 
 #ifdef DEBUG
@@ -1441,10 +1448,15 @@ void UHTTP::dtor()
 
       delete cache_file;
 
-            if (db_session) clearSession();
+      if (db_session) clearSession();
 
-      if (db_not_found) db_not_found->close();
+      if (db_not_found)
+         {
+         db_not_found->close();
 
+         delete db_not_found;
+         }
+         
 #  ifdef USE_LIBSSL
       if (db_session_ssl) clearSessionSSL();
 
@@ -1461,6 +1473,10 @@ void UHTTP::dtor()
          }
 #  endif
       }
+
+#ifndef U_HTTP2_DISABLE
+   UHTTP2::dtor();
+#endif
 }
 
 __pure bool UHTTP::isMobile()
@@ -1604,13 +1620,23 @@ int UHTTP::handlerDataPending()
 {
    U_TRACE(0, "UHTTP::handlerDataPending()")
 
+#ifndef U_HTTP2_DISABLE
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
-   if (U_http_version != '2') return UClientImage_Base::handlerDataPending();
+   if (U_http_version == '2')
+      {
+      if (UHTTP2::manageSetting() == false) U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+      else
+         {
+         // TODO
+         }
 
-   // TODO
+      U_RETURN(-1);
+      }
+   else
+#endif
 
-   U_RETURN(-1);
+   return UClientImage_Base::handlerDataPending();
 }
 
 bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
@@ -1645,6 +1671,7 @@ bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
 
    if (*ptr == 'P')
       {
+#  ifndef U_HTTP2_DISABLE
       if (*(int64_t*) ptr     == U_MULTICHAR_CONSTANT64( 'P', 'R','I',' ', '*', ' ', 'H', 'T') &&
           *(int64_t*)(ptr+8)  == U_MULTICHAR_CONSTANT64( 'T', 'P','/','2', '.', '0','\r','\n') &&
           *(int64_t*)(ptr+16) == U_MULTICHAR_CONSTANT64('\r','\n','S','M','\r','\n','\r','\n'))
@@ -1653,10 +1680,11 @@ bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
 
          U_ClientImage_data_missing = true;
 
-         UClientImage_Base::size_request = U_CONSTANT_SIZE("PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n");
+         UClientImage_Base::size_request = U_CONSTANT_SIZE(HTTP2_CONNECTION_PREFACE);
 
          U_RETURN(false);
          }
+#  endif
 
       if (*(int32_t*)ptr == U_MULTICHAR_CONSTANT32('P','O','S','T'))
          {
@@ -1823,16 +1851,16 @@ response:
          U_RETURN(false);
          }
 
-      // check for invalid characters (NB: '\n' can be present with openssl base64)
+      // check for invalid characters
 
-      if (u__isurlenc(c) &&
+      if (u__is2urlenc(c) &&
           u__isurlqry(c) == false)
          {
          U_INTERNAL_DUMP("char to url encode = %C u_http_info.uri_len = %u", c, u_http_info.uri_len)
 
-         if (LIKELY(u_http_info.uri_len == 0))
+         if (c == '?')
             {
-            if (LIKELY(c == '?')) // NB: we consider valid only the first '?' encountered...
+            if (LIKELY(u_http_info.uri_len == 0)) // NB: we consider only the first '?' encountered...
                {
                u_http_info.uri_len = ptr - u_http_info.uri;
 
@@ -1848,10 +1876,23 @@ response:
 
                continue;
                }
+            }
+         else
+            {
+            if (c == '%')
+               {
+               if (u__isxdigit(ptr[1]) &&
+                   u__isxdigit(ptr[2]))
+                  {
+                  ptr += 3;
 
-            U_SRV_LOG("WARNING: invalid character %C in URI %.*S", c, ptr - u_http_info.uri, u_http_info.uri);
+                  continue;
+                  }
 
-            U_RETURN(false);
+               goto error;
+               }
+
+            if (c != '+') goto error;
             }
          }
 
@@ -1869,6 +1910,11 @@ response:
    U_INTERNAL_DUMP("UClientImage_Base::uri_len = %u u_line_terminator_len = %u", UClientImage_Base::uri_len, u_line_terminator_len)
 
    U_RETURN(true);
+
+error:
+   U_SRV_LOG("WARNING: invalid character %C in URI %.*S", c, ptr - u_http_info.uri, u_http_info.uri);
+
+   U_RETURN(false);
 }
 
 bool UHTTP::findEndHeader(const UString& buffer)
@@ -2372,6 +2418,34 @@ end:
    U_RETURN(true);
 }
 
+void UHTTP::setHostname(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setHostname(%.*S,%u)", len, ptr, len)
+
+   // The difference between HTTP_HOST and U_HTTP_VHOST is that
+   // HTTP_HOST can include the «:PORT» text, and U_HTTP_VHOST only the name
+
+   u_http_info.host = ptr;
+   U_http_host_len  =
+   U_http_host_vlen = len;
+
+   U_INTERNAL_DUMP("U_http_host_len = %u U_HTTP_HOST = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
+
+   // hostname[:port]
+
+   for (const char* endptr = ptr+len; ptr < endptr; ++ptr)
+      {
+      if (*ptr == ':')
+         {
+         U_http_host_vlen = ptr-u_http_info.host;
+
+         break;
+         }
+      }
+
+   U_INTERNAL_DUMP("U_http_host_vlen = %u U_HTTP_VHOST = %.*S", U_http_host_vlen, U_HTTP_VHOST_TO_TRACE)
+}
+
 bool UHTTP::checkRequestForHeader(const UString& request)
 {
    U_TRACE(0, "UHTTP::checkRequestForHeader(%.*S)", U_STRING_TO_TRACE(request))
@@ -2496,15 +2570,16 @@ bool UHTTP::checkRequestForHeader(const UString& request)
                    (*(int32_t*)(p+ 8)) == U_MULTICHAR_CONSTANT32('o','c','k','e') &&
                    (*(int32_t*)(p+12)) == U_MULTICHAR_CONSTANT32('t','-','K','e'))
                   {
-                  U_http_websocket_len  = pos2-pos1;
-                  u_http_info.websocket =  ptr+pos1;
+                  U_http_websocket_len         = pos2-pos1;
+                  UWebSocket::upgrade_settings =  ptr+pos1;
 
-                  U_INTERNAL_DUMP("Sec-WebSocket-Key: = %.*S", U_HTTP_WEBSOCKET_TO_TRACE)
+                  U_INTERNAL_DUMP("Sec-WebSocket-Key: = %.*S", U_http_websocket_len, UWebSocket::upgrade_settings)
 
                   goto next1;
                   }
                }
             break;
+#        ifndef U_HTTP2_DISABLE
             case U_MULTICHAR_CONSTANT32('H','T','T','P'):
                {
                // HTTP2-Settings
@@ -2513,10 +2588,10 @@ bool UHTTP::checkRequestForHeader(const UString& request)
                   {
                   U_http_version = '2';
 
-                  U_http2_settings_len       = pos2-pos1;
-                  u_http_info.http2_settings =  ptr+pos1;
+                  U_http2_settings_len     = pos2-pos1;
+                  UHTTP2::upgrade_settings =  ptr+pos1;
 
-                  U_INTERNAL_DUMP("HTTP2-Settings: = %.*S", U_HTTP2_SETTINGS_TO_TRACE)
+                  U_INTERNAL_DUMP("HTTP2-Settings: = %.*S", U_http2_settings_len, UHTTP2::upgrade_settings)
 
                   result = false;
 
@@ -2524,6 +2599,7 @@ bool UHTTP::checkRequestForHeader(const UString& request)
                   }
                }
             break;
+#        endif
             case U_MULTICHAR_CONSTANT32('C','o','n','t'):
                {
                switch (*(int32_t*)(p+7))
@@ -2706,31 +2782,7 @@ set_accept:          u_http_info.accept =  ptr+pos1;
                     u__toupper(p[1]) == 'S'                   &&
                     u__toupper(p[2]) == 'T'))
                   {
-                  // The hostname of your server from header's request.
-                  // The difference between HTTP_HOST and U_HTTP_VHOST is that
-                  // HTTP_HOST can include the «:PORT» text, and U_HTTP_VHOST only the name
-set_hostname:
-                  u_http_info.host =  ptr+pos1;
-                  U_http_host_len  =
-                  U_http_host_vlen = pos2-pos1;
-
-                  const char* p2 = p1 = u_http_info.host;
-
-                  U_INTERNAL_DUMP("U_http_host_len  = %u U_HTTP_HOST  = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
-
-                  // Host: hostname[:port]
-
-                  for (const char* p3 = p2+U_http_host_len; p2 < p3; ++p2)
-                     {
-                     if (*p2 == ':')
-                        {
-                        U_http_host_vlen = p2-p1;
-
-                        break;
-                        }
-                     }
-
-                  U_INTERNAL_DUMP("U_http_host_vlen = %u U_HTTP_VHOST = %.*S", U_http_host_vlen, U_HTTP_VHOST_TO_TRACE)
+set_hostname:     setHostname(ptr+pos1, pos2-pos1);
                   }
                }
             break;
@@ -2900,30 +2952,17 @@ next1:
 
             U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.20S", u_http_info.szHeader, u_http_info.endHeader, request.c_pointer(u_http_info.endHeader))
 
-            U_ClientImage_data_missing = false;
-
+#        ifndef U_HTTP2_DISABLE
             if (U_http_version == '2')
                {
-               if (USocketExt::write(UClientImage_Base::psocket,
-                         U_CONSTANT_TO_PARAM("HTTP/1.1 101 Switching Protocols\r\n"
-                                             "Connection: Upgrade\r\n"
-                                             "Upgrade: h2c\r\n\r\n"), UServer_Base::timeoutMS) !=
-                             U_CONSTANT_SIZE("HTTP/1.1 101 Switching Protocols\r\n"
-                                             "Connection: Upgrade\r\n"
-                                             "Upgrade: h2c\r\n\r\n"))
-                  {
-                  U_RETURN(false);
-                  }
+               UHTTP2::manageUpgrade();
 
-               if (U_http_method_type == HTTP_OPTIONS)
-                  {
-                  U_ClientImage_data_missing = true;
-
-                  U_RETURN(false);
-                  }
+               U_RETURN(false);
                }
+#        endif
 
-            result = true;
+            result                     = true;
+            U_ClientImage_data_missing = false;
             }
 
          break;
@@ -3680,7 +3719,8 @@ next3:
 
       // URI requested can be URL encoded...
 
-      if (u_isUrlEncoded(U_HTTP_URI_TO_PARAM))
+      if (u_isUrlEncoded(U_HTTP_URI_TO_PARAM, false) &&
+              u_isBase64(U_HTTP_URI_TO_PARAM) == false)
          {
          file->path_relativ_len = u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)ptr);
 
@@ -3812,7 +3852,7 @@ need_to_be_processed:
 
          setRedirectResponse(NO_BODY, UString::getStringNull(), (const char*)redirect_url,
                                     u__snprintf(redirect_url, sizeof(redirect_url), "%s:/%.*s%.*s",
-                                       U_http_websocket_len ? "wss" : "https", U_STRING_TO_TRACE(ip_server), U_HTTP_URI_QUERY_TO_TRACE));
+                                    U_http_websocket_len ? "wss" : "https", U_STRING_TO_TRACE(ip_server), U_HTTP_URI_QUERY_TO_TRACE));
 
          U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %S", redirect_url);
 

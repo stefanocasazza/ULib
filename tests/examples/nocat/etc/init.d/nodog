@@ -49,7 +49,7 @@ clientcmdline='/usr/sbin/uclient -c /etc/uclient.conf'
 clientmempool=53,0,0,0,0,0,0,0,0
 
 servercmdline='/usr/sbin/userver_tcp -c /etc/nodog.conf'
-servermempool=199,79,0,98,254,0,-8,0,108
+servermempool=199,79,0,98,275,0,-8,0,108
 
 ## automagically from cmdlines
 #
@@ -145,7 +145,8 @@ start() { { log starting
 	#
 	#export UTRACE="-0 10M 0"
 	#export UOBJDUMP="0 100k 10"
-	#export USIMERR="error.sim"
+	#export USIMERR=error.sim
+	#export UMEMUSAGE=yes
 	export DIR_LOG_GZ=/tmp
 	export UMEMPOOL=$servermempool
 	$servercmdline \

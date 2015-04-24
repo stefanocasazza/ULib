@@ -456,6 +456,51 @@ bool USSLSocket::useDHFile(const char* dh_file)
    U_RETURN(true);
 }
 
+U_NO_EXPORT int USSLSocket::nextProto(SSL* ssl, const unsigned char** data, unsigned int* len, void* arg)
+{
+   U_TRACE(0, "USSLSocket::nextProto(%p,%p,%p,%p)", ssl, data, len, arg)
+
+   *data = (unsigned char*)arg;
+   *len  = U_CONSTANT_SIZE("\x2h2\x5h2-16\x5h2-14");
+
+   U_RETURN(SSL_TLSEXT_ERR_OK);
+}
+
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L
+U_NO_EXPORT int USSLSocket::selectProto(SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in, unsigned int inlen, void* arg)
+{
+   U_TRACE(0, "USSLSocket::selectProto(%p,%p,%p,%.*S,%u,%p)", ssl, out, outlen, inlen, in, inlen, arg)
+
+#ifdef DEBUG
+   U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
+
+   for (unsigned int i = 0; i < inlen; i += in[i]+1) u_buffer_len += u__snprintf(u_buffer+u_buffer_len, U_BUFFER_SIZE-u_buffer_len, "%.*s ", in[i], (const char*)(&in[i+1]));
+
+   U_INTERNAL_DUMP("[ALPN] client offers = %.*S", u_buffer_len, u_buffer)
+
+   u_buffer_len = 0;
+#endif
+
+   const unsigned char* p;
+   const unsigned char* end;
+
+   for (p = in, end = in + inlen; p <= end; p += *p + 1)
+      {
+      if (memcmp(p, U_CONSTANT_TO_PARAM("\x2h2"))    == 0 ||
+          memcmp(p, U_CONSTANT_TO_PARAM("\x5h2-16")) == 0 ||
+          memcmp(p, U_CONSTANT_TO_PARAM("\x5h2-14")) == 0)
+         {
+         *out    =  p+1;
+         *outlen = *p;
+
+         U_RETURN(SSL_TLSEXT_ERR_OK);
+         }
+      }
+
+   U_RETURN(SSL_TLSEXT_ERR_NOACK);
+}
+#endif
+
 bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const char* private_key_file,
                             const char* passwd,  const char* CAfile,    const char* CApath, int verify_mode)
 {
@@ -636,6 +681,13 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
                      SSL_OP_CIPHER_SERVER_PREFERENCE); // SSLHonorCipherOrder On - determine SSL cipher in server-preferred order, not client-order
 
    (void) U_SYSCALL(SSL_CTX_set_cipher_list, "%p,%S", ctx, ciphersuite);
+
+#ifndef U_HTTP2_DISABLE
+   U_SYSCALL_VOID(SSL_CTX_set_next_protos_advertised_cb, "%p,%p,%p", ctx, nextProto, (unsigned char*)"\x2h2\x5h2-16\x5h2-14");
+#  if OPENSSL_VERSION_NUMBER >= 0x10002000L
+   U_SYSCALL_VOID(SSL_CTX_set_alpn_select_cb, "%p,%p,%p", ctx, selectProto, 0); // ALPN selection callback
+#  endif
+#endif
 
    U_RETURN(true);
 }

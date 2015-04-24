@@ -54,8 +54,9 @@
  * they use class UIPAddress instances and port numbers rather than sockaddr structures
  */
 
-class UHTTP;
 class UFile;
+class UHTTP;
+class UHTTP2;
 class UNotifier;
 class USocketExt;
 class UFtpClient;
@@ -289,6 +290,8 @@ public:
 
    void setLocal();
 
+   UString getMacAddress(const char* device);
+
    UIPAddress&  localIPAddress()  __pure;
    unsigned int localPortNumber() __pure;
 
@@ -379,7 +382,18 @@ public:
     * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
     */
 
-   bool shutdown(int how = SHUT_WR);
+   bool shutdown(int how = SHUT_WR)
+      {
+      U_TRACE(1, "USocket::shutdown(%d)", how)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT(isOpen())
+
+      if (U_SYSCALL(shutdown, "%d,%d", getFd(), how) == 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
 
    /**
     * Stick a TCP cork in the socket. It's not clear that this will help performance, but it might.
@@ -447,7 +461,7 @@ public:
       {
       U_TRACE(0, "USocket::setTcpLingerOff()")
 
-      const struct linger l = { 1, 1 };
+      const struct linger l = { 1, 0 };
 
       (void) setSockOpt(SOL_SOCKET, SO_LINGER, &l, sizeof(struct linger));
       }
@@ -458,6 +472,11 @@ public:
     * (for example "write"), and you'll find out right away since the kernel is now just reporting the status of a previously set flag,
     * rather than having to wait a few seconds (or much longer in some cases) for network activity to fail. The exact same code logic you
     * had for handling the "other side went away unexpectedly" condition will still be used; what changes is the timing (not the method)
+    *
+    * Ref1: FIN_WAIT2 [https://kb.iu.edu/d/ajmi]
+    * Ref2: tcp_fin_timeout [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN370]
+    * Ref3: tcp_retries2 [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN444]
+    * Ref4: tcp_max_orphans [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN388]
     */
 
    void setTcpKeepAlive()
@@ -626,6 +645,7 @@ private:
 #endif
 
                       friend class UHTTP;
+                      friend class UHTTP2;
                       friend class UFile;
                       friend class UNotifier;
                       friend class USocketExt;

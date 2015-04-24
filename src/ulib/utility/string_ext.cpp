@@ -186,6 +186,17 @@ UString UStringExt::numberToString(double n)
    U_RETURN_STRING(x);
 }
 
+UString UStringExt::numberToString(uint32_t n)
+{
+   U_TRACE(0, "UStringExt::numberToString(%u)", n)
+
+   UString x(22U);
+
+   x.setFromNumber32(n);
+
+   U_RETURN_STRING(x);
+}
+
 UString UStringExt::numberToString(uint64_t n)
 {
    U_TRACE(0, "UStringExt::numberToString(%llu)", n)
@@ -1295,7 +1306,7 @@ UString UStringExt::compress(const char* s, uint32_t sz)
 #if __BYTE_ORDER == __LITTLE_ENDIAN
    uint32_t size_original = sz;
 #else
-   uint32_t size_original = u_invert_uint32(*(uint32_t*)&sz);
+   uint32_t size_original = u_invert32(*(uint32_t*)&sz);
 #endif
 
    U_MEMCPY(ptr, &size_original, sizeof(uint32_t));
@@ -1322,9 +1333,9 @@ UString UStringExt::decompress(const char* s, uint32_t n)
    const char* ptr = (char*)s + U_CONSTANT_SIZE(U_LZOP_COMPRESS);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
-   uint32_t sz =                 *(uint32_t*)ptr;
+   uint32_t sz =            *(uint32_t*)ptr;
 #else
-   uint32_t sz = u_invert_uint32(*(uint32_t*)ptr);
+   uint32_t sz = u_invert32(*(uint32_t*)ptr);
 #endif
 
    // decompress with lzo
@@ -1409,9 +1420,9 @@ UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compre
       uint32_t* psize_original = (uint32_t*)r.c_pointer(r.size() - 4);
 
 #  if __BYTE_ORDER == __LITTLE_ENDIAN
-      U_INTERNAL_DUMP("size original = %u (le)",                 *psize_original)
+      U_INTERNAL_DUMP("size original = %u (LE)",            *psize_original)
 #  else
-      U_INTERNAL_DUMP("size original = %u (be)", u_invert_uint32(*psize_original))
+      U_INTERNAL_DUMP("size original = %u (BE)", u_invert32(*psize_original))
 #  endif
       }
 #endif
@@ -1430,9 +1441,9 @@ UString UStringExt::gunzip(const char* ptr, uint32_t sz, uint32_t space) // .gz 
          uint32_t* psize_original = (uint32_t*)(ptr + sz - 4); // read original size
 
 #     if __BYTE_ORDER == __LITTLE_ENDIAN
-         space =                 *psize_original;
+         space =            *psize_original;
 #     else
-         space = u_invert_uint32(*psize_original);
+         space = u_invert32(*psize_original);
 #     endif
 
          U_INTERNAL_DUMP("space = %u", space)
@@ -1559,7 +1570,7 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
    const char* _end = s + n;
 
    bool bform = (dlen == 1 && *delim == '&'),
-        burl  = (bform ? u_isUrlEncoded(s, n) : false);
+        burl  = (bform ? u_isUrlEncoded(s, n, true) : false);
 
    UString x;
    uint32_t old_size = name_value.size(), oldPos = 0, pos = 0, len, result;
@@ -1585,8 +1596,8 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
          U_INTERNAL_ASSERT_EQUALS(p, content.c_pointer(oldPos))
 
-         if (burl                   == false ||
-             u_isUrlEncoded(p, len) == false)
+         if (burl                          == false ||
+             u_isUrlEncoded(p, len, false) == false)
             {
             name_value.push_back(content.substr(oldPos, len));
             }
@@ -1645,8 +1656,8 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
          if (bform)
             {
-            if (burl                   == false ||
-                u_isUrlEncoded(p, len) == false)
+            if (burl                          == false ||
+                u_isUrlEncoded(p, len, false) == false)
                {
                name_value.push_back(content.substr(oldPos, len));
                }

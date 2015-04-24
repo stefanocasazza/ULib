@@ -692,12 +692,17 @@ loop:
           *  EPOLLIN       EPOLLRDHUP
           */
 
-         if ((pevents->events & (EPOLLERR | EPOLLHUP)) != 0) handler_event->handlerError();
-         else
+         if ((pevents->events & (EPOLLERR | EPOLLHUP)) == 0)
             {
             bread = ((pevents->events & (EPOLLIN | EPOLLRDHUP)) != 0);
 
             notifyHandlerEvent();
+            }
+         else
+            {
+            handler_event->handlerError();
+
+            handler_event->fd = -1;
             }
          }
 

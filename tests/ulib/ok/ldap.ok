@@ -114,3 +114,7 @@ dn:   uid=segreteria,o=mail
 cn:   Segreteria
 mail: segreteria@unirel.com
 
+dn:   uid=assistenza.fea.bnl,o=mail
+cn:   Assistenza FEA BNL
+mail: assistenza.fea.bnl@unirel.com; assistenza.fea.bnl@unirel.it
+

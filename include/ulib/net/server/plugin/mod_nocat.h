@@ -28,8 +28,7 @@ class UDirWalk;
 class UIptAccount;
 class UNoCatPlugIn;
 
-// sizeof(UModNoCatPeer) 32bit == 196
-// sizeof(UModNoCatPeer) 64bit == 304
+// sizeof(UModNoCatPeer) 32bit == 212
 
 class UModNoCatPeer : public UEventTime, UIPAddress {
 public:
@@ -58,7 +57,7 @@ public:
 
    // COSTRUTTORI
 
-   UModNoCatPeer() : UEventTime(0L,1L), mac(*UString::str_without_mac), token(100U), gateway(100U)
+   UModNoCatPeer() : UEventTime(0L,1L), mac(*UString::str_without_mac)
       {
       U_TRACE_REGISTER_OBJECT(0, UModNoCatPeer, "", 0)
 
@@ -244,13 +243,18 @@ protected:
    static UString  getSignedData(const char* ptr, uint32_t len);
    static UString  getUrlForSendMsgToPortal(uint32_t index_AUTH, const char* msg, uint32_t msg_len);
 
-   static void preallocatePeers() { U_NEW_VECTOR_ULIB_OBJECT(peers_preallocate, num_peers_preallocate, UModNoCatPeer, 0); } 
-
-   static void getARPCache()
+   static void preallocatePeers()
       {
-      U_TRACE(0, "UNoCatPlugIn::getARPCache()")
+      U_TRACE(0+256, "UNoCatPlugIn::preallocatePeers()")
 
-      (void) USocketExt::getARPCache(*arp_cache, *varp_cache);
+      peers_preallocate = new UModNoCatPeer[num_peers_preallocate];
+      } 
+
+   static bool getARPCache()
+      {
+      U_TRACE(0+256, "UNoCatPlugIn::getARPCache()")
+
+      return USocketExt::getARPCache(*arp_cache, *varp_cache);
       }
 
    static void sendMsgToAllPortal(const UString& msg)

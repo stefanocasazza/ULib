@@ -8,9 +8,9 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 				[  --enable-memory-pool      enable memory pool features [[default=yes]]])
 	if test -z "$enable_memory_pool"; then
 		enable_memory_pool="yes"
+	fi
+	if test "$enable_memory_pool" = "yes"; then
 		AC_DEFINE( ENABLE_MEMPOOL, 1, [ enable memory pool features])
-	else
-		AC_DEFINE(DISABLE_MEMPOOL, 1, [disable memory pool features])
 	fi
 	AC_MSG_RESULT([${enable_memory_pool}])
 
@@ -19,9 +19,9 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 				[  --enable-LFS              enable Large File Support [[default=yes]]])
 	if test -z "$enable_LFS"; then
 		enable_LFS="yes"
+	fi
+	if test "$enable_LFS" = "yes"; then
 		AC_DEFINE( ENABLE_LFS, 1, [ enable Large File Support features])
-	else
-		AC_DEFINE(DISABLE_LFS, 1, [disable Large File Support features])
 	fi
 	AC_MSG_RESULT([$enable_LFS])
 
@@ -182,6 +182,17 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 		AC_DEFINE(U_PIPELINE_HOMOGENEOUS_DISABLE, 1, [disable homogeneous pipeline request support])
 	fi
 	AC_MSG_RESULT([$enable_HPRS])
+
+	AC_MSG_CHECKING(if you want to enable HTTP/2 support)
+	AC_ARG_ENABLE(http2,
+				[  --enable-http2            enable HTTP/2 support [[default=no]]])
+	if test -z "$enable_http2"; then
+		enable_http2="no"
+	fi
+	if test "$enable_http2" != "yes"; then
+		AC_DEFINE(U_HTTP2_DISABLE, 1, [disable HTTP/2 support])
+	fi
+	AC_MSG_RESULT([$enable_http2])
 
 	AC_MSG_CHECKING(if you want to enable server classic model support)
 	AC_ARG_ENABLE(classic,

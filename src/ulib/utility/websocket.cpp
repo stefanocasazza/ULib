@@ -47,10 +47,11 @@
 #define WEBSOCKET_GUID     "258EAFA5-E914-47DA-95CA-C5AB0DC85B11"
 #define WEBSOCKET_GUID_LEN 36
 
-int      UWebSocket::status_code;
-int      UWebSocket::message_type;
-UString* UWebSocket::rbuffer;
-uint32_t UWebSocket::max_message_size;
+int         UWebSocket::status_code;
+int         UWebSocket::message_type;
+UString*    UWebSocket::rbuffer;
+uint32_t    UWebSocket::max_message_size;
+const char* UWebSocket::upgrade_settings;
 
 const UString* UWebSocket::str_frm_websocket;
 const UString* UWebSocket::str_websocket_key;
@@ -100,14 +101,14 @@ bool UWebSocket::sendAccept()
 
    unsigned char challenge[128];
 
-   U_MEMCPY(challenge,                      u_http_info.websocket, U_http_websocket_len);
+   U_MEMCPY(challenge,                  upgrade_settings, U_http_websocket_len);
    U_MEMCPY(challenge+U_http_websocket_len, WEBSOCKET_GUID, WEBSOCKET_GUID_LEN);
 
    // SHA1(challenge)
 
    UString accept(U_CAPACITY);
 
-   UServices::generateDigest(U_HASH_SHA1, 0, challenge, U_http_websocket_len+WEBSOCKET_GUID_LEN, accept, true);
+   UServices::generateDigest(U_HASH_SHA1, 0, challenge, U_http_websocket_len + WEBSOCKET_GUID_LEN, accept, true);
 
    /*
    UString tmp(100U);

@@ -97,11 +97,12 @@ done
 #done
 
 #./sendbytes.pl
-#$NC -w 10 10.10.100.115 80 < inp/http/all4.inp		  >>out/web_server.out
-#$NC -w 10 10.30.1.111   80 < inp/http/SSL_Labs2.req >>out/web_server.out
-#$CURL http://$1/browserconfig.xml						  >>out/web_server.out 2>>err/web_server.err
+#ncat -4 test 80				 < inp/request.14215
+#$NC -w 10 test			 80 < inp/request.14215 >>out/web_server.out
+#$NC -w 10 10.10.100.115 80 < inp/http/all4.inp	>>out/web_server.out
+#$CURL http://$1/browserconfig.xml					>>out/web_server.out 2>>err/web_server.err
+#send_req $NCAT test 80 inp/request.14215 web_server 2
 #exit 0
-#send_req $1 $2 80 inp/http/request.18895 web_server 2
 #return
 
 LS=`ls inp/http/close`

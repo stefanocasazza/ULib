@@ -6,17 +6,18 @@ MAINTAINERCLEANFILES	= Makefile.in
 
 DEFAULT_INCLUDES =  -I. -I$(top_srcdir)/include
 
-PRG   = test_sprintf test_misc test_random test_utility crypto_url crypto_xml crypto_base64 crypto_qp
-TESTS = sprintf.test misc.test random.test url.test xml.test utility.test base64.test qp.test
+PRG   = test_sprintf test_misc test_random test_utility crypto_url crypto_xml crypto_base64 crypto_base64url crypto_qp
+TESTS = sprintf.test misc.test random.test url.test xml.test utility.test base64.test base64url.test qp.test
 
-test_misc_SOURCES 	 = test_misc.c
-test_random_SOURCES   = test_random.c
-test_sprintf_SOURCES  = test_sprintf.c
-test_utility_SOURCES  = test_utility.c
-crypto_url_SOURCES 	 = crypto_url.c
-crypto_xml_SOURCES 	 = crypto_xml.c
-crypto_base64_SOURCES = crypto_base64.c
-crypto_qp_SOURCES 	 = crypto_qp.c
+test_misc_SOURCES 	    = test_misc.c
+test_random_SOURCES      = test_random.c
+test_sprintf_SOURCES     = test_sprintf.c
+test_utility_SOURCES     = test_utility.c
+crypto_url_SOURCES 	    = crypto_url.c
+crypto_xml_SOURCES 	    = crypto_xml.c
+crypto_base64_SOURCES    = crypto_base64.c
+crypto_base64url_SOURCES = crypto_base64url.c
+crypto_qp_SOURCES 	    = crypto_qp.c
 
 if SSL
 PRG 	+= crypto_des3 crypto_dgst

@@ -248,25 +248,27 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
 
             if (filename)
                {
+               result = true;
+
                if (filename.isQuoted()) filename.unQuote();
+
+               uint32_t len    = filename.size();
+               const char* ptr = filename.data();
 
                // This is hairy: Netscape and IE don't encode the filenames
                // The RFC says they should be encoded, so I will assume they are
 
-               if (u_isUrlEncoded(U_STRING_TO_PARAM(filename)))
+               if (u_isUrlEncoded(ptr, len, false) &&
+                       u_isBase64(ptr, len) == false)
                   {
-                  uint32_t len = filename.size();
-
                   UString filename_decoded(len);
 
-                  Url::decode(filename.data(), len, filename_decoded);
+                  Url::decode(ptr, len, filename_decoded);
 
                   filename = filename_decoded;
                   }
 
                U_INTERNAL_DUMP("filename = %.*S", U_STRING_TO_TRACE(filename))
-
-               result = true;
                }
             }
          }

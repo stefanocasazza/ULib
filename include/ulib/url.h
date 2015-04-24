@@ -495,7 +495,7 @@ public:
 
       buffer.size_adjust(u_url_decode(input, len, (unsigned char*)buffer.data()));
 
-      U_INTERNAL_DUMP("size() = %u", buffer.size())
+      U_INTERNAL_DUMP("buffer(%u) = %#.*S", buffer.size(), U_STRING_TO_TRACE(buffer))
       }
 
    static void decode(const UString& input, UString& buffer) { decode(U_STRING_TO_PARAM(input), buffer); }

@@ -20,7 +20,7 @@ rm -f					out/socket.out1
 mv out/socket.out out/socket.out1
 
 #STRACE=$TRUSS
-start_prg socket client ip4 tcp localhost 11011 hello_World 10.1.1.21 eth0
+start_prg socket client ip4 tcp localhost 11011 hello_World 10.1.1.1 eth0
 mv out/socket.out out/socket.out2
 
 $SLEEP

@@ -41,7 +41,7 @@ UString UDES3::signData(const char* fmt, ...)
       else                         encode((const unsigned char*)buffer1.data(), sz1, buffer2);
       }
 
-   UBase64::encode(buffer2, signed_data);
+   UBase64::encodeUrl(buffer2, signed_data);
 
    (void) signed_data.shrink();
 
@@ -54,7 +54,11 @@ UString UDES3::getSignedData(const char* ptr, uint32_t len)
 
    UString buffer(U_CAPACITY), output(U_CAPACITY);
 
-   if (UBase64::decode(ptr, len, buffer))
+   bool old = (u_isBase64(ptr, len) &&
+               UBase64::decode(ptr, len, buffer));
+
+   if (old ||
+       UBase64::decodeUrl(ptr, len, buffer))
       {
       UDES3::decode(buffer, output);
 

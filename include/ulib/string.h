@@ -805,7 +805,15 @@ public:
 
    // NB: Avoid constructors with a single integer argument! Use the explicit keyword if you can't avoid them...
 
-   explicit UString(uint32_t n);
+   explicit UString(uint32_t n)
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u", n) // problem with sanitize address
+
+      rep = UStringRep::create(0U, n, 0);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
    explicit UString(uint32_t n, unsigned char c);
 
    // Copy from string
@@ -856,9 +864,23 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   UString substr(const char* t, uint32_t tlen) const;
+   UString substr(const char* t, uint32_t tlen) const
+      {
+      U_TRACE(0, "UString::substr(%.*S,%u)", tlen, t, tlen)
 
-   UString substr(uint32_t pos, uint32_t n = U_NOT_FOUND) const;
+      UString result(rep, t, tlen);
+
+      U_RETURN_STRING(result);
+      }
+
+   UString substr(uint32_t pos, uint32_t n = U_NOT_FOUND) const
+      {
+      U_TRACE(0, "UString::substr(%u,%u)", pos, n)
+
+      U_INTERNAL_ASSERT(pos <= rep->_length)
+
+      return substr(rep->str + pos, rep->fold(pos, n));
+      }
 
    bool isSubStringOf(const UString& str) const { return rep->isSubStringOf(str.rep); }
 

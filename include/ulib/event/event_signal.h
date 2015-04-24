@@ -19,13 +19,6 @@
 class U_EXPORT UEventSignal {
 public:
 
-   // Check for memory error
-   U_MEMORY_TEST
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
-
             UEventSignal() {}
    virtual ~UEventSignal() {}
 

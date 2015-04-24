@@ -12,13 +12,12 @@
 // ============================================================================
 
 #include <ulib/net/server/server.h>
+#include <ulib/utility/websocket.h>
 
 #include <ulib/debug/error.h>
 
-#ifdef U_CACHE_REQUEST_DISABLE
-#  define U_IOV_TO_SAVE  sizeof(struct iovec)
-#else
-#  define U_IOV_TO_SAVE (sizeof(struct iovec) * 4)
+#ifndef U_HTTP2_DISABLE
+#  include <ulib/utility/http2.h>
 #endif
 
 int                UClientImage_Base::idx;
@@ -131,6 +130,10 @@ UClientImage_Base::UClientImage_Base()
 
    pending_close = 0;
    last_event    = u_now->tv_sec;
+
+#ifndef U_HTTP2_DISABLE
+   connection = U_NEW(UHTTP2::Connection);
+#endif
 }
 
 UClientImage_Base::~UClientImage_Base()
@@ -143,14 +146,16 @@ UClientImage_Base::~UClientImage_Base()
 
    if (logbuf)
       {
-#  ifndef ENABLE_NEW_VECTOR
       U_CHECK_MEMORY_OBJECT(logbuf->rep)
-#  else
-      if (logbuf->rep->memory.invariant() == false) logbuf->rep->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
-#  endif
+
+   // if (logbuf->rep->memory.invariant() == false) logbuf->rep->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
 
       delete logbuf;
       }
+
+#ifndef U_HTTP2_DISABLE
+   delete (UHTTP2::Connection*)connection;
+#endif
 }
 
 void UClientImage_Base::set()
@@ -159,23 +164,27 @@ void UClientImage_Base::set()
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
-   if (UServer_Base::vClientImage == 0)
+   if (UServer_Base::pClientIndex == 0)
       {
-      UServer_Base::pClientIndex = UServer_Base::vClientImage = this;
-                                   UServer_Base::eClientImage = this + UNotifier::max_connection;
+      UServer_Base::pClientIndex = this;
+      UServer_Base::eClientImage = this + UNotifier::max_connection;
 
-      U_INTERNAL_DUMP("UServer_Base::vClientImage = %p UServer_Base::eClientImage = %p UNotifier::max_connection = %u",
-                       UServer_Base::vClientImage,     UServer_Base::eClientImage,     UNotifier::max_connection)
+      U_INTERNAL_DUMP("UServer_Base::pClientIndex = %p UServer_Base::eClientImage = %p UNotifier::max_connection = %u",
+                       UServer_Base::pClientIndex,     UServer_Base::eClientImage,     UNotifier::max_connection)
       }
 
-   U_INTERNAL_DUMP("u_new_vector<T>: elem %u of %u", (this - UServer_Base::vClientImage), UNotifier::max_connection)
+   U_INTERNAL_DUMP("new T[%u]: elem %u of %u", UNotifier::max_connection, (this - UServer_Base::pClientIndex), UNotifier::max_connection)
 
    U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
 
    U_INTERNAL_ASSERT_POINTER(socket)
    U_INTERNAL_ASSERT_POINTER(UServer_Base::socket)
 
-   if (UServer_Base::socket->isLocalSet()) socket->cLocalAddress.set(UServer_Base::socket->cLocalAddress);
+   if (UServer_Base::bipc == false &&
+       UServer_Base::socket->isLocalSet())
+      {
+      socket->cLocalAddress.set(UServer_Base::socket->cLocalAddress);
+      }
 
                                                socket->flags |= O_CLOEXEC;
    if (USocket::accept4_flags & SOCK_NONBLOCK) socket->flags |= O_NONBLOCK;
@@ -185,11 +194,11 @@ void UClientImage_Base::set()
                U_CHECK_MEMORY_OBJECT(socket)
    if (logbuf) U_CHECK_MEMORY_OBJECT(logbuf->rep)
 
-   uint32_t index = (this - UServer_Base::vClientImage);
+   uint32_t index = (this - UServer_Base::pClientIndex);
 
    if (index)
       {
-      UClientImage_Base* ptr = UServer_Base::vClientImage + index-1;
+      UClientImage_Base* ptr = UServer_Base::pClientIndex + index-1;
 
       U_CHECK_MEMORY_OBJECT(ptr)
       U_CHECK_MEMORY_OBJECT(ptr->socket)
@@ -203,10 +212,7 @@ void UClientImage_Base::set()
 
          if (index == (UNotifier::max_connection-1))
             {
-            for (index = 0, ptr = UServer_Base::vClientImage; index < UNotifier::max_connection; ++index, ++ptr)
-               {
-               (void) ptr->check_memory();
-               }
+            for (index = 0, ptr = UServer_Base::pClientIndex; index < UNotifier::max_connection; ++index, ++ptr) (void) ptr->check_memory();
             }
          }
       }
@@ -219,7 +225,7 @@ bool UClientImage_Base::check_memory()
 {
    U_TRACE(0, "UClientImage_Base::check_memory()")
 
-   U_INTERNAL_DUMP("u_check_memory_vector<T>: elem %u of %u", this - UServer_Base::vClientImage, UNotifier::max_connection)
+   U_INTERNAL_DUMP("u_check_memory_vector<T>: elem %u of %u", this - UServer_Base::pClientIndex, UNotifier::max_connection)
 
    U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
 
@@ -228,9 +234,9 @@ bool UClientImage_Base::check_memory()
 
    if (logbuf)
       {
-#  ifndef ENABLE_NEW_VECTOR
       U_CHECK_MEMORY_OBJECT(logbuf->rep)
-#  else
+
+      /*
       if (logbuf->rep->memory.invariant() == false)
          {
          U_INTERNAL_DUMP("logbuf = %p logbuf->rep = %p logbuf->rep->memory._this = %p",
@@ -238,7 +244,7 @@ bool UClientImage_Base::check_memory()
 
          logbuf->rep->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
          }
-#  endif
+      */
       }
 
    U_RETURN(true);
@@ -672,6 +678,12 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
    return ptr;
 }
 
+#ifdef U_CACHE_REQUEST_DISABLE
+#  define U_IOV_TO_SAVE  sizeof(struct iovec)
+#else
+#  define U_IOV_TO_SAVE (sizeof(struct iovec) * 4)
+#endif
+
 void UClientImage_Base::endRequest()
 {
    U_TRACE(0, "UClientImage_Base::endRequest()")
@@ -801,10 +813,6 @@ next2:
                                     u_http_info.uri    += diff;
          if (u_http_info.query_len) u_http_info.query  += diff;
 
-#     ifdef DEBUG
-      // U_MESSAGE("manageReadBufferResize(%u): uri = %.*S query = %.*S", n, U_HTTP_URI_TO_TRACE, U_HTTP_QUERY_TO_TRACE);
-#     endif
-
          U_INTERNAL_DUMP("uri             = %.*S", U_HTTP_URI_TO_TRACE)
          U_INTERNAL_DUMP("query           = %.*S", U_HTTP_QUERY_TO_TRACE)
 
@@ -814,14 +822,16 @@ next2:
          if (U_http_range_len)            u_http_info.range           += diff;
          if (U_http_accept_len)           u_http_info.accept          += diff;
          if (U_http_ip_client_len)        u_http_info.ip_client       += diff;
-         if (U_http_websocket_len)        u_http_info.websocket       += diff;
-         if (U_http2_settings_len)        u_http_info.http2_settings  += diff;
          if (u_http_info.cookie_len)      u_http_info.cookie          += diff;
          if (u_http_info.referer_len)     u_http_info.referer         += diff;
          if (U_http_content_type_len)     u_http_info.content_type    += diff;
          if (u_http_info.user_agent_len)  u_http_info.user_agent      += diff;
          if (U_http_accept_language_len)  u_http_info.accept_language += diff;
 
+#     ifndef U_HTTP2_DISABLE
+         if (U_http2_settings_len)     UHTTP2::upgrade_settings += diff;
+#     endif
+         if (U_http_websocket_len) UWebSocket::upgrade_settings += diff;
 
          U_INTERNAL_DUMP("host            = %.*S", U_HTTP_HOST_TO_TRACE)
          U_INTERNAL_DUMP("vhost           = %.*S", U_HTTP_VHOST_TO_TRACE)
@@ -831,9 +841,7 @@ next2:
          U_INTERNAL_DUMP("accept          = %.*S", U_HTTP_ACCEPT_TO_TRACE)
          U_INTERNAL_DUMP("referer         = %.*S", U_HTTP_REFERER_TO_TRACE)
          U_INTERNAL_DUMP("ip_client       = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
-         U_INTERNAL_DUMP("websocket       = %.*S", U_HTTP_WEBSOCKET_TO_TRACE)
          U_INTERNAL_DUMP("user_agent      = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
-         U_INTERNAL_DUMP("http2_settings  = %.*S", U_HTTP2_SETTINGS_TO_TRACE)
          U_INTERNAL_DUMP("accept_language = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
          }
       }
@@ -964,7 +972,6 @@ int UClientImage_Base::handlerRead() // Connection-wide hooks
 
    int result;
    uint32_t sz;
-   const char* ptr;
 
    u_clientimage_flag.u = 0;
 
@@ -1065,8 +1072,8 @@ dmiss:
 
    if (U_ClientImage_request_is_cached)
       {
-      sz  = request->size();
-      ptr = request->data();
+      const char* ptr = request->data();
+                  sz  = request->size();
 
       U_INTERNAL_DUMP("cbuffer(%u) = %.*S", u_http_info.startHeader, u_http_info.startHeader, cbuffer)
       U_INTERNAL_DUMP("request(%u) = %.*S", sz, sz, ptr)
@@ -1165,7 +1172,7 @@ next:
                {
                U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 
-                           ptr = rbuffer->data();
+               const char* ptr = rbuffer->data();
                const char* end = ptr + sz;
 
                while (true)

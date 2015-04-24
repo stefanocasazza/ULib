@@ -53,7 +53,7 @@ vPFsu USocketExt::read_buffer_resize = UString::_reserve;
 
 bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutMS, uint32_t time_limit)
 {
-   U_TRACE(0, "USocketExt::read(%p,%.*S,%u,%d,%u,%p)", sk, U_STRING_TO_TRACE(buffer), count, timeoutMS, time_limit)
+   U_TRACE(0, "USocketExt::read(%p,%.*S,%u,%d,%u)", sk, U_STRING_TO_TRACE(buffer), count, timeoutMS, time_limit)
 
    U_INTERNAL_ASSERT_POINTER(sk)
    U_INTERNAL_ASSERT(sk->isConnected())
@@ -83,7 +83,6 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
 
    ptr = buffer.c_pointer(start);
 
-read:
    /** 
     * When packets in SSL arrive at a destination, they are pulled off the socket in chunks of sizes
     * controlled by the encryption protocol being used, decrypted, and placed in SSL-internal buffers.
@@ -93,20 +92,9 @@ read:
     * SSL_pending() explicitly to see if there is any pending data to be read...
     */
 
-#ifdef USE_LIBSSL
-   if (bssl)
-      {
-      uint32_t available = ((USSLSocket*)sk)->pending();
+   U_ASSERT(bssl == false || ((USSLSocket*)sk)->pending() <= ncount)
 
-      if (available)
-         {
-         value = sk->recv(ptr + byte_read, available);
-
-         goto next;
-         }
-      }
-#endif
-
+read:
    if (blocking       &&
        timeoutMS != 0 &&
 #     ifdef USE_LIBSSL
@@ -172,9 +160,6 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
       goto done;
       }
 
-#ifdef USE_LIBSSL
-next:
-#endif
    byte_read += value;
 
    U_INTERNAL_DUMP("byte_read = %d", byte_read)
@@ -217,7 +202,7 @@ next:
    if (bssl == false)
 #endif
    {
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_) && defined(HAVE_EPOLL_WAIT)
+#if !defined(_MSWINDOWS_) && defined(HAVE_EPOLL_WAIT)
    if ((UNotifier::add_mask & EPOLLET) != 0)
       {
       U_INTERNAL_ASSERT_DIFFERS(USocket::server_flags & O_NONBLOCK, 0)
@@ -865,7 +850,7 @@ UString USocketExt::getNetworkDevice(const char* exclude)
 
 bool USocketExt::getARPCache(UString& cache, UVector<UString>& vec)
 {
-   U_TRACE(0, "USocketExt::getARPCache(%.*S,%p)", U_STRING_TO_TRACE(cache), &vec)
+   U_TRACE(0+256, "USocketExt::getARPCache(%.*S,%p)", U_STRING_TO_TRACE(cache), &vec)
 
 #if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H)
    /*
@@ -1063,17 +1048,18 @@ UString USocketExt::getMacAddress(int fd, const char* device)
 
    (void) u__strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
 
-   (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFHWADDR, &ifr);
+   if (U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFHWADDR, &ifr) == 0)
+      {
+      char* hwaddr = ifr.ifr_hwaddr.sa_data;
 
-   char* hwaddr = ifr.ifr_hwaddr.sa_data;
-
-   result.snprintf("%02x:%02x:%02x:%02x:%02x:%02x",
-                   hwaddr[0] & 0xFF,
-                   hwaddr[1] & 0xFF,
-                   hwaddr[2] & 0xFF,
-                   hwaddr[3] & 0xFF,
-                   hwaddr[4] & 0xFF,
-                   hwaddr[5] & 0xFF);
+      result.snprintf("%02x:%02x:%02x:%02x:%02x:%02x",
+                      hwaddr[0] & 0xFF,
+                      hwaddr[1] & 0xFF,
+                      hwaddr[2] & 0xFF,
+                      hwaddr[3] & 0xFF,
+                      hwaddr[4] & 0xFF,
+                      hwaddr[5] & 0xFF);
+      }
 #endif
 
    U_RETURN_STRING(result);
@@ -1095,17 +1081,18 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    /* Get the IP address of the interface */
 
-   (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFADDR, &ifr);
+   if (U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFADDR, &ifr) == 0)
+      {
+      uusockaddr addr;
 
-   uusockaddr addr;
+      U_MEMCPY(&addr, &ifr.ifr_addr, sizeof(struct sockaddr));
 
-   U_MEMCPY(&addr, &ifr.ifr_addr, sizeof(struct sockaddr));
+      U_INTERNAL_ASSERT_EQUALS(addr.psaIP4Addr.sin_family, AF_INET)
 
-   U_INTERNAL_ASSERT_EQUALS(addr.psaIP4Addr.sin_family, AF_INET)
+      (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &(addr.psaIP4Addr.sin_addr), result.data(), INET_ADDRSTRLEN);
 
-   (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &(addr.psaIP4Addr.sin_addr), result.data(), INET_ADDRSTRLEN);
-
-   result.size_adjust();
+      result.size_adjust();
+      }
 #endif
 
    U_RETURN_STRING(result);
@@ -1128,33 +1115,34 @@ UString USocketExt::getNetworkAddress(int fd, const char* device)
 
    // retrieve the IP address and subnet mask
 
-   (void) U_SYSCALL(ioctl, "%d,%d,%p", fd,    SIOCGIFADDR, &ifaddr);
-   (void) U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFNETMASK, &ifnetmask);
+   if (U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFADDR,    &ifaddr)    == 0 &&
+       U_SYSCALL(ioctl, "%d,%d,%p", fd, SIOCGIFNETMASK, &ifnetmask) == 0)
+      {
+      // compute the current network value from the address and netmask
 
-   // compute the current network value from the address and netmask
+      int network;
+      uusockaddr addr, netmask;
 
-   int network;
-   uusockaddr addr, netmask;
+      U_MEMCPY(&addr,    &ifaddr.ifr_addr,       sizeof(struct sockaddr));
+      U_MEMCPY(&netmask, &ifnetmask.ifr_netmask, sizeof(struct sockaddr));
 
-   U_MEMCPY(&addr,    &ifaddr.ifr_addr,       sizeof(struct sockaddr));
-   U_MEMCPY(&netmask, &ifnetmask.ifr_netmask, sizeof(struct sockaddr));
+      U_INTERNAL_ASSERT_EQUALS(addr.psaIP4Addr.sin_family,    AF_INET)
+      U_INTERNAL_ASSERT_EQUALS(netmask.psaIP4Addr.sin_family, AF_INET)
 
-   U_INTERNAL_ASSERT_EQUALS(addr.psaIP4Addr.sin_family,    AF_INET)
-   U_INTERNAL_ASSERT_EQUALS(netmask.psaIP4Addr.sin_family, AF_INET)
+      network =     addr.psaIP4Addr.sin_addr.s_addr &
+                 netmask.psaIP4Addr.sin_addr.s_addr;
 
-   network =     addr.psaIP4Addr.sin_addr.s_addr &
-              netmask.psaIP4Addr.sin_addr.s_addr;
+      /*
+      result.snprintf("%d.%d.%d.%d", (network       & 0xFF),
+                                     (network >>  8 & 0xFF),
+                                     (network >> 16 & 0xFF),
+                                     (network >> 24 & 0xFF));
+      */
 
-   /*
-   result.snprintf("%d.%d.%d.%d", (network       & 0xFF),
-                                  (network >>  8 & 0xFF),
-                                  (network >> 16 & 0xFF),
-                                  (network >> 24 & 0xFF));
-   */
+      (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &network, result.data(), INET_ADDRSTRLEN);
 
-   (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &network, result.data(), INET_ADDRSTRLEN);
-
-   result.size_adjust();
+      result.size_adjust();
+      }
 #endif
 
    U_RETURN_STRING(result);

@@ -1894,7 +1894,7 @@ number:     if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
          case 'I': /* print off_t */
             {
-#        if SIZEOF_OFF_T == 8 && !defined(_MSWINDOWS_) && !defined(DISABLE_LFS)
+#        if SIZEOF_OFF_T == 8 && defined(ENABLE_LFS)
             flags |= LLONGINT;
 #        endif
 

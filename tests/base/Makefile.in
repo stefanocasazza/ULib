@@ -84,8 +84,9 @@ CONFIG_CLEAN_VPATH_FILES =
 @ZIP_TRUE@am__EXEEXT_3 = test_zip$(EXEEXT)
 am__EXEEXT_4 = test_sprintf$(EXEEXT) test_misc$(EXEEXT) \
 	test_random$(EXEEXT) test_utility$(EXEEXT) crypto_url$(EXEEXT) \
-	crypto_xml$(EXEEXT) crypto_base64$(EXEEXT) crypto_qp$(EXEEXT) \
-	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3)
+	crypto_xml$(EXEEXT) crypto_base64$(EXEEXT) \
+	crypto_base64url$(EXEEXT) crypto_qp$(EXEEXT) $(am__EXEEXT_1) \
+	$(am__EXEEXT_2) $(am__EXEEXT_3)
 am_crypto_base64_OBJECTS = crypto_base64.$(OBJEXT)
 crypto_base64_OBJECTS = $(am_crypto_base64_OBJECTS)
 crypto_base64_LDADD = $(LDADD)
@@ -94,6 +95,10 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
+am_crypto_base64url_OBJECTS = crypto_base64url.$(OBJEXT)
+crypto_base64url_OBJECTS = $(am_crypto_base64url_OBJECTS)
+crypto_base64url_LDADD = $(LDADD)
+crypto_base64url_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am__crypto_des3_SOURCES_DIST = crypto_des3.c
 @SSL_TRUE@am_crypto_des3_OBJECTS = crypto_des3.$(OBJEXT)
 crypto_des3_OBJECTS = $(am_crypto_des3_OBJECTS)
@@ -174,13 +179,13 @@ AM_V_CCLD = $(am__v_CCLD_@AM_V@)
 am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
 am__v_CCLD_0 = @echo "  CCLD    " $@;
 am__v_CCLD_1 = 
-SOURCES = $(crypto_base64_SOURCES) $(crypto_des3_SOURCES) \
-	$(crypto_dgst_SOURCES) $(crypto_qp_SOURCES) \
-	$(crypto_url_SOURCES) $(crypto_xml_SOURCES) \
-	$(test_gzio_SOURCES) $(test_misc_SOURCES) \
-	$(test_random_SOURCES) $(test_sprintf_SOURCES) \
-	$(test_utility_SOURCES) test_zip.c
-DIST_SOURCES = $(crypto_base64_SOURCES) \
+SOURCES = $(crypto_base64_SOURCES) $(crypto_base64url_SOURCES) \
+	$(crypto_des3_SOURCES) $(crypto_dgst_SOURCES) \
+	$(crypto_qp_SOURCES) $(crypto_url_SOURCES) \
+	$(crypto_xml_SOURCES) $(test_gzio_SOURCES) \
+	$(test_misc_SOURCES) $(test_random_SOURCES) \
+	$(test_sprintf_SOURCES) $(test_utility_SOURCES) test_zip.c
+DIST_SOURCES = $(crypto_base64_SOURCES) $(crypto_base64url_SOURCES) \
 	$(am__crypto_des3_SOURCES_DIST) \
 	$(am__crypto_dgst_SOURCES_DIST) $(crypto_qp_SOURCES) \
 	$(crypto_url_SOURCES) $(crypto_xml_SOURCES) \
@@ -375,11 +380,11 @@ AUTOMAKE_OPTIONS = ## dist-shar dist-zip
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 PRG = test_sprintf test_misc test_random test_utility crypto_url \
-	crypto_xml crypto_base64 crypto_qp $(am__append_1) \
-	$(am__append_3) $(am__append_5)
+	crypto_xml crypto_base64 crypto_base64url crypto_qp \
+	$(am__append_1) $(am__append_3) $(am__append_5)
 TESTS = sprintf.test misc.test random.test url.test xml.test \
-	utility.test base64.test qp.test $(am__append_2) \
-	$(am__append_4) $(am__append_6) ../reset.color
+	utility.test base64.test base64url.test qp.test \
+	$(am__append_2) $(am__append_4) $(am__append_6) ../reset.color
 test_misc_SOURCES = test_misc.c
 test_random_SOURCES = test_random.c
 test_sprintf_SOURCES = test_sprintf.c
@@ -387,6 +392,7 @@ test_utility_SOURCES = test_utility.c
 crypto_url_SOURCES = crypto_url.c
 crypto_xml_SOURCES = crypto_xml.c
 crypto_base64_SOURCES = crypto_base64.c
+crypto_base64url_SOURCES = crypto_base64url.c
 crypto_qp_SOURCES = crypto_qp.c
 @SSL_TRUE@crypto_des3_SOURCES = crypto_des3.c
 @SSL_TRUE@crypto_dgst_SOURCES = crypto_dgst.c
@@ -440,6 +446,9 @@ clean-checkPROGRAMS:
 crypto_base64$(EXEEXT): $(crypto_base64_OBJECTS) $(crypto_base64_DEPENDENCIES) $(EXTRA_crypto_base64_DEPENDENCIES) 
 	@rm -f crypto_base64$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(crypto_base64_OBJECTS) $(crypto_base64_LDADD) $(LIBS)
+crypto_base64url$(EXEEXT): $(crypto_base64url_OBJECTS) $(crypto_base64url_DEPENDENCIES) $(EXTRA_crypto_base64url_DEPENDENCIES) 
+	@rm -f crypto_base64url$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(crypto_base64url_OBJECTS) $(crypto_base64url_LDADD) $(LIBS)
 crypto_des3$(EXEEXT): $(crypto_des3_OBJECTS) $(crypto_des3_DEPENDENCIES) $(EXTRA_crypto_des3_DEPENDENCIES) 
 	@rm -f crypto_des3$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(crypto_des3_OBJECTS) $(crypto_des3_LDADD) $(LIBS)
@@ -481,6 +490,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crypto_base64.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crypto_base64url.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crypto_des3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crypto_dgst.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/crypto_qp.Po@am__quote@

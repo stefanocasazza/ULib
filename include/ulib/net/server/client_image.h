@@ -31,6 +31,7 @@
  */
 
 class UHTTP;
+class UHTTP2;
 class UIPAllow;
 class USSIPlugIn;
 class UHttpPlugIn;
@@ -44,6 +45,13 @@ template <class T> class UServer;
 
 class U_EXPORT UClientImage_Base : public UEventFd {
 public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
 
    // SERVICES
 
@@ -324,6 +332,9 @@ public:
 
 protected:
    USocket* socket;
+#ifndef U_HTTP2_DISABLE
+   void* connection;
+#endif
    UString* data_pending;
    uint32_t start, count;
    int sfd, pending_close;
@@ -418,6 +429,7 @@ private:
    UClientImage_Base& operator=(const UClientImage_Base&)   { return *this; }
 
                       friend class UHTTP;
+                      friend class UHTTP2;
                       friend class USSIPlugIn;
                       friend class UHttpPlugIn;
                       friend class UNoCatPlugIn;

@@ -114,7 +114,7 @@ static bool     isIP, isMAC;
 static char     ap_ref[100U];
 static UPing*   sockp;
 static uint32_t index_access_point,
-                num_users, num_users_connected, num_users_delete,
+                num_users, num_users_connected, num_users_delete, num_ap_delete,
                 num_ap, num_ap_noconsume, num_ap_up, num_ap_down, num_ap_open, num_ap_unreachable;
 
 static const char* ptr1;
@@ -142,7 +142,7 @@ static URDBObjectHandler<UDataStorage*>* db_nodog;
 #define NAMED_PIPE              "/tmp/wi_auth_db.op"
 #define FIRENZECARD_REDIR       "http://159.213.248.2/wxfi/?ap=%s"
 #define LOGIN_VALIDATE_REDIR    "http://www.google.com/login_validate?%.*s"
-#define LOGIN_VALIDATE_REDIR_FI "http://151.11.45.77/login_validate?%.*s"
+#define LOGIN_VALIDATE_REDIR_FI "http://151.11.47.4/login_validate?%.*s"
 
 //#define IP_CASCINE              "151.11.47.3"
 //#define FIRENZECARD_REDIR       "http://wxfi.comune.fi.it/?ap=%s"
@@ -2452,6 +2452,37 @@ static int checkStatusUser(UStringRep* key, UStringRep* data)
    U_RETURN(1);
 }
 
+static int checkStatusNodog(UStringRep* key, UStringRep* data)
+{
+   U_TRACE(5, "::checkStatusNodog(%p,%p)", key, data)
+
+   if (key)
+      {
+      if (key == (void*)-1)
+         {
+         ++num_ap_delete;
+
+         U_RETURN(2); // delete
+         }
+
+      U_RETURN(4); // NB: call us later (after set record value from db)...
+      }
+
+   U_INTERNAL_DUMP("nodog_rec->sz = %u start_op = %ld nodog_rec->since = %ld nodog_rec->hostname = %.*S", nodog_rec->sz, start_op, nodog_rec->since, U_STRING_TO_TRACE(nodog_rec->hostname))
+
+   U_INTERNAL_ASSERT_MAJOR(nodog_rec->sz, 0)
+
+   if (nodog_rec->status == 2 &&
+       nodog_rec->since <= (start_op - (30 * 24 * 60 * 60))) // 1 month
+      {
+      U_LOGGER("*** AP TO REMOVE: AP(%.*s) ***", U_STRING_TO_TRACE(nodog_rec->hostname));
+
+      U_RETURN(3); // NB: call us later (without lock on db)...
+      }
+
+   U_RETURN(1);
+}
+
 static int checkStatusUserOnNodog(UStringRep* key, UStringRep* data)
 {
    U_TRACE(5, "::checkStatusUserOnNodog(%p,%p)", key, data)
@@ -3162,32 +3193,7 @@ static bool checkLoginValidate(bool all)
       }
    else
       {
-      // NB: it must be already URL decoded because it is part of form key1=value1&key2=value2&...
-
-      UString buffer(U_CAPACITY);
-      const char* ptr = redirect->data();
-
-      if (UBase64::decode(ptr, sz, buffer) == false)
-         {
-      // U_LOGGER("*** BASE64 DECODE FAILED: DATA(%.*s) ***", U_STRING_TO_TRACE(*redirect));
-
-         U_RETURN(false);
-         }
-
-#  ifdef USE_LIBSSL
-      output->setBuffer(U_CAPACITY);
-
-      if (UDES3::decode(buffer, *output) == false)
-         {
-      // U_LOGGER("*** DES3 DECODE FAILED: DATA(%.*s) ***", U_STRING_TO_TRACE(buffer));
-
-         U_RETURN(false);
-         }
-#  else
-      *output = buffer;
-#  endif
-
-      if (UStringExt::isCompress(*output)) *output = UStringExt::decompress(*output);
+      UString str = UDES3::getSignedData(*redirect);
 
       // ========================
       // 1 => uid
@@ -3200,29 +3206,29 @@ static bool checkLoginValidate(bool all)
       // 8 => redir_to
       // ========================
 
-      ptr1 = output->data() + U_CONSTANT_SIZE("uid=");
-      ptr2 = ptr1 + 1;
+      ptr3 = ptr2 = (ptr1 = str.data()) + U_CONSTANT_SIZE("uid=");
 
-      for (const char* end = output->end(); ptr2 < end; ++ptr2)
+      for (const char* end = str.end(); ptr3 < end; ++ptr3)
          {
-         if (*ptr2 == '&') break;
+         if (*ptr3 == '&') break;
          }
 
-      uint32_t pos = ptr2 - ptr1;
+      sz = ptr3 - ptr2;
 
-      (void) uid->replace(ptr1, pos);
+      (void) uid->replace(ptr2, sz);
 
-      if (*ptr2 != '&' ||
-          (pos += U_CONSTANT_SIZE("uid=") + 1, pos >= output->size()))
+      if (*ptr3 != '&'                         ||
+          uid->findWhiteSpace() != U_NOT_FOUND ||
+          *(int32_t*)ptr1 != U_MULTICHAR_CONSTANT32('u','i','d','='))
          {
-      // U_LOGGER("*** UID DECODE FAILED: DATA(%.*s) ***", U_STRING_TO_TRACE(*output));
+         U_LOGGER("*** checkLoginValidate(%b) FAILED: DATA(%.*s) ***", all, U_STRING_TO_TRACE(str));
 
          U_RETURN(false);
          }
 
       UVector<UString> name_value(14);
 
-      sz = UStringExt::getNameValueFromData(output->substr(pos), name_value, U_CONSTANT_TO_PARAM("&"));
+      sz = UStringExt::getNameValueFromData(str.substr(U_CONSTANT_SIZE("uid=")+sz), name_value, U_CONSTANT_TO_PARAM("&"));
 
       if (sz < 12)
          {
@@ -4500,8 +4506,7 @@ static void GET_LoginRequest(bool idp)
 
       *auth_domain = *cookie_auth + realm;
 
-      if (realm.equal(U_CONSTANT_TO_PARAM("firenzecard")) == false) *policy = (user_exist ? user_rec->_policy : *policy_daily);
-      else
+      if (realm.equal(U_CONSTANT_TO_PARAM("firenzecard")))
          {
          *policy = *policy_traffic;
 
@@ -4514,6 +4519,20 @@ static void GET_LoginRequest(bool idp)
 
             (void) db_user->putDataStorage(*uid);
             }
+         }
+      else
+         {
+         if (realm.equal(U_CONSTANT_TO_PARAM("all")) == false ||
+             askToLDAP(0, 0, 0, "ldapsearch -LLL -b %.*s %.*s waLogin=%.*s", U_STRING_TO_TRACE(*wiauth_card_basedn), U_STRING_TO_TRACE(*ldap_card_param), U_STRING_TO_TRACE(*uid)) == -1)
+            {
+            *policy = (user_exist ? user_rec->_policy : *policy_daily);
+            }
+         else
+            {
+            *policy = (*table)["waPolicy"];
+            }
+
+         U_INTERNAL_ASSERT(*policy)
          }
 
       sendLoginValidate(); // NB: in questo modo l'utente ripassa dal firewall e NoDog lo rimanda da noi (login_validate) con i dati rinnovati...
@@ -5205,6 +5224,12 @@ static void GET_resync()
 
       db_nodog->callForAllEntry(getAccessPointUP, (vPF)checkStatusUserOnNodog);
 
+      num_ap_delete = 0;
+
+      db_nodog->callForAllEntry(checkStatusNodog, (vPF)U_NOT_FOUND);
+
+      U_LOGGER("*** WE HAVE REMOVED %u ACCESS POINT ***", num_ap_delete);
+
       USSIPlugIn::setAlternativeResponse();
       }
 }
@@ -5288,6 +5313,10 @@ error:
 
    x    = user_rec->getAP(label);
    user = getUserName();
+
+#ifdef USE_LIBZ
+   if (UStringExt::isGzip(result)) result = UStringExt::gunzip(result);
+#endif
 
    USSIPlugIn::setAlternativeInclude(admin_cache->getContent(U_CONSTANT_TO_PARAM("stato_utente.tmpl")), 0, false,
                                      "Stato utente", 0, 0,
@@ -5776,7 +5805,7 @@ static void POST_LoginRequest(bool idp)
 
    if (idp == false                                  &&
        *ip                                           &&
-       ip->equal(U_CLIENT_ADDRESS_TO_PARAM) == false &&
+        ip->equal(U_CLIENT_ADDRESS_TO_PARAM) == false &&
        UClientImage_Base::isAllowed(*vallow_IP_request) == false) // "172.0.0.0/8, 159.213.248.230"
       {
       U_LOGGER("*** PARAM IP(%.*s) FROM AP(%.*s) IS DIFFERENT FROM CLIENT ADDRESS(%.*s) - REALM(%.*s) UID(%.*s) ***",

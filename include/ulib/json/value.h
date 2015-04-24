@@ -224,8 +224,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UValue)
 
-      U_INTERNAL_DUMP("type_ = %u", type_)
-
       clear(); 
       }
 

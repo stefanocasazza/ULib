@@ -35,12 +35,6 @@
 /* Define if disable ipv6 support */
 #undef DISABLE_IPV6
 
-/* disable Large File Support features */
-#undef DISABLE_LFS
-
-/* disable memory pool features */
-#undef DISABLE_MEMPOOL
-
 /* Define if disable ZIP support */
 #undef DISABLE_ZIP
 
@@ -274,6 +268,9 @@
 
 /* Define to 1 if you have the <netpacket/packet.h> header file. */
 #undef HAVE_NETPACKET_PACKET_H
+
+/* Define to 1 if you have the <net/if_arp.h> header file. */
+#undef HAVE_NET_IF_ARP_H
 
 /* define if the compiler implements old style iostreams */
 #undef HAVE_OLD_IOSTREAM
@@ -732,6 +729,9 @@
 
 /* enable HTML pagination support */
 #undef U_HTML_PAGINATION_SUPPORT
+
+/* disable HTTP/2 support */
+#undef U_HTTP2_DISABLE
 
 /* enable HTTP inotify support */
 #undef U_HTTP_INOTIFY_SUPPORT

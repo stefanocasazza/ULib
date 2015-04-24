@@ -244,7 +244,6 @@ if (envp) \
 // Manage location info for object allocation
 
 #  define U_NEW(args...)                         (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args)
-#  define U_NEW_VECTOR(n,type,p)                 (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, u_new_vector<type>(n,p,sizeof(type)))
 #  define U_NEW_DBG(CLASS,obj,args...)           (UMemoryPool::obj_class = #CLASS, \
                                                   UMemoryPool::func_call = __PRETTY_FUNCTION__, \
                                                   obj = U_NEW(args), \
@@ -252,10 +251,6 @@ if (envp) \
 
 #  define U_NEW_ULIB_OBJECT(obj,args...)         UObjectDB::flag_ulib_object = true, \
                                                  obj = U_NEW(args), \
-                                                 UObjectDB::flag_ulib_object = false
-
-#  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type,p) UObjectDB::flag_ulib_object = true, \
-                                                 obj = U_NEW_VECTOR(n,type,p), \
                                                  UObjectDB::flag_ulib_object = false
 
 #else // DEBUG && U_STDCPP_ENABLE
@@ -272,12 +267,9 @@ if (envp) \
 #  define U_DUMP_OBJECT(msg,obj)
 #  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)
 
-#  define U_NEW(args...)                       new args
-#  define U_NEW_VECTOR(n,type,p)               u_new_vector<type>(n,p,sizeof(type))
+#  define U_NEW(args...)                               new args
 #  define U_NEW_DBG(CLASS,obj,args...)           obj = new args
-
 #  define U_NEW_ULIB_OBJECT(obj,args...)         obj = new args
-#  define U_NEW_VECTOR_ULIB_OBJECT(obj,n,type,p) obj = u_new_vector<type>(n,p,sizeof(type))
 
 #endif // DEBUG && U_STDCPP_ENABLE
 

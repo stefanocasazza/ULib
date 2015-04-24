@@ -60,6 +60,10 @@ class UFileConfig;
 class UServerPlugIn {
 public:
 
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
    // COSTRUTTORE
 
             UServerPlugIn()        {}
