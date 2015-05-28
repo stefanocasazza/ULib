@@ -37,7 +37,7 @@ The current version offers the following features :
    * CGI support for the X-Sendfile feature and also supports X-Accel-Redirect headers transparently.
    * Support for minify HTML CGI output by wrapping [google page speed SDK](http://code.google.com/speed/page-speed/download.html#pagespeed-sdk).
    * Support for running JavaScript code by wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
-   * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video managed transparently.
+   * [HTTP pseudo-streaming](http://en.wikipedia.org/wiki/Progressive_download) for FLV video managed transparently.
    * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
    * Support for running Ruby on Rails applications natively (experimental).
    * Support for running natively PHP applications whith a php (embedded) library (experimental).
@@ -51,18 +51,18 @@ The current version offers the following features :
        * `mod_rpc` : generic Remote Procedure Call.
        * `mod_http` : core features, static file handler and dynamic page (ULib Servlet Page).
        * `mod_ssi` : [Server Side Includes]( http://en.wikipedia.org/wiki/Server_Side_Include) support with enhanced #set, direct include and #exec servlet (C/ULib Servlet Page).
-       * `mod_nocat` : [captive portal](http://nocat.net/) implementation.
+       * `mod_nocat` : [captive portal](http://dev.wifidog.org/wiki/NoCat) implementation.
        * `mod_proxy` : multi-features reverse proxy with websocket support.
-       * `mod_tsa` : server side [Time Stamp](http://www.opentsa.org) support.
-       * `mod_soap` : generic [SOAP](http://java.sun.com/developer/technicalArticles/xml/webservices) server services support.
+       * `mod_tsa` : server side [Time Stamp](http://sourceforge.net/projects/timestamping/) support.
+       * `mod_soap` : generic [SOAP](http://en.wikipedia.org/wiki/SOAP) server services support.
        * `mod_fcgi` : third-party applications support thru [FastCGI](http://www.fastcgi.com/drupal) interface.
-       * `mod_scgi` : module that implements the client side of the [SCGI](http://www.mems-exchange.org/software/scgi) protocol (experimental).
+       * `mod_scgi` : module that implements the client side of the [SCGI](http://en.wikipedia.org/wiki/Simple_Common_Gateway_Interface) protocol (experimental).
        * `mod_shib` : [web single sign-on support](http://shibboleth.internet2.edu) (experimental).
-       * `mod_geoip` : [geolocation support](http://www.maxmind.com/geoip/api/c.shtml) (experimental).
+       * `mod_geoip` : [geolocation support](http://en.wikipedia.org/wiki/Geolocation) (experimental).
        * `mod_stream` : simple streaming support (experimental).
        * `mod_socket` : [Web Socket](http://dev.w3.org/html5/websockets) application framework (experimental).
    * Security protection :
-       * [HTTP Session Hijacking](http://cleverlogic.net/articles/kochure) mitigation.
+       * [HTTP Session Hijacking](http://en.wikipedia.org/wiki/Session_hijacking) mitigation.
        * [Algorithmic Complexity Attacks](http://lwn.net/Articles/474365/) prevention by randomizing hash seed.
        * [DNS rebinding](http://en.wikipedia.org/wiki/DNS_rebinding) prevention by RFC1918 filtering and Host header validation.
        * selective uri support (DOS regex) for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
