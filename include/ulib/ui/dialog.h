@@ -17,11 +17,11 @@
 #include <ulib/string.h>
 
 /**
-   @class UDialog
-
-   @brief UDialog is a simple interface to the Unix dialog program by Savio Lam and Stuart Herbert.
-          I think dialog is an awesome way of building simple user interfaces.
-*/
+ * @class UDialog
+ *
+ * @brief UDialog is a simple interface to the Unix dialog program by Savio Lam and Stuart Herbert.
+ *        I think dialog is an awesome way of building simple user interfaces.
+ */
 
 template <class T> class UVector;
 
@@ -75,14 +75,14 @@ public:
 
    void setOptions(const UString& opt)
       {
-      U_TRACE(0, "UDialog::setOptions(%.*S)", U_STRING_TO_TRACE(opt))
+      U_TRACE(0, "UDialog::setOptions(%V)", opt.rep)
 
       options = opt;
       }
 
    void setArgument(const UString& arg)
       {
-      U_TRACE(0, "UDialog::setArgument(%.*S)", U_STRING_TO_TRACE(arg))
+      U_TRACE(0, "UDialog::setArgument(%V)", arg.rep)
 
       argument = arg;
       }

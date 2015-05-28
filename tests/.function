@@ -480,4 +480,4 @@ TIMEOUT() {
    fi
 }
 
-# grep -v 'Not a GIF file' err/* | grep --colour -i -E -e 'ERROR|ABORT|ASSERT|SIGSEGV|OVERLAP|genericRead|handler|epoll_ctl' | grep -v SQLITE_ABORT
+# grep -v 'Not a GIF file' err/* | grep --colour -i -E -e 'ERROR|ABORT|ASSERT|SIGSEGV|OVERLAP|genericRead|handler|epoll_ctl' | grep -v -e 'SQLITE_ABORT\|misaligned'

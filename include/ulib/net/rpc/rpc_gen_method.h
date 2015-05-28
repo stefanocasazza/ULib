@@ -24,7 +24,7 @@ public:
 
    URPCGenericMethod(const UString& n, const UString& _ns, UCommand* cmd, int rtype) : response_type(rtype), response(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, URPCGenericMethod, "%.*S,%.*S,%p,%d", U_STRING_TO_TRACE(n), U_STRING_TO_TRACE(_ns), cmd, rtype) 
+      U_TRACE_REGISTER_OBJECT(0, URPCGenericMethod, "%V,%V,%p,%d", n.rep, _ns.rep, cmd, rtype) 
 
       command                 = cmd;
       URPCMethod::ns          = _ns;

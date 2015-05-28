@@ -114,7 +114,7 @@ public:
 
    UFile(const UString& path, const UString* environment = 0) : pathname(path) 
       {
-      U_TRACE_REGISTER_OBJECT(0, UFile, "%.*S,%p", U_STRING_TO_TRACE(path), environment)
+      U_TRACE_REGISTER_OBJECT(0, UFile, "%V,%p", path.rep, environment)
 
       inc_num_file_object(this);
 
@@ -234,7 +234,7 @@ public:
 
    bool open(const UString& path, int flags = O_RDONLY)
       {
-      U_TRACE(0, "UFile::open(%.*S,%d)", U_STRING_TO_TRACE(path), flags)
+      U_TRACE(0, "UFile::open(%V,%d)", path.rep, flags)
 
       setPath(path);
 

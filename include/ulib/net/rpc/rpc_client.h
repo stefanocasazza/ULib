@@ -43,7 +43,7 @@ public:
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-   const char* dump(bool _reset) const { return UClient_Base::dump(_reset); }
+   const char* dump(bool _reset) const;
 #endif
 
 protected:
@@ -66,30 +66,7 @@ protected:
       delete URPCMethod::encoder;
       }
 
-   static bool readResponse(USocket* sk, UString& buffer, UString& response)
-      {
-      U_TRACE(0, "URPCClient_Base::readResponse(%p,%.*S,%.*S)", sk, U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(response))
-
-      uint32_t rstart = 0;
-
-      // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
-
-        buffer.setEmptyForce();
-      response.setEmptyForce();
-
-      if (URPC::readTokenString(sk, 0, buffer, rstart, response))
-         {
-         // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
-
-         buffer.size_adjust_force(U_TOKEN_NM);
-         }
-
-      U_INTERNAL_DUMP("buffer = %.*S response = %.*S)", U_STRING_TO_TRACE(buffer), U_STRING_TO_TRACE(response))
-
-      if (buffer) U_RETURN(true);
-
-      U_RETURN(false);
-      }
+   static bool readResponse(USocket* sk, UString& buffer, UString& response);
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS

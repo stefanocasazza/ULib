@@ -12,17 +12,21 @@
 # IP_ADDRESS         ip address of host for the interface connected to the Internet (autodetected if not specified)
 # ALLOWED_IP			list of comma separated client address for IP-based access control (IPADDR[/MASK])
 #
-# ENABLE_RFC1918_FILTER reject request from private IP to public server address
 # ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
+# ENABLE_RFC1918_FILTER reject request from private IP to public server address
+# MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
 #
 # LISTEN_BACKLOG				  max number of ready to be delivered connections to accept()
 # SET_REALTIME_PRIORITY		  flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+#
+# CLIENT_THRESHOLD			  min number of clients to active polling
 # CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization 
 #
 # PID_FILE      write pid on file indicated
 # WELCOME_MSG   message of welcome to send initially to client
 # RUN_AS_USER   downgrade privileges to that user account
 # DOCUMENT_ROOT The directory out of which you will serve your documents
+#
 #
 # LOG_FILE      locations for file log
 # LOG_FILE_SZ   memory size for file log
@@ -35,9 +39,9 @@
 # ORM_DRIVER_DIR directory where there are ORM drivers to load
 #
 # REQ_TIMEOUT    timeout for request from client
-# TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel.
-# MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-#                (Value <= 0 will disable Keep-Alive)
+# TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel
+# TCP_LINGER_SET Specifies how the TCP initiated the close
+# MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session. (Value <= 0 will disable Keep-Alive)
 #
 # DH_FILE       [Diffie-Hellman Key Agreement protocol](http://www.rsa.com/rsalabs/node.asp?id=2248) cmd: openssl dhparam -out dh.pem 1024
 # CERT_FILE     certificate of server
@@ -117,13 +121,13 @@ userver {
 # PREFORK_CHILD  3
 }
 
-# ------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
 #                                              P L U G I N     P A R A M E T E R S
-# ------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
 
-# ------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
 # http - plugin parameters
-# ------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
 # ALIAS                      vector of URI redirection (request -> alias)
 # REWRITE_RULE_NF            vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
 # USP_AUTOMATIC_ALIASING	  USP page that is recognized automatically as alias of all uri request without suffix
@@ -139,28 +143,24 @@ userver {
 # CACHE_FILE_STORE           pathfile of memory cache stored on filesystem
 #
 # CGI_TIMEOUT					  timeout for cgi execution
-# MIN_SIZE_FOR_SENDFILE      for major size it is better to use sendfile() to serve static content
-#
 # MOUNT_POINT                mount point application (to adjust var SCRIPT_NAME)
-# VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine,
-#                            as differentiated by their apparent hostname 
+# VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine, as differentiated by their apparent hostname 
 # DIGEST_AUTHENTICATION      flag authentication method (yes = digest, no = basic)
-#
-# ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive)
 #
 # URI_PROTECTED_MASK         mask (DOS regexp) of URI protected from prying eyes
 # URI_PROTECTED_ALLOWED_IP   list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
 #
+# SESSION_COOKIE_OPTION				 eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)	
+# ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive)
+#
 # URI_REQUEST_CERT_MASK							   mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
 # URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK mask (DOS regexp) of URI where use HTTP Strict Transport Security to force client to use only SSL
-#
-# SESSION_COOKIE_OPTION      eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)	
-# ------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
 # This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
-# ------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
 # LIMIT_REQUEST_BODY			  restricts the total size of the HTTP request body sent from the client
 # REQUEST_READ_TIMEOUT       set timeout for receiving requests
-# ------------------------------------------------------------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 http {
 
@@ -189,7 +189,6 @@ http {
 # ENABLE_INOTIFY  yes
 
 # CGI_TIMEOUT 60
-# MIN_SIZE_FOR_SENDFILE 32k
 
 # CACHE_FILE_MASK  *.css|*.js|*.*html|*.png|*.gif|*.jpg 
 
@@ -214,14 +213,14 @@ http {
 # ---------------------------------------------------------------------------
 }
 
-# -----------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------
 # ssi - plugin parameters
-# -----------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------
 # ENVIRONMENT					path of file configuration environment for SSI
 #
 # SSI_AUTOMATIC_ALIASING	special SSI HTML file that is recognized automatically as alias of all
 #									uri request without suffix (generally cause navigation directory not working)
-# -----------------------------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------------------------------
 
 # ssi {
 #

@@ -48,7 +48,9 @@ bool URDBClient_Base::readResponse()
 
    response.setBuffer(U_CAPACITY);
 
-   if (URPCClient_Base::readResponse(socket, buffer, response))
+   bool ok = URPCClient_Base::readResponse(socket, buffer, response);
+
+   if (ok)
       {
       nResponseCode = strtol(buffer.data(), 0, 10);
 
@@ -59,11 +61,9 @@ bool URDBClient_Base::readResponse()
 
       u_buffer_len = 0;
 #  endif
-
-      U_RETURN(true);
       }
 
-   U_RETURN(false);
+   U_RETURN(ok);
 }
 
 bool URDBClient_Base::processRequest(const char* token)
@@ -137,7 +137,7 @@ bool URDBClient_Base::commitTransaction()
 
 int URDBClient_Base::store(const UString& key, const UString& data, int flag)
 {
-   U_TRACE(0, "URDBClient_Base::store(%.*S,%.*S,%d)", U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(data), flag)
+   U_TRACE(0, "URDBClient_Base::store(%V,%V,%d)", key.rep, data.rep, flag)
 
    int result    = -5;
    char token[5] = { 'S', 'T', 'R', '0', '\0' };
@@ -166,7 +166,7 @@ int URDBClient_Base::store(const UString& key, const UString& data, int flag)
 
 int URDBClient_Base::remove(const UString& key)
 {
-   U_TRACE(0, "URDBClient_Base::remove(%.*S)", U_STRING_TO_TRACE(key))
+   U_TRACE(0, "URDBClient_Base::remove(%V)", key.rep)
 
    int result = -5;
 
@@ -192,8 +192,7 @@ int URDBClient_Base::remove(const UString& key)
 
 int URDBClient_Base::substitute(const UString& key, const UString& new_key, const UString& data, int flag)
 {
-   U_TRACE(0, "URDBClient_Base::substitute(%.*S,%.*S,%.*S,%d)", U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(new_key),
-                                                                U_STRING_TO_TRACE(data), flag)
+   U_TRACE(0, "URDBClient_Base::substitute(%V,%V,%V,%d)", key.rep, new_key.rep, data.rep, flag)
 
    int result    = -5;
    char token[5] = { 'S', 'U', 'B', '0', '\0' };
@@ -225,7 +224,7 @@ int URDBClient_Base::substitute(const UString& key, const UString& new_key, cons
 
 UString URDBClient_Base::operator[](const UString& key)
 {
-   U_TRACE(0, "URDBClient_Base::operator[](%.*S)", U_STRING_TO_TRACE(key))
+   U_TRACE(0, "URDBClient_Base::operator[](%V)", key.rep)
 
    reset();
 
@@ -233,7 +232,7 @@ UString URDBClient_Base::operator[](const UString& key)
 
    if (processRequest("FIND") && isOK()) U_RETURN_STRING(response);
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 // Call function for all entry

@@ -19,7 +19,7 @@
 
 X509_REQ* UPKCS10::readPKCS10(const UString& x, const char* format)
 {
-   U_TRACE(1, "UPKCS10::readPKCS10(%.*S,%S)", U_STRING_TO_TRACE(x), format)
+   U_TRACE(1, "UPKCS10::readPKCS10(%V,%S)", x.rep, format)
 
    BIO* in;
    UString tmp        = x;
@@ -34,13 +34,16 @@ X509_REQ* UPKCS10::readPKCS10(const UString& x, const char* format)
 
       UString buffer(length);
 
-      if (UBase64::decode(x.data(), length, buffer) == false) goto next;
+      UBase64::decode(x.data(), length, buffer);
 
-      tmp    = buffer;
-      format = "DER";
+      if (buffer &&
+          u_base64_errors == 0)
+         {
+         tmp    = buffer;
+         format = "DER";
+         }
       }
 
-next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
    _request = (X509_REQ*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_X509_REQ, "%p,%p,%p,%p", in, 0, 0, 0)
@@ -124,7 +127,7 @@ UString UPKCS10::getEncoded(const char* format) const
       U_RETURN_STRING(encoding);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 // STREAMS

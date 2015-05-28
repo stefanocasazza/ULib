@@ -715,11 +715,11 @@ fd_set* UPing::arping(UPing** sockp, UVector<UIPAddress*>** vaddr, uint32_t n, b
    SHM_counter = 0;
    FD_ZERO(addrmask);
 
-   uint32_t i, j, k, nfds = 0;
+   uint32_t j, nfds = 0;
 
-   for (i = 0; i < n; ++i)
+   for (uint32_t i = 0; i < n; ++i)
       {
-      k = vaddr[i]->size();
+      uint32_t k = vaddr[i]->size();
 
       for (j = 0; j < k; ++j) sockp[i]->pingAsync(nfds++, vaddr[i]->at(j), vdev[i].data());
       }
@@ -739,19 +739,18 @@ fd_set* UPing::checkARPCache(UVector<UString>& varp_cache, UVector<UIPAddress*>*
    FD_ZERO(addrmask);
 
    UString ip;
-   uint32_t k;
    UIPAddress* paddr;
 
    for (uint32_t i = 0; i < n; ++i)
       {
-      k = vaddr[i]->size();
+      uint32_t k = vaddr[i]->size();
 
       for (uint32_t j = 0; j < k; ++j)
          {
          paddr = vaddr[i]->at(j);
          ip    = paddr->getAddressString();
 
-         U_INTERNAL_DUMP("ip = %.*S", U_STRING_TO_TRACE(ip))
+         U_INTERNAL_DUMP("ip = %V", ip.rep)
 
          if (varp_cache.find(ip) != U_NOT_FOUND) FD_SET(SHM_counter, addrmask);
 

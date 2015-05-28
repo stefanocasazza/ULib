@@ -222,9 +222,10 @@ wait:
       {
       U_INTERNAL_DUMP("errno = %d", errno)
 
-      if (errno == EINTR &&
-          UInterrupt::checkForEventSignalPending())
+      if (errno == EINTR)
          {
+         UInterrupt::checkForEventSignalPending();
+
          goto wait;
          }
       }

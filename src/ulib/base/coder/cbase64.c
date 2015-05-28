@@ -103,12 +103,12 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
 
 uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char* restrict result)
 {
-   char c;
-   uint32_t input_len, i = 0;
-   int char_count = 0, bits = 0;
-   const    char* restrict ptr = input;
-   unsigned char* restrict r   = result;
-   const    char* restrict end = input + len;
+   static const int dispatch_table[] = {
+      0,
+      0,
+      (char*)&&case_2-(char*)&&case_1,
+      (char*)&&case_3-(char*)&&case_1
+   };
 
    /**
     * for (int i = 0; i < sizeof(u_alphabet); ++i) { member[u_alphabet[i]] = 1; decoder[u_alphabet[i]] = i; }
@@ -161,6 +161,13 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
       000, 000, 000, 000, 000, 000, 000, 000, 000, 000,
       000, 000, 000, 000, 000, 000
    };
+
+   char c;
+   uint32_t input_len, i = 0;
+   int char_count = 0, bits = 0;
+   const    char* restrict ptr = input;
+   unsigned char* restrict r   = result;
+   const    char* restrict end = input + len;
 
    U_INTERNAL_TRACE("u_base64_decode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
@@ -233,32 +240,31 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
 
          U_INTERNAL_PRINT("Decoding incomplete: at least %d bits truncated", (4 - char_count) * 6)
          }
-      }
-   else
-      {
-      switch (char_count)
-         {
-         case 1:
-            {
-            ++u_base64_errors;
 
-            U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
-            }
-         break;
-
-         case 2:
-            *r++ = bits >> 10;
-         break;
-
-         case 3:
-            {
-            *r++ =  bits >> 16;
-            *r++ = (bits >>  8) & 0xff;
-            }
-         break;
-         }
+      goto next;
       }
 
+   U_INTERNAL_ASSERT_RANGE(1, char_count, 3)
+
+   goto *((char*)&&case_1 + dispatch_table[char_count]);
+
+case_1:
+   ++u_base64_errors;
+
+   U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
+
+   goto next;
+
+case_2:
+   *r++ = bits >> 10;
+
+   goto next;
+
+case_3:
+   *r++ =  bits >> 16;
+   *r++ = (bits >>  8) & 0xff;
+
+next:
    *r = 0;
 
    return (r - result);
@@ -332,12 +338,12 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
 
 uint32_t u_base64url_decode(const char* restrict input, uint32_t len, unsigned char* restrict result)
 {
-   char c;
-   uint32_t input_len, i = 0;
-   int char_count = 0, bits = 0;
-   const    char* restrict ptr = input;
-   unsigned char* restrict r   = result;
-   const    char* restrict end = input + len;
+   static const int dispatch_table[] = {
+      0,
+      0,
+      (char*)&&case_2-(char*)&&case_1,
+      (char*)&&case_3-(char*)&&case_1
+   };
 
    static const unsigned char member[256] = {
       000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, /*  15 */
@@ -386,6 +392,13 @@ uint32_t u_base64url_decode(const char* restrict input, uint32_t len, unsigned c
      0,   0,   0,   0,   0,   0,   0,   0,   0,   0, /* ... */
      0,   0,   0,   0,   0,   0
    };
+
+   char c;
+   uint32_t input_len, i = 0;
+   int char_count = 0, bits = 0;
+   const    char* restrict ptr = input;
+   unsigned char* restrict r   = result;
+   const    char* restrict end = input + len;
 
    U_INTERNAL_TRACE("u_base64url_decode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
@@ -447,30 +460,29 @@ uint32_t u_base64url_decode(const char* restrict input, uint32_t len, unsigned c
          }
       }
 
-   switch (char_count)
-      {
-      case 1:
-         {
-         ++u_base64_errors;
+   if (char_count == 0) goto next;
 
-         U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
-         }
-      break;
+   U_INTERNAL_ASSERT_RANGE(1, char_count, 3)
 
-      case 2:
-         {
-         *r++ = bits >> 10;
-         }
-      break;
+   goto *((char*)&&case_1 + dispatch_table[char_count]);
 
-      case 3:
-         {
-         *r++ =  bits >> 16;
-         *r++ = (bits >>  8) & 0xff;
-         }
-      break;
-      }
+case_1:
+   ++u_base64_errors;
 
+   U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
+
+   goto next;
+
+case_2:
+   *r++ = bits >> 10;
+
+   goto next;
+
+case_3:
+   *r++ =  bits >> 16;
+   *r++ = (bits >>  8) & 0xff;
+
+next:
    *r = 0;
 
    return (r - result);
@@ -478,12 +490,12 @@ uint32_t u_base64url_decode(const char* restrict input, uint32_t len, unsigned c
 
 uint32_t u_base64all_decode(const char* restrict input, uint32_t len, unsigned char* restrict result)
 {
-   char c;
-   uint32_t input_len, i = 0;
-   int char_count = 0, bits = 0;
-   const    char* restrict ptr = input;
-   unsigned char* restrict r   = result;
-   const    char* restrict end = input + len;
+   static const int dispatch_table[] = {
+      0,
+      0,
+      (char*)&&case_2-(char*)&&case_1,
+      (char*)&&case_3-(char*)&&case_1
+   };
 
    static const unsigned char member[256] = {
       000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, /*  15 */
@@ -532,6 +544,13 @@ uint32_t u_base64all_decode(const char* restrict input, uint32_t len, unsigned c
      0,   0,   0,   0,   0,   0,   0,   0,   0,   0, /* ... */
      0,   0,   0,   0,   0,   0
    };
+
+   char c;
+   uint32_t input_len, i = 0;
+   int char_count = 0, bits = 0;
+   const    char* restrict ptr = input;
+   unsigned char* restrict r   = result;
+   const    char* restrict end = input + len;
 
    U_INTERNAL_TRACE("u_base64all_decode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
@@ -589,43 +608,27 @@ uint32_t u_base64all_decode(const char* restrict input, uint32_t len, unsigned c
          }
       }
 
-   switch (char_count)
-      {
-      case 1:
-         {
-         ++u_base64_errors;
+   U_INTERNAL_ASSERT_RANGE(1, char_count, 3)
 
-         U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
-         }
-      break;
+   goto *((char*)&&case_1 + dispatch_table[char_count]);
 
-      case 2:
-         {
-         /*
-         bits += decoder[(int)'A'];
-         bits <<= 6;
-         bits += decoder[(int)'A'];
-         bits <<= 6;
+case_1:
+   ++u_base64_errors;
 
-         *r++ = bits >> 16;
-         */
-         *r++ = bits >> 10;
-         }
-      break;
+   U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
 
-      case 3:
-         {
-         /*
-         bits += decoder[(int)'A'];
-         bits <<= 6;
-         */
+   goto next;
 
-         *r++ =  bits >> 16;
-         *r++ = (bits >>  8) & 0xff;
-         }
-      break;
-      }
+case_2:
+   *r++ = bits >> 10;
 
+   goto next;
+
+case_3:
+   *r++ =  bits >> 16;
+   *r++ = (bits >>  8) & 0xff;
+
+next:
    *r = 0;
 
    return (r - result);

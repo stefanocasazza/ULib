@@ -60,7 +60,7 @@ public:
 
    UCommand(const UString& cmd, char** penv = 0) : command(cmd)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCommand, "%.*S,%p", U_STRING_TO_TRACE(cmd), penv)
+      U_TRACE_REGISTER_OBJECT(0, UCommand, "%V,%p", cmd.rep, penv)
 
       zero();
       setCommand();
@@ -69,7 +69,7 @@ public:
 
    UCommand(const UString& cmd, const UString* penv) : command(cmd)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCommand, "%.*S,%p", U_STRING_TO_TRACE(cmd), penv)
+      U_TRACE_REGISTER_OBJECT(0, UCommand, "%V,%p", cmd.rep, penv)
 
       zero();
       setCommand();
@@ -176,7 +176,7 @@ public:
 
    void setCommand(const UString& cmd)
       {
-      U_TRACE(0, "UCommand::setCommand(%.*S)", U_STRING_TO_TRACE(cmd))
+      U_TRACE(0, "UCommand::setCommand(%V)", cmd.rep)
 
       command = cmd;
 
@@ -185,7 +185,7 @@ public:
 
    void set(const UString& cmd, char** penv = 0)
       {
-      U_TRACE(0, "UCommand::set(%.*S,%p)", U_STRING_TO_TRACE(cmd), penv)
+      U_TRACE(0, "UCommand::set(%V,%p)", cmd.rep, penv)
 
       setCommand(cmd);
       setEnvironment(penv);
@@ -193,7 +193,7 @@ public:
 
    void set(const UString& cmd, const UString* penv)
       {
-      U_TRACE(0, "UCommand::set(%.*S,%p)", U_STRING_TO_TRACE(cmd), penv)
+      U_TRACE(0, "UCommand::set(%V,%p)", cmd.rep, penv)
 
       setCommand(cmd);
       setEnvironment(penv);

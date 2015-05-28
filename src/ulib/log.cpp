@@ -41,7 +41,7 @@ ULog::static_date* ULog::ptr_static_date;
 
 ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(path, 0)
 {
-   U_TRACE_REGISTER_OBJECT(0, ULog, "%.*S,%u,%S", U_STRING_TO_TRACE(path), _size, dir_log_gz)
+   U_TRACE_REGISTER_OBJECT(0, ULog, "%V,%u,%S", path.rep, _size, dir_log_gz)
 
    lock         = 0;
    log_file_sz  = log_gzip_sz = 0;
@@ -171,8 +171,6 @@ ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(
       (void) memcpy(ptr, suffix, len_suffix);
 
       index_path_compress = buf_path_compress->distance(ptr) + 1;
-
-      buf_path_compress->UString::setNullTerminated();
       }
 #endif
 }
@@ -283,7 +281,8 @@ void ULog::_updateStaticDate(char* ptr, int which)
       {
       static long tv_sec_old_1;
 
-      /* 18/06/12 18:45:56
+      /**
+       * 18/06/12 18:45:56
        * 012345678901234567890123456789
        */
 
@@ -309,7 +308,8 @@ void ULog::_updateStaticDate(char* ptr, int which)
       {
       static long tv_sec_old_3;
 
-      /* Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+      /**
+       * Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
        * 0123456789012345678901234567890123456789
        */
 
@@ -337,7 +337,8 @@ void ULog::_updateStaticDate(char* ptr, int which)
 
       U_INTERNAL_ASSERT_EQUALS(which, 2)
 
-      /* 04/Jun/2012:18:18:37 +0200
+      /**
+       * 04/Jun/2012:18:18:37 +0200
        * 012345678901234567890123456789
        */
 
@@ -396,7 +397,7 @@ void ULog::setShared(log_data* ptr, uint32_t _size, bool breference)
 
          UString basename = UFile::getName();
 
-         (void) u__snprintf(somename, sizeof(somename), "/%.*s", U_STRING_TO_TRACE(basename));
+         (void) u__snprintf(somename, sizeof(somename), "/%v", basename.rep);
 
          // -------------------------------------------------------------------------------------------------------------------
          // ULog::log_data log_data_shared;
@@ -705,7 +706,7 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
 
 void ULog::logResponse(const UString& data, const char* name, const char* format, ...)
 {
-   U_TRACE(0, "ULog::logResponse(%.*S,%S,%S)", U_STRING_TO_TRACE(data), name, format)
+   U_TRACE(0, "ULog::logResponse(%V,%S,%S)", data.rep, name, format)
 
    U_INTERNAL_ASSERT(data)
 

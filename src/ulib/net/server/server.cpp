@@ -73,9 +73,12 @@
 #define U_DEFAULT_PORT 80
 
 int           UServer_Base::rkids;
+int           UServer_Base::old_pid;
 int           UServer_Base::timeoutMS;
-int           UServer_Base::iAddressType;
 int           UServer_Base::verify_mode;
+int           UServer_Base::socket_flags;
+int           UServer_Base::iAddressType;
+int           UServer_Base::tcp_linger_set = -2;
 int           UServer_Base::preforked_num_kids;
 bool          UServer_Base::bssl;
 bool          UServer_Base::bipc;
@@ -100,13 +103,15 @@ time_t        UServer_Base::last_event;
 int32_t       UServer_Base::oClientImage;
 uint32_t      UServer_Base::map_size;
 uint32_t      UServer_Base::max_depth;
+uint32_t      UServer_Base::read_again;
 uint32_t      UServer_Base::vplugin_size;
 uint32_t      UServer_Base::shared_data_add;
 uint32_t      UServer_Base::client_address_len;
 uint32_t      UServer_Base::wakeup_for_nothing;
 uint32_t      UServer_Base::document_root_size;
+uint32_t      UServer_Base::num_client_threshold;
+uint32_t      UServer_Base::min_size_for_sendfile;
 uint32_t      UServer_Base::num_client_for_parallelization;
-uint32_t      UServer_Base::num_client_for_parallelization_queue;
 sigset_t      UServer_Base::mask;
 UString*      UServer_Base::host;
 UString*      UServer_Base::server;
@@ -124,6 +129,7 @@ UString*      UServer_Base::senvironment;
 UString*      UServer_Base::document_root;
 UString*      UServer_Base::str_preforked_num_kids;
 USocket*      UServer_Base::socket;
+USocket*      UServer_Base::csocket;
 UProcess*     UServer_Base::proc;
 UEventFd*     UServer_Base::handler_inotify;
 UEventTime*   UServer_Base::ptime;
@@ -302,7 +308,7 @@ public:
             {
             result = USSLSocket::doStapling();
 
-            U_SRV_LOG("SSL: OCSP request for stapling to %.*S has %s", U_STRING_TO_TRACE(*USSLSocket::staple.url), (result ? "success" : "FAILED"));
+            U_SRV_LOG("SSL: OCSP request for stapling to %V has %s", USSLSocket::staple.url->rep, (result ? "success" : "FAILED"));
             }
 
          ts.tv_sec = (result ? U_min(USSLSocket::staple.valid - u_now->tv_sec, 3600L) : 300L);
@@ -412,9 +418,7 @@ UServer_Base::~UServer_Base()
 
    delete socket;
    delete vplugin_name;
-#ifndef U_SERVER_CAPTIVE_PORTAL
    delete vplugin;
-#endif
 
    UOrmDriver::clear();
 
@@ -547,13 +551,15 @@ void UServer_Base::closeLog()
 #ifdef U_WELCOME_SUPPORT
 void UServer_Base::setMsgWelcome(const UString& msg)
 {
-   U_TRACE(0, "UServer_Base::setMsgWelcome(%.*S)", U_STRING_TO_TRACE(msg))
+   U_TRACE(0, "UServer_Base::setMsgWelcome(%V)", msg.rep)
 
    U_INTERNAL_ASSERT(msg)
 
    msg_welcome = U_NEW(UString(U_CAPACITY));
 
-   if (UEscape::decode(msg, *msg_welcome)) (void) msg_welcome->shrink();
+   UEscape::decode(msg, *msg_welcome);
+
+   if (*msg_welcome) (void) msg_welcome->shrink();
    else
       {
       delete msg_welcome;
@@ -561,6 +567,63 @@ void UServer_Base::setMsgWelcome(const UString& msg)
       }
 }
 #endif
+
+bool UServer_Base::setDocumentRoot(const UString& dir)
+{
+   U_TRACE(0, "UServer_Base::setDocumentRoot(%V)", dir.rep)
+
+   *document_root = dir;
+
+   if (document_root->empty() ||
+       document_root->equal(U_CONSTANT_TO_PARAM(".")))
+      {
+      (void) document_root->replace(u_cwd, (document_root_size = u_cwd_len));
+      }
+   else
+      {
+      U_INTERNAL_ASSERT(document_root->isNullTerminated())
+
+      document_root_ptr = document_root->data();
+
+      char c = *document_root_ptr;
+
+      if (c == '~' ||
+          c == '$')
+         {
+         *document_root = UStringExt::expandPath(*document_root, 0);
+
+         document_root_ptr = document_root->data();
+
+         if (document_root->empty())
+            {
+            U_WARNING("var DOCUMENT_ROOT %S expansion failed", document_root_ptr);
+
+            U_RETURN(false);
+            }
+         }
+
+      *document_root = UFile::getRealPath(document_root_ptr, false);
+
+      document_root_size = document_root->size();
+      }
+
+   document_root_ptr = document_root->data();
+
+   U_INTERNAL_DUMP("document_root(%u) = %.*S", document_root_size, document_root_size, document_root_ptr)
+
+   if (UFile::chdir(document_root_ptr, false) == false)
+      {
+      U_WARNING("chdir to working directory (DOCUMENT_ROOT) %S failed", document_root_ptr);
+
+      U_RETURN(false);
+      }
+
+   U_INTERNAL_ASSERT_POINTER(document_root)
+   U_INTERNAL_ASSERT_EQUALS(document_root_size, u_cwd_len)
+   U_INTERNAL_ASSERT_EQUALS(strncmp(document_root_ptr, u_cwd, u_cwd_len), 0)
+
+   U_RETURN(true);
+}
 
 void UServer_Base::loadConfigParam()
 {
@@ -580,9 +643,12 @@ void UServer_Base::loadConfigParam()
    // ALLOWED_IP            list of comma separated client address for IP-based access control (IPADDR[/MASK])
    // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
    // ENABLE_RFC1918_FILTER reject request from private IP to public server address
+   // MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
    //
    // LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
    // SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+   //
+   // CLIENT_THRESHOLD           min number of clients to active polling
    // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization
    //
    // PID_FILE      write pid on file indicated
@@ -601,9 +667,9 @@ void UServer_Base::loadConfigParam()
    // ORM_DRIVER_DIR directory where there are ORM drivers to load
    //
    // REQ_TIMEOUT    timeout for request from client
-   // TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel.
-   // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-   //                (Value <= 0 will disable Keep-Alive)
+   // TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel
+   // TCP_LINGER_SET Specifies how the TCP initiated the close
+   // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session. (Value <= 0 will disable Keep-Alive)
    //
    // DH_FILE       DH param
    // CERT_FILE     server certificate
@@ -653,11 +719,15 @@ void UServer_Base::loadConfigParam()
       U_WARNING("Sorry, it is required root privilege to listen on port 80 but I am not setuid root, I must try 8080");
       }
 
+   set_tcp_keep_alive    = cfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
+   set_realtime_priority = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), true);
+
+   tcp_linger_set                 = cfg->readLong(U_CONSTANT_TO_PARAM("TCP_LINGER_SET"), -2);
    USocket::iBackLog              = cfg->readLong(U_CONSTANT_TO_PARAM("LISTEN_BACKLOG"), SOMAXCONN);
-   set_tcp_keep_alive             = cfg->readBoolean(U_CONSTANT_TO_PARAM("TCP_KEEP_ALIVE"));
-   set_realtime_priority          = cfg->readBoolean(U_CONSTANT_TO_PARAM("SET_REALTIME_PRIORITY"), true);
-   UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"), 1023);
+   UNotifier::max_connection      = cfg->readLong(U_CONSTANT_TO_PARAM("MAX_KEEP_ALIVE"));
    u_printf_string_max_length     = cfg->readLong(U_CONSTANT_TO_PARAM("LOG_MSG_SIZE"));
+
+   num_client_threshold           = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_THRESHOLD"));
    num_client_for_parallelization = cfg->readLong(U_CONSTANT_TO_PARAM("CLIENT_FOR_PARALLELIZATION"));
 
    x = cfg->at(U_CONSTANT_TO_PARAM("PREFORK_CHILD"));
@@ -670,6 +740,10 @@ void UServer_Base::loadConfigParam()
    if (x) setMsgWelcome(x);
 #endif
 
+   min_size_for_sendfile = cfg->readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"));
+
+   if (min_size_for_sendfile == 0) min_size_for_sendfile = 500 * 1024; // 500k: for major size we assume is better to use sendfile()
+
 #ifdef USE_LIBSSL
    *password   = (*cfg)[*UString::str_PASSWORD];
    *ca_file    = (*cfg)[*UString::str_CA_FILE];
@@ -679,7 +753,11 @@ void UServer_Base::loadConfigParam()
 
    *dh_file    = cfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
    verify_mode = cfg->readLong(*UString::str_VERIFY_MODE);
+
+   if (bssl) min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
 #endif
+
+   U_INTERNAL_DUMP("min_size_for_sendfile = %u", min_size_for_sendfile)
 
    // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be
    // supplied optionally after a trailing slash, e.g. 192.168.0.0/24, in which case addresses that
@@ -731,7 +809,14 @@ void UServer_Base::loadConfigParam()
 
    x = (*cfg)[*UString::str_PID_FILE];
 
-   if (x) (void) UFile::writeTo(x, UString(u_pid_str, u_pid_str_len));
+   if (x)
+      {
+      U_INTERNAL_ASSERT(x.isNullTerminated())
+
+      old_pid = UFile::getSysParam(x.data());
+
+      (void) UFile::writeTo(x, UString(u_pid_str, u_pid_str_len));
+      }
 
    // If you want the webserver to run as a process of a defined user, you can do it.
    // For the change of user to work, it's necessary to execute the server with root privileges.
@@ -779,44 +864,10 @@ void UServer_Base::loadConfigParam()
 
    // DOCUMENT_ROOT: The directory out of which you will serve your documents
 
-   *document_root = cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"));
-
-   if (document_root->empty() ||
-       document_root->equal(U_CONSTANT_TO_PARAM(".")))
+   if (setDocumentRoot(cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false)
       {
-      (void) document_root->replace(u_cwd, (document_root_size = u_cwd_len));
+      U_ERROR("setting DOCUMENT ROOT %V failed", document_root->rep);
       }
-   else
-      {
-      U_INTERNAL_ASSERT(document_root->isNullTerminated())
-
-      document_root_ptr = document_root->data();
-
-      char c = *document_root_ptr;
-
-      if (c == '~' ||
-          c == '$')
-         {
-         *document_root = UStringExt::expandPath(*document_root, 0);
-
-         document_root_ptr = document_root->data();
-
-         if (document_root->empty()) U_ERROR("var DOCUMENT_ROOT %S expansion failed", document_root_ptr);
-         }
-
-      *document_root = UFile::getRealPath(document_root_ptr, false);
-
-      document_root_size = document_root->size();
-      }
-
-   document_root_ptr = document_root->data();
-
-   U_INTERNAL_DUMP("document_root(%u) = %.*S", document_root_size, document_root_size, document_root_ptr)
-
-   if (UFile::chdir(document_root_ptr, false) == false) U_ERROR("chdir to working directory (DOCUMENT_ROOT) %S failed", document_root_ptr);
-
-   U_INTERNAL_ASSERT_EQUALS(document_root_size, u_cwd_len)
-   U_INTERNAL_ASSERT_EQUALS(strncmp(document_root_ptr, u_cwd, u_cwd_len), 0)
 
 #ifdef U_LOG_ENABLE
    x = (*cfg)[*UString::str_LOG_FILE];
@@ -946,13 +997,11 @@ next:
 
 int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 {
-   U_TRACE(0, "UServer_Base::loadPlugins(%.*S,%.*S)", U_STRING_TO_TRACE(plugin_dir), U_STRING_TO_TRACE(plugin_list))
+   U_TRACE(0, "UServer_Base::loadPlugins(%V,%V)", plugin_dir.rep, plugin_list.rep)
 
    if (plugin_dir)
       {
-      // NB: we can't use relativ path because after we call chdir()...
-
-      if (plugin_dir.first_char() == '.')
+      if (IS_DIR_SEPARATOR(plugin_dir.first_char()) == false) // NB: we can't use relativ path because after we call chdir()...
          {
          U_INTERNAL_ASSERT(plugin_dir.isNullTerminated())
 
@@ -966,7 +1015,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
    vplugin_name        = U_NEW(UVector<UString>(10U));
    vplugin_name_static = U_NEW(UVector<UString>(20U));
 
-   uint32_t i, pos;
+   uint32_t i;
    UString item, _name;
    UServerPlugIn* _plugin;
    int result = U_PLUGIN_HANDLER_ERROR;
@@ -997,25 +1046,26 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
    for (i = 0; i < vplugin_size; ++i)
       {
       item = vplugin_name->at(i);
-      pos  = vplugin_name_static->find(item);
 
-      U_INTERNAL_DUMP("i = %u pos = %u item = %.*S", i, pos, U_STRING_TO_TRACE(item))
+      uint32_t pos = vplugin_name_static->find(item);
+
+      U_INTERNAL_DUMP("i = %u pos = %u item = %V", i, pos, item.rep)
 
       if (pos != U_NOT_FOUND) continue;
 
       _name.setBuffer(32U);
 
-      _name.snprintf("server_plugin_%.*s", U_STRING_TO_TRACE(item));
+      _name.snprintf("server_plugin_%v", item.rep);
 
       _plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(_name));
 
 #  ifdef U_LOG_ENABLE
       if (isLog())
          {
-         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), "[%.*s] ", U_STRING_TO_TRACE(item));
+         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), "[%v] ", item.rep);
 
-         if (_plugin == 0) ULog::log("%sWARNING: Load phase of plugin %.*s failed", mod_name[0], U_STRING_TO_TRACE(item));
-         else              ULog::log("%sLoad phase of plugin %.*s success",         mod_name[0], U_STRING_TO_TRACE(item));
+         if (_plugin == 0) ULog::log("%sWARNING: Load phase of plugin %v failed", mod_name[0], item.rep);
+         else              ULog::log("%sLoad phase of plugin %v success",         mod_name[0], item.rep);
 
          mod_name[0][0] = '\0';
          }
@@ -1052,7 +1102,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
             _plugin = vplugin->at(i);
 
 #        ifdef U_LOG_ENABLE
-            if (isLog()) (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), "[%.*s] ", U_STRING_TO_TRACE(item));
+            if (isLog()) (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), "[%v] ", item.rep);
 #        endif
 
             result = _plugin->handlerConfig(*cfg);
@@ -1063,10 +1113,10 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
                if ((result & (U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_PROCESSED)) != 0)
                   {
                   const char* fmt = ((result & U_PLUGIN_HANDLER_ERROR) == 0
-                                       ? "%sConfiguration phase of plugin %.*s success"
-                                       : "%sWARNING: Configuration phase of plugin %.*s failed");
+                                       ? "%sConfiguration phase of plugin %v success"
+                                       : "%sWARNING: Configuration phase of plugin %v failed");
 
-                  ULog::log(fmt, mod_name[0], U_STRING_TO_TRACE(item));
+                  ULog::log(fmt, mod_name[0], item.rep);
                   }
 
                mod_name[0][0] = '\0';
@@ -1089,81 +1139,80 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 // manage plugin handler hooks...
 
 #ifdef U_LOG_DISABLE
-#  define U_PLUGIN_HANDLER(xxx)                                         \
-int UServer_Base::pluginsHandler##xxx()                                 \
-{                                                                       \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                   \
-                                                                        \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                   \
-   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                             \
-                                                                        \
-   int result;                                                          \
-   uint32_t i = 0;                                                      \
-                                                                        \
-   do {                                                                 \
-      result = vplugin->at(i)->handler##xxx();                          \
-                                                                        \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);     \
-      }                                                                 \
-   while (++i < vplugin_size);                                          \
-                                                                        \
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                 \
+#  define U_PLUGIN_HANDLER(xxx)                                               \
+int UServer_Base::pluginsHandler##xxx()                                       \
+{                                                                             \
+   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                         \
+                                                                              \
+   U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
+   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
+                                                                              \
+   int result;                                                                \
+   uint32_t i = 0;                                                            \
+                                                                              \
+   do {                                                                       \
+      result = vplugin->at(i)->handler##xxx();                                \
+                                                                              \
+      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);           \
+      }                                                                       \
+   while (++i < vplugin_size);                                                \
+                                                                              \
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                       \
 }
 #else
-#  define U_PLUGIN_HANDLER(xxx)                                         \
-int UServer_Base::pluginsHandler##xxx()                                 \
-{                                                                       \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                   \
-                                                                        \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                   \
-   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                             \
-                                                                        \
-   int result;                                                          \
-   uint32_t i = 0;                                                      \
-   const char* fmt;                                                     \
-   UServerPlugIn* _plugin;                                              \
-                                                                        \
-   do {                                                                 \
-      _plugin = vplugin->at(i);                                         \
-                                                                        \
-      if (isLog() == false) result = _plugin->handler##xxx();           \
-      else                                                              \
-         {                                                              \
-         UString name = vplugin_name->at(i);                            \
-                                                                        \
-         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]),           \
-                            "[%.*s] ", U_STRING_TO_TRACE(name));        \
-                                                                        \
-         result = _plugin->handler##xxx();                              \
-                                                                        \
-         if ((result & (U_PLUGIN_HANDLER_ERROR |                        \
-                        U_PLUGIN_HANDLER_PROCESSED)) != 0)              \
-            {                                                           \
-            if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                 \
-               {                                                        \
-               fmt = ((result & U_PLUGIN_HANDLER_FINISHED) != 0         \
-                  ? 0                                                   \
-                  : "%sWARNING: "#xxx" phase of plugin %.*s failed");   \
-               }                                                        \
-            else                                                        \
-               {                                                        \
-               fmt = (U_ClientImage_parallelization == 2 ||             \
-                      (result & U_PLUGIN_HANDLER_PROCESSED) == 0        \
-                        ? 0                                             \
-                        : "%s"#xxx" phase of plugin %.*s success");     \
-               }                                                        \
-                                                                        \
-            if (fmt) ULog::log(fmt,mod_name[0],U_STRING_TO_TRACE(name));\
-            }                                                           \
-                                                                        \
-         mod_name[0][0] = '\0';                                         \
-         }                                                              \
-                                                                        \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);     \
-      }                                                                 \
-   while (++i < vplugin_size);                                          \
-                                                                        \
-   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                 \
+#  define U_PLUGIN_HANDLER(xxx)                                               \
+int UServer_Base::pluginsHandler##xxx()                                       \
+{                                                                             \
+   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                         \
+                                                                              \
+   U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
+   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
+                                                                              \
+   int result;                                                                \
+   uint32_t i = 0;                                                            \
+   const char* fmt;                                                           \
+   UServerPlugIn* _plugin;                                                    \
+                                                                              \
+   do {                                                                       \
+      _plugin = vplugin->at(i);                                               \
+                                                                              \
+      if (isLog() == false) result = _plugin->handler##xxx();                 \
+      else                                                                    \
+         {                                                                    \
+         UString name = vplugin_name->at(i);                                  \
+                                                                              \
+         (void)u__snprintf(mod_name[0],sizeof(mod_name[0]),"[%v] ",name.rep); \
+                                                                              \
+         result = _plugin->handler##xxx();                                    \
+                                                                              \
+         if ((result & (U_PLUGIN_HANDLER_ERROR |                              \
+                        U_PLUGIN_HANDLER_PROCESSED)) != 0)                    \
+            {                                                                 \
+            if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                       \
+               {                                                              \
+               fmt = ((result & U_PLUGIN_HANDLER_FINISHED) != 0               \
+                  ? 0                                                         \
+                  : "%sWARNING: "#xxx" phase of plugin %v failed");           \
+               }                                                              \
+            else                                                              \
+               {                                                              \
+               fmt = (U_ClientImage_parallelization == 2 ||                   \
+                      (result & U_PLUGIN_HANDLER_PROCESSED) == 0              \
+                        ? 0                                                   \
+                        : "%s"#xxx" phase of plugin %v success");             \
+               }                                                              \
+                                                                              \
+            if (fmt) ULog::log(fmt, mod_name[0], name.rep);                   \
+            }                                                                 \
+                                                                              \
+         mod_name[0][0] = '\0';                                               \
+         }                                                                    \
+                                                                              \
+      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);           \
+      }                                                                       \
+   while (++i < vplugin_size);                                                \
+                                                                              \
+   U_RETURN(U_PLUGIN_HANDLER_FINISHED);                                       \
 }
 #endif
 
@@ -1174,81 +1223,80 @@ U_PLUGIN_HANDLER(Reset)
 // NB: we call the various handlerXXX() in reverse order respect to config var PLUGIN...
 
 #ifdef U_LOG_DISABLE
-#  define U_PLUGIN_HANDLER_REVERSE(xxx)                                 \
-int UServer_Base::pluginsHandler##xxx()                                 \
-{                                                                       \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                   \
-                                                                        \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                   \
-   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                             \
-                                                                        \
-   int result;                                                          \
-   uint32_t i = vplugin_size;                                           \
-                                                                        \
-   do {                                                                 \
-      result = vplugin->at(--i)->handler##xxx();                        \
-                                                                        \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);     \
-                                                                        \
-      if (i == 0) U_RETURN(U_PLUGIN_HANDLER_FINISHED);                  \
-      }                                                                 \
-   while (true);                                                        \
+#  define U_PLUGIN_HANDLER_REVERSE(xxx)                                       \
+int UServer_Base::pluginsHandler##xxx()                                       \
+{                                                                             \
+   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                         \
+                                                                              \
+   U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
+   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
+                                                                              \
+   int result;                                                                \
+   uint32_t i = vplugin_size;                                                 \
+                                                                              \
+   do {                                                                       \
+      result = vplugin->at(--i)->handler##xxx();                              \
+                                                                              \
+      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);           \
+                                                                              \
+      if (i == 0) U_RETURN(U_PLUGIN_HANDLER_FINISHED);                        \
+      }                                                                       \
+   while (true);                                                              \
 }
 #else
-#  define U_PLUGIN_HANDLER_REVERSE(xxx)                                 \
-int UServer_Base::pluginsHandler##xxx()                                 \
-{                                                                       \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                   \
-                                                                        \
-   U_INTERNAL_ASSERT_POINTER(vplugin)                                   \
-   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                             \
-                                                                        \
-   int result;                                                          \
-   const char* fmt;                                                     \
-   UServerPlugIn* _plugin;                                              \
-   uint32_t i = vplugin_size;                                           \
-                                                                        \
-   do {                                                                 \
-      _plugin = vplugin->at(--i);                                       \
-                                                                        \
-      if (isLog() == false) result = _plugin->handler##xxx();           \
-      else                                                              \
-         {                                                              \
-         UString name = vplugin_name->at(i);                            \
-                                                                        \
-         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]),           \
-                            "[%.*s] ", U_STRING_TO_TRACE(name));        \
-                                                                        \
-         result = _plugin->handler##xxx();                              \
-                                                                        \
-         if ((result & (U_PLUGIN_HANDLER_ERROR |                        \
-                        U_PLUGIN_HANDLER_PROCESSED)) != 0)              \
-            {                                                           \
-            if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                 \
-               {                                                        \
-               fmt = ((result & U_PLUGIN_HANDLER_FINISHED) != 0         \
-                  ? 0                                                   \
-                  : "%sWARNING: "#xxx" phase of plugin %.*s failed");   \
-               }                                                        \
-            else                                                        \
-               {                                                        \
-               fmt = (U_ClientImage_parallelization == 2 ||             \
-                      (result & U_PLUGIN_HANDLER_PROCESSED) == 0        \
-                        ? 0                                             \
-                        : "%s"#xxx" phase of plugin %.*s success");     \
-               }                                                        \
-                                                                        \
-            if (fmt) ULog::log(fmt,mod_name[0],U_STRING_TO_TRACE(name));\
-            }                                                           \
-                                                                        \
-         mod_name[0][0] = '\0';                                         \
-         }                                                              \
-                                                                        \
-      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);     \
-                                                                        \
-      if (i == 0) U_RETURN(U_PLUGIN_HANDLER_FINISHED);                  \
-      }                                                                 \
-   while (true);                                                        \
+#  define U_PLUGIN_HANDLER_REVERSE(xxx)                                       \
+int UServer_Base::pluginsHandler##xxx()                                       \
+{                                                                             \
+   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                         \
+                                                                              \
+   U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
+   U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
+                                                                              \
+   int result;                                                                \
+   const char* fmt;                                                           \
+   UServerPlugIn* _plugin;                                                    \
+   uint32_t i = vplugin_size;                                                 \
+                                                                              \
+   do {                                                                       \
+      _plugin = vplugin->at(--i);                                             \
+                                                                              \
+      if (isLog() == false) result = _plugin->handler##xxx();                 \
+      else                                                                    \
+         {                                                                    \
+         UString name = vplugin_name->at(i);                                  \
+                                                                              \
+         (void)u__snprintf(mod_name[0],sizeof(mod_name[0]),"[%v] ",name.rep); \
+                                                                              \
+         result = _plugin->handler##xxx();                                    \
+                                                                              \
+         if ((result & (U_PLUGIN_HANDLER_ERROR |                              \
+                        U_PLUGIN_HANDLER_PROCESSED)) != 0)                    \
+            {                                                                 \
+            if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                       \
+               {                                                              \
+               fmt = ((result & U_PLUGIN_HANDLER_FINISHED) != 0               \
+                  ? 0                                                         \
+                  : "%sWARNING: "#xxx" phase of plugin %v failed");           \
+               }                                                              \
+            else                                                              \
+               {                                                              \
+               fmt = (U_ClientImage_parallelization == 2 ||                   \
+                      (result & U_PLUGIN_HANDLER_PROCESSED) == 0              \
+                        ? 0                                                   \
+                        : "%s"#xxx" phase of plugin %v success");             \
+               }                                                              \
+                                                                              \
+            if (fmt) ULog::log(fmt, mod_name[0], name.rep);                   \
+            }                                                                 \
+                                                                              \
+         mod_name[0][0] = '\0';                                               \
+         }                                                                    \
+                                                                              \
+      if ((result & U_PLUGIN_HANDLER_GO_ON) == 0) U_RETURN(result);           \
+                                                                              \
+      if (i == 0) U_RETURN(U_PLUGIN_HANDLER_FINISHED);                        \
+      }                                                                       \
+   while (true);                                                              \
 }
 #endif
 
@@ -1271,6 +1319,8 @@ void UServer_Base::init()
 #ifdef USE_LIBSSL
    if (bssl)
       {
+      USocketExt::bssl = true;
+
       U_ASSERT(((USSLSocket*)socket)->isSSL())
 
       if (cfg) ((USSLSocket*)socket)->ciphersuite_model = cfg->readLong(U_CONSTANT_TO_PARAM("CIPHER_SUITE"));
@@ -1311,7 +1361,7 @@ void UServer_Base::init()
       {
       UString x = (server ? *server : U_STRING_FROM_CONSTANT("*"));
 
-      U_ERROR("Run as server with local address '%.*s:%u' failed", U_STRING_TO_TRACE(x), port);
+      U_ERROR("Run as server with local address '%v:%u' failed", x.rep, port);
       }
 
    U_SRV_LOG("TCP SO_REUSEPORT status is: %susing", (USocket::tcp_reuseport ? "" : "NOT "));
@@ -1327,7 +1377,7 @@ void UServer_Base::init()
       UStringExt::appendNumber32(*host, port);
       }
 
-   U_SRV_LOG("HOST registered as: %.*s", U_STRING_TO_TRACE(*host));
+   U_SRV_LOG("HOST registered as: %v", host->rep);
 
    // get IP address host (default source)
 
@@ -1366,7 +1416,7 @@ void UServer_Base::init()
               if ( IP_address->empty()) *IP_address = ip;
          else if (*IP_address != ip)
             {
-            U_SRV_LOG("WARNING: SERVER IP ADDRESS from configuration : %.*S differ from system interface: %.*S", U_STRING_TO_TRACE(*IP_address), U_STRING_TO_TRACE(ip));
+            U_SRV_LOG("WARNING: SERVER IP ADDRESS from configuration : %V differ from system interface: %V", IP_address->rep, ip.rep);
             }
          }
 
@@ -1383,11 +1433,9 @@ void UServer_Base::init()
 
       public_address = (socket->cLocalAddress.isPrivate() == false);
 
-      U_SRV_LOG("SERVER IP ADDRESS registered as: %.*s (%s)", U_STRING_TO_TRACE(*IP_address), (public_address ? "public" : "private"));
+      U_SRV_LOG("SERVER IP ADDRESS registered as: %v (%s)", IP_address->rep, (public_address ? "public" : "private"));
 
       u_need_root(false);
-
-      USocket::tcp_autocorking = UFile::getSysParam("/proc/sys/net/ipv4/tcp_autocorking");
 
       /**
        * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
@@ -1428,8 +1476,8 @@ void UServer_Base::init()
          sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
          }
 
-      U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d USocket::tcp_autocorking = %d",
-                       sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog,     USocket::tcp_autocorking)
+      U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
+                       sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
       }
 #endif
 
@@ -1605,8 +1653,7 @@ void UServer_Base::init()
 
       if (log->isMemoryMapped()) log->setShared(U_LOG_DATA_SHARED, log_rotate_size);
 
-      U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for %d preforked process",
-                  sizeof(shared_data) + shared_data_add, map_size / 1024, preforked_num_kids);
+      U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for %d preforked process", sizeof(shared_data) + shared_data_add, map_size / 1024, preforked_num_kids);
       }
 #endif
 
@@ -1626,12 +1673,31 @@ void UServer_Base::init()
    //     the forked child must feel the possibly timeout for request from the new client...
    // ---------------------------------------------------------------------------------------------------------
 
+   socket_flags |= O_RDWR | O_CLOEXEC;
+
+#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids != -1)
+#endif
       {
       if (timeoutMS > 0 ||
           isClassic() == false)
          {
+         binsert = true; // NB: we ask to be notified for request of connection (=> accept)
+
          UNotifier::min_connection = 1;
+
+         pthis->UEventFd::op_mask |= EPOLLET;
+
+         U_INTERNAL_ASSERT_EQUALS(pthis->UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
+
+         /**
+          * There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return a readability
+          * event because the connection might have been removed by an asynchronous network error or  another thread before
+          * accept() is called. If this happens then the call will block waiting for the next  connection to arrive. To ensure
+          * that accept() never blocks, the passed socket sockfd needs to have the O_NONBLOCK flag set (see socket(7))
+          */
+
+         socket_flags |= O_NONBLOCK;
          }
 
       if (handler_inotify) UNotifier::min_connection++;
@@ -1639,59 +1705,78 @@ void UServer_Base::init()
 
    UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog / 2) + (UNotifier::num_connection = UNotifier::min_connection);
 
-   num_client_for_parallelization_queue = UNotifier::max_connection - (UNotifier::max_connection / 10);
+   if (num_client_threshold == 0)
+#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+   num_client_threshold = (UNotifier::max_connection * 2) / 3;
+#else
+   num_client_threshold = U_NOT_FOUND;
+#endif
 
    if (num_client_for_parallelization == 0) num_client_for_parallelization = UNotifier::max_connection / 2;
 
-   U_INTERNAL_DUMP("UNotifier::max_connection = %u num_client_for_parallelization = %u num_client_for_parallelization_queue = %u",
-                    UNotifier::max_connection,     num_client_for_parallelization,     num_client_for_parallelization_queue)
+   U_INTERNAL_DUMP("UNotifier::max_connection = %u UNotifier::min_connection = %u num_client_for_parallelization = %u num_client_threshold = %u",
+                    UNotifier::max_connection,     UNotifier::min_connection,     num_client_for_parallelization,     num_client_threshold)
 
    pthis->preallocate();
 
-   USocket::server_flags |= O_RDWR | O_CLOEXEC;
-
-   if (UNotifier::min_connection)
+#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (bssl)
       {
-      U_INTERNAL_ASSERT_DIFFERS(preforked_num_kids, -1)
-
-      /**
-       * There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return
-       * a readability event because the connection might have been removed by an asynchronous network error or
-       * another thread before accept() is called. If this happens then the call will block waiting for the next
-       * connection to arrive. To ensure that accept() never blocks, the passed socket sockfd needs to have the
-       * O_NONBLOCK flag set (see socket(7))
-       */
-
-      USocket::server_flags |= O_NONBLOCK;
-
-      if (timeoutMS > 0 ||
-          isClassic() == false)
+      if (USSLSocket::setDataForStapling() == false)
          {
-         binsert = true; // NB: we ask to be notified for request of connection (=> accept)
-
-         /**
-          * Edge trigger (EPOLLET) simply means (unless you've used EPOLLONESHOT) that you'll get 1 event when something
-          * enters the (kernel) buffer. Thus, if you get 1 EPOLLIN event and do nothing about it, you'll get another
-          * EPOLLIN the next time some data arrives on that descriptor - if no new data arrives, you will not get an
-          * event though, even if you didn't read any data as indicated by the first event. Well, to put it succinctly,
-          * EPOLLONESHOT just means that if you don't read the data you're supposed to read, they will be discarded.
-          * Normally, you'd be notified with an event for the same data if you don't read them. With EPOLLONESHOT, however,
-          * not reading the data is perfectly legal and they will be just ignored. Hence, no further events will be generated.
-          * -------------------------------------------------------------------------------------------------------------------
-          * The suggested way to use epoll as an edge-triggered (EPOLLET) interface is as follows:
-          *
-          * 1) with nonblocking file descriptors
-          * 2) by waiting for an event only after read(2) or write(2) return EAGAIN.
-          * -------------------------------------------------------------------------------------------------------------------
-          * Edge-triggered semantics allow a more efficient internal implementation than level-triggered semantics.
-          *
-          * see: https://raw.githubusercontent.com/dankamongmen/libtorque/master/doc/mteventqueues
-          */
-
-#     if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
-         if (bssl == false) UNotifier::add_mask |= EPOLLET; // NB: we try to manage optimally a burst of new connections...
-#     endif
+         U_WARNING("SSL: OCSP stapling ignored, some error occured...");
          }
+      else
+         {
+         USSLSocket::staple.data = getPointerToDataShare(USSLSocket::staple.data);
+
+         setLockOCSPStaple();
+
+         U_INTERNAL_ASSERT_EQUALS(USSLSocket::staple.client, 0)
+
+         USSLSocket::staple.client = U_NEW(UClient<UTCPSocket>(0));
+
+         (void) USSLSocket::staple.client->setUrl(*USSLSocket::staple.url);
+
+         U_INTERNAL_ASSERT_EQUALS(pthread_ocsp, 0)
+
+         U_NEW_ULIB_OBJECT(pthread_ocsp, UOCSPStapling);
+
+         U_INTERNAL_DUMP("pthread_ocsp = %p", pthread_ocsp)
+
+         pthread_ocsp->start(0);
+         }
+      }
+#endif
+
+   if (pluginsHandlerRun() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage run failed");
+
+   if (u_start_time     == 0 &&
+       u_setStartTime() == false)
+      {
+      U_ERROR("System date not updated");
+      }
+
+   if (cfg) cfg->clear();
+
+   UInterrupt::syscall_restart                 = false;
+   UInterrupt::exit_loop_wait_event_for_signal = true;
+
+#if !defined(USE_LIBEVENT) && !defined(USE_RUBY)
+                UInterrupt::insert( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  // async signal
+                UInterrupt::insert(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
+#else
+   UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
+   UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); //  sync signal
+#endif
+
+   if (old_pid > 0)
+      {
+#  ifdef U_LOG_ENABLE
+      if (isLog()) ULog::log("Trying to kill another instance of userver that is running with pid %d", old_pid);
+#  endif
+
+      UProcess::kill(old_pid, SIGTERM); // SIGTERM is sent to every process in the process group of the calling process...
       }
 }
 
@@ -1878,9 +1963,10 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
                         "SIGTERM (Interrupt): "
                         "address space usage: %.2f MBytes - "
                                   "rss usage: %.2f MBytes\n"
-                        "max_depth = %u wakeup_for_nothing = %u\n",
+                        "max_nfd_ready = %u max_depth = %u read_again = %u wakeup_for_nothing = %u\n",
                         (double)vsz / (1024.0 * 1024.0),
-                        (double)rss / (1024.0 * 1024.0), max_depth - - UNotifier::min_connection, wakeup_for_nothing);
+                        (double)rss / (1024.0 * 1024.0), UNotifier::max_nfd_ready,
+                        (max_depth > UNotifier::min_connection ? max_depth - UNotifier::min_connection : 0), read_again, wakeup_for_nothing);
 
          ostrstream os(buffer + len, sizeof(buffer) - len);
 
@@ -1898,9 +1984,9 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
          {
 #     if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
          if (preforked_num_kids == -1) ((UThread*)UNotifier::pthread)->suspend();
-#        if defined(HAVE_SYS_SYSCALL_H) && defined(DEBUG)
+#       if defined(HAVE_SYS_SYSCALL_H) && defined(DEBUG)
          if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
-#        endif
+#       endif
 #     endif
 
 #     ifdef U_LOG_ENABLE
@@ -1912,82 +1998,172 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       }
 }
 
+U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
+{
+   U_TRACE(0, "UServer_Base::clientImageHandlerRead()")
+
+   U_INTERNAL_ASSERT(csocket->isOpen())
+   U_INTERNAL_ASSERT_EQUALS(csocket, pClientIndex->socket)
+
+   if (pClientIndex->handlerRead() == U_NOTIFIER_DELETE)
+      {
+      if (csocket->isOpen())
+         {
+         csocket->iState = USocket::CONNECT;
+
+         csocket->close();
+         }
+
+      pClientIndex->UClientImage_Base::handlerDelete();
+
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
+}
+
+#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#  define CSOCKET psocket
+#  define CLIENT_INDEX lClientIndex
+#  define CLIENT_ADDRESS lclient_address
+#  define CLIENT_ADDRESS_LEN lclient_address_len
+#  define CLIENT_IMAGE_HANDLER_READ (pClientIndex = lClientIndex, csocket = psocket, \
+                                     client_address = lclient_address, client_address_len = lclient_address_len, clientImageHandlerRead())
+#else
+#  define CSOCKET csocket
+#  define CLIENT_INDEX pClientIndex
+#  define CLIENT_ADDRESS client_address
+#  define CLIENT_ADDRESS_LEN client_address_len
+#  define CLIENT_IMAGE_HANDLER_READ clientImageHandlerRead()
+#endif
+
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
 
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
 
-   int cround = 0;
-   USocket* csocket;
-
-#ifdef DEBUG
-   client_address_len = 0;
+#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   USocket* psocket;
+   char* lclient_address;
+   uint32_t lclient_address_len;
+   UClientImage_Base* lClientIndex = pClientIndex;
 #endif
+#ifdef DEBUG
+   uint32_t nothing = 0;
+   CLIENT_ADDRESS_LEN = 0;
+#endif
+   int cround = 0;
 
 loop:
-   U_INTERNAL_ASSERT_MINOR(pClientIndex, eClientImage)
+   U_INTERNAL_ASSERT_MINOR(CLIENT_INDEX, eClientImage)
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
 
+   CSOCKET = CLIENT_INDEX->socket;
+
    U_INTERNAL_DUMP("----------------------------------------", 0)
-   U_INTERNAL_DUMP("vClientImage[%d].last_event    = %#3D",  (pClientIndex - vClientImage),
-                                                              pClientIndex->last_event)
-   U_INTERNAL_DUMP("vClientImage[%u].sfd           = %d",    (pClientIndex - vClientImage),
-                                                              pClientIndex->sfd)
-   U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd  = %d",    (pClientIndex - vClientImage),
-                                                              pClientIndex->UEventFd::fd)
-   U_INTERNAL_DUMP("vClientImage[%u].socket        = %p",    (pClientIndex - vClientImage),
-                                                              pClientIndex->socket)
-   U_INTERNAL_DUMP("vClientImage[%d].socket->flags = %d %B", (pClientIndex - vClientImage),
-                                                              pClientIndex->socket->flags,
-                                                              pClientIndex->socket->flags)
+   U_INTERNAL_DUMP("vClientImage[%d].last_event        = %#3D",  (CLIENT_INDEX - vClientImage), CLIENT_INDEX->last_event)
+   U_INTERNAL_DUMP("vClientImage[%u].sfd               = %d",    (CLIENT_INDEX - vClientImage), CLIENT_INDEX->sfd)
+   U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd      = %d",    (CLIENT_INDEX - vClientImage), CLIENT_INDEX->UEventFd::fd)
+   U_INTERNAL_DUMP("vClientImage[%u].socket            = %p",    (CLIENT_INDEX - vClientImage), CSOCKET)
+   U_INTERNAL_DUMP("vClientImage[%d].socket->flags     = %d %B", (CLIENT_INDEX - vClientImage), CSOCKET->flags, CSOCKET->flags)
+   U_INTERNAL_DUMP("vClientImage[%d].socket->iSockDesc = %d",    (CLIENT_INDEX - vClientImage), CSOCKET->iSockDesc)
    U_INTERNAL_DUMP("----------------------------------------", 0)
 
-   csocket = pClientIndex->socket;
-
-   if (csocket->isOpen()) // busy
+   if (CSOCKET->isOpen()) // busy
       {
-      if (timeoutMS > 0) // NB: we check if the connection is idle...
+      if (cround >= 2) // polling mode
+         {
+         if (CLIENT_IMAGE_HANDLER_READ == false)
+            {
+            U_INTERNAL_DUMP("cround = %u UNotifier::num_connection = %u num_client_threshold = %u", cround, UNotifier::num_connection, num_client_threshold)
+
+            if (UNotifier::num_connection < num_client_threshold)
+               {
+#           ifdef DEBUG
+               U_WARNING("It has returned below the client threshold(%u): preallocation(%u) num_connection(%u)",
+                           num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
+#           endif
+
+               goto end;
+               }
+            }
+#     ifdef DEBUG
+         else if (UClientImage_Base::rbuffer->empty())
+            {
+            ++nothing;
+
+            U_INTERNAL_DUMP("nothing = %u", nothing)
+            }
+#     endif
+         }
+      else if (timeoutMS > 0) // NB: we check if the connection is idle...
          {
          U_INTERNAL_ASSERT_POINTER(ptime)
 
          U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
-         if ((u_now->tv_sec - pClientIndex->last_event) >= ptime->UTimeVal::tv_sec &&
-             handlerTimeoutConnection(0))
+         if ((u_now->tv_sec - CLIENT_INDEX->last_event) >= ptime->UTimeVal::tv_sec)
             {
-            UNotifier::erase((UEventFd*)pClientIndex);
+#        ifdef U_LOG_ENABLE
+            called_from_handlerTime = false;
+#        endif
+            
+            if (handlerTimeoutConnection(pClientIndex))
+               {
+               UNotifier::erase((UEventFd*)CLIENT_INDEX);
 
-            goto try_accept;
+               goto try_accept;
+               }
             }
          }
 
-#if defined(U_ACL_SUPPORT) || defined(U_RFC1918_SUPPORT)
 try_next:
-#endif
-      if (++pClientIndex >= eClientImage)
+      if (++CLIENT_INDEX >= eClientImage)
          {
          U_INTERNAL_ASSERT_POINTER(vClientImage)
 
-         if (++cround >= 2) U_ERROR("out of space on client image: preallocation(%u) - connection(%u)", UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
+         CLIENT_INDEX = vClientImage;
 
-         pClientIndex = vClientImage;
+         if (cround >= 2)
+            {
+#        ifdef DEBUG
+            if (nothing > ((UNotifier::num_connection-UNotifier::min_connection)/2))
+               {
+               U_WARNING("Polling mode suspect: cround = %u nothing = %u num_connection = %u", cround, nothing, UNotifier::num_connection-UNotifier::min_connection);
+               }
+
+            nothing = 0;
+#        endif
+            }
+         else if (++cround >= 2)
+            {
+            U_INTERNAL_DUMP("cround = %u num_client_threshold = %u (UNotifier::num_connection * 2) / 3 = %u", cround, num_client_threshold, (UNotifier::num_connection * 2) / 3)
+
+            num_client_threshold = (UNotifier::num_connection * 2) / 3;
+
+#        ifdef DEBUG
+            U_WARNING("Out of space on client image preallocation(%u): num_connection(%u)", UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
+#        endif
+            }
          }
 
       goto loop;
       }
 
+   if (cround >= 2) goto try_next; // polling mode
+
 try_accept:
-   U_INTERNAL_ASSERT(csocket->isClosed())
+   U_INTERNAL_ASSERT(CSOCKET->isClosed())
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
 
-   if (socket->acceptClient(csocket) == false)
+   if (socket->acceptClient(CSOCKET) == false)
       {
-      U_INTERNAL_DUMP("flag_loop = %b csocket->iState = %d", flag_loop, csocket->iState)
+      U_INTERNAL_DUMP("flag_loop = %b CSOCKET->iState = %d", flag_loop, CSOCKET->iState)
 
 #  ifdef DEBUG
-      if (client_address_len == 0 &&
-          csocket->iState == -EAGAIN)
+      if (CLIENT_ADDRESS_LEN == 0 &&
+          CSOCKET->iState == -EAGAIN)
          {
          ++wakeup_for_nothing;
          }
@@ -1995,10 +2171,10 @@ try_accept:
 #  ifdef U_LOG_ENABLE
       if (isLog()                   &&
           flag_loop                 && // NB: we check to avoid SIGTERM event...
-          csocket->iState != -EINTR && // NB: we check to avoid log spurious EINTR on accept() by timer...
-          csocket->iState != -EAGAIN)
+          CSOCKET->iState != -EINTR && // NB: we check to avoid log spurious EINTR on accept() by timer...
+          CSOCKET->iState != -EAGAIN)
          {
-         csocket->setMsgError();
+         CSOCKET->setMsgError();
 
          if (u_buffer_len)
             {
@@ -2009,80 +2185,81 @@ try_accept:
          }
 #  endif
 
-      U_RETURN(U_NOTIFIER_OK);
+      goto end;
       }
 
-   U_INTERNAL_ASSERT(csocket->isConnected())
+   U_INTERNAL_ASSERT(CSOCKET->isConnected())
 
-   client_address     = UIPAddress::resolveStrAddress(iAddressType, csocket->cRemoteAddress.pcAddress.p, csocket->cRemoteAddress.pcStrAddress);
-   client_address_len = u__strlen(client_address, __PRETTY_FUNCTION__);
+   CLIENT_ADDRESS     = UIPAddress::resolveStrAddress(iAddressType, CSOCKET->cRemoteAddress.pcAddress.p, CSOCKET->cRemoteAddress.pcStrAddress);
+   CLIENT_ADDRESS_LEN = u__strlen(CLIENT_ADDRESS, __PRETTY_FUNCTION__);
 
-   U_INTERNAL_DUMP("client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
+   U_INTERNAL_DUMP("client_address = %.*S", CLIENT_ADDRESS_LEN, CLIENT_ADDRESS)
+
+#if defined(_MSWINDOWS_) && !defined(USE_LIBEVENT)
+   if (CSOCKET->iSockDesc >= FD_SETSIZE)
+      {
+      CSOCKET->abortive_close();
+
+      U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by FD_SETSIZE(%u)", CLIENT_ADDRESS_LEN, CLIENT_ADDRESS, FD_SETSIZE);
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
+#endif
 
 #ifdef U_ACL_SUPPORT
    if (vallow_IP &&
-       UIPAllow::isAllowed(csocket->remoteIPAddress().getInAddr(), *vallow_IP) == false)
+       UIPAllow::isAllowed(CSOCKET->remoteIPAddress().getInAddr(), *vallow_IP) == false)
       {
-      csocket->close();
+      CSOCKET->abortive_close();
 
-      // Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
-      // a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
-      // If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
-      // immediately. A warning is logged on the server but nothing is sent to the client.
+      /**
+       * Instructs server to accept connections from the IP address IPADDR. A CIDR mask length can be supplied optionally after
+       * a trailing slash, e.g. 192.168.0.0/24, in which case addresses that match in the most significant MASK bits will be allowed.
+       * If no options are specified, all clients are allowed. Unauthorized connections are rejected by closing the TCP connection
+       * immediately. A warning is logged on the server but nothing is sent to the client
+       */
 
-      U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by Access Control List", U_CLIENT_ADDRESS_TO_TRACE);
+      U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by Access Control List", CLIENT_ADDRESS_LEN, CLIENT_ADDRESS);
 
-#  ifdef USE_LIBSSL
-      if (bssl == false)
-#  endif
-      {
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)
 #  endif
       {
-      U_INTERNAL_ASSERT((USocket::server_flags & O_NONBLOCK) != 0)
-#  ifndef _MSWINDOWS
-      U_INTERNAL_ASSERT(UNotifier::add_mask & EPOLLET)
+      U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
 
-      goto try_next; // NB: we try to manage optimally a burst of new connections...
+#  if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+      goto try_next;
 #  endif
       }
-      }
 
-      U_RETURN(U_NOTIFIER_OK);
+      goto next;
       }
 #endif
 
 #ifdef U_RFC1918_SUPPORT
    if (public_address                         &&
        enable_rfc1918_filter                  &&
-       csocket->remoteIPAddress().isPrivate() &&
+       CSOCKET->remoteIPAddress().isPrivate() &&
        (vallow_IP_prv == 0 ||
-        UIPAllow::isAllowed(csocket->remoteIPAddress().getInAddr(), *vallow_IP_prv) == false))
+        UIPAllow::isAllowed(CSOCKET->remoteIPAddress().getInAddr(), *vallow_IP_prv) == false))
       {
-      csocket->close();
+      CSOCKET->abortive_close();
 
-      U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by RFC1918 filtering "
-                "(reject request from private IP to public server address)", U_CLIENT_ADDRESS_TO_TRACE); 
+      U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by RFC1918 filtering (reject request from private IP to public server address)",
+                     CLIENT_ADDRESS_LEN, CLIENT_ADDRESS); 
 
-#  ifdef USE_LIBSSL
-      if (bssl == false)
-#  endif
-      {
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)
 #  endif
       {
-      U_INTERNAL_ASSERT((USocket::server_flags & O_NONBLOCK) != 0)
-#  ifndef _MSWINDOWS
-      U_INTERNAL_ASSERT(UNotifier::add_mask & EPOLLET)
+      U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
 
-      goto try_next; // NB: we try to manage optimally a burst of new connections...
+#  if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+      goto try_next;
 #  endif
       }
-      }
 
-      U_RETURN(U_NOTIFIER_OK);
+      goto next;
       }
 #endif
 
@@ -2094,7 +2271,11 @@ try_accept:
 
    ++UNotifier::num_connection;
 
-   U_INTERNAL_DUMP("UNotifier::num_connection = %u", UNotifier::num_connection)
+#ifdef DEBUG
+   if (max_depth < UNotifier::num_connection) max_depth = UNotifier::num_connection;
+#endif
+
+   U_INTERNAL_DUMP("UNotifier::num_connection = %u max_depth = %u", UNotifier::num_connection, max_depth)
 
    /**
     * PREFORK_CHILD number of child server processes created at startup:
@@ -2113,7 +2294,7 @@ try_accept:
          {
          int status;
 
-         csocket->close();
+         CSOCKET->close();
 
          U_SRV_LOG("Started new child (pid %d), up to %u children", proc->pid(), UNotifier::num_connection - UNotifier::min_connection);
 
@@ -2151,134 +2332,101 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    if (isLog())
       {
 #  ifdef USE_LIBSSL
-      if (bssl) pClientIndex->logCertificate();
+      if (bssl) CLIENT_INDEX->logCertificate();
 #  endif
 
-      USocketExt::setRemoteInfo(csocket, *pClientIndex->logbuf);
+      USocketExt::setRemoteInfo(CSOCKET, *CLIENT_INDEX->logbuf);
 
-      U_INTERNAL_ASSERT(pClientIndex->logbuf->isNullTerminated())
+      U_INTERNAL_ASSERT(CLIENT_INDEX->logbuf->isNullTerminated())
 
       char buffer[32];
       uint32_t len = getNumConnection(buffer);
 
-      ULog::log("New client connected from %.*s, %.*s clients currently connected", U_STRING_TO_TRACE(*pClientIndex->logbuf), len, buffer);
+      ULog::log("New client connected from %v, %.*s clients currently connected", CLIENT_INDEX->logbuf->rep, len, buffer);
 
 #  ifdef U_WELCOME_SUPPORT
-      if (msg_welcome) ULog::log("Send welcome message to %.*s", U_STRING_TO_TRACE(*pClientIndex->logbuf));
+      if (msg_welcome) ULog::log("Send welcome message to %v", CLIENT_INDEX->logbuf->rep);
 #  endif
       }
 #endif
 
-   pClientIndex->UEventFd::fd = csocket->iSockDesc;
-
 #ifdef U_WELCOME_SUPPORT
    if (msg_welcome &&
-       USocketExt::write(csocket, *msg_welcome, timeoutMS) == false)
+       USocketExt::write(CSOCKET, *msg_welcome, timeoutMS) == false)
       {
-      csocket->close();
+      CSOCKET->abortive_close();
 
-      pClientIndex->UClientImage_Base::handlerDelete();
+      CLIENT_INDEX->UClientImage_Base::handlerDelete();
 
       goto next;
       }
 #endif
 
 #if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   if (UNotifier::pthread == 0)
+   if (preforked_num_kids == -1) lClientIndex->UEventFd::fd = psocket->iSockDesc;
+   else
 #endif
    {
-   if (pClientIndex->handlerRead() == U_NOTIFIER_DELETE)
-      {
-      if (csocket->isOpen())
-         {
-         csocket->iState = USocket::CONNECT;
-
-         csocket->close();
-         }
-
-      pClientIndex->UClientImage_Base::handlerDelete();
-
-      goto next;
-      }
+   if (CLIENT_IMAGE_HANDLER_READ == false) goto next;
    }
 
-   U_INTERNAL_ASSERT(csocket->isOpen())
+   U_INTERNAL_ASSERT(CSOCKET->isOpen())
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
 
-#if !defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(_MSWINDOWS_)
-   if (csocket->iSockDesc >= FD_SETSIZE)
-      {
-      csocket->close();
-
-      --UNotifier::num_connection;
-
-      U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by FD_SETSIZE(%u)", U_CLIENT_ADDRESS_TO_TRACE, FD_SETSIZE);
-
-      U_RETURN(U_NOTIFIER_OK);
-      }
+#if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)
+   UNotifier::batch((UEventFd*)CLIENT_INDEX);
+#else
+   UNotifier::insert((UEventFd*)CLIENT_INDEX);
 #endif
 
-   if (UNotifier::num_connection >= UNotifier::max_connection)
-      {
-      U_SRV_LOG("WARNING: new client connected from %.*S, num_connection(%u) greater than MAX_KEEP_ALIVE(%u)",
-                   U_CLIENT_ADDRESS_TO_TRACE, UNotifier::num_connection, UNotifier::max_connection - UNotifier::min_connection);
-
-#  ifdef U_SERVER_CAPTIVE_PORTAL // NB: we check for idle connection in the middle of a burst of new connections (DOS attack)...
-      if (timeoutMS > 0)
-         {
-         U_INTERNAL_ASSERT_EQUALS(preforked_num_kids, 0)
-
-         U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-         last_event = u_now->tv_sec;
-
-         UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
-         }
-#  endif
-      }
-
-#ifdef DEBUG
-   if (max_depth < UNotifier::num_connection) max_depth = UNotifier::num_connection;
-#endif
-
-   pClientIndex->last_event = u_now->tv_sec;
-
-   UNotifier::insert((UEventFd*)pClientIndex);
-
-   if (++pClientIndex >= eClientImage)
-      {
-      U_INTERNAL_ASSERT_POINTER(vClientImage)
-
-      pClientIndex = vClientImage;
-      }
+   if (++CLIENT_INDEX >= eClientImage) CLIENT_INDEX = vClientImage;
 
 next:
    last_event = u_now->tv_sec;
 
-#ifdef USE_LIBSSL
-   if (bssl == false)
-#endif
-   {
-#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids != -1)
-#endif
+# endif
    {
-   U_INTERNAL_ASSERT((USocket::server_flags & O_NONBLOCK) != 0)
+   U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
 
-#ifndef _MSWINDOWS
-   U_INTERNAL_ASSERT(UNotifier::add_mask & EPOLLET)
+   U_INTERNAL_DUMP("cround = %u UNotifier::num_connection = %u num_client_threshold = %u", cround, UNotifier::num_connection, num_client_threshold)
 
-   cround = 0;
+   if (num_client_threshold > UNotifier::num_connection) cround = 0;
+   else
+      {
+      cround = 2;
 
-   goto loop; // NB: we try to manage optimally a burst of new connections...
+      CLIENT_INDEX = vClientImage;
+
+#  ifdef DEBUG
+      U_WARNING("It has passed the client threshold(%u): preallocation(%u) num_connection(%u)",
+                  num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
+#  endif
+      }
+
+   goto loop;
+   }
 #endif
-   }
-   }
+
+end:
+#if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)
+   UNotifier::insertBatch();
+#endif
 
    U_RETURN(U_NOTIFIER_OK);
 }
 
+#undef CSOCKET
+#undef CLIENT_INDEX
+#undef CLIENT_ADDRESS
+#undef CLIENT_ADDRESS_LEN
+#undef CLIENT_IMAGE_HANDLER_READ
+
 #ifdef U_LOG_ENABLE
+bool UServer_Base::called_from_handlerTime;
+
 uint32_t UServer_Base::getNumConnection(char* ptr)
 {
    U_TRACE(0, "UServer_Base::getNumConnection(%p)", ptr)
@@ -2307,46 +2455,35 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 {
    U_TRACE(0, "UServer_Base::handlerTimeoutConnection(%p)", cimg)
 
+   U_INTERNAL_ASSERT_POINTER(cimg)
    U_INTERNAL_ASSERT_POINTER(pthis)
    U_INTERNAL_ASSERT_POINTER(ptime)
    U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
 
-#ifdef U_LOG_ENABLE
-   bool from_handlerTime = false;
-#endif
+   U_INTERNAL_DUMP("pthis = %p handler_inotify = %p ", pthis, handler_inotify)
 
-   if (cimg == 0) cimg = pClientIndex;
-   else
+   if (cimg == pthis ||
+       cimg == handler_inotify)
       {
-      U_INTERNAL_DUMP("pthis = %p handler_inotify = %p ", pthis, handler_inotify)
-
-      if (cimg == pthis ||
-          cimg == handler_inotify)
-         {
-         U_RETURN(false);
-         }
-
-#  ifdef U_LOG_ENABLE
-      from_handlerTime = true;
-#  endif
+      U_RETURN(false);
       }
 
-   if (((UClientImage_Base*)cimg)->handlerTimeout() == U_NOTIFIER_DELETE) // NB: this call set also UClientImage_Base::pthis...
+   if (((UClientImage_Base*)cimg)->handlerTimeout() == U_NOTIFIER_DELETE)
       {
-      U_INTERNAL_ASSERT_EQUALS(cimg, UClientImage_Base::pthis) // NB: U_SRV_LOG_WITH_ADDR macro depend on UClientImage_Base::pthis...
-
 #  ifdef U_LOG_ENABLE
       if (isLog())
          {
-         if (from_handlerTime)
+         if (called_from_handlerTime)
             {
-            U_SRV_LOG_WITH_ADDR("handlerTime: client connected didn't send any request in %u secs (timeout), close connection",
-                                 ptime->UTimeVal::tv_sec);
+            ULog::log("%shandlerTime: client connected didn't send any request in %u secs (timeout), close connection %v",
+                        UServer_Base::mod_name[0], ptime->UTimeVal::tv_sec, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
          else
             {
-            U_SRV_LOG_WITH_ADDR("handlerTimeoutConnection: client connected didn't send any request in %u secs (timeout), close connection",
-                                 last_event - ((UClientImage_Base*)cimg)->last_event);
+            U_INTERNAL_ASSERT_EQUALS(cimg, pClientIndex)
+
+            ULog::log("%shandlerTimeoutConnection: client connected didn't send any request in %u secs (timeout), close connection %v",
+                        UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
          }
 #  endif
@@ -2373,9 +2510,12 @@ int UServer_Base::UTimeoutConnection::handlerTime()
 
       // there are idle connection... (timeout)
 
-#  if defined(U_LOG_ENABLE) && defined(DEBUG)
+#  ifdef U_LOG_ENABLE
       if (isLog())
          {
+         called_from_handlerTime = true;
+
+#     ifdef DEBUG
          long delta = (u_now->tv_sec - last_event) - ptime->UTimeVal::tv_sec;
 
          if (delta >=  1 ||
@@ -2383,6 +2523,7 @@ int UServer_Base::UTimeoutConnection::handlerTime()
             {
             U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff %ld sec", delta);
             }
+#     endif
          }
 #  endif
 
@@ -2410,18 +2551,13 @@ void UServer_Base::runLoop(const char* user)
 {
    U_TRACE(0, "UServer_Base::runLoop(%S)", user)
 
-   socket->reusePort();
+   socket->reusePort(socket_flags);
 
 #ifndef _MSWINDOWS
    if (bipc == false)
       {
       U_ASSERT_EQUALS(socket->isUDP(), false)
 
-#  ifdef U_SERVER_CAPTIVE_PORTAL
-      U_INTERNAL_ASSERT_EQUALS(preforked_num_kids, 0)
-
-      socket->setTcpLingerOff();
-#  else
       /**
        * Let's say an application just issued a request to send a small block of data. Now, we could
        * either send the data immediately or wait for more data. Some interactive and client-server
@@ -2447,18 +2583,15 @@ void UServer_Base::runLoop(const char* user)
        * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
        * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
        * NB: Takes an integer value (seconds)
-       *
-       * socket->setBufferRCV(128 * 1024);
-       * socket->setBufferSND(128 * 1024);
        */
 
-      socket->setTcpNoDelay();
-      socket->setTcpFastOpen();
-      socket->setTcpQuickAck();
-      socket->setTcpDeferAccept();
-
-      if (set_tcp_keep_alive) socket->setTcpKeepAlive(); 
+#  ifndef U_SERVER_CAPTIVE_PORTAL
+                                 socket->setTcpFastOpen();
+                                 socket->setTcpDeferAccept();
+      if (bssl == false)         socket->setBufferSND(min_size_for_sendfile);
+      if (set_tcp_keep_alive )   socket->setTcpKeepAlive(); 
 #  endif
+      if (tcp_linger_set > -2)   socket->setTcpLinger(tcp_linger_set);
       }
 #endif
 
@@ -2512,12 +2645,7 @@ void UServer_Base::runLoop(const char* user)
 
    while (flag_loop)
       {
-      if (UNLIKELY(UInterrupt::event_signal_pending))
-         {
-         UInterrupt::callHandlerSignal();
-
-         continue;
-         }
+      U_INTERNAL_ASSERT_EQUALS(UInterrupt::event_signal_pending, 0)
 
       U_INTERNAL_DUMP("ptime = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
                        ptime,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
@@ -2539,10 +2667,7 @@ void UServer_Base::runLoop(const char* user)
 
       // NB: we go directly on accept() and block on it...
 
-#  ifdef HAVE_EPOLL_WAIT
-      U_INTERNAL_ASSERT_EQUALS(UNotifier::add_mask & EPOLLET, 0)
-#  endif
-      U_INTERNAL_ASSERT_EQUALS(USocket::server_flags & O_NONBLOCK, 0)
+      U_INTERNAL_ASSERT_EQUALS(socket_flags & O_NONBLOCK, 0)
 
 #  if !defined(ENABLE_THREAD) || !defined(HAVE_EPOLL_WAIT) || defined(USE_LIBEVENT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       U_INTERNAL_ASSERT(UNotifier::min_connection == UNotifier::num_connection)
@@ -2559,57 +2684,6 @@ void UServer_Base::run()
    U_INTERNAL_ASSERT_POINTER(pthis)
 
    init();
-
-#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (UServer_Base::bssl)
-      {
-      if (USSLSocket::setDataForStapling() == false)
-         {
-         U_WARNING("SSL: OCSP stapling ignored, some error occured...");
-         }
-      else
-         {
-         USSLSocket::staple.data = getPointerToDataShare(USSLSocket::staple.data);
-
-         setLockOCSPStaple();
-
-         U_INTERNAL_ASSERT_EQUALS(USSLSocket::staple.client, 0)
-
-         USSLSocket::staple.client = U_NEW(UClient<UTCPSocket>(0));
-
-         (void) USSLSocket::staple.client->setUrl(*USSLSocket::staple.url);
-
-         U_INTERNAL_ASSERT_EQUALS(pthread_ocsp, 0)
-
-         U_NEW_ULIB_OBJECT(pthread_ocsp, UOCSPStapling);
-
-         U_INTERNAL_DUMP("pthread_ocsp = %p", pthread_ocsp)
-
-         pthread_ocsp->start(0);
-         }
-      }
-#endif
-
-   if (pluginsHandlerRun() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage run failed");
-
-   if (u_start_time     == 0 &&
-       u_setStartTime() == false)
-      {
-      U_ERROR("System date not updated");
-      }
-
-   if (cfg) cfg->clear();
-
-   UInterrupt::syscall_restart                 = false;
-   UInterrupt::exit_loop_wait_event_for_signal = true;
-
-#if !defined(USE_LIBEVENT) && !defined(USE_RUBY)
-                UInterrupt::insert( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  // async signal
-                UInterrupt::insert(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
-#else
-   UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
-   UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); //  sync signal
-#endif
 
    int status;
    const char* user = (as_user->empty() ? 0 : as_user->data());
@@ -2631,17 +2705,19 @@ void UServer_Base::run()
        */
 
       int nkids;
+      cpu_set_t cpuset;
       pid_t pid_to_wait;
+      bool baffinity = false;
       UTimeVal to_sleep(0L, 500L * 1000L);
 
-#  ifndef U_SERVER_CAPTIVE_PORTAL
-      bool baffinity = (preforked_num_kids <= u_get_num_cpu() && u_num_cpu > 1);
+#  if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(HAVE_SCHED_GETAFFINITY)
+      if (preforked_num_kids <= u_get_num_cpu() &&
+          u_num_cpu > 1)
+         {
+         baffinity = true;
 
-#    ifdef HAVE_SCHED_GETAFFINITY
-      if (baffinity) U_SRV_LOG("cpu affinity is to be set; thread count (%d) <= cpu count (%d)", preforked_num_kids, u_num_cpu);
-
-      U_INTERNAL_DUMP("baffinity = %b", baffinity)
-#    endif
+         U_SRV_LOG("cpu affinity is to be set; thread count (%d) <= cpu count (%d)", preforked_num_kids, u_num_cpu);
+         }
 #  endif
 
       U_INTERNAL_ASSERT_EQUALS(rkids, 0)
@@ -2670,31 +2746,15 @@ void UServer_Base::run()
 
                pid = proc->pid();
 
-               cpu_set_t cpuset;
-
-#           ifndef U_SERVER_CAPTIVE_PORTAL
-               if (baffinity) u_bind2cpu(pid, rkids); // Pin the process to a particular core...
-#           endif
-
                CPU_ZERO(&cpuset);
 
-#           if defined(HAVE_SCHED_GETAFFINITY) && !defined(U_SERVER_CAPTIVE_PORTAL)
-               (void) U_SYSCALL(sched_getaffinity, "%d,%d,%p", pid, sizeof(cpuset), &cpuset);
-
-               U_INTERNAL_DUMP("cpuset = %ld %B", CPUSET_BITS(&cpuset)[0], CPUSET_BITS(&cpuset)[0])
-#           endif
+               if (baffinity) u_bind2cpu(&cpuset, pid, rkids); // Pin the process to a particular cpu...
 
                U_SRV_LOG("Started new child (pid %d), up to %u children, affinity mask: %x", pid, rkids, CPUSET_BITS(&cpuset)[0]);
 
-#           ifndef U_SERVER_CAPTIVE_PORTAL
-               if (set_realtime_priority &&
-                   u_switch_to_realtime_priority(pid) == false)
-                  {
-                  U_WARNING("Cannot set posix realtime scheduling policy");
-                  }
-#           endif
-
                if (preforked_num_kids <= 0) pid_to_wait = pid;
+
+               if (set_realtime_priority) u_switch_to_realtime_priority(pid);
  
 #           ifdef ENABLE_THREAD
                if (u_pthread_time)
@@ -2778,9 +2838,7 @@ void UServer_Base::run()
 
             --rkids;
 
-#        ifndef U_SERVER_CAPTIVE_PORTAL
             baffinity = false;
-#        endif
 
             U_INTERNAL_DUMP("down to %u children", rkids)
 
@@ -2794,8 +2852,7 @@ void UServer_Base::run()
                {
                char buffer[128];
 
-               ULog::log("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children",
-                          mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
+               ULog::log("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children", mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
                }
 #        endif
             }
@@ -2909,6 +2966,28 @@ __noreturn void UServer_Base::endNewChild()
    U_EXIT(0);
 }
 
+__pure bool UServer_Base::isParallelizationGoingToStart(uint32_t nclient)
+{
+   U_TRACE(0, "UServer_Base::isParallelizationGoingToStart(%u)", nclient)
+
+   U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
+                    U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
+
+#ifndef U_SERVER_CAPTIVE_PORTAL
+   if (U_ClientImage_parallelization != 1 && // 1 => child of parallelization
+       (UNotifier::num_connection - UNotifier::min_connection) > nclient)
+      {
+      U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
+
+      U_RETURN(true);
+      }
+#endif
+
+   U_RETURN(false);
+}
+
 bool UServer_Base::startParallelization(uint32_t nclient)
 {
    U_TRACE(0, "UServer_Base::startParallelization(%u)", nclient)
@@ -2924,8 +3003,9 @@ bool UServer_Base::startParallelization(uint32_t nclient)
          U_ClientImage_close = true;
          U_ClientImage_parallelization = 2; // 2 => parent of parallelization
 
-         UClientImage_Base::resetPipeline();
          UClientImage_Base::setRequestProcessed();
+
+         if (U_ClientImage_pipeline) UClientImage_Base::resetPipeline();
 
          U_ASSERT(isParallelizationParent())
 

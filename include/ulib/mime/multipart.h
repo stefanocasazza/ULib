@@ -96,7 +96,7 @@ public:
 
    void add(const UString& _section)
       {
-      U_TRACE(0, "UMimeMultipartMsg::add(%.*S)", U_STRING_TO_TRACE(_section))
+      U_TRACE(0, "UMimeMultipartMsg::add(%V)", _section.rep)
 
    // U_ASSERT_EQUALS(_section.find("MIME-Version: 1.0"), U_NOT_FOUND) /* con rfc822 si possono avere duplicazioni */
       U_ASSERT_EQUALS(_section.find(boundary+u_line_terminator_len), U_NOT_FOUND)

@@ -19,6 +19,7 @@ cat <<EOF >inp/webserver.cfg
 userver {
  PORT 443
  RUN_AS_USER apache
+#MIN_SIZE_FOR_SENDFILE 2k
  LOG_FILE webserver_ssl.log
  LOG_FILE_SZ 1M
 #LOG_FILE_SZ 20k
@@ -44,7 +45,6 @@ http {
 #ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 1M 
  REQUEST_READ_TIMEOUT 30
-#MIN_SIZE_FOR_SENDFILE 2k
 #DIGEST_AUTHENTICATION yes
 #CACHE_FILE_STORE nocat/webif.gz
 #CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz

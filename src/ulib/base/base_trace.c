@@ -358,16 +358,17 @@ int u_trace_check_if_active(int level)
 
 
    if (u_trace_fd == -1 ||
-      u_trace_suspend)
+       (u_trace_suspend && u_flag_test >= 0))
       {
       trace_active = 0;
       }
-   else if (level == -1) trace_active = (u_flag_test > 0 && level_active == 0);
+   else if (level == -1)
+      {
+      trace_active = (u_flag_test > 0 && level_active == 0);
+      }
    else
       {
-      trace_active = (u_flag_test > 0          ||
-                      (u_trace_mask_level == 0 &&
-                       ((level & 0x000000ff) >= level_active)));
+      trace_active = (u_trace_mask_level == 0 && ((level & 0x000000ff) >= level_active));
       }
 
    U_INTERNAL_PRINT("trace_active = %d", trace_active)

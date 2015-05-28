@@ -64,7 +64,7 @@ calc.set(arg1.strtod(), arg2.strtod(), opval.first_char());
 <!--#code
 if (calc.isResultOk())
    {
-   USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), calc.getResult());
+   USP_PRINTF("<hr>\n%v %v %v = %g", arg1.rep, opval.rep, arg2.rep, calc.getResult());
    }
 -->
 

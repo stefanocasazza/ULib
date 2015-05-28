@@ -44,7 +44,7 @@
 "\t\n" \
 "#include <ulib/net/server/usp_macro.h>\n" \
 "\t\n" \
-"%.*s" \
+"%v" \
 "\t\n" \
 "\t\n" \
 "extern \"C\" {\n" \
@@ -75,13 +75,13 @@
 "%s" \
 "%s" \
 "%s" \
-"%.*s" \
+"%v" \
 "%s" \
 "\t\t}\n\t" \
 "\t\n" \
-"%.*s" \
-"%.*s" \
-"%.*s" \
+"%v" \
+"%v" \
+"%v" \
 "%s" \
 "\n\tU_RETURN(200);\n" \
 "} }\n"
@@ -111,7 +111,7 @@ public:
 
       UString usp = UFile::contentOf(filename);
 
-      if (usp.empty()) U_ERROR(" %.*S not valid", U_STRING_TO_TRACE(filename));
+      if (usp.empty()) U_ERROR(" %V not valid", filename.rep);
 
 #  ifndef DEBUG
       bool bpreprocessing_failed = false;
@@ -128,13 +128,12 @@ public:
             bpreprocessing_failed = true;
 #        endif
 
-            U_WARNING("preprocessing %.*S failed", U_STRING_TO_TRACE(filename));
+            U_WARNING("preprocessing %V failed", filename.rep);
             }
          }
       
       const char* ptr;
-      const char* directive;
-      uint32_t i, n, distance, pos, size;
+      uint32_t i, n, size;
       UString token, declaration, http_header(U_CAPACITY), buffer(U_CAPACITY),
               bufname(100U), output(U_CAPACITY), output1(U_CAPACITY), xoutput(U_CAPACITY);
       bool bgroup, binit = false, breset = false, bend = false, bsighup = false, bfork = false, bcomment = false,
@@ -147,8 +146,8 @@ public:
 
       while (true)
          {
-         distance = t.getDistance();
-         pos      = usp.find("<!--#", distance);
+         uint32_t distance = t.getDistance(),
+                  pos      = usp.find("<!--#", distance);
 
          if (pos)
             {
@@ -190,7 +189,9 @@ public:
 
                (void) buffer.reserve(tmp.size() + 100U);
 
-               buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%.*s)\n\t);\n\t", U_STRING_TO_TRACE(tmp));
+               U_ASSERT(tmp.isQuoted())
+
+               buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%v)\n\t);\n\t", tmp.rep);
 
                (void) output.append(buffer);
                }
@@ -200,9 +201,9 @@ public:
 
          U_INTERNAL_ASSERT(bgroup)
 
-         U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
+         U_INTERNAL_DUMP("token = %V", token.rep)
 
-         directive = token.c_pointer(2); // "-#"...
+         const char* directive = token.c_pointer(2); // "-#"...
 
          U_INTERNAL_DUMP("directive(10) = %.*S", 10, directive)
 
@@ -352,15 +353,14 @@ public:
                pos  = tmp.find('(');
                name = (pos == U_NOT_FOUND ? tmp : tmp.substr(0U, pos));
 
-               buffer.snprintf("\n\tUString %.*s = USP_FORM_VALUE(%u);\n\t", U_STRING_TO_TRACE(name), i);
+               buffer.snprintf("\n\tUString %v = USP_FORM_VALUE(%u);\n\t", name.rep, i);
 
                if (pos != U_NOT_FOUND)
                   {
                   ptr  = name.data();
                   size = name.size();
 
-                  buffer.snprintf_add("\n\tif (%.*s.empty()) %.*s = U_STRING_FROM_CONSTANT(%.*s);\n\t",
-                                       size, ptr, size, ptr, tmp.size() - pos - 2, tmp.c_pointer(pos + 1));  
+                  buffer.snprintf_add("\n\tif (%.*s.empty()) %.*s = U_STRING_FROM_CONSTANT(%.*s);\n\t", size, ptr, size, ptr, tmp.size() - pos - 2, tmp.c_pointer(pos + 1));  
                   }
 
                (void) output.append(buffer);
@@ -388,7 +388,7 @@ public:
 
             (void) buffer.reserve(token.size() + 100U);
 
-            buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append(%.*s);\n\t", U_STRING_TO_TRACE(token));
+            buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append(%v);\n\t", token.rep);
 
             (void) output.append(buffer);
             }
@@ -398,7 +398,7 @@ public:
 
             token = UStringExt::trim(directive + U_CONSTANT_SIZE("xputs"), n);
 
-            buffer.snprintf("\n\tUSP_PUTS_XML(%.*s);\n\t", U_STRING_TO_TRACE(token));
+            buffer.snprintf("\n\tUSP_PUTS_XML(%v);\n\t", token.rep);
 
             (void) output.append(buffer);
             }
@@ -410,7 +410,7 @@ public:
 
             (void) buffer.reserve(token.size() + 100U);
 
-            buffer.snprintf("\n\tUStringExt::appendNumber32(*UClientImage_Base::wbuffer, %.*s);\n\t", U_STRING_TO_TRACE(token));
+            buffer.snprintf("\n\tUStringExt::appendNumber32(*UClientImage_Base::wbuffer, %v);\n\t", token.rep);
 
             (void) output.append(buffer);
             }
@@ -424,8 +424,8 @@ public:
 
             (void) buffer.reserve(token.size() + 150U);
 
-            buffer.snprintf("\n\tusp_sz = UObject2String(%.*s, usp_buffer, sizeof(usp_buffer));"
-                            "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t", U_STRING_TO_TRACE(token));
+            buffer.snprintf("\n\tusp_sz = UObject2String(%v, usp_buffer, sizeof(usp_buffer));"
+                            "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t", token.rep);
 
             (void) output.append(buffer);
             }
@@ -495,7 +495,7 @@ public:
       if (http_header.empty())
          {
          if (is_html) (void) x.append(U_CONSTANT_TO_PARAM("\n\t\tUHTTP::mime_index = U_html;\n\t"));
-                      (void) x.append(U_CONSTANT_TO_PARAM("\n\t\tu_http_info.endHeader = 0;\n"));
+                      (void) x.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_info.endHeader = 0;\n"));
          }
       else
          {
@@ -514,10 +514,12 @@ public:
 
          UString tmp(encoded.size() + 100U);
 
-         tmp.snprintf("\n\t\t(void) UClientImage_Base::wbuffer->append(\n\t\t\tU_CONSTANT_TO_PARAM(%.*s));\n\t", U_STRING_TO_TRACE(encoded));
+         U_ASSERT(encoded.isQuoted())
+
+         tmp.snprintf("\n\t\t(void) UClientImage_Base::wbuffer->append(\n\t\t\tU_CONSTANT_TO_PARAM(%v));\n\t", encoded.rep);
 
          (void) x.append(tmp);
-         (void) x.append(U_CONSTANT_TO_PARAM("\n\t\tu_http_info.endHeader = UClientImage_Base::wbuffer->size();\n"));
+         (void) x.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_info.endHeader = UClientImage_Base::wbuffer->size();\n"));
          }
 
       http_header = x;
@@ -573,7 +575,7 @@ public:
                       size, ptr,
                       size, ptr,
                       size, ptr,
-                      U_STRING_TO_TRACE(declaration),
+                      declaration.rep,
                       size, ptr,
                       size, ptr,
                       size, ptr,
@@ -586,11 +588,11 @@ public:
                       ptr5,
                       ptr6,
                       ptr7,
-                      U_STRING_TO_TRACE(http_header),
+                      http_header.rep,
                       bform ? "\t\n\t\t(void) UHTTP::processForm();\n" : "",
-                      U_STRING_TO_TRACE(output),
-                      U_STRING_TO_TRACE(output1),
-                      U_STRING_TO_TRACE(xoutput),
+                      output.rep,
+                      output1.rep,
+                      xoutput.rep,
                       ptr8);
 
       (void) UFile::writeTo(bufname, UStringExt::removeEmptyLine(result));

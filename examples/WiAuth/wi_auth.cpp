@@ -38,7 +38,7 @@ extern U_EXPORT int runDynamicPage_wi_auth(UClientImage_Base* client_image);
    
       if (client_image >= (void*)-5) U_RETURN(0);
    
-      u_http_info.endHeader = 0;
+      U_http_info.endHeader = 0;
       }
       
    static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...

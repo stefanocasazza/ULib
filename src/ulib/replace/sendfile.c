@@ -5,6 +5,7 @@
 #include <errno.h>
 #ifndef _MSWINDOWS_
 #  include <sys/socket.h>
+#  include <sys/uio.h>
 #endif
 
 /**
@@ -20,14 +21,18 @@
  * sendfile() returns the number of bytes sent, if transmission succeeded. If there was an error, it returns -1 with errno set. It should never return 0
  *
  * Could also use sendfilev() on Solaris >= 8:
+ *
  * http://docs.sun.com/db/doc/816-0217/6m6nhtaps?a=view
  */
 
+#ifdef __OSX__
+/* int sendfile(int fd, int s, off_t offset, off_t* len, struct sf_hdtr* hdtr, int flags); */
+#else
 extern U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t count);
        U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t count)
 {
    char* p;
-   char buf[262144];    /* we're not recursive */
+   char buf[262144]; /* we're not recursive */
    size_t n = count;
    ssize_t r_in, r_out, wanted;
 
@@ -50,7 +55,7 @@ extern U_EXPORT ssize_t sendfile(int ofd, int ifd, off_t* offset, size_t count);
       n -= r_in;
       p  = buf;
 
-      /* We now have r_in bytes waiting to go out, starting at p. Keep going until they're all written out. */
+      /* We now have r_in bytes waiting to go out, starting at p. Keep going until they're all written out */
 
       while (r_in > 0)
          {
@@ -74,3 +79,4 @@ end:
 
    return count;
 }
+#endif

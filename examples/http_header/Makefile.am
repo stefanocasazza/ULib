@@ -6,6 +6,8 @@ EXTRA_DIST = include
 
 DEFAULT_INCLUDES = -I./include -I$(top_builddir)/include
 
+ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+
 include_includedir = $(includedir)/include
 
 SRC = HttpBaAuthorization.cpp HttpBaWwwAuthenticate.cpp HttpCookie.cpp HttpField.cpp HttpHeader.cpp HttpLocation.cpp \

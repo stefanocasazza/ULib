@@ -113,7 +113,7 @@ static void TCPEchoServer(unsigned int iPortNumber, bool bIPv6)
    UTCPSocket cServerSocket(bIPv6);
 
    cServerSocket.setServer(iPortNumber);
-   cServerSocket.reusePort();
+   cServerSocket.reusePort(O_RDWR | O_CLOEXEC);
    cServerSocket.setLocal();
 
    pcBuffer[0] = '\0';
@@ -271,7 +271,7 @@ static void UDPEchoServer(unsigned int iPortNumber, bool bIPv6)
    UUDPSocket cServerSocket(bIPv6);
 
    cServerSocket.setServer(iPortNumber);
-   cServerSocket.reusePort();
+   cServerSocket.reusePort(O_RDWR | O_CLOEXEC);
    cServerSocket.setLocal();
 
    pcBuffer[0] = '\0';

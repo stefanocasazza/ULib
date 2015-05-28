@@ -18,7 +18,7 @@
 
 void Url::set(const UString& x)
 {
-   U_TRACE(0, "Url::set(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(0, "Url::set(%V)", x.rep)
 
    url = x;
 
@@ -261,7 +261,7 @@ UString Url::getQuery()
       U_RETURN_STRING(_query);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 uint32_t Url::getQuery(UVector<UString>& vec)

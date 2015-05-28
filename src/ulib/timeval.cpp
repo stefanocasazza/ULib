@@ -31,7 +31,7 @@ void UTimeVal::adjust(void* tv_sec, void* tv_usec)
 
    long riporto = *((suseconds_t*)tv_usec) / U_SECOND;
 
-   // NB: riporto puo' essere anche negativo...
+   // NB: riporto can be also negativ...
 
    if (riporto)
       {
@@ -55,7 +55,7 @@ void UTimeVal::nanosleep()
 
    setTimeSpec(&req);
 
-   // EINVAL: The value in the tv_nsec field was not in the range 0 to 999999999 or tv_sec was negative.
+   // EINVAL: The value in the tv_nsec field was not in the range 0 to 999999999 or tv_sec was negative
 
    U_INTERNAL_ASSERT(req.tv_sec >= 0L)
    U_INTERNAL_ASSERT_RANGE(0L, req.tv_nsec, 999999999L)
@@ -70,7 +70,9 @@ loop:
    if (result == -1 &&
         errno == EINTR)
       {
-      if (UInterrupt::checkForEventSignalPending() &&
+      UInterrupt::checkForEventSignalPending();
+
+      if (UInterrupt::isSysCallToRestart() &&
           operator>(&rem))
          {
          req = rem;

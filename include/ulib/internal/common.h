@@ -113,68 +113,27 @@ extern U_EXPORT void  operator delete[](void*);
 
 #include <ulib/internal/objectIO.h>
 #include <ulib/internal/memory_pool.h>
-
-// string representation
-
-typedef struct ustringrep {
-#ifdef DEBUG
-   const void* _this;
-#endif
-#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   struct ustringrep* parent; // manage substring for increment reference of source string
-#  ifdef DEBUG
-   int32_t child; // manage substring for capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
-#  endif
-#endif
-   uint32_t _length, _capacity, references;
-   const char* str;
-} ustringrep;
-
-// for gcc compiler strict aliasing behaviour
-
-class UStringRep;
-
-union uustringrep {
-   ustringrep* p1;
-   UStringRep* p2;
-   long*       p3;
-};
-
-// ======================================================================================
-// NB: in this way we don't capture the event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
-// ======================================================================================
-// #define U_SUBSTR_INC_REF
-// ======================================================================================
-
 #include <ulib/internal/macro.h>
 
 // json value representation
 
 union anyvalue {
    bool bool_;
-   char char_;
+            char char_;
    unsigned char uchar_;
-   short short_;
+            short short_;
    unsigned short ushort_;
-   int int_;
+            int int_;
    unsigned int uint_;
-   long long_;
+            long long_;
    unsigned long ulong_;
-   long long llong_;
+            long long llong_;
    unsigned long long ullong_;
    float float_;
    void* ptr_;
-   double real_;
+        double real_;
    long double lreal_;
 };
-
-typedef struct uvalue {
-#ifdef DEBUG
-   const void* _this;
-#endif
-   union anyvalue value;
-   int type;
-} uvalue;
 
 struct null {}; // Special type to bind a NULL value to column using operator,() - syntactic sugar
 

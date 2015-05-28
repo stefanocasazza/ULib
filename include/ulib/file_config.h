@@ -102,7 +102,7 @@ public:
 
    void load(const UString& path)
       {
-      U_TRACE(0, "UFileConfig::load(%.*S)", U_STRING_TO_TRACE(path))
+      U_TRACE(0, "UFileConfig::load(%V)", path.rep)
 
       UFile::setPath(path);
 

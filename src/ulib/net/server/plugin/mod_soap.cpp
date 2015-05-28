@@ -24,7 +24,7 @@ USOAPParser* USoapPlugIn::soap_parser;
 
 USoapPlugIn::USoapPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, USoapPlugIn, "")
+   U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "")
 }
 
 USoapPlugIn::~USoapPlugIn()
@@ -95,13 +95,13 @@ int USoapPlugIn::handlerRequest()
          UString body   = soap_parser->processMessage(*UClientImage_Base::body, *URPCObject::dispatcher, bSendingFault),
                  method = soap_parser->getMethodName();
 
-         U_SRV_LOG_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
+         U_SRV_LOG_WITH_ADDR("method %V process %s for", method.rep, (bSendingFault ? "failed" : "passed"));
 
 #     ifdef DEBUG
          (void) UFile::writeToTmp(U_STRING_TO_PARAM(body), false, "soap.res", 0);
 #     endif
 
-         u_http_info.nResponseCode  = HTTP_OK;
+         U_http_info.nResponseCode  = HTTP_OK;
 
          UHTTP::setResponse(UHTTP::str_ctype_soap, &body);
          }

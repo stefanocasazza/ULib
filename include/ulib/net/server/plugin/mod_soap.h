@@ -21,6 +21,9 @@ class USOAPParser;
 class U_EXPORT USoapPlugIn : public UServerPlugIn {
 public:
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORI
 
             USoapPlugIn();

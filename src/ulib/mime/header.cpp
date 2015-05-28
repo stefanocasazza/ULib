@@ -39,10 +39,11 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
    uint32_t n;
    const char* pkv;
    UString key, value;
-   const char* prev = ptr;
-   const char* _end = ptr + len;
 
-   (void) header.assign(ptr, len);
+   (void) header.replace(ptr, len);
+
+   const char* prev = ptr = header.data();
+   const char* _end = ptr + len;
 
    // Until we reach the data part of the response we know we are dealing with iso-8859-1 characters
 
@@ -115,9 +116,9 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
                {
                UString duplicate(rep->size() + 4U + key.size() + 2U);
 
-               duplicate.snprintf("%.*s%s%.*s: ", U_STRING_TO_TRACE(*rep), (cr ? U_CRLF : U_LF), U_STRING_TO_TRACE(key));
+               duplicate.snprintf("%v%s%v: ", rep, (cr ? U_CRLF : U_LF), key.rep);
 
-               U_INTERNAL_DUMP("duplicate = %.*S", U_STRING_TO_TRACE(duplicate))
+               U_INTERNAL_DUMP("duplicate = %V", duplicate.rep)
 
                table.replaceAfterFind(duplicate);
                }
@@ -128,15 +129,6 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
       }
 
    n = table.size();
-
-   U_RETURN(n);
-}
-
-uint32_t UMimeHeader::parse(const UString& buffer)
-{
-   U_TRACE(0, "UMimeHeader::parse(%.*S)", U_STRING_TO_TRACE(buffer))
-
-   uint32_t n = parse(buffer.data(), buffer.size());
 
    U_RETURN(n);
 }
@@ -152,7 +144,7 @@ void UMimeHeader::removeHeader(const char* key, uint32_t keylen)
 
 uint32_t UMimeHeader::getAttributeFromKeyValue(const UString& key_value, UVector<UString>& name_value)
 {
-   U_TRACE(0, "UMimeHeader::getAttributeFromKeyValue(%.*S,%p)", U_STRING_TO_TRACE(key_value), &name_value)
+   U_TRACE(0, "UMimeHeader::getAttributeFromKeyValue(%V,%p)", key_value.rep, &name_value)
 
    uint32_t n = 0;
 
@@ -188,26 +180,26 @@ UString UMimeHeader::getValueAttributeFromKeyValue(const char* name_attr, uint32
       {
       name = name_value[i];
 
-      U_INTERNAL_DUMP("name = %.*S", U_STRING_TO_TRACE(name))
+      U_INTERNAL_DUMP("name = %V", name.rep)
 
       if (name.equal(name_attr, name_attr_len, ignore_case))
          {
          value = name_value[i+1];
 
-         if (value.isQuoted()) value.unQuote();
+         if (value.isQuoted()) value.rep->unQuote();
 
          break;
          }
       }
 
-   U_INTERNAL_DUMP("value = %.*S", U_STRING_TO_TRACE(value))
+   U_INTERNAL_DUMP("value = %V", value.rep)
 
    U_RETURN_STRING(value);
 }
 
 UString UMimeHeader::getValueAttributeFromKeyValue(const UString& value, const char* name_attr, uint32_t name_attr_len, bool ignore_case)
 {
-   U_TRACE(0, "UMimeHeader::getValueAttributeFromKeyValue(%.*S,%.*S,%u,%b)", U_STRING_TO_TRACE(value), name_attr_len, name_attr, name_attr_len, ignore_case)
+   U_TRACE(0, "UMimeHeader::getValueAttributeFromKeyValue(%V,%.*S,%u,%b)", value.rep, name_attr_len, name_attr, name_attr_len, ignore_case)
 
    UString result;
    UVector<UString> name_value;
@@ -219,7 +211,7 @@ UString UMimeHeader::getValueAttributeFromKeyValue(const UString& value, const c
 
 bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& filename)
 {
-   U_TRACE(0, "UMimeHeader::getNames(%.*S,%p,%p)", U_STRING_TO_TRACE(cdisposition), &name, &filename)
+   U_TRACE(0, "UMimeHeader::getNames(%V,%p,%p)", cdisposition.rep, &name, &filename)
 
    bool result = false;
    UVector<UString> name_value;
@@ -234,23 +226,23 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
             {
             name = name_value[i+1];
 
-            U_INTERNAL_DUMP("name_value[%d] = %.*S", i+1, U_STRING_TO_TRACE(name))
+            U_INTERNAL_DUMP("name_value[%d] = %V", i+1, name.rep)
 
-            if (name.isQuoted()) name.unQuote();
+            if (name.isQuoted()) name.rep->unQuote();
 
-            U_INTERNAL_DUMP("name = %.*S", U_STRING_TO_TRACE(name))
+            U_INTERNAL_DUMP("name = %V", name.rep)
             }
          else if (name_value[i].equal(*UString::str_filename, false))
             {
             filename = name_value[i+1];
 
-            U_INTERNAL_DUMP("name_value[%d] = %.*S", i+1, U_STRING_TO_TRACE(filename))
+            U_INTERNAL_DUMP("name_value[%d] = %V", i+1, filename.rep)
 
             if (filename)
                {
                result = true;
 
-               if (filename.isQuoted()) filename.unQuote();
+               if (filename.isQuoted()) filename.rep->unQuote();
 
                uint32_t len    = filename.size();
                const char* ptr = filename.data();
@@ -268,7 +260,7 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
                   filename = filename_decoded;
                   }
 
-               U_INTERNAL_DUMP("filename = %.*S", U_STRING_TO_TRACE(filename))
+               U_INTERNAL_DUMP("filename = %V", filename.rep)
                }
             }
          }
@@ -279,7 +271,7 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
 
 UString UMimeHeader::getCharSet(const UString& content_type)
 {
-   U_TRACE(0, "UMimeHeader::getCharSet(%.*S)", U_STRING_TO_TRACE(content_type))
+   U_TRACE(0, "UMimeHeader::getCharSet(%V)", content_type.rep)
 
    U_INTERNAL_ASSERT(content_type)
 
@@ -289,14 +281,14 @@ UString UMimeHeader::getCharSet(const UString& content_type)
 
    if (charset.empty()) (void) charset.assign(U_CONSTANT_TO_PARAM("us-ascii"));
 
-   U_INTERNAL_DUMP("charset = %.*S", U_STRING_TO_TRACE(charset))
+   U_INTERNAL_DUMP("charset = %V", charset.rep)
 
    U_RETURN_STRING(charset);
 }
 
 UString UMimeHeader::shortContentType(const UString& content_type)
 {
-   U_TRACE(0, "UMimeHeader::shortContentType(%.*S)", U_STRING_TO_TRACE(content_type))
+   U_TRACE(0, "UMimeHeader::shortContentType(%V)", content_type.rep)
 
    U_INTERNAL_ASSERT(content_type)
 
@@ -314,32 +306,26 @@ UString UMimeHeader::shortContentType(const UString& content_type)
 
 void UMimeHeader::writeHeaders(UString& buffer)
 {
-   U_TRACE(0, "UMimeHeader::writeHeaders(%.*S)", U_STRING_TO_TRACE(buffer))
+   U_TRACE(0, "UMimeHeader::writeHeaders(%V)", buffer.rep)
 
-   UStringRep* value;
-   uint32_t len1, len2;
-   const UStringRep* key;
    UString tmp(U_CAPACITY);
 
    if (table.first())
       {
       do {
-         key   = table.key();
-         value = table.elem();
+         const UStringRep* key = table.key();
+         UStringRep* value     = table.elem();
 
-         len1 =   key->size();
-         len2 = value->size();
+         tmp.setBuffer(key->size() + 2 + value->size() + 2);
 
-         tmp.setBuffer(len1 + 2 + len2 + 2);
-
-         tmp.snprintf("%.*s: %.*s\r\n", len1, key->data(), len2, value->data());
+         tmp.snprintf("%v: %v\r\n", key, value);
 
          buffer += tmp;
          }
       while (table.next());
       }
 
-   U_INTERNAL_DUMP("buffer = %.*S", U_STRING_TO_TRACE(buffer))
+   U_INTERNAL_DUMP("buffer = %V", buffer.rep)
 }
 
 UString UMimeHeader::getHeaders()
@@ -357,7 +343,7 @@ UString UMimeHeader::getHeaders()
       U_RETURN_STRING(buffer);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 // read from socket
@@ -371,8 +357,8 @@ bool UMimeHeader::readHeader(USocket* socket, UString& data)
    U_HTTP_INFO_RESET(0);
 
    if (UHTTP::readHeader(socket, data)                                 &&
-       (u_http_info.startHeader + u_http_info.szHeader) <= data.size() &&
-       parse(data.c_pointer(u_http_info.startHeader), u_http_info.szHeader) > 0)
+       (U_http_info.startHeader + U_http_info.szHeader) <= data.size() &&
+       parse(data.c_pointer(U_http_info.startHeader), U_http_info.szHeader) > 0)
       {
       U_RETURN(true);
       }
@@ -389,12 +375,9 @@ U_EXPORT ostream& operator<<(ostream& os, UMimeHeader& h)
 
    if (h.table.first())
       {
-      UStringRep* value;
-      const UStringRep* key;
-
       do {
-         key   = h.table.key();
-         value = h.table.elem();
+         const UStringRep* key = h.table.key();
+         UStringRep* value     = h.table.elem();
 
          os.write(key->data(), key->size());
          os.write(": ", 2);

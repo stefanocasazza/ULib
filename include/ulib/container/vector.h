@@ -397,7 +397,7 @@ public:
 #ifdef DEBUG
    bool check_memory() // check all element
       {
-      U_TRACE(0, "UVector<T*>::check_memory()")
+      U_TRACE(0+256, "UVector<T*>::check_memory()")
 
       U_CHECK_MEMORY
 
@@ -969,7 +969,7 @@ public:
 
    void replace(uint32_t pos, const UString& str)
       {
-      U_TRACE(0, "UVector<UString>::replace(%u,%.*S)", pos, U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UVector<UString>::replace(%u,%V)", pos, str.rep)
 
       UVector<UStringRep*>::replace(pos, str.rep);
       }
@@ -1019,14 +1019,14 @@ public:
 
    void insert(uint32_t pos, const UString& str) // add elem before pos
       {
-      U_TRACE(0, "UVector<UString>::insert(%u,%.*S)", pos, U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UVector<UString>::insert(%u,%V)", pos, str.rep)
 
       UVector<UStringRep*>::insert(pos, str.rep);
       }
 
    void insert(uint32_t pos, uint32_t n, const UString& str) // add n copy of elem before pos
       {
-      U_TRACE(0, "UVector<UString>::insert(%u,%u,%.*S)", pos, n, U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UVector<UString>::insert(%u,%u,%V)", pos, n, str.rep)
 
       UVector<UStringRep*>::insert(pos, n, str.rep);
       }
@@ -1049,7 +1049,7 @@ public:
 
    void assign(uint32_t n, const UString& str)
       {
-      U_TRACE(0, "UVector<UString>::assign(%u,%p)", n, U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UVector<UString>::assign(%u,%V)", n, str.rep)
 
       UVector<UStringRep*>::assign(n, str.rep);
       }
@@ -1057,7 +1057,7 @@ public:
 #ifdef U_RING_BUFFER
    bool put(const UString& str) // queue an element at the end
       {
-      U_TRACE(0, "UVector<UString>::put(%.*S)", U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UVector<UString>::put(%V)", str.rep)
 
       return UVector<UStringRep*>::put(str.rep);
       }
@@ -1085,7 +1085,7 @@ public:
 
    void bh_put(const UString& str)
       {
-      U_TRACE(0, "UVector<UString>::bh_put(%.*S)", U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UVector<UString>::bh_put(%V)", str.rep)
 
       UVector<UStringRep*>::bh_put(str.rep);
       }
@@ -1105,7 +1105,7 @@ public:
          U_RETURN_STRING(str);
          }
 
-      U_RETURN_STRING(UString::getStringNull());
+      return UString::getStringNull();
       }
 
    // EXTENSION
@@ -1133,7 +1133,7 @@ public:
 
    bool isEqual(uint32_t pos, const UString& str, bool ignore_case = false)
       {
-      U_TRACE(0, "UVector<UString>::isEqual(%u,%.*S,%b)", pos, U_STRING_TO_TRACE(str), ignore_case)
+      U_TRACE(0, "UVector<UString>::isEqual(%u,%V,%b)", pos, str.rep, ignore_case)
 
       U_CHECK_MEMORY
 
@@ -1175,7 +1175,7 @@ public:
 
    void insertAsSet(const UString& str) // no duplicate value
       {
-      U_TRACE(0, "UVector<UString>::insertAsSet(%.*S)", U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UVector<UString>::insertAsSet(%V)", str.rep)
 
       if (empty() || find(str) == U_NOT_FOUND) push(str);
       }

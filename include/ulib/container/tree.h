@@ -413,7 +413,7 @@ public:
          U_RETURN_STRING(str);
          }
 
-      U_RETURN_STRING(UString::getStringNull());
+      return UString::getStringNull();
       }
 
    UTree<UString>*   parent() const                       { return (UTree<UString>*)_parent; }
@@ -436,7 +436,7 @@ public:
 
    void setRoot(const UString& str)
       {
-      U_TRACE(0, "UTree<UString>::setRoot(%.*S)", U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UTree<UString>::setRoot(%V)", str.rep)
 
       UTree<UStringRep*>::setRoot(str.rep);
       }
@@ -445,14 +445,14 @@ public:
 
    UTree<UString>* push(const UString& str)
       {
-      U_TRACE(0, "UTree<UString>::push(%.*S)", U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UTree<UString>::push(%V)", str.rep)
 
       return (UTree<UString>*) UTree<UStringRep*>::push(str.rep);
       }
 
    UTree<UString>* push_back(const UString& str)
       {
-      U_TRACE(0, "UTree<UString>::push_back(%.*S)", U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UTree<UString>::push_back(%V)", str.rep)
 
       return (UTree<UString>*) UTree<UStringRep*>::push_back(str.rep);
       }

@@ -69,17 +69,13 @@ UString URPCFault::getFaultCode()
 
 void URPCFault::encode(UString& response)
 {
-   U_TRACE(0, "URPCFault::encode(%.*S)", U_STRING_TO_TRACE(response))
+   U_TRACE(0, "URPCFault::encode(%V)", response.rep)
 
    UString code = getFaultCode();
 
    response.setBuffer(100U + code.size() + faultReason.size() + detail.size());
 
-   response.snprintf("%.*s: %.*s%s%.*s",
-                     U_STRING_TO_TRACE(code),
-                     U_STRING_TO_TRACE(faultReason),
-                     (detail.empty() ? "" : " - "),
-                     U_STRING_TO_TRACE(detail));
+   response.snprintf("%v: %v%s%v", code.rep, faultReason.rep, (detail.empty() ? "" : " - "), detail.rep);
 }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

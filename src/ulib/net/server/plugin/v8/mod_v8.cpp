@@ -26,7 +26,7 @@ extern "C" {
 extern U_EXPORT void runv8(UString& x);
        U_EXPORT void runv8(UString& x)
 {
-   U_TRACE(0, "::runv8(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(0, "::runv8(%V)", x.rep)
 
    // Create a new context.
    static Persistent<Context> context = Context::New();

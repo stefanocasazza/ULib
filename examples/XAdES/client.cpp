@@ -249,7 +249,9 @@ public:
 
          UString _buffer(result.size());
 
-         if (UBase64::decode(result, _buffer)) U_RETURN_STRING(_buffer);
+         UBase64::decode(result, _buffer);
+
+         if (_buffer) U_RETURN_STRING(_buffer);
          }
 
       U_RETURN_STRING(result);
@@ -285,7 +287,9 @@ public:
 
          UString _buffer(result.size());
 
-         if (UBase64::decode(result, _buffer)) U_RETURN_STRING(_buffer);
+         UBase64::decode(result, _buffer);
+
+         if (_buffer) U_RETURN_STRING(_buffer);
          }
 
       U_RETURN_STRING(result);
@@ -307,7 +311,9 @@ public:
 
          UString _buffer(result.size());
 
-         if (UBase64::decode(result, _buffer)) U_RETURN_STRING(_buffer);
+         UBase64::decode(result, _buffer);
+
+         if (_buffer) U_RETURN_STRING(_buffer);
          }
 
       U_RETURN_STRING(result);

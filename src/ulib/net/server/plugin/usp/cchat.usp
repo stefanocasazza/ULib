@@ -29,9 +29,9 @@ for (uint32_t i = 0, n = chat_message.size(); i < n; i += 2)
    person  = chat_message[i];
    message = chat_message[i+1];
 
-   USP_PRINTF("<tr><td class=\"person\">%.*s</td>"
-                  "<td class=\"message\">%.*s</td>"
-              "</tr>", U_STRING_TO_TRACE(person), U_STRING_TO_TRACE(message));
+   USP_PRINTF("<tr><td class=\"person\">%v</td>"
+                  "<td class=\"message\">%v</td>"
+              "</tr>", person.rep, message.rep);
    }
 -->
 </table>

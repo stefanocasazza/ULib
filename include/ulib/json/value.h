@@ -147,14 +147,17 @@ public:
 
    // Costruttori
 
-   UValue()
+   UValue(ValueType _type = NULL_VALUE)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, UValue, "%d", _type)
 
-      type_       = NULL_VALUE;
-      value.real_ = 0.0;
+      U_INTERNAL_ASSERT_RANGE(0, _type, OBJECT_VALUE)
 
-      reset();
+      (void) memset(this, 0, sizeof(UValue));
+#  ifdef DEBUG
+      memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
+#  endif
+      if (_type) type_ = _type;
       }
 
    UValue(bool value_)
@@ -199,7 +202,7 @@ public:
 
    UValue(UStringRep* value_)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%.*S", U_STRING_TO_TRACE(*value_))
+      U_TRACE_REGISTER_OBJECT(0, UValue, "%V", value_)
 
       type_      = STRING_VALUE;
       value.ptr_ = U_NEW(UString(value_));
@@ -209,7 +212,7 @@ public:
 
    UValue(const UString& value_)
       {
-      U_TRACE_REGISTER_OBJECT(0, UValue, "%.*S", U_STRING_TO_TRACE(value_))
+      U_TRACE_REGISTER_OBJECT(0, UValue, "%V", value_.rep)
 
       type_      = STRING_VALUE;
       value.ptr_ = U_NEW(UString(value_));
@@ -217,7 +220,6 @@ public:
       reset();
       }
 
-    UValue(ValueType type);
     UValue(const UString& key, const UString& value_);
 
    ~UValue()
@@ -371,15 +373,18 @@ public:
 
    UString* getString() const { return (UString*)value.ptr_; }
 
-   // \brief Return a list of the member names.
-   //
-   // If null, return an empty list.
-   // \pre type() is OBJECT_VALUE or NULL_VALUE
-   // \post if type() was NULL_VALUE, it remains NULL_VALUE 
+   /**
+    * \brief Return a list of the member names.
+    *
+    * If null, return an empty list.
+    * \pre type() is OBJECT_VALUE or NULL_VALUE
+    * \post if type() was NULL_VALUE, it remains NULL_VALUE 
+    */
 
    uint32_t getMemberNames(UVector<UString>& members) const;
 
-   /** \brief Read a UValue from a <a HREF="http://www.json.org">JSON</a> document.
+   /**
+    * \brief Read a UValue from a <a HREF="http://www.json.org">JSON</a> document.
     *
     * \param document UTF-8 encoded string containing the document to read.
     *
@@ -388,7 +393,8 @@ public:
 
    bool parse(const UString& document);
 
-   /** \brief Outputs a UValue in <a HREF="http://www.json.org">JSON</a> format without formatting (not human friendly).
+   /**
+    * \brief Outputs a UValue in <a HREF="http://www.json.org">JSON</a> format without formatting (not human friendly).
     *
     * The JSON document is written in a single line. It is not intended for 'human' consumption,
     * but may be usefull to support feature such as RPC where bandwith is limited.

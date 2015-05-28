@@ -27,6 +27,7 @@
 #  include <sys/select.h>
 #  ifdef HAVE_EPOLL_WAIT
 #     include <sys/epoll.h>
+#     define U_EPOLL_CTL_CMD_SIZE 128
 #  endif
 #endif
 
@@ -59,6 +60,22 @@ public:
    static void insert(UEventFd* handler_event);
    static void waitForEvent(UEventTime* timeout);
    static void callForAllEntryDynamic(bPFpv function);
+
+#ifdef HAVE_EPOLL_CTL_BATCH
+   static void insertBatch()
+      {
+      U_TRACE(0, "UNotifier::insertBatch()")
+
+      if (ctl_cmd_cnt)
+         {
+         (void) U_SYSCALL(epoll_ctl_batch, "%d,%d,%d,%p", epollfd, 0, ctl_cmd_cnt, ctl_cmd);
+
+         ctl_cmd_cnt = 0;
+         }
+      }
+
+   static void batch((UEventFd* handler_event);
+#endif
 
    static bool empty()
       {
@@ -94,15 +111,18 @@ public:
 
 protected:
    static bool bread;
-   static int nfd_ready; // the number of file descriptors ready for the requested I/O
    static UEventFd** lo_map_fd;
    static UEventFd* handler_event;
+   static int max_nfd_ready, nfd_ready; // the number of file descriptors ready for the requested I/O
    static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
 
 #ifdef USE_LIBEVENT
 // nothing
 #elif defined(HAVE_EPOLL_WAIT)
-   static int epollfd, add_mask;
+# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   static void* pthread;
+# endif
+   static int epollfd;
    static struct epoll_event* events;
 #else
    static UEventFd* first;
@@ -112,16 +132,15 @@ protected:
    static int  getNFDS();     // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
    static void removeBadFd(); // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
 #endif
-
 #ifndef HAVE_POLL_H
    static UEventTime* time_obj;
 #else
    static struct pollfd fds[1];
    static int waitForEvent(int timeoutMS = -1);
 #endif
-
-#if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   static void* pthread;
+#ifdef HAVE_EPOLL_CTL_BATCH
+   static int ctl_cmd_cnt;
+   static struct epoll_ctl_cmd ctl_cmd[U_EPOLL_CTL_CMD_SIZE];
 #endif
 
    static bool isHandler(int fd);

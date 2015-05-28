@@ -53,7 +53,6 @@ UString*    UWebSocket::rbuffer;
 uint32_t    UWebSocket::max_message_size;
 const char* UWebSocket::upgrade_settings;
 
-const UString* UWebSocket::str_frm_websocket;
 const UString* UWebSocket::str_websocket_key;
 const UString* UWebSocket::str_websocket_prot;
 
@@ -64,24 +63,16 @@ void UWebSocket::str_allocate()
 {
    U_TRACE(0+256, "UWebSocket::str_allocate()")
 
-   U_INTERNAL_ASSERT_EQUALS(str_frm_websocket, 0)
    U_INTERNAL_ASSERT_EQUALS(str_websocket_key, 0)
    U_INTERNAL_ASSERT_EQUALS(str_websocket_prot, 0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Key") },
-      { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Protocol") },
-      { U_STRINGREP_FROM_CONSTANT("HTTP/1.1 101 Switching Protocols\r\n"
-                                  "Upgrade: websocket\r\n"
-                                  "Connection: Upgrade\r\n"
-                                  "Sec-WebSocket-Accept: %.*s\r\n"
-                                  "%.*s"
-                                  "\r\n") }
+      { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Protocol") }
    };
 
    U_NEW_ULIB_OBJECT(str_websocket_key,  U_STRING_FROM_STRINGREP_STORAGE(0));
    U_NEW_ULIB_OBJECT(str_websocket_prot, U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_frm_websocket,  U_STRING_FROM_STRINGREP_STORAGE(2));
 }
 
 bool UWebSocket::sendAccept()
@@ -134,14 +125,17 @@ bool UWebSocket::sendAccept()
 
          U_INTERNAL_DUMP("protocol = %.*S", protocol_len, protocol)
 
-         tmp.snprintf("%.*s: %.*s\r\n", U_STRING_TO_TRACE(*UHTTP::str_websocket_prot), protocol_len, protocol); 
+         tmp.snprintf("%v: %.*s\r\n", *UHTTP::str_websocket_prot), protocol_len, protocol); 
          }
       }
    */
 
-   UClientImage_Base::wbuffer->snprintf(str_frm_websocket->data(), U_STRING_TO_TRACE(accept), 0, 0);
+   UClientImage_Base::wbuffer->snprintf("HTTP/1.1 101 Switching Protocols\r\n"
+                                        "Upgrade: websocket\r\n"
+                                        "Connection: Upgrade\r\n"
+                                        "Sec-WebSocket-Accept: %v\r\n\r\n", accept.rep);
 
-   if (USocketExt::write(UClientImage_Base::psocket, *UClientImage_Base::wbuffer, UServer_Base::timeoutMS))
+   if (USocketExt::write(UServer_Base::csocket, *UClientImage_Base::wbuffer, UServer_Base::timeoutMS))
       {
       status_code  = STATUS_CODE_INTERNAL_ERROR;
       message_type = MESSAGE_TYPE_INVALID;
@@ -163,7 +157,7 @@ void UWebSocket::checkForInitialData()
 
    uint32_t sz = UClientImage_Base::rbuffer->size();
 
-   U_INTERNAL_DUMP("UClientImage_Base::rbuffer(%u) = %.*S", sz, sz, UClientImage_Base::rbuffer->data())
+   U_INTERNAL_DUMP("UClientImage_Base::rbuffer(%u) = %V", sz, UClientImage_Base::rbuffer->rep)
 
    if (UClientImage_Base::size_request < sz)
       {
@@ -173,7 +167,7 @@ void UWebSocket::checkForInitialData()
 
       (void) rbuffer->append(ptr, sz - UClientImage_Base::size_request);
 
-      U_INTERNAL_DUMP("rbuffer(%u) = %.*S", rbuffer->size(), U_STRING_TO_TRACE(*rbuffer))
+      U_INTERNAL_DUMP("rbuffer(%u) = %V", rbuffer->size(), rbuffer->rep)
       }
 }
 
@@ -560,9 +554,9 @@ loop:
 
                      UClientImage_Base::wbuffer->size_adjust_force(application_data_offset);
 
-                     U_SRV_LOG_WITH_ADDR("received websocket data (%u+%u bytes) %.*S from",
+                     U_SRV_LOG_WITH_ADDR("received websocket data (%u+%u bytes) %V from",
                                              ncount - UClientImage_Base::wbuffer->size(),
-                                                      UClientImage_Base::wbuffer->size(), U_STRING_TO_TRACE(*UClientImage_Base::wbuffer))
+                                                      UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
                      U_RETURN(status_code = STATUS_CODE_OK);
                      }
@@ -650,8 +644,8 @@ bool UWebSocket::sendData(int type, const unsigned char* buffer, uint32_t buffer
                            { (caddr_t)buffer, payload_length } };
 
    int iBytesWrite = (payload_length
-            ? (pos += payload_length, USocketExt::writev(UClientImage_Base::psocket, iov, 2,              pos, UServer_Base::timeoutMS))
-            :                         USocketExt::write( UClientImage_Base::psocket, (const char*)header, pos, UServer_Base::timeoutMS));
+            ? (pos += payload_length, USocketExt::writev(UServer_Base::csocket, iov, 2,                pos, UServer_Base::timeoutMS))
+            :                         USocketExt::write( UServer_Base::csocket, (const char*)header, pos, UServer_Base::timeoutMS));
 
    if (iBytesWrite == (int)pos) U_RETURN(true);
 

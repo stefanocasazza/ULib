@@ -4,7 +4,9 @@ EXTRA_DIST = *.spec*
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
-xml2txt_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+
+xml2txt_LDADD   = $(ulib_la)
 xml2txt_SOURCES = main.cpp
 xml2txt_LDFLAGS = $(PRG_LDFLAGS)
 

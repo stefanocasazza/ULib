@@ -13,7 +13,7 @@ It include as application example a powerful search engine with relative [web in
 
 The current version offers the following features :
 
-   * HTTP/1.0 and 1.1 protocols supported.
+   * HTTP/1.0 and 1.1 protocols supported and initial implementations of HTTP/2.
    * Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.
    * Browser cache management (headers: If-Modified-Since/Last-modified).
    * Chunk-encoding transfers support.
@@ -39,6 +39,8 @@ The current version offers the following features :
    * Support for running JavaScript code by wrapping [google V8 JavaScript Engine](http://code.google.com/apis/v8/intro.html).
    * [HTTP pseudo-streaming](http://www.phpmotionwiz.com/what-is-pseudo-streaming) for FLV video managed transparently.
    * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
+   * Support for running Ruby on Rails applications natively (experimental).
+   * Support for running natively PHP applications whith a php (embedded) library (experimental).
    * Preforking mode to improve concurrency with dedicated process for long-time request.
    * Support for Windows (without preforking).
    * Customizable builds (you can remove unneeded functionality).
@@ -69,9 +71,9 @@ The current version offers the following features :
 
 It is the main software component of [city of Florence wireless network](http://wifi-aaa.comune.fi.it/login?mac=00%3A00%3A00%3A00%3A00%3A00&ip=172.22.11.124&redirect=http%3A//pasta.dianxinos.com/api/data&gateway=159.213.248.230%3A5280&timeout=0&token=1810300063&ap=05@159.213.248.230)
 
-We're hoping to get included in [TechEmpower's](http://techempower.com/) [next round of benchmarks](http://www.techempower.com/benchmarks/). A pull request has been already issued.
+userver application server is in the [10th round of TechEmpower's web framework benchmarks](http://www.techempower.com/benchmarks). This independent work tests a large number of frameworks and platforms against a set of tests common to web applications, such as JSON serialization, database queries and templating.
 
-ULib is normally built and installed as a set of shared object libraries and header files. These libraries and headers are installed using directories selected through a "configure" script that has been prepared with automake and autoconf. As such, they should build and install similarly to and in a manner compatible and consistent with most other GNU software. ULib is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+ULib is normally built and installed as a set of shared object libraries and header files. These libraries and headers are installed using directories selected through a "configure" script that has been prepared with automake and autoconf. As such, they should build and install similarly to and in a manner compatible and consistent with most other GNU software. ULib is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. ULib is Free Software under the LGPL
 
 Comments and suggestions are welcome.
 

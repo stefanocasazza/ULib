@@ -18,7 +18,7 @@
 
 UXml2Txt::UXml2Txt(const UString& tag_list, bool _tag_to_exclude, bool _tag_output_also) : taglist(tag_list, "<>, ")
 {
-   U_TRACE_REGISTER_OBJECT(0, UXml2Txt, "%.*S,%b,%b", U_STRING_TO_TRACE(tag_list), _tag_to_exclude, _tag_output_also)
+   U_TRACE_REGISTER_OBJECT(0, UXml2Txt, "%V,%b,%b", tag_list.rep, _tag_to_exclude, _tag_output_also)
 
    tag_pos = 0;
    tag_match = false;

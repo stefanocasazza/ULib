@@ -78,7 +78,12 @@ public:
    // COSTRUTTORI
 
     UApplication();
-   ~UApplication();
+
+#ifdef U_COVERITY_FALSE_POSITIVE
+   virtual ~UApplication();
+#else
+           ~UApplication();
+#endif
 
    // SERVICES
 

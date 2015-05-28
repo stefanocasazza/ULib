@@ -37,7 +37,7 @@ public:
 
    UDataStorage(const UString& key) : keyid(key)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDataStorage, "%.*S", U_STRING_TO_TRACE(key))
+      U_TRACE_REGISTER_OBJECT(0, UDataStorage, "%V", key.rep)
       }
 
    virtual ~UDataStorage()
@@ -57,7 +57,7 @@ public:
       {
       U_TRACE(0, "UDataStorage::isDataSession()")
 
-      U_INTERNAL_DUMP("keyid = %.*S", U_STRING_TO_TRACE(keyid))
+      U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
       if (keyid) U_RETURN(true);
 
@@ -68,16 +68,16 @@ public:
       {
       U_TRACE(0, "UDataStorage::resetDataSession()")
 
-      U_INTERNAL_DUMP("keyid = %.*S", U_STRING_TO_TRACE(keyid))
+      U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
       if (keyid.isNull() == false) keyid.clear();
       }
 
    void setKeyIdDataSession(const UString& key)
       {
-      U_TRACE(0, "UDataStorage::setKeyIdDataSession(%.*S)", U_STRING_TO_TRACE(key))
+      U_TRACE(0, "UDataStorage::setKeyIdDataSession(%V)", key.rep)
 
-      U_INTERNAL_DUMP("keyid = %.*S", U_STRING_TO_TRACE(keyid))
+      U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
       U_INTERNAL_ASSERT(key)
 
@@ -88,7 +88,7 @@ public:
       {
       U_TRACE(0, "UDataStorage::setKeyIdDataSession(%.*S,%u)", n, s, n)
 
-      U_INTERNAL_DUMP("keyid = %.*S", U_STRING_TO_TRACE(keyid))
+      U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
       (void) keyid.assign(s, n);
       }
@@ -161,7 +161,7 @@ public:
       {
       U_TRACE(0, "UDataSession::isDataSessionExpired()")
 
-      U_INTERNAL_DUMP("keyid = %.*S", U_STRING_TO_TRACE(keyid))
+      U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
       bool result = ((last_access - creation) > U_ONE_DAY_IN_SECOND);
 
@@ -196,12 +196,12 @@ public:
 
       value = vec_var->at(index);
 
-      U_INTERNAL_DUMP("value = %.*S", U_STRING_TO_TRACE(value))
+      U_INTERNAL_DUMP("value = %V", value.rep)
       }
 
    void putValueVar(uint32_t index, const UString& value)
       {
-      U_TRACE(0, "UDataSession::putValueVar(%u,%.*S)", index, U_STRING_TO_TRACE(value))
+      U_TRACE(0, "UDataSession::putValueVar(%u,%V)", index, value.rep)
 
       if (index < vec_var->size()) vec_var->replace(index, value);
       else

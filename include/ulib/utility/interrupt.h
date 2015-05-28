@@ -123,7 +123,31 @@ struct U_EXPORT UInterrupt {
    static sighandler_t handler_signal[NSIG];
 
    static void callHandlerSignal();
-   static bool checkForEventSignalPending();
+   static void checkForEventSignalPending()
+      {
+      U_TRACE(0, "UInterrupt::checkForEventSignalPending()")
+
+      U_INTERNAL_DUMP("errno = %d u_errno = %d UInterrupt::event_signal_pending = %d UInterrupt::syscall_restart = %b UInterrupt::flag_alarm = %b",
+                       errno,     u_errno,     UInterrupt::event_signal_pending,     UInterrupt::syscall_restart,     UInterrupt::flag_alarm)
+
+      if (event_signal_pending) callHandlerSignal();
+      }
+
+   static bool isSysCallToRestart()
+      {
+      U_TRACE(0, "UInterrupt::isSysCallToRestart()")
+
+      U_INTERNAL_DUMP("errno = %d u_errno = %d UInterrupt::event_signal_pending = %d UInterrupt::syscall_restart = %b UInterrupt::flag_alarm = %b",
+                       errno,     u_errno,     UInterrupt::event_signal_pending,     UInterrupt::syscall_restart,     UInterrupt::flag_alarm)
+
+      if (syscall_restart &&
+          flag_alarm == false)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    static void  erase(int signo);
    static void insert(int signo, sighandler_t handler);

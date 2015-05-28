@@ -131,7 +131,7 @@ void UOrmDriverSqlite::handlerError()
 
 UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 {
-   U_TRACE(1, "UOrmDriverSqlite::handlerConnect(%.*S)", U_STRING_TO_TRACE(option))
+   U_TRACE(1, "UOrmDriverSqlite::handlerConnect(%V)", option.rep)
 
    UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverSqlite(*str_name)) : this);
 
@@ -169,8 +169,8 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
       U_INTERNAL_DUMP("sz = %u", sz)
 
-      if (sz) sz = u__snprintf(buffer,    sizeof(buffer),    "%.*s/", sz, dbdir.data());
-            (void) u__snprintf(buffer+sz, sizeof(buffer)-sz, "%.*s.db", U_STRING_TO_TRACE(pdrv->dbname));
+      if (sz) sz = u__snprintf(buffer,    sizeof(buffer),    "%v/", dbdir.rep);
+            (void) u__snprintf(buffer+sz, sizeof(buffer)-sz, "%v.db", pdrv->dbname.rep);
 
       fullpath = buffer;
       }
@@ -341,11 +341,9 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
    double       double_value;
    long long long_long_value;
 
-   USqlStatementBindParam* param;
-
    for (uint32_t i = 0; i < num_bind_param; ++i)
       {
-      param = vparam[i];
+      USqlStatementBindParam* param = vparam[i];
 
       switch (param->type)
          {
@@ -478,11 +476,10 @@ bool USqliteStatement::setBindResult(UOrmDriver* pdrv)
 
    int sz;
    const char* ptr;
-   USqlStatementBindResult* result;
 
    for (int i = 0; i < (int)num_bind_result; ++i)
       {
-      result = vresult[i];
+      USqlStatementBindResult* result = vresult[i];
 
       switch (result->type)
          {

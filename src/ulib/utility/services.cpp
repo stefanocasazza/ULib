@@ -104,7 +104,7 @@ void UServices::closeStdInputOutput()
 
 bool UServices::read(int fd, UString& buffer, uint32_t count, int timeoutMS)
 {
-   U_TRACE(0, "UServices::read(%d,%.*S,%u,%d)", fd, U_STRING_TO_TRACE(buffer), count, timeoutMS)
+   U_TRACE(0, "UServices::read(%d,%V,%u,%d)", fd, buffer.rep, count, timeoutMS)
 
    ssize_t value;
    int byte_read = 0;
@@ -290,7 +290,6 @@ void UServices::setOpenSSLError()
    U_TRACE(0, "UServices::setOpenSSLError()")
 
    long i;
-   uint32_t sz;
 
    while ((i = ERR_get_error()))
       {
@@ -298,7 +297,7 @@ void UServices::setOpenSSLError()
 
       (void) ERR_error_string_n(i, buf, sizeof(buf));
 
-      sz = u__strlen(buf, __PRETTY_FUNCTION__);
+      uint32_t sz = u__strlen(buf, __PRETTY_FUNCTION__);
 
       U_INTERNAL_DUMP("buf = %.*S", sz, buf)
 
@@ -317,6 +316,25 @@ void UServices::setCApath(const char* _CApath)
    if (CApath == 0) U_NEW_ULIB_OBJECT(CApath, UString);
 
    *CApath = UFile::getRealPath(_CApath);
+}
+
+UString UServices::getFileName(long hash, bool crl)
+{
+   U_TRACE(0, "UServices::getFileName(%08x,%b)", hash, crl)
+
+   if ( CApath &&
+       *CApath)
+      {
+      UString buffer(U_CAPACITY);
+
+      buffer.snprintf("%v/%08x.%s", CApath->rep, hash, (crl ? "r0" : "0"));
+
+      (void) buffer.shrink();
+
+      U_RETURN_STRING(buffer);
+      }
+
+   return UString::getStringNull();
 }
 
 void UServices::setVerifyStatus(long result)
@@ -384,9 +402,9 @@ int UServices::X509Callback(int ok, X509_STORE_CTX* ctx)
               issuer_cert  = UCertificate::getIssuer(verify_current_cert),
               subject_cert = UCertificate::getSubject(verify_current_cert);
 
-      U_INTERNAL_DUMP("fname_cert   = %.*S", U_STRING_TO_TRACE(fname_cert))
-      U_INTERNAL_DUMP("issuer_cert  = %.*S", U_STRING_TO_TRACE(issuer_cert))
-      U_INTERNAL_DUMP("subject_cert = %.*S", U_STRING_TO_TRACE(subject_cert))
+      U_INTERNAL_DUMP("fname_cert   = %V", fname_cert.rep)
+      U_INTERNAL_DUMP("issuer_cert  = %V", issuer_cert.rep)
+      U_INTERNAL_DUMP("subject_cert = %V", subject_cert.rep)
       }
 #endif
 
@@ -510,7 +528,7 @@ void UServices::releaseEngine(ENGINE* e, bool bkey)
 
 EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private, const char* password, ENGINE* e)
 {
-   U_TRACE(0, "UServices::loadKey(%.*S,%S,%b,%S,%p)", U_STRING_TO_TRACE(x), format, _private, password, e)
+   U_TRACE(0, "UServices::loadKey(%V,%S,%b,%S,%p)", x.rep, format, _private, password, e)
 
    BIO* in;
    UString tmp = x;
@@ -532,17 +550,20 @@ EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private
    if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 &&
        strncmp(x.data(), U_CONSTANT_TO_PARAM("-----BEGIN RSA PRIVATE KEY-----")) != 0)
       {
-      unsigned length = x.size();
+      unsigned n = x.size();
 
-      UString buffer(length);
+      UString buffer(n);
 
-      if (UBase64::decode(x.data(), length, buffer) == false) goto next;
+      UBase64::decode(x.data(), n, buffer);
 
-      tmp    = buffer;
-      format = "DER";
+      if (buffer &&
+          u_base64_errors == 0)
+         {
+         tmp    = buffer;
+         format = "DER";
+         }
       }
 
-next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
    pkey = (EVP_PKEY*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0
@@ -565,7 +586,7 @@ passwd is the corresponding password for the private key
 
 UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, int base64, ENGINE* e)
 {
-   U_TRACE(0,"UServices::getSignatureValue(%d,%.*S,%.*S,%.*S,%d,%p)",alg,U_STRING_TO_TRACE(data),U_STRING_TO_TRACE(pkey),U_STRING_TO_TRACE(passwd),base64,e)
+   U_TRACE(0,"UServices::getSignatureValue(%d,%V,%V,%V,%d,%p)", alg, data.rep, pkey.rep, passwd.rep, base64, e)
 
    u_dgst_sign_init(alg, 0);
 
@@ -589,7 +610,7 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
       if (u_dgst_sign_finish((unsigned char*)output.data(), base64) > 0) output.size_adjust(u_mdLen);
       }
 
-   U_INTERNAL_DUMP("u_mdLen = %d output = %.*S", u_mdLen, U_STRING_TO_TRACE(output))
+   U_INTERNAL_DUMP("u_mdLen = %d output = %V", u_mdLen, output.rep)
 
    if (pkey &&
        u_pkey)
@@ -604,7 +625,7 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
 
 bool UServices::verifySignature(int alg, const UString& data, const UString& signature, const UString& pkey, ENGINE* e)
 {
-   U_TRACE(0, "UServices::verifySignature(%d,%.*S,%.*S,%.*S,%p)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(signature), U_STRING_TO_TRACE(pkey), e)
+   U_TRACE(0, "UServices::verifySignature(%d,%V,%V,%V,%p)", alg, data.rep, signature.rep, pkey.rep, e)
 
    u_dgst_verify_init(alg, e);
 
@@ -664,7 +685,7 @@ void UServices::generateKey(unsigned char* pkey, unsigned char* hexdump)
 
 void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, int base64)
 {
-   U_TRACE(0, "UServices::generateDigest(%d,%u,%.*S,%u,%.*S,%d)", alg, keylen, size, data, size, U_STRING_TO_TRACE(output), base64)
+   U_TRACE(0, "UServices::generateDigest(%d,%u,%.*S,%u,%V,%d)", alg, keylen, size, data, size, output.rep, base64)
 
 #ifdef USE_LIBSSL
    u_dgst_init(alg, (const char*)key, keylen);
@@ -684,7 +705,7 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
       output.size_adjust(output.size() + bytes_written);
       }
 
-   U_INTERNAL_DUMP("u_mdLen = %d output = %.*S", u_mdLen, U_STRING_TO_TRACE(output))
+   U_INTERNAL_DUMP("u_mdLen = %d output = %V", u_mdLen, output.rep)
 #endif
 }
 
@@ -693,13 +714,13 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
 
 UString UServices::generateToken(const UString& data, time_t expire)
 {
-   U_TRACE(0, "UServices::generateToken(%.*S,%ld)", U_STRING_TO_TRACE(data), expire)
+   U_TRACE(0, "UServices::generateToken(%V,%ld)", data.rep, expire)
 
    UString token(data.size() + U_TOKEN_SIZE);
 
-   token.snprintf("%.*s&%010ld&", U_STRING_TO_TRACE(data), expire); // NB: expire time must be of size 10...
+   token.snprintf("%v&%010ld&", data.rep, expire); // NB: expire time must be of size 10...
 
-   U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
+   U_INTERNAL_DUMP("token = %V", token.rep)
 
    // HMAC-MD5(data&expire&)
 
@@ -714,7 +735,7 @@ UString UServices::generateToken(const UString& data, time_t expire)
 
 bool UServices::getTokenData(UString& data, const UString& value, time_t& expire)
 {
-   U_TRACE(0, "UServices::getTokenData(%.*S,%.*S,%p)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(value), &expire)
+   U_TRACE(0, "UServices::getTokenData(%V,%V,%p)", data.rep, value.rep, &expire)
 
    uint32_t sz = value.size();
 
@@ -724,7 +745,7 @@ bool UServices::getTokenData(UString& data, const UString& value, time_t& expire
 
       UHexDump::decode(value, token);
 
-      U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
+      U_INTERNAL_DUMP("token = %V", token.rep)
 
       U_ASSERT_MAJOR(data.capacity(), token.size() - U_TOKEN_SIZE)
 
@@ -748,7 +769,7 @@ bool UServices::getTokenData(UString& data, const UString& value, time_t& expire
 
          data.size_adjust();
 
-         U_INTERNAL_DUMP("data = %.*S u_now = %ld expire = %T", U_STRING_TO_TRACE(data), u_now->tv_sec, expire)
+         U_INTERNAL_DUMP("data = %V u_now = %ld expire = %T", data.rep, u_now->tv_sec, expire)
 
          U_ASSERT_EQUALS(token.size(), data.size() + U_TOKEN_SIZE)
 

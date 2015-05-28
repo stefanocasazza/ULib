@@ -67,7 +67,6 @@
 #  define U_RETURN_OBJECT(obj)  return (obj)
 #  define U_RETURN_POINTER(r,t) return (r)
 
-#  define U_REGISTER_OBJECT(level,CLASS)
 #  define U_UNREGISTER_OBJECT(level,pointer)
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)
 #  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...)

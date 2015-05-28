@@ -63,11 +63,10 @@ U_NO_EXPORT void UPop3Client::setStatus()
 
 bool UPop3Client::_connectServer(const UString& server, unsigned int port, int timeoutMS)
 {
-   U_TRACE(0, "UPop3Client::_connectServer(%.*S,%u,%d)", U_STRING_TO_TRACE(server), port, timeoutMS)
+   U_TRACE(0, "UPop3Client::_connectServer(%V,%u,%d)", server.rep, port, timeoutMS)
 
    if (Socket::connectServer(server, port, timeoutMS) &&
-       USocketExt::readLineReply(this, buffer) > 0    &&
-       memcmp(buffer.data(), U_CONSTANT_TO_PARAM(U_POP3_OK)) == 0)
+       (USocketExt::readLineReply(this, buffer), memcmp(buffer.data(), U_CONSTANT_TO_PARAM(U_POP3_OK)) == 0))
       {
       state    = AUTHORIZATION;
       response = OK;
@@ -106,16 +105,16 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
    U_INTERNAL_DUMP("status() = %.*S", u_buffer_len, u_buffer)
 
    u_buffer_len = 0;
+
+   U_ASSERT(buffer.uniq())
 #endif
 
    va_list argp;
    va_start(argp, format);
 
-   end = USocketExt::vsyncCommand(this, buffer.data(), buffer.capacity(), format, argp);
+   buffer.rep->_length = end = USocketExt::vsyncCommand(this, buffer.data(), buffer.capacity(), format, argp);
 
    va_end(argp);
-
-   buffer.size_adjust(U_max(end,0));
 
    if (memcmp(buffer.data(), U_CONSTANT_TO_PARAM(U_POP3_OK)) != 0) U_RETURN(false);
 
@@ -131,7 +130,19 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
 
          if (eod > 0)
             {
+#        ifdef USE_LIBSSL
+            bool bssl_save     = USocketExt::bssl;
+                                 USocketExt::bssl = USocket::isSSL(true);
+#        endif
+            bool blocking_save = USocketExt::blocking;
+                                 USocketExt::blocking = USocket::isBlocking();
+
             bool esito = USocketExt::read(this, buffer, eod);
+
+#        ifdef USE_LIBSSL
+            USocketExt::bssl     = bssl_save;
+#        endif
+            USocketExt::blocking = blocking_save;
 
             if (esito == false) U_RETURN(false);
             }
@@ -160,7 +171,7 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
 
 U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* vend)
 {
-   U_TRACE(1, "UPop3Client::syncCommandML(%.*S,%p,%p)", U_STRING_TO_TRACE(req), vpos, vend)
+   U_TRACE(1, "UPop3Client::syncCommandML(%V,%p,%p)", req.rep, vpos, vend)
 
 #ifdef DEBUG
    setStatus();
@@ -188,10 +199,15 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
       (void) U_SYSCALL(memset, "%p,%d,%u", vend, 0xff, num_msg * sizeof(int));
       }
 
+   bool bssl_save     = USocketExt::bssl;
+                        USocketExt::bssl = USocket::isSSL(true);
+   bool blocking_save = USocketExt::blocking;
+                        USocketExt::blocking = USocket::isBlocking();
+
    do {
       ok = USocketExt::read(this, buffer);
 
-      if (ok == false) U_RETURN(false);
+      if (ok == false) goto error;
 
       U_INTERNAL_DUMP("buffer.size() = %u", buffer.size())
 
@@ -246,9 +262,14 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
    while (true);
 
 end:
+   ok = true;
    response = OK;
 
-   U_RETURN(true);
+error:
+   USocketExt::bssl     = bssl_save;
+   USocketExt::blocking = blocking_save;
+
+   U_RETURN(ok);
 }
 
 bool UPop3Client::startTLS()
@@ -263,8 +284,7 @@ bool UPop3Client::startTLS()
       {
       if (((USSLSocket*)this)->secureConnection()) U_RETURN(true);
 
-      if (USocketExt::readLineReply(this, buffer) > 0 &&
-          memcmp(buffer.data(), U_CONSTANT_TO_PARAM(U_POP3_ERR)) == 0)
+      if ((USocketExt::readLineReply(this, buffer), memcmp(buffer.data(), U_CONSTANT_TO_PARAM(U_POP3_ERR)) == 0))
          {
          response = STLS_NOT_SUPPORTED;
 
@@ -421,7 +441,7 @@ UString UPop3Client::getHeader(uint32_t n)
       response = BAD_STATE;
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 UString UPop3Client::getMessage(uint32_t n)
@@ -444,7 +464,7 @@ UString UPop3Client::getMessage(uint32_t n)
       response = NO_SUCH_MESSAGE;
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 bool UPop3Client::deleteMessage(uint32_t n)

@@ -22,6 +22,9 @@ class UClient_Base;
 class U_EXPORT UFCGIPlugIn : public UServerPlugIn {
 public:
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORI
 
             UFCGIPlugIn();

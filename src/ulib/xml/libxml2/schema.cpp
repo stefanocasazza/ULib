@@ -18,7 +18,7 @@
 
 UXML2Schema::UXML2Schema(const UString& xmldoc)
 {
-   U_TRACE_REGISTER_OBJECT(0, UXML2Schema, "%.*S", U_STRING_TO_TRACE(xmldoc))
+   U_TRACE_REGISTER_OBJECT(0, UXML2Schema, "%V", xmldoc.rep)
 
    xmlSchemaParserCtxtPtr context = (xmlSchemaParserCtxtPtr) U_SYSCALL(xmlSchemaNewMemParserCtxt, "%S,%u", U_STRING_TO_PARAM(xmldoc));
 

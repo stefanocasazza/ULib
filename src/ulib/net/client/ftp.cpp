@@ -276,7 +276,7 @@ bool UFtpClient::createPassiveDataConnection()
 
 int UFtpClient::retrieveFile(const UString& path, off_t offset)
 {
-   U_TRACE(0, "UFtpClient::retrieveFile(%.*S,%I)", U_STRING_TO_TRACE(path), offset)
+   U_TRACE(0, "UFtpClient::retrieveFile(%V,%I)", path.rep, offset)
 
    bytes_to_read = 0;
 
@@ -284,7 +284,7 @@ int UFtpClient::retrieveFile(const UString& path, off_t offset)
       {
       if (offset == 0 || restart(offset))
          {
-         (void) syncCommand("RETR %.*s", U_STRING_TO_TRACE(path));
+         (void) syncCommand("RETR %v", path.rep);
 
          if (response == FTP_OPENING_DATA_CONNECTION ||
              response == FTP_DATA_CONNECTION_OPEN)
@@ -323,9 +323,9 @@ bool UFtpClient::setTransferType(TransferType type)
 
 bool UFtpClient::changeWorkingDirectory(const UString& path)
 {
-   U_TRACE(0, "UFtpClient::changeWorkingDirectory(%.*S)", U_STRING_TO_TRACE(path))
+   U_TRACE(0, "UFtpClient::changeWorkingDirectory(%V)", path.rep)
 
-   if (syncCommand("CWD %.*s", U_STRING_TO_TRACE(path))) // Change working directory
+   if (syncCommand("CWD %v", path.rep)) // Change working directory
       {
       // RFC 959 states that the correct response to CDUP is 200 - command_ok
       // But also states that it should respond with the same codes as
@@ -342,9 +342,9 @@ bool UFtpClient::changeWorkingDirectory(const UString& path)
 
 size_t UFtpClient::getFileSize(const UString& path)
 {
-   U_TRACE(0, "UFtpClient::getFileSize(%.*S)", U_STRING_TO_TRACE(path))
+   U_TRACE(0, "UFtpClient::getFileSize(%V)", path.rep)
 
-   if (syncCommand("SIZE %.*s", U_STRING_TO_TRACE(path)) &&
+   if (syncCommand("SIZE %v", path.rep) &&
        response == FTP_FILE_STATUS)
       {
       // skip over the response code
@@ -399,7 +399,7 @@ bool UFtpClient::setConnection()
 
 size_t UFtpClient::getFileSize(const UIPAddress& ip, const UString& path)
 {
-   U_TRACE(0, "UFtpClient::getFileSize(%p,%.*S)", &ip, U_STRING_TO_TRACE(path))
+   U_TRACE(0, "UFtpClient::getFileSize(%p,%V)", &ip, path.rep)
 
    if (_connectServer(ip) == false) U_RETURN(0); // connect with ftp server failed...
 
@@ -412,7 +412,7 @@ size_t UFtpClient::getFileSize(const UIPAddress& ip, const UString& path)
 
 int UFtpClient::download(const UString& path, off_t offset)
 {
-   U_TRACE(0, "UFtpClient::download(%.*S,%I)", U_STRING_TO_TRACE(path), offset)
+   U_TRACE(0, "UFtpClient::download(%V,%I)", path.rep, offset)
 
    if (setConnection() == false) U_RETURN(-1); // login with ftp server failed...
 

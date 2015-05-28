@@ -18,7 +18,8 @@
 
 #include <openssl/ts.h>
 
-/* A time-stamp token is obtained by sending the digest value of the given data to the Time-Stamp Authority (TSA).
+/**
+ * A time-stamp token is obtained by sending the digest value of the given data to the Time-Stamp Authority (TSA).
  * The returned time-stamp token is a signed data that contains the digest value, the identity of the TSA, and
  * the time of stamping. This proves that the given data existed before the time of stamping.
  *
@@ -41,7 +42,7 @@ public:
 
    UTimeStamp(const UString& x) : UPKCS7(0,0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeStamp, "%.*S", U_STRING_TO_TRACE(x))
+      U_TRACE_REGISTER_OBJECT(0, UTimeStamp, "%V", x.rep)
 
       response = readTimeStampResponse(x);
 

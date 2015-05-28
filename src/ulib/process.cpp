@@ -563,11 +563,12 @@ int UProcess::waitpid(pid_t pid, int* _status, int options)
 loop:
    result = U_SYSCALL(waitpid, "%d,%p,%d", pid, _status, options);
 
-   if (result == -1   &&
-       errno == EINTR &&
-       UInterrupt::checkForEventSignalPending())
+   if (result == -1 &&
+        errno == EINTR)
       {
-      goto loop;
+      UInterrupt::checkForEventSignalPending();
+
+      if (UInterrupt::isSysCallToRestart()) goto loop;
       }
 
    // errno == ECHILD: if the process specified in pid does not exist or is not a child of the calling process...

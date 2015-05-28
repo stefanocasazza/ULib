@@ -225,7 +225,7 @@ __pure UModProxyService* UModProxyService::findService(const char* host, uint32_
          {
          UModProxyService* elem = (*UHTTP::vservice)[i];
 
-         U_INTERNAL_DUMP("host_mask = %.*S method_mask = %B", U_STRING_TO_TRACE(elem->host_mask), elem->method_mask)
+         U_INTERNAL_DUMP("host_mask = %V method_mask = %B", elem->host_mask.rep, elem->method_mask)
 
          if ((elem->method_mask     == 0    || (U_http_method_type & elem->method_mask) != 0)                                                  &&
              (elem->vremote_address == 0    || UClientImage_Base::isAllowed(*(elem->vremote_address)))                                         &&
@@ -244,15 +244,15 @@ __pure UModProxyService* UModProxyService::findService(const char* host, uint32_
    U_RETURN_POINTER(0, UModProxyService);
 }
 
-#define U_SRV_ADDR_FMT "%.*s/%.*s:%u.srv"
+#define U_SRV_ADDR_FMT "%v/%.*s:%u.srv"
 
 bool UModProxyService::setServerAddress(const UString& dir, const char* address, uint32_t address_len)
 {
-   U_TRACE(0, "UModProxyService::setServerAddress(%.*S,%.*S,%u)", U_STRING_TO_TRACE(dir), address_len, address, address_len)
+   U_TRACE(0, "UModProxyService::setServerAddress(%V,%.*S,%u)", dir.rep, address_len, address, address_len)
 
    UString dest(U_CAPACITY);
 
-   dest.snprintf(U_SRV_ADDR_FMT, U_STRING_TO_TRACE(dir), U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent());
+   dest.snprintf(U_SRV_ADDR_FMT, dir.rep, U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent());
 
    if (UFile::writeTo(dest, address, address_len)) U_RETURN(true);
 
@@ -280,7 +280,7 @@ UString UModProxyService::getServer() const
 
       U_INTERNAL_ASSERT(dir)
 
-      pathname.snprintf(U_SRV_ADDR_FMT, U_STRING_TO_TRACE(dir), U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent());
+      pathname.snprintf(U_SRV_ADDR_FMT, dir.rep, U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent());
 
       UString address = UFile::contentOf(pathname);
 
@@ -297,7 +297,7 @@ UString UModProxyService::getServer() const
 
 UString UModProxyService::replaceResponse(const UString& msg)
 {
-   U_TRACE(0, "UModProxyService::replaceResponse(%.*S)", U_STRING_TO_TRACE(msg))
+   U_TRACE(0, "UModProxyService::replaceResponse(%V)", msg.rep)
 
    UString result = msg;
 

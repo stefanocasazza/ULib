@@ -135,7 +135,7 @@ next:
 
 void UOrmDriver::setDriverDirectory(const UString& dir)
 {
-   U_TRACE(0, "UOrmDriver::setDriverDirectory(%.*S)", U_STRING_TO_TRACE(dir))
+   U_TRACE(0, "UOrmDriver::setDriverDirectory(%V)", dir.rep)
 
    U_INTERNAL_ASSERT_EQUALS(driver_dir, 0)
 
@@ -154,7 +154,7 @@ void UOrmDriver::setDriverDirectory(const UString& dir)
 
 bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
 {
-   U_TRACE(0, "UOrmDriver::loadDriver(%.*S,%.*S)", U_STRING_TO_TRACE(dir), U_STRING_TO_TRACE(driver_list))
+   U_TRACE(0, "UOrmDriver::loadDriver(%V,%V)", dir.rep, driver_list.rep)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    if (str_host) U_RETURN(true);
@@ -169,9 +169,9 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
    vdriver_name        = U_NEW(UVector<UString>(10U));
    vdriver_name_static = U_NEW(UVector<UString>(20U));
 
+   uint32_t i, n;
    UOrmDriver* _driver;
    UString item, _name;
-   uint32_t i, n, pos;
 
    // NB: we don't want to use substr() because of dependency from config var ORM_DRIVER...
 
@@ -188,21 +188,22 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
    for (i = 0; i < vdriver_size; ++i)
       {
       item = vdriver_name->at(i);
-      pos  = vdriver_name_static->find(item);
 
-      U_INTERNAL_DUMP("i = %u pos = %u item = %.*S", i, pos, U_STRING_TO_TRACE(item))
+      uint32_t pos = vdriver_name_static->find(item);
+
+      U_INTERNAL_DUMP("i = %u pos = %u item = %V", i, pos, item.rep)
 
       if (pos == U_NOT_FOUND)
          {
          _name.setBuffer(32U);
 
-         _name.snprintf("orm_driver_%.*s", U_STRING_TO_TRACE(item));
+         _name.snprintf("orm_driver_%v", item.rep);
 
          _driver = UPlugIn<UOrmDriver*>::create(U_STRING_TO_PARAM(_name));
 
          if (_driver == 0)
             {
-            U_SRV_LOG("WARNING: load of driver %.*s failed", U_STRING_TO_TRACE(item));
+            U_SRV_LOG("WARNING: load of driver %v failed", item.rep);
 
             continue;
             }
@@ -211,7 +212,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
          vdriver_name_static->push_back(item);
 
 #     ifdef U_LOG_ENABLE
-         if (UServer_Base::isLog()) ULog::log("[%.*s] Load of driver success", U_STRING_TO_TRACE(item));
+         if (UServer_Base::isLog()) ULog::log("[%v] Load of driver success", item.rep);
 #     endif
          }
       }
@@ -253,8 +254,8 @@ void UOrmDriver::printError(const char* function)
 
    buffer[0] = 0;
 
-   uint32_t len = u__snprintf(buffer, sizeof(buffer), "%.*S on %.*S at %S - %s%s(%d, %s)%s%s",
-                              U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(dbname), function, errname, ptr1, errcode, errmsg, ptr2, SQLSTATE);
+   uint32_t len = u__snprintf(buffer, sizeof(buffer), "%V on %V at %S - %s%s(%d, %s)%s%s",
+                              name.rep, dbname.rep, function, errname, ptr1, errcode, errmsg, ptr2, SQLSTATE);
 
    if (UOrmDriver::bexit == false)
       {
@@ -272,7 +273,7 @@ void UOrmDriver::printError(const char* function)
 
 bool UOrmDriver::setOption(const UString& option)
 {
-   U_TRACE(0, "UOrmDriver::setOption(%.*S)", U_STRING_TO_TRACE(option))
+   U_TRACE(0, "UOrmDriver::setOption(%V)", option.rep)
 
    // ---------------------------------------------------------------------------------------------
    // option string format:
@@ -341,7 +342,7 @@ UString UOrmDriver::getOptionValue(const char* _name, uint32_t len)
       U_RETURN_STRING(result);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 USqlStatementBindParam::USqlStatementBindParam(const char* s, int n, bool bstatic)
@@ -659,7 +660,7 @@ template <> void UOrmDriver::bindResult<unsigned long long>(USqlStatement* pstmt
 
 template <> void UOrmDriver::bindResult<UStringRep>(USqlStatement* pstmt, UStringRep& v)
 {
-   U_TRACE(0, "UOrmDriver::bindResult<UString>(%p,%.*S)", pstmt, U_STRING_TO_TRACE(v))
+   U_TRACE(0, "UOrmDriver::bindResult<UString>(%p,%V)", pstmt, &v)
 
    U_INTERNAL_ASSERT_POINTER(pstmt)
 

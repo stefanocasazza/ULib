@@ -8,9 +8,9 @@ EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg \
 
 MAINTAINERCLEANFILES	= Makefile.in
 
-DEFAULT_INCLUDES =  -I. -I$(top_builddir)/include
+DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 
-LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 
 ## DEFS = -DU_TEST @DEFS@
 ## TESTS_ENVIRONMENT = srcdir=$(srcdir)
@@ -179,10 +179,16 @@ if !MINGW
 PRG += test_process test_interrupt test_unixsocket_client test_unixsocket_server test_arping
 TST += process.test interrupt.test unixsocket.test
 test_arping_SOURCES = test_arping.cpp
-test_process_SOURCES = test_process.cpp
-test_interrupt_SOURCES = test_interrupt.cpp
 test_unixsocket_client_SOURCES = test_unixsocket_client.cpp
 test_unixsocket_server_SOURCES = test_unixsocket_server.cpp
+test_process_SOURCES = test_process.cpp
+test_interrupt_SOURCES = test_interrupt.cpp
+test_process_LDADD = $(LDADD)
+test_interrupt_LDADD = $(LDADD)
+if SANITIZE 
+test_process_LDADD   += -lubsan
+test_interrupt_LDADD += -lubsan
+endif
 endif
 
 if PLUGIN

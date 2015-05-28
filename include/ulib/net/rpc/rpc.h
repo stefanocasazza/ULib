@@ -67,7 +67,7 @@ public:
 
    static bool sendTokenInt(USocket* s, const char* token, uint32_t value, UString& buffer)
       {
-      U_TRACE(0, "URPC::sendTokenInt(%p,%S,%u,%.*S)", s, token, value, U_STRING_TO_TRACE(buffer))
+      U_TRACE(0, "URPC::sendTokenInt(%p,%S,%u,%V)", s, token, value, buffer.rep)
 
       UStringExt::buildTokenInt(token, value, buffer);
 
@@ -80,7 +80,7 @@ public:
 
    static bool sendTokenString(USocket* s, const char* token, const UString& data, UString& buffer)
       {
-      U_TRACE(0, "URPC::sendTokenString(%p,%S,%.*S,%.*S)", s, token, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(buffer))
+      U_TRACE(0, "URPC::sendTokenString(%p,%S,%V,%V)", s, token, data.rep, buffer.rep)
 
       UStringExt::buildTokenString(token, data, buffer);
 
@@ -93,7 +93,7 @@ public:
 
    static bool sendTokenVector(USocket* s, const char* token, UVector<UString>& vec, UString& buffer)
       {
-      U_TRACE(0, "URPC::sendTokenVector(%p,%S,%p,%.*S)", s, token, &vec, U_STRING_TO_TRACE(buffer))
+      U_TRACE(0, "URPC::sendTokenVector(%p,%S,%p,%V)", s, token, &vec, buffer.rep)
 
       UStringExt::buildTokenVector(token, vec, buffer);
 

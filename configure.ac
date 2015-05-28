@@ -6,7 +6,7 @@
 #
 # The autoconf documentation states that this is the recommended sequence for this file:
 #
-#  AC_INIT()
+#  AC_INIT
 #
 #  checks for programs
 #  checks for libraries
@@ -18,14 +18,14 @@
 #  checks for library functions
 #  checks for system services
 #
-#  AC_OUTPUT([FILE...])
+#  AC_CONFIG_FILES([FILE...])
 
-# SECTION 1: AC_INIT()
+# SECTION 1: AC_INIT
 #
 # This macro must be the very first invoked
 
 AC_PREREQ([2.69])
-AC_INIT(ULib, [1.4.2], [stefano.casazza@gmail.com], [ULib], [http://stefanocasazza.github.io/ULib/])
+AC_INIT([ULib],[1.4.2],[stefano.casazza@gmail.com],[ULib],[http://stefanocasazza.github.io/ULib/])
 AC_CONFIG_SRCDIR([src/ulib/string.cpp])
 AC_CONFIG_MACRO_DIR([m4])
 
@@ -48,23 +48,23 @@ fi
 TWOCAN_CONF_MSG(Initial phase)
 
 # Check what platform we are running on
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 # Pick a newer and better tar implementation like tar-pax
-AM_INIT_AUTOMAKE([no-define tar-pax])
+AM_INIT_AUTOMAKE([subdir-objects no-define tar-pax])
 AM_MAINTAINER_MODE
 AM_SILENT_RULES([yes])
 
 AC_USE_SYSTEM_EXTENSIONS
 
 dnl This is a C++ library after all
-AC_LANG_CPLUSPLUS
+AC_LANG([C++])
 
 dnl Initial CFLAGS
 AC_MSG_CHECKING(initial CFLAGS)
 AC_MSG_RESULT($CFLAGS)
 
 # Generate a header file with all settings, a config.h file (Automake will add -DHAVE_CONFIG_H)
-AM_CONFIG_HEADER(include/ulib/internal/config.h)
+AC_CONFIG_HEADERS([include/ulib/internal/config.h])
 
 # Check for architecture for the target
 AC_MSG_CHECKING([which architecture the target is])
@@ -262,6 +262,7 @@ case "$target_os" in
    ;;
 
 	darwin*)
+		CPPFLAGS="$CPPFLAGS -D__OSX__ -D__APPLE__"
 		MODULE_FLAGS="-dynamic -bundle -undefined suppress -flat_namespace -read_only_relocs suppress"
 
 		AM_CONDITIONAL(LINUX, false)
@@ -377,6 +378,7 @@ fi
 #                +- increment if interfaces have been added, removed or changed
 #AC_SUBST(GENERIC_LIBRARY_VERSION)
 
+# ==========================================================================================================
 # Updating library version information
 # ==========================================================================================================
 # If you want to use libtool's versioning system, then you must specify the version information to libtool
@@ -429,7 +431,7 @@ MODULE_LIBTOOL_OPTIONS="-export-dynamic -avoid-version"
 
 AM_CONDITIONAL(MS_LIB_AVAILABLE, test x$ms_librarian = xyes)
 
-AC_PROG_LIBTOOL
+LT_INIT
 
 AC_SUBST(MODULE_LIBTOOL_OPTIONS)
 
@@ -448,6 +450,7 @@ if test -z "$enable_stdcpp"; then
 	enable_stdcpp="yes"
 fi
 
+ULIB_LIBS=
 if test "$enable_stdcpp" = "yes"; then
    AC_MSG_RESULT(yes)
 	AM_CONDITIONAL(STDCPP, true)
@@ -501,7 +504,7 @@ AC_SUBST(ULIB)
 ULIB_LIBC="-lc"
 
 AC_ARG_WITH(libc,
-    AC_HELP_STRING([--with-libc=path], [specify path to alternate libc [[default=c]]]),
+    AS_HELP_STRING([--with-libc=path],[specify path to alternate libc [[default=c]]]),
 	 [ if test x$with_libc != x ; then
         clib=`echo $with_libc | sed s/[-]l//`
         ULIB_LIBC=-l${clib}
@@ -523,11 +526,10 @@ AC_HEADER_SYS_WAIT
 
 AC_FUNC_ALLOCA
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h \
-						string.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h sys/timeb.h syslog.h termios.h unistd.h wchar.h \
-						assert.h byteswap.h endian.h execinfo.h ifaddrs.h mcheck.h ndir.h dirent.h ndir.h string.h netpacket/packet.h \
-						sched.h semaphore.h sysexits.h streambuf.h poll.h net/if_arp.h \
-						sys/dir.h sys/ndir.h sys/inotify.h sys/sendfile.h sys/sched.h sys/syscall.h \
-						linux/netfilter_ipv4/ipt_ACCOUNT.h libnetfilter_conntrack/libnetfilter_conntrack.h \
+						string.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h sys/timeb.h sys/resource.h syslog.h termios.h unistd.h wchar.h \
+						assert.h byteswap.h endian.h execinfo.h ifaddrs.h mcheck.h ndir.h dirent.h ndir.h string.h netpacket/packet.h sched.h \
+						semaphore.h sysexits.h streambuf.h poll.h net/if_arp.h sys/dir.h sys/ndir.h sys/inotify.h sys/sendfile.h sys/sched.h \
+						sys/syscall.h linux/netfilter_ipv4/ipt_ACCOUNT.h libnetfilter_conntrack/libnetfilter_conntrack.h \
 						/usr/src/linux/include/generated/uapi/linux/version.h])
 
 AC_MSG_CHECKING([whether sys/inotify.h actually works])
@@ -609,6 +611,13 @@ AC_CHECK_LIB($clib, stristr, [
 AC_CHECK_LIB($clib, sysconf, [
     AC_DEFINE(HAVE_SYSCONF, [1], [system config])
 ])
+
+##AC_CHECK_LIB($clib, localtime_r, [
+##    AC_DEFINE(HAVE_LOCALTIME_R, [1], [system localtime_r])
+##])
+##AC_CHECK_LIB($clib, gmtime_r, [
+##    AC_DEFINE(HAVE_GMTIME_R, [1], [system gmtime_r])
+##])
 
 AC_CHECK_LIB($clib, posix_memalign, [
     AC_DEFINE(HAVE_POSIX_MEMALIGN, [1], [posix memory alignment])
@@ -757,7 +766,7 @@ AC_FUNC_CLOSEDIR_VOID
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getaffinity sem_init sem_getvalue sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getaffinity sem_init sem_getvalue sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     AC_CHECK_FUNC($func,[
         found=$func
@@ -797,6 +806,9 @@ for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait fallocate falloc
         ;;
     epoll_wait)
         AC_DEFINE(HAVE_EPOLL_WAIT, [1], [has epoll_wait])
+        ;;
+    epoll_ctl_batch)
+        AC_DEFINE(HAVE_EPOLL_CTL_BATCH, [1], [has epoll_ctl_batch])
         ;;
     fallocate)
 		  AM_CONDITIONAL(FALLOCATE, true)
@@ -861,6 +873,10 @@ for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait fallocate falloc
     sem_getvalue)
         AC_DEFINE(HAVE_SEM_GETVALUE, [1], [has sem_getvalue])
         ;;
+    sendfile)
+		  AM_CONDITIONAL(SENDFILE, true)
+        AC_DEFINE(HAVE_SENDFILE, [1], [has sendfile])
+        ;;
     sendfile64)
 		  AM_CONDITIONAL(SENDFILE, true)
         AC_DEFINE(HAVE_SENDFILE64, [1], [has sendfile64])
@@ -906,6 +922,21 @@ for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait fallocate falloc
     esac
 done
 
+dnl Mac OSX (10.5 and later)
+if test "$ac_cv_func_sendfile" != "yes"; then
+  AC_TRY_LINK(
+      [ #include <sys/types.h>
+        #include <sys/socket.h>
+        #include <sys/uio.h>
+      ],
+      [ int i;
+        off_t o, n;
+        struct sf_hdtr h;
+        (void)sendfile(i,i,o,&n,&h,i);
+      ],
+		AC_DEFINE([HAVE_MACOSX_SENDFILE], [1], [Define if you have Mac OSX sendfile() semantics]) )
+fi
+
 # C++ stuff must done after library and header (some C++ define require some header)
 
 TWOCAN_CONF_MSG(C++ stuff)
@@ -944,7 +975,7 @@ ulib_pagespeed_msg="no (--with-page-speed)"
 # Add --{enable,disable,with,without}-feature options
 
 AC_ARG_WITH(ipv6,
-   AC_HELP_STRING([--with-ipv6], [Enable ipv6, default is disabled]),
+   AS_HELP_STRING([--with-ipv6],[Enable ipv6, default is disabled]),
 	ulib_ipv6_msg="enabled",
    [ AC_CHECK_HEADERS(netinet6/in6.h linux/in6.h)
 	  AC_CHECK_LIB(c, inet_pton,[ AC_DEFINE(HAVE_INET_PTON, [1], [ipv6 support])])
@@ -1010,7 +1041,7 @@ fi
 
 AC_MSG_CHECKING(if you want to use distcc)
 AC_ARG_WITH(distcc,
-	[  --with-distcc           use distcc],
+	[  --with-distcc           using distcc we must avoid to use some gcc flags (-mtune=native,-flto,...)],
 	[use_distcc=$withval],
 	[use_distcc=no])
 AC_MSG_RESULT($use_distcc)
@@ -1019,7 +1050,7 @@ AC_MSG_RESULT($use_distcc)
 # Enable Linux Netfilter Transparent Proxy
 # ---------------------------------------------------------------------------------------------------
 # AC_ARG_ENABLE(linux-netfilter,
-# AC_HELP_STRING([--enable-linux-netfilter],[enable Transparent Proxy support for Linux (Netfilter)]),
+# AS_HELP_STRING([--enable-linux-netfilter],[enable Transparent Proxy support for Linux (Netfilter)]),
 # [ if test "$enableval" = "yes" ; then
 #    AC_MSG_NOTICE([Linux (Netfilter) Transparent Proxy enabled])
 #    AC_DEFINE(LINUX_NETFILTER,1,[Enable support for Transparent Proxy on Linux (Netfilter) systems])
@@ -1212,7 +1243,7 @@ if test "$use_php" = "yes" ; then
 	AC_SUBST(PHPCONFIGINCLUDES)
 
 	# Check for php_embed.h
-	AC_LANG_C
+	AC_LANG([C])
 	save_CPPFLAGS="$CPPFLAGS"
 	CPPFLAGS="$CPPFLAGS $PHPCONFIGINCLUDES"
 
@@ -1222,7 +1253,7 @@ if test "$use_php" = "yes" ; then
 						 [AC_MSG_ERROR([Cannot find php_embed.h. Check if php was compiled with the --enable-embed option.])])
 
 	CPPFLAGS=$save_CPPFLAGS
-	AC_LANG_CPLUSPLUS
+	AC_LANG([C++])
 
 	# List of php-config ldflags
 	AC_ARG_WITH(php-ldflags,
@@ -1448,7 +1479,8 @@ AC_TYPE_UINT64_T
 AC_TYPE_UINT8_T
 AC_CHECK_TYPES([ptrdiff_t])
 
-AC_TYPE_SIGNAL
+AC_DEFINE_UNQUOTED([RETSIGTYPE],[void],[Define as the return type of signal handlers (`int' or `void').])
+
 
 # SECTION 7: Checks for structures
 
@@ -1623,7 +1655,7 @@ static_handler_http=""
 static_handler_echo=""
 
 AC_ARG_ENABLE(static-server-plugin,
-				  AC_HELP_STRING([--enable-static-server-plugin=MODULES],[ rpc shib stream socket scgi fcgi geoip proxy soap ssi tsa nocat http echo ]),
+				  AS_HELP_STRING([--enable-static-server-plugin=MODULES],[ rpc shib stream socket scgi fcgi geoip proxy soap ssi tsa nocat http echo ]),
 				  [use_static_module="$enableval"])
 
 for mod in $modules; do
@@ -1728,7 +1760,7 @@ static_handler_mysql=""
 static_handler_sqlite=""
 static_handler_pgsql=""
 
-AC_ARG_ENABLE(static-orm-driver, AC_HELP_STRING([--enable-static-orm-driver=DRIVERS],[ sqlite mysql pgsql ]),
+AC_ARG_ENABLE(static-orm-driver, AS_HELP_STRING([--enable-static-orm-driver=DRIVERS],[ sqlite mysql pgsql ]),
 				  [use_static_driver="$enableval"])
 
 for drv in $drivers; do
@@ -1783,7 +1815,7 @@ if test "$enable_static" = "yes" && test "$enable_shared" = "no"; then
 
 	TWOCAN_CONF_MSG(Checking for static HTTP servlet)
 
-	AC_ARG_ENABLE(static-servlet, AC_HELP_STRING([--enable-static-servlet=NAMES],[ wi_auth ... ]),
+	AC_ARG_ENABLE(static-servlet, AS_HELP_STRING([--enable-static-servlet=NAMES],[ wi_auth ... ]),
 					  [use_static_servlet="$enableval"])
 
 	if test -n "$use_static_servlet" ; then
@@ -1841,6 +1873,7 @@ AM_CONDITIONAL(STATIC_SERVLET_WI_AUTH, test "$static_servlet_wi_auth" = "yes")
 AM_CONDITIONAL(HUPS, false)
 AM_CONDITIONAL(FINAL, false)
 AM_CONDITIONAL(HTTP2, false)
+AM_CONDITIONAL(SANITIZE, false)
 AM_CONDITIONAL(MEMORY_POOL, false)
 
 if test "$enable_memory_pool" = "yes"; then
@@ -1914,8 +1947,12 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 				## Graphite loop optimizations: -fgraphite, -fgraphite-identity, -floop-block, -floop-flatten,
 				##										  -floop-interchange, -floop-strip-mine, -floop-parallelize-all, -ftree-loop-linear
 				## ----------------------------------------------------------------------------------------------------------------------------------
+				## -fgcse Perform a global common subexpression elimination pass. This pass also performs global constant and copy propagation. When
+				##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
+				##			 common subexpression elimination pass by adding -fno-gcse to the command line
+				## ----------------------------------------------------------------------------------------------------------------------------------
 				MAYBE_FLAGS="$MAYBE_FLAGS -fstrict-aliasing -fno-stack-protector -fno-stack-protector-all -finline \
-										  -findirect-inlining -ftree-switch-conversion -fno-math-errno \
+										  -findirect-inlining -ftree-switch-conversion -fno-math-errno -fno-crossjumping -fno-gcse \
 										  -Ofast -ftree-partial-pre -freorder-functions" ## -ffunction-sections -fdata-sections
 
 				if test "$use_distcc" != "yes" ; then
@@ -1939,16 +1976,13 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 	## externally_visible become static functions
 	## -------------------------------------------------------------------------------------
 
-	if test "$enable_debug" = "yes"; then
+	if test "$enable_debug" != "yes"; then
+		MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable -fomit-frame-pointer"
+	else
 		## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -fno-omit-frame-pointer -rdynamic -fdiagnostics-color=auto"
-		if test "$USE_LIBSSL" = "yes"; then
-			MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-parameter"
-		fi
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -fno-omit-frame-pointer -rdynamic -fdiagnostics-color=auto"
 		# -Wzero-as-null-pointer-constant"
 		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat"
-	else
-		MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable -fomit-frame-pointer"
 	fi
 
 	AC_CACHE_CHECK([for gcc supported flags], ulib_cv_flags, [
@@ -1967,7 +2001,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 		# ------------------------------------------------
 		# Set the test language as C
 		# ------------------------------------------------
-		AC_LANG_C
+		AC_LANG([C])
 
 		for W in $CC_MAYBE_FLAGS; do
 			AC_CC_TRY_FLAG([$W], [CC_FLAGS="$CC_FLAGS $W"])
@@ -1978,7 +2012,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 		# ------------------------------------------------
 		# reset the test language as C++
 		# ------------------------------------------------
-		AC_LANG_CPLUSPLUS
+		AC_LANG([C++])
 
 		for W in $MAYBE_FLAGS; do
 			AC_CC_TRY_FLAG([$W], [FLAGS="$FLAGS $W"])
@@ -2022,6 +2056,14 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 		##		fi
 		##	fi
 		## -------------------------------------------------------------------------------------------------------------------------
+
+		AC_MSG_CHECKING([sanitize support request])
+		if echo $CPPFLAGS | grep fsanitize >/dev/null; then
+			AC_MSG_RESULT(yes)
+			AM_CONDITIONAL(SANITIZE, true)
+		else
+			AC_MSG_RESULT(no)
+		fi
 
 		# When using a linker plugin, compiling with the -flto option now generates slim object files (.o) which only contain intermediate
 		# language representation for LTO. Use -ffat-lto-objects to create files which contain additionally the object code. To generate
@@ -2127,6 +2169,7 @@ TWOCAN_CONF_MSG(Output Substitution)
 
 ULIB_VERSION="$PACKAGE_VERSION"
 
+AC_SUBST(ULIBS)
 AC_SUBST(ULIB_LIBS)
 AC_SUBST(ULIB_VERSION)
 
@@ -2134,15 +2177,15 @@ AC_SUBST(USP_LIBS)
 AC_SUBST(USP_FLAGS)
 AC_SUBST(USP_LDFLAGS)
 
-AC_DEFINE_UNQUOTED(CXX_VAR, 		"$CXX",		  [Compiler])
+AC_DEFINE_UNQUOTED(CXX_VAR, 		"$CXX", [Compiler])
 AC_DEFINE_UNQUOTED(LIBS_VAR, 		"$ULIB_LIBS", [Libraries])
-AC_DEFINE_UNQUOTED(CFLAGS_VAR,	"$CFLAGS",	  [C Flags])
-AC_DEFINE_UNQUOTED(LDFLAGS_VAR, 	"$LDFLAGS",   [Linker Flags])
-AC_DEFINE_UNQUOTED(CXXFLAGS_VAR, "$CXXFLAGS",  [C++ Flags])
-AC_DEFINE_UNQUOTED(CPPFLAGS_VAR, "$CPPFLAGS",  [Preprocessor Flags])
+AC_DEFINE_UNQUOTED(CFLAGS_VAR,	"$CFLAGS", [C Flags])
+AC_DEFINE_UNQUOTED(LDFLAGS_VAR, 	"$LDFLAGS", [Linker Flags])
+AC_DEFINE_UNQUOTED(CXXFLAGS_VAR, "$CXXFLAGS",[C++ Flags])
+AC_DEFINE_UNQUOTED(CPPFLAGS_VAR, "$CPPFLAGS",[Preprocessor Flags])
 
-AC_DEFINE_UNQUOTED(LD_VAR, 		"$LD",		  [Linker])
-AC_DEFINE_UNQUOTED(PLATFORM_VAR, "$PLATFORM",  [Platform])
+AC_DEFINE_UNQUOTED(LD_VAR, 		"$LD", [Linker])
+AC_DEFINE_UNQUOTED(PLATFORM_VAR, "$PLATFORM", [Platform])
 
 # rpm spec
 RPM_REQUIRE=rpmpkgreq.lst
@@ -2230,9 +2273,9 @@ See include/ulib/internal/config.h for further configuration information
 ------------------------------------------------------------------------])
 #      Built-in manual: ${ulib_manual_msg}
 
-# SECTION 16: `AC_OUTPUT([FILE...])' read Makefile.in and write Makefile
+# SECTION 16: `AC_CONFIG_FILES([FILE...])
 
-AC_OUTPUT(Makefile \
+AC_OUTPUT([Makefile \
 			 rpm.sh \
 			 ULib.spec \
 			 m4/Makefile \
@@ -2280,7 +2323,7 @@ AC_OUTPUT(Makefile \
 			 examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec \
 			 examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec  examples/PEC_log/PEC_log.spec \
 			 examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec \
-			 tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile)
+			 tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile])
 
 #			 examples/parser/Makefile \
 #			 src/ulib/base/Makefile src/ulib/debug/Makefile \
@@ -2301,9 +2344,9 @@ echo "***"
 CPPFLAGS="-DHAVE_CONFIG_H -I${srcdir}/include $CPPFLAGS"
 
 AC_CACHE_CHECK([if generated configuration is usable], ac_cv_configuration_is_usable,
-[AC_TRY_COMPILE([
+[AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include "src/ulib/internal/common.cpp"
-], [int a = 0; a += 1;], [ac_cv_configuration_is_usable="yes"], [ac_cv_configuration_is_usable="no"])
+]], [[int a = 0; a += 1;]])],[ac_cv_configuration_is_usable="yes"],[ac_cv_configuration_is_usable="no"])
 ])
 
 if test "$ac_cv_configuration_is_usable" = "no" ; then

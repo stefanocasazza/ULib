@@ -18,7 +18,7 @@
 #define U_TIMEOUT_MS     (30L * 1000L) // 30 second connection/read timeout
 #define U_SSL_TIMEOUT_MS (10L * 1000L) // 10 second handshake       timeout
 
-// NB: for avoid mis-aligned we use 4 bytes...
+// NB: to avoid mis-aligned we use 4 bytes...
 #define U_LZOP_COMPRESS "\x89LZO" // "\211LZO" "\x89\x4c\x5a\x4f"
 
 #define U_PATH_MAX (1024U - (1 + sizeof(ustringrep)))
@@ -27,7 +27,6 @@
 // -------------------------------------------------------------------------------------------------------------------
 #define U_CAPACITY (U_MAX_SIZE_PREALLOCATE - (1 + sizeof(ustringrep))) // UStringRep::max_size(U_MAX_SIZE_PREALLOCATE)
 // -------------------------------------------------------------------------------------------------------------------
-
 #define U_STRING_MAX_SIZE (((U_NOT_FOUND-sizeof(ustringrep))/sizeof(char))-4096)
 
 // NB: Optimization if it is enough a resolution of one second

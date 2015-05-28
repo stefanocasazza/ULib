@@ -231,7 +231,6 @@ protected:
    static UFileConfig* cfg;
    static bool log_shared_with_server, bIPv6;
 
-   bool connectServer();
    bool readHTTPResponse();
    bool setUrl(const UString& url); // NB: return if it has modified host or port...
 

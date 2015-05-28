@@ -14,7 +14,7 @@
 #include <ulib/url.h>
 #include <ulib/ldap/ldap.h>
 
-struct timeval ULDAP::timeOut = { 30L, 0L }; /* 30 second connection/search timeout */
+struct timeval ULDAP::timeOut = { 30L, 0L }; // 30 second connection/search timeout
 
 ULDAPEntry::ULDAPEntry(int num_names, const char** names, int num_entry)
 {
@@ -48,7 +48,7 @@ ULDAPEntry::~ULDAPEntry()
             {
             if (attr_val[k])
                {
-               U_INTERNAL_DUMP("ULDAPEntry(%d): %S = %.*S", k, attr_name[j], U_STRING_TO_TRACE(*attr_val[k]))
+               U_INTERNAL_DUMP("ULDAPEntry(%d): %S = %V", k, attr_name[j], attr_val[k]->rep)
 
                delete attr_val[k];
                }
@@ -82,7 +82,7 @@ void ULDAPEntry::set(char* attribute, char** values, int index_entry)
             attr_val[k]->append(values[j]);
             }
 
-         U_INTERNAL_DUMP("value = %.*S", U_STRING_TO_TRACE(*attr_val[k]))
+         U_INTERNAL_DUMP("value = %V", attr_val[k]->rep)
 
          break;
          }
@@ -103,7 +103,7 @@ void ULDAPEntry::set(char* attribute, char* value, uint32_t len, int index_entry
 
          attr_val[k] = U_NEW(UString((void*)value, len));
 
-         U_INTERNAL_DUMP("value = %.*S", U_STRING_TO_TRACE(*attr_val[k]))
+         U_INTERNAL_DUMP("value = %V", attr_val[k]->rep)
 
          break;
          }
@@ -126,7 +126,7 @@ UString ULDAPEntry::getString(int index_names, int index_entry)
       U_RETURN_STRING(str);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 const char* ULDAPEntry::getCStr(int index_names, int index_entry)

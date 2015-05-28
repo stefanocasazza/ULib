@@ -49,7 +49,7 @@ public:
 
    UHashMapNode(const UStringRep* _key, const void* _elem, UHashMapNode* _next, uint32_t _hash) : elem(_elem), key(_key), next(_next), hash(_hash)
       {
-      U_TRACE_REGISTER_OBJECT(0, UHashMapNode, "%.*S,%p,%p,%u", U_STRING_TO_TRACE(*_key), _elem, _next, _hash)
+      U_TRACE_REGISTER_OBJECT(0, UHashMapNode, "%V,%p,%p,%u", _key, _elem, _next, _hash)
 
       ((UStringRep*)_key)->hold(); // NB: we increases the reference string...
       }
@@ -174,7 +174,7 @@ public:
 
    bool find(const UString& _key)
       {
-      U_TRACE(0, "UHashMap<void*>::find(%.*S)", U_STRING_TO_TRACE(_key))
+      U_TRACE(0, "UHashMap<void*>::find(%V)", _key.rep)
 
       lookup(_key);
 
@@ -196,7 +196,7 @@ public:
 
    template <typename T> T* get(const UString& _key)
       {
-      U_TRACE(0, "UHashMap<void*>::get(%.*S)", U_STRING_TO_TRACE(_key))
+      U_TRACE(0, "UHashMap<void*>::get(%V)", _key.rep)
 
       return (T*) operator[](_key);
       }
@@ -205,7 +205,7 @@ public:
 
    void insert(const UString& _key, const void* _elem)
       {
-      U_TRACE(0, "UHashMap<void*>::insert(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
+      U_TRACE(0, "UHashMap<void*>::insert(%V,%p)", _key.rep, _elem)
 
       lookup(_key);
 
@@ -319,6 +319,7 @@ private:
    friend class UCDB;
    friend class UHTTP;
    friend class UValue;
+   friend class UString;
    friend class WeightWord;
    friend class UFileConfig;
    friend class UCertificate;
@@ -340,7 +341,7 @@ public:
 
    UHashMap(const UString& _key, const T* _elem) : UHashMap<void*>(_key, _elem)
       {
-      U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%.*S,%p", U_STRING_TO_TRACE(_key), _elem)
+      U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%V,%p", _key.rep, _elem)
       }
 
    ~UHashMap()
@@ -375,19 +376,16 @@ public:
 
    void insertAfterFind(const UStringRep* _key, const T* _elem)
       {
-      U_TRACE(0, "UHashMap<T*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(*_key), _elem)
+      U_TRACE(0, "UHashMap<T*>::insertAfterFind(%V,%p)", _key, _elem)
 
       u_construct<T>(&_elem, istream_loading);
 
-      if (node)
+      if (node == 0) UHashMap<void*>::insertAfterFind(_key, _elem);
+      else
          {
          u_destroy<T>((const T*)node->elem);
 
          node->elem = _elem;
-         }
-      else
-         {
-         UHashMap<void*>::insertAfterFind(_key, _elem);
          }
       }
 
@@ -410,17 +408,23 @@ public:
 
    void insert(const UString& _key, const T* _elem)
       {
-      U_TRACE(0, "UHashMap<T*>::insert(%.*S,%p)", U_STRING_TO_TRACE(_key), _elem)
+      U_TRACE(0, "UHashMap<T*>::insert(%V,%p)", _key.rep, _elem)
 
       UHashMap<void*>::lookup(_key);
 
       insertAfterFind(_key, _elem);
       }
 
+   // find a elem in the array with <key>
+
+   T* at(const UString& _key)                { return (T*) UHashMap<void*>::at(_key.rep); }
+   T* at(const UStringRep* keyr)             { return (T*) UHashMap<void*>::at(keyr); }
+   T* at(const char* _key, uint32_t keylen)  { return (T*) UHashMap<void*>::at(_key, keylen); }
+
 #ifdef DEBUG
    bool check_memory() const // check all element
       {
-      U_TRACE(0, "UHashMap<T*>::check_memory()")
+      U_TRACE(0+256, "UHashMap<T*>::check_memory()")
 
       U_CHECK_MEMORY
 
@@ -428,36 +432,50 @@ public:
 
       if (_length)
          {
-         T* _elem;
-         UHashMapNode* _node;
-         UHashMapNode* _next;
+         T* pelem;
+         UHashMapNode* pnode;
+         UHashMapNode* pnext;
          int sum = 0, max = 0, min = 1024, width;
 
          for (uint32_t _index = 0; _index < _capacity; ++_index)
             {
-            _node = table[_index];
+            pnode = table[_index];
 
-            if (_node)
+            if (pnode == 0) continue;
+
+            ++sum;
+            width = 0;
+
+loop:       U_INTERNAL_ASSERT_POINTER(pnode)
+
+            pelem = (T*) pnode->elem;
+
+            U_INTERNAL_DUMP("pelem = %p", pelem)
+
+            U_CHECK_MEMORY_OBJECT(pelem)
+
+            U_INTERNAL_DUMP("pnode->key(%u) = %p %V",  pnode->key->size(), pnode->key, pnode->key)
+
+            U_INTERNAL_ASSERT_MAJOR(pnode->key->size(), 0)
+
+            if (pnode->next)
                {
-               ++sum;
-               width = -1;
+               pnext = pnode->next;
 
-               do {
-                  ++width;
+               U_INTERNAL_DUMP("pnode = %p pnext = %p", pnode, pnext)
 
-                  _elem = (T*) _node->elem;
+               U_INTERNAL_ASSERT_POINTER(pnext)
+               U_INTERNAL_ASSERT_DIFFERS(pnode, pnext)
 
-                  U_INTERNAL_DUMP("_elem = %p", _elem)
+               ++width;
 
-                  U_CHECK_MEMORY_OBJECT(_elem)
+               pnode = pnext;
 
-                  _next = _node->next;
-                  }
-               while ((_node = _next));
-
-               if (max < width) max = width;
-               if (min > width) min = width;
+               goto loop;
                }
+
+            if (max < width) max = width;
+            if (min > width) min = width;
             }
 
          U_INTERNAL_DUMP("collision(min,max) = (%d,%d) - distribution = %f", min, max, (sum ? (double)_length / (double)sum : 0))
@@ -751,12 +769,6 @@ public:
 #  endif
 #endif
 
-protected:
-
-   // find a elem in the array with <key>
-
-   T* at(const UStringRep* keyr)             { return (T*) UHashMap<void*>::at(keyr); }
-   T* at(const char* _key, uint32_t keylen)  { return (T*) UHashMap<void*>::at(_key, keylen); }
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS
@@ -794,14 +806,14 @@ public:
 
    void replaceAfterFind(const UString& str)
       {
-      U_TRACE(0, "UHashMap<T*>::replaceAfterFind(%.*S)", U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UHashMap<T*>::replaceAfterFind(%V)", str.rep)
 
       UHashMap<UStringRep*>::replaceAfterFind(str.rep);
       }
 
    void insert(const UString& _key, const UString& str)
       {
-      U_TRACE(0, "UHashMap<UString>::insert(%.*S,%.*S)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(str))
+      U_TRACE(0, "UHashMap<UString>::insert(%V,%V)", _key.rep, str.rep)
 
       UHashMap<UStringRep*>::insert(_key, str.rep);
 
@@ -810,8 +822,7 @@ public:
 
    UString erase(const UString& key);
 
-   void insertAfterFind(const UString& key,                  const UString& str);
-   void insertAfterFind(const char*    key, uint32_t keylen, const UString& str);
+   void insertAfterFind(const UString& key, const UString& str);
 
    // OPERATOR []
 

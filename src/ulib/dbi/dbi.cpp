@@ -166,16 +166,16 @@ void UDBI::query(const char* str, uint32_t len)
       pos_input = pos_read;
       }
 
-   U_INTERNAL_DUMP("pos_read = %u pos_input = %u pos_size = %u escaped_query(%u) = %.*S",
-                    pos_read,     pos_input,     pos_size,     escaped_query.size(), U_STRING_TO_TRACE(escaped_query))
+   U_INTERNAL_DUMP("pos_read = %u pos_input = %u pos_size = %u escaped_query(%u) = %V",
+                    pos_read,     pos_input,     pos_size,     escaped_query.size(), escaped_query.rep)
 }
 
 void UDBI::reset()
 {
    U_TRACE(0, "UDBI::reset()")
 
-   U_INTERNAL_DUMP("pos_read = %u pos_input = %u pos_size = %u escaped_query(%u) = %.*S",
-                    pos_read,     pos_input,     pos_size,     escaped_query.size(), U_STRING_TO_TRACE(escaped_query))
+   U_INTERNAL_DUMP("pos_read = %u pos_input = %u pos_size = %u escaped_query(%u) = %V",
+                    pos_read,     pos_input,     pos_size,     escaped_query.size(), escaped_query.rep)
 
    if (pos_input)
       {
@@ -190,8 +190,8 @@ void UDBI::reset()
       escaped_query.size_adjust(pos_size);
       }
 
-   U_INTERNAL_DUMP("pos_read = %u pos_input = %u pos_size = %u escaped_query(%u) = %.*S",
-                    pos_read,     pos_input,     pos_size,     escaped_query.size(), U_STRING_TO_TRACE(escaped_query))
+   U_INTERNAL_DUMP("pos_read = %u pos_input = %u pos_size = %u escaped_query(%u) = %V",
+                    pos_read,     pos_input,     pos_size,     escaped_query.size(), escaped_query.rep)
 }
 
 void UDBI::escape()
@@ -244,7 +244,7 @@ void UDBI::escape()
 
    escaped_query._append();
 
-   U_INTERNAL_DUMP("escaped_query = %.*S", U_STRING_TO_TRACE(escaped_query))
+   U_INTERNAL_DUMP("escaped_query = %V", escaped_query.rep)
 
    if (ready_for_input == false)
       {
@@ -275,7 +275,7 @@ void UDBI::bind(const null& v, bool is_null)
 
 void UDBI::bind(const UString& v, bool is_null)
 {
-   U_TRACE(1, "UDBI::bind(%.*S,%b)", U_STRING_TO_TRACE(v), is_null)
+   U_TRACE(1, "UDBI::bind(%V,%b)", v.rep, is_null)
 
    U_CHECK_MEMORY
 

@@ -16,7 +16,7 @@
 
 void UXMLElement::splitNamespaceAndName(const UString& _str, UString& _namespaceName, UString& _accessorName)
 {
-   U_TRACE(0+256, "UXMLElement::splitNamespaceAndName(%.*S,%p,%p)", U_STRING_TO_TRACE(_str), &_namespaceName, &_accessorName)
+   U_TRACE(0+256, "UXMLElement::splitNamespaceAndName(%V,%p,%p)", _str.rep, &_namespaceName, &_accessorName)
 
    U_INTERNAL_ASSERT(_str)
 
@@ -36,20 +36,19 @@ void UXMLElement::splitNamespaceAndName(const UString& _str, UString& _namespace
 
 UXMLAttribute* UXMLElement::getAttribute(const UString& attributeName)
 {
-   U_TRACE(0, "UXMLElement::getAttribute(%.*S)", U_STRING_TO_TRACE(attributeName))
+   U_TRACE(0, "UXMLElement::getAttribute(%V)", attributeName.rep)
 
    uint32_t n = numAttributes(); 
 
    if (n)
       {
-      UXMLAttribute* entry;
       UString szAccessor, szNamespace;
 
       splitNamespaceAndName(attributeName, szNamespace, szAccessor);
 
       for (uint32_t i = 0; i < n; ++i)
          {
-         entry = attributeAt(i);
+         UXMLAttribute* entry = attributeAt(i);
 
          if ((entry->getAccessor() == attributeName) &&
              (szNamespace.empty() || (entry->getNamespaceName() == szNamespace)))

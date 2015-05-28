@@ -42,7 +42,7 @@ UString UTree<UString>::back() { return ((UTree<UString>*)UVector<void*>::back()
 
 void UTree<UString>::insert(uint32_t pos, const UString& str) // add elem before pos
 {
-   U_TRACE(0, "UTree<UString>::insert(%u,%.*S)", pos, U_STRING_TO_TRACE(str))
+   U_TRACE(0, "UTree<UString>::insert(%u,%V)", pos, str.rep)
 
    UTree<UStringRep*>::insert(pos, str.rep);
 }
@@ -51,7 +51,7 @@ void UTree<UString>::insert(uint32_t pos, const UString& str) // add elem before
 
 __pure uint32_t UTree<UString>::find(const UString& str)
 {
-   U_TRACE(0, "UTree<UString>::find(%.*S)", U_STRING_TO_TRACE(str))
+   U_TRACE(0, "UTree<UString>::find(%V)", str.rep)
 
    U_CHECK_MEMORY
 

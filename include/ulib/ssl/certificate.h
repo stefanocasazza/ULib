@@ -58,7 +58,7 @@ public:
 
    UCertificate(const UString& x, const char* format = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCertificate, "%.*S,%S", U_STRING_TO_TRACE(x), format)
+      U_TRACE_REGISTER_OBJECT(0, UCertificate, "%V,%S", x.rep, format)
 
       x509 = readX509(x, format);
       }
@@ -109,7 +109,7 @@ public:
 
    bool set(const UString& x, const char* format = 0)
       {
-      U_TRACE(0, "UCertificate::set(%.*S,%S)", U_STRING_TO_TRACE(x), format)
+      U_TRACE(0, "UCertificate::set(%V,%S)", x.rep, format)
 
       set(readX509(x, format));
 
@@ -143,7 +143,7 @@ public:
 
       long hash = U_SYSCALL(X509_subject_name_hash, "%p", _x509);
 
-      return getFileName(hash);
+      return getFileName(hash, false, 0);
       }
 
    UString getFileName() const { return getFileName(x509); }
@@ -388,10 +388,10 @@ public:
       {
       U_TRACE(0, "UCertificate::checkValidity(%ld)", time)
 
-      /*
-      Not Before: Jan 25 11:54:00 2005 GMT                                                                                         
-      Not After : Jan 25 11:54:00 2006 GMT                                                                                         
-      */
+      /**
+       * Not Before: Jan 25 11:54:00 2005 GMT
+       * Not After : Jan 25 11:54:00 2006 GMT
+       */
 
       bool result = (time >= UTimeDate::getSecondFromTime(getNotBefore(), true, "%s %2d %2d:%2d:%2d %4d GMT") &&
                      time <= UTimeDate::getSecondFromTime(getNotAfter(),  true, "%s %2d %2d:%2d:%2d %4d GMT"));
@@ -420,7 +420,7 @@ public:
 
    /**
     * Retrieves the signer's certificates from this certificate,
-    * it does check their validity and whether any signatures are valid.
+    * it does check their validity and whether any signatures are valid
     */
 
    static bool verify_result;
@@ -471,16 +471,16 @@ public:
     * Indicate the data certificate ("issuer","serial") for logging...
     */
 
-   static void setForLog(X509* a, UString& buffer, const char* fmt = " (\"%.*s\",\"%ld\")")
+   static void setForLog(X509* a, UString& buffer, const char* fmt = " (\"%v\",\"%ld\")")
       {
       U_TRACE(0, "UCertificate::setForLog(%p,%p,%S)", a, &buffer, fmt)
 
       UString issuer = getIssuer(a, true);
 
-      buffer.snprintf(fmt, U_STRING_TO_TRACE(issuer), getSerialNumber(a));
+      buffer.snprintf(fmt, issuer.rep, getSerialNumber(a));
       }
 
-   void setForLog(UString& buffer, const char* fmt = " (\"%.*s\",\"%ld\")") const { setForLog(x509, buffer, fmt); }
+   void setForLog(UString& buffer, const char* fmt = " (\"%v\",\"%ld\")") const { setForLog(x509, buffer, fmt); }
 
    static STACK_OF(X509)* loadCerts(const UString& content);
 

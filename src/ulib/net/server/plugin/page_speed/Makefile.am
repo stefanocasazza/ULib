@@ -2,6 +2,8 @@
 
 MAINTAINERCLEANFILES = Makefile.in
 
+AUTOMAKE_OPTIONS = -Wno-portability
+
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include -I..
 
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
@@ -45,9 +47,9 @@ PAGESPEED_DEPS = \
 #       third_party/cJSON/libcJSON.a \
 #       third_party/zlib/libchrome_zlib.a
 
-# The following are used to specify the location of the generated
-# libraries within the page speed SDK make build.
-PAGESPEED_LIBS = $(addprefix @PAGESPEED_ROOT_DIR@/out/Release/obj.target/, $(PAGESPEED_DEPS))
+# The following are used to specify the location of the generated libraries within the page speed SDK make build
+TPREFIX=@PAGESPEED_ROOT_DIR@/out/Release/obj.target
+PAGESPEED_LIBS=$(addprefix $(TPREFIX)/,$(PAGESPEED_DEPS))
 
 # ----------------------------------------------
 # NB: compile with CXXFLAGS='-fPIC' make

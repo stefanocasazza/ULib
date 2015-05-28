@@ -36,11 +36,11 @@
 
 /* Atomically mark descriptor(s) as non-blocking */
 #ifndef SOCK_NONBLOCK
-#define SOCK_NONBLOCK   04000
+#define SOCK_NONBLOCK 04000
 #endif
 /* Atomically set close-on-exec flag for the new descriptor(s) */
 #ifndef SOCK_CLOEXEC
-#define SOCK_CLOEXEC    02000000
+#define SOCK_CLOEXEC 02000000
 #endif
 
 /**
@@ -205,8 +205,6 @@ public:
 #  endif
       }
 
-   void close();
-
    /**
     * The getsockopt() function is called with the provided parameters to obtain the desired value
     */
@@ -273,7 +271,7 @@ public:
     * Following this, we call the listen() method to cause the socket to begin listening for new connections
     */
 
-   void reusePort();
+   void reusePort(int flags);
    bool setServer(unsigned int port, UString* localAddress = 0);
 
    /**
@@ -395,23 +393,68 @@ public:
       U_RETURN(false);
       }
 
+   void          close();
+   void abortive_close() /* Abort connection */
+      {
+      U_TRACE(0, "USocket::abortive_close()")
+
+      setTcpLingerOff();
+
+      close();
+      }
+
    /**
-    * Stick a TCP cork in the socket. It's not clear that this will help performance, but it might.
+    * When enabled, a close(2) or shutdown(2) will not return until all queued messages for the socket have been
+    * successfully sent or the linger timeout has been reached. Otherwise, the call returns immediately and the
+    * closing is done in the background. When the socket is closed as part of exit(2), it always lingers in the background
+    */
+
+   void setTcpLinger(int val)
+      {
+      U_TRACE(0, "USocket::setTcpLinger(%d)", val)
+
+      const struct linger l = {
+         (val >= 0), /* linger active */
+          val        /* how many seconds to linger for */
+      };
+
+      (void) setSockOpt(SOL_SOCKET, SO_LINGER, &l, sizeof(struct linger));
+      }
+
+   /**
+    * When linger is off the TCP stack doesn't wait for pending data to be sent before closing the connection. Data
+    * could be lost due to this but by setting linger to off you're accepting this and asking that the connection be
+    * reset straight away rather than closed gracefully. This causes an RST to be sent rather than the usual FIN
+    */
+
+   void setTcpLingerOff() { setTcpLinger(0); }
+
+   /**
+    * Stick a TCP cork in the socket. It's not clear that this will help performance, but it might
     *
     * TCP_CORK: If set, don't send out partial frames. All queued partial frames are sent when the option is cleared again. This is useful
     *           for prepending headers before calling sendfile(), or for throughput optimization. As currently implemented, there is a 200
     *           millisecond ceiling on the time for which output is corked by TCP_CORK. If this ceiling is reached, then queued data is
-    *           automatically transmitted.
+    *           automatically transmitted
     *
-    * This is a no-op if we don't think this platform has corks.
+    * This is a no-op if we don't think this platform has corks
     */
 
-   static void setTcpCork(USocket* sk, uint32_t value);
+   static void setTcpCork(USocket* sk, uint32_t value)
+      {
+      U_TRACE(1, "USocket::setTcpCork(%p,%u)", sk, value)
+
+      U_INTERNAL_ASSERT_POINTER(sk)
+
+#  if defined(TCP_CORK) && !defined(_MSWINDOWS_)
+      (void) sk->setSockOpt(SOL_TCP, TCP_CORK, (const void*)&value, sizeof(uint32_t));
+#  endif
+      }
 
    /**
     * Ask for the server not to be awakened until some data has arrived on the socket. Takes an integer value (seconds), this can bound the
     * maximum number of attempts TCP will make to complete the connection. This works for RPC protocol because the client sends a request immediately
-    * after connection without waiting for anything from the server.
+    * after connection without waiting for anything from the server
     */
 
    void setTcpDeferAccept()
@@ -423,13 +466,24 @@ public:
 #  endif
       }
 
-   void setTcpQuickAck()
+   void setTcpFastOpen()
       {
-      U_TRACE(0, "USocket::setTcpQuickAck()")
+      U_TRACE(0, "USocket::setTcpFastOpen()")
+
+#  if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
+#     ifndef TCP_FASTOPEN
+#     define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
+#     endif
+      (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const int[]){ 5 }, sizeof(int));
+#  endif
+      }
+
+   void setTcpQuickAck(int value)
+      {
+      U_TRACE(0, "USocket::setTcpQuickAck(%d)", value)
 
 #  if defined(TCP_QUICKACK) && !defined(_MSWINDOWS_)
-      (void) setSockOpt(SOL_TCP, TCP_QUICKACK,     (const int[]){ 0 }, sizeof(int));
-      (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 0 }, sizeof(int));
+      (void) setSockOpt(SOL_TCP, TCP_QUICKACK, &value, sizeof(int));
 #  endif
       }
 
@@ -449,21 +503,6 @@ public:
 #  if defined(TCP_CONGESTION) && !defined(_MSWINDOWS_)
       (void) setSockOpt(IPPROTO_TCP, TCP_CONGESTION, (const void*)&value, u__strlen(value, __PRETTY_FUNCTION__) + 1);
 #  endif
-      }
-
-   /**
-    * When linger is off the TCP stack doesn't wait for pending data to be sent before closing the connection. Data
-    * could be lost due to this but by setting linger to off you're accepting this and asking that the connection be
-    * reset straight away rather than closed gracefully. This causes an RST to be sent rather than the usual FIN
-    */
-
-   void setTcpLingerOff()
-      {
-      U_TRACE(0, "USocket::setTcpLingerOff()")
-
-      const struct linger l = { 1, 0 };
-
-      (void) setSockOpt(SOL_SOCKET, SO_LINGER, &l, sizeof(struct linger));
       }
 
    /**
@@ -487,8 +526,6 @@ public:
       (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 }, sizeof(int));
 #  endif
       }
-
-   void setTcpFastOpen();
 
    /**
     * Enables/disables the @c SO_TIMEOUT pseudo option
@@ -623,9 +660,9 @@ protected:
    void  closesocket();
    void _closesocket();
 
+   static bool tcp_reuseport;
    static SocketAddress* cLocal;
-   static bool tcp_autocorking, tcp_reuseport;
-   static int iBackLog, server_flags, accept4_flags; // If flags is 0, then accept4() is the same as accept()
+   static int iBackLog, accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
    /**
     * The _socket() function is called to create the socket of the specified type.

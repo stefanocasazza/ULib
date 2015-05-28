@@ -117,6 +117,8 @@
 #  endif
 #endif
 
+#define U_BUFFER_SIZE 8192
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -143,7 +145,26 @@ typedef void  (*vPFpvu)  (void*,uint32_t);
 typedef void* (*pvPF)    (void);
 typedef void* (*pvPFpvpb)(void*,bool*);
 
-#define U_BUFFER_SIZE 8192
+/**
+ * #define U_SUBSTR_INC_REF // NB: in this way we don't capture the event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
+ */
+
+typedef struct ustringrep {
+#ifdef DEBUG
+   const void* _this;
+#endif
+#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+   struct ustringrep* parent; /* manage substring for increment reference of source string */
+#  ifdef DEBUG
+   int32_t child; /* manage substring for capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'... */
+#  endif
+#endif
+   uint32_t _length, _capacity, references;
+   const char* str;
+} ustringrep;
+
+/* String representation */
+extern U_EXPORT struct ustringrep u_empty_string_rep_storage;
 
 /* Internal buffer */
 extern U_EXPORT char* u_buffer;
@@ -202,6 +223,7 @@ extern U_EXPORT bool u_fork_called;
 extern U_EXPORT bool u_exec_failed;
 extern U_EXPORT char u_user_name[32];
 extern U_EXPORT char u_hostname[HOST_NAME_MAX+1];
+extern U_EXPORT const int MultiplyDeBruijnBitPosition2[32];
 extern U_EXPORT uint32_t u_hostname_len, u_user_name_len, u_line_terminator_len, u_seed_hash;
 
 extern U_EXPORT const unsigned char u_alphabet[];  /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
@@ -224,9 +246,11 @@ extern U_EXPORT uint32_t u_num_line;
 extern U_EXPORT const char* restrict u_name_file;
 extern U_EXPORT const char* restrict u_name_function;
 
-U_EXPORT void        u_setPid(void);
-U_EXPORT void        u_init_ulib_username(void);
-U_EXPORT void        u_init_ulib_hostname(void);
+U_EXPORT void u_setPid(void);
+U_EXPORT void u_init_ulib_username(void);
+U_EXPORT void u_init_ulib_hostname(void);
+U_EXPORT void u_init_http_method_list(void);
+
 U_EXPORT const char* u_basename(const char* restrict path) __pure;
 U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
 
@@ -253,7 +277,7 @@ static inline bool u_is_unknow(int mime_index) { return (mime_index == U_unknow)
 
 /**
  * ----------------------------------------------------------------------------
- * Print with format extension: bBCDHMNOPQrRSUYwW
+ * Print with format extension: bBCDHMNOPQrRSvVUYwW
  * ----------------------------------------------------------------------------
  * '%b': print bool ("true" or "false")
  * '%B': print bit conversion of integer
@@ -265,8 +289,10 @@ static inline bool u_is_unknow(int mime_index) { return (mime_index == U_unknow)
  * '%Q': sign for call to exit() or abort() (var-argument is param to exit)
  * '%r': print u_getExitStatus(exit_value)
  * '%R': print var-argument (msg) "-" u_getSysError()
- * '%S': print formatted string
  * '%O': print formatted temporary string + free(string)
+ * '%S': print formatted string
+ * '%v': print ustring
+ * '%V': print ustring
  * '%U': print name login user
  * '%Y': print u_getSysSignal(signo)
  * '%w': print current working directory

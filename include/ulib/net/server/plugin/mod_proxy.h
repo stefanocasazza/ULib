@@ -21,6 +21,9 @@
 class U_EXPORT UProxyPlugIn : public UServerPlugIn {
 public:
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORI
 
             UProxyPlugIn();

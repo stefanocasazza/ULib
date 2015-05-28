@@ -128,7 +128,9 @@ public:
 
       content.setBuffer(x.size());
 
-      if (UBase64::decode(x, content) == false) U_ERROR("decoding data read failed");
+      UBase64::decode(x, content);
+
+      if (content.empty()) U_ERROR("decoding data read failed");
 
       // manage arguments...
 

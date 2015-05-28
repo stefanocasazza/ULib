@@ -652,14 +652,14 @@ U_NO_EXPORT void UPosting::checkPosting()
 #endif
 
    uint32_t* vpos = POSTING_POS_PTR;
-   uint32_t start, end = content->size(), sz = word->size();
+   uint32_t end = content->size(), sz = word->size();
 
    const char* ptr_word = word->data();
    const char* ptr_data = content->data();
 
    for (uint32_t i = 0; i < word_freq; ++i)
       {
-      start = vpos[i];
+      uint32_t start = vpos[i];
 
       U_INTERNAL_DUMP("start           = %u", start)
 

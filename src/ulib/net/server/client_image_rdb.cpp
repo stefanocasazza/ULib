@@ -33,9 +33,7 @@ int URDBClientImage::handlerRead()
 {
    U_TRACE(0, "URDBClientImage::handlerRead()")
 
-   u_clientimage_flag.u = 0;
-
-   if (UClientImage_Base::genericRead() == false)
+   if ((UClientImage_Base::prepareForRead(), UClientImage_Base::genericRead()) == false)
       {
       if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NOT BLOCKING...
 

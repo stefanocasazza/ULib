@@ -66,7 +66,7 @@ endif
 check_PROGRAMS  = $(PRG)
 TESTS 			+= ../reset.color
 
-LDADD = $(HTTP_LIB) $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+LDADD = @ULIBS@ $(HTTP_LIB) $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 
 ## web_server_multiclient.test form_completion.test http_header.test lrp_pusher.test lrp_session.test workflow.test 
 test: all-am

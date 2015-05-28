@@ -130,15 +130,8 @@ typedef struct ustackmemorypool {
 #endif
 } ustackmemorypool;
 
-#define U_STACK_INDEX_TO_SIZE(index)  (index == 0 ? U_STACK_TYPE_0 : \
-                                       index == 1 ? U_STACK_TYPE_1 : \
-                                       index == 2 ? U_STACK_TYPE_2 : \
-                                       index == 3 ? U_STACK_TYPE_3 : \
-                                       index == 4 ? U_STACK_TYPE_4 : \
-                                       index == 5 ? U_STACK_TYPE_5 : \
-                                       index == 6 ? U_STACK_TYPE_6 : \
-                                       index == 7 ? U_STACK_TYPE_7 : \
-                                       index == 8 ? U_STACK_TYPE_8 : U_MAX_SIZE_PREALLOCATE)
+static const uint32_t U_STACK_INDEX_TO_SIZE[] = { U_STACK_TYPE_0, U_STACK_TYPE_1, U_STACK_TYPE_2, U_STACK_TYPE_3, U_STACK_TYPE_4,
+                                                  U_STACK_TYPE_5, U_STACK_TYPE_6, U_STACK_TYPE_7, U_STACK_TYPE_8, U_MAX_SIZE_PREALLOCATE };
 
 /*
            --   --        --   --   --        --   -- 
@@ -239,12 +232,10 @@ public:
          U_INTERNAL_ASSERT_EQUALS(len, 0)
 
          pointer_block = (void**) UFile::mmap(&size, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
-         len = space   = (size / type);
+           len = space = (size / type);
 
-#     if defined(DEBUG)
-#        if defined(ENABLE_MEMPOOL)
+#     if defined(DEBUG) && defined(ENABLE_MEMPOOL)
          (void) U_SYSCALL(memset, "%p,%d,%u", pointer_block, 0, size); // NB: for check duplicate entry...
-#        endif
 #     endif
          }
       else
@@ -319,20 +310,18 @@ public:
       U_INTERNAL_ASSERT_MAJOR(index, 0)
       U_INTERNAL_ASSERT_MINOR(index, U_NUM_STACK_TYPE) // 10
       U_INTERNAL_ASSERT_EQUALS(index, U_SIZE_TO_STACK_INDEX(type))
-      U_INTERNAL_ASSERT_EQUALS(type, U_STACK_INDEX_TO_SIZE(index))
+      U_INTERNAL_ASSERT_EQUALS(type, U_STACK_INDEX_TO_SIZE[index])
       U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)), 0) // memory aligned
 
       if (len == space) growPointerBlock(space << 1); // NB: this call can change len...
 
-#  if defined(DEBUG)
-#     if defined(ENABLE_MEMPOOL)
+#  if defined(DEBUG) && defined(ENABLE_MEMPOOL)
       if (ptr < &mem_block[0] ||
           ptr > &mem_block[U_SIZE_MEM_BLOCK])
          {
       // (void) U_SYSCALL(memset, "%p,%d,%u", (void*)ptr, 0, type); // NB: in debug mode the memory area is zeroed to enhance showing bugs...
          (void)           memset(             (void*)ptr, 0, type); // NB: in debug mode the memory area is zeroed to enhance showing bugs...
          }
-#     endif
 #  endif
 
       pointer_block[len++] = (void*)ptr;
@@ -460,7 +449,7 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
       else if (memblock[i] < 0)
          {
          U_INTERNAL_ASSERT_MINOR(i, U_NUM_STACK_TYPE-1)
-         U_INTERNAL_ASSERT_EQUALS(U_STACK_INDEX_TO_SIZE(i) * 2, U_STACK_INDEX_TO_SIZE(i+1))
+         U_INTERNAL_ASSERT_EQUALS(U_STACK_INDEX_TO_SIZE[i] * 2, U_STACK_INDEX_TO_SIZE[i+1])
 
          pstack = (UStackMemoryPool*)(UStackMemoryPool::mem_stack+i);
 
@@ -507,7 +496,7 @@ void* UMemoryPool::pop(int stack_index)
    U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
 #if !defined(ENABLE_MEMPOOL)
-   void* ptr = U_SYSCALL(malloc, "%u", U_STACK_INDEX_TO_SIZE(stack_index));
+   void* ptr = U_SYSCALL(malloc, "%u", U_STACK_INDEX_TO_SIZE[stack_index]);
 #else
    UStackMemoryPool* pstack = (UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index);
 
@@ -550,7 +539,7 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
       int stack_index = U_SIZE_TO_STACK_INDEX(length);
 
       ptr    = pop(stack_index);
-      length = U_STACK_INDEX_TO_SIZE(stack_index);
+      length = U_STACK_INDEX_TO_SIZE[stack_index];
       }
    else
       {
@@ -585,7 +574,7 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
       int stack_index = U_SIZE_TO_STACK_INDEX(length);
 
       ptr    = pop(stack_index);
-      length = U_STACK_INDEX_TO_SIZE(stack_index);
+      length = U_STACK_INDEX_TO_SIZE[stack_index];
       }
    else
       {

@@ -30,7 +30,7 @@ public:
 
 	Fortune(uint32_t _id, const UString& _message) : id(_id), message(_message)
 		{
-		U_TRACE_REGISTER_OBJECT(5, Fortune, "%u,%.*S", _id, U_STRING_TO_TRACE(_message))
+		U_TRACE_REGISTER_OBJECT(5, Fortune, "%u,%V", _id, _message.rep)
 		}
 
 	Fortune(const Fortune& f) : id(f.id), message((void*)U_STRING_TO_PARAM(f.message))

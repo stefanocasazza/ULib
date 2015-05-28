@@ -17,7 +17,7 @@
 
 unsigned split(UVector<UString>& vec, const UString& buffer, const char* delim)
 {
-   U_TRACE(5, "split(%p,%.*S,%S)", &vec, U_STRING_TO_TRACE(buffer), delim)
+   U_TRACE(5, "split(%p,%V,%S)", &vec, buffer.rep, delim)
 
    unsigned n      = vec.size();
    const char* s   = buffer.data();

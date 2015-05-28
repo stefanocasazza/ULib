@@ -54,17 +54,19 @@ UString UDES3::getSignedData(const char* ptr, uint32_t len)
 
    UString buffer(U_CAPACITY), output(U_CAPACITY);
 
-   bool old = (u_isBase64(ptr, len) &&
-               UBase64::decode(ptr, len, buffer));
+   UBase64::decodeUrl(ptr, len, buffer);
 
-   if (old ||
-       UBase64::decodeUrl(ptr, len, buffer))
+   if (buffer &&
+       u_base64_errors == 0)
       {
       UDES3::decode(buffer, output);
 
-      if (UStringExt::isCompress(output)) output = UStringExt::decompress(output);
+      if (output)
+         {
+         if (UStringExt::isCompress(output)) output = UStringExt::decompress(output);
 
-      (void) output.shrink();
+         (void) output.shrink();
+         }
       }
 
    U_RETURN_STRING(output);

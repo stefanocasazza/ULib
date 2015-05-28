@@ -75,12 +75,12 @@ bool Action::sendHttpPostRequest(const UString& url, const UString& body, const 
    // manage error
 
    if (response.empty() ||
-       u_http_info.nResponseCode != HTTP_OK)
+       U_http_info.nResponseCode != HTTP_OK)
       {
       ok = false;
 
       response.setBuffer(100U);
-      response.snprintf("HTTP response %d",  u_http_info.nResponseCode);
+      response.snprintf("HTTP response %d",  U_http_info.nResponseCode);
       }
    else if (ok && strncmp(response.data(), expected, u__strlen(expected, __PRETTY_FUNCTION__)))
       {
@@ -124,7 +124,9 @@ bool Action::sendEmail()
       
       UString tmp(emailBodyForm.size());
 
-      if (UEscape::decode(emailBodyForm, tmp)) emailBodyForm = tmp;
+      UEscape::decode(emailBodyForm, tmp);
+
+      if (tmp) emailBodyForm = tmp;
 
       buffer.setBuffer(emailSubjectForm.size() + 1024U);
       buffer.snprintf( emailSubjectForm.data(), customer, installation, uid);

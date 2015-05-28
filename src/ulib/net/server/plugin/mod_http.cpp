@@ -74,8 +74,6 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // CACHE_FILE_STORE       pathfile of memory cache stored on filesystem
    //
    // CGI_TIMEOUT            timeout for cgi execution
-   // MIN_SIZE_FOR_SENDFILE  for major size it is better to use sendfile() to serve static content
-   //
    // MOUNT_POINT            mount point application (to adjust var SCRIPT_NAME)
    // VIRTUAL_HOST           flag to activate practice of maintaining more than one server on one machine,
    //                        as differentiated by their apparent hostname
@@ -110,15 +108,13 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          if (n == 1) UHTTP::setGlobalAlias(tmp[0]); // automatic alias of all uri request without suffix...
          else
             {
-            UStringRep* r;
-
             U_INTERNAL_ASSERT_EQUALS(UHTTP::valias, 0)
 
             UHTTP::valias = U_NEW(UVector<UString>(n));
 
             for (uint32_t i = 0; i < n; ++i)
                {
-               r = tmp.UVector<UStringRep*>::at(i);
+               UStringRep* r = tmp.UVector<UStringRep*>::at(i);
 
                UHTTP::valias->UVector<UStringRep*>::push(r);
                }
@@ -135,15 +131,13 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (n)
          {
-         UHTTP::RewriteRule* rule;
-
          U_INTERNAL_ASSERT_EQUALS(UHTTP::vRewriteRule, 0)
 
          UHTTP::vRewriteRule = U_NEW(UVector<UHTTP::RewriteRule*>(n));
 
          for (int32_t i = 0; i < (int32_t)n; i += 2)
             {
-            rule = U_NEW(UHTTP::RewriteRule(tmp[i], tmp[i+1]));
+            UHTTP::RewriteRule* rule = U_NEW(UHTTP::RewriteRule(tmp[i], tmp[i+1]));
 
             UHTTP::vRewriteRule->push_back(rule);
             }
@@ -159,7 +153,6 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       UHTTP::cgi_timeout                     = cfg.readLong(U_CONSTANT_TO_PARAM("CGI_TIMEOUT"));
       UHTTP::limit_request_body              = cfg.readLong(U_CONSTANT_TO_PARAM("LIMIT_REQUEST_BODY"), U_STRING_MAX_SIZE);
       UHTTP::request_read_timeout            = cfg.readLong(U_CONSTANT_TO_PARAM("REQUEST_READ_TIMEOUT"));
-      UHTTP::min_size_for_sendfile           = cfg.readLong(U_CONSTANT_TO_PARAM("MIN_SIZE_FOR_SENDFILE"));
       UHTTP::enable_caching_by_proxy_servers = cfg.readBoolean(U_CONSTANT_TO_PARAM("ENABLE_CACHING_BY_PROXY_SERVERS"));
 
       U_INTERNAL_DUMP("UHTTP::limit_request_body = %u", UHTTP::limit_request_body)
@@ -229,8 +222,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
             if (x.equal(U_CONSTANT_TO_PARAM("*"))) UHTTP::uri_strict_transport_security_mask = (UString*)1L;
             else
                {
-               U_SRV_LOG("SSL: Sorry, the directive URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK "
-                         "for ssl server must have the '*' value, instead of %.*S", U_STRING_TO_TRACE(x));
+               U_SRV_LOG("SSL: Sorry, the directive URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK for ssl server must have the '*' value, instead of %V", x.rep);
                }
             }
          else
@@ -387,6 +379,8 @@ int UHttpPlugIn::handlerInit()
 {
    U_TRACE(0, "UHttpPlugIn::handlerInit()")
 
+   u_init_http_method_list();
+
 #ifdef USE_LIBSSL
    if (UServer_Base::bssl)
       {
@@ -395,8 +389,7 @@ int UHttpPlugIn::handlerInit()
       if (U_SYSCALL_NO_PARAM(SSLeay) < OPENSSL_VERSION_NUMBER)
          {
          U_ERROR("SSL: this version of mod_http was compiled against a newer library (%s, "
-                 "version currently loaded is %s) - may result in undefined or erroneous behavior",
-                 OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
+                 "version currently loaded is %s) - may result in undefined or erroneous behavior", OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
          }
 
 /*
@@ -425,8 +418,6 @@ int UHttpPlugIn::handlerInit()
          }
 #  endif
 
-      UHTTP::min_size_for_sendfile = U_NOT_FOUND;
-
       U_SRV_LOG("SSL: server use configuration model: %s, protocol list: %s",
                   ((USSLSocket*)UServer_Base::socket)->getConfigurationModel(), ((USSLSocket*)UServer_Base::socket)->getProtocolList());
 
@@ -437,8 +428,6 @@ int UHttpPlugIn::handlerInit()
 #  endif
       }
 #endif
-
-   U_INTERNAL_DUMP("UServer_Base::bssl = %b min_size_for_sendfile = %u", UServer_Base::bssl, UHTTP::min_size_for_sendfile)
 
    UHTTP::ctor(); // init HTTP context
 

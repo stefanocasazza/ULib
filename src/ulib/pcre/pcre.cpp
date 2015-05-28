@@ -14,90 +14,91 @@
 #include <ulib/pcre/pcre.h>
 #include <ulib/utility/string_ext.h>
 
-/* see: http://www.codeproject.com/Articles/638287/Short-but-very-usueful-regex-lookbehind-lazy-group
-
-Short but very usueful regex lookbehind, lazy, group, and backreference - By morzel, 19 Aug 2013
-
-Recently, I wanted to extract calls to external system from log files and do some LINQ to XML processing
-on obtained data. Here a sample log line (simplified, real log was way more complicated but it doesn't matter for this post):
-
-Call:<getName seqNo="56789"><id>123</id></getName> Result:<getName seqNo="56789">John Smith</getName>
-
-I was interested in XML data of the call:
-
-<getName seqNo="56789">
-  <id>123</id>
-</getName>
-
-When it comes to log, some things were certain:
- call XML will be logged after Call: text on the beginning of line
- call root element name will contain only alphanumerical chars or underscore
- there will be no line brakes in call data
- call root element name may also appear in the Result section
-
-Getting to the proper information was quite easy thanks to Regex class:
-
-Regex regex = new Regex(@"(?<=^Call:)<(\w+).*?</\1>");
-string call = regex.Match(logLine).Value;
-
-This short regular expressions has a couple of interesting parts. It may not be perfect but proved really
-helpful in log analysis. If this regex is not entirely clear to you - read on, you will need to use something similar sooner or later. 
-
-Here the same regex with comments (RegexOptions.IgnorePatternWhitespace is required to process expression commented this way):
-
-string pattern = @"(?<=^Call:) # Positive lookbehind for call marker
-                   <(\w+)      # Capturing group for opening tag name
-                   .*?         # Lazy wildcard (everything in between)
-                   </\1>       # Backreference to opening tag name";   
-Regex regex = new Regex(pattern, RegexOptions.IgnorePatternWhitespace);
-string call = regex.Match(logLine).Value;
-
-Positive lookbehind
-
-(?<=Call:) is a lookaround or more precisely positive lookbehind. It's a zero-width assertion that lets us check whether some
-text is preceded by another text. Here Call: is the preceding text we are looking for. (?<=something) denotes positive lookbehind.
-There is also negative lookbehind expressed by (?<!something).  With negative lookbehind we can match text that doesn't have particular
-string before it. Lookaround checks fragment of the text but doesn't became part of the match value. So the result of this:
-
-Regex.Match("X123", @"(?<=X)\d*").Value
-
-Will be "123" rather than "X123".
-
-Note: In some cases (like in our log examination example) instead of using positive lookaround we may use non-capturing group...
-
-Capturing group
-
-<(\w+) will match less-than sign followed by one or more characters from \w class (letters, digits or underscores). \w+ part is
-surrounded with parenthesis to create a group containing XML root name (getName for sample log line). We later use this group to
-find closing tag with the use of backreference. (\w+) is capturing group, which means that results of this group existence are
-added to Groups collection of Match object. If you want to put part of the expression into a group but you don't want to push
-results into Groups collection you may use non-capturing group by adding a question mark and colon after opening parenthesis,
-like this: (?:something)
-
-Lazy wildcard
-
-.*? matches all characters except newline (because we are not using RegexOptions.Singleline) in lazy (or non-greedy) mode thanks
-to question mark after asterisk. By default * quantifier is greedy, which means that regex engine will try to match as much text
-as possible. In our case, default mode will result in too long text being matched:
-
-<getName seqNo="56789"><id>123</id></getName> Result:<getName seqNo="56789">John Smith</getName>
-
-Backreference
-
-</\1> matches XML close tag where element's name is provided with \1 backreference. Remember the (\w+) group? This group has number
-1 and by using \1 syntax we are referencing the text matched by this group. So for our sample log, </\1> gives us </getName>.
-If regex is complex it may be a good idea to ditch numbered references and use named references instead. You can name a group by
-<name> or name syntax and reference it by using k<name> or kname. So your expression could look like this:
-
-@"(?<=^Call:)<(?<tag>\w+).*?</\k<tag>>"
-
-or like this:
-
-@"(?<=^Call:)<(?'tag'\w+).*?</\k'tag'>"
-
-The latter version is better for our purpose. Using < > signs while matching XML is confusing. In this case regex engine will
-do just fine with < > version but keep in mind that source code is written for humans
-*/
+/**
+ * see: http://www.codeproject.com/Articles/638287/Short-but-very-usueful-regex-lookbehind-lazy-group
+ * 
+ * Short but very usueful regex lookbehind, lazy, group, and backreference - By morzel, 19 Aug 2013
+ * 
+ * Recently, I wanted to extract calls to external system from log files and do some LINQ to XML processing
+ * on obtained data. Here a sample log line (simplified, real log was way more complicated but it doesn't matter for this post):
+ * 
+ * Call:<getName seqNo="56789"><id>123</id></getName> Result:<getName seqNo="56789">John Smith</getName>
+ * 
+ * I was interested in XML data of the call:
+ * 
+ * <getName seqNo="56789">
+ *   <id>123</id>
+ * </getName>
+ * 
+ * When it comes to log, some things were certain:
+ *  call XML will be logged after Call: text on the beginning of line
+ *  call root element name will contain only alphanumerical chars or underscore
+ *  there will be no line brakes in call data
+ *  call root element name may also appear in the Result section
+ * 
+ * Getting to the proper information was quite easy thanks to Regex class:
+ * 
+ * Regex regex = new Regex(@"(?<=^Call:)<(\w+).*?</\1>");
+ * string call = regex.Match(logLine).Value;
+ * 
+ * This short regular expressions has a couple of interesting parts. It may not be perfect but proved really
+ * helpful in log analysis. If this regex is not entirely clear to you - read on, you will need to use something similar sooner or later. 
+ * 
+ * Here the same regex with comments (RegexOptions.IgnorePatternWhitespace is required to process expression commented this way):
+ * 
+ * string pattern = @"(?<=^Call:) # Positive lookbehind for call marker
+ *                    <(\w+)      # Capturing group for opening tag name
+ *                    .*?         # Lazy wildcard (everything in between)
+ *                    </\1>       # Backreference to opening tag name";   
+ * Regex regex = new Regex(pattern, RegexOptions.IgnorePatternWhitespace);
+ * string call = regex.Match(logLine).Value;
+ * 
+ * Positive lookbehind
+ * 
+ * (?<=Call:) is a lookaround or more precisely positive lookbehind. It's a zero-width assertion that lets us check whether some
+ * text is preceded by another text. Here Call: is the preceding text we are looking for. (?<=something) denotes positive lookbehind.
+ * There is also negative lookbehind expressed by (?<!something).  With negative lookbehind we can match text that doesn't have particular
+ * string before it. Lookaround checks fragment of the text but doesn't became part of the match value. So the result of this:
+ * 
+ * Regex.Match("X123", @"(?<=X)\d*").Value
+ * 
+ * Will be "123" rather than "X123".
+ * 
+ * Note: In some cases (like in our log examination example) instead of using positive lookaround we may use non-capturing group...
+ * 
+ * Capturing group
+ * 
+ * <(\w+) will match less-than sign followed by one or more characters from \w class (letters, digits or underscores). \w+ part is
+ * surrounded with parenthesis to create a group containing XML root name (getName for sample log line). We later use this group to
+ * find closing tag with the use of backreference. (\w+) is capturing group, which means that results of this group existence are
+ * added to Groups collection of Match object. If you want to put part of the expression into a group but you don't want to push
+ * results into Groups collection you may use non-capturing group by adding a question mark and colon after opening parenthesis,
+ * like this: (?:something)
+ * 
+ * Lazy wildcard
+ * 
+ * .*? matches all characters except newline (because we are not using RegexOptions.Singleline) in lazy (or non-greedy) mode thanks
+ * to question mark after asterisk. By default * quantifier is greedy, which means that regex engine will try to match as much text
+ * as possible. In our case, default mode will result in too long text being matched:
+ * 
+ * <getName seqNo="56789"><id>123</id></getName> Result:<getName seqNo="56789">John Smith</getName>
+ * 
+ * Backreference
+ * 
+ * </\1> matches XML close tag where element's name is provided with \1 backreference. Remember the (\w+) group? This group has number
+ * 1 and by using \1 syntax we are referencing the text matched by this group. So for our sample log, </\1> gives us </getName>.
+ * If regex is complex it may be a good idea to ditch numbered references and use named references instead. You can name a group by
+ * <name> or name syntax and reference it by using k<name> or kname. So your expression could look like this:
+ * 
+ * @"(?<=^Call:)<(?<tag>\w+).*?</\k<tag>>"
+ * 
+ * or like this:
+ * 
+ * @"(?<=^Call:)<(?'tag'\w+).*?</\k'tag'>"
+ * 
+ * The latter version is better for our purpose. Using < > signs while matching XML is confusing. In this case regex engine will
+ * do just fine with < > version but keep in mind that source code is written for humans
+ */
 
 UPCRE* UPCRE::dollar;
 UPCRE* UPCRE::xml_mask;
@@ -186,14 +187,14 @@ UPCRE::UPCRE()
 
 UPCRE::UPCRE(const UString& expression, int flags)
 {
-   U_TRACE_REGISTER_OBJECT(0, UPCRE, "%.*S,%u", U_STRING_TO_TRACE(expression), flags)
+   U_TRACE_REGISTER_OBJECT(0, UPCRE, "%V,%u", expression.rep, flags)
 
    set(expression, flags);
 }
 
 UPCRE::UPCRE(const UString& expression, const char* flags)
 {
-   U_TRACE_REGISTER_OBJECT(0, UPCRE, "%.*S,%S", U_STRING_TO_TRACE(expression), flags)
+   U_TRACE_REGISTER_OBJECT(0, UPCRE, "%V,%S", expression.rep, flags)
 
    set(expression, flags);
 }
@@ -207,7 +208,7 @@ UPCRE::~UPCRE()
 
 void UPCRE::set(const UString& expression, int flags)
 {
-   U_TRACE(0, "UPCRE::set(%.*S,%d)", U_STRING_TO_TRACE(expression), flags)
+   U_TRACE(0, "UPCRE::set(%V,%d)", expression.rep, flags)
 
    U_INTERNAL_ASSERT(expression)
 
@@ -222,7 +223,7 @@ void UPCRE::set(const UString& expression, int flags)
 
 void UPCRE::set(const UString& expression, const char* flags)
 {
-   U_TRACE(0, "UPCRE::set(%.*S,%S)", U_STRING_TO_TRACE(expression), flags)
+   U_TRACE(0, "UPCRE::set(%V,%S)", expression.rep, flags)
 
    U_INTERNAL_ASSERT(expression)
 
@@ -439,7 +440,7 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
          resultset->push_back(str);
 
-         U_INTERNAL_DUMP("resultset[%d] = (%u) %.*S", i-1, str.size(), U_STRING_TO_TRACE(str))
+         U_INTERNAL_DUMP("resultset[%d] = (%u) %V", i-1, str.size(), str.rep)
 
          U_DUMP("getMatchStart(%d) = %u getMatchEnd(%d) = %u getMatchLength(%d) = %u",
                   i-1, getMatchStart(i-1), i-1, getMatchEnd(i-1), i-1, getMatchLength(i-1))
@@ -456,7 +457,7 @@ end:
 
 uint32_t UPCRE::split(UVector<UString>& vec, const UString& piece, int limit, int start_offset, int end_offset)
 {
-   U_TRACE(0, "UPCRE::split(%p,%.*S,%d,%d,%d)", &vec, U_STRING_TO_TRACE(piece), limit, start_offset, end_offset)
+   U_TRACE(0, "UPCRE::split(%p,%V,%d,%d,%d)", &vec, piece.rep, limit, start_offset, end_offset)
 
    int num_pieces, piece_start, piece_end;
    uint32_t r, pos, sz, n = vec.size(), length = piece.size();
@@ -561,7 +562,7 @@ end:
 
 UString UPCRE::replace(const UString& piece, const UString& with)
 {
-   U_TRACE(0, "UPCRE::replace(%.*S,%.*S)", U_STRING_TO_TRACE(piece), U_STRING_TO_TRACE(with))
+   U_TRACE(0, "UPCRE::replace(%V,%V)", piece.rep, with.rep)
 
    bool bReplaced = false;
    int iReplaced = -1, len;
@@ -625,7 +626,7 @@ end:
 
 U_NO_EXPORT UString UPCRE::replaceVars(const UString& piece)
 {
-   U_TRACE(0, "UPCRE::replaceVars(%.*S)", U_STRING_TO_TRACE(piece))
+   U_TRACE(0, "UPCRE::replaceVars(%V)", piece.rep)
 
    if (dollar == 0)
       {
@@ -636,7 +637,7 @@ U_NO_EXPORT UString UPCRE::replaceVars(const UString& piece)
 
    UPCRE subsplit;
    UVector<UString> splitted;
-   uint32_t size, pos, iBracketIndex, last = resultset->size();
+   uint32_t pos, last = resultset->size();
    UString cstr(U_CAPACITY), first, replaced, sBracketContent, with = piece;
 
    while (dollar->search(with, 0, 0, true))
@@ -645,19 +646,19 @@ U_NO_EXPORT UString UPCRE::replaceVars(const UString& piece)
 
       first = dollar->resultset->at(0);
 
-      iBracketIndex = first.strtol();
+      uint32_t iBracketIndex = first.strtol();
 
       // NB: we need this check...
 
       sBracketContent = resultset->at(iBracketIndex < last ? iBracketIndex : last-1);
 
-      U_INTERNAL_DUMP("sBracket[%d] = %.*S", iBracketIndex, U_STRING_TO_TRACE(sBracketContent))
+      U_INTERNAL_DUMP("sBracket[%d] = %V", iBracketIndex, sBracketContent.rep)
 
       // now we can split the stuff
 
       subsplit.clear();
 
-      cstr.snprintf("(\\${?%.*s}?)", U_STRING_TO_TRACE(first));
+      cstr.snprintf("(\\${?%v}?)", first.rep);
 
       subsplit.set(cstr, PCRE_FOR_REPLACE);
 
@@ -666,7 +667,7 @@ U_NO_EXPORT UString UPCRE::replaceVars(const UString& piece)
       replaced.clear();
       splitted.clear();
 
-      size = subsplit.split(splitted, with);
+      uint32_t size = subsplit.split(splitted, with);
 
       for (pos = 0; pos < size; ++pos)
          {
@@ -686,7 +687,7 @@ U_NO_EXPORT UString UPCRE::replaceVars(const UString& piece)
 
 bool UPCRE::validateUsername(const UString& username)
 {
-   U_TRACE(0, "UPCRE::validateUsername(%.*S)", U_STRING_TO_TRACE(username))
+   U_TRACE(0, "UPCRE::validateUsername(%V)", username.rep)
 
    if (username_mask == 0)
       {
@@ -706,7 +707,7 @@ bool UPCRE::validateUsername(const UString& username)
 
 uint32_t UPCRE::getTag(UVector<UString>& vec, const UString& xml, const char* attr, const char* value, const char* tag)
 {
-   U_TRACE(0, "UPCRE::getTag(%p,%.*S,%S,%S,%S)", &vec, U_STRING_TO_TRACE(xml), attr, value, tag)
+   U_TRACE(0, "UPCRE::getTag(%p,%V,%S,%S,%S)", &vec, xml.rep, attr, value, tag)
 
    if (xml_mask == 0)
       {
@@ -746,7 +747,7 @@ scheme and authority could also be optional in the presence of a base url.
 
 bool UPCRE::isValidURL(const UString& url)
 {
-   U_TRACE(0, "UPCRE::isValidURL(%.*S)", U_STRING_TO_TRACE(url))
+   U_TRACE(0, "UPCRE::isValidURL(%V)", url.rep)
 
    if (url_mask == 0)
       {

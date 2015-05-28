@@ -262,7 +262,7 @@ public:
 
    explicit USqliteStatementBindResult(UStringRep& s) : USqlStatementBindResult(s)
       {
-      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%.*S", U_STRING_TO_TRACE(s))
+      U_TRACE_REGISTER_OBJECT(0, USqliteStatementBindResult, "%V", &s)
 
       type = STRING_VALUE;
       }
@@ -338,7 +338,7 @@ public:
 
    UOrmDriverSqlite()
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriverSqlite, "")
+      U_TRACE_REGISTER_OBJECT(0, UOrmDriverSqlite, "")
 
       str_allocate();
 
@@ -349,7 +349,7 @@ public:
 
    UOrmDriverSqlite(const UString& name_drv) : UOrmDriver(name_drv)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriverSqlite, "%.*S", U_STRING_TO_TRACE(name_drv))
+      U_TRACE_REGISTER_OBJECT(0, UOrmDriverSqlite, "%V", name_drv.rep)
 
       encoding_UTF16 = false;
       }

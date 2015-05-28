@@ -13,5 +13,5 @@ else if (opval == "-") result = val1 - val2;
 else if (opval == "*") result = val1 * val2;
 else if (opval == "/") result = val1 / val2;
 
-if (opval) USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), result);
+if (opval) USP_PRINTF("<hr>\n%v %v %v = %g", arg1.rep, opval.rep, arg2.rep, result);
 -->

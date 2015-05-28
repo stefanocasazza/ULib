@@ -63,7 +63,7 @@ public:
 
    bool parse(const UString& data)
       {
-      U_TRACE(0, "UXMLParser::parse(%.*S)", U_STRING_TO_TRACE(data))
+      U_TRACE(0, "UXMLParser::parse(%V)", data.rep)
 
       U_INTERNAL_ASSERT_POINTER(m_parser)
 

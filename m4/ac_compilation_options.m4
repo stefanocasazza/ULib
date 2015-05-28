@@ -163,7 +163,7 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 
 	AC_MSG_CHECKING(if you want to enable cache request support)
 	AC_ARG_ENABLE(HCRS,
-				[  --enable-HCRS             enable Cache Request Support [[default=yes]]])
+				[  --enable-HCRS             enable Cache Request Support [[default=no]]])
 	if test -z "$enable_HCRS"; then
 		enable_HCRS="yes"
 	fi

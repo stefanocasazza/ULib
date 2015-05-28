@@ -37,7 +37,7 @@ uint32_t sz = strings.size();
       {
       item = strings[i];
 
-      USP_PRINTF("<tr><td>%.*s</td><td><a href=\"?remove=%u\">remove</a></td></tr>", U_STRING_TO_TRACE(item), i);
+      USP_PRINTF("<tr><td>%v</td><td><a href=\"?remove=%u\">remove</a></td></tr>", item.rep, i);
       }
    -->
 

@@ -55,15 +55,15 @@ bool UDialog::run(const char* title, const char* format, ...)
 
    if (xdialog)
       {
-      if (title) tmp.snprintf("%.*s --stdout --title \"%s\" ", U_STRING_TO_TRACE(options), title);
-      else       tmp.snprintf("%.*s --stdout ",                U_STRING_TO_TRACE(options));
+      if (title) tmp.snprintf("%v --stdout --title \"%s\" ", options.rep, title);
+      else       tmp.snprintf("%v --stdout ",                options.rep);
       }
    else
       {
       UProcess::pipe(STDOUT_FILENO);
 
-      if (title) tmp.snprintf("%.*s --output-fd %d --title \"%s\" ", U_STRING_TO_TRACE(options), UProcess::filedes[3], title);
-      else       tmp.snprintf("%.*s --output-fd %d ",                U_STRING_TO_TRACE(options), UProcess::filedes[3]);
+      if (title) tmp.snprintf("%v --output-fd %d --title \"%s\" ", options.rep, UProcess::filedes[3], title);
+      else       tmp.snprintf("%v --output-fd %d ",                options.rep, UProcess::filedes[3]);
       }
 
    UString cmd = command + tmp;
@@ -102,9 +102,9 @@ bool UDialog::run(const char* title, const char* format, ...)
 
 bool UDialog::fselect(UString& filepath, const char* title)
 {
-   U_TRACE(0, "UDialog::fselect(%.*S,%S)",  U_STRING_TO_TRACE(filepath), title)
+   U_TRACE(0, "UDialog::fselect(%V,%S)",  filepath.rep, title)
 
-   if (run(title, "--fselect \"%.*s\" %d %d", U_STRING_TO_TRACE(filepath), height, width))
+   if (run(title, "--fselect \"%v\" %d %d", filepath.rep, height, width))
       {
       filepath = output.copy();
 
@@ -116,7 +116,7 @@ bool UDialog::fselect(UString& filepath, const char* title)
 
 bool UDialog::passwordbox(const char* text, UString& init, const char* title)
 {
-   U_TRACE(0, "UDialog::passwordbox(%S,%.*S,%S)", text, U_STRING_TO_TRACE(init), title)
+   U_TRACE(0, "UDialog::passwordbox(%S,%V,%S)", text, init.rep, title)
 
    if (run(title, "--passwordbox \"%s\" %d %d", text, height, width))
       {
@@ -240,7 +240,7 @@ bool UDialog::menu(const char* text, UVector<UString>& list, UString& choice, in
          {
          item = list[i];
 
-         fmt.snprintf(" \"%u\" \"%.*s\"", i+1, U_STRING_TO_TRACE(item));
+         fmt.snprintf(" \"%u\" \"%v\"", i+1, item.rep);
 
          argument += fmt;
          }
@@ -259,9 +259,9 @@ bool UDialog::menu(const char* text, UVector<UString>& list, UString& choice, in
 
 bool UDialog::inputbox(const char* text, UString& init, const char* title)
 {
-   U_TRACE(0, "UDialog::inputbox(%S,%.*S,%S)", text, U_STRING_TO_TRACE(init), title)
+   U_TRACE(0, "UDialog::inputbox(%S,%V,%S)", text, init.rep, title)
 
-   if (run(title, "--inputbox \"%s\" %d %d \"%.*s\"", text, height, width, U_STRING_TO_TRACE(init)))
+   if (run(title, "--inputbox \"%s\" %d %d \"%v\"", text, height, width, init.rep))
       {
       init = output.copy();
 
@@ -295,7 +295,7 @@ bool UDialog::inputsbox(int n, const char* text, const char* labels[], UVector<U
 
          for (i = 0; labels[i]; ++i)
             {
-            item.snprintf(" \"%s\" \"%.*s\"", labels[i], U_STRING_TO_TRACE(init[i]));
+            item.snprintf(" \"%s\" \"%v\"", labels[i], init[i].rep);
 
             argument += item;
             }
@@ -344,7 +344,7 @@ bool UDialog::combobox(const char* text, UVector<UString>& list, UString& choice
          {
          item = list[i];
 
-         fmt.snprintf(" \"%.*s\"", U_STRING_TO_TRACE(item));
+         fmt.snprintf(" \"%v\"", item.rep);
 
          argument += fmt;
          }

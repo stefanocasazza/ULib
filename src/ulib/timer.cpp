@@ -84,7 +84,7 @@ inline void UTimer::callHandlerTime()
 
    U_INTERNAL_DUMP("u_now = %#19D (next alarm expire) = %#19D", u_now->tv_sec, (next ? next->alarm->expire() : u_now->tv_sec))
 
-   int result = alarm->handlerTime(); // chiama il gestore dell'evento scadenza temporale
+   int result = alarm->handlerTime(); // call the manager of event time expired
 
    U_INTERNAL_DUMP("result = %d", result)
 
@@ -140,7 +140,7 @@ void UTimer::setTimer(bool bsignal)
 
       if (expired)
          {
-         *ptr = item->next; // toglie il nodo scaduto dalla lista...
+         *ptr = item->next; // remove the node expired from list...
 
          item->callHandlerTime();
 
@@ -214,11 +214,11 @@ void UTimer::erase(UEventTime* a, bool flag_reuse, bool set_timer)
       {
       if (item->alarm == a)
          {
-         *ptr = item->next; // lo si toglie dalla lista scadenze...
+         *ptr = item->next; // remove the node from list of item expired...
 
          U_ASSERT(invariant())
 
-         // e lo si mette nella lista degli item da riutilizzare...
+         // and we put it into the list of item to reuse...
 
          if (flag_reuse)
             {

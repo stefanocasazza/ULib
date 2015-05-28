@@ -30,7 +30,7 @@ UClient_Base* USCGIPlugIn::connection;
 
 USCGIPlugIn::USCGIPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, USCGIPlugIn, "")
+   U_TRACE_REGISTER_OBJECT(0, USCGIPlugIn, "")
 }
 
 USCGIPlugIn::~USCGIPlugIn()
@@ -99,7 +99,7 @@ int USCGIPlugIn::handlerInit()
 
       if (connection->connect())
          {
-         U_SRV_LOG("connection to the scgi-backend %.*S accepted", U_STRING_TO_TRACE(connection->host_port));
+         U_SRV_LOG("connection to the scgi-backend %V accepted", connection->host_port.rep);
 
          (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("SCGI=1\n"));
 
@@ -174,7 +174,7 @@ int USCGIPlugIn::handlerRequest()
 
       UString request(10U + n);
 
-      request.snprintf("%u:%.*s,", environment.size(), U_STRING_TO_TRACE(environment));
+      request.snprintf("%u:%v,", environment.size(), environment.rep);
 
       (void) request.append(*UClientImage_Base::body);
 

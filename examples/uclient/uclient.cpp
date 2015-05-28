@@ -1,6 +1,7 @@
 // uclient.cpp
 
 #include <ulib/file_config.h>
+#include <ulib/mime/entity.h>
 #include <ulib/net/client/http.h>
 #include <ulib/ssl/certificate.h>
 #include <ulib/utility/dir_walk.h>
@@ -164,25 +165,23 @@ loop: if (upload)
             }
 
          UFile file;
-         char mask[100U];
          uint32_t i, n, pos;
          UVector<UString> vec(64);
-         UString req, name, location(U_CAPACITY);
-
-         uint32_t mask_len = u__snprintf(mask, sizeof(mask), "%.*s.*", U_STRING_TO_TRACE(client->UClient_Base::host_port));
+         UString req, name, location(U_CAPACITY), mask(100U);
 
          to_sleep.setSecond(to_sleep.getSecond() * 10L);
 
-         U_MESSAGE("monitoring directory %.*S every %u sec - file mask: %.*S",
-                        U_STRING_TO_TRACE(*UString::str_CLIENT_QUEUE_DIR), to_sleep.getSecond(), mask_len, mask);
+         mask.snprintf("%v.*", client->UClient_Base::host_port.rep);
+
+         U_MESSAGE("monitoring directory %V every %u sec - file mask: %V", UString::str_CLIENT_QUEUE_DIR->rep, to_sleep.getSecond(), mask.rep);
 
 #     ifdef USE_LIBSSL
          client->UClient_Base::setActive(false);
 #     endif
 
-         UServer_Base::timeoutMS = client->UClient_Base::timeoutMS;
+         UDirWalk dirwalk(UString::str_CLIENT_QUEUE_DIR, mask);
 
-         UDirWalk dirwalk(*UString::str_CLIENT_QUEUE_DIR, mask, mask_len);
+         UServer_Base::timeoutMS = client->UClient_Base::timeoutMS;
 
          while (true)
             {

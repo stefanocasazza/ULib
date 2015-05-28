@@ -31,7 +31,7 @@ UPKCS7::~UPKCS7()
 
 PKCS7* UPKCS7::readPKCS7(const UString& x, const char* format)
 {
-   U_TRACE(1, "UPKCS7::readPKCS7(%.*S,%S)", U_STRING_TO_TRACE(x), format)
+   U_TRACE(1, "UPKCS7::readPKCS7(%V,%S)", x.rep, format)
 
    BIO* in;
    UString tmp   = x;
@@ -46,13 +46,16 @@ PKCS7* UPKCS7::readPKCS7(const UString& x, const char* format)
 
       UString buffer(length);
 
-      if (UBase64::decode(x.data(), length, buffer) == false) goto next;
+      UBase64::decode(x.data(), length, buffer);
 
-      tmp    = buffer;
-      format = "DER";
+      if (buffer &&
+          u_base64_errors == 0)
+         {
+         tmp    = buffer;
+         format = "DER";
+         }
       }
 
-next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
    _pkcs7 = (PKCS7*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_PKCS7, "%p,%p,%p,%p", in, 0, 0, 0)
@@ -91,15 +94,14 @@ UString UPKCS7::getContent(bool* valid_content) const
       {
       if (valid_content) *valid_content = true;
 
-      /* We now have to 'read' from p7b to calculate digests etc. */
+      // We now have to 'read' from p7b to calculate digests etc...
 
-      int i;
       char buf[4096];
       BIO* out = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 
       while (true)
          {
-         i = BIO_read(p7b, buf, sizeof(buf));
+         int i = BIO_read(p7b, buf, sizeof(buf));
 
          if (i <= 0) break;
 
@@ -116,7 +118,7 @@ UString UPKCS7::getContent(bool* valid_content) const
 
    if (valid_content) *valid_content = false;
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 UString UPKCS7::getEncoded(const char* format) const
@@ -160,7 +162,7 @@ UString UPKCS7::getEncoded(const char* format) const
       U_RETURN_STRING(encoding);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 bool UPKCS7::verify(int flags) const
@@ -223,13 +225,12 @@ unsigned UPKCS7::getSignerCertificates(UVector<UCertificate*>& vec, int flags) c
 
    if (signers)
       {
-      X509* x;
       unsigned l = vec.size();
       int n = U_SYSCALL(sk_X509_num, "%p", signers);
 
       for (int i = 0; i < n; ++i)
          {
-         x = sk_X509_value(signers, i);
+         X509* x = sk_X509_value(signers, i);
 
          vec.push_back(U_NEW(UCertificate(x)));
          }
@@ -258,8 +259,7 @@ flags    is an optional set of flags (PKCS7_TEXT, PKCS7_NOCERTS, PKCS7_DETACHED,
 
 PKCS7* UPKCS7::sign(const UString& data, const UString& signcert, const UString& pkey, const UString& passwd, const UString& certs, int flags)
 {
-   U_TRACE(1, "UPKCS7::sign(%.*S,%.*S,%.*S,%.*S,%.*S,%d)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(signcert),
-                                                           U_STRING_TO_TRACE(pkey), U_STRING_TO_TRACE(passwd), U_STRING_TO_TRACE(certs), flags)
+   U_TRACE(1, "UPKCS7::sign(%V,%V,%V,%V,%V,%d)", data.rep, signcert.rep, pkey.rep, passwd.rep, certs.rep, flags)
 
    U_INTERNAL_ASSERT(passwd.isNullTerminated())
 

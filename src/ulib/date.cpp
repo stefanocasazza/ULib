@@ -279,9 +279,7 @@ UString UTimeDate::strftime(const char* fmt)
    u_strftime_tm.tm_mon  = _month - 1;
    u_strftime_tm.tm_year = _year  - 1900;
 
-   uint32_t length = u_strftime1(result.data(), result.capacity(), fmt);
-
-   result.size_adjust(length);
+   result.rep->_length = u_strftime1(result.data(), result.capacity(), fmt);
 
    U_RETURN_STRING(result);
 }
@@ -292,9 +290,7 @@ UString UTimeDate::strftime(const char* fmt, time_t t, bool blocale)
 
    UString res(100U);
 
-   uint32_t length = u_strftime2(res.data(), res.capacity(), fmt, t + (blocale ? u_now_adjust : 0));
-
-   res.size_adjust(length);
+   res.rep->_length = u_strftime2(res.data(), res.capacity(), fmt, t + (blocale ? u_now_adjust : 0));
 
 #ifdef DEBUG
    char dbg[4096];

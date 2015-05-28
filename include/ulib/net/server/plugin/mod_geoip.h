@@ -23,6 +23,9 @@
 class U_EXPORT UGeoIPPlugIn : public UServerPlugIn {
 public:
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORI
 
             UGeoIPPlugIn();

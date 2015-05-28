@@ -39,7 +39,7 @@ URDBServer::~URDBServer()
 
 bool URDBServer::open(const UString& pathdb, uint32_t log_size)
 {
-   U_TRACE(0, "URDBServer::open(%.*S,%u)", U_STRING_TO_TRACE(pathdb), log_size)
+   U_TRACE(0, "URDBServer::open(%V,%u)", pathdb.rep, log_size)
 
    URDBClientImage::rdb = rdb;
 

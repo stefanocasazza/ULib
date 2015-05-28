@@ -400,7 +400,7 @@ void UHTTP2::sendError(int err)
       *(uint32_t*)(ptr+13) = htonl(err);
       }
 
-   if (USocketExt::write(UClientImage_Base::psocket, buffer, HTTP2_FRAME_HEADER_SIZE + 4, UServer_Base::timeoutMS) != HTTP2_FRAME_HEADER_SIZE + 4)
+   if (USocketExt::write(UServer_Base::csocket, buffer, HTTP2_FRAME_HEADER_SIZE + 4, UServer_Base::timeoutMS) != HTTP2_FRAME_HEADER_SIZE + 4)
       {
       U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
       }
@@ -410,9 +410,9 @@ void UHTTP2::setConnection()
 {
    U_TRACE(0, "UHTTP2::setConnection()")
 
-   if (pConnection != UClientImage_Base::pthis->connection)
+   if (pConnection != UServer_Base::pClientIndex->connection)
       {
-      pConnection    = (Connection*) UClientImage_Base::pthis->connection;
+      pConnection    = (Connection*) UServer_Base::pClientIndex->connection;
       pConnectionEnd = (char*)pConnection + sizeof(Connection);
 
       pConnection->state         = CONN_STATE_OPEN;
@@ -456,7 +456,7 @@ void UHTTP2::manageUpgrade()
 
    U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
 
-   if (USocketExt::write(UClientImage_Base::psocket, U_CONSTANT_TO_PARAM(HTTP2_CONNECTION_UPGRADE), UServer_Base::timeoutMS) ==
+   if (USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_CONNECTION_UPGRADE), UServer_Base::timeoutMS) ==
                                                      U_CONSTANT_SIZE(    HTTP2_CONNECTION_UPGRADE) &&
        (U_http2_settings_len || U_http_method_type == HTTP_OPTIONS))
       {
@@ -466,15 +466,15 @@ void UHTTP2::manageUpgrade()
 
       UClientImage_Base::request->clear();
 
-      if (sz > u_http_info.endHeader) start = u_http_info.endHeader;
+      if (sz > U_http_info.endHeader) start = U_http_info.endHeader;
       else
          {
          // we wait for HTTP2_CONNECTION_PREFACE...
 
          UClientImage_Base::rbuffer->setEmpty();
 
-         if (UNotifier::waitForRead(UClientImage_Base::psocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
-             USocketExt::read(UClientImage_Base::psocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, 0) == false)
+         if (UNotifier::waitForRead(UServer_Base::csocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
+             USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, 0) == false)
             {
             goto error;
             }
@@ -490,7 +490,9 @@ void UHTTP2::manageUpgrade()
             {
             UString buffer(U_CAPACITY);
 
-            if (UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer) == false ||
+            UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer);
+
+            if (buffer.empty() ||
                 updateSetting(U_STRING_TO_PARAM(buffer)) == false)
                {
                goto error;
@@ -590,7 +592,7 @@ void UHTTP2::readFrame()
    uint32_t sz = UClientImage_Base::rbuffer->size() - UClientImage_Base::rstart;
 
    if (sz >= HTTP2_FRAME_HEADER_SIZE ||
-       USocketExt::read(UClientImage_Base::psocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, UServer_Base::timeoutMS, UHTTP::request_read_timeout))
+       USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, UServer_Base::timeoutMS, UHTTP::request_read_timeout))
       {
       decodeFrame();
 
@@ -605,7 +607,7 @@ void UHTTP2::readFrame()
          U_INTERNAL_DUMP("sz = %u len = %u", sz, len)
 
          if (sz >= len ||
-             USocketExt::read(UClientImage_Base::psocket, *UClientImage_Base::rbuffer, len-sz, UServer_Base::timeoutMS, UHTTP::request_read_timeout))
+             USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, len-sz, UServer_Base::timeoutMS, UHTTP::request_read_timeout))
             {
             return;
             }
@@ -914,13 +916,13 @@ error:   nerror = COMPRESSION_ERROR;
 
                   if (sz == 0) goto error;
 
-                  u_http_info.query = (const char*) memchr((u_http_info.uri = value.data()), '?', (u_http_info.uri_len = sz));
+                  U_http_info.query = (const char*) memchr((U_http_info.uri = value.data()), '?', (U_http_info.uri_len = sz));
 
-                  if (u_http_info.query)
+                  if (U_http_info.query)
                      {
-                     u_http_info.query_len = u_http_info.uri_len - (u_http_info.query++ - u_http_info.uri);
+                     U_http_info.query_len = U_http_info.uri_len - (U_http_info.query++ - U_http_info.uri);
 
-                     u_http_info.uri_len -= u_http_info.query_len;
+                     U_http_info.uri_len -= U_http_info.query_len;
 
                      U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
                      }
@@ -969,7 +971,7 @@ next:
             }
          }
 
-      U_INTERNAL_DUMP("name = %.*S value = %.*S", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value))
+      U_INTERNAL_DUMP("name = %V value = %V", name.rep, value.rep)
       }
 
    U_INTERNAL_DUMP("U_http_method_type = %B U_http_method_num = %d", U_http_method_type, U_http_method_num)
@@ -1111,7 +1113,7 @@ bool UHTTP2::manageSetting()
 
    if (nerror != NO_ERROR) goto error;
 
-   if (USocketExt::write(UClientImage_Base::psocket, U_CONSTANT_TO_PARAM(HTTP2_SETTINGS_HOST_BIN), UServer_Base::timeoutMS) !=
+   if (USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_SETTINGS_HOST_BIN), UServer_Base::timeoutMS) !=
                                                      U_CONSTANT_SIZE(    HTTP2_SETTINGS_HOST_BIN))
       {
       U_RETURN(false);

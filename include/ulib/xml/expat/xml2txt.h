@@ -29,7 +29,7 @@ public:
 
    bool parse(const UString& data)
       {
-      U_TRACE(0, "UXml2Txt::parse(%.*S)", U_STRING_TO_TRACE(data))
+      U_TRACE(0, "UXml2Txt::parse(%V)", data.rep)
 
       tag_pos = U_NOT_FOUND;
 

@@ -2,7 +2,7 @@
 # Configuration validation subroutine script.
 #   Copyright 1992-2014 Free Software Foundation, Inc.
 
-timestamp='2014-01-01'
+timestamp='2014-09-11'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -258,7 +258,7 @@ case $basic_machine in
 	| be32 | be64 \
 	| bfin \
 	| c4x | c8051 | clipper \
-	| d10v | d30v | dlx | dsp16xx | dvp \
+	| d10v | d30v | dlx | dsp16xx \
 	| epiphany \
 	| fido | fr30 | frv \
 	| h8300 | h8500 | hppa | hppa1.[01] | hppa2.0 | hppa2.0[nw] | hppa64 \
@@ -283,8 +283,10 @@ case $basic_machine in
 	| mips64vr5900 | mips64vr5900el \
 	| mipsisa32 | mipsisa32el \
 	| mipsisa32r2 | mipsisa32r2el \
+	| mipsisa32r6 | mipsisa32r6el \
 	| mipsisa64 | mipsisa64el \
 	| mipsisa64r2 | mipsisa64r2el \
+	| mipsisa64r6 | mipsisa64r6el \
 	| mipsisa64sb1 | mipsisa64sb1el \
 	| mipsisa64sr71k | mipsisa64sr71kel \
 	| mipsr5900 | mipsr5900el \
@@ -296,11 +298,11 @@ case $basic_machine in
 	| nds32 | nds32le | nds32be \
 	| nios | nios2 | nios2eb | nios2el \
 	| ns16k | ns32k \
-	| open8 \
-	| or1k | or32 \
+	| open8 | or1k | or1knd | or32 \
 	| pdp10 | pdp11 | pj | pjl \
 	| powerpc | powerpc64 | powerpc64le | powerpcle \
 	| pyramid \
+	| riscv32 | riscv64 \
 	| rl78 | rx \
 	| score \
 	| sh | sh[1234] | sh[24]a | sh[24]aeb | sh[23]e | sh[34]eb | sheb | shbe | shle | sh[1234]le | sh3ele \
@@ -402,8 +404,10 @@ case $basic_machine in
 	| mips64vr5900-* | mips64vr5900el-* \
 	| mipsisa32-* | mipsisa32el-* \
 	| mipsisa32r2-* | mipsisa32r2el-* \
+	| mipsisa32r6-* | mipsisa32r6el-* \
 	| mipsisa64-* | mipsisa64el-* \
 	| mipsisa64r2-* | mipsisa64r2el-* \
+	| mipsisa64r6-* | mipsisa64r6el-* \
 	| mipsisa64sb1-* | mipsisa64sb1el-* \
 	| mipsisa64sr71k-* | mipsisa64sr71kel-* \
 	| mipsr5900-* | mipsr5900el-* \
@@ -415,6 +419,7 @@ case $basic_machine in
 	| nios-* | nios2-* | nios2eb-* | nios2el-* \
 	| none-* | np1-* | ns16k-* | ns32k-* \
 	| open8-* \
+	| or1k*-* \
 	| orion-* \
 	| pdp10-* | pdp11-* | pj-* | pjl-* | pn-* | power-* \
 	| powerpc-* | powerpc64-* | powerpc64le-* | powerpcle-* \
@@ -810,24 +815,6 @@ case $basic_machine in
 		basic_machine=m68k-atari
 		os=-mint
 		;;
-	mipsEE* | ee | ps2)
-		basic_machine=mips64r5900el-scei
-		case $os in
-		    -linux*)
-			;;
-		    *)
-			os=-elf
-			;;
-		esac
-		;;
-	iop)
-		basic_machine=mipsel-scei
-		os=-irx
-		;;
-	dvp)
-		basic_machine=dvp-scei
-		os=-elf
-		;;
 	mips3*-*)
 		basic_machine=`echo $basic_machine | sed -e 's/mips3/mips64/'`
 		;;
@@ -841,6 +828,10 @@ case $basic_machine in
 	morphos)
 		basic_machine=powerpc-unknown
 		os=-morphos
+		;;
+	moxiebox)
+		basic_machine=moxie-unknown
+		os=-moxiebox
 		;;
 	msdos)
 		basic_machine=i386-pc
@@ -1387,14 +1378,14 @@ case $os in
 	      | -cygwin* | -msys* | -pe* | -psos* | -moss* | -proelf* | -rtems* \
 	      | -mingw32* | -mingw64* | -linux-gnu* | -linux-android* \
 	      | -linux-newlib* | -linux-musl* | -linux-uclibc* \
-	      | -uxpv* | -beos* | -mpeix* | -udk* \
+	      | -uxpv* | -beos* | -mpeix* | -udk* | -moxiebox* \
 	      | -interix* | -uwin* | -mks* | -rhapsody* | -darwin* | -opened* \
 	      | -openstep* | -oskit* | -conix* | -pw32* | -nonstopux* \
-	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* | -irx* \
+	      | -storm-chaos* | -tops10* | -tenex* | -tops20* | -its* \
 	      | -os2* | -vos* | -palmos* | -uclinux* | -nucleus* \
 	      | -morphos* | -superux* | -rtmk* | -rtmk-nova* | -windiss* \
 	      | -powermax* | -dnix* | -nx6 | -nx7 | -sei* | -dragonfly* \
-	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es*)
+	      | -skyos* | -haiku* | -rdos* | -toppers* | -drops* | -es* | -tirtos*)
 	# Remember, each alternative MUST END IN *, to match a version number.
 		;;
 	-qnx*)
@@ -1610,9 +1601,6 @@ case $basic_machine in
 		os=-elf
 		;;
 	mips*-*)
-		os=-elf
-		;;
-	or1k-*)
 		os=-elf
 		;;
 	or32-*)

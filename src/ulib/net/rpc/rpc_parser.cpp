@@ -50,7 +50,7 @@ void URPCParser::clearData()
 
 UString URPCParser::processMessage(const UString& msg, URPCObject& object, bool& bContainsFault)
 {
-   U_TRACE(0, "URPCParser::processMessage(%.*S,%p,%p)", U_STRING_TO_TRACE(msg), &object, &bContainsFault)
+   U_TRACE(0, "URPCParser::processMessage(%V,%p,%p)", msg.rep, &object, &bContainsFault)
 
    U_INTERNAL_ASSERT(msg)
 

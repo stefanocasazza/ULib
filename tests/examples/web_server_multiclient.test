@@ -33,7 +33,7 @@ userver {
  LOG_FILE_SZ 1M
  LOG_MSG_SIZE -1
 #REQ_TIMEOUT 5
- MAX_KEEP_ALIVE 3
+#MAX_KEEP_ALIVE 3
  PID_FILE /var/run/userver_tcp.pid
  DOCUMENT_ROOT benchmark/docroot
 #PLUGIN "nocat ssi http"

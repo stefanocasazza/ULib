@@ -328,13 +328,13 @@ int mkstemp(char* tmpl)
 
       if (strncmp(pChr, "XXXXXX", 6) == 0)
          {
-         int iChr, iRnd;
+         int iChr;
 
          for (iChr = 0; iChr < 6; ++iChr)
             {
             /* 528.5 = RAND_MAX / u_alphabet */
 
-            iRnd      = rand() / 528.5;
+            int iRnd  = rand() / 528.5;
             *(pChr++) = u_alphabet[iRnd > 0 ? iRnd - 1 : 0];
             }
          }
@@ -1021,7 +1021,7 @@ void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset
 {
    BOOL bclose;
    HANDLE hFile;
-   int i, mmlen;
+   int mmlen;
    caddr_t gran_addr;
    struct mmapInfos* mmi;
    DWORD dwAccess, flProtect;
@@ -1053,6 +1053,8 @@ void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset
 
    if (g_curMMapInfos == g_maxMMapInfos)
       {
+      int i;
+
       g_maxMMapInfos += 10;
       g_mmapInfos     = (struct mmapInfos*) realloc(g_mmapInfos, g_maxMMapInfos * sizeof(struct mmapInfos));
 
@@ -1503,7 +1505,6 @@ static int extract_file_fd(fd_set* set, fd_set* fileset)
 
    if (set)
       {
-      int fd;
       u_int i, idx;
 
       fileset->fd_count = 0;
@@ -1512,7 +1513,7 @@ static int extract_file_fd(fd_set* set, fd_set* fileset)
 
       for (idx = 0; idx < set->fd_count; ++idx)
          {
-         fd = set->fd_array[idx];
+         int fd = set->fd_array[idx];
 
          if (is_fd_socket(fd) == FALSE)
             {
@@ -1547,7 +1548,6 @@ static fd_set* fdset_fd2sock(fd_set* set, fd_set* fileset)
 
    if (set)
       {
-      int fd;
       SOCKET h;
       u_int idx;
 
@@ -1557,8 +1557,9 @@ static fd_set* fdset_fd2sock(fd_set* set, fd_set* fileset)
 
       for (idx = 0; idx < set->fd_count; ++idx)
          {
-         fd = set->fd_array[idx];
-         h  = (SOCKET) _get_osfhandle(fd);
+         int fd = set->fd_array[idx];
+
+         h = (SOCKET) _get_osfhandle(fd);
 
       // U_INTERNAL_ASSERT_DIFFERS((HANDLE)h, INVALID_HANDLE_VALUE)
       // U_INTERNAL_ASSERT_EQUALS(is_fh_socket((HANDLE)h), TRUE)

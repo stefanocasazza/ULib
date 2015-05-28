@@ -16,7 +16,7 @@
 
 #include <ulib/net/server/server_plugin.h>
 
-/*
+/**
  * The plugin interface is an integral part of UServer which provides a flexible way to add specific functionality to UServer.
  * Plugins allow you to enhance the functionality of UServer without changing the core of the server. They can be loaded at
  * startup time and can change virtually some aspect of the behaviour of the server.

@@ -52,11 +52,7 @@ UTrace::UTrace(int level, const char* format, ...)
 
       u_trace_writev(iov + skip, 4 - skip);
 
-      if (u_flag_test == 0 &&
-          (level & 0x00000100) != 0) // [0-9]+256...
-         {
-         u_trace_mask_level = this;
-         }
+      if ((level & 0x00000100) != 0) u_trace_mask_level = this; // [0-9]+256...
       }
 }
 

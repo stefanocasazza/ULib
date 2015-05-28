@@ -88,9 +88,8 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 #  define   U_SET_MODULE_NAME(name)        { if (UServer_Base::isLog()) { (void) strcpy(UServer_Base::mod_name[1], UServer_Base::mod_name[0]); \
                                                                           (void) strcpy(UServer_Base::mod_name[0], "["#name"] "); } }
 
-#  define U_SRV_LOG(          fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s" fmt,         UServer_Base::mod_name[0] , ##args); }
-#  define U_SRV_LOG_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s" fmt " %.*s", UServer_Base::mod_name[0] , ##args, \
-                                                                                                    U_STRING_TO_TRACE(*(UClientImage_Base::pthis->logbuf))); }
+#  define U_SRV_LOG(          fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s" fmt,       UServer_Base::mod_name[0] , ##args); }
+#  define U_SRV_LOG_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s" fmt " %v", UServer_Base::mod_name[0] , ##args, UServer_Base::pClientIndex->logbuf->rep); }
 #endif
 
 class UHTTP;
@@ -99,6 +98,7 @@ class UCommand;
 class USSLSocket;
 class USSIPlugIn;
 class UWebSocket;
+class USocketExt;
 class Application;
 class UTimeThread;
 class UFileConfig;
@@ -139,9 +139,12 @@ public:
    // ALLOWED_IP            list of comma separated client         address for IP-based access control (IPADDR[/MASK])
    // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
    // ENABLE_RFC1918_FILTER reject request from private IP to public server address
+   // MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
    //
    // LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
    // SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+   //
+   // CLIENT_THRESHOLD           min number of clients to active polling
    // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization 
    //
    // PID_FILE      write pid on file indicated
@@ -205,6 +208,8 @@ public:
 
       U_RETURN_STRING(*document_root);
       }
+
+   static bool setDocumentRoot(const UString& dir);
 
 #ifdef U_WELCOME_SUPPORT
    static void setMsgWelcome(const UString& msg);
@@ -285,8 +290,7 @@ public:
       char spinlock_data_session[1];
       char spinlock_db_not_found[1];
 #  ifdef ENABLE_THREAD
-      /*
-      typedef struct static_date {
+      /* typedef struct static_date {
          struct timeval _timeval;      // => u_now
          char spinlock1[1];
          char date1[17+1];             // 18/06/12 18:45:56
@@ -294,8 +298,7 @@ public:
          char date2[26+1];             // 04/Jun/2012:18:18:37 +0200
          char spinlock3[1];
          char date3[6+29+2+12+2+19+1]; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
-         } static_date;
-      */
+         } static_date; */
       ULog::static_date static_date;
 #  endif
    // ------------------------------------------------------------------------------
@@ -432,7 +435,7 @@ public:
 
    // PARALLELIZATION
 
-   static uint32_t num_client_for_parallelization, num_client_for_parallelization_queue;
+   static uint32_t num_client_for_parallelization, num_client_threshold;
 
    static bool isParallelizationChild()
       {
@@ -463,32 +466,8 @@ public:
    static void    endNewChild() __noreturn;
    static pid_t startNewChild();
 
-   static bool startParallelization(uint32_t nclient = 1);
-
-   static bool isParallelizationGoingToStart(uint32_t nclient = 1)
-      {
-      U_TRACE(0, "UServer_Base::isParallelizationGoingToStart(%u)", nclient)
-
-      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
-                       U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
-
-#  ifndef U_SERVER_CAPTIVE_PORTAL
-      if (U_ClientImage_parallelization != 1 && // 1 => child of parallelization
-#     ifdef USE_LIBSSL
-       // bssl == false                      &&
-#     endif
-          (UNotifier::num_connection - UNotifier::min_connection) > nclient)
-         {
-         U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
-
-         U_RETURN(true);
-         }
-#  endif
-
-      U_RETURN(false);
-      }
+   static bool startParallelization(            uint32_t nclient = 1);
+   static bool    isParallelizationGoingToStart(uint32_t nclient = 1) __pure;
 
    // manage log server...
 
@@ -513,9 +492,9 @@ public:
 
    // NETWORK CTX
 
-   static int iAddressType;
    static char* client_address;
-   static uint32_t client_address_len;
+   static int iAddressType, socket_flags, tcp_linger_set;
+   static uint32_t client_address_len, min_size_for_sendfile;
 
 #define U_CLIENT_ADDRESS_TO_PARAM  UServer_Base::client_address, UServer_Base::client_address_len
 #define U_CLIENT_ADDRESS_TO_TRACE  UServer_Base::client_address_len, UServer_Base::client_address
@@ -531,6 +510,7 @@ public:
 #endif
 
    static USocket* socket;
+   static USocket* csocket;
 protected:
    static int timeoutMS,       // the time-out value in milliseconds for client request
               verify_mode;     // mode of verification ssl connection
@@ -546,18 +526,28 @@ protected:
    static UString* name_sock;  // name file for the listening socket
    static UString* IP_address; // IP address of this server
 
-   static int rkids;
    static UString* host;
    static sigset_t mask;
    static UProcess* proc;
    static UEventTime* ptime;
    static time_t last_event;
+   static int rkids, old_pid;
    static UServer_Base* pthis;
    static UString* cenvironment;
    static UString* senvironment;
    static UString* str_preforked_num_kids;
-   static uint32_t max_depth, wakeup_for_nothing;
+   static uint32_t max_depth, wakeup_for_nothing, read_again;
    static bool flag_loop, flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive;
+
+   static uint32_t                 vplugin_size;
+   static UVector<UString>*        vplugin_name;
+   static UVector<UString>*        vplugin_name_static;
+   static UVector<UServerPlugIn*>* vplugin;
+
+   static void init();
+   static void loadConfigParam();
+   static void runLoop(const char* user);
+   static bool handlerTimeoutConnection(void* cimg);
 
 #ifdef U_WELCOME_SUPPORT
    static UString* msg_welcome;
@@ -625,17 +615,9 @@ protected:
    UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
    };
 
-   static uint32_t                 vplugin_size;
-   static UVector<UString>*        vplugin_name;
-   static UVector<UString>*        vplugin_name_static;
-   static UVector<UServerPlugIn*>* vplugin;
-
-   static void init();
-   static void loadConfigParam();
-   static void runLoop(const char* user);
-   static bool handlerTimeoutConnection(void* cimg);
-
 #ifdef U_LOG_ENABLE
+   static bool called_from_handlerTime;
+
    static uint32_t getNumConnection(char* buffer);
 #endif
 
@@ -685,6 +667,7 @@ private:
    friend class USSLSocket;
    friend class USSIPlugIn;
    friend class UWebSocket;
+   friend class USocketExt;
    friend class Application;
    friend class UTimeThread;
    friend class UHttpPlugIn;
@@ -704,6 +687,7 @@ private:
    friend class UClientImage_Base;
 
    static void manageSigHUP() U_NO_EXPORT;
+   static bool clientImageHandlerRead() U_NO_EXPORT;
    static void logMemUsage(const char* signame) U_NO_EXPORT;
    static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
 

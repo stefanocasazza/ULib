@@ -29,7 +29,7 @@ USOAPParser::~USOAPParser()
 
 bool USOAPParser::parse(const UString& msg)
 {
-   U_TRACE(0+256, "USOAPParser::parse(%.*S)", U_STRING_TO_TRACE(msg))
+   U_TRACE(0+256, "USOAPParser::parse(%V)", msg.rep)
 
    initParser();
 
@@ -88,7 +88,7 @@ UString USOAPParser::getFaultResponse()
 
 UString USOAPParser::processMessage(const UString& msg, URPCObject& object, bool& bContainsFault)
 {
-   U_TRACE(0, "USOAPParser::processMessage(%.*S,%p,%p,%b)", U_STRING_TO_TRACE(msg), &object, &bContainsFault)
+   U_TRACE(0, "USOAPParser::processMessage(%V,%p,%p,%b)", msg.rep, &object, &bContainsFault)
 
    U_INTERNAL_ASSERT(msg)
 
@@ -132,7 +132,7 @@ UString USOAPParser::processMessage(const UString& msg, URPCObject& object, bool
 
       URPCMethod::pFault->getFaultReason() = UXMLParser::getErrorMessage();
 
-      U_INTERNAL_DUMP("UXMLParser: %.*S (%d,%d) ", U_STRING_TO_TRACE(URPCMethod::pFault->getFaultReason()), line, coln)
+      U_INTERNAL_DUMP("UXMLParser: %V (%d,%d) ", URPCMethod::pFault->getFaultReason().rep, line, coln)
 
       URPCMethod::pFault->setDetail("The fault occurred near position (line: %d col: %d) within the message", line, coln);
 
@@ -213,7 +213,7 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
          {
          envelope.nsName = value;
 
-         U_INTERNAL_DUMP("envelope.nsName = %.*S", U_STRING_TO_TRACE(envelope.nsName))
+         U_INTERNAL_DUMP("envelope.nsName = %V", envelope.nsName.rep)
          }
 
       // Manage the names and URNs of any and all namespaces found when parsing the message.

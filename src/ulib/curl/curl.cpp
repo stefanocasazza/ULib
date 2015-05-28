@@ -231,7 +231,6 @@ bool UCURL::perform()
    UCURL* entry;
    CURLMcode mresult;
    int msgs_in_queue;
-   CURLMsg* pendingMsg;
    int activeTransfers = 0;
 
    if (inited == false) setup();
@@ -249,7 +248,7 @@ bool UCURL::perform()
       {
       while (true)
          {
-         pendingMsg = (CURLMsg*) U_SYSCALL(curl_multi_info_read, "%p,%p", multiHandle, &msgs_in_queue);
+         CURLMsg* pendingMsg = (CURLMsg*) U_SYSCALL(curl_multi_info_read, "%p,%p", multiHandle, &msgs_in_queue);
 
          if (!pendingMsg) break;
 

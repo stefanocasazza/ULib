@@ -66,12 +66,12 @@ int URpcPlugIn::handlerREAD()
 
    if (rpc_parser)
       {
-      is_rpc_msg = URPC::readRequest(UClientImage_Base::psocket); // NB: URPC::resetInfo() it is already called by clearData()...
+      is_rpc_msg = URPC::readRequest(UServer_Base::csocket); // NB: URPC::resetInfo() it is already called by clearData()...
 
       if (is_rpc_msg)
          {
 #     ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-         u_http_info.nResponseCode = 0;
+         U_http_info.nResponseCode = 0;
 #     endif
 
          U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_FINISHED);
@@ -97,7 +97,7 @@ int URpcPlugIn::handlerRequest()
 
       *UClientImage_Base::wbuffer = rpc_parser->processMessage(method, *URPCObject::dispatcher, bSendingFault);
 
-      U_SRV_LOG_WITH_ADDR("method %.*S process %s for", U_STRING_TO_TRACE(method), (bSendingFault ? "failed" : "passed"));
+      U_SRV_LOG_WITH_ADDR("method %V process %s for", method.rep, (bSendingFault ? "failed" : "passed"));
 
 #  ifdef U_LOG_ENABLE
       if (UServer_Base::isLog()) (void) UClientImage_Base::request_uri->assign(method);

@@ -768,7 +768,7 @@ static void yy_reduce(
          bo = (yymsp[-1].minor.yy12 == U_TK_AND ? Bbo && Dbo
                              : Bbo || Dbo);
 
-   yygotominor.yy3 = (bo ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+   yygotominor.yy3 = (bo ? U_NEW(UString(*UString::str_true)) : U_NEW(UString));
 
    delete yymsp[-2].minor.yy3;
    delete yymsp[0].minor.yy3;
@@ -821,7 +821,7 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("bo = %b cmp = %d", bo, cmp)
 
-   yygotominor.yy3 = (bo ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+   yygotominor.yy3 = (bo ? U_NEW(UString(*UString::str_true)) : U_NEW(UString));
 
    delete yymsp[-2].minor.yy3;
    delete yymsp[0].minor.yy3;
@@ -871,7 +871,7 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("bo = %b cmp = %d", bo, cmp)
 
-   yygotominor.yy3 = (bo ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+   yygotominor.yy3 = (bo ? U_NEW(UString(*UString::str_true)) : U_NEW(UString));
 
    delete yymsp[-2].minor.yy3;
    delete yymsp[0].minor.yy3;
@@ -983,7 +983,7 @@ static void yy_reduce(
 
    U_INTERNAL_ASSERT_POINTER(yymsp[0].minor.yy3)
 
-   yygotominor.yy3 = (yymsp[0].minor.yy3->empty() ? U_NEW(UString(U_CONSTANT_TO_PARAM("true"))) : U_NEW(UString));
+   yygotominor.yy3 = (yymsp[0].minor.yy3->empty() ? U_NEW(UString(*UString::str_true)) : U_NEW(UString));
 
    delete yymsp[0].minor.yy3;
 

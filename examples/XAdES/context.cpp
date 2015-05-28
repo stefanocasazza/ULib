@@ -570,9 +570,11 @@ bool UTransformCtx::verifyNodeContent(xmlNodePtr node, UString& signature_value)
 
    (void) signature_value.reserve(size);
 
-   if (UBase64::decode(content, size, signature_value) == false) U_RETURN(false);
+   UBase64::decode(content, size, signature_value);
 
-   U_RETURN(true);
+   if (signature_value) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 /**

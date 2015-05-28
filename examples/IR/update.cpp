@@ -23,6 +23,11 @@
 class Application : public IR {
 public:
 
+   ~Application()
+      {
+      U_TRACE(5, "Application::~Application()")
+      }
+
    static void parse(void* name)
       {
       U_TRACE(5, "Application::parse(%p)", name)

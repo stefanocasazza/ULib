@@ -43,7 +43,7 @@ void UHashMap<void*>::allocate(uint32_t n)
 
 void UHashMap<void*>::lookup(const UStringRep* keyr)
 {
-   U_TRACE(0, "UHashMap<void*>::lookup(%.*S)", U_STRING_TO_TRACE(*keyr))
+   U_TRACE(0, "UHashMap<void*>::lookup(%V)", keyr)
 
    U_CHECK_MEMORY
 
@@ -58,10 +58,14 @@ void UHashMap<void*>::lookup(const UStringRep* keyr)
 
    U_INTERNAL_DUMP("index = %u", index)
 
-   U_INTERNAL_ASSERT_MINOR(index,_capacity)
+   U_INTERNAL_ASSERT_MINOR(index, _capacity)
 
    for (node = table[index]; node; node = node->next)
       {
+      U_INTERNAL_DUMP("node->key(%u) = %p %V",  node->key->size(), node->key, node->key)
+
+      U_INTERNAL_ASSERT_MAJOR(node->key->size(), 0)
+
       if (node->key->equal(keyr, ignore_case)) break;
       }
 
@@ -70,7 +74,7 @@ void UHashMap<void*>::lookup(const UStringRep* keyr)
 
 void* UHashMap<void*>::erase(const UStringRep* _key)
 {
-   U_TRACE(0, "UHashMap<void*>::erase(%.*S)", U_STRING_TO_TRACE(*_key))
+   U_TRACE(0, "UHashMap<void*>::erase(%V)", _key)
 
    lookup(_key);
 
@@ -90,7 +94,7 @@ void* UHashMap<void*>::erase(const UStringRep* _key)
 
 void* UHashMap<void*>::at(const UStringRep* _key)
 {
-   U_TRACE(0, "UHashMap<void*>::at(%.*S)", U_STRING_TO_TRACE(*_key))
+   U_TRACE(0, "UHashMap<void*>::at(%V)", _key)
 
    lookup(_key);
 
@@ -115,11 +119,12 @@ void* UHashMap<void*>::at(const char* _key, uint32_t keylen)
 
 void UHashMap<void*>::insertAfterFind(const UStringRep* _key, const void* _elem)
 {
-   U_TRACE(0, "UHashMap<void*>::insertAfterFind(%.*S,%p)", U_STRING_TO_TRACE(*_key), _elem)
+   U_TRACE(0, "UHashMap<void*>::insertAfterFind(%V,%p)", _key, _elem)
 
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT_EQUALS(node,0)
+   U_INTERNAL_ASSERT_DIFFERS(_key, pkey)
 
    /**
     * list self-organizing (move-to-front), we place before
@@ -194,7 +199,7 @@ void UHashMap<void*>::eraseAfterFind()
 
 void UHashMap<void*>::replaceKey(const UString& _key)
 {
-   U_TRACE(0, "UHashMap<void*>::replaceKey(%.*S)", U_STRING_TO_TRACE(_key))
+   U_TRACE(0, "UHashMap<void*>::replaceKey(%V)", _key.rep)
 
    UHashMapNode* pnode = node;
 
@@ -459,26 +464,14 @@ void UHashMap<void*>::_callForAllEntrySorted(bPFprpv function)
 
 void UHashMap<UString>::insertAfterFind(const UString& _key, const UString& str)
 {
-   U_TRACE(0, "UHashMap<UString>::insertAfterFind(%.*S,%.*S)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(str))
+   U_TRACE(0, "UHashMap<UString>::insertAfterFind(%V,%V)", _key.rep, str.rep)
 
    UHashMap<UStringRep*>::insertAfterFind(_key, str.rep);
 }
 
-void UHashMap<UString>::insertAfterFind(const char* _key, uint32_t keylen, const UString& str)
-{
-   U_TRACE(0, "UHashMap<UString>::insertAfterFind(%.*S,%u,%.*S)", keylen, _key, keylen, U_STRING_TO_TRACE(str))
-
-   U_INTERNAL_ASSERT_POINTER(pkey)
-
-   pkey->str     = _key;
-   pkey->_length = keylen;
-
-   UHashMap<UStringRep*>::insertAfterFind(pkey, str.rep);
-}
-
 UString UHashMap<UString>::erase(const UString& _key)
 {
-   U_TRACE(0, "UHashMap<UString>::erase(%.*S)", U_STRING_TO_TRACE(_key))
+   U_TRACE(0, "UHashMap<UString>::erase(%V)", _key.rep)
 
    UHashMap<void*>::lookup(_key);
 
@@ -497,14 +490,14 @@ UString UHashMap<UString>::erase(const UString& _key)
       U_RETURN_STRING(str);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 // OPERATOR []
 
 UString UHashMap<UString>::at(const UStringRep* _key)
 {
-   U_TRACE(0, "UHashMap<UString>::at(%.*S)", U_STRING_TO_TRACE(*_key))
+   U_TRACE(0, "UHashMap<UString>::at(%V)", _key)
 
    UHashMap<void*>::lookup(_key);
 
@@ -515,7 +508,7 @@ UString UHashMap<UString>::at(const UStringRep* _key)
       U_RETURN_STRING(str);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 void* UHashMap<void*>::operator[](const char* _key)

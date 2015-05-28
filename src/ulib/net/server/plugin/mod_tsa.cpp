@@ -23,7 +23,7 @@ UCommand* UTsaPlugIn::command;
 
 UTsaPlugIn::UTsaPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UTsaPlugIn, "")
+   U_TRACE_REGISTER_OBJECT(0, UTsaPlugIn, "")
 }
 
 UTsaPlugIn::~UTsaPlugIn()
@@ -93,7 +93,7 @@ int UTsaPlugIn::handlerRequest()
 
       if (command->execute(UClientImage_Base::body, &body))
          {
-         u_http_info.nResponseCode = HTTP_OK;
+         U_http_info.nResponseCode = HTTP_OK;
 
          UHTTP::setResponse(UHTTP::str_ctype_tsa, &body);
          }

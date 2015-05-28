@@ -141,7 +141,7 @@ void UIPAddress::set(const UIPAddress& cOtherAddr)
    U_ipaddress_HostNameUnresolved(this)   = U_ipaddress_HostNameUnresolved(&cOtherAddr);
    U_ipaddress_StrAddressUnresolved(this) = U_ipaddress_StrAddressUnresolved(&cOtherAddr);
 
-   U_INTERNAL_DUMP("addr = %u strHostName = %.*S", getInAddr(), U_STRING_TO_TRACE(strHostName))
+   U_INTERNAL_DUMP("addr = %u strHostName = %V", getInAddr(), strHostName.rep)
 
    U_INTERNAL_ASSERT_EQUALS(u_isIPAddr(iAddressType == AF_INET6, U_STRING_TO_PARAM(strHostName)), false)
 }
@@ -202,13 +202,13 @@ void UIPAddress::setAddress(const char* pcNewAddress, int iNewAddressLength)
 
 bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 {
-   U_TRACE(1, "UIPAddress::setHostName(%.*S,%b)", U_STRING_TO_TRACE(pcNewHostName), bIPv6)
+   U_TRACE(1, "UIPAddress::setHostName(%V,%b)", pcNewHostName.rep, bIPv6)
 
    U_CHECK_MEMORY
 
    if (pcNewHostName.empty()) U_RETURN(false);
 
-   U_INTERNAL_DUMP("strHostName = %.*S U_ipaddress_HostNameUnresolved = %b", U_STRING_TO_TRACE(strHostName), U_ipaddress_HostNameUnresolved(this))
+   U_INTERNAL_DUMP("strHostName = %V U_ipaddress_HostNameUnresolved = %b", strHostName.rep, U_ipaddress_HostNameUnresolved(this))
 
    U_INTERNAL_ASSERT_EQUALS(u_isIPAddr(bIPv6, U_STRING_TO_PARAM(strHostName)), false)
 
@@ -368,7 +368,7 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 
    U_ipaddress_HostNameUnresolved(this) = false;
 
-   U_INTERNAL_DUMP("strHostName = %.*S", U_STRING_TO_TRACE(strHostName))
+   U_INTERNAL_DUMP("strHostName = %V", strHostName.rep)
 
    U_INTERNAL_ASSERT_EQUALS(u_isIPAddr(bIPv6, U_STRING_TO_PARAM(strHostName)), false)
 
@@ -493,7 +493,7 @@ void UIPAddress::resolveHostName()
       U_ipaddress_HostNameUnresolved(this) = false;
       }
 
-   U_INTERNAL_DUMP("strHostName = %.*S", U_STRING_TO_TRACE(strHostName))
+   U_INTERNAL_DUMP("strHostName = %V", strHostName.rep)
 
    U_INTERNAL_ASSERT_EQUALS(u_isIPAddr(iAddressType == AF_INET6, U_STRING_TO_PARAM(strHostName)), false)
 }
@@ -524,23 +524,19 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
 
    if (iAddressType != iNewAddressFamily)
       {
-      switch (iNewAddressFamily)
+      if  (iNewAddressFamily == AF_INET:)
          {
-         case AF_INET:
-            {
-            if (IN6_IS_ADDR_V4MAPPED(&(pcAddress.s))) setAddress(pcAddress.p + 12, sizeof(in_addr));
-            }
-         break;
+         if (IN6_IS_ADDR_V4MAPPED(&(pcAddress.s))) setAddress(pcAddress.p + 12, sizeof(in_addr));
+         }
+      else  
+         {
+         U_INTERNAL_ASSERT_EQUALS(iNewAddressFamily, AF_INET6)
 
-         case AF_INET6:
-            {
-            iAddressLength = sizeof(in6_addr);
+         iAddressLength = sizeof(in6_addr);
 
-            (void) memset(pcAddress.p,                0, 10);
-            (void) memset(pcAddress.p + 10,        0xff,  2);
-                U_MEMCPY(pcAddress.p + 12, pcAddress.p,  4);
-            }
-         break;
+         (void) memset(pcAddress.p,                0, 10);
+         (void) memset(pcAddress.p + 10,        0xff,  2);
+              U_MEMCPY(pcAddress.p + 12, pcAddress.p,  4);
          }
 
       iAddressType = iNewAddressFamily;
@@ -551,7 +547,8 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
 }
 #endif
 
-/* In the Internet addressing architecture, a private network is a network that uses private IP address space,
+/**
+ * In the Internet addressing architecture, a private network is a network that uses private IP address space,
  * following the standards set by RFC 1918 and RFC 4193. These addresses are commonly used for home, office, and
  * enterprise local area networks (LANs), when globally routable addresses are not mandatory, or are not available
  * for the intended network applications. Under Internet Protocol IPv4, private IP address spaces were originally
@@ -647,7 +644,7 @@ UString UIPAddress::toString(uint8_t* addr)
 
 bool UIPAllow::parseMask(const UString& _spec)
 {
-   U_TRACE(1, "UIPAllow::parseMask(%.*S)", U_STRING_TO_TRACE(_spec))
+   U_TRACE(1, "UIPAllow::parseMask(%V)", _spec.rep)
 
    // get bit before slash
 
@@ -759,7 +756,7 @@ bool UIPAllow::parseMask(const UString& _spec)
 
 uint32_t UIPAllow::parseMask(const UString& vspec, UVector<UIPAllow*>& vipallow)
 {
-   U_TRACE(0, "UIPAllow::parseMask(%.*S,%p)", U_STRING_TO_TRACE(vspec), &vipallow)
+   U_TRACE(0, "UIPAllow::parseMask(%V,%p)", vspec.rep, &vipallow)
 
    UIPAllow* elem;
    UVector<UString> vec(vspec, ", \t");
@@ -837,7 +834,7 @@ bool UIPAllow::isAllowed(const char* ip_client)
 
 bool UIPAllow::isAllowed(const UString& ip_client)
 {
-   U_TRACE(0, "UIPAllow::isAllowed(%.*S)", U_STRING_TO_TRACE(ip_client))
+   U_TRACE(0, "UIPAllow::isAllowed(%V)", ip_client.rep)
 
    U_INTERNAL_ASSERT(u_isIPv4Addr(U_STRING_TO_PARAM(ip_client)))
 
@@ -874,7 +871,7 @@ __pure uint32_t UIPAllow::find(const char* ip_client, UVector<UIPAllow*>& vipall
 
 __pure uint32_t UIPAllow::find(const UString& ip_client, UVector<UIPAllow*>& vipallow)
 {
-   U_TRACE(0, "UIPAllow::find(%.*S,%p)", U_STRING_TO_TRACE(ip_client), &vipallow)
+   U_TRACE(0, "UIPAllow::find(%V,%p)", ip_client.rep, &vipallow)
 
    for (uint32_t i = 0, vlen = vipallow.size(); i < vlen; ++i)
       {

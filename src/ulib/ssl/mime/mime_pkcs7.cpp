@@ -15,7 +15,7 @@
 
 UMimePKCS7::UMimePKCS7(const UString& _data)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimePKCS7, "%.*S", U_STRING_TO_TRACE(_data))
+   U_TRACE_REGISTER_OBJECT(0, UMimePKCS7, "%V", _data.rep)
 
    // OpenSSL_add_all_algorithms(); // called in ULib_init()
 

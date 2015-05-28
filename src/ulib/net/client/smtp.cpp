@@ -50,7 +50,7 @@ void USmtpClient::setStatus()
 
 bool USmtpClient::_connectServer(const UString& server, unsigned int port, int timeoutMS)
 {
-   U_TRACE(0, "USmtpClient::_connectServer(%.*S,%u,%d)", U_STRING_TO_TRACE(server), port, timeoutMS)
+   U_TRACE(0, "USmtpClient::_connectServer(%V,%u,%d)", server.rep, port, timeoutMS)
 
    if (Socket::connectServer(server, port, timeoutMS) == false)
       {
@@ -60,7 +60,7 @@ bool USmtpClient::_connectServer(const UString& server, unsigned int port, int t
 
       // NB: the last argument (0) is necessary...
 
-      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "Sorry, couldn't connect to server '%.*s:%u'%R", U_STRING_TO_TRACE(server), port, 0);
+      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "Sorry, couldn't connect to server '%v:%u'%R", server.rep, port, 0);
       }
    else
       {
@@ -114,7 +114,7 @@ bool USmtpClient::_connectServer(UFileConfig& cfg, unsigned int port, int timeou
 
          UString tmp(10U + replyToAddress.size());
 
-         tmp.snprintf("Reply-To: %.*s", U_STRING_TO_TRACE(replyToAddress));
+         tmp.snprintf("Reply-To: %v", replyToAddress.rep);
 
          setMessageHeader(tmp);
          }
@@ -127,7 +127,7 @@ bool USmtpClient::_connectServer(UFileConfig& cfg, unsigned int port, int timeou
 
 void USmtpClient::setSenderAddress(const UString& sender)
 {
-   U_TRACE(0, "USmtpClient::setSenderAddress(%.*S)", U_STRING_TO_TRACE(sender))
+   U_TRACE(0, "USmtpClient::setSenderAddress(%V)", sender.rep)
 
    uint32_t index = sender.find('<');
 
@@ -258,9 +258,10 @@ bool USmtpClient::sendMessage(bool secure)
       (void) domainName.assign(U_CONSTANT_TO_PARAM("somemachine.nowhere.org"));
       }
 
-   if (secure)
+   if (secure == false) (void) syncCommand("helo %v", domainName.rep);
+   else
       {
-      (void) syncCommand("ehlo %.*s", U_STRING_TO_TRACE(domainName));
+      (void) syncCommand("ehlo %v", domainName.rep);
 
       if (response != SUCCESSFUL                ||
           strstr(u_buffer, "250-STARTTLS") == 0 ||
@@ -269,11 +270,7 @@ bool USmtpClient::sendMessage(bool secure)
          U_RETURN(false);
          }
 
-      (void) syncCommand("ehlo %.*s", U_STRING_TO_TRACE(domainName));
-      }
-   else
-      {
-      (void) syncCommand("helo %.*s", U_STRING_TO_TRACE(domainName));
+      (void) syncCommand("ehlo %v", domainName.rep);
       }
 
    if (response != SUCCESSFUL) U_RETURN(false);
@@ -284,7 +281,7 @@ bool USmtpClient::sendMessage(bool secure)
 
    U_ASSERT(UStringExt::isEmailAddress(senderAddress))
 
-   (void) syncCommand("mail from: %.*s", U_STRING_TO_TRACE(senderAddress));
+   (void) syncCommand("mail from: %v", senderAddress.rep);
 
    if (response != SUCCESSFUL) U_RETURN(false);
 
@@ -294,7 +291,7 @@ bool USmtpClient::sendMessage(bool secure)
 
    U_ASSERT(UStringExt::isEmailAddress(rcptoAddress))
 
-   (void) syncCommand("rcpt to: %.*s", U_STRING_TO_TRACE(rcptoAddress));
+   (void) syncCommand("rcpt to: %v", rcptoAddress.rep);
 
    if (response != SUCCESSFUL) U_RETURN(false);
 
@@ -318,17 +315,25 @@ bool USmtpClient::sendMessage(bool secure)
 
    UString msg(rcptoAddress.size() + messageSubject.size() + messageHeader.size() + messageBody.size() + 32U);
 
-   msg.snprintf("To: %.*s\r\n"
-                "Subject: %.*s\r\n"
-                "%.*s\r\n"
-                "%.*s\r\n"
-                ".\r\n",
-                U_STRING_TO_TRACE(rcptoAddress),
-                U_STRING_TO_TRACE(messageSubject),
-                U_STRING_TO_TRACE(messageHeader),
-                U_STRING_TO_TRACE(messageBody));
+   msg.snprintf("To: %v\r\n"
+                "Subject: %v\r\n"
+                "%v\r\n"
+                "%v\r\n"
+                ".\r\n", rcptoAddress.rep, messageSubject.rep, messageHeader.rep, messageBody.rep);
+
+#ifdef USE_LIBSSL
+   bool bssl_save     = USocketExt::bssl;
+                        USocketExt::bssl = USocket::isSSL(true);
+#endif
+   bool blocking_save = USocketExt::blocking;
+                        USocketExt::blocking = USocket::isBlocking();
 
    response = (USocketExt::write(this, msg, U_TIMEOUT_MS) ? USocketExt::readMultilineReply(this) : -1);
+
+#ifdef USE_LIBSSL
+   USocketExt::bssl     = bssl_save;
+#endif
+   USocketExt::blocking = blocking_save;
 
    setStateFromResponse();
 

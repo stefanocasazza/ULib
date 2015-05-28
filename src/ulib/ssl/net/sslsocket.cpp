@@ -262,10 +262,9 @@ long USSLSocket::getOptions(const UVector<UString>& vec)
 #endif
    };
 
+   uint32_t j;
    UString key;
-   char positive;
    const char* ptr;
-   uint32_t j, len;
 
    long options = SSL_OP_NO_SSLv2       |
 #              ifdef SSL_OP_NO_COMPRESSION
@@ -275,9 +274,11 @@ long USSLSocket::getOptions(const UVector<UString>& vec)
 
    for (uint32_t i = 0, n = vec.size(); i < n; ++i)
       {
-      len      = key.size();
-      ptr      = key.data();
-      positive = 1;
+      uint32_t len = key.size();
+
+      ptr = key.data();
+
+      char positive = 1;
 
       if (u__strncasecmp(ptr, U_CONSTANT_TO_PARAM("NO_")) == 0)
          {
@@ -1060,7 +1061,7 @@ loop:
 
 bool USSLSocket::connectServer(const UString& server, unsigned int iServPort, int timeoutMS)
 {
-   U_TRACE(0, "USSLSocket::connectServer(%.*S,%u,%d)", U_STRING_TO_TRACE(server), iServPort, timeoutMS)
+   U_TRACE(0, "USSLSocket::connectServer(%V,%u,%d)", server.rep, iServPort, timeoutMS)
 
    if (USocket::connectServer(server, iServPort, timeoutMS) &&
        (U_socket_Type(this) != USocket::SK_SSL_ACTIVE       ||
@@ -1402,7 +1403,7 @@ bool USSLSocket::doStapling()
    OCSP_RESPONSE* resp = 0;
    OCSP_BASICRESP* basic = 0;
 
-   if (staple.client->connectServer())
+   if (staple.client->connect())
       {
       unsigned char* p;
       BIO* conn = (BIO*) U_SYSCALL(BIO_new_fd, "%d,%d", staple.client->getFd(), BIO_NOCLOSE);
@@ -1495,8 +1496,8 @@ bool USSLSocket::doStapling()
 
          nextupdate_str = UStringExt::ASN1TimetoString(nextupdate);
 
-         U_INTERNAL_DUMP("OCSP_resp_find_status() - %d: %s This update: %s Next update: %.*s", status,
-                          OCSP_cert_status_str(status), UStringExt::ASN1TimetoString(thisupdate).data(), U_STRING_TO_TRACE(nextupdate_str))
+         U_INTERNAL_DUMP("OCSP_resp_find_status() - %d: %s This update: %s Next update: %v", status,
+                          OCSP_cert_status_str(status), UStringExt::ASN1TimetoString(thisupdate).data(), nextupdate_str.rep)
 
          if (result == false ||
              status != V_OCSP_CERTSTATUS_GOOD)

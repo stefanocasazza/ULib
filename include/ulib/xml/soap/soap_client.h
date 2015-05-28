@@ -42,14 +42,7 @@ public:
       U_RETURN(false);
       }
 
-   virtual bool readResponse()
-      {
-      U_TRACE(0, "USOAPClient_Base::readResponse()")
-
-      if (UClient_Base::readHTTPResponse()) U_RETURN(true);
-
-      U_RETURN(false);
-      }
+   virtual bool readResponse();
 
    bool processRequest(URPCMethod& method)
       {
@@ -59,8 +52,7 @@ public:
 
       request = URPCMethod::encoder->encodeMethodCall(method, *UString::str_ns);
 
-      request = UHttpClient_Base::wrapRequest(&request, UClient_Base::host_port, 2,
-                                              U_CONSTANT_TO_PARAM("/soap"), "", "application/soap+xml; charset=\"utf-8\"");
+      request = UHttpClient_Base::wrapRequest(&request, UClient_Base::host_port, 2, U_CONSTANT_TO_PARAM("/soap"), "", "application/soap+xml; charset=\"utf-8\"");
 
       if (sendRequest()  &&
           readResponse() &&
@@ -93,6 +85,8 @@ protected:
    USOAPClient_Base(UFileConfig* _cfg) : URPCClient_Base(_cfg)
       {
       U_TRACE_REGISTER_OBJECT(0, USOAPClient_Base, "%p", _cfg)
+
+      u_init_http_method_list();
 
       delete URPCMethod::encoder;
              URPCMethod::encoder = U_NEW(USOAPEncoder);

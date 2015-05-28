@@ -248,7 +248,7 @@ bool USSHSocket::setError()
 
 bool USSHSocket::connectServer(const UString& server, unsigned int iServPort, int timeoutMS) // 22
 {
-   U_TRACE(1, "USSHSocket::connectServer(%.*S,%u,%d)", U_STRING_TO_TRACE(server), iServPort, timeoutMS)
+   U_TRACE(1, "USSHSocket::connectServer(%V,%u,%d)", server.rep, iServPort, timeoutMS)
 
 #if LIBSSH_VERSION_INT < 1280 // (0.5.0)
    if (USocket::connectServer(server, iServPort, timeoutMS))
@@ -283,7 +283,7 @@ int USSHSocket::recv(void* pBuffer, uint32_t iBufferLen)
    if (iBytesRead > 0) U_MEMCPY(pBuffer, buffer_get(buffer), iBytesRead);
 
 #ifdef DEBUG
-        if (iBytesRead > 0) U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", iBytesRead, iBytesRead, CAST(pBuffer))
+        if (iBytesRead > 0) U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", iBytesRead, iBytesRead, pBuffer)
    else if (iBytesRead < 0)
       {
       setStatus(iBytesRead);
@@ -307,7 +307,7 @@ int USSHSocket::send(const char* pData, uint32_t iDataLen)
    int iBytesWrite = U_SYSCALL(channel_write, "%p,%p,%d", channel, (void*)pData, iDataLen);
 
 #ifdef DEBUG
-        if (iBytesWrite > 0) U_INTERNAL_DUMP("BytesWrite(%d) = %#.*S", iBytesWrite, iBytesWrite, CAST(pData))
+        if (iBytesWrite > 0) U_INTERNAL_DUMP("BytesWrite(%d) = %#.*S", iBytesWrite, iBytesWrite, pData)
    else if (iBytesWrite < 0)
       {
       setStatus(iBytesWrite);

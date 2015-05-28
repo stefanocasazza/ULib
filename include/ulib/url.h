@@ -114,7 +114,7 @@ public:
 
    Url(const UString& x) : url(x)
       {
-      U_TRACE_REGISTER_OBJECT(0, Url, "%.*S", U_STRING_TO_TRACE(x))
+      U_TRACE_REGISTER_OBJECT(0, Url, "%V", x.rep)
 
       findpos();
       }
@@ -470,11 +470,12 @@ public:
       {
       U_TRACE(0, "Url::encode(%.*S,%u,%p)", len, input, len, &buffer)
 
+      U_ASSERT(buffer.uniq())
       U_ASSERT(buffer.capacity() >= len * 3)
 
-      buffer.size_adjust(u_url_encode((const unsigned char*)input, len, (unsigned char*)buffer.data()));
+      buffer.rep->_length = u_url_encode((const unsigned char*)input, len, (unsigned char*)buffer.data());
 
-      U_INTERNAL_DUMP("buffer.size() = %u", buffer.size())
+      U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
       }
 
    static void encode(const UString& input, UString& buffer) { encode(input.data(), input.size(), buffer); }
@@ -491,11 +492,12 @@ public:
       {
       U_TRACE(0, "Url::decode(%.*S,%u,%p)", len, input, len, &buffer)
 
+      U_ASSERT(buffer.uniq())
       U_ASSERT(buffer.capacity() >= len)
 
-      buffer.size_adjust(u_url_decode(input, len, (unsigned char*)buffer.data()));
+      buffer.rep->_length = u_url_decode(input, len, (unsigned char*)buffer.data());
 
-      U_INTERNAL_DUMP("buffer(%u) = %#.*S", buffer.size(), U_STRING_TO_TRACE(buffer))
+      U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
       }
 
    static void decode(const UString& input, UString& buffer) { decode(U_STRING_TO_PARAM(input), buffer); }

@@ -42,7 +42,7 @@ UFileConfig::UFileConfig()
 
 UFileConfig::UFileConfig(const UString& _data, bool _preprocessing) : data(_data)
 {
-   U_TRACE_REGISTER_OBJECT(0, UFileConfig, "%.*S,%b", U_STRING_TO_TRACE(_data), _preprocessing)
+   U_TRACE_REGISTER_OBJECT(0, UFileConfig, "%V,%b", _data.rep, _preprocessing)
 
    init();
 
@@ -76,7 +76,7 @@ bool UFileConfig::processData()
 
       if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/cpp.err");
 
-      command.snprintf("cpp -undef -nostdinc -w -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
+      command.snprintf("cpp -undef -nostdinc -w -P -C " DBG_DEF "-I%v -", _dir.rep);
 
       if (UFile::isOpen())
          {
@@ -87,7 +87,7 @@ bool UFileConfig::processData()
 #     ifdef HAVE_MCPP
          if (data.empty())
             {
-            command.snprintf("mcpp -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
+            command.snprintf("mcpp -P -C " DBG_DEF "-I%v -", _dir.rep);
 
             (void) UFile::lseek(U_SEEK_BEGIN, SEEK_SET);
 
@@ -111,7 +111,7 @@ bool UFileConfig::processData()
             {
             UCommand _cmd(command);
 
-            command.snprintf("mcpp -P -C " DBG_DEF "-I%.*s -", U_STRING_TO_TRACE(_dir));
+            command.snprintf("mcpp -P -C " DBG_DEF "-I%v -", _dir.rep);
 
             (void) _cmd.execute(&data, &output, -1, fd_stderr);
 
@@ -134,12 +134,14 @@ bool UFileConfig::processData()
 
    if (UFile::isPath())
       {
+      // -------------------------------------------------------------
       // Loads configuration information from the file.
       // The file type is determined by the file extension.
       // The following extensions are supported:
       // -------------------------------------------------------------
       // .properties - properties file (JAVA Properties)
       // .ini        - initialization file (Windows INI)
+      // -------------------------------------------------------------
 
       UString suffix = UFile::getSuffix();
 
@@ -413,15 +415,14 @@ bool UFileConfig::loadINI()
             _start = ptr;
             }
 
-         // The name of a property is composed of the section key and the value key,
-         // separated by a period (<section key>.<value key>).
+         // The name of a property is composed of the section key and the value key, separated by a period (<section key>.<value key>).
 
          len = sectionKey.size();
 
          fullKey.setBuffer(len + 1 + key.size());
 
-         if (len == 0) fullKey.snprintf(     "%.*s",                         U_STRING_TO_TRACE(key));
-         else          fullKey.snprintf("%.*s.%.*s", len, sectionKey.data(), U_STRING_TO_TRACE(key));
+         if (len == 0) fullKey.snprintf(   "%v",                 key.rep);
+         else          fullKey.snprintf("%v.%v", sectionKey.rep, key.rep);
 
          (void) fullKey.shrink();
 
@@ -508,7 +509,11 @@ bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, c
 
          // NB: var shell often need to be quoted...
 
-         if (c == '=' && value.isQuoted()) value.unQuote();
+         if (c == '=' &&
+             value.isQuoted())
+            {
+            value.unQuote();
+            }
 
          _start = ptr;
          }

@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/command.h>
+#include <ulib/mime/entity.h>
 #include <ulib/utility/escape.h>
 #include <ulib/utility/websocket.h>
 #include <ulib/net/server/server.h>
@@ -31,7 +32,7 @@ U_CREAT_FUNC(server_plugin_proxy, UProxyPlugIn)
 
 UProxyPlugIn::UProxyPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UProxyPlugIn, "")
+   U_TRACE_REGISTER_OBJECT(0, UProxyPlugIn, "")
 }
 
 UProxyPlugIn::~UProxyPlugIn()
@@ -80,8 +81,6 @@ int UProxyPlugIn::handlerRequest()
 
    if (UHTTP::isProxyRequest())
       {
-      uint32_t sz;
-      const char* ptr;
       bool output_to_client = false, // send output as response to client...
            output_to_server = false; // send output as request  to server...
 
@@ -102,8 +101,8 @@ int UProxyPlugIn::handlerRequest()
 
          if (esito == false)
             {
-            if (u_http_info.nResponseCode == 0 ||
-                u_http_info.nResponseCode == HTTP_OK)
+            if (U_http_info.nResponseCode == 0 ||
+                U_http_info.nResponseCode == HTTP_OK)
                {
                UHTTP::setInternalError();
                }
@@ -121,7 +120,7 @@ int UProxyPlugIn::handlerRequest()
          {
          U_INTERNAL_ASSERT(*UClientImage_Base::wbuffer)
 
-         ptr = UClientImage_Base::wbuffer->data();
+         const char* ptr = UClientImage_Base::wbuffer->data();
 
          if (UHTTP::scanfHeader(ptr, UClientImage_Base::wbuffer->size()) == false)
             {
@@ -155,7 +154,7 @@ int UProxyPlugIn::handlerRequest()
             {
             UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
 
-            while (UWebSocket::handleDataFraming(UClientImage_Base::psocket) == STATUS_CODE_OK &&
+            while (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK &&
                    client_http->UClient_Base::sendRequest(*UClientImage_Base::wbuffer, true)   &&
                    UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(client_http->UClient_Base::response)))
                {
@@ -202,7 +201,7 @@ int UProxyPlugIn::handlerRequest()
 
                UString content_type = client_http->getResponseHeader()->getContentType();
 
-               sz = content_type.size() + U_CONSTANT_SIZE(U_CRLF);
+               uint32_t sz = content_type.size() + U_CONSTANT_SIZE(U_CRLF);
 
                content_type.size_adjust_force(sz);
 

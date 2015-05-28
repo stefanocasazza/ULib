@@ -58,7 +58,7 @@ public:
 
    UCrl(const UString& x, const char* format = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCrl, "%.*S,%S", U_STRING_TO_TRACE(x), format)
+      U_TRACE_REGISTER_OBJECT(0, UCrl, "%V,%S", x.rep, format)
 
       crl = readCRL(x, format);
       }
@@ -105,7 +105,7 @@ public:
 
    bool set(const UString& x, const char* format = 0)
       {
-      U_TRACE(0, "UCrl::set(%.*S,%S)", U_STRING_TO_TRACE(x), format)
+      U_TRACE(0, "UCrl::set(%V,%S)", x.rep, format)
 
       set(readCRL(x, format));
 

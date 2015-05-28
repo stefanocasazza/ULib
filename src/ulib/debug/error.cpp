@@ -106,8 +106,7 @@ void UError::stackDump()
    // does not append a null byte to buf. It will truncate the contents (to a length of bufsiz characters),
    // in case the buffer is too small to hold all of the contents
 
-   char name_buf[1024];
-        name_buf[0] = 0;
+   char name_buf[1024] = { 0 };
 
 #if defined(U_GDB_STACK_DUMP_ENABLE) && !defined(_MSWINDOWS_)
    int n = readlink("/proc/self/exe", name_buf, sizeof(name_buf) - 1);

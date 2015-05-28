@@ -68,7 +68,7 @@ public:
 
    UFlexer(const UString& data_) : yyFlexLexer(), data(data_)
       {
-      U_TRACE_REGISTER_OBJECT(0, UFlexer, "%.*S", U_STRING_TO_TRACE(data_))
+      U_TRACE_REGISTER_OBJECT(0, UFlexer, "%V", data_.rep)
 
       parsed_chars = write_position = 0;
       }
@@ -129,7 +129,7 @@ public:
 
    void setData(const UString& data_)
       {
-      U_TRACE(0, "UFlexer::setData(%.*S)", U_STRING_TO_TRACE(data_))
+      U_TRACE(0, "UFlexer::setData(%V)", data_.rep)
 
       data = data_;
       }

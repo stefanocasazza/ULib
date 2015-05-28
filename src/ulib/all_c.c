@@ -73,7 +73,7 @@
 #  include "replace/mremap.c"
 #endif
 
-#ifndef HAVE_SENDFILE64
+#if !defined(HAVE_SENDFILE) && !defined(HAVE_MACOSX_SENDFILE)
 #  include "replace/sendfile.c"
 #endif
 

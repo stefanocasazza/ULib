@@ -21,7 +21,6 @@
 uint32_t u_hexdump_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
 {
    uint32_t i;
-   unsigned char ch;
    unsigned char* restrict r = result;
 
    U_INTERNAL_TRACE("u_hexdump_encode(%.*s,%u,%p)", U_min(len,128), input, len, result)
@@ -30,7 +29,7 @@ uint32_t u_hexdump_encode(const unsigned char* restrict input, uint32_t len, uns
 
    for (i = 0; i < len; ++i)
       {
-      ch = input[i];
+      unsigned char ch = input[i];
 
       *r++ = u_hex_lower[(ch >> 4) & 0x0F];
       *r++ = u_hex_lower[(ch     ) & 0x0F];

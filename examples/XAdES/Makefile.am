@@ -1,28 +1,30 @@
 ## Makefile.am for examples/XAdES
 
-EXTRA_DIST = *.spec*
-
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
+EXTRA_DIST = *.spec*
+
+ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+
 if CURL
-feed_LDADD      = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+feed_LDADD      = $(ulib_la)
 feed_SOURCES    = feed.cpp
 feed_LDFLAGS    = $(PRG_LDFLAGS)
 endif
 
-sign_LDADD      = libutility.la $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+sign_LDADD      = libutility.la $(ulib_la)
 sign_SOURCES    = sign.cpp
 sign_LDFLAGS    = $(PRG_LDFLAGS)
 
-archive_LDADD   = libutility.la $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+archive_LDADD   = libutility.la $(ulib_la)
 archive_SOURCES = archive.cpp
 archive_LDFLAGS = $(PRG_LDFLAGS)
 
-client_LDADD    = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+client_LDADD    = $(ulib_la)
 client_SOURCES  = client.cpp
 client_LDFLAGS  = $(PRG_LDFLAGS)
 
-verify_LDADD    = libverify.la libutility.la $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+verify_LDADD    = libverify.la libutility.la $(ulib_la)
 verify_SOURCES  = verify.cpp
 verify_LDFLAGS  = $(PRG_LDFLAGS)
 

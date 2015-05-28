@@ -97,7 +97,7 @@ done
 #done
 
 #./sendbytes.pl
-#ncat -4 test 80				 < inp/request.14215
+#ncat -4 test 80				 < inp/http/request.8197
 #$NC -w 10 test			 80 < inp/request.14215 >>out/web_server.out
 #$NC -w 10 10.10.100.115 80 < inp/http/all4.inp	>>out/web_server.out
 #$CURL http://$1/browserconfig.xml					>>out/web_server.out 2>>err/web_server.err
@@ -116,10 +116,10 @@ done
 
 for i in all.inp all0.inp all01.inp all1.inp all2.inp plaintext.inp post.inp; do
 	send_req $1 $2 80 inp/http/$i web_server 4
-	if [ $? -ne 0 ]; then
-	   kill_prg userver_tcp TERM
-		exit 1
-	fi
+#	if [ $? -ne 0 ]; then
+#	   kill_prg userver_tcp TERM
+#		exit 1
+#	fi
 done
 
 upload_test $2
@@ -139,6 +139,7 @@ fi
 cat <<EOF >inp/webserver.cfg
 userver {
  RUN_AS_USER apache
+#MIN_SIZE_FOR_SENDFILE 2k
  REQ_TIMEOUT 30
  LOG_FILE webserver$1.log
  LOG_FILE_SZ 1M
@@ -157,7 +158,6 @@ http {
  ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 700K
  REQUEST_READ_TIMEOUT 30
-#MIN_SIZE_FOR_SENDFILE 2k
  DIGEST_AUTHENTICATION no
  APACHE_LIKE_LOG /var/log/httpd/access_log
  CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz
@@ -179,15 +179,13 @@ if [ $? -ne 0 ]; then
    echo localhost www.sito2.com	>> /etc/hosts
 fi
 
-mkdir -p $DOC_ROOT/inp/http \
-			$DOC_ROOT/www.sito1.com/inp/http \
-         $DOC_ROOT/www.sito1.com/benchmark/docroot
+mkdir -p $DOC_ROOT/www.sito1.com/benchmark/docroot
 
 creat_link ../ok												$DOC_ROOT/ok
 creat_link ../tmp												$DOC_ROOT/tmp
 creat_link ../uploads										$DOC_ROOT/uploads
 creat_link ../../../benchmark/docroot/servlet		$DOC_ROOT/benchmark/docroot/servlet
-creat_link inp													$DOC_ROOT/www.sito1.com/inp
+creat_link ../../inp											$DOC_ROOT/www.sito1.com/inp
 creat_link ../../tmp											$DOC_ROOT/www.sito1.com/tmp
 creat_link ../SSI												$DOC_ROOT/www.sito1.com/SSI
 creat_link ../cgi-bin										$DOC_ROOT/www.sito1.com/cgi-bin
@@ -199,6 +197,8 @@ cat << EOF >tmp/c
 c
 c
 EOF
+
+export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
 
 # webserver-1
  creat_config -1

@@ -115,7 +115,7 @@ public:
 
    bool parse(const UString& _data)
       {
-      U_TRACE(0, "UMimeEntity::parse(%.*S)", U_STRING_TO_TRACE(_data))
+      U_TRACE(0, "UMimeEntity::parse(%V)", _data.rep)
 
       U_ASSERT(data.empty())
 
@@ -284,7 +284,7 @@ public:
 
    UMimeMessage(const UString& _data) : UMimeEntity(_data), rfc822(UMimeEntity::content)
       {
-      U_TRACE_REGISTER_OBJECT(0, UMimeMessage, "%.*S", U_STRING_TO_TRACE(_data))
+      U_TRACE_REGISTER_OBJECT(0, UMimeMessage, "%V", _data.rep)
       }
 
    ~UMimeMessage()
@@ -357,7 +357,7 @@ public:
 
    UMimeMultipart(const UString& _data) : UMimeEntity(_data)
       {
-      U_TRACE_REGISTER_OBJECT(0, UMimeMultipart, "%.*S", U_STRING_TO_TRACE(_data))
+      U_TRACE_REGISTER_OBJECT(0, UMimeMultipart, "%V", _data.rep)
 
       init();
       }

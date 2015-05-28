@@ -41,11 +41,34 @@
 
 struct U_EXPORT UEscape {
 
-   static void encode(const UString& s,          UString& buffer, bool json = false) { encode(U_STRING_TO_PARAM(s), buffer, json); }
-   static void encode(const char* s, uint32_t n, UString& buffer, bool json = false);
+   static void encode(const char* s, uint32_t n, UString& buffer, bool json = false)
+      {
+      U_TRACE(0, "UEscape::encode(%.*S,%u,%p,%b)", n, s, n, &buffer, json)
 
-   static bool decode(const UString& s,          UString& buffer) { return decode(U_STRING_TO_PARAM(s), buffer); }
-   static bool decode(const char* s, uint32_t n, UString& buffer);
+      U_ASSERT(buffer.uniq())
+      U_ASSERT(buffer.capacity() >= n)
+
+      uint32_t sz = buffer.size();
+
+      buffer.rep->_length = sz + u_escape_encode((const unsigned char*)s, n, buffer.c_pointer(sz), buffer.space(), json);
+
+      U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
+      }
+
+   static void encode(const UString& s, UString& buffer, bool json = false) { encode(U_STRING_TO_PARAM(s), buffer, json); }
+
+   static void decode(const char* s, uint32_t n, UString& buffer)
+      {
+      U_TRACE(0, "UEscape::decode(%.*S,%u,%p)", n, s, n, &buffer)
+
+      U_ASSERT(buffer.uniq())
+
+      buffer.rep->_length = u_escape_decode(s, n, (unsigned char*)buffer.data());
+
+      U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
+      }
+
+   static void decode(const UString& s, UString& buffer) { decode(U_STRING_TO_PARAM(s), buffer); }
 };
 
 #endif

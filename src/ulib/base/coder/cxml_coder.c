@@ -85,7 +85,6 @@ static inline unsigned char* u_set_gt(unsigned char* restrict r)
 
 uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
 {
-         unsigned char ch;
          unsigned char* restrict r   = result;
    const unsigned char* restrict end = input + len;
 
@@ -95,7 +94,7 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
 
    while (input < end)
       {
-      ch = *input++;
+      unsigned char ch = *input++;
 
       if ( u__isalnum(ch)          ||
           (u__isquote(ch) == false &&
@@ -156,7 +155,6 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
 
 uint32_t u_xml_decode(const char* restrict input, uint32_t len, unsigned char* restrict result)
 {
-                  char ch;
          unsigned char* restrict r   = result;
    const          char* restrict end = input + len;
 
@@ -166,7 +164,7 @@ uint32_t u_xml_decode(const char* restrict input, uint32_t len, unsigned char* r
 
    while (input < end)
       {
-      ch = *input++;
+      char ch = *input++;
 
       if (ch != '&') *r++ = ch;
       else

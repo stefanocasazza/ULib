@@ -15,7 +15,7 @@
 
 UString URPCEncoder::encodeMethod(URPCMethod& method, const UString& nsName) // namespace qualified element information
 {
-   U_TRACE(0, "URPCEncoder::encodeMethod(%p,%.*S)", &method, U_STRING_TO_TRACE(nsName))
+   U_TRACE(0, "URPCEncoder::encodeMethod(%p,%V)", &method, nsName.rep)
 
    encodedValue.setEmpty();
 

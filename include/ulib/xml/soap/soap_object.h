@@ -20,14 +20,14 @@
 #include <ulib/xml/soap/soap_gen_method.h>
 
 /**
-A USOAPObject acts as a container for a set of methods. Objects derived from it may do with incoming requests:
-save persistence information, perform logging, or whatever else is needed. As a user of the class, you may also
-decide to just have the object hold stateless methods. In its simplest form, an object derived from USOAPObject
-may just act as repository for a functional group. When the component handling client requests receives a message
-that component tells the USOAPObject to process the request. USOAPObject assumes that all requests are wellformed
-SOAP messages. On return, the external component gets the SOAP response. This string may contain the result of the
-method/message or it may contain a Fault.
-*/
+ * A USOAPObject acts as a container for a set of methods. Objects derived from it may do with incoming requests:
+ * save persistence information, perform logging, or whatever else is needed. As a user of the class, you may also
+ * decide to just have the object hold stateless methods. In its simplest form, an object derived from USOAPObject
+ * may just act as repository for a functional group. When the component handling client requests receives a message
+ * that component tells the USOAPObject to process the request. USOAPObject assumes that all requests are wellformed
+ * SOAP messages. On return, the external component gets the SOAP response. This string may contain the result of the
+ * method/message or it may contain a Fault.
+ */
 
 class U_EXPORT USOAPObject : public URPCObject {
 public:
@@ -78,7 +78,7 @@ protected:
 
    virtual void insertGenericMethod(const UString& n, const UString& ns, UCommand* cmd, int rtype) U_DECL_OVERRIDE
       {
-      U_TRACE(0, "USOAPObject::insertGenericMethod(%.*S,%.*S,%p,%d)", U_STRING_TO_TRACE(n), U_STRING_TO_TRACE(ns), cmd, rtype)
+      U_TRACE(0, "USOAPObject::insertGenericMethod(%V,%V,%p,%d)", n.rep, ns.rep, cmd, rtype)
 
       methodList.push_back(U_NEW(USOAPGenericMethod(n, ns, cmd, rtype)));
       }

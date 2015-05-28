@@ -34,8 +34,8 @@
 #define U_MAX_UPLOAD_PROGRESS   16
 #define U_MIN_SIZE_FOR_DEFLATE 150 // NB: google advice...
 
-#define U_HTTP_BODY                         UClientImage_Base::request->substr(u_http_info.endHeader, u_http_info.clength)
-#define U_HTTP_HEADER                       UClientImage_Base::request->substr(u_http_info.startHeader, u_http_info.szHeader)
+#define U_HTTP_BODY                         UClientImage_Base::request->substr(U_http_info.endHeader, U_http_info.clength)
+#define U_HTTP_HEADER                       UClientImage_Base::request->substr(U_http_info.startHeader, U_http_info.szHeader)
 #define U_HTTP_URI_EQUAL(str)               ((str).equal(U_HTTP_URI_TO_PARAM))
 #define U_HTTP_URI_DOSMATCH(mask,len,flags) (UServices::dosMatchWithOR(U_HTTP_URI_TO_PARAM, mask, len, flags))
 
@@ -79,7 +79,9 @@ public:
    static void ctor();
    static void dtor();
 
+   static bool readRequest();
    static int  handlerDataPending();
+   static bool findEndHeader(const UString& buffer);
    static bool isValidRequest(const char* ptr) __pure;
    static bool scanfHeader(const char* ptr, uint32_t size);
    static bool isValidRequestExt(const char* ptr, uint32_t size) __pure;
@@ -87,14 +89,11 @@ public:
    static void        setStatusDescription();
    static const char* getStatusDescription(uint32_t* plen = 0);
 
-   static bool readRequest();
-   static bool findEndHeader(const UString& buffer);
-
    static bool readHeader( USocket* socket, UString& buffer);
    static bool readBody(   USocket* socket, UString* buffer, UString& body);
 
-   static bool readHeader() { return readHeader(UClientImage_Base::psocket, *UClientImage_Base::request); }
-   static bool readBody()   { return readBody(  UClientImage_Base::psocket,  UClientImage_Base::request, *UClientImage_Base::body); }
+   static bool readHeader() { return readHeader(UServer_Base::csocket, *UClientImage_Base::request); }
+   static bool readBody()   { return readBody(  UServer_Base::csocket,  UClientImage_Base::request, *UClientImage_Base::body); }
 
    // TYPE
 
@@ -189,12 +188,12 @@ public:
       }
 
    static bool isMobile() __pure;
+   static bool isProxyRequest();
+
    static bool isTSARequest() __pure;
    static bool isSOAPRequest() __pure;
    static bool isFCGIRequest() __pure;
    static bool isSCGIRequest() __pure;
-
-   static bool isProxyRequest();
 
    static bool isMethodEmpty() { return (U_http_method_type == 0); }
 
@@ -216,8 +215,58 @@ public:
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
    static bool enable_caching_by_proxy_servers, data_chunked, bsendfile;
-   static uint32_t npathinfo, limit_request_body, request_read_timeout, min_size_for_sendfile, range_start, range_size, response_code;
+   static uint32_t npathinfo, limit_request_body, request_read_timeout, range_start, range_size, response_code;
 
+   static uint32_t getUserAgent()
+      {
+      U_TRACE(0, "UHTTP::getUserAgent()")
+
+      uint32_t agent = (U_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, -1) : 0);
+
+      U_RETURN(agent);
+      }
+
+   static void setPathName();
+   static void checkForPathName()
+      {
+      U_TRACE(0, "UHTTP::checkForPathName()")
+
+      if (pathname->empty())
+         {
+         setPathName(); 
+
+         file->setPath(*pathname);
+
+         U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
+         }
+      }
+
+   static void setHostname(const char* ptr, uint32_t len)
+      {
+      U_TRACE(0, "UHTTP::setHostname(%.*S,%u)", len, ptr, len)
+
+      // The difference between HTTP_HOST and U_HTTP_VHOST is that HTTP_HOST can include the «:PORT» text, and U_HTTP_VHOST only the name
+
+      U_http_host_len  =
+      U_http_host_vlen = len;
+      U_http_info.host = ptr;
+
+      U_INTERNAL_DUMP("U_http_host_len = %u U_HTTP_HOST = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
+
+      // hostname[:port]
+
+      for (const char* endptr = ptr+len; ptr < endptr; ++ptr)
+         {
+         if (*ptr == ':')
+            {
+            U_http_host_vlen = ptr-U_http_info.host;
+
+            break;
+            }
+         }
+
+      U_INTERNAL_DUMP("U_http_host_vlen = %u U_HTTP_VHOST = %.*S", U_http_host_vlen, U_HTTP_VHOST_TO_TRACE)
+      }
 
    static int  handlerREAD();
    static bool callService();
@@ -225,47 +274,26 @@ public:
    static void setMimeIndex();
    static int  processRequest();
    static void initDbNotFound();
-
    static void setEndRequestProcessing();
    static bool callService(const UString& path);
    static bool isUriRequestNeedCertificate() __pure;
-   static void setHostname(const char* ptr, uint32_t len);
    static bool checkRequestForHeader(const UString& request);
    static bool manageSendfile(const char* ptr, uint32_t len, UString& ext);
    static bool checkContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
 
    static bool checkRequestForHeader() { return checkRequestForHeader(*UClientImage_Base::request); }
 
-   static uint32_t getUserAgent()
-      {
-      U_TRACE(0, "UHTTP::getUserAgent()")
-
-      uint32_t agent = (u_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, -1) : 0);
-
-      U_RETURN(agent);
-      }
-
-   static UString getHeaderMimeType(const char* content, uint32_t size, const char* content_type,
-                                    time_t expire = 0L, bool content_length_changeable = false);
-
-   static const char* getHeaderValuePtr(const UString& name, bool nocase)
-      { return getHeaderValuePtr(U_STRING_TO_PARAM(name), nocase); }
-
-   static const char* getHeaderValuePtr(const UString& request, const UString& name, bool nocase)
-      { return getHeaderValuePtr(request, U_STRING_TO_PARAM(name), nocase); }
-
    static const char* getHeaderValuePtr(                        const char* name, uint32_t name_len, bool nocase) __pure;
    static const char* getHeaderValuePtr(const UString& request, const char* name, uint32_t name_len, bool nocase) __pure;
 
-   // set HTTP main error message
+   static const char* getHeaderValuePtr(                        const UString& name, bool nocase) { return getHeaderValuePtr(         U_STRING_TO_PARAM(name), nocase); }
+   static const char* getHeaderValuePtr(const UString& request, const UString& name, bool nocase) { return getHeaderValuePtr(request, U_STRING_TO_PARAM(name), nocase); }
 
-   static void setNotFound();
-   static void setForbidden();
-   static void setBadMethod();
-   static void setBadRequest();
-   static void setUnAuthorized();
-   static void setInternalError();
-   static void setServiceUnavailable();
+   static UString getHeaderMimeType(const char* content, uint32_t size, const char* content_type, time_t expire = 0L, bool content_length_changeable = false);
+
+   // get HTTP response message
+
+   static UString getHeaderForResponse(const UString& content);
 
    // set HTTP response message
 
@@ -277,12 +305,65 @@ public:
    };
 
    static void setResponse(const UString* content_type, UString* pbody);
+   static void setErrorResponse(const UString* content_type, int code, const char* fmt, uint32_t len);
    static void setRedirectResponse(int mode, const UString& ext, const char* ptr_location, uint32_t len_location);
 
-   // get HTTP response message
+   // set HTTP main error message
 
-   static UString getHtmlEncodedForResponse(const char* fmt);
-   static UString getHeaderForResponse(const UString& content);
+   static void setNotFound()
+      {
+      U_TRACE(0, "UHTTP::setNotFound()")
+
+      setErrorResponse(str_ctype_html, HTTP_NOT_FOUND, "Your requested URL %.*S was not found on this server", 0);
+      }
+
+   static void setBadMethod()
+      {
+      U_TRACE(0, "UHTTP::setBadMethod()")
+
+      U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, HTTP_BAD_METHOD)
+
+      setErrorResponse(str_ctype_html, HTTP_BAD_METHOD, "The requested method is not allowed for the URL %.*S", 0);
+      }
+
+   static void setBadRequest()
+      {
+      U_TRACE(0, "UHTTP::setBadRequest()")
+
+      setErrorResponse(str_ctype_html, HTTP_BAD_REQUEST, "Your requested URL %.*S was a request that this server could not understand", 0);
+      }
+
+   static void setForbidden()
+      {
+      U_TRACE(0, "UHTTP::setForbidden()")
+
+      UClientImage_Base::setRequestForbidden();
+
+      setErrorResponse(str_ctype_html, HTTP_FORBIDDEN, "You don't have permission to access %.*S on this server", 0);
+      }
+
+   static void setInternalError()
+      {
+      U_TRACE(0, "UHTTP::setInternalError()")
+
+      setErrorResponse(str_ctype_html, HTTP_INTERNAL_ERROR,
+                       U_CONSTANT_TO_PARAM("The server encountered an internal error or misconfiguration "
+                                           "and was unable to complete your request. Please contact the server "
+                                           "administrator, and inform them of the time the error occurred, and "
+                                           "anything you might have done that may have caused the error. More "
+                                           "information about this error may be available in the server error log"));
+      }
+
+   static void setServiceUnavailable()
+      {
+      U_TRACE(0, "UHTTP::setServiceUnavailable()")
+
+      setErrorResponse(str_ctype_html, HTTP_UNAVAILABLE,
+                       U_CONSTANT_TO_PARAM("Sorry, the service you requested is not available at this moment. "
+                                           "Please contact the server administrator and inform them about this"));
+      }
+
+   static void setUnAuthorized();
 
    // HTTP STRICT TRANSPORT SECURITY
 
@@ -436,7 +517,7 @@ public:
 
    static void addLinkPagination(UString& link, uint32_t num_page)
       {
-      U_TRACE(0, "UHTTP::addLinkPagination(%.*S,%u)", U_STRING_TO_TRACE(link), num_page)
+      U_TRACE(0, "UHTTP::addLinkPagination(%V,%u)", link.rep, num_page)
 
 #  ifdef U_HTML_PAGINATION_SUPPORT
       UString x(100U);
@@ -772,7 +853,7 @@ public:
       key(_key, PCRE_FOR_REPLACE),
        replacement(_replacement)
       {
-      U_TRACE_REGISTER_OBJECT(0, RewriteRule, "%.*S,%.*S", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(_replacement))
+      U_TRACE_REGISTER_OBJECT(0, RewriteRule, "%V,%V", _key.rep, _replacement.rep)
 
       key.study();
       }
@@ -879,8 +960,30 @@ public:
       U_RETURN(result);
       }
 
-   static bool isFileInCache();
    static void checkFileForCache();
+   static void checkFileInCache(const char* path, uint32_t len);
+
+   static bool isFileInCache()
+      {
+      U_TRACE(0, "UHTTP::isFileInCache()")
+
+      checkFileInCache(U_FILE_TO_PARAM(*file));
+
+      if (file_data) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static uint32_t old_path_len;
+
+   static void checkFileInCache1(const char* path, uint32_t len)
+      {
+      U_TRACE(0, "UHTTP::checkFileInCache1(%.*S,%u)", len, path, len)
+
+      U_INTERNAL_DUMP("old_path_len = %u", old_path_len)
+
+      if (old_path_len != len) checkFileInCache(path, (old_path_len = len));
+      }
 
    static UString getDataFromCache(int idx);
 
@@ -917,6 +1020,7 @@ private:
 
 #ifdef U_STATIC_ONLY
    static void loadStaticLinkedServlet(const char* name, uint32_t len, iPFpv runDynamicPage) U_NO_EXPORT;
+   static uint32_t getHtmlEncodedForResponse(char* buffer, uint32_t size, const char* fmt);
 #endif      
 
    static UString getHTMLDirectoryList() U_NO_EXPORT;

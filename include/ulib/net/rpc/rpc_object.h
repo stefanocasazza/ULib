@@ -27,9 +27,7 @@
  * that component tells the URPCObject to process the request. URPCObject assumes that all requests are wellformed
  * messages. On return, the external component gets the response. This string may contain the result of the
  * method/message or it may contain a URPCFault.
- */
-
-/**
+ *
  * how to override the default...
  *
  * template <> inline void u_destroy(const URPCMethod** ptr, uint32_t n) { U_TRACE(0,"u_destroy<URPCMethod*>(%p,%u)", ptr, n) }
@@ -158,7 +156,7 @@ protected:
 
    virtual void insertGenericMethod(const UString& n, const UString& ns, UCommand* cmd, int rtype)
       {
-   // U_TRACE(0, "URPCObject::insertGenericMethod(%.*S,%.*S,%p,%d)", U_STRING_TO_TRACE(n), U_STRING_TO_TRACE(ns), cmd, rtype) // problem with sanitize address
+   // U_TRACE(0, "URPCObject::insertGenericMethod(%V,%V,%p,%d)", n.rep, ns.rep, cmd, rtype) // problem with sanitize address
 
       methodList.push_back(U_NEW(URPCGenericMethod(n, ns, cmd, rtype)));
       }

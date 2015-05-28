@@ -85,7 +85,7 @@ public:
 
    URDB(const UString& pathdb, int _ignore_case) : UCDB(pathdb, _ignore_case)
       {
-      U_TRACE_REGISTER_OBJECT(0, URDB, "%.*S,%d", U_STRING_TO_TRACE(pathdb), _ignore_case)
+      U_TRACE_REGISTER_OBJECT(0, URDB, "%V,%d", pathdb.rep, _ignore_case)
 
       pnode = 0;
        node = 0;
@@ -108,7 +108,7 @@ public:
    bool open(                       uint32_t log_size = 1024 * 1024, bool btruncate = false, bool cdb_brdonly = true, bool breference = true);
    bool open(const UString& pathdb, uint32_t log_size = 1024 * 1024, bool btruncate = false, bool cdb_brdonly = true, bool breference = true)
       {
-      U_TRACE(0, "URDB::open(%.*S,%u,%b,%b,%b)", U_STRING_TO_TRACE(pathdb), log_size, btruncate, cdb_brdonly, breference)
+      U_TRACE(0, "URDB::open(%V,%u,%b,%b,%b)", pathdb.rep, log_size, btruncate, cdb_brdonly, breference)
 
       UFile::setPath(pathdb);
 
@@ -203,7 +203,7 @@ public:
 
    UString at(UStringRep* _key)
       {
-      U_TRACE(0, "URDB::at(%.*S)", U_STRING_TO_TRACE(*_key))
+      U_TRACE(0, "URDB::at(%V)", _key)
 
       UCDB::setKey(_key);
 
@@ -212,7 +212,7 @@ public:
 
    UString at(const UString& _key)
       {
-      U_TRACE(0, "URDB::at(%.*S)", U_STRING_TO_TRACE(_key))
+      U_TRACE(0, "URDB::at(%V)", _key.rep)
 
       UCDB::setKey(_key);
 
@@ -410,7 +410,7 @@ public:
 
    URDBObjectHandler(const UString& pathdb, int _ignore_case, const UDataStorage* ptr) : URDB(pathdb, _ignore_case)
       {
-      U_TRACE_REGISTER_OBJECT(0, URDBObjectHandler<UDataStorage*>, "%.*S,%d,%p", U_STRING_TO_TRACE(pathdb), _ignore_case, ptr)
+      U_TRACE_REGISTER_OBJECT(0, URDBObjectHandler<UDataStorage*>, "%V,%d,%p", pathdb.rep, _ignore_case, ptr)
 
       pDataStorage     = (UDataStorage*)ptr;
       brecfound        = false;
@@ -435,7 +435,7 @@ public:
 
    bool getDataStorage(const UString& _key)
       {
-      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::getDataStorage(%.*S)", U_STRING_TO_TRACE(_key))
+      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::getDataStorage(%V)", _key.rep)
 
       U_CHECK_MEMORY
 
@@ -461,7 +461,7 @@ public:
 
    bool putDataStorage(const UString& _key)
       {
-      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::putDataStorage(%.*S)", U_STRING_TO_TRACE(_key))
+      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::putDataStorage(%V)", _key.rep)
 
       U_CHECK_MEMORY
 
@@ -486,7 +486,7 @@ public:
 
    bool insertDataStorage(const UString& _key)
       {
-      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::insertDataStorage(%.*S)", U_STRING_TO_TRACE(_key))
+      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::insertDataStorage(%V)", _key.rep)
 
       U_CHECK_MEMORY
 
@@ -554,7 +554,7 @@ public:
 
    URDBObjectHandler(const UString& pathdb, int _ignore_case, const T* ptr) : URDBObjectHandler<UDataStorage*>(pathdb, _ignore_case, ptr)
       {
-      U_TRACE_REGISTER_OBJECT(0, URDBObjectHandler<T*>, "%.*S,%d,%p", U_STRING_TO_TRACE(pathdb), _ignore_case, ptr)
+      U_TRACE_REGISTER_OBJECT(0, URDBObjectHandler<T*>, "%V,%d,%p", pathdb.rep, _ignore_case, ptr)
       }
 
    ~URDBObjectHandler()

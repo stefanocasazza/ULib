@@ -58,7 +58,7 @@ public:
 
    UPKCS10(const UString& x, const char* format = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPKCS10, "%.*S,%S", U_STRING_TO_TRACE(x), format)
+      U_TRACE_REGISTER_OBJECT(0, UPKCS10, "%V,%S", x.rep, format)
 
       request = readPKCS10(x, format);
       }

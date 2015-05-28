@@ -23,7 +23,7 @@ const char* UTokenizer::group;
 
 void UTokenizer::setData(const UString& data)
 {
-   U_TRACE(0, "UTokenizer::setData(%.*S)", U_STRING_TO_TRACE(data))
+   U_TRACE(0, "UTokenizer::setData(%V)", data.rep)
 
    str = data;
    end = (s = data.data()) + data.size();
@@ -246,7 +246,7 @@ tok:
 
 bool UTokenizer::tokenSeen(const UString* x)
 {
-   U_TRACE(0, "UTokenizer::tokenSeen(%.*S)", U_STRING_TO_TRACE(*x))
+   U_TRACE(0, "UTokenizer::tokenSeen(%V)", x->rep)
 
    U_INTERNAL_DUMP("s = %.*S", end - s, s)
 
@@ -336,27 +336,124 @@ UString UTokenizer::getTokenQueryParser()
    U_RETURN_STRING(token);
 }
 
-/*
-Expression is tokenized as:
-
-logical: && || !
-compare: = == != < <= > =>
-Multiplicative operators: *, /, %
-Additive operators: +, -
-precedence: ( )
-quoted strings: 'string with a dollar: $FOO'
-unquoted strings: string
-variable substitution: $REMOTE_ADDR ${REMOTE_ADDR} $$(pid)
-function call with optional params: FN_CALL([p1,p2,...,pn])
-
-contains:    ^
-ends_with:   =~
-starts_with: ~=
-*/
+/**
+ * Expression is tokenized as:
+ *
+ * precedence: ( )
+ * logical: && || !
+ * compare: = == != < <= > =>
+ * Additive operators: +, -
+ * Multiplicative operators: *, /, %
+ * unquoted strings: string
+ * quoted strings: 'string with a dollar: $FOO'
+ * variable substitution: $REMOTE_ADDR ${REMOTE_ADDR} $$(pid)
+ * function call with optional params: FN_CALL([p1,p2,...,pn])
+ *
+ * contains:    ^
+ * ends_with:   =~
+ * starts_with: ~=
+ */
 
 int UTokenizer::getTokenId(UString& token)
 {
    U_TRACE(0, "UTokenizer::getTokenId(%p)", &token)
+
+   static const int dispatch_table[] = {
+      (int)((char*)&&case_exclamation-(char*)&&cvalue),/* '!' */
+      0,/* '"' */
+      0,/* '#' */
+      (int)((char*)&&case_dollar-(char*)&&cvalue),/* '$' */
+      (int)((char*)&&case_percent-(char*)&&cvalue),/* '%' */
+      (int)((char*)&&case_ampersand-(char*)&&cvalue),/* '&' */
+      (int)((char*)&&case_quote-(char*)&&cvalue),/* '\'' */
+      (int)((char*)&&case_opening_parenthesis-(char*)&&cvalue),/* '(' */
+      (int)((char*)&&case_closing_parenthesis-(char*)&&cvalue),/* ')' */
+      (int)((char*)&&case_asterisk-(char*)&&cvalue),/* '*' */
+      (int)((char*)&&case_plus-(char*)&&cvalue),/* '+' */
+      (int)((char*)&&case_comma-(char*)&&cvalue),/* ',' */
+      (int)((char*)&&case_minus-(char*)&&cvalue),/* '-' */
+      0,/* '.' */
+      (int)((char*)&&case_slash-(char*)&&cvalue),/* '/' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '0' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '1' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '2' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '3' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '4' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '5' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '6' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '7' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '8' */
+      (int)((char*)&&case_digit-(char*)&&cvalue),/* '9' */
+      0,/* ':' */
+      0,/* ';' */
+      (int)((char*)&&case_less-(char*)&&cvalue),/* '<' */
+      (int)((char*)&&case_equal-(char*)&&cvalue),/* '=' */
+      (int)((char*)&&case_major-(char*)&&cvalue),/* '>' */
+      0,/* '?' */
+      0,/* '@' */
+      0,/* 'A' */
+      0,/* 'B' */
+      0,/* 'C' */
+      0,/* 'D' */
+      0,/* 'E' */
+      0,/* 'F' */
+      0,/* 'G' */
+      0,/* 'H' */
+      0,/* 'I' */
+      0,/* 'J' */
+      0,/* 'K' */
+      0,/* 'L' */
+      0,/* 'M' */
+      0,/* 'N' */
+      0,/* 'O' */
+      0,/* 'P' */
+      0,/* 'Q' */
+      0,/* 'R' */
+      0,/* 'S' */
+      0,/* 'T' */
+      0,/* 'U' */
+      0,/* 'V' */
+      0,/* 'W' */
+      0,/* 'X' */
+      0,/* 'Y' */
+      0,/* 'Z' */
+      0,/* '[' */
+      0,/* '\' */
+      0,/* ']' */
+      (int)((char*)&&case_xor-(char*)&&cvalue),/* '^' */
+      0,/* '_' */
+      0,/* '`' */
+      0,/* 'a' */
+      0,/* 'b' */
+      0,/* 'c' */
+      0,/* 'd' */
+      0,/* 'e' */
+      (int)((char*)&&case_bool-(char*)&&cvalue),/* 'f' */
+      0,/* 'g' */
+      0,/* 'h' */
+      0,/* 'i' */
+      0,/* 'j' */
+      0,/* 'k' */
+      0,/* 'l' */
+      0,/* 'm' */
+      0,/* 'n' */
+      0,/* 'o' */
+      0,/* 'p' */
+      0,/* 'q' */
+      0,/* 'r' */
+      0,/* 's' */
+      (int)((char*)&&case_bool-(char*)&&cvalue),/* 't' */
+      0,/* 'u' */
+      0,/* 'v' */
+      0,/* 'w' */
+      0,/* 'x' */
+      0,/* 'y' */
+      0,/* 'z' */
+      0,/* '{' */
+      (int)((char*)&&case_pipe-(char*)&&cvalue),/* '|' */
+      0,/* '}' */
+      (int)((char*)&&case_tilde-(char*)&&cvalue)/* '~' */
+   };
 
    char c;
    int tid = 0;
@@ -374,162 +471,142 @@ loop:
 
    if (u__isspace(c)) goto loop;
 
-   switch (c)
+   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&cvalue = %p", c-'!', dispatch_table[c-'!'], &&cvalue)
+
+   goto *((char*)&&cvalue + dispatch_table[c-'!']);
+
+case_exclamation: tid = (*s == '=' ? (++s, U_TK_NE) : U_TK_NOT); p2 = s; goto end; /* '!' */
+
+case_dollar: /* '$' */
+   if (*s == '=')
       {
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
+      p2  = ++s;
+      tid = U_TK_ENDS_WITH;
+      }
+   else if (*s == '$')
+      {
+      p2  = ++s;
+      tid = U_TK_PID;
+      }
+   else
+      {
+      tid = U_TK_NAME;
+
+      if (*s == '{')
          {
-         tid = U_TK_VALUE;
+         p1 = ++s;
 
-         while (s < end && u__isdigit(*s)) ++s;
-
-         p2 = s;
-         }
-      break;
-
-      case '\'':
-         {
-         tid = U_TK_VALUE;
-
-         p1 = s;
-
-         while (s < end && *s != '\'') ++s;
+         while (s < end && *s != '}') ++s;
 
          p2 = s++;
          }
-      break;
-
-      case '+': tid = U_TK_PLUS;                                          p2 = s; break;
-      case '-': tid = U_TK_MINUS;                                         p2 = s; break;
-      case '%': tid = U_TK_MOD;                                           p2 = s; break;
-      case '(': tid = U_TK_LPAREN;                                        p2 = s; break;
-      case ')': tid = U_TK_RPAREN;                                        p2 = s; break;
-      case ',': tid = U_TK_COMMA;                                         p2 = s; break;
-
-      case '|': tid = (*s == '|' ? (++s, U_TK_OR)          : U_TK_ERROR); p2 = s; break;
-      case '&': tid = (*s == '&' ? (++s, U_TK_AND)         : U_TK_ERROR); p2 = s; break;
-
-      case '=': tid = (*s == '=' ? (++s, U_TK_EQ)          : U_TK_EQ);    p2 = s; break;
-      case '>': tid = (*s == '=' ? (++s, U_TK_GE)          : U_TK_GT);    p2 = s; break;
-      case '<': tid = (*s == '=' ? (++s, U_TK_LE)          : U_TK_LT);    p2 = s; break;
-      case '!': tid = (*s == '=' ? (++s, U_TK_NE)          : U_TK_NOT);   p2 = s; break;
-
-      // foo  = "bar" - Un elemento il cui attributo "foo" è uguale a "bar"
-      // foo ~= "bar" - Un elemento il cui attributo "foo" ha per valore un elenco di valori separati da spazio, uno dei quali uguale a "bar"
-      // foo ^= "bar" - Un elemento il cui attributo "foo" ha un valore che inizia per "bar"
-      // foo $= "bar" - Un elemento il cui attributo "foo" ha un valore che finisce per "bar"
-      // foo *= "bar" - Un elemento il cui attributo "foo" ha un valore che contiene la sottostringa "bar"
-
-      case '~': tid = (*s == '=' ? (++s, U_TK_IS_PRESENT)  : U_TK_ERROR); p2 = s; break;
-      case '^': tid = (*s == '=' ? (++s, U_TK_STARTS_WITH) : U_TK_ERROR); p2 = s; break;
-      case '*': tid = (*s == '=' ? (++s, U_TK_CONTAINS)    : U_TK_MULT);  p2 = s; break;
-
-      case '$':
+      else
          {
-         if (*s == '=')
-            {
-            p2  = ++s;
-            tid = U_TK_ENDS_WITH;
-            }
-         else if (*s == '$')
-            {
-            p2  = ++s;
-            tid = U_TK_PID;
-            }
-         else
-            {
-            tid = U_TK_NAME;
+         p1 = s;
 
-            if (*s == '{')
-               {
-               p1 = ++s;
+         while (s < end && u__isname(*s)) ++s;
 
-               while (s < end && *s != '}') ++s;
-
-               p2 = s++;
-               }
-            else
-               {
-               p1 = s;
-
-               while (s < end && u__isname(*s)) ++s;
-
-               p2 = s;
-               }
-            }
+         p2 = s;
          }
-      break;
-
-      case 't':
-      case 'f':
-         {
-         if (c == 't' ? skipToken(U_CONSTANT_TO_PARAM("rue"))
-                      : skipToken(U_CONSTANT_TO_PARAM("alse")))
-            {
-            tid = U_TK_VALUE;
-
-            if (c == 't') p2 = s;
-
-            break;
-            }
-
-         goto value;
-         }
-   // break;
-
-      case '/':
-         {
-         c = *s;
-
-         if (u__isdigit(c) ||
-             u__isspace(c))
-            {
-            p2  = s;
-            tid = U_TK_DIV;
-
-            break;
-            }
-
-         goto value;
-         }
-   // break;
-
-      default:
-         {
-value:
-         while (s < end)
-            {
-            c = *s;
-
-            if (c == '(' ||
-                c == ')' ||
-                c == ',' ||
-                u__isgraph(c) == false)
-               {         
-               break;
-               }
-
-            ++s;
-            }
-
-         p2  = s;
-         tid = (c == '(' ? U_TK_FN_CALL : U_TK_VALUE);
-         }
-      break;
       }
+
+   goto end;
+
+case_percent:   tid = U_TK_MOD;                                   p2 = s; goto end; /* '%' */
+case_ampersand: tid = (*s == '&' ? (++s, U_TK_AND) : U_TK_ERROR); p2 = s; goto end; /* '&' */
+
+case_quote: /* '\'' */
+   tid = U_TK_VALUE;
+
+   p1 = s;
+
+   while (s < end && *s != '\'') ++s;
+
+   p2 = s++;
+
+   goto end;
+
+case_opening_parenthesis: tid = U_TK_LPAREN; p2 = s; goto end; /* '(' */
+case_closing_parenthesis: tid = U_TK_RPAREN; p2 = s; goto end; /* ')' */
+
+case_asterisk: tid = (*s == '=' ? (++s, U_TK_CONTAINS) : U_TK_MULT); p2 = s; goto end; /* '*' */
+case_plus:     tid = U_TK_PLUS;                                      p2 = s; goto end; /* '+' */
+case_comma:    tid = U_TK_COMMA;                                     p2 = s; goto end; /* ',' */
+case_minus:    tid = U_TK_MINUS;                                     p2 = s; goto end; /* '-' */
+
+case_slash: /* '/' */
+   c = *s;
+
+   if (u__isdigit(c) ||
+       u__isspace(c))
+      {
+      p2  = s;
+      tid = U_TK_DIV;
+
+      goto end;
+      }
+
+   goto cvalue;
+
+case_digit: /* '0' ... '9' */
+   tid = U_TK_VALUE;
+
+   while (s < end && u__isdigit(*s)) ++s;
+
+   p2 = s;
+
+   goto end;
+
+// foo  = "bar" - Un elemento il cui attributo "foo" è uguale a "bar"
+// foo ~= "bar" - Un elemento il cui attributo "foo" ha per valore un elenco di valori separati da spazio, uno dei quali uguale a "bar"
+// foo ^= "bar" - Un elemento il cui attributo "foo" ha un valore che inizia per "bar"
+// foo $= "bar" - Un elemento il cui attributo "foo" ha un valore che finisce per "bar"
+// foo *= "bar" - Un elemento il cui attributo "foo" ha un valore che contiene la sottostringa "bar"
+
+case_less:  tid = (*s == '=' ? (++s, U_TK_LE)          : U_TK_LT);    p2 = s; goto end; /* '<' */
+case_equal: tid = (*s == '=' ? (++s, U_TK_EQ)          : U_TK_EQ);    p2 = s; goto end; /* '=' */
+case_major: tid = (*s == '=' ? (++s, U_TK_GE)          : U_TK_GT);    p2 = s; goto end; /* '>' */
+case_xor:   tid = (*s == '=' ? (++s, U_TK_STARTS_WITH) : U_TK_ERROR); p2 = s; goto end; /* '^' */
+
+case_bool: /* 'f' 't' */
+   if (c == 't' ? skipToken(U_CONSTANT_TO_PARAM("rue"))
+                : skipToken(U_CONSTANT_TO_PARAM("alse")))
+      {
+      tid = U_TK_VALUE;
+
+      if (c == 't') p2 = s;
+
+      goto end;
+      }
+
+   goto cvalue;
+
+case_pipe:  tid = (*s == '|' ? (++s, U_TK_OR)          : U_TK_ERROR); p2 = s; goto end; /* '|' */
+case_tilde: tid = (*s == '=' ? (++s, U_TK_IS_PRESENT)  : U_TK_ERROR); p2 = s; goto end; /* '~' */
+
+cvalue:
+   while (s < end)
+      {
+      c = *s;
+
+      if (c == '(' ||
+          c == ')' ||
+          c == ',' ||
+          u__isgraph(c) == false)
+         {         
+         break;
+         }
+
+      ++s;
+      }
+
+   p2  = s;
+   tid = (c == '(' ? U_TK_FN_CALL : U_TK_VALUE);
 
 end:
    token = str.substr(p1, p2 - p1);
 
-   U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
+   U_INTERNAL_DUMP("token = %V", token.rep)
 
    U_RETURN(tid);
 }

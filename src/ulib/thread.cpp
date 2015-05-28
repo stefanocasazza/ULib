@@ -192,7 +192,7 @@ void UThread::yield()
 {
    U_TRACE(1, "UThread::yield()")
 
-   // Yields the current thread's CPU time slice to allow another thread to begin immediate execution.
+   // Yields the current thread's CPU time slice to allow another thread to begin immediate execution
 
    U_INTERNAL_DUMP("_cancel = %d", priv->_cancel)
 
@@ -311,10 +311,8 @@ void UThread::signal(int signo)
 {
    U_TRACE(1, "UThread::signal(%d)", signo)
 
-   // set the _signal variable to the given value. Can only be
-   // done if called from the process that the thread is associated
-   // with. If called from a different process, the given signal
-   // is sent to the process.
+   // set the _signal variable to the given value. Can only be done if called from the process that the
+   // thread is associated with. If called from a different process, the given signal is sent to the process
 
    pthread_t _tid = (pthread_t) U_SYSCALL_NO_PARAM(pthread_self);
 
@@ -327,10 +325,11 @@ void UThread::signal(int signo)
       }
 }
 
-/* You can't kill or stop just one thread from another process. You can send a signal to a particular thread,
+/**
+ * You can't kill or stop just one thread from another process. You can send a signal to a particular thread,
  * but the stop/abort action that is taken by the signal affects the whole process. In the earlier implementation
  * of Linux threads, it was possible to stop a single thread with SIGSTOP, but this behaviour has now been fixed
- * to conform to the Posix standard (so it stops all threads in the process).
+ * to conform to the Posix standard (so it stops all threads in the process)
  */
 
 void UThread::suspend()
@@ -395,7 +394,7 @@ void UThread::execHandler(UThread* th)
       // You can't kill or stop just one thread from another process. You can send a signal to a particular thread,
       // but the stop/abort action that is taken by the signal affects the whole process. In the earlier implementation
       // of Linux threads, it was possible to stop a single thread with SIGSTOP, but this behaviour has now been fixed
-      // to conform to the Posix standard (so it stops all threads in the process).
+      // to conform to the Posix standard (so it stops all threads in the process)
 
 #     ifdef sigemptyset
       sigemptyset(&mask);
@@ -447,7 +446,7 @@ bool UThread::start(uint32_t timeoutMS)
       {
       if (timeoutMS)
          {
-         /* give at the thread the time to initialize... */
+         // give at the thread the time to initialize...
 
          struct timespec ts = { 0L, 1000000L };
 

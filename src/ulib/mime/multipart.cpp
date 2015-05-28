@@ -38,7 +38,7 @@ const char* UMimeMultipartMsg::str_encoding[4] = {
 
 UMimeMultipartMsg::UMimeMultipartMsg(const char* type, uint32_t type_len, Encoding encoding, const char* header, uint32_t header_len, bool bRFC2045MIMEMSG)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimeMultipartMsg, "%.*S,%u,%d,%.*S,%u,%b",type_len,type,type_len,encoding,header_len,header,header_len,bRFC2045MIMEMSG)
+   U_TRACE_REGISTER_OBJECT(0, UMimeMultipartMsg, "%.*S,%u,%d,%.*S,%u,%b", type_len, type, type_len, encoding, header_len, header, header_len, bRFC2045MIMEMSG)
 
    U_INTERNAL_ASSERT_POINTER(type)
    U_INTERNAL_ASSERT_POINTER(header)
@@ -89,7 +89,7 @@ UMimeMultipartMsg::UMimeMultipartMsg(const char* type, uint32_t type_len, Encodi
 
 uint32_t UMimeMultipartMsg::message(UString& body, bool bterminator)
 {
-   U_TRACE(0, "UMimeMultipartMsg::message(%.*S,%b)", U_STRING_TO_TRACE(body), bterminator)
+   U_TRACE(0, "UMimeMultipartMsg::message(%V,%b)", body.rep, bterminator)
 
    U_ASSERT_MAJOR(vec_part.size(), 1)
 
@@ -118,7 +118,7 @@ uint32_t UMimeMultipartMsg::message(UString& body, bool bterminator)
 
 __pure inline int UMimeMultipartMsg::encodeAutodetect(const UString& content, const char* charset)
 {
-   U_TRACE(0, "UMimeMultipartMsg::encodeAutodetect(%.*S,%S)", U_STRING_TO_TRACE(content), charset)
+   U_TRACE(0, "UMimeMultipartMsg::encodeAutodetect(%V,%S)", content.rep, charset)
 
    U_INTERNAL_ASSERT_POINTER(charset)
 
@@ -175,8 +175,7 @@ UString UMimeMultipartMsg::section(const UString& content,
                                    Encoding encoding, const char* charset, const char* name,
                                    const char* header, uint32_t header_len)
 {
-   U_TRACE(0, "UMimeMultipartMsg::section(%.*S,%.*S,%u,%d,%S,%S,%.*S,%u)", U_STRING_TO_TRACE(content), type_len, type, type_len,
-                                                                           encoding, charset, name, header_len, header, header_len)
+   U_TRACE(0, "UMimeMultipartMsg::section(%V,%.*S,%u,%d,%S,%S,%.*S,%u)", content.rep, type_len, type, type_len, encoding, charset, name, header_len, header, header_len)
 
    U_INTERNAL_ASSERT_POINTER(name)
    U_INTERNAL_ASSERT_POINTER(charset)

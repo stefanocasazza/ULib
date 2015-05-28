@@ -61,6 +61,18 @@ cleandist:
 		$(distdir)/tests/ulib/ok/socket.ok \
 		$(distdir)/tests/ulib/ok/interrupt.ok \
 		$(distdir)/tests/ulib/ok/memory_pool.ok \
+		$(distdir)/src/ulib/*/*.lo \
+		$(distdir)/src/ulib/*/*/*.lo \
+		$(distdir)/src/ulib/*/*/*/*.lo \
+		$(distdir)/src/ulib/*/*/*/*/*.lo \
+		$(distdir)/src/ulib/*/.dirstamp \
+		$(distdir)/src/ulib/*/*/.dirstamp \
+		$(distdir)/src/ulib/*/*/*/.dirstamp \
+		$(distdir)/src/ulib/*/*/*/*/.dirstamp \
+		$(distdir)/src/ulib/*/.deps \
+		$(distdir)/src/ulib/*/*/.deps \
+		$(distdir)/src/ulib/*/*/*/.deps \
+		$(distdir)/src/ulib/*/*/*/*/.deps \
   		$(distdir)/src/ulib/wi_auth.cpp \
   		$(distdir)/src/ulib/orm/driver/*.o \
   		$(distdir)/src/ulib/orm/driver/*.l? \
@@ -79,6 +91,9 @@ cleandist:
   		$(distdir)/src/ulib/net/server/plugin/*/Makefile \
   		$(distdir)/src/ulib/net/server/plugin/usp/usp_compile.sh \
   		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator \
+		$(distdir)/tests/ulib/plugin/*.lo \
+		$(distdir)/tests/ulib/plugin/.dirstamp \
+		$(distdir)/tests/ulib/plugin/*/.dirstamp \
 		$(distdir)/tests/examples/RSIGN/RSIGN/log \
 		$(distdir)/tests/examples/WAGSM/log \
 		$(distdir)/tests/examples/CApath/*.*0 \

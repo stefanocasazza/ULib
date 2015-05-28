@@ -24,11 +24,14 @@ void USOAPGenericMethod::encode()
       {
       static const UString* str_response;
 
-      static ustringrep stringrep_storage[] = {
-         { U_STRINGREP_FROM_CONSTANT("response") }
-      };
+      if (str_response == 0)
+         {
+         static ustringrep stringrep_storage[] = {
+            { U_STRINGREP_FROM_CONSTANT("response") }
+         };
 
-      if (str_response == 0) U_NEW_ULIB_OBJECT(str_response, U_STRING_FROM_STRINGREP_STORAGE(0));
+         U_NEW_ULIB_OBJECT(str_response, U_STRING_FROM_STRINGREP_STORAGE(0));
+         }
 
       if (URPCObject::isOutputBinary(response_type)) U_SOAP_ENCB64_NAME_ARG(*str_response, response);
       else                                           U_SOAP_ENCODE_NAME_ARG(*str_response, response);

@@ -48,7 +48,7 @@ void UUnixSocket::setPath(const char* pathname)
 
 bool UUnixSocket::connectServer(const UString& server, unsigned int iServPort, int timeoutMS)
 {
-   U_TRACE(1, "UUnixSocket::connectServer(%.*S,%u,%d)", U_STRING_TO_TRACE(server), iServPort, timeoutMS)
+   U_TRACE(1, "UUnixSocket::connectServer(%V,%u,%d)", server.rep, iServPort, timeoutMS)
 
    U_CHECK_MEMORY
 
@@ -79,9 +79,10 @@ loop:
       U_RETURN(true);
       }
 
-   if (errno == EINTR &&
-       UInterrupt::checkForEventSignalPending())
+   if (errno == EINTR)
       {
+      UInterrupt::checkForEventSignalPending();
+
       goto loop;
       }
 

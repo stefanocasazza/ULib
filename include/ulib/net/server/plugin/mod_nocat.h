@@ -232,7 +232,6 @@ protected:
    static bool checkPeerInfo(UStringRep* key, void* value);
    static bool checkPeerStatus(UStringRep* key, void* value);
    static bool getPeerListInfo(UStringRep* key, void* value);
-   static void setRedirectLocation(const UString& redirect, const Url& auth);
    static void permit(const UString& UserDownloadRate, const UString& UserUploadRate);
    static void sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UString* poutput);
    static void setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const UString& ip);
@@ -259,7 +258,7 @@ protected:
 
    static void sendMsgToAllPortal(const UString& msg)
       {
-      U_TRACE(0, "UNoCatPlugIn::sendMsgToAllPortal(%.*S)", U_STRING_TO_TRACE(msg))
+      U_TRACE(0, "UNoCatPlugIn::sendMsgToAllPortal(%V)", msg.rep)
 
       for (uint32_t i = 0, n = vauth_url->size(); i < n; ++i) sendMsgToPortal(i, msg, 0);
       }

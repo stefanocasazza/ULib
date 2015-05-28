@@ -36,9 +36,7 @@ public:
 
    UXMLElement(const UString& s, const UString& a, const UString& n) : str(s), accessorName(a), namespaceName(n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLElement, "%.*S,%.*S,%.*S", U_STRING_TO_TRACE(s),
-                                                                U_STRING_TO_TRACE(a), U_STRING_TO_TRACE(n))
-      }
+      U_TRACE_REGISTER_OBJECT(0, UXMLElement, "%V,%V,%V", s.rep, a.rep, n.rep) }
 
    ~UXMLElement()
       {

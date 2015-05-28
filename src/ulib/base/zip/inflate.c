@@ -209,8 +209,8 @@ int init_inflation(void)
 
 int inflate_file(pb_file* pbf, int out_fd, struct zipentry* ze)
 {
+   int rdamt;
    ub4 crc = 0;
-   int rtval, rdamt;
    Bytef  in_buff[RDSZ];
    Bytef out_buff[RDSZ];
 
@@ -222,6 +222,8 @@ int inflate_file(pb_file* pbf, int out_fd, struct zipentry* ze)
 
    for (;;) /* loop until we've consumed all the compressed data */
       {
+      int rtval;
+
       if (zs.avail_in == 0)
          {
          if ((rdamt = pb_read(pbf, in_buff, RDSZ)) == 0) break;
@@ -305,8 +307,8 @@ int inflate_file(pb_file* pbf, int out_fd, struct zipentry* ze)
 
 int inflate_buffer(pb_file* pbf, unsigned* inlen, char** out_buff, unsigned* outlen, struct zipentry* ze)
 {
+   int flag;
    Bytef* ptr;
-   int rtval, flag;
    unsigned size, nsize;
 
    U_INTERNAL_TRACE("inflate_buffer(%p,%u,%p,%u,%p)", pbf, *inlen, out_buff, *outlen, ze)
@@ -333,10 +335,12 @@ int inflate_buffer(pb_file* pbf, unsigned* inlen, char** out_buff, unsigned* out
 
    for (;;) /* loop until we've consumed all the compressed data */
       {
+      int rtval = zlib_inflate(&zs, 0);
+
       U_INTERNAL_TRACE("zs.avail_in  = %u zs.next_in  = %p zs.avail_out = %u zs.next_out = %p",
                         zs.avail_in,  zs.next_in, zs.avail_out, zs.next_out)
 
-      if ((rtval = zlib_inflate(&zs, 0)) != Z_OK)
+      if (rtval != Z_OK)
          {
          U_INTERNAL_TRACE("rtval = %d", rtval)
 

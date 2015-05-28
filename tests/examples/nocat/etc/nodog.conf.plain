@@ -17,6 +17,7 @@ userver {
 ## LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
 ## USE_TCP_OPTIMIZATION  flag indicating the use of TCP/IP options to optimize data transmission (NODELAY/CORK, DEFER_ACCEPT, QUICKACK)
 ## SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+## MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
 ##
 ## PID_FILE      write pid on file indicated
 ## WELCOME_MSG   message of welcome to send initially to client
@@ -230,8 +231,6 @@ nocat {
 ## 
 ## ENABLE_INOTIFY             enable automatic update of cached document root image with inotify
 ## CACHE_FILE_MASK            mask (DOS regexp) of pathfile that be cached in memory (default: "*.css|*.js|*.*html|*.png|*.gif|*.jpg")
-##
-## MIN_SIZE_FOR_SENDFILE      for major size it is better to use sendfile() to serve static content
 ##
 ## VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine,
 ##                            as differentiated by their apparent hostname 

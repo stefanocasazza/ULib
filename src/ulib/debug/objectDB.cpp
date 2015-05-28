@@ -405,11 +405,11 @@ void UObjectDB::close()
          {
          ptrdiff_t write_size = file_ptr - file_mem;
 
-         U_INTERNAL_ASSERT_MINOR(write_size,(ptrdiff_t)file_size)
+         U_INTERNAL_ASSERT_MINOR(write_size, (ptrdiff_t)file_size)
 
-      // (void)  msync(file_mem, write_size, MS_SYNC);
+      // (void) msync(file_mem, write_size, MS_SYNC);
+      
          (void) munmap(file_mem, file_size);
-
          (void) ftruncate(fd, write_size);
          (void) fsync(fd);
 
@@ -611,11 +611,9 @@ void UObjectDB::dumpObjects()
 
    qsort(obj_live, n, sizeof(const UObjectDumpable*), compareDumper);
 
-   const UObjectDumpable* dumper;
-
    for (uint32_t i = 0; i < n; ++i)
       {
-      dumper = obj_live[i];
+      const UObjectDumpable* dumper = obj_live[i];
 
       if (dumper->level >= level_active)
          {

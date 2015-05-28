@@ -40,10 +40,8 @@ U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #endif
 
 int            USocket::iBackLog = SOMAXCONN;
-int            USocket::server_flags;
 int            USocket::accept4_flags;  // If flags is 0, then accept4() is the same as accept()
 bool           USocket::tcp_reuseport;
-bool           USocket::tcp_autocorking;
 SocketAddress* USocket::cLocal;
 
 #include "socket_address.cpp"
@@ -218,8 +216,8 @@ void USocket::setLocal()
 
    if (U_SYSCALL(getsockname, "%d,%p,%p", getFd(), (sockaddr*)tmp, &slDummy) == 0)
       {
-      tmp.getPortNumber(iLocalPort);
-      tmp.getIPAddress(cLocalAddress);
+      iLocalPort = tmp.getPortNumber();
+                   tmp.getIPAddress(cLocalAddress);
 
       U_socket_LocalSet(this) = true;
       }
@@ -319,6 +317,7 @@ bool USocket::bind()
 
    U_INTERNAL_ASSERT(isOpen())
    U_INTERNAL_ASSERT_POINTER(cLocal)
+   U_INTERNAL_ASSERT_MAJOR(iLocalPort, 0)
 
    int result, counter = 0;
 
@@ -339,18 +338,6 @@ loop:
    if (errno == EADDRINUSE) U_WARNING("Probably another instance of userver is running on the same port: %u", iLocalPort);
 
    U_RETURN(false);
-}
-
-void USocket::setTcpFastOpen()
-{
-   U_TRACE(0, "USocket::setTcpFastOpen()")
-
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
-#  ifndef TCP_FASTOPEN
-#  define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
-#  endif
-   (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const int[]){ 5 }, sizeof(int));
-#endif
 }
 
 void USocket::setReusePort()
@@ -407,7 +394,7 @@ void USocket::setAddress(void* address)
 
 bool USocket::setHostName(const UString& pcNewHostName)
 {
-   U_TRACE(0, "USocket::setHostName(%.*S)", U_STRING_TO_TRACE(pcNewHostName))
+   U_TRACE(0, "USocket::setHostName(%V)", pcNewHostName.rep)
 
    U_INTERNAL_ASSERT_POINTER(cLocal)
 
@@ -468,16 +455,16 @@ bool USocket::setServer(unsigned int port, UString* localAddress)
 
    cLocal = new SocketAddress;
 
-   cLocal->setPortNumber(port);
-
-   if (localAddress == 0)
+   if (localAddress)
+      {
+      if (setHostName(*localAddress) == false) U_RETURN(false);
+      }
+   else
       {
       cLocal->setIPAddressWildCard(U_socket_IPv6(this));
       }
-   else if (setHostName(*localAddress) == false)
-      {
-      U_RETURN(false);
-      }
+
+   cLocal->setPortNumber(iLocalPort = port);
 
    /**
     * The normal TCP termination sequence looks like this (simplified). We have two peers: A and B
@@ -540,9 +527,9 @@ bool USocket::setServer(unsigned int port, UString* localAddress)
    U_RETURN(false);
 }
 
-void USocket::reusePort()
+void USocket::reusePort(int _flags)
 {
-   U_TRACE(1, "USocket::reusePort()")
+   U_TRACE(1, "USocket::reusePort(%d)", _flags)
 
    U_CHECK_MEMORY
 
@@ -562,19 +549,24 @@ void USocket::reusePort()
       // coverity[+alloc]
       iSockDesc = U_SYSCALL(socket, "%d,%d,%d", domain, iSocketType, 0);
 
+      U_INTERNAL_DUMP("iLocalPort = %u cLocal->getPortNumber() = %u", iLocalPort, cLocal->getPortNumber())
+
+      U_INTERNAL_ASSERT_MAJOR( iLocalPort, 0)
+      U_INTERNAL_ASSERT_EQUALS(iLocalPort, cLocal->getPortNumber())
+
       if (isClosed()                                                           ||
           (setReuseAddress(), setReusePort(),
            cLocal->setIPAddressWildCard(U_socket_IPv6(this)), bind()) == false ||
           U_SYSCALL(listen, "%d,%d", iSockDesc, iBackLog) != 0)
          {
-         U_ERROR("SO_REUSEPORT failed", 0);
+         U_ERROR("SO_REUSEPORT failed, port %d", iLocalPort);
          }
 
       (void) U_SYSCALL(close, "%d", old);
       }
 #endif
 
-   setFlags(server_flags);
+   setFlags(_flags);
 }
 
 void USocket::setRemote()
@@ -591,8 +583,8 @@ void USocket::setRemote()
 
    if (U_SYSCALL(getpeername, "%d,%p,%p", getFd(), (sockaddr*)cRemote, &slDummy) == 0)
       {
-      cRemote.getPortNumber(iRemotePort);
-      cRemote.getIPAddress(cRemoteAddress);
+      iRemotePort = cRemote.getPortNumber();
+                    cRemote.getIPAddress(cRemoteAddress);
       }
 }
 
@@ -610,10 +602,7 @@ bool USocket::connect()
    cServer.setPortNumber(iRemotePort);
    cServer.setIPAddress(cRemoteAddress);
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_)
-   setTcpQuickAck();
    setTcpFastOpen();
-#endif
 
 loop:
    result = U_SYSCALL(connect, "%d,%p,%d", getFd(), (sockaddr*)cServer, cServer.sizeOf());
@@ -627,9 +616,10 @@ loop:
       U_RETURN(true);
       }
 
-   if (errno == EINTR &&
-       UInterrupt::checkForEventSignalPending())
+   if (errno == EINTR)
       {
+      UInterrupt::checkForEventSignalPending();
+
       goto loop;
       }
 
@@ -665,15 +655,16 @@ loop:
       {
       U_INTERNAL_DUMP("BytesRead(%d) = %#.*S", iBytesRead, iBytesRead, CAST(pBuffer))
 
-      cSource.getIPAddress(cSourceIP);
-      cSource.getPortNumber(iSourcePortNumber);
+      iSourcePortNumber = cSource.getPortNumber();
+                          cSource.getIPAddress(cSourceIP);
 
       U_RETURN(iBytesRead);
       }
 
-   if (errno == EINTR &&
-       UInterrupt::checkForEventSignalPending())
+   if (errno == EINTR)
       {
+      UInterrupt::checkForEventSignalPending();
+
       goto loop;
       }
 
@@ -704,42 +695,14 @@ int USocket::sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, U
       U_RETURN(iBytesWrite);
       }
 
-   if (errno == EINTR &&
-       UInterrupt::checkForEventSignalPending())
+   if (errno == EINTR)
       {
+      UInterrupt::checkForEventSignalPending();
+
       goto loop;
       }
 
    U_RETURN(-1);
-}
-
-/**
- * Stick a TCP cork in the socket. It's not clear that this will help performance, but it might.
- *
- * TCP_CORK: If set, don't send out partial frames. All queued partial frames are sent when the option is cleared again. This is useful
- *           for prepending headers before calling sendfile(), or for throughput optimization. As currently implemented, there is a 200
- *           millisecond ceiling on the time for which output is corked by TCP_CORK. If this ceiling is reached, then queued data is
- *           automatically transmitted.
- *
- * This is a no-op if we don't think this platform has corks.
- */
-
-void USocket::setTcpCork(USocket* sk, uint32_t value)
-{
-   U_TRACE(1, "USocket::setTcpCork(%p,%u)", sk, value)
-
-   U_INTERNAL_ASSERT_POINTER(sk)
-
-#if defined(TCP_CORK) && !defined(_MSWINDOWS_)
-   if (tcp_autocorking == false)
-      {
-#  ifdef USE_LIBSSL
-      if (sk->isSSL(true)) return;
-#  endif
-
-      (void) sk->setSockOpt(SOL_TCP, TCP_CORK, (const void*)&value, sizeof(uint32_t));
-      }
-#endif
 }
 
 /**
@@ -1047,8 +1010,8 @@ bool USocket::acceptClient(USocket* pcNewConnection)
       {
       pcNewConnection->iState = CONNECT;
 
-      cRemote.getPortNumber(pcNewConnection->iRemotePort);
-      cRemote.getIPAddress( pcNewConnection->cRemoteAddress);
+      pcNewConnection->iRemotePort = cRemote.getPortNumber();
+                                     cRemote.getIPAddress( pcNewConnection->cRemoteAddress);
 
       U_INTERNAL_DUMP("pcNewConnection->iSockDesc = %d pcNewConnection->flags = %d %B",
                        pcNewConnection->iSockDesc, pcNewConnection->flags, pcNewConnection->flags)
@@ -1133,9 +1096,7 @@ bool USocket::acceptClient(USocket* pcNewConnection)
 
    U_INTERNAL_ASSERT_EQUALS(pcNewConnection->iSockDesc, -1)
 
-   // NB: we never restart accept(), in general the socket server is NOT blocking...
-
-   if (errno == EINTR) (void) UInterrupt::checkForEventSignalPending();
+   if (errno == EINTR) UInterrupt::checkForEventSignalPending(); // NB: we never restart accept(), in general the socket server is NOT blocking...
 
    pcNewConnection->iState = -errno;
 
@@ -1176,14 +1137,14 @@ void USocket::setMsgError()
 
 bool USocket::connectServer(const UString& server, unsigned int iServPort, int timeoutMS)
 {
-   U_TRACE(1, "USocket::connectServer(%.*S,%u,%d)", U_STRING_TO_TRACE(server), iServPort, timeoutMS)
+   U_TRACE(1, "USocket::connectServer(%V,%u,%d)", server.rep, iServPort, timeoutMS)
 
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT(server.isNullTerminated())
 
    // This method is called to connect the socket to a server TCP socket that is specified
-   // by the provided IP Address and port number. We call the connect() method to perform the connection.
+   // by the provided IP Address and port number. We call the connect() method to perform the connection
 
    if (isOpen() == false) _socket();
 
@@ -1209,7 +1170,7 @@ ok:      setLocal();
 
          iState = CONNECT;
 
-         if (bflag) setBlocking(); // restore file status flags
+         if (bflag) setBlocking(); // restore socket status flags
 
          U_RETURN(true);
          }
@@ -1243,9 +1204,10 @@ ok:      setLocal();
             U_RETURN(false);
             }
 
-         if (errno == EINTR &&
-             UInterrupt::checkForEventSignalPending())
+         if (errno == EINTR)
             {
+            UInterrupt::checkForEventSignalPending();
+
             goto loop;
             }
 
@@ -1285,9 +1247,10 @@ loop:
       U_RETURN(iBytesWrite);
       }
 
-   if (errno == EINTR &&
-       UInterrupt::checkForEventSignalPending())
+   if (errno == EINTR)
       {
+      UInterrupt::checkForEventSignalPending();
+
       goto loop;
       }
 
@@ -1316,9 +1279,10 @@ loop:
       U_RETURN(iBytesRead);
       }
 
-   if (errno == EINTR &&
-       UInterrupt::checkForEventSignalPending())
+   if (errno == EINTR)
       {
+      UInterrupt::checkForEventSignalPending();
+
       goto loop;
       }
 

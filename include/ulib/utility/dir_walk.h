@@ -62,9 +62,16 @@ public:
       ctor(dir, _filter, _filter_len);
       }
 
+   UDirWalk(const UString* dir, const UString& _filter)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%V,%V", dir->rep, _filter.rep)
+
+      ctor(dir, U_STRING_TO_PARAM(_filter));
+      }
+
    UDirWalk(const UString& dir, const char* _filter = 0, uint32_t _filter_len = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%.*S,%.*S,%u", U_STRING_TO_TRACE(dir), _filter_len, _filter, _filter_len)
+      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%V,%.*S,%u", dir.rep, _filter_len, _filter, _filter_len)
 
       ctor(&dir, _filter, _filter_len);
       }
@@ -106,7 +113,7 @@ public:
 
    static void setFoundFile(UString& path)
       {
-      U_TRACE(0, "UDirWalk::setFoundFile(%.*S)", U_STRING_TO_TRACE(path))
+      U_TRACE(0, "UDirWalk::setFoundFile(%V)", path.rep)
 
       U_INTERNAL_ASSERT_POINTER(pthis)
 
@@ -132,6 +139,16 @@ public:
       }
 
    static void setSuffixFileType(const char* format, ...);
+
+   static void setSuffixFileType(const char* str, uint32_t len)
+      {
+      U_TRACE(0, "UDirWalk::setSuffixFileType(%.*S,%u)", len, str, len)
+
+      U_INTERNAL_ASSERT_EQUALS(suffix_file_type, 0)
+
+      suffix_file_type = U_NEW(UString(str, len));
+      }
+
    static void setFilter(const char* _filter, uint32_t _filter_len);
    static bool setDirectory(const UString& dir, const char* filter = 0, uint32_t filter_len = 0);
 

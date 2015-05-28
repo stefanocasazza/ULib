@@ -334,7 +334,7 @@ public:
 
    explicit UPgSqlStatementBindResult(UStringRep& s) : USqlStatementBindResult(s)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%.*S", U_STRING_TO_TRACE(s))
+      U_TRACE_REGISTER_OBJECT(0, UPgSqlStatementBindResult, "%V", &s)
 
       type = VARCHAROID;
       }
@@ -399,7 +399,7 @@ public:
 
    UOrmDriverPgSql()
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriverPgSql, "")
+      U_TRACE_REGISTER_OBJECT(0, UOrmDriverPgSql, "")
 
       str_allocate();
 
@@ -408,7 +408,7 @@ public:
 
    UOrmDriverPgSql(const UString& name_drv) : UOrmDriver(name_drv)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriverPgSql, "%.*S", U_STRING_TO_TRACE(name_drv))
+      U_TRACE_REGISTER_OBJECT(0, UOrmDriverPgSql, "%V", name_drv.rep)
       }
 
    virtual ~UOrmDriverPgSql();

@@ -112,7 +112,7 @@ void UFile::setPathRelativ(const UString* environment)
    */
 
    U_INTERNAL_DUMP("u_cwd(%u) = %S", u_cwd_len, u_cwd)
-   U_INTERNAL_DUMP("pathname(%u) = %.*S", pathname.size(), U_STRING_TO_TRACE(pathname))
+   U_INTERNAL_DUMP("pathname(%u) = %V", pathname.size(), pathname.rep)
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 }
 
@@ -136,7 +136,7 @@ void UFile::setRoot()
 
 void UFile::setPath(const UString& path, const UString* environment)
 {
-   U_TRACE(0, "UFile::setPath(%.*S,%p)", U_STRING_TO_TRACE(path), environment)
+   U_TRACE(0, "UFile::setPath(%V,%p)", path.rep, environment)
 
    pathname = path;
 
@@ -196,7 +196,7 @@ bool UFile::creat(int flags, mode_t mode)
 
 bool UFile::creat(const UString& path, int flags, mode_t mode)
 {
-   U_TRACE(0, "UFile::creat(%.*S,%d,%d)", U_STRING_TO_TRACE(path), flags, mode)
+   U_TRACE(0, "UFile::creat(%V,%d,%d)", path.rep, flags, mode)
 
    setPath(path);
 
@@ -702,7 +702,7 @@ UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
    U_INTERNAL_ASSERT_POINTER(path_relativ)
 
 #  ifdef U_COVERITY_FALSE_POSITIVE
-   if (fd <= 0) U_RETURN(UString::getStringNull());
+   if (fd <= 0) return UString::getStringNull();
 #  endif
 
    if (bsize) readSize();
@@ -737,7 +737,7 @@ UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
       U_RETURN_STRING(fileContent);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
@@ -747,7 +747,7 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
    if (isOpen()                          == false &&
        open(brdonly ? O_RDONLY : O_RDWR) == false)
       {
-      U_RETURN_STRING(UString::getStringNull());
+      return UString::getStringNull();
       }
 
    UString fileContent;
@@ -765,7 +765,7 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
 
 UString UFile::contentOf(const UString& _pathname, int flags, bool bstat)
 {
-   U_TRACE(0, "UFile::contentOf(%.*S,%d,%b)", U_STRING_TO_TRACE(_pathname), flags, bstat)
+   U_TRACE(0, "UFile::contentOf(%V,%d,%b)", _pathname.rep, flags, bstat)
 
    UFile file;
    UString content;
@@ -888,7 +888,7 @@ bool UFile::write(const struct iovec* iov, int n, bool append, bool bmkdirs)
 
 bool UFile::writeTo(const UString& path, const char* data, uint32_t sz, bool append, bool bmkdirs)
 {
-   U_TRACE(0, "UFile::writeTo(%.*S,%.*S,%u,%b,%b)", U_STRING_TO_TRACE(path), sz, data, sz, append, bmkdirs)
+   U_TRACE(0, "UFile::writeTo(%V,%.*S,%u,%b,%b)", path.rep, sz, data, sz, append, bmkdirs)
 
    UFile tmp(path);
 
@@ -901,7 +901,7 @@ bool UFile::writeTo(const UString& path, const char* data, uint32_t sz, bool app
 
 bool UFile::writeTo(const UString& path, const struct iovec* iov, int n, bool append, bool bmkdirs)
 {
-   U_TRACE(0, "UFile::writeTo(%.*S,%p,%d,%b,%b)", U_STRING_TO_TRACE(path), iov, n, append, bmkdirs)
+   U_TRACE(0, "UFile::writeTo(%V,%p,%d,%b,%b)", path.rep, iov, n, append, bmkdirs)
 
    UFile tmp(path);
 
@@ -1212,28 +1212,28 @@ int UFile::setBlocking(int _fd, int flags, bool block)
    U_INTERNAL_ASSERT_DIFFERS(_fd, -1)
 
    /* ------------------------------------------------------
-   * #define O_RDONLY           00
-   * #define O_WRONLY           01
-   * #define O_RDWR             02
-   * #define O_ACCMODE        0003
-   * #define O_CREAT          0100 // not fcntl
-   * #define O_EXCL           0200 // not fcntl
-   * #define O_NOCTTY         0400 // not fcntl
-   * #define O_TRUNC         01000 // not fcntl
-   * #define O_APPEND        02000
-   * #define O_NONBLOCK      04000
-   * #define O_SYNC         010000
-   * #define O_ASYNC        020000
-   * #define O_DIRECT       040000 // Direct disk access
-   * #define O_DIRECTORY   0200000 // Must be a directory
-   * #define O_NOFOLLOW    0400000 // Do not follow links
-   * #define O_NOATIME    01000000 // Do not set atime
-   * #define O_CLOEXEC    02000000 // Set close_on_exec
-   * ------------------------------------------------------
-   * #define O_NDELAY    O_NONBLOCK
-   * #define O_FSYNC     O_SYNC
-   * ------------------------------------------------------
-   */
+    * #define O_RDONLY           00
+    * #define O_WRONLY           01
+    * #define O_RDWR             02
+    * #define O_ACCMODE        0003
+    * #define O_CREAT          0100 // not fcntl
+    * #define O_EXCL           0200 // not fcntl
+    * #define O_NOCTTY         0400 // not fcntl
+    * #define O_TRUNC         01000 // not fcntl
+    * #define O_APPEND        02000
+    * #define O_NONBLOCK      04000
+    * #define O_SYNC         010000
+    * #define O_ASYNC        020000
+    * #define O_DIRECT       040000 // Direct disk access
+    * #define O_DIRECTORY   0200000 // Must be a directory
+    * #define O_NOFOLLOW    0400000 // Do not follow links
+    * #define O_NOATIME    01000000 // Do not set atime
+    * #define O_CLOEXEC    02000000 // Set close_on_exec
+    * ------------------------------------------------------
+    * #define O_FSYNC  O_SYNC
+    * #define O_NDELAY O_NONBLOCK
+    * ------------------------------------------------------
+    */
 
    bool blocking = isBlocking(_fd, flags); // actual state is blocking...?
 
@@ -1281,7 +1281,7 @@ UString UFile::getRealPath(const char* path, bool brelativ)
       U_RETURN_STRING(x);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 // ----------------------------------------------------------------------------------------------------------------------
@@ -1328,7 +1328,7 @@ bool UFile::mkTemp(char* _template)
 
 bool UFile::mkdtemp(UString& _template)
 {
-   U_TRACE(1, "UFile::mkdtemp(%.*S)", U_STRING_TO_TRACE(_template))
+   U_TRACE(1, "UFile::mkdtemp(%V)", _template.rep)
 
    errno = 0; // mkdtemp may not set it on error
 
@@ -1384,7 +1384,7 @@ bool UFile::mkdirs(const char* path, mode_t mode)
 
 bool UFile::rmdir(const UString& path, bool remove_all)
 {
-   U_TRACE(1, "UFile::rmdir(%.*S,%b)", U_STRING_TO_TRACE(path), remove_all)
+   U_TRACE(1, "UFile::rmdir(%V,%b)", path.rep, remove_all)
 
    const char* ptr = path.data();
 
@@ -1439,7 +1439,7 @@ bool UFile::rmdir(const UString& path, bool remove_all)
 
 bool UFile::rmdirs(const UString& path, bool remove_all)
 {
-   U_TRACE(1, "UFile::rmdirs(%.*S,%b)", U_STRING_TO_TRACE(path), remove_all)
+   U_TRACE(1, "UFile::rmdirs(%V,%b)", path.rep, remove_all)
 
    bool result = rmdir(path, remove_all);
 

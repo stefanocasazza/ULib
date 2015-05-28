@@ -27,7 +27,7 @@ SRC_CPP = internal/common.cpp \
 			 mime/header.cpp mime/entity.cpp mime/multipart.cpp \
 			 container/vector.cpp container/hash_map.cpp container/tree.cpp \
 			 utility/interrupt.cpp utility/compress.cpp utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
-			 utility/hexdump.cpp utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp utility/uhttp.cpp utility/escape.cpp \
+			 utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp utility/uhttp.cpp \
 			 utility/data_session.cpp utility/ring_buffer.cpp utility/websocket.cpp utility/dir_walk.cpp \
 			 lemon/expression.cpp \
 			 orm/orm.cpp orm/orm_driver.cpp \
@@ -35,7 +35,7 @@ SRC_CPP = internal/common.cpp \
 			 net/server/server.cpp net/server/client_image.cpp \
 			 net/client/client_rdb.cpp net/server/client_image_rdb.cpp net/server/server_rdb.cpp net/server/plugin/mod_proxy_service.cpp \
  			 net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp net/rpc/rpc_method.cpp net/rpc/rpc_encoder.cpp \
- 			 net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp net/rpc/rpc_parser.cpp \
+ 			 net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp net/rpc/rpc_parser.cpp net/rpc/rpc_client.cpp \
 			 net/client/smtp.cpp net/client/ftp.cpp net/client/pop3.cpp net/client/imap.cpp \
 			 net/client/http.cpp net/client/client.cpp \
 			 net/ipt_ACCOUNT.cpp \

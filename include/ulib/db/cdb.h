@@ -90,7 +90,7 @@ public:
 
    UCDB(const UString& path, int ignore_case) : UFile(path)
       {
-      U_TRACE_REGISTER_OBJECT(0, UCDB, "%.*S,%d", U_STRING_TO_TRACE(path), ignore_case)
+      U_TRACE_REGISTER_OBJECT(0, UCDB, "%V,%d", path.rep, ignore_case)
 
       init_internal(ignore_case);
       }
@@ -109,7 +109,7 @@ public:
 
    bool open(const UString& pathdb, bool brdonly = true)
       {
-      U_TRACE(0, "UCDB::open(%.*S)", U_STRING_TO_TRACE(pathdb))
+      U_TRACE(0, "UCDB::open(%V)", pathdb.rep)
 
       UFile::setPath(pathdb);
 
@@ -129,7 +129,7 @@ public:
 
    bool find(const UString& _key)
       {
-      U_TRACE(0, "UCDB::find(%.*S)", U_STRING_TO_TRACE(_key))
+      U_TRACE(0, "UCDB::find(%V)", _key.rep)
 
       setKey(_key);
 
@@ -171,7 +171,7 @@ public:
 
    UString operator[](const UString& _key)
       {
-      U_TRACE(0, "UCDB::operator[](%.*S)", U_STRING_TO_TRACE(_key))
+      U_TRACE(0, "UCDB::operator[](%V)", _key.rep)
 
       setKey(_key);
 
@@ -180,7 +180,7 @@ public:
 
    UString operator[](UStringRep* _key)
       {
-      U_TRACE(0, "UCDB::operator[](%.*S)", U_STRING_TO_TRACE(*_key))
+      U_TRACE(0, "UCDB::operator[](%V)", _key)
 
       setKey(_key);
 

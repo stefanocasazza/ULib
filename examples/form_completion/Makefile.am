@@ -4,7 +4,9 @@ MAINTAINERCLEANFILES = Makefile.in
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
-form_completion_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+
+form_completion_LDADD   = $(ulib_la)
 form_completion_SOURCES = main.cpp
 form_completion_LDFLAGS = $(PRG_LDFLAGS)
 

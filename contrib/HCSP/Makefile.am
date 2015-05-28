@@ -10,7 +10,7 @@ module_LTLIBRARIES = HCSP.la
 
 HCSP_la_SOURCES  = HCSP.c
 HCSP_la_LIBADD   = -lcrypto
-HCSP_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
+HCSP_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS) -no-undefined
 
 if MINGW
 if SSL

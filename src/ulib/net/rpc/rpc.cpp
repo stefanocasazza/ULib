@@ -26,7 +26,7 @@ UVector<UString>* URPC::rpc_info;
 
 uint32_t URPC::readTokenInt(USocket* s, const char* token, UString& buffer, uint32_t& rstart)
 {
-   U_TRACE(0, "URPC::readTokenInt(%p,%S,%.*S,%u)", s, token, U_STRING_TO_TRACE(buffer), rstart)
+   U_TRACE(0, "URPC::readTokenInt(%p,%S,%V,%u)", s, token, buffer.rep, rstart)
 
    uint32_t value = 0;
 
@@ -47,7 +47,7 @@ uint32_t URPC::readTokenInt(USocket* s, const char* token, UString& buffer, uint
 
 uint32_t URPC::readTokenString(USocket* s, const char* token, UString& buffer, uint32_t& rstart, UString& data)
 {
-   U_TRACE(0, "URPC::readTokenString(%p,%S,%.*S,%u,%p)", s, token, U_STRING_TO_TRACE(buffer), rstart, &data)
+   U_TRACE(0, "URPC::readTokenString(%p,%S,%V,%u,%p)", s, token, buffer.rep, rstart, &data)
 
    uint32_t value = readTokenInt(s, token, buffer, rstart);
 

@@ -2,19 +2,21 @@
 
 EXTRA_DIST = *.spec* *.start
 
+ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+
 dist_sysconf_DATA = userver.cfg.default
 
 DEFAULT_INCLUDES    = -I. -I$(top_srcdir)/include
 DEFAULT_CONFIG_FILE = $(sysconfdir)/userver.cfg
 
-userver_tcp_LDADD    = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+userver_tcp_LDADD    = $(ulib_la)
 userver_tcp_SOURCES  = userver.cpp
 userver_tcp_LDFLAGS  = $(PRG_LDFLAGS)
 userver_tcp_CPPFLAGS = -DU_TCP_SOCKET $(CPPFLAGS)
 bin_PROGRAMS  			= userver_tcp
 
 if SSL
-userver_ssl_LDADD    = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+userver_ssl_LDADD    = $(ulib_la)
 userver_ssl_SOURCES  = userver.cpp
 userver_ssl_LDFLAGS  = $(PRG_LDFLAGS)
 userver_ssl_CPPFLAGS = -DU_SSL_SOCKET $(CPPFLAGS)
@@ -23,7 +25,7 @@ endif
 
 ## MINGW don't have unix socket...
 if !MINGW
-userver_ipc_LDADD    = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+userver_ipc_LDADD    = $(ulib_la)
 userver_ipc_SOURCES  = userver.cpp
 userver_ipc_LDFLAGS  = $(PRG_LDFLAGS)
 userver_ipc_CPPFLAGS = -DU_UNIX_SOCKET $(CPPFLAGS)

@@ -460,3 +460,13 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
 #ifndef PLATFORM_VAR
 #define PLATFORM_VAR ""
 #endif
+
+/* Some useful macros for conditionally compiling memcheck features... */
+
+#ifndef HAVE_ARCH64
+#  define U_CHECK_MEMORY_SENTINEL      0x0a1b2c3d
+#  define U_CHECK_MEMORY_SENTINEL_STR "0x0a1b2c3d" 
+#else
+#  define U_CHECK_MEMORY_SENTINEL      0x0a1b2c3d4e5f6789
+#  define U_CHECK_MEMORY_SENTINEL_STR "0x0a1b2c3d4e5f6789"
+#endif

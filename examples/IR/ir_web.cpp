@@ -83,7 +83,7 @@ extern U_EXPORT int runDynamicPage_ir_web(UClientImage_Base* client_image);
    
       UHTTP::mime_index = U_html;
    
-      u_http_info.endHeader = 0;
+      U_http_info.endHeader = 0;
       }
       
    if (UHTTP::getDataSession() == false) UHTTP::setSessionCookie();

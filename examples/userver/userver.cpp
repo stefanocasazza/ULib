@@ -71,10 +71,11 @@ public:
       // PORT           port number for the listening socket
       // SOCKET_NAME    file name   for the listening socket
       // IP_ADDRESS     ip address of host for the interface connected to the Internet (autodetected if not specified)
-      // ALLOWED_IP     list of comma separated client address for IP-based access control (IPADDR[/MASK])
       //
-      // ENABLE_RFC1918_FILTER reject request from private IP to public server address
+      // ALLOWED_IP            list of comma separated client address for IP-based access control (IPADDR[/MASK])
       // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
+      // ENABLE_RFC1918_FILTER reject request from private IP to public server address
+      // MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
       //
       // LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
       // SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
@@ -93,9 +94,9 @@ public:
       // PLUGIN_DIR     directory of plugins to load
       //
       // REQ_TIMEOUT    timeout for request from client
-      // TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel.
-      // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session.
-      //                (Value <= 0 will disable Keep-Alive)
+      // TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel
+      // TCP_LINGER_SET Specifies how the TCP initiated the close
+      // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session. (Value <= 0 will disable Keep-Alive)
       //
       // DH_FILE        DH param
       // CERT_FILE      certificate of server

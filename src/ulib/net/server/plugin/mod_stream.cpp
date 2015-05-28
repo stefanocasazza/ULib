@@ -21,7 +21,6 @@
 U_CREAT_FUNC(server_plugin_stream, UStreamPlugIn)
 
 pid_t                   UStreamPlugIn::pid = (pid_t)-1;
-UFile*                  UStreamPlugIn::fmetadata;
 UString*                UStreamPlugIn::uri_path;
 UString*                UStreamPlugIn::metadata;
 UString*                UStreamPlugIn::content_type;
@@ -43,10 +42,9 @@ RETSIGTYPE UStreamPlugIn::handlerForSigTERM(int signo)
 
 UStreamPlugIn::UStreamPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UStreamPlugIn, "")
+   U_TRACE_REGISTER_OBJECT(0, UStreamPlugIn, "")
 
    uri_path     = U_NEW(UString);
-   metadata     = U_NEW(UString);
    content_type = U_NEW(UString);
 }
 
@@ -55,17 +53,17 @@ UStreamPlugIn::~UStreamPlugIn()
    U_TRACE_UNREGISTER_OBJECT(0, UStreamPlugIn)
 
    delete uri_path;
-   delete metadata;
    delete content_type;
 
    if (command)
       {
-                     delete command;
-      if (rbuf)      delete rbuf;
-      if (fmetadata) delete fmetadata;
+                delete command;
+      if (rbuf) delete rbuf;
 
       if (pid != -1) UProcess::kill(pid, SIGTERM);
       }
+
+   if (metadata) delete metadata;
 }
 
 // Server-wide hooks
@@ -87,8 +85,11 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
+      UString x = cfg.at(U_CONSTANT_TO_PARAM("METADATA"));
+
+      if (x) metadata = U_NEW(UString(x));
+
       *uri_path     = cfg.at(U_CONSTANT_TO_PARAM("URI_PATH"));
-      *metadata     = cfg.at(U_CONSTANT_TO_PARAM("METADATA"));
       *content_type = cfg.at(U_CONSTANT_TO_PARAM("CONTENT_TYPE"));
 
       command = UServer_Base::loadConfigCommand();
@@ -124,13 +125,6 @@ int UStreamPlugIn::handlerInit()
       }
 
    ptr = (URingBuffer::rbuf_data*) UServer_Base::getOffsetToDataShare(sizeof(URingBuffer::rbuf_data) + U_RING_BUFFER_SIZE);
-
-   if (*metadata)
-      {
-      fmetadata = U_NEW(UFile(*metadata));
-
-      if (fmetadata->open()) fmetadata->readSize();
-      }
 
    (void) content_type->append(U_CONSTANT_TO_PARAM(U_CRLF));
 
@@ -171,11 +165,9 @@ int UStreamPlugIn::handlerRun()
 
       UInterrupt::insert(SIGTERM, (sighandler_t)UStreamPlugIn::handlerForSigTERM); // async signal
 
-      int nread;
-
       while (UNotifier::waitForRead(UProcess::filedes[2]) >= 1)
          {
-         nread = rbuf->readFromFdAndWrite(UProcess::filedes[2]);
+         int nread = rbuf->readFromFdAndWrite(UProcess::filedes[2]);
 
          if (nread == 0) break;                // EOF
          if (nread  < 0) to_sleep.nanosleep(); // EAGAIN
@@ -195,43 +187,42 @@ int UStreamPlugIn::handlerRequest()
 
    if (U_HTTP_URI_EQUAL(*uri_path) == false) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 
-   u_http_info.nResponseCode = HTTP_OK;
-
-   UClientImage_Base::setCloseConnection();
+   U_http_info.nResponseCode = HTTP_OK;
 
    UHTTP::setResponse(content_type, 0);
 
-   if (USocketExt::write(UClientImage_Base::psocket, *UClientImage_Base::wbuffer, UServer_Base::timeoutMS))
+   UClientImage_Base::setCloseConnection();
+
+   if (USocketExt::write(UServer_Base::csocket, *UClientImage_Base::wbuffer, UServer_Base::timeoutMS) &&
+       UHTTP::isHEAD() == false)
       {
-      int readd;
+      int readd = rbuf->open();
 
-      if (UHTTP::isHEAD() == false)
+      if (readd != -1)
          {
-         readd = rbuf->open();
-
-         if (readd != -1)
+         if (UServer_Base::startParallelization())
             {
-            uint32_t sz = (fmetadata ? fmetadata->getSize() : 0);
+            // parent
 
-            if (sz &&
-                USocketExt::sendfile(UClientImage_Base::psocket, fmetadata->getFd(), 0, sz, UServer_Base::timeoutMS) == (int)sz)
-               {
-               UTimeVal to_sleep(0L, 10 * 1000L);
+            rbuf->close(readd);
 
-               while (UServer_Base::flag_loop)
-                  {
-                  if ( rbuf->isEmpty(readd) == false &&
-                      (rbuf->readAndWriteToFd(readd, UClientImage_Base::psocket->iSockDesc) <= 0 && errno != EAGAIN)) break;
-
-                  to_sleep.nanosleep();
-                  }
-
-               rbuf->close(readd);
-               }
+            U_RETURN(U_PLUGIN_HANDLER_ERROR);
             }
-         }
 
-      UClientImage_Base::resetAndClose();
+         UTimeVal to_sleep(0L, 10 * 1000L);
+
+         if (metadata) (void) USocketExt::write(UServer_Base::csocket, *metadata, UServer_Base::timeoutMS);
+
+         while (UServer_Base::flag_loop)
+            {
+            if ( rbuf->isEmpty(readd) == false &&
+                (rbuf->readAndWriteToFd(readd, UServer_Base::csocket->iSockDesc) <= 0 && errno != EAGAIN)) break;
+
+            to_sleep.nanosleep();
+            }
+
+         rbuf->close(readd);
+         }
       }
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
@@ -243,9 +234,7 @@ int UStreamPlugIn::handlerRequest()
 const char* UStreamPlugIn::dump(bool reset) const
 {
    *UObjectIO::os << "pid                       " << pid                 << '\n'
-                  << "fmetadata    (UFile       " << (void*)fmetadata    << ")\n"
                   << "uri_path     (UString     " << (void*)uri_path     << ")\n"
-                  << "metadata     (UString     " << (void*)metadata     << ")\n"
                   << "content_type (UString     " << (void*)content_type << ")\n"
                   << "command      (UCommand    " << (void*)command      << ")\n"
                   << "rbuf         (URingBuffer " << (void*)rbuf         << ')';

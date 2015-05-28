@@ -71,7 +71,7 @@ void UOrmDriverPgSql::handlerError()
 
 UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 {
-   U_TRACE(0, "UOrmDriverPgSql::handlerConnect(%.*S)", U_STRING_TO_TRACE(option))
+   U_TRACE(0, "UOrmDriverPgSql::handlerConnect(%V)", option.rep)
 
    UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverPgSql(*str_name)) : this);
 
@@ -163,7 +163,7 @@ UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(0, 0
    U_TRACE_REGISTER_OBJECT(0, UPgSqlStatement, "%.*S,%u", n, s, n)
 
    char* p = stmtName;
-   uint32_t start = 0, end, len;
+   uint32_t start = 0, len;
 
    *(int32_t*)p = U_MULTICHAR_CONSTANT32('S','Q','L','_');
    u_int2hex( p+4, U_PTR2INT(this));
@@ -171,7 +171,7 @@ UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(0, 0
 
    while ((p = (char*)memchr(s + start, '?', n - start)))
       {
-      end = p - s;
+      uint32_t end = p - s;
 
       if (end > start)
          {
@@ -348,9 +348,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
       num_bind_result = U_SYSCALL(PQnfields, "%p", res);
 
 #  ifdef DEBUG
-      char* fname;
       Oid paramtype;
-      int fformat, fsize;
 
       for (i = 0; i < (int)num_bind_param; ++i)
          {
@@ -361,9 +359,10 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 
       for (i = 0; i < (int)num_bind_result; ++i)
          {
-         fname     = PQfname(res, i);
-         fsize     = PQfsize(res, i);
-         fformat   = PQfformat(res, i);
+         char* fname = PQfname(res, i);
+         int fformat = PQfformat(res, i),
+             fsize   = PQfsize(res, i);
+
          paramtype = PQftype(res, i);
 
          U_INTERNAL_DUMP("result[%u] (%s): size = %d type = %d format = %d", i, fname, fsize, paramtype, fformat)
@@ -466,13 +465,10 @@ void UPgSqlStatement::setBindResult(UOrmDriver* pdrv)
       if (num_row_result == 0) return;
       }
 
-   int sz;
-   char* ptr;
-   USqlStatementBindResult* result;
 
    for (uint32_t i = 0; i < num_bind_result; ++i)
       {
-      result = vresult[i];
+      USqlStatementBindResult* result = vresult[i];
 
       /**
        * PQgetvalue() returns a single field value of one row of a PGresult. Row and column numbers start at 0.
@@ -486,8 +482,8 @@ void UPgSqlStatement::setBindResult(UOrmDriver* pdrv)
        * the PGresult structure itself
        */
 
-      ptr = U_SYSCALL(PQgetvalue,  "%p,%d,%d", res, current_row-1, i);
-       sz = U_SYSCALL(PQgetlength, "%p,%d,%d", res, current_row-1, i);
+      char* ptr = U_SYSCALL(PQgetvalue,  "%p,%d,%d", res, current_row-1, i);
+      int sz    = U_SYSCALL(PQgetlength, "%p,%d,%d", res, current_row-1, i);
 
 #  ifdef DEBUG
       char buffer[4096];
@@ -511,7 +507,7 @@ void UPgSqlStatement::setBindResult(UOrmDriver* pdrv)
                {
                (void) result->pstr->replace(ptr, sz);
 
-               U_INTERNAL_DUMP("result->pstr(%u) = %.*S", sz, U_STRING_TO_TRACE(*(result->pstr)))
+               U_INTERNAL_DUMP("result->pstr(%u) = %V", sz, result->pstr)
                }
 
             return;

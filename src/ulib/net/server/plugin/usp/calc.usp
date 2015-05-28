@@ -33,7 +33,7 @@ else if (op == "div")   result = val1 / val2;
 <!--#code
 if (op)
    {
-   USP_PRINTF("<hr>\n%.*s %.*s %.*s = %g", U_STRING_TO_TRACE(arg1), U_STRING_TO_TRACE(opval), U_STRING_TO_TRACE(arg2), result);
+   USP_PRINTF("<hr>\n%v %v %v = %g", arg1.rep, opval.rep, arg2.rep, result);
    }
 -->
 

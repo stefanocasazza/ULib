@@ -18,12 +18,12 @@
 #include <ulib/net/rpc/rpc_encoder.h>
 
 /**
-   @class USOAPEncoder
-*/
-
-// Here's something that templates and C++ still can't handle. Using this in conjunction with
-// the encodeArgument() methods below, we avoid type WRT the argument names. Spell it wrong and
-// you get a compile time error. Better at compile-time then run-time
+ * @class USOAPEncoder
+ *
+ * Here's something that templates and C++ still can't handle. Using this in conjunction with
+ * the encodeArgument() methods below, we avoid type WRT the argument names. Spell it wrong and
+ * you get a compile time error. Better at compile-time then run-time
+ */
 
 #define U_SOAP_ENCODE_ARG(arg)            ((USOAPEncoder*)URPCMethod::encoder)->encodeArgument(U_STRING_FROM_CONSTANT("" #arg ""), arg)
 #define U_SOAP_ENCB64_ARG(arg)            ((USOAPEncoder*)URPCMethod::encoder)->encodeArgBase64(U_STRING_FROM_CONSTANT("" #arg ""),arg)
@@ -94,98 +94,98 @@ public:
 
    void encodeArgument(const UString& argName, bool value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%b)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%b)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_boolean, value);
       }
 
    void encodeArgument(const UString& argName, char value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%C)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%C)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_byte, value);
       }
 
    void encodeArgument(const UString& argName, unsigned char value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%C)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%C)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_unsignedByte, value);
       }
 
    void encodeArgument(const UString& argName, short value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%d)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%d)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_short, value);
       }
 
    void encodeArgument(const UString& argName, unsigned short value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%d)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%d)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_unsignedShort, value);
       }
 
    void encodeArgument(const UString& argName, int value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%d)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%d)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_int, value);
       }
 
    void encodeArgument(const UString& argName, unsigned int value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%u)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%u)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_unsignedInt, value);
       }
 
    void encodeArgument(const UString& argName, long int value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%ld)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%ld)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_int, value);
       }
 
    void encodeArgument(const UString& argName, unsigned long int value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%lu)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%lu)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_unsignedInt, value);
       }
 
    void encodeArgument(const UString& argName, const long long& value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%lld)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%lld)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_long, value);
       }
 
    void encodeArgument(const UString& argName, const unsigned long long& value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%llu)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%llu)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_unsignedLong, value);
       }
 
    void encodeArgument(const UString& argName, float value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%f)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%f)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_float, value);
       }
 
    void encodeArgument(const UString& argName, const double& value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%g)", U_STRING_TO_TRACE(argName), value)
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%g)", argName.rep, value)
 
       encodeArgument(argName, *UString::str_double, value);
       }
 
    void encodeArgument(const UString& argName, const UString& value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%.*S)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(value))
+      U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%V)", argName.rep, value.rep)
 
       encodeArgument(argName, *UString::str_string, value);
       }
@@ -194,7 +194,7 @@ public:
 
    void encodeArgBase64(const UString& argName, const UString& value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeArgBase64(%.*S,%.*S)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(value))
+      U_TRACE(0, "USOAPEncoder::encodeArgBase64(%V,%V)", argName.rep, value.rep)
 
       if (value)
          {
@@ -208,7 +208,7 @@ public:
 
    void encodeResponse(const UString& value)
       {
-      U_TRACE(0, "USOAPEncoder::encodeResponse(%.*S)", U_STRING_TO_TRACE(value))
+      U_TRACE(0, "USOAPEncoder::encodeResponse(%V)", value.rep)
 
       encodedValue.replace(value);
       }

@@ -66,6 +66,36 @@ typedef uint64_t cpu_set_t;
 #  define CPUSET_BITS(set) (set)
 #endif
 
+/**
+ * TOKEN ID
+ **/
+#define U_TK_ERROR       -1
+#define U_TK_AND          1
+#define U_TK_OR           2
+#define U_TK_EQ           3
+#define U_TK_NE           4
+#define U_TK_GT           5
+#define U_TK_GE           6
+#define U_TK_LT           7
+#define U_TK_LE           8
+#define U_TK_STARTS_WITH  9
+#define U_TK_ENDS_WITH   10
+#define U_TK_IS_PRESENT  11
+#define U_TK_CONTAINS    12
+#define U_TK_PLUS        13
+#define U_TK_MINUS       14
+#define U_TK_MULT        15
+#define U_TK_DIV         16
+#define U_TK_MOD         17
+#define U_TK_NOT         18
+#define U_TK_FN_CALL     19
+#define U_TK_LPAREN      20
+#define U_TK_RPAREN      21
+#define U_TK_VALUE       22
+#define U_TK_COMMA       23
+#define U_TK_NAME        24
+#define U_TK_PID         25
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -112,7 +142,8 @@ U_EXPORT void        u_printSize(char* restrict buffer, uint64_t bytes); /* prin
 U_EXPORT char*       u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
 U_EXPORT bool        u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
 U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
-U_EXPORT uint32_t    u_findEndHeader(const char* restrict s, uint32_t n); /* find sequence of U_LF2 or U_CRLF2 */
+U_EXPORT uint32_t    u_findEndHeader( const char* restrict s, uint32_t n);        /* find sequence of U_CRLF2 or U_LF2 */
+U_EXPORT uint32_t    u_findEndHeader1(const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 */
 U_EXPORT const char* u_get_mimetype(const char* restrict suffix, int* pmime_index);
 
 U_EXPORT char*       u_memoryDump( char* restrict bp, unsigned char* restrict cp, uint32_t n);
@@ -157,9 +188,7 @@ U_EXPORT const char* u_skip(const char* restrict s, const char* restrict end, co
 
 /* delimit token */
 
-U_EXPORT const char* u_delimit_token(const char* restrict s,   const char** restrict p,
-                                     const char* restrict end, const char*  restrict delim,
-                                     char skip_line_comment);
+U_EXPORT const char* u_delimit_token(const char* restrict s,   const char** restrict p, const char* restrict end, const char*  restrict delim, char skip_line_comment);
 
 /* Search a string for any of a set of characters. Locates the first occurrence in the string s of any of the characters in the string accept */
 
@@ -171,50 +200,58 @@ U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen,
                                       const char* restrict group_delimitor, uint32_t group_delimitor_len,
                                       char skip_line_comment) __pure;
 
-/* WILDCARD PATTERN - The rules are as follows (POSIX.2, 3.13).
-
-Wildcard Matching
- A string is a wildcard pattern if it contains one of the characters '?', '*' or '['. Globbing is the operation that
- expands a wildcard pattern into the list of pathnames matching the pattern. Matching is defined by:
-
- A '?' (not between brackets) matches any single character.
- A '*' (not between brackets) matches any string, including the empty string.
-
-Character classes
- An expression '[...]' where the first character after the leading '[' is not an '!' matches a single character, namely
- any of the characters enclosed by the brackets. The string enclosed by the brackets cannot be empty; therefore ']' can
- be allowed between the brackets, provided that it is the first character. (Thus, '[][!]' matches the three characters
- '[', ']' and '!'.)
-
-Ranges
- There is one special convention: two characters separated by '-' denote a range. (Thus, '[A-Fa-f0-9]' is equivalent to
- '[ABCDEFabcdef0123456789]'.) One may include '-' in its literal meaning by making it the first or last character
- between the brackets. (Thus, '[]-]' matches just the two characters ']' and '-', and '[--0]' matches the three characters
- '-', '.', '0', since '/' cannot be matched.)
-
-Complementation
- An expression '[!...]' matches a single character, namely any character that is not matched by the expression obtained
- by removing the first '!' from it. (Thus, '[!]a-]' matches any single character except ']', 'a' and '-'.)
-
- One can remove the special meaning of '?', '*' and '[' by preceding them by a backslash, or, in case this is part of a
- shell command line, enclosing them in quotes. Between brackets these characters stand for themselves. Thus, '[[?*\]'
- matches the four characters '[', '?', '*' and '\'.
-
-Pathnames
- Globbing is applied on each of the components of a pathname separately. A '/' in a pathname cannot be matched by a '?'
- or '*'  wildcard, or by a range like '[.-0]'. A range cannot contain an explicit '/' character; this would lead to a
- syntax error.
-
- If a filename starts with a '.', this character must be matched explicitly. (Thus, 'rm *' will not remove .profile,
- and 'tar c *' will not archive all your files; 'tar c .' is better.)
-
-Note that wildcard patterns are not regular expressions, although they are a bit similar. First of all, they match
-filenames, rather than text, and secondly, the conventions are not the same: for example, in a regular expression '*'
-means zero or more copies of the preceding thing.
-
-Now that regular expressions have bracket expressions where the negation is indicated by a '^', POSIX has declared the
-effect of a wildcard pattern '[^...]' to be undefined.
-*/
+/**
+ * --------------------------------------------------------------------------------
+ * WILDCARD PATTERN - The rules are as follows (POSIX.2, 3.13)
+ * --------------------------------------------------------------------------------
+ * Wildcard Matching
+ *
+ * A string is a wildcard pattern if it contains one of the characters '?', '*' or '['. Globbing is the operation that
+ * expands a wildcard pattern into the list of pathnames matching the pattern. Matching is defined by:
+ *
+ * A '?' (not between brackets) matches any single character.
+ * A '*' (not between brackets) matches any string, including the empty string. 
+ * --------------------------------------------------------------------------------
+ * Character classes
+ *
+ * An expression '[...]' where the first character after the leading '[' is not an '!' matches a single character, namely
+ * any of the characters enclosed by the brackets. The string enclosed by the brackets cannot be empty; therefore ']' can
+ * be allowed between the brackets, provided that it is the first character. (Thus, '[][!]' matches the three characters
+ * '[', ']' and '!'.)
+ * --------------------------------------------------------------------------------
+ * Ranges
+ *
+ * There is one special convention: two characters separated by '-' denote a range. (Thus, '[A-Fa-f0-9]' is equivalent to
+ * '[ABCDEFabcdef0123456789]'.) One may include '-' in its literal meaning by making it the first or last character
+ * between the brackets. (Thus, '[]-]' matches just the two characters ']' and '-', and '[--0]' matches the three characters
+ * '-', '.', '0', since '/' cannot be matched.)
+ * --------------------------------------------------------------------------------
+ * Complementation
+ *
+ * An expression '[!...]' matches a single character, namely any character that is not matched by the expression obtained
+ * by removing the first '!' from it. (Thus, '[!]a-]' matches any single character except ']', 'a' and '-'.)
+ *
+ * One can remove the special meaning of '?', '*' and '[' by preceding them by a backslash, or, in case this is part of a
+ * shell command line, enclosing them in quotes. Between brackets these characters stand for themselves. Thus, '[[?*\]'
+ * matches the four characters '[', '?', '*' and '\'. 
+ * --------------------------------------------------------------------------------
+ * Pathnames
+ *
+ * Globbing is applied on each of the components of a pathname separately. A '/' in a pathname cannot be matched by a '?'
+ * or '*'  wildcard, or by a range like '[.-0]'. A range cannot contain an explicit '/' character; this would lead to a
+ * syntax error. 
+ *
+ * If a filename starts with a '.', this character must be matched explicitly. (Thus, 'rm *' will not remove .profile,
+ * and 'tar c *' will not archive all your files; 'tar c .' is better.)
+ *
+ * Note that wildcard patterns are not regular expressions, although they are a bit similar. First of all, they match
+ * filenames, rather than text, and secondly, the conventions are not the same: for example, in a regular expression '*'
+ * means zero or more copies of the preceding thing.
+ *
+ * Now that regular expressions have bracket expressions where the negation is indicated by a '^', POSIX has declared the
+ * effect of a wildcard pattern '[^...]' to be undefined
+ * --------------------------------------------------------------------------------
+ */
 
 typedef bool (*bPFpcupcud)(const char*, uint32_t, const char*, uint32_t, int);
 
@@ -276,31 +313,35 @@ U_EXPORT int u_get_num_cpu(void);
 
 /* Pin the process to a particular core */
 
-U_EXPORT void u_bind2cpu(pid_t pid, int n);
+U_EXPORT void u_bind2cpu(cpu_set_t* cpuset, pid_t pid, int n);
 
 /* Set the process to maximum priority that can be used with the scheduling algorithm */
 
-U_EXPORT bool u_switch_to_realtime_priority(pid_t pid);
+U_EXPORT void u_switch_to_realtime_priority(pid_t pid);
 
-/** -------------------------------------------------------------------------------
-// Canonicalize PATH, and build a new path. The new path differs from PATH in that:
-// --------------------------------------------------------------------------------
-// Multiple    '/'   are collapsed to a single '/'
-// Leading     './'  are removed
-// Trailing    '/.'  are removed
-// Trailing    '/'   are removed
-// Non-leading '../' and trailing '..' are handled by removing portions of the path
-// -------------------------------------------------------------------------------- */
+/**
+ * --------------------------------------------------------------------------------
+ * Canonicalize PATH, and build a new path. The new path differs from PATH in that:
+ * --------------------------------------------------------------------------------
+ * Multiple    '/'   are collapsed to a single '/'
+ * Leading     './'  are removed
+ * Trailing    '/.'  are removed
+ * Trailing    '/'   are removed
+ * Non-leading '../' and trailing '..' are handled by removing portions of the path
+ * --------------------------------------------------------------------------------
+ */
 
 U_EXPORT bool u_canonicalize_pathname(char* restrict path);
 
-/** --------------------------------------------------------------
-// find a FILE MODE along PATH
-// --------------------------------------------------------------
-// pathfind looks for a a file with name FILENAME and MODE access
-// along colon delimited PATH, and returns the full pathname as a
-// string, or NULL if not found.
-// -------------------------------------------------------------- */
+/**
+ * --------------------------------------------------------------------------------
+ * find a FILE MODE along PATH
+ * --------------------------------------------------------------
+ * pathfind looks for a a file with name FILENAME and MODE access
+ * along colon delimited PATH, and returns the full pathname as a
+ * string, or NULL if not found
+ * --------------------------------------------------------------
+ */
 
 U_EXPORT bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode); /* R_OK | X_OK */
 
@@ -325,15 +366,15 @@ static inline unsigned int  u_cttab(   unsigned char c) { return u__ct_tab[c]; }
 static inline unsigned char u__tolower(unsigned char c) { return u__ct_tol[c]; }
 static inline unsigned char u__toupper(unsigned char c) { return u__ct_tou[c]; }
 
-                                                                     /* 0x00000001              __S character space    ' ' (32 0x20) */
-                                                                     /* 0x00000002              __E */
-                                                                     /* 0x00000004              __H character          '+' (43 0x2B) */
-                                                                     /* 0x00000008              __V character          ',' (44 0x2C) */
-                                                                     /* 0x00000010              __O character minus    '-' (45 0x2D) */
-                                                                     /* 0x00000020              __N character point    '.' (46 0x2E) */
-                                                                     /* 0x00000040              __G character          ':' (58 0x3A) */
-                                                                     /* 0x00000080              __Q character underbar '_' (95 0x5F) */
-                                                                     /* 0x00000100)             __B character tab      \t  (09 0x09) */
+                                                                      /* 0x00000001              __S character space    ' ' (32 0x20) */
+                                                                      /* 0x00000002              __E character used in printf format  */
+                                                                      /* 0x00000004              __H character          '+' (43 0x2B) */
+                                                                      /* 0x00000008              __V character          ',' (44 0x2C) */
+                                                                      /* 0x00000010              __O character minus    '-' (45 0x2D) */
+                                                                      /* 0x00000020              __N character point    '.' (46 0x2E) */
+                                                                      /* 0x00000040              __G character          ':' (58 0x3A) */
+                                                                      /* 0x00000080              __Q character underbar '_' (95 0x5F) */
+                                                                      /* 0x00000100)             __B character tab       \t (09 0x09) */
 static inline bool u__islterm(unsigned char c)   { return ((u_cttab(c) & 0x00000200) != 0); } /* __R carriage return | new line (\r | \n) */
 static inline bool u__isspace(unsigned char c)   { return ((u_cttab(c) & 0x00000400) != 0); } /* __W WhiteSpace */
 static inline bool u__iscntrl(unsigned char c)   { return ((u_cttab(c) & 0x00000800) != 0); } /* __C Control character */
@@ -343,9 +384,9 @@ static inline bool u__ispunct(unsigned char c)   { return ((u_cttab(c) & 0x00004
 static inline bool u__isupper(unsigned char c)   { return ((u_cttab(c) & 0x00008000) != 0); } /* __U Uppercase */
 static inline bool u__isoctal(unsigned char c)   { return ((u_cttab(c) & 0x00010000) != 0); } /* __Z Octal */
 static inline bool u__istext( unsigned char c)   { return ((u_cttab(c) & 0x00020000) == 0); } /* __F character never appears in plain ASCII text */
-                                                                     /* 0x00040000              __T character       appears in plain ASCII text */
-                                                                     /* 0x00080000              __X Hexadecimal */
-                                                                     /* 0x00100000              __A BASE64 encoded: '+' | '/' (47 0x2F) | '=' (61 0x3D) */
+                                                                      /* 0x00040000              __T character       appears in plain ASCII text */
+                                                                      /* 0x00080000              __X Hexadecimal */
+                                                                      /* 0x00100000              __A BASE64 encoded: '+' | '/' (47 0x2F) | '=' (61 0x3D) */
 static inline bool u__ismethod( unsigned char c) { return ((u_cttab(c) & 0x00200000) != 0); } /* __M HTTP (COPY,DELETE,GET,HEAD|HTTP,OPTIONS,POST/PUT/PATCH) */
 static inline bool u__isheader( unsigned char c) { return ((u_cttab(c) & 0x00400000) != 0); } /* __Y HTTP header (Host,Range,...) */
 static inline bool u__isquote(  unsigned char c) { return ((u_cttab(c) & 0x00800000) != 0); } /* __K string quote: '"' (34 0x22) | ''' (39 0x27) */
@@ -354,14 +395,15 @@ static inline bool u__is2urlenc(unsigned char c) { return ((u_cttab(c) & 0x02000
 static inline bool u__isurlqry( unsigned char c) { return ((u_cttab(c) & 0x04000000) != 0); } /* __UQ URL: char FROM query '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
 static inline bool u__isfname(  unsigned char c) { return ((u_cttab(c) & 0x08000000) != 0); } /* __UF filename: char > 31 except: ":<>*?\| */
 
+static inline bool u__isprintf(unsigned char c)  { return ((u_cttab(c) & 0x00000002) != 0); } /*  __E                                  */
 static inline bool u__isipv4(  unsigned char c)  { return ((u_cttab(c) & 0x00001020) != 0); } /* (__N | __D)                           */
 static inline bool u__isreal(  unsigned char c)  { return ((u_cttab(c) & 0x00000024) != 0); } /* (__H | __N)                           */
 static inline bool u__isblank( unsigned char c)  { return ((u_cttab(c) & 0x00000101) != 0); } /* (__S | __B)                           */
 static inline bool u__isalpha( unsigned char c)  { return ((u_cttab(c) & 0x0000A000) != 0); } /* (__L | __U)                           */
 static inline bool u__isxdigit(unsigned char c)  { return ((u_cttab(c) & 0x00081000) != 0); } /* (__X | __D)                           */
 static inline bool u__isnumber(unsigned char c)  { return ((u_cttab(c) & 0x00001010) != 0); } /* (__O | __D)                           */
+static inline bool u__isename( unsigned char c)  { return ((u_cttab(c) & 0x00000240) != 0); } /* (__G | __R)                           */
 static inline bool u__isalnum( unsigned char c)  { return ((u_cttab(c) & 0x0000B000) != 0); } /* (__L | __U | __D)                     */
-static inline bool u__isename( unsigned char c)  { return ((u_cttab(c) & 0x00000141) != 0); } /* (__S | __B | __G)                     */
 static inline bool u__islitem( unsigned char c)  { return ((u_cttab(c) & 0x00000109) != 0); } /* (__S | __V | __B)                     */
 static inline bool u__ispecial(unsigned char c)  { return ((u_cttab(c) & 0x00000034) != 0); } /* (__H | __O | __N)                     */
 static inline bool u__isname(  unsigned char c)  { return ((u_cttab(c) & 0x0000B080) != 0); } /* (__Q | __L | __U | __D)               */
@@ -416,8 +458,10 @@ U_EXPORT bool u_isUTF8(  const unsigned char* restrict s, uint32_t n) __pure;
 U_EXPORT int  u_isUTF16( const unsigned char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isBinary(const unsigned char* restrict s, uint32_t n) __pure;
 
-/* Quick and dirty int->hex. The only standard way is to call snprintf (?),
- * which is undesirably slow for such a frequently-called function... */
+/**
+ * Quick and dirty int->hex. The only standard way is to call snprintf (?),
+ * which is undesirably slow for such a frequently-called function...
+ */
 
 extern U_EXPORT const unsigned char u__ct_hex2int[112];
 
@@ -438,12 +482,12 @@ U_EXPORT bool u_isIPv6Addr(const char* restrict s, uint32_t n) __pure;
 
 static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n)
                                                                                             : u_isIPv4Addr(p, n)); } 
-/*
-The u_passwd_cb() function must write the password into the provided buffer buf which is of size size.
-The actual length of the password must be returned to the calling function. rwflag indicates whether the
-callback is used for reading/decryption (rwflag=0) or writing/encryption (rwflag=1).
-See man SSL_CTX_set_default_passwd_cb(3) for more information
-*/
+/**
+ * The u_passwd_cb() function must write the password into the provided buffer buf which is of size size.
+ * The actual length of the password must be returned to the calling function. rwflag indicates whether the
+ * callback is used for reading/decryption (rwflag=0) or writing/encryption (rwflag=1).
+ * See man SSL_CTX_set_default_passwd_cb(3) for more information
+ */
 #ifdef USE_LIBSSL
 U_EXPORT int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict password);
 #endif

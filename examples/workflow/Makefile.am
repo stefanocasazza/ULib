@@ -8,7 +8,7 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
 EXTRA_DIST = action.h *.spec*
 
-ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
+ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 
 error_LDADD   		 = libaction.la $(ulib_la) @ULIB_LIBS@
 error_SOURCES 		 = error.cpp

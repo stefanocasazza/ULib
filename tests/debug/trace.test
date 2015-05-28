@@ -17,4 +17,4 @@ UTRACE_SIGNAL="5 10k 0"
 start_prg trace # per_simulazione_errori 30
 
 # Test against expected output
-test_output_wc l trace trace.*test_trace*.[0-9]*
+test_output_wc w trace trace.*test_trace*.[0-9]*

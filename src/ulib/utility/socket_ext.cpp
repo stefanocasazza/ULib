@@ -15,7 +15,7 @@
 #include <ulib/notifier.h>
 #include <ulib/container/vector.h>
 #include <ulib/utility/interrupt.h>
-#include <ulib/net/server/client_image.h>
+#include <ulib/net/server/server.h>
 
 #ifdef HAVE_SYS_SENDFILE_H
 #  ifndef HAVE_SENDFILE64
@@ -41,7 +41,8 @@
 #  include <ares.h>
 #endif
 
-vPFsu USocketExt::read_buffer_resize = UString::_reserve;
+bool USocketExt::bssl;
+bool USocketExt::blocking;
 
 /**
  * Socket I/O - read while not received almost count data
@@ -53,10 +54,15 @@ vPFsu USocketExt::read_buffer_resize = UString::_reserve;
 
 bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutMS, uint32_t time_limit)
 {
-   U_TRACE(0, "USocketExt::read(%p,%.*S,%u,%d,%u)", sk, U_STRING_TO_TRACE(buffer), count, timeoutMS, time_limit)
+   U_TRACE(0, "USocketExt::read(%p,%V,%u,%d,%u)", sk, buffer.rep, count, timeoutMS, time_limit)
 
    U_INTERNAL_ASSERT_POINTER(sk)
    U_INTERNAL_ASSERT(sk->isConnected())
+
+   U_DUMP("bssl = %b blocking = %b", sk->isSSL(true), sk->isBlocking())
+
+   U_ASSERT_EQUALS(bssl, sk->isSSL(true))
+   U_ASSERT_EQUALS(blocking, sk->isBlocking())
 
    char* ptr;
    long timeout = 0;
@@ -66,17 +72,12 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
             ncount = buffer.space(),
             chunk  = count;
 
-   bool blocking = sk->isBlocking();
-
-#ifdef USE_LIBSSL
-   bool bssl = sk->isSSL(true);
-#endif
-
    if (LIKELY(chunk < U_CAPACITY)) chunk = U_CAPACITY;
 
    if (UNLIKELY(ncount < chunk))
       {
-      read_buffer_resize(buffer, chunk); 
+      if (sk == UServer_Base::csocket) UClientImage_Base::manageReadBufferResize(chunk);
+      else                                                  UString::_reserve(buffer, chunk);
 
       ncount = buffer.space();
       }
@@ -91,19 +92,18 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
     * but it won't show up on the underlying file descriptor via select(). Your code needs to call
     * SSL_pending() explicitly to see if there is any pending data to be read...
     */
-
-   U_ASSERT(bssl == false || ((USSLSocket*)sk)->pending() <= ncount)
-
 read:
+#ifdef USE_LIBSSL
+   if (bssl == false) // NB: without this csp test fail (we have timeout (10 seconds) to read SOAP body response)...
+#endif
+   {
    if (blocking       &&
        timeoutMS != 0 &&
-#     ifdef USE_LIBSSL
-       bssl == false  &&
-#     endif
        (errno = 0, UNotifier::waitForRead(sk->iSockDesc, timeoutMS) != 1))
       {
       goto error;
       }
+   }
 
    value = sk->recv(ptr + byte_read, ncount);
 
@@ -118,12 +118,12 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
             if (U_ClientImage_parallelization != 1) // 1 => child of parallelization
                {
                if (errno != ECONNRESET &&
-                   sk == UClientImage_Base::psocket)
+                   sk == UServer_Base::csocket)
                   {
                   sk->iState = USocket::BROKEN;
                   }
 
-               sk->close();
+               sk->abortive_close();
                }
 
             U_RETURN(false);
@@ -149,7 +149,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
             {
             U_INTERNAL_DUMP("byte_read = %d errno = %d", byte_read, errno)
 
-            if (U_ClientImage_parallelization != 1) sk->close(); // 1 => child of parallelization
+            if (U_ClientImage_parallelization != 1) sk->abortive_close(); // 1 => child of parallelization
 
             U_RETURN(false);
             }
@@ -185,11 +185,12 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
    if (value == (ssize_t)ncount)
       {
-      buffer.size_adjust_force(start + byte_read); // NB: we force because string can be referenced...
-
       // NB: may be there are available more bytes to read...
 
-      read_buffer_resize(buffer, ncount * 2);
+      buffer.size_adjust_force(start + byte_read); // NB: we force because string can be referenced...
+
+      if (sk == UServer_Base::csocket) UClientImage_Base::manageReadBufferResize(ncount * 2);
+      else                                                  UString::_reserve(buffer, ncount * 2);
 
       ptr       = buffer.c_pointer(start);
       ncount    = buffer.space();
@@ -198,14 +199,28 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
       goto read;
       }
 
-#ifdef USE_LIBSSL
-   if (bssl == false)
-#endif
-   {
-#if !defined(_MSWINDOWS_) && defined(HAVE_EPOLL_WAIT)
-   if ((UNotifier::add_mask & EPOLLET) != 0)
+   if (blocking == false)
       {
-      U_INTERNAL_ASSERT_DIFFERS(USocket::server_flags & O_NONBLOCK, 0)
+      /**
+       * -------------------------------------------------------------------------------------------------------------------
+       * Edge trigger (EPOLLET) simply means (unless you've used EPOLLONESHOT) that you'll get 1 event when something
+       * enters the (kernel) buffer. Thus, if you get 1 EPOLLIN event and do nothing about it, you'll get another
+       * EPOLLIN the next time some data arrives on that descriptor - if no new data arrives, you will not get an
+       * event though, even if you didn't read any data as indicated by the first event. Well, to put it succinctly,
+       * EPOLLONESHOT just means that if you don't read the data you're supposed to read, they will be discarded.
+       * Normally, you'd be notified with an event for the same data if you don't read them. With EPOLLONESHOT, however,
+       * not reading the data is perfectly legal and they will be just ignored. Hence, no further events will be generated.
+       * -------------------------------------------------------------------------------------------------------------------
+       * The suggested way to use epoll as an edge-triggered (EPOLLET) interface is as follows:
+       *
+       * 1) with nonblocking file descriptors
+       * 2) by waiting for an event only after read(2) or write(2) return EAGAIN.
+       * -------------------------------------------------------------------------------------------------------------------
+       * Edge-triggered semantics allow a more efficient internal implementation than level-triggered semantics.
+       *
+       * see: https://raw.githubusercontent.com/dankamongmen/libtorque/master/doc/mteventqueues
+       * -------------------------------------------------------------------------------------------------------------------
+       */
 
       buffer.size_adjust_force(start + byte_read); // NB: we force because string can be referenced...
 
@@ -214,8 +229,6 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
       goto read;
       }
-#endif
-   }
 
 done:
    U_INTERNAL_DUMP("byte_read = %d", byte_read)
@@ -245,7 +258,7 @@ done:
 
 uint32_t USocketExt::readWhileNotToken(USocket* sk, UString& buffer, const char* token, uint32_t token_len, int timeoutMS)
 {
-   U_TRACE(0, "USocketExt::readWhileNotToken(%p,%.*S,%.*S,%u,%d)", sk, U_STRING_TO_TRACE(buffer), token_len, token, token_len, timeoutMS)
+   U_TRACE(0, "USocketExt::readWhileNotToken(%p,%V,%.*S,%u,%d)", sk, buffer.rep, token_len, token, token_len, timeoutMS)
 
    uint32_t start = buffer.size();
 
@@ -273,9 +286,13 @@ int USocketExt::write(USocket* sk, const char* ptr, uint32_t count, int timeoutM
    U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT(sk->isConnected())
 
+   U_DUMP("bssl = %b blocking = %b", sk->isSSL(true), sk->isBlocking())
+
+   U_ASSERT_EQUALS(bssl, sk->isSSL(true))
+   U_ASSERT_EQUALS(blocking, sk->isBlocking())
+
    ssize_t value;
    int byte_written = 0;
-   bool blocking = sk->isBlocking();
 
 write:
    if (blocking       &&
@@ -293,7 +310,7 @@ write:
          {
 error:   U_INTERNAL_DUMP("errno = %d", errno)
 
-              if (errno != EAGAIN) sk->close();
+              if (errno != EAGAIN) sk->abortive_close();
          else if (timeoutMS != 0)
             {
             if (UNotifier::waitForWrite(sk->iSockDesc, timeoutMS) == 1) goto write;
@@ -337,9 +354,16 @@ int USocketExt::sendfile(USocket* sk, int in_fd, off_t* poffset, uint32_t count,
    U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT(sk->isConnected())
 
+   U_DUMP("bssl = %b blocking = %b", sk->isSSL(true), sk->isBlocking())
+
+   U_INTERNAL_ASSERT_EQUALS(bssl, false)
+   U_ASSERT_EQUALS(blocking, sk->isBlocking())
+
+#if defined(HAVE_MACOSX_SENDFILE)
+   off_t len;
+#endif
    ssize_t value;
    int byte_written = 0;
-   bool blocking = sk->isBlocking();
 
 loop:
    if (blocking       &&
@@ -349,7 +373,29 @@ loop:
       goto error;
       }
 
+#if defined(HAVE_MACOSX_SENDFILE)
+   /**
+    * struct sf_hdtr {
+    *  struct iovec *headers;  // pointer to  header iovecs
+    *  int hdr_cnt;            //  number of  header iovecs
+    *  struct iovec *trailers; // pointer to trailer iovecs
+    *  int trl_cnt;            //  number of trailer iovecs
+    * };
+    *
+    * int sendfile(int fd, int s, off_t offset, off_t* len, struct sf_hdtr* hdtr, int flags);
+    *
+    * Since Mac OSX uses the fourth argument as a value-return parameter, success or failure, we need to put the result into value after the call
+    */
+
+   len   = count;
+   value = U_SYSCALL(sendfile, "%d,%d,%p,%u", sk->getFd(), in_fd, *poffset, &len, 0, 0);
+
+   if (value == -1) goto error;
+
+   poffset += (value = len);
+#else
    value = U_SYSCALL(sendfile, "%d,%d,%p,%u", sk->getFd(), in_fd, poffset, count);
+#endif
 
    if (value <= 0)
       {
@@ -359,13 +405,14 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno != EAGAIN)
             {
-            if (errno == EINTR &&
-                UInterrupt::checkForEventSignalPending())
+            if (errno == EINTR)
                {
+               UInterrupt::checkForEventSignalPending();
+
                goto loop;
                }
 
-            sk->close();
+            sk->abortive_close();
             }
          else if (timeoutMS != 0)
             {
@@ -406,9 +453,13 @@ int USocketExt::_writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t cou
    U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT(sk->isConnected())
 
+   U_DUMP("bssl = %b blocking = %b", sk->isSSL(true), sk->isBlocking())
+
+   U_ASSERT_EQUALS(bssl, sk->isSSL(true))
+   U_ASSERT_EQUALS(blocking, sk->isBlocking())
+
    ssize_t value;
    int idx, byte_written = 0;
-   bool blocking = sk->isBlocking();
 
 #ifdef DEBUG
    int i;
@@ -426,13 +477,13 @@ loop:
       }
 
 #if defined(USE_LIBSSL) && !defined(_MSWINDOWS_)
-   if (sk->isSSL(true))
+   if (bssl)
 #endif
 #if defined(USE_LIBSSL) ||  defined(_MSWINDOWS_)
    {
    U_INTERNAL_ASSERT_EQUALS(iovcnt, 1)
 
-   value = write(sk, (const char*)iov[0].iov_base, iov[0].iov_len, timeoutMS);
+   value = sk->send((const char*)iov[0].iov_base, iov[0].iov_len);
 
    goto check;
    }
@@ -450,13 +501,14 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno != EAGAIN)
             {
-            if (errno == EINTR &&
-                UInterrupt::checkForEventSignalPending())
+            if (errno == EINTR)
                {
+               UInterrupt::checkForEventSignalPending();
+
                goto loop;
                }
 
-            sk->close();
+            sk->abortive_close();
             }
          else if (timeoutMS != 0)
             {
@@ -513,16 +565,18 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
    U_INTERNAL_ASSERT(sk->isConnected())
 
 #if defined(USE_LIBSSL) && !defined(_MSWINDOWS_)
-   if (sk->isSSL(true))
+   if (bssl)
 #endif
-#if defined(USE_LIBSSL) ||  defined(_MSWINDOWS_)
+#if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
    {
    ssize_t value;
-   int sz, byte_written = 0;
+   int byte_written = 0;
 
    for (int i = 0; i < iovcnt; ++i)
       {
-      if ((sz = iov[i].iov_len))
+      int sz = iov[i].iov_len;
+
+      if (sz)
          {
          value = _writev(sk, iov+i, 1, sz, timeoutMS);
 
@@ -579,8 +633,10 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
    U_INTERNAL_DUMP("iov[0].iov_len = %d iov[1].iov_len = %d", iov[0].iov_len, iov[1].iov_len)
 
 #if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
-   int byte_written =  writev(sk, iov, iovcnt, count, timeoutMS);
+   int byte_written = writev(sk, iov, iovcnt, count, timeoutMS);
 #else
+   U_INTERNAL_ASSERT_EQUALS(sk->isSSL(true), false)
+
    int byte_written = _writev(sk, iov, iovcnt, count, timeoutMS);
 #endif
 
@@ -618,7 +674,7 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
 
 void USocketExt::setRemoteInfo(USocket* sk, UString& logbuf)
 {
-   U_TRACE(0, "USocketExt::setRemoteInfo(%p,%.*S)", sk, U_STRING_TO_TRACE(logbuf))
+   U_TRACE(0, "USocketExt::setRemoteInfo(%p,%V)", sk, logbuf.rep)
 
    UString x(100U);
 
@@ -641,7 +697,7 @@ int USocketExt::vsyncCommand(USocket* sk, char* buffer, uint32_t buffer_size, co
    buffer[buffer_len++] = '\n';
 
    int n        =  sk->send(buffer, buffer_len),
-       response = (sk->checkIO(n) ? readLineReply(sk, buffer, buffer_size) : (int)USocket::BROKEN);
+       response = (sk->checkIO(n) ? readLineReply(sk, buffer, buffer_size) : 0);
 
    U_RETURN(response);
 }
@@ -660,7 +716,7 @@ int USocketExt::vsyncCommandML(USocket* sk, char* buffer, uint32_t buffer_size, 
    buffer[buffer_len++] = '\n';
 
    int n        =  sk->send(buffer, buffer_len),
-       response = (sk->checkIO(n) ? readMultilineReply(sk, buffer, buffer_size) : (int)USocket::BROKEN);
+       response = (sk->checkIO(n) ? readMultilineReply(sk, buffer, buffer_size) : 0);
 
    U_RETURN(response);
 }
@@ -669,7 +725,7 @@ int USocketExt::vsyncCommandML(USocket* sk, char* buffer, uint32_t buffer_size, 
 
 int USocketExt::vsyncCommandToken(USocket* sk, UString& buffer, const char* format, va_list argp)
 {
-   U_TRACE(1, "USocketExt::vsyncCommandToken(%p,%.*S,%S)", sk, U_STRING_TO_TRACE(buffer), format)
+   U_TRACE(1, "USocketExt::vsyncCommandToken(%p,%V,%S)", sk, buffer.rep, format)
 
    U_INTERNAL_ASSERT(sk->isOpen())
    U_INTERNAL_ASSERT_EQUALS((bool)buffer, false)
@@ -694,7 +750,19 @@ int USocketExt::vsyncCommandToken(USocket* sk, UString& buffer, const char* form
 
    if (sk->checkIO(n))
       {
+#  ifdef USE_LIBSSL
+      bool bssl_save     = bssl;
+                           bssl = sk->isSSL(true);
+#  endif
+      bool blocking_save = blocking;
+                           blocking = sk->isBlocking();
+
       uint32_t pos_token = USocketExt::readWhileNotToken(sk, buffer, token, token_len);
+
+#  ifdef USE_LIBSSL
+      bssl     = bssl_save;
+#  endif
+      blocking = blocking_save;
 
       if (pos_token != U_NOT_FOUND)
          {
@@ -705,11 +773,9 @@ int USocketExt::vsyncCommandToken(USocket* sk, UString& buffer, const char* form
 
          U_RETURN(pos_token + token_len);
          }
-
-      U_RETURN(U_NOT_FOUND);
       }
 
-   U_RETURN(USocket::BROKEN);
+   U_RETURN(U_NOT_FOUND);
 }
 
 U_NO_EXPORT inline bool USocketExt::parseCommandResponse(char* buffer, int r, int response)
@@ -781,7 +847,7 @@ int USocketExt::readLineReply(USocket* sk, char* buffer, uint32_t buffer_size) /
 
       i = sk->recv(buffer + r, count);
 
-      if (sk->checkIO(i) == false) U_RETURN(USocket::BROKEN);
+      if (sk->checkIO(i) == false) U_RETURN(0);
 
       r += i;
       }
@@ -798,14 +864,12 @@ int USocketExt::readMultilineReply(USocket* sk, char* buffer, uint32_t buffer_si
 
    U_INTERNAL_ASSERT(sk->isConnected())
 
-   int r = 0, response;
+   int r = 0, response = 0;
 
    do {
       r = readLineReply(sk, buffer + r, buffer_size - r);
 
-      if (r == USocket::BROKEN) U_RETURN(USocket::BROKEN);
-
-      response = atoi(buffer);
+      if (r) response = atoi(buffer);
       }
    while (parseCommandResponse(buffer, r, response));
 
@@ -825,13 +889,12 @@ UString USocketExt::getNetworkDevice(const char* exclude)
 
    if (U_SYSCALL(fscanf, "%p,%S", route, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF) // Skip the first line
       {
-      bool found;
       char dev[7], dest[9];
 
       while (U_SYSCALL(fscanf, "%p,%S", route, "%6s %8s %*s %*s %*s %*s %*s %*s %*s %*s %*s\n", dev, dest) != EOF)
          {
-         found = (exclude ? (strncmp(dev, exclude, 6) != 0)   // not the whatever it is
-                          : (strcmp(dest, "00000000") == 0)); // default route
+         bool found = (exclude ? (strncmp(dev, exclude, 6) != 0)   // not the whatever it is
+                               : (strcmp(dest, "00000000") == 0)); // default route
 
          if (found)
             {
@@ -850,7 +913,7 @@ UString USocketExt::getNetworkDevice(const char* exclude)
 
 bool USocketExt::getARPCache(UString& cache, UVector<UString>& vec)
 {
-   U_TRACE(0+256, "USocketExt::getARPCache(%.*S,%p)", U_STRING_TO_TRACE(cache), &vec)
+   U_TRACE(0+256, "USocketExt::getARPCache(%V,%p)", cache.rep, &vec)
 
 #if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H)
    /*
@@ -974,7 +1037,12 @@ UString USocketExt::getNetworkInterfaceName(const char* ip, uint32_t ip_len)
       {
       for (uint32_t i = 0, n = vec.size(); i < n; i += 3)
          {
-         if (vec[i].equal(ip, ip_len)) U_RETURN_STRING(vec[i+2].copy());
+         if (vec[i].equal(ip, ip_len))
+            {
+            result = vec[i+2].copy();
+
+            break;
+            }
          }
       }
 #endif
@@ -1023,9 +1091,16 @@ UString USocketExt::getMacAddress(const char* ip, uint32_t ip_len)
 
    if (getARPCache(content, vec))
       {
+      UString result;
+
       for (uint32_t i = 0, n = vec.size(); i < n; i += 3)
          {
-         if (vec[i].equal(ip, ip_len)) U_RETURN_STRING(vec[i+1].copy());
+         if (vec[i].equal(ip, ip_len))
+            {
+            result = vec[i+1].copy();
+
+            U_RETURN_STRING(result);
+            }
          }
       }
 #endif

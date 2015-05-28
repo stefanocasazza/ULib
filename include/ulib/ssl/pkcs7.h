@@ -20,10 +20,10 @@
 #include <openssl/x509v3.h>
 
 /**
-  This class provides services for a PKCS7 structure. (general syntax for data that may have cryptography applied to it,
-  such as digital signatures and digital envelopes). This class contains a openssl PKCS7 structure and basically acts as
-  a wrapper to functions that act on that structure.
-*/
+ * This class provides services for a PKCS7 structure. (general syntax for data that may have cryptography applied to it,
+ * such as digital signatures and digital envelopes). This class contains a openssl PKCS7 structure and basically acts as
+ * a wrapper to functions that act on that structure.
+ */
 
 class UMimePKCS7;
 class UCertificate;
@@ -74,7 +74,7 @@ public:
 
    UPKCS7(const UString& x, const char* format = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UPKCS7, "%.*S,%S", U_STRING_TO_TRACE(x), format)
+      U_TRACE_REGISTER_OBJECT(0, UPKCS7, "%V,%S", x.rep, format)
 
       indata = 0;
       pkcs7  = readPKCS7(x, format);

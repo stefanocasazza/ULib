@@ -29,7 +29,7 @@ __noreturn U_NO_EXPORT void UOrmSession::loadDriverFail(const char* ptr, uint32_
 
 void UOrmSession::loadDriver(const char* backend, uint32_t len, const UString& option)
 {
-   U_TRACE(0, "UOrmSession::loadDriver(%.*S,%u,%.*S)", len, backend, len, U_STRING_TO_TRACE(option))
+   U_TRACE(0, "UOrmSession::loadDriver(%.*S,%u,%V)", len, backend, len, option.rep)
 
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::vdriver)
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::vdriver_name)
@@ -122,7 +122,7 @@ __pure UOrmSession::~UOrmSession()
 
 bool UOrmSession::connect(const UString& option)
 {
-   U_TRACE(0, "UOrmSession::connect(%.*S)", U_STRING_TO_TRACE(option))
+   U_TRACE(0, "UOrmSession::connect(%V)", option.rep)
 
    U_INTERNAL_ASSERT_POINTER(pdrv)
 
@@ -214,10 +214,12 @@ void UOrmStatement::execute()
 {
    U_TRACE(0, "UOrmStatement::execute()")
 
+#if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
 
    pdrv->execute(pstmt);
+#endif
 }
 
 // This function returns the number of database rows that were changed
@@ -507,7 +509,7 @@ void UOrmStatement::bindParam(const char* b, const char* e)
 
 void UOrmStatement::bindParam(UStringRep& v)
 {
-   U_TRACE(0, "UOrmStatement::bindParam(%.*S)", U_STRING_TO_TRACE(v))
+   U_TRACE(0, "UOrmStatement::bindParam(%V)", &v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    U_INTERNAL_ASSERT_POINTER(pdrv)
@@ -730,7 +732,7 @@ void UOrmStatement::bindResult(long double& v)
 
 void UOrmStatement::bindResult(UStringRep& v)
 {
-   U_TRACE(0, "UOrmStatement::bindResult(%.*S)", U_STRING_TO_TRACE(v))
+   U_TRACE(0, "UOrmStatement::bindResult(%V)", &v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    U_INTERNAL_ASSERT_POINTER(pdrv)

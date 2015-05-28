@@ -143,39 +143,18 @@ typedef struct uhttpinfo {
    unsigned char flag[16];
 } uhttpinfo;
 
-#define U_http_method_type u_http_info.method_type
-
-/* NB: sizeof(struct uhttpinfo) 64bit == 144 - RESET ==> 56 */
-
-#define U_http_user1                   u_http_info.flag[ 0]
-#define U_http_version                 u_http_info.flag[ 1]
-#define U_http_host_len                u_http_info.flag[ 2]
-#define U_http_host_vlen               u_http_info.flag[ 3]
-#define U_http_range_len               u_http_info.flag[ 4]
-#define U_http_accept_len              u_http_info.flag[ 5]
-#define U_http_keep_alive              u_http_info.flag[ 6]
-#define U_http_method_num              u_http_info.flag[ 7]
-#define U_http_websocket_len           u_http_info.flag[ 8]
-#define U_http2_settings_len           u_http_info.flag[ 9]
-#define U_http_ip_client_len           u_http_info.flag[10]
-#define U_http_is_accept_gzip          u_http_info.flag[11] /* NB: this position(11) is locked by mod_proxy (UHttpClient_Base::u_http_info_save)... */
-#define U_http_content_type_len        u_http_info.flag[12]
-#define U_http_is_request_nostat       u_http_info.flag[13]
-#define U_http_accept_language_len     u_http_info.flag[14]
-#define U_http_is_apache_log_prepared  u_http_info.flag[15]
-
 enum HTTPMethodType {
-   /* request methods */
+/* request methods */
    HTTP_GET         = 0x00000001,
    HTTP_HEAD        = 0x00000002,
    HTTP_POST        = 0x00000004,
    HTTP_PUT         = 0x00000008,
    HTTP_DELETE      = 0x00000010,
    HTTP_OPTIONS     = 0x00000020,
-   /* pathological */
+/* pathological */
    HTTP_TRACE       = 0x00000040,
    HTTP_CONNECT     = 0x00000080,
-   /* webdav */
+/* webdav */
    HTTP_COPY        = 0x00000100,
    HTTP_MOVE        = 0x00000200,
    HTTP_LOCK        = 0x00000400,
@@ -184,15 +163,15 @@ enum HTTPMethodType {
    HTTP_SEARCH      = 0x00002000,
    HTTP_PROPFIND    = 0x00004000,
    HTTP_PROPPATCH   = 0x00008000,
-   /* rfc-5789 */
+/* rfc-5789 */
    HTTP_PATCH       = 0x00010000,
    HTTP_PURGE       = 0x00020000,
-   /* subversion */
+/* subversion */
    HTTP_MERGE       = 0x00040000,
    HTTP_REPORT      = 0x00080000,
    HTTP_CHECKOUT    = 0x00100000,
    HTTP_MKACTIVITY  = 0x00200000,
-   /* upnp */
+/* upnp */
    HTTP_NOTIFY      = 0x00400000,
    HTTP_MSEARCH     = 0x00800000,
    HTTP_SUBSCRIBE   = 0x01000000,
@@ -204,46 +183,110 @@ typedef struct uhttpmethodtype {
    uint32_t len;
 } uhttpmethodtype;
 
-#define U_HTTP_URI_TO_PARAM             u_http_info.uri, u_http_info.uri_len
-#define U_HTTP_URI_TO_TRACE             u_http_info.uri_len, u_http_info.uri
+typedef struct uclientimage_info {
+   union uucflag64 flag;
+   struct uhttpmethodtype http_method_list[26];
+   struct uhttpinfo http_info;
+} uclientimage_info;
 
-#define U_HTTP_QUERY_TO_PARAM           u_http_info.query, u_http_info.query_len
-#define U_HTTP_QUERY_TO_TRACE           u_http_info.query_len, u_http_info.query
+#ifdef __cplusplus
+extern "C" {
+#endif
+extern U_EXPORT uclientimage_info u_clientimage_info;
+#ifdef __cplusplus
+}
+#endif
 
-#define U_HTTP_URI_QUERY_LEN            (u_http_info.uri_len + u_http_info.query_len + (u_http_info.query_len ? 1 : 0))
+#define U_ClientImage_state            u_clientimage_info.flag.c[0]
+#define U_ClientImage_close            u_clientimage_info.flag.c[1]
+#define U_ClientImage_request          u_clientimage_info.flag.c[2]
+#define U_ClientImage_pipeline         u_clientimage_info.flag.c[3]
+#define U_ClientImage_data_missing     u_clientimage_info.flag.c[4]
+#define U_ClientImage_parallelization  u_clientimage_info.flag.c[5]
 
-#define U_HTTP_URI_QUERY_TO_PARAM       u_http_info.uri, U_HTTP_URI_QUERY_LEN 
-#define U_HTTP_URI_QUERY_TO_TRACE       U_HTTP_URI_QUERY_LEN, u_http_info.uri
+#define U_http_info        u_clientimage_info.http_info
+#define U_clientimage_flag u_clientimage_info.flag
+#define U_http_method_list u_clientimage_info.http_method_list
+#define U_http_method_type u_clientimage_info.http_info.method_type
 
-#define U_HTTP_CTYPE_TO_PARAM           u_http_info.content_type, U_http_content_type_len
-#define U_HTTP_CTYPE_TO_TRACE           U_http_content_type_len, u_http_info.content_type
+/* NB: sizeof(struct uhttpinfo) 64bit == 144 - RESET ==> 56 */
 
-#define U_HTTP_RANGE_TO_PARAM           u_http_info.range, U_http_range_len
-#define U_HTTP_RANGE_TO_TRACE           U_http_range_len, u_http_info.range
+#define U_http_user1                   u_clientimage_info.http_info.flag[ 0]
+#define U_http_version                 u_clientimage_info.http_info.flag[ 1]
+#define U_http_host_len                u_clientimage_info.http_info.flag[ 2]
+#define U_http_host_vlen               u_clientimage_info.http_info.flag[ 3]
+#define U_http_range_len               u_clientimage_info.http_info.flag[ 4]
+#define U_http_accept_len              u_clientimage_info.http_info.flag[ 5]
+#define U_http_keep_alive              u_clientimage_info.http_info.flag[ 6]
+#define U_http_method_num              u_clientimage_info.http_info.flag[ 7]
+#define U_http_websocket_len           u_clientimage_info.http_info.flag[ 8]
+#define U_http2_settings_len           u_clientimage_info.http_info.flag[ 9]
+#define U_http_ip_client_len           u_clientimage_info.http_info.flag[10]
+#define U_http_is_accept_gzip          u_clientimage_info.http_info.flag[11] /* NB: this position(11) is locked by mod_proxy (UHttpClient_Base::u_http_info_save)... */
+#define U_http_content_type_len        u_clientimage_info.http_info.flag[12]
+#define U_http_is_request_nostat       u_clientimage_info.http_info.flag[13]
+#define U_http_accept_language_len     u_clientimage_info.http_info.flag[14]
+#define U_http_is_apache_log_prepared  u_clientimage_info.http_info.flag[15]
 
-#define U_HTTP_COOKIE_TO_PARAM          u_http_info.cookie, u_http_info.cookie_len
-#define U_HTTP_COOKIE_TO_TRACE          u_http_info.cookie_len, u_http_info.cookie
+#define U_HTTP_INFO_INIT(c)  (void) U_SYSCALL(memset, "%p,%d,%u", &(u_clientimage_info.http_info),                   c, sizeof(uhttpinfo))
+#define U_HTTP_INFO_RESET(c) (void) U_SYSCALL(memset, "%p,%d,%u", &(u_clientimage_info.http_info.if_modified_since), c, sizeof(uhttpinfo) - offsetof(uhttpinfo,if_modified_since))
 
-#define U_HTTP_REFERER_TO_PARAM         u_http_info.referer, u_http_info.referer_len
-#define U_HTTP_REFERER_TO_TRACE         u_http_info.referer_len, u_http_info.referer
+#define U_HTTP_URI_TO_PARAM             u_clientimage_info.http_info.uri, u_clientimage_info.http_info.uri_len
+#define U_HTTP_URI_TO_TRACE             u_clientimage_info.http_info.uri_len, u_clientimage_info.http_info.uri
 
-#define U_HTTP_IP_CLIENT_TO_PARAM       u_http_info.ip_client, U_http_ip_client_len
-#define U_HTTP_IP_CLIENT_TO_TRACE       U_http_ip_client_len, u_http_info.ip_client
+#define U_HTTP_QUERY_TO_PARAM           u_clientimage_info.http_info.query, u_clientimage_info.http_info.query_len
+#define U_HTTP_QUERY_TO_TRACE           u_clientimage_info.http_info.query_len, u_clientimage_info.http_info.query
 
-#define U_HTTP_USER_AGENT_TO_PARAM      u_http_info.user_agent, u_http_info.user_agent_len
-#define U_HTTP_USER_AGENT_TO_TRACE      u_http_info.user_agent_len, u_http_info.user_agent
+#define U_HTTP_URI_QUERY_LEN            (u_clientimage_info.http_info.uri_len + u_clientimage_info.http_info.query_len + (u_clientimage_info.http_info.query_len ? 1 : 0))
 
-#define U_HTTP_ACCEPT_TO_PARAM          u_http_info.accept, U_http_accept_len
-#define U_HTTP_ACCEPT_TO_TRACE          U_http_accept_len, u_http_info.accept
+#define U_HTTP_URI_QUERY_TO_PARAM       u_clientimage_info.http_info.uri, U_HTTP_URI_QUERY_LEN 
+#define U_HTTP_URI_QUERY_TO_TRACE       U_HTTP_URI_QUERY_LEN, u_clientimage_info.http_info.uri
 
-#define U_HTTP_ACCEPT_LANGUAGE_TO_PARAM u_http_info.accept_language, U_http_accept_language_len
-#define U_HTTP_ACCEPT_LANGUAGE_TO_TRACE U_http_accept_language_len, u_http_info.accept_language
+#define U_HTTP_CTYPE_TO_PARAM           u_clientimage_info.http_info.content_type, U_http_content_type_len
+#define U_HTTP_CTYPE_TO_TRACE           U_http_content_type_len, u_clientimage_info.http_info.content_type
+
+#define U_HTTP_RANGE_TO_PARAM           u_clientimage_info.http_info.range, U_http_range_len
+#define U_HTTP_RANGE_TO_TRACE           U_http_range_len, u_clientimage_info.http_info.range
+
+#define U_HTTP_COOKIE_TO_PARAM          u_clientimage_info.http_info.cookie, u_clientimage_info.http_info.cookie_len
+#define U_HTTP_COOKIE_TO_TRACE          u_clientimage_info.http_info.cookie_len, u_clientimage_info.http_info.cookie
+
+#define U_HTTP_REFERER_TO_PARAM         u_clientimage_info.http_info.referer, u_clientimage_info.http_info.referer_len
+#define U_HTTP_REFERER_TO_TRACE         u_clientimage_info.http_info.referer_len, u_clientimage_info.http_info.referer
+
+#define U_HTTP_IP_CLIENT_TO_PARAM       u_clientimage_info.http_info.ip_client, U_http_ip_client_len
+#define U_HTTP_IP_CLIENT_TO_TRACE       U_http_ip_client_len, u_clientimage_info.http_info.ip_client
+
+#define U_HTTP_USER_AGENT_TO_PARAM      u_clientimage_info.http_info.user_agent, u_clientimage_info.http_info.user_agent_len
+#define U_HTTP_USER_AGENT_TO_TRACE      u_clientimage_info.http_info.user_agent_len, u_clientimage_info.http_info.user_agent
+
+#define U_HTTP_ACCEPT_TO_PARAM          u_clientimage_info.http_info.accept, U_http_accept_len
+#define U_HTTP_ACCEPT_TO_TRACE          U_http_accept_len, u_clientimage_info.http_info.accept
+
+#define U_HTTP_ACCEPT_LANGUAGE_TO_PARAM u_clientimage_info.http_info.accept_language, U_http_accept_language_len
+#define U_HTTP_ACCEPT_LANGUAGE_TO_TRACE U_http_accept_language_len, u_clientimage_info.http_info.accept_language
 
 #define U_HTTP_METHOD_TO_PARAM          U_HTTP_METHOD_NUM_TO_PARAM(U_http_method_num)
 #define U_HTTP_METHOD_TO_TRACE          U_HTTP_METHOD_NUM_TO_TRACE(U_http_method_num)
 
-#define U_HTTP_METHOD_NUM_TO_PARAM(num) u_http_method_list[num].name, u_http_method_list[num].len
-#define U_HTTP_METHOD_NUM_TO_TRACE(num) u_http_method_list[num].len,  u_http_method_list[num].name
+#define U_HTTP_METHOD_NUM_TO_PARAM(num) u_clientimage_info.http_method_list[num].name, u_clientimage_info.http_method_list[num].len
+#define U_HTTP_METHOD_NUM_TO_TRACE(num) u_clientimage_info.http_method_list[num].len,  u_clientimage_info.http_method_list[num].name
+
+#define U_HTTP_QUERY_MEMEQ(str) (u_clientimage_info.http_info.query_len ?  memcmp(u_clientimage_info.http_info.query, U_CONSTANT_TO_PARAM(str)) == 0 : false)
+#define U_HTTP_QUERY_STREQ(str) (u_clientimage_info.http_info.query_len ? U_STREQ(u_clientimage_info.http_info.query, u_clientimage_info.http_info.query_len, str) : false)
+
+#define U_HTTP_CTYPE_MEMEQ(str) (U_http_content_type_len ?  memcmp(u_clientimage_info.http_info.content_type,  U_CONSTANT_TO_PARAM(str)) == 0 : false)
+#define U_HTTP_CTYPE_STREQ(str) (U_http_content_type_len ? U_STREQ(u_clientimage_info.http_info.content_type, U_http_content_type_len, str)   : false)
+
+#define U_HTTP_URI_STREQ(str)                     U_STREQ(u_clientimage_info.http_info.uri,  u_clientimage_info.http_info.uri_len, str)
+#define U_HTTP_HOST_STREQ(str) (U_http_host_len ? U_STREQ(u_clientimage_info.http_info.host, U_http_host_len,                       str) : false)
+
+#define U_HTTP_QUERY_STREQ(str) (u_clientimage_info.http_info.query_len ? U_STREQ(u_clientimage_info.http_info.query, u_clientimage_info.http_info.query_len, str) : false)
+
+#define U_HTTP_REFERER_STREQ(str) (u_clientimage_info.http_info.referer_len ? U_STREQ(u_clientimage_info.http_info.referer, u_clientimage_info.http_info.referer_len, str) : false)
+
+#define U_HTTP_USER_AGENT_STREQ(str) (u_clientimage_info.http_info.user_agent_len \
+                                          ? U_STREQ(u_clientimage_info.http_info.user_agent, u_clientimage_info.http_info.user_agent_len, str) : false)
 
 /**
  * The hostname of your server from header's request.
@@ -251,42 +294,10 @@ typedef struct uhttpmethodtype {
  * U_HTTP_HOST_.. can include the «:PORT» text, and U_HTTP_VHOST_.. only the name
  */
 
-#define U_HTTP_HOST_TO_PARAM  u_http_info.host, U_http_host_len
-#define U_HTTP_HOST_TO_TRACE  U_http_host_len, u_http_info.host
+#define U_HTTP_HOST_TO_PARAM  u_clientimage_info.http_info.host, U_http_host_len
+#define U_HTTP_HOST_TO_TRACE  U_http_host_len, u_clientimage_info.http_info.host
 
-#define U_HTTP_VHOST_TO_PARAM u_http_info.host, U_http_host_vlen
-#define U_HTTP_VHOST_TO_TRACE U_http_host_vlen, u_http_info.host
-
-#define U_HTTP_QUERY_MEMEQ(str)      (u_http_info.query_len   ? memcmp(u_http_info.query,         U_CONSTANT_TO_PARAM(str)) == 0 : false)
-#define U_HTTP_QUERY_STREQ(str)      (u_http_info.query_len   ? U_STREQ(u_http_info.query,        u_http_info.query_len, str)    : false)
-
-#define U_HTTP_CTYPE_MEMEQ(str)      (U_http_content_type_len ? memcmp(u_http_info.content_type,  U_CONSTANT_TO_PARAM(str)) == 0 : false)
-#define U_HTTP_CTYPE_STREQ(str)      (U_http_content_type_len ? U_STREQ(u_http_info.content_type, U_http_content_type_len, str)  : false)
-
-#define U_HTTP_URI_STREQ(str)                                      U_STREQ(u_http_info.uri,          u_http_info.uri_len,        str)
-#define U_HTTP_HOST_STREQ(str)       (U_http_host_len            ? U_STREQ(u_http_info.host,         U_http_host_len,            str) : false)
-#define U_HTTP_QUERY_STREQ(str)      (u_http_info.query_len      ? U_STREQ(u_http_info.query,        u_http_info.query_len,      str) : false)
-#define U_HTTP_REFERER_STREQ(str)    (u_http_info.referer_len    ? U_STREQ(u_http_info.referer,      u_http_info.referer_len,    str) : false)
-#define U_HTTP_USER_AGENT_STREQ(str) (u_http_info.user_agent_len ? U_STREQ(u_http_info.user_agent,   u_http_info.user_agent_len, str) : false)
-
-#define U_ClientImage_state            u_clientimage_flag.c[0]
-#define U_ClientImage_close            u_clientimage_flag.c[1]
-#define U_ClientImage_request          u_clientimage_flag.c[2]
-#define U_ClientImage_pipeline         u_clientimage_flag.c[3]
-#define U_ClientImage_data_missing     u_clientimage_flag.c[4]
-#define U_ClientImage_parallelization  u_clientimage_flag.c[5]
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-extern U_EXPORT uhttpinfo u_http_info;
-extern U_EXPORT union uucflag64 u_clientimage_flag;
-extern U_EXPORT const uhttpmethodtype u_http_method_list[26];
-#ifdef __cplusplus
-}
-#endif
-
-#define U_HTTP_INFO_INIT(c)  (void)U_SYSCALL(memset,"%p,%d,%u",&u_http_info,                  c,sizeof(uhttpinfo))
-#define U_HTTP_INFO_RESET(c) (void)U_SYSCALL(memset,"%p,%d,%u",&u_http_info.if_modified_since,c,sizeof(uhttpinfo)-offsetof(uhttpinfo,if_modified_since))
+#define U_HTTP_VHOST_TO_PARAM u_clientimage_info.http_info.host, U_http_host_vlen
+#define U_HTTP_VHOST_TO_TRACE U_http_host_vlen, u_clientimage_info.http_info.host
 
 #endif

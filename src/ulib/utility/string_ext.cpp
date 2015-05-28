@@ -56,7 +56,7 @@ UString UStringExt::BIOtoString(BIO* bio)
       U_RETURN_STRING(result);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 UString UStringExt::ASN1TimetoString(ASN1_GENERALIZEDTIME* t)
@@ -76,7 +76,7 @@ UString UStringExt::ASN1TimetoString(ASN1_GENERALIZEDTIME* t)
       U_RETURN_STRING(result);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 #endif
 
@@ -86,7 +86,7 @@ UString UStringExt::ASN1TimetoString(ASN1_GENERALIZEDTIME* t)
 #ifdef USE_LIBPCRE
 UString UStringExt::pregReplace(const UString& pattern, const UString& replacement, const UString& subject)
 {
-   U_TRACE(0, "UStringExt::pregReplace(%.*S,%.*S,%.*S)", U_STRING_TO_TRACE(pattern), U_STRING_TO_TRACE(replacement), U_STRING_TO_TRACE(subject))
+   U_TRACE(0, "UStringExt::pregReplace(%V,%V,%V)", pattern.rep, replacement.rep, subject.rep)
 
    UPCRE _pcre(pattern, PCRE_FOR_REPLACE);
 
@@ -97,7 +97,7 @@ UString UStringExt::pregReplace(const UString& pattern, const UString& replaceme
 
 UString UStringExt::sanitize(const UString& input)
 {
-   U_TRACE(0, "UStringExt::sanitize(%.*S)", U_STRING_TO_TRACE(input))
+   U_TRACE(0, "UStringExt::sanitize(%V)", input.rep)
 
    /*
    static UPCRE* strip1;
@@ -133,7 +133,7 @@ UString UStringExt::sanitize(const UString& input)
 #ifdef USE_LIBEXPAT
 UString UStringExt::stripTags(const UString& html, UString* list_tags_allowed)
 {
-   U_TRACE(0, "UStringExt::stripTags(%.*S,%p)", U_STRING_TO_TRACE(html), list_tags_allowed)
+   U_TRACE(0, "UStringExt::stripTags(%V,%p)", html.rep, list_tags_allowed)
 
    UString tag_list, result;
 
@@ -204,7 +204,6 @@ UString UStringExt::numberToString(uint64_t n)
    int i;
    UString x(32U);
    uint64_t u = 1024ULL;
-   const char* units = "bKMGTPEZY";
 
    for (i = 0; i < U_CONSTANT_SIZE("bKMGTPEZY"); ++i)
       {
@@ -223,7 +222,7 @@ UString UStringExt::numberToString(uint64_t n)
       {
       float fsize = (float)((double)n/(u/1024ULL));
 
-      x.snprintf("%.1f%c", fsize, units[i]);
+      x.snprintf("%.1f%c", fsize, "bKMGTPEZY"[i]);
       }
 
    U_RETURN_STRING(x);
@@ -235,11 +234,11 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
    void* p;
    UString x(U_CAPACITY);
-   uint32_t start = 0, _end, num, len;
+   uint32_t start = 0, len;
 
    while ((p = (void*)memchr(s + start, '\t', n - start)))
       {
-      _end = (const char*)p - s;
+      uint32_t _end = (const char*)p - s;
 
       if (_end > start)
          {
@@ -255,7 +254,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
             }
          }
 
-      num = tab - (x.rep->_length % tab);
+      uint32_t num = tab - (x.rep->_length % tab);
 
       U_INTERNAL_DUMP("start = %u _end = %u num = %u", start, _end, num)
 
@@ -282,7 +281,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
    U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
    void* p;
-   uint32_t start = 0, _end, len, capacity = (n / n1);
+   uint32_t start = 0, len, capacity = (n / n1);
 
    if (capacity == 0)                     capacity  = 10U;
    if (n2)                                capacity *= n2;
@@ -292,7 +291,8 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
    while ((p = u_find(s + start, n - start, a, n1)))
       {
-      _end = (const char*)p - s;
+      uint32_t _end = (const char*)p - s;
+
       len  = (_end > start ? _end - start : 0);
 
       U_INTERNAL_DUMP("start = %u _end = %u len = %u", start, _end, len)
@@ -327,7 +327,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
 UString UStringExt::dos2unix(const UString& s, bool unix2dos)
 {
-   U_TRACE(0, "UStringExt::dos2unix(%.*S,%b)", U_STRING_TO_TRACE(s), unix2dos)
+   U_TRACE(0, "UStringExt::dos2unix(%V,%b)", s.rep, unix2dos)
 
    UString result(s.size() * 2);
 
@@ -536,7 +536,7 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
 end:
    result.size_adjust(sz);
 
-   U_INTERNAL_DUMP("result(%d) = %#.*S", sz, U_STRING_TO_TRACE(result))
+   U_INTERNAL_DUMP("result(%d) = %#V", sz, result.rep)
 
    U_RETURN_STRING(result);
 }
@@ -553,19 +553,20 @@ UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UStrin
    const char* p;
    const char* var_ptr = 0;
    UString value, result(n+500U);
-   uint32_t _end, len, var_size, new_size = 0;
+   uint32_t var_size, new_size = 0;
 
    while ((p = (const char*) memchr(s, '$', n)))
       {
       U_INTERNAL_DUMP("p = %.*S", 10, p)
 
-      len = p - s;
+      uint32_t len = p - s;
+
       n  -= len;
 
       // read name=$var
       //          =>...
 
-      _end = 1;
+      uint32_t _end = 1;
 
       while (_end < n &&
              u__isname(p[_end]))
@@ -753,16 +754,16 @@ extern void  expressionParser(void* yyp, int yymajor, UString* yyminor, UString*
 
 UString UStringExt::evalExpression(const UString& expr, const UString& environment)
 {
-   U_TRACE(0, "UStringExt::evalExpression(%.*S,%.*S)", U_STRING_TO_TRACE(expr), U_STRING_TO_TRACE(environment))
+   U_TRACE(0, "UStringExt::evalExpression(%V,%V)", expr.rep, environment.rep)
 
    int token_id;
    UTokenizer t(expr);
-   UString token, result(U_CONSTANT_TO_PARAM("true"));
+   UString token, result = *UString::str_true;
 
    void* pParser = expressionParserAlloc(malloc);
 
 #ifdef DEBUG
-// (void) fprintf(stderr, "start parsing expr: \"%.*s\"\n", U_STRING_TO_TRACE(expr));
+// (void) fprintf(stderr, "start parsing expr: \"%v\"\n", expr));
 // expressionParserTrace(stderr, (char*)"parser: ");
 #endif
 
@@ -788,7 +789,7 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
    expressionParserFree(pParser, free);
 
 #ifdef DEBUG
-// (void) fprintf(stderr, "ended parsing expr: \"%.*s\"\n", U_STRING_TO_TRACE(expr));
+// (void) fprintf(stderr, "ended parsing expr: \"%v\"\n", expr));
 #endif
 
    U_RETURN_STRING(result);
@@ -899,7 +900,7 @@ UString UStringExt::trim(const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringExt::trim(%.*S,%u)", n, s, n)
 
-   if (n == 0) U_RETURN_STRING(UString::getStringNull());
+   if (n == 0) return UString::getStringNull();
 
    int32_t i = 0;
    UString result(n);
@@ -1193,7 +1194,7 @@ UString UStringExt::basename(const char* s, uint32_t n)
 
 __pure uint32_t UStringExt::getBaseNameLen(const UString& s)
 {
-   U_TRACE(0, "UStringExt::getBaseNameLen(%.*S)", U_STRING_TO_TRACE(s))
+   U_TRACE(0, "UStringExt::getBaseNameLen(%V)", s.rep)
 
    uint32_t len = s.size(),
             pos = s.rfind('/'); // Find last '/'
@@ -1217,13 +1218,13 @@ __pure int UStringExt::compareversion(const char* a, uint32_t alen, const char* 
    if (a == b) U_RETURN(0);
 
    bool isnum;
-   uint32_t apos1, apos2 = 0, bpos1, bpos2 = 0;
+   uint32_t apos2 = 0, bpos2 = 0;
 
    while (apos2 < alen &&
           bpos2 < blen)
       {
-      apos1 = apos2;
-      bpos1 = bpos2;
+      uint32_t apos1 = apos2,
+               bpos1 = bpos2;
 
       if (u__isdigit(a[apos2]))
          {
@@ -1281,7 +1282,7 @@ __pure int UStringExt::compareversion(const UString& s, const UString& a) { retu
 
 __pure bool UStringExt::isEmailAddress(const UString& s)
 {
-   U_TRACE(0, "UStringExt::isEmailAddress(%.*S)", U_STRING_TO_TRACE(s))
+   U_TRACE(0, "UStringExt::isEmailAddress(%V)", s.rep)
 
    if (u_validate_email_address(U_STRING_TO_PARAM(s))) U_RETURN(true);
 
@@ -1354,7 +1355,7 @@ UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compre
    U_TRACE(1, "UStringExt::deflate(%.*S,%u,%d)", len, s, len, type)
 
 #ifndef USE_LIBZ
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 #endif
 
    // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes 
@@ -1461,7 +1462,7 @@ UString UStringExt::gunzip(const char* ptr, uint32_t sz, uint32_t space) // .gz 
 
    U_RETURN_STRING(result);
 #else
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 #endif
 }
 
@@ -1507,7 +1508,7 @@ UString UStringExt::toupper(const char* s, uint32_t n)
 
 __pure const char* UStringExt::getValueFromName(const UString& buffer, uint32_t pos, uint32_t len, const char* name, uint32_t name_len, bool nocase)
 {
-   U_TRACE(0, "UStringExt::getValueFromName(%.*S,%u,%u,%.*S,%u,%b)", U_STRING_TO_TRACE(buffer), pos, len, name_len, name, name_len, nocase)
+   U_TRACE(0, "UStringExt::getValueFromName(%V,%u,%u,%.*S,%u,%b)", buffer.rep, pos, len, name_len, name, name_len, nocase)
 
    U_INTERNAL_ASSERT(buffer)
    U_INTERNAL_ASSERT_MAJOR(len, 0)
@@ -1557,7 +1558,7 @@ next:
 
 uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim, uint32_t dlen)
 {
-   U_TRACE(0, "UStringExt::getNameValueFromData(%.*S,%p,%.*S,%u)", U_STRING_TO_TRACE(content), &name_value, dlen, delim, dlen)
+   U_TRACE(0, "UStringExt::getNameValueFromData(%V,%p,%.*S,%u)", content.rep, &name_value, dlen, delim, dlen)
 
    U_INTERNAL_ASSERT(content)
    U_INTERNAL_ASSERT_POINTER(delim)
@@ -1676,7 +1677,7 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
             {
             x = content.substr(oldPos, len);
 
-            if (x.isQuoted()) x.unQuote();
+            if (x.isQuoted()) x.rep->unQuote();
 
             name_value.push_back(x);
             }
@@ -1712,7 +1713,7 @@ uint32_t UStringExt::getNameValueFromData(const UString& content, UVector<UStrin
 
 void UStringExt::buildTokenInt(const char* token, uint32_t value, UString& buffer)
 {
-   U_TRACE(0, "UStringExt::buildTokenInt(%S,%u,%.*S)", token, value, U_STRING_TO_TRACE(buffer))
+   U_TRACE(0, "UStringExt::buildTokenInt(%S,%u,%V)", token, value, buffer.rep)
 
    U_INTERNAL_ASSERT_POINTER(token)
    U_INTERNAL_ASSERT(u__strlen(token, __PRETTY_FUNCTION__) == U_TOKEN_NM)

@@ -22,33 +22,29 @@ struct U_EXPORT UXMLEscape {
 
    static void encode(const char* s, uint32_t n, UString& buffer)
       {
-      U_TRACE(0, "UXMLEscape::encode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
+      U_TRACE(0, "UXMLEscape::encode(%.*S,%u,%p)", n, s, n, &buffer)
 
+      U_ASSERT(buffer.uniq())
       U_ASSERT(buffer.capacity() >= n)
 
-      uint32_t pos = u_xml_encode((const unsigned char*)s, n, (unsigned char*)buffer.data());
-
-      buffer.size_adjust(pos);
+      buffer.rep->_length = u_xml_encode((const unsigned char*)s, n, (unsigned char*)buffer.data());
       }
 
    static void encode(const UString& s, UString& buffer) { encode(U_STRING_TO_PARAM(s), buffer); }
 
-   static bool decode(const char* s, uint32_t n, UString& buffer)
+   static void decode(const char* s, uint32_t n, UString& buffer)
       {
-      U_TRACE(0, "UXMLEscape::decode(%.*S,%u,%.*S)", n, s, n, U_STRING_TO_TRACE(buffer))
+      U_TRACE(0, "UXMLEscape::decode(%.*S,%u,%p)", n, s, n, &buffer)
 
+      U_ASSERT(buffer.uniq())
       U_ASSERT(buffer.capacity() >= n)
 
-      uint32_t pos = u_xml_decode(s, n, (unsigned char*) buffer.data());
+      buffer.rep->_length = u_xml_decode(s, n, (unsigned char*) buffer.data());
 
-      buffer.size_adjust(pos);
-
-      if (pos > 0) U_RETURN(true);
-
-      U_RETURN(false);
+      U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
       }
 
-   static bool decode(const UString& s, UString& buffer) { return decode(U_STRING_TO_PARAM(s), buffer); }
+   static void decode(const UString& s, UString& buffer) { decode(U_STRING_TO_PARAM(s), buffer); }
 };
 
 #endif

@@ -36,16 +36,16 @@
    U_STACK_TYPE_0
 
   12 sizeof(UProcess)
-  16 sizeof(ULock)
   16 sizeof(UTimer)
   16 sizeof(UPKCS7)
   16 sizeof(UTimeVal)
   16 sizeof(UTimeDate)
   16 sizeof(UXMLParser)
+  16 sizeof(USemaphore)
   16 sizeof(URDBServer)
   16 sizeof(UVector<UString>)
   16 sizeof(UServer<UTCPSocket>)
-  24 sizeof(USemaphore)
+  24 sizeof(ULock)
   24 sizeof(UStringRep) <==
   24 sizeof(USOAPObject)
 -------------------------
@@ -102,21 +102,20 @@
  216 sizeof(UFlexer)
  232 sizeof(ULog)
  232 sizeof(USmtpClient)
+ 248 sizeof(URDBClient<UTCPSocket>)
  256 sizeof(UFileConfig)
 -------------------------
    U_STACK_TYPE_5
 
- 272 sizeof(URDBClient<UTCPSocket>)
+ 304 sizeof(UHttpClient<UTCPSocket>)
  328 sizeof(UCDB)
- 304 sizeof(UModNoCatPeer)
- 336 sizeof(UHttpClient<UTCPSocket>)
  360 sizeof(UFtpClient)
- 392 sizeof(USOAPClient<UTCPSocket>)
+ 384 sizeof(USOAPClient<UTCPSocket>)
  512
 -------------------------
    U_STACK_TYPE_6
 
- 560 sizeof(URDB)
+ 568 sizeof(URDB)
 =========================
 ** DEBUG (64 bit) **
 -------------------------
@@ -129,7 +128,6 @@
   16 sizeof(UCrl)
   16 sizeof(UPKCS10)
   16 sizeof(UCertificate)
-  24 sizeof(ULock)
   24 sizeof(UTimer)
   24 sizeof(UPKCS7)
   24 sizeof(UProcess)
@@ -139,6 +137,7 @@
   24 sizeof(USemaphore)
   24 sizeof(UVector<UString>)
   24 sizeof(UServer<UTCPSocket>)
+  32 sizeof(ULock)
   40 sizeof(UQueryNode)
   40 sizeof(USOAPFault)
   40 sizeof(UStringRep) <==
@@ -165,13 +164,13 @@
   64 sizeof(USOAPEncoder)
   64 sizeof(UPlugIn<void*>)
   64 sizeof(UHTTP::UFileCacheData) <==
-  64 sizeof(UClientImage<UTCPSocket>)
 -------------------------
    U_STACK_TYPE_3
 
   72 sizeof(UPCRE)
   72 sizeof(UCommand)
   80 sizeof(UApplication)
+  80 sizeof(UClientImage<UTCPSocket>)
   88 sizeof(UZIP)
   88 sizeof(UMimePKCS7)
  104 sizeof(UMimeMultipartMsg)
@@ -189,23 +188,23 @@
  200 sizeof(USSLSocket)
  216 sizeof(UBison)
  216 sizeof(UFlexer)
- 232 sizeof(ULog)
+ 240 sizeof(ULog)
  256 sizeof(USmtpClient)
  256
 -------------------------
    U_STACK_TYPE_5
 
+ 264 sizeof(URDBClient<UTCPSocket>)
  272 sizeof(UFileConfig)
- 280 sizeof(URDBClient<UTCPSocket>)
+ 320 sizeof(UHttpClient<UTCPSocket>)
  336 sizeof(UCDB)
- 344 sizeof(UHttpClient<UTCPSocket>)
  408 sizeof(UFtpClient)
  440 sizeof(USOAPClient<UTCPSocket>)
  512
 -------------------------
    U_STACK_TYPE_6
 
- 584 sizeof(URDB)
+ 592 sizeof(URDB)
 =========================
 */
 #else
@@ -222,11 +221,11 @@
 -------------------------
    U_STACK_TYPE_0
 
-   8 sizeof(ULock)
    8 sizeof(UTimer)
    8 sizeof(UPKCS7)
    8 sizeof(UTimeVal)
    8 sizeof(USemaphore)
+  12 sizeof(ULock)
   12 sizeof(UProcess)
   12 sizeof(URDBServer)
   12 sizeof(UVector<UString>)
@@ -260,11 +259,11 @@
   40 sizeof(UCommand)
   40 sizeof(UMimePKCS7)
   40 sizeof(UHTTP::UFileCacheData) <==
-  40 sizeof(UClientImage<UTCPSocket>)
 -------------------------
    U_STACK_TYPE_2
 
   44 sizeof(UZIP)
+  44 sizeof(UClientImage<UTCPSocket>)
   48 sizeof(UIPAddress)
   56 sizeof(UMimeMessage)
   64
@@ -284,11 +283,11 @@
 
  144 sizeof(USSLSocket)
  148 sizeof(ULog)
- 156 sizeof(URDBClient<UTCPSocket>)
+ 148 sizeof(URDBClient<UTCPSocket>)
  172 sizeof(UFileConfig)
  176 sizeof(USmtpClient)
- 188 sizeof(UHttpClient<UTCPSocket>)
- 196 sizeof(UModNoCatPeer)
+ 180 sizeof(UHttpClient<UTCPSocket>)
+ 212 sizeof(UModNoCatPeer)
  216 sizeof(UCDB)
  220 sizeof(USOAPClient<UTCPSocket>)
  256
@@ -296,7 +295,7 @@
    U_STACK_TYPE_5
 
  300 sizeof(UFtpClient)
- 360 sizeof(URDB)
+ 364 sizeof(URDB)
  512
 -------------------------
    U_STACK_TYPE_6
@@ -312,11 +311,11 @@
    8 sizeof(UCrl)
    8 sizeof(UPKCS10)
    8 sizeof(UCertificate)
-  12 sizeof(ULock)
   12 sizeof(UTimer)
   12 sizeof(UPKCS7)
   12 sizeof(UTimeVal)
   12 sizeof(USemaphore)
+  16 sizeof(ULock)
   16 sizeof(UProcess)
   16 sizeof(URDBServer)
   16 sizeof(UVector<UString>)
@@ -347,12 +346,12 @@
   44 sizeof(UMimeHeader)
   44 sizeof(UApplication)
   44 sizeof(UHTTP::UFileCacheData) <==
-  44 sizeof(UClientImage<UTCPSocket>)
 -------------------------
    U_STACK_TYPE_2
 
   48 sizeof(UZIP)
   48 sizeof(UMimePKCS7)
+  48 sizeof(UClientImage<UTCPSocket>)
   52 sizeof(UIPAddress)
   64 sizeof(UMimeMessage)
 -------------------------
@@ -372,18 +371,17 @@
  136 sizeof(UUDPSocket)
  152 sizeof(ULog)
  156 sizeof(USSLSocket)
- 160 sizeof(URDBClient<UTCPSocket>)
+ 156 sizeof(URDBClient<UTCPSocket>)
  180 sizeof(UFileConfig)
- 180 sizeof(USmtpClient)
- 192 sizeof(UHttpClient<UTCPSocket>)
- 196 sizeof(UModNoCatPeer)
- 224 sizeof(UCDB)
- 224 sizeof(USOAPClient<UTCPSocket>)
+ 188 sizeof(USmtpClient)
+ 188 sizeof(UHttpClient<UTCPSocket>)
+ 220 sizeof(UCDB)
+ 248 sizeof(USOAPClient<UTCPSocket>)
 -------------------------
    U_STACK_TYPE_5
 
  324 sizeof(UFtpClient)
- 368 sizeof(URDB)
+ 376 sizeof(URDB)
  512
 -------------------------
    U_STACK_TYPE_6

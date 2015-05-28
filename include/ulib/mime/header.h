@@ -111,8 +111,9 @@ public:
 
    // VARIE
 
-   uint32_t parse(const UString& buffer);
    uint32_t parse(const char* ptr, uint32_t n);
+
+   uint32_t parse(const UString& buffer) { return parse(buffer.data(), buffer.size()); }
 
    void   removeHeader(const UString& key) { return removeHeader(U_STRING_TO_PARAM(key)); }
    bool containsHeader(const UString& key) { return table.find(key); }
@@ -126,7 +127,7 @@ public:
 
    void setHeader(const UString& key, const UString& value)
       {
-      U_TRACE(0, "UMimeHeader::setHeader(%.*S,%.*S)", U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(value))
+      U_TRACE(0, "UMimeHeader::setHeader(%V,%V)", key.rep, value.rep)
 
       if (containsHeader(key)) table.replaceAfterFind(value);
       else                     table.insertAfterFind(key, value);
@@ -134,15 +135,20 @@ public:
 
    void setHeader(const char* key, uint32_t keylen, const UString& value)
       {
-      U_TRACE(0, "UMimeHeader::setHeader(%.*S,%u,%.*S)", keylen, key, keylen, U_STRING_TO_TRACE(value))
+      U_TRACE(0, "UMimeHeader::setHeader(%.*S,%u,%V)", keylen, key, keylen, value.rep)
 
       if (containsHeader(key, keylen)) table.replaceAfterFind(value);
-      else                             table.insertAfterFind(key, keylen, value);
+      else
+         {
+         UString x(key, keylen);
+
+         table.insertAfterFind(x, value);
+         }
       }
 
    bool setHeaderIfAbsent(const UString& key, const UString& value)
       {
-      U_TRACE(0, "UMimeHeader::setHeaderIfAbsent(%.*S,%.*S)", U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(value))
+      U_TRACE(0, "UMimeHeader::setHeaderIfAbsent(%V,%V)", key.rep, value.rep)
 
       if (containsHeader(key) == false)
          {
@@ -298,7 +304,7 @@ public:
 
    static bool isContentType(const UString& content_type, const char* type, uint32_t len, bool ignore_case = false)
       {
-      U_TRACE(0, "UMimeHeader::isContentType(%.*S,%.*S,%u,%b)", U_STRING_TO_TRACE(content_type), len, type, len, ignore_case)
+      U_TRACE(0, "UMimeHeader::isContentType(%V,%.*S,%u,%b)", content_type.rep, len, type, len, ignore_case)
 
       if (content_type)
          {
@@ -313,7 +319,7 @@ public:
 
    static bool isType(const UString& content_type, const char* type, uint32_t len)
       {
-      U_TRACE(0, "UMimeHeader::isType(%.*S,%.*S,%u)", U_STRING_TO_TRACE(content_type), len, type, len)
+      U_TRACE(0, "UMimeHeader::isType(%V,%.*S,%u)", content_type.rep, len, type, len)
 
       if (content_type)
          {
@@ -360,7 +366,7 @@ public:
 
    static UString getBoundary(const UString& content_type)
       {
-      U_TRACE(0, "UMimeHeader::getBoundary(%.*S)", U_STRING_TO_TRACE(content_type))
+      U_TRACE(0, "UMimeHeader::getBoundary(%V)", content_type.rep)
 
       UString boundary = getValueAttributeFromKeyValue(content_type, U_CONSTANT_TO_PARAM("boundary"), false);
 
@@ -369,7 +375,7 @@ public:
 
    UString getValueAttributeFromKey(const UString& key, const UString& name)
       {
-      U_TRACE(0, "UMimeHeader::getValueAttributeFromKey(%.*S,%.*S)", U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(name))
+      U_TRACE(0, "UMimeHeader::getValueAttributeFromKey(%V,%V)", key.rep, name.rep)
 
       U_ASSERT(empty() == false)
 

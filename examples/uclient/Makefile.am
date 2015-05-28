@@ -5,8 +5,10 @@ dist_sysconf_DATA = uclient.cfg.default
 DEFAULT_INCLUDES    = -I. -I$(top_srcdir)/include
 DEFAULT_CONFIG_FILE = $(sysconfdir)/uclient.cfg
 
+ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+
 if SSL
-uclient_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+uclient_LDADD   = $(ulib_la)
 uclient_SOURCES = uclient.cpp
 uclient_LDFLAGS = $(PRG_LDFLAGS)
 bin_PROGRAMS 	 = uclient

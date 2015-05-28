@@ -27,7 +27,9 @@ HttpBaAuthorization::HttpBaAuthorization(const char* name_, unsigned name_len, c
    long pos = eng.decode(ptr, len, (unsigned char*)buffer.data());
    buffer.resize(pos);
 #else
-   if (UBase64::decode(ptr, len, buffer))
+   UBase64::decode(ptr, len, buffer);
+
+   if (buffer)
 #endif
       {
       unsigned index = buffer.find(':');

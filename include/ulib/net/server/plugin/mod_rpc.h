@@ -21,11 +21,14 @@ class URPCParser;
 class U_EXPORT URpcPlugIn : public UServerPlugIn {
 public:
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORI
 
    URpcPlugIn()
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, URpcPlugIn, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, URpcPlugIn, "", 0)
       }
 
    virtual ~URpcPlugIn();

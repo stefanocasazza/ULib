@@ -41,7 +41,7 @@ public:
     UOrmSession(const char* dbname,  uint32_t len);
     UOrmSession(const char* backend, uint32_t len, const UString& option)
       {
-      U_TRACE_REGISTER_OBJECT(0, UOrmSession, "%.*S,%u,%.*S", len, backend, len, U_STRING_TO_TRACE(option))
+      U_TRACE_REGISTER_OBJECT(0, UOrmSession, "%.*S,%u,%V", len, backend, len, option.rep)
 
       loadDriver(backend, len, option);
       }

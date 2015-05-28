@@ -65,7 +65,7 @@ void URPCObject::readFileMethod(UFileConfig& file_method)
 
 URPCMethod* URPCObject::find(const UString& methodName)
 {
-   U_TRACE(0, "URPCObject::find(%.*S)", U_STRING_TO_TRACE(methodName))
+   U_TRACE(0, "URPCObject::find(%V)", methodName.rep)
 
    URPCMethod* method;
    uint32_t n = methodList.size();
@@ -109,7 +109,7 @@ UString URPCObject::processMessage(URPCEnvelope& envelope, bool& bContainsFault)
       {
       UString ns = envelope.getNsName();
 
-      U_INTERNAL_DUMP("envelope.nsName = %.*S", U_STRING_TO_TRACE(ns))
+      U_INTERNAL_DUMP("envelope.nsName = %V", ns.rep)
 
       // check the name of namespace qualified element information (gSOAP)
 

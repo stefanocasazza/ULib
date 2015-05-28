@@ -4,6 +4,7 @@
 #include <ulib/ssl/crl.h>
 #include <ulib/curl/curl.h>
 #include <ulib/ssl/pkcs7.h>
+#include <ulib/mime/entity.h>
 #include <ulib/file_config.h>
 #include <ulib/ssl/certificate.h>
 #include <ulib/net/client/http.h>

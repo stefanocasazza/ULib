@@ -76,7 +76,7 @@ public:
 
    bool ping(const UString& host)
       {
-      U_TRACE(0, "UPing::ping(%.*S)", U_STRING_TO_TRACE(host))
+      U_TRACE(0, "UPing::ping(%V)", host.rep)
 
       UIPAddress addr;
 
@@ -104,7 +104,7 @@ public:
 
    bool arping(const UString& host, const char* device = "eth0")
       {
-      U_TRACE(0, "UPing::arping(%.*S,%S)", U_STRING_TO_TRACE(host), device)
+      U_TRACE(0, "UPing::arping(%V,%S)", host.rep, device)
 
       UIPAddress addr;
 

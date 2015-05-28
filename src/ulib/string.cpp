@@ -14,35 +14,22 @@
 #include <ulib/file.h>
 #include <ulib/utility/escape.h>
 #include <ulib/internal/chttp.h>
+#include <ulib/container/hash_map.h>
 
-static ustringrep empty_string_rep_storage = {
-#ifdef DEBUG
-   (void*)U_CHECK_MEMORY_SENTINEL, // memory_error (_this)
-#endif
-#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   0, // parent - substring increment reference of source string
-#  ifdef DEBUG
-   0, // child  - substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
-#  endif
-#endif
-   0, // _length
-   0, // _capacity
-   0, // references
-  ""  // str - NB: we need an address (see c_str() or isNullTerminated()) and must be null terminated...
-};
+struct ustring    { ustringrep* rep; };
+union uustring    { ustring*    p1; UString*    p2; };
+union uustringrep { ustringrep* p1; UStringRep* p2; };
 
-static uustringrep uustringrepnull      = { &empty_string_rep_storage };
+static ustring     empty_string_storage = { &u_empty_string_rep_storage };
+static uustringrep uustringrepnull      = { &u_empty_string_rep_storage };
+static uustring    uustringnull         = {   &empty_string_storage };
+
+UString*    UString::string_null        = uustringnull.p2;
 UStringRep* UStringRep::string_rep_null = uustringrepnull.p2;
-struct ustring                            { ustringrep* rep; };
-static ustring empty_string_storage     = { &empty_string_rep_storage };
 
-union uustring {
-   ustring* p1;
-   UString* p2;
-};
-
-static uustring uustringnull  = { &empty_string_storage };
-UString* UString::string_null = uustringnull.p2;
+// OPTMIZE APPEND (BUFFERED)
+char* UString::appbuf;
+char* UString::ptrbuf;
 
 const UString* UString::str_host;
 const UString* UString::str_cookie;
@@ -102,6 +89,8 @@ const UString* UString::str_SOCKET_NAME;
 const UString* UString::str_ENVIRONMENT;
 const UString* UString::str_CLIENT_QUEUE_DIR;
 const UString* UString::str_point;
+const UString* UString::str_true;
+const UString* UString::str_false;
 
 void UString::str_allocate()
 {
@@ -165,6 +154,9 @@ void UString::str_allocate()
    U_INTERNAL_ASSERT_EQUALS(str_ENVIRONMENT, 0)
    U_INTERNAL_ASSERT_EQUALS(str_CLIENT_QUEUE_DIR, 0)
    U_INTERNAL_ASSERT_EQUALS(str_point, 0)
+   U_INTERNAL_ASSERT_EQUALS(str_true, 0)
+   U_INTERNAL_ASSERT_EQUALS(str_false, 0)
+   U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, 0)
 
    static ustringrep stringrep_storage[] = {
       { U_STRINGREP_FROM_CONSTANT("Host") },
@@ -224,7 +216,10 @@ void UString::str_allocate()
       { U_STRINGREP_FROM_CONSTANT("SOCKET_NAME") },
       { U_STRINGREP_FROM_CONSTANT("ENVIRONMENT") },
       { U_STRINGREP_FROM_CONSTANT("/tmp/uclient") },
-      { U_STRINGREP_FROM_CONSTANT(".") }
+      { U_STRINGREP_FROM_CONSTANT(".") },
+      { U_STRINGREP_FROM_CONSTANT("true") },
+      { U_STRINGREP_FROM_CONSTANT("false") },
+      { U_STRINGREP_FROM_CONSTANT("") }
    };
 
    U_NEW_ULIB_OBJECT(str_host,                  U_STRING_FROM_STRINGREP_STORAGE(0));
@@ -285,10 +280,18 @@ void UString::str_allocate()
    U_NEW_ULIB_OBJECT(str_ENVIRONMENT,           U_STRING_FROM_STRINGREP_STORAGE(55));
    U_NEW_ULIB_OBJECT(str_CLIENT_QUEUE_DIR,      U_STRING_FROM_STRINGREP_STORAGE(56));
    U_NEW_ULIB_OBJECT(str_point,                 U_STRING_FROM_STRINGREP_STORAGE(57));
+   U_NEW_ULIB_OBJECT(str_true,                  U_STRING_FROM_STRINGREP_STORAGE(58));
+   U_NEW_ULIB_OBJECT(str_false,                 U_STRING_FROM_STRINGREP_STORAGE(59));
 
    U_INTERNAL_ASSERT_EQUALS(*str_without_mac,      "00:00:00:00:00:00")
    U_INTERNAL_ASSERT_EQUALS(*str_CLIENT_QUEUE_DIR, "/tmp/uclient")
-   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 58)
+   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 61)
+
+   uustringrep key1 = { stringrep_storage+60 };
+
+   UHashMap<void*>::pkey = key1.p2;
+
+   U_INTERNAL_ASSERT(UHashMap<void*>::pkey->invariant())
 }
 
 U_NO_EXPORT void UStringRep::set(uint32_t __length, uint32_t __capacity, const char* ptr)
@@ -333,75 +336,82 @@ UStringRep::~UStringRep()
    U_ERROR("I can't use UStringRep on stack");
 }
 
-UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* ptr)
+UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
 {
-   U_TRACE(1, "UStringRep::create(%u,%u,%p)", length, capacity, ptr)
+   U_TRACE(1, "UStringRep::create(%u,%u,%p)", length, need, ptr)
 
-   U_INTERNAL_ASSERT_MAJOR(capacity, 0)
+   U_INTERNAL_ASSERT_MAJOR(need, 0)
 
    char* _ptr;
    UStringRep* r;
 
    // NB: we don't use new (ctor) because we want an allocation with more space for string data...
 
-#if !defined(ENABLE_MEMPOOL)
-      r = (UStringRep*) U_SYSCALL(malloc, "%u", capacity + (1 + sizeof(UStringRep)));
+#ifndef ENABLE_MEMPOOL
+      r = (UStringRep*) U_SYSCALL(malloc, "%u", need+(1+sizeof(UStringRep)));
    _ptr = (char*)(r + 1);
 #else
-   if (capacity <= U_CAPACITY)
+   if (need > U_CAPACITY)
+      {
+      _ptr = UFile::mmap(&need, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
+
+      if (_ptr == MAP_FAILED) U_RETURN_POINTER(string_rep_null, UStringRep);
+
+      r = U_MALLOC_TYPE(UStringRep);
+      }
+   else
       {
 #  ifdef DEBUG
       UMemoryPool::obj_class = "UStringRep";
       UMemoryPool::func_call = __PRETTY_FUNCTION__;
 #  endif
 
-      if (capacity == U_CAPACITY) r = (UStringRep*) UMemoryPool::pop(9);
+      // -------------------------------------------------------------------------------------------------------------------------------
+      // see: http://www.codeproject.com/Articles/702065/C-Struct-Hack
+      //
+      // NB: we need an array of char[_capacity], plus a terminating null char element, plus enough for the UStringRep data structure...
+      // -------------------------------------------------------------------------------------------------------------------------------
+
+      if (need > (U_STACK_TYPE_8-(1+sizeof(UStringRep))))
+         {
+         need = U_STACK_TYPE_9-(1+sizeof(UStringRep));
+
+         r = (UStringRep*) UMemoryPool::pop(9);
+         }
       else
          {
          int stack_index;
+         uint32_t sz = need + (1+sizeof(UStringRep));
 
-         // --------------------------------------------------------
-         // NB: we need an array of char[_capacity],
-         //     plus a terminating null char element,
-         //     plus enough for the UStringRep data structure...
-         // 
-         // http://www.codeproject.com/Articles/702065/C-Struct-Hack
-         // --------------------------------------------------------
-
-         uint32_t sz = capacity + (1 + sizeof(UStringRep));
-
-         if (sz <= U_STACK_TYPE_4)      // 128
+         if (sz <= U_STACK_TYPE_4) // 128
             {
-            capacity    = U_STACK_TYPE_4 - (1 + sizeof(UStringRep));
+            need        = U_STACK_TYPE_4-(1+sizeof(UStringRep));
             stack_index = 4;
             }
          else if (sz <= U_STACK_TYPE_5) // 256
             {
-            capacity    = U_STACK_TYPE_5 - (1 + sizeof(UStringRep));
+            need        = U_STACK_TYPE_5-(1+sizeof(UStringRep));
             stack_index = 5;
             }
          else if (sz <= U_STACK_TYPE_6) // 512
             {
-            capacity    = U_STACK_TYPE_6 - (1 + sizeof(UStringRep));
+            need        = U_STACK_TYPE_6-(1+sizeof(UStringRep));
             stack_index = 6;
             }
          else if (sz <= U_STACK_TYPE_7) // 1024
             {
-            capacity    = U_STACK_TYPE_7 - (1 + sizeof(UStringRep));
+            need        = U_STACK_TYPE_7-(1+sizeof(UStringRep));
             stack_index = 7;
             }
-         else if (sz <= U_STACK_TYPE_8) // 2048
+         else
             {
-            capacity    = U_STACK_TYPE_8 - (1 + sizeof(UStringRep));
+            U_INTERNAL_ASSERT(need <= U_STACK_TYPE_8) // 2048
+
+            need        = U_STACK_TYPE_8-(1+sizeof(UStringRep));
             stack_index = 8;
             }
-         else // if (sz <= U_STACK_TYPE_9) // 4096
-            {
-            capacity    = U_STACK_TYPE_9 - (1 + sizeof(UStringRep));
-            stack_index = 9;
-            }
 
-         U_INTERNAL_DUMP("sz = %u capacity = %u stack_index = %u", sz, capacity, stack_index)
+         U_INTERNAL_DUMP("sz = %u need = %u stack_index = %u", sz, need, stack_index)
 
          r = (UStringRep*) UMemoryPool::pop(stack_index);
          }
@@ -412,23 +422,15 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t capacity, const char* p
       UMemoryPool::obj_class = UMemoryPool::func_call = 0;
 #  endif
       }
-   else
-      {
-      _ptr = UFile::mmap(&capacity, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
-
-      if (_ptr == MAP_FAILED) U_RETURN_POINTER(string_rep_null, UStringRep);
-
-      r = U_MALLOC_TYPE(UStringRep);
-      }
 #endif
 
 #ifdef DEBUG
    U_SET_LOCATION_INFO;
-   U_REGISTER_OBJECT_PTR(0,UStringRep,r)
+   U_REGISTER_OBJECT_PTR(0,UStringRep,r,&(r->memory._this))
    r->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
 #endif
 
-   r->set(length, capacity, _ptr);
+   r->set(length, need, _ptr);
 
    if (length &&
        ptr)
@@ -447,74 +449,71 @@ bool UString::shrink()
 {
    U_TRACE(0, "UString::shrink()")
 
-   // NB: we need an array of char[_length],
-   //     plus a terminating null char element,
-   //     plus enough for the UStringRep data structure...
+#ifdef ENABLE_MEMPOOL
+   uint32_t _length = rep->_length, sz = _length+(1+sizeof(UStringRep)); // NB: we need an array of char[_length], plus a terminating null char, plus the UStringRep data structure...
 
-#if defined(ENABLE_MEMPOOL)
-   uint32_t _length = rep->_length, sz = _length + (1 + sizeof(UStringRep));
-
-   U_INTERNAL_DUMP("capacity = %u length = %u sz = %u", rep->_capacity, _length, sz)
+   U_INTERNAL_DUMP("rep->_capacity = %u _length = %u sz = %u", rep->_capacity, _length, sz)
 
    U_INTERNAL_ASSERT_MAJOR(rep->_capacity, 0) // mode: 0 -> const
 
-   if (sz > U_STACK_TYPE_8) U_RETURN(false); // 2048
-
-   int stack_index;
-   uint32_t _capacity;
-
-   if (sz <= U_STACK_TYPE_4)      // 128
+   if (sz <= U_STACK_TYPE_8) // 2048
       {
-      _capacity   = U_STACK_TYPE_4 - (1 + sizeof(UStringRep));
-      stack_index = 4;
-      }
-   else if (sz <= U_STACK_TYPE_5) // 256
-      {
-      _capacity   = U_STACK_TYPE_5 - (1 + sizeof(UStringRep));
-      stack_index = 5;
-      }
-   else if (sz <= U_STACK_TYPE_6) // 512
-      {
-      _capacity   = U_STACK_TYPE_6 - (1 + sizeof(UStringRep));
-      stack_index = 6;
-      }
-   else if (sz <= U_STACK_TYPE_7) // 1024
-      {
-      _capacity   = U_STACK_TYPE_7 - (1 + sizeof(UStringRep));
-      stack_index = 7;
-      }
-   else // if (sz <= U_STACK_TYPE_8) // 2048
-      {
-      _capacity   = U_STACK_TYPE_8 - (1 + sizeof(UStringRep));
-      stack_index = 8;
-      }
+      int stack_index;
+      uint32_t _capacity;
 
-   U_INTERNAL_DUMP("capacity = %u stack_index = %u", _capacity, stack_index)
+      if (sz <= U_STACK_TYPE_4) // 128
+         {
+         _capacity   = U_STACK_TYPE_4-(1+sizeof(UStringRep));
+         stack_index = 4;
+         }
+      else if (sz <= U_STACK_TYPE_5) // 256
+         {
+         _capacity   = U_STACK_TYPE_5-(1+sizeof(UStringRep));
+         stack_index = 5;
+         }
+      else if (sz <= U_STACK_TYPE_6) // 512
+         {
+         _capacity   = U_STACK_TYPE_6-(1+sizeof(UStringRep));
+         stack_index = 6;
+         }
+      else if (sz <= U_STACK_TYPE_7) // 1024
+         {
+         _capacity   = U_STACK_TYPE_7-(1+sizeof(UStringRep));
+         stack_index = 7;
+         }
+      else // 2048
+         {
+         _capacity   = U_STACK_TYPE_8-(1+sizeof(UStringRep));
+         stack_index = 8;
+         }
 
-   if (_capacity < rep->_capacity)
-      {
-      UStringRep* r = (UStringRep*) UMemoryPool::pop(stack_index);
-      char* ptr     = (char*)(r + 1);
+      U_INTERNAL_DUMP("_capacity = %u stack_index = %u", _capacity, stack_index)
 
-#  ifdef DEBUG
-      U_SET_LOCATION_INFO;
-      U_REGISTER_OBJECT_PTR(0,UStringRep,r)
-      r->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
-#  endif
+      if (_capacity < rep->_capacity)
+         {
+         UStringRep* r = (UStringRep*) UMemoryPool::pop(stack_index);
+         char* ptr     = (char*)(r + 1);
 
-      r->set(_length, _capacity, ptr);
+#     ifdef DEBUG
+         U_SET_LOCATION_INFO;
+         U_REGISTER_OBJECT_PTR(0,UStringRep,r,&(r->memory._this))
+         r->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
+#     endif
 
-      U_MEMCPY((void*)ptr, rep->str, _length);
+         r->set(_length, _capacity, ptr);
 
-      ptr[_length] = '\0';
+         U_MEMCPY((void*)ptr, rep->str, _length);
 
-      U_INTERNAL_ASSERT(r->invariant())
+         ptr[_length] = '\0';
 
-      _set(r);
+         U_INTERNAL_ASSERT(r->invariant())
 
-      U_INTERNAL_ASSERT(invariant())
+         _set(r);
 
-      U_RETURN(true);
+         U_INTERNAL_ASSERT(invariant())
+
+         U_RETURN(true);
+         }
       }
 #endif
 
@@ -540,7 +539,7 @@ void UStringRep::release()
 
    if (references)
       {
-      --references;
+    --references;
 
       return;
       }
@@ -609,38 +608,34 @@ void UStringRep::release()
 #  endif
 #endif
 
-#if !defined(ENABLE_MEMPOOL)
+#ifndef ENABLE_MEMPOOL
    U_SYSCALL_VOID(free, "%p", (void*)this);
 #else
    if (_capacity <= U_CAPACITY)
       {
-           if (_capacity == U_CAPACITY) UMemoryPool::push(this, 9);
-      else if (_capacity == 0)          UMemoryPool::push(this, U_SIZE_TO_STACK_INDEX(sizeof(UStringRep))); // NB: no room for data, constant string...
+      if (_capacity == 0) UMemoryPool::push(this, U_SIZE_TO_STACK_INDEX(sizeof(UStringRep))); // NB: no room for data, which mean constant string...
       else
          {
-         int stack_index;
-
-         // ---------------------------------------------------
-         // NB: we need an array of char[_capacity],
-         //     plus a terminating null char element,
-         //     plus enough for the UStringRep data structure...
-         // ---------------------------------------------------
+         // NB: we need an array of char[_capacity], plus a terminating null char element, plus enough for the UStringRep data structure...
 
          uint32_t sz = _capacity + (1 + sizeof(UStringRep));
 
-         switch (sz)
-            {
-            case U_STACK_TYPE_4: stack_index = 4;                                                      break; //  128
-            case U_STACK_TYPE_5: stack_index = 5;                                                      break; //  256
-            case U_STACK_TYPE_6: stack_index = 6;                                                      break; //  512
-            case U_STACK_TYPE_7: stack_index = 7;                                                      break; // 1024
-            case U_STACK_TYPE_8: stack_index = 8;                                                      break; // 2048
-            default:             stack_index = 9; U_INTERNAL_ASSERT_EQUALS(sz, U_MAX_SIZE_PREALLOCATE) break; // 4096
-            }
+         /**
+          * -----------
+          * power of 2:
+          * -----------
+          * 2^7   128
+          * 2^8   256
+          * 2^9   512
+          * 2^10  1024
+          * 2^11  2048
+          * 2^12  4096
+          * -----------
+          */
 
-         U_INTERNAL_DUMP("stack_index = %u", stack_index)
+         U_INTERNAL_ASSERT_EQUALS(sz & (sz-1), 0) // must be a power of 2
 
-         UMemoryPool::push(this, stack_index);
+         UMemoryPool::push(this, MultiplyDeBruijnBitPosition2[(sz * 0x077CB531U) >> 27] - 3);
          }
       }
    else
@@ -673,9 +668,9 @@ void UStringRep::release()
 
 void UStringRep::fromValue(UStringRep* r)
 {
-   U_TRACE(0, "UStringRep::fromValue(%.*S)", U_STRING_TO_TRACE(*r))
+   U_TRACE(0, "UStringRep::fromValue(%V)", r)
 
-   U_INTERNAL_DUMP("r = %p r->parent = %p r->references = %d r->child = %d - %.*S", r, r->parent, r->references, r->child, U_STRING_TO_TRACE(*r))
+   U_INTERNAL_DUMP("r = %p r->parent = %p r->references = %d r->child = %d - %V", r, r->parent, r->references, r->child, r)
 
    U_INTERNAL_ASSERT(r->_capacity)
    U_INTERNAL_ASSERT_EQUALS(memcmp(this, UStringRep::string_rep_null, sizeof(UStringRep)), 0)
@@ -774,7 +769,7 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
 
 __pure bool UStringRep::isSubStringOf(UStringRep* rep) const
 {
-   U_TRACE(0, "UStringRep::isSubStringOf(%.*S)", U_STRING_TO_TRACE(*rep))
+   U_TRACE(0, "UStringRep::isSubStringOf(%V)", rep)
 
    U_CHECK_MEMORY
 
@@ -825,6 +820,8 @@ void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
       U_INTERNAL_ASSERT_DIFFERS(ptr, s)
 
       U_MEMCPY(ptr, s, n);
+
+      U_ASSERT(rep->uniq())
 
       ptr[(rep->_length = n)] = '\0';
       }
@@ -930,9 +927,6 @@ __pure bool UStringRep::equal(const char* s, uint32_t n, bool ignore_case) const
    U_RETURN(false);
 }
 
-// ----------------------------------------------
-// gcc: call is unlikely and code size would grow
-// ----------------------------------------------
 __pure bool UStringRep::isBase64(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::isBase64(%u)", pos)
@@ -1147,80 +1141,20 @@ UString::UString(ustringrep* r)
    U_INTERNAL_ASSERT(invariant())
 }
 
-UString& UString::operator=(const UString& str)
-{
-   U_TRACE(0, "UString::operator=(%p)", &str)
-
-   _assign(str.rep);
-
-   return *this;
-}
-
-char* UString::c_strdup() const                             { return strndup(rep->str, rep->_length); }
-char* UString::c_strndup(uint32_t pos, uint32_t n) const    { return strndup(rep->str + pos, rep->fold(pos, n)); }
-
-UString& UString::assign(const char* s)                     { return assign(s, u__strlen(s, __PRETTY_FUNCTION__)); }
-UString& UString::append(const char* s)                     { return append(s, u__strlen(s, __PRETTY_FUNCTION__)); }
-UString& UString::append(UStringRep* _rep)                  { return append(_rep->str, _rep->_length); }
-UString& UString::append(const UString& str)                { return append(str.data(), str.size()); }
-
-__pure bool UString::equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }
-__pure bool UString::equal(const char* s) const             { return rep->equal(s, u__strlen(s, __PRETTY_FUNCTION__)); }
-__pure bool UString::equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
-__pure bool UString::equalnocase(const UString& str) const  { return equalnocase(str.rep); }
-
-void UString::setEmpty()
-{
-   U_TRACE(0, "UString::setEmpty()")
-
-   U_INTERNAL_ASSERT_DIFFERS(rep->_capacity, 0) // mode: 0 -> const
-
-   rep->size_adjust(0U);
-
-   ((char*)rep->str)[0] = '\0';
-}
-
-void UString::setEmptyForce()
-{
-   U_TRACE(0, "UString::setEmptyForce()")
-
-   U_INTERNAL_ASSERT_DIFFERS(rep->_capacity, 0) // mode: 0 -> const
-
-   rep->size_adjust_force(0U);
-
-   ((char*)rep->str)[0] = '\0';
-}
-
-UString& UString::operator+=(const UString& str)   { return append(str.data(), str.size()); }
-
-UString& UString::erase(uint32_t pos, uint32_t n)  { return replace(pos, rep->fold(pos, n), "", 0); }
-
-__pure uint32_t UString::find(const UString& str, uint32_t pos, uint32_t how_much) const
-   { return find(str.data(), pos, str.size(), how_much); }
-
-__pure uint32_t UString::findnocase(const UString& str, uint32_t pos, uint32_t how_much) const
-   { return findnocase(str.data(), pos, str.size(), how_much); }
-
-void UString::clear()
-{
-   U_TRACE(0, "UString::clear()")
-
-   _assign(UStringRep::string_rep_null);
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
 UString UString::copy() const
 {
    U_TRACE(0, "UString::copy()")
 
-   if (empty()) U_RETURN_STRING(getStringNull());
+   if (rep->_length)
+      {
+      uint32_t sz = rep->_length;
 
-   uint32_t sz = rep->_length;
+      UString copia((void*)rep->str, sz);
 
-   UString copia((void*)rep->str, sz);
+      U_RETURN_STRING(copia);
+      }
 
-   U_RETURN_STRING(copia);
+   U_RETURN_STRING(getStringNull());
 }
 
 // SERVICES
@@ -1247,7 +1181,7 @@ UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::de
 
 #ifdef DEBUG
    U_SET_LOCATION_INFO;
-   U_REGISTER_OBJECT_PTR(0,UStringRep,rep)
+   U_REGISTER_OBJECT_PTR(0,UStringRep,rep,&(rep->memory._this))
    rep->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
 #endif
 
@@ -1301,7 +1235,7 @@ void UString::moveToBeginDataInBuffer(uint32_t n)
 
 void UString::_reserve(UString& buffer, uint32_t n)
 {
-   U_TRACE(0, "UString::_reserve(%.*S,%u)", U_STRING_TO_TRACE(buffer), n)
+   U_TRACE(0, "UString::_reserve(%V,%u)", buffer.rep, n)
 
    UStringRep* rep = buffer.rep;
 
@@ -1326,20 +1260,6 @@ void UString::_reserve(UString& buffer, uint32_t n)
    U_INTERNAL_ASSERT(buffer.space() >= n)
 }
 
-bool UString::reserve(uint32_t n)
-{
-   U_TRACE(0, "UString::reserve(%u)", n)
-
-   if (rep->space() < n)
-      {
-      _reserve(*this, n);
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
 // manage UString as memory mapped area...
 
 void UString::mmap(const char* map, uint32_t len)
@@ -1350,6 +1270,8 @@ void UString::mmap(const char* map, uint32_t len)
 
    if (isMmap())
       {
+      U_ASSERT(uniq())
+
       rep->str     = map;
       rep->_length = len;
       }
@@ -1424,6 +1346,8 @@ U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
       (void) U_SYSCALL(memmove, "%p,%p,%u", str + pos + n2, src, how_much);
       }
 
+   U_ASSERT(uniq())
+
    str[(rep->_length = n)] = '\0';
 
    return str + pos;
@@ -1458,6 +1382,8 @@ UString& UString::replace(uint32_t pos, uint32_t n1, uint32_t n2, char c)
 void UString::unQuote()
 {
    U_TRACE(0, "UString::unQuote()")
+
+   U_ASSERT(uniq())
 
    uint32_t len = rep->_length;
 
@@ -1496,6 +1422,8 @@ U_NO_EXPORT char* UString::__append(uint32_t n)
 
       str = (char*)r->str;
       }
+
+   U_ASSERT(uniq())
 
    str[(rep->_length = need)] = '\0';
 
@@ -1558,7 +1486,7 @@ void UString::setNullTerminated() const
    U_TRACE(0, "UString::setNullTerminated()")
 
    // A file is mapped in multiples of the page size. For a file that is not a multiple of the page size,
-   // the remaining memory is zeroed when mapped, and writes to that region are not written out to the file.
+   // the remaining memory is zeroed when mapped, and writes to that region are not written out to the file
 
    if (writeable() == false ||
        (isMmap() && (rep->_length % PAGESIZE) == 0))
@@ -1597,9 +1525,8 @@ __pure uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint3
 
    U_INTERNAL_ASSERT_MAJOR(s_len, 0)
 
-   // An empty string consists of no characters, therefore it should be
-   // found at every point in a UString, except beyond the end...
-   // if (s_len == 0) U_RETURN(pos <= size() ? pos : U_NOT_FOUND);
+// An empty string consists of no characters, therefore it should be found at every point in a UString, except beyond the end...
+// if (s_len == 0) U_RETURN(pos <= size() ? pos : U_NOT_FOUND);
 
    uint32_t n = rep->fold(pos, how_much);
 
@@ -1660,8 +1587,7 @@ __pure uint32_t UString::find(unsigned char c, uint32_t pos) const
    U_RETURN(ret);
 }
 
-// this is rfind(). instead of starting at the beginning of the string and searching for the text's first occurence,
-// rfind() starts its search at the end and returns the last occurence.
+// rfind() instead of starting at the beginning of the string and searching for the text's first occurence, starts its search at the end and returns the last occurence
 
 __pure uint32_t UString::rfind(unsigned char c, uint32_t pos) const
 {
@@ -1707,9 +1633,8 @@ __pure uint32_t UString::rfind(const char* s, uint32_t pos, uint32_t n) const
    U_RETURN(U_NOT_FOUND);
 }
 
-// Instead of searching for the entire string, find_first_of() returns as soon as a single common element is found
-// between the strings being compared. And yes, this means that the find_first_of()s that take a single char are
-// exactly the same as the find() functions with the same parameters
+// Instead of searching for the entire string, find_first_of() returns as soon as a single common element is found between the strings being compared.
+// And yes, this means that the find_first_of() that take a single char are exactly the same as the find() functions with the same parameters...
 
 __pure uint32_t UString::find_first_of(const char* s, uint32_t pos, uint32_t n) const
 {
@@ -1751,8 +1676,7 @@ __pure uint32_t UString::find_last_of(const char* s, uint32_t pos, uint32_t n) c
    U_RETURN(U_NOT_FOUND);
 }
 
-// Now these functions, instead of returning an index to the first common element,
-// returns an index to the first non-common element
+// Now these functions, instead of returning an index to the first common element, returns an index to the first non-common element...
 
 __pure uint32_t UString::find_first_not_of(const char* s, uint32_t pos, uint32_t n) const
 {
@@ -2098,11 +2022,6 @@ UStringRep* UStringRep::toUTF8(const unsigned char* s, uint32_t n)
    U_RETURN_POINTER(r, UStringRep);
 }
 
-// OPTMIZE APPEND (BUFFERED)
-
-char* UString::appbuf;
-char* UString::ptrbuf;
-
 void UString::setFromData(const char** p, uint32_t sz)
 {
    U_TRACE(0, "UString::setFromData(%.*S,%u)", sz, *p, sz)
@@ -2213,7 +2132,7 @@ void UString::setFromData(const char** p, uint32_t sz)
 
       setBuffer(sz * 4);
 
-      (void) UEscape::decode(start, sz, *this);
+      UEscape::decode(start, sz, *this);
       }
 
    *p = ptr;
@@ -2224,7 +2143,7 @@ void UString::setFromData(const char** p, uint32_t sz)
       setNullTerminated();
       }
 
-   U_INTERNAL_DUMP("size = %u, str = %.*S", size(), size(), data())
+   U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -2295,7 +2214,7 @@ void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
       setNullTerminated();
       }
 
-   U_INTERNAL_DUMP("size = %u, str = %.*S", size(), size(), data())
+   U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -2324,11 +2243,9 @@ void UStringRep::write(ostream& os) const
 
    if (need_quote == false)
       {
-      unsigned char c;
-
       for (const unsigned char* s = (const unsigned char*)str, *_end = s + _length; s < _end; ++s)
          {
-         c = *s;
+         unsigned char c = *s;
 
          if (c == '"'  ||
              c == '\\' ||
@@ -2426,7 +2343,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
 
       in.width(0);
 
-      U_INTERNAL_DUMP("size = %u, str = %.*S", str.size(), str.size(), str.data())
+      U_INTERNAL_DUMP("size = %u, str = %V", str.size(), str.rep)
       }
 
         if (extracted == 0) in.setstate(ios::failbit);
@@ -2502,7 +2419,7 @@ istream& UString::getline(istream& in, unsigned char delim)
 
       _append();
 
-      U_INTERNAL_DUMP("size = %u, str = %.*S", size(), size(), data())
+      U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
 
       extracted = (empty() == false);
 
@@ -2574,9 +2491,6 @@ U_EXPORT ostream& operator<<(ostream& out, const UString& str)
 
 // operator +
 
-U_EXPORT UString operator+(const UString& lhs, const UString& rhs)
-{ UString str(lhs); str.append(rhs); return str; }
-
 U_EXPORT UString operator+(const char* lhs, const UString& rhs)
 {
    uint32_t len = u__strlen(lhs, __PRETTY_FUNCTION__);
@@ -2598,12 +2512,6 @@ U_EXPORT UString operator+(char lhs, const UString& rhs)
    return str;
 }
 
-U_EXPORT UString operator+(const UString& lhs, char rhs)
-{ UString str(lhs); (void) str.append(1U, rhs); return str; }
-
-U_EXPORT UString operator+(const UString& lhs, const char* rhs)
-{ UString str(lhs); (void) str.append(rhs, u__strlen(rhs, __PRETTY_FUNCTION__)); return str; }
-
 #ifdef DEBUG
 const char* UStringRep::dump(bool reset) const
 {
@@ -2617,7 +2525,7 @@ const char* UStringRep::dump(bool reset) const
 
    char buffer[1024];
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%.*S", U_min(_length, 256U), str));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%V", this));
 
    if (reset)
       {
@@ -2692,19 +2600,19 @@ void UString::vsnprintf_check(const char* format) const
       {
       // -----------------------------------------------------------------------------------------------------------------------------------------
       // Ex: userver_tcp: ERROR: UString::vsnprintf_check() this = 0xa79bbd18 parent = (nil) references = 2126 child = 0 _capacity = 0 str(0) = ""
-      //                  format = "%.*s:" - ok_writeable = false ok_isNull = false ok_references = false ok_format = false
+      //                  format = "%v:" - ok_writeable = false ok_isNull = false ok_references = false ok_format = false
       // -----------------------------------------------------------------------------------------------------------------------------------------
 
-      U_ERROR("UString::vsnprintf_check() this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %.*S format = %S - "
+      U_ERROR("UString::vsnprintf_check() this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %V format = %S - "
               "ok_writeable = %b ok_isNull = %b ok_references = %b ok_format = %b",
-               this, rep->parent, rep->references, rep->child, rep->_capacity, rep->_length, rep->_length, rep->str, format,
+               this, rep->parent, rep->references, rep->child, rep->_capacity, rep->_length, rep->_length, rep, format,
                ok_writeable, ok_isNull, ok_references, ok_format);
       }
    else if (ok_references == false)
       {
-      U_WARNING("UString::vsnprintf_check() this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %.*S format = %S - "
+      U_WARNING("UString::vsnprintf_check() this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %V format = %S - "
                 "ok_writeable = %b ok_isNull = %b ok_references = %b ok_format = %b",
-                this, rep->parent, rep->references, rep->child, rep->_capacity, rep->_length, rep->_length, rep->str, format,
+                this, rep->parent, rep->references, rep->child, rep->_capacity, rep->_length, rep->_length, rep, format,
                 ok_writeable, ok_isNull, ok_references, ok_format);
       }
 }

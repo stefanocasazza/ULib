@@ -27,7 +27,7 @@ UZIP::UZIP() : tmpdir(U_CAPACITY)
 
 UZIP::UZIP(const UString& _content) : content(_content), tmpdir(U_CAPACITY)
 {
-   U_TRACE_REGISTER_OBJECT(0, UZIP, "%.*S", U_STRING_TO_TRACE(_content))
+   U_TRACE_REGISTER_OBJECT(0, UZIP, "%V", _content.rep)
 
    npart         = 0;
    file          = 0;
@@ -162,7 +162,7 @@ bool UZIP::extract(const UString* _tmpdir, bool bdir)
 
 bool UZIP::extract(const UString& data, const UString* _tmpdir, bool bdir)
 {
-   U_TRACE(0, "UZIP::extract(%.*S,%p,%b)", U_STRING_TO_TRACE(data), _tmpdir, bdir)
+   U_TRACE(0, "UZIP::extract(%V,%p,%b)", data.rep, _tmpdir, bdir)
 
    U_INTERNAL_ASSERT_EQUALS(valid,false)
 
@@ -267,7 +267,7 @@ UString UZIP::getFileContentAt(int index)
 
       UString filename = zippartname->at(index), buffer(U_CAPACITY);
 
-      buffer.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(filename));
+      buffer.snprintf("%v/%v", tmpdir.rep, filename.rep);
 
       dati = (file->setPath(buffer), file->getContent(true,true));
       }

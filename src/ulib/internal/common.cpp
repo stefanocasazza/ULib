@@ -13,7 +13,6 @@
  
 #include <ulib/file.h>
 #include <ulib/utility/interrupt.h>
-#include <ulib/container/hash_map.h>
 
 #ifndef U_STDCPP_ENABLE
 U_EXPORT bool __cxa_guard_acquire() { return 1; }
@@ -142,15 +141,6 @@ void ULib_init()
    u_tmpdir = (const char*) U_SYSCALL(getenv, "%S", "TMPDIR");
 
    if (u_tmpdir == 0) u_tmpdir = "/tmp";
-
-   U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, 0)
-
-   static ustringrep key  = { U_STRINGREP_FROM_CONSTANT("") };
-         uustringrep key1 = { &key };
-
-   UHashMap<void*>::pkey = key1.p2;
-
-   U_INTERNAL_ASSERT(UHashMap<void*>::pkey->invariant())
 
 #ifdef _MSWINDOWS_
    WSADATA wsaData;

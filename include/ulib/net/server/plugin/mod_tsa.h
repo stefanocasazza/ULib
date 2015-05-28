@@ -21,6 +21,9 @@ class UCommand;
 class U_EXPORT UTsaPlugIn : public UServerPlugIn {
 public:
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORI
 
             UTsaPlugIn();

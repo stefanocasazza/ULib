@@ -22,6 +22,9 @@ class UCommand;
 class U_EXPORT UStreamPlugIn : public UServerPlugIn {
 public:
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORI
 
             UStreamPlugIn();
@@ -47,7 +50,6 @@ public:
 
 protected:
    static pid_t pid;
-   static UFile* fmetadata;
    static URingBuffer* rbuf;
    static UCommand* command;
    static UString* uri_path;

@@ -19,7 +19,7 @@ TESTS 			+= ../reset.color
 
 EXTRA_DIST = error.sim ok $(TESTS)
 
-LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 
 test:
 	-make check

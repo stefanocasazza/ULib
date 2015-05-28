@@ -28,7 +28,7 @@ extern "C" {
 extern U_EXPORT void optimize_gif(UString& x);
        U_EXPORT void optimize_gif(UString& x)
 {
-   U_TRACE(0, "::optimize_gif(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(0, "::optimize_gif(%V)", x.rep)
 
    GifReader reader;
    std::string file_contents(U_STRING_TO_PARAM(x)), compressed;
@@ -43,7 +43,7 @@ extern U_EXPORT void optimize_gif(UString& x);
 extern U_EXPORT void optimize_png(UString& x);
        U_EXPORT void optimize_png(UString& x)
 {
-   U_TRACE(0, "::optimize_png(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(0, "::optimize_png(%V)", x.rep)
 
    PngReader reader;
    std::string file_contents(U_STRING_TO_PARAM(x)), compressed;
@@ -58,7 +58,7 @@ extern U_EXPORT void optimize_png(UString& x);
 extern U_EXPORT void optimize_jpg(UString& x);
        U_EXPORT void optimize_jpg(UString& x)
 {
-   U_TRACE(0, "::optimize_jpg(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(0, "::optimize_jpg(%V)", x.rep)
 
    std::string file_contents(U_STRING_TO_PARAM(x)), compressed;
 
@@ -72,7 +72,7 @@ extern U_EXPORT void optimize_jpg(UString& x);
 extern U_EXPORT void minify_html(const char* filename, UString& x);
        U_EXPORT void minify_html(const char* filename, UString& x)
 {
-   U_TRACE(0, "::minify_html(%S,%.*S)", filename, U_STRING_TO_TRACE(x))
+   U_TRACE(0, "::minify_html(%S,%V)", filename, x.rep)
 
    std::string file_contents(U_STRING_TO_PARAM(x)), compressed;
 

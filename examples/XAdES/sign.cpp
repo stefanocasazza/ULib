@@ -623,7 +623,9 @@ public:
 
       (void) document.reserve(x.size());
 
-      if (UBase64::decode(x, document) == false) U_ERROR("decoding data read failed");
+      UBase64::decode(x, document);
+
+      if (document.empty()) U_ERROR("decoding data read failed");
 
       // manage arguments...
 

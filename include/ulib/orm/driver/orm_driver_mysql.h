@@ -295,7 +295,7 @@ public:
 
    explicit UMySqlStatementBindResult(UStringRep& s) : USqlStatementBindResult(s)
       {
-      U_TRACE_REGISTER_OBJECT(0, UMySqlStatementBindResult, "%.*S", U_STRING_TO_TRACE(s))
+      U_TRACE_REGISTER_OBJECT(0, UMySqlStatementBindResult, "%V", &s)
 
       type = MYSQL_TYPE_STRING;
       }
@@ -350,7 +350,7 @@ public:
 
    UOrmDriverMySql()
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriverMySql, "")
+      U_TRACE_REGISTER_OBJECT(0, UOrmDriverMySql, "")
 
       str_allocate();
 
@@ -359,7 +359,7 @@ public:
 
    UOrmDriverMySql(const UString& name_drv) : UOrmDriver(name_drv)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriverMySql, "%.*S", U_STRING_TO_TRACE(name_drv))
+      U_TRACE_REGISTER_OBJECT(0, UOrmDriverMySql, "%V", name_drv.rep)
       }
 
    virtual ~UOrmDriverMySql();

@@ -304,7 +304,7 @@ public:
 
    bool isNull(const UString& id)
       {
-      U_TRACE(1, "UDBIRow::isNull(%.*S)", U_STRING_TO_TRACE(id))
+      U_TRACE(1, "UDBIRow::isNull(%V)", id.rep)
 
       U_INTERNAL_ASSERT_POINTER_MSG(res, "DBI: using unititilized row")
 

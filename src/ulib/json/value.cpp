@@ -15,44 +15,47 @@
 #include <ulib/json/value.h>
 #include <ulib/utility/escape.h>
 
-UValue::UValue(ValueType _type)
-{
-   U_TRACE_REGISTER_OBJECT(0, UValue, "%d", _type)
-
-   U_INTERNAL_ASSERT_RANGE(0,_type,OBJECT_VALUE)
-
-   switch ((type_ = _type))
-      {
-      case BOOLEAN_VALUE: value.bool_ = false;                break;
-      case     INT_VALUE:
-      case    UINT_VALUE: value.int_  = 0;                    break;
-      case    NULL_VALUE:
-      case    REAL_VALUE: value.real_ = 0.0;                  break;
-      case  STRING_VALUE: value.ptr_  = UString::string_null; break;
-      case   ARRAY_VALUE: value.ptr_  = 0;                    break;
-      case  OBJECT_VALUE: value.ptr_  = 0;                    break;
-      }
-
-   reset();
-}
+/**
+ * typedef enum ValueType {
+ *    NULL_VALUE =  0, // null value
+ * BOOLEAN_VALUE =  1, // bool value
+ *    CHAR_VALUE =  2, //   signed char value
+ *   UCHAR_VALUE =  3, // unsigned char value
+ *   SHORT_VALUE =  4, //   signed short integer value
+ *  USHORT_VALUE =  5, // unsigned short integer value
+ *     INT_VALUE =  6, //   signed integer value
+ *    UINT_VALUE =  7, // unsigned integer value
+ *    LONG_VALUE =  8, //   signed long value
+ *   ULONG_VALUE =  9, // unsigned long value
+ *   LLONG_VALUE = 10, //   signed long long value
+ *  ULLONG_VALUE = 11, // unsigned long long value
+ *   FLOAT_VALUE = 12, // float value
+ *    REAL_VALUE = 13, // double value
+ *   LREAL_VALUE = 14, // long double value
+ *  STRING_VALUE = 15, // UTF-8 string value
+ *   ARRAY_VALUE = 16, // array value (ordered list)
+ *  OBJECT_VALUE = 17  // object value (collection of name/value pairs)
+} ValueType;
+*/
 
 UValue::UValue(const UString& _key, const UString& value_)
 {
-   U_TRACE_REGISTER_OBJECT(0, UValue, "%.*S,%.*S", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(value_))
-
-   UValue* child = U_NEW(UValue(value_));
-
-   child->key = U_NEW(UString(_key));
+   U_TRACE_REGISTER_OBJECT(0, UValue, "%V,%V", _key.rep, value_.rep)
 
    parent     =
    prev       =
    next       = 0;
    key        = 0;
-   type_      = OBJECT_VALUE;
    value.ptr_ = 0;
+   type_      = OBJECT_VALUE;
+
+   UValue* child = U_NEW(UValue(STRING_VALUE));
 
    children.head =
    children.tail = child;
+
+   child->key        = U_NEW(UString(_key));
+   child->value.ptr_ = U_NEW(UString(value_));
 }
 
 void UValue::reset()
@@ -80,7 +83,7 @@ void UValue::clear()
       {
       if (key)
          {
-         U_INTERNAL_DUMP("key = %.*S", U_STRING_TO_TRACE(*key))
+         U_INTERNAL_DUMP("key = %V", key->rep)
 
          delete key;
                 key = 0;
@@ -97,38 +100,32 @@ void UValue::clear()
       next   = 0;
       }
 
-   switch (type_)
+   if (type_ == STRING_VALUE)
       {
-      case STRING_VALUE:
+      U_INTERNAL_ASSERT_POINTER(value.ptr_)
+
+      delete getString();
+
+      type_ = NULL_VALUE;
+      }
+   else if (type_ ==  ARRAY_VALUE ||
+            type_ == OBJECT_VALUE)
+      {
+      UValue* _next;
+
+      U_INTERNAL_DUMP("children.head = %p", children.head)
+
+      for (UValue* child = children.head; child; child = _next)
          {
-         U_INTERNAL_ASSERT_POINTER(value.ptr_)
+         _next = child->next;
 
-         delete getString();
+         U_INTERNAL_DUMP("_next = %p", _next)
 
-         type_ = NULL_VALUE;
+         delete child;
          }
-      break;
 
-      case ARRAY_VALUE:
-      case OBJECT_VALUE:
-         {
-         UValue* _next;
-
-         U_INTERNAL_DUMP("children.head = %p", children.head)
-
-         for (UValue* child = children.head; child; child = _next)
-            {
-            _next = child->next;
-
-            U_INTERNAL_DUMP("_next = %p", _next)
-
-            delete child;
-            }
-
-         children.head =
-         children.tail = 0;
-         }
-      break;
+      children.head =
+      children.tail = 0;
       }
 }
 
@@ -140,22 +137,49 @@ __pure bool UValue::asBool() const
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
-   bool result = false;
+   static const int dispatch_table[] = {
+      0,
+      (int)((char*)&&case_bool-(char*)&&case_null),
+      (int)((char*)&&case_char-(char*)&&case_null),
+      (int)((char*)&&case_uchar-(char*)&&case_null),
+      (int)((char*)&&case_short-(char*)&&case_null),
+      (int)((char*)&&case_ushort-(char*)&&case_null),
+      (int)((char*)&&case_int-(char*)&&case_null),
+      (int)((char*)&&case_uint-(char*)&&case_null),
+      (int)((char*)&&case_long-(char*)&&case_null),
+      (int)((char*)&&case_ulong-(char*)&&case_null),
+      (int)((char*)&&case_llong-(char*)&&case_null),
+      (int)((char*)&&case_ullong-(char*)&&case_null),
+      (int)((char*)&&case_float-(char*)&&case_null),
+      (int)((char*)&&case_double-(char*)&&case_null),
+      (int)((char*)&&case_ldouble-(char*)&&case_null),
+      (int)((char*)&&case_string-(char*)&&case_null),
+      (int)((char*)&&case_array-(char*)&&case_null),
+      (int)((char*)&&case_object-(char*)&&case_null)
+   };
 
-   switch (type_)
-      {
-      case    NULL_VALUE:                                                   break;
-      case     INT_VALUE: if (value.int_)         result = true;            break;
-      case    UINT_VALUE: if (value.uint_)        result = true;            break;
-      case    REAL_VALUE: if (value.real_ != 0.0) result = true;            break;
-      case BOOLEAN_VALUE:                         result = value.bool_;     break;
+   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&case_null = %p", type_, dispatch_table[type_], &&case_null)
 
-      case  STRING_VALUE: result = getString()->empty(); break;
-      case   ARRAY_VALUE:
-      case  OBJECT_VALUE: result = (children.head == 0); break;
-      }
+   goto *((char*)&&case_null + dispatch_table[type_]);
 
-   U_RETURN(result);
+case_null:     U_RETURN(false);
+case_bool:     U_RETURN(value.bool_);
+case_char:     U_RETURN(value.char_);
+case_uchar:    U_RETURN(value.uchar_);
+case_short:    U_RETURN(value.short_);
+case_ushort:   U_RETURN(value.short_);
+case_int:      U_RETURN(value.int_);
+case_uint:     U_RETURN(value.uint_);
+case_long:     U_RETURN(value.long_);
+case_ulong:    U_RETURN(value.ulong_);
+case_llong:    U_RETURN(value.llong_);
+case_ullong:   U_RETURN(value.ullong_);
+case_float:    U_RETURN(value.float_ != 0.0);
+case_double:   U_RETURN(value.real_  != 0.0);
+case_ldouble:  U_RETURN(value.lreal_ != 0.0);
+case_string:   U_RETURN(getString()->empty() == false);
+case_array:
+case_object:   U_RETURN(children.head == 0);
 }
 
 __pure int UValue::asInt() const
@@ -164,30 +188,64 @@ __pure int UValue::asInt() const
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
-   int result = 0;
+   static const int dispatch_table[] = {
+      0,
+      (int)((char*)&&case_bool-(char*)&&case_null),
+      (int)((char*)&&case_char-(char*)&&case_null),
+      (int)((char*)&&case_uchar-(char*)&&case_null),
+      (int)((char*)&&case_short-(char*)&&case_null),
+      (int)((char*)&&case_ushort-(char*)&&case_null),
+      (int)((char*)&&case_int-(char*)&&case_null),
+      (int)((char*)&&case_uint-(char*)&&case_null),
+      (int)((char*)&&case_long-(char*)&&case_null),
+      (int)((char*)&&case_ulong-(char*)&&case_null),
+      (int)((char*)&&case_llong-(char*)&&case_null),
+      (int)((char*)&&case_ullong-(char*)&&case_null),
+      (int)((char*)&&case_float-(char*)&&case_null),
+      (int)((char*)&&case_double-(char*)&&case_null),
+      (int)((char*)&&case_ldouble-(char*)&&case_null),
+      (int)((char*)&&case_string-(char*)&&case_null),
+      (int)((char*)&&case_array-(char*)&&case_null),
+      (int)((char*)&&case_object-(char*)&&case_null)
+   };
 
-   switch (type_)
-      {
-      case    NULL_VALUE:                                       break;
-      case     INT_VALUE:                  result = value.int_; break;
-      case BOOLEAN_VALUE: if (value.bool_) result = 1;          break;
-      case    UINT_VALUE:
-         U_INTERNAL_ASSERT_MSG(value.uint_ < (unsigned)INT_MAX, "Integer out of signed integer range")
-         result = (int)value.uint_;
-      break;
-      case    REAL_VALUE:
-         U_INTERNAL_ASSERT_MSG(value.real_ >= INT_MIN && value.real_ <= INT_MAX, "Real out of signed integer range")
-         result = (int)value.real_;
-      break;
+   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&case_null = %p", type_, dispatch_table[type_], &&case_null)
 
-      case  STRING_VALUE:
-      case   ARRAY_VALUE:
-      case  OBJECT_VALUE:
-         U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to signed integer...")
-      break;
-      }
+   goto *((char*)&&case_null + dispatch_table[type_]);
 
-   U_RETURN(result);
+case_null:     U_RETURN(0);
+case_bool:     U_RETURN(value.bool_);
+case_char:     U_RETURN(value.char_);
+case_uchar:    U_RETURN(value.uchar_);
+case_short:    U_RETURN(value.short_);
+case_ushort:   U_RETURN(value.short_);
+case_int:      U_RETURN(value.int_);
+case_uint:     U_RETURN(value.uint_);
+case_long:     U_RETURN(value.long_);
+case_ulong:    U_RETURN(value.ulong_);
+case_llong:    U_RETURN(value.llong_);
+case_ullong:   U_RETURN(value.ullong_);
+
+case_float:
+   U_INTERNAL_ASSERT_MSG(value.float_ >= INT_MIN && value.float_ <= INT_MAX, "float out of signed integer range")
+
+   U_RETURN(value.float_);
+
+case_double:
+   U_INTERNAL_ASSERT_MSG(value.real_ >= INT_MIN && value.real_ <= INT_MAX, "double out of signed integer range")
+
+   U_RETURN(value.real_);
+case_ldouble:
+   U_INTERNAL_ASSERT_MSG(value.lreal_ >= INT_MIN && value.lreal_ <= INT_MAX, "long double out of signed integer range")
+
+   U_RETURN(value.lreal_);
+
+case_string:
+case_array:
+case_object:
+   U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to signed integer...")
+
+   U_RETURN(-1);
 }
 
 __pure unsigned int UValue::asUInt() const
@@ -196,31 +254,69 @@ __pure unsigned int UValue::asUInt() const
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
-   unsigned int result = 0;
+   static const int dispatch_table[] = {
+      0,
+      (int)((char*)&&case_bool-(char*)&&case_null),
+      (int)((char*)&&case_char-(char*)&&case_null),
+      (int)((char*)&&case_uchar-(char*)&&case_null),
+      (int)((char*)&&case_short-(char*)&&case_null),
+      (int)((char*)&&case_ushort-(char*)&&case_null),
+      (int)((char*)&&case_int-(char*)&&case_null),
+      (int)((char*)&&case_uint-(char*)&&case_null),
+      (int)((char*)&&case_long-(char*)&&case_null),
+      (int)((char*)&&case_ulong-(char*)&&case_null),
+      (int)((char*)&&case_llong-(char*)&&case_null),
+      (int)((char*)&&case_ullong-(char*)&&case_null),
+      (int)((char*)&&case_float-(char*)&&case_null),
+      (int)((char*)&&case_double-(char*)&&case_null),
+      (int)((char*)&&case_ldouble-(char*)&&case_null),
+      (int)((char*)&&case_string-(char*)&&case_null),
+      (int)((char*)&&case_array-(char*)&&case_null),
+      (int)((char*)&&case_object-(char*)&&case_null)
+   };
 
-   switch (type_)
-      {
-      case    NULL_VALUE:                                        break;
-      case    UINT_VALUE:                  result = value.uint_; break;
-      case BOOLEAN_VALUE: if (value.bool_) result = 1;           break;
-      case     INT_VALUE:
-         U_INTERNAL_ASSERT_MSG(value.int_ >= 0, "Negative integer can not be converted to unsigned integer")
-         result = value.int_;
-      break;
+   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&case_null = %p", type_, dispatch_table[type_], &&case_null)
 
-      case    REAL_VALUE:
-         U_INTERNAL_ASSERT_MSG(value.real_ >= 0.0 && value.real_ <= UINT_MAX, "Real out of unsigned integer range")
-         result = (unsigned int)value.real_;
-      break;
+   goto *((char*)&&case_null + dispatch_table[type_]);
 
-      case  STRING_VALUE:
-      case   ARRAY_VALUE:
-      case  OBJECT_VALUE:
-         U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to unsigned integer...")
-      break;
-      }
+case_null:     U_RETURN(0);
+case_bool:     U_RETURN(value.bool_);
+case_char:     U_RETURN(value.char_);
+case_uchar:    U_RETURN(value.uchar_);
+case_short:    U_RETURN(value.short_);
+case_ushort:   U_RETURN(value.short_);
 
-   U_RETURN(result);
+case_int:
+   U_INTERNAL_ASSERT_MSG(value.int_ >= 0, "Negative integer cannot be converted to unsigned integer")
+
+   U_RETURN(value.int_);
+
+case_uint:     U_RETURN(value.uint_);
+case_long:     U_RETURN(value.long_);
+case_ulong:    U_RETURN(value.ulong_);
+case_llong:    U_RETURN(value.llong_);
+case_ullong:   U_RETURN(value.ullong_);
+
+case_float:
+   U_INTERNAL_ASSERT_MSG(value.float_ >= 0.0 && value.float_ <= UINT_MAX, "float out of unsigned integer range")
+
+   U_RETURN(value.float_);
+
+case_double:
+   U_INTERNAL_ASSERT_MSG(value.real_ >= 0.0 && value.real_ <= UINT_MAX, "double out of unsigned integer range")
+
+   U_RETURN(value.real_);
+case_ldouble:
+   U_INTERNAL_ASSERT_MSG(value.lreal_ >= 0.0 && value.lreal_ <= UINT_MAX, "long double out of unsigned integer range")
+
+   U_RETURN(value.lreal_);
+
+case_string:
+case_array:
+case_object:
+   U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to signed integer...")
+
+   U_RETURN(-1);
 }
 
 __pure double UValue::asDouble() const
@@ -229,24 +325,53 @@ __pure double UValue::asDouble() const
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
-   double result = 0.0;
+   static const int dispatch_table[] = {
+      0,
+      (int)((char*)&&case_bool-(char*)&&case_null),
+      (int)((char*)&&case_char-(char*)&&case_null),
+      (int)((char*)&&case_uchar-(char*)&&case_null),
+      (int)((char*)&&case_short-(char*)&&case_null),
+      (int)((char*)&&case_ushort-(char*)&&case_null),
+      (int)((char*)&&case_int-(char*)&&case_null),
+      (int)((char*)&&case_uint-(char*)&&case_null),
+      (int)((char*)&&case_long-(char*)&&case_null),
+      (int)((char*)&&case_ulong-(char*)&&case_null),
+      (int)((char*)&&case_llong-(char*)&&case_null),
+      (int)((char*)&&case_ullong-(char*)&&case_null),
+      (int)((char*)&&case_float-(char*)&&case_null),
+      (int)((char*)&&case_double-(char*)&&case_null),
+      (int)((char*)&&case_ldouble-(char*)&&case_null),
+      (int)((char*)&&case_string-(char*)&&case_null),
+      (int)((char*)&&case_array-(char*)&&case_null),
+      (int)((char*)&&case_object-(char*)&&case_null)
+   };
 
-   switch (type_)
-      {
-      case    NULL_VALUE:                                        break;
-      case     INT_VALUE:                  result = value.int_;  break;
-      case    UINT_VALUE:                  result = value.uint_; break;
-      case    REAL_VALUE:                  result = value.real_; break;
-      case BOOLEAN_VALUE: if (value.bool_) result = 1.0;         break;
+   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&case_null = %p", type_, dispatch_table[type_], &&case_null)
 
-      case  STRING_VALUE:
-      case   ARRAY_VALUE:
-      case  OBJECT_VALUE:
-         U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to double...")
-      break;
-      }
+   goto *((char*)&&case_null + dispatch_table[type_]);
 
-   U_RETURN(result);
+case_null:     U_RETURN(0.0);
+case_bool:     U_RETURN(value.bool_ ? 1.0 : 0.0);
+case_char:     U_RETURN(value.char_);
+case_uchar:    U_RETURN(value.uchar_);
+case_short:    U_RETURN(value.short_);
+case_ushort:   U_RETURN(value.short_);
+case_int:      U_RETURN(value.int_);
+case_uint:     U_RETURN(value.uint_);
+case_long:     U_RETURN(value.long_);
+case_ulong:    U_RETURN(value.ulong_);
+case_llong:    U_RETURN(value.llong_);
+case_ullong:   U_RETURN(value.ullong_);
+case_float:    U_RETURN(value.float_);
+case_double:   U_RETURN(value.real_);
+case_ldouble:  U_RETURN(value.lreal_);
+
+case_string:
+case_array:
+case_object:
+   U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to signed integer...")
+
+   U_RETURN(0.0);
 }
 
 __pure UString UValue::asString() const
@@ -255,26 +380,58 @@ __pure UString UValue::asString() const
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
-   UString result;
+   static const int dispatch_table[] = {
+      0,
+      (int)((char*)&&case_bool-(char*)&&case_null),
+      (int)((char*)&&case_char-(char*)&&case_null),
+      (int)((char*)&&case_uchar-(char*)&&case_null),
+      (int)((char*)&&case_short-(char*)&&case_null),
+      (int)((char*)&&case_ushort-(char*)&&case_null),
+      (int)((char*)&&case_int-(char*)&&case_null),
+      (int)((char*)&&case_uint-(char*)&&case_null),
+      (int)((char*)&&case_long-(char*)&&case_null),
+      (int)((char*)&&case_ulong-(char*)&&case_null),
+      (int)((char*)&&case_llong-(char*)&&case_null),
+      (int)((char*)&&case_ullong-(char*)&&case_null),
+      (int)((char*)&&case_float-(char*)&&case_null),
+      (int)((char*)&&case_double-(char*)&&case_null),
+      (int)((char*)&&case_ldouble-(char*)&&case_null),
+      (int)((char*)&&case_string-(char*)&&case_null),
+      (int)((char*)&&case_array-(char*)&&case_null),
+      (int)((char*)&&case_object-(char*)&&case_null)
+   };
 
-   switch (type_)
-      {
-      case    NULL_VALUE:                        break;
-      case  STRING_VALUE: result = *getString(); break;
+   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&case_null = %p", type_, dispatch_table[type_], &&case_null)
 
-      case BOOLEAN_VALUE: result = (value.bool_ ? U_STRING_FROM_CONSTANT("true")
-                                                : U_STRING_FROM_CONSTANT("false")); break;
+   goto *((char*)&&case_null + dispatch_table[type_]);
 
-      case     INT_VALUE:
-      case    UINT_VALUE:
-      case    REAL_VALUE:
-      case   ARRAY_VALUE:
-      case  OBJECT_VALUE:
-         U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to string...")
-      break;
-      }
+case_null:  return UString::getStringNull();
+case_bool:  U_RETURN_STRING(value.bool_ ? *UString::str_true : *UString::str_false);
 
-   U_RETURN_STRING(result);
+case_char:
+case_uchar:
+case_short:
+case_ushort:
+case_int:
+case_uint:
+case_long:
+case_ulong:
+case_llong:
+case_ullong:
+case_float:
+case_double:
+case_ldouble:
+   U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to string...")
+
+   return UString::getStringNull();
+
+case_string: U_RETURN_STRING(*getString());
+
+case_array:
+case_object:
+   U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to string...")
+
+   return UString::getStringNull();
 }
 
 __pure bool UValue::isConvertibleTo(ValueType other) const
@@ -283,43 +440,71 @@ __pure bool UValue::isConvertibleTo(ValueType other) const
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
-   bool result = false;
+   static const int dispatch_table[] = {
+      0,
+      (int)((char*)&&case_bool-(char*)&&case_null),
+      (int)((char*)&&case_char-(char*)&&case_null),
+      (int)((char*)&&case_uchar-(char*)&&case_null),
+      (int)((char*)&&case_short-(char*)&&case_null),
+      (int)((char*)&&case_ushort-(char*)&&case_null),
+      (int)((char*)&&case_int-(char*)&&case_null),
+      (int)((char*)&&case_uint-(char*)&&case_null),
+      (int)((char*)&&case_long-(char*)&&case_null),
+      (int)((char*)&&case_ulong-(char*)&&case_null),
+      (int)((char*)&&case_llong-(char*)&&case_null),
+      (int)((char*)&&case_ullong-(char*)&&case_null),
+      (int)((char*)&&case_float-(char*)&&case_null),
+      (int)((char*)&&case_double-(char*)&&case_null),
+      (int)((char*)&&case_ldouble-(char*)&&case_null),
+      (int)((char*)&&case_string-(char*)&&case_null),
+      (int)((char*)&&case_array-(char*)&&case_null),
+      (int)((char*)&&case_object-(char*)&&case_null)
+   };
 
-   switch (type_)
-      {
-      case    NULL_VALUE: result = true;                                          break;
-      case BOOLEAN_VALUE: result = (other != NULL_VALUE || value.bool_ == false); break;
+   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&case_null = %p", type_, dispatch_table[type_], &&case_null)
 
-      case     INT_VALUE: result = (other == NULL_VALUE && value.int_ == 0)        ||
-                                    other ==  INT_VALUE                            ||
-                                   (other == UINT_VALUE && value.int_ >= 0)        ||
-                                    other == REAL_VALUE                            ||
-                                    other == BOOLEAN_VALUE;
-      break;
-      case    UINT_VALUE: result = (other == NULL_VALUE && value.uint_ ==       0) ||
-                                   (other ==  INT_VALUE && value.uint_ <= INT_MAX) ||
-                                    other == UINT_VALUE                            ||
-                                    other == REAL_VALUE                            ||
-                                    other == BOOLEAN_VALUE;
-      break;
-      case    REAL_VALUE: result = (other == NULL_VALUE && value.real_ ==     0.0)                            ||
-                                   (other ==  INT_VALUE && value.real_ >= INT_MIN && value.real_ <=  INT_MAX) ||
-                                   (other == UINT_VALUE && value.real_ >=     0.0 && value.real_ <= UINT_MAX) ||
-                                    other == REAL_VALUE                                                       ||
-                                    other == BOOLEAN_VALUE;
-      break;
-      case  STRING_VALUE: result = (other == NULL_VALUE && getString()->empty()) ||
-                                    other == STRING_VALUE;
-      break;
-      case   ARRAY_VALUE: result = (other == NULL_VALUE && (children.head == 0)) ||
-                                    other == ARRAY_VALUE;
-      break;
-      case  OBJECT_VALUE: result = (other == NULL_VALUE && (children.head == 0)) ||
-                                    other == OBJECT_VALUE;
-      break;
-      }
+   goto *((char*)&&case_null + dispatch_table[type_]);
 
-   U_RETURN(result);
+case_null:     U_RETURN(true);
+case_bool:     U_RETURN(other != NULL_VALUE || value.bool_   == false);
+case_char:     U_RETURN(other != NULL_VALUE || value.char_   == 0);
+case_uchar:    U_RETURN(other != NULL_VALUE || value.uchar_  == 0);
+case_short:    U_RETURN(other != NULL_VALUE || value.short_  == 0);
+case_ushort:   U_RETURN(other != NULL_VALUE || value.ushort_ == 0);
+
+case_int:      U_RETURN((other == NULL_VALUE && value.int_ == 0) ||
+                         other ==  INT_VALUE                     ||
+                        (other == UINT_VALUE && value.int_ >= 0) ||
+                         other == REAL_VALUE                     ||
+                         other == BOOLEAN_VALUE);
+
+case_uint:     U_RETURN((other == NULL_VALUE && value.uint_ ==       0) ||
+                        (other ==  INT_VALUE && value.uint_ <= INT_MAX) ||
+                         other == UINT_VALUE                            ||
+                         other == REAL_VALUE                            ||
+                         other == BOOLEAN_VALUE);
+
+case_long:     U_RETURN(false);
+case_ulong:    U_RETURN(false);
+case_llong:    U_RETURN(false);
+case_ullong:   U_RETURN(false);
+case_float:    U_RETURN(false);
+
+case_double:   U_RETURN((other == NULL_VALUE && value.real_ ==     0.0)                            ||
+                        (other ==  INT_VALUE && value.real_ >= INT_MIN && value.real_ <=  INT_MAX) ||
+                        (other == UINT_VALUE && value.real_ >=     0.0 && value.real_ <= UINT_MAX) ||
+                         other == REAL_VALUE                                                       ||
+                         other == BOOLEAN_VALUE);
+
+case_ldouble:  U_RETURN((other == NULL_VALUE && value.lreal_ ==     0.0)                             ||
+                        (other ==  INT_VALUE && value.lreal_ >= INT_MIN && value.lreal_ <=  INT_MAX) ||
+                        (other == UINT_VALUE && value.lreal_ >=     0.0 && value.lreal_ <= UINT_MAX) ||
+                         other == REAL_VALUE                                                         ||
+                         other == BOOLEAN_VALUE);
+
+case_string:   U_RETURN((other == NULL_VALUE && getString()->empty()) || other == STRING_VALUE); 
+case_array:    U_RETURN((other == NULL_VALUE && (children.head == 0)) || other ==  ARRAY_VALUE);
+case_object:   U_RETURN((other == NULL_VALUE && (children.head == 0)) || other == OBJECT_VALUE);
 }
 
 __pure UValue& UValue::operator[](uint32_t pos)
@@ -343,7 +528,7 @@ __pure UValue& UValue::operator[](uint32_t pos)
 
 __pure UValue& UValue::operator[](const UString& _key)
 {
-   U_TRACE(0, "UValue::operator[](%.*S)", U_STRING_TO_TRACE(_key))
+   U_TRACE(0, "UValue::operator[](%V)", _key.rep)
 
    if (type_ == OBJECT_VALUE)
       {
@@ -384,127 +569,209 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
 
 void UValue::stringify(UString& result, UValue& _value)
 {
-   U_TRACE(0, "UValue::stringify(%.*S,%p)", U_STRING_TO_TRACE(result), &_value)
+   U_TRACE(0, "UValue::stringify(%V,%p)", result.rep, &_value)
 
    U_INTERNAL_DUMP("_value.type_ = %u", _value.type_)
 
    U_INTERNAL_ASSERT_RANGE(0,_value.type_,OBJECT_VALUE)
 
+   static const int dispatch_table[] = {
+      0,
+      (int)((char*)&&case_bool-(char*)&&case_null),
+      (int)((char*)&&case_char-(char*)&&case_null),
+      (int)((char*)&&case_uchar-(char*)&&case_null),
+      (int)((char*)&&case_short-(char*)&&case_null),
+      (int)((char*)&&case_ushort-(char*)&&case_null),
+      (int)((char*)&&case_int-(char*)&&case_null),
+      (int)((char*)&&case_uint-(char*)&&case_null),
+      (int)((char*)&&case_long-(char*)&&case_null),
+      (int)((char*)&&case_ulong-(char*)&&case_null),
+      (int)((char*)&&case_llong-(char*)&&case_null),
+      (int)((char*)&&case_ullong-(char*)&&case_null),
+      (int)((char*)&&case_float-(char*)&&case_null),
+      (int)((char*)&&case_double-(char*)&&case_null),
+      (int)((char*)&&case_ldouble-(char*)&&case_null),
+      (int)((char*)&&case_string-(char*)&&case_null),
+      (int)((char*)&&case_array-(char*)&&case_null),
+      (int)((char*)&&case_object-(char*)&&case_null)
+   };
+
+   bool bcomma;
+   char* presult;
+   const char* ch;
    char buffer[32];
+   UString* pstring;
+   const char* keyptr;
+   const char* last_nonzero;
+   uint32_t n, pos, sz, keysz;
 
-   switch (_value.type_)
+   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&case_null = %p", _value.type_, dispatch_table[_value.type_], &&case_null)
+
+   goto *((char*)&&case_null + dispatch_table[_value.type_]);
+
+case_null:
+   (void) result.append(U_CONSTANT_TO_PARAM("null"));
+
+   return;
+
+case_bool:
+   _value.value.bool_ ? (void) result.append(U_CONSTANT_TO_PARAM("true"))
+                      : (void) result.append(U_CONSTANT_TO_PARAM("false"));
+
+   return;
+
+case_char:
+   (void) result.push_back(_value.value.char_);
+
+   return;
+
+case_uchar:
+   (void) result.push_back(_value.value.uchar_);
+
+   return;
+
+case_short:
+   (void) result.append(buffer, u_num2str32s(buffer, _value.value.short_));
+
+   return;
+
+case_ushort:
+   (void) result.append(buffer, u_num2str32(buffer, _value.value.ushort_));
+
+   return;
+
+case_int:
+   (void) result.append(buffer, u_num2str32s(buffer, _value.value.int_));
+
+   return;
+
+case_uint:
+   (void) result.append(buffer, u_num2str32s(buffer, _value.value.uint_));
+
+   return;
+
+case_long:
+   (void) result.append(buffer, u_num2str64s(buffer, _value.value.long_));
+
+   return;
+
+case_ulong:
+   (void) result.append(buffer, u_num2str64s(buffer, _value.value.ulong_));
+
+   return;
+
+case_llong:
+   (void) result.append(buffer, u_num2str64s(buffer, _value.value.llong_));
+
+   return;
+
+case_ullong:
+   (void) result.append(buffer, u_num2str64s(buffer, _value.value.ullong_));
+
+   return;
+
+case_float:
+   n = u__snprintf(buffer, sizeof(buffer), "%#.6f", _value.value.float_);
+
+   goto next;
+
+case_double:
+   n = u__snprintf(buffer, sizeof(buffer), "%#.16g", _value.value.real_);
+
+   goto next;
+
+case_ldouble:
+   n = u__snprintf(buffer, sizeof(buffer), "%#.16g", _value.value.lreal_);
+
+next:
+   ch = buffer + n - 1;
+
+   if (*ch == '0')
       {
-      case    NULL_VALUE:                   (void) result.append(U_CONSTANT_TO_PARAM("null"));  break;
-      case BOOLEAN_VALUE: _value.asBool() ? (void) result.append(U_CONSTANT_TO_PARAM("true"))
-                                          : (void) result.append(U_CONSTANT_TO_PARAM("false")); break;
+      while (ch > buffer && *ch == '0') --ch;
 
-      case  INT_VALUE: (void) result.append(buffer, u_num2str32s(buffer, _value.asInt()));  break;
-      case UINT_VALUE: (void) result.append(buffer, u_num2str32( buffer, _value.asUInt())); break;
-      case REAL_VALUE:
+      last_nonzero = ch;
+
+      while (ch >= buffer)
          {
-         uint32_t n = u__snprintf(buffer, sizeof(buffer), "%#.16g", _value.asDouble());
+         char c = *ch;
 
-         const char* ch = buffer + n - 1;
-
-         if (*ch == '0')
+         if (u__isdigit(c))
             {
-            while (ch > buffer && *ch == '0') --ch;
+            --ch;
 
-            const char* last_nonzero = ch;
-
-            while (ch >= buffer)
-               {
-               switch (*ch)
-                  {
-                  case '0':
-                  case '1':
-                  case '2':
-                  case '3':
-                  case '4':
-                  case '5':
-                  case '6':
-                  case '7':
-                  case '8':
-                  case '9': --ch; continue;
-                  case '.': n = last_nonzero - buffer + 2; // Truncate zeroes to save bytes in output, but keep one
-                  default: goto end;
-                  }
-               }
+            continue; 
             }
-end:
-         (void) result.append(buffer, n);
+
+         if (c == '.') n = last_nonzero - buffer + 2; // Truncate zeroes to save bytes in output, but keep one)
 
          break;
          }
-
-      case STRING_VALUE:
-         {
-         UString* pstring = _value.getString();
-
-         (void) result.reserve(result.size() + pstring->size() * 6);
-
-         UEscape::encode(*pstring, result, true);
-         }
-      break;
-
-      case ARRAY_VALUE:
-         {
-         result.push_back('[');
-
-         for (UValue* element = _value.children.head; element; element = element->next)
-            {
-            stringify(result, *element);
-
-            if (element->next) result.push_back(',');
-            }
-
-         result.push_back(']');
-         }
-      break;
-
-      case OBJECT_VALUE:
-         {
-         char* presult;
-         const char* keyptr;
-         bool bcomma = false;
-         uint32_t pos, sz, keysz;
-
-         result.push_back('{');
-
-         for (UValue* member = _value.children.head; member; member = member->next)
-            {
-            sz = result.size();
-
-            U_INTERNAL_ASSERT_POINTER(member->key)
-
-            keysz  = member->key->size();
-            keyptr = member->key->data();
-
-            (void) result.reserve(sz + keysz * 6);
-
-            presult = result.c_pointer(sz);
-
-            if (bcomma == false) bcomma = true;
-            else
-               {
-               ++sz;
-
-               *presult++ = ',';
-               }
-
-            pos = u_escape_encode((const unsigned char*)keyptr, keysz, presult, result.space(), true);
-
-            presult[pos] = ':';
-
-            result.size_adjust(sz + 1 + pos);
-
-            stringify(result, *member);
-            }
-
-         result.push_back('}');
-         }
-      break;
       }
+
+   (void) result.append(buffer, n);
+
+   return;
+
+case_string:
+   pstring = _value.getString();
+
+   (void) result.reserve(result.size() + pstring->size() * 6);
+
+   UEscape::encode(*pstring, result, true);
+
+   return;
+
+case_array:
+   result.push_back('[');
+
+   for (UValue* element = _value.children.head; element; element = element->next)
+      {
+      stringify(result, *element);
+
+      if (element->next) result.push_back(',');
+      }
+
+   result.push_back(']');
+
+   return;
+
+case_object:
+   bcomma = false;
+
+   result.push_back('{');
+
+   for (UValue* member = _value.children.head; member; member = member->next)
+      {
+      sz = result.size();
+
+      U_INTERNAL_ASSERT_POINTER(member->key)
+
+      keysz  = member->key->size();
+      keyptr = member->key->data();
+
+      (void) result.reserve(sz + keysz * 6);
+
+      presult = result.c_pointer(sz);
+
+      if (bcomma == false) bcomma = true;
+      else
+         {
+         ++sz;
+
+         *presult++ = ',';
+         }
+
+      pos = u_escape_encode((const unsigned char*)keyptr, keysz, presult, result.space(), true);
+
+      presult[pos] = ':';
+
+      result.size_adjust(sz + 1 + pos);
+
+      stringify(result, *member);
+      }
+
+   result.push_back('}');
 }
 
 void UValue::appendNode(UValue* parent, UValue* child)
@@ -626,7 +893,9 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
             {
             _value->value.ptr_ = U_NEW(UString(sz));
 
-            result = UEscape::decode(ptr, sz, *(_value->getString()));
+            UEscape::decode(ptr, sz, *(_value->getString()));
+
+            result = ((_value->getString())->empty() == false);
             }
          else
             {
@@ -637,14 +906,12 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
          if (last < _end) tok.setPointer(last+1);
 
-         U_INTERNAL_DUMP("_value.ptr_ = %.*S", U_STRING_TO_TRACE(*(_value->getString())))
+         U_INTERNAL_DUMP("_value.ptr_ = %V", _value->getString()->rep)
          }
       break;
 
       case '[':
          {
-         UValue* child;
-
          _value->type_ = ARRAY_VALUE;
 
          while (true)
@@ -661,7 +928,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
             if (c != ',') tok.back();
 
-            child = U_NEW(UValue);
+            UValue* child = U_NEW(UValue);
 
             if (readValue(tok, child) == false)
                {
@@ -680,7 +947,6 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
       case '{':
          {
          UValue name;
-         UValue* child;
 
          _value->type_ = OBJECT_VALUE;
 
@@ -708,7 +974,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
                U_RETURN(false);
                }
 
-            child = U_NEW(UValue);
+            UValue* child = U_NEW(UValue);
 
             if (readValue(tok, child) == false)
                {
@@ -742,7 +1008,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
 bool UValue::parse(const UString& document)
 {
-   U_TRACE(0, "UValue::parse(%.*S)", U_STRING_TO_TRACE(document))
+   U_TRACE(0, "UValue::parse(%V)", document.rep)
 
    UTokenizer tok(document);
 
@@ -770,7 +1036,7 @@ void UJsonTypeHandler<UStringRep>::toJSON(UValue& json)
 
    UStringRep* rep = (UStringRep*)pval;
 
-   U_INTERNAL_DUMP("pval(%p) = %.*S", pval, U_STRING_TO_TRACE(*rep))
+   U_INTERNAL_DUMP("pval(%p) = %V", pval, rep)
 
    U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
 
@@ -786,11 +1052,11 @@ void UJsonTypeHandler<UStringRep>::fromJSON(UValue& json)
 
    UStringRep* rep = json.getString()->rep;
 
-   U_INTERNAL_DUMP("rep = %.*S", U_STRING_TO_TRACE(*rep))
+   U_INTERNAL_DUMP("rep = %V", rep)
 
    ((UStringRep*)pval)->fromValue(rep);
 
-   U_INTERNAL_DUMP("pval(%p) = %.*S", pval, U_STRING_TO_TRACE(*(UStringRep*)pval))
+   U_INTERNAL_DUMP("pval(%p) = %V", pval, pval)
 }
 
 // DEBUG

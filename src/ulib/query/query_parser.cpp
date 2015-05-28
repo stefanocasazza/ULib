@@ -57,7 +57,7 @@ UQueryNode::UQueryNode(Type t, UQueryNode* l, UQueryNode* r) : left(l), right(r)
 
 UQueryNode::UQueryNode(const UString& d) : left(0), right(0), value(d), type(VALUE)
 {
-   U_TRACE_REGISTER_OBJECT(0, UQueryNode, "%.*S", U_STRING_TO_TRACE(d))
+   U_TRACE_REGISTER_OBJECT(0, UQueryNode, "%V", d.rep)
 }
 
 UQueryNode::~UQueryNode()
@@ -98,25 +98,25 @@ void UQueryParser::clear()
    t.str.clear();
 }
 
-/*
-Create a tree for the expression: a AND NOT (b OR c AND d)
-
-The tree structure is supposed to be this:
-
-  AND
- /   \
-a     NOT
-        \
-         OR
-        /  \
-       b    AND
-           /   \
-          c     d
-*/
+/**
+ * Create a tree for the expression: a AND NOT (b OR c AND d)
+ * 
+ * The tree structure is supposed to be this:
+ * 
+ *   AND
+ *  /   \
+ * a     NOT
+ *         \
+ *          OR
+ *         /  \
+ *        b    AND
+ *            /   \
+ *           c     d
+ */
 
 bool UQueryParser::parse(const UString& query)
 {
-   U_TRACE(0, "UQueryParser::parse(%.*S)", U_STRING_TO_TRACE(query))
+   U_TRACE(0, "UQueryParser::parse(%V)", query.rep)
 
    t.setData(query);
 
@@ -345,9 +345,10 @@ U_NO_EXPORT UQueryNode* UQueryNode::getRawDNF(UQueryNode* root)
    root->left  = getRawDNF(root->left);
    root->right = getRawDNF(root->right);
 
-   /* Here, because of some simplifications, we may now have a two-level tree. For example, if the original tree was
-   (!(!a)) & (!(!m)). The double negations have been simplified and we now have a&m
-   */
+   /**
+    * Here, because of some simplifications, we may now have a two-level tree. For example, if the original tree was
+    * (!(!a)) & (!(!m)). The double negations have been simplified and we now have a&m
+    */
 
    U_INTERNAL_ASSERT_POINTER(root->right)
 
@@ -434,9 +435,7 @@ U_NO_EXPORT UQueryNode* UQueryNode::getRawDNF(UQueryNode* root)
    else if  (root->left->type  == OR &&
              root->right->type == AND) swap(root->left, root->right);
 
-   /* Conventional order:
-   root->left->type and root->right->type are expected to be equal or to be one of (OR, NOT), (AND, NOT), (AND, OR)
-   */
+   /* Conventional order: root->left->type and root->right->type are expected to be equal or to be one of (OR, NOT), (AND, NOT), (AND, OR) */
 
    if (root->type == OR)
       {
@@ -636,14 +635,14 @@ U_NO_EXPORT UQueryNode* UQueryNode::getRawDNF(UQueryNode* root)
    U_RETURN_POINTER(0,UQueryNode);
 }
 
-/*
-Returns the variables that are used in the tree root at this node.
-Example: with the expression a&b&!a&!c, the 'positives' set will contain "a" and "b" and the
-'negatives' set will contain "a" and "c". When the intersection between the two sets is not empty
-and the only binary operator used in the tree is AND, the tree always evaluates to false (because
-we have an expression of the form (a&!a)&(whatever)). If the only binary operator is OR, the tree
-always evaluates to true.
-*/
+/**
+ * Returns the variables that are used in the tree root at this node.
+ * Example: with the expression a&b&!a&!c, the 'positives' set will contain "a" and "b" and the
+ * 'negatives' set will contain "a" and "c". When the intersection between the two sets is not empty
+ * and the only binary operator used in the tree is AND, the tree always evaluates to false (because
+ * we have an expression of the form (a&!a)&(whatever)). If the only binary operator is OR, the tree
+ * always evaluates to true.
+ */
 
 void UQueryNode::getTreeVariables(UVector<UString>* positives, UVector<UString>* negatives) const
 {
@@ -812,11 +811,11 @@ UQueryNode* UQueryNode::getDisjunctiveNormalForm(UQueryNode* root)
    U_RETURN_POINTER(result,UQueryNode);
 }
 
-/*
-The Disjunctive Normal Form is an ORing of ANDed terms.
-In other words, if the OR is considered an additive operation and
-the AND a multiplicative operation, then the DNF is a sum of products
-*/
+/**
+ * The Disjunctive Normal Form is an ORing of ANDed terms.
+ * In other words, if the OR is considered an additive operation and
+ * the AND a multiplicative operation, then the DNF is a sum of products
+ */
 
 void UQueryParser::startEvaluate(bPFpr func)
 {
@@ -851,34 +850,35 @@ void UQueryParser::startEvaluate(bPFpr func)
 
 void UQueryParser::evaluate(UStringRep* _word, bool positive)
 {
-   U_TRACE(0, "UQueryParser::evaluate(%.*S,%b)", U_STRING_TO_TRACE(*_word), positive)
+   U_TRACE(0, "UQueryParser::evaluate(%V,%b)", _word, positive)
 
    U_INTERNAL_ASSERT_EQUALS(partial, 1)
 
    U_INTERNAL_DUMP("u_buffer_len = %u", u_buffer_len)
 
-   /* EXAMPLE
-   --------------------------------------------------------------------------------------
-   Original expression     : (a OR b) AND NOT (c AND d)
-   Disjunctive normal form : a AND  NOT c OR a AND  NOT d OR b AND  NOT c OR b AND  NOT d
-   --------------------------------------------------------------------------------------
-      Term       : a AND  NOT c
-      Positives: ( a )
-      Negatives: ( c )
-   --------------------------------------------------------------------------------------
-      Term       : a AND  NOT d
-      Positives: ( a )
-      Negatives: ( d )
-   --------------------------------------------------------------------------------------
-      Term       : b AND  NOT c
-      Positives: ( b )
-      Negatives: ( c )
-   --------------------------------------------------------------------------------------
-      Term       : b AND  NOT d
-      Positives: ( b )
-      Negatives: ( d )
-   --------------------------------------------------------------------------------------
-   */
+   /**
+    * EXAMPLE
+    * --------------------------------------------------------------------------------------
+    * Original expression     : (a OR b) AND NOT (c AND d)
+    * Disjunctive normal form : a AND  NOT c OR a AND  NOT d OR b AND  NOT c OR b AND  NOT d
+    * --------------------------------------------------------------------------------------
+    *  Term       : a AND  NOT c
+    *  Positives: ( a )
+    *  Negatives: ( c )
+    * --------------------------------------------------------------------------------------
+    *  Term       : a AND  NOT d
+    *  Positives: ( a )
+    *  Negatives: ( d )
+    * --------------------------------------------------------------------------------------
+    *  Term       : b AND  NOT c
+    *  Positives: ( b )
+    *  Negatives: ( c )
+    * --------------------------------------------------------------------------------------
+    *  Term       : b AND  NOT d
+    *  Positives: ( b )
+    *  Negatives: ( d )
+    * --------------------------------------------------------------------------------------
+    */
 
    char* p = (u_buffer_len ? (char*) u_find(u_buffer, u_buffer_len, (const char*)&_word, sizeof(void*)) : 0);
 
@@ -886,7 +886,12 @@ void UQueryParser::evaluate(UStringRep* _word, bool positive)
 
    if (!p)
       {
-      uustringrep pword;
+      union _uustringrep {
+         UStringRep* p2;
+         long*       p3;
+      };
+
+      _uustringrep pword;
 
       p = u_buffer + u_buffer_len;
 

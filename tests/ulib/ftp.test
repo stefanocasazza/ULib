@@ -15,6 +15,7 @@ rm -f README
 
 #ftp://people.redhat.com/jakub/prelink/prelink-0.1.3-1.i386.rpm
 
+#STRACE=$TRUSS
 start_prg ftp ftp://ftp.at.debian.org/debian/README
 
 # Test against expected output

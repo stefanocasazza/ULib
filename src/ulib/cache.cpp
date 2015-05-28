@@ -65,7 +65,7 @@ U_NO_EXPORT void UCache::init(UFile& _x, uint32_t size, bool bexist, bool brdonl
 
 bool UCache::open(const UString& path, uint32_t size, const UString* environment)
 {
-   U_TRACE(0, "UCache::open(%.*S,%u,%p)", U_STRING_TO_TRACE(path), size, environment)
+   U_TRACE(0, "UCache::open(%V,%u,%p)", path.rep, size, environment)
 
    U_CHECK_MEMORY
 
@@ -83,7 +83,7 @@ bool UCache::open(const UString& path, uint32_t size, const UString* environment
 
 bool UCache::open(const UString& path, const UString& dir, const UString* environment, bool brdonly)
 {
-   U_TRACE(0, "UCache::open(%.*S,%.*S,%p,%b)", U_STRING_TO_TRACE(path), U_STRING_TO_TRACE(dir), environment, brdonly)
+   U_TRACE(0, "UCache::open(%V,%V,%p,%b)", path.rep, dir.rep, environment, brdonly)
 
    U_CHECK_MEMORY
 
@@ -250,7 +250,7 @@ char* UCache::add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t _
 
 void UCache::add(const UString& _key, const UString& _data, uint32_t _ttl)
 {
-   U_TRACE(0, "UCache::add(%.*S,%.*S,%u)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(_data), _ttl)
+   U_TRACE(0, "UCache::add(%V,%V,%u)", _key.rep, _data.rep, _ttl)
 
    const char*  key =  _key.data();
    const char* data = _data.data();
@@ -265,7 +265,7 @@ void UCache::add(const UString& _key, const UString& _data, uint32_t _ttl)
 
 void UCache::addContent(const UString& _key, const UString& content, uint32_t _ttl)
 {
-   U_TRACE(0, "UCache::addContent(%.*S,%.*S,%u)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(content), _ttl)
+   U_TRACE(0, "UCache::addContent(%V,%V,%u)", _key.rep, content.rep, _ttl)
 
    U_INTERNAL_ASSERT(_key)
    U_INTERNAL_ASSERT(content)
@@ -290,17 +290,15 @@ UString UCache::get(const char* key, uint32_t keylen)
    U_INTERNAL_ASSERT_RANGE(1, keylen, U_MAX_KEYLEN)
 
    const char* p;
-   uint32_t time_expire, loop = 0,
+   uint32_t loop = 0,
             index = hash(key, keylen),
-              pos = getLink(index);
-
-   uint32_t prevpos = index, nextpos;
+              pos = getLink(index), prevpos = index;
 
    while (pos)
       {
       cache_hash_table_entry* e = entry(pos);
 
-      time_expire = u_get_unaligned(e->time_expire);
+      uint32_t time_expire = u_get_unaligned(e->time_expire);
 
       U_INTERNAL_DUMP("entry = { %u, %u, %.*S, %u, %.*S, %#3D }", u_get_unaligned(e->link),
                         u_get_unaligned(e->keylen),
@@ -338,43 +336,52 @@ UString UCache::get(const char* key, uint32_t keylen)
 
       if (++loop > 100U) break; /* to protect against hash flooding */
 
-      nextpos = prevpos ^ getLink(pos);
+      uint32_t nextpos = prevpos ^ getLink(pos);
+
       prevpos = pos;
       pos     = nextpos;
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 UString UCache::getContent(const char* key, uint32_t keylen)
 {
    U_TRACE(0, "UCache::getContent(%.*S,%u)", keylen, key, keylen)
 
-#  ifdef DEBUG
-      struct stat st;
-      char buffer[U_PATH_MAX];
+   UString content;
 
-      (void) u__snprintf(buffer, sizeof(buffer), "%.*s/%.*s", U_STRING_TO_TRACE(dir_template), keylen, key);
+#ifdef DEBUG
+   struct stat st;
+   char buffer[U_PATH_MAX];
 
-      if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0 &&
-          st.st_mtime > dir_template_mtime)
-         {
-         UString content = UFile::contentOf(buffer); 
+   (void) u__snprintf(buffer, sizeof(buffer), "%v/%.*s", dir_template.rep, keylen, key);
 
-         U_RETURN_STRING(content);
-         }
-#  endif
+   if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0 &&
+       st.st_mtime >= dir_template_mtime)
+      {
+      content = UFile::contentOf(buffer); 
 
-   UString content = get(key, keylen);
+      U_RETURN_STRING(content);
+      }
+#endif
 
-   if (content) content.size_adjust(content.size() - 1); // NB: minus null-terminator...
+   content = get(key, keylen);
+
+   if (content &&
+       content.isNullTerminated() == false)
+      {
+      content.rep->_length -= 1; // NB: minus null-terminator...
+
+      U_INTERNAL_ASSERT(content.isNullTerminated())
+      }
 
    U_RETURN_STRING(content);
 }
 
 void UCache::loadContentOf(const UString& dir, const char* filter, uint32_t filter_len)
 {
-   U_TRACE(1, "UCache::loadContentOf(%.*S,%.*S,%u)", U_STRING_TO_TRACE(dir), filter_len, filter, filter_len)
+   U_TRACE(1, "UCache::loadContentOf(%V,%.*S,%u)", dir.rep, filter_len, filter, filter_len)
 
    UString item, content;
    UVector<UString> vec(128);

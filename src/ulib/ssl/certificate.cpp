@@ -33,7 +33,7 @@ UVector<UCertificate*>* UCertificate::vcert;
 
 X509* UCertificate::readX509(const UString& x, const char* format)
 {
-   U_TRACE(1, "UCertificate::readX509(%.*S,%S)", U_STRING_TO_TRACE(x), format)
+   U_TRACE(1, "UCertificate::readX509(%V,%S)", x.rep, format)
 
    BIO* in;
    X509* _x509 = 0;
@@ -48,13 +48,16 @@ X509* UCertificate::readX509(const UString& x, const char* format)
 
       UString buffer(length);
 
-      if (UBase64::decode(x.data(), length, buffer) == false) goto next;
+      UBase64::decode(x.data(), length, buffer);
 
-      tmp    = buffer;
-      format = "DER";
+      if (buffer &&
+          u_base64_errors == 0)
+         {
+         tmp    = buffer;
+         format = "DER";
+         }
       }
 
-next:
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
    _x509 = (X509*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_X509, "%p,%p,%p,%p", in, 0, 0, 0)
@@ -110,23 +113,21 @@ UString UCertificate::getName(X509_NAME* n, bool bldap)
          U_RETURN_STRING(name);
          }
 
-      U_RETURN_STRING(UString::getStringNull());
+      return UString::getStringNull();
       }
-   else
-      {
-      unsigned len = U_SYSCALL(i2d_X509_NAME, "%p,%p", n, 0);
 
-      UString name(len);
-      char* ptr = name.data();
+   unsigned len = U_SYSCALL(i2d_X509_NAME, "%p,%p", n, 0);
 
-      (void) U_SYSCALL(X509_NAME_oneline, "%p,%p,%d", n, ptr, name.capacity());
+   UString name(len);
+   char* ptr = name.data();
 
-      len = u__strlen(ptr, __PRETTY_FUNCTION__);
+   (void) U_SYSCALL(X509_NAME_oneline, "%p,%p,%d", n, ptr, name.capacity());
 
-      name.size_adjust(len);
+   len = u__strlen(ptr, __PRETTY_FUNCTION__);
 
-      U_RETURN_STRING(name);
-      }
+   name.size_adjust(len);
+
+   U_RETURN_STRING(name);
 }
 
 bool UCertificate::isIssued(const UCertificate& ca) const
@@ -230,11 +231,11 @@ bool UCertificate::verify(STACK_OF(X509)* chain, time_t certsVerificationTime) c
    U_INTERNAL_ASSERT_POINTER(csc)
    U_INTERNAL_ASSERT_POINTER(x509)
 
-   /*
-   The fourth parameter is a collection of any certificates that might help the verify process.
-   It will normally be searched for untrusted CAs. It can contain other certificates in the expected path,
-   unrelated certificates or none at all
-   */
+   /**
+    * The fourth parameter is a collection of any certificates that might help the verify process.
+    * It will normally be searched for untrusted CAs. It can contain other certificates in the expected path,
+    * unrelated certificates or none at all
+    */
 
    // initialize an X509 STORE context
 
@@ -324,16 +325,14 @@ int UCertificate::getExtensions(UHashMap<UString>& table) const
 
    if (count > 0)
       {
-      int len;
       UString key, str;
       char buffer[4096];
-      X509_EXTENSION* ext;
 
       BIO* out = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 
       for (int i = 0; i < count; ++i)
          {
-         ext = X509_get_ext(x509, i); /* NO DUP - don't free! */
+         X509_EXTENSION* ext = X509_get_ext(x509, i); /* NO DUP - don't free! */
 
          U_INTERNAL_ASSERT_POINTER(ext)
 
@@ -341,11 +340,11 @@ int UCertificate::getExtensions(UHashMap<UString>& table) const
 
          if (!X509V3_EXT_print(out, ext, 0, 0)) M_ASN1_OCTET_STRING_print(out, ext->value);
 
-         len = BIO_read(out, buffer, sizeof(buffer));
+         int len = BIO_read(out, buffer, sizeof(buffer));
 
          (void) str.replace(buffer, len);
 
-         U_INTERNAL_DUMP("ext[%d] = <%.*S,%.*S>", i, U_STRING_TO_TRACE(key), U_STRING_TO_TRACE(str))
+         U_INTERNAL_DUMP("ext[%d] = <%V,%V>", i, key.rep, str.rep)
 
          table.insert(key, str);
          }
@@ -398,7 +397,8 @@ uint32_t UCertificate::getRevocationURL(UVector<UString>& vec) const
 {
    U_TRACE(0, "UCertificate::getRevocationURL(%p)", &vec)
 
-   /* X509v3 CRL Distribution Points
+   /**
+    * X509v3 CRL Distribution Points
     *
     * This is a multi-valued extension whose options can be either in name:value pair
     * using the same form as subject alternative name or a single value representing a
@@ -451,7 +451,6 @@ uint32_t UCertificate::getRevocationURL(UVector<UString>& vec) const
    X509_NAME* base;
    X509_NAME* merge;
    GENERAL_NAME* nm;
-   DIST_POINT* point;
    uint32_t result, n = vec.size();
 
    // CRLDistributionPoints ::= SEQUENCE OF DistributionPoint
@@ -460,7 +459,7 @@ uint32_t UCertificate::getRevocationURL(UVector<UString>& vec) const
 
    for (int i = 0, j = sk_DIST_POINT_num(crld); i < j; ++i)
       {
-      point = sk_DIST_POINT_value(crld, i);
+      DIST_POINT* point = sk_DIST_POINT_value(crld, i);
 
       U_INTERNAL_DUMP("point->distpoint = %p point->CRLissuer = %p", point->distpoint, point->CRLissuer)
 
@@ -506,7 +505,8 @@ uint32_t UCertificate::getRevocationURL(UVector<UString>& vec) const
          }
       else
          {
-         /* RFC3280: If the distributionPoint field is omitted, cRLIssuer MUST be present
+         /**
+          * RFC3280: If the distributionPoint field is omitted, cRLIssuer MUST be present
           * and include a Name corresponding to an X.500 or LDAP directory entry where the CRL is located
           */
 
@@ -533,7 +533,8 @@ uint32_t UCertificate::getCAIssuers(UVector<UString>& vec) const
 {
    U_TRACE(0, "UCertificate::getCAIssuers(%p)", &vec)
 
-   /* Authority Info Access
+   /**
+    * Authority Info Access
     *
     * The authority information access extension gives details about how to access
     * certain information relating to the CA. Its syntax is accessOID;location where
@@ -548,7 +549,6 @@ uint32_t UCertificate::getCAIssuers(UVector<UString>& vec) const
     */
 
    UString uri;
-   ACCESS_DESCRIPTION* ad;
 
    // try to extract an AuthorityInfoAccessSyntax extension from x509
 
@@ -558,11 +558,12 @@ uint32_t UCertificate::getCAIssuers(UVector<UString>& vec) const
 
    for (int i = 0, j = sk_ACCESS_DESCRIPTION_num(aia); i < j; ++i)
       {
-      ad = sk_ACCESS_DESCRIPTION_value(aia, i);
+      ACCESS_DESCRIPTION* ad = sk_ACCESS_DESCRIPTION_value(aia, i);
 
       U_INTERNAL_DUMP("ad->method = %d ad->location->type = %d", ad->method, ad->location->type)
 
-      /* we are interested in id-ad-caIssuers accessMethod only,
+      /**
+       * we are interested in id-ad-caIssuers accessMethod only,
        * extract general name from accessLocation. RFC3280 states:
        * "where the information is available via HTTP, FTP, or LDAP, accessLocation MUST be a uniformResourceIdentifier"
        */
@@ -624,7 +625,7 @@ UString UCertificate::getEncoded(const char* format) const
       U_RETURN_STRING(encoding);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 UString UCertificate::getModulus() const
@@ -653,7 +654,7 @@ UString UCertificate::getModulus() const
       U_RETURN_STRING(x);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 UString UCertificate::getExponent() const
@@ -682,7 +683,7 @@ UString UCertificate::getExponent() const
       U_RETURN_STRING(x);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 UString UCertificate::getFileName(long hash, bool crl, bool* exist)
@@ -710,7 +711,7 @@ UString UCertificate::getFileName(long hash, bool crl, bool* exist)
 
 STACK_OF(X509)* UCertificate::loadCerts(const UString& x)
 {
-   U_TRACE(1, "UCertificate::loadCerts(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(1, "UCertificate::loadCerts(%V)", x.rep)
 
    BIO* certs = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(x));
 
@@ -718,12 +719,11 @@ STACK_OF(X509)* UCertificate::loadCerts(const UString& x)
 
    STACK_OF(X509_INFO)* allcerts = (STACK_OF(X509_INFO)*) U_SYSCALL(PEM_X509_INFO_read_bio, "%p,%p,%p,%p", certs, 0, 0, 0);
 
-   X509_INFO* xi;
    int n = U_SYSCALL(sk_X509_INFO_num, "%p", allcerts);
 
    for (int i = 0; i < n; ++i)
       {
-      xi = sk_X509_INFO_value(allcerts, i);
+      X509_INFO* xi = sk_X509_INFO_value(allcerts, i);
 
       if (xi->x509)
          {

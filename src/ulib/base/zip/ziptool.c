@@ -505,7 +505,7 @@ static int add_to_zip(int fd, const char* file)
       }
 
 end:
-   (void) closedir(dir);
+   if (dir) (void) closedir(dir);
 #endif
 
    return result;
@@ -804,8 +804,8 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 {
    unsigned n = 0;
    char* names[1024];
+   int j, file_num = 0;
    unsigned names_len[1024];
-   int j, f_fd, handle, file_num = 0;
 
    U_INTERNAL_TRACE("zip_extract(%s,%p,%p,%p)", zipfile, files, filenames, filenames_len)
 
@@ -818,13 +818,13 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
    for (;;)
       {
+      int f_fd   = 0,
+          handle = 1; /* by default we'll extract/create the file */
+
       U_INTERNAL_ASSERT(n < 1024)
 
-      crc = 0;
-      f_fd = 0;
+         crc = 0;
       ze.crc = 0;
-
-      handle = 1; /* by default we'll extract/create the file */
 
       if (zip_read_entry()) break;
 

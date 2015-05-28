@@ -44,7 +44,7 @@ public:
       char buffer[32];
       UString date, request, referer;
       uint64_t traffico = 0, traffic1; // , traffic2;
-      uint32_t referer_size = 0, n, start = 0, end, u_printf_string_max_length_save;
+      uint32_t referer_size = 0, n, start = 0, end;
 
       buffer[0] = 0;
 
@@ -81,8 +81,8 @@ public:
             start = U_CONSTANT_SIZE("GET /info?");
 
 #        ifdef DEBUG
-            u_printf_string_max_length_save = u_printf_string_max_length;
-                                              u_printf_string_max_length = n;
+            uint32_t u_printf_string_max_length_save = u_printf_string_max_length;
+                                                       u_printf_string_max_length = n;
 
             U_INTERNAL_DUMP("request = %.*S", n, s)
 

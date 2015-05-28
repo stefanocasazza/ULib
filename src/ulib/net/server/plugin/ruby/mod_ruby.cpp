@@ -209,7 +209,7 @@ static VALUE URUBY_send_body(VALUE obj)
          {
          (void) UClientImage_Base::wbuffer->clear();
 
-         u_http_info.nResponseCode = HTTP_BAD_REQUEST;
+         U_http_info.nResponseCode = HTTP_BAD_REQUEST;
 
          U_SRV_LOG("URUBY_send_body() - body nil");
          }
@@ -402,9 +402,9 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
 
          // get the status code
 
-         u_http_info.nResponseCode = strtol(RSTRING_PTR(status), 0, 10);
+         U_http_info.nResponseCode = strtol(RSTRING_PTR(status), 0, 10);
 
-         U_DUMP("HTTP status = (%d %S)", u_http_info.nResponseCode, UHTTP::getStatusDescription())
+         U_DUMP("HTTP status = (%d %S)", U_http_info.nResponseCode, UHTTP::getStatusDescription())
 
          // get the body
 
@@ -418,9 +418,9 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
 
             result = rb_funcall(body, rb_intern("to_path"), 0);
 
-            u_http_info.endHeader = u__snprintf(buffer, sizeof(buffer), "X-Sendfile: %.*s\r\n\r\n", RSTRING_LEN(result), RSTRING_PTR(result));
+            U_http_info.endHeader = u__snprintf(buffer, sizeof(buffer), "X-Sendfile: %.*s\r\n\r\n", RSTRING_LEN(result), RSTRING_PTR(result));
 
-            (void) UClientImage_Base::wbuffer->append(buffer, u_http_info.endHeader);
+            (void) UClientImage_Base::wbuffer->append(buffer, U_http_info.endHeader);
             }
          else
             {
@@ -437,7 +437,7 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
 
             (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
 
-            u_http_info.endHeader = UClientImage_Base::wbuffer->size();
+            U_http_info.endHeader = UClientImage_Base::wbuffer->size();
 
             if (rb_respond_to(body, rb_intern("each")))
                {

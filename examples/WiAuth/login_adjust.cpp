@@ -51,7 +51,6 @@ public:
       //                     ip: 172.16.69.111, mac: 60:fa:cd:7d:14:06, timeout: 93, traffic: 295, policy: DAILY
       // ........
 
-      uint32_t pos, pos1, pos2, pos3, len3;
       UString ap_entry, ap_name, ap_address1, ap_address2;
 
       for (uint32_t i = 0, n = vec_events_log.size(); i < n; ++i)
@@ -60,17 +59,16 @@ public:
 
          ap_entry = vec_entry[2];
 
-         pos1 = ap_entry.find_first_of('@');
-         pos2 = ap_entry.find_first_of('/', pos1);
+         uint32_t pos1 = ap_entry.find_first_of('@'),
+                  pos2 = ap_entry.find_first_of('/', pos1),
+                  pos3 = pos1+1,
+                  len3 = pos2-pos1-6;
 
          ap_name = ap_entry.substr(pos2+1);
 
-         pos3 = pos1+1;
-         len3 = pos2-pos1-6;
-
          ap_address1 = ap_entry.substr(pos3, len3);
 
-         pos = vec_ap_name.findSorted(ap_name, false, true);
+         uint32_t pos = vec_ap_name.findSorted(ap_name, false, true);
 
          if (pos == U_NOT_FOUND)
             {

@@ -24,6 +24,9 @@ public:
 
    static void str_allocate();
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORI
 
             USSIPlugIn();
@@ -48,7 +51,7 @@ public:
 
    static void setMessagePage(const UString& tmpl, const char* title_txt, const char* message)
       {
-      U_TRACE(0, "USSIPlugIn::setMessagePage(%.*S,%S,%S)", U_STRING_TO_TRACE(tmpl), title_txt, message)
+      U_TRACE(0, "USSIPlugIn::setMessagePage(%V,%S,%S)", tmpl.rep, title_txt, message)
 
       setAlternativeInclude(tmpl, 1024, false, title_txt, 0, 0, title_txt, message);
       }

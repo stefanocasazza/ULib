@@ -86,7 +86,7 @@ const char* UInterrupt::BUS_errlist[] = {
 };
 
 bool              UInterrupt::flag_alarm;
-bool              UInterrupt::syscall_restart;     // NB: notify to make certain system calls restartable across signals...
+bool              UInterrupt::syscall_restart; // NB: notify to make certain system calls restartable across signals...
 bool              UInterrupt::exit_loop_wait_event_for_signal;
 jmp_buf           UInterrupt::jbuf;
 sigset_t*         UInterrupt::mask_interrupt;
@@ -356,25 +356,6 @@ void UInterrupt::init()
    syscall_restart = true; // NB: notify to make certain system calls restartable across signals...
 
    setHandlerForSignal(SIGALRM, (sighandler_t)handlerAlarm);
-}
-
-bool UInterrupt::checkForEventSignalPending()
-{
-   U_TRACE(0, "UInterrupt::checkForEventSignalPending()")
-
-   U_INTERNAL_DUMP("errno = %d u_errno = %d event_signal_pending = %d syscall_restart = %b flag_alarm = %b",
-                    errno,     u_errno,     event_signal_pending,     syscall_restart,     flag_alarm)
-
-   if (event_signal_pending) callHandlerSignal();
-
-   if (errno == EINTR  && // EINTR(4) Interrupted system call
-       syscall_restart &&
-       flag_alarm == false)
-      {
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
 }
 
 RETSIGTYPE UInterrupt::handlerAlarm(int signo)

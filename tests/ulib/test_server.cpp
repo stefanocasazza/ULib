@@ -25,6 +25,8 @@ U_EXPORT main (int argc, char* argv[])
       server.cfg = &fcg;
       }
 
+   server.setDocumentRoot(UString::getStringNull());
+
    server.loadPlugins(plugin_dir, plugin_list);
 
    server.port = 8080;

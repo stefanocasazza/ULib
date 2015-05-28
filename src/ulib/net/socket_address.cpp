@@ -138,13 +138,13 @@ public:
    // family type value, we set the iPortNumber parameter equal to either the
    // sin6_port or sin_port fields. If the family type is not set, assume IPv4
 
-   void getPortNumber(unsigned int& iPortNumber)
+   unsigned int getPortNumber()
       {
 #  ifdef ENABLE_IPV6
-      if (addr.psaGeneric.sa_family == AF_INET6) iPortNumber = ntohs(addr.psaIP6Addr.sin6_port);
+      if (addr.psaGeneric.sa_family == AF_INET6) return ntohs(addr.psaIP6Addr.sin6_port);
       else
 #  endif                                  
-                                                 iPortNumber = ntohs(addr.psaIP4Addr.sin_port);
+                                                 return ntohs(addr.psaIP4Addr.sin_port);
       }
 
    // Returns the size of the structure pointed to by the (sockaddr*) cast.

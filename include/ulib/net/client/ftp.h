@@ -164,7 +164,7 @@ public:
 
    bool _connectServer(const UString& server, unsigned int _port = 21, int timeoutMS = U_TIMEOUT_MS)
       {
-      U_TRACE(0, "UFtpClient::_connectServer(%.*S,%u,%d)", U_STRING_TO_TRACE(server), _port, timeoutMS)
+      U_TRACE(0, "UFtpClient::_connectServer(%V,%u,%d)", server.rep, _port, timeoutMS)
 
       bool result = (Socket::connectServer(server, _port, timeoutMS) && waitReady(timeoutMS));
 
@@ -281,7 +281,7 @@ public:
 
    int download(const UIPAddress& ip, const UString& path, off_t offset = 0)
       {
-      U_TRACE(0, "UFtpClient::download(%p,%.*S,%I)", &ip, U_STRING_TO_TRACE(path), offset)
+      U_TRACE(0, "UFtpClient::download(%p,%V,%I)", &ip, path.rep, offset)
 
       int result = (_connectServer(ip) ? download(path, offset) : -1);
 
@@ -290,7 +290,7 @@ public:
 
    int download(const UString& server, const UString& path, off_t offset = 0)
       {
-      U_TRACE(0, "UFtpClient::download(%.*S,%.*S,%I)", U_STRING_TO_TRACE(server), U_STRING_TO_TRACE(path), offset)
+      U_TRACE(0, "UFtpClient::download(%V,%V,%I)", server.rep, path.rep, offset)
 
       int result = (_connectServer(server) ? download(path, offset) : -1);
 

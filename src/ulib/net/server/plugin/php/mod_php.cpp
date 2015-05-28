@@ -43,7 +43,6 @@ static void register_server_variables(zval* track_vars_array TSRMLS_DC)
 
    if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_PHP))
       {
-      char* ptr;
       char** envp;
 
       int32_t nenv = UCommand::setEnvironment(*UClientImage_Base::environment, envp);
@@ -52,7 +51,7 @@ static void register_server_variables(zval* track_vars_array TSRMLS_DC)
 
       for (uint32_t i = 0; envp[i]; ++i)
          {
-         ptr = strchr(envp[i], '=');
+         char* ptr = strchr(envp[i], '=');
 
          if (ptr)
             {
@@ -70,7 +69,7 @@ static int send_headers(sapi_headers_struct* sapi_headers)
 {
    U_TRACE(0, "PHP::send_headers(%p)", sapi_headers)
 
-   if (SG(request_info).no_headers == 1) u_http_info.endHeader = 0;
+   if (SG(request_info).no_headers == 1) U_http_info.endHeader = 0;
    else
       {
       zend_llist_position pos;
@@ -86,10 +85,10 @@ static int send_headers(sapi_headers_struct* sapi_headers)
 
       (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
 
-      u_http_info.endHeader = UClientImage_Base::wbuffer->size();
+      U_http_info.endHeader = UClientImage_Base::wbuffer->size();
       }
 
-   u_http_info.nResponseCode = SG(sapi_headers).http_response_code;
+   U_http_info.nResponseCode = SG(sapi_headers).http_response_code;
 
    return SAPI_HEADER_SENT_SUCCESSFULLY;
 }
@@ -107,7 +106,7 @@ static char* read_cookies()
 {
    U_TRACE(0, "PHP::read_cookies()")
 
-   if (u_http_info.cookie_len) return estrndup(u_http_info.cookie, u_http_info.cookie_len);
+   if (U_http_info.cookie_len) return estrndup(U_http_info.cookie, U_http_info.cookie_len);
 
    return 0;
 }

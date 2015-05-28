@@ -75,7 +75,7 @@ UShibTarget::UShibTarget()
    U_INTERNAL_DUMP("protocol = %S hostname = %S port = %d uri = %S content_type = %S remote_addr = %S method = %.*S",
                     protocol,     hostname,     port,     uri,     content_type,     remote_addr,     U_HTTP_METHOD_TO_TRACE)
 
-   ShibTarget::init(protocol, hostname, port, uri, content_type, remote_addr, u_http_method_list[U_http_method_num].name); 
+   ShibTarget::init(protocol, hostname, port, uri, content_type, remote_addr, U_http_method_list[U_http_method_num].name); 
 }
 
 void UShibTarget::log(ShibLogLevel level, const string& msg)
@@ -618,7 +618,7 @@ int UShibPlugIn::handlerRequest()
       UShibTarget::hostname    = strndup(host.data(), pos);
       UShibTarget::uri         = strndup(U_HTTP_URI_TO_PARAM);
       UShibTarget::remote_addr = strdup(UServer_Base::client_address);
-      UShibTarget::cookies     = (u_http_info.cookie_len ? ((void)cookies.replace(u_http_info.cookie, u_http_info.cookie_len), cookies.c_str()) : "");
+      UShibTarget::cookies     = (U_http_info.cookie_len ? ((void)cookies.replace(U_http_info.cookie, U_http_info.cookie_len), cookies.c_str()) : "");
 
       int mode              = 0;
       UShibTarget::location = 0;
@@ -684,7 +684,7 @@ int UShibPlugIn::handlerRequest()
                   name  = UShibTarget::setcookie->at(i);
                   value = UShibTarget::setcookie->at(i+1);
 
-                  ext.snprintf_add("Set-Cookie: %.*s=%.*s\r\n", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value));
+                  ext.snprintf_add("Set-Cookie: %v=%v\r\n", name.rep, value.rep);
                   }
 
                delete UShibTarget::setcookie;

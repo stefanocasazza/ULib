@@ -106,7 +106,7 @@ void UDirWalk::setFilter(const char* _filter, uint32_t _filter_len)
 
 bool UDirWalk::setDirectory(const UString& dir, const char* _filter, uint32_t _filter_len)
 {
-   U_TRACE(0, "UDirWalk::setDirectory(%.*S,%.*S,%u)", U_STRING_TO_TRACE(dir), _filter_len, _filter, _filter_len)
+   U_TRACE(0, "UDirWalk::setDirectory(%V,%.*S,%u)", dir.rep, _filter_len, _filter, _filter_len)
 
    pthis->pathlen = dir.size();
 
@@ -272,7 +272,6 @@ found_file:
 
       dir_s qdir;
       dirent_s* ds;
-      uint32_t d_namlen;
       struct dirent* dp;
 
       qdir.num            = 0;
@@ -300,7 +299,7 @@ found_file:
 
       while ((dp = readdir(dirp))) // NB: we don't use the macro U_SYSCALL to avoid warning on stderr...
          {
-         d_namlen = NAMLEN(dp);
+         uint32_t d_namlen = NAMLEN(dp);
 
          U_INTERNAL_DUMP("d_namlen = %u d_name = %.*s filter(%u) = %.*S sort_by = %p",
                           d_namlen,     d_namlen, dp->d_name, filter_len, filter_len, filter, sort_by)

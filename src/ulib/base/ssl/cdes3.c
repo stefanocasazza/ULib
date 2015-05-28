@@ -56,10 +56,10 @@ void u_des3_init(void)
 {
    U_INTERNAL_TRACE("u_des3_init()")
 
-// OpenSSL_add_all_algorithms(); // called in ULib_init()
+/* OpenSSL_add_all_algorithms(); // called in ULib_init() */
 
    md     = EVP_md5();
-   cipher = EVP_des_ede3_cbc(); // EVP_get_cipherbyname("SN_des_ede3_cbc"); // des3
+   cipher = EVP_des_ede3_cbc(); /* EVP_get_cipherbyname("SN_des_ede3_cbc"); // des3 */
 
    U_INTERNAL_ASSERT_POINTER(md)
    U_INTERNAL_ASSERT_POINTER(cipher)
@@ -119,8 +119,9 @@ long u_des_encode(const unsigned char* restrict inp, long len, unsigned char* re
 
    U_INTERNAL_PRINT("inp_num = %d", inp_num)
 
-   /* The input and output encrypted as though 64bit cfb mode is being used.
-    * The extra state information to record how much of the 64bit block we have used is contained in inp_num;
+   /**
+    * The input and output encrypted as though 64bit cfb mode is being used.
+    * The extra state information to record how much of the 64bit block we have used is contained in inp_num
     */
 
    des_ede3_cfb64_encrypt(inp, out, len, out1_sched, out2_sched, out3_sched, &out_ivec, &inp_num, DES_ENCRYPT);
@@ -171,8 +172,9 @@ long u_des_decode(const unsigned char* restrict inp, long len, unsigned char* re
 
    U_INTERNAL_PRINT("out_num = %d", out_num)
 
-   /* The input and output encrypted as though 64bit cfb mode is being used.
-    * The extra state information to record how much of the 64bit block we have used is contained in out_num;
+   /**
+    * The input and output encrypted as though 64bit cfb mode is being used.
+    * The extra state information to record how much of the 64bit block we have used is contained in out_num
     */
 
    des_ede3_cfb64_encrypt(inp, out, len, inp1_sched, inp2_sched, inp3_sched, &inp_ivec, &out_num, DES_DECRYPT);
@@ -223,5 +225,5 @@ long u_des3_decode(const unsigned char* restrict inp, long len, unsigned char* r
    BIO_free(wbio);
    BIO_free(benc);
 
-   return len;
+   return (len > 0 ? len : 0);
 }

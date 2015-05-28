@@ -153,14 +153,14 @@ U_NO_EXPORT inline bool UCDB::match(uint32_t pos)
    if (UFile::map == MAP_FAILED)
       {
       char _buf[32];
-      uint32_t len = key.dsize, n;
+      uint32_t len = key.dsize;
       char* pkey = (char*) key.dptr;
 
       pos += sizeof(cdb_record_header);
 
       while (len)
          {
-         n = U_min(len, sizeof(_buf));
+         uint32_t n = U_min(len, sizeof(_buf));
 
          (void) UFile::pread(_buf, n, pos);
 
@@ -263,7 +263,7 @@ UString UCDB::at()
 
    if (find()) return elem();
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 // FOR RDB
@@ -288,7 +288,7 @@ uint32_t UCDB::makeFinish(bool _reset)
 
    if (nrecord > 0)
       {
-      uint32_t i, klen; // key length
+      uint32_t i;
 
       struct cdb_tmp {
          uint32_t hash;
@@ -315,9 +315,9 @@ uint32_t UCDB::makeFinish(bool _reset)
 
          // The hash value modulo CDB_NUM_HASH_TABLE_POINTER is the number of a hash table
 
-         klen        = u_get_unaligned(hr->klen);
-         ptmp->hash  = cdb_hash(ptr, klen);
-         ptmp->index = ptmp->hash % CDB_NUM_HASH_TABLE_POINTER;
+         uint32_t klen = u_get_unaligned(hr->klen);
+         ptmp->hash    = cdb_hash(ptr, klen);
+         ptmp->index   = ptmp->hash % CDB_NUM_HASH_TABLE_POINTER;
 
          /*
          U_INTERNAL_DUMP("pos   = %u", ptmp->pos)
@@ -354,17 +354,13 @@ uint32_t UCDB::makeFinish(bool _reset)
          {
          slot = (cdb_hash_table_slot*)(UFile::map + hp[tmp[i].index].pos);
 
-         /*
-         U_INTERNAL_DUMP("slot = %u", (char*)slot - UFile::map)
-         */
+      // U_INTERNAL_DUMP("slot = %u", (char*)slot - UFile::map)
 
          // The hash value divided by CDB_NUM_HASH_TABLE_POINTER, modulo the length of that table, is a slot number
 
          nslot = (tmp[i].hash / CDB_NUM_HASH_TABLE_POINTER) % hp[tmp[i].index].slots;
 
-         /*
-         U_INTERNAL_DUMP("nslot = %u", nslot)
-         */
+      // U_INTERNAL_DUMP("nslot = %u", nslot)
 
          // handles repeated keys...
 
@@ -380,9 +376,7 @@ uint32_t UCDB::makeFinish(bool _reset)
          u_put_unaligned(tmp[i].hash, pslot->hash);
          u_put_unaligned(tmp[i].pos,  pslot->pos);
 
-         /*
-         U_INTERNAL_DUMP("slot[%u] = { %u, %u }", nslot, tmp[i].hash, tmp[i].pos)
-         */
+      // U_INTERNAL_DUMP("slot[%u] = { %u, %u }", nslot, tmp[i].hash, tmp[i].pos)
          }
 
       UMemoryPool::_free(tmp, nrecord, sizeof(cdb_tmp));
@@ -549,7 +543,7 @@ void UCDB::call1()
    U_NEW_DBG(UStringRep, skey,  UStringRep((const char*) key.dptr,  key.dsize));
    U_NEW_DBG(UStringRep, sdata, UStringRep((const char*)data.dptr, data.dsize));
 
-   U_INTERNAL_DUMP("skey = %#.*S sdata = %#.*S)", U_STRING_TO_TRACE(*skey), U_STRING_TO_TRACE(*sdata))
+   U_INTERNAL_DUMP("skey = %#V sdata = %#V)", skey, sdata)
 
    U_cdb_result_call(this) = function_to_call(skey, sdata);
 
@@ -674,7 +668,7 @@ void UCDB::makeAdd2(UCDB* pcdb, char* src)
 
 uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString& mask_key, uint32_t* _size)
 {
-   U_TRACE(0, "UCDB::getValuesWithKeyNask(%p,%.*S,%p)", &vec_values, U_STRING_TO_TRACE(mask_key), _size)
+   U_TRACE(0, "UCDB::getValuesWithKeyNask(%p,%V,%p)", &vec_values, mask_key.rep, _size)
 
    U_INTERNAL_ASSERT_MAJOR(UFile::st_size,0)
    U_INTERNAL_ASSERT_DIFFERS(UFile::map, MAP_FAILED)
@@ -688,7 +682,6 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
 
    char* tmp;
    UStringRep* rep;
-   uint32_t klen, dlen;
 
    char* mask_data    = mask_key.data();
    uint32_t mask_size = mask_key.size(), n = vec_values.size();
@@ -699,8 +692,8 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
 
    while (true)
       {
-      klen = u_get_unaligned(((UCDB::cdb_record_header*)ptr)->klen); //  key length
-      dlen = u_get_unaligned(((UCDB::cdb_record_header*)ptr)->dlen); // data length
+      uint32_t klen = u_get_unaligned(((UCDB::cdb_record_header*)ptr)->klen), //  key length
+               dlen = u_get_unaligned(((UCDB::cdb_record_header*)ptr)->dlen); // data length
 
       U_INTERNAL_DUMP("hr(%p) = { %u, %u }", ptr, klen, dlen)
 
@@ -746,7 +739,7 @@ UString UCDB::print()
       U_RETURN_STRING(buffer);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 // Save memory hash table as constant database
@@ -890,14 +883,12 @@ U_NO_EXPORT void UCDB::checkForAllEntry()
    U_INTERNAL_ASSERT_DIFFERS(UFile::map, MAP_FAILED)
 
    char* ptr;
-   uint32_t pos;
-
    char* _eof = UFile::map + (ptrdiff_t)UFile::st_size;
    slot       = (cdb_hash_table_slot*) end();
 
    while ((char*)slot < _eof)
       {
-      pos = u_get_unaligned(slot->pos);
+      uint32_t pos = u_get_unaligned(slot->pos);
 
       if (pos)
          {

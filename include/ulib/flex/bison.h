@@ -37,7 +37,7 @@ public:
 
    UBison(const UString& data_) : UFlexer(data_)
       {
-      U_TRACE_REGISTER_OBJECT(0, UBison, "%.*S", U_STRING_TO_TRACE(data_))
+      U_TRACE_REGISTER_OBJECT(0, UBison, "%V", data_.rep)
       }
 
    ~UBison()
@@ -66,7 +66,7 @@ public:
 
    bool parse(const UString& _data, void* obj = 0)
       {
-      U_TRACE(0, "UBison::parse(%.*S,%p)", U_STRING_TO_TRACE(_data), obj)
+      U_TRACE(0, "UBison::parse(%V,%p)", _data.rep, obj)
 
       setData(_data);
 

@@ -63,7 +63,7 @@ void USSIPlugIn::str_allocate()
 
 USSIPlugIn::USSIPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, USSIPlugIn, "")
+   U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "")
 
    errmsg  = U_NEW(UString);
    timefmt = U_NEW(UString);
@@ -107,7 +107,7 @@ void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
    va_end(argp);
 
    alternative_response      = 1;
-   u_http_info.nResponseCode = HTTP_OK;
+   U_http_info.nResponseCode = HTTP_OK;
 
    UClientImage_Base::setCloseConnection();
 
@@ -129,7 +129,7 @@ void USSIPlugIn::setAlternativeResponse()
 
    alternative_response = 1;
 
-   u_http_info.nResponseCode = HTTP_NO_CONTENT;
+   U_http_info.nResponseCode = HTTP_NO_CONTENT;
 
    UClientImage_Base::setCloseConnection();
 
@@ -138,7 +138,7 @@ void USSIPlugIn::setAlternativeResponse()
 
 void USSIPlugIn::setAlternativeResponse(UString& _body)
 {
-   U_TRACE(0, "USSIPlugIn::setAlternativeResponse(%.*S)", U_STRING_TO_TRACE(_body))
+   U_TRACE(0, "USSIPlugIn::setAlternativeResponse(%V)", _body.rep)
 
    alternative_response = 1;
 
@@ -146,22 +146,21 @@ void USSIPlugIn::setAlternativeResponse(UString& _body)
 
    if (_body.empty())
       {
-      u_http_info.nResponseCode = HTTP_NO_CONTENT;
+      U_http_info.nResponseCode = HTTP_NO_CONTENT;
 
       UHTTP::setResponse(0, 0);
       }
    else
       {
-      u_http_info.nResponseCode = HTTP_OK;
+      U_http_info.nResponseCode = HTTP_OK;
 
       UHTTP::setResponse(u_is_know(UHTTP::mime_index) ? UHTTP::str_ctype_txt : UHTTP::str_ctype_html, &_body);
       }
 }
 
-void USSIPlugIn::setAlternativeInclude(const UString& tmpl, uint32_t estimated_size, bool bprocess,
-                                       const char* title_txt, const char* ssi_head, const char* body_style, ...)
+void USSIPlugIn::setAlternativeInclude(const UString& tmpl, uint32_t estimated_size, bool bprocess, const char* title_txt, const char* ssi_head, const char* body_style, ...)
 {
-   U_TRACE(0, "USSIPlugIn::setAlternativeInclude(%.*S,%u,%b,%S,%S,%S)", U_STRING_TO_TRACE(tmpl), estimated_size, bprocess, title_txt, ssi_head, body_style)
+   U_TRACE(0, "USSIPlugIn::setAlternativeInclude(%V,%u,%b,%S,%S,%S)", tmpl.rep, estimated_size, bprocess, title_txt, ssi_head, body_style)
 
    U_INTERNAL_ASSERT_POINTER(title_txt)
    U_INTERNAL_ASSERT(tmpl.isNullTerminated())
@@ -177,7 +176,7 @@ void USSIPlugIn::setAlternativeInclude(const UString& tmpl, uint32_t estimated_s
 
    va_end(argp);
 
-   u_http_info.nResponseCode = HTTP_NO_CONTENT;
+   U_http_info.nResponseCode = HTTP_NO_CONTENT;
 
    UString buffer(U_CAPACITY);
 
@@ -194,7 +193,7 @@ void USSIPlugIn::setAlternativeInclude(const UString& tmpl, uint32_t estimated_s
 
 void USSIPlugIn::setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, ...)
 {
-   U_TRACE(0, "USSIPlugIn::setMessagePageWithVar(%.*S,%S,%S)", U_STRING_TO_TRACE(tmpl), title_txt, fmt)
+   U_TRACE(0, "USSIPlugIn::setMessagePageWithVar(%V,%S,%S)", tmpl.rep, title_txt, fmt)
 
    char format[4096];
 
@@ -210,9 +209,10 @@ void USSIPlugIn::setMessagePageWithVar(const UString& tmpl, const char* title_tx
 
 U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& value, const UString& directory)
 {
-   U_TRACE(0, "USSIPlugIn::getPathname(%.*S,%.*S,%.*S)", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value), U_STRING_TO_TRACE(directory))
+   U_TRACE(0, "USSIPlugIn::getPathname(%V,%V,%V)", name.rep, value.rep, directory.rep)
 
-   /* "include file" looks in the current directory (the name must not start with /, ., or ..) and "include virtual" starts
+   /**
+    * "include file" looks in the current directory (the name must not start with /, ., or ..) and "include virtual" starts
     * in the root directory of your kiosk (so the name must start with "/".) You might want to make a "/includes" directory
     * in your Kiosk and then you can say "include virtual=/includes/file.txt" from any page. The "virtual" and "file"
     * parameters are also used with "fsize" and "flastmod". With either method, you can only reference files that are within
@@ -230,7 +230,7 @@ U_NO_EXPORT UString USSIPlugIn::getPathname(const UString& name, const UString& 
 
 U_NO_EXPORT UString USSIPlugIn::getInclude(const UString& include, int include_level, bool bssi)
 {
-   U_TRACE(0, "USSIPlugIn::getInclude(%.*S,%d,%b)", U_STRING_TO_TRACE(include), include_level, bssi)
+   U_TRACE(0, "USSIPlugIn::getInclude(%V,%d,%b)", include.rep, include_level, bssi)
 
    UString content = include;
 
@@ -251,7 +251,7 @@ U_NO_EXPORT UString USSIPlugIn::getInclude(const UString& include, int include_l
 
 U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& value)
 {
-   U_TRACE(0, "USSIPlugIn::callService(%.*S,%.*S)", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value))
+   U_TRACE(0, "USSIPlugIn::callService(%V,%V)", name.rep, value.rep)
 
    if (name.equal(U_CONSTANT_TO_PARAM("cmd")))
       {
@@ -289,17 +289,15 @@ U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& val
 
 U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int include_level)
 {
-   U_TRACE(0, "USSIPlugIn::processSSIRequest(%.*S,%d)", U_STRING_TO_TRACE(content), include_level)
+   U_TRACE(0, "USSIPlugIn::processSSIRequest(%V,%d)", content.rep, include_level)
 
    U_INTERNAL_ASSERT(content)
 
    UString tmp; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-   int32_t i, n;
-   const char* directive;
    UVector<UString> name_value;
+   uint32_t size, sz = content.size();
    enum {E_NONE, E_URL, E_ENTITY} encode;
-   int op, if_level = 0, if_is_false_level = 0;
-   uint32_t distance, pos, size, sz = content.size();
+   int if_level = 0, if_is_false_level = 0;
    bool bgroup, bfile, bvar, if_is_false = false, if_is_false_endif = false;
    UString token, name, value, pathname, include, output(U_CAPACITY), x, encoded,
            directory = UStringExt::dirname(UHTTP::file->getPath()).copy();
@@ -313,8 +311,8 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
    do {
       // Find next SSI tag
 
-      distance = t.getDistance();
-      pos      = content.find("<!--#", distance);
+      uint32_t distance = t.getDistance(),
+               pos      = content.find("<!--#", distance);
 
       if (pos)
          {
@@ -335,11 +333,13 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
       U_INTERNAL_ASSERT(bgroup)
 
-      U_INTERNAL_DUMP("token = %.*S", U_STRING_TO_TRACE(token))
+      U_INTERNAL_DUMP("token = %V", token.rep)
 
-      U_ASSERT(token.size() >= 2) 
+      U_ASSERT(token.size() >= 2)
 
-      directive = token.c_pointer((i = 2)); // "-#"...
+      int i = 2;
+
+      const char* directive = token.c_pointer(2); // "-#"...
 
       U_INTERNAL_DUMP("directive = %.*S", 10, directive)
 
@@ -390,7 +390,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
       // Check element
 
-      op = SSI_NONE;
+      int op = SSI_NONE;
 
       if (strncmp(directive, U_CONSTANT_TO_PARAM("include ")) == 0)
          {
@@ -453,7 +453,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
          i += U_CONSTANT_SIZE("set ");
          }
 
-      n = token.size() - i;
+      int n = token.size() - i;
 
       U_INTERNAL_DUMP("op = %d n = %u", op, n)
 
@@ -497,7 +497,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
             if (name.equal(U_CONSTANT_TO_PARAM("expr")) == false)
                {
-               U_ERROR("SSI: unknow attribute %S for %S statement", U_STRING_TO_TRACE(name), op == SSI_IF ? "if" : "elif");
+               U_ERROR("SSI: unknow attribute %V for %S statement", name.rep, op == SSI_IF ? "if" : "elif");
                }
 
             value = name_value[1];
@@ -508,8 +508,8 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                    (if_is_false_level == 0 || (if_level < if_is_false_level)))
                   {
                   if_is_false = (UStringExt::evalExpression(value, *UClientImage_Base::environment).empty()
-                                             ? (if_is_false_level = if_level, true)
-                                             : false);
+                                    ? (if_is_false_level = if_level, true)
+                                    :                                false);
                   }
                }
             else
@@ -645,29 +645,20 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                   if (x.empty()) continue;
 
-                  switch (encode)
+                       if (encode == E_NONE) encoded = x;
+                  else if (encode == E_URL)
                      {
-                     case E_NONE:
-                        {
-                        encoded = x;
-                        }
-                     break;
+                     encoded.setBuffer(x.size() * 3);
 
-                     case E_URL:
-                        {
-                        encoded.setBuffer(x.size() * 3);
+                     Url::encode(x, encoded);
+                     }
+                  else
+                     {
+                     U_INTERNAL_ASSERT_EQUALS(encode, E_ENTITY)
 
-                        Url::encode(x, encoded);
-                        }
-                     break;
+                     encoded.setBuffer(x.size());
 
-                     case E_ENTITY:
-                        {
-                        encoded.setBuffer(x.size());
-
-                        UXMLEscape::encode(x, encoded);
-                        }
-                     break;
+                     UXMLEscape::encode(x, encoded);
                      }
 
                   (void) output.append(encoded);
@@ -805,7 +796,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             {
             if (n == 2)
                {
-               if (callService(name_value[0], name_value[1]) == false) U_RETURN_STRING(UString::getStringNull());
+               if (callService(name_value[0], name_value[1]) == false) return UString::getStringNull();
 
                (void) output.append(*UClientImage_Base::wbuffer);
                }
@@ -839,7 +830,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                {
                name = name_value[0];
 
-               if (callService(name, name_value[1]) == false) U_RETURN_STRING(UString::getStringNull());
+               if (callService(name, name_value[1]) == false) return UString::getStringNull();
 
                if (name == *str_cgi)
                   {
@@ -856,7 +847,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                   UString rheader = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_HEADER"), UClientImage_Base::wbuffer);
 
-                  U_INTERNAL_DUMP("response_header(%u) = %.*S", rheader.size(), U_STRING_TO_TRACE(rheader))
+                  U_INTERNAL_DUMP("response_header(%u) = %V", rheader.size(), rheader.rep)
 
                   if (rheader)
                      {
@@ -868,13 +859,13 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                      UString _tmp(hsz);
 
-                     (void) UEscape::decode(rheader, _tmp);
+                     UEscape::decode(rheader, _tmp);
 
                      // NB: we cannot use directly the body attribute because is bounded at the param 'content'...
 
                      UString rbody = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_BODY"), UClientImage_Base::wbuffer);
 
-                     U_INTERNAL_DUMP("response_body(%u) = %.*S", rbody.size(), U_STRING_TO_TRACE(rbody))
+                     U_INTERNAL_DUMP("response_body(%u) = %V", rbody.size(), rbody.rep)
 
                      if (rbody.empty()) (void) header->insert(0, _tmp);
                      else
@@ -890,7 +881,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                         (void) header->replace(_tmp);
 
-                        U_RETURN_STRING(UString::getStringNull());
+                        return UString::getStringNull();
                         }
 
                      UClientImage_Base::wbuffer->erase(0, U_CONSTANT_SIZE("HTTP_RESPONSE_HEADER=") + hsz + 3);
@@ -1012,7 +1003,7 @@ int USSIPlugIn::handlerRequest()
          if (bcache == false) *body = UHTTP::file->getContent();
          else
             {
-            U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %.*S", UClientImage_Base::body->size(), U_STRING_TO_TRACE(*UClientImage_Base::body))
+            U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %V", UClientImage_Base::body->size(), UClientImage_Base::body->rep)
 
             U_ASSERT(UHTTP::isDataFromCache())
             U_INTERNAL_ASSERT_POINTER(UHTTP::file_data->array)
@@ -1030,7 +1021,7 @@ int USSIPlugIn::handlerRequest()
 
          UString output = processSSIRequest(*body, 0);
 
-         U_INTERNAL_DUMP("alternative_response = %d output(%u) = %.*S", alternative_response, output.size(), U_STRING_TO_TRACE(output))
+         U_INTERNAL_DUMP("alternative_response = %d output(%u) = %V", alternative_response, output.size(), output.rep)
 
          if (alternative_response == 0)
             {
@@ -1065,7 +1056,7 @@ int USSIPlugIn::handlerRequest()
                (void) header->append(UHTTP::getHeaderMimeType(0, size, U_CTYPE_HTML));
                }
 
-            u_http_info.nResponseCode = HTTP_OK;
+            U_http_info.nResponseCode = HTTP_OK;
 
             *UClientImage_Base::wbuffer = UHTTP::getHeaderForResponse(*header);
             *UClientImage_Base::body    = output;
@@ -1081,14 +1072,14 @@ int USSIPlugIn::handlerRequest()
             //      var environment 'HTTP_RESPONSE_BODY'        set as body   response (var 'body')
             // ------------------------------------------------------------------------------------------------------
 
-            U_INTERNAL_DUMP("header(%u) = %.*S", header->size(), U_STRING_TO_TRACE(*header))
-            U_INTERNAL_DUMP("  body(%u) = %.*S",   body->size(), U_STRING_TO_TRACE(*body))
+            U_INTERNAL_DUMP("header(%u) = %V", header->size(), header->rep)
+            U_INTERNAL_DUMP("  body(%u) = %V",   body->size(),   body->rep)
 
             (void) UClientImage_Base::wbuffer->replace(*header);
             (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
 
-            u_http_info.endHeader     = UClientImage_Base::wbuffer->size(); 
-            u_http_info.nResponseCode = HTTP_OK;
+            U_http_info.endHeader     = UClientImage_Base::wbuffer->size(); 
+            U_http_info.nResponseCode = HTTP_OK;
 
             (void) UClientImage_Base::wbuffer->append(alternative_response == 2 ? output : *body);
 

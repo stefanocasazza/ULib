@@ -106,6 +106,7 @@ EOF
 DIR_CMD="../../examples/lcsp"
 
  start_prg lcspclient_rpc -c inp/webclient.cfg --  1 CA   300
+#exit 0
  start_prg lcspclient_rpc -c inp/webclient.cfg --  1 CA_1 400 '"$CNF"'
  start_prg lcspclient_rpc -c inp/webclient.cfg --  1 CA   300
  start_prg lcspclient_rpc -c inp/webclient.cfg --  2
@@ -162,6 +163,8 @@ kill_cmd TERM
 $SLEEP
 PID=$LPID
 kill_prg userver_ipc TERM
+
+killall userver_ssl 2>/dev/null
 
 mv err/userver_ipc.err err/lcspserver_rpc.err
 

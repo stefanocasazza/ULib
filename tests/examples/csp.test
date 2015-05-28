@@ -13,6 +13,7 @@ start_msg cspclient
 
 rm -rf cspclient.log CSP/cspserver.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA CSP/CSP/DB_CA/CA_1 \
 		 out/userver_ssl.out err/userver_ssl.err \
+           trace.*userver_ssl*.[0-9]*     object.*userver_ssl*.[0-9]*     stack.*userver_ssl*.[0-9]*     mempool.*userver_ssl*.[0-9]* \
        CSP/trace.*userver_ssl*.[0-9]* CSP/object.*userver_ssl*.[0-9]* CSP/stack.*userver_ssl*.[0-9]* CSP/mempool.*userver_ssl*.[0-9]*
 
 # ----------------------------------------------------------------
@@ -130,6 +131,8 @@ DIR_CMD="../../examples/csp"
 
 $SLEEP
 kill_prg userver_ssl TERM
+
+killall userver_ssl 2>/dev/null
 
 mv err/userver_ssl.err err/cspserver.err
 

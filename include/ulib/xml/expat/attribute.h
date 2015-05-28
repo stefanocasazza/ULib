@@ -41,8 +41,7 @@ public:
    UXMLAttribute(const UString& s, const UString& a, const UString& n, const UString& v)
          : str(s), value(v), accessor(a), namespaceName(n)
       {
-      U_TRACE_REGISTER_OBJECT(0, UXMLAttribute, "%.*S,%.*S,%.*S,%.*S", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(a),
-                                                                       U_STRING_TO_TRACE(n), U_STRING_TO_TRACE(v))
+      U_TRACE_REGISTER_OBJECT(0, UXMLAttribute, "%V,%V,%V,%V", s.rep, a.rep, n.rep, v.rep)
       }
 
    ~UXMLAttribute()

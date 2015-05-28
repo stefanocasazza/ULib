@@ -180,38 +180,38 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_INTERNAL_ASSERT_EQUALS(result, false)
 
-   result = UBase64::decode(U_CONSTANT_TO_PARAM(URL_BASE64), value_decoded);
+   UBase64::decode(U_CONSTANT_TO_PARAM(URL_BASE64), value_decoded);
 
-   U_INTERNAL_ASSERT(result)
+   U_INTERNAL_ASSERT(value_decoded)
 
-   result = UBase64::decodeUrl(U_CONSTANT_TO_PARAM(URL_BASE64URL), output);
+   UBase64::decodeUrl(U_CONSTANT_TO_PARAM(URL_BASE64URL), output);
 
-   U_INTERNAL_ASSERT(result)
+   U_INTERNAL_ASSERT(output)
    U_INTERNAL_ASSERT_EQUALS(value_decoded, output)
 
-   result = UBase64::decodeAll(U_CONSTANT_TO_PARAM(URL_BASE64), output);
+   UBase64::decodeAll(U_CONSTANT_TO_PARAM(URL_BASE64), output);
 
-   U_INTERNAL_ASSERT(result)
+   U_INTERNAL_ASSERT(output)
    U_INTERNAL_ASSERT_EQUALS(value_decoded, output)
 
-   result = UBase64::decodeAll(U_CONSTANT_TO_PARAM(URL_BASE64URL), output);
+   UBase64::decodeAll(U_CONSTANT_TO_PARAM(URL_BASE64URL), output);
 
-   U_INTERNAL_ASSERT(result)
+   U_INTERNAL_ASSERT(output)
    U_INTERNAL_ASSERT_EQUALS(value_decoded, output)
 
    result = u_isUrlEncoded(U_CONSTANT_TO_PARAM(URL_ENDCODED_BASE64URL), false);
 
    U_INTERNAL_ASSERT_EQUALS(result, false)
 
-   result = UBase64::decodeUrl(U_CONSTANT_TO_PARAM(URL_ENDCODED_BASE64URL), value_decoded);
+   UBase64::decodeUrl(U_CONSTANT_TO_PARAM(URL_ENDCODED_BASE64URL), value_decoded);
 
-   U_INTERNAL_ASSERT(result)
+   U_INTERNAL_ASSERT(output)
 
    UDES3::setPassword("vivalatopa");
 
-   result = UDES3::decode(value_decoded, output);
+   UDES3::decode(value_decoded, output);
 
-   U_INTERNAL_ASSERT(result)
+   U_INTERNAL_ASSERT(output)
 
    result = u_isUrlEncoded(U_STRING_TO_PARAM(output), true);
 

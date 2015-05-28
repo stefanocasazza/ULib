@@ -149,8 +149,9 @@
 #endif
 
 struct option UOptions::long_options[128] = {
-{ "help",    0, 0, 'h' },
-{ "version", 0, 0, 'V' } };
+   { "help",    0, 0, 'h' },
+   { "version", 0, 0, 'V' }
+};
 
 UOptions::UOptions(uint32_t n)
 {
@@ -172,7 +173,7 @@ UOptions::~UOptions()
 
    for (uint32_t i = 0; i < length; ++i)
       {
-      // NB: si decrementa la reference della stringa...
+      // NB: we decreases the reference string...
 
       item[i].desc->release();
       item[i].value->release();
@@ -215,7 +216,7 @@ UString UOptions::operator[](char c)
 
 UString UOptions::operator[](const UString& long_opt)
 {
-   U_TRACE(0, "UOptions::operator[](%.*S)", U_STRING_TO_TRACE(long_opt))
+   U_TRACE(0, "UOptions::operator[](%V)", long_opt.rep)
 
    uint32_t i;
 
@@ -229,12 +230,9 @@ UString UOptions::operator[](const UString& long_opt)
    U_RETURN_STRING(str);
 }
 
-void UOptions::add(const UString& desc,
-                   const UString& long_opt,
-                   const UString& default_value,
-                   int has_arg, char short_opt)
+void UOptions::add(const UString& desc, const UString& long_opt, const UString& default_value, int has_arg, char short_opt)
 {
-   U_TRACE(0,"UOptions::add(%.*S,%.*S,%.*S,%d,%C)",U_STRING_TO_TRACE(desc),U_STRING_TO_TRACE(long_opt),U_STRING_TO_TRACE(default_value),has_arg,short_opt)
+   U_TRACE(0,"UOptions::add(%V,%V,%V,%d,%C)", desc.rep, long_opt.rep, default_value.rep, has_arg, short_opt)
 
    U_CHECK_MEMORY
 
@@ -263,7 +261,7 @@ void UOptions::add(const UString& desc,
    item[length].value     = default_value.rep;
    item[length].long_opt  = long_opt.rep;
 
-   // NB: si incrementa la reference della stringa...
+   // NB: we increases the reference string...
 
             desc.hold();
         long_opt.hold();
@@ -290,7 +288,7 @@ void UOptions::add(const UString& desc,
 
 void UOptions::load(const UString& str)
 {
-   U_TRACE(0, "UOptions::load(%.*S)", U_STRING_TO_TRACE(str))
+   U_TRACE(0, "UOptions::load(%V)", str.rep)
 
    U_CHECK_MEMORY
 
@@ -379,13 +377,13 @@ void UOptions::printHelp(vPF func)
 
    u_is_tty = isatty(STDOUT_FILENO);
 
-   u__printf(STDOUT_FILENO, "%W%.*s%W: %.*s", BRIGHTWHITE, U_STRING_TO_TRACE(package), RESET, U_STRING_TO_TRACE(version));
+   u__printf(STDOUT_FILENO, "%W%v%W: %v", BRIGHTWHITE, package.rep, RESET, version.rep);
 
-   if (purpose.size()) u__printf(STDOUT_FILENO, "%WPurpose:%W %.*s", BRIGHTWHITE, RESET, U_STRING_TO_TRACE(purpose));
+   if (purpose.size()) u__printf(STDOUT_FILENO, "%WPurpose:%W %v", BRIGHTWHITE, RESET, purpose.rep);
 
-   u__printf(STDOUT_FILENO, "%WUsage:\n  %W%.*s%W [ %WOptions%W ] %W%.*s\n%WOptions:%W",
+   u__printf(STDOUT_FILENO, "%WUsage:\n  %W%.*s%W [ %WOptions%W ] %W%v\n%WOptions:%W",
                BRIGHTWHITE, BRIGHTCYAN, u_progname_len, u_progname, RESET, BRIGHTGREEN, RESET,
-               BRIGHTGREEN, U_STRING_TO_TRACE(args), BRIGHTWHITE, RESET);
+               BRIGHTGREEN, args.rep, BRIGHTWHITE, RESET);
 
    struct option* ptr_long_options = long_options + 2;
 
@@ -500,25 +498,25 @@ void UOptions::printHelp(vPF func)
 
    if (func) func();
 
-   if (report_bugs) u__printf(STDOUT_FILENO, "%W%.*s%W", BRIGHTYELLOW, U_STRING_TO_TRACE(report_bugs), RESET);
+   if (report_bugs) u__printf(STDOUT_FILENO, "%W%v%W", BRIGHTYELLOW, report_bugs.rep, RESET);
 
    U_EXIT(EXIT_SUCCESS);
 }
 
-/*
-typedef struct option {
-   const char* name;    // Is the name of the long option
-   int         has_arg; // Is: no_argument       (or 0) if the option does not take an argument
-                        //     required_argument (or 1) if the option requires an argument
-                        //     optional_argument (or 2) if the option takes an optional argument
-   int*        flag;    // Specifies how results are returned for a long option. If flag is NULL,
-                        // then getopt_long() returns val. (For example, the calling program may
-                        // set val to the equivalent short option character)
-                        // Otherwise, getopt_long() returns 0, and flag points to a variable which
-                        // is set to val if the option is found, but left unchanged if the option is not found
-   int         val;     // Is the value to return, or to load into the variable pointed to by flag
-} option;
-*/
+/**
+ * typedef struct option {
+ *   const char* name;    // Is the name of the long option
+ *   int         has_arg; // Is: no_argument       (or 0) if the option does not take an argument
+ *                        //     required_argument (or 1) if the option requires an argument
+ *                        //     optional_argument (or 2) if the option takes an optional argument
+ *   int*        flag;    // Specifies how results are returned for a long option. If flag is NULL,
+ *                        // then getopt_long() returns val. (For example, the calling program may
+ *                        // set val to the equivalent short option character)
+ *                        // Otherwise, getopt_long() returns 0, and flag points to a variable which
+ *                        // is set to val if the option is found, but left unchanged if the option is not found
+ *   int         val;     // Is the value to return, or to load into the variable pointed to by flag
+ * } option;
+ */
 
 uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 {
@@ -571,7 +569,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
       {
       longindex = 0;
 
-      // NB: we can't use U_SYSCALL() here because getopt_long return most -1 which is error for system call...
+      // NB: we can't use U_SYSCALL() here because getopt_long return most -1 which it is error for system call...
 
       int c = u_getopt_long(argc, argv, optstring, long_options, &longindex); // Character of the parsed option
 
@@ -614,7 +612,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 #        endif
 
 /* -----------------------------------------------------------------------------
-         ULib version: 1.1.0
+         ULib version: 1.4.2
             Build ULib: Shared=yes, Static=yes
 
             Host setup: x86_64-unknown-linux-gnu
@@ -629,7 +627,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
   Standard C++ library: libstdc++.so.6.0.16
              Libraries: -ltcc -lxml2 -ldbi -lmysqlclient -lldap -llber -lcurl -lssh -lexpat -lpcre -lssl -lcrypto -lmagic -luuid -lz  -lpthread -ldl
 
-             C   Flags: -g -O2  -Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition
+             C   Flags: -g -O2 -Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement
              C++ Flags: -g -O2  -fno-check-new -fno-exceptions -fno-rtti -Wno-deprecated -fvisibility=hidden -fvisibility-inlines-hidden
           Linker Flags:  -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed
     Preprocessor Flags:  -DDEBUG -DHAVE_SSL_TS -I/usr/include/libxml2 -D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -pipe -D_GNU_SOURCE  -fstrict-aliasing -fno-stack-protector -fomit-frame-pointer -finline -findirect-inlining -ftree-switch-conversion -floop-interchange -floop-strip-mine -floop-block -Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat -Wformat-extra-args -Wenum-compare -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn -Ofast -flto -Wp,-D_FORTIFY_SOURCE=2 -Wunsafe-loop-optimizations -Wno-unused-parameter
@@ -666,7 +664,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
       Parser generator: bison -y ( bison (GNU Bison) 2.5 )
 ----------------------------------------------------------------------------- */
 
-            u__printf(STDOUT_FILENO, "%W%.*s%W (%W%.*s%W): %.*s\n\n"
+            u__printf(STDOUT_FILENO, "%W%v%W (%W%v%W): %v\n\n"
                "%WDeveloped with ULib (C++ application development framework)%W\n\n"
 
 #           ifdef CONFIGURE_CALL
@@ -718,9 +716,9 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
                "Lexical analyzer.....:%W " _FLEX_VERSION "%W\n"
                "Parser generator.....:%W " _BISON_VERSION "%W\n",
-               BRIGHTCYAN,  U_STRING_TO_TRACE(package), RESET,
-               BRIGHTGREEN, U_STRING_TO_TRACE(version), RESET,
-               U_STRING_TO_TRACE(purpose), BRIGHTWHITE, RESET,
+               BRIGHTCYAN,  package.rep, RESET,
+               BRIGHTGREEN, version.rep, RESET,
+               purpose.rep, BRIGHTWHITE, RESET,
 #           ifdef CONFIGURE_CALL
                BRIGHTCYAN, p, RESET,
 #           endif

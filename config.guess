@@ -2,7 +2,7 @@
 # Attempt to guess a canonical system name.
 #   Copyright 1992-2014 Free Software Foundation, Inc.
 
-timestamp='2014-02-12'
+timestamp='2014-03-23'
 
 # This file is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by
@@ -826,7 +826,7 @@ EOF
     *:MINGW*:*)
 	echo ${UNAME_MACHINE}-pc-mingw32
 	exit ;;
-    i*:MSYS*:*)
+    *:MSYS*:*)
 	echo ${UNAME_MACHINE}-pc-msys
 	exit ;;
     i*:windows32*:*)
@@ -969,10 +969,10 @@ EOF
 	eval `$CC_FOR_BUILD -E $dummy.c 2>/dev/null | grep '^CPU'`
 	test x"${CPU}" != x && { echo "${CPU}-unknown-linux-${LIBC}"; exit; }
 	;;
-    or1k:Linux:*:*)
-	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
+    openrisc*:Linux:*:*)
+	echo or1k-unknown-linux-${LIBC}
 	exit ;;
-    or32:Linux:*:*)
+    or32:Linux:*:* | or1k*:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
 	exit ;;
     padre:Linux:*:*)
@@ -1020,18 +1020,7 @@ EOF
 	echo ${UNAME_MACHINE}-dec-linux-${LIBC}
 	exit ;;
     x86_64:Linux:*:*)
-	eval $set_cc_for_build
-	X86_64_ABI=
-	# If there is a compiler, see if it is configured for 32-bit objects.
-	if [ "$CC_FOR_BUILD" != 'no_compiler_found' ]; then
-	    if (echo '#ifdef __ILP32__'; echo IS_X32; echo '#endif') | \
-		(CCOPTS= $CC_FOR_BUILD -E - 2>/dev/null) | \
-		grep IS_X32 >/dev/null
-	    then
-		X86_64_ABI=x32
-	    fi
-	fi
-	echo x86_64-unknown-linux-gnu${X86_64_ABI}
+	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}
 	exit ;;
     xtensa*:Linux:*:*)
 	echo ${UNAME_MACHINE}-unknown-linux-${LIBC}

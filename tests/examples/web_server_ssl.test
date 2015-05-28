@@ -180,15 +180,13 @@ if [ $? -ne 0 ]; then
    echo localhost www.sito2.com	>> /etc/hosts
 fi
 
-mkdir -p $DOC_ROOT/inp/http \
-			$DOC_ROOT/www.sito1.com/inp/http \
-         $DOC_ROOT/www.sito1.com/benchmark/docroot
+mkdir -p $DOC_ROOT/www.sito1.com/benchmark/docroot
 
 creat_link ../ok											 $DOC_ROOT/ok
 creat_link ../tmp											 $DOC_ROOT/tmp
 creat_link ../uploads									 $DOC_ROOT/uploads
 creat_link ../../../benchmark/docroot/servlet	 $DOC_ROOT/benchmark/docroot/servlet
-creat_link inp												 $DOC_ROOT/www.sito1.com/inp
+creat_link ../../inp											 $DOC_ROOT/www.sito1.com/inp
 creat_link ../../tmp									    $DOC_ROOT/www.sito1.com/tmp
 creat_link ../SSI											 $DOC_ROOT/www.sito1.com/SSI
 creat_link ../cgi-bin									 $DOC_ROOT/www.sito1.com/cgi-bin

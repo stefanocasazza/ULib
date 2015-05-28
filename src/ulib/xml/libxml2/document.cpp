@@ -46,7 +46,7 @@ void UXML2Document::init()
 
 UXML2Document::UXML2Document(const UString& _data) : data(_data)
 {
-   U_TRACE_REGISTER_OBJECT(0, UXML2Document, "%.*S", U_STRING_TO_TRACE(_data))
+   U_TRACE_REGISTER_OBJECT(0, UXML2Document, "%V", _data.rep)
 
    if (binit == false) init();
 
@@ -94,7 +94,7 @@ UXML2Document::UXML2Document(const UString& _data) : data(_data)
 
 uint32_t UXML2Document::getElement(UString& element, uint32_t pos, const char* tag, uint32_t tag_len)
 {
-   U_TRACE(0, "UXML2Document::getElement(%.*S,%u,%.*S,%u)", U_STRING_TO_TRACE(element), pos, tag_len, tag, tag_len)
+   U_TRACE(0, "UXML2Document::getElement(%V,%u,%.*S,%u)", element.rep, pos, tag_len, tag, tag_len)
 
    U_INTERNAL_ASSERT_POINTER(tag)
 
@@ -334,7 +334,7 @@ UString UXML2Document::xmlC14N(int mode, int with_comments, unsigned char** incl
 
 UString UXML2Document::xmlC14N(const UString& data, int mode, int with_comments, unsigned char** inclusive_namespaces)
 {
-   U_TRACE(0, "UXML2Document::xmlC14N(%.*S,%d,%d,%d,%p)", U_STRING_TO_TRACE(data), mode, with_comments, inclusive_namespaces)
+   U_TRACE(0, "UXML2Document::xmlC14N(%V,%d,%d,%d,%p)", data.rep, mode, with_comments, inclusive_namespaces)
 
    UString output;
    UXML2Document tmp(data);
@@ -348,7 +348,7 @@ UString UXML2Document::xmlC14N(const UString& data, int mode, int with_comments,
 
 char* UXML2Document::convString(const char* string, const char* in_charset, const char* out_charset)
 {
-   U_TRACE(0, "UXML2Document::convString(%.*S,%S,%S)", U_STRING_TO_TRACE(string), in_charset, out_charset)
+   U_TRACE(0, "UXML2Document::convString(%V,%S,%S)", string.rep in_charset, out_charset)
 
    U_INTERNAL_ASSERT_POINTER( in_charset)
    U_INTERNAL_ASSERT_POINTER(out_charset)

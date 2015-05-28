@@ -6,29 +6,29 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
 EXTRA_DIST = wi_auth.cpp wi_auth.usp cdbmake.cpp rdbgen.cpp login_adjust.cpp count_traffic.cpp count_traffic1.cpp
 
-ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
+ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 
-cdbmake_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+cdbmake_LDADD   = $(ulib_la)
 cdbmake_SOURCES = cdbmake.cpp
 cdbmake_LDFLAGS = $(PRG_LDFLAGS)
 
-rdbgen_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+rdbgen_LDADD   = $(ulib_la)
 rdbgen_SOURCES = rdbgen.cpp
 rdbgen_LDFLAGS = $(PRG_LDFLAGS)
 
-check_binary_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+check_binary_LDADD   = $(ulib_la)
 check_binary_SOURCES = check_binary.cpp
 check_binary_LDFLAGS = $(PRG_LDFLAGS)
 
-login_adjust_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+login_adjust_LDADD   = $(ulib_la)
 login_adjust_SOURCES = login_adjust.cpp
 login_adjust_LDFLAGS = $(PRG_LDFLAGS)
 
-count_traffic_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+count_traffic_LDADD   = $(ulib_la)
 count_traffic_SOURCES = count_traffic.cpp
 count_traffic_LDFLAGS = $(PRG_LDFLAGS)
 
-count_traffic1_LDADD   = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+count_traffic1_LDADD   = $(ulib_la)
 count_traffic1_SOURCES = count_traffic1.cpp
 count_traffic1_LDFLAGS = $(PRG_LDFLAGS)
 
@@ -42,7 +42,7 @@ if !MINGW
 if !STATIC_SERVLET_WI_AUTH
 module_LTLIBRARIES = wi_auth.la
 wi_auth_la_SOURCES = wi_auth.cpp
-wi_auth_la_LIBADD  = $(ulib_la) @ULIB_LIBS@
+wi_auth_la_LIBADD  = $(ulib_la)
 wi_auth_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
 endif
 endif
@@ -59,7 +59,7 @@ SUFFIXES = .cpp .usp .lo .la
 wi_auth.cpp: wi_auth.usp ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT)
 
 .lo.la:
-	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la) @ULIB_LIBS@
+	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la)
 
 if !STATIC_ONLY
 if !STATIC_SERVLET_WI_AUTH

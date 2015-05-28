@@ -70,9 +70,7 @@ public:
 
    virtual void encodeArgument(const UString& argName, const UString& argType, const UString& argContent)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%.*S)", U_STRING_TO_TRACE(argName),
-                                                                U_STRING_TO_TRACE(argType),
-                                                                U_STRING_TO_TRACE(argContent))
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%V)", argName.rep, argType.rep, argContent.rep)
 
       if (   argName) arg.push(argName);
       if (   argType) arg.push(argType);
@@ -81,7 +79,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, bool value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%b)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%b)", argName.rep, argType.rep, value)
 
       buffer.push_back(value ? '1' : '0');
 
@@ -90,7 +88,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, char value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%C)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%C)", argName.rep, argType.rep, value)
 
       buffer.push_back(value);
 
@@ -99,7 +97,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, unsigned char value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%C)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%C)", argName.rep, argType.rep, value)
 
       buffer.push_back(value);
 
@@ -108,7 +106,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, short value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%d)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%d)", argName.rep, argType.rep, value)
 
       buffer.setFromNumber32s(value);
 
@@ -117,7 +115,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, unsigned short value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%d)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%d)", argName.rep, argType.rep, value)
 
       buffer.setFromNumber32(value);
 
@@ -126,7 +124,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, int value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%d)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%d)", argName.rep, argType.rep, value)
 
       buffer.setFromNumber32s(value);
 
@@ -135,7 +133,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, unsigned int value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%u)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%u)", argName.rep, argType.rep, value)
 
       buffer.setFromNumber32(value);
 
@@ -144,7 +142,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, long int value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%ld)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%ld)", argName.rep, argType.rep, value)
 
 #  if SIZEOF_LONG == 4
       buffer.setFromNumber32s(value);
@@ -157,7 +155,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, unsigned long int value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%lu)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%lu)", argName.rep, argType.rep, value)
 
 #  if SIZEOF_LONG == 4
       buffer.setFromNumber32(value);
@@ -170,7 +168,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, const long long& value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%lld)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%lld)", argName.rep, argType.rep, value)
 
       buffer.setFromNumber64s(value);
 
@@ -179,7 +177,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, const unsigned long long& value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%llu)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%llu)", argName.rep, argType.rep, value)
 
       buffer.setFromNumber64(value);
 
@@ -188,7 +186,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, float value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%f)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%f)", argName.rep, argType.rep, value)
 
       buffer.snprintf("%f", value);
 
@@ -197,7 +195,7 @@ public:
 
    void encodeArgument(const UString& argName, const UString& argType, const double& value)
       {
-      U_TRACE(0, "URPCEncoder::encodeArgument(%.*S,%.*S,%g)", U_STRING_TO_TRACE(argName), U_STRING_TO_TRACE(argType), value)
+      U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%g)", argName.rep, argType.rep, value)
 
       buffer.snprintf("%g", value);
 
@@ -208,7 +206,7 @@ public:
 
    UString encodeMethodCall(URPCMethod& method, const UString& nsName)
       {
-      U_TRACE(0, "URPCEncoder::encodeMethodCall(%p,%.*S)", &method, U_STRING_TO_TRACE(nsName))
+      U_TRACE(0, "URPCEncoder::encodeMethodCall(%p,%V)", &method, nsName.rep)
 
       bIsResponse = false;
 
@@ -217,7 +215,7 @@ public:
 
    UString encodeMethodResponse(URPCMethod& method, const UString& nsName)
       {
-      U_TRACE(0, "URPCEncoder::encodeMethodResponse(%p,%.*S)", &method, U_STRING_TO_TRACE(nsName))
+      U_TRACE(0, "URPCEncoder::encodeMethodResponse(%p,%V)", &method, nsName.rep)
 
       bIsResponse = true;
 
@@ -226,7 +224,7 @@ public:
 
    void encodeResponse(const char* token, const UString& response)
       {
-      U_TRACE(0, "URPCEncoder::encodeResponse(%S,%.*S)", token, U_STRING_TO_TRACE(response))
+      U_TRACE(0, "URPCEncoder::encodeResponse(%S,%V)", token, response.rep)
 
       encodedValue.setBuffer(response.size() + U_TOKEN_LN);
 

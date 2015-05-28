@@ -44,7 +44,6 @@ public:
 
    // strings 
 
-   static const UString* str_frm_websocket;
    static const UString* str_websocket_key;
    static const UString* str_websocket_prot;
 

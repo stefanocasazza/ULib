@@ -157,7 +157,7 @@ void UOrmDriverMySql::handlerError()
 
 UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 {
-   U_TRACE(0, "UOrmDriverMySql::handlerConnect(%.*S)", U_STRING_TO_TRACE(option))
+   U_TRACE(0, "UOrmDriverMySql::handlerConnect(%V)", option.rep)
 
    UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverMySql(*str_name)) : this);
 
@@ -373,15 +373,15 @@ bool UMySqlStatement::setBindParam(UOrmDriver* pdrv)
    if (num_bind_param &&
        mysql_vparam == 0)
       {
-      MYSQL_BIND* mysql_param;
       USqlStatementBindParam* param;
 
       mysql_vparam = (MYSQL_BIND*) UMemoryPool::_malloc(num_bind_param, sizeof(MYSQL_BIND), true);
 
       for (uint32_t i = 0; i < num_bind_param; ++i)
          {
-               param =       vparam[i];
-         mysql_param = mysql_vparam+i;
+         param = vparam[i];
+
+         MYSQL_BIND* mysql_param = mysql_vparam+i;
 
          mysql_param->buffer        = param->buffer;
          mysql_param->buffer_length = param->length;
@@ -447,7 +447,7 @@ void UMySqlStatement::setStringBindedAsResult()
 
          result->pstr->size_adjust_force(result->length); // output length
 
-         U_INTERNAL_DUMP("result->pstr = %.*S", U_STRING_TO_TRACE(*(result->pstr)))
+         U_INTERNAL_DUMP("result->pstr = %V", result->pstr)
          }
       }
 }
@@ -493,15 +493,15 @@ bool UMySqlStatement::setBindResult(UOrmDriver* pdrv)
 
    if (mysql_vresult == 0)
       {
-      MYSQL_BIND* mysql_result;
       USqlStatementBindResult* result;
 
       mysql_vresult = (MYSQL_BIND*) UMemoryPool::_malloc(num_bind_result, sizeof(MYSQL_BIND), true);
 
       for (uint32_t i = 0; i < num_bind_result; ++i)
          {
-               result =       vresult[i];
-         mysql_result = mysql_vresult+i;
+         result = vresult[i];
+
+         MYSQL_BIND* mysql_result = mysql_vresult+i;
 
          mysql_result->is_null     = (my_bool*)&(result->is_null);
          mysql_result->buffer      = result->buffer;

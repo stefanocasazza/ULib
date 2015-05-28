@@ -24,7 +24,7 @@ struct UDigest {
 
    static UString md5(const UString& data)
       {
-      U_TRACE(1, "UDigest::md5(%.*S)", U_STRING_TO_TRACE(data))
+      U_TRACE(1, "UDigest::md5(%V)", data.rep)
 
       MD5_CTX ctx;
       UString output(MD5_DIGEST_LENGTH);
@@ -46,7 +46,7 @@ struct UDigest {
 
    static UString hmac(const UString& data, const UString& password)
       {
-      U_TRACE(1, "UDigest::hmac(%.*S,%.*S)", U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(password))
+      U_TRACE(1, "UDigest::hmac(%V,%V)", data.rep, password.rep)
 
       U_INTERNAL_ASSERT_EQUALS(password.size(), MD5_DIGEST_LENGTH)
 

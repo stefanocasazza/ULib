@@ -120,7 +120,7 @@ void UCommand::setCommand()
       }
    else
       {
-      U_WARNING("setCommand() failed, command %.*S not found", U_STRING_TO_TRACE(command));
+      U_WARNING("setCommand() failed, command %V not found", command.rep);
       }
 
    U_DUMP_ATTRS(argv_exec)
@@ -128,7 +128,7 @@ void UCommand::setCommand()
 
 int32_t UCommand::setEnvironment(const UString& env, char**& _envp)
 {
-   U_TRACE(0, "UCommand::setEnvironment(%.*S,%p)", U_STRING_TO_TRACE(env), _envp)
+   U_TRACE(0, "UCommand::setEnvironment(%V,%p)", env.rep, _envp)
 
    char* argp[U_MAX_ARGS];
 
@@ -155,7 +155,7 @@ int32_t UCommand::setEnvironment(const UString& env, char**& _envp)
 
 U_NO_EXPORT void UCommand::setEnvironment(const UString& env)
 {
-   U_TRACE(0, "UCommand::setEnvironment(%.*S)", U_STRING_TO_TRACE(env))
+   U_TRACE(0, "UCommand::setEnvironment(%V)", env.rep)
 
    freeEnvironment();
 
@@ -501,7 +501,7 @@ bool UCommand::execute(UString* input, UString* output, int fd_stdin, int fd_std
 
 void UCommand::outputCommandWithDialog(const UString& cmd, char** penv, UString* output, int fd_stdin, int fd_stderr, bool dialog)
 {
-   U_TRACE(1, "UCommand::outputCommandWithDialog(%.*S,%p,%p,%d,%d,%b)", U_STRING_TO_TRACE(cmd), penv, output, fd_stdin, fd_stderr, dialog)
+   U_TRACE(1, "UCommand::outputCommandWithDialog(%V,%p,%p,%d,%d,%b)", cmd.rep, penv, output, fd_stdin, fd_stderr, dialog)
 
    U_INTERNAL_ASSERT_POINTER(output)
 
@@ -533,7 +533,7 @@ void UCommand::outputCommandWithDialog(const UString& cmd, char** penv, UString*
 
 UString UCommand::outputCommand(const UString& cmd, char** penv, int fd_stdin, int fd_stderr)
 {
-   U_TRACE(0, "UCommand::outputCommand(%.*S,%p,%d,%d)", U_STRING_TO_TRACE(cmd), penv, fd_stdin, fd_stderr)
+   U_TRACE(0, "UCommand::outputCommand(%V,%p,%d,%d)", cmd.rep, penv, fd_stdin, fd_stderr)
 
    UString output(U_CAPACITY);
 
@@ -557,11 +557,9 @@ UCommand* UCommand::loadConfigCommand(UFileConfig* cfg)
       {
       if (U_ENDS_WITH(command, ".sh"))
          {
-         uint32_t len = command.size();
+         UString buffer(U_CONSTANT_SIZE(U_PATH_SHELL) + 1 + command.size());
 
-         UString buffer(U_CONSTANT_SIZE(U_PATH_SHELL) + 1 + len);
-
-         buffer.snprintf("%s %.*s", U_PATH_SHELL, len, command.data());
+         buffer.snprintf("%s %v", U_PATH_SHELL, command.rep);
 
          command = buffer;
          }
@@ -570,7 +568,7 @@ UCommand* UCommand::loadConfigCommand(UFileConfig* cfg)
 
       if (cmd->checkForExecute() == false)
          {
-         U_WARNING("loadConfigCommand() failed, command %.*S not executable", U_STRING_TO_TRACE(cmd->command));
+         U_WARNING("loadConfigCommand() failed, command %V not executable", cmd->command.rep);
 
          delete cmd;
 

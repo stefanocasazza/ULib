@@ -35,7 +35,7 @@ endif
 if ZIP
 PRG   += test_zip
 TESTS += zip.test
-test_zip_LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+test_zip_LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 endif
 
 check_PROGRAMS  = $(PRG)
@@ -43,7 +43,7 @@ TESTS 			+= ../reset.color
 
 EXTRA_DIST = inp ok $(TESTS)
 
-LDADD = $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
+LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 
 test:
 	-make check

@@ -97,7 +97,6 @@ U_NO_EXPORT bool URDB::htLookup(URDB* prdb)
 
    U_INTERNAL_DUMP("pnode = %p slot = %u", prdb->pnode, prdb->UCDB::khash % CACHE_HASHTAB_LEN)
 
-   int result;
    uint32_t len;
 
    while (true)
@@ -150,7 +149,7 @@ invalid_entry:
          }
 #  endif
 
-      result = u_equal(prdb->UCDB::key.dptr, RDB_node_key(prdb), U_min(prdb->UCDB::key.dsize, len), UCDB::ignoreCase(prdb));
+      int result = u_equal(prdb->UCDB::key.dptr, RDB_node_key(prdb), U_min(prdb->UCDB::key.dsize, len), UCDB::ignoreCase(prdb));
 
       // RDB_node => ((URDB::cache_node*)(journal.map+node))
 
@@ -547,7 +546,7 @@ void URDB::setShared(sem_t* psem, char* spinlock)
 
       UString basename = UFile::getName();
 
-      (void) u__snprintf(somename, sizeof(somename), "/%.*s", U_STRING_TO_TRACE(basename));
+      (void) u__snprintf(somename, sizeof(somename), "/%v", basename.rep);
 
       psem     = (sem_t*) UFile::shm_open(somename, sizeof(sem_t) + 1);
       spinlock = (char*)psem + sizeof(sem_t) + 1;
@@ -840,8 +839,6 @@ U_NO_EXPORT void URDB::callForEntryNotInCache(UCDB* pcdb, vPFpvpc function2)
    U_INTERNAL_ASSERT_DIFFERS(UFile::map, MAP_FAILED)
 
    char* ptr;
-   uint32_t pos;
-
    char* _eof = UFile::map + (ptrdiff_t)UFile::st_size;
    UCDB::slot = (UCDB::cdb_hash_table_slot*) UCDB::end();
 
@@ -849,7 +846,7 @@ U_NO_EXPORT void URDB::callForEntryNotInCache(UCDB* pcdb, vPFpvpc function2)
 
    while ((char*)slot < _eof)
       {
-      pos = u_get_unaligned(slot->pos);
+      uint32_t pos = u_get_unaligned(slot->pos);
 
       if (pos)
          {
@@ -1213,7 +1210,7 @@ UString URDB::print()
       U_RETURN_STRING(buffer);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 void URDB::callForAllEntry(iPFprpr function, UVector<UString>* pvec)
@@ -1339,12 +1336,11 @@ UString URDB::printSorted()
          if (n > 1) vkey.sort(UCDB::ignoreCase());
 
          char tmp[40];
-         UStringRep* r;
          UString buffer(_size);
 
          for (uint32_t i = 0; i < n; ++i)
             {
-            r = vkey.UVector<UStringRep*>::at(i);
+            UStringRep* r = vkey.UVector<UStringRep*>::at(i);
 
             UCDB::setKey(r);
 
@@ -1366,7 +1362,7 @@ UString URDB::printSorted()
          }
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 bool URDB::isDeleted()
@@ -1649,7 +1645,7 @@ end:
 
 int URDB::remove(const UString& _key)
 {
-   U_TRACE(0, "URDB::remove(%.*S)", U_STRING_TO_TRACE(_key))
+   U_TRACE(0, "URDB::remove(%V)", _key.rep)
 
    UCDB::setKey(_key);
 
@@ -1814,7 +1810,7 @@ int URDB::store(const char* _key, uint32_t keylen, const char* _data, uint32_t d
 
 int URDB::substitute(const UString& _key, const UString& new_key, const UString& _data, int _flag)
 {
-   U_TRACE(0, "URDB::substitute(%.*S,%.*S,%.*S,%d)", U_STRING_TO_TRACE(_key), U_STRING_TO_TRACE(new_key), U_STRING_TO_TRACE(_data), _flag)
+   U_TRACE(0, "URDB::substitute(%V,%V,%V,%d)", _key.rep, new_key.rep, _data.rep, _flag)
 
    UCDB::setKey(_key);
    UCDB::setData(_data);
@@ -1934,7 +1930,7 @@ bool URDBObjectHandler<UDataStorage*>::putDataStorage()
 
 void URDBObjectHandler<UDataStorage*>::setEntry(UStringRep* _key, UStringRep* _data)
 {
-   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::setEntry(%.*S,%.*S)", U_STRING_TO_TRACE(*_key), U_STRING_TO_TRACE(*_data))
+   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::setEntry(%V,%V)", _key, _data)
 
    U_INTERNAL_ASSERT_POINTER(pDataStorage)
    U_INTERNAL_ASSERT_POINTER(function_to_call)
@@ -1953,7 +1949,7 @@ URDBObjectHandler<UDataStorage*>* URDBObjectHandler<UDataStorage*>::pthis;
 
 int URDBObjectHandler<UDataStorage*>::callEntryCheck(UStringRep* _key, UStringRep* _data)
 {
-   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::callEntryCheck(%.*S,%.*S)", U_STRING_TO_TRACE(*_key), U_STRING_TO_TRACE(*_data))
+   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::callEntryCheck(%V,%V)", _key, _data)
 
    U_INTERNAL_ASSERT_POINTER(pthis)
    U_INTERNAL_ASSERT_POINTER(pthis->function_to_call)

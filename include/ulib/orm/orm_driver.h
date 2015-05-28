@@ -97,7 +97,7 @@ public:
 
    explicit USqlStatementBindResult(UStringRep& s)
       {
-      U_TRACE_REGISTER_OBJECT(0, USqlStatementBindResult, "%.*S", U_STRING_TO_TRACE(s))
+      U_TRACE_REGISTER_OBJECT(0, USqlStatementBindResult, "%V", &s)
 
       buffer = s.data();
       length = s.capacity(); // NB: after fetch become the length of the actual data value...
@@ -217,11 +217,14 @@ public:
 
    static void str_allocate();
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORE
 
    UOrmDriver()
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriver, "")
+      U_TRACE_REGISTER_OBJECT(0, UOrmDriver, "")
 
       errmsg     = errname = 0;
       errcode    = 0;
@@ -231,7 +234,7 @@ public:
 
    UOrmDriver(const UString& name_drv) : name(name_drv)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UOrmDriver, "%.*S", U_STRING_TO_TRACE(name))
+      U_TRACE_REGISTER_OBJECT(0, UOrmDriver, "%V", name.rep)
 
       errmsg     = errname = 0;
       errcode    = 0;
@@ -396,7 +399,7 @@ public:
 
    virtual UOrmDriver* handlerConnect(const UString& option)
       {
-      U_TRACE(0, "UOrmDriver::handlerConnect(%.*S)", U_STRING_TO_TRACE(option))
+      U_TRACE(0, "UOrmDriver::handlerConnect(%V)", option.rep)
 
       U_RETURN_POINTER(0, UOrmDriver);
       } 

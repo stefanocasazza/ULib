@@ -13,6 +13,7 @@
 
 #include <ulib/file.h>
 #include <ulib/process.h>
+#include <ulib/mime/entity.h>
 #include <ulib/utility/base64.h>
 #include <ulib/net/client/http.h>
 #include <ulib/utility/services.h>
@@ -22,192 +23,212 @@
 #  include <ulib/magic/magic.h>
 #endif
 
-/*
-An Example with HTTP/1.0 
-==========================================================================================
-server{meng}% telnet www.cs.panam.edu 80
-Trying 129.113.132.240...
-Connected to server.cs.panam.edu.
-Escape character is '^]'.
-GET /index.html HTTP/1.0
-From: meng@panam.edu
-User-Agent: Test/1.1
-
-HTTP/1.1 200 OK
-Date: Tue, 13 Apr 1999 19:30:29 GMT
-Server: Apache/1.3.2 (Unix)
-Last-Modified: Wed, 03 Feb 1999 22:06:29 GMT
-ETag: "5beed-b41-36b8c865"
-Accept-Ranges: bytes
-Content-Length: 2881
-Connection: close
-Content-Type: text/html
-
-<!DOCTYPE HTML SYSTEM "html.dtd">
-<HTML>
-<HEAD>
-<TITLE>Department of Computer Science UT-Pan American</TITLE>
-</HEAD>
-<BODY>
-<IMG SRC="/LocalIcons/utpa_g_t.gif"  HSPACE=15 VSPACE=0 BORDER=0 ALIGN=left >
-<!--width=150 height=120--!>
-<H2>
-<BR>
-Department Of Computer Science
-</H2>
-<BR  CLEAR=LEFT>
-<HR>
-
-<H2>
-<center>
-Welcome</center>
-</H2>
-<h3>
-<hr>
-...
-
-</BODY>
-</HTML>
-Connection closed by foreign host.
-==========================================================================================
-HTTP 1.1 is superset of HTTP 1.0. HTTP 1.1 added a few more requirements on both the server
-side and the client side. On the client side:
----------------------------------------------------
-1) include the "Host: ..." header with each request
----------------------------------------------------
-Starting with HTTP 1.1, one server at one IP address can be multi-homed, i.e. the home of
-several Web domains. For example, "www.host1.com" and "www.host2.com" can live on the same
-server. That's why the Host field is required. Example:
-GET /path/file.html HTTP/1.1
-Host: www.host1.com:80
-[blank line here]
--------------------------------------
-2) accept responses with chunked data
--------------------------------------
-If a server wants to start sending a response before knowing its total length (like with long
-script output), it might use the simple chunked transfer-encoding, which breaks the complete
-response into smaller chunks and sends them in series. You can identify such a response because
-it contains the "Transfer-Encoding: chunked" header. All HTTP 1.1 clients must be able to receive
-chunked messages. A chunked message body contains a series of chunks, followed by a line with a
-single "0" (zero), followed by optional footers (just like headers), and a blank line. Each chunk
-consists of two parts: a line with the size of the chunk data, in hex, possibly followed by a
-semicolon and extra parameters you can ignore (none are currently standard), and ending with CRLF.
-the data itself, followed by CRLF. An example:
-HTTP/1.1 200 OK
-Date: Fri, 31 Dec 1999 23:59:59 GMT
-Content-Type: text/plain
-Transfer-Encoding: chunked
-[blank line here]
-1a; ignore-stuff-here
-abcdefghijklmnopqrstuvwxyz
-10
-1234567890abcdef
-0
-some-footer: some-value
-another-footer: another-value
-[blank line here]
-Note the blank line after the last footer. The length of the text data is 42 bytes (1a + 10, in hex),
-and the data itself is abcdefghijklmnopqrstuvwxyz1234567890abcdef. The footers should be treated like
-headers, as if they were at the top of the response. The chunks can contain any binary data, and may
-be much larger than the examples here. The size-line parameters are rarely used, but you should at
-least ignore them correctly. Footers are also rare, but might be appropriate for things like checksums
-or digital signatures.
------------------------------------------------------------------------------------------------------
-3) either support persistent connections, or include the "Connection: close" header with each request
------------------------------------------------------------------------------------------------------
-In HTTP 1.0 and before, TCP connections are closed after each request and response, so each resource to
-be retrieved requires its own connection. Persistent connections are the default in HTTP 1.1, so nothing
-special is required to use them. Just open a connection and send several requests in series (called pipelining),
-and read the responses in the same order as the requests were sent. If you do this, be very careful to read
-the correct length of each response, to separate them correctly. If a client includes the "Connection: close"
-header in the request, then the connection will be closed after the corresponding response. Use this if you
-don't support persistent connections, or if you know a request will be the last on its connection. Similarly,
-if a response contains this header, then the server will close the connection following that response, and
-the client shouldn't send any more requests through that connection. A server might close the connection
-before all responses are sent, so a client must keep track of requests and resend them as needed. When
-resending, don't pipeline the requests until you know the connection is persistent. Don't pipeline at all
-if you know the server won't support persistent connections (like if it uses HTTP 1.0, based on a previous response).
------------------------------------
-4) handle the 100 Continue response
------------------------------------
-During the course of an HTTP 1.1 client sending a request to a server, the server might respond with an interim
-"100 Continue" response. This means the server has received the first part of the request, and can be used to
-aid communication over slow links. In any case, all HTT 1.1 clients must handle the 100 response correctly
-(perhaps by just ignoring it). The "100 Continue" response is structured like any HTTP response, i.e. consists
-of a status line, optional headers, and a blank line. Unlike other responses, it is always followed by another
-complete, final response. Example:
-HTTP/1.0 100 Continue
-[blank line here]
-HTTP/1.0 200 OK
-Date: Fri, 31 Dec 1999 23:59:59 GMT
-Content-Type: text/plain
-Content-Length: 42
-some-footer: some-value
-another-footer: another-value
-
-abcdefghijklmnoprstuvwxyz1234567890abcdef
-To handle this, a simple HTTP 1.1 client might read one response from the socket; if the status code is 100,
-discard the first response and read the next one instead.
------------------------------------
-To comply with HTTP 1.1, servers must:
---------------------------------------
-1) require the Host: header from HTTP 1.1 clients
-2) accept absolute URL's in a request
-3) accept requests with chunked data
-4) either support persistent connections, or include the "Connection: close" header with each response
-5) use the "100 Continue" response appropriately
-6) include the Date: header in each response
-7) handle requests with If-Modified-Since: or If-Unmodified-Since: headers
-8) support at least the GET and HEAD methods
-9) support HTTP 1.0 requests
---------------------------------------
-An example of transaction under HTTP 1.1:
-
-server{meng}% telnet www.cs.panam.edu 80
-Trying 129.113.132.240...
-Connected to server.cs.panam.edu.
-Escape character is '^]'.
-GET /index.html HTTP/1.1
-Host: www.cs.panam.edu:80
-From: meng@panam.edu
-User-Agent: test/1.1
-Connection: close
-
-HTTP/1.1 200 OK
-Date: Tue, 13 Apr 1999 20:57:45 GMT
-Server: Apache/1.3.2 (Unix)
-Last-Modified: Wed, 03 Feb 1999 22:06:29 GMT
-ETag: "5beed-b41-36b8c865"
-Accept-Ranges: bytes
-Content-Length: 2881
-Connection: close
-Content-Type: text/html
-
-<! -------------------- Welcome.html ----------------------------
- 
-<!                 Depertment of Computer Science Home Page
-
-<!DOCTYPE HTML SYSTEM "html.dtd">
-<HTML>
-<HEAD>
-<TITLE>Department of Computer Science UT-Pan American</TITLE>
-</HEAD>
-<BODY>
-<IMG SRC="/LocalIcons/utpa_g_t.gif"  HSPACE=15 VSPACE=0 BORDER=0 ALIGN=left >
-<!--width=150 height=120--!>
-<H2>
-<BR>
-Department Of Computer Science
-</H2>
-...
-</BODY>
-</HTML>
-Connection closed by foreign host.
-*/
+/**
+ * ==========================================================================================
+ * An Example with HTTP/1.0 
+ * ==========================================================================================
+ * server{meng}% telnet www.cs.panam.edu 80
+ * Trying 129.113.132.240...
+ * Connected to server.cs.panam.edu.
+ * Escape character is '^]'.
+ * GET /index.html HTTP/1.0
+ * From: meng@panam.edu
+ * User-Agent: Test/1.1
+ *
+ * HTTP/1.1 200 OK
+ * Date: Tue, 13 Apr 1999 19:30:29 GMT
+ * Server: Apache/1.3.2 (Unix)
+ * Last-Modified: Wed, 03 Feb 1999 22:06:29 GMT
+ * ETag: "5beed-b41-36b8c865"
+ * Accept-Ranges: bytes
+ * Content-Length: 2881
+ * Connection: close
+ * Content-Type: text/html
+ *
+ * <!DOCTYPE HTML SYSTEM "html.dtd">
+ * <HTML>
+ * <HEAD>
+ * <TITLE>Department of Computer Science UT-Pan American</TITLE>
+ * </HEAD>
+ * <BODY>
+ * <IMG SRC="/LocalIcons/utpa_g_t.gif"  HSPACE=15 VSPACE=0 BORDER=0 ALIGN=left >
+ * <!--width=150 height=120--!>
+ * <H2>
+ * <BR>
+ * Department Of Computer Science
+ * </H2>
+ * <BR  CLEAR=LEFT>
+ * <HR>
+ * <H2>
+ * <center>
+ * Welcome</center>
+ * </H2>
+ * <h3>
+ * <hr>
+ * ... 
+ * </BODY>
+ * </HTML>
+ * Connection closed by foreign host.
+ * ==========================================================================================
+ * HTTP 1.1 is superset of HTTP 1.0. HTTP 1.1 added a few more requirements on both the server
+ * side and the client side. On the client side:
+ * ---------------------------------------------------
+ * 1) include the "Host: ..." header with each request
+ * ---------------------------------------------------
+ * Starting with HTTP 1.1, one server at one IP address can be multi-homed, i.e. the home of
+ * several Web domains. For example, "www.host1.com" and "www.host2.com" can live on the same
+ * server. That's why the Host field is required. Example:
+ * GET /path/file.html HTTP/1.1
+ * Host: www.host1.com:80
+ * [blank line here]
+ * -------------------------------------
+ * 2) accept responses with chunked data
+ * -------------------------------------
+ * If a server wants to start sending a response before knowing its total length (like with long
+ * script output), it might use the simple chunked transfer-encoding, which breaks the complete
+ * response into smaller chunks and sends them in series. You can identify such a response because
+ * it contains the "Transfer-Encoding: chunked" header. All HTTP 1.1 clients must be able to receive
+ * chunked messages. A chunked message body contains a series of chunks, followed by a line with a
+ * single "0" (zero), followed by optional footers (just like headers), and a blank line. Each chunk
+ * consists of two parts: a line with the size of the chunk data, in hex, possibly followed by a
+ * semicolon and extra parameters you can ignore (none are currently standard), and ending with CRLF.
+ * the data itself, followed by CRLF. An example:
+ *  HTTP/1.1 200 OK
+ *  Date: Fri, 31 Dec 1999 23:59:59 GMT
+ *  Content-Type: text/plain
+ *  Transfer-Encoding: chunked
+ *  [blank line here]
+ *  1a; ignore-stuff-here
+ *  abcdefghijklmnopqrstuvwxyz
+ *  10
+ *  1234567890abcdef
+ *  0
+ *  some-footer: some-value
+ *  another-footer: another-value
+ *  [blank line here]
+ * Note the blank line after the last footer. The length of the text data is 42 bytes (1a + 10, in hex),
+ * and the data itself is abcdefghijklmnopqrstuvwxyz1234567890abcdef. The footers should be treated like
+ * headers, as if they were at the top of the response. The chunks can contain any binary data, and may
+ * be much larger than the examples here. The size-line parameters are rarely used, but you should at
+ * least ignore them correctly. Footers are also rare, but might be appropriate for things like checksums
+ * or digital signatures.
+ * -----------------------------------------------------------------------------------------------------
+ * 3) either support persistent connections, or include the "Connection: close" header with each request
+ * -----------------------------------------------------------------------------------------------------
+ * In HTTP 1.0 and before, TCP connections are closed after each request and response, so each resource to
+ * be retrieved requires its own connection. Persistent connections are the default in HTTP 1.1, so nothing
+ * special is required to use them. Just open a connection and send several requests in series (called pipelining),
+ * and read the responses in the same order as the requests were sent. If you do this, be very careful to read
+ * the correct length of each response, to separate them correctly. If a client includes the "Connection: close"
+ * header in the request, then the connection will be closed after the corresponding response. Use this if you
+ * don't support persistent connections, or if you know a request will be the last on its connection. Similarly,
+ * if a response contains this header, then the server will close the connection following that response, and
+ * the client shouldn't send any more requests through that connection. A server might close the connection
+ * before all responses are sent, so a client must keep track of requests and resend them as needed. When
+ * resending, don't pipeline the requests until you know the connection is persistent. Don't pipeline at all
+ * if you know the server won't support persistent connections (like if it uses HTTP 1.0, based on a previous response).
+ * -----------------------------------
+ * 4) handle the 100 Continue response
+ * -----------------------------------
+ * During the course of an HTTP 1.1 client sending a request to a server, the server might respond with an interim
+ * "100 Continue" response. This means the server has received the first part of the request, and can be used to
+ * aid communication over slow links. In any case, all HTT 1.1 clients must handle the 100 response correctly
+ * (perhaps by just ignoring it). The "100 Continue" response is structured like any HTTP response, i.e. consists
+ * of a status line, optional headers, and a blank line. Unlike other responses, it is always followed by another
+ * complete, final response. Example:
+ *  HTTP/1.0 100 Continue
+ *  [blank line here]
+ *  HTTP/1.0 200 OK
+ *  Date: Fri, 31 Dec 1999 23:59:59 GMT
+ *  Content-Type: text/plain
+ *  Content-Length: 42
+ *  some-footer: some-value
+ *  another-footer: another-value
+ *  
+ *  abcdefghijklmnoprstuvwxyz1234567890abcdef
+ * To handle this, a simple HTTP 1.1 client might read one response from the socket; if the status code is 100,
+ * discard the first response and read the next one instead.
+ * -----------------------------------
+ * To comply with HTTP 1.1, servers must:
+ * --------------------------------------
+ * 1) require the Host: header from HTTP 1.1 clients
+ * 2) accept absolute URL's in a request
+ * 3) accept requests with chunked data
+ * 4) either support persistent connections, or include the "Connection: close" header with each response
+ * 5) use the "100 Continue" response appropriately
+ * 6) include the Date: header in each response
+ * 7) handle requests with If-Modified-Since: or If-Unmodified-Since: headers
+ * 8) support at least the GET and HEAD methods
+ * 9) support HTTP 1.0 requests
+ * ==========================================================================================
+ * An example of transaction under HTTP 1.1:
+ * ==========================================================================================
+ * server{meng}% telnet www.cs.panam.edu 80
+ * Trying 129.113.132.240...
+ * Connected to server.cs.panam.edu.
+ * Escape character is '^]'.
+ *  GET /index.html HTTP/1.1
+ *  Host: www.cs.panam.edu:80
+ *  From: meng@panam.edu
+ *  User-Agent: test/1.1
+ *  Connection: close
+ *  
+ *  HTTP/1.1 200 OK
+ *  Date: Tue, 13 Apr 1999 20:57:45 GMT
+ *  Server: Apache/1.3.2 (Unix)
+ *  Last-Modified: Wed, 03 Feb 1999 22:06:29 GMT
+ *  ETag: "5beed-b41-36b8c865"
+ *  Accept-Ranges: bytes
+ *  Content-Length: 2881
+ *  Connection: close
+ *  Content-Type: text/html
+ *  
+ *  <!-------------------- Welcome.html ------------------------------!>
+ *  <!-- Depertment of Computer Science Home Page --!>
+ *  <!DOCTYPE HTML SYSTEM "html.dtd">
+ *  <HTML>
+ *  <HEAD>
+ *  <TITLE>Department of Computer Science UT-Pan American</TITLE>
+ *  </HEAD>
+ *  <BODY>
+ *  <IMG SRC="/LocalIcons/utpa_g_t.gif"  HSPACE=15 VSPACE=0 BORDER=0 ALIGN=left >
+ *  <!--width=150 height=120--!>
+ *  <H2>
+ *  <BR>
+ *  Department Of Computer Science
+ *  </H2>
+ *  ...
+ *  </BODY>
+ *  </HTML>
+ * Connection closed by foreign host.
+ * ==========================================================================================
+ */
 
 #define U_MAX_REDIRECTS 10 // HTTP 1.0 used to suggest 5
 
 struct uhttpinfo UHttpClient_Base::u_http_info_save;
+
+UHttpClient_Base::UHttpClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
+{
+   U_TRACE_REGISTER_OBJECT(0, UHttpClient_Base, "%p", _cfg)
+
+   method_num       = 0;
+   bFollowRedirects = true;
+   bproxy           = false;
+
+   u_init_http_method_list();
+
+   requestHeader  = U_NEW(UMimeHeader);
+   responseHeader = U_NEW(UMimeHeader);
+}
+
+UHttpClient_Base::~UHttpClient_Base()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UHttpClient_Base)
+
+   delete requestHeader;
+   delete responseHeader;
+}
 
 void UHttpClient_Base::reset()
 {
@@ -222,6 +243,27 @@ void UHttpClient_Base::reset()
    UClient_Base::server.clear();
 }
 
+void UHttpClient_Base::setHeader(const UString& name, const UString& value)
+{
+   U_TRACE(0, "UHttpClient_Base::setHeader(%V,%V)", name.rep, value.rep)
+
+   U_INTERNAL_ASSERT(name)
+   U_INTERNAL_ASSERT(value)
+   U_INTERNAL_ASSERT_POINTER(requestHeader)
+
+   requestHeader->setHeader(name, value);
+}
+
+void UHttpClient_Base::removeHeader(const UString& name)
+{
+   U_TRACE(0, "UHttpClient_Base::removeHeader(%V,)", name.rep)
+
+   U_INTERNAL_ASSERT(name)
+   U_INTERNAL_ASSERT_POINTER(requestHeader)
+
+   requestHeader->removeHeader(name);
+}
+
 //=======================================================================================
 // In response to a HTTP_UNAUTHORISED response from the HTTP server,
 // this function will attempt to generate an Authentication header to satisfy the server.
@@ -233,7 +275,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
    uint32_t keylen;
    const char* key;
-   bool bProxy = (u_http_info.nResponseCode == HTTP_PROXY_AUTH);
+   bool bProxy = (U_http_info.nResponseCode == HTTP_PROXY_AUTH);
 
    if (bProxy)
       {
@@ -250,7 +292,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
    if (authResponse.empty())
       {
-      U_DUMP("%.*S header missing from HTTP response: %d", keylen, key, u_http_info.nResponseCode)
+      U_DUMP("%.*S header missing from HTTP response: %d", keylen, key, U_http_info.nResponseCode)
 
       U_RETURN(false);
       }
@@ -259,7 +301,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
        password.empty())
       {
       // If the registered Authenticator cannot supply a user/password then we cannot continue.
-      // This is signalled by returning false to the sendRequest() function.
+      // This is signalled by returning false to the sendRequest() function
 
       U_RETURN(false);
       }
@@ -278,7 +320,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
    if (n < 3)
       {
-      U_WARNING("%.*S header: %.*S value is invalid", keylen, key, U_STRING_TO_TRACE(authResponse));
+      U_WARNING("%.*S header: %V value is invalid", keylen, key, authResponse.rep);
 
       U_RETURN(false);
       }
@@ -297,13 +339,13 @@ bool UHttpClient_Base::createAuthorizationHeader()
       {
       UString tmp(100U), data(100U);
 
-      tmp.snprintf("%.*s:%.*s", U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(password));
+      tmp.snprintf("%v:%v", user.rep, password.rep);
 
       UBase64::encode(tmp, data);
 
       // Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
 
-      headerValue.snprintf("Basic %.*s", U_STRING_TO_TRACE(data));
+      headerValue.snprintf("Basic %v", data.rep);
       }
    else
       {
@@ -319,7 +361,7 @@ bool UHttpClient_Base::createAuthorizationHeader()
          name  = name_value[i++];
          value = name_value[i++];
 
-         U_INTERNAL_DUMP("name = %.*S value = %.*S", U_STRING_TO_TRACE(name), U_STRING_TO_TRACE(value))
+         U_INTERNAL_DUMP("name = %V value = %V", name.rep, value.rep)
 
          switch (name.c_char(0))
             {
@@ -388,30 +430,27 @@ bool UHttpClient_Base::createAuthorizationHeader()
 
       // MD5(user : realm : password)
 
-      a1.snprintf("%.*s:%.*s:%.*s", U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(realm), U_STRING_TO_TRACE(password));
+      a1.snprintf("%v:%v:%v", user.rep, realm.rep, password.rep);
 
       UServices::generateDigest(U_HASH_MD5, 0, a1, ha1, false);
 
       // MD5(method : uri)
 
-      a2.snprintf("%.*s:%.*s", U_HTTP_METHOD_NUM_TO_TRACE(method_num), U_STRING_TO_TRACE(UClient_Base::uri));
+      a2.snprintf("%.*s:%v", U_HTTP_METHOD_NUM_TO_TRACE(method_num), UClient_Base::uri.rep);
 
       UServices::generateDigest(U_HASH_MD5, 0, a2, ha2, false);
 
       // MD5(HA1 : nonce : nc : cnonce : qop : HA2)
 
-      a3.snprintf("%.*s:%.*s:%08u:%ld:%.*s:%.*s", U_STRING_TO_TRACE(ha1), U_STRING_TO_TRACE(nonce),
-                                                   ++nc,                   u_now->tv_sec,
-                                                   U_STRING_TO_TRACE(qop), U_STRING_TO_TRACE(ha2));
+      a3.snprintf("%v:%v:%08u:%ld:%v:%v", ha1.rep, nonce.rep, ++nc, u_now->tv_sec, qop.rep, ha2.rep);
 
       UServices::generateDigest(U_HASH_MD5, 0, a3, _response, false);
 
       // Authorization: Digest username="s.casazza", realm="Protected Area", nonce="1222108408", uri="/ok", cnonce="dad0f85801e27b987d6dc59338c7bf99",
       //                       nc=00000001, response="240312fba053f6d687d10c90928f4af2", qop="auth", algorithm="MD5"
 
-      headerValue.snprintf("Digest username=\"%.*s\", realm=%.*s, nonce=%.*s, uri=\"%.*s\", cnonce=\"%ld\", nc=%08u, response=\"%.*s\", qop=%.*s",
-                           U_STRING_TO_TRACE(user), U_STRING_TO_TRACE(realm), U_STRING_TO_TRACE(nonce),
-                           U_STRING_TO_TRACE(UClient_Base::uri), u_now->tv_sec, nc, U_STRING_TO_TRACE(_response), U_STRING_TO_TRACE(qop));
+      headerValue.snprintf("Digest username=\"%v\", realm=%v, nonce=%v, uri=\"%v\", cnonce=\"%ld\", nc=%08u, response=\"%v\", qop=%v",
+                           user.rep, &realm.rep, nonce.rep, UClient_Base::uri.rep, u_now->tv_sec, nc, _response.rep, qop.rep);
 
       if (algorithm) (void) headerValue.append(U_CONSTANT_TO_PARAM(", algorithm=\"MD5\""));
       }
@@ -440,7 +479,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 {
    U_TRACE(0, "UHttpClient_Base::checkResponse(%d)", redirectCount)
 
-   U_DUMP("HTTP status = (%d, %S)", u_http_info.nResponseCode, UHTTP::getStatusDescription())
+   U_DUMP("HTTP status = (%d, %S)", U_http_info.nResponseCode, UHTTP::getStatusDescription())
 
    // check if you can use the same socket connection
 
@@ -456,15 +495,15 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
    // 5xx indicates an error on the server's part
    // ------------------------------------------------------------
 
-   if (u_http_info.nResponseCode == HTTP_UNAUTHORIZED || // 401
-       u_http_info.nResponseCode == HTTP_PROXY_AUTH)     // 407
+   if (U_http_info.nResponseCode == HTTP_UNAUTHORIZED || // 401
+       U_http_info.nResponseCode == HTTP_PROXY_AUTH)     // 407
       {
       // If we haven't already done so, attempt to create an Authentication header. If this fails
       // (due to application not passing the credentials), then we treat it as an error.
       // If we already have one then the server is rejecting it so we have an error anyway.
 
-      if ((u_http_info.nResponseCode == HTTP_UNAUTHORIZED && requestHeader->containsHeader(*UString::str_authorization))                ||
-          (u_http_info.nResponseCode == HTTP_PROXY_AUTH   && requestHeader->containsHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"))) ||
+      if ((U_http_info.nResponseCode == HTTP_UNAUTHORIZED && requestHeader->containsHeader(*UString::str_authorization))                ||
+          (U_http_info.nResponseCode == HTTP_PROXY_AUTH   && requestHeader->containsHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"))) ||
           (redirectCount == -1 || createAuthorizationHeader() == false))
          {
          U_RETURN(-2);
@@ -482,8 +521,8 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
       UString refresh = responseHeader->getRefresh();
 
       if (refresh.empty()           == false           ||
-          u_http_info.nResponseCode == HTTP_MOVED_PERM || // 301
-          u_http_info.nResponseCode == HTTP_MOVED_TEMP)   // 302
+          U_http_info.nResponseCode == HTTP_MOVED_PERM || // 301
+          U_http_info.nResponseCode == HTTP_MOVED_TEMP)   // 302
          {
          // 3xx redirects the client to another URL
 
@@ -505,7 +544,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
                {
                newLocation = refresh.substr(pos + U_CONSTANT_SIZE("url="));
 
-               if (newLocation.isQuoted()) newLocation.unQuote();
+               if (newLocation.isQuoted()) newLocation.rep->unQuote();
                }
             }
 
@@ -532,7 +571,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
          setcookie = responseHeader->getHeader(U_CONSTANT_TO_PARAM("Set-Cookie"));
 
-         U_INTERNAL_DUMP("Set-Cookie: %.*S", U_STRING_TO_TRACE(setcookie))
+         U_INTERNAL_DUMP("Set-Cookie: %V", setcookie.rep)
 
          if (bproxy && 
              setcookie)
@@ -573,8 +612,7 @@ bool UHttpClient_Base::putRequestOnQueue() // In general, if sendRequest() faile
 
    char _buffer[U_PATH_MAX];
 
-   (void) u__snprintf(_buffer, sizeof(_buffer), "%.*s/%.*s.%4D",
-                           U_STRING_TO_TRACE(*UString::str_CLIENT_QUEUE_DIR), U_STRING_TO_TRACE(UClient_Base::host_port));
+   (void) u__snprintf(_buffer, sizeof(_buffer), "%v/%v.%4D", UString::str_CLIENT_QUEUE_DIR->rep, UClient_Base::host_port.rep);
 
    int fd = UFile::creat(_buffer);
 
@@ -602,7 +640,7 @@ bool UHttpClient_Base::putRequestOnQueue() // In general, if sendRequest() faile
 
 int UHttpClient_Base::sendRequestAsync(const UString& _url, bool bqueue, const char* log_msg, int log_fd)
 {
-   U_TRACE(0, "UHttpClient_Base::sendRequestAsync(%.*S,%b,%S,%d)", U_STRING_TO_TRACE(_url), bqueue, log_msg, log_fd)
+   U_TRACE(0, "UHttpClient_Base::sendRequestAsync(%V,%b,%S,%d)", _url.rep, bqueue, log_msg, log_fd)
 
    U_INTERNAL_ASSERT_EQUALS(UClient_Base::socket->isSSL(true), false)
 
@@ -692,7 +730,7 @@ void UHttpClient_Base::parseRequest(uint32_t n)
 {
    U_TRACE(0, "UHttpClient_Base::parseRequest(%u)", n)
 
-   U_INTERNAL_DUMP("last_request = %.*S", U_STRING_TO_TRACE(last_request))
+   U_INTERNAL_DUMP("last_request = %V", last_request.rep)
 
    U_INTERNAL_ASSERT(last_request)
 
@@ -712,29 +750,26 @@ void UHttpClient_Base::parseRequest(uint32_t n)
    UClient_Base::iov[2].iov_len  = last_request.size() - startHeader;
 }
 
-UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, uint32_t method_num,
-                                      const char* _uri, uint32_t uri_len, const char* extension, const char* content_type)
+UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, uint32_t method_num, const char* _uri, uint32_t uri_len, const char* extension, const char* content_type)
 {
-   U_TRACE(0, "UHttpClient_Base::wrapRequest(%p,%.*S,%u,%.*S,%u,%S,%S)", req, U_STRING_TO_TRACE(host_port), method_num,
-                                                                         uri_len, _uri, uri_len, extension, content_type)
+   U_TRACE(0, "UHttpClient_Base::wrapRequest(%p,%V,%u,%.*S,%u,%S,%S)", req, host_port.rep, method_num, uri_len, _uri, uri_len, extension, content_type)
 
    U_INTERNAL_ASSERT_MAJOR(uri_len, 0)
-   U_INTERNAL_ASSERT_MINOR(method_num, U_NUM_ELEMENTS(u_http_method_list))
+   U_INTERNAL_ASSERT_MAJOR(U_http_method_list[0].len, 0)
+   U_INTERNAL_ASSERT_MINOR(method_num, U_NUM_ELEMENTS(U_http_method_list))
 
    // Add the MIME-type headers to the request for HTTP server
 
    UString tmp(800U + uri_len + (req ? req->size() : 0));
 
    tmp.snprintf("%.*s %.*s HTTP/1.1\r\n"
-                "Host: %.*s\r\n"
+                "Host: %v\r\n"
 #              ifdef USE_LIBZ
                 "Accept-Encoding: gzip\r\n"
 #              endif
                 "User-Agent: " PACKAGE_NAME "/" PACKAGE_VERSION "\r\n"
                 "%s",
-                U_HTTP_METHOD_NUM_TO_TRACE(method_num), uri_len, _uri,
-                U_STRING_TO_TRACE(host_port),
-                extension);
+                U_HTTP_METHOD_NUM_TO_TRACE(method_num), uri_len, _uri, host_port.rep, extension);
 
    if (req)
       {
@@ -780,16 +815,13 @@ void UHttpClient_Base::composeRequest(const char* content_type)
 
       (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
 
-      last_request.snprintf("POST %.*s HTTP/1.1\r\n"
-                            "Host: %.*s:%u\r\n"
+      last_request.snprintf("POST %v HTTP/1.1\r\n"
+                            "Host: %v:%u\r\n"
                             "User-Agent: ULib/1.0\r\n"
                             "Content-Length: %d\r\n"
                             "Content-Type: %s\r\n"
                             "\r\n",
-                            U_STRING_TO_TRACE(UClient_Base::uri),
-                            U_STRING_TO_TRACE(UClient_Base::server), UClient_Base::port,
-                            sz,
-                            content_type);
+                            UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, sz, content_type);
 
       parseRequest(4);
       }
@@ -836,19 +868,19 @@ bool UHttpClient_Base::sendRequestEngine()
       if (result == -2) U_RETURN(true); // pass HTTP_UNAUTHORISED response to the HTTP client...
       if (result ==  2)                 // no redirection, read body...
          {
-         U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", u_http_info.nResponseCode)
+         U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", U_http_info.nResponseCode)
 
-         u_http_info.clength = responseHeader->getHeader(*UString::str_content_length).strtol();
+         U_http_info.clength = responseHeader->getHeader(*UString::str_content_length).strtol();
 
-         if ((u_http_info.clength == 0                                      &&
+         if ((U_http_info.clength == 0                                      &&
               (UHTTP::data_chunked = responseHeader->isChunked()) == false) ||
               UHTTP::readBody(UClient_Base::socket, &response, body))
             {
             U_RETURN(true);
             }
 
-         if (u_http_info.nResponseCode == HTTP_CLIENT_TIMEOUT ||
-             u_http_info.nResponseCode == HTTP_ENTITY_TOO_LARGE)
+         if (U_http_info.nResponseCode == HTTP_CLIENT_TIMEOUT ||
+             U_http_info.nResponseCode == HTTP_ENTITY_TOO_LARGE)
             {
             U_RETURN(false);
             }
@@ -873,11 +905,16 @@ bool UHttpClient_Base::sendRequest()
 
    U_INTERNAL_ASSERT_RANGE(0,UClient_Base::iovcnt,6)
 
+   bool bssl_save     = USocketExt::bssl;
+                        USocketExt::bssl = socket->isSSL(true);
+   bool blocking_save = USocketExt::blocking;
+                        USocketExt::blocking = socket->isBlocking();
+
    U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
 
    bool U_ClientImage_close_save = U_ClientImage_close;
 
-   u_http_info_save = u_http_info;
+   u_http_info_save = U_http_info;
 
    if (UClient_Base::iovcnt == 0)
       {
@@ -890,9 +927,12 @@ bool UHttpClient_Base::sendRequest()
 
    bool esito = sendRequestEngine();
 
-   u_http_info_save.nResponseCode = u_http_info.nResponseCode;
+   USocketExt::bssl     = bssl_save;
+   USocketExt::blocking = blocking_save;
 
-   u_http_info = u_http_info_save;
+   u_http_info_save.nResponseCode = U_http_info.nResponseCode;
+
+   U_http_info = u_http_info_save;
 
    U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
 
@@ -903,7 +943,7 @@ bool UHttpClient_Base::sendRequest()
 
 bool UHttpClient_Base::sendRequest(const UString& req)
 {
-   U_TRACE(0, "UHttpClient_Base::sendRequest(%.*S)", U_STRING_TO_TRACE(req))
+   U_TRACE(0, "UHttpClient_Base::sendRequest(%V)", req.rep)
 
    U_INTERNAL_ASSERT(req)
 
@@ -929,7 +969,7 @@ bool UHttpClient_Base::sendRequest(const UString& req)
 
 bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const char* content_type)
 {
-   U_TRACE(0, "UHttpClient_Base::sendPost(%.*S,%.*S,%S)", U_STRING_TO_TRACE(_url), U_STRING_TO_TRACE(_body), content_type)
+   U_TRACE(0, "UHttpClient_Base::sendPost(%V,%V,%S)", _url.rep, _body.rep, content_type)
 
    if (UClient_Base::connectServer(_url) == false)
       {
@@ -952,7 +992,7 @@ bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const
 
 bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* filename, uint32_t filename_len)
 {
-   U_TRACE(0, "UHttpClient_Base::upload(%.*S,%.*S,%.*S,%u)", U_STRING_TO_TRACE(_url), U_FILE_TO_TRACE(file), filename_len, filename, filename_len)
+   U_TRACE(0, "UHttpClient_Base::upload(%V,%.*S,%.*S,%u)", _url.rep, U_FILE_TO_TRACE(file), filename_len, filename, filename_len)
 
    if (UClient_Base::connectServer(_url) == false)
       {
@@ -1001,15 +1041,13 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
 
    (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
 
-   last_request.snprintf("POST %.*s HTTP/1.1\r\n"
-                         "Host: %.*s:%u\r\n"
+   last_request.snprintf("POST %v HTTP/1.1\r\n"
+                         "Host: %v:%u\r\n"
                          "User-Agent: ULib/1.0\r\n"
                          "Content-Length: %d\r\n"
                          "Content-Type: multipart/form-data; boundary=----------------------------b34551106891\r\n"
                          "\r\n",
-                         U_STRING_TO_TRACE(UClient_Base::uri),
-                         U_STRING_TO_TRACE(UClient_Base::server), UClient_Base::port,
-                         _body.size() + sz + UClient_Base::iov[5].iov_len);
+                         UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, _body.size() + sz + UClient_Base::iov[5].iov_len);
 
    parseRequest(6);
 

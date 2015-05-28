@@ -309,12 +309,12 @@ U_EXPORT main (int argc, char* argv[])
    // EXTENSION
 
    {
-   UDirWalk dirwalk(0, U_CONSTANT_TO_PARAM("?db.*"));
+   UDirWalk dirwalk(0, U_CONSTANT_TO_PARAM("?db.*test*"));
 
    n = dirwalk.walk(y);
-   }
 
    U_ASSERT( n == 2 )
+   }
 
    y.sort();
 

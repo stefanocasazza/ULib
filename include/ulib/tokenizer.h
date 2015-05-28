@@ -16,37 +16,6 @@
 
 #include <ulib/string.h>
 
-/**
- * TOKEN ID
- **/
-
-#define U_TK_ERROR       -1
-#define U_TK_AND          1
-#define U_TK_OR           2
-#define U_TK_EQ           3
-#define U_TK_NE           4
-#define U_TK_GT           5
-#define U_TK_GE           6
-#define U_TK_LT           7
-#define U_TK_LE           8
-#define U_TK_STARTS_WITH  9
-#define U_TK_ENDS_WITH   10
-#define U_TK_IS_PRESENT  11
-#define U_TK_CONTAINS    12
-#define U_TK_PLUS        13
-#define U_TK_MINUS       14
-#define U_TK_MULT        15
-#define U_TK_DIV         16
-#define U_TK_MOD         17
-#define U_TK_NOT         18
-#define U_TK_FN_CALL     19
-#define U_TK_LPAREN      20
-#define U_TK_RPAREN      21
-#define U_TK_VALUE       22
-#define U_TK_COMMA       23
-#define U_TK_NAME        24
-#define U_TK_PID         25
-
 class UQueryParser;
 
 template <class T> class UVector;
@@ -73,7 +42,7 @@ public:
 
    UTokenizer(const UString& data, const char* d = 0) : str(data)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%.*S,%S", U_STRING_TO_TRACE(data), d)
+      U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%V,%S", data.rep, d)
 
       s     = data.data();
       end   = data.end();

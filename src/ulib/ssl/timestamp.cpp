@@ -20,7 +20,7 @@
 
 TS_RESP* UTimeStamp::readTimeStampResponse(const UString& x)
 {
-   U_TRACE(1, "UTimeStamp::readTimeStamp(%.*S)", U_STRING_TO_TRACE(x))
+   U_TRACE(1, "UTimeStamp::readTimeStamp(%V)", x.rep)
 
    BIO* in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(x));
 
@@ -33,7 +33,7 @@ TS_RESP* UTimeStamp::readTimeStampResponse(const UString& x)
 
 UTimeStamp::UTimeStamp(UString& request, const UString& TSA) : UPKCS7(0,0)
 {
-   U_TRACE_REGISTER_OBJECT(0, UTimeStamp, "%.*S,%.*S", U_STRING_TO_TRACE(request), U_STRING_TO_TRACE(TSA))
+   U_TRACE_REGISTER_OBJECT(0, UTimeStamp, "%V,%V", request.rep, TSA.rep)
 
    UHttpClient<USSLSocket> client(0);
 
@@ -62,7 +62,7 @@ bool UTimeStamp::isTimeStampToken(PKCS7* p7)
 
 bool UTimeStamp::isTimeStampResponse(const UString& content)
 {
-   U_TRACE(1, "UTimeStamp::isTimeStampResponse(%.*S)", U_STRING_TO_TRACE(content))
+   U_TRACE(1, "UTimeStamp::isTimeStampResponse(%V)", content.rep)
 
    BIO* in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(content));
 
@@ -82,7 +82,7 @@ bool UTimeStamp::isTimeStampResponse(const UString& content)
 
 UString UTimeStamp::createQuery(int alg, const UString& content, const char* policy, bool bnonce, bool bcert)
 {
-   U_TRACE(1, "UTimeStamp::createQuery(%d,%.*S,%S,%b,%b)", alg, U_STRING_TO_TRACE(content), policy, bnonce, bcert)
+   U_TRACE(1, "UTimeStamp::createQuery(%d,%V,%S,%b,%b)", alg, content.rep, policy, bnonce, bcert)
 
    UServices::generateDigest(alg, content);
 
@@ -168,12 +168,12 @@ UString UTimeStamp::createQuery(int alg, const UString& content, const char* pol
       U_RETURN_STRING(req);
       }
 
-   U_RETURN_STRING(UString::getStringNull());
+   return UString::getStringNull();
 }
 
 UString UTimeStamp::getTimeStampToken(int alg, const UString& data, const UString& url)
 {
-   U_TRACE(0, "UTimeStamp::getTimeStampToken(%d,%.*S,%.*S)", alg, U_STRING_TO_TRACE(data), U_STRING_TO_TRACE(url))
+   U_TRACE(0, "UTimeStamp::getTimeStampToken(%d,%V,%V)", alg, data.rep, url.rep)
 
    U_INTERNAL_ASSERT(url)
 

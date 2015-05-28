@@ -284,7 +284,8 @@
 #  undef  FD_SETSIZE
 #  endif
 #  define FD_SETSIZE 1024 /* larger than default (64) */
-#  define HAVE_GMTIME_R
+#  define HAVE_GMTIME_R 1 /* to avoid replace gmtime_r */
+#  define _POSIX_THREAD_SAFE_FUNCTIONS 1 /* for localtime_r and gmtime_r */
 /* #undef HAVE_GETOPT_LONG // within WINE don't work */
 #  define HAVE_WORKING_SOCKET_OPTION_SO_RCVTIMEO 1
 #  undef  HAVE_NANOSLEEP

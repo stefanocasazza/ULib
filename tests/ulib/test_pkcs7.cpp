@@ -22,13 +22,11 @@ static void check(const UString& dati)
    UPKCS7* item;
    UMimePKCS7* item0 = 0;
 
-   if (dati.find(U_STRING_FROM_CONSTANT("MIME-Version")) == U_NOT_FOUND)
-      {
-      item = new UPKCS7(dati);
-      }
+   if (dati.find(U_STRING_FROM_CONSTANT("MIME-Version")) == U_NOT_FOUND) item = new UPKCS7(dati);
    else
       {
       item0 = new UMimePKCS7(dati);
+
       item  = &(item0->getPKCS7());
       }
 
@@ -41,10 +39,7 @@ static void check(const UString& dati)
 
    unsigned n = item->getSignerCertificates(vec);
 
-   for (unsigned i = 0; i < n; ++i)
-      {
-      check_cert(vec[i]);
-      }
+   for (unsigned i = 0; i < n; ++i) check_cert(vec[i]);
 
    if (item0) delete item0;
    else       delete item;
@@ -272,30 +267,30 @@ int U_EXPORT main(int argc, char* argv[])
 
    int n = U_SYSCALL(sk_X509_num, "%p", certs);
 
-   U_ASSERT( n == 2 )
+   U_INTERNAL_ASSERT_EQUALS(n, 2)
 
    STACK_OF(X509)* certs1 = p7->d.sign->cert;
 
    n = U_SYSCALL(sk_X509_num, "%p", certs1);
 
-   U_ASSERT( n == 3 )
+   U_INTERNAL_ASSERT_EQUALS(n, 3)
 
    UCertificate c(U_STRING_FROM_CONSTANT(SIGNERFILE));
 
    X509* x  = c.getX509();;
    X509* x1 = sk_X509_value(certs1, 0);
 
-   U_ASSERT( X509_cmp(x, x1) == 0 )
+   U_ASSERT_EQUALS( X509_cmp(x, x1), 0 )
 
    x  = sk_X509_value(certs,  0);
    x1 = sk_X509_value(certs1, 1);
 
-   U_ASSERT( X509_cmp(x, x1) == 0 )
+   U_ASSERT_EQUALS( X509_cmp(x, x1), 0 )
 
    x  = sk_X509_value(certs,  1);
    x1 = sk_X509_value(certs1, 2);
 
-   U_ASSERT( X509_cmp(x, x1) == 0 )
+   U_ASSERT_EQUALS( X509_cmp(x, x1), 0 )
 
    cout << UPKCS7::writeMIME(p7);
 }

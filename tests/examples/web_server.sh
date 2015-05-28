@@ -38,12 +38,13 @@ cat <<EOF >inp/webserver.cfg
 userver {
  PORT 8080
  RUN_AS_USER apache
+#MIN_SIZE_FOR_SENDFILE 2k
  LOG_FILE web_server.log
  LOG_FILE_SZ 1M
 #LOG_FILE_SZ 20k
  LOG_MSG_SIZE -1
  PID_FILE /var/run/userver_tcp.pid
- PREFORK_CHILD 1
+ PREFORK_CHILD 2
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
@@ -66,12 +67,15 @@ http {
 #ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 1M 
  REQUEST_READ_TIMEOUT 30
-#MIN_SIZE_FOR_SENDFILE 2k
 #DIGEST_AUTHENTICATION yes
 #CACHE_FILE_STORE nocat/webif.gz
 #CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz
 }
 EOF
+
+export ORM_DRIVER="sqlite"
+export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
+export ORM_OPTION="host=localhost dbname=../db/hello_world"
 
 DIR_CMD="../../examples/userver"
 

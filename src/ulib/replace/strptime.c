@@ -37,7 +37,6 @@ static struct dtconv En_US = {
 extern U_EXPORT char* strptime(const char* buf, const char* fmt, struct tm* tm);
        U_EXPORT char* strptime(const char* buf, const char* fmt, struct tm* tm)
 {
-   char c;
    int i, j, len;
    const char* ptr;
 
@@ -45,6 +44,8 @@ extern U_EXPORT char* strptime(const char* buf, const char* fmt, struct tm* tm);
 
    while (*ptr != 0)
       {
+      char c;
+
       if (*buf == 0) break;
 
       c = *ptr++;

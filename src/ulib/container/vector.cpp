@@ -138,7 +138,7 @@ void UVector<void*>::reserve(uint32_t n)
 
 UVector<UString>::UVector(const UString& str, char delim) : UVector<UStringRep*>(64)
 {
-   U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%.*S,%C", U_STRING_TO_TRACE(str), delim)
+   U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%V,%C", str.rep, delim)
 
    uint32_t n = str.size() / 128;
 
@@ -162,7 +162,7 @@ UVector<UString>::UVector(const UString& str, char delim) : UVector<UStringRep*>
 
 UVector<UString>::UVector(const UString& x, const char* delim) : UVector<UStringRep*>(64)
 {
-   U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%.*S,%S", U_STRING_TO_TRACE(x), delim)
+   U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%V,%S", x.rep, delim)
 
    const char* s = x.data();
 
@@ -199,7 +199,7 @@ __pure UString UVector<UString>::at(uint32_t pos) const
 
 void UVector<UString>::push(const UString& str) // add to end
 {
-   U_TRACE(0, "UVector<UString>::push(%.*S)", U_STRING_TO_TRACE(str))
+   U_TRACE(0, "UVector<UString>::push(%V)", str.rep)
 
    UVector<UStringRep*>::push(str.rep);
 
@@ -249,7 +249,7 @@ __pure uint32_t UVector<UString>::findRange(const char* s, uint32_t n, uint32_t 
 
 __pure uint32_t UVector<UString>::find(const UString& str, bool ignore_case)
 {
-   U_TRACE(0, "UVector<UString>::find(%.*S,%b)", U_STRING_TO_TRACE(str), ignore_case)
+   U_TRACE(0, "UVector<UString>::find(%V,%b)", str.rep, ignore_case)
 
    U_CHECK_MEMORY
 
@@ -300,7 +300,7 @@ __pure uint32_t UVector<UString>::findWithDataOffset(const char* s, uint32_t n, 
 
 __pure uint32_t UVector<UString>::findSorted(const UString& str, bool ignore_case, bool bcouple)
 {
-   U_TRACE(0, "UVector<UString>::findSorted(%.*S,%b,%b)", U_STRING_TO_TRACE(str), ignore_case, bcouple)
+   U_TRACE(0, "UVector<UString>::findSorted(%V,%b,%b)", str.rep, ignore_case, bcouple)
 
    U_CHECK_MEMORY
 
@@ -310,20 +310,20 @@ __pure uint32_t UVector<UString>::findSorted(const UString& str, bool ignore_cas
 
    UStringRep* key;
    UStringRep* target = str.rep;
+   int old_probe = -1, low = -1, high = _length;
    uint32_t mask = (bcouple ? 0xFFFFFFFE : 0xFFFFFFFF);
-   int32_t cmp = -1, probe, old_probe = -1, low = -1, high = _length;
 
    while ((high - low) > 1)
       {
-      probe = (((low + high) & 0xFFFFFFFF) >> 1) & mask;
+      int probe = (((low + high) & 0xFFFFFFFF) >> 1) & mask;
 
       U_INTERNAL_DUMP("low = %d high = %d probe = %d old_probe = %d", low, high, probe, old_probe)
 
       if (probe == old_probe) U_RETURN(U_NOT_FOUND);
 
       key = UVector<UStringRep*>::at(probe);
-      cmp = (ignore_case ? key->comparenocase(target)
-                         : key->compare(      target));
+      int cmp = (ignore_case ? key->comparenocase(target)
+                             : key->compare(      target));
 
       U_INTERNAL_DUMP("cmp = %d", cmp)
 
@@ -346,7 +346,7 @@ __pure uint32_t UVector<UString>::findSorted(const UString& str, bool ignore_cas
 
 uint32_t UVector<UString>::contains(const UString& str, bool ignore_case)
 {
-   U_TRACE(0, "UVector<UString>::contains(%.*S,%b)", U_STRING_TO_TRACE(str), ignore_case)
+   U_TRACE(0, "UVector<UString>::contains(%V,%b)", str.rep, ignore_case)
 
    U_CHECK_MEMORY
 
@@ -443,10 +443,8 @@ UString UVector<UString>::operator[](uint32_t pos) const
 #ifdef DEBUG
    if (pos >= _length)
       {
-      U_ERROR("array access out of bounds - UVector<UString>::at(pos:%u >= _length:%u) _capacity = %u elem(0) = %.*S elem(%u) = %.*S",
-               pos, _length, _capacity,
-               U_STRING_TO_TRACE(*(UStringRep*)vec[0]), _length-1,
-               U_STRING_TO_TRACE(*(UStringRep*)(_length ? vec[_length-1] : UStringRep::string_rep_null)));
+      U_ERROR("array access out of bounds - UVector<UString>::at(pos:%u >= _length:%u) _capacity = %u elem(0) = %V elem(%u) = %V",
+               pos, _length, _capacity, vec[0], _length-1, (_length ? vec[_length-1] : UStringRep::string_rep_null));
       }
 #endif
 
@@ -463,7 +461,7 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
 
    U_INTERNAL_ASSERT(_length <= _capacity)
 
-   if (_length == 0) U_RETURN_STRING(UString::getStringNull());
+   if (_length == 0) return UString::getStringNull();
 
    uint32_t i   = 0,
             len = 0;
@@ -506,7 +504,7 @@ UString UVector<UString>::join(const char* t, uint32_t tlen)
 
 uint32_t UVector<UString>::split(const UString& str, const char* delim)
 {
-   U_TRACE(0, "UVector<UString>::split(%.*S,%S)", U_STRING_TO_TRACE(str), delim)
+   U_TRACE(0, "UVector<UString>::split(%V,%S)", str.rep, delim)
 
    U_CHECK_MEMORY
 
@@ -538,7 +536,7 @@ uint32_t UVector<UString>::split(const UString& str, const char* delim)
          len = s++ - p;
          r   = str.rep->substr(p, len);
 
-         U_INTERNAL_DUMP("r = %.*S", U_STRING_TO_TRACE(*r))
+         U_INTERNAL_DUMP("r = %V", r)
 
          UVector<void*>::push(r);
          }
@@ -581,7 +579,7 @@ uint32_t UVector<UString>::split(const char* s, uint32_t len, const char* delim)
          len = s++ - p;
          r   = UStringRep::create(len, len, p);
 
-         U_INTERNAL_DUMP("r = %.*S", U_STRING_TO_TRACE(*r))
+         U_INTERNAL_DUMP("r = %V", r)
 
          UVector<void*>::push(r);
          }
@@ -592,7 +590,7 @@ uint32_t UVector<UString>::split(const char* s, uint32_t len, const char* delim)
 
 uint32_t UVector<UString>::split(const UString& str, char delim)
 {
-   U_TRACE(0, "UVector<UString>::split(%.*S,%C)", U_STRING_TO_TRACE(str), delim)
+   U_TRACE(0, "UVector<UString>::split(%V,%C)", str.rep, delim)
 
    U_CHECK_MEMORY
 
@@ -756,7 +754,7 @@ static inline int chfunc(UStringRep* a[], int i, int depth)
 
    UStringRep* t = a[i];
 
-   U_INTERNAL_DUMP("t = %.*S", U_STRING_TO_TRACE(*t))
+   U_INTERNAL_DUMP("t = %V", t)
 
    int result = (t->data())[depth];
 

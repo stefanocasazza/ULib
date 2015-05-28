@@ -26,7 +26,7 @@ UCommand* UWebSocketPlugIn::command;
 
 UWebSocketPlugIn::UWebSocketPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UWebSocketPlugIn, "")
+   U_TRACE_REGISTER_OBJECT(0, UWebSocketPlugIn, "")
 }
 
 UWebSocketPlugIn::~UWebSocketPlugIn()
@@ -136,9 +136,9 @@ int UWebSocketPlugIn::handlerRequest()
 
          FD_ZERO(&fd_set_read);
          FD_SET(UProcess::filedes[2], &fd_set_read);
-         FD_SET(UClientImage_Base::psocket->iSockDesc, &fd_set_read);
+         FD_SET(UServer_Base::csocket->iSockDesc, &fd_set_read);
 
-         fdmax = U_max(UClientImage_Base::psocket->iSockDesc, UProcess::filedes[2]) + 1;
+         fdmax = U_max(UServer_Base::csocket->iSockDesc, UProcess::filedes[2]) + 1;
          }
 
       UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
@@ -162,11 +162,11 @@ loop:
                goto loop;
                }
             }
-         else if (FD_ISSET(UClientImage_Base::psocket->iSockDesc, &read_set))
+         else if (FD_ISSET(UServer_Base::csocket->iSockDesc, &read_set))
             {
 handle_data:
-            if (UWebSocket::handleDataFraming(UClientImage_Base::psocket) == STATUS_CODE_OK &&
-                (bcommand == false ? on_message(UClientImage_Base::pthis) == 0
+            if (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK &&
+                (bcommand == false ? on_message(UServer_Base::pClientIndex) == 0
                                    : UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(*UClientImage_Base::wbuffer))))
                {
                UWebSocket::rbuffer->setEmpty();
@@ -180,11 +180,11 @@ handle_data:
 
       // Send server-side closing handshake
 
-      if (UClientImage_Base::psocket->isOpen())
+      if (UServer_Base::csocket->isOpen())
          {
          (void) UWebSocket::sendClose();
 
-         UClientImage_Base::resetAndClose();
+         UClientImage_Base::close();
          }
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);

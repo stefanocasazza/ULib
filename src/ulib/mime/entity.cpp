@@ -30,7 +30,7 @@ UMimeEntity::UMimeEntity() : content(U_CAPACITY)
 
 UMimeEntity::UMimeEntity(const UString& _data) : data(_data)
 {
-   U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "%.*S", U_STRING_TO_TRACE(_data))
+   U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "%V", _data.rep)
 
    header       = U_NEW(UMimeHeader);
    startHeader  = 0;
@@ -122,7 +122,9 @@ void UMimeEntity::decodeBody()
          {
          UString buffer(length);
 
-         if (UBase64::decode(content.data(), length, buffer))
+         UBase64::decode(content.data(), length, buffer);
+
+         if (buffer)
             {
             content = buffer;
 
@@ -133,7 +135,9 @@ void UMimeEntity::decodeBody()
          {
          UString buffer(length);
 
-         if (UQuotedPrintable::decode(content.data(), length, buffer))
+         UQuotedPrintable::decode(content.data(), length, buffer);
+
+         if (buffer)
             {
             content = buffer;
 
@@ -159,8 +163,8 @@ bool UMimeEntity::readHeader(USocket* socket)
 
    if (header->readHeader(socket, data))
       {
-      endHeader   = u_http_info.endHeader;
-      startHeader = u_http_info.startHeader;
+      endHeader   = U_http_info.endHeader;
+      startHeader = U_http_info.startHeader;
 
       U_RETURN(true);
       }
@@ -392,7 +396,7 @@ void UMimeMultipart::reset()
 
 bool UMimeMultipart::init(const UString& body)
 {
-   U_TRACE(0, "UMimeMultipart::init(%.*S)", U_STRING_TO_TRACE(body))
+   U_TRACE(0, "UMimeMultipart::init(%V)", body.rep)
 
    U_ASSERT(isEmpty())
    U_INTERNAL_ASSERT(body)

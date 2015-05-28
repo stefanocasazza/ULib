@@ -6,7 +6,7 @@ EXTRA_DIST = *.usp usp2so.sh *.h *.cpp README.alldemos usp_compile.sh.in
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
-ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
+ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la
 
 usp_translator_LDADD   = $(ulib_la) @ULIB_LIBS@
 usp_translator_SOURCES = usp_translator.cpp

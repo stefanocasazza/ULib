@@ -16,7 +16,6 @@
 */
 
 #include <ulib/base/utility.h>
-#include <ulib/internal/chttp.h>
 
 #ifdef HAVE_SYSEXITS_H
 #  include <sysexits.h>
@@ -48,49 +47,6 @@ bPFpcupcud u_pfn_match = u_dosmatch_with_OR;
 /* Services */
 int u_num_cpu = -1;
 const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
-
-struct uhttpinfo u_http_info;
-union uucflag64 u_clientimage_flag;
-
-#ifdef ENTRY
-#undef ENTRY
-#endif
-#define ENTRY(name) {#name, U_CONSTANT_SIZE(#name)}
-const struct uhttpmethodtype u_http_method_list[26] = {
-   /* request methods */
-   ENTRY(GET),
-   ENTRY(HEAD),
-   ENTRY(POST),
-   ENTRY(PUT),
-   ENTRY(DELETE),
-   ENTRY(OPTIONS),
-   /* pathological */
-   ENTRY(TRACE),
-   ENTRY(CONNECT),
-   /* webdav */
-   ENTRY(COPY),
-   ENTRY(MOVE),
-   ENTRY(LOCK),
-   ENTRY(UNLOCK),
-   ENTRY(MKCOL),
-   ENTRY(SEARCH),
-   ENTRY(PROPFIND),
-   ENTRY(PROPPATCH),
-   /* rfc-5789 */
-   ENTRY(PATCH),
-   ENTRY(PURGE),
-   /* subversion */
-   ENTRY(MERGE),
-   ENTRY(REPORT),
-   ENTRY(CHECKOUT),
-   ENTRY(MKACTIVITY),
-   /* upnp */
-   ENTRY(NOTIFY),
-   ENTRY(MSEARCH),
-   ENTRY(SUBSCRIBE),
-   ENTRY(UNSUBSCRIBE)
-};
-#undef ENTRY
 
 /**
  * Random number generator
@@ -185,8 +141,6 @@ void* u__memcpy(void* restrict dst, const void* restrict src, size_t n, const ch
 
 __pure int u__strncasecmp(const char* restrict s1, const char* restrict s2, size_t n)
 {
-   char c1, c2;
-
    U_INTERNAL_TRACE("u__strncasecmp(%p,%p,%lu)", s1, s2, n)
 
    U_INTERNAL_ASSERT_MAJOR(n, 0)
@@ -195,8 +149,8 @@ __pure int u__strncasecmp(const char* restrict s1, const char* restrict s2, size
 
    while (n)
       {
-      c1 = u__tolower(*s1);
-      c2 = u__tolower(*s2);
+      char c1 = u__tolower(*s1),
+           c2 = u__tolower(*s2);
 
       if (c1 == c2)
          {
@@ -531,8 +485,6 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
 
 char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_len)
 {
-   uint32_t len, path_len;
-
    U_INTERNAL_TRACE("u_getPathRelativ(%s,%u)", path, *ptr_path_len)
 
    U_INTERNAL_ASSERT_POINTER(path)
@@ -542,7 +494,7 @@ char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_le
 
    if (path[0] == u_cwd[0])
       {
-      path_len = *ptr_path_len;
+      uint32_t path_len = *ptr_path_len;
 
       while (path[path_len-1] == '/') --path_len;
 
@@ -557,7 +509,7 @@ char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_le
          else if (     u_cwd_len  == 1 ||
                   path[u_cwd_len] == '/')
             {
-            len = u_cwd_len + (u_cwd_len > 1);
+            uint32_t len = u_cwd_len + (u_cwd_len > 1);
 
             path     += len;
             path_len -= len;
@@ -591,6 +543,41 @@ char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_le
       }
 
    return (char*)path;
+}
+
+/* find sequence of U_CRLF2 */
+
+__pure uint32_t u_findEndHeader1(const char* restrict str, uint32_t n)
+{
+   const char* restrict p;
+   const char* restrict end = str + n;
+   const char* restrict ptr = str;
+
+   uint32_t pos, endHeader = U_NOT_FOUND;
+
+   U_INTERNAL_TRACE("u_findEndHeader1(%.*s,%u)", U_min(n,128), str, n)
+
+   U_INTERNAL_ASSERT_POINTER(str)
+
+   while (ptr < end)
+      {
+      p = (const char* restrict) memchr(ptr, '\r', end - ptr);
+
+      if (p == 0) break;
+
+      if (*(int32_t*)p == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+         {
+         pos = p - str + 4;
+
+         if (pos <= n) endHeader = pos;
+
+         break;
+         }
+
+      ptr = p + 1;
+      }
+
+   return endHeader;
 }
 
 /* find sequence of U_LF2 or U_CRLF2 */
@@ -877,9 +864,7 @@ int u_get_num_cpu(void)
 
          if (fgets(buf, sizeof(buf), fp))
             {
-            int sret;            /* sscanf return (number of matches) */
             const char* p;
-            const char *c1, *c2; /* next tokens after '-' or ',' */
 
             q = buf;
 
@@ -900,7 +885,9 @@ int u_get_num_cpu(void)
 
             while (p = q, q = nexttoken(q, ','), p)
                {
-               sret = sscanf(p, "%u%c", &a, &nextc);
+               const char* c1;
+               const char* c2;
+               int sret = sscanf(p, "%u%c", &a, &nextc);
 
                if (scan_was_ok(sret, nextc, ",-") == false) break;
 
@@ -946,12 +933,9 @@ int u_get_num_cpu(void)
 
 /* Pin the process to a particular core */
 
-void u_bind2cpu(pid_t pid, int n)
+void u_bind2cpu(cpu_set_t* cpuset, pid_t pid, int n)
 {
-#ifdef HAVE_SCHED_GETAFFINITY
-   cpu_set_t cpuset;
-
-   U_INTERNAL_TRACE("u_bind2cpu(%d,%d)", pid, n)
+   U_INTERNAL_TRACE("u_bind2cpu(%p,%d,%d)", cpuset, pid, n)
 
    /**
     * CPU mask of CPUs available to this process,
@@ -961,40 +945,51 @@ void u_bind2cpu(pid_t pid, int n)
     * mask = 13 (1101b): cpu0, 2, 3
     */
 
-   CPU_ZERO(&cpuset);
+#if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(HAVE_SCHED_GETAFFINITY)
+   CPU_SET(n, cpuset);
 
-   CPU_SET(n, &cpuset);
+   (void) sched_setaffinity(pid, sizeof(cpuset), cpuset);
 
-   (void) sched_setaffinity(pid, sizeof(cpuset), &cpuset);
+   CPU_ZERO(cpuset);
+
+   (void) sched_getaffinity(pid, sizeof(cpuset), cpuset);
+
+   U_INTERNAL_PRINT("cpuset = %ld", CPUSET_BITS(cpuset)[0])
 #endif
 }
 
-bool u_switch_to_realtime_priority(pid_t pid)
+void u_switch_to_realtime_priority(pid_t pid)
 {
-   bool result = false;
-
-#if defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
+#if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
    struct sched_param sp;
 
    U_INTERNAL_TRACE("u_switch_to_realtime_priority(%d)", pid)
 
-   /* sched_getscheduler(pid); // SCHED_FIFO | SCHED_RR | SCHED_OTHER */
+/* sched_getscheduler(pid); // SCHED_FIFO | SCHED_RR | SCHED_OTHER */
 
    (void) sched_getparam(pid, &sp);
 
-   U_INTERNAL_PRINT("sp.sched_priority = %d", sp.sched_priority)
-
    sp.sched_priority = sched_get_priority_max(SCHED_FIFO);
 
-   if (sched_setscheduler(pid, SCHED_FIFO, &sp) != -1)
-      {
-      U_INTERNAL_PRINT("sp.sched_priority = %d", sp.sched_priority)
+   U_INTERNAL_PRINT("sp.sched_priority = %d", sp.sched_priority)
 
-      result = true;
+   /*
+   struct rlimit rlim_old, rlim_new = { sp.sched_priority, sp.sched_priority };
+
+   (void) prlimit(pid, RLIMIT_RTPRIO, &rlim_new, &rlim_old);
+
+   U_INTERNAL_PRINT("Previous RLIMIT_RTPRIO limits: soft=%lld; hard=%lld\n", (long long)rlim_old.rlim_cur, (long long)rlim_old.rlim_max);
+
+   (void) prlimit(pid, RLIMIT_RTPRIO, 0, &rlim_old);
+
+   U_INTERNAL_PRINT("New RLIMIT_RTPRIO limits: soft=%lld; hard=%lld\n", (long long)rlim_old.rlim_cur, (long long)rlim_old.rlim_max);
+   */
+
+   if (sched_setscheduler(pid, SCHED_FIFO, &sp) == -1)
+      {
+      U_WARNING("Cannot set posix realtime scheduling policy");
       }
 #endif
-
-   return result;
 }
 
 void u_get_memusage(unsigned long* vsz, unsigned long* rss)
@@ -1971,7 +1966,6 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
 {
    uint32_t p_index = 0;
    char zPath[PATH_MAX + 1];
-   char* restrict colon_unit;
 
    U_INTERNAL_TRACE("u_pathfind(%p,%.*s,%u,%s,%d)", result, path_len, path, path_len, filename, mode)
 
@@ -1999,7 +1993,7 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
 
    while (true)
       {
-      colon_unit = extract_colon_unit(zPath, path, path_len, &p_index);
+      char* restrict colon_unit = extract_colon_unit(zPath, path, path_len, &p_index);
 
       /* IF no more entries, THEN quit */
 
@@ -2358,7 +2352,7 @@ static const char* restrict end_s;
 
 static inline int rangematch(const char* restrict pattern, char test, int flags, char** restrict newp)
 {
-   char c, c2;
+   char c;
    int negate, ok;
 
    U_INTERNAL_TRACE("rangematch(%.*s,%c)", end_p - pattern, pattern, test)
@@ -2384,6 +2378,8 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
    c  = *pattern++;
 
    do {
+      char c2;
+
       if (c == '\\' && !(flags & FNM_NOESCAPE)) c = *pattern++;
 
       U_INTERNAL_PRINT("c = %c test = %c", c, test)
@@ -2544,9 +2540,8 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
          /* FALLTHROUGH */
 
          default:
-norm:
             {
-            if (c == *string)
+norm:       if (c == *string)
                {
                }
             else if ((flags & FNM_CASEFOLD) && (u__tolower((unsigned char)c) == u__tolower((unsigned char)*string)))
@@ -2754,12 +2749,11 @@ __pure bool u_isIPv4Addr(const char* restrict s, uint32_t n)
        u__isdigit(s[0])                        &&
        u__isdigit(s[--n]))
       {
-      unsigned char c;
       uint32_t count = 0;
 
       while (n--)
          {
-         c = *(++s);
+         unsigned char c = *(++s);
 
          U_INTERNAL_PRINT("c = %c n = %u count = %u", c, n, count)
 
@@ -2868,7 +2862,6 @@ __pure bool u_isHostName(const char* restrict ptr, uint32_t len)
 
 __pure const char* u_isUrlScheme(const char* restrict url, uint32_t len)
 {
-   int ch;
    const char* restrict ptr;
    const char* restrict first_slash;
 
@@ -2897,7 +2890,7 @@ __pure const char* u_isUrlScheme(const char* restrict url, uint32_t len)
 
    while (ptr < first_slash)
       {
-      ch = *(unsigned char*)ptr;
+      int ch = *(unsigned char*)ptr;
 
       /**
        * The set of valid URL schemes, as per STD66 (RFC3986) is '[A-Za-z][A-Za-z0-9+.-]*'.
@@ -3104,8 +3097,7 @@ const unsigned char u_validate_utf8[] = {
 
 __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
 {
-   unsigned char c;
-   uint32_t type, code = 0, state = 0;
+   uint32_t code = 0, state = 0;
    const unsigned char* restrict end = buf + len;
    /*
    bool result = false;
@@ -3129,7 +3121,7 @@ __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
        *    ........
        */
 
-      c = *buf++;
+      unsigned char c = *buf++;
 
       /**
        * Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
@@ -3137,7 +3129,8 @@ __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
        * See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details
        */
 
-      type = u_validate_utf8[c];
+      uint32_t type = u_validate_utf8[c];
+
       code = (state != 0 ? (c & 0x3fu)    | (code << 6)
                          : (0xff >> type) & (uint32_t)(c));
 
@@ -3192,7 +3185,7 @@ __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
 
 __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 {
-   uint32_t be, i, c;
+   uint32_t be, i;
 
    U_INTERNAL_TRACE("u_isUTF16(%.*s,%u)", U_min(len,128), buf, len)
 
@@ -3204,8 +3197,8 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 
    for(i = 2; i + 1 < len; i += 2)
       {
-      c = (be ? buf[i+1] + 256 * buf[i]
-              : buf[i]   + 256 * buf[i+1]);
+      uint32_t c = (be ? buf[i+1] + 256 * buf[i]
+                       : buf[i]   + 256 * buf[i+1]);
 
       if ( c == 0xfffe ||
           (c  < 128 && ((u_cttab(c) & 0x0200) == 0)))
@@ -3249,7 +3242,7 @@ const unsigned char u_uri_encoded_char[256] = {
 */
 
 #define __S  0x00000001 /* character space    ' ' (32 0x20) */
-#define __E  0x00000002 /* character */
+#define __E  0x00000002 /* character used in printf format  */
 #define __H  0x00000004 /* character          '+' (43 0x2B) */
 #define __V  0x00000008 /* character          ',' (44 0x2C) */
 #define __O  0x00000010 /* character minus    '-' (45 0x2D) */
@@ -3277,53 +3270,59 @@ const unsigned char u_uri_encoded_char[256] = {
 #define __UQ 0x04000000 /* FROM URL query:  '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
 #define __UF 0x08000000 /* filename: char >= 0x20 except: '"' '*' ':' '<' '>' '?' '\' '|' */
 
-#define DT    (__D | __T)
 #define LU    (__L | __U)
 #define LX    (__L | __X)
-#define LT    (__L | __T)
-#define UT    (__U | __T)
 #define UX    (__U | __X)
-#define IT    (__I | __T)
-#define ITA   (__I | __T | __A)
 #define ITK   (__I | __T | __K)
-#define ITV   (__I | __T | __V)
-#define DTZ   (__D | __T | __Z)
-#define ITN   (__I | __T | __N)
-#define ITO   (__I | __T | __O)
-#define ITQ   (__I | __T | __Q)
-#define LTM   (__L | __T | __M)
-#define LTY   (__L | __T | __Y)
-#define LXT   (__L | __X | __T)
-#define UXT   (__U | __X | __T)
-#define UTY   (__U | __T | __Y)
-#define UTM   (__U | __T | __M)
-#define LTMY  (__L | __T | __M | __Y)
-#define LXTM  (__L | __X | __T | __M)
-#define LXTY  (__L | __X | __T | __Y)
-#define UXTM  (__U | __X | __T | __M)
-#define UTMY  (__U | __T | __M | __Y)
-#define UXTY  (__U | __X | __T | __Y)
-#define LXTMY (__L | __X | __T | __M | __Y)
-#define UXTMY (__U | __X | __T | __M | __Y)
+#define LT    (__L | __T |                         __UF)
+#define UT    (__U | __T |                         __UF)
+#define ITF   (__I | __T |                         __UF) 
+#define ITA   (__I | __T | __A |                   __UF)
+#define ITQ   (__I | __T | __Q |                   __UF)
+#define LTE   (__L | __T |             __E |       __UF)
+#define LTY   (__L | __T | __Y |       __E |       __UF)
+#define UXT   (__U | __X | __T |       __E |       __UF)
+#define DT    (__D | __T |             __E |       __UF)
+#define ITN   (__I | __T | __N |       __E |       __UF)
+#define ITO   (__I | __T | __O |       __E |       __UF)
+#define DTZ   (__D | __T | __Z |       __E |       __UF)
+#define UTE   (__U | __T |             __E |       __UF)
+#define UTY   (__U | __T | __Y |       __E |       __UF)
+#define UTM   (__U | __T | __M |       __E |       __UF)
+#define LTM   (__L | __T | __M |       __E |       __UF)
+#define LXT   (__L | __X | __T |       __E |       __UF)
+#define LTMY  (__L | __T | __M | __Y | __E |       __UF)
+#define UTMY  (__U | __T | __M | __Y | __E |       __UF)
+#define UXTM  (__U | __X | __T | __M | __E |       __UF)
+#define UXTY  (__U | __X | __T | __Y | __E |       __UF)
+#define LXTM  (__L | __X | __T | __M | __E |       __UF)
+#define LXTY  (__L | __X | __T | __Y | __E |       __UF)
+#define LXTMY (__L | __X | __T | __M | __E | __Y | __UF)
+#define UXTMY (__U | __X | __T | __M | __E | __Y | __UF)
+#define IT    (__I | __T |             __E)
 
-#define FUE   (__F | __UE)
-#define IF    (__I | __F | __UE)
-#define CF    (__C | __F | __UE)
-#define CT    (__C | __T | __UE)
-#define WF    (__W | __F | __UE)
-#define ITUE  (__I | __T | __UE)
-#define CWT   (__C | __W | __T | __UE)
-#define CWF   (__C | __W | __F | __UE)
-#define ITG   (__I | __T | __G | __UE)
-#define ITJ   (__I | __T | __J | __UE)
-#define SWT   (__S | __W | __T | __UE)
+#define FUE   (__F |                   __UE)
+#define IF    (__I | __F |             __UE)
+#define CF    (__C | __F |             __UE)
+#define CT    (__C | __T |             __UE)
+#define WF    (__W | __F |             __UE)
+#define ITUE  (__I | __T |             __UE)
+#define CWT   (__C | __W | __T |       __UE)
+#define CWF   (__C | __W | __F |       __UE)
+#define ITG   (__I | __T | __G |       __UE)
+#define ITJ   (__I | __T | __J |       __UE)
 #define CWBT  (__C | __W | __B | __T | __UE)
 #define CWRT  (__C | __W | __R | __T | __UE)
-
 #define ITUQ  (__I | __T |             __UE | __UF)
-#define ITAH  (__I | __T | __A | __H | __UE | __UF)
+#define SWT   (__S | __W | __T |       __UE | __UF | __E)
+#define ITAH  (__I | __T | __A | __H | __UE | __UF | __E)
 #define ITAU  (__I | __T | __A |       __UE | __UF | __UQ)
 #define ITJU  (__I | __T | __J |       __UE | __UF | __UQ)
+#define ITVF  (__I | __T | __V |              __UF)
+#define ITKF  (__I | __T | __K |              __UF | __E)
+
+#define ITUEF  (__I | __T | __UE | __UF)
+#define ITUEFQ (__I | __T | __UE | __UF | __UQ | __E)
 
 const unsigned int u__ct_tab[256] = {
 /*                         BEL  BS    HT    LF        FF    CR                 */
@@ -3331,18 +3330,18 @@ CF, CF, CF, CF, CF, CF, CF, CT, CT, CWBT, CWRT, CWF, CWT, CWRT, CF, CF,/* 0x00 *
 /*                                              ESC                            */
 CF, CF, CF, CF, CF, CF, CF, CF, CF,   CF,   CF,  CT,  CF,  CF,  CF, CF,/* 0x10 */
 
-/* ' '    '!'      '"'       '#'     '$'       '%'       '&'      '''     '('     ')'     '*'       '+'      ','      '-'      '.'      '/'            */
-SWT|__UF,IT|__UF,  ITK,ITUE|__UF|__UQ,IT|__UF,  ITUQ,     ITJU, ITK|__UF,IT|__UF,IT|__UF,   IT,      ITAH,  ITV|__UF,ITO|__UF,ITN|__UF,ITA|__UF,    /*0x20*/
-/* '0'     '1'      '2'      '3'      '4'      '5'      '6'      '7'     '8'     '9'      ':'       ';'      '<'       '='      '>'       '?'          */
-DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DTZ|__UF,DT|__UF,DT|__UF,  ITG,   ITUE|__UF,  ITJ,     ITAU,     ITJ,      ITUE,  /*0x30*/
-/* '@'     'A'      'B'        'C'       'D'      'E'      'F'       'G'       'H'      'I'     'J'     'K'     'L'     'M'     'N'      'O'           */
-IT|__UF,UXTY|__UF,UXT|__UF,UXTMY|__UF,UXTM|__UF,UXT|__UF,UXT|__UF, UTM|__UF,UTMY|__UF,UTY|__UF,UT|__UF,UT|__UF,UT|__UF,UT|__UF,UT|__UF,UTM|__UF, /*0x40*/
-/* 'P'    'Q'      'R'      'S'     'T'      'U'     'V'     'W'      'X'     'Y'     'Z'       '['       '\'       ']'       '^'      '_'            */
-UTM|__UF,UT|__UF,UTY|__UF,UTY|__UF,UT|__UF,UTY|__UF,UT|__UF,UT|__UF,UTY|__UF,UT|__UF,UT|__UF,ITUE|__UF,  ITUE,   ITUE|__UF,ITUE|__UF,ITQ|__UF,   /*0x50*/
-/* '`'       'a'      'b'        'c'       'd'      'e'      'f'      'g'       'h'      'i'     'j'     'k'     'l'     'm'     'n'      'o'          */
-ITUE|__UF,LXTY|__UF,LXT|__UF,LXTMY|__UF,LXTM|__UF,LXT|__UF,LXT|__UF,LTM|__UF,LTMY|__UF,LTY|__UF,LT|__UF,LT|__UF,LT|__UF,LT|__UF,LT|__UF,LTM|__UF,/*0x60*/
-/* 'p'    'q'      'r'      's'     't'      'u'     'v'     'w'      'x'     'y'     'z'       '{'       '|'       '}'     '~'                        */
-LTM|__UF,LT|__UF,LTY|__UF,LTY|__UF,LT|__UF,LTY|__UF,LT|__UF,LT|__UF,LTY|__UF,LT|__UF,LT|__UF,ITUE|__UF,  ITUE,   ITUE|__UF,IT|__UF,CF,           /*0x70*/
+/* ' ' '!' '"'  '#'   '$'  '%'  '&' '\'' '('  ')' '*' '+'   ','  '-'   '.'  '/'         */
+  SWT, ITF,ITK,ITUEFQ,ITF,ITUQ,ITJU,ITKF,ITF,ITF, IT,ITAH,ITVF, ITO,  ITN, ITA, /* 0x20 */
+/* '0' '1' '2'  '3'   '4'  '5'  '6' '7'  '8'  '9' ':' ';'   '<'  '='   '>'  '?'         */
+  DTZ, DTZ,DTZ, DTZ, DTZ,  DTZ,DTZ, DTZ, DT,  DT,ITG,ITUEF,ITJ, ITAU, ITJ,ITUE, /* 0x30 */
+/* '@' 'A' 'B'  'C'   'D'  'E'  'F' 'G'  'H'  'I' 'J' 'K'   'L'  'M'   'N'  'O'         */
+  ITF,UXTY,UXT,UXTMY,UXTM, UXT,UXT, UTM,UTMY, UTY,UT, UT,  UTE, UTE,  UTE, UTM, /* 0x40 */
+/* 'P' 'Q' 'R'  'S'   'T'  'U'  'V' 'W'  'X'  'Y' 'Z' '['   '\'  ']'   '^'  '_'         */
+  UTM,UTE,UTY, UTY,  UTE, UTY, UTE,UTE, UTY, UTE, UT,ITUEF,ITUE,ITUEF,ITUEF,ITQ,/* 0x50 */
+/* '`' 'a' 'b'  'c'   'd'  'e'  'f' 'g'  'h'  'i' 'j' 'k'   'l'  'm'   'n'  'o'         */
+ITUEF,LXTY,LXT,LXTMY,LXTM,LXT, LXT,LTM,LTMY, LTY,LTE, LT,  LTE,  LT,  LTE, LTM, /* 0x60 */
+/* 'p' 'q' 'r'  's'   't'  'u'  'v' 'w'  'x'  'y' 'z' '{'   '|'  '}'   '~'              */
+  LTM,LTE,LTY, LTY,   LT, LTY, LTE,LTE, LTY,  LT, LT,ITUEF,ITUE,ITUEF,ITF, CF,  /* 0x70 */
 
 FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0x80 */
 FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0x90 */
@@ -3400,7 +3399,9 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef LU
 #undef LX
 #undef LT
+#undef LTE
 #undef UT
+#undef UTE
 #undef UX
 #undef WF
 #undef IF
@@ -3410,13 +3411,13 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef CWF
 #undef DTZ
 #undef ITA
+#undef ITF
 #undef ITG
 #undef ITK
 #undef ITJ
 #undef ITN
 #undef ITO
 #undef ITQ
-#undef ITV
 #undef LTM
 #undef LTY
 #undef LXT
@@ -3424,6 +3425,8 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef SWT
 #undef UTY
 #undef UTM
+#undef ITVF
+#undef ITKF
 #undef ITUE
 #undef ITAH
 #undef CWRT
@@ -3436,6 +3439,8 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef ITAU
 #undef ITJU
 #undef ITUQ
+#undef ITUEF
+#undef ITUEFQ
 #undef LXTMY
 #undef UXTMY
 
@@ -4573,23 +4578,52 @@ static struct mimeentry mimetab_null[] = {
 
 const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
 {
+   static const int dispatch_table[] = {
+      0,/* 'a' */
+      (char*)&&case_b-(char*)&&case_a,/* 'b' */
+      (char*)&&case_c-(char*)&&case_a,/* 'c' */
+      (char*)&&case_d-(char*)&&case_a,/* 'd' */
+      (char*)&&case_e-(char*)&&case_a,/* 'e' */
+      (char*)&&cdefault-(char*)&&case_a,/* 'f' */
+      (char*)&&case_g-(char*)&&case_a,/* 'g' */
+      (char*)&&case_h-(char*)&&case_a,/* 'h' */
+      (char*)&&cdefault-(char*)&&case_a,/* 'i' */
+      (char*)&&case_j-(char*)&&case_a,/* 'j' */
+      (char*)&&cdefault-(char*)&&case_a,/* 'k' */
+      (char*)&&cdefault-(char*)&&case_a,/* 'l' */
+      (char*)&&case_m-(char*)&&case_a,/* 'm' */
+      (char*)&&cdefault-(char*)&&case_a,/* 'n' */
+      (char*)&&case_o-(char*)&&case_a,/* 'o' */
+      (char*)&&case_p-(char*)&&case_a,/* 'p' */
+      (char*)&&case_q-(char*)&&case_a,/* 'q' */
+      (char*)&&case_r-(char*)&&case_a,/* 'r' */
+      (char*)&&case_s-(char*)&&case_a,/* 's' */
+      (char*)&&case_t-(char*)&&case_a,/* 't' */
+      (char*)&&cdefault-(char*)&&case_a,/* 'u' */
+      (char*)&&cdefault-(char*)&&case_a,/* 'v' */
+      (char*)&&case_w-(char*)&&case_a,/* 'w' */
+      (char*)&&case_x-(char*)&&case_a,/* 'x' */
+      (char*)&&cdefault-(char*)&&case_a,/* 'y' */
+      (char*)&&case_z-(char*)&&case_a /* 'z' */
+   };
+
    uint32_t i;
    struct mimeentry* ptr;
 
    enum {
-      EXT_CSS    = U_MULTICHAR_CONSTANT32('c','s','s',0),
-      EXT_FLV    = U_MULTICHAR_CONSTANT32('f','l','v',0),
-      EXT_GIF    = U_MULTICHAR_CONSTANT32('g','i','f',0),
-      EXT_ICO    = U_MULTICHAR_CONSTANT32('i','c','o',0),
-      EXT_PNG    = U_MULTICHAR_CONSTANT32('p','n','g',0),
-      EXT_JPG    = U_MULTICHAR_CONSTANT32('j','p','g',0),
-      EXT_TXT    = U_MULTICHAR_CONSTANT32('t','x','t',0),
-      EXT_USP    = U_MULTICHAR_CONSTANT32('u','s','p',0),
-      EXT_CSP    = U_MULTICHAR_CONSTANT32('c','s','p',0),
-      EXT_CGI    = U_MULTICHAR_CONSTANT32('c','g','i',0),
-      EXT_PHP    = U_MULTICHAR_CONSTANT32('p','h','p',0),
-      EXT_SSI    = U_MULTICHAR_CONSTANT32('s','h','t','m'),
-      EXT_HTML   = U_MULTICHAR_CONSTANT32('h','t','m','l')
+      EXT_CSS  = U_MULTICHAR_CONSTANT32('c','s','s',0),
+      EXT_FLV  = U_MULTICHAR_CONSTANT32('f','l','v',0),
+      EXT_GIF  = U_MULTICHAR_CONSTANT32('g','i','f',0),
+      EXT_ICO  = U_MULTICHAR_CONSTANT32('i','c','o',0),
+      EXT_PNG  = U_MULTICHAR_CONSTANT32('p','n','g',0),
+      EXT_JPG  = U_MULTICHAR_CONSTANT32('j','p','g',0),
+      EXT_TXT  = U_MULTICHAR_CONSTANT32('t','x','t',0),
+      EXT_USP  = U_MULTICHAR_CONSTANT32('u','s','p',0),
+      EXT_CSP  = U_MULTICHAR_CONSTANT32('c','s','p',0),
+      EXT_CGI  = U_MULTICHAR_CONSTANT32('c','g','i',0),
+      EXT_PHP  = U_MULTICHAR_CONSTANT32('p','h','p',0),
+      EXT_SSI  = U_MULTICHAR_CONSTANT32('s','h','t','m'),
+      EXT_HTML = U_MULTICHAR_CONSTANT32('h','t','m','l')
    };
 
    U_INTERNAL_TRACE("u_get_mimetype(%s,%p)", suffix, pmime_index)
@@ -4699,35 +4733,37 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
          }
       }
 
-   switch (*suffix++)
-      {
-      case 'a': ptr = mimetab_a; break;
-      case 'b': ptr = mimetab_b; break;
-      case 'c': ptr = mimetab_c; break;
-      case 'd': ptr = mimetab_d; break;
-      case 'e': ptr = mimetab_e; break;
-   /* case 'f': ptr = mimetab_f; break; */
-      case 'g': ptr = mimetab_g; break;
-      case 'h': ptr = mimetab_h; break;
-   /* case 'i': ptr = mimetab_i; break; */
-      case 'j': ptr = mimetab_j; break;
-   /* case 'k': ptr = mimetab_k; break; */
-   /* case 'l': ptr = mimetab_l; break; */
-      case 'm': ptr = mimetab_m; break;
-   /* case 'n': ptr = mimetab_n; break; */
-      case 'o': ptr = mimetab_o; break;
-      case 'p': ptr = mimetab_p; break;
-      case 'q': ptr = mimetab_q; break;
-      case 'r': ptr = mimetab_r; break;
-      case 's': ptr = mimetab_s; break;
-      case 't': ptr = mimetab_t; break;
-   /* case 'u': ptr = mimetab_u; break; */
-   /* case 'v': ptr = mimetab_v; break; */
-      case 'w': ptr = mimetab_w; break;
-      case 'x': ptr = mimetab_x; break;
-      case 'z': ptr = mimetab_z; break;
-      default:  ptr = mimetab_null;
-      }
+   i = *suffix++;
+
+   if (i < 'a' || i > 'z') goto cdefault;
+
+   goto *((char*)&&case_a + dispatch_table[i-'a']);
+
+   case_a: ptr = mimetab_a; goto loop;
+   case_b: ptr = mimetab_b; goto loop;
+   case_c: ptr = mimetab_c; goto loop;
+   case_d: ptr = mimetab_d; goto loop;
+   case_e: ptr = mimetab_e; goto loop;
+
+   case_g: ptr = mimetab_g; goto loop;
+   case_h: ptr = mimetab_h; goto loop;
+
+   case_j: ptr = mimetab_j; goto loop;
+
+   case_m: ptr = mimetab_m; goto loop;
+
+   case_o: ptr = mimetab_o; goto loop;
+   case_p: ptr = mimetab_p; goto loop;
+   case_q: ptr = mimetab_q; goto loop;
+   case_r: ptr = mimetab_r; goto loop;
+   case_s: ptr = mimetab_s; goto loop;
+   case_t: ptr = mimetab_t; goto loop;
+
+   case_w: ptr = mimetab_w; goto loop;
+   case_x: ptr = mimetab_x; goto loop;
+   case_z: ptr = mimetab_z; goto loop;
+
+   cdefault: ptr = mimetab_null;
 
 loop:
    while (ptr->name)

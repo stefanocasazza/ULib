@@ -168,11 +168,16 @@ bool UTranformBase64::execute(UString& data)
 
    UString buffer(data.size());
 
-   if (UBase64::decode(data, buffer) == false) U_RETURN(false);
+   UBase64::decode(data, buffer);
 
-   data = buffer;
+   if (buffer)
+      {
+      data = buffer;
 
-   U_RETURN(true);
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 bool UTranformInclC14N::execute(UString& data)

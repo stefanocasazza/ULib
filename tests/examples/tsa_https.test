@@ -6,7 +6,7 @@
 
 start_msg tsa_https
 
-#UTRACE="0 5M 0"
+ UTRACE="0 5M 0"
 #UOBJDUMP="0 1M 100"
 #USIMERR="error.sim"
 #VALGRIND=valgrind
@@ -19,6 +19,7 @@ rm -rf $DOC_ROOT/*log \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
+# ----------------------------------------------------------------
 # usage: openssl s_client args
 # ----------------------------------------------------------------
 # -host host    - use -connect instead

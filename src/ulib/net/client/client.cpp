@@ -115,8 +115,7 @@ void UClient_Base::setSSLContext()
       U_ERROR("SSL: client setContext() failed");
       }
 
-   U_MESSAGE("SSL: client use configuration model: %s, protocol list: %s",
-               ((USSLSocket*)socket)->getConfigurationModel(), ((USSLSocket*)socket)->getProtocolList());
+   U_MESSAGE("SSL: client use configuration model: %s, protocol list: %s", ((USSLSocket*)socket)->getConfigurationModel(), ((USSLSocket*)socket)->getProtocolList());
 }
 #endif
 
@@ -130,14 +129,14 @@ void UClient_Base::clearData()
 
 bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
 {
-   U_TRACE(0, "UClient_Base::setHostPort(%.*S,%u)", U_STRING_TO_TRACE(host), _port)
+   U_TRACE(0, "UClient_Base::setHostPort(%V,%u)", host.rep, _port)
 
    U_INTERNAL_ASSERT(host)
 
    bool host_differs = (host  != server),
         port_differs = (_port != port);
 
-   U_INTERNAL_DUMP("host_port = %.*S host_differs = %b port_differs = %b", U_STRING_TO_TRACE(host_port), host_differs, port_differs)
+   U_INTERNAL_DUMP("host_port = %V host_differs = %b port_differs = %b", host_port.rep, host_differs, port_differs)
 
    server = host.copy(); // NB: we must not depend on url...
    port   = _port;
@@ -158,7 +157,7 @@ bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
              (socket == 0  ||
               socket->isSSL(true)))
             {
-            U_INTERNAL_DUMP("host_port = %.*S", U_STRING_TO_TRACE(host_port))
+            U_INTERNAL_DUMP("host_port = %V", host_port.rep)
 
             U_RETURN(true);
             }
@@ -170,7 +169,7 @@ bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
          host_port.size_adjust(sz + u_num2str32(host_port.c_pointer(sz), _port));
          }
 
-      U_INTERNAL_DUMP("host_port = %.*S", U_STRING_TO_TRACE(host_port))
+      U_INTERNAL_DUMP("host_port = %V", host_port.rep)
 
       U_RETURN(true);
       }
@@ -298,35 +297,16 @@ bool UClient_Base::connect()
 
    if (socket->connectServer(server, port, timeoutMS)) U_RETURN(true);
 
-   response.snprintf("Sorry, couldn't connect to server %.*S%R", U_STRING_TO_TRACE(host_port), 0); // NB: the last argument (0) is necessary...
+   response.snprintf("Sorry, couldn't connect to server %V%R", host_port.rep, 0); // NB: the last argument (0) is necessary...
 
-   if (log) ULog::log("%s%.*s", log_shared_with_server ? UServer_Base::mod_name[0] : "", U_STRING_TO_TRACE(response));
-
-   U_RETURN(false);
-}
-
-bool UClient_Base::connectServer()
-{
-   U_TRACE(0, "UClient_Base::connectServer()")
-
-   iovcnt = 0;
-
-   if (isOpen() == false) socket->_socket();
-
-   if (timeoutMS &&
-       socket->isBlocking())
-      {
-      socket->setNonBlocking(); // setting socket to nonblocking
-      }
-
-   if (connect()) U_RETURN(true);
+   if (log) ULog::log("%s%v", log_shared_with_server ? UServer_Base::mod_name[0] : "", response.rep);
 
    U_RETURN(false);
 }
 
 bool UClient_Base::connectServer(const UString& _url)
 {
-   U_TRACE(0, "UClient_Base::connectServer(%.*S)", U_STRING_TO_TRACE(_url))
+   U_TRACE(0, "UClient_Base::connectServer(%V)", _url.rep)
 
    reset();
 
@@ -340,7 +320,7 @@ bool UClient_Base::connectServer(const UString& _url)
 
       char _buffer[U_PATH_MAX];
 
-      (void) u__snprintf(_buffer, sizeof(_buffer), "%.*s/%.*s.%4D", U_STRING_TO_TRACE(*queue_dir), U_STRING_TO_TRACE(host_port));
+      (void) u__snprintf(_buffer, sizeof(_buffer), "%v/%v.%4D", queue_dir->rep, host_port.rep);
 
       queue_fd = UFile::creat(_buffer);
 
@@ -349,7 +329,9 @@ bool UClient_Base::connectServer(const UString& _url)
       U_RETURN(true);
       }
 
-   if (connectServer()) U_RETURN(true);
+   iovcnt = 0;
+
+   if (connect()) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -370,7 +352,7 @@ bool UClient_Base::remoteIPAddress(UIPAddress& addr)
 
 bool UClient_Base::setUrl(const UString& location)
 {
-   U_TRACE(0, "UClient_Base::setUrl(%.*S)", U_STRING_TO_TRACE(location))
+   U_TRACE(0, "UClient_Base::setUrl(%V)", location.rep)
 
    U_INTERNAL_ASSERT(location)
 
@@ -387,7 +369,7 @@ bool UClient_Base::setUrl(const UString& location)
       const char*  src =       uri.data();
       const char* _end = src + uri.size();
 
-      U_INTERNAL_DUMP("uri = %.*S", U_STRING_TO_TRACE(uri))
+      U_INTERNAL_DUMP("uri = %V", uri.rep)
 
       ptr = dest = buf;
 
@@ -413,7 +395,7 @@ bool UClient_Base::setUrl(const UString& location)
 
       (void) uri.replace(buf, dest - ptr + len);
 
-      U_INTERNAL_DUMP("uri = %.*S", U_STRING_TO_TRACE(uri))
+      U_INTERNAL_DUMP("uri = %V", uri.rep)
 
       U_RETURN(false);
       }
@@ -424,7 +406,7 @@ bool UClient_Base::setUrl(const UString& location)
 
    uri = url.getPathAndQuery();
 
-   U_INTERNAL_DUMP("uri = %.*S", U_STRING_TO_TRACE(uri))
+   U_INTERNAL_DUMP("uri = %V", uri.rep)
 
    // NB: return if it has modified host or port...
 
@@ -435,7 +417,7 @@ bool UClient_Base::setUrl(const UString& location)
 
 bool UClient_Base::sendRequest(const UString& req, bool bread_response)
 {
-   U_TRACE(0, "UClient_Base::sendRequest(%.*S,%b)", U_STRING_TO_TRACE(req), bread_response)
+   U_TRACE(0, "UClient_Base::sendRequest(%V,%b)", req.rep, bread_response)
 
    iovcnt = 1;
 
@@ -473,27 +455,32 @@ bool UClient_Base::sendRequest(bool bread_response)
       U_RETURN(false);
       }
 
-   bool ko;
+   bool ok = false;
    int ncount = 0, counter = 0;
 
    for (int i = 0; i < iovcnt; ++i) ncount += iov[i].iov_len;
 
    const char* name = (log_shared_with_server ? UServer_Base::mod_name[0] : "");
 
+   bool bssl_save     = USocketExt::bssl;
+                        USocketExt::bssl = socket->isSSL(true);
+   bool blocking_save = USocketExt::blocking;
+                        USocketExt::blocking = socket->isBlocking();
+
 resend:
    if (connect())
       {
-      ko = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS, 1) != ncount);
+      ok = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS, 1) == ncount);
 
-      if (ko)
+      if (ok == false)
          {
          close();
 
          if (++counter <= 2) goto resend;
 
-         if (log) ULog::log("%serror on sending data to %.*S%R", name, U_STRING_TO_TRACE(host_port), 0); // NB: the last argument (0) is necessary...
+         if (log) ULog::log("%serror on sending data to %V%R", name, host_port.rep, 0); // NB: the last argument (0) is necessary...
 
-         U_RETURN(false);
+         goto end;
          }
 
       if (bread_response                                                        &&
@@ -511,20 +498,31 @@ resend:
 
          if (log)
             {
-            ULog::log(iov,                                   name, "request", ncount, "", 0, " to %.*s", U_STRING_TO_TRACE(host_port));
-            ULog::log("%serror on reading data from %.*S%R", name,                                       U_STRING_TO_TRACE(host_port), 0); // 0 is necessary
+            ULog::log(iov,                                 name, "request", ncount, "", 0, " to %v", host_port.rep);
+            ULog::log("%serror on reading data from %V%R", name,                                     host_port.rep, 0); // 0 is necessary
             }
 
-         U_RETURN(false);
+         goto end;
          }
 
       if (log)
          {
-                       ULog::log(iov,              name, "request", ncount, "", 0, " to %.*s",   U_STRING_TO_TRACE(host_port));
-         if (response) ULog::logResponse(response, name,                           " from %.*s", U_STRING_TO_TRACE(host_port));
+                       ULog::log(iov,              name, "request", ncount, "", 0, " to %v",   host_port.rep);
+         if (response) ULog::logResponse(response, name,                           " from %v", host_port.rep);
          }
 
       reset();
+      }
+
+end:
+   USocketExt::bssl     = bssl_save;
+   USocketExt::blocking = blocking_save;
+
+   if (ok)
+      {
+      U_INTERNAL_ASSERT(socket->isOpen())
+
+      if (socket->isConnected() == false) socket->iState = USocket::CONNECT;
 
       U_RETURN(true);
       }
@@ -538,53 +536,68 @@ bool UClient_Base::readResponse(uint32_t count)
 {
    U_TRACE(0, "UClient_Base::readResponse(%u)", count)
 
-   if (USocketExt::read(socket, response, count, timeoutMS))
-      {
-      if (log &&
-          response)
-         {
-         ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %.*S", U_STRING_TO_TRACE(host_port));
-         }
+   bool bssl_save     = USocketExt::bssl;
+                        USocketExt::bssl = socket->isSSL(true);
+   bool blocking_save = USocketExt::blocking;
+                        USocketExt::blocking = socket->isBlocking();
 
-      U_RETURN(true);
+   bool ok = USocketExt::read(socket, response, count, timeoutMS);
+
+   if (ok  &&
+       log &&
+       response)
+      {
+      ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %V", host_port.rep);
       }
 
-   U_RETURN(false);
-}
+   USocketExt::bssl     = bssl_save;
+   USocketExt::blocking = blocking_save;
 
+   U_RETURN(ok);
+}
 
 bool UClient_Base::readHTTPResponse()
 {
    U_TRACE(0, "UClient_Base::readHTTPResponse()")
 
-   // read HTTP message data
-
    clearData();
 
-   if (UHTTP::readHeader(socket, buffer))
+   // read HTTP message data
+
+   bool bssl_save     = USocketExt::bssl;
+                        USocketExt::bssl = socket->isSSL(true);
+   bool blocking_save = USocketExt::blocking;
+                        USocketExt::blocking = socket->isBlocking();
+
+   bool ok = UHTTP::readHeader(socket, buffer);
+
+   if (ok)
       {
-      uint32_t pos = buffer.find(*UString::str_content_length, u_http_info.startHeader, u_http_info.szHeader);
+      uint32_t pos = buffer.find(*UString::str_content_length, U_http_info.startHeader, U_http_info.szHeader);
 
-      if (pos != U_NOT_FOUND)
+      ok = (pos != U_NOT_FOUND);
+
+      if (ok)
          {
-         u_http_info.clength = (uint32_t) strtoul(buffer.c_pointer(pos + UString::str_content_length->size() + 2), 0, 0);
+         U_http_info.clength = (uint32_t) strtoul(buffer.c_pointer(pos + UString::str_content_length->size() + 2), 0, 0);
 
-         if (u_http_info.clength == 0) UHTTP::data_chunked = false;
+         if (U_http_info.clength == 0) UHTTP::data_chunked = false;
 
-         if (UHTTP::readBody(socket, &buffer, response))
+         ok = UHTTP::readBody(socket, &buffer, response);
+
+         if (ok  &&
+             log &&
+             response)
             {
-            if (log &&
-                response)
-               {
-               ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %.*S", U_STRING_TO_TRACE(host_port));
-               }
-
-            U_RETURN(true);
+            ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %V", host_port.rep);
             }
          }
       }
 
-   U_RETURN(false);
+   USocketExt::bssl     = bssl_save;
+   USocketExt::blocking = blocking_save;
+
+   U_RETURN(ok);
 }
 
 // DEBUG

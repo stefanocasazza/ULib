@@ -122,7 +122,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_ASSERT( y.empty() == true )
 
-   UDirWalk dirwalk(0, U_CONSTANT_TO_PARAM("?db.*"));
+   UDirWalk dirwalk(0, U_CONSTANT_TO_PARAM("?db.*test*"));
 
    uint32_t n = dirwalk.walk(y);
 

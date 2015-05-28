@@ -34,6 +34,7 @@ class UHTTP;
 class UHTTP2;
 class UIPAllow;
 class USSIPlugIn;
+class USocketExt;
 class UHttpPlugIn;
 class UNoCatPlugIn;
 class UServer_Base;
@@ -55,8 +56,8 @@ public:
 
    // SERVICES
 
-   bool genericRead();
-   int  handlerResponse();
+   bool    genericRead();
+   void prepareForRead();
 
    bool isPendingSendfile()
       {
@@ -66,6 +67,15 @@ public:
 
       U_RETURN(false);
       }
+
+   // define method VIRTUAL of class UEventFd
+
+   virtual int handlerRead() U_DECL_OVERRIDE;
+   virtual int handlerWrite() U_DECL_OVERRIDE;
+   virtual int handlerTimeout() U_DECL_OVERRIDE;
+
+   virtual void handlerError() U_DECL_OVERRIDE;
+   virtual void handlerDelete() U_DECL_OVERRIDE;
 
    static void setNoHeaderForResponse()
       {
@@ -84,78 +94,35 @@ public:
    static void init();
    static void clear();
 
+   static void          close();
+   static void abortive_close();
+
    static const char* getRequestUri(uint32_t& len);
 
    static bool isAllowed(UVector<UIPAllow*>& vallow_IP) __pure; // Check whether the ip address client ought to be allowed
 
-   // define method VIRTUAL of class UEventFd
-
-   virtual int handlerRead() U_DECL_OVERRIDE;
-   virtual int handlerWrite() U_DECL_OVERRIDE;
-   virtual int handlerTimeout() U_DECL_OVERRIDE;
-
-   virtual void handlerError() U_DECL_OVERRIDE;
-   virtual void handlerDelete() U_DECL_OVERRIDE;
-
    // manage if other data already available... (pipelining)
 
-   static void resetPipeline()
-      {
-      U_TRACE(0, "UClientImage_Base::resetPipeline()")
-
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d",
-                       U_ClientImage_pipeline,     U_ClientImage_parallelization)
-
-      if (U_ClientImage_pipeline)
-         {
-         U_INTERNAL_ASSERT(request->same(*rbuffer) == false)
-
-         U_ClientImage_pipeline = false;
-
-#     ifndef U_CACHE_REQUEST_DISABLE
-         U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
-
-         if (U_ClientImage_request_is_cached == false)
-#     endif
-         size_request = 0; // NB: we don't want to process further the read buffer...
-         }
-      }
-
-   static void resetPipelineAndClose()
-      {
-      U_TRACE(0, "UClientImage_Base::resetPipelineAndClose()")
-
-      // NB: because we close the connection we don't need to process other request in pipeline...
-
-      resetPipeline();
-
-      U_ClientImage_close = true;
-
-      U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
-      }
-
-   static void resetAndClose()
-      {
-      U_TRACE(0, "UClientImage_Base::resetAndClose()")
-
-      U_INTERNAL_ASSERT_POINTER(psocket)
-
-      resetPipeline();
-
-      setRequestProcessed();
-
-      psocket->close();
-      }
-
+   static void resetPipeline();
    static void setCloseConnection()
       {
       U_TRACE(0, "UClientImage_Base::setCloseConnection()")
 
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b", U_ClientImage_pipeline)
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d U_ClientImage_request_is_cached = %b U_ClientImage_close = %b",
+                       U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_request_is_cached,     U_ClientImage_close)
 
       if (U_ClientImage_pipeline == false) U_ClientImage_close = true;
+      }
 
-      U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
+   static void resetPipelineAndSetCloseConnection()
+      {
+      U_TRACE(0, "UClientImage_Base::resetPipelineAndSetCloseConnection()")
+
+      // NB: because we close the connection we don't need to process other request in pipeline...
+
+      U_ClientImage_close = true;
+
+      if (U_ClientImage_pipeline) resetPipeline();
       }
 
    // request state processing
@@ -229,12 +196,12 @@ public:
       {
       U_TRACE(0, "UClientImage_Base::isRequestRedirected()")
 
-      U_INTERNAL_DUMP("U_ClientImage_request = %d %B u_http_info.nResponseCode = %d", U_ClientImage_request,
-                       U_ClientImage_request,        u_http_info.nResponseCode)
+      U_INTERNAL_DUMP("U_ClientImage_request = %d %B U_http_info.nResponseCode = %d", U_ClientImage_request,
+                       U_ClientImage_request,        U_http_info.nResponseCode)
 
       if ((U_ClientImage_request & ALREADY_PROCESSED) != 0 &&
-          (u_http_info.nResponseCode == HTTP_MOVED_TEMP    ||
-           u_http_info.nResponseCode == HTTP_NETWORK_AUTHENTICATION_REQUIRED))
+          (U_http_info.nResponseCode == HTTP_MOVED_TEMP    ||
+           U_http_info.nResponseCode == HTTP_NETWORK_AUTHENTICATION_REQUIRED))
          {
          U_RETURN(true);
          }
@@ -309,7 +276,6 @@ public:
    static UString* rbuffer;
    static UString* wbuffer;
    static UString* request;
-   static USocket* psocket;
 
    static char cbuffer[128];
    static UString* request_uri;
@@ -317,7 +283,6 @@ public:
    static bPF callerHandlerCache;
    static struct iovec iov_sav[4];
    static struct iovec iov_vec[4];
-   static UClientImage_Base* pthis;
    static bPFpc callerIsValidRequest;
    static vPF callerHandlerEndRequest;
    static bPFpcu callerIsValidRequestExt;
@@ -345,13 +310,14 @@ protected:
       {
       U_TRACE(0, "UClientImage_Base::reset()")
 
-      UEventFd::op_mask = EPOLLIN | EPOLLRDHUP;
+      UEventFd::op_mask = EPOLLIN | EPOLLRDHUP | EPOLLET;
 
       start =
       count = 0;
       sfd   = -1;
       }
 
+   int  handlerResponse();
    void prepareForSendfile();
 
    static uint32_t getCountToRead()
@@ -372,17 +338,7 @@ protected:
       U_RETURN(U_SINGLE_READ);
       }
 
-   static void setSendfile(int _sfd, uint32_t _start, uint32_t _count)
-      {
-      U_TRACE(0, "UClientImage_Base::setSendfile(%d,%u,%u)", _sfd, _start, _count)
-
-      U_INTERNAL_ASSERT_MAJOR(_count, 0)
-      U_INTERNAL_ASSERT_DIFFERS(_sfd, -1)
-
-      pthis->start = _start;
-      pthis->count = _count;
-      pthis->sfd   = _sfd;
-      }
+   static void setSendfile(int _sfd, uint32_t _start, uint32_t _count);
 
 #ifndef U_LOG_DISABLE
    void logRequest();
@@ -404,7 +360,7 @@ protected:
    static void resetReadBuffer();
    static void resetWriteBuffer();
    static void saveRequestResponse();
-   static void manageReadBufferResize(UString& buffer, uint32_t n);
+   static void manageReadBufferResize(uint32_t n);
 
 #ifndef U_CACHE_REQUEST_DISABLE
    static bool isRequestCacheable() __pure;
@@ -430,6 +386,7 @@ private:
 
                       friend class UHTTP;
                       friend class UHTTP2;
+                      friend class USocketExt;
                       friend class USSIPlugIn;
                       friend class UHttpPlugIn;
                       friend class UNoCatPlugIn;

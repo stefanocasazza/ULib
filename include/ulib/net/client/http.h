@@ -14,7 +14,6 @@
 #ifndef U_HTTP_CLIENT_H
 #define U_HTTP_CLIENT_H 1
 
-#include <ulib/mime/entity.h>
 #include <ulib/net/client/client.h>
 
 /**
@@ -32,6 +31,7 @@
  * persistent connections which can make more effective use of TCP/IP.
  */
 
+class UMimeHeader;
 class Application;
 class WiAuthNodog;
 class UServer_Base;
@@ -56,12 +56,11 @@ public:
     * @param value the value to be associated with the named property
     */
 
-   void setHeader(const UString& name, const UString& value) { requestHeader->setHeader(name, value); }
+   void    setHeader(const UString& name, const UString& value);
+   void removeHeader(const UString& name);
 
-   void setHeaderHostPort(const UString& h)  { setHeader(*UString::str_host, h); }
+   void setHeaderHostPort( const UString& h) { setHeader(*UString::str_host, h); }
    void setHeaderUserAgent(const UString& u) { setHeader(*UString::str_user_agent, u); }
-
-   void removeHeader(const UString& name) { requestHeader->removeHeader(name); }
 
    // Returns the MIME header that were received in response from the HTTP server
 
@@ -91,7 +90,7 @@ public:
 
    void setRequestPasswordAuthentication(const UString& _user, const UString& _password)
       {
-      U_TRACE(0, "UHttpClient_Base::setRequestPasswordAuthentication(%.*S,%.*S)", U_STRING_TO_TRACE(_user), U_STRING_TO_TRACE(_password))
+      U_TRACE(0, "UHttpClient_Base::setRequestPasswordAuthentication(%V,%V)", _user.rep, _password.rep)
 
       user     = _user;
       password = _password;
@@ -175,25 +174,8 @@ protected:
 
    // COSTRUTTORI
 
-   UHttpClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UHttpClient_Base, "%p", _cfg)
-
-      requestHeader  = U_NEW(UMimeHeader);
-      responseHeader = U_NEW(UMimeHeader);
-
-      method_num       = 0;
-      bFollowRedirects = true;
-      bproxy           = false;
-      }
-
-   ~UHttpClient_Base()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UHttpClient_Base)
-
-      delete requestHeader;
-      delete responseHeader;
-      }
+    UHttpClient_Base(UFileConfig* _cfg);
+   ~UHttpClient_Base();
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS

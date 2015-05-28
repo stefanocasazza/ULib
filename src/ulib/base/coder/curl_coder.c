@@ -123,7 +123,6 @@
 uint32_t u_url_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
 {
    uint32_t i;
-   unsigned char ch;
    unsigned char* restrict r = result;
 
    U_INTERNAL_TRACE("u_url_encode(%.*s,%u,%p)", U_min(len,128), input, len, result)
@@ -132,7 +131,7 @@ uint32_t u_url_encode(const unsigned char* restrict input, uint32_t len, unsigne
 
    for (i = 0; i < len; ++i)
       {
-      ch = input[i];
+      unsigned char ch = input[i];
 
       if (u__is2urlenc(ch) == false) *r++ = ch;
       else
@@ -155,7 +154,6 @@ uint32_t u_url_encode(const unsigned char* restrict input, uint32_t len, unsigne
 uint32_t u_url_decode(const char* restrict input, uint32_t len, unsigned char* restrict result)
 {
    uint32_t i;
-   unsigned char ch;
    unsigned char* restrict r = result;
 
    U_INTERNAL_TRACE("u_url_decode(%.*s,%u,%p,%lu)", U_min(len,128), input, len, result)
@@ -164,7 +162,7 @@ uint32_t u_url_decode(const char* restrict input, uint32_t len, unsigned char* r
 
    for (i = 0; i < len; ++i)
       {
-      ch = ((unsigned char* restrict)input)[i];
+      unsigned char ch = ((unsigned char* restrict)input)[i];
 
            if (ch == '+') *r++ = ' ';
       else if (ch != '%') *r++ = ch;

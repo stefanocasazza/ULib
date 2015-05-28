@@ -53,7 +53,7 @@ void UDataStorage::setKeyId()
 {
    U_TRACE(0, "UDataStorage::setKeyId()")
 
-   U_INTERNAL_DUMP("keyid = %.*S", U_STRING_TO_TRACE(keyid))
+   U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
    keyid = *UHTTP::str_storage_keyid;
 }

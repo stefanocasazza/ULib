@@ -81,11 +81,10 @@ U_NO_EXPORT void UImapClient::setStatus()
 
 bool UImapClient::_connectServer(const UString& server, unsigned int port, int timeoutMS)
 {
-   U_TRACE(0, "UImapClient::_connectServer(%.*S,%u,%d)", U_STRING_TO_TRACE(server), port, timeoutMS)
+   U_TRACE(0, "UImapClient::_connectServer(%V,%u,%d)", server.rep, port, timeoutMS)
 
    if (Socket::connectServer(server, port, timeoutMS) &&
-       USocketExt::readLineReply(this, buffer) > 0    &&
-       memcmp(buffer.data(), U_CONSTANT_TO_PARAM(U_IMAP_OK)) == 0)
+       (USocketExt::readLineReply(this, buffer), memcmp(buffer.data(), U_CONSTANT_TO_PARAM(U_IMAP_OK)) == 0))
       {
       response = IMAP_SESSION_OK;
 
@@ -253,13 +252,11 @@ typedef struct ListResponse {
 
 bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResponse*>& vec, bool subscribedOnly)
 {
-   U_TRACE(0, "UImapClient::list(%.*S,%.*S,%p,%b)", U_STRING_TO_TRACE(ref), U_STRING_TO_TRACE(wild), &vec, subscribedOnly)
+   U_TRACE(0, "UImapClient::list(%V,%V,%p,%b)", ref.rep, wild.rep, &vec, subscribedOnly)
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("%s \"%.*s\" %.*s",
-               (subscribedOnly ? "LSUB" : "LIST"),
-               U_STRING_TO_TRACE(ref), U_STRING_TO_TRACE(wild)))
+      if (syncCommand("%s \"%v\" %v", (subscribedOnly ? "LSUB" : "LIST"), ref.rep, wild.rep))
          {
          setEnd();
 
@@ -285,11 +282,11 @@ bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResp
 
             if (attributes.size() > 2)
                {
-               attributes.unQuote();
+               attributes.rep->unQuote();
 
                UVector<UString> v2(attributes);
 
-               U_INTERNAL_DUMP("attributes = %.*S", U_STRING_TO_TRACE(attributes))
+               U_INTERNAL_DUMP("attributes = %V", attributes.rep)
 
                // (\\HasNoChildren \\HasChildren \\Marked \\Unmarked \\Noselect \\Noinferiors)
 
@@ -359,12 +356,12 @@ typedef struct StatusInfo {
 
 bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int items)
 {
-   U_TRACE(1, "UImapClient::status(%.*S,%p,%d)", U_STRING_TO_TRACE(mailboxName), &retval, items)
+   U_TRACE(1, "UImapClient::status(%V,%p,%d)", mailboxName.rep, &retval, items)
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("STATUS %.*s (%s %s %s %s %s)",
-               U_STRING_TO_TRACE(mailboxName),
+      if (syncCommand("STATUS %v (%s %s %s %s %s)",
+               mailboxName.rep,
                (items & MESSAGE_COUNT  ? "MESSAGES"    : ""),
                (items & RECENT_COUNT   ? "RECENT"      : ""),
                (items & NEXT_UID       ? "UIDNEXT"     : ""),
@@ -462,8 +459,6 @@ U_NO_EXPORT void UImapClient::setFlag(int& _flags, UVector<UString>& vec)
    for (uint32_t i = 0, length = vec.size(); i < length; ++i)
       {
       // * FLAGS (\\Answered \\Flagged \\Draft \\Deleted \\Seen $MDNSent Junk NonJunk)\r\n
-
-      U_INTERNAL_DUMP("vec[%d] = %.*S", i, U_STRING_TO_TRACE(vec[i]))
 
       if (!(_flags & ANSWERED) &&
           vec[i].equal(U_CONSTANT_TO_PARAM("\\Answered")))
@@ -693,7 +688,7 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
 
 bool UImapClient::selectMailbox(const UString& name, MailboxInfo& retval)
 {
-   U_TRACE(0, "UImapClient::selectMailbox(%.*S,%p)", U_STRING_TO_TRACE(name), &retval)
+   U_TRACE(0, "UImapClient::selectMailbox(%V,%p)", name.rep, &retval)
 
    U_INTERNAL_ASSERT(name)
 
@@ -707,7 +702,7 @@ bool UImapClient::selectMailbox(const UString& name, MailboxInfo& retval)
          U_RETURN(true);
          }
 
-      if (syncCommand("SELECT %.*s", U_STRING_TO_TRACE(name)))
+      if (syncCommand("SELECT %v", name.rep))
          {
          setMailBox(retval);
 
@@ -725,13 +720,13 @@ bool UImapClient::selectMailbox(const UString& name, MailboxInfo& retval)
 
 bool UImapClient::examineMailbox(const UString& name, MailboxInfo& retval)
 {
-   U_TRACE(0, "UImapClient::examineMailbox(%.*S,%p)", U_STRING_TO_TRACE(name), &retval)
+   U_TRACE(0, "UImapClient::examineMailbox(%V,%p)", name.rep, &retval)
 
    U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("EXAMINE %.*s", U_STRING_TO_TRACE(name)))
+      if (syncCommand("EXAMINE %v", name.rep))
          {
          setMailBox(retval);
 
@@ -746,13 +741,13 @@ bool UImapClient::examineMailbox(const UString& name, MailboxInfo& retval)
 
 bool UImapClient::createMailbox(const UString& name)
 {
-   U_TRACE(0, "UImapClient::createMailbox(%.*S)", U_STRING_TO_TRACE(name))
+   U_TRACE(0, "UImapClient::createMailbox(%V)", name.rep)
 
    U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("CREATE %.*s", U_STRING_TO_TRACE(name)))
+      if (syncCommand("CREATE %v", name.rep))
          {
          U_RETURN(true);
          }
@@ -763,22 +758,18 @@ bool UImapClient::createMailbox(const UString& name)
    U_RETURN(false);
 }
 
-/**
-* Attempt to remove the new mailbox with the given name.
-*/
+// Attempt to remove the new mailbox with the given name
 
 bool UImapClient::removeMailbox(const UString& name)
 {
-   U_TRACE(0, "UImapClient::removeMailbox(%.*S)", U_STRING_TO_TRACE(name))
+   U_TRACE(0, "UImapClient::removeMailbox(%V)", name.rep)
 
    U_INTERNAL_ASSERT(name)
 
-   if (state >= AUTHENTICATED)
+   if (state >= AUTHENTICATED &&
+       syncCommand("DELETE %v", name.rep))
       {
-      if (syncCommand("DELETE %.*s", U_STRING_TO_TRACE(name)))
-         {
-         U_RETURN(true);
-         }
+      U_RETURN(true);
       }
 
    response = IMAP_SESSION_BAD;
@@ -786,23 +777,19 @@ bool UImapClient::removeMailbox(const UString& name)
    U_RETURN(false);
 }
 
-/**
-* Attempt to rename the new mailbox with the given name.
-*/
+// Attempt to rename the new mailbox with the given name.
 
 bool UImapClient::renameMailbox(const UString& from, const UString& to)
 {
-   U_TRACE(0, "UImapClient::renameMailbox(%.*S,%.*S)", U_STRING_TO_TRACE(from), U_STRING_TO_TRACE(to))
+   U_TRACE(0, "UImapClient::renameMailbox(%V,%V)", from.rep, to.rep)
 
    U_INTERNAL_ASSERT(to)
    U_INTERNAL_ASSERT(from)
 
-   if (state >= AUTHENTICATED)
+   if (state >= AUTHENTICATED &&
+       syncCommand("RENAME %v %v", from.rep, to.rep))
       {
-      if (syncCommand("RENAME %.*s %.*s", U_STRING_TO_TRACE(from), U_STRING_TO_TRACE(to)))
-         {
-         U_RETURN(true);
-         }
+      U_RETURN(true);
       }
 
    response = IMAP_SESSION_BAD;
@@ -810,22 +797,18 @@ bool UImapClient::renameMailbox(const UString& from, const UString& to)
    U_RETURN(false);
 }
 
-/**
-* Attempt to subscribe to the new mailbox with the given name. @see RFC
-*/
+// Attempt to subscribe to the new mailbox with the given name. @see RFC
 
 bool UImapClient::subscribeMailbox(const UString& name)
 {
-   U_TRACE(0, "UImapClient::subscribeMailbox(%.*S)", U_STRING_TO_TRACE(name))
+   U_TRACE(0, "UImapClient::subscribeMailbox(%V)", name.rep)
 
    U_INTERNAL_ASSERT(name)
 
-   if (state >= AUTHENTICATED)
+   if (state >= AUTHENTICATED &&
+       syncCommand("SUBSCRIBE %v", name.rep))
       {
-      if (syncCommand("SUBSCRIBE %.*s", U_STRING_TO_TRACE(name)))
-         {
-         U_RETURN(true);
-         }
+      U_RETURN(true);
       }
 
    response = IMAP_SESSION_BAD;
@@ -833,22 +816,18 @@ bool UImapClient::subscribeMailbox(const UString& name)
    U_RETURN(false);
 }
 
-/**
-* Attempt to unsubscribe from the new mailbox with the given name. @see RFC
-*/
+// Attempt to unsubscribe from the new mailbox with the given name. @see RFC
 
 bool UImapClient::unsubscribeMailbox(const UString& name)
 {
-   U_TRACE(0, "UImapClient::unsubscribeMailbox(%.*S)", U_STRING_TO_TRACE(name))
+   U_TRACE(0, "UImapClient::unsubscribeMailbox(%V)", name.rep)
 
    U_INTERNAL_ASSERT(name)
 
-   if (state >= AUTHENTICATED)
+   if (state >= AUTHENTICATED &&
+       syncCommand("UNSUBSCRIBE %v", name.rep))
       {
-      if (syncCommand("UNSUBSCRIBE %.*s", U_STRING_TO_TRACE(name)))
-         {
-         U_RETURN(true);
-         }
+      U_RETURN(true);
       }
 
    response = IMAP_SESSION_BAD;
@@ -858,8 +837,7 @@ bool UImapClient::unsubscribeMailbox(const UString& name)
 
 bool UImapClient::appendMessage(const UString& mailboxName, const UString& messageData, int _flags, const char* date)
 {
-   U_TRACE(0, "UImapClient::appendMessage(%.*S,%.*S,%d,%S)",
-                        U_STRING_TO_TRACE(mailboxName), U_STRING_TO_TRACE(messageData), _flags, date)
+   U_TRACE(0, "UImapClient::appendMessage(%V,%V,%d,%S)", mailboxName.rep, messageData.rep, _flags, date)
 
    U_INTERNAL_ASSERT(mailboxName)
    U_INTERNAL_ASSERT(messageData)
@@ -867,8 +845,8 @@ bool UImapClient::appendMessage(const UString& mailboxName, const UString& messa
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("APPEND %.*s %s%s%s%s%s%s%s%s %s\r\n%.*s",
-               U_STRING_TO_TRACE(mailboxName),
+      if (syncCommand("APPEND %v %s%s%s%s%s%s%s%s %s\r\n%v",
+               mailboxName.rep,
                (_flags            ? "("           : ""),
                (_flags & SEEN     ? "\\Seen"      : ""),
                (_flags & ANSWERED ? " \\Answered" : ""),
@@ -878,7 +856,7 @@ bool UImapClient::appendMessage(const UString& mailboxName, const UString& messa
                (_flags & RECENT   ? " \\Recent"   : ""),
                (_flags            ? ")"           : ""),
                date,
-               U_STRING_TO_TRACE(messageData)))
+               messageData.rep))
          {
          U_RETURN(true);
          }
@@ -936,7 +914,7 @@ bool UImapClient::expunge(int* _ret)
 
 bool UImapClient::search(int* _ret, const UString& spec, const char* charSet, bool usingUID)
 {
-   U_TRACE(0, "UImapClient::search(%p,%.*S,%S,%b)", _ret, U_STRING_TO_TRACE(spec), charSet, usingUID)
+   U_TRACE(0, "UImapClient::search(%p,%V,%S,%b)", _ret, spec.rep, charSet, usingUID)
 
    U_INTERNAL_ASSERT(spec)
    U_INTERNAL_ASSERT_POINTER(_ret)
@@ -944,10 +922,7 @@ bool UImapClient::search(int* _ret, const UString& spec, const char* charSet, bo
 
    if (state == SELECTED)
       {
-      if (syncCommand("%s SEARCH %s %.*s",
-               (usingUID ? "UID" : ""),
-               charSet,
-               U_STRING_TO_TRACE(spec)))
+      if (syncCommand("%s SEARCH %s %v", (usingUID ? "UID" : ""), charSet, spec.rep))
          {
          setEnd();
 
@@ -982,16 +957,13 @@ bool UImapClient::search(int* _ret, const UString& spec, const char* charSet, bo
 
 bool UImapClient::fetch(UVector<UString>& vec, int start, int _end, const UString& spec, bool usingUID)
 {
-   U_TRACE(0, "UImapClient::fetch(%p,%d,%d,%.*S,%b)", &vec, start, _end, U_STRING_TO_TRACE(spec), usingUID)
+   U_TRACE(0, "UImapClient::fetch(%p,%d,%d,%V,%b)", &vec, start, _end, spec.rep, usingUID)
 
    U_INTERNAL_ASSERT(spec)
 
    if (state == SELECTED)
       {
-      if (syncCommand("%s FETCH %d:%d %.*s",
-               (usingUID ? "UID" : ""),
-               start, _end,
-               U_STRING_TO_TRACE(spec)))
+      if (syncCommand("%s FETCH %d:%d %v", (usingUID ? "UID" : ""), start, _end, spec.rep))
          {
          setEnd();
 
@@ -1069,19 +1041,14 @@ bool UImapClient::setFlags(int start, int _end, int style, int _flags, bool usin
 
 bool UImapClient::copy(int start, int _end, const UString& to, bool usingUID)
 {
-   U_TRACE(0, "UImapClient::copy(%d,%d,%.*S,%b)", start, _end, U_STRING_TO_TRACE(to), usingUID)
+   U_TRACE(0, "UImapClient::copy(%d,%d,%V,%b)", start, _end, to.rep, usingUID)
 
    U_INTERNAL_ASSERT(to)
 
-   if (state == SELECTED)
+   if (state == SELECTED &&
+       syncCommand("%s COPY %d:%d %v", (usingUID ? "UID" : ""), start, _end, to.rep))
       {
-      if (syncCommand("%s COPY %d:%d %.*s",
-               (usingUID ? "UID" : ""),
-               start, _end,
-               U_STRING_TO_TRACE(to)))
-         {
-         U_RETURN(true);
-         }
+      U_RETURN(true);
       }
 
    response = IMAP_SESSION_BAD;

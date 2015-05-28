@@ -134,7 +134,7 @@ bool UGeoIPPlugIn::checkCountryForbidden()
 
 UGeoIPPlugIn::UGeoIPPlugIn()
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UGeoIPPlugIn, "")
+   U_TRACE_REGISTER_OBJECT(0, UGeoIPPlugIn, "")
 }
 
 UGeoIPPlugIn::~UGeoIPPlugIn()

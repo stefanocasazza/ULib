@@ -11,6 +11,8 @@ exec_prefix=@exec_prefix@
 dirn=`dirname $1`
 basen=`basename $1`
 
+export UMEMPOOL="0,0,0,48,-20,-20,-20,-20,0"
+
 ${prefix}/bin/usp_translator $1.usp &&
 ${prefix}/bin/usp_libtool.sh --silent --tag=CXX --mode=compile \
 	@CXX@ -I${includedir} -DHAVE_CONFIG_H @CPPFLAGS@ @CXXFLAGS@ @USP_FLAGS@ -MT $1.lo -MD -MP -c -o $1.lo $1.cpp &&

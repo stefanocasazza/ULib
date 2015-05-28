@@ -64,7 +64,7 @@ struct U_EXPORT UServices {
 
    static void readEOF(int fd, UString& buffer)
       {
-      U_TRACE(0, "UServices::readEOF(%d,%.*S)", fd, U_STRING_TO_TRACE(buffer))
+      U_TRACE(0, "UServices::readEOF(%d,%p)", fd, &buffer)
 
       while (UServices::read(fd, buffer, U_SINGLE_READ, -1)) {}
       }
@@ -73,7 +73,7 @@ struct U_EXPORT UServices {
 
    static bool match(const UString& s, const UString& mask)
       {
-      U_TRACE(0, "UServices::match(%.*S,%.*S)", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(mask))
+      U_TRACE(0, "UServices::match(%V,%V)", s.rep, mask.rep)
 
       bool result = u_pfn_match(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), u_pfn_flags);
 
@@ -82,7 +82,7 @@ struct U_EXPORT UServices {
 
    static bool match(const UStringRep* r, const UString& mask)
       {
-      U_TRACE(0, "UServices::match(%p,%.*S)", r, U_STRING_TO_TRACE(mask))
+      U_TRACE(0, "UServices::match(%p,%V)", r, mask.rep)
 
       bool result = u_pfn_match(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask), u_pfn_flags);
 
@@ -91,7 +91,7 @@ struct U_EXPORT UServices {
 
    static bool matchnocase(const UString& s, const UString& mask)
       {
-      U_TRACE(0, "UServices::matchnocase(%.*S,%.*S)", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(mask))
+      U_TRACE(0, "UServices::matchnocase(%V,%V)", s.rep, mask.rep)
 
       bool result = u_pfn_match(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), FNM_CASEFOLD);
 
@@ -100,7 +100,7 @@ struct U_EXPORT UServices {
 
    static bool matchnocase(const UStringRep* r, const UString& mask)
       {
-      U_TRACE(0, "UServices::matchnocase(%p,%.*S)", r, U_STRING_TO_TRACE(mask))
+      U_TRACE(0, "UServices::matchnocase(%p,%V)", r, mask.rep)
 
       bool result = u_pfn_match(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask), FNM_CASEFOLD);
 
@@ -147,7 +147,7 @@ struct U_EXPORT UServices {
 
    static bool fnmatch(const UString& s, const UString& mask, int flags = FNM_PATHNAME | FNM_CASEFOLD)
       {
-      U_TRACE(0, "UServices::fnmatch(%.*S,%.*S,%d)", U_STRING_TO_TRACE(s), U_STRING_TO_TRACE(mask), flags)
+      U_TRACE(0, "UServices::fnmatch(%V,%V,%d)", s.rep, mask.rep, flags)
 
       bool result = u_fnmatch(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags);
 
@@ -213,27 +213,10 @@ struct U_EXPORT UServices {
       X509_STORE_set_verify_cb_func(store, func);
       }
 
-   static UString getFileName(long hash, bool crl = false)
-      {
-      U_TRACE(0, "UServices::getFileName(%08x,%b)", hash, crl)
-
-      if (CApath)
-         {
-         UString buffer(U_CAPACITY);
-
-         buffer.snprintf("%.*s/%08x.%s", U_STRING_TO_TRACE(*CApath), hash, (crl ? "r0" : "0"));
-
-         (void) buffer.shrink();
-
-         U_RETURN_STRING(buffer);
-         }
-
-      U_RETURN_STRING(UString::getStringNull());
-      }
-
    static void setOpenSSLError();
    static void releaseEngine(ENGINE* e, bool bkey);
    static int X509Callback(int ok, X509_STORE_CTX* ctx);
+   static UString getFileName(long hash, bool crl = false);
    static ENGINE* loadEngine(const char* id, unsigned int flags);
    static bool setupOpenSSLStore(const char* CAfile = 0, const char* CApath = 0, int store_flags = U_STORE_FLAGS);
    static EVP_PKEY* loadKey(const UString& x, const char* format, bool _private = true, const char* password = 0, ENGINE* e = 0);

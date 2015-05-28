@@ -15,24 +15,18 @@
 
 void USOAPEncoder::encodeArgument(const UString& argName, const UString& argType, const UString& argContent)
 {
-   U_TRACE(0, "USOAPEncoder::encodeArgument(%.*S,%.*S,%.*S)", U_STRING_TO_TRACE(argName),
-                                                              U_STRING_TO_TRACE(argType),
-                                                              U_STRING_TO_TRACE(argContent))
+   U_TRACE(0, "USOAPEncoder::encodeArgument(%V,%V,%V)", argName.rep, argType.rep, argContent.rep)
 
    encodedValue.setBuffer(200U + (argName.size() * 2) + argType.size() + argContent.size());
 
-   encodedValue.snprintf("<%.*s xsi:type=\"xsd:%.*s\">%.*s</%.*s>",
-                         U_STRING_TO_TRACE(argName),
-                         U_STRING_TO_TRACE(argType),
-                         U_STRING_TO_TRACE(argContent),
-                         U_STRING_TO_TRACE(argName));
+   encodedValue.snprintf("<%v xsi:type=\"xsd:%v\">%v</%v>", argName.rep, argType.rep, argContent.rep, argName.rep);
 
    arg.push(encodedValue);
 }
 
 UString USOAPEncoder::encodeMethod(URPCMethod& method, const UString& nsName) // namespace qualified element information
 {
-   U_TRACE(0, "USOAPEncoder::encodeMethod(%p,%.*S)", &method, U_STRING_TO_TRACE(nsName))
+   U_TRACE(0, "USOAPEncoder::encodeMethod(%p,%V)", &method, nsName.rep)
 
    method.encode(); // Encode the method by virtual method...
 
@@ -49,33 +43,16 @@ UString USOAPEncoder::encodeMethod(URPCMethod& method, const UString& nsName) //
 
    if (bIsResponse) (void) methodName.append(U_CONSTANT_TO_PARAM("Response"));
 
-   uint32_t sz_nsName         =         nsName.size(),
-            sz_methodName     =     methodName.size(),
-            sz_encodedValue   =   encodedValue.size(),
-            sz_headerContents = headerContents.size();
-
-   const char* ptr_nsName         =         nsName.data();
-   const char* ptr_methodName     =     methodName.data();
-   const char* ptr_encodedValue   =   encodedValue.data();
-   const char* ptr_headerContents = headerContents.data();
-
-   buffer.setBuffer(400U + (sz_nsName * 4) + (sz_methodName * 2) + sz_encodedValue + sz_headerContents);
+   buffer.setBuffer(400U + (nsName.size() * 4) + (methodName.size() * 2) + encodedValue.size() + headerContents.size());
 
    buffer.snprintf("<?xml version='1.0' ?>"
                    "<env:Envelope xmlns:env=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
-                     "<env:Header>%.*s</env:Header>"
+                     "<env:Header>%v</env:Header>"
                         "<env:Body>"
-                           "<%.*s:%.*s env:encodingStyle=\"http://www.w3.org/2003/05/soap-encoding\" xmlns:%.*s=\"%.*s\">%.*s</%.*s:%.*s>"
+                           "<%v:%v env:encodingStyle=\"http://www.w3.org/2003/05/soap-encoding\" xmlns:%v=\"%v\">%v</%v:%v>"
                         "</env:Body>"
-                   "</env:Envelope>",
-                   sz_headerContents, ptr_headerContents,
-                   sz_nsName, ptr_nsName,
-                   sz_methodName, ptr_methodName,
-                   sz_nsName, ptr_nsName,
-                   sz_nsName, ptr_nsName,
-                   sz_encodedValue, ptr_encodedValue,
-                   sz_nsName, ptr_nsName,
-                   sz_methodName, ptr_methodName);
+                   "</env:Envelope>", headerContents.rep, nsName.rep, methodName.rep, nsName.rep, nsName.rep, encodedValue.rep, nsName.rep,
+                   methodName.rep);
 
    U_RETURN_STRING(buffer);
 }

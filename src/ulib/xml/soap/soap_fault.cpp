@@ -15,7 +15,7 @@
 
 void USOAPFault::encode(UString& response)
 {
-   U_TRACE(0, "USOAPFault::encode(%.*S)", U_STRING_TO_TRACE(response))
+   U_TRACE(0, "USOAPFault::encode(%V)", response.rep)
 
    UString code = getFaultCode();
 
@@ -26,16 +26,14 @@ void USOAPFault::encode(UString& response)
                         "<soap:Body>"
                            "<soap:Fault>"
                               "<soap:Code>"
-                                 "<soap:Value>soap:%.*s</soap:Value>"
+                                 "<soap:Value>soap:%v</soap:Value>"
                               "</soap:Code>"
                               "<soap:Reason>"
-                                 "<soap:Text xml:lang=\"en-US\">%.*s</soap:Text>"
+                                 "<soap:Text xml:lang=\"en-US\">%v</soap:Text>"
                               "</soap:Reason>"
-                              "<soap:Detail>%.*s</soap:Detail>"
+                              "<soap:Detail>%v</soap:Detail>"
                            "</soap:Fault>"
                         "</soap:Body>"
                      "</soap:Envelope>",
-                     U_STRING_TO_TRACE(code),
-                     U_STRING_TO_TRACE(faultReason),
-                     U_STRING_TO_TRACE(detail));
+                     code.rep, faultReason.rep, detail.rep);
 }

@@ -114,14 +114,14 @@ void UDynamic::close()
 
 void UDynamic::setPluginDirectory(const UString& dir)
 {
-   U_TRACE(0, "UDynamic::setPluginDirectory(%.*S)", U_STRING_TO_TRACE(dir))
+   U_TRACE(0, "UDynamic::setPluginDirectory(%V)", dir.rep)
 
    U_INTERNAL_ASSERT(dir.isNullTerminated())
 
    if (plugin_dir == 0) plugin_dir = U_NEW(UString(dir));
    else
       {
-      U_INTERNAL_DUMP("plugin_dir = %.*S", U_STRING_TO_TRACE(*plugin_dir))
+      U_INTERNAL_DUMP("plugin_dir = %V", plugin_dir->rep)
 
       if (*plugin_dir != dir) *plugin_dir = dir;
       }

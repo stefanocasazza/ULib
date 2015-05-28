@@ -1,0 +1,53 @@
+  <div id="containerBig">
+    <div id="wrapperAuto">
+      <div id="loginbox" style="width:100%%;height:100%%;padding:0px;margin:0px;">
+        <div id="menulogo" class="menurow"><img src="images/FirenzeCard_Wifi.png"></div>
+
+        <form method="post" name="form" action="%v%v" id="form">
+          <input type="hidden" name="mac" value="%v">
+			 <input type="hidden" name="ip" value="%v">
+			 <input type="hidden" name="redirect" value="%v">
+          <input type="hidden" name="gateway" value="%v">
+			 <input type="hidden" name="timeout" value="%v">
+			 <input type="hidden" name="token" value="%v">
+			 <input type="hidden" name="ap" value="%v">
+			 <input type="hidden" name="realm" value="firenzecard">
+			 <input type="hidden" name="redir_to" value="%v">
+
+          <div id="pageWrap">
+            <div id="inside">
+              <div id="left-sidebar">
+                <p>Inserire le credenziali</p><br>
+                <br>
+              </div>
+
+              <div id="main-content"></div>
+
+              <p>Firenzecard WiFi password:</p>
+
+              <p><input class="login_input" type="text" name="uid"></p><br>
+
+				  <!--
+              <p>Password:</p>
+              <input class="login_input" type="password" name="pass">
+				  -->
+
+				  <input type="hidden" name="pass" value="utenteficard">
+				  <input type="hidden" name="submit_x" value="10">
+
+				  <input id="login_button" type="submit" name="submit" value="Entra" style="display:block;height:3em;width:10em;margin:2em auto;"><br>
+              %v
+				  <br>
+            </div><br>
+            <br>
+          </div>
+        </form>
+
+        <div style="clear: both;"></div>
+
+        <div id="footer"></div>
+      </div>
+
+      <div style="clear: both;"></div>
+    </div>
+  </div>

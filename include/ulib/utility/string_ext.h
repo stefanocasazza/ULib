@@ -39,7 +39,7 @@ public:
 
    static bool isDelimited(const UString& s, const char* delimiter = "()")
       {
-      U_TRACE(0, "UStringExt::isDelimited(%.*S,%S)", U_STRING_TO_TRACE(s), delimiter)
+      U_TRACE(0, "UStringExt::isDelimited(%V,%S)", s.rep, delimiter)
 
       U_INTERNAL_ASSERT_EQUALS(u__strlen(delimiter, __PRETTY_FUNCTION__), 2)
 
@@ -86,7 +86,7 @@ public:
 
    static void appendNumber32(UString& s, uint32_t number)
       {
-      U_TRACE(0, "UStringExt::appendNumber32(%.*S,%u)", U_STRING_TO_TRACE(s), number)
+      U_TRACE(0, "UStringExt::appendNumber32(%V,%u)", s.rep, number)
 
       char buffer[10];
       char* ptr = buffer;
@@ -96,7 +96,7 @@ public:
 
    static void appendNumber64(UString& s, uint64_t number)
       {
-      U_TRACE(0, "UStringExt::appendNumber64(%.*S,%llu)", U_STRING_TO_TRACE(s), number)
+      U_TRACE(0, "UStringExt::appendNumber64(%V,%llu)", s.rep, number)
 
       char buffer[10];
       char* ptr = buffer;
@@ -126,7 +126,7 @@ public:
 
    static bool startsWith(const UString& s1, const UString& s2)
       {
-      U_TRACE(0, "UStringExt::startsWith(%.*S,%.*S)", U_STRING_TO_TRACE(s1), U_STRING_TO_TRACE(s2))
+      U_TRACE(0, "UStringExt::startsWith(%V,%V)", s1.rep, s2.rep)
 
       bool result = u_startsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2));
 
@@ -135,7 +135,7 @@ public:
 
    static bool startsWith(const UString& s1, const char* s2, uint32_t n2)
       {
-      U_TRACE(0, "UStringExt::startsWith(%.*S,%.*S,%u)", U_STRING_TO_TRACE(s1), n2, s2, n2)
+      U_TRACE(0, "UStringExt::startsWith(%V,%.*S,%u)", s1.rep, n2, s2, n2)
 
       bool result = u_startsWith(U_STRING_TO_PARAM(s1), s2, n2);
 
@@ -155,7 +155,7 @@ public:
 
    static bool endsWith(const UString& s1, const UString& s2)
       {
-      U_TRACE(0, "UStringExt::endsWith(%.*S,%.*S)", U_STRING_TO_TRACE(s1), U_STRING_TO_TRACE(s2))
+      U_TRACE(0, "UStringExt::endsWith(%V,%V)", s1.rep, s2.rep)
 
       bool result = u_endsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2));
 
@@ -164,7 +164,7 @@ public:
 
    static bool endsWith(const UString& s1, const char* s2, uint32_t n2)
       {
-      U_TRACE(0, "UStringExt::endsWith(%.*S,%.*S,%u)", U_STRING_TO_TRACE(s1), n2, s2, n2)
+      U_TRACE(0, "UStringExt::endsWith(%V,%.*S,%u)", s1.rep, n2, s2, n2)
 
       bool result = u_endsWith(U_STRING_TO_PARAM(s1), s2, n2);
 
@@ -247,7 +247,7 @@ public:
 
    static UString removeEscape(const UString& s)
       {
-      U_TRACE(0, "UStringExt::removeEscape(%.*S)", U_STRING_TO_TRACE(s))
+      U_TRACE(0, "UStringExt::removeEscape(%V)", s.rep)
 
       uint32_t sz     = s.size();
       const char* str = s.data();
@@ -258,7 +258,7 @@ public:
 
    static UString insertEscape(const UString& s, char delimiter = '"')
       {
-      U_TRACE(0, "UStringExt::insertEscape(%.*S,%C)", U_STRING_TO_TRACE(s), delimiter)
+      U_TRACE(0, "UStringExt::insertEscape(%V,%C)", s.rep, delimiter)
 
       uint32_t sz     = s.size();
       const char* str = s.data();
@@ -331,9 +331,7 @@ public:
 
    // Retrieve information on form elements as couple <name1>=<value1>&<name2>=<value2>&...
 
-   static uint32_t getNameValueFromData(const UString& content,
-                                        UVector<UString>& name_value,
-                                        const char* delim, uint32_t dlen);
+   static uint32_t getNameValueFromData(const UString& content, UVector<UString>& name_value, const char* delim, uint32_t dlen);
 
 #  define U_TOKEN_NM 4U
 #  define U_TOKEN_LN (U_TOKEN_NM + 8U)
@@ -351,7 +349,7 @@ public:
 
    static void buildTokenString(const char* token, const UString& value, UString& buffer)
       {
-      U_TRACE(0, "UStringExt::buildTokenString(%S,%.*S,%.*S)", token, U_STRING_TO_TRACE(value), U_STRING_TO_TRACE(buffer))
+      U_TRACE(0, "UStringExt::buildTokenString(%S,%V,%p)", token, value.rep, &buffer)
 
       buildTokenInt(token, value.size(), buffer);
 
@@ -360,7 +358,7 @@ public:
 
    static void buildTokenVector(const char* token, UVector<UString>& vec, UString& buffer)
       {
-      U_TRACE(0, "UStringExt::buildTokenVector(%S,%p,%.*S)", token, &vec, U_STRING_TO_TRACE(buffer))
+      U_TRACE(0, "UStringExt::buildTokenVector(%S,%p,%p)", token, &vec, &buffer)
 
       uint32_t argc = vec.size();
 
