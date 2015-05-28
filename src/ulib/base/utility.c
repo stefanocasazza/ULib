@@ -948,11 +948,11 @@ void u_bind2cpu(cpu_set_t* cpuset, pid_t pid, int n)
 #if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(HAVE_SCHED_GETAFFINITY)
    CPU_SET(n, cpuset);
 
-   (void) sched_setaffinity(pid, sizeof(cpuset), cpuset);
+   (void) sched_setaffinity(pid, sizeof(cpu_set_t), cpuset);
 
    CPU_ZERO(cpuset);
 
-   (void) sched_getaffinity(pid, sizeof(cpuset), cpuset);
+   (void) sched_getaffinity(pid, sizeof(cpu_set_t), cpuset);
 
    U_INTERNAL_PRINT("cpuset = %ld", CPUSET_BITS(cpuset)[0])
 #endif
