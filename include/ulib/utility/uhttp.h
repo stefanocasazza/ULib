@@ -195,8 +195,6 @@ public:
    static bool isFCGIRequest() __pure;
    static bool isSCGIRequest() __pure;
 
-   static bool isMethodEmpty() { return (U_http_method_type == 0); }
-
    // SERVICES
 
    static UFile* file;
@@ -277,11 +275,8 @@ public:
    static void setEndRequestProcessing();
    static bool callService(const UString& path);
    static bool isUriRequestNeedCertificate() __pure;
-   static bool checkRequestForHeader(const UString& request);
    static bool manageSendfile(const char* ptr, uint32_t len, UString& ext);
    static bool checkContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
-
-   static bool checkRequestForHeader() { return checkRequestForHeader(*UClientImage_Base::request); }
 
    static const char* getHeaderValuePtr(                        const char* name, uint32_t name_len, bool nocase) __pure;
    static const char* getHeaderValuePtr(const UString& request, const char* name, uint32_t name_len, bool nocase) __pure;
@@ -329,6 +324,8 @@ public:
    static void setBadRequest()
       {
       U_TRACE(0, "UHTTP::setBadRequest()")
+
+      UClientImage_Base::resetPipelineAndSetCloseConnection();
 
       setErrorResponse(str_ctype_html, HTTP_BAD_REQUEST, "Your requested URL %.*S was a request that this server could not understand", 0);
       }
@@ -1032,6 +1029,7 @@ private:
    static bool processFileCache() U_NO_EXPORT;
    static void manageDataForCache() U_NO_EXPORT;
    static bool processAuthorization() U_NO_EXPORT;
+   static void checkRequestForHeader() U_NO_EXPORT;
    static bool checkPath(uint32_t len) U_NO_EXPORT;
    static bool checkGetRequestIfModified() U_NO_EXPORT;
    static bool runDynamicPage(bool as_service) U_NO_EXPORT;

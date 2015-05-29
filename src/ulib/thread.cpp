@@ -103,8 +103,6 @@ UThread::~UThread()
    if (priv) stop();
 
    U_INTERNAL_DUMP("first = %p next = %p", first, next)
-
-   if (next) delete next;
 }
 
 pid_t UThread::getTID()

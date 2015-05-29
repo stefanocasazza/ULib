@@ -1149,7 +1149,7 @@ dmiss:
       }
 #endif
 
-   U_ClientImage_request = 0;
+   size_request = U_ClientImage_request = 0;
 
    if (body->isNull() == false) body->clear();
 

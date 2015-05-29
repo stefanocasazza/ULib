@@ -457,7 +457,7 @@ void UHTTP2::manageUpgrade()
    U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
 
    if (USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_CONNECTION_UPGRADE), UServer_Base::timeoutMS) ==
-                                                     U_CONSTANT_SIZE(    HTTP2_CONNECTION_UPGRADE) &&
+                                                    U_CONSTANT_SIZE(HTTP2_CONNECTION_UPGRADE) &&
        (U_http2_settings_len || U_http_method_type == HTTP_OPTIONS))
       {
       // maybe we have read more data than necessary...

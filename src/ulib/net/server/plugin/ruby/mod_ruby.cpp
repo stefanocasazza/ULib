@@ -414,7 +414,7 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
 
             // If the Body responds to to_path, it must return a String identifying the location of a file whose contents are
             // identical to that produced by calling each; this may be used by the server as an alternative, possibly more
-            // efficient way to transport the response.
+            // efficient way to transport the response
 
             result = rb_funcall(body, rb_intern("to_path"), 0);
 

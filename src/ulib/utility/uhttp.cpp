@@ -1611,7 +1611,7 @@ int UHTTP::handlerDataPending()
 
    if (U_http_version == '2')
       {
-      if (UHTTP2::manageSetting() == false) U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+      if ((UHTTP2::manageUpgrade(), UHTTP2::manageSetting()) == false) U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
       else
          {
          // TODO
@@ -2399,14 +2399,15 @@ end:
    U_RETURN(true);
 }
 
-bool UHTTP::checkRequestForHeader(const UString& request)
+U_NO_EXPORT void UHTTP::checkRequestForHeader()
 {
-   U_TRACE(0, "UHTTP::checkRequestForHeader(%V)", request.rep)
+   U_TRACE(0, "UHTTP::checkRequestForHeader()")
 
    U_INTERNAL_DUMP("u_line_terminator_len = %d", u_line_terminator_len)
 
-   U_INTERNAL_ASSERT(request)
+   U_INTERNAL_ASSERT(*UClientImage_Base::request)
    U_INTERNAL_ASSERT_MAJOR(U_http_info.szHeader, 0)
+   U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
    U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len, 2)
 
    // --------------------------------
@@ -2430,30 +2431,21 @@ bool UHTTP::checkRequestForHeader(const UString& request)
    // "Sec-WebSocket-Key: ..."
    // --------------------------------
 
-   bool result;
-   uint32_t end;
-
+   const char* pend;
+   const char* ptr = UClientImage_Base::request->data();
+   
    if (U_http_info.endHeader)
       {
-      result = true;
+      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
 
-      end = U_http_info.endHeader - 2;
+      pend = ptr + U_http_info.endHeader - 2;
       }
    else
       {
-      result = false;
-
-      end = request.size();
-
       U_ClientImage_data_missing = true;
+
+      *(char*)(pend = ptr + UClientImage_Base::request->size()) = '\r';
       }
-
-   U_INTERNAL_DUMP("result = %b end = %u", result, end)
-
-   const char* ptr  = request.data();
-   const char* pend = ptr + end;
-
-   *(char*)pend = '\r'; // NB: to avoid SIGSEGV...
 
    for (const char* pn = ptr + U_http_info.startHeader; pn < pend; pn += 2)
       {
@@ -2463,7 +2455,7 @@ bool UHTTP::checkRequestForHeader(const UString& request)
          {
          while (*pn != '\r') ++pn;
 
-         if (UNLIKELY(pn >= pend)) U_RETURN(false); // NB: we can have too much advanced...
+         if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
          }
       else
          {
@@ -2490,31 +2482,31 @@ bool UHTTP::checkRequestForHeader(const UString& request)
             {
             do { ++pn; } while (u__isename(*pn) == false);
 
-            if (UNLIKELY(pn >= pend)) U_RETURN(false); // NB: we can have too much advanced...
+            if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
 
             if (UNLIKELY(*(int16_t*)pn == U_MULTICHAR_CONSTANT16('\r','\n'))) goto next;
 
             goto advance;
             }
 
-         if (UNLIKELY(pn >= pend)) U_RETURN(false); // NB: we can have too much advanced...
-advance:
-         U_INTERNAL_ASSERT_EQUALS(*pn, ':')
+         if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
+
+advance: U_INTERNAL_ASSERT_EQUALS(*pn, ':')
 
          do { ++pn; } while (u__isblank(*pn));
 
-         if (UNLIKELY(pn >= pend)) U_RETURN(false); // NB: we can have too much advanced...
+         if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
 
          pos1 = pn-ptr;
 
          while (*pn != '\r') ++pn;
 
-         if (UNLIKELY(pn >= pend)) U_RETURN(false); // NB: we can have too much advanced...
+         if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
 
          pos2 = pn-ptr;
 
-         U_INTERNAL_DUMP("pos1 = %.20S", request.c_pointer(pos1))
-         U_INTERNAL_DUMP("pos2 = %.20S", request.c_pointer(pos2))
+         U_INTERNAL_DUMP("pos1 = %.20S", ptr+pos1)
+         U_INTERNAL_DUMP("pos2 = %.20S", ptr+pos2)
 
          switch (*(int32_t*)p)
             {
@@ -2551,8 +2543,6 @@ advance:
                   UHTTP2::upgrade_settings =  ptr+pos1;
 
                   U_INTERNAL_DUMP("HTTP2-Settings: = %.*S", U_http2_settings_len, UHTTP2::upgrade_settings)
-
-                  result = false;
 
                   goto next;
                   }
@@ -2894,44 +2884,26 @@ set_x_http_forward_for: U_http_info.ip_client =  ptr+pos1;
 next:
       U_INTERNAL_DUMP("char (after cr/newline) = %C", pn[2])
 
-      if (*(int32_t*)pn == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+      if (U_http_info.endHeader == 0 &&
+          *(int32_t*)pn == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
          {
-         if (U_http_info.endHeader == 0)
-            {
-            uint32_t pos = pn-ptr;
+         uint32_t pos = pn-ptr;
 
-            U_http_info.szHeader  = pos-U_http_info.startHeader;
-            U_http_info.endHeader = pos+4;
+         U_http_info.szHeader  = pos-U_http_info.startHeader;
+         U_http_info.endHeader = pos+4;
 
-            U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.20S", U_http_info.szHeader, U_http_info.endHeader, request.c_pointer(U_http_info.endHeader))
+         U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.20S", U_http_info.szHeader, U_http_info.endHeader, ptr+U_http_info.endHeader)
 
-#        ifndef U_HTTP2_DISABLE
-            if (U_http_version == '2')
-               {
-               UHTTP2::manageUpgrade();
+         U_INTERNAL_ASSERT(U_ClientImage_data_missing)
 
-               U_RETURN(false);
-               }
-#        endif
+#     ifndef U_HTTP2_DISABLE
+         if (U_http_version != '2')
+#     endif
+         U_ClientImage_data_missing = false;
 
-            result                     = true;
-            U_ClientImage_data_missing = false;
-            }
-
-         break;
+         return;
          }
       }
-
-   U_INTERNAL_DUMP("result = %b", result)
-
-   if (result)
-      {
-      if (U_http_method_type == HTTP_OPTIONS) U_RETURN(false);
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
 }
 
 // manage dynamic page request (CGI - C/ULib Servlet Page - RUBY - PHP)
@@ -2941,7 +2913,7 @@ U_NO_EXPORT bool UHTTP::runDynamicPage(bool as_service)
    U_TRACE(1, "UHTTP::runDynamicPage(%b)", as_service)
 
    U_INTERNAL_ASSERT_POINTER(file_data)
-   U_INTERNAL_ASSERT_EQUALS(isMethodEmpty(), false)
+   U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
 
    bool cgi_sh_script = false;
 
@@ -3158,12 +3130,12 @@ next:
 
    switch (U_http_info.nResponseCode)
       {
-      case HTTP_NOT_FOUND:      setNotFound();           break;
-      case HTTP_BAD_METHOD:     setBadMethod();          break;
-      case HTTP_BAD_REQUEST:    setBadRequest();         break;
-      case HTTP_UNAVAILABLE:    setServiceUnavailable(); break;
-      case HTTP_UNAUTHORIZED:   setUnAuthorized();       break;
-      default:                  setInternalError();      break;
+      case HTTP_NOT_FOUND:    setNotFound();           break;
+      case HTTP_BAD_METHOD:   setBadMethod();          break;
+      case HTTP_BAD_REQUEST:  setBadRequest();         break;
+      case HTTP_UNAVAILABLE:  setServiceUnavailable(); break;
+      case HTTP_UNAUTHORIZED: setUnAuthorized();       break;
+      default:                setInternalError();      break;
       }
 
 end:
@@ -3380,132 +3352,142 @@ int UHTTP::handlerREAD()
 
    U_ASSERT(UClientImage_Base::request_uri->empty())
 
+   const char* ptr;
+   bool result_read_body;
+
    // ------------------------------
    // U_http_info.uri
    // ....
    // U_http_info.if_modified_since;
    // ....
    // ------------------------------
-
    U_HTTP_INFO_RESET(0);
 
-   UClientImage_Base::size_request = 0;
-
-   const char* ptr;
-   int result = U_PLUGIN_HANDLER_ERROR;
-
-   if (readHeader()               &&
-       (U_http_info.szHeader == 0 ||
-        (isMethodEmpty() == false &&
-         checkRequestForHeader())))
+   if (readHeader() == false)
       {
-      U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
+      // -----------------------------------------------------
+      // HTTP/1.1 compliance:
+      // -----------------------------------------------------
+      // Sends 501 for request-method != (GET|POST|HEAD|...)
+      // Sends 505 for protocol != HTTP/1.[0-1]
+      // Sends 400 for broken Request-Line
+      // -----------------------------------------------------
 
-      U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
-
-#  ifndef U_SERVER_CAPTIVE_PORTAL
-      if ((U_http_info.clength == 0                               &&
-           (data_chunked = false, isPOSTorPUTorPATCH() == false)) ||
-          readBody())
-#  endif
+      if (U_http_method_type == 0)
          {
-         U_INTERNAL_DUMP("U_ClientImage_data_missing = %b", U_ClientImage_data_missing)
-
-         if (U_ClientImage_data_missing) goto dmiss;
-
-         result = U_PLUGIN_HANDLER_FINISHED;
-         }
-
-      UClientImage_Base::size_request = U_http_info.endHeader + U_http_info.clength;
-
-      if (UNLIKELY(result == U_PLUGIN_HANDLER_FINISHED))
-         {
-         U_INTERNAL_DUMP("U_http_host_len = %u U_HTTP_HOST = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
-
-         if (U_http_host_len)
+         if (UClientImage_Base::request->isText() == false)
             {
-            // NB: as protection from DNS rebinding attack web servers can reject HTTP requests with an unrecognized Host header...
+            UClientImage_Base::abortive_close();
 
-            if (UServer_Base::public_address &&
-                ((U_http_host_len - U_http_host_vlen) > (1 + 5) || // NB: ':' + 0-65536
-                 u_isHostName(U_HTTP_VHOST_TO_PARAM) == false))
-               {
-               result = U_PLUGIN_HANDLER_ERROR;
+            UClientImage_Base::setRequestProcessed();
 
-               U_SRV_LOG("WARNING: unrecognized header <Host> in request: %.*S", U_HTTP_VHOST_TO_TRACE);
-               }
+            U_RETURN(U_PLUGIN_HANDLER_ERROR);
             }
-         else if (U_http_version == '1') result = U_PLUGIN_HANDLER_ERROR; // HTTP 1.1 want header "Host: " ...
+
+         U_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
          }
+      else if (U_http_version == 0 &&
+               U_http_info.uri_len)
+         {
+         U_http_info.nResponseCode = HTTP_VERSION;
+         }
+      else
+         {
+         setBadRequest();
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
+
+      setResponse(0, 0);
+
+      UClientImage_Base::resetPipelineAndSetCloseConnection();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
-   if (result == U_PLUGIN_HANDLER_ERROR)
-      {
-      U_INTERNAL_DUMP("UServer_Base::csocket->isClosed() = %b UClientImage_Base::wbuffer(%u) = %V",
-                       UServer_Base::csocket->isClosed(),       UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
+   U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
 
-      if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   if (U_http_info.szHeader)
+      {
+      checkRequestForHeader();
 
       U_INTERNAL_DUMP("U_ClientImage_data_missing = %b", U_ClientImage_data_missing)
 
       if (U_ClientImage_data_missing)
          {
-dmiss:   UClientImage_Base::setRequestProcessed();
+         UClientImage_Base::setRequestProcessed();
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
+      }
 
-      UClientImage_Base::resetPipelineAndSetCloseConnection(); // NB: because we close the connection we don't need to process other request in pipeline...
+   if (U_http_method_type == HTTP_OPTIONS)
+      {
+      U_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
 
-      if (UClientImage_Base::wbuffer->empty())
-         {
-         // -----------------------------------------------------
-         // HTTP/1.1 compliance:
-         // -----------------------------------------------------
-         // Sends 501 for request-method != (GET|POST|HEAD|...)
-         // Sends 505 for protocol != HTTP/1.[0-1]
-         // Sends 400 for broken Request-Line
-         // Sends 411 for missing Content-Length on POST requests
-         // -----------------------------------------------------
-
-         if (U_http_method_type == 0)
-            {
-            if (UClientImage_Base::request->isText() == false)
-               {
-               UClientImage_Base::abortive_close();
-
-               UClientImage_Base::setRequestProcessed();
-
-               U_RETURN(U_PLUGIN_HANDLER_ERROR);
-               }
-
-            U_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
-            }
-         else if (U_http_version == 0 &&
-                  U_http_info.uri_len)
-            {
-            U_http_info.nResponseCode = HTTP_VERSION;
-            }
-         else if (U_http_method_type == HTTP_OPTIONS)
-            {
-            U_http_info.nResponseCode = HTTP_OPTIONS_RESPONSE;
-            }
-         else
-            {
-            setBadRequest();
-
-            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-            }
-
-         setResponse(0, 0);
-         }
+      setResponse(0, 0);
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
-   // check the HTTP message
+   U_INTERNAL_DUMP("U_http_host_len = %u U_HTTP_HOST = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
 
-   U_INTERNAL_ASSERT(*UClientImage_Base::request)
+   if (U_http_host_len == 0)
+      {
+      if (U_http_version == '1') // HTTP 1.1 want header "Host: " ...
+         {
+         setBadRequest();
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
+      }
+   else if (UServer_Base::public_address && // NB: as protection from DNS rebinding attack web servers can reject HTTP requests with an unrecognized Host header...
+            ((U_http_host_len - U_http_host_vlen) > (1 + 5) || // NB: ':' + 0-65536
+             u_isHostName(U_HTTP_VHOST_TO_PARAM) == false))
+      {
+      setBadRequest();
+
+      U_SRV_LOG("WARNING: unrecognized header <Host> in request: %.*S", U_HTTP_VHOST_TO_TRACE);
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
+
+   U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
+
+   UClientImage_Base::size_request = U_http_info.endHeader;
+
+   U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+
+   if (U_http_info.clength == 0 && (data_chunked = false, isPOSTorPUTorPATCH() == false)) goto next;
+
+#ifndef U_SERVER_CAPTIVE_PORTAL
+   result_read_body = readBody();
+
+   U_INTERNAL_DUMP("U_ClientImage_data_missing = %b", U_ClientImage_data_missing)
+
+   if (U_ClientImage_data_missing)
+      {
+      UClientImage_Base::setRequestProcessed();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
+
+   if (result_read_body) UClientImage_Base::size_request += U_http_info.clength;
+   else
+      {
+      U_INTERNAL_DUMP("UServer_Base::csocket->isClosed() = %b UClientImage_Base::wbuffer(%u) = %V",
+                       UServer_Base::csocket->isClosed(),     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
+
+      if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
+      if (UClientImage_Base::wbuffer->empty()) setBadRequest();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
+#endif
+
+next: // check the HTTP message
+
    U_ASSERT(UClientImage_Base::isRequestNotFound())
 
    // reset
@@ -3525,7 +3507,7 @@ dmiss:   UClientImage_Base::setRequestProcessed();
 
       (void) alias->append(*maintenance_mode_page);
 
-      goto next3;
+      goto set_uri;
       }
 
    // manage virtual host
@@ -3617,8 +3599,7 @@ dmiss:   UClientImage_Base::setRequestProcessed();
 
             (void) alias->append(U_HTTP_URI_TO_PARAM);
             }
-
-next3:
+set_uri:
          U_http_info.uri     = alias->data();
          U_http_info.uri_len = alias->size();
 
@@ -3644,6 +3625,10 @@ next3:
       if (file_data)
          {
          UClientImage_Base::setRequestInFileCache();
+
+#     ifdef U_LOG_ENABLE
+         if (UServer_Base::apache_like_log) prepareApacheLikeLog();
+#     endif
 
          goto file_in_cache;
          }
@@ -3685,7 +3670,7 @@ next3:
             (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)ptr, ptr + 1 + U_http_host_vlen, file->path_relativ_len);
             }
 
-         if (checkPath(file->path_relativ_len)) goto next4;
+         if (checkPath(file->path_relativ_len)) goto manage;
          }
 #    endif
 
@@ -3696,7 +3681,7 @@ next3:
          {
          file->path_relativ_len = u_url_decode(U_HTTP_URI_TO_PARAM, (unsigned char*)ptr);
 
-         if (checkPath(file->path_relativ_len)) goto next4;
+         if (checkPath(file->path_relativ_len)) goto manage;
          }
 #  endif
       }
@@ -3711,7 +3696,7 @@ next3:
       }
 #endif
 
-next4:
+manage:
 #ifdef U_LOG_ENABLE
    if (UServer_Base::apache_like_log) prepareApacheLikeLog();
 #endif
@@ -5681,7 +5666,7 @@ void UHTTP::setRedirectResponse(int mode, const UString& ext, const char* ptr_lo
                                       ? HTTP_NETWORK_AUTHENTICATION_REQUIRED
                                       : HTTP_MOVED_TEMP); // NB: firefox ask confirmation to user with response 307 (HTTP_TEMP_REDIR)...
 
-   UClientImage_Base::resetPipelineAndSetCloseConnection(); // NB: because we close the connection we don't need to process other request in pipeline... (ex. nodog)
+   UClientImage_Base::resetPipelineAndSetCloseConnection();
 
    UString tmp(100U + len_location);
 
@@ -8472,8 +8457,10 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len, UString& ext)
                           "%v" \
                           "\r\n", pathname->rep, ext.rep);
 
-         (void) readHeader(UServer_Base::csocket, request);
-         (void) checkRequestForHeader(request);
+         U_http_info.szHeader = (U_http_info.endHeader = request.size()) - (U_http_info.startHeader = U_CONSTANT_SIZE("GET / HTTP/1.1\r\n") + len - IS_DIR_SEPARATOR(*ptr));
+
+         U_INTERNAL_DUMP("U_http_info.szHeader = %u U_http_info.startHeader(%u) = %.20S U_http_info.endHeader(%u) = %.20S",
+                          U_http_info.szHeader,     U_http_info.startHeader, request.c_pointer(U_http_info.startHeader), U_http_info.endHeader, request.c_pointer(U_http_info.endHeader))
 
 #     ifdef DEBUG
          ext.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
