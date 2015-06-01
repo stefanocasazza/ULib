@@ -1,33 +1,25 @@
-<!doctype html>
-<html>
+<!DOCTYPE html>
+<html lang="en-us">
   <head>
-    <meta charset="utf-8">
-    <meta http-equiv="X-UA-Compatible" content="chrome=1">
+    <meta charset="UTF-8">
     <title>Ulib by stefanocasazza</title>
-
-    <link rel="stylesheet" href="stylesheets/styles.css">
-    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
-    <script src="javascripts/scale.fix.js"></script>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-
-    <!--[if lt IE 9]>
-    <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
-    <![endif]-->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='http://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
   </head>
   <body>
-    <div class="wrapper">
-      <header>
-        <h1>Ulib</h1>
-        <p>C++ application development framework, to help developers create and deploy applications very fast and more simple</p>
-        <p class="view"><a href="https://github.com/stefanocasazza/ULib">View the Project on GitHub <small>stefanocasazza/ULib</small></a></p>
-        <ul>
-          <li><a href="https://github.com/stefanocasazza/ULib/zipball/master">Download <strong>ZIP File</strong></a></li>
-          <li><a href="https://github.com/stefanocasazza/ULib/tarball/master">Download <strong>TAR Ball</strong></a></li>
-          <li><a href="https://github.com/stefanocasazza/ULib">View On <strong>GitHub</strong></a></li>
-        </ul>
-      </header>
-      <section>
-        <h1>
+    <section class="page-header">
+      <h1 class="project-name">Ulib</h1>
+      <h2 class="project-tagline">C++ application development framework, to help developers create and deploy applications very fast and more simple</h2>
+      <a href="https://github.com/stefanocasazza/ULib" class="btn">View on GitHub</a>
+      <a href="https://github.com/stefanocasazza/ULib/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/stefanocasazza/ULib/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
+
+    <section class="main-content">
+      <h1>
 <a id="ulib---c-library" class="anchor" href="#ulib---c-library" aria-hidden="true"><span class="octicon octicon-link"></span></a>ULib - C++ library</h1>
 
 <p>Travis CI: <a href="https://travis-ci.org/stefanocasazza/ULib"><img src="https://travis-ci.org/stefanocasazza/ULib.svg?branch=master" alt="Build Status"></a>
@@ -45,7 +37,7 @@ Coverity Scan: <a href="https://scan.coverity.com/projects/3322"><img src="https
 <p>The current version offers the following features :</p>
 
 <ul>
-<li>HTTP/1.0 and 1.1 protocols supported.</li>
+<li>HTTP/1.0 and 1.1 protocols supported and initial implementations of HTTP/2.</li>
 <li>Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.</li>
 <li>Browser cache management (headers: If-Modified-Since/Last-modified).</li>
 <li>Chunk-encoding transfers support.</li>
@@ -71,9 +63,11 @@ Coverity Scan: <a href="https://scan.coverity.com/projects/3322"><img src="https
 <li>Support for minify HTML CGI output by wrapping <a href="http://code.google.com/speed/page-speed/download.html#pagespeed-sdk">google page speed SDK</a>.</li>
 <li>Support for running JavaScript code by wrapping <a href="http://code.google.com/apis/v8/intro.html">google V8 JavaScript Engine</a>.</li>
 <li>
-<a href="http://www.phpmotionwiz.com/what-is-pseudo-streaming">HTTP pseudo-streaming</a> for FLV video managed transparently.</li>
+<a href="http://en.wikipedia.org/wiki/Progressive_download">HTTP pseudo-streaming</a> for FLV video managed transparently.</li>
 <li>
 <a href="http://bellard.org/tcc/">C Servlet Support</a> with libtcc (if available) as a backend for dynamic code generation (experimental).</li>
+<li>Support for running Ruby on Rails applications natively (experimental).</li>
+<li>Support for running natively PHP applications whith a php (embedded) library (experimental).</li>
 <li>Preforking mode to improve concurrency with dedicated process for long-time request.</li>
 <li>Support for Windows (without preforking).</li>
 <li>Customizable builds (you can remove unneeded functionality).</li>
@@ -91,21 +85,21 @@ Coverity Scan: <a href="https://scan.coverity.com/projects/3322"><img src="https
 <li>
 <code>mod_ssi</code> : <a href="http://en.wikipedia.org/wiki/Server_Side_Include">Server Side Includes</a> support with enhanced #set, direct include and #exec servlet (C/ULib Servlet Page).</li>
 <li>
-<code>mod_nocat</code> : <a href="http://nocat.net/">captive portal</a> implementation.</li>
+<code>mod_nocat</code> : <a href="http://dev.wifidog.org/wiki/NoCat">captive portal</a> implementation.</li>
 <li>
 <code>mod_proxy</code> : multi-features reverse proxy with websocket support.</li>
 <li>
-<code>mod_tsa</code> : server side <a href="http://www.opentsa.org">Time Stamp</a> support.</li>
+<code>mod_tsa</code> : server side <a href="http://sourceforge.net/projects/timestamping/">Time Stamp</a> support.</li>
 <li>
-<code>mod_soap</code> : generic <a href="http://java.sun.com/developer/technicalArticles/xml/webservices">SOAP</a> server services support.</li>
+<code>mod_soap</code> : generic <a href="http://en.wikipedia.org/wiki/SOAP">SOAP</a> server services support.</li>
 <li>
 <code>mod_fcgi</code> : third-party applications support thru <a href="http://www.fastcgi.com/drupal">FastCGI</a> interface.</li>
 <li>
-<code>mod_scgi</code> : module that implements the client side of the <a href="http://www.mems-exchange.org/software/scgi">SCGI</a> protocol (experimental).</li>
+<code>mod_scgi</code> : module that implements the client side of the <a href="http://en.wikipedia.org/wiki/Simple_Common_Gateway_Interface">SCGI</a> protocol (experimental).</li>
 <li>
 <code>mod_shib</code> : <a href="http://shibboleth.internet2.edu">web single sign-on support</a> (experimental).</li>
 <li>
-<code>mod_geoip</code> : <a href="http://www.maxmind.com/geoip/api/c.shtml">geolocation support</a> (experimental).</li>
+<code>mod_geoip</code> : <a href="http://en.wikipedia.org/wiki/Geolocation">geolocation support</a> (experimental).</li>
 <li>
 <code>mod_stream</code> : simple streaming support (experimental).</li>
 <li>
@@ -116,7 +110,7 @@ Coverity Scan: <a href="https://scan.coverity.com/projects/3322"><img src="https
 
 <ul>
 <li>
-<a href="http://cleverlogic.net/articles/kochure">HTTP Session Hijacking</a> mitigation.</li>
+<a href="http://en.wikipedia.org/wiki/Session_hijacking">HTTP Session Hijacking</a> mitigation.</li>
 <li>
 <a href="http://lwn.net/Articles/474365/">Algorithmic Complexity Attacks</a> prevention by randomizing hash seed.</li>
 <li>
@@ -131,22 +125,24 @@ Coverity Scan: <a href="https://scan.coverity.com/projects/3322"><img src="https
 
 <p>It is the main software component of <a href="http://wifi-aaa.comune.fi.it/login?mac=00%3A00%3A00%3A00%3A00%3A00&amp;ip=172.22.11.124&amp;redirect=http%3A//pasta.dianxinos.com/api/data&amp;gateway=159.213.248.230%3A5280&amp;timeout=0&amp;token=1810300063&amp;ap=05@159.213.248.230">city of Florence wireless network</a></p>
 
-<p>We're hoping to get included in <a href="http://techempower.com/">TechEmpower's</a> <a href="http://www.techempower.com/benchmarks/">next round of benchmarks</a>. A pull request has been already issued.</p>
+<p>userver application server is in the <a href="http://www.techempower.com/benchmarks">10th round of TechEmpower's web framework benchmarks</a>. This independent work tests a large number of frameworks and platforms against a set of tests common to web applications, such as JSON serialization, database queries and templating.</p>
 
-<p>ULib is normally built and installed as a set of shared object libraries and header files. These libraries and headers are installed using directories selected through a "configure" script that has been prepared with automake and autoconf. As such, they should build and install similarly to and in a manner compatible and consistent with most other GNU software. ULib is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details. You should have received a copy of the GNU General Public License along with this program; if not, write to the Free Software Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA</p>
+<p>ULib is normally built and installed as a set of shared object libraries and header files. These libraries and headers are installed using directories selected through a "configure" script that has been prepared with automake and autoconf. As such, they should build and install similarly to and in a manner compatible and consistent with most other GNU software. ULib is free software; you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation; either version 2 of the License, or (at your option) any later version. This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. ULib is Free Software under the LGPL</p>
 
 <p>Comments and suggestions are welcome.</p>
 
 <pre><code>stefano casazza &lt;stefano.casazza@gmail.com&gt;
 </code></pre>
-      </section>
-    </div>
-    <footer>
-      <p>Project maintained by <a href="https://github.com/stefanocasazza">stefanocasazza</a></p>
-      <p>Hosted on GitHub Pages &mdash; Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
-    </footer>
-    <!--[if !IE]><script>fixScale(document);</script><![endif]-->
-              <script type="text/javascript">
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/stefanocasazza/ULib">Ulib</a> is maintained by <a href="https://github.com/stefanocasazza">stefanocasazza</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+            <script type="text/javascript">
             var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
             document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
           </script>
@@ -159,3 +155,4 @@ Coverity Scan: <a href="https://scan.coverity.com/projects/3322"><img src="https
 
   </body>
 </html>
+
