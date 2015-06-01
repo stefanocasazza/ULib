@@ -567,6 +567,97 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
    U_RETURN(_size);
 }
 
+uint32_t UValue::emitString(const unsigned char* inptr, uint32_t len, char* out)
+{
+   U_TRACE(0, "UValue::emitString(%.*S,%u,%p)", len, inptr, len, out)
+
+   U_INTERNAL_ASSERT_POINTER(out)
+   U_INTERNAL_ASSERT_POINTER(inptr)
+
+   const unsigned char* restrict inend  = inptr + len;
+                  char* restrict outptr = out;
+
+   *outptr++ = '"';
+
+   while (inptr < inend)
+      {
+      unsigned char c = *inptr++;
+
+      if (c < 32)
+         {
+         switch (c)
+            {
+            case '\b': // 0x08
+               {
+               *outptr++ = '\\';
+               *outptr++ = 'b';
+
+               continue;
+               }
+
+            case '\t': // 0x09
+               {
+               *outptr++ = '\\';
+               *outptr++ = 't';
+
+               continue;
+               }
+
+            case '\n': // 0x0A
+               {
+               *outptr++ = '\\';
+               *outptr++ = 'n';
+
+               continue;
+               }
+
+            case '\f': // 0x0C
+               {
+               *outptr++ = '\\';
+               *outptr++ = 'f';
+
+               continue;
+               }
+
+            case '\r': // 0x0D
+               {
+               *outptr++ = '\\';
+               *outptr++ = 'r';
+
+               continue;
+               }
+
+            default: goto next;
+            }
+         }
+      else if (c <= 126)
+         {
+         if (c == '"' || // 0x22
+             c == '\\')  // 0x5C
+            {
+            *outptr++ = '\\';
+            }
+
+         *outptr++ = c;
+
+         continue;
+         }
+
+next: // \u four-hex-digits (unicode char)
+
+      *(int32_t*)outptr = U_MULTICHAR_CONSTANT32('\\','u','0','0');
+
+      outptr[4] = u_hex_upper[((c >> 4) & 0x0F)];
+      outptr[5] = u_hex_upper[( c       & 0x0F)];
+
+      outptr += 6;
+      }
+
+   *outptr++ = '"';
+
+   U_RETURN(outptr - out);
+}
+
 void UValue::stringify(UString& result, UValue& _value)
 {
    U_TRACE(0, "UValue::stringify(%V,%p)", result.rep, &_value)
@@ -601,7 +692,6 @@ void UValue::stringify(UString& result, UValue& _value)
    const char* ch;
    char buffer[32];
    UString* pstring;
-   const char* keyptr;
    const char* last_nonzero;
    uint32_t n, pos, sz, keysz;
 
@@ -703,7 +793,7 @@ next:
             continue; 
             }
 
-         if (c == '.') n = last_nonzero - buffer + 2; // Truncate zeroes to save bytes in output, but keep one)
+         if (c == '.') n = last_nonzero - buffer + 2; // Truncate zeroes to save bytes in output, but keep one
 
          break;
          }
@@ -716,9 +806,11 @@ next:
 case_string:
    pstring = _value.getString();
 
-   (void) result.reserve(result.size() + pstring->size() * 6);
+   (void) result.reserve((sz = result.size()) + (keysz = pstring->size()) * 6);
 
-   UEscape::encode(*pstring, result, true);
+   presult = result.c_pointer(sz);
+
+   result.rep->_length = sz + emitString((const unsigned char*)pstring->data(), keysz, presult);
 
    return;
 
@@ -743,14 +835,9 @@ case_object:
 
    for (UValue* member = _value.children.head; member; member = member->next)
       {
-      sz = result.size();
-
       U_INTERNAL_ASSERT_POINTER(member->key)
 
-      keysz  = member->key->size();
-      keyptr = member->key->data();
-
-      (void) result.reserve(sz + keysz * 6);
+      (void) result.reserve((sz = result.size()) + (keysz = member->key->size()) * 6);
 
       presult = result.c_pointer(sz);
 
@@ -762,11 +849,11 @@ case_object:
          *presult++ = ',';
          }
 
-      pos = u_escape_encode((const unsigned char*)keyptr, keysz, presult, result.space(), true);
+      pos = emitString((const unsigned char*)member->key->data(), keysz, presult);
 
       presult[pos] = ':';
 
-      result.size_adjust(sz + 1 + pos);
+      result.rep->_length = sz + pos + 1;
 
       stringify(result, *member);
       }

@@ -319,8 +319,10 @@ extern U_EXPORT int32_t u_printf_string_max_length;
 
 /* NB: u_printf(), u_vsnprintf and u_snprintf conflit with /usr/include/unicode/urename.h */
 
-U_EXPORT void     u__printf(int fd,                                         const char* restrict format, ...);
-U_EXPORT void     u_internal_print(bool abrt,                               const char* restrict format, ...);
+U_EXPORT void u__printf(int fd,           const char* restrict format, ...);
+U_EXPORT void u_internal_print(bool abrt, const char* restrict format, ...);
+
+U_EXPORT uint32_t u_sprintc(   char* restrict buffer, unsigned char c);
 U_EXPORT uint32_t u__snprintf( char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
 U_EXPORT uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
 

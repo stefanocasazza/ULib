@@ -10008,7 +10008,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UHTTP::UFileCacheData& d)
                 d.mime_index == U_jpg ||
                 d.mime_index == U_ico
                      ? u_base64_encode((const unsigned char*)U_STRING_TO_PARAM(str), (unsigned char*)buffer)
-                     : u_escape_encode((const unsigned char*)U_STRING_TO_PARAM(str),                 buffer, sizeof(buffer), false));
+                     : u_escape_encode((const unsigned char*)U_STRING_TO_PARAM(str),                 buffer, sizeof(buffer)));
 
          os.put('\n');
          os.write(buffer, pos);
@@ -10016,7 +10016,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UHTTP::UFileCacheData& d)
 
          str = d.array->at(1); // header
 
-         pos = u_escape_encode((const unsigned char*)U_STRING_TO_PARAM(str), buffer, sizeof(buffer), false);
+         pos = u_escape_encode((const unsigned char*)U_STRING_TO_PARAM(str), buffer, sizeof(buffer));
 
          os.put('\n');
          os.write(buffer, pos);
@@ -10035,7 +10035,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UHTTP::UFileCacheData& d)
 
             str = d.array->at(3); // gzip(header)
 
-            pos = u_escape_encode((const unsigned char*)U_STRING_TO_PARAM(str), buffer, sizeof(buffer), false);
+            pos = u_escape_encode((const unsigned char*)U_STRING_TO_PARAM(str), buffer, sizeof(buffer));
 
             os.put('\n');
             os.write(buffer, pos);

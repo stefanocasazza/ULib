@@ -99,7 +99,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UXMLElement& e)
       (void) os.write(U_CONSTANT_TO_PARAM(" VALUE = "));
 
       char buffer[4096];
-      uint32_t len = u_escape_encode((const unsigned char*)U_STRING_TO_PARAM(e.value), buffer, sizeof(buffer), false);
+      uint32_t len = u_escape_encode((const unsigned char*)U_STRING_TO_PARAM(e.value), buffer, sizeof(buffer));
 
       (void) os.write(buffer, len);
       }

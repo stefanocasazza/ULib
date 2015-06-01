@@ -77,6 +77,7 @@ class UDES3;
 class UHTTP;
 class UValue;
 class UCache;
+class UValue;
 class UString;
 class UBase64;
 class UEscape;
@@ -612,6 +613,7 @@ private:
    friend class UDES3;
    friend class UHTTP;
    friend class UCache;
+   friend class UValue;
    friend class UString;
    friend class UBase64;
    friend class UEscape;

@@ -1532,10 +1532,11 @@ void UNoCatPlugIn::addPeerInfo(time_t logout)
 
    char* ptr;
    char buffer[64];
-   UString info = (*vinfo_data)[U_peer_index_AUTH];
+   UString info = (*vinfo_data)[U_peer_index_AUTH],
+            str = UStringExt::substitute(peer->mac, ':', U_CONSTANT_TO_PARAM("%3A"));
    uint32_t sz  = info.size();
 
-   U_INTERNAL_DUMP("U_peer_index_AUTH = %u info = %V", U_peer_index_AUTH, info.rep)
+   U_INTERNAL_DUMP("U_peer_index_AUTH = %u info = %V peer->ip = %V", U_peer_index_AUTH, info.rep, peer->ip.rep)
 
    // -----------------------------------------------------------------------------------------------------------------------------------------
    // $1 -> mac
@@ -1552,10 +1553,10 @@ void UNoCatPlugIn::addPeerInfo(time_t logout)
 
    (void) info.reserve(sz + 200);
 
-   info.snprintf_add("%sMac=%.*s&ip=%v&", (sz ? "&" : ""), u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->mac), (unsigned char*)buffer), buffer, peer->ip.rep);
+   info.snprintf_add("%sMac=%v&ip=%v&", (sz ? "&" : ""), str.rep, peer->ip.rep);
 
    info.snprintf_add("gateway=%.*s&ap=%v%%40%v&User=",
-                      u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->gateway), (unsigned char*)buffer), buffer, peer->label.rep, UServer_Base::IP_address);
+                      u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->gateway), (unsigned char*)buffer), buffer, peer->label.rep, UServer_Base::IP_address->rep);
 
    info.snprintf_add("%.*s&logout=", u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->user), (unsigned char*)buffer), buffer);
 
@@ -1625,7 +1626,7 @@ bool UModNoCatPeer::checkPeerInfo(bool btraffic)
             }
          }
 
-      U_INTERNAL_DUMP("UNoCatPlugIn::peer_present_in_arp_cache = %V peer->ifname = %V", UNoCatPlugIn::peer_present_in_arp_cache, ifname.rep)
+      U_INTERNAL_DUMP("UNoCatPlugIn::peer_present_in_arp_cache = %V peer->ifname = %V", UNoCatPlugIn::peer_present_in_arp_cache->rep, ifname.rep)
 
       if (ctraffic == 0) time_no_traffic += (u_now->tv_sec - ctime);
 
@@ -2658,7 +2659,7 @@ google:  (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
             {
             UString printable(data.size() * 4);
 
-            UEscape::encode(data, printable, false);
+            UEscape::encode(data, printable);
 
             ULog::log("%sauth message: %v", UServer_Base::mod_name[0], printable.rep);
             }

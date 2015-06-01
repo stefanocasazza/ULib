@@ -1248,6 +1248,129 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
       }
 }
 
+/**
+ * --------------------------------------------------------------------
+ * Encode escape sequences into a buffer, the following are recognized:
+ * --------------------------------------------------------------------
+ *  \a  BEL                 (\007  7  7)
+ *  \b  BS  backspace       (\010  8  8) 
+ *  \t  HT  horizontal tab  (\011  9  9)
+ *  \n  LF  newline         (\012 10  A) 
+ *  \v  VT  vertical tab    (\013 11  B)
+ *  \f  FF  formfeed        (\014 12  C) 
+ *  \r  CR  carriage return (\015 13  D)
+ *  \e  ESC character       (\033 27 1B)
+ *
+ *  \DDD number formed of 1-3 octal digits
+ * --------------------------------------------------------------------
+ */
+
+uint32_t u_sprintc(char* restrict out, unsigned char c)
+{
+   char* restrict cp;
+
+   U_INTERNAL_TRACE("u_sprintc(%d)", c)
+
+   if (c < 32)
+      {
+      *out++ = '\\';
+
+      switch (c)
+         {
+         case '\a': // 0x07
+            {
+            *out = 'a';
+
+            return 2;
+            }
+
+         case '\b': // 0x08
+            {
+            *out = 'b';
+
+            return 2;
+            }
+
+         case '\t': // 0x09
+            {
+            *out = 't';
+
+            return 2;
+            }
+
+         case '\n': // 0x0A
+            {
+            *out = 'n';
+
+            return 2;
+            }
+
+         case '\v': // 0x0B
+            {
+            *out = 'v';
+
+            return 2;
+            }
+
+         case '\f': // 0x0C
+            {
+            *out = 'f';
+
+            return 2;
+            }
+
+         case '\r': // 0x0D
+            {
+            *out = 'r';
+
+            return 2;
+            }
+
+         case '\033': // 0x1B
+            {
+            *out = 'e';
+
+            return 2;
+            }
+
+         default: goto next;
+         }
+      }
+
+   if (c == '"' || // 0x22
+       c == '\\')  // 0x5C
+      {
+      *out++ = '\\';
+      *out   = c;
+
+      return 2;
+      }
+
+   if (c > 126)
+      {
+      *out++ = '\\';
+
+      /* \DDD number formed of 1-3 octal digits */
+next:
+      cp = out + 3;
+
+      do {
+         *--cp = (c & 7) + '0';
+
+         c >>= 3;
+         }
+      while (c);
+
+      while (--cp >= out) *cp = '0';
+
+      return 4;
+      }
+
+   *out = c;
+
+   return 1;
+}
+
 #ifndef _MSWINDOWS_
 static const char* tab_color[] = { U_RESET_STR,
    U_BLACK_STR,       U_RED_STR,           U_GREEN_STR,       U_YELLOW_STR,

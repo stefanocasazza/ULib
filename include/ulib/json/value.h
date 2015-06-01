@@ -495,6 +495,7 @@ protected:
 private:
    static void appendNode(UValue* parent, UValue* child);
    static bool readValue(UTokenizer& tok, UValue* value) U_NO_EXPORT;
+   static uint32_t emitString(const unsigned char* ptr, uint32_t sz, char* presult) U_NO_EXPORT;
 
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
