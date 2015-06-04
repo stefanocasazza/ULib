@@ -64,10 +64,10 @@ uint32_t u_escape_encode(const unsigned char* restrict inptr, uint32_t len, char
  *  \r  CR  carriage return (\015 13  D)
  *  \e  ESC character       (\033 27 1B)
  *
- *  \u    four-hex-digits (unicode char)
- *  \^C   C = any letter (Control code)
- *  \xDD  number formed of 1-2 hex   digits
- *  \DDD  number formed of 1-3 octal digits
+ *  \u   four hex digits (unicode char)
+ *  \^C  C = any letter (Control code)
+ *  \xDD number formed of 1-2 hex   digits
+ *  \DDD number formed of 1-3 octal digits
  * ---------------------------------------------------------------------------
  */
 
@@ -105,20 +105,6 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
          if (p == 0) break;
          }
 
-      /* \u four-hex-digits (unicode char) */
-
-      if ( p[1] == 'u' &&
-          (p[2] != '0' ||
-           p[3] != '0'))
-         {
-         u__memcpy(outptr, p, 6, __PRETTY_FUNCTION__);
-
-         inptr   = p+6;
-         outptr += 6;
-
-         continue;
-         }
-
            inptr = p+1;
       c = *inptr++;
 
@@ -139,7 +125,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
 
          case '^': c = u__toupper(*inptr++) - '@'; break;
 
-         /* check sequenza escape esadecimale */
+         /* check hexadecimal escape sequence */
 
          case 'x':
             {
@@ -151,7 +137,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
             }
          break;
 
-         /* check sequenza escape ottale */
+         /* check octal escape sequence */
 
          case '0': case '1': case '2': case '3':
          case '4': case '5': case '6': case '7':
@@ -166,27 +152,86 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
             }
          break;
 
-         /* \u four-hex-digits (unicode char) */
+         /* \u four hex digits (unicode char) */
 
          case 'u':
             {
-            U_INTERNAL_ASSERT_EQUALS(inptr[0], '0')
-            U_INTERNAL_ASSERT_EQUALS(inptr[1], '0')
-
-            inptr += 2;
-
             U_INTERNAL_ASSERT(u__isxdigit(inptr[0]))
             U_INTERNAL_ASSERT(u__isxdigit(inptr[1]))
+            U_INTERNAL_ASSERT(u__isxdigit(inptr[2]))
+            U_INTERNAL_ASSERT(u__isxdigit(inptr[3]))
 
-            c = ((u__hexc2int(inptr[0]) & 0x0F) << 4) |
-                 (u__hexc2int(inptr[1]) & 0x0F);
+            if (inptr[0] != '0' ||
+                inptr[1] != '0')
+               {
+               c = u_hex2int(inptr, 4);
+                             inptr += 4;
 
-            inptr += 2;
+               U_INTERNAL_PRINT("c = %d", c)
+
+               U_INTERNAL_ASSERT(c > 0x7F) /* U+0000..U+007F */
+
+               if (c >= 0xD800      &&
+                   c <= 0xDFFF      &&
+                   inptr[0] == '\\' &&
+                   inptr[1] == 'u')
+                  {
+                  /* Handle UTF-16 surrogate pair */
+
+                  int lc = u_hex2int(inptr+2, 4);
+
+                  U_INTERNAL_PRINT("lc = %d", lc)
+
+                  if (lc >= 0xDC00 &&
+                      lc <= 0xDFFF)
+                     {
+                     inptr += 6;
+
+                     c = 0x10000 + (((c & 0x3FF) << 10) | (lc & 0x3FF));
+                     }
+                  }
+
+               U_INTERNAL_PRINT("c = %d", c)
+
+               U_INTERNAL_ASSERT(c > 0x7F) /* U+0000..U+007F */
+
+               if (c <= 0x7FF) /* U+0080..U+07FF */
+                  {
+                  *outptr++ = (unsigned char)(0xC0 |  c >> 6);
+                  *outptr++ = (unsigned char)(0x80 | (c & 0x3F));
+                  }
+               else if (c <= 0xFFFF) /* U+0800..U+FFFF */
+                  {
+                  *outptr++ = (unsigned char)(0xE0 |  c >> 12);
+                  *outptr++ = (unsigned char)(0x80 | (c >> 6 & 0x3F));
+                  *outptr++ = (unsigned char)(0x80 | (c      & 0x3F));
+                  }
+               else /* U+10000..U+10FFFF */
+                  {
+                  U_INTERNAL_ASSERT(c <= 0x10FFFF)
+
+                  *outptr++ = (unsigned char)(0xF0 |  c >> 18);
+                  *outptr++ = (unsigned char)(0x80 | (c >> 12 & 0x3F));
+                  *outptr++ = (unsigned char)(0x80 | (c >>  6 & 0x3F));
+                  *outptr++ = (unsigned char)(0x80 | (c       & 0x3F));
+                  }
+
+               continue;
+               }
+
+            c = ((u__hexc2int(inptr[2]) & 0x0F) << 4) |
+                 (u__hexc2int(inptr[3]) & 0x0F);
+
+            U_INTERNAL_ASSERT(c <= 0x7F) /* U+0000..U+007F */
+
+            U_INTERNAL_PRINT("c = %d", c)
+
+            inptr += 4;
             }
          break;
          }
 
-      *outptr++ = c;
+      *outptr++ = (unsigned char)c;
       }
 
    *outptr = 0;

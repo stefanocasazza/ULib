@@ -1,25 +1,4 @@
-m4_divert(-1)                                                       -*- C -*-
-
-# Yacc compatible skeleton for Bison
-# Copyright (C) 1984, 1989, 1990, 2000, 2001, 2002
-# Free Software Foundation, Inc.
-
-# This program is free software; you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation; either version 2 of the License, or
-# (at your option) any later version.
-
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-
-# You should have received a copy of the GNU General Public License
-# along with this program; if not, write to the Free Software
-# Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA
-# 02111-1307  USA
-
-
+m4_divert(-1) -*- C -*-
 
 ## ---------------- ##
 ## Default values.  ##
@@ -29,20 +8,15 @@ m4_divert(-1)                                                       -*- C -*-
 m4_define_default([b4_stack_depth_max], [10000])
 m4_define_default([b4_stack_depth_init],  [200])
 
-
 ## ------------------------ ##
 ## Pure/impure interfaces.  ##
 ## ------------------------ ##
-
 
 # b4_pure_if(IF-TRUE, IF-FALSE)
 # -----------------------------
 # Expand IF-TRUE, if %pure-parser and %parse-param, IF-FALSE otherwise.
 m4_define([b4_Pure_if],
-[b4_pure_if([m4_ifset([b4_parse_param],
-                      [$1], [$2])],
-            [$2])])
-
+[b4_pure_if([m4_ifset([b4_parse_param], [$1], [$2])], [$2])])
 
 # b4_yyerror_args
 # ---------------
@@ -50,7 +24,6 @@ m4_define([b4_Pure_if],
 m4_define([b4_yyerror_args],
 [b4_Pure_if([b4_location_if([&yylloc, ])])dnl
 m4_ifset([b4_parse_param], [b4_c_args(b4_parse_param), ])])
-
 
 # b4_lex_param
 # ------------
@@ -60,8 +33,6 @@ m4_define([b4_lex_param],
 m4_dquote(b4_pure_if([[[[YYSTYPE *]], [[&yylval]]][]dnl
 b4_location_if([, [[YYLTYPE *], [&yylloc]]])])dnl
 m4_ifdef([b4_lex_param], [, ]b4_lex_param)))
-
-
 
 ## ------------ ##
 ## Data Types.  ##
@@ -83,18 +54,15 @@ m4_define([b4_int_type],
 
  	                                       [int])])
 
-
 ## ----------------- ##
 ## Semantic Values.  ##
 ## ----------------- ##
-
 
 # b4_lhs_value([TYPE])
 # --------------------
 # Expansion of $<TYPE>$.
 m4_define([b4_lhs_value],
 [yyval[]m4_ifval([$1], [.$1])])
-
 
 # b4_rhs_value(RULE-LENGTH, NUM, [TYPE])
 # --------------------------------------
@@ -103,8 +71,6 @@ m4_define([b4_lhs_value],
 m4_define([b4_rhs_value],
 [yyvsp@{m4_eval([$2 - $1])@}m4_ifval([$3], [.$3])])
 
-
-
 ## ----------- ##
 ## Locations.  ##
 ## ----------- ##
@@ -112,18 +78,14 @@ m4_define([b4_rhs_value],
 # b4_lhs_location()
 # -----------------
 # Expansion of @$.
-m4_define([b4_lhs_location],
-[yyloc])
+m4_define([b4_lhs_location], [yyloc])
 
 
 # b4_rhs_location(RULE-LENGTH, NUM)
 # ---------------------------------
 # Expansion of @NUM, where the current rule has RULE-LENGTH symbols
 # on RHS.
-m4_define([b4_rhs_location],
-[yylsp@{m4_eval([$2 - $1])@}])
-
-
+m4_define([b4_rhs_location], [yylsp@{m4_eval([$2 - $1])@}])
 
 ## --------------------------------------------------------- ##
 ## Defining symbol actions, e.g., printers and destructors.  ##

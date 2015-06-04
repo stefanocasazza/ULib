@@ -583,54 +583,38 @@ uint32_t UValue::emitString(const unsigned char* inptr, uint32_t len, char* out)
       {
       unsigned char c = *inptr++;
 
-      if (c < 32)
+      U_INTERNAL_DUMP("c = %u", c)
+
+      if (c < 0x1F)
          {
-         switch (c)
+                             *outptr++ = '\\';
+              if (c == '\b') *outptr++ = 'b'; // 0x08
+         else if (c == '\t') *outptr++ = 't'; // 0x09
+         else if (c == '\n') *outptr++ = 'n'; // 0x0A
+         else if (c == '\f') *outptr++ = 'f'; // 0x0C
+         else if (c == '\r') *outptr++ = 'r'; // 0x0D
+
+         else // \u four hex digits (unicode char)
             {
-            case '\b': // 0x08
-               {
-               *outptr++ = '\\';
-               *outptr++ = 'b';
-
-               continue;
-               }
-
-            case '\t': // 0x09
-               {
-               *outptr++ = '\\';
-               *outptr++ = 't';
-
-               continue;
-               }
-
-            case '\n': // 0x0A
-               {
-               *outptr++ = '\\';
-               *outptr++ = 'n';
-
-               continue;
-               }
-
-            case '\f': // 0x0C
-               {
-               *outptr++ = '\\';
-               *outptr++ = 'f';
-
-               continue;
-               }
-
-            case '\r': // 0x0D
-               {
-               *outptr++ = '\\';
-               *outptr++ = 'r';
-
-               continue;
-               }
-
-            default: goto next;
+            *outptr++ = 'u';
+            *outptr++ = '0';
+            *outptr++ = '0';
+            *outptr++ = u_hex_upper[((c >> 4) & 0x0F)];
+            *outptr++ = u_hex_upper[( c       & 0x0F)];
             }
+
+         continue;
          }
-      else if (c <= 126)
+
+      /**
+       * This syntax is given in RFC3629, which is the same as that given in The Unicode Standard, Version 6.0. It has the following properties:
+       *
+       * All codepoints U+0000..U+10FFFF may be encoded, except for U+D800..U+DFFF, which are reserved for UTF-16 surrogate pair encoding.
+       * UTF-8 byte sequences longer than 4 bytes are not permitted, as they exceed the range of Unicode.
+       * The sixty-six Unicode "non-characters" are permitted (namely, U+FDD0..U+FDEF, U+xxFFFE, and U+xxFFFF)
+       */
+
+      if (c <= 0x7F) // 00..7F
          {
          if (c == '"' || // 0x22
              c == '\\')  // 0x5C
@@ -643,14 +627,54 @@ uint32_t UValue::emitString(const unsigned char* inptr, uint32_t len, char* out)
          continue;
          }
 
-next: // \u four-hex-digits (unicode char)
+      if (c <= 0xC1) continue; // 80..C1 - Disallow overlong 2-byte sequence
 
-      *(int32_t*)outptr = U_MULTICHAR_CONSTANT32('\\','u','0','0');
+      if (c <= 0xDF) // C2..DF
+         {
+         if ((inptr[0] & 0xC0) != 0x80) // Make sure subsequent byte is in the range 0x80..0xBF
+            {
+            *outptr++ = c;
+            *outptr++ = *inptr++;
+            }
 
-      outptr[4] = u_hex_upper[((c >> 4) & 0x0F)];
-      outptr[5] = u_hex_upper[( c       & 0x0F)];
+         continue;
+         }
 
-      outptr += 6;
+      if (c <= 0xEF) // E0..EF
+         {
+         if ((c != 0xE0 || inptr[0] >= 0xA0) && // Disallow overlong 3-byte sequence
+             (c != 0xED || inptr[0] <= 0x9F) && // Disallow U+D800..U+DFFF
+             (inptr[0] & 0xC0) == 0x80       && // Make sure subsequent bytes are in the range 0x80..0xBF
+             (inptr[1] & 0xC0) == 0x80)
+            {
+            *outptr++ = c;
+            *outptr++ = inptr[0];
+            *outptr++ = inptr[1];
+
+            inptr += 2;
+            }
+
+         continue;
+         }
+
+      if (c <= 0xF4) // F0..F4
+         {
+         if ((c != 0xF0 || inptr[0] >= 0x90) && // Disallow overlong 4-byte sequence
+             (c != 0xF4 || inptr[0] <= 0x8F) && // Disallow codepoints beyond U+10FFFF
+             (inptr[0] & 0xC0) == 0x80       && // Make sure subsequent bytes are in the range 0x80..0xBF
+             (inptr[1] & 0xC0) == 0x80       &&
+             (inptr[2] & 0xC0) == 0x80)
+            {
+            *outptr++ = c;
+            *outptr++ = inptr[0];
+            *outptr++ = inptr[1];
+            *outptr++ = inptr[2];
+
+            inptr += 3;
+            }
+         }
+
+      // F5..FF
       }
 
    *outptr++ = '"';
@@ -1107,6 +1131,8 @@ bool UValue::parse(const UString& document)
         c == '{' ) && 
        readValue(tok, this))
       {
+      U_INTERNAL_ASSERT(invariant())
+
       U_RETURN(true);
       }
 
@@ -1148,9 +1174,10 @@ void UJsonTypeHandler<UStringRep>::fromJSON(UValue& json)
 
 // DEBUG
 
-#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+#ifdef DEBUG
 const char* UValue::dump(bool _reset) const
 {
+#ifdef U_STDCPP_ENABLE
    *UObjectIO::os << "key        " << key    << '\n'
                   << "prev       " << prev   << '\n'
                   << "next       " << next   << '\n'
@@ -1164,12 +1191,14 @@ const char* UValue::dump(bool _reset) const
 
       return UObjectIO::buffer_output;
       }
+#endif
 
    return 0;
 }
 
 const char* UJsonTypeHandler_Base::dump(bool _reset) const
 {
+#ifdef U_STDCPP_ENABLE
    *UObjectIO::os << "pval " << pval;
 
    if (_reset)
@@ -1178,7 +1207,169 @@ const char* UJsonTypeHandler_Base::dump(bool _reset) const
 
       return UObjectIO::buffer_output;
       }
+#endif
 
    return 0;
+}
+
+bool UValue::invariant() const
+{
+   if ( key &&
+       *key &&
+        key->isUTF8(0) == false)
+      {
+      U_WARNING("error on value: (key contains invalid UTF-8)\n"
+                "--------------------------------------------------\n%s", dump(true));
+
+      return false;
+      }
+
+   if (type_ < 0 ||
+       type_ > OBJECT_VALUE)
+      {
+      U_WARNING("error on value: (tag is invalid)\n"
+                "--------------------------------------------------\n%s", dump(true));
+
+      return false;
+      }
+
+   if (type_ == BOOLEAN_VALUE &&
+       value.bool_ != false   &&
+       value.bool_ != true)
+      {
+      U_WARNING("error on value: (bool_ is neither false nor true)\n"
+                "--------------------------------------------------\n%s", dump(true));
+
+      return false;
+      }
+
+   if (type_ == STRING_VALUE)
+      {
+      UString* str = (UString*)value.ptr_;
+
+      if (str == 0)
+         {
+         U_WARNING("error on value: (string is NULL)\n"
+                   "--------------------------------------------------\n%s", dump(true));
+
+         return false;
+         }
+
+      if (*str &&
+           str->isUTF8(0) == false)
+         {
+         U_WARNING("error on value: (string contains invalid UTF-8)\n"
+                   "--------------------------------------------------\n%s", dump(true));
+
+         return false;
+         }
+      }
+   else if (type_ ==  ARRAY_VALUE ||
+            type_ == OBJECT_VALUE)
+      {
+      if (children.head == 0 ||
+          children.tail == 0)
+         {
+         if (children.head)
+            {
+            U_WARNING("error on value: (tail is NULL, but head is not)\n"
+                      "--------------------------------------------------\n%s", dump(true));
+
+            return false;
+            }
+
+         if (children.tail)
+            {
+            U_WARNING("error on value: (head is NULL, but tail is not)\n"
+                      "--------------------------------------------------\n%s", dump(true));
+
+            return false;
+            }
+         }
+      else
+         {
+         if (children.head->prev)
+            {
+            U_WARNING("error on value: (First child's prev pointer is not NULL)\n"
+                      "--------------------------------------------------\n%s", dump(true));
+
+            return false;
+            }
+
+         UValue* last = 0;
+
+         for (UValue* child = children.head; child; last = child, child = child->next)
+            {
+            if (child == this)
+               {
+               U_WARNING("error on value: (it is its own child)\n"
+                         "--------------------------------------------------\n%s", dump(true));
+
+               return false;
+               }
+
+            if (child->next == child)
+               {
+               U_WARNING("error on value: (child->next == child (cycle))\n"
+                         "--------------------------------------------------\n%s", dump(true));
+
+               return false;
+               }
+
+            if (child->next == children.head)
+               {
+               U_WARNING("error on value: (child->next == head (cycle))\n"
+                         "--------------------------------------------------\n%s", dump(true));
+
+               return false;
+               }
+
+            if (child->parent != this)
+               {
+               U_WARNING("error on value: (child does not point back to parent)\n"
+                         "--------------------------------------------------\n%s", dump(true));
+
+               return false;
+               }
+
+            if (child->next &&
+                child->next->prev != child)
+               {
+               U_WARNING("error on value: (child->next does not point back to child)\n"
+                         "--------------------------------------------------\n%s", dump(true));
+
+               return false;
+               }
+
+            if (type_ == ARRAY_VALUE && child->key)
+               {
+               U_WARNING("error on value: (Array element's key is not NULL)\n"
+                         "--------------------------------------------------\n%s", dump(true));
+
+               return false;
+               }
+
+            if (type_ == OBJECT_VALUE && child->key == 0)
+               {
+               U_WARNING("error on value: (Object member's key is NULL)\n"
+                         "--------------------------------------------------\n%s", dump(true));
+
+               return false;
+               }
+
+            if (child->invariant() == false) return false;
+            }
+
+         if (last != children.tail)
+            {
+            U_WARNING("error on value: (tail does not match pointer found by starting at head and following next links)\n"
+                      "--------------------------------------------------\n%s", dump(true));
+
+            return false;
+            }
+         }
+      }
+
+   return true;
 }
 #endif

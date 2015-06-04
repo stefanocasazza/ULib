@@ -2748,7 +2748,9 @@ set_redirect_to_AUTH:
          }
 
 redirect:
-      UHTTP::setRedirectResponse(mode, UString::getStringNull(), U_STRING_TO_PARAM(*location));
+      UHTTP::ext->clear();
+
+      UHTTP::setRedirectResponse(mode, U_STRING_TO_PARAM(*location));
 
 end:
       UClientImage_Base::setCloseConnection();

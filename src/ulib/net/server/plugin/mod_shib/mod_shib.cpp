@@ -673,18 +673,18 @@ int UShibPlugIn::handlerRequest()
          if (UShibTarget::location == 0) mode = -1;
          else
             {
-            UString ext(U_CAPACITY);
-
             if (UShibTarget::setcookie)
                {
                UString name, value;
+
+               UHTTP::ext->setBuffer(U_CAPACITY);
 
                for (uint32_t i = 0, length = UShibTarget::setcookie->size(); i < length; i += 2)
                   {
                   name  = UShibTarget::setcookie->at(i);
                   value = UShibTarget::setcookie->at(i+1);
 
-                  ext.snprintf_add("Set-Cookie: %v=%v\r\n", name.rep, value.rep);
+                  UHTTP::ext->snprintf_add("Set-Cookie: %v=%v\r\n", name.rep, value.rep);
                   }
 
                delete UShibTarget::setcookie;
@@ -692,7 +692,7 @@ int UShibPlugIn::handlerRequest()
                UShibTarget::setcookie = 0;
                }
 
-            UHTTP::setRedirectResponse(0, ext, UShibTarget::location, u__strlen(UShibTarget::location, __PRETTY_FUNCTION__));
+            UHTTP::setRedirectResponse(0, UShibTarget::location, u__strlen(UShibTarget::location, __PRETTY_FUNCTION__));
             }
          }
 

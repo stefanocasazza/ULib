@@ -91,6 +91,7 @@ cleandist:
   		$(distdir)/src/ulib/net/server/plugin/*/Makefile \
   		$(distdir)/src/ulib/net/server/plugin/usp/usp_compile.sh \
   		$(distdir)/src/ulib/net/server/plugin/usp/usp_translator \
+		$(distdir)/tests/ulib/test_bison.cc \
 		$(distdir)/tests/ulib/plugin/*.lo \
 		$(distdir)/tests/ulib/plugin/.dirstamp \
 		$(distdir)/tests/ulib/plugin/*/.dirstamp \

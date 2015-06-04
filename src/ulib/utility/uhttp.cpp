@@ -78,9 +78,12 @@ bool        UHTTP::enable_caching_by_proxy_servers;
 char        UHTTP::response_buffer[64];
 URDB*       UHTTP::db_not_found;
 UFile*      UHTTP::file;
+UString*    UHTTP::ext;
+UString*    UHTTP::etag;
 UString*    UHTTP::geoip;
 UString*    UHTTP::suffix;
 UString*    UHTTP::tmpdir;
+UString*    UHTTP::request;
 UString*    UHTTP::htpasswd;
 UString*    UHTTP::htdigest;
 UString*    UHTTP::qcontent;
@@ -753,9 +756,12 @@ void UHTTP::ctor()
 {
    U_TRACE(1, "UHTTP::ctor()")
 
+   U_INTERNAL_ASSERT_EQUALS(ext, 0)
+   U_INTERNAL_ASSERT_EQUALS(etag, 0)
    U_INTERNAL_ASSERT_EQUALS(file, 0)
    U_INTERNAL_ASSERT_EQUALS(geoip, 0)
    U_INTERNAL_ASSERT_EQUALS(tmpdir, 0)
+   U_INTERNAL_ASSERT_EQUALS(request, 0)
    U_INTERNAL_ASSERT_EQUALS(pathname, 0)
    U_INTERNAL_ASSERT_EQUALS(qcontent, 0)
    U_INTERNAL_ASSERT_EQUALS(rpathname, 0)
@@ -769,9 +775,12 @@ void UHTTP::ctor()
    UWebSocket::str_allocate();
 
    file                  = U_NEW(UFile);
+   ext                   = U_NEW(UString);
+   etag                  = U_NEW(UString);
    geoip                 = U_NEW(UString(U_CAPACITY));
    suffix                = U_NEW(UString);
    tmpdir                = U_NEW(UString(U_PATH_MAX));
+   request               = U_NEW(UString);
    qcontent              = U_NEW(UString);
    pathname              = U_NEW(UString(U_CAPACITY));
    rpathname             = U_NEW(UString);
@@ -1362,10 +1371,13 @@ void UHTTP::dtor()
 
    if (file)
       {
+      delete ext;
+      delete etag;
       delete file;
       delete geoip;
       delete suffix;
       delete tmpdir;
+      delete request;
       delete qcontent;
       delete pathname;
       delete rpathname;
@@ -3379,8 +3391,6 @@ int UHTTP::handlerREAD()
             {
             UClientImage_Base::abortive_close();
 
-            UClientImage_Base::setRequestProcessed();
-
             U_RETURN(U_PLUGIN_HANDLER_ERROR);
             }
 
@@ -3810,9 +3820,8 @@ need_to_be_processed:
          // When your site is accessed over HTTPS with no certificate errors, the browser knows your site is HTTPS
          // capable and will honor the Strict-Transport-Security header
 
-         setRedirectResponse(NO_BODY, UString::getStringNull(), (const char*)redirect_url,
-                                    u__snprintf(redirect_url, sizeof(redirect_url), "%s:/%v%.*s",
-                                    U_http_websocket_len ? "wss" : "https", ip_server.rep, U_HTTP_URI_QUERY_TO_TRACE));
+         setRedirectResponse(NO_BODY, (const char*)redirect_url,
+                             u__snprintf(redirect_url, sizeof(redirect_url), "%s:/%v%.*s", U_http_websocket_len ? "wss" : "https", ip_server.rep, U_HTTP_URI_QUERY_TO_TRACE));
 
          U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %S", redirect_url);
 
@@ -3896,8 +3905,7 @@ int UHTTP::processRequest()
 
    U_ASSERT(UClientImage_Base::body->empty())
 
-   bool result;
-   UString etag, ext(U_CAPACITY);
+   ext->setBuffer(U_CAPACITY);
 
    /* 
     * If the browser has to validate a component, it uses the If-None-Match header to pass the ETag back to
@@ -3905,7 +3913,7 @@ int UHTTP::processRequest()
     *
     * For me it's enough Last-Modified: ...
 
-   etag = file->etag();
+   *etag = file->etag();
 
    const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("If-None-Match"), false);
 
@@ -3913,7 +3921,10 @@ int UHTTP::processRequest()
       {
       U_INTERNAL_ASSERT_EQUALS(*ptr, '"') // entity-tag
 
-      if (etag.equal(ptr, etag.size()))
+      uint32_t sz = etag->size();
+
+      if (sz &&
+          etag->equal(ptr, sz))
          {
          U_http_info.nResponseCode = HTTP_NOT_MODIFIED;
 
@@ -3923,8 +3934,10 @@ int UHTTP::processRequest()
          }
       }
 
-   ext.snprintf("Etag: %v\r\n", etag.rep));
+   ext->snprintf("Etag: %v\r\n", etag->rep));
    */
+
+   bool result;
 
    checkForPathName();
 
@@ -3976,14 +3989,18 @@ int UHTTP::processRequest()
                   {
                   U_http_is_accept_gzip = '2';
 
-                  *UClientImage_Base::body    =                        getBodyCompressFromCache();
-                  *UClientImage_Base::wbuffer = getHeaderForResponse(getHeaderCompressFromCache());
+                  *ext = getHeaderCompressFromCache();
+
+                  *UClientImage_Base::body = getBodyCompressFromCache();
                   }
                else
-               {
-               *UClientImage_Base::body    =                        getBodyFromCache();
-               *UClientImage_Base::wbuffer = getHeaderForResponse(getHeaderFromCache());
-               }
+                  {
+                  *ext = getHeaderFromCache();
+
+                  *UClientImage_Base::body = getBodyFromCache();
+                  }
+
+               *UClientImage_Base::wbuffer = getHeaderForResponse();
 #           endif
 
                U_RETURN(U_PLUGIN_HANDLER_FINISHED);
@@ -4016,7 +4033,7 @@ int UHTTP::processRequest()
             {
              U_http_is_accept_gzip = '2';
 
-            (void) ext.append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
+            (void) ext->append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
 
             *UClientImage_Base::body = UStringExt::deflate(*UClientImage_Base::body, 1);
             }
@@ -4027,9 +4044,9 @@ int UHTTP::processRequest()
          mime_index                = U_unknow;
          U_http_info.nResponseCode = HTTP_OK;
 
-         (void) ext.append(getHeaderMimeType(0, sz, U_CTYPE_HTML));
+         (void) ext->append(getHeaderMimeType(0, sz, U_CTYPE_HTML));
 
-         *UClientImage_Base::wbuffer = getHeaderForResponse(ext); // build response...
+         *UClientImage_Base::wbuffer = getHeaderForResponse(); // build response...
          }
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
@@ -4103,14 +4120,16 @@ check_file: // now we check the file...
       {
 empty_file: // NB: now we check for empty file...
 
-      if (file_data->size) processGetRequest(etag, ext);
+      if (file_data->size) processGetRequest();
       else
          {
          file->close();
 
          file_data->fd = -1;
 
-         *UClientImage_Base::wbuffer = getHeaderForResponse(UString::getStringNull());
+         ext->clear();
+
+         *UClientImage_Base::wbuffer = getHeaderForResponse();
          }
       }
 
@@ -5378,9 +5397,9 @@ void UHTTP::setStatusDescription()
    U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %.*S", UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base)
 }
 
-UString UHTTP::getHeaderForResponse(const UString& ext)
+UString UHTTP::getHeaderForResponse()
 {
-   U_TRACE(0, "UHTTP::getHeaderForResponse(%V)", ext.rep)
+   U_TRACE(0, "UHTTP::getHeaderForResponse()")
 
    U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
 
@@ -5391,7 +5410,7 @@ UString UHTTP::getHeaderForResponse(const UString& ext)
         U_http_info.nResponseCode <  200) ||
         U_http_info.nResponseCode == 304)
       {
-      U_ASSERT(ext.empty())
+      U_ASSERT(ext->empty())
       }
 #endif
 
@@ -5426,9 +5445,9 @@ UString UHTTP::getHeaderForResponse(const UString& ext)
    char* ptr;
    char* base;
    const char* ptr2;
-   uint32_t sz1 = set_cookie->size(), sz2 = ext.size();
+   uint32_t sz1 = set_cookie->size(), sz2 = ext->size();
 
-   if (sz2) ptr2 = ext.data();
+   if (sz2) ptr2 = ext->data();
    else
       {
       ptr2 =                 "Content-Length: 0\r\n\r\n";
@@ -5541,7 +5560,7 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::body)
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
 
-   UString ext(U_CAPACITY);
+   ext->setBuffer(U_CAPACITY);
 
    if (content_type)
       {
@@ -5549,7 +5568,7 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
 
       U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(*content_type), U_CONSTANT_TO_PARAM(U_CRLF)))
 
-      char* start = ext.data();
+      char* start = ext->data();
       char* ptr   = start;
       uint32_t sz = content_type->size();
 
@@ -5602,13 +5621,13 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
       *(int32_t*)ptr  = U_MULTICHAR_CONSTANT32('\r','\n','\r','\n');
                  ptr += U_CONSTANT_SIZE(U_CRLF2);
 
-      ext.size_adjust(ptr - start);
+      ext->size_adjust(ptr - start);
       }
 
    if (pbody) *UClientImage_Base::body = *pbody;
    else        UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 
-   *UClientImage_Base::wbuffer = getHeaderForResponse(ext);
+   *UClientImage_Base::wbuffer = getHeaderForResponse();
 
    U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %V", UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
    U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %V",    UClientImage_Base::body->size(),    UClientImage_Base::body->rep)
@@ -5656,9 +5675,9 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
  * information necessary for a user to repeat the original request on the new URI.
  */
 
-void UHTTP::setRedirectResponse(int mode, const UString& ext, const char* ptr_location, uint32_t len_location)
+void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location)
 {
-   U_TRACE(0, "UHTTP::setRedirectResponse(%d,%V,%.*S,%u)", mode, ext.rep, len_location, ptr_location, len_location)
+   U_TRACE(0, "UHTTP::setRedirectResponse(%d,%.*S,%u)", mode, len_location, ptr_location, len_location)
 
    U_ASSERT_EQUALS(u_find(ptr_location,len_location,"\n",1), 0)
 
@@ -5677,14 +5696,14 @@ void UHTTP::setRedirectResponse(int mode, const UString& ext, const char* ptr_lo
                            : "Location: ",
                      len_location, ptr_location);
 
-   if (ext)
+   if (*ext)
       {
-      U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(ext), U_CONSTANT_TO_PARAM(U_CRLF)))
+      U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(*ext), U_CONSTANT_TO_PARAM(U_CRLF)))
 
-      (void) tmp.append(ext);
+      (void) tmp.append(*ext);
 
 #  ifdef DEBUG
-      if ((mode & PARAM_DEPENDENCY) != 0) ((UString*)&ext)->clear(); // NB: ext has a dependency on UClientImage_Base::wbuffer...
+      if ((mode & PARAM_DEPENDENCY) != 0) ext->clear(); // NB: ext has a dependency on UClientImage_Base::wbuffer...
 #  endif
       }
 
@@ -5813,12 +5832,15 @@ void UHTTP::setCgiResponse()
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
 
    int ratio;
+   char* ptr;
+   char* ptr1;
+   UString compress;
    const char* pEndHeader;
-   UString compress, header(U_CAPACITY);
    uint32_t sz = 0, size, clength = UClientImage_Base::wbuffer->size();
 
-   char* ptr1;
-   char* ptr = header.data();
+   ext->setBuffer(U_CAPACITY);
+
+   ptr = ext->data();
 
 #ifdef USE_LIBZ
    bool bcompress = (U_http_is_accept_gzip &&
@@ -5954,10 +5976,10 @@ end:
       ptr1 += U_http_info.endHeader;
       }
 
-   header.size_adjust(ptr1);
+   ext->size_adjust(ptr1);
 
-   *UClientImage_Base::wbuffer = getHeaderForResponse(header);
-   }
+   *UClientImage_Base::wbuffer = getHeaderForResponse();
+}
 
 U_NO_EXPORT bool UHTTP::processAuthorization()
 {
@@ -7584,8 +7606,10 @@ U_NO_EXPORT bool UHTTP::processFileCache()
       {
       U_http_is_accept_gzip = '2';
 
-      *UClientImage_Base::body    =                        getBodyCompressFromCache();
-      *UClientImage_Base::wbuffer = getHeaderForResponse(getHeaderCompressFromCache());
+      *ext = getHeaderCompressFromCache();
+
+      *UClientImage_Base::wbuffer = getHeaderForResponse();
+      *UClientImage_Base::body    = getBodyCompressFromCache();
 
       U_RETURN(true);
       }
@@ -7593,7 +7617,7 @@ U_NO_EXPORT bool UHTTP::processFileCache()
 
    uint32_t sz;
    bool result = true;
-   UString header = getHeaderFromCache();
+   *ext = getHeaderFromCache();
 
    // --------------------------------------------------------------------------------------------------------------
    // The Range: header is used with a GET/HEAD request.
@@ -7606,9 +7630,9 @@ U_NO_EXPORT bool UHTTP::processFileCache()
    range_start = 0;
 
    if (U_http_range_len &&
-       checkGetRequestIfRange(UString::getStringNull()))
+       checkGetRequestIfRange())
       {
-      if (checkGetRequestForRange(header, getBodyFromCache()) != U_PARTIAL) U_RETURN(true); // NB: we have a complete response...
+      if (checkGetRequestForRange(getBodyFromCache()) != U_PARTIAL) U_RETURN(true); // NB: we have a complete response...
 
       // NB: range_start is modified only if we have as response U_PARTIAL from checkGetRequestForRange()...
 
@@ -7626,7 +7650,7 @@ U_NO_EXPORT bool UHTTP::processFileCache()
       bsendfile = true;
       }
 
-   *UClientImage_Base::wbuffer = getHeaderForResponse(header);
+   *UClientImage_Base::wbuffer = getHeaderForResponse();
 
    U_RETURN(result);
 }
@@ -8425,9 +8449,9 @@ U_NO_EXPORT void UHTTP::setCGIShellScript(UString& command)
       }
 }
 
-bool UHTTP::manageSendfile(const char* ptr, uint32_t len, UString& ext)
+bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
 {
-   U_TRACE(0, "UHTTP::manageSendfile(%.*S,%u,%V)", len, ptr, len, ext.rep)
+   U_TRACE(0, "UHTTP::manageSendfile(%.*S,%u)", len, ptr, len)
 
    pathname->setBuffer(u_cwd_len + 1 + len);
 
@@ -8443,28 +8467,26 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len, UString& ext)
        file->regular() &&
        file->open())
       {
-      UString request, tmp;
-
       UClientImage_Base::setRequestNoCache();
 
-      if (ext)
+      if (*ext)
          {
-         U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(ext), U_CONSTANT_TO_PARAM(U_CRLF)))
+         U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(*ext), U_CONSTANT_TO_PARAM(U_CRLF)))
 
-         request.setBuffer(U_CAPACITY);
+         /*
+         request->setBuffer(U_CAPACITY);
 
-         request.snprintf("GET %v HTTP/1.1\r\n" \
-                          "%v" \
-                          "\r\n", pathname->rep, ext.rep);
+         request->snprintf("GET %v HTTP/1.1\r\n" \
+                           "%v" \
+                           "\r\n", pathname->rep, ext->rep);
 
-         U_http_info.szHeader = (U_http_info.endHeader = request.size()) - (U_http_info.startHeader = U_CONSTANT_SIZE("GET / HTTP/1.1\r\n") + len - IS_DIR_SEPARATOR(*ptr));
+         U_http_info.szHeader = (U_http_info.endHeader = request->size()) - (U_http_info.startHeader = U_CONSTANT_SIZE("GET / HTTP/1.1\r\n") + len - IS_DIR_SEPARATOR(*ptr));
 
          U_INTERNAL_DUMP("U_http_info.szHeader = %u U_http_info.startHeader(%u) = %.20S U_http_info.endHeader(%u) = %.20S",
-                          U_http_info.szHeader,     U_http_info.startHeader, request.c_pointer(U_http_info.startHeader), U_http_info.endHeader, request.c_pointer(U_http_info.endHeader))
+                          U_http_info.szHeader,     U_http_info.startHeader, request->c_pointer(U_http_info.startHeader), U_http_info.endHeader, request->c_pointer(U_http_info.endHeader))
+         */
 
-#     ifdef DEBUG
-         ext.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-#     endif
+         ext->setBuffer(U_CAPACITY);
          }
 
       UClientImage_Base::body->clear();
@@ -8477,7 +8499,7 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len, UString& ext)
       file_data->fd   = file->fd;
       file_data->size = file->st_size;
 
-      processGetRequest(UString::getStringNull(), tmp);
+      processGetRequest();
 
       if (file_data->fd != UServer_Base::pClientIndex->sfd) file->close();
       else                 UServer_Base::pClientIndex->pending_close = U_CLOSE;
@@ -8488,13 +8510,14 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len, UString& ext)
    U_RETURN(false);
 }
 
-U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2, UString& ext)
+U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2)
 {
-   U_TRACE(0, "UHTTP::splitCGIOutput(%p,%p,%V)", ptr1, ptr2, ext.rep)
+   U_TRACE(0, "UHTTP::splitCGIOutput(%p,%p)", ptr1, ptr2)
 
    uint32_t pos = UClientImage_Base::wbuffer->distance(ptr1);
 
-   if (pos) ext = UClientImage_Base::wbuffer->substr(0U, pos);
+   if (pos == 0) ext->setBuffer(U_CAPACITY);
+   else         *ext = UClientImage_Base::wbuffer->substr(0U, pos);
 
    U_INTERNAL_DUMP("U_http_info.endHeader = %u", U_http_info.endHeader)
 
@@ -8516,10 +8539,10 @@ U_NO_EXPORT bool UHTTP::splitCGIOutput(const char*& ptr1, const char* ptr2, UStr
          {
          // NB: we cut one couple of '\r\n'
 
-         (void) ext.append(UClientImage_Base::wbuffer->c_pointer(pos), diff - U_CONSTANT_SIZE(U_CRLF));
+         (void) ext->append(UClientImage_Base::wbuffer->c_pointer(pos), diff - U_CONSTANT_SIZE(U_CRLF));
          }
 
-      U_INTERNAL_DUMP("value = %.*S ext = %V", (uint32_t)((ptrdiff_t)ptr1 - (ptrdiff_t)ptr2), ptr2, ext.rep)
+      U_INTERNAL_DUMP("value = %.*S ext = %V", (uint32_t)((ptrdiff_t)ptr1 - (ptrdiff_t)ptr2), ptr2, ext->rep)
 
       U_RETURN(true);
       }
@@ -8675,10 +8698,8 @@ loop:
 
             if (ptr1)
                {
-               UString ext;
-
-               if (splitCGIOutput(ptr, ptr1, ext) &&
-                   manageSendfile(ptr1, ptr - ptr1, ext))
+               if (splitCGIOutput(ptr, ptr1) &&
+                   manageSendfile(ptr1, ptr - ptr1))
                   {
                   U_SRV_LOG("Header X-Sendfile found in CGI output: serving file %V", pathname->rep);
 
@@ -8699,13 +8720,11 @@ loop:
 
          if (*(int32_t*)(ptr+4) == U_MULTICHAR_CONSTANT32('t','i','o','n'))
             {
-            UString ext;
-
             ptr1 = ptr + U_CONSTANT_SIZE("Location: ");
 
-            if (splitCGIOutput(ptr, ptr1, ext))
+            if (splitCGIOutput(ptr, ptr1))
                {
-               setRedirectResponse(PARAM_DEPENDENCY, ext, ptr1, ptr - ptr1);
+               setRedirectResponse(PARAM_DEPENDENCY, ptr1, ptr - ptr1);
 
                U_RETURN(true);
                }
@@ -8756,9 +8775,11 @@ loop:
                   {
                   // NB: we assume to have no content without HTTP headers...
 
+                  ext->clear();
+
                   UClientImage_Base::body->clear();
 
-                  *UClientImage_Base::wbuffer = getHeaderForResponse(UString::getStringNull());
+                  *UClientImage_Base::wbuffer = getHeaderForResponse();
 
                   U_RETURN(true);
                   }
@@ -8970,11 +8991,13 @@ loop:
       {
       // NB: we assume to have no content with some HTTP headers...
 
+      ext->clear();
+
       UClientImage_Base::body->clear();
 
       (void) set_cookie->append(UClientImage_Base::wbuffer->data(), sz - U_CONSTANT_SIZE(U_CRLF)); // NB: opportunism...
 
-      *UClientImage_Base::wbuffer = getHeaderForResponse(UString::getStringNull());
+      *UClientImage_Base::wbuffer = getHeaderForResponse();
 
       U_RETURN(true);
       }
@@ -9063,20 +9086,20 @@ bool UHTTP::processCGIRequest(UCommand& cmd, const char* cgi_dir)
    U_RETURN(true);
 }
 
-bool UHTTP::checkContentLength(UString& x, uint32_t length, uint32_t pos)
+bool UHTTP::checkContentLength(uint32_t length, uint32_t pos)
 {
-   U_TRACE(0, "UHTTP::checkContentLength(%V,%u,%u)", x.rep, length, pos)
+   U_TRACE(0, "UHTTP::checkContentLength(%u,%u)", length, pos)
 
    const char* ptr;
 
-   if (pos != U_NOT_FOUND) ptr = x.c_pointer(pos);  
+   if (pos != U_NOT_FOUND) ptr = ext->c_pointer(pos);  
    else
       {
-      pos = x.find(*UString::str_content_length);
+      pos = ext->find(*UString::str_content_length);
 
       U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
 
-      ptr = x.c_pointer(pos + UString::str_content_length->size() + 1);
+      ptr = ext->c_pointer(pos + UString::str_content_length->size() + 1);
       }
 
    if (u__isblank(*ptr)) ++ptr; // NB: weighttp need at least one space...
@@ -9103,11 +9126,11 @@ bool UHTTP::checkContentLength(UString& x, uint32_t length, uint32_t pos)
          --sz_len1;
          }
 
-      pos = x.distance(ptr);
+      pos = ext->distance(ptr);
 
-      (void) x.replace(pos, sz_len1, bp, sz_len2);
+      (void) ext->replace(pos, sz_len1, bp, sz_len2);
 
-      U_INTERNAL_DUMP("x(%u) = %#V", x.size(), x.rep)
+      U_INTERNAL_DUMP("x(%u) = %#V", ext->size(), ext->rep)
 
       U_RETURN(true);
       }
@@ -9150,9 +9173,9 @@ typedef struct { uint32_t start, end; } HTTPRange;
  *
  */
 
-U_NO_EXPORT bool UHTTP::checkGetRequestIfRange(const UString& etag)
+U_NO_EXPORT bool UHTTP::checkGetRequestIfRange()
 {
-   U_TRACE(0, "UHTTP::checkGetRequestIfRange(%V)", etag.rep)
+   U_TRACE(0, "UHTTP::checkGetRequestIfRange()")
 
    const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("If-Range"), false);
 
@@ -9160,7 +9183,13 @@ U_NO_EXPORT bool UHTTP::checkGetRequestIfRange(const UString& etag)
       {
       if (*ptr == '"') // entity-tag
          {
-         if (etag.equal(ptr, etag.size()) == false) U_RETURN(false);
+         uint32_t sz = etag->size();
+
+         if (sz &&
+             etag->equal(ptr, sz) == false)
+            {
+            U_RETURN(false);
+            }
          }
       else // HTTP-date
          {
@@ -9193,9 +9222,9 @@ U_NO_EXPORT __pure int UHTTP::sortRange(const void* a, const void* b)
    U_RETURN(diff);
 }
 
-U_NO_EXPORT void UHTTP::setResponseForRange(uint32_t _start, uint32_t _end, uint32_t _header, UString& ext)
+U_NO_EXPORT void UHTTP::setResponseForRange(uint32_t _start, uint32_t _end, uint32_t _header)
 {
-   U_TRACE(0, "UHTTP::setResponseForRange(%u,%u,%u,%V)", _start, _end, _header, ext.rep)
+   U_TRACE(0, "UHTTP::setResponseForRange(%u,%u,%u)", _start, _end, _header)
 
    // Single range
 
@@ -9208,20 +9237,20 @@ U_NO_EXPORT void UHTTP::setResponseForRange(uint32_t _start, uint32_t _end, uint
 
    range_size = _end - _start + 1;
 
-   if (ext) (void) checkContentLength(ext, _header + range_size);
+   if (*ext) (void) checkContentLength(_header + range_size, U_NOT_FOUND);
 
-   (void) ext.insert(0, tmp);
+   (void) ext->insert(0, tmp);
 
-   U_INTERNAL_DUMP("ext = %V", ext.rep)
+   U_INTERNAL_DUMP("ext = %V", ext->rep)
 }
 
 // return U_YES     - ok    - HTTP response     complete 
 // return U_PARTIAL - ok    - HTTP response NOT complete 
 // return U_NOT     - error - HTTP response     complete
 
-U_NO_EXPORT int UHTTP::checkGetRequestForRange(UString& ext, const UString& data)
+U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
 {
-   U_TRACE(0, "UHTTP::checkGetRequestForRange(%V,%V)", ext.rep, data.rep)
+   U_TRACE(0, "UHTTP::checkGetRequestForRange(%V)", data.rep)
 
    U_INTERNAL_ASSERT_MAJOR(U_http_range_len, 0)
 
@@ -9312,7 +9341,7 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(UString& ext, const UString& data
       {
       cur = array[0];
 
-      setResponseForRange((range_start = cur->start), cur->end, 0, ext);
+      setResponseForRange((range_start = cur->start), cur->end, 0);
 
       U_RETURN(U_PARTIAL);
       }
@@ -9389,17 +9418,18 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(UString& ext, const UString& data
                                               buffer, ptr - buffer));
       }
 
-   UString msg;
-   uint32_t content_length = response.message(msg, false);
+   ext->clear();
 
-   (void) checkContentLength(msg, content_length);
+   uint32_t content_length = response.message(*ext, false);
+
+   (void) checkContentLength(content_length, U_NOT_FOUND);
 
 #ifdef DEBUG
-   (void) UFile::writeToTmp(U_STRING_TO_PARAM(msg), false, "byteranges.%P", 0);
+   (void) UFile::writeToTmp(U_STRING_TO_PARAM(*ext), false, "byteranges.%P", 0);
 #endif
 
    U_http_info.nResponseCode   = HTTP_PARTIAL;
-   *UClientImage_Base::wbuffer = getHeaderForResponse(msg);
+   *UClientImage_Base::wbuffer = getHeaderForResponse();
 
    U_RETURN(U_YES);
 }
@@ -9475,9 +9505,9 @@ U_NO_EXPORT bool UHTTP::checkGetRequestIfModified()
    U_RETURN(true);
 }
 
-U_NO_EXPORT void UHTTP::processGetRequest(const UString& etag, UString& ext)
+U_NO_EXPORT void UHTTP::processGetRequest()
 {
-   U_TRACE(0, "UHTTP::processGetRequest(%V,%V)", etag.rep, ext.rep)
+   U_TRACE(0, "UHTTP::processGetRequest()")
 
    U_INTERNAL_ASSERT_POINTER(file_data)
    U_INTERNAL_ASSERT_MAJOR(file_data->size, 0)
@@ -9521,7 +9551,7 @@ U_NO_EXPORT void UHTTP::processGetRequest(const UString& etag, UString& ext)
 
    x = getHeaderMimeType(file->map, file->st_size, ctype, expire);
 
-   (void) ext.append(x);
+   (void) ext->append(x);
 
    range_size  = file->st_size;
    range_start = 0;
@@ -9529,14 +9559,14 @@ U_NO_EXPORT void UHTTP::processGetRequest(const UString& etag, UString& ext)
    U_http_info.nResponseCode = HTTP_OK;
 
    if (U_http_range_len &&
-       checkGetRequestIfRange(etag))
+       checkGetRequestIfRange())
       {
       // The Range: header is used with a GET request.
       // For example assume that will return only a portion (let's say the first 32 bytes) of the requested resource...
       //
       // Range: bytes=0-31
 
-      if (checkGetRequestForRange(ext, mmap) != U_PARTIAL) return; // NB: we have already a complete response...
+      if (checkGetRequestForRange(mmap) != U_PARTIAL) return; // NB: we have already a complete response...
 
       U_http_info.nResponseCode = HTTP_PARTIAL;
 
@@ -9571,9 +9601,9 @@ U_NO_EXPORT void UHTTP::processGetRequest(const UString& etag, UString& ext)
 
          U_http_info.nResponseCode = HTTP_PARTIAL;
 
-         setResponseForRange(range_start, range_size-1, U_CONSTANT_SIZE(U_FLV_HEAD), ext);
+         setResponseForRange(range_start, range_size-1, U_CONSTANT_SIZE(U_FLV_HEAD));
 
-         *UClientImage_Base::wbuffer = getHeaderForResponse(ext);
+         *UClientImage_Base::wbuffer = getHeaderForResponse();
 
          (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_FLV_HEAD));
 
@@ -9582,7 +9612,7 @@ U_NO_EXPORT void UHTTP::processGetRequest(const UString& etag, UString& ext)
       }
 
 build_response:
-   *UClientImage_Base::wbuffer = getHeaderForResponse(ext);
+   *UClientImage_Base::wbuffer = getHeaderForResponse();
 
 next:
    U_INTERNAL_DUMP("range_start = %u range_size = %u UServer_Base::min_size_for_sendfile = %u", range_start, range_size, UServer_Base::min_size_for_sendfile)

@@ -1637,11 +1637,11 @@ void UClientImage_Base::abortive_close()
 
    setRequestProcessed();
 
-   UServer_Base::csocket->abortive_close();
-
    U_ClientImage_close = true;
 
    if (U_ClientImage_pipeline) resetPipeline();
+
+   if (UServer_Base::csocket->isOpen()) UServer_Base::csocket->abortive_close();
 }
 
 void UClientImage_Base::resetPipeline()

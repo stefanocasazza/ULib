@@ -44,6 +44,7 @@ class ULock;
 class UEventFd;
 class UCommand;
 class UPageSpeed;
+class USSIPlugIn;
 class UHttpPlugIn;
 class USSLSession;
 class UMimeMultipart;
@@ -198,7 +199,10 @@ public:
    // SERVICES
 
    static UFile* file;
+   static UString* ext;
+   static UString* etag;
    static UString* suffix;
+   static UString* request;
    static UString* qcontent;
    static UString* pathname;
    static UString* rpathname;
@@ -275,8 +279,8 @@ public:
    static void setEndRequestProcessing();
    static bool callService(const UString& path);
    static bool isUriRequestNeedCertificate() __pure;
-   static bool manageSendfile(const char* ptr, uint32_t len, UString& ext);
-   static bool checkContentLength(UString& x, uint32_t length, uint32_t pos = U_NOT_FOUND);
+   static bool manageSendfile(const char* ptr, uint32_t len);
+   static bool checkContentLength(uint32_t length, uint32_t pos);
 
    static const char* getHeaderValuePtr(                        const char* name, uint32_t name_len, bool nocase) __pure;
    static const char* getHeaderValuePtr(const UString& request, const char* name, uint32_t name_len, bool nocase) __pure;
@@ -285,10 +289,6 @@ public:
    static const char* getHeaderValuePtr(const UString& request, const UString& name, bool nocase) { return getHeaderValuePtr(request, U_STRING_TO_PARAM(name), nocase); }
 
    static UString getHeaderMimeType(const char* content, uint32_t size, const char* content_type, time_t expire = 0L, bool content_length_changeable = false);
-
-   // get HTTP response message
-
-   static UString getHeaderForResponse(const UString& content);
 
    // set HTTP response message
 
@@ -300,8 +300,8 @@ public:
    };
 
    static void setResponse(const UString* content_type, UString* pbody);
+   static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
    static void setErrorResponse(const UString* content_type, int code, const char* fmt, uint32_t len);
-   static void setRedirectResponse(int mode, const UString& ext, const char* ptr_location, uint32_t len_location);
 
    // set HTTP main error message
 
@@ -1020,6 +1020,7 @@ private:
    static uint32_t getHtmlEncodedForResponse(char* buffer, uint32_t size, const char* fmt);
 #endif      
 
+   static UString getHeaderForResponse();
    static UString getHTMLDirectoryList() U_NO_EXPORT;
 
    static bool   initUploadProgress(int byte_read) U_NO_EXPORT;
@@ -1028,25 +1029,25 @@ private:
    static void checkPath() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
    static void manageDataForCache() U_NO_EXPORT;
+   static void processGetRequest() U_NO_EXPORT;
    static bool processAuthorization() U_NO_EXPORT;
    static void checkRequestForHeader() U_NO_EXPORT;
    static bool checkPath(uint32_t len) U_NO_EXPORT;
+   static bool checkGetRequestIfRange() U_NO_EXPORT;
    static bool checkGetRequestIfModified() U_NO_EXPORT;
    static bool runDynamicPage(bool as_service) U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static void removeDataSession(const UString& token) U_NO_EXPORT;
    static bool checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
-   static bool checkGetRequestIfRange(const UString& etag) U_NO_EXPORT;
    static bool checkIfUSPLink(UStringRep* key, void* value) U_NO_EXPORT;
+   static int  checkGetRequestForRange(const UString& data) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;
    static bool addHTTPVariables(UStringRep* key, void* value) U_NO_EXPORT;
-   static void processGetRequest(const UString& etag, UString& ext) U_NO_EXPORT;
+   static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire) U_NO_EXPORT;
-   static int  checkGetRequestForRange(UString& ext, const UString& data) U_NO_EXPORT;
-   static bool splitCGIOutput(const char*& ptr1, const char* ptr2, UString& ext) U_NO_EXPORT;
-   static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header, UString& ext) U_NO_EXPORT;
+   static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
 
 #ifdef U_COMPILER_DELETE_MEMBERS
    UHTTP(const UHTTP&) = delete;
@@ -1056,6 +1057,7 @@ private:
    UHTTP& operator=(const UHTTP&) { return *this; }
 #endif      
 
+   friend class USSIPlugIn;
    friend class UHttpPlugIn;
 };
 

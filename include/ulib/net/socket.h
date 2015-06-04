@@ -398,6 +398,8 @@ public:
       {
       U_TRACE(0, "USocket::abortive_close()")
 
+      U_INTERNAL_ASSERT(isOpen())
+
       setTcpLingerOff();
 
       close();

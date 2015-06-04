@@ -473,8 +473,11 @@ public:
 
    static void stringify(UString& result, UValue& value);
 
-#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+#ifdef DEBUG
+   bool invariant() const;
+#  ifdef U_STDCPP_ENABLE
    const char* dump(bool _reset) const;
+#  endif
 #endif
 
 protected:

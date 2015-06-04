@@ -29,19 +29,18 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 #sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 8000|g" benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # Running 15s test @ http://laptop:8080/plaintext
-#   4 threads and 16384 connections
+#   4 threads and 256 connections
 #   Thread Stats   Avg      Stdev     Max   +/- Stdev
-#     Latency    13.30s     2.61s   14.43s    87.33%
-#     Req/Sec     3.06k     0.94k    5.07k    62.22%
+#     Latency   220.76ms   49.25ms 937.77ms   86.40%
+#     Req/Sec     4.68k   355.58     5.69k    71.20%
 #   Latency Distribution
-#      50%   14.38s 
-#      75%   14.43s 
-#      90%   14.43s 
-#      99%   14.43s 
-#   174245 requests in 15.00s, 23.93MB read
-#   Socket errors: connect 0, read 143, write 0, timeout 5565
-# Requests/sec: 11613.20
-# Transfer/sec: 1.60MB
+#      50%  220.85ms
+#      75%  235.07ms
+#      90%  254.43ms
+#      99%  353.92ms
+#   279265 requests in 15.02s, 38.35MB read
+# Requests/sec:  18588.96
+# Transfer/sec:      2.55MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -54,16 +53,16 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # Running 15s test @ http://laptop:8080/json
 #   4 threads and 256 connections
 #   Thread Stats   Avg      Stdev     Max   +/- Stdev
-#     Latency    18.26ms    3.84ms 234.44ms   91.85%
-#     Req/Sec     3.48k   490.60     4.95k    67.32%
+#     Latency    18.39ms    3.77ms 233.91ms   91.22%
+#     Req/Sec     3.47k   386.95     4.81k    79.18%
 #   Latency Distribution
-#      50%   18.56ms
-#      75%   19.81ms
-#      90%   21.00ms
-#      99%   23.05ms
-#   205824 requests in 15.01s, 32.19MB read
-# Requests/sec: 13716.68
-# Transfer/sec: 2.15MB
+#      50%   18.67ms
+#      75%   19.96ms
+#      90%   21.26ms
+#      99%   23.31ms
+#   205436 requests in 15.00s, 32.13MB read
+# Requests/sec:  13695.12
+# Transfer/sec:      2.14MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # DB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------

@@ -118,8 +118,8 @@ target_triplet = @target@
 check_PROGRAMS = $(am__EXEEXT_18)
 subdir = tests/ulib
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
-	test_bison_flexer.cc test_bison.hh test_bison.cc \
-	test_flexer.cc $(top_srcdir)/depcomp $(top_srcdir)/ylwrap \
+	test_bison_flexer.cc test_bison.cc test_flexer.cc \
+	$(top_srcdir)/depcomp $(top_srcdir)/ylwrap \
 	$(top_srcdir)/test-driver README
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -1079,14 +1079,10 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = ## dist-shar dist-zip
-EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg \
-				 file_config.cf file_config.gperf file_config.gperf.sh file_config.key test_bison.h
-
+EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg file_config.cf file_config.gperf file_config.gperf.sh file_config.key
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
-AM_LFLAGS = -olex.yy.c
-AM_YFLAGS = -d -v # -Sbison.skl
 PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_cdb test_rdb test_file_config test_log test_vector \
 	test_options test_application test_tree test_compress \
@@ -1276,9 +1272,6 @@ test_arping$(EXEEXT): $(test_arping_OBJECTS) $(test_arping_DEPENDENCIES) $(EXTRA
 test_base64$(EXEEXT): $(test_base64_OBJECTS) $(test_base64_DEPENDENCIES) $(EXTRA_test_base64_DEPENDENCIES) 
 	@rm -f test_base64$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_base64_OBJECTS) $(test_base64_LDADD) $(LIBS)
-test_bison.hh: test_bison.cc
-	@if test ! -f $@; then rm -f test_bison.cc; else :; fi
-	@if test ! -f $@; then $(MAKE) $(AM_MAKEFLAGS) test_bison.cc; else :; fi
 
 test_bison$(EXEEXT): $(test_bison_OBJECTS) $(test_bison_DEPENDENCIES) $(EXTRA_test_bison_DEPENDENCIES) 
 	@rm -f test_bison$(EXEEXT)
@@ -1973,7 +1966,6 @@ maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
 	-rm -f test_bison.cc
-	-rm -f test_bison.hh
 	-rm -f test_bison_flexer.cc
 	-rm -f test_flexer.cc
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)

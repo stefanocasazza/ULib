@@ -3,24 +3,13 @@
 
 AUTOMAKE_OPTIONS = ## dist-shar dist-zip
 
-EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg \
-				 file_config.cf file_config.gperf file_config.gperf.sh file_config.key test_bison.h
+EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg file_config.cf file_config.gperf file_config.gperf.sh file_config.key
 
 MAINTAINERCLEANFILES	= Makefile.in
 
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 
 LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
-
-## DEFS = -DU_TEST @DEFS@
-## TESTS_ENVIRONMENT = srcdir=$(srcdir)
-## AM_LFLAGS = -olex.yy.c -S$(shell pwd)/../../include/ulib/flex/flex.skl
-## NB: il comando per generare il file .cc dal file .ll viene lanciato in una subdirectory:
-## sh -x /mnt/source/ulib/autoconf/ylwrap test_flexer.ll lex.yy.c test_flexer.cc -- \
-## 		flex -olex.yy.c -S../../include/ulib/flex/flex.skl
-
-AM_LFLAGS = -olex.yy.c
-AM_YFLAGS = -d -v # -Sbison.skl
 
 PRG = test_timeval test_timer test_notifier test_string \
 		test_file test_cdb test_rdb test_file_config test_log \
@@ -86,11 +75,20 @@ TST += zip.test
 test_zip_SOURCES = test_zip.cpp
 endif
 
+## DEFS = -DU_TEST @DEFS@
+## TESTS_ENVIRONMENT = srcdir=$(srcdir)
+## AM_LFLAGS = -olex.yy.c -S$(shell pwd)/../../include/ulib/flex/flex.skl
+## NB: il comando per generare il file .cc dal file .ll viene lanciato in una subdirectory:
+## sh -x /mnt/source/ulib/autoconf/ylwrap test_flexer.ll lex.yy.c test_flexer.cc -- flex -olex.yy.c -S../../include/ulib/flex/flex.skl
+
 if USE_PARSER
+##AM_LFLAGS = -olex.yy.c
+##AM_YFLAGS = -d -v # -Sbison.skl
+##EXTRA_DIST += test_bison.h
 PRG += test_flexer test_bison
-TST +=  flexer.test bison.test
-test_flexer_SOURCES =  test_flexer.ll
-test_bison_SOURCES =  test_bison_flexer.ll test_bison.yy
+TST += flexer.test bison.test
+test_flexer_SOURCES = test_flexer.ll
+test_bison_SOURCES = test_bison_flexer.ll test_bison.yy
 endif
 
 if PCRE

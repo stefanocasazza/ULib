@@ -1043,23 +1043,20 @@ int USSIPlugIn::handlerRequest()
                (void) header->insert(0, U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
                }
 
-            if (bcache)
-               {
-               // NB: adjusting the size of response...
+            *UHTTP::ext = *header;
 
-               (void) UHTTP::checkContentLength(*header, size);
-               }
+            if (bcache) (void) UHTTP::checkContentLength(size, U_NOT_FOUND); // NB: adjusting the size of response...
             else
                {
                UHTTP::mime_index = U_unknow;
 
-               (void) header->append(UHTTP::getHeaderMimeType(0, size, U_CTYPE_HTML));
+               (void) UHTTP::ext->append(UHTTP::getHeaderMimeType(0, size, U_CTYPE_HTML));
                }
 
             U_http_info.nResponseCode = HTTP_OK;
 
-            *UClientImage_Base::wbuffer = UHTTP::getHeaderForResponse(*header);
             *UClientImage_Base::body    = output;
+            *UClientImage_Base::wbuffer = UHTTP::getHeaderForResponse();
             }
          else if (alternative_response > 1)
             {
