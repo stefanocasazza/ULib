@@ -14,7 +14,7 @@
 #include <ulib/url.h>
 #include <ulib/file.h>
 #include <ulib/tokenizer.h>
-#include <ulib/utility/compress.h>
+#include <ulib/base/miniz/miniz.h>
 #include <ulib/utility/string_ext.h>
 
 #ifdef USE_LIBPCRE
@@ -1293,13 +1293,14 @@ UString UStringExt::compress(const char* s, uint32_t sz)
 {
    U_TRACE(0, "UStringExt::compress(%.*S,%u)", sz, s, sz)
 
-   UString r(U_CONSTANT_SIZE(U_LZOP_COMPRESS) + sizeof(uint32_t) + UCompress::space(sz));
+   UString out(U_CONSTANT_SIZE(U_MINIZ_COMPRESS) + sizeof(uint32_t) + sz + 32);
+
+   mz_ulong out_len   = out.capacity() - U_CONSTANT_SIZE(U_MINIZ_COMPRESS) + sizeof(uint32_t);
+   unsigned char* ptr = (unsigned char*)out.data();
 
    // copy magic byte
 
-   char* ptr = r.data();
-
-   *(int32_t*)ptr  = U_MULTICHAR_CONSTANT32('\x89','L','Z','O');
+   *(int32_t*)ptr  = U_MULTICHAR_CONSTANT32('\x89','M','N','Z'); // U_MINIZ_COMPRESS
               ptr += 4;
 
    // copy original size
@@ -1310,15 +1311,22 @@ UString UStringExt::compress(const char* s, uint32_t sz)
    uint32_t size_original = u_invert32(*(uint32_t*)&sz);
 #endif
 
-   U_MEMCPY(ptr, &size_original, sizeof(uint32_t));
+   *(int32_t*)ptr = *(int32_t*)&size_original;
 
-   // compress with lzo
+#ifdef DEBUG
+   int r =
+#endif
+   U_SYSCALL(mz_compress, "%p,%p,%p,%u", ptr + sizeof(uint32_t), &out_len, (const unsigned char*)s, sz);
 
-   r.rep->_length = U_CONSTANT_SIZE(U_LZOP_COMPRESS) + sizeof(uint32_t) + UCompress::compress(s, sz, ptr + sizeof(uint32_t));
+   U_INTERNAL_ASSERT_EQUALS(r, Z_OK)
 
-   U_INTERNAL_ASSERT(UStringExt::isCompress(r))
+   out.rep->_length = U_CONSTANT_SIZE(U_MINIZ_COMPRESS) + sizeof(uint32_t) + out_len;
 
-   U_RETURN_STRING(r);
+   U_INTERNAL_DUMP("compressed %u bytes into %lu bytes (%u%%)", sz, out_len, 100 - (out_len * 100 / sz))
+
+   U_INTERNAL_ASSERT(UStringExt::isCompress(out))
+
+   U_RETURN_STRING(out);
 }
 
 UString UStringExt::decompress(const char* s, uint32_t n)
@@ -1331,7 +1339,7 @@ UString UStringExt::decompress(const char* s, uint32_t n)
 
    // read original size
 
-   const char* ptr = (char*)s + U_CONSTANT_SIZE(U_LZOP_COMPRESS);
+   const char* ptr = (char*)s + U_CONSTANT_SIZE(U_MINIZ_COMPRESS);
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
    uint32_t sz =            *(uint32_t*)ptr;
@@ -1339,15 +1347,23 @@ UString UStringExt::decompress(const char* s, uint32_t n)
    uint32_t sz = u_invert32(*(uint32_t*)ptr);
 #endif
 
-   // decompress with lzo
-
    U_INTERNAL_DUMP("sz = %u", sz)
 
-   UString r(sz + 32);
+   UString out(sz + 32);
+   mz_ulong out_len = out.capacity();
 
-   r.rep->_length = UCompress::decompress(ptr + sizeof(uint32_t), n - U_CONSTANT_SIZE(U_LZOP_COMPRESS) - sizeof(uint32_t), r.rep->data());
+#ifdef DEBUG
+   int r =
+#endif
+   U_SYSCALL(mz_uncompress, "%p,%p,%p,%u", (unsigned char*)out.rep->data(), &out_len, (const unsigned char*)ptr + sizeof(uint32_t), n - U_CONSTANT_SIZE(U_MINIZ_COMPRESS) - sizeof(uint32_t));
 
-   U_RETURN_STRING(r);
+   U_INTERNAL_ASSERT_EQUALS(r, Z_OK)
+
+   U_INTERNAL_DUMP("decompressed %u bytes back into %lu bytes", n - U_CONSTANT_SIZE(U_MINIZ_COMPRESS) - sizeof(uint32_t), out_len)
+
+   out.rep->_length = out_len;
+
+   U_RETURN_STRING(out);
 }
 
 UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compress

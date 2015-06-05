@@ -6,7 +6,7 @@
 #include "base/hash.c"
 #include "base/utility.c"
 #include "base/base_error.c"
-#include "base/lzo/minilzo.c"
+#include "base/miniz/miniz.c"
 #include "base/coder/cbase64.c"
 #include "base/coder/cescape.c"
 #include "base/coder/chexdump.c"

@@ -137,6 +137,7 @@ static URDBObjectHandler<UDataStorage*>* db_user;
 static URDBObjectHandler<UDataStorage*>* db_nodog;
 
 #define IP_UNIFI                "151.11.47.5"
+#define IP_UNIFI_TMP            "159.213.248.230"
 #define IP_CASCINE              "159.213.248.232"
 #define NAMED_PIPE              "/tmp/wi_auth_db.op"
 #define FIRENZECARD_REDIR       "http://wxfi.comune.fi.it/?ap=%v"
@@ -1700,7 +1701,7 @@ static void usp_init_wi_auth()
    vallow_IP_user    = U_NEW(UVector<UIPAllow*>);
    vallow_IP_request = U_NEW(UVector<UIPAllow*>);
 
-   (void) x.assign(U_CONSTANT_TO_PARAM("172.0.0.0/8, " IP_UNIFI ", " IP_CASCINE)); // NB: unifi and cascine has MasqueradeDevice...
+   (void) x.assign(U_CONSTANT_TO_PARAM("172.0.0.0/8, " IP_UNIFI ", " IP_UNIFI_TMP ", " IP_CASCINE)); // NB: unifi and cascine has MasqueradeDevice...
 
    (void) UIPAllow::parseMask(x, *vallow_IP_request);
 
@@ -2831,7 +2832,8 @@ static void setAccessPointLocalization()
    U_INTERNAL_ASSERT_POINTER(url_banner_ap_path)
    U_INTERNAL_ASSERT_POINTER(url_banner_comune_path)
 
-   if (ap_address->equal(U_CONSTANT_TO_PARAM(IP_UNIFI)))
+   if (ap_address->equal(U_CONSTANT_TO_PARAM(IP_UNIFI)) ||
+       ap_address->equal(U_CONSTANT_TO_PARAM(IP_UNIFI)))
       {
       if (ap_label->equal(U_CONSTANT_TO_PARAM("05"))) // careggi
          {
@@ -5686,7 +5688,7 @@ static void POST_LoginRequest(bool idp)
    if (idp == false                                   &&
        *ip                                            &&
         ip->equal(U_CLIENT_ADDRESS_TO_PARAM) == false &&
-       UClientImage_Base::isAllowed(*vallow_IP_request) == false) // "172.0.0.0/8, 159.213.248.230"
+       UClientImage_Base::isAllowed(*vallow_IP_request) == false) // 172.0.0.0/8, ...
       {
       U_LOGGER("*** PARAM IP(%v) FROM AP(%v) IS DIFFERENT FROM CLIENT ADDRESS(%.*s) - REALM(%v) UID(%v) ***", ip->rep, ap->rep, U_CLIENT_ADDRESS_TO_TRACE, realm.rep, uid->rep);
       }

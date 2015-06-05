@@ -55,7 +55,7 @@ public:
 
    // LZO method
 
-   static bool isCompress(const char* s)       { return (*(int32_t*)s == U_MULTICHAR_CONSTANT32('\x89','L','Z','O')); }
+   static bool isCompress(const char* s)       { return (*(int32_t*)s == U_MULTICHAR_CONSTANT32('\x89','M','N','Z')); } // U_MINIZ_COMPRESS
    static bool isCompress(const UString& s)    { return isCompress(s.data()); }
 
    static UString   compress(const char* s, uint32_t n);

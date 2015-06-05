@@ -7,9 +7,9 @@ SUBDIRS = ulib
 TO_INC = ulib/README \
 			ulib/*.h \
 			ulib/base/*.h \
-			ulib/base/lzo/*.h \
 			ulib/base/zip/*.h \
 			ulib/base/ssl/*.h \
+			ulib/base/miniz/*.h \
 			ulib/base/zopfli/*.h \
 			ulib/base/zopfli/COPYING \
 			ulib/base/coder/*.h \

@@ -204,7 +204,7 @@ am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(pkgconfigdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 lib@ULIB@_la_LIBADD =
 am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
-	base/hash.c base/utility.c base/lzo/minilzo.c \
+	base/hash.c base/utility.c base/miniz/miniz.c \
 	base/coder/cbase64.c base/coder/cquoted_printable.c \
 	base/coder/curl_coder.c base/coder/cxml_coder.c \
 	base/coder/cescape.c base/coder/chexdump.c base/base_trace.c \
@@ -221,9 +221,9 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	dynamic/dynamic.cpp dynamic/plugin.cpp mime/header.cpp \
 	mime/entity.cpp mime/multipart.cpp container/vector.cpp \
 	container/hash_map.cpp container/tree.cpp \
-	utility/interrupt.cpp utility/compress.cpp \
-	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
-	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
+	utility/interrupt.cpp utility/services.cpp \
+	utility/semaphore.cpp utility/base64.cpp utility/lock.cpp \
+	utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp utility/data_session.cpp \
 	utility/ring_buffer.cpp utility/websocket.cpp \
 	utility/dir_walk.cpp lemon/expression.cpp orm/orm.cpp \
@@ -296,7 +296,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @SSL_TRUE@am__objects_20 = base/ssl/cdes3.lo base/ssl/dgst.lo
 @MINGW_TRUE@am__objects_21 = base/win32/mingw32.lo
 am__objects_22 = base/base.lo base/base_error.lo base/hash.lo \
-	base/utility.lo base/lzo/minilzo.lo base/coder/cbase64.lo \
+	base/utility.lo base/miniz/miniz.lo base/coder/cbase64.lo \
 	base/coder/cquoted_printable.lo base/coder/curl_coder.lo \
 	base/coder/cxml_coder.lo base/coder/cescape.lo \
 	base/coder/chexdump.lo $(am__objects_1) $(am__objects_2) \
@@ -371,14 +371,13 @@ am__objects_61 = internal/common.lo ui/dialog.lo db/cdb.lo db/rdb.lo \
 	debug/debug_common.lo debug/error.lo dynamic/dynamic.lo \
 	dynamic/plugin.lo mime/header.lo mime/entity.lo \
 	mime/multipart.lo container/vector.lo container/hash_map.lo \
-	container/tree.lo utility/interrupt.lo utility/compress.lo \
-	utility/services.lo utility/semaphore.lo utility/base64.lo \
-	utility/lock.lo utility/string_ext.lo utility/socket_ext.lo \
-	utility/uhttp.lo utility/data_session.lo \
-	utility/ring_buffer.lo utility/websocket.lo \
-	utility/dir_walk.lo lemon/expression.lo orm/orm.lo \
-	orm/orm_driver.lo net/ipaddress.lo net/socket.lo net/ping.lo \
-	net/server/server.lo net/server/client_image.lo \
+	container/tree.lo utility/interrupt.lo utility/services.lo \
+	utility/semaphore.lo utility/base64.lo utility/lock.lo \
+	utility/string_ext.lo utility/socket_ext.lo utility/uhttp.lo \
+	utility/data_session.lo utility/ring_buffer.lo \
+	utility/websocket.lo utility/dir_walk.lo lemon/expression.lo \
+	orm/orm.lo orm/orm_driver.lo net/ipaddress.lo net/socket.lo \
+	net/ping.lo net/server/server.lo net/server/client_image.lo \
 	net/client/client_rdb.lo net/server/client_image_rdb.lo \
 	net/server/server_rdb.lo \
 	net/server/plugin/mod_proxy_service.lo net/rpc/rpc.lo \
@@ -660,7 +659,7 @@ DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ULib.pc
 SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
-	base/lzo/minilzo.c base/coder/cbase64.c \
+	base/miniz/miniz.c base/coder/cbase64.c \
 	base/coder/cquoted_printable.c base/coder/curl_coder.c \
 	base/coder/cxml_coder.c base/coder/cescape.c \
 	base/coder/chexdump.c $(am__append_4) $(am__append_7) \
@@ -675,9 +674,9 @@ SRC_CPP = internal/common.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
 	debug/debug_common.cpp debug/error.cpp dynamic/dynamic.cpp \
 	dynamic/plugin.cpp mime/header.cpp mime/entity.cpp \
 	mime/multipart.cpp container/vector.cpp container/hash_map.cpp \
-	container/tree.cpp utility/interrupt.cpp utility/compress.cpp \
-	utility/services.cpp utility/semaphore.cpp utility/base64.cpp \
-	utility/lock.cpp utility/string_ext.cpp utility/socket_ext.cpp \
+	container/tree.cpp utility/interrupt.cpp utility/services.cpp \
+	utility/semaphore.cpp utility/base64.cpp utility/lock.cpp \
+	utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp utility/data_session.cpp \
 	utility/ring_buffer.cpp utility/websocket.cpp \
 	utility/dir_walk.cpp lemon/expression.cpp orm/orm.cpp \
@@ -805,14 +804,14 @@ base/base_error.lo: base/$(am__dirstamp) \
 	base/$(DEPDIR)/$(am__dirstamp)
 base/hash.lo: base/$(am__dirstamp) base/$(DEPDIR)/$(am__dirstamp)
 base/utility.lo: base/$(am__dirstamp) base/$(DEPDIR)/$(am__dirstamp)
-base/lzo/$(am__dirstamp):
-	@$(MKDIR_P) base/lzo
-	@: > base/lzo/$(am__dirstamp)
-base/lzo/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) base/lzo/$(DEPDIR)
-	@: > base/lzo/$(DEPDIR)/$(am__dirstamp)
-base/lzo/minilzo.lo: base/lzo/$(am__dirstamp) \
-	base/lzo/$(DEPDIR)/$(am__dirstamp)
+base/miniz/$(am__dirstamp):
+	@$(MKDIR_P) base/miniz
+	@: > base/miniz/$(am__dirstamp)
+base/miniz/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) base/miniz/$(DEPDIR)
+	@: > base/miniz/$(DEPDIR)/$(am__dirstamp)
+base/miniz/miniz.lo: base/miniz/$(am__dirstamp) \
+	base/miniz/$(DEPDIR)/$(am__dirstamp)
 base/coder/$(am__dirstamp):
 	@$(MKDIR_P) base/coder
 	@: > base/coder/$(am__dirstamp)
@@ -977,8 +976,6 @@ utility/$(DEPDIR)/$(am__dirstamp):
 	@$(MKDIR_P) utility/$(DEPDIR)
 	@: > utility/$(DEPDIR)/$(am__dirstamp)
 utility/interrupt.lo: utility/$(am__dirstamp) \
-	utility/$(DEPDIR)/$(am__dirstamp)
-utility/compress.lo: utility/$(am__dirstamp) \
 	utility/$(DEPDIR)/$(am__dirstamp)
 utility/services.lo: utility/$(am__dirstamp) \
 	utility/$(DEPDIR)/$(am__dirstamp)
@@ -1335,8 +1332,8 @@ mostlyclean-compile:
 	-rm -f base/*.lo
 	-rm -f base/coder/*.$(OBJEXT)
 	-rm -f base/coder/*.lo
-	-rm -f base/lzo/*.$(OBJEXT)
-	-rm -f base/lzo/*.lo
+	-rm -f base/miniz/*.$(OBJEXT)
+	-rm -f base/miniz/*.lo
 	-rm -f base/ssl/*.$(OBJEXT)
 	-rm -f base/ssl/*.lo
 	-rm -f base/win32/*.$(OBJEXT)
@@ -1452,7 +1449,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@base/coder/$(DEPDIR)/curl_coder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/coder/$(DEPDIR)/cxml_coder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/coder/$(DEPDIR)/zopfli.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@base/lzo/$(DEPDIR)/minilzo.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@base/miniz/$(DEPDIR)/miniz.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/ssl/$(DEPDIR)/cdes3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/ssl/$(DEPDIR)/dgst.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/win32/$(DEPDIR)/mingw32.Plo@am__quote@
@@ -1563,7 +1560,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ssl/net/$(DEPDIR)/sslsocket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ui/$(DEPDIR)/dialog.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/base64.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/compress.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/data_session.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/des3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/dir_walk.Plo@am__quote@
@@ -1646,7 +1642,7 @@ clean-libtool:
 	-rm -rf .libs _libs
 	-rm -rf base/.libs base/_libs
 	-rm -rf base/coder/.libs base/coder/_libs
-	-rm -rf base/lzo/.libs base/lzo/_libs
+	-rm -rf base/miniz/.libs base/miniz/_libs
 	-rm -rf base/ssl/.libs base/ssl/_libs
 	-rm -rf base/win32/.libs base/win32/_libs
 	-rm -rf base/zip/.libs base/zip/_libs
@@ -1785,8 +1781,8 @@ distclean-generic:
 	-rm -f base/$(am__dirstamp)
 	-rm -f base/coder/$(DEPDIR)/$(am__dirstamp)
 	-rm -f base/coder/$(am__dirstamp)
-	-rm -f base/lzo/$(DEPDIR)/$(am__dirstamp)
-	-rm -f base/lzo/$(am__dirstamp)
+	-rm -f base/miniz/$(DEPDIR)/$(am__dirstamp)
+	-rm -f base/miniz/$(am__dirstamp)
 	-rm -f base/ssl/$(DEPDIR)/$(am__dirstamp)
 	-rm -f base/ssl/$(am__dirstamp)
 	-rm -f base/win32/$(DEPDIR)/$(am__dirstamp)
@@ -1878,7 +1874,7 @@ clean-am: clean-generic clean-libLTLIBRARIES clean-libtool clean-local \
 	mostlyclean-am
 
 distclean: distclean-am
-	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/coder/$(DEPDIR) base/lzo/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/coder/$(DEPDIR) base/miniz/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
 	-rm -f Makefile
 distclean-am: clean-am distclean-compile distclean-generic
 
@@ -1923,7 +1919,7 @@ install-ps-am:
 installcheck-am:
 
 maintainer-clean: maintainer-clean-am
-	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/coder/$(DEPDIR) base/lzo/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
+	-rm -rf ./$(DEPDIR) base/$(DEPDIR) base/coder/$(DEPDIR) base/miniz/$(DEPDIR) base/ssl/$(DEPDIR) base/win32/$(DEPDIR) base/zip/$(DEPDIR) container/$(DEPDIR) curl/$(DEPDIR) db/$(DEPDIR) dbi/$(DEPDIR) debug/$(DEPDIR) dynamic/$(DEPDIR) event/$(DEPDIR) flex/$(DEPDIR) internal/$(DEPDIR) json/$(DEPDIR) ldap/$(DEPDIR) lemon/$(DEPDIR) libevent/$(DEPDIR) magic/$(DEPDIR) mime/$(DEPDIR) net/$(DEPDIR) net/client/$(DEPDIR) net/rpc/$(DEPDIR) net/server/$(DEPDIR) net/server/plugin/$(DEPDIR) net/server/plugin/mod_geoip/$(DEPDIR) net/server/plugin/mod_shib/$(DEPDIR) orm/$(DEPDIR) orm/driver/$(DEPDIR) pcre/$(DEPDIR) query/$(DEPDIR) replace/$(DEPDIR) ssh/net/$(DEPDIR) ssl/$(DEPDIR) ssl/mime/$(DEPDIR) ssl/net/$(DEPDIR) ui/$(DEPDIR) utility/$(DEPDIR) xml/expat/$(DEPDIR) xml/libxml2/$(DEPDIR) xml/soap/$(DEPDIR) zip/$(DEPDIR)
 	-rm -f Makefile
 maintainer-clean-am: distclean-am maintainer-clean-generic
 

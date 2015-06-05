@@ -19,7 +19,7 @@
 #define U_SSL_TIMEOUT_MS (10L * 1000L) // 10 second handshake       timeout
 
 // NB: to avoid mis-aligned we use 4 bytes...
-#define U_LZOP_COMPRESS "\x89LZO" // "\211LZO" "\x89\x4c\x5a\x4f"
+#define U_MINIZ_COMPRESS "\x89MNZ" // "\211MNZ" "\x89\x4d\x4e\x5a"
 
 #define U_PATH_MAX (1024U - (1 + sizeof(ustringrep)))
 // -------------------------------------------------------------------------------------------------------------------

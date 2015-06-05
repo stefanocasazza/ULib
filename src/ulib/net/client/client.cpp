@@ -465,11 +465,13 @@ bool UClient_Base::sendRequest(bool bread_response)
    bool bssl_save     = USocketExt::bssl;
                         USocketExt::bssl = socket->isSSL(true);
    bool blocking_save = USocketExt::blocking;
-                        USocketExt::blocking = socket->isBlocking();
+//                      USocketExt::blocking = socket->isBlocking();
 
 resend:
    if (connect())
       {
+      USocketExt::blocking = socket->isBlocking();
+
       ok = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS, 1) == ncount);
 
       if (ok == false)
@@ -518,10 +520,9 @@ end:
    USocketExt::bssl     = bssl_save;
    USocketExt::blocking = blocking_save;
 
-   if (ok)
+   if (ok &&
+       socket->isOpen())
       {
-      U_INTERNAL_ASSERT(socket->isOpen())
-
       if (socket->isConnected() == false) socket->iState = USocket::CONNECT;
 
       U_RETURN(true);

@@ -29,7 +29,6 @@
 #include <ulib/utility/base64.h>
 #include <ulib/utility/hexdump.h>
 #include <ulib/utility/dir_walk.h>
-#include <ulib/utility/compress.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/websocket.h>
 #include <ulib/utility/xml_escape.h>
