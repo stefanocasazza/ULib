@@ -947,6 +947,7 @@ dnl initialize all the info variables to 'no'
      ulib_pcre_msg="no (--with-pcre)"
      ulib_ldap_msg="no (--with-ldap)"
      ulib_libz_msg="no (--with-libz)"
+ulib_libzopfli_msg="no (--with-libzopfli)"
      ulib_curl_msg="no (--with-curl)"
     ulib_expat_msg="no (--with-expat)"
     ulib_magic_msg="no (--with-magic)"
@@ -1113,6 +1114,7 @@ fi
 # SECTION 4: checks for libraries
 
 libz_version="no"
+libzopfli_version="no"
 pcre_version="no"
 ldap_version="no"
 expat_version="no"
@@ -1155,10 +1157,14 @@ if test "$USE_LIBZ" = "yes"; then
 	fi
 fi
 
+if test "$USE_LIBZOPFLI" = "yes"; then
+	ulib_libzopfli_msg="yes ( 1.0.1 )"
+fi
+
 if test "$enable_zip" = "yes" && test "$USE_LIBZ" = "yes"; then
 	ulib_zip_msg="enabled"
-	AC_DEFINE(ENABLE_ZIP, 1, [Define if enable ZIP support])
 	AM_CONDITIONAL(ZIP, true)
+	AC_DEFINE(ENABLE_ZIP, 1, [Define if enable ZIP support])
 else
 	AC_DEFINE(DISABLE_ZIP, 1, [Define if disable ZIP support])
 fi
@@ -1436,6 +1442,7 @@ AC_DEFINE_UNQUOTED(_PCRE_VERSION,		 "$pcre_version",			[PCRE - Perl compatible r
 AC_DEFINE_UNQUOTED(_LDAP_VERSION,		 "$ldap_version",			[Ldap version])
 AC_DEFINE_UNQUOTED(_EXPAT_VERSION,		 "$expat_version",		[Expat version])
 AC_DEFINE_UNQUOTED(_LIBZ_VERSION,		 "$libz_version",			[libz - general purpose compression library version])
+AC_DEFINE_UNQUOTED(_LIBZOPFLI_VERSION,	 "$libzopfli_version",	[libzopfli - google compression library version])
 AC_DEFINE_UNQUOTED(_LIBSSH_VERSION,		 "$libssh_version",		[libSSH version])
 AC_DEFINE_UNQUOTED(_SSL_VERSION,			 "$ssl_version",			[SSL version])
 AC_DEFINE_UNQUOTED(_CURL_VERSION,		 "$libcurl_version",		[libcURL - multiprotocol file transfer library version])
@@ -1942,8 +1949,6 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 				## ----------------------------------------------------------------------------------------------------------------------------------
 				## Bug 61048 -fsanitize=address crashes GCC if pointers are used - It compiles fine without -flto (disregarding undefined references)
 				## ----------------------------------------------------------------------------------------------------------------------------------
-				## NB: -freorder-blocks give some problem, maybe need -Os...
-				## ----------------------------------------------------------------------------------------------------------------------------------
 				## Graphite loop optimizations: -fgraphite, -fgraphite-identity, -floop-block, -floop-flatten,
 				##										  -floop-interchange, -floop-strip-mine, -floop-parallelize-all, -ftree-loop-linear
 				## ----------------------------------------------------------------------------------------------------------------------------------
@@ -1953,7 +1958,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 				## ----------------------------------------------------------------------------------------------------------------------------------
 				MAYBE_FLAGS="$MAYBE_FLAGS -fstrict-aliasing -fno-stack-protector -fno-stack-protector-all -finline \
 										  -findirect-inlining -ftree-switch-conversion -fno-math-errno -fno-crossjumping -fno-gcse \
-										  -Ofast -ftree-partial-pre -freorder-functions" ## -ffunction-sections -fdata-sections
+										  -Ofast -ftree-partial-pre -freorder-blocks -freorder-functions" ## -ffunction-sections -fdata-sections
 
 				if test "$use_distcc" != "yes" ; then
 					MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -mtune=native" # NB: distcc don't work with this...
@@ -2244,6 +2249,7 @@ AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
         thread support: ${ulib_thread_msg}
 
           LIBZ support: ${ulib_libz_msg}
+     LIBZOPFLI support: ${ulib_libzopfli_msg}
           PCRE support: ${ulib_pcre_msg}
            SSL support: ${ulib_ssl_msg}
            SSH support: ${ulib_ssh_msg}

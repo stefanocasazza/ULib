@@ -155,7 +155,7 @@ bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
          if (_port == 443  &&
              url.isHTTPS() &&
              (socket == 0  ||
-              socket->isSSL(true)))
+              socket->isSSLActive()))
             {
             U_INTERNAL_DUMP("host_port = %V", host_port.rep)
 
@@ -410,9 +410,9 @@ bool UClient_Base::setUrl(const UString& location)
 
    // NB: return if it has modified host or port...
 
-   bool bchange = setHostPort(url.getHost(), url.getPort());
+   if (setHostPort(url.getHost(), url.getPort())) U_RETURN(true);
 
-   U_RETURN(bchange);
+   U_RETURN(false);
 }
 
 bool UClient_Base::sendRequest(const UString& req, bool bread_response)
@@ -462,16 +462,9 @@ bool UClient_Base::sendRequest(bool bread_response)
 
    const char* name = (log_shared_with_server ? UServer_Base::mod_name[0] : "");
 
-   bool bssl_save     = USocketExt::bssl;
-                        USocketExt::bssl = socket->isSSL(true);
-   bool blocking_save = USocketExt::blocking;
-//                      USocketExt::blocking = socket->isBlocking();
-
 resend:
    if (connect())
       {
-      USocketExt::blocking = socket->isBlocking();
-
       ok = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS, 1) == ncount);
 
       if (ok == false)
@@ -517,9 +510,6 @@ resend:
       }
 
 end:
-   USocketExt::bssl     = bssl_save;
-   USocketExt::blocking = blocking_save;
-
    if (ok &&
        socket->isOpen())
       {
@@ -537,24 +527,18 @@ bool UClient_Base::readResponse(uint32_t count)
 {
    U_TRACE(0, "UClient_Base::readResponse(%u)", count)
 
-   bool bssl_save     = USocketExt::bssl;
-                        USocketExt::bssl = socket->isSSL(true);
-   bool blocking_save = USocketExt::blocking;
-                        USocketExt::blocking = socket->isBlocking();
-
-   bool ok = USocketExt::read(socket, response, count, timeoutMS);
-
-   if (ok  &&
-       log &&
-       response)
+   if (USocketExt::read(socket, response, count, timeoutMS))
       {
-      ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %V", host_port.rep);
+      if (log &&
+          response)
+         {
+         ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %V", host_port.rep);
+         }
+
+      U_RETURN(true);
       }
 
-   USocketExt::bssl     = bssl_save;
-   USocketExt::blocking = blocking_save;
-
-   U_RETURN(ok);
+   U_RETURN(false);
 }
 
 bool UClient_Base::readHTTPResponse()
@@ -565,40 +549,30 @@ bool UClient_Base::readHTTPResponse()
 
    // read HTTP message data
 
-   bool bssl_save     = USocketExt::bssl;
-                        USocketExt::bssl = socket->isSSL(true);
-   bool blocking_save = USocketExt::blocking;
-                        USocketExt::blocking = socket->isBlocking();
-
-   bool ok = UHTTP::readHeader(socket, buffer);
-
-   if (ok)
+   if (UHTTP::readHeaderResponse(socket, buffer))
       {
-      uint32_t pos = buffer.find(*UString::str_content_length, U_http_info.startHeader, U_http_info.szHeader);
+      uint32_t pos = buffer.find(*UString::str_content_length, U_http_info.startHeader, U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader);
 
-      ok = (pos != U_NOT_FOUND);
-
-      if (ok)
+      if (pos != U_NOT_FOUND)
          {
          U_http_info.clength = (uint32_t) strtoul(buffer.c_pointer(pos + UString::str_content_length->size() + 2), 0, 0);
 
-         if (U_http_info.clength == 0) UHTTP::data_chunked = false;
+         if (U_http_info.clength == 0) U_http_data_chunked = false;
 
-         ok = UHTTP::readBody(socket, &buffer, response);
-
-         if (ok  &&
-             log &&
-             response)
+         if (UHTTP::readBodyResponse(socket, &buffer, response))
             {
-            ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %V", host_port.rep);
+            if (log &&
+                response)
+               {
+               ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %V", host_port.rep);
+               }
+
+            U_RETURN(true);
             }
          }
       }
 
-   USocketExt::bssl     = bssl_save;
-   USocketExt::blocking = blocking_save;
-
-   U_RETURN(ok);
+   U_RETURN(false);
 }
 
 // DEBUG

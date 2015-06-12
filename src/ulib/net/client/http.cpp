@@ -24,7 +24,6 @@
 #endif
 
 /**
- * ==========================================================================================
  * An Example with HTTP/1.0 
  * ==========================================================================================
  * server{meng}% telnet www.cs.panam.edu 80
@@ -642,7 +641,7 @@ int UHttpClient_Base::sendRequestAsync(const UString& _url, bool bqueue, const c
 {
    U_TRACE(0, "UHttpClient_Base::sendRequestAsync(%V,%b,%S,%d)", _url.rep, bqueue, log_msg, log_fd)
 
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::socket->isSSL(true), false)
+   U_INTERNAL_ASSERT_EQUALS(UClient_Base::socket->isSSLActive(), false)
 
    pid_t pid = UServer_Base::startNewChild();
 
@@ -873,8 +872,8 @@ bool UHttpClient_Base::sendRequestEngine()
          U_http_info.clength = responseHeader->getHeader(*UString::str_content_length).strtol();
 
          if ((U_http_info.clength == 0                                      &&
-              (UHTTP::data_chunked = responseHeader->isChunked()) == false) ||
-              UHTTP::readBody(UClient_Base::socket, &response, body))
+              (U_http_data_chunked = responseHeader->isChunked()) == false) ||
+              UHTTP::readBodyResponse(UClient_Base::socket, &response, body))
             {
             U_RETURN(true);
             }
@@ -905,16 +904,10 @@ bool UHttpClient_Base::sendRequest()
 
    U_INTERNAL_ASSERT_RANGE(0,UClient_Base::iovcnt,6)
 
-   bool bssl_save     = USocketExt::bssl;
-                        USocketExt::bssl = socket->isSSL(true);
-   bool blocking_save = USocketExt::blocking;
-                        USocketExt::blocking = socket->isBlocking();
-
    U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
 
-   bool U_ClientImage_close_save = U_ClientImage_close;
-
-   u_http_info_save = U_http_info;
+   u_http_info_save   = U_http_info;
+   uint64_t flag_save = u_clientimage_info.flag.u;
 
    if (UClient_Base::iovcnt == 0)
       {
@@ -925,10 +918,7 @@ bool UHttpClient_Base::sendRequest()
       composeRequest();
       }
 
-   bool esito = sendRequestEngine();
-
-   USocketExt::bssl     = bssl_save;
-   USocketExt::blocking = blocking_save;
+   bool ok = sendRequestEngine();
 
    u_http_info_save.nResponseCode = U_http_info.nResponseCode;
 
@@ -936,9 +926,9 @@ bool UHttpClient_Base::sendRequest()
 
    U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
 
-   U_ClientImage_close = U_ClientImage_close_save;
+   u_clientimage_info.flag.u = flag_save;
 
-   U_RETURN(esito);
+   U_RETURN(ok);
 }
 
 bool UHttpClient_Base::sendRequest(const UString& req)
@@ -951,7 +941,7 @@ bool UHttpClient_Base::sendRequest(const UString& req)
 
    parseRequest();
 
-   if (UHTTP::scanfHeader((const char*)UClient_Base::iov[0].iov_base, UClient_Base::iov[0].iov_len))
+   if (UHTTP::scanfHeaderRequest((const char*)UClient_Base::iov[0].iov_base, UClient_Base::iov[0].iov_len))
       {
       U_INTERNAL_DUMP("U_http_method_type = %B", U_http_method_type)
 

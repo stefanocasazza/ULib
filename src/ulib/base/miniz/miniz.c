@@ -2146,9 +2146,16 @@ static mz_bool tdefl_compress_fast(tdefl_compressor *d)
 
                     s0 = s_tdefl_small_dist_sym[cur_match_dist & 511];
                     s1 = s_tdefl_large_dist_sym[cur_match_dist >> 8];
-                    d->m_huff_count[1][(cur_match_dist < 512) ? s0 : s1]++;
 
+                    d->m_huff_count[1][(cur_match_dist < 512) ? s0 : s1]++;
+#                 ifndef U_COVERITY_FALSE_POSITIVE
+                    /**
+                     * CID 95675: Memory - illegal accesses (OVERRUN)
+                     * Overrunning array "s_tdefl_len_sym" of 256 2-byte elements at element index 4093 (byte offset 8186)
+                     * using index "cur_match_len - TDEFL_MIN_MATCH_LEN" (which evaluates to 4093)
+                     */
                     d->m_huff_count[0][s_tdefl_len_sym[cur_match_len - TDEFL_MIN_MATCH_LEN]]++;
+#                 endif
                 }
             }
             else

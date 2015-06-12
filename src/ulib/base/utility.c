@@ -606,15 +606,15 @@ uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
 
          if (pos <= n)
             {
-            endHeader             = pos;
-            u_line_terminator     = U_CRLF;
-            u_line_terminator_len = 2;
+            endHeader = pos;
+
+         /* U_line_terminator_len = 2; */
             }
 
          break;
          }
 
-      // \n\n (U_LF2)
+      /* \n\n (U_LF2) */
 
       if (p[1] == '\n')
          {
@@ -624,9 +624,9 @@ uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
 
          if (pos <= n)
             {
-            endHeader             = pos;
-            u_line_terminator     = U_LF;
-            u_line_terminator_len = 1;
+            endHeader = pos;
+
+         /* U_line_terminator_len = 1; */
             }
 
          break;

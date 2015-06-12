@@ -138,7 +138,7 @@ SRC_CPP += zip/zip.cpp
 endif
 
 if LIBZ
-SRC_C   += base/coder/cgzio.c base/coder/zopfli.c
+SRC_C += base/coder/cgzio.c
 endif
 
 if USE_PARSER

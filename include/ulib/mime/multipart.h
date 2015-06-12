@@ -14,6 +14,8 @@
 #ifndef U_MULTIPART_H
 #define U_MULTIPART_H 1
 
+#include <ulib/base/base.h>
+#include <ulib/internal/chttp.h>
 #include <ulib/container/vector.h>
 
 /**
@@ -98,8 +100,9 @@ public:
       {
       U_TRACE(0, "UMimeMultipartMsg::add(%V)", _section.rep)
 
+      U_INTERNAL_ASSERT_MAJOR(U_line_terminator_len, 0)
    // U_ASSERT_EQUALS(_section.find("MIME-Version: 1.0"), U_NOT_FOUND) /* con rfc822 si possono avere duplicazioni */
-      U_ASSERT_EQUALS(_section.find(boundary+u_line_terminator_len), U_NOT_FOUND)
+      U_ASSERT_EQUALS(_section.find(boundary+U_line_terminator_len), U_NOT_FOUND)
 
       vec_part.push(_section);
       }

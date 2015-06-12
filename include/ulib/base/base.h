@@ -172,8 +172,8 @@ extern U_EXPORT char* u_err_buffer;
 extern U_EXPORT uint32_t u_buffer_len; /* assert that is busy if != 0 */
 
 /* Startup */
-extern U_EXPORT bool u_is_tty;
 extern U_EXPORT pid_t u_pid;
+extern U_EXPORT bool u_is_tty;
 extern U_EXPORT uint32_t u_pid_str_len;
 extern U_EXPORT uint32_t u_progname_len;
 extern U_EXPORT       char* restrict u_pid_str;
@@ -197,17 +197,17 @@ extern U_EXPORT uint32_t u_cwd_len;
 U_EXPORT void u_getcwd(void);
 
 /* Time services */
-extern U_EXPORT int u_now_adjust;   /* GMT based time */
 extern U_EXPORT bool u_daylight;
-extern U_EXPORT void* u_pthread_time; /* pthread clock */
+extern U_EXPORT int u_now_adjust;   /* GMT based time */
 extern U_EXPORT time_t u_start_time;
-
-extern U_EXPORT const char* u_months[];    /* "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" */
-extern U_EXPORT const char* u_months_it[]; /* "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" */
+extern U_EXPORT void* u_pthread_time; /* pthread clock */
 
 extern U_EXPORT struct timeval* u_now;
 extern U_EXPORT struct tm u_strftime_tm;
 extern U_EXPORT struct timeval u_timeval;
+
+extern U_EXPORT const char* u_months[];    /* "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" */
+extern U_EXPORT const char* u_months_it[]; /* "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" */
 
 U_EXPORT bool     u_setStartTime(void);
 U_EXPORT int      u_getMonth(const char* buf) __pure;
@@ -222,16 +222,14 @@ extern U_EXPORT bool u_recursion;
 extern U_EXPORT bool u_fork_called;
 extern U_EXPORT bool u_exec_failed;
 extern U_EXPORT char u_user_name[32];
+extern U_EXPORT const char* restrict u_tmpdir;
 extern U_EXPORT char u_hostname[HOST_NAME_MAX+1];
 extern U_EXPORT const int MultiplyDeBruijnBitPosition2[32];
-extern U_EXPORT uint32_t u_hostname_len, u_user_name_len, u_line_terminator_len, u_seed_hash;
+extern U_EXPORT uint32_t u_hostname_len, u_user_name_len, u_seed_hash;
 
 extern U_EXPORT const unsigned char u_alphabet[];  /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
 extern U_EXPORT const unsigned char u_hex_upper[]; /* "0123456789ABCDEF" */
 extern U_EXPORT const unsigned char u_hex_lower[]; /* "0123456789abcdef" */
-
-extern U_EXPORT const char* restrict u_tmpdir;
-extern U_EXPORT const char* restrict u_line_terminator;
 
 /* conversion number to string */
 extern U_EXPORT const char u_ctn2s[201];
@@ -261,7 +259,6 @@ static inline bool u_is_css(int mime_index)    { return (mime_index == U_css); }
 static inline bool u_is_gif(int mime_index)    { return (mime_index == U_gif); }
 static inline bool u_is_jpg(int mime_index)    { return (mime_index == U_jpg); }
 static inline bool u_is_png(int mime_index)    { return (mime_index == U_png); }
-static inline bool u_is_img(int mime_index)    { return (mime_index == U_png || mime_index == U_gif || mime_index == U_jpg || mime_index == U_ico); }
 static inline bool u_is_flv(int mime_index)    { return (mime_index == U_flv); }
 static inline bool u_is_html(int mime_index)   { return (mime_index == U_html); }
 
@@ -274,6 +271,11 @@ static inline bool u_is_ruby(int mime_index)   { return (mime_index == U_ruby); 
 
 static inline bool u_is_know(int mime_index)   { return (mime_index == U_know); }
 static inline bool u_is_unknow(int mime_index) { return (mime_index == U_unknow); }
+
+static inline bool u_is_img(int mime_index)    { return (mime_index == U_png ||
+                                                         mime_index == U_gif ||
+                                                         mime_index == U_jpg ||
+                                                         mime_index == U_ico); }
 
 /**
  * ----------------------------------------------------------------------------

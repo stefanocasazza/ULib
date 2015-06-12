@@ -29,7 +29,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				AC_MSG_RESULT($msg)
 			fi
 		else
-			echo "${T_MD}LIBZ found in $libzdir${T_ME}"
+			echo "${T_MD}libz found in $libzdir${T_ME}"
 			USE_LIBZ=yes
 			AC_DEFINE(USE_LIBZ, 1, [Define if enable libz support])
 			libz_version=$(grep ZLIB_VERSION $libzdir/include/zlib.h | head -n1 | cut -d'"' -f2)
@@ -55,45 +55,45 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	fi
 	AC_MSG_RESULT([$enable_zip])
 
-	AC_MSG_CHECKING(if c-ares library for DNS resolution is wanted)
-	if test -n "$with_libares" ; then
-		wanted=1;
-	else
+	AC_MSG_CHECKING(if zopfli library is wanted)
+	wanted=1;
+	if test -z "$with_libzopfli" ; then
 		wanted=0;
-		with_libares="${CROSS_ENVIRONMENT}/usr";
+		with_libzopfli="${CROSS_ENVIRONMENT}/usr";
 	fi
-	AC_ARG_WITH(libares, [  --with-libares          use system   c-ares library - [[will check /usr /usr/local]]], [
+	AC_ARG_WITH(libzopfli, [  --with-libzopfli        use system   zopfli library - [[will check /usr /usr/local]] [[default=use if present]]], [
 	if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
 		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
-			caresdir="$dir"
-			if test -f "$dir/include/ares.h"; then
-				found_cares="yes";
+			libzopflidir="$dir"
+			if test -f "$dir/include/zopfli.h"; then
+				found_libzopfli="yes";
 				break;
 			fi
 		done
-		if test x_$found_cares != x_yes; then
-			msg="Cannot find c-ares library";
+		if test x_$found_libzopfli != x_yes; then
+			msg="Cannot find libzopfli library";
 			if test $wanted = 1; then
 				AC_MSG_ERROR($msg)
 			else
 				AC_MSG_RESULT($msg)
 			fi
 		else
-			echo "${T_MD}c-ares found in $caresdir${T_ME}"
-			USE_C_ARES=yes
-			AC_DEFINE(USE_C_ARES, 1, [Define if enable c-ares support])
-			cares_version=$(pkg-config --modversion libcares)
-			if test -z "${cares_version}"; then
-				cares_version="unknown"
+			echo "${T_MD}libzopfli found in $libzopflidir${T_ME}"
+			USE_LIBZOPFLI=yes
+			AC_DEFINE(USE_LIBZOPFLI, 1, [Define if enable libzopfli support])
+		  	libzopfli_version=1.0.1
+		##	libzopfli_version=$(grep VERSION $libzopflidir/include/zopfli.h)
+			if test -z "${libzopfli_version}"; then
+				libzopfli_version="unknown"
 			fi
-         ULIB_LIBS="-lcares $ULIB_LIBS";
-			if test $caresdir != "${CROSS_ENVIRONMENT}/usr"; then
-				CPPFLAGS="$CPPFLAGS -I$caresdir/include"
-				LDFLAGS="$LDFLAGS -L$caresdir/lib -Wl,-R$caresdir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$caresdir/lib";
+         ULIB_LIBS="$ULIB_LIBS -lzopfli";
+			if test $libzopflidir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$libzopflidir/include"
+				LDFLAGS="$LDFLAGS -L$libzopflidir/lib -Wl,-R$libzopflidir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzopflidir/lib";
 			fi
 		fi
 	fi
@@ -223,7 +223,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				ssl_version=$(grep VERSION $ssldir/include/cyassl/openssl/opensslv.h | cut -d' ' -f3 | tr -d '\r\n');
 				ULIB_LIBS="$ULIB_LIBS -lcyassl";
 			else
-				echo "${T_MD}OPENSSL found in $ssldir${T_ME}";
+				echo "${T_MD}libssl found in $ssldir${T_ME}";
 				if test -f "$ssldir/include/openssl/ts.h"; then
 					HAVE_SSL_TS="yes";
 					AC_DEFINE(HAVE_SSL_TS, 1, [Define if we have time stamp support in openssl])
@@ -273,7 +273,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				AC_MSG_RESULT($msg)
 			fi
 		else
-			echo "${T_MD}PCRE found in $pcredir${T_ME}"
+			echo "${T_MD}libpcre found in $pcredir${T_ME}"
 			USE_LIBPCRE=yes
 			AC_DEFINE(USE_LIBPCRE, 1, [Define if enable libpcre support])
 			pcre_version=$($pcredir/bin/pcre-config --version)
@@ -316,7 +316,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				AC_MSG_RESULT($msg)
 			fi
 		else
-			echo "${T_MD}EXPAT found in $expatdir${T_ME}"
+			echo "${T_MD}libexpat found in $expatdir${T_ME}"
 			USE_LIBEXPAT=yes
 			AC_DEFINE(USE_LIBEXPAT, 1, [Define if enable libexpat support])
 			expat_version=$(strings $expatdir/lib*/libexpat.* 2>/dev/null | grep "^expat_[[0-9]]" | head -n1 | cut -d'_' -f2)
@@ -328,6 +328,50 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				CPPFLAGS="$CPPFLAGS -I$expatdir/include"
 				LDFLAGS="$LDFLAGS -L$expatdir/lib -Wl,-R$expatdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$expatdir/lib";
+			fi
+		fi
+	fi
+	], [AC_MSG_RESULT(no)])
+
+	AC_MSG_CHECKING(if c-ares library for DNS resolution is wanted)
+	if test -n "$with_libares" ; then
+		wanted=1;
+	else
+		wanted=0;
+		with_libares="${CROSS_ENVIRONMENT}/usr";
+	fi
+	AC_ARG_WITH(libares, [  --with-libares          use system   c-ares library - [[will check /usr /usr/local]]], [
+	if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
+			caresdir="$dir"
+			if test -f "$dir/include/ares.h"; then
+				found_cares="yes";
+				break;
+			fi
+		done
+		if test x_$found_cares != x_yes; then
+			msg="Cannot find c-ares library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			echo "${T_MD}libcares found in $caresdir${T_ME}"
+			USE_C_ARES=yes
+			AC_DEFINE(USE_C_ARES, 1, [Define if enable c-ares support])
+			cares_version=$(pkg-config --modversion libcares)
+			if test -z "${cares_version}"; then
+				cares_version="unknown"
+			fi
+         ULIB_LIBS="-lcares $ULIB_LIBS";
+			if test $caresdir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$caresdir/include"
+				LDFLAGS="$LDFLAGS -L$caresdir/lib -Wl,-R$caresdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$caresdir/lib";
 			fi
 		fi
 	fi
@@ -434,7 +478,7 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 		if test x_$found_ldap != x_yes; then
 			AC_MSG_ERROR(Cannot find LDAP include)
 		else
-			echo "${T_MD}LDAP found in $ldapdir${T_ME}"
+			echo "${T_MD}libldap found in $ldapdir${T_ME}"
 			USE_LIBLDAP=yes
 			AC_DEFINE(USE_LIBLDAP, 1, [Define if enable libldap support])
 			if test -f "$LDAP_INCS/ldap_ssl.h"; then
@@ -472,7 +516,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 		if test x_$found_dbi != x_yes; then
 			AC_MSG_ERROR(Cannot find DBI library)
 		else
-			echo "${T_MD}DBI found in $dbidir${T_ME}"
+			echo "${T_MD}libdbi found in $dbidir${T_ME}"
 			USE_LIBDBI=yes
 			AC_DEFINE(USE_LIBDBI, 1, [Define if enable libdbi support])
 			libdbi_version=$(strings $dbidir/lib*/libdbi.* 2>/dev/null | grep "^libdbi v[[0-9]]" | cut -d'v' -f2 | head -n1)

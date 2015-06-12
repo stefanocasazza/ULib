@@ -6,6 +6,7 @@
 #include <ulib/ssl/crl.h>
 #include <ulib/file_config.h>
 #include <ulib/base/ssl/dgst.h>
+#include <ulib/internal/chttp.h>
 #include <ulib/utility/base64.h>
 #include <ulib/ssl/certificate.h>
 #include <ulib/utility/services.h>
@@ -688,8 +689,8 @@ public:
          // -------------------------------------------------------------------------------------------------------------  
          }
 
-      u_line_terminator_len = 2;
       u_base64_max_columns  = U_OPENSSL_BASE64_MAX_COLUMN;
+      U_line_terminator_len = 2;
 
       UString modulus          = cert.getModulus(),
               exponent         = cert.getExponent();

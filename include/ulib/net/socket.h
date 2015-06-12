@@ -96,9 +96,9 @@ public:
       SK_STREAM     = 0x000,
       SK_DGRAM      = 0x001,
       SK_RAW        = 0x002,
-      SK_UNIX       = 0x003,
-      SK_SSL        = 0x004,
-      SK_SSL_ACTIVE = 0x005
+      SK_UNIX       = 0x004,
+      SK_SSL        = 0x008,
+      SK_SSL_ACTIVE = 0x010
    };
 
             USocket(bool bSocketIsIPv6 = false);
@@ -158,9 +158,9 @@ public:
       {
       U_TRACE(0, "USocket::isUDP()")
 
-      U_INTERNAL_DUMP("U_socket_Type = %d", U_socket_Type(this))
+      U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
-      if (U_socket_Type(this) == SK_DGRAM) U_RETURN(true);
+      if ((U_socket_Type(this) & SK_DGRAM) != 0) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -169,26 +169,34 @@ public:
       {
       U_TRACE(0, "USocket::isIPC()")
 
-      U_INTERNAL_DUMP("U_socket_Type = %d", U_socket_Type(this))
+      U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
-      if (U_socket_Type(this) == SK_UNIX) U_RETURN(true);
+      if ((U_socket_Type(this) & SK_UNIX) != 0) U_RETURN(true);
 
       U_RETURN(false);
       }
 
-   bool isSSL(bool bcheck = false) const
+   bool isSSL() const
       {
-      U_TRACE(0, "USocket::isSSL(%b)", bcheck)
+      U_TRACE(0, "USocket::isSSL()")
 
-      U_INTERNAL_DUMP("U_socket_Type = %d", U_socket_Type(this))
+      U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
 #  ifdef USE_LIBSSL
-      if (U_socket_Type(this)  >= SK_SSL &&
-          (bcheck == false               ||
-           U_socket_Type(this) == SK_SSL_ACTIVE))
-         {
-         U_RETURN(true);
-         }
+      if ((U_socket_Type(this) & SK_SSL) != 0) U_RETURN(true);
+#  endif
+
+      U_RETURN(false);
+      }
+
+   bool isSSLActive() const
+      {
+      U_TRACE(0, "USocket::isSSLActive()")
+
+      U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
+
+#  ifdef USE_LIBSSL
+      if ((U_socket_Type(this) & SK_SSL_ACTIVE) != 0) U_RETURN(true);
 #  endif
 
       U_RETURN(false);
@@ -201,7 +209,10 @@ public:
 #  ifdef USE_LIBSSL
       U_ASSERT(isSSL())
 
-      U_socket_Type(this) = (_flag ? USocket::SK_SSL_ACTIVE : USocket::SK_SSL);
+      if (_flag) U_socket_Type(this) |=  SK_SSL_ACTIVE;
+      else       U_socket_Type(this) &= ~SK_SSL_ACTIVE;
+
+      U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 #  endif
       }
 

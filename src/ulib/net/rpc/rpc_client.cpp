@@ -24,24 +24,12 @@ bool URPCClient_Base::readResponse(USocket* sk, UString& buffer, UString& respon
      buffer.setEmptyForce();
    response.setEmptyForce();
 
-#ifdef USE_LIBSSL
-   bool bssl_save     = USocketExt::bssl;
-                        USocketExt::bssl = sk->isSSL(true);
-#endif
-   bool blocking_save = USocketExt::blocking;
-                        USocketExt::blocking = sk->isBlocking();
-
    if (URPC::readTokenString(sk, 0, buffer, rstart, response))
       {
       // NB: we force for U_SUBSTR_INC_REF case (string can be referenced more)...
 
       buffer.size_adjust_force(U_TOKEN_NM);
       }
-
-#ifdef USE_LIBSSL
-   USocketExt::bssl     = bssl_save;
-#endif
-   USocketExt::blocking = blocking_save;
 
    U_INTERNAL_DUMP("buffer = %V response = %V)", buffer.rep, response.rep)
 

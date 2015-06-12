@@ -203,6 +203,7 @@ export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
 # webserver-1
  creat_config -1
  start_test $NCAT localhost
+#exit 0
 # webserver0
  creat_config 0 
  start_test $NCAT localhost

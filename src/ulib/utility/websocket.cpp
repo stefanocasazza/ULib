@@ -82,13 +82,12 @@ bool UWebSocket::sendAccept()
    U_INTERNAL_ASSERT_POINTER(str_websocket_key)
    U_INTERNAL_ASSERT_MAJOR(U_http_websocket_len, 0)
 
-   // In order to establish a websocket connection, a client (a web browser) sends a HTTP GET request with a number of HTTP headers.
-   // Among those headers there is the Sec-WebSocket-Key header, which contains a handshake key. According to the WebSocket protocol,
-   // the server should:
+   // In order to establish a websocket connection, a client (a web browser) sends a HTTP GET request with a number of HTTP headers. Among those
+   // headers there is the Sec-WebSocket-Key header, which contains a handshake key. According to the WebSocket protocol, the server should:
    //
-   // Concatenate the handshake key with the magic guid {258EAFA5-E914-47DA-95CA-C5AB0DC85B11}.
-   // Take the SHA1 hash of the concatenation result.
-   // Send the base64 equivalent of the hash in HTTP response to the client.
+   // 1) Concatenate the handshake key with the magic guid {258EAFA5-E914-47DA-95CA-C5AB0DC85B11}
+   // 2) Take the SHA1 hash of the concatenation result
+   // 3) Send the base64 equivalent of the hash in HTTP response to the client
 
    unsigned char challenge[128];
 
@@ -100,35 +99,6 @@ bool UWebSocket::sendAccept()
    UString accept(U_CAPACITY);
 
    UServices::generateDigest(U_HASH_SHA1, 0, challenge, U_http_websocket_len + WEBSOCKET_GUID_LEN, accept, true);
-
-   /*
-   UString tmp(100U);
-
-   const char* origin = getHTTPHeaderValuePtr(*UClientImage_Base::request, *UHTTP::str_origin, false);
-
-   if (origin)
-      {
-      char c;
-      uint32_t origin_len = 0;
-
-      for (c = u_line_terminator[0]; origin[origin_len] != c; ++origin_len) {}
-
-      U_INTERNAL_DUMP("origin = %.*S", origin_len, origin)
-
-      const char* protocol = getHTTPHeaderValuePtr(*UClientImage_Base::request, *UHTTP::str_websocket_prot, false);
-
-      if (protocol)
-         {
-         uint32_t protocol_len = 0;
-
-         for (c = u_line_terminator[0]; protocol[protocol_len] != c; ++protocol_len) {}
-
-         U_INTERNAL_DUMP("protocol = %.*S", protocol_len, protocol)
-
-         tmp.snprintf("%v: %.*s\r\n", *UHTTP::str_websocket_prot), protocol_len, protocol); 
-         }
-      }
-   */
 
    UClientImage_Base::wbuffer->snprintf("HTTP/1.1 101 Switching Protocols\r\n"
                                         "Upgrade: websocket\r\n"

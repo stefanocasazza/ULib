@@ -126,10 +126,6 @@ struct timeval* u_now = &u_timeval;
 const char* u_months[]    = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
 const char* u_months_it[] = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
 
-/* Scan services */
-uint32_t             u_line_terminator_len = 1;
-const char* restrict u_line_terminator     = U_LF;
-
 /* Services */
 int                  u_errno; /* An errno value */
 int                  u_flag_exit;

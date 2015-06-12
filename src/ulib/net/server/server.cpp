@@ -100,11 +100,11 @@ char*         UServer_Base::client_address;
 ULock*        UServer_Base::lock_user1;
 ULock*        UServer_Base::lock_user2;
 time_t        UServer_Base::last_event;
-int32_t       UServer_Base::oClientImage;
 uint32_t      UServer_Base::map_size;
 uint32_t      UServer_Base::max_depth;
 uint32_t      UServer_Base::read_again;
 uint32_t      UServer_Base::vplugin_size;
+uint32_t      UServer_Base::nClientIndex;
 uint32_t      UServer_Base::shared_data_add;
 uint32_t      UServer_Base::client_address_len;
 uint32_t      UServer_Base::wakeup_for_nothing;
@@ -1319,8 +1319,6 @@ void UServer_Base::init()
 #ifdef USE_LIBSSL
    if (bssl)
       {
-      USocketExt::bssl = true;
-
       U_ASSERT(((USSLSocket*)socket)->isSSL())
 
       if (cfg) ((USSLSocket*)socket)->ciphersuite_model = cfg->readLong(U_CONSTANT_TO_PARAM("CIPHER_SUITE"));
@@ -2041,7 +2039,12 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
 
+   U_INTERNAL_DUMP("nClientIndex = %u", nClientIndex)
+
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+   U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
+
+   pClientIndex = vClientImage + nClientIndex;
 
 #if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    USocket* psocket;
@@ -2109,7 +2112,7 @@ loop:
             called_from_handlerTime = false;
 #        endif
             
-            if (handlerTimeoutConnection(pClientIndex))
+            if (handlerTimeoutConnection(CLIENT_INDEX))
                {
                UNotifier::erase((UEventFd*)CLIENT_INDEX);
 
@@ -2202,7 +2205,7 @@ try_accept:
 
       U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by FD_SETSIZE(%u)", CLIENT_ADDRESS_LEN, CLIENT_ADDRESS, FD_SETSIZE);
 
-      U_RETURN(U_NOTIFIER_OK);
+      goto end;
       }
 #endif
 
@@ -2414,6 +2417,12 @@ end:
 #if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)
    UNotifier::insertBatch();
 #endif
+
+   nClientIndex = CLIENT_INDEX - vClientImage;
+
+   U_INTERNAL_DUMP("nClientIndex = %u", nClientIndex)
+
+   U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
 
    U_RETURN(U_NOTIFIER_OK);
 }
@@ -2631,12 +2640,20 @@ void UServer_Base::runLoop(const char* user)
 #if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids == -1)
       {
-      ((UThread*)(UNotifier::pthread = U_NEW(UClientThread)))->start(50);
+      UNotifier::pthread = U_NEW(UClientThread);
+
+      ((UThread*)UNotifier::pthread)->start(50);
 
       proc->_pid = ((UThread*)UNotifier::pthread)->getTID();
 
       U_ASSERT(proc->parent())
       }
+#  ifdef DEBUG
+   else 
+      {
+      U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, 0)
+      }
+#  endif
 #endif
 
 #if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)

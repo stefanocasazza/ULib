@@ -124,27 +124,12 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
 
       if (eod)
          {
-         // adjust how many bytes read...
+         eod += (U_CONSTANT_SIZE(U_POP3_EOD) - (buffer.size() - pos)); // adjust how many bytes read...  
 
-         eod += (U_CONSTANT_SIZE(U_POP3_EOD) - (buffer.size() - pos));
-
-         if (eod > 0)
+         if (eod > 0 &&
+             USocketExt::read(this, buffer, eod) == false)
             {
-#        ifdef USE_LIBSSL
-            bool bssl_save     = USocketExt::bssl;
-                                 USocketExt::bssl = USocket::isSSL(true);
-#        endif
-            bool blocking_save = USocketExt::blocking;
-                                 USocketExt::blocking = USocket::isBlocking();
-
-            bool esito = USocketExt::read(this, buffer, eod);
-
-#        ifdef USE_LIBSSL
-            USocketExt::bssl     = bssl_save;
-#        endif
-            USocketExt::blocking = blocking_save;
-
-            if (esito == false) U_RETURN(false);
+            U_RETURN(false);
             }
 
          end = buffer.size() - U_CONSTANT_SIZE(U_POP3_EOD);
@@ -187,7 +172,6 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
 
    if (USocket::checkIO(end) == false) U_RETURN(false);
 
-   bool ok;
    int i = 0;
 
    pos = end = 0;
@@ -199,15 +183,8 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
       (void) U_SYSCALL(memset, "%p,%d,%u", vend, 0xff, num_msg * sizeof(int));
       }
 
-   bool bssl_save     = USocketExt::bssl;
-                        USocketExt::bssl = USocket::isSSL(true);
-   bool blocking_save = USocketExt::blocking;
-                        USocketExt::blocking = USocket::isBlocking();
-
    do {
-      ok = USocketExt::read(this, buffer);
-
-      if (ok == false) goto error;
+      if ( USocketExt::read(this, buffer) == false) U_RETURN(false);
 
       U_INTERNAL_DUMP("buffer.size() = %u", buffer.size())
 
@@ -262,14 +239,9 @@ U_NO_EXPORT bool UPop3Client::syncCommandML(const UString& req, int* vpos, int* 
    while (true);
 
 end:
-   ok = true;
    response = OK;
 
-error:
-   USocketExt::bssl     = bssl_save;
-   USocketExt::blocking = blocking_save;
-
-   U_RETURN(ok);
+   U_RETURN(true);
 }
 
 bool UPop3Client::startTLS()

@@ -394,8 +394,6 @@ TO_INC = ulib/README \
 			ulib/base/zip/*.h \
 			ulib/base/ssl/*.h \
 			ulib/base/miniz/*.h \
-			ulib/base/zopfli/*.h \
-			ulib/base/zopfli/COPYING \
 			ulib/base/coder/*.h \
 			ulib/base/win32/*.h \
 			ulib/base/replace/*.h \

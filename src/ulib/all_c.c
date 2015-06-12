@@ -20,9 +20,6 @@
 
 #ifdef USE_LIBZ
 #  include "base/coder/cgzio.c"
-#  ifndef HAVE_OLD_IOSTREAM
-#     include "base/coder/zopfli.c"
-#  endif
 #endif
 
 #ifdef ENABLE_ZIP

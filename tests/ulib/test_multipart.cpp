@@ -9,6 +9,8 @@ int U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   U_line_terminator_len = 1;
+
    UMimeMultipartMsg msg;
    UString dati, filename;
 

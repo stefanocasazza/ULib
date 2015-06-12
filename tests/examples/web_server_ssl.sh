@@ -25,7 +25,7 @@ userver {
 #LOG_FILE_SZ 20k
  LOG_MSG_SIZE -1
  PID_FILE /var/run/userver_tcp.pid
- PREFORK_CHILD 1
+ PREFORK_CHILD 2
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"

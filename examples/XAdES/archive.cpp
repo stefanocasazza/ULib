@@ -3,6 +3,7 @@
 #include <ulib/url.h>
 #include <ulib/date.h>
 #include <ulib/file_config.h>
+#include <ulib/internal/chttp.h>
 #include <ulib/utility/base64.h>
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
@@ -310,8 +311,8 @@ public:
          if (x.find("xades:QualifyingProperties") == U_NOT_FOUND) to_digest += UXML2Document::xmlC14N(x);
          }
 
-      u_line_terminator_len = 2;
       u_base64_max_columns  = U_OPENSSL_BASE64_MAX_COLUMN;
+      U_line_terminator_len = 2;
 
       UString archiveTimeStamp(U_CAPACITY), token = getTimeStampToken(to_digest, archive_timestamp);
 

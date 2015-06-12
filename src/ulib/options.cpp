@@ -52,6 +52,11 @@
 #else
 #  define LIBZ_ENABLE        "no"
 #endif
+#ifdef USE_LIBZOPFLI
+#  define LIBZOPFLI_ENABLE   "yes ( " _LIBZOPFLI_VERSION " )"
+#else
+#  define LIBZOPFLI_ENABLE   "no"
+#endif
 #ifdef USE_LIBPCRE
 #  define LIBPCRE_ENABLE     "yes ( " _PCRE_VERSION " )"
 #else
@@ -640,6 +645,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
            zip support: enabled
         thread support: enabled
           LIBZ support: yes ( 1.2.6 )
+     LIBZOPFLI support: yes ( 1.0.1 )
           PCRE support: yes ( 8.12 )
            SSL support: yes ( 1.0.0e )
            SSH support: yes ( 0.4.8 )
@@ -694,6 +700,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                "memory pool support..:%W " MEMORY_POOL_ENABLE "%W\n"
 
                "LIBZ support.........:%W " LIBZ_ENABLE "%W\n"
+               "LIBZOPFLI support....:%W " LIBZOPFLI_ENABLE "%W\n"
                "PCRE support.........:%W " LIBPCRE_ENABLE "%W\n"
                "SSL support..........:%W " LIBSSL_ENABLE "%W\n"
                "SSH support..........:%W " LIBSSH_ENABLE "%W\n"
@@ -745,6 +752,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                // wrapping
+               BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,

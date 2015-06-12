@@ -224,18 +224,21 @@ public:
       {
       U_TRACE(0, "USSLSocket::pending()")
 
-      if (U_socket_Type(this) != USocket::SK_SSL_ACTIVE) U_RETURN(0);
+      if (USocket::isSSLActive())
+         {
+         U_INTERNAL_DUMP("this = %p ssl = %p", this, ssl)
 
-      U_INTERNAL_DUMP("this = %p ssl = %p", this, ssl)
+         U_INTERNAL_ASSERT_POINTER(ssl)
 
-      U_INTERNAL_ASSERT_POINTER(ssl)
+         // NB: data are received in blocks from the peer. Therefore data can be buffered
+         // inside ssl and are ready for immediate retrieval with SSL_read()...
 
-      // NB: data are received in blocks from the peer. Therefore data can be buffered
-      // inside ssl and are ready for immediate retrieval with SSL_read()...
+         uint32_t result = U_SYSCALL(SSL_pending, "%p", ssl);
 
-      uint32_t result = U_SYSCALL(SSL_pending, "%p", ssl);
+         U_RETURN(result);
+         }
 
-      U_RETURN(result);
+      U_RETURN(0);
       }
 
    // VIRTUAL METHOD

@@ -120,9 +120,7 @@ int UProxyPlugIn::handlerRequest()
          {
          U_INTERNAL_ASSERT(*UClientImage_Base::wbuffer)
 
-         const char* ptr = UClientImage_Base::wbuffer->data();
-
-         if (UHTTP::scanfHeader(ptr, UClientImage_Base::wbuffer->size()) == false)
+         if (UHTTP::scanfHeaderResponse(U_STRING_TO_PARAM(*UClientImage_Base::wbuffer)) == false)
             {
             UModProxyService::setMsgError(UModProxyService::INTERNAL_ERROR);
 
@@ -181,15 +179,15 @@ int UProxyPlugIn::handlerRequest()
             {
             UClientImage_Base::setNoHeaderForResponse();
 
-            U_INTERNAL_DUMP("UHTTP::data_chunked = %b U_ClientImage_close = %b", UHTTP::data_chunked, U_ClientImage_close)
+            U_INTERNAL_DUMP("U_http_data_chunked = %b U_ClientImage_close = %b", U_http_data_chunked, U_ClientImage_close)
 
-            if (UHTTP::data_chunked == false)
+            if (U_http_data_chunked == false)
                {
                if (UHTTP::service->isReplaceResponse()) *UClientImage_Base::wbuffer = UHTTP::service->replaceResponse(*UClientImage_Base::wbuffer); 
                }
             else
                {
-               UHTTP::data_chunked = false;
+               U_http_data_chunked = false;
 
                // NB: in this case we broke the transparency of the response to avoid a duplication of effort to read chunked data...
 

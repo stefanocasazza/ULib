@@ -30,6 +30,7 @@
 #endif
 
 #include <php_embed.h>
+//#include <php/Zend/zend_stream.h>
 
 #ifdef snprintf
 #undef snprintf
@@ -93,7 +94,7 @@ static int send_headers(sapi_headers_struct* sapi_headers)
    return SAPI_HEADER_SENT_SUCCESSFULLY;
 }
 
-static int ub_write(const char* str, unsigned int strlen TSRMLS_DC)
+static int ub_write(const char* str, unsigned int strlen TSRMLS_DC) // this is the stdout output of a PHP script
 {
    U_TRACE(0, "PHP::ub_write(%.*S,%u)", strlen, str, strlen)
 
@@ -122,6 +123,32 @@ extern U_EXPORT bool runPHP(const char* script);
        U_EXPORT bool runPHP(const char* script)
 {
    U_TRACE(0, "::runPHP(%S)", script)
+
+   /*
+   char str[512];
+   zval ret_value;
+   int exit_status;
+
+   zend_first_try
+   {
+   PG(during_request_startup) = 0;
+
+   // run the specified PHP script file
+
+   snprintf(str, sizeof(str), "include (\"%s\");", script);
+
+   zend_eval_string(str, &ret_value, str TSRMLS_CC);
+
+   exit_status = Z_LVAL(ret_value);
+   } zend_catch
+   {
+   exit_status = EG(exit_status);
+   }
+
+   zend_end_try();
+
+   return exit_status;
+   */
 
    bool esito = true;
 
@@ -243,4 +270,40 @@ extern U_EXPORT void UPHP_end();
       php_embed_module.ini_entries = 0;
       }
 }
+/*
+extern U_EXPORT void UPHP_set_var(const char* varname, const char* varval);
+       U_EXPORT void UPHP_set_var(const char* varname, const char* varval)
+{
+   zval* var;
+   MAKE_STD_ZVAL(var);
+   ZVAL_STRING(var, varval, 1);
+
+   zend_hash_update(&EG(symbol_table), varname, strlen(varname) + 1, &var, sizeof(zval*), 0);
+}
+
+extern U_EXPORT const char* UPHP_get_var(const char* varname);
+       U_EXPORT const char* UPHP_get_var(const char* varname)
+{
+   zval** data = 0;
+   const char* ret = NULL;
+
+   if (zend_hash_find(&EG(symbol_table), varname, strlen(varname) + 1, (void**)&data) == FAILURE)
+      {
+      printf("Name not found in $GLOBALS\n");
+
+      return "";
+      }
+
+   if (data == 0)
+      {
+      printf("Value is NULL (not possible for symbol_table?)\n");
+
+      return "";
+      }
+
+   ret = Z_STRVAL_PP(data);
+
+   return ret;
+}
+*/
 }

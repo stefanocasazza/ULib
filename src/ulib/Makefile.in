@@ -105,7 +105,7 @@ target_triplet = @target@
 @MEMORY_POOL_TRUE@am__append_23 = internal/memory_pool.cpp
 @ZIP_TRUE@am__append_24 = base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c base/zip/ziptool.c
 @ZIP_TRUE@am__append_25 = zip/zip.cpp
-@LIBZ_TRUE@am__append_26 = base/coder/cgzio.c base/coder/zopfli.c
+@LIBZ_TRUE@am__append_26 = base/coder/cgzio.c
 @USE_PARSER_TRUE@am__append_27 = flex/flexer.cpp flex/bison.cpp
 @PCRE_TRUE@am__append_28 = pcre/pcre.cpp
 @SSL_TRUE@am__append_29 = base/ssl/cdes3.c base/ssl/dgst.c
@@ -215,13 +215,12 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	replace/fallocate.c replace/fallocate64.c replace/pread.c \
 	replace/assert.c base/zip/inflate.c base/zip/dostime.c \
 	base/zip/pushback.c base/zip/ziptool.c base/coder/cgzio.c \
-	base/coder/zopfli.c base/ssl/cdes3.c base/ssl/dgst.c \
-	base/win32/mingw32.c internal/common.cpp ui/dialog.cpp \
-	db/cdb.cpp db/rdb.cpp debug/debug_common.cpp debug/error.cpp \
-	dynamic/dynamic.cpp dynamic/plugin.cpp mime/header.cpp \
-	mime/entity.cpp mime/multipart.cpp container/vector.cpp \
-	container/hash_map.cpp container/tree.cpp \
-	utility/interrupt.cpp utility/services.cpp \
+	base/ssl/cdes3.c base/ssl/dgst.c base/win32/mingw32.c \
+	internal/common.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
+	debug/debug_common.cpp debug/error.cpp dynamic/dynamic.cpp \
+	dynamic/plugin.cpp mime/header.cpp mime/entity.cpp \
+	mime/multipart.cpp container/vector.cpp container/hash_map.cpp \
+	container/tree.cpp utility/interrupt.cpp utility/services.cpp \
 	utility/semaphore.cpp utility/base64.cpp utility/lock.cpp \
 	utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp utility/data_session.cpp \
@@ -292,7 +291,7 @@ am__dirstamp = $(am__leading_dot)dirstamp
 @ASSERT_FALSE@am__objects_17 = replace/assert.lo
 @ZIP_TRUE@am__objects_18 = base/zip/inflate.lo base/zip/dostime.lo \
 @ZIP_TRUE@	base/zip/pushback.lo base/zip/ziptool.lo
-@LIBZ_TRUE@am__objects_19 = base/coder/cgzio.lo base/coder/zopfli.lo
+@LIBZ_TRUE@am__objects_19 = base/coder/cgzio.lo
 @SSL_TRUE@am__objects_20 = base/ssl/cdes3.lo base/ssl/dgst.lo
 @MINGW_TRUE@am__objects_21 = base/win32/mingw32.lo
 am__objects_22 = base/base.lo base/base_error.lo base/hash.lo \
@@ -886,8 +885,6 @@ base/zip/ziptool.lo: base/zip/$(am__dirstamp) \
 	base/zip/$(DEPDIR)/$(am__dirstamp)
 base/coder/cgzio.lo: base/coder/$(am__dirstamp) \
 	base/coder/$(DEPDIR)/$(am__dirstamp)
-base/coder/zopfli.lo: base/coder/$(am__dirstamp) \
-	base/coder/$(DEPDIR)/$(am__dirstamp)
 base/ssl/$(am__dirstamp):
 	@$(MKDIR_P) base/ssl
 	@: > base/ssl/$(am__dirstamp)
@@ -1448,7 +1445,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@base/coder/$(DEPDIR)/cquoted_printable.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/coder/$(DEPDIR)/curl_coder.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/coder/$(DEPDIR)/cxml_coder.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@base/coder/$(DEPDIR)/zopfli.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/miniz/$(DEPDIR)/miniz.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/ssl/$(DEPDIR)/cdes3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@base/ssl/$(DEPDIR)/dgst.Plo@am__quote@

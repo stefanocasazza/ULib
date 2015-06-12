@@ -43,29 +43,29 @@ UMimeMultipartMsg::UMimeMultipartMsg(const char* type, uint32_t type_len, Encodi
    U_INTERNAL_ASSERT_POINTER(type)
    U_INTERNAL_ASSERT_POINTER(header)
    U_INTERNAL_ASSERT_MAJOR(type_len, 1)
+   U_INTERNAL_ASSERT_MAJOR(U_line_terminator_len, 0)
 
    uint32_t start = 4;
    char* ptr = boundary;
+   const char* line_terminator;
 
-   if (u_line_terminator_len == 1)
+   if (U_line_terminator_len == 1)
       {
-      U_INTERNAL_ASSERT_EQUALS(u_line_terminator[0], '\n')
-
       start  = 3;
       *ptr++ = '\n';
+
+      line_terminator = U_LF;
       }
    else
       {
-      U_INTERNAL_ASSERT_EQUALS(*(int16_t*)u_line_terminator, U_MULTICHAR_CONSTANT16('\r','\n'))
+      *(int16_t*)ptr  = U_MULTICHAR_CONSTANT16('\r','\n');
+                 ptr += 2;
 
-      *(int16_t*)ptr = U_MULTICHAR_CONSTANT16('\r','\n');
-
-      ptr += 2;
+      line_terminator = U_CRLF;
       }
 
-   *(int32_t*)ptr = U_MULTICHAR_CONSTANT32('-','-','=','_');
-
-   ptr += 4;
+   *(int32_t*)ptr  = U_MULTICHAR_CONSTANT32('-','-','=','_');
+              ptr += 4;
 
    boundary_len = (ptr + u_num2str64(ptr, UServices::getUniqUID()) - boundary);
 
@@ -76,12 +76,12 @@ UMimeMultipartMsg::UMimeMultipartMsg(const char* type, uint32_t type_len, Encodi
                    "%s%s%.*s"                                           // Content-Transfer-Encoding: ...
                    "%.*s"                                               // \r\n
                    "%s",                                                // RFC2045MIMEMSG
-                   header_len, header, (header_len ? u_line_terminator_len : 0), u_line_terminator,
-                   type_len, type, boundary_len - start, boundary + start, u_line_terminator_len, u_line_terminator,
+                   header_len, header, (header_len ? U_line_terminator_len : 0), line_terminator,
+                   type_len, type, boundary_len - start, boundary + start, U_line_terminator_len, line_terminator,
                    (encoding == NONE ? "" : "Content-Transfer-Encoding: "),
                    (encoding == NONE ? "" : str_encoding[encoding - 1]),
-                   (encoding == NONE ?  0 : u_line_terminator_len), u_line_terminator,
-                                            u_line_terminator_len,  u_line_terminator,
+                   (encoding == NONE ?  0 : U_line_terminator_len), line_terminator,
+                                            U_line_terminator_len,  line_terminator,
                    (bRFC2045MIMEMSG ? RFC2045MIMEMSG : ""));
 
    vec_part.push(buffer);
@@ -93,14 +93,16 @@ uint32_t UMimeMultipartMsg::message(UString& body, bool bterminator)
 
    U_ASSERT_MAJOR(vec_part.size(), 1)
 
+   const char* line_terminator = (U_line_terminator_len == 1 ? U_LF : U_CRLF);
+
    char _buf[64];
    uint32_t content_length = vec_part[0].size(),
-            len = u__snprintf(_buf, sizeof(_buf), "%.*s%.*s", boundary_len, boundary, u_line_terminator_len, u_line_terminator);
+            len = u__snprintf(_buf, sizeof(_buf), "%.*s%.*s", boundary_len, boundary, U_line_terminator_len, line_terminator);
 
    body = vec_part.join(_buf, len);
 
-                    (void) body.append(_buf, u__snprintf(_buf, sizeof(_buf), "%.*s--", boundary_len, boundary, u_line_terminator));
-   if (bterminator) (void) body.append(u_line_terminator, u_line_terminator_len);
+                    (void) body.append(_buf, u__snprintf(_buf, sizeof(_buf), "%.*s--", boundary_len, boundary));
+   if (bterminator) (void) body.append(line_terminator, U_line_terminator_len);
 
    content_length = body.size() - content_length;
 
@@ -206,10 +208,11 @@ UString UMimeMultipartMsg::section(const UString& content,
    U_INTERNAL_ASSERT_MAJOR(length, 0)
 
    UString buffer(U_CAPACITY);
+   const char* line_terminator = (U_line_terminator_len == 1 ? U_LF : U_CRLF);
 
    buffer.snprintf("%.*s%.*s"
                    "Content-Type: %.*s",
-                   header_len, header, (header_len ? u_line_terminator_len : 0), u_line_terminator,
+                   header_len, header, (header_len ? U_line_terminator_len : 0), line_terminator,
                    type_len, type);
 
    if (*charset) buffer.snprintf_add("; charset=\"%s\"", charset);
@@ -218,11 +221,11 @@ UString UMimeMultipartMsg::section(const UString& content,
    buffer.snprintf_add("%.*s"      // \r\n
                        "%s%s%.*s"  // Content-Transfer-Encoding: ...
                        "%.*s",     // \r\n
-                       u_line_terminator_len,  u_line_terminator,
+                       U_line_terminator_len,  line_terminator,
                        (encoding == NONE ? "" : "Content-Transfer-Encoding: "),
                        (encoding == NONE ? "" : str_encoding[encoding - 1]),
-                       (encoding == NONE ?  0 : u_line_terminator_len), u_line_terminator,
-                       u_line_terminator_len,  u_line_terminator);
+                       (encoding == NONE ?  0 : U_line_terminator_len), line_terminator,
+                       U_line_terminator_len,  line_terminator);
 
    if (encoding != BASE64 &&
        encoding != QUOTED_PRINTABLE)

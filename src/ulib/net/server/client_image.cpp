@@ -20,7 +20,7 @@
 #  include <ulib/utility/http2.h>
 #endif
 
-int           UClientImage_Base::idx;
+int          UClientImage_Base::idx;
 int           UClientImage_Base::csfd;
 int           UClientImage_Base::iovcnt;
 iPF           UClientImage_Base::callerHandlerRead;
@@ -34,7 +34,8 @@ bool          UClientImage_Base::log_request_partial;
 char          UClientImage_Base::cbuffer[128];
 long          UClientImage_Base::time_run;
 long          UClientImage_Base::time_between_request;
-bPFpc         UClientImage_Base::callerIsValidRequest;
+bPFpc         UClientImage_Base::callerIsValidMethod;
+bPFpcu        UClientImage_Base::callerIsValidRequest;
 bPFpcu        UClientImage_Base::callerIsValidRequestExt;
 uint32_t      UClientImage_Base::resto;
 uint32_t      UClientImage_Base::rstart;
@@ -259,8 +260,11 @@ void UClientImage_Base::saveRequestResponse()
 }
 #endif
 
-U_NO_EXPORT bool UClientImage_Base::isValidRequest(   const char* ptr)              { return true; }
-U_NO_EXPORT bool UClientImage_Base::isValidRequestExt(const char* ptr, uint32_t sz) { return sz; }
+// NB: we have default to true to manage pipeline for protocol as RPC...
+
+U_NO_EXPORT bool UClientImage_Base::isValidMethod(    const char* ptr)              { return true; }
+U_NO_EXPORT bool UClientImage_Base::isValidRequest(   const char* ptr, uint32_t sz) { return true; }
+U_NO_EXPORT bool UClientImage_Base::isValidRequestExt(const char* ptr, uint32_t sz) { return true; }
 
 U_NO_EXPORT int UClientImage_Base::handlerDataPending()
 {
@@ -318,6 +322,7 @@ void UClientImage_Base::init()
    _buffer  = U_NEW(UString(U_CAPACITY));
    _encoded = U_NEW(UString(U_CAPACITY));
 
+   callerIsValidMethod      = isValidMethod;
    callerIsValidRequest     = isValidRequest;
    callerIsValidRequestExt  = isValidRequestExt;
    callerHandlerDataPending = handlerDataPending;
@@ -797,7 +802,8 @@ next1:
 
       UString::_reserve(*rbuffer, n);
 
-      if (U_http_method_type)
+      if (U_http_method_type &&
+          U_http_version != '2')
          {
          diff = rbuffer->data() - ptr;
 next2:
@@ -1006,6 +1012,12 @@ bool UClientImage_Base::genericRead()
    U_RETURN(true);
 }
 
+#ifdef U_HTTP2_DISABLE
+#define U_CALL_DATA_PENDING       handlerDataPending
+#else
+#define U_CALL_DATA_PENDING callerHandlerDataPending
+#endif
+
 int UClientImage_Base::handlerRead() // Connection-wide hooks
 {
    U_TRACE(0, "UClientImage_Base::handlerRead()")
@@ -1081,7 +1093,8 @@ pipeline:
    if (U_ClientImage_data_missing)
       {
 dmiss:
-      result = callerHandlerDataPending();
+#  if defined(U_LOG_ENABLE) || !defined(U_CACHE_REQUEST_DISABLE)
+      result = U_CALL_DATA_PENDING();
 
       if (result)
          {
@@ -1093,6 +1106,7 @@ dmiss:
             goto death;
             }
          }
+#  endif
 
       U_ClientImage_data_missing = false;
 
@@ -1131,7 +1145,8 @@ dmiss:
           memcmp(ptr+uri_offset, cbuffer, U_http_info.startHeader) == 0)
          {
          if (size_request > sz &&
-             callerIsValidRequestExt(ptr, sz) == false)
+             (callerIsValidMethod( ptr)     == false ||
+              callerIsValidRequest(ptr, sz) == false))
             {
             goto dmiss; // partial valid (not complete)
             }
@@ -1193,7 +1208,7 @@ next:
          // NB: we check if we have a pipeline...
 
          if (size_request < sz &&
-             callerIsValidRequest(ptr1))
+             callerIsValidMethod(ptr1))
             {
             U_INTERNAL_DUMP("U_http_info.nResponseCode = %u U_ClientImage_close = %b U_ClientImage_state = %d %B",
                              U_http_info.nResponseCode,     U_ClientImage_close,     U_ClientImage_state, U_ClientImage_state)
@@ -1206,10 +1221,10 @@ next:
 
             U_INTERNAL_DUMP("n = %u resto = %u size_request = %u", n, resto, size_request)
 
-            if (n > 1                                       &&
-                *wbuffer                                    &&
-                callerIsValidRequestExt(ptr1, size_request) &&
-                (resto == 0 || callerIsValidRequest(rbuffer->c_pointer(sz-resto))))
+            if (n > 1                                    &&
+                *wbuffer                                 &&
+                callerIsValidRequest(ptr1, size_request) &&
+                (resto == 0 || callerIsValidMethod(rbuffer->c_pointer(sz-resto))))
                {
                U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 
@@ -1579,8 +1594,6 @@ loop:
                bflag = true;
 
                socket->setBlocking();
-
-               USocketExt::blocking = true;
                }
             }
 
@@ -1611,8 +1624,6 @@ end:
       // restore socket status flags
 
       socket->setNonBlocking();
-
-      USocketExt::blocking = false;
       }
 
    U_RETURN(result);

@@ -346,6 +346,8 @@ public:
 
       U_CHECK_MEMORY
 
+      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+
 #  ifdef DEBUG
       if (references)
          {
@@ -368,6 +370,8 @@ public:
 
       U_CHECK_MEMORY
 
+      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+
 #  ifdef DEBUG
       if (references)
          {
@@ -378,6 +382,8 @@ public:
          U_INTERNAL_ASSERT_MSG(false, "CANNOT ADJUST SIZE OF A REFERENCED STRING...")
          }
 #  endif
+
+      U_INTERNAL_ASSERT(value <= _capacity)
 
       ((char*)str)[_length = value] = '\0';
 
@@ -390,6 +396,8 @@ public:
 
       U_CHECK_MEMORY
 
+      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+
 #  ifdef DEBUG
       if (references)
          {
@@ -401,7 +409,7 @@ public:
          }
 #  endif
 
-      ((char*)str)[_length =  distance(ptr)] = '\0';
+      ((char*)str)[_length = distance(ptr)] = '\0';
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -411,6 +419,8 @@ public:
       U_TRACE(0, "UStringRep::size_adjust_force()")
 
       U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
 
       _length = u__strlen(str, __PRETTY_FUNCTION__);
 
@@ -422,6 +432,9 @@ public:
       U_TRACE(0, "UStringRep::size_adjust_force(%u)", value)
 
       U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+      U_INTERNAL_ASSERT(value <= _capacity)
 
       ((char*)str)[_length = value] = '\0';
 

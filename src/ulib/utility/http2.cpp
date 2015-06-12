@@ -18,7 +18,7 @@
 #include <ulib/utility/hpack_huffman_table.h>
 
 // ============================
-// SETTINGS FRAME
+//       SETTINGS FRAME
 // ============================
 // frame size = 18 (3*6)
 // settings frame
@@ -450,68 +450,18 @@ void UHTTP2::setStream()
       }
 }
 
-void UHTTP2::manageUpgrade()
+void UHTTP2::resetReadBuffer(uint32_t length)
 {
-   U_TRACE(0, "UHTTP2::manageUpgrade()")
+   U_TRACE(0, "UHTTP2::resetReadBuffer(%u)", length)
 
-   U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
+   UClientImage_Base::rstart = 0;
 
-   if (USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_CONNECTION_UPGRADE), UServer_Base::timeoutMS) ==
-                                                    U_CONSTANT_SIZE(HTTP2_CONNECTION_UPGRADE) &&
-       (U_http2_settings_len || U_http_method_type == HTTP_OPTIONS))
-      {
-      // maybe we have read more data than necessary...
+   UClientImage_Base::request->clear();
 
-      uint32_t sz = UClientImage_Base::request->size(), start = 0;
+   // NB: maybe we have read more data than necessary...
 
-      UClientImage_Base::request->clear();
-
-      if (sz > U_http_info.endHeader) start = U_http_info.endHeader;
-      else
-         {
-         // we wait for HTTP2_CONNECTION_PREFACE...
-
-         UClientImage_Base::rbuffer->setEmpty();
-
-         if (UNotifier::waitForRead(UServer_Base::csocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
-             USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, 0) == false)
-            {
-            goto error;
-            }
-         }
-
-      const char* ptr = UClientImage_Base::rbuffer->c_pointer(start);
-
-      if (*(int64_t*) ptr     == U_MULTICHAR_CONSTANT64( 'P', 'R','I',' ', '*', ' ', 'H', 'T') &&
-          *(int64_t*)(ptr+8)  == U_MULTICHAR_CONSTANT64( 'T', 'P','/','2', '.', '0','\r','\n') &&
-          *(int64_t*)(ptr+16) == U_MULTICHAR_CONSTANT64('\r','\n','S','M','\r','\n','\r','\n'))
-         {
-         if (U_http2_settings_len)
-            {
-            UString buffer(U_CAPACITY);
-
-            UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer);
-
-            if (buffer.empty() ||
-                updateSetting(U_STRING_TO_PARAM(buffer)) == false)
-               {
-               goto error;
-               }
-            }
-
-         U_ClientImage_data_missing = true;
-
-         sz = start + U_CONSTANT_SIZE(HTTP2_CONNECTION_PREFACE);
-
-         if (UClientImage_Base::rbuffer->size() <= sz) UClientImage_Base::rbuffer->setEmpty();
-         else                                          UClientImage_Base::rbuffer->moveToBeginDataInBuffer(sz);
-
-         return;
-         }
-      }
-
-error:
-   U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+   if (UClientImage_Base::rbuffer->size() <= length) UClientImage_Base::rbuffer->setEmpty();
+   else                                              UClientImage_Base::rbuffer->moveToBeginDataInBuffer(length);
 }
 
 bool UHTTP2::updateSetting(const char* ptr, uint32_t len)
@@ -819,135 +769,403 @@ error:   nerror = COMPRESSION_ERROR;
          }
       else
          {
-         switch (index)
+         static const int dispatch_table[HEADER_TABLE_OFFSET] = {
+            0,/* 0 */
+            (int)((char*)&&case_1-(char*)&&cdefault),   /* 1 :authority */
+            (int)((char*)&&case_2_3-(char*)&&cdefault), /* 2 :method */
+            (int)((char*)&&case_2_3-(char*)&&cdefault), /* 3 :method */
+            (int)((char*)&&case_4_5-(char*)&&cdefault), /* 4 :path */
+            (int)((char*)&&case_4_5-(char*)&&cdefault), /* 5 :path */
+            (int)((char*)&&case_6-(char*)&&cdefault),   /* 6 :scheme */
+            (int)((char*)&&case_7-(char*)&&cdefault),   /* 7 :scheme */
+            0,/*  8 :status 200 */
+            0,/*  9 :status 204 */
+            0,/* 10 :status 206 */
+            0,/* 11 :status 304 */
+            0,/* 12 :status 400 */
+            0,/* 13 :status 404 */
+            0,/* 14 :status 500 */
+            0,/* 15 accept-charset */
+            (int)((char*)&&case_16-(char*)&&cdefault), /* 16 accept-encoding */
+            (int)((char*)&&case_17-(char*)&&cdefault), /* 17 accept-language */
+            0,/* 18 accept-ranges */
+            (int)((char*)&&case_19-(char*)&&cdefault), /* 19 accept */
+            0,/* 20 access-control-allow-origin */
+            0,/* 21 age */
+            0,/* 22 allow */
+            0,/* 23 authorization */
+            0,/* 24 cache-control */
+            0,/* 25 content-disposition */
+            0,/* 26 content-encoding */
+            0,/* 27 content-language */
+            (int)((char*)&&case_28-(char*)&&cdefault), /* 28 content-length */
+            0,/* 29 content-location */
+            0,/* 30 content-range */
+            (int)((char*)&&case_31-(char*)&&cdefault), /* 31 content-type */
+            (int)((char*)&&case_32-(char*)&&cdefault), /* 32 cookie */
+            0,/* 33 date */
+            0,/* 34 etag */
+            0,/* 35 expect */
+            0,/* 36 expires */
+            0,/* 37 from */
+            (int)((char*)&&case_38-(char*)&&cdefault), /* 38 host */
+            0,/* 39 if-match */
+            (int)((char*)&&case_40-(char*)&&cdefault), /* 40 if-modified-since */
+            0,/* 41 if-none-match */
+            0,/* 42 if-range */
+            0,/* 43 if-unmodified-since */
+            0,/* 44 last-modified */
+            0,/* 45 link*/
+            0,/* 46 location */
+            0,/* 47 max-forwards*/
+            0,/* 48 proxy-authenticate */
+            0,/* 49 proxy-authorization */
+            (int)((char*)&&case_50-(char*)&&cdefault), /* 50 range */
+            (int)((char*)&&case_51-(char*)&&cdefault), /* 51 referer */
+            0,/* 52 refresh */
+            0,/* 53 retry-after */
+            0,/* 54 server */
+            0,/* 55 set-cookie */
+            0,/* 56 strict-transport-security */
+            (int)((char*)&&case_57-(char*)&&cdefault), /* 57 transfer-encoding */
+            (int)((char*)&&case_58-(char*)&&cdefault), /* 58 user-agent */
+            0,/* 59 vary */
+            0,/* 60 via */
+            0 /* 61 www-authenticate */
+         };
+
+         U_INTERNAL_PRINT("dispatch_table[%d] = %p &&cdefault = %p", index, dispatch_table[index], &&cdefault)
+
+         goto *((char*)&&cdefault + dispatch_table[index]);
+
+case_38: // host
+
+         name = *str_host;
+
+         goto host;
+
+case_1: // authority (a.k.a. the Host header)
+
+         name = *str_authority;
+
+host:    U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         sz = value.size();
+
+         if (sz == 0) goto error;
+
+         UHTTP::setHostname(value.data(), sz);
+
+         goto next;
+
+case_2_3: // GET - POST
+
+         name = *str_method;
+
+         // determine the value (if necessary)
+
+         if (value_is_indexed) value = *(index == 2 ? str_method_get : str_method_post);
+         else
             {
-            case 1: // authority (a.k.a. the Host header)
+            value_is_indexed = true;
+
+            ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+            ptr1 = value.data();
+
+            if (*ptr1 == '\0') goto error;
+
+            switch (*(int32_t*)ptr1)
                {
-               name = *str_authority;
+               case U_MULTICHAR_CONSTANT32('g','e','t','\0'):
+               case U_MULTICHAR_CONSTANT32('G','E','T','\0'): U_http_method_type = HTTP_GET;                                 break;
+               case U_MULTICHAR_CONSTANT32('h','e','a','d'):
+               case U_MULTICHAR_CONSTANT32('H','E','A','D'):  U_http_method_type = HTTP_HEAD;        U_http_method_num =  1; break;
+               case U_MULTICHAR_CONSTANT32('p','o','s','t'):
+               case U_MULTICHAR_CONSTANT32('P','O','S','T'):  U_http_method_type = HTTP_POST;        U_http_method_num =  2; break;
+               case U_MULTICHAR_CONSTANT32('p','u','t','\0'):
+               case U_MULTICHAR_CONSTANT32('P','U','T','\0'): U_http_method_type = HTTP_PUT;         U_http_method_num =  3; break;
+               case U_MULTICHAR_CONSTANT32('d','e','l','e'):
+               case U_MULTICHAR_CONSTANT32('D','E','L','E'):  U_http_method_type = HTTP_DELETE;      U_http_method_num =  4; break;
+               case U_MULTICHAR_CONSTANT32('o','p','t','i'):
+               case U_MULTICHAR_CONSTANT32('O','P','T','I'):  U_http_method_type = HTTP_OPTIONS;     U_http_method_num =  5; break;
+               // NOT IMPLEMENTED
+               case U_MULTICHAR_CONSTANT32('T','R','A','C'):  U_http_method_type = HTTP_TRACE;       U_http_method_num =  6; break;
+               case U_MULTICHAR_CONSTANT32('C','O','N','N'):  U_http_method_type = HTTP_CONNECT;     U_http_method_num =  7; break;
+               case U_MULTICHAR_CONSTANT32('C','O','P','Y'):  U_http_method_type = HTTP_COPY;        U_http_method_num =  8; break;
+               case U_MULTICHAR_CONSTANT32('M','O','V','E'):  U_http_method_type = HTTP_MOVE;        U_http_method_num =  9; break;
+               case U_MULTICHAR_CONSTANT32('L','O','C','K'):  U_http_method_type = HTTP_LOCK;        U_http_method_num = 10; break;
+               case U_MULTICHAR_CONSTANT32('U','N','L','O'):  U_http_method_type = HTTP_UNLOCK;      U_http_method_num = 11; break;
+               case U_MULTICHAR_CONSTANT32('M','K','C','O'):  U_http_method_type = HTTP_MKCOL;       U_http_method_num = 12; break;
+               case U_MULTICHAR_CONSTANT32('S','E','A','R'):  U_http_method_type = HTTP_SEARCH;      U_http_method_num = 13; break;
+               case U_MULTICHAR_CONSTANT32('P','R','O','P'):  U_http_method_type = HTTP_PROPFIND;    U_http_method_num = 14; break;
+               case U_MULTICHAR_CONSTANT32('P','A','T','C'):  U_http_method_type = HTTP_PATCH;       U_http_method_num = 16; break;
+               case U_MULTICHAR_CONSTANT32('P','U','R','G'):  U_http_method_type = HTTP_PURGE;       U_http_method_num = 17; break;
+               case U_MULTICHAR_CONSTANT32('M','E','R','G'):  U_http_method_type = HTTP_MERGE;       U_http_method_num = 18; break;
+               case U_MULTICHAR_CONSTANT32('R','E','P','O'):  U_http_method_type = HTTP_REPORT;      U_http_method_num = 19; break;
+               case U_MULTICHAR_CONSTANT32('C','H','E','C'):  U_http_method_type = HTTP_CHECKOUT;    U_http_method_num = 20; break;
+               case U_MULTICHAR_CONSTANT32('M','K','A','C'):  U_http_method_type = HTTP_MKACTIVITY;  U_http_method_num = 21; break;
+               case U_MULTICHAR_CONSTANT32('N','O','T','I'):  U_http_method_type = HTTP_NOTIFY;      U_http_method_num = 22; break;
+               case U_MULTICHAR_CONSTANT32('M','S','E','A'):  U_http_method_type = HTTP_MSEARCH;     U_http_method_num = 23; break;
+               case U_MULTICHAR_CONSTANT32('S','U','B','S'):  U_http_method_type = HTTP_SUBSCRIBE;   U_http_method_num = 24; break;
+               case U_MULTICHAR_CONSTANT32('U','N','S','U'):  U_http_method_type = HTTP_UNSUBSCRIBE; U_http_method_num = 25; break;
 
-               U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
-
-               value_is_indexed = true;
-
-               ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
-
-               sz = value.size();
-
-               if (sz == 0) goto error;
-
-               UHTTP::setHostname(value.data(), sz);
+               default: goto error;
                }
-            break;
-
-            case 2: // GET
-            case 3: // POST
-               {
-               name = *str_method;
-
-               // determine the value (if necessary)
-
-               if (value_is_indexed) value = *(index == 2 ? str_method_get : str_method_post);
-               else
-                  {
-                  value_is_indexed = true;
-
-                  ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
-
-                  ptr1 = value.data();
-
-                  if (*ptr1 == '\0') goto error;
-
-                  switch (*(int32_t*)ptr1)
-                     {
-                     case U_MULTICHAR_CONSTANT32('g','e','t','\0'):
-                     case U_MULTICHAR_CONSTANT32('G','E','T','\0'): U_http_method_type = HTTP_GET;                                 break;
-                     case U_MULTICHAR_CONSTANT32('h','e','a','d'):
-                     case U_MULTICHAR_CONSTANT32('H','E','A','D'):  U_http_method_type = HTTP_HEAD;        U_http_method_num =  1; break;
-                     case U_MULTICHAR_CONSTANT32('p','o','s','t'):
-                     case U_MULTICHAR_CONSTANT32('P','O','S','T'):  U_http_method_type = HTTP_POST;        U_http_method_num =  2; break;
-                     case U_MULTICHAR_CONSTANT32('p','u','t','\0'):
-                     case U_MULTICHAR_CONSTANT32('P','U','T','\0'): U_http_method_type = HTTP_PUT;         U_http_method_num =  3; break;
-                     case U_MULTICHAR_CONSTANT32('d','e','l','e'):
-                     case U_MULTICHAR_CONSTANT32('D','E','L','E'):  U_http_method_type = HTTP_DELETE;      U_http_method_num =  4; break;
-                     case U_MULTICHAR_CONSTANT32('o','p','t','i'):
-                     case U_MULTICHAR_CONSTANT32('O','P','T','I'):  U_http_method_type = HTTP_OPTIONS;     U_http_method_num =  5; break;
-                     // NOT IMPLEMENTED
-                     case U_MULTICHAR_CONSTANT32('T','R','A','C'):  U_http_method_type = HTTP_TRACE;       U_http_method_num =  6; break;
-                     case U_MULTICHAR_CONSTANT32('C','O','N','N'):  U_http_method_type = HTTP_CONNECT;     U_http_method_num =  7; break;
-                     case U_MULTICHAR_CONSTANT32('C','O','P','Y'):  U_http_method_type = HTTP_COPY;        U_http_method_num =  8; break;
-                     case U_MULTICHAR_CONSTANT32('M','O','V','E'):  U_http_method_type = HTTP_MOVE;        U_http_method_num =  9; break;
-                     case U_MULTICHAR_CONSTANT32('L','O','C','K'):  U_http_method_type = HTTP_LOCK;        U_http_method_num = 10; break;
-                     case U_MULTICHAR_CONSTANT32('U','N','L','O'):  U_http_method_type = HTTP_UNLOCK;      U_http_method_num = 11; break;
-                     case U_MULTICHAR_CONSTANT32('M','K','C','O'):  U_http_method_type = HTTP_MKCOL;       U_http_method_num = 12; break;
-                     case U_MULTICHAR_CONSTANT32('S','E','A','R'):  U_http_method_type = HTTP_SEARCH;      U_http_method_num = 13; break;
-                     case U_MULTICHAR_CONSTANT32('P','R','O','P'):  U_http_method_type = HTTP_PROPFIND;    U_http_method_num = 14; break;
-                     case U_MULTICHAR_CONSTANT32('P','A','T','C'):  U_http_method_type = HTTP_PATCH;       U_http_method_num = 16; break;
-                     case U_MULTICHAR_CONSTANT32('P','U','R','G'):  U_http_method_type = HTTP_PURGE;       U_http_method_num = 17; break;
-                     case U_MULTICHAR_CONSTANT32('M','E','R','G'):  U_http_method_type = HTTP_MERGE;       U_http_method_num = 18; break;
-                     case U_MULTICHAR_CONSTANT32('R','E','P','O'):  U_http_method_type = HTTP_REPORT;      U_http_method_num = 19; break;
-                     case U_MULTICHAR_CONSTANT32('C','H','E','C'):  U_http_method_type = HTTP_CHECKOUT;    U_http_method_num = 20; break;
-                     case U_MULTICHAR_CONSTANT32('M','K','A','C'):  U_http_method_type = HTTP_MKACTIVITY;  U_http_method_num = 21; break;
-                     case U_MULTICHAR_CONSTANT32('N','O','T','I'):  U_http_method_type = HTTP_NOTIFY;      U_http_method_num = 22; break;
-                     case U_MULTICHAR_CONSTANT32('M','S','E','A'):  U_http_method_type = HTTP_MSEARCH;     U_http_method_num = 23; break;
-                     case U_MULTICHAR_CONSTANT32('S','U','B','S'):  U_http_method_type = HTTP_SUBSCRIBE;   U_http_method_num = 24; break;
-                     case U_MULTICHAR_CONSTANT32('U','N','S','U'):  U_http_method_type = HTTP_UNSUBSCRIBE; U_http_method_num = 25; break;
-
-                     default: goto error;
-                     }
-                  }
-               }
-            break;
-
-            case 4: // /
-            case 5: // /index.html
-               {
-               name = *str_path;
-
-               // determine the value (if necessary)
-
-               if (value_is_indexed) value = *(index == 4 ? str_path_root : str_path_index);
-               else
-                  {
-                  value_is_indexed = true;
-
-                  ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
-
-                  sz = value.size();
-
-                  if (sz == 0) goto error;
-
-                  U_http_info.query = (const char*) memchr((U_http_info.uri = value.data()), '?', (U_http_info.uri_len = sz));
-
-                  if (U_http_info.query)
-                     {
-                     U_http_info.query_len = U_http_info.uri_len - (U_http_info.query++ - U_http_info.uri);
-
-                     U_http_info.uri_len -= U_http_info.query_len;
-
-                     U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
-                     }
-
-                  U_INTERNAL_DUMP("URI = %.*S", U_HTTP_URI_TO_TRACE)
-                  }
-               }
-            break;
-
-            case 57: // transfer-encoding
-               {
-               U_SRV_LOG("WARNING: Transfer-Encoding is not supported in HTTP/2");
-
-               goto error;
-               }
-
-            default:
-               {
-               entry = hpack_static_table + index - 1;
-
-                                      name = *(entry->name);
-               if (value_is_indexed) value = *(entry->value);
-               }
-            break;
             }
+
+         goto next;
+
+case_4_5: // / - /index.html
+
+         name = *str_path;
+
+         // determine the value (if necessary)
+
+         if (value_is_indexed) value = *(index == 4 ? str_path_root : str_path_index);
+         else
+            {
+            value_is_indexed = true;
+
+            ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+            sz = value.size();
+
+            if (sz == 0) goto error;
+
+            U_http_info.query = (const char*) memchr((U_http_info.uri = value.data()), '?', (U_http_info.uri_len = sz));
+
+            if (U_http_info.query)
+               {
+               U_http_info.query_len = U_http_info.uri_len - (U_http_info.query++ - U_http_info.uri);
+
+               U_http_info.uri_len -= U_http_info.query_len;
+
+               U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
+               }
+
+            U_INTERNAL_DUMP("URI = %.*S", U_HTTP_URI_TO_TRACE)
+            }
+
+         goto next;
+
+case_6: // http
+
+         U_ASSERT_EQUALS(UServer_Base::csocket->isSSLActive(), false)
+
+         goto next;
+
+case_7: // https
+
+         U_ASSERT(((USSLSocket*)UServer_Base::csocket)->isSSL())
+
+         goto next;
+
+case_16: // accept-encoding: gzip, deflate
+
+         name = *str_accept_encoding;
+
+         U_INTERNAL_ASSERT(value_is_indexed)
+
+         value = *str_accept_encoding_value;
+
+         U_http_is_accept_gzip = '1';
+
+         U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+
+         goto next;
+
+case_17: // accept-language
+
+         name = *str_accept_language;
+
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         U_http_accept_language_len = value.size();
+
+         if (U_http_accept_language_len == 0) goto error;
+
+         U_http_info.accept_language = value.data();
+
+         U_INTERNAL_DUMP("Accept-Language: = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
+
+         goto next;
+
+case_19: // accept
+
+         name = *str_accept;
+
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         U_http_accept_len = value.size();
+
+         if (U_http_accept_len == 0) goto error;
+
+         U_http_info.accept = value.data();
+
+         U_INTERNAL_DUMP("Accept: = %.*S", U_HTTP_ACCEPT_TO_TRACE)
+
+         goto next;
+
+case_28: // content_length
+
+         name = *str_content_length;
+
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         if (value.empty()) goto error;
+
+         U_http_info.clength = (uint32_t) strtoul(value.data(), 0, 0);
+
+         U_INTERNAL_DUMP("Content-Length: = %.*S U_http_info.clength = %u", U_STRING_TO_TRACE(value), U_http_info.clength)
+
+         goto next;
+
+case_31: // content_type
+
+         name = *str_content_type;
+
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         U_http_content_type_len = value.size();
+
+         if (U_http_content_type_len == 0) goto error;
+
+         U_http_info.content_type = value.data();
+
+         U_INTERNAL_DUMP("Content-Type(%u): = %.*S", U_http_content_type_len, U_HTTP_CTYPE_TO_TRACE)
+
+         goto next;
+
+case_32: // cookie
+
+         name = *str_cookie;
+
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         U_http_info.cookie_len = value.size();
+
+         if (U_http_info.cookie_len == 0) goto error;
+
+         U_http_info.cookie = value.data();
+
+         U_INTERNAL_DUMP("Cookie(%u): = %.*S", U_http_info.cookie_len, U_HTTP_COOKIE_TO_TRACE)
+
+         goto next;
+
+case_40: // if-modified-since
+
+         name = *str_if_modified_since;
+
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         if (value.empty()) goto error;
+
+         U_http_info.if_modified_since = UTimeDate::getSecondFromTime(value.data(), true);
+
+         U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
+
+         goto next;
+
+case_50: // range 
+
+         name = *str_range;
+
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         U_http_range_len = value.size() - U_CONSTANT_SIZE("bytes=");
+
+         if (U_http_range_len <= 0) goto error;
+
+         U_http_info.range = value.data() + U_CONSTANT_SIZE("bytes=");
+
+         U_INTERNAL_DUMP("Range = %.*S", U_HTTP_RANGE_TO_TRACE)
+
+         goto next;
+
+case_51: // referer 
+
+         name = *str_referer;
+
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         U_http_info.referer_len = value.size();
+
+         if (U_http_info.referer_len == 0) goto error;
+
+         U_http_info.referer = value.data();
+
+         U_INTERNAL_DUMP("Referer(%u): = %.*S", U_http_info.referer_len, U_HTTP_REFERER_TO_TRACE)
+
+         goto next;
+
+case_57: // transfer-encoding
+
+         U_SRV_LOG("WARNING: Transfer-Encoding is not supported in HTTP/2");
+
+         goto error;
+
+case_58: // user-agent
+
+         name = *str_user_agent;
+
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         value_is_indexed = true;
+
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         U_http_info.user_agent_len = value.size();
+
+         if (U_http_info.user_agent_len == 0) goto error;
+
+         U_http_info.user_agent = value.data();
+
+         U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+
+         goto next;
+
+cdefault:
+         entry = hpack_static_table + index - 1;
+
+                                name = *(entry->name);
+         if (value_is_indexed) value = *(entry->value);
          }
 
 next:
@@ -1090,17 +1308,62 @@ bool UHTTP2::manageSetting()
 {
    U_TRACE(0, "UHTTP2::manageSetting()")
 
-   uint32_t sz;
-   bool expect_continuation_of_headers;
+   U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
 
-   UClientImage_Base::rstart = 0;
+   U_INTERNAL_DUMP("HTTP2-Settings: = %.*S U_http_method_type = %B", U_http2_settings_len, UHTTP2::upgrade_settings, U_http_method_type)
 
-   UClientImage_Base::request->clear();
+   if (U_http2_settings_len &&
+       USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_CONNECTION_UPGRADE), UServer_Base::timeoutMS) !=
+                                                    U_CONSTANT_SIZE(HTTP2_CONNECTION_UPGRADE))
+      {
+      U_RETURN(false);
+      }
 
    // maybe we have read more data than necessary...
 
-   if (UClientImage_Base::rbuffer->size() <= U_CONSTANT_SIZE(HTTP2_CONNECTION_PREFACE)) UClientImage_Base::rbuffer->setEmpty();
-   else                                                                                 UClientImage_Base::rbuffer->moveToBeginDataInBuffer(U_CONSTANT_SIZE(HTTP2_CONNECTION_PREFACE));
+   uint32_t sz = UClientImage_Base::request->size();
+
+   if (sz > U_http_info.endHeader) UClientImage_Base::rstart = U_http_info.endHeader;
+   else
+      {
+      // we wait for HTTP2_CONNECTION_PREFACE...
+
+      UClientImage_Base::rbuffer->setEmptyForce();
+
+      if (UNotifier::waitForRead(UServer_Base::csocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
+          USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, 0) == false)
+         {
+         U_RETURN(false);
+         }
+
+      UClientImage_Base::rstart = 0;
+      }
+
+   const char* ptr = UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
+
+   if (*(int64_t*) ptr     == U_MULTICHAR_CONSTANT64( 'P', 'R','I',' ', '*', ' ', 'H', 'T') &&
+       *(int64_t*)(ptr+8)  == U_MULTICHAR_CONSTANT64( 'T', 'P','/','2', '.', '0','\r','\n') &&
+       *(int64_t*)(ptr+16) == U_MULTICHAR_CONSTANT64('\r','\n','S','M','\r','\n','\r','\n'))
+      {
+      if (U_http2_settings_len)
+         {
+         UString buffer(U_CAPACITY);
+
+         UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer);
+
+         if (buffer.empty() ||
+             updateSetting(U_STRING_TO_PARAM(buffer)) == false)
+            {
+            U_RETURN(false);
+            }
+         }
+
+      U_ClientImage_data_missing = true;
+
+      resetReadBuffer(UClientImage_Base::rstart + U_CONSTANT_SIZE(HTTP2_CONNECTION_PREFACE));
+      }
+
+   bool expect_continuation_of_headers;
 
    readFrame();
 
@@ -1114,7 +1377,7 @@ bool UHTTP2::manageSetting()
    if (nerror != NO_ERROR) goto error;
 
    if (USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_SETTINGS_HOST_BIN), UServer_Base::timeoutMS) !=
-                                                     U_CONSTANT_SIZE(    HTTP2_SETTINGS_HOST_BIN))
+                                                    U_CONSTANT_SIZE(HTTP2_SETTINGS_HOST_BIN))
       {
       U_RETURN(false);
       }
@@ -1197,18 +1460,12 @@ loop:
          }
       }
 
-   if (nerror != NO_ERROR) goto error;
+   if (nerror == NO_ERROR)
+      {
+      resetReadBuffer(UClientImage_Base::rstart + HTTP2_FRAME_HEADER_SIZE + (uint32_t)frame.length);
 
-   sz = UClientImage_Base::rstart + HTTP2_FRAME_HEADER_SIZE + (uint32_t)frame.length;
-
-   U_INTERNAL_DUMP("sz = %u", sz)
-
-   if (UClientImage_Base::rbuffer->size() <= sz) UClientImage_Base::rbuffer->setEmpty();
-   else                                          UClientImage_Base::rbuffer->moveToBeginDataInBuffer(sz);
-
-   UClientImage_Base::rstart = 0;
-
-   U_RETURN(true);
+      U_RETURN(true);
+      }
 
 error:
    sendError(nerror);

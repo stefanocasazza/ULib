@@ -16,6 +16,7 @@
 */
 
 #include <ulib/base/utility.h>
+#include <ulib/internal/chttp.h>
 #include <ulib/base/coder/base64.h>
 
 #include <ctype.h>
@@ -60,8 +61,8 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
                cols    = 0;
                columns = true;
 
-               if (u_line_terminator_len == 2) *r++ = '\r';
-                                               *r++ = '\n';
+               if (U_line_terminator_len == 2) *r++ = '\r';
+                                                    *r++ = '\n';
                }
             }
 
@@ -92,8 +93,8 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
    if (columns &&
        cols > 0)
       {
-      if (u_line_terminator_len == 2) *r++ = '\r';
-                                      *r++ = '\n';
+      if (U_line_terminator_len == 2) *r++ = '\r';
+                                           *r++ = '\n';
       }
 
    *r = 0;
@@ -304,8 +305,8 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
                cols    = 0;
                columns = true;
 
-               if (u_line_terminator_len == 2) *r++ = '\r';
-                                               *r++ = '\n';
+               if (U_line_terminator_len == 2) *r++ = '\r';
+                                                    *r++ = '\n';
                }
             }
 
@@ -327,8 +328,8 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
    if (columns &&
        cols > 0)
       {
-      if (u_line_terminator_len == 2) *r++ = '\r';
-                                      *r++ = '\n';
+      if (U_line_terminator_len == 2) *r++ = '\r';
+                                           *r++ = '\n';
       }
 
    *r = 0;

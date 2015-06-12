@@ -1011,8 +1011,7 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
    if (_remain >= 4 &&
        *(int32_t*)ptr == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
       {
-      u_line_terminator     = U_CRLF;
-      u_line_terminator_len = 2;
+   // U_line_terminator_len = 2;
 
       U_INTERNAL_ASSERT(u__islterm(*ptr))
 
@@ -1022,8 +1021,7 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
    if (_remain >= 2 &&
        *(int16_t*)ptr == U_MULTICHAR_CONSTANT16('\n','\n'))
       {
-      u_line_terminator     = U_LF;
-      u_line_terminator_len = 1;
+   // U_line_terminator_len = 1;
 
       U_INTERNAL_ASSERT(u__islterm(*ptr))
 

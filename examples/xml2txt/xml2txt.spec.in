@@ -3,7 +3,7 @@ Summary: Expects xml as input, outputs text only
 Version: @VERSION@
 Release: 1
 Epoch: 0
-License: GPL
+License: LGPL
 Group: Applications
 URL: http://www.unirel.com
 Source0: %{name}-%{version}.tar.gz

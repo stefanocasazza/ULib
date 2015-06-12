@@ -389,9 +389,9 @@ public:
       U_RETURN_POINTER(shared_data_ptr, void);
       }
 
-   static int32_t            oClientImage;
-   static UClientImage_Base* vClientImage;
+   static uint32_t           nClientIndex;
    static UClientImage_Base* pClientIndex;
+   static UClientImage_Base* vClientImage;
    static UClientImage_Base* eClientImage;
 
    static bool isPreForked()

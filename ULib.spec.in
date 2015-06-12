@@ -3,7 +3,7 @@ Summary: ULib C++ library - A package for creating small and fast C++ programs
 Version: @ULIB_VERSION@
 Release: 1
 Epoch: 0
-License: GPL
+License: LGPL
 Group: Development/Libraries
 URL: http://www.unirel.com
 Source0: %{name}-%{version}.tar.gz

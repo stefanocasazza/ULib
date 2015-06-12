@@ -34,8 +34,6 @@
 #define U_MAX_UPLOAD_PROGRESS   16
 #define U_MIN_SIZE_FOR_DEFLATE 150 // NB: google advice...
 
-#define U_HTTP_BODY                         UClientImage_Base::request->substr(U_http_info.endHeader, U_http_info.clength)
-#define U_HTTP_HEADER                       UClientImage_Base::request->substr(U_http_info.startHeader, U_http_info.szHeader)
 #define U_HTTP_URI_EQUAL(str)               ((str).equal(U_HTTP_URI_TO_PARAM))
 #define U_HTTP_URI_DOSMATCH(mask,len,flags) (UServices::dosMatchWithOR(U_HTTP_URI_TO_PARAM, mask, len, flags))
 
@@ -82,19 +80,14 @@ public:
 
    static bool readRequest();
    static int  handlerDataPending();
-   static bool findEndHeader(const UString& buffer);
-   static bool isValidRequest(const char* ptr) __pure;
-   static bool scanfHeader(const char* ptr, uint32_t size);
+   static void setStatusDescription();
+   static bool isValidMethod(const char* ptr) __pure;
+   static bool scanfHeaderRequest(const char* ptr, uint32_t size);
+   static bool scanfHeaderResponse(const char* ptr, uint32_t size);
+   static bool readHeaderResponse(USocket* socket, UString& buffer);
+   static bool isValidRequest(   const char* ptr, uint32_t size) __pure;
    static bool isValidRequestExt(const char* ptr, uint32_t size) __pure;
-
-   static void        setStatusDescription();
-   static const char* getStatusDescription(uint32_t* plen = 0);
-
-   static bool readHeader( USocket* socket, UString& buffer);
-   static bool readBody(   USocket* socket, UString* buffer, UString& body);
-
-   static bool readHeader() { return readHeader(UServer_Base::csocket, *UClientImage_Base::request); }
-   static bool readBody()   { return readBody(  UServer_Base::csocket,  UClientImage_Base::request, *UClientImage_Base::body); }
+   static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
 
    // TYPE
 
@@ -216,7 +209,7 @@ public:
 
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
-   static bool enable_caching_by_proxy_servers, data_chunked, bsendfile;
+   static bool enable_caching_by_proxy_servers, bsendfile;
    static uint32_t npathinfo, limit_request_body, request_read_timeout, range_start, range_size, response_code;
 
    static uint32_t getUserAgent()
@@ -281,6 +274,8 @@ public:
    static bool isUriRequestNeedCertificate() __pure;
    static bool manageSendfile(const char* ptr, uint32_t len);
    static bool checkContentLength(uint32_t length, uint32_t pos);
+
+   static const char* getStatusDescription(uint32_t* plen = 0);
 
    static const char* getHeaderValuePtr(                        const char* name, uint32_t name_len, bool nocase) __pure;
    static const char* getHeaderValuePtr(const UString& request, const char* name, uint32_t name_len, bool nocase) __pure;
@@ -1027,9 +1022,11 @@ private:
    static void updateUploadProgress(int byte_read) U_NO_EXPORT;
 
    static void checkPath() U_NO_EXPORT;
+   static bool readBodyRequest() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
-   static void manageDataForCache() U_NO_EXPORT;
+   static bool readHeaderRequest() U_NO_EXPORT;
    static void processGetRequest() U_NO_EXPORT;
+   static void manageDataForCache() U_NO_EXPORT;
    static bool processAuthorization() U_NO_EXPORT;
    static void checkRequestForHeader() U_NO_EXPORT;
    static bool checkPath(uint32_t len) U_NO_EXPORT;
@@ -1047,6 +1044,7 @@ private:
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire) U_NO_EXPORT;
+   static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
 
 #ifdef U_COMPILER_DELETE_MEMBERS

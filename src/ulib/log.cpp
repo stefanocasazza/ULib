@@ -627,7 +627,7 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
 
    if (u_printf_string_max_length == -1)
       {
-      uint32_t endHeader = (sz ? u_findEndHeader(ptr, sz) : U_NOT_FOUND);
+      uint32_t endHeader = (sz ? u_findEndHeader1(ptr, sz) : U_NOT_FOUND);
 
       if (endHeader == U_NOT_FOUND) u_printf_string_max_length = U_min(sz_header, sizeof(buffer1));
       else                          u_printf_string_max_length = sz1 + endHeader;
@@ -718,7 +718,7 @@ void ULog::logResponse(const UString& data, const char* name, const char* format
 
    if (u_printf_string_max_length == -1)
       {
-      u_printf_string_max_length = u_findEndHeader(ptr, sz);
+      u_printf_string_max_length = u_findEndHeader1(ptr, sz);
 
       if (u_printf_string_max_length == -1) u_printf_string_max_length = U_min(sz,2000);
 

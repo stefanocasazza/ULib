@@ -63,7 +63,7 @@ public:
       U_INTERNAL_ASSERT_POINTER(pval)
       }
 
-#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+#ifdef DEBUG
    const char* dump(bool _reset) const;
 #endif
 
@@ -475,9 +475,7 @@ public:
 
 #ifdef DEBUG
    bool invariant() const;
-#  ifdef U_STDCPP_ENABLE
    const char* dump(bool _reset) const;
-#  endif
 #endif
 
 protected:

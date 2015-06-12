@@ -308,7 +308,7 @@ bool USmtpClient::sendMessage(bool secure)
         if (messageBody.empty()) (void) messageBody.assign(U_CONSTANT_TO_PARAM("empty"));
    else if (strncmp(messageBody.data(), U_CONSTANT_TO_PARAM("MIME-Version: ")) == 0)
       {
-      u_line_terminator = U_CRLF;
+      U_line_terminator_len = 2;
 
       messageBody = UMimeMultipartMsg::section(messageBody, 0, 0, UMimeMultipartMsg::AUTO, "", "", U_CONSTANT_TO_PARAM("MIME-Version: 1.0"));
       }
@@ -321,19 +321,7 @@ bool USmtpClient::sendMessage(bool secure)
                 "%v\r\n"
                 ".\r\n", rcptoAddress.rep, messageSubject.rep, messageHeader.rep, messageBody.rep);
 
-#ifdef USE_LIBSSL
-   bool bssl_save     = USocketExt::bssl;
-                        USocketExt::bssl = USocket::isSSL(true);
-#endif
-   bool blocking_save = USocketExt::blocking;
-                        USocketExt::blocking = USocket::isBlocking();
-
    response = (USocketExt::write(this, msg, U_TIMEOUT_MS) ? USocketExt::readMultilineReply(this) : -1);
-
-#ifdef USE_LIBSSL
-   USocketExt::bssl     = bssl_save;
-#endif
-   USocketExt::blocking = blocking_save;
 
    setStateFromResponse();
 

@@ -31,7 +31,6 @@ public:
 
    static void ctor();
    static void dtor();
-   static void manageUpgrade();
    static bool manageSetting();
 
 protected:
@@ -265,6 +264,7 @@ protected:
    static void setStream();
    static void setConnection();
    static void sendError(int err);
+   static void resetReadBuffer(uint32_t length);
    static bool updateSetting(const char* ptr, uint32_t len);
    static void decodeHeaders(const char* ptr, const char* endptr);
 

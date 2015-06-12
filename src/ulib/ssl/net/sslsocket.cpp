@@ -91,7 +91,9 @@ USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool bserver) : USocke
    ssl = 0;
    ret = renegotiations = 0;
 
-   U_socket_Type(this) = USocket::SK_SSL;
+   U_socket_Type(this) |= USocket::SK_SSL;
+
+   U_ASSERT(USocket::isSSL())
 }
 
 USSLSocket::~USSLSocket()
@@ -604,7 +606,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
 
    setVerifyCallback(UServices::X509Callback, verify_mode);
 
-   U_socket_Type(this) = USocket::SK_SSL_ACTIVE;
+   USocket::setSSLActive(true);
 
    /**
     * see: https://wiki.mozilla.org/Security/Server_Side_TLS
@@ -827,7 +829,7 @@ loop:
          USocket::fh = (SOCKET)_get_osfhandle(USocket::iSockDesc);
 #     endif
 
-         U_socket_Type(this) = USocket::SK_SSL_ACTIVE;
+         USocket::setSSLActive(true);
 
          U_RETURN(true);
          }
@@ -852,7 +854,7 @@ loop:
       errno = lerrno;
       }
 
-   U_socket_Type(this) = USocket::SK_SSL;
+   USocket::setSSLActive(false);
 
    U_RETURN(false);
 }
@@ -971,8 +973,7 @@ loop:
       pcNewConnection->iState         = CONNECT;
       pcNewConnection->renegotiations = 0;
 
-      ssl                             = 0;
-      U_socket_Type(pcNewConnection)  = USocket::SK_SSL_ACTIVE;
+      ssl = 0;
 
       U_RETURN(true);
       }
@@ -1054,7 +1055,7 @@ loop:
                                      ssl = 0;                
       }
 
-   U_socket_Type(this) = USocket::SK_SSL;
+   USocket::setSSLActive(false);
 }
 
 // VIRTUAL METHOD
@@ -1064,7 +1065,7 @@ bool USSLSocket::connectServer(const UString& server, unsigned int iServPort, in
    U_TRACE(0, "USSLSocket::connectServer(%V,%u,%d)", server.rep, iServPort, timeoutMS)
 
    if (USocket::connectServer(server, iServPort, timeoutMS) &&
-       (U_socket_Type(this) != USocket::SK_SSL_ACTIVE       ||
+       (USocket::isSSLActive() == false                     ||
         secureConnection()))
       {
       U_RETURN(true);
@@ -1077,11 +1078,12 @@ int USSLSocket::recv(void* pBuffer, uint32_t iBufferLen)
 {
    U_TRACE(1, "USSLSocket::recv(%p,%u)", pBuffer, iBufferLen)
 
+   U_ASSERT(USocket::isSSL())
    U_INTERNAL_ASSERT(USocket::isConnected())
 
    int iBytesRead, lerrno;
 
-   if (U_socket_Type(this) != USocket::SK_SSL_ACTIVE)
+   if (USocket::isSSLActive() == false)
       {
       iBytesRead = USocket::recv(pBuffer, iBufferLen);
 
@@ -1145,11 +1147,12 @@ int USSLSocket::send(const char* pData, uint32_t iDataLen)
 {
    U_TRACE(1, "USSLSocket::send(%p,%u)", pData, iDataLen)
 
+   U_ASSERT(USocket::isSSL())
    U_INTERNAL_ASSERT(USocket::isOpen())
 
    int iBytesWrite, lerrno;
 
-   if (U_socket_Type(this) != USocket::SK_SSL_ACTIVE)
+   if (USocket::isSSLActive() == false)
       {
       iBytesWrite = USocket::send(pData, iDataLen);
 

@@ -461,6 +461,7 @@ int UHttpPlugIn::handlerRun() // NB: we use this method because now we have the 
 
       UClientImage_Base::callerHandlerRead        = UHTTP::handlerREAD;
       UClientImage_Base::callerHandlerCache       = UHTTP::handlerCache;
+      UClientImage_Base::callerIsValidMethod      = UHTTP::isValidMethod;
       UClientImage_Base::callerIsValidRequest     = UHTTP::isValidRequest;
       UClientImage_Base::callerIsValidRequestExt  = UHTTP::isValidRequestExt;
       UClientImage_Base::callerHandlerEndRequest  = UHTTP::setEndRequestProcessing;

@@ -70,7 +70,6 @@
 int         UHTTP::mime_index;
 int         UHTTP::cgi_timeout;
 bool        UHTTP::bsendfile;
-bool        UHTTP::data_chunked;
 bool        UHTTP::bcallInitForAllUSP;
 bool        UHTTP::bcallResetForAllUSP;
 bool        UHTTP::digest_authentication;
@@ -1053,9 +1052,8 @@ next:
    U_INTERNAL_ASSERT_EQUALS(virtual_host, false)
 #  endif
    /**
-    * I do know that to include code in the middle of a function is hacky and dirty,
-    * but this is the best solution that I could figure out. If you have some idea to
-    * clean it up, please, don't hesitate and let me know.
+    * I do know that to include code in the middle of a function is hacky and dirty, but this is the best solution that I could figure out.
+    * If you have some idea to clean it up, please, don't hesitate and let me know
     */
 #  include "../net/server/plugin/usp/loader.autoconf.cpp"
 #endif
@@ -1537,9 +1535,9 @@ __pure bool UHTTP::isMobile()
  * ====================================================================================
  */
 
-__pure bool UHTTP::isValidRequest(const char* ptr)
+__pure bool UHTTP::isValidMethod(const char* ptr)
 {
-   U_TRACE(0, "UHTTP::isValidRequest(%.*S)", 30, ptr)
+   U_TRACE(0, "UHTTP::isValidMethod(%.*S)", 30, ptr)
 
    if (*ptr != 'G')
       {
@@ -1596,19 +1594,31 @@ __pure bool UHTTP::isValidRequest(const char* ptr)
    U_RETURN(false);
 }
 
+__pure bool UHTTP::isValidRequest(const char* ptr, uint32_t sz)
+{
+   U_TRACE(0, "UHTTP::isValidRequest(%.*S,%u)", 30, ptr, sz)
+
+   U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+   U_INTERNAL_DUMP("sz = %u UClientImage_Base::size_request = %u", sz, UClientImage_Base::size_request)
+
+   if (*(int32_t*)(ptr+sz-4) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
 __pure bool UHTTP::isValidRequestExt(const char* ptr, uint32_t sz)
 {
    U_TRACE(0, "UHTTP::isValidRequestExt(%.*S,%u)", 30, ptr, sz)
 
    U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
-   if (isValidRequest(ptr))
+   if (isValidMethod(ptr)                                      &&
+       (isValidRequest(  ptr, sz)                              ||
+        isValidRequest(  ptr, UClientImage_Base::size_request) ||
+        u_findEndHeader1(ptr, sz) != U_NOT_FOUND))
       {
-      if (*(int32_t*)(ptr+sz-4) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n') ||
-          (sz < UClientImage_Base::size_request && u_findEndHeader1(ptr, sz) != U_NOT_FOUND))
-         {
-         U_RETURN(true);
-         }
+      U_RETURN(true);
       }
 
    U_RETURN(false);
@@ -1623,11 +1633,19 @@ int UHTTP::handlerDataPending()
 
    if (U_http_version == '2')
       {
-      if ((UHTTP2::manageUpgrade(), UHTTP2::manageSetting()) == false) U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
-      else
+      if (UHTTP2::manageSetting() == false)
          {
-         // TODO
+         U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+
+         U_RETURN(-1);
          }
+
+      // TODO: HTTP/2 implementation
+
+      /*
+      return  1 //  child of parallelization
+      return -1 // parent of parallelization
+      */
 
       U_RETURN(-1);
       }
@@ -1637,16 +1655,12 @@ int UHTTP::handlerDataPending()
    return UClientImage_Base::handlerDataPending();
 }
 
-bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
+bool UHTTP::scanfHeaderRequest(const char* ptr, uint32_t size)
 {
-   U_TRACE(0, "UHTTP::scanfHeader(%.*S,%u)", size, ptr, size)
+   U_TRACE(0, "UHTTP::scanfHeaderRequest(%.*S,%u)", size, ptr, size)
 
    /**
-    * Check if HTTP response or request
-    *
-    * The default is GET for input requests and POST for output requests
-    *
-    * Other possible alternatives are:
+    * Check HTTP request. The default is GET for input requests and POST for output requests. Other possible alternatives are:
     *
     *  - PUT
     *  - HEAD
@@ -1661,11 +1675,22 @@ bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
     *  ------------------------------------------------------------------
     *
     * See http://ietf.org/rfc/rfc2616.txt for further information about HTTP request methods
-    **/
+    */
 
    unsigned char c;
    const char* endptr;
    const char* start = ptr;
+
+   if (*(int32_t*)ptr == U_MULTICHAR_CONSTANT32('G','E','T',' ')) // try to parse the request line: GET / HTTP/1.n
+      {
+      ptr += 4;
+
+      U_INTERNAL_ASSERT_EQUALS(U_http_method_num, 0)
+
+      U_http_method_type = HTTP_GET;
+
+      goto next;
+      }
 
    if (*ptr == 'P')
       {
@@ -1694,21 +1719,15 @@ bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
          goto next;
          }
       }
-   else if (*(int32_t*)ptr == U_MULTICHAR_CONSTANT32('G','E','T',' ')) // try to parse the request line: GET / HTTP/1.n
-      {
-      ptr += 4;
-
-      U_http_method_type = HTTP_GET;
-
-      goto next;
-      }
 
    U_INTERNAL_DUMP("char (before method) = %C", *ptr)
 
-   while (u__isspace(*ptr)) ++ptr; // RFC 2616 4.1 "servers SHOULD ignore any empty line(s) received where a Request-Line is expected"
+   if (UNLIKELY(u__isspace(*ptr))) while (u__isspace(*++ptr)); // RFC 2616 4.1 "servers SHOULD ignore any empty line(s) received where a Request-Line is expected"
+
+   U_INTERNAL_ASSERT_EQUALS(U_http_method_num, 0)
 
    // GET
-   // HEAD or response
+   // HEAD
    // POST/PUT/PATCH
    // COPY
    // DELETE
@@ -1716,18 +1735,6 @@ bool UHTTP::scanfHeader(const char* ptr, uint32_t size)
 
    switch (*(int32_t*)ptr)
       {
-      case U_MULTICHAR_CONSTANT32('h','t','t','p'):
-      case U_MULTICHAR_CONSTANT32('H','T','T','P'):
-         {
-         // try to parse the response line: HTTP/1.n nnn <ssss>
-
-         U_INTERNAL_ASSERT_EQUALS(U_http_method_type, 0)
-
-         endptr = start + size;
-
-         goto response;
-         }
-   // break; // it is intentional...
       case U_MULTICHAR_CONSTANT32('g','e','t',' '):
       case U_MULTICHAR_CONSTANT32('G','E','T',' '): U_http_method_type = HTTP_GET;         ptr +=  4;                         break;
       case U_MULTICHAR_CONSTANT32('h','e','a','d'):
@@ -1769,7 +1776,7 @@ next:
 
    U_INTERNAL_ASSERT_MAJOR(U_http_method_type, 0)
 
-   c = (*(unsigned char*)(ptr-1));
+   c = *(unsigned char*)(ptr-1);
 
    U_INTERNAL_DUMP("char (after method) = %C", c)
 
@@ -1780,7 +1787,7 @@ next:
       U_RETURN(false);
       }
 
-   while (u__isblank(*ptr)) ++ptr; // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
+   if (UNLIKELY(u__isblank(*ptr))) while (u__isblank(*++ptr)); // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
 
    U_http_info.uri   = ptr;
    U_http_info.query = 0;
@@ -1798,7 +1805,7 @@ next:
 
    while (ptr < endptr)
       {
-      c = (*(unsigned char*)ptr);
+      c = *(unsigned char*)ptr;
 
       if (UNLIKELY(u__isblank(c)))
          {
@@ -1812,38 +1819,33 @@ next:
 
          U_INTERNAL_DUMP("URI = %.*S", U_HTTP_URI_TO_TRACE)
 
-         while (u__isblank(*++ptr)) {} // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
+         if (UNLIKELY(u__isblank(*++ptr))) while (u__isblank(*++ptr)); // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
 
-         if (*(int64_t*)(ptr-1) != U_MULTICHAR_CONSTANT64(' ','H','T','T','P','/','1','.')) U_RETURN(false);
-
-response:
-         ptr += U_CONSTANT_SIZE("HTTP/1.");
-
-         U_http_version = *ptr++;
-
-         if (U_http_method_type == 0)
+         if (*(int64_t*)(ptr-1) == U_MULTICHAR_CONSTANT64(' ','H','T','T','P','/','1','.'))
             {
-            U_http_info.nResponseCode = strtol(ptr+1, (char**)&ptr, 10);
+            ptr += U_CONSTANT_SIZE("HTTP/1.");
 
-            if (U_IS_HTTP_VALID_RESPONSE(U_http_info.nResponseCode) == false) U_RETURN(false);
+            U_http_version = *ptr++;
 
-            while (u__islterm(*++ptr) == false) {}
-            }
+            U_INTERNAL_DUMP("U_http_version = %C U_http_info.nResponseCode = %d", U_http_version, U_http_info.nResponseCode)
 
-         U_INTERNAL_DUMP("U_http_version = %C U_http_info.nResponseCode = %d", U_http_version, U_http_info.nResponseCode)
+            if (           ptr <= (endptr-U_CONSTANT_SIZE(U_CRLF)) &&
+                *(int16_t*)ptr == U_MULTICHAR_CONSTANT16('\r','\n'))
+               {
+               U_line_terminator_len = U_CONSTANT_SIZE(U_CRLF);
 
-         if (UNLIKELY(ptr >= (endptr-2))) break;
+               U_http_info.startHeader = ptr - start;
 
-         c = (*(unsigned char*)ptr);
+               U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S", U_http_info.startHeader, ptr)
 
-         if (LIKELY(c == '\r'))
-            {
-            u_line_terminator     = U_CRLF;
-            u_line_terminator_len = 2;
+#           if defined(DEBUG) && defined(U_LOG_ENABLE) && !defined(U_CACHE_REQUEST_DISABLE)
+               UClientImage_Base::uri_len = U_http_info.uri_len;
+#           endif
 
-            if (LIKELY(ptr[1] == '\n')) break;
+               U_INTERNAL_DUMP("UClientImage_Base::uri_len = %u U_line_terminator_len = %u", UClientImage_Base::uri_len, U_line_terminator_len)
 
-            U_INTERNAL_DUMP("char after '\r' = %C", ptr[1])
+               U_RETURN(true);
+               }
             }
 
          U_RETURN(false);
@@ -1887,229 +1889,231 @@ response:
                   continue;
                   }
 
-               goto error;
+               U_SRV_LOG("WARNING: invalid character %C in URI %.*S", c, ptr - U_http_info.uri, U_http_info.uri);
+
+               U_RETURN(false);
                }
 
-            if (c != '+') goto error;
+            if (c != '+')
+               {
+               U_SRV_LOG("WARNING: invalid character %C in URI %.*S", c, ptr - U_http_info.uri, U_http_info.uri);
+
+               U_RETURN(false);
+               }
             }
          }
 
       ++ptr;
       }
 
-   U_http_info.startHeader += (ptr - start);
-
-   U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S", U_http_info.startHeader, ptr)
-
-#if defined(DEBUG) && defined(U_LOG_ENABLE) && !defined(U_CACHE_REQUEST_DISABLE)
-   UClientImage_Base::uri_len = U_http_info.uri_len;
-#endif
-
-   U_INTERNAL_DUMP("UClientImage_Base::uri_len = %u u_line_terminator_len = %u", UClientImage_Base::uri_len, u_line_terminator_len)
-
-   U_RETURN(true);
-
-error:
-   U_SRV_LOG("WARNING: invalid character %C in URI %.*S", c, ptr - U_http_info.uri, U_http_info.uri);
-
-   U_http_version = ' '; // NB: to avoid 'Version Not Supported' response...
-
    U_RETURN(false);
 }
 
-bool UHTTP::findEndHeader(const UString& buffer)
+bool UHTTP::scanfHeaderResponse(const char* ptr, uint32_t size)
 {
-   U_TRACE(0, "UHTTP::findEndHeader(%V)", buffer.rep)
+   U_TRACE(0, "UHTTP::scanfHeaderResponse(%.*S,%u)", size, ptr, size)
 
-   U_INTERNAL_DUMP("u_line_terminator_len = %d U_http_info.startHeader = %u", u_line_terminator_len, U_http_info.startHeader)
+   // try to parse the response line: HTTP/1.n nnn <ssss>
 
-   U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len, 2)
-
-   const char* ptr = buffer.c_pointer(U_http_info.startHeader);
-
-   U_http_info.endHeader = u_findEndHeader1(ptr, buffer.remain(ptr));
-
-   if (U_http_info.endHeader != U_NOT_FOUND)
+   if (*(int32_t*)ptr == U_MULTICHAR_CONSTANT32('H','T','T','P') ||
+       *(int32_t*)ptr == U_MULTICHAR_CONSTANT32('h','t','t','p'))
       {
-      // NB: endHeader comprende anche la blank line...
+      const char* start = ptr;
 
-      U_http_info.szHeader   = U_http_info.endHeader - 4;
-      U_http_info.endHeader += U_http_info.startHeader;
+      ptr += U_CONSTANT_SIZE("HTTP/1.");
 
-      U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.20S", U_http_info.szHeader, U_http_info.endHeader, buffer.c_pointer(U_http_info.endHeader))
+      U_http_version = *ptr++;
 
-      U_RETURN(true);
+      U_INTERNAL_ASSERT(u__isblank(*ptr))
+
+      U_http_info.nResponseCode = strtol(ptr+1, (char**)&ptr, 10);
+
+      U_INTERNAL_DUMP("U_http_version = %C U_http_info.nResponseCode = %d", U_http_version, U_http_info.nResponseCode)
+
+      if (U_IS_HTTP_VALID_RESPONSE(U_http_info.nResponseCode))
+         {
+         while (u__islterm(*++ptr) == false) {}
+
+         if (           ptr <= (start+size-U_CONSTANT_SIZE(U_CRLF)) &&
+             *(int16_t*)ptr == U_MULTICHAR_CONSTANT16('\r','\n'))
+            {
+            U_line_terminator_len = U_CONSTANT_SIZE(U_CRLF);
+
+            U_http_info.startHeader = ptr - start;
+
+            U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S", U_http_info.startHeader, ptr)
+
+            U_RETURN(true);
+            }
+         }
       }
 
-   U_http_info.endHeader = 0;
-
    U_RETURN(false);
 }
 
-bool UHTTP::readHeader(USocket* sk, UString& buffer)
+U_NO_EXPORT bool UHTTP::readHeaderRequest()
 {
-   U_TRACE(0, "UHTTP::readHeader(%p,%V)", sk, buffer.rep)
+   U_TRACE(0, "UHTTP::readHeaderRequest()")
 
-   U_INTERNAL_ASSERT_POINTER(sk)
-
-   uint32_t sz;
-   bool bWaitEndHeader, bserver = (sk == UServer_Base::csocket);
-
-loop:
-   sz = buffer.size();
+   uint32_t sz     = UClientImage_Base::request->size();
+   const char* ptr = UClientImage_Base::request->data();
 
    U_INTERNAL_DUMP("sz = %u", sz)
 
    if ( sz < 18 && // 18 -> "GET / HTTP/1.0\r\n\r\n"
-       (sz <  4 || *(int32_t*)buffer.c_pointer(sz-4) != U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')))
+       (sz <  4 || *(int32_t*)(ptr+sz-4) != U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')))
       {
-      if (buffer &&
-          buffer.isPrintable(0, true) == false)
-         {
-         if (bserver) UClientImage_Base::abortive_close();
-
-         U_RETURN(false);
-         }
-
-read:
-      if (bserver)
-         {
-         U_ClientImage_data_missing = true;
-
-         U_RETURN(false);
-         }
-
-      if (USocketExt::read(sk, buffer, (sz < 18 ? 18 - sz : U_SINGLE_READ), UServer_Base::timeoutMS, request_read_timeout)) goto loop;
+      if (u_isPrintable(ptr, sz, true)) U_ClientImage_data_missing = true;
+      else                              UClientImage_Base::abortive_close();
 
       U_RETURN(false);
       }
 
-start:
-   if (U_http_method_type == 0)
-      {
-      // NB: U_http_info.startHeader is needed for loop...
-
-      uint32_t sz1     = sz;
-      const char* ptr1 = buffer.data();
-
-      if (U_http_info.startHeader)
-         {
-         ptr1 = buffer.c_pointer(U_http_info.startHeader);
-         sz1  = buffer.remain(ptr1);
-         }
-
-      u_line_terminator_len = 1;
-
-      if (scanfHeader(ptr1, sz1) == false ||
-          (bserver && u_line_terminator_len != 2))
-         {
-         if (bserver &&
-             U_http_version >= '0')
-            {
-            U_ClientImage_data_missing = true;
-            }
-
-         U_RETURN(false);
-         }
-
-      // check if HTTP response line: HTTP/1.n 100 Continue
-
-      U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
-
-      if (UNLIKELY(U_http_info.nResponseCode == HTTP_CONTINUE))
-         {
-         /**
-          * During the course of an HTTP 1.1 client sending a request to a server, the server might respond with
-          * an interim "100 Continue" response. This means the server has received the first part of the request,
-          * and can be used to aid communication over slow links. In any case, all HTT 1.1 clients must handle the
-          * 100 response correctly (perhaps by just ignoring it). The "100 Continue" response is structured like
-          * any HTTP response, i.e. consists of a status line, optional headers, and a blank line. Unlike other
-          * responses, it is always followed by another complete, final response. Example:
-          *
-          * HTTP/1.0 100 Continue
-          * [blank line here]
-          * HTTP/1.0 200 OK
-          * Date: Fri, 31 Dec 1999 23:59:59 GMT
-          * Content-Type: text/plain
-          * Content-Length: 42
-          * some-footer: some-value
-          * another-footer: another-value
-          * [blank line here]
-          * abcdefghijklmnoprstuvwxyz1234567890abcdef
-          *
-          * To handle this, a simple HTTP 1.1 client might read one response from the socket;
-          * if the status code is 100, discard the first response and read the next one instead
-          */
-
-         U_ASSERT(buffer.isEndHeader(U_http_info.startHeader))
-
-         U_http_method_type        = 0;
-         U_http_info.startHeader  += 4;
-         U_http_info.nResponseCode = 0;
-
-         if (sz <= U_http_info.startHeader) goto read;
-                                            goto start;
-         }
-      }
+   if (scanfHeaderRequest(ptr, sz) == false) U_RETURN(false);
 
    U_INTERNAL_DUMP("sz = %u U_http_info.startHeader = %u", sz, U_http_info.startHeader)
 
-   // NB: there are case of requests fragmented (maybe because of VPN tunnel)
-   //     for example something like: GET /info?Mac=00%3A40%3A63%3Afb%3A42%3A1c&ip=172.16.93.235&gateway=172.16.93.254%3A5280&ap=ap%4010.8.0.9
+   U_INTERNAL_ASSERT_MINOR(U_http_info.startHeader, sz)
 
-   if (UNLIKELY(U_http_info.startHeader >= sz))
+   ptr += U_http_info.startHeader;
+
+   U_ASSERT_EQUALS(UServer_Base::bssl, UServer_Base::csocket->isSSLActive())
+   U_INTERNAL_ASSERT_EQUALS(*(int16_t*)ptr, U_MULTICHAR_CONSTANT16('\r','\n'))
+
+   if (*(int32_t*)ptr == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) U_RETURN(true);
+
+   sz = u_findEndHeader1(ptr+2, sz-U_http_info.startHeader-2);
+
+   if (sz != U_NOT_FOUND) sz += U_http_info.startHeader-2;
+   else
       {
-      U_http_method_type      = 0;
-      U_http_info.uri_len     = 0;
-      U_http_info.query_len   = 0;
-      U_http_info.startHeader = 0;
+#  ifdef USE_LIBSSL
+      if (UServer_Base::bssl)
+         {
+         sz = USocketExt::readWhileNotToken(UServer_Base::csocket, *UClientImage_Base::request, U_CONSTANT_TO_PARAM(U_CRLF2), UServer_Base::timeoutMS);
 
-      goto read;
+         if (sz != U_NOT_FOUND) goto next;
+         }
+#  endif
+
+      U_ClientImage_data_missing = true;
+
+      U_RETURN(false);
       }
-
-   // NB: endHeader includes also the blank line...
-
-   if (*(int32_t*)buffer.c_pointer(U_http_info.startHeader) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
-      {
-      U_http_info.endHeader = U_http_info.startHeader + 4;
-
-      U_INTERNAL_DUMP("U_http_info.endHeader = %u", U_http_info.endHeader)
-
-      U_RETURN(true);
-      }
-
-   bWaitEndHeader = (bserver == false);
 
 #ifdef USE_LIBSSL
-   if (sk->isSSL(true) &&
-       bWaitEndHeader == false)
-      {
-      bWaitEndHeader = true;
-      }
+next:
 #endif
+// U_http_sz_header         = sz - U_http_info.startHeader;
+   U_http_info.endHeader    = sz + U_CONSTANT_SIZE(U_CRLF2); // NB: U_http_info.endHeader includes also the blank line...
+   U_http_info.startHeader +=      U_CONSTANT_SIZE(U_CRLF);
 
-   U_INTERNAL_DUMP("sz = %u bWaitEndHeader = %b", sz, bWaitEndHeader)
+   U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S U_http_info.endHeader(%u) = %.20S",
+                    U_http_info.startHeader, UClientImage_Base::request->c_pointer(U_http_info.startHeader),
+                    U_http_info.endHeader,   UClientImage_Base::request->c_pointer(U_http_info.endHeader))
 
-   if (bWaitEndHeader &&
-       findEndHeader(buffer) == false)
+   U_RETURN(true);
+}
+
+bool UHTTP::readHeaderResponse(USocket* sk, UString& buffer)
+{
+   U_TRACE(0, "UHTTP::readHeaderResponse(%p,%V)", sk, buffer.rep)
+
+   U_INTERNAL_ASSERT_POINTER(sk)
+
+   const char* ptr;
+   uint32_t sz = buffer.size();
+
+   U_INTERNAL_DUMP("sz = %u", sz)
+
+   if (sz == 0)
+      {
+      if (USocketExt::read(sk, buffer, U_SINGLE_READ, UServer_Base::timeoutMS, request_read_timeout) == false) U_RETURN(false);
+
+loop: sz = buffer.size();
+
+      U_INTERNAL_DUMP("sz = %u", sz)
+      }
+
+   ptr = buffer.data();
+
+   if (scanfHeaderResponse(ptr, sz) == false) U_RETURN(false);
+
+   // check for HTTP response line: HTTP/1.n 100 Continue
+
+   U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
+
+   if (UNLIKELY(U_http_info.nResponseCode == HTTP_CONTINUE))
+      {
+      /**
+       * During the course of an HTTP 1.1 client sending a request to a server, the server might respond with
+       * an interim "100 Continue" response. This means the server has received the first part of the request,
+       * and can be used to aid communication over slow links. In any case, all HTT 1.1 clients must handle the
+       * 100 response correctly (perhaps by just ignoring it). The "100 Continue" response is structured like
+       * any HTTP response, i.e. consists of a status line, optional headers, and a blank line. Unlike other
+       * responses, it is always followed by another complete, final response. Example:
+       *
+       * HTTP/1.0 100 Continue
+       * [blank line here]
+       * HTTP/1.0 200 OK
+       * Date: Fri, 31 Dec 1999 23:59:59 GMT
+       * Content-Type: text/plain
+       * Content-Length: 42
+       * some-footer: some-value
+       * another-footer: another-value
+       * [blank line here]
+       * abcdefghijklmnoprstuvwxyz1234567890abcdef
+       *
+       * To handle this, a simple HTTP 1.1 client might read one response from the socket;
+       * if the status code is 100, discard the first response and read the next one instead
+       */
+
+      U_INTERNAL_ASSERT_EQUALS(*(int32_t*)buffer.c_pointer(U_http_info.startHeader), U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+
+      U_http_info.startHeader += U_CONSTANT_SIZE(U_CRLF2);
+
+      if (sz == U_http_info.startHeader)
+         {
+         buffer.setEmpty();
+
+         if (USocketExt::read(sk, buffer, U_SINGLE_READ, UServer_Base::timeoutMS, request_read_timeout) == false) U_RETURN(false);
+         }
+      else
+         {
+         buffer.moveToBeginDataInBuffer(U_http_info.startHeader);
+         }
+
+      U_http_info.startHeader   =
+      U_http_info.nResponseCode = 0;
+
+      goto loop;
+      }
+
+   U_INTERNAL_ASSERT_MINOR(U_http_info.startHeader, sz)
+
+   ptr = buffer.c_pointer(U_http_info.startHeader);
+
+   U_INTERNAL_ASSERT_EQUALS(*(int16_t*)ptr, U_MULTICHAR_CONSTANT16('\r','\n'))
+
+   sz = u_findEndHeader1(ptr+U_CONSTANT_SIZE(U_CRLF), sz-U_http_info.startHeader-U_CONSTANT_SIZE(U_CRLF));
+
+   if (sz != U_NOT_FOUND) sz += U_http_info.startHeader-U_CONSTANT_SIZE(U_CRLF);
+   else
       {
       sz = USocketExt::readWhileNotToken(sk, buffer, U_CONSTANT_TO_PARAM(U_CRLF2), UServer_Base::timeoutMS);
 
-      if (sz == U_NOT_FOUND)
-         {
-         if (bserver) U_ClientImage_data_missing = true;
-
-         U_RETURN(false);
-         }
-
-      U_http_info.endHeader = sz + U_CONSTANT_SIZE(U_CRLF2); // NB: U_http_info.endHeader comprende anche la blank line...
+      if (sz == U_NOT_FOUND) U_RETURN(false);
       }
 
-   U_http_info.startHeader += 2;
-   U_http_info.szHeader     = buffer.size() - U_http_info.startHeader;
+   U_INTERNAL_ASSERT_MINOR(sz, buffer.size())
 
-   U_INTERNAL_DUMP("U_http_info.szHeader = %u U_http_info.startHeader(%u) = %.20S U_http_info.endHeader(%u) = %.20S",
-                    U_http_info.szHeader,     U_http_info.startHeader, buffer.c_pointer(U_http_info.startHeader), U_http_info.endHeader, buffer.c_pointer(U_http_info.endHeader))
+// U_http_sz_header         = sz - U_http_info.startHeader;
+   U_http_info.endHeader    = sz + U_CONSTANT_SIZE(U_CRLF2); // NB: U_http_info.endHeader includes also the blank line...
+   U_http_info.startHeader +=      U_CONSTANT_SIZE(U_CRLF);
+
+   U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S U_http_info.endHeader(%u) = %.20S",
+                    U_http_info.startHeader, buffer.c_pointer(U_http_info.startHeader),
+                    U_http_info.endHeader,   buffer.c_pointer(U_http_info.endHeader))
 
    U_RETURN(true);
 }
@@ -2118,7 +2122,11 @@ __pure const char* UHTTP::getHeaderValuePtr(const UString& request, const char* 
 {
    U_TRACE(0, "UHTTP::getHeaderValuePtr(%V,%.*S,%u,%b)", request.rep, name_len, name, name_len, nocase)
 
-   if (U_http_info.szHeader) return UStringExt::getValueFromName(request, U_http_info.startHeader, U_http_info.szHeader, name, name_len, nocase);
+   if (U_http_info.endHeader)
+      {
+      return UStringExt::getValueFromName(request, U_http_info.startHeader,
+                                                   U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader, name, name_len, nocase);
+      }
 
    U_RETURN((const char*)0);
 }
@@ -2126,265 +2134,215 @@ __pure const char* UHTTP::getHeaderValuePtr(const UString& request, const char* 
 __pure const char* UHTTP::getHeaderValuePtr(const char* name, uint32_t name_len, bool nocase)
 { return getHeaderValuePtr(*UClientImage_Base::request, name, name_len, nocase); }
 
-bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
+U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& body)
 {
-   U_TRACE(0, "UHTTP::readBody(%p,%V,%V)", sk, pbuffer->rep, body.rep)
-
-   U_INTERNAL_DUMP("u_line_terminator_len = %d", u_line_terminator_len)
+   U_TRACE(0, "UHTTP::readDataChunked(%p,%V,%V)", sk, pbuffer->rep, body.rep)
 
    U_ASSERT(body.empty())
-   U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len, 2)
+   U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
 
-   bool bserver = (sk == UServer_Base::csocket);
+   U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
 
-   // NB: check if request includes an entity-body (as indicated by the presence of Content-Length or Transfer-Encoding)...
-
-   if (U_http_info.clength)
+   if (U_http_data_chunked == false)
       {
-      uint32_t body_byte_read = (pbuffer->size() - U_http_info.endHeader);
+      const char* chunk_ptr = getHeaderValuePtr(*pbuffer, *UString::str_Transfer_Encoding, true);
 
-      U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u Content-Length = %u", pbuffer->size(), body_byte_read, U_http_info.clength)
-
-      if (U_http_info.clength > body_byte_read)
+      if (chunk_ptr)
          {
-         if (U_http_info.clength > limit_request_body)
-            {
-            U_http_info.nResponseCode = HTTP_ENTITY_TOO_LARGE;
+         if (UString::str_chunked->equal(chunk_ptr, U_CONSTANT_SIZE("chunked")) == false) U_RETURN(false);
 
-            UClientImage_Base::setCloseConnection();
-
-            setResponse(0, 0);
-
-            U_RETURN(false);
-            }
-
-         // NB: check for 'Expect: 100-continue' (as curl does)...
-
-         if (body_byte_read == 0                                                                                               &&
-             U_STRING_FIND_EXT(*pbuffer, U_http_info.startHeader, "Expect: 100-continue", U_http_info.szHeader) != U_NOT_FOUND &&
-             USocketExt::write(sk, U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"), UServer_Base::timeoutMS) == false)
-            {
-            U_INTERNAL_ASSERT_EQUALS(U_http_version, '1')
-
-            U_RETURN(false);
-            }
-
-         if (bserver &&
-             UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization))
-            {
-            // parent
-
-            sk->close();
-
-            U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
-
-            U_RETURN(false);
-            }
-
-         // NB: wait for other data to complete the read of the request...
-
-         if (USocketExt::read(sk, *pbuffer, U_http_info.clength - body_byte_read, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
-            {
-            U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u Content-Length = %u", pbuffer->size(), pbuffer->size() - U_http_info.endHeader, U_http_info.clength)
-
-            if (bserver &&
-                sk->isTimeout())
-               {
-               U_ClientImage_data_missing = true;
-               }
-
-            U_RETURN(false);
-            }
+         U_http_data_chunked = true;
          }
       }
-   else
+
+   if (U_http_data_chunked)
       {
-      U_INTERNAL_DUMP("data_chunked = %b", data_chunked)
+            char* out;
+      const char* inp;
+      const char* end;
+      uint32_t count;
 
-      if (data_chunked == false)
-         {
-         const char* chunk_ptr = getHeaderValuePtr(*pbuffer, *UString::str_Transfer_Encoding, true);
+      /**
+       * If a server wants to start sending a response before knowing its total length (like with long script output),
+       * it might use the simple chunked transfer-encoding, which breaks the complete response into smaller chunks and
+       * sends them in series. You can identify such a response because it contains the "Transfer-Encoding: chunked"
+       * header. All HTTP 1.1 clients must be able to receive chunked messages. A chunked message body contains a
+       * series of chunks, followed by a line with a single "0" (zero), followed by optional footers (just like headers),
+       * and a blank line. Each chunk consists of two parts: a line with the size of the chunk data, in hex, possibly
+       * followed by a semicolon and extra parameters you can ignore (none are currently standard), and ending with
+       * CRLF, the data itself, followed by CRLF. An example:
+       *
+       * HTTP/1.1 200 OK
+       * Date: Fri, 31 Dec 1999 23:59:59 GMT
+       * Content-Type: text/plain
+       * Transfer-Encoding: chunked
+       * [blank line here]
+       * 1a; ignore-stuff-here
+       * abcdefghijklmnopqrstuvwxyz
+       * 10
+       * 1234567890abcdef
+       * 0
+       * some-footer: some-value
+       * another-footer: another-value
+       * [blank line here]
+       *
+       * Note the blank line after the last footer. The length of the text data is 42 bytes (1a + 10, in hex),
+       * and the data itself is 'abcdefghijklmnopqrstuvwxyz1234567890abcdef'. The footers should be treated like
+       * headers, as if they were at the top of the response. The chunks can contain any binary data, and may
+       * be much larger than the examples here. The size-line parameters are rarely used, but you should at
+       * least ignore them correctly. Footers are also rare, but might be appropriate for things like checksums
+       * or digital signatures
+       */
 
-         if (chunk_ptr)
+      U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
+
+      count = pbuffer->find(U_CRLF2, U_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
+
+      if (count == U_NOT_FOUND) count = USocketExt::readWhileNotToken(sk, *pbuffer, U_CONSTANT_TO_PARAM(U_CRLF2), U_SSL_TIMEOUT_MS);
+
+      if (count == U_NOT_FOUND) U_RETURN(false);
+
+      count += U_CONSTANT_SIZE(U_CRLF2); // NB: the message include also the blank line...
+
+      U_INTERNAL_DUMP("count = %u U_http_info.endHeader = %u", count, U_http_info.endHeader)
+
+      if (count <= U_http_info.endHeader) U_RETURN(false);
+
+      U_http_info.clength = (count - U_http_info.endHeader);
+
+      U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+
+      body.setBuffer(U_http_info.clength);
+
+      out = body.data();
+      end = pbuffer->c_pointer(count);
+      inp = pbuffer->c_pointer(U_http_info.endHeader);
+
+      do {
+         // Decode the hexadecimal chunk size into an understandable number
+
+         uint32_t chunkSize = strtol(inp, 0, 16);
+
+      // U_INTERNAL_DUMP("chunkSize = %u inp[0] = %C", chunkSize, inp[0])
+
+         // The last chunk is followed by zero or more trailers, followed by a blank line
+
+         if (chunkSize == 0)
             {
-            if (UString::str_chunked->equal(chunk_ptr, U_CONSTANT_SIZE("chunked")) == false)
-               {
-               setBadRequest();
+            body.size_adjust(body.distance(out));
 
-               U_RETURN(false);
-               }
+            U_INTERNAL_DUMP("body = %V", body.rep)
 
-            data_chunked = true;
-            }
-         }
-
-      if (data_chunked)
-         {
-               char* out;
-         const char* inp;
-         const char* end;
-         uint32_t count;
-
-         /**
-          * If a server wants to start sending a response before knowing its total length (like with long script output),
-          * it might use the simple chunked transfer-encoding, which breaks the complete response into smaller chunks and
-          * sends them in series. You can identify such a response because it contains the "Transfer-Encoding: chunked"
-          * header. All HTTP 1.1 clients must be able to receive chunked messages. A chunked message body contains a
-          * series of chunks, followed by a line with a single "0" (zero), followed by optional footers (just like headers),
-          * and a blank line. Each chunk consists of two parts: a line with the size of the chunk data, in hex, possibly
-          * followed by a semicolon and extra parameters you can ignore (none are currently standard), and ending with
-          * CRLF, the data itself, followed by CRLF. An example:
-          *
-          * HTTP/1.1 200 OK
-          * Date: Fri, 31 Dec 1999 23:59:59 GMT
-          * Content-Type: text/plain
-          * Transfer-Encoding: chunked
-          * [blank line here]
-          * 1a; ignore-stuff-here
-          * abcdefghijklmnopqrstuvwxyz
-          * 10
-          * 1234567890abcdef
-          * 0
-          * some-footer: some-value
-          * another-footer: another-value
-          * [blank line here]
-          *
-          * Note the blank line after the last footer. The length of the text data is 42 bytes (1a + 10, in hex),
-          * and the data itself is 'abcdefghijklmnopqrstuvwxyz1234567890abcdef'. The footers should be treated like
-          * headers, as if they were at the top of the response. The chunks can contain any binary data, and may
-          * be much larger than the examples here. The size-line parameters are rarely used, but you should at
-          * least ignore them correctly. Footers are also rare, but might be appropriate for things like checksums
-          * or digital signatures
-          */
-
-         count = pbuffer->find(U_CRLF2, U_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
-
-         if (count == U_NOT_FOUND)
-            {
-            if (bserver &&
-                UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization))
-               {
-               // parent
-
-               sk->close();
-
-               U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
-
-               U_RETURN(false);
-               }
-
-            count = USocketExt::readWhileNotToken(sk, *pbuffer, U_CONSTANT_TO_PARAM(U_CRLF2), U_SSL_TIMEOUT_MS);
-            }
-
-         if (count == U_NOT_FOUND)
-            {
-            if (bserver &&
-                sk->isConnected())
-               {
-               U_ClientImage_data_missing = true;
-               }
+            if (body) U_RETURN(true);
 
             U_RETURN(false);
             }
 
-         count += U_CONSTANT_SIZE(U_CRLF2); // NB: the message include also the blank line...
+         U_INTERNAL_ASSERT(u__isxdigit(*inp))
 
-         U_INTERNAL_DUMP("count = %u U_http_info.endHeader = %u", count, U_http_info.endHeader)
+         while (*inp++ != '\n') {} // discard the rest of the line
 
-         if (count <= U_http_info.endHeader)
-            {
-            if (bserver &&
-                sk->isConnected())
-               {
-               setBadRequest();
-               }
+      // U_MEMCPY( out, inp, chunkSize);
+         u__memcpy(out, inp, chunkSize, __PRETTY_FUNCTION__);
 
-            U_RETURN(false);
-            }
+         inp += chunkSize + 2;
+         out += chunkSize;
+         }
+      while (inp <= end);
+      }
 
-         U_http_info.clength = (count - U_http_info.endHeader);
+   U_RETURN(false);
+}
 
-         U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+U_NO_EXPORT bool UHTTP::readBodyRequest()
+{
+   U_TRACE(0, "UHTTP::readBodyRequest()")
 
-         body.setBuffer(U_http_info.clength);
+   U_ASSERT(UClientImage_Base::body->empty())
+   U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
+   U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
 
-         out = body.data();
-         end = pbuffer->c_pointer(count);
-         inp = pbuffer->c_pointer(U_http_info.endHeader);
+   uint32_t body_byte_read = UClientImage_Base::request->size() - U_http_info.endHeader;
 
-         do {
-            // Decode the hexadecimal chunk size into an understandable number
+   U_INTERNAL_DUMP("UClientImage_Base::request->size() = %u body_byte_read = %u Content-Length = %u U_http_data_chunked = %b",
+                    UClientImage_Base::request->size(),     body_byte_read, U_http_info.clength,    U_http_data_chunked)
 
-            uint32_t chunkSize = strtol(inp, 0, 16);
+   if (U_http_info.clength > body_byte_read)
+      {
+      if (U_http_info.clength > limit_request_body)
+         {
+         U_http_info.nResponseCode = HTTP_ENTITY_TOO_LARGE;
 
-            // U_INTERNAL_DUMP("chunkSize = %u inp[0] = %C", chunkSize, inp[0])
+         UClientImage_Base::setCloseConnection();
 
-            // The last chunk is followed by zero or more trailers, followed by a blank line
+         setResponse(0, 0);
 
-            if (chunkSize == 0)
-               {
-               body.size_adjust(body.distance(out));
-
-               U_INTERNAL_DUMP("body = %V", body.rep)
-
-               break;
-               }
-
-            U_INTERNAL_ASSERT(u__isxdigit(*inp))
-
-            while (*inp++ != '\n') {} // discard the rest of the line
-
-         // U_MEMCPY( out, inp, chunkSize);
-            u__memcpy(out, inp, chunkSize, __PRETTY_FUNCTION__);
-
-            inp += chunkSize + 2;
-            out += chunkSize;
-            }
-         while (inp <= end);
-
-         U_RETURN(true);
+         U_RETURN(false);
          }
 
-      U_INTERNAL_ASSERT_EQUALS(U_http_info.clength, 0)
+      // NB: check for 'Expect: 100-continue' (as curl does)...
 
-      if (UStringExt::getValueFromName(*pbuffer, U_http_info.startHeader, U_http_info.szHeader, *UString::str_content_length, true)) goto end;
+      if (body_byte_read == 0 &&
+          UClientImage_Base::request->find("Expect: 100-continue", U_http_info.startHeader,
+                           U_CONSTANT_SIZE("Expect: 100-continue"), U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader) != U_NOT_FOUND &&
+          USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"), UServer_Base::timeoutMS) == false)
+         {
+         U_INTERNAL_ASSERT_EQUALS(U_http_version, '1')
 
+         U_RETURN(false);
+         }
+
+      if (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization))
+         {
+parallelization: // parent
+         UServer_Base::csocket->close();
+
+         U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+
+         U_RETURN(false);
+         }
+
+      // NB: wait for other data to complete the read of the request...
+
+      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, U_http_info.clength - body_byte_read, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
+         {
+         U_INTERNAL_DUMP("UClientImage_Base::request->size() = %u Content-Length = %u", UClientImage_Base::request->size(), U_http_info.clength)
+
+         if (UServer_Base::csocket->isTimeout() &&
+             UServer_Base::startParallelization())
+            {
+            goto parallelization; // parent
+            }
+
+         U_RETURN(false);
+         }
+      }
+   else if (U_http_info.clength == 0)
+      {
       if (U_http_version == '1')
          {
-         if (bserver &&
-             sk->isConnected())
-            {
-            // HTTP/1.1 compliance: no missing Content-Length on POST requests
+         // HTTP/1.1 compliance: no missing Content-Length on POST requests
 
-            U_http_info.nResponseCode = HTTP_LENGTH_REQUIRED;
+         U_http_info.nResponseCode = HTTP_LENGTH_REQUIRED;
 
-            UClientImage_Base::setCloseConnection();
+         UClientImage_Base::setCloseConnection();
 
-            setResponse(0, 0);
-            }
+         setResponse(0, 0);
 
          U_RETURN(false);
          }
 
-      if (U_http_info.szHeader == 0)
-         {
-         if (bserver &&
-             sk->isConnected())
-            {
-            setBadRequest();
-            }
+      if (readDataChunked(UServer_Base::csocket, UClientImage_Base::request, *UClientImage_Base::body)) U_RETURN(true);
 
-         U_RETURN(false);
-         }
+      U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
+
+      if (U_http_data_chunked) U_RETURN(false);
 
       // wait for other data (max 256k)...
 
-      if (USocketExt::read(sk, *pbuffer, 256 * 1024, UServer_Base::timeoutMS, request_read_timeout) == false)
+      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, 256 * 1024, UServer_Base::timeoutMS, request_read_timeout) == false)
          {
-         U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u", pbuffer->size(), pbuffer->size() - U_http_info.endHeader)
-
-         if (bserver &&
-             sk->isTimeout())
+         if (UServer_Base::csocket->isTimeout())
             {
             U_http_info.nResponseCode = HTTP_CLIENT_TIMEOUT;
 
@@ -2396,31 +2354,66 @@ bool UHTTP::readBody(USocket* sk, UString* pbuffer, UString& body)
          U_RETURN(false);
          }
 
-      U_http_info.clength = (pbuffer->size() - U_http_info.endHeader);
-
-      U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
-
-      U_INTERNAL_ASSERT_MAJOR(U_http_info.clength, 0)
+      U_http_info.clength = (UClientImage_Base::request->size() - U_http_info.endHeader);
       }
 
-   body = pbuffer->substr(U_http_info.endHeader, U_http_info.clength);
+   U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
 
-end:
+   U_INTERNAL_ASSERT_MAJOR(U_http_info.clength, 0)
+
+   *UClientImage_Base::body = UClientImage_Base::request->substr(U_http_info.endHeader, U_http_info.clength);
+
    UClientImage_Base::setRequestNoCache();
 
    U_RETURN(true);
+}
+
+bool UHTTP::readBodyResponse(USocket* sk, UString* pbuffer, UString& body)
+{
+   U_TRACE(0, "UHTTP::readBodyResponse(%p,%V,%V)", sk, pbuffer->rep, body.rep)
+
+   U_ASSERT(body.empty())
+   U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
+   U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
+
+   if (U_http_info.clength)
+      {
+      uint32_t body_byte_read = (pbuffer->size() - U_http_info.endHeader);
+
+      U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u Content-Length = %u", pbuffer->size(), body_byte_read, U_http_info.clength)
+
+      if (U_http_info.clength > body_byte_read)
+         {
+         // NB: wait for other data to complete the read of the response...
+
+         if (USocketExt::read(sk, *pbuffer, U_http_info.clength - body_byte_read, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
+            {
+            U_INTERNAL_DUMP("pbuffer->size() = %u body_byte_read = %u Content-Length = %u", pbuffer->size(), pbuffer->size() - U_http_info.endHeader, U_http_info.clength)
+
+            U_RETURN(false);
+            }
+         }
+
+      body = pbuffer->substr(U_http_info.endHeader, U_http_info.clength);
+
+      U_RETURN(true);
+      }
+
+   if (readDataChunked(sk, pbuffer, body)) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 U_NO_EXPORT void UHTTP::checkRequestForHeader()
 {
    U_TRACE(0, "UHTTP::checkRequestForHeader()")
 
-   U_INTERNAL_DUMP("u_line_terminator_len = %d", u_line_terminator_len)
+   U_INTERNAL_DUMP("U_line_terminator_len = %d", U_line_terminator_len)
 
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
-   U_INTERNAL_ASSERT_MAJOR(U_http_info.szHeader, 0)
    U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
-   U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len, 2)
+   U_INTERNAL_ASSERT_MAJOR(U_http_info.endHeader, 0)
+   U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
 
    // --------------------------------
    // check in header request for:
@@ -2450,7 +2443,7 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
       {
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
 
-      pend = ptr + U_http_info.endHeader - 2;
+      pend = ptr + U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF);
       }
    else
       {
@@ -2459,7 +2452,7 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
       *(char*)(pend = ptr + UClientImage_Base::request->size()) = '\r';
       }
 
-   for (const char* pn = ptr + U_http_info.startHeader; pn < pend; pn += 2)
+   for (const char* pn = ptr + U_http_info.startHeader; pn < pend; pn += U_CONSTANT_SIZE(U_CRLF))
       {
       U_INTERNAL_DUMP("u__isheader(%C) = %b pn = %.20S", *pn, u__isheader(*pn), pn)
 
@@ -2785,7 +2778,7 @@ set_upgrade:      p1 = ptr+pos1;
                   {
 set_if_mod_since: U_http_info.if_modified_since = UTimeDate::getSecondFromTime(ptr+pos1, true);
 
-                  U_INTERNAL_DUMP("If-Modified-Since = %ld", U_http_info.if_modified_since)
+                  U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
                   }
                }
             break;
@@ -2901,10 +2894,10 @@ next:
          {
          uint32_t pos = pn-ptr;
 
-         U_http_info.szHeader  = pos-U_http_info.startHeader;
-         U_http_info.endHeader = pos+4;
+      // U_http_sz_header      = pos - U_http_info.startHeader;
+         U_http_info.endHeader = pos + U_CONSTANT_SIZE(U_CRLF2); // NB: U_http_info.endHeader includes also the blank line...
 
-         U_INTERNAL_DUMP("szHeader = %u endHeader(%u) = %.20S", U_http_info.szHeader, U_http_info.endHeader, ptr+U_http_info.endHeader)
+         U_INTERNAL_DUMP("endHeader(%u) = %.20S", U_http_info.endHeader, ptr+U_http_info.endHeader)
 
          U_INTERNAL_ASSERT(U_ClientImage_data_missing)
 
@@ -3254,12 +3247,13 @@ bool UHTTP::handlerCache()
 
    if (U_ClientImage_pipeline)
       {
-      uint32_t sz = UClientImage_Base::request->size();
+      U_INTERNAL_ASSERT(UClientImage_Base::size_request <= UClientImage_Base::request->size())
 
-      U_INTERNAL_ASSERT(UClientImage_Base::size_request <= sz)
+      const char* ptr1 = ptr+UClientImage_Base::size_request;
 
-      if ((UClientImage_Base::size_request+UClientImage_Base::size_request) <= sz &&
-          isValidRequestExt(ptr+UClientImage_Base::size_request, UClientImage_Base::size_request) == false)
+      if (isValidMethod(ptr1) == false                                      ||
+          (  isValidRequest(ptr1, UClientImage_Base::size_request) == false &&
+           u_findEndHeader1(ptr1, UClientImage_Base::size_request) == U_NOT_FOUND))
          {
          U_RETURN(false);
          }
@@ -3360,8 +3354,10 @@ int UHTTP::handlerREAD()
 {
    U_TRACE(0, "UHTTP::handlerREAD()")
 
-   U_INTERNAL_DUMP("UClientImage_Base::request_uri = %V", UClientImage_Base::request_uri->rep)
+   U_INTERNAL_DUMP("UClientImage_Base::request(%u) = %V UClientImage_Base::request_uri = %V",
+                    UClientImage_Base::request->size(), UClientImage_Base::request->rep, UClientImage_Base::request_uri->rep)
 
+   U_INTERNAL_ASSERT(*UClientImage_Base::request)
    U_ASSERT(UClientImage_Base::request_uri->empty())
 
    const char* ptr;
@@ -3370,13 +3366,17 @@ int UHTTP::handlerREAD()
    // ------------------------------
    // U_http_info.uri
    // ....
-   // U_http_info.if_modified_since;
+   // U_http_info.nResponseCode
    // ....
    // ------------------------------
    U_HTTP_INFO_RESET(0);
 
-   if (readHeader() == false)
+   if (readHeaderRequest() == false)
       {
+      if (U_ClientImage_data_missing) goto dmiss;
+
+      if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
       // -----------------------------------------------------
       // HTTP/1.1 compliance:
       // -----------------------------------------------------
@@ -3417,15 +3417,13 @@ int UHTTP::handlerREAD()
 
    U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
 
-   if (U_http_info.szHeader)
+   if (U_http_info.endHeader)
       {
       checkRequestForHeader();
 
-      U_INTERNAL_DUMP("U_ClientImage_data_missing = %b", U_ClientImage_data_missing)
-
       if (U_ClientImage_data_missing)
          {
-         UClientImage_Base::setRequestProcessed();
+dmiss:   UClientImage_Base::setRequestProcessed();
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
@@ -3451,6 +3449,7 @@ int UHTTP::handlerREAD()
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
       }
+#ifdef U_LOG_ENABLE
    else if (UServer_Base::public_address && // NB: as protection from DNS rebinding attack web servers can reject HTTP requests with an unrecognized Host header...
             ((U_http_host_len - U_http_host_vlen) > (1 + 5) || // NB: ':' + 0-65536
              u_isHostName(U_HTTP_VHOST_TO_PARAM) == false))
@@ -3461,42 +3460,36 @@ int UHTTP::handlerREAD()
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
+#endif
 
-   U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
+   UClientImage_Base::size_request = (U_http_info.endHeader ? U_http_info.endHeader : U_http_info.startHeader + U_CONSTANT_SIZE(U_CRLF2));
 
-   UClientImage_Base::size_request = U_http_info.endHeader;
-
-   U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
-
-   if (U_http_info.clength == 0 && (data_chunked = false, isPOSTorPUTorPATCH() == false)) goto next;
+   U_DUMP("U_http_info.clength = %u isPOSTorPUTorPATCH() = %b", U_http_info.clength, isPOSTorPUTorPATCH())
 
 #ifndef U_SERVER_CAPTIVE_PORTAL
-   result_read_body = readBody();
-
-   U_INTERNAL_DUMP("U_ClientImage_data_missing = %b", U_ClientImage_data_missing)
-
-   if (U_ClientImage_data_missing)
+   if (U_http_info.clength ||
+       isPOSTorPUTorPATCH())
       {
-      UClientImage_Base::setRequestProcessed();
+      result_read_body = readBodyRequest();
 
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
+      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
 
-   if (result_read_body) UClientImage_Base::size_request += U_http_info.clength;
-   else
-      {
-      U_INTERNAL_DUMP("UServer_Base::csocket->isClosed() = %b UClientImage_Base::wbuffer(%u) = %V",
-                       UServer_Base::csocket->isClosed(),     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
+      if (result_read_body) UClientImage_Base::size_request += U_http_info.clength;
+      else
+         {
+         U_INTERNAL_DUMP("UServer_Base::csocket->isClosed() = %b UClientImage_Base::wbuffer(%u) = %V",
+                          UServer_Base::csocket->isClosed(),     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
-      if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
-      if (UClientImage_Base::wbuffer->empty()) setBadRequest();
+         if (UClientImage_Base::wbuffer->empty()) setBadRequest();
 
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
       }
 #endif
 
-next: // check the HTTP message
+   // check the HTTP message
 
    U_ASSERT(UClientImage_Base::isRequestNotFound())
 
@@ -6013,7 +6006,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
       tmp = UClientImage_Base::request->substr(UClientImage_Base::request->distance(ptr));
 
       t.setData(tmp);
-      t.setDelimiter(u_line_terminator);
+      t.setDelimiter(U_CRLF2);
 
       if (t.next(content, (bool*)0) == false) goto end;
 
@@ -8171,11 +8164,11 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
    UMimeHeader requestHeader;
    UHashMap<UString>* prequestHeader = 0;
 
-   if (U_http_info.szHeader) // NB: we can have HTTP 1.0 request without headers...
+   if (U_http_info.endHeader) // NB: we can have HTTP 1.0 request without headers...
       {
       requestHeader.setIgnoreCase(true);
 
-      if (requestHeader.parse(UClientImage_Base::request->c_pointer(U_http_info.startHeader), U_http_info.szHeader))
+      if (requestHeader.parse(UClientImage_Base::request->c_pointer(U_http_info.startHeader), U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader))
          {
          // The environment must not contain the keys HTTP_CONTENT_TYPE or HTTP_CONTENT_LENGTH (we use the versions without HTTP_).
 
@@ -8480,10 +8473,12 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
                            "%v" \
                            "\r\n", pathname->rep, ext->rep);
 
-         U_http_info.szHeader = (U_http_info.endHeader = request->size()) - (U_http_info.startHeader = U_CONSTANT_SIZE("GET / HTTP/1.1\r\n") + len - IS_DIR_SEPARATOR(*ptr));
+         U_http_info.startHeader = U_CONSTANT_SIZE("GET / HTTP/1.1\r\n") + len - IS_DIR_SEPARATOR(*ptr);
+         U_http_info.endHeader   = request->size();
+      // U_http_sz_header        = U_http_info.endHeader - U_http_info.startHeader - U_CONSTANT_SIZE(U_CRLF);
 
-         U_INTERNAL_DUMP("U_http_info.szHeader = %u U_http_info.startHeader(%u) = %.20S U_http_info.endHeader(%u) = %.20S",
-                          U_http_info.szHeader,     U_http_info.startHeader, request->c_pointer(U_http_info.startHeader), U_http_info.endHeader, request->c_pointer(U_http_info.endHeader))
+         U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S U_http_info.endHeader(%u) = %.20S",
+                          U_http_info.startHeader, request->c_pointer(U_http_info.startHeader), U_http_info.endHeader, request->c_pointer(U_http_info.endHeader))
          */
 
          ext->setBuffer(U_CAPACITY);
@@ -8605,7 +8600,7 @@ bool UHTTP::processCGIOutput(bool cgi_sh_script)
    ptr = endptr = UClientImage_Base::wbuffer->data();
 
    U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %.*S", sz, sz, ptr)
-   U_INTERNAL_DUMP("U_http_info.endHeader = %u u_line_terminator_len = %d", U_http_info.endHeader, u_line_terminator_len)
+   U_INTERNAL_DUMP("U_http_info.endHeader = %u U_line_terminator_len = %d", U_http_info.endHeader, U_line_terminator_len)
 
 /*
 #ifdef DEBUG
@@ -8629,7 +8624,7 @@ bool UHTTP::processCGIOutput(bool cgi_sh_script)
 rescan:
       U_http_info.endHeader = u_findEndHeader(ptr, sz); // NB: U_http_info.endHeader comprende anche la blank line...
 
-      U_INTERNAL_DUMP("U_http_info.endHeader = %u u_line_terminator_len = %d", U_http_info.endHeader, u_line_terminator_len)
+      U_INTERNAL_DUMP("U_http_info.endHeader = %u U_line_terminator_len = %d", U_http_info.endHeader, U_line_terminator_len)
 
       if (U_http_info.endHeader == U_NOT_FOUND)
          {
@@ -8640,7 +8635,7 @@ rescan:
          goto end;
          }
 
-      if (u_line_terminator_len == 1)
+      if (*(int16_t*)(ptr+U_http_info.endHeader-2) == U_MULTICHAR_CONSTANT16('\n','\n'))
          {
          UString tmp                 = UStringExt::dos2unix(UClientImage_Base::wbuffer->substr(0U, U_http_info.endHeader), true) +
                                                             UClientImage_Base::wbuffer->substr(    U_http_info.endHeader);
@@ -8656,7 +8651,7 @@ rescan:
    U_INTERNAL_DUMP("U_http_info.endHeader = %u sz = %u U_http_info.nResponseCode = %u", U_http_info.endHeader, sz, U_http_info.nResponseCode)
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.endHeader, 0)
-   U_INTERNAL_ASSERT_EQUALS(u_line_terminator_len, 2)
+   U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
 
    http_response = false;
 
@@ -8866,7 +8861,7 @@ loop:
 
       case U_MULTICHAR_CONSTANT32('H','T','T','P'): // response line: HTTP/1.n nnn <ssss>
          {
-         if (scanfHeader(ptr, endptr - ptr)) // we check for script's responsibility to return a valid HTTP response to the client...
+         if (scanfHeaderResponse(ptr, endptr - ptr)) // we check for script's responsibility to return a valid HTTP response to the client...
             {
             http_response = true;
             cgi_sh_script = false;
@@ -9454,10 +9449,10 @@ U_NO_EXPORT bool UHTTP::checkGetRequestIfModified()
 
    if (U_http_info.if_modified_since)
       {
-      U_INTERNAL_DUMP("since = %ld", U_http_info.if_modified_since)
+      U_INTERNAL_DUMP("since = %u",  U_http_info.if_modified_since)
       U_INTERNAL_DUMP("mtime = %ld", file->st_mtime)
 
-      if (file->st_mtime <= U_http_info.if_modified_since)
+      if (file->st_mtime <= (long)U_http_info.if_modified_since)
          {
          U_http_info.nResponseCode = HTTP_NOT_MODIFIED;
 

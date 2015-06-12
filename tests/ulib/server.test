@@ -35,6 +35,8 @@ send_req $NCAT localhost 8080 inp/http/form_enctype.http server 3
 $SLEEP
 
 kill_prg test_server TERM
+$SLEEP
+killall -9 test_server
 
 rm -rf /tmp/form*
 

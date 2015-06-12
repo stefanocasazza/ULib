@@ -23,6 +23,7 @@ class URPC;
 class UHTTP;
 class UHTTP2;
 class UWebSocket;
+class UMimeHeader;
 class USmtpClient;
 class UPop3Client;
 class UClient_Base;
@@ -147,8 +148,6 @@ public:
 #endif
 
 private:
-   static bool bssl, blocking;
-
 #ifdef USE_C_ARES
    static int   resolv_status;
    static char  resolv_hostname[INET6_ADDRSTRLEN];
@@ -190,6 +189,8 @@ private:
 
    // write data from multiple buffers
 
+   static void iov_resize(struct iovec* iov, int iovcnt, size_t value) U_NO_EXPORT;
+
    static int  writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS);
    static int _writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS);
    static int  writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t count, int timeoutMS, uint32_t cloop);
@@ -208,6 +209,7 @@ private:
    friend class UHTTP;
    friend class UHTTP2;
    friend class UWebSocket;
+   friend class UMimeHeader;
    friend class USmtpClient;
    friend class UPop3Client;
    friend class UServer_Base;

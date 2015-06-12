@@ -283,9 +283,9 @@ public:
    static bPF callerHandlerCache;
    static struct iovec iov_sav[4];
    static struct iovec iov_vec[4];
-   static bPFpc callerIsValidRequest;
+   static bPFpc callerIsValidMethod;
    static vPF callerHandlerEndRequest;
-   static bPFpcu callerIsValidRequestExt;
+   static bPFpcu callerIsValidRequest, callerIsValidRequestExt;
    static uint32_t rstart, size_request;
    static iPF callerHandlerRead, callerHandlerRequest, callerHandlerReset, callerHandlerDataPending;
 
@@ -378,7 +378,8 @@ protected:
 private:
    static int handlerDataPending() U_NO_EXPORT;
 
-   static bool isValidRequest(   const char* ptr)              U_NO_EXPORT;
+   static bool isValidMethod(    const char* ptr)              U_NO_EXPORT;
+   static bool isValidRequest(   const char* ptr, uint32_t sz) U_NO_EXPORT;
    static bool isValidRequestExt(const char* ptr, uint32_t sz) U_NO_EXPORT;
 
    UClientImage_Base(const UClientImage_Base&) : UEventFd() {}

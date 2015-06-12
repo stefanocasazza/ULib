@@ -88,6 +88,10 @@
 #include "utility/data_session.cpp"
 #include "lemon/expression.cpp"
 
+#ifndef U_HTTP2_DISABLE
+#  include "utility/http2.cpp"
+#endif
+
 #ifndef _MSWINDOWS_
 #  include "net/unixsocket.cpp"
 #endif

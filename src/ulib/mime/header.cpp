@@ -354,11 +354,8 @@ bool UMimeHeader::readHeader(USocket* socket, UString& data)
 
    U_ASSERT(empty())
 
-   U_HTTP_INFO_RESET(0);
-
-   if (UHTTP::readHeader(socket, data)                                 &&
-       (U_http_info.startHeader + U_http_info.szHeader) <= data.size() &&
-       parse(data.c_pointer(U_http_info.startHeader), U_http_info.szHeader) > 0)
+   if (UHTTP::readHeaderResponse(socket, data) &&
+       (parse(data.c_pointer(U_http_info.startHeader), U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader) > 0))
       {
       U_RETURN(true);
       }

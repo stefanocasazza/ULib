@@ -22,8 +22,9 @@
 #endif
 #ifdef USE_LIBZ
 #  include <ulib/base/coder/gzio.h>
-#  include <ulib/base/zopfli/zopfli.h>
-#  include <ulib/base/zopfli/gzip_container.h>
+#endif
+#ifdef USE_LIBZOPFLI
+#  include <zopfli.h>
 #endif
 #ifdef USE_LIBEXPAT
 #  include <ulib/xml/expat/xml2txt.h>
@@ -1380,7 +1381,7 @@ UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compre
 
    if (UFile::isAllocableFromPool(sz))
       {
-#  ifndef HAVE_OLD_IOSTREAM
+#  ifdef USE_LIBZOPFLI
       if (type <= 1)
 #  endif
          {
@@ -1390,26 +1391,24 @@ UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compre
 
          U_INTERNAL_DUMP("u_gz_deflate() = %u", len)
          }
-#  ifndef HAVE_OLD_IOSTREAM
+#  ifdef USE_LIBZOPFLI
       else
          {
-#     ifdef USE_LIBZ // zopfli...
          size_t outsize = 0;
          ZopfliOptions options;
          unsigned char* out = 0;
 
          U_SYSCALL_VOID(ZopfliInitOptions, "%p", &options);
 
-         U_SYSCALL_VOID(ZopfliGzipCompress, "%p,%p,%u,%p,%p", &options, (unsigned char*)s, (size_t)len, &out, &outsize);
+         U_SYSCALL_VOID(ZopfliCompress, "%p,%d,%p,%u,%p,%p", &options, ZOPFLI_FORMAT_GZIP, (unsigned char*)s, (size_t)len, &out, &outsize);
 
-         U_INTERNAL_DUMP("ZopfliGzipCompress(%u) = %u", len, outsize)
+         U_INTERNAL_DUMP("ZopfliCompress(%u) = %u", len, outsize)
 
          len = outsize;
 
          U_MEMCPY(UFile::pfree, out, len);
 
          U_SYSCALL_VOID(free, "%p", out);
-#     endif
          }
 #  endif
 

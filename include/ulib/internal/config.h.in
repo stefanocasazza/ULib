@@ -679,6 +679,9 @@
 /* Define if enable libz support */
 #undef USE_LIBZ
 
+/* Define if enable libzopfli support */
+#undef USE_LIBZOPFLI
+
 /* Define if enable MySQL database support */
 #undef USE_MYSQL
 
@@ -884,6 +887,9 @@
 
 /* libxml2 - version 2 of the library to manipulate XML files */
 #undef _LIBXML2_VERSION
+
+/* libzopfli - google compression library version */
+#undef _LIBZOPFLI_VERSION
 
 /* libz - general purpose compression library version */
 #undef _LIBZ_VERSION

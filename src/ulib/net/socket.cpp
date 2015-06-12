@@ -61,7 +61,7 @@ USocket::USocket(bool bSocketIsIPv6)
    U_socket_IPv6(this) = false;
 #endif
 
-   U_socket_Type(this)     = SK_STREAM;
+   U_socket_Type(this)     = 0;
    U_socket_LocalSet(this) = false;
 
 #ifdef _MSWINDOWS_
@@ -106,28 +106,25 @@ void USocket::_socket(int iSocketType, int domain, int protocol)
 
    if (domain == 0)
       {
-      domain = (U_socket_Type(this) == SK_UNIX ? AF_UNIX  :
-                U_socket_IPv6(this)            ? AF_INET6 : AF_INET);
+       domain = ((U_socket_Type(this) & SK_UNIX) != 0 ? AF_UNIX  :
+                  U_socket_IPv6(this)                 ? AF_INET6 : AF_INET);
       }
-   else
-      {
-      if (domain == AF_UNIX) U_socket_Type(this) = SK_UNIX; // AF_UNIX == 1
-      }
+   else if (domain == AF_UNIX) U_socket_Type(this) |= SK_UNIX; // AF_UNIX == 1
 
    if (iSocketType == 0)
       {
-      iSocketType = (U_socket_Type(this) == SK_DGRAM ? SOCK_DGRAM : SOCK_STREAM);
+      iSocketType = ((U_socket_Type(this) & SK_DGRAM) != 0 ? SOCK_DGRAM : SOCK_STREAM);
       }
    else if (iSocketType == SOCK_RAW)
       {
-      U_socket_Type(this) = SK_RAW;
+      U_socket_Type(this) |= SK_RAW;
       }
    else if (iSocketType == SOCK_DGRAM)
       {
-      U_socket_Type(this) = SK_DGRAM;
+      U_socket_Type(this) |= SK_DGRAM;
       }
 
-   U_INTERNAL_DUMP("U_socket_Type = %d", U_socket_Type(this))
+   U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
 #ifdef _MSWINDOWS_
    fh        = U_SYSCALL(socket, "%d,%d,%d", domain, iSocketType, protocol);
@@ -357,9 +354,11 @@ void USocket::setReusePort()
 #  ifndef SO_REUSEPORT
 #  define SO_REUSEPORT 15
 #  endif
-   tcp_reuseport = (U_socket_Type(this) != SK_UNIX                                        &&
+   U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
+
+   tcp_reuseport = ((U_socket_Type(this) & SK_UNIX) == 0                                  &&
                     setSockOpt(SOL_SOCKET, SO_REUSEPORT, (const int[]){ 1 }, sizeof(int)) &&
-                    U_socket_Type(this) != SK_DGRAM);
+                    (U_socket_Type(this) & SK_DGRAM) == 0);
 
    U_INTERNAL_DUMP("tcp_reuseport = %b", tcp_reuseport)
 #endif
@@ -538,13 +537,15 @@ void USocket::reusePort(int _flags)
 
    if (tcp_reuseport)
       {
+      U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
+
       U_ASSERT_EQUALS(isUDP(), false)
       U_ASSERT_EQUALS(isIPC(), false)
 
       int old         = iSockDesc,
-          domain      = (U_socket_Type(this) == SK_UNIX  ? AF_UNIX    :
-                         U_socket_IPv6(this)             ? AF_INET6   : AF_INET),
-          iSocketType = (U_socket_Type(this) == SK_DGRAM ? SOCK_DGRAM : SOCK_STREAM);
+          domain      = ((U_socket_Type(this) & SK_UNIX)  != 0 ? AF_UNIX  :
+                          U_socket_IPv6(this)                  ? AF_INET6 : AF_INET),
+          iSocketType = ((U_socket_Type(this) & SK_DGRAM) != 0 ? SOCK_DGRAM : SOCK_STREAM);
 
       // coverity[+alloc]
       iSockDesc = U_SYSCALL(socket, "%d,%d,%d", domain, iSocketType, 0);
@@ -915,7 +916,7 @@ void USocket::closesocket()
       }
 
 #ifdef USE_LIBSSL
-   if (isSSL(true)) ((USSLSocket*)this)->closesocket();
+   if (isSSLActive()) ((USSLSocket*)this)->closesocket();
 #endif
 
    U_INTERNAL_DUMP("isBroken()   = %b", isBroken())
@@ -1084,12 +1085,14 @@ bool USocket::acceptClient(USocket* pcNewConnection)
 */
 
 #  ifdef USE_LIBSSL
-      if (isSSL(true) &&
+      if (isSSLActive() &&
           ((USSLSocket*)this)->acceptSSL((USSLSocket*)pcNewConnection) == false)
          {
          U_RETURN(false);
          }
 #  endif
+
+      U_socket_Type(pcNewConnection) = U_socket_Type(this);
 
       U_RETURN(true);
       }
@@ -1108,7 +1111,7 @@ void USocket::setMsgError()
    U_TRACE(0, "USocket::setMsgError()")
 
 #ifdef USE_LIBSSL
-   if (isSSL(true))
+   if (isSSLActive())
       {
       U_INTERNAL_DUMP("ret = %d", ((USSLSocket*)this)->ret)
 
