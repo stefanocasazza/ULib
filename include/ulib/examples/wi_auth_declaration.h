@@ -3123,6 +3123,41 @@ static void getLoginRequest(UString& timeout, UString& realm)
       }
 }
 
+static void checkUserID()
+{
+   U_TRACE(5, "::checkUserID()")
+
+   if (WiAuthUser::checkUserID())
+      {
+      if (isMAC &&
+          *mac != *uid)
+         {
+         U_LOGGER("*** MAC MISMATCH: UID(%v) IP(%v) MAC(%v) AP(%v) REDIR(%v) ***", uid->rep, ip->rep, mac->rep, ap->rep, redir->rep);
+
+      // U_ASSERT(UStringExt::startsWith(*auth_domain, *mac_auth))
+
+         UString x;
+
+         if (*mac) x = UStringExt::trim(*mac);
+
+         if (x) *uid = x;
+         }
+      else if (isIP &&
+               *ip != *uid)
+         {
+         U_LOGGER("*** IP MISMATCH: UID(%v) IP(%v) MAC(%v) AP(%v) REDIR(%v) ***", uid->rep, ip->rep, mac->rep, ap->rep, redir->rep);
+
+      // U_ASSERT(UStringExt::startsWith(*auth_domain, *ip_auth))
+
+         UString x;
+
+         if (*ip) x = UStringExt::trim(*ip);
+
+         if (x) *uid = x;
+         }
+      }
+}
+
 static bool checkLoginValidate(bool all)
 {
    U_TRACE(5, "::checkLoginValidate(%b)", all)
@@ -3199,36 +3234,6 @@ static bool checkLoginValidate(bool all)
          (void)   user_UploadRate->replace(name_value[11]);
 
          UHTTP::getFormValue(*token, U_CONSTANT_TO_PARAM("token"), 0, 11, 14);
-         }
-
-      if (WiAuthUser::checkUserID())
-         {
-         if (isMAC &&
-             *mac != *uid)
-            {
-            U_LOGGER("*** MAC MISMATCH: UID(%v) IP(%v) MAC(%v) AP(%v) REDIR(%v) ***", uid->rep, ip->rep, mac->rep, ap->rep, redir->rep);
-
-         // U_ASSERT(UStringExt::startsWith(*auth_domain, *mac_auth))
-
-            UString x;
-
-            if (*mac) x = UStringExt::trim(*mac);
-
-            if (x) *uid = x;
-            }
-         else if (isIP &&
-                  *ip != *uid)
-            {
-            U_LOGGER("*** IP MISMATCH: UID(%v) IP(%v) MAC(%v) AP(%v) REDIR(%v) ***", uid->rep, ip->rep, mac->rep, ap->rep, redir->rep);
-
-         // U_ASSERT(UStringExt::startsWith(*auth_domain, *ip_auth))
-
-            UString x;
-
-            if (*ip) x = UStringExt::trim(*ip);
-
-            if (x) *uid = x;
-            }
          }
       }
 
@@ -3352,7 +3357,7 @@ static void sendLoginValidate()
    // -------------------------------------------------------------------------------------------------------------------
    // Ho predisposto un servizio di redirect sulla tnet concentratore che redirige sul portale autorizzativo.
    // Il portale autorizzativo dovrà implementare il servizio 'fake_login_validate' che semplicemente estrae la
-   // url di redirect contenuta nella URL di richiesta e fa semplicemente la redirect sulla stessa.
+   // url di redirect contenuta nella URL di richiesta e fa semplicemente la redirect sulla stessa
    // -------------------------------------------------------------------------------------------------------------------
 
    USSIPlugIn::setAlternativeRedirect(UStringExt::startsWith(*title_default, U_CONSTANT_TO_PARAM("Firenze ")) ? LOGIN_VALIDATE_REDIR_FI : LOGIN_VALIDATE_REDIR, signed_data.rep);
@@ -3779,38 +3784,29 @@ static void GET_fake_login_validate()
 {
    U_TRACE(5, "::GET_fake_login_validate()")
 
-   // ---------------------------------------------------------------------------------------------------
-   // NB: come back from the gateway (NoDog) after the POST of login_request, the params CANNOT be empty
-   // ---------------------------------------------------------------------------------------------------
-   // $1 -> mac
-   // $2 -> ip
-   // $3 -> redirect
    // ========================
    // => uid
    // => policy
    // => auth_domain
    // => max_time
    // => max_traffic
-   // => UserDownloadRate 
-   // => UserUploadRate 
+   // => UserDownloadRate
+   // => UserUploadRate
    // => redir_to
    // ========================
-   // $4 -> gateway
-   // $5 -> timeout
-   // $6 -> token
-   // $7 -> ap (with localization => '@')
-   // ---------------------------------------------------------------------------------------------------
 
-   if (checkLoginRequest(0, 14, 0, false) == false ||
-       checkLoginValidate(true)           == false ||
-       checkIfUserConnected()             == false)
+   U_INTERNAL_ASSERT_MAJOR(U_HTTP_URI_QUERY_LEN, 0)
+
+   (void) redirect->assign(U_HTTP_QUERY_TO_PARAM);
+
+   if (checkLoginValidate(false) == false)
       {
       loginWithProblem();
 
       return;
       }
 
-   U_LOGGER("*** ALREADY LOGGED IN: UID(%v) IP(%v) MAC(%v) AP(%v) REDIR(%v) ***", uid->rep, ip->rep, mac->rep, ap->rep, redir->rep);
+   U_LOGGER("*** ALREADY LOGGED IN: UID(%v) IP(%.*s) REDIR(%v) ***", uid->rep, U_CLIENT_ADDRESS_TO_TRACE, redir->rep);
 
 // USSIPlugIn::setMessagePage(*message_page_template, "Login", "Sei già loggato! (fake_login_validate)");
 
@@ -4610,6 +4606,8 @@ static void GET_login_validate()
    UVector<UString> vec;
    UString x, signed_data(500U + U_http_info.query_len);
 
+   checkUserID();
+
    if (checkIfUserConnected() &&
        isIP == false)
       {
@@ -4884,6 +4882,8 @@ error:
 
    U_INTERNAL_ASSERT(*redir)
    U_ASSERT_MINOR(redir->size(), 2048)
+
+   checkUserID();
 
    if (checkIfUserConnected())
       {

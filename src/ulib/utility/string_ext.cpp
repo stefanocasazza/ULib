@@ -22,6 +22,8 @@
 #endif
 #ifdef USE_LIBZ
 #  include <ulib/base/coder/gzio.h>
+#elif !defined(Z_OK)
+#  define Z_OK 0
 #endif
 #ifdef USE_LIBZOPFLI
 #  include <zopfli.h>

@@ -1613,9 +1613,10 @@ __pure bool UHTTP::isValidRequestExt(const char* ptr, uint32_t sz)
 
    U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
-   if (isValidMethod(ptr)                                      &&
-       (isValidRequest(  ptr, sz)                              ||
-        isValidRequest(  ptr, UClientImage_Base::size_request) ||
+   if (isValidMethod(ptr)                                     &&
+       (isValidRequest(ptr, sz)                               ||
+                           (UClientImage_Base::size_request   &&
+        isValidRequest(ptr, UClientImage_Base::size_request)) ||
         u_findEndHeader1(ptr, sz) != U_NOT_FOUND))
       {
       U_RETURN(true);

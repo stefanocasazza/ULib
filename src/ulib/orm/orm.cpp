@@ -82,7 +82,7 @@ UOrmSession::UOrmSession(const char* dbname, uint32_t len)
 
    if (UOrmDriver::env_driver_len)
       {
-      U_INTERNAL_ASSERT_POINTER(UOrmDriver::env_option)
+      if (UOrmDriver::env_option == 0) U_ERROR("The environment var ORM_OPTION is empty");
 
       UString option(200U);
 

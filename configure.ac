@@ -1947,24 +1947,14 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 
 			if test "$enable_gcc_optimized" = "yes"; then
 				## ----------------------------------------------------------------------------------------------------------------------------------
-				## Bug 61048 -fsanitize=address crashes GCC if pointers are used - It compiles fine without -flto (disregarding undefined references)
-				## ----------------------------------------------------------------------------------------------------------------------------------
-				## Graphite loop optimizations: -fgraphite, -fgraphite-identity, -floop-block, -floop-flatten,
-				##										  -floop-interchange, -floop-strip-mine, -floop-parallelize-all, -ftree-loop-linear
-				## ----------------------------------------------------------------------------------------------------------------------------------
 				## -fgcse Perform a global common subexpression elimination pass. This pass also performs global constant and copy propagation. When
 				##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
 				##			 common subexpression elimination pass by adding -fno-gcse to the command line
 				## ----------------------------------------------------------------------------------------------------------------------------------
-				MAYBE_FLAGS="$MAYBE_FLAGS -fstrict-aliasing -fno-stack-protector -fno-stack-protector-all -finline \
-										  -findirect-inlining -ftree-switch-conversion -fno-math-errno -fno-crossjumping -fno-gcse \
-										  -Ofast -ftree-partial-pre -freorder-blocks -freorder-functions" ## -ffunction-sections -fdata-sections
+				MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -fno-math-errno -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
 
 				if test "$use_distcc" != "yes" ; then
 					MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -mtune=native" # NB: distcc don't work with this...
-				fi
-				if test "$enable_final" = "yes"; then
-					MAYBE_FLAGS="$MAYBE_FLAGS -funit-at-a-time"
 				fi
 			fi
 		;;
@@ -1982,10 +1972,10 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 	## -------------------------------------------------------------------------------------
 
 	if test "$enable_debug" != "yes"; then
-		MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable -fomit-frame-pointer"
+		MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
 	else
 		## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -fno-omit-frame-pointer -rdynamic -fdiagnostics-color=auto"
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto"
 		# -Wzero-as-null-pointer-constant"
 		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat"
 	fi
