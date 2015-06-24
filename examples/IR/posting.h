@@ -10,11 +10,11 @@
 template <class T> class UVector;
 template <class T> class UHashMap;
 
-/*
-+------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
-| WORD | offset last DOC id | DOC id | frequency | pos 1 | ... | pos n | ... | DOC id | frequency | pos 1 | ... | pos n |
-+------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
-*/
+/**
+ * +------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
+ * | WORD | offset last DOC id | DOC id | frequency | pos 1 | ... | pos n | ... | DOC id | frequency | pos 1 | ... | pos n |
+ * +------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
+ */
 
 class U_EXPORT UPosting {
 public:
@@ -59,15 +59,15 @@ public:
       {
       U_TRACE(5, "UPosting::setDocID(%#.*S)", U_STRING_TO_TRACE(*str_inode))
 
-      str_cur_doc_id->_assign(str_inode);
+      (void) str_cur_doc_id->_assign(str_inode);
 
       ptr_cur_doc_id = str_cur_doc_id->data();
 
-      cur_doc_id = *((uint64_t*)(str_inode->data()));
+      cur_doc_id = u_get_unalignedp64(str_inode->data());
 
       U_INTERNAL_DUMP("cur_doc_id = %llu", cur_doc_id)
 
-      U_INTERNAL_ASSERT_DIFFERS(cur_doc_id,0)
+      U_INTERNAL_ASSERT_DIFFERS(cur_doc_id, 0)
       }
 
    static void processWord(int32_t op);
@@ -89,19 +89,18 @@ public:
 #endif
 
 protected:
+   static char* ptr;
+   static char* data;
    static vPF pfunction;
-   static const char* ptr;
-   static const char* data;
    static UString* sub_word;
    static uint64_t cur_doc_id;
-   static const char* ptr_cur_doc_id;
+   static char* ptr_cur_doc_id;
    static UVector<UString>* vec_word;
    static UVector<UString>* vec_entry;
    static UVector<UString>* vec_posting;
    static UVector<UString>* vec_sub_word;
    static UVector<UString>* vec_sub_word_posting;
-   static uint32_t pos, size_entry, space, off_last_doc_id, distance,
-                   vec_sub_word_size, sub_word_size, sub_word_pos_prev, approximate_num_words;
+   static uint32_t pos, size_entry, space, off_last_doc_id, distance, vec_sub_word_size, sub_word_size, sub_word_pos_prev, approximate_num_words;
 
 private:
    static inline void    init() U_NO_EXPORT;
@@ -110,8 +109,8 @@ private:
    static inline UString extractDocID() U_NO_EXPORT;
    static inline bool    setSubWord(uint32_t i) U_NO_EXPORT;
    static inline void    setDocID(bool from_inode) U_NO_EXPORT;
-   static inline bool    checkEntry(const char* str, const char* s, uint32_t n) U_NO_EXPORT;
-   static const char*    find(const char* s, uint32_t n, bool boptmize) U_NO_EXPORT __pure;
+   static inline bool    checkEntry(char* str, char* s, uint32_t n) U_NO_EXPORT;
+   static       char*    find(char* s, uint32_t n, bool boptmize) U_NO_EXPORT __pure;
    static       void     add() U_NO_EXPORT; // op 0
    static       void     del() U_NO_EXPORT; // op 2
    static       void     checkWord() U_NO_EXPORT;

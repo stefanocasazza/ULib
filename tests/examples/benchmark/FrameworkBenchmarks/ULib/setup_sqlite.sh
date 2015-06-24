@@ -13,7 +13,6 @@ sudo getcap -v                                                                 $
 RTPRIO=`ulimit -r`
 
 # 3. Start ULib Server (userver_tcp)
-
 export ORM_DRIVER=sqlite
 export UMEMPOOL=146,0,0,90,150,-22,-12,-20,0
 export ORM_OPTION="host=$DBHOST user=benchmarkdbuser password=benchmarkdbpass character-set=utf8 dbname=$IROOT/ULib/db/%.*s"

@@ -212,7 +212,8 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                u_errno = errno;
                }
 
-            if (errno != EAGAIN &&
+            if (errno != EAGAIN      &&
+                errno != EINPROGRESS &&
                 strstr(buffer_syscall, "::getenv") == 0)
                {
                U_WARNING("%s", buffer_syscall);

@@ -56,36 +56,25 @@
    }  
    
 extern "C" {
-extern U_EXPORT int runDynamicPage_ir_web(UClientImage_Base* client_image);
-       U_EXPORT int runDynamicPage_ir_web(UClientImage_Base* client_image)
+extern U_EXPORT void runDynamicPage_ir_web(int param);
+       U_EXPORT void runDynamicPage_ir_web(int param)
 {
-   U_TRACE(0, "::runDynamicPage_ir_web(%p)", client_image)
+   U_TRACE(0, "::runDynamicPage_ir_web(%d)", param)
    
    
-   // ------------------------------
-   // special argument value:
-   // ------------------------------
-   //  0 -> call it as service
-   // -1 -> init
-   // -2 -> reset
-   // -3 -> destroy
-   // -4 -> call it for sigHUP
-   // -5 -> call it after fork
-   // ------------------------------
-   
-   if (client_image)
+   if (param)
       {
-      if (client_image == (void*)-1) { usp_init_ir_web(); U_RETURN(0); }
+      if (param == U_DPAGE_INIT) { usp_init_ir_web(); return; }
    
-      if (client_image == (void*)-3) { usp_end_ir_web(); U_RETURN(0); }
+      if (param == U_DPAGE_DESTROY) { usp_end_ir_web(); return; }
    
-      if (client_image >= (void*)-5) U_RETURN(0);
-   
-      UHTTP::mime_index = U_html;
-   
-      U_http_info.endHeader = 0;
+      if (param >= U_DPAGE_FORK) return;
       }
-      
+   
+   UHTTP::mime_index = U_html;
+   
+   U_http_info.endHeader = 0;
+   
    if (UHTTP::getDataSession() == false) UHTTP::setSessionCookie();
    
    const char* ref     = "?ext=help";
@@ -114,7 +103,13 @@ extern U_EXPORT int runDynamicPage_ir_web(UClientImage_Base* client_image);
       {
       IR_SESSION.query = USP_FORM_VALUE(0);
    
-      if (num_args != 2 || IR_SESSION.query.empty()) return HTTP_BAD_REQUEST;
+      if (num_args != 2 ||
+          IR_SESSION.query.empty())
+         {
+         UHTTP::setBadRequest();
+   
+         return;
+         }
    
       IR_SESSION.for_page = UHTTP::num_item_for_page = USP_FORM_VALUE(1).strtol();
    
@@ -140,7 +135,9 @@ extern U_EXPORT int runDynamicPage_ir_web(UClientImage_Base* client_image);
       }
    else
       {
-      return HTTP_BAD_METHOD;
+      UHTTP::setBadMethod();
+   
+      return;
       }
    
    (void) UClientImage_Base::wbuffer->append(
@@ -223,7 +220,7 @@ extern U_EXPORT int runDynamicPage_ir_web(UClientImage_Base* client_image);
    
    UHTTP::putDataSession();
    
-      UClientImage_Base::setRequestNoCache();
+   UClientImage_Base::setRequestNoCache();
    
-   U_RETURN(200);
+   
 } }

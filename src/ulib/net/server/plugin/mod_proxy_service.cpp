@@ -134,7 +134,7 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
 
             const char* msk = x.data();
 loop:
-            switch (*(int32_t*)msk)
+            switch (u_get_unalignedp32(msk))
                {
                case U_MULTICHAR_CONSTANT32('G','E','T', 0):  service->method_mask |= HTTP_GET; break;
                case U_MULTICHAR_CONSTANT32('P','U','T', 0):  service->method_mask |= HTTP_PUT; break;
@@ -265,7 +265,7 @@ UString UModProxyService::getServer() const
 
    const char* ptr = server.data();
 
-   if (*(int16_t*)ptr == U_MULTICHAR_CONSTANT16('$','<'))
+   if (u_get_unalignedp16(ptr) == U_MULTICHAR_CONSTANT16('$','<'))
       {
       // NB: as example look at Service_GOOGLE_MAP for nodog...
 

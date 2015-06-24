@@ -514,7 +514,7 @@ void u_init_ulib(char** restrict argv)
       uint32_t h = 0xABAD1DEA;
 
 #  if __x86_64__
-      h = (uint32_t)__builtin_ia32_crc32di(h, *((uint64_t*)"12345678"));
+      h = (uint32_t)__builtin_ia32_crc32di(h, U_MULTICHAR_CONSTANT64('1','2','3','4','5','6','7','8'));
 #  else
       h =           __builtin_ia32_crc32si(h, U_MULTICHAR_CONSTANT32('/','o','p','t'));
 #  endif
@@ -791,14 +791,14 @@ case_I: /* %I The hour (on a 12-hour clock), formatted with two digits */
       if (u_strftime_tm.tm_hour == 0 ||
           u_strftime_tm.tm_hour == 12)
          {
-         *(int16_t*)(s+count) = U_MULTICHAR_CONSTANT16('1', '2');
+         u_put_unalignedp16(s+count, U_MULTICHAR_CONSTANT16('1', '2'));
          }
       else
          {
          val = u_strftime_tm.tm_hour % 12;
 
-         *(int16_t*)(s+count) = U_MULTICHAR_CONSTANT16('0' + (val >= 10 ? (val / 10) : 0),
-                                                       '0' + (val  % 10));
+         u_put_unalignedp16(s+count, U_MULTICHAR_CONSTANT16('0' + (val >= 10 ? (val / 10) : 0),
+                                                            '0' + (val  % 10)));
          }
 
       count += 2;
@@ -929,8 +929,8 @@ case_e: /* %e Like %d, the day of the month as a decimal number, but a leading z
 
       val = (u_strftime_tm.tm_mday >= 10 ? (u_strftime_tm.tm_mday / 10) : 0);
 
-      *(int16_t*)(s+count) = U_MULTICHAR_CONSTANT16(val ? '0' + val : ' ',
-                                                          '0' + (u_strftime_tm.tm_mday % 10));
+      u_put_unalignedp16(s+count, U_MULTICHAR_CONSTANT16(val ? '0' + val : ' ',
+                                                               '0' + (u_strftime_tm.tm_mday % 10)));
 
       count += 2;
 
@@ -963,7 +963,7 @@ case_p: /* %p Either AM or PM as appropriate */
 
    /* if (count >= (maxsize - 2)) return 0; */
 
-      *(int16_t*)(s+count) = U_MULTICHAR_CONSTANT16(u_strftime_tm.tm_hour < 12 ? 'A' : 'P','M');
+      u_put_unalignedp16(s+count, U_MULTICHAR_CONSTANT16(u_strftime_tm.tm_hour < 12 ? 'A' : 'P','M'));
 
       count += 2;
 
@@ -1760,8 +1760,8 @@ case_str:
             }
          else if (prec == -1)
             {
-            *(int32_t*) bp    = U_MULTICHAR_CONSTANT32('(','n','u','l');
-            *(int16_t*)(bp+4) = U_MULTICHAR_CONSTANT16('l',')');
+            u_put_unalignedp32(bp,   U_MULTICHAR_CONSTANT32('(','n','u','l'));
+            u_put_unalignedp16(bp+4, U_MULTICHAR_CONSTANT16('l',')'));
 
             bp  += 6;
             ret += 6;
@@ -1777,7 +1777,7 @@ case_ustring_V:
 
          if (prec == 0)
             {
-empty:      *(int16_t*)bp = U_MULTICHAR_CONSTANT16('"','"');
+empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
 
             bp  += 2;
             ret += 2;
@@ -1836,8 +1836,8 @@ empty:      *(int16_t*)bp = U_MULTICHAR_CONSTANT16('"','"');
             {
             /* to be continued... */
 
-                      *bp++ = '.';
-            *(int16_t*)bp   = U_MULTICHAR_CONSTANT16('.','.');
+                              *bp++ = '.';
+            u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('.','.'));
 
             bp += 2;
             }
@@ -1899,7 +1899,7 @@ case_B: /* extension: print bit conversion of int */
             }
          else
             {
-            *(int64_t*)bp = U_MULTICHAR_CONSTANT64('0','0','0','0','0','0','0','0');
+            u_put_unalignedp64(bp, U_MULTICHAR_CONSTANT64('0','0','0','0','0','0','0','0'));
 
             bp += 8;
             }
@@ -2090,8 +2090,8 @@ case_R: /* extension: print msg - u_getSysError() */
 
       if ((flags & ALT) == 0)
          {
-                   *bp++ = ' ';
-         *(int16_t*)bp   = U_MULTICHAR_CONSTANT16('-',' ');
+                           *bp++ = ' ';
+         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('-',' '));
 
          bp  += 2;
          ret += 3;
@@ -2111,8 +2111,8 @@ case_R: /* extension: print msg - u_getSysError() */
          bp  += len;
          ret += len;
 
-                   *bp++ = ' ';
-         *(int16_t*)bp   = U_MULTICHAR_CONSTANT16('-',' ');
+                           *bp++ = ' ';
+         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('-',' '));
 
          bp  += 2;
          ret += 3;
@@ -2321,14 +2321,14 @@ case_b: /* extension: print bool */
 
       if (n)
          {
-         *(int32_t*)bp = U_MULTICHAR_CONSTANT32('t','r','u','e');
+         u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32('t','r','u','e'));
 
          ret += 4;
          }
       else
          {
-                   *bp++ = 'f';
-         *(int32_t*)bp   = U_MULTICHAR_CONSTANT32('a','l','s','e');
+                           *bp++ = 'f';
+         u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32('a','l','s','e'));
 
          ret += 5;
          }
@@ -2435,8 +2435,8 @@ case_p: /* The argument shall be a pointer to void. The value of the pointer is 
          goto nosign;
          }
 
-                *bp++ = '(';
-      *(int32_t*)bp   = U_MULTICHAR_CONSTANT32('n','i','l',')');
+                        *bp++ = '(';
+      u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32('n','i','l',')'));
 
       bp  += 4;
       ret += 5;

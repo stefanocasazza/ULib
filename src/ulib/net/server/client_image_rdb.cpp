@@ -80,7 +80,7 @@ int URDBClientImage::handlerRead()
       RPC_METHOD_COMMIT_TRANSACTION = U_MULTICHAR_CONSTANT32('C','T','R','N')
    };
 
-   switch (*(int32_t*)ptr)
+   switch (u_get_unalignedp32(ptr))
       {
       case RPC_METHOD_FIND:
          {

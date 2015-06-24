@@ -48,25 +48,14 @@
 "\t\n" \
 "\t\n" \
 "extern \"C\" {\n" \
-"extern U_EXPORT int runDynamicPage_%.*s(UClientImage_Base* client_image);\n" \
-"       U_EXPORT int runDynamicPage_%.*s(UClientImage_Base* client_image)\n" \
+"extern U_EXPORT void runDynamicPage_%.*s(int param);\n" \
+"       U_EXPORT void runDynamicPage_%.*s(int param)\n" \
 "{\n" \
-"\tU_TRACE(0, \"::runDynamicPage_%.*s(%%p)\", client_image)\n" \
+"\tU_TRACE(0, \"::runDynamicPage_%.*s(%%d)\", param)\n" \
 "\t\n" \
 "%s" \
 "\t\n" \
-"\t// ------------------------------\n" \
-"\t// special argument value:\n" \
-"\t// ------------------------------\n" \
-"\t//  0 -> call it as service\n" \
-"\t// -1 -> init\n" \
-"\t// -2 -> reset\n" \
-"\t// -3 -> destroy\n" \
-"\t// -4 -> call it for sigHUP\n" \
-"\t// -5 -> call it after fork\n" \
-"\t// ------------------------------\n" \
-"\t\n" \
-"\tif (client_image)\n" \
+"\tif (param)\n" \
 "\t\t{\n" \
 "%s" \
 "%s" \
@@ -75,15 +64,16 @@
 "%s" \
 "%s" \
 "%s" \
+"\t\t}\n" \
+"\t\n" \
 "%v" \
 "%s" \
-"\t\t}\n\t" \
 "\t\n" \
 "%v" \
 "%v" \
 "%v" \
 "%s" \
-"\n\tU_RETURN(200);\n" \
+"\t\n" \
 "} }\n"
 
 class Application : public UApplication {
@@ -147,7 +137,7 @@ public:
       while (true)
          {
          uint32_t distance = t.getDistance(),
-                  pos      = usp.find("<!--#", distance);
+                       pos = usp.find("<!--#", distance);
 
          if (pos)
             {
@@ -494,8 +484,8 @@ public:
 
       if (http_header.empty())
          {
-         if (is_html) (void) x.append(U_CONSTANT_TO_PARAM("\n\t\tUHTTP::mime_index = U_html;\n\t"));
-                      (void) x.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_info.endHeader = 0;\n"));
+         if (is_html) (void) x.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::mime_index = U_html;\n\t"));
+                      (void) x.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
          }
       else
          {
@@ -531,23 +521,12 @@ public:
             char  ptr5[100] = { '\0' };
       const char* ptr6      = "";
       const char* ptr7      = "";
-      const char* ptr8      = (bcomment ? "\n\t\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
+      const char* ptr8      = (bcomment ? "\n\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
 
-      // ------------------------------
-      // special argument value:
-      // ------------------------------
-      //  0 -> call it as service
-      // -1 -> init
-      // -2 -> reset
-      // -3 -> destroy
-      // -4 -> call it for sigHUP
-      // -5 -> call it after fork
-      // ------------------------------
-
-      if (binit)   (void) u__snprintf(ptr1, 100, "\n\t\tif (client_image == (void*)-1) { usp_init_%.*s(); U_RETURN(0); }\n\t",   size, ptr);
-      if (breset)  (void) u__snprintf(ptr2, 100, "\n\t\tif (client_image == (void*)-2) { usp_reset_%.*s(); U_RETURN(0); }\n\t",  size, ptr);
-      if (bsighup) (void) u__snprintf(ptr4, 100, "\n\t\tif (client_image == (void*)-4) { usp_sighup_%.*s(); U_RETURN(0); }\n\t", size, ptr);
-      if (bfork)   (void) u__snprintf(ptr5, 100, "\n\t\tif (client_image == (void*)-5) { usp_fork_%.*s(); U_RETURN(0); }\n\t",   size, ptr);
+      if (binit)   (void) u__snprintf(ptr1, 100, "\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n\t", size, ptr);
+      if (breset)  (void) u__snprintf(ptr2, 100, "\n\t\tif (param == U_DPAGE_RESET) { usp_reset_%.*s(); return; }\n\t", size, ptr);
+      if (bsighup) (void) u__snprintf(ptr4, 100, "\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n\t", size, ptr);
+      if (bfork)   (void) u__snprintf(ptr5, 100, "\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n\t", size, ptr);
 
       if (bend)
          {
@@ -555,7 +534,7 @@ public:
          if (bpreprocessing_failed) bend = false;
          else
 #     endif
-         (void) u__snprintf(ptr3, 100, "\n\t\tif (client_image == (void*)-3) { usp_end_%.*s(); U_RETURN(0); }\n\t", size, ptr);
+         (void) u__snprintf(ptr3, 100, "\n\t\tif (param == U_DPAGE_DESTROY) { usp_end_%.*s(); return; }\n\t", size, ptr);
          }
 
       if (binit   == false ||
@@ -564,10 +543,10 @@ public:
           bsighup == false ||
           bfork   == false)
          {
-         ptr6 = "\n\t\tif (client_image >= (void*)-5) U_RETURN(0);\n\t\n";
+         ptr6 = "\n\t\tif (param >= U_DPAGE_FORK) return;\n";
          }
 
-      if (bparallelization) ptr7 = "\n\t\tif (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization)) U_RETURN(0);\n\t\n";
+      if (bparallelization) ptr7 = "\t\n\t\tif (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization)) return;\n\t\n";
 
       UString result(800U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output.size() + output1.size() + xoutput.size());
 

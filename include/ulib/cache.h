@@ -175,7 +175,7 @@ protected:
 
       U_INTERNAL_ASSERT(pos <= (info->size - sizeof(uint32_t)))
 
-      uint32_t value = u_get_unalignedp(x + pos);
+      uint32_t value = u_get_unalignedp32(x + pos);
 
       U_INTERNAL_DUMP("value = %u info->size = %u", value, info->size)
 
@@ -191,9 +191,9 @@ protected:
 
       char* ptr = x + pos;
 
-      U_INTERNAL_DUMP("ptr = %p *ptr = %u", ptr, u_get_unalignedp(ptr))
+      U_INTERNAL_DUMP("ptr = %p *ptr = %u", ptr, u_get_unalignedp32(ptr))
 
-      u_put_unalignedp(value, ptr);
+      u_put_unalignedp32(ptr, value);
 
       ptr = x + value;
 
@@ -222,11 +222,11 @@ protected:
 
       char* ptr = x + pos;
 
-      U_INTERNAL_DUMP("*ptr = %u", u_get_unalignedp(ptr))
+      U_INTERNAL_DUMP("*ptr = %u", u_get_unalignedp32(ptr))
 
-      value ^= u_get_unalignedp(ptr);
+      value ^= u_get_unalignedp32(ptr);
 
-      u_put_unalignedp(value, ptr);
+      u_put_unalignedp32(ptr, value);
 
       U_INTERNAL_DUMP("*ptr = %u", value)
       }

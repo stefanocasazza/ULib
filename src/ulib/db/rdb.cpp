@@ -113,7 +113,7 @@ U_NO_EXPORT bool URDB::htLookup(URDB* prdb)
          }
 #  endif
 
-      prdb->node = u_get_unalignedp(prdb->pnode);
+      prdb->node = u_get_unalignedp32(prdb->pnode);
 
       U_INTERNAL_DUMP("pnode = %p node = %u", prdb->pnode, prdb->node)
 
@@ -143,7 +143,7 @@ U_NO_EXPORT bool URDB::htLookup(URDB* prdb)
 invalid_entry:
          prdb->node = 0;
 
-         u_put_unalignedp(0, prdb->pnode);
+         u_put_unalignedp32(prdb->pnode, 0);
 
          break;
          }
@@ -191,7 +191,7 @@ U_NO_EXPORT void URDB::htAlloc(URDB* prdb)
 
    prdb->node = RDB_off(prdb);
 
-   u_put_unalignedp(prdb->node, prdb->pnode);
+   u_put_unalignedp32(prdb->pnode, prdb->node);
 
    RDB_off(prdb) += sizeof(URDB::cache_node);
 
@@ -216,11 +216,11 @@ U_NO_EXPORT void URDB::htRemoveAlloc(URDB* prdb)
 
    RDB_off(prdb) -= sizeof(URDB::cache_node);
 
-   U_INTERNAL_ASSERT_EQUALS(RDB_off(prdb), u_get_unalignedp(prdb->pnode))
+   U_INTERNAL_ASSERT_EQUALS(RDB_off(prdb), u_get_unalignedp32(prdb->pnode))
 
    (void) U_SYSCALL(memset, "%p,%d,%d", prdb->journal.map + prdb->node, 0, sizeof(URDB::cache_node));
 
-   u_put_unalignedp(0, prdb->pnode);
+   u_put_unalignedp32(prdb->pnode, 0);
 }
 
 // Insert one key/data pair in the cache
@@ -249,10 +249,10 @@ U_NO_EXPORT void URDB::htInsert(URDB* prdb)
    uint32_t offset1 =                           (char*)prdb->UCDB::key.dptr  - prdb->journal.map,
             offset2 = (prdb->UCDB::data.dptr ? ((char*)prdb->UCDB::data.dptr - prdb->journal.map) : 0);
 
-   u_put_unaligned(offset1,                RDB_node(prdb)->key.dptr);
-   u_put_unaligned(prdb->UCDB::key.dsize,  RDB_node(prdb)->key.dsize);
-   u_put_unaligned(offset2,                RDB_node(prdb)->data.dptr);
-   u_put_unaligned(prdb->UCDB::data.dsize, RDB_node(prdb)->data.dsize);
+   u_put_unaligned32(RDB_node(prdb)->key.dptr,   offset1);
+   u_put_unaligned32(RDB_node(prdb)->key.dsize,  prdb->UCDB::key.dsize);
+   u_put_unaligned32(RDB_node(prdb)->data.dptr,  offset2);
+   u_put_unaligned32(RDB_node(prdb)->data.dsize, prdb->UCDB::data.dsize);
 }
 
 U_NO_EXPORT bool URDB::resizeJournal(uint32_t oversize)
@@ -525,7 +525,7 @@ U_NO_EXPORT void URDB::copy1(URDB* prdb, uint32_t _offset) // entry presenti nel
       U_WARNING("URDB::copy1(%p,%u) - data node at offset is invalid, key: %#.*S", prdb, _offset,
                   RDB_cache_node(n,key.dsize), (const char*)((ptrdiff_t)RDB_cache_node(n,key.dptr) + (ptrdiff_t)journal.map));
 
-      u_put_unaligned(U_NOT_FOUND, n->data.dsize);
+      u_put_unaligned32(n->data.dsize, U_NOT_FOUND);
       }
 #  endif
 }
@@ -846,17 +846,17 @@ U_NO_EXPORT void URDB::callForEntryNotInCache(UCDB* pcdb, vPFpvpc function2)
 
    while ((char*)slot < _eof)
       {
-      uint32_t pos = u_get_unaligned(slot->pos);
+      uint32_t pos = u_get_unaligned32(slot->pos);
 
       if (pos)
          {
          ptr      = UFile::map + pos;
          UCDB::hr = (UCDB::cdb_record_header*) ptr;
 
-         U_INTERNAL_DUMP("hr(%p) = { %u, %u }", UCDB::hr, u_get_unaligned(UCDB::hr->klen), u_get_unaligned(UCDB::hr->dlen))
+         U_INTERNAL_DUMP("hr(%p) = { %u, %u }", UCDB::hr, u_get_unaligned32(UCDB::hr->klen), u_get_unaligned32(UCDB::hr->dlen))
 
-         UCDB::khash     = u_get_unaligned(slot->hash);
-         UCDB::key.dsize = u_get_unaligned(UCDB::hr->klen);
+         UCDB::khash     = u_get_unaligned32(slot->hash);
+         UCDB::key.dsize = u_get_unaligned32(UCDB::hr->klen);
          UCDB::key.dptr  = ptr + sizeof(UCDB::cdb_record_header);
 
          U_INTERNAL_DUMP("key = %.*S khash = %u", UCDB::key.dsize, UCDB::key.dptr, khash)
@@ -905,7 +905,7 @@ U_NO_EXPORT void URDB::call1(UCDB* pcdb, uint32_t _offset)
       U_WARNING("URDB::call1(%p,%u) - data node at offset is invalid, key: %#.*S", pcdb, offset,
                   RDB_cache_node(n,key.dsize), (const char*)((ptrdiff_t)RDB_cache_node(n,key.dptr) + (ptrdiff_t)journal.map));
 
-      u_put_unaligned(U_NOT_FOUND, n->data.dsize);
+      u_put_unaligned32(n->data.dsize, U_NOT_FOUND);
       }
 #endif
 }
@@ -932,10 +932,10 @@ U_NO_EXPORT void URDB::makeAdd1(UCDB* pcdb, uint32_t _offset) // entry presenti 
 
       UCDB::cdb_record_header* ptr_hr = pcdb->hr;
 
-      u_put_unaligned(size_key,  ptr_hr->klen);
-      u_put_unaligned(size_data, ptr_hr->dlen);
+      u_put_unaligned32(ptr_hr->klen, size_key);
+      u_put_unaligned32(ptr_hr->dlen, size_data);
 
-      U_INTERNAL_DUMP("hr(%p) = { %u, %u }", ptr_hr, u_get_unaligned(ptr_hr->klen), u_get_unaligned(ptr_hr->dlen))
+      U_INTERNAL_DUMP("hr(%p) = { %u, %u }", ptr_hr, u_get_unaligned32(ptr_hr->klen), u_get_unaligned32(ptr_hr->dlen))
 
       ++ptr_hr;
 
@@ -962,7 +962,7 @@ U_NO_EXPORT void URDB::makeAdd1(UCDB* pcdb, uint32_t _offset) // entry presenti 
                   RDB_cache_node(n,key.dsize), (const char*)((ptrdiff_t)RDB_cache_node(n,key.dptr) + (ptrdiff_t)journal.map));
 #  endif
 
-      u_put_unaligned(U_NOT_FOUND, n->data.dsize);
+      u_put_unaligned32(n->data.dsize, U_NOT_FOUND);
       }
 }
 
@@ -1008,7 +1008,7 @@ U_NO_EXPORT void URDB::print1(UCDB* pcdb, uint32_t _offset) // entry presenti ne
                   RDB_cache_node(n,key.dsize), (const char*)((ptrdiff_t)RDB_cache_node(n,key.dptr) + (ptrdiff_t)journal.map));
 #  endif
 
-      u_put_unaligned(U_NOT_FOUND, n->data.dsize);
+      u_put_unaligned32(n->data.dsize, U_NOT_FOUND);
       }
 }
 
@@ -1042,7 +1042,7 @@ U_NO_EXPORT void URDB::getKeys1(UCDB* pcdb, uint32_t _offset) // entry presenti 
                   RDB_cache_node(n,key.dsize), (const char*)((ptrdiff_t)RDB_cache_node(n,key.dptr) + (ptrdiff_t)journal.map));
 #  endif
 
-      u_put_unaligned(U_NOT_FOUND, n->data.dsize);
+      u_put_unaligned32(n->data.dsize, U_NOT_FOUND);
       }
 }
 
@@ -1382,7 +1382,7 @@ bool URDB::isDeleted()
       U_WARNING("URDB::isDeleted() - data node is invalid, key: %#.*S", RDB_node_key_sz(this), RDB_node_key_pr(this));
 #  endif
 
-      u_put_unaligned(U_NOT_FOUND, RDB_node_data_sz(this));
+      u_put_unaligned32(RDB_node(this)->data.dsize, U_NOT_FOUND);
       }
 
    U_RETURN(result);
@@ -1497,10 +1497,10 @@ int URDB::_store(int _flag, bool exist)
          {
          char* ptr = (char*)data_new.dptr + data_new.dsize;
 
-         *(int64_t*) ptr     = U_MULTICHAR_CONSTANT64(' ',' ',' ',' ',' ',' ',' ',' ');
-         *(int64_t*)(ptr+8)  = U_MULTICHAR_CONSTANT64(' ',' ',' ',' ',' ',' ',' ',' ');
-         *(int64_t*)(ptr+16) = U_MULTICHAR_CONSTANT64(' ',' ',' ',' ',' ',' ',' ',' ');
-         *(int64_t*)(ptr+24) = U_MULTICHAR_CONSTANT64(' ',' ',' ',' ',' ',' ',' ',' ');
+         u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64(' ',' ',' ',' ',' ',' ',' ',' '));
+         u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64(' ',' ',' ',' ',' ',' ',' ',' '));
+         u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64(' ',' ',' ',' ',' ',' ',' ',' '));
+         u_put_unalignedp64(ptr+24, U_MULTICHAR_CONSTANT64(' ',' ',' ',' ',' ',' ',' ',' '));
 
          data_new.dsize += 32;
 

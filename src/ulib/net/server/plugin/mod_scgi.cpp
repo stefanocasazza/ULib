@@ -187,7 +187,8 @@ int USCGIPlugIn::handlerRequest()
 
       if (scgi_keep_conn == false)
          {
-         /* The shutdown() tells the receiver the server is done sending data. No
+         /**
+          * The shutdown() tells the receiver the server is done sending data. No
           * more data is going to be send. More importantly, it doesn't close the
           * socket. At the socket layer, this sends a TCP/IP FIN packet to the receiver
           */
@@ -202,11 +203,10 @@ int USCGIPlugIn::handlerRequest()
 
       *UClientImage_Base::wbuffer = connection->getResponse();
 
-      if (UHTTP::processCGIOutput(false)) UClientImage_Base::setRequestProcessed();
-      else                                UHTTP::setInternalError();
+      if (UHTTP::processCGIOutput(false, false)) UClientImage_Base::setRequestProcessed();
+      else                                       UHTTP::setInternalError();
 
-end:
-      connection->clearData();
+end:  connection->clearData();
 
       if (scgi_keep_conn == false &&
           connection->isConnected())

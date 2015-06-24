@@ -291,7 +291,7 @@ void UThread::sigHandler(int signo)
       {
       U_INTERNAL_DUMP("SUSPEND: start(%2D)")
 
-      (void) U_SYSCALL(pthread_cond_wait, "%p,%p", &cond, &_lock);
+               (void) U_SYSCALL(pthread_cond_wait, "%p,%p", &cond, &_lock);
 
       U_INTERNAL_DUMP("SUSPEND: end(%2D)")
       }
@@ -563,6 +563,55 @@ void UThread::sleep(time_t timeoutMS)
 #ifdef CCXX_SIG_THREAD_CANCEL
    th->exitCancel(old);
 #endif
+}
+
+// Inter Process Communication
+
+bool UThread::initIPC(pthread_mutex_t* mutex, pthread_cond_t* cond)
+{
+   U_TRACE(0, "UThread::initIPC(%p,%p)", mutex, cond)
+
+   if (mutex) /* initialize mutex */
+      {
+      pthread_mutexattr_t mutexattr;
+
+      if (U_SYSCALL(pthread_mutexattr_init,       "%p",    &mutexattr)                         == -1 ||
+          U_SYSCALL(pthread_mutexattr_setrobust,  "%p,%d", &mutexattr, PTHREAD_MUTEX_ROBUST)   == -1 ||
+          U_SYSCALL(pthread_mutexattr_setpshared, "%p,%d", &mutexattr, PTHREAD_PROCESS_SHARED) == -1 ||
+          U_SYSCALL(pthread_mutex_init,           "%p,%p", mutex, &mutexattr)                  == -1)
+         {
+         U_RETURN(false);
+         }
+      }
+
+   if (cond) /* initialize condition variable */
+      {
+      pthread_condattr_t condattr;
+
+      if (U_SYSCALL(pthread_condattr_init,       "%p",    &condattr)                         == -1 ||
+          U_SYSCALL(pthread_condattr_setpshared, "%p,%d", &condattr, PTHREAD_PROCESS_SHARED) == -1 ||
+          U_SYSCALL(pthread_cond_init,           "%p,%p", cond, &condattr)                   == -1)
+         {
+         U_RETURN(false);
+         }
+      }
+
+   U_RETURN(true);
+}
+
+void UThread::doIPC(pthread_mutex_t* mutex, pthread_cond_t* cond, vPF function, bool wait)
+{
+   U_TRACE(0, "UThread::doIPC(%p,%p,%p,%b)", mutex, cond, function, wait)
+
+   lock(mutex);
+
+   if (wait) (void) U_SYSCALL(pthread_cond_wait, "%p,%p", cond, mutex); // block until we are signalled from other...
+
+   function(); // ...than call function
+
+   unlock(mutex);
+
+   if (wait == false) (void) U_SYSCALL(pthread_cond_signal, "%p", cond); // signal to waiting thread...
 }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

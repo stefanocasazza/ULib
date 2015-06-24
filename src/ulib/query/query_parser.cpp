@@ -895,10 +895,15 @@ void UQueryParser::evaluate(UStringRep* _word, bool positive)
 
       p = u_buffer + u_buffer_len;
 
-                   pword.p2 = _word;
-      *(long*)p = *pword.p3;
+      pword.p2 = _word;
 
-      u_buffer_len += sizeof(void*);
+#  if SIZEOF_LONG == 8
+      u_put_unalignedp64(p, *pword.p3);
+#  else
+      u_put_unalignedp32(p, *pword.p3);
+#  endif
+
+      u_buffer_len += sizeof(long);
 
       u_buffer[u_buffer_len++] = (result ? '1' : '0');
 

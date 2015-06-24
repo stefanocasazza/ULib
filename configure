@@ -986,6 +986,7 @@ with_sysroot
 enable_libtool_lock
 enable_stdcpp
 enable_debug
+enable_unaligned
 with_libc
 enable_thread
 enable_pth
@@ -1705,6 +1706,7 @@ Optional Features:
   --disable-libtool-lock  avoid locking (might break parallel builds)
   --enable-stdcpp           compile with stdc++ runtime overhead [default=yes]
   --enable-debug            compile for debugging [default=no]
+  --enable-unaligned        compile for target that allows unaligned reads and writes [default=yes]
   --enable-thread           enable build of thread support [default=yes]
   --enable-pth              always use GNU pth for threading [default=no]
   --enable-examples         enable building of examples [default=yes]
@@ -5775,8 +5777,16 @@ LINUX_ARCH=
 case $target in
 	x86_64)			LINUX_ARCH=x86_64 ;;
 	i*86)				LINUX_ARCH=i386 ;;
-	arm*)				LINUX_ARCH=arm ;;
-	aarch64*)		LINUX_ARCH=arm64 ;;
+	arm*)				LINUX_ARCH=arm
+
+$as_echo "#define HAVE_NO_UNALIGNED_ACCESSES 1" >>confdefs.h
+
+	;;
+	aarch64*)		LINUX_ARCH=arm64
+
+$as_echo "#define HAVE_NO_UNALIGNED_ACCESSES 1" >>confdefs.h
+
+	;;
 	sh*)				LINUX_ARCH=sh ;;
 	mips*)			LINUX_ARCH=mips ;;
 	or1k*)			LINUX_ARCH=openrisc ;;
@@ -18811,6 +18821,29 @@ fi
 
 
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for target that allows unaligned reads and writes" >&5
+$as_echo_n "checking for target that allows unaligned reads and writes... " >&6; }
+# Check whether --enable-unaligned was given.
+if test "${enable_unaligned+set}" = set; then :
+  enableval=$enable_unaligned;
+fi
+
+
+if test -z "$enable_unaligned"; then
+	enable_unaligned="yes"
+fi
+
+if test "$enable_unaligned" = "yes"; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+$as_echo "#define HAVE_NO_UNALIGNED_ACCESSES 1" >>confdefs.h
+
+fi
+
 ULIB_LIBC="-lc"
 
 
@@ -27843,7 +27876,7 @@ fi
 $as_echo_n "checking servlet \"$srv\"... " >&6; }
 
 			add_calls3="$add_calls3 \n extern \"C\" { int runDynamicPage_${srv}(UClientImage_Base*); }"
-			add_calls4="$add_calls4 \n loadStaticLinkedServlet(\"${srv}\",U_CONSTANT_SIZE(\"${srv}\"),(iPFpv)::runDynamicPage_${srv});"
+			add_calls4="$add_calls4 \n loadStaticLinkedServlet(\"${srv}\",U_CONSTANT_SIZE(\"${srv}\"),(vPFi)::runDynamicPage_${srv});"
 
 			if test "$srv" = "wi_auth"; then
 				static_servlet_wi_auth="yes"

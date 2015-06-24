@@ -260,28 +260,28 @@ U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& val
       if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/SSI.err");
 
       *UClientImage_Base::wbuffer = UCommand::outputCommand(value, 0, -1, fd_stderr);
+
+      U_RETURN(true);
       }
-   else
+
+   U_ASSERT(name == *str_cgi ||
+            name.equal(U_CONSTANT_TO_PARAM("servlet")))
+
+   UClientImage_Base::wbuffer->setBuffer(U_CAPACITY); // NB: we need this to avoid to accumulate output from services...
+
+   bool result = UHTTP::callService(value);
+
+#ifdef DEBUG // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+   UHTTP::file->getPath().clear();
+#endif
+
+   if (result == false      ||
+       alternative_response ||
+       U_ClientImage_parallelization == 2) // 2 => parent of parallelization
       {
-      U_ASSERT(name == *str_cgi ||
-               name.equal(U_CONSTANT_TO_PARAM("servlet")))
+      alternative_response = 1; // 1 => response already complete (nothing to do)
 
-      UClientImage_Base::wbuffer->setBuffer(U_CAPACITY); // NB: we need this to avoid to accumulate output from services...
-
-      bool result = UHTTP::callService(value);
-
-#  ifdef DEBUG // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
-      UHTTP::file->getPath().clear();
-#  endif
-
-      if (result == false      ||
-          alternative_response ||
-          U_ClientImage_parallelization == 2) // 2 => parent of parallelization
-         {
-         alternative_response = 1; // 1 => response already complete (nothing to do)
-
-         U_RETURN(false);
-         }
+      U_RETURN(false);
       }
 
    U_RETURN(true);
@@ -1080,7 +1080,7 @@ int USSIPlugIn::handlerRequest()
 
             (void) UClientImage_Base::wbuffer->append(alternative_response == 2 ? output : *body);
 
-            if (UHTTP::processCGIOutput(true) == false) UHTTP::setInternalError();
+            if (UHTTP::processCGIOutput(true, true) == false) UHTTP::setInternalError();
             }
 
          UClientImage_Base::environment->setEmpty();

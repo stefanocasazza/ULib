@@ -73,8 +73,12 @@ LINUX_ARCH=
 case $target in
 	x86_64)			LINUX_ARCH=x86_64 ;;
 	i*86)				LINUX_ARCH=i386 ;;
-	arm*)				LINUX_ARCH=arm ;;
-	aarch64*)		LINUX_ARCH=arm64 ;;
+	arm*)				LINUX_ARCH=arm
+						AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write])
+	;;
+	aarch64*)		LINUX_ARCH=arm64
+						AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write])
+	;;
 	sh*)				LINUX_ARCH=sh ;;
 	mips*)			LINUX_ARCH=mips ;;
 	or1k*)			LINUX_ARCH=openrisc ;;
@@ -500,6 +504,20 @@ else
 fi
 
 AC_SUBST(ULIB)
+
+AC_MSG_CHECKING(for target that allows unaligned reads and writes)
+AC_ARG_ENABLE(unaligned, [  --enable-unaligned        compile for target that allows unaligned reads and writes [[default=yes]]])
+
+if test -z "$enable_unaligned"; then
+	enable_unaligned="yes"
+fi
+
+if test "$enable_unaligned" = "yes"; then
+   AC_MSG_RESULT(yes)
+else
+   AC_MSG_RESULT(no)
+	AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write])
+fi
 
 ULIB_LIBC="-lc"
 
@@ -1839,7 +1857,7 @@ if test "$enable_static" = "yes" && test "$enable_shared" = "no"; then
 			AC_MSG_CHECKING([servlet "$srv"])
 
 			add_calls3="$add_calls3 \n extern \"C\" { int runDynamicPage_${srv}(UClientImage_Base*); }"
-			add_calls4="$add_calls4 \n loadStaticLinkedServlet(\"${srv}\",U_CONSTANT_SIZE(\"${srv}\"),(iPFpv)::runDynamicPage_${srv});"
+			add_calls4="$add_calls4 \n loadStaticLinkedServlet(\"${srv}\",U_CONSTANT_SIZE(\"${srv}\"),(vPFi)::runDynamicPage_${srv});"
 
 			if test "$srv" = "wi_auth"; then
 				static_servlet_wi_auth="yes"

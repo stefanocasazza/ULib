@@ -47,7 +47,7 @@ public:
 #endif
 
 protected:
-   static iPFpv on_message;
+   static vPFi on_message;
    static UCommand* command;
 
    static RETSIGTYPE handlerForSigTERM(int signo);

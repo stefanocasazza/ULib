@@ -1009,7 +1009,7 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
    uint32_t _remain = (_length - pos);
 
    if (_remain >= 4 &&
-       *(int32_t*)ptr == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+       u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
       {
    // U_line_terminator_len = 2;
 
@@ -1019,7 +1019,7 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
       }
 
    if (_remain >= 2 &&
-       *(int16_t*)ptr == U_MULTICHAR_CONSTANT16('\n','\n'))
+       u_get_unalignedp16(ptr) == U_MULTICHAR_CONSTANT16('\n','\n'))
       {
    // U_line_terminator_len = 1;
 
@@ -1802,7 +1802,7 @@ __pure bool UStringRep::strtob() const
          VAL_TRUE = U_MULTICHAR_CONSTANT32('T','R','U','E')
       };
 
-      switch (*(int32_t*)str)
+      switch (u_get_unalignedp32(str))
          {
          case VAL_yes:
          case VAL_Yes:
@@ -1812,7 +1812,7 @@ __pure bool UStringRep::strtob() const
          case VAL_TRUE: U_RETURN(true); 
          }
 
-      switch (*(int16_t*)str)
+      switch (u_get_unalignedp16(str))
          {
          case U_MULTICHAR_CONSTANT16('1',0):
          case U_MULTICHAR_CONSTANT16('o','n'):
@@ -2054,7 +2054,7 @@ void UString::setFromData(const char** p, uint32_t sz)
       {
       // get content pointed by string 'meta' (that start with '@')
 
-      if (*(int32_t*)(ptr+1) == U_MULTICHAR_CONSTANT32('F','I','L','E'))
+      if (u_get_unalignedp32(ptr+1) == U_MULTICHAR_CONSTANT32('F','I','L','E'))
          {
          UFile file;
          char pathname[U_PATH_MAX];

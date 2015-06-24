@@ -240,8 +240,6 @@ union uucflag {
 
 union uucflag64 {
    char c[8];
-   uint16_t lo; 
-   uint16_t hi; 
    uint32_t s;
    uint64_t u;
 };
@@ -291,16 +289,29 @@ union uucflag64 {
 #define U_STRUCT_IS_LAST_MEMBER(type,member)    (U_STRUCT_MEMBER_END_OFFSET(type,member) == sizeof(type))
 #define U_STRUCT_MEMBER_END_OFFSET(type,member) (U_STRUCT_MEMBER_SIZE(type,member) + U_STRUCT_OFFSET(type,member))
 
-/* Needed for unaligned memory access */
+/**
+ * x86 allows unaligned reads and writes (so for example you can read a 16-bit value
+ * from a non-even address), but other architectures do not (ARM will raise SIGILL)
+ */
 
-#ifdef HAVE_NO_UNALIGNED_ACCESSES
-struct __una_u32 { uint32_t x __attribute__((packed)); };
-#  define u_get_unalignedp(ptr)      ((uint32_t)(((const struct __una_u32*)(ptr))->x))
-#  define u_put_unalignedp(val, ptr)             ((      struct __una_u32*)(ptr))->x = val
+#ifndef HAVE_NO_UNALIGNED_ACCESSES
+#  define u_get_unalignedp16(ptr)     (*(uint16_t*)(ptr))
+#  define u_get_unalignedp32(ptr)     (*(uint32_t*)(ptr))
+#  define u_get_unalignedp64(ptr)     (*(uint64_t*)(ptr))
+#  define u_put_unalignedp16(ptr,val) (*(uint16_t*)(ptr) = (val))
+#  define u_put_unalignedp32(ptr,val) (*(uint32_t*)(ptr) = (val))
+#  define u_put_unalignedp64(ptr,val) (*(uint64_t*)(ptr) = (val))
 #else
-/* The x86 can do unaligned accesses itself */
-#  define u_get_unalignedp(ptr)      (*(uint32_t*)(ptr))
-#  define u_put_unalignedp(val, ptr) (*(uint32_t*)(ptr) = (val))
+struct u_una_u16 { uint16_t x __attribute__((packed)); };
+struct u_una_u32 { uint32_t x __attribute__((packed)); };
+struct u_una_u64 { uint64_t x __attribute__((packed)); };
+
+static inline uint16_t u_get_unalignedp16(const void* p)               { const struct u_una_u16 *ptr = (const struct u_una_u16*)p; return ptr->x; }
+static inline uint32_t u_get_unalignedp32(const void* p)               { const struct u_una_u32 *ptr = (const struct u_una_u32*)p; return ptr->x; }
+static inline uint64_t u_get_unalignedp64(const void* p)               { const struct u_una_u64 *ptr = (const struct u_una_u64*)p; return ptr->x; }
+static inline void     u_put_unalignedp16(      void* p, uint16_t val) {       struct u_una_u16 *ptr = (      struct u_una_u16*)p;        ptr->x = val; } 
+static inline void     u_put_unalignedp32(      void* p, uint32_t val) {       struct u_una_u32 *ptr = (      struct u_una_u32*)p;        ptr->x = val; }
+static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       struct u_una_u64 *ptr = (      struct u_una_u64*)p;        ptr->x = val; }
 #endif
 
 /**
@@ -309,10 +320,12 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
  * This macro should be used for accessing values larger in size than
  * single bytes at locations that are expected to be improperly aligned
  *
- * Note that unaligned accesses can be very expensive on some architectures.
+ * Note that unaligned accesses can be very expensive on some architectures
  */
 
-#define u_get_unaligned(ref) u_get_unalignedp(&(ref))
+#define u_get_unaligned16(ref) u_get_unalignedp16(&(ref))
+#define u_get_unaligned32(ref) u_get_unalignedp32(&(ref))
+#define u_get_unaligned64(ref) u_get_unalignedp64(&(ref))
 
 /**
  * u_put_unaligned - put value to a possibly mis-aligned location
@@ -320,10 +333,12 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
  * This macro should be used for placing values larger in size than
  * single bytes at locations that are expected to be improperly aligned
  *
- * Note that unaligned accesses can be very expensive on some architectures.
+ * Note that unaligned accesses can be very expensive on some architectures
  */
 
-#define u_put_unaligned(val, ref) u_put_unalignedp(val,&(ref))
+#define u_put_unaligned16(ref,val) u_put_unalignedp16(&(ref),(uint16_t)(val))
+#define u_put_unaligned32(ref,val) u_put_unalignedp32(&(ref),(uint32_t)(val))
+#define u_put_unaligned64(ref,val) u_put_unalignedp64(&(ref),(uint64_t)(val))
 
 /* Endian order (network byte order is big endian) */
 
@@ -333,37 +348,33 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
 #  define u_htonll(x) (((uint64_t)htonl((uint32_t)x))<<32 | htonl((uint32_t)(x>>32)))
 #  define u_ntohll(x) (((uint64_t)ntohl((uint32_t)x))<<32 | ntohl((uint32_t)(x>>32)))
 
-#  define U_NUM2STR16(ptr,val1)             (((union uucflag*)(ptr))->lo = \
-                                             ((union uucflag*)(u_ctn2s+((val1)*2)))->lo)
+#  define U_NUM2STR16(ptr,val1)             u_put_unalignedp16((ptr),u_get_unalignedp16(u_ctn2s+((val1)*2)))
 
-#  define U_NUM2STR32(ptr,val1,val2)        (((union uucflag*)(ptr))->u = \
-                                            (((union uucflag*)(u_ctn2s+((val1)*2)))->lo)|\
-                                            (((union uucflag*)(u_ctn2s+((val2)*2)))->lo)<<16)
+#  define U_NUM2STR32(ptr,val1,val2)        u_put_unalignedp32((ptr),u_get_unalignedp16(u_ctn2s+((val1)*2))|\
+                                                                     u_get_unalignedp16(u_ctn2s+((val2)*2))<<16)
 
+#  define U_NUM2STR64(ptr,c,val1,val2,val3) u_put_unalignedp64((ptr),u_get_unalignedp16(u_ctn2s+((val1)*2))|\
+                                                           (uint64_t)(c)<<16|\
+                                                          ((uint64_t)u_get_unalignedp16(u_ctn2s+((val2)*2))<<24)|\
+                                                           (uint64_t)(c)<<40|\
+                                                          ((uint64_t)u_get_unalignedp16(u_ctn2s+((val3)*2))<<48))
 
-#  define U_NUM2STR64(ptr,c,val1,val2,val3) (((union uucflag64*)(ptr))->u = \
-                                            (((union uucflag*)(u_ctn2s+((val1)*2)))->lo)|\
-                                              (int64_t)(c)<<16|\
-                                  ((int64_t)(((union uucflag*)(u_ctn2s+((val2)*2)))->lo)<<24)|\
-                                              (int64_t)(c)<<40|\
-                                  ((int64_t)(((union uucflag*)(u_ctn2s+((val3)*2)))->lo)<<48))
+#  define U_MULTICHAR_CONSTANT16(a,b)               (uint16_t)((uint8_t)(a)|\
+                                                               (uint8_t)(b)<<8)
 
-#  define U_MULTICHAR_CONSTANT16(a,b)              ((int16_t)((uint8_t)(a)|\
-                                                              (uint8_t)(b)<<8))
+#  define U_MULTICHAR_CONSTANT32(a,b,c,d)           (uint32_t)((uint8_t)(a)|\
+                                                               (uint8_t)(b)<<8|\
+                                                               (uint8_t)(c)<<16|\
+                                                               (uint8_t)(d)<<24)
 
-#  define U_MULTICHAR_CONSTANT32(a,b,c,d)          ((int32_t)((uint8_t)(a)|\
-                                                              (uint8_t)(b)<<8|\
-                                                              (uint8_t)(c)<<16|\
-                                                              (uint8_t)(d)<<24))
-
-#  define U_MULTICHAR_CONSTANT64(a,b,c,d,e,f,g,h)  ((int64_t)((int64_t)(a)|\
-                                                             ((int64_t)(b))<<8|\
-                                                             ((int64_t)(c))<<16|\
-                                                             ((int64_t)(d))<<24|\
-                                                             ((int64_t)(e))<<32|\
-                                                             ((int64_t)(f))<<40|\
-                                                             ((int64_t)(g))<<48|\
-                                                             ((int64_t)(h))<<56))
+#  define U_MULTICHAR_CONSTANT64(a,b,c,d,e,f,g,h)   (uint64_t)((uint64_t)(a)|\
+                                                              ((uint64_t)(b))<<8|\
+                                                              ((uint64_t)(c))<<16|\
+                                                              ((uint64_t)(d))<<24|\
+                                                              ((uint64_t)(e))<<32|\
+                                                              ((uint64_t)(f))<<40|\
+                                                              ((uint64_t)(g))<<48|\
+                                                              ((uint64_t)(h))<<56)
 #else /* the host byte order is Most Significant Byte first */
 #  define u_test_bit(n,c) ((((c) >> n) & 1) != 0)
 
@@ -375,42 +386,39 @@ struct __una_u32 { uint32_t x __attribute__((packed)); };
 #  define u_htonll(x) (x)
 #  define u_ntohll(x) (x)
 
-#  define U_NUM2STR16(ptr,val1)             (((union uucflag*)(ptr))->lo = \
-                                              (int16_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
-                                                        (uint8_t)(u_ctn2s[((val1)*2)])<<8))
+#  define U_NUM2STR16(ptr,val1)      u_put_unalignedp16((ptr),(uint16_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
+                                                                         (uint8_t)(u_ctn2s[((val1)*2)])<<8))
 
-#  define U_NUM2STR32(ptr,val2,val1)        (((union uucflag*)(ptr))->u = \
-                                              (int16_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
-                                                        (uint8_t)(u_ctn2s[((val1)*2)])<<8)|\
-                                             ((int16_t)((uint8_t)(u_ctn2s[((val2)*2)+1])|\
-                                                        (uint8_t)(u_ctn2s[((val2)*2)])<<8))<<16)
+#  define U_NUM2STR32(ptr,val2,val1) u_put_unalignedp32((ptr),(uint16_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
+                                                                         (uint8_t)(u_ctn2s[((val1)*2)])<<8)|\
+                                                             ((uint16_t)((uint8_t)(u_ctn2s[((val2)*2)+1])|\
+                                                                         (uint8_t)(u_ctn2s[((val2)*2)])<<8))<<16)
 
-#  define U_NUM2STR64(ptr,c,val3,val2,val1) (((union uucflag64*)(ptr))->u = \
-                                             ((int64_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
-                                                        (uint8_t)(u_ctn2s[((val1)*2)])<<8))|\
-                                            (((int64_t)(c))<<16)|\
-                                            (((int64_t)((uint8_t)(u_ctn2s[((val2)*2)+1])|\
-                                                        (uint8_t)(u_ctn2s[((val2)*2)])<<8))<<24)|\
-                                            (((int64_t)(c))<<40)|\
-                                            (((int64_t)((uint8_t)(u_ctn2s[((val3)*2)+1])|\
-                                                        (uint8_t)(u_ctn2s[((val3)*2)])<<8))<<48))
+#  define U_NUM2STR64(ptr,c,val3,val2,val1) u_put_unalignedp64((ptr),((uint64_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
+                                                                                 (uint8_t)(u_ctn2s[((val1)*2)])<<8))|\
+                                                                     (((uint64_t)(c))<<16)|\
+                                                                     (((uint64_t)((uint8_t)(u_ctn2s[((val2)*2)+1])|\
+                                                                                 (uint8_t)(u_ctn2s[((val2)*2)])<<8))<<24)|\
+                                                                     (((uint64_t)(c))<<40)|\
+                                                                     (((uint64_t)((uint8_t)(u_ctn2s[((val3)*2)+1])|\
+                                                                                 (uint8_t)(u_ctn2s[((val3)*2)])<<8))<<48))
 
-#  define U_MULTICHAR_CONSTANT16(b,a)              ((int16_t)((uint8_t)(a)|\
-                                                              (uint8_t)(b)<<8))
+#  define U_MULTICHAR_CONSTANT16(b,a)               (uint16_t)((uint8_t)(a)|\
+                                                               (uint8_t)(b)<<8)
 
-#  define U_MULTICHAR_CONSTANT32(d,c,b,a)          ((int32_t)((uint8_t)(a)|\
-                                                              (uint8_t)(b)<<8|\
-                                                              (uint8_t)(c)<<16|\
-                                                              (uint8_t)(d)<<24))
+#  define U_MULTICHAR_CONSTANT32(d,c,b,a)           (uint32_t)((uint8_t)(a)|\
+                                                               (uint8_t)(b)<<8|\
+                                                               (uint8_t)(c)<<16|\
+                                                               (uint8_t)(d)<<24)
 
-#  define U_MULTICHAR_CONSTANT64(h,g,f,e,d,c,b,a)  ((int64_t)((int64_t)(a)|\
-                                                             ((int64_t)(b))<<8|\
-                                                             ((int64_t)(c))<<16|\
-                                                             ((int64_t)(d))<<24|\
-                                                             ((int64_t)(e))<<32|\
-                                                             ((int64_t)(f))<<40|\
-                                                             ((int64_t)(g))<<48|\
-                                                             ((int64_t)(h))<<56))
+#  define U_MULTICHAR_CONSTANT64(h,g,f,e,d,c,b,a)   (uint64_t)((uint64_t)(a)|\
+                                                              ((uint64_t)(b))<<8|\
+                                                              ((uint64_t)(c))<<16|\
+                                                              ((uint64_t)(d))<<24|\
+                                                              ((uint64_t)(e))<<32|\
+                                                              ((uint64_t)(f))<<40|\
+                                                              ((uint64_t)(g))<<48|\
+                                                              ((uint64_t)(h))<<56)
 #endif
 
 /* Check for dot entry in directory */

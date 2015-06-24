@@ -24,6 +24,8 @@
 #undef sleep
 #endif
 
+class UNotifier;
+
 class U_EXPORT UThread {
 public:
    // Check for memory error
@@ -47,28 +49,33 @@ public:
 
    // SERVICES
 
-   void lock()
-      {
-      U_TRACE(1, "UThread::lock()")
-
-      (void) U_SYSCALL(pthread_mutex_lock, "%p", &_lock);
-      }
-
-   void unlock()
-      {
-      U_TRACE(1, "UThread::unlock()")
-
-      (void) U_SYSCALL(pthread_mutex_unlock, "%p", &_lock);
-      }
-
    static pid_t getTID();
-   static void  sleep(time_t timeoutMS);
+
+   static void sleep(time_t timeoutMS);
+
+   // Inter Process Communication
+
+   static void lock(pthread_mutex_t* mutex)
+      {
+      U_TRACE(1, "UThread::lock(%p)", mutex)
+
+      (void) U_SYSCALL(pthread_mutex_lock, "%p", mutex);
+      }
+
+   static void unlock(pthread_mutex_t* mutex)
+      {
+      U_TRACE(1, "UThread::unlock(%p)", mutex)
+
+      (void) U_SYSCALL(pthread_mutex_unlock, "%p", mutex);
+      }
+
+   static bool initIPC(pthread_mutex_t* mutex, pthread_cond_t* cond);
+   static void   doIPC(pthread_mutex_t* mutex, pthread_cond_t* cond, vPF function, bool wait);
 
    /**
     * All threads execute by deriving the run method of UThread.
-    * This method is called after initial to begin normal operation
-    * of the thread. If the method terminates, then the thread will
-    * also terminate.
+    * This method is called after initial to begin normal operation of the
+    * thread. If the method terminates, then the thread will also terminate
     */
 
    virtual void run()
@@ -77,14 +84,13 @@ public:
       } 
 
    /**
-    * When a new thread is created, it does not begin immediate
-    * execution. This is because the derived class virtual tables
-    * are not properly loaded at the time the C++ object is created
-    * within the constructor itself, at least in some compiler/system
-    * combinations. It can be started directly after the constructor
-    * completes by calling the start() method.
+    * When a new thread is created, it does not begin immediate execution.
+    * This is because the derived class virtual tables are not properly loaded
+    * at the time the C++ object is created within the constructor itself, at
+    * least in some compiler/system combinations. It can be started directly
+    * after the constructor completes by calling the start() method
     *
-    * @return false if execution fails.
+    * @return false if execution fails
     */
 
    void stop();
@@ -93,45 +99,42 @@ public:
    /**
     * Start a new thread as "detached". This is an alternative
     * start() method that resolves some issues with later glibc
-    * implimentations which incorrectly impliment self-detach.
+    * implementations which incorrectly implement self-detach
     *
-    * @return false if execution fails.
+    * @return false if execution fails
     */
 
    bool detach();
 
    /**
-    * Yields the current thread's CPU time slice to allow another thread to
-    * begin immediate execution.
+    * Yields the current thread's CPU time slice to allow another thread to begin immediate execution
     */
 
    void yield();
 
    /**
-    * Suspends execution of the selected thread. Pthreads do not
-    * normally support suspendable threads, so the behavior is
-    * simulated with signals.
+    * Suspends execution of the selected thread. Pthreads do not normally
+    * support suspendable threads, so the behavior is simulated with signals
     */
 
    void suspend();
 
    /**
-    * Resumes execution of the selected thread.
+    * Resumes execution of the selected thread
     */
 
    void resume();
 
    /**
-    * Check if this thread is detached.
+    * Check if this thread is detached
     *
-    * @return true if the thread is detached.
+    * @return true if the thread is detached
     */
 
    bool isDetached() const;
 
    /** 
-    * Each time a thread receives a signal, it stores the
-    * signal number locally.
+    * Each time a thread receives a signal, it stores the signal number locally
     */
 
    void signal(int signo);
@@ -142,18 +145,17 @@ public:
 
    /**
     * This is used to help build wrapper functions in libraries
-    * around system calls that should behave as cancellation
-    * points but don't.
+    * around system calls that should behave as cancellation points but don't
     *
-    * @return saved cancel type.
+    * @return saved cancel type
     */
 
    int enterCancel();
 
    /**
-    * This is used to restore a cancel block.
+    * This is used to restore a cancel block
     *
-    * @param cancel type that was saved.
+    * @param cancel type that was saved
     */
 
    void exitCancel(int cancel);
@@ -172,18 +174,22 @@ protected:
    void close(); // close current thread, free all
    void sigInstall(int signo);
 
+   static void   lock() {   lock(&_lock); }
+   static void unlock() { unlock(&_lock); }
+
    static void sigHandler(int signo);
    static void execHandler(UThread* th);
    static void threadCleanup(UThread* th);
 
    // A special global function, getThread(), is provided to identify the thread object that represents the current
-   // execution context you are running under. This is sometimes needed to deliver signals to the correct thread.
+   // execution context you are running under. This is sometimes needed to deliver signals to the correct thread
 
    static UThread* getThread() __pure;
 
 private:
-   // private data
-   class UThreadImpl* priv;
+   class UThreadImpl* priv; // private data
+
+   friend class UNotifier;
    friend class UThreadImpl;
 
 #ifdef U_COMPILER_DELETE_MEMBERS

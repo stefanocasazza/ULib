@@ -55,7 +55,7 @@ public:
 
    // LZO method
 
-   static bool isCompress(const char* s)       { return (*(int32_t*)s == U_MULTICHAR_CONSTANT32('\x89','M','N','Z')); } // U_MINIZ_COMPRESS
+   static bool isCompress(const char* s)       { return (u_get_unalignedp32(s) == U_MULTICHAR_CONSTANT32('\x89','M','N','Z')); } // U_MINIZ_COMPRESS
    static bool isCompress(const UString& s)    { return isCompress(s.data()); }
 
    static UString   compress(const char* s, uint32_t n);
@@ -66,7 +66,7 @@ public:
 
    // GZIP method
 
-   static bool isGzip(const char* s)        { return (*(int16_t*)s == U_MULTICHAR_CONSTANT16('\x1F','\x8B')); }
+   static bool isGzip(const char* s)        { return (u_get_unalignedp16(s) == U_MULTICHAR_CONSTANT16('\x1F','\x8B')); }
    static bool isGzip(const UString& s)     { return isGzip(s.data()); }
 
    static UString deflate(const char* s, uint32_t n, int type);         // .gz   compress

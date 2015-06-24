@@ -97,7 +97,7 @@ __pure uint32_t u_crc32(unsigned char* restrict bp, uint32_t len)
 #  ifdef HAVE_ARCH64
    while (len >= sizeof(uint64_t))
       {
-      h1 = (uint32_t)__builtin_ia32_crc32di(h1, *((uint64_t*)bp));
+      h1 = __builtin_ia32_crc32di(h1, u_get_unalignedp64(bp));
 
       bp  += sizeof(uint64_t);
       len -= sizeof(uint64_t);
@@ -105,7 +105,7 @@ __pure uint32_t u_crc32(unsigned char* restrict bp, uint32_t len)
 #  endif
    while (len >= sizeof(uint32_t))
       {
-      h1 = __builtin_ia32_crc32si(h1, *((uint32_t*)bp));
+      h1 = __builtin_ia32_crc32si(h1, u_get_unalignedp32(bp));
 
       bp  += sizeof(uint32_t);
       len -= sizeof(uint32_t);
@@ -113,7 +113,7 @@ __pure uint32_t u_crc32(unsigned char* restrict bp, uint32_t len)
 
    if (len >= sizeof(uint16_t))
       {
-      h1 = __builtin_ia32_crc32hi(h1, *((uint16_t*)bp));
+      h1 = __builtin_ia32_crc32hi(h1, u_get_unalignedp16(bp));
 
       bp  += sizeof(uint16_t);
       len -= sizeof(uint16_t);
@@ -176,7 +176,10 @@ static inline uint32_t fmix32(uint32_t h)
    return h;
 }
 
-#define getblock(p,i) (p[i]) /* Block read - if your platform needs to do endian-swapping or can only handle aligned reads, do the conversion here */
+/* Block read - if your platform needs to do endian-swapping or can only handle aligned reads, do the conversion here */
+
+#define getblock32(p,i) u_get_unalignedp32(p+i)
+#define getblock64(p,i) u_get_unalignedp64(p+i)
 
 static uint32_t murmurhash3_x86_32(unsigned char* restrict bp, uint32_t len, bool ignore_case)
 {
@@ -203,7 +206,7 @@ static uint32_t murmurhash3_x86_32(unsigned char* restrict bp, uint32_t len, boo
 
       for (; i; ++i)
          {
-         u.u    = getblock(blocks,i);
+         u.u    = getblock32(blocks,i);
          u.c[0] = u__tolower(u.c[0]);
          u.c[1] = u__tolower(u.c[1]);
          u.c[2] = u__tolower(u.c[2]);
@@ -223,7 +226,7 @@ static uint32_t murmurhash3_x86_32(unsigned char* restrict bp, uint32_t len, boo
       {
       for (; i; ++i)
          {
-         k1  = getblock(blocks,i);
+         k1  = getblock32(blocks,i);
 
          k1 *= c1;
          k1  = rotl32(k1,15);
@@ -284,8 +287,8 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_cas
 
       for (i = 0; i < nblocks; ++i)
          {
-         k1 = getblock(blocks,i*2+0);
-         k2 = getblock(blocks,i*2+1);
+         k1 = getblock64(blocks,i*2+0);
+         k2 = getblock64(blocks,i*2+1);
 
          k1 *= c1; k1 = rotl64(k1,31); k1 *= c2; h1 ^= k1;
          h1 = rotl64(h1,27); h1 += h2; h1 = h1*5+0x52dce729;
@@ -355,10 +358,10 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len, bool ignore_cas
 
          for (i = -nblocks; i; ++i)
             {
-            k1 = getblock(blocks,i*4);
-            k2 = getblock(blocks,i*4+1);
-            k3 = getblock(blocks,i*4+2);
-            k4 = getblock(blocks,i*4+3);
+            k1 = getblock32(blocks,i*4);
+            k2 = getblock32(blocks,i*4+1);
+            k3 = getblock32(blocks,i*4+2);
+            k4 = getblock32(blocks,i*4+3);
 
             k1 *= c1; k1 = rotl32(k1,15); k1 *= c2; h1 ^= k1;
             h1 = rotl32(h1,19); h1 += h2; h1 = h1*5+0x561ccd1b;

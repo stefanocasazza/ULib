@@ -278,6 +278,9 @@
 /* Define to 1 if you have the <net/if_arp.h> header file. */
 #undef HAVE_NET_IF_ARP_H
 
+/* Define to 1 if the target don't allows unaligned reads and write */
+#undef HAVE_NO_UNALIGNED_ACCESSES
+
 /* define if the compiler implements old style iostreams */
 #undef HAVE_OLD_IOSTREAM
 

@@ -56,16 +56,16 @@ class URDBClientImage;
 #  define RDB_start(prdb)    (RDB_ptr(prdb)-(CACHE_HASHTAB_LEN*sizeof(uint32_t)))
 #  define RDB_node(prdb)     ((URDB::cache_node*)(((URDB*)prdb)->journal.map+prdb->node))
 
-#  define RDB_node_key_pr(prdb)  u_get_unaligned(RDB_node(prdb)->key.dptr)
-#  define RDB_node_key_sz(prdb)  u_get_unaligned(RDB_node(prdb)->key.dsize)
-#  define RDB_node_data_pr(prdb) u_get_unaligned(RDB_node(prdb)->data.dptr)
-#  define RDB_node_data_sz(prdb) u_get_unaligned(RDB_node(prdb)->data.dsize)
+#  define RDB_node_key_pr(prdb)  u_get_unaligned32(RDB_node(prdb)->key.dptr)
+#  define RDB_node_key_sz(prdb)  u_get_unaligned32(RDB_node(prdb)->key.dsize)
+#  define RDB_node_data_pr(prdb) u_get_unaligned32(RDB_node(prdb)->data.dptr)
+#  define RDB_node_data_sz(prdb) u_get_unaligned32(RDB_node(prdb)->data.dsize)
 
 #  define RDB_node_key(prdb)     (((URDB*)prdb)->journal.map+RDB_node_key_pr(prdb))
 #  define RDB_node_data(prdb)    (((URDB*)prdb)->journal.map+RDB_node_data_pr(prdb))
 
 #  define RDB_ptr_node(prdb,offset)      ((URDB::cache_node*)(((URDB*)prdb)->journal.map+offset))
-#  define RDB_cache_node(node,attribute) (u_get_unaligned(((URDB::cache_node*)node)->attribute))
+#  define RDB_cache_node(node,attribute) (u_get_unaligned32(((URDB::cache_node*)node)->attribute))
 
 class U_EXPORT URDB : public UCDB {
 public:

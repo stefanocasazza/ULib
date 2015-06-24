@@ -32,6 +32,9 @@ UHashMap<UString>* UPosting::tbl_words;
 // private
 
 vPF                UPosting::pfunction;
+char*              UPosting::ptr;
+char*              UPosting::data;
+char*              UPosting::ptr_cur_doc_id;
 uint64_t           UPosting::cur_doc_id;
 uint32_t           UPosting::pos;
 uint32_t           UPosting::pos_start;
@@ -44,9 +47,6 @@ uint32_t           UPosting::vec_sub_word_size;
 uint32_t           UPosting::sub_word_pos_prev;
 uint32_t           UPosting::approximate_num_words;
 UString*           UPosting::sub_word;
-const char*        UPosting::ptr;
-const char*        UPosting::data;
-const char*        UPosting::ptr_cur_doc_id;
 UVector<UString>*  UPosting::vec_word;
 UVector<UString>*  UPosting::vec_entry;
 UVector<UString>*  UPosting::vec_posting;
@@ -60,30 +60,27 @@ typedef struct u_property {
 
 static u_property property[32];
 
-/*
-uint32_t off_last_doc_id;
+/**
+ * uint32_t off_last_doc_id;
+ *
+ * typedef struct u_posting {
+ *    uint64_t doc_id;
+ *    uint32_t word_freq;
+ *    // -----> array of unsigned with word_freq elements
+ * } u_posting;
+ *
+ * +------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
+ * | WORD | offset last DOC id | DOC id | frequency | pos 1 | ... | pos n | ... | DOC id | frequency | pos 1 | ... | pos n |
+ * +------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
+ */
 
-typedef struct u_posting {
-   uint64_t doc_id;
-   uint32_t word_freq;
-   // -----> array of unsigned with word_freq elements
-} u_posting;
+#define POSTING32(x,attr) u_get_unaligned32(((u_posting*)(x))->attr)
+#define POSTING64(x,attr) u_get_unaligned64(((u_posting*)(x))->attr)
 
-+------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
-| WORD | offset last DOC id | DOC id | frequency | pos 1 | ... | pos n | ... | DOC id | frequency | pos 1 | ... | pos n |
-+------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
-*/
+#define POSTING_SIZE(x) (sizeof(u_posting)+((POSTING32(x,word_freq))*sizeof(uint32_t)))
 
-#define POSTING_OFFSET_LAST_DOC_ID *((uint32_t*)data)
-
-#define POSTING_POS_PTR    ((uint32_t*)(((char*)ptr)+sizeof(u_posting)))
-#define POSTING_POS(n)     POSTING_POS_PTR[n]
-
-#define POSTING(attr)      ((u_posting*)ptr)->attr
-#define POSTING_SIZE       (sizeof(u_posting)+((POSTING(word_freq))*sizeof(uint32_t)))
-
-#define POSTING1(x,attr)   ((u_posting*)x)->attr
-#define POSTING_SIZE1(x)   (sizeof(u_posting)+((POSTING1(x,word_freq))*sizeof(uint32_t)))
+#define POSTING_POS(n)             u_get_unalignedp32(ptr+sizeof(u_posting)+(n*sizeof(uint32_t)))
+#define POSTING_OFFSET_LAST_DOC_ID u_get_unalignedp32(data)
 
 UPosting::UPosting(uint32_t dimension, bool parsing, bool index)
 {
@@ -181,10 +178,10 @@ UPosting::~UPosting()
       }
 }
 
-// MANAGE POSTING VALUE ON DATABASE
-
 // #define U_OPTIMIZE
 // #define U_COMPRESS_ENTRY
+
+// MANAGE POSTING VALUE ON DATABASE
 
 inline bool UPosting::decompress()
 {
@@ -222,7 +219,7 @@ U_NO_EXPORT void UPosting::readPosting(UStringRep* word_rep, bool flag)
       if (word_rep == 0) posting->duplicate(); // NB: need duplicate string because we need space on string constant..
       }
 
-   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(posting->data()),false)
+   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(posting->data()), false)
 }
 
 U_NO_EXPORT int UPosting::writePosting(int flag)
@@ -230,7 +227,7 @@ U_NO_EXPORT int UPosting::writePosting(int flag)
    U_TRACE(5, "UPosting::writePosting(%d)", flag)
 
    U_INTERNAL_ASSERT_POINTER(cdb_words)
-   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(posting->data()),false)
+   U_INTERNAL_ASSERT_EQUALS(UStringExt::isCompress(posting->data()), false)
 
 #ifdef U_COMPRESS_ENTRY
    if (posting->size() > U_CAPACITY) posting->compress();
@@ -243,7 +240,7 @@ U_NO_EXPORT int UPosting::writePosting(int flag)
 
 // FIND CURRENT DOC ID ON POSTING
 
-inline bool UPosting::checkEntry(const char* str, const char* s, uint32_t n)
+inline bool UPosting::checkEntry(char* str, char* s, uint32_t n)
 {
    U_TRACE(5, "UPosting::checkEntry(%p,%p,%u)", str, n)
 
@@ -253,10 +250,10 @@ inline bool UPosting::checkEntry(const char* str, const char* s, uint32_t n)
    uint32_t offset = (str - s);
 
    U_INTERNAL_DUMP("offset     = %u", offset)
-   U_INTERNAL_DUMP("size_entry = %u", POSTING_SIZE1(str))
+   U_INTERNAL_DUMP("size_entry = %u", POSTING_SIZE(str))
 
    if ((offset % sizeof(uint32_t)) == 0 &&
-       POSTING_SIZE1(str) <= (n - offset))
+       POSTING_SIZE(str) <= (n - offset))
       {
       U_RETURN(true);
       }
@@ -264,7 +261,7 @@ inline bool UPosting::checkEntry(const char* str, const char* s, uint32_t n)
    U_RETURN(false);
 }
 
-U_NO_EXPORT __pure const char* UPosting::find(const char* s, uint32_t n, bool boptmize)
+U_NO_EXPORT __pure char* UPosting::find(char* s, uint32_t n, bool boptmize)
 {
    U_TRACE(5, "UPosting::find(%p,%u,%b)", s, n, boptmize)
 
@@ -272,47 +269,47 @@ U_NO_EXPORT __pure const char* UPosting::find(const char* s, uint32_t n, bool bo
 
    if (boptmize)
       {
-      const char* str;
+      char* str;
 
       do {
-         str = (const char*) u_find(s, n, ptr_cur_doc_id, sizeof(cur_doc_id));
+         str = (char*) u_find(s, n, ptr_cur_doc_id, sizeof(cur_doc_id));
 
          if (str)
             {
-            if (checkEntry(str, s, n)) U_RETURN((char*)str);
+            if (checkEntry(str, s, n)) U_RETURN(str);
 
             ++str;
 
             n = (s + n) - str;
-            s = str;
+            s =           str;
             }
          }
       while (str);
       }
    else
       {
-      const char* str = s;
-      const char* end = s + n;
+      char* str = s;
+      char* end = s + n;
 
       do {
-         if (POSTING1(str,doc_id) == cur_doc_id)
+         if (POSTING64(str,doc_id) == cur_doc_id)
             {
             U_INTERNAL_DUMP("offset     = %u",   (str - s))
-            U_INTERNAL_DUMP("doc_id     = %llu", POSTING1(str,doc_id))
-            U_INTERNAL_DUMP("word_freq  = %u",   POSTING1(str,word_freq))
-            U_INTERNAL_DUMP("size_entry = %u",   POSTING_SIZE1(str))
+            U_INTERNAL_DUMP("doc_id     = %llu", POSTING64(str,doc_id))
+            U_INTERNAL_DUMP("word_freq  = %u",   POSTING32(str,word_freq))
+            U_INTERNAL_DUMP("size_entry = %u",   POSTING_SIZE(str))
 
-            U_RETURN((char*)str);
+            U_RETURN(str);
             }
 
-         str += POSTING_SIZE1(str);
+         str += POSTING_SIZE(str);
          }
       while (str < end);
 
       U_INTERNAL_ASSERT_EQUALS((str - s), (ptrdiff_t)n)
       }
 
-   U_RETURN((const char*)0);
+   U_RETURN((char*)0);
 }
 
 U_NO_EXPORT bool UPosting::setPosting(bool bcache)
@@ -323,9 +320,9 @@ U_NO_EXPORT bool UPosting::setPosting(bool bcache)
 
    if (bcache)
       {
+      static char* last_posting_ptr;
       static uint32_t last_posting_sz;
       static UStringRep* last_word_rep;
-      static const char* last_posting_ptr;
 
       if (word->rep != last_word_rep)
          {
@@ -339,22 +336,24 @@ U_NO_EXPORT bool UPosting::setPosting(bool bcache)
             }
          }
 
-      const char* posting_ptr = (last_posting_sz ? find(last_posting_ptr, last_posting_sz, true) : 0);
+      char* posting_ptr = (last_posting_sz ? find(last_posting_ptr, last_posting_sz, true) : 0);
 
-      U_RETURN(posting_ptr != 0);
+      if (posting_ptr) U_RETURN(true);
+
+      U_RETURN(false);
       }
-   else
-      {
-      U_INTERNAL_ASSERT(*posting)
 
-   // if (posting->empty()) U_RETURN(false);
+   U_INTERNAL_ASSERT(*posting)
 
-      ptr = find(posting->data() + sizeof(uint32_t), posting->size() - sizeof(uint32_t), false);
+// if (posting->empty()) U_RETURN(false);
 
-      U_INTERNAL_DUMP("ptr = %p", ptr)
+   ptr = find(posting->data() + sizeof(uint32_t), posting->size() - sizeof(uint32_t), false);
 
-      U_RETURN(ptr != 0);
-      }
+   U_INTERNAL_DUMP("ptr = %p", ptr)
+
+   if (ptr) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 U_NO_EXPORT bool UPosting::findCurrentDocIdOnPosting(UStringRep* value)
@@ -367,15 +366,14 @@ U_NO_EXPORT bool UPosting::findCurrentDocIdOnPosting(UStringRep* value)
    (void)decompress();
 #endif
 
-   ptr = (const char*)u_find(U_STRING_TO_PARAM(*posting), ptr_cur_doc_id, sizeof(cur_doc_id));
+   ptr = (char*) u_find(U_STRING_TO_PARAM(*posting), ptr_cur_doc_id, sizeof(cur_doc_id));
 
    // check for collision...
 
-   if (ptr)
+   if (ptr &&
+       checkEntry(ptr, U_STRING_TO_PARAM(*posting)))
       {
-      bool result = checkEntry(ptr, U_STRING_TO_PARAM(*posting));
-
-      U_RETURN(result);
+      U_RETURN(true);
       }
 
    U_RETURN(false);
@@ -387,9 +385,9 @@ inline bool UPosting::isOneEntry()
 {
    U_TRACE(5, "UPosting::isOneEntry()")
 
-   bool result = (posting->size() == (sizeof(uint32_t) + POSTING_SIZE));
+   if (posting->size() == (sizeof(uint32_t) + POSTING_SIZE(ptr))) U_RETURN(true);
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 U_NO_EXPORT void UPosting::del()
@@ -402,13 +400,13 @@ U_NO_EXPORT void UPosting::del()
 
    data = posting->data();
 
-   U_INTERNAL_DUMP("word_freq       = %u",   POSTING(word_freq))
-   U_INTERNAL_DUMP("size_entry      = %u",   POSTING_SIZE)
+   U_INTERNAL_DUMP("word_freq       = %u",   POSTING32(ptr,word_freq))
+   U_INTERNAL_DUMP("size_entry      = %u",   POSTING_SIZE(ptr))
    U_INTERNAL_DUMP("cur_doc_id      = %llu", cur_doc_id)
    U_INTERNAL_DUMP("posting->size() = %u",   posting->size())
    U_INTERNAL_DUMP("off_last_doc_id = %u",   POSTING_OFFSET_LAST_DOC_ID)
 
-   U_INTERNAL_ASSERT_MAJOR(POSTING(word_freq), 0)
+   U_INTERNAL_ASSERT_MAJOR(POSTING32(ptr,word_freq), 0)
 
    // check if other reference...
 
@@ -430,14 +428,14 @@ U_NO_EXPORT void UPosting::del()
    uint32_t last_offset = POSTING_OFFSET_LAST_DOC_ID;
 #endif
 
-   const char* end = posting->rep->end();
+   char* end = posting->rep->end();
 
    do {
-      U_INTERNAL_DUMP("doc_id          = %lu", POSTING(doc_id))
+      U_INTERNAL_DUMP("doc_id          = %lu", POSTING64(ptr,doc_id))
 
-      size_entry = POSTING_SIZE;
+      size_entry = POSTING_SIZE(ptr);
 
-      if (POSTING(doc_id) == cur_doc_id) break;
+      if (POSTING64(ptr,doc_id) == cur_doc_id) break;
 
       ptr += size_entry;
       }
@@ -448,7 +446,7 @@ U_NO_EXPORT void UPosting::del()
       U_ERROR("del(): cannot find DocID<%llu> reference for word<%.*s> on index database", cur_doc_id, U_STRING_TO_TRACE(*word));
       }
 
-   (void) posting->replace((ptr - data), size_entry, 0, '\0');
+   (void) posting->replace(ptr - data, size_entry, 0, '\0');
 
    // reassign value
 
@@ -458,22 +456,22 @@ U_NO_EXPORT void UPosting::del()
 
    U_INTERNAL_DUMP("posting->size() = %u", posting->size())
 
-   U_INTERNAL_ASSERT_EQUALS(POSTING_OFFSET_LAST_DOC_ID,last_offset)
+   U_INTERNAL_ASSERT_EQUALS(POSTING_OFFSET_LAST_DOC_ID, last_offset)
 
    do {
-      size_entry = POSTING_SIZE;
+      size_entry = POSTING_SIZE(ptr);
 
       ptr += size_entry;
       }
    while (ptr < end);
 
-   U_INTERNAL_ASSERT_EQUALS((ptr - data), (ptrdiff_t)posting->size())
+   U_INTERNAL_ASSERT_EQUALS(ptr - data, (ptrdiff_t)posting->size())
 
-   POSTING_OFFSET_LAST_DOC_ID = ((ptr - data) - size_entry);
+   u_put_unalignedp32(data, (ptr - data) - size_entry);
 
    U_INTERNAL_DUMP("off_last_doc_id = %u", POSTING_OFFSET_LAST_DOC_ID)
 
-   U_INTERNAL_ASSERT_MINOR(POSTING_OFFSET_LAST_DOC_ID,last_offset)
+   U_INTERNAL_ASSERT_MINOR(POSTING_OFFSET_LAST_DOC_ID, last_offset)
 
    result = writePosting(RDB_REPLACE);
 
@@ -489,8 +487,8 @@ inline void UPosting::init()
 {
    U_TRACE(5, "UPosting::init()")
 
-   POSTING(doc_id)    = cur_doc_id;
-   POSTING(word_freq) = 0;
+   u_put_unalignedp64(&(((u_posting*)(ptr))->doc_id), cur_doc_id);
+   u_put_unalignedp32(&(((u_posting*)(ptr))->word_freq), 0);
 }
 
 inline void UPosting::checkCapacity()
@@ -540,9 +538,10 @@ U_NO_EXPORT void UPosting::add()
 
       // setting off_last_doc_id for first document...
 
-      size_entry                 = sizeof(u_posting);
-      off_last_doc_id            = sizeof(off_last_doc_id);
-      POSTING_OFFSET_LAST_DOC_ID = sizeof(off_last_doc_id);
+      size_entry      = sizeof(u_posting);
+      off_last_doc_id = sizeof(off_last_doc_id);
+
+      u_put_unalignedp32(data, sizeof(off_last_doc_id));
 
       init();
 
@@ -565,23 +564,24 @@ U_NO_EXPORT void UPosting::add()
       data            = posting->data();
       off_last_doc_id = POSTING_OFFSET_LAST_DOC_ID;
       ptr             = data + off_last_doc_id;
-      size_entry      = POSTING_SIZE;
+      size_entry      = POSTING_SIZE(ptr);
 
-      U_INTERNAL_DUMP("word_freq       = %u", POSTING(word_freq))
+      U_INTERNAL_DUMP("word_freq       = %u", POSTING32(ptr,word_freq))
       U_INTERNAL_DUMP("size_entry      = %u", size_entry)
       U_INTERNAL_DUMP("off_last_doc_id = %u", off_last_doc_id)
 
-      U_INTERNAL_ASSERT_MAJOR(POSTING(word_freq), 0)
+      U_INTERNAL_ASSERT_MAJOR(POSTING32(ptr,word_freq), 0)
 
       U_ASSERT((off_last_doc_id + size_entry) <= posting->capacity())
 
       // check for new document...
 
-      if (POSTING(doc_id) != cur_doc_id)
+      if (POSTING64(ptr,doc_id) != cur_doc_id)
          {
-         off_last_doc_id           += size_entry;
-         size_entry                 = sizeof(u_posting);
-         POSTING_OFFSET_LAST_DOC_ID = off_last_doc_id;
+         off_last_doc_id += size_entry;
+               size_entry = sizeof(u_posting);
+
+         u_put_unalignedp32(data, off_last_doc_id);
 
          // check string capacity...
 
@@ -591,28 +591,30 @@ U_NO_EXPORT void UPosting::add()
          }
       }
 
-   U_INTERNAL_ASSERT_EQUALS(cur_doc_id,      POSTING(doc_id))
+   U_INTERNAL_ASSERT_EQUALS(cur_doc_id,      POSTING64(ptr,doc_id))
    U_INTERNAL_ASSERT_EQUALS(off_last_doc_id, POSTING_OFFSET_LAST_DOC_ID)
 
    // check string capacity...
 
    checkCapacity();
 
-   U_INTERNAL_ASSERT_EQUALS(cur_doc_id,      POSTING(doc_id))
+   U_INTERNAL_ASSERT_EQUALS(cur_doc_id,      POSTING64(ptr,doc_id))
    U_INTERNAL_ASSERT_EQUALS(off_last_doc_id, POSTING_OFFSET_LAST_DOC_ID)
 
    // save position of word in document...
 
-   POSTING_POS(POSTING(word_freq)) = pos;
+   word_freq = POSTING32(ptr,word_freq);
 
-   posting->size_adjust_force(space);
+   u_put_unalignedp32(ptr+sizeof(u_posting)+(word_freq*sizeof(uint32_t)), pos);
 
-   POSTING(word_freq)++;
+   u_put_unalignedp32(&(((u_posting*)(ptr))->word_freq), word_freq+1);
 
    U_INTERNAL_DUMP("pos       = %u", pos)
    U_INTERNAL_DUMP("pos[0]    = %u", POSTING_POS(0))
    U_INTERNAL_DUMP("pos[1]    = %u", POSTING_POS(1))
-   U_INTERNAL_DUMP("word_freq = %u", POSTING(word_freq))
+   U_INTERNAL_DUMP("word_freq = %u", POSTING32(ptr,word_freq))
+
+   posting->size_adjust_force(space);
 
    if (tbl_words == 0)
       {
@@ -635,13 +637,13 @@ U_NO_EXPORT void UPosting::checkPosting()
 
    U_INTERNAL_DUMP("cur_doc_id      = %llu", cur_doc_id)
 
-   U_INTERNAL_ASSERT_EQUALS(cur_doc_id, POSTING(doc_id))
+   U_INTERNAL_ASSERT_EQUALS(cur_doc_id, POSTING64(ptr,doc_id))
 
-   word_freq = POSTING(word_freq);
+   word_freq = POSTING32(ptr,word_freq);
 
    U_INTERNAL_DUMP("word_freq       = %u", word_freq)
-   U_INTERNAL_DUMP("size_entry      = %u", POSTING_SIZE)
-   U_INTERNAL_DUMP("offset          = %u", ptr - posting->data())
+   U_INTERNAL_DUMP("size_entry      = %u", POSTING_SIZE(ptr))
+   U_INTERNAL_DUMP("offset          = %u", posting->distance(ptr))
    U_INTERNAL_DUMP("posting->size() = %u", posting->size())
 
 #if defined(U_OPTIMIZE) && defined(DEBUG)
@@ -651,23 +653,24 @@ U_NO_EXPORT void UPosting::checkPosting()
       }
 #endif
 
-   uint32_t* vpos = POSTING_POS_PTR;
-   uint32_t end = content->size(), sz = word->size();
+   uint32_t end = content->size(),
+             sz =    word->size();
 
-   const char* ptr_word = word->data();
-   const char* ptr_data = content->data();
+   uint32_t* vpos = (uint32_t*)(ptr+sizeof(u_posting));
+
+   char* ptr_word = word->data();
+   char* ptr_data = content->data();
 
    for (uint32_t i = 0; i < word_freq; ++i)
       {
-      uint32_t start = vpos[i];
+      uint32_t start = u_get_unalignedp32(vpos+i);
 
       U_INTERNAL_DUMP("start           = %u", start)
 
       if (start >= end ||
           u_equal(ptr_word, ptr_data+start, sz, cdb_words->ignoreCase()))
          {
-         U_ERROR("checkPosting(): word<%.*s> reference at position<%u> for DocID<%llu %.*s> lost",
-                     U_STRING_TO_TRACE(*word), start, cur_doc_id, U_STRING_TO_TRACE(*filename));
+         U_ERROR("checkPosting(): word<%v> reference at position<%u> for DocID<%llu %v> lost", word->rep, start, cur_doc_id, filename->rep);
          }
       }
 }
@@ -684,7 +687,7 @@ void UPosting::processWord(int32_t op)
 
    pos = pos_start + (word->data() - content->data());
 
-   U_INTERNAL_DUMP("word = %.*S pos = %u", U_STRING_TO_TRACE(*word), pos)
+   U_INTERNAL_DUMP("word = %V pos = %u", word->rep, pos)
 
    if (op == 0 ||
        op == 1)
@@ -698,8 +701,7 @@ void UPosting::processWord(int32_t op)
       if (posting->empty()  == true ||
           setPosting(false) == false)
          {
-         U_ERROR("processWord(%d): word<%.*s> reference at position<%u> for DocID<%llu %.*s> lost",
-                     op, U_STRING_TO_TRACE(*word), pos, cur_doc_id, U_STRING_TO_TRACE(*filename));
+         U_ERROR("processWord(%d): word<%v> reference at position<%u> for DocID<%llu %v> lost", op, word->rep, pos, cur_doc_id, filename->rep);
          }
 
       if      (op == 2) del();          // del
@@ -810,7 +812,7 @@ void UPosting::setDocID(int32_t op)
 
       filename->duplicate(); // NB: need duplicate string because depends on volatile buffer of filename...
 
-      U_INTERNAL_DUMP("dirname = %.*S", U_STRING_TO_TRACE(*filename))
+      U_INTERNAL_DUMP("dirname = %V", filename->rep)
       }
 
    // insert/fetch/remove into table of docs name
@@ -863,14 +865,14 @@ void UPosting::callForPosting(vPF function)
    U_INTERNAL_ASSERT(*posting)
    U_INTERNAL_ASSERT_POINTER(function)
 
-   data            = posting->data();
-   ptr             = data + sizeof(uint32_t);
-   const char* end = posting->rep->end();
+   data      = posting->data();
+   ptr       = data + sizeof(uint32_t);
+   char* end = posting->rep->end();
 
    do {
-      word_freq  = POSTING(word_freq);
-      size_entry = POSTING_SIZE;
-      cur_doc_id = POSTING(doc_id);
+      word_freq  = POSTING32(ptr,word_freq);
+      size_entry = POSTING_SIZE(ptr);
+      cur_doc_id = POSTING64(ptr,doc_id);
 
       U_INTERNAL_DUMP("word_freq  = %u",   word_freq)
       U_INTERNAL_DUMP("size_entry = %u",   size_entry)
@@ -882,7 +884,7 @@ void UPosting::callForPosting(vPF function)
       }
    while (ptr < end);
 
-   U_INTERNAL_ASSERT_EQUALS((ptr - data), (ptrdiff_t)posting->size())
+   U_INTERNAL_ASSERT_EQUALS(ptr - data, (ptrdiff_t)posting->size())
 }
 
 U_NO_EXPORT void UPosting::setFilename()
@@ -896,8 +898,7 @@ U_NO_EXPORT void UPosting::setFilename()
 
    if (filename->empty())
       {
-      U_ERROR("setFilename(): cannot find document name from DocID<%llu> reference for word<%.*s> on index database",
-               cur_doc_id, U_STRING_TO_TRACE(*word));
+      U_ERROR("setFilename(): cannot find document name from DocID<%llu> reference for word<%v> on index database", cur_doc_id, word->rep);
       }
 }
 
@@ -939,7 +940,7 @@ U_NO_EXPORT bool UPosting::setVectorCompositeWord()
       {
       *sub_word = (*vec_sub_word)[i];
 
-      U_INTERNAL_DUMP("sub_word = %.*S", U_STRING_TO_TRACE(*sub_word))
+      U_INTERNAL_DUMP("sub_word = %V", sub_word->rep)
 
       if (sub_word->size() < min_word_size)
          {
@@ -973,7 +974,7 @@ inline bool UPosting::setSubWord(uint32_t i)
    *sub_word      = (*vec_sub_word)[i];
     sub_word_size = sub_word->size();
 
-   U_INTERNAL_DUMP("sub_word = %.*S", U_STRING_TO_TRACE(*sub_word))
+   U_INTERNAL_DUMP("sub_word = %V", sub_word->rep)
 
    if (sub_word_size < min_word_size)
       {
@@ -995,17 +996,17 @@ inline UString UPosting::extractDocID()
 {
    U_TRACE(5, "UPosting::extractDocID()")
 
-   /*
-   +------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
-   | WORD | offset last DOC id | DOC id | frequency | pos 1 | ... | pos n | ... | DOC id | frequency | pos 1 | ... | pos n |
-   +------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
-   */
+   /**
+    * +------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
+    * | WORD | offset last DOC id | DOC id | frequency | pos 1 | ... | pos n | ... | DOC id | frequency | pos 1 | ... | pos n |
+    * +------+--------------------+--------+-----------+-------+-----+-------+-----+--------+-----------+-------+-----+-------+
+    */
 
    UStringRep* r;
    UString s(size_entry);
 
-   const char* sdata = s.data();
-   const char* sptr  = sdata;
+   char* sdata = s.data();
+   char* sptr  = sdata;
 
    for (uint32_t i = 0, n = vec_entry->size(); i < n; ++i)
       {
@@ -1013,18 +1014,19 @@ inline UString UPosting::extractDocID()
 
 #  ifdef U_COMPRESS_ENTRY
       posting->_assign(r);
+
       if (decompress()) r = posting->rep;
 #  endif
 
-      data = r->data();
-      ptr  = data + sizeof(uint32_t);
-      const char* end  = r->end();
+      data      = r->data();
+      ptr       = data + sizeof(uint32_t);
+      char* end = r->end();
 
       do {
-         size_entry = POSTING_SIZE;
-         cur_doc_id = POSTING(doc_id);
+         size_entry = POSTING_SIZE(ptr);
+         cur_doc_id = POSTING64(ptr,doc_id);
 
-         U_INTERNAL_DUMP("word_freq  = %u",   POSTING(word_freq))
+         U_INTERNAL_DUMP("word_freq  = %u",   POSTING32(ptr,word_freq))
          U_INTERNAL_DUMP("size_entry = %u",   size_entry)
          U_INTERNAL_DUMP("cur_doc_id = %llu", cur_doc_id)
 
@@ -1035,7 +1037,7 @@ inline UString UPosting::extractDocID()
          }
       while (ptr < end);
 
-      U_INTERNAL_ASSERT_EQUALS((ptr - data), (ptrdiff_t)r->size())
+      U_INTERNAL_ASSERT_EQUALS(ptr - data, (ptrdiff_t)r->size())
       }
 
    s.size_adjust_force(sptr - sdata);
@@ -1043,16 +1045,17 @@ inline UString UPosting::extractDocID()
    U_RETURN_STRING(s);
 }
 
-/*
-* findDocID() is be called from:
-* ------------------------------------------------
-* UQueryParser::evaluate() (loop for all doc name)
-* ------------------------------------------------
-*/
+/**
+ * ------------------------------------------------
+ * findDocID() is be called from:
+ * ------------------------------------------------
+ * UQueryParser::evaluate() (loop for all doc name)
+ * ------------------------------------------------
+ */
 
 bool UPosting::findDocID(UStringRep* word_rep)
 {
-   U_TRACE(5, "UPosting::findDocID(%p)", word_rep)
+   U_TRACE(5, "UPosting::findDocID(%V)", word_rep)
 
    U_INTERNAL_ASSERT(*str_cur_doc_id)
    U_INTERNAL_ASSERT_POINTER(cdb_words)
@@ -1115,11 +1118,12 @@ bool UPosting::findDocID(UStringRep* word_rep)
          if (vec_sub_word) resetVectorCompositeWord();
          }
 
-      bool result = callForCompositeWord(0);
+      if (callForCompositeWord(0)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
-   else if (property[i].is_meta)
+
+   if (property[i].is_meta)
       {
       // context meta word...
 
@@ -1135,16 +1139,20 @@ bool UPosting::findDocID(UStringRep* word_rep)
          vec_posting->push(entry);
          }
 
-      bool result = (entry && u_find(entry.data(), entry.size(), ptr_cur_doc_id, sizeof(cur_doc_id)));
+      if (entry &&
+          u_find(entry.data(), entry.size(), ptr_cur_doc_id, sizeof(cur_doc_id)))
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // context single word...
 
-   bool result = setPosting(true);
+   if (setPosting(true)) U_RETURN(true);
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 void UPosting::callForPosting(vPF function, bool is_space)
@@ -1174,14 +1182,16 @@ void UPosting::callForPosting(vPF function, bool is_space)
       }
 }
 
-/* CONTEXT COMPOSITE WORD...
-*
-* checkCompositeWord() may be called from:
-* ------------------------------------------------
-* UQueryParser::evaluate() (loop for all doc name)
-* callForPosting()         (for composite word)
-* ------------------------------------------------
-*/
+/**
+ * ------------------------------------------------
+ * CONTEXT COMPOSITE WORD...
+ * ------------------------------------------------
+ * checkCompositeWord() may be called from:
+ * ------------------------------------------------
+ * UQueryParser::evaluate() (loop for all doc name)
+ * callForPosting()         (for composite word)
+ * ------------------------------------------------
+ */
 
 U_NO_EXPORT bool UPosting::callForCompositeWord(vPF function)
 {
@@ -1190,7 +1200,10 @@ U_NO_EXPORT bool UPosting::callForCompositeWord(vPF function)
    U_INTERNAL_ASSERT_POINTER(cdb_names)
 
    if (vec_sub_word == 0 &&
-       setVectorCompositeWord() == false) U_RETURN(false);
+       setVectorCompositeWord() == false)
+      {
+      U_RETURN(false);
+      }
 
    // find the first sub-word util
 
@@ -1213,8 +1226,8 @@ U_NO_EXPORT bool UPosting::callForCompositeWord(vPF function)
 #endif
 
    bool match;
-   const char* ptr1;
-   const char* end1 = 0;
+   char* ptr1;
+   char* end1 = 0;
    int32_t i, first_subword_freq;
    uint32_t j, k, sz = sub_word_size;
 
@@ -1238,8 +1251,8 @@ U_NO_EXPORT bool UPosting::callForCompositeWord(vPF function)
 
    do {
       ptr        = ptr1;
-      cur_doc_id = POSTING(doc_id);
-      size_entry = POSTING_SIZE;
+      cur_doc_id = POSTING64(ptr,doc_id);
+      size_entry = POSTING_SIZE(ptr);
 
       U_INTERNAL_DUMP("cur_doc_id          = %llu", cur_doc_id)
       U_INTERNAL_DUMP("size_entry          = %u",   size_entry)
@@ -1247,7 +1260,7 @@ U_NO_EXPORT bool UPosting::callForCompositeWord(vPF function)
       setDocID(false);
 
 start:
-      first_subword_freq = POSTING(word_freq);
+      first_subword_freq = POSTING32(ptr,word_freq);
 
       U_INTERNAL_DUMP("first_subword_freq  = %u", first_subword_freq)
 
@@ -1278,9 +1291,9 @@ loop1:
 
             U_INTERNAL_DUMP("subword            = %.*S", U_STRING_TO_TRACE(*sub_word))
 
-            U_INTERNAL_ASSERT_EQUALS(cur_doc_id, POSTING(doc_id))
+            U_INTERNAL_ASSERT_EQUALS(cur_doc_id, POSTING64(ptr,doc_id))
 
-            word_freq = POSTING(word_freq);
+            word_freq = POSTING32(ptr,word_freq);
 
             U_INTERNAL_DUMP("word_freq          = %u", word_freq)
 
@@ -1328,7 +1341,7 @@ loop1:
       }
    while (ptr1 < end1);
 
-   U_INTERNAL_ASSERT_EQUALS((ptr1 - data), (ptrdiff_t)posting_size)
+   U_INTERNAL_ASSERT_EQUALS(ptr1 - data, (ptrdiff_t)posting_size)
 
    U_RETURN(true);
 }
@@ -1350,7 +1363,6 @@ U_NO_EXPORT void UPosting::printPosting()
    static UStringRep* last = word->rep;
 
 start:
-
    if (last == word->rep)
       {
       if (buffer->empty())
@@ -1362,12 +1374,12 @@ start:
 #     endif
          }
 
-      uint32_t* vpos = POSTING_POS_PTR;
+      uint32_t* vpos = (uint32_t*)(ptr+sizeof(u_posting));
 
       if (buffer->space() < SIZE_ENTRY) buffer->reserve(buffer->capacity() * 2);
 
-                                               buffer->snprintf_add("(%llX,%u,%u", cur_doc_id, word_freq, vpos[0]);
-      for (uint32_t i = 1; i < word_freq; ++i) buffer->snprintf_add(",%u", vpos[i]);
+                                               buffer->snprintf_add("(%llX,%u,%u", cur_doc_id, word_freq, u_get_unalignedp32(vpos));
+      for (uint32_t i = 1; i < word_freq; ++i) buffer->snprintf_add(",%u", u_get_unalignedp32(vpos+i));
                                         (void) buffer->append(U_CONSTANT_TO_PARAM(")"));
       }
    else

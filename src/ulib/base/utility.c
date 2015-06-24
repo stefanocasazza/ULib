@@ -565,7 +565,7 @@ __pure uint32_t u_findEndHeader1(const char* restrict str, uint32_t n)
 
       if (p == 0) break;
 
-      if (*(int32_t*)p == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+      if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
          {
          pos = p - str + 4;
 
@@ -600,7 +600,7 @@ uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
 
       if (p == 0) break;
 
-      if (*(int32_t*)(p-1) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
+      if (u_get_unalignedp32(p-1) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
          {
          pos = p - str + 3;
 
@@ -618,7 +618,7 @@ uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
 
       if (p[1] == '\n')
          {
-         U_INTERNAL_ASSERT_EQUALS(*(int16_t*)p, U_MULTICHAR_CONSTANT16('\n','\n'))
+         U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp16(p), U_MULTICHAR_CONSTANT16('\n','\n'))
 
          pos = p - str + 2;
 
@@ -1949,7 +1949,7 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
       {
       u__memcpy(program_w32, program, len, __PRETTY_FUNCTION__);
 
-      *(int32_t*)(program_w32+len) = U_MULTICHAR_CONSTANT32('.','e','x','e');
+      u_put_unalignedp32(program_w32+len, U_MULTICHAR_CONSTANT32('.','e','x','e'));
 
       program = program_w32;
 
@@ -2999,7 +2999,7 @@ __pure bool u_isHTML(const char* restrict ptr)
 
    U_INTERNAL_TRACE("u_isHTML(%.*s)", 12, ptr)
 
-   switch (*(int32_t*)ptr)
+   switch (u_get_unalignedp32(ptr))
       {
       case VAL_h1:
       case VAL_H1:
@@ -4630,7 +4630,7 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
 
    U_INTERNAL_ASSERT_POINTER(suffix)
 
-   i = (*(uint32_t*)suffix);
+   i = u_get_unalignedp32(suffix);
 
    switch (i)
       {
@@ -4699,7 +4699,7 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
          }
       }
 
-   switch (*(int16_t*)suffix)
+   switch (u_get_unalignedp16(suffix))
       {
       case U_MULTICHAR_CONSTANT16('j','s'):
          {

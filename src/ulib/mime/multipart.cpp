@@ -58,14 +58,14 @@ UMimeMultipartMsg::UMimeMultipartMsg(const char* type, uint32_t type_len, Encodi
       }
    else
       {
-      *(int16_t*)ptr  = U_MULTICHAR_CONSTANT16('\r','\n');
-                 ptr += 2;
+      u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('\r','\n'));
+                         ptr += 2;
 
       line_terminator = U_CRLF;
       }
 
-   *(int32_t*)ptr  = U_MULTICHAR_CONSTANT32('-','-','=','_');
-              ptr += 4;
+   u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('-','-','=','_'));
+                      ptr += 4;
 
    boundary_len = (ptr + u_num2str64(ptr, UServices::getUniqUID()) - boundary);
 

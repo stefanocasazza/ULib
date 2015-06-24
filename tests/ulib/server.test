@@ -36,7 +36,7 @@ $SLEEP
 
 kill_prg test_server TERM
 $SLEEP
-killall -9 test_server
+killall -9 test_server 2>/dev/null
 
 rm -rf /tmp/form*
 

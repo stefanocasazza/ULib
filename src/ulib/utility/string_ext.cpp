@@ -1303,8 +1303,8 @@ UString UStringExt::compress(const char* s, uint32_t sz)
 
    // copy magic byte
 
-   *(int32_t*)ptr  = U_MULTICHAR_CONSTANT32('\x89','M','N','Z'); // U_MINIZ_COMPRESS
-              ptr += 4;
+   u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('\x89','M','N','Z')); // U_MINIZ_COMPRESS
+                      ptr += 4;
 
    // copy original size
 
@@ -1459,9 +1459,9 @@ UString UStringExt::gunzip(const char* ptr, uint32_t sz, uint32_t space) // .gz 
          uint32_t* psize_original = (uint32_t*)(ptr + sz - 4); // read original size
 
 #     if __BYTE_ORDER == __LITTLE_ENDIAN
-         space =            *psize_original;
+         space =            u_get_unalignedp32(psize_original);
 #     else
-         space = u_invert32(*psize_original);
+         space = u_invert32(u_get_unalignedp32(psize_original));
 #     endif
 
          U_INTERNAL_DUMP("space = %u", space)

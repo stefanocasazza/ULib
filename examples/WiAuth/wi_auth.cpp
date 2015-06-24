@@ -11,36 +11,25 @@ static void usp_end_wi_auth();
    #include <ulib/examples/wi_auth_declaration.h>  
    
 extern "C" {
-extern U_EXPORT int runDynamicPage_wi_auth(UClientImage_Base* client_image);
-       U_EXPORT int runDynamicPage_wi_auth(UClientImage_Base* client_image)
+extern U_EXPORT void runDynamicPage_wi_auth(int param);
+       U_EXPORT void runDynamicPage_wi_auth(int param)
 {
-   U_TRACE(0, "::runDynamicPage_wi_auth(%p)", client_image)
+   U_TRACE(0, "::runDynamicPage_wi_auth(%d)", param)
    
    
-   // ------------------------------
-   // special argument value:
-   // ------------------------------
-   //  0 -> call it as service
-   // -1 -> init
-   // -2 -> reset
-   // -3 -> destroy
-   // -4 -> call it for sigHUP
-   // -5 -> call it after fork
-   // ------------------------------
-   
-   if (client_image)
+   if (param)
       {
-      if (client_image == (void*)-1) { usp_init_wi_auth(); U_RETURN(0); }
+      if (param == U_DPAGE_INIT) { usp_init_wi_auth(); return; }
    
-      if (client_image == (void*)-3) { usp_end_wi_auth(); U_RETURN(0); }
+      if (param == U_DPAGE_DESTROY) { usp_end_wi_auth(); return; }
    
-      if (client_image == (void*)-4) { usp_sighup_wi_auth(); U_RETURN(0); }
+      if (param == U_DPAGE_SIGHUP) { usp_sighup_wi_auth(); return; }
    
-      if (client_image >= (void*)-5) U_RETURN(0);
-   
-      U_http_info.endHeader = 0;
+      if (param >= U_DPAGE_FORK) return;
       }
-      
+   
+   U_http_info.endHeader = 0;
+   
    static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
       GET_ENTRY(admin),
       GET_ENTRY(admin_edit_ap),
@@ -111,10 +100,18 @@ extern U_EXPORT int runDynamicPage_wi_auth(UClientImage_Base* client_image);
    
    start_op = u_now->tv_sec;
    
+   U_http_info.nResponseCode = 0;
+   
    UHTTP::manageRequest( GET_table, sizeof( GET_table) / sizeof( GET_table[0]),
                         POST_table, sizeof(POST_table) / sizeof(POST_table[0]));
    
-      UClientImage_Base::setRequestNoCache();
+   U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
    
-   U_RETURN(200);
+   // NB: it is used by server_plugin_ssi to continue processing with a shell script...
+   
+   if (U_http_info.nResponseCode == 0) (void) UClientImage_Base::environment->append(U_CONSTANT_TO_PARAM("HTTP_RESPONSE_CODE=0\n"));
+   
+   UClientImage_Base::setRequestNoCache();
+   
+   
 } }

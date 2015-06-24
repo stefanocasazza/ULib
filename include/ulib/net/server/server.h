@@ -89,7 +89,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
                                                                           (void) strcpy(UServer_Base::mod_name[0], "["#name"] "); } }
 
 #  define U_SRV_LOG(          fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s" fmt,       UServer_Base::mod_name[0] , ##args); }
-#  define U_SRV_LOG_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s" fmt " %v", UServer_Base::mod_name[0] , ##args, UServer_Base::pClientIndex->logbuf->rep); }
+#  define U_SRV_LOG_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s" fmt " %v", UServer_Base::mod_name[0] , ##args, UServer_Base::pClientImage->logbuf->rep); }
 #endif
 
 class UHTTP;
@@ -390,7 +390,7 @@ public:
       }
 
    static uint32_t           nClientIndex;
-   static UClientImage_Base* pClientIndex;
+   static UClientImage_Base* pClientImage;
    static UClientImage_Base* vClientImage;
    static UClientImage_Base* eClientImage;
 
@@ -740,9 +740,9 @@ protected:
 
       vClientImage = new client_type[UNotifier::max_connection];
 
-      U_INTERNAL_DUMP("vClientImage = %p pClientIndex = %p", vClientImage, pClientIndex)
+      U_INTERNAL_DUMP("vClientImage = %p pClientImage = %p", vClientImage, pClientImage)
 
-      U_INTERNAL_ASSERT_EQUALS(vClientImage, pClientIndex)
+      U_INTERNAL_ASSERT_EQUALS(vClientImage, pClientImage)
       }
 
 #ifdef DEBUG

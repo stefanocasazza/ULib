@@ -3204,7 +3204,7 @@ static bool checkLoginValidate(bool all)
 
       if (*ptr3 != '&'                         ||
           uid->findWhiteSpace() != U_NOT_FOUND ||
-          *(int32_t*)ptr1 != U_MULTICHAR_CONSTANT32('u','i','d','='))
+          u_get_unalignedp32(ptr1) != U_MULTICHAR_CONSTANT32('u','i','d','='))
          {
          U_LOGGER("*** checkLoginValidate(%b) FAILED: DATA(%v) ***", all, str.rep);
 
@@ -3795,11 +3795,8 @@ static void GET_fake_login_validate()
    // => redir_to
    // ========================
 
-   U_INTERNAL_ASSERT_MAJOR(U_HTTP_URI_QUERY_LEN, 0)
-
-   (void) redirect->assign(U_HTTP_QUERY_TO_PARAM);
-
-   if (checkLoginValidate(false) == false)
+   if (u_clientimage_info.http_info.query_len == 0 ||
+       ((void) redirect->assign(U_HTTP_QUERY_TO_PARAM), checkLoginValidate(false)) == false)
       {
       loginWithProblem();
 

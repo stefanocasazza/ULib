@@ -215,21 +215,21 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_ClientImage_parallelization  u_clientimage_info.flag.c[7]
 
 #define U_http_version                 u_clientimage_info.http_info.flag[ 0]
-#define U_http_host_len                u_clientimage_info.http_info.flag[ 1]
-#define U_http_host_vlen               u_clientimage_info.http_info.flag[ 2]
-#define U_http_range_len               u_clientimage_info.http_info.flag[ 3]
-#define U_http_accept_len              u_clientimage_info.http_info.flag[ 4]
-#define U_http_keep_alive              u_clientimage_info.http_info.flag[ 5]
-#define U_http_method_num              u_clientimage_info.http_info.flag[ 6]
-#define U_http_data_chunked            u_clientimage_info.http_info.flag[ 7]
-#define U_http_websocket_len           u_clientimage_info.http_info.flag[ 8]
-#define U_http2_settings_len           u_clientimage_info.http_info.flag[ 9]
-#define U_http_ip_client_len           u_clientimage_info.http_info.flag[10]
-#define U_http_is_accept_gzip          u_clientimage_info.http_info.flag[11] /* NB: this position(11) is locked by mod_proxy (UHttpClient_Base::u_http_info_save)... */
-#define U_http_content_type_len        u_clientimage_info.http_info.flag[12]
-#define U_http_is_request_nostat       u_clientimage_info.http_info.flag[13]
-#define U_http_accept_language_len     u_clientimage_info.http_info.flag[14]
-#define U_http_is_apache_log_prepared  u_clientimage_info.http_info.flag[15]
+#define U_http_sendfile                u_clientimage_info.http_info.flag[ 1]
+#define U_http_host_len                u_clientimage_info.http_info.flag[ 2]
+#define U_http_host_vlen               u_clientimage_info.http_info.flag[ 3]
+#define U_http_range_len               u_clientimage_info.http_info.flag[ 4]
+#define U_http_accept_len              u_clientimage_info.http_info.flag[ 5]
+#define U_http_keep_alive              u_clientimage_info.http_info.flag[ 6]
+#define U_http_method_num              u_clientimage_info.http_info.flag[ 7]
+#define U_http_data_chunked            u_clientimage_info.http_info.flag[ 8]
+#define U_http_websocket_len           u_clientimage_info.http_info.flag[ 9]
+#define U_http2_settings_len           u_clientimage_info.http_info.flag[10]
+#define U_http_ip_client_len           u_clientimage_info.http_info.flag[11]
+#define U_http_is_accept_gzip          u_clientimage_info.http_info.flag[12] /* NB: this position(12) is locked by mod_proxy (UHttpClient_Base::u_http_info_save)... */
+#define U_http_content_type_len        u_clientimage_info.http_info.flag[13]
+#define U_http_is_request_nostat       u_clientimage_info.http_info.flag[14]
+#define U_http_accept_language_len     u_clientimage_info.http_info.flag[15]
 
 #define U_HTTP_INFO_INIT(c)  (void) U_SYSCALL(memset, "%p,%d,%u", &(u_clientimage_info.http_info),               c, sizeof(uhttpinfo))
 #define U_HTTP_INFO_RESET(c) (void) U_SYSCALL(memset, "%p,%d,%u", &(u_clientimage_info.http_info.nResponseCode), c, 52)

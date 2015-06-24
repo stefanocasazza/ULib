@@ -410,9 +410,9 @@ void UHTTP2::setConnection()
 {
    U_TRACE(0, "UHTTP2::setConnection()")
 
-   if (pConnection != UServer_Base::pClientIndex->connection)
+   if (pConnection != UServer_Base::pClientImage->connection)
       {
-      pConnection    = (Connection*) UServer_Base::pClientIndex->connection;
+      pConnection    = (Connection*) UServer_Base::pClientImage->connection;
       pConnectionEnd = (char*)pConnection + sizeof(Connection);
 
       pConnection->state         = CONN_STATE_OPEN;
@@ -879,7 +879,7 @@ case_2_3: // GET - POST
 
             if (*ptr1 == '\0') goto error;
 
-            switch (*(int32_t*)ptr1)
+            switch (u_get_unalignedp32(ptr1))
                {
                case U_MULTICHAR_CONSTANT32('g','e','t','\0'):
                case U_MULTICHAR_CONSTANT32('G','E','T','\0'): U_http_method_type = HTTP_GET;                                 break;
@@ -1341,9 +1341,9 @@ bool UHTTP2::manageSetting()
 
    const char* ptr = UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
 
-   if (*(int64_t*) ptr     == U_MULTICHAR_CONSTANT64( 'P', 'R','I',' ', '*', ' ', 'H', 'T') &&
-       *(int64_t*)(ptr+8)  == U_MULTICHAR_CONSTANT64( 'T', 'P','/','2', '.', '0','\r','\n') &&
-       *(int64_t*)(ptr+16) == U_MULTICHAR_CONSTANT64('\r','\n','S','M','\r','\n','\r','\n'))
+   if (u_get_unalignedp64(ptr)    == U_MULTICHAR_CONSTANT64( 'P', 'R','I',' ', '*', ' ', 'H', 'T') &&
+       u_get_unalignedp64(ptr+8)  == U_MULTICHAR_CONSTANT64( 'T', 'P','/','2', '.', '0','\r','\n') &&
+       u_get_unalignedp64(ptr+16) == U_MULTICHAR_CONSTANT64('\r','\n','S','M','\r','\n','\r','\n'))
       {
       if (U_http2_settings_len)
          {

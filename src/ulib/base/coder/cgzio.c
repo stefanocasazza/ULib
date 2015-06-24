@@ -250,11 +250,11 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
       return 0;
       }
 
-   if (*(int16_t*)input == U_MULTICHAR_CONSTANT16('\x1F','\x8B'))
+   if (u_get_unalignedp16(input) == U_MULTICHAR_CONSTANT16('\x1F','\x8B'))
       {
       int header_size;
-      const char* restrict ptr = input + U_CONSTANT_SIZE(GZIP_MAGIC);
-      char _flags, _method = *ptr++; /* method */
+      const char* restrict ptr   = input + U_CONSTANT_SIZE(GZIP_MAGIC);
+            char _flags, _method = *ptr++; /* method */
 
       if (_method != Z_DEFLATED) /* 8 */
          {

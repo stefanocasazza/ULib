@@ -57,6 +57,14 @@ enum EnvironmentType {
    U_SHELL = 0x008
 };
 
+enum DynamicPageType {
+   U_DPAGE_INIT    = -1,
+   U_DPAGE_RESET   = -2,
+   U_DPAGE_DESTROY = -3,
+   U_DPAGE_SIGHUP  = -4,
+   U_DPAGE_FORK    = -5
+};
+
 class U_EXPORT UHTTP {
 public:
 
@@ -186,8 +194,6 @@ public:
 
    static bool isTSARequest() __pure;
    static bool isSOAPRequest() __pure;
-   static bool isFCGIRequest() __pure;
-   static bool isSCGIRequest() __pure;
 
    // SERVICES
 
@@ -209,7 +215,7 @@ public:
 
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
-   static bool enable_caching_by_proxy_servers, bsendfile;
+   static bool enable_caching_by_proxy_servers;
    static uint32_t npathinfo, limit_request_body, request_read_timeout, range_start, range_size, response_code;
 
    static uint32_t getUserAgent()
@@ -264,9 +270,7 @@ public:
       }
 
    static int  handlerREAD();
-   static bool callService();
    static bool handlerCache();
-   static void setMimeIndex();
    static int  processRequest();
    static void initDbNotFound();
    static void setEndRequestProcessing();
@@ -294,6 +298,7 @@ public:
       NETWORK_AUTHENTICATION_REQUIRED = 0x008
    };
 
+   static void setDynamicResponse();
    static void setResponse(const UString* content_type, UString* pbody);
    static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
    static void setErrorResponse(const UString* content_type, int code, const char* fmt, uint32_t len);
@@ -420,10 +425,7 @@ public:
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
-   static void     clearForm();
    static uint32_t processForm();
-   static void     removeTemporaryDirectory(uint32_t sz);
-
    static void     getFormValue(UString& value, const char* name, uint32_t len);
    static void     getFormValue(UString& value,                                                 uint32_t pos);
    static UString  getFormValue(                const char* name, uint32_t len, uint32_t start,               uint32_t end);
@@ -536,9 +538,12 @@ public:
    static UString* fcgi_uri_mask;
    static UString* scgi_uri_mask;
 
-   static void setCgiResponse();
-   static bool processCGIOutput(bool bcheck);
+   static bool isFCGIRequest() __pure;
+   static bool isSCGIRequest() __pure;
+
+   static bool runCGI(bool set_environment);
    static bool getCGIEnvironment(UString& environment, int mask);
+   static bool processCGIOutput(bool cgi_sh_script, bool bheaders);
    static bool processCGIRequest(UCommand& cmd, const char* cgi_dir);
 
    // USP (ULib Servlet Page)
@@ -546,7 +551,7 @@ public:
    class UServletPage : public UDynamic {
    public:
 
-   iPFpv runDynamicPage;
+   vPFi runDynamicPage;
 
    // COSTRUTTORI
 
@@ -603,14 +608,22 @@ public:
 #ifdef U_LOG_ENABLE
    static char iov_buffer[20];
    static struct iovec iov_vec[10];
-#  ifndef U_CACHE_REQUEST_DISABLE
+# ifndef U_CACHE_REQUEST_DISABLE
    static uint32_t request_offset, referer_offset, agent_offset;
-#  endif
+#endif
 
    static void    initApacheLikeLog();
-   static void   writeApacheLikeLog();
    static void prepareApacheLikeLog();
-#endif
+   static void   resetApacheLikeLog()
+      {
+      U_TRACE(0, "UHTTP::resetApacheLikeLog()")
+
+      iov_vec[6].iov_len  =
+      iov_vec[8].iov_len  = 1;
+      iov_vec[6].iov_base =
+      iov_vec[8].iov_base = (caddr_t) "-";
+      }
+# endif
 
    // CSP (C Servlet Page)
 
@@ -841,9 +854,7 @@ public:
    UPCRE key;
    UString replacement;
 
-   RewriteRule(const UString& _key, const UString& _replacement) :
-      key(_key, PCRE_FOR_REPLACE),
-       replacement(_replacement)
+   RewriteRule(const UString& _key, const UString& _replacement) : key(_key, PCRE_FOR_REPLACE), replacement(_replacement)
       {
       U_TRACE_REGISTER_OBJECT(0, RewriteRule, "%V,%V", _key.rep, _replacement.rep)
 
@@ -988,6 +999,23 @@ public:
    static UFileCacheData* getFileInCache(const char* path, uint32_t len);
 
 private:
+   static UString getHeaderForResponse();
+   static UString getHTMLDirectoryList() U_NO_EXPORT;
+
+   static void setMimeIndex() // NB: it is used by server_plugin_ssi...
+      {
+      U_TRACE(0, "UHTTP::setMimeIndex()")
+
+      U_INTERNAL_ASSERT_POINTER(file)
+      U_ASSERT_EQUALS(UClientImage_Base::isRequestNotFound(), false)
+
+      mime_index = U_unknow;
+
+      const char* ptr = u_getsuffix(U_FILE_TO_PARAM(*file));
+
+      if (ptr) (void) u_get_mimetype(ptr+1, &mime_index);
+      }
+
 #ifdef DEBUG
    static bool cache_file_check_memory();
    static bool check_memory(UStringRep* key, void* value) U_NO_EXPORT;
@@ -1011,28 +1039,23 @@ private:
 #endif
 
 #ifdef U_STATIC_ONLY
-   static void loadStaticLinkedServlet(const char* name, uint32_t len, iPFpv runDynamicPage) U_NO_EXPORT;
    static uint32_t getHtmlEncodedForResponse(char* buffer, uint32_t size, const char* fmt);
+   static void     loadStaticLinkedServlet(const char* name, uint32_t len, vPFi runDynamicPage) U_NO_EXPORT;
 #endif      
 
-   static UString getHeaderForResponse();
-   static UString getHTMLDirectoryList() U_NO_EXPORT;
-
-   static bool   initUploadProgress(int byte_read) U_NO_EXPORT;
-   static void updateUploadProgress(int byte_read) U_NO_EXPORT;
-
    static void checkPath() U_NO_EXPORT;
+   static bool callService() U_NO_EXPORT;
+   static bool runDynamicPage() U_NO_EXPORT;
    static bool readBodyRequest() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
    static bool readHeaderRequest() U_NO_EXPORT;
    static void processGetRequest() U_NO_EXPORT;
    static void manageDataForCache() U_NO_EXPORT;
    static bool processAuthorization() U_NO_EXPORT;
-   static void checkRequestForHeader() U_NO_EXPORT;
    static bool checkPath(uint32_t len) U_NO_EXPORT;
+   static void checkRequestForHeader() U_NO_EXPORT;
    static bool checkGetRequestIfRange() U_NO_EXPORT;
    static bool checkGetRequestIfModified() U_NO_EXPORT;
-   static bool runDynamicPage(bool as_service) U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static void removeDataSession(const UString& token) U_NO_EXPORT;
    static bool checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
@@ -1044,6 +1067,7 @@ private:
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire) U_NO_EXPORT;
+   static bool checkIfSourceHasChangedAndCompileUSP(UServletPage* usp_page) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
 

@@ -41,7 +41,6 @@ uint32_t      UClientImage_Base::resto;
 uint32_t      UClientImage_Base::rstart;
 uint32_t      UClientImage_Base::ncount;
 uint32_t      UClientImage_Base::nrequest;
-uint32_t      UClientImage_Base::uri_len;
 uint32_t      UClientImage_Base::uri_offset;
 uint32_t      UClientImage_Base::size_request;
 UString*      UClientImage_Base::body;
@@ -163,16 +162,16 @@ void UClientImage_Base::set()
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
-   if (UServer_Base::pClientIndex == 0)
+   if (UServer_Base::pClientImage == 0)
       {
-      UServer_Base::pClientIndex = this;
+      UServer_Base::pClientImage = this;
       UServer_Base::eClientImage = this + UNotifier::max_connection;
 
-      U_INTERNAL_DUMP("UServer_Base::pClientIndex = %p UServer_Base::eClientImage = %p UNotifier::max_connection = %u",
-                       UServer_Base::pClientIndex,     UServer_Base::eClientImage,     UNotifier::max_connection)
+      U_INTERNAL_DUMP("UServer_Base::pClientImage = %p UServer_Base::eClientImage = %p UNotifier::max_connection = %u",
+                       UServer_Base::pClientImage,     UServer_Base::eClientImage,     UNotifier::max_connection)
       }
 
-   U_INTERNAL_DUMP("new T[%u]: elem %u of %u", UNotifier::max_connection, (this - UServer_Base::pClientIndex), UNotifier::max_connection)
+   U_INTERNAL_DUMP("new T[%u]: elem %u of %u", UNotifier::max_connection, (this - UServer_Base::pClientImage), UNotifier::max_connection)
 
    U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
 
@@ -193,11 +192,11 @@ void UClientImage_Base::set()
                U_CHECK_MEMORY_OBJECT(socket)
    if (logbuf) U_CHECK_MEMORY_OBJECT(logbuf->rep)
 
-   uint32_t index = (this - UServer_Base::pClientIndex);
+   uint32_t index = (this - UServer_Base::pClientImage);
 
    if (index)
       {
-      UClientImage_Base* ptr = UServer_Base::pClientIndex + index-1;
+      UClientImage_Base* ptr = UServer_Base::pClientImage + index-1;
 
       U_CHECK_MEMORY_OBJECT(ptr)
       U_CHECK_MEMORY_OBJECT(ptr->socket)
@@ -211,7 +210,7 @@ void UClientImage_Base::set()
 
          if (index == (UNotifier::max_connection-1))
             {
-            for (index = 0, ptr = UServer_Base::pClientIndex; index < UNotifier::max_connection; ++index, ++ptr) (void) ptr->check_memory();
+            for (index = 0, ptr = UServer_Base::pClientImage; index < UNotifier::max_connection; ++index, ++ptr) (void) ptr->check_memory();
             }
          }
       }
@@ -224,7 +223,7 @@ bool UClientImage_Base::check_memory()
 {
    U_TRACE(0, "UClientImage_Base::check_memory()")
 
-   U_INTERNAL_DUMP("u_check_memory_vector<T>: elem %u of %u", this - UServer_Base::pClientIndex, UNotifier::max_connection)
+   U_INTERNAL_DUMP("u_check_memory_vector<T>: elem %u of %u", this - UServer_Base::pClientImage, UNotifier::max_connection)
 
    U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
 
@@ -447,9 +446,9 @@ void UClientImage_Base::setSendfile(int _sfd, uint32_t _start, uint32_t _count)
    U_INTERNAL_ASSERT_MAJOR(_count, 0)
    U_INTERNAL_ASSERT_DIFFERS(_sfd, -1)
 
-   UServer_Base::pClientIndex->start = _start;
-   UServer_Base::pClientIndex->count = _count;
-   UServer_Base::pClientIndex->sfd   = _sfd;
+   UServer_Base::pClientImage->start = _start;
+   UServer_Base::pClientImage->count = _count;
+   UServer_Base::pClientImage->sfd   = _sfd;
 }
 
 // define method VIRTUAL of class UEventFd
@@ -665,6 +664,10 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
 #ifdef U_ALIAS
    if (*request_uri)
       {
+#  ifndef U_CACHE_REQUEST_DISABLE
+      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_request_is_cached, false)
+#  endif
+
       sz  = request_uri->size();
       ptr = request_uri->data();
 
@@ -718,11 +721,15 @@ void UClientImage_Base::endRequest()
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (U_ClientImage_request_is_cached)
          {
-         U_INTERNAL_ASSERT_MAJOR(uri_len, 0)
-         U_INTERNAL_ASSERT_MAJOR(uri_offset, 0)
+         U_INTERNAL_ASSERT_RANGE(1,uri_offset,64)
 
-         sz  = uri_len;
-         ptr = request->c_pointer(uri_offset);
+         ptr = cbuffer; // request->c_pointer(uri_offset);
+
+#     ifdef U_ALIAS
+         sz = U_http_info.startHeader;
+#     else
+         sz = U_http_info.uri_len;
+#     endif
          }
       else
 #  endif
@@ -740,6 +747,8 @@ void UClientImage_Base::endRequest()
 
       if (sz)
          {
+         U_INTERNAL_DUMP("sz = %u", sz)
+
          if (sz > (sizeof(buffer)-32)) sz = sizeof(buffer)-32;
 
          u__memcpy(ptr1, ptr, sz, __PRETTY_FUNCTION__);
@@ -759,7 +768,7 @@ void UClientImage_Base::endRequest()
 #endif
 
 #ifdef U_ALIAS
-   if (request_uri->isNull() == false) request_uri->clear();
+   request_uri->clear();
 #endif
 
    u__memcpy(iov_vec, iov_sav, U_IOV_TO_SAVE, __PRETTY_FUNCTION__);
@@ -807,9 +816,7 @@ next1:
          {
          diff = rbuffer->data() - ptr;
 next2:
-         U_INTERNAL_DUMP("diff = %d request_uri = %V", diff, request_uri->rep)
-
-         U_ASSERT(request_uri->empty())
+         U_INTERNAL_DUMP("diff = %d", diff)
 
          U_INTERNAL_ASSERT_POINTER(U_http_info.uri)
 
@@ -899,7 +906,7 @@ void UClientImage_Base::prepareForRead()
       U_INTERNAL_ASSERT_DIFFERS(UEventFd::fd, -1)
 
       UServer_Base::csocket            = socket;
-      UServer_Base::pClientIndex       = this;
+      UServer_Base::pClientImage       = this;
       UServer_Base::client_address     = socket->cRemoteAddress.pcStrAddress;
       UServer_Base::client_address_len = u__strlen(UServer_Base::client_address, __PRETTY_FUNCTION__);
 
@@ -909,11 +916,11 @@ void UClientImage_Base::prepareForRead()
       {
       // NB: called from UServer_Base::handlerRead...
 
-      U_INTERNAL_DUMP("UServer_Base::csocket = %p socket = %p UServer_Base::pClientIndex = %p this = %p", UServer_Base::csocket, socket, UServer_Base::pClientIndex, this)
+      U_INTERNAL_DUMP("UServer_Base::csocket = %p socket = %p UServer_Base::pClientImage = %p this = %p", UServer_Base::csocket, socket, UServer_Base::pClientImage, this)
 
       U_INTERNAL_ASSERT_DIFFERS(socket->iSockDesc, -1)
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::csocket, socket)
-      U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientIndex, this)
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::pClientImage, this)
       U_INTERNAL_ASSERT_MAJOR(UServer_Base::client_address_len, 0)
 
       UEventFd::fd = socket->iSockDesc;
@@ -1133,10 +1140,10 @@ dmiss:
       U_INTERNAL_DUMP("cbuffer(%u) = %.*S", U_http_info.startHeader, U_http_info.startHeader, cbuffer)
       U_INTERNAL_DUMP("request(%u) = %.*S", sz, sz, ptr)
 
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u uri_offset = %u",
-                       U_ClientImage_pipeline,     size_request,     uri_offset)
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u uri_offset = %u", U_ClientImage_pipeline, size_request, uri_offset)
 
       U_INTERNAL_ASSERT_MAJOR(size_request, 0)
+      U_INTERNAL_ASSERT_RANGE(1,uri_offset,64)
       U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 0)
       U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 0)
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
@@ -1308,7 +1315,7 @@ check:
                     socket->isClosed(),     U_http_info.nResponseCode,     U_ClientImage_close,     U_ClientImage_state, U_ClientImage_state)
 
    U_INTERNAL_DUMP("wbuffer(%u) = %V", wbuffer->size(), wbuffer->rep)
-   U_INTERNAL_DUMP("   body(%u) = %V",    body->size(), body->rep)
+   U_INTERNAL_DUMP("   body(%u) = %V",    body->size(),    body->rep)
 
    if (LIKELY(*wbuffer))
       {

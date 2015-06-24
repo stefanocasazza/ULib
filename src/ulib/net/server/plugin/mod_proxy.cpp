@@ -81,25 +81,29 @@ int UProxyPlugIn::handlerRequest()
 
    if (UHTTP::isProxyRequest())
       {
-      bool output_to_client = false, // send output as response to client...
-           output_to_server = false; // send output as request  to server...
+      bool output_to_client = false,
+           output_to_server = false;
 
-      // check if it is required an action...
-
-      if (UHTTP::service->command)
+      if (UHTTP::service->command) // check if it is required an action...
          {
          U_ASSERT(UClientImage_Base::environment->empty())
 
-         if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_CGI) == false) U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_CGI))
+            {
+            if (UHTTP::service->environment) UClientImage_Base::environment->append(UHTTP::service->environment);
 
-         if (UHTTP::service->environment) UClientImage_Base::environment->append(UHTTP::service->environment);
+            if (UHTTP::processCGIRequest(*(UHTTP::service->command), "") &&
+                UHTTP::processCGIOutput(false, false))
+               {
+               if (UHTTP::service->isResponseForClient()) output_to_client = true; // send output as response to client...
+               else                                       output_to_server = true; // send output as request  to server...
+               }
 
-         bool esito = (UHTTP::processCGIRequest(*(UHTTP::service->command), "") &&
-                       UHTTP::processCGIOutput(false));
+            UClientImage_Base::environment->setEmpty();
+            }
 
-         UClientImage_Base::environment->setEmpty();
-
-         if (esito == false)
+         if (output_to_client == false &&
+             output_to_server == false)
             {
             if (U_http_info.nResponseCode == 0 ||
                 U_http_info.nResponseCode == HTTP_OK)
@@ -109,9 +113,6 @@ int UProxyPlugIn::handlerRequest()
 
             U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
             }
-
-         if (UHTTP::service->isResponseForClient()) output_to_client = true; // send output as response to client...
-         else                                       output_to_server = true; // send output as request  to server...
          }
 
       U_INTERNAL_DUMP("output_to_server = %b output_to_client = %b", output_to_server, output_to_client)
@@ -207,7 +208,7 @@ int UProxyPlugIn::handlerRequest()
 
 #           ifdef USE_LIBZ
                if (body.size() > U_MIN_SIZE_FOR_DEFLATE &&
-                   UHttpClient_Base::u_http_info_save.flag[11]) // U_http_is_accept_gzip
+                   UHttpClient_Base::u_http_info_save.flag[12]) // U_http_is_accept_gzip
                   {
                   body = UStringExt::deflate(body, 1);
                   }

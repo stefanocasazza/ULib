@@ -200,18 +200,18 @@ char* UCache::add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t _
 
       e = entry(info->oldest);
 
-      U_INTERNAL_DUMP("entry = { %u, %u, %.*S, %u, %.*S, %#3D }", u_get_unaligned(e->link),
-                        u_get_unaligned(e->keylen),
-                        u_get_unaligned(e->keylen),                                (char*)(e+1),
-                        u_get_unaligned(e->datalen),
-                        u_get_unaligned(e->datalen), (u_get_unaligned(e->keylen) + (char*)(e+1)),
-                        u_get_unaligned(e->time_expire))
+      U_INTERNAL_DUMP("entry = { %u, %u, %.*S, %u, %.*S, %#3D }", u_get_unaligned32(e->link),
+                        u_get_unaligned32(e->keylen),
+                        u_get_unaligned32(e->keylen),                                  (char*)(e+1),
+                        u_get_unaligned32(e->datalen),
+                        u_get_unaligned32(e->datalen), (u_get_unaligned32(e->keylen) + (char*)(e+1)),
+                        u_get_unaligned32(e->time_expire))
 
-      pos = u_get_unaligned(e->link);
+      pos = u_get_unaligned32(e->link);
 
       replace(pos, info->oldest);
 
-      info->oldest += sizeof(UCache::cache_hash_table_entry) + u_get_unaligned(e->keylen) + u_get_unaligned(e->datalen);
+      info->oldest += sizeof(UCache::cache_hash_table_entry) + u_get_unaligned32(e->keylen) + u_get_unaligned32(e->datalen);
 
       U_INTERNAL_ASSERT(info->oldest <= info->unused)
 
@@ -227,17 +227,17 @@ char* UCache::add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t _
 
    time_t expire = (_ttl ? getTime() + _ttl : U_NO_TTL);
 
-   u_put_unaligned(pos ^ index, e->link);
-   u_put_unaligned(keylen,      e->keylen);
-   u_put_unaligned(datalen,     e->datalen);
-   u_put_unaligned(expire,      e->time_expire);
+   u_put_unaligned32(e->link,        pos ^ index);
+   u_put_unaligned32(e->keylen,      keylen);
+   u_put_unaligned32(e->datalen,     datalen);
+   u_put_unaligned32(e->time_expire, expire);
 
-   U_INTERNAL_DUMP("entry = { %u, %u, %.*S, %u, %.*S, %#3D }", u_get_unaligned(e->link),
-                        u_get_unaligned(e->keylen),
-                        u_get_unaligned(e->keylen),                                (char*)(e+1),
-                        u_get_unaligned(e->datalen),
-                        u_get_unaligned(e->datalen), (u_get_unaligned(e->keylen) + (char*)(e+1)),
-                        u_get_unaligned(e->time_expire))
+   U_INTERNAL_DUMP("entry = { %u, %u, %.*S, %u, %.*S, %#3D }", u_get_unaligned32(e->link),
+                        u_get_unaligned32(e->keylen),
+                        u_get_unaligned32(e->keylen),                                  (char*)(e+1),
+                        u_get_unaligned32(e->datalen),
+                        u_get_unaligned32(e->datalen), (u_get_unaligned32(e->keylen) + (char*)(e+1)),
+                        u_get_unaligned32(e->time_expire))
 
    char* p = x + info->writer + sizeof(UCache::cache_hash_table_entry);
 
@@ -298,17 +298,17 @@ UString UCache::get(const char* key, uint32_t keylen)
       {
       cache_hash_table_entry* e = entry(pos);
 
-      uint32_t time_expire = u_get_unaligned(e->time_expire);
+      uint32_t time_expire = u_get_unaligned32(e->time_expire);
 
-      U_INTERNAL_DUMP("entry = { %u, %u, %.*S, %u, %.*S, %#3D }", u_get_unaligned(e->link),
-                        u_get_unaligned(e->keylen),
-                        u_get_unaligned(e->keylen),                                (char*)(e+1),
-                        u_get_unaligned(e->datalen),
-                        u_get_unaligned(e->datalen), (u_get_unaligned(e->keylen) + (char*)(e+1)),
+      U_INTERNAL_DUMP("entry = { %u, %u, %.*S, %u, %.*S, %#3D }", u_get_unaligned32(e->link),
+                        u_get_unaligned32(e->keylen),
+                        u_get_unaligned32(e->keylen),                                  (char*)(e+1),
+                        u_get_unaligned32(e->datalen),
+                        u_get_unaligned32(e->datalen), (u_get_unaligned32(e->keylen) + (char*)(e+1)),
                         time_expire)
 
       if (time_expire && // chek if entry is expired...
-          u_get_unaligned(e->keylen) == keylen)
+          u_get_unaligned32(e->keylen) == keylen)
          {
          U_INTERNAL_ASSERT((pos + sizeof(UCache::cache_hash_table_entry) + keylen) <= info->size)
 
@@ -319,16 +319,16 @@ UString UCache::get(const char* key, uint32_t keylen)
             if (time_expire != U_NO_TTL &&
                 getTime() >= time_expire)
                {
-               u_put_unaligned(0, e->time_expire); // set entry expired...
+               u_put_unaligned32(e->time_expire, 0); // set entry expired...
 
                break;
                }
 
-            U_INTERNAL_ASSERT(u_get_unaligned(e->datalen) <= (info->size - pos - sizeof(UCache::cache_hash_table_entry) - keylen))
+            U_INTERNAL_ASSERT(u_get_unaligned32(e->datalen) <= (info->size - pos - sizeof(UCache::cache_hash_table_entry) - keylen))
 
             ttl = time_expire;
 
-            UString str(p + keylen, u_get_unaligned(e->datalen));
+            UString str(p + keylen, u_get_unaligned32(e->datalen));
 
             U_RETURN_STRING(str);
             }
@@ -472,20 +472,20 @@ void UCache::print(ostream& os, uint32_t& pos) const
    UCache::cache_hash_table_entry* e = (UCache::cache_hash_table_entry*)(x + pos);
 
    os.put('+');
-   os << u_get_unaligned(e->keylen);
+   os << u_get_unaligned32(e->keylen);
    os.put(',');
-   os << u_get_unaligned(e->datalen);
+   os << u_get_unaligned32(e->datalen);
    os.put(':');
 
    pos += sizeof(UCache::cache_hash_table_entry);
-   os.write(x + pos, u_get_unaligned(e->keylen));
+   os.write(x + pos, u_get_unaligned32(e->keylen));
 
    os.put('-');
    os.put('>');
 
-   pos += e->keylen;
-   os.write(x + pos, u_get_unaligned(e->datalen));
-   pos += e->datalen;
+   pos += u_get_unaligned32(e->keylen);
+   os.write(x + pos, u_get_unaligned32(e->datalen));
+   pos += u_get_unaligned32(e->datalen);
 
    os.put('\n');
 }

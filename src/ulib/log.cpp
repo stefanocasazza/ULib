@@ -116,9 +116,9 @@ ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(
 
             // NB: we can be an other process that manage this file (apache like log)...
 
-            *(int64_t*) ptr     = U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n');
-            *(int64_t*)(ptr+8)  = U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n');
-            *(int64_t*)(ptr+16) = U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n');
+            u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n'));
+            u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n'));
+            u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n'));
 
             UFile::msync(ptr + U_CONSTANT_SIZE(U_MARK_END), UFile::map, MS_SYNC);
             }
@@ -518,9 +518,9 @@ void ULog::write(const struct iovec* iov, int n)
          {
          char* ptr = UFile::map + file_ptr;
 
-         *(int64_t*) ptr     = U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n');
-         *(int64_t*)(ptr+8)  = U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n');
-         *(int64_t*)(ptr+16) = U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n');
+         u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n'));
+         u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n'));
+         u_put_unalignedp64(ptr+16, U_MULTICHAR_CONSTANT64('\n','\n','\n','\n','\n','\n','\n','\n'));
          }
 
       ptr_log_data->file_ptr = file_ptr;

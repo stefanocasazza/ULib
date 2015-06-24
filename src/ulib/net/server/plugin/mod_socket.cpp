@@ -21,7 +21,7 @@
 
 U_CREAT_FUNC(server_plugin_socket, UWebSocketPlugIn)
 
-iPFpv     UWebSocketPlugIn::on_message;
+vPFi      UWebSocketPlugIn::on_message;
 UCommand* UWebSocketPlugIn::command;
 
 UWebSocketPlugIn::UWebSocketPlugIn()
@@ -145,8 +145,7 @@ int UWebSocketPlugIn::handlerRequest()
 
       if (bcommand == false) goto handle_data;
 
-loop:
-      read_set = fd_set_read;
+loop: read_set = fd_set_read;
 
       if (U_SYSCALL(select, "%d,%p,%p,%p,%p", fdmax, &read_set, 0, 0, 0) > 0)
          {
@@ -166,7 +165,7 @@ loop:
             {
 handle_data:
             if (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK &&
-                (bcommand == false ? on_message(UServer_Base::pClientIndex) == 0
+                (bcommand == false ? (on_message(0), U_http_info.nResponseCode != HTTP_INTERNAL_ERROR)
                                    : UNotifier::write(UProcess::filedes[1], U_STRING_TO_PARAM(*UClientImage_Base::wbuffer))))
                {
                UWebSocket::rbuffer->setEmpty();

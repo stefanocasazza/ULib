@@ -150,7 +150,7 @@ unsigned int Url::getPort()
 
       const char* ptr = url.data();
 
-      switch (*(int32_t*)ptr)
+      switch (u_get_unalignedp32(ptr))
          {
          case URL_FTP:  U_RETURN(21);
          case URL_SMTP: U_RETURN(25);

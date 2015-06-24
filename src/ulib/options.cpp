@@ -446,8 +446,8 @@ void UOptions::printHelp(vPF func)
             *ptr++ = '[';
             }
 
-         *(int32_t*) ptr    = U_MULTICHAR_CONSTANT32('=','V','A','L');
-         *(int16_t*)(ptr+4) = U_MULTICHAR_CONSTANT16('U','E');
+         u_put_unalignedp32(ptr,   U_MULTICHAR_CONSTANT32('=','V','A','L'));
+         u_put_unalignedp16(ptr+4, U_MULTICHAR_CONSTANT16('U','E'));
 
          ptr += 6;
 
@@ -483,8 +483,8 @@ void UOptions::printHelp(vPF func)
 
          if (n)
             {
-            *(int64_t*) ptr    = U_MULTICHAR_CONSTANT64(' ','(','d','e','f','a','u','l');
-            *(int16_t*)(ptr+8) = U_MULTICHAR_CONSTANT16('t','=');
+            u_put_unalignedp64(ptr,   U_MULTICHAR_CONSTANT64(' ','(','d','e','f','a','u','l'));
+            u_put_unalignedp16(ptr+8, U_MULTICHAR_CONSTANT16('t','='));
 
             ptr += 10;
 

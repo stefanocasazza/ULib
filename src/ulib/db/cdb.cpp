@@ -125,13 +125,13 @@ bool UCDB::find()
       if (UFile::map == MAP_FAILED) (void) UFile::pread(&slot_buf, sizeof(cdb_hash_table_slot), offset);
       else                          slot = (cdb_hash_table_slot*) (UFile::map + offset);
 
-      U_INTERNAL_DUMP("slot[%d] = { %u, %u }", nslot, u_get_unaligned(slot->hash), u_get_unaligned(slot->pos))
+      U_INTERNAL_DUMP("slot[%d] = { %u, %u }", nslot, u_get_unaligned32(slot->hash), u_get_unaligned32(slot->pos))
 
       // Each hash table slot states a hash value and a byte position.
       // If the byte position is 0, the slot is empty.
       // Otherwise, the slot points to a record whose key has that hash value
 
-      if (u_get_unaligned(slot->pos))
+      if (u_get_unaligned32(slot->pos))
          {
          loop = 0;
 
@@ -173,7 +173,7 @@ U_NO_EXPORT inline bool UCDB::match(uint32_t pos)
 
       if (data.dptr) U_SYSCALL_VOID(free, "%p", data.dptr); // free old data...
 
-      data.dsize = u_get_unaligned(hr->dlen);
+      data.dsize = u_get_unaligned32(hr->dlen);
       data.dptr  = U_SYSCALL(malloc, "%lu", data.dsize);
 
       (void) UFile::pread(data.dptr, data.dsize, pos);
@@ -181,7 +181,7 @@ U_NO_EXPORT inline bool UCDB::match(uint32_t pos)
       U_RETURN(true);
       }
 
-   data.dsize = u_get_unaligned(hr->dlen);
+   data.dsize = u_get_unaligned32(hr->dlen);
 
    if (u_equal(key.dptr, ++hr, key.dsize, ignoreCase()) == 0)
       {
@@ -232,13 +232,13 @@ bool UCDB::findNext()
       // byte position is 0, the slot is empty. Otherwise, the slot points to
       // a record whose key has that hash value
 
-      pos = u_get_unaligned(slot->pos);
+      pos = u_get_unaligned32(slot->pos);
 
-      U_INTERNAL_DUMP("slot[%d] = { %u, %u }", nslot, u_get_unaligned(slot->hash), pos)
+      U_INTERNAL_DUMP("slot[%d] = { %u, %u }", nslot, u_get_unaligned32(slot->hash), pos)
 
       if (pos == 0) break;
 
-      if (u_get_unaligned(slot->hash) == khash)
+      if (u_get_unaligned32(slot->hash) == khash)
          {
          // Records are stored sequentially, without special alignment.
          // A record states a key length, a data length, the key, and the data
@@ -246,9 +246,9 @@ bool UCDB::findNext()
          if (UFile::map == MAP_FAILED) (void) UFile::pread(&hr_buf, sizeof(cdb_record_header), pos);
          else                          hr = (cdb_record_header*)(UFile::map + pos);
 
-         U_INTERNAL_DUMP("hr = { %u, %u }", u_get_unaligned(hr->klen), u_get_unaligned(hr->dlen))
+         U_INTERNAL_DUMP("hr = { %u, %u }", u_get_unaligned32(hr->klen), u_get_unaligned32(hr->dlen))
 
-         if (u_get_unaligned(hr->klen) == key.dsize && match(pos)) U_RETURN(true);
+         if (u_get_unaligned32(hr->klen) == key.dsize && match(pos)) U_RETURN(true);
          }
       }
 
@@ -315,7 +315,7 @@ uint32_t UCDB::makeFinish(bool _reset)
 
          // The hash value modulo CDB_NUM_HASH_TABLE_POINTER is the number of a hash table
 
-         uint32_t klen = u_get_unaligned(hr->klen);
+         uint32_t klen = u_get_unaligned32(hr->klen);
          ptmp->hash    = cdb_hash(ptr, klen);
          ptmp->index   = ptmp->hash % CDB_NUM_HASH_TABLE_POINTER;
 
@@ -328,7 +328,7 @@ uint32_t UCDB::makeFinish(bool _reset)
 
          hp[ptmp->index].slots++;
 
-         ptr += klen + u_get_unaligned(hr->dlen);
+         ptr += klen + u_get_unaligned32(hr->dlen);
          }
 
       for (i = 0; i < CDB_NUM_HASH_TABLE_POINTER; ++i)
@@ -368,13 +368,13 @@ uint32_t UCDB::makeFinish(bool _reset)
             {
             pslot = slot + nslot;
 
-            if (u_get_unaligned(pslot->pos) == 0) break;
+            if (u_get_unaligned32(pslot->pos) == 0) break;
 
             if (++nslot == hp[tmp[i].index].slots) nslot = 0;
             }
 
-         u_put_unaligned(tmp[i].hash, pslot->hash);
-         u_put_unaligned(tmp[i].pos,  pslot->pos);
+         u_put_unaligned32(pslot->hash, tmp[i].hash);
+         u_put_unaligned32(pslot->pos,  tmp[i].pos);
 
       // U_INTERNAL_DUMP("slot[%u] = { %u, %u }", nslot, tmp[i].hash, tmp[i].pos)
          }
@@ -407,12 +407,12 @@ void UCDB::callForAllEntry(vPFpvpc function)
       {
       hr = (UCDB::cdb_record_header*) ptr;
 
-      U_INTERNAL_DUMP("hr(%p) = { %u, %u } key = %.*S", hr, u_get_unaligned(hr->klen), u_get_unaligned(hr->dlen),
-                                                            u_get_unaligned(hr->klen), ptr+sizeof(UCDB::cdb_record_header))
+      U_INTERNAL_DUMP("hr(%p) = { %u, %u } key = %.*S", hr, u_get_unaligned32(hr->klen), u_get_unaligned32(hr->dlen),
+                                                            u_get_unaligned32(hr->klen), ptr+sizeof(UCDB::cdb_record_header))
 
       function(this, ptr);
 
-      ptr += sizeof(UCDB::cdb_record_header) + u_get_unaligned(hr->klen) + u_get_unaligned(hr->dlen);
+      ptr += sizeof(UCDB::cdb_record_header) + u_get_unaligned32(hr->klen) + u_get_unaligned32(hr->dlen);
       }
 }
 
@@ -492,8 +492,8 @@ void UCDB::callForAllEntryWithPattern(iPFprpr function, UString* _pattern)
 
    while (true)
       {
-      klen = u_get_unaligned(((UCDB::cdb_record_header*)ptr)->klen); //  key length
-      dlen = u_get_unaligned(((UCDB::cdb_record_header*)ptr)->dlen); // data length
+      klen = u_get_unaligned32(((UCDB::cdb_record_header*)ptr)->klen); //  key length
+      dlen = u_get_unaligned32(((UCDB::cdb_record_header*)ptr)->dlen); // data length
 
       U_INTERNAL_DUMP("hr(%p) = { %u, %u }", ptr, klen, dlen)
 
@@ -590,8 +590,8 @@ void UCDB::call2(UCDB* pcdb, char* src)
 
    UCDB::cdb_record_header* ptr_hr = (UCDB::cdb_record_header*)src;
 
-   uint32_t klen = u_get_unaligned(ptr_hr->klen), // key length
-            dlen = u_get_unaligned(ptr_hr->dlen); // data length
+   uint32_t klen = u_get_unaligned32(ptr_hr->klen), // key length
+            dlen = u_get_unaligned32(ptr_hr->dlen); // data length
 
    U_INTERNAL_DUMP("hr(%p) = { %u, %u }", ptr_hr, klen, dlen)
 
@@ -608,9 +608,9 @@ void UCDB::getKeys2(UCDB* pcdb, char* src)
    UStringRep* rep;
    UCDB::cdb_record_header* ptr_hr = (UCDB::cdb_record_header*)src;
 
-   uint32_t klen = u_get_unaligned(ptr_hr->klen); // key length
+   uint32_t klen = u_get_unaligned32(ptr_hr->klen); // key length
 #ifdef DEBUG
-   uint32_t dlen = u_get_unaligned(ptr_hr->dlen); // data length
+   uint32_t dlen = u_get_unaligned32(ptr_hr->dlen); // data length
 
    U_INTERNAL_DUMP("hr(%p) = { %u, %u }", ptr_hr, klen, dlen)
 #endif
@@ -628,8 +628,8 @@ void UCDB::print2(UCDB* pcdb, char* src)
 
    UCDB::cdb_record_header* ptr_hr = (UCDB::cdb_record_header*)src;
 
-   uint32_t klen = u_get_unaligned(ptr_hr->klen), //  key length
-            dlen = u_get_unaligned(ptr_hr->dlen); // data length
+   uint32_t klen = u_get_unaligned32(ptr_hr->klen), //  key length
+            dlen = u_get_unaligned32(ptr_hr->dlen); // data length
 
    char tmp[40];
    UString* pstr = pcdb->pbuffer;
@@ -651,15 +651,15 @@ void UCDB::makeAdd2(UCDB* pcdb, char* src)
    UCDB::cdb_record_header* s_hr = (UCDB::cdb_record_header*)src;
    UCDB::cdb_record_header* d_hr = pcdb->hr;
 
-   U_INTERNAL_DUMP("src = { %#.*S %#.*S }", u_get_unaligned(s_hr->klen), src + sizeof(UCDB::cdb_record_header),
-                                            u_get_unaligned(s_hr->dlen), src + sizeof(UCDB::cdb_record_header) +
-                                            u_get_unaligned(s_hr->klen))
+   U_INTERNAL_DUMP("src = { %#.*S %#.*S }", u_get_unaligned32(s_hr->klen), src + sizeof(UCDB::cdb_record_header),
+                                            u_get_unaligned32(s_hr->dlen), src + sizeof(UCDB::cdb_record_header) +
+                                            u_get_unaligned32(s_hr->klen))
 
-   uint32_t sz = sizeof(UCDB::cdb_record_header) + u_get_unaligned(s_hr->klen) + u_get_unaligned(s_hr->dlen);
+   uint32_t sz = sizeof(UCDB::cdb_record_header) + u_get_unaligned32(s_hr->klen) + u_get_unaligned32(s_hr->dlen);
 
    U_MEMCPY(d_hr, s_hr, sz);
 
-   U_INTERNAL_DUMP("hr(%p) = { %u, %u }", d_hr, u_get_unaligned(d_hr->klen), u_get_unaligned(d_hr->dlen))
+   U_INTERNAL_DUMP("hr(%p) = { %u, %u }", d_hr, u_get_unaligned32(d_hr->klen), u_get_unaligned32(d_hr->dlen))
 
    pcdb->hr = (UCDB::cdb_record_header*)((char*)d_hr + sz);
 
@@ -692,8 +692,8 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
 
    while (true)
       {
-      uint32_t klen = u_get_unaligned(((UCDB::cdb_record_header*)ptr)->klen), //  key length
-               dlen = u_get_unaligned(((UCDB::cdb_record_header*)ptr)->dlen); // data length
+      uint32_t klen = u_get_unaligned32(((UCDB::cdb_record_header*)ptr)->klen), //  key length
+               dlen = u_get_unaligned32(((UCDB::cdb_record_header*)ptr)->dlen); // data length
 
       U_INTERNAL_DUMP("hr(%p) = { %u, %u }", ptr, klen, dlen)
 
@@ -816,8 +816,8 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, pvPFpvpb func)
 
                   _hr = (UCDB::cdb_record_header*) ptr;
 
-                  u_put_unaligned(klen, _hr->klen);
-                  u_put_unaligned(dlen, _hr->dlen);
+                  u_put_unaligned32(_hr->klen, klen);
+                  u_put_unaligned32(_hr->dlen, dlen);
 
                   U_INTERNAL_DUMP("hr = { %u, %u }", klen, dlen)
 
@@ -888,17 +888,17 @@ U_NO_EXPORT void UCDB::checkForAllEntry()
 
    while ((char*)slot < _eof)
       {
-      uint32_t pos = u_get_unaligned(slot->pos);
+      uint32_t pos = u_get_unaligned32(slot->pos);
 
       if (pos)
          {
          ptr = UFile::map + pos;
           hr = (cdb_record_header*)ptr;
 
-         U_INTERNAL_DUMP("hr(%p) = { %u, %u }", hr, u_get_unaligned(hr->klen), u_get_unaligned(hr->dlen))
+         U_INTERNAL_DUMP("hr(%p) = { %u, %u }", hr, u_get_unaligned32(hr->klen), u_get_unaligned32(hr->dlen))
 
-         khash     = u_get_unaligned(slot->hash);
-         key.dsize = u_get_unaligned(hr->klen);
+         khash     = u_get_unaligned32(slot->hash);
+         key.dsize = u_get_unaligned32(hr->klen);
          key.dptr  = ptr + sizeof(cdb_record_header);
 
          U_INTERNAL_DUMP("key = %.*S khash = %u", key.dsize, key.dptr, khash)
@@ -953,8 +953,8 @@ U_EXPORT istream& operator>>(istream& is, UCDB& cdb)
 
       U_INTERNAL_DUMP("hr = { %u, %u }", klen, dlen)
 
-      u_put_unaligned(klen, hr->klen);
-      u_put_unaligned(dlen, hr->dlen);
+      u_put_unaligned32(hr->klen, klen);
+      u_put_unaligned32(hr->dlen, dlen);
 
       ptr += sizeof(UCDB::cdb_record_header);
 

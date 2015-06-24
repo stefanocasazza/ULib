@@ -140,7 +140,7 @@ UServer_Base* UServer_Base::pthis;
 
 UVector<UString>*                 UServer_Base::vplugin_name;
 UVector<UString>*                 UServer_Base::vplugin_name_static;
-UClientImage_Base*                UServer_Base::pClientIndex;
+UClientImage_Base*                UServer_Base::pClientImage;
 UClientImage_Base*                UServer_Base::vClientImage;
 UClientImage_Base*                UServer_Base::eClientImage;
 ULog::static_date*                UServer_Base::ptr_static_date;
@@ -2001,9 +2001,9 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
    U_TRACE(0, "UServer_Base::clientImageHandlerRead()")
 
    U_INTERNAL_ASSERT(csocket->isOpen())
-   U_INTERNAL_ASSERT_EQUALS(csocket, pClientIndex->socket)
+   U_INTERNAL_ASSERT_EQUALS(csocket, pClientImage->socket)
 
-   if (pClientIndex->handlerRead() == U_NOTIFIER_DELETE)
+   if (pClientImage->handlerRead() == U_NOTIFIER_DELETE)
       {
       if (csocket->isOpen())
          {
@@ -2012,7 +2012,7 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
          csocket->close();
          }
 
-      pClientIndex->UClientImage_Base::handlerDelete();
+      pClientImage->UClientImage_Base::handlerDelete();
 
       U_RETURN(false);
       }
@@ -2025,11 +2025,11 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
 #  define CLIENT_INDEX lClientIndex
 #  define CLIENT_ADDRESS lclient_address
 #  define CLIENT_ADDRESS_LEN lclient_address_len
-#  define CLIENT_IMAGE_HANDLER_READ (pClientIndex = lClientIndex, csocket = psocket, \
+#  define CLIENT_IMAGE_HANDLER_READ (pClientImage = lClientIndex, csocket = psocket, \
                                      client_address = lclient_address, client_address_len = lclient_address_len, clientImageHandlerRead())
 #else
 #  define CSOCKET csocket
-#  define CLIENT_INDEX pClientIndex
+#  define CLIENT_INDEX pClientImage
 #  define CLIENT_ADDRESS client_address
 #  define CLIENT_ADDRESS_LEN client_address_len
 #  define CLIENT_IMAGE_HANDLER_READ clientImageHandlerRead()
@@ -2044,13 +2044,13 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
    U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
 
-   pClientIndex = vClientImage + nClientIndex;
+   pClientImage = vClientImage + nClientIndex;
 
 #if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    USocket* psocket;
    char* lclient_address;
    uint32_t lclient_address_len;
-   UClientImage_Base* lClientIndex = pClientIndex;
+   UClientImage_Base* lClientIndex = pClientImage;
 #endif
 #ifdef DEBUG
    uint32_t nothing = 0;
@@ -2489,7 +2489,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
             }
          else
             {
-            U_INTERNAL_ASSERT_EQUALS(cimg, pClientIndex)
+            U_INTERNAL_ASSERT_EQUALS(cimg, pClientImage)
 
             ULog::log("%shandlerTimeoutConnection: client connected didn't send any request in %u secs (timeout), close connection %v",
                         UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);

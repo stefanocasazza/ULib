@@ -352,7 +352,7 @@ protected:
    static UTimeVal* chronometer;
    static bool log_request_partial;
    static long time_between_request, time_run;
-   static uint32_t ncount, nrequest, resto, uri_offset, uri_len;
+   static uint32_t ncount, nrequest, resto, uri_offset;
 
    static void   endRequest();
    static bool startRequest();

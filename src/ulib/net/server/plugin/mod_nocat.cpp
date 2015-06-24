@@ -1835,7 +1835,7 @@ void UNoCatPlugIn::setHTTPResponse(const UString& content)
 
       UHTTP::mime_index = (u_isHTML(content.data()) ? U_html : U_unknow);
 
-      UHTTP::setCgiResponse();
+      UHTTP::setDynamicResponse();
       }
 }
 

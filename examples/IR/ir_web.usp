@@ -82,7 +82,13 @@ else if (UHTTP::isPOST())
    {
    IR_SESSION.query = USP_FORM_VALUE(0);
 
-   if (num_args != 2 || IR_SESSION.query.empty()) return HTTP_BAD_REQUEST;
+   if (num_args != 2 ||
+       IR_SESSION.query.empty())
+      {
+      UHTTP::setBadRequest();
+
+      return;
+      }
 
    IR_SESSION.for_page = UHTTP::num_item_for_page = USP_FORM_VALUE(1).strtol();
 
@@ -108,7 +114,9 @@ else if (UHTTP::isPOST())
    }
 else
    {
-   return HTTP_BAD_METHOD;
+   UHTTP::setBadMethod();
+
+   return;
    }
 -->
 <html>

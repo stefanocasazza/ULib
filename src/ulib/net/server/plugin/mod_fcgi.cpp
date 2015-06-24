@@ -446,8 +446,8 @@ int UFCGIPlugIn::handlerRequest()
                   {
                   U_INTERNAL_ASSERT_EQUALS(pos + clength, connection->response.size())
 
-                  if (UHTTP::processCGIOutput(false)) UClientImage_Base::setRequestProcessed();
-                  else                                UHTTP::setInternalError();
+                  if (UHTTP::processCGIOutput(false, false)) UClientImage_Base::setRequestProcessed();
+                  else                                       UHTTP::setInternalError();
 
                   goto end;
                   }
