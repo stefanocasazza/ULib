@@ -143,64 +143,67 @@ public:
 
       UApplication::exit_value = 1;
 
-      UXML2Document document(content);
-
-      if (XAdES_schema.validate(document) == false)
+      if (content)
          {
-         UString content1;
+         UXML2Document document(content);
 
-         if (document.getElement(content1, 0, U_CONSTANT_TO_PARAM(U_TAG_SIGNED_INFO)) &&
-             content1.empty() == false)
+         if (XAdES_schema.validate(document) == false)
             {
-            UXML2Document document1(content1);
+            UString content1;
 
-            if (XAdES_schema.validate(document1) == false)
+            if (document.getElement(content1, 0, U_CONSTANT_TO_PARAM(U_TAG_SIGNED_INFO)) &&
+                content1.empty() == false)
                {
-               U_ERROR("fail to validate data input based on XAdES schema");
+               UXML2Document document1(content1);
+
+               if (XAdES_schema.validate(document1) == false)
+                  {
+                  U_ERROR("fail to validate data input based on XAdES schema");
+                  }
                }
             }
-         }
 
-      UDSIGContext dsigCtx;
-      UString data, signature;
-      const char* digest_algorithm = 0;
+         UDSIGContext dsigCtx;
+         UString data, signature;
+         const char* digest_algorithm = 0;
 
-      if (dsigCtx.verify(document, digest_algorithm, data, signature))
-         {
-         UString element = document.getElementData(128, U_CONSTANT_TO_PARAM(U_TAG_X509_CERTIFICATE));
-
-         if (element.empty() == false)
+         if (dsigCtx.verify(document, digest_algorithm, data, signature))
             {
-            UString certificate(element.size());
+            UString element = document.getElementData(128, U_CONSTANT_TO_PARAM(U_TAG_X509_CERTIFICATE));
 
-            UBase64::decode(element, certificate);
-
-            if (certificate)
+            if (element.empty() == false)
                {
-               alg = u_dgst_get_algoritm(digest_algorithm);
+               UString certificate(element.size());
 
-               if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm);
+               UBase64::decode(element, certificate);
 
-               X509* x509 = UCertificate::readX509(certificate, "DER");
-
-               u_pkey = UCertificate::getSubjectPublicKey(x509);
-
-               U_SYSCALL_VOID(X509_free, "%p", x509);
-
-               if (UServices::verifySignature(alg, data, signature, UString::getStringNull(), 0))
+               if (certificate)
                   {
-                  UApplication::exit_value = 0;
+                  alg = u_dgst_get_algoritm(digest_algorithm);
 
-#              ifdef _MSWINDOWS_
-                  (void) setmode(1, O_BINARY);
-#              endif
+                  if (alg == -1) U_ERROR("I can't find the digest algorithm for: %s", digest_algorithm);
 
-               // std::cout.write(U_STRING_TO_PARAM(certificate));
-                  std::cout.write(U_STRING_TO_PARAM(content));
+                  X509* x509 = UCertificate::readX509(certificate, "DER");
+
+                  u_pkey = UCertificate::getSubjectPublicKey(x509);
+
+                  U_SYSCALL_VOID(X509_free, "%p", x509);
+
+                  if (UServices::verifySignature(alg, data, signature, UString::getStringNull(), 0))
+                     {
+                     UApplication::exit_value = 0;
+
+#                 ifdef _MSWINDOWS_
+                     (void) setmode(1, O_BINARY);
+#                 endif
+
+                  // std::cout.write(U_STRING_TO_PARAM(certificate));
+                     std::cout.write(U_STRING_TO_PARAM(content));
+                     }
+
+                  U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
+                                                      u_pkey = 0;
                   }
-
-               U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
-                                                   u_pkey = 0;
                }
             }
          }

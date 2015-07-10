@@ -10,7 +10,7 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 		enable_memory_pool="yes"
 	fi
 	if test "$enable_memory_pool" = "yes"; then
-		AC_DEFINE( ENABLE_MEMPOOL, 1, [ enable memory pool features])
+		AC_DEFINE(ENABLE_MEMPOOL, 1, [enable memory pool features])
 	fi
 	AC_MSG_RESULT([${enable_memory_pool}])
 
@@ -21,7 +21,7 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 		enable_LFS="yes"
 	fi
 	if test "$enable_LFS" = "yes"; then
-		AC_DEFINE( ENABLE_LFS, 1, [ enable Large File Support features])
+		AC_DEFINE(ENABLE_LFS, 1, [enable Large File Support features])
 	fi
 	AC_MSG_RESULT([$enable_LFS])
 
@@ -31,7 +31,10 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	if test -z "$enable_coverage"; then
 		enable_coverage="no"
 	elif test "$enable_coverage" = "yes"; then
-		CPPFLAGS="${CPPFLAGS} -fprofile-arcs -ftest-coverage"
+		CPPFLAGS="$CPPFLAGS --coverage"
+		LDFLAGS="$LDFLAGS -O0 -fprofile-arcs"
+		CFLAGS="$CFLAGS -O0 -fprofile-arcs -ftest-coverage"
+		CXXFLAGS="$CXXFLAGS -O0 -fprofile-arcs -ftest-coverage"
 	fi
 	AC_MSG_RESULT([$enable_coverage])
 

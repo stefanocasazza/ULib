@@ -15,13 +15,13 @@
 #include <ulib/container/hash_map.h>
 
 bool        UHashMap<void*>::istream_loading;
-uPFpcu      UHashMap<void*>::gperf;
 UStringRep* UHashMap<void*>::pkey;
 
-UHashMap<void*>::UHashMap(uint32_t n, bool _ignore_case)
+UHashMap<void*>::UHashMap(uint32_t n, bool _ignore_case, vPFptpr _set_index)
 {
-   U_TRACE_REGISTER_OBJECT(0, UHashMap<void*>, "%u,%b", n, _ignore_case)
+   U_TRACE_REGISTER_OBJECT(0, UHashMap<void*>, "%u,%b,%p", n, _ignore_case, _set_index)
 
+   set_index   = _set_index;
    node        = 0;
    _length     = _space = index = hash = 0;
    ignore_case = _ignore_case;
@@ -47,14 +47,10 @@ void UHashMap<void*>::lookup(const UStringRep* keyr)
 
    U_CHECK_MEMORY
 
+   U_INTERNAL_ASSERT_POINTER(set_index)
    U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
 
-   if (gperf) index = gperf(U_STRING_TO_PARAM(*keyr));
-   else
-      {
-      hash  = keyr->hash(ignore_case);
-      index = hash % _capacity;
-      }
+   set_index(this, keyr);
 
    U_INTERNAL_DUMP("index = %u", index)
 
@@ -230,7 +226,6 @@ void UHashMap<void*>::reserve(uint32_t n)
 {
    U_TRACE(0, "UHashMap<void*>::reserve(%u)", n)
 
-   U_INTERNAL_ASSERT_EQUALS(gperf,0)
    U_INTERNAL_ASSERT_MAJOR(_capacity, 1)
 
    uint32_t new_capacity = U_GET_NEXT_PRIME_NUMBER(n);

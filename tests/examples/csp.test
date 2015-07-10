@@ -108,7 +108,9 @@ EOF
 
 DIR_CMD="../../examples/csp"
 
+#UTRACE="0 50M 0"
  start_prg cspclient -c inp/webclient.cfg --  1 CA   300
+#unset UTRACE
  start_prg cspclient -c inp/webclient.cfg --  1 CA_1 400 '"$CNF"'
  start_prg cspclient -c inp/webclient.cfg --  1 CA   300
 #exit 0

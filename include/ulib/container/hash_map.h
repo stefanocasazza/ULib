@@ -16,8 +16,9 @@
 
 #include <ulib/container/construct.h>
 
-typedef uint32_t (*uPFpcu) (const char* t, uint32_t tlen);
-typedef bool     (*bPFprpv)(UStringRep* key, void* elem);
+typedef bool     (*bPFprpv) (UStringRep*,void*);
+typedef uint32_t (*uPFpcu)  (const char*,uint32_t);
+typedef void     (*vPFptpr) (UHashMap<void*>*,const UStringRep*);
 
 class UCDB;
 class UHTTP;
@@ -91,7 +92,6 @@ template <class T> class UHashMap;
 
 template <> class U_EXPORT UHashMap<void*> {
 public:
-   static uPFpcu gperf;
 
    // Check for memory error
    U_MEMORY_TEST
@@ -102,7 +102,7 @@ public:
 
    // Costruttori e distruttore
 
-   UHashMap(uint32_t n = 53, bool _ignore_case = false);
+   UHashMap(uint32_t n = 53, bool _ignore_case = false, vPFptpr _set_index = setIndex);
 
    ~UHashMap()
       {
@@ -270,7 +270,20 @@ public:
 protected:
    UHashMapNode* node;
    UHashMapNode** table;
-   uint32_t _length, _capacity, _space, index, hash;
+
+public:
+   vPFptpr set_index;
+   uint32_t _capacity, index, hash;
+
+   static void setIndex(UHashMap<void*>* pthis, const UStringRep* keyr)
+      {
+      U_TRACE(0, "UHashMap<void*>::setIndex(%p,%V)", pthis, keyr)
+
+      pthis->index = (pthis->hash = keyr->hash(pthis->ignore_case)) % pthis->_capacity;
+      }
+
+protected:
+   uint32_t _length, _space;
    bool ignore_case;
 
    static UStringRep* pkey;
@@ -334,14 +347,9 @@ public:
 
    // Costruttori e distruttore
 
-   UHashMap(uint32_t n = 53, bool _ignore_case = false) : UHashMap<void*>(n, _ignore_case)
+   UHashMap(uint32_t n = 53, bool _ignore_case = false, vPFptpr _set_index = setIndex) : UHashMap<void*>(n, _ignore_case, _set_index)
       {
-      U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%u,%b", n, _ignore_case)
-      }
-
-   UHashMap(const UString& _key, const T* _elem) : UHashMap<void*>(_key, _elem)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%V,%p", _key.rep, _elem)
+      U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%u,%b,%p", n, _ignore_case, _set_index)
       }
 
    ~UHashMap()
@@ -574,7 +582,6 @@ loop:       U_INTERNAL_ASSERT_POINTER(pnode)
       {
       U_TRACE(0, "UHashMap<T*>::assign(%p)", &t)
 
-      U_INTERNAL_ASSERT_EQUALS(gperf,0)
       U_INTERNAL_ASSERT_DIFFERS(this, &t)
       U_INTERNAL_ASSERT_EQUALS(ignore_case, t.ignore_case)
 
@@ -792,9 +799,9 @@ public:
 
    // Costruttori e distruttore
 
-   UHashMap(uint32_t n = 53, bool _ignore_case = false) : UHashMap<UStringRep*>(n, _ignore_case)
+   UHashMap(uint32_t n = 53, bool _ignore_case = false, vPFptpr _set_index = setIndex) : UHashMap<UStringRep*>(n, _ignore_case, _set_index)
       {
-      U_TRACE_REGISTER_OBJECT(0, UHashMap<UString>, "%u,%b", n, _ignore_case)
+      U_TRACE_REGISTER_OBJECT(0, UHashMap<UString>, "%u,%b,%p", n, _ignore_case, _set_index)
       }
 
    ~UHashMap()

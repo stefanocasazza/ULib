@@ -24,3 +24,6 @@ dist-hook:
 	find $(distdir) -type f -name \*.c   -exec /utility/expand_tab '{}' ';'
 	find $(distdir) -type f -name \*.cpp -exec /utility/expand_tab '{}' ';'
 	find $(distdir) -type f -name \*.cfg -exec /utility/expand_tab '{}' ';'
+
+clean-local:
+	-rm -rf core .libs *.bb* *.da *.la gmon.out *.gc* */*.gc* */*/*.gc* */*/*/*.gc*

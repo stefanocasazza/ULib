@@ -30,9 +30,11 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
 
-      UString request = URPCMethod::encoder->encodeMethodCall(method, UString::getStringNull());
+      UString name;
+      
+      UClient_Base::prepareRequest(URPCMethod::encoder->encodeMethodCall(method, name));
 
-      if (sendRequest(request, false)            &&
+      if (UClient_Base::sendRequest()            &&
           readResponse(socket, buffer, response) &&
           buffer.equal(U_CONSTANT_TO_PARAM("DONE")))
          {

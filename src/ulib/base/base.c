@@ -462,7 +462,8 @@ bool u_setStartTime(void)
 
    U_INTERNAL_PRINT("lnow = %ld t = %ld", lnow, t)
 
-   if (lnow >= t)
+   if (lnow >= t ||
+       (t - lnow) < U_ONE_DAY_IN_SECOND)
       {
       u_start_time = lnow; /* u_now->tv_sec + u_now_adjust */
 
@@ -1393,13 +1394,13 @@ static const char* tab_color[] = { U_RESET_STR,
  * '%S': print formatted string
  * '%v': print ustring
  * '%V': print ustring
+ * '%J': print U_DATA
  * '%U': print name login user
  * '%Y': print u_getSysSignal(signo)
  * '%w': print current working directory
  * '%W': print COLOR (index to ANSI ESCAPE STR)
- * '%D': print date and time in various format
  * ----------------------------------------------------------------------------
- * '%D': print date and time in various format
+ * '%D': print date and time in various format:
  * ----------------------------------------------------------------------------
  *             0  => format: %d/%m/%y
  * with flag  '1' => format:          %T (=> "%H:%M:%S)
@@ -1422,7 +1423,7 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
       (char*)&&case_space-(char*)&&cdefault, /* ' ' */
       0,/* '!' */
       0,/* '"' */
-      (char*)&&case_number-(char*)&&cdefault,   /* '#' */
+      (char*)&&case_number-(char*)&&cdefault,/* '#' */
       0,/* '$' */
       0,/* '%' */
       0,/* '&' */
@@ -1430,12 +1431,12 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
       0,/* '(' */
       0,/* ')' */
       (char*)&&case_asterisk-(char*)&&cdefault,/* '*' */
-      (char*)&&case_plus-(char*)&&cdefault,     /* '+' */
+      (char*)&&case_plus-(char*)&&cdefault,    /* '+' */
       0,/* ',' */
       (char*)&&case_minus-(char*)&&cdefault, /* '-' */
-      (char*)&&case_period-(char*)&&cdefault,   /* '.' */
+      (char*)&&case_period-(char*)&&cdefault,/* '.' */
       0,/* '/' */
-      (char*)&&case_zero-(char*)&&cdefault,     /* '0' */
+      (char*)&&case_zero-(char*)&&cdefault,  /* '0' */
       (char*)&&case_digit-(char*)&&cdefault, /* '1' */
       (char*)&&case_digit-(char*)&&cdefault, /* '2' */
       (char*)&&case_digit-(char*)&&cdefault, /* '3' */
@@ -1461,7 +1462,7 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
       (char*)&&case_float-(char*)&&cdefault,/* 'G' */
       (char*)&&case_H-(char*)&&cdefault,/* 'H' */
       (char*)&&case_I-(char*)&&cdefault,/* 'I' */
-      0,/* 'J' */
+      (char*)&&case_J-(char*)&&cdefault,/* 'J' */
       0,/* 'K' */
       (char*)&&case_L-(char*)&&cdefault,/* 'L' */
       (char*)&&case_M-(char*)&&cdefault,/* 'M' */
@@ -1533,28 +1534,28 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
 
    /* Flags used during conversion */
 
-#define LONGINT            0x001 /* long integer */
-#define LLONGINT           0x002 /* long long integer */
-#define LONGDBL            0x004 /* long double */
-#define SHORTINT           0x008 /* short integer */
-#define ALT                0x010 /* alternate form */
-#define LADJUST            0x020 /* left adjustment */
-#define ZEROPAD            0x040 /* zero (as opposed to blank) */
-#define HEXPREFIX          0x080 /* add 0x or 0X prefix */
-#define THOUSANDS_GROUPED  0x100 /* For decimal conversion (i,d,u,f,F,g,G) the output is to be grouped with thousands */
+#  define LONGINT            0x001 /* long integer */
+#  define LLONGINT           0x002 /* long long integer */
+#  define LONGDBL            0x004 /* long double */
+#  define SHORTINT           0x008 /* short integer */
+#  define ALT                0x010 /* alternate form */
+#  define LADJUST            0x020 /* left adjustment */
+#  define ZEROPAD            0x040 /* zero (as opposed to blank) */
+#  define HEXPREFIX          0x080 /* add 0x or 0X prefix */
+#  define THOUSANDS_GROUPED  0x100 /* For decimal conversion (i,d,u,f,F,g,G) the output is to be grouped with thousands */
 
    /* To extend shorts properly, we need both signed and uint32_t argument extraction methods */
 
-#define VA_ARG(type) va_arg(argp, type)
+#  define VA_ARG(type) va_arg(argp, type)
 
-#define SARG() (flags & LLONGINT ?                      VA_ARG(int64_t) : \
-                flags &  LONGINT ? (int64_t)            VA_ARG(long) : \
-                flags & SHORTINT ? (int64_t)(int16_t)   VA_ARG(int)  : \
-                                   (int64_t)            VA_ARG(int))
-#define UARG() (flags & LLONGINT ?                      VA_ARG(uint64_t) : \
-                flags &  LONGINT ? (uint64_t)           VA_ARG(unsigned long) : \
-                flags & SHORTINT ? (uint64_t)(uint16_t) VA_ARG(int) : \
-                                   (uint64_t)           VA_ARG(unsigned int))
+#  define SARG() (flags & LLONGINT ?                      VA_ARG(int64_t) : \
+                  flags &  LONGINT ? (int64_t)            VA_ARG(long) : \
+                  flags & SHORTINT ? (int64_t)(int16_t)   VA_ARG(int)  : \
+                                     (int64_t)            VA_ARG(int))
+#  define UARG() (flags & LLONGINT ?                      VA_ARG(uint64_t) : \
+                  flags &  LONGINT ? (uint64_t)           VA_ARG(unsigned long) : \
+                  flags & SHORTINT ? (uint64_t)(uint16_t) VA_ARG(int) : \
+                                     (uint64_t)           VA_ARG(unsigned int))
 
    /* Scan the format for conversions (`%' character) */
 
@@ -1562,6 +1563,7 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
    time_t t;
    uint32_t ret = 0; /* return value accumulator */
    unsigned char c;
+   struct U_DATA udata;
    char* restrict pbase;
    struct ustringrep* pstr;
    const char* restrict ccp;
@@ -2033,6 +2035,15 @@ case_I: /* extension: print off_t */
 #  endif
 
       goto case_d;
+
+case_J: /* extension: print U_DATA */
+
+      udata = VA_ARG(struct U_DATA);
+
+      cp   = udata.dptr;
+      prec = udata.dsize;
+
+      goto case_ustring_V;
 
 case_L: /* field length modifier */
       flags |= LONGDBL;

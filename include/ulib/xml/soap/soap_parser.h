@@ -24,145 +24,145 @@
 #endif
 
 /**
-   @class USOAPParser
-
-   @brief USOAPParser is a parser SOAP based on Expat (Expat is a stream-oriented parser)
-
-   SOAP (Simple Object Access Protocol) is a simple XML based protocol to let applications exchange information over HTTP.
-   SOAP is fundamentally a stateless, one-way message exchange paradigm.
-
-   The following SOAP 1.2 message contains a number of elements, attributes, and values:
-   -------------------------------------------------------------------------------------
-   <?xml version='1.0' ?>
-   <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> 
-    <soap:Header>
-     <m:reservation xmlns:m="http://travelcompany.example.org/reservation" 
-             soap:role="http://www.w3.org/2003/05/soap-envelope/role/next"
-             soap:mustUnderstand="true">
-      <m:reference>uuid:093a2da1-q345-739r-ba5d-pqff98fe8j7d</m:reference>
-      <m:dateAndTime>2001-11-29T13:20:00.000-05:00</m:dateAndTime>
-     </m:reservation>
-     <n:passenger xmlns:n="http://mycompany.example.com/employees"
-             soap:role="http://www.w3.org/2003/05/soap-envelope/role/next"
-             soap:mustUnderstand="true">
-      <n:name>Åke Jógvan Øyvind</n:name>
-     </n:passenger>
-    </soap:Header>
-    <soap:Body>
-     <p:itinerary xmlns:p="http://travelcompany.example.org/reservation/travel">
-      <p:departure>
-        <p:departing>New York</p:departing>
-        <p:arriving>Los Angeles</p:arriving>
-        <p:departureDate>2001-12-14</p:departureDate>
-        <p:departureTime>late afternoon</p:departureTime>
-        <p:seatPreference>aisle</p:seatPreference>
-      </p:departure>
-      <p:return>
-        <p:departing>Los Angeles</p:departing>
-        <p:arriving>New York</p:arriving>
-        <p:departureDate>2001-12-20</p:departureDate>
-        <p:departureTime>mid-morning</p:departureTime>
-        <p:seatPreference/>
-      </p:return>
-     </p:itinerary>
-     <q:lodging xmlns:q="http://travelcompany.example.org/reservation/hotels">
-      <q:preference>none</q:preference>
-     </q:lodging>
-    </soap:Body>
-   </soap:Envelope>
-   -------------------------------------------------------------------------------------
-
-   SOAP envelope: The outermost element information item of a SOAP message.
-   ------------------------------------------------------------------------
-   The SOAP Envelope element information item has:
-   - A local name of Envelope.
-   - A namespace name of "http://www.w3.org/2003/05/soap-envelope".
-   - Zero or more namespace qualified attribute information items amongst its attributes property.
-   - One or two element information items in its [children] property in order as follows:
-   -  1. An optional Header element information item.
-   -  2. A mandatory Body   element information item.
-   ------------------------------------------------------------------------
-
-   The encodingStyle attribute information item indicates the encoding rules used to serialize parts of a SOAP message.
-   --------------------------------------------------------------------------------------------------------------------
-   The encodingStyle attribute information item has:
-   - A local name of encodingStyle.
-   - A namespace name of "http://www.w3.org/2003/05/soap-envelope".
-   - The encodingStyle attribute information item is of type xs:anyURI.
-     Its value identifies a set of serialization rules that can be used to deserialize the SOAP message.
-   - The encodingStyle attribute information item MAY appear on the following:
-   -  1. A SOAP header block.
-   -  2. A child element information item of the SOAP Body element information item if that child is not a SOAP
-         Fault element information.
-   -  3. A child element information item of the SOAP Detail element information item.
-   -  4. Any descendent of 1, 2, and 3 above.
-   --------------------------------------------------------------------------------------------------------------------
-
-   --------------------------------------------------------------------------------------------------------------------
-   SOAP header: A collection of zero or more SOAP header blocks each of which might be targeted at any SOAP receiver
-                within the SOAP message path.
-   SOAP header block: An element information item used to delimit data that logically constitutes a single computational
-                      unit within the SOAP header.
-
-   The type of a SOAP header block is identified by the XML expanded name of the header block element information item.
-   The Header element information item has:
-   - A local name of Header.
-   - A namespace name of "http://www.w3.org/2003/05/soap-envelope".
-   - Zero or more namespace qualified attribute information items in its attributes property.
-   - Zero or more namespace qualified element information items in its children property.
-   - Each child element information item of the SOAP Header is called a SOAP header block.
-
-   Each SOAP header block element information item:
-   . MUST have a namespace name property which has a value, that is the name of the element MUST be namespace qualified.
-   . MAY have any number of character information item children. Child character information items whose character code
-         is amongst the white space characters as defined by XML 1.0 are considered significant.
-   . MAY have any number of element information item children. Such element information items MAY be namespace qualified.
-   . MAY have zero or more attribute information items in its attributes property. Among these MAY be any or all of the
-         following, which have special significance for SOAP processing:
-   .     - encodingStyle attribute information item.
-   .     - role attribute information item.
-   .     - mustUnderstand attribute information item.
-   .     - relay attribute information item.
-
-   A SOAP header is an extension mechanism that provides a way to pass information in SOAP messages that is not
-   application payload. Such "control" information includes, for example, passing directives or contextual
-   information related to the processing of the message. This allows a SOAP message to be extended in an
-   application-specific manner. The immediate child elements of the soap:Header element are called header
-   blocks, and represent a logical grouping of data which, as shown later, can individually be targeted at SOAP nodes that
-   might be encountered in the path of a message from a sender to an ultimate receiver.
-
-   SOAP headers have been designed in anticipation of various uses for SOAP, many of which will involve the
-   participation of other SOAP processing nodes - called SOAP intermediaries - along a message's path from an
-   initial SOAP sender to an ultimate SOAP receiver. This allows SOAP intermediaries to provide value-added
-   services. Headers, as shown later, may be inspected, inserted, deleted or forwarded by SOAP nodes encountered
-   along a SOAP message path.
-   --------------------------------------------------------------------------------------------------------------------
-
-   --------------------------------------------------------------------------------------------------------------------
-   SOAP body: A collection of zero or more element information items targeted at an ultimate SOAP receiver in the SOAP
-              message path.
-
-   The Body element information item has:
-      - A local name of Body.
-      - A namespace name of "http://www.w3.org/2003/05/soap-envelope".
-      - Zero or more namespace qualified attribute information items in its attributes property.
-      - Zero or more namespace qualified element information items in its children property.
-      - The Body element information item MAY have any number of character information item children whose character
-        code is amongst the white space characters as defined by XML 1.0. These are considered significant.
-
-   All child element information items of the SOAP Body element information item:
-      - SHOULD have a namespace name property which has a value, that is the name of the element SHOULD be namespace
-               qualified. Note: Namespace qualified elements tend to produce messages whose interpretation is less
-               ambiguous than those with unqualified elements. The use of unqualified elements is therefore discouraged.
-      - MAY have any number of character information item children. Child character information items whose character
-            code is amongst the white space characters as defined by XML 1.0 are considered significant.
-      - MAY have any number of element information item children. Such element information items MAY be namespace qualified.
-      - MAY have zero or more attribute information items in its attributes property. Among these MAY be the following,
-            which has special significance for SOAP processing: encodingStyle attribute information item.
-
-   SOAP defines one particular direct child of the SOAP body, the SOAP fault, which is used for reporting errors.
-   --------------------------------------------------------------------------------------------------------------------
-*/
+ * @class USOAPParser
+ *
+ *  @brief USOAPParser is a parser SOAP based on Expat (Expat is a stream-oriented parser)
+ *
+ *  SOAP (Simple Object Access Protocol) is a simple XML based protocol to let applications exchange information over HTTP.
+ *  SOAP is fundamentally a stateless, one-way message exchange paradigm.
+ *
+ *  The following SOAP 1.2 message contains a number of elements, attributes, and values:
+ *  -------------------------------------------------------------------------------------
+ *  <?xml version='1.0' ?>
+ *  <soap:Envelope xmlns:soap="http://www.w3.org/2003/05/soap-envelope"> 
+ *   <soap:Header>
+ *     <m:reservation xmlns:m="http://travelcompany.example.org/reservation" 
+ *             soap:role="http://www.w3.org/2003/05/soap-envelope/role/next"
+ *             soap:mustUnderstand="true">
+ *      <m:reference>uuid:093a2da1-q345-739r-ba5d-pqff98fe8j7d</m:reference>
+ *      <m:dateAndTime>2001-11-29T13:20:00.000-05:00</m:dateAndTime>
+ *     </m:reservation>
+ *     <n:passenger xmlns:n="http://mycompany.example.com/employees"
+ *             soap:role="http://www.w3.org/2003/05/soap-envelope/role/next"
+ *             soap:mustUnderstand="true">
+ *      <n:name>Åke Jógvan Øyvind</n:name>
+ *     </n:passenger>
+ *    </soap:Header>
+ *    <soap:Body>
+ *     <p:itinerary xmlns:p="http://travelcompany.example.org/reservation/travel">
+ *      <p:departure>
+ *        <p:departing>New York</p:departing>
+ *        <p:arriving>Los Angeles</p:arriving>
+ *        <p:departureDate>2001-12-14</p:departureDate>
+ *        <p:departureTime>late afternoon</p:departureTime>
+ *        <p:seatPreference>aisle</p:seatPreference>
+ *      </p:departure>
+ *      <p:return>
+ *        <p:departing>Los Angeles</p:departing>
+ *        <p:arriving>New York</p:arriving>
+ *        <p:departureDate>2001-12-20</p:departureDate>
+ *        <p:departureTime>mid-morning</p:departureTime>
+ *        <p:seatPreference/>
+ *      </p:return>
+ *     </p:itinerary>
+ *     <q:lodging xmlns:q="http://travelcompany.example.org/reservation/hotels">
+ *      <q:preference>none</q:preference>
+ *     </q:lodging>
+ *    </soap:Body>
+ *  </soap:Envelope>
+ *  -------------------------------------------------------------------------------------
+ *
+ *  SOAP envelope: The outermost element information item of a SOAP message.
+ *  ------------------------------------------------------------------------
+ *  The SOAP Envelope element information item has:
+ *   - A local name of Envelope.
+ *   - A namespace name of "http://www.w3.org/2003/05/soap-envelope".
+ *   - Zero or more namespace qualified attribute information items amongst its attributes property.
+ *   - One or two element information items in its [children] property in order as follows:
+ *   -  1. An optional Header element information item.
+ *   -  2. A mandatory Body   element information item.
+ *  ------------------------------------------------------------------------
+ *
+ *  The encodingStyle attribute information item indicates the encoding rules used to serialize parts of a SOAP message.
+ *  --------------------------------------------------------------------------------------------------------------------
+ *   The encodingStyle attribute information item has:
+ *   - A local name of encodingStyle.
+ *   - A namespace name of "http://www.w3.org/2003/05/soap-envelope".
+ *   - The encodingStyle attribute information item is of type xs:anyURI.
+ *     Its value identifies a set of serialization rules that can be used to deserialize the SOAP message.
+ *   - The encodingStyle attribute information item MAY appear on the following:
+ *   -  1. A SOAP header block.
+ *   -  2. A child element information item of the SOAP Body element information item if that child is not a SOAP
+ *         Fault element information.
+ *   -  3. A child element information item of the SOAP Detail element information item.
+ *   -  4. Any descendent of 1, 2, and 3 above.
+ *  --------------------------------------------------------------------------------------------------------------------
+ *
+ *  --------------------------------------------------------------------------------------------------------------------
+ *  SOAP header: A collection of zero or more SOAP header blocks each of which might be targeted at any SOAP receiver
+ *               within the SOAP message path.
+ *  SOAP header block: An element information item used to delimit data that logically constitutes a single computational
+ *                     unit within the SOAP header.
+ *
+ *  The type of a SOAP header block is identified by the XML expanded name of the header block element information item.
+ *  The Header element information item has:
+ *   - A local name of Header.
+ *   - A namespace name of "http://www.w3.org/2003/05/soap-envelope".
+ *   - Zero or more namespace qualified attribute information items in its attributes property.
+ *   - Zero or more namespace qualified element information items in its children property.
+ *   - Each child element information item of the SOAP Header is called a SOAP header block.
+ *
+ *  Each SOAP header block element information item:
+ *   . MUST have a namespace name property which has a value, that is the name of the element MUST be namespace qualified.
+ *   . MAY have any number of character information item children. Child character information items whose character code
+ *         is amongst the white space characters as defined by XML 1.0 are considered significant.
+ *   . MAY have any number of element information item children. Such element information items MAY be namespace qualified.
+ *   . MAY have zero or more attribute information items in its attributes property. Among these MAY be any or all of the
+ *         following, which have special significance for SOAP processing:
+ *   .     - encodingStyle attribute information item.
+ *   .     - role attribute information item.
+ *   .     - mustUnderstand attribute information item.
+ *   .     - relay attribute information item.
+ *
+ *  A SOAP header is an extension mechanism that provides a way to pass information in SOAP messages that is not
+ *  application payload. Such "control" information includes, for example, passing directives or contextual
+ *  information related to the processing of the message. This allows a SOAP message to be extended in an
+ *  application-specific manner. The immediate child elements of the soap:Header element are called header
+ *  blocks, and represent a logical grouping of data which, as shown later, can individually be targeted at SOAP nodes that
+ *  might be encountered in the path of a message from a sender to an ultimate receiver.
+ *
+ *  SOAP headers have been designed in anticipation of various uses for SOAP, many of which will involve the
+ *  participation of other SOAP processing nodes - called SOAP intermediaries - along a message's path from an
+ *  initial SOAP sender to an ultimate SOAP receiver. This allows SOAP intermediaries to provide value-added
+ *  services. Headers, as shown later, may be inspected, inserted, deleted or forwarded by SOAP nodes encountered
+ *  along a SOAP message path.
+ *  --------------------------------------------------------------------------------------------------------------------
+ *
+ *  --------------------------------------------------------------------------------------------------------------------
+ *  SOAP body: A collection of zero or more element information items targeted at an ultimate SOAP receiver in the SOAP
+ *             message path.
+ *
+ *  The Body element information item has:
+ *      - A local name of Body.
+ *      - A namespace name of "http://www.w3.org/2003/05/soap-envelope".
+ *      - Zero or more namespace qualified attribute information items in its attributes property.
+ *      - Zero or more namespace qualified element information items in its children property.
+ *      - The Body element information item MAY have any number of character information item children whose character
+ *        code is amongst the white space characters as defined by XML 1.0. These are considered significant.
+ *
+ *  All child element information items of the SOAP Body element information item:
+ *      - SHOULD have a namespace name property which has a value, that is the name of the element SHOULD be namespace
+ *               qualified. Note: Namespace qualified elements tend to produce messages whose interpretation is less
+ *               ambiguous than those with unqualified elements. The use of unqualified elements is therefore discouraged.
+ *      - MAY have any number of character information item children. Child character information items whose character
+ *            code is amongst the white space characters as defined by XML 1.0 are considered significant.
+ *      - MAY have any number of element information item children. Such element information items MAY be namespace qualified.
+ *      - MAY have zero or more attribute information items in its attributes property. Among these MAY be the following,
+ *            which has special significance for SOAP processing: encodingStyle attribute information item.
+ *
+ *  SOAP defines one particular direct child of the SOAP body, the SOAP fault, which is used for reporting errors
+ *  --------------------------------------------------------------------------------------------------------------------
+ */
 
 class U_EXPORT USOAPParser : public UXMLParser, public URPCParser {
 public:

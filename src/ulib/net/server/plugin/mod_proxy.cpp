@@ -153,8 +153,8 @@ int UProxyPlugIn::handlerRequest()
             {
             UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
 
-            while (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK &&
-                   client_http->UClient_Base::sendRequest(*UClientImage_Base::wbuffer, true)   &&
+            while (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK                                                             &&
+                   (client_http->UClient_Base::prepareRequest(*UClientImage_Base::wbuffer), client_http->UClient_Base::sendRequestAndReadResponse()) &&
                    UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(client_http->UClient_Base::response)))
                {
                client_http->UClient_Base::clearData();

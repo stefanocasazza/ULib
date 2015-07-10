@@ -97,7 +97,7 @@ bool URPC::readRequest(USocket* s)
 {
    U_TRACE(0, "URPC::readRequest(%p)", s)
 
-   UClientImage_Base::size_request = readTokenVector(s, 0, *UClientImage_Base::request, *rpc_info);
+   UClientImage_Base::size_request = readTokenVector(s, 0, *UClientImage_Base::rbuffer, *rpc_info);
 
    if (UClientImage_Base::size_request) U_RETURN(true);
 

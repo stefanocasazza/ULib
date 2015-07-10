@@ -572,6 +572,9 @@ public:
 
       // manage options
 
+      UString cfg_str;
+      UFileConfig cfg;
+
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
       // manage arg operation
@@ -597,8 +600,6 @@ public:
 
 private:
    UClientLCSP<UUnixSocket>* client;
-   UString cfg_str;
-   UFileConfig cfg;
 };
 
 U_MAIN

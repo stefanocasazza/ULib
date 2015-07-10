@@ -1051,7 +1051,7 @@ test:
 	-make check
 
 clean-local:
-	-rm -rf out err core tmp/* .libs *.bb* *.da *.gcov trace.*.[0-9]* object.*.[0-9]* stack.*.[0-9]* *.log
+	-rm -rf out err core tmp/* .libs *.bb* *.da *.gc* trace.*.[0-9]* object.*.[0-9]* stack.*.[0-9]* *.log
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

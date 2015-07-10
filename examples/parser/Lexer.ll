@@ -1,7 +1,7 @@
 %{
 /*
 */
-#define TRACE_DEBUG
+#define DEBUG_DEBUG
 #undef  YY_DECL
 #define YY_DECL int ParserInterface::yylex(void* yyval)
 #include <ParserInterface.h>

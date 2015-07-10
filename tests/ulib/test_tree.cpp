@@ -126,13 +126,19 @@ int U_EXPORT main(int argc, char* argv[])
 
    uint32_t n = dirwalk.walk(y);
 
-   U_ASSERT( n == 2 )
+   U_ASSERT( n == 3 )
 
    U_DUMP("y[0] = %.*S", U_STRING_TO_TRACE(y[0]))
    U_DUMP("y[1] = %.*S", U_STRING_TO_TRACE(y[1]))
+   U_DUMP("y[2] = %.*S", U_STRING_TO_TRACE(y[1]))
 
    U_ASSERT( y[0] == U_STRING_FROM_CONSTANT("./cdb.test") ||
-             y[0] == U_STRING_FROM_CONSTANT("./rdb.test"))
+             y[0] == U_STRING_FROM_CONSTANT("./rdb.test") ||
+             y[0] == U_STRING_FROM_CONSTANT("./tdb.test"))
    U_ASSERT( y[1] == U_STRING_FROM_CONSTANT("./rdb.test") ||
-             y[1] == U_STRING_FROM_CONSTANT("./cdb.test"))
+             y[1] == U_STRING_FROM_CONSTANT("./cdb.test") ||
+             y[1] == U_STRING_FROM_CONSTANT("./tdb.test"))
+   U_ASSERT( y[2] == U_STRING_FROM_CONSTANT("./rdb.test") ||
+             y[2] == U_STRING_FROM_CONSTANT("./cdb.test") ||
+             y[2] == U_STRING_FROM_CONSTANT("./tdb.test"))
 }

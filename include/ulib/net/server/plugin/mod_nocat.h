@@ -177,6 +177,7 @@ protected:
    static UString* label_to_match;
    static UString* status_content;
    static UString* allowed_members;
+   static UString* IP_address_trust;
    static UString* peer_present_in_arp_cache;
 
    static UVector<Url*>* vauth_url;
@@ -193,6 +194,7 @@ protected:
    static UVector<UString>* vLocalNetworkLabel;
    static UVector<UIPAllow*>* vLocalNetworkMask;
 
+   static void* pdata;
    static UCommand* fw;
    static UPing** sockp;
    static fd_set addrmask;

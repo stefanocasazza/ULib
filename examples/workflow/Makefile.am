@@ -30,4 +30,4 @@ noinst_LTLIBRARIES = libaction.la
 noinst_PROGRAMS = error validation production
 
 clean-local:
-	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out
+	-rm -rf core .libs *.bb* *.da *.gc* *.la *.exe gmon.out

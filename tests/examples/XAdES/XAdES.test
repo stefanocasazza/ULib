@@ -4,19 +4,13 @@
 
 start_msg XAdES
 
-rm -f tsa_http.log TSA/log \
-		out/sign.out err/sign.err \
-		out/client*.out err/client*.err \
-		out/archive.out err/archive.err \
-		out/verify.out err/verify.err \
-		trace.*sign*.[0-9]* object.*sign*.[0-9]* stack.*sign*.[0-9]* \
-		trace.*client*.[0-9]* object.*client*.[0-9]* stack.*client*.[0-9]* \
-		trace.*archive*.[0-9]* object.*archive*.[0-9]* stack.*archive*.[0-9]* \
-		trace.*verify*.[0-9]* object.*verify*.[0-9]* stack.*verify*.[0-9]* \
-		out/userver_tcp.out err/userver_tcp.err \
-		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
+rm -f tsa_http.log TSA/log out/sign.out err/sign.err out/client*.out err/client*.err \
+		out/archive.out err/archive.err out/verify.out err/verify.err out/userver_tcp.out err/userver_tcp.err \
+		trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* mempool.*userver_tcp*.[0-9]* \
+		trace.*sign*.[0-9]* object.*sign*.[0-9]* stack.*sign*.[0-9]* trace.*client*.[0-9]* object.*client*.[0-9]* stack.*client*.[0-9]* mempool.*client*.[0-9]* \
+		trace.*archive*.[0-9]* object.*archive*.[0-9]* stack.*archive*.[0-9]* trace.*verify*.[0-9]* object.*verify*.[0-9]* stack.*verify*.[0-9]* mempool.*verify*.[0-9]*
 
- UTRACE="0 10M 0"
+#UTRACE="0 10M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --leak-check=full"
@@ -35,7 +29,7 @@ SCHEMA=XAdESv141.xsd
 
 DATA_URI=$DOCUMENT
 X509=`cat ../../ulib/CA/server.crt`
-KEY_HANDLE=`pwd`/../../ulib/CA/server_nopass.key
+KEY_HANDLE=/usr/src/ULib-1.4.2/tests/ulib/CA/server_nopass.key
 DIGEST_ALGORITHM=sha256
 SIGNING_TIME=1
 CLAIMED_ROLE="Amministratore UNIREL"
@@ -45,10 +39,10 @@ PRODUCTION_PLACE_POSTAL_CODE=11111
 PRODUCTION_PLACE_COUNTRY_NAME=Italy
 
 SIGNATURE_TIMESTAMP="http://10.30.1.131/tsa"
-CA_STORE=`pwd`/../../ulib/CA/CApath
+CA_STORE=../../ulib/CA/CApath
 
 #ZIPPONE=file:///mnt/storage/stefano/XAdES/zippone/LISTACER_20100907.zip.p7m
- ZIPPONE=file:///stefano/XAdES/zippone/LISTACER_20101103.zip.p7m
+#ZIPPONE=file:///stefano/XAdES/zippone/LISTACER_20101103.zip.p7m
 
 #start_prg feed -c XAdES.ini -- $ZIPPONE
 #exit 0

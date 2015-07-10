@@ -19,7 +19,7 @@
 /**
  * @class UBison
  *
- * Implementazione di Bison per ULib
+ * Implementazione of Bison for ULib
  */
 
 // extern int yydebug;
@@ -53,15 +53,18 @@ public:
 
       U_INTERNAL_ASSERT(data)
 
-      // yydebug = 1;
+   // yydebug = 1;
 
       if (obj == 0) obj = this;
 
-      bool ok = (yyparse(obj) == 0);
+      if (yyparse(obj) == 0)
+         {
+         U_INTERNAL_DUMP("UFlexer::parsed_chars = %d, UFlexer::data.size() = %u", UFlexer::parsed_chars, UFlexer::data.size())
 
-      U_INTERNAL_DUMP("yyparse() = %b, parsed_chars = %d, size() = %u", ok, parsed_chars, data.size())
+         U_RETURN(true);
+         }
 
-      U_RETURN(ok);
+      U_RETURN(false);
       }
 
    bool parse(const UString& _data, void* obj = 0)
@@ -70,9 +73,9 @@ public:
 
       setData(_data);
 
-      bool ok = parse(obj);
+      if (parse(obj)) U_RETURN(true);
 
-      U_RETURN(ok);
+      U_RETURN(false);
       }
 
    // DEBUG

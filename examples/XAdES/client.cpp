@@ -241,11 +241,9 @@ public:
       m_XAdES_BES.PRODUCTION_PLACE_POSTAL_CODE       = production_place_postal_code;
       m_XAdES_BES.PRODUCTION_PLACE_COUNTRY_NAME      = production_place_country_name;
 
-      UString result;
-
       if (USOAPClient<T>::processRequest(m_XAdES_BES))
          {
-         result = USOAPClient<T>::getResponse(); // Get the value of the element inside the response
+         UString result = USOAPClient<T>::getResponse(); // Get the value of the element inside the response
 
          UString _buffer(result.size());
 
@@ -254,7 +252,7 @@ public:
          if (_buffer) U_RETURN_STRING(_buffer);
          }
 
-      U_RETURN_STRING(result);
+      return UString::getStringNull();
       }
 
    UString creatC(const UString& data, const char* data_uri, const UString& x509, const char* key_handle,
@@ -279,11 +277,9 @@ public:
       m_XAdES_C.CA_STORE                           = ca_store;
       m_XAdES_C.SIGNATURE_TIMESTAMP                = signature_timestamp;
 
-      UString result;
-
       if (USOAPClient<T>::processRequest(m_XAdES_C))
          {
-         result = USOAPClient<T>::getResponse(); // Get the value of the element inside the response
+         UString result = USOAPClient<T>::getResponse(); // Get the value of the element inside the response
 
          UString _buffer(result.size());
 
@@ -292,7 +288,7 @@ public:
          if (_buffer) U_RETURN_STRING(_buffer);
          }
 
-      U_RETURN_STRING(result);
+      return UString::getStringNull();
       }
 
    UString creatL(const UString& data, const char* archive_timestamp, const char* schema) // 2
@@ -303,11 +299,9 @@ public:
       m_XAdES_L.ARCHIVE_TIMESTAMP = archive_timestamp;
       m_XAdES_L.SCHEMA            = schema;
 
-      UString result;
-
       if (USOAPClient<T>::processRequest(m_XAdES_L))
          {
-         result = USOAPClient<T>::getResponse(); // Get the value of the element inside the response
+         UString result = USOAPClient<T>::getResponse(); // Get the value of the element inside the response
 
          UString _buffer(result.size());
 
@@ -316,7 +310,7 @@ public:
          if (_buffer) U_RETURN_STRING(_buffer);
          }
 
-      U_RETURN_STRING(result);
+      return UString::getStringNull();
       }
 };
 
@@ -327,8 +321,7 @@ public:
       {
       U_TRACE(5, "Application::Application()")
 
-      num_args = 0;
-      client   = 0;
+      client = 0;
       }
 
    ~Application()
@@ -346,6 +339,9 @@ public:
 
       // manage options
 
+      UString cfg_str;
+      UFileConfig cfg;
+
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
       // manage arg operation
@@ -354,9 +350,7 @@ public:
 
       if (method == 0) usage();
 
-      int op = atoi(method);
-
-      num_args = (argc - optind);
+      int op = atoi(method), num_args = (argc - optind);
 
       U_INTERNAL_DUMP("optind = %d num_args = %d", optind, num_args)
 
@@ -433,16 +427,15 @@ public:
             {
             result = client->getResponse();
 
-            if (result) U_ERROR("%.*s", U_STRING_TO_TRACE(result));
+            if (result) U_WARNING("%v", result.rep);
             }
          }
+
+      client->closeLog();
       }
 
 private:
-   int num_args;
    UClientXAdES<UTCPSocket>* client;
-   UString cfg_str;
-   UFileConfig cfg;
 };
 
 U_MAIN

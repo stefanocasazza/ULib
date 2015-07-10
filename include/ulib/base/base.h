@@ -145,6 +145,11 @@ typedef void  (*vPFpvu)  (void*,uint32_t);
 typedef void* (*pvPF)    (void);
 typedef void* (*pvPFpvpb)(void*,bool*);
 
+typedef struct U_DATA {
+   unsigned char* dptr;
+   size_t dsize;
+} U_DATA;
+
 /**
  * #define U_SUBSTR_INC_REF // NB: in this way we don't capture the event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
  */
@@ -295,12 +300,13 @@ static inline bool u_is_img(int mime_index)    { return (mime_index == U_png ||
  * '%S': print formatted string
  * '%v': print ustring
  * '%V': print ustring
+ * '%J': print U_DATA
  * '%U': print name login user
  * '%Y': print u_getSysSignal(signo)
  * '%w': print current working directory
  * '%W': print COLOR (index to ANSI ESCAPE STR)
  * ----------------------------------------------------------------------------
- * '%D': print date and time in various format
+ * '%D': print date and time in various format:
  * ----------------------------------------------------------------------------
  *             0  => format: %d/%m/%y
  * with flag  '1' => format:          %T (=> "%H:%M:%S)

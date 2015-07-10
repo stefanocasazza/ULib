@@ -161,7 +161,6 @@ public:
    bool connect();
    void clearData();
    bool readResponse(uint32_t count = U_SINGLE_READ);
-   bool sendRequest(const UString& req, bool bread_response);
 
    /**
     * Establishes a TCP/IP socket connection with the host that will satisfy requests for the provided URL.
@@ -215,6 +214,7 @@ protected:
            ca_file,   // locations of trusted CA certificates used in the verification
            ca_path,   // locations of trusted CA certificates used in the verification
            uri,
+           request,
            response,
            buffer,
            host_port;
@@ -234,7 +234,10 @@ protected:
    bool readHTTPResponse();
    bool setUrl(const UString& url); // NB: return if it has modified host or port...
 
-   bool sendRequest(bool bread_response);
+   void prepareRequest(const UString& req);
+
+   bool sendRequest(bool bread_response = false);
+   bool sendRequestAndReadResponse() { return sendRequest(true); }
 
 #ifdef USE_LIBSSL
    void setSSLContext();

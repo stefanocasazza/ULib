@@ -310,7 +310,7 @@ U_NO_EXPORT void UStringRep::set(uint32_t __length, uint32_t __capacity, const c
 #endif
 
    _length    = __length;
-   _capacity  = __capacity; // [0 const | -1 mmap]...
+   _capacity  = __capacity; // [0 const | -1 mmap | -2 to free]...
    references = 0;
    str        = ptr;
 }
@@ -642,9 +642,20 @@ void UStringRep::release()
       {
       if (_capacity != U_NOT_FOUND)
          {
+         U_INTERNAL_DUMP("_capacity = %d", (int32_t)_capacity)
+
+#     ifdef USE_LIBTDB
+         if (_capacity == U_TO_FREE)
+            {
+            U_SYSCALL_VOID(free, "%p", (void*)str);
+            }
+         else
+#     endif
+         {
          U_INTERNAL_ASSERT_EQUALS(_capacity & U_PAGEMASK, 0)
 
          UMemoryPool::deallocate((void*)str, _capacity);
+         }
          }
       else
          {
@@ -673,7 +684,7 @@ void UStringRep::fromValue(UStringRep* r)
    U_INTERNAL_DUMP("r = %p r->parent = %p r->references = %d r->child = %d - %V", r, r->parent, r->references, r->child, r)
 
    U_INTERNAL_ASSERT(r->_capacity)
-   U_INTERNAL_ASSERT_EQUALS(memcmp(this, UStringRep::string_rep_null, sizeof(UStringRep)), 0)
+   U_INTERNAL_ASSERT_EQUALS(memcmp(this, string_rep_null, sizeof(UStringRep)), 0)
 
    u__memcpy(this, r, sizeof(UStringRep), __PRETTY_FUNCTION__);
 
@@ -801,32 +812,6 @@ void UStringRep::replace(const char* s, uint32_t n)
    ((char*)str)[(_length = n)] = '\0';
 }
 
-void UStringRep::assign(UStringRep*& rep, const char* s, uint32_t n)
-{
-   U_TRACE(0, "UStringRep::assign(%p,%S,%u)", rep, s, n)
-
-   if (rep->references ||
-       rep->_capacity < n)
-      {
-      rep->release();
-
-      rep = (n ? U_NEW(UStringRep(s, n)) : string_rep_null);
-      }
-   else
-      {
-      char* ptr = (char*)rep->str;
-
-      U_INTERNAL_ASSERT_MAJOR(n, 0)
-      U_INTERNAL_ASSERT_DIFFERS(ptr, s)
-
-      U_MEMCPY(ptr, s, n);
-
-      U_ASSERT(rep->uniq())
-
-      ptr[(rep->_length = n)] = '\0';
-      }
-}
-
 void UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::copy(%p,%u,%u)", s, n, pos)
@@ -891,96 +876,6 @@ next:
    U_RETURN(r);
 }
 
-__pure bool UStringRep::equal(const char* s, uint32_t n) const
-{
-   U_TRACE(0, "UStringRep::equal(%#.*S,%u)", n, s, n) // problem with sanitize address
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_POINTER(s)
-
-   if (_length == n &&
-       memcmp(str, s, n) == 0)
-      {
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-__pure bool UStringRep::equal(const char* s, uint32_t n, bool ignore_case) const
-{
-   U_TRACE(0, "UStringRep::equal(%.*S,%u,%b)", n, s, n, ignore_case)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_POINTER(s)
-
-   if (_length == n)
-      {
-      bool r = ((ignore_case ? u__strncasecmp(str, s, n)
-                             :         memcmp(str, s, n)) == 0);
-
-      U_RETURN(r);
-      }
-
-   U_RETURN(false);
-}
-
-__pure bool UStringRep::isBase64(uint32_t pos) const
-{
-   U_TRACE(0, "UStringRep::isBase64(%u)", pos)
-
-   U_CHECK_MEMORY
-
-   if (_length)
-      {
-      U_INTERNAL_ASSERT_MINOR(pos, _length)
-
-      bool result = u_isBase64(str + pos, _length - pos);
-
-      U_RETURN(result);
-      }
-
-   U_RETURN(false);
-}
-
-__pure bool UStringRep::isPrintable(uint32_t pos, bool bline) const
-{
-   U_TRACE(0, "UStringRep::isPrintable(%u,%b)", pos, bline)
-
-   U_CHECK_MEMORY
-
-   if (_length)
-      {
-      U_INTERNAL_ASSERT_MINOR(pos, _length)
-
-      bool result = u_isPrintable(str + pos, _length - pos, bline);
-
-      U_RETURN(result);
-      }
-
-   U_RETURN(false);
-}
-
-__pure bool UStringRep::isWhiteSpace(uint32_t pos) const
-{
-   U_TRACE(0, "UStringRep::isWhiteSpace(%u)", pos)
-
-   U_CHECK_MEMORY
-
-   if (_length)
-      {
-      U_INTERNAL_ASSERT_MINOR(pos, _length)
-
-      bool result = u_isWhiteSpace(str + pos, _length - pos);
-
-      U_RETURN(result);
-      }
-
-   U_RETURN(true);
-}
-
 __pure uint32_t UStringRep::findWhiteSpace(uint32_t pos) const
 {
    U_TRACE(0, "UStringRep::findWhiteSpace(%u)", pos)
@@ -1029,63 +924,6 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
       }
 
    U_RETURN(false);
-}
-
-__pure bool UStringRep::isText(uint32_t pos) const
-{
-   U_TRACE(0, "UStringRep::isText(%u)", pos)
-
-   U_CHECK_MEMORY
-
-   if (_length)
-      {
-      U_INTERNAL_ASSERT_MINOR(pos, _length)
-
-      bool result = u_isText((const unsigned char*)(str + pos), _length - pos);
-
-      U_RETURN(result);
-      }
-
-   U_RETURN(true);
-}
-
-__pure bool UStringRep::isBinary(uint32_t pos) const
-{
-   U_TRACE(0, "UStringRep::isBinary(%u)", pos)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_MINOR(pos, _length)
-
-   bool result = u_isBinary((const unsigned char*)(str + pos), _length - pos);
-
-   U_RETURN(result);
-}
-
-__pure bool UStringRep::isUTF8(uint32_t pos) const
-{
-   U_TRACE(0, "UStringRep::isUTF8(%u)", pos)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_MINOR(pos, _length)
-
-   bool result = u_isUTF8((const unsigned char*)(str + pos), _length - pos);
-
-   U_RETURN(result);
-}
-
-__pure bool UStringRep::isUTF16(uint32_t pos) const
-{
-   U_TRACE(0, "UStringRep::isUTF16(%u)", pos)
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_MINOR(pos, _length)
-
-   bool result = u_isUTF16((const unsigned char*)(str + pos), _length - pos);
-
-   U_RETURN(result);
 }
 
 UString::UString(const char* t)
@@ -1152,7 +990,7 @@ UString UString::copy() const
       U_RETURN_STRING(copia);
       }
 
-   U_RETURN_STRING(getStringNull());
+   return getStringNull();
 }
 
 // SERVICES
@@ -1186,6 +1024,35 @@ UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::de
    rep->set(len, sz, ptr);
 
    U_INTERNAL_ASSERT(invariant())
+}
+
+UString& UString::assign(const char* s, uint32_t n)
+{
+   U_TRACE(0, "UString::assign(%S,%u)", s, n)
+
+   if (rep->references ||
+       rep->_capacity < n)
+      {
+      if (n) _set(U_NEW(UStringRep(s, n)));
+      else _assign(UStringRep::string_rep_null);
+      }
+   else
+      {
+      char* ptr = (char*)rep->str;
+
+      U_INTERNAL_ASSERT_MAJOR(n, 0)
+      U_INTERNAL_ASSERT_DIFFERS(ptr, s)
+
+      U_MEMCPY(ptr, s, n);
+
+      U_ASSERT(rep->uniq())
+
+      ptr[(rep->_length = n)] = '\0';
+      }
+
+   U_INTERNAL_ASSERT(invariant())
+
+   return *this;
 }
 
 void UString::setBuffer(uint32_t n)
@@ -1949,8 +1816,7 @@ UStringRep* UStringRep::fromUTF8(const unsigned char* s, uint32_t n)
    U_TRACE(0, "UStringRep::fromUTF8(%.*S,%u)", n, s, n)
 
    U_INTERNAL_ASSERT_POINTER(s)
-
-   if (n == 0) return UStringRep::string_rep_null;
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
 
    int c, c1, c2;
    UStringRep* r = UStringRep::create(n, n, 0);
@@ -1990,8 +1856,7 @@ UStringRep* UStringRep::toUTF8(const unsigned char* s, uint32_t n)
    U_TRACE(0, "UStringRep::toUTF8(%.*S,%u)", n, s, n)
 
    U_INTERNAL_ASSERT_POINTER(s)
-
-   if (n == 0) return UStringRep::string_rep_null;
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
 
    UStringRep* r = UStringRep::create(n, n * 2, 0);
 
@@ -2018,6 +1883,34 @@ UStringRep* UStringRep::toUTF8(const unsigned char* s, uint32_t n)
    U_INTERNAL_ASSERT(r->invariant())
 
    U_RETURN_POINTER(r, UStringRep);
+}
+
+void UString::printKeyValue(const char* key, uint32_t keylen, const char* _data, uint32_t datalen)
+{
+   U_TRACE(0, "UString::printKeyValue(%.*S,%u,%.*S,%u,%d)", keylen, key, keylen, datalen, _data, datalen)
+
+   uint32_t n = 5 + 18 + keylen + datalen; 
+
+   if (rep->space() < n) _reserve(*this, n);
+
+   char* ptr = (char*)rep->str + rep->_length;
+
+   ptr += u__snprintf(ptr, 40, "+%u,%u:", keylen, datalen);
+
+   U_MEMCPY(ptr, key, keylen);
+            ptr +=    keylen;
+
+   U_MEMCPY(ptr, "->", U_CONSTANT_SIZE("->"));
+            ptr +=     U_CONSTANT_SIZE("->");
+
+   U_MEMCPY(ptr, _data, datalen);
+            ptr +=      datalen;
+
+   u_put_unalignedp16(ptr, U_MULTICHAR_CONSTANT16('\n','\0'));
+
+   rep->_length = (ptr - rep->str) + 1;
+
+   U_INTERNAL_ASSERT(invariant())
 }
 
 void UString::setFromData(const char** p, uint32_t sz)
@@ -2623,7 +2516,7 @@ const char* UString::dump(bool reset) const
 
    *UObjectIO::os << "rep (UStringRep " << (void*)rep << ")";
 
-   if (rep == rep->string_rep_null) *UObjectIO::os << " == UStringRepNull";
+   if (rep == rep->string_rep_null) UObjectIO::os->write(U_CONSTANT_TO_PARAM(" == UStringRep::string_rep_null"));
 
    if (reset)
       {

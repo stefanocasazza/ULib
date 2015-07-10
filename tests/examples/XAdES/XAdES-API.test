@@ -4,20 +4,13 @@
 
 start_msg XAdES-API
 
-rm -f XAdES-API.log /tmp/URPCGenericMethod.err \
-		out/sign.out err/sign.err \
-		out/archive.out err/archive.err \
-		out/verify.out err/verify.err \
-		out/XAdES-API.out out/client.out out/client1.out \
-		trace.*sign*.[0-9]* object.*sign*.[0-9]* stack.*sign*.[0-9]* \
-		trace.*archive*.[0-9]* object.*archive*.[0-9]* stack.*archive*.[0-9]* \
-		trace.*verify*.[0-9]* object.*verify*.[0-9]* stack.*verify*.[0-9]* \
-		out/client.out err/client.err \
-		trace.*client*.[0-9]* object.*client*.[0-9]* stack.*client*.[0-9]* \
-		out/userver_tcp.out err/userver_tcp.err \
-      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]*
+rm -f XAdES-API.log XAdESclient.log /tmp/URPCGenericMethod.err out/XAdES-API.out out/client.out out/client1.out \
+      out/archive.out err/archive.err out/verify.out err/verify.err out/userver_tcp.out err/userver_tcp.err \
+      trace.*userver_tcp*.[0-9]* object.*userver_tcp*.[0-9]* stack.*userver_tcp*.[0-9]* mempool.*userver_tcp*.[0-9]* \
+      trace.*sign*.[0-9]* object.*sign*.[0-9]* stack.*sign*.[0-9]* trace.*client*.[0-9]* object.*client*.[0-9]* stack.*client*.[0-9]* mempool.*client*.[0-9]* \
+      trace.*archive*.[0-9]* object.*archive*.[0-9]* stack.*archive*.[0-9]* trace.*verify*.[0-9]* object.*verify*.[0-9]* stack.*verify*.[0-9]* mempool.*verify*.[0-9]*
 
- UTRACE="0 10M 0"
+#UTRACE="0 10M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --leak-check=full"
@@ -43,7 +36,7 @@ PRODUCTION_PLACE_STATE_OR_PROVINCE=SI
 PRODUCTION_PLACE_POSTAL_CODE=11111
 PRODUCTION_PLACE_COUNTRY_NAME=Italy
 CA_STORE=../../ulib/CA/CApath
-SIGNATURE_TIMESTAMP="http://10.30.1.131/tsa"
+SIGNATURE_TIMESTAMP="http://localhost/tsa"
 
 #STRACE=$LTRUSS
 start_prg client -c XAdESclient.cfg -- 1 \
@@ -74,7 +67,7 @@ mv out/client.out out/client1.out
 #									 $CA_STORE \
 #									 $SIGNATURE_TIMESTAMP
 
-#ARCHIVE_TIMESTAMP="http://10.30.1.131/tsa"
+#ARCHIVE_TIMESTAMP="http://localhost/tsa"
 #SCHEMA=/mnt/storage/stefano/XAdES/XAdESv141.xsd
 
 #start_prg client -c XAdESclient.cfg -- 3 \

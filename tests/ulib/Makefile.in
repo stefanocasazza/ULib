@@ -83,8 +83,8 @@ target_triplet = @target@
 @PTHREAD_TRUE@am__append_2 = thread.test
 @ZIP_TRUE@am__append_3 = test_zip
 @ZIP_TRUE@am__append_4 = zip.test
-@USE_PARSER_TRUE@am__append_5 = test_flexer test_bison
-@USE_PARSER_TRUE@am__append_6 = flexer.test bison.test
+@LIBTDB_TRUE@am__append_5 = test_tdb
+@LIBTDB_TRUE@am__append_6 = tdb.test
 @PCRE_TRUE@am__append_7 = test_pcre
 @PCRE_TRUE@am__append_8 = pcre.test
 @SSL_TRUE@am__append_9 = test_des3 test_digest test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7 test_url
@@ -167,8 +167,7 @@ product2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 @PLUGIN_TRUE@@STDCPP_TRUE@am_product2_la_rpath =
 @PTHREAD_TRUE@am__EXEEXT_1 = test_thread$(EXEEXT)
 @ZIP_TRUE@am__EXEEXT_2 = test_zip$(EXEEXT)
-@USE_PARSER_TRUE@am__EXEEXT_3 = test_flexer$(EXEEXT) \
-@USE_PARSER_TRUE@	test_bison$(EXEEXT)
+@LIBTDB_TRUE@am__EXEEXT_3 = test_tdb$(EXEEXT)
 @PCRE_TRUE@am__EXEEXT_4 = test_pcre$(EXEEXT)
 @SSL_TRUE@am__EXEEXT_5 = test_des3$(EXEEXT) test_digest$(EXEEXT) \
 @SSL_TRUE@	test_certificate$(EXEEXT) test_crl$(EXEEXT) \
@@ -208,12 +207,12 @@ am__EXEEXT_18 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_multipart$(EXEEXT) test_command$(EXEEXT) \
 	test_dialog$(EXEEXT) test_rdb_server$(EXEEXT) \
 	test_json$(EXEEXT) test_server$(EXEEXT) $(am__EXEEXT_1) \
-	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4) \
-	$(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7) \
-	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_10) \
-	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
-	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16) \
-	$(am__EXEEXT_17)
+	$(am__EXEEXT_2) $(am__EXEEXT_3) test_flexer$(EXEEXT) \
+	test_bison$(EXEEXT) $(am__EXEEXT_4) $(am__EXEEXT_5) \
+	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
+	$(am__EXEEXT_9) $(am__EXEEXT_10) $(am__EXEEXT_11) \
+	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14) \
+	$(am__EXEEXT_15) $(am__EXEEXT_16) $(am__EXEEXT_17)
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -227,9 +226,8 @@ am_test_base64_OBJECTS = test_base64.$(OBJEXT)
 test_base64_OBJECTS = $(am_test_base64_OBJECTS)
 test_base64_LDADD = $(LDADD)
 test_base64_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
-am__test_bison_SOURCES_DIST = test_bison_flexer.ll test_bison.yy
-@USE_PARSER_TRUE@am_test_bison_OBJECTS = test_bison_flexer.$(OBJEXT) \
-@USE_PARSER_TRUE@	test_bison.$(OBJEXT)
+am_test_bison_OBJECTS = test_bison_flexer.$(OBJEXT) \
+	test_bison.$(OBJEXT)
 test_bison_OBJECTS = $(am_test_bison_OBJECTS)
 test_bison_LDADD = $(LDADD)
 test_bison_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
@@ -309,8 +307,7 @@ am_test_file_config_OBJECTS = test_file_config.$(OBJEXT)
 test_file_config_OBJECTS = $(am_test_file_config_OBJECTS)
 test_file_config_LDADD = $(LDADD)
 test_file_config_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
-am__test_flexer_SOURCES_DIST = test_flexer.ll
-@USE_PARSER_TRUE@am_test_flexer_OBJECTS = test_flexer.$(OBJEXT)
+am_test_flexer_OBJECTS = test_flexer.$(OBJEXT)
 test_flexer_OBJECTS = $(am_test_flexer_OBJECTS)
 test_flexer_LDADD = $(LDADD)
 test_flexer_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
@@ -478,6 +475,11 @@ am_test_string_OBJECTS = test_string.$(OBJEXT)
 test_string_OBJECTS = $(am_test_string_OBJECTS)
 test_string_LDADD = $(LDADD)
 test_string_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+am__test_tdb_SOURCES_DIST = test_tdb.cpp
+@LIBTDB_TRUE@am_test_tdb_OBJECTS = test_tdb.$(OBJEXT)
+test_tdb_OBJECTS = $(am_test_tdb_OBJECTS)
+test_tdb_LDADD = $(LDADD)
+test_tdb_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am__test_thread_SOURCES_DIST = test_thread.cpp
 @PTHREAD_TRUE@am_test_thread_OBJECTS = test_thread.$(OBJEXT)
 test_thread_OBJECTS = $(am_test_thread_OBJECTS)
@@ -632,16 +634,16 @@ SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
 	$(test_soap_server_SOURCES) $(test_socket_SOURCES) \
 	$(test_ssh_client_SOURCES) $(test_ssl_client_SOURCES) \
 	$(test_ssl_server_SOURCES) $(test_string_SOURCES) \
-	$(test_thread_SOURCES) $(test_timer_SOURCES) \
-	$(test_timestamp_SOURCES) $(test_timeval_SOURCES) \
-	$(test_tokenizer_SOURCES) $(test_tree_SOURCES) \
-	$(test_unixsocket_client_SOURCES) \
+	$(test_tdb_SOURCES) $(test_thread_SOURCES) \
+	$(test_timer_SOURCES) $(test_timestamp_SOURCES) \
+	$(test_timeval_SOURCES) $(test_tokenizer_SOURCES) \
+	$(test_tree_SOURCES) $(test_unixsocket_client_SOURCES) \
 	$(test_unixsocket_server_SOURCES) $(test_url_SOURCES) \
 	$(test_vector_SOURCES) $(test_zip_SOURCES)
 DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(am__product2_la_SOURCES_DIST) $(test_application_SOURCES) \
 	$(am__test_arping_SOURCES_DIST) $(test_base64_SOURCES) \
-	$(am__test_bison_SOURCES_DIST) $(test_cache_SOURCES) \
+	$(test_bison_SOURCES) $(test_cache_SOURCES) \
 	$(test_cdb_SOURCES) $(am__test_certificate_SOURCES_DIST) \
 	$(test_command_SOURCES) $(test_compress_SOURCES) \
 	$(am__test_crl_SOURCES_DIST) $(am__test_curl_SOURCES_DIST) \
@@ -650,7 +652,7 @@ DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(am__test_digest_SOURCES_DIST) $(test_entity_SOURCES) \
 	$(am__test_event_SOURCES_DIST) $(am__test_expat_SOURCES_DIST) \
 	$(test_file_SOURCES) $(test_file_config_SOURCES) \
-	$(am__test_flexer_SOURCES_DIST) $(test_ftp_SOURCES) \
+	$(test_flexer_SOURCES) $(test_ftp_SOURCES) \
 	$(test_header_SOURCES) $(test_http_SOURCES) \
 	$(am__test_https_SOURCES_DIST) $(test_imap_SOURCES) \
 	$(am__test_interrupt_SOURCES_DIST) $(test_ipaddress_SOURCES) \
@@ -670,9 +672,10 @@ DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(am__test_ssh_client_SOURCES_DIST) \
 	$(am__test_ssl_client_SOURCES_DIST) \
 	$(am__test_ssl_server_SOURCES_DIST) $(test_string_SOURCES) \
-	$(am__test_thread_SOURCES_DIST) $(test_timer_SOURCES) \
-	$(am__test_timestamp_SOURCES_DIST) $(test_timeval_SOURCES) \
-	$(test_tokenizer_SOURCES) $(test_tree_SOURCES) \
+	$(am__test_tdb_SOURCES_DIST) $(am__test_thread_SOURCES_DIST) \
+	$(test_timer_SOURCES) $(am__test_timestamp_SOURCES_DIST) \
+	$(test_timeval_SOURCES) $(test_tokenizer_SOURCES) \
+	$(test_tree_SOURCES) \
 	$(am__test_unixsocket_client_SOURCES_DIST) \
 	$(am__test_unixsocket_server_SOURCES_DIST) \
 	$(am__test_url_SOURCES_DIST) $(test_vector_SOURCES) \
@@ -1079,7 +1082,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = ## dist-shar dist-zip
-EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg file_config.cf file_config.gperf file_config.gperf.sh file_config.key
+EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg file_config.cf file_config.gperf file_config.gperf.sh file_config.key test_bison.h
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
@@ -1091,12 +1094,12 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_imap test_ftp test_http test_rdb_client test_tokenizer \
 	test_query_parser test_multipart test_command test_dialog \
 	test_rdb_server test_json test_server $(am__append_1) \
-	$(am__append_3) $(am__append_5) $(am__append_7) \
-	$(am__append_9) $(am__append_11) $(am__append_13) \
-	$(am__append_15) $(am__append_17) $(am__append_19) \
-	$(am__append_21) $(am__append_23) $(am__append_25) \
-	$(am__append_27) $(am__append_29) $(am__append_31) \
-	$(am__append_35)
+	$(am__append_3) $(am__append_5) test_flexer test_bison \
+	$(am__append_7) $(am__append_9) $(am__append_11) \
+	$(am__append_13) $(am__append_15) $(am__append_17) \
+	$(am__append_19) $(am__append_21) $(am__append_23) \
+	$(am__append_25) $(am__append_27) $(am__append_29) \
+	$(am__append_31) $(am__append_35)
 TST = timeval.test timer.test notifier.test string.test file.test \
 	cdb.test rdb.test file_config.test log.test vector.test \
 	options.test application.test tree.test compress.test \
@@ -1105,7 +1108,7 @@ TST = timeval.test timer.test notifier.test string.test file.test \
 	imap.test ftp.test http.test tokenizer.test query_parser.test \
 	multipart.test rdb_client_server.test command.test json.test \
 	server.test server_rpc.test $(am__append_2) $(am__append_4) \
-	$(am__append_6) $(am__append_8) $(am__append_10) \
+	$(am__append_6) flexer.test $(am__append_8) $(am__append_10) \
 	$(am__append_12) $(am__append_14) $(am__append_16) \
 	$(am__append_18) $(am__append_20) $(am__append_22) \
 	$(am__append_24) $(am__append_26) $(am__append_28) \
@@ -1148,8 +1151,9 @@ test_json_SOURCES = test_json.cpp
 test_server_SOURCES = test_server.cpp
 @PTHREAD_TRUE@test_thread_SOURCES = test_thread.cpp
 @ZIP_TRUE@test_zip_SOURCES = test_zip.cpp
-@USE_PARSER_TRUE@test_flexer_SOURCES = test_flexer.ll
-@USE_PARSER_TRUE@test_bison_SOURCES = test_bison_flexer.ll test_bison.yy
+@LIBTDB_TRUE@test_tdb_SOURCES = test_tdb.cpp
+test_bison_SOURCES = test_bison_flexer.ll test_bison.yy
+test_flexer_SOURCES = test_flexer.ll
 @PCRE_TRUE@test_pcre_SOURCES = test_pcre.cpp
 @SSL_TRUE@test_des3_SOURCES = test_des3.cpp
 @SSL_TRUE@test_digest_SOURCES = test_digest.cpp
@@ -1493,6 +1497,10 @@ test_string$(EXEEXT): $(test_string_OBJECTS) $(test_string_DEPENDENCIES) $(EXTRA
 	@rm -f test_string$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_string_OBJECTS) $(test_string_LDADD) $(LIBS)
 
+test_tdb$(EXEEXT): $(test_tdb_OBJECTS) $(test_tdb_DEPENDENCIES) $(EXTRA_test_tdb_DEPENDENCIES) 
+	@rm -f test_tdb$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_tdb_OBJECTS) $(test_tdb_LDADD) $(LIBS)
+
 test_thread$(EXEEXT): $(test_thread_OBJECTS) $(test_thread_DEPENDENCIES) $(EXTRA_test_thread_DEPENDENCIES) 
 	@rm -f test_thread$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_thread_OBJECTS) $(test_thread_LDADD) $(LIBS)
@@ -1604,6 +1612,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_ssl_client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_ssl_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_string.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_tdb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_thread.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_timer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_timestamp.Po@am__quote@
@@ -2063,7 +2072,7 @@ test: all-am
 	../make_test.sh application.test base64.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test
 
 clean-local:
-	-rm -rf out err core .libs *.bb* *.da *.gcov *.log test_log.log* tmp/* \
+	-rm -rf out err core .libs *.bb* *.da *.gc* *.log test_log.log* tmp/* \
 			trace.*.[0-9]*  object.*.[0-9]* stack.*.[0-9]* mempool.*.[0-9]*
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.

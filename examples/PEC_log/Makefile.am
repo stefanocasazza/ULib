@@ -56,4 +56,4 @@ noinst_LTLIBRARIES = libPEC_report.la libPEC_report_anomalie.la
 noinst_PROGRAMS = ${PRG}
 
 clean-local:
-	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out
+	-rm -rf core .libs *.bb* *.da *.gc* *.la *.exe gmon.out

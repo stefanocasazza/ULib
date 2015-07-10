@@ -111,7 +111,7 @@ static UVector<UIPAllow*>*      vallow_IP_request;
 static UHttpClient<UTCPSocket>* client;
 
 static bool     user_exist;
-static bool     isIP, isMAC;
+static bool     isIP, isMAC, ap_address_trust;
 static UPing*   sockp;
 static uint32_t index_access_point,
                 num_users, num_users_connected, num_users_delete, num_ap_delete,
@@ -663,48 +663,64 @@ public:
 
       U_INTERNAL_ASSERT(*ap_address)
 
-      bool esito = false;
+      int op = -1;
 
-      // NB: we may be a different process from what it has updated so that we need to read the record...
+      if (ap_label->empty()) (void) ap_label->assign(U_CONSTANT_TO_PARAM("ap"));
 
       if (db_nodog->getDataStorage(*ap_address))
          {
               if ( ap_hostname->empty()) *ap_hostname = hostname;
          else if (*ap_hostname != hostname)
             {
-            U_LOGGER("*** AP HOSTNAME (%v) NOT EQUAL (%v) ON NODOG RECORD ADDRESS(%v) ***", ap_hostname->rep, hostname.rep, ap_address->rep);
+            U_LOGGER("*** AP HOSTNAME (%v) NOT EQUAL (%v) ON NODOG RECORD: ADDRESS(%v) ***", ap_hostname->rep, hostname.rep, ap_address->rep);
 
             if (UClientImage_Base::request_uri->equal(U_CONSTANT_TO_PARAM("/start_ap")))
                {
-               hostname = *ap_hostname;
+               op = RDB_REPLACE;
 
-               (void) db_nodog->putDataStorage();
+               hostname = *ap_hostname;
                }
             }
 
-         esito = (*ap_label ? findLabel() : true);
+         if (findLabel() == false)
+            {
+            if (ap_address_trust == false ||
+                sz > 1024)
+               {
+               U_RETURN(false);
+               }
+
+            op = RDB_REPLACE;
+
+            index_access_point = sz++;
+
+            vec_access_point.push_back(U_NEW(WiAuthAccessPoint(*ap_label)));
+            }
          }
       else
          {
+         if (ap_address_trust == false) U_RETURN(false);
+
+         op        = RDB_INSERT;
          port      = _port;
          status    = 0;
-         hostname  = *ap_hostname;
+         hostname  = (*ap_hostname ? *ap_hostname : U_STRING_FROM_CONSTANT("hostname_empty"));
          last_info = since = start = u_now->tv_sec;
-
-         if (hostname.empty()) (void) hostname.assign(U_CONSTANT_TO_PARAM("hostname_empty"));
-
-         WiAuthAccessPoint* ap_rec = U_NEW(WiAuthAccessPoint(*ap_label));
 
          sz                 = 1;
          index_access_point = 0;
 
          vec_access_point.clear();
-         vec_access_point.push_back(ap_rec);
-
-         esito = db_nodog->insertDataStorage(*ap_address);
+         vec_access_point.push_back(U_NEW(WiAuthAccessPoint(*ap_label)));
          }
 
-      U_RETURN(esito);
+      if (op != -1)
+         {
+         if (op == RDB_REPLACE) (void) db_nodog->putDataStorage(   *ap_address);
+         else                   (void) db_nodog->insertDataStorage(*ap_address);
+         }
+
+      U_RETURN(true);
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -1285,8 +1301,8 @@ next:
          _time_available   =  _time_available_tmp;
       _traffic_available = _traffic_available_tmp;
 
-      if (op == RDB_INSERT) (void) db_user->insertDataStorage(*uid);
-      else                  (void) db_user->putDataStorage(*uid);
+      if (op == RDB_REPLACE) (void) db_user->putDataStorage(   *uid);
+      else                   (void) db_user->insertDataStorage(*uid);
       }
 
    void writeToLOG(const char* op)
@@ -2809,11 +2825,15 @@ static bool setAccessPointAddress()
       *ap_label   = ap->substr(0U, pos).copy();
       *ap_address = ap->substr(pos + 1).copy();
 
-      if (*ap_address                                  &&
-          u_isIPv4Addr(U_STRING_TO_PARAM(*ap_address)) &&
-          db_nodog->getDataStorage(*ap_address))
+      if (*ap_address)
          {
-         U_RETURN(true);
+         if ((ap_address_trust = ap_address->isBase64Url())) *ap_address = UDES3::getSignedData(*ap_address);
+
+         if (u_isIPv4Addr(U_STRING_TO_PARAM(*ap_address)) &&
+                   db_nodog->getDataStorage(*ap_address))
+            {
+            U_RETURN(true);
+            }
          }
       }
 
@@ -3002,6 +3022,8 @@ static bool setAccessPoint(bool localization)
             *ap_address = address.substr(0U, pos).copy();
              ap_port    = address.substr(pos+1).strtol();
             }
+
+         if ((ap_address_trust = ap_address->isBase64Url())) *ap_address = UDES3::getSignedData(*ap_address);
 
          if (u_isIPv4Addr(U_STRING_TO_PARAM(*ap_address)) == false)
             {

@@ -44,6 +44,10 @@ SRC_CPP = internal/common.cpp \
 			 timeval.cpp timer.cpp notifier.cpp string.cpp file.cpp process.cpp file_config.cpp log.cpp \
 			 options.cpp application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp command.cpp
 
+if LIBTDB
+SRC_CPP += db/tdb.cpp
+endif
+
 if HTTP2
 SRC_CPP += utility/http2.cpp
 endif
@@ -308,7 +312,8 @@ dist-hook:
 	find $(distdir) -type f -name \*.usp -exec /utility/expand_tab '{}' ';'
 
 clean-local:
-	-rm -rf core .libs *.bb* *.da *.gcov *.la gmon.out
+	@cd $(top_builddir)/src/ulib/net/server/plugin/usp; $(MAKE) $(AM_MAKEFLAGS) clean 
+	-rm -rf core .libs *.bb* *.da *.la gmon.out *.gc* */*.gc* */*/*.gc* */*/*/*.gc* */*/*/*/*.gc*
 
 ## ----------------------------------------------------------------------------------------------------
 ## usp section

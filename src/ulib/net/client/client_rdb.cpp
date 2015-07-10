@@ -74,11 +74,13 @@ bool URDBClient_Base::processRequest(const char* token)
 
    for (uint32_t i = 0, n = URPC::rpc_info->size(); i < n; ++i) size += U_TOKEN_LN + (*URPC::rpc_info)[i].size();
 
-   UString request(size);
+   UString req(size);
 
-   UStringExt::buildTokenVector(token, *URPC::rpc_info, request);
+   UStringExt::buildTokenVector(token, *URPC::rpc_info, req);
 
-   if (sendRequest(request, false) &&
+   UClient_Base::prepareRequest(req);
+
+   if (sendRequest() &&
        readResponse())
       {
       U_RETURN(true);

@@ -3,7 +3,7 @@
 
 AUTOMAKE_OPTIONS = ## dist-shar dist-zip
 
-EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg file_config.cf file_config.gperf file_config.gperf.sh file_config.key
+EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg file_config.cf file_config.gperf file_config.gperf.sh file_config.key test_bison.h
 
 MAINTAINERCLEANFILES	= Makefile.in
 
@@ -75,21 +75,27 @@ TST += zip.test
 test_zip_SOURCES = test_zip.cpp
 endif
 
+if LIBTDB
+PRG += test_tdb
+TST += tdb.test
+test_tdb_SOURCES = test_tdb.cpp
+endif
+
 ## DEFS = -DU_TEST @DEFS@
 ## TESTS_ENVIRONMENT = srcdir=$(srcdir)
 ## AM_LFLAGS = -olex.yy.c -S$(shell pwd)/../../include/ulib/flex/flex.skl
 ## NB: il comando per generare il file .cc dal file .ll viene lanciato in una subdirectory:
 ## sh -x /mnt/source/ulib/autoconf/ylwrap test_flexer.ll lex.yy.c test_flexer.cc -- flex -olex.yy.c -S../../include/ulib/flex/flex.skl
 
-if USE_PARSER
+##if USE_PARSER
 ##AM_LFLAGS = -olex.yy.c
 ##AM_YFLAGS = -d -v # -Sbison.skl
-##EXTRA_DIST += test_bison.h
+TST += flexer.test
+##TST += bison.test
 PRG += test_flexer test_bison
-TST += flexer.test bison.test
-test_flexer_SOURCES = test_flexer.ll
 test_bison_SOURCES = test_bison_flexer.ll test_bison.yy
-endif
+test_flexer_SOURCES = test_flexer.ll
+##endif
 
 if PCRE
 PRG += test_pcre
@@ -219,5 +225,5 @@ test: all-am
 	../make_test.sh application.test base64.test cache.test cdb.test certificate.test command.test compress.test crl.test date.test des3.test dialog.test digest.test entity.test expat.test file.test file_config.test header.test http.test https.test interrupt.test json.test log.test memory_pool.test multipart.test notifier.test options.test pcre.test pkcs10.test pkcs7.test plugin.test process.test query_parser.test rdb.test rdb_client_server.test server.test server_rpc.test services.test soap_client.test soap_server.test ssl_client_server.test string.test timer.test timestamp.test timeval.test tokenizer.test tree.test unixsocket.test url.test vector.test zip.test
 
 clean-local:
-	-rm -rf out err core .libs *.bb* *.da *.gcov *.log test_log.log* tmp/* \
+	-rm -rf out err core .libs *.bb* *.da *.gc* *.log test_log.log* tmp/* \
 			trace.*.[0-9]*  object.*.[0-9]* stack.*.[0-9]* mempool.*.[0-9]*

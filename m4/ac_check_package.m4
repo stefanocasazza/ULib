@@ -14,7 +14,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libzdir="$dir"
 			if test -f "$dir/include/zlib.h"; then
 				found_libz="yes";
@@ -55,6 +55,49 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	fi
 	AC_MSG_RESULT([$enable_zip])
 
+	AC_MSG_CHECKING(if tdb library is wanted)
+	wanted=1;
+	if test -z "$with_libtdb" ; then
+		wanted=0;
+		with_libtdb="${CROSS_ENVIRONMENT}/usr";
+	fi
+	AC_ARG_WITH(libtdb,    [  --with-libtdb           use system      tdb library - [[will check /usr /usr/local]] [[default=use if present]]], [
+	if test "$withval" = "no"; then
+		AC_MSG_RESULT(no)
+	else
+		AC_MSG_RESULT(yes)
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libtdbdir="$dir"
+			if test -f "$dir/include/tdb.h"; then
+				found_libtdb="yes";
+				break;
+			fi
+		done
+		if test x_$found_libtdb != x_yes; then
+			msg="Cannot find libtdb library";
+			if test $wanted = 1; then
+				AC_MSG_ERROR($msg)
+			else
+				AC_MSG_RESULT($msg)
+			fi
+		else
+			echo "${T_MD}libtdb found in $libtdbdir${T_ME}"
+			USE_LIBTDB=yes
+			AC_DEFINE(USE_LIBTDB, 1, [Define if enable libtdb support])
+			libtdb_version=$(ls $libtdbdir/lib*/libtdb.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			if test -z "${libtdb_version}"; then
+				libtdb_version="unknown"
+			fi
+         ULIB_LIBS="$ULIB_LIBS -ltdb";
+			if test $libtdbdir != "${CROSS_ENVIRONMENT}/usr"; then
+				CPPFLAGS="$CPPFLAGS -I$libtdbdir/include"
+				LDFLAGS="$LDFLAGS -L$libtdbdir/lib -Wl,-R$libtdbdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libtdbdir/lib";
+			fi
+		fi
+	fi
+	], [AC_MSG_RESULT(no)])
+
 	AC_MSG_CHECKING(if zopfli library is wanted)
 	wanted=1;
 	if test -z "$with_libzopfli" ; then
@@ -66,7 +109,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libzopflidir="$dir"
 			if test -f "$dir/include/zopfli.h"; then
 				found_libzopfli="yes";
@@ -84,8 +127,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			echo "${T_MD}libzopfli found in $libzopflidir${T_ME}"
 			USE_LIBZOPFLI=yes
 			AC_DEFINE(USE_LIBZOPFLI, 1, [Define if enable libzopfli support])
-		  	libzopfli_version=1.0.1
-		##	libzopfli_version=$(grep VERSION $libzopflidir/include/zopfli.h)
+			libzopfli_version=$(ls $libzopflidir/lib*/libzopfli.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
 			if test -z "${libzopfli_version}"; then
 				libzopfli_version="unknown"
 			fi
@@ -258,7 +300,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			pcredir="$dir"
 			if test -f "$dir/include/pcre.h"; then
 				found_pcre="yes";
@@ -301,7 +343,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			expatdir="$dir"
 			if test -f "$dir/include/expat.h"; then
 				found_expat="yes";
@@ -345,7 +387,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		AC_MSG_RESULT(no)
 	else
 		AC_MSG_RESULT(yes)
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local/; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			caresdir="$dir"
 			if test -f "$dir/include/ares.h"; then
 				found_cares="yes";

@@ -1,6 +1,5 @@
-#line 2 "test_flexer.cc"
 
-#line 4 "test_flexer.cc"
+#line 3 "test_flexer.ccc"
 
 #define  YY_INT_ALIGNED short int
 
@@ -9,7 +8,7 @@
 #define FLEX_SCANNER
 #define YY_FLEX_MAJOR_VERSION 2
 #define YY_FLEX_MINOR_VERSION 5
-#define YY_FLEX_SUBMINOR_VERSION 35
+#define YY_FLEX_SUBMINOR_VERSION 39
 #if YY_FLEX_SUBMINOR_VERSION > 0
 #define FLEX_BETA
 #endif
@@ -58,7 +57,6 @@ typedef int flex_int32_t;
 typedef unsigned char flex_uint8_t; 
 typedef unsigned short int flex_uint16_t;
 typedef unsigned int flex_uint32_t;
-#endif /* ! C99 */
 
 /* Limits of integral types. */
 #ifndef INT8_MIN
@@ -89,12 +87,15 @@ typedef unsigned int flex_uint32_t;
 #define UINT32_MAX             (4294967295U)
 #endif
 
+#endif /* ! C99 */
+
 #endif /* ! FLEXINT_H */
 
 /* begin standard C++ headers. */
 #include <iostream> 
 #include <errno.h>
 #include <cstdlib>
+#include <cstdio>
 #include <cstring>
 /* end standard C++ headers. */
 
@@ -164,13 +165,19 @@ typedef unsigned int flex_uint32_t;
 typedef struct yy_buffer_state *YY_BUFFER_STATE;
 #endif
 
-extern int yyleng;
+#ifndef YY_TYPEDEF_YY_SIZE_T
+#define YY_TYPEDEF_YY_SIZE_T
+typedef size_t yy_size_t;
+#endif
+
+extern yy_size_t yyleng;
 
 #define EOB_ACT_CONTINUE_SCAN 0
 #define EOB_ACT_END_OF_FILE 1
 #define EOB_ACT_LAST_MATCH 2
 
     #define YY_LESS_LINENO(n)
+    #define YY_LINENO_REWIND_TO(ptr)
     
 /* Return all but the first "n" matched characters back to the input stream. */
 #define yyless(n) \
@@ -187,11 +194,6 @@ extern int yyleng;
 	while ( 0 )
 
 #define unput(c) yyunput( c, (yytext_ptr)  )
-
-#ifndef YY_TYPEDEF_YY_SIZE_T
-#define YY_TYPEDEF_YY_SIZE_T
-typedef size_t yy_size_t;
-#endif
 
 #ifndef YY_STRUCT_YY_BUFFER_STATE
 #define YY_STRUCT_YY_BUFFER_STATE
@@ -211,7 +213,7 @@ struct yy_buffer_state
 	/* Number of characters read into yy_ch_buf, not including EOB
 	 * characters.
 	 */
-	int yy_n_chars;
+	yy_size_t yy_n_chars;
 
 	/* Whether we "own" the buffer - i.e., we know we created it,
 	 * and can realloc() it to grow it, and should free() it to
@@ -452,7 +454,9 @@ static yyconst flex_int16_t yy_chk[125] =
 #define YY_RESTORE_YY_MORE_OFFSET
 #line 1 "test_flexer.ll"
 #line 2 "test_flexer.ll"
-#define TRACE_DEBUG
+/*
+#define DEBUG_DEBUG
+*/
 #undef  YY_DECL
 #include <ulib/flex/flexer.h>
 #define YY_DECL int UFlexer::yylex(void* yyval)
@@ -462,7 +466,7 @@ static yyconst flex_int16_t yy_chk[125] =
 
 int line_num = 1;
 
-#line 466 "test_flexer.cc"
+#line 470 "test_flexer.ccc"
 
 #define INITIAL 0
 #define comment 1
@@ -563,11 +567,6 @@ YY_DECL
 	register char *yy_cp, *yy_bp;
 	register int yy_act;
     
-#line 34 "test_flexer.ll"
-
-
-#line 570 "test_flexer.cc"
-
 	if ( !(yy_init) )
 		{
 		(yy_init) = 1;
@@ -594,6 +593,12 @@ YY_DECL
 		yy_load_buffer_state(  );
 		}
 
+	{
+#line 36 "test_flexer.ll"
+
+
+#line 601 "test_flexer.ccc"
+
 	while ( 1 )		/* loops until end-of-file is reached */
 		{
 		yy_cp = (yy_c_buf_p);
@@ -610,7 +615,7 @@ YY_DECL
 yy_match:
 		do
 			{
-			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)];
+			register YY_CHAR yy_c = yy_ec[YY_SC_TO_UI(*yy_cp)] ;
 			if ( yy_accept[yy_current_state] )
 				{
 				(yy_last_accepting_state) = yy_current_state;
@@ -647,41 +652,41 @@ do_action:	/* This label is used only to access EOF actions. */
 
 case 1:
 YY_RULE_SETUP
-#line 36 "test_flexer.ll"
+#line 38 "test_flexer.ll"
 /* skip blanks and tabs */
 	YY_BREAK
 case 2:
 /* rule 2 can match eol */
 YY_RULE_SETUP
-#line 38 "test_flexer.ll"
+#line 40 "test_flexer.ll"
 {
 	++line_num;
 }
 	YY_BREAK
 case 3:
 YY_RULE_SETUP
-#line 42 "test_flexer.ll"
+#line 44 "test_flexer.ll"
 {
    U_INTERNAL_TRACE("UFlexer::yylex() line_num = %4d number <%s>", line_num, yytext);
 }
 	YY_BREAK
 case 4:
 YY_RULE_SETUP
-#line 46 "test_flexer.ll"
+#line 48 "test_flexer.ll"
 {
    U_INTERNAL_TRACE("UFlexer::yylex() line_num = %4d name   <%s>", line_num, yytext);
 }
 	YY_BREAK
 case 5:
 YY_RULE_SETUP
-#line 50 "test_flexer.ll"
+#line 52 "test_flexer.ll"
 {
    U_INTERNAL_TRACE("UFlexer::yylex() line_num = %4d string <%s>", line_num, yytext);
 }
 	YY_BREAK
 case 6:
 YY_RULE_SETUP
-#line 54 "test_flexer.ll"
+#line 56 "test_flexer.ll"
 {
 	BEGIN(comment);
 }
@@ -689,45 +694,45 @@ YY_RULE_SETUP
 
 case 7:
 YY_RULE_SETUP
-#line 59 "test_flexer.ll"
+#line 61 "test_flexer.ll"
 
 	YY_BREAK
 case 8:
 /* rule 8 can match eol */
 YY_RULE_SETUP
-#line 60 "test_flexer.ll"
+#line 62 "test_flexer.ll"
 ++line_num;
 	YY_BREAK
 case 9:
 YY_RULE_SETUP
-#line 61 "test_flexer.ll"
+#line 63 "test_flexer.ll"
 
 	YY_BREAK
 case 10:
 /* rule 10 can match eol */
 YY_RULE_SETUP
-#line 62 "test_flexer.ll"
+#line 64 "test_flexer.ll"
 ++line_num;
 	YY_BREAK
 case 11:
 YY_RULE_SETUP
-#line 63 "test_flexer.ll"
+#line 65 "test_flexer.ll"
 BEGIN(INITIAL);
 	YY_BREAK
 
 case 12:
 YY_RULE_SETUP
-#line 66 "test_flexer.ll"
+#line 68 "test_flexer.ll"
 {
    U_INTERNAL_TRACE("UFlexer::yylex() line_num = %4d word   <%s>", line_num, yytext);
 }
 	YY_BREAK
 case 13:
 YY_RULE_SETUP
-#line 70 "test_flexer.ll"
+#line 72 "test_flexer.ll"
 ECHO;
 	YY_BREAK
-#line 731 "test_flexer.cc"
+#line 736 "test_flexer.ccc"
 case YY_STATE_EOF(INITIAL):
 case YY_STATE_EOF(comment):
 	yyterminate();
@@ -860,6 +865,7 @@ case YY_STATE_EOF(comment):
 			"fatal flex scanner internal error--no action found" );
 	} /* end of action switch */
 		} /* end of scanning one token */
+	} /* end of user's declarations */
 } /* end of yylex */
 
 /* The contents of this function are C++ specific, so the () macro is not used.
@@ -1004,21 +1010,21 @@ int yyFlexLexer::yy_get_next_buffer()
 
 	else
 		{
-			int num_to_read =
+			yy_size_t num_to_read =
 			YY_CURRENT_BUFFER_LVALUE->yy_buf_size - number_to_move - 1;
 
 		while ( num_to_read <= 0 )
 			{ /* Not enough room in the buffer - grow it. */
 
 			/* just a shorter name for the current buffer */
-			YY_BUFFER_STATE b = YY_CURRENT_BUFFER;
+			YY_BUFFER_STATE b = YY_CURRENT_BUFFER_LVALUE;
 
 			int yy_c_buf_p_offset =
 				(int) ((yy_c_buf_p) - b->yy_ch_buf);
 
 			if ( b->yy_is_our_buffer )
 				{
-				int new_size = b->yy_buf_size * 2;
+				yy_size_t new_size = b->yy_buf_size * 2;
 
 				if ( new_size <= 0 )
 					b->yy_buf_size += b->yy_buf_size / 8;
@@ -1049,7 +1055,7 @@ int yyFlexLexer::yy_get_next_buffer()
 
 		/* Read in more data. */
 		YY_INPUT( (&YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[number_to_move]),
-			(yy_n_chars), (size_t) num_to_read );
+			(yy_n_chars), num_to_read );
 
 		YY_CURRENT_BUFFER_LVALUE->yy_n_chars = (yy_n_chars);
 		}
@@ -1144,7 +1150,7 @@ int yyFlexLexer::yy_get_next_buffer()
 	yy_current_state = yy_nxt[yy_base[yy_current_state] + (unsigned int) yy_c];
 	yy_is_jam = (yy_current_state == 51);
 
-	return yy_is_jam ? 0 : yy_current_state;
+		return yy_is_jam ? 0 : yy_current_state;
 }
 
     void yyFlexLexer::yyunput( int c, register char* yy_bp)
@@ -1159,7 +1165,7 @@ int yyFlexLexer::yy_get_next_buffer()
 	if ( yy_cp < YY_CURRENT_BUFFER_LVALUE->yy_ch_buf + 2 )
 		{ /* need to shift things up to make room */
 		/* +2 for EOB chars. */
-		register int number_to_move = (yy_n_chars) + 2;
+		register yy_size_t number_to_move = (yy_n_chars) + 2;
 		register char *dest = &YY_CURRENT_BUFFER_LVALUE->yy_ch_buf[
 					YY_CURRENT_BUFFER_LVALUE->yy_buf_size + 2];
 		register char *source =
@@ -1202,7 +1208,7 @@ int yyFlexLexer::yy_get_next_buffer()
 
 		else
 			{ /* need more input */
-			int offset = (yy_c_buf_p) - (yytext_ptr);
+			yy_size_t offset = (yy_c_buf_p) - (yytext_ptr);
 			++(yy_c_buf_p);
 
 			switch ( yy_get_next_buffer(  ) )
@@ -1472,7 +1478,7 @@ void yyFlexLexer::yypop_buffer_state (void)
  */
 void yyFlexLexer::yyensure_buffer_stack(void)
 {
-	int num_to_alloc;
+	yy_size_t num_to_alloc;
     
 	if (!(yy_buffer_stack)) {
 
@@ -1627,7 +1633,7 @@ void yyfree (void * ptr )
 
 #define YYTABLES_NAME "yytables"
 
-#line 70 "test_flexer.ll"
+#line 72 "test_flexer.ll"
 
 
 

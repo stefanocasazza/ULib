@@ -578,11 +578,11 @@ done:
    U_RETURN_POINTER(pkey,EVP_PKEY);
 }
 
-/*
-data   is the data to be signed
-pkey   is the corresponding private key
-passwd is the corresponding password for the private key
-*/
+/**
+ * data   is the data to be signed
+ * pkey   is the corresponding private key
+ * passwd is the corresponding password for the private key
+ */
 
 UString UServices::getSignatureValue(int alg, const UString& data, const UString& pkey, const UString& passwd, int base64, ENGINE* e)
 {

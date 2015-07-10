@@ -88,8 +88,9 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
          {
          pkv = (const char*) memchr(prev, ':', _end - prev);
 
-         if (pkv == 0 ||
-             pkv >= ptr)
+         if (pkv == 0   ||
+             pkv >= ptr ||
+             pkv == prev)
             {
             break;
             }

@@ -208,6 +208,9 @@
 /* Define to 1 if you have the `tcc' library (-ltcc). */
 #undef HAVE_LIBTCC
 
+/* Define to 1 if you have the `tdb' library (-ltdb). */
+#undef HAVE_LIBTDB
+
 /* Define to 1 if you have the `z' library (-lz). */
 #undef HAVE_LIBZ
 
@@ -670,6 +673,9 @@
 /* Define if enable libssl support */
 #undef USE_LIBSSL
 
+/* Define if enable libtdb support */
+#undef USE_LIBTDB
+
 /* Define if enable libuuid support */
 #undef USE_LIBUUID
 
@@ -848,6 +854,9 @@
 /* install directory for configuration data */
 #undef U_SYSCONFDIR
 
+/* Define if we have libtdb with this function */
+#undef U_TDB_TRAVERSE_READ
+
 /* enable welcome message support */
 #undef U_WELCOME_SUPPORT
 
@@ -884,6 +893,9 @@
 
 /* libSSH version */
 #undef _LIBSSH_VERSION
+
+/* libtdb - samba Trivial DB library version */
+#undef _LIBTDB_VERSION
 
 /* libuuid - version library to create a new UUID value */
 #undef _LIBUUID_VERSION

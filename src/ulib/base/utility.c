@@ -2651,6 +2651,17 @@ __pure bool u_isBase64(const char* restrict s, uint32_t n)
    return true;
 }
 
+__pure bool u_isBase64Url(const char* restrict s, uint32_t n)
+{
+   /* u__isalnum(c) || (c == '+') || (c == '/') || (c == '=') */
+
+   U_LOOP_STRING( if (u__isb64url(c) == false) return false )
+
+   U_INTERNAL_TRACE("u_isBase64Url(%.*s,%u)", U_min(n,128), s, n)
+
+   return true;
+}
+
 __pure bool u_isPrintable(const char* restrict s, uint32_t n, bool bline)
 {
    U_LOOP_STRING( if (u__isprint(c) == false && (bline == false || u__islterm(c) == false)) return false )
@@ -3335,7 +3346,7 @@ CF, CF, CF, CF, CF, CF, CF, CF, CF,   CF,   CF,  CT,  CF,  CF,  CF, CF,/* 0x10 *
 /* '0' '1' '2'  '3'   '4'  '5'  '6' '7'  '8'  '9' ':' ';'   '<'  '='   '>'  '?'         */
   DTZ, DTZ,DTZ, DTZ, DTZ,  DTZ,DTZ, DTZ, DT,  DT,ITG,ITUEF,ITJ, ITAU, ITJ,ITUE, /* 0x30 */
 /* '@' 'A' 'B'  'C'   'D'  'E'  'F' 'G'  'H'  'I' 'J' 'K'   'L'  'M'   'N'  'O'         */
-  ITF,UXTY,UXT,UXTMY,UXTM, UXT,UXT, UTM,UTMY, UTY,UT, UT,  UTE, UTE,  UTE, UTM, /* 0x40 */
+  ITF,UXTY,UXT,UXTMY,UXTM, UXT,UXT, UTM,UTMY, UTY,UTE,UT,  UTE, UTE,  UTE, UTM, /* 0x40 */
 /* 'P' 'Q' 'R'  'S'   'T'  'U'  'V' 'W'  'X'  'Y' 'Z' '['   '\'  ']'   '^'  '_'         */
   UTM,UTE,UTY, UTY,  UTE, UTY, UTE,UTE, UTY, UTE, UT,ITUEF,ITUE,ITUEF,ITUEF,ITQ,/* 0x50 */
 /* '`' 'a' 'b'  'c'   'd'  'e'  'f' 'g'  'h'  'i' 'j' 'k'   'l'  'm'   'n'  'o'         */

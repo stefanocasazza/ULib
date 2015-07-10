@@ -54,6 +54,7 @@
 
 int                           UHTTP2::nerror;
 void*                         UHTTP2::pConnectionEnd;
+uint32_t                      UHTTP2::hash_static_table[61];
 const char*                   UHTTP2::upgrade_settings;
 UHTTP2::Stream*               UHTTP2::pStream;
 UHTTP2::Connection*           UHTTP2::pConnection;
@@ -286,19 +287,24 @@ void UHTTP2::ctor()
    U_NEW_ULIB_OBJECT(str_www_authenticate,            U_STRING_FROM_STRINGREP_STORAGE(65));
 
    hpack_static_table[0].name   = str_authority;
+    hash_static_table[0]        = str_authority->hash();
    hpack_static_table[1].name   = str_method;
+    hash_static_table[1]        = str_method->hash();
    hpack_static_table[1].value  = str_method_get;
    hpack_static_table[2].name   = str_method;
    hpack_static_table[2].value  = str_method_post;
    hpack_static_table[3].name   = str_path;
+    hash_static_table[3]        = str_path->hash();
    hpack_static_table[3].value  = str_path_root;
    hpack_static_table[4].name   = str_path;
    hpack_static_table[4].value  = str_path_index;
    hpack_static_table[5].name   = str_scheme;
+    hash_static_table[5]        = str_scheme->hash();
    hpack_static_table[5].value  = str_scheme_http;
    hpack_static_table[6].name   = str_scheme;
    hpack_static_table[6].value  = str_scheme_https;
    hpack_static_table[7].name   = str_status;
+    hash_static_table[7]        = str_status->hash();
    hpack_static_table[7].value  = str_status_200;
    hpack_static_table[8].name   = str_status;
    hpack_static_table[8].value  = str_status_204;
@@ -313,53 +319,100 @@ void UHTTP2::ctor()
    hpack_static_table[13].name  = str_status;
    hpack_static_table[13].value = str_status_500;
    hpack_static_table[14].name  = str_accept_charset;
+    hash_static_table[14]       = str_accept_charset->hash();
    hpack_static_table[15].name  = str_accept_encoding;
+    hash_static_table[15]       = str_accept_encoding->hash();
    hpack_static_table[15].value = str_accept_encoding_value;
    hpack_static_table[16].name  = str_accept_language;
+    hash_static_table[16]       = str_accept_language->hash();
    hpack_static_table[17].name  = str_accept_ranges;
+    hash_static_table[17]       = str_accept_ranges->hash();
    hpack_static_table[18].name  = str_accept;
+    hash_static_table[18]       = str_accept->hash();
    hpack_static_table[19].name  = str_access_control_allow_origin;
+    hash_static_table[19]       = str_access_control_allow_origin->hash();
    hpack_static_table[20].name  = str_age;
+    hash_static_table[20]       = str_age->hash();
    hpack_static_table[21].name  = str_allow;
+    hash_static_table[21]       = str_allow->hash();
    hpack_static_table[22].name  = str_authorization;
+    hash_static_table[22]       = str_authorization->hash();
    hpack_static_table[23].name  = str_cache_control;
+    hash_static_table[23]       = str_cache_control->hash();
    hpack_static_table[24].name  = str_content_disposition;
+    hash_static_table[24]       = str_content_disposition->hash();
    hpack_static_table[25].name  = str_content_encoding;
+    hash_static_table[25]       = str_content_encoding->hash();
    hpack_static_table[26].name  = str_content_language;
+    hash_static_table[26]       = str_content_language->hash();
    hpack_static_table[27].name  = str_content_length;
+    hash_static_table[27]       = str_content_length->hash();
    hpack_static_table[28].name  = str_content_location;
+    hash_static_table[28]       = str_content_location->hash();
    hpack_static_table[29].name  = str_content_range;
+    hash_static_table[29]       = str_content_range->hash();
    hpack_static_table[30].name  = str_content_type;
+    hash_static_table[30]       = str_content_type->hash();
    hpack_static_table[31].name  = str_cookie;
+    hash_static_table[31]       = str_cookie->hash();
    hpack_static_table[32].name  = str_date;
+    hash_static_table[32]       = str_date->hash();
    hpack_static_table[33].name  = str_etag;
+    hash_static_table[33]       = str_etag->hash();
    hpack_static_table[34].name  = str_expect;
+    hash_static_table[34]       = str_expect->hash();
    hpack_static_table[35].name  = str_expires;
+    hash_static_table[35]       = str_expires->hash();
    hpack_static_table[36].name  = str_from;
+    hash_static_table[36]       = str_from->hash();
    hpack_static_table[37].name  = str_host;
+    hash_static_table[37]       = str_host->hash();
    hpack_static_table[38].name  = str_if_match;
+    hash_static_table[38]       = str_if_match->hash();
    hpack_static_table[39].name  = str_if_modified_since;
+    hash_static_table[39]       = str_if_modified_since->hash();
    hpack_static_table[40].name  = str_if_none_match;
+    hash_static_table[40]       = str_if_none_match->hash();
    hpack_static_table[41].name  = str_if_range;
+    hash_static_table[41]       = str_if_range->hash();
    hpack_static_table[42].name  = str_if_unmodified_since;
+    hash_static_table[42]       = str_if_unmodified_since->hash();
    hpack_static_table[43].name  = str_last_modified;
+    hash_static_table[43]       = str_last_modified->hash();
    hpack_static_table[44].name  = str_link;
+    hash_static_table[44]       = str_link->hash();
    hpack_static_table[45].name  = str_location;
+    hash_static_table[45]       = str_location->hash();
    hpack_static_table[46].name  = str_max_forwards;
+    hash_static_table[46]       = str_max_forwards->hash();
    hpack_static_table[47].name  = str_proxy_authenticate;
+    hash_static_table[47]       = str_proxy_authenticate->hash();
    hpack_static_table[48].name  = str_proxy_authorization;
+    hash_static_table[48]       = str_proxy_authorization->hash();
    hpack_static_table[49].name  = str_range;
+    hash_static_table[49]       = str_range->hash();
    hpack_static_table[50].name  = str_referer;
+    hash_static_table[50]       = str_referer->hash();
    hpack_static_table[51].name  = str_refresh;
+    hash_static_table[51]       = str_refresh->hash();
    hpack_static_table[52].name  = str_retry_after;
+    hash_static_table[52]       = str_retry_after->hash();
    hpack_static_table[53].name  = str_server;
+    hash_static_table[53]       = str_server->hash();
    hpack_static_table[54].name  = str_set_cookie;
+    hash_static_table[54]       = str_set_cookie->hash();
    hpack_static_table[55].name  = str_strict_transport_security;
+    hash_static_table[55]       = str_strict_transport_security->hash();
    hpack_static_table[56].name  = str_transfer_encoding;
+    hash_static_table[56]       = str_transfer_encoding->hash();
    hpack_static_table[57].name  = str_user_agent;
+    hash_static_table[57]       = str_user_agent->hash();
    hpack_static_table[58].name  = str_vary;
+    hash_static_table[58]       = str_vary->hash();
    hpack_static_table[59].name  = str_via;
+    hash_static_table[59]       = str_via->hash();
    hpack_static_table[60].name  = str_www_authenticate;
+    hash_static_table[60]       = str_www_authenticate->hash();
 }
 
 void UHTTP2::dtor()
@@ -653,33 +706,7 @@ error:
    U_RETURN(nmove + len);
 }
 
-#define HEADER_TABLE_OFFSET            62
-#define HEADER_TABLE_ENTRY_SIZE_OFFSET 32
-#define STATUS_HEADER_MAX_SIZE          5 // for :status:
-
-/*
-void header_table_evict_one(h2o_hpack_header_table_t *table)
-{
-    struct st_h2o_hpack_header_table_entry_t *entry;
-    assert(table->num_entries != 0);
-
-    entry = header_table_get(table, --table->num_entries);
-    table->hpack_size -= entry->name->len + entry->value->len + HEADER_TABLE_ENTRY_SIZE_OFFSET;
-    if (! h2o_iovec_is_token(entry->name))
-        h2o_mempool_release_shared(entry->name);
-    if (! value_is_part_of_static_table(entry->value))
-        h2o_mempool_release_shared(entry->value);
-    entry->name = NULL;
-    entry->value = NULL;
-}
-*/
-
-UHTTP2::HpackHeaderTableEntry* UHTTP2::hpackHeaderTableAdd(HpackHeaderTable* ptable, uint32_t size_add, uint32_t max_num_entries)
-{
-   U_TRACE(0, "UHTTP2::hpackHeaderTableAdd(%p,%u,%u)", ptable, size_add, max_num_entries)
-
-   U_RETURN_POINTER(0, UHTTP2::HpackHeaderTableEntry);
-}
+#define HEADER_TABLE_OFFSET 62
 
 void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
 {
@@ -690,13 +717,12 @@ void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
    unsigned char c;
    const char* ptr1;
    UString name, value;
-   bool value_is_indexed, do_index;
+   bool value_is_indexed;
    UHTTP2::HpackHeaderTableEntry* entry;
-   HpackHeaderTable* ptable = &(pConnection->input_header_table);
+   UHashMap<UString>* ptable = pConnection->itable;
 
    while (ptr < endptr)
       {
-      do_index         =
       value_is_indexed = false;
 
       c = (*(unsigned char*)ptr); // determine the mode and handle accordingly
@@ -711,8 +737,6 @@ void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
          }
       else if (c >= 64) // literal header field with incremental handling
          {
-         do_index = true;
-
          ptr += (c == 64 ? (index = 0, 1) : hpackDecodeInt((const unsigned char*)ptr, (const unsigned char*)endptr, &index, (1<<6)-1));
          }
       else if (c < 32) // literal header field without indexing or never indexed
@@ -723,15 +747,9 @@ void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
          {
          ptr += hpackDecodeInt((const unsigned char*)ptr, (const unsigned char*)endptr, &index, (1<<5)-1);
 
-         if (index > ptable->hpack_max_capacity) goto error;
+         if (index > pConnection->hpack_max_capacity) goto error;
 
-         ptable->hpack_capacity = index;
-
-         while (ptable->num_entries != 0 &&
-                ptable->hpack_size > ptable->hpack_capacity)
-            {
-         // header_table_evict_one(hpack_header_table);
-            }
+         pConnection->hpack_max_capacity = index;
 
          continue;
          }
@@ -744,7 +762,12 @@ void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
             {
             ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &name);
 
-            if (name) goto next;
+            if (name)
+               {
+               ptable->hash = name.hash();
+
+               goto next;
+               }
             }
 
 error:   nerror = COMPRESSION_ERROR;
@@ -754,102 +777,164 @@ error:   nerror = COMPRESSION_ERROR;
 
       // determine the header
 
-      if (index >= HEADER_TABLE_OFFSET) // existing name (and value?)
-         {
-          index -= HEADER_TABLE_OFFSET;
+      U_INTERNAL_ASSERT_MINOR(index, HEADER_TABLE_OFFSET) // existing name (and value?)
 
-         if ((uint32_t)index >= ptable->num_entries) goto error;
+      static const int dispatch_table[HEADER_TABLE_OFFSET] = {
+         0,/* 0 */
+         (int)((char*)&&case_1-(char*)&&cdefault),   /* 1 :authority */
+         (int)((char*)&&case_2_3-(char*)&&cdefault), /* 2 :method */
+         (int)((char*)&&case_2_3-(char*)&&cdefault), /* 3 :method */
+         (int)((char*)&&case_4_5-(char*)&&cdefault), /* 4 :path */
+         (int)((char*)&&case_4_5-(char*)&&cdefault), /* 5 :path */
+         (int)((char*)&&case_6-(char*)&&cdefault),   /* 6 :scheme */
+         (int)((char*)&&case_7-(char*)&&cdefault),   /* 7 :scheme */
+         0,/*  8 :status 200 */
+         0,/*  9 :status 204 */
+         0,/* 10 :status 206 */
+         0,/* 11 :status 304 */
+         0,/* 12 :status 400 */
+         0,/* 13 :status 404 */
+         0,/* 14 :status 500 */
+         0,/* 15 accept-charset */
+         (int)((char*)&&case_16-(char*)&&cdefault), /* 16 accept-encoding */
+         (int)((char*)&&case_17-(char*)&&cdefault), /* 17 accept-language */
+         0,/* 18 accept-ranges */
+         (int)((char*)&&case_19-(char*)&&cdefault), /* 19 accept */
+         0,/* 20 access-control-allow-origin */
+         0,/* 21 age */
+         0,/* 22 allow */
+         0,/* 23 authorization */
+         0,/* 24 cache-control */
+         0,/* 25 content-disposition */
+         0,/* 26 content-encoding */
+         0,/* 27 content-language */
+         (int)((char*)&&case_28-(char*)&&cdefault), /* 28 content-length */
+         0,/* 29 content-location */
+         0,/* 30 content-range */
+         (int)((char*)&&case_31-(char*)&&cdefault), /* 31 content-type */
+         (int)((char*)&&case_32-(char*)&&cdefault), /* 32 cookie */
+         0,/* 33 date */
+         0,/* 34 etag */
+         0,/* 35 expect */
+         0,/* 36 expires */
+         0,/* 37 from */
+         (int)((char*)&&case_38-(char*)&&cdefault), /* 38 host */
+         0,/* 39 if-match */
+         (int)((char*)&&case_40-(char*)&&cdefault), /* 40 if-modified-since */
+         0,/* 41 if-none-match */
+         0,/* 42 if-range */
+         0,/* 43 if-unmodified-since */
+         0,/* 44 last-modified */
+         0,/* 45 link*/
+         0,/* 46 location */
+         0,/* 47 max-forwards*/
+         0,/* 48 proxy-authenticate */
+         0,/* 49 proxy-authorization */
+         (int)((char*)&&case_50-(char*)&&cdefault), /* 50 range */
+         (int)((char*)&&case_51-(char*)&&cdefault), /* 51 referer */
+         0,/* 52 refresh */
+         0,/* 53 retry-after */
+         0,/* 54 server */
+         0,/* 55 set-cookie */
+         0,/* 56 strict-transport-security */
+         (int)((char*)&&case_57-(char*)&&cdefault), /* 57 transfer-encoding */
+         (int)((char*)&&case_58-(char*)&&cdefault), /* 58 user-agent */
+         0,/* 59 vary */
+         0,/* 60 via */
+         0 /* 61 www-authenticate */
+      };
 
-         U_INTERNAL_ASSERT_POINTER(ptable->entries)
+      U_INTERNAL_PRINT("dispatch_table[%d] = %p &&cdefault = %p", index, dispatch_table[index], &&cdefault)
 
-         entry = ptable->entries + ((ptable->entry_start_index + index) % ptable->entry_capacity);
-
-                                name = *(entry->name);
-         if (value_is_indexed) value = *(entry->value);
-         }
-      else
-         {
-         static const int dispatch_table[HEADER_TABLE_OFFSET] = {
-            0,/* 0 */
-            (int)((char*)&&case_1-(char*)&&cdefault),   /* 1 :authority */
-            (int)((char*)&&case_2_3-(char*)&&cdefault), /* 2 :method */
-            (int)((char*)&&case_2_3-(char*)&&cdefault), /* 3 :method */
-            (int)((char*)&&case_4_5-(char*)&&cdefault), /* 4 :path */
-            (int)((char*)&&case_4_5-(char*)&&cdefault), /* 5 :path */
-            (int)((char*)&&case_6-(char*)&&cdefault),   /* 6 :scheme */
-            (int)((char*)&&case_7-(char*)&&cdefault),   /* 7 :scheme */
-            0,/*  8 :status 200 */
-            0,/*  9 :status 204 */
-            0,/* 10 :status 206 */
-            0,/* 11 :status 304 */
-            0,/* 12 :status 400 */
-            0,/* 13 :status 404 */
-            0,/* 14 :status 500 */
-            0,/* 15 accept-charset */
-            (int)((char*)&&case_16-(char*)&&cdefault), /* 16 accept-encoding */
-            (int)((char*)&&case_17-(char*)&&cdefault), /* 17 accept-language */
-            0,/* 18 accept-ranges */
-            (int)((char*)&&case_19-(char*)&&cdefault), /* 19 accept */
-            0,/* 20 access-control-allow-origin */
-            0,/* 21 age */
-            0,/* 22 allow */
-            0,/* 23 authorization */
-            0,/* 24 cache-control */
-            0,/* 25 content-disposition */
-            0,/* 26 content-encoding */
-            0,/* 27 content-language */
-            (int)((char*)&&case_28-(char*)&&cdefault), /* 28 content-length */
-            0,/* 29 content-location */
-            0,/* 30 content-range */
-            (int)((char*)&&case_31-(char*)&&cdefault), /* 31 content-type */
-            (int)((char*)&&case_32-(char*)&&cdefault), /* 32 cookie */
-            0,/* 33 date */
-            0,/* 34 etag */
-            0,/* 35 expect */
-            0,/* 36 expires */
-            0,/* 37 from */
-            (int)((char*)&&case_38-(char*)&&cdefault), /* 38 host */
-            0,/* 39 if-match */
-            (int)((char*)&&case_40-(char*)&&cdefault), /* 40 if-modified-since */
-            0,/* 41 if-none-match */
-            0,/* 42 if-range */
-            0,/* 43 if-unmodified-since */
-            0,/* 44 last-modified */
-            0,/* 45 link*/
-            0,/* 46 location */
-            0,/* 47 max-forwards*/
-            0,/* 48 proxy-authenticate */
-            0,/* 49 proxy-authorization */
-            (int)((char*)&&case_50-(char*)&&cdefault), /* 50 range */
-            (int)((char*)&&case_51-(char*)&&cdefault), /* 51 referer */
-            0,/* 52 refresh */
-            0,/* 53 retry-after */
-            0,/* 54 server */
-            0,/* 55 set-cookie */
-            0,/* 56 strict-transport-security */
-            (int)((char*)&&case_57-(char*)&&cdefault), /* 57 transfer-encoding */
-            (int)((char*)&&case_58-(char*)&&cdefault), /* 58 user-agent */
-            0,/* 59 vary */
-            0,/* 60 via */
-            0 /* 61 www-authenticate */
-         };
-
-         U_INTERNAL_PRINT("dispatch_table[%d] = %p &&cdefault = %p", index, dispatch_table[index], &&cdefault)
-
-         goto *((char*)&&cdefault + dispatch_table[index]);
+      goto *((char*)&&cdefault + dispatch_table[index]);
 
 case_38: // host
 
-         name = *str_host;
+      name = *str_host;
 
-         goto host;
+      goto host;
 
 case_1: // authority (a.k.a. the Host header)
 
-         name = *str_authority;
+      name = *str_authority;
 
-host:    U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+host: U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
+      value_is_indexed = true;
+
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+      sz = value.size();
+
+      if (sz == 0) goto error;
+
+      UHTTP::setHostname(value.data(), sz);
+
+      ptable->hash = hash_static_table[37]; // host
+
+      goto next;
+
+case_2_3: // GET - POST
+
+      if (value_is_indexed) U_http_method_type = (index == 2 ? HTTP_GET : HTTP_POST);
+      else
+         {
+         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+
+         ptr1 = value.data();
+
+         if (*ptr1 == '\0') goto error;
+
+         switch (u_get_unalignedp32(ptr1))
+            {
+            case U_MULTICHAR_CONSTANT32('g','e','t','\0'):
+            case U_MULTICHAR_CONSTANT32('G','E','T','\0'): U_http_method_type = HTTP_GET;                                 break;
+            case U_MULTICHAR_CONSTANT32('h','e','a','d'):
+            case U_MULTICHAR_CONSTANT32('H','E','A','D'):  U_http_method_type = HTTP_HEAD;        U_http_method_num =  1; break;
+            case U_MULTICHAR_CONSTANT32('p','o','s','t'):
+            case U_MULTICHAR_CONSTANT32('P','O','S','T'):  U_http_method_type = HTTP_POST;        U_http_method_num =  2; break;
+            case U_MULTICHAR_CONSTANT32('p','u','t','\0'):
+            case U_MULTICHAR_CONSTANT32('P','U','T','\0'): U_http_method_type = HTTP_PUT;         U_http_method_num =  3; break;
+            case U_MULTICHAR_CONSTANT32('d','e','l','e'):
+            case U_MULTICHAR_CONSTANT32('D','E','L','E'):  U_http_method_type = HTTP_DELETE;      U_http_method_num =  4; break;
+            case U_MULTICHAR_CONSTANT32('o','p','t','i'):
+            case U_MULTICHAR_CONSTANT32('O','P','T','I'):  U_http_method_type = HTTP_OPTIONS;     U_http_method_num =  5; break;
+            // NOT IMPLEMENTED
+            case U_MULTICHAR_CONSTANT32('T','R','A','C'):  U_http_method_type = HTTP_TRACE;       U_http_method_num =  6; break;
+            case U_MULTICHAR_CONSTANT32('C','O','N','N'):  U_http_method_type = HTTP_CONNECT;     U_http_method_num =  7; break;
+            case U_MULTICHAR_CONSTANT32('C','O','P','Y'):  U_http_method_type = HTTP_COPY;        U_http_method_num =  8; break;
+            case U_MULTICHAR_CONSTANT32('M','O','V','E'):  U_http_method_type = HTTP_MOVE;        U_http_method_num =  9; break;
+            case U_MULTICHAR_CONSTANT32('L','O','C','K'):  U_http_method_type = HTTP_LOCK;        U_http_method_num = 10; break;
+            case U_MULTICHAR_CONSTANT32('U','N','L','O'):  U_http_method_type = HTTP_UNLOCK;      U_http_method_num = 11; break;
+            case U_MULTICHAR_CONSTANT32('M','K','C','O'):  U_http_method_type = HTTP_MKCOL;       U_http_method_num = 12; break;
+            case U_MULTICHAR_CONSTANT32('S','E','A','R'):  U_http_method_type = HTTP_SEARCH;      U_http_method_num = 13; break;
+            case U_MULTICHAR_CONSTANT32('P','R','O','P'):  U_http_method_type = HTTP_PROPFIND;    U_http_method_num = 14; break;
+            case U_MULTICHAR_CONSTANT32('P','A','T','C'):  U_http_method_type = HTTP_PATCH;       U_http_method_num = 16; break;
+            case U_MULTICHAR_CONSTANT32('P','U','R','G'):  U_http_method_type = HTTP_PURGE;       U_http_method_num = 17; break;
+            case U_MULTICHAR_CONSTANT32('M','E','R','G'):  U_http_method_type = HTTP_MERGE;       U_http_method_num = 18; break;
+            case U_MULTICHAR_CONSTANT32('R','E','P','O'):  U_http_method_type = HTTP_REPORT;      U_http_method_num = 19; break;
+            case U_MULTICHAR_CONSTANT32('C','H','E','C'):  U_http_method_type = HTTP_CHECKOUT;    U_http_method_num = 20; break;
+            case U_MULTICHAR_CONSTANT32('M','K','A','C'):  U_http_method_type = HTTP_MKACTIVITY;  U_http_method_num = 21; break;
+            case U_MULTICHAR_CONSTANT32('N','O','T','I'):  U_http_method_type = HTTP_NOTIFY;      U_http_method_num = 22; break;
+            case U_MULTICHAR_CONSTANT32('M','S','E','A'):  U_http_method_type = HTTP_MSEARCH;     U_http_method_num = 23; break;
+            case U_MULTICHAR_CONSTANT32('S','U','B','S'):  U_http_method_type = HTTP_SUBSCRIBE;   U_http_method_num = 24; break;
+            case U_MULTICHAR_CONSTANT32('U','N','S','U'):  U_http_method_type = HTTP_UNSUBSCRIBE; U_http_method_num = 25; break;
+
+            default: goto error;
+            }
+         }
+
+      continue;
+
+case_4_5: // / - /index.html
+
+      name = *str_path;
+
+      // determine the value (if necessary)
+
+      if (value_is_indexed) value = *(index == 4 ? str_path_root : str_path_index);
+      else
+         {
          value_is_indexed = true;
 
          ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
@@ -858,336 +943,270 @@ host:    U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
          if (sz == 0) goto error;
 
-         UHTTP::setHostname(value.data(), sz);
+         U_http_info.query = (const char*) memchr((U_http_info.uri = value.data()), '?', (U_http_info.uri_len = sz));
 
-         goto next;
-
-case_2_3: // GET - POST
-
-         name = *str_method;
-
-         // determine the value (if necessary)
-
-         if (value_is_indexed) value = *(index == 2 ? str_method_get : str_method_post);
-         else
+         if (U_http_info.query)
             {
-            value_is_indexed = true;
+            U_http_info.query_len = U_http_info.uri_len - (U_http_info.query++ - U_http_info.uri);
 
-            ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+            U_http_info.uri_len -= U_http_info.query_len;
 
-            ptr1 = value.data();
-
-            if (*ptr1 == '\0') goto error;
-
-            switch (u_get_unalignedp32(ptr1))
-               {
-               case U_MULTICHAR_CONSTANT32('g','e','t','\0'):
-               case U_MULTICHAR_CONSTANT32('G','E','T','\0'): U_http_method_type = HTTP_GET;                                 break;
-               case U_MULTICHAR_CONSTANT32('h','e','a','d'):
-               case U_MULTICHAR_CONSTANT32('H','E','A','D'):  U_http_method_type = HTTP_HEAD;        U_http_method_num =  1; break;
-               case U_MULTICHAR_CONSTANT32('p','o','s','t'):
-               case U_MULTICHAR_CONSTANT32('P','O','S','T'):  U_http_method_type = HTTP_POST;        U_http_method_num =  2; break;
-               case U_MULTICHAR_CONSTANT32('p','u','t','\0'):
-               case U_MULTICHAR_CONSTANT32('P','U','T','\0'): U_http_method_type = HTTP_PUT;         U_http_method_num =  3; break;
-               case U_MULTICHAR_CONSTANT32('d','e','l','e'):
-               case U_MULTICHAR_CONSTANT32('D','E','L','E'):  U_http_method_type = HTTP_DELETE;      U_http_method_num =  4; break;
-               case U_MULTICHAR_CONSTANT32('o','p','t','i'):
-               case U_MULTICHAR_CONSTANT32('O','P','T','I'):  U_http_method_type = HTTP_OPTIONS;     U_http_method_num =  5; break;
-               // NOT IMPLEMENTED
-               case U_MULTICHAR_CONSTANT32('T','R','A','C'):  U_http_method_type = HTTP_TRACE;       U_http_method_num =  6; break;
-               case U_MULTICHAR_CONSTANT32('C','O','N','N'):  U_http_method_type = HTTP_CONNECT;     U_http_method_num =  7; break;
-               case U_MULTICHAR_CONSTANT32('C','O','P','Y'):  U_http_method_type = HTTP_COPY;        U_http_method_num =  8; break;
-               case U_MULTICHAR_CONSTANT32('M','O','V','E'):  U_http_method_type = HTTP_MOVE;        U_http_method_num =  9; break;
-               case U_MULTICHAR_CONSTANT32('L','O','C','K'):  U_http_method_type = HTTP_LOCK;        U_http_method_num = 10; break;
-               case U_MULTICHAR_CONSTANT32('U','N','L','O'):  U_http_method_type = HTTP_UNLOCK;      U_http_method_num = 11; break;
-               case U_MULTICHAR_CONSTANT32('M','K','C','O'):  U_http_method_type = HTTP_MKCOL;       U_http_method_num = 12; break;
-               case U_MULTICHAR_CONSTANT32('S','E','A','R'):  U_http_method_type = HTTP_SEARCH;      U_http_method_num = 13; break;
-               case U_MULTICHAR_CONSTANT32('P','R','O','P'):  U_http_method_type = HTTP_PROPFIND;    U_http_method_num = 14; break;
-               case U_MULTICHAR_CONSTANT32('P','A','T','C'):  U_http_method_type = HTTP_PATCH;       U_http_method_num = 16; break;
-               case U_MULTICHAR_CONSTANT32('P','U','R','G'):  U_http_method_type = HTTP_PURGE;       U_http_method_num = 17; break;
-               case U_MULTICHAR_CONSTANT32('M','E','R','G'):  U_http_method_type = HTTP_MERGE;       U_http_method_num = 18; break;
-               case U_MULTICHAR_CONSTANT32('R','E','P','O'):  U_http_method_type = HTTP_REPORT;      U_http_method_num = 19; break;
-               case U_MULTICHAR_CONSTANT32('C','H','E','C'):  U_http_method_type = HTTP_CHECKOUT;    U_http_method_num = 20; break;
-               case U_MULTICHAR_CONSTANT32('M','K','A','C'):  U_http_method_type = HTTP_MKACTIVITY;  U_http_method_num = 21; break;
-               case U_MULTICHAR_CONSTANT32('N','O','T','I'):  U_http_method_type = HTTP_NOTIFY;      U_http_method_num = 22; break;
-               case U_MULTICHAR_CONSTANT32('M','S','E','A'):  U_http_method_type = HTTP_MSEARCH;     U_http_method_num = 23; break;
-               case U_MULTICHAR_CONSTANT32('S','U','B','S'):  U_http_method_type = HTTP_SUBSCRIBE;   U_http_method_num = 24; break;
-               case U_MULTICHAR_CONSTANT32('U','N','S','U'):  U_http_method_type = HTTP_UNSUBSCRIBE; U_http_method_num = 25; break;
-
-               default: goto error;
-               }
+            U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
             }
 
-         goto next;
+         U_INTERNAL_DUMP("URI = %.*S", U_HTTP_URI_TO_TRACE)
+         }
 
-case_4_5: // / - /index.html
+      ptable->hash = hash_static_table[3]; // path
 
-         name = *str_path;
-
-         // determine the value (if necessary)
-
-         if (value_is_indexed) value = *(index == 4 ? str_path_root : str_path_index);
-         else
-            {
-            value_is_indexed = true;
-
-            ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
-
-            sz = value.size();
-
-            if (sz == 0) goto error;
-
-            U_http_info.query = (const char*) memchr((U_http_info.uri = value.data()), '?', (U_http_info.uri_len = sz));
-
-            if (U_http_info.query)
-               {
-               U_http_info.query_len = U_http_info.uri_len - (U_http_info.query++ - U_http_info.uri);
-
-               U_http_info.uri_len -= U_http_info.query_len;
-
-               U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
-               }
-
-            U_INTERNAL_DUMP("URI = %.*S", U_HTTP_URI_TO_TRACE)
-            }
-
-         goto next;
+      goto next;
 
 case_6: // http
 
-         U_ASSERT_EQUALS(UServer_Base::csocket->isSSLActive(), false)
+      U_ASSERT_EQUALS(UServer_Base::csocket->isSSLActive(), false)
 
-         goto next;
+      goto next;
 
 case_7: // https
 
-         U_ASSERT(((USSLSocket*)UServer_Base::csocket)->isSSL())
+      U_ASSERT(((USSLSocket*)UServer_Base::csocket)->isSSL())
 
-         goto next;
+      goto next;
 
 case_16: // accept-encoding: gzip, deflate
 
-         name = *str_accept_encoding;
+      name = *str_accept_encoding;
 
-         U_INTERNAL_ASSERT(value_is_indexed)
+      U_INTERNAL_ASSERT(value_is_indexed)
 
-         value = *str_accept_encoding_value;
+      value = *str_accept_encoding_value;
 
-         U_http_is_accept_gzip = '1';
+      U_http_is_accept_gzip = '1';
 
-         U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+      U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
 
-         goto next;
+      ptable->hash = hash_static_table[15]; // accept_encoding
+
+      goto next;
 
 case_17: // accept-language
 
-         name = *str_accept_language;
+      name = *str_accept_language;
 
-         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-         value_is_indexed = true;
+      value_is_indexed = true;
 
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-         U_http_accept_language_len = value.size();
+      U_http_accept_language_len = value.size();
 
-         if (U_http_accept_language_len == 0) goto error;
+      if (U_http_accept_language_len == 0) goto error;
 
-         U_http_info.accept_language = value.data();
+      U_http_info.accept_language = value.data();
 
-         U_INTERNAL_DUMP("Accept-Language: = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
+      U_INTERNAL_DUMP("Accept-Language: = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
 
-         goto next;
+      ptable->hash = hash_static_table[16]; // accept_language
+
+      goto next;
 
 case_19: // accept
 
-         name = *str_accept;
+      name = *str_accept;
 
-         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-         value_is_indexed = true;
+      value_is_indexed = true;
 
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-         U_http_accept_len = value.size();
+      U_http_accept_len = value.size();
 
-         if (U_http_accept_len == 0) goto error;
+      if (U_http_accept_len == 0) goto error;
 
-         U_http_info.accept = value.data();
+      U_http_info.accept = value.data();
 
-         U_INTERNAL_DUMP("Accept: = %.*S", U_HTTP_ACCEPT_TO_TRACE)
+      U_INTERNAL_DUMP("Accept: = %.*S", U_HTTP_ACCEPT_TO_TRACE)
 
-         goto next;
+      ptable->hash = hash_static_table[18]; // accept
+
+      goto next;
 
 case_28: // content_length
 
-         name = *str_content_length;
+      name = *str_content_length;
 
-         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-         value_is_indexed = true;
+      value_is_indexed = true;
 
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-         if (value.empty()) goto error;
+      if (value.empty()) goto error;
 
-         U_http_info.clength = (uint32_t) strtoul(value.data(), 0, 0);
+      U_http_info.clength = (uint32_t) strtoul(value.data(), 0, 0);
 
-         U_INTERNAL_DUMP("Content-Length: = %.*S U_http_info.clength = %u", U_STRING_TO_TRACE(value), U_http_info.clength)
+      U_INTERNAL_DUMP("Content-Length: = %.*S U_http_info.clength = %u", U_STRING_TO_TRACE(value), U_http_info.clength)
 
-         goto next;
+      ptable->hash = hash_static_table[27]; // content_length 
+
+      goto next;
 
 case_31: // content_type
 
-         name = *str_content_type;
+      name = *str_content_type;
 
-         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-         value_is_indexed = true;
+      value_is_indexed = true;
 
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-         U_http_content_type_len = value.size();
+      U_http_content_type_len = value.size();
 
-         if (U_http_content_type_len == 0) goto error;
+      if (U_http_content_type_len == 0) goto error;
 
-         U_http_info.content_type = value.data();
+      U_http_info.content_type = value.data();
 
-         U_INTERNAL_DUMP("Content-Type(%u): = %.*S", U_http_content_type_len, U_HTTP_CTYPE_TO_TRACE)
+      U_INTERNAL_DUMP("Content-Type(%u): = %.*S", U_http_content_type_len, U_HTTP_CTYPE_TO_TRACE)
 
-         goto next;
+      ptable->hash = hash_static_table[30]; // content_type 
+
+      goto next;
 
 case_32: // cookie
 
-         name = *str_cookie;
+      name = *str_cookie;
 
-         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-         value_is_indexed = true;
+      value_is_indexed = true;
 
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-         U_http_info.cookie_len = value.size();
+      U_http_info.cookie_len = value.size();
 
-         if (U_http_info.cookie_len == 0) goto error;
+      if (U_http_info.cookie_len == 0) goto error;
 
-         U_http_info.cookie = value.data();
+      U_http_info.cookie = value.data();
 
-         U_INTERNAL_DUMP("Cookie(%u): = %.*S", U_http_info.cookie_len, U_HTTP_COOKIE_TO_TRACE)
+      U_INTERNAL_DUMP("Cookie(%u): = %.*S", U_http_info.cookie_len, U_HTTP_COOKIE_TO_TRACE)
 
-         goto next;
+      ptable->hash = hash_static_table[31]; // cookie 
+
+      goto next;
 
 case_40: // if-modified-since
 
-         name = *str_if_modified_since;
+      name = *str_if_modified_since;
 
-         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-         value_is_indexed = true;
+      value_is_indexed = true;
 
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-         if (value.empty()) goto error;
+      if (value.empty()) goto error;
 
-         U_http_info.if_modified_since = UTimeDate::getSecondFromTime(value.data(), true);
+      U_http_info.if_modified_since = UTimeDate::getSecondFromTime(value.data(), true);
 
-         U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
+      U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
 
-         goto next;
+      ptable->hash = hash_static_table[39]; // if_modified_since 
+
+      goto next;
 
 case_50: // range 
 
-         name = *str_range;
+      name = *str_range;
 
-         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-         value_is_indexed = true;
+      value_is_indexed = true;
 
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-         U_http_range_len = value.size() - U_CONSTANT_SIZE("bytes=");
+      U_http_range_len = value.size() - U_CONSTANT_SIZE("bytes=");
 
-         if (U_http_range_len <= 0) goto error;
+      if (U_http_range_len <= 0) goto error;
 
-         U_http_info.range = value.data() + U_CONSTANT_SIZE("bytes=");
+      U_http_info.range = value.data() + U_CONSTANT_SIZE("bytes=");
 
-         U_INTERNAL_DUMP("Range = %.*S", U_HTTP_RANGE_TO_TRACE)
+      U_INTERNAL_DUMP("Range = %.*S", U_HTTP_RANGE_TO_TRACE)
 
-         goto next;
+      ptable->hash = hash_static_table[49]; // range 
+
+      goto next;
 
 case_51: // referer 
 
-         name = *str_referer;
+      name = *str_referer;
 
-         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-         value_is_indexed = true;
+      value_is_indexed = true;
 
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-         U_http_info.referer_len = value.size();
+      U_http_info.referer_len = value.size();
 
-         if (U_http_info.referer_len == 0) goto error;
+      if (U_http_info.referer_len == 0) goto error;
 
-         U_http_info.referer = value.data();
+      U_http_info.referer = value.data();
 
-         U_INTERNAL_DUMP("Referer(%u): = %.*S", U_http_info.referer_len, U_HTTP_REFERER_TO_TRACE)
+      U_INTERNAL_DUMP("Referer(%u): = %.*S", U_http_info.referer_len, U_HTTP_REFERER_TO_TRACE)
 
-         goto next;
+      ptable->hash = hash_static_table[50]; // referer 
+
+      goto next;
 
 case_57: // transfer-encoding
 
-         U_SRV_LOG("WARNING: Transfer-Encoding is not supported in HTTP/2");
+      U_SRV_LOG("WARNING: Transfer-Encoding is not supported in HTTP/2");
 
-         goto error;
+      goto error;
 
 case_58: // user-agent
 
-         name = *str_user_agent;
+      name = *str_user_agent;
 
-         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-         value_is_indexed = true;
+      value_is_indexed = true;
 
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-         U_http_info.user_agent_len = value.size();
+      U_http_info.user_agent_len = value.size();
 
-         if (U_http_info.user_agent_len == 0) goto error;
+      if (U_http_info.user_agent_len == 0) goto error;
 
-         U_http_info.user_agent = value.data();
+      U_http_info.user_agent = value.data();
 
-         U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+      U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
 
-         goto next;
+      ptable->hash = hash_static_table[57]; // user_agent
+
+      goto next;
 
 cdefault:
-         entry = hpack_static_table + index - 1;
+      entry = hpack_static_table + --index;
 
-                                name = *(entry->name);
-         if (value_is_indexed) value = *(entry->value);
-         }
+      ptable->hash = hash_static_table[index];
 
-next:
-      if (value_is_indexed == false) // determine the value (if necessary)
+                             name = *(entry->name);
+      if (value_is_indexed) value = *(entry->value);
+
+next: if (value_is_indexed == false) // determine the value (if necessary)
          {
          ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
          if (value.empty()) goto error;
          }
 
-      // add the decoded header to the header table if necessary
+      // add the decoded header to the header table
 
-      if (do_index)
-         {
-         entry = hpackHeaderTableAdd(ptable, name.size() + value.size() + HEADER_TABLE_ENTRY_SIZE_OFFSET, U_NOT_FOUND);
-
-         if (entry)
-            {
-            *(entry->name)  = name;
-            *(entry->value) = value;
-            }
-         }
+      ptable->insert(name, value);
 
       U_INTERNAL_DUMP("name = %V value = %V", name.rep, value.rep)
       }
@@ -1195,14 +1214,13 @@ next:
    U_INTERNAL_DUMP("U_http_method_type = %B U_http_method_num = %d", U_http_method_type, U_http_method_num)
 }
 
-void UHTTP2::manageHeaders()
+bool UHTTP2::manageHeaders(const char** p, const char** e)
 {
-   U_TRACE(0, "UHTTP2::manageHeaders()")
+   U_TRACE(0, "UHTTP2::manageHeaders(%p,%p)", p, e)
 
    int32_t padlen;
-
-   const char*    ptr = frame.payload;
-   const char* endptr = frame.payload + frame.length;
+   const char*    ptr = *p;
+   const char* endptr = *e;
 
    if ((frame.flags & FLAG_PADDED) == 0) padlen = 0;
    else
@@ -1213,7 +1231,7 @@ void UHTTP2::manageHeaders()
          {
          nerror = PROTOCOL_ERROR;
 
-         return;
+         U_RETURN(false);
          }
 
       endptr -= padlen;
@@ -1236,7 +1254,7 @@ void UHTTP2::manageHeaders()
          {
          nerror = PROTOCOL_ERROR;
 
-         return;
+         U_RETURN(false);
          }
 
       uint32_t u4 = ntohl(*(uint32_t*)ptr);
@@ -1247,7 +1265,8 @@ void UHTTP2::manageHeaders()
       pStream->priority_weight     = (uint16_t)*ptr++ + 1;
       }
 
-   HpackHeaderTable* ptable = &(pConnection->input_header_table);
+   *p = ptr;
+   *e = endptr;
 
    pStream->id                     =
    pConnection->max_open_stream_id = frame.stream_id;
@@ -1257,13 +1276,16 @@ void UHTTP2::manageHeaders()
        pStream->output_window =
    pConnection->output_window = pConnection->peer_settings.initial_window_size;
 
-   ptable->hpack_capacity                          =
-   ptable->hpack_max_capacity                      =
-   pConnection->output_header_table.hpack_capacity = SETTINGS_DEFAULT.header_table_size;
+   pConnection->itable = U_NEW(UHashMap<UString>(53, false, setIndexStaticTable));
 
-   pStream->state = STREAM_STATE_RECV_PSUEDO_HEADERS | ((frame.flags & FLAG_END_STREAM) != 0 ? STREAM_STATE_HALF_CLOSED : 0);
+   pConnection->hpack_max_capacity = SETTINGS_DEFAULT.header_table_size;
 
-   decodeHeaders(ptr, endptr); // parse header block fragment
+                                             pStream->state  = STREAM_STATE_RECV_PSUEDO_HEADERS;
+   if ((frame.flags & FLAG_END_STREAM) != 0) pStream->state |= STREAM_STATE_HALF_CLOSED;
+
+   if ((frame.flags & FLAG_END_HEADERS) != 0) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 void UHTTP2::manageData()
@@ -1363,8 +1385,6 @@ bool UHTTP2::manageSetting()
       resetReadBuffer(UClientImage_Base::rstart + U_CONSTANT_SIZE(HTTP2_CONNECTION_PREFACE));
       }
 
-   bool expect_continuation_of_headers;
-
    readFrame();
 
    if ( frame.stream_id != 0   ||
@@ -1389,8 +1409,6 @@ bool UHTTP2::manageSetting()
       goto error;
       }
 
-   expect_continuation_of_headers = false;
-
 loop:
    sz = HTTP2_FRAME_HEADER_SIZE + (uint32_t)frame.length;
 
@@ -1410,32 +1428,54 @@ loop:
          case DATA:     manageData();     break;
          case PRIORITY: managePriority(); break;
          case HEADERS:
-         case CONTINUATION:
             {
-            if (expect_continuation_of_headers == false) manageHeaders();
+            const char* endptr = (ptr = frame.payload) + frame.length;
+
+            if (manageHeaders(&ptr, &endptr)) decodeHeaders(ptr, endptr); // parse header block fragment
             else
                {
+               if (nerror != NO_ERROR) goto error;
+
+               // we must wait for CONTINUATION frames for the same stream...
+
+               U_INTERNAL_ASSERT_EQUALS(frame.flags & FLAG_END_HEADERS, 0)
+
+               sz = (endptr - ptr);
+
+               UString bufferHeaders(ptr, sz, sz * 2);
+
+wait_for_CONTINUATION:
+               resetReadBuffer(UClientImage_Base::rstart + HTTP2_FRAME_HEADER_SIZE + (uint32_t)frame.length);
+
+               readFrame();
+
+               if (nerror != NO_ERROR) goto error;
+
                if (frame.type != CONTINUATION ||
                    frame.stream_id != pConnection->max_open_stream_id)
                   {
                   nerror = PROTOCOL_ERROR;
 
-                  goto error;;
+                  goto error;
                   }
 
-               decodeHeaders(frame.payload, frame.payload + frame.length);
-               }
+               (void) bufferHeaders.append(frame.payload, frame.length);
 
-            if ((frame.flags & FLAG_END_HEADERS) == 0)
-               {
-               // we wait for CONTINUATION frames...
+               if ((frame.flags & FLAG_END_HEADERS) == 0) goto wait_for_CONTINUATION;
 
-               expect_continuation_of_headers = true;
+               ptr = bufferHeaders.data();
 
-               goto loop;
+               decodeHeaders(ptr, ptr + bufferHeaders.size()); // parse header block fragment
                }
             }
          break;
+
+         case CONTINUATION:
+            {
+            nerror = PROTOCOL_ERROR;
+
+            goto error;
+            }
 
          default: goto loop; // we wait for SETTINGS ack...
          }

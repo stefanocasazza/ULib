@@ -983,21 +983,14 @@ U_NO_EXPORT void URDB::print1(UCDB* pcdb, uint32_t _offset) // entry presenti ne
 
    if (offset_data)
       {
-      char tmp[40];
-      UString* pstr = pcdb->pbuffer;
-      
-      uint32_t size_key  = RDB_cache_node(n, key.dsize),
-               size_data = RDB_cache_node(n,data.dsize);
+      U_INTERNAL_ASSERT_POINTER(pcdb)
+      U_INTERNAL_ASSERT_POINTER(pcdb->pbuffer)
 
-      uint32_t _size = u__snprintf(tmp, sizeof(tmp), "+%u,%u:", size_key, size_data);
+      uint32_t klen = RDB_cache_node(n, key.dsize),
+               dlen = RDB_cache_node(n,data.dsize);
 
-      U_INTERNAL_ASSERT_POINTER(pstr)
-
-      pstr->append(tmp, _size);
-      pstr->append((const char*)((ptrdiff_t)journal.map + (ptrdiff_t)RDB_cache_node(n, key.dptr)), size_key);
-      pstr->append(U_CONSTANT_TO_PARAM("->"));
-      pstr->append((const char*)((ptrdiff_t)journal.map + (ptrdiff_t)offset_data), size_data);
-      pstr->push_back('\n');
+      pcdb->pbuffer->printKeyValue((const char*)((ptrdiff_t)journal.map + (ptrdiff_t)RDB_cache_node(n, key.dptr)), klen,
+                                   (const char*)((ptrdiff_t)journal.map + (ptrdiff_t)offset_data),                 dlen);
       }
    else if (RDB_cache_node(n,data.dsize) != U_NOT_FOUND)
       {
@@ -1321,7 +1314,7 @@ UString URDB::printSorted()
 
    uint32_t _size = UFile::st_size + RDB_off(this);
 
-   U_INTERNAL_DUMP("size = %u", _size)
+   U_INTERNAL_DUMP("_size = %u", _size)
 
    if (_size)
       {
@@ -1335,7 +1328,6 @@ UString URDB::printSorted()
 
          if (n > 1) vkey.sort(UCDB::ignoreCase());
 
-         char tmp[40];
          UString buffer(_size);
 
          for (uint32_t i = 0; i < n; ++i)
@@ -1346,16 +1338,7 @@ UString URDB::printSorted()
 
             UCDB::cdb_hash();
 
-            if (_fetch())
-               {
-               _size = u__snprintf(tmp, sizeof(tmp), "+%u,%u:", UCDB::key.dsize, UCDB::data.dsize);
-
-               buffer.append(tmp, _size);
-               buffer.append((const char*) UCDB::key.dptr, UCDB::key.dsize);
-               buffer.append(U_CONSTANT_TO_PARAM("->"));
-               buffer.append((const char*)UCDB::data.dptr, UCDB::data.dsize);
-               buffer.push_back('\n');
-               }
+            if (_fetch()) buffer.printKeyValue((const char*)UCDB::key.dptr, UCDB::key.dsize, (const char*)UCDB::data.dptr, UCDB::data.dsize);
             }
 
          U_RETURN_STRING(buffer);

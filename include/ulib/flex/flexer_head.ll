@@ -1,5 +1,5 @@
 %{
-/* #define TRACE_DEBUG */
+/* #define DEBUG_DEBUG */
 #include <ulib/flex/flexer.h>
 #include <%.h>
 #undef  YY_DECL

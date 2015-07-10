@@ -62,7 +62,7 @@
 
          if (ok == false) goto end; 
 
-         U_INTERNAL_DUMP("ca = %.*S", U_STRING_TO_TRACE(ca))
+         U_INTERNAL_DUMP("ca = %V", ca.rep)
          }
 
       ++op;
@@ -252,7 +252,7 @@
                   {
                   subject = UCertificate::getSubject(cert);
 
-                  tmp.snprintf("0x%04X %.*s", lserial, U_STRING_TO_TRACE(subject));
+                  tmp.snprintf("0x%04X %v", lserial, subject.rep);
 
                   vec.push(tmp.copy());
                   }
@@ -274,7 +274,7 @@
 
             serial = UCertificate::checkForSerialNumber(serial.data());
 
-            U_INTERNAL_DUMP("serial = %.*S", U_STRING_TO_TRACE(serial))
+            U_INTERNAL_DUMP("serial = %V", serial.rep)
             }
 
          if (op == 6 ? client->removeCert(ca, serial)
@@ -376,7 +376,7 @@ end:
       {
       result = client->getResponse();
 
-      if (result) U_WARNING("%.*s", U_STRING_TO_TRACE(result));
+      if (result) U_WARNING("%v", result.rep);
       }
 
    client->closeLog();

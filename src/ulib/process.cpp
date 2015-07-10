@@ -655,8 +655,11 @@ char* UProcess::exitInfo(char* buffer, int _status)
       {
       n = u__snprintf(buffer, 128, "Signal %Y", WSTOPSIG(_status));
       }
+#  ifdef __clang__
+#  undef WIFCONTINUED // to avoid warning: equality comparison with extraneous parentheses...
+#  endif
 #  ifndef WIFCONTINUED
-#  define WIFCONTINUED(status)  ((status) == 0xffff)
+#  define WIFCONTINUED(status) status == 0xffff
 #  endif
    else if (WIFCONTINUED(_status))
       {

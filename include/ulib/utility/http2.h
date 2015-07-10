@@ -15,6 +15,7 @@
 #define ULIB_HTTP2_H 1
 
 #include <ulib/net/ipaddress.h>
+#include <ulib/container/hash_map.h>
 
 #define HTTP2_CONNECTION_UPGRADE \
       "HTTP/1.1 101 Switching Protocols\r\n" \
@@ -25,6 +26,7 @@
 
 class UHTTP;
 class UClientImage_Base;
+class UHashMap<UString>;
 
 class U_EXPORT UHTTP2 {
 public:
@@ -132,21 +134,6 @@ protected:
       CONN_STATE_IS_CLOSING
    };
 
-   struct HpackHeaderTableEntry {
-      UString* name;
-      UString* value;
-   };
-
-   struct HpackHeaderTable {
-      // ring buffer
-      HpackHeaderTableEntry* entries;
-      uint32_t num_entries, entry_capacity, entry_start_index;
-      // size and capacities are 32+name_len+value_len (as defined by hpack spec)
-      int32_t hpack_size;
-      int32_t hpack_capacity;     // the value set by SETTINGS_HEADER_TABLE_SIZE _and_ dynamic table size update
-      int32_t hpack_max_capacity; // the value set by SETTINGS_HEADER_TABLE_SIZE
-   };
-
    struct Stream {
       int id;
       int state;
@@ -154,24 +141,32 @@ protected:
       int output_window;
       // priority
       uint32_t priority_dependency; // 0 if not set
-      char priority_weight;         // 0 if not set
-      bool priority_exclusive;
+          char priority_weight;     // 0 if not set
+          bool priority_exclusive;
    };
 
    struct Connection {
+      // headers
+      UHashMap<UString>* itable;
+      UHashMap<UString>* otable;
+      // streams
+      Stream open_streams[100];
       // settings
       Settings peer_settings;
-      // internal
-      ConnectionState state;
-      uint32_t  input_window;
-      uint32_t output_window;
-      HpackHeaderTable  input_header_table;
-      HpackHeaderTable output_header_table;
       // streams
       int max_open_stream_id;
       uint32_t num_responding_streams;
       uint32_t max_processed_stream_id;
-      Stream open_streams[100];
+      // internal
+      ConnectionState state;
+      uint32_t  input_window;
+      uint32_t output_window;
+       int32_t hpack_max_capacity; // the value set by SETTINGS_HEADER_TABLE_SIZE
+   };
+
+   struct HpackHeaderTableEntry {
+      UString* name;
+      UString* value;
    };
 
    static UString* str_authority;
@@ -249,6 +244,8 @@ protected:
    static const char* upgrade_settings;
    static const Settings SETTINGS_HOST;
    static const Settings SETTINGS_DEFAULT;
+
+   static uint32_t hash_static_table[61];
    static HpackHeaderTableEntry hpack_static_table[61];
 
    // SERVICES
@@ -257,7 +254,6 @@ protected:
    static void decodeFrame();
 
    static void manageData();
-   static void manageHeaders();
    static void managePriority();
    static void manageWindowUpdate();
 
@@ -265,12 +261,20 @@ protected:
    static void setConnection();
    static void sendError(int err);
    static void resetReadBuffer(uint32_t length);
-   static bool updateSetting(const char* ptr, uint32_t len);
-   static void decodeHeaders(const char* ptr, const char* endptr);
+   static bool updateSetting(const char*  ptr, uint32_t len);
+   static void decodeHeaders(const char*  ptr, const char*  endptr);
+   static bool manageHeaders(const char** ptr, const char** endptr);
 
 #ifdef DEBUG
    static const char* getFrameTypeDescription();
 #endif      
+
+   static void setIndexStaticTable(UHashMap<void*>* ptable, const UStringRep* keyr)
+      {
+      U_TRACE(0, "UHTTP2::setIndexStaticTable(%p,%V)", ptable, keyr)
+
+      ptable->index = ptable->hash % ptable->_capacity;
+      }
 
    static void setLengthAndType(char* ptr, uint32_t length, FrameTypesId type)
       {
@@ -313,8 +317,6 @@ protected:
 
    static uint32_t hpackDecodeInt(   const unsigned char* src, const unsigned char* src_end, int32_t* pvalue, uint8_t prefix_max);
    static uint32_t hpackDecodeString(const unsigned char* src, const unsigned char* src_end, UString* pvalue);
-
-   static HpackHeaderTableEntry* hpackHeaderTableAdd(HpackHeaderTable* ptable, uint32_t size_add, uint32_t max_num_entries);
 
 private:
    friend class UHTTP;

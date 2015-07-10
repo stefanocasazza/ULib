@@ -858,7 +858,7 @@ bool UHttpClient_Base::sendRequestEngine()
 
       UClient_Base::response.setEmpty();
 
-      result = (UClient_Base::sendRequest(true) &&
+      result = (UClient_Base::sendRequestAndReadResponse() &&
                 responseHeader->readHeader(UClient_Base::socket, UClient_Base::response) // read the HTTP response header
                      ? checkResponse(redirectCount)
                      : -1);

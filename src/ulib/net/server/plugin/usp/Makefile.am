@@ -15,7 +15,7 @@ usp_translator_LDFLAGS = $(PRG_LDFLAGS)
 bin_PROGRAMS = usp_translator
 
 clean-local:
-	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe trace.usp_translator* gmon.out usp_compile.sh
+	-rm -rf core .libs *.bb* *.da *.gc* *.la *.exe trace.usp_translator* gmon.out usp_compile.sh
 
 ## usp section
 ## ----------------------------------------------------------------------------------------------------

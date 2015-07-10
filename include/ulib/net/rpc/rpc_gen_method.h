@@ -22,20 +22,19 @@ public:
 
    // COSTRUTTORI
 
-   URPCGenericMethod(const UString& n, const UString& _ns, UCommand* cmd, int rtype) : response_type(rtype), response(U_CAPACITY)
+   URPCGenericMethod(const UString& n, const UString& _ns, UCommand* cmd, int rtype) : URPCMethod(n, _ns), response(U_CAPACITY)
       {
       U_TRACE_REGISTER_OBJECT(0, URPCGenericMethod, "%V,%V,%p,%d", n.rep, _ns.rep, cmd, rtype) 
 
-      command                 = cmd;
-      URPCMethod::ns          = _ns;
-      URPCMethod::method_name = n;
+      command       = cmd; 
+      response_type = rtype;
       }
 
    virtual ~URPCGenericMethod()
       {
       U_TRACE_UNREGISTER_OBJECT(0, URPCGenericMethod)
 
-      delete command;
+      if (command) delete command;
       }
 
    // VIRTUAL METHOD
@@ -66,9 +65,9 @@ public:
 #endif
 
 protected:
+   UString response;
    UCommand* command;
    int response_type;
-   UString response;
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS

@@ -17,8 +17,8 @@
 #include <ulib/net/rpc/rpc_fault.h>
 
 /**
-  @class USOAPFault
-*/
+ * @class USOAPFault
+ */
 
 class U_EXPORT USOAPFault : public URPCFault {
 public:

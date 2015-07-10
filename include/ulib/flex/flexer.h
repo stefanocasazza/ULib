@@ -20,18 +20,10 @@
 #  include <FlexLexer.h>
 #endif
 
-#ifndef min
-#  define min(x,y) (x < y ? x : y)
-#endif
-
-#ifndef max
-#  define max(x,y) (x > y ? x : y)
-#endif
-
 /**
  * @class UFlexer
  *
- * Implementazione di FlexLexer per ULib
+ * Implementazione of FlexLexer for ULib
  */
 
 struct U_NO_EXPORT UFlexerReference {
@@ -81,6 +73,7 @@ public:
 #ifndef YY_DECL
    /**
     * ordinary flex scanners: it scans the input stream, consuming tokens, until a rule's action returns a value.
+    *
     * NB: this function code is produced by flex program...
     */
 
@@ -88,15 +81,14 @@ public:
 #endif
 
    /**
-    * reads up to `max_size' characters into buf and returns the number of characters read.
-    * To indicate end-of-input, return 0 characters.
+    * reads up to max_size characters into buf and returns the number of characters read. To indicate end-of-input, return 0 characters
     */
 
    virtual int LexerInput(char* buf, int max_size)
       {
       U_TRACE(0, "UFlexer::LexerInput(%p,%d)", buf, max_size)
 
-      int length = min(max((int)data.size() - write_position, 0), max_size);
+      int length = U_min(U_max((int)data.size() - write_position, 0), max_size);
 
       U_INTERNAL_DUMP("length = %d data.size() = %u", length, data.size())
 

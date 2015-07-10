@@ -2,10 +2,9 @@
 /*
 #define YYDEBUG 1
 */
-#define TRACE_DEBUG
+#define DEBUG_DEBUG
 #include <ParserInterface.h>
 #include <Parser.h>
-#define YYPARSE_PARAM obj
 #define YYPARSE_RETURN_TYPE int
 YYPARSE_RETURN_TYPE yyparse(void*);
 int yyerror(char*);

@@ -695,7 +695,7 @@ uninstall-am: uninstall-binPROGRAMS
 
 
 clean-local:
-	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe trace.usp_translator* gmon.out usp_compile.sh
+	-rm -rf core .libs *.bb* *.da *.gc* *.la *.exe trace.usp_translator* gmon.out usp_compile.sh
 
 #SUFFIXES = .cpp .usp .lo .la
 

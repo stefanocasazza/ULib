@@ -415,11 +415,12 @@ bool UClient_Base::setUrl(const UString& location)
    U_RETURN(false);
 }
 
-bool UClient_Base::sendRequest(const UString& req, bool bread_response)
+void UClient_Base::prepareRequest(const UString& req)
 {
-   U_TRACE(0, "UClient_Base::sendRequest(%V,%b)", req.rep, bread_response)
+   U_TRACE(0, "UClient_Base::prepareRequest(%V)", req.rep)
 
-   iovcnt = 1;
+   iovcnt  = 1;
+   request = req;
 
    iov[0].iov_base = (caddr_t)req.data();
    iov[0].iov_len  =          req.size();
@@ -431,10 +432,6 @@ bool UClient_Base::sendRequest(const UString& req, bool bread_response)
    U_INTERNAL_ASSERT_EQUALS(iov[3].iov_len, 0)
    U_INTERNAL_ASSERT_EQUALS(iov[4].iov_len, 0)
    U_INTERNAL_ASSERT_EQUALS(iov[5].iov_len, 0)
-
-   if (sendRequest(bread_response)) U_RETURN(true);
-
-   U_RETURN(false);
 }
 
 bool UClient_Base::sendRequest(bool bread_response)
@@ -594,6 +591,7 @@ const char* UClient_Base::dump(bool _reset) const
                   << "password       (UString             " << (void*)&password        << ")\n"
                   << "cert_file      (UString             " << (void*)&cert_file       << ")\n"
                   << "buffer         (UString             " << (void*)&buffer          << ")\n"
+                  << "request        (UString             " << (void*)&request        << ")\n"
                   << "response       (UString             " << (void*)&response        << ")\n"
                   << "host_port      (UString             " << (void*)&host_port       << ")\n"
                   << "socket         (USocket             " << (void*)socket           << ')';

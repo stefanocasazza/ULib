@@ -261,10 +261,14 @@
 #  define U_PATH_SHELL          "sh.exe"
 #  define U_LIB_SUFFIX          "dll"
 #else
-#  define PATH_SEPARATOR        '/'
-#  define IS_DIR_SEPARATOR(c)   ((c) == '/')
-#  define IS_ABSOLUTE_PATH(f)   (IS_DIR_SEPARATOR((f)[0]))
-#  define U_PATH_CONV(s)        (s)
+#  define PATH_SEPARATOR '/'
+#  ifdef __clang__
+#     define IS_DIR_SEPARATOR(c)  (c) == '/' /* to avoid warning: equality comparison with extraneous parentheses... */
+#  else
+#     define IS_DIR_SEPARATOR(c) ((c) == '/')
+#  endif
+#  define IS_ABSOLUTE_PATH(f)   IS_DIR_SEPARATOR((f)[0])
+#  define U_PATH_CONV(s)        s
 #  define U_PATH_SHELL          "/bin/sh"
 #  define U_LIB_SUFFIX          "so"
 /* unix is binary by default */

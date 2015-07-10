@@ -73,8 +73,10 @@
 class Url;
 class UCDB;
 class URDB;
+class UTDB;
 class UDES3;
 class UHTTP;
+class UHTTP2;
 class UValue;
 class UCache;
 class UValue;
@@ -82,6 +84,7 @@ class UString;
 class UBase64;
 class UEscape;
 class UHexDump;
+class UOptions;
 class UTimeDate;
 class UStringExt;
 class USocketExt;
@@ -322,13 +325,44 @@ public:
 
    // Equal
 
-   bool equal(const UStringRep* rep)     const { return equal(rep->str, rep->_length); }
-   bool equal(const char* s, uint32_t n) const __pure;
+          bool equal(const UStringRep* rep)     const { return equal(rep->str, rep->_length); }
+   __pure bool equal(const char* s, uint32_t n) const
+      {
+      U_TRACE(0, "UStringRep::equal(%#.*S,%u)", n, s, n) // problem with sanitize address
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_POINTER(s)
+
+      if (_length == n &&
+          memcmp(str, s, n) == 0)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    // Equal with ignore case
 
-   bool equal(const UStringRep* rep,     bool ignore_case) const { return equal(rep->str, rep->_length, ignore_case); }
-   bool equal(const char* s, uint32_t n, bool ignore_case) const __pure;
+          bool equal(const UStringRep* rep,     bool ignore_case) const { return equal(rep->str, rep->_length, ignore_case); }
+   __pure bool equal(const char* s, uint32_t n, bool ignore_case) const
+      {
+      U_TRACE(0, "UStringRep::equal(%.*S,%u,%b)", n, s, n, ignore_case)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_POINTER(s)
+
+      if (_length == n &&
+          ((ignore_case ? u__strncasecmp(str, s, n)
+                        :         memcmp(str, s, n)) == 0))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    // Substring
 
@@ -370,7 +404,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+      U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity, 0)
 
 #  ifdef DEBUG
       if (references)
@@ -396,7 +430,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+      U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity, 0)
 
 #  ifdef DEBUG
       if (references)
@@ -420,7 +454,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+      U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity, 0)
 
       _length = u__strlen(str, __PRETTY_FUNCTION__);
 
@@ -433,7 +467,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
+      U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity, 0)
       U_INTERNAL_ASSERT(value <= _capacity)
 
       ((char*)str)[_length = value] = '\0';
@@ -450,15 +484,126 @@ public:
 
    // EXTENSION
 
-   bool isText(uint32_t pos) const __pure;
-   bool isUTF8(uint32_t pos) const __pure;
-   bool isUTF16(uint32_t pos) const __pure;
-   bool isBase64(uint32_t pos) const __pure;
-   bool isBinary(uint32_t pos) const __pure;
-   bool isEndHeader(uint32_t pos) const __pure;
-   bool isWhiteSpace(uint32_t pos) const __pure;
-   bool isPrintable(uint32_t pos, bool bline = false) const __pure;
+   __pure bool isBinary(uint32_t pos) const
+      {
+      U_TRACE(0, "UStringRep::isBinary(%u)", pos)
 
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+      if (u_isBinary((const unsigned char*)(str + pos), _length - pos)) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   __pure bool isBase64(uint32_t pos) const
+      {
+      U_TRACE(0, "UStringRep::isBase64(%u)", pos)
+
+      U_CHECK_MEMORY
+
+      if (_length)
+         {
+         U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+         if (u_isBase64(str + pos, _length - pos)) U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   __pure bool isBase64Url(uint32_t pos) const
+      {
+      U_TRACE(0, "UStringRep::isBase64Url(%u)", pos)
+
+      U_CHECK_MEMORY
+
+      if (_length)
+         {
+         U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+         if (u_isBase64Url(str + pos, _length - pos)) U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   __pure bool isPrintable(uint32_t pos, bool bline = false) const
+      {
+      U_TRACE(0, "UStringRep::isPrintable(%u,%b)", pos, bline)
+
+      U_CHECK_MEMORY
+
+      if (_length)
+         {
+         U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+         if (u_isPrintable(str + pos, _length - pos, bline)) U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   __pure bool isWhiteSpace(uint32_t pos) const
+      {
+      U_TRACE(0, "UStringRep::isWhiteSpace(%u)", pos)
+
+      U_CHECK_MEMORY
+
+      if (_length)
+         {
+         U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+         if (u_isWhiteSpace(str + pos, _length - pos) == false) U_RETURN(false);
+         }
+
+      U_RETURN(true);
+      }
+
+   __pure bool isText(uint32_t pos) const
+      {
+      U_TRACE(0, "UStringRep::isText(%u)", pos)
+
+      U_CHECK_MEMORY
+
+      if (_length)
+         {
+         U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+         if (u_isText((const unsigned char*)(str + pos), _length - pos)) U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   __pure bool isUTF8(uint32_t pos) const
+      {
+      U_TRACE(0, "UStringRep::isUTF8(%u)", pos)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+      if (u_isUTF8((const unsigned char*)(str + pos), _length - pos)) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   __pure bool isUTF16(uint32_t pos) const
+      {
+      U_TRACE(0, "UStringRep::isUTF16(%u)", pos)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+      if (u_isUTF16((const unsigned char*)(str + pos), _length - pos)) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   bool isEndHeader(uint32_t pos) const __pure;
    uint32_t findWhiteSpace(uint32_t pos) const __pure;
 
    bool strtob() const __pure;
@@ -517,7 +662,7 @@ public:
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_MAJOR(_length, 2)
-      U_INTERNAL_ASSERT_EQUALS(_capacity, 0)
+      U_INTERNAL_ASSERT_EQUALS((int32_t)_capacity, 0)
 
       ++str;
       _length -= 2;
@@ -537,8 +682,6 @@ public:
 
    static UStringRep*   toUTF8(const unsigned char* t, uint32_t tlen);
    static UStringRep* fromUTF8(const unsigned char* t, uint32_t tlen);
-
-   static void assign(UStringRep*& rep, const char* s, uint32_t n);
 
    static uint32_t max_size() { return U_STRING_MAX_SIZE; } // The maximum number of individual char elements of an individual string is determined by max_size()
 
@@ -623,6 +766,7 @@ private:
    friend class Url;
    friend class UCDB;
    friend class URDB;
+   friend class UTDB;
    friend class UDES3;
    friend class UHTTP;
    friend class UCache;
@@ -631,6 +775,7 @@ private:
    friend class UBase64;
    friend class UEscape;
    friend class UHexDump;
+   friend class UOptions;
    friend class UTimeDate;
    friend class UStringExt;
    friend class USocketExt;
@@ -738,12 +883,25 @@ protected:
 
                       friend void ULib_init();
 
+                      friend class UHTTP2;
                       friend class UValue;
    template <class T> friend class UVector;
                       friend class UStringExt;
                       friend class UClientImage_Base;
 
    explicit UString(uint32_t len, uint32_t sz, char* ptr); // NB: for UStringExt::deflate()...
+
+   explicit UString(const char* t, uint32_t tlen, uint32_t need) // NB: for UHTTP2::CONTINUATION...
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u,%u", tlen, t, tlen, need)
+
+      U_INTERNAL_ASSERT_POINTER(t)
+      U_INTERNAL_ASSERT_MAJOR(need, tlen)
+
+      rep = UStringRep::create(tlen, need, t);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
 
 public:
    // mutable
@@ -955,18 +1113,9 @@ public:
    UString& replace(uint32_t pos, uint32_t n, const char* s)      { return replace(pos,     n, s, u__strlen(s, __PRETTY_FUNCTION__)); }
    UString& replace(uint32_t pos, uint32_t n, const UString& str) { return replace(pos,     n, U_STRING_TO_PARAM(str)); }
 
-   // Assignment - NB: assign() NON GARANTISCE PROPRIETA' DELLA STRINGA, replace() SI...
+   // Assignment - NB: assign() DOES NOT WARRANT PROPERTIES OF STRING, replace() YES...
 
-   UString& assign(const char* s, uint32_t n)
-      {
-      U_TRACE(0, "UString::assign(%S,%u)", s, n)
-
-      UStringRep::assign(rep, s, n);
-
-      U_INTERNAL_ASSERT(invariant())
-
-      return *this;
-      }
+   UString& assign(const char* s, uint32_t n);
 
    UString& assign(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND)
       {
@@ -1357,6 +1506,7 @@ public:
    bool isUTF16(uint32_t pos = 0) const                         { return rep->isUTF16(pos); }
    bool isBinary(uint32_t pos = 0) const                        { return rep->isBinary(pos); }
    bool isBase64(uint32_t pos = 0) const                        { return rep->isBase64(pos); }
+   bool isBase64Url(uint32_t pos = 0) const                     { return rep->isBase64Url(pos); }
    bool isEndHeader(uint32_t pos = 0) const                     { return rep->isEndHeader(pos); }
    bool isWhiteSpace(uint32_t pos = 0) const                    { return rep->isWhiteSpace(pos); }
    bool isPrintable(uint32_t pos = 0, bool bline = false) const { return rep->isPrintable(pos, bline); }
@@ -1444,6 +1594,7 @@ public:
 
    void setBuffer(uint32_t n);
    void moveToBeginDataInBuffer(uint32_t n);
+   void printKeyValue(const char* key, uint32_t keylen, const char* data, uint32_t datalen);
 
    void snprintf(    const char* format, ...);
    void snprintf_add(const char* format, ...);
@@ -1587,6 +1738,8 @@ public:
       {
       U_TRACE(0, "UString::toUTF8(%.*S,%u)", tlen, t, tlen)
 
+      if (tlen == 0) return *string_null; 
+
       UString utf8(UStringRep::toUTF8(t, tlen));
 
       U_RETURN_STRING(utf8);
@@ -1595,6 +1748,8 @@ public:
    static UString fromUTF8(const unsigned char* t, uint32_t tlen)
       {
       U_TRACE(0, "UString::fromUTF8(%.*S,%u)", tlen, t, tlen)
+
+      if (tlen == 0) return *string_null; 
 
       UString isolat1(UStringRep::fromUTF8(t, tlen));
 

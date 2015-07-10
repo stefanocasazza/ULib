@@ -178,7 +178,9 @@ int USCGIPlugIn::handlerRequest()
 
       (void) request.append(*UClientImage_Base::body);
 
-      if (connection->sendRequest(request, true) == false)
+      connection->prepareRequest(request);
+
+      if (connection->sendRequestAndReadResponse() == false)
          {
          UHTTP::setInternalError();
 

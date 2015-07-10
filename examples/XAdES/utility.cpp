@@ -238,13 +238,21 @@ UString UXAdESUtility::getSigned()
 {
    U_TRACE(5, "UXAdESUtility::getSigned()")
 
-   UString firma, name = (msword ? MSname : OOname);
+   UString name = (msword ? MSname : OOname);
 
-   uint32_t index = ZipStructure.contains(name);
+   if (name)
+      {
+      uint32_t index = ZipStructure.contains(name);
 
-   if (index != U_NOT_FOUND) firma = ZipContent[index];
+      if (index != U_NOT_FOUND)
+         {
+         UString firma = ZipContent[index];
 
-   U_RETURN_STRING(firma);
+         U_RETURN_STRING(firma);
+         }
+      }
+
+   return UString::getStringNull();
 }
 
 void UXAdESUtility::outputDocument(const UString& firma)
@@ -256,14 +264,16 @@ void UXAdESUtility::outputDocument(const UString& firma)
    if (msword ||
        ooffice)
       {
-      (void) UFile::writeTo(docout, firma, false, true);
+      UString x = getSigned();
+
+      if (x.empty()) x = (msword ? MSname : OOname);
 
       const char* add_to_filenames[32];
 
-      add_to_filenames[0] = (getSigned().empty() ? msword
-                                                 ? MSname.c_str() : OOname.c_str()
-                                                                  : 0);
-      add_to_filenames[1] = 0;
+      add_to_filenames[0] = (x ? x.c_str() : 0);
+      add_to_filenames[1] =                  0;
+
+      (void) UFile::writeTo(docout, firma, false, true);
 
       if (msword &&
           MSSignatureStructure.empty() == false)

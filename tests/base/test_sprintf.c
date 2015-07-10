@@ -209,7 +209,7 @@ int main(int argc, char *argv[])
    fmtst2chk("%*.*x");
    fmtst2chk("%0*.*x");
 
-   printf("bad format:\t\"%J\"\n",0);
+   printf("bad format:\t\"%K\"\n",0);
    printf("nil pointer (padded):\t\"%10p\"\n", (void *) NULL);
 
    printf("decimal negative:\t\"%d\"\n", -2345);

@@ -13,4 +13,4 @@ form_completion_LDFLAGS = $(PRG_LDFLAGS)
 noinst_PROGRAMS = form_completion
 
 clean-local:
-	-rm -rf core .libs *.bb* *.da *.gcov *.la *.exe gmon.out
+	-rm -rf core .libs *.bb* *.da *.gc* *.la *.exe gmon.out

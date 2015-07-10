@@ -1612,7 +1612,8 @@ __pure bool UHTTP::isValidRequestExt(const char* ptr, uint32_t sz)
 
    U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
-   if (isValidMethod(ptr)                                     &&
+   if (sz >= 18                                               && // 18 -> "GET / HTTP/1.0\r\n\r\n"
+       isValidMethod(ptr)                                     &&
        (isValidRequest(ptr, sz)                               ||
                            (UClientImage_Base::size_request   &&
         isValidRequest(ptr, UClientImage_Base::size_request)) ||
@@ -2534,12 +2535,13 @@ advance: U_INTERNAL_ASSERT_EQUALS(*pn, ':')
 
                if (u_get_unalignedp64(p+4) == U_MULTICHAR_CONSTANT64('2','-','S','e','t','t','i','n'))
                   {
-                  U_http_version = '2';
-
                   U_http2_settings_len     = pos2-pos1;
                   UHTTP2::upgrade_settings =  ptr+pos1;
 
                   U_INTERNAL_DUMP("HTTP2-Settings: = %.*S", U_http2_settings_len, UHTTP2::upgrade_settings)
+
+                  U_http_version             = '2';
+                  U_ClientImage_data_missing = true;
 
                   goto next;
                   }

@@ -103,6 +103,9 @@ public:
 
       // manage options
 
+      UFileConfig cfg;
+      UString cfg_str, cfg_key;
+
       if (UApplication::isOptions())
          {
          cfg_str = opt['c'];
@@ -156,15 +159,13 @@ public:
             {
             result = client->getResponse();
 
-            if (result) U_WARNING("%.*s", U_STRING_TO_TRACE(result));
+            if (result) U_WARNING("%v", result.rep);
             }
          }
       }
 
 private:
    UClientRSIGN<USSLSocket>* client;
-   UString cfg_str, cfg_key;
-   UFileConfig cfg;
 };
 
 U_MAIN

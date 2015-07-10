@@ -1,22 +1,21 @@
 /* Infix notation calculator-calc */
 
 %{
-/*
-*/
 #define YYDEBUG 1
-#define TRACE_DEBUG
+/*
+#define DEBUG_DEBUG
+*/
 #include <ulib/flex/bison.h>
 #include <test_bison.h>
 #include <math.h>
-#define YYPARSE_PARAM obj
-#define YYPARSE_RETURN_TYPE int
-YYPARSE_RETURN_TYPE yyparse(void*);
-int yyerror(char*);
-#define yylex ((UBison*)obj)->yylex
-#define YYLEX_PARAM &yylval
+int yyerror(void*, char*);
+#define yylex ((UBison*)obj)->UFlexer::yylex
 %}
 
 /* BISON Declarations */
+
+%lex-param   { void* obj }
+%parse-param { void* obj }
 
 %union {
    int number;
@@ -100,14 +99,15 @@ exp: NUM
 
 %%
 
-int yyerror(char* s)
+int yyerror(void* p, char* s)
 {
-	U_INTERNAL_TRACE("yyerror(\"%s\")", s);
+	U_INTERNAL_TRACE("yyerror(\"%p,%s\")", p, s);
 
-	/*
-	extern int yylineno;
-	U_INTERNAL_TRACE("yylineno=%d", yylineno)
-	*/
+	/**
+	 * extern int yylineno;
+	 *
+	 * U_INTERNAL_TRACE("yylineno=%d", yylineno)
+	 */
 
 	return -1;
 }
@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
 	/*
 	*/
 	extern int yydebug;
-	yydebug = 1;
+				  yydebug = 1;
 
 	parser.parse();
 }

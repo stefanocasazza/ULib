@@ -17,16 +17,16 @@
 #include <ulib/string.h>
 
 /**
-   @class URPCMethod
-
-   URPCMethod provides an interface for the things that methods most know how to do.
-
-   Specifically, it needs to know the following:
-   · Its name so the URPCObject can find it
-   · How to execute itself given a URPCEnvelope
-   · If it fails, how to fill in a URPCFault
-   · How to encode itself for execution or response
-*/
+ * @class URPCMethod
+ *
+ * URPCMethod provides an interface for the things that methods most know how to do.
+ *
+ * Specifically, it needs to know the following:
+ *   - Its name so the URPCObject can find it
+ *   - How to execute itself given a URPCEnvelope
+ *   - If it fails, how to fill in a URPCFault
+ *   - How to encode itself for execution or response
+ */
 
 // Forward declaration
 
@@ -49,6 +49,11 @@ public:
    URPCMethod()
       {
       U_TRACE_REGISTER_OBJECT(0, URPCMethod, "", 0)
+      }
+
+   URPCMethod(const UString& n, const UString& _ns) : method_name(n), ns(_ns)
+      {
+      U_TRACE_REGISTER_OBJECT(0, URPCMethod, "%V,%V", n.rep, _ns.rep)
       }
 
    virtual ~URPCMethod()

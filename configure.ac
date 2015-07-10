@@ -966,6 +966,7 @@ dnl initialize all the info variables to 'no'
      ulib_ldap_msg="no (--with-ldap)"
      ulib_libz_msg="no (--with-libz)"
 ulib_libzopfli_msg="no (--with-libzopfli)"
+   ulib_libtdb_msg="no (--with-libtdb)"
      ulib_curl_msg="no (--with-curl)"
     ulib_expat_msg="no (--with-expat)"
     ulib_magic_msg="no (--with-magic)"
@@ -1133,6 +1134,7 @@ fi
 
 libz_version="no"
 libzopfli_version="no"
+libtdb_version="no"
 pcre_version="no"
 ldap_version="no"
 expat_version="no"
@@ -1176,7 +1178,15 @@ if test "$USE_LIBZ" = "yes"; then
 fi
 
 if test "$USE_LIBZOPFLI" = "yes"; then
-	ulib_libzopfli_msg="yes ( 1.0.1 )"
+	ulib_libzopfli_msg="yes ( $libzopfli_version )"
+fi
+
+if test "$USE_LIBTDB" = "yes"; then
+	ulib_libtdb_msg="yes ( $libtdb_version )"
+	AC_CHECK_LIB(tdb,tdb_traverse_read)
+	if test "$ac_cv_lib_tdb_tdb_traverse_read" = "yes"; then
+		AC_DEFINE(U_TDB_TRAVERSE_READ, 1, [Define if we have libtdb with this function])
+	fi
 fi
 
 if test "$enable_zip" = "yes" && test "$USE_LIBZ" = "yes"; then
@@ -1218,8 +1228,12 @@ case "$target_os" in
 			AC_DEFINE(HAVE_GNUC_VISIBILTY, 1, [enable gcc visibility features])
 			CXXFLAGS="$CXXFLAGS -fvisibility=hidden -fvisibility-inlines-hidden"
 		fi
-		if test "$with_gnu_ld" = "yes" && test "$enable_new_ldflags" = "yes"; then
+		AC_MSG_CHECKING([whether new ldflags are wanted])
+		if test "$with_gnu_ld" = "yes" -a "$enable_new_ldflags" = "yes"; then
+		   AC_MSG_RESULT([yes])
 			LDFLAGS="$LDFLAGS -Wl,-O1 -Wl,--as-needed -Wl,-z,now,-O1,--hash-style=gnu,--sort-common -Wl,--as-needed"
+		else
+		   AC_MSG_RESULT([no])
 		fi
 	;;
 esac
@@ -1446,6 +1460,7 @@ AM_CONDITIONAL(LIBZ,			test "$USE_LIBZ"			= "yes")
 AM_CONDITIONAL(EXPAT,		test "$USE_LIBEXPAT"		= "yes")
 AM_CONDITIONAL(MAGIC,		test "$USE_LIBMAGIC"		= "yes")
 AM_CONDITIONAL(DBI,			test "$USE_LIBDBI"		= "yes")
+AM_CONDITIONAL(LIBTDB,		test "$USE_LIBTDB"		= "yes")
 AM_CONDITIONAL(LIBEVENT,	test "$USE_LIBEVENT"		= "yes")
 AM_CONDITIONAL(LIBXML2,		test "$USE_LIBXML2"		= "yes")
 AM_CONDITIONAL(PAGE_SPEED, test "$USE_PAGE_SPEED"	= "yes")
@@ -1461,6 +1476,7 @@ AC_DEFINE_UNQUOTED(_LDAP_VERSION,		 "$ldap_version",			[Ldap version])
 AC_DEFINE_UNQUOTED(_EXPAT_VERSION,		 "$expat_version",		[Expat version])
 AC_DEFINE_UNQUOTED(_LIBZ_VERSION,		 "$libz_version",			[libz - general purpose compression library version])
 AC_DEFINE_UNQUOTED(_LIBZOPFLI_VERSION,	 "$libzopfli_version",	[libzopfli - google compression library version])
+AC_DEFINE_UNQUOTED(_LIBTDB_VERSION,		 "$libtdb_version",		[libtdb - samba Trivial DB library version])
 AC_DEFINE_UNQUOTED(_LIBSSH_VERSION,		 "$libssh_version",		[libSSH version])
 AC_DEFINE_UNQUOTED(_SSL_VERSION,			 "$ssl_version",			[SSL version])
 AC_DEFINE_UNQUOTED(_CURL_VERSION,		 "$libcurl_version",		[libcURL - multiprotocol file transfer library version])
@@ -1927,6 +1943,8 @@ if test "$enable_http2" = "yes"; then
 	AM_CONDITIONAL(HTTP2, true)
 fi
 
+CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
+
 # If gcc compiler add values to *FLAGS...
 
 if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
@@ -1948,7 +1966,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
 						 -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
 
-	CXX_MAYBE_FLAGS="-fno-check-new -fno-exceptions -fno-rtti -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor"
+	CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor"
 
 	case "$gcc_version" in
 		2*|3*|4.0*|4.1*|4.2*)
@@ -1963,7 +1981,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 			    MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
  		##	CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -std=c++0x -std=c++11" # -std=c++14
 
-			if test "$enable_gcc_optimized" = "yes"; then
+			if test "$enable_gcc_optimized" = "yes" -a "$enable_coverage" != "yes"; then
 				## ----------------------------------------------------------------------------------------------------------------------------------
 				## -fgcse Perform a global common subexpression elimination pass. This pass also performs global constant and copy propagation. When
 				##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
@@ -1971,7 +1989,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 				## ----------------------------------------------------------------------------------------------------------------------------------
 				MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -fno-math-errno -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
 
-				if test "$use_distcc" != "yes" ; then
+				if test "$use_distcc" != "yes"; then
 					MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -mtune=native" # NB: distcc don't work with this...
 				fi
 			fi
@@ -2160,14 +2178,17 @@ fi
 if test -n "$plib"; then
    ULIB_LIBS="$ULIB_LIBS $plib";
 fi
+if test "$enable_coverage" = "yes"; then
+	ULIB_LIBS="$ULIB_LIBS -lgcov"
+fi
 if test -n "$rlib"; then
    ULIB_LIBS="$ULIB_LIBS $rlib";
 fi
- 
+
 ULIB_LIBS="$ULIB_LIBS $ULIB_LIBC"
 
 if test "$enable_stdcpp" != "yes"; then
-	AC_CHECK_LIB(Systemstubs, printf, [ ULIB_LIBS="$ULIB_LIBS -lSystemstubs -lgcc" ])
+	AC_CHECK_LIB(Systemstubs, printf, [ULIB_LIBS="$ULIB_LIBS -lSystemstubs -lgcc"])
 fi
 
 # Check for availablity of "old style" C++ strstream header
@@ -2258,6 +2279,7 @@ AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
 
           LIBZ support: ${ulib_libz_msg}
      LIBZOPFLI support: ${ulib_libzopfli_msg}
+        LIBTDB support: ${ulib_libtdb_msg}
           PCRE support: ${ulib_pcre_msg}
            SSL support: ${ulib_ssl_msg}
            SSH support: ${ulib_ssh_msg}

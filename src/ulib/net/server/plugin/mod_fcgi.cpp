@@ -363,7 +363,9 @@ int UFCGIPlugIn::handlerRequest()
 
       // Send request and read fast cgi header+record
 
-      if (connection->sendRequest(request, true) == false)
+      connection->prepareRequest(request);
+
+      if (connection->sendRequestAndReadResponse() == false)
          {
          UHTTP::setInternalError();
 

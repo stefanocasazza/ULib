@@ -596,7 +596,7 @@ maintainer-clean-generic:
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-recursive
 
-clean-am: clean-generic clean-libtool mostlyclean-am
+clean-am: clean-generic clean-libtool clean-local mostlyclean-am
 
 distclean: distclean-recursive
 	-rm -f Makefile
@@ -663,18 +663,18 @@ uninstall-am:
 .MAKE: $(am__recursive_targets) install-am install-strip
 
 .PHONY: $(am__recursive_targets) CTAGS GTAGS TAGS all all-am check \
-	check-am clean clean-generic clean-libtool cscopelist-am ctags \
-	ctags-am dist-hook distclean distclean-generic \
-	distclean-libtool distclean-tags distdir dvi dvi-am html \
-	html-am info info-am install install-am install-data \
-	install-data-am install-dvi install-dvi-am install-exec \
-	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-pdf install-pdf-am \
-	install-ps install-ps-am install-strip installcheck \
-	installcheck-am installdirs installdirs-am maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am
+	check-am clean clean-generic clean-libtool clean-local \
+	cscopelist-am ctags ctags-am dist-hook distclean \
+	distclean-generic distclean-libtool distclean-tags distdir dvi \
+	dvi-am html html-am info info-am install install-am \
+	install-data install-data-am install-dvi install-dvi-am \
+	install-exec install-exec-am install-html install-html-am \
+	install-info install-info-am install-man install-pdf \
+	install-pdf-am install-ps install-ps-am install-strip \
+	installcheck installcheck-am installdirs installdirs-am \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am
 
 
 test:
@@ -684,6 +684,9 @@ dist-hook:
 	find $(distdir) -type f -name \*.c   -exec /utility/expand_tab '{}' ';'
 	find $(distdir) -type f -name \*.cpp -exec /utility/expand_tab '{}' ';'
 	find $(distdir) -type f -name \*.cfg -exec /utility/expand_tab '{}' ';'
+
+clean-local:
+	-rm -rf core .libs *.bb* *.da *.la gmon.out *.gc* */*.gc* */*/*.gc* */*/*/*.gc*
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

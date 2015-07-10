@@ -57,6 +57,11 @@
 #else
 #  define LIBZOPFLI_ENABLE   "no"
 #endif
+#ifdef USE_LIBTDB
+#  define LIBTDB_ENABLE      "yes ( " _LIBTDB_VERSION " )"
+#else
+#  define LIBTDB_ENABLE      "no"
+#endif
 #ifdef USE_LIBPCRE
 #  define LIBPCRE_ENABLE     "yes ( " _PCRE_VERSION " )"
 #else
@@ -646,6 +651,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
         thread support: enabled
           LIBZ support: yes ( 1.2.6 )
      LIBZOPFLI support: yes ( 1.0.1 )
+        LIBTDB support: yes ( 1.3.5 )
           PCRE support: yes ( 8.12 )
            SSL support: yes ( 1.0.0e )
            SSH support: yes ( 0.4.8 )
@@ -701,6 +707,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
                "LIBZ support.........:%W " LIBZ_ENABLE "%W\n"
                "LIBZOPFLI support....:%W " LIBZOPFLI_ENABLE "%W\n"
+               "LIBTDB support.......:%W " LIBTDB_ENABLE "%W\n"
                "PCRE support.........:%W " LIBPCRE_ENABLE "%W\n"
                "SSL support..........:%W " LIBSSL_ENABLE "%W\n"
                "SSH support..........:%W " LIBSSH_ENABLE "%W\n"
@@ -752,6 +759,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                BRIGHTGREEN, RESET,
                BRIGHTGREEN, RESET,
                // wrapping
+               BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
                BRIGHTYELLOW, RESET,
@@ -859,14 +867,20 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                optarg = buffer;
                }
 
-            if (optarg)
-               {
-               UStringRep::assign(item[longindex - 2].value, optarg, u__strlen(optarg, __PRETTY_FUNCTION__));
-               }
-            else
+            if (optarg == 0)
                {
                U_INTERNAL_ASSERT_EQUALS(long_options[longindex].has_arg,2)
+
+               break;
                }
+
+            UStringRep*& pvalue = item[longindex-2].value;
+
+            // _set
+
+            pvalue->release();
+
+            pvalue = U_NEW(UStringRep(optarg, u__strlen(optarg, __PRETTY_FUNCTION__)));
             }
          break;
          }

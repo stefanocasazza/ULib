@@ -34,6 +34,11 @@
    trace_sysreturn((error), format, ret); \
    return ret; }
 
+#ifdef USE_LIBTDB
+#  include <tdb.h>
+typedef struct TDB_DATA tdbdata_t;
+#endif
+
 typedef                 DIR* pdir_t;
 typedef                void* pvoid_t;
 typedef                FILE* pfile_t;
@@ -80,6 +85,9 @@ public:
    U_MANAGE_RETURN_VALUE(const char*,        "%S")
    U_MANAGE_RETURN_VALUE(void**,             "%p")
    U_MANAGE_RETURN_VALUE(char**,             "%p")
+#ifdef USE_LIBTDB
+   U_MANAGE_RETURN_VALUE(tdbdata_t,          "%J")
+#endif
 
    // trace call and return from system call
 
@@ -107,6 +115,9 @@ public:
    U_MANAGE_SYSRETURN_VALUE(pdir_t,             "%p",   ret == 0)
    U_MANAGE_SYSRETURN_VALUE(pfile_t,            "%p",   ret == 0)
    U_MANAGE_SYSRETURN_VALUE(sighandler_t,       "%p",   ret == (sighandler_t)SIG_ERR)
+#ifdef USE_LIBTDB
+   U_MANAGE_SYSRETURN_VALUE(tdbdata_t,          "%J",   false)
+#endif
 
    static int suspend()           { int status = u_trace_suspend; u_trace_suspend = 1; return status; }
    static void resume(int status) {                               u_trace_suspend = status; }

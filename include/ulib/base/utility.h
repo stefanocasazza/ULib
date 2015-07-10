@@ -420,6 +420,7 @@ U_EXPORT bool u_isURL(       const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isHTML(      const char* restrict s            ) __pure;
 U_EXPORT bool u_isName(      const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isBase64(    const char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isBase64Url( const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isMacAddr(   const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isHostName(  const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isFileName(  const char* restrict s, uint32_t n) __pure;

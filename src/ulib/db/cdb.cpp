@@ -626,22 +626,15 @@ void UCDB::print2(UCDB* pcdb, char* src)
 {
    U_TRACE(0, "UCDB::print2(%p,%p)", pcdb, src)
 
+   U_INTERNAL_ASSERT_POINTER(pcdb)
+   U_INTERNAL_ASSERT_POINTER(pcdb->pbuffer)
+
    UCDB::cdb_record_header* ptr_hr = (UCDB::cdb_record_header*)src;
 
    uint32_t klen = u_get_unaligned32(ptr_hr->klen), //  key length
             dlen = u_get_unaligned32(ptr_hr->dlen); // data length
 
-   char tmp[40];
-   UString* pstr = pcdb->pbuffer;
-   uint32_t size = u__snprintf(tmp, sizeof(tmp), "+%u,%u:", klen, dlen);
-
-   U_INTERNAL_ASSERT_POINTER(pstr)
-
-   pstr->append(tmp, size);
-   pstr->append(src + sizeof(UCDB::cdb_record_header), klen);
-   pstr->append(U_CONSTANT_TO_PARAM("->"));
-   pstr->append(src + sizeof(UCDB::cdb_record_header) + klen, dlen);
-   pstr->push_back('\n');
+   pcdb->pbuffer->printKeyValue(src + sizeof(UCDB::cdb_record_header), klen, src + sizeof(UCDB::cdb_record_header) + klen, dlen);
 }
 
 void UCDB::makeAdd2(UCDB* pcdb, char* src)
@@ -794,12 +787,15 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, pvPFpvpb func)
                      {
                      *pnode = node->next; // lo si toglie dalla lista collisioni...
 
-                     /* va fatto nella func...
-                     -------------------------
-                     elem = (T*) node->elem;
-                     u_destroy<T>(elem);
-                     -------------------------
-                     */
+                     /**
+                      * ---------------------------------
+                      * NB: it must be do in the function
+                      * ---------------------------------
+                      * elem = (T*) node->elem;
+                      *
+                      * u_destroy<T>(elem);
+                      * ---------------------------------
+                      */
 
                      delete node;
 

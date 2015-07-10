@@ -158,6 +158,7 @@
 #endif
 
 #define U_PAGEMASK (PAGESIZE-1)
+#define U_TO_FREE   ((uint32_t)-2)
 #define U_NOT_FOUND ((uint32_t)-1)
 
 #define U_ONE_HOUR_IN_SECOND  (60L * 60L)

@@ -39,6 +39,17 @@ doc: $(top_builddir)/doc/Doxyfile
 todo:
 	@grep --color=tty --exclude="Makefile*" --exclude-dir=.git -nrEI "/[*] TODO|/[*] FIXME|// TODO|// FIXME" .
 
+coverage:
+	@lcov --output-file coverage.info --directory . --capture
+	@lcov --output-file coverage.info --remove coverage.info '/usr/*' 'src/ulib/expression.*'
+	 lcov --list   	  coverage.info
+
+coverage_clean:
+	@lcov --directory . -z
+
+coverage_html:
+	@genhtml --ignore-errors source -o html coverage.info
+
 install-data-local:
 	@${INSTALL} -m 777 $(top_builddir)/libtool $(DESTDIR)${bindir}/usp_libtool.sh; \
 	 ${INSTALL} -m 777 $(top_builddir)/src/ulib/net/server/plugin/usp/usp_compile.sh $(DESTDIR)${bindir}

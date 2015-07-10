@@ -115,15 +115,6 @@ public:
       return URDB::open(log_size, btruncate, cdb_brdonly, breference);
       }
 
-   // Close a Reliable DataBase
-
-   void close(bool breference = true);
-
-   // Combines the old cdb file and the diffs in a new cdb file.
-   // Close the database and deletes the obsolete journal file if everything worked out
-
-   bool closeReorganize();
-
    void reset();
 
    uint32_t size() const
@@ -134,6 +125,15 @@ public:
 
       U_RETURN(UCDB::nrecord + RDB_nrecord(this));
       }
+
+   // Close a Reliable DataBase
+
+   void close(bool breference = true);
+
+   // Combines the old cdb file and the diffs in a new cdb file.
+   // Close the database and deletes the obsolete journal file if everything worked out
+
+   bool closeReorganize();
 
    // ---------------------------------------------------------------------
    // Write a key/value pair to a reliable database
@@ -319,8 +319,8 @@ protected:
    int  remove();
    bool _fetch();
    bool isDeleted();
-   int  store(int flag);
    bool reorganize(); // Combines the old cdb file and the diffs in a new cdb file
+   int  store(int flag);
    bool compactionJournal();
    int _store(int flag, bool exist);
    int  substitute(UCDB::datum* new_key, int flag);

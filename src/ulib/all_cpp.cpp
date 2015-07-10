@@ -88,6 +88,10 @@
 #include "utility/data_session.cpp"
 #include "lemon/expression.cpp"
 
+#ifdef USE_LIBTDB
+#  include "db/tdb.cpp"
+#endif
+
 #ifndef U_HTTP2_DISABLE
 #  include "utility/http2.cpp"
 #endif

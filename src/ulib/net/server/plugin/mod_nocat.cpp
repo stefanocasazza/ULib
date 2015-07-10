@@ -26,6 +26,10 @@
 #include <ulib/net/server/client_image.h>
 #include <ulib/net/server/plugin/mod_nocat.h>
 
+#ifdef USE_LIBTDB
+#  include <ulib/db/tdb.h>
+#endif
+
 #include <errno.h>
 
 U_CREAT_FUNC(server_plugin_nocat, UNoCatPlugIn)
@@ -36,6 +40,7 @@ int                        UNoCatPlugIn::next_event_time;
 bool                       UNoCatPlugIn::flag_check_system;
 long                       UNoCatPlugIn::last_request_check;
 long                       UNoCatPlugIn::last_request_firewall;
+void*                      UNoCatPlugIn::pdata;
 UPing**                    UNoCatPlugIn::sockp;
 fd_set                     UNoCatPlugIn::addrmask;
 fd_set*                    UNoCatPlugIn::paddrmask;
@@ -63,6 +68,7 @@ UString*                   UNoCatPlugIn::login_timeout;
 UString*                   UNoCatPlugIn::status_content;
 UString*                   UNoCatPlugIn::label_to_match;
 UString*                   UNoCatPlugIn::allowed_members;
+UString*                   UNoCatPlugIn::IP_address_trust;
 UString*                   UNoCatPlugIn::peer_present_in_arp_cache;
 UCommand*                  UNoCatPlugIn::fw;
 UDirWalk*                  UNoCatPlugIn::dirwalk;
@@ -209,6 +215,7 @@ UNoCatPlugIn::UNoCatPlugIn()
    auth_login          = U_NEW(UString);
    decrypt_key         = U_NEW(UString);
    allowed_members     = U_NEW(UString);
+   IP_address_trust    = U_NEW(UString);
 
    vauth               = U_NEW(UVector<UString>(4U));
    vauth_ip            = U_NEW(UVector<UString>(4U));
@@ -255,6 +262,7 @@ UNoCatPlugIn::~UNoCatPlugIn()
    delete auth_login;
    delete decrypt_key;
    delete allowed_members;
+   delete IP_address_trust;
    delete peer_present_in_arp_cache;
 
    delete vauth;
@@ -293,6 +301,10 @@ UNoCatPlugIn::~UNoCatPlugIn()
    if (dirwalk) delete dirwalk;
 
    if (peers_preallocate) delete[] peers_preallocate;
+
+#ifdef USE_LIBTDB
+   if (pdata) delete (UTDB*)pdata;
+#endif
 }
 
 // status
@@ -850,7 +862,7 @@ bool UNoCatPlugIn::checkFirewall()
          {
          // send msg to portal for resync
 
-         msg.snprintf("/error_ap?ap=%v@%v&public=%v%%3A%u", label->rep, hostname->rep, UServer_Base::IP_address->rep, UServer_Base::port);
+         msg.snprintf("/error_ap?ap=%v@%v&public=%v%%3A%u", label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port);
 
          sendMsgToAllPortal(msg);
          }
@@ -1388,7 +1400,46 @@ bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
 
    (void) peer->user.assign(U_CONSTANT_TO_PARAM("anonymous"));
 
-   if ((check_type & U_CHECK_MAC) != 0) // not unifi (L2)
+   setNewPeer();
+
+   U_RETURN(true);
+}
+
+void UNoCatPlugIn::setNewPeer()
+{
+   U_TRACE(0, "UNoCatPlugIn::setNewPeer()")
+
+   U_INTERNAL_ASSERT_POINTER(peer)
+
+   U_INTERNAL_DUMP("peer->UIPAddress::pcStrAddress = %S U_peer_index_network = %u U_peer_index_AUTH = %u",
+                    peer->UIPAddress::pcStrAddress,     U_peer_index_network,     U_peer_index_AUTH)
+
+   if (U_peer_index_network == 0xFF)
+      {
+      U_ERROR("IP address for new peer %V not found in LocalNetworkMask %V", peer->ip.rep, localnet->rep);
+      }
+
+#ifdef USE_LIBTDB
+   if (pdata)
+      {
+      UString value = (*(UTDB*)pdata)[peer->ip];
+
+      if (value)
+         {
+         UVector<UString> ventry(value);
+
+         peer->mac   = ventry[2].copy(); 
+         peer->label = ventry[1].copy();
+
+         goto next;
+         }
+      }
+#endif
+
+   peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
+
+   if ((check_type & U_CHECK_MAC) != 0 && // not unifi (L2)
+       peer->mac == *UString::str_without_mac)
       {
       U_INTERNAL_ASSERT(peer->ifname.isNullTerminated())
 
@@ -1416,30 +1467,10 @@ bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
       U_ASSERT_EQUALS(peer->mac, USocketExt::getMacAddress(peer->ip))
       }
 
-   setNewPeer();
-
-   U_RETURN(true);
-}
-
-void UNoCatPlugIn::setNewPeer()
-{
-   U_TRACE(0, "UNoCatPlugIn::setNewPeer()")
-
-   U_INTERNAL_ASSERT_POINTER(peer)
-
-   U_INTERNAL_DUMP("peer->UIPAddress::pcStrAddress = %S U_peer_index_network = %u U_peer_index_AUTH = %u",
-                    peer->UIPAddress::pcStrAddress,     U_peer_index_network,     U_peer_index_AUTH)
-
-   if (U_peer_index_network == 0xFF)
-      {
-      U_ERROR("IP address for new peer %V not found in LocalNetworkMask %V", peer->ip.rep, localnet->rep);
-      }
-
-   peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size()
-                              ? *str_without_label
-                              : (*vLocalNetworkLabel)[U_peer_index_network]);
-
-   U_INTERNAL_DUMP("peer->label = %V", peer->label.rep)
+#ifdef USE_LIBTDB
+next:
+#endif
+   U_INTERNAL_DUMP("peer->label = %V peer->mac", peer->label.rep, peer->mac.rep)
 
    UIPAllow* pallow = vLocalNetworkMask->at(U_peer_index_network);
 
@@ -1556,7 +1587,7 @@ void UNoCatPlugIn::addPeerInfo(time_t logout)
    info.snprintf_add("%sMac=%v&ip=%v&", (sz ? "&" : ""), str.rep, peer->ip.rep);
 
    info.snprintf_add("gateway=%.*s&ap=%v%%40%v&User=",
-                      u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->gateway), (unsigned char*)buffer), buffer, peer->label.rep, UServer_Base::IP_address->rep);
+                      u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->gateway), (unsigned char*)buffer), buffer, peer->label.rep, IP_address_trust->rep);
 
    info.snprintf_add("%.*s&logout=", u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->user), (unsigned char*)buffer), buffer);
 
@@ -2031,6 +2062,25 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       *allowed_members = cfg.at(U_CONSTANT_TO_PARAM("ALLOWED_MEMBERS"));
       *allowed_members = UFile::contentOf(allowed_members->empty() ? *str_allowed_members_default : *allowed_members);
+
+#  ifdef USE_LIBTDB
+      tmp = cfg.at(U_CONSTANT_TO_PARAM("DHCP_DATA_FILE"));
+
+      if (tmp)
+         {
+         pdata = U_NEW(UTDB());
+
+         U_INTERNAL_ASSERT(tmp.isNullTerminated())
+
+         if (((UTDB*)pdata)->open(tmp.data()) == false)
+            {
+            U_SRV_LOG("WARNING: cannot open DHCP_DATA_FILE %V", tmp.rep);
+
+            delete (UTDB*)pdata;
+                          pdata = 0;
+            }
+         }
+#  endif
       }
 
    *label = (vLocalNetworkLabel->empty() ? *str_without_label : (*vLocalNetworkLabel)[0]);
@@ -2116,8 +2166,10 @@ int UNoCatPlugIn::handlerInit()
 // if (*decrypt_key)
       {
       U_INTERNAL_ASSERT(decrypt_key->isNullTerminated())
-      
+
       UDES3::setPassword(decrypt_key->data());
+
+      *IP_address_trust = UDES3::signData("%v", UServer_Base::IP_address->rep);
       }
 
    // firewall cmd
@@ -2170,7 +2222,7 @@ bool UNoCatPlugIn::preallocatePeersFault()
 
    msg.snprintf("/error_ap?ap=%v@%v&public=%v%%3A%u&msg="
                            "address+space+usage%%3A%2f+MBytes+-+"
-                                     "rss+usage%%3A%2f+MBytes", label->rep, hostname->rep, UServer_Base::IP_address->rep, UServer_Base::port, _vsz, _rss);
+                                     "rss+usage%%3A%2f+MBytes", label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, _vsz, _rss);
 
    sendMsgToPortal(0, msg, 0);
 
@@ -2247,7 +2299,7 @@ int UNoCatPlugIn::handlerFork()
 
    UString msg(300U), output(U_CAPACITY), allowed_web_hosts(U_CAPACITY);
 
-   msg.snprintf("/start_ap?ap=%v@%v&public=%v%%3A%u&pid=%u", label->rep, hostname->rep, UServer_Base::IP_address->rep, UServer_Base::port, UServer_Base::pid);
+   msg.snprintf("/start_ap?ap=%v@%v&public=%v%%3A%u&pid=%u", label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, UServer_Base::pid);
 
    for (i = 0, n = vauth_url->size(); i < n; ++i)
       {
@@ -2544,7 +2596,7 @@ next:          (void) getARPCache();
          // been characterised casual Internet searching found that several people had noted this
          // behaviour as well, and speculated upon its meaning. What is clear is that Apple fail
          // to document it. Since the iPhone needs a positive response to its strange little query
-         // it was decided to give it one.
+         // it was decided to give it one
 
 #     ifdef DEBUG
          U_SRV_LOG("Detected strange initial WiFi request (iPhone) from peer: IP %.*s", U_CLIENT_ADDRESS_TO_TRACE);
@@ -2744,7 +2796,7 @@ set_redirect_to_AUTH:
 
          U_INTERNAL_ASSERT(peer->token)
 
-         location->snprintf_add("%v&ap=%v@%v", peer->token.rep, peer->label.rep, UServer_Base::IP_address->rep);
+         location->snprintf_add("%v&ap=%v@%v", peer->token.rep, peer->label.rep, IP_address_trust->rep);
          }
 
 redirect:
@@ -2752,8 +2804,7 @@ redirect:
 
       UHTTP::setRedirectResponse(mode, U_STRING_TO_PARAM(*location));
 
-end:
-      UClientImage_Base::setCloseConnection();
+end:  UClientImage_Base::setCloseConnection();
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
       }
@@ -2811,6 +2862,7 @@ const char* UModNoCatPeer::dump(bool _reset) const
 const char* UNoCatPlugIn::dump(bool _reset) const
 {
    *UObjectIO::os << "nfds                                           " << nfds                        <<  '\n'
+                  << "pdata                                          " << pdata                       <<  '\n' 
                   << "vaddr                                          " << (void*)vaddr                <<  '\n' 
                   << "sockp                                          " << (void*)sockp                <<  '\n'
                   << "paddrmask                                      " << (void*)paddrmask            <<  '\n'
