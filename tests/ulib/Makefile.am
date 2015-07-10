@@ -87,7 +87,7 @@ endif
 ## NB: il comando per generare il file .cc dal file .ll viene lanciato in una subdirectory:
 ## sh -x /mnt/source/ulib/autoconf/ylwrap test_flexer.ll lex.yy.c test_flexer.cc -- flex -olex.yy.c -S../../include/ulib/flex/flex.skl
 
-##if USE_PARSER
+if USE_PARSER
 ##AM_LFLAGS = -olex.yy.c
 ##AM_YFLAGS = -d -v # -Sbison.skl
 TST += flexer.test
@@ -95,7 +95,7 @@ TST += flexer.test
 PRG += test_flexer test_bison
 test_bison_SOURCES = test_bison_flexer.ll test_bison.yy
 test_flexer_SOURCES = test_flexer.ll
-##endif
+endif
 
 if PCRE
 PRG += test_pcre
