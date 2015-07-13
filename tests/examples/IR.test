@@ -57,7 +57,7 @@ fi
 if [ ! -d $DB_DIR ]; then
    mkdir -p $DB_DIR
 
-#export UTRACE="0 10M 1"
+#export UTRACE="0 50M -1"
 #export UOBJDUMP="0 5M 1k"
    start_prg index1 -c index.cfg
 #unset UOBJDUMP UTRACE

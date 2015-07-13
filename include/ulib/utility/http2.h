@@ -269,11 +269,13 @@ protected:
    static const char* getFrameTypeDescription();
 #endif      
 
-   static void setIndexStaticTable(UHashMap<void*>* ptable, const UStringRep* keyr)
+   static bool setIndexStaticTable(UHashMap<void*>* ptable, const char* key, uint32_t length)
       {
-      U_TRACE(0, "UHTTP2::setIndexStaticTable(%p,%V)", ptable, keyr)
+      U_TRACE(0, "UHTTP2::setIndexStaticTable(%p,%.*S,%u)", ptable, length, key, length)
 
       ptable->index = ptable->hash % ptable->_capacity;
+
+      U_RETURN(false);
       }
 
    static void setLengthAndType(char* ptr, uint32_t length, FrameTypesId type)

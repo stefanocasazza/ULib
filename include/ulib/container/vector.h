@@ -364,8 +364,11 @@ public:
       }
 #endif
 
-#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+#ifdef DEBUG
+   bool check_memory(); // check all element
+# ifdef U_STDCPP_ENABLE
    const char* dump(bool reset) const;
+# endif
 #endif
 
    // STREAMS
@@ -393,26 +396,6 @@ private:
 
 template <class T> class U_EXPORT UVector<T*> : public UVector<void*> {
 public:
-
-#ifdef DEBUG
-   bool check_memory() // check all element
-      {
-      U_TRACE(0+256, "UVector<T*>::check_memory()")
-
-      U_CHECK_MEMORY
-
-      T* elem;
-
-      for (uint32_t i = 0; i < _length; ++i)
-         {
-         elem = at(i);
-
-         U_CHECK_MEMORY_OBJECT(elem)
-         }
-
-      U_RETURN(true);
-      }
-#endif
 
    void clear() // erase all element
       {
@@ -939,7 +922,12 @@ public:
    UVector(const UString& str,       char  delim);
    UVector(const UString& str, const char* delim = 0);
 
-   ~UVector();
+   ~UVector()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UVector<UString>)
+
+      U_ASSERT(check_memory())
+      }
 
    // ELEMENT ACCESS
 
@@ -976,7 +964,17 @@ public:
 
    // STACK OPERATIONS
 
-   void push(     const UString& str);
+   void push(const UString& str) // add to end
+      {
+      U_TRACE(0, "UVector<UString>::push(%V)", str.rep)
+
+      UVector<UStringRep*>::push(str.rep);
+
+      U_INTERNAL_DUMP("str.rep = %p at(%u) = %p", str.rep, _length-1, UVector<UStringRep*>::at(_length-1))
+
+      U_ASSERT_EQUALS(str.rep, UVector<UStringRep*>::at(_length-1))
+      }
+
    void push_back(const UString& str) { push(str); } // add to end
 
    void push(     const UStringRep* rep) { UVector<UStringRep*>::push(rep); }
@@ -1131,21 +1129,7 @@ public:
 
    // Check equality with string at pos
 
-   bool isEqual(uint32_t pos, const UString& str, bool ignore_case = false)
-      {
-      U_TRACE(0, "UVector<UString>::isEqual(%u,%V,%b)", pos, str.rep, ignore_case)
-
-      U_CHECK_MEMORY
-
-      if (_length)
-         {
-         UStringRep* rep = UVector<UStringRep*>::at(pos);
-
-         if (str.equal(rep, ignore_case)) U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
+   bool isEqual(uint32_t pos, const UString& str, bool ignore_case = false);
 
    // Check equality with an existing vector object
 

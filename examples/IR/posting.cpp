@@ -24,6 +24,7 @@ UString*           UPosting::filename;
 UString*           UPosting::str_cur_doc_id;
 uint32_t           UPosting::word_freq;
 uint32_t           UPosting::min_word_size;
+uint32_t           UPosting::tbl_name_space;
 uint32_t           UPosting::tbl_words_space;
 uint32_t           UPosting::max_distance = 2;
 UHashMap<UString>* UPosting::tbl_name;
@@ -105,7 +106,7 @@ UPosting::UPosting(uint32_t dimension, bool parsing, bool index)
 
       dimension += dimension / 4;
 
-      tbl_name  = U_NEW(UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(dimension), false));
+      tbl_name  = U_NEW(UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(dimension)));
       tbl_words = U_NEW(UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(approximate_num_words), ignore_case));
       }
 
@@ -525,7 +526,7 @@ U_NO_EXPORT void UPosting::add()
 
    U_INTERNAL_ASSERT(*word)
 
-   bool present = (tbl_words ? tbl_words->find(*word)
+   bool present = (tbl_words ?          tbl_words->find(*word)
                              : ((URDB*)cdb_words)->find(*word));
 
    if (present == false)
@@ -698,7 +699,7 @@ void UPosting::processWord(int32_t op)
       {
       readPosting(word->rep, (op == 2)); // del
 
-      if (posting->empty()  == true ||
+      if (posting->empty() ||
           setPosting(false) == false)
          {
          U_ERROR("processWord(%d): word<%v> reference at position<%u> for DocID<%llu %v> lost", op, word->rep, pos, cur_doc_id, filename->rep);
@@ -819,7 +820,12 @@ void UPosting::setDocID(int32_t op)
 
    setDocID(true);
 
-   if (tbl_name) tbl_name->insert(*str_cur_doc_id, *filename);
+   if (tbl_name)
+      {
+      tbl_name->insert(*str_cur_doc_id, *filename);
+
+      tbl_name_space += str_cur_doc_id->size() + filename->size();
+      }
    else
       {
       int result = 0;
@@ -1476,6 +1482,7 @@ const char* UPosting::dump(bool _reset) const
                   << "max_distance                            " << max_distance                 << '\n'
                   << "min_word_size                           " << min_word_size                << '\n'
                   << "sub_word_size                           " << sub_word_size                << '\n'
+                  << "tbl_name_space                          " << tbl_name_space               << '\n'
                   << "ptr_cur_doc_id                          " << (void*)ptr_cur_doc_id        << '\n'
                   << "tbl_words_space                         " << tbl_words_space              << '\n'
                   << "off_last_doc_id                         " << off_last_doc_id              << '\n'

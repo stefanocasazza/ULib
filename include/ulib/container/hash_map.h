@@ -16,12 +16,13 @@
 
 #include <ulib/container/construct.h>
 
-typedef bool     (*bPFprpv) (UStringRep*,void*);
-typedef uint32_t (*uPFpcu)  (const char*,uint32_t);
-typedef void     (*vPFptpr) (UHashMap<void*>*,const UStringRep*);
+typedef bool     (*bPFprpv)  (UStringRep*,void*);
+typedef uint32_t (*uPFpcu)   (const char*,uint32_t);
+typedef bool     (*bPFptpcu) (UHashMap<void*>*,const char*,uint32_t);
 
 class UCDB;
 class UHTTP;
+class UHTTP2;
 class WeightWord;
 class UMimeHeader;
 class UFileConfig;
@@ -102,7 +103,9 @@ public:
 
    // Costruttori e distruttore
 
-   UHashMap(uint32_t n = 53, bool _ignore_case = false, vPFptpr _set_index = setIndex);
+   UHashMap(uint32_t n, bool ignore_case);
+
+   UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex);
 
    ~UHashMap()
       {
@@ -136,20 +139,6 @@ public:
       U_RETURN(_capacity);
       }
 
-   uint32_t space() const
-      {
-      U_TRACE(0, "UHashMap<void*>::space()")
-
-      U_RETURN(_space);
-      }
-
-   void setSpace(uint32_t s)
-      {
-      U_TRACE(0, "UHashMap<void*>::setSpace(%u)", s)
-
-      _space = s;
-      }
-
    bool empty() const
       {
       U_TRACE(0, "UHashMap<void*>::empty()")
@@ -165,10 +154,19 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(_length, 0)
 
-      ignore_case = flag;
+      set_index = (flag ? setIndexIgnoreCase : setIndex);
       }
 
-   bool ignoreCase() const  { return ignore_case; }
+   void setIndexFunction(bPFptpcu _set_index)
+      {
+      U_TRACE(0, "UHashMap<void*>::setIndexFunction(%p)", _set_index)
+
+      U_INTERNAL_ASSERT_EQUALS(_length, 0)
+
+      set_index = _set_index;
+      }
+
+   bool ignoreCase() const { return (set_index == setIndexIgnoreCase); }
 
    // ricerche
 
@@ -178,7 +176,7 @@ public:
 
       lookup(_key);
 
-      if (node != 0) U_RETURN(true);
+      if (node) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -187,7 +185,18 @@ public:
 
    // set/get methods
 
-   void* operator[](const char*       _key);
+   void* operator[](const char* _key)
+      {
+      U_TRACE(0, "UHashMap<void*>::operator[](%S)", _key)
+
+      U_INTERNAL_ASSERT_POINTER(pkey)
+
+      pkey->str     =           _key;
+      pkey->_length = u__strlen(_key, __PRETTY_FUNCTION__);
+
+      return at(pkey);
+      }
+
    void* operator[](const UString&    _key) { return at(_key.rep); }
    void* operator[](const UStringRep* _key) { return at(_key); }
 
@@ -237,7 +246,7 @@ public:
 
    // call function for all entry
 
-   bool next();
+   bool  next();
    bool first();
 
    void getKeys(UVector<UString>& vec);
@@ -268,25 +277,18 @@ public:
    static bool istream_loading;
 
 protected:
+   bPFptpcu set_index;
    UHashMapNode* node;
    UHashMapNode** table;
-
+   uint32_t _capacity, _length, hash;
 public:
-   vPFptpr set_index;
-   uint32_t _capacity, index, hash;
-
-   static void setIndex(UHashMap<void*>* pthis, const UStringRep* keyr)
-      {
-      U_TRACE(0, "UHashMap<void*>::setIndex(%p,%V)", pthis, keyr)
-
-      pthis->index = (pthis->hash = keyr->hash(pthis->ignore_case)) % pthis->_capacity;
-      }
-
+   uint32_t index;
 protected:
-   uint32_t _length, _space;
-   bool ignore_case;
-
    static UStringRep* pkey;
+
+#ifdef DEBUG
+   bool check_memory() const; // check all element
+#endif
 
    void _allocate(uint32_t n)
       {
@@ -309,16 +311,73 @@ protected:
       UMemoryPool::_free(table, _capacity, sizeof(UHashMapNode*));
       }
 
+   void init(uint32_t n)
+      {
+      U_TRACE(0, "UHashMap<void*>::init(%u)", n)
+
+      node = 0;
+
+      _allocate(n);
+
+      _length =
+      hash    =
+      index   = 0;
+      }
+
    // Find a elem in the array with <key>
 
-   void* at(const UStringRep* keyr);
-   void* at(const char* _key, uint32_t keylen);
+   void* at(const UStringRep* _key)
+      {
+      U_TRACE(0, "UHashMap<void*>::at(%V)", _key)
+
+      lookup(_key);
+
+      if (node) U_RETURN((void*)node->elem);
+
+      U_RETURN((void*)0);
+      }
+
+   void* at(const char* _key, uint32_t keylen)
+      {
+      U_TRACE(0, "UHashMap<void*>::at(%.*S,%u)", keylen, _key, keylen)
+
+      U_INTERNAL_ASSERT_POINTER(pkey)
+      U_INTERNAL_ASSERT_POINTER(_key)
+      U_INTERNAL_ASSERT_MAJOR(keylen, 0)
+
+      pkey->str     = _key;
+      pkey->_length = keylen;
+
+      return at(pkey);
+      }
 
    void lookup(const UString&    keyr) { return lookup(keyr.rep); }
    void lookup(const UStringRep* keyr);
 
    void _eraseAfterFind();
    void _callForAllEntrySorted(bPFprpv function);
+
+   static bool setIndex(UHashMap<void*>* pthis, const char* _key, uint32_t keylen)
+      {
+      U_TRACE(0, "UHashMap<void*>::setIndex(%p,%.*S,%u)", pthis, keylen, _key, keylen)
+
+      pthis->index = (pthis->hash = u_hash((unsigned char*)_key, keylen)) % pthis->_capacity;
+
+      U_INTERNAL_ASSERT_MAJOR(pthis->hash, 0)
+
+      U_RETURN(false);
+      }
+
+   static bool setIndexIgnoreCase(UHashMap<void*>* pthis, const char* _key, uint32_t keylen)
+      {
+      U_TRACE(0, "UHashMap<void*>::setIndexIgnoreCase(%p,%.*S,%u)", pthis, keylen, _key, keylen)
+
+      pthis->index = (pthis->hash = u_hash_ignore_case((unsigned char*)_key, keylen)) % pthis->_capacity;
+
+      U_INTERNAL_ASSERT_MAJOR(pthis->hash, 0)
+
+      U_RETURN(true);
+      }
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS
@@ -331,6 +390,7 @@ private:
 
    friend class UCDB;
    friend class UHTTP;
+   friend class UHTTP2;
    friend class UValue;
    friend class UString;
    friend class WeightWord;
@@ -347,9 +407,14 @@ public:
 
    // Costruttori e distruttore
 
-   UHashMap(uint32_t n = 53, bool _ignore_case = false, vPFptpr _set_index = setIndex) : UHashMap<void*>(n, _ignore_case, _set_index)
+   UHashMap(uint32_t n, bool ignore_case) : UHashMap<void*>(n, ignore_case)
       {
-      U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%u,%b,%p", n, _ignore_case, _set_index)
+      U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%u,%b", n, ignore_case)
+      }
+
+   UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex) : UHashMap<void*>(n, _set_index)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%u,%p", n, _set_index)
       }
 
    ~UHashMap()
@@ -425,73 +490,9 @@ public:
 
    // find a elem in the array with <key>
 
-   T* at(const UString& _key)                { return (T*) UHashMap<void*>::at(_key.rep); }
-   T* at(const UStringRep* keyr)             { return (T*) UHashMap<void*>::at(keyr); }
-   T* at(const char* _key, uint32_t keylen)  { return (T*) UHashMap<void*>::at(_key, keylen); }
-
-#ifdef DEBUG
-   bool check_memory() const // check all element
-      {
-      U_TRACE(0+256, "UHashMap<T*>::check_memory()")
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_DUMP("_length = %u", _length)
-
-      if (_length)
-         {
-         T* pelem;
-         UHashMapNode* pnode;
-         UHashMapNode* pnext;
-         int sum = 0, max = 0, min = 1024, width;
-
-         for (uint32_t _index = 0; _index < _capacity; ++_index)
-            {
-            pnode = table[_index];
-
-            if (pnode == 0) continue;
-
-            ++sum;
-            width = 0;
-
-loop:       U_INTERNAL_ASSERT_POINTER(pnode)
-
-            pelem = (T*) pnode->elem;
-
-            U_INTERNAL_DUMP("pelem = %p", pelem)
-
-            U_CHECK_MEMORY_OBJECT(pelem)
-
-            U_INTERNAL_DUMP("pnode->key(%u) = %p %V",  pnode->key->size(), pnode->key, pnode->key)
-
-            U_INTERNAL_ASSERT_MAJOR(pnode->key->size(), 0)
-
-            if (pnode->next)
-               {
-               pnext = pnode->next;
-
-               U_INTERNAL_DUMP("pnode = %p pnext = %p", pnode, pnext)
-
-               U_INTERNAL_ASSERT_POINTER(pnext)
-               U_INTERNAL_ASSERT_DIFFERS(pnode, pnext)
-
-               ++width;
-
-               pnode = pnext;
-
-               goto loop;
-               }
-
-            if (max < width) max = width;
-            if (min > width) min = width;
-            }
-
-         U_INTERNAL_DUMP("collision(min,max) = (%d,%d) - distribution = %f", min, max, (sum ? (double)_length / (double)sum : 0))
-         }
-
-      U_RETURN(true);
-      }
-#endif
+   T* at(const UString& _key)               { return (T*) UHashMap<void*>::at(_key.rep); }
+   T* at(const UStringRep* keyr)            { return (T*) UHashMap<void*>::at(keyr); }
+   T* at(const char* _key, uint32_t keylen) { return (T*) UHashMap<void*>::at(_key, keylen); }
 
    // cancellazione tabella
 
@@ -583,7 +584,6 @@ loop:       U_INTERNAL_ASSERT_POINTER(pnode)
       U_TRACE(0, "UHashMap<T*>::assign(%p)", &t)
 
       U_INTERNAL_ASSERT_DIFFERS(this, &t)
-      U_INTERNAL_ASSERT_EQUALS(ignore_case, t.ignore_case)
 
       clear();
 
@@ -776,7 +776,6 @@ loop:       U_INTERNAL_ASSERT_POINTER(pnode)
 #  endif
 #endif
 
-
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS
    UHashMap<T*>(const UHashMap<T*>&) = delete;
@@ -799,9 +798,14 @@ public:
 
    // Costruttori e distruttore
 
-   UHashMap(uint32_t n = 53, bool _ignore_case = false, vPFptpr _set_index = setIndex) : UHashMap<UStringRep*>(n, _ignore_case, _set_index)
+   UHashMap(uint32_t n, bool ignore_case) : UHashMap<UStringRep*>(n, ignore_case)
       {
-      U_TRACE_REGISTER_OBJECT(0, UHashMap<UString>, "%u,%b,%p", n, _ignore_case, _set_index)
+      U_TRACE_REGISTER_OBJECT(0, UHashMap<UString>, "%u,%b", n, ignore_case)
+      }
+
+   UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex) : UHashMap<UStringRep*>(n, _set_index)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UHashMap<UString>, "%u,%p", n, _set_index)
       }
 
    ~UHashMap()
@@ -823,13 +827,16 @@ public:
       U_TRACE(0, "UHashMap<UString>::insert(%V,%V)", _key.rep, str.rep)
 
       UHashMap<UStringRep*>::insert(_key, str.rep);
-
-      _space += _key.size() + str.size();
       }
 
    UString erase(const UString& key);
 
-   void insertAfterFind(const UString& key, const UString& str);
+   void insertAfterFind(const UString& _key, const UString& str)
+      {
+      U_TRACE(0, "UHashMap<UString>::insertAfterFind(%V,%V)", _key.rep, str.rep)
+
+      UHashMap<UStringRep*>::insertAfterFind(_key, str.rep);
+      }
 
    // OPERATOR []
 

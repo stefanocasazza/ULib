@@ -36,11 +36,10 @@ public:
 
          // save hash table as constant database
 
-         if (cdb_names->writeTo(UPosting::tbl_name))
+         if (cdb_names->writeTo(UPosting::tbl_name,  UPosting::tbl_name_space) &&
+             cdb_words->writeTo(UPosting::tbl_words, UPosting::tbl_words_space))
             {
-            UPosting::tbl_words->setSpace(UPosting::tbl_words_space);
-
-            if (cdb_words->writeTo(UPosting::tbl_words)) IR::deleteDB();
+            IR::deleteDB();
             }
          }
       }

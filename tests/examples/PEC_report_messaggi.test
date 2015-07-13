@@ -4,7 +4,7 @@
 
 ## PEC_report.test -- Test PEC_report feature
 
-#UTRACE="5 5M 1"
+#UTRACE="5 50M 0"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND=valgrind
@@ -26,32 +26,32 @@ start_msg PEC_report_messaggi
 #										 -n inp/PEC/domains.txt -b gds@actalis.it
 #exit 0
 
-start_prg PEC_report_messaggi -T BustaAnomaliaConPiuDestinatariTest -d inp/PEC/1/BustaAnomaliaConPiuDestinatari \
-									   -e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
-										-b GDS@actalis.it -F pippo
-start_prg PEC_report_messaggi -c PEC_report_messaggi.cfg \
-										-b GDS@actalis.it -F pippo
-start_prg PEC_report_messaggi -T FilenameFilterTest -d inp/PEC/1/FilenameFilterTest \
-									   -e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
-										-b GDS@actalis.it -F pippo
-start_prg PEC_report_messaggi -T Report_EmptyTest -d inp/PEC/1/Report_EmptyTest \
-										-e log.p7m -i PEC_Milter					-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
-										-b GDS@actalis.it -F pippo
-start_prg PEC_report_messaggi -T Report_MsgAccettazioneTest -d inp/PEC/1/Report_MsgAccettazioneTest \
-										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
-										-b GDS@actalis.it -F pippo
-start_prg PEC_report_messaggi -T Report_MsgAllTest -d inp/PEC/1/Report_MsgAllTest \
-										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
-										-b GDS@actalis.it -F pippo
-start_prg PEC_report_messaggi -T Report_MsgInputTest -d inp/PEC/1/Report_MsgInputTest \
+ start_prg PEC_report_messaggi -T BustaAnomaliaConPiuDestinatariTest -d inp/PEC/1/BustaAnomaliaConPiuDestinatari \
+ 									   -e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+ 										-b GDS@actalis.it -F pippo
+ start_prg PEC_report_messaggi -c PEC_report_messaggi.cfg \
+ 										-b GDS@actalis.it -F pippo
+ start_prg PEC_report_messaggi -T FilenameFilterTest -d inp/PEC/1/FilenameFilterTest \
+ 									   -e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+ 										-b GDS@actalis.it -F pippo
+ start_prg PEC_report_messaggi -T Report_EmptyTest -d inp/PEC/1/Report_EmptyTest \
+ 										-e log.p7m -i PEC_Milter					-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+ 										-b GDS@actalis.it -F pippo
+ start_prg PEC_report_messaggi -T Report_MsgAccettazioneTest -d inp/PEC/1/Report_MsgAccettazioneTest \
  										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
-										-b GDS@actalis.it -F pippo
-start_prg PEC_report_messaggi -T WithoutDomainInInputTest -d inp/PEC/1/WithoutDomainInInputTest \
-										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
-										-b GDS@actalis.it -F pippo
-start_prg PEC_report_messaggi -T TwoFilesTest -d inp/PEC/1/TwoFilesTest \
-									   -e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
-										-b GDS@actalis.it -F pippo
+ 										-b GDS@actalis.it -F pippo
+ start_prg PEC_report_messaggi -T Report_MsgAllTest -d inp/PEC/1/Report_MsgAllTest \
+ 										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+ 										-b GDS@actalis.it -F pippo
+ start_prg PEC_report_messaggi -T Report_MsgInputTest -d inp/PEC/1/Report_MsgInputTest \
+  										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+ 										-b GDS@actalis.it -F pippo
+ start_prg PEC_report_messaggi -T WithoutDomainInInputTest -d inp/PEC/1/WithoutDomainInInputTest \
+ 										-e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+ 										-b GDS@actalis.it -F pippo
+ start_prg PEC_report_messaggi -T TwoFilesTest -d inp/PEC/1/TwoFilesTest \
+ 									   -e log.p7m -i PEC_Milter,PEC_Notify	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
+ 										-b GDS@actalis.it -F pippo
 start_prg PEC_report_messaggi -T RilevazioneVirusTest -d inp/PEC/1/RilevazioneVirusTest \
 									   -e log.p7m -i PEC_Milter	-f 10/05/2006 -t 02/07/2007 -n inp/PEC/domain.txt \
 										-b GDS@actalis.it -F pippo

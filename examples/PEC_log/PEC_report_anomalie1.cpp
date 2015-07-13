@@ -27,6 +27,7 @@ static URDB* rdb;
 #define MARGINE      (MAX_NUM_MSG / 10)
 
 static UString* rdbname;
+static uint32_t table_space;
 static uint32_t max_size_table;
 static uint32_t ntable_discharges;
 static UHashMap<Messaggio*>* table;
@@ -226,11 +227,11 @@ public:
 
          U_MESSAGE("start session <%d>: write table on database %.*S...", lrdb->size(), U_STRING_TO_TRACE(*rdbname));
 
-         table->setSpace(table->size() * U_DIMENSIONE_MEDIA_RECORD_LOG * 2);
+         table_space = table->size() * U_DIMENSIONE_MEDIA_RECORD_LOG * 2;
 
          pvPFpmpb func = Application::MessageToString;
 
-         if (rdb->UCDB::writeTo(table, (pvPFpvpb)func) == false) U_ERROR("failed to write table on database");
+         if (rdb->UCDB::writeTo(table, table_space, (pvPFpvpb)func) == false) U_ERROR("failed to write table on database");
 
          rdbname->setEmpty();
 #     else
@@ -246,11 +247,11 @@ public:
       
             rdb = new URDB(*rdbname, true);
 
-            table->setSpace(table->size() * 512 + MARGINE);
+            table_space = table->size() * 512 + MARGINE;
 
             pvPFpmpb func = Application::FirstCheckForOldMessage;
 
-            if (rdb->UCDB::writeTo(table, (pvPFpvpb)func) == false)
+            if (rdb->UCDB::writeTo(table, table_space, (pvPFpvpb)func) == false)
                {
                U_ERROR("write to database file %.*S failed", U_STRING_TO_TRACE(*rdbname));
                }
@@ -258,7 +259,7 @@ public:
          else
             {
             if (ntable_discharges == 2 &&
-             // rdb->open(table->space() + MARGINE) == false)
+             // rdb->open(table_space + MARGINE) == false)
                 rdb->open(1024 * 1024 * 1024) == false)
                {
                U_ERROR("open database file %.*S failed", U_STRING_TO_TRACE(*rdbname));

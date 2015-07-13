@@ -10,11 +10,13 @@ extern "C" {
 #  include "file_config.gperf"
 }
 
-static void setIndex(UHashMap<void*>* pthis, const UStringRep* keyr)
+static bool setIndex(UHashMap<void*>* pthis, const char* p, uint32_t sz)
 {
-   U_TRACE(5, "setIndex(%p,%V)", pthis, keyr)
+   U_TRACE(5, "setIndex(%p,%.*S,%u)", pthis, sz, p, sz)
 
-   pthis->index = gperf_hash(U_STRING_TO_PARAM(*keyr));
+   pthis->index = gperf_hash(p, sz);
+
+   U_RETURN(false);
 }
 
 static void check(UFileConfig& y)
@@ -125,7 +127,7 @@ int U_EXPORT main (int argc, char* argv[])
 
    UFileConfig y;
 
-   y.table.set_index = setIndex;
+   y.table.setIndexFunction(setIndex);
 
    y.table.allocate(MAX_HASH_VALUE+1);
 
@@ -142,7 +144,7 @@ int U_EXPORT main (int argc, char* argv[])
    check(y);
    check1(y);
 
-   y.table.set_index = UHashMap<void*>::setIndex;
+   y.table.setIgnoreCase(false);
 
    cin  >> y.table;
    cout << y.table;

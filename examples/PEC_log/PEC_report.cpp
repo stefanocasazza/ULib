@@ -862,7 +862,7 @@ loop2:
 
 bool PEC_report::readContent()
 {
-   U_TRACE(5+256, "PEC_report::readContent()")
+   U_TRACE(5, "PEC_report::readContent()")
 
    *content = file->getContent();
 

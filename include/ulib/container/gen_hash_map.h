@@ -75,7 +75,7 @@ protected:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
+      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
 
       hash  = hashcode(_key);
       index = hash % _capacity;
@@ -235,7 +235,7 @@ public:
        * delle collisioni - lista self-organizing (move-to-front)...
        */
 
-      U_INTERNAL_ASSERT_EQUALS(node,table[index])
+      U_INTERNAL_ASSERT_EQUALS(node, table[index])
 
       table[index] = node->next;
 

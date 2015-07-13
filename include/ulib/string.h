@@ -90,6 +90,7 @@ class UStringExt;
 class USocketExt;
 class UOrmDriver;
 class UXMLEscape;
+class UMimeHeader;
 class UPop3Client;
 class UHttpPlugIn;
 class Application;
@@ -325,7 +326,7 @@ public:
 
    // Equal
 
-          bool equal(const UStringRep* rep)     const { return equal(rep->str, rep->_length); }
+          bool equal(const UStringRep* rep) const { return equal(rep->str, rep->_length); }
    __pure bool equal(const char* s, uint32_t n) const
       {
       U_TRACE(0, "UStringRep::equal(%#.*S,%u)", n, s, n) // problem with sanitize address
@@ -345,18 +346,17 @@ public:
 
    // Equal with ignore case
 
-          bool equal(const UStringRep* rep,     bool ignore_case) const { return equal(rep->str, rep->_length, ignore_case); }
-   __pure bool equal(const char* s, uint32_t n, bool ignore_case) const
+          bool equalnocase(const UStringRep* rep) const { return equalnocase(rep->str, rep->_length); }
+   __pure bool equalnocase(const char* s, uint32_t n) const
       {
-      U_TRACE(0, "UStringRep::equal(%.*S,%u,%b)", n, s, n, ignore_case)
+      U_TRACE(0, "UStringRep::equalnocase(%.*S,%u)", n, s, n)
 
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_POINTER(s)
 
       if (_length == n &&
-          ((ignore_case ? u__strncasecmp(str, s, n)
-                        :         memcmp(str, s, n)) == 0))
+          u__strncasecmp(str, s, n) == 0)
          {
          U_RETURN(true);
          }
@@ -475,7 +475,17 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   void replace(const char* s, uint32_t n);
+   void replace(const char* s, uint32_t n)
+      {
+      U_TRACE(0, "UStringRep::replace(%S,%u)", s, n)
+
+      U_INTERNAL_ASSERT_MAJOR(n, 0)
+      U_INTERNAL_ASSERT(_capacity >= n)
+
+      U_MEMCPY((char*)str, s, n);
+
+      ((char*)str)[(_length = n)] = '\0';
+      }
 
 #ifdef DEBUG
    bool invariant() const;
@@ -619,13 +629,26 @@ public:
    int64_t strtoll(int base = 0) const;
 #endif
 
-   uint32_t hash(bool ignore_case = false) const
+   uint32_t hash() const
       {
-      U_TRACE(0, "UStringRep::hash(%b)", ignore_case)
+      U_TRACE(0, "UStringRep::hash()")
 
       U_CHECK_MEMORY
 
-      uint32_t result = u_hash((unsigned char*)str, _length, ignore_case);
+      uint32_t result = u_hash((unsigned char*)str, _length);
+
+      U_INTERNAL_ASSERT_MAJOR(result, 0)
+
+      U_RETURN(result);
+      }
+
+   uint32_t hashIgnoreCase() const
+      {
+      U_TRACE(0, "UStringRep::hashIgnoreCase()")
+
+      U_CHECK_MEMORY
+
+      uint32_t result = u_hash_ignore_case((unsigned char*)str, _length);
 
       U_INTERNAL_ASSERT_MAJOR(result, 0)
 
@@ -707,7 +730,21 @@ public:
 
    // JSON
 
-   void fromValue(UStringRep* r);
+   void fromValue(UStringRep* r)
+      {
+      U_TRACE(0, "UStringRep::fromValue(%V)", r)
+
+      U_INTERNAL_DUMP("r = %p r->parent = %p r->references = %d r->child = %d - %V", r, r->parent, r->references, r->child, r)
+
+      U_INTERNAL_ASSERT(r->_capacity)
+      U_INTERNAL_ASSERT_EQUALS(memcmp(this, string_rep_null, sizeof(UStringRep)), 0)
+
+      u__memcpy(this, r, sizeof(UStringRep), __PRETTY_FUNCTION__);
+
+      r->_capacity = 0; // NB: no room for data, constant string...
+
+      U_INTERNAL_ASSERT(invariant())
+      }
 
 protected:
    uint32_t _length,
@@ -726,24 +763,31 @@ protected:
 #endif
 
 private:
-   UStringRep()
+    UStringRep()
       {
       U_TRACE(0, "UStringRep::UStringRep()")
 
       u__memcpy(this, string_rep_null, sizeof(UStringRep), __PRETTY_FUNCTION__);
       }
 
-   explicit UStringRep(const char* t, uint32_t tlen); // NB: to use with caution...
+   explicit UStringRep(const char* t, uint32_t tlen) // NB: use with caution...
+      {
+      U_TRACE_REGISTER_OBJECT(0, UStringRep, "%.*S,%u", tlen, t, tlen)
 
-   ~UStringRep();
+      U_INTERNAL_ASSERT_POINTER(t)
+      U_INTERNAL_ASSERT_MAJOR(tlen, 0)
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UStringRep(const UStringRep&) = delete;
-   UStringRep& operator=(const UStringRep&) = delete;
-#else
-   UStringRep(const UStringRep&) {}
-   UStringRep& operator=(const UStringRep&) { return *this; }
-#endif
+      set(tlen, 0U, t);
+      }
+
+   ~UStringRep()
+      {
+      U_TRACE(0, "UStringRep::~UStringRep()")
+
+      // NB: we don't use delete (dtor) because it add a deallocation to the destroy process...
+
+      U_ERROR("I can't use UStringRep on stack");
+      }
 
    void shift(ptrdiff_t diff)
       {
@@ -761,7 +805,61 @@ private:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   void set(uint32_t length, uint32_t capacity, const char* ptr) U_NO_EXPORT;
+   void set(uint32_t length, uint32_t capacity, const char* ptr);
+
+   // Equal lookup use case
+
+   static bool equal_lookup(UStringRep* key1, const char* s2, uint32_t n2, bool ignore_case)
+      {
+      U_TRACE(0, "UStringRep::equal_lookup(%V,%.*S,%u,%b)", key1, n2, s2, n2, ignore_case)
+
+      U_INTERNAL_ASSERT_MAJOR(n2, 0)
+
+      const char* s1;
+      uint32_t n1 = key1->size();
+
+      U_INTERNAL_ASSERT_MAJOR(n1, 0)
+
+      if (n1 == n2                                          &&
+          ((s1 = key1->data(),     memcmp(s1, s2, n1) == 0) ||
+           (ignore_case && u__strncasecmp(s1, s2, n1) == 0)))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   static bool equal_lookup(const UStringRep* key1, const char* s1, uint32_t n1, const UStringRep* key2, uint32_t n2, bool ignore_case)
+      {
+      U_TRACE(0, "UStringRep::equal_lookup(%V,%.*S,%u,%V,%u,%b)", key1, n1, s1, n1, key2, n2, ignore_case)
+
+      U_INTERNAL_ASSERT_MAJOR(n1, 0)
+      U_INTERNAL_ASSERT_MAJOR(n2, 0)
+      U_INTERNAL_ASSERT_EQUALS(key1->data(), s1)
+      U_INTERNAL_ASSERT_EQUALS(key1->size(), n1)
+      U_INTERNAL_ASSERT_EQUALS(key2->size(), n2)
+
+      const char* s2;
+
+      if (n1 == n2                                          &&
+          (key1 == key2                                     ||
+           (s2 = key2->data(),     memcmp(s1, s2, n1) == 0) ||
+           (ignore_case && u__strncasecmp(s1, s2, n1) == 0)))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+#ifdef U_COMPILER_DELETE_MEMBERS
+   UStringRep(const UStringRep&) = delete;
+   UStringRep& operator=(const UStringRep&) = delete;
+#else
+   UStringRep(const UStringRep&) {}
+   UStringRep& operator=(const UStringRep&) { return *this; }
+#endif
 
    friend class Url;
    friend class UCDB;
@@ -782,6 +880,7 @@ private:
    friend class UOrmDriver;
    friend class UXMLEscape;
    friend class UPop3Client;
+   friend class UMimeHeader;
    friend class UHttpPlugIn;
    friend class Application;
    friend class UHashMapNode;
@@ -904,7 +1003,7 @@ protected:
       }
 
 public:
-   // mutable
+// mutable
    UStringRep* rep;
 
    // SERVICES
@@ -996,7 +1095,15 @@ public:
       }
 
    explicit UString(const char* t);
-   explicit UString(const char* t, uint32_t tlen);
+   explicit UString(const char* t, uint32_t tlen)
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u", tlen, t, tlen)
+
+      if (tlen) rep = U_NEW(UStringRep(t, tlen));
+      else     _copy(UStringRep::string_rep_null);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
 
    // NB: Avoid constructors with a single integer argument! Use the explicit keyword if you can't avoid them...
 
@@ -1094,8 +1201,31 @@ public:
 
    // Replace
 
-   UString& replace(uint32_t pos, uint32_t n1, uint32_t n2, char c); // NB: unsigned char conflict with a uint32_t at the same parameter position...
-   UString& replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2);
+   UString& replace(uint32_t pos, uint32_t n1, uint32_t n2, char c) // NB: unsigned char conflict with a uint32_t at the same parameter position...
+      {
+      U_TRACE(0, "UString::replace(%u,%u,%u,%C)", pos, n1, n2, c)
+
+      char* ptr = __replace(pos, n1, n2);
+
+      if (ptr && n2) (void) U_SYSCALL(memset, "%p,%d,%u", ptr, c, n2);
+
+      U_INTERNAL_ASSERT(invariant())
+
+      return *this;
+      }
+
+   UString& replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
+      {
+      U_TRACE(0, "UString::replace(%u,%u,%S,%u)", pos, n1, s, n2)
+
+      char* ptr = __replace(pos, n1, n2);
+
+      if (ptr && n2) U_MEMCPY(ptr, s, n2);
+
+      U_INTERNAL_ASSERT(invariant())
+
+      return *this;
+      }
 
    UString& replace(uint32_t pos1, uint32_t n1, const UString& str, uint32_t pos2, uint32_t n2 = U_NOT_FOUND)
       {
@@ -1246,7 +1376,22 @@ public:
    void push_back(unsigned char c) { (void) append(1U, c); }
 
    UString& append(uint32_t n, char c); // NB: unsigned char conflict with a uint32_t at the same parameter position...
-   UString& append(const char* s, uint32_t n);
+
+   UString& append(const char* s, uint32_t n)
+      {
+      U_TRACE(0, "UString::append(%.*S,%u)", n, s, n) // problem with sanitize address
+
+      if (n)
+         {
+         char* ptr = __append(n);
+
+         U_MEMCPY(ptr, s, n);
+         }
+
+      U_INTERNAL_ASSERT(invariant())
+
+      return *this;
+      }
 
    UString& append(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND)
       {
@@ -1458,20 +1603,15 @@ public:
 
    bool equal(const char* s) const __pure             { return rep->equal(s, u__strlen(s, __PRETTY_FUNCTION__)); }
    bool equal(const char* s, uint32_t n) const __pure { return rep->equal(s, n); }
-   bool equal(const UString& str) const               { return equal(str.rep); }
    bool equal(UStringRep* _rep) const __pure          { return same(_rep) || rep->equal(_rep); }
+   bool equal(const UString& str) const               { return equal(str.rep); }
 
    // Equal with ignore case
 
-   bool equalnocase(const char* s) const             { return rep->equal(s, u__strlen(s, __PRETTY_FUNCTION__), true); }
-   bool equalnocase(const char* s, uint32_t n) const { return rep->equal(s, n, true); }
-
-   bool equalnocase(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep, true); }
+   bool equalnocase(const char* s) const             { return rep->equalnocase(s, u__strlen(s, __PRETTY_FUNCTION__)); }
+   bool equalnocase(const char* s, uint32_t n) const { return rep->equalnocase(s, n); }
+   bool equalnocase(UStringRep* _rep) const          { return same(_rep) || rep->equalnocase(_rep); }
    bool equalnocase(const UString& str) const __pure { return equalnocase(str.rep); }
-
-   bool equal(UStringRep* _rep,          bool ignore_case) const { return same(_rep) || rep->equal(_rep, ignore_case); }
-   bool equal(const UString& str,        bool ignore_case) const { return equal(str.rep, ignore_case); }
-   bool equal(const char* s, uint32_t n, bool ignore_case) const { return rep->equal(s, n, ignore_case); }
 
    // STREAM
 
@@ -1521,7 +1661,8 @@ public:
 
    void setFromInode(uint64_t* p)  { (void) replace((const char*)p, sizeof(uint64_t)); }
 
-   uint32_t hash(bool ignore_case = false) const { return rep->hash(ignore_case); }
+   uint32_t hash() const           { return rep->hash(); }
+   uint32_t hashIgnoreCase() const { return rep->hashIgnoreCase(); }
 
    // references
 
@@ -1596,8 +1737,33 @@ public:
    void moveToBeginDataInBuffer(uint32_t n);
    void printKeyValue(const char* key, uint32_t keylen, const char* data, uint32_t datalen);
 
-   void snprintf(    const char* format, ...);
-   void snprintf_add(const char* format, ...);
+   void snprintf(const char* format, ...)
+      {
+      U_TRACE(0, "UString::snprintf(%S)", format)
+
+      U_INTERNAL_ASSERT_POINTER(format)
+
+      va_list argp;
+      va_start(argp, format);
+
+      UString::vsnprintf(format, argp); 
+
+      va_end(argp);
+      }
+
+   void snprintf_add(const char* format, ...)
+      {
+      U_TRACE(0, "UString::snprintf_add(%S)", format)
+
+      U_INTERNAL_ASSERT_POINTER(format)
+
+      va_list argp;
+      va_start(argp, format);
+
+      UString::vsnprintf_add(format, argp); 
+
+      va_end(argp);
+      }
 
    void setFromData(const char** ptr, uint32_t sz);
    void setFromData(const char** ptr, uint32_t sz, unsigned char delim);
@@ -1761,8 +1927,8 @@ public:
    // -----------------------------------------------------------------------------------------------------------------------
 
 private:
-   char* __append(uint32_t n) U_NO_EXPORT;
-   char* __replace(uint32_t pos, uint32_t n1, uint32_t n2) U_NO_EXPORT;
+   char* __append(uint32_t n);
+   char* __replace(uint32_t pos, uint32_t n1, uint32_t n2);
 };
 
 // operator ==

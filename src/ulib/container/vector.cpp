@@ -134,6 +134,26 @@ void UVector<void*>::reserve(uint32_t n)
       }
 }
 
+#ifdef DEBUG
+bool UVector<void*>::check_memory() // check all element
+{
+   U_TRACE(0+256, "UVector<void*>::check_memory()")
+
+   U_CHECK_MEMORY
+
+   const void* pelem;
+
+   for (uint32_t i = 0; i < _length; ++i)
+      {
+      pelem = at(i);
+
+      U_INTERNAL_ASSERT_EQUALS(((const UMemoryError*)pelem)->_this, (void*)U_CHECK_MEMORY_SENTINEL)
+      }
+
+   U_RETURN(true);
+}
+#endif
+
 // specializzazione stringa
 
 UVector<UString>::UVector(const UString& str, char delim) : UVector<UStringRep*>(64)
@@ -179,13 +199,6 @@ UVector<UString>::UVector(const UString& x, const char* delim) : UVector<UString
    if (_length) reserve(_length);
 }
 
-UVector<UString>::~UVector()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, UVector<UString>)
-
-   U_ASSERT(check_memory())
-}
-
 __pure UString UVector<UString>::at(uint32_t pos) const
 {
    U_TRACE(0, "UVector<UString>::at(%u)", pos)
@@ -195,17 +208,6 @@ __pure UString UVector<UString>::at(uint32_t pos) const
    UString result(rep);
 
    U_RETURN_STRING(result);
-}
-
-void UVector<UString>::push(const UString& str) // add to end
-{
-   U_TRACE(0, "UVector<UString>::push(%V)", str.rep)
-
-   UVector<UStringRep*>::push(str.rep);
-
-   U_INTERNAL_DUMP("str.rep = %p at(%u) = %p", str.rep, _length-1, UVector<UStringRep*>::at(_length-1))
-
-   U_ASSERT_EQUALS(str.rep, UVector<UStringRep*>::at(_length-1))
 }
 
 __pure uint32_t UVector<UString>::find(const char* s, uint32_t n)
@@ -276,6 +278,24 @@ __pure uint32_t UVector<UString>::find(const UString& str, bool ignore_case)
       }
 
    U_RETURN(U_NOT_FOUND);
+}
+
+// Check equality with string at pos
+
+bool UVector<UString>::isEqual(uint32_t pos, const UString& str, bool ignore_case)
+{
+   U_TRACE(0, "UVector<UString>::isEqual(%u,%V,%b)", pos, str.rep, ignore_case)
+
+   U_CHECK_MEMORY
+
+   if (_length)
+      {
+      UStringRep* rep = UVector<UStringRep*>::at(pos);
+
+      if (UStringRep::equal_lookup(rep, U_STRING_TO_PARAM(*rep), str.rep, str.size(), ignore_case)) U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 /*

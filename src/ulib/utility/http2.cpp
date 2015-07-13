@@ -723,16 +723,12 @@ void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
 
    while (ptr < endptr)
       {
-      value_is_indexed = false;
+      value_is_indexed = ((c = *(unsigned char*)ptr) >= 128);
 
-      c = (*(unsigned char*)ptr); // determine the mode and handle accordingly
+      U_INTERNAL_DUMP("c = %u value_is_indexed = %b", c, value_is_indexed)
 
-      U_INTERNAL_DUMP("c = %u", c)
-
-      if (c >= 128) // indexed header field representation
+      if (value_is_indexed) // indexed header field representation
          {
-         value_is_indexed = true;
-
          ptr += hpackDecodeInt((const unsigned char*)ptr, (const unsigned char*)endptr, &index, (1<<7)-1);
          }
       else if (c >= 64) // literal header field with incremental handling
@@ -764,9 +760,16 @@ void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
 
             if (name)
                {
-               ptable->hash = name.hash();
+               ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
-               goto next;
+               if (value)
+                  {
+                  // add the decoded header to the header table
+
+                  ptable->hash = name.hash();
+
+                  goto insert;
+                  }
                }
             }
 
@@ -860,8 +863,6 @@ case_1: // authority (a.k.a. the Host header)
 
 host: U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      value_is_indexed = true;
-
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
       sz = value.size();
@@ -872,7 +873,7 @@ host: U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
       ptable->hash = hash_static_table[37]; // host
 
-      goto next;
+      goto insert;
 
 case_2_3: // GET - POST
 
@@ -930,13 +931,13 @@ case_4_5: // / - /index.html
 
       name = *str_path;
 
+      ptable->hash = hash_static_table[3]; // path
+
       // determine the value (if necessary)
 
       if (value_is_indexed) value = *(index == 4 ? str_path_root : str_path_index);
       else
          {
-         value_is_indexed = true;
-
          ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
          sz = value.size();
@@ -957,21 +958,21 @@ case_4_5: // / - /index.html
          U_INTERNAL_DUMP("URI = %.*S", U_HTTP_URI_TO_TRACE)
          }
 
-      ptable->hash = hash_static_table[3]; // path
-
-      goto next;
+      goto insert;
 
 case_6: // http
 
+      U_INTERNAL_ASSERT(value_is_indexed)
       U_ASSERT_EQUALS(UServer_Base::csocket->isSSLActive(), false)
 
-      goto next;
+      continue;
 
 case_7: // https
 
+      U_INTERNAL_ASSERT(value_is_indexed)
       U_ASSERT(((USSLSocket*)UServer_Base::csocket)->isSSL())
 
-      goto next;
+      continue;
 
 case_16: // accept-encoding: gzip, deflate
 
@@ -987,15 +988,13 @@ case_16: // accept-encoding: gzip, deflate
 
       ptable->hash = hash_static_table[15]; // accept_encoding
 
-      goto next;
+      goto insert;
 
 case_17: // accept-language
 
       name = *str_accept_language;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
-
-      value_is_indexed = true;
 
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
@@ -1009,15 +1008,13 @@ case_17: // accept-language
 
       ptable->hash = hash_static_table[16]; // accept_language
 
-      goto next;
+      goto insert;
 
 case_19: // accept
 
       name = *str_accept;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
-
-      value_is_indexed = true;
 
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
@@ -1031,15 +1028,13 @@ case_19: // accept
 
       ptable->hash = hash_static_table[18]; // accept
 
-      goto next;
+      goto insert;
 
 case_28: // content_length
 
       name = *str_content_length;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
-
-      value_is_indexed = true;
 
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
@@ -1051,15 +1046,13 @@ case_28: // content_length
 
       ptable->hash = hash_static_table[27]; // content_length 
 
-      goto next;
+      goto insert;
 
 case_31: // content_type
 
       name = *str_content_type;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
-
-      value_is_indexed = true;
 
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
@@ -1073,15 +1066,13 @@ case_31: // content_type
 
       ptable->hash = hash_static_table[30]; // content_type 
 
-      goto next;
+      goto insert;
 
 case_32: // cookie
 
       name = *str_cookie;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
-
-      value_is_indexed = true;
 
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
@@ -1095,15 +1086,13 @@ case_32: // cookie
 
       ptable->hash = hash_static_table[31]; // cookie 
 
-      goto next;
+      goto insert;
 
 case_40: // if-modified-since
 
       name = *str_if_modified_since;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
-
-      value_is_indexed = true;
 
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
@@ -1115,15 +1104,13 @@ case_40: // if-modified-since
 
       ptable->hash = hash_static_table[39]; // if_modified_since 
 
-      goto next;
+      goto insert;
 
 case_50: // range 
 
       name = *str_range;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
-
-      value_is_indexed = true;
 
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
@@ -1137,15 +1124,13 @@ case_50: // range
 
       ptable->hash = hash_static_table[49]; // range 
 
-      goto next;
+      goto insert;
 
 case_51: // referer 
 
       name = *str_referer;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
-
-      value_is_indexed = true;
 
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
@@ -1159,7 +1144,7 @@ case_51: // referer
 
       ptable->hash = hash_static_table[50]; // referer 
 
-      goto next;
+      goto insert;
 
 case_57: // transfer-encoding
 
@@ -1173,8 +1158,6 @@ case_58: // user-agent
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      value_is_indexed = true;
-
       ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
       U_http_info.user_agent_len = value.size();
@@ -1187,7 +1170,7 @@ case_58: // user-agent
 
       ptable->hash = hash_static_table[57]; // user_agent
 
-      goto next;
+      goto insert;
 
 cdefault:
       entry = hpack_static_table + --index;
@@ -1195,18 +1178,16 @@ cdefault:
       ptable->hash = hash_static_table[index];
 
                              name = *(entry->name);
-      if (value_is_indexed) value = *(entry->value);
-
-next: if (value_is_indexed == false) // determine the value (if necessary)
+      if (value_is_indexed) value = *(entry->value); // determine the value (if necessary)
+      else  
          {
          ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
 
          if (value.empty()) goto error;
          }
 
-      // add the decoded header to the header table
-
-      ptable->insert(name, value);
+insert:
+      ptable->insert(name, value); // add the decoded header to the header table
 
       U_INTERNAL_DUMP("name = %V value = %V", name.rep, value.rep)
       }
@@ -1276,7 +1257,7 @@ bool UHTTP2::manageHeaders(const char** p, const char** e)
        pStream->output_window =
    pConnection->output_window = pConnection->peer_settings.initial_window_size;
 
-   pConnection->itable = U_NEW(UHashMap<UString>(53, false, setIndexStaticTable));
+   pConnection->itable = U_NEW(UHashMap<UString>(53, setIndexStaticTable));
 
    pConnection->hpack_max_capacity = SETTINGS_DEFAULT.header_table_size;
 

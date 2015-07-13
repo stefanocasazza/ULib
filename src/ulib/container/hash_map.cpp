@@ -17,16 +17,22 @@
 bool        UHashMap<void*>::istream_loading;
 UStringRep* UHashMap<void*>::pkey;
 
-UHashMap<void*>::UHashMap(uint32_t n, bool _ignore_case, vPFptpr _set_index)
+UHashMap<void*>::UHashMap(uint32_t n, bPFptpcu _set_index)
 {
-   U_TRACE_REGISTER_OBJECT(0, UHashMap<void*>, "%u,%b,%p", n, _ignore_case, _set_index)
+   U_TRACE_REGISTER_OBJECT(0, UHashMap<void*>, "%u,%p", n, _set_index)
 
-   set_index   = _set_index;
-   node        = 0;
-   _length     = _space = index = hash = 0;
-   ignore_case = _ignore_case;
+   set_index = _set_index;
 
-   _allocate(n);
+   init(n);
+}
+
+UHashMap<void*>::UHashMap(uint32_t n, bool ignore_case)
+{
+   U_TRACE_REGISTER_OBJECT(0, UHashMap<void*>, "%u,%b", n, ignore_case)
+
+   set_index = (ignore_case ? setIndexIgnoreCase : setIndex);
+
+   init(n);
 }
 
 void UHashMap<void*>::allocate(uint32_t n)
@@ -37,8 +43,7 @@ void UHashMap<void*>::allocate(uint32_t n)
 
    if (_capacity) _deallocate();
 
-   table     = (UHashMapNode**) UMemoryPool::_malloc(&n, sizeof(UHashMapNode*), true);
-   _capacity = n;
+   _allocate(n);
 }
 
 void UHashMap<void*>::lookup(const UStringRep* keyr)
@@ -50,22 +55,33 @@ void UHashMap<void*>::lookup(const UStringRep* keyr)
    U_INTERNAL_ASSERT_POINTER(set_index)
    U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
 
-   set_index(this, keyr);
+   const UStringRep* keyn;
+   const char* ptr1  = keyr->data();
+   uint32_t sz2, sz1 = keyr->size();
 
-   U_INTERNAL_DUMP("index = %u", index)
+   bool ignore_case = set_index(this, ptr1, sz1);
+
+   U_INTERNAL_DUMP("index = %u ignore_case = %b", index, ignore_case)
 
    U_INTERNAL_ASSERT_MINOR(index, _capacity)
 
    for (node = table[index]; node; node = node->next)
       {
-      U_INTERNAL_DUMP("node->key(%u) = %p %V",  node->key->size(), node->key, node->key)
+      U_INTERNAL_ASSERT_POINTER(node->key)
 
-      U_INTERNAL_ASSERT_MAJOR(node->key->size(), 0)
+      sz2 = (keyn = node->key)->size();
 
-      if (node->key->equal(keyr, ignore_case)) break;
+      U_INTERNAL_DUMP("node->key(%u) = %p %V",  sz2, keyn, keyn)
+
+      U_INTERNAL_ASSERT_MAJOR(sz2, 0)
+
+      if (UStringRep::equal_lookup(keyr, ptr1, sz1, keyn, sz2, ignore_case))
+         {
+         U_INTERNAL_DUMP("node = %p", node)
+
+         return;
+         }
       }
-
-   U_INTERNAL_DUMP("node = %p", node)
 }
 
 void* UHashMap<void*>::erase(const UStringRep* _key)
@@ -86,48 +102,24 @@ void* UHashMap<void*>::erase(const UStringRep* _key)
    U_RETURN((void*)0);
 }
 
-// OPERATOR []
-
-void* UHashMap<void*>::at(const UStringRep* _key)
-{
-   U_TRACE(0, "UHashMap<void*>::at(%V)", _key)
-
-   lookup(_key);
-
-   if (node) U_RETURN((void*)node->elem);
-
-   U_RETURN((void*)0);
-}
-
-void* UHashMap<void*>::at(const char* _key, uint32_t keylen)
-{
-   U_TRACE(0, "UHashMap<void*>::at(%.*S,%u)", keylen, _key, keylen) // problem with sanitize address
-
-   U_INTERNAL_ASSERT_POINTER(pkey)
-   U_INTERNAL_ASSERT_POINTER(_key)
-   U_INTERNAL_ASSERT_MAJOR(keylen, 0)
-
-   pkey->str     = _key;
-   pkey->_length = keylen;
-
-   return at(pkey);
-}
-
 void UHashMap<void*>::insertAfterFind(const UStringRep* _key, const void* _elem)
 {
    U_TRACE(0, "UHashMap<void*>::insertAfterFind(%V,%p)", _key, _elem)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_EQUALS(node,0)
+   U_INTERNAL_ASSERT_EQUALS(node, 0)
    U_INTERNAL_ASSERT_DIFFERS(_key, pkey)
+
+   U_INTERNAL_DUMP("index = %u", index)
 
    /**
     * list self-organizing (move-to-front), we place before
     * the element at the beginning of the list of collisions
     */
 
-   node = table[index] = U_NEW(UHashMapNode(_key, _elem, table[index], hash));
+   node         =
+   table[index] = U_NEW(UHashMapNode(_key, _elem, table[index], hash));
 
    ++_length;
 
@@ -317,6 +309,72 @@ void UHashMap<void*>::reserve(uint32_t n)
    U_INTERNAL_DUMP("NEW: collision(min,max) = (%3d,%3d) - distribution = %3f", min, max, (sum ? (double)_length / (double)sum : 0))
 }
 
+#ifdef DEBUG
+bool UHashMap<void*>::check_memory() const // check all element
+{
+   U_TRACE(0+256, "UHashMap<void*>::check_memory()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_DUMP("_length = %u", _length)
+
+   if (_length)
+      {
+      const void* pelem;
+      UHashMapNode* pnode;
+      UHashMapNode* pnext;
+      int sum = 0, max = 0, min = 1024, width;
+
+      for (uint32_t _index = 0; _index < _capacity; ++_index)
+         {
+         pnode = table[_index];
+
+         if (pnode == 0) continue;
+
+         ++sum;
+         width = 0;
+
+         U_INTERNAL_DUMP("_index = %u sum = %u", _index, sum)
+
+loop:    U_INTERNAL_ASSERT_POINTER(pnode)
+
+         U_INTERNAL_DUMP("pnode->key(%u) = %p %V", pnode->key->size(), pnode->key, pnode->key)
+
+         U_INTERNAL_ASSERT_MAJOR(pnode->key->size(), 0)
+
+         pelem = pnode->elem;
+
+         U_INTERNAL_DUMP("pelem = %p width = %u", pelem, width)
+
+         U_INTERNAL_ASSERT_EQUALS(((const UMemoryError*)pelem)->_this, (void*)U_CHECK_MEMORY_SENTINEL)
+
+         if (pnode->next)
+            {
+            pnext = pnode->next;
+
+            U_INTERNAL_DUMP("pnode = %p pnext = %p", pnode, pnext)
+
+            U_INTERNAL_ASSERT_POINTER(pnext)
+            U_INTERNAL_ASSERT_DIFFERS(pnode, pnext)
+
+            ++width;
+
+            pnode = pnext;
+
+            goto loop;
+            }
+
+         if (max < width) max = width;
+         if (min > width) min = width;
+         }
+
+      U_INTERNAL_DUMP("collision(min,max) = (%d,%d) - distribution = %f", min, max, (sum ? (double)_length / (double)sum : 0))
+      }
+
+   U_RETURN(true);
+}
+#endif
+
 bool UHashMap<void*>::first()
 {
    U_TRACE(0, "UHashMap<void*>::first()")
@@ -441,7 +499,9 @@ void UHashMap<void*>::_callForAllEntrySorted(bPFprpv function)
 
    U_ASSERT_EQUALS(_length, vkey.size())
 
-   vkey.sort(ignore_case);
+   vkey.sort(ignoreCase());
+
+   U_INTERNAL_ASSERT(check_memory())
 
    for (uint32_t i = 0, n = _length; i < n; ++i)
       {
@@ -456,13 +516,6 @@ void UHashMap<void*>::_callForAllEntrySorted(bPFprpv function)
 }
 
 // specializzazione stringa
-
-void UHashMap<UString>::insertAfterFind(const UString& _key, const UString& str)
-{
-   U_TRACE(0, "UHashMap<UString>::insertAfterFind(%V,%V)", _key.rep, str.rep)
-
-   UHashMap<UStringRep*>::insertAfterFind(_key, str.rep);
-}
 
 UString UHashMap<UString>::erase(const UString& _key)
 {
@@ -504,18 +557,6 @@ UString UHashMap<UString>::at(const UStringRep* _key)
       }
 
    return UString::getStringNull();
-}
-
-void* UHashMap<void*>::operator[](const char* _key)
-{
-   U_TRACE(0, "UHashMap<void*>::operator[](%S)", _key)
-
-   U_INTERNAL_ASSERT_POINTER(pkey)
-
-   pkey->str     =           _key;
-   pkey->_length = u__strlen(_key, __PRETTY_FUNCTION__);
-
-   return at(pkey);
 }
 
 UString UHashMap<UString>::operator[](const char* _key)
@@ -781,7 +822,6 @@ const char* UHashMap<void*>::dump(bool reset) const
                   << "table              " << (void*)table << '\n'
                   << "_length            " << _length      << "\n"
                   << "_capacity          " << _capacity    << '\n'
-                  << "ignore_case        " << ignore_case  << '\n'
                   << "node (UHashMapNode " << (void*)node  << ')';
 
    if (reset)

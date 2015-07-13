@@ -247,9 +247,10 @@ void u_trace_init(int bsignal)
             }
          }
 
-      /* format: <level> <max_size_log> <u_flag_test>
-                    -1        500k           0
-      */
+      /**
+       * format: <level> <max_size_log> <u_flag_test>
+       *            -1        500k           0
+       */
 
       (void) sscanf(env, "%d%d%c%d", &level_active, &file_size, &suffix, &u_flag_test);
 
@@ -276,39 +277,39 @@ void u_trace_init(int bsignal)
          if (u_trace_fd == -1)
             {
             U_WARNING("error on create file %S", name);
+
+            return;
             }
-         else
+
+         /* we manage max size... */
+
+         if (file_size)
             {
-            /* we manage max size... */
+            off_t start = (u_fork_called ? lseek(u_trace_fd, 0, SEEK_END) : 0);
 
-            if (file_size)
+            if (ftruncate(u_trace_fd, file_size))
                {
-               off_t start = (u_fork_called ? lseek(u_trace_fd, 0, SEEK_END) : 0);
+               U_WARNING("out of space on file system, (required %u bytes)", file_size);
 
-               if (ftruncate(u_trace_fd, file_size))
-                  {
-                  U_WARNING("out of space on file system, (required %u bytes)", file_size);
+               file_size = 0;
 
-                  file_size = 0;
-                  }
-               else
-                  {
-                  /* NB: PROT_READ avoid some strange SIGSEGV... */
-
-                  file_mem = (char* restrict) mmap(0, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, u_trace_fd, 0);
-
-                  if (file_mem == MAP_FAILED)
-                     {
-                     file_mem  = 0;
-                     file_size = 0;
-
-                     (void) ftruncate(u_trace_fd, 0);
-                     }
-
-                  file_ptr   = file_mem + start;
-                  file_limit = file_mem + file_size;
-                  }
+               return;
                }
+
+            /* NB: include also PROT_READ seem to avoid some strange SIGSEGV... */
+
+            file_mem = (char* restrict) mmap(0, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, u_trace_fd, 0);
+
+            if (file_mem == MAP_FAILED)
+               {
+               file_mem  = 0;
+               file_size = 0;
+
+               (void) ftruncate(u_trace_fd, 0);
+               }
+
+            file_ptr   = file_mem + start;
+            file_limit = file_mem + file_size;
             }
          }
 
@@ -354,26 +355,15 @@ int u_trace_check_if_active(int level)
         if (flag_init == 0) u_trace_init(0);
    else if (u_trace_signal) u_trace_handlerSignal();
 
-   U_INTERNAL_PRINT("u_trace_fd = %d level_active = %d u_trace_mask_level = %p u_flag_test = %d", u_trace_fd, level_active, u_trace_mask_level, u_flag_test)
+   U_INTERNAL_PRINT("u_trace_fd = %d level_active = %d u_trace_mask_level = %p", u_trace_fd, level_active, u_trace_mask_level)
 
+        if (u_trace_fd == -1 || u_trace_suspend) trace_active = 0;
+   else if (     level == -1)                    trace_active = (level_active == 0);
+   else                                          trace_active = (u_trace_mask_level == 0 && ((level & 0x000000ff) >= level_active));
 
-   if (u_trace_fd == -1 ||
-       (u_trace_suspend && u_flag_test >= 0))
-      {
-      trace_active = 0;
-      }
-   else if (level == -1)
-      {
-      trace_active = (u_flag_test > 0 && level_active == 0);
-      }
-   else
-      {
-      trace_active = (u_trace_mask_level == 0 && ((level & 0x000000ff) >= level_active));
-      }
+   U_INTERNAL_PRINT("trace_active = %d u_flag_test = %d", trace_active, u_flag_test)
 
-   U_INTERNAL_PRINT("trace_active = %d", trace_active)
-
-   return trace_active;
+   return (u_flag_test >= 0 ? trace_active : 1);
 }
 
 void u_trace_check_init(void)

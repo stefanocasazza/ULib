@@ -212,10 +212,8 @@ public:
       U_RETURN(size);
       }
 
-   bool writeTo(UHashMap<void*>* t, pvPFpvpb f = 0) { return UCDB::writeTo(*this, t, f); }
-
-   static bool writeTo(const UString& path, UHashMap<void*>* t, pvPFpvpb f = 0)
-         { return UCDB(path, t->ignoreCase()).writeTo(t, f); }
+          bool writeTo(                     UHashMap<void*>* t, uint32_t tbl_space, pvPFpvpb f = 0) { return UCDB::writeTo(*this, t, tbl_space, f); }
+   static bool writeTo(const UString& path, UHashMap<void*>* t, uint32_t tbl_space, pvPFpvpb f = 0) { return UCDB(path, t->ignoreCase()).writeTo(t, tbl_space, f); }
 
    // STREAM
 
@@ -295,7 +293,7 @@ protected:
 
    // Save memory hash table as Constant DataBase
 
-   static bool writeTo(UCDB& cdb, UHashMap<void*>* table, pvPFpvpb f = 0);
+   static bool writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpvpb f = 0);
 
    // FOR RDB
 

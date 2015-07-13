@@ -42,7 +42,7 @@ public:
    static UHashMap<UString>* tbl_name;
    static UHashMap<UString>* tbl_words;
    static bool ignore_case, dir_content_as_doc, change_dir;
-   static uint32_t word_freq, tbl_words_space, min_word_size, max_distance, pos_start;
+   static uint32_t word_freq, tbl_name_space, tbl_words_space, min_word_size, max_distance, pos_start;
 
    // COSTRUTTORE
 

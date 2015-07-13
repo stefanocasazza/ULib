@@ -242,9 +242,9 @@ public:
             {
             vc = new VCasellaIdCounter();
 
-            // NB: need duplicate string because depends on mmap()'s content of document...
+            key.duplicate(); // NB: need duplicate string because depends on mmap()'s content of document...
 
-            table->insertAfterFind(UStringExt::tolower(key), vc);
+            table->insertAfterFind(key, vc);
             }
 
          CasellaIdCounter* c;

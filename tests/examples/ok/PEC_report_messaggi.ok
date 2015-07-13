@@ -598,7 +598,7 @@
   <RESULTS>
     <NumMsgInOutPerMailbox>
       <NumMsgInOutPerMailbox-Entry>
-        <NumMsgInOutPerMailbox-Mailbox>gds@actalis.it</NumMsgInOutPerMailbox-Mailbox>
+        <NumMsgInOutPerMailbox-Mailbox>GDS@actalis.it</NumMsgInOutPerMailbox-Mailbox>
         <NumMsgInOutPerMailbox-Input>
           <NumMsgInOutPerMailbox-InstallationId>PEC_Milter</NumMsgInOutPerMailbox-InstallationId>
           <NumMsgInOutPerMailbox-Accettazioni>0</NumMsgInOutPerMailbox-Accettazioni>

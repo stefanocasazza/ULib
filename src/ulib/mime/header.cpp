@@ -183,7 +183,7 @@ UString UMimeHeader::getValueAttributeFromKeyValue(const char* name_attr, uint32
 
       U_INTERNAL_DUMP("name = %V", name.rep)
 
-      if (name.equal(name_attr, name_attr_len, ignore_case))
+      if (UStringRep::equal_lookup(name.rep, name_attr, name_attr_len, ignore_case))
          {
          value = name_value[i+1];
 
@@ -223,7 +223,7 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
       {
       for (int32_t i = 0, n = name_value.size(); i < n; i += 2)
          {
-         if (name_value[i].equal(*UString::str_name, false))
+         if (name_value[i].equal(*UString::str_name))
             {
             name = name_value[i+1];
 
@@ -233,7 +233,7 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
 
             U_INTERNAL_DUMP("name = %V", name.rep)
             }
-         else if (name_value[i].equal(*UString::str_filename, false))
+         else if (name_value[i].equal(*UString::str_filename))
             {
             filename = name_value[i+1];
 

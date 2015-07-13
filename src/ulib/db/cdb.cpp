@@ -737,15 +737,15 @@ UString UCDB::print()
 
 // Save memory hash table as constant database
 
-bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, pvPFpvpb func)
+bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpvpb func)
 {
-   U_TRACE(1, "UCDB::writeTo(%p,%p,%p)", &cdb, table, func)
+   U_TRACE(1, "UCDB::writeTo(%p,%p,%u,%p)", &cdb, table, tbl_space, func)
 
    cdb.nrecord = (func ? 0
                        : table->size());
 
    bool result = cdb.creat(O_RDWR) &&
-                 cdb.ftruncate(sizeFor(cdb.nrecord) + table->space());
+                 cdb.ftruncate(sizeFor(cdb.nrecord) + tbl_space);
 
    if (result)
       {

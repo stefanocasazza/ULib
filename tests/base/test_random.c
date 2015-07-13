@@ -15,9 +15,9 @@ int main(int argc, char* argv[])
    u_init_ulib(argv);
 
 #ifdef DEBUG
-   hash1 = u_hash((unsigned char*)U_CONSTANT_TO_PARAM("Set-Cookie2"), false),
-   hash2 = u_hash((unsigned char*)U_CONSTANT_TO_PARAM("Set-Cookie2"), true),
-   hash3 = u_hash((unsigned char*)U_CONSTANT_TO_PARAM("Set-COOkie2"), true);
+   hash1 = u_hash(            (unsigned char*)U_CONSTANT_TO_PARAM("Set-Cookie2")),
+   hash2 = u_hash_ignore_case((unsigned char*)U_CONSTANT_TO_PARAM("Set-Cookie2")),
+   hash3 = u_hash_ignore_case((unsigned char*)U_CONSTANT_TO_PARAM("Set-COOkie2"));
 
    U_INTERNAL_ASSERT(hash1 != hash2)
    U_INTERNAL_ASSERT(hash2 == hash3)

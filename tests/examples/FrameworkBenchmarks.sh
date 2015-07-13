@@ -22,12 +22,26 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # PLAINTEXT
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#UMEMPOOL="982,0,0,36,9846,-24,-23,1727,1151"
-#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ UMEMPOOL="982,0,0,36,9846,-24,-23,1727,1151"
+ sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 4000|g"							 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 8000|g" benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
+#Running 15s test @ http://localhost:8080/plaintext
+#  4 threads and 256 connections
+#  Thread Stats   Avg      Stdev     Max   +/- Stdev
+#    Latency     1.36ms  419.70us  16.85ms   71.18%
+#    Req/Sec   406.47k    24.96k  507.20k    76.88%
+#  Latency Distribution
+#     50%    1.36ms
+#     75%    1.62ms
+#     90%    1.82ms
+#     99%    2.59ms
+#  23278464 requests in 14.96s, 3.12GB read
+#Requests/sec: 1555648.16
+#Transfer/sec:    213.64MB
+#
 # Running 15s test @ http://laptop:8080/plaintext
 #   4 threads and 256 connections
 #   Thread Stats   Avg      Stdev     Max   +/- Stdev
@@ -44,12 +58,26 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
- UMEMPOOL="56,0,0,40,150,-24,-13,-20,0"
- sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
- sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#UMEMPOOL="56,0,0,40,150,-24,-13,-20,0"
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 50|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 100|g"  benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
+#Running 15s test @ http://localhost:8080/json
+#  4 threads and 256 connections
+#  Thread Stats   Avg      Stdev     Max   +/- Stdev
+#    Latency     1.20ms  682.33us  12.52ms   64.81%
+#    Req/Sec    37.41k    14.81k   71.00k    55.06%
+#  Latency Distribution
+#     50%    1.10ms
+#     75%    1.67ms
+#     90%    2.15ms
+#     99%    2.80ms
+#  2109926 requests in 15.00s, 330.00MB read
+#Requests/sec: 140658.66
+#Transfer/sec:     22.00MB
+#
 # Running 15s test @ http://laptop:8080/json
 #   4 threads and 256 connections
 #   Thread Stats   Avg      Stdev     Max   +/- Stdev

@@ -16,6 +16,7 @@ void WeightWord::clear()
    if (tbl)
       {
       tbl->_length = 0;
+
       tbl->deallocate();
 
       delete tbl;
@@ -134,7 +135,7 @@ int Query::query_meta(UStringRep* word_rep, UStringRep* value)
    U_TRACE(5, "Query::query_meta(%.*S,%p)", U_STRING_TO_TRACE(*word_rep), value)
 
    if (u_pfn_match(      word_rep->data(),       word_rep->size(),
-               UPosting::word->data(), UPosting::word->size(), u_pfn_flags))
+                   UPosting::word->data(), UPosting::word->size(), u_pfn_flags))
       {
       UPosting::posting->_assign(value);
 

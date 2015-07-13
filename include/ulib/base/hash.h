@@ -16,8 +16,8 @@
 
 #include <ulib/base/base.h>
 
-#define hashsize(n) (1U<<(n))
-#define hashmask(n) (hashsize(n)-1)
+#define U_hash_size(n) (1U<<(n))
+#define U_hash_mask(n) (U_hash_size(n)-1U)
 
 /* get next prime number for container */
 
@@ -52,18 +52,32 @@
 extern "C" {
 #endif
 
-U_EXPORT uint32_t u_random(uint32_t a) __pure; /* quick 4byte hashing function */
+U_EXPORT uint32_t u_random(  uint32_t val) __pure; /* quick 4byte hashing function */
 #ifdef HAVE_ARCH64
 U_EXPORT uint32_t u_random64(uint64_t ptr) __pure;
 #endif
 static inline double u_randomd(uint32_t a) { return (1.0/4294967296.0) * u_random(a); } /* Map hash value into number 0.0 <= n < 1.0 */
 
-#ifdef USE_HARDWARE_CRC32
-U_EXPORT uint32_t u_crc32(unsigned char* restrict t, uint32_t tlen) __pure; /* hash variable-length key into 32-bit value */
-#endif
+/* hash variable-length key into 32-bit value */
 
-U_EXPORT uint32_t u_hash(    unsigned char* restrict t, uint32_t tlen, bool ignore_case) __pure; /* hash variable-length key into 32-bit value */
-U_EXPORT uint32_t u_cdb_hash(unsigned char* restrict t, uint32_t tlen,        int flags) __pure; /* hash variable-length key into 32-bit value */
+U_EXPORT uint32_t murmurhash3_x86_32_ignore_case(unsigned char* restrict t, uint32_t tlen) __pure;
+
+U_EXPORT      uint32_t u_cdb_hash(        unsigned char* restrict t, uint32_t tlen, int flags) __pure;
+static inline uint32_t u_hash_ignore_case(unsigned char* restrict t, uint32_t tlen) { return murmurhash3_x86_32_ignore_case(t, tlen); }
+
+#ifdef USE_HARDWARE_CRC32
+U_EXPORT uint32_t u_crc32(unsigned char* restrict t, uint32_t tlen) __pure;
+
+static inline uint32_t u_hash(unsigned char* restrict t, uint32_t tlen) { return u_crc32(t, tlen); }
+#else
+# ifndef HAVE_ARCH64
+U_EXPORT uint32_t u_hash(unsigned char* restrict t, uint32_t tlen) __pure;
+# else
+U_EXPORT uint32_t murmurhash3_x86_64(unsigned char* restrict t, uint32_t tlen) __pure;
+
+static inline uint32_t u_hash(unsigned char* restrict t, uint32_t tlen) { return murmurhash3_x86_64(t, tlen); }
+# endif
+#endif
 
 #ifdef __cplusplus
 }

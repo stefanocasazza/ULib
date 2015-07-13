@@ -294,9 +294,9 @@ void UString::str_allocate()
    U_INTERNAL_ASSERT(UHashMap<void*>::pkey->invariant())
 }
 
-U_NO_EXPORT void UStringRep::set(uint32_t __length, uint32_t __capacity, const char* ptr)
+void UStringRep::set(uint32_t __length, uint32_t __capacity, const char* ptr)
 {
-// U_TRACE(0, "UStringRep::set(%u,%u,%p)", __length, __capacity, ptr) // problem with sanitize address
+   U_TRACE(0, "UStringRep::set(%u,%u,%p)", __length, __capacity, ptr) // problem with sanitize address
 
    U_CHECK_MEMORY
 
@@ -313,27 +313,6 @@ U_NO_EXPORT void UStringRep::set(uint32_t __length, uint32_t __capacity, const c
    _capacity  = __capacity; // [0 const | -1 mmap | -2 to free]...
    references = 0;
    str        = ptr;
-}
-
-UStringRep::UStringRep(const char* t, uint32_t tlen)
-{
-   U_TRACE_REGISTER_OBJECT(0, UStringRep, "%.*S,%u", tlen, t, tlen) // problem with sanitize address
-
-   U_INTERNAL_ASSERT_POINTER(t)
-   U_INTERNAL_ASSERT_MAJOR(tlen, 0)
-
-   set(tlen, 0U, t);
-}
-
-// NB: ctor is private...
-
-UStringRep::~UStringRep()
-{
-   U_TRACE(0, "UStringRep::~UStringRep()")
-
-   // NB: we don't use delete (dtor) because it add a deallocation to the destroy process...
-
-   U_ERROR("I can't use UStringRep on stack");
 }
 
 UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
@@ -677,22 +656,6 @@ void UStringRep::release()
 #endif
 }
 
-void UStringRep::fromValue(UStringRep* r)
-{
-   U_TRACE(0, "UStringRep::fromValue(%V)", r)
-
-   U_INTERNAL_DUMP("r = %p r->parent = %p r->references = %d r->child = %d - %V", r, r->parent, r->references, r->child, r)
-
-   U_INTERNAL_ASSERT(r->_capacity)
-   U_INTERNAL_ASSERT_EQUALS(memcmp(this, string_rep_null, sizeof(UStringRep)), 0)
-
-   u__memcpy(this, r, sizeof(UStringRep), __PRETTY_FUNCTION__);
-
-   r->_capacity = 0; // NB: no room for data, constant string...
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
 #ifdef DEBUG
 // substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
 int32_t     UStringRep::max_child;
@@ -763,13 +726,13 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
 
       r->parent = p;
 
-#     ifdef U_SUBSTR_INC_REF
+#    ifdef U_SUBSTR_INC_REF
       p->references++; // substring increment reference of source string
-#     else
+#    else
       p->child++;      // substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
 
       max_child = U_max(max_child, p->child);
-#     endif
+#    endif
 
       U_INTERNAL_DUMP("r->parent = %p max_child = %d", r->parent, max_child)
 #  endif
@@ -798,18 +761,6 @@ __pure bool UStringRep::isSubStringOf(UStringRep* rep) const
       }
 
    U_RETURN(false);
-}
-
-void UStringRep::replace(const char* s, uint32_t n)
-{
-   U_TRACE(0, "UStringRep::replace(%S,%u)", s, n)
-
-   U_INTERNAL_ASSERT_MAJOR(n, 0)
-   U_INTERNAL_ASSERT(_capacity >= n)
-
-   U_MEMCPY((char*)str, s, n);
-
-   ((char*)str)[(_length = n)] = '\0';
 }
 
 void UStringRep::copy(char* s, uint32_t n, uint32_t pos) const
@@ -931,16 +882,6 @@ UString::UString(const char* t)
    U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%S", t)
 
    uint32_t len = (t ? u__strlen(t, __PRETTY_FUNCTION__) : 0);
-
-   if (len) rep = U_NEW(UStringRep(t, len));
-   else     _copy(UStringRep::string_rep_null);
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
-UString::UString(const char* t, uint32_t len)
-{
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u", len, t, len)
 
    if (len) rep = U_NEW(UStringRep(t, len));
    else     _copy(UStringRep::string_rep_null);
@@ -1154,7 +1095,7 @@ void UString::mmap(const char* map, uint32_t len)
    U_INTERNAL_ASSERT(invariant())
 }
 
-U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
+char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 {
    U_TRACE(0, "UString::__replace(%u,%u,%u)", pos, n1, n2)
 
@@ -1218,32 +1159,6 @@ U_NO_EXPORT char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
    return str + pos;
 }
 
-UString& UString::replace(uint32_t pos, uint32_t n1, const char* s, uint32_t n2)
-{
-   U_TRACE(0, "UString::replace(%u,%u,%S,%u)", pos, n1, s, n2)
-
-   char* ptr = __replace(pos, n1, n2);
-
-   if (ptr && n2) U_MEMCPY(ptr, s, n2);
-
-   U_INTERNAL_ASSERT(invariant())
-
-   return *this;
-}
-
-UString& UString::replace(uint32_t pos, uint32_t n1, uint32_t n2, char c)
-{
-   U_TRACE(0, "UString::replace(%u,%u,%u,%C)", pos, n1, n2, c)
-
-   char* ptr = __replace(pos, n1, n2);
-
-   if (ptr && n2) (void) U_SYSCALL(memset, "%p,%d,%u", ptr, c, n2);
-
-   U_INTERNAL_ASSERT(invariant())
-
-   return *this;
-}
-
 void UString::unQuote()
 {
    U_TRACE(0, "UString::unQuote()")
@@ -1266,7 +1181,7 @@ void UString::unQuote()
       }
 }
 
-U_NO_EXPORT char* UString::__append(uint32_t n)
+char* UString::__append(uint32_t n)
 {
    U_TRACE(0, "UString::__append(%u)", n)
 
@@ -1295,22 +1210,6 @@ U_NO_EXPORT char* UString::__append(uint32_t n)
    return str + sz;
 }
 
-UString& UString::append(const char* s, uint32_t n)
-{
-   U_TRACE(0, "UString::append(%.*S,%u)", n, s, n) // problem with sanitize address
-
-   if (n)
-      {
-      char* ptr = __append(n);
-
-      U_MEMCPY(ptr, s, n);
-      }
-
-   U_INTERNAL_ASSERT(invariant())
-
-   return *this;
-}
-
 UString& UString::append(uint32_t n, char c)
 {
    U_TRACE(0, "UString::append(%u,%C)", n, c)
@@ -1337,7 +1236,7 @@ void UString::duplicate() const
    if (sz) ((UString*)this)->_set(UStringRep::create(sz, sz, rep->str));
    else
       {
-        ((UString*)this)->_set(UStringRep::create(0, 100U, 0));
+      ((UString*)this)->_set(UStringRep::create(0, 100U, 0));
 
       *(((UString*)this)->UString::rep->begin()) = '\0';
       }
@@ -1625,34 +1524,6 @@ __pure uint32_t UString::find_last_not_of(unsigned char c, uint32_t pos) const
 }
 
 // EXTENSION
-
-void UString::snprintf(const char* format, ...)
-{
-   U_TRACE(0, "UString::snprintf(%S)", format)
-
-   U_INTERNAL_ASSERT_POINTER(format)
-
-   va_list argp;
-   va_start(argp, format);
-
-   UString::vsnprintf(format, argp); 
-
-   va_end(argp);
-}
-
-void UString::snprintf_add(const char* format, ...)
-{
-   U_TRACE(0, "UString::snprintf_add(%S)", format)
-
-   U_INTERNAL_ASSERT_POINTER(format)
-
-   va_list argp;
-   va_start(argp, format);
-
-   UString::vsnprintf_add(format, argp); 
-
-   va_end(argp);
-}
 
 __pure bool UStringRep::strtob() const
 {
