@@ -268,40 +268,27 @@ public:
       sem_t lock_user1;
       sem_t lock_user2;
       sem_t lock_rdb_server;
-#  ifdef USE_LIBSSL
-      sem_t lock_ssl_session;
-#    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-      sem_t lock_ocsp_staple;
-#    endif
-#  endif
-      sem_t lock_static_date;
       sem_t lock_data_session;
       sem_t lock_db_not_found;
       char spinlock_user1[1];
       char spinlock_user2[1];
       char spinlock_rdb_server[1];
+      char spinlock_data_session[1];
+      char spinlock_db_not_found[1];
 #  ifdef USE_LIBSSL
+      sem_t    lock_ssl_session;
       char spinlock_ssl_session[1];
 #    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+      sem_t    lock_ocsp_staple;
       char spinlock_ocsp_staple[1];
 #    endif
 #  endif
-      char spinlock_static_date[1];
-      char spinlock_data_session[1];
-      char spinlock_db_not_found[1];
-#  ifdef ENABLE_THREAD
-      /* typedef struct static_date {
-         struct timeval _timeval;      // => u_now
-         char spinlock1[1];
-         char date1[17+1];             // 18/06/12 18:45:56
-         char spinlock2[1];
-         char date2[26+1];             // 04/Jun/2012:18:18:37 +0200
-         char spinlock3[1];
-         char date3[6+29+2+12+2+19+1]; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
-         } static_date; */
-      ULog::static_date static_date;
-#  endif
    // ------------------------------------------------------------------------------
+#  ifdef ENABLE_THREAD
+      pthread_rwlock_t rwlock;
+      struct timeval now_shared; // => u_now
+      ULog::log_date log_date_shared;
+#  endif
       ULog::log_data log_data_shared;
    // -> maybe unnamed array of char for gzip compression (log rotate)
    // --------------------------------------------------------------------------------
@@ -316,33 +303,23 @@ public:
 #define U_LOCK_USER1              &(UServer_Base::ptr_shared_data->lock_user1)
 #define U_LOCK_USER2              &(UServer_Base::ptr_shared_data->lock_user2)
 #define U_LOCK_RDB_SERVER         &(UServer_Base::ptr_shared_data->lock_rdb_server)
-#define U_LOCK_STATIC_DATE        &(UServer_Base::ptr_shared_data->lock_static_date)
 #define U_LOCK_SSL_SESSION        &(UServer_Base::ptr_shared_data->lock_ssl_session)
 #define U_LOCK_DATA_SESSION       &(UServer_Base::ptr_shared_data->lock_data_session)
 #define U_LOCK_DB_NOT_FOUND       &(UServer_Base::ptr_shared_data->lock_db_not_found)
 #define U_SPINLOCK_USER1            UServer_Base::ptr_shared_data->spinlock_user1
 #define U_SPINLOCK_USER2            UServer_Base::ptr_shared_data->spinlock_user2
 #define U_SPINLOCK_RDB_SERVER       UServer_Base::ptr_shared_data->spinlock_rdb_server
-#define U_SPINLOCK_STATIC_DATE      UServer_Base::ptr_shared_data->spinlock_static_date
 #define U_SPINLOCK_SSL_SESSION      UServer_Base::ptr_shared_data->spinlock_ssl_session
 #define U_SPINLOCK_DATA_SESSION     UServer_Base::ptr_shared_data->spinlock_data_session
 #define U_SPINLOCK_DB_NOT_FOUND     UServer_Base::ptr_shared_data->spinlock_db_not_found
-#define U_HTTP_DATE1_SPINLOCK       UServer_Base::ptr_static_date->spinlock1
-#define U_HTTP_DATE1      ((char*)&(UServer_Base::ptr_static_date->date1[0]))
-#define U_HTTP_DATE2_SPINLOCK       UServer_Base::ptr_static_date->spinlock2
-#define U_HTTP_DATE2      ((char*)&(UServer_Base::ptr_static_date->date2[0]))
-#define U_HTTP_DATE3_SPINLOCK       UServer_Base::ptr_static_date->spinlock3
-#define U_HTTP_DATE3      ((char*)&(UServer_Base::ptr_static_date->date3[6]))
-#define U_LOG_DATA_SHARED         &(UServer_Base::ptr_shared_data->log_data_shared)
 
    static pid_t pid;
    static ULock* lock_user1;
    static ULock* lock_user2;
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
    static shared_data* ptr_shared_data;
-   static ULog::static_date* ptr_static_date;
    static uint32_t shared_data_add, map_size;
-   static bool update_date1, update_date2, update_date3;
+   static bool update_date, update_date1, update_date2, update_date3;
 
    static void setLockUser1()
       {

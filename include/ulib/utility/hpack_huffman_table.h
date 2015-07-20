@@ -1,6 +1,6 @@
 // source: https://github.com/tatsuhiro-t/nghttp2/ @ 76b3ba2, under the following license
 
-/*
+/**
  * nghttp2 - HTTP/2 C Library
  *
  * Copyright (c) 2013 Tatsuhiro Tsujikawa

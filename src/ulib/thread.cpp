@@ -19,7 +19,7 @@
 #  include <sys/syscall.h>
 #endif
 
-typedef void* (*exec_t)(void*);
+typedef void* (*exec_t)   (void*);
 typedef void  (*cleanup_t)(void*);
 
 #ifndef HAVE_NANOSLEEP
@@ -138,15 +138,9 @@ void UThread::stop()
 
    (void) U_SYSCALL(pthread_cancel, "%p", priv->_tid);
 
-   if (bdetached == false)
-      {
-      (void) U_SYSCALL(pthread_join, "%p,%p", priv->_tid, 0);
-      }
+   if (bdetached == false) (void) U_SYSCALL(pthread_join, "%p,%p", priv->_tid, 0);
 #ifdef HAVE_PTHREAD_YIELD
-   else
-      {
-      (void) U_SYSCALL_NO_PARAM(pthread_yield);
-      }
+   else                    (void) U_SYSCALL_NO_PARAM(pthread_yield);
 #endif
 }
 
@@ -179,13 +173,6 @@ void UThread::close()
       }
 }
 
-void UThread::threadCleanup(UThread* th)
-{
-   U_TRACE(0, "UThread::threadCleanup(%p)", th)
-
-   th->close();
-}
-
 void UThread::yield()
 {
    U_TRACE(1, "UThread::yield()")
@@ -202,17 +189,17 @@ void UThread::yield()
 
    if (bcancel)
       {
-#     ifdef sigemptyset
+#  ifdef sigemptyset
       sigemptyset(&cancel);
-#     else
+#  else
       (void) U_SYSCALL(sigemptyset, "%p", &cancel);
-#     endif
+#  endif
 
-#     ifdef sigaddset
+#  ifdef sigaddset
       sigaddset(&cancel, CCXX_SIG_THREAD_CANCEL);
-#     else
+#  else
       (void) U_SYSCALL(sigaddset, "%p,%d", &cancel, CCXX_SIG_THREAD_CANCEL);
-#     endif
+#  endif
 
       (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &cancel, &old);
       }
@@ -254,11 +241,11 @@ void UThread::sigInstall(int signo)
 
    struct sigaction sa;
 
-#  ifdef sigemptyset
+#ifdef sigemptyset
    sigemptyset(&sa.sa_mask);
-#  else
+#else
    (void) U_SYSCALL(sigemptyset, "%p", &sa.sa_mask);
-#  endif
+#endif
 
 #ifdef SA_RESTART
    sa.sa_flags  = SA_RESTART;
@@ -364,25 +351,25 @@ void UThread::execHandler(UThread* th)
 
    sigset_t mask;
 
-#  ifdef sigemptyset
+#ifdef sigemptyset
    sigemptyset(&mask);
-#  else
+#else
    (void) U_SYSCALL(sigemptyset, "%p", &mask);
-#  endif
+#endif
 
-#  ifdef sigaddset
+#ifdef sigaddset
 // sigaddset(&mask, SIGHUP);
    sigaddset(&mask, SIGINT);
    sigaddset(&mask, SIGABRT);
    sigaddset(&mask, SIGPIPE);
    sigaddset(&mask, SIGALRM);
-#  else
+#else
 // (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGHUP);
    (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGINT);
    (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGABRT);
    (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGPIPE);
    (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGALRM);
-#  endif
+#endif
 
    (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, &mask, 0);
 
@@ -394,19 +381,19 @@ void UThread::execHandler(UThread* th)
       // of Linux threads, it was possible to stop a single thread with SIGSTOP, but this behaviour has now been fixed
       // to conform to the Posix standard (so it stops all threads in the process)
 
-#     ifdef sigemptyset
+#    ifdef sigemptyset
       sigemptyset(&mask);
-#     else
+#    else
       (void) U_SYSCALL(sigemptyset, "%p", &mask);
-#     endif
+#    endif
 
-#     ifdef sigaddset
+#    ifdef sigaddset
       sigaddset(&mask, U_SIGSTOP);
       sigaddset(&mask, U_SIGCONT);
-#     else
+#    else
       (void) U_SYSCALL(sigaddset, "%p,%d", &mask, U_SIGSTOP);
       (void) U_SYSCALL(sigaddset, "%p,%d", &mask, U_SIGCONT);
-#     endif
+#    endif
 
       (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
 
@@ -575,10 +562,10 @@ bool UThread::initIPC(pthread_mutex_t* mutex, pthread_cond_t* cond)
       {
       pthread_mutexattr_t mutexattr;
 
-      if (U_SYSCALL(pthread_mutexattr_init,       "%p",    &mutexattr)                         == -1 ||
-          U_SYSCALL(pthread_mutexattr_setrobust,  "%p,%d", &mutexattr, PTHREAD_MUTEX_ROBUST)   == -1 ||
-          U_SYSCALL(pthread_mutexattr_setpshared, "%p,%d", &mutexattr, PTHREAD_PROCESS_SHARED) == -1 ||
-          U_SYSCALL(pthread_mutex_init,           "%p,%p", mutex, &mutexattr)                  == -1)
+      if (U_SYSCALL(pthread_mutexattr_init,       "%p",    &mutexattr)                         != 0 ||
+          U_SYSCALL(pthread_mutexattr_setrobust,  "%p,%d", &mutexattr, PTHREAD_MUTEX_ROBUST)   != 0 ||
+          U_SYSCALL(pthread_mutexattr_setpshared, "%p,%d", &mutexattr, PTHREAD_PROCESS_SHARED) != 0 ||
+          U_SYSCALL(pthread_mutex_init,           "%p,%p", mutex, &mutexattr)                  != 0)
          {
          U_RETURN(false);
          }
@@ -588,9 +575,9 @@ bool UThread::initIPC(pthread_mutex_t* mutex, pthread_cond_t* cond)
       {
       pthread_condattr_t condattr;
 
-      if (U_SYSCALL(pthread_condattr_init,       "%p",    &condattr)                         == -1 ||
-          U_SYSCALL(pthread_condattr_setpshared, "%p,%d", &condattr, PTHREAD_PROCESS_SHARED) == -1 ||
-          U_SYSCALL(pthread_cond_init,           "%p,%p", cond, &condattr)                   == -1)
+      if (U_SYSCALL(pthread_condattr_init,       "%p",    &condattr)                         != 0 ||
+          U_SYSCALL(pthread_condattr_setpshared, "%p,%d", &condattr, PTHREAD_PROCESS_SHARED) != 0 ||
+          U_SYSCALL(pthread_cond_init,           "%p,%p", cond, &condattr)                   != 0)
          {
          U_RETURN(false);
          }

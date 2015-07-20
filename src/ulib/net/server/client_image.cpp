@@ -20,7 +20,7 @@
 #  include <ulib/utility/http2.h>
 #endif
 
-int          UClientImage_Base::idx;
+int           UClientImage_Base::idx;
 int           UClientImage_Base::csfd;
 int           UClientImage_Base::iovcnt;
 iPF           UClientImage_Base::callerHandlerRead;
@@ -129,8 +129,23 @@ UClientImage_Base::UClientImage_Base()
    last_event    = u_now->tv_sec;
    pending_close = 0;
 
+   // NB: array are not pointers (virtual table can shift the address of 'this')...
+
+   if (UServer_Base::pClientImage == 0)
+      {
+      UServer_Base::pClientImage = this;
+      UServer_Base::eClientImage = this + UNotifier::max_connection;
+
+      U_INTERNAL_DUMP("UServer_Base::pClientImage = %p UServer_Base::eClientImage = %p UNotifier::max_connection = %u",
+                       UServer_Base::pClientImage,     UServer_Base::eClientImage,     UNotifier::max_connection)
+      }
+
+   U_INTERNAL_DUMP("new T[%u]: elem %u of %u", UNotifier::max_connection, (this - UServer_Base::pClientImage), UNotifier::max_connection)
+
 #ifndef U_HTTP2_DISABLE
    connection = U_NEW(UHTTP2::Connection);
+
+   ((UHTTP2::Connection*)connection)->itable.setIndexFunction(UHTTP2::setIndexStaticTable);
 #endif
 }
 
@@ -159,19 +174,6 @@ UClientImage_Base::~UClientImage_Base()
 void UClientImage_Base::set()
 {
    U_TRACE(0, "UClientImage_Base::set()")
-
-   // NB: array are not pointers (virtual table can shift the address of 'this')...
-
-   if (UServer_Base::pClientImage == 0)
-      {
-      UServer_Base::pClientImage = this;
-      UServer_Base::eClientImage = this + UNotifier::max_connection;
-
-      U_INTERNAL_DUMP("UServer_Base::pClientImage = %p UServer_Base::eClientImage = %p UNotifier::max_connection = %u",
-                       UServer_Base::pClientImage,     UServer_Base::eClientImage,     UNotifier::max_connection)
-      }
-
-   U_INTERNAL_DUMP("new T[%u]: elem %u of %u", UNotifier::max_connection, (this - UServer_Base::pClientImage), UNotifier::max_connection)
 
    U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
 
@@ -223,7 +225,7 @@ bool UClientImage_Base::check_memory()
 {
    U_TRACE(0, "UClientImage_Base::check_memory()")
 
-   U_INTERNAL_DUMP("u_check_memory_vector<T>: elem %u of %u", this - UServer_Base::pClientImage, UNotifier::max_connection)
+   U_INTERNAL_DUMP("u_check_memory_vector<T>: elem %u of %u", this-UServer_Base::pClientImage, UNotifier::max_connection)
 
    U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
 
@@ -778,11 +780,26 @@ void UClientImage_Base::manageReadBufferResize(uint32_t n)
 {
    U_TRACE(0, "UClientImage_Base::manageReadBufferResize(%u)", n)
 
-   ptrdiff_t diff;
-   const char* ptr;
-
    U_DUMP("U_ClientImage_pipeline = %b size_request = %u rbuffer->size() = %u rbuffer->capacity() = %u request->size() = %u rstart = %u",
            U_ClientImage_pipeline,     size_request,     rbuffer->size(),     rbuffer->capacity(),     request->size(),     rstart)
+
+#ifndef U_HTTP2_DISABLE
+   if (U_http_version == '2')
+      {
+      if (rstart)
+         {
+         rbuffer->moveToBeginDataInBuffer(rstart);
+                                          rstart = 0;
+         }
+
+      UString::_reserve(*rbuffer, n);
+
+      return;
+      }
+#endif
+
+   ptrdiff_t diff;
+   const char* ptr;
 
    request->clear();
 
@@ -811,8 +828,7 @@ next1:
 
       UString::_reserve(*rbuffer, n);
 
-      if (U_http_method_type &&
-          U_http_version != '2')
+      if (U_http_method_type)
          {
          diff = rbuffer->data() - ptr;
 next2:
@@ -1447,9 +1463,9 @@ bool UClientImage_Base::writeResponse()
             msg_len = (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0);
 
    iov_vec[2].iov_len  = sz1;
-   iov_vec[2].iov_base = (caddr_t) wbuffer->data();
+   iov_vec[2].iov_base = (caddr_t)wbuffer->data();
    iov_vec[3].iov_len  = sz2;
-   iov_vec[3].iov_base = (caddr_t) body->data();
+   iov_vec[3].iov_base = (caddr_t)body->data();
 
    ncount = sz1 + sz2;
 
@@ -1478,7 +1494,14 @@ bool UClientImage_Base::writeResponse()
 
       u__memcpy(iov_sav, iov_vec, U_IOV_TO_SAVE, __PRETTY_FUNCTION__);
 
-      ULog::updateStaticDate(UServer_Base::ptr_static_date->date3+6, 3);
+#  if defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+      U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, UServer_Base::ptr_shared_data->log_date_shared.date3)
+#  else
+      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::date.date3)
+
+      ULog::updateDate3();
+#  endif
 
 #  ifdef U_LOG_ENABLE
       if (logbuf) ULog::log(iov_vec+idx, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, " to %v", logbuf->rep);

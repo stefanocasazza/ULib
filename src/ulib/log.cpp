@@ -34,18 +34,26 @@
 #define U_MARK_END       "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n" // 24
 #define U_FMT_START_STOP "*** %s %N (%ubit, pid %P) [%U@%H] ***"
 
-ULog*              ULog::pthis;
-const char*        ULog::prefix;
-struct iovec       ULog::iov_vec[5];
-ULog::static_date* ULog::ptr_static_date;
+long              ULog::tv_sec_old_1;
+long              ULog::tv_sec_old_2;
+long              ULog::tv_sec_old_3;
+ULog*             ULog::pthis;
+const char*       ULog::prefix;
+struct iovec      ULog::iov_vec[5];
+ULog::log_date    ULog::date;
+ULog::log_date*   ULog::ptr_shared_date;
+#ifdef ENABLE_THREAD
+pthread_rwlock_t* ULog::prwlock;
+#endif
 
 ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(path, 0)
 {
    U_TRACE_REGISTER_OBJECT(0, ULog, "%V,%u,%S", path.rep, _size, dir_log_gz)
 
    lock         = 0;
-   log_file_sz  = log_gzip_sz = 0;
    ptr_log_data = 0;
+   log_file_sz  =
+   log_gzip_sz  = 0;
 
    U_Log_start_stop_msg(this) = false;
 
@@ -74,16 +82,16 @@ ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(
       return;
       }
 
-   /*
-   typedef struct log_data {
-      uint32_t file_ptr;
-      uint32_t file_page;
-      uint32_t gzip_len;
-      sem_t lock_shared;
-      char spinlock_shared[1];
-      // --------------> maybe unnamed array of char for gzip compression...
-   } log_data;
-   */
+   /**
+    * typedef struct log_data {
+    *  uint32_t file_ptr;
+    *  uint32_t file_page;
+    *  uint32_t gzip_len;
+    *  sem_t lock_shared;
+    *  char spinlock_shared[1];
+    *  // --------------> maybe unnamed array of char for gzip compression...
+    * } log_data;
+    */
 
    ptr_log_data = U_MALLOC_TYPE(log_data);
 
@@ -186,38 +194,30 @@ ULog::~ULog()
 #endif
 }
 
-void ULog::initStaticDate()
+void ULog::initDate()
 {
-   U_TRACE(1, "ULog::initStaticDate()")
-
-   U_INTERNAL_ASSERT_EQUALS(ptr_static_date, 0)
-
-   ptr_static_date = U_MALLOC_TYPE(static_date);
-
-   (void) U_SYSCALL(memset, "%p,%d,%u", ptr_static_date, 0, sizeof(static_date));
-
-   u_now = &(ptr_static_date->_timeval);
+   U_TRACE(1, "ULog::initDate()")
 
    iov_vec[0].iov_len  = 17;
    iov_vec[1].iov_len  =
    iov_vec[4].iov_len  = 1;
-   iov_vec[0].iov_base = (caddr_t) ptr_static_date->date1;
-   iov_vec[1].iov_base = (caddr_t) " ";
-   iov_vec[2].iov_base = (caddr_t) u_buffer;
-   iov_vec[4].iov_base = (caddr_t) U_LF;
+   iov_vec[0].iov_base = (caddr_t)date.date1;
+   iov_vec[1].iov_base = (caddr_t)" ";
+   iov_vec[2].iov_base = (caddr_t)u_buffer;
+   iov_vec[4].iov_base = (caddr_t)U_LF;
 
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-   (void) u_strftime2(ptr_static_date->date1, 17, "%d/%m/%y %T",    u_now->tv_sec + u_now_adjust);
-   (void) u_strftime2(ptr_static_date->date2, 26, "%d/%b/%Y:%T %z", u_now->tv_sec + u_now_adjust);
-   (void) u_strftime2(ptr_static_date->date3, 6+29+2+12+2+17+2, "Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n", u_now->tv_sec);
+   (void) u_strftime2(date.date1, 17,                     "%d/%m/%y %T",                                                  u_now->tv_sec + u_now_adjust);
+   (void) u_strftime2(date.date2, 26,                     "%d/%b/%Y:%T %z",                                               u_now->tv_sec + u_now_adjust);
+   (void) u_strftime2(date.date3, 6+29+2+12+2+17+2, "Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n", u_now->tv_sec);
 }
 
 void ULog::startup()
 {
    U_TRACE(1, "ULog::startup()")
   
-   initStaticDate();
+   initDate();
 
    log(U_FMT_START_STOP, "STARTUP", sizeof(void*) * 8);
 
@@ -267,101 +267,233 @@ void ULog::setPrefix(const char* _prefix)
       }
 }
 
-void ULog::_updateStaticDate(char* ptr, int which)
+void ULog::updateDate1()
 {
-   U_TRACE(1, "ULog::_updateStaticDate(%p,%d)", ptr, which)
+   U_TRACE(1, "ULog::updateDate1()")
 
+   /**
+    * 18/06/12 18:45:56
+    * 012345678901234567890123456789
+    */
+
+#ifdef ENABLE_THREAD
+   if (u_pthread_time)
+      {
+#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+      (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
+#  endif
+
+      if (tv_sec_old_1 != u_now->tv_sec)
+         {
+         long tv_sec = u_now->tv_sec;
+
+         U_INTERNAL_DUMP("tv_sec_old_1 = %lu u_now->tv_sec = %lu", tv_sec_old_1, tv_sec)
+
+         if ((tv_sec - tv_sec_old_1) != 1 ||
+             (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+            {
+            tv_sec_old_1 = tv_sec;
+
+            U_MEMCPY(date.date1, ptr_shared_date->date1, 17);
+            }
+         else
+            {
+            ++tv_sec_old_1;
+
+            u_put_unalignedp16(date.date1+12,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date1[12],ptr_shared_date->date1[13]));
+            u_put_unalignedp16(date.date1+12+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date1[15],ptr_shared_date->date1[16]));
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_1)
+         }
+
+#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+      (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
+#  endif
+      }
+   else
+#endif
+   {
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
 
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-   bool bchange = ((u_now->tv_sec % U_ONE_HOUR_IN_SECOND) == 0);
-
-   if (which == 1)
+   if (tv_sec_old_1 != u_now->tv_sec)
       {
-      static long tv_sec_old_1;
+      long tv_sec = u_now->tv_sec;
 
-      /**
-       * 18/06/12 18:45:56
-       * 012345678901234567890123456789
-       */
+      U_INTERNAL_DUMP("tv_sec_old_1 = %lu u_now->tv_sec = %lu", tv_sec_old_1, tv_sec)
 
-      if (tv_sec_old_1 == u_now->tv_sec) return;
-
-      U_INTERNAL_ASSERT_MINOR(tv_sec_old_1, u_now->tv_sec)
-
-      if (bchange ||
-          (u_now->tv_sec - tv_sec_old_1) != 1)
+      if ((tv_sec - tv_sec_old_1) != 1 ||
+          (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
          {
-         (void) u_strftime2(ptr, 17, "%d/%m/%y %T", (tv_sec_old_1 = u_now->tv_sec) + u_now_adjust);
+         (void) u_strftime2(date.date1, 17, "%d/%m/%y %T", (tv_sec_old_1 = tv_sec) + u_now_adjust);
          }
       else
          {
          ++tv_sec_old_1;
 
-         UTimeDate::updateTime(ptr+12);
+         UTimeDate::updateTime(date.date1+12);
          }
 
-      U_INTERNAL_ASSERT_EQUALS(u_now->tv_sec, tv_sec_old_1)
+      U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_1)
       }
-   else if (which == 3)
+   }
+
+   U_INTERNAL_DUMP("date.date1 = %.17S", date.date1)
+}
+
+void ULog::updateDate2()
+{
+   U_TRACE(1, "ULog::updateDate2()")
+
+   /**
+    * 04/Jun/2012:18:18:37 +0200
+    * 012345678901234567890123456789
+    */
+
+#ifdef ENABLE_THREAD
+   if (u_pthread_time)
       {
-      static long tv_sec_old_3;
+#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+      (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
+#  endif
 
-      /**
-       * Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
-       * 0123456789012345678901234567890123456789
-       */
-
-      if (tv_sec_old_3 == u_now->tv_sec) return;
-
-      U_INTERNAL_ASSERT_MINOR(tv_sec_old_3, u_now->tv_sec)
-
-      if (bchange ||
-          (u_now->tv_sec - tv_sec_old_3) != 1)
+      if (tv_sec_old_2 != u_now->tv_sec)
          {
-         (void) u_strftime2(ptr, 29-4, "%a, %d %b %Y %T", (tv_sec_old_3 = u_now->tv_sec)); // GMT can't change...
+         long tv_sec = u_now->tv_sec;
+
+         U_INTERNAL_DUMP("tv_sec_old_2 = %lu u_now->tv_sec = %lu", tv_sec_old_2, tv_sec)
+
+         if ((tv_sec - tv_sec_old_2) != 1 ||
+             (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+            {
+            tv_sec_old_2 = tv_sec;
+
+            U_MEMCPY(date.date2, ptr_shared_date->date2, 26);
+            }
+         else
+            {
+            ++tv_sec_old_2;
+
+            u_put_unalignedp16(date.date2+15,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date2[15],ptr_shared_date->date2[16]));
+            u_put_unalignedp16(date.date2+15+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date2[18],ptr_shared_date->date2[19]));
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_2)
+         }
+
+#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+      (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
+#  endif
+      }
+   else
+#endif
+   {
+   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
+
+   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+   if (tv_sec_old_2 != u_now->tv_sec)
+      {
+      long tv_sec = u_now->tv_sec;
+
+      U_INTERNAL_DUMP("tv_sec_old_2 = %lu u_now->tv_sec = %lu", tv_sec_old_2, tv_sec)
+
+      if ((tv_sec - tv_sec_old_2) != 1 ||
+          (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+         {
+         (void) u_strftime2(date.date2, 26-6, "%d/%b/%Y:%T", (tv_sec_old_2 = tv_sec) + u_now_adjust);
+         }
+      else
+         {
+         ++tv_sec_old_2;
+
+         UTimeDate::updateTime(date.date2+15);
+         }
+
+      U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_2)
+      }
+   }
+
+   U_INTERNAL_DUMP("date.date2 = %.26S", date.date2)
+}
+
+void ULog::updateDate3()
+{
+   U_TRACE(1, "ULog::updateDate3()")
+
+   /**
+    * Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
+    *       0123456789012345678901234567890123
+    * 0123456789012345678901234567890123456789
+    */
+
+#ifdef ENABLE_THREAD
+   if (u_pthread_time)
+      {
+#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+      (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
+#  endif
+
+      if (tv_sec_old_3 != u_now->tv_sec)
+         {
+         long tv_sec = u_now->tv_sec;
+
+         U_INTERNAL_DUMP("tv_sec_old_3 = %lu u_now->tv_sec = %lu", tv_sec_old_3, tv_sec)
+
+         if ((tv_sec - tv_sec_old_3) != 1 ||
+             (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+            {
+            tv_sec_old_3 = tv_sec;
+
+            U_MEMCPY(date.date3+6, ptr_shared_date->date3+6, 29-4);
+            }
+         else
+            {
+            ++tv_sec_old_3;
+
+            u_put_unalignedp16(date.date3+26,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[26],ptr_shared_date->date3[27]));
+            u_put_unalignedp16(date.date3+26+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[29],ptr_shared_date->date3[30]));
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_3)
+         }
+
+#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+      (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
+#  endif
+      }
+   else
+#endif
+   {
+   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
+
+   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+   if (tv_sec_old_3 != u_now->tv_sec)
+      {
+      long tv_sec = u_now->tv_sec;
+
+      U_INTERNAL_DUMP("tv_sec_old_3 = %lu u_now->tv_sec = %lu", tv_sec_old_3, tv_sec)
+
+      if ((tv_sec - tv_sec_old_3) != 1 ||
+          (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
+         {
+         (void) u_strftime2(date.date3+6, 29-4, "%a, %d %b %Y %T", (tv_sec_old_3 = tv_sec)); // GMT can't change...
          }
       else
          {
          ++tv_sec_old_3;
 
-         UTimeDate::updateTime(ptr+20);
+         UTimeDate::updateTime(date.date3+26);
          }
 
-      U_INTERNAL_ASSERT_EQUALS(u_now->tv_sec, tv_sec_old_3)
+      U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_3)
       }
-   else
-      {
-      static long tv_sec_old_2;
+   }
 
-      U_INTERNAL_ASSERT_EQUALS(which, 2)
-
-      /**
-       * 04/Jun/2012:18:18:37 +0200
-       * 012345678901234567890123456789
-       */
-
-      if (tv_sec_old_2 == u_now->tv_sec) return;
-
-      U_INTERNAL_ASSERT_MINOR(tv_sec_old_2, u_now->tv_sec)
-
-      if (bchange ||
-          (u_now->tv_sec - tv_sec_old_2) != 1)
-         {
-         (void) u_strftime2(ptr, 26-6, "%d/%b/%Y:%T", (tv_sec_old_2 = u_now->tv_sec) + u_now_adjust);
-         }
-      else
-         {
-         ++tv_sec_old_2;
-      
-         UTimeDate::updateTime(ptr+15);
-         }
-
-      U_INTERNAL_ASSERT_EQUALS(u_now->tv_sec, tv_sec_old_2)
-      }
-
-   U_INTERNAL_ASSERT_EQUALS(ptr_static_date->date1, iov_vec[0].iov_base)
+   U_INTERNAL_DUMP("date.date3+6 = %.29S", date.date3+6)
 }
 
 void ULog::setShared(log_data* ptr, uint32_t _size, bool breference)
@@ -559,7 +691,7 @@ void ULog::write(const char* msg, uint32_t len)
    iov_vec[3].iov_len  = len;
    iov_vec[3].iov_base = (caddr_t) msg;
 
-   updateStaticDate(ptr_static_date->date1, 1);
+   updateDate1();
 
    pthis->write(iov_vec, 5);
 
@@ -606,7 +738,7 @@ void ULog::log(int _fd, const char* fmt, ...)
    iov_vec[3].iov_len  = len;
    iov_vec[3].iov_base = (caddr_t)buffer;
 
-   updateStaticDate(ptr_static_date->date1, 1);
+   updateDate1();
 
    (void) U_SYSCALL(writev, "%d,%p,%d", _fd, iov_vec, 5);
 }

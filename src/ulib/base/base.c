@@ -58,13 +58,14 @@ void u_debug_at_exit(void);
 #ifdef HAVE_ENDIAN_H
 #  include <endian.h>
 #endif
-
+#ifdef HAVE_SYS_SYSCALL_H
+#  include <sys/syscall.h>
+#endif
 #ifndef _MSWINDOWS_
 #  include <pwd.h>
 #  include <sys/uio.h>
 #  include <sys/utsname.h>
 #endif
-
 /* For TIOCGWINSZ and friends: */
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
@@ -386,13 +387,28 @@ bool u_setStartTime(void)
 
    (void) gettimeofday(u_now, 0);
 
-   /*
+   /**
     * The "hash seed" is a feature to perturb the results to avoid "algorithmic complexity attacks"
     *
     * http://lwn.net/Articles/474365
     */
-
+ 
    u_seed_hash = u_random((uint32_t)u_pid ^ (uint32_t)u_now->tv_usec);
+
+#ifdef SYS_getrandom
+   if (syscall(SYS_getrandom, &u_seed_hash, sizeof(u_seed_hash), 0) == sizeof(u_seed_hash)) u_seed_hash |= 1;
+   else
+#endif
+   {
+   int         fd = open("/dev/urandom", O_CLOEXEC | O_RDONLY);
+   if (fd < 0) fd = open("/dev/random",  O_CLOEXEC | O_RDONLY);
+   if (fd > 0)
+      {
+      if (read(fd, &u_seed_hash, sizeof(u_seed_hash)) == sizeof(u_seed_hash)) u_seed_hash |= 1;
+
+      (void) close(fd);
+      }
+   }
 
    /* seed the random generator */
 

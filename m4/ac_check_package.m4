@@ -361,7 +361,10 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			echo "${T_MD}libexpat found in $expatdir${T_ME}"
 			USE_LIBEXPAT=yes
 			AC_DEFINE(USE_LIBEXPAT, 1, [Define if enable libexpat support])
-			expat_version=$(strings $expatdir/lib*/libexpat.* 2>/dev/null | grep "^expat_[[0-9]]" | head -n1 | cut -d'_' -f2)
+			expat_version=$(strings $expatdir/lib*/libexpat.* 2>/dev/null | grep "^expat_[[0-9]]*" | head -n1 | cut -d'_' -f2)
+			if test -z "${expat_version}"; then
+				expat_version=$(ls $expatdir/libexpat.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			fi
 			if test -z "${expat_version}"; then
 				expat_version="unknown"
 			fi

@@ -30,10 +30,6 @@ typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
 #  define U_STORE_FLAGS (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL)
 #endif
 
-#ifdef USE_LIBUUID
-#  include <uuid/uuid.h>
-#endif
-
 #ifndef FNM_CASEFOLD
 #define FNM_CASEFOLD FNM_IGNORECASE
 #endif
@@ -44,7 +40,7 @@ typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
 
 struct U_EXPORT UServices {
 
-   static bool isSetuidRoot();               // UID handling: are we setuid-root...
+   static bool isSetuidRoot();               // UID handling: check if we are setuid-root
    static void closeStdInputOutput();        // move stdin and stdout to /dev/null
    static int  getDevNull(const char* file); // return open(/dev/null)
 
@@ -171,22 +167,18 @@ struct U_EXPORT UServices {
    static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, int base64 = 0)
       { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
 
-#ifdef USE_LIBUUID
    // creat a new unique UUID value - 16 bytes (128 bits) long
    // return from the binary representation a 36-byte string (plus tailing '\0') of the form 1b4e28ba-2fa1-11d2-883f-0016d3cca427
 
-   static uuid_t uuid; // typedef unsigned char uuid_t[16];
-
-   static UString getUUID();
-#endif
-
-   static uint64_t getUniqUID();
+   static UString  getUUID();
+   static uint64_t getUniqUID(); // creat a new unique UUID value - 8 bytes (64 bits) long
 
 #ifdef USE_LIBSSL
-   /* setup OPENSSL standard certificate directory. The X509_STORE holds the tables etc for verification stuff.
-   A X509_STORE_CTX is used while validating a single certificate. The X509_STORE has X509_LOOKUPs for looking
-   up certs. The X509_STORE then calls a function to actually verify the certificate chain
-   */
+   /**
+    * setup OPENSSL standard certificate directory. The X509_STORE holds the tables etc for verification stuff.
+    * A X509_STORE_CTX is used while validating a single certificate. The X509_STORE has X509_LOOKUPs for looking
+    * up certs. The X509_STORE then calls a function to actually verify the certificate chain
+    */
 
    static UString* CApath;
    static X509_STORE* store;
@@ -227,8 +219,8 @@ struct U_EXPORT UServices {
     * passwd is the corresponsding password for the private key
     */
 
-   static UString getSignatureValue(int alg, const UString& data,                           const UString& pkey, const UString& passwd, int base64, ENGINE* e = 0);
    static bool    verifySignature(  int alg, const UString& data, const UString& signature, const UString& pkey,                                    ENGINE* e = 0);
+   static UString getSignatureValue(int alg, const UString& data,                           const UString& pkey, const UString& passwd, int base64, ENGINE* e = 0);
 #endif
 };
 

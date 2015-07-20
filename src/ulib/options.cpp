@@ -712,7 +712,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
                "SSL support..........:%W " LIBSSL_ENABLE "%W\n"
                "SSH support..........:%W " LIBSSH_ENABLE "%W\n"
                "LDAP support.........:%W " LIBLDAP_ENABLE "%W\n"
-               "LDAP support.........:%W " LIBLDAP_ENABLE "%W\n"
+               "cURL support.........:%W " LIBCURL_ENABLE "%W\n"
                "XML support..........:%W " LIBEXPAT_ENABLE "%W\n"
                "MAGIC support........:%W " MAGIC_ENABLE "%W\n"
                "SQLite support.......:%W " SQLITE_ENABLE "%W\n"

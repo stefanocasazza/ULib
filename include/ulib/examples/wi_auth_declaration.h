@@ -1706,6 +1706,7 @@ static void usp_init_wi_auth()
    file_RECOVERY = U_NEW(UFile(dir + U_STRING_FROM_CONSTANT("/wifi-recovery")));
    file_UTILIZZO = U_NEW(UFile(dir + U_STRING_FROM_CONSTANT("/wifi-utilizzo")));
 
+   UServer_Base::update_date  =
    UServer_Base::update_date1 = true;
 
    (void) UServer_Base::addLog(file_LOG);

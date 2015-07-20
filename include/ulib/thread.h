@@ -69,6 +69,22 @@ public:
       (void) U_SYSCALL(pthread_mutex_unlock, "%p", mutex);
       }
 
+   static bool initRwLock(pthread_rwlock_t* rwlock)
+      {
+      U_TRACE(1, "UThread::initRwLock(%p)", rwlock)
+
+      pthread_rwlockattr_t rwlockattr;
+
+      if (U_SYSCALL(pthread_rwlockattr_init,       "%p",    &rwlockattr)                         != 0 ||
+          U_SYSCALL(pthread_rwlockattr_setpshared, "%p,%d", &rwlockattr, PTHREAD_PROCESS_SHARED) != 0 ||
+          U_SYSCALL(pthread_rwlock_init,           "%p,%p", rwlock, &rwlockattr)                 != 0)
+         {
+         U_RETURN(false);
+         }
+
+      U_RETURN(true);
+      }
+
    static bool initIPC(pthread_mutex_t* mutex, pthread_cond_t* cond);
    static void   doIPC(pthread_mutex_t* mutex, pthread_cond_t* cond, vPF function, bool wait);
 
@@ -179,7 +195,14 @@ protected:
 
    static void sigHandler(int signo);
    static void execHandler(UThread* th);
-   static void threadCleanup(UThread* th);
+
+   static void threadCleanup(UThread* th)
+      {
+      U_TRACE(0, "UThread::threadCleanup(%p)", th)
+
+      th->close();
+      }
+
 
    // A special global function, getThread(), is provided to identify the thread object that represents the current
    // execution context you are running under. This is sometimes needed to deliver signals to the correct thread

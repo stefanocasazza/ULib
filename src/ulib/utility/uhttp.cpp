@@ -956,7 +956,7 @@ void UHTTP::ctor()
    /**
     * Set up static environment variables
     * -------------------------------------------------------------------------------------------------------------------------------------------
-    * server static variable  Description
+    * server static variable Description
     * -------------------------------------------------------------------------------------------------------------------------------------------
     * SERVER_PORT
     * SERVER_ADDR
@@ -966,14 +966,14 @@ void UHTTP::ctor()
     * GATEWAY_INTERFACE CGI specification revision with which this server complies. Format: CGI/revision
     * -------------------------------------------------------------------------------------------------------------------------------------------
     * Example:
-    * ----------------------------------------------------------------------------------------------------------------------------
+    * -------------------------------------------------------------------------------------------------------------------------------------------
     * SERVER_PORT=80
     * SERVER_ADDR=127.0.0.1
     * SERVER_NAME=localhost
     * DOCUMENT_ROOT="/var/www/localhost/htdocs"
     * SERVER_SOFTWARE=Apache
     * GATEWAY_INTERFACE=CGI/1.1
-    * ----------------------------------------------------------------------------------------------------------------------------
+    * -------------------------------------------------------------------------------------------------------------------------------------------
     */
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::cenvironment)
@@ -1047,14 +1047,14 @@ next:
    cache_file = U_NEW(UHashMap<UHTTP::UFileCacheData*>);
 
 #ifdef U_STATIC_ONLY
-#  if defined(U_ALIAS) && !defined(U_STATIC_SERVLET_WI_AUTH)
+# if defined(U_ALIAS) && !defined(U_STATIC_SERVLET_WI_AUTH)
    U_INTERNAL_ASSERT_EQUALS(virtual_host, false)
-#  endif
+# endif
    /**
     * I do know that to include code in the middle of a function is hacky and dirty, but this is the best solution that I could figure out.
     * If you have some idea to clean it up, please, don't hesitate and let me know
     */
-#  include "../net/server/plugin/usp/loader.autoconf.cpp"
+# include "../net/server/plugin/usp/loader.autoconf.cpp"
 #endif
 
    U_INTERNAL_ASSERT_EQUALS(file_not_in_cache_data, 0)
@@ -1101,7 +1101,7 @@ next:
 #  ifdef U_STDCPP_ENABLE
       if (content_cache)
          {
-         n += (content_cache.size() / (1024 + 512)); // NB: we assume as medium file size ~1.5k...
+         n += (content_cache.size() / (1024 + 512)); // NB: we assume as medium file size something like ~1.5k...
 
          UString2Object(U_STRING_TO_PARAM(content_cache), *cache_file);
 
@@ -1492,7 +1492,15 @@ __pure bool UHTTP::isMobile()
 }
 
 /**
+ * ---------------------------------------------------------------------------------------------------------------------------
  * HTTP message
+ * ---------------------------------------------------------------------------------------------------------------------------
+ * There are four parts to an HTTP request:
+ * ---------------------------------------------------------------------------------------------------------------------------
+ * 1) the request line    [REQUIRED]: the method, the URL, the version of the protocol
+ * 2) the request headers [OPTIONAL]: a series of lines (one per) in the format of name, colon(:), and the value of the header
+ * 3) a blank line        [REQUIRED]: worth mentioning by itself
+ * 4) the request Body    [OPTIONAL]: used in POST/PUT/PATCH requests to send content to the server
  * ======================================================================================
  * Read the request line and attached headers. A typical http request will take the form:
  * ======================================================================================
@@ -1641,14 +1649,18 @@ int UHTTP::handlerDataPending()
          U_RETURN(-1);
          }
 
-      // TODO: HTTP/2 implementation
+      U_ClientImage_data_missing = false;
+
+      UClientImage_Base::setRequestNeedProcessing();
+
+      (void) manageRequest();
 
       /*
       return  1 //  child of parallelization
       return -1 // parent of parallelization
       */
 
-      U_RETURN(-1);
+      U_RETURN(0);
       }
    else
 #endif
@@ -1661,22 +1673,26 @@ bool UHTTP::scanfHeaderRequest(const char* ptr, uint32_t size)
    U_TRACE(0, "UHTTP::scanfHeaderRequest(%.*S,%u)", size, ptr, size)
 
    /**
-    *  ------------------------------------------------------------------
-    * Check HTTP request.
+    * -------------------------------------------------------------------
+    * Check HTTP request
+    * -------------------------------------------------------------------
     * The default is GET for input requests and POST for output requests.
     * Other possible alternatives are:
-    *  ------------------------------------------------------------------
+    * -------------------------------------------------------------------
     *  - PUT
     *  - HEAD
     *  - COPY
     *  - PATCH
     *  - DELETE
     *  - OPTIONS
-    *  ---------------------- NOT implemented ---------------------------
+    * ---------------------- NOT implemented ----------------------------
     *  - CONNECT
     *  - TRACE (because can send client cookie information, dangerous...)
-    *  ------------------------------------------------------------------
-    * See http://ietf.org/rfc/rfc2616.txt for further information about HTTP request methods
+    * -------------------------------------------------------------------
+    * for further information about HTTP request methods see:
+    *
+    * http://ietf.org/rfc/rfc2616.txt
+    * -------------------------------------------------------------------
     */
 
    unsigned char c;
@@ -3169,17 +3185,6 @@ bool UHTTP::callService(const UString& path) // NB: it is used also by server_pl
    U_RETURN(true);
 }
 
-/**
- * ---------------------------------------------------------------------------------------------------------------------------
- * There are four parts to an HTTP request:
- * ---------------------------------------------------------------------------------------------------------------------------
- * 1) the request line    [REQUIRED]: the method, the URL, the version of the protocol
- * 2) the request headers [OPTIONAL]: a series of lines (one per) in the format of name, colon(:), and the value of the header
- * 3) a blank line        [REQUIRED]: worth mentioning by itself
- * 4) the request Body    [OPTIONAL]: used in POST/PUT/PATCH requests to send content to the server
- * ---------------------------------------------------------------------------------------------------------------------------
- */
-
 bool UHTTP::handlerCache()
 {
    U_TRACE(0, "UHTTP::handlerCache()")
@@ -3338,7 +3343,6 @@ int UHTTP::handlerREAD()
 
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
-   const char* ptr;
    bool result_read_body;
 
    // ------------------------------
@@ -3452,8 +3456,7 @@ dmiss:   UClientImage_Base::setRequestProcessed();
 
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
 
-      if (result_read_body) UClientImage_Base::size_request += U_http_info.clength;
-      else
+      if (result_read_body == false)
          {
          U_INTERNAL_DUMP("UServer_Base::csocket->isClosed() = %b UClientImage_Base::wbuffer(%u) = %V",
                           UServer_Base::csocket->isClosed(),     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
@@ -3464,10 +3467,21 @@ dmiss:   UClientImage_Base::setRequestProcessed();
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
+
+      UClientImage_Base::size_request += U_http_info.clength;
       }
 #endif
 
+   return manageRequest();
+}
+
+int UHTTP::manageRequest()
+{
+   U_TRACE(0, "UHTTP::manageRequest()")
+
    // check the HTTP message
+
+   U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
    U_ASSERT(UClientImage_Base::isRequestNotFound())
 
@@ -3501,6 +3515,7 @@ dmiss:   UClientImage_Base::setRequestProcessed();
    if (valias)
       {
       UString str;
+      const char* ptr;
       int i, n = valias->size();
 
       // Ex: /admin /admin.html
@@ -3512,7 +3527,6 @@ dmiss:   UClientImage_Base::setRequestProcessed();
          int flag = 0;
 
          str = (*valias)[i];
-
          ptr = str.data();
 
          int len = str.size();
@@ -3624,7 +3638,7 @@ set_uri: U_http_info.uri     = alias->data();
       //     we check if it is present as shared file (without the virtual host prefix)
       // ------------------------------------------------------------------------------
 #  ifndef U_SERVER_CAPTIVE_PORTAL
-      ptr = pathname->c_pointer(u_cwd_len);
+      const char* ptr = pathname->c_pointer(u_cwd_len);
 
 #    ifdef U_ALIAS
       U_INTERNAL_DUMP("virtual_host = %b U_http_host_vlen = %u U_http_is_request_nostat = %b", virtual_host, U_http_host_vlen, U_http_is_request_nostat)
@@ -4224,9 +4238,9 @@ void UHTTP::setEndRequestProcessing()
          }
 #    endif
 
-      U_INTERNAL_ASSERT_EQUALS(U_HTTP_DATE2, iov_vec[2].iov_base)
+      U_INTERNAL_ASSERT_EQUALS(iov_vec[2].iov_base, ULog::date.date2)
 
-      ULog::updateStaticDate(U_HTTP_DATE2, 2);
+      ULog::updateDate2();
 
       UServer_Base::apache_like_log->write(iov_vec, 10);
 
@@ -5199,11 +5213,11 @@ uint32_t UHTTP::processForm()
       {
       U_ASSERT(isPOST())
 
-      // ------------------------------------------------------------------------
+      // -------------------------------------------------------------------------
       // POST
-      // ------------------------------------------------------------------------
+      // -------------------------------------------------------------------------
       // Content-Type: application/x-www-form-urlencoded OR multipart/form-data...
-      // ------------------------------------------------------------------------
+      // -------------------------------------------------------------------------
 
       if (U_HTTP_CTYPE_MEMEQ("application/x-www-form-urlencoded")) tmp = *UClientImage_Base::body;
       else
@@ -5438,6 +5452,13 @@ UString UHTTP::getHeaderForResponse()
 
    UClientImage_Base::setRequestProcessed();
 
+#ifndef U_HTTP2_DISABLE
+   if (U_http_version == '2')
+      {
+      return UString::getStringNull();
+      }
+#endif
+
    UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
    if (U_http_info.nResponseCode == HTTP_NOT_IMPLEMENTED ||
@@ -5665,7 +5686,8 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
                        "<address>ULib Server</address>\r\n" \
                        "</body></html>\r\n"
 
-/*------------------------------------------------------------------------------------------------------------------
+/**
+ * ------------------------------------------------------------------------------------------------------------------
  * http://sebastians-pamphlets.com/the-anatomy-of-http-redirects-301-302-307/
  * ------------------------------------------------------------------------------------------------------------------
  * HTTP/1.0
@@ -5695,6 +5717,7 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
  * the request method was HEAD, the entity of the response SHOULD contain a short hypertext note with a hyperlink to the new
  * URI(s), since many pre-HTTP/1.1 user agents do not understand the 307 status. Therefore, the note SHOULD contain the
  * information necessary for a user to repeat the original request on the new URI.
+ * ------------------------------------------------------------------------------------------------------------------
  */
 
 void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location)
@@ -9598,12 +9621,12 @@ void UHTTP::initApacheLikeLog()
 
    iov_vec[1].iov_base = (caddr_t)       " - - [";
    iov_vec[1].iov_len  = U_CONSTANT_SIZE(" - - [");
-   iov_vec[2].iov_base = (caddr_t) U_HTTP_DATE2; // %d/%b/%Y:%T %z - 21/May/2012:16:29:41 +0200 
+   iov_vec[2].iov_base = (caddr_t)ULog::date.date2; // %d/%b/%Y:%T %z - 21/May/2012:16:29:41 +0200 
    iov_vec[2].iov_len  = 26;
    iov_vec[3].iov_base = (caddr_t)       "] \"";
    iov_vec[3].iov_len  = U_CONSTANT_SIZE("] \"");
    // request
-   iov_vec[5].iov_base = (caddr_t) iov_buffer; // response_code, body_len
+   iov_vec[5].iov_base = (caddr_t)iov_buffer; // response_code, body_len
    // referer
    iov_vec[7].iov_base = (caddr_t)       "\" \"";
    iov_vec[7].iov_len  = U_CONSTANT_SIZE("\" \"");

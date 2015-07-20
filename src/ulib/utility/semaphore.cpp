@@ -55,22 +55,22 @@ void USemaphore::init(sem_t* ptr, int resource)
       U_INTERNAL_ASSERT_DIFFERS(first, next)
       }
 
-#  ifdef DEBUG
+# ifdef DEBUG
    int _value = getValue();
 
    if (_value != resource) U_ERROR("USemaphore::init(%p,%u) failed - value = %d", ptr, resource, _value);
-#  endif
+# endif
 #else
-#  ifdef _MSWINDOWS_
+# ifdef _MSWINDOWS_
    psem = (sem_t*) ::CreateSemaphore((LPSECURITY_ATTRIBUTES)NULL, (LONG)resource, 1000000, (LPCTSTR)NULL);
-#  else
+# else
    if (flock == 0)
       {
       flock = U_NEW(UFile);
 
       if (flock->mkTemp(0) == false) U_ERROR("USemaphore::init(%p,%u) failed", ptr, resource);
       }
-#  endif
+# endif
 #endif
 }
 
@@ -88,11 +88,11 @@ USemaphore::~USemaphore()
 
    (void) sem_destroy(psem); // Free resources associated with semaphore object sem
 #else
-#  ifdef _MSWINDOWS_
+# ifdef _MSWINDOWS_
    ::CloseHandle((HANDLE)psem);
-#  else
+# else
    (void) flock->close();
-#  endif
+# endif
 #endif
 }
 
@@ -116,11 +116,11 @@ void USemaphore::post()
 
    U_INTERNAL_DUMP("value = %d", getValue())
 #else
-#  ifdef _MSWINDOWS_
+# ifdef _MSWINDOWS_
    ::ReleaseSemaphore((HANDLE)psem, 1, (LPLONG)NULL);
-#  else
+# else
    (void) flock->unlock();
-#  endif
+# endif
 #endif
 }
 
@@ -190,11 +190,11 @@ bool USemaphore::wait(time_t timeoutMS)
 
    if (rc == 0) U_RETURN(true);
 #else
-#  ifdef _MSWINDOWS_
+# ifdef _MSWINDOWS_
    if (::WaitForSingleObject((HANDLE)psem, timeoutMS) == WAIT_OBJECT_0) U_RETURN(true);
-#  else
+# else
    if (flock->unlock()) U_RETURN(true);
-#  endif
+# endif
 #endif
 
    U_RETURN(false);
@@ -234,11 +234,11 @@ wait:
 
    U_INTERNAL_ASSERT_EQUALS(rc, 0)
 #else
-#  ifdef _MSWINDOWS_
+# ifdef _MSWINDOWS_
    (void) ::WaitForSingleObject((HANDLE)psem, INFINITE);
-#  else
+# else
    (void) flock->unlock();
-#  endif
+# endif
 #endif
 }
 

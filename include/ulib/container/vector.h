@@ -1129,7 +1129,7 @@ public:
 
    // Check equality with string at pos
 
-   bool isEqual(uint32_t pos, const UString& str, bool ignore_case = false);
+   bool isEqual(uint32_t pos, const UString& str, bool ignore_case = false) __pure;
 
    // Check equality with an existing vector object
 

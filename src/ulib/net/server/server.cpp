@@ -89,6 +89,7 @@ bool          UServer_Base::public_address;
 bool          UServer_Base::monitoring_process;
 bool          UServer_Base::set_tcp_keep_alive;
 bool          UServer_Base::set_realtime_priority;
+bool          UServer_Base::update_date;
 bool          UServer_Base::update_date1;
 bool          UServer_Base::update_date2;
 bool          UServer_Base::update_date3;
@@ -143,7 +144,6 @@ UVector<UString>*                 UServer_Base::vplugin_name_static;
 UClientImage_Base*                UServer_Base::pClientImage;
 UClientImage_Base*                UServer_Base::vClientImage;
 UClientImage_Base*                UServer_Base::eClientImage;
-ULog::static_date*                UServer_Base::ptr_static_date;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin;
 UServer_Base::shared_data*        UServer_Base::ptr_shared_data;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
@@ -167,24 +167,14 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 class UTimeThread : public UThread {
 public:
 
-   UTimeThread() : UThread(true, false) { watch_counter = 1; }
-
-#ifdef DEBUG
-   UTimeVal before;
-#endif
-   int watch_counter;
+   UTimeThread() : UThread(true, false) {}
 
    virtual void run()
       {
       U_TRACE(0, "UTimeThread::run()")
 
-#  ifdef DEBUG
-      long delta;
-      UTimeVal after;
-#  endif
-      bool bchange;
       struct timespec ts;
-      long tv_sec_old = u_now->tv_sec;
+      u_timeval.tv_sec = u_now->tv_sec;
 
       U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (pid %u)", UThread::getTID());
 
@@ -196,74 +186,46 @@ public:
          (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
 
 #     if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
-         if ((UServer_Base::log             && UServer_Base::log->checkForLogRotateDataToWrite()) ||
-             (UServer_Base::apache_like_log && UServer_Base::apache_like_log->checkForLogRotateDataToWrite()))
-            {
-            watch_counter = 1;
-            }
+         if (UServer_Base::log)             (void) UServer_Base::log->checkForLogRotateDataToWrite();
+         if (UServer_Base::apache_like_log) (void) UServer_Base::apache_like_log->checkForLogRotateDataToWrite();
 #     endif
 
-         U_INTERNAL_DUMP("watch_counter = %d tv_sec_old = %ld u_now->tv_sec  = %ld", watch_counter, tv_sec_old, u_now->tv_sec)
+         U_INTERNAL_DUMP("u_timeval.tv_sec = %ld u_now->tv_sec = %ld", u_timeval.tv_sec, u_now->tv_sec)
 
-         if (tv_sec_old == u_now->tv_sec)
+         if (u_timeval.tv_sec == u_now->tv_sec)
             {
-            if (--watch_counter > 0) u_now->tv_sec++;
+            (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+            if (u_timeval.tv_sec == u_now->tv_sec) continue;
+            }
+
+         U_INTERNAL_ASSERT_DIFFERS(u_now->tv_sec, u_timeval.tv_sec)
+
+         u_timeval.tv_sec = u_now->tv_sec;
+
+         if (UServer_Base::update_date)
+            {
+#        if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+            (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
+#        endif
+
+            if ((u_timeval.tv_sec % U_ONE_HOUR_IN_SECOND) != 0)
+               {
+               if (UServer_Base::update_date1) UTimeDate::updateTime(ULog::ptr_shared_date->date1 + 12);
+               if (UServer_Base::update_date2) UTimeDate::updateTime(ULog::ptr_shared_date->date2 + 15);
+               if (UServer_Base::update_date3) UTimeDate::updateTime(ULog::ptr_shared_date->date3 + 26);
+               }
             else
                {
-#           ifdef DEBUG
-               if (watch_counter == 0)
-                  {
-                  before.tv_sec  = u_now->tv_sec + 1;
-                  before.tv_usec = u_now->tv_usec;
-                  }
-#           endif
-
-               (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-#           ifdef DEBUG
-               after.set(*u_now);
-
-               after -= before;
-               delta  = after.getMilliSecond();
-
-               if (delta >=  1000L ||
-                   delta <= -1000L)
-                  {
-                  U_SRV_LOG("UTimeThread delta time exceed 1 sec: diff(%ld ms)", delta);
-
-                  if (delta <= -30000L) U_ERROR("UTimeThread delta time exceed too much - ts = { %ld, %ld }", ts.tv_sec, ts.tv_nsec);
-                  }
-#           endif
-
-               watch_counter = 30;
-
-               if (tv_sec_old == u_now->tv_sec) continue;
+               if (UServer_Base::update_date1) (void) u_strftime2(ULog::ptr_shared_date->date1,     17, "%d/%m/%y %T",     u_timeval.tv_sec + u_now_adjust);
+               if (UServer_Base::update_date2) (void) u_strftime2(ULog::ptr_shared_date->date2,   26-6, "%d/%b/%Y:%T",     u_timeval.tv_sec + u_now_adjust); // %z in general don't change...
+               if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, "%a, %d %b %Y %T", u_timeval.tv_sec);                // GMT can't change...
                }
+
+#        if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+            (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
+#        endif
             }
-
-         U_INTERNAL_ASSERT_DIFFERS(u_now->tv_sec, tv_sec_old)
-
-         bchange = ((u_now->tv_sec % U_ONE_HOUR_IN_SECOND) == 0);
-
-         if (UServer_Base::update_date1)
-            {
-            if (bchange == false) UTimeDate::updateTime(U_HTTP_DATE1 + 12);
-            else           (void) u_strftime2(U_HTTP_DATE1, 17, "%d/%m/%y %T", u_now->tv_sec + u_now_adjust);
-            }
-
-         if (UServer_Base::update_date2)
-            {
-            if (bchange == false) UTimeDate::updateTime(U_HTTP_DATE2 + 15);
-            else           (void) u_strftime2(U_HTTP_DATE2, 26-6, "%d/%b/%Y:%T", u_now->tv_sec + u_now_adjust); // NB: %z in general don't change...
-            }
-
-         if (UServer_Base::update_date3)
-            {
-            if (bchange == false) UTimeDate::updateTime(U_HTTP_DATE3 + 20);
-            else           (void) u_strftime2(U_HTTP_DATE3, 29-4, "%a, %d %b %Y %T", u_now->tv_sec); // GMT can't change...
-            }
-
-         tv_sec_old = u_now->tv_sec;
          }
       }
 };
@@ -395,9 +357,11 @@ UServer_Base::~UServer_Base()
       ((UTimeThread*)u_pthread_time)->suspend();
 
       delete (UTimeThread*)u_pthread_time; // delete to join
+
+      (void) U_SYSCALL(pthread_rwlock_destroy, "%p", ULog::prwlock);
       }
 
-#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (bssl)
       {
       if (pthread_ocsp)
@@ -411,7 +375,7 @@ UServer_Base::~UServer_Base()
 
       if (UServer_Base::lock_ocsp_staple) delete UServer_Base::lock_ocsp_staple;
       }
-#  endif
+# endif
 #endif
 
    UClientImage_Base::clear();
@@ -876,6 +840,7 @@ void UServer_Base::loadConfigParam()
       {
       // open log
 
+      update_date  =
       update_date1 = true;
 
       log = U_NEW(ULog(x, cfg->readLong(*UString::str_LOG_FILE_SZ)));
@@ -1394,7 +1359,7 @@ void UServer_Base::init()
       }
 #else
    /**
-    * This code does NOT make a connection or send any packets (to 64.233.187.99 which is google).
+    * This code does NOT make a connection or send any packets (to 8.8.8.8 which is google DNS).
     * Since UDP is a stateless protocol connect() merely makes a system call which figures out how to
     * route the packets based on the address and what interface (and therefore IP address) it should
     * bind to. Returns an array containing the family (AF_INET), local port, and local address (which
@@ -1545,7 +1510,7 @@ void UServer_Base::init()
 #ifdef U_LOG_ENABLE
    uint32_t log_rotate_size = 0;
 
-#  ifdef USE_LIBZ
+# ifdef USE_LIBZ
    if (isLog())
       {
       // The zlib documentation states that destination buffer size must be at least 0.1% larger than avail_in plus 12 bytes
@@ -1553,7 +1518,7 @@ void UServer_Base::init()
       log_rotate_size =
       shared_data_add = log->UFile::st_size + (log->UFile::st_size / 10) + 12U;
       }
-#  endif
+# endif
 
    U_INTERNAL_DUMP("log_rotate_size = %u", log_rotate_size)
 #endif
@@ -1585,60 +1550,55 @@ void UServer_Base::init()
 #ifdef U_LOG_ENABLE
    if (isLog() == false)
 #endif
-   ULog::initStaticDate();
-
-   if (bpthread_time == false) ptr_static_date = ULog::ptr_static_date;
-#ifdef ENABLE_THREAD
-   else
-      {
-      ptr_static_date = &(ptr_shared_data->static_date);
-
-      U_INTERNAL_ASSERT_POINTER(                    ULog::ptr_static_date)
-      U_INTERNAL_ASSERT_EQUALS((void*)u_now, (void*)ULog::ptr_static_date)
-
-      U_MEMCPY(ptr_static_date, ULog::ptr_static_date, sizeof(ULog::static_date));
-
-      u_now                     =        &(ptr_static_date->_timeval);
-      ULog::iov_vec[0].iov_base = (caddr_t)ptr_static_date->date1;
-
-      U_FREE_TYPE(ULog::ptr_static_date, ULog::static_date);
-
-      ULog::ptr_static_date = ptr_static_date;
-      }
-#endif
-
-   U_INTERNAL_ASSERT_EQUALS((void*)u_now,       (void*)ptr_static_date)
-   U_INTERNAL_ASSERT_EQUALS((void*)u_now, (void*)ULog::ptr_static_date)
-
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
-   // NB: we block SIGHUP and SIGTERM; the threads created will inherit a copy of the signal mask...
-#  ifdef sigemptyset
-                    sigemptyset(&mask);
-#  else
-   (void) U_SYSCALL(sigemptyset, "%p", &mask);
-#  endif
-
-#  ifdef sigaddset
-                    sigaddset(&mask, SIGHUP);
-                    sigaddset(&mask, SIGTERM);
-#  else
-   (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGHUP);
-   (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGTERM);
-#  endif
-
-   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, &mask, 0);
-#endif
-
-   flag_loop = true; // NB: UTimeThread loop depend on this...
+   ULog::initDate();
 
 #ifdef ENABLE_THREAD
    if (bpthread_time)
       {
+      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+      U_INTERNAL_ASSERT_EQUALS(ULog::ptr_shared_date, 0)
+
+                     u_now  = &(ptr_shared_data->now_shared);
+      ULog::ptr_shared_date = &(ptr_shared_data->log_date_shared);
+
+      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+      U_MEMCPY(ULog::ptr_shared_date, &ULog::date, sizeof(ULog::log_date));
+      }
+#endif
+
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+   // NB: we block SIGHUP and SIGTERM; the threads created will inherit a copy of the signal mask...
+# ifdef sigemptyset
+                    sigemptyset(&mask);
+# else
+   (void) U_SYSCALL(sigemptyset, "%p", &mask);
+# endif
+
+# ifdef sigaddset
+                    sigaddset(&mask, SIGHUP);
+                    sigaddset(&mask, SIGTERM);
+# else
+   (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGHUP);
+   (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGTERM);
+# endif
+
+   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, &mask, 0);
+#endif
+
+   flag_loop = true; // NB: UTimeThread loop depend on this setting...
+
+#ifdef ENABLE_THREAD
+   if (bpthread_time)
+      {
+      U_INTERNAL_ASSERT_EQUALS(ULog::prwlock, 0)
       U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
 
       U_NEW_ULIB_OBJECT(u_pthread_time, UTimeThread);
 
       U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
+
+      (void) UThread::initRwLock((ULog::prwlock = &(ptr_shared_data->rwlock)));
 
       ((UTimeThread*)u_pthread_time)->start(50);
       }
@@ -1647,9 +1607,9 @@ void UServer_Base::init()
 #ifdef U_LOG_ENABLE
    if (isLog())
       {
-      // NB: if log is mapped must be always shared cause of possibility of fork() by parallelization
+      // NB: if log is mapped must be always shared because of possibility of fork() by parallelization...
 
-      if (log->isMemoryMapped()) log->setShared(U_LOG_DATA_SHARED, log_rotate_size);
+      if (log->isMemoryMapped()) log->setShared(&(ptr_shared_data->log_data_shared), log_rotate_size);
 
       U_SRV_LOG("Mapped %u bytes (%u KB) of shared memory for %d preforked process", sizeof(shared_data) + shared_data_add, map_size / 1024, preforked_num_kids);
       }
@@ -1690,8 +1650,8 @@ void UServer_Base::init()
 
          /**
           * There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return a readability
-          * event because the connection might have been removed by an asynchronous network error or  another thread before
-          * accept() is called. If this happens then the call will block waiting for the next  connection to arrive. To ensure
+          * event because the connection might have been removed by an asynchronous network error or another thread before
+          * accept() is called. If this happens then the call will block waiting for the next connection to arrive. To ensure
           * that accept() never blocks, the passed socket sockfd needs to have the O_NONBLOCK flag set (see socket(7))
           */
 
@@ -1874,13 +1834,13 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
 #ifdef ENABLE_THREAD
-#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp) pthread_ocsp->suspend();
-#  endif
+# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (pthread_ocsp)                     pthread_ocsp->suspend();
+# endif
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 #endif
 
-   pthis->handlerSignal(); // manage before regenering preforked pool of children...
+   pthis->handlerSignal(); // manage signal before we regenering the preforked pool of children...
 
    // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
 
@@ -1896,19 +1856,9 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
 #ifdef ENABLE_THREAD
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp) pthread_ocsp->resume();
+   if (pthread_ocsp)                     pthread_ocsp->resume();
 #  endif
-   if (u_pthread_time)
-      {
-#  ifdef DEBUG
-      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-      ((UTimeThread*)u_pthread_time)->before.set(*u_now);
-#  endif
-      ((UTimeThread*)u_pthread_time)->watch_counter = 0;
-
-      ((UTimeThread*)u_pthread_time)->resume();
-      }
+   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
 #endif
 
 #ifdef U_LOG_ENABLE
@@ -2174,7 +2124,7 @@ try_accept:
 #  ifdef U_LOG_ENABLE
       if (isLog()                   &&
           flag_loop                 && // NB: we check to avoid SIGTERM event...
-          CSOCKET->iState != -EINTR && // NB: we check to avoid log spurious EINTR on accept() by timer...
+          CSOCKET->iState != -EINTR && // NB: we check to avoid log spurious EINTR on accept() by any timer...
           CSOCKET->iState != -EAGAIN)
          {
          CSOCKET->setMsgError();
@@ -2772,18 +2722,6 @@ void UServer_Base::run()
                if (preforked_num_kids <= 0) pid_to_wait = pid;
 
                if (set_realtime_priority) u_switch_to_realtime_priority(pid);
- 
-#           ifdef ENABLE_THREAD
-               if (u_pthread_time)
-                  {
-#              ifdef DEBUG
-                  (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-                  ((UTimeThread*)u_pthread_time)->before.set(*u_now);
-#              endif
-                  ((UTimeThread*)u_pthread_time)->watch_counter = 0;
-                  }
-#           endif
                }
 
             if (proc->child())
@@ -3069,7 +3007,6 @@ const char* UServer_Base::dump(bool reset) const
                   << "last_event                " << last_event                 << '\n'
                   << "verify_mode               " << verify_mode                << '\n'
                   << "shared_data_add           " << shared_data_add            << '\n'
-                  << "ptr_static_date           " << (void*)ptr_static_date     << '\n'
                   << "ptr_shared_data           " << (void*)ptr_shared_data     << '\n'
                   << "preforked_num_kids        " << preforked_num_kids         << '\n'
                   << "log           (ULog       " << (void*)log                 << ")\n"

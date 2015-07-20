@@ -271,6 +271,7 @@ public:
 
    static int  handlerREAD();
    static bool handlerCache();
+   static int  manageRequest();
    static int  processRequest();
    static void initDbNotFound();
    static void setEndRequestProcessing();

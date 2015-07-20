@@ -35,15 +35,11 @@ class UClientImage_Base;
 class U_EXPORT ULog : public UFile {
 public:
 
-   typedef struct static_date {
-      struct timeval _timeval;      // => u_now
-      char spinlock1[1];
+   typedef struct log_date {
       char date1[17+1];             // 18/06/12 18:45:56
-      char spinlock2[1];
       char date2[26+1];             // 04/Jun/2012:18:18:37 +0200
-      char spinlock3[1];
       char date3[6+29+2+12+2+19+1]; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
-   } static_date;
+   } log_date;
 
    typedef struct log_data {
       uint32_t file_ptr;
@@ -55,9 +51,13 @@ public:
    } log_data;
 
    static ULog* pthis;
+   static log_date date;
    static const char* prefix;
    static struct iovec iov_vec[5];
-   static static_date* ptr_static_date;
+   static log_date* ptr_shared_date;
+#ifdef ENABLE_THREAD
+   static pthread_rwlock_t* prwlock;
+#endif
 
    // COSTRUTTORI
 
@@ -137,6 +137,8 @@ protected:
    bool checkForLogRotateDataToWrite();
 #endif
 
+   static long tv_sec_old_1, tv_sec_old_2, tv_sec_old_3;
+
    void write(const struct iovec* iov, int n);
 
 #ifdef USE_LIBZ
@@ -145,26 +147,12 @@ protected:
 
    static void close();
    static void startup();
-   static void initStaticDate();
-   static void _updateStaticDate(char* ptr, int which);
+   static void initDate();
+   static void updateDate1();
+   static void updateDate2();
+   static void updateDate3();
    static void logResponse(const UString& data, const char* name,                                                                  const char* format, ...);
    static void log(const struct iovec* iov,     const char* name, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, ...);
-
-   static void updateStaticDate(char* ptr, int which)
-      {
-      U_TRACE(0, "ULog::updateStaticDate(%p,%d)", ptr, which)
-
-      U_INTERNAL_ASSERT_POINTER(ptr)
-      U_INTERNAL_ASSERT_DIFFERS(ptr[0], '\0')
-
-#  ifdef ENABLE_THREAD
-      if (u_pthread_time == 0)
-#  endif
-      _updateStaticDate(ptr, which);
-
-      U_INTERNAL_DUMP("ptr_static_date->date1 = %.17S ptr_static_date->date2 = %.26S ptr_static_date->date3+6 = %.29S",
-                       ptr_static_date->date1,        ptr_static_date->date2,        ptr_static_date->date3+6)
-      }
 
 private:
    static int decode(const char* name, uint32_t len, bool bfacility) __pure U_NO_EXPORT;

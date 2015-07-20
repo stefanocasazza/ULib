@@ -17,11 +17,6 @@
 #include <ulib/net/ipaddress.h>
 #include <ulib/container/hash_map.h>
 
-#define HTTP2_CONNECTION_UPGRADE \
-      "HTTP/1.1 101 Switching Protocols\r\n" \
-      "Connection: Upgrade\r\n" \
-      "Upgrade: h2c\r\n\r\n"
-
 #define HTTP2_CONNECTION_PREFACE "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n" // (24 bytes)
 
 class UHTTP;
@@ -119,14 +114,11 @@ protected:
    };
 
    enum StreamState {
-      STREAM_STATE_RECV_PSUEDO_HEADERS = 0x001,
-      STREAM_STATE_RECV_HEADERS        = 0x002,
-      STREAM_STATE_RECV_BODY           = 0x004,
-      STREAM_STATE_REQ_PENDING         = 0x008,
-      STREAM_STATE_SEND_HEADERS        = 0x010,
-      STREAM_STATE_SEND_BODY           = 0x020,
-      STREAM_STATE_END_STREAM          = 0x040,
-      STREAM_STATE_HALF_CLOSED         = 0x080
+      STREAM_STATE_IDLE        = 0x000,
+      STREAM_STATE_RESERVED    = 0x001,
+      STREAM_STATE_OPEN        = 0x002,
+      STREAM_STATE_HALF_CLOSED = 0x004,
+      STREAM_STATE_CLOSED      = 0x008
    };
 
    enum ConnectionState {
@@ -146,22 +138,18 @@ protected:
    };
 
    struct Connection {
-      // headers
-      UHashMap<UString>* itable;
-      UHashMap<UString>* otable;
-      // streams
-      Stream open_streams[100];
-      // settings
-      Settings peer_settings;
+      ConnectionState state; // state
+      Settings peer_settings; // settings
+      UHashMap<UString> itable; // headers request
+      // internal
+      uint32_t  input_window;
+      uint32_t output_window;
+       int32_t hpack_max_capacity; // the value set by SETTINGS_HEADER_TABLE_SIZE
       // streams
       int max_open_stream_id;
       uint32_t num_responding_streams;
       uint32_t max_processed_stream_id;
-      // internal
-      ConnectionState state;
-      uint32_t  input_window;
-      uint32_t output_window;
-       int32_t hpack_max_capacity; // the value set by SETTINGS_HEADER_TABLE_SIZE
+      Stream streams[100];
    };
 
    struct HpackHeaderTableEntry {
@@ -238,32 +226,25 @@ protected:
 
    static int nerror;
    static Stream* pStream;
+   static bool settings_ack;
    static FrameHeader frame;
    static void* pConnectionEnd;
    static Connection* pConnection;
+   static const Settings settings;
    static const char* upgrade_settings;
-   static const Settings SETTINGS_HOST;
-   static const Settings SETTINGS_DEFAULT;
 
    static uint32_t hash_static_table[61];
    static HpackHeaderTableEntry hpack_static_table[61];
 
    // SERVICES
 
-   static void   readFrame();
-   static void decodeFrame();
-
+   static void readFrame();
+   static void sendError();
    static void manageData();
-   static void managePriority();
-   static void manageWindowUpdate();
-
-   static void setStream();
-   static void setConnection();
-   static void sendError(int err);
-   static void resetReadBuffer(uint32_t length);
+   static void manageHeaders();
+   static bool readBodyRequest();
    static bool updateSetting(const char*  ptr, uint32_t len);
    static void decodeHeaders(const char*  ptr, const char*  endptr);
-   static bool manageHeaders(const char** ptr, const char** endptr);
 
 #ifdef DEBUG
    static const char* getFrameTypeDescription();
@@ -317,8 +298,11 @@ protected:
    static const HuffSym    huff_sym_table[];
    static const HuffDecode huff_decode_table[][16];
 
-   static uint32_t hpackDecodeInt(   const unsigned char* src, const unsigned char* src_end, int32_t* pvalue, uint8_t prefix_max);
-   static uint32_t hpackDecodeString(const unsigned char* src, const unsigned char* src_end, UString* pvalue);
+   static uint32_t       hpackDecodeString(const unsigned char* src, const unsigned char* src_end, UString* pvalue);
+   static uint32_t       hpackEncodeString(      unsigned char* dst,                               const char* src, uint32_t len);
+
+   static unsigned char* hpackEncodeInt(         unsigned char* dst,                               uint32_t   value, uint8_t prefix_max);
+   static uint32_t       hpackDecodeInt(   const unsigned char* src, const unsigned char* src_end,  int32_t* pvalue, uint8_t prefix_max);
 
 private:
    friend class UHTTP;

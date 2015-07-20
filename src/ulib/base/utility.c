@@ -582,7 +582,7 @@ __pure uint32_t u_findEndHeader1(const char* restrict str, uint32_t n)
 
 /* find sequence of U_LF2 or U_CRLF2 */
 
-uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
+__pure uint32_t u_findEndHeader(const char* restrict str, uint32_t n)
 {
    const char* restrict p;
    const char* restrict end = str + n;

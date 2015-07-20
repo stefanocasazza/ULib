@@ -191,7 +191,7 @@ public:
       U_RETURN(0);
       }
 
-   uint32_t remain(const char* ptr) const
+   ptrdiff_t remain(const char* ptr) const
       {
       U_TRACE(0, "UStringRep::remain(%p)", ptr)
 
@@ -329,7 +329,7 @@ public:
           bool equal(const UStringRep* rep) const { return equal(rep->str, rep->_length); }
    __pure bool equal(const char* s, uint32_t n) const
       {
-      U_TRACE(0, "UStringRep::equal(%#.*S,%u)", n, s, n) // problem with sanitize address
+      U_TRACE(0, "UStringRep::equal(%#.*S,%u)", n, s, n)
 
       U_CHECK_MEMORY
 
@@ -1109,7 +1109,7 @@ public:
 
    explicit UString(uint32_t n)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u", n) // problem with sanitize address
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u", n)
 
       rep = UStringRep::create(0U, n, 0);
 
@@ -1379,7 +1379,7 @@ public:
 
    UString& append(const char* s, uint32_t n)
       {
-      U_TRACE(0, "UString::append(%.*S,%u)", n, s, n) // problem with sanitize address
+      U_TRACE(0, "UString::append(%.*S,%u)", n, s, n)
 
       if (n)
          {
@@ -1656,7 +1656,7 @@ public:
    char  c_char(uint32_t pos) const    { return rep->at(pos); }
    char* c_pointer(uint32_t pos) const { return (char*)rep->c_pointer(pos); }
 
-          uint32_t remain(  const char* ptr) const { return rep->remain(ptr); }
+         ptrdiff_t remain(  const char* ptr) const { return rep->remain(ptr); }
    __pure uint32_t distance(const char* ptr) const { return rep->distance(ptr); }
 
    void setFromInode(uint64_t* p)  { (void) replace((const char*)p, sizeof(uint64_t)); }

@@ -142,7 +142,7 @@ U_EXPORT void        u_printSize(char* restrict buffer, uint64_t bytes); /* prin
 U_EXPORT char*       u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
 U_EXPORT bool        u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
 U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
-U_EXPORT uint32_t    u_findEndHeader( const char* restrict s, uint32_t n);        /* find sequence of U_CRLF2 or U_LF2 */
+U_EXPORT uint32_t    u_findEndHeader( const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 or U_LF2 */
 U_EXPORT uint32_t    u_findEndHeader1(const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 */
 U_EXPORT const char* u_get_mimetype(const char* restrict suffix, int* pmime_index);
 

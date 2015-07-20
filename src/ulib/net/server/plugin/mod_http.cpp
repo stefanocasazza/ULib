@@ -348,6 +348,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x)
          {
+         UServer_Base::update_date  =
          UServer_Base::update_date2 = true;
 
          uint32_t size = cfg.readLong(*UString::str_LOG_FILE_SZ);
@@ -446,10 +447,17 @@ int UHttpPlugIn::handlerRun() // NB: we use this method because now we have the 
 
    if (UServer_Base::vplugin_name->last() == *UString::str_http)
       {
+      UServer_Base::update_date  =
       UServer_Base::update_date3 = true;
 
-      UClientImage_Base::iov_vec[1].iov_base = (caddr_t) UServer_Base::ptr_static_date->date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n...
+      UClientImage_Base::iov_vec[1].iov_base = (caddr_t)ULog::date.date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n...
       UClientImage_Base::iov_vec[1].iov_len  = 6+29+2+12+2+17+2;
+
+#  if defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+      U_INTERNAL_ASSERT_POINTER(u_pthread_time)
+
+      UClientImage_Base::iov_vec[1].iov_base = (caddr_t)UServer_Base::ptr_shared_data->log_date_shared.date3;
+#  endif
 
       U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %.*S UClientImage_Base::iov_vec[1] = %.*S",
                        UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base,

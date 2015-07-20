@@ -282,7 +282,7 @@ __pure uint32_t UVector<UString>::find(const UString& str, bool ignore_case)
 
 // Check equality with string at pos
 
-bool UVector<UString>::isEqual(uint32_t pos, const UString& str, bool ignore_case)
+__pure bool UVector<UString>::isEqual(uint32_t pos, const UString& str, bool ignore_case)
 {
    U_TRACE(0, "UVector<UString>::isEqual(%u,%V,%b)", pos, str.rep, ignore_case)
 

@@ -19,6 +19,10 @@
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
 
+#ifdef USE_LIBUUID
+#  include <uuid/uuid.h>
+#endif
+
 unsigned char UServices::key[16];
 
 /* coverity[+alloc] */
@@ -222,13 +226,15 @@ int UServices::askToLDAP(UString* pinput, UHashMap<UString>* ptable, const char*
    U_RETURN(0);
 }
 
+// creat a new unique UUID value - 8 bytes (64 bits) long
+
 uint64_t UServices::getUniqUID()
 {
    U_TRACE(0, "UServices::getUniqUID()")
 
    static uint64_t unique_num;
 
-   if (unique_num == 0) unique_num = (uint64_t)u_now->tv_usec;
+   if (unique_num == 0) unique_num = (uint64_t)u_seed_hash;
 
    uint64_t _uid = (((uint64_t)u_pid) << 56)                               |
                   ((((uint64_t)u_now->tv_sec) & (0xfffffULL << 20)) << 16) |
@@ -237,26 +243,74 @@ uint64_t UServices::getUniqUID()
    U_RETURN(_uid);
 }
 
-#ifdef USE_LIBUUID
 // creat a new unique UUID value - 16 bytes (128 bits) long
 // return from the binary representation a 36-byte string (plus tailing '\0') of the form 1b4e28ba-2fa1-11d2-883f-0016d3cca427
-
-uuid_t UServices::uuid; // typedef unsigned char uuid_t[16];
 
 UString UServices::getUUID()
 {
    U_TRACE(1, "UServices::getUUID()")
 
-   UString id(37U);
+   UString buffer(36U);
+   char* id = buffer.data();
 
-   U_SYSCALL_VOID(uuid_generate, "%p", uuid);
-   U_SYSCALL_VOID(uuid_unparse,  "%p", uuid, id.data());
+#ifdef USE_LIBUUID
+   uuid_t uuid; // typedef unsigned char uuid_t[16];
 
-   id.size_adjust(36U);
+   U_SYSCALL_VOID(uuid_generate, "%p",    uuid);
+   U_SYSCALL_VOID(uuid_unparse,  "%p,%p", uuid, id);
+#else
+   static unsigned short clock_seq;
 
-   U_RETURN_STRING(id);
-}
+   unsigned short clock_seq_low        = ++clock_seq       & 0xff;
+   unsigned short clock_seq_hi_variant =  (clock_seq >> 8) & 0x3f;
+
+   uint64_t node = getUniqUID(),
+            ossp_time = (((uint64_t)u_now->tv_sec + (141427ULL * 24ULL * 60ULL * 60ULL)) * 10000000ULL) + (u_now->tv_usec > 0 ? u_now->tv_usec * 10 : 0);
+
+   uint32_t time_low            = htonl( ossp_time        & 0xffffffff),
+            time_mid            = htons((ossp_time >> 32) & 0x0000ffff),
+            time_hi_and_version = htons((ossp_time >> 48) & 0x00000fff);
+
+#define U_APPEND_HEX(value, offset) \
+   *id++ = u_hex_upper[(((char*)&value)[offset] >> 4) & 0x0F]; \
+   *id++ = u_hex_upper[(((char*)&value)[offset]     ) & 0x0F];
+
+   U_APPEND_HEX(time_low, 0);
+   U_APPEND_HEX(time_low, 1);
+   U_APPEND_HEX(time_low, 2);
+   U_APPEND_HEX(time_low, 3);
+
+   *id++ = '-';
+
+   U_APPEND_HEX(time_mid, 0);
+   U_APPEND_HEX(time_mid, 1);
+
+   *id++ = '-';
+
+   U_APPEND_HEX(time_hi_and_version, 0);
+   U_APPEND_HEX(time_hi_and_version, 1);
+
+   *id++ = '-';
+
+   U_APPEND_HEX(clock_seq_hi_variant, 0);
+   U_APPEND_HEX(clock_seq_low,        0);
+
+   *id++ = '-';
+
+   U_APPEND_HEX(node, 0);
+   U_APPEND_HEX(node, 1);
+   U_APPEND_HEX(node, 2);
+   U_APPEND_HEX(node, 3);
+   U_APPEND_HEX(node, 4);
+   U_APPEND_HEX(node, 5);
+
+#undef U_APPEND_HEX(value, offset)
 #endif
+
+   buffer.size_adjust(36U);
+
+   U_RETURN_STRING(buffer);
+}
 
 #ifdef USE_LIBSSL
 #  include <openssl/err.h>

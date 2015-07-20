@@ -139,7 +139,7 @@ public:
       {
       U_TRACE(0, "UTimeDate::updateTime(%.5S)", ptr)
 
-      U_INTERNAL_ASSERT_DIFFERS(u_now->tv_sec % U_ONE_HOUR_IN_SECOND, 0)
+      U_INTERNAL_ASSERT(u_now->tv_sec % U_ONE_HOUR_IN_SECOND)
 
       U_NUM2STR16(ptr, (u_now->tv_sec / 60) % 60);
       U_NUM2STR16(ptr+3,u_now->tv_sec       % 60);
