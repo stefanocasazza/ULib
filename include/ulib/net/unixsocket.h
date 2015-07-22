@@ -86,7 +86,7 @@ public:
 
    // VIRTUAL METHOD
 
-   virtual bool connectServer(const UString& pathname, unsigned int iServPort, int timeoutMS = 0) U_DECL_OVERRIDE;
+   virtual bool connectServer(const UString& pathname, unsigned int iServPort, int timeoutMS = 0) U_DECL_FINAL;
 
    // DEBUG
 

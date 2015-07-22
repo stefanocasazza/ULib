@@ -307,6 +307,9 @@ public:
                         num_login, num_auth_domain_ALL, num_auth_domain_FICARD, traffic_done);
       }
 
+   // STREAMS
+
+#if defined(U_STDCPP_ENABLE)
    void fromStream(istream& is)
       {
       U_TRACE(5, "WiAuthAccessPoint::fromStream(%p)", &is)
@@ -333,9 +336,6 @@ public:
          >> traffic_done;
       }
 
-   // STREAMS
-
-#if defined(U_STDCPP_ENABLE)
    friend istream& operator>>(istream& is, WiAuthAccessPoint& _ap) { _ap.fromStream(is); return is; }
 
 #  ifdef DEBUG

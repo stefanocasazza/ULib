@@ -134,7 +134,7 @@ protected:
 #ifdef USE_LIBZ
    UString*   buf_path_compress;
    uint32_t index_path_compress;
-   bool checkForLogRotateDataToWrite();
+   void checkForLogRotateDataToWrite();
 #endif
 
    static long tv_sec_old_1, tv_sec_old_2, tv_sec_old_3;

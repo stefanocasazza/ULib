@@ -208,9 +208,13 @@ void ULog::initDate()
 
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-   (void) u_strftime2(date.date1, 17,                     "%d/%m/%y %T",                                                  u_now->tv_sec + u_now_adjust);
-   (void) u_strftime2(date.date2, 26,                     "%d/%b/%Y:%T %z",                                               u_now->tv_sec + u_now_adjust);
-   (void) u_strftime2(date.date3, 6+29+2+12+2+17+2, "Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n", u_now->tv_sec);
+   tv_sec_old_1 =
+   tv_sec_old_2 =
+   tv_sec_old_3 = u_now->tv_sec;
+
+   (void) u_strftime2(date.date1, 17,                     "%d/%m/%y %T",                                                  tv_sec_old_1 + u_now_adjust);
+   (void) u_strftime2(date.date2, 26,                     "%d/%b/%Y:%T %z",                                               tv_sec_old_2 + u_now_adjust);
+   (void) u_strftime2(date.date3, 6+29+2+12+2+17+2, "Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n", tv_sec_old_3);
 }
 
 void ULog::startup()
@@ -279,15 +283,15 @@ void ULog::updateDate1()
 #ifdef ENABLE_THREAD
    if (u_pthread_time)
       {
-#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
       (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
-#  endif
 
       if (tv_sec_old_1 != u_now->tv_sec)
          {
          long tv_sec = u_now->tv_sec;
 
          U_INTERNAL_DUMP("tv_sec_old_1 = %lu u_now->tv_sec = %lu", tv_sec_old_1, tv_sec)
+
+         U_INTERNAL_ASSERT_MINOR(tv_sec_old_1, tv_sec)
 
          if ((tv_sec - tv_sec_old_1) != 1 ||
              (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
@@ -307,9 +311,7 @@ void ULog::updateDate1()
          U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_1)
          }
 
-#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
       (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
-#  endif
       }
    else
 #endif
@@ -323,6 +325,8 @@ void ULog::updateDate1()
       long tv_sec = u_now->tv_sec;
 
       U_INTERNAL_DUMP("tv_sec_old_1 = %lu u_now->tv_sec = %lu", tv_sec_old_1, tv_sec)
+
+      U_INTERNAL_ASSERT_MINOR(tv_sec_old_1, tv_sec)
 
       if ((tv_sec - tv_sec_old_1) != 1 ||
           (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
@@ -355,15 +359,15 @@ void ULog::updateDate2()
 #ifdef ENABLE_THREAD
    if (u_pthread_time)
       {
-#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
       (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
-#  endif
 
       if (tv_sec_old_2 != u_now->tv_sec)
          {
          long tv_sec = u_now->tv_sec;
 
          U_INTERNAL_DUMP("tv_sec_old_2 = %lu u_now->tv_sec = %lu", tv_sec_old_2, tv_sec)
+
+         U_INTERNAL_ASSERT_MINOR(tv_sec_old_2, tv_sec)
 
          if ((tv_sec - tv_sec_old_2) != 1 ||
              (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
@@ -383,9 +387,7 @@ void ULog::updateDate2()
          U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_2)
          }
 
-#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
       (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
-#  endif
       }
    else
 #endif
@@ -399,6 +401,8 @@ void ULog::updateDate2()
       long tv_sec = u_now->tv_sec;
 
       U_INTERNAL_DUMP("tv_sec_old_2 = %lu u_now->tv_sec = %lu", tv_sec_old_2, tv_sec)
+
+      U_INTERNAL_ASSERT_MINOR(tv_sec_old_2, tv_sec)
 
       if ((tv_sec - tv_sec_old_2) != 1 ||
           (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
@@ -432,15 +436,15 @@ void ULog::updateDate3()
 #ifdef ENABLE_THREAD
    if (u_pthread_time)
       {
-#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
       (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
-#  endif
 
       if (tv_sec_old_3 != u_now->tv_sec)
          {
          long tv_sec = u_now->tv_sec;
 
          U_INTERNAL_DUMP("tv_sec_old_3 = %lu u_now->tv_sec = %lu", tv_sec_old_3, tv_sec)
+
+         U_INTERNAL_ASSERT_MINOR(tv_sec_old_3, tv_sec)
 
          if ((tv_sec - tv_sec_old_3) != 1 ||
              (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
@@ -460,9 +464,7 @@ void ULog::updateDate3()
          U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_3)
          }
 
-#  if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
       (void) U_SYSCALL(pthread_rwlock_unlock, "%p", prwlock);
-#  endif
       }
    else
 #endif
@@ -476,6 +478,8 @@ void ULog::updateDate3()
       long tv_sec = u_now->tv_sec;
 
       U_INTERNAL_DUMP("tv_sec_old_3 = %lu u_now->tv_sec = %lu", tv_sec_old_3, tv_sec)
+
+      U_INTERNAL_ASSERT_MINOR(tv_sec_old_3, tv_sec)
 
       if ((tv_sec - tv_sec_old_3) != 1 ||
           (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
@@ -608,7 +612,7 @@ void ULog::write(const struct iovec* iov, int n)
 
             if (file_ptr <= log_gzip_sz)
                {
-               (void) checkForLogRotateDataToWrite(); // check if there are previous data to write
+               checkForLogRotateDataToWrite(); // check if there are previous data to write
 
                ptr_log_data->gzip_len = u_gz_deflate(UFile::map, file_ptr, (char*)ptr_log_data+sizeof(log_data), true);
 
@@ -970,7 +974,7 @@ void ULog::closeLog()
    // msync();
 
 #  ifdef USE_LIBZ
-      (void) checkForLogRotateDataToWrite(); // check for previous data to write
+      checkForLogRotateDataToWrite(); // check for previous data to write
 #  endif
 
       U_INTERNAL_ASSERT_EQUALS(ptr_log_data->gzip_len, 0)
@@ -1023,7 +1027,7 @@ UString ULog::getDirLogGz()
    U_RETURN_STRING(result);
 }
 
-bool ULog::checkForLogRotateDataToWrite()
+void ULog::checkForLogRotateDataToWrite()
 {
    U_TRACE(0, "ULog::checkForLogRotateDataToWrite()")
 
@@ -1038,11 +1042,7 @@ bool ULog::checkForLogRotateDataToWrite()
       (void) UFile::writeTo(*buf_path_compress, (char*)ptr_log_data+sizeof(log_data), ptr_log_data->gzip_len, false, false);
 
       ptr_log_data->gzip_len = 0;
-
-      U_RETURN(true);
       }
-
-   U_RETURN(false);
 }
 #endif
 

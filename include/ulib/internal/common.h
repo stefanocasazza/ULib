@@ -75,14 +75,14 @@ extern U_EXPORT void  operator delete[](void*);
 #endif
 
 #ifdef U_COMPILER_EXPLICIT_OVERRIDES
-# define U_DECL_OVERRIDE override
 # define U_DECL_FINAL final
+# define U_DECL_OVERRIDE override
 #else
-# ifndef U_DECL_OVERRIDE
-# define U_DECL_OVERRIDE
-# endif
 # ifndef U_DECL_FINAL
 # define U_DECL_FINAL
+# endif
+# ifndef U_DECL_OVERRIDE
+# define U_DECL_OVERRIDE
 # endif
 #endif
 

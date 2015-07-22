@@ -1081,7 +1081,10 @@ next:
 
 #  ifdef DEBUG
       UDirWalk::setFollowLinks();
+
+      U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 #  endif
+
       UDirWalk::setRecurseSubDirs();
       UDirWalk::setSuffixFileType(U_CONSTANT_TO_PARAM("usp|c|cgi|template|" U_LIB_SUFFIX));
 
@@ -1123,6 +1126,10 @@ next:
    for (uint32_t i = 0, v = vec.size(); i < v; ++i)
       {
       item = vec[i];
+
+#  ifdef DEBUG
+      if (UStringExt::endsWith(item, U_CONSTANT_TO_PARAM(".usp.swp"))) continue;
+#  endif
 
       // NB: we can have duplication (symlink, cache_file_store)
 
@@ -2922,40 +2929,92 @@ next:
 
 // manage dynamic page request (CGI - C/ULib Servlet Page - RUBY - PHP)
 
-bool UHTTP::checkIfSourceHasChangedAndCompileUSP(UServletPage* usp_page)
+bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
 {
-   U_TRACE(1, "UHTTP::checkIfSourceHasChangedAndCompileUSP(%p)", usp_page)
+   U_TRACE(1, "UHTTP::checkIfSourceHasChangedAndCompileUSP()")
 
 #if defined(DEBUG) && !defined(U_STATIC_ONLY)
    checkForPathName();
 
-   U_INTERNAL_DUMP("pathname = %V file = %.*S", pathname->rep, U_FILE_TO_TRACE(*file))
+   UString suffix = file->getSuffix();
 
-   struct stat st;
+   U_INTERNAL_DUMP("pathname = %V file = %.*S suffix = %V", pathname->rep, U_FILE_TO_TRACE(*file), suffix.rep)
+
+   const char* ptr  = file->getPathRelativ();
+   uint32_t sz, len = file->getPathRelativLen() - (sz = suffix.size());
+
+   U_INTERNAL_DUMP("ptr(%u) = %#.*S", len, len, ptr)
+
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
+
    char buffer[U_PATH_MAX];
-   uint32_t len = u__snprintf(buffer, sizeof(buffer), "%.*s.usp", U_FILE_TO_TRACE(*file));
+   char run_dynamic_page[128];
+   UServletPage* usp_page = (UServletPage*)file_data->ptr;
 
-   if (cache_file->at(buffer, len)                &&
-       U_SYSCALL(stat, "%S,%p", buffer, &st) == 0 &&
-       st.st_mtime > file->st_mtime)
+   if (suffix.empty())
       {
-      usp_page->UDynamic::close();
+      struct stat st;
 
-      usp_page->runDynamicPage = 0;
+      (void) u__snprintf(buffer, sizeof(buffer), "%.*s.usp", U_FILE_TO_TRACE(*file));
 
-      bool ko = (compileUSP(U_FILE_TO_PARAM(*file)) == false ||
-                 usp_page->UDynamic::load(buffer)   == false);
-
-      if (ko)
+      if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0 &&
+          st.st_mtime > file->st_mtime)
          {
-         setInternalError();
+         U_INTERNAL_ASSERT_POINTER(usp_page)
 
-         U_RETURN(false);
+         usp_page->UDynamic::close();
+
+         usp_page->runDynamicPage = 0;
+
+         // NB: dlopen() fail if the module name is not prefixed with "./"...
+
+         U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
+
+         (void) u__snprintf(buffer, sizeof(buffer), "./%.*s.%s", len, ptr, U_LIB_SUFFIX);
+
+         goto compile;
          }
 
-      usp_page->runDynamicPage = (vPFi)(*usp_page)["runDynamicPage"];
+      U_RETURN(true);
+      }
 
-      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
+   if (suffix.equal(U_CONSTANT_TO_PARAM("usp")))
+      {
+      if (U_HTTP_QUERY_STREQ("_nav_")) U_RETURN(false);
+
+      ++sz; // NB: we must avoid the point '.' before the suffix...
+
+      // NB: dlopen() fail if the module name is not prefixed with "./"...
+
+      U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
+
+      (void) u__snprintf(buffer, sizeof(buffer), "./%.*s%s", len, ptr, U_LIB_SUFFIX);
+
+      if (usp_page == 0)
+         {
+         usp_page = U_NEW(UHTTP::UServletPage);
+
+compile: if (compileUSP(ptr, len) == false)
+            {
+err:        setInternalError();
+
+            U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+
+            U_RETURN(false);
+            }
+         }
+
+      if (usp_page->UDynamic::load(buffer) == false) goto err;
+
+      UString file_name = UStringExt::basename(file->getPath());
+
+      (void) u__snprintf(run_dynamic_page, sizeof(run_dynamic_page), "runDynamicPage_%.*s", file_name.size() - sz, file_name.data());
+
+      usp_page->runDynamicPage = (vPFi)(*usp_page)[run_dynamic_page];
+
+      if (usp_page->runDynamicPage == 0) goto err;
+
+      file_data->ptr = usp_page;
       }
 #endif
 
@@ -3122,6 +3181,8 @@ U_NO_EXPORT bool UHTTP::callService()
    pathname->setBuffer(U_CAPACITY);
 
    const char* psuffix = u_getsuffix(U_FILE_TO_PARAM(*file));
+
+   U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 
    if (psuffix) pathname->snprintf("%.*s",    U_FILE_TO_TRACE(*file));
    else         pathname->snprintf("%.*s.%s", U_FILE_TO_TRACE(*file), U_LIB_SUFFIX);
@@ -3727,15 +3788,15 @@ file_in_cache:
 
       if (u_is_usp(mime_index))
          {
+#     if defined(DEBUG) && !defined(U_STATIC_ONLY)
+         if (checkIfSourceHasChangedAndCompileUSP())
+#     endif
+         {
          UServletPage* usp_page = (UServletPage*)file_data->ptr;
 
          U_INTERNAL_ASSERT_POINTER(usp_page)
          U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
 
-#     if defined(DEBUG) && !defined(U_STATIC_ONLY)
-         if (checkIfSourceHasChangedAndCompileUSP(usp_page))
-#     endif
-         {
          U_SET_MODULE_NAME(usp);
 
          usp_page->runDynamicPage(0);
@@ -3743,7 +3804,11 @@ file_in_cache:
          if (U_ClientImage_parallelization != 2) setDynamicResponse(); // 2 => parent of parallelization
 
          U_RESET_MODULE_NAME;
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
+
+         if (U_ClientImage_state != U_PLUGIN_HANDLER_ERROR) goto from_cache;
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
@@ -3794,13 +3859,12 @@ file_in_cache:
          U_INTERNAL_DUMP("st_mode = %d st_size = %I st_mtime = %ld", file->st_mode, file->st_size, file->st_mtime)
          }
 
-      // NB: if we can't service the content of file directly from cache, set status to 'file exist and need to be processed'...
-
+from_cache:
       if (isGETorHEAD()      == false ||
           isDataFromCache()  == false ||
           processFileCache() == false)
          {
-file_exist_and_need_to_be_processed:
+file_exist_and_need_to_be_processed: // NB: if we can't service the content of file directly from cache, set status to 'file exist and need to be processed'...
 
          UClientImage_Base::setRequestNeedProcessing();
          }
@@ -3961,14 +4025,14 @@ int UHTTP::processRequest()
       {
       // NB: may be we want a directory list...
 
-      /*
+#  ifndef DEBUG
       if (u_fnmatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("servlet"), 0))
          {
          setForbidden(); // set forbidden error response...
-
+   
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
-      */
+#  endif
 
       // Check if there is an index file (index.html) in the directory... (we check in the CACHE FILE SYSTEM)
 
@@ -6915,15 +6979,17 @@ bool UHTTP::callInitForAllUSP(UStringRep* key, void* value)
 
    UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
 
-   if (cptr->link == false &&
+   if (cptr->ptr           &&
+       cptr->link == false &&
        cptr->mime_index == U_usp)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
       U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
-      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
-
+#  ifdef DEBUG
+      if (usp_page->runDynamicPage)
+#  endif
       usp_page->runDynamicPage(U_DPAGE_INIT);
       }
 
@@ -6939,15 +7005,17 @@ bool UHTTP::callEndForAllUSP(UStringRep* key, void* value)
 
    UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
 
-   if (cptr->link == false &&
+   if (cptr->ptr           &&
+       cptr->link == false &&
        cptr->mime_index == U_usp)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
       U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
-      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
-
+#  ifdef DEBUG
+      if (usp_page->runDynamicPage)
+#  endif
       usp_page->runDynamicPage(U_DPAGE_DESTROY);
       }
 
@@ -6963,15 +7031,17 @@ bool UHTTP::callResetForAllUSP(UStringRep* key, void* value)
 
    UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
 
-   if (cptr->link == false &&
+   if (cptr->ptr           &&
+       cptr->link == false &&
        cptr->mime_index == U_usp)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
       U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
-      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
-
+#  ifdef DEBUG
+      if (usp_page->runDynamicPage)
+#  endif
       usp_page->runDynamicPage(U_DPAGE_RESET);
       }
 
@@ -6987,15 +7057,17 @@ bool UHTTP::callSigHUPForAllUSP(UStringRep* key, void* value)
 
    UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
 
-   if (cptr->link == false &&
+   if (cptr->ptr           &&
+       cptr->link == false &&
        cptr->mime_index == U_usp)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
       U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
-      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
-
+#  ifdef DEBUG
+      if (usp_page->runDynamicPage)
+#  endif
       usp_page->runDynamicPage(U_DPAGE_SIGHUP);
       }
 
@@ -7011,15 +7083,17 @@ bool UHTTP::callAfterForkForAllUSP(UStringRep* key, void* value)
 
    UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
 
-   if (cptr->link == false &&
+   if (cptr->ptr           &&
+       cptr->link == false &&
        cptr->mime_index == U_usp)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
       U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
-      U_INTERNAL_ASSERT_POINTER(usp_page->runDynamicPage)
-
+#  ifdef DEBUG
+      if (usp_page->runDynamicPage)
+#  endif
       usp_page->runDynamicPage(U_DPAGE_FORK);
       }
 
@@ -7073,7 +7147,8 @@ U_NO_EXPORT bool UHTTP::checkIfUSP(UStringRep* key, void* value)
 
    U_INTERNAL_DUMP("cptr->link = %b cptr->mime_index= %C", cptr->link, cptr->mime_index)
 
-   if (cptr->link == false &&
+   if (cptr->ptr           &&
+       cptr->link == false &&
        cptr->mime_index == U_usp)
       {
 #  ifdef DEBUG
@@ -7120,6 +7195,8 @@ U_NO_EXPORT bool UHTTP::compileUSP(const char* path, uint32_t len)
    static int fd_stderr;
 
    UString command(200U);
+
+   U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 
    command.snprintf("usp_compile.sh %.*s %s", len, path, U_LIB_SUFFIX);
 
@@ -7299,18 +7376,19 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
       goto end;
       }
 
-   // NB: when a pathfile ends with "*.so|servlet/*.[usp|c|so|dll]" it is assumed to be a dynamic page...
+   // NB: when a pathfile ends with "*.[so|usp|c|dll]" it is assumed to be a dynamic page...
 
-   if (ptr                                                                                &&
-       (UServices::dosMatch(file_name,              U_CONSTANT_TO_PARAM("*.so"),       0) ||
-        UServices::dosMatch(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("*servlet/*"), 0)))
+   if (ptr &&
+       UServices::dosMatchWithOR(file_name, U_CONSTANT_TO_PARAM("*.so|*.usp|*.c|*.dll"), 0))
       {
-      uint32_t len;
+      uint32_t sz, len;
       char buffer[U_PATH_MAX];
       char run_dynamic_page[128];
 
       bool usp_dll = false,
            usp_src = suffix->equal(U_CONSTANT_TO_PARAM("usp"));
+
+      U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 
       if ( usp_src ||
           (usp_dll = suffix->equal(U_CONSTANT_TO_PARAM(U_LIB_SUFFIX))))
@@ -7323,45 +7401,45 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
          UServletPage* usp_page;
 
          ptr = file->getPathRelativ();
-         len = file->getPathRelativLen() - suffix->size();
+         len = file->getPathRelativLen()-(sz = suffix->size());
 
          U_INTERNAL_DUMP("ptr(%u) = %.*S", len, len, ptr)
 
          U_INTERNAL_ASSERT_MAJOR(len, 0)
+         U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 
          (void) u__snprintf(buffer, sizeof(buffer), "%.*s%s", len, ptr, usp_dll ? "usp" : U_LIB_SUFFIX);
 
          exist = (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0);
 
-         if (((usp_dll && ( exist && st.st_mtime > file->st_mtime))  ||
-              (usp_src && (!exist || st.st_mtime < file->st_mtime))) && compileUSP(ptr, len-1) == false)
+         if ((exist && getUSP(ptr, len-1))                            || // NB: check to avoid duplication...
+             (((usp_dll && ( exist && st.st_mtime > file->st_mtime))  ||
+               (usp_src && (!exist || st.st_mtime < file->st_mtime))) &&
+              compileUSP(ptr, len-1) == false))
             {
-            goto error;
+            goto check;
             }
 
-         // NB: check to avoid duplication...
+         // NB: dlopen() fail if the name of the module is not prefixed with "./"...
 
-         if (getUSP(ptr, len-1)) goto error;
+         U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 
-         if (usp_dll)
-            {
-            // NB: dlopen() fail if the name is not prefixed with "./"...
-
-            (void) u__snprintf(buffer, sizeof(buffer), "./%.*s%s", len, ptr, U_LIB_SUFFIX);
-            }
+         (void) u__snprintf(buffer, sizeof(buffer), "./%.*s%s", len, ptr, U_LIB_SUFFIX);
 
          usp_page = U_NEW(UHTTP::UServletPage);
 
          if (usp_page->UDynamic::load(buffer) == false)
             {
-no_usp:     U_SRV_LOG("WARNING: USP load failed: %S", buffer);
+fail:       U_SRV_LOG("WARNING: USP load failed: %S", buffer);
 
             delete usp_page;
+
+check:      if (usp_src) goto end;
 
             goto error;
             }
 
-         (void) u__snprintf(run_dynamic_page, sizeof(run_dynamic_page), "runDynamicPage_%.*s", file_name.size()-suffix->size()-1,  file_name.data());
+         (void) u__snprintf(run_dynamic_page, sizeof(run_dynamic_page), "runDynamicPage_%.*s", file_name.size()-sz-1, file_name.data());
 
          usp_page->runDynamicPage = (vPFi)(*usp_page)[run_dynamic_page];
 
@@ -7369,7 +7447,7 @@ no_usp:     U_SRV_LOG("WARNING: USP load failed: %S", buffer);
             {
             usp_page->UDynamic::close();
 
-            goto no_usp;
+            goto fail;
             }
 
          file_data->ptr        = usp_page;
@@ -7381,7 +7459,7 @@ no_usp:     U_SRV_LOG("WARNING: USP load failed: %S", buffer);
          link = (cache_file->callForAllEntry(checkIfUSPLink), file_data->link) ? " (link)" : "";
 #     endif
 
-         (void) pathname->replace(buffer + (usp_dll ? 2 : 0), len-1);
+         (void) pathname->replace(buffer+2, len-1);
 
          U_SRV_LOG("USP found: %S%s, USP service registered (URI): %V", buffer, link, pathname->rep);
 
@@ -7829,14 +7907,15 @@ nocontent:
 
          if (*suffix)
             {
-            if (suffix->equal(U_CONSTANT_TO_PARAM("usp")))
-               {
-               UClientImage_Base::setRequestNeedProcessing();
-
-               return;
-               }
+            U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 
             if (suffix->equal(U_CONSTANT_TO_PARAM(U_LIB_SUFFIX))) goto nocontent;
+
+            if (U_HTTP_QUERY_STREQ("_nav_") &&
+                suffix->equal(U_CONSTANT_TO_PARAM("usp")))
+               {
+               UClientImage_Base::setRequestNeedProcessing();
+               }
             }
 
          (void) pathname->replace(U_FILE_TO_PARAM(*file));

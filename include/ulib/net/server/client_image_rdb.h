@@ -25,7 +25,7 @@
 
 class URDB;
 
-class U_EXPORT URDBClientImage : public UClientImage<UTCPSocket> {
+class U_EXPORT URDBClientImage U_DECL_FINAL : public UClientImage<UTCPSocket> {
 public:
 
    URDBClientImage() : UClientImage<UTCPSocket>()

@@ -69,21 +69,10 @@ UString UDataSession::setKeyIdDataSession(uint32_t counter)
    U_RETURN_STRING(keyid);
 }
 
-// define method VIRTUAL of class UDataStorage
-
-void UDataSession::clear()
-{
-   U_TRACE(0, "UDataSession::clear()")
-
-   vec_var->clear();
-}
-
 #ifdef U_STDCPP_ENABLE
 void UDataSession::toStream(ostream& os)
 {
    U_TRACE(0, "UDataSession::toStream(%p)", &os)
-
-   U_ASSERT(vec_var->empty())
 
    os.put('{');
    os.put(' ');

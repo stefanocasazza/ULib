@@ -28247,18 +28247,19 @@ $as_echo "$ulib_cc_flag" >&6; }
 
 	MAYBE_FLAGS="-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
 					 -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat \
-					 -Wformat-extra-args -Wenum-compare"
+					 -Wformat-extra-args -Wenum-compare -Wswitch-bool -Wlogical-not-parentheses -Wsizeof-array-argument -Wbool-compare"
 	# -------------------------------------------------------------------------------------
 	# to turn various gcc/glibc-specific preprocessor checks
 	# -------------------------------------------------------------------------------------
 	# -Wno-format -Wno-format-extra-args
+	# -Wsuggest-final-methods -Wsuggest-final-types
 	# -------------------------------------------------------------------------------------
 
 	# -Wcast-qual
 	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
 						 -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
 
-	CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor"
+	CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor -Wodr"
 
 	case "$gcc_version" in
 		2*|3*|4.0*|4.1*|4.2*)

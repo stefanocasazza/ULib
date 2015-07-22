@@ -216,7 +216,12 @@ public:
 
    // define method VIRTUAL of class UDataStorage
 
-   virtual void clear();
+   virtual void clear() U_DECL_OVERRIDE
+      {
+      U_TRACE(0, "UDataSession::clear()")
+
+      vec_var->clear();
+      }
 
    // STREAM
 

@@ -243,15 +243,15 @@ public:
 
    // VIRTUAL METHOD
 
-   virtual int send(const char* pData,   uint32_t iDataLen) U_DECL_OVERRIDE;
-   virtual int recv(      void* pBuffer, uint32_t iBufferLen) U_DECL_OVERRIDE;
+   virtual int send(const char* pData,   uint32_t iDataLen) U_DECL_FINAL;
+   virtual int recv(      void* pBuffer, uint32_t iBufferLen) U_DECL_FINAL;
 
    /**
     * This method is called to connect the socket to a server SSL that is specified
     * by the provided host name and port number. We call the SSL_connect() function to perform the connection
     */
 
-   virtual bool connectServer(const UString& server, unsigned int iServPort, int timeoutMS = 0) U_DECL_OVERRIDE;
+   virtual bool connectServer(const UString& server, unsigned int iServPort, int timeoutMS = 0) U_DECL_FINAL;
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;

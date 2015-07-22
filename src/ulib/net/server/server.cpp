@@ -164,7 +164,7 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #ifdef ENABLE_THREAD
 #  include <ulib/thread.h>
 
-class UTimeThread : public UThread {
+class UTimeThread U_DECL_FINAL : public UThread {
 public:
 
    UTimeThread() : UThread(true, false) {}
@@ -186,51 +186,47 @@ public:
          (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
 
 #     if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
-         if (UServer_Base::log)             (void) UServer_Base::log->checkForLogRotateDataToWrite();
-         if (UServer_Base::apache_like_log) (void) UServer_Base::apache_like_log->checkForLogRotateDataToWrite();
+         if (UServer_Base::log)                         UServer_Base::log->checkForLogRotateDataToWrite();
+         if (UServer_Base::apache_like_log) UServer_Base::apache_like_log->checkForLogRotateDataToWrite();
 #     endif
 
          U_INTERNAL_DUMP("u_timeval.tv_sec = %ld u_now->tv_sec = %ld", u_timeval.tv_sec, u_now->tv_sec)
 
-         if (u_timeval.tv_sec == u_now->tv_sec)
+         (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+
+         if (u_timeval.tv_sec != u_now->tv_sec)
             {
-            (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+            u_timeval.tv_sec = u_now->tv_sec;
 
-            if (u_timeval.tv_sec == u_now->tv_sec) continue;
-            }
-
-         U_INTERNAL_ASSERT_DIFFERS(u_now->tv_sec, u_timeval.tv_sec)
-
-         u_timeval.tv_sec = u_now->tv_sec;
-
-         if (UServer_Base::update_date)
-            {
-#        if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
-            (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
-#        endif
-
-            if ((u_timeval.tv_sec % U_ONE_HOUR_IN_SECOND) != 0)
+            if (UServer_Base::update_date)
                {
-               if (UServer_Base::update_date1) UTimeDate::updateTime(ULog::ptr_shared_date->date1 + 12);
-               if (UServer_Base::update_date2) UTimeDate::updateTime(ULog::ptr_shared_date->date2 + 15);
-               if (UServer_Base::update_date3) UTimeDate::updateTime(ULog::ptr_shared_date->date3 + 26);
-               }
-            else
-               {
-               if (UServer_Base::update_date1) (void) u_strftime2(ULog::ptr_shared_date->date1,     17, "%d/%m/%y %T",     u_timeval.tv_sec + u_now_adjust);
-               if (UServer_Base::update_date2) (void) u_strftime2(ULog::ptr_shared_date->date2,   26-6, "%d/%b/%Y:%T",     u_timeval.tv_sec + u_now_adjust); // %z in general don't change...
-               if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, "%a, %d %b %Y %T", u_timeval.tv_sec);                // GMT can't change...
-               }
+#           if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+               (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
+#           endif
 
-#        if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
-            (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
-#        endif
+               if ((u_timeval.tv_sec % U_ONE_HOUR_IN_SECOND) != 0)
+                  {
+                  if (UServer_Base::update_date1) UTimeDate::updateTime(ULog::ptr_shared_date->date1 + 12);
+                  if (UServer_Base::update_date2) UTimeDate::updateTime(ULog::ptr_shared_date->date2 + 15);
+                  if (UServer_Base::update_date3) UTimeDate::updateTime(ULog::ptr_shared_date->date3 + 26);
+                  }
+               else
+                  {
+                  if (UServer_Base::update_date1) (void) u_strftime2(ULog::ptr_shared_date->date1,     17, "%d/%m/%y %T",     u_timeval.tv_sec + u_now_adjust);
+                  if (UServer_Base::update_date2) (void) u_strftime2(ULog::ptr_shared_date->date2,   26-6, "%d/%b/%Y:%T",     u_timeval.tv_sec + u_now_adjust); // %z  don't change...
+                  if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, "%a, %d %b %Y %T", u_timeval.tv_sec);                // GMT can't change...
+                  }
+
+#           if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+               (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
+#           endif
+               }
             }
          }
       }
 };
 
-class UClientThread : public UThread {
+class UClientThread U_DECL_FINAL : public UThread {
 public:
 
    UClientThread() : UThread(true, false) {}
@@ -247,7 +243,7 @@ public:
 #include <ulib/net/tcpsocket.h>
 #include <ulib/net/client/client.h>
 
-class UOCSPStapling : public UThread {
+class UOCSPStapling U_DECL_FINAL : public UThread {
 public:
 
    UOCSPStapling() : UThread(true, false) {}
@@ -1558,10 +1554,9 @@ void UServer_Base::init()
       U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
       U_INTERNAL_ASSERT_EQUALS(ULog::ptr_shared_date, 0)
 
-                     u_now  = &(ptr_shared_data->now_shared);
-      ULog::ptr_shared_date = &(ptr_shared_data->log_date_shared);
+      *(u_now = &(ptr_shared_data->now_shared)) = u_timeval;
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+      ULog::ptr_shared_date = &(ptr_shared_data->log_date_shared);
 
       U_MEMCPY(ULog::ptr_shared_date, &ULog::date, sizeof(ULog::log_date));
       }

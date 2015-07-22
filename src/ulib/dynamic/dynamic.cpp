@@ -33,7 +33,9 @@ bool UDynamic::load(const char* pathname)
 #ifdef _MSWINDOWS_
    handle = ::LoadLibrary(pathname);
 #else
-   /* Perform lazy binding
+   /**
+    * --------------------------------------------------------------------
+    * Perform lazy binding
     * --------------------------------------------------------------------
     * Only resolve symbols as the code that references them is executed.
     * If the symbol is never referenced, then it is never resolved.

@@ -36,15 +36,15 @@ public:
       U_TRACE_REGISTER_OBJECT(0, USSLSession, "", 0)
       }
 
-   virtual ~USSLSession()
+   virtual ~USSLSession() U_DECL_FINAL
       {
       U_TRACE_UNREGISTER_OBJECT(0, USSLSession)
       }
 
    // define method VIRTUAL of class UDataStorage
 
-   virtual char* toBuffer();
-   virtual void  fromData(const char* ptr, uint32_t len);
+   virtual char* toBuffer() U_DECL_FINAL;
+   virtual void  fromData(const char* ptr, uint32_t len) U_DECL_FINAL;
 
    // SERVICES
 

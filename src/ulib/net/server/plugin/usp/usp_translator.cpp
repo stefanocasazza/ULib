@@ -30,7 +30,7 @@
 #include <ulib/application.h>
 
 #define USP_SESSION_INIT \
-"static void usp_init_%.*s()\n" \
+"\n\t\nstatic void usp_init_%.*s()\n" \
 "{\n" \
 "\tU_TRACE(5, \"::usp_init_%.*s()\")\n" \
 "\t\n" \
@@ -472,8 +472,8 @@ public:
          buffer.snprintf(USP_SESSION_INIT,
                          size, ptr,
                          size, ptr,
-                         (bsession ? "\n\tif (UHTTP::data_session == 0) UHTTP::data_session = U_NEW(UDataSession);\n\t" : ""),
-                         (bstorage ? "\n\tif (UHTTP::data_storage == 0) UHTTP::data_storage = U_NEW(UDataSession);\n\t" : ""));
+                         (bsession ? "\n\tif (UHTTP::data_session == 0)   UHTTP::data_session = U_NEW(UDataSession);\n\t" : ""),
+                         (bstorage ? "\n\tif (UHTTP::data_storage == 0) { UHTTP::data_storage = U_NEW(UDataSession); UHTTP::data_storage->setKeyId(); }\n\t" : ""));
 
          (void) declaration.append(buffer);
          }

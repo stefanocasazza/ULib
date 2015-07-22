@@ -1058,6 +1058,7 @@ private:
    static bool checkGetRequestIfRange() U_NO_EXPORT;
    static bool checkGetRequestIfModified() U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
+   static bool checkIfSourceHasChangedAndCompileUSP() U_NO_EXPORT;
    static void removeDataSession(const UString& token) U_NO_EXPORT;
    static bool checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
@@ -1068,7 +1069,6 @@ private:
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
    static bool checkDataSession(const UString& token, time_t expire) U_NO_EXPORT;
-   static bool checkIfSourceHasChangedAndCompileUSP(UServletPage* usp_page) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
 

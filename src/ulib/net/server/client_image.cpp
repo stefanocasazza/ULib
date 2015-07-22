@@ -135,12 +135,7 @@ UClientImage_Base::UClientImage_Base()
       {
       UServer_Base::pClientImage = this;
       UServer_Base::eClientImage = this + UNotifier::max_connection;
-
-      U_INTERNAL_DUMP("UServer_Base::pClientImage = %p UServer_Base::eClientImage = %p UNotifier::max_connection = %u",
-                       UServer_Base::pClientImage,     UServer_Base::eClientImage,     UNotifier::max_connection)
       }
-
-   U_INTERNAL_DUMP("new T[%u]: elem %u of %u", UNotifier::max_connection, (this - UServer_Base::pClientImage), UNotifier::max_connection)
 
 #ifndef U_HTTP2_DISABLE
    connection = U_NEW(UHTTP2::Connection);
@@ -1496,7 +1491,7 @@ bool UClientImage_Base::writeResponse()
 
 #  if defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
-      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, UServer_Base::ptr_shared_data->log_date_shared.date3)
+      U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::date.date3)
 

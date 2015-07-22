@@ -1935,7 +1935,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
  */
 
 #ifdef _MSWINDOWS_
-#  define U_PATH_DEFAULT "C:\\msys\\1.0\\bin;C:\\MinGW\\bin;C:\\windows;C:\\windows\\system;C:\\windows\\system32"
+#define U_PATH_DEFAULT "C:\\msys\\1.0\\bin;C:\\MinGW\\bin;C:\\windows;C:\\windows\\system;C:\\windows\\system32"
 
 static const char* u_check_for_suffix_exe(const char* restrict program)
 {
@@ -1959,7 +1959,7 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
    return program;
 }
 #else
-#  define U_PATH_DEFAULT "/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin"
+#define U_PATH_DEFAULT "/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin"
 #endif
 
 bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode)

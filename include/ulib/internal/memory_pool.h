@@ -481,10 +481,14 @@ public:
    static const char* func_call;
 
    static bool check(void* ptr);
-#  ifdef U_STDCPP_ENABLE
+# ifdef U_STDCPP_ENABLE
+#  ifdef __clang__
+   static void printInfo(     ostream& os);
+#  else
    static void printInfo(std::ostream& os);
-   static void writeInfoTo(const char* format, ...);
 #  endif
+   static void writeInfoTo(const char* format, ...);
+# endif
 #endif
 
 private:
