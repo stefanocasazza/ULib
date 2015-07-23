@@ -134,9 +134,14 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UDataSession, "", 0)
 
-      vec_var = U_NEW(UVector<UString>);
+      init();
+      }
 
-      creation = last_access = u_now->tv_sec;
+   UDataSession(const UString& key) : UDataStorage(key)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UDataSession, "%V", key.rep)
+
+      init();
       }
 
    virtual ~UDataSession()
@@ -240,6 +245,15 @@ public:
 protected:
    UVector<UString>* vec_var;
    long creation, last_access;
+
+   void init()
+      {
+      U_TRACE(0, "UDataSession::init()")
+
+      vec_var = U_NEW(UVector<UString>);
+
+      creation = last_access = u_now->tv_sec;
+      }
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS

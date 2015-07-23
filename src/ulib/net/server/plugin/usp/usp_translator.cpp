@@ -473,7 +473,7 @@ public:
                          size, ptr,
                          size, ptr,
                          (bsession ? "\n\tif (UHTTP::data_session == 0)   UHTTP::data_session = U_NEW(UDataSession);\n\t" : ""),
-                         (bstorage ? "\n\tif (UHTTP::data_storage == 0) { UHTTP::data_storage = U_NEW(UDataSession); UHTTP::data_storage->setKeyId(); }\n\t" : ""));
+                         (bstorage ? "\n\tif (UHTTP::data_storage == 0) { UHTTP::data_storage = U_NEW(UDataSession(*UHTTP::str_storage_keyid)); }\n\t" : ""));
 
          (void) declaration.append(buffer);
          }

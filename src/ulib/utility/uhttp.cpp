@@ -1081,10 +1081,7 @@ next:
 
 #  ifdef DEBUG
       UDirWalk::setFollowLinks();
-
-      U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 #  endif
-
       UDirWalk::setRecurseSubDirs();
       UDirWalk::setSuffixFileType(U_CONSTANT_TO_PARAM("usp|c|cgi|template|" U_LIB_SUFFIX));
 
@@ -2955,12 +2952,13 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
       {
       struct stat st;
 
-      (void) u__snprintf(buffer, sizeof(buffer), "%.*s.usp", U_FILE_TO_TRACE(*file));
-
-      if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0 &&
-          st.st_mtime > file->st_mtime)
+      if (cache_file->at(buffer, u__snprintf(buffer, sizeof(buffer), "%.*s.usp", U_FILE_TO_TRACE(*file))) &&
+          U_SYSCALL(stat, "%S,%p", buffer, &st) == 0                                                      &&
+          st.st_mtime > file_data->mtime)
          {
          U_INTERNAL_ASSERT_POINTER(usp_page)
+
+         U_INTERNAL_DUMP("st.st_mtime = %#3D file_data->mtime = %#3D", st.st_mtime, file_data->mtime)
 
          usp_page->UDynamic::close();
 
@@ -3181,8 +3179,6 @@ U_NO_EXPORT bool UHTTP::callService()
    pathname->setBuffer(U_CAPACITY);
 
    const char* psuffix = u_getsuffix(U_FILE_TO_PARAM(*file));
-
-   U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
 
    if (psuffix) pathname->snprintf("%.*s",    U_FILE_TO_TRACE(*file));
    else         pathname->snprintf("%.*s.%s", U_FILE_TO_TRACE(*file), U_LIB_SUFFIX);
@@ -4868,7 +4864,7 @@ bool UHTTP::getDataStorage(uint32_t index, UString& value)
 
    if (getDataStorage())
       {
-      ((UDataSession*)data_storage)->getValueVar(index, value);
+      data_storage->getValueVar(index, value);
 
       U_RETURN(true);
       }
@@ -4956,7 +4952,7 @@ void UHTTP::putDataStorage(uint32_t index, const char* value, uint32_t size)
 
    UString _value((void*)value, size);
 
-   ((UDataSession*)data_storage)->putValueVar(index, _value);
+   data_storage->putValueVar(index, _value);
 
    putDataStorage();
 }
@@ -7196,8 +7192,6 @@ U_NO_EXPORT bool UHTTP::compileUSP(const char* path, uint32_t len)
 
    UString command(200U);
 
-   U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
-
    command.snprintf("usp_compile.sh %.*s %s", len, path, U_LIB_SUFFIX);
 
    UCommand cmd(command);
@@ -7234,10 +7228,8 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    U_INTERNAL_DUMP("pathname = %V file = %.*S rpathname = %V", pathname->rep, U_FILE_TO_TRACE(*file), rpathname->rep)
 
-   if (pathname->equal(U_FILE_TO_PARAM(*file)) == false)
+   if (pathname->equal(U_FILE_TO_PARAM(*file)) == false) // NB: can happen with inotify...
       {
-      // NB: can happen with inotify...
-
       U_WARNING("UHTTP::manageDataForCache() pathname(%u) = %.*S file(%u) = %.*S", pathname->size(), pathname->rep, file->getPathRelativLen(), U_FILE_TO_TRACE(*file));
       }
 #endif
@@ -7388,8 +7380,6 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
       bool usp_dll = false,
            usp_src = suffix->equal(U_CONSTANT_TO_PARAM("usp"));
 
-      U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
-
       if ( usp_src ||
           (usp_dll = suffix->equal(U_CONSTANT_TO_PARAM(U_LIB_SUFFIX))))
          {
@@ -7422,8 +7412,6 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
          // NB: dlopen() fail if the name of the module is not prefixed with "./"...
 
-         U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
-
          (void) u__snprintf(buffer, sizeof(buffer), "./%.*s%s", len, ptr, U_LIB_SUFFIX);
 
          usp_page = U_NEW(UHTTP::UServletPage);
@@ -7449,6 +7437,19 @@ check:      if (usp_src) goto end;
 
             goto fail;
             }
+
+#     if defined(DEBUG) && !defined(U_STATIC_ONLY)
+         if (usp_src)
+            {
+            (void) pathname->shrink();
+
+            cache_file->insert(*pathname, file_data);
+
+            U_NEW_DBG(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
+
+            file_data->mtime = u_now->tv_sec;
+            }
+#     endif
 
          file_data->ptr        = usp_page;
          file_data->mime_index = U_usp;
@@ -7907,8 +7908,6 @@ nocontent:
 
          if (*suffix)
             {
-            U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
-
             if (suffix->equal(U_CONSTANT_TO_PARAM(U_LIB_SUFFIX))) goto nocontent;
 
             if (U_HTTP_QUERY_STREQ("_nav_") &&
@@ -7926,6 +7925,32 @@ nocontent:
 
          U_INTERNAL_ASSERT_POINTER(file_data)
          }
+#  if defined(DEBUG) && !defined(U_STATIC_ONLY)
+      else
+         {
+         *suffix = file->getSuffix();
+
+         if (suffix->empty())
+            {
+            struct stat st;
+            char buffer[U_PATH_MAX];
+            uint32_t sz = u__snprintf(buffer, sizeof(buffer), "%.*s.usp", U_FILE_TO_TRACE(*file));
+
+            if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0)
+               {
+               U_SRV_LOG("WARNING: request usp service not in cache: %V - try to compile", pathname->rep);
+
+               (void) pathname->replace(buffer, sz);
+
+               file->setPath(*pathname);
+
+               manageDataForCache();
+
+               U_INTERNAL_ASSERT_POINTER(file_data)
+               }
+            }
+         }
+#  endif
       }
 
    if (file_data) UClientImage_Base::setRequestInFileCache();

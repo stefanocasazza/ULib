@@ -400,6 +400,7 @@ bool u_setStartTime(void)
    else
 #endif
    {
+#ifndef U_COVERITY_FALSE_POSITIVE /* RESOURCE_LEAK */
    int         fd = open("/dev/urandom", O_CLOEXEC | O_RDONLY);
    if (fd < 0) fd = open("/dev/random",  O_CLOEXEC | O_RDONLY);
    if (fd > 0)
@@ -408,6 +409,7 @@ bool u_setStartTime(void)
 
       (void) close(fd);
       }
+#endif
    }
 
    /* seed the random generator */
