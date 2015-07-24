@@ -199,7 +199,8 @@ public:
       {
       U_TRACE(0, "UDataSession::getValueVar(%u,%p)", index, &value)
 
-      value = vec_var->at(index);
+      if (index < vec_var->size()) value = vec_var->at(index);
+      else                         value.clear();
 
       U_INTERNAL_DUMP("value = %V", value.rep)
       }

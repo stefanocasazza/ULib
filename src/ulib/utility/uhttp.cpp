@@ -102,6 +102,7 @@ uint32_t    UHTTP::range_size;
 uint32_t    UHTTP::range_start;
 uint32_t    UHTTP::old_path_len;
 uint32_t    UHTTP::response_code;
+uint32_t    UHTTP::sid_counter_gen;
 uint32_t    UHTTP::sid_counter_cur;
 uint32_t    UHTTP::usp_page_key_len;
 uint32_t    UHTTP::limit_request_body = U_STRING_MAX_SIZE;
@@ -4402,8 +4403,6 @@ void UHTTP::setCookie(const UString& param)
 {
    U_TRACE(0, "UHTTP::setCookie(%V)", param.rep)
 
-   static uint32_t sid_counter_gen;
-
    time_t expire;
    uint32_t n_hours;
    UVector<UString> vec(param);
@@ -4926,9 +4925,13 @@ void UHTTP::putDataSession(uint32_t index, const char* value, uint32_t size)
 
    U_INTERNAL_ASSERT_POINTER(data_session)
 
-   UString _value((void*)value, size);
+   if (size == 0) data_session->putValueVar(index, UString::getStringNull());
+   else
+      {
+      UString _value((void*)value, size);
 
-   data_session->putValueVar(index, _value);
+      data_session->putValueVar(index, _value);
+      }
 
    putDataSession();
 }
@@ -4952,9 +4955,13 @@ void UHTTP::putDataStorage(uint32_t index, const char* value, uint32_t size)
    U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_storage)
 
-   UString _value((void*)value, size);
+   if (size == 0) data_storage->putValueVar(index, UString::getStringNull());
+   else
+      {
+      UString _value((void*)value, size);
 
-   data_storage->putValueVar(index, _value);
+      data_storage->putValueVar(index, _value);
+      }
 
    putDataStorage();
 }

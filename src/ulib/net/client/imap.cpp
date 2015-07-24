@@ -347,12 +347,13 @@ bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResp
    U_RETURN(false);
 }
 
-/* STATUS command representation
-typedef struct StatusInfo {
-   long messageCount, recentCount, nextUID, uidValidity, unseenCount;
-   bool hasMessageCount, hasRecentCount, hasNextUID, hasUIDValidity, hasUnseenCount;
-} StatusInfo;
-*/
+/**
+ * STATUS command representation
+ * typedef struct StatusInfo {
+ *   long messageCount, recentCount, nextUID, uidValidity, unseenCount;
+ *    bool hasMessageCount, hasRecentCount, hasNextUID, hasUIDValidity, hasUnseenCount;
+ * } StatusInfo;
+ */
 
 bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int items)
 {
@@ -380,35 +381,36 @@ bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int ite
          uint32_t length, i = (ptr2 - ptr1);
 
          UString x = buffer.substr(i, end - i);
+
          UVector<UString> vec(x);
 
          for (i = 0, length = vec.size(); i < length; ++i)
             {
-            if (!retval.hasMessageCount &&
+            if (retval.hasMessageCount == false &&
                 vec[i].equal(U_CONSTANT_TO_PARAM("MESSAGES")))
                {
                retval.messageCount    = vec[++i].strtol();
                retval.hasMessageCount = true;
                }
-            else if (!retval.hasRecentCount &&
+            else if (retval.hasRecentCount == false &&
                      vec[i] == *str_recent)
                {
                retval.recentCount    = vec[++i].strtol();
                retval.hasRecentCount = true;
                }
-            else if (!retval.hasNextUID &&
+            else if (retval.hasNextUID == false &&
                      vec[i] == *str_uidnext)
                {
                retval.nextUID    = vec[++i].strtol();
                retval.hasNextUID = true;
                }
-            else if (!retval.hasUIDValidity &&
+            else if (retval.hasUIDValidity == false &&
                      vec[i] == *str_uidvalidity)
                {
                retval.uidValidity    = vec[++i].strtol();
                retval.hasUIDValidity = true;
                }
-            else if (!retval.hasUnseenCount &&
+            else if (retval.hasUnseenCount == false &&
                      vec[i] == *str_unseen)
                {
                retval.unseenCount    = vec[++i].strtol();
@@ -416,7 +418,7 @@ bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int ite
                }
             else
                {
-               U_ERROR("Unknow tag response for STATUS command, exit..");
+               U_WARNING("Unknow tag response %V for STATUS command", vec[i].rep);
                }
             }
 
@@ -429,28 +431,29 @@ bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int ite
    U_RETURN(false);
 }
 
-/* (SELECT | EXAMINE) command representation
-typedef struct MailboxInfo {
-   bool readWrite;
-   StatusInfo status;
-   int flags, permanentFlags;
-   bool flagsAvailable, permanentFlagsAvailable, readWriteAvailable;
-} MailboxInfo;
-
-enum MailboxFlag {
-   SEEN      = 1 << 0,
-   ANSWERED  = 1 << 1,
-   FLAGGED   = 1 << 2,
-   DELETED   = 1 << 3,
-   DRAFT     = 1 << 4,
-   RECENT    = 1 << 5,
-   ASTERISK  = 1 << 6,
-   MDNSent   = 1 << 7,
-   Junk      = 1 << 8,
-   NonJunk   = 1 << 9,
-   Forwarded = 1 << 10
-};
-*/
+/**
+ * (SELECT | EXAMINE) command representation
+ * typedef struct MailboxInfo {
+ *    bool readWrite;
+ *    StatusInfo status;
+ *    int flags, permanentFlags;
+ *    bool flagsAvailable, permanentFlagsAvailable, readWriteAvailable;
+ * } MailboxInfo;
+ * 
+ * enum MailboxFlag {
+ *    SEEN      = 1 << 0,
+ *    ANSWERED  = 1 << 1,
+ *    FLAGGED   = 1 << 2,
+ *    DELETED   = 1 << 3,
+ *    DRAFT     = 1 << 4,
+ *    RECENT    = 1 << 5,
+ *    ASTERISK  = 1 << 6,
+ *    MDNSent   = 1 << 7,
+ *    Junk      = 1 << 8,
+ *    NonJunk   = 1 << 9,
+ *    Forwarded = 1 << 10
+ * };
+ */
 
 U_NO_EXPORT void UImapClient::setFlag(int& _flags, UVector<UString>& vec)
 {

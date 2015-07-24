@@ -1023,20 +1023,31 @@ uint32_t UVector<UString>::loadFromData(const char* ptr, uint32_t sz)
 
    // U_INTERNAL_DUMP("c = %C", c)
 
-      if (c == '"') str.setFromData(&ptr, sz, '"');
+      if (c == '"')
+         {
+         // NB: check if we have a string null...
+
+         if (*ptr != '"') str.setFromData(&ptr, _end - ptr, '"');
+         else
+            {
+            ++ptr;
+
+            str.clear();
+            }
+         }
       else
          {
          --ptr;
 
-         str.setFromData(&ptr, sz);
+         str.setFromData(&ptr, _end - ptr, terminator);
          }
 
       push(str);
       }
 
-   U_INTERNAL_DUMP("ptr-_start = %lu", ptr-_start)
+   U_INTERNAL_DUMP("ptr - _start = %lu", ptr - _start)
 
-   U_INTERNAL_ASSERT((ptr-_start) <= sz)
+   U_INTERNAL_ASSERT((ptr - _start) <= sz)
 
    sz = ptr - _start;
 

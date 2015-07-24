@@ -435,6 +435,7 @@ public:
    // COOKIE
 
    static UString* set_cookie;
+   static uint32_t sid_counter_gen;
    static UString* set_cookie_option;
    static UString* cgi_cookie_option;
 

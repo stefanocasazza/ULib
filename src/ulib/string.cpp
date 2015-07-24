@@ -1784,12 +1784,12 @@ void UString::printKeyValue(const char* key, uint32_t keylen, const char* _data,
    U_INTERNAL_ASSERT(invariant())
 }
 
-void UString::setFromData(const char** p, uint32_t sz)
+void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
 {
-   U_TRACE(0, "UString::setFromData(%.*S,%u)", sz, *p, sz)
+   U_TRACE(0, "UString::setFromData(%.*S,%u,%C)", sz, *p, sz, delim)
 
-   U_ASSERT(empty())
    U_INTERNAL_ASSERT_MAJOR(sz, 0)
+   U_INTERNAL_ASSERT_EQUALS(rep->_length, 0)
 
    const char* ptr  = *p;
    unsigned char c  = *ptr;
@@ -1799,22 +1799,7 @@ void UString::setFromData(const char** p, uint32_t sz)
 
    U_INTERNAL_ASSERT_EQUALS(u__isspace(c), false)
 
-   if (LIKELY(c != '@'))
-      {
-      do {
-         _append(c);
-
-         if  (++ptr >= pend) break;
-
-         c = *ptr;
-
-         if (u__isspace(c)) break;
-         }
-      while (true);
-
-      _append();
-      }
-   else
+   if (c == '@')
       {
       // get content pointed by string 'meta' (that start with '@')
 
@@ -1854,6 +1839,10 @@ void UString::setFromData(const char** p, uint32_t sz)
             U_WARNING("open file %S specified in configuration failed", pathname);
             }
 
+         U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
+
+         U_INTERNAL_ASSERT(invariant())
+
          return;
          }
 
@@ -1869,9 +1858,13 @@ void UString::setFromData(const char** p, uint32_t sz)
 
          if (ptr == pend)
             {
-            (void) append(ptr, pend-ptr);
+            (void) append(ptr, pend - ptr);
 
             *p = pend;
+
+            U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
+
+            U_INTERNAL_ASSERT(invariant())
 
             return;
             }
@@ -1895,85 +1888,81 @@ void UString::setFromData(const char** p, uint32_t sz)
       setBuffer(sz * 4);
 
       UEscape::decode(start, sz, *this);
+
+      U_INTERNAL_ASSERT_MAJOR(rep->_length, 0)
+
+      *p = ptr;
+
+      U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
+
+      U_INTERNAL_ASSERT(invariant())
+
+      return;
       }
 
-   *p = ptr;
-
-   if (empty()  == false &&
-       shrink() == false)
+loop:
+   if ( delim == c     ||
+       (delim != '"'   &&
+        u__isspace(c)) ||
+       (delim == '\0'  &&
+        (c == '}'      ||
+         c == ']')))
       {
-      setNullTerminated();
+      ++ptr;
+
+      goto end;
       }
 
-   U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
-void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
-{
-   U_TRACE(0, "UString::setFromData(%.*S,%u,%C)", sz, *p, sz, delim)
-
-   U_ASSERT(empty())
-
-   const char* ptr = *p;
-
-   U_INTERNAL_ASSERT_EQUALS(u__isspace(*ptr), false)
-
-   for (const char* pend = ptr + sz; ptr < pend; ++ptr)
+   if (c == '\\')
       {
-      unsigned char c = *ptr;
+      c = *++ptr;
+
+      U_INTERNAL_DUMP("c (after '\\') = %C", c)
+
+      if (c != delim)
+         {
+         if (c == '\n')
+            {
+            // compress multiple white-space in a single new-line...
+
+            U_INTERNAL_DUMP("ptr+1 = %.*S", 20, ptr+1)
+
+            while (ptr < pend)
+               {
+               if (u__isspace(ptr[1]) == false) break;
+
+               ++ptr;
+               }
+
+            U_INTERNAL_DUMP("ptr+1 = %.*S", 20, ptr+1)
+            }
+         else if (strchr("nrtbfvae", c))
+            {
+            _append('\\');
+            }
+         }
+      }
+
+   _append(c);
+
+   if (++ptr <= pend)
+      {
+      c = *ptr;
 
       U_INTERNAL_DUMP("c = %C", c)
 
-      if (c == delim)
-         {
-         ++ptr;
-
-         break;
-         }
-
-      if (c == '\\')
-         {
-         c = *++ptr;
-
-         U_INTERNAL_DUMP("c (after '\\') = %C", c)
-
-         if (c != delim)
-            {
-            if (c == '\n')
-               {
-               // compress multiple white-space in a single new-line...
-
-               U_INTERNAL_DUMP("ptr+1 = %.*S", 20, ptr+1)
-
-               while (ptr < pend)
-                  {
-                  if (u__isspace(ptr[1]) == false) break;
-
-                  ++ptr;
-                  }
-
-               U_INTERNAL_DUMP("ptr+1 = %.*S", 20, ptr+1)
-               }
-            else if (strchr("nrtbfvae", c))
-               {
-               _append('\\');
-               }
-            }
-         }
-
-      _append(c);
+      goto loop;
       }
+
+end:
+   _append();
 
    *p = ptr;
 
-   _append();
-
-   if (empty()  == false &&
-       shrink() == false)
+   if (empty()) _assign(UStringRep::string_rep_null);
+   else
       {
-      setNullTerminated();
+      if (shrink() == false) setNullTerminated();
       }
 
    U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)

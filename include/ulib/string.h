@@ -1002,6 +1002,8 @@ protected:
       U_INTERNAL_ASSERT(invariant())
       }
 
+   void setFromData(const char** ptr, uint32_t sz, unsigned char delim);
+
 public:
 // mutable
    UStringRep* rep;
@@ -1765,9 +1767,6 @@ public:
       va_end(argp);
       }
 
-   void setFromData(const char** ptr, uint32_t sz);
-   void setFromData(const char** ptr, uint32_t sz, unsigned char delim);
-
    void size_adjust()                     { rep->size_adjust(); }
    void size_adjust_force()               { rep->size_adjust_force(); }
 
@@ -1929,6 +1928,9 @@ public:
 private:
    char* __append(uint32_t n);
    char* __replace(uint32_t pos, uint32_t n1, uint32_t n2);
+
+   template <class T> friend class UVector;
+   template <class T> friend class UHashMap;
 };
 
 // operator ==

@@ -663,12 +663,23 @@ uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
 
    // U_INTERNAL_DUMP("c = %C", c)
 
-      if (c == '"') _key.setFromData(&ptr, sz, '"');
+      if (c == '"')
+         {
+         // NB: check if we have a string null...
+
+         if (*ptr != '"') _key.setFromData(&ptr, _end - ptr, '"');
+         else
+            {
+            ++ptr;
+
+            _key.clear();
+            }
+         }
       else
          {
          --ptr;
 
-         _key.setFromData(&ptr, sz);
+         _key.setFromData(&ptr, _end - ptr, terminator);
          }
 
       U_INTERNAL_ASSERT(_key)
@@ -686,12 +697,23 @@ uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
 
    // U_INTERNAL_DUMP("c = %C", c)
 
-      if (c == '"') str.setFromData(&ptr, sz, '"');
+      if (c == '"')
+         {
+         // NB: check if we have a string null...
+
+         if (*ptr != '"') str.setFromData(&ptr, _end - ptr, '"');
+         else
+            {
+            ++ptr;
+
+            str.clear();
+            }
+         }
       else
          {
          --ptr;
 
-         str.setFromData(&ptr, sz);
+         str.setFromData(&ptr, _end - ptr, terminator);
          }
 
       U_INTERNAL_ASSERT(str)
@@ -700,9 +722,9 @@ uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
       insert(_key, str);
       }
 
-   U_INTERNAL_DUMP("ptr-_start = %lu", ptr-_start)
+   U_INTERNAL_DUMP("ptr - _start = %lu", ptr - _start)
 
-   U_INTERNAL_ASSERT((ptr-_start) <= sz)
+   U_INTERNAL_ASSERT((ptr - _start) <= sz)
 
    sz = ptr - _start;
 

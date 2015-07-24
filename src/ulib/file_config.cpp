@@ -49,13 +49,11 @@ UFileConfig::UFileConfig(const UString& _data, bool _preprocessing) : data(_data
    preprocessing = _preprocessing;
 }
 
-bool UFileConfig::processData()
+bool UFileConfig::processData(bool bload)
 {
-   U_TRACE(0, "UFileConfig::processData()")
+   U_TRACE(0, "UFileConfig::processData(%b)", bload)
 
    U_CHECK_MEMORY
-
-   bool result = false;
 
    // manage if we need preprocessing...
 
@@ -126,7 +124,8 @@ bool UFileConfig::processData()
       }
 #endif
 
-   if (data.empty()) U_RETURN(false);
+   if (data.empty())   U_RETURN(false);
+   if (bload == false) U_RETURN(true);
 
    _end   = data.end();
    _start = data.data();
@@ -134,28 +133,37 @@ bool UFileConfig::processData()
 
    if (UFile::isPath())
       {
-      // -------------------------------------------------------------
-      // Loads configuration information from the file.
-      // The file type is determined by the file extension.
-      // The following extensions are supported:
-      // -------------------------------------------------------------
-      // .properties - properties file (JAVA Properties)
+      //------------ -------------------------------------------------------------
+      // Loads configuration information from the file. The file type is
+      // determined by the file extension. The following extensions are supported:
+      // -------------------------------------------------------------------------
       // .ini        - initialization file (Windows INI)
-      // -------------------------------------------------------------
+      // .properties - properties file (JAVA Properties)
+      // -------------------------------------------------------------------------
 
       UString suffix = UFile::getSuffix();
 
       if (suffix)
          {
-              if (suffix.equal(U_CONSTANT_TO_PARAM("ini")))        { result = loadINI();        goto end; }
-         else if (suffix.equal(U_CONSTANT_TO_PARAM("properties"))) { result = loadProperties(); goto end; }
+         if (suffix.equal(U_CONSTANT_TO_PARAM("ini")))
+            {
+            if (loadINI()) U_RETURN(true);
+
+            U_RETURN(false);
+            }
+
+         if (suffix.equal(U_CONSTANT_TO_PARAM("properties")))
+            {
+            if (loadProperties()) U_RETURN(true);
+
+            U_RETURN(false);
+            }
          }
       }
 
-   result = loadSection(0, 0);
+   if (loadSection(0, 0)) U_RETURN(true);
 
-end:
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 void UFileConfig::load()
@@ -169,7 +177,7 @@ void UFileConfig::load()
    if (UFile::open()                   &&
        UFile::size() > 0               &&
        UFile::memmap(PROT_READ, &data) &&
-       processData())
+       processData(true))
       {
       if (UFile::isOpen()) UFile::close();
       }

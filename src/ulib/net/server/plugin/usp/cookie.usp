@@ -10,8 +10,8 @@ delete_cookie;
 UString ses_name;
 -->
 <!--#code
-if (name.empty()) name     = ses_name;
-else              ses_name = name;
+if (name.empty())     name = ses_name;
+else              ses_name =     name;
 
 if (delete_cookie) UHTTP::removeDataSession();
 -->

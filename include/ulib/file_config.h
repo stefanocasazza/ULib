@@ -128,7 +128,7 @@ public:
 
    // EXT
 
-   bool processData();
+   bool processData(bool bload);
 
    UString getData() const                                    { return  data; }
    void    setData(const UString& _data, bool _preprocessing) { data = _data; preprocessing = _preprocessing; }

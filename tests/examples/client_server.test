@@ -9,7 +9,7 @@ start_msg client
 
 rm -f server.log client.log
 
-#UTRACE="0 10M 1"
+#UTRACE="0 10M -1"
 #UOBJDUMP="0 1M 100"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR

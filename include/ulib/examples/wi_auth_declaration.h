@@ -3994,7 +3994,7 @@ static void GET_get_config()
 
                UHTTP::mime_index = U_know;
 
-               if (cfg.processData())
+               if (cfg.processData(false))
                   {
                   _body = cfg.getData();
 
