@@ -1331,8 +1331,8 @@ public:
    const char* rbegin() const { return rep->rbegin(); }
    const char* rend()   const { return rep->rend(); }
 
-   __pure char at(uint32_t pos) const           { return rep->at(pos); }
-          char operator[](uint32_t pos) const   { return rep->operator[](pos); }
+   __pure char at(uint32_t pos) const         { return rep->at(pos); }
+          char operator[](uint32_t pos) const { return rep->operator[](pos); }
 
    char* _begin()
       {
@@ -1502,7 +1502,7 @@ public:
       }
 
    char* c_strdup() const                                            { return strndup(rep->str, rep->_length); }
-   char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return strndup(rep->str + pos, rep->fold(pos, n)); }
+   char* c_strndup(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) const { return strndup(rep->str+pos, rep->fold(pos, n)); }
 
    UString copy() const;
    void    copy(char* s, uint32_t n = U_NOT_FOUND, uint32_t pos = 0) const { rep->copy(s, n, pos); }
@@ -1596,8 +1596,8 @@ public:
 
    // Same string representation
 
-   bool same(UStringRep* _rep) const                      { return (rep == _rep); }
-   bool same(const UString& str) const                    { return same(str.rep); }
+   bool same(UStringRep* _rep) const   { return (rep == _rep); }
+   bool same(const UString& str) const { return same(str.rep); }
 
    // Equal
 

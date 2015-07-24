@@ -3804,9 +3804,11 @@ file_in_cache:
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
 
+#     ifndef U_COVERITY_FALSE_POSITIVE // UNREACHABLE
          if (U_ClientImage_state != U_PLUGIN_HANDLER_ERROR) goto from_cache;
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+#     endif
          }
 
       if (u__isdigit(mime_index))

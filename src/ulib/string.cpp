@@ -2076,7 +2076,11 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
 
       if (c != EOF)
          {
-         if (str) str.rep->size_adjust(0U);
+         if (str)
+            {
+            if (str.uniq()) str.setEmpty();
+            else            str._set(UStringRep::create(0U, U_CAPACITY, 0)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:823)...
+            }
 
          streamsize w = in.width();
 
@@ -2125,7 +2129,11 @@ istream& UString::getline(istream& in, unsigned char delim)
 
    if (in.good())
       {
-      if (empty() == false) rep->size_adjust(0U);
+      if (size())
+         {
+         if (uniq()) setEmpty();
+         else        _set(UStringRep::create(0U, U_CAPACITY, 0)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:823)...
+         }
 
       streambuf* sb = in.rdbuf();
 
