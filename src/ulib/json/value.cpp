@@ -569,7 +569,7 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
 
 uint32_t UValue::emitString(const unsigned char* inptr, uint32_t len, char* out)
 {
-   U_TRACE(0, "UValue::emitString(%.*S,%u,%p)", len, inptr, len, out)
+   U_TRACE(0+256, "UValue::emitString(%.*S,%u,%p)", len, inptr, len, out)
 
    U_INTERNAL_ASSERT_POINTER(out)
    U_INTERNAL_ASSERT_POINTER(inptr)

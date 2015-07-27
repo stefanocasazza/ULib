@@ -938,7 +938,14 @@ public:
    UString front()  { return UString(UVector<UStringRep*>::front()); }
    UString back()   { return UString(UVector<UStringRep*>::back()); }
 
-   UString at(uint32_t pos) const __pure;
+   UString at(uint32_t pos) const __pure
+      {
+      U_TRACE(0, "UVector<UString>::at(%u)", pos)
+
+      UString result(UVector<UStringRep*>::at(pos));
+
+      U_RETURN_STRING(result);
+      }
 
    UString operator[](uint32_t pos) const;
 

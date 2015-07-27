@@ -29,11 +29,12 @@ inline void u_destroy(const Product** ptr, uint32_t n)
    U_TRACE(0, "u_destroy<Product>(%p,%u)", ptr, n)
 }
 
-/*
-NB: used by method
-void assign(unsigned n, T* elem))
-void erase(unsigned first, unsigned last)
-*/
+/**
+ * NB: used by method
+ *
+ * void assign(unsigned n, T* elem))
+ * void  erase(unsigned first, unsigned last)
+ */
 
 static void check_vector_destructor()
 {
@@ -52,29 +53,29 @@ static void check(UVector<UString>& y)
    unsigned n;
    UString tmp;
 
-/* input
-[
-ROOT_DN                       0
-PASSWORD                      1
-ROOT_DN_MAIL                  2
-PASSWORD_MAIL                 3
-CHECK_QUOTING                 4
-LDAP_SERVER_ADDRESS           5
-LOG_FILE                      6
-LDAP_SERVER_ADDRESS_MAIL      7
-ADMIN_DN                      8
-ADMIN_DN_MAIL                 9
-TIME_SLEEP_LDAP_ERROR         10
-TIME_SLEEP_MQSERIES_ERROR     11
-FILE_WRONG_MESSAGE            12
-MAILDELIVERYOPTION            13
-MESSAGE_QUEUE_SERVER          14
-MESSAGE_QUEUE_MANAGER         15
-MAILHOST                      16
-MESSAGE_QUEUE_NAME            17
-MAX_ERROR_FOR_CONNECT         18
-]
-*/
+/**
+ * input [
+ * ROOT_DN                       0
+ * PASSWORD                      1
+ * ROOT_DN_MAIL                  2
+ * PASSWORD_MAIL                 3
+ * CHECK_QUOTING                 4
+ * LDAP_SERVER_ADDRESS           5
+ * LOG_FILE                      6
+ * LDAP_SERVER_ADDRESS_MAIL      7
+ * ADMIN_DN                      8
+ * ADMIN_DN_MAIL                 9
+ * TIME_SLEEP_LDAP_ERROR         10
+ * TIME_SLEEP_MQSERIES_ERROR     11
+ * FILE_WRONG_MESSAGE            12
+ * MAILDELIVERYOPTION            13
+ * MESSAGE_QUEUE_SERVER          14
+ * MESSAGE_QUEUE_MANAGER         15
+ * MAILHOST                      16
+ * MESSAGE_QUEUE_NAME            17
+ * MAX_ERROR_FOR_CONNECT         18
+ * ]
+ */
 
    tmp = y.front();
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("ROOT_DN") )
@@ -236,16 +237,27 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   UString tmp;
+   UVector<UString> v0(U_STRING_FROM_CONSTANT("[\"\" 0 @PIPPO]"));
+   uint32_t n = v0.size();
+   U_INTERNAL_ASSERT( n == 3 )
+   tmp = v0[0];
+   U_ASSERT( tmp.isNull() )
+   tmp = v0[1];
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("0") )
+   tmp = v0[2];
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("@PIPPO") )
+
    UString content = UFile::contentOf("inp/wifi-utilizzo");
    UVector<UString> vec1(content, '\n'), vec2(4);
 
-   uint32_t n = vec1.size();
-   U_ASSERT( n == 2 )
+   n = vec1.size();
+   U_INTERNAL_ASSERT( n == 2 )
 
    n = vec2.split(vec1[0], ',');
    vec1.clear();
-   U_ASSERT( n == 4 )
-   UString tmp = vec2[0];
+   U_INTERNAL_ASSERT( n == 4 )
+   tmp = vec2[0];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("\"2013/09/11\"") )
 
    tmp = U_STRING_FROM_CONSTANT("museoGalileoLungarno-r29587_locoM2 10.8.0.110\n"
@@ -255,18 +267,18 @@ U_EXPORT main (int argc, char* argv[])
 
    vec2.clear();
    n = vec2.split(tmp);
-   U_ASSERT( n == 8 )
+   U_INTERNAL_ASSERT( n == 8 )
 
    n = vec2.findSorted(U_STRING_FROM_CONSTANT("museoGalileoLungarno-r29587_locoM2"), true, true);
-   U_ASSERT( n == 0 )
+   U_INTERNAL_ASSERT( n == 0 )
    n = vec2.findSorted(U_STRING_FROM_CONSTANT("orSmichele-r29587_picoM2"), false, true);
-   U_ASSERT( n == 2 )
+   U_INTERNAL_ASSERT( n == 2 )
    n = vec2.findSorted(U_STRING_FROM_CONSTANT("paasBracci-r29587_picoM2"), true, true);
-   U_ASSERT( n == 4 )
+   U_INTERNAL_ASSERT( n == 4 )
    n = vec2.findSorted(U_STRING_FROM_CONSTANT("paasBronzino-r29587_picoM2"), false, true);
-   U_ASSERT( n == 6 )
+   U_INTERNAL_ASSERT( n == 6 )
    n = vec2.findSorted(U_STRING_FROM_CONSTANT("paasBronzino"), true, true);
-   U_ASSERT( n == U_NOT_FOUND )
+   U_INTERNAL_ASSERT( n == U_NOT_FOUND )
 
    vec2.clear();
 
@@ -275,19 +287,7 @@ U_EXPORT main (int argc, char* argv[])
    y.sort(false);
 
    uint32_t i = y.findSorted(U_STRING_FROM_CONSTANT("NULL"));
-   U_ASSERT( i == U_NOT_FOUND )
-   /*
-   i = y.findSorted(U_STRING_FROM_CONSTANT("10sne1"));
-   U_ASSERT( i == 12 )
-   i = y.findSorted(U_STRING_FROM_CONSTANT("dakota"));
-   U_ASSERT( i == 917 )
-   i = y.findSorted(U_STRING_FROM_CONSTANT("victoria"));
-   U_ASSERT( i == 2955 )
-   i = y.findSorted(U_STRING_FROM_CONSTANT("zzz"));
-   U_ASSERT( i == 3105 )
-   i = y.findSorted(U_STRING_FROM_CONSTANT("!@#$%"));
-   U_ASSERT( i == 0 )
-   */
+   U_INTERNAL_ASSERT( i == U_NOT_FOUND )
 
    for (i = 0, n = y.size(); i < n; ++i) { U_ASSERT( i == y.findSorted(y[i]) ) }
 
@@ -313,7 +313,7 @@ U_EXPORT main (int argc, char* argv[])
 
    n = dirwalk.walk(y);
 
-   U_ASSERT( n == 3 )
+   U_INTERNAL_ASSERT( n == 3 )
    }
 
    y.sort();
@@ -328,58 +328,14 @@ U_EXPORT main (int argc, char* argv[])
 
    y.clear();
    bool res = y.empty();
-   U_ASSERT( res == true )
-
-   /*
-   UString key(U_CAPACITY);
-   unsigned i, j, k = 0;
-// char ctmp[] = "                                                    "; // sizeof(tmp) == 53
-   char ctmp[53];
-   memset(ctmp, 'a', sizeof(ctmp)-1);
-   ctmp[52] = '\0';
-
-   for (i = 1; i < sizeof(ctmp) - 1; ++i)
-      {
-      for (j = 35; j < 122; ++j)
-         {
-         ctmp[i] = j;
-
-         key.replace(ctmp, sizeof(ctmp));
-
-         y.push_back(key);
-
-         k = u_random(k);
-
-         ctmp[1 + k % (sizeof(ctmp)-1)] = 35 + k % (122 - 35);
-
-         key.replace(ctmp, sizeof(ctmp));
-
-         y.push_back(key);
-         }
-      }
-
-   y.sort(false);
-
-   n = y.findSorted(U_STRING_FROM_CONSTANT("NULL"));
-   U_ASSERT( n == U_NOT_FOUND )
-   n = y.findSorted(U_STRING_FROM_CONSTANT("a$n5;FyAsX*;UGu(T0\\UaxwbV\%el4wZ,QeVqg3L\\],_O&---3PXg#"));
-   U_ASSERT( n == 4 )
-   n = y.findSorted(U_STRING_FROM_CONSTANT("axc`)dX,1Xs:M[nlH+*whM(*ff4;&TAFM%Ubd&-Y=F(x(4Q/Hw;pc"));
-   U_ASSERT( n == 8612 )
-   n = y.findSorted(U_STRING_FROM_CONSTANT("ayyuf;I=FLC?)G4<^$gftBB+P/1A]`L,I0^>@Y*71d0SDH^ '2E 7"));
-   U_ASSERT( n == 8873 )
-
-   ofstream outf("vector1.sort");
-
-   outf << y;
-   */
+   U_INTERNAL_ASSERT(res)
 
    y.clear();
 
    UString yA = U_STRING_FROM_CONSTANT("\n\n# comment line\n\nriga_0\nriga_1\n\n");
 
    n = y.split(yA);
-   U_ASSERT( n == 2 )
+   U_INTERNAL_ASSERT( n == 2 )
    tmp = y[0];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga_0") )
    tmp = y[1];
@@ -388,7 +344,7 @@ U_EXPORT main (int argc, char* argv[])
    UString y0 = U_STRING_FROM_CONSTANT("word \"word with space\"");
 
    n = y.split(y0);
-   U_ASSERT( n == 2 )
+   U_INTERNAL_ASSERT( n == 2 )
    tmp = y[2];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("word") )
    tmp = y[3];
@@ -397,7 +353,7 @@ U_EXPORT main (int argc, char* argv[])
    UString x = U_STRING_FROM_CONSTANT("  word \"word with space\"    ");
 
    n = y.split(x);
-   U_ASSERT( n == 2 )
+   U_INTERNAL_ASSERT( n == 2 )
    tmp = y[4];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("word") )
    tmp = y[5];
@@ -408,12 +364,12 @@ U_EXPORT main (int argc, char* argv[])
 
    y.clear();
    res = y.empty();
-   U_ASSERT( res == true )
+   U_INTERNAL_ASSERT( res )
 
    UString y2 = U_STRING_FROM_CONSTANT("$Version=\"1\";\n Part_Number=\"Riding_Rocket_0023\"; $Path=\"/acme/ammo\";\n Part_Number=\"Rocket_Launcher_0001\"; $Path=\"/acme\"");
 
    n = y.split(y2, "=;, \n");
-   U_ASSERT( n == 10 )
+   U_INTERNAL_ASSERT( n == 10 )
 
    tmp = y[0];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("$Version") )
@@ -450,7 +406,7 @@ U_EXPORT main (int argc, char* argv[])
 
    y.clear();
    res = y.empty();
-   U_ASSERT( res == true )
+   U_INTERNAL_ASSERT( res )
 
    // BINARY HEAP
 
@@ -522,7 +478,7 @@ U_EXPORT main (int argc, char* argv[])
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 11") )
 
    res = y.empty();
-   U_ASSERT( res == true )
+   U_INTERNAL_ASSERT( res )
 
    tmp = U_STRING_FROM_CONSTANT("[ \"riga 1\" \"riga 2\" \"riga 3\" \"riga 4\" ]");
 
@@ -567,12 +523,6 @@ U_EXPORT main (int argc, char* argv[])
    y1.put(tmp);
    tmp = U_STRING_FROM_CONSTANT("riga 4");
    y1.put(tmp);
-
-   /*
-   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 5")) == false )
-   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 6")) == false )
-   U_ASSERT( y1.put(U_STRING_FROM_CONSTANT("riga 7")) == false )
-   */
 
    y1.get(tmp);
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 1") )

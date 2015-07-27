@@ -29,8 +29,7 @@ uint32_t sz = strings.size();
 
    <p><table border=1>
    <tr><th colspan=2>Strings entered so far: <!--#number sz --></th></tr>
-
-   <!--#code
+<!--#code
    UString item;
 
    for (uint32_t i = 0; i < sz; ++i)
@@ -39,8 +38,7 @@ uint32_t sz = strings.size();
 
       USP_PRINTF("<tr><td>%v</td><td><a href=\"?remove=%u\">remove</a></td></tr>", item.rep, i);
       }
-   -->
-
+-->
    </table></p>
 </body> 
 </html>

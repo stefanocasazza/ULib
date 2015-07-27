@@ -489,27 +489,31 @@ public:
          }
       else
          {
-         if (http_header.find(*UString::str_content_type) != U_NOT_FOUND)
-            {
-            (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_content_type_len = 1;\n\t"));
-            }
+         // NB: we use insert because the possibility of UHTTP::callService() (see chat.usp)...
+
+         if (http_header.find(*UString::str_content_type) != U_NOT_FOUND) (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_content_type_len = 1;\n\t"));
 
          UString header = UStringExt::dos2unix(http_header, true);
 
          (void) header.append(U_CONSTANT_TO_PARAM("\r\n\r\n"));
 
-         UString encoded(header.size() * 4);
+         n = header.size();
+
+         U_INTERNAL_DUMP("n = %u", size)
+
+         UString encoded(n * 4);
 
          UEscape::encode(header, encoded);
 
-         UString tmp(encoded.size() + 100U);
-
          U_ASSERT(encoded.isQuoted())
 
-         tmp.snprintf("\n\t\t(void) UClientImage_Base::wbuffer->append(\n\t\t\tU_CONSTANT_TO_PARAM(%v));\n\t", encoded.rep);
+         UString tmp(encoded.size() + 200U);
+
+         tmp.snprintf("\n\t\tU_INTERNAL_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false);"
+                      "\n\t\tU_http_info.endHeader = %u;"
+                      "\n\t\t(void) UClientImage_Base::wbuffer->insert(0, \n\tU_CONSTANT_TO_PARAM(%v));\n", n, encoded.rep);
 
          (void) x.append(tmp);
-         (void) x.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_info.endHeader = UClientImage_Base::wbuffer->size();\n"));
          }
 
       http_header = x;
@@ -548,7 +552,7 @@ public:
 
       if (bparallelization) ptr7 = "\t\n\t\tif (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization)) return;\n\t\n";
 
-      UString result(800U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output.size() + output1.size() + xoutput.size());
+      UString result(1024U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output.size() + output1.size() + xoutput.size());
 
       result.snprintf(USP_TEMPLATE,
                       size, ptr,
@@ -568,7 +572,7 @@ public:
                       ptr6,
                       ptr7,
                       http_header.rep,
-                      bform ? "\t\n\t\t(void) UHTTP::processForm();\n" : "",
+                      bform ? "\t\n\t\tif (UHTTP::isGETorPOST()) (void) UHTTP::processForm();\n" : "",
                       output.rep,
                       output1.rep,
                       xoutput.rep,

@@ -143,7 +143,23 @@ public:
       ++references;
       }
 
-   void release(); // NB: we don't use delete (dtor) because add a deallocation to the destroy object process...
+   void release() // NB: we don't use delete (dtor) because add a deallocation to the destroy object process...
+      {
+      U_TRACE(0, "UStringRep::release()")
+
+      U_INTERNAL_DUMP("this = %p parent = %p references = %u child = %d", this, parent, references, child)
+
+#  ifdef DEBUG
+      if (memory.invariant() == false)
+         {
+         U_ERROR("UStringRep::release() %s - this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %.*S",
+                  memory.getErrorType(this), this, parent, references, child, _capacity, _length, _length, str);
+         }
+#  endif
+
+      if (references) --references;
+      else            _release();
+      }
 
    // Size and Capacity
 
@@ -613,7 +629,9 @@ public:
       U_RETURN(false);
       }
 
-   bool isEndHeader(uint32_t pos) const __pure;
+   bool   isEndHeader(uint32_t pos) const __pure;
+   bool findEndHeader(uint32_t pos) const __pure;
+
    uint32_t findWhiteSpace(uint32_t pos) const __pure;
 
    bool strtob() const __pure;
@@ -805,6 +823,7 @@ private:
       U_INTERNAL_ASSERT(invariant())
       }
 
+   void _release();
    void set(uint32_t length, uint32_t capacity, const char* ptr);
 
    // Equal lookup use case
@@ -1649,9 +1668,11 @@ public:
    bool isBinary(uint32_t pos = 0) const                        { return rep->isBinary(pos); }
    bool isBase64(uint32_t pos = 0) const                        { return rep->isBase64(pos); }
    bool isBase64Url(uint32_t pos = 0) const                     { return rep->isBase64Url(pos); }
-   bool isEndHeader(uint32_t pos = 0) const                     { return rep->isEndHeader(pos); }
    bool isWhiteSpace(uint32_t pos = 0) const                    { return rep->isWhiteSpace(pos); }
    bool isPrintable(uint32_t pos = 0, bool bline = false) const { return rep->isPrintable(pos, bline); }
+
+   bool   isEndHeader(uint32_t pos = 0) const                   { return rep->isEndHeader(pos); }
+   bool findEndHeader(uint32_t pos = 0) const                   { return rep->findEndHeader(pos); }
 
    char  last_char() const             { return rep->last_char(); }
    char  first_char() const            { return rep->first_char(); }

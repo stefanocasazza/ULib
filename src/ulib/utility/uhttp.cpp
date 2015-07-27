@@ -464,125 +464,131 @@ void UHTTP::in_READ()
    union uuinotify_event event;
    int i = 0, length = U_SYSCALL(read, "%d,%p,%u", UServer_Base::handler_inotify->fd, buffer, IN_BUFLEN);  
 
-   while (i < length)
+   if (length > 0)
       {
-      event.p = buffer + i;
-
-      i += sizeof(struct inotify_event);
-
-      if (event.ip->len)
+      while (i < length)
          {
-         wd   = event.ip->wd;
-         mask = event.ip->mask;
-         len  = event.ip->len;
-         name = event.ip->name;
+         event.p = buffer + i;
 
-         U_INTERNAL_DUMP("The %s %s(%u) was %s", (mask & IN_ISDIR  ? "directory" : "file"), name, len,
-                                                 (mask & IN_CREATE ? "created"   :
-                                                  mask & IN_DELETE ? "deleted"   :
-                                                  mask & IN_MODIFY ? "modified"  : "???"))
+         i += sizeof(struct inotify_event);
 
-         // NB: The length contains any potential padding that is, the result of strlen() on the name field may be smaller than len...
-
-         while (name[len-1] == '\0') --len;
-
-         U_INTERNAL_ASSERT_EQUALS(len, u__strlen(name, __PRETTY_FUNCTION__))
-
-         file_data = 0;
-
-         if (wd  == inotify_wd)
+         if (event.ip->len)
             {
-            if (inotify_file_data  &&
-                len == inotify_len &&
-                memcmp(name, inotify_name, len) == 0)
+            wd   = event.ip->wd;
+            mask = event.ip->mask;
+            len  = event.ip->len;
+            name = event.ip->name;
+
+            U_INTERNAL_DUMP("The %s %s(%u) was %s", (mask & IN_ISDIR  ? "directory" : "file"), name, len,
+                                                    (mask & IN_CREATE ? "created"   :
+                                                     mask & IN_DELETE ? "deleted"   :
+                                                     mask & IN_MODIFY ? "modified"  : "???"))
+
+            // NB: The length contains any potential padding that is, the result of strlen() on the name field may be smaller than len...
+
+            while (name[len-1] == '\0') --len;
+
+            U_INTERNAL_ASSERT_EQUALS(len, u__strlen(name, __PRETTY_FUNCTION__))
+
+            file_data = 0;
+
+            if (wd  == inotify_wd)
                {
-               goto next;
-               }
-
-            if (inotify_dir)
-               {
-               inotify_len  = len;
-               inotify_name = name;
-
-               setInotifyPathname();
-
-               goto next;
-               }
-            }
-
-         inotify_wd        = wd;
-         inotify_len       = len;
-         inotify_name      = name;
-         inotify_dir       = 0; 
-         inotify_file_data = 0;
-
-         cache_file->callForAllEntry(getInotifyPathDirectory);
-next:
-         if ((mask & IN_CREATE) != 0)
-            {
-            if (inotify_file_data == 0) checkFileForCache();
-            }
-         else
-            {
-            if ((mask & IN_DELETE) != 0)
-               {
-               if (inotify_file_data)
+               if (inotify_file_data  &&
+                   len == inotify_len &&
+                   memcmp(name, inotify_name, len) == 0)
                   {
-                  if (file_data == 0)
-                     {
-                     file_data = cache_file->at(*inotify_pathname);
+                  goto next;
+                  }
 
-                     U_INTERNAL_ASSERT_EQUALS(file_data, inotify_file_data)
-                     }
+               if (inotify_dir)
+                  {
+                  inotify_len  = len;
+                  inotify_name = name;
 
-                  cache_file->eraseAfterFind();
+                  setInotifyPathname();
 
-                  inotify_file_data = 0;
+                  goto next;
                   }
                }
-            else if ((mask & IN_MODIFY) != 0)
+
+            inotify_wd        = wd;
+            inotify_len       = len;
+            inotify_name      = name;
+            inotify_dir       = 0; 
+            inotify_file_data = 0;
+
+            cache_file->callForAllEntry(getInotifyPathDirectory);
+   next:
+            if ((mask & IN_CREATE) != 0)
                {
-               if (inotify_file_data)
+               if (inotify_file_data == 0) checkFileForCache();
+               }
+            else
+               {
+               if ((mask & IN_DELETE) != 0)
                   {
-                  // NB: check if we have the content of file in cache...
-
-                  if (inotify_file_data->array) inotify_file_data->expire = 0; // NB: we delay the renew...
-                  else
+                  if (inotify_file_data)
                      {
-                     int fd = inotify_file_data->fd;
-
                      if (file_data == 0)
                         {
                         file_data = cache_file->at(*inotify_pathname);
 
                         U_INTERNAL_ASSERT_EQUALS(file_data, inotify_file_data)
-
-                        uint32_t sz = inotify_pathname->size();
-
-                        pathname->setBuffer(sz);
-
-                        pathname->snprintf("%v", inotify_pathname->rep);
                         }
 
                      cache_file->eraseAfterFind();
 
-                     checkFileForCache();
+                     inotify_file_data = 0;
+                     }
+                  }
+               else if ((mask & IN_MODIFY) != 0)
+                  {
+                  if (inotify_file_data)
+                     {
+                     // NB: check if we have the content of file in cache...
 
-                     if (fd != -1 &&
-                         file->st_ino) // stat() ok...
+                     if (inotify_file_data->array) inotify_file_data->expire = 0; // NB: we delay the renew...
+                     else
                         {
-                        UFile::close(fd);
+                        int fd = inotify_file_data->fd;
 
-                        if (file->open()) file_data->fd = file->fd;
+                        if (file_data == 0)
+                           {
+                           file_data = cache_file->at(*inotify_pathname);
+
+                           U_INTERNAL_ASSERT_EQUALS(file_data, inotify_file_data)
+
+                           uint32_t sz = inotify_pathname->size();
+
+                           pathname->setBuffer(sz);
+
+                           pathname->snprintf("%v", inotify_pathname->rep);
+                           }
+
+                        cache_file->eraseAfterFind();
+
+                        checkFileForCache();
+
+                        if (fd != -1 &&
+                            file->st_ino) // stat() ok...
+                           {
+                           UFile::close(fd);
+
+                           if (file->open()) file_data->fd = file->fd;
+                           }
                         }
                      }
                   }
                }
-            }
 
-         i += event.ip->len;
+            i += event.ip->len;
+            }
          }
       }
+#ifdef U_EPOLLET_POSTPONE_STRATEGY
+   else if (errno == EAGAIN) U_ClientImage_state = U_PLUGIN_HANDLER_AGAIN;
+#endif
 
    file_data = 0;
 }
@@ -2946,7 +2952,6 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
    U_INTERNAL_ASSERT_MAJOR(len, 0)
 
    char buffer[U_PATH_MAX];
-   char run_dynamic_page[128];
    UServletPage* usp_page = (UServletPage*)file_data->ptr;
 
    if (suffix.empty())
@@ -2961,15 +2966,13 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
 
          U_INTERNAL_DUMP("st.st_mtime = %#3D file_data->mtime = %#3D", st.st_mtime, file_data->mtime)
 
+         // NB: dlopen() fail if the module name is not prefixed with "./"...
+
+         (void) u__snprintf(buffer, sizeof(buffer), "./%.*s.%s", len, ptr, U_LIB_SUFFIX);
+
          usp_page->UDynamic::close();
 
          usp_page->runDynamicPage = 0;
-
-         // NB: dlopen() fail if the module name is not prefixed with "./"...
-
-         U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
-
-         (void) u__snprintf(buffer, sizeof(buffer), "./%.*s.%s", len, ptr, U_LIB_SUFFIX);
 
          goto compile;
          }
@@ -2981,30 +2984,34 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
       {
       if (U_HTTP_QUERY_STREQ("_nav_")) U_RETURN(false);
 
-      ++sz; // NB: we must avoid the point '.' before the suffix...
+      if (usp_page) U_RETURN(true);
+
+      usp_page = U_NEW(UHTTP::UServletPage);
 
       // NB: dlopen() fail if the module name is not prefixed with "./"...
 
-      U_INTERNAL_ASSERT(u__strlen(U_LIB_SUFFIX, __PRETTY_FUNCTION__) >= 2)
-
       (void) u__snprintf(buffer, sizeof(buffer), "./%.*s%s", len, ptr, U_LIB_SUFFIX);
 
-      if (usp_page == 0)
+      // NB: we must avoid the point '.' before the suffix...
+
+      ++sz;
+      --len;
+
+compile:
+      if (compileUSP(ptr, len) == false)
          {
-         usp_page = U_NEW(UHTTP::UServletPage);
+err:     setInternalError();
 
-compile: if (compileUSP(ptr, len) == false)
-            {
-err:        setInternalError();
+         if (suffix) delete usp_page;
 
-            U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+         U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
 
-            U_RETURN(false);
-            }
+         U_RETURN(false);
          }
 
       if (usp_page->UDynamic::load(buffer) == false) goto err;
 
+      char run_dynamic_page[128];
       UString file_name = UStringExt::basename(file->getPath());
 
       (void) u__snprintf(run_dynamic_page, sizeof(run_dynamic_page), "runDynamicPage_%.*s", file_name.size() - sz, file_name.data());
@@ -3023,8 +3030,6 @@ err:        setInternalError();
 bool UHTTP::runCGI(bool set_environment)
 {
    U_TRACE(0, "UHTTP::runCGI(%b)", set_environment)
-
-   U_INTERNAL_ASSERT(u_is_cgi(mime_index))
 
    UHTTP::ucgi* cgi = (UHTTP::ucgi*)file_data->ptr;
 
@@ -3232,11 +3237,18 @@ bool UHTTP::callService(const UString& path) // NB: it is used also by server_pl
 
    U_INTERNAL_ASSERT_POINTER(file_data)
 
-   mime_index = file_data->mime_index;
+   if (u_is_usp(file_data->mime_index))
+      {
+      int mime_index_save = mime_index;
 
-   if (u_is_usp(mime_index)) ((UServletPage*)(file_data->ptr))->runDynamicPage(0);
+      ((UServletPage*)(file_data->ptr))->runDynamicPage(0);
+
+      mime_index = mime_index_save;
+      }
    else
       {
+      U_INTERNAL_ASSERT(u_is_cgi(file_data->mime_index))
+
       if (runCGI(false) == false) U_RETURN(false);
       }
 

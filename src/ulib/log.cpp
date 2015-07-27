@@ -291,8 +291,6 @@ void ULog::updateDate1()
 
          U_INTERNAL_DUMP("tv_sec_old_1 = %lu u_now->tv_sec = %lu", tv_sec_old_1, tv_sec)
 
-         U_INTERNAL_ASSERT_MINOR(tv_sec_old_1, tv_sec)
-
          if ((tv_sec - tv_sec_old_1) != 1 ||
              (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
             {
@@ -325,8 +323,6 @@ void ULog::updateDate1()
       long tv_sec = u_now->tv_sec;
 
       U_INTERNAL_DUMP("tv_sec_old_1 = %lu u_now->tv_sec = %lu", tv_sec_old_1, tv_sec)
-
-      U_INTERNAL_ASSERT_MINOR(tv_sec_old_1, tv_sec)
 
       if ((tv_sec - tv_sec_old_1) != 1 ||
           (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
@@ -367,8 +363,6 @@ void ULog::updateDate2()
 
          U_INTERNAL_DUMP("tv_sec_old_2 = %lu u_now->tv_sec = %lu", tv_sec_old_2, tv_sec)
 
-         U_INTERNAL_ASSERT_MINOR(tv_sec_old_2, tv_sec)
-
          if ((tv_sec - tv_sec_old_2) != 1 ||
              (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
             {
@@ -401,8 +395,6 @@ void ULog::updateDate2()
       long tv_sec = u_now->tv_sec;
 
       U_INTERNAL_DUMP("tv_sec_old_2 = %lu u_now->tv_sec = %lu", tv_sec_old_2, tv_sec)
-
-      U_INTERNAL_ASSERT_MINOR(tv_sec_old_2, tv_sec)
 
       if ((tv_sec - tv_sec_old_2) != 1 ||
           (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
@@ -444,8 +436,6 @@ void ULog::updateDate3()
 
          U_INTERNAL_DUMP("tv_sec_old_3 = %lu u_now->tv_sec = %lu", tv_sec_old_3, tv_sec)
 
-         U_INTERNAL_ASSERT_MINOR(tv_sec_old_3, tv_sec)
-
          if ((tv_sec - tv_sec_old_3) != 1 ||
              (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
             {
@@ -478,8 +468,6 @@ void ULog::updateDate3()
       long tv_sec = u_now->tv_sec;
 
       U_INTERNAL_DUMP("tv_sec_old_3 = %lu u_now->tv_sec = %lu", tv_sec_old_3, tv_sec)
-
-      U_INTERNAL_ASSERT_MINOR(tv_sec_old_3, tv_sec)
 
       if ((tv_sec - tv_sec_old_3) != 1 ||
           (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)

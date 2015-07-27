@@ -17,11 +17,13 @@
 #include <ulib/container/vector.h>
 #include <ulib/container/gen_hash_map.h>
 
-/* NB: to force the use of select() uncomment this define
-#if defined(U_SERVER_CAPTIVE_PORTAL) && defined(HAVE_EPOLL_WAIT)
-#  undef HAVE_EPOLL_WAIT
-#endif
-*/
+/**
+ * NB: to force the use of select() uncomment this define
+ *
+ * #if defined(U_SERVER_CAPTIVE_PORTAL) && defined(HAVE_EPOLL_WAIT)
+ * #  undef HAVE_EPOLL_WAIT
+ * #endif
+ */
 
 #ifndef _MSWINDOWS_
 #  include <sys/select.h>
@@ -29,6 +31,10 @@
 #     include <sys/epoll.h>
 #     define U_EPOLL_CTL_CMD_SIZE 128
 #  endif
+#endif
+
+#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+#  define U_EPOLLET_POSTPONE_STRATEGY
 #endif
 
 #include <ulib/event/event_fd.h>
@@ -115,6 +121,10 @@ protected:
    static UEventFd* handler_event;
    static int max_nfd_ready, nfd_ready; // the number of file descriptors ready for the requested I/O
    static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
+
+#ifdef U_EPOLLET_POSTPONE_STRATEGY
+   static bool bepollet;
+#endif
 
 #ifdef USE_LIBEVENT
 // nothing

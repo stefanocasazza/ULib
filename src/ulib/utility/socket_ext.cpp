@@ -193,6 +193,10 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
       goto read;
       }
 
+#ifdef U_EPOLLET_POSTPONE_STRATEGY
+   if (UNotifier::bepollet == false)
+#endif
+   {
    if (sk->isBlocking() == false)
       {
       /**
@@ -223,6 +227,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
       goto read;
       }
+   }
 
 done:
    U_INTERNAL_DUMP("byte_read = %d", byte_read)

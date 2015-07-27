@@ -513,7 +513,7 @@ protected:
    static UString* cenvironment;
    static UString* senvironment;
    static UString* str_preforked_num_kids;
-   static uint32_t max_depth, wakeup_for_nothing, read_again;
+   static uint32_t max_depth, wakeup_for_nothing, nread, nread_again;
    static bool flag_loop, flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive;
 
    static uint32_t                 vplugin_size;

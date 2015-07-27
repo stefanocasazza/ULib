@@ -1057,7 +1057,7 @@ start:
          U_INTERNAL_ASSERT(socket->isOpen())
 
 #     ifdef DEBUG
-         UServer_Base::read_again++;
+         UServer_Base::nread_again++;
 #     endif
 
          U_RETURN(U_NOTIFIER_OK); // NOT BLOCKING...
@@ -1065,6 +1065,10 @@ start:
 
       goto end;
       }
+
+#ifdef DEBUG
+   UServer_Base::nread++;
+#endif
 
    U_INTERNAL_ASSERT(socket->isOpen())
 

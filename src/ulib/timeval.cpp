@@ -127,13 +127,7 @@ long UTimeVal::restart()
 {
    U_TRACE(1, "UTimeVal::restart()")
 
-#ifdef DEBUG
-   long tv_sec_old = u_now->tv_sec;
-#endif
-
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-   U_INTERNAL_ASSERT(tv_sec_old <= u_now->tv_sec)
 
    struct timeval time_from_last_start = { u_now->tv_sec - tv_sec, u_now->tv_usec - tv_usec };
 
@@ -157,13 +151,7 @@ long UTimeVal::stop()
 {
    U_TRACE(1, "UTimeVal::stop()")
 
-#ifdef DEBUG
-   long tv_sec_old = u_now->tv_sec;
-#endif
-
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-   U_INTERNAL_ASSERT(tv_sec_old <= u_now->tv_sec)
 
    struct timeval time_elapsed = { u_now->tv_sec - tv_sec, u_now->tv_usec - tv_usec };
 

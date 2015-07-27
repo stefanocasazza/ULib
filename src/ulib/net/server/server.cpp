@@ -101,9 +101,10 @@ char*         UServer_Base::client_address;
 ULock*        UServer_Base::lock_user1;
 ULock*        UServer_Base::lock_user2;
 time_t        UServer_Base::last_event;
+uint32_t      UServer_Base::nread;
 uint32_t      UServer_Base::map_size;
 uint32_t      UServer_Base::max_depth;
-uint32_t      UServer_Base::read_again;
+uint32_t      UServer_Base::nread_again;
 uint32_t      UServer_Base::vplugin_size;
 uint32_t      UServer_Base::nClientIndex;
 uint32_t      UServer_Base::shared_data_add;
@@ -1906,10 +1907,10 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
                         "SIGTERM (Interrupt): "
                         "address space usage: %.2f MBytes - "
                                   "rss usage: %.2f MBytes\n"
-                        "max_nfd_ready = %u max_depth = %u read_again = %u wakeup_for_nothing = %u\n",
+                        "max_nfd_ready = %u max_depth = %u again:read = (%u/%u - %u%%) wakeup_for_nothing = %u\n",
                         (double)vsz / (1024.0 * 1024.0),
                         (double)rss / (1024.0 * 1024.0), UNotifier::max_nfd_ready,
-                        (max_depth > UNotifier::min_connection ? max_depth - UNotifier::min_connection : 0), read_again, wakeup_for_nothing);
+                        (max_depth > UNotifier::min_connection ? max_depth - UNotifier::min_connection : 0), nread_again, nread, (nread_again*100)/nread, wakeup_for_nothing);
 
          ostrstream os(buffer + len, sizeof(buffer) - len);
 
@@ -2131,6 +2132,10 @@ try_accept:
             u_buffer_len = 0;
             }
          }
+#  endif
+
+#  ifdef U_EPOLLET_POSTPONE_STRATEGY
+      if (CSOCKET->iState == -EAGAIN) U_ClientImage_state = U_PLUGIN_HANDLER_AGAIN;
 #  endif
 
       goto end;

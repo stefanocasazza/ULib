@@ -14,6 +14,7 @@
 #include <ulib/file.h>
 #include <ulib/utility/escape.h>
 #include <ulib/internal/chttp.h>
+#include <ulib/container/vector.h>
 #include <ulib/container/hash_map.h>
 
 struct ustring    { ustringrep* rep; };
@@ -499,31 +500,9 @@ bool UString::shrink()
    U_RETURN(false);
 }
 
-void UStringRep::release()
+void UStringRep::_release()
 {
-   U_TRACE(0, "UStringRep::release()") // problem with sanitize address
-
-   U_INTERNAL_DUMP("this = %p parent = %p references = %u child = %d", this, parent, references, child)
-
-#ifdef DEBUG
-   bool ok = memory.invariant();
-
-   if (ok == false)
-      {
-      U_ERROR("UStringRep::release() %s - this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %.*S",
-               memory.getErrorType(this),
-               this, parent, references, child, _capacity, _length, _length, str);
-      }
-#endif
-
-   if (references)
-      {
-    --references;
-
-      return;
-      }
-
-   // NB: we don't use delete (dtor) because add a deallocation to the destroy process...
+   U_TRACE(0, "UStringRep::_release()")
 
    U_INTERNAL_DUMP("_capacity = %u str(%u) = %.*S", _capacity, _length, _length, str)
 
@@ -872,6 +851,25 @@ __pure bool UStringRep::isEndHeader(uint32_t pos) const
       U_INTERNAL_ASSERT(u__islterm(*ptr))
 
       U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+__pure bool UStringRep::findEndHeader(uint32_t pos) const
+{
+   U_TRACE(0, "UStringRep::findEndHeader(%u)", pos)
+
+   U_CHECK_MEMORY
+
+   if (_length)
+      {
+      U_INTERNAL_ASSERT_MINOR(pos, _length)
+
+      const char* ptr  = str + pos;
+      uint32_t _remain = (_length - pos);
+
+      if (u_findEndHeader1(ptr, _remain) != U_NOT_FOUND) U_RETURN(true); /* find sequence of U_CRLF2 */
       }
 
    U_RETURN(false);
@@ -1799,7 +1797,8 @@ void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
 
    U_INTERNAL_ASSERT_EQUALS(u__isspace(c), false)
 
-   if (c == '@')
+   if (c == '@' &&
+       UVector<void*>::istream_loading == false)
       {
       // get content pointed by string 'meta' (that start with '@')
 

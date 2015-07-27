@@ -35,11 +35,9 @@
   </script>
   <hr>
   <div id="chat">
-
 <!--#code
 (void) UHTTP::callService(U_STRING_FROM_CONSTANT("servlet/cchat"));
 -->
-
   </div>
  </body>
 </html>

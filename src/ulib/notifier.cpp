@@ -13,7 +13,9 @@
 
 #include <ulib/notifier.h>
 #include <ulib/net/socket.h>
+#include <ulib/internal/chttp.h>
 #include <ulib/utility/interrupt.h>
+#include <ulib/net/server/server_plugin.h>
 
 #if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
 #  include "ulib/thread.h"
@@ -28,28 +30,28 @@ UEventTime* UNotifier::time_obj;
 
 #include <errno.h>
 
-/*
-typedef union epoll_data {
-   void* ptr;
-   int fd;
-   uint32_t u32;
-   uint64_t u64;
-} epoll_data_t;
-
-struct epoll_event {
-   uint32_t events;   // Epoll events
-   epoll_data_t data; // User data variable
-};
-
-struct epoll_ctl_cmd {
-   int flags;        // Reserved flags for future extension, must be 0
-   int op;           // The same as epoll_ctl() op parameter
-   int fd;           // The same as epoll_ctl() fd parameter
-   uint32_t events;  // The same as the "events" field in struct epoll_event
-   uint64_t data;    // The same as the "data"   field in struct epoll_event
-   int error_hint;   // Output field, will be set to the return code after this command is executed by kernel
-};
-*/
+/**
+ * typedef union epoll_data {
+ *    void* ptr;
+ *    int fd;
+ *    uint32_t u32;
+ *    uint64_t u64;
+ * } epoll_data_t;
+ *
+ * struct epoll_event {
+ *    uint32_t events;   // Epoll events
+ *    epoll_data_t data; // User data variable
+ * };
+ *
+ * struct epoll_ctl_cmd {
+ *    int flags;        // Reserved flags for future extension, must be 0
+ *    int op;           // The same as epoll_ctl() op parameter
+ *    int fd;           // The same as epoll_ctl() fd parameter
+ *    uint32_t events;  // The same as the "events" field in struct epoll_event
+ *    uint64_t data;    // The same as the "data"   field in struct epoll_event
+ *    int error_hint;   // Output field, will be set to the return code after this command is executed by kernel
+ * };
+ */
 
 #ifdef HAVE_EPOLL_CTL_BATCH
 int                  UNotifier::ctl_cmd_cnt;
@@ -81,7 +83,9 @@ int                  UNotifier::fd_write_cnt;
 fd_set               UNotifier::fd_set_read;
 fd_set               UNotifier::fd_set_write;
 #endif
-
+#ifdef U_EPOLLET_POSTPONE_STRATEGY
+bool                 UNotifier::bepollet;
+#endif
 int                  UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
 int                  UNotifier::max_nfd_ready;
 bool                 UNotifier::bread;
@@ -665,12 +669,39 @@ U_NO_EXPORT void UNotifier::notifyHandlerEvent()
       {
       U_INTERNAL_DUMP("num_connection = %u", num_connection)
 
+      if (LIKELY(handler_event->fd != -1)) handlerDelete(handler_event);
+
 #  ifdef HAVE_EPOLL_WAIT
       U_INTERNAL_ASSERT_EQUALS(handler_event, pevents->data.ptr)
-#  endif
 
-      if (LIKELY(handler_event->fd != -1)) handlerDelete(handler_event);
+#    ifdef U_EPOLLET_POSTPONE_STRATEGY
+      goto decrement;
+#    endif
+#  endif
       }
+
+#ifdef U_EPOLLET_POSTPONE_STRATEGY
+   U_INTERNAL_DUMP("U_ClientImage_state = %d %B", U_ClientImage_state, U_ClientImage_state)
+
+   if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN)
+      {
+      U_INTERNAL_DUMP("handler_event->fd = %d", handler_event->fd)
+
+      U_INTERNAL_ASSERT_MAJOR(handler_event->fd, 0)
+
+      if (bepollet)
+         {
+         handler_event->fd = -handler_event->fd;
+
+decrement:
+         U_INTERNAL_DUMP("nfd_ready = %d", nfd_ready)
+
+         U_INTERNAL_ASSERT_MAJOR(nfd_ready, 0)
+
+         --nfd_ready;
+         }
+      }
+#endif
 }
 #endif
 
@@ -701,10 +732,17 @@ void UNotifier::waitForEvent(UEventTime* timeout)
    if (LIKELY(nfd_ready > 0))
       {
 #  ifdef HAVE_EPOLL_WAIT
-      pevents = events + nfd_ready;
-loop:
-    --pevents;
+      int i, n = nfd_ready;
 
+#   ifdef U_EPOLLET_POSTPONE_STRATEGY
+      bepollet = (n >= 16); 
+
+loop1:
+#   endif
+      i       = 0;
+      pevents = events;
+
+loop2:
       handler_event = (UEventFd*)pevents->data.ptr;
 
       U_INTERNAL_DUMP("handler_event = %p bread = %b bwrite = %b events[%d].events = %d %B", handler_event,
@@ -715,7 +753,7 @@ loop:
       U_INTERNAL_ASSERT(pevents >= events)
       U_INTERNAL_ASSERT_DIFFERS(handler_event, 0)
 
-      if (LIKELY(handler_event->fd != -1))
+      if (handler_event->fd > 0)
          {
          /**
           * EPOLLIN     = 0x0001
@@ -745,22 +783,53 @@ loop:
             handler_event->handlerError();
 
             handler_event->fd = -1;
+
+#        ifdef U_EPOLLET_POSTPONE_STRATEGY
+            U_INTERNAL_DUMP("nfd_ready = %d", nfd_ready)
+
+            U_INTERNAL_ASSERT_MAJOR(nfd_ready, 0)
+
+            --nfd_ready;
+#        endif
             }
          }
 
-      if (--nfd_ready) goto loop;
+      U_INTERNAL_DUMP("i = %d handler_event->fd = %d nfd_ready = %d", i, handler_event->fd, nfd_ready)
 
-      U_INTERNAL_DUMP("events[%d]: return", (pevents-events))
+      ++pevents;
 
-      U_INTERNAL_ASSERT_EQUALS(pevents, events)
+      if (++i < n) goto loop2;
+
+      U_INTERNAL_ASSERT_EQUALS(pevents-events, n)
+
+#    ifdef U_EPOLLET_POSTPONE_STRATEGY
+      if (bepollet)
+         {
+         if (nfd_ready) goto loop1;
+
+         U_INTERNAL_ASSERT_EQUALS(nfd_ready, 0)
+
+loop3:   --pevents;
+
+         handler_event = (UEventFd*)pevents->data.ptr;
+
+         if (handler_event->fd < -1) handler_event->fd = -handler_event->fd;
+
+         U_INTERNAL_DUMP("i = %d handler_event->fd = %d", i, handler_event->fd)
+
+         if (--i) goto loop3;
+
+         U_INTERNAL_ASSERT_EQUALS(pevents, events)
+         }
+#   endif
 #  else
-      int fd, fd_cnt = (fd_read_cnt + fd_write_cnt);
+      int fd = 1, fd_cnt = (fd_read_cnt + fd_write_cnt);
 
       U_INTERNAL_DUMP("fd_cnt = %d fd_set_max = %d", fd_cnt, fd_set_max)
 
       U_INTERNAL_ASSERT(nfd_ready <= fd_cnt)
 
-      for (fd = 1; fd < fd_set_max; ++fd)
+      for (int i = nfd_ready; fd < fd_set_max; ++fd)
          {
          bread = (fd_read_cnt && FD_ISSET(fd, &read_set));
 
@@ -770,7 +839,7 @@ loop:
             {
             notifyHandlerEvent();
 
-            if (--nfd_ready == 0)
+            if (--i == 0)
                {
                U_INTERNAL_DUMP("fd = %d: return", fd)
 

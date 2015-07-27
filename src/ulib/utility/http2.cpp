@@ -17,6 +17,9 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/hpack_huffman_table.h> // huff_sym_table, huff_decode_table
 
+#define HTTP2_FRAME_HEADER_SIZE    9 // The number of bytes of the frame header
+#define HTTP2_HEADER_TABLE_OFFSET 62
+
 int                           UHTTP2::nerror;
 bool                          UHTTP2::settings_ack;
 void*                         UHTTP2::pConnectionEnd;
@@ -429,8 +432,6 @@ void UHTTP2::dtor()
    U_TRACE(0, "UHTTP2::dtor()")
 }
 
-#define HTTP2_FRAME_HEADER_SIZE 9 // The number of bytes of the frame header
-
 void UHTTP2::sendError()
 {
    U_TRACE(0, "UHTTP2::sendError()")
@@ -559,7 +560,7 @@ uint32_t UHTTP2::hpackEncodeString(unsigned char* dst, const char* src, uint32_t
    unsigned char* ptr;
    const char* src_end = src + len;
 
-   UString buffer(len + 1024);
+   UString buffer(len + 1024U);
 
    unsigned char* _dst       = (unsigned char*)buffer.data();
    unsigned char* _dst_end   = _dst + len;
@@ -665,8 +666,6 @@ err:  pvalue->clear();
    U_RETURN(nmove + len);
 }
 
-#define HEADER_TABLE_OFFSET 62
-
 void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
 {
    U_TRACE(0, "UHTTP2::decodeHeaders(%p,%p)", ptr, endptr)
@@ -739,9 +738,9 @@ error:   nerror = COMPRESSION_ERROR;
 
       // determine the header
 
-      U_INTERNAL_ASSERT_MINOR(index, HEADER_TABLE_OFFSET) // existing name (and value?)
+      U_INTERNAL_ASSERT_MINOR(index, HTTP2_HEADER_TABLE_OFFSET) // existing name (and value?)
 
-      static const int dispatch_table[HEADER_TABLE_OFFSET] = {
+      static const int dispatch_table[HTTP2_HEADER_TABLE_OFFSET] = {
          0,/* 0 */
          (int)((char*)&&case_1-(char*)&&cdefault),   /* 1 :authority */
          (int)((char*)&&case_2_3-(char*)&&cdefault), /* 2 :method */
@@ -1251,12 +1250,14 @@ loop:
 
    U_INTERNAL_DUMP("ptr = %#.4S", ptr) // "\000\000\f\004" (big endian: 0x11223344)
 
+#ifdef DEBUG
    if ((frame.type = ptr[3]) > CONTINUATION)
       {
       nerror = PROTOCOL_ERROR;
 
       return;
       }
+#endif
 
    frame.length = ntohl(*(uint32_t*)ptr & 0x00ffffff) >> 8;
 
@@ -1286,6 +1287,7 @@ loop:
 
          U_INTERNAL_DUMP("window_size_increment = %u", window_size_increment)
 
+#     ifdef DEBUG
          if (frame.length != 4 ||
              window_size_increment == 0)
             {
@@ -1293,6 +1295,7 @@ loop:
 
             goto err;
             }
+#     endif
 
          if (frame.stream_id)     pStream->output_window += window_size_increment;
          else                 pConnection->output_window += window_size_increment;
@@ -1306,12 +1309,14 @@ loop:
             {
             if ((frame.flags & FLAG_ACK) != 0)
                {
+#           ifdef DEBUG
                if (frame.length)
                   {
                   nerror = FRAME_SIZE_ERROR;
 
                   goto err;
                   }
+#           endif
 
                settings_ack = true;
                }
@@ -1425,12 +1430,14 @@ void UHTTP2::manageHeaders()
       {
       padlen = *ptr++;
 
+#  ifdef DEBUG
       if (frame.length < padlen)
          {
          nerror = PROTOCOL_ERROR;
 
          return;
          }
+#  endif
 
       endptr -= padlen;
       }
@@ -1443,12 +1450,14 @@ void UHTTP2::manageHeaders()
       }
    else
       {
+#  ifdef DEBUG
       if ((frame.length - padlen) < 5)
          {
          nerror = PROTOCOL_ERROR;
 
          return;
          }
+#  endif
 
       uint32_t u4 = ntohl(*(uint32_t*)ptr);
                                       ptr += 4;
@@ -1472,6 +1481,7 @@ void UHTTP2::manageHeaders()
 wait_CONTINUATION:
       readFrame();
 
+#  ifdef DEBUG
       if (nerror != NO_ERROR         ||
           frame.type != CONTINUATION ||
           frame.stream_id != pStream->id)
@@ -1480,6 +1490,7 @@ wait_CONTINUATION:
 
          return;
          }
+#  endif
 
       (void) bufferHeaders.append(frame.payload, frame.length);
 
@@ -1504,19 +1515,20 @@ void UHTTP2::manageData()
       return;
       }
 
-   uint32_t sz;
-   int32_t padlen;
-   const char* ptr;
-   const char* endptr = (ptr = frame.payload) + frame.length;
+   const char* ptr    = frame.payload;;
+   int32_t padlen     = *ptr;
+   const char* endptr =  ptr + frame.length;
 
-   if (frame.length < (padlen = *ptr++))
+#ifdef DEBUG
+   if (frame.length < padlen)
       {
       nerror = PROTOCOL_ERROR;
 
       return;
       }
+#endif
 
-   sz = (endptr - padlen) - ptr;
+   uint32_t sz = (endptr - padlen) - ++ptr;
 
    U_INTERNAL_ASSERT(sz <= U_http_info.clength)
 

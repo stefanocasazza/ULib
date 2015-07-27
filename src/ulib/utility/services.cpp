@@ -304,7 +304,7 @@ UString UServices::getUUID()
    U_APPEND_HEX(node, 4);
    U_APPEND_HEX(node, 5);
 
-#undef U_APPEND_HEX(value, offset)
+#undef U_APPEND_HEX
 #endif
 
    buffer.size_adjust(36U);

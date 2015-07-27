@@ -185,29 +185,23 @@ UVector<UString>::UVector(const UString& x, const char* delim) : UVector<UString
    U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%V,%S", x.rep, delim)
 
    const char* s = x.data();
+         char  c = *s;
 
-   if (*s == '[' ||
-       *s == '(')
+   if (c == '[' ||
+       c == '(')
       {
+      istream_loading = true; // NB: we need this flag for distinguish this operation in UString::setFromData()...
+
       (void) loadFromData(s, x.size());
+
+      istream_loading = false;
       }
    else
       {
-      (void) split(x, delim);
+      (void) split(x, delim); // NB: use substr(), so dependency from x...
       }
 
    if (_length) reserve(_length);
-}
-
-__pure UString UVector<UString>::at(uint32_t pos) const
-{
-   U_TRACE(0, "UVector<UString>::at(%u)", pos)
-
-   UStringRep* rep = UVector<UStringRep*>::at(pos);
-
-   UString result(rep);
-
-   U_RETURN_STRING(result);
 }
 
 __pure uint32_t UVector<UString>::find(const char* s, uint32_t n)
@@ -297,26 +291,6 @@ __pure bool UVector<UString>::isEqual(uint32_t pos, const UString& str, bool ign
 
    U_RETURN(false);
 }
-
-/*
-__pure uint32_t UVector<UString>::findWithDataOffset(const char* s, uint32_t n, uint32_t offset)
-{
-   U_TRACE(0, "UVector<UString>::findWithDataOffset(%#.*S,%u)", n, s, n)
-
-   U_CHECK_MEMORY
-
-   UStringRep* r;
-
-   for (uint32_t i = 0; i < _length; ++i)
-      {
-      r = UVector<UStringRep*>::at(i);
-
-      if (u_find(r->data() + offset, r->size() - offset, s, n)) U_RETURN(i);
-      }
-
-   U_RETURN(U_NOT_FOUND);
-}
-*/
 
 __pure uint32_t UVector<UString>::findSorted(const UString& str, bool ignore_case, bool bcouple)
 {
@@ -780,67 +754,6 @@ static inline int chfunc(UStringRep* a[], int i, int depth)
 
    U_RETURN(result);
 }
-
-/* Simple version
-
-static inline void swap2(UStringRep* a[], int i, int j)
-{
-   U_TRACE(0, "swap2(%p,%d,%d)", a, i, j)
-
-   UStringRep* t = a[i];
-   a[i] = a[j];
-   a[j] = t;
-}
-
-static inline void vecswap2(UStringRep* a[], int i, int j, int n)
-{
-   U_TRACE(0, "vecswap2(%p,%d,%d,%d)", a, i, j, n)
-
-   while (n-- > 0) swap2(a, i++, j++);
-}
-
-#define ch(i) chfunc(a, i, depth)
-
-void UVector<UString>::mksort(UStringRep** a, int n, int depth)
-{
-   U_TRACE(0+256, "UVector<UString>::mksort(%p,%d,%d)", a, n, depth)
-
-   int le, lt, gt, ge, r, v;
-
-   if (n <= 1) return;
-
-   swap2(a, 0, u_random(n) % n);
-
-   v = ch(0);
-   le = lt = 1;
-   gt = ge = n-1;
-
-   for (;;)
-      {
-      for (; lt <= gt && ch(lt) <= v; lt++) if (ch(lt) == v) swap2(a, le++, lt);
-      for (; lt <= gt && ch(gt) >= v; gt--) if (ch(gt) == v) swap2(a, gt, ge--);
-
-      if (lt > gt) break;
-
-      swap2(a, lt++, gt--);
-      }
-
-   r = U_min(le, lt-le);
-
-   vecswap2(a, 0, lt-r, r);
-
-   r = U_min(ge-gt, n-ge-1);
-
-   vecswap2(a, lt, n-r, r);
-
-   mksort(a, lt-le, depth);
-
-   if (v != 0) mksort(a + lt-le, le + n-ge-1, depth+1);
-               mksort(a + n-(ge-gt),   ge-gt, depth); 
-}
-*/
-
-/* Faster version */
 
 static inline void vecswap2(UStringRep** a, UStringRep** b, int n)
 {
