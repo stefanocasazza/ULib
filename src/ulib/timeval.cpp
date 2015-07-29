@@ -120,19 +120,20 @@ __pure bool UTimeVal::operator<(const UTimeVal& t) const
    U_RETURN(result);
 }
 
-
 // CHRONOMETER
 
 long UTimeVal::restart()
 {
    U_TRACE(1, "UTimeVal::restart()")
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+   struct timeval now;
 
-   struct timeval time_from_last_start = { u_now->tv_sec - tv_sec, u_now->tv_usec - tv_usec };
+   (void) U_SYSCALL(gettimeofday, "%p,%p", &now, 0);
 
-   tv_sec  = u_now->tv_sec;
-   tv_usec = u_now->tv_usec;
+   struct timeval time_from_last_start = { now.tv_sec - tv_sec, now.tv_usec - tv_usec };
+
+   tv_sec  = now.tv_sec;
+   tv_usec = now.tv_usec;
 
    while (time_from_last_start.tv_usec < 0L)
       {
@@ -151,9 +152,11 @@ long UTimeVal::stop()
 {
    U_TRACE(1, "UTimeVal::stop()")
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+   struct timeval now;
 
-   struct timeval time_elapsed = { u_now->tv_sec - tv_sec, u_now->tv_usec - tv_usec };
+   (void) U_SYSCALL(gettimeofday, "%p,%p", &now, 0);
+
+   struct timeval time_elapsed = { now.tv_sec - tv_sec, now.tv_usec - tv_usec };
 
    if (time_elapsed.tv_usec < 0L)
       {

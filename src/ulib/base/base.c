@@ -2019,11 +2019,11 @@ case_D: /* extension: print date and time in various format */
          char tmp[16];
          uint32_t len1;
 
-#     if defined(ENABLE_THREAD)
+#     ifdef ENABLE_THREAD
          if (u_pthread_time) (void) gettimeofday(u_now, 0);
 #     endif
 
-         (void) sprintf(tmp, "_%03ld", (long)u_now->tv_usec / 1000L);
+         (void) sprintf(tmp, "_%03ld", u_now->tv_usec / 1000L);
 
          len1 = u__strlen(tmp, __PRETTY_FUNCTION__);
 

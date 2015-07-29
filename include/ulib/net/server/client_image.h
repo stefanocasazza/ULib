@@ -18,6 +18,7 @@
 #include <ulib/event/event_fd.h>
 #include <ulib/internal/chttp.h>
 #include <ulib/utility/socket_ext.h>
+#include <ulib/net/server/server_plugin.h>
 
 #ifdef USE_LIBSSL
 #  include <ulib/ssl/certificate.h>
@@ -70,11 +71,9 @@ public:
 
    // define method VIRTUAL of class UEventFd
 
-   virtual int handlerRead() U_DECL_OVERRIDE;
-   virtual int handlerWrite() U_DECL_OVERRIDE;
-   virtual int handlerTimeout() U_DECL_OVERRIDE;
-
-   virtual void handlerError() U_DECL_OVERRIDE;
+   virtual int  handlerRead() U_DECL_OVERRIDE;
+   virtual int  handlerWrite() U_DECL_OVERRIDE;
+   virtual int  handlerTimeout() U_DECL_OVERRIDE;
    virtual void handlerDelete() U_DECL_OVERRIDE;
 
    static void setNoHeaderForResponse()
@@ -317,7 +316,22 @@ protected:
       sfd   = -1;
       }
 
-   int  handlerResponse();
+   int manageRead()
+      {
+      U_TRACE(0, "UClientImage::manageRead()")
+
+      if ((prepareForRead(), genericRead()) == false &&
+          U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN) // NOT BLOCKING...
+         {
+         U_INTERNAL_ASSERT_EQUALS(U_ClientImage_state, U_PLUGIN_HANDLER_ERROR)
+
+         U_RETURN(U_NOTIFIER_DELETE);
+         }
+
+      U_RETURN(U_NOTIFIER_OK);
+      }
+
+   int handlerResponse();
    void prepareForSendfile();
 
    static uint32_t getCountToRead()

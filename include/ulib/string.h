@@ -1003,9 +1003,11 @@ protected:
 
                       friend class UHTTP2;
                       friend class UValue;
-   template <class T> friend class UVector;
                       friend class UStringExt;
                       friend class UClientImage_Base;
+
+   template <class T> friend class UVector;
+   template <class T> friend class UHashMap;
 
    explicit UString(uint32_t len, uint32_t sz, char* ptr); // NB: for UStringExt::deflate()...
 
@@ -1949,9 +1951,6 @@ public:
 private:
    char* __append(uint32_t n);
    char* __replace(uint32_t pos, uint32_t n1, uint32_t n2);
-
-   template <class T> friend class UVector;
-   template <class T> friend class UHashMap;
 };
 
 // operator ==

@@ -80,7 +80,6 @@ public:
    virtual int handlerWrite()   { return U_NOTIFIER_DELETE; }
    virtual int handlerTimeout() { return U_NOTIFIER_DELETE; }
 
-   virtual void handlerError()  { }
    virtual void handlerDelete() { delete this; }
 
 #ifdef USE_LIBEVENT

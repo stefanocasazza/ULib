@@ -31,20 +31,16 @@ protected:
       {
       U_TRACE(5, "UUnixClientImage::handlerRead()")
 
-      if ((UClientImage_Base::prepareForRead(), UClientImage_Base::genericRead()) == false)
+      if (UClientImage_Base::manageRead() == U_NOTIFIER_DELETE) U_RETURN(U_NOTIFIER_DELETE);
+
+      if (U_ClientImage_state == U_PLUGIN_HANDLER_GO_ON)
          {
-         if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NOT BLOCKING...
+         *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
 
-         U_INTERNAL_ASSERT_EQUALS(U_ClientImage_state, U_PLUGIN_HANDLER_ERROR)
-
-         U_RETURN(U_NOTIFIER_DELETE);
+         return UClientImage_Base::handlerResponse();
          }
 
-      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_state, U_PLUGIN_HANDLER_GO_ON)
-
-      *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
-
-      return UClientImage_Base::handlerResponse();
+      U_RETURN(U_NOTIFIER_OK);
       }
 };
 

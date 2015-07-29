@@ -45,35 +45,33 @@ protected:
       {
       U_TRACE(5, "UClientImageExample::handlerRead()")
 
-      if ((UClientImage_Base::prepareForRead(), UClientImage_Base::genericRead()) == false)
+      if (UClientImage_Base::manageRead() == U_NOTIFIER_DELETE) U_RETURN(U_NOTIFIER_DELETE);
+
+      if (U_ClientImage_state == U_PLUGIN_HANDLER_GO_ON)
          {
-         if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NOT BLOCKING...
+#  ifdef U_LOG_ENABLE
+      if (UClientImage_Base::logbuf) 
+         {
+         *UClientImage_Base::request = *UClientImage_Base::rbuffer;
 
-         U_INTERNAL_ASSERT_EQUALS(U_ClientImage_state, U_PLUGIN_HANDLER_ERROR)
-
-         U_RETURN(U_NOTIFIER_DELETE);
+         UClientImage_Base::logRequest();
          }
+#  endif
 
-#ifdef U_LOG_ENABLE
-   if (UClientImage_Base::logbuf) 
-      {
-      *UClientImage_Base::request = *UClientImage_Base::rbuffer;
-
-      UClientImage_Base::logRequest();
-      }
-#endif
-
-      for (unsigned i = 0; i < request_response->size(); i += 2)
-         {
-         if (UServices::match(*rbuffer, (*request_response)[i]))
+         for (unsigned i = 0; i < request_response->size(); i += 2)
             {
-            *UClientImage_Base::wbuffer = (*request_response)[i+1];
+            if (UServices::match(*rbuffer, (*request_response)[i]))
+               {
+               *UClientImage_Base::wbuffer = (*request_response)[i+1];
 
-            break;
+               break;
+               }
             }
+
+         return UClientImage_Base::handlerResponse();
          }
 
-      return UClientImage_Base::handlerResponse();
+      U_RETURN(U_NOTIFIER_OK);
       }
 };
 

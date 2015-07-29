@@ -312,12 +312,12 @@ public:
 
    // TIMESPEC
 
-   /*
-   struct timespec {
-      time_t tv_sec;  // seconds
-      long   tv_nsec; // nanoseconds
-      };
-   */
+   /**
+    * struct timespec {
+    *    time_t tv_sec;  // seconds
+    *    long   tv_nsec; // nanoseconds
+    * };
+    */
 
    void setTimeSpec(struct timespec* t)
       {
@@ -355,10 +355,7 @@ public:
       {
       U_TRACE(1, "UTimeVal::start()")
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
-
-      tv_sec  = u_now->tv_sec;
-      tv_usec = u_now->tv_usec;
+      (void) U_SYSCALL(gettimeofday, "%p,%p", this, 0);
       }
 
    long stop();

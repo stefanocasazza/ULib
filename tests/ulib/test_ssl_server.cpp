@@ -32,39 +32,35 @@ protected:
       {
       U_TRACE(5, "USSLClientImage::handlerRead()")
 
-      if ((UClientImage_Base::prepareForRead(), UClientImage_Base::genericRead()) == false)
+      if (UClientImage_Base::manageRead() == U_NOTIFIER_DELETE) U_RETURN(U_NOTIFIER_DELETE);
+
+      if (U_ClientImage_state == U_PLUGIN_HANDLER_GO_ON)
          {
-         if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN) U_RETURN(U_NOTIFIER_OK); // NOT BLOCKING...
+         static bool binit;
 
-         U_INTERNAL_ASSERT_EQUALS(U_ClientImage_state, U_PLUGIN_HANDLER_ERROR)
-
-         U_RETURN(U_NOTIFIER_DELETE);
-         }
-
-      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_state, U_PLUGIN_HANDLER_GO_ON)
-
-      static bool binit;
-
-      if (binit == false)
-         {
-         binit = true;
-
-         X509* x509 = ((USSLSocket*)socket)->getPeerCertificate();
-
-         if (x509 == 0 &&
-             ((USSLSocket*)socket)->askForClientCertificate())
+         if (binit == false)
             {
-            x509 = ((USSLSocket*)socket)->getPeerCertificate();
+            binit = true;
 
-            U_INTERNAL_ASSERT_DIFFERS(x509, 0)
+            X509* x509 = ((USSLSocket*)socket)->getPeerCertificate();
+
+            if (x509 == 0 &&
+                ((USSLSocket*)socket)->askForClientCertificate())
+               {
+               x509 = ((USSLSocket*)socket)->getPeerCertificate();
+
+               U_INTERNAL_ASSERT_DIFFERS(x509, 0)
+               }
+
+            if (x509) cerr << UCertificate(x509).print();
             }
 
-         if (x509) cerr << UCertificate(x509).print();
+         *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
+
+         return UClientImage_Base::handlerResponse();
          }
 
-      *UClientImage_Base::wbuffer = *UClientImage_Base::rbuffer;
-
-      return UClientImage_Base::handlerResponse();
+      U_RETURN(U_NOTIFIER_OK);
       }
 };
 

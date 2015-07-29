@@ -393,70 +393,6 @@ void UNotifier::batch((UEventFd* item)
 }
 #endif
 
-void UNotifier::handlerDelete(int fd, int mask)
-{
-   U_TRACE(0, "UNotifier::handlerDelete(%d,%d)", fd, mask)
-
-   U_INTERNAL_ASSERT_MAJOR(fd, 0)
-
-   resetHandler(fd);
-
-#ifdef USE_LIBEVENT
-// nothing
-#elif defined(HAVE_EPOLL_WAIT)
-#else
-   if ((mask & (EPOLLIN | EPOLLRDHUP)) != 0)
-      {
-      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_read))
-      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
-
-      FD_CLR(fd, &fd_set_read);
-
-#  ifndef _MSWINDOWS_
-      U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
-#  endif
-
-      --fd_read_cnt;
-
-      U_INTERNAL_ASSERT(fd_read_cnt >= 0)
-      }
-   else
-      {
-      U_INTERNAL_ASSERT_DIFFERS(mask & EPOLLOUT, 0)
-      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_write))
-      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_read), 0)
-
-      FD_CLR(fd, &fd_set_write);
-
-#  ifndef _MSWINDOWS_
-      U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
-#  endif
-
-      --fd_write_cnt;
-
-      U_INTERNAL_ASSERT(fd_write_cnt >= 0)
-      }
-
-   if (empty() == false) fd_set_max = getNFDS();
-#endif
-}
-
-U_NO_EXPORT void UNotifier::handlerDelete(UEventFd* item)
-{
-   U_TRACE(0, "UNotifier::handlerDelete(%p)", item)
-
-   U_INTERNAL_ASSERT_POINTER(item)
-
-   int fd   = item->fd,
-       mask = item->op_mask;
-
-   U_INTERNAL_DUMP("fd = %d op_mask = %B num_connection = %d min_connection = %d", fd, mask, num_connection, min_connection)
-
-   item->handlerDelete();
-
-   handlerDelete(fd, mask);
-}
-
 void UNotifier::modify(UEventFd* item)
 {
    U_TRACE(0, "UNotifier::modify(%p)", item)
@@ -545,6 +481,54 @@ void UNotifier::erase(UEventFd* item)
 #endif
 }
 
+void UNotifier::handlerDelete(int fd, int mask)
+{
+   U_TRACE(0, "UNotifier::handlerDelete(%d,%d)", fd, mask)
+
+   U_INTERNAL_ASSERT_MAJOR(fd, 0)
+
+   resetHandler(fd);
+
+#ifdef USE_LIBEVENT
+// nothing
+#elif defined(HAVE_EPOLL_WAIT)
+#else
+   if ((mask & (EPOLLIN | EPOLLRDHUP)) != 0)
+      {
+      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_read))
+      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
+
+      FD_CLR(fd, &fd_set_read);
+
+#  ifndef _MSWINDOWS_
+      U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
+#  endif
+
+      --fd_read_cnt;
+
+      U_INTERNAL_ASSERT(fd_read_cnt >= 0)
+      }
+   else
+      {
+      U_INTERNAL_ASSERT_DIFFERS(mask & EPOLLOUT, 0)
+      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_write))
+      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_read), 0)
+
+      FD_CLR(fd, &fd_set_write);
+
+#  ifndef _MSWINDOWS_
+      U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+#  endif
+
+      --fd_write_cnt;
+
+      U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+      }
+
+   if (empty() == false) fd_set_max = getNFDS();
+#endif
+}
+
 int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout)
 {
    U_TRACE(1, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, timeout)
@@ -604,10 +588,10 @@ loop:
             {
             if (empty() == false)
                {
-#        ifndef HAVE_EPOLL_WAIT
+#           ifndef HAVE_EPOLL_WAIT
                if (read_set)   *read_set = fd_set_read;
                if (write_set) *write_set = fd_set_write;
-#        endif
+#           endif
 
                goto loop;
                }
@@ -652,59 +636,6 @@ loop:
    U_RETURN(result);
 }
 
-#ifndef USE_LIBEVENT
-U_NO_EXPORT void UNotifier::notifyHandlerEvent()
-{
-   U_TRACE(0, "UNotifier::notifyHandlerEvent()")
-
-   U_INTERNAL_ASSERT_POINTER(handler_event)
-
-   U_INTERNAL_DUMP("handler_event = %p bread = %b nfd_ready = %d fd = %d op_mask = %d %B",
-                    handler_event, bread, nfd_ready, handler_event->fd, handler_event->op_mask, handler_event->op_mask)
-
-   int ret = (LIKELY(bread) ? handler_event->handlerRead()
-                            : handler_event->handlerWrite());
-
-   if (ret == U_NOTIFIER_DELETE)
-      {
-      U_INTERNAL_DUMP("num_connection = %u", num_connection)
-
-      if (LIKELY(handler_event->fd != -1)) handlerDelete(handler_event);
-
-#  ifdef HAVE_EPOLL_WAIT
-      U_INTERNAL_ASSERT_EQUALS(handler_event, pevents->data.ptr)
-
-#    ifdef U_EPOLLET_POSTPONE_STRATEGY
-      goto decrement;
-#    endif
-#  endif
-      }
-
-#ifdef U_EPOLLET_POSTPONE_STRATEGY
-   U_INTERNAL_DUMP("U_ClientImage_state = %d %B", U_ClientImage_state, U_ClientImage_state)
-
-   if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN)
-      {
-      U_INTERNAL_DUMP("handler_event->fd = %d", handler_event->fd)
-
-      U_INTERNAL_ASSERT_MAJOR(handler_event->fd, 0)
-
-      if (bepollet)
-         {
-         handler_event->fd = -handler_event->fd;
-
-decrement:
-         U_INTERNAL_DUMP("nfd_ready = %d", nfd_ready)
-
-         U_INTERNAL_ASSERT_MAJOR(nfd_ready, 0)
-
-         --nfd_ready;
-         }
-      }
-#endif
-}
-#endif
-
 void UNotifier::waitForEvent(UEventTime* timeout)
 {
    U_TRACE(0, "UNotifier::waitForEvent(%p)", timeout)
@@ -732,29 +663,26 @@ void UNotifier::waitForEvent(UEventTime* timeout)
    if (LIKELY(nfd_ready > 0))
       {
 #  ifdef HAVE_EPOLL_WAIT
-      int i, n = nfd_ready;
+      pevents = events;
+      int i = 0, ret = 0x00ff;
 
 #   ifdef U_EPOLLET_POSTPONE_STRATEGY
-      bepollet = (n >= 16); 
+      bepollet = (nfd_ready >= 10);
 
-loop1:
+      U_INTERNAL_DUMP("bepollet = %b nfd_ready = %d", bepollet, nfd_ready)
 #   endif
-      i       = 0;
-      pevents = events;
 
-loop2:
+loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
+
       handler_event = (UEventFd*)pevents->data.ptr;
 
-      U_INTERNAL_DUMP("handler_event = %p bread = %b bwrite = %b events[%d].events = %d %B", handler_event,
-                      ((pevents->events & (EPOLLIN | EPOLLRDHUP)) != 0),
-                      ((pevents->events &  EPOLLOUT)              != 0),
-                       (pevents -events), pevents->events, pevents->events)
+      U_INTERNAL_DUMP("i = %d handler_event->fd = %d", i, handler_event->fd)
 
-      U_INTERNAL_ASSERT(pevents >= events)
-      U_INTERNAL_ASSERT_DIFFERS(handler_event, 0)
-
-      if (handler_event->fd > 0)
+      if (handler_event->fd != -1)
          {
+         U_INTERNAL_DUMP("bread = %b bwrite = %b events[%d].events = %d %B", ((pevents->events & (EPOLLIN | EPOLLRDHUP)) != 0),
+                                                                             ((pevents->events &  EPOLLOUT)              != 0), (pevents -events), pevents->events, pevents->events)
+
          /**
           * EPOLLIN     = 0x0001
           * EPOLLPRI    = 0x0002
@@ -769,57 +697,74 @@ loop2:
           * EPOLLRDHUP  = 0x2000
           *
           * <10000000 00000100 00000000 00000000>
-          *  EPOLLIN       EPOLLRDHUP
+          *  EPOLLIN  EPOLLRDHUP
           */
 
-         if ((pevents->events & (EPOLLERR | EPOLLHUP)) == 0)
+         if (UNLIKELY((pevents->events & (EPOLLERR | EPOLLHUP))  != 0) ||
+              (LIKELY((pevents->events & (EPOLLIN | EPOLLRDHUP)) != 0) ? (ret = handler_event->handlerRead())
+                                                                       :        handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
             {
-            bread = ((pevents->events & (EPOLLIN | EPOLLRDHUP)) != 0);
-
-            notifyHandlerEvent();
-            }
-         else
-            {
-            handler_event->handlerError();
-
-            handler_event->fd = -1;
+            handlerDelete(handler_event);
+                          handler_event->fd = -1;
 
 #        ifdef U_EPOLLET_POSTPONE_STRATEGY
-            U_INTERNAL_DUMP("nfd_ready = %d", nfd_ready)
-
-            U_INTERNAL_ASSERT_MAJOR(nfd_ready, 0)
-
-            --nfd_ready;
+            if (bepollet) pevents->events = 0;
 #        endif
             }
+#     ifdef U_EPOLLET_POSTPONE_STRATEGY
+         else if (bepollet                                       &&
+                  (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN ||
+                   UNLIKELY((pevents->events & (EPOLLIN | EPOLLRDHUP)) == 0)))
+            {
+            pevents->events = 0;
+            }
+#     endif
          }
 
-      U_INTERNAL_DUMP("i = %d handler_event->fd = %d nfd_ready = %d", i, handler_event->fd, nfd_ready)
+      if (++i < nfd_ready)
+         {
+         ++pevents;
 
-      ++pevents;
-
-      if (++i < n) goto loop2;
-
-      U_INTERNAL_ASSERT_EQUALS(pevents-events, n)
+         goto loop;
+         }
 
 #    ifdef U_EPOLLET_POSTPONE_STRATEGY
-      if (bepollet)
+      if (bepollet &&
+          ret != 0x00ff)
          {
-         if (nfd_ready) goto loop1;
+loop1:   ret     = 0x00ff;
+         i       = 0;
+         pevents = events;
 
-         U_INTERNAL_ASSERT_EQUALS(nfd_ready, 0)
+loop2:   if (pevents->events)
+            {
+            handler_event = (UEventFd*)pevents->data.ptr;
 
-loop3:   --pevents;
+            U_INTERNAL_DUMP("i = %d handler_event->fd = %d ", i, handler_event->fd)
 
-         handler_event = (UEventFd*)pevents->data.ptr;
+            U_INTERNAL_ASSERT_DIFFERS(handler_event->fd, -1)
 
-         if (handler_event->fd < -1) handler_event->fd = -handler_event->fd;
+            if ((ret = handler_event->handlerRead()) == U_NOTIFIER_DELETE)
+               {
+               pevents->events = 0;
 
-         U_INTERNAL_DUMP("i = %d handler_event->fd = %d", i, handler_event->fd)
+               handlerDelete(handler_event);
+                             handler_event->fd = -1;
+               }
+            else if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN)
+               {
+               pevents->events = 0;
+               }
 
-         if (--i) goto loop3;
+            if (++i < nfd_ready)
+               {
+               ++pevents;
 
-         U_INTERNAL_ASSERT_EQUALS(pevents, events)
+               goto loop2;
+               }
+
+            if (ret != 0x00ff) goto loop1;
+            }
          }
 #   endif
 #  else
@@ -1015,7 +960,7 @@ void UNotifier::removeBadFd()
             if ( nfd_ready == -1 &&
                 (nfd_ready = (bread + bwrite)))
                {
-               handler_event->handlerError();
+               handlerDelete(handler_event);
                }
             else
                {

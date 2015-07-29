@@ -227,20 +227,7 @@ bool UClientImage_Base::check_memory()
    U_CHECK_MEMORY
    U_CHECK_MEMORY_OBJECT(socket)
 
-   if (logbuf)
-      {
-      U_CHECK_MEMORY_OBJECT(logbuf->rep)
-
-      /*
-      if (logbuf->rep->memory.invariant() == false)
-         {
-         U_INTERNAL_DUMP("logbuf = %p logbuf->rep = %p logbuf->rep->memory._this = %p",
-                          logbuf,     logbuf->rep,     logbuf->rep->memory._this)
-
-         logbuf->rep->memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
-         }
-      */
-      }
+   if (logbuf) U_CHECK_MEMORY_OBJECT(logbuf->rep)
 
    U_RETURN(true);
 }
@@ -454,21 +441,20 @@ void UClientImage_Base::handlerDelete()
 {
    U_TRACE(0, "UClientImage_Base::handlerDelete()")
 
+   bool bsocket_open = socket->isOpen();
+
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(UNotifier::num_connection <= UNotifier::min_connection))
       {
       U_WARNING("handlerDelete(): "
-                "UEventFd::fd = %d socket->iSockDesc = %d "
+                "UEventFd::fd = %d socket->iSockDesc = %d socket->isOpen() = %b "
                 "UNotifier::num_connection = %d UNotifier::min_connection = %d "
                 "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
-                UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
+                UEventFd::fd, socket->iSockDesc, bsocket_open, UNotifier::num_connection, UNotifier::min_connection, UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
       return;
       }
 #endif
-
-   bool bsocket_open = socket->isOpen();
 
 #ifdef U_LOG_ENABLE
    if (UServer_Base::isLog())
@@ -559,33 +545,6 @@ void UClientImage_Base::handlerDelete()
    U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((socket->flags & O_CLOEXEC)  != 0))
    U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((socket->flags & O_NONBLOCK) != 0))
 #endif
-}
-
-void UClientImage_Base::handlerError()
-{
-   U_TRACE(0, "UClientImage_Base::handlerError()")
-
-   U_INTERNAL_ASSERT_POINTER(socket)
-
-   UNotifier::handlerDelete(UEventFd::fd, UEventFd::op_mask);
-
-#if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
-   if (UNLIKELY(socket->iSockDesc == -1))
-      {
-      U_WARNING("handlerError(): "
-                "UEventFd::fd = %d socket->iSockDesc = %d "
-                "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
-                UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
-                UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
-
-      return;
-      }
-
-   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
-#endif
-
-   UClientImage_Base::handlerDelete();
 }
 
 int UClientImage_Base::handlerTimeout()

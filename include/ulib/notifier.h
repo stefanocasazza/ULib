@@ -159,11 +159,35 @@ protected:
    static int  waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 private:
+   static void handlerDelete(UEventFd* item)
+      {
+      U_TRACE(0, "UNotifier::handlerDelete(%p)", item)
+
+      U_INTERNAL_ASSERT_POINTER(item)
+
+      item->handlerDelete();
+
+      handlerDelete(item->fd, item->op_mask);
+      }
+
    static void handlerDelete(int fd, int mask);
-   static void handlerDelete(UEventFd* item) U_NO_EXPORT;
 
 #ifndef USE_LIBEVENT
-   static void notifyHandlerEvent() U_NO_EXPORT; 
+   static void notifyHandlerEvent()
+      {
+      U_TRACE(0, "UNotifier::notifyHandlerEvent()")
+
+      U_INTERNAL_ASSERT_POINTER(handler_event)
+
+      U_INTERNAL_DUMP("handler_event = %p bread = %b nfd_ready = %d fd = %d op_mask = %d %B",
+                       handler_event, bread, nfd_ready, handler_event->fd, handler_event->op_mask, handler_event->op_mask)
+
+      if ((bread ? handler_event->handlerRead()
+                 : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
+         {
+         handlerDelete(handler_event);
+         }
+      }
 #endif
 
 #ifdef U_COMPILER_DELETE_MEMBERS
