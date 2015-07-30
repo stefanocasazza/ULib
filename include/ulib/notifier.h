@@ -33,7 +33,7 @@
 #  endif
 #endif
 
-#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && !defined(U_SERVER_CAPTIVE_PORTAL) 
 #  define U_EPOLLET_POSTPONE_STRATEGY
 #endif
 

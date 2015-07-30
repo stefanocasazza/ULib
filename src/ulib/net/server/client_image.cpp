@@ -578,37 +578,6 @@ int UClientImage_Base::handlerTimeout()
    U_RETURN(U_NOTIFIER_DELETE);
 }
 
-bool UClientImage_Base::startRequest()
-{
-   U_TRACE(0, "UClientImage_Base::startRequest()")
-
-#if !defined(DEBUG) && !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
-   U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
-#else
-   long tmp = chronometer->restart();
-
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_between_request = %ld time_run = %ld U_ClientImage_request_is_cached = %b csfd = %d",
-                    U_ClientImage_pipeline,     time_between_request,      time_run,      U_ClientImage_request_is_cached,     csfd)
-
-   if (U_ClientImage_pipeline == false &&
-       U_ClientImage_parallelization == 0)
-      {
-      time_between_request = tmp;
-
-#  ifndef U_CACHE_REQUEST_DISABLE
-      if (U_ClientImage_request_is_cached) U_RETURN(false);
-#  endif
-#  ifdef USE_LIBSSL
-      if (UServer_Base::bssl) U_RETURN(false);
-#  endif
-
-      if ((time_run - time_between_request) > 10) U_RETURN(true);
-      }
-#endif
-
-   U_RETURN(false);
-}
-
 const char* UClientImage_Base::getRequestUri(uint32_t& sz)
 {
    U_TRACE(0, "UClientImage_Base::getRequestUri(%p)", &sz)
@@ -646,6 +615,35 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
 #else
 #  define U_IOV_TO_SAVE (sizeof(struct iovec) * 4)
 #endif
+
+bool UClientImage_Base::startRequest()
+{
+   U_TRACE(0, "UClientImage_Base::startRequest()")
+
+#if defined(DEBUG) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
+   long tmp = chronometer->restart();
+
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_between_request = %ld time_run = %ld U_ClientImage_request_is_cached = %b csfd = %d",
+                    U_ClientImage_pipeline,     time_between_request,      time_run,      U_ClientImage_request_is_cached,     csfd)
+
+   if (U_ClientImage_pipeline == false &&
+       U_ClientImage_parallelization == 0)
+      {
+      time_between_request = tmp;
+
+#  ifndef U_CACHE_REQUEST_DISABLE
+      if (U_ClientImage_request_is_cached) U_RETURN(false);
+#  endif
+#  ifdef USE_LIBSSL
+      if (UServer_Base::bssl) U_RETURN(false);
+#  endif
+
+      if ((time_run-time_between_request) > 10) U_RETURN(true);
+      }
+#endif
+
+   U_RETURN(false);
+}
 
 void UClientImage_Base::endRequest()
 {
@@ -919,18 +917,20 @@ bool UClientImage_Base::genericRead()
 
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
-#if defined(DEBUG) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
-   bool advise_for_parallelization =
+#if !defined(DEBUG) && !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
+   U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 #else
-   (void)
+   bool advise_for_parallelization = startRequest();
 #endif
-   startRequest();
 
    request->clear(); // reset buffer before read
 
    U_INTERNAL_DUMP("rbuffer(%u) = %V", rbuffer->size(), rbuffer->rep)
 
-   rbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
+   // NB: rbuffer string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
+
+   if (rbuffer->uniq()) rbuffer->rep->_length = 0; 
+   else                 rbuffer->_set(UStringRep::create(0U, U_CAPACITY, 0));
 
    if (data_pending)
       {

@@ -368,13 +368,13 @@ protected:
    static long time_between_request, time_run;
    static uint32_t ncount, nrequest, resto, uri_offset;
 
-   static void   endRequest();
-   static bool startRequest();
-
    static void resetReadBuffer();
    static void resetWriteBuffer();
    static void saveRequestResponse();
    static void manageReadBufferResize(uint32_t n);
+
+   static void   endRequest();
+   static bool startRequest();
 
 #ifndef U_CACHE_REQUEST_DISABLE
    static bool isRequestCacheable() __pure;

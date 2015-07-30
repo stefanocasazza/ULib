@@ -663,10 +663,11 @@ void UNotifier::waitForEvent(UEventTime* timeout)
    if (LIKELY(nfd_ready > 0))
       {
 #  ifdef HAVE_EPOLL_WAIT
+      int i = 0;
       pevents = events;
-      int i = 0, ret = 0x00ff;
 
 #   ifdef U_EPOLLET_POSTPONE_STRATEGY
+      bool bloop1 = false;
       bepollet = (nfd_ready >= 10);
 
       U_INTERNAL_DUMP("bepollet = %b nfd_ready = %d", bepollet, nfd_ready)
@@ -701,8 +702,8 @@ loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
           */
 
          if (UNLIKELY((pevents->events & (EPOLLERR | EPOLLHUP))  != 0) ||
-              (LIKELY((pevents->events & (EPOLLIN | EPOLLRDHUP)) != 0) ? (ret = handler_event->handlerRead())
-                                                                       :        handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
+              (LIKELY((pevents->events & (EPOLLIN | EPOLLRDHUP)) != 0) ? handler_event->handlerRead()
+                                                                       : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
             {
             handlerDelete(handler_event);
                           handler_event->fd = -1;
@@ -712,11 +713,17 @@ loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
 #        endif
             }
 #     ifdef U_EPOLLET_POSTPONE_STRATEGY
-         else if (bepollet                                       &&
-                  (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN ||
-                   UNLIKELY((pevents->events & (EPOLLIN | EPOLLRDHUP)) == 0)))
+         else if (bepollet)
             {
-            pevents->events = 0;
+            if (U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN &&
+                LIKELY((pevents->events & (EPOLLIN | EPOLLRDHUP)) != 0))
+               {
+               bloop1 = true;
+               }
+            else
+               {
+               pevents->events = 0;
+               }
             }
 #     endif
          }
@@ -729,11 +736,12 @@ loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
          }
 
 #    ifdef U_EPOLLET_POSTPONE_STRATEGY
-      if (bepollet &&
-          ret != 0x00ff)
+      while (bloop1)
          {
-loop1:   ret     = 0x00ff;
+         U_INTERNAL_ASSERT(bepollet)
+
          i       = 0;
+         bloop1  = false;
          pevents = events;
 
 loop2:   if (pevents->events)
@@ -744,26 +752,25 @@ loop2:   if (pevents->events)
 
             U_INTERNAL_ASSERT_DIFFERS(handler_event->fd, -1)
 
-            if ((ret = handler_event->handlerRead()) == U_NOTIFIER_DELETE)
+            if (handler_event->handlerRead() == U_NOTIFIER_DELETE)
                {
-               pevents->events = 0;
-
                handlerDelete(handler_event);
                              handler_event->fd = -1;
-               }
-            else if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN)
-               {
+
                pevents->events = 0;
                }
-
-            if (++i < nfd_ready)
+            else
                {
-               ++pevents;
-
-               goto loop2;
+               if (U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN) bloop1 = true;
+               else                                               pevents->events = 0;
                }
+            }
 
-            if (ret != 0x00ff) goto loop1;
+         if (++i < nfd_ready)
+            {
+            ++pevents;
+
+            goto loop2;
             }
          }
 #   endif
