@@ -415,20 +415,20 @@ public:
 
    // define method VIRTUAL of class UOrmDriver
 
-   virtual void handlerError() U_DECL_OVERRIDE;
-   virtual void handlerDisConnect() U_DECL_OVERRIDE;
-   virtual void execute(USqlStatement* pstmt) U_DECL_OVERRIDE;
-   virtual bool nextRow(USqlStatement* pstmt) U_DECL_OVERRIDE;
-   virtual void handlerStatementReset(USqlStatement* pstmt) U_DECL_OVERRIDE;
-   virtual void handlerStatementRemove(USqlStatement* pstmt) U_DECL_OVERRIDE;
-   virtual bool handlerQuery(const char* query, uint32_t query_len) U_DECL_OVERRIDE;
+   virtual void handlerError() U_DECL_FINAL;
+   virtual void handlerDisConnect() U_DECL_FINAL;
+   virtual void execute(USqlStatement* pstmt) U_DECL_FINAL;
+   virtual bool nextRow(USqlStatement* pstmt) U_DECL_FINAL;
+   virtual void handlerStatementReset(USqlStatement* pstmt) U_DECL_FINAL;
+   virtual void handlerStatementRemove(USqlStatement* pstmt) U_DECL_FINAL;
+   virtual bool handlerQuery(const char* query, uint32_t query_len) U_DECL_FINAL;
 
-   virtual unsigned int cols(USqlStatement* pstmt) U_DECL_OVERRIDE;
-   virtual unsigned long long affected(USqlStatement* pstmt) U_DECL_OVERRIDE;
-   virtual unsigned long long last_insert_rowid(USqlStatement* pstmt, const char* sequence) U_DECL_OVERRIDE;
+   virtual unsigned int cols(USqlStatement* pstmt) U_DECL_FINAL;
+   virtual unsigned long long affected(USqlStatement* pstmt) U_DECL_FINAL;
+   virtual unsigned long long last_insert_rowid(USqlStatement* pstmt, const char* sequence) U_DECL_FINAL;
 
-   virtual UOrmDriver*    handlerConnect(const UString& option) U_DECL_OVERRIDE;
-   virtual USqlStatement* handlerStatementCreation(const char* stmt, uint32_t len) U_DECL_OVERRIDE
+   virtual UOrmDriver*    handlerConnect(const UString& option) U_DECL_FINAL;
+   virtual USqlStatement* handlerStatementCreation(const char* stmt, uint32_t len) U_DECL_FINAL
       {
       U_TRACE(0, "UOrmDriverPgSql::handlerStatementCreation(%.*S,%u)", len, stmt, len)
 

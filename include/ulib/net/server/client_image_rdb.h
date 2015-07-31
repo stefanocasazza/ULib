@@ -25,7 +25,7 @@
 
 class URDB;
 
-class U_EXPORT URDBClientImage U_DECL_FINAL : public UClientImage<UTCPSocket> {
+class U_EXPORT URDBClientImage : public UClientImage<UTCPSocket> {
 public:
 
    URDBClientImage() : UClientImage<UTCPSocket>()
@@ -49,7 +49,7 @@ protected:
 
    // define method VIRTUAL of class UEventFd
 
-   virtual int handlerRead() U_DECL_OVERRIDE;
+   virtual int handlerRead() U_DECL_FINAL;
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS

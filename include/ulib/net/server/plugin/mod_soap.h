@@ -33,12 +33,12 @@ public:
 
    // Server-wide hooks
 
-   virtual int handlerConfig(UFileConfig& cfg) U_DECL_OVERRIDE;
-   virtual int handlerInit() U_DECL_OVERRIDE;
+   virtual int handlerConfig(UFileConfig& cfg) U_DECL_FINAL;
+   virtual int handlerInit() U_DECL_FINAL;
 
    // Connection-wide hooks
 
-   virtual int handlerRequest() U_DECL_OVERRIDE;
+   virtual int handlerRequest() U_DECL_FINAL;
 
    // DEBUG
 

@@ -53,13 +53,13 @@ public: \
 ~server_class()                                               { U_TRACE_UNREGISTER_OBJECT(5, server_class) } \
 const char* dump(bool reset) const { return UServer<socket_type>::dump(reset); } \
 protected: \
-virtual void preallocate() U_DECL_OVERRIDE { \
+virtual void preallocate() U_DECL_FINAL { \
 U_TRACE(5+256, #server_class "::preallocate()") \
 vClientImage = new client_type[UNotifier::max_connection]; } \
-virtual void deallocate() U_DECL_OVERRIDE { \
+virtual void deallocate() U_DECL_FINAL { \
 U_TRACE(5+256, #server_class "::deallocate()") \
 delete[] (client_type*)vClientImage; }  \
-virtual bool check_memory() U_DECL_OVERRIDE { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); } }
+virtual bool check_memory() U_DECL_FINAL { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); } }
 #else
 #  define U_MACROSERVER(server_class,client_type,socket_type) \
 class server_class : public UServer<socket_type> { \
@@ -67,7 +67,7 @@ public: \
  server_class(UFileConfig* pcfg) : UServer<socket_type>(pcfg) {} \
 ~server_class()                                               {} \
 protected: \
-virtual void preallocate() U_DECL_OVERRIDE { \
+virtual void preallocate() U_DECL_FINAL { \
 vClientImage = new client_type[UNotifier::max_connection]; } }
 #endif
 // ---------------------------------------------------------------------------------------------
@@ -581,7 +581,7 @@ protected:
 
    // define method VIRTUAL of class UEventTime
 
-   virtual int handlerTime() U_DECL_OVERRIDE;
+   virtual int handlerTime() U_DECL_FINAL;
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
    const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
@@ -600,8 +600,8 @@ protected:
 
    // define method VIRTUAL of class UEventFd
 
-   virtual int  handlerRead()   U_DECL_OVERRIDE; // This method is called to accept a new connection on the server socket
-   virtual void handlerDelete() U_DECL_OVERRIDE
+   virtual int  handlerRead()   U_DECL_FINAL; // This method is called to accept a new connection on the server socket
+   virtual void handlerDelete() U_DECL_FINAL
       {
       U_TRACE(0, "UServer_Base::handlerDelete()")
 

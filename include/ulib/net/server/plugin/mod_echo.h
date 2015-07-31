@@ -30,7 +30,7 @@ public:
 
    // Connection-wide hooks
 
-   virtual int handlerRequest() U_DECL_OVERRIDE;
+   virtual int handlerRequest() U_DECL_FINAL;
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS

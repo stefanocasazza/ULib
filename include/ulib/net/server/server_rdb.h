@@ -20,7 +20,7 @@
 /**
  * @class URDBServer
  *
- * @brief Handles incoming TCP/IP connections from URDBClient.
+ * @brief Handles incoming TCP/IP connections from URDBClient
  */
 
 class URDB;
@@ -46,10 +46,10 @@ protected:
 
    // method VIRTUAL to redefine
 
-   virtual void preallocate()  U_DECL_OVERRIDE;
+   virtual void preallocate()  U_DECL_FINAL;
 #ifdef DEBUG
-   virtual void  deallocate()  U_DECL_OVERRIDE;
-   virtual bool check_memory() U_DECL_OVERRIDE;
+   virtual void  deallocate()  U_DECL_FINAL;
+   virtual bool check_memory() U_DECL_FINAL;
 #endif
 
 private:

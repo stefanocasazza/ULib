@@ -23,6 +23,7 @@
 #endif
 
 /**
+ * --------------------------------------------------------------------------------------------------------------------------------------------------
  * Unix domain sockets are used for stream based connected sessions between processes on the same machine
  * --------------------------------------------------------------------------------------------------------------------------------------------------
  * - UNIX domain sockets use the file system as the address name space. This means you can use UNIX file permissions to control access to communicate

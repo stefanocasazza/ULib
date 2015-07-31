@@ -72,9 +72,9 @@ public:
    // define method VIRTUAL of class UEventFd
 
    virtual int  handlerRead() U_DECL_OVERRIDE;
-   virtual int  handlerWrite() U_DECL_OVERRIDE;
-   virtual int  handlerTimeout() U_DECL_OVERRIDE;
-   virtual void handlerDelete() U_DECL_OVERRIDE;
+   virtual int  handlerWrite() U_DECL_FINAL;
+   virtual int  handlerTimeout() U_DECL_FINAL;
+   virtual void handlerDelete() U_DECL_FINAL;
 
    static void setNoHeaderForResponse()
       {

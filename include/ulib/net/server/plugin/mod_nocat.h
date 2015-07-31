@@ -71,7 +71,7 @@ public:
 
    // define method VIRTUAL of class UEventTime
 
-   virtual int handlerTime() U_DECL_OVERRIDE;
+   virtual int handlerTime() U_DECL_FINAL;
 
    // DEBUG
 
@@ -140,18 +140,18 @@ public:
 
    // Server-wide hooks
 
-   virtual int handlerConfig(UFileConfig& cfg) U_DECL_OVERRIDE;
-   virtual int handlerInit() U_DECL_OVERRIDE;
-   virtual int handlerFork() U_DECL_OVERRIDE;
+   virtual int handlerConfig(UFileConfig& cfg) U_DECL_FINAL;
+   virtual int handlerInit() U_DECL_FINAL;
+   virtual int handlerFork() U_DECL_FINAL;
 
    // Connection-wide hooks
 
-   virtual int handlerRequest() U_DECL_OVERRIDE;
-   virtual int handlerReset() U_DECL_OVERRIDE;
+   virtual int handlerRequest() U_DECL_FINAL;
+   virtual int handlerReset() U_DECL_FINAL;
 
    // define method VIRTUAL of class UEventTime
 
-   virtual int handlerTime() U_DECL_OVERRIDE;
+   virtual int handlerTime() U_DECL_FINAL;
 
    // DEBUG
 
