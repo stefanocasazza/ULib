@@ -9160,6 +9160,7 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi)
          // NB: exit_value consists of the least significant 8 bits of the status argument that the child specified in a call to exit()...
 
          if (UCommand::exit_value > 128       &&
+             cgi                              &&
              cgi->environment_type == U_SHELL &&
              U_IS_HTTP_ERROR(UCommand::exit_value + 256))
             {
