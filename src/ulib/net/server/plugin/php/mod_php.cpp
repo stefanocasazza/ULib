@@ -45,7 +45,6 @@ static void register_server_variables(zval* track_vars_array TSRMLS_DC)
    if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_PHP))
       {
       char** envp;
-
       int32_t nenv = UCommand::setEnvironment(*UClientImage_Base::environment, envp);
 
       php_import_environment_variables(track_vars_array TSRMLS_CC);
@@ -91,6 +90,10 @@ static int send_headers(sapi_headers_struct* sapi_headers)
 
    U_http_info.nResponseCode = SG(sapi_headers).http_response_code;
 
+   if (U_IS_HTTP_VALID_RESPONSE(U_http_info.nResponseCode) == false) U_http_info.nResponseCode = HTTP_OK; 
+
+   U_DUMP("HTTP status = (%d %S)", U_http_info.nResponseCode, UHTTP::getStatusDescription())
+
    return SAPI_HEADER_SENT_SUCCESSFULLY;
 }
 
@@ -124,31 +127,23 @@ extern U_EXPORT bool runPHP(const char* script);
 {
    U_TRACE(0, "::runPHP(%S)", script)
 
-   /*
-   char str[512];
-   zval ret_value;
-   int exit_status;
-
-   zend_first_try
-   {
-   PG(during_request_startup) = 0;
-
-   // run the specified PHP script file
-
-   snprintf(str, sizeof(str), "include (\"%s\");", script);
-
-   zend_eval_string(str, &ret_value, str TSRMLS_CC);
-
-   exit_status = Z_LVAL(ret_value);
-   } zend_catch
-   {
-   exit_status = EG(exit_status);
-   }
-
-   zend_end_try();
-
-   return exit_status;
-   */
+   /**
+    * char str[512];
+    * zval ret_value;
+    * int exit_status;
+    * zend_first_try
+    * {
+    * PG(during_request_startup) = 0;
+    * snprintf(str, sizeof(str), "include (\"%s\");", script);
+    * zend_eval_string(str, &ret_value, str TSRMLS_CC);
+    * exit_status = Z_LVAL(ret_value);
+    * } zend_catch
+    * {
+    * exit_status = EG(exit_status);
+    * }
+    * zend_end_try();
+    * return exit_status;
+    */
 
    bool esito = true;
 
@@ -270,40 +265,32 @@ extern U_EXPORT void UPHP_end();
       php_embed_module.ini_entries = 0;
       }
 }
-/*
-extern U_EXPORT void UPHP_set_var(const char* varname, const char* varval);
-       U_EXPORT void UPHP_set_var(const char* varname, const char* varval)
-{
-   zval* var;
-   MAKE_STD_ZVAL(var);
-   ZVAL_STRING(var, varval, 1);
-
-   zend_hash_update(&EG(symbol_table), varname, strlen(varname) + 1, &var, sizeof(zval*), 0);
-}
-
-extern U_EXPORT const char* UPHP_get_var(const char* varname);
-       U_EXPORT const char* UPHP_get_var(const char* varname)
-{
-   zval** data = 0;
-   const char* ret = NULL;
-
-   if (zend_hash_find(&EG(symbol_table), varname, strlen(varname) + 1, (void**)&data) == FAILURE)
-      {
-      printf("Name not found in $GLOBALS\n");
-
-      return "";
-      }
-
-   if (data == 0)
-      {
-      printf("Value is NULL (not possible for symbol_table?)\n");
-
-      return "";
-      }
-
-   ret = Z_STRVAL_PP(data);
-
-   return ret;
-}
-*/
+/**
+ * extern U_EXPORT void UPHP_set_var(const char* varname, const char* varval);
+ *        U_EXPORT void UPHP_set_var(const char* varname, const char* varval)
+ * {
+ *    zval* var;
+ *    MAKE_STD_ZVAL(var);
+ *    ZVAL_STRING(var, varval, 1);
+ *    zend_hash_update(&EG(symbol_table), varname, strlen(varname) + 1, &var, sizeof(zval*), 0);
+ * }
+ * extern U_EXPORT const char* UPHP_get_var(const char* varname);
+ *        U_EXPORT const char* UPHP_get_var(const char* varname)
+ * {
+ *    zval** data = 0;
+ *    const char* ret = NULL;
+ *    if (zend_hash_find(&EG(symbol_table), varname, strlen(varname) + 1, (void**)&data) == FAILURE)
+ *       {
+ *       printf("Name not found in $GLOBALS\n");
+ *       return "";
+ *       }
+ *    if (data == 0)
+ *       {
+ *       printf("Value is NULL (not possible for symbol_table?)\n");
+ *       return "";
+ *       }
+ *    ret = Z_STRVAL_PP(data);
+ *    return ret;
+ * }
+ */
 }

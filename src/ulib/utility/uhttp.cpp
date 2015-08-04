@@ -109,6 +109,7 @@ uint32_t    UHTTP::limit_request_body = U_STRING_MAX_SIZE;
 uint32_t    UHTTP::request_read_timeout;
 const char* UHTTP::usp_page_key;
 
+UCommand*                         UHTTP::pcmd;
 UDataSession*                     UHTTP::data_session;
 UDataSession*                     UHTTP::data_storage;
 UMimeMultipart*                   UHTTP::formMulti;
@@ -764,6 +765,7 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_EQUALS(ext, 0)
    U_INTERNAL_ASSERT_EQUALS(etag, 0)
    U_INTERNAL_ASSERT_EQUALS(file, 0)
+   U_INTERNAL_ASSERT_EQUALS(pcmd, 0)
    U_INTERNAL_ASSERT_EQUALS(geoip, 0)
    U_INTERNAL_ASSERT_EQUALS(tmpdir, 0)
    U_INTERNAL_ASSERT_EQUALS(request, 0)
@@ -780,6 +782,7 @@ void UHTTP::ctor()
    UWebSocket::str_allocate();
 
    file                  = U_NEW(UFile);
+   pcmd                  = U_NEW(UCommand);
    ext                   = U_NEW(UString);
    etag                  = U_NEW(UString);
    geoip                 = U_NEW(UString(U_CAPACITY));
@@ -1382,6 +1385,7 @@ void UHTTP::dtor()
       delete ext;
       delete etag;
       delete file;
+      delete pcmd;
       delete geoip;
       delete suffix;
       delete tmpdir;
@@ -1666,14 +1670,10 @@ int UHTTP::handlerDataPending()
 
       (void) manageRequest();
 
-      /*
-      return  1 //  child of parallelization
-      return -1 // parent of parallelization
-      */
+      U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
 
-      U_RETURN(0);
+      U_RETURN(-1); 
       }
-   else
 #endif
 
    return UClientImage_Base::handlerDataPending();
@@ -2907,8 +2907,7 @@ set_x_http_forward_for: U_http_info.ip_client =  ptr+pos1;
             }
          }
 
-next:
-      U_INTERNAL_DUMP("char (after cr/newline) = %C", pn[2])
+next: U_INTERNAL_DUMP("char (after cr/newline) = %C", pn[2])
 
       if (U_http_info.endHeader == 0 &&
           u_get_unalignedp32(pn) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
@@ -3035,7 +3034,7 @@ bool UHTTP::runCGI(bool set_environment)
 
    U_INTERNAL_ASSERT_POINTER(cgi)
 
-   U_INTERNAL_DUMP("cgi->dir = %S cgi->sh_script = %b cgi->interpreter = %S", cgi->dir, cgi->sh_script, cgi->interpreter)
+   U_INTERNAL_DUMP("cgi->dir = %S cgi->environment_type = %d cgi->interpreter = %S", cgi->dir, cgi->environment_type, cgi->interpreter)
 
    // NB: we can't use the relativ path because after we call chdir()...
 
@@ -3052,9 +3051,11 @@ bool UHTTP::runCGI(bool set_environment)
 
    // ULIB facility: check if present form data and convert them in parameters for shell script...
 
-   if (cgi->sh_script) setCGIShellScript(command);
+   if (cgi->environment_type == U_SHELL) setCGIShellScript(command);
 
-   UCommand cmd(command);
+   U_INTERNAL_ASSERT_POINTER(pcmd)
+
+   pcmd->setCommand(command);
 
    if (set_environment)
       {
@@ -3062,14 +3063,14 @@ bool UHTTP::runCGI(bool set_environment)
 
       // NB: process the CGI request with fork....
 
-      if (getCGIEnvironment(*UClientImage_Base::environment, cgi->sh_script ? U_SHELL : U_CGI) == false ||
+      if (getCGIEnvironment(*UClientImage_Base::environment, cgi->environment_type) == false ||
           UServer_Base::startParallelization()) // parent of parallelization
          {
          goto next;
          }
       }
 
-   if (processCGIRequest(cmd, cgi->dir)) // NB: in case of failure we have already the response...
+   if (processCGIRequest(pcmd, cgi)) // NB: in case of failure we have already the response...
       {
 next: U_DUMP("UServer_Base::isParallelizationChild() = %b UServer_Base::isParallelizationParent() = %b", UServer_Base::isParallelizationChild(), UServer_Base::isParallelizationParent())
 
@@ -3078,7 +3079,7 @@ next: U_DUMP("UServer_Base::isParallelizationChild() = %b UServer_Base::isParall
 
       if (set_environment == false            ||
           (U_ClientImage_parallelization != 2 && // 2 => parent of parallelization
-           processCGIOutput(cgi->sh_script, false)))
+           processCGIOutput(cgi->environment_type == U_SHELL, false)))
          {
          U_RETURN(true);
          }
@@ -3845,7 +3846,7 @@ file_in_cache:
 #        if defined(USE_RUBY) || defined(USE_PHP) || defined(HAVE_LIBTCC)
             if (U_http_is_request_nostat    == false &&
                 U_HTTP_QUERY_STREQ("_nav_") == false &&
-                runDynamicPage())
+                (checkForPathName(), runDynamicPage()))
                {
                U_RETURN(U_PLUGIN_HANDLER_FINISHED);
                }
@@ -5536,6 +5537,8 @@ UString UHTTP::getHeaderForResponse()
 #ifndef U_HTTP2_DISABLE
    if (U_http_version == '2')
       {
+      UHTTP2::handlerResponse();
+
       return UString::getStringNull();
       }
 #endif
@@ -6039,9 +6042,14 @@ end:
 #  if defined(DEBUG) && defined(USE_LIBMAGIC)
       if (clength > 4)
          {
-         UString tmp = UMagic::getType(UClientImage_Base::wbuffer->c_pointer(U_http_info.endHeader), clength);
+         const char* p = UClientImage_Base::wbuffer->c_pointer(U_http_info.endHeader);
 
-         U_INTERNAL_ASSERT_EQUALS(memcmp(tmp.data(), U_CONSTANT_TO_PARAM("text")), 0)
+         if (u_isText((const unsigned char*)p, clength))
+            {
+            UString tmp = UMagic::getType(p, clength);
+
+            U_INTERNAL_ASSERT_EQUALS(memcmp(tmp.data(), U_CONSTANT_TO_PARAM("text")), 0)
+            }
          }
 #  endif
 
@@ -7544,18 +7552,14 @@ check:      if (usp_src) goto end;
 
          ptr = pathname->c_pointer(pathname->size() - 2);
 
-         cgi->sh_script = (memcmp(ptr, U_CONSTANT_TO_PARAM("sh")) == 0);
+              if (suffix->equal(U_CONSTANT_TO_PARAM("sh")))  { cgi->interpreter = U_PATH_SHELL; cgi->environment_type = U_SHELL; }
+         else if (suffix->equal(U_CONSTANT_TO_PARAM("php"))) { cgi->interpreter = "php-cgi";    cgi->environment_type = U_PHP; }
+         else if (suffix->equal(U_CONSTANT_TO_PARAM("pl")))  { cgi->interpreter = "perl";       cgi->environment_type = U_CGI; }
+         else if (suffix->equal(U_CONSTANT_TO_PARAM("py")))  { cgi->interpreter = "python";     cgi->environment_type = U_CGI; }
+         else if (suffix->equal(U_CONSTANT_TO_PARAM("rb")))  { cgi->interpreter = "ruby";       cgi->environment_type = U_CGI; }
+         else                                                { cgi->interpreter = 0;            cgi->environment_type = U_CGI; }
 
-         U_INTERNAL_DUMP("cgi->sh_script = %b", cgi->sh_script)
-
-              if (suffix->equal(U_CONSTANT_TO_PARAM("sh")))  cgi->interpreter = U_PATH_SHELL;
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("php"))) cgi->interpreter = "php-cgi";
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("pl")))  cgi->interpreter = "perl";
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("py")))  cgi->interpreter = "python";
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("rb")))  cgi->interpreter = "ruby";
-         else                                                cgi->interpreter = 0;
-
-         U_INTERNAL_DUMP("cgi->interpreter = %S", cgi->interpreter)
+         U_INTERNAL_DUMP("cgi->environment_type = %d cgi->interpreter = %S", cgi->environment_type, cgi->interpreter)
 
          file_data->ptr        = cgi;
          file_data->mime_index = U_cgi;
@@ -8202,6 +8206,20 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
       if (brequest == false) buffer.snprintf_add("REQUEST_URI=%.*s\n", sz, ptr);
       }
 
+   if ((mask & U_PHP) != 0)
+      {
+      // ---------------------------------------------------------------------------------------------------
+      // see: http://woozle.org/~neale/papers/php-cgi.html
+      // ---------------------------------------------------------------------------------------------------
+      // PHP_SELF: The filename of the currently executing script, relative to the document root
+      // ---------------------------------------------------------------------------------------------------
+
+      buffer.snprintf_add("PHP_SELF=%.*s\n"
+                          "REDIRECT_STATUS=1\n"
+                          "SCRIPT_FILENAME=%w%.*s\n",
+                          sz, ptr, sz, ptr);
+      }
+
    (void) buffer.append(*UServer_Base::cenvironment); // SERVER_(NAME|PORT)
 
    /**
@@ -8286,9 +8304,9 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
    if (U_http_host_len)
       {
                         buffer.snprintf_add("HTTP_HOST=%.*s\n",    U_HTTP_HOST_TO_TRACE);
-#     ifdef U_ALIAS
+#  ifdef U_ALIAS
       if (virtual_host) buffer.snprintf_add("VIRTUAL_HOST=%.*s\n", U_HTTP_VHOST_TO_TRACE);
-#     endif
+#  endif
 
       if (prequestHeader)
          {
@@ -8449,25 +8467,6 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
       (void) buffer.append(U_CONSTANT_TO_PARAM("\nPATH=/usr/local/bin:/usr/bin:/bin\n"));
 
       if (*geoip) (void) buffer.append(*geoip);
-
-      goto end;
-      }
-
-   if ((mask & U_PHP) != 0)
-      {
-      // ---------------------------------------------------------------------------------------------------
-      // see: http://woozle.org/~neale/papers/php-cgi.html
-      // ---------------------------------------------------------------------------------------------------
-      // PHP_SELF: The filename of the currently executing script, relative to the document root
-      // ---------------------------------------------------------------------------------------------------
-
-      sz  = UHTTP::file->getPathRelativLen();
-      ptr = UHTTP::file->getPathRelativ();
-
-      buffer.snprintf_add("PHP_SELF=%.*s\n"
-                          "REDIRECT_STATUS=1\n"
-                          "SCRIPT_FILENAME=%.*s\n",
-                          sz, ptr, sz, ptr);
       }
 
 end:
@@ -9106,9 +9105,9 @@ error:
    U_RETURN(false);
 }
 
-bool UHTTP::processCGIRequest(UCommand& cmd, const char* cgi_dir)
+bool UHTTP::processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi)
 {
-   U_TRACE(0, "UHTTP::processCGIRequest(%p,%S)", &cmd, cgi_dir)
+   U_TRACE(0, "UHTTP::processCGIRequest(%p,%p)", cmd, cgi)
 
    static int fd_stderr;
 
@@ -9116,33 +9115,36 @@ bool UHTTP::processCGIRequest(UCommand& cmd, const char* cgi_dir)
 
    U_INTERNAL_DUMP("U_http_method_type = %B URI = %.*S U_http_info.nResponseCode = %d", U_http_method_type, U_HTTP_URI_TO_TRACE, U_http_info.nResponseCode)
 
-   U_ASSERT(cmd.checkForExecute())
+   U_ASSERT(cmd->checkForExecute())
    U_INTERNAL_ASSERT(*UClientImage_Base::environment)
 
-   cmd.setEnvironment(UClientImage_Base::environment);
+   cmd->setEnvironment(UClientImage_Base::environment);
 
-   /* When a url ends by "cgi-bin/" it is assumed to be a cgi script.
+   /**
+    * When a url ends by "cgi-bin/" it is assumed to be a cgi script.
     * The server changes directory to the location of the script and
     * executes it after setting QUERY_STRING and other environment variables.
     */
 
-   if (cgi_dir[0]) (void) UFile::chdir(cgi_dir, true);
+   if (cgi) (void) UFile::chdir(cgi->dir, true);
 
    // execute script...
 
-   if (cgi_timeout) cmd.setTimeout(cgi_timeout);
+   if (cgi_timeout) cmd->setTimeout(cgi_timeout);
 
    if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/processCGIRequest.err");
 
-   bool result = cmd.execute(UClientImage_Base::body->empty() ? 0 : UClientImage_Base::body, UClientImage_Base::wbuffer, -1, fd_stderr);
+   bool result = cmd->execute(UClientImage_Base::body->empty() ? 0 : UClientImage_Base::body, UClientImage_Base::wbuffer, -1, fd_stderr);
 
-   if (cgi_dir[0]) (void) UFile::chdir(0, true);
+   if (cgi) (void) UFile::chdir(0, true);
 
 #ifdef U_LOG_ENABLE
-   UServer_Base::logCommandMsgError(cmd.getCommand(), false);
+   UServer_Base::logCommandMsgError(cmd->getCommand(), false);
 #endif
 
-   cmd.reset(UClientImage_Base::environment);
+   cmd->reset(UClientImage_Base::environment);
+
+   cmd->environment.clear();
 
    if (result == false ||
        UClientImage_Base::wbuffer->empty())
@@ -9157,7 +9159,8 @@ bool UHTTP::processCGIRequest(UCommand& cmd, const char* cgi_dir)
          {
          // NB: exit_value consists of the least significant 8 bits of the status argument that the child specified in a call to exit()...
 
-         if (UCommand::exit_value > 128 &&
+         if (UCommand::exit_value > 128       &&
+             cgi->environment_type == U_SHELL &&
              U_IS_HTTP_ERROR(UCommand::exit_value + 256))
             {
             U_http_info.nResponseCode = UCommand::exit_value + 256;

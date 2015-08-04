@@ -22,9 +22,10 @@ rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/*.memusage.* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
 #UTRACE="0 100M 0"
-#UOBJDUMP="0 50M 5000"
+#UTRACE_SIGNAL="0 50M 0"
+#UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
 
 if [ "$TERM" = "msys" ]; then
    export TMPDIR="c:/tmp"

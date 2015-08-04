@@ -531,11 +531,12 @@ public:
    // CGI
 
    typedef struct ucgi {
-      char        sh_script;
-      char        dir[503];
       const char* interpreter;
+      char        environment_type;
+      char        dir[503];
    } ucgi;
 
+   static UCommand* pcmd;
    static UString* geoip;
    static UString* fcgi_uri_mask;
    static UString* scgi_uri_mask;
@@ -546,7 +547,7 @@ public:
    static bool runCGI(bool set_environment);
    static bool getCGIEnvironment(UString& environment, int mask);
    static bool processCGIOutput(bool cgi_sh_script, bool bheaders);
-   static bool processCGIRequest(UCommand& cmd, const char* cgi_dir);
+   static bool processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi = 0);
 
    // USP (ULib Servlet Page)
 

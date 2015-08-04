@@ -92,7 +92,7 @@ int UProxyPlugIn::handlerRequest()
             {
             if (UHTTP::service->environment) UClientImage_Base::environment->append(UHTTP::service->environment);
 
-            if (UHTTP::processCGIRequest(*(UHTTP::service->command), "") &&
+            if (UHTTP::processCGIRequest(UHTTP::service->command) &&
                 UHTTP::processCGIOutput(false, false))
                {
                if (UHTTP::service->isResponseForClient()) output_to_client = true; // send output as response to client...

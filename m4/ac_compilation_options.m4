@@ -91,7 +91,11 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(CRPWS,
 				[  --enable-CRPWS            enable Client Response Partial Write Support [[default=no]]])
 	if test -z "$enable_CRPWS"; then
-		enable_CRPWS="no"
+		if test "$enable_debug" = "yes"; then
+			enable_CRPWS="yes"
+		else
+			enable_CRPWS="no"
+		fi
 	fi
 	if test "$enable_CRPWS" = "yes"; then
 		AC_DEFINE(U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT, 1, [enable client response partial write support])
@@ -102,7 +106,11 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(check-time,
 				[  --enable-check-time       enable server check time between request for parallelization [[default=no]]])
 	if test -z "$enable_check_time"; then
-		enable_check_time="no"
+		if test "$enable_debug" = "yes"; then
+			enable_check_time="yes"
+		else
+			enable_check_time="no"
+		fi
 	fi
 	if test "$enable_check_time" = "yes"; then
 		AC_DEFINE(U_SERVER_CHECK_TIME_BETWEEN_REQUEST, 1, [enable server check time between request for parallelization])
@@ -135,7 +143,11 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(HIS,
 				[  --enable-HIS              enable HTTP Inotify Support [[default=no]]])
 	if test -z "$enable_HIS" ; then
-		enable_HIS="no"
+		if test "$enable_debug" = "yes"; then
+			enable_HIS="yes"
+		else
+			enable_HIS="no"
+		fi
 	fi
 	if test "$enable_HIS" = "yes"; then
 		AC_DEFINE(U_HTTP_INOTIFY_SUPPORT, 1, [enable HTTP inotify support])
@@ -146,7 +158,11 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(log,
 				[  --enable-log              enable client and server log support [[default=no]]])
 	if test -z "$enable_log"; then
-		enable_log="no"
+		if test "$enable_debug" = "yes"; then
+			enable_log="yes"
+		else
+			enable_log="no"
+		fi
 	fi
 	if test "$enable_log" != "yes"; then
 		AC_DEFINE(U_LOG_DISABLE, 1, [disable client and server log support])
@@ -157,7 +173,11 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(GSDS,
 				[  --enable-GSDS             enable GDB Stack Dump Support [[default=no]]])
 	if test -z "$enable_GSDS"; then
-		enable_GSDS="$enable_debug"
+		if test "$enable_debug" = "yes"; then
+			enable_GSDS="yes"
+		else
+			enable_GSDS="no"
+		fi
 	fi
 	if test "$enable_GSDS" = "yes"; then
 		AC_DEFINE(U_GDB_STACK_DUMP_ENABLE, 1, [enable GDB stack dump support])
@@ -168,7 +188,11 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(HCRS,
 				[  --enable-HCRS             enable Cache Request Support [[default=no]]])
 	if test -z "$enable_HCRS"; then
-		enable_HCRS="yes"
+		if test "$enable_debug" = "yes"; then
+			enable_HCRS="no"
+		else
+			enable_HCRS="yes"
+		fi
 	fi
 	if test "$enable_HCRS" != "yes"; then
 		AC_DEFINE(U_CACHE_REQUEST_DISABLE, 1, [disable cache request support])
@@ -179,7 +203,11 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(HPRS,
 				[  --enable-HPRS             enable Homogeneous Pipeline Request Support [[default=yes]]])
 	if test -z "$enable_HPRS"; then
-		enable_HPRS="yes"
+		if test "$enable_debug" = "yes"; then
+			enable_HPRS="no"
+		else
+			enable_HPRS="yes"
+		fi
 	fi
 	if test "$enable_HPRS" != "yes"; then
 		AC_DEFINE(U_PIPELINE_HOMOGENEOUS_DISABLE, 1, [disable homogeneous pipeline request support])
@@ -212,7 +240,11 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(alias,
 				[  --enable-alias            enable alias URI support [[default=no]]])
 	if test -z "$enable_alias"; then
-		enable_alias="no"
+		if test "$enable_debug" = "yes"; then
+			enable_alias="yes"
+		else
+			enable_alias="no"
+		fi
 	fi
 	if test "$enable_alias" = "yes"; then
 		AC_DEFINE(U_ALIAS, 1, [enable alias URI support])
@@ -256,7 +288,11 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(HSTS,
 				[  --enable-HSTS             enable HTTP Strict Transport Security support [[default=no]]])
 	if test -z "$enable_HSTS"; then
-		enable_HSTS="no"
+		if test "$enable_debug" = "yes"; then
+			enable_HSTS="yes"
+		else
+			enable_HSTS="no"
+		fi
 	fi
 	if test "$enable_HSTS" = "yes"; then
 		AC_DEFINE(U_HTTP_STRICT_TRANSPORT_SECURITY, 1, [enable HTTP Strict Transport Security support])

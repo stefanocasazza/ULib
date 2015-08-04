@@ -242,12 +242,13 @@ protected:
    static void sendError();
    static void manageData();
    static void manageHeaders();
+   static void handlerResponse();
    static bool readBodyRequest();
    static bool updateSetting(const char*  ptr, uint32_t len);
    static void decodeHeaders(const char*  ptr, const char*  endptr);
 
 #ifdef DEBUG
-   static const char* getFrameTypeDescription();
+   static const char* getFrameTypeDescription(char type);
 #endif      
 
    static bool setIndexStaticTable(UHashMap<void*>* ptable, const char* key, uint32_t length)

@@ -146,8 +146,8 @@ void UFCGIPlugIn::fill_FCGIBeginRequest(u_char type, u_short content_length)
 
 U_CREAT_FUNC(server_plugin_fcgi, UFCGIPlugIn)
 
-bool          UFCGIPlugIn::bphp;
 bool          UFCGIPlugIn::fcgi_keep_conn;
+char          UFCGIPlugIn::environment_type;
 UClient_Base* UFCGIPlugIn::connection;
 
 UFCGIPlugIn::UFCGIPlugIn()
@@ -235,7 +235,7 @@ int UFCGIPlugIn::handlerInit()
          UHTTP::valias->push_back(*UHTTP::fcgi_uri_mask);
          UHTTP::valias->push_back(U_STRING_FROM_CONSTANT("/nostat"));
 
-         bphp = UHTTP::fcgi_uri_mask->equal(U_CONSTANT_TO_PARAM("*.php"));
+         environment_type = (UHTTP::fcgi_uri_mask->equal(U_CONSTANT_TO_PARAM("*.php")) ? U_PHP : U_CGI);
 
          U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 #     endif
@@ -274,7 +274,7 @@ int UFCGIPlugIn::handlerRequest()
 
       UString environment(U_CAPACITY);
 
-      if (UHTTP::getCGIEnvironment(environment, bphp ? U_PHP : U_CGI) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      if (UHTTP::getCGIEnvironment(environment, environment_type) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
       n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 
@@ -396,7 +396,7 @@ int UFCGIPlugIn::handlerRequest()
 
          U_INTERNAL_ASSERT((connection->response.size() - pos) >= FCGI_HEADER_LEN)
 
-         h = (FCGI_Header*) connection->response.c_pointer(pos);
+         h = (FCGI_Header*)connection->response.c_pointer(pos);
 
          U_INTERNAL_DUMP("version = %C request_id = %u", h->version, ntohs(h->request_id))
 
@@ -418,7 +418,7 @@ int UFCGIPlugIn::handlerRequest()
 
          // NB: connection->response can be resized...
 
-         h = (FCGI_Header*) connection->response.c_pointer(pos);
+         h = (FCGI_Header*)connection->response.c_pointer(pos);
 
          // Record fully read
 

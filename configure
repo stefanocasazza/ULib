@@ -23093,7 +23093,11 @@ if test "${enable_CRPWS+set}" = set; then :
 fi
 
 	if test -z "$enable_CRPWS"; then
-		enable_CRPWS="no"
+		if test "$enable_debug" = "yes"; then
+			enable_CRPWS="yes"
+		else
+			enable_CRPWS="no"
+		fi
 	fi
 	if test "$enable_CRPWS" = "yes"; then
 
@@ -23111,7 +23115,11 @@ if test "${enable_check_time+set}" = set; then :
 fi
 
 	if test -z "$enable_check_time"; then
-		enable_check_time="no"
+		if test "$enable_debug" = "yes"; then
+			enable_check_time="yes"
+		else
+			enable_check_time="no"
+		fi
 	fi
 	if test "$enable_check_time" = "yes"; then
 
@@ -23165,7 +23173,11 @@ if test "${enable_HIS+set}" = set; then :
 fi
 
 	if test -z "$enable_HIS" ; then
-		enable_HIS="no"
+		if test "$enable_debug" = "yes"; then
+			enable_HIS="yes"
+		else
+			enable_HIS="no"
+		fi
 	fi
 	if test "$enable_HIS" = "yes"; then
 
@@ -23183,7 +23195,11 @@ if test "${enable_log+set}" = set; then :
 fi
 
 	if test -z "$enable_log"; then
-		enable_log="no"
+		if test "$enable_debug" = "yes"; then
+			enable_log="yes"
+		else
+			enable_log="no"
+		fi
 	fi
 	if test "$enable_log" != "yes"; then
 
@@ -23201,7 +23217,11 @@ if test "${enable_GSDS+set}" = set; then :
 fi
 
 	if test -z "$enable_GSDS"; then
-		enable_GSDS="$enable_debug"
+		if test "$enable_debug" = "yes"; then
+			enable_GSDS="yes"
+		else
+			enable_GSDS="no"
+		fi
 	fi
 	if test "$enable_GSDS" = "yes"; then
 
@@ -23219,7 +23239,11 @@ if test "${enable_HCRS+set}" = set; then :
 fi
 
 	if test -z "$enable_HCRS"; then
-		enable_HCRS="yes"
+		if test "$enable_debug" = "yes"; then
+			enable_HCRS="no"
+		else
+			enable_HCRS="yes"
+		fi
 	fi
 	if test "$enable_HCRS" != "yes"; then
 
@@ -23237,7 +23261,11 @@ if test "${enable_HPRS+set}" = set; then :
 fi
 
 	if test -z "$enable_HPRS"; then
-		enable_HPRS="yes"
+		if test "$enable_debug" = "yes"; then
+			enable_HPRS="no"
+		else
+			enable_HPRS="yes"
+		fi
 	fi
 	if test "$enable_HPRS" != "yes"; then
 
@@ -23291,7 +23319,11 @@ if test "${enable_alias+set}" = set; then :
 fi
 
 	if test -z "$enable_alias"; then
-		enable_alias="no"
+		if test "$enable_debug" = "yes"; then
+			enable_alias="yes"
+		else
+			enable_alias="no"
+		fi
 	fi
 	if test "$enable_alias" = "yes"; then
 
@@ -23363,7 +23395,11 @@ if test "${enable_HSTS+set}" = set; then :
 fi
 
 	if test -z "$enable_HSTS"; then
-		enable_HSTS="no"
+		if test "$enable_debug" = "yes"; then
+			enable_HSTS="yes"
+		else
+			enable_HSTS="no"
+		fi
 	fi
 	if test "$enable_HSTS" = "yes"; then
 
@@ -25798,7 +25834,7 @@ fi
 
 
 	if test -z "$PHPCONFIGINCLUDES"; then
-		PHPCONFIGINCLUDES="-I${php_prefix}/include/php/sapi/embed `$PHPCONFIG --includes`"
+		PHPCONFIGINCLUDES="-I${php_prefix}/include/php5/sapi/embed `$PHPCONFIG --includes`"
 	fi
 
 
@@ -25862,7 +25898,7 @@ fi
 
 
 	if test -z "$PHPCONFIGLIBS"; then
-		PHPCONFIGLIBS="-L`$PHPCONFIG --ldflags`/lib -lphp5 `$PHPCONFIG --libs`"
+		PHPCONFIGLIBS="-lphp5 `$PHPCONFIG --libs`"
 	fi
 
 

@@ -18,6 +18,7 @@
 #include <ulib/utility/lock.h>
 
 class UHTTP;
+class UHTTP2;
 class Application;
 class UTimeThread;
 class UProxyPlugIn;
@@ -166,6 +167,7 @@ private:
 #endif
 
    friend class UHTTP;
+   friend class UHTTP2;
    friend class Application;
    friend class UTimeThread;
    friend class UProxyPlugIn;

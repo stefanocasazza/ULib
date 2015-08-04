@@ -48,8 +48,9 @@ public:
 #endif
 
 protected:
+   static bool fcgi_keep_conn;
+   static char environment_type;
    static UClient_Base* connection;
-   static bool fcgi_keep_conn, bphp;
 
           void set_FCGIBeginRequest();
    static void fill_FCGIBeginRequest(u_char type, u_short content_length);

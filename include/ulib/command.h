@@ -19,6 +19,7 @@
 #include <errno.h>
 
 class UFile;
+class UHTTP;
 class UDialog;
 class UFileConfig;
 class UServer_Base;
@@ -147,6 +148,17 @@ public:
       argv_exec[ncmd] = (char*) argument;
       }
 
+   char* getArgument(int n) const __pure
+      {
+      U_TRACE(0, "UCommand::getArgument(%d)", n)
+
+      char* result = (argv_exec ? argv_exec[n] : 0);
+
+      U_INTERNAL_ASSERT(result == 0 || u_isText((const unsigned char*)result, u__strlen(result, __PRETTY_FUNCTION__)))
+
+      U_RETURN(result);
+      }
+
    void setNumArgument(int32_t n = 1, bool bfree = false);
 
    // MANAGE FILE ARGUMENT
@@ -210,16 +222,7 @@ public:
       U_RETURN(result);
       }
 
-   char* getCommand() const __pure
-      {
-      U_TRACE(0, "UCommand::getCommand()")
-
-      char* result = (argv_exec ? argv_exec[(isShellScript() ? 2 : 0)] : 0);
-
-      U_INTERNAL_ASSERT(result == 0 || u_isText((const unsigned char*)result, u__strlen(result, __PRETTY_FUNCTION__)))
-
-      U_RETURN(result);
-      }
+   char* getCommand() const __pure { return getArgument(isShellScript() ? 2 : 0); }
 
    // SERVICES
 
@@ -302,7 +305,7 @@ protected:
    int32_t ncmd, nenv, nfile;
    UString command, environment;
 
-   void setCommand();
+   void  setCommand();
    void freeCommand();
    void freeEnvironment();
 
@@ -322,6 +325,7 @@ private:
    UCommand& operator=(const UCommand&) { return *this; }
 #endif
 
+   friend class UHTTP;
    friend class UDialog;
    friend class UServer_Base;
    friend class UProxyPlugIn;

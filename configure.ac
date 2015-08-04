@@ -1275,7 +1275,7 @@ if test "$use_php" = "yes" ; then
 		 [PHPCONFIGINCLUDES=""])
 
 	if test -z "$PHPCONFIGINCLUDES"; then
-		PHPCONFIGINCLUDES="-I${php_prefix}/include/php/sapi/embed `$PHPCONFIG --includes`"
+		PHPCONFIGINCLUDES="-I${php_prefix}/include/php5/sapi/embed `$PHPCONFIG --includes`"
 	fi
 
 	AC_SUBST(PHPCONFIGINCLUDES)
@@ -1312,7 +1312,7 @@ if test "$use_php" = "yes" ; then
 		 [PHPCONFIGLIBS=""])
 
 	if test -z "$PHPCONFIGLIBS"; then
-		PHPCONFIGLIBS="-L`$PHPCONFIG --ldflags`/lib -lphp5 `$PHPCONFIG --libs`"
+		PHPCONFIGLIBS="-lphp5 `$PHPCONFIG --libs`"
 	fi
 
 	AC_SUBST(PHPCONFIGLIBS)
