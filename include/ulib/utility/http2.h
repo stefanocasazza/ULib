@@ -28,7 +28,6 @@ public:
 
    static void ctor();
    static void dtor();
-   static bool manageSetting();
 
 protected:
    enum FrameTypesId {
@@ -242,6 +241,7 @@ protected:
    static void sendError();
    static void manageData();
    static void manageHeaders();
+   static int  handlerRequest();
    static void handlerResponse();
    static bool readBodyRequest();
    static bool updateSetting(const char*  ptr, uint32_t len);
@@ -306,6 +306,9 @@ protected:
    static uint32_t       hpackDecodeInt(   const unsigned char* src, const unsigned char* src_end,  int32_t* pvalue, uint8_t prefix_max);
 
 private:
+   static unsigned char* pwbuffer;
+   static bool addHTTPHeader(UStringRep* key, void* value) U_NO_EXPORT;
+
    friend class UHTTP;
    friend class UClientImage_Base;
 

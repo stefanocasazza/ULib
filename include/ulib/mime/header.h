@@ -76,6 +76,7 @@
  */
 
 class UHTTP;
+class UHTTP2;
 
 class U_EXPORT UMimeHeader {
 public:
@@ -444,6 +445,7 @@ private:
 #endif
 
    friend class UHTTP;
+   friend class UHTTP2;
 };
 
 #endif

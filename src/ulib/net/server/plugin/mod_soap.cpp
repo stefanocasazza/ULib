@@ -101,7 +101,7 @@ int USoapPlugIn::handlerRequest()
          (void) UFile::writeToTmp(U_STRING_TO_PARAM(body), false, "soap.res", 0);
 #     endif
 
-         U_http_info.nResponseCode  = HTTP_OK;
+         U_http_info.nResponseCode = HTTP_OK;
 
          UHTTP::setResponse(UHTTP::str_ctype_soap, &body);
          }

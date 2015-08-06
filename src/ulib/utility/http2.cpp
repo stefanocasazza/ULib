@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/mime/header.h>
 #include <ulib/utility/http2.h>
 #include <ulib/utility/uhttp.h>
 #include <ulib/utility/base64.h>
@@ -25,6 +26,7 @@ bool                          UHTTP2::settings_ack;
 void*                         UHTTP2::pConnectionEnd;
 uint32_t                      UHTTP2::hash_static_table[61];
 const char*                   UHTTP2::upgrade_settings;
+unsigned char*                UHTTP2::pwbuffer;
 UHTTP2::Stream*               UHTTP2::pStream;
 UHTTP2::FrameHeader           UHTTP2::frame;
 UHTTP2::Connection*           UHTTP2::pConnection;
@@ -517,9 +519,22 @@ uint32_t UHTTP2::hpackEncodeString(unsigned char* dst, const char* src, uint32_t
 
    U_INTERNAL_ASSERT_MAJOR(len, 0)
 
+   unsigned char* ptr;
+
+   if (len < 29)
+      {
+      // encode as-is
+
+asis: *dst = '\0';
+       ptr = hpackEncodeInt(dst, len, (1<<7)-1);
+
+      u__memcpy(ptr, src, len, __PRETTY_FUNCTION__);
+
+      U_RETURN(ptr - dst + len);
+      }
+
    uint64_t bits = 0;
    int bits_left = 40;
-   unsigned char* ptr;
    const char* src_end = src + len;
 
    UString buffer(len + 1024U);
@@ -528,45 +543,53 @@ uint32_t UHTTP2::hpackEncodeString(unsigned char* dst, const char* src, uint32_t
    unsigned char* _dst_end   = _dst + len;
    unsigned char* _dst_start = _dst;
 
+   // try to encode in huffman
+
    do {
-      const HuffSym* sym = huff_sym_table + *src++;
+      const HuffSym* sym = huff_sym_table + *(unsigned char*)src++;
+
+   // U_INTERNAL_DUMP("sym->nbits = %u sym->code = %u bits_left = %d", sym->nbits, sym->code, bits_left)
 
       bits |= (uint64_t)sym->code << (bits_left - sym->nbits);
 
       bits_left -= sym->nbits;
 
+   // U_INTERNAL_DUMP("bits = %llu bits_left = %d", bits, bits_left)
+
       while (bits_left <= 32)
          {
          *_dst++ = bits >> 32;
 
+      // U_INTERNAL_DUMP("_dst = %u bits >> 32 = %u", _dst[-1], bits >> 32)
+
          bits <<= 8;
          bits_left += 8;
+
+         U_INTERNAL_ASSERT_MINOR(_dst, _dst_end)
          }
       }
    while (src < src_end);
+
+// U_INTERNAL_DUMP("bits = %llu bits_left = %d", bits, bits_left)
 
    if (bits_left != 40)
       {
       bits |= (1UL << bits_left) - 1;
 
       *_dst++ = bits >> 32;
+
+   // U_INTERNAL_DUMP("_dst = %u bits >> 32 = %u", _dst[-1], bits >> 32)
       }
 
-   if (_dst >= _dst_end) // encode as-is
-      {
-      *dst = '\0';
-       ptr = hpackEncodeInt(dst, len, (1<<7)-1);
+   U_INTERNAL_DUMP("_dst_end = %p _dst = %p %#.*S", _dst_end, _dst, buffer.distance((const char*)_dst), _dst_start)
 
-      u__memcpy(ptr, src, len, __PRETTY_FUNCTION__);
+   if (_dst > _dst_end) goto asis; // encode as-is
 
-      U_RETURN(ptr - dst + len);
-      }
-
-    len = _dst - _dst_start;
    *dst = '\x80';
+    len = _dst - _dst_start;
     ptr = hpackEncodeInt(dst, len, (1<<7)-1);
 
-   u__memcpy(ptr, _dst, len, __PRETTY_FUNCTION__);
+   u__memcpy(ptr, _dst_start, len, __PRETTY_FUNCTION__);
 
    U_RETURN(ptr - dst + len);
 }
@@ -588,7 +611,7 @@ err:  pvalue->clear();
 
    src += nmove;
 
-   U_INTERNAL_DUMP("is_huffman = %b", is_huffman)
+   U_INTERNAL_DUMP("is_huffman = %b len = %u src = %#.*S", is_huffman, len, len, src)
 
    if (is_huffman == false)
       {
@@ -1505,110 +1528,6 @@ void UHTTP2::manageData()
    (void) UClientImage_Base::body->append(ptr, sz);
 }
 
-bool UHTTP2::manageSetting()
-{
-   U_TRACE(0, "UHTTP2::manageSetting()")
-
-   U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
-
-   U_INTERNAL_DUMP("HTTP2-Settings: = %.*S U_http_method_type = %B", U_http2_settings_len, UHTTP2::upgrade_settings, U_http_method_type)
-
-   if (U_http2_settings_len &&
-       USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_CONNECTION_UPGRADE_AND_SETTING_BIN), UServer_Base::timeoutMS) !=
-                                                    U_CONSTANT_SIZE(HTTP2_CONNECTION_UPGRADE_AND_SETTING_BIN))
-      {
-      U_RETURN(false);
-      }
-
-   U_INTERNAL_ASSERT(UClientImage_Base::request->same(*UClientImage_Base::rbuffer))
-
-   UClientImage_Base::request->clear();
-
-   // maybe we have read more data than necessary...
-
-   uint32_t sz = UClientImage_Base::rbuffer->size();
-
-   U_INTERNAL_ASSERT_MAJOR(sz, 0)
-
-   if (sz > U_http_info.endHeader) UClientImage_Base::rstart = U_http_info.endHeader;
-   else
-      {
-      // we wait for HTTP2_CONNECTION_PREFACE...
-
-      UClientImage_Base::rbuffer->setEmptyForce();
-
-      if (UNotifier::waitForRead(UServer_Base::csocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
-          USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, 0) == false)
-         {
-         U_RETURN(false);
-         }
-
-      UClientImage_Base::rstart = 0;
-
-      sz = UClientImage_Base::rbuffer->size();
-      }
-
-   const char* ptr = UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
-
-   if (u_get_unalignedp64(ptr)    != U_MULTICHAR_CONSTANT64( 'P', 'R','I',' ', '*', ' ', 'H', 'T') ||
-       u_get_unalignedp64(ptr+8)  != U_MULTICHAR_CONSTANT64( 'T', 'P','/','2', '.', '0','\r','\n') ||
-       u_get_unalignedp64(ptr+16) != U_MULTICHAR_CONSTANT64('\r','\n','S','M','\r','\n','\r','\n'))
-      {
-      U_RETURN(false);
-      }
-
-   pConnection    = (Connection*)UServer_Base::pClientImage->connection;
-   pConnectionEnd = (char*)pConnection + sizeof(Connection);
-
-   pConnection->state         = CONN_STATE_OPEN;
-   pConnection->peer_settings = settings;
-
-   pConnection->max_open_stream_id      =
-   pConnection->num_responding_streams  =
-   pConnection->max_processed_stream_id = 0;
-
-   pStream = pConnection->streams;
-
-   pStream->state = STREAM_STATE_IDLE;
-
-   if (U_http2_settings_len == 0)
-      {
-      if (USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_SETTINGS_BIN), UServer_Base::timeoutMS) != U_CONSTANT_SIZE(HTTP2_SETTINGS_BIN)) U_RETURN(false);
-      }
-   else
-      {
-      UString buffer(U_CAPACITY);
-
-      UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer);
-
-      if (buffer.empty() ||
-          updateSetting(U_STRING_TO_PARAM(buffer)) == false)
-         {
-         U_RETURN(false);
-         }
-      }
-
-   settings_ack = false;
-
-   UClientImage_Base::rstart += U_CONSTANT_SIZE(HTTP2_CONNECTION_PREFACE);
-
-loop:
-   readFrame();
-
-   if (nerror == NO_ERROR)
-      {
-      U_INTERNAL_DUMP("settings_ack = %b", settings_ack)
-
-      if (settings_ack == false) goto loop; // we wait for SETTINGS ack...
-
-      U_RETURN(true);
-      }
-
-   sendError();
-
-   U_RETURN(false);
-}
-
 void UHTTP2::sendError()
 {
    U_TRACE(0, "UHTTP2::sendError()")
@@ -1647,60 +1566,140 @@ void UHTTP2::sendError()
       }
 }
 
+U_NO_EXPORT bool UHTTP2::addHTTPHeader(UStringRep* key, void* value)
+{
+   U_TRACE(0+256, "UHTTP2::addHTTPHeader(%V,%V)", key, value)
+
+   U_INTERNAL_ASSERT_POINTER(key)
+   U_INTERNAL_ASSERT_POINTER(value)
+
+   uint32_t      key_sz  =                  key->size(),
+               value_sz  = ((UStringRep*)value)->size();
+   const char*   key_ptr =                  key->data();
+   const char* value_ptr = ((UStringRep*)value)->data();
+
+   U_INTERNAL_DUMP("key(%u) = %#V value(%u) = %#V", key_sz, key, value_sz, (UStringRep*)value)
+
+   U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)value_ptr, value_sz), false)
+
+   uint32_t index = U_NOT_FOUND;
+
+        if (hpack_static_table[30].name->equalnocase(key_ptr, key_sz)) index = 31; // content-type
+   else if (hpack_static_table[27].name->equalnocase(key_ptr, key_sz)) U_RETURN(true); // content-length
+   else if (hpack_static_table[35].name->equalnocase(key_ptr, key_sz)) index = 36; // expires
+   else if (hpack_static_table[43].name->equalnocase(key_ptr, key_sz)) index = 44; // last-modified
+   else if (hpack_static_table[45].name->equalnocase(key_ptr, key_sz)) index = 46; // location
+   else if (hpack_static_table[51].name->equalnocase(key_ptr, key_sz)) index = 52; // refresh
+   else if (hpack_static_table[60].name->equalnocase(key_ptr, key_sz)) index = 61; // www-authenticate
+   else if (hpack_static_table[29].name->equalnocase(key_ptr, key_sz)) index = 30; // content-range
+   else if (hpack_static_table[17].name->equalnocase(key_ptr, key_sz)) index = 18; // accept-ranges
+   else if (hpack_static_table[19].name->equalnocase(key_ptr, key_sz)) index = 20; // access-control-allow-origin
+   else if (hpack_static_table[20].name->equalnocase(key_ptr, key_sz)) index = 21; // age
+   else if (hpack_static_table[23].name->equalnocase(key_ptr, key_sz)) index = 24; // cache-control
+   else if (hpack_static_table[24].name->equalnocase(key_ptr, key_sz)) index = 25; // content-disposition
+   else if (hpack_static_table[25].name->equalnocase(key_ptr, key_sz)) index = 26; // content-encoding 
+   else if (hpack_static_table[26].name->equalnocase(key_ptr, key_sz)) index = 27; // content-language 
+   else if (hpack_static_table[28].name->equalnocase(key_ptr, key_sz)) index = 29; // content-location
+   else if (hpack_static_table[33].name->equalnocase(key_ptr, key_sz)) index = 34; // etag
+   else if (hpack_static_table[44].name->equalnocase(key_ptr, key_sz)) index = 45; // link
+   else if (hpack_static_table[47].name->equalnocase(key_ptr, key_sz)) index = 48; // proxy-authenticate
+   else if (hpack_static_table[52].name->equalnocase(key_ptr, key_sz)) index = 53; // retry-after
+   else if (hpack_static_table[55].name->equalnocase(key_ptr, key_sz)) index = 56; // strict-transport-security
+   else if (hpack_static_table[58].name->equalnocase(key_ptr, key_sz)) index = 59; // vary
+   else if (hpack_static_table[59].name->equalnocase(key_ptr, key_sz)) index = 60; // via
+
+   if (index != U_NOT_FOUND)
+      {
+      *pwbuffer  = 0x40;
+       pwbuffer  = hpackEncodeInt(pwbuffer, index, (1<<6)-1);
+       pwbuffer += hpackEncodeString(pwbuffer, value_ptr, value_sz);
+      }
+   /*
+   else
+      {
+      }
+   */
+
+   U_RETURN(true);
+}
+
 void UHTTP2::handlerResponse()
 {
    U_TRACE(0, "UHTTP2::handlerResponse()")
 
-   unsigned char buffer[8192] = { 0, 0, 0,               // frame size
-                                  HEADERS,               // header frame
-                                  FLAG_END_HEADERS,      // end header flags
-                                  0, 0, 0, 0,            // stream id
-                                  8, 3, '0', '0', '0' }; // use literal header field without indexing - indexed name
+   U_ASSERT(UClientImage_Base::wbuffer->empty())
+   U_ASSERT(UClientImage_Base::wbuffer->capacity())
 
-   // \000\000#
-   // \001
-   // \004
-   // \000\000\000\001
-   // \b\003403
-   // v\004\000UHTa
+   U_INTERNAL_DUMP("ext(%u) = %#V", UHTTP::ext->size(), UHTTP::ext->rep)
 
-   char* ptr = (char*)buffer;
-   int32_t sz = HTTP2_FRAME_HEADER_SIZE+1;
+   char* ptr   = (char*)UClientImage_Base::wbuffer->data();
+   uint32_t sz = HTTP2_FRAME_HEADER_SIZE+1, sz1 = UHTTP::set_cookie->size(), sz2 = UHTTP::ext->size();
 
-   switch (U_http_info.nResponseCode)
+   pwbuffer = (unsigned char*)ptr+HTTP2_FRAME_HEADER_SIZE+1;
+
+   if (U_http_info.nResponseCode == HTTP_NOT_IMPLEMENTED ||
+       U_http_info.nResponseCode == HTTP_OPTIONS_RESPONSE)
       {
-      case HTTP_OK:             ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 |  8; break;
-      case HTTP_NO_CONTENT:     ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 |  9; break;
-      case HTTP_PARTIAL:        ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 10; break;
-      case HTTP_NOT_MODIFIED:   ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 11; break;
-      case HTTP_BAD_REQUEST:    ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 12; break;
-      case HTTP_NOT_FOUND:      ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 13; break;
-      case HTTP_INTERNAL_ERROR: ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 14; break;
+      ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 8;
 
-      default: // use literal header field without indexing - indexed name
+     *pwbuffer  = 0x40;
+      pwbuffer  = hpackEncodeInt(pwbuffer, 22, (1<<6)-1);
+      pwbuffer += hpackEncodeString(pwbuffer,
+                     U_CONSTANT_TO_PARAM("GET, HEAD, POST, PUT, DELETE, OPTIONS, "     // request methods
+                                         "TRACE, CONNECT, "                            // pathological
+                                         "COPY, MOVE, LOCK, UNLOCK, MKCOL, PROPFIND, " // webdav
+                                         "PATCH, PURGE, "                              // rfc-5789
+                                         "MERGE, REPORT, CHECKOUT, MKACTIVITY, "       // subversion
+                                         "NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE"));  // upnp
+
+      UClientImage_Base::setCloseConnection();
+      }
+   else
+      {
+      if (sz2 == 0 &&
+          U_http_info.nResponseCode == HTTP_OK)
          {
-         sz += 4;
+         ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 9; // HTTP_NO_CONTENT
+         }
+      else
+         {
+         switch (U_http_info.nResponseCode)
+            {
+            case HTTP_OK:             ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 |  8; break;
+            case HTTP_NO_CONTENT:     ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 |  9; break;
+            case HTTP_PARTIAL:        ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 10; break;
+            case HTTP_NOT_MODIFIED:   ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 11; break;
+            case HTTP_BAD_REQUEST:    ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 12; break;
+            case HTTP_NOT_FOUND:      ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 13; break;
+            case HTTP_INTERNAL_ERROR: ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 14; break;
 
-                     ptr[HTTP2_FRAME_HEADER_SIZE+2] = (U_http_info.nResponseCode / 100) + '0';
-         U_NUM2STR16(ptr+HTTP2_FRAME_HEADER_SIZE+3,    U_http_info.nResponseCode % 100);
+            default: // use literal header field without indexing - indexed name
+               {
+               u_put_unalignedp32(ptr+HTTP2_FRAME_HEADER_SIZE,  U_MULTICHAR_CONSTANT32('\010','\003','0'+(U_http_info.nResponseCode / 100),'\0'));
+                      U_NUM2STR16(ptr+HTTP2_FRAME_HEADER_SIZE+3,                                          U_http_info.nResponseCode % 100);
+
+                     sz += 4;
+               pwbuffer += 4;
+               }
+            }
          }
       }
 
+   // -------------------------------------------------
    // literal header field with indexing (indexed name)
-
-   unsigned char* dst = buffer+sz;
-
+   // -------------------------------------------------
    // server: ULib
    // date: Wed, 20 Jun 2012 11:43:17 GMT
 
-   *dst  = 0x40;
-    dst  = hpackEncodeInt(dst, 54, (1<<6)-1);
-    dst += hpackEncodeString(dst, U_CONSTANT_TO_PARAM("ULib"));
-   *dst  = 0x40;
-    dst  = hpackEncodeInt(dst, 33, (1<<6)-1);
+   /**
+    * *pwbuffer  = 0x40;
+    *  pwbuffer  = hpackEncodeInt(pwbuffer, 54, (1<<6)-1);
+    *  pwbuffer += hpackEncodeString(pwbuffer, U_CONSTANT_TO_PARAM("ULib"));
+    * *pwbuffer  = 0x40;
+    *  pwbuffer  = hpackEncodeInt(pwbuffer, 33, (1<<6)-1);
+    */
 
-// u__memcpy(dst, "v\004\000UHTa", U_CONSTANT_SIZE("v\004\000UHTa"), __PRETTY_FUNCTION__);
-//           dst +=                U_CONSTANT_SIZE("v\004\000UHTa");
+   u_put_unalignedp64(pwbuffer,  U_MULTICHAR_CONSTANT64('v','\004','U','L','i','b','a','\0'));
 
 #if defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
    U_INTERNAL_ASSERT_POINTER(u_pthread_time)
@@ -1711,18 +1710,164 @@ void UHTTP2::handlerResponse()
    ULog::updateDate3();
 #endif
 
-   dst += hpackEncodeString(dst, ((char*)UClientImage_Base::iov_vec[1].iov_base)+6, 29); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
+   pwbuffer += 7+hpackEncodeString(pwbuffer+7, ((char*)UClientImage_Base::iov_vec[1].iov_base)+6, 29); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
 
-   sz = dst - buffer;
+   if (sz1)
+      {
+      UClientImage_Base::setRequestNoCache();
+
+     *pwbuffer  = 0x40;
+      pwbuffer  = hpackEncodeInt(pwbuffer, 55, (1<<6)-1);
+      pwbuffer += hpackEncodeString(pwbuffer, UHTTP::set_cookie->data(), sz1);
+
+      UHTTP::set_cookie->setEmpty();
+      }
+
+   if (sz2 == 0)
+      {
+     *pwbuffer  = 0x40;
+      pwbuffer  = hpackEncodeInt(pwbuffer, 28, (1<<6)-1);
+      pwbuffer += hpackEncodeString(pwbuffer, U_CONSTANT_TO_PARAM("0"));
+      }
+   else
+      {
+      UMimeHeader header;
+
+      if (header.parse(UHTTP::ext->data(), sz2)) header.table.callForAllEntry(addHTTPHeader);
+      }
+
+   sz = pwbuffer-(unsigned char*)ptr;
 
    *(uint32_t*) ptr    = htonl((sz-HTTP2_FRAME_HEADER_SIZE) << 8);
                 ptr[3] = HEADERS;
+                ptr[4] = FLAG_END_HEADERS;
    *(uint32_t*)(ptr+5) = htonl(pStream->id);
 
-   U_DUMP("frame response { length = %d stream_id = %d type = (%d, %s) flags = %d } = %#.*S", ntohl(*(uint32_t*)ptr & 0x00ffffff) >> 8,
+   U_DUMP("frame header response { length = %d stream_id = %d type = (%d, %s) flags = %d } = %#.*S", ntohl(*(uint32_t*)ptr & 0x00ffffff) >> 8,
                ntohl(*(uint32_t*)(ptr+5) & 0x7fffffff), ptr[3], getFrameTypeDescription(ptr[3]), ptr[4], ntohl(*(uint32_t*)ptr & 0x00ffffff) >> 8, ptr + HTTP2_FRAME_HEADER_SIZE)
 
-   if (USocketExt::write(UServer_Base::csocket, ptr, sz, UServer_Base::timeoutMS) != sz) nerror = FLOW_CONTROL_ERROR;
+   sz2 = UClientImage_Base::body->size();
+
+   if (sz2)
+      {
+      *(uint32_t*) pwbuffer    = htonl(sz2 << 8);
+                   pwbuffer[3] = DATA;
+                   pwbuffer[4] = FLAG_END_STREAM;
+      *(uint32_t*)(pwbuffer+5) = htonl(pStream->id);
+
+      U_DUMP("frame data response { length = %d stream_id = %d type = (%d, %s) flags = %d }", ntohl(*(uint32_t*)pwbuffer & 0x00ffffff) >> 8,
+                  ntohl(*(uint32_t*)(pwbuffer+5) & 0x7fffffff), pwbuffer[3], getFrameTypeDescription(pwbuffer[3]), pwbuffer[4])
+
+      sz += HTTP2_FRAME_HEADER_SIZE;
+      }
+
+   UClientImage_Base::wbuffer->size_adjust(sz);
+
+   UClientImage_Base::setNoHeaderForResponse();
+}
+
+int UHTTP2::handlerRequest()
+{
+   U_TRACE(0, "UHTTP2::handlerRequest()")
+
+   U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
+
+   U_INTERNAL_DUMP("HTTP2-Settings: = %.*S U_http_method_type = %B", U_http2_settings_len, UHTTP2::upgrade_settings, U_http_method_type)
+
+   if (U_http2_settings_len &&
+       USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_CONNECTION_UPGRADE_AND_SETTING_BIN), UServer_Base::timeoutMS) !=
+                                                    U_CONSTANT_SIZE(HTTP2_CONNECTION_UPGRADE_AND_SETTING_BIN))
+      {
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
+
+   U_INTERNAL_ASSERT(UClientImage_Base::request->same(*UClientImage_Base::rbuffer))
+
+   UClientImage_Base::request->clear();
+
+   // maybe we have read more data than necessary...
+
+   uint32_t sz = UClientImage_Base::rbuffer->size();
+
+   U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+   if (sz > U_http_info.endHeader) UClientImage_Base::rstart = U_http_info.endHeader;
+   else
+      {
+      // we wait for HTTP2_CONNECTION_PREFACE...
+
+      UClientImage_Base::rbuffer->setEmptyForce();
+
+      if (UNotifier::waitForRead(UServer_Base::csocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
+          USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, 0) == false)
+         {
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+
+      UClientImage_Base::rstart = 0;
+
+      sz = UClientImage_Base::rbuffer->size();
+      }
+
+   const char* ptr = UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
+
+   if (u_get_unalignedp64(ptr)    != U_MULTICHAR_CONSTANT64( 'P', 'R','I',' ', '*', ' ', 'H', 'T') ||
+       u_get_unalignedp64(ptr+8)  != U_MULTICHAR_CONSTANT64( 'T', 'P','/','2', '.', '0','\r','\n') ||
+       u_get_unalignedp64(ptr+16) != U_MULTICHAR_CONSTANT64('\r','\n','S','M','\r','\n','\r','\n'))
+      {
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
+
+   pConnection    = (Connection*)UServer_Base::pClientImage->connection;
+   pConnectionEnd = (char*)pConnection + sizeof(Connection);
+
+   pConnection->state         = CONN_STATE_OPEN;
+   pConnection->peer_settings = settings;
+
+   pConnection->max_open_stream_id      =
+   pConnection->num_responding_streams  =
+   pConnection->max_processed_stream_id = 0;
+
+   pStream = pConnection->streams;
+
+   pStream->state = STREAM_STATE_IDLE;
+
+   if (U_http2_settings_len == 0)
+      {
+      if (USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_SETTINGS_BIN), UServer_Base::timeoutMS) != U_CONSTANT_SIZE(HTTP2_SETTINGS_BIN)) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
+   else
+      {
+      UString buffer(U_CAPACITY);
+
+      UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer);
+
+      if (buffer.empty() ||
+          updateSetting(U_STRING_TO_PARAM(buffer)) == false)
+         {
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+      }
+
+   settings_ack = false;
+
+   UClientImage_Base::rstart += U_CONSTANT_SIZE(HTTP2_CONNECTION_PREFACE);
+
+loop:
+   readFrame();
+
+   if (nerror == NO_ERROR)
+      {
+      U_INTERNAL_DUMP("settings_ack = %b", settings_ack)
+
+      if (settings_ack == false) goto loop; // we wait for SETTINGS ack...
+
+      return UHTTP::manageRequest();
+      }
+
+   sendError();
+
+   U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }
 
 #ifdef ENTRY

@@ -390,8 +390,6 @@ protected:
 #endif
 
 private:
-   static int handlerDataPending() U_NO_EXPORT;
-
    static bool isValidMethod(    const char* ptr)              U_NO_EXPORT;
    static bool isValidRequest(   const char* ptr, uint32_t sz) U_NO_EXPORT;
    static bool isValidRequestExt(const char* ptr, uint32_t sz) U_NO_EXPORT;

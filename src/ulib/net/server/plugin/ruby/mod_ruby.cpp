@@ -329,15 +329,15 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
          rbv = rb_ary_new();
          env = rb_hash_new();
 
-         /*
-         "rack.version"=>[1, 0],
-         "rack.run_once"=>false,
-         "rack.multithread"=>false,
-         "rack.multiprocess"=>false,
-         "rack.url_scheme"=>"http",
-         "rack.errors"=>#<IO:<STDERR>>,
-         "rack.input"=>#<StringIO:0x007fa1bce039f8>,
-         */
+         /**
+          * "rack.version"=>[1, 0],
+          * "rack.run_once"=>false,
+          * "rack.multithread"=>false,
+          * "rack.multiprocess"=>false,
+          * "rack.url_scheme"=>"http",
+          * "rack.errors"=>#<IO:<STDERR>>,
+          * "rack.input"=>#<StringIO:0x007fa1bce039f8>,
+          */
 
          (void) rb_ary_store(rbv, 0, INT2NUM(1));
          (void) rb_ary_store(rbv, 1, INT2NUM(1));

@@ -87,7 +87,6 @@ public:
    static void dtor();
 
    static bool readRequest();
-   static int  handlerDataPending();
    static void setStatusDescription();
    static bool isValidMethod(const char* ptr) __pure;
    static bool scanfHeaderRequest(const char* ptr, uint32_t size);
@@ -1002,7 +1001,7 @@ public:
    static UFileCacheData* getFileInCache(const char* path, uint32_t len);
 
 private:
-   static UString getHeaderForResponse();
+   static void    handlerResponse();
    static UString getHTMLDirectoryList() U_NO_EXPORT;
 
    static void setMimeIndex() // NB: it is used by server_plugin_ssi...

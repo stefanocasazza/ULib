@@ -1055,8 +1055,9 @@ int USSIPlugIn::handlerRequest()
 
             U_http_info.nResponseCode = HTTP_OK;
 
-            *UClientImage_Base::body    = output;
-            *UClientImage_Base::wbuffer = UHTTP::getHeaderForResponse();
+            *UClientImage_Base::body = output;
+
+            UHTTP::handlerResponse();
             }
          else if (alternative_response > 1)
             {

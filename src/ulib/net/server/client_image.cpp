@@ -28,7 +28,6 @@ iPF           UClientImage_Base::callerHandlerRequest;
 iPF           UClientImage_Base::callerHandlerReset;
 bPF           UClientImage_Base::callerHandlerCache;
 vPF           UClientImage_Base::callerHandlerEndRequest;
-iPF           UClientImage_Base::callerHandlerDataPending;
 bool          UClientImage_Base::bIPv6;
 bool          UClientImage_Base::log_request_partial;
 char          UClientImage_Base::cbuffer[128];
@@ -249,33 +248,6 @@ U_NO_EXPORT bool UClientImage_Base::isValidMethod(    const char* ptr)          
 U_NO_EXPORT bool UClientImage_Base::isValidRequest(   const char* ptr, uint32_t sz) { return true; }
 U_NO_EXPORT bool UClientImage_Base::isValidRequestExt(const char* ptr, uint32_t sz) { return true; }
 
-U_NO_EXPORT int UClientImage_Base::handlerDataPending()
-{
-   U_TRACE(0, "UClientImage_Base::handlerDataPending()")
-
-   if (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization))
-      {
-      // parent
-
-      U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
-
-      U_RETURN(-1);
-      }
-
-   if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
-      {
-      if (UNotifier::waitForRead(UServer_Base::csocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
-          (resetReadBuffer(), USocketExt::read(UServer_Base::csocket, *rbuffer, getCountToRead(), 0)) == false)
-         {
-         U_RETURN(-1);
-         }
-
-      U_RETURN(1);
-      }
-
-   U_RETURN(0);
-}
-
 void UClientImage_Base::init()
 {
    U_TRACE(0, "UClientImage_Base::init()")
@@ -305,10 +277,9 @@ void UClientImage_Base::init()
    _buffer  = U_NEW(UString(U_CAPACITY));
    _encoded = U_NEW(UString(U_CAPACITY));
 
-   callerIsValidMethod      = isValidMethod;
-   callerIsValidRequest     = isValidRequest;
-   callerIsValidRequestExt  = isValidRequestExt;
-   callerHandlerDataPending = handlerDataPending;
+   callerIsValidMethod     = isValidMethod;
+   callerIsValidRequest    = isValidRequest;
+   callerIsValidRequestExt = isValidRequestExt;
 
 #ifdef DEBUG
    UError::callerDataDump = saveRequestResponse;
@@ -989,12 +960,6 @@ bool UClientImage_Base::genericRead()
    U_RETURN(true);
 }
 
-#ifdef U_HTTP2_DISABLE
-#define U_CALL_DATA_PENDING       handlerDataPending
-#else
-#define U_CALL_DATA_PENDING callerHandlerDataPending
-#endif
-
 int UClientImage_Base::handlerRead() // Connection-wide hooks
 {
    U_TRACE(0, "UClientImage_Base::handlerRead()")
@@ -1063,33 +1028,46 @@ pipeline:
          }
       }
 
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_data_missing = %b", U_ClientImage_pipeline, U_ClientImage_data_missing)
-
    U_INTERNAL_ASSERT(request->invariant())
 
 #ifdef U_LOG_ENABLE
    if (logbuf) logRequest();
 #endif
 
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_data_missing = %b", U_ClientImage_pipeline, U_ClientImage_data_missing)
+
    if (U_ClientImage_data_missing)
       {
 dmiss:
-#  if defined(U_LOG_ENABLE) || !defined(U_CACHE_REQUEST_DISABLE)
-      result = U_CALL_DATA_PENDING();
+      U_INTERNAL_DUMP("U_ClientImage_parallelization = %d", U_ClientImage_parallelization)
 
-      if (result)
+      if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
          {
-         if (result ==  1) goto loop; //  child of parallelization
-         if (result == -1)            // parent of parallelization
+         if (UNotifier::waitForRead(UServer_Base::csocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
+             (resetReadBuffer(), USocketExt::read(UServer_Base::csocket, *rbuffer, getCountToRead(), 0)) == false)
             {
             if ((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0) U_RETURN(U_NOTIFIER_DELETE);
 
             goto death;
             }
+
+         goto loop;
          }
-#  endif
 
       U_ClientImage_data_missing = false;
+
+#  ifndef U_HTTP2_DISABLE
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+      if (U_http_version == '2')
+         {
+         U_ClientImage_state = UHTTP2::handlerRequest();
+
+         if (UNLIKELY((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0)) goto error;
+
+         goto processing;
+         }
+#  endif
 
       U_INTERNAL_ASSERT_EQUALS(data_pending, 0)
 
@@ -1271,6 +1249,9 @@ check:
          }
       }
 
+#ifndef U_HTTP2_DISABLE
+processing:
+#endif
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u request->size() = %u",
                     U_ClientImage_pipeline,     size_request,     request->size())
 
