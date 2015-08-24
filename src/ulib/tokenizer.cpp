@@ -54,7 +54,7 @@ bool UTokenizer::next(UString& token, bPFi func)
          ++s;
          }
 
-      token = str.substr(p, s - p);
+      token = substr(p);
 
       ++s;
 
@@ -88,7 +88,7 @@ bool UTokenizer::next(UString& token, char c)
 
       if (s == 0) s = end;
 
-      token = str.substr(p, s - p);
+      token = substr(p);
 
       ++s;
 
@@ -124,7 +124,7 @@ bool UTokenizer::extend(UString& token, char c)
 
       if (s == 0) s = end;
 
-      token = str.substr(p, s - p);
+      token = substr(p);
 
       ++s;
 
@@ -331,9 +331,7 @@ UString UTokenizer::getTokenQueryParser()
          }
       }
 
-   UString token = str.substr(p, s - p);
-
-   U_RETURN_STRING(token);
+   return substr(p);
 }
 
 /**

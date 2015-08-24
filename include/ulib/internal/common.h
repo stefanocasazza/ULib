@@ -157,7 +157,8 @@ typedef enum ValueType {
      LREAL_VALUE = 14, // long double value
     STRING_VALUE = 15, // UTF-8 string value
      ARRAY_VALUE = 16, // array value (ordered list)
-    OBJECT_VALUE = 17  // object value (collection of name/value pairs)
+    OBJECT_VALUE = 17, // object value (collection of name/value pairs)
+    NUMBER_VALUE = 18  // generic number value (may be -ve) int or float
 } ValueType;
 
 using namespace std;

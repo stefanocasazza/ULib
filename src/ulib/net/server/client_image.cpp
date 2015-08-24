@@ -76,6 +76,10 @@ void UClientImage_Base::logRequest()
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
+#ifndef U_HTTP2_DISABLE
+   if (U_http_version != '2')
+#endif
+   {
    if (u_printf_string_max_length == -1)
       {
       u_printf_string_max_length = u_findEndHeader1(ptr, sz);
@@ -102,6 +106,7 @@ void UClientImage_Base::logRequest()
 
       U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
       }
+   }
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d U_ClientImage_pipeline = %b", u_printf_string_max_length, U_ClientImage_pipeline)
 
@@ -125,8 +130,8 @@ UClientImage_Base::UClientImage_Base()
 
    reset();
 
-   last_event    = u_now->tv_sec;
-   pending_close = 0;
+   flag.u     = 0;
+   last_event = u_now->tv_sec;
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
@@ -483,10 +488,10 @@ void UClientImage_Base::handlerDelete()
       }
    else if (isPendingSendfile())
       {
-      U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B pending_close = %d %B",
-                       sfd,     count,     UEventFd::op_mask,     pending_close, pending_close)
+      U_INTERNAL_DUMP("sfd = %d count = %u UEventFd::op_mask = %B U_ClientImage_pclose(this) = %d %B",
+                       sfd,     count,     UEventFd::op_mask,     U_ClientImage_pclose(this), U_ClientImage_pclose(this))
 
-      if ((pending_close & U_CLOSE) != 0)
+      if ((U_ClientImage_pclose(this) & U_CLOSE) != 0)
          {
 #     ifdef DEBUG
          if (UNLIKELY(sfd == -1))
@@ -500,15 +505,13 @@ void UClientImage_Base::handlerDelete()
             }
 #     endif
 
-         pending_close = 0;
-
          UFile::close(sfd);
          }
 
       reset();
       }
 
-   if (UNLIKELY(pending_close)) pending_close = 0;
+   flag.u = 0;
 
    U_INTERNAL_ASSERT_EQUALS(data_pending, 0)
    U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
@@ -540,13 +543,20 @@ int UClientImage_Base::handlerTimeout()
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 #endif
 
-   // NB: maybe we have some more data to read...
+   U_INTERNAL_DUMP("U_ClientImage_pidle(this) = %d %B", U_ClientImage_pidle(this), U_ClientImage_pidle(this))
 
-   if (UNotifier::waitForRead(socket->iSockDesc, 0) == 1) U_RETURN(U_NOTIFIER_OK);
+   if (U_ClientImage_pidle(this) != U_YES)
+      {
+      // NB: maybe we have some more data to read...
 
-   socket->iState = USocket::TIMEOUT;
+      if (UNotifier::waitForRead(socket->iSockDesc, 0) == 1) U_RETURN(U_NOTIFIER_OK);
 
-   U_RETURN(U_NOTIFIER_DELETE);
+      socket->iState = USocket::TIMEOUT;
+
+      U_RETURN(U_NOTIFIER_DELETE);
+      }
+
+   U_RETURN(U_NOTIFIER_OK);
 }
 
 const char* UClientImage_Base::getRequestUri(uint32_t& sz)
@@ -591,7 +601,7 @@ bool UClientImage_Base::startRequest()
 {
    U_TRACE(0, "UClientImage_Base::startRequest()")
 
-#if defined(DEBUG) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
+#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    long tmp = chronometer->restart();
 
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_between_request = %ld time_run = %ld U_ClientImage_request_is_cached = %b csfd = %d",
@@ -620,7 +630,7 @@ void UClientImage_Base::endRequest()
 {
    U_TRACE(0, "UClientImage_Base::endRequest()")
 
-#if !defined(DEBUG) && !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
+#ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 #else
    time_run = chronometer->stop();
@@ -629,11 +639,7 @@ void UClientImage_Base::endRequest()
                     U_ClientImage_pipeline,     time_between_request,      time_run,      U_ClientImage_request_is_cached)
 #endif
 
-   if (callerHandlerEndRequest &&
-       U_ClientImage_parallelization != 2) // 2 => parent of parallelization
-      {
-      callerHandlerEndRequest();
-      }
+   if (callerHandlerEndRequest) callerHandlerEndRequest();
 
    U_http_method_type = 0; // NB: this mark the end of http request processing...
 
@@ -888,7 +894,7 @@ bool UClientImage_Base::genericRead()
 
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
-#if !defined(DEBUG) && !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
+#ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 #else
    bool advise_for_parallelization = startRequest();
@@ -937,12 +943,13 @@ bool UClientImage_Base::genericRead()
              data_pending = 0;
       }
 
-#if defined(DEBUG) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
+#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    if (advise_for_parallelization)
       {
-#  ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+#  ifdef DEBUG
       U_MESSAGE("UClientImage_Base::genericRead(): time_between_request(%ld) < time_run(%ld)", time_between_request, time_run);
-#  else
+#  endif
+
       if (UServer_Base::startParallelization(UServer_Base::num_client_threshold))
          {
          // parent
@@ -951,7 +958,6 @@ bool UClientImage_Base::genericRead()
 
          U_RETURN(false);
          }
-#  endif
       }
 #endif
 
@@ -1651,8 +1657,8 @@ void UClientImage_Base::prepareForSendfile()
 
    if (U_ClientImage_close)
       {
-      pending_close       = U_YES;
-      U_ClientImage_close = false;
+      U_ClientImage_close        = false;
+      U_ClientImage_pclose(this) = U_YES;
       }
 
    if (U_ClientImage_pipeline) resetPipeline();
@@ -1723,7 +1729,7 @@ int UClientImage_Base::handlerResponse()
 
       prepareForSendfile();
 
-      pending_close |= U_CLOSE;
+      U_ClientImage_pclose(this) |= U_CLOSE;
 
       U_RETURN(U_NOTIFIER_OK);
 #  endif
@@ -1786,13 +1792,13 @@ write:
          }
 #  endif
 
-      if ((pending_close & U_CLOSE) != 0) UFile::close(sfd);
+      if ((U_ClientImage_pclose(this) & U_CLOSE) != 0) UFile::close(sfd);
 
       start =
       count =  0;
       sfd   = -1;
 
-      if ((pending_close & U_YES) != 0) U_RETURN(U_NOTIFIER_DELETE);
+      if ((U_ClientImage_pclose(this) & U_YES) != 0) U_RETURN(U_NOTIFIER_DELETE);
 
       U_RETURN(U_NOTIFIER_OK);
       }
@@ -1831,15 +1837,15 @@ wait:    if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto
       U_RETURN(U_NOTIFIER_OK);
       }
 
-   U_SRV_LOG("sendfile failed - sock_fd %d sfd %d count %u pending_close %d %B", socket->iSockDesc, sfd, count, pending_close, pending_close);
+   U_SRV_LOG("sendfile failed - sock_fd %d sfd %d count %u U_ClientImage_pclose(this) %d %B", socket->iSockDesc, sfd, count, U_ClientImage_pclose(this), U_ClientImage_pclose(this));
 
-   if ((pending_close & U_CLOSE) != 0) UFile::close(sfd);
+   if ((U_ClientImage_pclose(this) & U_CLOSE) != 0) UFile::close(sfd);
 
    start =
    count =  0;
    sfd   = -1;
 
-   pending_close = 0;
+   U_ClientImage_pclose(this) = 0;
 
    U_RETURN(U_NOTIFIER_DELETE);
 }

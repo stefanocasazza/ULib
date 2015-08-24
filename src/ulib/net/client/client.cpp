@@ -415,30 +415,13 @@ bool UClient_Base::setUrl(const UString& location)
    U_RETURN(false);
 }
 
-void UClient_Base::prepareRequest(const UString& req)
-{
-   U_TRACE(0, "UClient_Base::prepareRequest(%V)", req.rep)
-
-   iovcnt  = 1;
-   request = req;
-
-   iov[0].iov_base = (caddr_t)req.data();
-   iov[0].iov_len  =          req.size();
-
-   (void) U_SYSCALL(memset, "%p,%d,%u", iov+1, 0, sizeof(struct iovec) * 5);
-
-   U_INTERNAL_ASSERT_EQUALS(iov[1].iov_len, 0)
-   U_INTERNAL_ASSERT_EQUALS(iov[2].iov_len, 0)
-   U_INTERNAL_ASSERT_EQUALS(iov[3].iov_len, 0)
-   U_INTERNAL_ASSERT_EQUALS(iov[4].iov_len, 0)
-   U_INTERNAL_ASSERT_EQUALS(iov[5].iov_len, 0)
-}
-
 bool UClient_Base::sendRequest(bool bread_response)
 {
    U_TRACE(0, "UClient_Base::sendRequest(%b)", bread_response)
 
    U_INTERNAL_ASSERT_RANGE(1,iovcnt,6)
+
+   U_DUMP_IOVEC(iov,iovcnt)
 
    // QUEUE MODE
 

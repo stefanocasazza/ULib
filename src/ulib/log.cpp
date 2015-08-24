@@ -14,6 +14,7 @@
 #include <ulib/log.h>
 #include <ulib/date.h>
 #include <ulib/utility/lock.h>
+#include <ulib/internal/chttp.h>
 
 #ifndef _MSWINDOWS_
 #  ifdef __clang__
@@ -749,6 +750,10 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d iov[0].len = %d iov[1].len = %d iov[2].len = %d iov[3].len = %d",
                     u_printf_string_max_length,     iov[0].iov_len, iov[1].iov_len, iov[2].iov_len, iov[3].iov_len)
 
+#ifndef U_HTTP2_DISABLE
+   if (U_http_version != '2')
+#endif
+   {
    if (u_printf_string_max_length == -1)
       {
       uint32_t endHeader = (sz ? u_findEndHeader1(ptr, sz) : U_NOT_FOUND);
@@ -762,6 +767,7 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
 
       U_INTERNAL_ASSERT(u_printf_string_max_length <= (int)sz_header)
       }
+   }
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d sz1 = %u", u_printf_string_max_length, sz1)
 

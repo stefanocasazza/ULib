@@ -648,7 +648,7 @@ __pure int u_getScreenWidth(void)
 
    U_INTERNAL_TRACE("u_getScreenWidth()")
 
-   /* If there's a way to get the terminal size using POSIX tcgetattr(), somebody please tell me. */
+   /* If there's a way to get the terminal size using POSIX tcgetattr(), somebody please tell me */
 
 #ifdef TIOCGWINSZ
    if (ioctl(STDERR_FILENO, TIOCGWINSZ, &wsz) != -1)  /* most likely ENOTTY */
@@ -834,7 +834,7 @@ static inline const char* nexttoken(const char* q, int sep)
  *
  * The mask term just scanned was ok if and only if either the numbers
  * matching the %u were all of the input or if the next character in
- * the input past the numbers was one of the allowed next characters.
+ * the input past the numbers was one of the allowed next characters
  */
 
 static inline bool scan_was_ok(int sret, char nextc, const char* ok_next_chars) { return (sret == 1 || (sret == 2 && strchr(ok_next_chars, nextc))); }
@@ -1001,6 +1001,7 @@ void u_get_memusage(unsigned long* vsz, unsigned long* rss)
    if (fp)
       {
       /**
+       * -----------------------------------------------------------------------------------------------------------------------------
        * The fields, in order, with their proper scanf(3) format specifiers, are:
        * -----------------------------------------------------------------------------------------------------------------------------
        * pid %d          The process ID.
@@ -1029,7 +1030,7 @@ void u_get_memusage(unsigned long* vsz, unsigned long* rss)
        * vsize %lu Virtual memory size in bytes.
        * rss %ld   Resident Set Size: number of pages the process has in real memory.
        *           This is just the pages which count toward text, data, or stack space.
-       *           This does not include pages which have not been demand-loaded in, or which are swapped out.
+       *           This does not include pages which have not been demand-loaded in, or which are swapped out
        * -----------------------------------------------------------------------------------------------------------------------------
        */
 
@@ -1411,8 +1412,7 @@ const char* u_delimit_token(const char* restrict s, const char** restrict pold, 
 
    if (delim)
       {
-next:
-      s = (const char* restrict) (s < end ? u__strpbrk(s, end - s, delim) : 0);
+next: s = (const char* restrict) (s < end ? u__strpbrk(s, end - s, delim) : 0);
 
       if (s == 0) return end;
       }
@@ -1754,7 +1754,7 @@ __pure bool u_validate_email_address(const char* restrict address, uint32_t addr
    return (count >= 1);
 }
 
-/* Perform 'natural order' comparisons of strings. */
+/* Perform 'natural order' comparisons of strings */
 
 __pure int u_strnatcmp(char const* restrict a, char const* restrict b)
 {
@@ -1822,7 +1822,7 @@ done_number:
       if (!ca &&
           !cb)
          {
-         /* The strings compare the same. Perhaps the caller will want to call strcmp to break the tie. */
+         /* The strings compare the same. Perhaps the caller will want to call strcmp to break the tie */
 
          return 0;
          }
@@ -2467,7 +2467,7 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
                return 1;
                }
 
-            /* Optimize for pattern with * at end or before /. */
+            /* Optimize for pattern with * at end or before / */
 
             if (pattern == end_p) /* if (c == EOS) */
                {
@@ -2483,7 +2483,7 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
                break;
                }
 
-            /* General case, use recursion. */
+            /* General case, use recursion */
 
             while (string < end_s)
                {
@@ -2838,7 +2838,7 @@ __pure bool u_isHostName(const char* restrict ptr, uint32_t len)
     *
     * Several well known Internet and technology companies have DNS records that use the underscore:
     *
-    * http://domainkeys.sourceforge.net/underscore.html
+    * see http://domainkeys.sourceforge.net/underscore.html
     */
 
    if (u__isalpha(ch))
@@ -4750,31 +4750,31 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
 
    goto *((char*)&&case_a + dispatch_table[i-'a']);
 
-   case_a: ptr = mimetab_a; goto loop;
-   case_b: ptr = mimetab_b; goto loop;
-   case_c: ptr = mimetab_c; goto loop;
-   case_d: ptr = mimetab_d; goto loop;
-   case_e: ptr = mimetab_e; goto loop;
+case_a: ptr = mimetab_a; goto loop;
+case_b: ptr = mimetab_b; goto loop;
+case_c: ptr = mimetab_c; goto loop;
+case_d: ptr = mimetab_d; goto loop;
+case_e: ptr = mimetab_e; goto loop;
 
-   case_g: ptr = mimetab_g; goto loop;
-   case_h: ptr = mimetab_h; goto loop;
+case_g: ptr = mimetab_g; goto loop;
+case_h: ptr = mimetab_h; goto loop;
 
-   case_j: ptr = mimetab_j; goto loop;
+case_j: ptr = mimetab_j; goto loop;
 
-   case_m: ptr = mimetab_m; goto loop;
+case_m: ptr = mimetab_m; goto loop;
 
-   case_o: ptr = mimetab_o; goto loop;
-   case_p: ptr = mimetab_p; goto loop;
-   case_q: ptr = mimetab_q; goto loop;
-   case_r: ptr = mimetab_r; goto loop;
-   case_s: ptr = mimetab_s; goto loop;
-   case_t: ptr = mimetab_t; goto loop;
+case_o: ptr = mimetab_o; goto loop;
+case_p: ptr = mimetab_p; goto loop;
+case_q: ptr = mimetab_q; goto loop;
+case_r: ptr = mimetab_r; goto loop;
+case_s: ptr = mimetab_s; goto loop;
+case_t: ptr = mimetab_t; goto loop;
 
-   case_w: ptr = mimetab_w; goto loop;
-   case_x: ptr = mimetab_x; goto loop;
-   case_z: ptr = mimetab_z; goto loop;
+case_w: ptr = mimetab_w; goto loop;
+case_x: ptr = mimetab_x; goto loop;
+case_z: ptr = mimetab_z; goto loop;
 
-   cdefault: ptr = mimetab_null;
+cdefault: ptr = mimetab_null;
 
 loop:
    while (ptr->name)

@@ -210,13 +210,13 @@ am__EXEEXT_19 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_tokenizer$(EXEEXT) test_query_parser$(EXEEXT) \
 	test_multipart$(EXEEXT) test_command$(EXEEXT) \
 	test_dialog$(EXEEXT) test_rdb_server$(EXEEXT) \
-	test_json$(EXEEXT) test_server$(EXEEXT) $(am__EXEEXT_1) \
-	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4) \
-	$(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7) \
-	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_10) \
-	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
-	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16) \
-	$(am__EXEEXT_17) $(am__EXEEXT_18)
+	test_json$(EXEEXT) test_server$(EXEEXT) test_redis$(EXEEXT) \
+	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
+	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
+	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
+	$(am__EXEEXT_10) $(am__EXEEXT_11) $(am__EXEEXT_12) \
+	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
+	$(am__EXEEXT_16) $(am__EXEEXT_17) $(am__EXEEXT_18)
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -436,6 +436,10 @@ am_test_rdb_server_OBJECTS = test_rdb_server.$(OBJEXT)
 test_rdb_server_OBJECTS = $(am_test_rdb_server_OBJECTS)
 test_rdb_server_LDADD = $(LDADD)
 test_rdb_server_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+am_test_redis_OBJECTS = test_redis.$(OBJEXT)
+test_redis_OBJECTS = $(am_test_redis_OBJECTS)
+test_redis_LDADD = $(LDADD)
+test_redis_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am_test_server_OBJECTS = test_server.$(OBJEXT)
 test_server_OBJECTS = $(am_test_server_OBJECTS)
 test_server_LDADD = $(LDADD)
@@ -635,15 +639,16 @@ SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
 	$(test_pop3_SOURCES) $(test_process_SOURCES) \
 	$(test_query_parser_SOURCES) $(test_rdb_SOURCES) \
 	$(test_rdb_client_SOURCES) $(test_rdb_server_SOURCES) \
-	$(test_server_SOURCES) $(test_services_SOURCES) \
-	$(test_smtp_SOURCES) $(test_soap_client_SOURCES) \
-	$(test_soap_server_SOURCES) $(test_socket_SOURCES) \
-	$(test_ssh_client_SOURCES) $(test_ssl_client_SOURCES) \
-	$(test_ssl_server_SOURCES) $(test_string_SOURCES) \
-	$(test_tdb_SOURCES) $(test_thread_SOURCES) \
-	$(test_timer_SOURCES) $(test_timestamp_SOURCES) \
-	$(test_timeval_SOURCES) $(test_tokenizer_SOURCES) \
-	$(test_tree_SOURCES) $(test_unixsocket_client_SOURCES) \
+	$(test_redis_SOURCES) $(test_server_SOURCES) \
+	$(test_services_SOURCES) $(test_smtp_SOURCES) \
+	$(test_soap_client_SOURCES) $(test_soap_server_SOURCES) \
+	$(test_socket_SOURCES) $(test_ssh_client_SOURCES) \
+	$(test_ssl_client_SOURCES) $(test_ssl_server_SOURCES) \
+	$(test_string_SOURCES) $(test_tdb_SOURCES) \
+	$(test_thread_SOURCES) $(test_timer_SOURCES) \
+	$(test_timestamp_SOURCES) $(test_timeval_SOURCES) \
+	$(test_tokenizer_SOURCES) $(test_tree_SOURCES) \
+	$(test_unixsocket_client_SOURCES) \
 	$(test_unixsocket_server_SOURCES) $(test_url_SOURCES) \
 	$(test_vector_SOURCES) $(test_zip_SOURCES)
 DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
@@ -671,9 +676,9 @@ DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(am__test_plugin_SOURCES_DIST) $(test_pop3_SOURCES) \
 	$(am__test_process_SOURCES_DIST) $(test_query_parser_SOURCES) \
 	$(test_rdb_SOURCES) $(test_rdb_client_SOURCES) \
-	$(test_rdb_server_SOURCES) $(test_server_SOURCES) \
-	$(test_services_SOURCES) $(test_smtp_SOURCES) \
-	$(am__test_soap_client_SOURCES_DIST) \
+	$(test_rdb_server_SOURCES) $(test_redis_SOURCES) \
+	$(test_server_SOURCES) $(test_services_SOURCES) \
+	$(test_smtp_SOURCES) $(am__test_soap_client_SOURCES_DIST) \
 	$(am__test_soap_server_SOURCES_DIST) $(test_socket_SOURCES) \
 	$(am__test_ssh_client_SOURCES_DIST) \
 	$(am__test_ssl_client_SOURCES_DIST) \
@@ -1099,13 +1104,13 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_entity test_ipaddress test_socket test_smtp test_pop3 \
 	test_imap test_ftp test_http test_rdb_client test_tokenizer \
 	test_query_parser test_multipart test_command test_dialog \
-	test_rdb_server test_json test_server $(am__append_1) \
-	$(am__append_3) $(am__append_5) $(am__append_8) \
-	$(am__append_9) $(am__append_11) $(am__append_13) \
-	$(am__append_15) $(am__append_17) $(am__append_19) \
-	$(am__append_21) $(am__append_23) $(am__append_25) \
-	$(am__append_27) $(am__append_29) $(am__append_31) \
-	$(am__append_33) $(am__append_37)
+	test_rdb_server test_json test_server test_redis \
+	$(am__append_1) $(am__append_3) $(am__append_5) \
+	$(am__append_8) $(am__append_9) $(am__append_11) \
+	$(am__append_13) $(am__append_15) $(am__append_17) \
+	$(am__append_19) $(am__append_21) $(am__append_23) \
+	$(am__append_25) $(am__append_27) $(am__append_29) \
+	$(am__append_31) $(am__append_33) $(am__append_37)
 TST = timeval.test timer.test notifier.test string.test file.test \
 	cdb.test rdb.test file_config.test log.test vector.test \
 	options.test application.test tree.test compress.test \
@@ -1156,6 +1161,7 @@ test_dialog_SOURCES = test_dialog.cpp
 test_rdb_server_SOURCES = test_rdb_server.cpp
 test_json_SOURCES = test_json.cpp
 test_server_SOURCES = test_server.cpp
+test_redis_SOURCES = test_redis.cpp
 @PTHREAD_TRUE@test_thread_SOURCES = test_thread.cpp
 @ZIP_TRUE@test_zip_SOURCES = test_zip.cpp
 @LIBTDB_TRUE@test_tdb_SOURCES = test_tdb.cpp
@@ -1464,6 +1470,10 @@ test_rdb_server$(EXEEXT): $(test_rdb_server_OBJECTS) $(test_rdb_server_DEPENDENC
 	@rm -f test_rdb_server$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_rdb_server_OBJECTS) $(test_rdb_server_LDADD) $(LIBS)
 
+test_redis$(EXEEXT): $(test_redis_OBJECTS) $(test_redis_DEPENDENCIES) $(EXTRA_test_redis_DEPENDENCIES) 
+	@rm -f test_redis$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_redis_OBJECTS) $(test_redis_LDADD) $(LIBS)
+
 test_server$(EXEEXT): $(test_server_OBJECTS) $(test_server_DEPENDENCIES) $(EXTRA_test_server_DEPENDENCIES) 
 	@rm -f test_server$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_server_OBJECTS) $(test_server_LDADD) $(LIBS)
@@ -1609,6 +1619,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_rdb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_rdb_client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_rdb_server.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_redis.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_services.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_smtp.Po@am__quote@

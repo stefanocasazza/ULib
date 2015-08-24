@@ -29,12 +29,13 @@
  *   ULONG_VALUE =  9, // unsigned long value
  *   LLONG_VALUE = 10, //   signed long long value
  *  ULLONG_VALUE = 11, // unsigned long long value
- *   FLOAT_VALUE = 12, // float value
- *    REAL_VALUE = 13, // double value
+ *   FLOAT_VALUE = 12, //       float value
+ *    REAL_VALUE = 13, //      double value
  *   LREAL_VALUE = 14, // long double value
  *  STRING_VALUE = 15, // UTF-8 string value
  *   ARRAY_VALUE = 16, // array value (ordered list)
- *  OBJECT_VALUE = 17  // object value (collection of name/value pairs)
+ *  OBJECT_VALUE = 17, // object value (collection of name/value pairs)
+ *  NUMBER_VALUE = 18  // generic number value (may be -ve) int or float
 } ValueType;
 */
 
@@ -515,11 +516,9 @@ __pure UValue& UValue::operator[](uint32_t pos)
       {
       uint32_t i = 0;
 
-      for (UValue* child = children.head; child; child = child->next)
+      for (UValue* child = children.head; child; ++i, child = child->next)
          {
          if (i == pos) return *child;
-
-         i++;
          }
       }
 
@@ -911,9 +910,9 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
    tok.skipSpaces();
 
    bool result;
-   const char* start = tok.getPointer();
 
-   char c = tok.next();
+   const char* start = tok.getPointer();
+         char      c = tok.next();
 
    switch (c)
       {
@@ -1109,9 +1108,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
          }
       break;
 
-      default:
-         result = false;
-      break;
+      default: result = false; break;
       }
 
    U_RETURN(result);
@@ -1172,9 +1169,780 @@ void UJsonTypeHandler<UStringRep>::fromJSON(UValue& json)
    U_INTERNAL_DUMP("pval(%p) = %V", pval, pval)
 }
 
+// =======================================================================================================================
+// An in-place JSON element reader (@see http://www.codeproject.com/Articles/885389/jRead-an-in-place-JSON-element-reader)
+// =======================================================================================================================
+// Instead of parsing JSON into some structure, this maintains the input JSON as unaltered text and allows queries to be
+// made on it directly. E.g. with the simple JSON:
+// UString json = U_STRING_FROM_CONSTANT("
+// {
+//    "astring":"This is a string",
+//    "anumber":42,
+//    "myarray":[ "one", 2, {"description":"element 3"}, null ],
+//    "yesno":true,
+//    "HowMany":"1234",
+//    "foo":null
+// }");
+//
+// calling:
+//    UString query = U_STRING_FROM_CONSTANT("{'myarray'[0"), value;
+//    int dataType = jread(json, query, value);
+//
+// would return:
+//    value -> "one"
+//    dataType = STRING_VALUE;
+//
+// The query string simply defines the route to the required data item as an arbitary list of object or array specifiers:
+//    object element = "{'keyname'"
+//     array element = "[INDEX"
+//
+// The jread() function describe the located element, this can be used to locate any element, not just terminal values e.g.
+//    query = U_STRING_FROM_CONSTANT("{'myarray'");
+//    dataType = jread(json, query, value);
+//
+// in this case would return:
+//    value -> "[ "one", 2, {"descripton":"element 3"}, null ]"
+//    dataType = ARRAY_VALUE;
+//
+// allowing jread() to be called again on the array:
+//    dataType = jread(value, U_STRING_FROM_CONSTANT("[3"), value); // get 4th element - the null value
+//
+// in this case would return:
+//    value -> ""
+//    dataType = NULL_VALUE;
+//
+// Note that jread() never modifies the source JSON and does not allocate any memory. i.e. elements are assigned as
+// substring of the source json string
+// =======================================================================================================================
+
+#define U_JR_EOL     (NUMBER_VALUE+1) // 19 end of input string (ptr at '\0')
+#define U_JR_COLON   (NUMBER_VALUE+2) // 20 ":"
+#define U_JR_COMMA   (NUMBER_VALUE+3) // 21 ","
+#define U_JR_EARRAY  (NUMBER_VALUE+4) // 22 "]"
+#define U_JR_QPARAM  (NUMBER_VALUE+5) // 23 "*" query string parameter
+#define U_JR_EOBJECT (NUMBER_VALUE+6) // 24 "}"
+
+int      UValue::jread_error;
+uint32_t UValue::jread_pos;
+uint32_t UValue::jread_elements;
+
+U_NO_EXPORT int UValue::jreadFindToken(UTokenizer& tok)
+{
+   U_TRACE(0, "UValue::jreadFindToken(%p)", &tok)
+
+   tok.skipSpaces();
+
+   switch (tok.current())
+      {
+      case  '0':
+      case  '1':
+      case  '2':
+      case  '3':
+      case  '4':
+      case  '5':
+      case  '6':
+      case  '7':
+      case  '8':
+      case  '9':
+      case  '-': U_RETURN(NUMBER_VALUE);
+      case  't':
+      case  'f': U_RETURN(BOOLEAN_VALUE);
+      case  'n': U_RETURN(NULL_VALUE);
+      case  '[': U_RETURN(ARRAY_VALUE);
+      case  '{': U_RETURN(OBJECT_VALUE);
+      case  '}': U_RETURN(U_JR_EOBJECT);
+      case  ']': U_RETURN(U_JR_EARRAY);
+      case  ':': U_RETURN(U_JR_COLON);
+      case  ',': U_RETURN(U_JR_COMMA);
+      case  '*': U_RETURN(U_JR_QPARAM);
+      case  '"':
+      case '\'': U_RETURN(STRING_VALUE);
+      case '\0': U_RETURN(U_JR_EOL);
+      }
+
+   U_RETURN(-1);
+}
+
+U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
+{
+   U_TRACE(0, "UValue::jread_skip(%p)", &tok)
+
+   tok.skipSpaces();
+
+   switch (tok.next())
+      {
+      case  'n': (void) tok.skipToken(U_CONSTANT_TO_PARAM("ull"));
+      case '\0':                                                    U_RETURN(   NULL_VALUE);
+      case  't': (void) tok.skipToken(U_CONSTANT_TO_PARAM("rue"));  U_RETURN(BOOLEAN_VALUE);
+      case  'f': (void) tok.skipToken(U_CONSTANT_TO_PARAM("alse")); U_RETURN(BOOLEAN_VALUE);
+      case  '0':
+      case  '1':
+      case  '2':
+      case  '3':
+      case  '4':
+      case  '5':
+      case  '6':
+      case  '7':
+      case  '8':
+      case  '9':
+      case  '-':
+         {
+         bool breal;
+
+         (void) tok.skipNumber(breal);
+
+         U_RETURN(NUMBER_VALUE);
+         }
+
+      case  '"':
+         {
+         const char* ptr  = tok.getPointer();
+         const char* _end = tok.getEnd();
+         const char* last = u_find_char(ptr, _end, '"');
+
+         if (last < _end)
+            {
+            tok.setPointer(last+1);
+
+            U_RETURN(STRING_VALUE);
+            }
+         }
+      break;
+
+      case '[':
+         {
+         while (true)
+            {
+            tok.skipSpaces();
+
+            char c = tok.next();
+
+            if (c == ']' ||
+                c == '\0')
+               {
+               break;
+               }
+
+            if (c != ',') tok.back();
+
+            if (jread_skip(tok) == -1) U_RETURN(-1);
+            }
+
+         U_RETURN(ARRAY_VALUE);
+         }
+
+      case '{':
+         {
+         while (true)
+            {
+            tok.skipSpaces();
+
+            char c = tok.next();
+
+            if (c == '}' ||
+                c == '\0')
+               {
+               break;
+               }
+
+            if (c != ',') tok.back();
+
+            int dataType = jread_skip(tok);
+
+            if (dataType == -1) U_RETURN(-1);
+
+            tok.skipSpaces();
+
+            if (tok.next() != ':' ||
+                dataType != STRING_VALUE)
+               {
+               U_RETURN(-1);
+               }
+
+            if (jread_skip(tok) == -1) U_RETURN(-1);
+            }
+
+         U_RETURN(OBJECT_VALUE);
+         }
+      }
+
+   U_RETURN(-1);
+}
+
+U_NO_EXPORT UString UValue::jread_string(UTokenizer& tok)
+{
+   U_TRACE(0, "UValue::jread_string(%p)", &tok)
+
+   UString result;
+
+   tok.skipSpaces();
+
+         char  c    = tok.next();
+   const char* ptr  = tok.getPointer();
+   const char* _end = tok.getEnd();
+   const char* last = u_find_char(ptr, _end, c);
+   uint32_t sz      = (last < _end ? last - ptr : 0);
+
+   U_INTERNAL_DUMP("c = %C sz = %u", c, sz)
+
+   if (sz) (void) result.assign(ptr, sz);
+
+   if (last < _end) tok.setPointer(last+1);
+
+   U_RETURN_STRING(result);
+}
+
+// used when query ends at an object, we want to return the object -> "{... "
+
+U_NO_EXPORT UString UValue::jread_object(UTokenizer& tok)
+{
+   U_TRACE(0, "UValue::jread_object(%p)", &tok)
+
+   int jTok;
+   int dataType;
+   const char* start = tok.getPointer();
+
+   jread_elements = 0;
+
+   while (true)
+      {
+      dataType = jread_skip(++tok);
+
+      if (dataType == -1 ||
+          dataType != STRING_VALUE)
+         {
+         jread_error = 3; // Expected "key"
+
+         break;
+         }
+
+      U_INTERNAL_DUMP("jread_elements = %u", jread_elements)
+
+      jTok = jreadFindToken(tok);
+
+      U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+
+      if (jTok != U_JR_COLON)
+         {
+         jread_error = 4; // Expected ":"
+
+         break;
+         }
+
+      if (jread_skip(++tok) == -1) break;
+
+      ++jread_elements;
+
+      U_INTERNAL_DUMP("jread_elements = %u", jread_elements)
+
+      jTok = jreadFindToken(tok);
+
+      U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+
+      if (jTok == U_JR_EOBJECT)
+         {
+         ++tok;
+
+         U_RETURN_STRING(tok.substr(start));
+         }
+
+      if (jTok != U_JR_COMMA)
+         {
+         jread_error = 6; // Expected "," in object
+
+         break;
+         }
+      }
+
+   return UString::getStringNull();
+}
+
+// we're looking for the nth "key" value in which case keyIndex is the index of the key we want
+
+U_NO_EXPORT UString UValue::jread_object(UTokenizer& tok, uint32_t keyIndex)
+{
+   U_TRACE(0, "UValue::jread_object(%p,%u)", &tok, keyIndex)
+
+   int jTok;
+   UString key;
+
+   jread_elements = 0;
+
+   while (true)
+      {
+      key = jread_string(++tok);
+
+      if (key.empty())
+         {
+         jread_error = 3; // Expected "key"
+
+         break;
+         }
+
+      U_INTERNAL_DUMP("jread_elements = %u", jread_elements)
+
+      if (jread_elements == keyIndex) U_RETURN_STRING(key); // if match keyIndex we return "key" at this index
+
+      jTok = jreadFindToken(tok);
+
+      U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+
+      if (jTok != U_JR_COLON)
+         {
+         jread_error = 4; // Expected ":"
+
+         break;
+         }
+
+      if (jread_skip(++tok) == -1) break;
+
+      ++jread_elements;
+
+      U_INTERNAL_DUMP("jread_elements = %u", jread_elements)
+
+      jTok = jreadFindToken(tok);
+
+      U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+
+      if (jTok == U_JR_EOBJECT)
+         {
+         // we wanted a "key" value - that we didn't find
+
+         jread_error = 11; // Object key not found (bad index)
+
+         break;
+         }
+
+      if (jTok != U_JR_COMMA)
+         {
+         jread_error = 6; // Expected "," in object
+
+         break;
+         }
+      }
+
+   return UString::getStringNull();
+}
+
+int UValue::jread(const UString& json, const UString& query, UString& result, uint32_t* queryParams)
+{
+   U_TRACE(0+256, "UValue::jread(%V,%V,%V,%p)", json.rep, query.rep, result.rep, queryParams)
+
+   bool breal;
+   const char* start;
+   uint32_t count, index;
+
+   UTokenizer tok1(json),
+              tok2(query);
+
+   int jTok = jreadFindToken(tok1),
+       qTok = jreadFindToken(tok2);
+
+   U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+   U_DUMP("qTok = (%d %S)", qTok, getDataTypeDescription(qTok))
+
+   jread_elements = 0;
+
+   if (qTok != jTok &&
+       qTok != U_JR_EOL)
+      {
+      jread_error = 1; // JSON does not match Query
+
+      U_RETURN(jTok);
+      }
+
+   jread_error = 0;
+
+   switch (jTok)
+      {
+      case -1:
+         {
+         jread_error = 2; // Error reading JSON value
+
+         U_RETURN(-1);
+         }
+
+      case STRING_VALUE: // "string" 
+         {
+         jread_elements = 1;
+
+         result = jread_string(tok1);
+         }
+      break;
+
+      case NULL_VALUE:    // null
+      case NUMBER_VALUE:  // number (may be -ve) int or float
+      case BOOLEAN_VALUE: // true or false
+         {
+         const char* ptr =  start = tok1.getPointer();
+               char    c = *start;
+
+         while ((c  > ' ') && // any ctrl char incl '\0'
+                (c != ',') &&
+                (c != '}') &&
+                (c != ']'))
+            {
+            c = *++ptr;
+            }
+
+         jread_elements = 1;
+
+         (void) result.assign(start, ptr-start);
+         }
+      break;
+
+      case OBJECT_VALUE: // "{"
+         {
+         if (qTok == U_JR_EOL)
+            {
+            jTok   = OBJECT_VALUE;
+            result = jread_object(tok1); 
+
+            goto end;
+            }
+
+         qTok = jreadFindToken(++tok2); // "('key'...", "{NUMBER", "{*" or EOL
+
+         U_DUMP("qTok = (%d %S)", qTok, getDataTypeDescription(qTok))
+
+         if (qTok != STRING_VALUE)
+            {
+            index = 0;
+
+            switch (qTok)
+               {
+               case NUMBER_VALUE: // index value
+                  {
+                  start = tok2.getPointer();
+
+                  (void) tok2.skipNumber(breal);
+
+                  U_INTERNAL_ASSERT_EQUALS(breal, false)
+
+                  index = strtoul(start, 0, 10);
+
+                  U_INTERNAL_DUMP("index = %u", index)
+                  }
+               break;
+
+               case U_JR_QPARAM: ++tok2; index = (queryParams ? *queryParams++ : 0); break; // substitute parameter
+
+               default:
+                  {
+                  jread_error = 12; // Bad Object key
+
+                  U_RETURN(-1);
+                  }
+               }
+
+            jTok   = OBJECT_VALUE;
+            result = jread_object(tok1, index); 
+
+            goto end;
+            }
+
+         UString jElement, qElement = jread_string(tok2); // qElement = query 'key'
+
+         // read <key> : <value> , ... }
+         // loop 'til key matched
+
+         while (true)
+            {
+            jElement = jread_string(++tok1);
+
+            if (jElement.empty())
+               {
+               jread_error = 3;  // Expected "key"
+
+               break;
+               }
+
+            jTok = jreadFindToken(tok1);
+
+            U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+
+            if (jTok != U_JR_COLON)
+               {
+               jread_error = 4; // Expected ":"
+
+               break;
+               }
+
+            // compare object keys
+
+            if (qElement == jElement)
+               {
+               // found object key
+
+               ++tok1;
+
+               return jread(tok1.substr(), tok2.substr(), result, queryParams);
+               }
+
+            // no key match... skip this value
+
+            if (jread_skip(++tok1) == -1) break;
+
+            jTok = jreadFindToken(tok1);
+
+            U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+
+            if (jTok == U_JR_EOBJECT)
+               {
+               jread_error = 5; // Object key not found
+
+               break;
+               }
+
+            if (jTok != U_JR_COMMA)
+               {
+               jread_error = 6; // Expected "," in object
+
+               break;
+               }
+            }
+         }
+      break;
+
+      case ARRAY_VALUE: // "[NUMBER" or "[*"
+         {
+         // read index, skip values 'til index
+
+         if (qTok == U_JR_EOL)
+            {
+            tok1.skipSpaces();
+
+            start = tok1.getPointer();
+
+            while (true)
+               {
+               if (jread_skip(++tok1) == -1) break; // array value
+
+               ++jread_elements;
+
+               U_INTERNAL_DUMP("jread_elements = %u", jread_elements)
+
+               jTok = jreadFindToken(tok1);
+
+               U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+
+               if (jTok == U_JR_EARRAY)
+                  {
+                  ++tok1;
+
+                  break;
+                  }
+
+               if (jTok != U_JR_COMMA)
+                  {
+                  jread_error = 9; // Expected "," in array
+
+                  break;
+                  }
+               }
+
+            jTok   = ARRAY_VALUE;
+            result = tok1.substr(start);
+
+            goto end;
+            }
+
+         index = 0;
+         qTok  = jreadFindToken(++tok2); // "[NUMBER" or "[*"
+         start = tok2.getPointer();
+
+         U_DUMP("qTok = (%d %S)", qTok, getDataTypeDescription(qTok))
+
+         if (qTok == U_JR_QPARAM)
+            {
+            ++tok2;
+
+            index = (queryParams ? *queryParams++ : 0); // substitute parameter
+            }
+         else if (qTok == NUMBER_VALUE)
+            {
+            // get array index   
+
+            (void) tok2.skipNumber(breal);
+
+            U_INTERNAL_ASSERT_EQUALS(breal, false)
+
+            index = strtoul(start, 0, 10);
+
+            U_INTERNAL_DUMP("index = %u", index)
+            }
+
+         count = 0;
+
+         while (true)
+            {
+            if (count == index)
+               {
+               ++tok1;
+
+               return jread(tok1.substr(), tok2.substr(), result, queryParams); // return value at index
+               }
+
+            // not this index... skip this value
+
+            if (jread_skip(++tok1) == -1) break;
+
+            ++count;          
+
+            jTok = jreadFindToken(tok1); // , or ]
+
+            U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+
+            if (jTok == U_JR_EARRAY)
+               {
+               jread_error = 10; // Array element not found (bad index)
+
+               break;
+               }
+
+            if (jTok != U_JR_COMMA)
+               {
+               jread_error = 9; // Expected "," in array
+
+               break;
+               }
+            }
+         }
+      break;
+
+      default: jread_error = 8; // unexpected character (in pResult->dataType)
+      }
+
+   // We get here on a 'terminal value' - make sure the query string is empty also
+
+   qTok = jreadFindToken(tok2);
+
+   U_DUMP("qTok = (%d %S)", qTok, getDataTypeDescription(qTok))
+
+   if (qTok != U_JR_EOL)
+      {
+      if (jread_error == 0) jread_error = 7; // terminal value found before end of query
+      }
+
+   U_INTERNAL_DUMP("jread_error = %d", jread_error)
+
+   if (jread_error) jread_elements = 0;
+
+end:
+   jread_pos = tok1.getDistance();
+
+   U_DUMP("jTok = (%d %S) result = %V jread_pos = %u", jTok, getDataTypeDescription(jTok), result.rep, jread_pos)
+
+   U_RETURN(jTok);
+}
+
+// reads one value from an array - assumes jarray points at the start of an array or array element
+
+int UValue::jreadArrayStep(const UString& jarray, UString& result)
+{
+   U_TRACE(0, "UValue::jreadArrayStep(%V,%V)", jarray.rep, result.rep)
+
+   UTokenizer tok(jarray);
+
+   tok.setDistance(jread_pos);
+
+   int jTok = jreadFindToken(tok);
+
+   U_DUMP("jTok = (%d %S)", jTok, getDataTypeDescription(jTok))
+
+   switch (jTok)
+      {
+      case U_JR_COMMA:  // element separator
+      case ARRAY_VALUE: // start of array
+         {
+         ++tok;
+
+         jTok = jread(tok.substr(), UString::getStringNull(), result);
+         }
+      break;
+
+      case U_JR_EARRAY: jread_error = 13; break; // End of array found
+      default:          jread_error =  9;        // Expected comma in array
+      }
+
+   U_RETURN(jTok);
+}
+
 // DEBUG
 
 #ifdef DEBUG
+const char* UValue::getJReadErrorDescription()
+{
+   U_TRACE(0, "UValue::getJReadErrorDescription()")
+
+   static const char* errlist[] = {
+      "Ok",                                       //  0
+      "JSON does not match Query",                //  1
+      "Error reading JSON value",                 //  2
+      "Expected \"key\"",                         //  3
+      "Expected ':'",                             //  4
+      "Object key not found",                     //  5
+      "Expected ',' in object",                   //  6
+      "Terminal value found before end of query", //  7
+      "Unexpected character",                     //  8
+      "Expected ',' in array",                    //  9
+      "Array element not found (bad index)",      // 10
+      "Object key not found (bad index)",         // 11
+      "Bad object key",                           // 12
+      "End of array found",                       // 13
+      "End of object found"                       // 14
+   };
+
+   const char* descr = (jread_error >= 0 && jread_error <= 14 ? errlist[jread_error] : "Unknown jread error");
+
+   U_RETURN(descr);
+}
+
+#  ifdef ENTRY
+#  undef ENTRY
+#  endif
+#  define ENTRY(n) n: descr = #n; break
+
+const char* UValue::getDataTypeDescription(int type)
+{
+   U_TRACE(0, "UValue::getDataTypeDescription(%d)", type)
+
+   const char* descr;
+
+   switch (type)
+      {
+      case ENTRY(NULL_VALUE);
+      case ENTRY(BOOLEAN_VALUE);
+      case ENTRY(CHAR_VALUE);
+      case ENTRY(UCHAR_VALUE);
+      case ENTRY(SHORT_VALUE);
+      case ENTRY(USHORT_VALUE);
+      case ENTRY(INT_VALUE);
+      case ENTRY(UINT_VALUE);
+      case ENTRY(LONG_VALUE);
+      case ENTRY(ULONG_VALUE);
+      case ENTRY(LLONG_VALUE);
+      case ENTRY(ULLONG_VALUE);
+      case ENTRY(FLOAT_VALUE);
+      case ENTRY(REAL_VALUE);
+      case ENTRY(LREAL_VALUE);
+      case ENTRY(STRING_VALUE);
+      case ENTRY(ARRAY_VALUE);
+      case ENTRY(OBJECT_VALUE);
+      case ENTRY(NUMBER_VALUE);
+      case ENTRY(U_JR_EOL);
+      case ENTRY(U_JR_COLON);
+      case ENTRY(U_JR_COMMA);
+      case ENTRY(U_JR_EARRAY);
+      case ENTRY(U_JR_QPARAM);
+      case ENTRY(U_JR_EOBJECT);
+
+      default: descr = "Data type unknown";
+      }
+
+   U_RETURN(descr);
+}
+
 const char* UValue::dump(bool _reset) const
 {
 #ifdef U_STDCPP_ENABLE

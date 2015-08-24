@@ -454,7 +454,7 @@ void UHTTP::in_READ()
     */
 
    union uuinotify_event {
-                      char*  p;
+      char*  p;
       struct inotify_event* ip;
    };
 
@@ -520,7 +520,7 @@ void UHTTP::in_READ()
             inotify_file_data = 0;
 
             cache_file->callForAllEntry(getInotifyPathDirectory);
-   next:
+next:
             if ((mask & IN_CREATE) != 0)
                {
                if (inotify_file_data == 0) checkFileForCache();
@@ -4196,14 +4196,6 @@ void UHTTP::setEndRequestProcessing()
 {
    U_TRACE(0, "UHTTP::setEndRequestProcessing()")
 
-   U_ASSERT_EQUALS(UServer_Base::isParallelizationParent(), false)
-
-   U_INTERNAL_DUMP("bcallResetForAllUSP = %b", bcallResetForAllUSP)
-
-   if (bcallResetForAllUSP) cache_file->callForAllEntry(callResetForAllUSP);
-
-   if (data_session) data_session->resetDataSession();
-
    // if any clear form data
 
    if (form_name_value->size())
@@ -4234,6 +4226,14 @@ void UHTTP::setEndRequestProcessing()
 
       qcontent->clear();
       }
+
+   if (UServer_Base::isParallelizationParent()) return;
+
+   U_INTERNAL_DUMP("bcallResetForAllUSP = %b", bcallResetForAllUSP)
+
+   if (bcallResetForAllUSP) cache_file->callForAllEntry(callResetForAllUSP);
+
+   if (data_session) data_session->resetDataSession();
 
 #ifdef U_LOG_ENABLE
    if (UServer_Base::apache_like_log)
@@ -5694,7 +5694,7 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
 #  ifdef USE_LIBZ
       if (UStringExt::isGzip(*pbody))
          {
-         if (U_http_is_accept_gzip) *pbody = UStringExt::gunzip(*pbody);
+         if (U_http_is_accept_gzip == false) *pbody = UStringExt::gunzip(*pbody);
 
 #     ifndef U_HTTP2_DISABLE
          if (U_http_version != '2')
@@ -6746,18 +6746,13 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
 
    header.snprintf_add("Content-Type: %s\r\n", content_type);
 
-   const char* fmt;
-
    U_INTERNAL_DUMP("mime_index = %C", mime_index)
 
-   if (content_length_changeable)
-      {
-      fmt = "Content-Length: " "   " "%u\r\n\r\n";
-      }
+   const char* fmt = "Content-Length: %u\r\n\r\n";
+
+   if (content_length_changeable) fmt = "Content-Length:    %u\r\n\r\n";
    else
       {
-      fmt = "Content-Length: "       "%u\r\n\r\n";
-
       if (u__isdigit(mime_index)) goto next; // NB: check for dynamic page...
 
       if (expire) header.snprintf_add("Expires: %#8D\r\n", expire);
@@ -8570,7 +8565,10 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
       processGetRequest();
 
       if (file_data->fd != UServer_Base::pClientImage->sfd) file->close();
-      else                 UServer_Base::pClientImage->pending_close = U_CLOSE;
+      else
+         {
+         U_ClientImage_pclose(UServer_Base::pClientImage) = U_CLOSE;
+         }
 
       U_RETURN(true);
       }

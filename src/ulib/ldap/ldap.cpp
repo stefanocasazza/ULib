@@ -309,9 +309,10 @@ void ULDAP::setStatus()
 
    char* descr = ldap_err2string(result);
 
-   /* get a meaningful error string back from the security library
+   /**
+    * get a meaningful error string back from the security library
     * this function should be called, if ldap_err2string doesn't
-    * identify the error code.
+    * identify the error code
     */
 #if defined(HAVE_LDAP_SSL_H) && !defined(_MSWINDOWS_) && !defined(HAVE_WINLDAP_H)
    if (descr == 0) descr = (char*)ldapssl_err2string(result);
@@ -324,7 +325,8 @@ void ULDAP::setStatus()
 
 #if defined(_MSWINDOWS_) && defined(HAVE_WINLDAP_H)
 
-/* Split 'str' into strings separated by commas.
+/**
+ * Split 'str' into strings separated by commas.
  *
  * Note: res[] points into 'str'.
  */

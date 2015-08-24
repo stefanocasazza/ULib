@@ -24,16 +24,15 @@
  *
  * - 'null'
  * - boolean
- * - signed integer
+ * -   signed integer
  * - unsigned integer
  * - double
  * - UTF-8 string
- * - an ordered list of UValue
+ * - list of UValue
  * - collection of name/value pairs (javascript object)
  *
- * The type of the held value is represented by a #ValueType and can be obtained using type().
+ * The type of the held value is represented by a #ValueType and can be obtained using method type().
  * Values of an #OBJECT_VALUE or #ARRAY_VALUE can be accessed using operator[]() methods.
- * The sequence of an #ARRAY_VALUE will be automatically resize and initialized with #NULL_VALUE.
  * It is possible to iterate over the list of a #OBJECT_VALUE values using the getMemberNames() method
  */
 
@@ -89,9 +88,9 @@ private:
 ///
 ///   class Person {
 ///   public:
-///      UString _lastName;
-///      UString _firstName;
-///      int     _age;
+///      UString  lastName;
+///      UString firstName;
+///      int     age;
 ///   };
 ///
 /// The UJsonTypeHandler must provide a custom toJSON and fromJSON method:
@@ -101,18 +100,18 @@ private:
 ///      explicit UJsonTypeHandler(Person& val) : UJsonTypeHandler_Base(&val)
 ///
 ///      void toJSON(UValue& json)
-///      {
-///         json.toJSON(U_JSON_TYPE_HANDLER(Person, _lastName,  UString));
-///         json.toJSON(U_JSON_TYPE_HANDLER(Person, _firstName, UString));
-///         json.toJSON(U_JSON_TYPE_HANDLER(Person, _age,       int));
-///      }
+///         {
+///         json.toJSON(U_JSON_TYPE_HANDLER(Person,  lastName, UString));
+///         json.toJSON(U_JSON_TYPE_HANDLER(Person, firstName, UString));
+///         json.toJSON(U_JSON_TYPE_HANDLER(Person, age,       int));
+///         }
 ///
 ///      void fromJSON(UValue& json)
-///      {
-///         json.fromJSON(U_JSON_TYPE_HANDLER(Person, _lastName,  UString));
-///         json.fromJSON(U_JSON_TYPE_HANDLER(Person, _firstName, UString));
-///         json.fromJSON(U_JSON_TYPE_HANDLER(Person, _age,       int));
-///      }
+///         {
+///         json.fromJSON(U_JSON_TYPE_HANDLER(Person,  lastName, UString));
+///         json.fromJSON(U_JSON_TYPE_HANDLER(Person, firstName, UString));
+///         json.fromJSON(U_JSON_TYPE_HANDLER(Person, age,       int));
+///         }
 ///   };
 
 template <class T> class U_EXPORT UJsonTypeHandler : public UJsonTypeHandler_Base {
@@ -153,11 +152,13 @@ public:
 
       U_INTERNAL_ASSERT_RANGE(0, _type, OBJECT_VALUE)
 
-      (void) memset(this, 0, sizeof(UValue));
+      (void) memset(this, 0, sizeof(UValue)-sizeof(int));
+
 #  ifdef DEBUG
       memory._this = (void*)U_CHECK_MEMORY_SENTINEL;
 #  endif
-      if (_type) type_ = _type;
+
+      type_ = _type;
       }
 
    UValue(bool value_)
@@ -473,9 +474,31 @@ public:
 
    static void stringify(UString& result, UValue& value);
 
+   // =======================================================================================================================
+   // An in-place JSON element reader (@see http://www.codeproject.com/Articles/885389/jRead-an-in-place-JSON-element-reader)
+   // =======================================================================================================================
+
+   static int      jread_error;
+   static uint32_t jread_elements, jread_pos;
+
+   static int jread(const UString& json, const UString& query, UString& result, uint32_t* queryParams = 0);
+
+   // reads one value from an array
+
+   static void jreadArrayStepInit() { jread_pos = 0; }
+
+   static int  jreadArrayStep(const UString& jarray, UString& result); // assumes jarray points at the start of an array or array element
+
+
 #ifdef DEBUG
    bool invariant() const;
    const char* dump(bool _reset) const;
+
+   static const char* getJReadErrorDescription();
+   static const char* getDataTypeDescription(int type);
+#else
+   static const char* getJReadErrorDescription()       { return ""; }
+   static const char* getDataTypeDescription(int type) { return ""; }
 #endif
 
 protected:
@@ -493,8 +516,16 @@ protected:
 
    void reset();
 
-private:
    static void appendNode(UValue* parent, UValue* child);
+
+private:
+   static int jread_skip(UTokenizer& tok) U_NO_EXPORT;
+   static int jreadFindToken(UTokenizer& tok) U_NO_EXPORT;
+
+   static UString jread_string(UTokenizer& tok) U_NO_EXPORT;
+   static UString jread_object(UTokenizer& tok) U_NO_EXPORT;
+   static UString jread_object(UTokenizer& tok, uint32_t keyIndex) U_NO_EXPORT;
+
    static bool readValue(UTokenizer& tok, UValue* value) U_NO_EXPORT;
    static uint32_t emitString(const unsigned char* ptr, uint32_t sz, char* presult) U_NO_EXPORT;
 

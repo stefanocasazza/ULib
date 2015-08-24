@@ -205,6 +205,9 @@
    <libnetfilter_conntrack/libnetfilter_conntrack.h> header file. */
 #undef HAVE_LIBNETFILTER_CONNTRACK_LIBNETFILTER_CONNTRACK_H
 
+/* Define to 1 if you have the `numa' library (-lnuma). */
+#undef HAVE_LIBNUMA
+
 /* Define to 1 if you have the `tcc' library (-ltcc). */
 #undef HAVE_LIBTCC
 

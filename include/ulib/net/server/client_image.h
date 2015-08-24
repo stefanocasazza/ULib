@@ -43,6 +43,9 @@ class UStreamPlugIn;
 
 template <class T> class UServer;
 
+#define U_ClientImage_pidle(obj)  (obj)->UClientImage_Base::flag.c[0]
+#define U_ClientImage_pclose(obj) (obj)->UClientImage_Base::flag.c[1]
+
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]
 
 class U_EXPORT UClientImage_Base : public UEventFd {
@@ -301,7 +304,8 @@ protected:
 #endif
    UString* data_pending;
    uint32_t start, count;
-   int sfd, pending_close;
+   int sfd;
+   uucflag flag;
    time_t last_event;
 
    void   set();

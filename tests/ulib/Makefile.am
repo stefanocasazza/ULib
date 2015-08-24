@@ -16,7 +16,7 @@ PRG = test_timeval test_timer test_notifier test_string \
 		test_vector test_options test_application test_tree test_compress test_cache test_date \
 		test_services test_base64 test_header test_entity \
 		test_ipaddress test_socket test_smtp test_pop3 test_imap test_ftp test_http test_rdb_client \
-		test_tokenizer test_query_parser test_multipart test_command test_dialog test_rdb_server test_json test_server
+		test_tokenizer test_query_parser test_multipart test_command test_dialog test_rdb_server test_json test_server test_redis
 
 TST = timeval.test timer.test notifier.test string.test \
 		file.test cdb.test rdb.test file_config.test log.test \
@@ -24,7 +24,7 @@ TST = timeval.test timer.test notifier.test string.test \
 		services.test base64.test header.test entity.test \
 		ipaddress.test socket.test smtp.test pop3.test imap.test ftp.test http.test \
 		tokenizer.test query_parser.test multipart.test rdb_client_server.test command.test json.test server.test server_rpc.test
-## 	dialog.test
+## 	dialog.test redis.test
 
 test_ipaddress_SOURCES = test_ipaddress.cpp
 test_socket_SOURCES = test_socket.cpp
@@ -62,6 +62,7 @@ test_dialog_SOURCES = test_dialog.cpp
 test_rdb_server_SOURCES = test_rdb_server.cpp
 test_json_SOURCES = test_json.cpp
 test_server_SOURCES = test_server.cpp
+test_redis_SOURCES = test_redis.cpp
 
 if PTHREAD
 PRG += test_thread

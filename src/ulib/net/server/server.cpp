@@ -25,6 +25,9 @@
 #else
 #  include <pwd.h>
 #  include <ulib/net/unixsocket.h>
+#  ifdef HAVE_LIBNUMA
+#     include <numa.h>
+#  endif
 #endif
 
 #ifdef U_STATIC_HANDLER_RPC
@@ -133,6 +136,7 @@ UString*      UServer_Base::str_preforked_num_kids;
 USocket*      UServer_Base::socket;
 USocket*      UServer_Base::csocket;
 UProcess*     UServer_Base::proc;
+UEventFd*     UServer_Base::handler_other;
 UEventFd*     UServer_Base::handler_inotify;
 UEventTime*   UServer_Base::ptime;
 const char*   UServer_Base::document_root_ptr;
@@ -1654,6 +1658,7 @@ void UServer_Base::init()
          socket_flags |= O_NONBLOCK;
          }
 
+      if (handler_other)   UNotifier::min_connection++;
       if (handler_inotify) UNotifier::min_connection++;
       }
 
@@ -2419,9 +2424,10 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_INTERNAL_ASSERT_POINTER(ptime)
    U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
 
-   U_INTERNAL_DUMP("pthis = %p handler_inotify = %p ", pthis, handler_inotify)
+   U_INTERNAL_DUMP("pthis = %p handler_other = %p handler_inotify = %p ", pthis, handler_other, handler_inotify)
 
-   if (cimg == pthis ||
+   if (cimg == pthis         ||
+       cimg == handler_other ||
        cimg == handler_inotify)
       {
       U_RETURN(false);
@@ -2580,6 +2586,7 @@ void UServer_Base::runLoop(const char* user)
    if (UNotifier::min_connection)
       {
       if (binsert)         UNotifier::insert(pthis);           // NB: we ask to be notified for request of connection (=> accept)
+      if (handler_other)   UNotifier::insert(handler_other);   // NB: we ask to be notified for request from request
       if (handler_inotify) UNotifier::insert(handler_inotify); // NB: we ask to be notified for change of file system (=> inotify)
       }
 
@@ -2614,8 +2621,8 @@ void UServer_Base::runLoop(const char* user)
       {
       U_INTERNAL_ASSERT_EQUALS(UInterrupt::event_signal_pending, 0)
 
-      U_INTERNAL_DUMP("ptime = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
-                       ptime,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
+      U_INTERNAL_DUMP("ptime = %p handler_other = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
+                       ptime,     handler_other,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
 
 #  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)
@@ -2727,6 +2734,18 @@ void UServer_Base::run()
             if (proc->child())
                {
                U_INTERNAL_DUMP("child = %P UNotifier::num_connection = %d", UNotifier::num_connection)
+
+#           ifdef HAVE_LIBNUMA
+               if (U_SYSCALL_NO_PARAM(numa_max_node))
+                  {
+                  struct bitmask* bmask = (struct bitmask*) U_SYSCALL(numa_bitmask_alloc, "%u", 16);
+
+                  (void) U_SYSCALL(numa_bitmask_setbit, "%p,%u", bmask, rkids % 2);
+
+                  U_SYSCALL_VOID(numa_set_membind,  "%p", bmask);
+                  U_SYSCALL_VOID(numa_bitmask_free, "%p", bmask);
+                  }
+#           endif
 
                /**
                 * POSIX.1-1990 disallowed setting the action for SIGCHLD to SIG_IGN.

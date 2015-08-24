@@ -30,3 +30,35 @@
 {"count":1234}
 {"count":1234,"name":"test","attribute":"random"}
 {"":1234}
+
+dataType = (17 "OBJECT_VALUE") query = "" result(254) = "{  \"astring\": \"This is a string\",\n  \"number1\": 42,\n  \"number2\":  -123.45,\n  \"anObject\":{\"one\":1,\"two\":{\"obj2.1\":21,\"obj2.2\":22}," UValue::jread_elements = 8 UValue::jread_error = (0, Ok)
+dataType = (17 "OBJECT_VALUE") query = "[1" result(0) = "" UValue::jread_elements = 0 UValue::jread_error = (1, JSON does not match Query)
+dataType = (15 "STRING_VALUE") query = "{'astring'" result(16) = "This is a string" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (18 "NUMBER_VALUE") query = "{'number1'" result(2) = "42" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (18 "NUMBER_VALUE") query = "{'number2'" result(7) = "-123.45" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (17 "OBJECT_VALUE") query = "{'anObject'" result(53) = "{\"one\":1,\"two\":{\"obj2.1\":21,\"obj2.2\":22},\"three\":333}" UValue::jread_elements = 3 UValue::jread_error = (0, Ok)
+dataType = (16 "ARRAY_VALUE") query = "{'anArray'" result(50) = "[0, \"one\", {\"two.0\":20,\"two.1\":21}, 3, [4,44,444]]" UValue::jread_elements = 5 UValue::jread_error = (0, Ok)
+dataType = (0 "NULL_VALUE") query = "{'isnull'" result(4) = "null" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (1 "BOOLEAN_VALUE") query = "{'yes'" result(4) = "true" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (1 "BOOLEAN_VALUE") query = "{'no'" result(5) = "false" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (24 "U_RP_EOBJECT") query = "{'missing'" result(0) = "" UValue::jread_elements = 0 UValue::jread_error = (5, Object key not found)
+dataType = (17 "OBJECT_VALUE") query = "{'anObject'{'two'" result(25) = "{\"obj2.1\":21,\"obj2.2\":22}" UValue::jread_elements = 2 UValue::jread_error = (0, Ok)
+dataType = (18 "NUMBER_VALUE") query = "{'anObject' {'two' {'obj2.2'" result(2) = "22" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (18 "NUMBER_VALUE") query = "{'anObject'{'three'" result(3) = "333" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (15 "STRING_VALUE") query = "{'anArray' [1" result(3) = "one" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (18 "NUMBER_VALUE") query = "{'anArray' [2 {'two.1'" result(2) = "21" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (18 "NUMBER_VALUE") query = "{'anArray' [4 [2" result(3) = "444" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (22 "U_RP_EARRAY") query = "{'anArray' [999" result(0) = "" UValue::jread_elements = 0 UValue::jread_error = (10, Array element not found (bad index))
+dataType = (17 "OBJECT_VALUE") query = "{3" result(8) = "anObject" UValue::jread_elements = 3 UValue::jread_error = (0, Ok)
+dataType = (17 "OBJECT_VALUE") query = "{'anObject' {1" result(3) = "two" UValue::jread_elements = 1 UValue::jread_error = (0, Ok)
+dataType = (17 "OBJECT_VALUE") query = "{999" result(0) = "" UValue::jread_elements = 8 UValue::jread_error = (11, Object key not found (bad index))
+
+"anArray": = "[0, \"one\", {\"two.0\":20,\"two.1\":21}, 3, [4,44,444]]"
+anArray[0] = "0"
+anArray[1] = "one"
+anArray[2] = "{\"two.0\":20,\"two.1\":21}"
+anArray[3] = "3"
+anArray[4] = "[4,44,444]"
+
+anArray[2] objectKey[1] = "two.1"
+

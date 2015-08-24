@@ -52,7 +52,7 @@ protected:
    static char environment_type;
    static UClient_Base* connection;
 
-          void set_FCGIBeginRequest();
+          void  set_FCGIBeginRequest();
    static void fill_FCGIBeginRequest(u_char type, u_short content_length);
 
 private:

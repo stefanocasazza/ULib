@@ -44,6 +44,34 @@ void UVector<void*>::push(const void* elem) // add to end
    vec[_length++] = elem;
 }
 
+void UVector<void*>::move(UVector<void*>& source) // add to end and reset source
+{
+   U_TRACE(0, "UVector<void*>::move(%p)", &source)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_ASSERT_MAJOR(source._length, 0)
+
+   if ((_length + source._length) >= _capacity)
+      {
+      const void** old_vec  = vec;
+      uint32_t old_capacity = _capacity;
+
+      _capacity <<= 1; // x 2...
+
+      vec = (const void**) UMemoryPool::_malloc(&_capacity, sizeof(void*));
+
+      if (_length) U_MEMCPY(vec, old_vec, _length * sizeof(void*));
+
+      UMemoryPool::_free(old_vec, old_capacity, sizeof(void*));
+      }
+
+   U_MEMCPY(vec+_length, source.vec, source._length * sizeof(void*));
+
+   _length += source._length;
+              source._length = 0;
+}
+
 // LIST OPERATIONS
 
 void UVector<void*>::insert(uint32_t pos, const void* elem) // add elem before pos
@@ -443,6 +471,52 @@ UString UVector<UString>::operator[](uint32_t pos) const
 #endif
 
    return at(pos);
+}
+
+UString UVector<UString>::join(char c)
+{
+   U_TRACE(0, "UVector<UString>::join(%C)", c)
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_DUMP("_length = %u", _length)
+
+   U_INTERNAL_ASSERT(_length <= _capacity)
+
+   if (_length == 0) return UString::getStringNull();
+
+   uint32_t i   = 0,
+            len = 0;
+
+   for (; i < _length; ++i) len += ((UStringRep*)vec[i])->size();
+
+   len += (_length - 1);
+
+   UString str(len < U_CAPACITY ? U_CAPACITY : len);
+
+   str.size_adjust(len);
+
+   i = 0;
+   char* ptr = str.data();
+
+   while (true)
+      {
+      UStringRep* rep = (UStringRep*)vec[i];
+
+      uint32_t sz = rep->size();
+
+      if (sz) U_MEMCPY(ptr, rep->data(), sz);
+
+      if (++i >= _length) break;
+
+      ptr += sz;
+
+      *ptr++ = c;
+      }
+
+   (void) str.shrink();
+
+   U_RETURN_STRING(str);
 }
 
 UString UVector<UString>::join(const char* t, uint32_t tlen)

@@ -309,6 +309,8 @@ public:
       U_SYSCALL_VOID(qsort, "%p,%u,%d,%p", (void*)vec, _length, sizeof(void*), compare_obj);
       }
 
+   void move(UVector<void*>& source); // add to end and reset source
+
 #ifdef U_RING_BUFFER
    bool isEmptyRingBuffer()
       {
@@ -804,6 +806,8 @@ public:
       U_RETURN(U_NOT_FOUND);
       }
 
+   void move(UVector<T*>& source) { UVector<void*>::move(source); } // add to end and reset source
+
    // STREAMS
 
 #ifdef U_STDCPP_ENABLE
@@ -1115,7 +1119,8 @@ public:
 
    // EXTENSION
 
-   UString join(const char* delim = "\n", uint32_t delim_len = 1);
+   UString join(      char  delim);
+   UString join(const char* delim, uint32_t delim_len);
 
    uint32_t split(const    char* str, uint32_t len,       char  delim);
    uint32_t split(const UString& str,                     char  delim);     // NB: use substr(), so dependency from str...
@@ -1161,6 +1166,8 @@ public:
       }
 
    void sort(bool ignore_case = false);
+
+   void move(UVector<UString>& source) { UVector<void*>::move(source); } // add to end and reset source
 
    // AS SET
 

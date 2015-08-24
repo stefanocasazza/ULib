@@ -242,15 +242,17 @@ UString USocket::getMacAddress(const char* device)
 #if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_ARPA_INET_H)
    U_INTERNAL_ASSERT(isOpen())
 
-   /* ARP ioctl request
-   struct arpreq {
-      struct sockaddr arp_pa;       // Protocol address
-      struct sockaddr arp_ha;       // Hardware address
-      int arp_flags;                // Flags
-      struct sockaddr arp_netmask;  // Netmask (only for proxy arps)
-      char arp_dev[16];
-   };
-   */
+   /**
+    * ARP ioctl request
+    *
+    * struct arpreq {
+    *    struct sockaddr arp_pa;       // Protocol address
+    *    struct sockaddr arp_ha;       // Hardware address
+    *    int arp_flags;                // Flags
+    *    struct sockaddr arp_netmask;  // Netmask (only for proxy arps)
+    *    char arp_dev[16];
+    * };
+    */
 
    struct arpreq arpreq;
 
@@ -287,12 +289,12 @@ UString USocket::getMacAddress(const char* device)
             hwaddr[4] & 0xFF,
             hwaddr[5] & 0xFF);
 
-         /*
-         if (arpreq.arp_flags & ATF_PERM)        printf("PERM");
-         if (arpreq.arp_flags & ATF_PUBL)        printf("PUBLISHED");
-         if (arpreq.arp_flags & ATF_USETRAILERS) printf("TRAILERS");
-         if (arpreq.arp_flags & ATF_PROXY)       printf("PROXY");
-         */
+         /**
+          * if (arpreq.arp_flags & ATF_PERM)        printf("PERM");
+          * if (arpreq.arp_flags & ATF_PUBL)        printf("PUBLISHED");
+          * if (arpreq.arp_flags & ATF_USETRAILERS) printf("TRAILERS");
+          * if (arpreq.arp_flags & ATF_PROXY)       printf("PROXY");
+          */
          }
       // else printf("*** INCOMPLETE ***");
       }
@@ -376,6 +378,30 @@ void USocket::setReuseAddress()
     */
 
    (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, (const int[]){ 1 }, sizeof(int)); 
+}
+
+void USocket::setTcpKeepAlive()
+{
+   U_TRACE(0, "USocket::setTcpKeepAlive()")
+
+   // Set TCP keep alive option to detect dead peers
+
+#ifdef SO_KEEPALIVE
+   (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 }, sizeof(int));
+
+# ifdef __linux__ // Default settings are more or less garbage, with the keepalive time set to 7200 by default on Linux. Modify settings to make the feature actually useful
+
+   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPIDLE, (const int[]){ 15 }, sizeof(int)); // Send first probe after interval
+
+   // Send next probes after the specified interval. Note that we set the delay as interval / 3, as we send three probes before detecting an error (see the next setsockopt call)
+
+   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPINTVL, (const int[]){ 15 / 3 }, sizeof(int)); // Send next probe after interval
+
+   // Consider the socket in error state after three we send three ACK probes without getting a reply
+
+   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPCNT, (const int[]){ 3 }, sizeof(int));
+# endif
+#endif
 }
 
 void USocket::setAddress(void* address)

@@ -38,7 +38,7 @@ public:
       /*
       vec_ap_name.sort();
 
-      riga = vec_ap_name.join("\n");
+      riga = vec_ap_name.join('\n');
 
       (void) write(1, U_STRING_TO_PARAM(riga));
 
@@ -100,7 +100,7 @@ public:
             vec_entry.replace(2, ap_entry.replace(pos3, len3, ap_address2));
             }
 
-         riga = vec_entry.join(",");
+         riga = vec_entry.join(',');
 
          (void) write(1, U_STRING_TO_PARAM(riga));
          (void) write(1, U_CONSTANT_TO_PARAM("\n"));

@@ -66,6 +66,7 @@ class SocketAddress;
 class URDBClientImage;
 class UHttpClient_Base;
 class UClientImage_Base;
+class UREDISClient_Base;
 
 #define U_socket_IPv6(obj)     (obj)->USocket::flag[0]
 #define U_socket_LocalSet(obj) (obj)->USocket::flag[1]
@@ -531,14 +532,7 @@ public:
     * Ref4: tcp_max_orphans [https://www.frozentux.net/ipsysctl-tutorial/chunkyhtml/tcpvariables.html#AEN388]
     */
 
-   void setTcpKeepAlive()
-      {
-      U_TRACE(0, "USocket::setTcpKeepAlive()")
-
-#  ifdef SO_KEEPALIVE
-      (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 }, sizeof(int));
-#  endif
-      }
+   void setTcpKeepAlive();
 
    /**
     * Enables/disables the @c SO_TIMEOUT pseudo option
@@ -707,6 +701,7 @@ private:
                       friend class UHttpClient_Base;
                       friend class UWebSocketPlugIn;
                       friend class UClientImage_Base;
+                      friend class UREDISClient_Base;
    template <class T> friend class UServer;
    template <class T> friend class UClientImage;
 };

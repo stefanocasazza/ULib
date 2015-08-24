@@ -99,6 +99,7 @@ class UHashMapNode;
 class URDBClient_Base;
 class UQuotedPrintable;
 class UClientImage_Base;
+class UREDISClient_Base;
 
 template <class T> class UVector;
 template <class T> class UHashMap;
@@ -1005,20 +1006,21 @@ protected:
                       friend class UValue;
                       friend class UStringExt;
                       friend class UClientImage_Base;
+                      friend class UREDISClient_Base;
 
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
 
    explicit UString(uint32_t len, uint32_t sz, char* ptr); // NB: for UStringExt::deflate()...
 
-   explicit UString(const char* t, uint32_t tlen, uint32_t need) // NB: for UHTTP2::CONTINUATION...
+   explicit UString(unsigned char* t, uint32_t tlen, uint32_t need) // NB: for UHTTP2::CONTINUATION...
       {
       U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u,%u", tlen, t, tlen, need)
 
       U_INTERNAL_ASSERT_POINTER(t)
       U_INTERNAL_ASSERT_MAJOR(need, tlen)
 
-      rep = UStringRep::create(tlen, need, t);
+      rep = UStringRep::create(tlen, need, (const char*)t);
 
       U_INTERNAL_ASSERT(invariant())
       }

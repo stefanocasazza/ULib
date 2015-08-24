@@ -220,6 +220,7 @@ public:
    // -------------------------------------------------------------------
 
    static char mod_name[2][16];
+   static UEventFd* handler_other;
    static UEventFd* handler_inotify;
 
    // load plugin modules and call server-wide hooks handlerConfig()...

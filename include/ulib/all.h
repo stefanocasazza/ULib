@@ -20,6 +20,7 @@
 #include <ulib/net/client/smtp.h>
 #include <ulib/net/client/pop3.h>
 #include <ulib/net/client/imap.h>
+#include <ulib/net/client/redis.h>
 #include <ulib/orm/orm_driver.h>
 #include <ulib/net/rpc/rpc_client.h>
 #include <ulib/net/rpc/rpc_object.h>

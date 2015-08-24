@@ -22,9 +22,9 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # PLAINTEXT
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
- UMEMPOOL="982,0,0,36,9846,-24,-23,1727,1151"
- sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
- sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#UMEMPOOL="982,0,0,36,9846,-24,-23,1727,1151"
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 4000|g"							 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 8000|g" benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -148,6 +148,13 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # Requests/sec: 8072.57
 # Transfer/sec: 5.96MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
+#export REDIS_HOST=localhost
+ UMEMPOOL="146,0,0,90,150,-22,-12,-20,0"
+ sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 80|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 100|g"  benchmark/FrameworkBenchmarks/fbenchmark.cfg
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------
 DIR_CMD="../../examples/userver"
 
 prepare_usp
@@ -166,6 +173,7 @@ if [ "$TERM" != "cygwin" ]; then
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/db.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/update.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/query.so; \
+ 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/rquery.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/fortune.so )
 fi
 

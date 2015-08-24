@@ -1579,7 +1579,7 @@ static void usp_init_wi_auth()
       {
       UVector<UString> vec(content);
 
-      if (vec.empty() == false) *allowed_web_hosts = vec.join(" ") + ' ';
+      if (vec.empty() == false) *allowed_web_hosts = vec.join(' ') + ' ';
       }
 
           cache = U_NEW(UCache);

@@ -105,9 +105,9 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(socket)
 
-      bool result = socket->shutdown(how);
+      if (socket->shutdown(how)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    void setTimeOut(uint32_t t)
@@ -234,7 +234,25 @@ protected:
    bool readHTTPResponse();
    bool setUrl(const UString& url); // NB: return if it has modified host or port...
 
-   void prepareRequest(const UString& req);
+   void prepareRequest(const char* req, uint32_t len)
+      {
+      U_TRACE(0, "UClient_Base::prepareRequest(%.*S,%u)", len, req, len)
+
+      iovcnt = 1;
+
+      iov[0].iov_base = (caddr_t)req;
+      iov[0].iov_len  =          len;
+
+      (void) U_SYSCALL(memset, "%p,%d,%u", iov+1, 0, sizeof(struct iovec) * 5);
+
+      U_INTERNAL_ASSERT_EQUALS(iov[1].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(iov[2].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(iov[3].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(iov[4].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(iov[5].iov_len, 0)
+      }
+
+   void prepareRequest(const UString& req) { request = req; prepareRequest(U_STRING_TO_PARAM(req)); }
 
    bool sendRequest(bool bread_response = false);
    bool sendRequestAndReadResponse() { return sendRequest(true); }

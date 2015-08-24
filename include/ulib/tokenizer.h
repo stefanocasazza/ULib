@@ -153,6 +153,8 @@ public:
       U_RETURN(*s++);
       }
 
+   UTokenizer& operator++() { ++s; return *this; } // ++A
+
    // get next token
 
    bool   next(UString& tok, char c);
@@ -162,6 +164,24 @@ public:
    bool   next(UString& tok, bool* bgroup);
 
    // EXT
+
+   UString substr() const
+      {
+      U_TRACE(0, "UTokenizer::substr()")
+
+      U_INTERNAL_ASSERT(s <= end)
+
+      return (s < end ? str.substr(str.distance(s)) : UString::getStringNull());
+      }
+
+   UString substr(const char* start) const
+      {
+      U_TRACE(0, "UTokenizer::substr(%p)", start)
+
+      U_INTERNAL_ASSERT(start < end)
+
+      return str.substr(start, s - start);
+      }
 
    UString getTokenQueryParser();
    int     getTokenId(UString& token);

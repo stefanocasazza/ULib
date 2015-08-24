@@ -40,7 +40,7 @@
  * Each entry contains the following information: struct cache_hash_table_entry + key + data.
  */
 
-#define U_MAX_TTL         365L * U_ONE_DAY_IN_SECOND // 365 gg (1 anno)
+#define U_MAX_TTL         365L * U_ONE_DAY_IN_SECOND // 365 gg (1 year)
 #define U_MAX_KEYLEN     1000U
 #define U_MAX_DATALEN 1000000U
 
@@ -163,7 +163,7 @@ protected:
    char* x;          // cache      pointer
    cache_info* info; // cache info pointer
    time_t start;     // time of reference
-   uint32_t ttl;     // time to live (scadenza entry)
+   uint32_t ttl;     // time to live (expire entry)
 #ifdef DEBUG
    UString dir_template;
    time_t  dir_template_mtime;

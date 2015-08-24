@@ -37,7 +37,7 @@ SRC_CPP = internal/common.cpp \
  			 net/rpc/rpc.cpp net/rpc/rpc_envelope.cpp net/rpc/rpc_fault.cpp net/rpc/rpc_method.cpp net/rpc/rpc_encoder.cpp \
  			 net/rpc/rpc_object.cpp net/rpc/rpc_gen_method.cpp net/rpc/rpc_parser.cpp net/rpc/rpc_client.cpp \
 			 net/client/smtp.cpp net/client/ftp.cpp net/client/pop3.cpp net/client/imap.cpp \
-			 net/client/http.cpp net/client/client.cpp \
+			 net/client/http.cpp net/client/client.cpp net/client/redis.cpp \
 			 net/ipt_ACCOUNT.cpp \
 			 json/value.cpp \
 			 query/query_parser.cpp  event/event_time.cpp \

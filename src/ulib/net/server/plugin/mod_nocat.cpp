@@ -804,7 +804,7 @@ bool UNoCatPlugIn::checkFirewall()
 
       if (n)
          {
-         out = openlist->join(U_CONSTANT_TO_PARAM(" "));
+         out = openlist->join(' ');
 
       // (void) UFile::writeToTmp(U_STRING_TO_PARAM(out), false, "nodog_chk.out", 0);
          }
@@ -2152,7 +2152,7 @@ int UNoCatPlugIn::handlerInit()
          }
       }
 
-   auth_ip = vauth_ip->join(U_CONSTANT_TO_PARAM(" "));
+   auth_ip = vauth_ip->join(' ');
 
    fw_env->snprintf_add("'AuthServiceIP=%v'\n", auth_ip.rep);
 

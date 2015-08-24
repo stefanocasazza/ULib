@@ -11,7 +11,6 @@
 //
 // ============================================================================
 
-#include <ulib/mime/header.h>
 #include <ulib/utility/http2.h>
 #include <ulib/utility/uhttp.h>
 #include <ulib/utility/base64.h>
@@ -26,8 +25,8 @@ bool                          UHTTP2::settings_ack;
 void*                         UHTTP2::pConnectionEnd;
 uint32_t                      UHTTP2::hash_static_table[61];
 const char*                   UHTTP2::upgrade_settings;
-unsigned char*                UHTTP2::pwbuffer;
 UHTTP2::Stream*               UHTTP2::pStream;
+UVector<UString>*             UHTTP2::vext;
 UHTTP2::FrameHeader           UHTTP2::frame;
 UHTTP2::Connection*           UHTTP2::pConnection;
 UHTTP2::HpackHeaderTableEntry UHTTP2::hpack_static_table[61];
@@ -427,14 +426,18 @@ void UHTTP2::ctor()
     hash_static_table[59]       = str_via->hash();
    hpack_static_table[60].name  = str_www_authenticate;
     hash_static_table[60]       = str_www_authenticate->hash();
+
+   vext = U_NEW(UVector<UString>(10));
 }
 
 void UHTTP2::dtor()
 {
    U_TRACE(0, "UHTTP2::dtor()")
+
+   delete vext;
 }
 
-bool UHTTP2::updateSetting(const char* ptr, uint32_t len)
+bool UHTTP2::updateSetting(unsigned char* ptr, uint32_t len)
 {
    U_TRACE(0, "UHTTP2::updateSetting(%#.*S,%u)", len, ptr, len)
 
@@ -477,7 +480,7 @@ unsigned char* UHTTP2::hpackEncodeInt(unsigned char* dst, uint32_t value, uint8_
 
       U_INTERNAL_ASSERT(value <= 0x0fffffff)
 
-      for (*dst++ |= value; value >= 256; value >>= 8) *dst++ = 0x80 | value;
+      for (*dst++ |= prefix_max; value >= 256; value >>= 8) *dst++ = 0x80 | value;
 
       *dst++ = value;
       }
@@ -485,131 +488,136 @@ unsigned char* UHTTP2::hpackEncodeInt(unsigned char* dst, uint32_t value, uint8_
    return dst;
 }
 
-uint32_t UHTTP2::hpackDecodeInt(const unsigned char* src, const unsigned char* src_end, int32_t* pvalue, uint8_t prefix_max)
+unsigned char* UHTTP2::hpackDecodeInt(unsigned char* src, unsigned char* src_end, int32_t* pvalue, uint8_t prefix_max)
 {
    U_TRACE(0, "UHTTP2::hpackDecodeInt(%p,%p,%p,%u)", src, src_end, pvalue, prefix_max)
 
+   U_INTERNAL_ASSERT_DIFFERS(src, src_end)
+
    *pvalue = (uint8_t)*src++ & prefix_max;
 
-   if (*pvalue != prefix_max) U_RETURN(1);
-
-   // we only allow at most 4 octets (excluding prefix) to be used as int (== 2**(4*7) == 2**28)
-
-   if ((src_end - src) > 4)
-        src_end = src  + 4;
-
-   *pvalue = prefix_max;
-
-   for (int32_t mult = 1; src < src_end; mult *= 128)
+   if (*pvalue == prefix_max)
       {
-      *pvalue += (*src & 127) * mult;
+      // we only allow at most 4 octets (excluding prefix) to be used as int (== 2**(4*7) == 2**28)
 
-      if ((*src++ & 128) == 0) goto end;
+      if ((src_end - src) > 4)
+           src_end = src  + 4;
+
+      *pvalue = prefix_max;
+
+      for (int32_t mult = 1; src < src_end; mult *= 128)
+         {
+         *pvalue += (*src & 127) * mult;
+
+         if ((*src++ & 128) == 0) return src;
+         }
+
+      *pvalue = -1;
       }
 
-   *pvalue = -1;
-
-end:
-   U_RETURN(1 + 4-(src_end-src));
+   return src;
 }
 
-uint32_t UHTTP2::hpackEncodeString(unsigned char* dst, const char* src, uint32_t len)
+unsigned char* UHTTP2::hpackEncodeString(unsigned char* dst, const char* src, uint32_t len)
 {
    U_TRACE(0+256, "UHTTP2::hpackEncodeString(%p,%.*S,%u)", dst, len, src, len)
 
    U_INTERNAL_ASSERT_MAJOR(len, 0)
-
-   unsigned char* ptr;
 
    if (len < 29)
       {
       // encode as-is
 
 asis: *dst = '\0';
-       ptr = hpackEncodeInt(dst, len, (1<<7)-1);
+       dst = hpackEncodeInt(dst, len, (1<<7)-1);
 
-      u__memcpy(ptr, src, len, __PRETTY_FUNCTION__);
-
-      U_RETURN(ptr - dst + len);
+      u__memcpy(dst, src, len, __PRETTY_FUNCTION__);
       }
+   else
+      {
+      uint64_t bits = 0;
+      int bits_left = 40;
+      const char* src_end = src + len;
 
-   uint64_t bits = 0;
-   int bits_left = 40;
-   const char* src_end = src + len;
+      UString buffer(len + 1024U);
 
-   UString buffer(len + 1024U);
+      unsigned char* _dst       = (unsigned char*)buffer.data();
+      unsigned char* _dst_end   = _dst + len;
+      unsigned char* _dst_start = _dst;
 
-   unsigned char* _dst       = (unsigned char*)buffer.data();
-   unsigned char* _dst_end   = _dst + len;
-   unsigned char* _dst_start = _dst;
+      // try to encode in huffman
 
-   // try to encode in huffman
+      do {
+         const HuffSym* sym = huff_sym_table + *(unsigned char*)src++;
 
-   do {
-      const HuffSym* sym = huff_sym_table + *(unsigned char*)src++;
+      // U_INTERNAL_DUMP("sym->nbits = %u sym->code = %u bits_left = %d", sym->nbits, sym->code, bits_left)
 
-   // U_INTERNAL_DUMP("sym->nbits = %u sym->code = %u bits_left = %d", sym->nbits, sym->code, bits_left)
+         bits |= (uint64_t)sym->code << (bits_left - sym->nbits);
 
-      bits |= (uint64_t)sym->code << (bits_left - sym->nbits);
+         bits_left -= sym->nbits;
 
-      bits_left -= sym->nbits;
+      // U_INTERNAL_DUMP("bits = %llu bits_left = %d", bits, bits_left)
+
+         while (bits_left <= 32)
+            {
+            *_dst++ = bits >> 32;
+
+         // U_INTERNAL_DUMP("_dst = %u bits >> 32 = %u", _dst[-1], bits >> 32)
+
+            bits <<= 8;
+            bits_left += 8;
+
+            U_INTERNAL_ASSERT_MINOR(_dst, _dst_end)
+            }
+         }
+      while (src < src_end);
 
    // U_INTERNAL_DUMP("bits = %llu bits_left = %d", bits, bits_left)
 
-      while (bits_left <= 32)
+      if (bits_left != 40)
          {
+         bits |= (1UL << bits_left) - 1;
+
          *_dst++ = bits >> 32;
 
       // U_INTERNAL_DUMP("_dst = %u bits >> 32 = %u", _dst[-1], bits >> 32)
-
-         bits <<= 8;
-         bits_left += 8;
-
-         U_INTERNAL_ASSERT_MINOR(_dst, _dst_end)
          }
+
+#  ifdef DEBUG
+      int32_t u_printf_string_max_length_save = u_printf_string_max_length;
+                                                u_printf_string_max_length = buffer.distance((const char*)_dst) * 3;
+
+      U_INTERNAL_DUMP("_dst_end = %p _dst = %p %#.*S", _dst_end, _dst, buffer.distance((const char*)_dst), _dst_start)
+
+      u_printf_string_max_length = u_printf_string_max_length_save;
+#  endif
+
+      if (_dst > _dst_end) goto asis; // encode as-is
+
+      *dst = '\x80';
+       dst = hpackEncodeInt(dst, (len = _dst-_dst_start), (1<<7)-1);
+
+      u__memcpy(dst, _dst_start, len, __PRETTY_FUNCTION__);
       }
-   while (src < src_end);
 
-// U_INTERNAL_DUMP("bits = %llu bits_left = %d", bits, bits_left)
-
-   if (bits_left != 40)
-      {
-      bits |= (1UL << bits_left) - 1;
-
-      *_dst++ = bits >> 32;
-
-   // U_INTERNAL_DUMP("_dst = %u bits >> 32 = %u", _dst[-1], bits >> 32)
-      }
-
-   U_INTERNAL_DUMP("_dst_end = %p _dst = %p %#.*S", _dst_end, _dst, buffer.distance((const char*)_dst), _dst_start)
-
-   if (_dst > _dst_end) goto asis; // encode as-is
-
-   *dst = '\x80';
-    len = _dst - _dst_start;
-    ptr = hpackEncodeInt(dst, len, (1<<7)-1);
-
-   u__memcpy(ptr, _dst_start, len, __PRETTY_FUNCTION__);
-
-   U_RETURN(ptr - dst + len);
+   return dst+len;
 }
 
-uint32_t UHTTP2::hpackDecodeString(const unsigned char* src, const unsigned char* src_end, UString* pvalue)
+unsigned char* UHTTP2::hpackDecodeString(unsigned char* src, unsigned char* src_end, UString* pvalue)
 {
    U_TRACE(0+256, "UHTTP2::hpackDecodeString(%p,%p,%p)", src, src_end, pvalue)
 
    int32_t len;
    bool is_huffman = ((*src & 0x80) != 0);
-   uint32_t nmove = hpackDecodeInt(src, src_end, &len, (1<<7)-1);
+
+   src = hpackDecodeInt(src, src_end, &len, (1<<7)-1);
 
    if (len <= 0)
       {
 err:  pvalue->clear();
 
-      U_RETURN(nmove);
+      return src;
       }
-
-   src += nmove;
 
    U_INTERNAL_DUMP("is_huffman = %b len = %u src = %#.*S", is_huffman, len, len, src)
 
@@ -618,40 +626,40 @@ err:  pvalue->clear();
       if ((src + len) > src_end) goto err;
 
       (void) pvalue->replace((const char*)src, len);
+
+      return (src+len);
       }
-   else     
+
+   uint8_t state = 0;
+   bool maybe_eos = true;
+   UString result(len * 2); // max compression ratio is >= 0.5
+   char* dst = result.data();
+   const UHTTP2::HuffDecode* entry;
+
+   for (src_end = src + len; src < src_end; ++src)
       {
-      uint8_t state = 0;
-      bool maybe_eos = true;
-      UString result(len * 2); // max compression ratio is >= 0.5
-      char* dst = result.data();
-      const UHTTP2::HuffDecode* entry;
+      entry = huff_decode_table[state] + (*src >> 4);
 
-      for (src_end = src + len; src < src_end; ++src)
-         {
-         entry = huff_decode_table[state] + (*src >> 4);
+      if ((entry->flags & HUFF_FAIL) != 0) goto err;
+      if ((entry->flags & HUFF_SYM)  != 0) *dst++ = entry->sym;
 
-         if ((entry->flags & HUFF_FAIL) != 0) goto err;
-         if ((entry->flags & HUFF_SYM)  != 0) *dst++ = entry->sym;
+      entry = huff_decode_table[entry->state] + (*src & 0x0f);
 
-         entry = huff_decode_table[entry->state] + (*src & 0x0f);
+      if ((entry->flags & HUFF_FAIL) != 0) goto err;
+      if ((entry->flags & HUFF_SYM)  != 0) *dst++ = entry->sym;
 
-         if ((entry->flags & HUFF_FAIL) != 0) goto err;
-         if ((entry->flags & HUFF_SYM)  != 0) *dst++ = entry->sym;
-
-         state     =  entry->state;
-         maybe_eos = (entry->flags & HUFF_ACCEPTED) != 0;
-         }
-
-      if (maybe_eos) result.size_adjust(dst);
-
-      *pvalue = result;
+      state     =  entry->state;
+      maybe_eos = (entry->flags & HUFF_ACCEPTED) != 0;
       }
 
-   U_RETURN(nmove + len);
+   if (maybe_eos) result.size_adjust(dst);
+
+   *pvalue = result;
+
+   return src_end;
 }
 
-void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
+void UHTTP2::decodeHeaders(unsigned char* ptr, unsigned char* endptr)
 {
    U_TRACE(0, "UHTTP2::decodeHeaders(%p,%p)", ptr, endptr)
 
@@ -666,25 +674,37 @@ void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
 
    while (ptr < endptr)
       {
-      value_is_indexed = ((c = *(unsigned char*)ptr) >= 128);
+      value_is_indexed = ((c = *ptr) >= 128);
 
       U_INTERNAL_DUMP("c = %u value_is_indexed = %b", c, value_is_indexed)
 
       if (value_is_indexed) // indexed header field representation
          {
-         ptr += hpackDecodeInt((const unsigned char*)ptr, (const unsigned char*)endptr, &index, (1<<7)-1);
+         ptr = hpackDecodeInt(ptr, endptr, &index, (1<<7)-1);
          }
-      else if (c >= 64) // literal header field with incremental handling
+      else if (c > 64) // literal header field with incremental handling
          {
-         ptr += (c == 64 ? (index = 0, 1) : hpackDecodeInt((const unsigned char*)ptr, (const unsigned char*)endptr, &index, (1<<6)-1));
+         ptr = hpackDecodeInt(ptr, endptr, &index, (1<<6)-1);
+         }
+      else if (c == 64) // literal header field with incremental handling
+         {
+         ++ptr;
+
+         index = 0;
          }
       else if (c < 32) // literal header field without indexing or never indexed
          {
-         ptr += ((c & 0x0f) == 0 ? (index = 0, 1) : hpackDecodeInt((const unsigned char*)ptr, (const unsigned char*)endptr, &index, (1<<4)-1));
+         if ((c & 0x0f) != 0) ptr = hpackDecodeInt(ptr, endptr, &index, (1<<4)-1);
+         else
+            {
+            ++ptr;
+
+            index = 0;
+            }
          }
       else // size update
          {
-         ptr += hpackDecodeInt((const unsigned char*)ptr, (const unsigned char*)endptr, &index, (1<<5)-1);
+         ptr = hpackDecodeInt(ptr, endptr, &index, (1<<5)-1);
 
          if (index > pConnection->hpack_max_capacity) goto error;
 
@@ -699,11 +719,11 @@ void UHTTP2::decodeHeaders(const char* ptr, const char* endptr)
          {
          if (index == 0) // non-existing name
             {
-            ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &name);
+            ptr = hpackDecodeString(ptr, endptr, &name);
 
             if (name)
                {
-               ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+               ptr = hpackDecodeString(ptr, endptr, &value);
 
                if (value)
                   {
@@ -806,7 +826,7 @@ case_1: // authority (a.k.a. the Host header)
 
 host: U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       sz = value.size();
 
@@ -823,7 +843,7 @@ case_2_3: // GET - POST
       if (value_is_indexed) U_http_method_type = (index == 2 ? HTTP_GET : HTTP_POST);
       else
          {
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+         ptr = hpackDecodeString(ptr, endptr, &value);
 
          ptr1 = value.data();
 
@@ -863,8 +883,6 @@ case_2_3: // GET - POST
             case U_MULTICHAR_CONSTANT32('M','S','E','A'):  U_http_method_type = HTTP_MSEARCH;     U_http_method_num = 23; break;
             case U_MULTICHAR_CONSTANT32('S','U','B','S'):  U_http_method_type = HTTP_SUBSCRIBE;   U_http_method_num = 24; break;
             case U_MULTICHAR_CONSTANT32('U','N','S','U'):  U_http_method_type = HTTP_UNSUBSCRIBE; U_http_method_num = 25; break;
-
-            default: goto error;
             }
          }
 
@@ -887,7 +905,7 @@ case_4_5: // / - /index.html
          }
       else
          {
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+         ptr = hpackDecodeString(ptr, endptr, &value);
 
          sz = value.size();
 
@@ -945,7 +963,7 @@ case_17: // accept-language
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       U_http_accept_language_len = value.size();
 
@@ -965,7 +983,7 @@ case_19: // accept
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       U_http_accept_len = value.size();
 
@@ -985,7 +1003,7 @@ case_28: // content_length
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       if (value.empty()) goto error;
 
@@ -1003,7 +1021,7 @@ case_31: // content_type
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       U_http_content_type_len = value.size();
 
@@ -1023,7 +1041,7 @@ case_32: // cookie
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       U_http_info.cookie_len = value.size();
 
@@ -1041,7 +1059,7 @@ case_35: // expect
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       if (value.empty()) goto error;
 
@@ -1066,7 +1084,7 @@ case_40: // if-modified-since
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       if (value.empty()) goto error;
 
@@ -1084,7 +1102,7 @@ case_50: // range
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       U_http_range_len = value.size() - U_CONSTANT_SIZE("bytes=");
 
@@ -1104,7 +1122,7 @@ case_51: // referer
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       U_http_info.referer_len = value.size();
 
@@ -1130,7 +1148,7 @@ case_58: // user-agent
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
-      ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+      ptr = hpackDecodeString(ptr, endptr, &value);
 
       U_http_info.user_agent_len = value.size();
 
@@ -1153,7 +1171,7 @@ cdefault:
       if (value_is_indexed) value = *(entry->value); // determine the value (if necessary)
       else  
          {
-         ptr += hpackDecodeString((const unsigned char*)ptr, (const unsigned char*)endptr, &value);
+         ptr = hpackDecodeString(ptr, endptr, &value);
 
          if (value.empty()) goto error;
          }
@@ -1233,7 +1251,7 @@ loop:
 #ifdef DEBUG
    else
       {
-      U_INTERNAL_ASSERT_MAJOR(sz-UClientImage_Base::rstart, HTTP2_FRAME_HEADER_SIZE)
+      U_INTERNAL_ASSERT((sz-UClientImage_Base::rstart) >= HTTP2_FRAME_HEADER_SIZE)
       }
 #endif
 
@@ -1269,8 +1287,8 @@ loop:
    if (len >= 0  ||
        USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, -len, UServer_Base::timeoutMS, UHTTP::request_read_timeout))
       {
-      frame.payload = UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
-                                                            UClientImage_Base::rstart += (uint32_t)frame.length;
+      frame.payload = (unsigned char*)UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
+                                                                            UClientImage_Base::rstart += (uint32_t)frame.length;
 
       if (frame.type == WINDOW_UPDATE)
          {
@@ -1356,6 +1374,8 @@ loop:
 
             manageHeaders();
 
+            if (nerror != NO_ERROR) goto err;
+
             goto end;
             }
 
@@ -1415,8 +1435,8 @@ void UHTTP2::manageHeaders()
    U_TRACE(0, "UHTTP2::manageHeaders()")
 
    int32_t padlen;
-   const char* ptr;
-   const char* endptr = (ptr = frame.payload) + frame.length;
+   unsigned char* ptr;
+   unsigned char* endptr = (ptr = frame.payload) + frame.length;
 
    if ((frame.flags & FLAG_PADDED) == 0) padlen = 0;
    else
@@ -1485,11 +1505,11 @@ wait_CONTINUATION:
          }
 #  endif
 
-      (void) bufferHeaders.append(frame.payload, frame.length);
+      (void) bufferHeaders.append((const char*)frame.payload, frame.length);
 
       if ((frame.flags & FLAG_END_HEADERS) == 0) goto wait_CONTINUATION;
 
-      ptr = bufferHeaders.data();
+      ptr = (unsigned char*)bufferHeaders.data();
 
       decodeHeaders(ptr, ptr + bufferHeaders.size()); // parse header block fragment
       }
@@ -1503,14 +1523,15 @@ void UHTTP2::manageData()
       {
       U_INTERNAL_ASSERT((uint32_t)frame.length <= U_http_info.clength)
 
-      (void) UClientImage_Base::body->append(frame.payload, frame.length);
+      (void) UClientImage_Base::body->append((const char*)frame.payload, frame.length);
 
       return;
       }
 
-   const char* ptr    = frame.payload;;
-   int32_t padlen     = *ptr;
-   const char* endptr =  ptr + frame.length;
+   unsigned char* ptr    = frame.payload;;
+   unsigned char* endptr = ptr + frame.length;
+
+   int32_t padlen = *ptr;
 
 #ifdef DEBUG
    if (frame.length < padlen)
@@ -1525,7 +1546,7 @@ void UHTTP2::manageData()
 
    U_INTERNAL_ASSERT(sz <= U_http_info.clength)
 
-   (void) UClientImage_Base::body->append(ptr, sz);
+   (void) UClientImage_Base::body->append((const char*)ptr, sz);
 }
 
 void UHTTP2::sendError()
@@ -1566,63 +1587,6 @@ void UHTTP2::sendError()
       }
 }
 
-U_NO_EXPORT bool UHTTP2::addHTTPHeader(UStringRep* key, void* value)
-{
-   U_TRACE(0+256, "UHTTP2::addHTTPHeader(%V,%V)", key, value)
-
-   U_INTERNAL_ASSERT_POINTER(key)
-   U_INTERNAL_ASSERT_POINTER(value)
-
-   uint32_t      key_sz  =                  key->size(),
-               value_sz  = ((UStringRep*)value)->size();
-   const char*   key_ptr =                  key->data();
-   const char* value_ptr = ((UStringRep*)value)->data();
-
-   U_INTERNAL_DUMP("key(%u) = %#V value(%u) = %#V", key_sz, key, value_sz, (UStringRep*)value)
-
-   U_INTERNAL_ASSERT_EQUALS(u_isBinary((const unsigned char*)value_ptr, value_sz), false)
-
-   uint32_t index = U_NOT_FOUND;
-
-        if (hpack_static_table[30].name->equalnocase(key_ptr, key_sz)) index = 31; // content-type
-   else if (hpack_static_table[27].name->equalnocase(key_ptr, key_sz)) U_RETURN(true); // content-length
-   else if (hpack_static_table[35].name->equalnocase(key_ptr, key_sz)) index = 36; // expires
-   else if (hpack_static_table[43].name->equalnocase(key_ptr, key_sz)) index = 44; // last-modified
-   else if (hpack_static_table[45].name->equalnocase(key_ptr, key_sz)) index = 46; // location
-   else if (hpack_static_table[51].name->equalnocase(key_ptr, key_sz)) index = 52; // refresh
-   else if (hpack_static_table[60].name->equalnocase(key_ptr, key_sz)) index = 61; // www-authenticate
-   else if (hpack_static_table[29].name->equalnocase(key_ptr, key_sz)) index = 30; // content-range
-   else if (hpack_static_table[17].name->equalnocase(key_ptr, key_sz)) index = 18; // accept-ranges
-   else if (hpack_static_table[19].name->equalnocase(key_ptr, key_sz)) index = 20; // access-control-allow-origin
-   else if (hpack_static_table[20].name->equalnocase(key_ptr, key_sz)) index = 21; // age
-   else if (hpack_static_table[23].name->equalnocase(key_ptr, key_sz)) index = 24; // cache-control
-   else if (hpack_static_table[24].name->equalnocase(key_ptr, key_sz)) index = 25; // content-disposition
-   else if (hpack_static_table[25].name->equalnocase(key_ptr, key_sz)) index = 26; // content-encoding 
-   else if (hpack_static_table[26].name->equalnocase(key_ptr, key_sz)) index = 27; // content-language 
-   else if (hpack_static_table[28].name->equalnocase(key_ptr, key_sz)) index = 29; // content-location
-   else if (hpack_static_table[33].name->equalnocase(key_ptr, key_sz)) index = 34; // etag
-   else if (hpack_static_table[44].name->equalnocase(key_ptr, key_sz)) index = 45; // link
-   else if (hpack_static_table[47].name->equalnocase(key_ptr, key_sz)) index = 48; // proxy-authenticate
-   else if (hpack_static_table[52].name->equalnocase(key_ptr, key_sz)) index = 53; // retry-after
-   else if (hpack_static_table[55].name->equalnocase(key_ptr, key_sz)) index = 56; // strict-transport-security
-   else if (hpack_static_table[58].name->equalnocase(key_ptr, key_sz)) index = 59; // vary
-   else if (hpack_static_table[59].name->equalnocase(key_ptr, key_sz)) index = 60; // via
-
-   if (index != U_NOT_FOUND)
-      {
-      *pwbuffer  = 0x40;
-       pwbuffer  = hpackEncodeInt(pwbuffer, index, (1<<6)-1);
-       pwbuffer += hpackEncodeString(pwbuffer, value_ptr, value_sz);
-      }
-   /*
-   else
-      {
-      }
-   */
-
-   U_RETURN(true);
-}
-
 void UHTTP2::handlerResponse()
 {
    U_TRACE(0, "UHTTP2::handlerResponse()")
@@ -1632,27 +1596,28 @@ void UHTTP2::handlerResponse()
 
    U_INTERNAL_DUMP("ext(%u) = %#V", UHTTP::ext->size(), UHTTP::ext->rep)
 
-   char* ptr   = (char*)UClientImage_Base::wbuffer->data();
+   char* ptr   = UClientImage_Base::wbuffer->data();
    uint32_t sz = HTTP2_FRAME_HEADER_SIZE+1, sz1 = UHTTP::set_cookie->size(), sz2 = UHTTP::ext->size();
-
-   pwbuffer = (unsigned char*)ptr+HTTP2_FRAME_HEADER_SIZE+1;
+   unsigned char* dst = (unsigned char*)ptr+HTTP2_FRAME_HEADER_SIZE+1;
 
    if (U_http_info.nResponseCode == HTTP_NOT_IMPLEMENTED ||
        U_http_info.nResponseCode == HTTP_OPTIONS_RESPONSE)
       {
+      UClientImage_Base::setCloseConnection();
+
       ptr[HTTP2_FRAME_HEADER_SIZE] = 0x80 | 8;
 
-     *pwbuffer  = 0x40;
-      pwbuffer  = hpackEncodeInt(pwbuffer, 22, (1<<6)-1);
-      pwbuffer += hpackEncodeString(pwbuffer,
-                     U_CONSTANT_TO_PARAM("GET, HEAD, POST, PUT, DELETE, OPTIONS, "     // request methods
-                                         "TRACE, CONNECT, "                            // pathological
-                                         "COPY, MOVE, LOCK, UNLOCK, MKCOL, PROPFIND, " // webdav
-                                         "PATCH, PURGE, "                              // rfc-5789
-                                         "MERGE, REPORT, CHECKOUT, MKACTIVITY, "       // subversion
-                                         "NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE"));  // upnp
-
-      UClientImage_Base::setCloseConnection();
+      *dst = 0x40;
+       dst = hpackEncodeInt(dst, 22, (1<<6)-1);
+       dst = hpackEncodeString(dst,
+               U_CONSTANT_TO_PARAM("GET, HEAD, POST, PUT, DELETE, OPTIONS, "     // request methods
+                                   "TRACE, CONNECT, "                            // pathological
+                                   "COPY, MOVE, LOCK, UNLOCK, MKCOL, PROPFIND, " // webdav
+                                   "PATCH, PURGE, "                              // rfc-5789
+                                   "MERGE, REPORT, CHECKOUT, MKACTIVITY, "       // subversion
+                                   "NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE"));  // upnp
+     
+      U_INTERNAL_DUMP("allow(%u) = %#169S", dst-(unsigned char*)ptr-HTTP2_FRAME_HEADER_SIZE+1, ptr+HTTP2_FRAME_HEADER_SIZE+1)
       }
    else
       {
@@ -1678,28 +1643,29 @@ void UHTTP2::handlerResponse()
                u_put_unalignedp32(ptr+HTTP2_FRAME_HEADER_SIZE,  U_MULTICHAR_CONSTANT32('\010','\003','0'+(U_http_info.nResponseCode / 100),'\0'));
                       U_NUM2STR16(ptr+HTTP2_FRAME_HEADER_SIZE+3,                                          U_http_info.nResponseCode % 100);
 
-                     sz += 4;
-               pwbuffer += 4;
+                sz += 4;
+               dst += 4;
                }
             }
          }
       }
 
-   // -------------------------------------------------
-   // literal header field with indexing (indexed name)
-   // -------------------------------------------------
-   // server: ULib
-   // date: Wed, 20 Jun 2012 11:43:17 GMT
-
    /**
-    * *pwbuffer  = 0x40;
-    *  pwbuffer  = hpackEncodeInt(pwbuffer, 54, (1<<6)-1);
-    *  pwbuffer += hpackEncodeString(pwbuffer, U_CONSTANT_TO_PARAM("ULib"));
-    * *pwbuffer  = 0x40;
-    *  pwbuffer  = hpackEncodeInt(pwbuffer, 33, (1<<6)-1);
+    * -------------------------------------------------
+    * literal header field with indexing (indexed name)
+    * -------------------------------------------------
+    * server: ULib
+    * date: Wed, 20 Jun 2012 11:43:17 GMT
+    * -------------------------------------------------
+    * *dst = 0x40;
+    *  dst = hpackEncodeInt(dst, 54, (1<<6)-1);
+    *  dst = hpackEncodeString(dst, U_CONSTANT_TO_PARAM("ULib"));
+    * *dst = 0x40;
+    *  dst = hpackEncodeInt(dst, 33, (1<<6)-1);
+    * -------------------------------------------------
     */
 
-   u_put_unalignedp64(pwbuffer,  U_MULTICHAR_CONSTANT64('v','\004','U','L','i','b','a','\0'));
+   u_put_unalignedp64(dst, U_MULTICHAR_CONSTANT64('v','\004','U','L','i','b','a','\0'));
 
 #if defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
    U_INTERNAL_ASSERT_POINTER(u_pthread_time)
@@ -1710,53 +1676,179 @@ void UHTTP2::handlerResponse()
    ULog::updateDate3();
 #endif
 
-   pwbuffer += 7+hpackEncodeString(pwbuffer+7, ((char*)UClientImage_Base::iov_vec[1].iov_base)+6, 29); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
+   dst = hpackEncodeString(dst+7, ((char*)UClientImage_Base::iov_vec[1].iov_base)+6, 29); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
 
    if (sz1)
       {
       UClientImage_Base::setRequestNoCache();
 
-     *pwbuffer  = 0x40;
-      pwbuffer  = hpackEncodeInt(pwbuffer, 55, (1<<6)-1);
-      pwbuffer += hpackEncodeString(pwbuffer, UHTTP::set_cookie->data(), sz1);
+     *dst = 0x40;
+      dst = hpackEncodeInt(dst, 55, (1<<6)-1);
+      dst = hpackEncodeString(dst, UHTTP::set_cookie->data(), sz1);
 
       UHTTP::set_cookie->setEmpty();
       }
 
-   if (sz2 == 0)
+   if (sz2)
       {
-     *pwbuffer  = 0x40;
-      pwbuffer  = hpackEncodeInt(pwbuffer, 28, (1<<6)-1);
-      pwbuffer += hpackEncodeString(pwbuffer, U_CONSTANT_TO_PARAM("0"));
+      const char* keyp;
+      uint32_t pos, index;
+      UString key, value, row;
+
+      for (uint32_t i = 0, n = vext->split(*UHTTP::ext, U_CRLF); i < n; ++i)
+         {
+         row = (*vext)[i];
+         pos = row.find_first_of(':');
+
+         key   = row.substr(0U, pos);
+         value = row.substr(pos+2);
+
+         U_INTERNAL_DUMP("key(%u) = %#V", key.size(), key.rep)
+         U_INTERNAL_DUMP("value(%u) = %#V", value.size(), value.rep)
+
+         U_INTERNAL_ASSERT_EQUALS(u_isBinary((unsigned char*)U_STRING_TO_PARAM(value)), false)
+
+         index = U_NOT_FOUND;
+          keyp = key.data();
+
+         switch (u_get_unalignedp32(keyp))
+            {
+            case U_MULTICHAR_CONSTANT32('C','o','n','t'):
+               {
+               keyp += 7;
+
+               switch (u_get_unalignedp32(keyp))
+                  {
+                  case U_MULTICHAR_CONSTANT32('-','D','i','s'): index = 25; break; // content-disposition
+                  case U_MULTICHAR_CONSTANT32('-','E','n','c'): index = 26; break; // content-encoding
+                  case U_MULTICHAR_CONSTANT32('-','L','a','n'): index = 27; break; // content-language
+                  case U_MULTICHAR_CONSTANT32('-','L','o','c'): index = 29; break; // content-location
+                  case U_MULTICHAR_CONSTANT32('-','R','a','n'): index = 30; break; // content-range
+                  case U_MULTICHAR_CONSTANT32('-','T','y','p'): index = 31; break; // content-type 
+
+                  default:
+                     {
+                     U_INTERNAL_ASSERT_EQUALS(key, U_STRING_FROM_CONSTANT("Content-Length"))
+
+                     continue;
+                     }
+                  }
+               }
+            break;
+
+            case U_MULTICHAR_CONSTANT32('A','c','c','e'):
+               {
+               keyp += 6;
+
+               if (u_get_unalignedp32(keyp) == U_MULTICHAR_CONSTANT32('-','R','a','n')) index = 18; // accept-ranges
+               else
+                  {
+                  U_INTERNAL_ASSERT_EQUALS(key, U_STRING_FROM_CONSTANT("Access-Control-Allow-Origin"))
+
+                  index = 20; // access-control-allow-origin
+                  }
+               }
+            break;
+
+            case U_MULTICHAR_CONSTANT32('C','a','c','h'): index = 24; break; // cache-control
+            case U_MULTICHAR_CONSTANT32('E','t','a','g'): index = 34; break; // etag
+            case U_MULTICHAR_CONSTANT32('E','x','p','i'): index = 36; break; // expires
+            case U_MULTICHAR_CONSTANT32('L','a','s','t'): index = 44; break; // last-modified
+            case U_MULTICHAR_CONSTANT32('L','i','n','k'): index = 45; break; // link
+            case U_MULTICHAR_CONSTANT32('L','o','c','a'): index = 46; break; // location
+            case U_MULTICHAR_CONSTANT32('P','r','o','x'): index = 48; break; // proxy-authenticate
+            case U_MULTICHAR_CONSTANT32('R','e','f','r'): index = 52; break; // refresh
+            case U_MULTICHAR_CONSTANT32('R','e','t','r'): index = 53; break; // retry-after
+            case U_MULTICHAR_CONSTANT32('S','t','r','i'): index = 56; break; // strict-transport-security
+            case U_MULTICHAR_CONSTANT32('V','a','r','y'): index = 59; break; // vary 
+            case U_MULTICHAR_CONSTANT32('W','W','W','-'): index = 61; break; // www-authenticate 
+
+            default:
+               {
+                    if (key.equalnocase(U_CONSTANT_TO_PARAM("Via"))) index = 60; // via
+               else if (key.equalnocase(U_CONSTANT_TO_PARAM("Age"))) index = 21; // age
+               }
+            break;
+            }
+
+         *dst = 0x40;
+
+         if (index != U_NOT_FOUND) dst = hpackEncodeInt(     dst, index, (1<<6)-1);
+         else                      dst = hpackEncodeString(++dst, U_STRING_TO_PARAM(key));
+
+         dst = hpackEncodeString(dst, U_STRING_TO_PARAM(value));
+         }
+
+      vext->clear();
       }
    else
       {
-      UMimeHeader header;
+      /**
+       * -------------------------------------------------
+       * literal header field with indexing (indexed name)
+       * -------------------------------------------------
+       * content-length: 0
+       * -------------------------------------------------
+       * *dst = 0x40;
+       *  dst = hpackEncodeInt(dst, 28, (1<<6)-1);
+       *  dst = hpackEncodeString(dst, U_CONSTANT_TO_PARAM("0"));
+       * -------------------------------------------------
+       */
 
-      if (header.parse(UHTTP::ext->data(), sz2)) header.table.callForAllEntry(addHTTPHeader);
+      u_put_unalignedp32(dst, U_MULTICHAR_CONSTANT32('\\','\001','0','\0'));
+                         dst += 3;
       }
 
-   sz = pwbuffer-(unsigned char*)ptr;
+   sz  = dst-(unsigned char*)ptr;
+   sz1 = pConnection->peer_settings.max_frame_size;
 
-   *(uint32_t*) ptr    = htonl((sz-HTTP2_FRAME_HEADER_SIZE) << 8);
-                ptr[3] = HEADERS;
-                ptr[4] = FLAG_END_HEADERS;
-   *(uint32_t*)(ptr+5) = htonl(pStream->id);
+   U_INTERNAL_DUMP("sz = %u pConnection->peer_settings.max_frame_size = %u", sz, sz1)
+
+   if (sz <= sz1)
+      {
+      *(uint32_t*) ptr    = htonl((sz-HTTP2_FRAME_HEADER_SIZE) << 8);
+                   ptr[3] = HEADERS;
+                   ptr[4] = FLAG_END_HEADERS;
+      *(uint32_t*)(ptr+5) = htonl(pStream->id);
+      }
+   else
+      {
+      *(uint32_t*) ptr    = htonl((sz1-HTTP2_FRAME_HEADER_SIZE) << 8);
+                   ptr[3] = HEADERS;
+                   ptr[4] = 0;
+      *(uint32_t*)(ptr+5) = htonl(pStream->id);
+
+      U_DUMP("frame header response { length = %d stream_id = %d type = (%d, %s) flags = %d } = %#.*S", ntohl(*(uint32_t*)ptr & 0x00ffffff) >> 8,
+                  ntohl(*(uint32_t*)(ptr+5) & 0x7fffffff), ptr[3], getFrameTypeDescription(ptr[3]), ptr[4], ntohl(*(uint32_t*)ptr & 0x00ffffff) >> 8, ptr + HTTP2_FRAME_HEADER_SIZE)
+
+      ptr = UClientImage_Base::wbuffer->c_pointer(sz1);
+      sz2 = sz-sz1;
+
+      (void) U_SYSCALL(memmove, "%p,%p,%u", ptr+HTTP2_FRAME_HEADER_SIZE, ptr, sz2);
+
+       sz += HTTP2_FRAME_HEADER_SIZE;
+      dst += HTTP2_FRAME_HEADER_SIZE;
+
+      *(uint32_t*) ptr    = htonl(sz2 << 8);
+                   ptr[3] = CONTINUATION;
+                   ptr[4] = FLAG_END_HEADERS;
+      *(uint32_t*)(ptr+5) = htonl(pStream->id);
+      }
 
    U_DUMP("frame header response { length = %d stream_id = %d type = (%d, %s) flags = %d } = %#.*S", ntohl(*(uint32_t*)ptr & 0x00ffffff) >> 8,
-               ntohl(*(uint32_t*)(ptr+5) & 0x7fffffff), ptr[3], getFrameTypeDescription(ptr[3]), ptr[4], ntohl(*(uint32_t*)ptr & 0x00ffffff) >> 8, ptr + HTTP2_FRAME_HEADER_SIZE)
+           ntohl(*(uint32_t*)(ptr+5) & 0x7fffffff), ptr[3], getFrameTypeDescription(ptr[3]), ptr[4], ntohl(*(uint32_t*)ptr & 0x00ffffff) >> 8, ptr + HTTP2_FRAME_HEADER_SIZE)
 
    sz2 = UClientImage_Base::body->size();
 
    if (sz2)
       {
-      *(uint32_t*) pwbuffer    = htonl(sz2 << 8);
-                   pwbuffer[3] = DATA;
-                   pwbuffer[4] = FLAG_END_STREAM;
-      *(uint32_t*)(pwbuffer+5) = htonl(pStream->id);
+      *(uint32_t*) dst    = htonl(sz2 << 8);
+                   dst[3] = DATA;
+                   dst[4] = FLAG_END_STREAM;
+      *(uint32_t*)(dst+5) = htonl(pStream->id);
 
-      U_DUMP("frame data response { length = %d stream_id = %d type = (%d, %s) flags = %d }", ntohl(*(uint32_t*)pwbuffer & 0x00ffffff) >> 8,
-                  ntohl(*(uint32_t*)(pwbuffer+5) & 0x7fffffff), pwbuffer[3], getFrameTypeDescription(pwbuffer[3]), pwbuffer[4])
+      U_DUMP("frame data response { length = %d stream_id = %d type = (%d, %s) flags = %d }", ntohl(*(uint32_t*)dst & 0x00ffffff) >> 8,
+                  ntohl(*(uint32_t*)(dst+5) & 0x7fffffff), dst[3], getFrameTypeDescription(dst[3]), dst[4])
 
       sz += HTTP2_FRAME_HEADER_SIZE;
       }
@@ -1843,7 +1935,7 @@ int UHTTP2::handlerRequest()
       UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer);
 
       if (buffer.empty() ||
-          updateSetting(U_STRING_TO_PARAM(buffer)) == false)
+          updateSetting((unsigned char*)U_STRING_TO_PARAM(buffer)) == false)
          {
          U_RETURN(U_PLUGIN_HANDLER_ERROR);
          }
@@ -1858,9 +1950,20 @@ loop:
 
    if (nerror == NO_ERROR)
       {
-      U_INTERNAL_DUMP("settings_ack = %b", settings_ack)
+      U_INTERNAL_DUMP("settings_ack = %b U_http_method_type = %d", settings_ack, U_http_method_type)
 
       if (settings_ack == false) goto loop; // we wait for SETTINGS ack...
+
+      if (U_http_method_type == 0 ||
+          U_http_method_type == HTTP_OPTIONS)
+         {
+         U_http_info.nResponseCode = (U_http_method_type ? HTTP_OPTIONS_RESPONSE
+                                                         : HTTP_NOT_IMPLEMENTED);
+
+         UHTTP::setResponse(0, 0);
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
 
       return UHTTP::manageRequest();
       }

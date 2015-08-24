@@ -33,7 +33,7 @@ struct U_EXPORT UObjectIO {
    static void  init(char* t, uint32_t sz);
    static void input(char* t, uint32_t tlen);
 
-   static UStringRep* create();
+   static UStringRep* create(bool bcopy);
 };
 
 template <class T> inline void UString2Object(char* t, uint32_t tlen, T& object)
@@ -72,16 +72,16 @@ template <class T> inline char* UObject2String(T& object)
 #endif
 }
 
-template <class T> inline UStringRep* UObject2StringRep(T* object)
+template <class T> inline UStringRep* UObject2StringRep(T& object, bool bcopy)
 {
-   U_INTERNAL_TRACE("UObject2StringRep(%p)", object)
+   U_INTERNAL_TRACE("UObject2StringRep(%p,%b)", &object, bcopy)
 
 #ifdef U_STDCPP_ENABLE
    U_INTERNAL_ASSERT_POINTER(UObjectIO::os)
 
-   *UObjectIO::os << *object;
+   *UObjectIO::os << object;
 
-   return UObjectIO::create();
+   return UObjectIO::create(bcopy);
 #else
    return 0;
 #endif
@@ -134,7 +134,7 @@ template <class T> inline char* U_OBJECT_TO_TRACE(T& object)
    return str;
 }
 #else
-#  define U_OBJECT_TO_TRACE(obj) "non available"
+#  define U_OBJECT_TO_TRACE(obj) "not available"
 #endif
 
 #endif

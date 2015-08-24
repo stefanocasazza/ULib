@@ -75,13 +75,14 @@ void UObjectIO::output()
    U_INTERNAL_PRINT("pos = %ld, os->pcount() = %d", pos, os->pcount())
 }
 
-UStringRep* UObjectIO::create()
+UStringRep* UObjectIO::create(bool bcopy)
 {
-   U_TRACE(0, "UObjectIO::create()")
+   U_TRACE(0, "UObjectIO::create(%b)", bcopy)
 
    UObjectIO::output();
 
-   UStringRep* rep = U_NEW(UStringRep(buffer_output, buffer_output_len));
+   UStringRep* rep = (bcopy == false ? U_NEW(UStringRep(buffer_output, buffer_output_len))
+                                     : UStringRep::create(buffer_output_len, buffer_output_len, (const char*)buffer_output));
 
    U_INTERNAL_PRINT("rep = %V", rep)
 

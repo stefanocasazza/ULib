@@ -87,7 +87,7 @@ protected:
     */
 
    struct FrameHeader {
-      const char* payload;
+      unsigned char* payload;
       int32_t length;    // The length field of this frame, excluding frame header
       int32_t stream_id; // The stream identifier (aka, stream ID)
       uint8_t type;      // The type of this frame
@@ -244,8 +244,8 @@ protected:
    static int  handlerRequest();
    static void handlerResponse();
    static bool readBodyRequest();
-   static bool updateSetting(const char*  ptr, uint32_t len);
-   static void decodeHeaders(const char*  ptr, const char*  endptr);
+   static bool updateSetting(unsigned char*  ptr, uint32_t len);
+   static void decodeHeaders(unsigned char*  ptr, unsigned char*  endptr);
 
 #ifdef DEBUG
    static const char* getFrameTypeDescription(char type);
@@ -299,15 +299,14 @@ protected:
    static const HuffSym    huff_sym_table[];
    static const HuffDecode huff_decode_table[][16];
 
-   static uint32_t       hpackDecodeString(const unsigned char* src, const unsigned char* src_end, UString* pvalue);
-   static uint32_t       hpackEncodeString(      unsigned char* dst,                               const char* src, uint32_t len);
+   static unsigned char* hpackEncodeString(unsigned char* dst,                         const char* src, uint32_t len);
+   static unsigned char* hpackDecodeString(unsigned char* src, unsigned char* src_end, UString* pvalue);
 
-   static unsigned char* hpackEncodeInt(         unsigned char* dst,                               uint32_t   value, uint8_t prefix_max);
-   static uint32_t       hpackDecodeInt(   const unsigned char* src, const unsigned char* src_end,  int32_t* pvalue, uint8_t prefix_max);
+   static unsigned char* hpackEncodeInt(   unsigned char* dst,                         uint32_t   value, uint8_t prefix_max);
+   static unsigned char* hpackDecodeInt(   unsigned char* src, unsigned char* src_end,  int32_t* pvalue, uint8_t prefix_max);
 
 private:
-   static unsigned char* pwbuffer;
-   static bool addHTTPHeader(UStringRep* key, void* value) U_NO_EXPORT;
+   static UVector<UString>* vext;
 
    friend class UHTTP;
    friend class UClientImage_Base;

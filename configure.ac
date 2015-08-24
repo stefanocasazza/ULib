@@ -767,6 +767,11 @@ else
 			  fi
 		 done
 	fi
+   AC_CHECK_LIB(numa,numa_max_node)
+   LIBS=""
+	if test "$ac_cv_lib_numa_numa_max_node" = "yes"; then
+		plib="$plib -lnuma"
+	fi
 fi
 
 TWOCAN_CONF_MSG(Checking for functions)
