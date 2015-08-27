@@ -123,27 +123,29 @@
 extern "C" {
 #endif
 
-typedef int   (*iPF)     (void);
-typedef int   (*iPFpv)   (void*);
-typedef int   (*iPFpvpv) (      void*,      void*);
-typedef int   (*qcompare)(const void*,const void*);
-typedef bool  (*bPFi)    (int);
-typedef bool  (*bPF)     (void);
-typedef bool  (*bPFpv)   (void*);
-typedef bool  (*bPFpvpv) (void*,void*);
-typedef bool  (*bPFpc)   (const char*);
-typedef bool  (*bPFpcu)  (const char*, uint32_t);
-typedef bool  (*bPFpcpc) (const char*,const char*);
-typedef bool  (*bPFpcpv) (const char*,const void*);
-typedef void  (*vPF)     (void);
-typedef void  (*vPFi)    (int);
-typedef void  (*vPFpv)   (void*);
-typedef void  (*vPFpc)   (const char*);
-typedef void  (*vPFpvpc) (void*,char*);
-typedef void  (*vPFpvpv) (void*,void*);
-typedef void  (*vPFpvu)  (void*,uint32_t);
-typedef void* (*pvPF)    (void);
-typedef void* (*pvPFpvpb)(void*,bool*);
+typedef int      (*iPF)     (void);
+typedef int      (*iPFpv)   (void*);
+typedef unsigned (*uPFpv)   (void*);
+typedef int      (*iPFpvpv) (      void*,      void*);
+typedef int      (*qcompare)(const void*,const void*);
+typedef bool     (*bPFi)    (int);
+typedef bool     (*bPF)     (void);
+typedef bool     (*bPFpv)   (void*);
+typedef bool     (*bPFpvpv) (void*,void*);
+typedef bool     (*bPFpc)   (const char*);
+typedef bool     (*bPFpcu)  (const char*, uint32_t);
+typedef bool     (*bPFpcpc) (const char*,const char*);
+typedef bool     (*bPFpcpv) (const char*,const void*);
+typedef void     (*vPF)     (void);
+typedef void     (*vPFi)    (int);
+typedef void     (*vPFpv)   (void*);
+typedef void     (*vPFpc)   (const char*);
+typedef void     (*vPFpvpc) (void*,char*);
+typedef void     (*vPFpvpv) (void*,void*);
+typedef void     (*vPFpvu)  (void*,uint32_t);
+typedef void*    (*pvPF)    (void);
+typedef void*    (*pvPFpv)  (void*);
+typedef void*    (*pvPFpvpb)(void*,bool*);
 
 typedef struct U_DATA {
    unsigned char* dptr;

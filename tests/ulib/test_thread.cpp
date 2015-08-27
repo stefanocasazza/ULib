@@ -4,42 +4,47 @@
 
 #include <iostream>
 
+#undef  OK
+#define OK    {printf("ok\n");}
+#undef  ERROR
+#define ERROR {printf("ko\n");return 1;}
+
+#define TEST_CHANGE(b) {if(!TestChange(b))return 1;}
+
+static bool status;
 static volatile int n;
+static int time_to_sleep = 5;
 
 static bool WaitNValue(int value)
 {
-   U_TRACE(5, "::WaitNValue(%d)", value)
+   U_TRACE(5+256, "::WaitNValue(%d)", value)
 
    U_INTERNAL_DUMP("n = %d", n)
 
-   for (int i = 0; ; ++i)
+   for (int i = 0; i < 100; ++i)
       {
-      if (n == value) break;
+      if (n == value) U_RETURN(true);
 
-      if (i >= 100) U_RETURN(false);
-
-      UThread::sleep(10);
+      UThread::nanosleep(10);
       }
 
-   U_RETURN(true);
+   U_RETURN(false);
 }
 
 static bool WaitChangeNValue(int value)
 {
-   U_TRACE(5, "::WaitChangeNValue(%d)", value)
+   U_TRACE(5+256, "::WaitChangeNValue(%d)", value)
 
    U_INTERNAL_DUMP("n = %d", n)
 
-   for (int i = 0; ; ++i)
+   for (int i = 0; i < 100; ++i)
       {
-      if (n != value) break;
+      if (n != value) U_RETURN(true);
 
-      if (i >= 100) U_RETURN(false);
-
-      UThread::sleep(10);
+      UThread::nanosleep(10);
       }
 
-   U_RETURN(true);
+   U_RETURN(false);
 }
 
 static bool TestChange(bool shouldChange)
@@ -68,25 +73,28 @@ static bool TestChange(bool shouldChange)
 class ThreadTest : public UThread {
 public:
 
-   ThreadTest() : UThread(true) {}
+   ThreadTest() : UThread(PTHREAD_CREATE_JOINABLE) {}
 
    virtual void run()
       {
-      U_TRACE(5, "ThreadTest::run()")
+      U_TRACE(5+256, "ThreadTest::run()")
 
       n = 1;
 
-      // wait for main thread
-
-      if (!WaitNValue(2)) return;
-
-      // increment infinitely
-
-      while (true)
+      if (WaitNValue(2)) // wait for main thread
          {
-         yield();
+#     ifdef DEBUG
+         status = UTrace::suspend();
+#     endif
 
-         n = n+1;
+         while (true)
+            {
+            yield();
+
+            ++n; // increment infinitely
+
+            sleep(time_to_sleep);
+            }
          }
       }
 
@@ -95,25 +103,22 @@ public:
 #endif
 };
 
-#undef  OK
-#define OK    {printf("ok\n");}
-#undef  ERROR
-#define ERROR {printf("ko\n");return 1;}
-
-#define TEST_CHANGE(b) {if(!TestChange(b))return 1;}
-
 class Child : public UThread {
 public:
 
-   Child() {}
+   Child() : UThread(PTHREAD_CREATE_JOINABLE) {}
 
    virtual void run()
       {
       U_TRACE(5, "Child::run()")
 
+      U_INTERNAL_DUMP("CHILD START")
+
       cout << "child start" << endl;
 
-      UThread::sleep(1500);
+      sleep(50);
+
+      U_INTERNAL_DUMP("CHILD END")
 
       cout << "child end" << endl;
       }
@@ -122,21 +127,27 @@ public:
 class Father : public UThread {
 public:
 
-   Father() {}
+   Father() : UThread(PTHREAD_CREATE_JOINABLE) {}
 
    virtual void run()
       {
       U_TRACE(5, "Father::run()")
 
+      U_INTERNAL_DUMP("STARTING CHILD THREAD")
+
       cout << "starting child thread" << endl;
 
-      UThread* th = new Child;
+      Child* ch = U_NEW(Child);
 
-      th->start();
+      ch->start();
 
-      UThread::sleep(1000);
+      ch->sleep(100);
 
-      delete th;
+      U_INTERNAL_DUMP("DELETING CHILD THREAD = %p", ch)
+
+      delete ch;
+
+      U_INTERNAL_DUMP("FATHER END")
 
       cout << "father end" << endl;
       }
@@ -144,15 +155,15 @@ public:
 
 class myObject {
 public:
-    myObject() { cout << "created auto object on stack"    << endl; }
-   ~myObject() { cout << "destroyed auto object on cancel" << endl; }
+    myObject() {}
+   ~myObject() {}
 };
 
 class myThread : public UThread {
 public:
 
-    myThread() : UThread() {}
-   ~myThread()             { cout << "ending thread" << endl; }
+    myThread() : UThread(PTHREAD_CREATE_JOINABLE) {}
+   ~myThread()                                    {}
 
    void run()
       {
@@ -162,7 +173,7 @@ public:
 
       setCancel(cancelImmediate);
 
-      UThread::sleep(2000);
+      sleep(100);
       }
 };
 
@@ -173,6 +184,7 @@ int U_EXPORT main(int argc, char* argv[])
    U_TRACE(5,"main(%d)",argc)
 
    // This is a little regression test
+   UThread* th;
    ThreadTest test;
 
    // test only thread, without sincronization
@@ -231,15 +243,23 @@ int U_EXPORT main(int argc, char* argv[])
    TEST_CHANGE(false);
    test.resume();
 
+   time_to_sleep = 5000;
+
+#ifdef DEBUG
+   UTrace::resume(status);
+#endif
+
    // Test child thread destroying before father
 
    cout << "\nstarting father thread" << endl;
 
-   Father* th = new Father;
+   th = U_NEW(Father);
 
    th->start();
 
-   UThread::sleep(2000);
+   UThread::nanosleep(200);
+
+   U_INTERNAL_DUMP("FATHER DELETE = %p", th)
 
    delete th;
 
@@ -247,13 +267,13 @@ int U_EXPORT main(int argc, char* argv[])
 
    cout << "\nstarting thread" << endl;
 
-   myThread* th1 = new myThread;
+   th = U_NEW(myThread);
 
-   th1->start();
+   th->start();
 
-   UThread::sleep(1000); // 1 second
+   UThread::nanosleep(100); // 150 millisecond
 
-   delete th1; // delete to join
+   delete th; // delete to join
 
    printf("\nNow program should finish... :)\n");
 

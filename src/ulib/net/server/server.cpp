@@ -166,13 +166,13 @@ UString*            UServer_Base::allow_IP_prv;
 UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #endif
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
 #  include <ulib/thread.h>
 
 class UTimeThread U_DECL_FINAL : public UThread {
 public:
 
-   UTimeThread() : UThread(true, false) {}
+   UTimeThread() : UThread(PTHREAD_CREATE_DETACHED) {}
 
    virtual void run()
       {
@@ -234,7 +234,7 @@ public:
 class UClientThread U_DECL_FINAL : public UThread {
 public:
 
-   UClientThread() : UThread(true, false) {}
+   UClientThread() : UThread(PTHREAD_CREATE_DETACHED) {}
 
    virtual void run()
       {
@@ -251,7 +251,7 @@ public:
 class UOCSPStapling U_DECL_FINAL : public UThread {
 public:
 
-   UOCSPStapling() : UThread(true, false) {}
+   UOCSPStapling() : UThread(PTHREAD_CREATE_DETACHED) {}
 
    virtual void run()
       {
@@ -352,7 +352,7 @@ UServer_Base::~UServer_Base()
    U_INTERNAL_ASSERT_POINTER(socket)
    U_INTERNAL_ASSERT_POINTER(vplugin)
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
    if (u_pthread_time)
       {
       ((UTimeThread*)u_pthread_time)->suspend();
@@ -1540,7 +1540,7 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
    bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
 #else
    bool bpthread_time = false; 
@@ -1553,7 +1553,7 @@ void UServer_Base::init()
 #endif
    ULog::initDate();
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
    if (bpthread_time)
       {
       U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
@@ -1588,7 +1588,7 @@ void UServer_Base::init()
 
    flag_loop = true; // NB: UTimeThread loop depend on this setting...
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
    if (bpthread_time)
       {
       U_INTERNAL_ASSERT_EQUALS(ULog::prwlock, 0)
@@ -1678,7 +1678,7 @@ void UServer_Base::init()
 
    pthis->preallocate();
 
-#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
    if (bssl)
       {
       if (USSLSocket::setDataForStapling() == false)
@@ -1834,7 +1834,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp)                     pthread_ocsp->suspend();
 # endif
@@ -1855,7 +1855,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
                 UInterrupt::insert(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
 #endif
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (pthread_ocsp)                     pthread_ocsp->resume();
 #  endif
@@ -1881,7 +1881,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
    if (proc->parent())
       {
-#  ifdef ENABLE_THREAD
+#  if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
       if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 #  endif
 
@@ -1912,10 +1912,11 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
                         "SIGTERM (Interrupt): "
                         "address space usage: %.2f MBytes - "
                                   "rss usage: %.2f MBytes\n"
-                        "max_nfd_ready = %u max_depth = %u again:read = (%u/%u - %u%%) wakeup_for_nothing = %u\n",
+                        "max_nfd_ready = %u max_depth = %u again:read = (%u/%u - %u%%) wakeup_for_nothing = %u bepollet_threshold = %u\n",
                         (double)vsz / (1024.0 * 1024.0),
                         (double)rss / (1024.0 * 1024.0), UNotifier::max_nfd_ready,
-                        (max_depth > UNotifier::min_connection ? max_depth - UNotifier::min_connection : 0), nread_again, nread, (nread_again*100)/nread, wakeup_for_nothing);
+                        (max_depth > UNotifier::min_connection ? max_depth - UNotifier::min_connection : 0),
+                        nread_again, nread, (nread_again*100)/nread, wakeup_for_nothing, UNotifier::bepollet_threshold);
 
          ostrstream os(buffer + len, sizeof(buffer) - len);
 

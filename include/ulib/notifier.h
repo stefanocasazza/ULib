@@ -124,6 +124,7 @@ protected:
 
 #ifdef U_EPOLLET_POSTPONE_STRATEGY
    static bool bepollet;
+   static unsigned bepollet_threshold;
 #endif
 
 #ifdef USE_LIBEVENT

@@ -308,6 +308,9 @@
 /* pthread inherit scheduling attribute */
 #undef HAVE_PTHREAD_ATTR_SETINHRITSCHED
 
+/* pthread cancel */
+#undef HAVE_PTHREAD_CANCEL
+
 /* pthread clocking */
 #undef HAVE_PTHREAD_CONDATTR_SETCLOCK
 
@@ -322,6 +325,9 @@
 
 /* pthread scheduling */
 #undef HAVE_PTHREAD_SETSCHEDPRIO
+
+/* pthread suspend */
+#undef HAVE_PTHREAD_SUSPEND
 
 /* pthread yield */
 #undef HAVE_PTHREAD_YIELD

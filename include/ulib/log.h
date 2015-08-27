@@ -56,7 +56,7 @@ public:
    static const char* prefix;
    static struct iovec iov_vec[5];
    static log_date* ptr_shared_date;
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
    static pthread_rwlock_t* prwlock;
 #endif
 

@@ -285,7 +285,7 @@ public:
 #    endif
 #  endif
    // ------------------------------------------------------------------------------
-#  ifdef ENABLE_THREAD
+#  if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
       pthread_rwlock_t rwlock;
       struct timeval now_shared; // => u_now
       ULog::log_date log_date_shared;

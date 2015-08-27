@@ -676,6 +676,12 @@ if test "$threading" = "none" ; then
                 ])
             fi
             if test ! -z "$tlib" ; then
+                AC_CHECK_LIB($tlib,pthread_suspend,[
+                    AC_DEFINE(HAVE_PTHREAD_SUSPEND, [1], [pthread suspend])
+                ])
+                AC_CHECK_LIB($tlib,pthread_cancel,[
+                    AC_DEFINE(HAVE_PTHREAD_CANCEL, [1], [pthread cancel])
+                ])
                 AC_CHECK_LIB($tlib,pthread_condattr_setclock,[
                     AC_DEFINE(HAVE_PTHREAD_CONDATTR_SETCLOCK, [1], [pthread clocking])
                 ])

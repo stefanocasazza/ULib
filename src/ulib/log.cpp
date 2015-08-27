@@ -43,7 +43,7 @@ const char*       ULog::prefix;
 struct iovec      ULog::iov_vec[5];
 ULog::log_date    ULog::date;
 ULog::log_date*   ULog::ptr_shared_date;
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
 pthread_rwlock_t* ULog::prwlock;
 #endif
 
@@ -281,7 +281,7 @@ void ULog::updateDate1()
     * 012345678901234567890123456789
     */
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
    if (u_pthread_time)
       {
       (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
@@ -353,7 +353,7 @@ void ULog::updateDate2()
     * 012345678901234567890123456789
     */
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
    if (u_pthread_time)
       {
       (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
@@ -426,7 +426,7 @@ void ULog::updateDate3()
     * 0123456789012345678901234567890123456789
     */
 
-#ifdef ENABLE_THREAD
+#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
    if (u_pthread_time)
       {
       (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);

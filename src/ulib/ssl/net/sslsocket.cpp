@@ -1520,13 +1520,13 @@ bool USSLSocket::doStapling()
 
          p = (unsigned char*) staple.data;
 
-#     ifdef ENABLE_THREAD
+#     if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
          UServer_Base::lock_ocsp_staple->lock();
 #     endif
 
          staple.len = i2d_OCSP_RESPONSE(resp, &p);
 
-#     ifdef ENABLE_THREAD
+#     if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
          UServer_Base::lock_ocsp_staple->unlock();
 #     endif
 
@@ -1560,7 +1560,7 @@ void USSLSocket::certificate_status_callback(SSL* _ssl, void* data)
 
       U_INTERNAL_ASSERT_MINOR(staple.len, U_OCSP_MAX_RESPONSE_SIZE)
 
-#  ifdef ENABLE_THREAD
+#  if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
       UServer_Base::lock_ocsp_staple->lock();
 #  endif
 
@@ -1570,7 +1570,7 @@ void USSLSocket::certificate_status_callback(SSL* _ssl, void* data)
 
       U_MEMCPY(p, staple.data, staple.len);
 
-#  ifdef ENABLE_THREAD
+#  if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
       UServer_Base::lock_ocsp_staple->unlock();
 #  endif
 

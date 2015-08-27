@@ -20582,6 +20582,98 @@ fi
 
             fi
             if test ! -z "$tlib" ; then
+                as_ac_Lib=`$as_echo "ac_cv_lib_$tlib''_pthread_suspend" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_suspend in -l$tlib" >&5
+$as_echo_n "checking for pthread_suspend in -l$tlib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$tlib  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pthread_suspend ();
+int
+main ()
+{
+return pthread_suspend ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+
+
+$as_echo "#define HAVE_PTHREAD_SUSPEND 1" >>confdefs.h
+
+
+fi
+
+                as_ac_Lib=`$as_echo "ac_cv_lib_$tlib''_pthread_cancel" | $as_tr_sh`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_cancel in -l$tlib" >&5
+$as_echo_n "checking for pthread_cancel in -l$tlib... " >&6; }
+if eval \${$as_ac_Lib+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-l$tlib  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char pthread_cancel ();
+int
+main ()
+{
+return pthread_cancel ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_cxx_try_link "$LINENO"; then :
+  eval "$as_ac_Lib=yes"
+else
+  eval "$as_ac_Lib=no"
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+eval ac_res=\$$as_ac_Lib
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+if eval test \"x\$"$as_ac_Lib"\" = x"yes"; then :
+
+
+$as_echo "#define HAVE_PTHREAD_CANCEL 1" >>confdefs.h
+
+
+fi
+
                 as_ac_Lib=`$as_echo "ac_cv_lib_$tlib''_pthread_condattr_setclock" | $as_tr_sh`
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for pthread_condattr_setclock in -l$tlib" >&5
 $as_echo_n "checking for pthread_condattr_setclock in -l$tlib... " >&6; }

@@ -85,6 +85,7 @@ fd_set               UNotifier::fd_set_write;
 #endif
 #ifdef U_EPOLLET_POSTPONE_STRATEGY
 bool                 UNotifier::bepollet;
+unsigned             UNotifier::bepollet_threshold = 10;
 #endif
 int                  UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
 int                  UNotifier::max_nfd_ready;
@@ -668,9 +669,9 @@ void UNotifier::waitForEvent(UEventTime* timeout)
 
 #   ifdef U_EPOLLET_POSTPONE_STRATEGY
       bool bloop1 = false;
-      bepollet = (nfd_ready >= 10);
+      bepollet = ((unsigned)nfd_ready >= bepollet_threshold);
 
-      U_INTERNAL_DUMP("bepollet = %b nfd_ready = %d", bepollet, nfd_ready)
+      U_INTERNAL_DUMP("bepollet = %b nfd_ready = %d bepollet_threshold = %u", bepollet, nfd_ready, bepollet_threshold)
 #   endif
 
 loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
@@ -736,41 +737,51 @@ loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
          }
 
 #    ifdef U_EPOLLET_POSTPONE_STRATEGY
-      while (bloop1)
+      if (bepollet)
          {
-         U_INTERNAL_ASSERT(bepollet)
-
-         i       = 0;
-         bloop1  = false;
-         pevents = events;
-
-loop2:   if (pevents->events)
+         if (bloop1 == false)
             {
-            handler_event = (UEventFd*)pevents->data.ptr;
+            bepollet_threshold += bepollet_threshold / 2;
 
-            U_INTERNAL_DUMP("i = %d handler_event->fd = %d ", i, handler_event->fd)
-
-            U_INTERNAL_ASSERT_DIFFERS(handler_event->fd, -1)
-
-            if (handler_event->handlerRead() == U_NOTIFIER_DELETE)
-               {
-               handlerDelete(handler_event);
-                             handler_event->fd = -1;
-
-               pevents->events = 0;
-               }
-            else
-               {
-               if (U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN) bloop1 = true;
-               else                                               pevents->events = 0;
-               }
+            U_INTERNAL_DUMP("bepollet_threshold = %u", bepollet_threshold)
             }
-
-         if (++i < nfd_ready)
+         else
             {
-            ++pevents;
+            do {
+               i       = 0;
+               bloop1  = false;
+               pevents = events;
 
-            goto loop2;
+loop2:         if (pevents->events)
+                  {
+                  handler_event = (UEventFd*)pevents->data.ptr;
+
+                  U_INTERNAL_DUMP("i = %d handler_event->fd = %d ", i, handler_event->fd)
+
+                  U_INTERNAL_ASSERT_DIFFERS(handler_event->fd, -1)
+
+                  if (handler_event->handlerRead() == U_NOTIFIER_DELETE)
+                     {
+                     handlerDelete(handler_event);
+                                   handler_event->fd = -1;
+
+                     pevents->events = 0;
+                     }
+                  else
+                     {
+                     if (U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN) bloop1 = true;
+                     else                                               pevents->events = 0;
+                     }
+                  }
+
+               if (++i < nfd_ready)
+                  {
+                  ++pevents;
+
+                  goto loop2;
+                  }
+               }
+            while (bloop1);
             }
          }
 #   endif

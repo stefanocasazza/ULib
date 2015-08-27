@@ -39,10 +39,9 @@ Testing resuspend
 starting father thread
 starting child thread
 child start
+child end
 father end
 
 starting thread
-created auto object on stack
-ending thread
 
 Now program should finish... :)

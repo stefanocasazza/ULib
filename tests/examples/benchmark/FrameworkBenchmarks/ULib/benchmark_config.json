@@ -104,6 +104,7 @@
       "db_url": "/rdb",
       "query_url": "/rquery?queries=",
       "fortune_url": "/rfortune",
+      "update_url": "/rupdate?queries=",
       "port": 8080,
       "approach": "Realistic",
       "classification": "Platform",
