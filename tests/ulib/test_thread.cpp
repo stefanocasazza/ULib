@@ -2,8 +2,6 @@
 
 #include <ulib/thread.h>
 
-#include <iostream>
-
 #undef  OK
 #define OK    {printf("ok\n");}
 #undef  ERROR
@@ -141,7 +139,7 @@ public:
 
       ch->start();
 
-      ch->sleep(100);
+      sleep(100);
 
       U_INTERNAL_DUMP("DELETING CHILD THREAD = %p", ch)
 

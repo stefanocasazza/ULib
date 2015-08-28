@@ -1,16 +1,18 @@
-test_trace: WARNING: 30/05/15 16:03:58 (pid 19663) we are going to allocate 64 MB (pid 19663) - address space usage: 122.40 MBytes - rss usage: 7.77 MBytes
+[tid 0]<--
+[tid 32744]-->
+test_trace: WARNING: 28/08/15 15:37:35 (pid 32744) we are going to allocate 64 MB (pid 32744) - address space usage: 130.58 MBytes - rss usage: 8.21 MBytes
 {Call   main(2)
 	{Call   routine1(2,3)
 	}Return routine1(2,3) = 6
 	c = 6
-	::signal(4,0x401710) = (nil)
+	::signal(4,0x401660) = (nil)
 	{Call   manage_sigpipe(4)
 		::open("/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp"...,2,438) = -1 - ENOENT (2, No such file or directory)
 		::open("tmp/prova",66,438) = 5
 	}Return manage_sigpipe(4)
 	::raise(4) = 0
 	result raise() = 0
-	test_stat() = -1
+	test_stat() = 0
 	test_stat() = -1
 	test_stat() = 0
 	test_stat() = 0

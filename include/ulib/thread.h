@@ -15,6 +15,7 @@
 #define ULIB_THREAD_H
 
 #include <ulib/timeval.h>
+#include <ulib/container/vector.h>
 
 #ifdef _MSWINDOWS_
 #  undef sleep
@@ -26,6 +27,7 @@
 #endif
 
 class UNotifier;
+class UServer_Base;
 
 class U_EXPORT UThread {
 public:
@@ -38,44 +40,44 @@ public:
 
    // COSTRUTTORI
 
-   UThread(int _detachstate);
-
-   virtual ~UThread()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UThread)
-
-      if (tid) close();
-      }
+            UThread(int detachstate);
+   virtual ~UThread();
 
    // SERVICES
 
 #ifdef _MSWINDOWS_
    static DWORD getTID();
-#else
-   static pthread_t getTID();
-#endif
 
-   // Inter Process Communication
+   static void lock(CRITICAL_SECTION* pmutex)
+      {
+      U_TRACE(0, "UThread::lock(%p)", pmutex)
+
+      EnterCriticalSection(pmutex);
+      }
+
+   static void unlock(CRITICAL_SECTION* pmutex)
+      {
+      U_TRACE(0, "UThread::unlock(%p)", pmutex)
+
+      LeaveCriticalSection(pmutex);
+      }
+#else
+   static pid_t getTID();
 
    static void lock(pthread_mutex_t* pmutex)
       {
       U_TRACE(1, "UThread::lock(%p)", pmutex)
 
-#  ifndef _MSWINDOWS_
       (void) U_SYSCALL(pthread_mutex_lock, "%p", pmutex);
-#  endif
       }
 
    static void unlock(pthread_mutex_t* pmutex)
       {
       U_TRACE(1, "UThread::unlock(%p)", pmutex)
 
-#  ifndef _MSWINDOWS_
       (void) U_SYSCALL(pthread_mutex_unlock, "%p", pmutex);
-#  endif
       }
 
-#ifndef _MSWINDOWS_
    static bool initRwLock(pthread_rwlock_t* prwlock)
       {
       U_TRACE(1, "UThread::initRwLock(%p)", prwlock)
@@ -91,6 +93,8 @@ public:
 
       U_RETURN(true);
       }
+
+   // Inter Process Communication
 
    static bool initIPC(pthread_mutex_t* mutex, pthread_cond_t* cond);
    static void   doIPC(pthread_mutex_t* mutex, pthread_cond_t* cond, vPF function, bool wait);
@@ -163,37 +167,48 @@ public:
     * with SIGSTOP, but this behaviour has now been fixed to conform to the Posix standard (so it stops all threads in the process)
     */
 
+#ifdef _MSWINDOWS_
+   void  resume() {}
+   void suspend() {}
+#else
    void resume()
       {
       U_TRACE(0, "UThread::resume()")
 
-#  ifndef _MSWINDOWS_
-      resume(tid);
-#   ifndef HAVE_PTHREAD_SUSPEND
+      U_ASSERT_EQUALS(isCurrentThread(tid), false)
+
+#   ifdef HAVE_PTHREAD_SUSPEND
+      (void) U_SYSCALL(pthread_resume, "%p", tid);
+#   else
+      (void) U_SYSCALL(pthread_kill, "%p,%d", tid, U_SIGCONT);
+
       yield(); // give the signal a time to kick in
 #   endif
-#  endif
       }
       
    void suspend()
       {
       U_TRACE(0, "UThread::suspend()")
 
-#  ifndef _MSWINDOWS_
-      suspend(tid);
-#   ifndef HAVE_PTHREAD_SUSPEND
+      U_ASSERT_EQUALS(isCurrentThread(tid), false)
+
+#   ifdef HAVE_PTHREAD_SUSPEND
+      (void) U_SYSCALL(pthread_suspend, "%p", tid);
+#   else
+      (void) U_SYSCALL(pthread_kill, "%p,%d", tid, U_SIGSTOP);
+
       yield(); // give the signal a time to kick in
 #   endif
-#  endif
       }
+#endif
 
    // Cancellation
 
    enum Cancel {
-      cancelInitial,    /* used internally, do not use */
-      cancelDeferred,   /* exit thread on cancellation pointsuch as yield */
-      cancelImmediate,  /* exit befor cancellation */
-      cancelDisabled,   /* ignore cancellation */
+      cancelInitial,   /* used internally, do not use */
+      cancelDeferred,  /* exit thread on cancellation pointsuch as yield */
+      cancelImmediate, /* exit befor cancellation */
+      cancelDisabled,  /* ignore cancellation */
       cancelManual
    };
 
@@ -265,6 +280,8 @@ public:
 protected:
    UThread* next;
    int detachstate, cancel;
+   pid_t sid;
+
 #ifdef _MSWINDOWS_
    DWORD tid;
    HANDLE cancellation;
@@ -272,30 +289,34 @@ protected:
    pthread_t tid;
    pthread_attr_t attr;
    int suspendCount;
-
-   static pthread_mutex_t mlock;
 #endif
 
    static UThread* first;
 
    void close();
 
+   static void threadStart(UThread* th)
+      {
+      U_TRACE(0, "UThread::threadStart(%p)", th)
+
+      U_INTERNAL_ASSERT_POINTER(th)
+
+      U_INTERNAL_DUMP("th->tid = %p th->sid = %u", th->tid, th->sid)
+
+      th->setCancel(cancelDeferred);
+
+      th->run();
+
+      U_INTERNAL_DUMP("th->tid = %p th->sid = %u", th->tid, th->sid)
+
+      if (th->tid) th->close();
+      }
+
 #ifdef _MSWINDOWS_
-   static void   lock() {}
-   static void unlock() {}
-
-   static void  resume(pthread_t _tid) {}
-   static void suspend(pthread_t _tid) {}
-
    static unsigned __stdcall execHandler(void* th);
 #else
    void sigInstall(int signo);
    void manageSignal(int signo);
-
-   static void   lock() {   lock(&mlock); }
-   static void unlock() { unlock(&mlock); }
-
-   static void execHandler(UThread* th);
 
    static void sigHandler(int signo)
       {
@@ -306,73 +327,41 @@ protected:
       if (th) th->manageSignal(signo);
       }
 
-   static bool isDetached(pthread_attr_t* pattr)
+   static void execHandler(UThread* th);
+
+   static void threadCleanup(UThread* th)
       {
-      U_TRACE(1, "UThread::isDetached(%p)", pattr)
+      U_TRACE(0, "UThread::threadCleanup(%p)", th)
 
-      int state;
+      U_INTERNAL_ASSERT_POINTER(th)
 
-      (void) U_SYSCALL(pthread_attr_getdetachstate, "%p,%p", pattr, &state);
+      U_INTERNAL_DUMP("th->tid = %p th->sid = %u", th->tid, th->sid)
 
-      if (state == PTHREAD_CREATE_DETACHED) U_RETURN(true);
-
-      U_RETURN(false);
+      if (th->tid) th->close();
       }
 
    static void stop(pthread_t _tid, pthread_attr_t* pattr)
       {
       U_TRACE(1, "UThread::stop(%p,%p)", _tid, pattr)
 
+      int state;
+
 #   ifdef HAVE_PTHREAD_CANCEL
       (void) U_SYSCALL(pthread_cancel, "%p", _tid);
 #   endif
 
-      if (isDetached(pattr) == false) (void) U_SYSCALL(pthread_join, "%p,%p", _tid, 0);
+      (void) U_SYSCALL(pthread_attr_getdetachstate, "%p,%p", pattr, &state);
+
+      if (state != PTHREAD_CREATE_DETACHED) (void) U_SYSCALL(pthread_join, "%p,%p", _tid, 0);
 #   ifdef HAVE_PTHREAD_YIELD
       else (void) U_SYSCALL_NO_PARAM(pthread_yield);
 #   endif
-      }
-
-   static void suspend(pthread_t _tid)
-      {
-      U_TRACE(1, "UThread::suspend(%p)", _tid)
-
-      U_ASSERT_EQUALS(isCurrentThread(_tid), false)
-
-#   ifdef HAVE_PTHREAD_SUSPEND
-      (void) U_SYSCALL(pthread_suspend, "%p", _tid);
-#   else
-      (void) U_SYSCALL(pthread_kill, "%p,%d", _tid, U_SIGSTOP);
-#   endif
-      }
-
-   static void resume(pthread_t _tid)
-      {
-      U_TRACE(1, "UThread::resume(%p)", _tid)
-
-      U_ASSERT_EQUALS(isCurrentThread(_tid), false)
-
-#   ifdef HAVE_PTHREAD_SUSPEND
-      (void) U_SYSCALL(pthread_resume, "%p", _tid);
-#   else
-      (void) U_SYSCALL(pthread_kill, "%p,%d", _tid, U_SIGCONT);
-#   endif
-      }
-
-   static void threadCleanup(void* th)
-      {
-      U_TRACE(0, "UThread::threadCleanup(%p)", th)
-
-      U_INTERNAL_ASSERT_POINTER(th)
-
-      U_INTERNAL_DUMP("th->tid = %p", ((UThread*)th)->tid)
-
-      if (((UThread*)th)->tid) ((UThread*)th)->close();
       }
 #endif
 
 private:
    friend class UNotifier;
+   friend class UServer_Base;
 
 #ifdef U_COMPILER_DELETE_MEMBERS
    UThread(const UThread&) = delete;
@@ -383,7 +372,7 @@ private:
 #endif
 };
 
-class U_EXPORT UThreadPool {
+class U_EXPORT UThreadPool : public UThread {
 public:
    // Check for memory error
    U_MEMORY_TEST
@@ -391,6 +380,56 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
-};
 
+   // COSTRUTTORI
+
+    UThreadPool(uint32_t size);
+   ~UThreadPool();
+
+   // define method VIRTUAL of class UThread
+
+   virtual void run() U_DECL_FINAL
+      {
+      U_TRACE(0, "UThreadPool::run()")
+
+      /*
+      for (task in queue)
+         {
+         if (task == STOP_WORKING) break;
+
+         do work;
+         }
+      */
+      }
+
+   // SERVICES
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const;
+#endif
+
+protected:
+   UVector<UThread*> pool;  // Thread pool storage
+   UVector<UThread*> queue; // Queue to keep track of incoming tasks
+   bool active;
+
+#ifdef _MSWINDOWS_
+   CRITICAL_SECTION tasksMutex;  // Task queue mutex
+   CONDITION_VARIABLE condition; // Condition variable
+#else
+   pthread_mutex_t tasksMutex;  // Task queue mutex
+   pthread_cond_t condition;    // Condition variable
+#endif
+
+private:
+#ifdef U_COMPILER_DELETE_MEMBERS
+   UThreadPool(const UThreadPool&) = delete;
+   UThreadPool& operator=(const UThreadPool&) = delete;
+#else
+   UThreadPool(const UThreadPool&) : UThread(PTHREAD_CREATE_DETACHED) {}
+   UThreadPool& operator=(const UThreadPool&)                         { return *this; }
+#endif
+};
 #endif

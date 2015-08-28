@@ -50,7 +50,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UProcess, "", 0)
 
-      _pid    = (pid_t) -1;
+      _pid    = (pid_t)-1;
       status  = 0;
       running = false;
       }

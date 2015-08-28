@@ -1,3 +1,5 @@
+[tid 0]<--
+[tid 31949]-->
 {Call   routine1(2,3)
 }Return routine1(2,3) = 6
 {Call   manage_sigpipe(4)

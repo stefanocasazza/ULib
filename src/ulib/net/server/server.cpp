@@ -166,9 +166,23 @@ UString*            UServer_Base::allow_IP_prv;
 UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #endif
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
-#  include <ulib/thread.h>
+#ifdef ENABLE_THREAD
+#include <ulib/thread.h>
 
+class UClientThread U_DECL_FINAL : public UThread {
+public:
+
+   UClientThread() : UThread(PTHREAD_CREATE_DETACHED) {}
+
+   virtual void run()
+      {
+      U_TRACE(0, "UClientThread::run()")
+
+      while (UServer_Base::flag_loop) UNotifier::waitForEvent(UServer_Base::ptime);
+      }
+};
+
+#  ifndef _MSWINDOWS_
 class UTimeThread U_DECL_FINAL : public UThread {
 public:
 
@@ -231,22 +245,9 @@ public:
       }
 };
 
-class UClientThread U_DECL_FINAL : public UThread {
-public:
-
-   UClientThread() : UThread(PTHREAD_CREATE_DETACHED) {}
-
-   virtual void run()
-      {
-      U_TRACE(0, "UClientThread::run()")
-
-      while (UServer_Base::flag_loop) UNotifier::waitForEvent(UServer_Base::ptime);
-      }
-};
-
-#if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-#include <ulib/net/tcpsocket.h>
-#include <ulib/net/client/client.h>
+#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#  include <ulib/net/tcpsocket.h>
+#  include <ulib/net/client/client.h>
 
 class UOCSPStapling U_DECL_FINAL : public UThread {
 public:
@@ -283,6 +284,7 @@ public:
 
 ULock*         UServer_Base::lock_ocsp_staple;
 UOCSPStapling* UServer_Base::pthread_ocsp;
+#endif
 #endif
 #endif
 
@@ -352,30 +354,35 @@ UServer_Base::~UServer_Base()
    U_INTERNAL_ASSERT_POINTER(socket)
    U_INTERNAL_ASSERT_POINTER(vplugin)
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#ifdef ENABLE_THREAD
+
+# if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   if (preforked_num_kids == -1)
+      {
+      U_INTERNAL_ASSERT_POINTER(UNotifier::pthread)
+
+      delete UNotifier::pthread;
+      }
+# endif
+
+# ifndef _MSWINDOWS_
    if (u_pthread_time)
       {
-      ((UTimeThread*)u_pthread_time)->suspend();
-
-      delete (UTimeThread*)u_pthread_time; // delete to join
+      delete (UTimeThread*)u_pthread_time;
 
       (void) U_SYSCALL(pthread_rwlock_destroy, "%p", ULog::prwlock);
       }
 
-# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    if (bssl)
       {
-      if (pthread_ocsp)
-         {
-         pthread_ocsp->suspend();
-
-         delete pthread_ocsp; // delete to join
-         }
+      if (pthread_ocsp) delete pthread_ocsp;
 
       USSLSocket::cleanupStapling();
 
       if (UServer_Base::lock_ocsp_staple) delete UServer_Base::lock_ocsp_staple;
       }
+#  endif
 # endif
 #endif
 
@@ -1836,7 +1843,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
 #if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp)                     pthread_ocsp->suspend();
+   if (  pthread_ocsp)                  pthread_ocsp->suspend();
 # endif
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 #endif
@@ -1857,7 +1864,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
 #if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp)                     pthread_ocsp->resume();
+   if (  pthread_ocsp)                  pthread_ocsp->resume();
 #  endif
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
 #endif
@@ -1932,10 +1939,10 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
       if (preforked_num_kids)
          {
-#     if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-         if (preforked_num_kids == -1) ((UThread*)UNotifier::pthread)->suspend();
-#       if defined(HAVE_SYS_SYSCALL_H) && defined(DEBUG)
-         if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
+#     if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+         if (preforked_num_kids == -1) UNotifier::pthread->suspend();
+#       ifdef DEBUG
+         u_trace_unlock();
 #       endif
 #     endif
 
@@ -2595,19 +2602,25 @@ void UServer_Base::runLoop(const char* user)
    if (isLog()) ULog::log("Waiting for connection on port %u", port);
 #endif
 
-#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids == -1)
       {
+      U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, 0)
+
       UNotifier::pthread = U_NEW(UClientThread);
 
-      ((UThread*)UNotifier::pthread)->start(50);
+#  ifdef _MSWINDOWS_
+      InitializeCriticalSection(&UNotifier::mutex);
+#  endif
 
-      proc->_pid = ((UThread*)UNotifier::pthread)->getTID();
+      UNotifier::pthread->start(50);
+
+      proc->_pid = UNotifier::pthread->sid;
 
       U_ASSERT(proc->parent())
       }
 #  ifdef DEBUG
-   else 
+   else
       {
       U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, 0)
       }

@@ -1,19 +1,21 @@
-test_memerror: WARNING: 30/05/15 16:03:57 (pid 19575) we are going to allocate 64 MB (pid 19575) - address space usage: 122.48 MBytes - rss usage: 7.78 MBytes
-{Call   main(1,0x7fffd71b9218)
+[tid 0]<--
+[tid 32088]-->
+test_memerror: WARNING: 28/08/15 15:35:12 (pid 32088) we are going to allocate 64 MB (pid 32088) - address space usage: 130.66 MBytes - rss usage: 8.08 MBytes
+{Call   main(1,0x7ffccf732938)
 test_memerror: ERROR ON MEMORY
 -------------------------------------
- pid: 19575
+ pid: 32088
  file: test_memerror.cpp
  line: 26
  function: UInt::operator int() const
- assertion: "((this)->memory.invariant())" [pobj = 0x24717a0 _this = (nil) - FMR]
+ assertion: "((this)->memory.invariant())" [pobj = 0x1762a50 _this = (nil) - FMR]
 -------------------------------------
 test_memerror: ERROR ON MEMORY
 -------------------------------------
- pid: 19575
+ pid: 32088
  file: ../../include/ulib/debug/error_memory.h
  line: 28
  function: UMemoryError::~UMemoryError()
- assertion: "(invariant())" [pobj = 0x7fffd71b8900 _this = 0xa1b2c3d000000ff - ABW]
+ assertion: "(invariant())" [pobj = 0x7ffccf732020 _this = 0xa1b2c3d000000ff - ABW]
 -------------------------------------
-}Return main(1,0x7fffd71b9218) = 0
+}Return main(1,0x7ffccf732938) = 0

@@ -14,7 +14,7 @@
 #ifndef ULIB_NOTIFIER_H
 #define ULIB_NOTIFIER_H
 
-#include <ulib/container/vector.h>
+#include <ulib/thread.h>
 #include <ulib/container/gen_hash_map.h>
 
 /**
@@ -40,7 +40,6 @@
 #include <ulib/event/event_fd.h>
 #include <ulib/event/event_time.h>
 
-class UThread;
 class USocket;
 class USocketExt;
 class UHttpPlugIn;
@@ -130,9 +129,6 @@ protected:
 #ifdef USE_LIBEVENT
 // nothing
 #elif defined(HAVE_EPOLL_WAIT)
-# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   static void* pthread;
-# endif
    static int epollfd;
    static struct epoll_event* events;
 #else
@@ -174,21 +170,20 @@ private:
    static void handlerDelete(int fd, int mask);
 
 #ifndef USE_LIBEVENT
-   static void notifyHandlerEvent()
-      {
-      U_TRACE(0, "UNotifier::notifyHandlerEvent()")
-
-      U_INTERNAL_ASSERT_POINTER(handler_event)
-
-      U_INTERNAL_DUMP("handler_event = %p bread = %b nfd_ready = %d fd = %d op_mask = %d %B",
-                       handler_event, bread, nfd_ready, handler_event->fd, handler_event->op_mask, handler_event->op_mask)
-
-      if ((bread ? handler_event->handlerRead()
-                 : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
-         {
-         handlerDelete(handler_event);
-         }
-      }
+   static void notifyHandlerEvent() U_NO_EXPORT;
+# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   static UThread* pthread;
+#  ifdef _MSWINDOWS_
+   static CRITICAL_SECTION mutex;
+#  else
+   static pthread_mutex_t mutex;
+#  endif
+   static void   lock() { if (pthread) UThread::lock(&mutex); }
+   static void unlock() { if (pthread) UThread::unlock(&mutex); }
+# else
+   static void   lock() {}
+   static void unlock() {}
+# endif
 #endif
 
 #ifdef U_COMPILER_DELETE_MEMBERS
@@ -205,5 +200,4 @@ private:
    friend class UServer_Base;
    friend class UClientImage_Base;
 };
-
 #endif

@@ -22,17 +22,24 @@
 #  include <sys/syscall.h>
 #endif
 
-int   u_trace_fd = -1;
-int   u_trace_signal;
-int   u_trace_suspend;
-void* u_plock;
-void* u_trace_mask_level;
-
+int      u_trace_fd = -1;
+int      u_trace_signal;
+int      u_trace_suspend;
+void*    u_trace_mask_level;
 char     u_trace_tab[256]; /* 256 max indent */
 uint32_t u_trace_num_tab;
 
-static int      level_active;
+static int level_active;
 static uint32_t file_size;
+#ifdef ENABLE_THREAD
+# ifdef _MSWINDOWS_
+static DWORD old_tid;
+static CRITICAL_SECTION mutex;
+# else
+static pthread_t old_tid;
+static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+# endif
+#endif
 
 static void printInfo(void)
 {
@@ -77,32 +84,36 @@ void u_trace_lock(void)
 {
    U_INTERNAL_TRACE("u_trace_lock()")
 
-#if defined(HAVE_SYS_SYSCALL_H) && defined(ENABLE_THREAD)
-   if (u_plock)
+#ifdef ENABLE_THREAD
+# ifdef _MSWINDOWS_
+   if (old_tid == 0) InitializeCriticalSection(&mutex);
+
+   DWORD tid = GetCurrentThreadId();
+
+   EnterCriticalSection(&mutex);
+# else
+   pthread_t tid;
+#  ifdef HAVE_SYS_SYSCALL_H
+   tid = syscall(SYS_gettid);
+#  endif
+   (void) pthread_mutex_lock(&mutex);
+# endif
+
+   if (old_tid != tid)
       {
-      static pid_t old_tid;
+      char tid_buffer[32];
+      int sz = snprintf(tid_buffer, sizeof(tid_buffer), "[tid %ld]<--\n[tid %ld]-->\n", old_tid, tid);
 
-      pid_t tid = syscall(SYS_gettid);
+      old_tid = tid;
 
-      (void) pthread_mutex_lock((pthread_mutex_t*)u_plock);
-
-      if (old_tid != tid)
+      if (file_size == 0) (void) write(u_trace_fd, tid_buffer, sz);
+      else
          {
-         char tid_buffer[32];
+         if ((file_ptr + sz) > file_limit) file_ptr = file_mem;
 
-         int sz = snprintf(tid_buffer, sizeof(tid_buffer), "[tid %d]<--\n[tid %d]-->\n", old_tid, tid);
+         u__memcpy(file_ptr, tid_buffer, sz, __PRETTY_FUNCTION__);
 
-         old_tid = tid;
-
-         if (file_size == 0) (void) write(u_trace_fd, tid_buffer, sz);
-         else
-            {
-            if ((file_ptr + sz) > file_limit) file_ptr = file_mem;
-
-            u__memcpy(file_ptr, tid_buffer, sz, __PRETTY_FUNCTION__);
-
-            file_ptr += sz;
-            }
+         file_ptr += sz;
          }
       }
 #endif
@@ -112,8 +123,12 @@ void u_trace_unlock(void)
 {
    U_INTERNAL_TRACE("u_trace_unlock()")
 
-#if defined(HAVE_SYS_SYSCALL_H) && defined(ENABLE_THREAD)
-   if (u_plock) (void) pthread_mutex_unlock((pthread_mutex_t*)u_plock);
+#ifdef ENABLE_THREAD
+# ifdef _MSWINDOWS_
+   LeaveCriticalSection(&mutex);
+# else
+   (void) pthread_mutex_unlock(&mutex);
+# endif
 #endif
 }
 

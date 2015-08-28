@@ -34,10 +34,6 @@ extern "C" { int nanosleep (const struct timespec* requested_time,
 
 UThread* UThread::first;
 
-#ifndef _MSWINDOWS_
-pthread_mutex_t UThread::mlock = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
 UThread::UThread(int _detachstate)
 {
    U_TRACE_REGISTER_OBJECT(0, UThread, "%d", _detachstate)
@@ -59,6 +55,20 @@ UThread::UThread(int _detachstate)
    (void) U_SYSCALL(pthread_attr_init,           "%p",    &attr);
    (void) U_SYSCALL(pthread_attr_setdetachstate, "%p,%d", &attr, _detachstate);
 #endif
+}
+
+UThread::~UThread()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UThread)
+
+   if (tid)
+      {
+#  ifndef _MSWINDOWS_
+      if (isDetached()) suspend();
+#  endif
+
+      close();
+      }
 }
 
 void UThread::close()
@@ -138,26 +148,6 @@ void UThread::close()
 #endif
 }
 
-#ifdef _MSWINDOWS_
-DWORD UThread::getTID()
-{
-   U_TRACE(0, "UThread::getTID()")
-
-   DWORD _tid = GetCurrentThreadId();
-
-   U_RETURN(_tid);
-}
-#else
-pthread_t UThread::getTID()
-{
-   U_TRACE(0, "UThread::getTID()")
-
-   pthread_t _tid = syscall(SYS_gettid);
-
-   U_RETURN(_tid);
-}
-#endif
-
 void UThread::yield()
 {
    U_TRACE(1, "UThread::yield()")
@@ -201,7 +191,38 @@ void UThread::yield()
 #endif
 }
 
-#ifndef _MSWINDOWS_
+#ifdef _MSWINDOWS_
+DWORD UThread::getTID()
+{
+   U_TRACE(0, "UThread::getTID()")
+
+   DWORD tid = GetCurrentThreadId();
+
+   U_RETURN(tid);
+}
+
+unsigned __stdcall UThread::execHandler(void* th)
+{
+   U_TRACE(0, "UThread::::execHandler(%p)", th)
+
+   threadStart((UThread*)th);
+
+   U_RETURN(0);
+}
+#else
+pid_t UThread::getTID()
+{
+   U_TRACE(0, "UThread::getTID()")
+
+   pid_t tid;
+
+#ifdef HAVE_SYS_SYSCALL_H
+   tid = syscall(SYS_gettid);
+#endif
+
+   U_RETURN(tid);
+}
+
 void UThread::sigInstall(int signo)
 {
    U_TRACE(1, "UThread::sigInstall(%d)", signo)
@@ -232,15 +253,16 @@ void UThread::manageSignal(int signo)
 {
    U_TRACE(1, "UThread::manageSignal(%d)", signo)
 
+   static pthread_cond_t  mcond = PTHREAD_COND_INITIALIZER;
+   static pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
+
    // Mutexes are used to ensure the exclusive access, where as condition variables are used to synchronize threads based on the events.
    // We need Mutexes to ensure that condition variables dont end up in an infinite wait. One thing to remember is Mutex operation of lock
    // and unlock are guaranteed to be atomic, but the condition variables need not be. i.e The thread can get scheduled out while the condition variable wait is half way
 
-   static pthread_cond_t  mcond = PTHREAD_COND_INITIALIZER;
+   lock(&mlock);
 
    U_INTERNAL_DUMP("suspendCount = %d", suspendCount)
-
-   (void) U_SYSCALL(pthread_mutex_lock, "%p", &mlock);
 
    if (signo == U_SIGSTOP &&
        suspendCount++ == 0)
@@ -264,36 +286,20 @@ void UThread::manageSignal(int signo)
       (void) U_SYSCALL(pthread_cond_signal, "%p", &mcond);
       }
 
-   (void) U_SYSCALL(pthread_mutex_unlock, "%p", &mlock);
+   unlock(&mlock);
 }
-#endif
 
-#ifdef _MSWINDOWS_
-unsigned __stdcall UThread::execHandler(void* th)
-{
-   U_TRACE(0, "UThread::::execHandler(%p)", th)
-
-   U_INTERNAL_DUMP("th->tid = %p", ((UThread*)th)->tid)
-
-   ((UThread*)th)->setCancel(cancelDeferred);
-
-   ((UThread*)th)->run();
-
-   ((UThread*)th)->close();
-
-   U_RETURN(0);
-}
-#else
 void UThread::execHandler(UThread* th)
 {
    U_TRACE(1, "UThread::execHandler(%p)", th)
 
+#ifdef HAVE_SYS_SYSCALL_H
+   th->sid = syscall(SYS_gettid);
+#endif
+
+   U_INTERNAL_ASSERT_EQUALS(pthread_self(), th->tid)
+
    sigset_t mask;
-
-   th->tid = (pthread_t) U_SYSCALL_NO_PARAM(pthread_self);
-
-   U_INTERNAL_DUMP("th->tid = %p", th->tid)
-
 #ifdef sigemptyset
    sigemptyset(&mask);
 #else
@@ -337,17 +343,7 @@ void UThread::execHandler(UThread* th)
    th->sigInstall(U_SIGCONT);
 #endif
 
-   pthread_cleanup_push(threadCleanup, th);
-
-   th->setCancel(cancelDeferred);
-
-   th->run();
-
-   pthread_cleanup_pop(0);
-
-   U_INTERNAL_DUMP("th->tid = %p", th->tid)
-
-   if (th->tid) th->close();
+   threadStart(th);
 }
 #endif
 
@@ -357,22 +353,13 @@ bool UThread::start(uint32_t timeoutMS)
 
    U_INTERNAL_ASSERT_EQUALS(tid, 0)
 
-#if defined(DEBUG) && !defined(_MSWINDOWS_)
-   if (u_plock == 0)
-      {
-      static pthread_mutex_t plock = PTHREAD_MUTEX_INITIALIZER;
-
-      u_plock = &plock;
-      }
-#endif
-
    next  = first;
    first = this;
 
    U_INTERNAL_DUMP("first = %p next = %p", first, next)
 
 #ifdef _MSWINDOWS_
-   (void) _beginthreadex(NULL, 0, execHandler, this, CREATE_SUSPENDED, (unsigned*)&tid);
+   (void) _beginthreadex(NULL, 0, execHandler, this, CREATE_SUSPENDED, (unsigned*)&sid);
 
    if (tid == 0)
        {
@@ -416,8 +403,8 @@ void UThread::setCancel(int mode)
 
    switch (mode)
       {
-      case cancelImmediate:
       case cancelDeferred:
+      case cancelImmediate:
          {
 #     ifdef HAVE_PTHREAD_CANCEL
          (void) U_SYSCALL(pthread_setcancelstate, "%d,%p",                           PTHREAD_CANCEL_ENABLE,        &old);
@@ -482,6 +469,8 @@ void UThread::exitCancel(int old)
 void UThread::sleep(time_t timeoutMS)
 {
    U_TRACE(1, "UThread::sleep(%ld)", timeoutMS)
+
+   U_ASSERT(isCurrentThread(tid))
 
    struct timespec ts = { timeoutMS / 1000L, (timeoutMS % 1000L) * 1000000L };
 
@@ -560,28 +549,67 @@ bool UThread::initIPC(pthread_mutex_t* pmutex, pthread_cond_t* pcond)
    U_RETURN(true);
 }
 
-void UThread::doIPC(pthread_mutex_t* pmutex, pthread_cond_t* pcond, vPF function, bool wait)
+void UThread::doIPC(pthread_mutex_t* plock, pthread_cond_t* pcond, vPF function, bool wait)
 {
-   U_TRACE(0, "UThread::doIPC(%p,%p,%p,%b)", pmutex, pcond, function, wait)
+   U_TRACE(0, "UThread::doIPC(%p,%p,%p,%b)", plock, pcond, function, wait)
 
-   lock(pmutex);
+   lock(plock);
 
-   if (wait) (void) U_SYSCALL(pthread_cond_wait, "%p,%p", pcond, pmutex); // block until we are signalled from other...
+   if (wait) (void) U_SYSCALL(pthread_cond_wait, "%p,%p", pcond, plock); // block until we are signalled from other...
 
    function(); // ...than call function
 
-   unlock(pmutex);
+   unlock(plock);
 
    if (wait == false) (void) U_SYSCALL(pthread_cond_signal, "%p", pcond); // signal to waiting thread...
 }
+
+// THREAD POOL
+
+UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool(size)
+{
+   U_TRACE_REGISTER_OBJECT(0, UThreadPool, "%u", size)
+
+#ifdef _MSWINDOWS_
+   InitializeCriticalSection(&tasksMutex);  // Task queue mutex
+   InitializeConditionVariable(&condition); // Condition variable
+#else
+   tasksMutex = PTHREAD_MUTEX_INITIALIZER; // Task queue mutex
+    condition = PTHREAD_COND_INITIALIZER;  // Condition variable
+#endif
+}
+
+UThreadPool::~UThreadPool()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UThread)
+}
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+const char* UThreadPool::dump(bool reset) const
+{
+   *UObjectIO::os << "active         " << active        << '\n'
+                  << "pool  (UVector " << (void*)&pool  << ")\n"
+                  << "queue (UVector " << (void*)&queue << ')';
+
+   if (reset)
+      {
+      UObjectIO::output();
+
+      return UObjectIO::buffer_output;
+      }
+
+   return 0;
+}
+#endif
 #endif
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UThread::dump(bool reset) const
 {
    *UObjectIO::os << "tid            " << tid          << '\n'
+                  << "sid            " << sid          << '\n'
                   << "cancel         " << cancel       << '\n'
-                  << "detachstate    " << detachstate << '\n'
+                  << "detachstate    " << detachstate  << '\n'
                   << "next  (UThread " << (void*)next  << ")\n"
                   << "first (UThread " << (void*)first << ')';
 

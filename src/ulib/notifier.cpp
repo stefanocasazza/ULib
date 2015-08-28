@@ -17,10 +17,6 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/net/server/server_plugin.h>
 
-#if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-#  include "ulib/thread.h"
-#endif
-
 #ifdef HAVE_POLL_H
 #  include <poll.h>
 struct pollfd UNotifier::fds[1];
@@ -70,9 +66,6 @@ void UEventFd::operator()(int _fd, short event)
    if (ret == U_NOTIFIER_DELETE) UNotifier::erase(this);
 }
 #elif defined(HAVE_EPOLL_WAIT)
-# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-void*                UNotifier::pthread;
-# endif
 int                  UNotifier::epollfd;
 struct epoll_event*  UNotifier::events;
 struct epoll_event*  UNotifier::pevents;
@@ -97,6 +90,32 @@ UEventFd*            UNotifier::handler_event;
 UEventFd**           UNotifier::lo_map_fd;
 
 UGenericHashMap<int,UEventFd*>* UNotifier::hi_map_fd; // maps a fd to a node pointer
+
+#ifndef USE_LIBEVENT
+U_NO_EXPORT void UNotifier::notifyHandlerEvent()
+{
+   U_TRACE(0, "UNotifier::notifyHandlerEvent()")
+
+   U_INTERNAL_ASSERT_POINTER(handler_event)
+
+   U_INTERNAL_DUMP("handler_event = %p bread = %b nfd_ready = %d fd = %d op_mask = %d %B",
+                    handler_event, bread, nfd_ready, handler_event->fd, handler_event->op_mask, handler_event->op_mask)
+
+   if ((bread ? handler_event->handlerRead()
+              : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
+      {
+      handlerDelete(handler_event);
+      }
+}
+# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+UThread* UNotifier::pthread;
+#  ifdef _MSWINDOWS_
+CRITICAL_SECTION UNotifier::mutex;
+#  else
+pthread_mutex_t UNotifier::mutex = PTHREAD_MUTEX_INITIALIZER;
+#  endif
+# endif
+#endif
 
 void UNotifier::init(bool bacquisition)
 {
@@ -222,15 +241,15 @@ bool UNotifier::isHandler(int fd)
          U_RETURN(false);
          }
 
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (pthread) ((UThread*)pthread)->lock();
-#  endif
+      bool result;
 
-      if (hi_map_fd->find(fd)) U_RETURN(true);
+      lock();
 
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (pthread) ((UThread*)pthread)->unlock();
-#  endif
+      result = hi_map_fd->find(fd);
+
+      unlock();
+
+      if (result) U_RETURN(true);
       }
 
    U_RETURN(false);
@@ -243,15 +262,11 @@ void UNotifier::resetHandler(int fd)
    if (fd < (int32_t)max_connection) lo_map_fd[fd] = 0;
    else
       {
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (pthread) ((UThread*)pthread)->lock();
-#  endif
+      lock();
 
       (void) hi_map_fd->erase(fd);
 
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (pthread) ((UThread*)pthread)->unlock();
-#  endif
+      unlock();
       }
 }
 
@@ -275,11 +290,15 @@ bool UNotifier::setHandler(int fd)
          }
       }
 
-#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   if (pthread) ((UThread*)pthread)->lock();
-#endif
+   bool result;
 
-   if (hi_map_fd->find(fd))
+   lock();
+
+   result = hi_map_fd->find(fd);
+
+   unlock();
+
+   if (result)
       {
       handler_event = hi_map_fd->elem();
 
@@ -287,10 +306,6 @@ bool UNotifier::setHandler(int fd)
 
       U_RETURN(true);
       }
-
-#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   if (pthread) ((UThread*)pthread)->unlock();
-#endif
 
    U_RETURN(false);
 }
@@ -310,15 +325,11 @@ void UNotifier::insert(UEventFd* item)
    if (fd < (int32_t)max_connection) lo_map_fd[fd] = item;
    else
       {
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (pthread) ((UThread*)pthread)->lock();
-#  endif
+      lock();
 
       hi_map_fd->insert(fd, item);
 
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (pthread) ((UThread*)pthread)->unlock();
-#  endif
+      unlock();
       }
 
 #ifdef USE_LIBEVENT
@@ -707,7 +718,9 @@ loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
                                                                        : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
             {
             handlerDelete(handler_event);
+#                       ifndef U_COVERITY_FALSE_POSITIVE // Improper use of negative value (NEGATIVE_RETURNS)
                           handler_event->fd = -1;
+#                       endif
 
 #        ifdef U_EPOLLET_POSTPONE_STRATEGY
             if (bepollet) pevents->events = 0;
@@ -763,7 +776,9 @@ loop2:         if (pevents->events)
                   if (handler_event->handlerRead() == U_NOTIFIER_DELETE)
                      {
                      handlerDelete(handler_event);
+#                                ifndef U_COVERITY_FALSE_POSITIVE // Improper use of negative value (NEGATIVE_RETURNS)
                                    handler_event->fd = -1;
+#                                endif
 
                      pevents->events = 0;
                      }
@@ -890,23 +905,15 @@ void UNotifier::clear()
          }
       }
 
-#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   if (pthread == 0)
-#endif
-      {
-      UMemoryPool::_free(lo_map_fd, max_connection, sizeof(UEventFd*));
+   UMemoryPool::_free(lo_map_fd, max_connection, sizeof(UEventFd*));
 
-      hi_map_fd->deallocate();
+   hi_map_fd->deallocate();
 
-      delete hi_map_fd;
-      }
+   delete hi_map_fd;
 
 #if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
    U_INTERNAL_ASSERT_POINTER(events)
 
-# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-   if (pthread == 0)
-# endif
    UMemoryPool::_free(events, max_connection + 1, sizeof(struct epoll_event));
 
    (void) U_SYSCALL(close, "%d", epollfd);

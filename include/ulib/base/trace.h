@@ -25,7 +25,6 @@
 extern "C" {
 #endif
 
-extern U_EXPORT void*    u_plock;
 extern U_EXPORT int      u_trace_fd;
 extern U_EXPORT int      u_trace_signal;
 extern U_EXPORT int      u_trace_suspend;  /* on-off */
