@@ -382,7 +382,6 @@ U_EXPORT int            inet_aton(const char *cp, struct in_addr *addr);
 U_EXPORT int            setrlimit(int resource, const struct rlimit* rlim);
 U_EXPORT int            socketpair(int d, int type, int protocol, int sv[2]);
 U_EXPORT ssize_t        writev(int fd, const struct iovec* vector, int count);
-U_EXPORT const char*    inet_ntop(int af, const void* src, char* dst, size_t size);
 U_EXPORT int            sigprocmask(int how, const sigset_t* set, sigset_t* oldset);
 U_EXPORT void*          mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset);
 U_EXPORT int            sigaction(int signum, const struct sigaction* act, struct sigaction* oldact);
@@ -392,6 +391,7 @@ U_EXPORT int            setitimer(int which, const struct itimerval* value, stru
  *
  * U_EXPORT int         gettimeofday(struct timeval* tv, void* tz);
  * U_EXPORT int         truncate(const char* fname, off_t distance);
+ * U_EXPORT const char* inet_ntop(int af, const void* src, char* dst, size_t size);
  */
 
 U_EXPORT int             raise_w32(int nsig);

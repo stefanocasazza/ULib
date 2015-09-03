@@ -1,6 +1,7 @@
 // test_thread.cpp
 
 #include <ulib/thread.h>
+#include <ulib/timeval.h>
 
 #undef  OK
 #define OK    {printf("ok\n");}
@@ -175,6 +176,22 @@ public:
       }
 };
 
+class Task : public UThread {
+public:
+
+    Task() : UThread(PTHREAD_CREATE_JOINABLE) {}
+   ~Task()                                    {}
+
+   void run()
+      {
+      U_TRACE(5, "Task::run()")
+
+      printf("Hello World!\n");
+
+      sleep(1000);
+      }
+};
+
 int U_EXPORT main(int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
@@ -255,7 +272,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    th->start();
 
-   UThread::nanosleep(200);
+   UTimeVal::nanosleep(200);
 
    U_INTERNAL_DUMP("FATHER DELETE = %p", th)
 
@@ -269,9 +286,19 @@ int U_EXPORT main(int argc, char* argv[])
 
    th->start();
 
-   UThread::nanosleep(100); // 150 millisecond
+   UTimeVal::nanosleep(100); // 150 millisecond
 
    delete th; // delete to join
+
+   cout << "thread delete\n\nstarting thread pool" << endl;
+
+   UThreadPool tp(2);
+
+   for (int i = 0; i < 4; ++i) tp.addTask(U_NEW(Task));
+
+   tp.waitForWorkToBeFinished();
+
+   cout << "thread pool finished" << endl;
 
    printf("\nNow program should finish... :)\n");
 

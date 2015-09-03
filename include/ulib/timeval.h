@@ -347,7 +347,8 @@ public:
 
    // SERVICES
 
-   void nanosleep();
+          void nanosleep();
+   static void nanosleep(time_t timeoutMS) { UTimeVal(timeoutMS / 1000L, (timeoutMS % 1000L) * 1000L).nanosleep(); }
 
    // CHRONOMETER
 

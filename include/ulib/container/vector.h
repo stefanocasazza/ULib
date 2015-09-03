@@ -25,6 +25,7 @@
  */
 
 class UHTTP;
+class UThreadPool;
 class UHttpPlugIn;
 class UFileConfig;
 class UNoCatPlugIn;
@@ -391,6 +392,8 @@ private:
 #else
    UVector<void*>& operator=(const UVector<void*>&) { return *this; }
 #endif
+
+   friend class UThreadPool;
 
    template <class T> friend class UOrmTypeHandler;
    template <class T> friend class UJsonTypeHandler;
@@ -904,6 +907,8 @@ public:
 #endif
 
 private:
+   friend class UThreadPool;
+
 #ifdef U_COMPILER_DELETE_MEMBERS
    UVector<T*>& operator=(const UVector<T*>&) = delete;
 #else

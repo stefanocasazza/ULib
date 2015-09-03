@@ -86,9 +86,9 @@ void u_trace_lock(void)
 
 #ifdef ENABLE_THREAD
 # ifdef _MSWINDOWS_
-   if (old_tid == 0) InitializeCriticalSection(&mutex);
-
    DWORD tid = GetCurrentThreadId();
+
+   if (old_tid == 0) InitializeCriticalSection(&mutex);
 
    EnterCriticalSection(&mutex);
 # else

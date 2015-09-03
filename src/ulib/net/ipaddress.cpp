@@ -392,7 +392,7 @@ char* UIPAddress::resolveStrAddress(int iAddressType, const void* src, char* ip)
    char* result = 0;
 
 #ifdef HAVE_INET_NTOP
-   result = (char*) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, src, ip, U_INET_ADDRSTRLEN);
+   result = (char*) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, (void*)src, ip, U_INET_ADDRSTRLEN);
 #else
    result = U_SYSCALL(inet_ntoa, "%u", *((struct in_addr*)src));
 

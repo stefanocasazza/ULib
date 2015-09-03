@@ -18,15 +18,20 @@
 #include <ulib/container/vector.h>
 
 #ifdef _MSWINDOWS_
+#  include <synchapi.h>
 #  undef sleep
 #  undef signal
 #  define PTHREAD_CREATE_DETACHED 1
 #else
+#  ifdef HAVE_SYS_SYSCALL_H
+#     include <sys/syscall.h>
+#  endif
 #  define U_SIGSTOP (SIGRTMIN+5)
 #  define U_SIGCONT (SIGRTMIN+6)
 #endif
 
 class UNotifier;
+class UThreadPool;
 class UServer_Base;
 
 class U_EXPORT UThread {
@@ -40,8 +45,35 @@ public:
 
    // COSTRUTTORI
 
-            UThread(int detachstate);
-   virtual ~UThread();
+   UThread(int _detachstate)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UThread, "%d", _detachstate)
+
+      next         = 0;
+      detachstate  = _detachstate;
+      cancel       = 0;
+      sid          = 0;
+      tid          = 0;
+#  ifdef _MSWINDOWS_
+      cancellation = 0;
+#  else
+      suspendCount = 0;
+#  endif
+      }
+
+   virtual ~UThread()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UThread)
+
+      if (tid)
+         {
+#     ifndef _MSWINDOWS_
+         if (isDetached()) suspend();
+#     endif
+
+         close();
+         }
+      }
 
    // SERVICES
 
@@ -61,6 +93,27 @@ public:
 
       LeaveCriticalSection(pmutex);
       }
+
+   static void wait(CRITICAL_SECTION* pmutex, CONDITION_VARIABLE* pcond)
+      {
+      U_TRACE(0, "UThread::wait(%p,%p)", pmutex, pcond)
+
+      SleepConditionVariableCS(pcond, pmutex, INFINITE); // block until we are signalled from other...
+      }
+
+   static void signal(CONDITION_VARIABLE* pcond)
+      {
+      U_TRACE(0, "UThread::signal(%p)", pcond)
+
+      WakeConditionVariable(pcond); // signal to waiting thread...
+      }
+
+   static void signalAll(CONDITION_VARIABLE* pcond)
+      {
+      U_TRACE(0, "UThread::signalAll(%p)", pcond)
+
+      WakeAllConditionVariable(pcond); // signal to waiting thread...
+      }
 #else
    static pid_t getTID();
 
@@ -76,6 +129,27 @@ public:
       U_TRACE(1, "UThread::unlock(%p)", pmutex)
 
       (void) U_SYSCALL(pthread_mutex_unlock, "%p", pmutex);
+      }
+
+   static void wait(pthread_mutex_t* pmutex, pthread_cond_t* pcond)
+      {
+      U_TRACE(0, "UThread::wait(%p,%p)", pmutex, pcond)
+
+      (void) U_SYSCALL(pthread_cond_wait, "%p,%p", pcond, pmutex); // block until we are signalled from other...
+      }
+
+   static void signal(pthread_cond_t* pcond)
+      {
+      U_TRACE(0, "UThread::signal(%p)", pcond)
+
+      (void) U_SYSCALL(pthread_cond_signal, "%p", pcond); // signal to waiting thread...
+      }
+
+   static void signalAll(pthread_cond_t* pcond)
+      {
+      U_TRACE(0, "UThread::signalAll(%p)", pcond)
+
+      (void) U_SYSCALL(pthread_cond_broadcast, "%p", pcond); // signal to waiting thread...
       }
 
    static bool initRwLock(pthread_rwlock_t* prwlock)
@@ -151,7 +225,7 @@ public:
          return;
          }
 
-      UTimeVal(timeoutMS / 1000L, (timeoutMS % 1000L) * 1000L).nanosleep();
+      UTimeVal::nanosleep(timeoutMS);
       }
 
    /**
@@ -281,13 +355,11 @@ protected:
    UThread* next;
    int detachstate, cancel;
    pid_t sid;
-
 #ifdef _MSWINDOWS_
    DWORD tid;
    HANDLE cancellation;
 #else
    pthread_t tid;
-   pthread_attr_t attr;
    int suspendCount;
 #endif
 
@@ -295,26 +367,35 @@ protected:
 
    void close();
 
-   static void threadStart(UThread* th)
+   void threadStart()
       {
-      U_TRACE(0, "UThread::threadStart(%p)", th)
+      U_TRACE(0, "UThread::threadStart()")
 
-      U_INTERNAL_ASSERT_POINTER(th)
+      U_INTERNAL_DUMP("tid = %p sid = %u", tid, sid)
 
-      U_INTERNAL_DUMP("th->tid = %p th->sid = %u", th->tid, th->sid)
+      setCancel(cancelDeferred);
 
-      th->setCancel(cancelDeferred);
+      run();
 
-      th->run();
+      U_INTERNAL_DUMP("tid = %p sid = %u", tid, sid)
 
-      U_INTERNAL_DUMP("th->tid = %p th->sid = %u", th->tid, th->sid)
-
-      if (th->tid) th->close();
+      if (tid) close();
       }
 
 #ifdef _MSWINDOWS_
-   static unsigned __stdcall execHandler(void* th);
+   static unsigned __stdcall execHandler(void* th)
+      {
+      U_TRACE(0, "UThread::::execHandler(%p)", th)
+
+      U_INTERNAL_ASSERT_POINTER(th)
+   // U_INTERNAL_ASSERT_EQUALS(GetCurrentThreadId(), th->tid)
+
+      ((UThread*)th)->threadStart();
+
+      U_RETURN(0);
+      }
 #else
+   void maskSignal();
    void sigInstall(int signo);
    void manageSignal(int signo);
 
@@ -327,7 +408,22 @@ protected:
       if (th) th->manageSignal(signo);
       }
 
-   static void execHandler(UThread* th);
+   static void execHandler(UThread* th)
+      {
+      U_TRACE(0, "UThread::execHandler(%p)", th)
+
+      U_INTERNAL_ASSERT_POINTER(th)
+
+#  ifdef HAVE_SYS_SYSCALL_H
+      th->sid = syscall(SYS_gettid);
+#  endif
+
+   // U_INTERNAL_ASSERT_EQUALS(pthread_self(), th->tid)
+
+      th->maskSignal();
+
+      th->threadStart();
+      }
 
    static void threadCleanup(UThread* th)
       {
@@ -361,16 +457,18 @@ protected:
 
 private:
    friend class UNotifier;
+   friend class UThreadPool;
    friend class UServer_Base;
 
 #ifdef U_COMPILER_DELETE_MEMBERS
-   UThread(const UThread&) = delete;
    UThread& operator=(const UThread&) = delete;
 #else
-   UThread(const UThread&)            {}
    UThread& operator=(const UThread&) { return *this; }
 #endif
 };
+
+// UThreadPool class manages all the UThreadPool related activities. This includes keeping track of idle threads and snchronizations between all threads.
+// Using UThreadPool is advantageous only when the work to be done is really time consuming. (at least 1 or 2 seconds)
 
 class U_EXPORT UThreadPool : public UThread {
 public:
@@ -386,23 +484,40 @@ public:
     UThreadPool(uint32_t size);
    ~UThreadPool();
 
-   // define method VIRTUAL of class UThread
+   // SERVICES
 
-   virtual void run() U_DECL_FINAL
+   void addTask(UThread* task)
       {
-      U_TRACE(0, "UThreadPool::run()")
+      U_TRACE(0, "UThreadPool::addTask(%p)", task)
 
-      /*
-      for (task in queue)
-         {
-         if (task == STOP_WORKING) break;
+      U_INTERNAL_ASSERT(active)
 
-         do work;
-         }
-      */
+      lock(&tasks_mutex);
+
+      queue.push(task);
+
+      unlock(&tasks_mutex);
+
+      signal(&condition); // Waking up the threads so they will know there is a job to do
       }
 
-   // SERVICES
+   // This function gives the user the ability to send 10 tasks to the thread pool then to wait till
+   // all the tasks completed, and give the next 10 which are dependand on the result of the previous ones
+
+   void waitForWorkToBeFinished()
+      {
+      U_TRACE(0, "UThreadPool::waitForWorkToBeFinished()")
+
+      lock(&tasks_mutex);
+
+      while (queue._length != 0) wait(&tasks_mutex, &condition_task_finished);
+
+      unlock(&tasks_mutex);
+      }
+
+   // define method VIRTUAL of class UThread
+
+   virtual void run() U_DECL_OVERRIDE;
 
    // DEBUG
 
@@ -416,11 +531,11 @@ protected:
    bool active;
 
 #ifdef _MSWINDOWS_
-   CRITICAL_SECTION tasksMutex;  // Task queue mutex
-   CONDITION_VARIABLE condition; // Condition variable
+   CRITICAL_SECTION tasks_mutex; // Task queue mutex
+   CONDITION_VARIABLE condition, condition_task_finished; // Condition variable
 #else
-   pthread_mutex_t tasksMutex;  // Task queue mutex
-   pthread_cond_t condition;    // Condition variable
+   pthread_mutex_t tasks_mutex; // Task queue mutex
+   pthread_cond_t condition, condition_task_finished; // Condition variable
 #endif
 
 private:

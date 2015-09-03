@@ -43,5 +43,13 @@ child end
 father end
 
 starting thread
+thread delete
+
+starting thread pool
+Hello World!
+Hello World!
+Hello World!
+Hello World!
+thread pool finished
 
 Now program should finish... :)

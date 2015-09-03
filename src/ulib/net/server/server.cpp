@@ -73,8 +73,6 @@
 #  include <ulib/net/server/plugin/mod_http.h>
 #endif
 
-#define U_DEFAULT_PORT 80
-
 int           UServer_Base::rkids;
 int           UServer_Base::old_pid;
 int           UServer_Base::timeoutMS;
@@ -169,12 +167,12 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #ifdef ENABLE_THREAD
 #include <ulib/thread.h>
 
-class UClientThread U_DECL_FINAL : public UThread {
+class UClientThread : public UThread {
 public:
 
    UClientThread() : UThread(PTHREAD_CREATE_DETACHED) {}
 
-   virtual void run()
+   virtual void run() U_DECL_FINAL
       {
       U_TRACE(0, "UClientThread::run()")
 
@@ -183,12 +181,12 @@ public:
 };
 
 #  ifndef _MSWINDOWS_
-class UTimeThread U_DECL_FINAL : public UThread {
+class UTimeThread : public UThread {
 public:
 
    UTimeThread() : UThread(PTHREAD_CREATE_DETACHED) {}
 
-   virtual void run()
+   virtual void run() U_DECL_FINAL
       {
       U_TRACE(0, "UTimeThread::run()")
 
@@ -249,12 +247,12 @@ public:
 #  include <ulib/net/tcpsocket.h>
 #  include <ulib/net/client/client.h>
 
-class UOCSPStapling U_DECL_FINAL : public UThread {
+class UOCSPStapling : public UThread {
 public:
 
    UOCSPStapling() : UThread(PTHREAD_CREATE_DETACHED) {}
 
-   virtual void run()
+   virtual void run() U_DECL_FINAL
       {
       U_TRACE(0, "UOCSPStapling::run()")
 
@@ -300,7 +298,7 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
    U_INTERNAL_ASSERT_EQUALS(cenvironment, 0)
    U_INTERNAL_ASSERT_EQUALS(senvironment, 0)
 
-   port  = U_DEFAULT_PORT;
+   port  = 80;
    pthis = this;
 
    as_user       = U_NEW(UString);
@@ -355,8 +353,7 @@ UServer_Base::~UServer_Base()
    U_INTERNAL_ASSERT_POINTER(vplugin)
 
 #ifdef ENABLE_THREAD
-
-# if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+# if !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids == -1)
       {
       U_INTERNAL_ASSERT_POINTER(UNotifier::pthread)
@@ -617,8 +614,8 @@ void UServer_Base::loadConfigParam()
    // ENABLE_RFC1918_FILTER reject request from private IP to public server address
    // MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
    //
-   // LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
-   // SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+   // LISTEN_BACKLOG        max number of ready to be delivered connections to accept()
+   // SET_REALTIME_PRIORITY flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
    //
    // CLIENT_THRESHOLD           min number of clients to active polling
    // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization
@@ -681,9 +678,9 @@ void UServer_Base::loadConfigParam()
 
    if (timeoutMS > 0) timeoutMS *= 1000;
 
-   port = cfg->readLong(*UString::str_PORT, U_DEFAULT_PORT);
+   port = cfg->readLong(*UString::str_PORT, 80);
 
-   if (port == U_DEFAULT_PORT &&
+   if (port == 80 &&
        UServices::isSetuidRoot() == false)
       {
       port = 8080;
@@ -777,12 +774,12 @@ void UServer_Base::loadConfigParam()
    enable_rfc1918_filter = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_RFC1918_FILTER"));
 #endif
 
-   // write pid on file...
-
    x = (*cfg)[*UString::str_PID_FILE];
 
    if (x)
       {
+      // write pid on file
+
       U_INTERNAL_ASSERT(x.isNullTerminated())
 
       old_pid = UFile::getSysParam(x.data());
@@ -834,7 +831,7 @@ void UServer_Base::loadConfigParam()
 #  endif
       }
 
-   // DOCUMENT_ROOT: The directory out of which you will serve your documents
+   // DOCUMENT_ROOT: The directory out of which we will serve your documents
 
    if (setDocumentRoot(cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false)
       {
@@ -884,8 +881,6 @@ void UServer_Base::loadConfigParam()
 
    if (loadPlugins(plugin_dir, plugin_list) == U_PLUGIN_HANDLER_ERROR) U_ERROR("Plugins stage load failed");
 }
-
-// load plugin modules and call server-wide hooks handlerConfig()...
 
 U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 {
@@ -1061,7 +1056,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
    if (cfg)
       {
-      // NB: we load configuration in reverse order respect to config var PLUGIN...
+      // NB: we load configuration in reverse order respect to the content of config var PLUGIN...
 
       i = vplugin_size;
 
@@ -1193,7 +1188,7 @@ int UServer_Base::pluginsHandler##xxx()                                       \
 U_PLUGIN_HANDLER(Request)
 U_PLUGIN_HANDLER(Reset)
 
-// NB: we call the various handlerXXX() in reverse order respect to config var PLUGIN...
+// NB: we call the various handlerXXX() in reverse order respect to the content of config var PLUGIN...
 
 #ifdef U_LOG_DISABLE
 #  define U_PLUGIN_HANDLER_REVERSE(xxx)                                       \
@@ -1274,14 +1269,14 @@ int UServer_Base::pluginsHandler##xxx()                                       \
 #endif
 
 // Server-wide hooks
-U_PLUGIN_HANDLER_REVERSE(Init)   // NB: we call handlerInit()   in reverse order respect to config var PLUGIN...
-U_PLUGIN_HANDLER_REVERSE(Run)    // NB: we call handlerRun()    in reverse order respect to config var PLUGIN...
-U_PLUGIN_HANDLER_REVERSE(Fork)   // NB: we call handlerFork()   in reverse order respect to config var PLUGIN...
-U_PLUGIN_HANDLER_REVERSE(Stop)   // NB: we call handlerStop()   in reverse order respect to config var PLUGIN...
+U_PLUGIN_HANDLER_REVERSE(Init)   // NB: we call handlerInit()   in reverse order respect to the content of config var PLUGIN...
+U_PLUGIN_HANDLER_REVERSE(Run)    // NB: we call handlerRun()    in reverse order respect to the content of config var PLUGIN...
+U_PLUGIN_HANDLER_REVERSE(Fork)   // NB: we call handlerFork()   in reverse order respect to the content of config var PLUGIN...
+U_PLUGIN_HANDLER_REVERSE(Stop)   // NB: we call handlerStop()   in reverse order respect to the content of config var PLUGIN...
 // Connection-wide hooks
-U_PLUGIN_HANDLER_REVERSE(READ)   // NB: we call handlerREAD()   in reverse order respect to config var PLUGIN...
+U_PLUGIN_HANDLER_REVERSE(READ)   // NB: we call handlerREAD()   in reverse order respect to the content of config var PLUGIN...
 // SigHUP hook
-U_PLUGIN_HANDLER_REVERSE(SigHUP) // NB: we call handlerSigHUP() in reverse order respect to config var PLUGIN...
+U_PLUGIN_HANDLER_REVERSE(SigHUP) // NB: we call handlerSigHUP() in reverse order respect to the content of config var PLUGIN...
 
 void UServer_Base::init()
 {
@@ -1341,7 +1336,7 @@ void UServer_Base::init()
 
    host = U_NEW(UString(server ? *server : USocketExt::getNodeName()));
 
-   if (port != U_DEFAULT_PORT)
+   if (port != 80)
       {
       host->push_back(':');
 
@@ -1463,7 +1458,7 @@ void UServer_Base::init()
       delete str_preforked_num_kids;
              str_preforked_num_kids = 0;
 
-#  if !defined(ENABLE_THREAD) || !defined(HAVE_EPOLL_WAIT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT) || defined(USE_LIBEVENT)
+#  if !defined(ENABLE_THREAD) || defined(USE_LIBEVENT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids == -1)
          {
          U_WARNING("Sorry, I was compiled without server thread approach so I can't accept PREFORK_CHILD == -1");
@@ -1614,7 +1609,7 @@ void UServer_Base::init()
 #ifdef U_LOG_ENABLE
    if (isLog())
       {
-      // NB: if log is mapped must be always shared because of possibility of fork() by parallelization...
+      // NB: if log is mapped must be always shared because the possibility of fork() by parallelization...
 
       if (log->isMemoryMapped()) log->setShared(&(ptr_shared_data->log_data_shared), log_rotate_size);
 
@@ -1633,17 +1628,19 @@ void UServer_Base::init()
    // ---------------------------------------------------------------------------------------------------------
    // init notifier event manager
    // ---------------------------------------------------------------------------------------------------------
-   // NB: in the classic model we don't need to be notified for request of connection (loop: accept-fork)
-   //     and the forked child don't accept new client, but maybe we need anyway the event manager because
-   //     the forked child must feel the possibly timeout for request from the new client...
-   // ---------------------------------------------------------------------------------------------------------
 
    socket_flags |= O_RDWR | O_CLOEXEC;
 
-#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids != -1)
 #endif
       {
+      // ---------------------------------------------------------------------------------------------------------
+      // NB: in the classic model we don't need to be notified for request of connection (loop: accept-fork)
+      //     and the forked child don't accept new client, but we need anyway the event manager because
+      //     the forked child must feel the possibly timeout for request from the new client...
+      // ---------------------------------------------------------------------------------------------------------
+
       if (timeoutMS > 0 ||
           isClassic() == false)
          {
@@ -1671,12 +1668,12 @@ void UServer_Base::init()
 
    UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog / 2) + (UNotifier::num_connection = UNotifier::min_connection);
 
-   if (num_client_threshold == 0)
-#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-   num_client_threshold = (UNotifier::max_connection * 2) / 3;
-#else
-   num_client_threshold = U_NOT_FOUND;
-#endif
+   if (num_client_threshold == 0) num_client_threshold =
+#  ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+      U_NOT_FOUND;
+#  else
+      (UNotifier::max_connection * 2) / 3;
+#  endif
 
    if (num_client_for_parallelization == 0) num_client_for_parallelization = UNotifier::max_connection / 2;
 
@@ -1729,8 +1726,8 @@ void UServer_Base::init()
    UInterrupt::exit_loop_wait_event_for_signal = true;
 
 #if !defined(USE_LIBEVENT) && !defined(USE_RUBY)
-                UInterrupt::insert( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  // async signal
-                UInterrupt::insert(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
+   UInterrupt::insert(              SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  // async signal
+   UInterrupt::insert(             SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
 #else
    UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
    UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); //  sync signal
@@ -1804,6 +1801,8 @@ RETSIGTYPE UServer_Base::handlerForSigCHLD(int signo)
 {
    U_TRACE(0, "[SIGCHLD] UServer_Base::handlerForSigCHLD(%d)", signo)
 
+   U_INTERNAL_ASSERT_POINTER(proc)
+
    if (proc->parent()) proc->wait();
 }
 
@@ -1822,9 +1821,13 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 {
    U_TRACE(0, "[SIGHUP] UServer_Base::handlerForSigHUP(%d)", signo)
 
+   U_INTERNAL_ASSERT_POINTER(proc)
    U_INTERNAL_ASSERT_POINTER(pthis)
-
    U_INTERNAL_ASSERT(proc->parent())
+
+#if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   if (preforked_num_kids == -1) return;
+#endif
 
    // NB: for logrotate...
 
@@ -1842,10 +1845,11 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
 #if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
-# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (  pthread_ocsp)                  pthread_ocsp->suspend();
-# endif
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
+
+# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (pthread_ocsp) pthread_ocsp->suspend();
+# endif
 #endif
 
    pthis->handlerSignal(); // manage signal before we regenering the preforked pool of children...
@@ -1863,10 +1867,11 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 #endif
 
 #if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
-#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (  pthread_ocsp)                  pthread_ocsp->resume();
-#  endif
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
+
+#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (pthread_ocsp) pthread_ocsp->resume();
+#  endif
 #endif
 
 #ifdef U_LOG_ENABLE
@@ -1979,7 +1984,7 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
    U_RETURN(true);
 }
 
-#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
 #  define CSOCKET psocket
 #  define CLIENT_INDEX lClientIndex
 #  define CLIENT_ADDRESS lclient_address
@@ -1994,7 +1999,7 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
 #  define CLIENT_IMAGE_HANDLER_READ clientImageHandlerRead()
 #endif
 
-int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket
+int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket (listening)
 {
    U_TRACE(1, "UServer_Base::handlerRead()")
 
@@ -2005,17 +2010,17 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
    pClientImage = vClientImage + nClientIndex;
 
-#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    USocket* psocket;
    char* lclient_address;
    uint32_t lclient_address_len;
    UClientImage_Base* lClientIndex = pClientImage;
 #endif
+   int cround = 0;
 #ifdef DEBUG
    uint32_t nothing = 0;
    CLIENT_ADDRESS_LEN = 0;
 #endif
-   int cround = 0;
 
 loop:
    U_INTERNAL_ASSERT_MINOR(CLIENT_INDEX, eClientImage)
@@ -2187,13 +2192,13 @@ try_accept:
 
       U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by Access Control List", CLIENT_ADDRESS_LEN, CLIENT_ADDRESS);
 
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#  if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)
 #  endif
       {
       U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
 
-#  if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+#  ifndef USE_LIBEVENT
       goto try_next;
 #  endif
       }
@@ -2214,13 +2219,13 @@ try_accept:
       U_SRV_LOG("WARNING: new client connected from %.*S, connection denied by RFC1918 filtering (reject request from private IP to public server address)",
                      CLIENT_ADDRESS_LEN, CLIENT_ADDRESS); 
 
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#  if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)
 #  endif
       {
       U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
 
-#  if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+#  ifndef USE_LIBEVENT
       goto try_next;
 #  endif
       }
@@ -2311,7 +2316,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
       ULog::log("New client connected from %v, %.*s clients currently connected", CLIENT_INDEX->logbuf->rep, len, buffer);
 
 #  ifdef U_WELCOME_SUPPORT
-      if (msg_welcome) ULog::log("Send welcome message to %v", CLIENT_INDEX->logbuf->rep);
+      if (msg_welcome) ULog::log("Sending welcome message to %v", CLIENT_INDEX->logbuf->rep);
 #  endif
       }
 #endif
@@ -2328,7 +2333,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
       }
 #endif
 
-#if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids == -1) lClientIndex->UEventFd::fd = psocket->iSockDesc;
    else
 #endif
@@ -2350,10 +2355,13 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
 next:
    last_event = u_now->tv_sec;
 
-#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
-# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#ifdef USE_LIBEVENT
+   goto end;
+#endif
+
+#if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids != -1)
-# endif
+#endif
    {
    U_INTERNAL_ASSERT_DIFFERS(socket_flags & O_NONBLOCK, 0)
 
@@ -2374,7 +2382,6 @@ next:
 
    goto loop;
    }
-#endif
 
 end:
 #if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)
@@ -2410,13 +2417,13 @@ uint32_t UServer_Base::getNumConnection(char* ptr)
       {
       char* start = ptr;
 
-      *ptr++ = '(';
-       ptr  += u_num2str32(ptr, UNotifier::num_connection - UNotifier::min_connection - 1);
-      *ptr++ = '/';
-       ptr  += u_num2str32(ptr, U_TOT_CONNECTION - flag_loop); // NB: check for SIGTERM event...
-      *ptr++ = ')';
+      *ptr  = '(';
+       ptr += 1+u_num2str32(ptr+1, UNotifier::num_connection - UNotifier::min_connection - 1);
+      *ptr  = '/';
+       ptr += 1+u_num2str32(ptr+1, U_TOT_CONNECTION - flag_loop); // NB: check for SIGTERM event...
+      *ptr  = ')';
 
-      len = ptr - start;
+      len = ptr-start+1;
       }
 
    U_RETURN(len);
@@ -2461,7 +2468,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          }
 #  endif
 
-      U_RETURN(true); // NB: erase item...
+      U_RETURN(true); // NB: return true mean that we want erase the item...
       }
 
    U_RETURN(false);
@@ -2594,7 +2601,7 @@ void UServer_Base::runLoop(const char* user)
    if (UNotifier::min_connection)
       {
       if (binsert)         UNotifier::insert(pthis);           // NB: we ask to be notified for request of connection (=> accept)
-      if (handler_other)   UNotifier::insert(handler_other);   // NB: we ask to be notified for request from request
+      if (handler_other)   UNotifier::insert(handler_other);   // NB: we ask to be notified for request from generic system
       if (handler_inotify) UNotifier::insert(handler_inotify); // NB: we ask to be notified for change of file system (=> inotify)
       }
 
@@ -2638,7 +2645,7 @@ void UServer_Base::runLoop(const char* user)
       U_INTERNAL_DUMP("ptime = %p handler_other = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
                        ptime,     handler_other,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
 
-#  if defined(ENABLE_THREAD) && defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#  if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)
 #  endif
       {
@@ -2657,7 +2664,7 @@ void UServer_Base::runLoop(const char* user)
 
       U_INTERNAL_ASSERT_EQUALS(socket_flags & O_NONBLOCK, 0)
 
-#  if !defined(ENABLE_THREAD) || !defined(HAVE_EPOLL_WAIT) || defined(USE_LIBEVENT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#  if !defined(ENABLE_THREAD) || defined(USE_LIBEVENT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       U_INTERNAL_ASSERT(UNotifier::min_connection == UNotifier::num_connection)
 #  endif
 

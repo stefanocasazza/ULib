@@ -378,7 +378,7 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
 
          UProcess::kill(pid, SIGTERM);
 
-         UTimeVal(1L).nanosleep();
+         UTimeVal::nanosleep(1L);
 
          UProcess::kill(pid, SIGKILL);
          }

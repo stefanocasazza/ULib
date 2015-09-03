@@ -86,6 +86,7 @@ int inet_aton(const char* src, struct in_addr* addr)
    return 1;
 }
 
+/*
 const char* inet_ntop(int af, const void* src, char* dst, size_t size)
 {
    U_INTERNAL_TRACE("inet_ntop(%d,%p,%s,%d)", af, src, dst, size)
@@ -122,6 +123,7 @@ const char* inet_ntop(int af, const void* src, char* dst, size_t size)
 
    return 0;
 }
+*/
 
 #define isWindow9x()  (version.dwPlatformId == VER_PLATFORM_WIN32_WINDOWS)
 #define isWindowNT()  (version.dwPlatformId == VER_PLATFORM_WIN32_NT)

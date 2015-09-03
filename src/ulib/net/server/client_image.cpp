@@ -947,7 +947,7 @@ bool UClientImage_Base::genericRead()
    if (advise_for_parallelization)
       {
 #  ifdef DEBUG
-      U_MESSAGE("UClientImage_Base::genericRead(): time_between_request(%ld) < time_run(%ld)", time_between_request, time_run);
+      U_MESSAGE("%9D (pid %P) UClientImage_Base::genericRead(): time_between_request(%ld) < time_run(%ld)", time_between_request, time_run);
 #  endif
 
       if (UServer_Base::startParallelization(UServer_Base::num_client_threshold))
