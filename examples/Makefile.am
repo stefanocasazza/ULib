@@ -4,6 +4,7 @@ AUTOMAKE_OPTIONS = no-dependencies
 
 EXTRA_DIST = README \
 				 WiAuth/Makefile.* \
+				 hello/Makefile.* hello/*.cpp \
 				 XAdES/*.h XAdES/*.cpp XAdES/Makefile.* \
 				 IR/*.h IR/*.cpp IR/Makefile.* \
 				 userver/*.cpp userver/Makefile.* \
@@ -25,7 +26,7 @@ EXTRA_DIST = README \
 
 MAINTAINERCLEANFILES = Makefile.in
 
-SUBDIRS = userver test_manager simple_client_server workflow
+SUBDIRS = hello userver test_manager simple_client_server workflow
 
 if STDCPP
 SUBDIRS += IR

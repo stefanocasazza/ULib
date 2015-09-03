@@ -2352,6 +2352,7 @@ AC_OUTPUT([Makefile \
 			 examples/csp/Makefile \
 			 examples/lcsp/Makefile \
 			 examples/rsign/Makefile \
+			 examples/hello/Makefile \
 			 examples/WiAuth/Makefile \
 			 examples/xml2txt/Makefile \
 			 examples/uclient/Makefile \
