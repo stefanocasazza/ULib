@@ -34,6 +34,15 @@ public:
 
    // SERVICES
 
+   void setTime(long timeoutMS)
+      {
+      U_TRACE(0, "UEventTime::setTime(%ld)", timeoutMS)
+
+      setCurrentTime();
+
+      UTimeVal::setMilliSecond(timeoutMS);
+      }
+
    void setCurrentTime()
       {
       U_TRACE(1, "UEventTime::setCurrentTime()")
@@ -42,29 +51,42 @@ public:
 
       (void) U_SYSCALL(gettimeofday, "%p,%p", &ctime, 0);
 
-      *u_now = ctime;
-
-      U_INTERNAL_DUMP("u_now = { %ld %6ld }", u_now->tv_sec, u_now->tv_usec)
+      U_INTERNAL_DUMP("ctime = { %ld %6ld }", ctime.tv_sec, ctime.tv_usec)
       }
 
-   bool isOld() const __pure
+   time_t expire() const { return (ctime.tv_sec + tv_sec); }
+
+   bool isExpired(long tolerance) const __pure
       {
-      U_TRACE(0, "UEventTime::isOld()")
+      U_TRACE(0, "UEventTime::isExpired(%ld)", tolerance)
 
       U_CHECK_MEMORY
 
-      long t1 = (ctime.tv_sec + tv_sec);
+      long t1    = expire(),
+           diff1 =                      t1 - u_now->tv_sec,
+           diff2 = ctime.tv_usec + tv_usec - u_now->tv_usec;
 
-      U_INTERNAL_DUMP("this = { %ld %6ld }", t1, ctime.tv_usec + tv_usec)
+      U_INTERNAL_DUMP("this = { %ld %6ld }, diff1 = %ld diff2 = %ld", t1, ctime.tv_usec + tv_usec, diff1, diff2)
 
-      bool result = (  t1  < u_now->tv_sec) ||
-                     ((t1 == u_now->tv_sec) &&
-                      ((ctime.tv_usec + tv_usec) < u_now->tv_usec));
+      if ( diff1  < 0 ||
+          (diff1 == 0 &&
+           diff2 <= 0))
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      long diff = (diff1 * 1000L) +
+                  (diff2 / 1000L);
+
+      U_INTERNAL_DUMP("diff = %ld", diff)
+
+      if (diff <= tolerance) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
-   bool isExpired() const __pure;
+   bool isOld() const __pure     { return isExpired(0); }
+   bool isExpired() const __pure { return isExpired(UTimeVal::getTolerance()); }
 
    void setTimerVal(struct timeval* it_value)
       {
@@ -83,7 +105,17 @@ public:
       U_INTERNAL_ASSERT(it_value->tv_usec >= 0)
       }
 
-   time_t expire() { return (ctime.tv_sec + tv_sec); }
+   long getTimerVal()
+      {
+      U_TRACE(0, "UEventTime::getTimerVal()")
+
+      U_CHECK_MEMORY
+
+      long ms = ((ctime.tv_sec  + tv_sec  - u_now->tv_sec)  * 1000L) +
+                ((ctime.tv_usec + tv_usec - u_now->tv_usec) / 1000L);
+
+      U_RETURN(ms);
+      }
 
    // -------------------------------------------
    // method VIRTUAL to define

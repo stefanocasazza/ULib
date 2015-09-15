@@ -258,33 +258,56 @@ typedef bool (*bPFpcupcud)(const char*, uint32_t, const char*, uint32_t, int);
 extern U_EXPORT int        u_pfn_flags;
 extern U_EXPORT bPFpcupcud u_pfn_match;
 
-U_EXPORT bool u_fnmatch(         const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
-U_EXPORT bool u_dosmatch(        const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
-/* multiple patterns separated by '|' */ 
-U_EXPORT bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
+U_EXPORT bool u_fnmatch(     const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
+U_EXPORT bool u_dosmatch(    const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
+U_EXPORT bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
 
-enum MatchType { U_FNMATCH = 0, U_DOSMATCH = 1, U_DOSMATCH_WITH_OR = 2 };
+/* multiple patterns separated by '|' */
+
+U_EXPORT bool u_match_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
+
+static inline bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
+{
+   U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, pattern, n2, flags)
+
+   u_pfn_match = u_dosmatch;
+
+   return u_match_with_OR(s, n1, pattern, n2, flags);
+}
+
+static inline bool u_dosmatch_ext_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
+{
+   U_INTERNAL_TRACE("u_dosmatch_ext_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, pattern, n2, flags)
+
+   u_pfn_match = u_dosmatch_ext;
+
+   return u_match_with_OR(s, n1, pattern, n2, flags);
+}
 
 #ifndef FNM_CASEFOLD
-#define FNM_CASEFOLD    (1 <<  4)   /* Compare without regard to case */
+#define FNM_CASEFOLD (1 <<  4) /* compare without regard to case */
 #endif
-#define FNM_INVERT      (1 << 28)   /* invert the result */
+#define FNM_INVERT   (1 << 28) /* invert the result */
 
-#ifndef FNM_IGNORECASE
-#define FNM_IGNORECASE  FNM_CASEFOLD
-#endif
 #ifndef FNM_LEADING_DIR
 #define FNM_LEADING_DIR FNM_PERIOD
 #endif
+#ifndef FNM_IGNORECASE
+#define FNM_IGNORECASE FNM_CASEFOLD
+#endif
+
+enum MatchType { U_FNMATCH, U_DOSMATCH, U_DOSMATCH_EXT, U_DOSMATCH_WITH_OR, U_DOSMATCH_EXT_WITH_OR };
 
 static inline void u_setPfnMatch(int match_type, int flags)
 {
    U_INTERNAL_TRACE("u_setPfnMatch(%d,%d)", match_type, flags)
 
    u_pfn_flags = flags;
-   u_pfn_match = (match_type == U_FNMATCH  ? u_fnmatch  :
-                  match_type == U_DOSMATCH ? u_dosmatch :
-                                             u_dosmatch_with_OR);
+   u_pfn_match = (match_type == U_FNMATCH          ? u_fnmatch          :
+                  match_type == U_DOSMATCH         ? u_dosmatch         :
+                  match_type == U_DOSMATCH_EXT     ? u_dosmatch_ext     :
+                  match_type == U_DOSMATCH_WITH_OR ? u_dosmatch_with_OR :
+                                                     u_dosmatch_ext_with_OR);
 }
 
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */

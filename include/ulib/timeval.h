@@ -175,7 +175,17 @@ public:
 
       U_CHECK_MEMORY
 
-      long ms = tv_sec * 1000L + (tv_usec / 1000L);
+      long ms = (tv_sec  * 1000L) +
+                (tv_usec / 1000L);
+
+      U_RETURN(ms);
+      }
+
+   long getTolerance() const
+      {
+      U_TRACE(0, "UTimeVal::getTolerance()")
+
+      long ms = getMilliSecond() / 128;
 
       U_RETURN(ms);
       }

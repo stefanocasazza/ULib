@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/db/cdb.h>
+#include <ulib/utility/services.h>
 #include <ulib/container/vector.h>
 
 void UCDB::init_internal(int ignore_case)
@@ -675,11 +676,8 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
 
    char* tmp;
    UStringRep* rep;
-
-   char* mask_data    = mask_key.data();
-   uint32_t mask_size = mask_key.size(), n = vec_values.size();
-
-   if (ignoreCase()) u_pfn_flags |= FNM_CASEFOLD;
+   uint32_t n = vec_values.size();
+   int flags = (ignoreCase() ? FNM_CASEFOLD : 0);
 
    if (_size) *_size = 0;
 
@@ -692,7 +690,7 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
 
       tmp = ptr + sizeof(UCDB::cdb_record_header) + klen + dlen;
 
-      if (u_pfn_match(ptr + sizeof(UCDB::cdb_record_header), klen, mask_data, mask_size, u_pfn_flags))
+      if (UServices::dosMatchWithOR(ptr + sizeof(UCDB::cdb_record_header), klen, U_STRING_TO_PARAM(mask_key), flags))
          {
          U_INTERNAL_DUMP("key = %#.*S data = %#.*S)", klen, ptr + sizeof(UCDB::cdb_record_header), dlen, tmp - dlen)
 

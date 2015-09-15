@@ -1,0 +1,4 @@
+[
+/favicon.ico|/images/logo_fiwifi-n.png|/css/livevalidation.css|/js/livevalidation_standalone.compressed.js|*apple-touch-icon*.png|*robots.txt|*/cgi-bin/webif/*.sh
+/nostat /login_request/OP /cgi-bin/OP.cgi
+]

@@ -57,7 +57,6 @@ rm -rf CSP/lcspserver_rpc.log RSIGN/rsignserver.log CSP/CSP/DB_CA/log CSP/CSP/DB
 
 cat <<EOF >inp/webserver.cfg
 userver {
- PORT 443
  SOCKET_NAME ../tmp/socket
  REQ_TIMEOUT 5
  MAX_KEEP_ALIVE 256

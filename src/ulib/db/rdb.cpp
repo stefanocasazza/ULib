@@ -1922,7 +1922,8 @@ void URDBObjectHandler<UDataStorage*>::setEntry(UStringRep* _key, UStringRep* _d
 
    // NB: in this way now we have the direct reference to mmap memory for the data record and the key...
 
-   recval._assign(_data);
+                recval._assign(_data);
+
    pDataStorage->keyid._assign(_key);
 
    pDataStorage->fromData(U_STRING_TO_PARAM(recval));

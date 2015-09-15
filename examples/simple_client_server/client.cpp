@@ -39,7 +39,7 @@ public:
             {
             LOG_MSGB("received welcome message %#.*S from", iBytesTransferred, pcBuffer);
 
-            if (u_pfn_match(pcBuffer, iBytesTransferred, U_STRING_TO_PARAM(msg_welcome), u_pfn_flags) == false)
+            if (UServices::dosMatch(pcBuffer, iBytesTransferred, U_STRING_TO_PARAM(msg_welcome)) == false)
                {
                LOG_MSG0("welcome message mismatched...");
                }
@@ -74,7 +74,7 @@ public:
 
          UString resp = request_response[index+1];
 
-         if (u_pfn_match(pcBuffer, iBytesTransferred, U_STRING_TO_PARAM(resp), u_pfn_flags) == false)
+         if (UServices::dosMatch(pcBuffer, iBytesTransferred, U_STRING_TO_PARAM(resp)) == false)
             {
             LOG_MSG0("response message mismatched...");
             }

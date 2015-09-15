@@ -40,6 +40,7 @@ class UHttpPlugIn;
 class UNoCatPlugIn;
 class UServer_Base;
 class UStreamPlugIn;
+class UBandWidthThrottling;
 
 template <class T> class UServer;
 
@@ -287,9 +288,9 @@ public:
    static struct iovec iov_vec[4];
    static bPFpc callerIsValidMethod;
    static vPF callerHandlerEndRequest;
-   static bPFpcu callerIsValidRequest, callerIsValidRequestExt;
    static uint32_t rstart, size_request;
-   static iPF callerHandlerRead, callerHandlerRequest, callerHandlerReset, callerHandlerDataPending;
+   static bPFpcu callerIsValidRequest, callerIsValidRequestExt;
+   static iPF callerHandlerRead, callerHandlerRequest, callerHandlerDataPending;
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
@@ -301,6 +302,11 @@ protected:
    USocket* socket;
 #ifndef U_HTTP2_DISABLE
    void* connection;
+#endif
+#ifdef U_THROTTLING_SUPPORT
+   UString uri;
+   uint64_t bytes_sent;
+   uint32_t min_limit, max_limit, started_at;
 #endif
    UString* data_pending;
    uint32_t start, count;
@@ -338,6 +344,17 @@ protected:
    int handlerResponse();
    void prepareForSendfile();
 
+   void setPendingSendfile()
+      {
+      U_TRACE(0, "UClientImage::setPendingSendfile()")
+
+      count = ncount;
+
+      prepareForSendfile();
+
+      U_ClientImage_pclose(this) |= U_CLOSE;
+      }
+      
    static uint32_t getCountToRead()
       {
       U_TRACE(0, "UClientImage_Base::getCountToRead()")
@@ -409,6 +426,8 @@ private:
                       friend class UNoCatPlugIn;
                       friend class UServer_Base;
                       friend class UStreamPlugIn;
+                      friend class UBandWidthThrottling;
+
    template <class T> friend class UServer;
    template <class T> friend void u_delete_vector(      T* _vec, uint32_t offset, uint32_t n);
 #ifdef DEBUG

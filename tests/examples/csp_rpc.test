@@ -52,7 +52,6 @@ rm -rf CSP/cspserver_rpc.log CSP/CSP/DB_CA/log CSP/CSP/DB_CA/CA* \
 
 cat <<EOF >inp/webserver.cfg
 userver {
- PORT 443
  LOG_FILE cspserver_rpc.log
  LOG_FILE_SZ 1M
  DOCUMENT_ROOT CSP

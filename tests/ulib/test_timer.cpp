@@ -82,20 +82,21 @@ int U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
-   UTimer::init(false);
+   UTimer::init(UTimer::SYNC);
 
    UTimeVal s(0L, 50L * 1000L);
+
    MyAlarm1* a = U_NEW(MyAlarm1(0L, 50L * 1000L));
    MyAlarm2* b = U_NEW(MyAlarm2(0L, 50L * 1000L));
 
-   UTimer::insert(a, false);
-   UTimer::insert(b, false);
+   UTimer::insert(a);
+   UTimer::insert(b);
 
 #ifdef DEBUG
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
-   UTimer::erase(a, true, false);
+   UTimer::erase(a);
 
 #ifdef DEBUG
    if (argc > 2) UTimer::printInfo(cout);
@@ -107,7 +108,9 @@ int U_EXPORT main (int argc, char* argv[])
       {
       s.nanosleep();
 
-      (void) UTimer::insert(U_NEW(MyAlarm1(0L, 50L * 1000L)));
+      UTimer::insert(U_NEW(MyAlarm1(0L, 50L * 1000L)));
+
+      UTimer::setTimer();
 
 #  ifdef DEBUG
       if (argc > 2) UTimer::printInfo(cout);
@@ -117,12 +120,12 @@ int U_EXPORT main (int argc, char* argv[])
    s.nanosleep();
    s.nanosleep();
 
-   UTimer::stop();
-
 #ifdef DEBUG
    if (argc > 2) UTimer::printInfo(cout);
 #endif
-   UTimer::clear(false);
+
+   UTimer::clear();
+
 #ifdef DEBUG
    if (argc > 2) UTimer::printInfo(cout);
 #endif

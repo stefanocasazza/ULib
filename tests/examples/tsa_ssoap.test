@@ -23,7 +23,7 @@ rm -rf $DOC_ROOT/*log \
 # ----------------------------------------------------------------
 # -host host    - use -connect instead
 # -port port    - use -connect instead
-# -connect host:port - who to connect to (default is 10.30.1.131:4433)
+# -connect host:port - who to connect to (default is localhost:433)
 # -verify arg   - turn on peer certificate verification
 # -cert arg     - certificate file to use, PEM format assumed
 # -key arg      - Private key file to use, PEM format assumed, in cert file if not specified but cert file is.
@@ -62,7 +62,6 @@ creat_link . $DOC_ROOT/$DOC_ROOT
 
 cat <<EOF >inp/webserver.cfg
 userver {
- PORT 443
  REQ_TIMEOUT 5
  MAX_KEEP_ALIVE 256
  LOG_FILE tsa_ssoap.log

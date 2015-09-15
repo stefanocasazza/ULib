@@ -10,8 +10,8 @@
 # PORT					port number             for the listening socket
 # SOCKET_NAME			file name               for the listening socket
 # IP_ADDRESS         ip address of host for the interface connected to the Internet (autodetected if not specified)
-# ALLOWED_IP			list of comma separated client address for IP-based access control (IPADDR[/MASK])
 #
+# ALLOWED_IP			   list of comma separated client address for IP-based access control (IPADDR[/MASK])
 # ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
 # ENABLE_RFC1918_FILTER reject request from private IP to public server address
 # MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
@@ -26,7 +26,6 @@
 # WELCOME_MSG   message of welcome to send initially to client
 # RUN_AS_USER   downgrade privileges to that user account
 # DOCUMENT_ROOT The directory out of which you will serve your documents
-#
 #
 # LOG_FILE      locations for file log
 # LOG_FILE_SZ   memory size for file log
@@ -154,6 +153,7 @@ userver {
 # ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive)
 #
 # URI_REQUEST_CERT_MASK							   mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
+# BANDWIDTH_THROTTLING_MASK						lets you set maximum byte rates on URLs or URL groups (*.jpg|*.gif 50)
 # URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK mask (DOS regexp) of URI where use HTTP Strict Transport Security to force client to use only SSL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
@@ -167,17 +167,17 @@ http {
    # Allows you to tell clients about documents that used to exist in your server's namespace, but do not anymore.
    # The client will make a request for the document at its new location
  
-#  ALIAS [
-#	      /login  /RA/cgi-bin/login.sh
-#        /admin  /RA/admin/cgi-bin/card-generation.sh
-#        ]
+#  ALIAS "[ \
+#	       /login /RA/cgi-bin/login.sh \
+#         /admin /RA/admin/cgi-bin/card-generation.sh \
+#         ]"
 
    # vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
 
-#	REWRITE_RULE_NF [
-#                  ^/.*\.[A-Za-z0-9]+.*?$	$0
-#                  ^/(.*?)(\?|$)(.*)      /sapphire/main.php?url=$1&$3
-#                  ]
+#	REWRITE_RULE_NF "[ \
+#                   ^/.*\.[A-Za-z0-9]+.*?$ $0 \
+#                   ^/(.*?)(\?|$)(.*) /sapphire/main.php?url=$1&$3 \
+#                   ]"
 
 # USP_AUTOMATIC_ALIASING servlet/example 
 

@@ -41,10 +41,12 @@
 #include <ulib/event/event_time.h>
 
 class USocket;
+class UTimeStat;
 class USocketExt;
 class UHttpPlugIn;
 class UServer_Base;
 class UClientImage_Base;
+class UClientThrottling;
 
 // interface to select() and epoll()
 
@@ -59,6 +61,7 @@ public:
    // SERVICES
 
    static void clear();
+   static void waitForEvent();
    static void init(bool bacquisition);
    static void erase( UEventFd* handler_event);
    static void modify(UEventFd* handler_event);
@@ -116,14 +119,18 @@ public:
 
 protected:
    static bool bread;
+   static int nfd_ready; // the number of file descriptors ready for the requested I/O
    static UEventFd** lo_map_fd;
    static UEventFd* handler_event;
-   static int max_nfd_ready, nfd_ready; // the number of file descriptors ready for the requested I/O
    static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
 
+#ifdef DEBUG
+   static uint32_t nwatches;
+   static uint32_t max_nfd_ready;
+#endif
 #ifdef U_EPOLLET_POSTPONE_STRATEGY
    static bool bepollet;
-   static unsigned bepollet_threshold;
+   static uint32_t bepollet_threshold;
 #endif
 
 #ifdef USE_LIBEVENT
@@ -143,7 +150,7 @@ protected:
    static UEventTime* time_obj;
 #else
    static struct pollfd fds[1];
-   static int waitForEvent(int timeoutMS = -1);
+   static int waitForEvent(int timeoutMS);
 #endif
 #ifdef HAVE_EPOLL_CTL_BATCH
    static int ctl_cmd_cnt;
@@ -153,6 +160,8 @@ protected:
    static bool isHandler(int fd);
    static bool setHandler(int fd);
    static void resetHandler(int fd);
+   static void resume(UEventFd* item);
+   static void suspend(UEventFd* item);
    static int  waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 private:
@@ -195,9 +204,11 @@ private:
 #endif
 
    friend class USocket;
+   friend class UTimeStat;
    friend class USocketExt;
    friend class UHttpPlugIn;
    friend class UServer_Base;
    friend class UClientImage_Base;
+   friend class UClientThrottling;
 };
 #endif

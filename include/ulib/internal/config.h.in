@@ -866,6 +866,9 @@
 /* Define if we have libtdb with this function */
 #undef U_TDB_TRAVERSE_READ
 
+/* enable server bandwidth throttling support */
+#undef U_THROTTLING_SUPPORT
+
 /* enable welcome message support */
 #undef U_WELCOME_SUPPORT
 

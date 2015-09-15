@@ -414,7 +414,7 @@ protected:
 
       U_INTERNAL_ASSERT_POINTER(th)
 
-#  ifdef HAVE_SYS_SYSCALL_H
+#  if defined(ENABLE_THREAD) && defined(HAVE_SYS_SYSCALL_H)
       th->sid = syscall(SYS_gettid);
 #  endif
 

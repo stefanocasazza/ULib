@@ -11,6 +11,7 @@
 //
 // ============================================================================
 
+#include <ulib/timer.h>
 #include <ulib/notifier.h>
 #include <ulib/net/socket.h>
 #include <ulib/internal/chttp.h>
@@ -49,6 +50,11 @@ UEventTime* UNotifier::time_obj;
  * };
  */
 
+#ifdef DEBUG
+uint32_t UNotifier::nwatches;
+uint32_t UNotifier::max_nfd_ready;
+#endif
+
 #ifdef HAVE_EPOLL_CTL_BATCH
 int                  UNotifier::ctl_cmd_cnt;
 struct epoll_ctl_cmd UNotifier::ctl_cmd[U_EPOLL_CTL_CMD_SIZE];
@@ -78,10 +84,9 @@ fd_set               UNotifier::fd_set_write;
 #endif
 #ifdef U_EPOLLET_POSTPONE_STRATEGY
 bool                 UNotifier::bepollet;
-unsigned             UNotifier::bepollet_threshold = 10;
+uint32_t             UNotifier::bepollet_threshold = 10;
 #endif
 int                  UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
-int                  UNotifier::max_nfd_ready;
 bool                 UNotifier::bread;
 uint32_t             UNotifier::min_connection;
 uint32_t             UNotifier::num_connection;
@@ -477,7 +482,7 @@ void UNotifier::modify(UEventFd* item)
 
 void UNotifier::erase(UEventFd* item)
 {
-   U_TRACE(1, "UNotifier::erase(%p)", item)
+   U_TRACE(0, "UNotifier::erase(%p)", item)
 
    U_INTERNAL_ASSERT_POINTER(item)
 
@@ -541,125 +546,119 @@ void UNotifier::handlerDelete(int fd, int mask)
 #endif
 }
 
-int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout)
+void UNotifier::suspend(UEventFd* item)
 {
-   U_TRACE(1, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, timeout)
+   U_TRACE(0, "UNotifier::suspend(%p)", item)
 
-   int result;
+   U_INTERNAL_ASSERT_POINTER(item)
+   U_INTERNAL_ASSERT_EQUALS(item->op_mask, EPOLLOUT)
 
 #ifdef USE_LIBEVENT
-   result = -1;
+// ???
 #elif defined(HAVE_EPOLL_WAIT)
-   int _timeout = (timeout ? timeout->getMilliSecond() : -1);
-loop:
-   result = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, _timeout);
+   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, item->fd, (struct epoll_event*)1);
 #else
+   U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
+   U_INTERNAL_ASSERT(FD_ISSET(item->fd, &fd_set_write))
+
+   FD_CLR(item->fd, &fd_set_write);
+
+# ifndef _MSWINDOWS_
+   U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+# endif
+
+   --fd_write_cnt;
+
+   U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+#endif
+}
+
+void UNotifier::resume(UEventFd* item)
+{
+   U_TRACE(0, "UNotifier::resume(%p)", item)
+
+   U_INTERNAL_ASSERT_POINTER(item)
+   U_INTERNAL_ASSERT_EQUALS(item->op_mask, EPOLLOUT)
+
+#ifdef USE_LIBEVENT
+// ???
+#elif defined(HAVE_EPOLL_WAIT)
+   struct epoll_event _events = { EPOLLOUT, { item } };
+
+   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, item->fd, &_events);
+#else
+   U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
+   U_INTERNAL_ASSERT_EQUALS(FD_ISSET(item->fd, &fd_set_write), 0)
+
+   FD_SET(item->fd, &fd_set_write);
+
+# ifndef _MSWINDOWS_
+   U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+# endif
+
+   ++fd_write_cnt;
+
+   U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+#endif
+}
+
+int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout)
+{
+   U_TRACE(1, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, ptimeout)
+
+#ifdef USE_LIBEVENT
+   U_RETURN(-1);
+#else
+   int result;
+# ifdef HAVE_EPOLL_WAIT
+   int timeoutMS = (ptimeout ? ptimeout->getTimerVal() : -1);
+
+   result = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, timeoutMS);
+# else
    static struct timeval   tmp;
-          struct timeval* ptmp = (timeout == 0 ? 0 : &tmp);
-loop:
+          struct timeval* ptmp;
+
 # if defined(DEBUG) && !defined(_MSWINDOWS_)
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
    if (write_set) U_INTERNAL_DUMP("write_set = %B", __FDS_BITS(write_set)[0])
 # endif
 
-   if (timeout)
+   if (ptimeout == 0) ptmp = 0;
+   else
       {
       // On Linux, the function select modifies timeout to reflect the amount of time not slept; most other implementations do not do this.
-      // This causes problems both when Linux code which reads timeout is ported to other operating systems, and when code is ported to
-      // Linux that reuses a struct timeval for multiple selects in a loop without reinitializing it.
-      // Consider timeout to be undefined after select returns
+      // This causes problems both when Linux code which reads timeout is ported to other operating systems, and when code is ported to Linux
+      // that reuses a struct timeval for multiple selects in a loop without reinitializing it. Consider timeout to be undefined after select returns
 
-      tmp = *(struct timeval*)timeout;
-
-      U_INTERNAL_DUMP("timeout = { %ld %6ld }", tmp.tv_sec, tmp.tv_usec)
+      ptimeout->setTimerVal(ptmp = &tmp);
       }
 
    // If both fields of the timeval structure are zero, then select() returns immediately.
    // (This is useful for polling). If ptmp is NULL (no timeout), select() can block indefinitely...
 
    result = U_SYSCALL(select, "%d,%p,%p,%p,%p", fd_max, read_set, write_set, 0, ptmp);
-#endif
 
-#ifndef USE_LIBEVENT
-   if (result == 0) // timeout
-      {
-      // call the manager of timeout
-
-      if (timeout)
-         {
-         int ret = timeout->handlerTime();
-
-         // ---------------
-         // return value:
-         // ---------------
-         // -1 - normal
-         //  0 - monitoring
-         // ---------------
-
-         if (ret == 0)
-            {
-            if (empty() == false)
-               {
-#           ifndef HAVE_EPOLL_WAIT
-               if (read_set)   *read_set = fd_set_read;
-               if (write_set) *write_set = fd_set_write;
-#           endif
-
-               goto loop;
-               }
-            }
-         }
-      }
-   else if (result == -1)
-      {
-      if (errno == EINTR                   &&
-          UInterrupt::event_signal_pending &&
-          (UInterrupt::callHandlerSignal(), UInterrupt::exit_loop_wait_event_for_signal) == false)
-         {
-         goto loop;
-         }
-
-#  ifndef HAVE_EPOLL_WAIT
-      if (errno == EBADF) // there are fd that become not valid (it is possible if EPIPE)
-         {
-         removeBadFd();
-
-         if (empty() == false)
-            {
-            if (read_set)   *read_set = fd_set_read;
-            if (write_set) *write_set = fd_set_write;
-
-            goto loop;
-            }
-         }
-#  endif
-      }
-
-#  if defined(DEBUG) && !defined(_MSWINDOWS_)
+# if defined(DEBUG) && !defined(_MSWINDOWS_)
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
    if (write_set) U_INTERNAL_DUMP("write_set = %B", __FDS_BITS(write_set)[0])
-#  endif
-#endif
-
-#ifdef DEBUG
-   if (max_nfd_ready < result) max_nfd_ready = result;
-#endif
+# endif
+# endif
 
    U_RETURN(result);
+#endif
 }
 
-void UNotifier::waitForEvent(UEventTime* timeout)
+void UNotifier::waitForEvent(UEventTime* ptimeout)
 {
-   U_TRACE(0, "UNotifier::waitForEvent(%p)", timeout)
+   U_TRACE(0, "UNotifier::waitForEvent(%p)", ptimeout)
 
 #ifdef USE_LIBEVENT
    (void) UDispatcher::dispatch(UDispatcher::ONCE);
-#elif defined(HAVE_EPOLL_WAIT)
-   nfd_ready = waitForEvent(0, 0, 0, timeout);
 #else
-   U_INTERNAL_ASSERT(fd_read_cnt > 0 || fd_write_cnt > 0)
-
+# ifndef HAVE_EPOLL_WAIT
    fd_set read_set, write_set;
+loop:
+   U_INTERNAL_ASSERT(fd_read_cnt > 0 || fd_write_cnt > 0)
 
    if (fd_read_cnt)   read_set = fd_set_read;
    if (fd_write_cnt) write_set = fd_set_write;
@@ -669,23 +668,61 @@ void UNotifier::waitForEvent(UEventTime* timeout)
                               : 0),
                 (fd_write_cnt ? &write_set
                               : 0),
-                timeout);
-#endif
-#ifndef USE_LIBEVENT
-   if (LIKELY(nfd_ready > 0))
+                ptimeout);
+# else
+loop:
+   int timeoutMS = (ptimeout ? ptimeout->getTimerVal() : -1);
+
+   nfd_ready = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, timeoutMS);
+# endif
+
+   if (nfd_ready > 0)
       {
-#  ifdef HAVE_EPOLL_WAIT
+#  ifdef DEBUG
+      if (max_nfd_ready < (uint32_t)nfd_ready) max_nfd_ready = nfd_ready;
+
+      U_INTERNAL_DUMP("max_nfd_ready = %u", max_nfd_ready)
+#  endif
+
+#  ifndef HAVE_EPOLL_WAIT
+      int fd = 1, fd_cnt = (fd_read_cnt + fd_write_cnt);
+
+      U_INTERNAL_DUMP("fd_cnt = %d fd_set_max = %d", fd_cnt, fd_set_max)
+
+      U_INTERNAL_ASSERT(nfd_ready <= fd_cnt)
+
+      for (int i = nfd_ready; fd < fd_set_max; ++fd)
+         {
+         bread = (fd_read_cnt && FD_ISSET(fd, &read_set));
+
+         if ((bread                                            ||
+              (fd_write_cnt && FD_ISSET(fd, &write_set)) != 0) &&
+             setHandler(fd))
+            {
+            notifyHandlerEvent();
+
+            if (--i == 0)
+               {
+               U_INTERNAL_DUMP("fd = %d: return", fd)
+
+               if (fd_cnt > (fd_read_cnt + fd_write_cnt)) fd_set_max = getNFDS();
+
+               return;
+               }
+            }
+         }
+#  else
       int i = 0;
       pevents = events;
-
-#   ifdef U_EPOLLET_POSTPONE_STRATEGY
+#    ifdef U_EPOLLET_POSTPONE_STRATEGY
       bool bloop1 = false;
-      bepollet = ((unsigned)nfd_ready >= bepollet_threshold);
+      bepollet = ((uint32_t)nfd_ready >= bepollet_threshold);
 
       U_INTERNAL_DUMP("bepollet = %b nfd_ready = %d bepollet_threshold = %u", bepollet, nfd_ready, bepollet_threshold)
-#   endif
+#    endif
 
-loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
+loop0:
+      U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
 
       handler_event = (UEventFd*)pevents->data.ptr;
 
@@ -726,7 +763,7 @@ loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
             if (bepollet) pevents->events = 0;
 #        endif
             }
-#     ifdef U_EPOLLET_POSTPONE_STRATEGY
+#       ifdef U_EPOLLET_POSTPONE_STRATEGY
          else if (bepollet)
             {
             if (U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN &&
@@ -739,14 +776,14 @@ loop: U_INTERNAL_ASSERT_POINTER(pevents->data.ptr)
                pevents->events = 0;
                }
             }
-#     endif
+#       endif
          }
 
       if (++i < nfd_ready)
          {
          ++pevents;
 
-         goto loop;
+         goto loop0;
          }
 
 #    ifdef U_EPOLLET_POSTPONE_STRATEGY
@@ -799,35 +836,55 @@ loop2:         if (pevents->events)
             while (bloop1);
             }
          }
-#   endif
-#  else
-      int fd = 1, fd_cnt = (fd_read_cnt + fd_write_cnt);
+#    endif
+#  endif
+      }
+   else if (nfd_ready == -1)
+      {
+      U_INTERNAL_DUMP("errno = %d num_connection = %u", errno, num_connection)
 
-      U_INTERNAL_DUMP("fd_cnt = %d fd_set_max = %d", fd_cnt, fd_set_max)
-
-      U_INTERNAL_ASSERT(nfd_ready <= fd_cnt)
-
-      for (int i = nfd_ready; fd < fd_set_max; ++fd)
+      if (errno == EINTR                   &&
+          UInterrupt::event_signal_pending &&
+          (UInterrupt::callHandlerSignal(), UInterrupt::exit_loop_wait_event_for_signal) == false)
          {
-         bread = (fd_read_cnt && FD_ISSET(fd, &read_set));
+         goto loop;
+         }
 
-         if ((bread                                            ||
-              (fd_write_cnt && FD_ISSET(fd, &write_set)) != 0) &&
-             setHandler(fd))
-            {
-            notifyHandlerEvent();
+#  ifndef HAVE_EPOLL_WAIT
+      if (errno == EBADF) // there are fd that become not valid (it is possible if EPIPE)
+         {
+         removeBadFd();
 
-            if (--i == 0)
-               {
-               U_INTERNAL_DUMP("fd = %d: return", fd)
-
-               if (fd_cnt > (fd_read_cnt + fd_write_cnt)) fd_set_max = getNFDS();
-
-               return;
-               }
-            }
+         if (num_connection) goto loop;
          }
 #  endif
+      }
+#endif
+}
+
+void UNotifier::waitForEvent()
+{
+   U_TRACE(0, "UNotifier::waitForEvent()")
+
+#ifdef DEBUG
+   ++nwatches;
+#endif
+
+#ifdef USE_LIBEVENT
+   (void) UDispatcher::dispatch(UDispatcher::ONCE);
+#else
+   UEventTime* ptimeout;
+loop:
+   waitForEvent(ptimeout = UTimer::getTimeout());
+
+   if (nfd_ready == 0 &&
+       ptimeout)
+      {
+      // call the handler of timeout
+
+      U_INTERNAL_ASSERT_EQUALS(UTimer::first->alarm, ptimeout)
+
+      if (UTimer::callHandlerTimeout()) goto loop;
       }
 #endif
 }
@@ -1068,8 +1125,7 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 
    U_INTERNAL_DUMP("revents = %d %B", fds[0].revents, fds[0].revents)
 #else
-
-#  ifdef _MSWINDOWS_
+# ifdef _MSWINDOWS_
    HANDLE h = is_pipe(fd);
 
    if (h != INVALID_HANDLE_VALUE)
@@ -1087,7 +1143,7 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 
       U_RETURN(count);
       }
-#  endif
+# endif
 
    // If both fields of the timeval structure are zero, then select() returns immediately.
    // (This is useful for polling). If ptmp is NULL (no timeout), select() can block indefinitely...
@@ -1099,8 +1155,7 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
       {
       U_INTERNAL_ASSERT_POINTER(time_obj)
 
-      time_obj->UTimeVal::setMilliSecond(timeoutMS);
-
+              time_obj->setTime(timeoutMS);
       ptime = time_obj;
       }
 
@@ -1160,8 +1215,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
       {
       U_INTERNAL_ASSERT_POINTER(time_obj)
 
-      time_obj->UTimeVal::setMilliSecond(timeoutMS);
-
+              time_obj->setTime(timeoutMS);
       ptime = time_obj;
       }
 

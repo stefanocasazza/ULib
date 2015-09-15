@@ -29,13 +29,12 @@
  *
  * @brief Handles incoming connections.
  *
- * The UServer class contains the methods needed to write a portable server.
- * In general, a server listens for incoming network requests on a well-known
- * IP address and port number. When a connection request is received,
- * the UServer makes this connection available to the server program as a socket.
+ * The UServer class contains the methods needed to write a portable server. In general, a server listens for incoming network requests on a well-known
+ * IP address and port number. When a connection request is received, the UServer makes this connection available to the server program as a socket.
  * The socket represents a two-way (full-duplex) connection with the client.
  *
  * In common with normal socket programming, the life-cycle of a UServer follows this basic course:
+ *
  * 1) bind() to an IP-address/port number and listen for incoming connections
  * 2) accept() a connection request
  * 3) deal with the request, or pass the created socket to another thread or process to be dealt with
@@ -95,6 +94,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 class UHTTP;
 class UHTTP2;
 class UCommand;
+class UTimeStat;
 class USSLSocket;
 class USSIPlugIn;
 class UWebSocket;
@@ -105,10 +105,12 @@ class UFileConfig;
 class UHttpPlugIn;
 class UFCGIPlugIn;
 class USCGIPlugIn;
+class UThrottling;
 class UNoCatPlugIn;
 class UGeoIPPlugIn;
 class UClient_Base;
 class UProxyPlugIn;
+class UDataStorage;
 class UStreamPlugIn;
 class UModNoCatPeer;
 class UClientThread;
@@ -116,6 +118,9 @@ class UOCSPStapling;
 class UHttpClient_Base;
 class UWebSocketPlugIn;
 class UModProxyService;
+class UTimeoutConnection;
+
+template <class T> class URDBObjectHandler;
 
 class U_EXPORT UServer_Base : public UEventFd {
 public:
@@ -238,15 +243,11 @@ public:
    // ---------------------------------
    static int pluginsHandlerREAD();
    static int pluginsHandlerRequest();
-   static int pluginsHandlerReset();
    // ---------------------------------
    // SigHUP hook
    // ---------------------------------
    static int pluginsHandlerSigHUP();
    // ---------------------------------
-
-   static void   setCallerHandlerReset() { UClientImage_Base::callerHandlerReset = pluginsHandlerReset; }
-   static void resetCallerHandlerReset() { UClientImage_Base::callerHandlerReset = 0;                   }
 
    // ----------------------------------------------------------------------------------------------------------------------------
    // Manage process server
@@ -268,11 +269,13 @@ public:
    // ---------------------------------
       sem_t lock_user1;
       sem_t lock_user2;
+      sem_t lock_throttling;
       sem_t lock_rdb_server;
       sem_t lock_data_session;
       sem_t lock_db_not_found;
       char spinlock_user1[1];
       char spinlock_user2[1];
+      char spinlock_throttling[1];
       char spinlock_rdb_server[1];
       char spinlock_data_session[1];
       char spinlock_db_not_found[1];
@@ -303,12 +306,14 @@ public:
 #define U_CNT_PARALLELIZATION       UServer_Base::ptr_shared_data->cnt_parallelization
 #define U_LOCK_USER1              &(UServer_Base::ptr_shared_data->lock_user1)
 #define U_LOCK_USER2              &(UServer_Base::ptr_shared_data->lock_user2)
+#define U_LOCK_THROTTLING         &(UServer_Base::ptr_shared_data->lock_throttling)
 #define U_LOCK_RDB_SERVER         &(UServer_Base::ptr_shared_data->lock_rdb_server)
 #define U_LOCK_SSL_SESSION        &(UServer_Base::ptr_shared_data->lock_ssl_session)
 #define U_LOCK_DATA_SESSION       &(UServer_Base::ptr_shared_data->lock_data_session)
 #define U_LOCK_DB_NOT_FOUND       &(UServer_Base::ptr_shared_data->lock_db_not_found)
 #define U_SPINLOCK_USER1            UServer_Base::ptr_shared_data->spinlock_user1
 #define U_SPINLOCK_USER2            UServer_Base::ptr_shared_data->spinlock_user2
+#define U_SPINLOCK_THROTTLING       UServer_Base::ptr_shared_data->spinlock_throttling
 #define U_SPINLOCK_RDB_SERVER       UServer_Base::ptr_shared_data->spinlock_rdb_server
 #define U_SPINLOCK_SSL_SESSION      UServer_Base::ptr_shared_data->spinlock_ssl_session
 #define U_SPINLOCK_DATA_SESSION     UServer_Base::ptr_shared_data->spinlock_data_session
@@ -344,7 +349,7 @@ public:
       lock_user2->init(&(ptr_shared_data->lock_user2), ptr_shared_data->spinlock_user2);
       }
 
-   // NB: two step acquisition - first we get the offset, after the pointer...
+   // NB: two step shared memory acquisition - first we get the offset, after the pointer...
 
    static void* getOffsetToDataShare(uint32_t shared_data_size)
       {
@@ -439,12 +444,10 @@ public:
       U_RETURN(false);
       }
 
-   // it creates a copy of itself, return true if parent...
-
    static void    endNewChild() __noreturn;
    static pid_t startNewChild();
 
-   static bool startParallelization(            uint32_t nclient = 1);
+   static bool startParallelization(            uint32_t nclient = 1); // it can creates a copy of itself, return true if parent...
    static bool    isParallelizationGoingToStart(uint32_t nclient = 1) __pure;
 
    // manage log server...
@@ -514,7 +517,6 @@ protected:
    static UString* cenvironment;
    static UString* senvironment;
    static UString* str_preforked_num_kids;
-   static uint32_t max_depth, wakeup_for_nothing, nread, nread_again;
    static bool flag_loop, flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive;
 
    static uint32_t                 vplugin_size;
@@ -542,6 +544,28 @@ protected:
    static UVector<UIPAllow*>* vallow_IP_prv;
 #endif
 
+#ifdef DEBUG
+   static UEventTime* pstat;
+   static uint64_t stats_bytes;
+   static uint32_t max_depth, wakeup_for_nothing, nread, nread_again, stats_connections, stats_simultaneous;
+
+   static UString getStats();
+#endif
+
+#ifdef U_THROTTLING_SUPPORT
+   static bool         throttling_chk;
+   static UEventTime*  throttling_time;
+   static UThrottling* throttling_rec;
+   static URDBObjectHandler<UDataStorage*>* db_throttling;
+
+   static void clearThrottling();
+   static bool checkThrottling();
+   static bool checkThrottlingBeforeSend(bool bwrite);
+
+   static void initThrottlingClient();
+   static void initThrottlingServer(const UString& data);
+#endif
+
 #if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    static ULock* lock_ocsp_staple;
    static UOCSPStapling* pthread_ocsp;
@@ -564,34 +588,6 @@ protected:
    virtual ~UServer_Base();
 
    // VARIE
-
-   class U_NO_EXPORT UTimeoutConnection : public UEventTime {
-   public:
-
-   // COSTRUTTORI
-
-   UTimeoutConnection() : UEventTime(timeoutMS / 1000L, 0L)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "", 0)
-      }
-
-   virtual ~UTimeoutConnection()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UTimeoutConnection)
-      }
-
-   // define method VIRTUAL of class UEventTime
-
-   virtual int handlerTime() U_DECL_FINAL;
-
-#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
-   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
-#endif
-
-   private:
-   UTimeoutConnection(const UTimeoutConnection&) : UEventTime() {}
-   UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
-   };
 
 #ifdef U_LOG_ENABLE
    static bool called_from_handlerTime;
@@ -642,6 +638,7 @@ protected:
 private:
    friend class UHTTP;
    friend class UHTTP2;
+   friend class UTimeStat;
    friend class USSLSocket;
    friend class USSIPlugIn;
    friend class UWebSocket;
@@ -651,6 +648,7 @@ private:
    friend class UHttpPlugIn;
    friend class USCGIPlugIn;
    friend class UFCGIPlugIn;
+   friend class UThrottling;
    friend class UProxyPlugIn;
    friend class UNoCatPlugIn;
    friend class UGeoIPPlugIn;
@@ -663,6 +661,8 @@ private:
    friend class UWebSocketPlugIn;
    friend class UModProxyService;
    friend class UClientImage_Base;
+   friend class UTimeoutConnection;
+   friend class UBandWidthThrottling;
 
    static void manageSigHUP() U_NO_EXPORT;
    static bool clientImageHandlerRead() U_NO_EXPORT;

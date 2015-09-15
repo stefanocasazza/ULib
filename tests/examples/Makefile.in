@@ -509,7 +509,7 @@ top_srcdir = @top_srcdir@
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/examples/http_header/include
 EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA IR/WEB IR/benchmark IR/doc_dir *.cfg .htpasswd .htdigest \
-				 *.properties *.test *.sh error_msg workflow doc_parse robots.txt css js benchmark websocket docroot php.sh
+				 *.properties *.test *.sh error_msg workflow doc_parse robots.txt alias.txt throttling.txt css js benchmark websocket docroot php.sh
 
 TESTS = client_server.test test_manager.test IR.test web_server.test \
 	web_server_multiclient.test web_socket.test $(am__append_1) \

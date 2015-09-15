@@ -583,14 +583,13 @@ public:
 #endif      
    };
 
+   static bool bcallInitForAllUSP;
    static const char* usp_page_key;
    static uint32_t usp_page_key_len;
    static UServletPage* usp_page_ptr;
-   static bool bcallInitForAllUSP, bcallResetForAllUSP;
 
    static bool callEndForAllUSP(UStringRep* key, void* value);
    static bool callInitForAllUSP(UStringRep* key, void* value);
-   static bool callResetForAllUSP(UStringRep* key, void* value);
    static bool callSigHUPForAllUSP(UStringRep* key, void* value);
    static bool callAfterForkForAllUSP(UStringRep* key, void* value);
 

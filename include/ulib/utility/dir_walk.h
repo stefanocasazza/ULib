@@ -152,6 +152,9 @@ public:
    static void setFilter(const char* _filter, uint32_t _filter_len);
    static bool setDirectory(const UString& dir, const char* filter = 0, uint32_t filter_len = 0);
 
+   static void setFilter( const UString& _filter)                       { setFilter(U_STRING_TO_PARAM(_filter)); }
+   static void setDirectory(const UString& dir, const UString& _filter) { setDirectory(dir, U_STRING_TO_PARAM(_filter)); }
+
    // DEBUG
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

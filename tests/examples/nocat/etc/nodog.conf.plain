@@ -258,18 +258,10 @@ http {
    ## Allows you to tell clients about documents that used to exist in your server's namespace, but do not anymore.
    ## The client will make a request for the document at its new location
 
-  	ALIAS	[
-  			/			  /test
-  			/printenv  /cgi-bin/printenv.sh
-# 			/login	  /cgi-bin/index.sh
-  			]
-
-	## vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
-
-##	REWRITE_RULE_NF [
-##						 ^/.*\.[A-Za-z0-9]+.*?$	$0
-##						 ^/(.*?)(\?|$)(.*)		/sapphire/main.php?url=$1&$3
-##						 ]
+  	ALIAS	"[ \
+  			 /			  /test \
+  			 /printenv  /cgi-bin/printenv.sh \
+  			 ]"
 
 ## VIRTUAL_HOST           yes
 ## ENABLE_INOTIFY         yes

@@ -134,7 +134,6 @@ fi
 
 cat <<EOF >inp/webserver.cfg
 userver {
- PORT 443
  RUN_AS_USER apache
  REQ_TIMEOUT 30
 #MIN_SIZE_FOR_SENDFILE 2k
@@ -154,9 +153,8 @@ userver {
  VERIFY_MODE 0
 }
 http {
- ALIAS [ /                                                    /index.php
-			/www.sito1.com/benchmark/docroot/servlet/jsonrequest /benchmark/docroot/servlet/jsonrequest ]
  ENABLE_INOTIFY yes
+ ALIAS @FILE:../alias.txt
  LIMIT_REQUEST_BODY 700K
  REQUEST_READ_TIMEOUT 30
  DIGEST_AUTHENTICATION no
@@ -186,7 +184,7 @@ creat_link ../ok											 $DOC_ROOT/ok
 creat_link ../tmp											 $DOC_ROOT/tmp
 creat_link ../uploads									 $DOC_ROOT/uploads
 creat_link ../../../benchmark/docroot/servlet	 $DOC_ROOT/benchmark/docroot/servlet
-creat_link ../../inp											 $DOC_ROOT/www.sito1.com/inp
+creat_link ../../inp										 $DOC_ROOT/www.sito1.com/inp
 creat_link ../../tmp									    $DOC_ROOT/www.sito1.com/tmp
 creat_link ../SSI											 $DOC_ROOT/www.sito1.com/SSI
 creat_link ../cgi-bin									 $DOC_ROOT/www.sito1.com/cgi-bin

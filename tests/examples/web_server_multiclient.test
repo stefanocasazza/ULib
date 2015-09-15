@@ -43,7 +43,7 @@ userver {
 #PREFORK_CHILD 0 
 }
 http {
- ALIAS [ / /index.php ]
+ ALIAS "[ / /index.php ]"
  ENABLE_INOTIFY yes
  APACHE_LIKE_LOG /var/log/httpd/access_log
  CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz

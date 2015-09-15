@@ -65,46 +65,37 @@ struct U_EXPORT UServices {
       while (UServices::read(fd, buffer, U_SINGLE_READ, -1)) {}
       }
 
-   // generic MatchType { U_FNMATCH = 0, U_DOSMATCH = 1, U_DOSMATCH_WITH_OR = 2 };
+   // generic MatchType { U_FNMATCH, U_DOSMATCH, U_DOSMATCH_EXT, U_DOSMATCH_WITH_OR, U_DOSMATCH_EXT_WITH_OR }
 
-   static bool match(const UString& s, const UString& mask)
+   static bool match(const char* s, uint32_t len, const char* mask, uint32_t size)
       {
-      U_TRACE(0, "UServices::match(%V,%V)", s.rep, mask.rep)
+      U_TRACE(0, "UServices::match(%.*S,%u,%.*S,%u)", len, s, len, size, mask, size)
 
-      bool result = u_pfn_match(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), u_pfn_flags);
+      U_INTERNAL_DUMP("u_pfn_match = %p u_pfn_flags = %u", u_pfn_match, u_pfn_flags)
 
-      U_RETURN(result);
+      if (u_pfn_match(s, len, mask, size, u_pfn_flags)) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
-   static bool match(const UStringRep* r, const UString& mask)
+   static bool matchnocase(const char* s, uint32_t len, const char* mask, uint32_t size)
       {
-      U_TRACE(0, "UServices::match(%p,%V)", r, mask.rep)
+      U_TRACE(0, "UServices::matchnocase(%.*S,%u,%.*S,%u)", len, s, len, size, mask, size)
 
-      bool result = u_pfn_match(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask), u_pfn_flags);
+      U_INTERNAL_DUMP("u_pfn_match = %p u_pfn_flags = %u", u_pfn_match, u_pfn_flags)
 
-      U_RETURN(result);
+      if (u_pfn_match(s, len, mask, size, u_pfn_flags | FNM_CASEFOLD)) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
-   static bool matchnocase(const UString& s, const UString& mask)
-      {
-      U_TRACE(0, "UServices::matchnocase(%V,%V)", s.rep, mask.rep)
+   static bool match(const UString& s,    const UString& mask)       { return match(U_STRING_TO_PARAM(s),  U_STRING_TO_PARAM(mask)); }
+   static bool match(const UStringRep* r, const UString& mask)       { return match(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask)); }
 
-      bool result = u_pfn_match(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), FNM_CASEFOLD);
-
-      U_RETURN(result);
-      }
-
-   static bool matchnocase(const UStringRep* r, const UString& mask)
-      {
-      U_TRACE(0, "UServices::matchnocase(%p,%V)", r, mask.rep)
-
-      bool result = u_pfn_match(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask), FNM_CASEFOLD);
-
-      U_RETURN(result);
-      }
+   static bool matchnocase(const UString& s,    const UString& mask) { return matchnocase(U_STRING_TO_PARAM(s),  U_STRING_TO_PARAM(mask)); }
+   static bool matchnocase(const UStringRep* r, const UString& mask) { return matchnocase(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask)); }
 
    // ------------------------------------------------------------
-   // DOS or wildcard regexpr
    // DOS or wildcard regexpr - multiple patterns separated by '|'
    // ------------------------------------------------------------
    // '?' matches any single character
@@ -115,39 +106,57 @@ struct U_EXPORT UServices {
       {
       U_TRACE(0, "UServices::dosMatch(%.*S,%u,%.*S,%u,%d)", len, s, len, size, mask, size, flags)
 
-      bool result = u_dosmatch(s, len, mask, size, flags);
+      if (u_dosmatch(s, len, mask, size, flags)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
+      }
+
+   static bool dosMatchExt(const char* s, uint32_t len, const char* mask, uint32_t size, int flags = 0)
+      {
+      U_TRACE(0, "UServices::dosMatchExt(%.*S,%u,%.*S,%u,%d)", len, s, len, size, mask, size, flags)
+
+      if (u_dosmatch_ext(s, len, mask, size, flags)) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    static bool dosMatchWithOR(const char* s, uint32_t len, const char* mask, uint32_t size, int flags = 0)
       {
       U_TRACE(0, "UServices::dosMatchWithOR(%.*S,%u,%.*S,%u,%d)", len, s, len, size, mask, size, flags)
 
-      bool result = u_dosmatch_with_OR(s, len, mask, size, flags);
+      if (u_dosmatch_with_OR(s, len, mask, size, flags)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
-   static bool dosMatch(const UString& s, const char* mask, uint32_t size, int flags = 0)
-      { return dosMatch(U_STRING_TO_PARAM(s), mask, size, flags); }
+   static bool dosMatchExtWithOR(const char* s, uint32_t len, const char* mask, uint32_t size, int flags = 0)
+      {
+      U_TRACE(0, "UServices::dosMatchExtWithOR(%.*S,%u,%.*S,%u,%d)", len, s, len, size, mask, size, flags)
 
-   static bool dosMatch(const UString& s, const UString& mask, int flags = 0)
-      { return dosMatch(U_STRING_TO_PARAM(mask), U_STRING_TO_PARAM(mask), flags); }
+      if (u_dosmatch_ext_with_OR(s, len, mask, size, flags)) U_RETURN(true);
 
-   static bool dosMatchWithOR(const UString& s, const char* mask, uint32_t size, int flags = 0)
-      { return dosMatchWithOR(U_STRING_TO_PARAM(s), mask, size, flags); }
+      U_RETURN(false);
+      }
 
-   static bool dosMatchWithOR(const UString& s, const UString& mask, int flags = 0)
-      { return dosMatchWithOR(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
+   static bool dosMatch(const UString& s, const char* mask, uint32_t size, int flags = 0)          { return dosMatch(U_STRING_TO_PARAM(s),              mask, size, flags); }
+   static bool dosMatch(const UString& s, const UString& mask,             int flags = 0)          { return dosMatch(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
+
+   static bool dosMatchExt(const UString& s, const char* mask, uint32_t size, int flags = 0)       { return dosMatchExt(U_STRING_TO_PARAM(s),              mask, size, flags); }
+   static bool dosMatchExt(const UString& s, const UString& mask,             int flags = 0)       { return dosMatchExt(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
+
+   static bool dosMatchWithOR(const UString& s, const char* mask, uint32_t size, int flags = 0)    { return dosMatchWithOR(U_STRING_TO_PARAM(s),              mask, size, flags); }
+   static bool dosMatchWithOR(const UString& s, const UString& mask,             int flags = 0)    { return dosMatchWithOR(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
+
+   static bool dosMatchExtWithOR(const UString& s, const char* mask, uint32_t size, int flags = 0) { return dosMatchExtWithOR(U_STRING_TO_PARAM(s),              mask, size, flags); }
+   static bool dosMatchExtWithOR(const UString& s, const UString& mask,             int flags = 0) { return dosMatchExtWithOR(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
 
    static bool fnmatch(const UString& s, const UString& mask, int flags = FNM_PATHNAME | FNM_CASEFOLD)
       {
       U_TRACE(0, "UServices::fnmatch(%V,%V,%d)", s.rep, mask.rep, flags)
 
-      bool result = u_fnmatch(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags);
+      if (u_fnmatch(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // manage session cookies and hashing password...
@@ -213,7 +222,7 @@ struct U_EXPORT UServices {
    static bool setupOpenSSLStore(const char* CAfile = 0, const char* CApath = 0, int store_flags = U_STORE_FLAGS);
    static EVP_PKEY* loadKey(const UString& x, const char* format, bool _private = true, const char* password = 0, ENGINE* e = 0);
 
-   /*
+   /**
     * data   is the data to be signed
     * pkey   is the corresponsding private key
     * passwd is the corresponsding password for the private key

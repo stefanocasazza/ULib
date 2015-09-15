@@ -186,6 +186,8 @@ void ULib_init()
 
    U_INTERNAL_DUMP("sizeof(off_t) = %u SIZEOF_OFF_T = %u", sizeof(off_t), SIZEOF_OFF_T)
 
+   U_INTERNAL_DUMP("u_dosmatch = %p u_dosmatch_with_OR = %p u_pfn_match = %p u_pfn_flags = %u", u_dosmatch, u_dosmatch_with_OR, u_pfn_match, u_pfn_flags)
+
 /* NB: there are to many exceptions...
 #if defined(_LARGEFILE_SOURCE) && !defined(_MSWINDOWS_) 
    U_INTERNAL_ASSERT_EQUALS(sizeof(off_t), SIZEOF_OFF_T)

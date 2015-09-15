@@ -6,7 +6,7 @@
 
 start_msg services
 
-#UTRACE="0 5M 1"
+#UTRACE="0 5M -1"
 #UOBJDUMP="-1 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR

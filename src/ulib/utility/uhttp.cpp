@@ -70,7 +70,6 @@
 int         UHTTP::mime_index;
 int         UHTTP::cgi_timeout;
 bool        UHTTP::bcallInitForAllUSP;
-bool        UHTTP::bcallResetForAllUSP;
 bool        UHTTP::digest_authentication;
 bool        UHTTP::enable_caching_by_proxy_servers;
 char        UHTTP::response_buffer[64];
@@ -1073,21 +1072,7 @@ next:
 
    if (cache_file_mask->equal(U_CONSTANT_TO_PARAM("_off_")) == false)
       {
-      const char* filter;
-      uint32_t filter_len;
-
-      if (cache_avoid_mask)
-         {
-         filter     = cache_avoid_mask->data();
-         filter_len = cache_avoid_mask->size();
-         }
-      else
-         {
-         filter     = 0;
-         filter_len = 0;
-         }
-
-      UDirWalk dirwalk(0, filter, filter_len);
+      UDirWalk dirwalk;
 
 #  ifdef DEBUG
       UDirWalk::setFollowLinks();
@@ -1095,11 +1080,14 @@ next:
       UDirWalk::setRecurseSubDirs();
       UDirWalk::setSuffixFileType(U_CONSTANT_TO_PARAM("usp|c|cgi|template|" U_LIB_SUFFIX));
 
-      u_pfn_flags = FNM_INVERT;
+      if (cache_avoid_mask)
+         {
+         UDirWalk::setFilter(*cache_avoid_mask);
+
+         u_pfn_flags |= FNM_INVERT;
+         }
 
       n = dirwalk.walk(vec);
-
-      u_pfn_flags = 0;
       }
 
    if (cache_file_store)
@@ -1352,20 +1340,24 @@ void UHTTP::checkFileForCache()
 }
 
 #ifdef U_ALIAS
-void UHTTP::setGlobalAlias(const UString& _alias)
+void UHTTP::setGlobalAlias(const UString& _alias) // NB: automatic alias for all uri request without suffix...
 {
    U_TRACE(0, "UHTTP::setGlobalAlias(%V)", _alias.rep)
 
-   if (_alias)
+   U_INTERNAL_ASSERT(_alias)
+
+   if (global_alias)
       {
-      // automatic alias for all uri request without suffix...
+      U_WARNING("UHTTP::setGlobalAlias(): global alias not empty: %S", global_alias->rep);
 
-      U_INTERNAL_ASSERT_EQUALS(global_alias, 0)
-
-      global_alias = U_NEW(UString(_alias));
-
-      if (global_alias->first_char() != '/') (void) global_alias->insert(0, '/');
+      delete global_alias;
       }
+
+   U_INTERNAL_ASSERT_EQUALS(global_alias, 0)
+
+   global_alias = U_NEW(UString(_alias));
+
+   if (global_alias->first_char() != '/') (void) global_alias->insert(0, '/');
 }
 #endif
 
@@ -1984,6 +1976,8 @@ U_NO_EXPORT bool UHTTP::readHeaderRequest()
          sz = USocketExt::readWhileNotToken(UServer_Base::csocket, *UClientImage_Base::request, U_CONSTANT_TO_PARAM(U_CRLF2), UServer_Base::timeoutMS);
 
          if (sz != U_NOT_FOUND) goto next;
+
+         U_RETURN(false);
          }
 #  endif
 
@@ -3641,6 +3635,15 @@ set_uri: U_http_info.uri     = alias->data();
 
    // ...process the HTTP message
 
+#ifdef U_THROTTLING_SUPPORT
+   if (UServer_Base::checkThrottling() == false)
+      {
+      setServiceUnavailable();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
+#endif
+
    U_http_info.nResponseCode = HTTP_OK;
 
    U_INTERNAL_DUMP("U_http_method_type = %B old_path_len = %u URI = %.*S u_cwd(%u) = %.*S", U_http_method_type, old_path_len, U_HTTP_URI_TO_TRACE, u_cwd_len, u_cwd_len, u_cwd)
@@ -4228,10 +4231,6 @@ void UHTTP::setEndRequestProcessing()
       }
 
    if (UServer_Base::isParallelizationParent()) return;
-
-   U_INTERNAL_DUMP("bcallResetForAllUSP = %b", bcallResetForAllUSP)
-
-   if (bcallResetForAllUSP) cache_file->callForAllEntry(callResetForAllUSP);
 
    if (data_session) data_session->resetDataSession();
 
@@ -7007,32 +7006,6 @@ bool UHTTP::callEndForAllUSP(UStringRep* key, void* value)
       if (usp_page->runDynamicPage)
 #  endif
       usp_page->runDynamicPage(U_DPAGE_DESTROY);
-      }
-
-   U_RETURN(true);
-}
-
-bool UHTTP::callResetForAllUSP(UStringRep* key, void* value)
-{
-   U_TRACE(0+256, "UHTTP::callResetForAllUSP(%V,%p)", key, value)
-
-   U_INTERNAL_ASSERT_POINTER(value)
-   U_INTERNAL_ASSERT(bcallResetForAllUSP)
-
-   UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
-
-   if (cptr->ptr           &&
-       cptr->link == false &&
-       cptr->mime_index == U_usp)
-      {
-      UServletPage* usp_page = (UServletPage*)cptr->ptr;
-
-      U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
-
-#  ifdef DEBUG
-      if (usp_page->runDynamicPage)
-#  endif
-      usp_page->runDynamicPage(U_DPAGE_RESET);
       }
 
    U_RETURN(true);

@@ -21,7 +21,7 @@
  * Plugins allow you to enhance the functionality of UServer without changing the core of the server. They can be loaded at
  * startup time and can change virtually some aspect of the behaviour of the server.
  *
- * UServer has 8 hooks which are used in different states of the execution of the request:
+ * UServer has 7 hooks which are used in different states of the execution of the request:
  * --------------------------------------------------------------------------------------------
  *  * Server-wide hooks:
  *  ````````````````````
@@ -35,7 +35,6 @@
  *  ````````````````````````
  *  6) handlerREAD:
  *  7) handlerRequest:
- *  8) handlerReset:
  *   called in `UClientImage_Base::handlerRead()`
  * --------------------------------------------------------------------------------------------
  *
@@ -67,7 +66,6 @@ public:
    // Connection-wide hooks
    virtual int handlerREAD() U_DECL_FINAL;
    virtual int handlerRequest() U_DECL_FINAL;
-   virtual int handlerReset() U_DECL_FINAL;
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS

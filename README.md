@@ -27,6 +27,7 @@ The current version offers the following features :
    * Support for uri protection.
    * Support for aliases/redirection.
    * Support for switch the site to a maintenance page only.
+   * Support for URL traffic based throttling (experimental).
    * Support for overriden of error messages by local document (ErrorDocument/40x|500.html).
    * Support for RewriteRule (lighttpd-like) that check for file existence as they do on Apache, some CMS (SilverStripe) require it.
    * Support for (apache-like) log [NCSA extended/combined format](http://httpd.apache.org/docs/2.0/mod/mod_log_config.html)

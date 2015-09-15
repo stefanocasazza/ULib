@@ -133,8 +133,8 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
             U_INTERNAL_ASSERT(x.isNullTerminated())
 
             const char* msk = x.data();
-loop:
-            switch (u_get_unalignedp32(msk))
+
+loop:       switch (u_get_unalignedp32(msk))
                {
                case U_MULTICHAR_CONSTANT32('G','E','T', 0):  service->method_mask |= HTTP_GET; break;
                case U_MULTICHAR_CONSTANT32('P','U','T', 0):  service->method_mask |= HTTP_PUT; break;

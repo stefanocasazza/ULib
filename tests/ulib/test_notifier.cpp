@@ -405,9 +405,12 @@ int U_EXPORT main(int argc, char* argv[])
    MyAlarm1* a = U_NEW(MyAlarm1(1L, 0L));
    MyAlarm2* b = U_NEW(MyAlarm2(1L, 0L));
 
-   UTimer::init(true);
+   UTimer::init(UTimer::ASYNC);
+
    UTimer::insert(a);
    UTimer::insert(b);
+
+   UTimer::setTimer();
 
 #ifdef DEBUG
    if (argc > 2) UTimer::printInfo(cout);
@@ -424,8 +427,10 @@ int U_EXPORT main(int argc, char* argv[])
              UNotifier::waitForEvent(&timeout);
       (void) UNotifier::waitForRead(fds[0], 500);
 
-      (void) UTimer::insert(U_NEW(MyAlarm1(1L, 0L)));
+      UTimer::insert(U_NEW(MyAlarm1(1L, 0L)));
 
+      UTimer::setTimer();
+      
       timeout.nanosleep();
 
 #  ifdef DEBUG
@@ -433,12 +438,12 @@ int U_EXPORT main(int argc, char* argv[])
 #  endif
       }
 
-   UTimer::stop();
-
 #ifdef DEBUG
    if (argc > 2) UTimer::printInfo(cout);
 #endif
-   UTimer::clear(false);
+
+   UTimer::clear();
+
 #ifdef DEBUG
    if (argc > 2) UTimer::printInfo(cout);
 #endif

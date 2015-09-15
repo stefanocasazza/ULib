@@ -933,7 +933,9 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
          }
 
 #  ifdef U_ALIAS
-      UHTTP::setGlobalAlias(cfg.at(U_CONSTANT_TO_PARAM("SSI_AUTOMATIC_ALIASING")));
+      x = cfg.at(U_CONSTANT_TO_PARAM("SSI_AUTOMATIC_ALIASING"));
+
+      if (x) UHTTP::setGlobalAlias(x); // NB: automatic alias of all uri request without suffix...
 #  endif
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);

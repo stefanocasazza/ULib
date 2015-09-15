@@ -9,11 +9,11 @@ current stable release, you may wish to investigate the "squeeze-lts"
 distribution. More information is available at:
 https://wiki.debian.org/LTS/ 
 
-Debian 7.8, or wheezy.  Access this release through dists/oldstable
-Debian 7.8 was released Saturday, 10th January 2015.
+Debian 7.9, or wheezy.  Access this release through dists/oldstable
+Debian 7.9 was released Saturday, 5th September 2015.
 
-Debian 8.1, or jessie.  Access this release through dists/stable
-Debian 8.1 was released Saturday, 6th June 2015.
+Debian 8.2, or jessie.  Access this release through dists/stable
+Debian 8.2 was released Saturday, 5th September 2015.
 
 Testing, or stretch.  Access this release through dists/testing.  The
 current tested development snapshot is named stretch.  Packages which

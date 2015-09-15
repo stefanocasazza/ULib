@@ -42,7 +42,7 @@
 
 /* Match */
 int        u_pfn_flags;
-bPFpcupcud u_pfn_match = u_dosmatch_with_OR;
+bPFpcupcud u_pfn_match;
 
 /* Services */
 int u_num_cpu = -1;
@@ -53,7 +53,6 @@ const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
  * these values are not magical, just the default values
  * Marsaglia used. Any pair of unsigned integers should be fine
  */ 
-
 uint32_t u_m_w = 521288629,
          u_m_z = 362436069;
 
@@ -61,11 +60,14 @@ bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n)
 {
    U_INTERNAL_TRACE("u_is_overlap(%p,%p,%lu)", dst, src, n)
 
-   U_INTERNAL_ASSERT_MAJOR(n,0)
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
 
-        if (src < dst) return !((src + n - 1) < dst);
-   else if (dst < src) return !((dst + n - 1) < src);
-   else                return true; /* They start at same place. Since we know neither of them has zero length, they must overlap. */
+        if (src < dst) return ((src + n - 1) >= dst);
+   else if (dst < src) return ((dst + n - 1) >= src);
+
+   U_INTERNAL_ASSERT_EQUALS(dst, src)
+
+   return true; /* They start at same place. Since we know neither of them has zero length, they must overlap */
 }
 
 #ifdef DEBUG
@@ -117,7 +119,7 @@ void* u__memcpy(void* restrict dst, const void* restrict src, size_t n, const ch
 
    if (n == 0)
       {
-      U_WARNING("*** zero copy in memcpy *** - %s", called_by_function);
+      U_WARNING("*** Zero copy in memcpy *** - %s", called_by_function);
 
       return 0;
       }
@@ -183,7 +185,8 @@ static gid_t effective_gid = (gid_t)(-1);
 
 void u_init_security(void)
 {
-   /* Run this at the beginning of the program to initialize this code and
+   /**
+    * Run this at the beginning of the program to initialize this code and
     * to drop privileges before someone uses them to shoot us in the foot
     */
 #ifndef _MSWINDOWS_
@@ -229,10 +232,10 @@ void u_need_root(bool necessary)
 
    if (effective_uid)
       {
-      if (necessary) U_ERROR(  "require root privilege but not setuid root");
-#                 ifdef DEBUG
-                     U_WARNING("require root privilege but not setuid root");
-#                 endif
+      if (necessary) U_ERROR("require root privilege but not setuid root");
+#              ifdef DEBUG
+                   U_WARNING("require root privilege but not setuid root");
+#              endif
 
       return;
       }
@@ -244,10 +247,10 @@ void u_need_root(bool necessary)
    if (seteuid(effective_uid) == -1 ||
        geteuid()              !=  0)
       {
-      if (necessary) U_ERROR(  "did not get root privilege");
-#                 ifdef DEBUG
-                     U_WARNING("did not get root privilege");
-#                 endif
+      if (necessary) U_ERROR("did not get root privilege");
+#              ifdef DEBUG
+                   U_WARNING("did not get root privilege");
+#              endif
       }
 #endif
 }
@@ -268,7 +271,7 @@ void u_dont_need_root(void)
    if (geteuid() != 0) return; /* nothing to do */
 
    if (seteuid(real_uid) == -1 ||
-       geteuid()         != real_uid)
+       geteuid() != real_uid)
       {
       U_ERROR("did not drop root privilege");
       }
@@ -339,11 +342,11 @@ cap_list[] = {
    };
 */
 
-#  ifdef DEBUG
+# ifdef DEBUG
    cap_value_t minimal_cap_values[] = { CAP_SETUID, CAP_SETGID, CAP_SETPCAP, CAP_SYS_PTRACE };
-#  else
+# else
    cap_value_t minimal_cap_values[] = { CAP_SETUID, CAP_SETGID, CAP_SETPCAP };
-#  endif
+# endif
 
    cap_t caps = cap_init();
 
@@ -360,7 +363,7 @@ cap_list[] = {
    (void) cap_free(caps);
 
    if (prctl(U_PR_SET_KEEPCAPS, 1, 0, 0, 0) < 0) U_ERROR("prctl() failed");
-#  endif
+# endif
 
    U_INTERNAL_TRACE("u_never_need_root()")
 
@@ -394,10 +397,12 @@ void u_need_group(bool necessary)
    if (getegid() == effective_gid) return; /* nothing to do */
 
     if (setegid(effective_gid) == -1 ||
-        getegid()              != effective_gid)
+        getegid() != effective_gid)
       {
-      if (necessary) U_ERROR(  "did not get group privilege");
-                     U_WARNING("did not get group privilege");
+      if (necessary) U_ERROR("did not get group privilege");
+#              ifdef DEBUG
+                   U_WARNING("did not get group privilege");
+#              endif
       }
 #endif
 }
@@ -416,7 +421,7 @@ void u_dont_need_group(void)
    if (getegid() != effective_gid) return; /* nothing to do */
 
     if (setegid(real_gid) == -1 ||
-        getegid()         != real_gid)
+        getegid() != real_gid)
       {
       U_ERROR("did not drop group privilege");
       }
@@ -476,7 +481,7 @@ bool u_runAsUser(const char* restrict user, bool change_dir)
 
       u_getcwd(); /* get current working directory */
 
-      U_INTERNAL_ASSERT_EQUALS(strcmp(pw->pw_dir,u_cwd),0)
+      U_INTERNAL_ASSERT_EQUALS(strcmp(pw->pw_dir,u_cwd), 0)
       }
 
    return true;
@@ -1170,8 +1175,7 @@ __pure const char* u_strpend(const char* restrict s, uint32_t slen,
 
    while (s < end)
       {
-loop:
-      c = *++s;
+loop: c = *++s;
 
       if (u__isspace(c)) continue;
 
@@ -1225,7 +1229,7 @@ __pure bool u_startsWith(const char* restrict a, uint32_t n1, const char* restri
    U_INTERNAL_TRACE("u_startsWith(%.*s,%u,%.*s,%u)", U_min(n1,128), a, n1, U_min(n2,128), b, n2)
 
    if (diff >= 0 &&
-       (strncmp(a, b, n2) == 0))
+       (memcmp(a, b, n2) == 0))
       {
       return true;
       }
@@ -1242,7 +1246,7 @@ __pure bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict
    U_INTERNAL_TRACE("u_endsWith(%.*s,%u,%.*s,%u)", U_min(n1,128), a, n1, U_min(n2,128), b, n2)
 
    if (diff >= 0 &&
-       (strncmp(a+diff, b, n2) == 0))
+       (memcmp(a+diff, b, n2) == 0))
       {
       return true;
       }
@@ -1382,7 +1386,7 @@ const char* u_delimit_token(const char* restrict s, const char** restrict pold, 
       }
 
    *pold =  s;
-   c     = *s++;
+       c = *s++;
 
    /* NB: we don't search for delimiter in block text... */
 
@@ -1469,9 +1473,8 @@ uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char*
    return n;
 }
 
-/*
- * Match STRING against the filename pattern MASK, returning true if it matches,
- * false if not, inversion if flags contain FNM_INVERT
+/**
+ * Match STRING against the filename pattern MASK, returning true if it matches, false if not, inversion if flags contain FNM_INVERT
  *
  * '?' matches any single character
  * '*' matches any string, including the empty string
@@ -1490,9 +1493,9 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
    U_INTERNAL_TRACE("u_dosmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, flags)
 
    U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_MAJOR(n1, 0)
+   U_INTERNAL_ASSERT_MAJOR(n2, 0)
    U_INTERNAL_ASSERT_POINTER(mask)
-   U_INTERNAL_ASSERT_MAJOR(n1,0)
-   U_INTERNAL_ASSERT_MAJOR(n2,0)
 
    if (flags & FNM_IGNORECASE)
       {
@@ -1523,7 +1526,7 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
 
             result = (mask >= end_mask);
 
-            return (flags & FNM_INVERT ? (result != true) : result);
+            return (flags & FNM_INVERT ? (result == false) : result);
             }
 
          c2 = (mask ? u__tolower(*mask) : 0);
@@ -1566,7 +1569,10 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
          c1 = *s;
 
          if (c2 != c1 &&
-             c2 != '?') return (flags & FNM_INVERT ? true : false);
+             c2 != '?')
+            {
+            return (flags & FNM_INVERT ? true : false);
+            }
 
          ++s;
          ++mask;
@@ -1582,7 +1588,7 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
 
             result = (mask >= end_mask);
 
-            return (flags & FNM_INVERT ? (result != true) : result);
+            return (flags & FNM_INVERT ? (result == false) : result);
             }
 
          c2 = *mask;
@@ -1616,52 +1622,228 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
       }
 }
 
-/*
- * Match STRING against the filename pattern MASK and multiple patterns separated by '|',
- * returning true if it matches, false if not, inversion if flags contain FNM_INVERT
- *
- * '?' matches any single character
- * '*' matches any string, including the empty string
+bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
+{
+   U_INTERNAL_TRACE("u_dosmatch_ext(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, flags)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_MAJOR(n1, 0)
+   U_INTERNAL_ASSERT_MAJOR(n2, 0)
+   U_INTERNAL_ASSERT_POINTER(mask)
+
+   while (n2)
+      {
+      U_INTERNAL_PRINT("switch: s[0] = %c n1 = %u mask[0] = %c n2 = %u", s[0], n1, mask[0], n2)
+
+      switch (mask[0])
+         {
+         case '*':
+            {
+            while (mask[1] == '*')
+               {
+               ++mask;
+               --n2;
+               }
+
+            if (n2 == 1) return (flags & FNM_INVERT ? false : true); /* match */
+
+            while (n1)
+               {
+               if (u_dosmatch_ext(s, n1, mask+1, n2-1, flags & ~FNM_INVERT)) return (flags & FNM_INVERT ? false : true); /* match */
+
+               ++s;
+               --n1;
+               }
+
+            return (flags & FNM_INVERT ? true : false); /* no match */
+            }
+         break;
+
+         case '?':
+            {
+            if (n1 == 0) return (flags & FNM_INVERT ? true : false); /* no match */
+
+            ++s;
+            --n1;
+            }
+         break;
+
+         case '[':
+            {
+            bool match = false,
+                  bnot = (mask[1] == '^');
+
+            if (bnot)
+               {
+               mask += 2;
+                 n2 -= 2;
+               }
+            else
+               {
+               ++mask;
+               --n2;
+               }
+
+            U_INTERNAL_PRINT("s[0] = %c n1 = %u mask[0] = %c n2 = %u", s[0], n1, mask[0], n2)
+
+            while (true)
+               {
+               if (mask[0] == '\\')
+                  {
+                  ++mask;
+                  --n2;
+
+                  if (mask[0] == s[0]) match = true;
+                  }
+               else
+                  {
+                  if (mask[0] == ']') break;
+
+                  if (n2 == 0)
+                     {
+                     --mask;
+                     ++n2;
+
+                     break;
+                     }
+
+                  if (n2 >= 3 && 
+                      mask[1] == '-')
+                     {
+                     int start = mask[0],
+                           end = mask[2],
+                             c =    s[0];
+
+                     if (start > end)
+                        {
+                        int t = start;
+                        start = end;
+                          end = t;
+                        }
+
+                     if (flags & FNM_IGNORECASE)
+                        {
+                        start = u__tolower((unsigned char)start);
+                          end = u__tolower((unsigned char)end);
+                            c = u__tolower((unsigned char)c);
+                        }
+
+                     mask += 2;
+                       n2 -= 2;
+
+                     if (c >= start &&
+                         c <= end)
+                        {
+                        match = true;
+                        }
+                     }
+                  else
+                     {
+                     if ((flags & FNM_IGNORECASE) == 0)
+                        {
+                        if (mask[0] == s[0]) match = true;
+                        }
+                     else
+                        {
+                        if (u__tolower((unsigned char)mask[0]) == u__tolower((unsigned char)s[0])) match = true;
+                        }
+                     }
+                  }
+
+               ++mask;
+               --n2;
+               }
+
+            U_INTERNAL_PRINT("match = %d bnot = %d", match, bnot)
+
+            if (match == false || bnot) return (flags & FNM_INVERT ? true : false); /* no match */
+
+            U_INTERNAL_PRINT("s[0] = %c n1 = %u mask[0] = %c n2 = %u", s[0], n1, mask[0], n2)
+
+            ++s;
+            --n1;
+            }
+         break;
+
+         case '\\':
+            {
+            if (n2 >= 2)
+               {
+               ++mask;
+               --n2;
+               }
+            }
+
+         /* fall through */
+
+         default:
+            {
+            U_INTERNAL_PRINT("default: s[0] = %c n1 = %u mask[0] = %c n2 = %u", s[0], n1, mask[0], n2)
+
+            if ((flags & FNM_IGNORECASE) == 0)
+               {
+               if (mask[0] != s[0]) return (flags & FNM_INVERT ? true : false); /* no match */
+               }
+            else
+               {
+               if (u__tolower((unsigned char)mask[0]) != u__tolower((unsigned char)s[0])) return (flags & FNM_INVERT ? true : false); /* no match */
+               }
+
+            ++s;
+            --n1;
+            }
+         break;
+         }
+
+      ++mask;
+      --n2;
+
+      if (n1 == 0)
+         {
+         while (*mask == '*')
+            {
+            ++mask;
+            --n2;
+            }
+
+         break;
+         }
+      }
+
+   U_INTERNAL_PRINT("n1 = %u n2 = %u", n1, n2)
+
+   if (n2 == 0 &&
+       n1 == 0)
+      {
+      return (flags & FNM_INVERT ? false : true);
+      }
+
+   return (flags & FNM_INVERT ? true : false);
+}
+
+/**
+ * Match STRING against the pattern MASK and multiple patterns separated by '|', returning true if it matches, false if not, inversion if flags contain FNM_INVERT
  */
 
-__pure bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
+bool u_match_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
 {
-   bool result;
    const char* restrict p_or;
    const char* restrict end = mask + n2;
 
-   U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, flags)
+   U_INTERNAL_TRACE("u_match_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, flags)
 
    U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_MAJOR(n1, 0)
+   U_INTERNAL_ASSERT_MAJOR(n2, 0)
    U_INTERNAL_ASSERT_POINTER(mask)
-   U_INTERNAL_ASSERT_MAJOR(n1,0)
-   U_INTERNAL_ASSERT_MAJOR(n2,0)
 
    while (true)
       {
       p_or = (const char* restrict) memchr(mask, '|', n2);
 
-      if (p_or == 0)
-         {
-         result = u_dosmatch(s, n1, mask, n2, flags);
+      if (p_or == 0) return u_pfn_match(s, n1, mask, n2, flags);
 
-         U_INTERNAL_PRINT("result = %d", result)
-
-         return result;
-         }
-
-      result = u_dosmatch(s, n1, mask, (p_or - mask), flags);
-
-      U_INTERNAL_PRINT("result = %d", result)
-
-      if (flags & FNM_INVERT)
-         {
-         if (result == false) return false;
-         }
-      else
-         {
-         if (result) return true;
-         }
+      if (u_pfn_match(s, n1, mask, (p_or - mask), flags & ~FNM_INVERT)) return (flags & FNM_INVERT ? false : true);
 
       mask = p_or + 1;
       n2   = end - mask;
@@ -1671,7 +1853,7 @@ __pure bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* 
 /**
  * Verifies that the passed string is actually an e-mail address
  *
- * see also: http://www.remote.org/jochen/mail/info/chars.html
+ * see: http://www.remote.org/jochen/mail/info/chars.html
  */
 
 #define RFC822_SPECIALS "()<>@,;:\\\"[]"
@@ -1772,10 +1954,12 @@ __pure int u_strnatcmp(char const* restrict a, char const* restrict b)
       cb = b[bi];
 
       /* skip over leading spaces or zeros */
+
       while (u__isspace(ca) || ca == '0') ca = a[++ai];
       while (u__isspace(cb) || cb == '0') cb = b[++bi];
 
       /* process run of digits */
+
       if (u__isdigit(ca) &&
           u__isdigit(cb))
          {
@@ -1869,7 +2053,7 @@ static inline char* extract_colon_unit(char* restrict pzDir, const char* restric
 
    while (*pzSrc == PATH_LIST_SEP) pzSrc++;
 
-   for (;;)
+   while (true)
       {
       char ch = (*pzDest = *pzSrc);
 
@@ -1935,7 +2119,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
  */
 
 #ifdef _MSWINDOWS_
-#define U_PATH_DEFAULT "C:\\msys\\1.0\\bin;C:\\MinGW\\bin;C:\\windows;C:\\windows\\system;C:\\windows\\system32"
+#  define U_PATH_DEFAULT "C:\\msys\\1.0\\bin;C:\\MinGW\\bin;C:\\windows;C:\\windows\\system;C:\\windows\\system32"
 
 static const char* u_check_for_suffix_exe(const char* restrict program)
 {
@@ -1959,7 +2143,7 @@ static const char* u_check_for_suffix_exe(const char* restrict program)
    return program;
 }
 #else
-#define U_PATH_DEFAULT "/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin"
+#  define U_PATH_DEFAULT "/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin"
 #endif
 
 bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode)
@@ -2017,12 +2201,11 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
 }
 
 /**
- * Canonicalize PATH, and build a new path. The new path differs from PATH in that:
+ * Canonicalize path, and build a new path. The new path differs from original in that:
  *
  * Multiple    '/'                     are collapsed to a single '/'
- * Leading     './'  and trailing '/.' are removed
  * Trailing    '/'                     are removed
- * Trailing    '/.'                    are removed
+ * Leading     './'  and trailing '/.' are removed
  * Non-leading '../' and trailing '..' are handled by removing portions of the path
  */
 
@@ -2242,7 +2425,7 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
    U_INTERNAL_ASSERT_MAJOR(n,0)
    U_INTERNAL_ASSERT_MAJOR(pathbuf_size,0)
 
-   /* check if command have path separator... */
+   /* check if command have path separator */
 
    while ((c = argv[1][i++]))
       {
@@ -2280,7 +2463,7 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
 /**
  * It uses George Marsaglia's MWC algorithm to produce an unsigned integer.
  *
- * See http://www.bobwheeler.com/statistics/Password/MarsagliaPost.txt
+ * see http://www.bobwheeler.com/statistics/Password/MarsagliaPost.txt
  */
 
 uint32_t u_get_num_random(uint32_t range)
@@ -2457,7 +2640,7 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
             {
             c = *pattern;
 
-            /* Collapse multiple stars. */
+            /* Collapse multiple stars */
 
             while (c == '*') c = *++pattern;
 
@@ -2590,10 +2773,10 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
 /*
 #if !defined(GCOV)
 
-* (Duff's device) This is INCREDIBLY ugly, but fast. We break the string up into 8 byte units. On the first
-* time through the loop we get the "leftover bytes" (strlen % 8). On every other iteration, we perform 8 BODY's
-* so we handle all 8 bytes. Essentially, this saves us 7 cmp & branch instructions. If this routine is heavily
-* used enough, it's worth the ugly coding
+(Duff's device) This is INCREDIBLY ugly, but fast. We break the string up into 8 byte units. On the first
+time through the loop we get the "leftover bytes" (strlen % 8). On every other iteration, we perform 8 BODY's
+so we handle all 8 bytes. Essentially, this saves us 7 cmp & branch instructions. If this routine is heavily
+used enough, it's worth the ugly coding
 
 #  undef  U_LOOP_STRING
 #  define U_LOOP_STRING( exec_code ) {     \
@@ -3108,17 +3291,17 @@ const unsigned char u_validate_utf8[] = {
 
 __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
 {
-   uint32_t code = 0, state = 0;
-   const unsigned char* restrict end = buf + len;
    /*
    bool result = false;
    uint32_t j, following;
    */
+   uint32_t code = 0, state = 0;
+   const unsigned char* restrict end = buf + len;
 
    U_INTERNAL_TRACE("u_isUTF8(%.*s,%u)", U_min(len,128), buf, len)
 
-   U_INTERNAL_ASSERT_MAJOR(len,0)
    U_INTERNAL_ASSERT_POINTER(buf)
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
 
    while (buf < end)
       {
@@ -3137,7 +3320,7 @@ __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
       /**
        * Copyright (c) 2008-2009 Bjoern Hoehrmann <bjoern@hoehrmann.de>
        *
-       * See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details
+       * see http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details
        */
 
       uint32_t type = u_validate_utf8[c];
@@ -3151,44 +3334,43 @@ __pure bool u_isUTF8(const unsigned char* restrict buf, uint32_t len)
 
       if (state == 1) return false;
 
-      /*
-      if ((c & 0x80) == 0) // 0xxxxxxx is plain ASCII
-         {
-         // Even if the whole file is valid UTF-8 sequences,
-         // still reject it if it uses weird control characters.
-
-         if ((u_cttab(c) & 0x0200) == 0) return false;
-         }
-      else if ((c & 0x40) == 0) return false; // 10xxxxxx never 1st byte
-      else
-         {
-         // 11xxxxxx begins UTF-8
-
-         if      ((c & 0x20) == 0) following = 1; // 110xxxxx
-         else if ((c & 0x10) == 0) following = 2; // 1110xxxx
-         else if ((c & 0x08) == 0) following = 3; // 11110xxx
-         else if ((c & 0x04) == 0) following = 4; // 111110xx
-         else if ((c & 0x02) == 0) following = 5; // 1111110x
-         else                      return false;
-
-         for (j = 0; j < following; j++)
-            {
-            if (buf >= end) return result;
-
-            c = *buf++;
-
-            if ((c & 0x80) == 0 ||
-                (c & 0x40))
-               {
-               return false;
-               }
-            }
-
-         result = true;
-         }
-
-      return result;
-      */
+      /**
+       * if ((c & 0x80) == 0) // 0xxxxxxx is plain ASCII
+       *    {
+       *    // Even if the whole file is valid UTF-8 sequences, still reject it if it uses weird control characters
+       *
+       *    if ((u_cttab(c) & 0x0200) == 0) return false;
+       *    }
+       * else if ((c & 0x40) == 0) return false; // 10xxxxxx never 1st byte
+       * else
+       *    {
+       *    // 11xxxxxx begins UTF-8
+       *   
+       *    if      ((c & 0x20) == 0) following = 1; // 110xxxxx
+       *    else if ((c & 0x10) == 0) following = 2; // 1110xxxx
+       *    else if ((c & 0x08) == 0) following = 3; // 11110xxx
+       *    else if ((c & 0x04) == 0) following = 4; // 111110xx
+       *    else if ((c & 0x02) == 0) following = 5; // 1111110x
+       *    else                      return false;
+       *   
+       *    for (j = 0; j < following; j++)
+       *       {
+       *       if (buf >= end) return result;
+       *   
+       *       c = *buf++;
+       *   
+       *       if ((c & 0x80) == 0 ||
+       *           (c & 0x40))
+       *          {
+       *          return false;
+       *          }
+       *       }
+       *   
+       *    result = true;
+       *    }
+       *
+       * return result;
+       */
       }
 
    return (state == 0);
@@ -3223,34 +3405,35 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 
 __pure bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }
 
-/* From RFC 3986
-
-#define U_URI_UNRESERVED  0 // ALPHA (%41-%5A and %61-%7A) DIGIT (%30-%39) '-' '.' '_' '~'
-#define U_URI_PCT_ENCODED 1
-#define U_URI_GEN_DELIMS  2 // ':' '/' '?' '#' '[' ']' '@'
-#define U_URI_SUB_DELIMS  4 // '!' '$' '&' '\'' '(' ')' '*' '+' ',' ';' '='
-
-unsigned int u_uri_encoded_char_mask = (U_URI_PCT_ENCODED | U_URI_GEN_DELIMS | U_URI_SUB_DELIMS);
-
-const unsigned char u_uri_encoded_char[256] = {
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  // 0x00 - 0x0f
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  // 0x10 - 0x1f
-   1, 4, 1, 2, 4, 1, 4, 4, 4, 4, 4, 4, 4, 0, 0, 2,  //  !"#$%&'()*+,-./
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 1, 4, 1, 2,  // 0123456789:;<=>?
-   2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // @ABCDEFGHIJKLMNO
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 1, 0,  // PQRSTUVWXYZ[\]^_
-   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // `abcdefghijklmno
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1,  // pqrstuvwxyz{|}~
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
-   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-};
-*/
+/**
+ * From RFC 3986
+ *
+ * #define U_URI_UNRESERVED  0 // ALPHA (%41-%5A and %61-%7A) DIGIT (%30-%39) '-' '.' '_' '~'
+ * #define U_URI_PCT_ENCODED 1
+ * #define U_URI_GEN_DELIMS  2 // ':' '/' '?' '#' '[' ']' '@'
+ * #define U_URI_SUB_DELIMS  4 // '!' '$' '&' '\'' '(' ')' '*' '+' ',' ';' '='
+ *
+ * unsigned int u_uri_encoded_char_mask = (U_URI_PCT_ENCODED | U_URI_GEN_DELIMS | U_URI_SUB_DELIMS);
+ *
+ * const unsigned char u_uri_encoded_char[256] = {
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  // 0x00 - 0x0f
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,  // 0x10 - 0x1f
+ *   1, 4, 1, 2, 4, 1, 4, 4, 4, 4, 4, 4, 4, 0, 0, 2,  //  !"#$%&'()*+,-./
+ *   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 4, 1, 4, 1, 2,  // 0123456789:;<=>?
+ *   2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // @ABCDEFGHIJKLMNO
+ *   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 1, 2, 1, 0,  // PQRSTUVWXYZ[\]^_
+ *   1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,  // `abcdefghijklmno
+ *   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 1,  // pqrstuvwxyz{|}~
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+ *   1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+ * };
+ */
 
 #define __S  0x00000001 /* character space    ' ' (32 0x20) */
 #define __E  0x00000002 /* character used in printf format  */
@@ -3363,7 +3546,8 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, 
 FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0xe0 */
 FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  /* 0xf0 */
 
-/* ISO-1 character set
+/**
+ * ISO-1 character set
  *
  * C,  C,  C,  C,  C, CT,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,
  * C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,  C,
@@ -3545,17 +3729,17 @@ const unsigned char u__ct_hex2int[112] = {
    0,10,11,12,13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* @ABCDEFGHIJKLMNO */
    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* PQRSTUVWXYZ[\]^_ */
    0,10,11,12,13,14,15, 0, 0, 0, 0, 0, 0, 0, 0, 0, /* `abcdefghijklmno */
-/*
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  // pqrstuvwxyz{|}~
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-   0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-*/
+/**
+ * 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0  // pqrstuvwxyz{|}~
+ * 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ * 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ * 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ * 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ * 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ * 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ * 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+ * 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+ */
 };
 
 /* MIME TYPE */
@@ -3568,680 +3752,681 @@ typedef struct mimeentry {
 
 #define MIME_ENTRY(name,type) { type, name+1, U_CONSTANT_SIZE(name)-1 }
 
-/* Complete list of MIME types
-
-.3dm  x-world/x-3dmf
-.3dmf x-world/x-3dmf
-
-.a    application/octet-stream
-.aab  application/x-authorware-bin
-.aam  application/x-authorware-map
-.aas  application/x-authorware-seg
-.abc  text/vnd.abc
-.acgi text/html
-.afl  video/animaflex
-.ai   application/postscript
-.aif  audio/aiff
-.aif  audio/x-aiff
-.aifc audio/aiff
-.aifc audio/x-aiff
-.aiff audio/aiff
-.aiff audio/x-aiff
-.aim  application/x-aim
-.aip  text/x-audiosoft-intra
-.ani  application/x-navi-animation
-.aos  application/x-nokia-9000-communicator-add-on-software
-.aps  application/mime
-.arc  application/octet-stream
-.arj  application/arj
-.arj  application/octet-stream
-.art  image/x-jg
-.asf  video/x-ms-asf
-.asm  text/x-asm
-.asp  text/asp
-.asx  application/x-mplayer2
-.asx  video/x-ms-asf
-.asx  video/x-ms-asf-plugin
-.au   audio/basic
-.au   audio/x-au
-.avi  application/x-troff-msvideo
-.avi  video/avi
-.avi  video/msvideo
-.avi  video/x-msvideo
-.avs  video/avs-video
-
-.bcpio application/x-bcpio
-.bin  application/mac-binary
-.bin  application/macbinary
-.bin  application/octet-stream
-.bin  application/x-binary
-.bin  application/x-macbinary
-.bm   image/bmp
-.bmp  image/bmp
-.bmp  image/x-windows-bmp
-.boo  application/book
-.book application/book
-.boz  application/x-bzip2
-.bsh  application/x-bsh
-.bz   application/x-bzip
-.bz2  application/x-bzip2
-
-.c    text/plain
-.c    text/x-c
-.c++  text/plain
-.cat  application/vnd.ms-pki.seccat
-.cc   text/plain
-.cc   text/x-c
-.ccad application/clariscad
-.cco  application/x-cocoa
-.cdf  application/cdf
-.cdf  application/x-cdf
-.cdf  application/x-netcdf
-.cer  application/pkix-cert
-.cer  application/x-x509-ca-cert
-.cha  application/x-chat
-.chat application/x-chat
-.class application/java
-.class application/java-byte-code
-.class application/x-java-class
-.com  application/octet-stream
-.com  text/plain
-.conf text/plain
-.cpio application/x-cpio
-.cpp  text/x-c
-.cpt  application/mac-compactpro
-.cpt  application/x-compactpro
-.cpt  application/x-cpt
-.crl  application/pkcs-crl
-.crl  application/pkix-crl
-.crt  application/pkix-cert
-.crt  application/x-x509-ca-cert
-.crt  application/x-x509-user-cert
-.csh  application/x-csh
-.csh  text/x-script.csh
-.css  application/x-pointplus
-.css  text/css
-.cxx  text/plain
-
-.dcr  application/x-director
-.deepv application/x-deepv
-.def  text/plain
-.der  application/x-x509-ca-cert
-.dif  video/x-dv
-.dir  application/x-director
-.dl   video/dl
-.dl   video/x-dl
-.doc  application/msword
-.dot  application/msword
-.dp   application/commonground
-.drw  application/drafting
-.dump application/octet-stream
-.dv   video/x-dv
-.dvi  application/x-dvi
-.dwf  drawing/x-dwf (old)
-.dwf  model/vnd.dwf
-.dwg  application/acad
-.dwg  image/vnd.dwg
-.dwg  image/x-dwg
-.dxf  application/dxf
-.dxf  image/vnd.dwg
-.dxf  image/x-dwg
-.dxr  application/x-director
-
-.el   text/x-script.elisp
-.elc  application/x-bytecode.elisp (compiled elisp)
-.elc  application/x-elc
-.env  application/x-envoy
-.eps  application/postscript
-.es   application/x-esrehber
-.etx  text/x-setext
-.evy  application/envoy
-.evy  application/x-envoy
-.exe  application/octet-stream
-
-.f    text/plain
-.f    text/x-fortran
-.f77  text/x-fortran
-.f90  text/plain
-.f90  text/x-fortran
-.fdf  application/vnd.fdf
-.fif  application/fractals
-.fif  image/fif
-.fli  video/fli
-.fli  video/x-fli
-.flo  image/florian
-.flx  text/vnd.fmi.flexstor
-.fmf  video/x-atomic3d-feature
-.for  text/plain
-.for  text/x-fortran
-.fpx  image/vnd.fpx
-.fpx  image/vnd.net-fpx
-.frl  application/freeloader
-.funk audio/make
-
-.g    text/plain
-.g3   image/g3fax
-.gif  image/gif
-.gl   video/gl
-.gl   video/x-gl
-.gsd  audio/x-gsm
-.gsm  audio/x-gsm
-.gsp  application/x-gsp
-.gss  application/x-gss
-.gtar application/x-gtar
-.gz   application/x-compressed
-.gz   application/x-gzip
-.gzip application/x-gzip
-.gzip multipart/x-gzip
-
-.h    text/plain
-.h    text/x-h
-.hdf  application/x-hdf
-.help application/x-helpfile
-.hgl  application/vnd.hp-hpgl
-.hh   text/plain
-.hh   text/x-h
-.hlb  text/x-script
-.hlp  application/hlp
-.hlp  application/x-helpfile
-.hlp  application/x-winhelp
-.hpg  application/vnd.hp-hpgl
-.hpgl application/vnd.hp-hpgl
-.hqx  application/binhex
-.hqx  application/binhex4
-.hqx  application/mac-binhex
-.hqx  application/mac-binhex40
-.hqx  application/x-binhex40
-.hqx  application/x-mac-binhex40
-.hta  application/hta
-.htc  text/x-component
-.htm  text/html
-.html text/html
-.htmls text/html
-.htt  text/webviewhtml
-.htx  text/html
-
-.ice  x-conference/x-cooltalk
-.ico  image/x-icon
-.idc  text/plain
-.ief  image/ief
-.iefs image/ief
-.iges application/iges
-.iges model/iges
-.igs  application/iges
-.igs  model/iges
-.ima  application/x-ima
-.imap application/x-httpd-imap
-.inf  application/inf
-.ins  application/x-internett-signup
-.ip   application/x-ip2
-.isu  video/x-isvideo
-.it   audio/it
-.iv   application/x-inventor
-.ivr  i-world/i-vrml
-.ivy  application/x-livescreen
-
-.jam  audio/x-jam
-.jav  text/plain
-.jav  text/x-java-source
-.java text/plain
-.java text/x-java-source
-.jcm  application/x-java-commerce
-.jfif image/jpeg
-.jfif image/pjpeg
-.jfif-tbnl  image/jpeg
-.jpe  image/jpeg
-.jpe  image/pjpeg
-.jpeg image/jpeg
-.jpeg image/pjpeg
-.jpg  image/jpeg
-.jpg  image/pjpeg
-.jps  image/x-jps
-.js   application/x-javascript
-.js   application/javascript
-.js   application/ecmascript
-.js   text/javascript
-.js   text/ecmascript
-.jut  image/jutvision
-
-.kar  audio/midi
-.kar  music/x-karaoke
-.ksh  application/x-ksh
-.ksh  text/x-script.ksh
-
-.la   audio/nspaudio
-.la   audio/x-nspaudio
-.lam  audio/x-liveaudio
-.latex application/x-latex
-.lha  application/lha
-.lha  application/octet-stream
-.lha  application/x-lha
-.lhx  application/octet-stream
-.list text/plain
-.lma  audio/nspaudio
-.lma  audio/x-nspaudio
-.log  text/plain
-.lsp  application/x-lisp
-.lsp  text/x-script.lisp
-.lst  text/plain
-.lsx  text/x-la-asf
-.ltx  application/x-latex
-.lzh  application/octet-stream
-.lzh  application/x-lzh
-.lzx  application/lzx
-.lzx  application/octet-stream
-.lzx  application/x-lzx
-
-.m    text/plain
-.m    text/x-m
-.m1v  video/mpeg
-.m2a  audio/mpeg
-.m2v  video/mpeg
-.m3u  audio/x-mpequrl
-.man  application/x-troff-man
-.map  application/x-navimap
-.mar  text/plain
-.mbd  application/mbedlet
-.mc$  application/x-magic-cap-package-1.0
-.mcd  application/mcad
-.mcd  application/x-mathcad
-.mcf  image/vasa
-.mcf  text/mcf
-.mcp  application/netmc
-.me   application/x-troff-me
-.mht  message/rfc822
-.mhtml message/rfc822
-.mid  application/x-midi
-.mid  audio/midi
-.mid  audio/x-mid
-.mid  audio/x-midi
-.mid  music/crescendo
-.mid  x-music/x-midi
-.midi application/x-midi
-.midi audio/midi
-.midi audio/x-mid
-.midi audio/x-midi
-.midi music/crescendo
-.midi x-music/x-midi
-.mif  application/x-frame
-.mif  application/x-mif
-.mime message/rfc822
-.mime www/mime
-.mjf  audio/x-vnd.audioexplosion.mjuicemediafile
-.mjpg video/x-motion-jpeg
-.mm   application/base64
-.mm   application/x-meme
-.mme  application/base64
-.mod  audio/mod
-.mod  audio/x-mod
-.moov video/quicktime
-.mov  video/quicktime
-.movie video/x-sgi-movie
-.mp2  audio/mpeg
-.mp2  audio/x-mpeg
-.mp2  video/mpeg
-.mp2  video/x-mpeg
-.mp2  video/x-mpeq2a
-.mp3  audio/mpeg3
-.mp3  audio/x-mpeg-3
-.mp3  video/mpeg
-.mp3  video/x-mpeg
-.mpa  audio/mpeg
-.mpa  video/mpeg
-.mpc  application/x-project
-.mpe  video/mpeg
-.mpeg video/mpeg
-.mpg  audio/mpeg
-.mpg  video/mpeg
-.mpga audio/mpeg
-.mpp  application/vnd.ms-project
-.mpt  application/x-project
-.mpv  application/x-project
-.mpx  application/x-project
-.mrc  application/marc
-.ms   application/x-troff-ms
-.mv   video/x-sgi-movie
-.my   audio/make
-.mzz  application/x-vnd.audioexplosion.mzz
-
-.nap  image/naplps
-.naplps image/naplps
-.nc   application/x-netcdf
-.ncm  application/vnd.nokia.configuration-message
-.nif  image/x-niff
-.niff image/x-niff
-.nix  application/x-mix-transfer
-.nsc  application/x-conference
-.nvd  application/x-navidoc
-
-.o    application/octet-stream
-.oda  application/oda
-.omc  application/x-omc
-.omcd application/x-omcdatamaker
-.omcr application/x-omcregerator
-
-.p    text/x-pascal
-.p10  application/pkcs10
-.p10  application/x-pkcs10
-.p12  application/pkcs-12
-.p12  application/x-pkcs12
-.p7a  application/x-pkcs7-signature
-.p7c  application/pkcs7-mime
-.p7c  application/x-pkcs7-mime
-.p7m  application/pkcs7-mime
-.p7m  application/x-pkcs7-mime
-.p7r  application/x-pkcs7-certreqresp
-.p7s  application/pkcs7-signature
-.part application/pro_eng
-.pas  text/pascal
-.pbm  image/x-portable-bitmap
-.pcl  application/vnd.hp-pcl
-.pcl  application/x-pcl
-.pct  image/x-pict
-.pcx  image/x-pcx
-.pdb  chemical/x-pdb
-.pdf  application/pdf
-.pfunk audio/make
-.pfunk audio/make.my.funk
-.pgm  image/x-portable-graymap
-.pgm  image/x-portable-greymap
-.pic  image/pict
-.pict image/pict
-.pkg  application/x-newton-compatible-pkg
-.pko  application/vnd.ms-pki.pko
-.pl   text/plain
-.pl   text/x-script.perl
-.plx  application/x-pixclscript
-.pm   image/x-xpixmap
-.pm   text/x-script.perl-module
-.pm4  application/x-pagemaker
-.pm5  application/x-pagemaker
-.png  image/png
-.pnm  application/x-portable-anymap
-.pnm  image/x-portable-anymap
-.pot  application/mspowerpoint
-.pot  application/vnd.ms-powerpoint
-.pov  model/x-pov
-.ppa  application/vnd.ms-powerpoint
-.ppm  image/x-portable-pixmap
-.pps  application/mspowerpoint
-.pps  application/vnd.ms-powerpoint
-.ppt  application/mspowerpoint
-.ppt  application/powerpoint
-.ppt  application/vnd.ms-powerpoint
-.ppt  application/x-mspowerpoint
-.ppz  application/mspowerpoint
-.pre  application/x-freelance
-.prt  application/pro_eng
-.ps   application/postscript
-.psd  application/octet-stream
-.pvu  paleovu/x-pv
-.pwz  application/vnd.ms-powerpoint
-.py   text/x-script.phyton
-.pyc  applicaiton/x-bytecode.python
-
-.qcp  audio/vnd.qcelp
-.qd3  x-world/x-3dmf
-.qd3d x-world/x-3dmf
-.qif  image/x-quicktime
-.qt   video/quicktime
-.qtc  video/x-qtc
-.qti  image/x-quicktime
-.qtif image/x-quicktime
-
-.ra   audio/x-pn-realaudio
-.ra   audio/x-pn-realaudio-plugin
-.ra   audio/x-realaudio
-.ram  audio/x-pn-realaudio
-.ras  application/x-cmu-raster
-.ras  image/cmu-raster
-.ras  image/x-cmu-raster
-.rast image/cmu-raster
-.rexx text/x-script.rexx
-.rf   image/vnd.rn-realflash
-.rgb  image/x-rgb
-.rm   application/vnd.rn-realmedia
-.rm   audio/x-pn-realaudio
-.rmi  audio/mid
-.rmm  audio/x-pn-realaudio
-.rmp  audio/x-pn-realaudio
-.rmp  audio/x-pn-realaudio-plugin
-.rng  application/ringing-tones
-.rng  application/vnd.nokia.ringing-tone
-.rnx  application/vnd.rn-realplayer
-.roff application/x-troff
-.rp   image/vnd.rn-realpix
-.rpm  audio/x-pn-realaudio-plugin
-.rt   text/richtext
-.rt   text/vnd.rn-realtext
-.rtf  application/rtf
-.rtf  application/x-rtf
-.rtf  text/richtext
-.rtx  application/rtf
-.rtx  text/richtext
-.rv   video/vnd.rn-realvideo
-
-.s    text/x-asm
-.s3m  audio/s3m
-.saveme application/octet-stream
-.sbk  application/x-tbook
-.scm  application/x-lotusscreencam
-.scm  text/x-script.guile
-.scm  text/x-script.scheme
-.scm  video/x-scm
-.sdml text/plain
-.sdp  application/sdp
-.sdp  application/x-sdp
-.sdr  application/sounder
-.sea  application/sea
-.sea  application/x-sea
-.set  application/set
-.sgm  text/sgml
-.sgm  text/x-sgml
-.sgml text/sgml
-.sgml text/x-sgml
-.sh   application/x-bsh
-.sh   application/x-sh
-.sh   application/x-shar
-.sh   text/x-script.sh
-.shar application/x-bsh
-.shar application/x-shar
-.shtml text/html
-.shtml text/x-server-parsed-html
-.sid  audio/x-psid
-.sit  application/x-sit
-.sit  application/x-stuffit
-.skd  application/x-koan
-.skm  application/x-koan
-.skp  application/x-koan
-.skt  application/x-koan
-.sl   application/x-seelogo
-.smi  application/smil
-.smil application/smil
-.snd  audio/basic
-.snd  audio/x-adpcm
-.sol  application/solids
-.spc  application/x-pkcs7-certificates
-.spc  text/x-speech
-.spl  application/futuresplash
-.spr  application/x-sprite
-.sprite application/x-sprite
-.src  application/x-wais-source
-.ssi  text/x-server-parsed-html
-.ssm  application/streamingmedia
-.sst  application/vnd.ms-pki.certstore
-.step application/step
-.stl  application/sla
-.stl  application/vnd.ms-pki.stl
-.stl  application/x-navistyle
-.stp  application/step
-.sv4cpio application/x-sv4cpio
-.sv4crc  application/x-sv4crc
-.svf  image/vnd.dwg
-.svf  image/x-dwg
-.svr  application/x-world
-.svr  x-world/x-svr
-.swf  application/x-shockwave-flash
-
-.t    application/x-troff
-.talk text/x-speech
-.tar  application/x-tar
-.tbk  application/toolbook
-.tbk  application/x-tbook
-.tcl  application/x-tcl
-.tcl  text/x-script.tcl
-.tcsh text/x-script.tcsh
-.tex  application/x-tex
-.texi application/x-texinfo
-.texinfo application/x-texinfo
-.text application/plain
-.text text/plain
-.tgz  application/gnutar
-.tgz  application/x-compressed
-.tif  image/tiff
-.tif  image/x-tiff
-.tiff image/tiff
-.tiff image/x-tiff
-.tr   application/x-troff
-.tsi  audio/tsp-audio
-.tsp  application/dsptype
-.tsp  audio/tsplayer
-.tsv  text/tab-separated-values
-.turbot image/florian
-.txt  text/plain
-
-.uil  text/x-uil
-.uni  text/uri-list
-.unis text/uri-list
-.unv  application/i-deas
-.uri  text/uri-list
-.uris text/uri-list
-.ustar application/x-ustar
-.ustar multipart/x-ustar
-.uu   application/octet-stream
-.uu   text/x-uuencode
-.uue  text/x-uuencode
-
-.vcd  application/x-cdlink
-.vcs  text/x-vcalendar
-.vda  application/vda
-.vdo  video/vdo
-.vew  application/groupwise
-.viv  video/vivo
-.viv  video/vnd.vivo
-.vivo video/vivo
-.vivo video/vnd.vivo
-.vmd  application/vocaltec-media-desc
-.vmf  application/vocaltec-media-file
-.voc  audio/voc
-.voc  audio/x-voc
-.vos  video/vosaic
-.vox  audio/voxware
-.vqe  audio/x-twinvq-plugin
-.vqf  audio/x-twinvq
-.vql  audio/x-twinvq-plugin
-.vrml application/x-vrml
-.vrml model/vrml
-.vrml x-world/x-vrml
-.vrt  x-world/x-vrt
-.vsd  application/x-visio
-.vst  application/x-visio
-.vsw  application/x-visio
-
-.w60  application/wordperfect6.0
-.w61  application/wordperfect6.1
-.w6w  application/msword
-.wav  audio/wav
-.wav  audio/x-wav
-.wb1  application/x-qpro
-.wbmp image/vnd.wap.wbmp
-.web  application/vnd.xara
-.wiz  application/msword
-.wk1  application/x-123
-.wmf  windows/metafile
-.wml  text/vnd.wap.wml
-.wmlc application/vnd.wap.wmlc
-.wmls text/vnd.wap.wmlscript
-.wmlsc application/vnd.wap.wmlscriptc
-.word application/msword
-.wp   application/wordperfect
-.wp5  application/wordperfect
-.wp5  application/wordperfect6.0
-.wp6  application/wordperfect
-.wpd  application/wordperfect
-.wpd  application/x-wpwin
-.wq1  application/x-lotus
-.wri  application/mswrite
-.wri  application/x-wri
-.wrl  application/x-world
-.wrl  model/vrml
-.wrl  x-world/x-vrml
-.wrz  model/vrml
-.wrz  x-world/x-vrml
-.wsc  text/scriplet
-.wsrc application/x-wais-source
-.wtk  application/x-wintalk
-
-.xbm  image/x-xbitmap
-.xbm  image/x-xbm
-.xbm  image/xbm
-.xdr  video/x-amt-demorun
-.xgz  xgl/drawing
-.xif  image/vnd.xiff
-.xl   application/excel
-.xla  application/excel
-.xla  application/x-excel
-.xla  application/x-msexcel
-.xlb  application/excel
-.xlb  application/vnd.ms-excel
-.xlb  application/x-excel
-.xlc  application/excel
-.xlc  application/vnd.ms-excel
-.xlc  application/x-excel
-.xld  application/excel
-.xld  application/x-excel
-.xlk  application/excel
-.xlk  application/x-excel
-.xll  application/excel
-.xll  application/vnd.ms-excel
-.xll  application/x-excel
-.xlm  application/excel
-.xlm  application/vnd.ms-excel
-.xlm  application/x-excel
-.xls  application/excel
-.xls  application/vnd.ms-excel
-.xls  application/x-excel
-.xls  application/x-msexcel
-.xlt  application/excel
-.xlt  application/x-excel
-.xlv  application/excel
-.xlv  application/x-excel
-.xlw  application/excel
-.xlw  application/vnd.ms-excel
-.xlw  application/x-excel
-.xlw  application/x-msexcel
-.xm   audio/xm
-.xml  application/xml
-.xml  text/xml
-.xmz  xgl/movie
-.xpix application/x-vnd.ls-xpix
-.xpm  image/x-xpixmap
-.xpm  image/xpm
-.x-png image/png
-.xsr  video/x-amt-showrun
-.xwd  image/x-xwd
-.xwd  image/x-xwindowdump
-.xyz  chemical/x-pdb
-
-.z    application/x-compress
-.z    application/x-compressed
-.zip  application/x-compressed
-.zip  application/x-zip-compressed
-.zip  application/zip
-.zip  multipart/x-zip
-.zoo  application/octet-stream
-.zsh  text/x-script.zsh
-*/
+/**
+ * Complete list of MIME types
+ *
+ *.3dm  x-world/x-3dmf
+ *.3dmf x-world/x-3dmf
+ *
+ *.a     application/octet-stream
+ *.aab   application/x-authorware-bin
+ *.aam   application/x-authorware-map
+ *.aas   application/x-authorware-seg
+ *.abc   text/vnd.abc
+ *.acgi  text/html
+ *.afl   video/animaflex
+ *.ai    application/postscript
+ *.aif   audio/aiff
+ *.aif   audio/x-aiff
+ *.aifc  audio/aiff
+ *.aifc  audio/x-aiff
+ *.aiff  audio/aiff
+ *.aiff  audio/x-aiff
+ *.aim   application/x-aim
+ *.aip   text/x-audiosoft-intra
+ *.ani   application/x-navi-animation
+ *.aos   application/x-nokia-9000-communicator-add-on-software
+ *.aps   application/mime
+ *.arc   application/octet-stream
+ *.arj   application/arj
+ *.arj   application/octet-stream
+ *.art   image/x-jg
+ *.asf   video/x-ms-asf
+ *.asm   text/x-asm
+ *.asp   text/asp
+ *.asx   application/x-mplayer2
+ *.asx   video/x-ms-asf
+ *.asx   video/x-ms-asf-plugin
+ *.au    audio/basic
+ *.au    audio/x-au
+ *.avi   application/x-troff-msvideo
+ *.avi   video/avi
+ *.avi   video/msvideo
+ *.avi   video/x-msvideo
+ *.avs   video/avs-video
+ *
+ *.bcpio application/x-bcpio
+ *.bin   application/mac-binary
+ *.bin   application/macbinary
+ *.bin   application/octet-stream
+ *.bin   application/x-binary
+ *.bin   application/x-macbinary
+ *.bm    image/bmp
+ *.bmp   image/bmp
+ *.bmp   image/x-windows-bmp
+ *.boo   application/book
+ *.book  application/book
+ *.boz   application/x-bzip2
+ *.bsh   application/x-bsh
+ *.bz    application/x-bzip
+ *.bz2   application/x-bzip2
+ *
+ *.c     text/plain
+ *.c     text/x-c
+ *.c++   text/plain
+ *.cat   application/vnd.ms-pki.seccat
+ *.cc    text/plain
+ *.cc    text/x-c
+ *.ccad  application/clariscad
+ *.cco   application/x-cocoa
+ *.cdf   application/cdf
+ *.cdf   application/x-cdf
+ *.cdf   application/x-netcdf
+ *.cer   application/pkix-cert
+ *.cer   application/x-x509-ca-cert
+ *.cha   application/x-chat
+ *.chat  application/x-chat
+ *.class application/java
+ *.class application/java-byte-code
+ *.class application/x-java-class
+ *.com   application/octet-stream
+ *.com   text/plain
+ *.conf  text/plain
+ *.cpio  application/x-cpio
+ *.cpp   text/x-c
+ *.cpt   application/mac-compactpro
+ *.cpt   application/x-compactpro
+ *.cpt   application/x-cpt
+ *.crl   application/pkcs-crl
+ *.crl   application/pkix-crl
+ *.crt   application/pkix-cert
+ *.crt   application/x-x509-ca-cert
+ *.crt   application/x-x509-user-cert
+ *.csh   application/x-csh
+ *.csh   text/x-script.csh
+ *.css   application/x-pointplus
+ *.css   text/css
+ *.cxx   text/plain
+ *
+ *.dcr   application/x-director
+ *.deepv application/x-deepv
+ *.def   text/plain
+ *.der   application/x-x509-ca-cert
+ *.dif   video/x-dv
+ *.dir   application/x-director
+ *.dl    video/dl
+ *.dl    video/x-dl
+ *.doc   application/msword
+ *.dot   application/msword
+ *.dp    application/commonground
+ *.drw   application/drafting
+ *.dump  application/octet-stream
+ *.dv    video/x-dv
+ *.dvi   application/x-dvi
+ *.dwf   drawing/x-dwf (old)
+ *.dwf   model/vnd.dwf
+ *.dwg   application/acad
+ *.dwg   image/vnd.dwg
+ *.dwg   image/x-dwg
+ *.dxf   application/dxf
+ *.dxf   image/vnd.dwg
+ *.dxf   image/x-dwg
+ *.dxr   application/x-director
+ *
+ *.el    text/x-script.elisp
+ *.elc   application/x-bytecode.elisp (compiled elisp)
+ *.elc   application/x-elc
+ *.env   application/x-envoy
+ *.eps   application/postscript
+ *.es    application/x-esrehber
+ *.etx   text/x-setext
+ *.evy   application/envoy
+ *.evy   application/x-envoy
+ *.exe   application/octet-stream
+ *
+ *.f     text/plain
+ *.f     text/x-fortran
+ *.f77   text/x-fortran
+ *.f90   text/plain
+ *.f90   text/x-fortran
+ *.fdf   application/vnd.fdf
+ *.fif   application/fractals
+ *.fif   image/fif
+ *.fli   video/fli
+ *.fli   video/x-fli
+ *.flo   image/florian
+ *.flx   text/vnd.fmi.flexstor
+ *.fmf   video/x-atomic3d-feature
+ *.for   text/plain
+ *.for   text/x-fortran
+ *.fpx   image/vnd.fpx
+ *.fpx   image/vnd.net-fpx
+ *.frl   application/freeloader
+ *.funk  audio/make
+ *
+ *.g     text/plain
+ *.g3    image/g3fax
+ *.gif   image/gif
+ *.gl    video/gl
+ *.gl    video/x-gl
+ *.gsd   audio/x-gsm
+ *.gsm   audio/x-gsm
+ *.gsp   application/x-gsp
+ *.gss   application/x-gss
+ *.gtar  application/x-gtar
+ *.gz    application/x-compressed
+ *.gz    application/x-gzip
+ *.gzip  application/x-gzip
+ *.gzip  multipart/x-gzip
+ *
+ *.h     text/plain
+ *.h     text/x-h
+ *.hdf   application/x-hdf
+ *.help  application/x-helpfile
+ *.hgl   application/vnd.hp-hpgl
+ *.hh    text/plain
+ *.hh    text/x-h
+ *.hlb   text/x-script
+ *.hlp   application/hlp
+ *.hlp   application/x-helpfile
+ *.hlp   application/x-winhelp
+ *.hpg   application/vnd.hp-hpgl
+ *.hpgl  application/vnd.hp-hpgl
+ *.hqx   application/binhex
+ *.hqx   application/binhex4
+ *.hqx   application/mac-binhex
+ *.hqx   application/mac-binhex40
+ *.hqx   application/x-binhex40
+ *.hqx   application/x-mac-binhex40
+ *.hta   application/hta
+ *.htc   text/x-component
+ *.htm   text/html
+ *.html  text/html
+ *.htmls text/html
+ *.htt   text/webviewhtml
+ *.htx   text/html
+ *
+ *.ice   x-conference/x-cooltalk
+ *.ico   image/x-icon
+ *.idc   text/plain
+ *.ief   image/ief
+ *.iefs  image/ief
+ *.iges  application/iges
+ *.iges  model/iges
+ *.igs   application/iges
+ *.igs   model/iges
+ *.ima   application/x-ima
+ *.imap  application/x-httpd-imap
+ *.inf   application/inf
+ *.ins   application/x-internett-signup
+ *.ip    application/x-ip2
+ *.isu   video/x-isvideo
+ *.it    audio/it
+ *.iv    application/x-inventor
+ *.ivr   i-world/i-vrml
+ *.ivy   application/x-livescreen
+ *
+ *.jam   audio/x-jam
+ *.jav   text/plain
+ *.jav   text/x-java-source
+ *.java  text/plain
+ *.java  text/x-java-source
+ *.jcm   application/x-java-commerce
+ *.jfif  image/jpeg
+ *.jfif  image/pjpeg
+ *.jfif-tbnl image/jpeg
+ *.jpe   image/jpeg
+ *.jpe   image/pjpeg
+ *.jpeg  image/jpeg
+ *.jpeg  image/pjpeg
+ *.jpg   image/jpeg
+ *.jpg   image/pjpeg
+ *.jps   image/x-jps
+ *.js    application/x-javascript
+ *.js    application/javascript
+ *.js    application/ecmascript
+ *.js    text/javascript
+ *.js    text/ecmascript
+ *.jut   image/jutvision
+ *
+ *.kar   audio/midi
+ *.kar   music/x-karaoke
+ *.ksh   application/x-ksh
+ *.ksh   text/x-script.ksh
+ *
+ *.la    audio/nspaudio
+ *.la    audio/x-nspaudio
+ *.lam   audio/x-liveaudio
+ *.latex application/x-latex
+ *.lha   application/lha
+ *.lha   application/octet-stream
+ *.lha   application/x-lha
+ *.lhx   application/octet-stream
+ *.list  text/plain
+ *.lma   audio/nspaudio
+ *.lma   audio/x-nspaudio
+ *.log   text/plain
+ *.lsp   application/x-lisp
+ *.lsp   text/x-script.lisp
+ *.lst   text/plain
+ *.lsx   text/x-la-asf
+ *.ltx   application/x-latex
+ *.lzh   application/octet-stream
+ *.lzh   application/x-lzh
+ *.lzx   application/lzx
+ *.lzx   application/octet-stream
+ *.lzx   application/x-lzx
+ *
+ *.m     text/plain
+ *.m     text/x-m
+ *.m1v   video/mpeg
+ *.m2a   audio/mpeg
+ *.m2v   video/mpeg
+ *.m3u   audio/x-mpequrl
+ *.man   application/x-troff-man
+ *.map   application/x-navimap
+ *.mar   text/plain
+ *.mbd   application/mbedlet
+ *.mc$   application/x-magic-cap-package-1.0
+ *.mcd   application/mcad
+ *.mcd   application/x-mathcad
+ *.mcf   image/vasa
+ *.mcf   text/mcf
+ *.mcp   application/netmc
+ *.me    application/x-troff-me
+ *.mht   message/rfc822
+ *.mhtml message/rfc822
+ *.mid   application/x-midi
+ *.mid   audio/midi
+ *.mid   audio/x-mid
+ *.mid   audio/x-midi
+ *.mid   music/crescendo
+ *.mid   x-music/x-midi
+ *.midi  application/x-midi
+ *.midi  audio/midi
+ *.midi  audio/x-mid
+ *.midi  audio/x-midi
+ *.midi  music/crescendo
+ *.midi  x-music/x-midi
+ *.mif   application/x-frame
+ *.mif   application/x-mif
+ *.mime  message/rfc822
+ *.mime  www/mime
+ *.mjf   audio/x-vnd.audioexplosion.mjuicemediafile
+ *.mjpg  video/x-motion-jpeg
+ *.mm    application/base64
+ *.mm    application/x-meme
+ *.mme   application/base64
+ *.mod   audio/mod
+ *.mod   audio/x-mod
+ *.moov  video/quicktime
+ *.mov   video/quicktime
+ *.movie video/x-sgi-movie
+ *.mp2   audio/mpeg
+ *.mp2   audio/x-mpeg
+ *.mp2   video/mpeg
+ *.mp2   video/x-mpeg
+ *.mp2   video/x-mpeq2a
+ *.mp3   audio/mpeg3
+ *.mp3   audio/x-mpeg-3
+ *.mp3   video/mpeg
+ *.mp3   video/x-mpeg
+ *.mpa   audio/mpeg
+ *.mpa   video/mpeg
+ *.mpc   application/x-project
+ *.mpe   video/mpeg
+ *.mpeg  video/mpeg
+ *.mpg   audio/mpeg
+ *.mpg   video/mpeg
+ *.mpga  audio/mpeg
+ *.mpp   application/vnd.ms-project
+ *.mpt   application/x-project
+ *.mpv   application/x-project
+ *.mpx   application/x-project
+ *.mrc   application/marc
+ *.ms    application/x-troff-ms
+ *.mv    video/x-sgi-movie
+ *.my    audio/make
+ *.mzz   application/x-vnd.audioexplosion.mzz
+ *
+ *.nap   image/naplps
+ *.naplps image/naplps
+ *.nc    application/x-netcdf
+ *.ncm   application/vnd.nokia.configuration-message
+ *.nif   image/x-niff
+ *.niff  image/x-niff
+ *.nix   application/x-mix-transfer
+ *.nsc   application/x-conference
+ *.nvd   application/x-navidoc
+ *
+ *.o     application/octet-stream
+ *.oda   application/oda
+ *.omc   application/x-omc
+ *.omcd  application/x-omcdatamaker
+ *.omcr  application/x-omcregerator
+ *
+ *.p     text/x-pascal
+ *.p10   application/pkcs10
+ *.p10   application/x-pkcs10
+ *.p12   application/pkcs-12
+ *.p12   application/x-pkcs12
+ *.p7a   application/x-pkcs7-signature
+ *.p7c   application/pkcs7-mime
+ *.p7c   application/x-pkcs7-mime
+ *.p7m   application/pkcs7-mime
+ *.p7m   application/x-pkcs7-mime
+ *.p7r   application/x-pkcs7-certreqresp
+ *.p7s   application/pkcs7-signature
+ *.part  application/pro_eng
+ *.pas   text/pascal
+ *.pbm   image/x-portable-bitmap
+ *.pcl   application/vnd.hp-pcl
+ *.pcl   application/x-pcl
+ *.pct   image/x-pict
+ *.pcx   image/x-pcx
+ *.pdb   chemical/x-pdb
+ *.pdf   application/pdf
+ *.pfunk audio/make
+ *.pfunk audio/make.my.funk
+ *.pgm   image/x-portable-graymap
+ *.pgm   image/x-portable-greymap
+ *.pic   image/pict
+ *.pict  image/pict
+ *.pkg   application/x-newton-compatible-pkg
+ *.pko   application/vnd.ms-pki.pko
+ *.pl    text/plain
+ *.pl    text/x-script.perl
+ *.plx   application/x-pixclscript
+ *.pm    image/x-xpixmap
+ *.pm    text/x-script.perl-module
+ *.pm4   application/x-pagemaker
+ *.pm5   application/x-pagemaker
+ *.png   image/png
+ *.pnm   application/x-portable-anymap
+ *.pnm   image/x-portable-anymap
+ *.pot   application/mspowerpoint
+ *.pot   application/vnd.ms-powerpoint
+ *.pov   model/x-pov
+ *.ppa   application/vnd.ms-powerpoint
+ *.ppm   image/x-portable-pixmap
+ *.pps   application/mspowerpoint
+ *.pps   application/vnd.ms-powerpoint
+ *.ppt   application/mspowerpoint
+ *.ppt   application/powerpoint
+ *.ppt   application/vnd.ms-powerpoint
+ *.ppt   application/x-mspowerpoint
+ *.ppz   application/mspowerpoint
+ *.pre   application/x-freelance
+ *.prt   application/pro_eng
+ *.ps    application/postscript
+ *.psd   application/octet-stream
+ *.pvu   paleovu/x-pv
+ *.pwz   application/vnd.ms-powerpoint
+ *.py    text/x-script.phyton
+ *.pyc   applicaiton/x-bytecode.python
+ *
+ *.qcp   audio/vnd.qcelp
+ *.qd3   x-world/x-3dmf
+ *.qd3d  x-world/x-3dmf
+ *.qif   image/x-quicktime
+ *.qt    video/quicktime
+ *.qtc   video/x-qtc
+ *.qti   image/x-quicktime
+ *.qtif  image/x-quicktime
+ *
+ *.ra    audio/x-pn-realaudio
+ *.ra    audio/x-pn-realaudio-plugin
+ *.ra    audio/x-realaudio
+ *.ram   audio/x-pn-realaudio
+ *.ras   application/x-cmu-raster
+ *.ras   image/cmu-raster
+ *.ras   image/x-cmu-raster
+ *.rast  image/cmu-raster
+ *.rexx  text/x-script.rexx
+ *.rf    image/vnd.rn-realflash
+ *.rgb   image/x-rgb
+ *.rm    application/vnd.rn-realmedia
+ *.rm    audio/x-pn-realaudio
+ *.rmi   audio/mid
+ *.rmm   audio/x-pn-realaudio
+ *.rmp   audio/x-pn-realaudio
+ *.rmp   audio/x-pn-realaudio-plugin
+ *.rng   application/ringing-tones
+ *.rng   application/vnd.nokia.ringing-tone
+ *.rnx   application/vnd.rn-realplayer
+ *.roff  application/x-troff
+ *.rp    image/vnd.rn-realpix
+ *.rpm   audio/x-pn-realaudio-plugin
+ *.rt    text/richtext
+ *.rt    text/vnd.rn-realtext
+ *.rtf   application/rtf
+ *.rtf   application/x-rtf
+ *.rtf   text/richtext
+ *.rtx   application/rtf
+ *.rtx   text/richtext
+ *.rv    video/vnd.rn-realvideo
+ *
+ *.s     text/x-asm
+ *.s3m   audio/s3m
+ *.saveme application/octet-stream
+ *.sbk   application/x-tbook
+ *.scm   application/x-lotusscreencam
+ *.scm   text/x-script.guile
+ *.scm   text/x-script.scheme
+ *.scm   video/x-scm
+ *.sdml  text/plain
+ *.sdp   application/sdp
+ *.sdp   application/x-sdp
+ *.sdr   application/sounder
+ *.sea   application/sea
+ *.sea   application/x-sea
+ *.set   application/set
+ *.sgm   text/sgml
+ *.sgm   text/x-sgml
+ *.sgml  text/sgml
+ *.sgml  text/x-sgml
+ *.sh    application/x-bsh
+ *.sh    application/x-sh
+ *.sh    application/x-shar
+ *.sh    text/x-script.sh
+ *.shar  application/x-bsh
+ *.shar  application/x-shar
+ *.shtml text/html
+ *.shtml text/x-server-parsed-html
+ *.sid   audio/x-psid
+ *.sit   application/x-sit
+ *.sit   application/x-stuffit
+ *.skd   application/x-koan
+ *.skm   application/x-koan
+ *.skp   application/x-koan
+ *.skt   application/x-koan
+ *.sl    application/x-seelogo
+ *.smi   application/smil
+ *.smil  application/smil
+ *.snd   audio/basic
+ *.snd   audio/x-adpcm
+ *.sol   application/solids
+ *.spc   application/x-pkcs7-certificates
+ *.spc   text/x-speech
+ *.spl   application/futuresplash
+ *.spr   application/x-sprite
+ *.sprite application/x-sprite
+ *.src   application/x-wais-source
+ *.ssi   text/x-server-parsed-html
+ *.ssm   application/streamingmedia
+ *.sst   application/vnd.ms-pki.certstore
+ *.step  application/step
+ *.stl   application/sla
+ *.stl   application/vnd.ms-pki.stl
+ *.stl   application/x-navistyle
+ *.stp   application/step
+ *.sv4cpio application/x-sv4cpio
+ *.sv4crc application/x-sv4crc
+ *.svf   image/vnd.dwg
+ *.svf   image/x-dwg
+ *.svr   application/x-world
+ *.svr   x-world/x-svr
+ *.swf   application/x-shockwave-flash
+ *
+ *.t     application/x-troff
+ *.talk  text/x-speech
+ *.tar   application/x-tar
+ *.tbk   application/toolbook
+ *.tbk   application/x-tbook
+ *.tcl   application/x-tcl
+ *.tcl   text/x-script.tcl
+ *.tcsh  text/x-script.tcsh
+ *.tex   application/x-tex
+ *.texi  application/x-texinfo
+ *.texinfo application/x-texinfo
+ *.text  application/plain
+ *.text  text/plain
+ *.tgz   application/gnutar
+ *.tgz   application/x-compressed
+ *.tif   image/tiff
+ *.tif   image/x-tiff
+ *.tiff  image/tiff
+ *.tiff  image/x-tiff
+ *.tr    application/x-troff
+ *.tsi   audio/tsp-audio
+ *.tsp   application/dsptype
+ *.tsp   audio/tsplayer
+ *.tsv   text/tab-separated-values
+ *.turbot image/florian
+ *.txt   text/plain
+ *
+ *.uil   text/x-uil
+ *.uni   text/uri-list
+ *.unis  text/uri-list
+ *.unv   application/i-deas
+ *.uri   text/uri-list
+ *.uris  text/uri-list
+ *.ustar application/x-ustar
+ *.ustar multipart/x-ustar
+ *.uu    application/octet-stream
+ *.uu    text/x-uuencode
+ *.uue   text/x-uuencode
+ *
+ *.vcd   application/x-cdlink
+ *.vcs   text/x-vcalendar
+ *.vda   application/vda
+ *.vdo   video/vdo
+ *.vew   application/groupwise
+ *.viv   video/vivo
+ *.viv   video/vnd.vivo
+ *.vivo  video/vivo
+ *.vivo  video/vnd.vivo
+ *.vmd   application/vocaltec-media-desc
+ *.vmf   application/vocaltec-media-file
+ *.voc   audio/voc
+ *.voc   audio/x-voc
+ *.vos   video/vosaic
+ *.vox   audio/voxware
+ *.vqe   audio/x-twinvq-plugin
+ *.vqf   audio/x-twinvq
+ *.vql   audio/x-twinvq-plugin
+ *.vrml  application/x-vrml
+ *.vrml  model/vrml
+ *.vrml  x-world/x-vrml
+ *.vrt   x-world/x-vrt
+ *.vsd   application/x-visio
+ *.vst   application/x-visio
+ *.vsw   application/x-visio
+ *
+ *.w60   application/wordperfect6.0
+ *.w61   application/wordperfect6.1
+ *.w6w   application/msword
+ *.wav   audio/wav
+ *.wav   audio/x-wav
+ *.wb1   application/x-qpro
+ *.wbmp  image/vnd.wap.wbmp
+ *.web   application/vnd.xara
+ *.wiz   application/msword
+ *.wk1   application/x-123
+ *.wmf   windows/metafile
+ *.wml   text/vnd.wap.wml
+ *.wmlc  application/vnd.wap.wmlc
+ *.wmls  text/vnd.wap.wmlscript
+ *.wmlsc application/vnd.wap.wmlscriptc
+ *.word  application/msword
+ *.wp    application/wordperfect
+ *.wp5   application/wordperfect
+ *.wp5   application/wordperfect6.0
+ *.wp6   application/wordperfect
+ *.wpd   application/wordperfect
+ *.wpd   application/x-wpwin
+ *.wq1   application/x-lotus
+ *.wri   application/mswrite
+ *.wri   application/x-wri
+ *.wrl   application/x-world
+ *.wrl   model/vrml
+ *.wrl   x-world/x-vrml
+ *.wrz   model/vrml
+ *.wrz   x-world/x-vrml
+ *.wsc   text/scriplet
+ *.wsrc  application/x-wais-source
+ *.wtk   application/x-wintalk
+ *
+ *.xbm   image/x-xbitmap
+ *.xbm   image/x-xbm
+ *.xbm   image/xbm
+ *.xdr   video/x-amt-demorun
+ *.xgz   xgl/drawing
+ *.xif   image/vnd.xiff
+ *.xl    application/excel
+ *.xla   application/excel
+ *.xla   application/x-excel
+ *.xla   application/x-msexcel
+ *.xlb   application/excel
+ *.xlb   application/vnd.ms-excel
+ *.xlb   application/x-excel
+ *.xlc   application/excel
+ *.xlc   application/vnd.ms-excel
+ *.xlc   application/x-excel
+ *.xld   application/excel
+ *.xld   application/x-excel
+ *.xlk   application/excel
+ *.xlk   application/x-excel
+ *.xll   application/excel
+ *.xll   application/vnd.ms-excel
+ *.xll   application/x-excel
+ *.xlm   application/excel
+ *.xlm   application/vnd.ms-excel
+ *.xlm   application/x-excel
+ *.xls   application/excel
+ *.xls   application/vnd.ms-excel
+ *.xls   application/x-excel
+ *.xls   application/x-msexcel
+ *.xlt   application/excel
+ *.xlt   application/x-excel
+ *.xlv   application/excel
+ *.xlv   application/x-excel
+ *.xlw   application/excel
+ *.xlw   application/vnd.ms-excel
+ *.xlw   application/x-excel
+ *.xlw   application/x-msexcel
+ *.xm    audio/xm
+ *.xml   application/xml
+ *.xml   text/xml
+ *.xmz   xgl/movie
+ *.xpix  application/x-vnd.ls-xpix
+ *.xpm   image/x-xpixmap
+ *.xpm   image/xpm
+ *.x-png image/png
+ *.xsr   video/x-amt-showrun
+ *.xwd   image/x-xwd
+ *.xwd   image/x-xwindowdump
+ *.xyz   chemical/x-pdb
+ *
+ *.z     application/x-compress
+ *.z     application/x-compressed
+ *.zip   application/x-compressed
+ *.zip   application/x-zip-compressed
+ *.zip   application/zip
+ *.zip   multipart/x-zip
+ *.zoo   application/octet-stream
+ *.zsh   text/x-script.zsh
+ */
 
 static struct mimeentry mimetab_a[] = {
    MIME_ENTRY( "ai",       "application/postscript" ),

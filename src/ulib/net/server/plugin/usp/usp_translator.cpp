@@ -126,7 +126,7 @@ public:
       uint32_t i, n, size;
       UString token, declaration, http_header(U_CAPACITY), buffer(U_CAPACITY),
               bufname(100U), output(U_CAPACITY), output1(U_CAPACITY), xoutput(U_CAPACITY);
-      bool bgroup, binit = false, breset = false, bend = false, bsighup = false, bfork = false, bcomment = false,
+      bool bgroup, binit = false, bend = false, bsighup = false, bfork = false, bcomment = false,
            bvar = false, bform = false, test_if_html = false, is_html = false, bsession = false, bstorage = false, bparallelization = false;
 
       // Anything that is not enclosed in <!-- ... --> tags is assumed to be HTML
@@ -206,7 +206,6 @@ public:
             declaration = UStringExt::trim(directive + U_CONSTANT_SIZE("declaration"), n);
 
             binit   = (declaration.find("static void usp_init_")   != U_NOT_FOUND); // usp_init  (    Server-wide hooks)...
-            breset  = (declaration.find("static void usp_reset_")  != U_NOT_FOUND); // usp_reset (Connection-wide hooks)...
             bend    = (declaration.find("static void usp_end_")    != U_NOT_FOUND); // usp_end
             bsighup = (declaration.find("static void usp_sighup_") != U_NOT_FOUND); // usp_sighup
             bfork   = (declaration.find("static void usp_fork_")   != U_NOT_FOUND); // usp_fork
@@ -528,7 +527,6 @@ public:
       const char* ptr8      = (bcomment ? "\n\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
 
       if (binit)   (void) u__snprintf(ptr1, 100, "\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n\t", size, ptr);
-      if (breset)  (void) u__snprintf(ptr2, 100, "\n\t\tif (param == U_DPAGE_RESET) { usp_reset_%.*s(); return; }\n\t", size, ptr);
       if (bsighup) (void) u__snprintf(ptr4, 100, "\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n\t", size, ptr);
       if (bfork)   (void) u__snprintf(ptr5, 100, "\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n\t", size, ptr);
 
@@ -543,7 +541,6 @@ public:
 
       if (binit   == false ||
           bend    == false ||
-          breset  == false ||
           bsighup == false ||
           bfork   == false)
          {

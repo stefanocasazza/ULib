@@ -511,6 +511,7 @@ public:
       }
 
    UString getKeyID() const { return pDataStorage->keyid; }
+   void  resetKeyID() const {        pDataStorage->keyid.clear(); }
 
    bool          isRecordFound() const     { return brecfound; }
    UDataStorage* getPointerToDataStorage() { return pDataStorage; }

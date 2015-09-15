@@ -12,13 +12,14 @@
 // ============================================================================
 
 #include <ulib/url.h>
+#include <ulib/timer.h>
+#include <ulib/db/rdb.h>
 #include <ulib/net/udpsocket.h>
 #include <ulib/utility/escape.h>
 #include <ulib/orm/orm_driver.h>
 #include <ulib/dynamic/dynamic.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
-#include <ulib/utility/string_ext.h>
 
 #ifdef _MSWINDOWS_
 #  include <ws2tcpip.h>
@@ -102,15 +103,11 @@ char*         UServer_Base::client_address;
 ULock*        UServer_Base::lock_user1;
 ULock*        UServer_Base::lock_user2;
 time_t        UServer_Base::last_event;
-uint32_t      UServer_Base::nread;
 uint32_t      UServer_Base::map_size;
-uint32_t      UServer_Base::max_depth;
-uint32_t      UServer_Base::nread_again;
 uint32_t      UServer_Base::vplugin_size;
 uint32_t      UServer_Base::nClientIndex;
 uint32_t      UServer_Base::shared_data_add;
 uint32_t      UServer_Base::client_address_len;
-uint32_t      UServer_Base::wakeup_for_nothing;
 uint32_t      UServer_Base::document_root_size;
 uint32_t      UServer_Base::num_client_threshold;
 uint32_t      UServer_Base::min_size_for_sendfile;
@@ -152,7 +149,7 @@ UServer_Base::shared_data*        UServer_Base::ptr_shared_data;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
 #ifdef U_WELCOME_SUPPORT
-UString*            UServer_Base::msg_welcome;
+UString* UServer_Base::msg_welcome;
 #endif
 #ifdef U_ACL_SUPPORT
 UString*            UServer_Base::allow_IP;
@@ -162,6 +159,699 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP;
 bool                UServer_Base::enable_rfc1918_filter;
 UString*            UServer_Base::allow_IP_prv;
 UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
+#endif
+
+#ifdef DEBUG
+#  ifdef USE_LIBEVENT
+#     define U_WHICH "libevent" 
+#  elif defined(HAVE_EPOLL_WAIT)
+#     define U_WHICH "epoll" 
+#  else
+#     define U_WHICH "select" 
+#  endif
+#  define U_STAT_TIME 600 // 10m - Time between stats logs
+
+uint32_t    UServer_Base::nread;
+uint32_t    UServer_Base::max_depth;
+uint32_t    UServer_Base::nread_again;
+uint64_t    UServer_Base::stats_bytes;
+uint32_t    UServer_Base::stats_connections;
+uint32_t    UServer_Base::stats_simultaneous;
+uint32_t    UServer_Base::wakeup_for_nothing;
+UEventTime* UServer_Base::pstat;
+
+UString UServer_Base::getStats()
+{
+   U_TRACE(0, "UTimeStat::getStats()")
+
+   UString x(U_CAPACITY);
+
+   x.snprintf("%3u connections (%5.2f/sec), %3u max simultaneous, %3u %s (%5.2f/sec) - %v/sec", UServer_Base::stats_connections,
+               (float) UServer_Base::stats_connections / U_STAT_TIME, UServer_Base::stats_simultaneous, UNotifier::nwatches, U_WHICH, (float) UNotifier::nwatches / U_STAT_TIME,
+               UStringExt::printSize(UServer_Base::stats_bytes).rep);
+
+   U_RETURN_STRING(x);
+}
+
+class U_NO_EXPORT UTimeStat : public UEventTime {
+public:
+
+   // COSTRUTTORI
+
+   UTimeStat() : UEventTime(U_STAT_TIME, 0L)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTimeStat, "", 0)
+      }
+
+   virtual ~UTimeStat() U_DECL_FINAL
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTimeStat)
+      }
+
+   // define method VIRTUAL of class UEventTime
+
+   virtual int handlerTime() U_DECL_FINAL
+      {
+      U_TRACE(0, "UTimeStat::handlerTime()")
+
+      if (UServer_Base::stats_bytes)
+         {
+         U_MESSAGE("%9D (pid %P): %v", UServer_Base::getStats().rep);
+
+         UServer_Base::stats_bytes = 0;
+         }
+
+      UNotifier::nwatches              =
+      UServer_Base::stats_connections  =
+      UServer_Base::stats_simultaneous = 0;
+
+      // ---------------
+      // return value:
+      // ---------------
+      // -1 - normal
+      //  0 - monitoring
+      // ---------------
+
+      U_RETURN(0);
+      }
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
+#endif
+
+private:
+   UTimeStat(const UTimeStat&) : UEventTime() {}
+   UTimeStat& operator=(const UTimeStat&)     { return *this; }
+};
+#endif
+
+class U_NO_EXPORT UTimeoutConnection : public UEventTime {
+public:
+
+   // COSTRUTTORI
+
+   UTimeoutConnection() : UEventTime(UServer_Base::timeoutMS / 1000L, 0L)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTimeoutConnection, "", 0)
+      }
+
+   virtual ~UTimeoutConnection() U_DECL_FINAL
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UTimeoutConnection)
+      }
+
+   // define method VIRTUAL of class UEventTime
+
+   virtual int handlerTime() U_DECL_FINAL
+      {
+      U_TRACE(0, "UTimeoutConnection::handlerTime()")
+
+      U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
+
+      U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
+
+      if (UNotifier::num_connection > UNotifier::min_connection)
+         {
+         U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+
+         // there are idle connection... (timeout)
+
+#     ifdef U_LOG_ENABLE
+         if (UServer_Base::isLog())
+            {
+            UServer_Base::called_from_handlerTime = true;
+
+#        ifdef DEBUG
+            long delta = (u_now->tv_sec - UServer_Base::last_event) - UTimeVal::tv_sec;
+
+            if (delta >=  1 ||
+                delta <= -1)
+               {
+               U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff %ld sec", delta);
+               }
+#        endif
+            }
+#     endif
+
+         UServer_Base::last_event = u_now->tv_sec;
+
+         UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
+         }
+
+#  ifdef U_LOG_ENABLE
+      if (U_CNT_PARALLELIZATION)
+#  endif
+      UServer_Base::removeZombies();
+
+      // ---------------
+      // return value:
+      // ---------------
+      // -1 - normal
+      //  0 - monitoring
+      // ---------------
+
+      U_RETURN(0);
+      }
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
+#endif
+
+private:
+   UTimeoutConnection(const UTimeoutConnection&) : UEventTime() {}
+   UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
+};
+
+/**
+ * The throttle data lets you set maximum byte rates on URLs or URL groups. You can optionally set a minimum rate too.
+ * The format of the throttle data is very simple, should consist of a pattern, whitespace, and a number. The pattern
+ * is a simple shell-style filename pattern, using ?*, or multiple such patterns separated by |. The numbers are byte
+ * rates, specified in units of kbytes per second. If you want to set a minimum rate as well, use number-number.
+ *
+ * For example assuming we have a bandwith of 150 kB/s
+ *
+ * a) *           20-100  => limit total web usage to 2/3, but never go below 20 kB/s
+ * b) *.jpg|*.gif     50  => limit images to 1/3 of our bandwith
+ * c) *.mpg           20  => and movies to even less
+ *
+ * Throttling is implemented by checking each incoming URL filename against all of the patterns in the throttle data.
+ * The server accumulates statistics on how much bandwidth each pattern has accounted for recently (via a rolling average).
+ * If a URL matches a pattern that has been exceeding its specified limit, then the data returned is actually slowed down,
+ * with pauses between each block. If that's not possible or if the bandwidth has gotten way larger than the limit, then
+ * the server returns a special code
+ */
+
+#ifdef U_THROTTLING_SUPPORT
+#  define U_THROTTLE_TIME 2 // Time between updates of the throttle table's rolling averages
+
+class U_NO_EXPORT UThrottling : public UDataStorage {
+public:
+
+   uint64_t bytes_since_avg;
+   uint32_t krate, min_limit, max_limit, num_sending;
+
+   // COSTRUTTORE
+
+   UThrottling()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UThrottling, "", 0)
+
+      (void) memset(&bytes_since_avg, 0, sizeof(uint32_t) * 6);
+      }
+
+   ~UThrottling()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UThrottling)
+
+      if (UServer_Base::db_throttling)
+         {
+                UServer_Base::db_throttling->close();
+         delete UServer_Base::db_throttling;
+         }
+      }
+
+   // define method VIRTUAL of class UDataStorage
+
+   virtual char* toBuffer()
+      {
+      U_TRACE(0, "UThrottling::toBuffer()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
+
+      U_MEMCPY(u_buffer, &bytes_since_avg, u_buffer_len = sizeof(uint32_t) * 6);
+
+      U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_BUFFER_SIZE)
+
+      U_RETURN(u_buffer);
+      }
+
+   virtual void fromData(const char* ptr, uint32_t len)
+      {
+      U_TRACE(0, "UThrottling::fromData(%.*S,%u)", len, ptr, len)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_POINTER(ptr)
+      U_INTERNAL_ASSERT(len >= sizeof(uint32_t) * 6)
+
+      U_MEMCPY(&bytes_since_avg, ptr, sizeof(uint32_t) * 6);
+      }
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool breset) const { return ""; }
+#endif
+
+private:
+   UThrottling(const UThrottling&) : UDataStorage() {}
+   UThrottling& operator=(const UThrottling&)       { return *this; }
+};
+
+class U_NO_EXPORT UBandWidthThrottling : public UEventTime {
+public:
+
+   // COSTRUTTORI
+
+   UBandWidthThrottling() : UEventTime(U_THROTTLE_TIME, 0L)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UBandWidthThrottling, "", 0)
+      }
+
+   virtual ~UBandWidthThrottling() U_DECL_FINAL
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UBandWidthThrottling)
+      }
+
+   // SERVICES
+
+   static int clearThrottling(UStringRep* key, UStringRep* data)
+      {
+      U_TRACE(0, "UBandWidthThrottling::clearThrottling(%p,%p)", key, data)
+
+      if (key)
+         {
+         if (UServices::dosMatchWithOR(U_STRING_TO_PARAM(UServer_Base::pClientImage->uri), U_STRING_TO_PARAM(*key))) U_RETURN(4); // NB: call us later (after set record value from db)...
+
+         U_RETURN(1);
+         }
+
+      U_INTERNAL_DUMP("krate = %u min_limit = %u max_limit = %u num_sending = %u bytes_since_avg = %llu", UServer_Base::throttling_rec->krate, UServer_Base::throttling_rec->min_limit,
+                        UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending, UServer_Base::throttling_rec->bytes_since_avg)
+
+      U_INTERNAL_ASSERT_MAJOR(UServer_Base::throttling_rec->num_sending, 0)
+
+      UServer_Base::throttling_rec->num_sending--;
+
+      (void) UServer_Base::db_throttling->putDataStorage();
+
+      // NB: db can have different pattern matching the same url...
+
+      U_RETURN(1);
+      }
+
+   static int checkThrottling(UStringRep* key, UStringRep* data)
+      {
+      U_TRACE(0, "UBandWidthThrottling::checkThrottling(%p,%p)", key, data)
+
+      if (key)
+         {
+         if (UServices::dosMatchWithOR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*key))) U_RETURN(4); // NB: call us later (after set record value from db)...
+
+         U_RETURN(1);
+         }
+
+      U_INTERNAL_DUMP("krate = %u min_limit = %u max_limit = %u num_sending = %u bytes_since_avg = %llu", UServer_Base::throttling_rec->krate, UServer_Base::throttling_rec->min_limit,
+                        UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending, UServer_Base::throttling_rec->bytes_since_avg)
+
+      if ( UServer_Base::throttling_rec->krate &&
+          (UServer_Base::throttling_rec->krate > (UServer_Base::throttling_rec->max_limit * 2) || // if we're way over the limit, don't even start...
+           UServer_Base::throttling_rec->krate <  UServer_Base::throttling_rec->min_limit))       // ...also don't start if we're under the minimum
+         {
+         UServer_Base::throttling_chk = false;
+
+         U_RETURN(0); // stop
+         }
+      
+      UServer_Base::throttling_rec->num_sending++;
+
+      (void) UServer_Base::db_throttling->putDataStorage();
+
+      uint32_t l = UServer_Base::throttling_rec->max_limit / UServer_Base::throttling_rec->num_sending;
+
+      UServer_Base::pClientImage->max_limit = (UServer_Base::pClientImage->max_limit == U_NOT_FOUND ?       l
+                                                                                                    : U_min(l, UServer_Base::pClientImage->max_limit));
+      l = UServer_Base::throttling_rec->min_limit;
+
+      UServer_Base::pClientImage->min_limit = (UServer_Base::pClientImage->min_limit == U_NOT_FOUND ?       l
+                                                                                                    : U_max(l, UServer_Base::pClientImage->min_limit));
+
+      U_INTERNAL_DUMP("UServer_Base::pClientImage->min_limit = %u UServer_Base::pClientImage->max_limit = %u",
+                       UServer_Base::pClientImage->min_limit,     UServer_Base::pClientImage->max_limit)
+
+      // NB: db can have different pattern matching the same url...
+
+      U_RETURN(1);
+      }
+
+   static int updateThrottling(UStringRep* key, UStringRep* data)
+      {
+      U_TRACE(0, "UBandWidthThrottling::updateThrottling(%p,%p)", key, data)
+
+      if (key) U_RETURN(4); // NB: call us later (after set record value from db)...
+
+      U_INTERNAL_DUMP("krate = %u min_limit = %u max_limit = %u num_sending = %u bytes_since_avg = %llu", UServer_Base::throttling_rec->krate, UServer_Base::throttling_rec->min_limit,
+                        UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending, UServer_Base::throttling_rec->bytes_since_avg)
+
+      UServer_Base::throttling_rec->krate = ( 2 * UServer_Base::throttling_rec->krate + UServer_Base::throttling_rec->bytes_since_avg / (U_THROTTLE_TIME * 1024ULL)) / 3;
+                                                                                        UServer_Base::throttling_rec->bytes_since_avg = 0;
+
+      U_INTERNAL_DUMP("krate = %u", UServer_Base::throttling_rec->krate)
+
+      (void) UServer_Base::db_throttling->putDataStorage();
+
+#  ifdef U_LOG_ENABLE
+      if (UServer_Base::isLog())
+         {
+         if (UServer_Base::throttling_rec->num_sending)
+            {
+            if (UServer_Base::throttling_rec->krate > UServer_Base::throttling_rec->max_limit)
+               {
+               ULog::log("throttle %V: krate %u %sexceeding limit %u; %u sending", UServer_Base::db_throttling->getKeyID().rep, UServer_Base::throttling_rec->krate,
+                           (UServer_Base::throttling_rec->krate > UServer_Base::throttling_rec->max_limit * 2  ? "greatly " : ""),
+                            UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending);
+               }
+
+            if (UServer_Base::throttling_rec->krate < UServer_Base::throttling_rec->min_limit)
+               {
+               ULog::log("throttle %V: krate %u lower than minimum %u; %u sending", UServer_Base::db_throttling->getKeyID().rep, UServer_Base::throttling_rec->krate,
+                            UServer_Base::throttling_rec->min_limit, UServer_Base::throttling_rec->num_sending);
+               }
+            }
+         }
+#  endif
+
+      U_RETURN(1);
+      }
+
+   static int updateSending(UStringRep* key, UStringRep* data)
+      {
+      U_TRACE(0, "UBandWidthThrottling::updateSending(%p,%p)", key, data)
+
+      if (key)
+         {
+         if (UServices::dosMatchWithOR(U_HTTP_URI_TO_PARAM, U_STRING_TO_PARAM(*key))) U_RETURN(4); // NB: call us later (after set record value from db)...
+
+         U_RETURN(1);
+         }
+
+      U_INTERNAL_DUMP("krate = %u min_limit = %u max_limit = %u num_sending = %u bytes_since_avg = %llu", UServer_Base::throttling_rec->krate, UServer_Base::throttling_rec->min_limit,
+                        UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending, UServer_Base::throttling_rec->bytes_since_avg)
+
+      UServer_Base::throttling_rec->bytes_since_avg += UServer_Base::pClientImage->bytes_sent;
+
+      (void) UServer_Base::db_throttling->putDataStorage();
+
+      // NB: db can have different pattern matching the same url...
+
+      U_RETURN(1);
+      }
+
+   static int updateSendingRate(UStringRep* key, UStringRep* data)
+      {
+      U_TRACE(0, "UBandWidthThrottling::updateSendingRate(%p,%p)", key, data)
+
+      if (key)
+         {
+         if (UServices::dosMatchWithOR(UServer_Base::pClientImage->uri, U_STRING_TO_PARAM(*key))) U_RETURN(4); // NB: call us later (after set record value from db)...
+
+         U_RETURN(1);
+         }
+
+      U_INTERNAL_DUMP("krate = %u min_limit = %u max_limit = %u num_sending = %u bytes_since_avg = %llu", UServer_Base::throttling_rec->krate, UServer_Base::throttling_rec->min_limit,
+                        UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending, UServer_Base::throttling_rec->bytes_since_avg)
+
+      uint32_t l = UServer_Base::throttling_rec->max_limit / UServer_Base::throttling_rec->num_sending;
+
+      UServer_Base::pClientImage->max_limit = (UServer_Base::pClientImage->max_limit == U_NOT_FOUND ?      l
+                                                                                                    : U_min(l, UServer_Base::pClientImage->max_limit));
+
+      U_RETURN(1);
+      }
+
+   static bool updateSendingRate(void* cimg)
+      {
+      U_TRACE(0, "UBandWidthThrottling::updateSendingRate(%p)", cimg)
+
+      U_INTERNAL_ASSERT_POINTER(cimg)
+
+      U_INTERNAL_DUMP("pthis = %p handler_other = %p handler_inotify = %p ", UServer_Base::pthis, UServer_Base::handler_other, UServer_Base::handler_inotify)
+
+      if (cimg == UServer_Base::pthis         ||
+          cimg == UServer_Base::handler_other ||
+          cimg == UServer_Base::handler_inotify)
+         {
+         U_RETURN(false);
+         }
+
+      U_INTERNAL_ASSERT(((UClientImage_Base*)cimg)->socket->isOpen())
+
+      UServer_Base::pClientImage = ((UClientImage_Base*)cimg);
+
+      U_INTERNAL_DUMP("UServer_Base::pClientImage->min_limit = %u UServer_Base::pClientImage->max_limit = %u", UServer_Base::pClientImage->min_limit, UServer_Base::pClientImage->max_limit)
+
+      UServer_Base::pClientImage->max_limit = U_NOT_FOUND;
+
+      UServer_Base::db_throttling->callForAllEntry(updateSendingRate);
+
+      U_RETURN(false);
+      }
+
+   // define method VIRTUAL of class UEventTime
+
+   virtual int handlerTime() U_DECL_FINAL
+      {
+      U_TRACE(0, "UBandWidthThrottling::handlerTime()")
+
+      if (UServer_Base::db_throttling)
+         {
+         // Update the average sending rate for each throttle. This is only used when new connections start up
+
+         UServer_Base::db_throttling->callForAllEntry(updateThrottling);
+
+         // Now update the sending rate on all the currently-sending connections, redistributing it evenly
+
+         U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
+
+         if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(updateSendingRate);
+         }
+
+      // ---------------
+      // return value:
+      // ---------------
+      // -1 - normal
+      //  0 - monitoring
+      // ---------------
+
+      U_RETURN(0);
+      }
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
+#endif
+
+private:
+   UBandWidthThrottling(const UBandWidthThrottling&) : UEventTime() {}
+   UBandWidthThrottling& operator=(const UBandWidthThrottling&)     { return *this; }
+};
+
+class U_NO_EXPORT UClientThrottling : public UEventTime {
+public:
+
+   // COSTRUTTORI
+
+   UClientThrottling(UClientImage_Base* _pClientImage, long sec, long micro_sec) : UEventTime(sec, micro_sec)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UClientThrottling, "%p,%ld,%ld", _pClientImage, sec, micro_sec)
+
+      UNotifier::suspend(pClientImage = _pClientImage);
+      }
+
+   virtual ~UClientThrottling() U_DECL_FINAL
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UClientThrottling)
+      }
+
+   // define method VIRTUAL of class UEventTime
+
+   virtual int handlerTime() U_DECL_FINAL
+      {
+      U_TRACE(0, "UClientThrottling::handlerTime()")
+
+      UNotifier::resume(pClientImage);
+
+      delete this;
+
+      // ---------------
+      // return value:
+      // ---------------
+      // -1 - normal
+      //  0 - monitoring
+      // ---------------
+
+      U_RETURN(-1);
+      }
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
+#endif
+
+protected:
+   UClientImage_Base* pClientImage;
+
+private:
+   UClientThrottling(const UClientThrottling&) : UEventTime() {}
+   UClientThrottling& operator=(const UClientThrottling&)     { return *this; }
+};
+
+bool                              UServer_Base::throttling_chk;
+UEventTime*                       UServer_Base::throttling_time;
+UThrottling*                      UServer_Base::throttling_rec;
+URDBObjectHandler<UDataStorage*>* UServer_Base::db_throttling;
+
+void UServer_Base::initThrottlingClient()
+{
+   U_TRACE(0, "UServer_Base::initThrottlingClient()")
+
+   if (db_throttling)
+      {
+      pClientImage->uri.clear();
+
+      pClientImage->min_limit  =
+      pClientImage->max_limit  = U_NOT_FOUND;
+      pClientImage->bytes_sent =
+      pClientImage->started_at = 0;
+      }
+}
+
+void UServer_Base::initThrottlingServer(const UString& x)
+{
+   U_TRACE(0, "UServer_Base::initThrottlingServer(%V)", x.rep)
+
+   U_INTERNAL_ASSERT(x)
+   U_INTERNAL_ASSERT_EQUALS(db_throttling, 0)
+
+   if (bssl == false) // NB: we can't use throttling with SSL...
+      {
+      db_throttling = U_NEW(URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/BandWidthThrottling"), -1, (throttling_rec = U_NEW(UThrottling))));
+
+      if (isPreForked()) db_throttling->setShared(U_LOCK_THROTTLING, U_SPINLOCK_THROTTLING);
+
+      bool result = db_throttling->open(32 * 1024, false, true); // NB: we don't want truncate (we have only the journal)...
+
+      U_SRV_LOG("%sdb initialization of BandWidthThrottling %s: size(%u)", (result ? "" : "WARNING: "), (result ? "success" : "failed"), db_throttling->size());
+
+      if (result == false)
+         {
+         delete db_throttling;
+                db_throttling = 0;
+         }
+      else
+         {
+         char* ptr;
+         UVector<UString> vec(x);
+         UString pattern, number;
+
+         min_size_for_sendfile = 4096; // 4k
+
+         db_throttling->reset(); // Initialize the db to contain no entries
+
+         for (int32_t i = 0, n = vec.size(); i < n; i += 2)
+            {
+            pattern = vec[i];
+             number = vec[i+1];
+
+                                                                                      throttling_rec->max_limit = strtol(number.data(), &ptr, 10);
+            if (ptr[0] == '-') throttling_rec->min_limit = throttling_rec->max_limit, throttling_rec->max_limit = strtol(        ptr+1,    0, 10);
+
+            (void) db_throttling->insertDataStorage(pattern);
+            }
+
+#     ifdef DEBUG
+         db_throttling->resetKeyID(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#     endif
+         }
+      }
+}
+
+void UServer_Base::clearThrottling()
+{
+   U_TRACE(0, "UServer_Base::clearThrottling()")
+
+   U_INTERNAL_ASSERT(pClientImage)
+   U_INTERNAL_ASSERT(pClientImage->uri)
+   U_INTERNAL_ASSERT_POINTER(db_throttling)
+
+   U_INTERNAL_DUMP("pClientImage->uri = %V", pClientImage->uri.rep)
+
+   db_throttling->callForAllEntry(UBandWidthThrottling::clearThrottling);
+}
+
+bool UServer_Base::checkThrottling()
+{
+   U_TRACE(0, "UServer_Base::checkThrottling()")
+
+   if (db_throttling)
+      {
+      throttling_chk = true;
+
+      pClientImage->max_limit =
+      pClientImage->min_limit = U_NOT_FOUND;
+
+      db_throttling->callForAllEntry(UBandWidthThrottling::checkThrottling);
+
+      if (throttling_chk == false) U_RETURN(false);
+
+      (void) pClientImage->uri.replace(U_HTTP_URI_TO_PARAM);
+      }
+
+   U_RETURN(true);
+}
+
+bool UServer_Base::checkThrottlingBeforeSend(bool bwrite)
+{
+   U_TRACE(0, "UServer_Base::checkThrottlingBeforeSend(%b)", bwrite)
+
+   if (db_throttling)
+      {
+      U_ASSERT(pClientImage->uri.equal(U_HTTP_URI_TO_PARAM))
+
+      U_INTERNAL_DUMP("pClientImage->max_limit = %u pClientImage->bytes_sent = %llu",
+                       pClientImage->max_limit,     pClientImage->bytes_sent)
+
+      if (pClientImage->max_limit != U_NOT_FOUND)
+         {
+         U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+
+         if (bwrite == false)
+            {
+            U_INTERNAL_ASSERT_EQUALS(pClientImage->started_at, 0)
+            U_ASSERT(pClientImage->uri.equal(U_HTTP_URI_TO_PARAM))
+
+            U_INTERNAL_DUMP("pClientImage->bytes_sent = %llu UClientImage_Base::ncount = %u", pClientImage->bytes_sent, UClientImage_Base::ncount)
+
+            pClientImage->started_at = u_now->tv_sec;
+
+            pClientImage->setPendingSendfile();
+
+            db_throttling->callForAllEntry(UBandWidthThrottling::updateSending);
+
+            U_RETURN(false);
+            }
+
+         // check if we're sending too fast
+
+         uint32_t elapsed     = u_now->tv_sec - pClientImage->started_at,
+                  kbytes_sent = pClientImage->bytes_sent / 1024ULL,
+                  krate       = (elapsed > 1 ? kbytes_sent / elapsed : kbytes_sent);
+
+         U_INTERNAL_DUMP("krate = %u", krate)
+
+         if (krate > pClientImage->max_limit)
+            {
+            // How long should we wait to get back on schedule? If less than a second (integer math rounding), use 1/2 second
+
+            time_t coast = kbytes_sent / pClientImage->max_limit - elapsed;
+
+            UTimer::insert(U_NEW(UClientThrottling(pClientImage, coast, coast ? 0 : U_SECOND / 2L))); // set up the wakeup timer
+
+            U_RETURN(false);
+            }
+         }
+      }
+
+   U_RETURN(true);
+}
 #endif
 
 #ifdef ENABLE_THREAD
@@ -176,7 +866,7 @@ public:
       {
       U_TRACE(0, "UClientThread::run()")
 
-      while (UServer_Base::flag_loop) UNotifier::waitForEvent(UServer_Base::ptime);
+      while (UServer_Base::flag_loop) UNotifier::waitForEvent();
       }
 };
 
@@ -383,6 +1073,14 @@ UServer_Base::~UServer_Base()
 # endif
 #endif
 
+# ifdef DEBUG
+   delete pstat;
+#endif
+
+   if (ptime) delete ptime;
+
+   UTimer::clear();
+
    UClientImage_Base::clear();
 
    delete socket;
@@ -397,8 +1095,12 @@ UServer_Base::~UServer_Base()
    delete cenvironment;
    delete senvironment;
 
-   if (host)  delete host;
-   if (ptime) delete ptime;
+   if (host) delete host;
+
+#ifdef U_THROTTLING_SUPPORT
+   if (throttling_rec)  delete throttling_rec;
+   if (throttling_time) delete throttling_time;
+#endif
 
 #ifdef U_WELCOME_SUPPORT
    if (msg_welcome) delete msg_welcome;
@@ -678,9 +1380,9 @@ void UServer_Base::loadConfigParam()
 
    if (timeoutMS > 0) timeoutMS *= 1000;
 
-   port = cfg->readLong(*UString::str_PORT, 80);
+   port = cfg->readLong(*UString::str_PORT, bssl ? 443 : 80);
 
-   if (port == 80 &&
+   if ((port == 80 || port == 443) &&
        UServices::isSetuidRoot() == false)
       {
       port = 8080;
@@ -858,8 +1560,6 @@ void UServer_Base::loadConfigParam()
       }
 #endif
 
-   UString plugin_dir = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN_DIR"));
-
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    UString orm_driver_dir  = cfg->at(U_CONSTANT_TO_PARAM("ORM_DRIVER_DIR")),
            orm_driver_list = cfg->at(U_CONSTANT_TO_PARAM("ORM_DRIVER"));
@@ -877,7 +1577,8 @@ void UServer_Base::loadConfigParam()
 
    // load plugin modules and call server-wide hooks handlerConfig()...
 
-   UString plugin_list = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN"));
+   UString plugin_dir  = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN_DIR")),
+           plugin_list = cfg->at(U_CONSTANT_TO_PARAM("PLUGIN"));
 
    if (loadPlugins(plugin_dir, plugin_list) == U_PLUGIN_HANDLER_ERROR) U_ERROR("Plugins stage load failed");
 }
@@ -1186,7 +1887,6 @@ int UServer_Base::pluginsHandler##xxx()                                       \
 
 // Connection-wide hooks
 U_PLUGIN_HANDLER(Request)
-U_PLUGIN_HANDLER(Reset)
 
 // NB: we call the various handlerXXX() in reverse order respect to the content of config var PLUGIN...
 
@@ -1277,6 +1977,9 @@ U_PLUGIN_HANDLER_REVERSE(Stop)   // NB: we call handlerStop()   in reverse order
 U_PLUGIN_HANDLER_REVERSE(READ)   // NB: we call handlerREAD()   in reverse order respect to the content of config var PLUGIN...
 // SigHUP hook
 U_PLUGIN_HANDLER_REVERSE(SigHUP) // NB: we call handlerSigHUP() in reverse order respect to the content of config var PLUGIN...
+
+#undef U_PLUGIN_HANDLER
+#undef U_PLUGIN_HANDLER_REVERSE
 
 void UServer_Base::init()
 {
@@ -1498,6 +2201,12 @@ void UServer_Base::init()
 
    if (preforked_num_kids > 1) monitoring_process = true;
 
+   UTimer::init();
+
+   UClientImage_Base::init();
+
+   USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
+
    U_INTERNAL_ASSERT_EQUALS(proc, 0)
 
    proc = U_NEW(UProcess);
@@ -1505,10 +2214,6 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_POINTER(proc)
 
    proc->setProcessGroup();
-
-   UClientImage_Base::init();
-
-   USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
 
 #ifdef U_LOG_ENABLE
    uint32_t log_rotate_size = 0;
@@ -1623,7 +2328,15 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION, 0)
 #endif
 
-   if (timeoutMS > 0) ptime = U_NEW(UTimeoutConnection);
+#ifdef DEBUG
+   UTimer::insert(pstat = U_NEW(UTimeStat));
+#endif
+
+   if (timeoutMS > 0) UTimer::insert(ptime = U_NEW(UTimeoutConnection));
+
+#ifdef U_THROTTLING_SUPPORT
+   if (db_throttling) UTimer::insert(throttling_time = U_NEW(UBandWidthThrottling)); // set up the throttles timer
+#endif
 
    // ---------------------------------------------------------------------------------------------------------
    // init notifier event manager
@@ -1924,11 +2637,11 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
                         "SIGTERM (Interrupt): "
                         "address space usage: %.2f MBytes - "
                                   "rss usage: %.2f MBytes\n"
-                        "max_nfd_ready = %u max_depth = %u again:read = (%u/%u - %u%%) wakeup_for_nothing = %u bepollet_threshold = %u\n",
+                        "%v\nmax_nfd_ready = %u max_depth = %u again:read = (%u/%u - %u%%) wakeup_for_nothing = %u bepollet_threshold = (%u/10)\n",
+                        getStats().rep,
                         (double)vsz / (1024.0 * 1024.0),
-                        (double)rss / (1024.0 * 1024.0), UNotifier::max_nfd_ready,
-                        (max_depth > UNotifier::min_connection ? max_depth - UNotifier::min_connection : 0),
-                        nread_again, nread, (nread_again*100)/nread, wakeup_for_nothing, UNotifier::bepollet_threshold);
+                        (double)rss / (1024.0 * 1024.0), UNotifier::max_nfd_ready, max_depth,
+                        nread_again, nread, (nread_again * 100) / nread, wakeup_for_nothing, UNotifier::bepollet_threshold);
 
          ostrstream os(buffer + len, sizeof(buffer) - len);
 
@@ -2008,6 +2721,8 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
    U_INTERNAL_ASSERT_MINOR(nClientIndex, UNotifier::max_connection)
 
+   // This loops until the accept() fails, trying to start new connections as fast as possible so we don't overrun the listen queue
+
    pClientImage = vClientImage + nClientIndex;
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
@@ -2018,8 +2733,8 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 #endif
    int cround = 0;
 #ifdef DEBUG
-   uint32_t nothing = 0;
    CLIENT_ADDRESS_LEN = 0;
+   uint32_t numc, nothing = 0;
 #endif
 
 loop:
@@ -2243,10 +2958,16 @@ try_accept:
    ++UNotifier::num_connection;
 
 #ifdef DEBUG
-   if (max_depth < UNotifier::num_connection) max_depth = UNotifier::num_connection;
-#endif
+   ++stats_connections;
 
-   U_INTERNAL_DUMP("UNotifier::num_connection = %u max_depth = %u", UNotifier::num_connection, max_depth)
+   numc = UNotifier::num_connection -
+          UNotifier::min_connection;
+
+   if (max_depth          < numc)          max_depth = numc;
+   if (stats_simultaneous < numc) stats_simultaneous = numc;
+
+   U_INTERNAL_DUMP("numc = %u max_depth = %u stats_simultaneous = %u", numc, max_depth, stats_simultaneous)
+#endif
 
    /**
     * PREFORK_CHILD number of child server processes created at startup:
@@ -2474,59 +3195,6 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_RETURN(false);
 }
 
-// define method VIRTUAL of class UEventTime
-
-int UServer_Base::UTimeoutConnection::handlerTime()
-{
-   U_TRACE(0, "UServer_Base::UTimeoutConnection::handlerTime()")
-
-   U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
-
-   U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-
-   if (UNotifier::num_connection > UNotifier::min_connection)
-      {
-      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
-
-      // there are idle connection... (timeout)
-
-#  ifdef U_LOG_ENABLE
-      if (isLog())
-         {
-         called_from_handlerTime = true;
-
-#     ifdef DEBUG
-         long delta = (u_now->tv_sec - last_event) - ptime->UTimeVal::tv_sec;
-
-         if (delta >=  1 ||
-             delta <= -1)
-            {
-            U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff %ld sec", delta);
-            }
-#     endif
-         }
-#  endif
-
-      last_event = u_now->tv_sec;
-
-      UNotifier::callForAllEntryDynamic(handlerTimeoutConnection);
-      }
-
-#ifdef U_LOG_ENABLE
-   if (U_CNT_PARALLELIZATION)
-#endif
-   removeZombies();
-
-   // ---------------
-   // return value:
-   // ---------------
-   // -1 - normal
-   //  0 - monitoring
-   // ---------------
-
-   U_RETURN(0);
-}
-
 void UServer_Base::runLoop(const char* user)
 {
    U_TRACE(0, "UServer_Base::runLoop(%S)", user)
@@ -2652,7 +3320,7 @@ void UServer_Base::runLoop(const char* user)
       if (UNotifier::min_connection ||
           UNotifier::min_connection < UNotifier::num_connection) // NB: if we have some client we can't go directly on accept() and block on it...
          {
-         UNotifier::waitForEvent(ptime);
+         UNotifier::waitForEvent();
 
          if (UNotifier::empty() == false) continue;
 

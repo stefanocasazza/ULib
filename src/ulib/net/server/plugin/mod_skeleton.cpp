@@ -83,12 +83,3 @@ int USkeletonPlugIn::handlerRequest()
 
    U_RETURN(result);
 }
-
-int USkeletonPlugIn::handlerReset()
-{
-   U_TRACE(0, "USkeletonPlugIn::handlerReset()")
-
-   int result = U_PLUGIN_HANDLER_GO_ON;
-
-   U_RETURN(result);
-}

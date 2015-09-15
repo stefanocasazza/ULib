@@ -10,10 +10,11 @@ rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/*.memusage.* \
                 trace.*userver_ssl*.[0-9]*           object.*userver_ssl*.[0-9]*           stack.*userver_ssl*.[0-9]* mempool.*userver_ssl*.[0-9]* \
       $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* $DOC_ROOT/mempool.*userver_ssl*.[0-9]*
 
- UTRACE="0 50M 0"
-#UOBJDUMP="0 100k 10"
+#UTRACE="0 50M 0"
+#UTRACE_SIGNAL="0 50M 0"
+#UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
 
 cat <<EOF >inp/webserver.cfg
 userver {
@@ -25,6 +26,7 @@ userver {
 #LOG_FILE_SZ 20k
  LOG_MSG_SIZE -1
  PID_FILE /var/run/userver_tcp.pid
+ BANDWIDTH_THROTTLING_MASK @FILE:throttling.txt
  PREFORK_CHILD 2
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
@@ -40,7 +42,7 @@ userver {
  VERIFY_MODE 0
 }
 http {
-#ALIAS [ / /index.php ]
+#ALIAS "[ / /index.php ]"
 #VIRTUAL_HOST yes
 #ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 1M 

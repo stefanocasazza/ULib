@@ -60,7 +60,7 @@ protected:
 
          for (unsigned i = 0; i < request_response->size(); i += 2)
             {
-            if (UServices::match(*rbuffer, (*request_response)[i]))
+            if (UServices::dosMatch(*rbuffer, (*request_response)[i]))
                {
                *UClientImage_Base::wbuffer = (*request_response)[i+1];
 

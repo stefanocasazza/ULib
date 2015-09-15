@@ -147,11 +147,24 @@ public:
    // Connection-wide hooks
 
    virtual int handlerRequest() U_DECL_FINAL;
-   virtual int handlerReset() U_DECL_FINAL;
 
    // define method VIRTUAL of class UEventTime
 
-   virtual int handlerTime() U_DECL_FINAL;
+   virtual int handlerTime() U_DECL_FINAL
+      {
+      U_TRACE(0, "UNoCatPlugIn::handlerTime()")
+
+      checkSystem();
+
+      // ---------------
+      // return value:
+      // ---------------
+      // -1 - normal
+      //  0 - monitoring
+      // ---------------
+
+      U_RETURN(0);
+      }
 
    // DEBUG
 
@@ -173,7 +186,6 @@ protected:
    static UString* arp_cache;
    static UString* auth_login;
    static UString* decrypt_key;
-   static UString* login_timeout;
    static UString* label_to_match;
    static UString* status_content;
    static UString* allowed_members;
@@ -217,9 +229,8 @@ protected:
    static void checkOldPeer();
    static void creatNewPeer();
    static bool checkFirewall();
-   static bool preallocatePeersFault();
    static void deny(bool disconnected);
-   static void executeCommand(int type);
+   static bool preallocatePeersFault();
    static void addPeerInfo(time_t logout);
    static bool getPeer(uint32_t i) __pure;
    static void uploadFileToPortal(UFile& file);
@@ -228,21 +239,31 @@ protected:
    static bool getPeerFromMAC(const UString& mac);
    static bool checkAuthMessage(const UString& msg);
    static void setStatusContent(const UString& label);
-   static void setHTTPResponse(const UString& content);
    static void notifyAuthOfUsersInfo(uint32_t index_AUTH);
    static bool getPeerStatus(UStringRep* key, void* value);
    static bool checkPeerInfo(UStringRep* key, void* value);
    static bool checkPeerStatus(UStringRep* key, void* value);
    static bool getPeerListInfo(UStringRep* key, void* value);
+   static void setHTTPResponse(const UString& content, int mime_index);
    static void permit(const UString& UserDownloadRate, const UString& UserUploadRate);
    static void sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UString* poutput);
-   static void setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const UString& ip);
 
    static uint32_t checkFirewall(UString& output);
    static uint32_t getIndexAUTH(const char* ip_address) __pure;
    static UString  getIPAddress(const char* ptr, uint32_t len);
    static UString  getSignedData(const char* ptr, uint32_t len);
-   static UString  getUrlForSendMsgToPortal(uint32_t index_AUTH, const char* msg, uint32_t msg_len);
+
+   static void remove(bool disconnected)
+      {
+      U_TRACE(0, "UNoCatPlugIn::remove(%b)", disconnected)
+
+      deny(disconnected);
+
+      if (check_expire) UTimer::erase(peer);
+
+      if (num_peers_preallocate == 0) delete peer;
+                                             peer = 0;
+      }
 
    static void preallocatePeers()
       {
@@ -274,6 +295,51 @@ protected:
       bool result = (((check_type & U_CHECK_ARP_PING) != 0) && nfds && paddrmask == 0);
 
       U_RETURN(result);
+      }
+
+   static void executeCommand(int type)
+      {
+      U_TRACE(0, "UNoCatPlugIn::executeCommand(%d)", type)
+
+      U_INTERNAL_ASSERT_POINTER(peer)
+
+      peer->fw.setArgument(3, (type == UModNoCatPeer::PEER_PERMIT ? "permit" : "deny"));
+
+      if (peer->fw.executeAndWait(0, -1, fd_stderr)) U_peer_status = type;
+
+      last_request_firewall = u_now->tv_sec;
+
+#  ifdef U_LOG_ENABLE
+      UServer_Base::logCommandMsgError(peer->fw.getCommand(), false);
+#  endif
+      }
+
+   static UString getUrlForSendMsgToPortal(uint32_t index_AUTH, const char* msg, uint32_t msg_len)
+      {
+      U_TRACE(0, "UNoCatPlugIn::getUrlForSendMsgToPortal(%u,%.*S,%u)", index_AUTH, msg_len, msg, msg_len)
+
+      Url* auth = (*vauth_url)[index_AUTH];
+      UString auth_host    = auth->getHost(),
+              auth_service = auth->getService(),
+              url(200U + auth_host.size() + auth_service.size() + msg_len);
+
+      url.snprintf("%v://%v%.*s", auth_service.rep, auth_host.rep, msg_len, msg);
+
+      U_RETURN_STRING(url);
+      }
+
+   static void setFireWallCommand(UCommand& cmd, const UString& script, const UString& mac, const UString& ip)
+      {
+      U_TRACE(0, "UNoCatPlugIn::setFireWallCommand(%p,%V,%V,%V)", &cmd, script.rep, mac.rep, ip.rep)
+
+      // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
+
+      UString command(100U);
+
+      command.snprintf("/bin/sh %v deny %v %v Member 0 0", script.rep, mac.rep, ip.rep);
+
+      cmd.set(command, (char**)0);
+      cmd.setEnvironment(fw_env);
       }
 
 private:

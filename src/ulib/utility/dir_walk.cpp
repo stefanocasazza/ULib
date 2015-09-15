@@ -98,8 +98,6 @@ void UDirWalk::setFilter(const char* _filter, uint32_t _filter_len)
    else
       {
       filter       = _filter;
-      u_pfn_flags  = 0;
-      u_pfn_match  = u_dosmatch_with_OR;
       bfollowlinks = true;
       }
 }
@@ -307,7 +305,7 @@ found_file:
          if (U_ISDOTS(dp->d_name)) continue;
 
          if (filter_len == 0 ||
-             u_pfn_match(dp->d_name, d_namlen, filter, filter_len, u_pfn_flags))
+             UServices::dosMatchWithOR(dp->d_name, d_namlen, filter, filter_len, u_pfn_flags))
             {
             if (sort_by == 0) prepareForCallingRecurse(dp->d_name, d_namlen, U_DT_TYPE);
             else

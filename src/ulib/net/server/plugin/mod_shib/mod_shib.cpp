@@ -696,25 +696,14 @@ int UShibPlugIn::handlerRequest()
             }
          }
 
-      UServer_Base::setCallerHandlerReset();
+      UShibTarget::hostname = UShibTarget::uri = 0;
+
+      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::uri);
+      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::hostname);
+      U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::remote_addr);
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-}
-
-int UShibPlugIn::handlerReset()
-{
-   U_TRACE(0, "UShibPlugIn::handlerReset()")
-
-   U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::uri);
-   U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::hostname);
-   U_SYSCALL_VOID(free, "%p", (void*)UShibTarget::remote_addr);
-
-   UShibTarget::hostname = UShibTarget::uri = 0;
-
-   UServer_Base::resetCallerHandlerReset();
-
-   U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }

@@ -17,6 +17,8 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   U_ASSERT_EQUALS( UServices::dosMatchWithOR(U_CONSTANT_TO_PARAM("www.sito1.com"), U_CONSTANT_TO_PARAM("SSI|benchmark|www.sito1.com|www.sito2.com"), FNM_INVERT), false)
+
    UString buffer(2000);
 
    u_base64_max_columns = 72;

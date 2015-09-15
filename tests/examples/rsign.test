@@ -51,7 +51,6 @@ rm -rf RSIGN/rsignserver.log RSIGN/RSIGN/log \
 
 cat <<EOF >inp/webserver.cfg
 userver {
- PORT 443
  REQ_TIMEOUT 5
  MAX_KEEP_ALIVE 256
  LOG_FILE rsignserver.log

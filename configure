@@ -1011,6 +1011,7 @@ enable_HCRS
 enable_HPRS
 enable_http2
 enable_classic
+enable_throttling
 enable_alias
 enable_welcome
 enable_ACL
@@ -1730,6 +1731,7 @@ Optional Features:
   --enable-HPRS             enable Homogeneous Pipeline Request Support [default=yes]
   --enable-http2            enable HTTP/2 support [default=no]
   --enable-classic          enable server classic model support [default=no]
+  --enable-throttling       enable server bandwidth throttling support [default=no]
   --enable-alias            enable alias URI support [default=no]
   --enable-welcome          enable welcome message support [default=no]
   --enable-ACL              enable ACL filtering support [default=no]
@@ -23451,6 +23453,24 @@ $as_echo "#define U_CLASSIC_SUPPORT 1" >>confdefs.h
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_classic" >&5
 $as_echo "$enable_classic" >&6; }
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable server bandwidth throttling support" >&5
+$as_echo_n "checking if you want to enable server bandwidth throttling support... " >&6; }
+	# Check whether --enable-throttling was given.
+if test "${enable_throttling+set}" = set; then :
+  enableval=$enable_throttling;
+fi
+
+	if test -z "$enable_throttling"; then
+		enable_throttling="no"
+	fi
+	if test "$enable_throttling" = "yes"; then
+
+$as_echo "#define U_THROTTLING_SUPPORT 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_throttling" >&5
+$as_echo "$enable_throttling" >&6; }
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable alias URI support" >&5
 $as_echo_n "checking if you want to enable alias URI support... " >&6; }

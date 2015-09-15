@@ -85,6 +85,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // URI_PROTECTED_ALLOWED_IP list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
    //
    // URI_REQUEST_CERT_MASK                      mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
+   // BANDWIDTH_THROTTLING_MASK                  lets you set maximum byte rates on URLs or URL groups (*.jpg|*.gif 50)
    // URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK mask (DOS regexp) of URI where use HTTP Strict Transport Security to force client to use only SSL
    //
    // SESSION_COOKIE_OPTION  eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)  
@@ -95,60 +96,82 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // REQUEST_READ_TIMEOUT set timeout for receiving requests
    // ------------------------------------------------------------------------------------------------------------------------------------------------
 
-#ifdef U_ALIAS
-   uint32_t n;
-   UVector<UString> tmp;
-
-   if (cfg.loadVector(tmp, "ALIAS"))
+   if (cfg.loadTable())
       {
-      n = tmp.size();
+      UString x;
 
-      if (n)
+      // VIRTUAL HOST
+
+      bool bvirtual_host = cfg.readBoolean(U_CONSTANT_TO_PARAM("VIRTUAL_HOST"));
+
+#  ifndef U_ALIAS
+      if (bvirtual_host)
          {
-         if (n == 1) UHTTP::setGlobalAlias(tmp[0]); // automatic alias of all uri request without suffix...
-         else
+         U_SRV_LOG("WARNING: Sorry, I can't enable virtual hosting because alias URI support is missing, please recompile ULib");
+         }
+#  else
+      x = cfg.at(U_CONSTANT_TO_PARAM("MAINTENANCE_MODE"));
+
+      if (x)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UHTTP::maintenance_mode_page, 0)
+
+         UHTTP::maintenance_mode_page = U_NEW(UString(x));
+
+         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
+         }
+
+      UHTTP::virtual_host = bvirtual_host;
+
+      x = cfg.at(U_CONSTANT_TO_PARAM("USP_AUTOMATIC_ALIASING"));
+
+      if (x) UHTTP::setGlobalAlias(x); // NB: automatic alias of all uri request without suffix...
+      else
+         {
+         x = cfg.at(U_CONSTANT_TO_PARAM("ALIAS"));
+
+         if (x)
             {
+            UVector<UString> vec(x);
+            uint32_t n = vec.size();
+
+            if (n < 2)
+               {
+               U_ERROR("UHttpPlugIn::handlerConfig(): vector ALIAS malformed: %S", x.rep);
+               }
+
             U_INTERNAL_ASSERT_EQUALS(UHTTP::valias, 0)
 
-            UHTTP::valias = U_NEW(UVector<UString>(n));
+            UHTTP::valias = U_NEW(UVector<UString>(vec, n));
+            }
+         }
 
-            for (uint32_t i = 0; i < n; ++i)
-               {
-               UStringRep* r = tmp.UVector<UStringRep*>::at(i);
+#    ifdef USE_LIBPCRE
+      x = cfg.at(U_CONSTANT_TO_PARAM("REWRITE_RULE_NF"));
 
-               UHTTP::valias->UVector<UStringRep*>::push(r);
-               }
+      if (x)
+         {
+         UVector<UString> vec(x);
+         uint32_t n = vec.size();
+
+         if (n < 2)
+            {
+            U_ERROR("UHttpPlugIn::handlerConfig(): vector REWRITE_RULE_NF malformed: %S", x.rep);
             }
 
-         tmp.clear();
-         }
-      }
-
-#  ifdef USE_LIBPCRE // REWRITE RULE
-   if (cfg.loadVector(tmp, "REWRITE_RULE_NF"))
-      {
-      n = tmp.size();
-
-      if (n)
-         {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::vRewriteRule, 0)
 
          UHTTP::vRewriteRule = U_NEW(UVector<UHTTP::RewriteRule*>(n));
 
          for (int32_t i = 0; i < (int32_t)n; i += 2)
             {
-            UHTTP::RewriteRule* rule = U_NEW(UHTTP::RewriteRule(tmp[i], tmp[i+1]));
+            UHTTP::RewriteRule* rule = U_NEW(UHTTP::RewriteRule(vec[i], vec[i+1]));
 
             UHTTP::vRewriteRule->push_back(rule);
             }
          }
-      }
+#   endif
 #  endif
-#endif
-
-   if (cfg.loadTable())
-      {
-      UString x;
 
       UHTTP::cgi_timeout                     = cfg.readLong(U_CONSTANT_TO_PARAM("CGI_TIMEOUT"));
       UHTTP::limit_request_body              = cfg.readLong(U_CONSTANT_TO_PARAM("LIMIT_REQUEST_BODY"), U_STRING_MAX_SIZE);
@@ -241,30 +264,6 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          UHTTP::mount_point = U_NEW(UString(x));
          }
-
-      // VIRTUAL HOST
-
-      bool bvirtual_host = cfg.readBoolean(U_CONSTANT_TO_PARAM("VIRTUAL_HOST"));
-
-#  ifndef U_ALIAS
-      if (bvirtual_host)
-         {
-         U_SRV_LOG("WARNING: Sorry, I can't enable virtual hosting because alias URI support is missing, please recompile ULib");
-         }
-#  else
-      UHTTP::virtual_host = bvirtual_host;
-
-      x = cfg.at(U_CONSTANT_TO_PARAM("MAINTENANCE_MODE"));
-
-      if (x)
-         {
-         U_INTERNAL_ASSERT_EQUALS(UHTTP::maintenance_mode_page, 0)
-
-         UHTTP::maintenance_mode_page = U_NEW(UString(x));
-         }
-
-      UHTTP::setGlobalAlias(cfg.at(U_CONSTANT_TO_PARAM("USP_AUTOMATIC_ALIASING")));
-#  endif
 
       // INOTIFY
 
@@ -370,6 +369,12 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          }
 #  endif
 
+#  ifdef U_THROTTLING_SUPPORT
+      x = cfg.at(U_CONSTANT_TO_PARAM("BANDWIDTH_THROTTLING_MASK"));
+
+      if (x) UServer_Base::initThrottlingServer(x);
+#  endif
+
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
       }
 
@@ -409,10 +414,9 @@ int UHttpPlugIn::handlerInit()
 #  endif
 */
 
+   // Configure TLS extensions support
+
 #  if !defined(OPENSSL_NO_TLSEXT) && defined(SSL_set_tlsext_host_name)
-
-      // Configure TLS extensions support
-
       if (SSL_CTX_set_tlsext_servername_callback(USSLSocket::sctx, USSLSocket::callback_ServerNameIndication) == false) // Server name indication (SNI)
          {
          U_WARNING("SSL: Unable to initialize TLS servername extension callback");
@@ -435,7 +439,7 @@ int UHttpPlugIn::handlerInit()
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }
 
-int UHttpPlugIn::handlerRun() // NB: we use this method because now we have the shared data allocated by UServer...
+int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit() because now we have the shared data allocated by UServer...
 {
    U_TRACE(0, "UHttpPlugIn::handlerRun()")
 

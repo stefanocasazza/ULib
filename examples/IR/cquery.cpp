@@ -134,8 +134,8 @@ int Query::query_meta(UStringRep* word_rep, UStringRep* value)
 {
    U_TRACE(5, "Query::query_meta(%.*S,%p)", U_STRING_TO_TRACE(*word_rep), value)
 
-   if (u_pfn_match(      word_rep->data(),       word_rep->size(),
-                   UPosting::word->data(), UPosting::word->size(), u_pfn_flags))
+   if (u_dosmatch(       word_rep->data(),       word_rep->size(),
+                   UPosting::word->data(), UPosting::word->size(), UPosting::ignore_case ? FNM_CASEFOLD : 0))
       {
       UPosting::posting->_assign(value);
 
@@ -263,8 +263,6 @@ void Query::run(const char* ptr, uint32_t len, UVector<WeightWord*>* vec)
          else
             {
             WeightWord::check_for_duplicate = true;
-
-            if (UPosting::ignore_case) u_pfn_flags |= FNM_CASEFOLD;
 
             cdb_words->callForAllEntryWithPattern(query_meta, 0);
 

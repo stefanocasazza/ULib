@@ -236,6 +236,17 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_classic])
 
+	AC_MSG_CHECKING(if you want to enable server bandwidth throttling support)
+	AC_ARG_ENABLE(throttling,
+				[  --enable-throttling       enable server bandwidth throttling support [[default=no]]])
+	if test -z "$enable_throttling"; then
+		enable_throttling="no"
+	fi
+	if test "$enable_throttling" = "yes"; then
+		AC_DEFINE(U_THROTTLING_SUPPORT, 1, [enable server bandwidth throttling support])
+	fi
+	AC_MSG_RESULT([$enable_throttling])
+
 	AC_MSG_CHECKING(if you want to enable alias URI support)
 	AC_ARG_ENABLE(alias,
 				[  --enable-alias            enable alias URI support [[default=no]]])

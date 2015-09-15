@@ -25,7 +25,6 @@ int           UClientImage_Base::csfd;
 int           UClientImage_Base::iovcnt;
 iPF           UClientImage_Base::callerHandlerRead;
 iPF           UClientImage_Base::callerHandlerRequest;
-iPF           UClientImage_Base::callerHandlerReset;
 bPF           UClientImage_Base::callerHandlerCache;
 vPF           UClientImage_Base::callerHandlerEndRequest;
 bool          UClientImage_Base::bIPv6;
@@ -870,6 +869,10 @@ void UClientImage_Base::prepareForRead()
 
       UEventFd::fd = socket->iSockDesc;
       }
+
+#ifdef U_THROTTLING_SUPPORT
+   UServer_Base::initThrottlingClient();
+#endif
 }
 
 bool UClientImage_Base::genericRead()
@@ -1349,8 +1352,6 @@ write:
 
          goto pipeline;
          }
-
-      if (callerHandlerReset) U_ClientImage_state = callerHandlerReset();
       }
    else
       {
@@ -1362,6 +1363,10 @@ error:
       }
 
    endRequest();
+
+#ifdef U_THROTTLING_SUPPORT
+   if (uri) UServer_Base::clearThrottling();
+#endif
 
    U_DUMP("U_ClientImage_close = %b UServer_Base::isParallelizationChild() = %b", U_ClientImage_close, UServer_Base::isParallelizationChild())
 
@@ -1472,6 +1477,13 @@ bool UClientImage_Base::writeResponse()
 #endif
    }
 
+#ifdef U_THROTTLING_SUPPORT
+   if (iBytesWrite > 0) bytes_sent += iBytesWrite;
+#endif
+#ifdef DEBUG
+   if (iBytesWrite > 0) UServer_Base::stats_bytes += iBytesWrite;
+#endif
+
    if (iBytesWrite == (int)ncount) U_RETURN(true);
 
    if (socket->isClosed()) U_RETURN(false);
@@ -1511,6 +1523,7 @@ bool UClientImage_Base::writeResponse()
    int i;
    uint32_t sum;
 #endif
+
    bool bopen;
 
 loop:
@@ -1555,6 +1568,13 @@ loop:
    iBytesWrite = USocketExt::writev( socket, piov, iovcnt, ncount, U_TIMEOUT_MS);
 #else
    iBytesWrite = USocketExt::_writev(socket, piov, iovcnt, ncount, U_TIMEOUT_MS);
+#endif
+
+#ifdef U_THROTTLING_SUPPORT
+   if (iBytesWrite > 0) bytes_sent += iBytesWrite;
+#endif
+#ifdef DEBUG
+   if (iBytesWrite > 0) UServer_Base::stats_bytes += iBytesWrite;
 #endif
 
    if (iBytesWrite != (int)ncount)
@@ -1723,13 +1743,7 @@ int UClientImage_Base::handlerResponse()
 
       U_SRV_LOG("partial write: (remain %u bytes) - create temporary file %.*S sock_fd %d sfd %d", ncount, len, path, socket->iSockDesc, sfd);
 
-      // NB: we have a pending sendfile...
-
-      count = ncount;
-
-      prepareForSendfile();
-
-      U_ClientImage_pclose(this) |= U_CLOSE;
+      setPendingSendfile(); // NB: we have a pending sendfile...
 
       U_RETURN(U_NOTIFIER_OK);
 #  endif
@@ -1764,15 +1778,27 @@ int UClientImage_Base::handlerWrite()
    U_INTERNAL_ASSERT_DIFFERS(sfd, -1)
    U_INTERNAL_ASSERT(socket->isOpen())
 
-   off_t offset;
-   int iBytesWrite;
    bool bwrite = (UEventFd::op_mask == EPOLLOUT);
 
    U_INTERNAL_DUMP("bwrite = %b", bwrite)
 
+#ifdef U_THROTTLING_SUPPORT
+   if (UServer_Base::checkThrottlingBeforeSend(bwrite) == false) U_RETURN(U_NOTIFIER_OK);
+#endif
+
+   off_t offset;
+   int iBytesWrite;
+
 write:
    offset      = start;
    iBytesWrite = USocketExt::sendfile(socket, sfd, &offset, count, 0);
+
+#ifdef U_THROTTLING_SUPPORT
+   if (iBytesWrite > 0) bytes_sent += iBytesWrite;
+#endif
+#ifdef DEBUG
+   if (iBytesWrite > 0) UServer_Base::stats_bytes += iBytesWrite;
+#endif
 
    if (iBytesWrite == (int)count)
       {

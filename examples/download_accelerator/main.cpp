@@ -273,13 +273,13 @@ no_eta:
 
       (void) UFile::writev(STDOUT_FILENO, iov, 3); 
 
-      UTimer::init(false);
+      UTimer::init(UTimer::SYNC);
 
-      (void) UTimer::insert(this, true);
+      UTimer::insert(this);
 
-      (void) gettimeofday(&_start, 0);
+      UTimer::setTimer();
 
-      time = _start;
+      time = *u_now;
 
       display();
       }
@@ -302,6 +302,8 @@ no_eta:
       {
       U_TRACE(5, "ProgressBar::end()")
 
+      UTimer::erase(this);
+
       howmuch = count = (total_length - initial_length);
 
       progress();
@@ -311,6 +313,8 @@ no_eta:
       display();
 
       (void) UFile::write(STDOUT_FILENO, U_CONSTANT_TO_PARAM("\n")); 
+
+      delete this;
       }
 
    virtual int handlerTime()
@@ -1200,24 +1204,17 @@ public:
 
       host = from[i];
 
-      if (u_is_tty) pinfo->start();
+      if (pinfo) pinfo->start();
 
       download();
 
       (void) proc.waitAll();
 
-      if (u_is_tty)
-         {
-         UTimer::erase(pinfo, true);
-
-         pinfo->end();
-         }
+      if (pinfo) pinfo->end();
 
       file.munmap();
 
 #  ifdef DEBUG
-      if (u_is_tty) delete pinfo;
-
       file.close();
 
       UFile::munmap(place, map_size1);

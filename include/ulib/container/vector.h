@@ -931,6 +931,13 @@ public:
    UVector(const UString& str,       char  delim);
    UVector(const UString& str, const char* delim = 0);
 
+   UVector(UVector<UString>& source, uint32_t n) : UVector<UStringRep*>(n)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%p,%u", &source, n)
+
+      UVector<void*>::move(source); // add to end and reset source
+      }
+
    ~UVector()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UVector<UString>)
