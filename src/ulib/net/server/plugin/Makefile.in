@@ -79,24 +79,24 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@PAGE_SPEED_TRUE@am__append_1 = page_speed
-@V8_TRUE@am__append_2 = v8
-@PHP_TRUE@am__append_3 = php
-@RUBY_TRUE@am__append_4 = ruby
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_FALSE@am__append_5 = mod_geoip
-@MOD_SHIB_TRUE@@PCRE_TRUE@@SSL_TRUE@@STATIC_HANDLER_SHIB_FALSE@am__append_6 = mod_shib
-@STATIC_HANDLER_RPC_FALSE@am__append_7 = server_plugin_rpc.la
-@STATIC_HANDLER_STREAM_FALSE@am__append_8 = server_plugin_stream.la
-@STATIC_HANDLER_NOCAT_FALSE@am__append_9 = server_plugin_nocat.la
-@STATIC_HANDLER_SOCKET_FALSE@am__append_10 = server_plugin_socket.la
-@STATIC_HANDLER_SCGI_FALSE@am__append_11 = server_plugin_scgi.la
-@STATIC_HANDLER_FCGI_FALSE@am__append_12 = server_plugin_fcgi.la
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am__append_13 = server_plugin_proxy.la
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am__append_14 = server_plugin_soap.la
-@STATIC_HANDLER_SSI_FALSE@am__append_15 = server_plugin_ssi.la
-@STATIC_HANDLER_TSA_FALSE@am__append_16 = server_plugin_tsa.la
-@STATIC_HANDLER_HTTP_FALSE@am__append_17 = server_plugin_http.la
-@STATIC_HANDLER_ECHO_FALSE@am__append_18 = server_plugin_echo.la
+@STATIC_HANDLER_RPC_FALSE@am__append_1 = server_plugin_rpc.la
+@STATIC_HANDLER_STREAM_FALSE@am__append_2 = server_plugin_stream.la
+@STATIC_HANDLER_NOCAT_FALSE@am__append_3 = server_plugin_nocat.la
+@STATIC_HANDLER_SOCKET_FALSE@am__append_4 = server_plugin_socket.la
+@STATIC_HANDLER_SCGI_FALSE@am__append_5 = server_plugin_scgi.la
+@STATIC_HANDLER_FCGI_FALSE@am__append_6 = server_plugin_fcgi.la
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_FALSE@am__append_7 = server_plugin_proxy.la
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_FALSE@am__append_8 = server_plugin_soap.la
+@STATIC_HANDLER_SSI_FALSE@am__append_9 = server_plugin_ssi.la
+@STATIC_HANDLER_TSA_FALSE@am__append_10 = server_plugin_tsa.la
+@STATIC_HANDLER_HTTP_FALSE@am__append_11 = server_plugin_http.la
+@STATIC_HANDLER_ECHO_FALSE@am__append_12 = server_plugin_echo.la
+@PAGE_SPEED_TRUE@am__append_13 = page_speed
+@V8_TRUE@am__append_14 = v8
+@PHP_TRUE@am__append_15 = php
+@RUBY_TRUE@am__append_16 = ruby
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_FALSE@am__append_17 = mod_geoip
+@MOD_SHIB_TRUE@@PCRE_TRUE@@SSL_TRUE@@STATIC_HANDLER_SHIB_FALSE@am__append_18 = mod_shib
 subdir = src/ulib/net/server/plugin
 DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/Makefile.am \
 	$(top_srcdir)/depcomp
@@ -523,6 +523,7 @@ STRIP = @STRIP@
 ULIB = @ULIB@
 ULIBS = @ULIBS@
 ULIB_LIBS = @ULIB_LIBS@
+ULIB_MODULEDIR = @ULIB_MODULEDIR@
 ULIB_VERSION = @ULIB_VERSION@
 USP_FLAGS = @USP_FLAGS@
 USP_LDFLAGS = @USP_LDFLAGS@
@@ -594,8 +595,6 @@ target_vendor = @target_vendor@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-SUBDIRS = usp $(am__append_1) $(am__append_2) $(am__append_3) \
-	$(am__append_4) $(am__append_5) $(am__append_6)
 EXTRA_DIST = *.cpp Makefile.* \
 				 mod_shib/*.cpp mod_shib/Makefile.* \
 				 mod_geoip/*.cpp mod_geoip/Makefile.* \
@@ -607,11 +606,11 @@ EXTRA_DIST = *.cpp Makefile.* \
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
-moduledir = $(libexecdir)/ulib
-module_LTLIBRARIES = $(am__append_7) $(am__append_8) $(am__append_9) \
-	$(am__append_10) $(am__append_11) $(am__append_12) \
-	$(am__append_13) $(am__append_14) $(am__append_15) \
-	$(am__append_16) $(am__append_17) $(am__append_18)
+moduledir = @ULIB_MODULEDIR@
+module_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
+	$(am__append_4) $(am__append_5) $(am__append_6) \
+	$(am__append_7) $(am__append_8) $(am__append_9) \
+	$(am__append_10) $(am__append_11) $(am__append_12)
 @STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_SOURCES = mod_rpc.cpp
 @STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_LIBADD = $(ulib_la) @ULIB_LIBS@
 @STATIC_HANDLER_RPC_FALSE@server_plugin_rpc_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
@@ -648,6 +647,8 @@ module_LTLIBRARIES = $(am__append_7) $(am__append_8) $(am__append_9) \
 @STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_SOURCES = mod_echo.cpp
 @STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_LIBADD = $(ulib_la) @ULIB_LIBS@
 @STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+SUBDIRS = usp $(am__append_13) $(am__append_14) $(am__append_15) \
+	$(am__append_16) $(am__append_17) $(am__append_18)
 all: all-recursive
 
 .SUFFIXES:

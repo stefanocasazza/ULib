@@ -8,8 +8,7 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
-moduledir = $(libexecdir)/ulib
-
+moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES =
 
 if HAVE_SQLITE3

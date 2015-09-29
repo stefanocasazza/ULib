@@ -73,6 +73,7 @@ UCommand*                  UNoCatPlugIn::fw;
 UDirWalk*                  UNoCatPlugIn::dirwalk;
 UIptAccount*               UNoCatPlugIn::ipt;
 UModNoCatPeer*             UNoCatPlugIn::peer;
+UModNoCatPeer*             UNoCatPlugIn::peers_delete;
 UModNoCatPeer*             UNoCatPlugIn::peers_preallocate;
 UVector<Url*>*             UNoCatPlugIn::vauth_url;
 UVector<UString>*          UNoCatPlugIn::vauth;
@@ -143,13 +144,13 @@ int UModNoCatPeer::handlerTime()
 {
    U_TRACE(0, "UModNoCatPeer::handlerTime()")
 
-   if (checkPeerInfo(true) == false)
+   int disconnected = checkPeerInfo(true);
+
+   if (disconnected)
       {
       UNoCatPlugIn::peer = this;
 
-      UNoCatPlugIn::deny(false);
-
-      if (UNoCatPlugIn::num_peers_preallocate == 0) delete this;
+      UNoCatPlugIn::deny(disconnected, false);
       }
 
    // ---------------
@@ -265,8 +266,9 @@ UNoCatPlugIn::~UNoCatPlugIn()
    delete varp_cache;
    delete  arp_cache;
 
-   if (ipt)   delete ipt;
-   if (peers) delete peers;
+   if (ipt)     delete ipt;
+   if (peers)   delete peers;
+   if (dirwalk) delete dirwalk;
 
    if (status_content)
       {
@@ -286,7 +288,12 @@ UNoCatPlugIn::~UNoCatPlugIn()
       UMemoryPool::_free(vaddr, num_radio, sizeof(UVector<UIPAddress*>*));
       }
 
-   if (dirwalk) delete dirwalk;
+   if (peers_delete)
+      {
+      peer = peers_delete;
+
+      do { delete peer; } while ((peer = peer->next));
+      }
 
    if (peers_preallocate) delete[] peers_preallocate;
 
@@ -301,7 +308,7 @@ bool UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
 {
    U_TRACE(0, "UNoCatPlugIn::getPeerStatus(%p,%p)", key, value)
 
-   peer = (UModNoCatPeer*) value;
+   peer = (UModNoCatPeer*)value;
 
    if ( label_to_match &&
        *label_to_match != peer->label)
@@ -313,9 +320,9 @@ bool UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
    const char* status;
    time_t how_much_connected;
    UString buffer(U_CAPACITY);
-   bool btraffic = (key == 0);
+   int disconnected = peer->checkPeerInfo(key == 0);
 
-   (void) peer->checkPeerInfo(btraffic);
+   if (disconnected) deny(disconnected, check_expire);
 
    U_INTERNAL_DUMP("now    = %#5D", u_now->tv_sec)
    U_INTERNAL_DUMP("logout = %#5D", peer->logout)
@@ -623,17 +630,9 @@ bool UNoCatPlugIn::checkPeerStatus(UStringRep* key, void* value)
             U_SRV_LOG("WARNING: I try to deny user with status permit: IP %v MAC %v remain: %ld secs %llu bytes - total_connections %u",
                        peer->ip.rep, peer->mac.rep, peer->time_remain, peer->traffic_remain, total_connections);
 
-            executeCommand(UModNoCatPeer::PEER_DENY);
-
-            --total_connections;
+            deny(U_LOGOUT_CHECK_FIREWALL, check_expire);
             }
          }
-      /*
-      else
-         {
-         U_SRV_LOG("User deny: IP %v MAC %v", peer->ip.rep, peer->mac.rep);
-         }
-      */
       }
    else
       {
@@ -648,12 +647,6 @@ bool UNoCatPlugIn::checkPeerStatus(UStringRep* key, void* value)
 
          executeCommand(UModNoCatPeer::PEER_DENY);
          }
-      /*
-      else
-         {
-         U_SRV_LOG("User %s permit: IP %v MAC %v", (U_peer_allowed ? "ALLOWED" : ""), peer->ip.rep, peer->mac.rep);
-         }
-      */
 
       openlist->erase(pos);
       }
@@ -887,7 +880,7 @@ void UNoCatPlugIn::checkSystem()
    if (paddrmask)
       {
 result:
-      U_INTERNAL_ASSERT_MAJOR(nfds,0)
+      U_INTERNAL_ASSERT_MAJOR(nfds, 0)
 
       for (i = 0; i < nfds; ++i)
          {
@@ -903,7 +896,7 @@ result:
                   }
 #           endif
 
-               remove(true);
+               deny(U_LOGOUT_NO_ARP_REPLY, check_expire);
                }
             }
          }
@@ -945,9 +938,9 @@ end:
    last_request_check = u_now->tv_sec;
 }
 
-void UNoCatPlugIn::deny(bool disconnected)
+void UNoCatPlugIn::deny(int disconnected, bool bcheck_expire)
 {
-   U_TRACE(0, "UNoCatPlugIn::deny(%b)", disconnected)
+   U_TRACE(0, "UNoCatPlugIn::deny(%d,%b)", disconnected, bcheck_expire)
 
    U_INTERNAL_ASSERT_POINTER(peer)
 
@@ -965,21 +958,17 @@ void UNoCatPlugIn::deny(bool disconnected)
       return;
       }
 
-   if (peer->logout == 0) peer->logout = u_now->tv_sec; // NB: request of logout or user disconnected...
-#ifdef DEBUG
-   else // NB: user with no more time or no more traffic...
-      {
-      U_INTERNAL_ASSERT_EQUALS(peer->logout, peer->expire)
-      }
-#endif
-
-   addPeerInfo(disconnected ? -1 : peer->logout); // -1 => disconnected (logout implicito)
+   addPeerInfo(disconnected);
 
    executeCommand(UModNoCatPeer::PEER_DENY);
 
    --total_connections;
 
    U_SRV_LOG("Peer denied: IP %v MAC %v remain: %ld secs %llu bytes - total_connections %u", peer->ip.rep, peer->mac.rep, peer->time_remain, peer->traffic_remain, total_connections);
+
+   U_INTERNAL_DUMP("check_expire = %u num_peers_preallocate = %u", check_expire, num_peers_preallocate)
+
+   if (bcheck_expire) UTimer::erase(peer);
 }
 
 void UNoCatPlugIn::permit(const UString& UserDownloadRate, const UString& UserUploadRate)
@@ -994,17 +983,17 @@ void UNoCatPlugIn::permit(const UString& UserDownloadRate, const UString& UserUp
 
    executeCommand(UModNoCatPeer::PEER_PERMIT);
 
+   ++total_connections;
+
+   U_SRV_LOG("Peer permitted: IP %v MAC %v - UserDownloadRate %v UserUploadRate %v remain: %ld secs %llu bytes - total_connections %u",
+               peer->ip.rep, peer->mac.rep, UserDownloadRate.rep, UserUploadRate.rep, peer->time_remain, peer->traffic_remain, total_connections);
+
    if (check_expire)
       {
       peer->UTimeVal::setSecond(peer->time_remain);
 
       UTimer::insert(peer);
       }
-
-   ++total_connections;
-
-   U_SRV_LOG("Peer permitted: IP %v MAC %v - UserDownloadRate %v UserUploadRate %v remain: %ld secs %llu bytes - total_connections %u",
-               peer->ip.rep, peer->mac.rep, UserDownloadRate.rep, UserUploadRate.rep, peer->time_remain, peer->traffic_remain, total_connections);
 }
 
 UString UNoCatPlugIn::getSignedData(const char* ptr, uint32_t len)
@@ -1100,12 +1089,13 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
       goto end;
       }
 
-   /* get mode
-
-   mode = args.at(U_CONSTANT_TO_PARAM("Mode")).copy();
-
-   U_INTERNAL_DUMP("mode = %V", mode.rep))
-   */
+   /**
+    * get mode
+    *
+    * mode = args.at(U_CONSTANT_TO_PARAM("Mode")).copy();
+    *
+    * U_INTERNAL_DUMP("mode = %V", mode.rep))
+    */
 
    // check user id
 
@@ -1192,6 +1182,8 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
    if (action.empty() ||
        action.equal(U_CONSTANT_TO_PARAM("Permit")))
       {
+      result = true;
+
       if (U_peer_status == UModNoCatPeer::PEER_PERMIT)
          {
          U_SRV_LOG("WARNING: peer already permit: IP %v MAC %v", peer->ip.rep, peer->mac.rep);
@@ -1213,16 +1205,6 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
 
          permit(userDownloadRate, userUploadRate);
          }
-
-      result = true;
-      }
-   else if (action.equal(U_CONSTANT_TO_PARAM("Deny")))
-      {
-      result = true;
-
-      (void) peer->checkPeerInfo(true);
-
-      remove(false);
       }
    else
       {
@@ -1240,38 +1222,43 @@ void UNoCatPlugIn::creatNewPeer()
 {
    U_TRACE(0, "UNoCatPlugIn::creatNewPeer()")
 
-   U_INTERNAL_ASSERT_EQUALS(peer, 0)
+   U_INTERNAL_DUMP("peer = %p peers_delete = %p num_peers_preallocate = %u", peer, peers_delete, num_peers_preallocate)
 
-   U_INTERNAL_DUMP("num_peers_preallocate = %u", num_peers_preallocate)
+   U_INTERNAL_ASSERT_EQUALS(peer, 0)
 
    if (num_peers_preallocate)
       {
       U_INTERNAL_ASSERT_POINTER(peers_preallocate)
 
       peer = peers_preallocate + --num_peers_preallocate;
+
+      return;
       }
-   else
-      {
+
    // U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.creatNewPeer", 0)
 
-      peer = U_NEW(UModNoCatPeer);
+   peer = U_NEW(UModNoCatPeer);
 
-      if (peer == 0)
-         {
-         unsigned long vsz, rss;
+   if (peer == 0)
+      {
+      unsigned long vsz, rss;
 
-         u_get_memusage(&vsz, &rss);
+      u_get_memusage(&vsz, &rss);
 
-         double _vsz = (double)vsz / (1024.0 * 1024.0),
-                _rss = (double)rss / (1024.0 * 1024.0);
+      double _vsz = (double)vsz / (1024.0 * 1024.0),
+             _rss = (double)rss / (1024.0 * 1024.0);
 
-         U_ERROR("cannot allocate %u bytes (%u KB) of memory - "
-                     "address space usage: %.2f MBytes - "
-                               "rss usage: %.2f MBytes\n",
-                     sizeof(UModNoCatPeer),
-                     sizeof(UModNoCatPeer) / 1024, _vsz, _rss);
-         }
+      U_ERROR("cannot allocate %u bytes (%u KB) of memory - "
+                  "address space usage: %.2f MBytes - "
+                            "rss usage: %.2f MBytes\n",
+                  sizeof(UModNoCatPeer),
+                  sizeof(UModNoCatPeer) / 1024, _vsz, _rss);
       }
+
+   // put the new allocated peer on the delete list
+
+   peer->next = peers_delete;
+                peers_delete = peer;
 }
 
 bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
@@ -1443,11 +1430,11 @@ void UNoCatPlugIn::checkOldPeer()
 
       (void) getARPCache();
 
-      (void) peer->checkPeerInfo(true);
+      int disconnected = peer->checkPeerInfo(true);
 
-      deny(true);
+      if (disconnected == 0) disconnected = U_LOGOUT_DIFFERENT_MAC_FOR_IP;
 
-      if (check_expire) UTimer::erase(peer);
+      deny(disconnected, check_expire);
 
       peer->mac = mac.copy();
 
@@ -1463,9 +1450,9 @@ void UNoCatPlugIn::checkOldPeer()
       }
 }
 
-void UNoCatPlugIn::addPeerInfo(time_t logout)
+void UNoCatPlugIn::addPeerInfo(int disconnected)
 {
-   U_TRACE(0, "UNoCatPlugIn::addPeerInfo(%T)", logout)
+   U_TRACE(0, "UNoCatPlugIn::addPeerInfo(%d)", disconnected)
 
    U_INTERNAL_ASSERT_POINTER(peer)
    U_INTERNAL_ASSERT(peer->user)
@@ -1479,7 +1466,7 @@ void UNoCatPlugIn::addPeerInfo(time_t logout)
 
    U_INTERNAL_DUMP("U_peer_index_AUTH = %u info = %V peer->ip = %V", U_peer_index_AUTH, info.rep, peer->ip.rep)
 
-   // -----------------------------------------------------------------------------------------------------------------------------------------
+   // ------------------------------------------------------------------------------------------------------------------------------------------
    // $1 -> mac
    // $2 -> ip
    // $3 -> gateway
@@ -1488,9 +1475,9 @@ void UNoCatPlugIn::addPeerInfo(time_t logout)
    // $6 -> logout
    // $7 -> connected
    // $8 -> traffic
-   // -----------------------------------------------------------------------------------------------------------------------------------------
-   // /info?Mac=98%3A0c%3A82%3A76%3A3b%3A39&ip=172.16.1.8&gateway=172.16.1.254%3A5280&ap=ap%4010.8.0.1&User=1212&logout=1&connected=3&traffic=0
-   // -----------------------------------------------------------------------------------------------------------------------------------------
+   // ------------------------------------------------------------------------------------------------------------------------------------------
+   // /info?Mac=98%3A0c%3A82%3A76%3A3b%3A39&ip=172.16.1.8&gateway=172.16.1.254%3A5280&ap=ap%4010.8.0.1&User=1212&logout=-1&connected=3&traffic=0
+   // ------------------------------------------------------------------------------------------------------------------------------------------
 
    (void) info.reserve(sz + 200);
 
@@ -1503,41 +1490,46 @@ void UNoCatPlugIn::addPeerInfo(time_t logout)
 
    ptr = (char*) info.end();
 
-   // NB: 0 => mean NOT logout (only info)
-   //    -1 => disconnected (logout implicito)
+   // NB: disconnected 0 => mean NOT logout (only info)
+   //                 <0 => disconnected (logout implicito)
 
-   if (logout == -1)
+   if (disconnected == false) *ptr++ = '0'; // 0 => mean NOT logout (only info)
+   else
       {
       *ptr++ = '-';
-      logout = u_now->tv_sec;
-      }
+      *ptr++ = '0' + disconnected;
 
-   ptr += u_num2str32(ptr, logout);
+      if (peer->logout == 0) peer->logout = u_now->tv_sec;
+#  ifdef DEBUG
+      else // NB: user with no more time or no more traffic...
+         {
+         U_INTERNAL_ASSERT_EQUALS(peer->logout, peer->expire)
+         }
+#  endif
+      }
 
    u__memcpy(ptr,            "&connected=",
              U_CONSTANT_SIZE("&connected="), __PRETTY_FUNCTION__);
       ptr += U_CONSTANT_SIZE("&connected=");
 
    ptr += u_num2str32(ptr, u_now->tv_sec - peer->ctime);
+                                           peer->ctime = u_now->tv_sec;
 
    u__memcpy(ptr,            "&traffic=",
              U_CONSTANT_SIZE("&traffic="), __PRETTY_FUNCTION__);
       ptr += U_CONSTANT_SIZE("&traffic=");
 
    ptr += u_num2str32(ptr, peer->ctraffic);
+                           peer->ctraffic = 0;
 
    info.size_adjust(ptr);
 
    U_INTERNAL_DUMP("info(%u) = %V", info.size(), info.rep)
 
    (void) vinfo_data->replace(U_peer_index_AUTH, info);
-
-   peer->ctime = u_now->tv_sec;
-
-   if (peer->ctraffic) peer->ctraffic = peer->time_no_traffic = 0;
 }
 
-bool UModNoCatPeer::checkPeerInfo(bool btraffic)
+int UModNoCatPeer::checkPeerInfo(bool btraffic)
 {
    U_TRACE(0, "UModNoCatPeer::checkPeerInfo(%b)", btraffic)
 
@@ -1546,8 +1538,6 @@ bool UModNoCatPeer::checkPeerInfo(bool btraffic)
    if (U_peer_allowed == false &&
        U_peer_status  == PEER_PERMIT)
       {
-      bool result = true;
-
       if (btraffic) UNoCatPlugIn::getTraffic();
 
       // NB: we get the device for peer IP address from the ARP cache...
@@ -1569,7 +1559,16 @@ bool UModNoCatPeer::checkPeerInfo(bool btraffic)
 
       U_INTERNAL_DUMP("UNoCatPlugIn::peer_present_in_arp_cache = %V peer->ifname = %V", UNoCatPlugIn::peer_present_in_arp_cache->rep, ifname.rep)
 
-      if (ctraffic == 0) time_no_traffic += (u_now->tv_sec - ctime);
+      if ( UNoCatPlugIn::peer_present_in_arp_cache->empty() &&
+          (UNoCatPlugIn::check_type & UNoCatPlugIn::U_CHECK_ARP_CACHE) != 0)
+         {
+         U_SRV_LOG("Peer IP %v MAC %v not present in ARP cache, I assume he is disconnected", ip.rep, mac.rep);
+
+         U_RETURN(U_LOGOUT_NO_ARP_CACHE);
+         }
+
+      if (ctraffic) time_no_traffic  = 0;
+      else          time_no_traffic += (u_now->tv_sec - ctime);
 
       U_INTERNAL_DUMP("time_no_traffic = %ld", time_no_traffic)
 
@@ -1580,12 +1579,11 @@ bool UModNoCatPeer::checkPeerInfo(bool btraffic)
          U_SRV_LOG("Peer IP %v MAC %v has made no traffic for %ld secs - (max_time_no_traffic: %ld secs) (present in ARP cache: %s)",
                      ip.rep, mac.rep, time_no_traffic, max_time_no_traffic, UNoCatPlugIn::peer_present_in_arp_cache->empty() ? "NO" : "yes");
 
-         if (time_no_traffic >= max_time_no_traffic ||
-             UNoCatPlugIn::peer_present_in_arp_cache->empty())
+         if (time_no_traffic >= max_time_no_traffic)
             {
             U_INTERNAL_ASSERT(u_now->tv_sec >= ctime)
 
-            result = false;
+            U_RETURN(U_LOGOUT_NO_TRAFFIC);
             }
          }
 
@@ -1595,35 +1593,27 @@ bool UModNoCatPeer::checkPeerInfo(bool btraffic)
          {
          if (time_remain <= 15)
             {
-            result      = false;
             logout      = expire; // NB: user with no more time or no more traffic...
             time_remain = 0;
 
             U_SRV_LOG("Peer IP %v MAC %v has no more time - remain traffic for %llu bytes", ip.rep, mac.rep, traffic_remain);
+
+            U_RETURN(U_LOGOUT_NO_MORE_TIME);
             }
 
          if (traffic_remain <= 1024ULL)
             {
-            result         = false;
             logout         = expire; // NB: user with no more time or no more traffic...
             traffic_remain = 0;
 
             U_SRV_LOG("Peer IP %v MAC %v has no more traffic - remain time for %lu sec", ip.rep, mac.rep, time_remain);
+
+            U_RETURN(U_LOGOUT_NO_MORE_TRAFFIC);
             }
          }
-
-      if ( UNoCatPlugIn::peer_present_in_arp_cache->empty() &&
-          (UNoCatPlugIn::check_type & UNoCatPlugIn::U_CHECK_ARP_CACHE) != 0)
-         {
-         result = false;
-
-         U_SRV_LOG("Peer IP %v MAC %v not present in ARP cache, I assume he is disconnected", ip.rep, mac.rep);
-         }
-
-      U_RETURN(result);
       }
 
-   U_RETURN(true);
+   U_RETURN(0);
 }
 
 bool UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
@@ -1632,21 +1622,18 @@ bool UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
 
    peer = (UModNoCatPeer*) value;
 
-   if (peer->checkPeerInfo(false) == false)
+   int disconnected = peer->checkPeerInfo(false);
+
+   if (disconnected)
       {
-      remove(peer_present_in_arp_cache->empty());
+      deny(disconnected, check_expire);
 
       U_RETURN(true);
       }
 
    if (U_peer_status == UModNoCatPeer::PEER_PERMIT)
       {
-      if (U_peer_allowed)
-         {
-      // addPeerInfo(0);
-
-         U_RETURN(true);
-         }
+      if (U_peer_allowed) U_RETURN(true);
 
       U_SRV_LOG("Peer IP %v MAC %v remain: %ld secs %llu bytes", peer->ip.rep, peer->mac.rep, peer->time_remain, peer->traffic_remain);
 
@@ -2092,24 +2079,7 @@ int UNoCatPlugIn::handlerInit()
 
    if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/server_plugin_nocat.err");
 
-   // users table
-
-   peers = U_NEW(UHashMap<UModNoCatPeer*>(U_GET_NEXT_PRIME_NUMBER(1024)));
-
-   openlist       = U_NEW(UVector<UString>);
-   status_content = U_NEW(UString(U_CAPACITY));
- 
-   // users traffic
-
-   ipt = U_NEW(UIptAccount(UClientImage_Base::bIPv6));
-
-   U_INTERNAL_DUMP("num_peers_preallocate = %u", num_peers_preallocate)
-
-   U_INTERNAL_ASSERT_EQUALS(peers_preallocate, 0)
-
-   UInterrupt::setHandlerForSegv(preallocatePeers, preallocatePeersFault);
-
-   U_INTERNAL_DUMP("num_peers_preallocate = %u peers_preallocate = %p", num_peers_preallocate, peers_preallocate)
+   // users monitoring
 
    if (check_expire)
       {
@@ -2117,6 +2087,25 @@ int UNoCatPlugIn::handlerInit()
 
       U_SRV_LOG("Monitoring set for every %d secs", UTimeVal::getSecond());
       }
+
+   // users traffic
+
+   ipt = U_NEW(UIptAccount(UClientImage_Base::bIPv6));
+
+   // users table
+ 
+   U_INTERNAL_DUMP("num_peers_preallocate = %u", num_peers_preallocate)
+
+   peers = U_NEW(UHashMap<UModNoCatPeer*>(num_peers_preallocate < 49157U ? U_GET_NEXT_PRIME_NUMBER(num_peers_preallocate * 8) : 49157U));
+
+   openlist       = U_NEW(UVector<UString>);
+   status_content = U_NEW(UString(U_CAPACITY));
+
+   U_INTERNAL_ASSERT_EQUALS(peers_preallocate, 0)
+
+   UInterrupt::setHandlerForSegv(preallocatePeers, preallocatePeersFault);
+
+   U_INTERNAL_DUMP("num_peers_preallocate = %u peers_preallocate = %p", num_peers_preallocate, peers_preallocate)
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }
@@ -2144,9 +2133,9 @@ bool UNoCatPlugIn::preallocatePeersFault()
 
    U_INTERNAL_ASSERT_EQUALS(peers_preallocate, 0)
 
-   if (num_peers_preallocate > 256)
+   if (num_peers_preallocate > 512)
       {
-      num_peers_preallocate = 256;
+      num_peers_preallocate = 512;
 
       U_RETURN(true);
       }
@@ -2308,9 +2297,9 @@ int UNoCatPlugIn::handlerRequest()
       // 1) /checkFirewall - check firewall and report info
       // 2) /check         - check system and report info
       // 3) /uptime        - report uptime info 
-      // 4) /status        - report status user
-      // 5) /logout        - logout specific user
-      // 6) /users         - report list ip of peers permitted
+      // 4) /users         - report list ip of peers permitted
+      // 5) /status        - report status user
+      // 6) /logout        - logout specific user
       // -----------------------------------------------------
 
       U_INTERNAL_DUMP("vauth_ip = %S", UObject2String(*vauth_ip))
@@ -2347,6 +2336,18 @@ int UNoCatPlugIn::handlerRequest()
             status_content->snprintf("%u", u_get_uptime());
 
             setHTTPResponse(*status_content, U_unknow);
+            }
+         else if (U_HTTP_URI_STREQ("/users"))
+            {
+            // NB: request from AUTH to get list info on peers permitted
+
+            status_content->setBuffer(U_CAPACITY);
+
+            peers->callForAllEntry(getPeerListInfo);
+
+            setHTTPResponse(*status_content, U_html);
+
+            U_SRV_LOG("AUTH request to get list info on peers permitted");
             }
          else if (U_HTTP_URI_STREQ("/status"))
             {
@@ -2432,39 +2433,29 @@ int UNoCatPlugIn::handlerRequest()
                      goto next;
                      }
                   }
+
+               UHTTP::setBadRequest();
+
+               goto end;
                }
 
-            if (peer == 0) UHTTP::setBadRequest();
+next:       (void) getARPCache();
+
+            if (U_peer_status != UModNoCatPeer::PEER_PERMIT) setStatusContent(UString::getStringNull()); // NB: peer == 0 -> request from AUTH to get status access point...
             else
                {
-next:          (void) getARPCache();
+               int disconnected = peer->checkPeerInfo(true);
 
-               if (U_peer_status != UModNoCatPeer::PEER_PERMIT) setStatusContent(UString::getStringNull()); // NB: peer == 0 -> request from AUTH to get status access point...
-               else
-                  {
-                  (void) peer->checkPeerInfo(true);
+               if (disconnected == 0) disconnected = U_LOGOUT_REQUEST_FROM_AUTH;
 
-                  remove(false);
+               deny(disconnected, check_expire);
 
-                  notifyAuthOfUsersInfo(index_AUTH);
-                  }
+               notifyAuthOfUsersInfo(index_AUTH);
                }
             }
          else
             {
-            if (U_HTTP_URI_STREQ("/users") == false) UHTTP::setBadRequest();
-            else
-               {
-               // NB: request from AUTH to get list info on peers permitted
-
-               status_content->setBuffer(U_CAPACITY);
-
-               peers->callForAllEntry(getPeerListInfo);
-
-               setHTTPResponse(*status_content, U_html);
-
-               U_SRV_LOG("AUTH request to get list info on peers permitted");
-               }
+            UHTTP::setBadRequest();
             }
 
          goto end;
@@ -2535,17 +2526,16 @@ next:          (void) getARPCache();
       // h) /login_validate - before authorization ticket with info
       // ---------------------------------------------------------------
 
-      if (U_HTTP_URI_STREQ("/cpe"))
+      if (U_HTTP_URI_STREQ("/cpe") ||
+          U_HTTP_URI_STREQ("/test"))
          {
-         url.setPath(U_CONSTANT_TO_PARAM("/cpe"));
-         url.setService(U_CONSTANT_TO_PARAM("https"));
+         if (U_HTTP_URI_STREQ("/cpe"))
+            {
+            url.setPath(U_CONSTANT_TO_PARAM("/cpe"));
+            url.setService(U_CONSTANT_TO_PARAM("https"));
+            }
 
-         goto google;
-         }
-
-      if (U_HTTP_URI_STREQ("/test"))
-         {
-google:  (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
+         (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
 
          goto set_redirect_to_AUTH;
          }
@@ -2555,7 +2545,9 @@ google:  (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
          {
          // user has pushed the login button
 
-         UString data = getSignedData(U_HTTP_QUERY_TO_PARAM);
+         uint32_t len;
+         const char* ptr;
+         UString _uid, data = getSignedData(U_HTTP_QUERY_TO_PARAM);
 
          if (data.empty())
             {
@@ -2564,9 +2556,8 @@ google:  (void) buffer.assign(U_CONSTANT_TO_PARAM("http://www.google.com"));
             goto set_redirection_url;
             }
 
-         UString _uid;
-         uint32_t len    = data.size() - U_CONSTANT_SIZE("uid=");
-         const char* ptr = data.data() + U_CONSTANT_SIZE("uid=");
+         len = data.size() - U_CONSTANT_SIZE("uid=");
+         ptr = data.data() + U_CONSTANT_SIZE("uid=");
 
          (void) buffer.assign(ptr, len);
 
@@ -2716,7 +2707,8 @@ end:  UClientImage_Base::setCloseConnection();
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UModNoCatPeer::dump(bool _reset) const
 {
-   *UObjectIO::os << "expire                " << expire            <<  '\n'
+   *UObjectIO::os << "next                  " << (void*)next       <<  '\n'
+                  << "expire                " << expire            <<  '\n'
                   << "logout                " << logout            <<  '\n'
                   << "ctraffic              " << ctraffic          <<  '\n'
                   << "connected             " << connected         <<  '\n'

@@ -9,6 +9,8 @@ EXTRA_DIST = cdb configure.help TODO LICENSE* README* *.spec* \
 
 MAINTAINERCLEANFILES = configure aclocal.m4 libtool Makefile.in Makefile INSTALL
 
+moduledir = @ULIB_MODULEDIR@
+
 SUBDIRS  = include src/ulib
 if PLUGIN
 SUBDIRS += src/ulib/net/server/plugin src/ulib/orm/driver

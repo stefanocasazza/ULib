@@ -472,6 +472,7 @@ public:
 
       U_ASSERT(buffer.uniq())
       U_ASSERT(buffer.capacity() >= len * 3)
+      U_INTERNAL_ASSERT_EQUALS(u_isBase64(input, len), false)
 
       buffer.rep->_length = u_url_encode((const unsigned char*)input, len, (unsigned char*)buffer.data());
 

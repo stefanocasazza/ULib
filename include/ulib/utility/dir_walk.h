@@ -149,7 +149,14 @@ public:
       suffix_file_type = U_NEW(UString(str, len));
       }
 
-   static void setFilter(const char* _filter, uint32_t _filter_len);
+   static void setFilter(const char* _filter, uint32_t _filter_len)
+      {
+      U_TRACE(0, "UDirWalk::setFilter(%.*S,%u)", _filter_len, _filter, _filter_len)
+
+                      filter     = _filter;
+      bfollowlinks = (filter_len = _filter_len);
+      }
+
    static bool setDirectory(const UString& dir, const char* filter = 0, uint32_t filter_len = 0);
 
    static void setFilter( const UString& _filter)                       { setFilter(U_STRING_TO_PARAM(_filter)); }

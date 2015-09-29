@@ -19,6 +19,10 @@
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
 
+#ifdef __NetBSD__
+extern char** environ;
+#endif
+
 int   UCommand::status;
 int   UCommand::exit_value;
 int   UCommand::timeoutMS = -1;

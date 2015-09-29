@@ -973,6 +973,23 @@ bool UFile::lock(short l_type, uint32_t start, uint32_t len) const
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
+   /**
+    * Advisory file segment locking data type - information passed to system by user
+    */
+
+#ifdef __NetBSD__
+   /*
+   struct flock {
+      off_t l_start;    // starting offset
+      off_t l_len;      // len = 0 means until end of file
+      pid_t l_pid;      // lock owner
+      short l_type;     // lock type: read/write, etc.
+      short l_whence;   // type of l_start
+   };
+   */
+
+   struct flock flock = { start, len, u_pid, SEEK_SET, l_type };
+#else
    /*
    struct flock {
       short l_type;    // Type of lock: F_RDLCK, F_WRLCK, F_UNLCK
@@ -984,6 +1001,7 @@ bool UFile::lock(short l_type, uint32_t start, uint32_t len) const
    */
 
    struct flock flock = { l_type, SEEK_SET, start, len, u_pid };
+#endif
 
    /**
     * ---------------------------------------------------------------------------------------------------------------------
@@ -1035,7 +1053,7 @@ bool UFile::ftruncate(uint32_t n)
        map_size < (uint32_t)n)
       {
       uint32_t _map_size = n * 2;
-      char* _map         = (char*) mremap(map, map_size, _map_size, MREMAP_MAYMOVE);
+         char* _map      = UFile::mremap(map, map_size, _map_size, MREMAP_MAYMOVE);
 
       if (_map == (char*)MAP_FAILED) U_RETURN(false);
 

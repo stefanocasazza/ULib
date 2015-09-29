@@ -35,11 +35,11 @@ count_traffic1_LDFLAGS = $(PRG_LDFLAGS)
 bin_PROGRAMS = cdbmake rdbgen
 noinst_PROGRAMS = login_adjust count_traffic count_traffic1 check_binary
 
-moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
 if !MINGW
 if !STATIC_SERVLET_WI_AUTH
+moduledir = @ULIB_MODULEDIR@/usp
 module_LTLIBRARIES = wi_auth.la
 wi_auth_la_SOURCES = wi_auth.cpp
 wi_auth_la_LIBADD  = $(ulib_la)

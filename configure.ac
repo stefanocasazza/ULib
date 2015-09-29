@@ -71,20 +71,20 @@ AC_MSG_CHECKING([which architecture the target is])
 
 LINUX_ARCH=
 case $target in
-	x86_64)			LINUX_ARCH=x86_64 ;;
-	i*86)				LINUX_ARCH=i386 ;;
-	arm*)				LINUX_ARCH=arm
-						AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write])
-	;;
-	aarch64*)		LINUX_ARCH=arm64
-						AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write])
-	;;
-	sh*)				LINUX_ARCH=sh ;;
-	mips*)			LINUX_ARCH=mips ;;
-	or1k*)			LINUX_ARCH=openrisc ;;
-	microblaze)		LINUX_ARCH=microblaze ;;
-	powerpc*|ppc*) LINUX_ARCH=powerpc ;;
-	*)					LINUX_ARCH=unknown ;;
+	x86_64)				LINUX_ARCH=x86_64 ;;
+	i*86)					LINUX_ARCH=i386 ;;
+	sh*)					LINUX_ARCH=sh ;;
+	mips*)				LINUX_ARCH=mips ;;
+	or1k*)				LINUX_ARCH=openrisc ;;
+	microblaze)			LINUX_ARCH=microblaze ;;
+	powerpc*|ppc*)		LINUX_ARCH=powerpc ;;
+	*-rumprun-netbsd) LINUX_ARCH=NetBSD
+							enable_stdcpp="yes" ;;
+	arm*)					LINUX_ARCH=arm
+							AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write]) ;;
+	aarch64*)			LINUX_ARCH=arm64
+							AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write]) ;;
+	*)						LINUX_ARCH=unknown ;;
 esac
 
 #AC_SUBST(LINUX_ARCH)
@@ -96,9 +96,10 @@ AC_MSG_CHECKING([which operating system the target is])
 OPERATINGSYSTEM=
 TARGET_LIBC=
 case $target in
-	*-*-linux-*) OPERATINGSYSTEM=linux ;;
-	*-none-*)	 OPERATINGSYSTEM=baremetal ;;
-	*)				 OPERATINGSYSTEM=unknown ;;
+	*-*-linux-*)		OPERATINGSYSTEM=linux ;;
+	*-rumprun-netbsd) OPERATINGSYSTEM=NetBSD ;;
+	*-none-*)			OPERATINGSYSTEM=baremetal ;;
+	*)						OPERATINGSYSTEM=unknown ;;
 esac
 
 #AC_SUBST(OPERATINGSYSTEM)
@@ -110,6 +111,11 @@ if test "x$OPERATINGSYSTEM" = xlinux ; then
 		*-*-linux-gnu*)	 TARGET_LIBC=glibc ;;
 		*-*-linux-musl*)	 TARGET_LIBC=musl ;;
 		*-*-linux-uclibc*) TARGET_LIBC=uclibc ;;
+		*)						 TARGET_LIBC=unknown ;;
+	esac
+else
+	case $target in
+		*-rumprun-netbsd)  TARGET_LIBC=libc ;;
 		*)						 TARGET_LIBC=unknown ;;
 	esac
 fi
@@ -172,6 +178,11 @@ case "$target_os" in
 		kernel=`uname -r`
 
 		case "$kernel" in
+			5.*)
+				AC_MSG_RESULT([5 family ($kernel)])
+#				AC_DEFINE([KERNEL_5], 1, [Define to 1 if you're using Linux 5.x])
+			;;
+
 			4.*)
 				AC_MSG_RESULT([4 family ($kernel)])
 #				AC_DEFINE([KERNEL_4], 1, [Define to 1 if you're using Linux 4.x])
@@ -247,6 +258,17 @@ case "$target_os" in
 		MODULE_FLAGS="-module -shared -no-undefined"
 	;;
 
+	*netbsd)
+		AC_MSG_RESULT([ok ($target_os)])
+
+		CPPFLAGS="$CPPFLAGS -D__NetBSD__"
+
+		AM_CONDITIONAL(LINUX, false)
+		AM_CONDITIONAL(MINGW, false)
+		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(SOLARIS, false)
+   ;;
+
 	*solaris*)
 		AC_MSG_RESULT([ok ($target_os)])
 
@@ -256,16 +278,9 @@ case "$target_os" in
 		AM_CONDITIONAL(SOLARIS, true)
 	;;
 
-	osf*)
-		MODULE_FLAGS="-module -shared -no-undefined"
-
-		AM_CONDITIONAL(LINUX, false)
-		AM_CONDITIONAL(MINGW, false)
-		AM_CONDITIONAL(CYGWIN, false)
-		AM_CONDITIONAL(SOLARIS, false)
-   ;;
-
 	darwin*)
+		AC_MSG_RESULT([maybe ($target_os)])
+
 		CPPFLAGS="$CPPFLAGS -D__OSX__ -D__APPLE__"
 		MODULE_FLAGS="-dynamic -bundle -undefined suppress -flat_namespace -read_only_relocs suppress"
 
@@ -275,7 +290,20 @@ case "$target_os" in
 		AM_CONDITIONAL(SOLARIS, false)
    ;;
 
+	osf*)
+		AC_MSG_RESULT([maybe ($target_os)])
+
+		MODULE_FLAGS="-module -shared -no-undefined"
+
+		AM_CONDITIONAL(LINUX, false)
+		AM_CONDITIONAL(MINGW, false)
+		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(SOLARIS, false)
+   ;;
+
    *minix*)
+		AC_MSG_RESULT([maybe ($target_os)])
+
 		enable_stdcpp="no"
 
 		AM_CONDITIONAL(LINUX, false)
@@ -440,7 +468,9 @@ LT_INIT
 AC_SUBST(MODULE_LIBTOOL_OPTIONS)
 
 if test "$enable_static" = "yes" && test "$enable_shared" = "no"; then
-	enable_stdcpp="no"
+	if test -z "$enable_stdcpp"; then
+		enable_stdcpp="no"
+	fi
 	AM_CONDITIONAL(STATIC_ONLY, true)
 	AC_DEFINE(U_STATIC_ONLY,, [STATIC_ONLY])
 else
@@ -1870,8 +1900,10 @@ if test "$enable_static" = "yes" && test "$enable_shared" = "no"; then
 	AC_ARG_ENABLE(static-servlet, AS_HELP_STRING([--enable-static-servlet=NAMES],[ wi_auth ... ]),
 					  [use_static_servlet="$enableval"])
 
-	if test -n "$use_static_servlet" ; then
-
+	if test -z "$use_static_servlet" ; then
+		echo >> src/ulib/net/server/plugin/usp/loader.autoconf.ext
+		echo >> src/ulib/net/server/plugin/usp/loader.autoconf.cpp
+	else
 		add_calls3=""
 		add_calls4=""
 		add_calls5=""
@@ -2196,6 +2228,9 @@ fi
 if test -n "$rlib"; then
    ULIB_LIBS="$ULIB_LIBS $rlib";
 fi
+if test "$USE_LIBSSL" = "yes" && test "$target_os" = "netbsd"; then
+   ULIB_LIBS="$ULIB_LIBS -ldes";
+fi
 
 ULIB_LIBS="$ULIB_LIBS $ULIB_LIBC"
 
@@ -2242,22 +2277,37 @@ AC_SUBST([RPM_CONFIGURE])
 # Collect building environment
 AC_COMPILATION_ENVIRONMENT
 
+# if it's set to NONE, it means it hasn't been given on the command line
 if test "$prefix" = "NONE"; then
-	prefixdir="$ac_default_prefix"
+	u_prefixdir="$ac_default_prefix"
 else
-   prefixdir="$prefix"
+   u_prefixdir="$prefix"
+fi
+if test "$libdir" = "NONE"; then
+	libdir="$u_prefixdir/lib"
+fi
+if test "$libexecdir" = "NONE"; then
+   u_libexecdir="$u_prefixdir/libexec/ulib"
+else
+	exec_prefix="$u_prefixdir"
+   eval u_libexecdir=\""$libexecdir\""
+fi
+if test "$sysconfdir" = "NONE"; then
+   u_sysconfdir="$u_prefixdir/etc/ulib"
+else
+	prefix="$u_prefixdir"
+   eval u_sysconfdir=\""$sysconfdir\""
 fi
 
-pkglibdir="$prefixdir/lib"
-sysconfdir="$prefixdir/etc/ulib"
-pkglibexecdir="$prefixdir/libexec/ulib"
-
 # Prefix dir
-AC_DEFINE_UNQUOTED(U_PREFIXDIR,	"$prefixdir", [install directory])
-# Plugin dir
-AC_DEFINE_UNQUOTED(U_LIBEXECDIR, "$pkglibexecdir", [install directory for plugins])
-# Config dir
-AC_DEFINE_UNQUOTED(U_SYSCONFDIR, "$sysconfdir", [install directory for configuration data])
+AC_DEFINE_UNQUOTED(U_PREFIXDIR,	"$u_prefixdir", [install directory])
+# Plugin dir - program executables [EPREFIX/libexec]
+AC_DEFINE_UNQUOTED(U_LIBEXECDIR, "$u_libexecdir", [install directory for plugins])
+# Config dir - read-only single-machine data [PREFIX/etc]
+AC_DEFINE_UNQUOTED(U_SYSCONFDIR, "$u_sysconfdir", [install directory for configuration data])
+
+ULIB_MODULEDIR="$u_libexecdir"
+AC_SUBST(ULIB_MODULEDIR)
 
 AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
 ------------------------------------------------------------------------
@@ -2265,9 +2315,9 @@ AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
             Build ULib: Shared=${enable_shared}, Static=${enable_static}
 
             Host setup: ${host}
-        Install prefix: ${prefixdir}
-        Install plugin: ${pkglibexecdir}
-    Configuration data: ${sysconfdir}
+        Install prefix: ${u_prefixdir}
+        Install plugin: ${u_libexecdir}
+    Configuration data: ${u_sysconfdir}
 
       Operating System: $os_version
           C++ Compiler: ${CXX} ( $gcc_version )

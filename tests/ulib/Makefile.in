@@ -1021,6 +1021,7 @@ STRIP = @STRIP@
 ULIB = @ULIB@
 ULIBS = @ULIBS@
 ULIB_LIBS = @ULIB_LIBS@
+ULIB_MODULEDIR = @ULIB_MODULEDIR@
 ULIB_VERSION = @ULIB_VERSION@
 USP_FLAGS = @USP_FLAGS@
 USP_LDFLAGS = @USP_LDFLAGS@
@@ -1204,7 +1205,6 @@ test_redis_SOURCES = test_redis.cpp
 @PLUGIN_TRUE@@STDCPP_TRUE@product2_la_SOURCES = plugin/product2.cpp
 @PLUGIN_TRUE@@STDCPP_TRUE@product2_la_LIBADD = $(LDADD)
 @PLUGIN_TRUE@@STDCPP_TRUE@product2_la_LDFLAGS = -module -rpath /nowhere $(MODULE_LIBTOOL_OPTIONS)
-@PLUGIN_TRUE@@STDCPP_TRUE@noinst_moduledir = $(libexecdir)/ulib
 @PLUGIN_TRUE@@STDCPP_TRUE@noinst_LTLIBRARIES = product1.la product2.la
 TESTS = $(TST) ../reset.color
 all: all-am

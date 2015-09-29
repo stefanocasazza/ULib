@@ -169,7 +169,6 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #  else
 #     define U_WHICH "select" 
 #  endif
-#  define U_STAT_TIME 600 // 10m - Time between stats logs
 
 uint32_t    UServer_Base::nread;
 uint32_t    UServer_Base::max_depth;
@@ -187,8 +186,8 @@ UString UServer_Base::getStats()
    UString x(U_CAPACITY);
 
    x.snprintf("%3u connections (%5.2f/sec), %3u max simultaneous, %3u %s (%5.2f/sec) - %v/sec", UServer_Base::stats_connections,
-               (float) UServer_Base::stats_connections / U_STAT_TIME, UServer_Base::stats_simultaneous, UNotifier::nwatches, U_WHICH, (float) UNotifier::nwatches / U_STAT_TIME,
-               UStringExt::printSize(UServer_Base::stats_bytes).rep);
+               (float) UServer_Base::stats_connections / U_ONE_HOUR_IN_SECOND, UServer_Base::stats_simultaneous, UNotifier::nwatches, U_WHICH,
+               (float) UNotifier::nwatches / U_ONE_HOUR_IN_SECOND, UStringExt::printSize(UServer_Base::stats_bytes).rep);
 
    U_RETURN_STRING(x);
 }
@@ -198,7 +197,7 @@ public:
 
    // COSTRUTTORI
 
-   UTimeStat() : UEventTime(U_STAT_TIME, 0L)
+   UTimeStat() : UEventTime(U_ONE_HOUR_IN_SECOND, 0L)
       {
       U_TRACE_REGISTER_OBJECT(0, UTimeStat, "", 0)
       }
@@ -310,7 +309,7 @@ public:
       //  0 - monitoring
       // ---------------
 
-      U_RETURN(0);
+      U_RETURN(-1);
       }
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
@@ -754,7 +753,7 @@ void UServer_Base::initThrottlingServer(const UString& x)
                                                                                       throttling_rec->max_limit = strtol(number.data(), &ptr, 10);
             if (ptr[0] == '-') throttling_rec->min_limit = throttling_rec->max_limit, throttling_rec->max_limit = strtol(        ptr+1,    0, 10);
 
-            (void) db_throttling->insertDataStorage(pattern);
+            (void) db_throttling->insertDataStorage(pattern, RDB_INSERT);
             }
 
 #     ifdef DEBUG
@@ -866,6 +865,8 @@ public:
       {
       U_TRACE(0, "UClientThread::run()")
 
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::ptime, 0)
+
       while (UServer_Base::flag_loop) UNotifier::waitForEvent();
       }
 };
@@ -883,7 +884,7 @@ public:
       struct timespec ts;
       u_timeval.tv_sec = u_now->tv_sec;
 
-      U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (pid %u)", UThread::getTID());
+      U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (tid %u)", u_gettid());
 
       while (UServer_Base::flag_loop)
          {
@@ -949,7 +950,7 @@ public:
       struct timespec ts;
       bool result = false;
 
-      U_SRV_LOG("SSL: OCSP Stapling thread activated (pid %u)", UThread::getTID());
+      U_SRV_LOG("SSL: OCSP Stapling thread activated (tid %u)", u_gettid());
 
       errno = 0;
       ts.tv_nsec = 0L;
@@ -1057,7 +1058,7 @@ UServer_Base::~UServer_Base()
       {
       delete (UTimeThread*)u_pthread_time;
 
-      (void) U_SYSCALL(pthread_rwlock_destroy, "%p", ULog::prwlock);
+      (void) pthread_rwlock_destroy(ULog::prwlock);
       }
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
@@ -2106,6 +2107,7 @@ void UServer_Base::init()
 
       u_need_root(false);
 
+#  ifndef __NetBSD__
       /**
        * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
        * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
@@ -2144,6 +2146,7 @@ void UServer_Base::init()
          sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn",           value);
          sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
          }
+#  endif
 
       U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                        sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
@@ -2331,9 +2334,6 @@ void UServer_Base::init()
 #ifdef DEBUG
    UTimer::insert(pstat = U_NEW(UTimeStat));
 #endif
-
-   if (timeoutMS > 0) UTimer::insert(ptime = U_NEW(UTimeoutConnection));
-
 #ifdef U_THROTTLING_SUPPORT
    if (db_throttling) UTimer::insert(throttling_time = U_NEW(UBandWidthThrottling)); // set up the throttles timer
 #endif
@@ -2360,6 +2360,10 @@ void UServer_Base::init()
          binsert = true; // NB: we ask to be notified for request of connection (=> accept)
 
          UNotifier::min_connection = 1;
+
+#     ifndef USE_LIBEVENT
+         if (timeoutMS > 0) ptime = U_NEW(UTimeoutConnection);
+#     endif
 
          pthis->UEventFd::op_mask |= EPOLLET;
 
@@ -2779,7 +2783,7 @@ loop:
             }
 #     endif
          }
-      else if (timeoutMS > 0) // NB: we check if the connection is idle...
+      else if (ptime) // NB: we check if the connection is idle...
          {
          U_INTERNAL_ASSERT_POINTER(ptime)
 
@@ -3011,12 +3015,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
          U_RETURN(U_NOTIFIER_OK);
          }
 
-      if (proc->child())
-         {
-         UNotifier::init(false);
-
-         if (timeoutMS > 0) ptime = U_NEW(UTimeoutConnection);
-         }
+      if (proc->child()) UNotifier::init(false);
       }
 #endif
 
@@ -3233,7 +3232,7 @@ void UServer_Base::runLoop(const char* user)
        * NB: Takes an integer value (seconds)
        */
 
-#  ifndef U_SERVER_CAPTIVE_PORTAL
+#  if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(__NetBSD__)
                                  socket->setTcpFastOpen();
                                  socket->setTcpDeferAccept();
       if (bssl == false)         socket->setBufferSND(min_size_for_sendfile);
@@ -3290,7 +3289,7 @@ void UServer_Base::runLoop(const char* user)
 
       UNotifier::pthread->start(50);
 
-      proc->_pid = UNotifier::pthread->sid;
+      proc->_pid = UNotifier::pthread->id;
 
       U_ASSERT(proc->parent())
       }
@@ -3320,7 +3319,17 @@ void UServer_Base::runLoop(const char* user)
       if (UNotifier::min_connection ||
           UNotifier::min_connection < UNotifier::num_connection) // NB: if we have some client we can't go directly on accept() and block on it...
          {
-         UNotifier::waitForEvent();
+         if (ptime == 0) UNotifier::waitForEvent();
+         else
+            {
+            UTimer::insert(ptime);
+
+            last_event = u_now->tv_sec;
+
+            UNotifier::waitForEvent();
+
+            if (UNotifier::nfd_ready > 0) UTimer::erase(ptime);
+            }
 
          if (UNotifier::empty() == false) continue;
 

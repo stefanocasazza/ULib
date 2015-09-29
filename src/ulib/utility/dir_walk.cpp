@@ -88,20 +88,6 @@ void UDirWalk::ctor(const UString* dir, const char* _filter, uint32_t _filter_le
       }
 }
 
-void UDirWalk::setFilter(const char* _filter, uint32_t _filter_len)
-{
-   U_TRACE(0, "UDirWalk::setFilter(%.*S,%u)", _filter_len, _filter, _filter_len)
-
-   filter_len = _filter_len;
-
-   if (_filter_len == 0) bfollowlinks = false;
-   else
-      {
-      filter       = _filter;
-      bfollowlinks = true;
-      }
-}
-
 bool UDirWalk::setDirectory(const UString& dir, const char* _filter, uint32_t _filter_len)
 {
    U_TRACE(0, "UDirWalk::setDirectory(%V,%.*S,%u)", dir.rep, _filter_len, _filter, _filter_len)

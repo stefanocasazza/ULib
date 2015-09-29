@@ -8,8 +8,7 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include -I..
 
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
-moduledir = $(libexecdir)/ulib
-
+moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES = server_plugin_pagespeed.la
 
 # Path to the root of the page speed build tree.

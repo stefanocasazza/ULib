@@ -4,8 +4,7 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
 EXTRA_DIST = CSP.fld CSP.dbg CSP.fcfg CSP.func CSP.h HCSP.err WinCrypt.h doc
 
-moduledir = $(libexecdir)/ulib
-
+moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES = HCSP.la
 
 HCSP_la_SOURCES  = HCSP.c

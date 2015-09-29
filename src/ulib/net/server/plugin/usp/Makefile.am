@@ -19,11 +19,11 @@ clean-local:
 
 ## usp section
 ## ----------------------------------------------------------------------------------------------------
-moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
 if !CROSS_COMPILING
 AM_CPPFLAGS = @USP_FLAGS@
+moduledir = @ULIB_MODULEDIR@/usp
 
 #SUFFIXES = .cpp .usp .lo .la
 

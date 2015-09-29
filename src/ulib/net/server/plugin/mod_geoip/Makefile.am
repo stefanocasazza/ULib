@@ -6,8 +6,7 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include -I..
 
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
-moduledir = $(libexecdir)/ulib
-
+moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES = server_plugin_geoip.la
 
 server_plugin_geoip_la_SOURCES = mod_geoip.cpp

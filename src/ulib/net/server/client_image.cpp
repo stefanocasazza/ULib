@@ -601,7 +601,7 @@ bool UClientImage_Base::startRequest()
    U_TRACE(0, "UClientImage_Base::startRequest()")
 
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-   long tmp = chronometer->restart();
+   long time_elapsed = chronometer->restart();
 
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_between_request = %ld time_run = %ld U_ClientImage_request_is_cached = %b csfd = %d",
                     U_ClientImage_pipeline,     time_between_request,      time_run,      U_ClientImage_request_is_cached,     csfd)
@@ -609,7 +609,7 @@ bool UClientImage_Base::startRequest()
    if (U_ClientImage_pipeline == false &&
        U_ClientImage_parallelization == 0)
       {
-      time_between_request = tmp;
+      time_between_request = time_elapsed;
 
 #  ifndef U_CACHE_REQUEST_DISABLE
       if (U_ClientImage_request_is_cached) U_RETURN(false);
@@ -618,7 +618,7 @@ bool UClientImage_Base::startRequest()
       if (UServer_Base::bssl) U_RETURN(false);
 #  endif
 
-      if ((time_run-time_between_request) > 10) U_RETURN(true);
+      if ((time_run - time_between_request) > 10L) U_RETURN(true);
       }
 #endif
 

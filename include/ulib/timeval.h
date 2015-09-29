@@ -21,7 +21,7 @@
 class U_EXPORT UTimeVal : public timeval {
 public:
 
-   // NB: l'oggetto puo' essere usato come (struct timeval) in quanto UMemoryError viene allocato dopo...
+   // NB: the object can be used as (struct timeval) because UMemoryError is allocated after...
 
    // Check for memory error
    U_MEMORY_TEST
@@ -362,6 +362,8 @@ public:
 
    // CHRONOMETER
 
+   static struct timeval time_stop;
+
    void start()
       {
       U_TRACE(1, "UTimeVal::start()")
@@ -369,10 +371,41 @@ public:
       (void) U_SYSCALL(gettimeofday, "%p,%p", this, 0);
       }
 
-   long stop();
-   long restart();
+   long stop()
+      {
+      U_TRACE(1, "UTimeVal::stop()")
 
-   double getTimeElapsed() const __pure;
+      (void) U_SYSCALL(gettimeofday, "%p,%p", &time_stop, 0);
+
+      long ms = (time_stop.tv_sec * 1000L + (time_stop.tv_usec / 1000L)) -
+                (          tv_sec * 1000L + (          tv_usec / 1000L));
+
+      U_RETURN(ms);
+      }
+
+   long restart()
+      {
+      U_TRACE(0, "UTimeVal::restart()")
+
+      long ms = stop();
+
+      tv_sec  = time_stop.tv_sec;
+      tv_usec = time_stop.tv_usec;
+
+      if (ms <= 0L) U_RETURN(0L);
+
+      U_RETURN(ms);
+      }
+
+   double getTimeElapsed() const __pure
+      {
+      U_TRACE(0, "UTimeVal::getTimeElapsed()")
+
+      double ms = ((time_stop.tv_sec * 1000000L + time_stop.tv_usec) -
+                   (          tv_sec * 1000000L +           tv_usec)) / 1000.;
+
+      U_RETURN(ms);
+      }
 
    // STREAM
 

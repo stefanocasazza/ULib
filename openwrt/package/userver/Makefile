@@ -69,8 +69,8 @@ define Package/userver/install
 				 $(PKG_INSTALL_DIR)/usr/bin/uclient \
 				 $(PKG_INSTALL_DIR)/usr/bin/userver_tcp \
 				 $(PKG_INSTALL_DIR)/usr/bin/userver_ssl $(1)/usr/sbin/
-	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/libulib* \
-				 $(PKG_INSTALL_DIR)/usr/lib/ulib/usp/wi_auth.so $(1)/usr/lib/
+	$(CP) -a  $(PKG_INSTALL_DIR)/$(PKG_INSTALL_DIR)/usr/lib/libulib* \
+				 $(PKG_INSTALL_DIR)/$(PKG_INSTALL_DIR)/usr/lib/usp/wi_auth.so $(1)/usr/lib/
 endef
 
 $(eval $(call BuildPackage,userver))

@@ -277,6 +277,7 @@ STRIP = @STRIP@
 ULIB = @ULIB@
 ULIBS = @ULIBS@
 ULIB_LIBS = @ULIB_LIBS@
+ULIB_MODULEDIR = @ULIB_MODULEDIR@
 ULIB_VERSION = @ULIB_VERSION@
 USP_FLAGS = @USP_FLAGS@
 USP_LDFLAGS = @USP_LDFLAGS@
@@ -355,8 +356,8 @@ ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la
 usp_translator_LDADD = $(ulib_la) @ULIB_LIBS@
 usp_translator_SOURCES = usp_translator.cpp
 usp_translator_LDFLAGS = $(PRG_LDFLAGS)
-moduledir = $(libexecdir)/ulib/usp
 @CROSS_COMPILING_FALSE@AM_CPPFLAGS = @USP_FLAGS@
+@CROSS_COMPILING_FALSE@moduledir = @ULIB_MODULEDIR@/usp
 all: all-am
 
 .SUFFIXES:

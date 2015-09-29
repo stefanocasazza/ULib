@@ -316,7 +316,9 @@ check_for_netcat() {
 			NC=nc
 			NC_ARG_LISTEN_PORT=""
 		fi
-	else
+	fi
+
+	if [ -z "$NC" ]; then
 		type netcat >/dev/null 2>&1
 
 		if [ $? -eq 0 ]; then

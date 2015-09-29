@@ -484,9 +484,9 @@ public:
       return _insertDataStorage(op);
       }
 
-   bool insertDataStorage(const UString& _key)
+   bool insertDataStorage(const UString& _key, int _flag = RDB_INSERT_WITH_PADDING)
       {
-      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::insertDataStorage(%V)", _key.rep)
+      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::insertDataStorage(%V,%d)", _key.rep, _flag)
 
       U_CHECK_MEMORY
 
@@ -494,7 +494,7 @@ public:
 
       pDataStorage->setKeyIdDataSession(_key);
 
-      return insertDataStorage(RDB_INSERT_WITH_PADDING);
+      return insertDataStorage(_flag);
       }
 
    void insertDataStorage(const char* s, uint32_t n)

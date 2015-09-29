@@ -128,7 +128,7 @@ protected:
    static uint32_t nwatches;
    static uint32_t max_nfd_ready;
 #endif
-#ifdef U_EPOLLET_POSTPONE_STRATEGY
+#if defined(U_EPOLLET_POSTPONE_STRATEGY) || defined(DEBUG)
    static bool bepollet;
    static uint32_t bepollet_threshold;
 #endif

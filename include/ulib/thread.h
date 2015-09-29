@@ -23,11 +23,13 @@
 #  undef signal
 #  define PTHREAD_CREATE_DETACHED 1
 #else
-#  ifdef HAVE_SYS_SYSCALL_H
-#     include <sys/syscall.h>
+#  ifdef __NetBSD__
+#     define U_SIGSTOP SIGSTOP
+#     define U_SIGCONT SIGCONT
+#  else
+#     define U_SIGSTOP (SIGRTMIN+5)
+#     define U_SIGCONT (SIGRTMIN+6)
 #  endif
-#  define U_SIGSTOP (SIGRTMIN+5)
-#  define U_SIGCONT (SIGRTMIN+6)
 #endif
 
 class UNotifier;
@@ -52,7 +54,7 @@ public:
       next         = 0;
       detachstate  = _detachstate;
       cancel       = 0;
-      sid          = 0;
+      id           = 0;
       tid          = 0;
 #  ifdef _MSWINDOWS_
       cancellation = 0;
@@ -78,8 +80,6 @@ public:
    // SERVICES
 
 #ifdef _MSWINDOWS_
-   static DWORD getTID();
-
    static void lock(CRITICAL_SECTION* pmutex)
       {
       U_TRACE(0, "UThread::lock(%p)", pmutex)
@@ -115,8 +115,6 @@ public:
       WakeAllConditionVariable(pcond); // signal to waiting thread...
       }
 #else
-   static pid_t getTID();
-
    static void lock(pthread_mutex_t* pmutex)
       {
       U_TRACE(1, "UThread::lock(%p)", pmutex)
@@ -152,21 +150,7 @@ public:
       (void) U_SYSCALL(pthread_cond_broadcast, "%p", pcond); // signal to waiting thread...
       }
 
-   static bool initRwLock(pthread_rwlock_t* prwlock)
-      {
-      U_TRACE(1, "UThread::initRwLock(%p)", prwlock)
-
-      pthread_rwlockattr_t rwlockattr;
-
-      if (U_SYSCALL(pthread_rwlockattr_init,       "%p",    &rwlockattr)                         != 0 ||
-          U_SYSCALL(pthread_rwlockattr_setpshared, "%p,%d", &rwlockattr, PTHREAD_PROCESS_SHARED) != 0 ||
-          U_SYSCALL(pthread_rwlock_init,           "%p,%p", prwlock, &rwlockattr)                != 0)
-         {
-         U_RETURN(false);
-         }
-
-      U_RETURN(true);
-      }
+   static bool initRwLock(pthread_rwlock_t* prwlock);
 
    // Inter Process Communication
 
@@ -354,7 +338,7 @@ public:
 protected:
    UThread* next;
    int detachstate, cancel;
-   pid_t sid;
+   pid_t id;
 #ifdef _MSWINDOWS_
    DWORD tid;
    HANDLE cancellation;
@@ -371,13 +355,13 @@ protected:
       {
       U_TRACE(0, "UThread::threadStart()")
 
-      U_INTERNAL_DUMP("tid = %p sid = %u", tid, sid)
+      U_INTERNAL_DUMP("tid = %p id = %u", tid, id)
 
       setCancel(cancelDeferred);
 
       run();
 
-      U_INTERNAL_DUMP("tid = %p sid = %u", tid, sid)
+      U_INTERNAL_DUMP("tid = %p id = %u", tid, id)
 
       if (tid) close();
       }
@@ -414,11 +398,7 @@ protected:
 
       U_INTERNAL_ASSERT_POINTER(th)
 
-#  if defined(ENABLE_THREAD) && defined(HAVE_SYS_SYSCALL_H)
-      th->sid = syscall(SYS_gettid);
-#  endif
-
-   // U_INTERNAL_ASSERT_EQUALS(pthread_self(), th->tid)
+      th->id = u_gettid();
 
       th->maskSignal();
 
@@ -431,7 +411,7 @@ protected:
 
       U_INTERNAL_ASSERT_POINTER(th)
 
-      U_INTERNAL_DUMP("th->tid = %p th->sid = %u", th->tid, th->sid)
+      U_INTERNAL_DUMP("th->tid = %p th->id = %u", th->tid, th->id)
 
       if (th->tid) th->close();
       }

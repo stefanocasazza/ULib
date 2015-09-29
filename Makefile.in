@@ -338,6 +338,7 @@ STRIP = @STRIP@
 ULIB = @ULIB@
 ULIBS = @ULIBS@
 ULIB_LIBS = @ULIB_LIBS@
+ULIB_MODULEDIR = @ULIB_MODULEDIR@
 ULIB_VERSION = @ULIB_VERSION@
 USP_FLAGS = @USP_FLAGS@
 USP_LDFLAGS = @USP_LDFLAGS@
@@ -416,6 +417,7 @@ EXTRA_DIST = cdb configure.help TODO LICENSE* README* *.spec* \
 	 			 doc/Doxyfile doc/readme.txt shtool *.awk .travis.yml autogen.sh
 
 MAINTAINERCLEANFILES = configure aclocal.m4 libtool Makefile.in Makefile INSTALL
+moduledir = @ULIB_MODULEDIR@
 SUBDIRS = include src/ulib $(am__append_1) $(am__append_2) tests
 DIST_SUBDIRS = include src/ulib src/ulib/net/server/plugin src/ulib/orm/driver m4 doc contrib examples tests
 aclocaldir = $(datadir)/aclocal

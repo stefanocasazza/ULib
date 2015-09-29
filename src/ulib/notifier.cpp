@@ -82,7 +82,7 @@ int                  UNotifier::fd_write_cnt;
 fd_set               UNotifier::fd_set_read;
 fd_set               UNotifier::fd_set_write;
 #endif
-#ifdef U_EPOLLET_POSTPONE_STRATEGY
+#if defined(U_EPOLLET_POSTPONE_STRATEGY) || defined(DEBUG)
 bool                 UNotifier::bepollet;
 uint32_t             UNotifier::bepollet_threshold = 10;
 #endif

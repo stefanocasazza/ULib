@@ -18,6 +18,10 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
+#ifdef __NetBSD__
+extern char** environ;
+#endif
+
 U_NO_EXPORT void UFileConfig::init()
 {
    U_TRACE(0, "UFileConfig::init()")

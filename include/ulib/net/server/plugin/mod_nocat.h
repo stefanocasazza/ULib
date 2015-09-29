@@ -24,11 +24,22 @@
 #include <ulib/container/hash_map.h>
 #include <ulib/net/server/server_plugin.h>
 
+enum LogoutType {
+      U_LOGOUT_NO_TRAFFIC           = 1,
+      U_LOGOUT_NO_ARP_CACHE         = 2,
+      U_LOGOUT_NO_ARP_REPLY         = 3,
+      U_LOGOUT_NO_MORE_TIME         = 4,
+      U_LOGOUT_NO_MORE_TRAFFIC      = 5,
+      U_LOGOUT_CHECK_FIREWALL       = 6, 
+      U_LOGOUT_REQUEST_FROM_AUTH    = 7,
+      U_LOGOUT_DIFFERENT_MAC_FOR_IP = 8 
+};
+
 class UDirWalk;
 class UIptAccount;
 class UNoCatPlugIn;
 
-// sizeof(UModNoCatPeer) 32bit == 212
+// sizeof(UModNoCatPeer) 32bit == 216
 
 class UModNoCatPeer : public UEventTime, UIPAddress {
 public:
@@ -46,11 +57,13 @@ public:
       {
       U_TRACE(0, "UModNoCatPeer::init()")
 
+      next = 0;
+
       ctime        = connected = expire = u_now->tv_sec;
       ctraffic     = time_no_traffic    = time_remain = logout = 0L;
       traffic_done = traffic_available  = traffic_remain = 0ULL;
 
-      (void) U_SYSCALL(memset,"%p,%d,%u", flag, 0, sizeof(flag));
+      (void) U_SYSCALL(memset, "%p,%d,%u", flag, 0, sizeof(flag));
       }
 
    enum Status { PEER_DENY, PEER_PERMIT };
@@ -81,13 +94,14 @@ public:
 
 protected:
    UCommand fw;
+   UModNoCatPeer* next;
    UString ip, mac, token, user, ifname, label, gateway;
-   long connected, expire, logout, ctime, time_no_traffic, time_remain;
    uint64_t traffic_done, traffic_available, traffic_remain;
+   long connected, expire, logout, ctime, time_no_traffic, time_remain;
    unsigned char flag[8];
    uint32_t ctraffic;
 
-   bool checkPeerInfo(bool btraffic);
+   int checkPeerInfo(bool btraffic);
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS
@@ -216,10 +230,12 @@ protected:
    static UModNoCatPeer* peer;
    static bool flag_check_system;
    static uint64_t traffic_available;
-   static UModNoCatPeer* peers_preallocate;
    static int fd_stderr, check_type, next_event_time;
    static long last_request_firewall, last_request_check;
    static uint32_t total_connections, nfds, num_radio, num_peers_preallocate, time_available, check_expire;
+
+   static UModNoCatPeer* peers_delete; // delete list 
+   static UModNoCatPeer* peers_preallocate;
 
    // VARIE
 
@@ -229,16 +245,16 @@ protected:
    static void checkOldPeer();
    static void creatNewPeer();
    static bool checkFirewall();
-   static void deny(bool disconnected);
    static bool preallocatePeersFault();
-   static void addPeerInfo(time_t logout);
    static bool getPeer(uint32_t i) __pure;
+   static void addPeerInfo(int disconnected);
    static void uploadFileToPortal(UFile& file);
    static bool creatNewPeer(uint32_t index_AUTH);
    static void sendInfoData(uint32_t index_AUTH);
    static bool getPeerFromMAC(const UString& mac);
    static bool checkAuthMessage(const UString& msg);
    static void setStatusContent(const UString& label);
+   static void deny(int disconnected, bool bcheck_expire);
    static void notifyAuthOfUsersInfo(uint32_t index_AUTH);
    static bool getPeerStatus(UStringRep* key, void* value);
    static bool checkPeerInfo(UStringRep* key, void* value);
@@ -252,18 +268,6 @@ protected:
    static uint32_t getIndexAUTH(const char* ip_address) __pure;
    static UString  getIPAddress(const char* ptr, uint32_t len);
    static UString  getSignedData(const char* ptr, uint32_t len);
-
-   static void remove(bool disconnected)
-      {
-      U_TRACE(0, "UNoCatPlugIn::remove(%b)", disconnected)
-
-      deny(disconnected);
-
-      if (check_expire) UTimer::erase(peer);
-
-      if (num_peers_preallocate == 0) delete peer;
-                                             peer = 0;
-      }
 
    static void preallocatePeers()
       {

@@ -12,21 +12,24 @@ static void check(const UString& dati, const UString& file)
 {
    U_TRACE(5,"check(%p,%p)", &dati, &file)
 
-   uint32_t sz = dati.size() * 4;
+   if (u_isUrlEncodeNeeded(U_STRING_TO_PARAM(dati)))
+      {
+      uint32_t sz = dati.size() * 4;
 
-   UString buffer1(sz), buffer2(sz);
+      UString buffer1(sz), buffer2(sz);
 
-   Url::encode(dati,    buffer1);
-   Url::decode(buffer1, buffer2);
+      Url::encode(dati,    buffer1);
+      Url::decode(buffer1, buffer2);
 
-   U_INTERNAL_DUMP("buffer1 = %#.*S", U_STRING_TO_TRACE(buffer1))
-   U_INTERNAL_DUMP("dati    = %#.*S", U_STRING_TO_TRACE(dati))
-   U_INTERNAL_DUMP("buffer2 = %#.*S", U_STRING_TO_TRACE(buffer2))
+      U_INTERNAL_DUMP("buffer1 = %#.*S", U_STRING_TO_TRACE(buffer1))
+      U_INTERNAL_DUMP("dati    = %#.*S", U_STRING_TO_TRACE(dati))
+      U_INTERNAL_DUMP("buffer2 = %#.*S", U_STRING_TO_TRACE(buffer2))
 
-// (void) UFile::writeToTmp(U_STRING_TO_PARAM(buffer1), false, "url.encode", 0);
-// (void) UFile::writeToTmp(U_STRING_TO_PARAM(buffer2), false, "url.decode", 0);
- 
-   U_ASSERT( dati == buffer2 )
+   // (void) UFile::writeToTmp(U_STRING_TO_PARAM(buffer1), false, "url.encode", 0);
+   // (void) UFile::writeToTmp(U_STRING_TO_PARAM(buffer2), false, "url.decode", 0);
+
+      U_ASSERT( dati == buffer2 )
+      }
 }
 
 int U_EXPORT main(int argc, char* argv[])

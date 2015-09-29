@@ -1386,7 +1386,7 @@ next:
    return 1;
 }
 
-#ifndef _MSWINDOWS_
+#if !defined(_MSWINDOWS_) && !defined(__NetBSD__)
 static const char* tab_color[] = { U_RESET_STR,
    U_BLACK_STR,       U_RED_STR,           U_GREEN_STR,       U_YELLOW_STR,
    U_BLUE_STR,        U_MAGENTA_STR,       U_CYAN_STR,        U_WHITE_STR,
@@ -2190,7 +2190,7 @@ case_V: /* extension: print ustring */
 case_W: /* extension: print COLOR (ANSI ESCAPE STR) */
       n = VA_ARG(int);
 
-#  ifndef _MSWINDOWS_
+#  if !defined(_MSWINDOWS_) && !defined(__NetBSD__)
       if (u_is_tty)
          {
          U_INTERNAL_ERROR(n <= BRIGHTWHITE, "INVALID COLOR(%d) at u__vsnprintf() - CHECK THE PARAMETERS - format = \"%s\"", n, format_save);

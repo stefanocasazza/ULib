@@ -303,6 +303,7 @@ STRIP = @STRIP@
 ULIB = @ULIB@
 ULIBS = @ULIBS@
 ULIB_LIBS = @ULIB_LIBS@
+ULIB_MODULEDIR = @ULIB_MODULEDIR@
 ULIB_VERSION = @ULIB_VERSION@
 USP_FLAGS = @USP_FLAGS@
 USP_LDFLAGS = @USP_LDFLAGS@
@@ -383,7 +384,7 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include -I.. \
 	-I@PAGESPEED_ROOT_DIR@/third_party/protobuf2 \
 	-I@PAGESPEED_ROOT_DIR@/third_party/protobuf2/src/src
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
-moduledir = $(libexecdir)/ulib
+moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES = server_plugin_pagespeed.la
 
 # Path to the root of the page speed build tree.

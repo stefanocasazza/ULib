@@ -637,6 +637,7 @@ ac_func_list=
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+ULIB_MODULEDIR
 RPM_CONFIGURE
 USP_LDFLAGS
 USP_FLAGS
@@ -5781,24 +5782,24 @@ $as_echo_n "checking which architecture the target is... " >&6; }
 
 LINUX_ARCH=
 case $target in
-	x86_64)			LINUX_ARCH=x86_64 ;;
-	i*86)				LINUX_ARCH=i386 ;;
-	arm*)				LINUX_ARCH=arm
+	x86_64)				LINUX_ARCH=x86_64 ;;
+	i*86)					LINUX_ARCH=i386 ;;
+	sh*)					LINUX_ARCH=sh ;;
+	mips*)				LINUX_ARCH=mips ;;
+	or1k*)				LINUX_ARCH=openrisc ;;
+	microblaze)			LINUX_ARCH=microblaze ;;
+	powerpc*|ppc*)		LINUX_ARCH=powerpc ;;
+	*-rumprun-netbsd) LINUX_ARCH=NetBSD
+							enable_stdcpp="yes" ;;
+	arm*)					LINUX_ARCH=arm
 
 $as_echo "#define HAVE_NO_UNALIGNED_ACCESSES 1" >>confdefs.h
-
-	;;
-	aarch64*)		LINUX_ARCH=arm64
+ ;;
+	aarch64*)			LINUX_ARCH=arm64
 
 $as_echo "#define HAVE_NO_UNALIGNED_ACCESSES 1" >>confdefs.h
-
-	;;
-	sh*)				LINUX_ARCH=sh ;;
-	mips*)			LINUX_ARCH=mips ;;
-	or1k*)			LINUX_ARCH=openrisc ;;
-	microblaze)		LINUX_ARCH=microblaze ;;
-	powerpc*|ppc*) LINUX_ARCH=powerpc ;;
-	*)					LINUX_ARCH=unknown ;;
+ ;;
+	*)						LINUX_ARCH=unknown ;;
 esac
 
 #AC_SUBST(LINUX_ARCH)
@@ -5817,9 +5818,10 @@ $as_echo_n "checking which operating system the target is... " >&6; }
 OPERATINGSYSTEM=
 TARGET_LIBC=
 case $target in
-	*-*-linux-*) OPERATINGSYSTEM=linux ;;
-	*-none-*)	 OPERATINGSYSTEM=baremetal ;;
-	*)				 OPERATINGSYSTEM=unknown ;;
+	*-*-linux-*)		OPERATINGSYSTEM=linux ;;
+	*-rumprun-netbsd) OPERATINGSYSTEM=NetBSD ;;
+	*-none-*)			OPERATINGSYSTEM=baremetal ;;
+	*)						OPERATINGSYSTEM=unknown ;;
 esac
 
 #AC_SUBST(OPERATINGSYSTEM)
@@ -5838,6 +5840,11 @@ if test "x$OPERATINGSYSTEM" = xlinux ; then
 		*-*-linux-gnu*)	 TARGET_LIBC=glibc ;;
 		*-*-linux-musl*)	 TARGET_LIBC=musl ;;
 		*-*-linux-uclibc*) TARGET_LIBC=uclibc ;;
+		*)						 TARGET_LIBC=unknown ;;
+	esac
+else
+	case $target in
+		*-rumprun-netbsd)  TARGET_LIBC=libc ;;
 		*)						 TARGET_LIBC=unknown ;;
 	esac
 fi
@@ -7399,6 +7406,12 @@ $as_echo_n "checking for the kernel version... " >&6; }
 		kernel=`uname -r`
 
 		case "$kernel" in
+			5.*)
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 5 family ($kernel)" >&5
+$as_echo "5 family ($kernel)" >&6; }
+#				AC_DEFINE([KERNEL_5], 1, [Define to 1 if you're using Linux 5.x])
+			;;
+
 			4.*)
 				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: 4 family ($kernel)" >&5
 $as_echo "4 family ($kernel)" >&6; }
@@ -7695,6 +7708,46 @@ fi
 		MODULE_FLAGS="-module -shared -no-undefined"
 	;;
 
+	*netbsd)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ok ($target_os)" >&5
+$as_echo "ok ($target_os)" >&6; }
+
+		CPPFLAGS="$CPPFLAGS -D__NetBSD__"
+
+		 if false; then
+  LINUX_TRUE=
+  LINUX_FALSE='#'
+else
+  LINUX_TRUE='#'
+  LINUX_FALSE=
+fi
+
+		 if false; then
+  MINGW_TRUE=
+  MINGW_FALSE='#'
+else
+  MINGW_TRUE='#'
+  MINGW_FALSE=
+fi
+
+		 if false; then
+  CYGWIN_TRUE=
+  CYGWIN_FALSE='#'
+else
+  CYGWIN_TRUE='#'
+  CYGWIN_FALSE=
+fi
+
+		 if false; then
+  SOLARIS_TRUE=
+  SOLARIS_FALSE='#'
+else
+  SOLARIS_TRUE='#'
+  SOLARIS_FALSE=
+fi
+
+   ;;
+
 	*solaris*)
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ok ($target_os)" >&5
 $as_echo "ok ($target_os)" >&6; }
@@ -7733,44 +7786,10 @@ fi
 
 	;;
 
-	osf*)
-		MODULE_FLAGS="-module -shared -no-undefined"
-
-		 if false; then
-  LINUX_TRUE=
-  LINUX_FALSE='#'
-else
-  LINUX_TRUE='#'
-  LINUX_FALSE=
-fi
-
-		 if false; then
-  MINGW_TRUE=
-  MINGW_FALSE='#'
-else
-  MINGW_TRUE='#'
-  MINGW_FALSE=
-fi
-
-		 if false; then
-  CYGWIN_TRUE=
-  CYGWIN_FALSE='#'
-else
-  CYGWIN_TRUE='#'
-  CYGWIN_FALSE=
-fi
-
-		 if false; then
-  SOLARIS_TRUE=
-  SOLARIS_FALSE='#'
-else
-  SOLARIS_TRUE='#'
-  SOLARIS_FALSE=
-fi
-
-   ;;
-
 	darwin*)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: maybe ($target_os)" >&5
+$as_echo "maybe ($target_os)" >&6; }
+
 		CPPFLAGS="$CPPFLAGS -D__OSX__ -D__APPLE__"
 		MODULE_FLAGS="-dynamic -bundle -undefined suppress -flat_namespace -read_only_relocs suppress"
 
@@ -7808,7 +7827,50 @@ fi
 
    ;;
 
+	osf*)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: maybe ($target_os)" >&5
+$as_echo "maybe ($target_os)" >&6; }
+
+		MODULE_FLAGS="-module -shared -no-undefined"
+
+		 if false; then
+  LINUX_TRUE=
+  LINUX_FALSE='#'
+else
+  LINUX_TRUE='#'
+  LINUX_FALSE=
+fi
+
+		 if false; then
+  MINGW_TRUE=
+  MINGW_FALSE='#'
+else
+  MINGW_TRUE='#'
+  MINGW_FALSE=
+fi
+
+		 if false; then
+  CYGWIN_TRUE=
+  CYGWIN_FALSE='#'
+else
+  CYGWIN_TRUE='#'
+  CYGWIN_FALSE=
+fi
+
+		 if false; then
+  SOLARIS_TRUE=
+  SOLARIS_FALSE='#'
+else
+  SOLARIS_TRUE='#'
+  SOLARIS_FALSE=
+fi
+
+   ;;
+
    *minix*)
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: maybe ($target_os)" >&5
+$as_echo "maybe ($target_os)" >&6; }
+
 		enable_stdcpp="no"
 
 		 if false; then
@@ -18697,7 +18759,9 @@ fi
 
 
 if test "$enable_static" = "yes" && test "$enable_shared" = "no"; then
-	enable_stdcpp="no"
+	if test -z "$enable_stdcpp"; then
+		enable_stdcpp="no"
+	fi
 	 if true; then
   STATIC_ONLY_TRUE=
   STATIC_ONLY_FALSE='#'
@@ -24218,7 +24282,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libzdir="$dir"
 			if test -f "$dir/include/zlib.h"; then
 				found_libz="yes";
@@ -24244,7 +24308,7 @@ $as_echo "#define USE_LIBZ 1" >>confdefs.h
 				libz_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -lz";
-			if test $libzdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libzdir != "${CROSS_ENVIRONMENT}/" && $libzdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libzdir/include"
 				LDFLAGS="$LDFLAGS -L$libzdir/lib -Wl,-R$libzdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzdir/lib";
@@ -24290,7 +24354,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libtdbdir="$dir"
 			if test -f "$dir/include/tdb.h"; then
 				found_libtdb="yes";
@@ -24316,7 +24380,7 @@ $as_echo "#define USE_LIBTDB 1" >>confdefs.h
 				libtdb_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -ltdb";
-			if test $libtdbdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libtdbdir != "${CROSS_ENVIRONMENT}/" && $libtdbdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libtdbdir/include"
 				LDFLAGS="$LDFLAGS -L$libtdbdir/lib -Wl,-R$libtdbdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libtdbdir/lib";
@@ -24347,7 +24411,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libzopflidir="$dir"
 			if test -f "$dir/include/zopfli.h"; then
 				found_libzopfli="yes";
@@ -24373,7 +24437,7 @@ $as_echo "#define USE_LIBZOPFLI 1" >>confdefs.h
 				libzopfli_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -lzopfli";
-			if test $libzopflidir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libzopflidir != "${CROSS_ENVIRONMENT}/" && $libzopflidir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libzopflidir/include"
 				LDFLAGS="$LDFLAGS -L$libzopflidir/lib -Wl,-R$libzopflidir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzopflidir/lib";
@@ -24403,7 +24467,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libuuiddir="$dir";
 			if test -f "$dir/include/uuid/uuid.h"; then
 				found_libuuid="yes";
@@ -24429,7 +24493,7 @@ $as_echo "#define USE_LIBUUID 1" >>confdefs.h
 				libuuid_version="unknown"
 			fi
          ULIB_LIBS="-luuid $ULIB_LIBS";
-			if test $libuuiddir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libuuiddir != "${CROSS_ENVIRONMENT}/" && $libuuiddir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libuuiddir/include";
 				LDFLAGS="$LDFLAGS -L$libuuiddir/lib -Wl,-R$libuuiddir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libuuiddir/lib";
@@ -24459,7 +24523,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			magicdir="$dir";
 			if test -f "$dir/include/magic.h"; then
 				found_magic="yes";
@@ -24485,7 +24549,7 @@ $as_echo "#define USE_LIBMAGIC 1" >>confdefs.h
 				libmagic_version="unknown"
 			fi
          ULIB_LIBS="-lmagic $ULIB_LIBS";
-			if test $magicdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $magicdir != "${CROSS_ENVIRONMENT}/" && $magicdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$magicdir/include";
 				LDFLAGS="$LDFLAGS -L$magicdir/lib -Wl,-R$magicdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$magicdir/lib";
@@ -24515,7 +24579,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			ssldir="$dir";
 			if test -f "$dir/include/openssl/ssl.h"; then
 				found_ssl="yes";
@@ -24562,7 +24626,7 @@ $as_echo "#define HAVE_SSL_TS 1" >>confdefs.h
 			if test -z "${ssl_version}"; then
 				ssl_version="unknown";
 			fi
-			if test $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $ssldir != "${CROSS_ENVIRONMENT}/" && $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
 				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ssldir/lib";
@@ -24592,7 +24656,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			pcredir="$dir"
 			if test -f "$dir/include/pcre.h"; then
 				found_pcre="yes";
@@ -24618,7 +24682,7 @@ $as_echo "#define USE_LIBPCRE 1" >>confdefs.h
 				pcre_version="unknown"
 			fi
 			ULIB_LIBS="-lpcre $ULIB_LIBS";
-			if test $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $pcredir != "${CROSS_ENVIRONMENT}/" && $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$pcredir/include"
 				LDFLAGS="$LDFLAGS -L$pcredir/lib -Wl,-R$pcredir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$pcredir/lib";
@@ -24648,7 +24712,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			expatdir="$dir"
 			if test -f "$dir/include/expat.h"; then
 				found_expat="yes";
@@ -24677,7 +24741,7 @@ $as_echo "#define USE_LIBEXPAT 1" >>confdefs.h
 				expat_version="unknown"
 			fi
 			ULIB_LIBS="-lexpat $ULIB_LIBS";
-			if test $expatdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $expatdir != "${CROSS_ENVIRONMENT}/" && $expatdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$expatdir/include"
 				LDFLAGS="$LDFLAGS -L$expatdir/lib -Wl,-R$expatdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$expatdir/lib";
@@ -24709,7 +24773,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			caresdir="$dir"
 			if test -f "$dir/include/ares.h"; then
 				found_cares="yes";
@@ -24735,7 +24799,7 @@ $as_echo "#define USE_C_ARES 1" >>confdefs.h
 				cares_version="unknown"
 			fi
          ULIB_LIBS="-lcares $ULIB_LIBS";
-			if test $caresdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $caresdir != "${CROSS_ENVIRONMENT}/" && $caresdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$caresdir/include"
 				LDFLAGS="$LDFLAGS -L$caresdir/lib -Wl,-R$caresdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$caresdir/lib";
@@ -24760,7 +24824,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			sshdir="$dir";
 			if test -f "$dir/include/libssh/libssh.h"; then
 				found_ssh="yes";
@@ -24780,7 +24844,7 @@ $as_echo "#define USE_LIBSSH 1" >>confdefs.h
 				libssh_version="unknown"
 			fi
 			ULIB_LIBS="-lssh $ULIB_LIBS";
-			if test $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $sshdir != "${CROSS_ENVIRONMENT}/" && $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
 				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
@@ -24805,7 +24869,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			curldir="$dir";
 			if test -f "$dir/include/curl/curl.h"; then
 				found_curl="yes";
@@ -24825,7 +24889,7 @@ $as_echo "#define USE_LIBCURL 1" >>confdefs.h
 				libcurl_version="unknown"
 			fi
 			ULIB_LIBS="-lcurl $ULIB_LIBS";
-			if test $curldir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $curldir != "${CROSS_ENVIRONMENT}/" && $curldir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$curldir/include";
 				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$curldir/lib";
@@ -24850,7 +24914,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			ldapdir="$dir"
 			if test -f "$dir/include/ldap.h"; then
 				found_ldap="yes"
@@ -24891,7 +24955,7 @@ $as_echo "#define USE_LIBLDAP 1" >>confdefs.h
 				ldap_version="unknown"
 			fi
 			ULIB_LIBS="$LDAP_LIBS $ULIB_LIBS";
-			if test $ldapdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $ldapdir != "${CROSS_ENVIRONMENT}/" && $ldapdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$LDAP_INCS"
 				LDFLAGS="$LDFLAGS -L$LDAP_LDFLAGS -Wl,-R$LDAP_LDFLAGS"
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ldapdir/lib";
@@ -24916,7 +24980,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			dbidir="$dir";
 			if test -f "$dir/include/dbi/dbi.h"; then
 				found_dbi="yes";
@@ -24936,7 +25000,7 @@ $as_echo "#define USE_LIBDBI 1" >>confdefs.h
 				libdbi_version="unknown"
 			fi
 			ULIB_LIBS="-ldbi $ULIB_LIBS";
-			if test $dbidir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $dbidir != "${CROSS_ENVIRONMENT}/" && $dbidir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$dbidir/include";
 				LDFLAGS="$LDFLAGS -L$dbidir/lib -Wl,-R$dbidir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$dbidir/lib";
@@ -24966,7 +25030,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libeventdir="$dir";
 			if test -f "$dir/include/event.h"; then
 				found_libevent="yes";
@@ -24986,7 +25050,7 @@ $as_echo "#define USE_LIBEVENT 1" >>confdefs.h
 				libevent_version="unknown"
 			fi
 			ULIB_LIBS="-levent $ULIB_LIBS";
-			if test $libeventdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libeventdir != "${CROSS_ENVIRONMENT}/" && $libeventdir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libeventdir/include";
 				LDFLAGS="$LDFLAGS -L$libeventdir/lib -Wl,-R$libeventdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libeventdir/lib";
@@ -25011,7 +25075,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			libxml2dir="$dir";
 			if test -f "$dir/include/libxml2/libxml/valid.h"; then
 				found_libxml2="yes";
@@ -25031,7 +25095,7 @@ $as_echo "#define USE_LIBXML2 1" >>confdefs.h
 				libxml2_version="unknown"
 			fi
 			ULIB_LIBS="-lxml2 $ULIB_LIBS";
-			if test $libxml2dir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libxml2dir != "${CROSS_ENVIRONMENT}/" && $libxml2dir != "${CROSS_ENVIRONMENT}/usr"; then
 				CPPFLAGS="$CPPFLAGS -I$libxml2dir/include/libxml2";
 				LDFLAGS="$LDFLAGS -L$libxml2dir/lib -Wl,-R$libxml2dir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libxml2dir/lib";
@@ -25058,7 +25122,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			page_speeddir="$dir";
 			if test -d $dir/page-speed-*; then
 				found_page_speed="yes";
@@ -25096,7 +25160,7 @@ $as_echo "no" >&6; }
 	else
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
 			v8dir="$dir";
 			if test -f "$dir/include/v8.h"; then
 				found_v8="yes";
@@ -28200,8 +28264,10 @@ if test "${enable_static_servlet+set}" = set; then :
 fi
 
 
-	if test -n "$use_static_servlet" ; then
-
+	if test -z "$use_static_servlet" ; then
+		echo >> src/ulib/net/server/plugin/usp/loader.autoconf.ext
+		echo >> src/ulib/net/server/plugin/usp/loader.autoconf.cpp
+	else
 		add_calls3=""
 		add_calls4=""
 		add_calls5=""
@@ -29086,6 +29152,9 @@ fi
 if test -n "$rlib"; then
    ULIB_LIBS="$ULIB_LIBS $rlib";
 fi
+if test "$USE_LIBSSL" = "yes" && test "$target_os" = "netbsd"; then
+   ULIB_LIBS="$ULIB_LIBS -ldes";
+fi
 
 ULIB_LIBS="$ULIB_LIBS $ULIB_LIBC"
 
@@ -29281,7 +29350,7 @@ cat >>confdefs.h <<_ACEOF
 #define LD_VERSION "${ld_version}"
 _ACEOF
 
-	for dir in ${CROSS_ENVIRONMENT}/usr/lib ${CROSS_ENVIRONMENT}/usr/local/lib; do
+	for dir in ${CROSS_ENVIRONMENT}/lib ${CROSS_ENVIRONMENT}/usr/lib ${CROSS_ENVIRONMENT}/usr/local/lib; do
 		if test -f "$dir/libstdc++.so"; then
 			stdgpp_dir="$dir"
 		fi
@@ -29328,33 +29397,48 @@ _ACEOF
 
 
 
+# if it's set to NONE, it means it hasn't been given on the command line
 if test "$prefix" = "NONE"; then
-	prefixdir="$ac_default_prefix"
+	u_prefixdir="$ac_default_prefix"
 else
-   prefixdir="$prefix"
+   u_prefixdir="$prefix"
 fi
-
-pkglibdir="$prefixdir/lib"
-sysconfdir="$prefixdir/etc/ulib"
-pkglibexecdir="$prefixdir/libexec/ulib"
+if test "$libdir" = "NONE"; then
+	libdir="$u_prefixdir/lib"
+fi
+if test "$libexecdir" = "NONE"; then
+   u_libexecdir="$u_prefixdir/libexec/ulib"
+else
+	exec_prefix="$u_prefixdir"
+   eval u_libexecdir=\""$libexecdir\""
+fi
+if test "$sysconfdir" = "NONE"; then
+   u_sysconfdir="$u_prefixdir/etc/ulib"
+else
+	prefix="$u_prefixdir"
+   eval u_sysconfdir=\""$sysconfdir\""
+fi
 
 # Prefix dir
 
 cat >>confdefs.h <<_ACEOF
-#define U_PREFIXDIR "$prefixdir"
+#define U_PREFIXDIR "$u_prefixdir"
 _ACEOF
 
-# Plugin dir
+# Plugin dir - program executables [EPREFIX/libexec]
 
 cat >>confdefs.h <<_ACEOF
-#define U_LIBEXECDIR "$pkglibexecdir"
+#define U_LIBEXECDIR "$u_libexecdir"
 _ACEOF
 
-# Config dir
+# Config dir - read-only single-machine data [PREFIX/etc]
 
 cat >>confdefs.h <<_ACEOF
-#define U_SYSCONFDIR "$sysconfdir"
+#define U_SYSCONFDIR "$u_sysconfdir"
 _ACEOF
+
+
+ULIB_MODULEDIR="$u_libexecdir"
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: Configured to build src/ulib/lib${ULIB}:
@@ -29363,9 +29447,9 @@ _ACEOF
             Build ULib: Shared=${enable_shared}, Static=${enable_static}
 
             Host setup: ${host}
-        Install prefix: ${prefixdir}
-        Install plugin: ${pkglibexecdir}
-    Configuration data: ${sysconfdir}
+        Install prefix: ${u_prefixdir}
+        Install plugin: ${u_libexecdir}
+    Configuration data: ${u_sysconfdir}
 
       Operating System: $os_version
           C++ Compiler: ${CXX} ( $gcc_version )
@@ -29423,9 +29507,9 @@ $as_echo "$as_me: Configured to build src/ulib/lib${ULIB}:
             Build ULib: Shared=${enable_shared}, Static=${enable_static}
 
             Host setup: ${host}
-        Install prefix: ${prefixdir}
-        Install plugin: ${pkglibexecdir}
-    Configuration data: ${sysconfdir}
+        Install prefix: ${u_prefixdir}
+        Install plugin: ${u_libexecdir}
+    Configuration data: ${u_sysconfdir}
 
       Operating System: $os_version
           C++ Compiler: ${CXX} ( $gcc_version )
@@ -29634,6 +29718,22 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${am__fastdepCC_TRUE}" && test -z "${am__fastdepCC_FALSE}"; then
   as_fn_error $? "conditional \"am__fastdepCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${LINUX_TRUE}" && test -z "${LINUX_FALSE}"; then
+  as_fn_error $? "conditional \"LINUX\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MINGW_TRUE}" && test -z "${MINGW_FALSE}"; then
+  as_fn_error $? "conditional \"MINGW\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${CYGWIN_TRUE}" && test -z "${CYGWIN_FALSE}"; then
+  as_fn_error $? "conditional \"CYGWIN\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SOLARIS_TRUE}" && test -z "${SOLARIS_FALSE}"; then
+  as_fn_error $? "conditional \"SOLARIS\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${LINUX_TRUE}" && test -z "${LINUX_FALSE}"; then

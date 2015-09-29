@@ -6,6 +6,7 @@
 #include <ulib/date.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/plugin/mod_ssi.h>
+#include <ulib/net/server/plugin/mod_nocat.h>
 #include <ulib/net/server/plugin/mod_proxy_service.h>
 
 #ifdef USE_LIBSSL
@@ -842,8 +843,6 @@ public:
       _user.get(is);
       }
 
-   UString getLabelAP() { return nodog_rec->getLabelAP(_index_access_point); }
-
    UString getAP(UString& label)
       {
       U_TRACE(5, "WiAuthUser::getAP(%V)", label.rep)
@@ -860,6 +859,9 @@ public:
 
       U_RETURN_STRING(x);
       }
+
+   UString getAP()      { UString label; return getAP(label); }
+   UString getLabelAP() { return nodog_rec->getLabelAP(_index_access_point); }
 
    static bool isConnected(UStringRep* data)
       {
@@ -935,16 +937,16 @@ public:
             }
          }
 
-      const char* write_to_log;
+      const char* write_to_log = 0;
 
       char c = (logout ? logout.first_char() : '0');
 
-      if (c == '0') // NB: _logout == 0 mean NOT logout (only info)...
+      if (c == '0') // NB: logout == 0 mean NOT logout (only info)...
          {
          write_to_log = 0;
 
          if (traffic == 0 &&
-             time_connected > (30 * 60)) // 30m
+             time_connected > (30L * 60L)) // 30m (MAX_TIME_NO_TRAFFIC for FLAT policy)
             {
             ask_logout = true;
 
@@ -956,8 +958,30 @@ public:
          }
       else
          {
-         write_to_log = (c == '-' || traffic == 0 ? "EXIT" : "LOGOUT"); // LOGOUT (-1... => implicito)
+         if (c != '-') write_to_log = "EXIT"; // old compatibility
+         else
+            {
+            connected = false;
 
+            if (logout.size() > 2) write_to_log = "EXIT"; // old compatibility
+            else
+               {
+               U_ASSERT_EQUALS(logout.size(), 2)
+
+               switch (logout.c_char(1) - '0')
+                  {
+                  case U_LOGOUT_NO_TRAFFIC:           write_to_log = "EXIT_NO_TRAFFIC";           break;
+                  case U_LOGOUT_NO_ARP_CACHE:         write_to_log = "EXIT_NO_ARP_CACHE";         break;
+                  case U_LOGOUT_NO_ARP_REPLY:         write_to_log = "EXIT_NO_ARP_REPLY";         break;
+                  case U_LOGOUT_NO_MORE_TIME:         write_to_log = "EXIT_NO_MORE_TIME";         break;
+                  case U_LOGOUT_NO_MORE_TRAFFIC:      write_to_log = "EXIT_NO_MORE_TRAFFIC";      break;
+                  case U_LOGOUT_CHECK_FIREWALL:       write_to_log = "EXIT_CHECK_FIREWALL";       break;
+                  case U_LOGOUT_REQUEST_FROM_AUTH:    write_to_log = "EXIT_REQUEST_FROM_AUTH";    break;
+                  case U_LOGOUT_DIFFERENT_MAC_FOR_IP: write_to_log = "EXIT_DIFFERENT_MAC_FOR_IP"; break;
+                  }
+               }
+            }
+            
          U_INTERNAL_DUMP("_auth_domain = %V", _auth_domain.rep)
 
          if (_auth_domain == *account_auth)
@@ -994,21 +1018,6 @@ public:
                   }
                }
             }
-
-         long logout_time = (c == '-' ? logout.substr(1) : logout).strtol();
-
-         if (logout_time == 1 ||
-             logout_time >= last_modified)
-            {
-            connected = false;
-            }
-         /*
-         else
-            {
-            U_LOGGER("*** updateCounter() UID(%v) IP(%v) MAC(%v) AP(%v) connected=%b LOGOUT TIME EXPIRED (%#8D < %#8D) ***",
-                                          uid->rep, _ip.rep, _mac.rep, ap->rep, connected, logout_time, last_modified);
-            }
-         */
          }
 next:
       last_modified = u_now->tv_sec;
@@ -1311,20 +1320,17 @@ next:
 
       U_INTERNAL_ASSERT_POINTER(op)
 
-      UString label,
-              x = getPolicy(),
-              y = getAP(label);
-
       getCounter();
 
-      /* Example
-      ------------------------------------------------------------------------------------------------------------------------------------------------------ 
-      2012/08/08 14:56:00 op: PASS_AUTH, uid: 33437934, ap: 00@10.8.1.2, ip: 172.16.1.172, mac: 00:14:a5:6e:9c:cb, timeout: 233, traffic: 342, policy: DAILY
-      ------------------------------------------------------------------------------------------------------------------------------------------------------ 
-      */
+      /**
+       * Example
+       * ------------------------------------------------------------------------------------------------------------------------------------------------------ 
+       * 2012/08/08 14:56:00 op: PASS_AUTH, uid: 33437934, ap: 00@10.8.1.2, ip: 172.16.1.172, mac: 00:14:a5:6e:9c:cb, timeout: 233, traffic: 342, policy: DAILY
+       * ------------------------------------------------------------------------------------------------------------------------------------------------------ 
+       */
 
       ULog::log(file_LOG->getFd(), "op: %s, uid: %v, ap: %v, ip: %v, mac: %v, timeout: %v, traffic: %v, policy: %v",
-                                    op,    uid->rep, y.rep, _ip.rep, _mac.rep, time_counter->rep, traffic_counter->rep, x.rep);
+                                    op,     uid->rep, getAP().rep, _ip.rep, _mac.rep, time_counter->rep, traffic_counter->rep, getPolicy().rep);
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -4209,7 +4215,11 @@ next:
 
       (void) UHTTP::db_session->putDataStorage();
 
-      if (write_to_log) user_rec->writeToLOG(write_to_log);
+      if (write_to_log &&
+          user_rec->setNodogReference())
+         {
+         user_rec->writeToLOG(write_to_log);
+         }
 
       if (ask_logout &&
           user_rec->nodog)
@@ -4312,11 +4322,15 @@ static void GET_login() // MAIN PAGE
       {
       // NB: we can have problems without encoding if redirect have query params...
 
-      UString value_encoded((redirect->size() + 1024U) * 3U);
+      if (u_isUrlEncodeNeeded(U_STRING_TO_PARAM(*redirect)) == false) *redir = *redirect;
+      else
+         {
+         UString value_encoded((redirect->size() + 1024U) * 3U);
 
-      Url::encode(*redirect, value_encoded);
+         Url::encode(*redirect, value_encoded);
 
-      *redir = value_encoded;
+         *redir = value_encoded;
+         }
 
       redirect->clear();
 
@@ -4623,6 +4637,7 @@ static void GET_login_validate()
       return;
       }
 
+   bool renew = false;
    UVector<UString> vec;
    UString x, signed_data(500U + U_http_info.query_len);
 
@@ -4684,6 +4699,8 @@ static void GET_login_validate()
             return;
             }
 
+         renew = true;
+
          U_LOGGER("*** RENEW: UID(%v) IP(%v=>%v) MAC(%v=>%v) ADDRESS(%v=>%v@%v) AUTH_DOMAIN(%v) ***", uid->rep,
                      user_rec->_ip.rep, ip->rep,
                      user_rec->_mac.rep, mac->rep,
@@ -4739,7 +4756,7 @@ static void GET_login_validate()
 
    // redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
 next:
-   x = user_rec->getPolicy();
+   WiAuthUser::loadPolicy(x = user_rec->getPolicy());
 
 #ifdef USE_LIBSSL
    signed_data = UDES3::signData("\n"
@@ -4768,7 +4785,11 @@ next:
       *gateway = *ap_address + ap_port;
       }
 
-   user_rec->writeToLOG(auth_domain->c_str()); // NB: writeToLOG() change time_counter and traffic_counter...
+   char buffer[128];
+
+   (void) u__snprintf(buffer, sizeof(buffer), (renew ? "RENEW_%v" : "%v"), auth_domain->rep); 
+
+   user_rec->writeToLOG(buffer); // NB: writeToLOG() change time_counter and traffic_counter strings...
 
    USSIPlugIn::setAlternativeRedirect("http://%v/ticket?ticket=%v", gateway->rep, signed_data.rep);
 
@@ -4993,7 +5014,8 @@ error:
 
    UString uid_encoded((uid->size() + 24U) * 3U);
 
-   Url::encode(*uid, uid_encoded);
+   if (u_isUrlEncodeNeeded(U_STRING_TO_PARAM(*uid))) Url::encode(*uid, uid_encoded);
+   else                                              uid_encoded = *uid;
 
    U_INTERNAL_DUMP("uid_encoded = %V", uid_encoded.rep)
 
@@ -5170,7 +5192,7 @@ static void GET_stato_utente()
 {
    U_TRACE(5, "::GET_stato_utente()")
 
-   UString label, x, user, result;
+   UString result;
 
    uid->clear();
 
@@ -5217,16 +5239,13 @@ error:
       (void) db_user->putDataStorage(*uid);
       }
 
-   x    = user_rec->getAP(label);
-   user = getUserName();
-
 #ifdef USE_LIBZ
    if (UStringExt::isGzip(result)) result = UStringExt::gunzip(result);
 #endif
 
    USSIPlugIn::setAlternativeInclude(admin_cache->getContent(U_CONSTANT_TO_PARAM("stato_utente.tmpl")), 0, false,
                                      "Stato utente", 0, 0,
-                                     user.rep, uid->rep, x.rep, result.rep);
+                                     getUserName().rep, uid->rep, user_rec->getAP().rep, result.rep);
 }
 
 static void GET_status_ap()
@@ -5770,8 +5789,8 @@ static void POST_login_request()
       {
       // manage logout request
 
+      bool bpopup;
       UVector<UString> vec;
-      bool bpopup, bcheck = false;
       uint32_t end = UHTTP::processForm();
       UString uid_cookie = (uid->clear(), (void)getCookie(0,0), *uid);
 
@@ -5807,11 +5826,11 @@ static void POST_login_request()
          {
          if (user_rec->_auth_domain != *account_auth)
             {
-            bcheck = true;
-
             vec.push_back(user_rec->nodog);
             vec.push_back(user_rec->_ip);
             vec.push_back(user_rec->_mac);
+
+            user_rec->writeToLOG("LOGOUT");
             }
          }
       else
@@ -5861,7 +5880,7 @@ static void POST_login_request()
                                         uid->rep,
                                         time_counter->rep, traffic_counter->rep, ptr2);
 
-      if (vec.empty() == false) askNodogToLogoutUser(vec, bcheck);
+      if (vec.empty() == false) askNodogToLogoutUser(vec, false);
       }
 }
 

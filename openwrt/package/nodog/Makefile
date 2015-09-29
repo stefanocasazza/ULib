@@ -42,7 +42,8 @@ define Package/nodog/conffiles
 /usr/lib/nodog/firewall/tcrules.awk
 endef
 
-NODOG_OPTIONS:= --with-ssl --with-libz \
+NODOG_OPTIONS:= --disable-examples \
+					 --with-ssl --with-libz \
 					 --without-expat --without-magic --without-pcre \
 					 --disable-static --disable-new-ldflags --disable-zip --disable-LFS \
 					 --enable-log --enable-captive-portal --enable-static-server-plugin="nocat http" \
@@ -61,7 +62,15 @@ endef
 define Build/Compile
 	rm -rf $(PKG_INSTALL_DIR)
 	mkdir -p $(PKG_INSTALL_DIR)
-	$(MAKE) -C $(PKG_BUILD_DIR) \
+	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR) \
+		CC="$(TARGET_CC)" \
+		AR="$(TARGET_CROSS)ar r" \
+		RANLIB="$(TARGET_CROSS)ranlib"
+	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/examples/userver \
+		CC="$(TARGET_CC)" \
+		AR="$(TARGET_CROSS)ar r" \
+		RANLIB="$(TARGET_CROSS)ranlib"
+	$(MAKE) $(PKG_JOBS) -C $(PKG_BUILD_DIR)/examples/uclient \
 		CC="$(TARGET_CC)" \
 		AR="$(TARGET_CROSS)ar r" \
 		RANLIB="$(TARGET_CROSS)ranlib"
@@ -69,10 +78,12 @@ endef
 
 define Package/nodog/install
 	mkdir -p $(PKG_INSTALL_DIR)
-	$(MAKE) -C $(PKG_BUILD_DIR) DESTDIR="$(PKG_INSTALL_DIR)" install
-	$(INSTALL_DIR) $(1)/etc $(1)/usr/sbin $(1)/usr/lib/ulib $(1)/usr/lib/nodog
-##	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/ulib/server_plugin_proxy* $(1)/usr/lib/ulib
-	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/libulib* $(1)/usr/lib/
+	$(MAKE) -C $(PKG_BUILD_DIR) 						DESTDIR="$(PKG_INSTALL_DIR)" install
+	$(MAKE) -C $(PKG_BUILD_DIR)/examples/userver DESTDIR="$(PKG_INSTALL_DIR)" install
+	$(MAKE) -C $(PKG_BUILD_DIR)/examples/uclient DESTDIR="$(PKG_INSTALL_DIR)" install
+	$(INSTALL_DIR) $(1)/etc $(1)/usr/sbin $(1)/usr/lib $(1)/usr/lib/nodog
+	$(CP) -a  $(PKG_INSTALL_DIR)/$(PKG_INSTALL_DIR)/usr/lib/libulib* $(1)/usr/lib/
+##	$(CP) -a  $(PKG_INSTALL_DIR)/usr/lib/server_plugin_proxy* $(1)/usr/lib
 	$(CP)     $(PKG_INSTALL_DIR)/usr/bin/uclient $(PKG_INSTALL_DIR)/usr/bin/userver_tcp $(1)/usr/sbin/
 	$(CP) -r  $(PKG_BUILD_DIR)/tests/examples/nocat/*    $(1)/usr/lib/nodog
 ##	$(CP) -r	 $(PKG_BUILD_DIR)/tests/examples/nocat/.ht* $(1)/usr/lib/nodog

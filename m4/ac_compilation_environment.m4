@@ -12,7 +12,7 @@ AC_DEFUN([AC_COMPILATION_ENVIRONMENT],[
 		fi
 	fi
 	AC_DEFINE_UNQUOTED(LD_VERSION, "${ld_version}", [LD Linker version])
-	for dir in ${CROSS_ENVIRONMENT}/usr/lib ${CROSS_ENVIRONMENT}/usr/local/lib; do
+	for dir in ${CROSS_ENVIRONMENT}/lib ${CROSS_ENVIRONMENT}/usr/lib ${CROSS_ENVIRONMENT}/usr/local/lib; do
 		if test -f "$dir/libstdc++.so"; then
 			stdgpp_dir="$dir"
 		fi

@@ -336,7 +336,7 @@ endif
 endif
 
 .lo.la:
-	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< lib@ULIB@.la @ULIB_LIBS@
+	$(CXXLINK) -rpath @ULIB_MODULEDIR@ -module $(MODULE_LIBTOOL_OPTIONS) $< lib@ULIB@.la @ULIB_LIBS@
 
 ## all: net/server/plugin/usp/usp_translator$(EXEEXT)
 endif

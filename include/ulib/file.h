@@ -647,13 +647,18 @@ public:
    // mremap() expands (or shrinks) an existing memory mapping, potentially moving it at the same time
    // (controlled by the flags argument and the available virtual address space)
 
-   static void* mremap(void* old_address, uint32_t old_size, uint32_t new_size, int flags = 0) // MREMAP_MAYMOVE == 1
+   static char* mremap(void* old_address, uint32_t old_size, uint32_t new_size, int flags = 0) // MREMAP_MAYMOVE == 1
       {
       U_TRACE(1, "UFile::mremap(%p,%u,%u,%d)", old_address, old_size, new_size, flags)
 
-      void* result = U_SYSCALL(mremap, "%p,%u,%u,%d", old_address, old_size, new_size, flags);
+      void* result =
+#  ifdef __NetBSD__
+      U_SYSCALL(mremap, "%p,%u,%p,%u,%d", old_address, old_size, 0, new_size, 0);
+#  else
+      U_SYSCALL(mremap, "%p,%u,%u,%d",    old_address, old_size,    new_size, flags);
+#  endif
 
-      U_RETURN(result);
+      U_RETURN((char*)result);
       }
 
    bool memmap(int prot = PROT_READ, UString* str = 0, uint32_t offset = 0, uint32_t length = 0);

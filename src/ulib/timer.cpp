@@ -161,12 +161,7 @@ void UTimer::insert(UEventTime* a)
 {
    U_TRACE(0, "UTimer::insert(%p,%b)", a)
 
-   // NB: non si puo' riutilizzare uno stesso oggetto gia' inserito nel timer...
-
-   U_INTERNAL_ASSERT_EQUALS(a->ctime.tv_sec, 0)
-   U_INTERNAL_ASSERT_EQUALS(a->ctime.tv_usec, 0)
-
-   // settare un allarme a piu' di due mesi e' molto sospetto...
+   // set an alarm to more than 2 month is very strange...
 
    U_INTERNAL_ASSERT_MINOR(a->tv_sec, 60L * U_ONE_DAY_IN_SECOND) // 60 gg (2 month)
 

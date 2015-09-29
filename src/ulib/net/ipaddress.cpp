@@ -904,10 +904,12 @@ bool UIPAllow::getNetworkInterface(UVector<UIPAllow*>& vipallow)
 
          family = ifa->ifa_addr->sa_family;
 
+#     ifndef __NetBSD__
          U_INTERNAL_DUMP("%s => family: %d%s", ifa->ifa_name, family,
                                  (family == AF_PACKET) ? " (AF_PACKET)" :
                                  (family == AF_INET)   ? " (AF_INET)"   :
                                  (family == AF_INET6)  ? " (AF_INET6)"  : "")
+#     endif
 
          if (family == AF_INET &&
              strncmp(ifa->ifa_name, U_CONSTANT_TO_PARAM("lo")) != 0) // Name of interface

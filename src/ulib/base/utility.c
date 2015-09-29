@@ -27,6 +27,15 @@
 #  include <fnmatch.h>
 #endif
 
+#ifdef ENABLE_THREAD
+#  ifdef __NetBSD__
+#     include <lwp.h>
+#  endif
+#  ifdef HAVE_SYS_SYSCALL_H
+#     include <sys/syscall.h>
+#  endif
+#endif
+
 #ifndef _MSWINDOWS_
 #  include <pwd.h>
 #  if defined(__linux__) && defined(HAVE_LIBCAP)
@@ -172,6 +181,34 @@ __pure int u__strncasecmp(const char* restrict s1, const char* restrict s2, size
       }
 
    return 0;
+}
+
+uint32_t u_gettid(void)
+{
+#ifndef ENABLE_THREAD
+   return U_NOT_FOUND;
+#else
+   uint32_t tid =
+# ifdef _MSWINDOWS_
+   GetCurrentThreadId();
+# elif defined(HAVE_PTHREAD_GETTHREADID_NP)
+   pthread_getthreadid_np();
+# elif defined(linux)
+   syscall(SYS_gettid);
+# elif defined(__sun)
+   pthread_self();
+# elif defined(__APPLE__)
+   mach_thread_self();
+   mach_port_deallocate(mach_task_self(), tid);
+# elif defined(__NetBSD__)
+   _lwp_self();
+# elif defined(__FreeBSD__)
+   thr_self(&tid);
+# elif defined(__DragonFly__)
+   lwp_gettid();
+# endif
+   return tid;
+#endif
 }
 
 /* Security functions */
@@ -2867,47 +2904,42 @@ __pure bool u_isFileName(const char* restrict s, uint32_t n)
 
 __pure bool u_isUrlEncoded(const char* restrict s, uint32_t n, bool bquery)
 {
-   bool result = false;
+   bool benc = false;
    unsigned char c = *s;
 
    U_INTERNAL_TRACE("u_isUrlEncoded(%.*s,%u,%d)", U_min(n,128), s, n, bquery)
 
-   U_INTERNAL_ASSERT_MAJOR(n,0)
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
 
    while (n--)
       {
       U_INTERNAL_PRINT("c = %c n = %u", c, n)
 
-      if (u__is2urlenc(c)          &&
-          (bquery         == false ||
-           u__isurlqry(c) == false)) /* URL: char FROM query '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
+      if (bquery         == false ||
+          u__isurlqry(c) == false) /* URL: char FROM query '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
          {
          if (c == '%')
             {
-            if (u__isxdigit(s[1]) == false ||
-                u__isxdigit(s[2]) == false)
+            if (n >= 2)
                {
-               return false;
+               if (u__isxdigit(s[1]) &&
+                   u__isxdigit(s[2]))
+                  {
+                  benc = true;
+                  }
+
+               s += 2;
+               n -= 2;
                }
-
-            if (n == 2) return true;
-            if (n <  2) return false;
-
-            s += 2;
-            n -= 2;
             }
-         else if (c != '+')
-            {
-            return false;
-            }
-
-         result = true;
+         else if (c == '+') benc = true;
+         else if (u__is2urlenc(c)) return false;
          }
 
       c = *(++s);
       }
 
-   return result;
+   return benc;
 }
 
 __pure bool u_isUrlEncodeNeeded(const char* restrict s, uint32_t n)

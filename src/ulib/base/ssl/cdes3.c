@@ -18,6 +18,10 @@
 #include <openssl/des.h>
 #include <openssl/rand.h>
 
+#if defined(__NetBSD__)
+#  include <des.h>
+#endif
+
 #define U_ENCRYPT   1
 #define U_DECRYPT   0
 #define U_STR_MAGIC "Salted__"

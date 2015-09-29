@@ -11,8 +11,6 @@ if MINGW
 RSIGN_la_LIBADD += -lwsock32 -lgdi32
 endif
 
-noinst_moduledir = $(libexecdir)/ulib
-
 ## for convenience module
 noinst_LTLIBRARIES = RSIGN.la
 

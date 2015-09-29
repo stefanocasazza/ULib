@@ -1,39 +1,5 @@
 ## Makefile.am for plugin userver
 
-SUBDIRS = usp
-
-if PAGE_SPEED
-SUBDIRS += page_speed
-endif
-
-if V8
-SUBDIRS += v8
-endif
-
-if PHP
-SUBDIRS += php
-endif
-
-if RUBY
-SUBDIRS += ruby
-endif
-
-if GEOIP
-if !STATIC_HANDLER_GEOIP
-SUBDIRS += mod_geoip
-endif
-endif
-
-if SSL
-if PCRE
-if MOD_SHIB
-if !STATIC_HANDLER_SHIB
-SUBDIRS += mod_shib
-endif
-endif
-endif
-endif
-
 EXTRA_DIST = *.cpp Makefile.* \
 				 mod_shib/*.cpp mod_shib/Makefile.* \
 				 mod_geoip/*.cpp mod_geoip/Makefile.* \
@@ -48,8 +14,7 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
-moduledir = $(libexecdir)/ulib
-
+moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES =
 
 if !STATIC_HANDLER_RPC
@@ -138,6 +103,40 @@ module_LTLIBRARIES += server_plugin_echo.la
 server_plugin_echo_la_SOURCES = mod_echo.cpp
 server_plugin_echo_la_LIBADD  = $(ulib_la) @ULIB_LIBS@
 server_plugin_echo_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+endif
+
+SUBDIRS = usp
+
+if PAGE_SPEED
+SUBDIRS += page_speed
+endif
+
+if V8
+SUBDIRS += v8
+endif
+
+if PHP
+SUBDIRS += php
+endif
+
+if RUBY
+SUBDIRS += ruby
+endif
+
+if GEOIP
+if !STATIC_HANDLER_GEOIP
+SUBDIRS += mod_geoip
+endif
+endif
+
+if SSL
+if PCRE
+if MOD_SHIB
+if !STATIC_HANDLER_SHIB
+SUBDIRS += mod_shib
+endif
+endif
+endif
 endif
 
 clean-local:

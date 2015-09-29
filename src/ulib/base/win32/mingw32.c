@@ -201,9 +201,11 @@ char* u_slashify(const char* src, char slash_from, char slash_to)
 
    U_INTERNAL_TRACE("u_slashify(%s,%c,%c)", src, slash_from, slash_to)
 
-   /* Skip over the disk name in MSDOS pathnames
-   if (u__isalpha(src[0]) && src[1] == ':') src += 2;
-   */
+   /**
+    * Skip over the disk name in MSDOS pathnames
+    *
+    * if (u__isalpha(src[0]) && src[1] == ':') src += 2;
+    */
 
    while (*src)
       {
@@ -236,15 +238,16 @@ int rename_w32(const char* oldpath, const char* newpath)
    if (newatts != -1 &&
        newatts & FILE_ATTRIBUTE_READONLY)
       {
-      /* Destination file exists and is read only, change that or else the rename won't work. */
+      /* Destination file exists and is read only, change that or else the rename won't work */
 
       (void) SetFileAttributesA(newpath, newatts & ~FILE_ATTRIBUTE_READONLY);
       }
 
-   /* NT4 (and up) provides a way to rename/move a file with similar semantics to what's usually done on UNIX
-   if there's an existing file with <newpath> it is removed before the file is renamed/moved.
-   The MOVEFILE_COPY_ALLOWED is specified to allow such a rename across drives.
-   */
+   /**
+    * NT4 (and up) provides a way to rename/move a file with similar semantics to what's usually done on UNIX
+    * if there's an existing file with <newpath> it is removed before the file is renamed/moved.
+    * The MOVEFILE_COPY_ALLOWED is specified to allow such a rename across drives
+    */
 
    ok = ((isWindowNT() ? MoveFileExA(oldpath, newpath, MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING | MOVEFILE_WRITE_THROUGH) :
                          MoveFile   (oldpath, newpath)) != 0);
@@ -283,7 +286,7 @@ int rename_w32(const char* oldpath, const char* newpath)
 
    if (ok == FALSE) return -1;
 
-   (void) SetFileAttributes(newpath, oldatts); /* Reset R/O attributes if neccessary. */
+   (void) SetFileAttributes(newpath, oldatts); /* Reset R/O attributes if neccessary */
 
    return 0;
 }
@@ -361,33 +364,32 @@ int mkstemp(char* tmpl)
    return ret;
 }
 
-/* INODE FOR WINDOWS - IT IS NOT STABLE FOR FILES ON NETWORK DRIVES (NFS)
--------------------------------------------------------------------------------------------------------------------------
-Basically, the implementation of stat uses as inode number the FileIndex from the  BY_HANDLE_FILE_INFORMATION structure
-returned by the Win32 API function  GetFileInformationByHandle. The FileIndex is a 64-bit number that indicates the
-position of the file in the Master File Table (MFT). On Windows XP one can also obtain this number by using the command
-fsutil usn readdata <path>. It is stable between successive starts of the system, provided the MFT does not overflow and
-therefore has to be rebuilt. On WinNT systems (NT, 2K, XP) the FileIndex is also returned for directories, on Win9x
-(95, 98, ME) it returns zero for directories.  For directories on 9x and network files, the stat uses a hashed value of
-the full path of the file.
-***************************************************
-IT IS NOT STABLE FOR FILES ON NETWORK DRIVES (NFS),
-successive calls to GetFileInformationByHandle return different values.
-***********************************************************************
-The FileIndex consists of two parts: the low 48 bits are the file record number and contain the actual index in the MFT;
-the high 16 bits are the socalled sequence number: each time an entry in the MFT is reused for another file, the sequence
-number is increased by one. This behavior of the sequence number can be observed by creating a file, printing its
-fileindex, deleting it, creating a new file and printing its fileindex; the fileindex of the newest file is equal to that
-of the first file, with the sequence number, in the left most part of the fileindex, increased by one. So the file
-reference number appears to be the equivalent of the Unix inode
--------------------------------------------------------------------------------------------------------------------------
-*/
+/**
+ * INODE FOR WINDOWS - IT IS NOT STABLE FOR FILES ON NETWORK DRIVES (NFS)
+ * -------------------------------------------------------------------------------------------------------------------------
+ * Basically, the implementation of stat uses as inode number the FileIndex from the  BY_HANDLE_FILE_INFORMATION structure
+ * returned by the Win32 API function  GetFileInformationByHandle. The FileIndex is a 64-bit number that indicates the
+ * position of the file in the Master File Table (MFT). On Windows XP one can also obtain this number by using the command
+ * fsutil usn readdata <path>. It is stable between successive starts of the system, provided the MFT does not overflow and
+ * therefore has to be rebuilt. On WinNT systems (NT, 2K, XP) the FileIndex is also returned for directories, on Win9x
+ * (95, 98, ME) it returns zero for directories.  For directories on 9x and network files, the stat uses a hashed value of
+ * the full path of the file.
+ * ***************************************************
+ * IT IS NOT STABLE FOR FILES ON NETWORK DRIVES (NFS),
+ * successive calls to GetFileInformationByHandle return different values.
+ * ***********************************************************************
+ * The FileIndex consists of two parts: the low 48 bits are the file record number and contain the actual index in the MFT;
+ * the high 16 bits are the socalled sequence number: each time an entry in the MFT is reused for another file, the sequence
+ * number is increased by one. This behavior of the sequence number can be observed by creating a file, printing its
+ * fileindex, deleting it, creating a new file and printing its fileindex; the fileindex of the newest file is equal to that
+ * of the first file, with the sequence number, in the left most part of the fileindex, increased by one. So the file
+ * reference number appears to be the equivalent of the Unix inode
+ * -------------------------------------------------------------------------------------------------------------------------
+ */
  
 #define HIDWORD(l)         ((DWORD)((UINT64)(l) >> 32))
 #define LODWORD(w)         ((DWORD)((UINT64)(w) & 0xffffffff))
 #define MAKEDWORDLONG(a,b) ((DWORDLONG)(((DWORD)(a))|(((DWORDLONG)((DWORD)(b)))<<32)))
-
-/*extern uint64_t u_hash64(unsigned char* t, uint32_t tlen);*/
 
 uint64_t u_get_inode(int fd)
 {
@@ -521,16 +523,16 @@ sighandler_t signal_w32(int nsig, sighandler_t handler)
 
    U_INTERNAL_TRACE("signal_w32(%d,%p)", nsig, handler)
 
-   /*
-   We delegate some signals to the system function.
-   The SIGILL, SIGSEGV, and SIGTERM signals are not generated under Windows NT.
-   They are included for ANSI compatibility. Thus you can set signal handlers for these signals with signal,
-   and you can also explicitly generate these signals by calling raise().
-
-   SIGINT is not supported for any Win32 application, including Windows 98/Me and Windows NT/2000/XP.
-   When a CTRL+C interrupt occurs, Win32 operating systems generate a new thread to specifically handle that interrupt.
-   This can cause a single-thread application such as UNIX, to become multithreaded, resulting in unexpected behavior.
-   */
+   /**
+    * We delegate some signals to the system function.
+    * The SIGILL, SIGSEGV, and SIGTERM signals are not generated under Windows NT.
+    * They are included for ANSI compatibility. Thus you can set signal handlers for these signals with signal,
+    * and you can also explicitly generate these signals by calling raise().
+    *
+    * SIGINT is not supported for any Win32 application, including Windows 98/Me and Windows NT/2000/XP.
+    * When a CTRL+C interrupt occurs, Win32 operating systems generate a new thread to specifically handle that interrupt.
+    * This can cause a single-thread application such as UNIX, to become multithreaded, resulting in unexpected behavior
+    */
 
    switch (nsig)
       {
@@ -660,11 +662,11 @@ int sigaction(int signum, const struct sigaction* act, struct sigaction* oldact)
    return ret;
 }
 
-/*
-If SET is not NULL, modify the current set of blocked signals
-according to HOW, which may be SIG_BLOCK, SIG_UNBLOCK or SIG_SETMASK.
-If OSET is not NULL, store the old set of blocked signals in *OSET.
-*/
+/**
+ * If SET is not NULL, modify the current set of blocked signals
+ * according to HOW, which may be SIG_BLOCK, SIG_UNBLOCK or SIG_SETMASK.
+ * If OSET is not NULL, store the old set of blocked signals in *OSET
+ */
 
 int sigprocmask(int how, const sigset_t* set, sigset_t* oldset)
 {
@@ -753,11 +755,11 @@ static int handle_kill_result(HANDLE h)
    return -1;
 }
 
-/*
-Send signal sig to process number pid. If pid is zero,
-send sig to all processes in the current process's process group.
-If pid is < -1, send sig to all processes in process group - pid.
-*/
+/**
+ * Send signal sig to process number pid. If pid is zero,
+ * send sig to all processes in the current process's process group.
+ * If pid is < -1, send sig to all processes in process group - pid
+ */
 
 int kill(pid_t pid, int sig)
 {
@@ -940,14 +942,15 @@ int fsync(int fd)
 }
 */
 
-/* Map addresses starting near ADDR and extending for LEN bytes.
+/**
+ * Map addresses starting near ADDR and extending for LEN bytes.
  * From OFFSET into the file FD describes according to PROT and FLAGS.
  * If ADDR is nonzero, it is the desired mapping address. If the MAP_FIXED
  * bit is set in FLAGS, the mapping will be at ADDR exactly (which must be
  * page-aligned); otherwise the system chooses a convenient nearby address.
  * The return value is the actual mapping address chosen or MAP_FAILED for
  * errors (in which case `errno' is set). A successful `mmap' call deallocates
- * any previous mapping for the affected region.
+ * any previous mapping for the affected region
  */
 
 #ifndef SECTION_MAP_EXECUTE_EXPLICIT
@@ -1190,10 +1193,11 @@ void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset
    return mmi->start;
 }
 
-/*
-Deallocate any mapping for the region starting at ADDR and extending LEN bytes.
-Returns 0 if successful, -1 for errors (and sets errno).
-*/
+/**
+ * Deallocate any mapping for the region starting at ADDR and extending LEN bytes.
+ *
+ * Returns 0 if successful, -1 for errors (and sets errno)
+ */
 
 int munmap(void* start, size_t length)
 {
@@ -1257,10 +1261,10 @@ int munmap(void* start, size_t length)
    return 0;
 }
 
-/*
-Synchronize the region starting at ADDR and extending LEN bytes with the file it maps.
-Filesystem operations on a file being mapped are unpredictable before this is done.
-*/
+/**
+ * Synchronize the region starting at ADDR and extending LEN bytes with the file it maps.
+ * Filesystem operations on a file being mapped are unpredictable before this is done
+ */
 
 int msync(void* start, size_t length, int flags)
 {
@@ -1273,24 +1277,25 @@ int msync(void* start, size_t length, int flags)
    return ret;
 }
 
-/* implemented in MINGW Runtime
+/**
+ * implemented in MINGW Runtime
  *
-int gettimeofday(struct timeval* tv, void* tz)
-{
-   U_INTERNAL_TRACE("gettimeofday(%p,%p)", tv, tz)
-
-   struct _timeb theTime;
-
-   _ftime(&theTime);
-
-   tv->tv_sec  = theTime.time;
-   tv->tv_usec = theTime.millitm * 1000;
-
-   U_INTERNAL_PRINT("ret = %d", 0)
-
-   return 0;
-}
-*/
+ * int gettimeofday(struct timeval* tv, void* tz)
+ * {
+ * U_INTERNAL_TRACE("gettimeofday(%p,%p)", tv, tz)
+ *
+ * struct _timeb theTime;
+ *
+ * _ftime(&theTime);
+ *
+ * tv->tv_sec  = theTime.time;
+ * tv->tv_usec = theTime.millitm * 1000;
+ *
+ * U_INTERNAL_PRINT("ret = %d", 0)
+ *
+ * return 0;
+ * }
+ */
 
 static int is_fh_socket(HANDLE fh)
 {

@@ -21,9 +21,11 @@ extern "C" { int nanosleep (const struct timespec* requested_time,
                                   struct timespec* remaining); }
 #endif
 
-#ifndef __suseconds_t_defined
+#if !defined(__suseconds_t_defined) && !defined(__NetBSD__)
 typedef long suseconds_t;
 #endif
+
+struct timeval UTimeVal::time_stop;
 
 void UTimeVal::adjust(void* tv_sec, void* tv_usec)
 {
@@ -118,74 +120,6 @@ __pure bool UTimeVal::operator<(const UTimeVal& t) const
                  (tv_sec == t.tv_sec && tv_usec < t.tv_usec));
 
    U_RETURN(result);
-}
-
-// CHRONOMETER
-
-long UTimeVal::restart()
-{
-   U_TRACE(1, "UTimeVal::restart()")
-
-   struct timeval now;
-
-   (void) U_SYSCALL(gettimeofday, "%p,%p", &now, 0);
-
-   struct timeval time_from_last_start = { now.tv_sec - tv_sec, now.tv_usec - tv_usec };
-
-   tv_sec  = now.tv_sec;
-   tv_usec = now.tv_usec;
-
-   while (time_from_last_start.tv_usec < 0L)
-      {
-      time_from_last_start.tv_sec--;
-      time_from_last_start.tv_usec += 1000000L;
-      }
-
-   long ms = time_from_last_start.tv_sec * 1000L + (time_from_last_start.tv_usec / 1000L);
-
-   if (ms <= 0L) U_RETURN(0L);
-
-   U_RETURN(ms);
-}
-
-long UTimeVal::stop()
-{
-   U_TRACE(1, "UTimeVal::stop()")
-
-   struct timeval now;
-
-   (void) U_SYSCALL(gettimeofday, "%p,%p", &now, 0);
-
-   struct timeval time_elapsed = { now.tv_sec - tv_sec, now.tv_usec - tv_usec };
-
-   if (time_elapsed.tv_usec < 0L)
-      {
-      time_elapsed.tv_sec--;
-      time_elapsed.tv_usec += 1000000L;
-      }
-
-   if (time_elapsed.tv_sec < 0L) U_RETURN(0);
-
-   long ms = time_elapsed.tv_sec * 1000L + (time_elapsed.tv_usec / 1000L);
-
-   U_RETURN(ms);
-}
-
-__pure double UTimeVal::getTimeElapsed() const
-{
-   U_TRACE(0, "UTimeVal::getTimeElapsed()")
-
-   struct timeval time_elapsed = { u_now->tv_sec - tv_sec, u_now->tv_usec - tv_usec };
-
-   if (time_elapsed.tv_usec < 0L)
-      {
-      time_elapsed.tv_sec--;
-      time_elapsed.tv_usec += 1000000L;
-      }
-
-   double ms = (time_elapsed.tv_sec * 1000.) + (time_elapsed.tv_usec / 1000.);
-
-   U_RETURN(ms);
 }
 
 // STREAMS

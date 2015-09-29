@@ -47,10 +47,10 @@ noinst_PROGRAMS = gendoc index1 index2 db_dump db_check query update
 
 ## usp web section
 ## --------------------------------------------------------------------------------------------------------------------------
-moduledir = $(libexecdir)/ulib/usp
 MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
 
 if !MINGW
+moduledir = @ULIB_MODULEDIR@/usp
 module_LTLIBRARIES = ir_web.la
 ir_web_la_SOURCES  = ir_web.cpp
 ir_web_la_LIBADD   = libcquery.la libIR.la libposting.la $(ulib_la)

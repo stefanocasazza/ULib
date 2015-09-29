@@ -18,10 +18,6 @@
 #include <ulib/base/trace.h>
 #include <ulib/base/utility.h>
 
-#ifdef HAVE_SYS_SYSCALL_H
-#  include <sys/syscall.h>
-#endif
-
 int      u_trace_fd = -1;
 int      u_trace_signal;
 int      u_trace_suspend;
@@ -30,13 +26,11 @@ char     u_trace_tab[256]; /* 256 max indent */
 uint32_t u_trace_num_tab;
 
 static int level_active;
-static uint32_t file_size;
+static uint32_t file_size, old_tid;
 #ifdef ENABLE_THREAD
 # ifdef _MSWINDOWS_
-static DWORD old_tid;
 static CRITICAL_SECTION mutex;
 # else
-static pthread_t old_tid;
 static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 # endif
 #endif
@@ -85,24 +79,19 @@ void u_trace_lock(void)
    U_INTERNAL_TRACE("u_trace_lock()")
 
 #ifdef ENABLE_THREAD
+   uint32_t tid = u_gettid();
 # ifdef _MSWINDOWS_
-   DWORD tid = GetCurrentThreadId();
-
    if (old_tid == 0) InitializeCriticalSection(&mutex);
 
    EnterCriticalSection(&mutex);
 # else
-   pthread_t tid;
-#  ifdef HAVE_SYS_SYSCALL_H
-   tid = syscall(SYS_gettid);
-#  endif
    (void) pthread_mutex_lock(&mutex);
 # endif
 
    if (old_tid != tid)
       {
       char tid_buffer[32];
-      int sz = snprintf(tid_buffer, sizeof(tid_buffer), "[tid %ld]<--\n[tid %ld]-->\n", old_tid, tid);
+      int sz = snprintf(tid_buffer, sizeof(tid_buffer), "[tid %u]<--\n[tid %u]-->\n", old_tid, tid);
 
       old_tid = tid;
 

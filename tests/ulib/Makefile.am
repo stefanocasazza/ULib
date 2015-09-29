@@ -210,8 +210,6 @@ product2_la_SOURCES  = plugin/product2.cpp
 product2_la_LIBADD   = $(LDADD)
 product2_la_LDFLAGS  = -module -rpath /nowhere $(MODULE_LIBTOOL_OPTIONS)
 
-noinst_moduledir = $(libexecdir)/ulib
-
 ## for convenience module
 noinst_LTLIBRARIES = product1.la product2.la
 endif

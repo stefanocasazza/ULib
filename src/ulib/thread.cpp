@@ -15,11 +15,13 @@
 
 #include <time.h>
 
-#ifndef HAVE_PTHREAD_CANCEL
-#  ifdef SIGCANCEL
-#     define U_SIG_THREAD_CANCEL SIGCANCEL
-#  else
-#     define U_SIG_THREAD_CANCEL SIGQUIT
+#ifndef _MSWINDOWS_
+#  ifndef HAVE_PTHREAD_CANCEL
+#     ifdef SIGCANCEL
+#        define U_SIG_THREAD_CANCEL SIGCANCEL
+#     else
+#        define U_SIG_THREAD_CANCEL SIGQUIT
+#     endif
 #  endif
 #endif
 
@@ -146,29 +148,7 @@ void UThread::yield()
 #endif
 }
 
-#ifdef _MSWINDOWS_
-DWORD UThread::getTID()
-{
-   U_TRACE(0, "UThread::getTID()")
-
-   DWORD tid = GetCurrentThreadId();
-
-   U_RETURN(tid);
-}
-#else
-pid_t UThread::getTID()
-{
-   U_TRACE(0, "UThread::getTID()")
-
-   pid_t tid;
-
-#ifdef HAVE_SYS_SYSCALL_H
-   tid = syscall(SYS_gettid);
-#endif
-
-   U_RETURN(tid);
-}
-
+#ifndef _MSWINDOWS_
 void UThread::sigInstall(int signo)
 {
    U_TRACE(1, "UThread::sigInstall(%d)", signo)
@@ -285,6 +265,24 @@ void UThread::maskSignal()
 #endif
 }
 
+bool UThread::initRwLock(pthread_rwlock_t* prwlock)
+{
+   U_TRACE(1, "UThread::initRwLock(%p)", prwlock)
+
+   pthread_rwlockattr_t rwlockattr;
+
+   if (U_SYSCALL(pthread_rwlockattr_init,       "%p",    &rwlockattr)                         != 0 ||
+#     ifndef __NetBSD__
+       U_SYSCALL(pthread_rwlockattr_setpshared, "%p,%d", &rwlockattr, PTHREAD_PROCESS_SHARED) != 0 ||
+#     endif
+       U_SYSCALL(pthread_rwlock_init,           "%p,%p", prwlock, &rwlockattr)                != 0)
+      {
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
+}
+
 bool UThread::initIPC(pthread_mutex_t* pmutex, pthread_cond_t* pcond)
 {
    U_TRACE(0, "UThread::initIPC(%p,%p)", pmutex, pcond)
@@ -294,8 +292,10 @@ bool UThread::initIPC(pthread_mutex_t* pmutex, pthread_cond_t* pcond)
       pthread_mutexattr_t mutexattr;
 
       if (U_SYSCALL(pthread_mutexattr_init,       "%p",    &mutexattr)                         != 0 ||
+#        ifndef __NetBSD__
           U_SYSCALL(pthread_mutexattr_setrobust,  "%p,%d", &mutexattr, PTHREAD_MUTEX_ROBUST)   != 0 ||
           U_SYSCALL(pthread_mutexattr_setpshared, "%p,%d", &mutexattr, PTHREAD_PROCESS_SHARED) != 0 ||
+#        endif
           U_SYSCALL(pthread_mutex_init,           "%p,%p", pmutex, &mutexattr)                 != 0)
          {
          U_RETURN(false);
@@ -307,7 +307,9 @@ bool UThread::initIPC(pthread_mutex_t* pmutex, pthread_cond_t* pcond)
       pthread_condattr_t condattr;
 
       if (U_SYSCALL(pthread_condattr_init,       "%p",    &condattr)                         != 0 ||
+#        ifndef __NetBSD__
           U_SYSCALL(pthread_condattr_setpshared, "%p,%d", &condattr, PTHREAD_PROCESS_SHARED) != 0 ||
+#        endif
           U_SYSCALL(pthread_cond_init,           "%p,%p", pcond, &condattr)                  != 0)
          {
          U_RETURN(false);
@@ -357,7 +359,7 @@ bool UThread::start(uint32_t timeoutMS)
    const unsigned CREATE_IN_RUN_STATE    = 0;
    const unsigned USE_DEFAULT_STACK_SIZE = 0;
 
-   if (_beginthreadex(NO_SECURITY_ATTRIBUTES, USE_DEFAULT_STACK_SIZE, execHandler, this, CREATE_IN_RUN_STATE, (unsigned*)&sid) == 0)
+   if (_beginthreadex(NO_SECURITY_ATTRIBUTES, USE_DEFAULT_STACK_SIZE, execHandler, this, CREATE_IN_RUN_STATE, &id) == 0)
       {
       int m_thread_start_error;
       errno_t m_return_value = _get_errno(&m_thread_start_error);
@@ -558,7 +560,7 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
       {
       th = U_NEW(UThread(UThread::detachstate));
 
-      if (_beginthreadex(NO_SECURITY_ATTRIBUTES, USE_DEFAULT_STACK_SIZE, execHandler, this, CREATE_IN_RUN_STATE, (unsigned*)&sid) == 0)
+      if (_beginthreadex(NO_SECURITY_ATTRIBUTES, USE_DEFAULT_STACK_SIZE, execHandler, this, CREATE_IN_RUN_STATE, &id) == 0)
          {
          int m_thread_start_error;
          errno_t m_return_value = _get_errno(&m_thread_start_error);
@@ -588,14 +590,14 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
    condition               =
    condition_task_finished = PTHREAD_COND_INITIALIZER;
 
-   (void) U_SYSCALL(pthread_attr_init, "%p", &attr);
-   (void) U_SYSCALL(pthread_attr_setdetachstate, "%p,%d", &attr, UThread::detachstate);
+   (void) pthread_attr_init(&attr);
+   (void) pthread_attr_setdetachstate(&attr, UThread::detachstate);
 
    for (uint32_t i = 0; i < size; ++i)
       {
       th = U_NEW(UThread(UThread::detachstate));
 
-      if (U_SYSCALL(pthread_create, "%p,%p,%p,%p", &(th->tid), &attr, (pvPFpv)execHandler, this))
+      if (pthread_create(&(th->tid), &attr, (pvPFpv)execHandler, this))
          {
          delete th;
 
@@ -680,8 +682,8 @@ void UThreadPool::run()
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* UThread::dump(bool reset) const
 {
-   *UObjectIO::os << "tid            " << tid          << '\n'
-                  << "sid            " << sid          << '\n'
+   *UObjectIO::os << "id             " << id           << '\n'
+                  << "tid            " << (void*)tid   << '\n'
                   << "cancel         " << cancel       << '\n'
                   << "detachstate    " << detachstate  << '\n'
                   << "next  (UThread " << (void*)next  << ")\n"

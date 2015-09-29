@@ -6,8 +6,7 @@ DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include -I.. @PHPCONFIGINCLUDES@
 
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
-moduledir = $(libexecdir)/ulib
-
+moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES = server_plugin_php.la
 server_plugin_php_la_SOURCES = mod_php.cpp
 server_plugin_php_la_LDFLAGS = $(PHPCONFIGLDFLAGS) -Wl,--start-group $(PHPCONFIGLIBS) -Wl,--end-group -module $(MODULE_LIBTOOL_OPTIONS)

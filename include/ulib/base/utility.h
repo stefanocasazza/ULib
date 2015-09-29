@@ -118,6 +118,8 @@ U_EXPORT void u_need_group(bool necessary);
 extern U_EXPORT int         u_num_cpu;
 extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 
+extern U_EXPORT uint32_t u_gettid(void);
+
 /* Random number generator */ 
 
 extern U_EXPORT uint32_t u_m_w, u_m_z;
@@ -270,18 +272,28 @@ static inline bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const
 {
    U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, pattern, n2, flags)
 
-   u_pfn_match = u_dosmatch;
+   bool result;
+   bPFpcupcud save = u_pfn_match;
+                     u_pfn_match = u_dosmatch;
 
-   return u_match_with_OR(s, n1, pattern, n2, flags);
+        result = u_match_with_OR(s, n1, pattern, n2, flags);
+   u_pfn_match = save;
+
+   return result;
 }
 
 static inline bool u_dosmatch_ext_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
    U_INTERNAL_TRACE("u_dosmatch_ext_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, pattern, n2, flags)
 
-   u_pfn_match = u_dosmatch_ext;
+   bool result;
+   bPFpcupcud save = u_pfn_match;
+                     u_pfn_match = u_dosmatch_ext;
 
-   return u_match_with_OR(s, n1, pattern, n2, flags);
+        result = u_match_with_OR(s, n1, pattern, n2, flags);
+   u_pfn_match = save;
+
+   return result;
 }
 
 #ifndef FNM_CASEFOLD
@@ -505,7 +517,8 @@ U_EXPORT bool u_isIPv4Addr(const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isIPv6Addr(const char* restrict s, uint32_t n) __pure;
 
 static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n)
-                                                                                            : u_isIPv4Addr(p, n)); } 
+                                                                                            : u_isIPv4Addr(p, n)); }
+
 /**
  * The u_passwd_cb() function must write the password into the provided buffer buf which is of size size.
  * The actual length of the password must be returned to the calling function. rwflag indicates whether the

@@ -5,7 +5,7 @@
 #include <errno.h>
 
 #ifndef PAGE_MASK
-#define PAGE_MASK      0xFFFFF000
+#define PAGE_MASK 0xFFFFF000
 #endif
 #ifndef MREMAP_MAYMOVE
 #define MREMAP_MAYMOVE 1
@@ -16,8 +16,13 @@
  * same time (controlled by the MREMAP_MAYMOVE flag and available VM space) 
  */ 
 
-extern U_EXPORT void* mremap(void* addr, size_t old_len, size_t new_len, int flags);
-       U_EXPORT void* mremap(void* addr, size_t old_len, size_t new_len, int flags)
+#ifdef __NetBSD__
+extern U_EXPORT void* mremap(void* addr, size_t old_len, void* new_addr, size_t new_len, int _flags);
+       U_EXPORT void* mremap(void* addr, size_t old_len, void* new_addr, size_t new_len, int _flags)
+#else
+extern U_EXPORT void* mremap(void* addr, size_t old_len,                 size_t new_len, int _flags);
+       U_EXPORT void* mremap(void* addr, size_t old_len,                 size_t new_len, int _flags)
+#endif
 {
    if (((unsigned long)addr & (~PAGE_MASK)))
       {
@@ -26,17 +31,17 @@ extern U_EXPORT void* mremap(void* addr, size_t old_len, size_t new_len, int fla
       return (void*)-1;
       }
 
-   if (!(flags & MREMAP_MAYMOVE))
+   if (!(_flags & MREMAP_MAYMOVE))
       {
       errno = ENOSYS;
 
       return (void*)-1;
       }
 
-   /*
-   old_len = PAGE_ALIGN(old_len);
-   new_len = PAGE_ALIGN(new_len);
-   */
+   /**
+    * old_len = PAGE_ALIGN(old_len);
+    * new_len = PAGE_ALIGN(new_len);
+    */
 
    /* Always allow a shrinking remap: that just unmaps the unnecessary pages.. */ 
 

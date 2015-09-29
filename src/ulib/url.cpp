@@ -473,23 +473,31 @@ void Url::addQuery(const char* entry, uint32_t entry_len, const char* value, uin
 
       if (e_size < v_size) b_size = v_size;
 
-      b_size *= 3;
-
-      UString buffer(b_size);
-
-      encode(entry, e_size, buffer);
-
       if (*url.rbegin() != '?') url.push_back('&');
 
-      (void) url.append(buffer);
+      if (u_isUrlEncodeNeeded(entry, e_size) == false) (void) url.append(entry, e_size);
+      else
+         {
+         UString buffer(b_size * 3);
+
+         encode(entry, e_size, buffer);
+
+         (void) url.append(buffer);
+         }
 
       if (value)
          {
          url.push_back('=');
 
-         encode(value, v_size, buffer);
+         if (u_isUrlEncodeNeeded(value, v_size) == false) (void) url.append(value, v_size);
+         else
+            {
+            UString buffer(v_size * 3);
 
-         (void) url.append(buffer);
+            encode(value, v_size, buffer);
+
+            (void) url.append(buffer);
+            }
          }
       }
 }
