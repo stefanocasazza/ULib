@@ -2308,6 +2308,8 @@ AC_DEFINE_UNQUOTED(U_SYSCONFDIR, "$u_sysconfdir", [install directory for configu
 
 ULIB_MODULEDIR="$u_libexecdir"
 AC_SUBST(ULIB_MODULEDIR)
+ULIB_SYSCONFDIR="$u_sysconfdir"
+AC_SUBST(ULIB_SYSCONFDIR)
 
 AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
 ------------------------------------------------------------------------

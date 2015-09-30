@@ -7,7 +7,7 @@ ulib_la = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 dist_sysconf_DATA = userver.cfg.default
 
 DEFAULT_INCLUDES    = -I. -I$(top_srcdir)/include
-DEFAULT_CONFIG_FILE = $(u_sysconfdir)/userver.cfg
+DEFAULT_CONFIG_FILE = @ULIB_SYSCONFDIR@/userver.cfg
 
 userver_tcp_LDADD    = $(ulib_la)
 userver_tcp_SOURCES  = userver.cpp

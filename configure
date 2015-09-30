@@ -637,6 +637,7 @@ ac_func_list=
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
+ULIB_SYSCONFDIR
 ULIB_MODULEDIR
 RPM_CONFIGURE
 USP_LDFLAGS
@@ -29439,6 +29440,8 @@ _ACEOF
 
 
 ULIB_MODULEDIR="$u_libexecdir"
+
+ULIB_SYSCONFDIR="$u_sysconfdir"
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: Configured to build src/ulib/lib${ULIB}:

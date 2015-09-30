@@ -44,7 +44,7 @@ class UBandWidthThrottling;
 
 template <class T> class UServer;
 
-#define U_ClientImage_pidle(obj)  (obj)->UClientImage_Base::flag.c[0]
+#define U_ClientImage_idle(obj)   (obj)->UClientImage_Base::flag.c[0]
 #define U_ClientImage_pclose(obj) (obj)->UClientImage_Base::flag.c[1]
 
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]

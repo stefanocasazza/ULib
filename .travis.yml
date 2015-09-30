@@ -1,0 +1,35 @@
+language: cpp
+compiler:
+  - gcc
+  - clang
+#before_install:
+# - sudo pip install cpp-coveralls
+#install:
+# - cd ${TRAVIS_BUILD_DIR}
+# - wget http://ftp.de.debian.org/debian/pool/main/l/lcov/lcov_1.11.orig.tar.gz
+# - tar xf lcov_1.11.orig.tar.gz
+# - sudo make -C lcov-1.11/ install
+# - gem install coveralls-lcov
+env:
+  global:
+  # The next declaration is the encrypted COVERITY_SCAN_TOKEN, created via the "travis encrypt" command using the project repo's public key
+  - secure: "B6Qfsm3mx0yUMQFcvQTbW3SliAbrqUwH+jZDj3bQipL9M0UQkXNptmsl33mHMQfi14MGEIspfeYPk8TKPCCJ4Ia7yjE1T/5V01qB8WeJlzUlMFunuhy8G7QJmwS7vPsd0t69563/PMKq4JLEOLGhSwhZPN83pV4G70ctrxn/aG4="
+addons:
+  coverity_scan:
+    project:
+      name: "stefanocasazza/ULib"
+      description: "C++ application development framework"
+    notification_email: stefano.casazza@gmail.com
+    build_command_prepend: "CPPFLAGS=-DU_COVERITY_FALSE_POSITIVE ./configure"
+    build_command: "make -j2"
+    branch_pattern: master
+#before_script:
+# - cd ${TRAVIS_BUILD_DIR}
+# - lcov --directory . --zerocounters
+script:
+  - cd ${TRAVIS_BUILD_DIR}
+  - ./configure && make -j2 && make test
+# - CFLAGS=-O0 CXXFLAGS=-O0 CPPFLAGS=-O0 ./configure --enable-coverage disable-final && make -j2 && make test && make coverage
+#after_success:
+# - coveralls-lcov --repo-token Vtsx16cD2EzEuWvFPZ63O8njddWMarTRB coverage.info
+# - coveralls --exclude lib --exclude tests -n -t Vtsx16cD2EzEuWvFPZ63O8njddWMarTRB

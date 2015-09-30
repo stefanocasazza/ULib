@@ -542,9 +542,9 @@ int UClientImage_Base::handlerTimeout()
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 #endif
 
-   U_INTERNAL_DUMP("U_ClientImage_pidle(this) = %d %B", U_ClientImage_pidle(this), U_ClientImage_pidle(this))
+   U_INTERNAL_DUMP("U_ClientImage_idle(this) = %d %B", U_ClientImage_idle(this), U_ClientImage_idle(this))
 
-   if (U_ClientImage_pidle(this) != U_YES)
+   if (U_ClientImage_idle(this) != U_YES) // U_YES = 0x0001
       {
       // NB: maybe we have some more data to read...
 
@@ -611,14 +611,21 @@ bool UClientImage_Base::startRequest()
       {
       time_between_request = time_elapsed;
 
-#  ifndef U_CACHE_REQUEST_DISABLE
-      if (U_ClientImage_request_is_cached) U_RETURN(false);
-#  endif
 #  ifdef USE_LIBSSL
       if (UServer_Base::bssl) U_RETURN(false);
 #  endif
+#  ifndef U_CACHE_REQUEST_DISABLE
+      if (U_ClientImage_request_is_cached) U_RETURN(false);
+#  endif
 
-      if ((time_run - time_between_request) > 10L) U_RETURN(true);
+      if ((time_run - time_between_request) > 10L)
+         {
+#     ifdef DEBUG
+         U_MESSAGE("%9D (pid %P) UClientImage_Base::startRequest(): time_between_request(%ld) < time_run(%ld) - request = %V", time_between_request, time_run, request->rep);
+#     endif
+
+         U_RETURN(true);
+         }
       }
 #endif
 
@@ -947,20 +954,14 @@ bool UClientImage_Base::genericRead()
       }
 
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-   if (advise_for_parallelization)
+   if (advise_for_parallelization &&
+       UServer_Base::startParallelization(UServer_Base::num_client_threshold))
       {
-#  ifdef DEBUG
-      U_MESSAGE("%9D (pid %P) UClientImage_Base::genericRead(): time_between_request(%ld) < time_run(%ld)", time_between_request, time_run);
-#  endif
+      // parent
 
-      if (UServer_Base::startParallelization(UServer_Base::num_client_threshold))
-         {
-         // parent
+      U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
 
-         U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
-
-         U_RETURN(false);
-         }
+      U_RETURN(false);
       }
 #endif
 

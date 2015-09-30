@@ -2243,7 +2243,6 @@ U_NO_EXPORT bool UHTTP::readBodyRequest()
 
    U_ASSERT(UClientImage_Base::body->empty())
    U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
-   U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
 
    uint32_t body_byte_read = UClientImage_Base::request->size() - U_http_info.endHeader;
 

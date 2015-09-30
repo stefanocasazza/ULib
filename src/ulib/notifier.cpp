@@ -880,11 +880,11 @@ loop:
    if (nfd_ready == 0 &&
        ptimeout)
       {
-      // call the handler of timeout
-
       U_INTERNAL_ASSERT_EQUALS(UTimer::first->alarm, ptimeout)
 
-      if (UTimer::callHandlerTimeout()) goto loop;
+      (void) UTimer::callHandlerTimeout();
+
+      goto loop;
       }
 #endif
 }

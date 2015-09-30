@@ -265,37 +265,35 @@ public:
       {
       U_TRACE(0, "UTimeoutConnection::handlerTime()")
 
-      U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
+      U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::min_connection = %u", UNotifier::num_connection, UNotifier::min_connection)
 
       U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
+      U_INTERNAL_ASSERT_MAJOR(UNotifier::num_connection, UNotifier::min_connection)
 
-      if (UNotifier::num_connection > UNotifier::min_connection)
+      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+
+      // there are idle connection... (timeout)
+
+#  ifdef U_LOG_ENABLE
+      if (UServer_Base::isLog())
          {
-         U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+         UServer_Base::called_from_handlerTime = true;
 
-         // there are idle connection... (timeout)
+#     ifdef DEBUG
+         long delta = (u_now->tv_sec - UServer_Base::last_event) - UTimeVal::tv_sec;
 
-#     ifdef U_LOG_ENABLE
-         if (UServer_Base::isLog())
+         if (delta >=  1 ||
+             delta <= -1)
             {
-            UServer_Base::called_from_handlerTime = true;
-
-#        ifdef DEBUG
-            long delta = (u_now->tv_sec - UServer_Base::last_event) - UTimeVal::tv_sec;
-
-            if (delta >=  1 ||
-                delta <= -1)
-               {
-               U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff %ld sec", delta);
-               }
-#        endif
+            U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff %ld sec", delta);
             }
 #     endif
-
-         UServer_Base::last_event = u_now->tv_sec;
-
-         UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
          }
+#  endif
+
+      UServer_Base::last_event = u_now->tv_sec;
+
+      UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
 
 #  ifdef U_LOG_ENABLE
       if (U_CNT_PARALLELIZATION)
@@ -2814,9 +2812,9 @@ try_next:
          if (cround >= 2)
             {
 #        ifdef DEBUG
-            if (nothing > ((UNotifier::num_connection-UNotifier::min_connection)/2))
+            if (nothing > ((UNotifier::num_connection - UNotifier::min_connection) / 2))
                {
-               U_WARNING("Polling mode suspect: cround = %u nothing = %u num_connection = %u", cround, nothing, UNotifier::num_connection-UNotifier::min_connection);
+               U_WARNING("Polling mode suspect: cround = %u nothing = %u num_connection = %u", cround, nothing, UNotifier::num_connection - UNotifier::min_connection);
                }
 
             nothing = 0;
@@ -3316,24 +3314,32 @@ void UServer_Base::runLoop(const char* user)
       if (preforked_num_kids != -1)
 #  endif
       {
-      if (UNotifier::min_connection ||
-          UNotifier::min_connection < UNotifier::num_connection) // NB: if we have some client we can't go directly on accept() and block on it...
+      if (UNotifier::min_connection) // NB: we need to notify someone for something...
          {
          if (ptime == 0) UNotifier::waitForEvent();
          else
             {
-            UTimer::insert(ptime);
+            bool some_client = (UNotifier::num_connection > UNotifier::min_connection);
 
-            last_event = u_now->tv_sec;
+            if (some_client) // NB: we must feel the possibly timeout for request from the client...
+               {
+               UTimer::insert(ptime);
+
+               last_event = u_now->tv_sec;
+               }
 
             UNotifier::waitForEvent();
 
-            if (UNotifier::nfd_ready > 0) UTimer::erase(ptime);
+            if (some_client &&
+                UNotifier::nfd_ready > 0)
+               {
+               UTimer::erase(ptime);
+               }
             }
 
-         if (UNotifier::empty() == false) continue;
+         U_ASSERT_EQUALS(UNotifier::empty(), false)
 
-         return; // NB: no more event manager registered, the child go to exit...
+         continue;
          }
       }
 
