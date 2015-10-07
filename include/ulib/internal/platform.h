@@ -341,7 +341,7 @@ typedef int socket_t;
 #undef getchar
 #undef putchar
 
-#if !defined(_GNU_SOURCE) || defined(__NetBSD__)
+#if !defined(_GNU_SOURCE) || defined(__OSX__) || defined(__NetBSD__)
 typedef void (*sighandler_t)(int);  /* Convenient typedef for signal handlers */
 #endif
 typedef unsigned long timeout_t;    /* Typedef for millisecond timer values */

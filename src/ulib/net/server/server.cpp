@@ -1129,7 +1129,7 @@ UServer_Base::~UServer_Base()
 
       (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_fin_timeout", tcp_fin_timeout, true);
 
-      if (USocket::iBackLog >= SOMAXCONN)
+      if (USocket::iBackLog > SOMAXCONN)
          {
          (void) UFile::setSysParam("/proc/sys/net/core/somaxconn",           sysctl_somaxconn,       true);
          (void) UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", sysctl_max_syn_backlog, true);
@@ -2135,14 +2135,18 @@ void UServer_Base::init()
 
          tcp_abort_on_overflow = UFile::setSysParam("/proc/sys/net/ipv4/tcp_abort_on_overflow", 1, true);
          }
-      else if (USocket::iBackLog >= SOMAXCONN)
+      else if (USocket::iBackLog > SOMAXCONN)
          {
-         int value = USocket::iBackLog * 2;
-
          // NB: take a look at `netstat -s | grep overflowed`
 
-         sysctl_somaxconn       = UFile::setSysParam("/proc/sys/net/core/somaxconn",           value);
-         sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 2);
+         sysctl_somaxconn = UFile::setSysParam("/proc/sys/net/core/somaxconn", USocket::iBackLog);
+
+         if (sysctl_somaxconn == USocket::iBackLog) sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", USocket::iBackLog * 8);
+         else
+            {
+            U_WARNING("The TCP backlog (LISTEN_BACKLOG) setting of %u cannot be enforced because of OS error - "
+                      "/proc/sys/net/core/somaxconn is set to the lower value of %u", USocket::iBackLog, SOMAXCONN);
+            }
          }
 #  endif
 
@@ -2381,7 +2385,7 @@ void UServer_Base::init()
       if (handler_inotify) UNotifier::min_connection++;
       }
 
-   UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog / 2) + (UNotifier::num_connection = UNotifier::min_connection);
+   UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog) + (UNotifier::num_connection = UNotifier::min_connection);
 
    if (num_client_threshold == 0) num_client_threshold =
 #  ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST

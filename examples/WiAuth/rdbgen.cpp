@@ -54,17 +54,18 @@ public:
          U_ERROR("you must avoid the jnl suffix, exiting");
          }
 
-      if (x.open(10 * 1024 * 1024, false, false, true)) // bool open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference)
+      const char* method = argv[optind++];
+
+      if (method == 0) U_ERROR("<number_of_command> argument is missing");
+
+      if (u__isdigit(*method) == false) U_ERROR("<number_of_command> argument is not numeric");
+
+      int op = method[0] - '0';
+
+      if (x.open(10 * 1024 * 1024, false, op == 6, true)) // bool open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference)
          {
-         const char* method = argv[optind++];
-
-         if (method == 0)                  U_ERROR("<number_of_command> argument is missing");
-         if (u__isdigit(*method) == false) U_ERROR("<number_of_command> argument is not numeric");
-
          if (method[1] == 's') x.setShared(0,0); // POSIX shared memory object (interprocess - can be used by unrelated processes)
          else                  x.resetReference();
-
-         int op = method[0] - '0';
 
          switch (op)
             {

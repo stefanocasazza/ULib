@@ -15,7 +15,7 @@
 #include <ulib/utility/uhttp.h>
 #include <ulib/ssl/net/ssl_session.h>
 
-/*
+/**
  * Forward secrecy
  *
  * You should consider forward secrecy. Forward secrecy means that the keys for a connection aren't stored on disk.

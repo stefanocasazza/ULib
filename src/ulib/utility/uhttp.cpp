@@ -646,11 +646,21 @@ bool UHTTP::UCServletPage::compile(const UString& program)
 
       /* You may also open a dll with tcc_add_file() and use symbols from that */
 
-#  ifdef DEBUG
-      (void) U_SYSCALL(tcc_add_file, "%p,%S,%d", s, U_PREFIXDIR "/lib/libulib_g.so");
+#  ifdef HAVE_ARCH64
+#     ifdef DEBUG
+#        define U_LIB_SO U_PREFIXDIR "/lib64/libulib_g.so" 
+#     else
+#        define U_LIB_SO U_PREFIXDIR "/lib64/libulib.so" 
+#     endif
 #  else
-      (void) U_SYSCALL(tcc_add_file, "%p,%S,%d", s, U_PREFIXDIR "/lib/libulib.so");
+#     ifdef DEBUG
+#        define U_LIB_SO U_PREFIXDIR "/lib/libulib_g.so" 
+#     else
+#        define U_LIB_SO U_PREFIXDIR "/lib/libulib.so" 
+#     endif
 #  endif
+
+      (void) U_SYSCALL(tcc_add_file, "%p,%S,%d", s, U_LIB_SO);
 
       int rc;
       UString token;
@@ -1265,14 +1275,27 @@ next:
 
    if (rlim > 1024)
       {
-      struct rlimit nofile = {
-         rlim, // Soft limit
-         rlim  // Hard limit (ceiling for rlim_cur)
-      };
+      /**
+       * struct rlimit {
+       *    rlim_t rlim_cur; // Soft limit
+       *    rlim_t rlim_max; // Hard limit (ceiling for rlim_cur)
+       * };
+       */
+
+      struct rlimit nofile = { rlim, rlim };
 
       if (U_SYSCALL(setrlimit, "%d,%p", RLIMIT_NOFILE, &nofile) == 0)
          {
          U_SRV_LOG("Updated program fd_max: %u", rlim);
+         }
+      else
+         {
+         U_WARNING("Your DOCUMENT_ROOT cache may be require at least %u max file descriptors. I can't set maximum open files because of OS error", rlim);
+
+         if (U_SYSCALL(getrlimit, "%d,%p", RLIMIT_NOFILE, &nofile) == 0)
+            {
+            U_WARNING("Current maximum open files is %u. If you need higher increase 'ulimit -n'", nofile.rlim_max);
+            }
          }
       }
 #endif

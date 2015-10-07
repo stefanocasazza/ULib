@@ -4397,13 +4397,15 @@ static void GET_login() // MAIN PAGE
          }
       else
          {
+         // campi bisenzio
+
          USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login.tmpl")), sz, false,
                                            title_default->data(), 0, 0,
-                                           url_banner_ap->data(),
-                                               ap_ref_ap->data(),
-                                           request1.data(),
-                                           url_banner_comune->data(),
-                                               ap_ref_comune->data());
+                                           url_banner_ap->rep,
+                                               ap_ref_ap->rep,
+                                           request1.rep,
+                                           url_banner_comune->rep,
+                                               ap_ref_comune->rep);
          }
       }
    else
