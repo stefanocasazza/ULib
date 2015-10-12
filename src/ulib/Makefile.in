@@ -159,6 +159,7 @@ ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
 	$(top_srcdir)/m4/ac_compilation_environment.m4 \
 	$(top_srcdir)/m4/ac_compilation_options.m4 \
+	$(top_srcdir)/m4/ac_compile_check_sizeof.m4 \
 	$(top_srcdir)/m4/ac_cxx_old_iostream.m4 \
 	$(top_srcdir)/m4/ac_fallocate.m4 \
 	$(top_srcdir)/m4/ac_try_flag.m4 \
@@ -559,6 +560,7 @@ PHPCONFIG = @PHPCONFIG@
 PHPCONFIGINCLUDES = @PHPCONFIGINCLUDES@
 PHPCONFIGLDFLAGS = @PHPCONFIGLDFLAGS@
 PHPCONFIGLIBS = @PHPCONFIGLIBS@
+PKG_CONFIG = @PKG_CONFIG@
 POW_LIB = @POW_LIB@
 PRG_LDFLAGS = @PRG_LDFLAGS@
 RANLIB = @RANLIB@

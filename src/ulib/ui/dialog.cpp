@@ -19,6 +19,10 @@
 
 #include <errno.h>
 
+#if defined(__NetBSD__) || defined(__UNIKERNEL__)
+extern char** environ;
+#endif
+
 bool  UDialog::xdialog;
 char* UDialog::path_dialog;
 

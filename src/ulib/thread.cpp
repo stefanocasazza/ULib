@@ -272,7 +272,7 @@ bool UThread::initRwLock(pthread_rwlock_t* prwlock)
    pthread_rwlockattr_t rwlockattr;
 
    if (U_SYSCALL(pthread_rwlockattr_init,       "%p",    &rwlockattr)                         != 0 ||
-#     ifndef __NetBSD__
+#     if !defined(__NetBSD__) && !defined(__UNIKERNEL__)
        U_SYSCALL(pthread_rwlockattr_setpshared, "%p,%d", &rwlockattr, PTHREAD_PROCESS_SHARED) != 0 ||
 #     endif
        U_SYSCALL(pthread_rwlock_init,           "%p,%p", prwlock, &rwlockattr)                != 0)
@@ -292,7 +292,7 @@ bool UThread::initIPC(pthread_mutex_t* pmutex, pthread_cond_t* pcond)
       pthread_mutexattr_t mutexattr;
 
       if (U_SYSCALL(pthread_mutexattr_init,       "%p",    &mutexattr)                         != 0 ||
-#        ifndef __NetBSD__
+#        if !defined(__NetBSD__) && !defined(__UNIKERNEL__)
           U_SYSCALL(pthread_mutexattr_setrobust,  "%p,%d", &mutexattr, PTHREAD_MUTEX_ROBUST)   != 0 ||
           U_SYSCALL(pthread_mutexattr_setpshared, "%p,%d", &mutexattr, PTHREAD_PROCESS_SHARED) != 0 ||
 #        endif
@@ -307,7 +307,7 @@ bool UThread::initIPC(pthread_mutex_t* pmutex, pthread_cond_t* pcond)
       pthread_condattr_t condattr;
 
       if (U_SYSCALL(pthread_condattr_init,       "%p",    &condattr)                         != 0 ||
-#        ifndef __NetBSD__
+#        if !defined(__NetBSD__) && !defined(__UNIKERNEL__)
           U_SYSCALL(pthread_condattr_setpshared, "%p,%d", &condattr, PTHREAD_PROCESS_SHARED) != 0 ||
 #        endif
           U_SYSCALL(pthread_cond_init,           "%p,%p", pcond, &condattr)                  != 0)

@@ -977,7 +977,7 @@ bool UFile::lock(short l_type, uint32_t start, uint32_t len) const
     * Advisory file segment locking data type - information passed to system by user
     */
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__UNIKERNEL__)
    /*
    struct flock {
       off_t l_start;    // starting offset
@@ -1113,7 +1113,7 @@ UString UFile::getSysContent(const char* name)
 
    UString fileContent(U_CAPACITY);
 
-   int fd = open(name, O_RDWR, PERM_FILE);
+   int fd = open(name, O_RDONLY, PERM_FILE);
 
    if (fd != -1)
       {
@@ -1131,7 +1131,7 @@ int UFile::getSysParam(const char* name)
 {
    U_TRACE(0, "UFile::getSysParam(%S)", name)
 
-   int value = -1, fd = open(name, O_RDWR, PERM_FILE);
+   int value = -1, fd = open(name, O_RDONLY, PERM_FILE);
 
    if (fd != -1)
       {

@@ -23,7 +23,7 @@
 #  undef signal
 #  define PTHREAD_CREATE_DETACHED 1
 #else
-#  ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__UNIKERNEL__)
 #     define U_SIGSTOP SIGSTOP
 #     define U_SIGCONT SIGCONT
 #  else

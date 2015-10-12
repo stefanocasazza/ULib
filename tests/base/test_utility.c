@@ -278,6 +278,7 @@ int main(int argc, char* argv[])
    bool ok;
    int i, n;
    char buf8[9];
+   const char* ptr;
    char* sargv[128];
    uint32_t path_len;
    const char* path_rel;
@@ -406,6 +407,18 @@ int main(int argc, char* argv[])
    U_INTERNAL_ASSERT( u_isNumber(U_CONSTANT_TO_PARAM("1A3"))        == false )
    U_INTERNAL_ASSERT( u_isNumber(U_CONSTANT_TO_PARAM("1A3d3###"))   == false )
    U_INTERNAL_ASSERT( u_isNumber(U_CONSTANT_TO_PARAM("0123456789")) == true )
+
+   ptr = "+1234";
+   U_INTERNAL_ASSERT_EQUALS( u_strtol( ptr,    ptr + U_CONSTANT_SIZE("+1234")), 1234 )
+   U_INTERNAL_ASSERT_EQUALS( u_strtoll(ptr,    ptr + U_CONSTANT_SIZE("+1234")), 1234 )
+   U_INTERNAL_ASSERT_EQUALS( u_strtoul( ptr+1, ptr + U_CONSTANT_SIZE("+1234")), 1234 )
+   U_INTERNAL_ASSERT_EQUALS( u_strtoull(ptr+1, ptr + U_CONSTANT_SIZE("+1234")), 1234 )
+
+   ptr = "-1234";
+   U_INTERNAL_ASSERT_EQUALS( u_strtol( ptr,    ptr + U_CONSTANT_SIZE("-1234")), -1234 )
+   U_INTERNAL_ASSERT_EQUALS( u_strtoll(ptr,    ptr + U_CONSTANT_SIZE("-1234")), -1234 )
+   U_INTERNAL_ASSERT_EQUALS( u_strtoul( ptr+1, ptr + U_CONSTANT_SIZE("-1234")),  1234 )
+   U_INTERNAL_ASSERT_EQUALS( u_strtoull(ptr+1, ptr + U_CONSTANT_SIZE("-1234")),  1234 )
 
    U_INTERNAL_ASSERT( u_isIPv4Addr("127.0.0.1/8", 9)                       == true )
    U_INTERNAL_ASSERT( u_isIPv4Addr(U_CONSTANT_TO_PARAM("8.0.0.1"))         == true )

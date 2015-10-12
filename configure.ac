@@ -78,7 +78,7 @@ case $target in
 	or1k*)				LINUX_ARCH=openrisc ;;
 	microblaze)			LINUX_ARCH=microblaze ;;
 	powerpc*|ppc*)		LINUX_ARCH=powerpc ;;
-	*-rumprun-netbsd) LINUX_ARCH=NetBSD
+	*netbsd*)			LINUX_ARCH=NetBSD
 							enable_stdcpp="yes" ;;
 	arm*)					LINUX_ARCH=arm
 							AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write]) ;;
@@ -97,7 +97,7 @@ OPERATINGSYSTEM=
 TARGET_LIBC=
 case $target in
 	*-*-linux-*)		OPERATINGSYSTEM=linux ;;
-	*-rumprun-netbsd) OPERATINGSYSTEM=NetBSD ;;
+	*netbsd*)			OPERATINGSYSTEM=NetBSD ;;
 	*-none-*)			OPERATINGSYSTEM=baremetal ;;
 	*)						OPERATINGSYSTEM=unknown ;;
 esac
@@ -115,8 +115,8 @@ if test "x$OPERATINGSYSTEM" = xlinux ; then
 	esac
 else
 	case $target in
-		*-rumprun-netbsd)  TARGET_LIBC=libc ;;
-		*)						 TARGET_LIBC=unknown ;;
+		*netbsd*) TARGET_LIBC=libc ;;
+		*)			 TARGET_LIBC=unknown ;;
 	esac
 fi
 
@@ -146,6 +146,7 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
+AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
 AC_C_RESTRICT
 AC_C_VOLATILE
@@ -165,6 +166,7 @@ not clang
 AC_MSG_RESULT([$GCC_IS_CLANG])
 #AC_SUBST(GCC_IS_CLANG)
 
+ULIB_LIBS=
 os_version=`uname -a`
 AC_DEFINE_UNQUOTED(_OS_VERSION, "$os_version", [Operating System version])
 AC_MSG_CHECKING([for a supported OS])
@@ -258,10 +260,17 @@ case "$target_os" in
 		MODULE_FLAGS="-module -shared -no-undefined"
 	;;
 
-	*netbsd)
+	*netbsd*)
 		AC_MSG_RESULT([ok ($target_os)])
 
-		CPPFLAGS="$CPPFLAGS -D__NetBSD__"
+		ULIB_LIBS="$ULIB_LIBS -lexecinfo"
+
+		if test "$target_os" = "netbsd"; then
+			CPPFLAGS="$CPPFLAGS -D__UNIKERNEL__"
+		else
+			# Disable -ffunction-sections -fdata-sections and accompanying --gc-sections on netbsd because --gc-sections doesn't work with the netbsd-4 and netbsd-5 linker
+			LDFLAGS="${LDFLAGS} -Wl,--no-gc-sections"
+		fi
 
 		AM_CONDITIONAL(LINUX, false)
 		AM_CONDITIONAL(MINGW, false)
@@ -484,7 +493,6 @@ if test -z "$enable_stdcpp"; then
 	enable_stdcpp="yes"
 fi
 
-ULIB_LIBS=
 if test "$enable_stdcpp" = "yes"; then
    AC_MSG_RESULT(yes)
 	AM_CONDITIONAL(STDCPP, true)
@@ -1578,21 +1586,19 @@ AC_CHECK_MEMBER([struct tm.tm_gmtoff],AC_DEFINE(TM_HAVE_TM_GMTOFF,1,[Define if y
 
 TWOCAN_CONF_MSG(Checking for types, and defing if needed)
 
-# For miniLZO
 AC_C_CONST
 AC_TYPE_SIZE_T
 AC_CHECK_TYPE(ptrdiff_t,long)
-AC_CHECK_SIZEOF(unsigned char)
-AC_CHECK_SIZEOF(short)
-AC_CHECK_SIZEOF(int)
-AC_CHECK_SIZEOF(long)
-AC_CHECK_SIZEOF(time_t)
-AC_CHECK_SIZEOF(size_t)
-AC_CHECK_SIZEOF(long long)
-AC_CHECK_SIZEOF(__int64)
-AC_CHECK_SIZEOF(void *)
-AC_CHECK_SIZEOF(ptrdiff_t)
 AC_CHECK_TYPE([cpu_set_t], [AC_DEFINE_UNQUOTED(HAVE_CPU_SET_T,1,[Define if exist type cpu_set_t])],[],[#include <sched.h>])
+
+AC_COMPILE_CHECK_SIZEOF(unsigned char)
+AC_COMPILE_CHECK_SIZEOF(short)
+AC_COMPILE_CHECK_SIZEOF(int)
+AC_COMPILE_CHECK_SIZEOF(long)
+AC_COMPILE_CHECK_SIZEOF(long long)
+AC_COMPILE_CHECK_SIZEOF(time_t)
+AC_COMPILE_CHECK_SIZEOF(size_t)
+AC_COMPILE_CHECK_SIZEOF(void *)
 
 if test "$ac_cv_sizeof_void_p" = "8"; then
 	AC_DEFINE(HAVE_ARCH64, 1, [Define if we are on 64 bit architecture])
@@ -2228,8 +2234,10 @@ fi
 if test -n "$rlib"; then
    ULIB_LIBS="$ULIB_LIBS $rlib";
 fi
-if test "$USE_LIBSSL" = "yes" && test "$target_os" = "netbsd"; then
-   ULIB_LIBS="$ULIB_LIBS -ldes";
+if test "$USE_LIBSSL" = "yes"; then
+	case "$target_os" in
+		*netbsd*) ULIB_LIBS="$ULIB_LIBS -ldes" ;;
+	esac
 fi
 
 ULIB_LIBS="$ULIB_LIBS $ULIB_LIBC"

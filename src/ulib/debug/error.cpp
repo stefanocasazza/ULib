@@ -28,9 +28,7 @@ vPF UError::callerDataDump;
 #  include <cxxabi.h>
 #  ifdef HAVE_DLFCN_H
 #  include <dlfcn.h>
-#  endif
-#  include <wait.h>
-
+#   if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
 static uint32_t execute_addr2line(char* buffer, uint32_t buffer_size, const char* image, void* addr)
 {
    ssize_t len;
@@ -48,13 +46,13 @@ static uint32_t execute_addr2line(char* buffer, uint32_t buffer_size, const char
 
       (void) close(pipefd[0]);
 
-#  ifndef HAVE_DUP3
+#    ifndef HAVE_DUP3
       (void) dup2(pipefd[1], STDOUT_FILENO);
       (void) dup2(fd_stderr, STDERR_FILENO);
-#  else
+#    else
       (void) dup3(pipefd[1], STDOUT_FILENO, O_CLOEXEC);
       (void) dup3(fd_stderr, STDERR_FILENO, O_CLOEXEC);
-#  endif
+#    endif
 
       // Invokes addr2line utility to determine the function name
       // and the line information from an address in the code segment
@@ -88,6 +86,8 @@ loop:
 
    return output_len;
 }
+#   endif
+#  endif
 #endif
 
 void UError::stackDump()
@@ -170,7 +170,12 @@ void UError::stackDump()
 
    if (trace_size <= 2) abort();
 
-#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+# if !defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)
+   // This function is similar to backtrace_symbols() but it writes the result immediately
+   // to a file and can therefore also be used in situations where malloc() is not usable anymore
+
+   backtrace_symbols_fd(array, trace_size, fd);
+# else
    uint32_t output_len;
    char* functionNameEnd;
    char buffer[128 * 1024];
@@ -179,14 +184,14 @@ void UError::stackDump()
 
    (void) fwrite(buffer, u__snprintf(buffer, sizeof(buffer), "%9D: %N (pid %P) === STACK TRACE ===\n", 0), 1, f);
 
-#  ifdef HAVE_DLFCN_H
+# ifdef HAVE_DLFCN_H
    Dl_info dlinf;
-#  else
+# else
    int status;
    char* realname;
    char* lastparen;
    char* firstparen;
-#  endif
+# endif
 
    char** strings = backtrace_symbols(array, trace_size);
 
@@ -202,7 +207,7 @@ void UError::stackDump()
       {
       (void) fprintf(f, "#%d %s\n", i-2, strings[i]);
 
-#     ifdef HAVE_DLFCN_H
+#   ifdef HAVE_DLFCN_H
       if (dladdr(array[i], &dlinf)          == 0 ||
           strcmp(name_buf, dlinf.dli_fname) == 0)
          {
@@ -230,7 +235,7 @@ void UError::stackDump()
          }
 
       (void) fwrite(U_CONSTANT_TO_PARAM("--------------------------------------------------------------------\n"), 1, f);
-#     else
+#    else
       firstparen = strchr(strings[i], '('); // extract the identifier from strings[i]. It's inside of parens
       lastparen  = strchr(strings[i], '+');
 
@@ -249,15 +254,10 @@ void UError::stackDump()
             free(realname);
             }
          }
-#     endif
+#    endif
       }
-#  else
-   // This function is similar to backtrace_symbols() but it writes the result immediately
-   // to a file and can therefore also be used in situations where malloc() is not usable anymore
-
-   backtrace_symbols_fd(array, trace_size, fd);
-#  endif
 
    (void) fclose(f);
+# endif
 #endif
 }

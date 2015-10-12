@@ -239,7 +239,7 @@ UString USocket::getMacAddress(const char* device)
 
    UString result(100U);
 
-#if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_ARPA_INET_H) && !defined(__NetBSD__)
+#if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_ARPA_INET_H) && !defined(__NetBSD__) && !defined(__UNIKERNEL__)
    U_INTERNAL_ASSERT(isOpen())
 
    /**

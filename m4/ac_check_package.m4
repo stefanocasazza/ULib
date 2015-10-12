@@ -32,7 +32,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			echo "${T_MD}libz found in $libzdir${T_ME}"
 			USE_LIBZ=yes
 			AC_DEFINE(USE_LIBZ, 1, [Define if enable libz support])
-			libz_version=$(grep ZLIB_VERSION $libzdir/include/zlib.h | head -n1 | cut -d'"' -f2)
+			libz_version=$(grep ZLIB_VERSION $libzdir/include/zlib.h 2>/dev/null | head -n1 | cut -d'"' -f2 2>/dev/null)
 			if test -z "${libz_version}"; then
 				libz_version="unknown"
 			fi
@@ -170,7 +170,9 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			echo "${T_MD}libuuid found in $libuuiddir${T_ME}"
 			USE_LIBUUID=yes
 			AC_DEFINE(USE_LIBUUID, 1, [Define if enable libuuid support])
-			libuuid_version=$(pkg-config --modversion ext2fs)
+			if test x_$PKG_CONFIG != x_no; then
+				libuuid_version=$(pkg-config --modversion ext2fs)
+			fi
 			if test -z "${libuuid_version}"; then
 				libuuid_version="unknown"
 			fi
@@ -262,7 +264,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			AC_DEFINE(USE_LIBSSL, 1, [Define if enable libssl support])
 			if test "$found_cyassl" = "yes"; then
 				echo "${T_MD}CYASSL found in $ssldir${T_ME}";
-				ssl_version=$(grep VERSION $ssldir/include/cyassl/openssl/opensslv.h | cut -d' ' -f3 | tr -d '\r\n');
+				ssl_version=$(grep VERSION $ssldir/include/cyassl/openssl/opensslv.h 2>/dev/null | cut -d' ' -f3 | tr -d '\r\n');
 				ULIB_LIBS="$ULIB_LIBS -lcyassl";
 			else
 				echo "${T_MD}libssl found in $ssldir${T_ME}";
@@ -270,7 +272,9 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 					HAVE_SSL_TS="yes";
 					AC_DEFINE(HAVE_SSL_TS, 1, [Define if we have time stamp support in openssl])
 				fi
-				ssl_version=$(pkg-config --modversion openssl);
+				if test x_$PKG_CONFIG != x_no; then
+					ssl_version=$(pkg-config --modversion openssl)
+				fi
 				if test -z "$OPENSSL_LINK"; then
 					ULIB_LIBS="-lssl -lcrypto $ULIB_LIBS";
 				else
@@ -408,7 +412,9 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			echo "${T_MD}libcares found in $caresdir${T_ME}"
 			USE_C_ARES=yes
 			AC_DEFINE(USE_C_ARES, 1, [Define if enable c-ares support])
-			cares_version=$(pkg-config --modversion libcares)
+			if test x_$PKG_CONFIG != x_no; then
+				cares_version=$(pkg-config --modversion libcares)
+			fi
 			if test -z "${cares_version}"; then
 				cares_version="unknown"
 			fi
@@ -475,7 +481,7 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 			echo "${T_MD}libcurl found in $curldir${T_ME}"
 			USE_LIBCURL=yes
 			AC_DEFINE(USE_LIBCURL, 1, [Define if enable libcurL support])
-			libcurl_version=$($curldir/bin/curl-config --version | sed -e "s/libcurl //g")
+			libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null | sed -e "s/libcurl //g")
 			if test -z "${libcurl_version}"; then
 				libcurl_version="unknown"
 			fi
@@ -635,7 +641,9 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 			echo "${T_MD}libxml2 found in $libxml2dir${T_ME}"
 			USE_LIBXML2=yes
 			AC_DEFINE(USE_LIBXML2, 1, [Define if enable libxml2 support])
-			libxml2_version=$(pkg-config --modversion libxml-2.0)
+			if test x_$PKG_CONFIG != x_no; then
+				libxml2_version=$(pkg-config --modversion libxml-2.0)
+			fi
 			if test -z "${libxml2_version}"; then
 				libxml2_version="unknown"
 			fi
@@ -670,7 +678,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 			echo "${T_MD}page-speed SDK found in $page_speeddir${T_ME}"
 			USE_PAGE_SPEED=yes
 			AC_DEFINE(USE_PAGE_SPEED, 1, [Define if enable libpagespeed support])
-			page_speed_version=$(ls -1 $page_speeddir | grep page-speed | cut -d'-' -f3)
+			page_speed_version=$(ls -1 $page_speeddir 2>/dev/null | grep page-speed | cut -d'-' -f3)
 			PAGESPEED_ROOT_DIR=$page_speeddir/page-speed-$page_speed_version
 		fi
 	fi
@@ -752,10 +760,10 @@ else
    if test "$ac_sqlite3_incdir" = "no"; then
       AC_CHECK_HEADER([sqlite3.h])
       SQLITE3_INCLUDE=""
-		libsqlite_version=$(grep SQLITE_VERSION /usr/include/sqlite3.h | grep '"' | cut -d'"' -f2)
+		libsqlite_version=$(grep SQLITE_VERSION /usr/include/sqlite3.h 2>/dev/null | grep '"' | cut -d'"' -f2)
    else
       SQLITE3_INCLUDE=-I$ac_sqlite3_incdir
-		libsqlite_version=$(grep SQLITE_VERSION $ac_sqlite3_incdir/sqlite3.h | grep '"' | cut -d'"' -f2)
+		libsqlite_version=$(grep SQLITE_VERSION $ac_sqlite3_incdir/sqlite3.h 2>/dev/null | grep '"' | cut -d'"' -f2)
    fi
    if test "$ac_sqlite3_libdir" = "no"; then
       AC_SEARCH_LIBS_VAR([sqlite3_exec], sqlite3, , , , SQLITE3_LIBS)
@@ -827,10 +835,10 @@ else
 
 	if test "$ac_mysql_incdir" = "no"; then
 		MYSQL_INCLUDE=`mysql_config --include`
-		libmysql_version=$(grep MYSQL_VERSION_ID /usr/include/mysql/mysql_version.h | cut -f3)
+		libmysql_version=$(grep MYSQL_VERSION_ID /usr/include/mysql/mysql_version.h 2>/dev/null | cut -f3)
 	else
 		MYSQL_INCLUDE=-I$ac_mysql_incdir
-		libmysql_version=$(grep MYSQL_VERSION_ID $ac_mysql_incdir/mysql/mysql_version.h | cut -f3)
+		libmysql_version=$(grep MYSQL_VERSION_ID $ac_mysql_incdir/mysql/mysql_version.h 2>/dev/null | cut -f3)
 	fi
 	if test "$ac_mysql_libdir" = "no"; then
 	   	if test "$ac_mysql_threadsafe" = "YES"; then
@@ -913,7 +921,7 @@ else
 
 	USE_PGSQL=yes
 	AC_DEFINE(USE_PGSQL, 1, [Define if enable PostgreSQL database support])
-	pgsql_version=$(pg_config --version | cut -d' ' -f2)
+	pgsql_version=$(pg_config --version 2>/dev/null | cut -d' ' -f2)
 	if test -z "${pgsql_version}"; then
 		pgsql_version="unknown"
 	fi

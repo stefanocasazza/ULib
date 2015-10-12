@@ -28,7 +28,7 @@
 #endif
 
 #ifdef ENABLE_THREAD
-#  ifdef __NetBSD__
+#  if defined(__NetBSD__) || defined(__UNIKERNEL__)
 #     include <lwp.h>
 #  endif
 #  ifdef HAVE_SYS_SYSCALL_H
@@ -148,6 +148,74 @@ void* u__memcpy(void* restrict dst, const void* restrict src, size_t n, const ch
 }
 #endif
 
+long u_strtol(const char* restrict s, const char* restrict e)
+{
+   bool neg;
+   long val;
+
+   U_INTERNAL_TRACE("u_strtol(%p,%p)", s, e)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(e)
+
+   while (u__isspace(*s)) ++s;
+
+   if (*s == '-')
+      {
+      ++s;
+
+      neg = true;
+      }
+   else
+      {
+      neg = false;
+
+      if (*s == '+' ||
+          *s == '0')
+         {
+         ++s;
+         }
+      }
+
+   val = u_strtoul(s, e);
+
+   return (neg ? -val : val);
+}
+
+int64_t u_strtoll(const char* restrict s, const char* restrict e)
+{
+   bool neg;
+   int64_t val;
+
+   U_INTERNAL_TRACE("u_strtoll(%p,%p)", s, e)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(e)
+
+   while (u__isspace(*s)) ++s;
+
+   if (*s == '-')
+      {
+      ++s;
+
+      neg = true;
+      }
+   else
+      {
+      neg = false;
+
+      if (*s == '+' ||
+          *s == '0')
+         {
+         ++s;
+         }
+      }
+
+   val = u_strtoull(s, e);
+
+   return (neg ? -val : val);
+}
+
 /* To avoid libc locale overhead */
 
 __pure int u__strncasecmp(const char* restrict s1, const char* restrict s2, size_t n)
@@ -200,7 +268,7 @@ uint32_t u_gettid(void)
 # elif defined(__APPLE__)
    mach_thread_self();
    mach_port_deallocate(mach_task_self(), tid);
-# elif defined(__NetBSD__)
+# elif defined(__NetBSD__) || defined(__UNIKERNEL__)
    _lwp_self();
 # elif defined(__FreeBSD__)
    thr_self(&tid);

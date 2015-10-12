@@ -289,6 +289,7 @@ kill_cmd() {
 	# command2 is executed if and only if command1 returns a non-zero exit status.
 	# -------------------------------------------------------------------------------------------------
 	# The return status of AND and OR lists is the exit status of the last command executed in the list
+	# -------------------------------------------------------------------------------------------------
 
 	if [ -n "$PID" ]; then
 		kill -0 $PID 2>/dev/null && kill -s $1 $PID 2>/dev/null && return 0
@@ -312,7 +313,8 @@ check_for_netcat() {
 			NC=nc
 		fi
 		if [ "$NC_TEST" = "Ncat 6.47 " ] || \
-			[ "$NC_TEST" = "usage: nc [-46DdhklnrStUuvzC] [-i interval] [-p source_port]" ]; then
+			[ "$NC_TEST" = "usage: nc [-46DdhklnrStUuvzC] [-i interval] [-p source_port]" ] || \
+			[ "$NC_TEST" = "This is nc from the netcat-openbsd package. An alternative nc is available" ]; then
 			NC=nc
 			NC_ARG_LISTEN_PORT=""
 		fi

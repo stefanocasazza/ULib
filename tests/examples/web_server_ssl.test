@@ -173,12 +173,12 @@ rm -rf $DOC_ROOT/www.sito1.com 2>/dev/null
 grep 'www.sito1.com' /etc/hosts >/dev/null 2>/dev/null
 
 if [ $? -ne 0 ]; then
-   echo '# virtual host userver' >> /etc/hosts
-   echo localhost www.sito1.com	>> /etc/hosts
-   echo localhost www.sito2.com	>> /etc/hosts
+   echo '# virtual host userver' >> /etc/hosts 2>/dev/null
+   echo localhost www.sito1.com	>> /etc/hosts 2>/dev/null
+   echo localhost www.sito2.com	>> /etc/hosts 2>/dev/null
 fi
 
-mkdir -p $DOC_ROOT/www.sito1.com/benchmark/docroot
+mkdir -p $DOC_ROOT/benchmark/docroot $DOC_ROOT/www.sito1.com/benchmark/docroot
 
 creat_link ../ok											 $DOC_ROOT/ok
 creat_link ../tmp											 $DOC_ROOT/tmp

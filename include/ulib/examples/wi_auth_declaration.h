@@ -2354,7 +2354,7 @@ static void get_ap_uptime()
          {
          U_INTERNAL_DUMP("nodog_rec->start = %ld result = %V", nodog_rec->start, result.rep)
 
-         nodog_rec->start = u_now->tv_sec - result.copy().strtol();
+         nodog_rec->start = u_now->tv_sec - result.strtol();
 
          (void) db_nodog->putDataStorage();
 
@@ -3933,11 +3933,11 @@ static void GET_get_config()
 
          if (key)
             {
-            UString pathname(U_CAPACITY);
+            UString buffer(U_CAPACITY);
 
-            pathname.snprintf("%w/ap/%v/nodog.conf", key.rep);
+            buffer.snprintf("%w/ap/%v/nodog.conf", key.rep);
 
-            _body = UFile::contentOf(pathname);
+            _body = UFile::contentOf(buffer);
 
             if (_body.empty())
                {
@@ -3948,14 +3948,14 @@ static void GET_get_config()
 
                UVector<UString> vec(*ip, '.');
 
-               key = vec[3]; // 10.8.0.54
+               buffer.snprintf("%w/ap/%v/nodog.conf.local", ip->rep);
 
-               pathname.snprintf("%w/ap/%v/nodog.conf.local", ip->rep);
+               UString local = UFile::contentOf(buffer);
 
-               UString local = UFile::contentOf(pathname);
+               buffer.snprintf("%u.%v", 16 + vec[2].strtol(), vec[3].rep);
 
-               const char* lan =                 "???";
-               uint32_t    len = U_CONSTANT_SIZE("???");
+               const char* lan = "???";
+               uint32_t len = U_CONSTANT_SIZE("???");
 
                UHTTP::getFormValue(*ap, U_CONSTANT_TO_PARAM("ap"), 0, 1, end);
 
@@ -3992,7 +3992,7 @@ static void GET_get_config()
                   }
 
                _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<LAN>"),                                              lan, len);
-               _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<DDD>"),                                              U_STRING_TO_PARAM(key));
+               _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<CCC>.<DDD>"),                                        U_STRING_TO_PARAM(buffer));
                _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("#include \"ap/<AAA.BBB.CCC.DDD>/nodog.conf.local\""), U_STRING_TO_PARAM(local));
                _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<AAA.BBB.CCC.DDD>"),                                  U_STRING_TO_PARAM(*ip));
 

@@ -34,7 +34,7 @@ ssize_t sendfile(int out_fd, int in_fd, off_t* poffset, size_t count);
 #  endif
 #endif
 
-#if !defined(HAVE_MREMAP) && !defined(__NetBSD__)
+#if !defined(HAVE_MREMAP) && !defined(__UNIKERNEL__)
 #  ifdef __cplusplus
 extern "C" {
 #  endif

@@ -31,7 +31,7 @@ bool          UClientImage_Base::bIPv6;
 bool          UClientImage_Base::log_request_partial;
 char          UClientImage_Base::cbuffer[128];
 long          UClientImage_Base::time_run;
-long          UClientImage_Base::time_between_request;
+long          UClientImage_Base::time_between_request = 10;
 bPFpc         UClientImage_Base::callerIsValidMethod;
 bPFpcu        UClientImage_Base::callerIsValidRequest;
 bPFpcu        UClientImage_Base::callerIsValidRequestExt;
@@ -603,8 +603,8 @@ bool UClientImage_Base::startRequest()
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    long time_elapsed = chronometer->restart();
 
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_between_request = %ld time_run = %ld U_ClientImage_request_is_cached = %b csfd = %d",
-                    U_ClientImage_pipeline,     time_between_request,      time_run,      U_ClientImage_request_is_cached,     csfd)
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_elapsed = %ld time_run = %ld U_ClientImage_request_is_cached = %b csfd = %d",
+                    U_ClientImage_pipeline,     time_elapsed,      time_run,      U_ClientImage_request_is_cached,     csfd)
 
    if (U_ClientImage_pipeline == false &&
        U_ClientImage_parallelization == 0)
@@ -621,7 +621,8 @@ bool UClientImage_Base::startRequest()
       if ((time_run - time_between_request) > 10L)
          {
 #     ifdef DEBUG
-         U_MESSAGE("%9D (pid %P) UClientImage_Base::startRequest(): time_between_request(%ld) < time_run(%ld) - request = %V", time_between_request, time_run, request->rep);
+         U_MESSAGE("%9D (pid %P) UClientImage_Base::startRequest(): time_between_request(%ld) < time_run(%ld) - isParallelizationGoingToStart(%u) = %b request = %V",
+                     time_between_request, time_run, UServer_Base::num_client_threshold, UServer_Base::isParallelizationGoingToStart(UServer_Base::num_client_threshold), request->rep);
 #     endif
 
          U_RETURN(true);
@@ -641,8 +642,15 @@ void UClientImage_Base::endRequest()
 #else
    time_run = chronometer->stop();
 
+# ifdef DEBUG
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_between_request = %ld time_run = %ld U_ClientImage_request_is_cached = %b",
                     U_ClientImage_pipeline,     time_between_request,      time_run,      U_ClientImage_request_is_cached)
+
+   if ((time_run - time_between_request) > 10L)
+      {
+      U_MESSAGE("%9D (pid %P) UClientImage_Base::endRequest(): time_between_request(%ld) < time_run(%ld) - request = %V", time_between_request, time_run, request->rep);
+      }
+# endif
 #endif
 
    if (callerHandlerEndRequest) callerHandlerEndRequest();
@@ -1394,6 +1402,8 @@ death:
 
    U_INTERNAL_ASSERT(socket->isOpen())
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
+
+   U_INTERNAL_DUMP("request(%u) = %V", request->size(), request->rep);
 
    U_RETURN(U_NOTIFIER_OK);
 }

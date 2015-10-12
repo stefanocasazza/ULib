@@ -16,7 +16,7 @@
  * same time (controlled by the MREMAP_MAYMOVE flag and available VM space) 
  */ 
 
-#ifdef __NetBSD__
+#ifdef __UNIKERNEL__
 extern U_EXPORT void* mremap(void* addr, size_t old_len, void* new_addr, size_t new_len, int _flags);
        U_EXPORT void* mremap(void* addr, size_t old_len, void* new_addr, size_t new_len, int _flags)
 #else

@@ -652,7 +652,7 @@ public:
       U_TRACE(1, "UFile::mremap(%p,%u,%u,%d)", old_address, old_size, new_size, flags)
 
       void* result =
-#  ifdef __NetBSD__
+#  if defined(__NetBSD__) || defined(__UNIKERNEL__)
       U_SYSCALL(mremap, "%p,%u,%p,%u,%d", old_address, old_size, 0, new_size, 0);
 #  else
       U_SYSCALL(mremap, "%p,%u,%u,%d",    old_address, old_size,    new_size, flags);

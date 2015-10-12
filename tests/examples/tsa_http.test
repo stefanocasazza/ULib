@@ -13,6 +13,8 @@ start_msg tsa_http
 
 DOC_ROOT=TSA
 
+mkdir -p $DOC_ROOT/response
+
 rm -rf $DOC_ROOT/*log \
 		 out/userver_tcp.out err/userver_tcp.err \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \

@@ -1575,12 +1575,20 @@ long UStringRep::strtol(int base) const
       char* endptr;
       long  result = (long) strtoul(str, &endptr, base);
 
-      U_INTERNAL_DUMP("errno = %d", errno)
+      U_INTERNAL_DUMP("errno = %d endptr = %p", errno, endptr)
 
-      if (endptr &&
-          endptr < eos)
+      U_INTERNAL_ASSERT_POINTER(endptr)
+
+      if (endptr < eos)
          {
          U_NUMBER_SUFFIX(result, *endptr);
+         }
+      else if (endptr > eos)
+         {
+         U_INTERNAL_ASSERT_EQUALS(base, 0)
+         U_INTERNAL_ASSERT(u_isNumber(str, _length))
+
+         result = u_strtol(str, eos);
          }
 
       U_RETURN(result);
@@ -1603,12 +1611,20 @@ int64_t UStringRep::strtoll(int base) const
       char* endptr;
       int64_t result = (int64_t) strtoull(str, &endptr, base);
 
-      U_INTERNAL_DUMP("errno = %d", errno)
+      U_INTERNAL_DUMP("errno = %d endptr = %p", errno, endptr)
 
-      if (endptr &&
-          endptr < eos)
+      U_INTERNAL_ASSERT_POINTER(endptr)
+
+      if (endptr < eos)
          {
          U_NUMBER_SUFFIX(result, *endptr);
+         }
+      else if (endptr > eos)
+         {
+         U_INTERNAL_ASSERT_EQUALS(base, 0)
+         U_INTERNAL_ASSERT(u_isNumber(str, _length))
+
+         result = u_strtoll(str, eos);
          }
 
       U_RETURN(result);

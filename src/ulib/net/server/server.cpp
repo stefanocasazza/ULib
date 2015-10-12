@@ -2105,7 +2105,7 @@ void UServer_Base::init()
 
       u_need_root(false);
 
-#  ifndef __NetBSD__
+#  if !defined(__NetBSD__) && !defined(__UNIKERNEL__)
       /**
        * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
        * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
@@ -2139,13 +2139,18 @@ void UServer_Base::init()
          {
          // NB: take a look at `netstat -s | grep overflowed`
 
-         sysctl_somaxconn = UFile::setSysParam("/proc/sys/net/core/somaxconn", USocket::iBackLog);
+         sysctl_somaxconn = UFile::getSysParam("/proc/sys/net/core/somaxconn");
 
-         if (sysctl_somaxconn == USocket::iBackLog) sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", USocket::iBackLog * 8);
-         else
+         if (sysctl_somaxconn < USocket::iBackLog)
             {
-            U_WARNING("The TCP backlog (LISTEN_BACKLOG) setting of %u cannot be enforced because of OS error - "
-                      "/proc/sys/net/core/somaxconn is set to the lower value of %u", USocket::iBackLog, SOMAXCONN);
+            int value = UFile::setSysParam("/proc/sys/net/core/somaxconn", USocket::iBackLog);
+
+            if (value == USocket::iBackLog) sysctl_max_syn_backlog = UFile::setSysParam("/proc/sys/net/ipv4/tcp_max_syn_backlog", value * 8);
+            else
+               {
+               U_WARNING("The TCP backlog (LISTEN_BACKLOG) setting of %u cannot be enforced because of OS error - "
+                         "/proc/sys/net/core/somaxconn is set to the lower value of %d", USocket::iBackLog, sysctl_somaxconn);
+               }
             }
          }
 #  endif
@@ -3234,7 +3239,7 @@ void UServer_Base::runLoop(const char* user)
        * NB: Takes an integer value (seconds)
        */
 
-#  if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(__NetBSD__)
+#  if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(__UNIKERNEL__) && !defined(__NetBSD__)
                                  socket->setTcpFastOpen();
                                  socket->setTcpDeferAccept();
       if (bssl == false)         socket->setBufferSND(min_size_for_sendfile);

@@ -494,6 +494,41 @@ U_EXPORT bool u_isUTF8(  const unsigned char* restrict s, uint32_t n) __pure;
 U_EXPORT int  u_isUTF16( const unsigned char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isBinary(const unsigned char* restrict s, uint32_t n) __pure;
 
+static inline unsigned long u_strtoul(const char* restrict s, const char* restrict e)
+{
+   char c;
+   unsigned long val = 0UL;
+
+   U_INTERNAL_TRACE("u_strtoul(%p,%p)", s, e)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(e)
+   U_INTERNAL_ASSERT(u__isdigit(*s))
+
+   for (c = *s; s != e; c = *++s) val = (c - '0') + (val * 10UL);
+
+   return val;
+}
+
+static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e)
+{
+   char c;
+   uint64_t val = 0ULL;
+
+   U_INTERNAL_TRACE("u_strtoull(%p,%p)", s, e)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(e)
+   U_INTERNAL_ASSERT(u__isdigit(*s))
+
+   for (c = *s; s != e; c = *++s) val = (c - '0') + (val * 10ULL);
+
+   return val;
+}
+
+extern U_EXPORT long    u_strtol( const char* restrict s, const char* restrict e);
+extern U_EXPORT int64_t u_strtoll(const char* restrict s, const char* restrict e);
+
 /**
  * Quick and dirty int->hex. The only standard way is to call snprintf (?),
  * which is undesirably slow for such a frequently-called function...

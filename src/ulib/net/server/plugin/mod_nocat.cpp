@@ -133,7 +133,7 @@ const UString*    UNoCatPlugIn::str_allowed_members_default;
       "</table></td></tr>\n" \
    "</table>\n" \
    "<hr noshade=\"1\"/>\n" \
-   "<img src=%s width=\"112\" height=\"35\">\n" \
+   "<img src=\"/images/auth_logo.png\" width=\"112\" height=\"35\">\n" \
    "<p style=\"text-align:right\">Powered by ULib</p>\n" \
    "</body>\n" \
    "</html>"
@@ -446,7 +446,7 @@ void UNoCatPlugIn::setStatusContent(const UString& ap_label)
                       label_buffer.rep,
                       peers->size(),
                       total_connections,
-                      status_content->rep, "/images/auth_logo.png");
+                      status_content->rep);
 
       *status_content = buffer;
       }
@@ -672,7 +672,20 @@ loop:
    UServer_Base::logCommandMsgError(fw->getCommand(), false);
 #endif
 
-   if (ok == false) n = total_connections;
+   if (ok == false)
+      {
+      n = total_connections;
+
+#  ifndef U_LOG_ENABLE
+      if (UCommand::setMsgError(fw->getCommand(), true))
+         {
+         U_WARNING("%s%.*s", UServer_Base::mod_name[0], u_buffer_len, u_buffer);
+         }
+
+      errno        = 0;
+      u_buffer_len = 0;
+#  endif
+      }
    else
       {
       n = (output.empty() ? (openlist->clear(), 0)
@@ -697,7 +710,6 @@ bool UNoCatPlugIn::checkFirewall()
 {
    U_TRACE(0, "UNoCatPlugIn::checkFirewall()")
 
-   UString output(U_CAPACITY);
    long firewall_interval = u_now->tv_sec - last_request_firewall;
 
    U_INTERNAL_DUMP("firewall_interval = %ld", firewall_interval)
@@ -711,6 +723,7 @@ bool UNoCatPlugIn::checkFirewall()
       U_RETURN(false);
       }
 
+   UString output(U_CAPACITY);
    uint32_t n = checkFirewall(output);
 
    U_SRV_LOG("checkFirewall(): total_connections %u firewall %u", total_connections, n);
@@ -2312,18 +2325,7 @@ int UNoCatPlugIn::handlerRequest()
 
          U_SRV_LOG("AUTH(%u) request: %.*S", index_AUTH, U_HTTP_URI_TO_TRACE);
 
-         if (U_HTTP_URI_STREQ("/checkFirewall"))
-            {
-            if (flag_check_system == false)
-               {
-               (void) getARPCache();
-
-               checkFirewall();
-               }
-
-            notifyAuthOfUsersInfo(index_AUTH);
-            }
-         else if (U_HTTP_URI_STREQ("/check"))
+         if (U_HTTP_URI_STREQ("/check"))
             {
             if (flag_check_system == false) checkSystem();
 
@@ -2391,7 +2393,24 @@ int UNoCatPlugIn::handlerRequest()
 
             (void) getARPCache();
 
+            if (total_connections > peers->size() && // anomalous
+                checkFirewall())
+               {
+               sendInfoData(index_AUTH);
+               }
+
             setStatusContent(ap_label); // NB: peer == 0 -> request from AUTH to get status access point...
+            }
+         else if (U_HTTP_URI_STREQ("/checkFirewall"))
+            {
+            if (flag_check_system == false)
+               {
+               (void) getARPCache();
+
+               (void) checkFirewall();
+               }
+
+            notifyAuthOfUsersInfo(index_AUTH);
             }
          else if (U_HTTP_URI_STREQ("/logout") &&
                   U_http_info.query_len)

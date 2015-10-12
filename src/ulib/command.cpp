@@ -19,7 +19,7 @@
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
 
-#ifdef __NetBSD__
+#if defined(__NetBSD__) || defined(__UNIKERNEL__)
 extern char** environ;
 #endif
 
@@ -286,9 +286,9 @@ U_NO_EXPORT void UCommand::execute(bool flag_stdin, bool flag_stdout, bool flag_
 
    U_INTERNAL_DUMP("begin = %p end = %p argv_exec[1] = %p %S", begin, _end, argv_exec[1], argv_exec[1])
 
-#  ifndef _MSWINDOWS_
+# ifndef _MSWINDOWS_
    U_INTERNAL_ASSERT_RANGE(begin, argv_exec[1], _end)
-#  endif
+# endif
 
    int32_t i;
 

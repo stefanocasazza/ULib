@@ -18,7 +18,7 @@
 #include <openssl/des.h>
 #include <openssl/rand.h>
 
-#if defined(__NetBSD__)
+#if defined(__NetBSD__) || defined(__UNIKERNEL__)
 #  include <des.h>
 #endif
 
