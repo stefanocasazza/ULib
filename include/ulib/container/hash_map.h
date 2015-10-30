@@ -116,7 +116,7 @@ public:
 
    void deallocate()
       {
-      U_TRACE(0, "UHashMap<void*>::deallocate()")
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::deallocate()")
 
       _capacity = 0;
       }
@@ -127,21 +127,21 @@ public:
 
    uint32_t size() const
       {
-      U_TRACE(0, "UHashMap<void*>::size()")
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::size()")
 
       U_RETURN(_length);
       }
 
    uint32_t capacity() const
       {
-      U_TRACE(0, "UHashMap<void*>::capacity()")
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::capacity()")
 
       U_RETURN(_capacity);
       }
 
    bool empty() const
       {
-      U_TRACE(0, "UHashMap<void*>::empty()")
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::empty()")
 
       if (_length) U_RETURN(false);
 
@@ -302,7 +302,7 @@ protected:
 
    void _deallocate()
       {
-      U_TRACE(0, "UHashMap<void*>::_deallocate()")
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::_deallocate()")
 
       U_CHECK_MEMORY
 
@@ -438,7 +438,7 @@ public:
 
    void eraseAfterFind()
       {
-      U_TRACE(0, "UHashMap<T*>::eraseAfterFind()")
+      U_TRACE_NO_PARAM(0, "UHashMap<T*>::eraseAfterFind()")
 
       U_INTERNAL_ASSERT_POINTER(node)
 
@@ -498,7 +498,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0+256, "UHashMap<T*>::clear()")
+      U_TRACE_NO_PARAM(0+256, "UHashMap<T*>::clear()")
 
       U_INTERNAL_ASSERT(check_memory())
 

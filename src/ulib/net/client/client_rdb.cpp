@@ -17,7 +17,7 @@
 
 U_NO_EXPORT void URDBClient_Base::setStatus()
 {
-   U_TRACE(0, "URDBClient_Base::setStatus()")
+   U_TRACE_NO_PARAM(0, "URDBClient_Base::setStatus()")
 
    const char* descr;
 
@@ -44,7 +44,7 @@ U_NO_EXPORT void URDBClient_Base::setStatus()
 
 bool URDBClient_Base::readResponse()
 {
-   U_TRACE(0, "URDBClient_Base::readResponse()")
+   U_TRACE_NO_PARAM(0, "URDBClient_Base::readResponse()")
 
    response.setBuffer(U_CAPACITY);
 
@@ -91,7 +91,7 @@ bool URDBClient_Base::processRequest(const char* token)
 
 bool URDBClient_Base::closeReorganize()
 {
-   U_TRACE(0, "URDBClient_Base::closeReorganize()")
+   U_TRACE_NO_PARAM(0, "URDBClient_Base::closeReorganize()")
 
    reset();
 
@@ -104,7 +104,7 @@ bool URDBClient_Base::closeReorganize()
 
 bool URDBClient_Base::beginTransaction()
 {
-   U_TRACE(0, "URDBClient_Base::beginTransaction()")
+   U_TRACE_NO_PARAM(0, "URDBClient_Base::beginTransaction()")
 
    reset();
 
@@ -115,7 +115,7 @@ bool URDBClient_Base::beginTransaction()
 
 bool URDBClient_Base::abortTransaction()
 {
-   U_TRACE(0, "URDBClient_Base::abortTransaction()")
+   U_TRACE_NO_PARAM(0, "URDBClient_Base::abortTransaction()")
 
    reset();
 
@@ -126,7 +126,7 @@ bool URDBClient_Base::abortTransaction()
 
 bool URDBClient_Base::commitTransaction()
 {
-   U_TRACE(0, "URDBClient_Base::commitTransaction()")
+   U_TRACE_NO_PARAM(0, "URDBClient_Base::commitTransaction()")
 
    reset();
 

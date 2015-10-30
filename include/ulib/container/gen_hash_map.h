@@ -124,7 +124,7 @@ public:
 
    void deallocate()
       {
-      U_TRACE(0, "UGenericHashMap<K,I>::deallocate()")
+      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::deallocate()")
 
       U_CHECK_MEMORY
 
@@ -139,21 +139,21 @@ public:
 
    uint32_t size() const
       {
-      U_TRACE(0, "UGenericHashMap<K,I>::size()")
+      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::size()")
 
       U_RETURN(_length);
       }
 
    uint32_t capacity() const
       {
-      U_TRACE(0, "UGenericHashMap<K,I>::capacity()")
+      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::capacity()")
 
       U_RETURN(_capacity);
       }
 
    bool empty() const
       {
-      U_TRACE(0, "UGenericHashMap<K,I>::empty()")
+      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::empty()")
 
       if (_length) U_RETURN(false);
 
@@ -196,7 +196,7 @@ public:
 
    void eraseAfterFind()
       {
-      U_TRACE(0, "UGenericHashMap<K,I>::eraseAfterFind()")
+      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::eraseAfterFind()")
 
       U_CHECK_MEMORY
 
@@ -344,7 +344,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UGenericHashMap<K,I>::clear()")
+      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::clear()")
 
       U_INTERNAL_DUMP("_length = %u", _length)
 
@@ -394,7 +394,7 @@ public:
 
    bool first()
       {
-      U_TRACE(0, "UGenericHashMap<K,I>::first()")
+      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::first()")
 
       U_INTERNAL_DUMP("_length = %u", _length)
 
@@ -413,7 +413,7 @@ public:
 
    bool next()
       {
-      U_TRACE(0, "UGenericHashMap<K,I>::next()")
+      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::next()")
 
       U_INTERNAL_DUMP("index = %u node = %p next = %p", index, node, node->next)
 

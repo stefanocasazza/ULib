@@ -44,6 +44,8 @@
 
 #ifndef HAVE_SEM_INIT
 #  include "replace/sem.c"
+#elif !defined(HAVE_SEM_TIMEDWAIT)
+#  include "replace/sem_timedwait.c"
 #endif
 
 #ifndef HAVE_DAEMON

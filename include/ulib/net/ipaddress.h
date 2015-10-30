@@ -123,7 +123,7 @@ public:
 
    bool isEmpty()
       {
-      U_TRACE(0, "UIPAllow::isEmpty()")
+      U_TRACE_NO_PARAM(0, "UIPAllow::isEmpty()")
 
       bool result = (device.empty() || host.empty());
 

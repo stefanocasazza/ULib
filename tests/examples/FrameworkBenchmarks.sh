@@ -32,16 +32,16 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 #Running 15s test @ http://localhost:8080/plaintext
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency     1.36ms  419.70us  16.85ms   71.18%
-#    Req/Sec   406.47k    24.96k  507.20k    76.88%
+#    Latency     1.07ms  292.99us  17.09ms   83.28%
+#    Req/Sec   509.25k    28.12k  568.89k    75.06%
 #  Latency Distribution
-#     50%    1.36ms
-#     75%    1.62ms
-#     90%    1.82ms
-#     99%    2.59ms
-#  23278464 requests in 14.96s, 3.12GB read
-#Requests/sec: 1555648.16
-#Transfer/sec:    213.64MB
+#     50%    1.07ms
+#     75%    1.22ms
+#     90%    1.34ms
+#     99%    1.53ms
+#  29127120 requests in 15.00s, 3.91GB read
+#Requests/sec: 1941819.65
+#Transfer/sec:    266.67MB
 #
 # Running 15s test @ http://laptop:8080/plaintext
 #   4 threads and 256 connections
@@ -230,7 +230,7 @@ start_prg_background userver_tcp -c benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #ab -n 100000 -c10 https://stefano/servlet/benchmarking?name=stefano
 
 #$SLEEP
-#killall userver_tcp userver_ssl
+#pkill userver_tcp userver_ssl
 
  mv err/userver_tcp.err err/FrameworkBenchmarks.err
 #mv err/userver_ssl.err err/benchmarking.err

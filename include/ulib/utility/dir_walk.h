@@ -97,7 +97,7 @@ public:
 
    static bool isDirectory()
       {
-      U_TRACE(0, "UDirWalk::isDirectory()")
+      U_TRACE_NO_PARAM(0, "UDirWalk::isDirectory()")
 
       U_INTERNAL_ASSERT_POINTER(pthis)
 
@@ -106,7 +106,7 @@ public:
 
    static void setSortingForInode()
       {
-      U_TRACE(0, "UDirWalk::setSortingForInode()")
+      U_TRACE_NO_PARAM(0, "UDirWalk::setSortingForInode()")
 
       sort_by = cmp_inode;
       }
@@ -193,7 +193,7 @@ protected:
 
    virtual void foundFile()
       {
-      U_TRACE(0, "UDirWalk::foundFile()")
+      U_TRACE_NO_PARAM(0, "UDirWalk::foundFile()")
 
       U_INTERNAL_ASSERT_EQUALS(pthis, this)
 

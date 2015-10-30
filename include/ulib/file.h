@@ -89,7 +89,7 @@ public:
 
    void reset()
       {
-      U_TRACE(0, "UFile::reset()")
+      U_TRACE_NO_PARAM(0, "UFile::reset()")
 
       fd       = -1;
       map      = (char*)MAP_FAILED;
@@ -146,7 +146,7 @@ public:
 
    bool isRoot()
       {
-      U_TRACE(0, "UFile::isRoot()")
+      U_TRACE_NO_PARAM(0, "UFile::isRoot()")
 
       U_INTERNAL_DUMP("u_cwd           = %S", u_cwd)
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
@@ -162,7 +162,7 @@ public:
 
    bool isPath()
       {
-      U_TRACE(0, "UFile::isPath()")
+      U_TRACE_NO_PARAM(0, "UFile::isPath()")
 
       U_CHECK_MEMORY
 
@@ -263,7 +263,7 @@ public:
 
    bool isOpen()
       {
-      U_TRACE(0, "UFile::isOpen()")
+      U_TRACE_NO_PARAM(0, "UFile::isOpen()")
 
       U_CHECK_MEMORY
 
@@ -274,7 +274,7 @@ public:
 
    void close()
       {
-      U_TRACE(0, "UFile::close()")
+      U_TRACE_NO_PARAM(0, "UFile::close()")
 
       U_CHECK_MEMORY
 
@@ -294,7 +294,7 @@ public:
 
    int getFd() const
       {
-      U_TRACE(0, "UFile::getFd()")
+      U_TRACE_NO_PARAM(0, "UFile::getFd()")
 
       U_CHECK_MEMORY
 
@@ -322,7 +322,7 @@ public:
 
    bool slink() const
       {
-      U_TRACE(0, "UFile::slink()")
+      U_TRACE_NO_PARAM(0, "UFile::slink()")
 
       U_CHECK_MEMORY
 
@@ -336,7 +336,7 @@ public:
 #ifndef _MSWINDOWS_
    bool lstat()
       {
-      U_TRACE(1, "UFile::lstat()")
+      U_TRACE_NO_PARAM(1, "UFile::lstat()")
 
       U_CHECK_MEMORY
 
@@ -352,7 +352,7 @@ public:
 
    void fstat()
       {
-      U_TRACE(1, "UFile::fstat()")
+      U_TRACE_NO_PARAM(1, "UFile::fstat()")
 
       U_CHECK_MEMORY
 
@@ -386,7 +386,7 @@ public:
 
    void readSize()
       {
-      U_TRACE(1, "UFile::readSize()")
+      U_TRACE_NO_PARAM(1, "UFile::readSize()")
 
       U_CHECK_MEMORY
 
@@ -404,7 +404,7 @@ public:
 
    off_t getSize() const
       {
-      U_TRACE(0, "UFile::getSize()")
+      U_TRACE_NO_PARAM(0, "UFile::getSize()")
 
       U_CHECK_MEMORY
 
@@ -435,7 +435,7 @@ public:
 
    bool empty() const
       {
-      U_TRACE(0, "UFile::empty()")
+      U_TRACE_NO_PARAM(0, "UFile::empty()")
 
       U_CHECK_MEMORY
 
@@ -446,7 +446,7 @@ public:
 
    bool regular() const
       {
-      U_TRACE(0, "UFile::regular()")
+      U_TRACE_NO_PARAM(0, "UFile::regular()")
 
       U_CHECK_MEMORY
 
@@ -457,7 +457,7 @@ public:
 
    bool dir() const
       {
-      U_TRACE(0, "UFile::dir()")
+      U_TRACE_NO_PARAM(0, "UFile::dir()")
 
       U_CHECK_MEMORY
 
@@ -468,7 +468,7 @@ public:
 
    bool socket() const
       {
-      U_TRACE(0, "UFile::socket()")
+      U_TRACE_NO_PARAM(0, "UFile::socket()")
 
       U_CHECK_MEMORY
 
@@ -483,7 +483,7 @@ public:
 
    UString etag() const
       {
-      U_TRACE(0, "UFile::etag()")
+      U_TRACE_NO_PARAM(0, "UFile::etag()")
 
       U_CHECK_MEMORY
 
@@ -501,7 +501,7 @@ public:
 
    uint64_t inode()
       {
-      U_TRACE(0, "UFile::inode()")
+      U_TRACE_NO_PARAM(0, "UFile::inode()")
 
       U_CHECK_MEMORY
 
@@ -511,11 +511,26 @@ public:
       U_RETURN(st_ino);
       }
 
+   /**
+    * Mount Point
+    *
+    * Either the system root directory or a directory for which the st_dev field of structure stat differs from that of its parent directory
+    */
+
+   bool isMountPoint(dev_t parent_id)
+      {
+      U_TRACE(0, "UFile::isMountPoint(%ld)", parent_id)
+
+      fstat();
+
+      U_RETURN(st_dev != parent_id);
+      }
+
    // MODIFIER
 
    bool modified()
       {
-      U_TRACE(0, "UFile::modified()")
+      U_TRACE_NO_PARAM(0, "UFile::modified()")
 
       time_t mtime = st_mtime;
 
@@ -565,7 +580,7 @@ public:
 
    bool _unlink()
       {
-      U_TRACE(0, "UFile::_unlink()")
+      U_TRACE_NO_PARAM(0, "UFile::_unlink()")
 
       U_CHECK_MEMORY
 
@@ -592,7 +607,7 @@ public:
 
    void fsync()
       {
-      U_TRACE(1, "UFile::fsync()")
+      U_TRACE_NO_PARAM(1, "UFile::fsync()")
 
       U_CHECK_MEMORY
 
@@ -623,7 +638,7 @@ public:
 
    bool isMapped() const
       {
-      U_TRACE(0, "UFile::isMapped()")
+      U_TRACE_NO_PARAM(0, "UFile::isMapped()")
 
       U_CHECK_MEMORY
 

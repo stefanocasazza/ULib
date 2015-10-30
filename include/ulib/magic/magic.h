@@ -59,7 +59,7 @@ public:
 
    static void clear()
       {
-      U_TRACE(1, "UMagic::clear()")
+      U_TRACE_NO_PARAM(1, "UMagic::clear()")
 
       if (magic)
          {
@@ -71,7 +71,7 @@ public:
 
    static const char* getError()
       {
-      U_TRACE(1, "UMagic::getError()")
+      U_TRACE_NO_PARAM(1, "UMagic::getError()")
 
       U_INTERNAL_ASSERT_POINTER(magic)
 

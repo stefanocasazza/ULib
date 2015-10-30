@@ -68,7 +68,7 @@ public:
 
    static bool hasFailed()
       {
-      U_TRACE(0, "URPCMethod::hasFailed()")
+      U_TRACE_NO_PARAM(0, "URPCMethod::hasFailed()")
 
       bool result = (pFault != 0);
 
@@ -93,7 +93,7 @@ public:
 
    virtual void encode()
       {
-      U_TRACE(0, "URPCMethod::encode()")
+      U_TRACE_NO_PARAM(0, "URPCMethod::encode()")
 
       U_INTERNAL_ASSERT(false) // If this assert fires, you need to implement the method
       }

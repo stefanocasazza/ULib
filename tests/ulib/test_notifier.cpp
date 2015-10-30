@@ -5,7 +5,6 @@
 #include <ulib/notifier.h>
 
 #include <fcntl.h>
-#include <iostream>
 
 struct node {
    node* next;
@@ -231,7 +230,7 @@ public:
       U_RETURN(-1);
       }
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
 #endif
 };
@@ -264,7 +263,7 @@ public:
       U_RETURN(0);
       }
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool _reset) const { return MyAlarm1::dump(_reset); }
 #endif
 };
@@ -289,12 +288,14 @@ public:
       {
       U_TRACE(0, "handlerOutput::handlerWrite()")
 
+#  ifdef U_STDCPP_ENABLE
       cout << "receive message: " << message << endl;
+#  endif
 
       U_RETURN(0);
       }
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool _reset) const
       {
       *UObjectIO::os << "fd      " << fd << "\n"
@@ -351,7 +352,7 @@ public:
       U_RETURN(0);
       }
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool _reset) const
       {
       *UObjectIO::os << "fd      " << fd << "\n"
@@ -412,7 +413,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    UTimer::setTimer();
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
@@ -433,18 +434,18 @@ int U_EXPORT main(int argc, char* argv[])
       
       timeout.nanosleep();
 
-#  ifdef DEBUG
+#  if defined(U_STDCPP_ENABLE) && defined(DEBUG)
       if (argc > 2) UTimer::printInfo(cout);
 #  endif
       }
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
    UTimer::clear();
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 

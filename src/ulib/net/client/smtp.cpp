@@ -19,7 +19,7 @@
 
 void USmtpClient::setStatus()
 {
-   U_TRACE(0, "USmtpClient::setStatus()")
+   U_TRACE_NO_PARAM(0, "USmtpClient::setStatus()")
 
    const char* descr;
 
@@ -168,7 +168,7 @@ void USmtpClient::setSenderAddress(const UString& sender)
 
 U_NO_EXPORT void USmtpClient::setStateFromResponse()
 {
-   U_TRACE(0, "USmtpClient::setStateFromResponse()")
+   U_TRACE_NO_PARAM(0, "USmtpClient::setStateFromResponse()")
 
    switch (response)
       {
@@ -223,7 +223,7 @@ U_NO_EXPORT bool USmtpClient::syncCommand(const char* format, ...)
 
 bool USmtpClient::startTLS()
 {
-   U_TRACE(0, "USmtpClient::startTLS()")
+   U_TRACE_NO_PARAM(0, "USmtpClient::startTLS()")
 
 #ifdef USE_LIBSSL
    U_ASSERT(Socket::isSSL())

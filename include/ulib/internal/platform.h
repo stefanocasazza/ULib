@@ -44,7 +44,9 @@
                            __GNUC_MINOR__ *   100 + \
                            __GNUC_PATCHLEVEL__)
 #  if GCC_VERSION_NUM > 29600 && GCC_VERSION_NUM != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
+#    if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
 #     define __pure                       __attribute__((pure))
+#    endif
 #     define LIKELY(x)                    __builtin_expect(!!(x), 1)
 #     define UNLIKELY(x)                  __builtin_expect(!!(x), 0)
 #     define __noreturn                   __attribute__((noreturn))

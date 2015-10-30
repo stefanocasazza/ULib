@@ -18,7 +18,7 @@ close:
 #	print \nclose
 	send ath
 	! ./ABILITA_CALLER_ID.sh
-#	! killall -9 minicom
+#	! pkill -9 minicom
 #	exit 0
 
 main:

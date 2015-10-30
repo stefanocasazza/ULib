@@ -61,7 +61,7 @@ public:
 
    void setDetail()
       {
-      U_TRACE(0, "URPCFault::setDetail()")
+      U_TRACE_NO_PARAM(0, "URPCFault::setDetail()")
 
       U_INTERNAL_ASSERT_MAJOR(u_buffer_len, 0)
 

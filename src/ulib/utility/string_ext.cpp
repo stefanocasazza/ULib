@@ -739,7 +739,7 @@ end:
 
 UString UStringExt::getPidProcess()
 {
-   U_TRACE(0, "UStringExt::getPidProcess()")
+   U_TRACE_NO_PARAM(0, "UStringExt::getPidProcess()")
 
    UString value(32U);
 

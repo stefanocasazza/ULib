@@ -179,23 +179,15 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static const UString* str_p1;
-   static const UString* str_p2;
-   static const UString* str_or;
-   static const UString* str_and;
-   static const UString* str_not;
-
-   static void str_allocate();
-
    // COSTRUTTORE
 
    UQueryParser()
       {
       U_TRACE_REGISTER_OBJECT(0, UQueryParser, "", 0)
 
-      tree = 0;
+      U_INTERNAL_ASSERT_POINTER(UString::str_not);
 
-      if (str_not == 0) str_allocate();
+      tree = 0;
       }
 
    ~UQueryParser()
@@ -264,45 +256,45 @@ private:
 
    bool isBraceStart()
       {
-      U_TRACE(0, "UQueryParser::isBraceStart()")
+      U_TRACE_NO_PARAM(0, "UQueryParser::isBraceStart()")
 
-      bool result = t.tokenSeen(str_p1);
+      bool result = t.tokenSeen(UString::str_p1);
 
       U_RETURN(result);
       }
 
    bool isBraceEnd()
       {
-      U_TRACE(0, "UQueryParser::isBraceEnd()")
+      U_TRACE_NO_PARAM(0, "UQueryParser::isBraceEnd()")
 
-      bool result = t.tokenSeen(str_p2);
+      bool result = t.tokenSeen(UString::str_p2);
 
       U_RETURN(result);
       }
 
    bool isOR()
       {
-      U_TRACE(0, "UQueryParser::isOR()")
+      U_TRACE_NO_PARAM(0, "UQueryParser::isOR()")
 
-      bool result = t.tokenSeen(str_or);
+      bool result = t.tokenSeen(UString::str_or);
 
       U_RETURN(result);
       }
 
    bool isAND()
       {
-      U_TRACE(0, "UQueryParser::isAND()")
+      U_TRACE_NO_PARAM(0, "UQueryParser::isAND()")
 
-      bool result = t.tokenSeen(str_and);
+      bool result = t.tokenSeen(UString::str_and);
 
       U_RETURN(result);
       }
 
    bool isNOT()
       {
-      U_TRACE(0, "UQueryParser::isNOT()")
+      U_TRACE_NO_PARAM(0, "UQueryParser::isNOT()")
 
-      bool result = t.tokenSeen(str_not);
+      bool result = t.tokenSeen(UString::str_not);
 
       U_RETURN(result);
       }

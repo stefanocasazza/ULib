@@ -39,7 +39,7 @@ UZIP::UZIP(const UString& _content) : content(_content), tmpdir(U_CAPACITY)
 
 void UZIP::clear()
 {
-   U_TRACE(0, "UZIP::clear()")
+   U_TRACE_NO_PARAM(0, "UZIP::clear()")
 
    if (file)
       {
@@ -92,7 +92,7 @@ void UZIP::clear()
 
 U_NO_EXPORT void UZIP::assignFilenames()
 {
-   U_TRACE(0, "UZIP::assignFilenames()")
+   U_TRACE_NO_PARAM(0, "UZIP::assignFilenames()")
 
    U_INTERNAL_ASSERT_MAJOR(npart,0)
    U_INTERNAL_ASSERT_EQUALS(zippartname,0)
@@ -225,7 +225,7 @@ UString UZIP::archive(const char** add_to_filenames)
 
 bool UZIP::readContent()
 {
-   U_TRACE(1, "UZIP::readContent()")
+   U_TRACE_NO_PARAM(1, "UZIP::readContent()")
 
    U_CHECK_MEMORY
 

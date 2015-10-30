@@ -21,7 +21,7 @@ UFtpClient::~UFtpClient()
 
 void UFtpClient::setStatus()
 {
-   U_TRACE(0, "UFtpClient::setStatus()")
+   U_TRACE_NO_PARAM(0, "UFtpClient::setStatus()")
 
    const char* descr;
 
@@ -107,7 +107,7 @@ bool UFtpClient::syncCommand(const char* format, ...)
 
 void UFtpClient::readCommandResponse()
 {
-   U_TRACE(0, "UFtpClient::readCommandResponse()")
+   U_TRACE_NO_PARAM(0, "UFtpClient::readCommandResponse()")
 
    response = USocketExt::readMultilineReply(this);
 
@@ -122,7 +122,7 @@ void UFtpClient::readCommandResponse()
 
 bool UFtpClient::negotiateEncryption()
 {
-   U_TRACE(0, "UFtpClient::negotiateEncryption()")
+   U_TRACE_NO_PARAM(0, "UFtpClient::negotiateEncryption()")
 
 #ifdef USE_LIBSSL
    U_ASSERT(Socket::isSSL())
@@ -173,7 +173,7 @@ bool UFtpClient::login(const char* user, const char* passwd)
 
 inline bool UFtpClient::readPortToConnect()
 {
-   U_TRACE(0, "UFtpClient::readPortToConnect()")
+   U_TRACE_NO_PARAM(0, "UFtpClient::readPortToConnect()")
 
    U_INTERNAL_ASSERT_EQUALS(response, FTP_ENTERING_PASSIVE_MODE)
 
@@ -215,7 +215,7 @@ inline bool UFtpClient::readPortToConnect()
 
 inline void UFtpClient::readNumberOfByte()
 {
-   U_TRACE(0, "UFtpClient::readNumberOfByte()")
+   U_TRACE_NO_PARAM(0, "UFtpClient::readNumberOfByte()")
 
    U_INTERNAL_ASSERT(response == FTP_OPENING_DATA_CONNECTION || response == FTP_DATA_CONNECTION_OPEN)
 
@@ -259,7 +259,7 @@ inline void UFtpClient::readNumberOfByte()
 
 bool UFtpClient::createPassiveDataConnection()
 {
-   U_TRACE(0, "UFtpClient::createPassiveDataConnection()")
+   U_TRACE_NO_PARAM(0, "UFtpClient::createPassiveDataConnection()")
 
    (void) syncCommand("PASV"); // Enter Passive mode
 
@@ -349,7 +349,7 @@ size_t UFtpClient::getFileSize(const UString& path)
       {
       // skip over the response code
 
-      size_t size = strtoul(u_buffer + 4, 0, 0);
+      size_t size = strtoul(u_buffer + 4, 0, 10);
 
       U_RETURN(size);
       }
@@ -375,7 +375,7 @@ bool UFtpClient::restart(off_t offset)
 
 bool UFtpClient::setConnection()
 {
-   U_TRACE(0, "UFtpClient::setConnection()")
+   U_TRACE_NO_PARAM(0, "UFtpClient::setConnection()")
 
    // ------------------------------------------
    // 3. Execute login

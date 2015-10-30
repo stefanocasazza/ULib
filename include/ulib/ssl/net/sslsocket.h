@@ -179,7 +179,7 @@ public:
 
    long getVerifyResult()
       {
-      U_TRACE(1, "USSLSocket::getVerifyResult()")
+      U_TRACE_NO_PARAM(1, "USSLSocket::getVerifyResult()")
 
       U_INTERNAL_ASSERT_POINTER(ssl)
 
@@ -203,7 +203,7 @@ public:
 
    X509* getPeerCertificate()
       {
-      U_TRACE(1, "USSLSocket::getPeerCertificate()")
+      U_TRACE_NO_PARAM(1, "USSLSocket::getPeerCertificate()")
 
       X509* peer = (X509*) (ssl ? U_SYSCALL(SSL_get_peer_certificate, "%p", ssl) : 0);
 
@@ -222,7 +222,7 @@ public:
 
    uint32_t pending() const
       {
-      U_TRACE(0, "USSLSocket::pending()")
+      U_TRACE_NO_PARAM(0, "USSLSocket::pending()")
 
       if (USocket::isSSLActive())
          {

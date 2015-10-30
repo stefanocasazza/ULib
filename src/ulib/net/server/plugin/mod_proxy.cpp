@@ -55,7 +55,7 @@ int UProxyPlugIn::handlerConfig(UFileConfig& cfg)
 
 int UProxyPlugIn::handlerInit()
 {
-   U_TRACE(0, "UProxyPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(0, "UProxyPlugIn::handlerInit()")
 
    if (UHTTP::vservice == 0 ||
        UHTTP::vservice->empty())
@@ -77,7 +77,7 @@ int UProxyPlugIn::handlerInit()
 
 int UProxyPlugIn::handlerRequest()
 {
-   U_TRACE(0, "UProxyPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UProxyPlugIn::handlerRequest()")
 
    if (UHTTP::isProxyRequest())
       {

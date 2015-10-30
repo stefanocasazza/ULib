@@ -67,7 +67,7 @@ bool USOAPParser::parse(const UString& msg)
 
 UString USOAPParser::getFaultResponse()
 {
-   U_TRACE(0, "USOAPParser::getFaultResponse()")
+   U_TRACE_NO_PARAM(0, "USOAPParser::getFaultResponse()")
 
    U_INTERNAL_ASSERT_POINTER(method)
 
@@ -119,7 +119,7 @@ UString USOAPParser::processMessage(const UString& msg, URPCObject& object, bool
       }
    else if (parse(msg))
       {
-      U_ASSERT(envelope.methodName != *UString::str_fault)
+      U_ASSERT_EQUALS(envelope.methodName.equal(U_CONSTANT_TO_PARAM("Fault")), false)
 
       retval = object.processMessage(envelope, bContainsFault);
       }
@@ -207,8 +207,8 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
 
       // set the name of namespace qualified element information (gSOAP)
 
-      if (flag_state    == 1 &&
-          namespaceName == *UString::str_xmlns &&
+      if (flag_state == 1                                   &&
+          namespaceName.equal(U_CONSTANT_TO_PARAM("xmlns")) &&
            accessorName == *UString::str_ns)
          {
          envelope.nsName = value;
@@ -221,7 +221,7 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
       // will appear in the set of values.
 
 #  ifdef U_SOAP_NAMESPACE
-      if (namespaceName == *UString::str_xmlns) XMLNStoURN.insert(accessorName, value);
+      if (namespaceName.equal(U_CONSTANT_TO_PARAM("xmlns"))) XMLNStoURN.insert(accessorName, value);
 #  endif
       }
 }

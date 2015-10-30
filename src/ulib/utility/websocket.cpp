@@ -53,33 +53,13 @@ UString*    UWebSocket::rbuffer;
 uint32_t    UWebSocket::max_message_size;
 const char* UWebSocket::upgrade_settings;
 
-const UString* UWebSocket::str_websocket_key;
-const UString* UWebSocket::str_websocket_prot;
-
 UWebSocket::WebSocketFrameData UWebSocket::control_frame = { 0, 0, 1, 8, 0 };
 UWebSocket::WebSocketFrameData UWebSocket::message_frame = { 0, 0, 1, 0, 0 };
 
-void UWebSocket::str_allocate()
-{
-   U_TRACE(0+256, "UWebSocket::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_websocket_key, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_websocket_prot, 0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Key") },
-      { U_STRINGREP_FROM_CONSTANT("Sec-WebSocket-Protocol") }
-   };
-
-   U_NEW_ULIB_OBJECT(str_websocket_key,  U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_websocket_prot, U_STRING_FROM_STRINGREP_STORAGE(1));
-}
-
 bool UWebSocket::sendAccept()
 {
-   U_TRACE(0, "UWebSocket::sendAccept()")
+   U_TRACE_NO_PARAM(0, "UWebSocket::sendAccept()")
 
-   U_INTERNAL_ASSERT_POINTER(str_websocket_key)
    U_INTERNAL_ASSERT_MAJOR(U_http_websocket_len, 0)
 
    // In order to establish a websocket connection, a client (a web browser) sends a HTTP GET request with a number of HTTP headers. Among those
@@ -120,7 +100,7 @@ bool UWebSocket::sendAccept()
 
 void UWebSocket::checkForInitialData()
 {
-   U_TRACE(0, "UWebSocket::checkForInitialData()")
+   U_TRACE_NO_PARAM(0, "UWebSocket::checkForInitialData()")
 
    U_INTERNAL_ASSERT_POINTER(rbuffer)
    U_INTERNAL_ASSERT_MAJOR(UClientImage_Base::size_request, 0)

@@ -43,6 +43,8 @@ EOF
 
 DIR_CMD="../../examples/simple_client_server"
 
+pkill -9 test_
+
 start_prg_background server											  inp/server.cf
 start_prg 				client --log client.log --max_length 256 inp/client.cf
 $SLEEP

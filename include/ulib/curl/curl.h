@@ -102,7 +102,7 @@ public:
 
    void setInsecure()
       {
-      U_TRACE(0, "UCURL::setInsecure()")
+      U_TRACE_NO_PARAM(0, "UCURL::setInsecure()")
 
       /* new stuff needed for libcurl 7.10 */
 
@@ -112,14 +112,14 @@ public:
 
    void setNoBody()
       {
-      U_TRACE(0, "UCURL::setNoBody()")
+      U_TRACE_NO_PARAM(0, "UCURL::setNoBody()")
 
       setOption(CURLOPT_NOBODY, 1L);
       }
 
    void setGetMode()
       {
-      U_TRACE(0, "UCURL::setGetMode()")
+      U_TRACE_NO_PARAM(0, "UCURL::setGetMode()")
 
       setOption(CURLOPT_HTTPGET, 1L);
       }
@@ -180,7 +180,7 @@ public:
 
    void setHTTPPostMode()
       {
-      U_TRACE(0, "UCURL::setHTTPPostMode()")
+      U_TRACE_NO_PARAM(0, "UCURL::setHTTPPostMode()")
 
       setOption(CURLOPT_HTTPPOST, (long)formPost);
       }
@@ -226,7 +226,7 @@ public:
 
    bool performWait()
       {
-      U_TRACE(1, "UCURL::performWait()")
+      U_TRACE_NO_PARAM(1, "UCURL::performWait()")
 
       U_CHECK_MEMORY
 
@@ -273,7 +273,7 @@ public:
 
    void addHandle()
       {
-      U_TRACE(1, "UCURL::addHandle()", 0)
+      U_TRACE_NO_PARAM(1, "UCURL::addHandle()")
 
       U_CHECK_MEMORY
 
@@ -292,7 +292,7 @@ public:
 
    void removeHandle()
       {
-      U_TRACE(1, "UCURL::removeHandle()", 0)
+      U_TRACE_NO_PARAM(1, "UCURL::removeHandle()")
 
       U_CHECK_MEMORY
 

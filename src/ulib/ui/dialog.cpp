@@ -19,7 +19,7 @@
 
 #include <errno.h>
 
-#if defined(__NetBSD__) || defined(__UNIKERNEL__)
+#if defined(__NetBSD__) || defined(__UNIKERNEL__) || defined(__OSX__)
 extern char** environ;
 #endif
 
@@ -28,7 +28,7 @@ char* UDialog::path_dialog;
 
 void UDialog::initialize()
 {
-   U_TRACE(0, "UDialog::initialize()")
+   U_TRACE_NO_PARAM(0, "UDialog::initialize()")
 
    U_INTERNAL_ASSERT_EQUALS(path_dialog, 0)
 

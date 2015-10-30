@@ -26,7 +26,13 @@ public:
 
    // COSTRUTTORI
 
-            USoapPlugIn();
+   USoapPlugIn()
+      {
+      U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "")
+
+      UString::str_allocate(STR_ALLOCATE_SOAP);
+      }
+
    virtual ~USoapPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn

@@ -73,7 +73,7 @@ int UWebSocketPlugIn::handlerConfig(UFileConfig& cfg)
 
 int UWebSocketPlugIn::handlerRun()
 {
-   U_TRACE(0, "UWebSocketPlugIn::handlerRun()")
+   U_TRACE_NO_PARAM(0, "UWebSocketPlugIn::handlerRun()")
 
    U_INTERNAL_ASSERT_EQUALS(UWebSocket::rbuffer, 0)
 
@@ -101,7 +101,7 @@ int UWebSocketPlugIn::handlerRun()
 
 int UWebSocketPlugIn::handlerRequest()
 {
-   U_TRACE(0, "UWebSocketPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UWebSocketPlugIn::handlerRequest()")
 
    if (U_http_websocket_len)
       {

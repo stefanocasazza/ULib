@@ -51,7 +51,7 @@ int URpcPlugIn::handlerConfig(UFileConfig& cfg)
 
 __pure int URpcPlugIn::handlerInit()
 {
-   U_TRACE(0, "URpcPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(0, "URpcPlugIn::handlerInit()")
 
    if (rpc_parser) U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 
@@ -62,7 +62,7 @@ __pure int URpcPlugIn::handlerInit()
 
 int URpcPlugIn::handlerREAD()
 {
-   U_TRACE(0, "URpcPlugIn::handlerREAD()")
+   U_TRACE_NO_PARAM(0, "URpcPlugIn::handlerREAD()")
 
    if (rpc_parser)
       {
@@ -70,10 +70,6 @@ int URpcPlugIn::handlerREAD()
 
       if (is_rpc_msg)
          {
-#     ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-         U_http_info.nResponseCode = 0;
-#     endif
-
          U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_FINISHED);
          }
       }
@@ -83,7 +79,7 @@ int URpcPlugIn::handlerREAD()
 
 int URpcPlugIn::handlerRequest()
 {
-   U_TRACE(0, "URpcPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "URpcPlugIn::handlerRequest()")
 
    if (is_rpc_msg)
       {

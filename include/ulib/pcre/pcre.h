@@ -55,7 +55,7 @@ public:
 
    void reset()
       {
-      U_TRACE(0, "UPCRE::reset()")
+      U_TRACE_NO_PARAM(0, "UPCRE::reset()")
 
       did_match   = false;
       num_matches = -1;
@@ -162,7 +162,7 @@ public:
 
    bool matched()
       {
-      U_TRACE(0, "UPCRE::matched()")
+      U_TRACE_NO_PARAM(0, "UPCRE::matched()")
 
       U_RETURN(did_match);
       }
@@ -175,7 +175,7 @@ public:
 
    int matches()
       {
-      U_TRACE(0, "UPCRE::matches()")
+      U_TRACE_NO_PARAM(0, "UPCRE::matches()")
 
       U_RETURN(num_matches);
       }
@@ -223,7 +223,7 @@ public:
 
    int getMatchStart()
       {
-      U_TRACE(0, "UPCRE::getMatchStart()")
+      U_TRACE_NO_PARAM(0, "UPCRE::getMatchStart()")
 
       int result = (sub_vec ? sub_vec[0] : -1);
 
@@ -283,7 +283,7 @@ public:
 
    int getMatchEnd()
       {
-      U_TRACE(0, "UPCRE::getMatchEnd()")
+      U_TRACE_NO_PARAM(0, "UPCRE::getMatchEnd()")
 
       int result = (sub_vec ? sub_vec[1] - 1 : -1);
 

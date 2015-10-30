@@ -23,12 +23,12 @@
 #  undef signal
 #  define PTHREAD_CREATE_DETACHED 1
 #else
-#if defined(__NetBSD__) || defined(__UNIKERNEL__)
-#     define U_SIGSTOP SIGSTOP
-#     define U_SIGCONT SIGCONT
-#  else
+#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
 #     define U_SIGSTOP (SIGRTMIN+5)
 #     define U_SIGCONT (SIGRTMIN+6)
+#  else
+#     define U_SIGSTOP SIGSTOP
+#     define U_SIGCONT SIGCONT
 #  endif
 #endif
 
@@ -175,7 +175,7 @@ public:
 
    virtual void run()
       {
-      U_TRACE(0, "UThread::run()")
+      U_TRACE_NO_PARAM(0, "UThread::run()")
       }
 
    /**
@@ -186,7 +186,7 @@ public:
 
    bool isDetached()
       {
-      U_TRACE(0, "UThread::isDetached()")
+      U_TRACE_NO_PARAM(0, "UThread::isDetached()")
 
       U_INTERNAL_DUMP("detachstate = %d", detachstate)
 
@@ -231,7 +231,7 @@ public:
 #else
    void resume()
       {
-      U_TRACE(0, "UThread::resume()")
+      U_TRACE_NO_PARAM(0, "UThread::resume()")
 
       U_ASSERT_EQUALS(isCurrentThread(tid), false)
 
@@ -246,7 +246,7 @@ public:
       
    void suspend()
       {
-      U_TRACE(0, "UThread::suspend()")
+      U_TRACE_NO_PARAM(0, "UThread::suspend()")
 
       U_ASSERT_EQUALS(isCurrentThread(tid), false)
 
@@ -294,7 +294,7 @@ public:
 
    static UThread* getThread() __pure
       {
-      U_TRACE(1, "UThread::getThread()")
+      U_TRACE_NO_PARAM(1, "UThread::getThread()")
 
       U_INTERNAL_DUMP("first = %p", first)
 
@@ -353,7 +353,7 @@ protected:
 
    void threadStart()
       {
-      U_TRACE(0, "UThread::threadStart()")
+      U_TRACE_NO_PARAM(0, "UThread::threadStart()")
 
       U_INTERNAL_DUMP("tid = %p id = %u", tid, id)
 
@@ -486,7 +486,7 @@ public:
 
    void waitForWorkToBeFinished()
       {
-      U_TRACE(0, "UThreadPool::waitForWorkToBeFinished()")
+      U_TRACE_NO_PARAM(0, "UThreadPool::waitForWorkToBeFinished()")
 
       lock(&tasks_mutex);
 

@@ -20,29 +20,6 @@ extern "C" {
 
 U_CREAT_FUNC(orm_driver_sqlite, UOrmDriverSqlite)
 
-const UString* UOrmDriverSqlite::str_name;
-const UString* UOrmDriverSqlite::str_dbdir;
-const UString* UOrmDriverSqlite::str_memory;
-
-void UOrmDriverSqlite::str_allocate()
-{
-   U_TRACE(0, "UOrmDriverSqlite::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_name,0)
-   U_INTERNAL_ASSERT_EQUALS(str_dbdir,0)
-   U_INTERNAL_ASSERT_EQUALS(str_memory,0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("sqlite") },
-      { U_STRINGREP_FROM_CONSTANT("dbdir") },
-      { U_STRINGREP_FROM_CONSTANT(":memory:") },
-   };
-
-   U_NEW_ULIB_OBJECT(str_name,   U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_dbdir,  U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_memory, U_STRING_FROM_STRINGREP_STORAGE(2));
-}
-
 UOrmDriverSqlite::~UOrmDriverSqlite()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UOrmDriverSqlite)
@@ -53,7 +30,7 @@ UOrmDriverSqlite::~UOrmDriverSqlite()
 
 void UOrmDriverSqlite::handlerError()
 {
-   U_TRACE(0, "UOrmDriverSqlite::handlerError()")
+   U_TRACE_NO_PARAM(0, "UOrmDriverSqlite::handlerError()")
 
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
@@ -133,7 +110,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 {
    U_TRACE(1, "UOrmDriverSqlite::handlerConnect(%V)", option.rep)
 
-   UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverSqlite(*str_name)) : this);
+   UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverSqlite(*UString::str_sqlite_name)) : this);
 
    if (pdrv->setOption(option) == false)
       {
@@ -160,10 +137,10 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
    const char* fullpath;
    char buffer[U_PATH_MAX];
 
-   if (pdrv->dbname == *str_memory) fullpath = str_memory->data();
+   if (pdrv->dbname == *UString::str_memory) fullpath = UString::str_memory->data();
    else
       {
-      UString dbdir = pdrv->getOptionValue(*str_dbdir);
+      UString dbdir = pdrv->getOptionValue(*UString::str_dbdir);
 
       uint32_t sz = dbdir.size();
 
@@ -177,7 +154,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
    // create a database connection
 
-   ((UOrmDriverSqlite*)pdrv)->encoding_UTF16 = (pdrv->getOptionValue(*UString::str_encoding) == *UOrmDriver::str_UTF16);
+   ((UOrmDriverSqlite*)pdrv)->encoding_UTF16 = (pdrv->getOptionValue(U_CONSTANT_TO_PARAM("encoding")) == *UString::str_UTF16);
 
    sqlite3** pconnection = (sqlite3**)&(pdrv->connection);
 
@@ -201,7 +178,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
    // set options
 
-   UString x = pdrv->getOptionValue(*UOrmDriver::str_timeout); // timeout is specified in milliseconds
+   UString x = pdrv->getOptionValue(*UString::str_timeout); // timeout is specified in milliseconds
 
    // Calling this routine with an argument less than or equal to zero turns off all busy handlers
 
@@ -216,7 +193,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
 void UOrmDriverSqlite::handlerDisConnect()
 {
-   U_TRACE(0, "UOrmDriverSqlite::handlerDisConnect()")
+   U_TRACE_NO_PARAM(0, "UOrmDriverSqlite::handlerDisConnect()")
 
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 

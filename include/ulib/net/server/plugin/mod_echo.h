@@ -19,10 +19,17 @@
 class U_EXPORT UEchoPlugIn : public UServerPlugIn {
 public:
 
+   // Check for memory error
+   U_MEMORY_TEST
+
    // COSTRUTTORE
 
-            UEchoPlugIn() : UServerPlugIn() {}
-   virtual ~UEchoPlugIn() __pure            {}
+   UEchoPlugIn()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UEchoPlugIn, "", 0)
+      }
+
+   virtual ~UEchoPlugIn();
 
    // define method VIRTUAL of class UServerPlugIn
 
@@ -31,6 +38,12 @@ public:
    // Connection-wide hooks
 
    virtual int handlerRequest() U_DECL_FINAL;
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool _reset) const { return ""; }
+#endif
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS

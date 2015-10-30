@@ -133,7 +133,7 @@ DIR_CMD="../../examples/csp"
 $SLEEP
 kill_prg userver_ssl TERM
 
-killall userver_ssl 2>/dev/null
+pkill userver_ssl 2>/dev/null
 
 mv err/userver_ssl.err err/cspserver.err
 

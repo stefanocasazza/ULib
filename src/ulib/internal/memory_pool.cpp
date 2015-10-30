@@ -167,7 +167,7 @@ public:
 
    void deallocatePointerBlock()
       {
-      U_TRACE(0, "UStackMemoryPool::deallocatePointerBlock()")
+      U_TRACE_NO_PARAM(0, "UStackMemoryPool::deallocatePointerBlock()")
 
 #  if defined(ENABLE_MEMPOOL)
       U_INTERNAL_DUMP("&mem_pointer_block[  0] = %p", &mem_pointer_block[0])
@@ -272,7 +272,7 @@ public:
 
    void* pop()
       {
-   // U_TRACE(0, "UStackMemoryPool::pop()") // problem with sanitize address
+   // U_TRACE_NO_PARAM(0, "UStackMemoryPool::pop()") // problem with sanitize address
 
    // U_INTERNAL_DUMP("index = %u type = %u len = %u space = %u depth = %u max_depth = %u pop_cnt = %u push_cnt = %u num_call_allocateMemoryBlocks = %u",
    //                  index,     type,     len,     space,     depth,     max_depth,     pop_cnt,     push_cnt,     num_call_allocateMemoryBlocks)

@@ -27,7 +27,7 @@ void Url::set(const UString& x)
 
 UString Url::getService() const
 {
-   U_TRACE(0, "Url::getService()")
+   U_TRACE_NO_PARAM(0, "Url::getService()")
 
    UString srv;
 
@@ -54,7 +54,7 @@ void Url::setService(const char* service, uint32_t n)
 
 UString Url::getUser()
 {
-   U_TRACE(0, "Url::getUser()")
+   U_TRACE_NO_PARAM(0, "Url::getUser()")
 
    UString usr;
 
@@ -96,7 +96,7 @@ bool Url::setUser(const char* user, uint32_t n)
 
 UString Url::getHost()
 {
-   U_TRACE(0, "Url::getHost()")
+   U_TRACE_NO_PARAM(0, "Url::getHost()")
 
    UString host;
 
@@ -119,7 +119,7 @@ void Url::setHost(const char* _host, uint32_t n)
 
 unsigned int Url::getPort()
 {
-   U_TRACE(0, "Url::getPort()")
+   U_TRACE_NO_PARAM(0, "Url::getPort()")
 
    if (host_end < path_begin)
       {
@@ -232,7 +232,7 @@ void Url::setPath(const char* path, uint32_t n)
 
 UString Url::getPath()
 {
-   U_TRACE(0, "Url::getPath()")
+   U_TRACE_NO_PARAM(0, "Url::getPath()")
 
    UString path(U_CAPACITY);
 
@@ -246,7 +246,7 @@ UString Url::getPath()
 
 UString Url::getQuery()
 {
-   U_TRACE(0, "Url::getQuery()")
+   U_TRACE_NO_PARAM(0, "Url::getQuery()")
 
    int _end = url.size() - 1;
 
@@ -324,7 +324,7 @@ bool Url::setQuery(UVector<UString>& vec)
 
 UString Url::getPathAndQuery()
 {
-   U_TRACE(0, "Url::getPathAndQuery()")
+   U_TRACE_NO_PARAM(0, "Url::getPathAndQuery()")
 
    UString file;
 
@@ -336,7 +336,7 @@ UString Url::getPathAndQuery()
 
 void Url::findpos()
 {
-   U_TRACE(0, "Url::findpos()")
+   U_TRACE_NO_PARAM(0, "Url::findpos()")
 
    // proto://[user[:password]@]hostname[:port]/[path]?[query]
 
@@ -438,7 +438,7 @@ void Url::findpos()
 
 U_NO_EXPORT bool Url::prepareForQuery()
 {
-   U_TRACE(0, "Url::prepareForQuery()")
+   U_TRACE_NO_PARAM(0, "Url::prepareForQuery()")
 
    // NB: Only posible if there is a url
 

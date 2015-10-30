@@ -45,7 +45,7 @@ public:
 
    void setCurrentTime()
       {
-      U_TRACE(1, "UEventTime::setCurrentTime()")
+      U_TRACE_NO_PARAM(1, "UEventTime::setCurrentTime()")
 
       U_CHECK_MEMORY
 
@@ -107,7 +107,7 @@ public:
 
    long getTimerVal()
       {
-      U_TRACE(0, "UEventTime::getTimerVal()")
+      U_TRACE_NO_PARAM(0, "UEventTime::getTimerVal()")
 
       U_CHECK_MEMORY
 
@@ -115,6 +115,30 @@ public:
                 ((ctime.tv_usec + tv_usec - u_now->tv_usec) / 1000L);
 
       U_RETURN(ms);
+      }
+
+   struct timespec* getTimerValSpec()
+      {
+      U_TRACE_NO_PARAM(0, "UEventTime::getTimerValSpec()")
+
+      U_CHECK_MEMORY
+
+      /**
+       * struct timespec {
+       *    time_t tv_sec;  // seconds
+       *    long   tv_nsec; // nanoseconds
+       * };
+       */
+
+      long ns = ((ctime.tv_sec  + tv_sec  - u_now->tv_sec)  * 1000000000L) +
+                ((ctime.tv_usec + tv_usec - u_now->tv_usec) *       1000L);
+
+      timeout.tv_sec  = ns / 1000000000L;
+      timeout.tv_nsec = ns % 1000000000L;
+
+      U_INTERNAL_DUMP("timeout = { %ld %9ld }", timeout.tv_sec, timeout.tv_nsec)
+
+      U_RETURN_POINTER(&timeout, struct timespec);
       }
 
    // -------------------------------------------
@@ -140,6 +164,8 @@ public:
 #endif
 
 private:
+   static struct timespec timeout;
+
 #ifdef U_COMPILER_DELETE_MEMBERS
    UEventTime& operator=(const UEventTime&) = delete;
 #else

@@ -83,7 +83,7 @@ int USCGIPlugIn::handlerConfig(UFileConfig& cfg)
 
 int USCGIPlugIn::handlerInit()
 {
-   U_TRACE(1, "USCGIPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(1, "USCGIPlugIn::handlerInit()")
 
    if (connection &&
        UHTTP::scgi_uri_mask)
@@ -128,7 +128,7 @@ int USCGIPlugIn::handlerInit()
 
 int USCGIPlugIn::handlerRequest()
 {
-   U_TRACE(0, "USCGIPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "USCGIPlugIn::handlerRequest()")
 
    if (connection &&
        UHTTP::isSCGIRequest())

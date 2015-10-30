@@ -31,22 +31,22 @@
  */
 
 #ifndef DT_DIR
-#define DT_DIR      4
+#define DT_DIR 4
 #endif
 #ifndef DT_REG
-#define DT_REG      8
+#define DT_REG 8
 #endif
 #ifndef DT_LNK
-#define DT_LNK     10
+#define DT_LNK 10
 #endif
 #ifndef DT_UNKNOWN
-#define DT_UNKNOWN  0
+#define DT_UNKNOWN 0
 #endif
 
-#ifdef _DIRENT_HAVE_D_TYPE
-#define U_DT_TYPE dp->d_type
+#ifdef DIRENT_HAVE_D_TYPE
+#  define U_DT_TYPE dp->d_type
 #else
-#define U_DT_TYPE DT_UNKNOWN
+#  define U_DT_TYPE DT_UNKNOWN
 #endif
 
 vPF               UDirWalk::call_if_up;
@@ -169,7 +169,7 @@ U_NO_EXPORT void UDirWalk::prepareForCallingRecurse(char* d_name, uint32_t d_nam
 
 U_NO_EXPORT bool UDirWalk::isFile()
 {
-   U_TRACE(0, "UDirWalk::isFile()")
+   U_TRACE_NO_PARAM(0, "UDirWalk::isFile()")
 
    U_INTERNAL_ASSERT_POINTER(pthis)
 
@@ -194,7 +194,7 @@ U_NO_EXPORT bool UDirWalk::isFile()
 
 void UDirWalk::recurse()
 {
-   U_TRACE(1+256, "UDirWalk::recurse()")
+   U_TRACE_NO_PARAM(1+256, "UDirWalk::recurse()")
 
    U_INTERNAL_ASSERT_EQUALS(pthis, this)
 
@@ -380,7 +380,7 @@ end:
 
 void UDirWalk::walk()
 {
-   U_TRACE(0, "UDirWalk::walk()")
+   U_TRACE_NO_PARAM(0, "UDirWalk::walk()")
 
    U_INTERNAL_DUMP("pathname = %S", pathname)
    U_INTERNAL_DUMP("u_cwd(%u) = %.*S", u_cwd_len, u_cwd_len, u_cwd)
@@ -428,7 +428,7 @@ void UDirWalk::walk()
 
 U_NO_EXPORT void UDirWalk::vectorPush()
 {
-   U_TRACE(0, "UDirWalk::vectorPush()")
+   U_TRACE_NO_PARAM(0, "UDirWalk::vectorPush()")
 
    U_INTERNAL_ASSERT_POINTER(pthis)
    U_INTERNAL_ASSERT_POINTER(pvector)
@@ -540,7 +540,7 @@ uint32_t UDirWalk::walk(UVector<UString>& vec, qcompare compare_obj)
 
 U_NO_EXPORT void UDirWalk::treePush()
 {
-   U_TRACE(0, "UDirWalk::treePush()")
+   U_TRACE_NO_PARAM(0, "UDirWalk::treePush()")
 
    U_INTERNAL_DUMP("is_directory = %b", pthis->is_directory)
 
@@ -559,7 +559,7 @@ U_NO_EXPORT void UDirWalk::treePush()
 
 U_NO_EXPORT void UDirWalk::treeUp()
 {
-   U_TRACE(0, "UDirWalk::treeUp()")
+   U_TRACE_NO_PARAM(0, "UDirWalk::treeUp()")
 
    U_INTERNAL_ASSERT_POINTER(ptree)
 

@@ -181,11 +181,11 @@ UEventTime* UServer_Base::pstat;
 
 UString UServer_Base::getStats()
 {
-   U_TRACE(0, "UTimeStat::getStats()")
+   U_TRACE_NO_PARAM(0, "UTimeStat::getStats()")
 
    UString x(U_CAPACITY);
 
-   x.snprintf("%3u connections (%5.2f/sec), %3u max simultaneous, %3u %s (%5.2f/sec) - %v/sec", UServer_Base::stats_connections,
+   x.snprintf("%3u connections (%5.2f/sec), %3u max simultaneous, %4u %s (%5.2f/sec) - %v/sec", UServer_Base::stats_connections,
                (float) UServer_Base::stats_connections / U_ONE_HOUR_IN_SECOND, UServer_Base::stats_simultaneous, UNotifier::nwatches, U_WHICH,
                (float) UNotifier::nwatches / U_ONE_HOUR_IN_SECOND, UStringExt::printSize(UServer_Base::stats_bytes).rep);
 
@@ -211,7 +211,7 @@ public:
 
    virtual int handlerTime() U_DECL_FINAL
       {
-      U_TRACE(0, "UTimeStat::handlerTime()")
+      U_TRACE_NO_PARAM(0, "UTimeStat::handlerTime()")
 
       if (UServer_Base::stats_bytes)
          {
@@ -263,7 +263,7 @@ public:
 
    virtual int handlerTime() U_DECL_FINAL
       {
-      U_TRACE(0, "UTimeoutConnection::handlerTime()")
+      U_TRACE_NO_PARAM(0, "UTimeoutConnection::handlerTime()")
 
       U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::min_connection = %u", UNotifier::num_connection, UNotifier::min_connection)
 
@@ -371,7 +371,7 @@ public:
 
    virtual char* toBuffer()
       {
-      U_TRACE(0, "UThrottling::toBuffer()")
+      U_TRACE_NO_PARAM(0, "UThrottling::toBuffer()")
 
       U_CHECK_MEMORY
 
@@ -608,7 +608,7 @@ public:
 
    virtual int handlerTime() U_DECL_FINAL
       {
-      U_TRACE(0, "UBandWidthThrottling::handlerTime()")
+      U_TRACE_NO_PARAM(0, "UBandWidthThrottling::handlerTime()")
 
       if (UServer_Base::db_throttling)
          {
@@ -663,7 +663,7 @@ public:
 
    virtual int handlerTime() U_DECL_FINAL
       {
-      U_TRACE(0, "UClientThrottling::handlerTime()")
+      U_TRACE_NO_PARAM(0, "UClientThrottling::handlerTime()")
 
       UNotifier::resume(pClientImage);
 
@@ -698,7 +698,7 @@ URDBObjectHandler<UDataStorage*>* UServer_Base::db_throttling;
 
 void UServer_Base::initThrottlingClient()
 {
-   U_TRACE(0, "UServer_Base::initThrottlingClient()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::initThrottlingClient()")
 
    if (db_throttling)
       {
@@ -763,7 +763,7 @@ void UServer_Base::initThrottlingServer(const UString& x)
 
 void UServer_Base::clearThrottling()
 {
-   U_TRACE(0, "UServer_Base::clearThrottling()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::clearThrottling()")
 
    U_INTERNAL_ASSERT(pClientImage)
    U_INTERNAL_ASSERT(pClientImage->uri)
@@ -776,7 +776,7 @@ void UServer_Base::clearThrottling()
 
 bool UServer_Base::checkThrottling()
 {
-   U_TRACE(0, "UServer_Base::checkThrottling()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::checkThrottling()")
 
    if (db_throttling)
       {
@@ -861,7 +861,7 @@ public:
 
    virtual void run() U_DECL_FINAL
       {
-      U_TRACE(0, "UClientThread::run()")
+      U_TRACE_NO_PARAM(0, "UClientThread::run()")
 
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::ptime, 0)
 
@@ -877,7 +877,7 @@ public:
 
    virtual void run() U_DECL_FINAL
       {
-      U_TRACE(0, "UTimeThread::run()")
+      U_TRACE_NO_PARAM(0, "UTimeThread::run()")
 
       struct timespec ts;
       u_timeval.tv_sec = u_now->tv_sec;
@@ -943,7 +943,7 @@ public:
 
    virtual void run() U_DECL_FINAL
       {
-      U_TRACE(0, "UOCSPStapling::run()")
+      U_TRACE_NO_PARAM(0, "UOCSPStapling::run()")
 
       struct timespec ts;
       bool result = false;
@@ -975,7 +975,7 @@ UOCSPStapling* UServer_Base::pthread_ocsp;
 #endif
 #endif
 
-#ifndef _MSWINDOWS_
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
 static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
 #endif
 
@@ -1121,7 +1121,7 @@ UServer_Base::~UServer_Base()
       }
 #endif
 
-#ifndef _MSWINDOWS_
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
    if (as_user->empty() &&
        isChild() == false)
       {
@@ -1139,11 +1139,10 @@ UServer_Base::~UServer_Base()
       }
 #endif
 
-   if (proc)              delete proc;
-   if (server)            delete server;
-   if (lock_user1)        delete lock_user1;
-   if (lock_user2)        delete lock_user2;
-   if (USemaphore::flock) delete USemaphore::flock;
+   if (proc)       delete proc;
+   if (server)     delete server;
+   if (lock_user1) delete lock_user1;
+   if (lock_user2) delete lock_user2;
 
    UFile::munmap(ptr_shared_data, map_size);
 
@@ -1169,7 +1168,7 @@ UServer_Base::~UServer_Base()
 
 void UServer_Base::closeLog()
 {
-   U_TRACE(0, "UServer_Base::closeLog()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::closeLog()")
 
 #ifdef U_LOG_ENABLE
    if (log &&
@@ -1297,7 +1296,7 @@ bool UServer_Base::setDocumentRoot(const UString& dir)
 
 void UServer_Base::loadConfigParam()
 {
-   U_TRACE(0, "UServer_Base::loadConfigParam()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::loadConfigParam()")
 
    U_INTERNAL_ASSERT_POINTER(cfg)
 
@@ -1364,8 +1363,8 @@ void UServer_Base::loadConfigParam()
    U_INTERNAL_DUMP("SOMAXCONN = %d FD_SETSIZE = %d", SOMAXCONN, FD_SETSIZE)
 #endif
 
-   UString x  = (*cfg)[*UString::str_SERVER];
-   *name_sock = (*cfg)[*UString::str_SOCKET_NAME];
+   UString x  = cfg->at(U_CONSTANT_TO_PARAM("SERVER"));
+   *name_sock = cfg->at(U_CONSTANT_TO_PARAM("SOCKET_NAME"));
 
    if (x) server = U_NEW(UString(x));
 
@@ -1379,7 +1378,7 @@ void UServer_Base::loadConfigParam()
 
    if (timeoutMS > 0) timeoutMS *= 1000;
 
-   port = cfg->readLong(*UString::str_PORT, bssl ? 443 : 80);
+   port = cfg->readLong(U_CONSTANT_TO_PARAM("PORT"), bssl ? 443 : 80);
 
    if ((port == 80 || port == 443) &&
        UServices::isSetuidRoot() == false)
@@ -1415,14 +1414,14 @@ void UServer_Base::loadConfigParam()
    if (min_size_for_sendfile == 0) min_size_for_sendfile = 500 * 1024; // 500k: for major size we assume is better to use sendfile()
 
 #ifdef USE_LIBSSL
-   *password   = (*cfg)[*UString::str_PASSWORD];
-   *ca_file    = (*cfg)[*UString::str_CA_FILE];
-   *ca_path    = (*cfg)[*UString::str_CA_PATH];
-   *key_file   = (*cfg)[*UString::str_KEY_FILE];
-   *cert_file  = (*cfg)[*UString::str_CERT_FILE];
+   *password   = cfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
+   *ca_file    = cfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+   *ca_path    = cfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
+   *key_file   = cfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
+   *cert_file  = cfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
 
    *dh_file    = cfg->at(U_CONSTANT_TO_PARAM("DH_FILE"));
-   verify_mode = cfg->readLong(*UString::str_VERIFY_MODE);
+   verify_mode = cfg->at(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
 
    if (bssl) min_size_for_sendfile = U_NOT_FOUND; // NB: we can't use sendfile with SSL...
 #endif
@@ -1475,7 +1474,7 @@ void UServer_Base::loadConfigParam()
    enable_rfc1918_filter = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_RFC1918_FILTER"));
 #endif
 
-   x = (*cfg)[*UString::str_PID_FILE];
+   x = cfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
 
    if (x)
       {
@@ -1540,7 +1539,7 @@ void UServer_Base::loadConfigParam()
       }
 
 #ifdef U_LOG_ENABLE
-   x = (*cfg)[*UString::str_LOG_FILE];
+   x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
 
    if (x)
       {
@@ -1549,7 +1548,7 @@ void UServer_Base::loadConfigParam()
       update_date  =
       update_date1 = true;
 
-      log = U_NEW(ULog(x, cfg->readLong(*UString::str_LOG_FILE_SZ)));
+      log = U_NEW(ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
 
       log->init(U_SERVER_LOG_PREFIX);
 
@@ -1568,7 +1567,7 @@ void UServer_Base::loadConfigParam()
    // load ORM driver modules...
 
    if (orm_driver_list &&
-       UOrmDriver::loadDriver(orm_driver_list) == false)
+       (UString::str_allocate(STR_ALLOCATE_ORM), UOrmDriver::loadDriver(orm_driver_list)) == false)
       {
       U_ERROR("ORM drivers load failed");
       }
@@ -1698,9 +1697,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
       {
       UClientImage_Base::callerHandlerRequest = pluginsHandlerRequest;
 
-      // NB: we don't use split with substr() cause of dependency from config var PLUGIN...
-
-      vplugin_size = vplugin_name->split(U_STRING_TO_PARAM(plugin_list));
+      vplugin_size = vplugin_name->split(U_STRING_TO_PARAM(plugin_list)); // NB: we don't use split with substr() cause of dependency from config var PLUGIN...
       }
 
    /**
@@ -1748,7 +1745,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
    U_INTERNAL_ASSERT_EQUALS(vplugin->size(), vplugin_size)
-   U_INTERNAL_ASSERT_EQUALS(*vplugin_name, *vplugin_name_static)
+   U_INTERNAL_ASSERT_EQUALS(vplugin_name->size(), vplugin_name_static->size())
 
    delete vplugin_name_static;
 
@@ -1810,7 +1807,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 #  define U_PLUGIN_HANDLER(xxx)                                               \
 int UServer_Base::pluginsHandler##xxx()                                       \
 {                                                                             \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                         \
+   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                \
                                                                               \
    U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
@@ -1831,7 +1828,7 @@ int UServer_Base::pluginsHandler##xxx()                                       \
 #  define U_PLUGIN_HANDLER(xxx)                                               \
 int UServer_Base::pluginsHandler##xxx()                                       \
 {                                                                             \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                         \
+   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                \
                                                                               \
    U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
@@ -1893,7 +1890,7 @@ U_PLUGIN_HANDLER(Request)
 #  define U_PLUGIN_HANDLER_REVERSE(xxx)                                       \
 int UServer_Base::pluginsHandler##xxx()                                       \
 {                                                                             \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                         \
+   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                \
                                                                               \
    U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
@@ -1914,7 +1911,7 @@ int UServer_Base::pluginsHandler##xxx()                                       \
 #  define U_PLUGIN_HANDLER_REVERSE(xxx)                                       \
 int UServer_Base::pluginsHandler##xxx()                                       \
 {                                                                             \
-   U_TRACE(0, "UServer_Base::pluginsHandler"#xxx"()")                         \
+   U_TRACE_NO_PARAM(0, "UServer_Base::pluginsHandler"#xxx"()")                \
                                                                               \
    U_INTERNAL_ASSERT_POINTER(vplugin)                                         \
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)                                   \
@@ -1982,7 +1979,7 @@ U_PLUGIN_HANDLER_REVERSE(SigHUP) // NB: we call handlerSigHUP() in reverse order
 
 void UServer_Base::init()
 {
-   U_TRACE(1, "UServer_Base::init()")
+   U_TRACE_NO_PARAM(1, "UServer_Base::init()")
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
@@ -2105,7 +2102,7 @@ void UServer_Base::init()
 
       u_need_root(false);
 
-#  if !defined(__NetBSD__) && !defined(__UNIKERNEL__)
+#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
       /**
        * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
        * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
@@ -2153,10 +2150,10 @@ void UServer_Base::init()
                }
             }
          }
-#  endif
 
       U_INTERNAL_DUMP("sysctl_somaxconn = %d tcp_abort_on_overflow = %b sysctl_max_syn_backlog = %d",
                        sysctl_somaxconn,     tcp_abort_on_overflow,     sysctl_max_syn_backlog)
+#  endif
       }
 #endif
 
@@ -2392,12 +2389,7 @@ void UServer_Base::init()
 
    UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog) + (UNotifier::num_connection = UNotifier::min_connection);
 
-   if (num_client_threshold == 0) num_client_threshold =
-#  ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-      U_NOT_FOUND;
-#  else
-      (UNotifier::max_connection * 2) / 3;
-#  endif
+   if (num_client_threshold == 0) num_client_threshold = U_NOT_FOUND;
 
    if (num_client_for_parallelization == 0) num_client_for_parallelization = UNotifier::max_connection / 2;
 
@@ -2490,7 +2482,7 @@ bool UServer_Base::addLog(UFile* _log, int flags)
 
 void UServer_Base::reopenLog()
 {
-   U_TRACE(0, "UServer_Base::reopenLog()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::reopenLog()")
 
    file_LOG* item;
 
@@ -2532,7 +2524,7 @@ RETSIGTYPE UServer_Base::handlerForSigCHLD(int signo)
 
 U_NO_EXPORT void UServer_Base::manageSigHUP()
 {
-   U_TRACE(0, "UServer_Base::manageSigHUP()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::manageSigHUP()")
 
    U_INTERNAL_ASSERT_POINTER(proc)
 
@@ -2686,7 +2678,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
 U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
 {
-   U_TRACE(0, "UServer_Base::clientImageHandlerRead()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::clientImageHandlerRead()")
 
    U_INTERNAL_ASSERT(csocket->isOpen())
    U_INTERNAL_ASSERT_EQUALS(csocket, pClientImage->socket)
@@ -2725,7 +2717,7 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
 
 int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket (listening)
 {
-   U_TRACE(1, "UServer_Base::handlerRead()")
+   U_TRACE_NO_PARAM(1, "UServer_Base::handlerRead()")
 
    U_INTERNAL_DUMP("nClientIndex = %u", nClientIndex)
 
@@ -3239,7 +3231,7 @@ void UServer_Base::runLoop(const char* user)
        * NB: Takes an integer value (seconds)
        */
 
-#  if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(__UNIKERNEL__) && !defined(__NetBSD__)
+#  if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && !defined(U_SERVER_CAPTIVE_PORTAL)
                                  socket->setTcpFastOpen();
                                  socket->setTcpDeferAccept();
       if (bssl == false)         socket->setBufferSND(min_size_for_sendfile);
@@ -3366,7 +3358,7 @@ void UServer_Base::runLoop(const char* user)
 
 void UServer_Base::run()
 {
-   U_TRACE(1, "UServer_Base::run()")
+   U_TRACE_NO_PARAM(1, "UServer_Base::run()")
 
    U_INTERNAL_ASSERT_POINTER(pthis)
 
@@ -3589,7 +3581,7 @@ no_monitoring_process:
 
 void UServer_Base::removeZombies()
 {
-   U_TRACE(0, "UServer_Base::removeZombies()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::removeZombies()")
 
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
 
@@ -3606,7 +3598,7 @@ void UServer_Base::removeZombies()
 
 pid_t UServer_Base::startNewChild()
 {
-   U_TRACE(0, "UServer_Base::startNewChild()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::startNewChild()")
 
    UProcess p;
 
@@ -3635,7 +3627,7 @@ pid_t UServer_Base::startNewChild()
 
 __noreturn void UServer_Base::endNewChild()
 {
-   U_TRACE(0, "UServer_Base::endNewChild()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::endNewChild()")
 
 #ifdef DEBUG
    UInterrupt::setHandlerForSignal(SIGHUP,  (sighandler_t)SIG_IGN);

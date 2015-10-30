@@ -33,7 +33,7 @@ URPCParser::URPCParser(UVector<UString>* arg)
 
 void URPCParser::clearData()
 {
-   U_TRACE(0, "URPCParser::clearData()")
+   U_TRACE_NO_PARAM(0, "URPCParser::clearData()")
 
    U_ENCODER_CLEAR_DATA;
 

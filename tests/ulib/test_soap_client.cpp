@@ -136,9 +136,11 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5, "main(%d)",argc)
 
+   UString::str_allocate(STR_ALLOCATE_SOAP);
+
    UTestSOAPClient<USocket> testSOAP;
 
-   testSOAP.setHostPort(U_STRING_FROM_CONSTANT("localhost"), 80);
+   testSOAP.setHostPort(*UString::str_localhost, 80);
 
    if (strcmp(argv[1], "add") == 0)
       {

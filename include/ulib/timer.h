@@ -55,7 +55,7 @@ public:
 
    static bool empty()
       {
-      U_TRACE(0, "UTimer::empty()")
+      U_TRACE_NO_PARAM(0, "UTimer::empty()")
 
       if (first == 0) U_RETURN(true);
 
@@ -64,7 +64,7 @@ public:
 
    static bool isAlarm()
       {
-      U_TRACE(0, "UTimer::isAlarm()")
+      U_TRACE_NO_PARAM(0, "UTimer::isAlarm()")
 
       if (UInterrupt::timerval.it_value.tv_sec  != 0 ||
           UInterrupt::timerval.it_value.tv_usec != 0)
@@ -90,7 +90,7 @@ public:
 
    static UEventTime* getTimeout() // returns a timeout indicating how long until the next timer triggers
       {
-      U_TRACE(0, "UTimer::getTimeout()")
+      U_TRACE_NO_PARAM(0, "UTimer::getTimeout()")
 
       if (first &&
           run())

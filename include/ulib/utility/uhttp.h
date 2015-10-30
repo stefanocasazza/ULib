@@ -68,22 +68,9 @@ enum DynamicPageType {
 class U_EXPORT UHTTP {
 public:
 
-   // HTTP strings 
-
-   static const UString* str_origin;
-   static const UString* str_indexhtml;
-   static const UString* str_ctype_tsa;
-   static const UString* str_ctype_txt;
-   static const UString* str_ctype_html;
-   static const UString* str_ctype_soap;
-   static const UString* str_ulib_header;
-   static const UString* str_storage_keyid;
-
-   static void str_allocate();
-
    // COSTRUTTORE e DISTRUTTORE
 
-   static void ctor();
+   static void init();
    static void dtor();
 
    static bool readRequest();
@@ -100,7 +87,7 @@ public:
 
    static bool isGET()
       {
-      U_TRACE(0, "UHTTP::isGET()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isGET()")
 
       if (U_http_method_type == HTTP_GET) U_RETURN(true);
 
@@ -109,7 +96,7 @@ public:
 
    static bool isHEAD()
       {
-      U_TRACE(0, "UHTTP::isHEAD()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isHEAD()")
 
       if (U_http_method_type == HTTP_HEAD) U_RETURN(true);
 
@@ -118,7 +105,7 @@ public:
 
    static bool isPOST()
       {
-      U_TRACE(0, "UHTTP::isPOST()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isPOST()")
 
       if (U_http_method_type == HTTP_POST) U_RETURN(true);
 
@@ -127,7 +114,7 @@ public:
 
    static bool isPUT()
       {
-      U_TRACE(0, "UHTTP::isPUT()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isPUT()")
 
       if (U_http_method_type == HTTP_PUT) U_RETURN(true);
 
@@ -136,7 +123,7 @@ public:
 
    static bool isPATCH()
       {
-      U_TRACE(0, "UHTTP::isPATCH()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isPATCH()")
 
       if (U_http_method_type == HTTP_PATCH) U_RETURN(true);
 
@@ -145,7 +132,7 @@ public:
 
    static bool isDELETE()
       {
-      U_TRACE(0, "UHTTP::isDELETE()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isDELETE()")
 
       if (U_http_method_type == HTTP_DELETE) U_RETURN(true);
 
@@ -154,7 +141,7 @@ public:
 
    static bool isCOPY()
       {
-      U_TRACE(0, "UHTTP::isCOPY()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isCOPY()")
 
       if (U_http_method_type == HTTP_COPY) U_RETURN(true);
 
@@ -163,7 +150,7 @@ public:
 
    static bool isGETorHEAD()
       {
-      U_TRACE(0, "UHTTP::isGETorHEAD()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isGETorHEAD()")
 
       if ((U_http_method_type & (HTTP_GET | HTTP_HEAD)) != 0) U_RETURN(true);
 
@@ -172,7 +159,7 @@ public:
 
    static bool isGETorPOST()
       {
-      U_TRACE(0, "UHTTP::isGETorPOST()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isGETorPOST()")
 
       if ((U_http_method_type & (HTTP_GET | HTTP_POST)) != 0) U_RETURN(true);
 
@@ -181,7 +168,7 @@ public:
 
    static bool isPOSTorPUTorPATCH()
       {
-      U_TRACE(0, "UHTTP::isPOSTorPUTorPATCH()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isPOSTorPUTorPATCH()")
 
       if ((U_http_method_type & (HTTP_POST | HTTP_PUT | HTTP_PATCH)) != 0) U_RETURN(true);
 
@@ -219,7 +206,7 @@ public:
 
    static uint32_t getUserAgent()
       {
-      U_TRACE(0, "UHTTP::getUserAgent()")
+      U_TRACE_NO_PARAM(0, "UHTTP::getUserAgent()")
 
       uint32_t agent = (U_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, -1) : 0);
 
@@ -229,7 +216,7 @@ public:
    static void setPathName();
    static void checkForPathName()
       {
-      U_TRACE(0, "UHTTP::checkForPathName()")
+      U_TRACE_NO_PARAM(0, "UHTTP::checkForPathName()")
 
       if (pathname->empty())
          {
@@ -307,43 +294,43 @@ public:
 
    static void setNotFound()
       {
-      U_TRACE(0, "UHTTP::setNotFound()")
+      U_TRACE_NO_PARAM(0, "UHTTP::setNotFound()")
 
-      setErrorResponse(str_ctype_html, HTTP_NOT_FOUND, "Your requested URL %.*S was not found on this server", 0);
+      setErrorResponse(UString::str_ctype_html, HTTP_NOT_FOUND, "Your requested URL %.*S was not found on this server", 0);
       }
 
    static void setBadMethod()
       {
-      U_TRACE(0, "UHTTP::setBadMethod()")
+      U_TRACE_NO_PARAM(0, "UHTTP::setBadMethod()")
 
       U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, HTTP_BAD_METHOD)
 
-      setErrorResponse(str_ctype_html, HTTP_BAD_METHOD, "The requested method is not allowed for the URL %.*S", 0);
+      setErrorResponse(UString::str_ctype_html, HTTP_BAD_METHOD, "The requested method is not allowed for the URL %.*S", 0);
       }
 
    static void setBadRequest()
       {
-      U_TRACE(0, "UHTTP::setBadRequest()")
+      U_TRACE_NO_PARAM(0, "UHTTP::setBadRequest()")
 
       UClientImage_Base::resetPipelineAndSetCloseConnection();
 
-      setErrorResponse(str_ctype_html, HTTP_BAD_REQUEST, "Your requested URL %.*S was a request that this server could not understand", 0);
+      setErrorResponse(UString::str_ctype_html, HTTP_BAD_REQUEST, "Your requested URL %.*S was a request that this server could not understand", 0);
       }
 
    static void setForbidden()
       {
-      U_TRACE(0, "UHTTP::setForbidden()")
+      U_TRACE_NO_PARAM(0, "UHTTP::setForbidden()")
 
       UClientImage_Base::setRequestForbidden();
 
-      setErrorResponse(str_ctype_html, HTTP_FORBIDDEN, "You don't have permission to access %.*S on this server", 0);
+      setErrorResponse(UString::str_ctype_html, HTTP_FORBIDDEN, "You don't have permission to access %.*S on this server", 0);
       }
 
    static void setInternalError()
       {
-      U_TRACE(0, "UHTTP::setInternalError()")
+      U_TRACE_NO_PARAM(0, "UHTTP::setInternalError()")
 
-      setErrorResponse(str_ctype_html, HTTP_INTERNAL_ERROR,
+      setErrorResponse(UString::str_ctype_html, HTTP_INTERNAL_ERROR,
                        U_CONSTANT_TO_PARAM("The server encountered an internal error or misconfiguration "
                                            "and was unable to complete your request. Please contact the server "
                                            "administrator, and inform them of the time the error occurred, and "
@@ -353,9 +340,9 @@ public:
 
    static void setServiceUnavailable()
       {
-      U_TRACE(0, "UHTTP::setServiceUnavailable()")
+      U_TRACE_NO_PARAM(0, "UHTTP::setServiceUnavailable()")
 
-      setErrorResponse(str_ctype_html, HTTP_UNAVAILABLE,
+      setErrorResponse(UString::str_ctype_html, HTTP_UNAVAILABLE,
                        U_CONSTANT_TO_PARAM("Sorry, the service you requested is not available at this moment. "
                                            "Please contact the server administrator and inform them about this"));
       }
@@ -493,7 +480,7 @@ public:
 
    static UString getKeyIdDataSession()
       {
-      U_TRACE(0, "UHTTP::getKeyIdDataSession()")
+      U_TRACE_NO_PARAM(0, "UHTTP::getKeyIdDataSession()")
 
       U_INTERNAL_ASSERT_POINTER(data_session)
 
@@ -609,22 +596,22 @@ public:
 #ifdef U_LOG_ENABLE
    static char iov_buffer[20];
    static struct iovec iov_vec[10];
-# ifndef U_CACHE_REQUEST_DISABLE
+# if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
    static uint32_t request_offset, referer_offset, agent_offset;
-#endif
+# endif
 
    static void    initApacheLikeLog();
    static void prepareApacheLikeLog();
    static void   resetApacheLikeLog()
       {
-      U_TRACE(0, "UHTTP::resetApacheLikeLog()")
+      U_TRACE_NO_PARAM(0, "UHTTP::resetApacheLikeLog()")
 
       iov_vec[6].iov_len  =
       iov_vec[8].iov_len  = 1;
       iov_vec[6].iov_base =
       iov_vec[8].iov_base = (caddr_t) "-";
       }
-# endif
+#endif
 
    // CSP (C Servlet Page)
 
@@ -941,7 +928,7 @@ public:
 
    static bool isDataFromCache()
       {
-      U_TRACE(0, "UHTTP::isDataFromCache()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isDataFromCache()")
 
       U_INTERNAL_ASSERT_POINTER(file_data)
 
@@ -954,7 +941,7 @@ public:
 
    static bool isDataCompressFromCache()
       {
-      U_TRACE(0, "UHTTP::isDataCompressFromCache()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isDataCompressFromCache()")
 
       U_INTERNAL_ASSERT_POINTER(file_data)
       U_INTERNAL_ASSERT_POINTER(file_data->array)
@@ -969,7 +956,7 @@ public:
 
    static bool isFileInCache()
       {
-      U_TRACE(0, "UHTTP::isFileInCache()")
+      U_TRACE_NO_PARAM(0, "UHTTP::isFileInCache()")
 
       checkFileInCache(U_FILE_TO_PARAM(*file));
 
@@ -1005,7 +992,7 @@ private:
 
    static void setMimeIndex() // NB: it is used by server_plugin_ssi...
       {
-      U_TRACE(0, "UHTTP::setMimeIndex()")
+      U_TRACE_NO_PARAM(0, "UHTTP::setMimeIndex()")
 
       U_INTERNAL_ASSERT_POINTER(file)
       U_ASSERT_EQUALS(UClientImage_Base::isRequestNotFound(), false)

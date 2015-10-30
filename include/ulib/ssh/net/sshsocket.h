@@ -131,7 +131,7 @@ public:
 
    void sendEOF()
       {
-      U_TRACE(1, "USSHSocket::sendEOF()")
+      U_TRACE_NO_PARAM(1, "USSHSocket::sendEOF()")
 
       U_INTERNAL_ASSERT_POINTER(channel)
 

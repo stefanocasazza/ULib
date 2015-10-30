@@ -62,7 +62,7 @@ public:
 
    void deallocate()
       {
-      U_TRACE(0, "UVector<void*>::deallocate()")
+      U_TRACE_NO_PARAM(0, "UVector<void*>::deallocate()")
 
       U_CHECK_MEMORY
 
@@ -97,21 +97,21 @@ public:
 
    uint32_t size() const
       {
-      U_TRACE(0, "UVector<void*>::size()")
+      U_TRACE_NO_PARAM(0, "UVector<void*>::size()")
 
       U_RETURN(_length);
       }
 
    uint32_t capacity() const
       {
-      U_TRACE(0, "UVector<void*>::capacity()")
+      U_TRACE_NO_PARAM(0, "UVector<void*>::capacity()")
 
       U_RETURN(_capacity);
       }
 
    bool empty() const
       {
-      U_TRACE(0, "UVector<void*>::empty()")
+      U_TRACE_NO_PARAM(0, "UVector<void*>::empty()")
 
       U_RETURN(_length == 0);
       }
@@ -171,7 +171,7 @@ public:
 
    const void* last() // return last element
       {
-      U_TRACE(0, "UVector<void*>::last()")
+      U_TRACE_NO_PARAM(0, "UVector<void*>::last()")
 
       U_CHECK_MEMORY
 
@@ -182,7 +182,7 @@ public:
 
    const void* pop() // remove last element
       {
-      U_TRACE(0, "UVector<void*>::pop()")
+      U_TRACE_NO_PARAM(0, "UVector<void*>::pop()")
 
       U_CHECK_MEMORY
 
@@ -247,7 +247,7 @@ public:
 
    const void* bh_min() const __pure
       {
-      U_TRACE(0, "UVector<void*>::bh_min()")
+      U_TRACE_NO_PARAM(0, "UVector<void*>::bh_min()")
 
       U_CHECK_MEMORY
 
@@ -315,7 +315,7 @@ public:
 #ifdef U_RING_BUFFER
    bool isEmptyRingBuffer()
       {
-      U_TRACE(0, "UVector<void*>::isEmptyRingBuffer()")
+      U_TRACE_NO_PARAM(0, "UVector<void*>::isEmptyRingBuffer()")
 
       U_CHECK_MEMORY
 
@@ -331,7 +331,7 @@ public:
 
    uint32_t sizeRingBuffer()
       {
-      U_TRACE(0, "UVector<void*>::sizeRingBuffer()")
+      U_TRACE_NO_PARAM(0, "UVector<void*>::sizeRingBuffer()")
 
       U_CHECK_MEMORY
 
@@ -404,7 +404,7 @@ public:
 
    void clear() // erase all element
       {
-      U_TRACE(0+256, "UVector<T*>::clear()")
+      U_TRACE_NO_PARAM(0+256, "UVector<T*>::clear()")
 
       U_CHECK_MEMORY
 
@@ -489,7 +489,7 @@ public:
 
    T* last() // return last element
       {
-      U_TRACE(0, "UVector<T*>::last()")
+      U_TRACE_NO_PARAM(0, "UVector<T*>::last()")
 
       T* elem = (T*) UVector<void*>::last();
 
@@ -498,7 +498,7 @@ public:
 
    T* pop() // remove last element
       {
-      U_TRACE(0, "UVector<T*>::pop()")
+      U_TRACE_NO_PARAM(0, "UVector<T*>::pop()")
 
       T* elem = (T*) UVector<void*>::pop();
 
@@ -729,7 +729,7 @@ public:
 
    T* bh_get()
       {
-      U_TRACE(0, "UVector<T*>::bh_get()")
+      U_TRACE_NO_PARAM(0, "UVector<T*>::bh_get()")
 
       U_CHECK_MEMORY
 
@@ -1008,7 +1008,7 @@ public:
 
    UString last() // return last element
       {
-      U_TRACE(0, "UVector<UString>::last()")
+      U_TRACE_NO_PARAM(0, "UVector<UString>::last()")
 
       UStringRep* rep = UVector<UStringRep*>::last();
 
@@ -1021,7 +1021,7 @@ public:
 
    UString pop() // remove last element
       {
-      U_TRACE(0, "UVector<UString>::pop()")
+      U_TRACE_NO_PARAM(0, "UVector<UString>::pop()")
 
       UStringRep* rep = UVector<UStringRep*>::pop();
 
@@ -1113,7 +1113,7 @@ public:
 
    UString bh_get()
       {
-      U_TRACE(0, "UVector<UString>::bh_get()")
+      U_TRACE_NO_PARAM(0, "UVector<UString>::bh_get()")
 
       UStringRep* rep = UVector<UStringRep*>::bh_get();
 

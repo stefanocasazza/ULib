@@ -70,7 +70,7 @@ public:
    pid_t  pid() const  { return  _pid; }
    pid_t ppid() const
       {
-      U_TRACE(0, "UProcess::ppid()")
+      U_TRACE_NO_PARAM(0, "UProcess::ppid()")
 
       pid_t _ppid = U_SYSCALL_NO_PARAM(getppid);
 
@@ -84,7 +84,7 @@ public:
 
    static uint32_t removeZombies()
       {
-      U_TRACE(1, "UProcess::removeZombies()")
+      U_TRACE_NO_PARAM(1, "UProcess::removeZombies()")
 
       uint32_t n = 0;
 

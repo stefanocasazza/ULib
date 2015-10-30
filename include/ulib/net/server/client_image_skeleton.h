@@ -47,7 +47,7 @@ protected:
 
    virtual int handlerRead() U_DECL_OVERRIDE
       {
-      U_TRACE(0, "USkeletonClientImage::handlerRead()")
+      U_TRACE_NO_PARAM(0, "USkeletonClientImage::handlerRead()")
 
       int result = UClientImage_Base::handlerRead(); // read request...
 
@@ -91,7 +91,7 @@ protected:
 
    virtual int handlerRead() U_DECL_OVERRIDE
       {
-      U_TRACE(0, "USkeletonClientImage::handlerRead()")
+      U_TRACE_NO_PARAM(0, "USkeletonClientImage::handlerRead()")
 
       int result = UClientImage_Base::handlerRead(); // read request...
 

@@ -69,7 +69,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UCertificate::clear()")
+      U_TRACE_NO_PARAM(0, "UCertificate::clear()")
 
       U_INTERNAL_ASSERT_POINTER(x509)
 
@@ -89,7 +89,7 @@ public:
 
    bool isValid() const
       {
-      U_TRACE(0, "UCertificate::isValid()")
+      U_TRACE_NO_PARAM(0, "UCertificate::isValid()")
 
       U_RETURN(x509 != 0);
       }
@@ -122,7 +122,7 @@ public:
 
    void duplicate()
       {
-      U_TRACE(0, "UCertificate::duplicate()")
+      U_TRACE_NO_PARAM(0, "UCertificate::duplicate()")
 
       x509 = X509_dup(x509);
       }
@@ -260,7 +260,7 @@ public:
 
    static UString getSignature(X509* a)
       {
-      U_TRACE(0, "UCertificate::getSignature(%a)")
+      U_TRACE(0, "UCertificate::getSignature(%p)", a)
 
       U_INTERNAL_ASSERT_POINTER(a)
 
@@ -278,7 +278,7 @@ public:
 
    static UString getSignatureAlgorithm(X509* a)
       {
-      U_TRACE(0, "UCertificate::getSignatureAlgorithm(%p)")
+      U_TRACE(0, "UCertificate::getSignatureAlgorithm(%p)", a)
 
       U_INTERNAL_ASSERT_POINTER(a)
 
@@ -341,7 +341,7 @@ public:
 
    const char* getNotBefore() const __pure
       {
-      U_TRACE(0, "UCertificate::getNotBefore()")
+      U_TRACE_NO_PARAM(0, "UCertificate::getNotBefore()")
 
       U_INTERNAL_ASSERT_POINTER(x509)
 
@@ -356,7 +356,7 @@ public:
 
    const char* getNotAfter() const __pure
       {
-      U_TRACE(0, "UCertificate::getNotAfter()")
+      U_TRACE_NO_PARAM(0, "UCertificate::getNotAfter()")
 
       U_INTERNAL_ASSERT_POINTER(x509)
 
@@ -371,7 +371,7 @@ public:
 
    bool checkValidity() const
       {
-      U_TRACE(0, "UCertificate::checkValidity()")
+      U_TRACE_NO_PARAM(0, "UCertificate::checkValidity()")
 
       U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 

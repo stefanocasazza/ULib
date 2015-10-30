@@ -15,7 +15,7 @@
 
 void USSHSocket::close()
 {
-   U_TRACE(1, "USSHSocket::close()")
+   U_TRACE_NO_PARAM(1, "USSHSocket::close()")
 
    if (channel)
       {
@@ -39,7 +39,7 @@ void USSHSocket::close()
 
 U_NO_EXPORT void USSHSocket::setStatus()
 {
-   U_TRACE(1, "USSHSocket::setStatus()")
+   U_TRACE_NO_PARAM(1, "USSHSocket::setStatus()")
 
    int val = 0;
    const char* descr = "SSH_NO_ERROR";
@@ -220,7 +220,7 @@ end:
 
 bool USSHSocket::setError()
 {
-   U_TRACE(0, "USSHSocket::setError()")
+   U_TRACE_NO_PARAM(0, "USSHSocket::setError()")
 
    if (USocket::isSysError())
       {

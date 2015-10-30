@@ -42,25 +42,6 @@ UString* USSIPlugIn::header;
 UString* USSIPlugIn::environment;
 UString* USSIPlugIn::alternative_include;
 
-const UString* USSIPlugIn::str_cgi;
-const UString* USSIPlugIn::str_var;
-
-void USSIPlugIn::str_allocate()
-{
-   U_TRACE(0, "USSIPlugIn::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_cgi, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_var, 0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("cgi") },
-      { U_STRINGREP_FROM_CONSTANT("var") }
-   };
-
-   U_NEW_ULIB_OBJECT(str_cgi, U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_var, U_STRING_FROM_STRINGREP_STORAGE(1));
-}
-
 USSIPlugIn::USSIPlugIn()
 {
    U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "")
@@ -69,7 +50,7 @@ USSIPlugIn::USSIPlugIn()
    timefmt = U_NEW(UString);
    docname = U_NEW(UString);
 
-   str_allocate();
+   UString::str_allocate(STR_ALLOCATE_SSI);
 }
 
 USSIPlugIn::~USSIPlugIn()
@@ -116,7 +97,7 @@ void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
 
 void USSIPlugIn::setBadRequest()
 {
-   U_TRACE(0, "USSIPlugIn::setBadRequest()")
+   U_TRACE_NO_PARAM(0, "USSIPlugIn::setBadRequest()")
 
    alternative_response = 1;
 
@@ -125,7 +106,7 @@ void USSIPlugIn::setBadRequest()
 
 void USSIPlugIn::setAlternativeResponse()
 {
-   U_TRACE(0, "USSIPlugIn::setAlternativeResponse()")
+   U_TRACE_NO_PARAM(0, "USSIPlugIn::setAlternativeResponse()")
 
    alternative_response = 1;
 
@@ -154,7 +135,7 @@ void USSIPlugIn::setAlternativeResponse(UString& _body)
       {
       U_http_info.nResponseCode = HTTP_OK;
 
-      UHTTP::setResponse(u_is_know(UHTTP::mime_index) ? UHTTP::str_ctype_txt : UHTTP::str_ctype_html, &_body);
+      UHTTP::setResponse(u_is_know(UHTTP::mime_index) ? UString::str_ctype_txt : UString::str_ctype_html, &_body);
       }
 }
 
@@ -264,7 +245,7 @@ U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& val
       U_RETURN(true);
       }
 
-   U_ASSERT(name == *str_cgi ||
+   U_ASSERT(name == *UString::str_cgi ||
             name.equal(U_CONSTANT_TO_PARAM("servlet")))
 
    UClientImage_Base::wbuffer->setBuffer(U_CAPACITY); // NB: we need this to avoid to accumulate output from services...
@@ -612,13 +593,13 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                name  = name_value[i];
                value = name_value[i+1];
 
-               if (name == *UString::str_encoding)
+               if (name.equal(U_CONSTANT_TO_PARAM("encoding")))
                   {
                        if (value.equal(U_CONSTANT_TO_PARAM("none")))   encode = E_NONE;
                   else if (value.equal(U_CONSTANT_TO_PARAM("url")))    encode = E_URL;
                   else if (value.equal(U_CONSTANT_TO_PARAM("entity"))) encode = E_ENTITY;
                   }
-               else if (name == *str_var)
+               else if (name == *UString::str_var)
                   {
                   U_INTERNAL_ASSERT_MAJOR(u_user_name_len,0)
 
@@ -814,7 +795,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
             for (i = 0; i < n; i += 4)
                {
-               if (name_value[i]   == *str_var &&
+               if (name_value[i]   == *UString::str_var &&
                    name_value[i+2].equal(U_CONSTANT_TO_PARAM("value")))
                   {
                   bvar = true;
@@ -832,7 +813,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
                if (callService(name, name_value[1]) == false) return UString::getStringNull();
 
-               if (name == *str_cgi)
+               if (name == *UString::str_cgi)
                   {
                   // NB: check if we are in cgi shell script DEBUG mode...
 
@@ -919,7 +900,7 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
 
    if (cfg.loadTable())
       {
-      UString x = cfg[*UString::str_ENVIRONMENT];
+      UString x = cfg.at(U_CONSTANT_TO_PARAM("ENVIRONMENT"));
 
       if (x)
          {
@@ -946,7 +927,7 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
 
 int USSIPlugIn::handlerInit()
 {
-   U_TRACE(0, "USSIPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(0, "USSIPlugIn::handlerInit()")
 
    U_INTERNAL_ASSERT_EQUALS(body, 0)
    U_INTERNAL_ASSERT_EQUALS(header, 0)
@@ -963,7 +944,7 @@ int USSIPlugIn::handlerInit()
 
 int USSIPlugIn::handlerRequest()
 {
-   U_TRACE(0, "USSIPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "USSIPlugIn::handlerRequest()")
 
    U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 

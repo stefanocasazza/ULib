@@ -112,7 +112,7 @@ public:
 
    int free()
       {
-      U_TRACE(0, "URingBuffer::free()")
+      U_TRACE_NO_PARAM(0, "URingBuffer::free()")
 
       U_CHECK_MEMORY
 

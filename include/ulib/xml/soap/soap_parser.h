@@ -191,7 +191,7 @@ public:
 
    void clearData()
       {
-      U_TRACE(0, "USOAPParser::clearData()")
+      U_TRACE_NO_PARAM(0, "USOAPParser::clearData()")
 
       URPCParser::clearData();
 
@@ -208,7 +208,7 @@ public:
 
    void zero()
       {
-      U_TRACE(0, "USOAPParser::zero()")
+      U_TRACE_NO_PARAM(0, "USOAPParser::zero()")
 
       body                    = 0;
       header                  = 0;
@@ -237,7 +237,7 @@ public:
 
    UString getResponse()
       {
-      U_TRACE(0, "USOAPParser::getResponse()")
+      U_TRACE_NO_PARAM(0, "USOAPParser::getResponse()")
       
       U_INTERNAL_ASSERT_POINTER(method)
 

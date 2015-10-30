@@ -24,7 +24,7 @@ USOAPClient_Base::~USOAPClient_Base()
 
 void USOAPClient_Base::clearData()
 {
-   U_TRACE(0, "USOAPClient_Base::clearData()")
+   U_TRACE_NO_PARAM(0, "USOAPClient_Base::clearData()")
 
    if (parser)
       {
@@ -35,7 +35,7 @@ void USOAPClient_Base::clearData()
 
 bool USOAPClient_Base::readResponse()
 {
-   U_TRACE(0, "USOAPClient_Base::readResponse()")
+   U_TRACE_NO_PARAM(0, "USOAPClient_Base::readResponse()")
 
    if (UClient_Base::readHTTPResponse()) U_RETURN(true);
 
@@ -59,7 +59,7 @@ bool USOAPClient_Base::processRequest(URPCMethod& method)
 
       if (parser->parse(UClient_Base::response))
          {
-         if (parser->getMethodName() == *UString::str_fault) UClient_Base::response = parser->getFaultResponse();
+         if (parser->getMethodName().equal(U_CONSTANT_TO_PARAM("Fault"))) UClient_Base::response = parser->getFaultResponse();
          else
             {
 #        ifndef U_COVERITY_FALSE_POSITIVE // Explicit null dereferenced (FORWARD_NULL)

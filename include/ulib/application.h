@@ -139,7 +139,7 @@ public:
 
    static bool isOptions()
       {
-      U_TRACE(0, "UApplication::isOptions()")
+      U_TRACE_NO_PARAM(0, "UApplication::isOptions()")
 
       U_RETURN(is_options);
       }

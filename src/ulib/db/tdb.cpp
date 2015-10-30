@@ -58,7 +58,7 @@ bool UTDB::getKeys(UVector<UString>& vec)
 
 UString UTDB::print()
 {
-   U_TRACE(1, "UTDB::print()")
+   U_TRACE_NO_PARAM(1, "UTDB::print()")
 
    U_CHECK_MEMORY
 
@@ -75,7 +75,7 @@ UString UTDB::print()
 
 UString UTDB::printSorted()
 {
-   U_TRACE(1, "UTDB::printSorted()")
+   U_TRACE_NO_PARAM(1, "UTDB::printSorted()")
 
    U_CHECK_MEMORY
 

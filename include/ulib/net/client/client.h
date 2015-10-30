@@ -54,7 +54,7 @@ public:
 
    bool isOpen() const
       {
-      U_TRACE(0, "UClient_Base::isOpen()")
+      U_TRACE_NO_PARAM(0, "UClient_Base::isOpen()")
 
       if (socket->isOpen()) U_RETURN(true);
 
@@ -63,7 +63,7 @@ public:
 
    bool isClosed() const
       {
-      U_TRACE(0, "UClient_Base::isClosed()")
+      U_TRACE_NO_PARAM(0, "UClient_Base::isClosed()")
 
       if (socket->isClosed()) U_RETURN(true);
 
@@ -72,7 +72,7 @@ public:
 
    bool isConnected() const
       {
-      U_TRACE(0, "UClient_Base::isConnected()")
+      U_TRACE_NO_PARAM(0, "UClient_Base::isConnected()")
 
       if (socket->isOpen() &&
           socket->isConnected())
@@ -92,7 +92,7 @@ public:
 
    void close()
       {
-      U_TRACE(0, "UClient_Base::close()")
+      U_TRACE_NO_PARAM(0, "UClient_Base::close()")
 
       U_INTERNAL_ASSERT_POINTER(socket)
 
@@ -119,14 +119,14 @@ public:
 
    void adjustTimeOut()
       {
-      U_TRACE(0, "UClient_Base::adjustTimeOut()")
+      U_TRACE_NO_PARAM(0, "UClient_Base::adjustTimeOut()")
 
       if (timeoutMS < U_TIMEOUT_MS) timeoutMS = U_TIMEOUT_MS;
       }
 
    void reset()
       {
-      U_TRACE(0, "UClient_Base::reset()")
+      U_TRACE_NO_PARAM(0, "UClient_Base::reset()")
 
 #  ifdef DEBUG
       uri.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (uri can be a substr of url)
@@ -141,7 +141,7 @@ public:
 
    static bool isLogSharedWithServer()
       {
-      U_TRACE(0, "UClient_Base::isLogSharedWithServer()")
+      U_TRACE_NO_PARAM(0, "UClient_Base::isLogSharedWithServer()")
 
       U_RETURN(log_shared_with_server);
       }

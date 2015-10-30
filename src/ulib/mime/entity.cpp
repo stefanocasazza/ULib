@@ -61,7 +61,7 @@ __pure bool UMimeEntity::isMultipartFormData() const { return UMimeHeader::isMul
 
 __pure bool UMimeEntity::isMultipart() const
 {
-   U_TRACE(0, "UMimeEntity::isMultipart()")
+   U_TRACE_NO_PARAM(0, "UMimeEntity::isMultipart()")
 
    bool result = UMimeHeader::isContentType(content_type, U_CONSTANT_TO_PARAM("multipart"), true); // NB: ignore case - kmail use "Multipart"
 
@@ -102,7 +102,7 @@ bool UMimeEntity::parse(const char* ptr, uint32_t len)
 
 void UMimeEntity::decodeBody()
 {
-   U_TRACE(0, "UMimeEntity::decodeBody()")
+   U_TRACE_NO_PARAM(0, "UMimeEntity::decodeBody()")
 
    U_INTERNAL_ASSERT_POINTER(header)
 
@@ -358,7 +358,7 @@ U_NO_EXPORT bool UMimeMultipart::findBoundary(uint32_t pos)
 
 void UMimeMultipart::init()
 {
-   U_TRACE(0, "UMimeMultipart::init()")
+   U_TRACE_NO_PARAM(0, "UMimeMultipart::init()")
 
    U_INTERNAL_ASSERT(UMimeEntity::content)
 
@@ -385,7 +385,7 @@ void UMimeMultipart::init()
 
 void UMimeMultipart::reset()
 {
-   U_TRACE(0, "UMimeMultipart::reset()")
+   U_TRACE_NO_PARAM(0, "UMimeMultipart::reset()")
 
    if (preamble.isNull() == false) preamble.clear();
    if (epilogue.isNull() == false) epilogue.clear();
@@ -473,7 +473,7 @@ bool UMimeMultipart::parse(bool digest)
             item->content_type = *UString::str_txt_plain;
             }
 
-         (void) item->header->setHeaderIfAbsent(*UString::str_content_type, item->content_type);
+         (void) item->header->setHeaderIfAbsent(U_CONSTANT_TO_PARAM("Content-Type"), item->content_type);
          }
 
       bodypart.push(item);

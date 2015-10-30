@@ -40,7 +40,7 @@ CAPATH="../ulib/CA/CApath"
 CACERT="../ulib/CA/username.crt"
 USER_KEY="../ulib/CA/username.key"
 LCMD="$OPENSSL s_client -no_ssl2 -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -verify 0 -connect"
-LCMD1="$LCMD localhost:443"
+LCMD1="$LCMD localhost:4443"
 
 # function : start_test
 start_test() {
@@ -51,7 +51,7 @@ $SLEEP
  start_prg_background userver_ssl -c inp/webserver.cfg 
 
 for i in 1 2 3 4 5; do
-	$NC -c localhost 443 </dev/null 2>/dev/null
+	$NC -c localhost 4443 </dev/null 2>/dev/null
 	if [ $? -eq 0 ]; then
 		break
 	fi
@@ -66,7 +66,7 @@ done
 # TIMEOUT 10 $LCMD1 <inp/http/and/$i >/tmp/web_server/$i
 #done
 
-#TIMEOUT 10 $LCMD 10.30.1.111:443 <inp/http/all6.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+#TIMEOUT 10 $LCMD 10.30.1.111:4443 <inp/http/all6.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 #exit 0
 #TIMEOUT 10 $LCMD1					 <inp/http/all5.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 #return
@@ -107,8 +107,8 @@ mkdir -p		   uploads
 $CHOWN apache: uploads
 chmod 777      uploads
 
-TIMEOUT 10 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://localhost:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-TIMEOUT 10 $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" -k https://localhost:443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+TIMEOUT 10 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://localhost:4443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+TIMEOUT 10 $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" -k https://localhost:4443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 
  kill_prg userver_ssl TERM
  if [ $? -ne 0 ]; then
@@ -134,6 +134,7 @@ fi
 
 cat <<EOF >inp/webserver.cfg
 userver {
+ PORT 4443
  RUN_AS_USER apache
  REQ_TIMEOUT 30
 #MIN_SIZE_FOR_SENDFILE 2k
@@ -197,7 +198,7 @@ c
 c
 EOF
 
-killall userver_ssl 2>/dev/null
+pkill userver_ssl 2>/dev/null
 
 # webserver_ssl0
  creat_config 0 

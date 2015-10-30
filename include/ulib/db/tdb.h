@@ -104,7 +104,7 @@ public:
 
    void close()
       {
-      U_TRACE(1, "UTDB::close()")
+      U_TRACE_NO_PARAM(1, "UTDB::close()")
 
       U_CHECK_MEMORY
 

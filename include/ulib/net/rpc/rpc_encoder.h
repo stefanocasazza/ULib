@@ -54,7 +54,7 @@ public:
 
    void clearData()
       {
-      U_TRACE(0, "URPCEncoder::clearData()")
+      U_TRACE_NO_PARAM(0, "URPCEncoder::clearData()")
 
       arg.clear();
 

@@ -74,7 +74,7 @@ public:
 
    const char* getErrorMessage()
       {
-      U_TRACE(0, "UXMLParser::getErrorMessage()")
+      U_TRACE_NO_PARAM(0, "UXMLParser::getErrorMessage()")
 
       U_INTERNAL_ASSERT_POINTER(m_parser)
 

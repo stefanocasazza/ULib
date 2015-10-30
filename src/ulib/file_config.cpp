@@ -18,13 +18,13 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/string_ext.h>
 
-#if defined(__NetBSD__) || defined(__UNIKERNEL__)
+#if defined(__NetBSD__) || defined(__UNIKERNEL__) || defined(__OSX__)
 extern char** environ;
 #endif
 
 U_NO_EXPORT void UFileConfig::init()
 {
-   U_TRACE(0, "UFileConfig::init()")
+   U_TRACE_NO_PARAM(0, "UFileConfig::init()")
 
    UFile::map      = (char*)MAP_FAILED;
    UFile::st_size  = 0;
@@ -172,7 +172,7 @@ bool UFileConfig::processData(bool bload)
 
 void UFileConfig::load()
 {
-   U_TRACE(0, "UFileConfig::load()")
+   U_TRACE_NO_PARAM(0, "UFileConfig::load()")
 
    U_CHECK_MEMORY
 
@@ -357,7 +357,7 @@ bool UFileConfig::loadSection(const char* section, uint32_t len)
 
 bool UFileConfig::loadINI()
 {
-   U_TRACE(0, "UFileConfig::loadINI()")
+   U_TRACE_NO_PARAM(0, "UFileConfig::loadINI()")
 
    U_CHECK_MEMORY
 
@@ -544,7 +544,7 @@ bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, c
 
 bool UFileConfig::loadProperties()
 {
-   U_TRACE(0, "UFileConfig::loadProperties()")
+   U_TRACE_NO_PARAM(0, "UFileConfig::loadProperties()")
 
    U_CHECK_MEMORY
 

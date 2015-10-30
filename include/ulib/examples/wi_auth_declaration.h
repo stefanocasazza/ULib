@@ -160,7 +160,7 @@ public:
 
    // COSTRUTTORE
 
-   WiAuthDataStorage() : UDataStorage(*UHTTP::str_storage_keyid)
+   WiAuthDataStorage() : UDataStorage(*UString::str_storage_keyid)
       {
       U_TRACE_REGISTER_OBJECT(5, WiAuthDataStorage, "", 0)
 
@@ -180,7 +180,7 @@ public:
 
    virtual char* toBuffer()
       {
-      U_TRACE(5, "WiAuthDataStorage::toBuffer()")
+      U_TRACE_NO_PARAM(5, "WiAuthDataStorage::toBuffer()")
 
       U_CHECK_MEMORY
 
@@ -210,7 +210,7 @@ public:
 
    void reset()
       {
-      U_TRACE(5, "WiAuthDataStorage::reset()")
+      U_TRACE_NO_PARAM(5, "WiAuthDataStorage::reset()")
 
       U_CHECK_MEMORY
 
@@ -287,7 +287,7 @@ public:
 
    void reset()
       {
-      U_TRACE(5, "WiAuthAccessPoint::reset()")
+      U_TRACE_NO_PARAM(5, "WiAuthAccessPoint::reset()")
 
       traffic_done = 0ULL;
       num_login = num_auth_domain_ALL = num_auth_domain_FICARD = 0U;
@@ -295,7 +295,7 @@ public:
 
    void toBuffer()
       {
-      U_TRACE(5, "WiAuthAccessPoint::toBuffer()")
+      U_TRACE_NO_PARAM(5, "WiAuthAccessPoint::toBuffer()")
 
       U_CHECK_MEMORY
 
@@ -382,7 +382,7 @@ public:
 
    virtual void clear()
       {
-      U_TRACE(5, "WiAuthNodog::clear()")
+      U_TRACE_NO_PARAM(5, "WiAuthNodog::clear()")
 
       U_CHECK_MEMORY
 
@@ -394,7 +394,7 @@ public:
 
    virtual char* toBuffer()
       {
-      U_TRACE(5, "WiAuthNodog::toBuffer()")
+      U_TRACE_NO_PARAM(5, "WiAuthNodog::toBuffer()")
 
       U_CHECK_MEMORY
 
@@ -457,7 +457,7 @@ public:
 
    bool findLabel()
       {
-      U_TRACE(5, "WiAuthNodog::findLabel()")
+      U_TRACE_NO_PARAM(5, "WiAuthNodog::findLabel()")
 
       U_CHECK_MEMORY
 
@@ -494,7 +494,7 @@ public:
 
    static bool checkMAC()
       {
-      U_TRACE(5, "WiAuthNodog::checkMAC()")
+      U_TRACE_NO_PARAM(5, "WiAuthNodog::checkMAC()")
 
       if (*mac                                  &&
           *ap_address                           &&
@@ -764,7 +764,7 @@ public:
 
    virtual void clear()
       {
-      U_TRACE(5, "WiAuthUser::clear()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::clear()")
 
       U_CHECK_MEMORY
 
@@ -778,7 +778,7 @@ public:
 
    virtual char* toBuffer()
       {
-      U_TRACE(5, "WiAuthUser::toBuffer()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::toBuffer()")
 
       U_CHECK_MEMORY
 
@@ -1027,7 +1027,7 @@ next:
 
    void getDone()
       {
-      U_TRACE(5, "WiAuthUser::getDone()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::getDone()")
 
       U_CHECK_MEMORY
 
@@ -1037,7 +1037,7 @@ next:
 
    void getCounter()
       {
-      U_TRACE(5, "WiAuthUser::getCounter()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::getCounter()")
 
       U_CHECK_MEMORY
 
@@ -1047,7 +1047,7 @@ next:
 
    void getConsumed()
       {
-      U_TRACE(5, "WiAuthUser::getConsume()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::getConsume()")
 
       U_CHECK_MEMORY
 
@@ -1057,7 +1057,7 @@ next:
 
    UString getPolicy()
       {
-      U_TRACE(5, "WiAuthUser::getPolicy()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::getPolicy()")
 
       UString x = (consume || _policy != *policy_daily ? _policy : *policy_flat);
 
@@ -1066,7 +1066,7 @@ next:
 
    bool setNodogReference()
       {
-      U_TRACE(5, "WiAuthUser::setNodogReference()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::setNodogReference()")
 
       U_CHECK_MEMORY
 
@@ -1098,7 +1098,7 @@ next:
 
    static bool checkUserID()
       {
-      U_TRACE(5, "WiAuthUser::checkUserID()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::checkUserID()")
 
       U_INTERNAL_ASSERT(*uid)
       U_ASSERT_EQUALS(*uid, UStringExt::trim(*uid))
@@ -1122,7 +1122,7 @@ next:
 
    static UString get_UserName()
       {
-      U_TRACE(5, "WiAuthUser::get_UserName()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::get_UserName()")
 
       UString user, content;
 
@@ -1209,7 +1209,7 @@ next:
 
    void setRecord() // NB: it is called only in the context of login validation...
       {
-      U_TRACE(5, "WiAuthUser::setRecord()")
+      U_TRACE_NO_PARAM(5, "WiAuthUser::setRecord()")
 
       U_CHECK_MEMORY
 
@@ -1473,7 +1473,7 @@ static void setAccessPointReference(const char* s, uint32_t n)
 
 static void usp_init_wi_auth()
 {
-   U_TRACE(5, "::usp_init_wi_auth()")
+   U_TRACE_NO_PARAM(5, "::usp_init_wi_auth()")
 
    ap_ref   = U_NEW(UString(100U));
    ap_label = U_NEW(UString);
@@ -1760,7 +1760,7 @@ static void usp_init_wi_auth()
 
 static void usp_sighup_wi_auth()
 {
-   U_TRACE(5, "::usp_sighup_wi_auth()")
+   U_TRACE_NO_PARAM(5, "::usp_sighup_wi_auth()")
 
    if (db_nodog)
       {
@@ -1800,7 +1800,7 @@ static void usp_sighup_wi_auth()
 
 static void usp_end_wi_auth()
 {
-   U_TRACE(5, "::usp_end_wi_auth()")
+   U_TRACE_NO_PARAM(5, "::usp_end_wi_auth()")
 
    if (db_nodog)
       {
@@ -1939,7 +1939,7 @@ static int checkIfUserExist(UStringRep* key, UStringRep* data)
 
 static bool checkIfUserConnected()
 {
-   U_TRACE(5, "::checkIfUserConnected()")
+   U_TRACE_NO_PARAM(5, "::checkIfUserConnected()")
 
    U_INTERNAL_DUMP("uid = %V", uid->rep)
 
@@ -1993,7 +1993,7 @@ static bool checkIfUserConnectedOnAP(const UString& label)
 
 static UString getUserName()
 {
-   U_TRACE(5, "::getUserName()")
+   U_TRACE_NO_PARAM(5, "::getUserName()")
 
    UString user, x = WiAuthUser::get_UserName();
 
@@ -2339,7 +2339,7 @@ static int setLoginNodog(UStringRep* key, UStringRep* data)
 
 static void get_ap_uptime()
 {
-   U_TRACE(5, "::get_ap_uptime()")
+   U_TRACE_NO_PARAM(5, "::get_ap_uptime()")
 
    // NB: request => http://%s:%u/...", *ap_address, nodog_rec->port...
 
@@ -2589,7 +2589,7 @@ static void setCookie(const char* hexdump)
 
 static void loginWithProblem()
 {
-   U_TRACE(5, "::loginWithProblem()")
+   U_TRACE_NO_PARAM(5, "::loginWithProblem()")
 
    if (UServer_Base::bssl) setCookie(0);
 
@@ -2821,7 +2821,7 @@ static void askNodogToLogoutUser(UVector<UString>& vec, bool bcheck)
 
 static bool setAccessPointAddress()
 {
-   U_TRACE(5, "::setAccessPointAddress()")
+   U_TRACE_NO_PARAM(5, "::setAccessPointAddress()")
 
    U_INTERNAL_ASSERT(ap)
 
@@ -2849,7 +2849,7 @@ static bool setAccessPointAddress()
 
 static void setAccessPointLocalization()
 {
-   U_TRACE(5, "::setAccessPointLocalization()")
+   U_TRACE_NO_PARAM(5, "::setAccessPointLocalization()")
 
    U_INTERNAL_ASSERT_POINTER(ap_ref)
    U_INTERNAL_ASSERT_POINTER(ap_ref_ap)
@@ -3154,7 +3154,7 @@ static void getLoginRequest(UString& timeout, UString& realm)
 
 static void checkUserID()
 {
-   U_TRACE(5, "::checkUserID()")
+   U_TRACE_NO_PARAM(5, "::checkUserID()")
 
    if (WiAuthUser::checkUserID())
       {
@@ -3336,7 +3336,7 @@ static bool getCookie(UString* prealm, UString* pid)
 
 static void sendRedirect()
 {
-   U_TRACE(5, "::sendRedirect()")
+   U_TRACE_NO_PARAM(5, "::sendRedirect()")
 
    U_INTERNAL_DUMP("redir = %V", redir->rep)
 
@@ -3348,7 +3348,7 @@ static void sendRedirect()
 
 static void sendLoginValidate()
 {
-   U_TRACE(5, "::sendLoginValidate()")
+   U_TRACE_NO_PARAM(5, "::sendLoginValidate()")
 
    if (policy->empty()) *policy = *policy_daily;
 
@@ -3398,14 +3398,14 @@ static void sendLoginValidate()
 
 static void GET_admin()
 {
-   U_TRACE(5, "::GET_admin()")
+   U_TRACE_NO_PARAM(5, "::GET_admin()")
 
    USSIPlugIn::setAlternativeRedirect("https://%v/admin.html", ip_server->rep);
 }
 
 static void GET_admin_edit_ap()
 {
-   U_TRACE(5, "::GET_admin_edit_ap()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_edit_ap()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -3450,7 +3450,7 @@ static void GET_admin_edit_ap()
 
 static void GET_admin_export_statistics_login_as_csv()
 {
-   U_TRACE(5, "::GET_admin_export_statistics_login_as_csv()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_export_statistics_login_as_csv()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 
@@ -3463,7 +3463,7 @@ static void GET_admin_export_statistics_login_as_csv()
 
 static void GET_admin_export_statistics_registration_as_csv()
 {
-   U_TRACE(5, "::GET_admin_export_statistics_registration_as_csv()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_export_statistics_registration_as_csv()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 
@@ -3476,7 +3476,7 @@ static void GET_admin_export_statistics_registration_as_csv()
 
 static void GET_admin_export_view_using_historical_as_csv()
 {
-   U_TRACE(5, "::GET_admin_export_view_using_historical_as_csv()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_export_view_using_historical_as_csv()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -3489,7 +3489,7 @@ static void GET_admin_export_view_using_historical_as_csv()
 
 static void GET_admin_historical_statistics_login()
 {
-   U_TRACE(5, "::GET_admin_historical_statistics_login()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_historical_statistics_login()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 
@@ -3502,7 +3502,7 @@ static void GET_admin_historical_statistics_login()
 
 static void GET_admin_login_nodog()
 {
-   U_TRACE(5, "::GET_admin_login_nodog()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_login_nodog()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -3528,7 +3528,7 @@ static void GET_admin_login_nodog()
 
 static void GET_admin_printlog()
 {
-   U_TRACE(5, "::GET_admin_printlog()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_printlog()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 
@@ -3541,7 +3541,7 @@ static void GET_admin_printlog()
 
 static void GET_admin_recovery()
 {
-   U_TRACE(5, "::GET_admin_recovery()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_recovery()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 
@@ -3554,7 +3554,7 @@ static void GET_admin_recovery()
 
 static void GET_admin_status_network()
 {
-   U_TRACE(5, "::GET_admin_status_network()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_status_network()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -3575,7 +3575,7 @@ static void GET_admin_status_network()
 
 static void GET_admin_status_nodog()
 {
-   U_TRACE(5, "::GET_admin_status_nodog()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_status_nodog()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -3602,7 +3602,7 @@ static void GET_admin_status_nodog()
 
 static void GET_admin_view_statistics_login()
 {
-   U_TRACE(5, "::GET_admin_view_statistics_login()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_view_statistics_login()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 
@@ -3615,7 +3615,7 @@ static void GET_admin_view_statistics_login()
 
 static void GET_admin_view_statistics_registration()
 {
-   U_TRACE(5, "::GET_admin_view_statistics_registration()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_view_statistics_registration()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 
@@ -3628,7 +3628,7 @@ static void GET_admin_view_statistics_registration()
 
 static void GET_admin_view_user()
 {
-   U_TRACE(5, "::GET_admin_view_user()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_view_user()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -3643,7 +3643,7 @@ static void GET_admin_view_user()
 
 static void GET_admin_view_using()
 {
-   U_TRACE(5, "::GET_admin_view_using()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_view_using()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -3675,7 +3675,7 @@ static void GET_admin_view_using()
 
 static void GET_admin_view_using_historical()
 {
-   U_TRACE(5, "::GET_admin_view_using_historical()")
+   U_TRACE_NO_PARAM(5, "::GET_admin_view_using_historical()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -3738,7 +3738,7 @@ static void GET_admin_view_using_historical()
 
 static void GET_error_ap()
 {
-   U_TRACE(5, "::GET_error_ap()")
+   U_TRACE_NO_PARAM(5, "::GET_error_ap()")
 
    // $1 -> ap (without localization => '@')
    // $2 -> public address to contact the access point
@@ -3811,7 +3811,7 @@ static void GET_error_ap()
 
 static void GET_fake_login_validate()
 {
-   U_TRACE(5, "::GET_fake_login_validate()")
+   U_TRACE_NO_PARAM(5, "::GET_fake_login_validate()")
 
    // ========================
    // => uid
@@ -3841,7 +3841,7 @@ static void GET_fake_login_validate()
 
 static void GET_gen_activation()
 {
-   U_TRACE(5, "::GET_gen_activation()")
+   U_TRACE_NO_PARAM(5, "::GET_gen_activation()")
 
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
 
@@ -3854,7 +3854,7 @@ static void GET_gen_activation()
 
 static void GET_get_ap_check_firewall()
 {
-   U_TRACE(5, "::GET_get_ap_check_firewall()")
+   U_TRACE_NO_PARAM(5, "::GET_get_ap_check_firewall()")
 
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
@@ -3870,7 +3870,7 @@ static void GET_get_ap_check_firewall()
 
 static void GET_get_ap_check_zombies()
 {
-   U_TRACE(5, "::GET_get_ap_check_zombies()")
+   U_TRACE_NO_PARAM(5, "::GET_get_ap_check_zombies()")
 
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
@@ -3886,7 +3886,7 @@ static void GET_get_ap_check_zombies()
 
 static void GET_get_ap_name()
 {
-   U_TRACE(5, "::GET_get_ap_name()")
+   U_TRACE_NO_PARAM(5, "::GET_get_ap_name()")
 
    output->setBuffer(U_CAPACITY);
 
@@ -3897,7 +3897,7 @@ static void GET_get_ap_name()
 
 static void GET_get_ap_uptime()
 {
-   U_TRACE(5, "::GET_get_ap_uptime()")
+   U_TRACE_NO_PARAM(5, "::GET_get_ap_uptime()")
 
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
@@ -3914,7 +3914,7 @@ static void GET_get_ap_uptime()
 
 static void GET_get_config()
 {
-   U_TRACE(5, "::GET_get_config()")
+   U_TRACE_NO_PARAM(5, "::GET_get_config()")
 
 // if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 // else
@@ -4022,7 +4022,7 @@ static void GET_get_config()
 
 static void GET_get_users_info()
 {
-   U_TRACE(5, "::GET_get_users_info()")
+   U_TRACE_NO_PARAM(5, "::GET_get_users_info()")
 
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
@@ -4060,7 +4060,7 @@ loop:
 
 static void GET_help_wifi()
 {
-   U_TRACE(5, "::GET_help_wifi()")
+   U_TRACE_NO_PARAM(5, "::GET_help_wifi()")
 
    USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("help_wifi.tmpl")), 0, false,
                                      title_default->data(), 0, 0,
@@ -4069,7 +4069,7 @@ static void GET_help_wifi()
 
 static void GET_info()
 {
-   U_TRACE(5, "::GET_info()")
+   U_TRACE_NO_PARAM(5, "::GET_info()")
 
    uint32_t end;
    uint64_t _traffic;
@@ -4237,7 +4237,7 @@ next:
 
 static void POST_info()
 {
-   U_TRACE(5, "::POST_info()")
+   U_TRACE_NO_PARAM(5, "::POST_info()")
 
 #ifdef USE_LIBZ
    if (UStringExt::isGzip(*UClientImage_Base::body)) *UClientImage_Base::body = UStringExt::gunzip(*UClientImage_Base::body);
@@ -4248,14 +4248,14 @@ static void POST_info()
 
 static void GET_logged()
 {
-   U_TRACE(5, "::GET_logged()")
+   U_TRACE_NO_PARAM(5, "::GET_logged()")
 
    USSIPlugIn::setAlternativeRedirect("http://www.google.com", 0);
 }
 
 static void GET_logged_login_request()
 {
-   U_TRACE(5, "::GET_logged_login_request()")
+   U_TRACE_NO_PARAM(5, "::GET_logged_login_request()")
 
    USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logged_login_request.tmpl")), 0, false,
                                      title_default->data(), 0, 0,
@@ -4264,7 +4264,7 @@ static void GET_logged_login_request()
 
 static void GET_login() // MAIN PAGE
 {
-   U_TRACE(5, "::GET_login()")
+   U_TRACE_NO_PARAM(5, "::GET_login()")
 
    // -----------------------------------------------------------------------------------------------------------------------------------------------
    // NB: *** the params CAN be empty ***
@@ -4501,7 +4501,7 @@ static void GET_LoginRequest(bool idp)
       return;
       }
 
-   UString tmp1, tmp2 = U_STRING_FROM_CONSTANT("<a href=\"password\">Non riesci a ricordare la password?</a>");
+   UString tmp1, tmp2; // = U_STRING_FROM_CONSTANT("<a href=\"password\">Non riesci a ricordare la password?</a>");
 
    if (realm.equal(U_CONSTANT_TO_PARAM("firenzecard")) == false)
       {
@@ -4530,21 +4530,21 @@ static void GET_LoginRequest(bool idp)
 
 static void GET_login_request()
 {
-   U_TRACE(5, "::GET_login_request()")
+   U_TRACE_NO_PARAM(5, "::GET_login_request()")
 
    GET_LoginRequest(false);
 }
 
 static void GET_login_request_IdP()
 {
-   U_TRACE(5, "::GET_login_request_IdP()")
+   U_TRACE_NO_PARAM(5, "::GET_login_request_IdP()")
 
    GET_LoginRequest(true);
 }
 
 static void GET_login_request_by_MAC()
 {
-   U_TRACE(5, "::GET_login_request_by_MAC()")
+   U_TRACE_NO_PARAM(5, "::GET_login_request_by_MAC()")
 
    // -----------------------------------------------------------------------------
    // *** the params CAN be empty ***
@@ -4599,7 +4599,7 @@ static void GET_login_request_by_MAC()
 
 static void GET_login_validate()
 {
-   U_TRACE(5, "::GET_login_validate()")
+   U_TRACE_NO_PARAM(5, "::GET_login_validate()")
 
    if (UServer_Base::bssl)
       {
@@ -4801,7 +4801,7 @@ end:
 
 static void GET_logout_page()
 {
-   U_TRACE(5, "::GET_logout_page()")
+   U_TRACE_NO_PARAM(5, "::GET_logout_page()")
 
    USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("logout_page.tmpl")), 0, false,
                                      title_default->data(), 0, 0,
@@ -4810,7 +4810,7 @@ static void GET_logout_page()
 
 static void GET_password()
 {
-   U_TRACE(5, "::GET_password()")
+   U_TRACE_NO_PARAM(5, "::GET_password()")
 
    /*
    USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("servizio_non_disponibile.tmpl")), 0, false,
@@ -4827,7 +4827,7 @@ static void GET_password()
 
 static void GET_polling_attivazione()
 {
-   U_TRACE(5, "::GET_polling_attivazione()")
+   U_TRACE_NO_PARAM(5, "::GET_polling_attivazione()")
 
    /*
    ---------------------------------------------------------------------------------------------------------------
@@ -4838,7 +4838,7 @@ static void GET_polling_attivazione()
 
 static void GET_polling_password()
 {
-   U_TRACE(5, "::GET_polling_password()")
+   U_TRACE_NO_PARAM(5, "::GET_polling_password()")
 
    /*
    ---------------------------------------------------------------------------------------------------------------
@@ -4849,7 +4849,7 @@ static void GET_polling_password()
 
 static void GET_postlogin()
 {
-   U_TRACE(5, "::GET_postlogin()")
+   U_TRACE_NO_PARAM(5, "::GET_postlogin()")
 
    if (UServer_Base::bssl)
       {
@@ -5032,7 +5032,7 @@ error:
 
 static void GET_recovery()
 {
-   U_TRACE(5, "::GET_recovery()")
+   U_TRACE_NO_PARAM(5, "::GET_recovery()")
 
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
@@ -5041,7 +5041,7 @@ static void GET_recovery()
       // $1 -> uid
       // ----------------------------
 
-      UHTTP::getFormValue(*uid, U_STRING_TO_PARAM(*UString::str_user), 0, 1, UHTTP::processForm());
+      UHTTP::getFormValue(*uid, U_CONSTANT_TO_PARAM("user"), 0, 1, UHTTP::processForm());
 
       if (checkIfUserConnected() &&
           user_rec->setNodogReference())
@@ -5067,7 +5067,7 @@ static void GET_recovery()
 
 static void GET_registrazione()
 {
-   U_TRACE(5, "::GET_registrazione()")
+   U_TRACE_NO_PARAM(5, "::GET_registrazione()")
 
    // $1 -> ap (with localization => '@')
 
@@ -5084,7 +5084,7 @@ static void GET_registrazione()
 
 static void GET_reset_counter_ap()
 {
-   U_TRACE(5, "::GET_reset_counter_ap()")
+   U_TRACE_NO_PARAM(5, "::GET_reset_counter_ap()")
 
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
@@ -5097,7 +5097,7 @@ static void GET_reset_counter_ap()
 
 static void GET_reset_policy()
 {
-   U_TRACE(5, "::GET_reset_policy()")
+   U_TRACE_NO_PARAM(5, "::GET_reset_policy()")
 
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
@@ -5141,7 +5141,7 @@ static void GET_reset_policy()
 
 static void GET_resync()
 {
-   U_TRACE(5, "::GET_resync()")
+   U_TRACE_NO_PARAM(5, "::GET_resync()")
 
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
@@ -5166,7 +5166,7 @@ static void GET_resync()
 
 static void GET_start_ap()
 {
-   U_TRACE(5, "::GET_start_ap()")
+   U_TRACE_NO_PARAM(5, "::GET_start_ap()")
 
    // $1 -> ap (with localization => '@')
    // $2 -> public address to contact the access point
@@ -5192,7 +5192,7 @@ static void GET_start_ap()
 
 static void GET_stato_utente()
 {
-   U_TRACE(5, "::GET_stato_utente()")
+   U_TRACE_NO_PARAM(5, "::GET_stato_utente()")
 
    UString result;
 
@@ -5252,7 +5252,7 @@ error:
 
 static void GET_status_ap()
 {
-   U_TRACE(5, "::GET_status_ap()")
+   U_TRACE_NO_PARAM(5, "::GET_status_ap()")
 
    // $1 -> ap (with localization => '@')
    // $2 -> public address to contact the access point
@@ -5281,7 +5281,7 @@ static void GET_status_ap()
 /*
 static void GET_unifi()
 {
-   U_TRACE(5, "::GET_unifi()")
+   U_TRACE_NO_PARAM(5, "::GET_unifi()")
 
    USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("unifi_page.tmpl")), 0, false,
                                      title_default->data(), 0, 0,
@@ -5291,7 +5291,7 @@ static void GET_unifi()
 
 static void GET_unifi_login_request()
 {
-   U_TRACE(5, "::GET_unifi_login_request()")
+   U_TRACE_NO_PARAM(5, "::GET_unifi_login_request()")
 
    USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("unifi_login_request.tmpl")), 0, false,
                                      title_default->data(), 0, 0,
@@ -5301,7 +5301,7 @@ static void GET_unifi_login_request()
 
 static void GET_webif_ap()
 {
-   U_TRACE(5, "::GET_webif_ap()")
+   U_TRACE_NO_PARAM(5, "::GET_webif_ap()")
 
    // $1 -> ap (with localization => '@')
    // $2 -> public address to contact the access point
@@ -5332,7 +5332,7 @@ static void GET_webif_ap()
 
 static void POST_admin_edit_ap()
 {
-   U_TRACE(5, "::POST_admin_edit_ap()")
+   U_TRACE_NO_PARAM(5, "::POST_admin_edit_ap()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -5393,7 +5393,7 @@ static void POST_admin_edit_ap()
 
 static void POST_admin_view_user()
 {
-   U_TRACE(5, "::POST_admin_view_user()")
+   U_TRACE_NO_PARAM(5, "::POST_admin_view_user()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
@@ -5496,7 +5496,7 @@ static void POST_admin_view_user()
 
 static void POST_admin_execute_recovery()
 {
-   U_TRACE(5, "::POST_admin_execute_recovery()")
+   U_TRACE_NO_PARAM(5, "::POST_admin_execute_recovery()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 
@@ -5509,7 +5509,7 @@ static void POST_admin_execute_recovery()
 
 static void POST_admin_recovery()
 {
-   U_TRACE(5, "::POST_admin_recovery()")
+   U_TRACE_NO_PARAM(5, "::POST_admin_recovery()")
 
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
 
@@ -5784,7 +5784,7 @@ static void POST_LoginRequest(bool idp)
 
 static void POST_login_request()
 {
-   U_TRACE(5, "::POST_login_request()")
+   U_TRACE_NO_PARAM(5, "::POST_login_request()")
 
    if (UClientImage_Base::request_uri->equal(U_CONSTANT_TO_PARAM("/login_request/logout")) == false) POST_LoginRequest(false);
    else
@@ -5888,14 +5888,14 @@ static void POST_login_request()
 
 static void POST_login_request_IdP()
 {
-   U_TRACE(5, "::POST_login_request_IdP()")
+   U_TRACE_NO_PARAM(5, "::POST_login_request_IdP()")
 
    POST_LoginRequest(true);
 }
 
 static void POST_password()
 {
-   U_TRACE(5, "::POST_password()")
+   U_TRACE_NO_PARAM(5, "::POST_password()")
 
    /*
    ---------------------------------------------------------------------------------------------------------------
@@ -5934,7 +5934,7 @@ static void POST_password()
 
 static void POST_registrazione()
 {
-   U_TRACE(5, "::POST_registrazione()")
+   U_TRACE_NO_PARAM(5, "::POST_registrazione()")
 
    /*
    ---------------------------------------------------------------------------------------------------------------
@@ -5984,7 +5984,7 @@ static void POST_registrazione()
 
 static void POST_uploader()
 {
-   U_TRACE(5, "::POST_uploader()")
+   U_TRACE_NO_PARAM(5, "::POST_uploader()")
 
    // $1 -> path file uploaded
 

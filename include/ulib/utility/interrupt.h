@@ -16,6 +16,7 @@
 
 #include <ulib/internal/common.h>
 
+#include <errno.h>
 #include <setjmp.h>
 
 #ifndef HAVE_SIGINFO_T
@@ -60,7 +61,7 @@ struct U_EXPORT UInterrupt {
 
    static void setNoZombies()
       {
-      U_TRACE(1, "UInterrupt::setNoZombies()")
+      U_TRACE_NO_PARAM(1, "UInterrupt::setNoZombies()")
 
       act.sa_flags   = SA_NOCLDWAIT;
       act.sa_handler = (sighandler_t)SIG_DFL;
@@ -125,7 +126,7 @@ struct U_EXPORT UInterrupt {
    static void callHandlerSignal();
    static void checkForEventSignalPending()
       {
-      U_TRACE(0, "UInterrupt::checkForEventSignalPending()")
+      U_TRACE_NO_PARAM(0, "UInterrupt::checkForEventSignalPending()")
 
       U_INTERNAL_DUMP("errno = %d u_errno = %d UInterrupt::event_signal_pending = %d UInterrupt::syscall_restart = %b UInterrupt::flag_alarm = %b",
                        errno,     u_errno,     UInterrupt::event_signal_pending,     UInterrupt::syscall_restart,     UInterrupt::flag_alarm)
@@ -135,7 +136,7 @@ struct U_EXPORT UInterrupt {
 
    static bool isSysCallToRestart()
       {
-      U_TRACE(0, "UInterrupt::isSysCallToRestart()")
+      U_TRACE_NO_PARAM(0, "UInterrupt::isSysCallToRestart()")
 
       U_INTERNAL_DUMP("errno = %d u_errno = %d UInterrupt::event_signal_pending = %d UInterrupt::syscall_restart = %b UInterrupt::flag_alarm = %b",
                        errno,     u_errno,     UInterrupt::event_signal_pending,     UInterrupt::syscall_restart,     UInterrupt::flag_alarm)

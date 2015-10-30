@@ -22,11 +22,6 @@ U_CREAT_FUNC(server_plugin_soap, USoapPlugIn)
 
 USOAPParser* USoapPlugIn::soap_parser;
 
-USoapPlugIn::USoapPlugIn()
-{
-   U_TRACE_REGISTER_OBJECT(0, USoapPlugIn, "")
-}
-
 USoapPlugIn::~USoapPlugIn()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USoapPlugIn)
@@ -56,7 +51,7 @@ int USoapPlugIn::handlerConfig(UFileConfig& cfg)
 
 int USoapPlugIn::handlerInit()
 {
-   U_TRACE(0, "USoapPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(0, "USoapPlugIn::handlerInit()")
 
    // NB: soap is NOT a static page, so to avoid stat() syscall we use alias mechanism...
 
@@ -81,7 +76,7 @@ int USoapPlugIn::handlerInit()
 
 int USoapPlugIn::handlerRequest()
 {
-   U_TRACE(0, "USoapPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "USoapPlugIn::handlerRequest()")
 
    if (UHTTP::isSOAPRequest())
       {
@@ -103,7 +98,7 @@ int USoapPlugIn::handlerRequest()
 
          U_http_info.nResponseCode = HTTP_OK;
 
-         UHTTP::setResponse(UHTTP::str_ctype_soap, &body);
+         UHTTP::setResponse(UString::str_ctype_soap, &body);
          }
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);

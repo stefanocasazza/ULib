@@ -53,7 +53,7 @@ UClient_Base::UClient_Base(UFileConfig* pcfg) : response(U_CAPACITY), buffer(U_C
 
 void UClient_Base::closeLog()
 {
-   U_TRACE(0, "UClient_Base::closeLog()")
+   U_TRACE_NO_PARAM(0, "UClient_Base::closeLog()")
 
    if (log &&
        log_shared_with_server == false)
@@ -93,7 +93,7 @@ UClient_Base::~UClient_Base()
 #ifdef USE_LIBSSL
 void UClient_Base::setSSLContext()
 {
-   U_TRACE(0, "UClient_Base::setSSLContext()")
+   U_TRACE_NO_PARAM(0, "UClient_Base::setSSLContext()")
 
    socket = U_NEW(USSLSocket(bIPv6, 0, false));
 
@@ -121,7 +121,7 @@ void UClient_Base::setSSLContext()
 
 void UClient_Base::clearData()
 {
-   U_TRACE(0, "UClient_Base::clearData()")
+   U_TRACE_NO_PARAM(0, "UClient_Base::clearData()")
 
      buffer.setEmpty();
    response.setEmpty();
@@ -179,7 +179,7 @@ bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
 
 void UClient_Base::setLogShared()
 {
-   U_TRACE(0, "UClient_Base::setLogShared()")
+   U_TRACE_NO_PARAM(0, "UClient_Base::setLogShared()")
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::log)
 
@@ -189,7 +189,7 @@ void UClient_Base::setLogShared()
 
 void UClient_Base::loadConfigParam()
 {
-   U_TRACE(0, "UClient_Base::loadConfigParam()")
+   U_TRACE_NO_PARAM(0, "UClient_Base::loadConfigParam()")
 
    U_INTERNAL_ASSERT_POINTER(cfg)
 
@@ -217,20 +217,20 @@ void UClient_Base::loadConfigParam()
    // CIPHER_SUITE  cipher suite model (Intermediate=0, Modern=1, Old=2)
    // --------------------------------------------------------------------------------------------------------------------------------------
 
-   ca_file   = (*cfg)[*UString::str_CA_FILE];
-   ca_path   = (*cfg)[*UString::str_CA_PATH];
-   key_file  = (*cfg)[*UString::str_KEY_FILE];
-   password  = (*cfg)[*UString::str_PASSWORD];
-   cert_file = (*cfg)[*UString::str_CERT_FILE];
+   ca_file   = cfg->at(U_CONSTANT_TO_PARAM("CA_FILE"));
+   ca_path   = cfg->at(U_CONSTANT_TO_PARAM("CA_PATH"));
+   key_file  = cfg->at(U_CONSTANT_TO_PARAM("KEY_FILE"));
+   password  = cfg->at(U_CONSTANT_TO_PARAM("PASSWORD"));
+   cert_file = cfg->at(U_CONSTANT_TO_PARAM("CERT_FILE"));
 
    // write pid on file...
 
-   UString x = (*cfg)[*UString::str_PID_FILE];
+   UString x = cfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
 
    if (x) (void) UFile::writeTo(x, UString(u_pid_str, u_pid_str_len));
 
 #ifdef U_LOG_ENABLE
-   x = (*cfg)[*UString::str_LOG_FILE];
+   x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
 
    if (x)
       {
@@ -242,7 +242,7 @@ void UClient_Base::loadConfigParam()
          }
       else
          {
-         log = U_NEW(ULog(x, cfg->readLong(*UString::str_LOG_FILE_SZ)));
+         log = U_NEW(ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
 
          u_atexit(&ULog::close); // register function of close at exit()...
 
@@ -261,15 +261,15 @@ void UClient_Base::loadConfigParam()
 #ifdef ENABLE_IPV6
    bIPv6       = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_IPV6"));
 #endif
-   verify_mode = cfg->readLong(*UString::str_VERIFY_MODE);
+   verify_mode = cfg->readLong(U_CONSTANT_TO_PARAM("VERIFY_MODE"));
 
-   UString host      = (*cfg)[*UString::str_SERVER],
-           name_sock = (*cfg)[*UString::str_SOCKET_NAME];
+   UString host      = cfg->at(U_CONSTANT_TO_PARAM("SERVER")),
+           name_sock = cfg->at(U_CONSTANT_TO_PARAM("SOCKET_NAME"));
 
    if (host ||
        name_sock)
       {
-      (void) setHostPort(name_sock.empty() ? host : name_sock, cfg->readLong(*UString::str_PORT));
+      (void) setHostPort(name_sock.empty() ? host : name_sock, cfg->readLong(U_CONSTANT_TO_PARAM("PORT")));
       }
 
    UString value = cfg->at(U_CONSTANT_TO_PARAM("RES_TIMEOUT"));
@@ -287,7 +287,7 @@ void UClient_Base::loadConfigParam()
 
 bool UClient_Base::connect()
 {
-   U_TRACE(0, "UClient_Base::connect()")
+   U_TRACE_NO_PARAM(0, "UClient_Base::connect()")
 
    response.setBuffer(U_CAPACITY);
 
@@ -523,7 +523,7 @@ bool UClient_Base::readResponse(uint32_t count)
 
 bool UClient_Base::readHTTPResponse()
 {
-   U_TRACE(0, "UClient_Base::readHTTPResponse()")
+   U_TRACE_NO_PARAM(0, "UClient_Base::readHTTPResponse()")
 
    clearData();
 
@@ -531,11 +531,13 @@ bool UClient_Base::readHTTPResponse()
 
    if (UHTTP::readHeaderResponse(socket, buffer))
       {
-      uint32_t pos = buffer.find(*UString::str_content_length, U_http_info.startHeader, U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader);
+      uint32_t pos = U_STRING_FIND_EXT(buffer, U_http_info.startHeader, "Content-Length", U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader);
 
       if (pos != U_NOT_FOUND)
          {
-         U_http_info.clength = (uint32_t) strtoul(buffer.c_pointer(pos + UString::str_content_length->size() + 2), 0, 0);
+         uint32_t end = buffer.findWhiteSpace(pos += U_CONSTANT_SIZE("Content-Length") + 2);
+
+         U_http_info.clength = (end != U_NOT_FOUND ? u_strtoul(buffer.c_pointer(pos), buffer.c_pointer(end)) : 0);
 
          if (U_http_info.clength == 0) U_http_data_chunked = false;
 

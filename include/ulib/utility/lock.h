@@ -33,7 +33,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, ULock, "")
 
       plock  = 0;
-      sem    = 0;
+      psem   = 0;
       locked = 0;
       }
 
@@ -55,14 +55,14 @@ public:
 
    void lock()
       {
-      U_TRACE(0, "ULock::lock()")
+      U_TRACE_NO_PARAM(0, "ULock::lock()")
 
       U_CHECK_MEMORY
 
-      if (sem &&
+      if (psem &&
           locked == 0)
          {
-         sem->lock();
+         psem->lock();
 
          locked = 1;
          }
@@ -100,7 +100,7 @@ public:
 
 protected:
    char* plock;
-   USemaphore* sem;
+   USemaphore* psem;
    int locked; // manage lock recursivity...
 
    static bool spinLockAcquire(char* ptr)

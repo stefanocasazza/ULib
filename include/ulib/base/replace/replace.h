@@ -135,6 +135,17 @@ ssize_t pwrite(int fd, const void* buf, size_t count, off_t offset);
 #  endif
 #endif
 
+#if defined(HAVE_SEM_INIT) && !defined(HAVE_SEM_TIMEDWAIT)
+#  include <semaphore.h>
+#  ifdef __cplusplus
+extern "C" {
+#  endif
+int sem_timedwait(sem_t *sem, const struct timespec *abs_timeout);
+#  ifdef __cplusplus
+}
+#  endif
+#endif
+
 #ifndef HAVE_FNMATCH
 #  ifdef __cplusplus
 extern "C" {

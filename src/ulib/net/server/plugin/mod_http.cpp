@@ -32,7 +32,7 @@ UHttpPlugIn::~UHttpPlugIn()
 
 int UHttpPlugIn::handlerRead()
 {
-   U_TRACE(0, "UHttpPlugIn::handlerRead()")
+   U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerRead()")
    
 #if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
@@ -45,7 +45,7 @@ int UHttpPlugIn::handlerRead()
 
 void UHttpPlugIn::handlerDelete()
 {
-   U_TRACE(0, "UHttpPlugIn::handlerDelete()")
+   U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerDelete()")
 
    U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
 
@@ -350,7 +350,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          UServer_Base::update_date  =
          UServer_Base::update_date2 = true;
 
-         uint32_t size = cfg.readLong(*UString::str_LOG_FILE_SZ);
+         uint32_t size = cfg.readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SIZE"));
 
          U_INTERNAL_ASSERT_EQUALS(UServer_Base::apache_like_log, 0)
 
@@ -383,9 +383,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
 int UHttpPlugIn::handlerInit()
 {
-   U_TRACE(0, "UHttpPlugIn::handlerInit()")
-
-   u_init_http_method_list();
+   U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerInit()")
 
 #ifdef USE_LIBSSL
    if (UServer_Base::bssl)
@@ -434,14 +432,14 @@ int UHttpPlugIn::handlerInit()
       }
 #endif
 
-   UHTTP::ctor(); // init HTTP context
+   UHTTP::init();
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }
 
 int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit() because now we have the shared data allocated by UServer...
 {
-   U_TRACE(0, "UHttpPlugIn::handlerRun()")
+   U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerRun()")
 
 #ifdef USE_LIBSSL
    if (UServer_Base::bssl) UHTTP::initSessionSSL();
@@ -498,7 +496,7 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 
 int UHttpPlugIn::handlerFork()
 {
-   U_TRACE(0, "UHttpPlugIn::handlerFork()")
+   U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerFork()")
 
    if (UHTTP::bcallInitForAllUSP) UHTTP::cache_file->callForAllEntry(UHTTP::callAfterForkForAllUSP);
 
@@ -507,7 +505,7 @@ int UHttpPlugIn::handlerFork()
 
 int UHttpPlugIn::handlerStop()
 {
-   U_TRACE(0, "UHttpPlugIn::handlerStop()")
+   U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerStop()")
 
    U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
 
@@ -533,14 +531,14 @@ int UHttpPlugIn::handlerStop()
 
 int UHttpPlugIn::handlerREAD()
 {
-   U_TRACE(0, "UHttpPlugIn::handlerREAD()")
+   U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerREAD()")
 
    return UHTTP::handlerREAD();
 }
 
 int UHttpPlugIn::handlerRequest()
 {
-   U_TRACE(0, "UHttpPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerRequest()")
 
    U_INTERNAL_DUMP("method_type = %C uri = %.*S", U_http_method_type, U_HTTP_URI_TO_TRACE)
 
@@ -553,7 +551,7 @@ int UHttpPlugIn::handlerRequest()
 
 int UHttpPlugIn::handlerSigHUP()
 {
-   U_TRACE(0, "UHttpPlugIn::handlerSigHUP()")
+   U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerSigHUP()")
 
 #ifdef USE_LIBSSL
    if (UServer_Base::bssl &&

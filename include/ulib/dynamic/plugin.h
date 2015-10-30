@@ -34,7 +34,7 @@ public:
 
    UPlugIn()
       {
-      U_TRACE(0, "UPlugIn<void*>::UPlugIn()")
+      U_TRACE_NO_PARAM(0, "UPlugIn<void*>::UPlugIn()")
 
       obj      = 0;
       next     = 0;
@@ -51,7 +51,7 @@ public:
 
    static bool empty()
       {
-      U_TRACE(0, "UPlugIn<void*>::empty()")
+      U_TRACE_NO_PARAM(0, "UPlugIn<void*>::empty()")
 
       bool result = (first == 0);
 

@@ -16,6 +16,8 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)", argc)
 
+   UString::str_allocate(STR_ALLOCATE_QUERY_PARSER);
+
    UString query;
    uint32_t i, sz;
    UQueryNode* term;

@@ -27,7 +27,7 @@ void URPCFault::setDetail(const char* format, ...)
 
 UString URPCFault::getFaultCode()
 {
-   U_TRACE(0, "URPCFault::getFaultCode()")
+   U_TRACE_NO_PARAM(0, "URPCFault::getFaultCode()")
 
    UString retval;
 

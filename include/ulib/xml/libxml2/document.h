@@ -97,7 +97,7 @@ public:
 
    xmlDtdPtr getInternalSubset() const
       {
-      U_TRACE(1, "UXML2Document::getInternalSubset()")
+      U_TRACE_NO_PARAM(1, "UXML2Document::getInternalSubset()")
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 

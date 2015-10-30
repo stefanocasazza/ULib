@@ -11,6 +11,10 @@
 //
 // ============================================================================
  
+/*
+#define DEBUG_DEBUG
+*/
+
 #include <ulib/base/trace.h>
 #include <ulib/base/utility.h>
 
@@ -20,6 +24,43 @@
 #include <errno.h>
 
 static UCrono* time_syscall_read_or_write;
+
+U_NO_EXPORT void UTrace::set(int level)
+{
+   U_INTERNAL_TRACE("UTrace::set(%d)", level)
+
+   u_trace_check_if_interrupt(); // check for context manage signal event
+
+   int skip = (u_trace_num_tab == 0);
+
+   struct iovec iov[4] = { { (caddr_t)u_trace_tab, u_trace_num_tab++ },
+                           { (caddr_t)U_CONSTANT_TO_PARAM("{Call   ") },
+                           { (caddr_t)buffer_trace, buffer_trace_len },
+                           { (caddr_t)"\n", 1 } };
+
+   u_trace_writev(iov + skip, 4 - skip);
+
+   if ((level & 0x00000100) != 0) u_trace_mask_level = this; // [0-9]+256...
+}
+
+UTrace::UTrace(int level, uint32_t len, const char* name)
+{
+   U_INTERNAL_TRACE("UTrace::UTrace(%d,%u,%s)", level, len, name)
+
+   U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_trace), 1019)
+
+   buffer_trace_len   =
+   buffer_syscall_len = 0;
+
+   active[0] = u_trace_check_if_active(level);
+
+   if (active[0])
+      {
+      (void) u__memcpy(buffer_trace, name, buffer_trace_len = len, __PRETTY_FUNCTION__);
+
+      set(level);
+      }
+}
 
 UTrace::UTrace(int level, const char* format, ...)
 {
@@ -41,18 +82,7 @@ UTrace::UTrace(int level, const char* format, ...)
 
       va_end(argp);
 
-      u_trace_check_if_interrupt(); // check for context manage signal event
-
-      int skip = (u_trace_num_tab == 0);
-
-      struct iovec iov[4] = { { (caddr_t)u_trace_tab, u_trace_num_tab++ },
-                              { (caddr_t)U_CONSTANT_TO_PARAM("{Call   ") },
-                              { (caddr_t)buffer_trace, buffer_trace_len },
-                              { (caddr_t)"\n", 1 } };
-
-      u_trace_writev(iov + skip, 4 - skip);
-
-      if ((level & 0x00000100) != 0) u_trace_mask_level = this; // [0-9]+256...
+      set(level);
       }
 }
 

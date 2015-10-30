@@ -79,7 +79,7 @@ case "$1" in
 
  		sleep 1
 
-		killall -9 `basename $exepath1` `basename $exepath2`
+		pkill -9 `basename $exepath1` `basename $exepath2`
 
 		echo ;;
 

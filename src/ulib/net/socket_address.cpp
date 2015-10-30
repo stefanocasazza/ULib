@@ -96,7 +96,7 @@ public:
 
    void setIPAddress(UIPAddress& cAddr)
       {
-      U_TRACE(0, "SocketAddress::setIPAddress()")
+      U_TRACE(0, "SocketAddress::setIPAddress(%p)", &cAddr)
 
       addr.psaGeneric.sa_family = cAddr.getAddressFamily();
 

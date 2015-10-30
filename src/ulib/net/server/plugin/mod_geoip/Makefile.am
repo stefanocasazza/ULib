@@ -10,7 +10,7 @@ moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES = server_plugin_geoip.la
 
 server_plugin_geoip_la_SOURCES = mod_geoip.cpp
-server_plugin_geoip_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+server_plugin_geoip_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
 server_plugin_geoip_la_LIBADD  = -lGeoIP $(ulib_la) @ULIB_LIBS@
 
 clean-local:

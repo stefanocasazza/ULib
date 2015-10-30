@@ -92,347 +92,146 @@ const UHTTP2::Settings UHTTP2::settings = {
    /* max_header_list_size */ UINT32_MAX
 };
 
-UString* UHTTP2::str_authority;
-UString* UHTTP2::str_method;
-UString* UHTTP2::str_method_get;
-UString* UHTTP2::str_method_post;
-UString* UHTTP2::str_path;
-UString* UHTTP2::str_path_root;
-UString* UHTTP2::str_path_index;
-UString* UHTTP2::str_scheme;
-UString* UHTTP2::str_scheme_http;
-UString* UHTTP2::str_scheme_https;
-UString* UHTTP2::str_status;
-UString* UHTTP2::str_status_200;
-UString* UHTTP2::str_status_204;
-UString* UHTTP2::str_status_206;
-UString* UHTTP2::str_status_304;
-UString* UHTTP2::str_status_400;
-UString* UHTTP2::str_status_404;
-UString* UHTTP2::str_status_500;
-UString* UHTTP2::str_accept_charset;
-UString* UHTTP2::str_accept_encoding;
-UString* UHTTP2::str_accept_encoding_value;
-UString* UHTTP2::str_accept_language;
-UString* UHTTP2::str_accept_ranges;
-UString* UHTTP2::str_accept;
-UString* UHTTP2::str_access_control_allow_origin;
-UString* UHTTP2::str_age;
-UString* UHTTP2::str_allow;
-UString* UHTTP2::str_authorization;
-UString* UHTTP2::str_cache_control;
-UString* UHTTP2::str_content_disposition;
-UString* UHTTP2::str_content_encoding;
-UString* UHTTP2::str_content_language;
-UString* UHTTP2::str_content_length;
-UString* UHTTP2::str_content_location;
-UString* UHTTP2::str_content_range;
-UString* UHTTP2::str_content_type;
-UString* UHTTP2::str_cookie;
-UString* UHTTP2::str_date;
-UString* UHTTP2::str_etag;
-UString* UHTTP2::str_expect;
-UString* UHTTP2::str_expires;
-UString* UHTTP2::str_from;
-UString* UHTTP2::str_host;
-UString* UHTTP2::str_if_match;
-UString* UHTTP2::str_if_modified_since;
-UString* UHTTP2::str_if_none_match;
-UString* UHTTP2::str_if_range;
-UString* UHTTP2::str_if_unmodified_since;
-UString* UHTTP2::str_last_modified;
-UString* UHTTP2::str_link;
-UString* UHTTP2::str_location;
-UString* UHTTP2::str_max_forwards;
-UString* UHTTP2::str_proxy_authenticate;
-UString* UHTTP2::str_proxy_authorization;
-UString* UHTTP2::str_range;
-UString* UHTTP2::str_referer;
-UString* UHTTP2::str_refresh;
-UString* UHTTP2::str_retry_after;
-UString* UHTTP2::str_server;
-UString* UHTTP2::str_set_cookie;
-UString* UHTTP2::str_strict_transport_security;
-UString* UHTTP2::str_transfer_encoding;
-UString* UHTTP2::str_user_agent;
-UString* UHTTP2::str_vary;
-UString* UHTTP2::str_via;
-UString* UHTTP2::str_www_authenticate;
-
 void UHTTP2::ctor()
 {
-   U_TRACE(0, "UHTTP2::ctor()")
+   U_TRACE_NO_PARAM(0, "UHTTP2::ctor()")
 
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT(":authority") },
-      { U_STRINGREP_FROM_CONSTANT(":method") },
-      { U_STRINGREP_FROM_CONSTANT("GET") },
-      { U_STRINGREP_FROM_CONSTANT("POST") },
-      { U_STRINGREP_FROM_CONSTANT(":path") },
-      { U_STRINGREP_FROM_CONSTANT("/") },
-      { U_STRINGREP_FROM_CONSTANT("/index.html") },
-      { U_STRINGREP_FROM_CONSTANT(":scheme") },
-      { U_STRINGREP_FROM_CONSTANT("http") },
-      { U_STRINGREP_FROM_CONSTANT("https") },
-      { U_STRINGREP_FROM_CONSTANT(":status") },
-      { U_STRINGREP_FROM_CONSTANT("200") },
-      { U_STRINGREP_FROM_CONSTANT("204") },
-      { U_STRINGREP_FROM_CONSTANT("206") },
-      { U_STRINGREP_FROM_CONSTANT("304") },
-      { U_STRINGREP_FROM_CONSTANT("400") },
-      { U_STRINGREP_FROM_CONSTANT("404") },
-      { U_STRINGREP_FROM_CONSTANT("500") },
-      { U_STRINGREP_FROM_CONSTANT("accept-charset") },
-      { U_STRINGREP_FROM_CONSTANT("accept-encoding") },
-      { U_STRINGREP_FROM_CONSTANT("gzip, deflate") },
-      { U_STRINGREP_FROM_CONSTANT("accept-language") },
-      { U_STRINGREP_FROM_CONSTANT("accept-ranges") },
-      { U_STRINGREP_FROM_CONSTANT("accept") },
-      { U_STRINGREP_FROM_CONSTANT("access-control-allow-origin") },
-      { U_STRINGREP_FROM_CONSTANT("age") },
-      { U_STRINGREP_FROM_CONSTANT("allow") },
-      { U_STRINGREP_FROM_CONSTANT("authorization") },
-      { U_STRINGREP_FROM_CONSTANT("cache-control") },
-      { U_STRINGREP_FROM_CONSTANT("content-disposition") },
-      { U_STRINGREP_FROM_CONSTANT("content-encoding") },
-      { U_STRINGREP_FROM_CONSTANT("content-language") },
-      { U_STRINGREP_FROM_CONSTANT("content-length") },
-      { U_STRINGREP_FROM_CONSTANT("content-location") },
-      { U_STRINGREP_FROM_CONSTANT("content-range") },
-      { U_STRINGREP_FROM_CONSTANT("content-type") },
-      { U_STRINGREP_FROM_CONSTANT("cookie") },
-      { U_STRINGREP_FROM_CONSTANT("date") },
-      { U_STRINGREP_FROM_CONSTANT("etag") },
-      { U_STRINGREP_FROM_CONSTANT("expect") },
-      { U_STRINGREP_FROM_CONSTANT("expires") },
-      { U_STRINGREP_FROM_CONSTANT("from") },
-      { U_STRINGREP_FROM_CONSTANT("host") },
-      { U_STRINGREP_FROM_CONSTANT("if-match") },
-      { U_STRINGREP_FROM_CONSTANT("if-modified-since") },
-      { U_STRINGREP_FROM_CONSTANT("if-none-match") },
-      { U_STRINGREP_FROM_CONSTANT("if-range") },
-      { U_STRINGREP_FROM_CONSTANT("if-unmodified-since") },
-      { U_STRINGREP_FROM_CONSTANT("last-modified") },
-      { U_STRINGREP_FROM_CONSTANT("link") },
-      { U_STRINGREP_FROM_CONSTANT("location") },
-      { U_STRINGREP_FROM_CONSTANT("max-forwards") },
-      { U_STRINGREP_FROM_CONSTANT("proxy-authenticate") },
-      { U_STRINGREP_FROM_CONSTANT("proxy-authorization") },
-      { U_STRINGREP_FROM_CONSTANT("range") },
-      { U_STRINGREP_FROM_CONSTANT("referer") },
-      { U_STRINGREP_FROM_CONSTANT("refresh") },
-      { U_STRINGREP_FROM_CONSTANT("retry-after") },
-      { U_STRINGREP_FROM_CONSTANT("server") },
-      { U_STRINGREP_FROM_CONSTANT("set-cookie") },
-      { U_STRINGREP_FROM_CONSTANT("strict-transport-security") },
-      { U_STRINGREP_FROM_CONSTANT("transfer-encoding") },
-      { U_STRINGREP_FROM_CONSTANT("user-agent") },
-      { U_STRINGREP_FROM_CONSTANT("vary") },
-      { U_STRINGREP_FROM_CONSTANT("via") },
-      { U_STRINGREP_FROM_CONSTANT("www-authenticate") }
-   };
+   UString::str_allocate(STR_ALLOCATE_HTTP2);
 
-   U_NEW_ULIB_OBJECT(str_authority,                   U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_method,                      U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_method_get,                  U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_method_post,                 U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_path,                        U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_path_root,                   U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_path_index,                  U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_scheme,                      U_STRING_FROM_STRINGREP_STORAGE(7));
-   U_NEW_ULIB_OBJECT(str_scheme_http,                 U_STRING_FROM_STRINGREP_STORAGE(8));
-   U_NEW_ULIB_OBJECT(str_scheme_https,                U_STRING_FROM_STRINGREP_STORAGE(9));
-   U_NEW_ULIB_OBJECT(str_status,                      U_STRING_FROM_STRINGREP_STORAGE(10));
-   U_NEW_ULIB_OBJECT(str_status_200,                  U_STRING_FROM_STRINGREP_STORAGE(11));
-   U_NEW_ULIB_OBJECT(str_status_204,                  U_STRING_FROM_STRINGREP_STORAGE(12));
-   U_NEW_ULIB_OBJECT(str_status_206,                  U_STRING_FROM_STRINGREP_STORAGE(13));
-   U_NEW_ULIB_OBJECT(str_status_304,                  U_STRING_FROM_STRINGREP_STORAGE(14));
-   U_NEW_ULIB_OBJECT(str_status_400,                  U_STRING_FROM_STRINGREP_STORAGE(15));
-   U_NEW_ULIB_OBJECT(str_status_404,                  U_STRING_FROM_STRINGREP_STORAGE(16));
-   U_NEW_ULIB_OBJECT(str_status_500,                  U_STRING_FROM_STRINGREP_STORAGE(17));
-   U_NEW_ULIB_OBJECT(str_accept_charset,              U_STRING_FROM_STRINGREP_STORAGE(18));
-   U_NEW_ULIB_OBJECT(str_accept_encoding,             U_STRING_FROM_STRINGREP_STORAGE(19));
-   U_NEW_ULIB_OBJECT(str_accept_encoding_value,       U_STRING_FROM_STRINGREP_STORAGE(20));
-   U_NEW_ULIB_OBJECT(str_accept_language,             U_STRING_FROM_STRINGREP_STORAGE(21));
-   U_NEW_ULIB_OBJECT(str_accept_ranges,               U_STRING_FROM_STRINGREP_STORAGE(22));
-   U_NEW_ULIB_OBJECT(str_accept,                      U_STRING_FROM_STRINGREP_STORAGE(23));
-   U_NEW_ULIB_OBJECT(str_access_control_allow_origin, U_STRING_FROM_STRINGREP_STORAGE(24));
-   U_NEW_ULIB_OBJECT(str_age,                         U_STRING_FROM_STRINGREP_STORAGE(25));
-   U_NEW_ULIB_OBJECT(str_allow,                       U_STRING_FROM_STRINGREP_STORAGE(26));
-   U_NEW_ULIB_OBJECT(str_authorization,               U_STRING_FROM_STRINGREP_STORAGE(27));
-   U_NEW_ULIB_OBJECT(str_cache_control,               U_STRING_FROM_STRINGREP_STORAGE(28));
-   U_NEW_ULIB_OBJECT(str_content_disposition,         U_STRING_FROM_STRINGREP_STORAGE(29));
-   U_NEW_ULIB_OBJECT(str_content_encoding,            U_STRING_FROM_STRINGREP_STORAGE(30));
-   U_NEW_ULIB_OBJECT(str_content_language,            U_STRING_FROM_STRINGREP_STORAGE(31));
-   U_NEW_ULIB_OBJECT(str_content_length,              U_STRING_FROM_STRINGREP_STORAGE(32));
-   U_NEW_ULIB_OBJECT(str_content_location,            U_STRING_FROM_STRINGREP_STORAGE(33));
-   U_NEW_ULIB_OBJECT(str_content_range,               U_STRING_FROM_STRINGREP_STORAGE(34));
-   U_NEW_ULIB_OBJECT(str_content_type,                U_STRING_FROM_STRINGREP_STORAGE(35));
-   U_NEW_ULIB_OBJECT(str_cookie,                      U_STRING_FROM_STRINGREP_STORAGE(36));
-   U_NEW_ULIB_OBJECT(str_date,                        U_STRING_FROM_STRINGREP_STORAGE(37));
-   U_NEW_ULIB_OBJECT(str_etag,                        U_STRING_FROM_STRINGREP_STORAGE(38));
-   U_NEW_ULIB_OBJECT(str_expect,                      U_STRING_FROM_STRINGREP_STORAGE(39));
-   U_NEW_ULIB_OBJECT(str_expires,                     U_STRING_FROM_STRINGREP_STORAGE(40));
-   U_NEW_ULIB_OBJECT(str_from,                        U_STRING_FROM_STRINGREP_STORAGE(41));
-   U_NEW_ULIB_OBJECT(str_host,                        U_STRING_FROM_STRINGREP_STORAGE(42));
-   U_NEW_ULIB_OBJECT(str_if_match,                    U_STRING_FROM_STRINGREP_STORAGE(43));
-   U_NEW_ULIB_OBJECT(str_if_modified_since,           U_STRING_FROM_STRINGREP_STORAGE(44));
-   U_NEW_ULIB_OBJECT(str_if_none_match,               U_STRING_FROM_STRINGREP_STORAGE(45));
-   U_NEW_ULIB_OBJECT(str_if_range,                    U_STRING_FROM_STRINGREP_STORAGE(46));
-   U_NEW_ULIB_OBJECT(str_if_unmodified_since,         U_STRING_FROM_STRINGREP_STORAGE(47));
-   U_NEW_ULIB_OBJECT(str_last_modified,               U_STRING_FROM_STRINGREP_STORAGE(48));
-   U_NEW_ULIB_OBJECT(str_link,                        U_STRING_FROM_STRINGREP_STORAGE(49));
-   U_NEW_ULIB_OBJECT(str_location,                    U_STRING_FROM_STRINGREP_STORAGE(50));
-   U_NEW_ULIB_OBJECT(str_max_forwards,                U_STRING_FROM_STRINGREP_STORAGE(51));
-   U_NEW_ULIB_OBJECT(str_proxy_authenticate,          U_STRING_FROM_STRINGREP_STORAGE(52));
-   U_NEW_ULIB_OBJECT(str_proxy_authorization,         U_STRING_FROM_STRINGREP_STORAGE(53));
-   U_NEW_ULIB_OBJECT(str_range,                       U_STRING_FROM_STRINGREP_STORAGE(54));
-   U_NEW_ULIB_OBJECT(str_referer,                     U_STRING_FROM_STRINGREP_STORAGE(55));
-   U_NEW_ULIB_OBJECT(str_refresh,                     U_STRING_FROM_STRINGREP_STORAGE(56));
-   U_NEW_ULIB_OBJECT(str_retry_after,                 U_STRING_FROM_STRINGREP_STORAGE(57));
-   U_NEW_ULIB_OBJECT(str_server,                      U_STRING_FROM_STRINGREP_STORAGE(58));
-   U_NEW_ULIB_OBJECT(str_set_cookie,                  U_STRING_FROM_STRINGREP_STORAGE(59));
-   U_NEW_ULIB_OBJECT(str_strict_transport_security,   U_STRING_FROM_STRINGREP_STORAGE(60));
-   U_NEW_ULIB_OBJECT(str_transfer_encoding,           U_STRING_FROM_STRINGREP_STORAGE(61));
-   U_NEW_ULIB_OBJECT(str_user_agent,                  U_STRING_FROM_STRINGREP_STORAGE(62));
-   U_NEW_ULIB_OBJECT(str_vary,                        U_STRING_FROM_STRINGREP_STORAGE(63));
-   U_NEW_ULIB_OBJECT(str_via,                         U_STRING_FROM_STRINGREP_STORAGE(64));
-   U_NEW_ULIB_OBJECT(str_www_authenticate,            U_STRING_FROM_STRINGREP_STORAGE(65));
-
-   hpack_static_table[0].name   = str_authority;
-    hash_static_table[0]        = str_authority->hash();
-   hpack_static_table[1].name   = str_method;
-    hash_static_table[1]        = str_method->hash();
-   hpack_static_table[1].value  = str_method_get;
-   hpack_static_table[2].name   = str_method;
-   hpack_static_table[2].value  = str_method_post;
-   hpack_static_table[3].name   = str_path;
-    hash_static_table[3]        = str_path->hash();
-   hpack_static_table[3].value  = str_path_root;
-   hpack_static_table[4].name   = str_path;
-   hpack_static_table[4].value  = str_path_index;
-   hpack_static_table[5].name   = str_scheme;
-    hash_static_table[5]        = str_scheme->hash();
-   hpack_static_table[5].value  = str_scheme_http;
-   hpack_static_table[6].name   = str_scheme;
-   hpack_static_table[6].value  = str_scheme_https;
-   hpack_static_table[7].name   = str_status;
-    hash_static_table[7]        = str_status->hash();
-   hpack_static_table[7].value  = str_status_200;
-   hpack_static_table[8].name   = str_status;
-   hpack_static_table[8].value  = str_status_204;
-   hpack_static_table[9].name   = str_status;
-   hpack_static_table[9].value  = str_status_206;
-   hpack_static_table[10].name  = str_status;
-   hpack_static_table[10].value = str_status_304;
-   hpack_static_table[11].name  = str_status;
-   hpack_static_table[11].value = str_status_400;
-   hpack_static_table[12].name  = str_status;
-   hpack_static_table[12].value = str_status_404;
-   hpack_static_table[13].name  = str_status;
-   hpack_static_table[13].value = str_status_500;
-   hpack_static_table[14].name  = str_accept_charset;
-    hash_static_table[14]       = str_accept_charset->hash();
-   hpack_static_table[15].name  = str_accept_encoding;
-    hash_static_table[15]       = str_accept_encoding->hash();
-   hpack_static_table[15].value = str_accept_encoding_value;
-   hpack_static_table[16].name  = str_accept_language;
-    hash_static_table[16]       = str_accept_language->hash();
-   hpack_static_table[17].name  = str_accept_ranges;
-    hash_static_table[17]       = str_accept_ranges->hash();
-   hpack_static_table[18].name  = str_accept;
-    hash_static_table[18]       = str_accept->hash();
-   hpack_static_table[19].name  = str_access_control_allow_origin;
-    hash_static_table[19]       = str_access_control_allow_origin->hash();
-   hpack_static_table[20].name  = str_age;
-    hash_static_table[20]       = str_age->hash();
-   hpack_static_table[21].name  = str_allow;
-    hash_static_table[21]       = str_allow->hash();
-   hpack_static_table[22].name  = str_authorization;
-    hash_static_table[22]       = str_authorization->hash();
-   hpack_static_table[23].name  = str_cache_control;
-    hash_static_table[23]       = str_cache_control->hash();
-   hpack_static_table[24].name  = str_content_disposition;
-    hash_static_table[24]       = str_content_disposition->hash();
-   hpack_static_table[25].name  = str_content_encoding;
-    hash_static_table[25]       = str_content_encoding->hash();
-   hpack_static_table[26].name  = str_content_language;
-    hash_static_table[26]       = str_content_language->hash();
-   hpack_static_table[27].name  = str_content_length;
-    hash_static_table[27]       = str_content_length->hash();
-   hpack_static_table[28].name  = str_content_location;
-    hash_static_table[28]       = str_content_location->hash();
-   hpack_static_table[29].name  = str_content_range;
-    hash_static_table[29]       = str_content_range->hash();
-   hpack_static_table[30].name  = str_content_type;
-    hash_static_table[30]       = str_content_type->hash();
-   hpack_static_table[31].name  = str_cookie;
-    hash_static_table[31]       = str_cookie->hash();
-   hpack_static_table[32].name  = str_date;
-    hash_static_table[32]       = str_date->hash();
-   hpack_static_table[33].name  = str_etag;
-    hash_static_table[33]       = str_etag->hash();
-   hpack_static_table[34].name  = str_expect;
-    hash_static_table[34]       = str_expect->hash();
-   hpack_static_table[35].name  = str_expires;
-    hash_static_table[35]       = str_expires->hash();
-   hpack_static_table[36].name  = str_from;
-    hash_static_table[36]       = str_from->hash();
-   hpack_static_table[37].name  = str_host;
-    hash_static_table[37]       = str_host->hash();
-   hpack_static_table[38].name  = str_if_match;
-    hash_static_table[38]       = str_if_match->hash();
-   hpack_static_table[39].name  = str_if_modified_since;
-    hash_static_table[39]       = str_if_modified_since->hash();
-   hpack_static_table[40].name  = str_if_none_match;
-    hash_static_table[40]       = str_if_none_match->hash();
-   hpack_static_table[41].name  = str_if_range;
-    hash_static_table[41]       = str_if_range->hash();
-   hpack_static_table[42].name  = str_if_unmodified_since;
-    hash_static_table[42]       = str_if_unmodified_since->hash();
-   hpack_static_table[43].name  = str_last_modified;
-    hash_static_table[43]       = str_last_modified->hash();
-   hpack_static_table[44].name  = str_link;
-    hash_static_table[44]       = str_link->hash();
-   hpack_static_table[45].name  = str_location;
-    hash_static_table[45]       = str_location->hash();
-   hpack_static_table[46].name  = str_max_forwards;
-    hash_static_table[46]       = str_max_forwards->hash();
-   hpack_static_table[47].name  = str_proxy_authenticate;
-    hash_static_table[47]       = str_proxy_authenticate->hash();
-   hpack_static_table[48].name  = str_proxy_authorization;
-    hash_static_table[48]       = str_proxy_authorization->hash();
-   hpack_static_table[49].name  = str_range;
-    hash_static_table[49]       = str_range->hash();
-   hpack_static_table[50].name  = str_referer;
-    hash_static_table[50]       = str_referer->hash();
-   hpack_static_table[51].name  = str_refresh;
-    hash_static_table[51]       = str_refresh->hash();
-   hpack_static_table[52].name  = str_retry_after;
-    hash_static_table[52]       = str_retry_after->hash();
-   hpack_static_table[53].name  = str_server;
-    hash_static_table[53]       = str_server->hash();
-   hpack_static_table[54].name  = str_set_cookie;
-    hash_static_table[54]       = str_set_cookie->hash();
-   hpack_static_table[55].name  = str_strict_transport_security;
-    hash_static_table[55]       = str_strict_transport_security->hash();
-   hpack_static_table[56].name  = str_transfer_encoding;
-    hash_static_table[56]       = str_transfer_encoding->hash();
-   hpack_static_table[57].name  = str_user_agent;
-    hash_static_table[57]       = str_user_agent->hash();
-   hpack_static_table[58].name  = str_vary;
-    hash_static_table[58]       = str_vary->hash();
-   hpack_static_table[59].name  = str_via;
-    hash_static_table[59]       = str_via->hash();
-   hpack_static_table[60].name  = str_www_authenticate;
-    hash_static_table[60]       = str_www_authenticate->hash();
+   hpack_static_table[0].name   = UString::str_authority;
+    hash_static_table[0]        = UString::str_authority->hash();
+   hpack_static_table[1].name   = UString::str_method;
+    hash_static_table[1]        = UString::str_method->hash();
+   hpack_static_table[1].value  = UString::str_method_get;
+   hpack_static_table[2].name   = UString::str_method;
+   hpack_static_table[2].value  = UString::str_method_post;
+   hpack_static_table[3].name   = UString::str_path;
+    hash_static_table[3]        = UString::str_path->hash();
+   hpack_static_table[3].value  = UString::str_path_root;
+   hpack_static_table[4].name   = UString::str_path;
+   hpack_static_table[4].value  = UString::str_path_index;
+   hpack_static_table[5].name   = UString::str_scheme;
+    hash_static_table[5]        = UString::str_scheme->hash();
+   hpack_static_table[5].value  = UString::str_scheme_http;
+   hpack_static_table[6].name   = UString::str_scheme;
+   hpack_static_table[6].value  = UString::str_scheme_https;
+   hpack_static_table[7].name   = UString::str_status;
+    hash_static_table[7]        = UString::str_status->hash();
+   hpack_static_table[7].value  = UString::str_status_200;
+   hpack_static_table[8].name   = UString::str_status;
+   hpack_static_table[8].value  = UString::str_status_204;
+   hpack_static_table[9].name   = UString::str_status;
+   hpack_static_table[9].value  = UString::str_status_206;
+   hpack_static_table[10].name  = UString::str_status;
+   hpack_static_table[10].value = UString::str_status_304;
+   hpack_static_table[11].name  = UString::str_status;
+   hpack_static_table[11].value = UString::str_status_400;
+   hpack_static_table[12].name  = UString::str_status;
+   hpack_static_table[12].value = UString::str_status_404;
+   hpack_static_table[13].name  = UString::str_status;
+   hpack_static_table[13].value = UString::str_status_500;
+   hpack_static_table[14].name  = UString::str_accept_charset;
+    hash_static_table[14]       = UString::str_accept_charset->hash();
+   hpack_static_table[15].name  = UString::str_accept_encoding;
+    hash_static_table[15]       = UString::str_accept_encoding->hash();
+   hpack_static_table[15].value = UString::str_accept_encoding_value;
+   hpack_static_table[16].name  = UString::str_accept_language;
+    hash_static_table[16]       = UString::str_accept_language->hash();
+   hpack_static_table[17].name  = UString::str_accept_ranges;
+    hash_static_table[17]       = UString::str_accept_ranges->hash();
+   hpack_static_table[18].name  = UString::str_accept;
+    hash_static_table[18]       = UString::str_accept->hash();
+   hpack_static_table[19].name  = UString::str_access_control_allow_origin;
+    hash_static_table[19]       = UString::str_access_control_allow_origin->hash();
+   hpack_static_table[20].name  = UString::str_age;
+    hash_static_table[20]       = UString::str_age->hash();
+   hpack_static_table[21].name  = UString::str_allow;
+    hash_static_table[21]       = UString::str_allow->hash();
+   hpack_static_table[22].name  = UString::str_authorization;
+    hash_static_table[22]       = UString::str_authorization->hash();
+   hpack_static_table[23].name  = UString::str_cache_control;
+    hash_static_table[23]       = UString::str_cache_control->hash();
+   hpack_static_table[24].name  = UString::str_content_disposition;
+    hash_static_table[24]       = UString::str_content_disposition->hash();
+   hpack_static_table[25].name  = UString::str_content_encoding;
+    hash_static_table[25]       = UString::str_content_encoding->hash();
+   hpack_static_table[26].name  = UString::str_content_language;
+    hash_static_table[26]       = UString::str_content_language->hash();
+   hpack_static_table[27].name  = UString::str_content_length;
+    hash_static_table[27]       = UString::str_content_length->hash();
+   hpack_static_table[28].name  = UString::str_content_location;
+    hash_static_table[28]       = UString::str_content_location->hash();
+   hpack_static_table[29].name  = UString::str_content_range;
+    hash_static_table[29]       = UString::str_content_range->hash();
+   hpack_static_table[30].name  = UString::str_content_type;
+    hash_static_table[30]       = UString::str_content_type->hash();
+   hpack_static_table[31].name  = UString::str_cookie;
+    hash_static_table[31]       = UString::str_cookie->hash();
+   hpack_static_table[32].name  = UString::str_date;
+    hash_static_table[32]       = UString::str_date->hash();
+   hpack_static_table[33].name  = UString::str_etag;
+    hash_static_table[33]       = UString::str_etag->hash();
+   hpack_static_table[34].name  = UString::str_expect;
+    hash_static_table[34]       = UString::str_expect->hash();
+   hpack_static_table[35].name  = UString::str_expires;
+    hash_static_table[35]       = UString::str_expires->hash();
+   hpack_static_table[36].name  = UString::str_from;
+    hash_static_table[36]       = UString::str_from->hash();
+   hpack_static_table[37].name  = UString::str_host;
+    hash_static_table[37]       = UString::str_host->hash();
+   hpack_static_table[38].name  = UString::str_if_match;
+    hash_static_table[38]       = UString::str_if_match->hash();
+   hpack_static_table[39].name  = UString::str_if_modified_since;
+    hash_static_table[39]       = UString::str_if_modified_since->hash();
+   hpack_static_table[40].name  = UString::str_if_none_match;
+    hash_static_table[40]       = UString::str_if_none_match->hash();
+   hpack_static_table[41].name  = UString::str_if_range;
+    hash_static_table[41]       = UString::str_if_range->hash();
+   hpack_static_table[42].name  = UString::str_if_unmodified_since;
+    hash_static_table[42]       = UString::str_if_unmodified_since->hash();
+   hpack_static_table[43].name  = UString::str_last_modified;
+    hash_static_table[43]       = UString::str_last_modified->hash();
+   hpack_static_table[44].name  = UString::str_link;
+    hash_static_table[44]       = UString::str_link->hash();
+   hpack_static_table[45].name  = UString::str_location;
+    hash_static_table[45]       = UString::str_location->hash();
+   hpack_static_table[46].name  = UString::str_max_forwards;
+    hash_static_table[46]       = UString::str_max_forwards->hash();
+   hpack_static_table[47].name  = UString::str_proxy_authenticate;
+    hash_static_table[47]       = UString::str_proxy_authenticate->hash();
+   hpack_static_table[48].name  = UString::str_proxy_authorization;
+    hash_static_table[48]       = UString::str_proxy_authorization->hash();
+   hpack_static_table[49].name  = UString::str_range;
+    hash_static_table[49]       = UString::str_range->hash();
+   hpack_static_table[50].name  = UString::str_referer;
+    hash_static_table[50]       = UString::str_referer->hash();
+   hpack_static_table[51].name  = UString::str_refresh;
+    hash_static_table[51]       = UString::str_refresh->hash();
+   hpack_static_table[52].name  = UString::str_retry_after;
+    hash_static_table[52]       = UString::str_retry_after->hash();
+   hpack_static_table[53].name  = UString::str_server;
+    hash_static_table[53]       = UString::str_server->hash();
+   hpack_static_table[54].name  = UString::str_set_cookie;
+    hash_static_table[54]       = UString::str_set_cookie->hash();
+   hpack_static_table[55].name  = UString::str_strict_transport_security;
+    hash_static_table[55]       = UString::str_strict_transport_security->hash();
+   hpack_static_table[56].name  = UString::str_transfer_encoding;
+    hash_static_table[56]       = UString::str_transfer_encoding->hash();
+   hpack_static_table[57].name  = UString::str_user_agent;
+    hash_static_table[57]       = UString::str_user_agent->hash();
+   hpack_static_table[58].name  = UString::str_vary;
+    hash_static_table[58]       = UString::str_vary->hash();
+   hpack_static_table[59].name  = UString::str_via;
+    hash_static_table[59]       = UString::str_via->hash();
+   hpack_static_table[60].name  = UString::str_www_authenticate;
+    hash_static_table[60]       = UString::str_www_authenticate->hash();
 
    vext = U_NEW(UVector<UString>(10));
 }
 
 void UHTTP2::dtor()
 {
-   U_TRACE(0, "UHTTP2::dtor()")
+   U_TRACE_NO_PARAM(0, "UHTTP2::dtor()")
 
    delete vext;
 }
@@ -816,13 +615,13 @@ error:   nerror = COMPRESSION_ERROR;
 
 case_38: // host
 
-      name = *str_host;
+      name = *UString::str_host;
 
       goto host;
 
 case_1: // authority (a.k.a. the Host header)
 
-      name = *str_authority;
+      name = *UString::str_authority;
 
 host: U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -890,7 +689,7 @@ case_2_3: // GET - POST
 
 case_4_5: // / - /index.html
 
-      name = *str_path;
+      name = *UString::str_path;
 
       ptable.hash = hash_static_table[3]; // path
 
@@ -898,7 +697,7 @@ case_4_5: // / - /index.html
 
       if (value_is_indexed)
          {
-         value = *(index == 4 ? str_path_root : str_path_index);
+         value = *(index == 4 ? UString::str_path_root : UString::str_path_index);
 
          U_http_info.uri     = value.data();
          U_http_info.uri_len = value.size();
@@ -943,11 +742,11 @@ case_7: // https
 
 case_16: // accept-encoding: gzip, deflate
 
-      name = *str_accept_encoding;
+      name = *UString::str_accept_encoding;
 
       U_INTERNAL_ASSERT(value_is_indexed)
 
-      value = *str_accept_encoding_value;
+      value = *UString::str_accept_encoding_value;
 
       U_http_is_accept_gzip = '1';
 
@@ -959,7 +758,7 @@ case_16: // accept-encoding: gzip, deflate
 
 case_17: // accept-language
 
-      name = *str_accept_language;
+      name = *UString::str_accept_language;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -979,7 +778,7 @@ case_17: // accept-language
 
 case_19: // accept
 
-      name = *str_accept;
+      name = *UString::str_accept;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -999,7 +798,7 @@ case_19: // accept
 
 case_28: // content_length
 
-      name = *str_content_length;
+      name = *UString::str_content_length;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -1007,7 +806,7 @@ case_28: // content_length
 
       if (value.empty()) goto error;
 
-      U_http_info.clength = (uint32_t) strtoul(value.data(), 0, 0);
+      U_http_info.clength = (uint32_t) strtoul(value.data(), 0, 10);
 
       U_INTERNAL_DUMP("Content-Length: = %.*S U_http_info.clength = %u", U_STRING_TO_TRACE(value), U_http_info.clength)
 
@@ -1017,7 +816,7 @@ case_28: // content_length
 
 case_31: // content_type
 
-      name = *str_content_type;
+      name = *UString::str_content_type;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -1037,7 +836,7 @@ case_31: // content_type
 
 case_32: // cookie
 
-      name = *str_cookie;
+      name = *UString::str_cookie;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -1069,7 +868,7 @@ case_35: // expect
 
       if (continue100 == false)
          {
-         name = *str_expect;
+         name = *UString::str_expect;
 
          ptable.hash = hash_static_table[34]; // expect 
 
@@ -1080,7 +879,7 @@ case_35: // expect
 
 case_40: // if-modified-since
 
-      name = *str_if_modified_since;
+      name = *UString::str_if_modified_since;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -1098,7 +897,7 @@ case_40: // if-modified-since
 
 case_50: // range 
 
-      name = *str_range;
+      name = *UString::str_range;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -1118,7 +917,7 @@ case_50: // range
 
 case_51: // referer 
 
-      name = *str_referer;
+      name = *UString::str_referer;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -1144,7 +943,7 @@ case_57: // transfer-encoding
 
 case_58: // user-agent
 
-      name = *str_user_agent;
+      name = *UString::str_user_agent;
 
       U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
@@ -1220,7 +1019,7 @@ insert:
 
 void UHTTP2::readFrame()
 {
-   U_TRACE(0, "UHTTP2::readFrame()")
+   U_TRACE_NO_PARAM(0, "UHTTP2::readFrame()")
 
    U_INTERNAL_ASSERT_POINTER(pStream)
 
@@ -1432,7 +1231,7 @@ err:
 
 void UHTTP2::manageHeaders()
 {
-   U_TRACE(0, "UHTTP2::manageHeaders()")
+   U_TRACE_NO_PARAM(0, "UHTTP2::manageHeaders()")
 
    int32_t padlen;
    unsigned char* ptr;
@@ -1517,7 +1316,7 @@ wait_CONTINUATION:
 
 void UHTTP2::manageData()
 {
-   U_TRACE(0, "UHTTP2::manageData()")
+   U_TRACE_NO_PARAM(0, "UHTTP2::manageData()")
 
    if ((frame.flags & FLAG_PADDED) == 0)
       {
@@ -1551,7 +1350,7 @@ void UHTTP2::manageData()
 
 void UHTTP2::sendError()
 {
-   U_TRACE(0, "UHTTP2::sendError()")
+   U_TRACE_NO_PARAM(0, "UHTTP2::sendError()")
 
    U_INTERNAL_ASSERT_DIFFERS(nerror, NO_ERROR)
 
@@ -1589,7 +1388,7 @@ void UHTTP2::sendError()
 
 void UHTTP2::handlerResponse()
 {
-   U_TRACE(0, "UHTTP2::handlerResponse()")
+   U_TRACE_NO_PARAM(0, "UHTTP2::handlerResponse()")
 
    U_ASSERT(UClientImage_Base::wbuffer->empty())
    U_ASSERT(UClientImage_Base::wbuffer->capacity())
@@ -1860,7 +1659,7 @@ void UHTTP2::handlerResponse()
 
 int UHTTP2::handlerRequest()
 {
-   U_TRACE(0, "UHTTP2::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP2::handlerRequest()")
 
    U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
 

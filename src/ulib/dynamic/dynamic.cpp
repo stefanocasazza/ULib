@@ -97,7 +97,7 @@ void* UDynamic::operator[](const char* _sym)
 
 void UDynamic::close()
 {
-   U_TRACE(0, "UDynamic::close()")
+   U_TRACE_NO_PARAM(0, "UDynamic::close()")
 
    U_CHECK_MEMORY
 
@@ -131,7 +131,7 @@ void UDynamic::setPluginDirectory(const UString& dir)
 
 void UDynamic::clear()
 {
-   U_TRACE(0, "UDynamic::clear()")
+   U_TRACE_NO_PARAM(0, "UDynamic::clear()")
 
    if (plugin_dir)
       {

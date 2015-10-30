@@ -157,7 +157,7 @@ public:
 
    bool isUDP() const
       {
-      U_TRACE(0, "USocket::isUDP()")
+      U_TRACE_NO_PARAM(0, "USocket::isUDP()")
 
       U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
@@ -168,7 +168,7 @@ public:
 
    bool isIPC() const
       {
-      U_TRACE(0, "USocket::isIPC()")
+      U_TRACE_NO_PARAM(0, "USocket::isIPC()")
 
       U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
@@ -179,7 +179,7 @@ public:
 
    bool isSSL() const
       {
-      U_TRACE(0, "USocket::isSSL()")
+      U_TRACE_NO_PARAM(0, "USocket::isSSL()")
 
       U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
@@ -192,7 +192,7 @@ public:
 
    bool isSSLActive() const
       {
-      U_TRACE(0, "USocket::isSSLActive()")
+      U_TRACE_NO_PARAM(0, "USocket::isSSLActive()")
 
       U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
@@ -257,7 +257,7 @@ public:
 
    bool isBlocking()
       {
-      U_TRACE(0, "USocket::isBlocking()")
+      U_TRACE_NO_PARAM(0, "USocket::isBlocking()")
 
       U_CHECK_MEMORY
 
@@ -307,7 +307,7 @@ public:
 
    const char* getLocalInfo()
       {
-      U_TRACE(0, "USocket::getLocalInfo()")
+      U_TRACE_NO_PARAM(0, "USocket::getLocalInfo()")
 
       U_CHECK_MEMORY
 
@@ -326,7 +326,7 @@ public:
 
    unsigned int remotePortNumber()
       {
-      U_TRACE(0, "USocket::remotePortNumber()")
+      U_TRACE_NO_PARAM(0, "USocket::remotePortNumber()")
 
       U_CHECK_MEMORY
 
@@ -335,7 +335,7 @@ public:
 
    UIPAddress& remoteIPAddress()
       {
-      U_TRACE(0, "USocket::remoteIPAddress()")
+      U_TRACE_NO_PARAM(0, "USocket::remoteIPAddress()")
 
       U_CHECK_MEMORY
 
@@ -348,7 +348,7 @@ public:
 
    uint32_t getBufferRCV()
       {
-      U_TRACE(1, "USocket::getBufferRCV()")
+      U_TRACE_NO_PARAM(1, "USocket::getBufferRCV()")
 
       uint32_t size = U_NOT_FOUND, tmp = sizeof(uint32_t);
 
@@ -359,7 +359,7 @@ public:
 
    uint32_t getBufferSND()
       {
-      U_TRACE(1, "USocket::getBufferSND()")
+      U_TRACE_NO_PARAM(1, "USocket::getBufferSND()")
 
       uint32_t size = U_NOT_FOUND, tmp = sizeof(uint32_t);
 
@@ -408,7 +408,7 @@ public:
    void          close();
    void abortive_close() /* Abort connection */
       {
-      U_TRACE(0, "USocket::abortive_close()")
+      U_TRACE_NO_PARAM(0, "USocket::abortive_close()")
 
       U_INTERNAL_ASSERT(isOpen())
 
@@ -460,7 +460,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(sk)
 
-#  if defined(TCP_CORK) && !defined(_MSWINDOWS_)
+#  if defined(TCP_CORK) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
       (void) sk->setSockOpt(SOL_TCP, TCP_CORK, (const void*)&value, sizeof(uint32_t));
 #  endif
       }
@@ -473,21 +473,21 @@ public:
 
    void setTcpDeferAccept()
       {
-      U_TRACE(0, "USocket::setTcpDeferAccept()")
+      U_TRACE_NO_PARAM(0, "USocket::setTcpDeferAccept()")
 
-#  if defined(TCP_DEFER_ACCEPT) && !defined(_MSWINDOWS_)
+#  if defined(TCP_DEFER_ACCEPT) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
       (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 1 }, sizeof(int));
 #  endif
       }
 
    void setTcpFastOpen()
       {
-      U_TRACE(0, "USocket::setTcpFastOpen()")
+      U_TRACE_NO_PARAM(0, "USocket::setTcpFastOpen()")
 
-#  if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
-#     ifndef TCP_FASTOPEN
-#     define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
-#     endif
+#  if !defined(U_SERVER_CAPTIVE_PORTAL) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
+#    ifndef TCP_FASTOPEN
+#    define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
+#    endif
       (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const int[]){ 5 }, sizeof(int));
 #  endif
       }
@@ -496,14 +496,14 @@ public:
       {
       U_TRACE(0, "USocket::setTcpQuickAck(%d)", value)
 
-#  if defined(TCP_QUICKACK) && !defined(_MSWINDOWS_)
+#  if defined(TCP_QUICKACK) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
       (void) setSockOpt(SOL_TCP, TCP_QUICKACK, &value, sizeof(int));
 #  endif
       }
 
    void setTcpNoDelay()
       {
-      U_TRACE(0, "USocket::setTcpNoDelay()")
+      U_TRACE_NO_PARAM(0, "USocket::setTcpNoDelay()")
 
 #  ifdef TCP_NODELAY
       (void) setSockOpt(SOL_TCP, TCP_NODELAY, (const int[]){ 1 }, sizeof(int));
@@ -514,7 +514,7 @@ public:
       {
       U_TRACE(0, "USocket::setTcpCongestion(%S)", value)
 
-#  if defined(TCP_CONGESTION) && !defined(_MSWINDOWS_)
+#  if defined(TCP_CONGESTION) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
       (void) setSockOpt(IPPROTO_TCP, TCP_CONGESTION, (const void*)&value, u__strlen(value, __PRETTY_FUNCTION__) + 1);
 #  endif
       }

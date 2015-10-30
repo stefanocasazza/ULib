@@ -56,11 +56,13 @@ public:
 
    // Initialization and termination methods
 
+   UTrace(int level, const char* format, ...);
+   UTrace(int level, uint32_t len, const char* name);
+
+   ~UTrace();
+
    char                     active[1];
    char flag_syscall_read_or_write[1];
-
-    UTrace(int level, const char* format, ...);
-   ~UTrace();
 
    // trace return from generic call
 
@@ -125,6 +127,8 @@ public:
 private:
    char buffer_trace[1019], buffer_syscall[1019];
    uint32_t buffer_trace_len, buffer_syscall_len;
+
+   void set(int level) U_NO_EXPORT;
 };
 
 #endif

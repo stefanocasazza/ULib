@@ -575,6 +575,8 @@ public:
       UString cfg_str;
       UFileConfig cfg;
 
+      UString::str_allocate(STR_ALLOCATE_SOAP);
+
       if (UApplication::isOptions()) cfg_str = opt['c'];
 
       // manage arg operation

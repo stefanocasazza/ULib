@@ -236,7 +236,7 @@ public:
 
    bool isNull()
       {
-      U_TRACE(0, "UValue::isNull()")
+      U_TRACE_NO_PARAM(0, "UValue::isNull()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -247,7 +247,7 @@ public:
 
    bool isBool()
       {
-      U_TRACE(0, "UValue::isBool()")
+      U_TRACE_NO_PARAM(0, "UValue::isBool()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -258,7 +258,7 @@ public:
 
    bool isInt()
       {
-      U_TRACE(0, "UValue::isInt()")
+      U_TRACE_NO_PARAM(0, "UValue::isInt()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -269,7 +269,7 @@ public:
 
    bool isUInt()
       {
-      U_TRACE(0, "UValue::isUInt()")
+      U_TRACE_NO_PARAM(0, "UValue::isUInt()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -280,7 +280,7 @@ public:
 
    bool isIntegral()
       {
-      U_TRACE(0, "UValue::isIntegral()")
+      U_TRACE_NO_PARAM(0, "UValue::isIntegral()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -296,7 +296,7 @@ public:
 
    bool isDouble()
       {
-      U_TRACE(0, "UValue::isDouble()")
+      U_TRACE_NO_PARAM(0, "UValue::isDouble()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -307,7 +307,7 @@ public:
 
    bool isNumeric()
       {
-      U_TRACE(0, "UValue::isNumeric()")
+      U_TRACE_NO_PARAM(0, "UValue::isNumeric()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -324,7 +324,7 @@ public:
 
    bool isString() const
       {
-      U_TRACE(0, "UValue::isString()")
+      U_TRACE_NO_PARAM(0, "UValue::isString()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -335,7 +335,7 @@ public:
 
    bool isArray() const
       {
-      U_TRACE(0, "UValue::isArray()")
+      U_TRACE_NO_PARAM(0, "UValue::isArray()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -346,7 +346,7 @@ public:
 
    bool isObject() const
       {
-      U_TRACE(0, "UValue::isObject()")
+      U_TRACE_NO_PARAM(0, "UValue::isObject()")
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
@@ -403,7 +403,7 @@ public:
 
    UString output()
       {
-      U_TRACE(0, "UValue::output()")
+      U_TRACE_NO_PARAM(0, "UValue::output()")
 
       UString result(U_CAPACITY);
 

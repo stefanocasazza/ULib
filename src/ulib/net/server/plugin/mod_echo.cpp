@@ -18,14 +18,19 @@
 U_CREAT_FUNC(server_plugin_echo, UEchoPlugIn)
 
 /*
-#define U_RESPONSE_FOR_TEST \
-"HTTP/1.0 200 OK\r\n" \
-"Server: ULib\r\n" \
-"Connection: close\r\n" \
-"Content-Type: text/html\r\n" \
-"Content-Length: 22\r\n\r\n" \
-"<h1>Hello stefano</h1>"
+#define U_ECHO_RESPONSE_FOR_TEST \
+   "HTTP/1.0 200 OK\r\n" \
+   "Server: ULib\r\n" \
+   "Connection: close\r\n" \
+   "Content-Type: text/html\r\n" \
+   "Content-Length: 22\r\n\r\n" \
+   "<h1>Hello stefano</h1>"
 */
+
+UEchoPlugIn::~UEchoPlugIn()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UEchoPlugIn)
+}
 
 // Server-wide hooks
 
@@ -33,16 +38,16 @@ U_CREAT_FUNC(server_plugin_echo, UEchoPlugIn)
 
 int UEchoPlugIn::handlerRequest()
 {
-   U_TRACE(0, "UEchoPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UEchoPlugIn::handlerRequest()")
 
    UClientImage_Base::body->clear();
 
    UClientImage_Base::setNoHeaderForResponse();
 
-#ifdef U_RESPONSE_FOR_TEST
-   UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM(U_RESPONSE_FOR_TEST));
-#else
+#ifndef U_ECHO_RESPONSE_FOR_TEST
    *UClientImage_Base::wbuffer = *UClientImage_Base::request;
+#else
+   (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM(U_ECHO_RESPONSE_FOR_TEST));
 #endif
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_FINISHED);

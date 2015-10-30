@@ -30,7 +30,7 @@ int USkeletonPlugIn::handlerConfig(UFileConfig& cfg)
 
 int USkeletonPlugIn::handlerInit()
 {
-   U_TRACE(0, "USkeletonPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(0, "USkeletonPlugIn::handlerInit()")
 
    int result = U_PLUGIN_HANDLER_GO_ON;
 
@@ -39,7 +39,7 @@ int USkeletonPlugIn::handlerInit()
 
 int USkeletonPlugIn::handlerRun()
 {
-   U_TRACE(0, "USkeletonPlugIn::handlerRun()")
+   U_TRACE_NO_PARAM(0, "USkeletonPlugIn::handlerRun()")
 
    int result = U_PLUGIN_HANDLER_GO_ON;
 
@@ -48,7 +48,7 @@ int USkeletonPlugIn::handlerRun()
 
 int USkeletonPlugIn::handlerFork()
 {
-   U_TRACE(0, "USkeletonPlugIn::handlerFork()")
+   U_TRACE_NO_PARAM(0, "USkeletonPlugIn::handlerFork()")
 
    int result = U_PLUGIN_HANDLER_GO_ON;
 
@@ -57,7 +57,7 @@ int USkeletonPlugIn::handlerFork()
 
 int USkeletonPlugIn::handlerStop()
 {
-   U_TRACE(0, "USkeletonPlugIn::handlerStop()")
+   U_TRACE_NO_PARAM(0, "USkeletonPlugIn::handlerStop()")
 
    int result = U_PLUGIN_HANDLER_GO_ON;
 
@@ -68,7 +68,7 @@ int USkeletonPlugIn::handlerStop()
 
 int USkeletonPlugIn::handlerREAD()
 {
-   U_TRACE(0, "USkeletonPlugIn::handlerREAD()")
+   U_TRACE_NO_PARAM(0, "USkeletonPlugIn::handlerREAD()")
 
    int result = U_PLUGIN_HANDLER_GO_ON;
 
@@ -77,7 +77,7 @@ int USkeletonPlugIn::handlerREAD()
 
 int USkeletonPlugIn::handlerRequest()
 {
-   U_TRACE(0, "USkeletonPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "USkeletonPlugIn::handlerRequest()")
 
    int result = U_PLUGIN_HANDLER_GO_ON;
 

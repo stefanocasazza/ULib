@@ -89,10 +89,6 @@ UVector<UIPAddress*>**     UNoCatPlugIn::vaddr;
 UHttpClient<UTCPSocket>*   UNoCatPlugIn::client;
 UHashMap<UModNoCatPeer*>*  UNoCatPlugIn::peers;
 
-const UString*    UNoCatPlugIn::str_without_label;
-const UString*    UNoCatPlugIn::str_allowed_members_default;
-//const UString*  UNoCatPlugIn::str_IPHONE_SUCCESS;
-
 #define U_NOCAT_STATUS \
    "<html>\n" \
    "<head>\n" \
@@ -142,7 +138,7 @@ const UString*    UNoCatPlugIn::str_allowed_members_default;
 
 int UModNoCatPeer::handlerTime()
 {
-   U_TRACE(0, "UModNoCatPeer::handlerTime()")
+   U_TRACE_NO_PARAM(0, "UModNoCatPeer::handlerTime()")
 
    int disconnected = checkPeerInfo(true);
 
@@ -161,35 +157,6 @@ int UModNoCatPeer::handlerTime()
    // ---------------
 
    U_RETURN(-1);
-}
-
-void UNoCatPlugIn::str_allocate()
-{
-   U_TRACE(0, "UNoCatPlugIn::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_without_label, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_allowed_members_default, 0)
-// U_INTERNAL_ASSERT_EQUALS(str_IPHONE_SUCCESS, 0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("without_label") },
-      { U_STRINGREP_FROM_CONSTANT("/etc/nodog.allowed") },
-      /*
-      { U_STRINGREP_FROM_CONSTANT("<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 3.2//EN\">\n"
-                                  "<HTML>\n"
-                                  "<HEAD>\n"
-                                  "   <TITLE>Success</TITLE>\n"
-                                  "</HEAD>\n"
-                                  "<BODY>\n"
-                                  "Success\n"
-                                  "</BODY>\n"
-                                  "</HTML>") }
-      */
-   };
-
-   U_NEW_ULIB_OBJECT(str_without_label,           U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_allowed_members_default, U_STRING_FROM_STRINGREP_STORAGE(1));
-// U_NEW_ULIB_OBJECT(str_IPHONE_SUCCESS,          U_STRING_FROM_STRINGREP_STORAGE(2));
 }
 
 UNoCatPlugIn::UNoCatPlugIn()
@@ -229,7 +196,7 @@ UNoCatPlugIn::UNoCatPlugIn()
 
    peer_present_in_arp_cache = U_NEW(UString);
 
-   str_allocate();
+   UString::str_allocate(STR_ALLOCATE_NOCAT);
 }
 
 UNoCatPlugIn::~UNoCatPlugIn()
@@ -456,7 +423,7 @@ void UNoCatPlugIn::setStatusContent(const UString& ap_label)
 
 void UNoCatPlugIn::getTraffic()
 {
-   U_TRACE(0, "UNoCatPlugIn::getTraffic()")
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::getTraffic()")
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    union uuaddr {
@@ -676,7 +643,6 @@ loop:
       {
       n = total_connections;
 
-#  ifndef U_LOG_ENABLE
       if (UCommand::setMsgError(fw->getCommand(), true))
          {
          U_WARNING("%s%.*s", UServer_Base::mod_name[0], u_buffer_len, u_buffer);
@@ -684,7 +650,6 @@ loop:
 
       errno        = 0;
       u_buffer_len = 0;
-#  endif
       }
    else
       {
@@ -708,7 +673,7 @@ loop:
 
 bool UNoCatPlugIn::checkFirewall()
 {
-   U_TRACE(0, "UNoCatPlugIn::checkFirewall()")
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::checkFirewall()")
 
    long firewall_interval = u_now->tv_sec - last_request_firewall;
 
@@ -809,7 +774,7 @@ bool UNoCatPlugIn::checkFirewall()
 
 void UNoCatPlugIn::checkSystem()
 {
-   U_TRACE(1, "UNoCatPlugIn::checkSystem()")
+   U_TRACE_NO_PARAM(1, "UNoCatPlugIn::checkSystem()")
 
    uint32_t i, n;
    long check_interval;
@@ -975,7 +940,7 @@ void UNoCatPlugIn::deny(int disconnected, bool bcheck_expire)
 
    executeCommand(UModNoCatPeer::PEER_DENY);
 
-   --total_connections;
+   if (total_connections) --total_connections;
 
    U_SRV_LOG("Peer denied: IP %v MAC %v remain: %ld secs %llu bytes - total_connections %u", peer->ip.rep, peer->mac.rep, peer->time_remain, peer->traffic_remain, total_connections);
 
@@ -1233,7 +1198,7 @@ end:
 
 void UNoCatPlugIn::creatNewPeer()
 {
-   U_TRACE(0, "UNoCatPlugIn::creatNewPeer()")
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::creatNewPeer()")
 
    U_INTERNAL_DUMP("peer = %p peers_delete = %p num_peers_preallocate = %u", peer, peers_delete, num_peers_preallocate)
 
@@ -1315,7 +1280,7 @@ bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
 
 void UNoCatPlugIn::setNewPeer()
 {
-   U_TRACE(0, "UNoCatPlugIn::setNewPeer()")
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::setNewPeer()")
 
    U_INTERNAL_ASSERT_POINTER(peer)
 
@@ -1344,7 +1309,7 @@ void UNoCatPlugIn::setNewPeer()
       }
 #endif
 
-   peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
+   peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *UString::str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
 
    if ((check_type & U_CHECK_MAC) != 0 && // not unifi (L2)
        peer->mac == *UString::str_without_mac)
@@ -1421,7 +1386,7 @@ next:
 
 void UNoCatPlugIn::checkOldPeer()
 {
-   U_TRACE(0, "UNoCatPlugIn::checkOldPeer()")
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::checkOldPeer()")
 
    U_INTERNAL_ASSERT_POINTER(peer)
    U_ASSERT(peer->ip.equal(U_CLIENT_ADDRESS_TO_PARAM))
@@ -1885,8 +1850,8 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          {
          char* ptr;
 
-                               time_available = strtol(tmp.data(), &ptr, 0);
-         if (ptr[0] == ':') traffic_available = strtoll(ptr+1, 0, 0);
+                               time_available = strtol(tmp.data(), &ptr, 10);
+         if (ptr[0] == ':') traffic_available = strtoll(ptr+1,        0, 10);
 
          if (   time_available > U_ONE_DAY_IN_SECOND) time_available = U_ONE_DAY_IN_SECOND;
          if (traffic_available == 0)               traffic_available = 4ULL * 1024ULL * 1024ULL * 1024ULL; // 4G
@@ -1970,7 +1935,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
       UServer_Base::port = (port ? port : 5280);
 
       *allowed_members = cfg.at(U_CONSTANT_TO_PARAM("ALLOWED_MEMBERS"));
-      *allowed_members = UFile::contentOf(allowed_members->empty() ? *str_allowed_members_default : *allowed_members);
+      *allowed_members = UFile::contentOf(allowed_members->empty() ? *UString::str_allowed_members_default : *allowed_members);
 
 #  ifdef USE_LIBTDB
       tmp = cfg.at(U_CONSTANT_TO_PARAM("DHCP_DATA_FILE"));
@@ -1992,7 +1957,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 #  endif
       }
 
-   *label = (vLocalNetworkLabel->empty() ? *str_without_label : (*vLocalNetworkLabel)[0]);
+   *label = (vLocalNetworkLabel->empty() ? *UString::str_without_label : (*vLocalNetworkLabel)[0]);
 
    U_INTERNAL_DUMP("label = %V", label->rep)
 
@@ -2001,7 +1966,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
 int UNoCatPlugIn::handlerInit()
 {
-   U_TRACE(0, "UNoCatPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::handlerInit()")
 
    if (fw_cmd->empty()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
@@ -2125,7 +2090,7 @@ int UNoCatPlugIn::handlerInit()
 
 bool UNoCatPlugIn::preallocatePeersFault()
 {
-   U_TRACE(0, "UNoCatPlugIn::preallocatePeersFault()")
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::preallocatePeersFault()")
 
    // send msg to portal
 
@@ -2158,7 +2123,7 @@ bool UNoCatPlugIn::preallocatePeersFault()
 
 int UNoCatPlugIn::handlerFork()
 {
-   U_TRACE(0, "UNoCatPlugIn::handlerFork()")
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::handlerFork()")
 
    uint32_t i, n;
 
@@ -2291,7 +2256,7 @@ int UNoCatPlugIn::handlerFork()
 
 int UNoCatPlugIn::handlerRequest()
 {
-   U_TRACE(1, "UNoCatPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(1, "UNoCatPlugIn::handlerRequest()")
 
    if (UHTTP::file->isRoot() ||
        UClientImage_Base::isRequestNotFound())
@@ -2514,7 +2479,7 @@ next:       (void) getARPCache();
          /*
          if (u_find(U_HTTP_USER_AGENT_TO_PARAM, U_CONSTANT_TO_PARAM("CaptiveNetworkSupport")) != 0)
             {
-            setHTTPResponse(str_IPHONE_SUCCESS, U_html);
+            setHTTPResponse(UString::str_IPHONE_SUCCESS, U_html);
 
             goto end;
             }

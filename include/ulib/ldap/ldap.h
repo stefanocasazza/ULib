@@ -308,7 +308,7 @@ public:
 
    int search()
       {
-      U_TRACE(1, "ULDAP::search()")
+      U_TRACE_NO_PARAM(1, "ULDAP::search()")
 
       U_CHECK_MEMORY
 
@@ -368,7 +368,7 @@ public:
 
    const char** getAttrs() const
       {
-      U_TRACE(0, "ULDAP::getAttrs()")
+      U_TRACE_NO_PARAM(0, "ULDAP::getAttrs()")
 
       U_INTERNAL_ASSERT_POINTER(ludpp)
 

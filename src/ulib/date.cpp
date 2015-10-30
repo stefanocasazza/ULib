@@ -33,7 +33,7 @@ UTimeDate::UTimeDate(int day, int month, int year)
 
 __pure int UTimeDate::getDayOfYear()
 {
-   U_TRACE(0, "UTimeDate::getDayOfYear()")
+   U_TRACE_NO_PARAM(0, "UTimeDate::getDayOfYear()")
 
    int y = _year - 1901;
 
@@ -57,7 +57,7 @@ bool UTimeDate::leapYear(int y)
 
 __pure bool UTimeDate::isValid() const
 {
-   U_TRACE(0, "UTimeDate::isValid()")
+   U_TRACE_NO_PARAM(0, "UTimeDate::isValid()")
 
    U_CHECK_MEMORY
 
@@ -83,7 +83,7 @@ __pure bool UTimeDate::isValid() const
 
 __pure int UTimeDate::getDaysInMonth() const
 {
-   U_TRACE(0, "UTimeDate::getDaysInMonth()")
+   U_TRACE_NO_PARAM(0, "UTimeDate::getDaysInMonth()")
 
    if (_month == 2 && leapYear(_year)) U_RETURN(29);
 

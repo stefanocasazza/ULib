@@ -2,8 +2,6 @@
 
 #include <ulib/timer.h>
 
-#include <iostream>
-
 static char buffer[4096];
 
 class MyAlarm1 : public UEventTime {
@@ -31,12 +29,14 @@ public:
       //  0 - monitoring
       // ---------------
 
+#  if defined(U_STDCPP_ENABLE)
       cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "MyAlarm1::handlerTime() u_now = %1D expire = %#1D\n", UEventTime::expire()));
+#  endif
 
       U_RETURN(-1);
       }
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
 #endif
 };
@@ -66,12 +66,14 @@ public:
       //  0 - monitoring
       // ---------------
 
+#  if defined(U_STDCPP_ENABLE)
       cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "MyAlarm2::handlerTime() u_now = %1D expire = %#1D\n", UEventTime::expire()));
+#  endif
 
       U_RETURN(0);
       }
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool _reset) const { return MyAlarm1::dump(_reset); }
 #endif
 };
@@ -92,13 +94,13 @@ int U_EXPORT main (int argc, char* argv[])
    UTimer::insert(a);
    UTimer::insert(b);
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
    UTimer::erase(a);
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
@@ -112,7 +114,7 @@ int U_EXPORT main (int argc, char* argv[])
 
       UTimer::setTimer();
 
-#  ifdef DEBUG
+#  if defined(U_STDCPP_ENABLE) && defined(DEBUG)
       if (argc > 2) UTimer::printInfo(cout);
 #  endif
       }
@@ -120,13 +122,13 @@ int U_EXPORT main (int argc, char* argv[])
    s.nanosleep();
    s.nanosleep();
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 
    UTimer::clear();
 
-#ifdef DEBUG
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    if (argc > 2) UTimer::printInfo(cout);
 #endif
 }

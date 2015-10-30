@@ -58,7 +58,7 @@ void UProcess::setProcessGroup(pid_t pid, pid_t pgid)
 
 bool UProcess::fork()
 {
-   U_TRACE(1, "UProcess::fork()")
+   U_TRACE_NO_PARAM(1, "UProcess::fork()")
 
    U_CHECK_MEMORY
 
@@ -582,7 +582,7 @@ loop:
 
 void UProcess::wait()
 {
-   U_TRACE(0, "UProcess::wait()")
+   U_TRACE_NO_PARAM(0, "UProcess::wait()")
 
    U_CHECK_MEMORY
 

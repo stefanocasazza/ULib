@@ -55,7 +55,7 @@ public:
 
    bool isDataSession()
       {
-      U_TRACE(0, "UDataStorage::isDataSession()")
+      U_TRACE_NO_PARAM(0, "UDataStorage::isDataSession()")
 
       U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
@@ -66,7 +66,7 @@ public:
 
    void resetDataSession()
       {
-      U_TRACE(0, "UDataStorage::resetDataSession()")
+      U_TRACE_NO_PARAM(0, "UDataStorage::resetDataSession()")
 
       U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
@@ -155,7 +155,7 @@ public:
 
    bool isNewSession()
       {
-      U_TRACE(0, "UDataSession::isNewSession()")
+      U_TRACE_NO_PARAM(0, "UDataSession::isNewSession()")
 
       if (last_access == creation) U_RETURN(true);
 
@@ -164,7 +164,7 @@ public:
 
    bool isDataSessionExpired()
       {
-      U_TRACE(0, "UDataSession::isDataSessionExpired()")
+      U_TRACE_NO_PARAM(0, "UDataSession::isDataSessionExpired()")
 
       U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
@@ -175,7 +175,7 @@ public:
 
    UString getSessionCreationTime()
       {
-      U_TRACE(0, "UDataSession::getSessionCreationTime()")
+      U_TRACE_NO_PARAM(0, "UDataSession::getSessionCreationTime()")
 
       UString x(40U);
 
@@ -186,7 +186,7 @@ public:
 
    UString getSessionLastAccessedTime()
       {
-      U_TRACE(0, "UDataSession::getSessionLastAccessedTime()")
+      U_TRACE_NO_PARAM(0, "UDataSession::getSessionLastAccessedTime()")
 
       UString x(40U);
 
@@ -224,7 +224,7 @@ public:
 
    virtual void clear() U_DECL_OVERRIDE
       {
-      U_TRACE(0, "UDataSession::clear()")
+      U_TRACE_NO_PARAM(0, "UDataSession::clear()")
 
       vec_var->clear();
       }
@@ -249,7 +249,7 @@ protected:
 
    void init()
       {
-      U_TRACE(0, "UDataSession::init()")
+      U_TRACE_NO_PARAM(0, "UDataSession::init()")
 
       vec_var = U_NEW(UVector<UString>);
 

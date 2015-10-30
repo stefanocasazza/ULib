@@ -107,6 +107,8 @@ public:
 
       UApplication::run(argc, argv, env);
 
+      UString::str_allocate(STR_ALLOCATE_SOAP);
+
       // manage arg operation
 
       // manage options

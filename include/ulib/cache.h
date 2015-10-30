@@ -110,14 +110,14 @@ public:
 
    uint32_t getTTL() const
       {
-      U_TRACE(0, "UCache::getTTL()")
+      U_TRACE_NO_PARAM(0, "UCache::getTTL()")
 
       U_RETURN(ttl);
       }
 
    uint32_t getTime() const
       {
-      U_TRACE(0, "UCache::getTime()")
+      U_TRACE_NO_PARAM(0, "UCache::getTime()")
 
       U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 

@@ -81,12 +81,12 @@ public:
 
    Application()
       {
-      U_TRACE(5, "Application::Application()")
+      U_TRACE_NO_PARAM(5, "Application::Application()")
       }
 
    ~Application()
       {
-      U_TRACE(5, "Application::~Application()")
+      U_TRACE_NO_PARAM(5, "Application::~Application()")
       }
 
    void run(int argc, char* argv[], char* env[])
@@ -107,7 +107,7 @@ public:
       bool bpreprocessing_failed = false;
 #  endif
 
-      if (usp.find(U_CONSTANT_TO_PARAM("\n#ifdef DEBUG")) != U_NOT_FOUND)
+      if (U_STRING_FIND(usp, 0, "\n#ifdef DEBUG") != U_NOT_FOUND)
          {
          UFileConfig cfg(UStringExt::substitute(usp, U_CONSTANT_TO_PARAM("#include"), U_CONSTANT_TO_PARAM("//#include")), true);
 
@@ -137,7 +137,7 @@ public:
       while (true)
          {
          uint32_t distance = t.getDistance(),
-                       pos = usp.find("<!--#", distance);
+                       pos = U_STRING_FIND(usp, distance, "<!--#");
 
          if (pos)
             {
@@ -205,10 +205,10 @@ public:
 
             declaration = UStringExt::trim(directive + U_CONSTANT_SIZE("declaration"), n);
 
-            binit   = (declaration.find("static void usp_init_")   != U_NOT_FOUND); // usp_init  (    Server-wide hooks)...
-            bend    = (declaration.find("static void usp_end_")    != U_NOT_FOUND); // usp_end
-            bsighup = (declaration.find("static void usp_sighup_") != U_NOT_FOUND); // usp_sighup
-            bfork   = (declaration.find("static void usp_fork_")   != U_NOT_FOUND); // usp_fork
+            binit   = (U_STRING_FIND(declaration, 0, "static void usp_init_")   != U_NOT_FOUND); // usp_init  (    Server-wide hooks)...
+            bend    = (U_STRING_FIND(declaration, 0, "static void usp_end_")    != U_NOT_FOUND); // usp_end
+            bsighup = (U_STRING_FIND(declaration, 0, "static void usp_sighup_") != U_NOT_FOUND); // usp_sighup
+            bfork   = (U_STRING_FIND(declaration, 0, "static void usp_fork_")   != U_NOT_FOUND); // usp_fork
 
             declaration = UStringExt::substitute(declaration, '\n', U_CONSTANT_TO_PARAM("\n\t"));
             }
@@ -472,7 +472,7 @@ public:
                          size, ptr,
                          size, ptr,
                          (bsession ? "\n\tif (UHTTP::data_session == 0)   UHTTP::data_session = U_NEW(UDataSession);\n\t" : ""),
-                         (bstorage ? "\n\tif (UHTTP::data_storage == 0) { UHTTP::data_storage = U_NEW(UDataSession(*UHTTP::str_storage_keyid)); }\n\t" : ""));
+                         (bstorage ? "\n\tif (UHTTP::data_storage == 0) { UHTTP::data_storage = U_NEW(UDataSession(*UString::str_storage_keyid)); }\n\t" : ""));
 
          (void) declaration.append(buffer);
          }
@@ -490,7 +490,7 @@ public:
          {
          // NB: we use insert because the possibility of UHTTP::callService() (see chat.usp)...
 
-         if (http_header.find(*UString::str_content_type) != U_NOT_FOUND) (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_content_type_len = 1;\n\t"));
+         if (U_STRING_FIND(http_header, 0, "Content-Type") != U_NOT_FOUND) (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_content_type_len = 1;\n\t"));
 
          UString header = UStringExt::dos2unix(http_header, true);
 

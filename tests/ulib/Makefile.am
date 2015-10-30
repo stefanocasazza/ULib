@@ -180,17 +180,17 @@ TST += event.test
 test_event_SOURCES = test_event.cpp
 endif
 
-if !MINGW
+if LINUX
 PRG += test_process test_interrupt test_unixsocket_client test_unixsocket_server test_arping
 TST += process.test interrupt.test unixsocket.test
 test_arping_SOURCES = test_arping.cpp
-test_unixsocket_client_SOURCES = test_unixsocket_client.cpp
-test_unixsocket_server_SOURCES = test_unixsocket_server.cpp
 test_process_SOURCES = test_process.cpp
 test_interrupt_SOURCES = test_interrupt.cpp
+test_unixsocket_client_SOURCES = test_unixsocket_client.cpp
+test_unixsocket_server_SOURCES = test_unixsocket_server.cpp
 test_process_LDADD = $(LDADD)
 test_interrupt_LDADD = $(LDADD)
-if SANITIZE 
+if SANITIZE
 test_process_LDADD   += -lubsan
 test_interrupt_LDADD += -lubsan
 endif
@@ -204,11 +204,11 @@ test_plugin_SOURCES  = test_plugin.cpp
 
 product1_la_SOURCES  = plugin/product1.cpp
 product1_la_LIBADD   = $(LDADD)
-product1_la_LDFLAGS  = -module -rpath /nowhere $(MODULE_LIBTOOL_OPTIONS)
+product1_la_LDFLAGS  = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
 
 product2_la_SOURCES  = plugin/product2.cpp
 product2_la_LIBADD   = $(LDADD)
-product2_la_LDFLAGS  = -module -rpath /nowhere $(MODULE_LIBTOOL_OPTIONS)
+product2_la_LDFLAGS  = -module -rpath /nowhere @MODULE_LIBTOOL_OPTIONS@
 
 ## for convenience module
 noinst_LTLIBRARIES = product1.la product2.la

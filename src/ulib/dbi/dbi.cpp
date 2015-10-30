@@ -62,7 +62,7 @@ UDBI::~UDBI()
 
 void UDBI::close()
 {
-   U_TRACE(1, "UDBI::close()")
+   U_TRACE_NO_PARAM(1, "UDBI::close()")
 
    U_CHECK_MEMORY
 
@@ -121,7 +121,7 @@ bool UDBI::connect(const char* dbName, const char* hostName, const char* usernam
 
 bool UDBI::reconnect()
 {
-   U_TRACE(1, "UDBI::reconnect()")
+   U_TRACE_NO_PARAM(1, "UDBI::reconnect()")
 
    U_CHECK_MEMORY
 
@@ -172,7 +172,7 @@ void UDBI::query(const char* str, uint32_t len)
 
 void UDBI::reset()
 {
-   U_TRACE(0, "UDBI::reset()")
+   U_TRACE_NO_PARAM(0, "UDBI::reset()")
 
    U_INTERNAL_DUMP("pos_read = %u pos_input = %u pos_size = %u escaped_query(%u) = %V",
                     pos_read,     pos_input,     pos_size,     escaped_query.size(), escaped_query.rep)
@@ -196,7 +196,7 @@ void UDBI::reset()
 
 void UDBI::escape()
 {
-   U_TRACE(0+256, "UDBI::escape()")
+   U_TRACE_NO_PARAM(0+256, "UDBI::escape()")
 
    U_CHECK_MEMORY
 
@@ -332,7 +332,7 @@ void UDBI::bind(struct tm& v, bool is_null)
 
 void UDBI::exec()
 {
-   U_TRACE(1, "UDBI::exec()")
+   U_TRACE_NO_PARAM(1, "UDBI::exec()")
 
    U_CHECK_MEMORY
 
@@ -549,7 +549,7 @@ unsigned long long UDBI::rowid(char const* seq)
 
 const char* UDBI::getLastError() const
 {
-   U_TRACE(1, "UDBI::getLastError()")
+   U_TRACE_NO_PARAM(1, "UDBI::getLastError()")
 
    U_CHECK_MEMORY
 
@@ -564,7 +564,7 @@ const char* UDBI::getLastError() const
 
 unsigned long long UDBISet::rows()
 {
-   U_TRACE(1, "UDBISet::rows()")
+   U_TRACE_NO_PARAM(1, "UDBISet::rows()")
 
    U_INTERNAL_ASSERT_POINTER_MSG(res, "DBI: no result assigned")
 

@@ -790,7 +790,7 @@ void USSLSocket::setStatus(SSL* _ssl, int _ret, bool _flag)
 
 bool USSLSocket::secureConnection()
 {
-   U_TRACE(1, "USSLSocket::secureConnection()")
+   U_TRACE_NO_PARAM(1, "USSLSocket::secureConnection()")
 
    int lerrno;
 
@@ -863,7 +863,7 @@ loop:
 
 bool USSLSocket::askForClientCertificate()
 {
-   U_TRACE(1, "USSLSocket::askForClientCertificate()")
+   U_TRACE_NO_PARAM(1, "USSLSocket::askForClientCertificate()")
 
    /**
     * -------------------------------------------------------------------------------------
@@ -1016,7 +1016,7 @@ loop:
 
 void USSLSocket::closesocket()
 {
-   U_TRACE(1, "USSLSocket::closesocket()")
+   U_TRACE_NO_PARAM(1, "USSLSocket::closesocket()")
 
    if (ssl)
       {
@@ -1248,7 +1248,7 @@ int USSLSocket::callback_ServerNameIndication(SSL* _ssl, int* alert, void* data)
 #if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
 bool USSLSocket::setDataForStapling()
 {
-   U_TRACE(1, "USSLSocket::setDataForStapling()")
+   U_TRACE_NO_PARAM(1, "USSLSocket::setDataForStapling()")
 
    U_INTERNAL_ASSERT_POINTER(sctx)
 
@@ -1394,7 +1394,7 @@ bool USSLSocket::setDataForStapling()
 
 bool USSLSocket::doStapling()
 {
-   U_TRACE(1, "USSLSocket::doStapling()")
+   U_TRACE_NO_PARAM(1, "USSLSocket::doStapling()")
 
    U_INTERNAL_ASSERT_POINTER(sctx)
    U_INTERNAL_ASSERT_POINTER(staple.id)
@@ -1580,7 +1580,7 @@ void USSLSocket::certificate_status_callback(SSL* _ssl, void* data)
 
 void USSLSocket::cleanupStapling()
 {
-   U_TRACE(1, "USSLSocket::cleanupStapling()")
+   U_TRACE_NO_PARAM(1, "USSLSocket::cleanupStapling()")
 
    if (staple.id)  OCSP_CERTID_free(staple.id);
 // if (staple.req) OCSP_REQUEST_free(staple.req);

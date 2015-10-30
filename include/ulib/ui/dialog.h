@@ -60,7 +60,7 @@ public:
 
    static bool isXdialog()
       {
-      U_TRACE(0, "UDialog::isXdialog()")
+      U_TRACE_NO_PARAM(0, "UDialog::isXdialog()")
 
       U_RETURN(xdialog);
       }

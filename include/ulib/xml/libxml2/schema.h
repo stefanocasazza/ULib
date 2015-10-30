@@ -69,7 +69,7 @@ public:
 
    const char* getName() const
       {
-      U_TRACE(0, "UXML2Schema::getName()")
+      U_TRACE_NO_PARAM(0, "UXML2Schema::getName()")
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 
@@ -80,7 +80,7 @@ public:
 
    const char* getTargetNameSpace() const
       {
-      U_TRACE(0, "UXML2Schema::getTargetNameSpace()")
+      U_TRACE_NO_PARAM(0, "UXML2Schema::getTargetNameSpace()")
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 
@@ -91,7 +91,7 @@ public:
 
    const char* getVersion() const
       {
-      U_TRACE(0, "UXML2Schema::getVersion()")
+      U_TRACE_NO_PARAM(0, "UXML2Schema::getVersion()")
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 

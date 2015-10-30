@@ -165,7 +165,7 @@ void UVector<void*>::reserve(uint32_t n)
 #ifdef DEBUG
 bool UVector<void*>::check_memory() // check all element
 {
-   U_TRACE(0+256, "UVector<void*>::check_memory()")
+   U_TRACE_NO_PARAM(0+256, "UVector<void*>::check_memory()")
 
    U_CHECK_MEMORY
 

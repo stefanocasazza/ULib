@@ -35,15 +35,13 @@ count_traffic1_LDFLAGS = $(PRG_LDFLAGS)
 bin_PROGRAMS = cdbmake rdbgen
 noinst_PROGRAMS = login_adjust count_traffic count_traffic1 check_binary
 
-MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
-
 if !MINGW
 if !STATIC_SERVLET_WI_AUTH
 moduledir = @ULIB_MODULEDIR@/usp
 module_LTLIBRARIES = wi_auth.la
 wi_auth_la_SOURCES = wi_auth.cpp
 wi_auth_la_LIBADD  = $(ulib_la)
-wi_auth_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+wi_auth_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
 endif
 endif
 
@@ -59,7 +57,7 @@ SUFFIXES = .cpp .usp .lo .la
 wi_auth.cpp: wi_auth.usp ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT)
 
 .lo.la:
-	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la)
+	$(CXXLINK) -rpath $(moduledir) -module @MODULE_LIBTOOL_OPTIONS@ $< $(ulib_la)
 
 if !STATIC_ONLY
 if !STATIC_SERVLET_WI_AUTH

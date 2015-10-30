@@ -121,7 +121,7 @@ void* USimulationError::checkForMatch(const char* call_name)
 
                   // manage random testing
 
-                  uint32_t range = (uint32_t) strtol(file_ptr, &file_ptr, 0);
+                  uint32_t range = (uint32_t) strtol(file_ptr, &file_ptr, 10);
 
                   if (range > 0) match = (u_get_num_random(range) == (range / 2));
 
@@ -148,14 +148,14 @@ void* USimulationError::checkForMatch(const char* call_name)
 
                case 'l': // long
                   {
-                  var_arg.l = strtol(file_ptr, &file_ptr, 0);
+                  var_arg.l = strtol(file_ptr, &file_ptr, 10);
                   }
                break;
 
                case 'L': // long long
                   {
 #              ifdef HAVE_STRTOULL
-                  var_arg.ll = (long long) strtoull(file_ptr, &file_ptr, 0);
+                  var_arg.ll = (long long) strtoull(file_ptr, &file_ptr, 10);
 #              endif
                   }
                break;
@@ -185,7 +185,7 @@ void* USimulationError::checkForMatch(const char* call_name)
                case 'i': // word-size (int)
                default:
                   {
-                  var_arg.i = (int) strtol(file_ptr, &file_ptr, 0);
+                  var_arg.i = (int) strtol(file_ptr, &file_ptr, 10);
                   }
                break;
                }

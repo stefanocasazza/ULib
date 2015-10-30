@@ -13,7 +13,6 @@
 
 #include <ulib/file.h>
 #include <ulib/process.h>
-#include <ulib/mime/entity.h>
 #include <ulib/utility/base64.h>
 #include <ulib/net/client/http.h>
 #include <ulib/utility/services.h>
@@ -221,17 +220,9 @@ UHttpClient_Base::UHttpClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
    responseHeader = U_NEW(UMimeHeader);
 }
 
-UHttpClient_Base::~UHttpClient_Base()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, UHttpClient_Base)
-
-   delete requestHeader;
-   delete responseHeader;
-}
-
 void UHttpClient_Base::reset()
 {
-   U_TRACE(0, "UHttpClient_Base::reset()")
+   U_TRACE_NO_PARAM(0, "UHttpClient_Base::reset()")
 
    body.clear();
 
@@ -240,27 +231,6 @@ void UHttpClient_Base::reset()
 
    UClient_Base::reset();
    UClient_Base::server.clear();
-}
-
-void UHttpClient_Base::setHeader(const UString& name, const UString& value)
-{
-   U_TRACE(0, "UHttpClient_Base::setHeader(%V,%V)", name.rep, value.rep)
-
-   U_INTERNAL_ASSERT(name)
-   U_INTERNAL_ASSERT(value)
-   U_INTERNAL_ASSERT_POINTER(requestHeader)
-
-   requestHeader->setHeader(name, value);
-}
-
-void UHttpClient_Base::removeHeader(const UString& name)
-{
-   U_TRACE(0, "UHttpClient_Base::removeHeader(%V,)", name.rep)
-
-   U_INTERNAL_ASSERT(name)
-   U_INTERNAL_ASSERT_POINTER(requestHeader)
-
-   requestHeader->removeHeader(name);
 }
 
 //=======================================================================================
@@ -457,12 +427,15 @@ bool UHttpClient_Base::createAuthorizationHeader()
    // Only basic and digest authentication is supported at present. By failing to create an authentication header,
    // and returning false, we signal to the caller that the authenticate response should be treated as an error.
 
-   if (headerValue.empty()) U_RETURN(false);
+   if (headerValue)
+      {
+      if (bProxy == false) requestHeader->setHeader(U_CONSTANT_TO_PARAM("Authorization"),       headerValue);
+      else                 requestHeader->setHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"), headerValue);
 
-   if (bProxy) requestHeader->setHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"), headerValue);
-   else        requestHeader->setHeader(*UString::str_authorization,                headerValue);
+      U_RETURN(true);
+      }
 
-   U_RETURN(true);
+   U_RETURN(false);
 }
 
 // ------------------------------------------------------------
@@ -501,7 +474,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
       // (due to application not passing the credentials), then we treat it as an error.
       // If we already have one then the server is rejecting it so we have an error anyway.
 
-      if ((U_http_info.nResponseCode == HTTP_UNAUTHORIZED && requestHeader->containsHeader(*UString::str_authorization))                ||
+      if ((U_http_info.nResponseCode == HTTP_UNAUTHORIZED && requestHeader->containsHeader(U_CONSTANT_TO_PARAM("Authorization")))       ||
           (U_http_info.nResponseCode == HTTP_PROXY_AUTH   && requestHeader->containsHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"))) ||
           (redirectCount == -1 || createAuthorizationHeader() == false))
          {
@@ -564,7 +537,7 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
          // New locations will possibly need different authentication, so we should reset
          // our origin authentication header (if any)
 
-         requestHeader->removeHeader(*UString::str_authorization);
+         requestHeader->removeHeader(U_CONSTANT_TO_PARAM("Authorization"));
 
          // Store cookie if present "Set-Cookie:"
 
@@ -828,7 +801,7 @@ void UHttpClient_Base::composeRequest(const char* content_type)
 
 bool UHttpClient_Base::sendRequestEngine()
 {
-   U_TRACE(0, "UHttpClient_Base::sendRequestEngine()")
+   U_TRACE_NO_PARAM(0, "UHttpClient_Base::sendRequestEngine()")
 
    U_INTERNAL_ASSERT_RANGE(1,UClient_Base::iovcnt,6)
 
@@ -869,7 +842,7 @@ bool UHttpClient_Base::sendRequestEngine()
          {
          U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", U_http_info.nResponseCode)
 
-         U_http_info.clength = responseHeader->getHeader(*UString::str_content_length).strtol();
+         U_http_info.clength = responseHeader->getHeader(U_CONSTANT_TO_PARAM("Content-Length")).strtol();
 
          if ((U_http_info.clength == 0                                      &&
               (U_http_data_chunked = responseHeader->isChunked()) == false) ||
@@ -900,7 +873,7 @@ bool UHttpClient_Base::sendRequestEngine()
 
 bool UHttpClient_Base::sendRequest()
 {
-   U_TRACE(0, "UHttpClient_Base::sendRequest()")
+   U_TRACE_NO_PARAM(0, "UHttpClient_Base::sendRequest()")
 
    U_INTERNAL_ASSERT_RANGE(0,UClient_Base::iovcnt,6)
 

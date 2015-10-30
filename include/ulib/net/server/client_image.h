@@ -66,7 +66,7 @@ public:
 
    bool isPendingSendfile()
       {
-      U_TRACE(0, "UClientImage_Base::isPendingSendfile()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isPendingSendfile()")
 
       if (count > 0) U_RETURN(true);
 
@@ -82,7 +82,7 @@ public:
 
    static void setNoHeaderForResponse()
       {
-      U_TRACE(0, "UClientImage_Base::setNoHeaderForResponse()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setNoHeaderForResponse()")
 
       iov_vec[1].iov_len = 0;
       }
@@ -109,7 +109,7 @@ public:
    static void resetPipeline();
    static void setCloseConnection()
       {
-      U_TRACE(0, "UClientImage_Base::setCloseConnection()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setCloseConnection()")
 
       U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d U_ClientImage_request_is_cached = %b U_ClientImage_close = %b",
                        U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_request_is_cached,     U_ClientImage_close)
@@ -119,7 +119,7 @@ public:
 
    static void resetPipelineAndSetCloseConnection()
       {
-      U_TRACE(0, "UClientImage_Base::resetPipelineAndSetCloseConnection()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPipelineAndSetCloseConnection()")
 
       // NB: because we close the connection we don't need to process other request in pipeline...
 
@@ -140,7 +140,7 @@ public:
 
    static bool isRequestNotFound()
       {
-      U_TRACE(0, "UClientImage_Base::isRequestNotFound()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestNotFound()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
@@ -155,7 +155,7 @@ public:
 
    static void setRequestProcessed()
       {
-      U_TRACE(0, "UClientImage_Base::setRequestProcessed()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestProcessed()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
@@ -164,7 +164,7 @@ public:
 
    static void setRequestNeedProcessing()
       {
-      U_TRACE(0, "UClientImage_Base::setRequestNeedProcessing()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestNeedProcessing()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
@@ -175,7 +175,7 @@ public:
 
    static bool isRequestNeedProcessing()
       {
-      U_TRACE(0, "UClientImage_Base::isRequestNeedProcessing()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestNeedProcessing()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
@@ -186,7 +186,7 @@ public:
 
    static bool isRequestAlreadyProcessed()
       {
-      U_TRACE(0, "UClientImage_Base::isRequestAlreadyProcessed()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestAlreadyProcessed()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
@@ -197,7 +197,7 @@ public:
 
    static bool isRequestRedirected()
       {
-      U_TRACE(0, "UClientImage_Base::isRequestRedirected()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestRedirected()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B U_http_info.nResponseCode = %d", U_ClientImage_request,
                        U_ClientImage_request,        U_http_info.nResponseCode)
@@ -214,7 +214,7 @@ public:
 
    static void setRequestForbidden()
       {
-      U_TRACE(0, "UClientImage_Base::setRequestForbidden()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestForbidden()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
@@ -223,7 +223,7 @@ public:
 
    static bool isRequestForbidden()
       {
-      U_TRACE(0, "UClientImage_Base::isRequestForbidden()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestForbidden()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
@@ -234,7 +234,7 @@ public:
 
    static void setRequestInFileCache()
       {
-      U_TRACE(0, "UClientImage_Base::setRequestInFileCache()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestInFileCache()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
@@ -243,7 +243,7 @@ public:
 
    static bool isRequestInFileCache()
       {
-      U_TRACE(0, "UClientImage_Base::isRequestInFileCache()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestInFileCache()")
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
@@ -254,13 +254,71 @@ public:
 
    static void setRequestNoCache()
       {
-      U_TRACE(0, "UClientImage_Base::setRequestNoCache()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestNoCache()")
 
 #  ifndef U_CACHE_REQUEST_DISABLE
       U_ClientImage_request |= NO_CACHE;
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 #  endif
+      }
+
+   static void setRequestToCache()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestToCache()")
+
+#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
+      U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 2)
+      U_INTERNAL_ASSERT_MAJOR(UClientImage_Base::size_request, 0)
+      U_INTERNAL_ASSERT_RANGE(1,UClientImage_Base::uri_offset,64)
+
+      U_http_info.startHeader -= UClientImage_Base::uri_offset + U_CONSTANT_SIZE(" HTTP/1.1\r\n");
+
+      (void) u__memcpy(UClientImage_Base::cbuffer, UClientImage_Base::request->c_pointer(UClientImage_Base::uri_offset), U_http_info.startHeader, __PRETTY_FUNCTION__);
+
+      U_INTERNAL_DUMP("request(%u) = %V", UClientImage_Base::request->size(), UClientImage_Base::request->rep)
+      U_INTERNAL_DUMP("UClientImage_Base::cbuffer(%u) = %.*S", U_http_info.startHeader, U_http_info.startHeader, UClientImage_Base::cbuffer)
+#  endif
+      }
+
+   static uint32_t checkRequestToCache()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::checkRequestToCache()")
+
+      U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
+
+#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
+      U_INTERNAL_ASSERT(U_ClientImage_request_is_cached)
+
+      uint32_t    sz  = request->size();
+      const char* ptr = request->data();
+
+      U_INTERNAL_DUMP("cbuffer(%u) = %.*S", U_http_info.startHeader, U_http_info.startHeader, cbuffer)
+      U_INTERNAL_DUMP("request(%u) = %.*S", sz, sz, ptr)
+
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u uri_offset = %u", U_ClientImage_pipeline, size_request, uri_offset)
+
+      U_INTERNAL_ASSERT_MAJOR(size_request, 0)
+      U_INTERNAL_ASSERT_RANGE(1,uri_offset,64)
+      U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 0)
+      U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 0)
+      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
+
+      if (u__isblank((ptr+uri_offset)[U_http_info.startHeader]) &&
+          memcmp(ptr+uri_offset, cbuffer, U_http_info.startHeader) == 0)
+         {
+         if (size_request > sz &&
+             (callerIsValidMethod( ptr)     == false ||
+              callerIsValidRequest(ptr, sz) == false))
+            {
+            U_RETURN(1); // partial valid (not complete)
+            }
+
+         if (callerHandlerCache()) U_RETURN(2);
+         }
+#  endif
+
+      U_RETURN(0);
       }
 
    // DEBUG
@@ -317,7 +375,7 @@ protected:
    void   set();
    void reset()
       {
-      U_TRACE(0, "UClientImage_Base::reset()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::reset()")
 
       UEventFd::op_mask = EPOLLIN | EPOLLRDHUP | EPOLLET;
 
@@ -328,7 +386,7 @@ protected:
 
    int manageRead()
       {
-      U_TRACE(0, "UClientImage::manageRead()")
+      U_TRACE_NO_PARAM(0, "UClientImage::manageRead()")
 
       if ((prepareForRead(), genericRead()) == false &&
           U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN) // NOT BLOCKING...
@@ -346,7 +404,7 @@ protected:
 
    void setPendingSendfile()
       {
-      U_TRACE(0, "UClientImage::setPendingSendfile()")
+      U_TRACE_NO_PARAM(0, "UClientImage::setPendingSendfile()")
 
       count = ncount;
 
@@ -357,7 +415,7 @@ protected:
       
    static uint32_t getCountToRead()
       {
-      U_TRACE(0, "UClientImage_Base::getCountToRead()")
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::getCountToRead()")
 
       if (size_request == 0) U_RETURN(U_SINGLE_READ);
 

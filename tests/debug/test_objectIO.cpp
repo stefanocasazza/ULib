@@ -18,7 +18,7 @@ public:
    bool operator==(const Prima& l) { return (memcmp(a, l.a, strlen(a)) == 0); }
 };
 
-std::istream& operator>>(std::istream& is, Prima& l)
+istream& operator>>(istream& is, Prima& l)
 {
    static char buffer1[128];
 
@@ -29,7 +29,7 @@ std::istream& operator>>(std::istream& is, Prima& l)
    return is;
 }
 
-std::ostream& operator<<(std::ostream& os, const Prima& l) 
+ostream& operator<<(ostream& os, const Prima& l) 
 {
    // per simulare ricorsione in U_OBJECT_TO_TRACE()
 
@@ -54,7 +54,7 @@ public:
    bool operator==(const Seconda& l) { return (memcmp(b, l.b, strlen(b)) == 0); }
 };
 
-std::istream& operator>>(std::istream& is, Seconda& l)
+istream& operator>>(istream& is, Seconda& l)
 {
    static char buffer2[128];
 
@@ -65,7 +65,7 @@ std::istream& operator>>(std::istream& is, Seconda& l)
    return is;
 }
 
-std::ostream& operator<<(std::ostream& os, const Seconda& l)
+ostream& operator<<(ostream& os, const Seconda& l)
 {
    // per simulare ricorsione in U_OBJECT_TO_TRACE()
 

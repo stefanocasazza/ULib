@@ -47,14 +47,12 @@ noinst_PROGRAMS = gendoc index1 index2 db_dump db_check query update
 
 ## usp web section
 ## --------------------------------------------------------------------------------------------------------------------------
-MODULE_LIBTOOL_OPTIONS = -export-dynamic -avoid-version
-
 if !MINGW
 moduledir = @ULIB_MODULEDIR@/usp
 module_LTLIBRARIES = ir_web.la
 ir_web_la_SOURCES  = ir_web.cpp
 ir_web_la_LIBADD   = libcquery.la libIR.la libposting.la $(ulib_la)
-ir_web_la_LDFLAGS  = -module $(MODULE_LIBTOOL_OPTIONS)
+ir_web_la_LDFLAGS  = -module @MODULE_LIBTOOL_OPTIONS@
 endif
 
 if !CROSS_COMPILING
@@ -69,7 +67,7 @@ SUFFIXES = .cpp .usp .lo .la
 ir_web.cpp: ir_web.usp ../../src/ulib/net/server/plugin/usp/usp_translator$(EXEEXT)
 
 .lo.la:
-	$(CXXLINK) -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< libcquery.la libIR.la libposting.la $(ulib_la)
+	$(CXXLINK) -rpath $(moduledir) -module @MODULE_LIBTOOL_OPTIONS@ $< libcquery.la libIR.la libposting.la $(ulib_la)
 
 if !STATIC_ONLY
 ##FOR_ALL = .libs/ir_web.so

@@ -46,6 +46,10 @@
 #     else
 #        define U_PR_SET_KEEPCAPS PR_SET_KEEPCAPS
 #     endif
+#  elif defined(__APPLE__)
+#     include <mach/mach.h>
+#     include <mach/mach_port.h>
+#     include <mach/mach_traps.h>
 #  endif
 #endif
 
@@ -148,7 +152,7 @@ void* u__memcpy(void* restrict dst, const void* restrict src, size_t n, const ch
 }
 #endif
 
-long u_strtol(const char* restrict s, const char* restrict e)
+__pure long u_strtol(const char* restrict s, const char* restrict e)
 {
    bool neg;
    long val;
@@ -182,7 +186,7 @@ long u_strtol(const char* restrict s, const char* restrict e)
    return (neg ? -val : val);
 }
 
-int64_t u_strtoll(const char* restrict s, const char* restrict e)
+__pure int64_t u_strtoll(const char* restrict s, const char* restrict e)
 {
    bool neg;
    int64_t val;
@@ -1727,7 +1731,7 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
       }
 }
 
-bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
+__pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
 {
    U_INTERNAL_TRACE("u_dosmatch_ext(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, flags)
 
@@ -2906,6 +2910,15 @@ __pure bool u_isName(const char* restrict s, uint32_t n)
    U_LOOP_STRING( if (u__isname(c) == false) return false )
 
    U_INTERNAL_TRACE("u_isName(%.*s,%u)", U_min(n,128), s, n)
+
+   return true;
+}
+
+__pure bool u_isDigit(const char* restrict s, uint32_t n)
+{
+   U_LOOP_STRING( if (u__isdigit(c) == false) return false )
+
+   U_INTERNAL_TRACE("u_isDigit(%.*s,%u)", U_min(n,128), s, n)
 
    return true;
 }
@@ -4906,22 +4919,6 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
    uint32_t i;
    struct mimeentry* ptr;
 
-   enum {
-      EXT_CSS  = U_MULTICHAR_CONSTANT32('c','s','s',0),
-      EXT_FLV  = U_MULTICHAR_CONSTANT32('f','l','v',0),
-      EXT_GIF  = U_MULTICHAR_CONSTANT32('g','i','f',0),
-      EXT_ICO  = U_MULTICHAR_CONSTANT32('i','c','o',0),
-      EXT_PNG  = U_MULTICHAR_CONSTANT32('p','n','g',0),
-      EXT_JPG  = U_MULTICHAR_CONSTANT32('j','p','g',0),
-      EXT_TXT  = U_MULTICHAR_CONSTANT32('t','x','t',0),
-      EXT_USP  = U_MULTICHAR_CONSTANT32('u','s','p',0),
-      EXT_CSP  = U_MULTICHAR_CONSTANT32('c','s','p',0),
-      EXT_CGI  = U_MULTICHAR_CONSTANT32('c','g','i',0),
-      EXT_PHP  = U_MULTICHAR_CONSTANT32('p','h','p',0),
-      EXT_SSI  = U_MULTICHAR_CONSTANT32('s','h','t','m'),
-      EXT_HTML = U_MULTICHAR_CONSTANT32('h','t','m','l')
-   };
-
    U_INTERNAL_TRACE("u_get_mimetype(%s,%p)", suffix, pmime_index)
 
    U_INTERNAL_ASSERT_POINTER(suffix)
@@ -4930,64 +4927,64 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
 
    switch (i)
       {
-      case EXT_CSS:
+      case U_MULTICHAR_CONSTANT32('c','s','s',0):
          {
          if (pmime_index) *pmime_index = U_css;
 
          return "text/css";
          }
-      case EXT_FLV:
+      case U_MULTICHAR_CONSTANT32('f','l','v',0):
          {
          if (pmime_index) *pmime_index = U_flv;
 
          return "video/x-flv";
          }
-      case EXT_GIF:
+      case U_MULTICHAR_CONSTANT32('g','i','f',0):
          {
          if (pmime_index) *pmime_index = U_gif;
 
          return "image/gif";
          }
-      case EXT_ICO:
+      case U_MULTICHAR_CONSTANT32('i','c','o',0):
          {
          if (pmime_index) *pmime_index = U_ico;
 
          return "image/x-icon";
          }
-      case EXT_PNG:
+      case U_MULTICHAR_CONSTANT32('p','n','g',0):
          {
          if (pmime_index) *pmime_index = U_png;
 
          return "image/png";
          }
-      case EXT_JPG:
+      case U_MULTICHAR_CONSTANT32('j','p','g',0):
          {
          if (pmime_index) *pmime_index = U_jpg;
 
          return "image/jpg";
          }
-      case EXT_SSI:
-      case EXT_HTML:
+      case U_MULTICHAR_CONSTANT32('s','h','t','m'):
+      case U_MULTICHAR_CONSTANT32('h','t','m','l'):
          {
-         if (pmime_index) *pmime_index = (i == EXT_HTML ? U_html : U_ssi);
+         if (pmime_index) *pmime_index = (i == U_MULTICHAR_CONSTANT32('h','t','m','l') ? U_html : U_ssi);
 
          return U_CTYPE_HTML;
          }
-      case EXT_TXT:
-      case EXT_USP:
-      case EXT_CSP:
-      case EXT_CGI:
-      case EXT_PHP:
+      case U_MULTICHAR_CONSTANT32('t','x','t',0):
+      case U_MULTICHAR_CONSTANT32('u','s','p',0):
+      case U_MULTICHAR_CONSTANT32('c','s','p',0):
+      case U_MULTICHAR_CONSTANT32('c','g','i',0):
+      case U_MULTICHAR_CONSTANT32('p','h','p',0):
          {
          if (pmime_index)
             {
             switch (i)
                {
-               case EXT_TXT: *pmime_index = U_txt; break;
-               case EXT_USP: *pmime_index = U_usp; break;
-               case EXT_CSP: *pmime_index = U_csp; break;
-               case EXT_CGI: *pmime_index = U_cgi; break;
-               case EXT_PHP: *pmime_index = U_php; return "application/x-httpd-php";
+               case U_MULTICHAR_CONSTANT32('t','x','t',0): *pmime_index = U_txt; break;
+               case U_MULTICHAR_CONSTANT32('u','s','p',0): *pmime_index = U_usp; break;
+               case U_MULTICHAR_CONSTANT32('c','s','p',0): *pmime_index = U_csp; break;
+               case U_MULTICHAR_CONSTANT32('c','g','i',0): *pmime_index = U_cgi; break;
+               case U_MULTICHAR_CONSTANT32('p','h','p',0): *pmime_index = U_php; return "application/x-httpd-php";
                }
             }
 

@@ -58,13 +58,6 @@ public:
       IMAP_SESSION_BAD
    };
 
-   static const UString* str_recent;
-   static const UString* str_unseen;
-   static const UString* str_uidnext;
-   static const UString* str_uidvalidity;
-
-   static void str_allocate();
-
    /**
     * Constructs a new UImapClient with default values for all properties
     */
@@ -73,9 +66,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UImapClient, "%b", bSocketIsIPv6)
 
-      state = NOT_AUTHENTICATED;
+      U_INTERNAL_ASSERT_POINTER(UString::str_recent)
 
-      if (str_recent == 0) str_allocate();
+      state = NOT_AUTHENTICATED;
       }
 
    virtual ~UImapClient();

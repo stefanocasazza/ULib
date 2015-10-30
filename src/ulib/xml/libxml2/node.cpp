@@ -15,7 +15,7 @@
 
 const xmlChar* UXML2Node::getNameSpaceUri()
 {
-   U_TRACE(0, "UXML2Node::getNameSpaceUri()")
+   U_TRACE_NO_PARAM(0, "UXML2Node::getNameSpaceUri()")
 
    U_INTERNAL_ASSERT_POINTER(impl_)
 

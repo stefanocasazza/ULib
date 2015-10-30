@@ -86,7 +86,7 @@ public:
 
    void clear()
       {
-      U_TRACE(1, "UPKCS7::clear()")
+      U_TRACE_NO_PARAM(1, "UPKCS7::clear()")
 
       U_INTERNAL_ASSERT_POINTER(pkcs7)
 
@@ -101,7 +101,7 @@ public:
 
    bool isValid() const
       {
-      U_TRACE(0, "UPKCS7::isValid()")
+      U_TRACE_NO_PARAM(0, "UPKCS7::isValid()")
 
       U_RETURN(pkcs7 != 0);
       }
@@ -110,7 +110,7 @@ public:
 
    bool isDetached() const
       {
-      U_TRACE(1, "UPKCS7::isDetached()")
+      U_TRACE_NO_PARAM(1, "UPKCS7::isDetached()")
 
       bool result = (U_SYSCALL(PKCS7_ctrl, "%p,%d,%ld,%s", pkcs7, PKCS7_OP_GET_DETACHED_SIGNATURE, 0, 0) != 0);
 
@@ -121,7 +121,7 @@ public:
 
    bool isMessageEncrypted() const
       {
-      U_TRACE(0, "UPKCS7::isMessageEncrypted()")
+      U_TRACE_NO_PARAM(0, "UPKCS7::isMessageEncrypted()")
 
       bool result = (PKCS7_type_is_enveloped(pkcs7) != 0);
 
@@ -130,7 +130,7 @@ public:
 
    bool isMessageSignedAndEncrypted() const
       {
-      U_TRACE(0, "UPKCS7::isMessageSignedAndEncrypted()")
+      U_TRACE_NO_PARAM(0, "UPKCS7::isMessageSignedAndEncrypted()")
 
       bool result = (PKCS7_type_is_signedAndEnveloped(pkcs7) != 0);
 

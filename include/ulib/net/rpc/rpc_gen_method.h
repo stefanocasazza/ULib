@@ -45,7 +45,7 @@ public:
 
    virtual void encode()
       {
-      U_TRACE(0, "URPCGenericMethod::encode()")
+      U_TRACE_NO_PARAM(0, "URPCGenericMethod::encode()")
 
       U_INTERNAL_ASSERT_POINTER(URPCMethod::encoder)
 

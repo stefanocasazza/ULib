@@ -69,7 +69,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UPKCS10::clear()")
+      U_TRACE_NO_PARAM(0, "UPKCS10::clear()")
 
       U_INTERNAL_ASSERT_POINTER(request)
 
@@ -89,7 +89,7 @@ public:
 
    bool isValid() const
       {
-      U_TRACE(0, "UPKCS10::isValid()")
+      U_TRACE_NO_PARAM(0, "UPKCS10::isValid()")
 
       U_RETURN(request != 0);
       }
@@ -108,7 +108,7 @@ public:
 
    long getVersionNumber() const
       {
-      U_TRACE(1, "UPKCS10::getVersionNumber()")
+      U_TRACE_NO_PARAM(1, "UPKCS10::getVersionNumber()")
 
       U_INTERNAL_ASSERT_POINTER(request)
 
@@ -123,7 +123,7 @@ public:
 
    UString getSignature() const
       {
-      U_TRACE(0, "UPKCS10::getSignature()")
+      U_TRACE_NO_PARAM(0, "UPKCS10::getSignature()")
 
       U_INTERNAL_ASSERT_POINTER(request)
 
@@ -139,7 +139,7 @@ public:
 
    UString getSignatureAlgorithm() const
       {
-      U_TRACE(0, "UPKCS10::getSignatureAlgorithm()")
+      U_TRACE_NO_PARAM(0, "UPKCS10::getSignatureAlgorithm()")
 
       U_INTERNAL_ASSERT_POINTER(request)
 
@@ -162,7 +162,7 @@ public:
 
    EVP_PKEY* getSubjectPublicKey() const
       {
-      U_TRACE(1, "UPKCS10::getSubjectPublicKey()")
+      U_TRACE_NO_PARAM(1, "UPKCS10::getSubjectPublicKey()")
 
       U_INTERNAL_ASSERT_POINTER(request)
 

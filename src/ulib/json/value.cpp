@@ -61,7 +61,7 @@ UValue::UValue(const UString& _key, const UString& value_)
 
 void UValue::reset()
 {
-   U_TRACE(0, "UValue::reset()")
+   U_TRACE_NO_PARAM(0, "UValue::reset()")
 
    parent =
    prev   =
@@ -74,7 +74,7 @@ void UValue::reset()
 
 void UValue::clear()
 {
-   U_TRACE(0, "UValue::clear()")
+   U_TRACE_NO_PARAM(0, "UValue::clear()")
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
@@ -134,7 +134,7 @@ void UValue::clear()
 
 __pure bool UValue::asBool() const
 {
-   U_TRACE(0, "UValue::asBool()")
+   U_TRACE_NO_PARAM(0, "UValue::asBool()")
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
@@ -185,7 +185,7 @@ case_object:   U_RETURN(children.head == 0);
 
 __pure int UValue::asInt() const
 {
-   U_TRACE(0, "UValue::asInt()")
+   U_TRACE_NO_PARAM(0, "UValue::asInt()")
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
@@ -251,7 +251,7 @@ case_object:
 
 __pure unsigned int UValue::asUInt() const
 {
-   U_TRACE(0, "UValue::asUInt()")
+   U_TRACE_NO_PARAM(0, "UValue::asUInt()")
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
@@ -322,7 +322,7 @@ case_object:
 
 __pure double UValue::asDouble() const
 {
-   U_TRACE(0, "UValue::asDouble()")
+   U_TRACE_NO_PARAM(0, "UValue::asDouble()")
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
@@ -377,7 +377,7 @@ case_object:
 
 __pure UString UValue::asString() const
 {
-   U_TRACE(0, "UValue::asString()")
+   U_TRACE_NO_PARAM(0, "UValue::asString()")
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
@@ -1873,7 +1873,7 @@ int UValue::jreadArrayStep(const UString& jarray, UString& result)
 #ifdef DEBUG
 const char* UValue::getJReadErrorDescription()
 {
-   U_TRACE(0, "UValue::getJReadErrorDescription()")
+   U_TRACE_NO_PARAM(0, "UValue::getJReadErrorDescription()")
 
    static const char* errlist[] = {
       "Ok",                                       //  0

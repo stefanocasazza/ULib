@@ -34,7 +34,7 @@ UThread* UThread::first;
 
 void UThread::close()
 {
-   U_TRACE(0, "UThread::close()")
+   U_TRACE_NO_PARAM(0, "UThread::close()")
 
 #ifdef _MSWINDOWS_
    DWORD _tid = tid;
@@ -107,7 +107,7 @@ void UThread::close()
 
 void UThread::yield()
 {
-   U_TRACE(1, "UThread::yield()")
+   U_TRACE_NO_PARAM(1, "UThread::yield()")
 
    // Yields the current thread's CPU time slice to allow another thread to begin immediate execution
 
@@ -217,7 +217,7 @@ void UThread::manageSignal(int signo)
 
 void UThread::maskSignal()
 {
-   U_TRACE(1, "UThread::maskSignal()")
+   U_TRACE_NO_PARAM(1, "UThread::maskSignal()")
 
    sigset_t mask;
 
@@ -272,7 +272,7 @@ bool UThread::initRwLock(pthread_rwlock_t* prwlock)
    pthread_rwlockattr_t rwlockattr;
 
    if (U_SYSCALL(pthread_rwlockattr_init,       "%p",    &rwlockattr)                         != 0 ||
-#     if !defined(__NetBSD__) && !defined(__UNIKERNEL__)
+#     if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
        U_SYSCALL(pthread_rwlockattr_setpshared, "%p,%d", &rwlockattr, PTHREAD_PROCESS_SHARED) != 0 ||
 #     endif
        U_SYSCALL(pthread_rwlock_init,           "%p,%p", prwlock, &rwlockattr)                != 0)
@@ -292,7 +292,7 @@ bool UThread::initIPC(pthread_mutex_t* pmutex, pthread_cond_t* pcond)
       pthread_mutexattr_t mutexattr;
 
       if (U_SYSCALL(pthread_mutexattr_init,       "%p",    &mutexattr)                         != 0 ||
-#        if !defined(__NetBSD__) && !defined(__UNIKERNEL__)
+#        if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
           U_SYSCALL(pthread_mutexattr_setrobust,  "%p,%d", &mutexattr, PTHREAD_MUTEX_ROBUST)   != 0 ||
           U_SYSCALL(pthread_mutexattr_setpshared, "%p,%d", &mutexattr, PTHREAD_PROCESS_SHARED) != 0 ||
 #        endif
@@ -307,7 +307,7 @@ bool UThread::initIPC(pthread_mutex_t* pmutex, pthread_cond_t* pcond)
       pthread_condattr_t condattr;
 
       if (U_SYSCALL(pthread_condattr_init,       "%p",    &condattr)                         != 0 ||
-#        if !defined(__NetBSD__) && !defined(__UNIKERNEL__)
+#        if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
           U_SYSCALL(pthread_condattr_setpshared, "%p,%d", &condattr, PTHREAD_PROCESS_SHARED) != 0 ||
 #        endif
           U_SYSCALL(pthread_cond_init,           "%p,%p", pcond, &condattr)                  != 0)
@@ -359,7 +359,7 @@ bool UThread::start(uint32_t timeoutMS)
    const unsigned CREATE_IN_RUN_STATE    = 0;
    const unsigned USE_DEFAULT_STACK_SIZE = 0;
 
-   if (_beginthreadex(NO_SECURITY_ATTRIBUTES, USE_DEFAULT_STACK_SIZE, execHandler, this, CREATE_IN_RUN_STATE, &id) == 0)
+   if (_beginthreadex(NO_SECURITY_ATTRIBUTES, USE_DEFAULT_STACK_SIZE, execHandler, this, CREATE_IN_RUN_STATE, (unsigned int*)&id) == 0)
       {
       int m_thread_start_error;
       errno_t m_return_value = _get_errno(&m_thread_start_error);
@@ -449,7 +449,7 @@ void UThread::setCancel(int mode)
 
 int UThread::enterCancel()
 {
-   U_TRACE(1, "UThread::enterCancel()")
+   U_TRACE_NO_PARAM(1, "UThread::enterCancel()")
 
    U_INTERNAL_DUMP("cancel = %d", cancel)
 
@@ -560,7 +560,7 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
       {
       th = U_NEW(UThread(UThread::detachstate));
 
-      if (_beginthreadex(NO_SECURITY_ATTRIBUTES, USE_DEFAULT_STACK_SIZE, execHandler, this, CREATE_IN_RUN_STATE, &id) == 0)
+      if (_beginthreadex(NO_SECURITY_ATTRIBUTES, USE_DEFAULT_STACK_SIZE, execHandler, this, CREATE_IN_RUN_STATE, (unsigned int*)&id) == 0)
          {
          int m_thread_start_error;
          errno_t m_return_value = _get_errno(&m_thread_start_error);
@@ -636,7 +636,7 @@ UThreadPool::~UThreadPool()
 
 void UThreadPool::run()
 {
-   U_TRACE(0, "UThreadPool::run()")
+   U_TRACE_NO_PARAM(0, "UThreadPool::run()")
 
    UThread* current_task;
 

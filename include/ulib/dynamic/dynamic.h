@@ -58,7 +58,7 @@ public:
 
    UDynamic()
       {
-      U_TRACE(0, "UDynamic::UDynamic()")
+      U_TRACE_NO_PARAM(0, "UDynamic::UDynamic()")
 
       err    = "none";
       addr   = 0;
@@ -67,7 +67,7 @@ public:
 
    ~UDynamic()
       {
-      U_TRACE(0, "UDynamic::~UDynamic()")
+      U_TRACE_NO_PARAM(0, "UDynamic::~UDynamic()")
       }
 
    /**

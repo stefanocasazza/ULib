@@ -185,7 +185,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "Url::clear()")
+      U_TRACE_NO_PARAM(0, "Url::clear()")
 
       url.clear();
 
@@ -205,7 +205,7 @@ public:
 
    bool isHTTP() const
       {
-      U_TRACE(0, "Url::isHTTP()")
+      U_TRACE_NO_PARAM(0, "Url::isHTTP()")
 
       bool result = (getService() == *UString::str_http);
 
@@ -214,7 +214,7 @@ public:
 
    bool isHTTPS() const
       {
-      U_TRACE(0, "Url::isHTTPS()")
+      U_TRACE_NO_PARAM(0, "Url::isHTTPS()")
 
       bool result = getService().equal(U_CONSTANT_TO_PARAM("https"));
 
@@ -223,7 +223,7 @@ public:
 
    bool isLDAP() const
       {
-      U_TRACE(0, "Url::isLDAP()")
+      U_TRACE_NO_PARAM(0, "Url::isLDAP()")
 
       bool result = getService().equal(U_CONSTANT_TO_PARAM("ldap"));
 
@@ -232,7 +232,7 @@ public:
 
    bool isLDAPS() const
       {
-      U_TRACE(0, "Url::isLDAPS()")
+      U_TRACE_NO_PARAM(0, "Url::isLDAPS()")
 
       bool result = getService().equal(U_CONSTANT_TO_PARAM("ldaps"));
 
@@ -274,7 +274,7 @@ public:
 
    void eraseUser()
       {
-      U_TRACE(0, "Url::eraseUser()")
+      U_TRACE_NO_PARAM(0, "Url::eraseUser()")
 
       if (user_begin < user_end)
          {
@@ -293,7 +293,7 @@ public:
 
    bool isLocalFile()
       {
-      U_TRACE(0, "Url::isLocalFile()")
+      U_TRACE_NO_PARAM(0, "Url::isLocalFile()")
 
       bool result = (host_begin < host_end ? true : false); // Is there a host ?
 
@@ -353,7 +353,7 @@ public:
 
    bool isPath() const
       {
-      U_TRACE(0, "Url::isPath()")
+      U_TRACE_NO_PARAM(0, "Url::isPath()")
 
       bool result = (path_begin < path_end);
 
@@ -401,7 +401,7 @@ public:
 
    bool isQuery()
       {
-      U_TRACE(0, "Url::isQuery()")
+      U_TRACE_NO_PARAM(0, "Url::isQuery()")
 
       bool result = (path_end < (int)(url.size() - 1));
 
@@ -434,7 +434,7 @@ public:
 
    void eraseQuery()
       {
-      U_TRACE(0, "Url::eraseQuery()")
+      U_TRACE_NO_PARAM(0, "Url::eraseQuery()")
 
       if (path_end < (int)url.size())
          {

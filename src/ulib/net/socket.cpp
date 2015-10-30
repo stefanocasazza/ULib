@@ -78,7 +78,7 @@ USocket::~USocket()
 
 __pure unsigned int USocket::localPortNumber()
 {
-   U_TRACE(0, "USocket::localPortNumber()")
+   U_TRACE_NO_PARAM(0, "USocket::localPortNumber()")
 
    U_CHECK_MEMORY
 
@@ -89,7 +89,7 @@ __pure unsigned int USocket::localPortNumber()
 
 __pure UIPAddress& USocket::localIPAddress()
 {
-   U_TRACE(0, "USocket::localIPAddress()")
+   U_TRACE_NO_PARAM(0, "USocket::localIPAddress()")
 
    U_CHECK_MEMORY
 
@@ -157,7 +157,7 @@ bool USocket::connectServer(const UIPAddress& cAddr, unsigned int iServPort)
 
 bool USocket::checkErrno()
 {
-   U_TRACE(0, "USocket::checkErrno()")
+   U_TRACE_NO_PARAM(0, "USocket::checkErrno()")
 
    U_INTERNAL_DUMP("errno = %d", errno)
 
@@ -201,7 +201,7 @@ bool USocket::checkTime(long time_limit, long& timeout)
 
 void USocket::setLocal()
 {
-   U_TRACE(1, "USocket::setLocal()")
+   U_TRACE_NO_PARAM(1, "USocket::setLocal()")
 
    U_CHECK_MEMORY
 
@@ -239,7 +239,7 @@ UString USocket::getMacAddress(const char* device)
 
    UString result(100U);
 
-#if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_ARPA_INET_H) && !defined(__NetBSD__) && !defined(__UNIKERNEL__)
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_ARPA_INET_H)
    U_INTERNAL_ASSERT(isOpen())
 
    /**
@@ -310,7 +310,7 @@ UString USocket::getMacAddress(const char* device)
 
 bool USocket::bind()
 {
-   U_TRACE(1, "USocket::bind()")
+   U_TRACE_NO_PARAM(1, "USocket::bind()")
 
    U_CHECK_MEMORY
 
@@ -341,7 +341,7 @@ loop:
 
 void USocket::setReusePort()
 {
-   U_TRACE(0, "USocket::setReusePort()")
+   U_TRACE_NO_PARAM(0, "USocket::setReusePort()")
 
    /**
     * As with TCP, SO_REUSEPORT allows multiple UDP sockets to be bound to the same port. This
@@ -352,10 +352,10 @@ void USocket::setReusePort()
     * SO_REUSEPORT distributes datagrams evenly across all of the receiving threads
     */
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
-#  ifndef SO_REUSEPORT
-#  define SO_REUSEPORT 15
-#  endif
+#if !defined(U_SERVER_CAPTIVE_PORTAL) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
+# ifndef SO_REUSEPORT
+# define SO_REUSEPORT 15
+# endif
    U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
    tcp_reuseport = ((U_socket_Type(this) & SK_UNIX) == 0                                  &&
@@ -368,7 +368,7 @@ void USocket::setReusePort()
 
 void USocket::setReuseAddress()
 {
-   U_TRACE(0, "USocket::setReuseAddress()")
+   U_TRACE_NO_PARAM(0, "USocket::setReuseAddress()")
 
    /**
     * SO_REUSEADDR allows your server to bind to an address which is in a TIME_WAIT state.
@@ -382,7 +382,7 @@ void USocket::setReuseAddress()
 
 void USocket::setTcpKeepAlive()
 {
-   U_TRACE(0, "USocket::setTcpKeepAlive()")
+   U_TRACE_NO_PARAM(0, "USocket::setTcpKeepAlive()")
 
    // Set TCP keep alive option to detect dead peers
 
@@ -558,7 +558,7 @@ void USocket::reusePort(int _flags)
 
    U_CHECK_MEMORY
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && !defined(_MSWINDOWS_)
+#if !defined(U_SERVER_CAPTIVE_PORTAL) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
    U_INTERNAL_DUMP("tcp_reuseport = %b", tcp_reuseport)
 
    if (tcp_reuseport)
@@ -598,7 +598,7 @@ void USocket::reusePort(int _flags)
 
 void USocket::setRemote()
 {
-   U_TRACE(1, "USocket::setRemote()")
+   U_TRACE_NO_PARAM(1, "USocket::setRemote()")
 
    U_CHECK_MEMORY
 
@@ -617,7 +617,7 @@ void USocket::setRemote()
 
 bool USocket::connect()
 {
-   U_TRACE(1, "USocket::connect()")
+   U_TRACE_NO_PARAM(1, "USocket::connect()")
 
    U_CHECK_MEMORY
 
@@ -757,7 +757,7 @@ bool USocket::setTimeoutRCV(uint32_t timeoutMS)
    // to be measured as an int value in milliseconds, whereas BSD-style
    // sockets use a timeval
 
-#if defined(_MSWINDOWS_)
+#ifdef _MSWINDOWS_
    bool result = setSockOpt(SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeoutMS, sizeof(uint32_t));
 #else
    // Convert the timeout value (in milliseconds) into a timeval struct
@@ -782,7 +782,7 @@ bool USocket::setTimeoutSND(uint32_t timeoutMS)
    U_RETURN(false);
 #endif
 
-#if defined(_MSWINDOWS_)
+#ifdef _MSWINDOWS_
    bool result = setSockOpt(SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeoutMS, sizeof(uint32_t));
 #else
    // Convert the timeout value (in milliseconds) into a timeval struct
@@ -799,7 +799,7 @@ bool USocket::setTimeoutSND(uint32_t timeoutMS)
 
 int USocket::recvBinary16Bits()
 {
-   U_TRACE(0, "USocket::recvBinary16Bits()")
+   U_TRACE_NO_PARAM(0, "USocket::recvBinary16Bits()")
 
    uint16_t uiNetOrder;
    uint32_t iBytesLeft = sizeof(uint16_t);
@@ -817,7 +817,7 @@ int USocket::recvBinary16Bits()
 
 uint32_t USocket::recvBinary32Bits()
 {
-   U_TRACE(0, "USocket::recvBinary32Bits()")
+   U_TRACE_NO_PARAM(0, "USocket::recvBinary32Bits()")
 
    uint32_t uiNetOrder, iBytesLeft = sizeof(uint32_t);
    char* pcEndReadBuffer = ((char*)&uiNetOrder) + iBytesLeft;
@@ -856,7 +856,7 @@ bool USocket::sendBinary32Bits(uint32_t lData)
 
 void USocket::setBlocking()
 {
-   U_TRACE(1, "USocket::setBlocking()")
+   U_TRACE_NO_PARAM(1, "USocket::setBlocking()")
 
    U_CHECK_MEMORY
 
@@ -872,7 +872,7 @@ void USocket::setBlocking()
 
 void USocket::setNonBlocking()
 {
-   U_TRACE(1, "USocket::setNonBlocking()")
+   U_TRACE_NO_PARAM(1, "USocket::setNonBlocking()")
 
    U_CHECK_MEMORY
 
@@ -892,7 +892,7 @@ void USocket::setNonBlocking()
 
 void USocket::_closesocket()
 {
-   U_TRACE(1, "USocket::_closesocket()")
+   U_TRACE_NO_PARAM(1, "USocket::_closesocket()")
 
    U_CHECK_MEMORY
 
@@ -917,7 +917,7 @@ void USocket::_closesocket()
 
 void USocket::close()
 {
-   U_TRACE(0, "USocket::close()")
+   U_TRACE_NO_PARAM(0, "USocket::close()")
 
    closesocket();
 
@@ -926,7 +926,7 @@ void USocket::close()
 
 void USocket::closesocket()
 {
-   U_TRACE(1, "USocket::closesocket()")
+   U_TRACE_NO_PARAM(1, "USocket::closesocket()")
 
    U_CHECK_MEMORY
 
@@ -1134,7 +1134,7 @@ bool USocket::acceptClient(USocket* pcNewConnection)
 
 void USocket::setMsgError()
 {
-   U_TRACE(0, "USocket::setMsgError()")
+   U_TRACE_NO_PARAM(0, "USocket::setMsgError()")
 
 #ifdef USE_LIBSSL
    if (isSSLActive())

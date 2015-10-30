@@ -57,6 +57,8 @@ void u_debug_at_exit(void);
 
 #ifdef HAVE_ENDIAN_H
 #  include <endian.h>
+#elif defined(HAVE_SYS_ENDIAN_H)
+#  include <sys/endian.h>
 #endif
 #ifdef HAVE_SYS_SYSCALL_H
 #  include <sys/syscall.h>
@@ -1890,7 +1892,7 @@ case_B: /* extension: print bit conversion of int */
       n  = VA_ARG(int);
       cp = (unsigned char* restrict)&n;
 
-#  if __BYTE_ORDER == __BIG_ENDIAN
+#  if __BYTE_ORDER != __LITTLE_ENDIAN
       cp += sizeof(int);
 #  endif
 
@@ -1914,7 +1916,7 @@ case_B: /* extension: print bit conversion of int */
             for (j = 7; j >= 0; --j)
 #        endif
                {
-               *bp++ = (u_test_bit(j,c) ? '1' : '0');
+               *bp++ = '0' + u_test_bit(j,c);
                }
             }
          else
@@ -2449,28 +2451,29 @@ case_o:
       goto nosign;
 
 case_p: /* The argument shall be a pointer to void. The value of the pointer is converted to a sequence of printable characters, in an implementation-defined manner */
-      argument = (uint64_t) (long) VA_ARG(void*)
-#  ifndef HAVE_ARCH64
-      & 0x00000000ffffffff
+#  if defined(HAVE_ARCH64) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
+      argument = (long) VA_ARG(const char* restrict);
+#  else
+      argument = (long) VA_ARG(const char* restrict) & 0x00000000ffffffffLL;
 #  endif
-      ;
 
-      if (argument)
+      if (argument == 0)
          {
-         ch     = 'x';
-         base   = HEX;
-         flags |= HEXPREFIX;
+         *bp++ = '(';
 
-         goto nosign;
+         u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32('n','i','l',')'));
+
+         bp  += 4;
+         ret += 5;
+
+         continue;
          }
 
-                        *bp++ = '(';
-      u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32('n','i','l',')'));
+      ch     = 'x';
+      base   = HEX;
+      flags |= HEXPREFIX;
 
-      bp  += 4;
-      ret += 5;
-
-      continue;
+      goto nosign;
 
 case_q: /* field length modifier: quad. This is a synonym for ll */
       flags |= LLONGINT;

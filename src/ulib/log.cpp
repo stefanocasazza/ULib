@@ -197,7 +197,7 @@ ULog::~ULog()
 
 void ULog::initDate()
 {
-   U_TRACE(1, "ULog::initDate()")
+   U_TRACE_NO_PARAM(1, "ULog::initDate()")
 
    iov_vec[0].iov_len  = 17;
    iov_vec[1].iov_len  =
@@ -220,7 +220,7 @@ void ULog::initDate()
 
 void ULog::startup()
 {
-   U_TRACE(1, "ULog::startup()")
+   U_TRACE_NO_PARAM(1, "ULog::startup()")
   
    initDate();
 
@@ -236,7 +236,7 @@ void ULog::startup()
    log("Current Operating System: %s %s v%s %s", u.sysname, u.machine, u.version, u.release);
 #endif
 
-#if __BYTE_ORDER == __BIG_ENDIAN
+#if __BYTE_ORDER != __LITTLE_ENDIAN
    log("Big endian arch detected", 0);
 #endif
 }
@@ -274,7 +274,7 @@ void ULog::setPrefix(const char* _prefix)
 
 void ULog::updateDate1()
 {
-   U_TRACE(1, "ULog::updateDate1()")
+   U_TRACE_NO_PARAM(1, "ULog::updateDate1()")
 
    /**
     * 18/06/12 18:45:56
@@ -346,7 +346,7 @@ void ULog::updateDate1()
 
 void ULog::updateDate2()
 {
-   U_TRACE(1, "ULog::updateDate2()")
+   U_TRACE_NO_PARAM(1, "ULog::updateDate2()")
 
    /**
     * 04/Jun/2012:18:18:37 +0200
@@ -418,7 +418,7 @@ void ULog::updateDate2()
 
 void ULog::updateDate3()
 {
-   U_TRACE(1, "ULog::updateDate3()")
+   U_TRACE_NO_PARAM(1, "ULog::updateDate3()")
 
    /**
     * Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
@@ -948,7 +948,7 @@ __pure int ULog::getPriorityForLogger(const char* s)
 
 void ULog::closeLog()
 {
-   U_TRACE(1, "ULog::closeLog()")
+   U_TRACE_NO_PARAM(1, "ULog::closeLog()")
 
    if (U_Log_syslog(this))
       {
@@ -992,7 +992,7 @@ void ULog::closeLog()
 
 void ULog::close()
 {
-   U_TRACE(0, "ULog::close()")
+   U_TRACE_NO_PARAM(0, "ULog::close()")
 
    // NB: we need this check because all child try to close the log... (inherits from its parent)
 
@@ -1011,7 +1011,7 @@ void ULog::close()
 #ifdef USE_LIBZ
 UString ULog::getDirLogGz()
 {
-   U_TRACE(0, "ULog::getDirLogGz()")
+   U_TRACE_NO_PARAM(0, "ULog::getDirLogGz()")
 
    U_INTERNAL_ASSERT_POINTER(pthis)
    U_INTERNAL_ASSERT_POINTER(pthis->buf_path_compress)
@@ -1023,7 +1023,7 @@ UString ULog::getDirLogGz()
 
 void ULog::checkForLogRotateDataToWrite()
 {
-   U_TRACE(0, "ULog::checkForLogRotateDataToWrite()")
+   U_TRACE_NO_PARAM(0, "ULog::checkForLogRotateDataToWrite()")
 
    if (ptr_log_data->gzip_len)
       {

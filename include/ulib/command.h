@@ -100,7 +100,7 @@ public:
 
    void delArgument()
       {
-      U_TRACE(0, "UCommand::delArgument()")
+      U_TRACE_NO_PARAM(0, "UCommand::delArgument()")
 
       U_INTERNAL_ASSERT_POINTER(argv_exec)
 
@@ -213,7 +213,7 @@ public:
 
    bool isShellScript() const __pure
       {
-      U_TRACE(0, "UCommand::isShellScript()")
+      U_TRACE_NO_PARAM(0, "UCommand::isShellScript()")
 
       U_INTERNAL_ASSERT(command)
 
@@ -261,7 +261,7 @@ public:
 
    static bool isStarted()
       {
-      U_TRACE(0, "UCommand::isStarted()")
+      U_TRACE_NO_PARAM(0, "UCommand::isStarted()")
 
       bool result = (pid > 0);
 
@@ -270,7 +270,7 @@ public:
 
    static bool isTimeout()
       {
-      U_TRACE(0, "UCommand::isTimeout()")
+      U_TRACE_NO_PARAM(0, "UCommand::isTimeout()")
 
       bool result = (exit_value == -EAGAIN);
 
@@ -279,7 +279,7 @@ public:
 
    static void printMsgError()
       {
-      U_TRACE(0, "UCommand::printMsgError()")
+      U_TRACE_NO_PARAM(0, "UCommand::printMsgError()")
 
       U_INTERNAL_ASSERT_MAJOR(u_buffer_len,0)
 

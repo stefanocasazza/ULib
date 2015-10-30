@@ -18,41 +18,14 @@
 #define U_IMAP_OK  "* OK"
 #define U_IMAP_ERR "* BAD"
 
-const UString* UImapClient::str_recent;
-const UString* UImapClient::str_unseen;
-const UString* UImapClient::str_uidnext;
-const UString* UImapClient::str_uidvalidity;
-
 UImapClient::~UImapClient()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UImapClient)
 }
 
-void UImapClient::str_allocate()
-{
-   U_TRACE(0, "UImapClient_Base::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_recent, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_unseen, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_uidnext, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_uidvalidity, 0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("RECENT") },
-      { U_STRINGREP_FROM_CONSTANT("UNSEEN") },
-      { U_STRINGREP_FROM_CONSTANT("UIDNEXT") },
-      { U_STRINGREP_FROM_CONSTANT("UIDVALIDITY") }
-   };
-
-   U_NEW_ULIB_OBJECT(str_recent,      U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_unseen,      U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_uidnext,     U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_uidvalidity, U_STRING_FROM_STRINGREP_STORAGE(3));
-}
-
 U_NO_EXPORT void UImapClient::setStatus()
 {
-   U_TRACE(0, "UImapClient::setStatus()")
+   U_TRACE_NO_PARAM(0, "UImapClient::setStatus()")
 
    const char* descr1;
    const char* descr2;
@@ -144,7 +117,7 @@ U_NO_EXPORT bool UImapClient::syncCommand(const char* format, ...)
 
 bool UImapClient::startTLS()
 {
-   U_TRACE(0, "UImapClient::startTLS()")
+   U_TRACE_NO_PARAM(0, "UImapClient::startTLS()")
 
 #ifdef USE_LIBSSL
    U_ASSERT(Socket::isSSL())
@@ -183,7 +156,7 @@ bool UImapClient::login(const char* user, const char* passwd)
 
 U_NO_EXPORT void UImapClient::setEnd()
 {
-   U_TRACE(0, "UImapClient::setEnd()")
+   U_TRACE_NO_PARAM(0, "UImapClient::setEnd()")
 
    U_INTERNAL_ASSERT(buffer)
 
@@ -231,7 +204,7 @@ int UImapClient::getCapabilities(UVector<UString>& vec)
 
 bool UImapClient::logout()
 {
-   U_TRACE(0, "UImapClient::logout()")
+   U_TRACE_NO_PARAM(0, "UImapClient::logout()")
 
    if (syncCommand("LOGOUT"))
       {
@@ -393,25 +366,25 @@ bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int ite
                retval.hasMessageCount = true;
                }
             else if (retval.hasRecentCount == false &&
-                     vec[i] == *str_recent)
+                     vec[i] == *UString::str_recent)
                {
                retval.recentCount    = vec[++i].strtol();
                retval.hasRecentCount = true;
                }
             else if (retval.hasNextUID == false &&
-                     vec[i] == *str_uidnext)
+                     vec[i] == *UString::str_uidnext)
                {
                retval.nextUID    = vec[++i].strtol();
                retval.hasNextUID = true;
                }
             else if (retval.hasUIDValidity == false &&
-                     vec[i] == *str_uidvalidity)
+                     vec[i] == *UString::str_uidvalidity)
                {
                retval.uidValidity    = vec[++i].strtol();
                retval.hasUIDValidity = true;
                }
             else if (retval.hasUnseenCount == false &&
-                     vec[i] == *str_unseen)
+                     vec[i] == *UString::str_unseen)
                {
                retval.unseenCount    = vec[++i].strtol();
                retval.hasUnseenCount = true;
@@ -604,19 +577,19 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
             (void) vec.split(l);
 
             if (!retval.status.hasUnseenCount &&
-                vec[0] == *str_unseen)
+                vec[0] == *UString::str_unseen)
                {
                retval.status.unseenCount    = vec[1].strtol();
                retval.status.hasUnseenCount = true;
                }
             else if (!retval.status.hasNextUID &&
-                     vec[0] == *str_uidnext)
+                     vec[0] == *UString::str_uidnext)
                {
                retval.status.nextUID    = vec[1].strtol();
                retval.status.hasNextUID = true;
                }
             else if (!retval.status.hasUIDValidity &&
-                     vec[0] == *str_uidvalidity)
+                     vec[0] == *UString::str_uidvalidity)
                {
                retval.status.uidValidity    = vec[1].strtol();
                retval.status.hasUIDValidity = true;
@@ -668,7 +641,7 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
             retval.status.hasMessageCount = true;
             }
          else if (!retval.status.hasRecentCount &&
-                  vec[1] == *str_recent)
+                  vec[1] == *UString::str_recent)
             {
             retval.status.recentCount    = vec[0].strtol();
             retval.status.hasRecentCount = true;
@@ -902,7 +875,7 @@ bool UImapClient::expunge(int* _ret)
                {
                U_ASSERT_EQUALS(line[0],'*')
 
-               *_ret++ = strtol(line.c_pointer(2), 0, 0);
+               *_ret++ = strtol(line.c_pointer(2), 0, 10);
                }
             }
 
@@ -946,7 +919,7 @@ bool UImapClient::search(int* _ret, const UString& spec, const char* charSet, bo
 
          while (tok.next(word, ' '))
             {
-            *_ret++ = strtol(word.data(), 0, 0);
+            *_ret++ = strtol(word.data(), 0, 10);
             }
 
          U_RETURN(true);

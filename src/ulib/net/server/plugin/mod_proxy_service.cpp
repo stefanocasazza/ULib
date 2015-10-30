@@ -102,16 +102,15 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
 
       if (cfg.loadTable())
          {
-         service->user      = cfg[*UString::str_USER];
-         service->server    = cfg[*UString::str_SERVER];
-         service->password  = cfg[*UString::str_PASSWORD];
-
+         service->user      = cfg.at(U_CONSTANT_TO_PARAM("USER"));
+         service->server    = cfg.at(U_CONSTANT_TO_PARAM("SERVER"));;
+         service->password  = cfg.at(U_CONSTANT_TO_PARAM("PASSWORD"));
          service->host_mask = cfg.at(U_CONSTANT_TO_PARAM("HOST"));
 
-         service->port             = cfg.readLong(*UString::str_PORT, 80);
+         service->port             = cfg.readLong(   U_CONSTANT_TO_PARAM("PORT"), 80);
          service->websocket        = cfg.readBoolean(U_CONSTANT_TO_PARAM("WEBSOCKET"));
          service->request_cert     = cfg.readBoolean(U_CONSTANT_TO_PARAM("CLIENT_CERTIFICATE"));
-         service->response_client  = cfg.readBoolean(*UString::str_RESPONSE_TYPE);
+         service->response_client  = cfg.readBoolean(U_CONSTANT_TO_PARAM("RESPONSE_TYPE"));
          service->follow_redirects = cfg.readBoolean(U_CONSTANT_TO_PARAM("FOLLOW_REDIRECTS"));
 
          x = cfg.at(U_CONSTANT_TO_PARAM("URI"));
@@ -126,7 +125,7 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
 #        endif
             }
 
-         x = cfg[*UString::str_METHOD_NAME];
+         x = cfg.at(U_CONSTANT_TO_PARAM("METHOD_NAME"));
 
          if (x)
             {
@@ -201,7 +200,7 @@ loop:       switch (u_get_unalignedp32(msk))
 
 __pure UModProxyService* UModProxyService::findService()
 {
-   U_TRACE(0, "UModProxyService::findService()")
+   U_TRACE_NO_PARAM(0, "UModProxyService::findService()")
 
    uint32_t sz;
    const char* ptr = UClientImage_Base::getRequestUri(sz);
@@ -261,7 +260,7 @@ bool UModProxyService::setServerAddress(const UString& dir, const char* address,
 
 UString UModProxyService::getServer() const
 {
-   U_TRACE(0, "UModProxyService::getServer()")
+   U_TRACE_NO_PARAM(0, "UModProxyService::getServer()")
 
    const char* ptr = server.data();
 

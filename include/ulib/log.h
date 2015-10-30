@@ -69,7 +69,7 @@ public:
 
    void reopen()
       {
-      U_TRACE(0, "ULog::reopen()")
+      U_TRACE_NO_PARAM(0, "ULog::reopen()")
 
       U_INTERNAL_ASSERT_EQUALS(U_Log_syslog(this), false)
 
@@ -78,7 +78,7 @@ public:
 
    void msync() // flushes changes made to memory mapped log file back to disk
       {
-      U_TRACE(0, "ULog::msync()")
+      U_TRACE_NO_PARAM(0, "ULog::msync()")
 
       U_INTERNAL_ASSERT_EQUALS(U_Log_syslog(this), false)
 
@@ -99,7 +99,7 @@ public:
 
    static bool isMemoryMapped()
       {
-      U_TRACE(0, "ULog::isMemoryMapped()")
+      U_TRACE_NO_PARAM(0, "ULog::isMemoryMapped()")
 
       U_INTERNAL_ASSERT_POINTER(pthis)
 

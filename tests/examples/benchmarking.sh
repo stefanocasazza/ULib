@@ -75,7 +75,7 @@ echo 0 > /proc/sys/net/ipv4/tcp_syncookies
 #ab -n 100000 -c10 https://stefano/servlet/benchmarking?name=stefano
 
 #$SLEEP
-#killall userver_tcp userver_ssl
+#pkill userver_tcp userver_ssl
 
  mv err/userver_tcp.err err/benchmarking.err
 #mv err/userver_ssl.err err/benchmarking.err

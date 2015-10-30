@@ -34,7 +34,7 @@ public:
 
    void adjust()
       {
-      U_TRACE(0, "UTimeVal::adjust()")
+      U_TRACE_NO_PARAM(0, "UTimeVal::adjust()")
 
       U_CHECK_MEMORY
 
@@ -105,7 +105,7 @@ public:
 
    bool isZero() const
       {
-      U_TRACE(0, "UTimeVal::isZero()")
+      U_TRACE_NO_PARAM(0, "UTimeVal::isZero()")
 
       bool result = (tv_sec  == 0L &&
                      tv_usec <= 1L);
@@ -115,7 +115,7 @@ public:
 
    bool isNegativ() const
       {
-      U_TRACE(0,"UTimeVal::isNegativ()")
+      U_TRACE_NO_PARAM(0,"UTimeVal::isNegativ()")
 
       bool result = (tv_sec < 0L || tv_usec < 0L);
 
@@ -160,7 +160,7 @@ public:
 
    long getSecond() const
       {
-      U_TRACE(0, "UTimeVal::getSecond()")
+      U_TRACE_NO_PARAM(0, "UTimeVal::getSecond()")
 
       U_CHECK_MEMORY
 
@@ -171,7 +171,7 @@ public:
 
    long getMilliSecond() const
       {
-      U_TRACE(0, "UTimeVal::getMilliSecond()")
+      U_TRACE_NO_PARAM(0, "UTimeVal::getMilliSecond()")
 
       U_CHECK_MEMORY
 
@@ -183,7 +183,7 @@ public:
 
    long getTolerance() const
       {
-      U_TRACE(0, "UTimeVal::getTolerance()")
+      U_TRACE_NO_PARAM(0, "UTimeVal::getTolerance()")
 
       long ms = getMilliSecond() / 128;
 
@@ -192,7 +192,7 @@ public:
 
    double getMicroSecond() const
       {
-      U_TRACE(0, "UTimeVal::getMicroSecond()")
+      U_TRACE_NO_PARAM(0, "UTimeVal::getMicroSecond()")
 
       double micro_sec = (double) tv_sec + (tv_usec / 1000000.);
 
@@ -366,14 +366,14 @@ public:
 
    void start()
       {
-      U_TRACE(1, "UTimeVal::start()")
+      U_TRACE_NO_PARAM(1, "UTimeVal::start()")
 
       (void) U_SYSCALL(gettimeofday, "%p,%p", this, 0);
       }
 
    long stop()
       {
-      U_TRACE(1, "UTimeVal::stop()")
+      U_TRACE_NO_PARAM(1, "UTimeVal::stop()")
 
       (void) U_SYSCALL(gettimeofday, "%p,%p", &time_stop, 0);
 
@@ -385,7 +385,7 @@ public:
 
    long restart()
       {
-      U_TRACE(0, "UTimeVal::restart()")
+      U_TRACE_NO_PARAM(0, "UTimeVal::restart()")
 
       long ms = stop();
 
@@ -399,7 +399,7 @@ public:
 
    double getTimeElapsed() const __pure
       {
-      U_TRACE(0, "UTimeVal::getTimeElapsed()")
+      U_TRACE_NO_PARAM(0, "UTimeVal::getTimeElapsed()")
 
       double ms = ((time_stop.tv_sec * 1000000L + time_stop.tv_usec) -
                    (          tv_sec * 1000000L +           tv_usec)) / 1000.;

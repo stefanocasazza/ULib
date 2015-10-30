@@ -74,6 +74,7 @@ public:
       U_ASSERT(vec.empty())
       U_INTERNAL_ASSERT_EQUALS(sz, 0)
 
+#  ifdef U_STDCPP_ENABLE
       is >> creation
          >> for_page;
 
@@ -98,6 +99,7 @@ public:
 
    friend istream& operator>>(istream& is, IRDataSession& d) { d.fromStream(is); return is; }
    friend ostream& operator<<(ostream& os, IRDataSession& d) {   d.toStream(os); return os; }
+#endif
 
    // DEBUG
 

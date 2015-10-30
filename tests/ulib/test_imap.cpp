@@ -22,6 +22,8 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   UString::str_allocate(STR_ALLOCATE_IMAP);
+
    UImapClient imap;
    UVector<UString> vec1;
    UString tmp(argv[1], strlen(argv[1])), str_asterisk(U_CONSTANT_TO_PARAM("*"));

@@ -51,7 +51,7 @@ public:
 
    void reset()
       {
-      U_TRACE(0, "UFileConfig::reset()")
+      U_TRACE_NO_PARAM(0, "UFileConfig::reset()")
 
       _end  = data.end();
       _size = (_end - _start);
@@ -111,7 +111,7 @@ public:
 
    bool isLoaded()
       {
-      U_TRACE(0, "UFileConfig::isLoaded()")
+      U_TRACE_NO_PARAM(0, "UFileConfig::isLoaded()")
 
       U_INTERNAL_DUMP("st_size = %I", UFile::st_size)
 

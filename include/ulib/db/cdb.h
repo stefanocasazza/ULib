@@ -144,14 +144,14 @@ public:
 
    uint32_t size() const
       {
-      U_TRACE(0, "UCDB::size()")
+      U_TRACE_NO_PARAM(0, "UCDB::size()")
 
       U_RETURN(nrecord);
       }
 
    UString elem()
       {
-      U_TRACE(0, "UCDB::elem()")
+      U_TRACE_NO_PARAM(0, "UCDB::elem()")
 
       UString str((const char*)data.dptr, data.dsize);
 
@@ -299,7 +299,7 @@ protected:
 
    void makeStart()
       {
-      U_TRACE(0, "UCDB::makeStart()")
+      U_TRACE_NO_PARAM(0, "UCDB::makeStart()")
 
       U_INTERNAL_ASSERT_DIFFERS(map, MAP_FAILED)
 

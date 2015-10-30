@@ -69,26 +69,26 @@ AC_CONFIG_HEADERS([include/ulib/internal/config.h])
 # Check for architecture for the target
 AC_MSG_CHECKING([which architecture the target is])
 
-LINUX_ARCH=
+TARGET_ARCH=
 case $target in
-	x86_64)				LINUX_ARCH=x86_64 ;;
-	i*86)					LINUX_ARCH=i386 ;;
-	sh*)					LINUX_ARCH=sh ;;
-	mips*)				LINUX_ARCH=mips ;;
-	or1k*)				LINUX_ARCH=openrisc ;;
-	microblaze)			LINUX_ARCH=microblaze ;;
-	powerpc*|ppc*)		LINUX_ARCH=powerpc ;;
-	*netbsd*)			LINUX_ARCH=NetBSD
+	x86_64)				TARGET_ARCH=x86_64 ;;
+	i*86)					TARGET_ARCH=i386 ;;
+	sh*)					TARGET_ARCH=sh ;;
+	mips*)				TARGET_ARCH=mips ;;
+	or1k*)				TARGET_ARCH=openrisc ;;
+	microblaze)			TARGET_ARCH=microblaze ;;
+	powerpc*|ppc*)		TARGET_ARCH=powerpc ;;
+	*netbsd*)			TARGET_ARCH=NetBSD
 							enable_stdcpp="yes" ;;
-	arm*)					LINUX_ARCH=arm
+	arm*)					TARGET_ARCH=arm
 							AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write]) ;;
-	aarch64*)			LINUX_ARCH=arm64
+	aarch64*)			TARGET_ARCH=arm64
 							AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write]) ;;
-	*)						LINUX_ARCH=unknown ;;
+	*)						TARGET_ARCH=unknown ;;
 esac
 
-#AC_SUBST(LINUX_ARCH)
-AS_IF([test "x$LINUX_ARCH" = xunknown], [AC_MSG_RESULT([unknown])], [test "x$LINUX_ARCH" != xunknown], [AC_MSG_RESULT([$LINUX_ARCH])])
+#AC_SUBST(TARGET_ARCH)
+AS_IF([test "x$TARGET_ARCH" = xunknown], [AC_MSG_RESULT([unknown])], [test "x$TARGET_ARCH" != xunknown], [AC_MSG_RESULT([$TARGET_ARCH])])
 
 # Check for Operating system and libc to use in $target
 AC_MSG_CHECKING([which operating system the target is])
@@ -167,6 +167,11 @@ AC_MSG_RESULT([$GCC_IS_CLANG])
 #AC_SUBST(GCC_IS_CLANG)
 
 ULIB_LIBS=
+dnl ********************************************************
+dnl * Options to pass to libtool
+dnl ********************************************************
+MODULE_LIBTOOL_OPTIONS="-shared -export-dynamic -avoid-version"
+
 os_version=`uname -a`
 AC_DEFINE_UNQUOTED(_OS_VERSION, "$os_version", [Operating System version])
 AC_MSG_CHECKING([for a supported OS])
@@ -214,6 +219,8 @@ case "$target_os" in
 		AM_CONDITIONAL(LINUX, true)
 		AM_CONDITIONAL(MINGW, false)
 		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(NETBSD, false)
+		AM_CONDITIONAL(DARWIN, false)
 		AM_CONDITIONAL(SOLARIS, false)
 	;;
 
@@ -239,31 +246,34 @@ case "$target_os" in
 		AC_CHECK_PROG(ms_librarian, lib.exe, yes, no)
 
 		# We currently use .def files on Windows
-		# Note that -module isn't included here since automake needs to see it to know
-		# that something like server_plugin_http.la is a valid libtool archive
-		MODULE_LIBTOOL_OPTIONS=" $MODULE_LIBTOOL_OPTIONS -no-undefined"
+		MODULE_LIBTOOL_OPTIONS="-export-dynamic -avoid-version -no-undefined"
 
 		AM_CONDITIONAL(LINUX, false)
 		AM_CONDITIONAL(MINGW, true)
 		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(NETBSD, false)
+		AM_CONDITIONAL(DARWIN, false)
 		AM_CONDITIONAL(SOLARIS, false)
 	;;
 
 	cygwin*)
 		AC_MSG_RESULT([ok ($target_os)])
 
+		MODULE_LIBTOOL_OPTIONS="-shared -no-undefined"
+
 		AM_CONDITIONAL(LINUX, false)
 		AM_CONDITIONAL(MINGW, false)
 		AM_CONDITIONAL(CYGWIN, true)
+		AM_CONDITIONAL(NETBSD, false)
+		AM_CONDITIONAL(DARWIN, false)
 		AM_CONDITIONAL(SOLARIS, false)
-
-		MODULE_FLAGS="-module -shared -no-undefined"
 	;;
 
 	*netbsd*)
 		AC_MSG_RESULT([ok ($target_os)])
 
 		ULIB_LIBS="$ULIB_LIBS -lexecinfo"
+		CPPFLAGS="$CPPFLAGS -fpermissive -Wno-sign-compare"
 
 		if test "$target_os" = "netbsd"; then
 			CPPFLAGS="$CPPFLAGS -D__UNIKERNEL__"
@@ -272,9 +282,13 @@ case "$target_os" in
 			LDFLAGS="${LDFLAGS} -Wl,--no-gc-sections"
 		fi
 
+		MODULE_LIBTOOL_OPTIONS="-shared -avoid-version -no-undefined"
+
 		AM_CONDITIONAL(LINUX, false)
 		AM_CONDITIONAL(MINGW, false)
 		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(NETBSD, true)
+		AM_CONDITIONAL(DARWIN, false)
 		AM_CONDITIONAL(SOLARIS, false)
    ;;
 
@@ -284,29 +298,35 @@ case "$target_os" in
 		AM_CONDITIONAL(LINUX, false)
 		AM_CONDITIONAL(MINGW, false)
 		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(NETBSD, false)
+		AM_CONDITIONAL(DARWIN, false)
 		AM_CONDITIONAL(SOLARIS, true)
 	;;
 
 	darwin*)
 		AC_MSG_RESULT([maybe ($target_os)])
 
-		CPPFLAGS="$CPPFLAGS -D__OSX__ -D__APPLE__"
-		MODULE_FLAGS="-dynamic -bundle -undefined suppress -flat_namespace -read_only_relocs suppress"
+		CPPFLAGS="$CPPFLAGS -D__OSX__ -D__APPLE__ -Wno-deprecated-declarations"
+		MODULE_LIBTOOL_OPTIONS="-dynamic -bundle -undefined suppress -flat_namespace -read_only_relocs suppress"
 
 		AM_CONDITIONAL(LINUX, false)
 		AM_CONDITIONAL(MINGW, false)
 		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(NETBSD, false)
+		AM_CONDITIONAL(DARWIN, true)
 		AM_CONDITIONAL(SOLARIS, false)
    ;;
 
 	osf*)
 		AC_MSG_RESULT([maybe ($target_os)])
 
-		MODULE_FLAGS="-module -shared -no-undefined"
+		MODULE_LIBTOOL_OPTIONS="-shared -no-undefined"
 
 		AM_CONDITIONAL(LINUX, false)
 		AM_CONDITIONAL(MINGW, false)
 		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(NETBSD, false)
+		AM_CONDITIONAL(DARWIN, false)
 		AM_CONDITIONAL(SOLARIS, false)
    ;;
 
@@ -318,6 +338,8 @@ case "$target_os" in
 		AM_CONDITIONAL(LINUX, false)
 		AM_CONDITIONAL(MINGW, false)
 		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(NETBSD, false)
+		AM_CONDITIONAL(DARWIN, false)
 		AM_CONDITIONAL(SOLARIS, false)
    ;;
 
@@ -327,6 +349,8 @@ case "$target_os" in
 		AM_CONDITIONAL(LINUX, false)
 		AM_CONDITIONAL(MINGW, false)
 		AM_CONDITIONAL(CYGWIN, false)
+		AM_CONDITIONAL(NETBSD, false)
+		AM_CONDITIONAL(DARWIN, false)
 		AM_CONDITIONAL(SOLARIS, false)
 	;;
 esac
@@ -463,25 +487,21 @@ fi
 dnl Initialize Libtool
 m4_ifdef([LT_INIT], [LT_INIT([dlopen shared static win32-dll])], [AC_LIBTOOL_DLOPEN AC_LIBTOOL_WIN32_DLL])
 
-dnl ********************************************************
-dnl * Options to pass to libtool
-dnl ********************************************************
-
-MODULE_FLAGS="-module -shared -avoid-version"
-MODULE_LIBTOOL_OPTIONS="-export-dynamic -avoid-version"
-
 AM_CONDITIONAL(MS_LIB_AVAILABLE, test x$ms_librarian = xyes)
 
 LT_INIT
 
 AC_SUBST(MODULE_LIBTOOL_OPTIONS)
 
-if test "$enable_static" = "yes" && test "$enable_shared" = "no"; then
+if test "$enable_static" = "yes" -a "$enable_shared" = "no"; then
+	AM_CONDITIONAL(STATIC_ONLY, true)
+	AC_DEFINE(U_STATIC_ONLY, [1], [we want only static linking])
 	if test -z "$enable_stdcpp"; then
 		enable_stdcpp="no"
 	fi
-	AM_CONDITIONAL(STATIC_ONLY, true)
-	AC_DEFINE(U_STATIC_ONLY,, [STATIC_ONLY])
+	if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
+		ULIB_LIBS="$ULIB_LIBS -lgcc"
+	fi
 else
 	AM_CONDITIONAL(STATIC_ONLY, false)
 fi
@@ -584,7 +604,7 @@ AC_FUNC_ALLOCA
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h \
 						string.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h sys/timeb.h sys/resource.h syslog.h termios.h unistd.h wchar.h \
 						assert.h byteswap.h endian.h execinfo.h ifaddrs.h mcheck.h ndir.h dirent.h ndir.h string.h netpacket/packet.h sched.h \
-						semaphore.h sysexits.h streambuf.h poll.h net/if_arp.h sys/dir.h sys/ndir.h sys/inotify.h sys/sendfile.h sys/sched.h \
+						semaphore.h sysexits.h streambuf.h poll.h net/if_arp.h sys/dir.h sys/endian.h sys/ndir.h sys/inotify.h sys/sendfile.h sys/sched.h \
 						sys/syscall.h linux/netfilter_ipv4/ipt_ACCOUNT.h libnetfilter_conntrack/libnetfilter_conntrack.h \
 						/usr/src/linux/include/generated/uapi/linux/version.h])
 
@@ -791,6 +811,7 @@ AM_CONDITIONAL(SEMAPHORE, false)
 AM_CONDITIONAL(FALLOCATE, false)
 AM_CONDITIONAL(FALLOCATE64, false)
 AM_CONDITIONAL(GETOPT_LONG, false)
+AM_CONDITIONAL(SEM_TIMEDWAIT, false)
 
 if test "$enable_thread" != "yes"; then
    ulib_thread_msg="no (--enable-thread)"
@@ -833,7 +854,7 @@ AC_FUNC_CLOSEDIR_VOID
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getaffinity sem_init sem_getvalue sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     AC_CHECK_FUNC($func,[
         found=$func
@@ -905,6 +926,12 @@ for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch 
     inet_ntop)
         AC_DEFINE(HAVE_INET_NTOP, [1], [has inet_ntop])
         ;;
+    kqueue)
+        AC_DEFINE(HAVE_KQUEUE, [1], [has kqueue])
+        ;;
+    kqueue1)
+        AC_DEFINE(HAVE_KQUEUE1, [1], [has kqueue1])
+        ;;
     memmem)
         AC_DEFINE(HAVE_MEMMEM, [1], [has memmem])
         ;;
@@ -939,6 +966,10 @@ for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch 
         ;;
     sem_getvalue)
         AC_DEFINE(HAVE_SEM_GETVALUE, [1], [has sem_getvalue])
+        ;;
+    sem_timedwait)
+		  AM_CONDITIONAL(SEM_TIMEDWAIT, true)
+        AC_DEFINE(HAVE_SEM_TIMEDWAIT, [1], [has sem_timedwait])
         ;;
     sendfile)
 		  AM_CONDITIONAL(SENDFILE, true)
@@ -990,7 +1021,7 @@ for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch 
 done
 
 dnl Mac OSX (10.5 and later)
-if test "$ac_cv_func_sendfile" != "yes"; then
+if test "$ac_cv_func_sendfile" = "yes"; then
   AC_TRY_LINK(
       [ #include <sys/types.h>
         #include <sys/socket.h>
@@ -1238,7 +1269,7 @@ if test "$USE_LIBTDB" = "yes"; then
 	fi
 fi
 
-if test "$enable_zip" = "yes" && test "$USE_LIBZ" = "yes"; then
+if test "$enable_zip" = "yes" -a "$USE_LIBZ" = "yes"; then
 	ulib_zip_msg="enabled"
 	AM_CONDITIONAL(ZIP, true)
 	AC_DEFINE(ENABLE_ZIP, 1, [Define if enable ZIP support])
@@ -1580,6 +1611,7 @@ AC_STRUCT_TM
 AC_HEADER_STAT
 AC_STRUCT_ST_BLOCKS
 AC_CHECK_TYPE([struct iphdr],[AC_DEFINE(HAVE_IPHDR,1,[struct iphdr needed for IPv6 support])],[],[#include <netinet/ip.h>])
+AC_CHECK_MEMBER([struct dirent.d_type],AC_DEFINE(DIRENT_HAVE_D_TYPE,1,[Define if you have d_type in struct dirent]),[],[ #include <dirent.h> ])
 AC_CHECK_MEMBER([struct dirent.d_reclen],AC_DEFINE(DIRENT_HAVE_D_RECLEN,1,[Define if you have d_reclen in struct dirent]),[],[ #include <dirent.h> ])
 AC_CHECK_MEMBER([struct dirent.d_namlen],AC_DEFINE(DIRENT_HAVE_D_NAMLEN,1,[Define if you have d_namlen in struct dirent]),[],[ #include <dirent.h> ])
 AC_CHECK_MEMBER([struct tm.tm_gmtoff],AC_DEFINE(TM_HAVE_TM_GMTOFF,1,[Define if you have tm_gmtoff in struct tm]),[],[ #include <time.h> ])
@@ -1618,7 +1650,7 @@ fi
 
 if test "$cross_compiling" != "yes"; then
 	AM_SOCKET_SO_RCVTIMEO
-	if test "$ac_cv_func_fallocate" = "yes" && test "$ac_cv_func_fallocate64" = "yes"; then
+	if test "$ac_cv_func_fallocate" = "yes" -a "$ac_cv_func_fallocate64" = "yes"; then
 		AC_TRY_FALLOCATE
 	fi
 fi
@@ -1897,7 +1929,7 @@ AM_CONDITIONAL(STATIC_ORM_DRIVER_PGSQL,  test "$static_handler_pgsql"  = "yes")
 static_servlet=""
 static_servlet_wi_auth=""
 
-if test "$enable_static" = "yes" && test "$enable_shared" = "no"; then
+if test "$enable_static" = "yes" -a "$enable_shared" = "no"; then
 
 	use_static_servlet=""
 

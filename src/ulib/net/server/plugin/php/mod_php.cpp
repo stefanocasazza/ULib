@@ -108,7 +108,7 @@ static int ub_write(const char* str, unsigned int strlen TSRMLS_DC) // this is t
 
 static char* read_cookies()
 {
-   U_TRACE(0, "PHP::read_cookies()")
+   U_TRACE_NO_PARAM(0, "PHP::read_cookies()")
 
    if (U_http_info.cookie_len) return estrndup(U_http_info.cookie, U_http_info.cookie_len);
 
@@ -248,7 +248,7 @@ end:
 extern U_EXPORT void UPHP_end();
        U_EXPORT void UPHP_end()
 {
-   U_TRACE(0, "UPHP_end()")
+   U_TRACE_NO_PARAM(0, "UPHP_end()")
 
    TSRMLS_FETCH();
    php_module_shutdown(TSRMLS_C);

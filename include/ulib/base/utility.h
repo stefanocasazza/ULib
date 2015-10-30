@@ -262,7 +262,7 @@ extern U_EXPORT bPFpcupcud u_pfn_match;
 
 U_EXPORT bool u_fnmatch(     const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
 U_EXPORT bool u_dosmatch(    const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
-U_EXPORT bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
+U_EXPORT bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
 
 /* multiple patterns separated by '|' */
 
@@ -454,6 +454,7 @@ static inline bool u__isb64url(unsigned char c)  { return ((u_cttab(c) & 0x0000B
 U_EXPORT bool u_isURL(       const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isHTML(      const char* restrict s            ) __pure;
 U_EXPORT bool u_isName(      const char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isDigit(     const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isBase64(    const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isBase64Url( const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isMacAddr(   const char* restrict s, uint32_t n) __pure;
@@ -526,8 +527,8 @@ static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e
    return val;
 }
 
-extern U_EXPORT long    u_strtol( const char* restrict s, const char* restrict e);
-extern U_EXPORT int64_t u_strtoll(const char* restrict s, const char* restrict e);
+extern U_EXPORT long    u_strtol( const char* restrict s, const char* restrict e) __pure;
+extern U_EXPORT int64_t u_strtoll(const char* restrict s, const char* restrict e) __pure;
 
 /**
  * Quick and dirty int->hex. The only standard way is to call snprintf (?),

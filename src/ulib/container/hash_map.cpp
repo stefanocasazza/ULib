@@ -128,7 +128,7 @@ void UHashMap<void*>::insertAfterFind(const UStringRep* _key, const void* _elem)
 
 void UHashMap<void*>::_eraseAfterFind()
 {
-   U_TRACE(0, "UHashMap<void*>::_eraseAfterFind()")
+   U_TRACE_NO_PARAM(0, "UHashMap<void*>::_eraseAfterFind()")
 
    U_CHECK_MEMORY
 
@@ -174,7 +174,7 @@ void UHashMap<void*>::_eraseAfterFind()
 
 void UHashMap<void*>::eraseAfterFind()
 {
-   U_TRACE(0, "UHashMap<void*>::eraseAfterFind()")
+   U_TRACE_NO_PARAM(0, "UHashMap<void*>::eraseAfterFind()")
 
    _eraseAfterFind();
 
@@ -312,7 +312,7 @@ void UHashMap<void*>::reserve(uint32_t n)
 #ifdef DEBUG
 bool UHashMap<void*>::check_memory() const // check all element
 {
-   U_TRACE(0+256, "UHashMap<void*>::check_memory()")
+   U_TRACE_NO_PARAM(0+256, "UHashMap<void*>::check_memory()")
 
    U_CHECK_MEMORY
 
@@ -377,7 +377,7 @@ loop:    U_INTERNAL_ASSERT_POINTER(pnode)
 
 bool UHashMap<void*>::first()
 {
-   U_TRACE(0, "UHashMap<void*>::first()")
+   U_TRACE_NO_PARAM(0, "UHashMap<void*>::first()")
 
    U_INTERNAL_DUMP("_length = %u", _length)
 
@@ -396,7 +396,7 @@ bool UHashMap<void*>::first()
 
 bool UHashMap<void*>::next()
 {
-   U_TRACE(0, "UHashMap<void*>::next()")
+   U_TRACE_NO_PARAM(0, "UHashMap<void*>::next()")
 
    U_INTERNAL_DUMP("index = %u node = %p next = %p", index, node, node->next)
 

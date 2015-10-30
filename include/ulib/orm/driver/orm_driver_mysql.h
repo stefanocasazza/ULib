@@ -340,21 +340,15 @@ public:
 class U_EXPORT UOrmDriverMySql : public UOrmDriver {
 public:
 
-   static const UString* str_name;
-   static const UString* str_secure_auth;
-   static const UString* str_auto_reconnect;
-
-   static void str_allocate();
-
    // COSTRUTTORE
 
    UOrmDriverMySql()
       {
       U_TRACE_REGISTER_OBJECT(0, UOrmDriverMySql, "")
 
-      str_allocate();
+      U_INTERNAL_ASSERT_POINTER(UString::str_mysql_name)
 
-      UOrmDriver::name = *str_name;
+      UOrmDriver::name = *UString::str_mysql_name;
       }
 
    UOrmDriverMySql(const UString& name_drv) : UOrmDriver(name_drv)

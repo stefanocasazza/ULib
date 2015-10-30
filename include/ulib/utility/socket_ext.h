@@ -40,7 +40,7 @@ public:
 
    static UString getNodeName()
       {
-      U_TRACE(0, "USocketExt::getNodeName()")
+      U_TRACE_NO_PARAM(0, "USocketExt::getNodeName()")
 
       U_INTERNAL_ASSERT_MAJOR(u_hostname_len, 0)
 
@@ -136,7 +136,7 @@ public:
 #ifdef USE_C_ARES
    static char* endResolv()
       {
-      U_TRACE(0, "USocketExt::endResolv()")
+      U_TRACE_NO_PARAM(0, "USocketExt::endResolv()")
 
       U_INTERNAL_ASSERT_POINTER(resolv_channel)
 

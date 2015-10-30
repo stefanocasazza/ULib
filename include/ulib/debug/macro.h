@@ -77,7 +77,8 @@
 
 // Manage info on execution of program
 
-#  define U_TRACE(level,args...) UTrace utr(level , ##args);
+#  define U_TRACE(level,args...)       UTrace utr(level , ##args);
+#  define U_TRACE_NO_PARAM(level,name) UTrace utr(level, sizeof(name)-1, name);
 
 // NB: U_DUMP, U_SYSCALL() and U_RETURN() depend on presence of U_TRACE()
 
@@ -155,6 +156,7 @@ if (envp) \
 
 #  define U_DUMP(args...)
 #  define U_TRACE(level,args...)
+#  define U_TRACE_NO_PARAM(level,name)
 #  define U_INTERNAL_DUMP(args...)
 #  define U_SYSCALL_NO_PARAM(name)            ::name()
 #  define U_SYSCALL_VOID_NO_PARAM(name)       ::name()

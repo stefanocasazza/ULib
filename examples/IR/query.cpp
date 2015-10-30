@@ -50,6 +50,8 @@ public:
 
       if (ptr == 0) U_ERROR("<query> not specified");
 
+      UString::str_allocate(STR_ALLOCATE_QUERY_PARSER);
+
       if (IR::openCDB(false))
          {
          uint32_t len;

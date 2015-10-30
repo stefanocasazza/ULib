@@ -34,53 +34,6 @@ UVector<UString>*     UOrmDriver::vdriver_name;
 UVector<UString>*     UOrmDriver::vdriver_name_static;
 UVector<UOrmDriver*>* UOrmDriver::vdriver;
 
-const UString* UOrmDriver::str_host;
-const UString* UOrmDriver::str_port;
-const UString* UOrmDriver::str_root;
-const UString* UOrmDriver::str_UTF8;
-const UString* UOrmDriver::str_UTF16;
-const UString* UOrmDriver::str_dbname;
-const UString* UOrmDriver::str_timeout;
-const UString* UOrmDriver::str_compress;
-const UString* UOrmDriver::str_character_set;
-
-void UOrmDriver::str_allocate()
-{
-   U_TRACE(0, "UOrmDriver::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_host,0)
-   U_INTERNAL_ASSERT_EQUALS(str_port,0)
-   U_INTERNAL_ASSERT_EQUALS(str_root,0)
-   U_INTERNAL_ASSERT_EQUALS(str_UTF8,0)
-   U_INTERNAL_ASSERT_EQUALS(str_UTF16,0)
-   U_INTERNAL_ASSERT_EQUALS(str_dbname,0)
-   U_INTERNAL_ASSERT_EQUALS(str_timeout,0)
-   U_INTERNAL_ASSERT_EQUALS(str_compress,0)
-   U_INTERNAL_ASSERT_EQUALS(str_character_set,0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("host") },
-      { U_STRINGREP_FROM_CONSTANT("port") },
-      { U_STRINGREP_FROM_CONSTANT("root") },
-      { U_STRINGREP_FROM_CONSTANT("utf8") },
-      { U_STRINGREP_FROM_CONSTANT("utf16") },
-      { U_STRINGREP_FROM_CONSTANT("dbname") },
-      { U_STRINGREP_FROM_CONSTANT("timeout") },
-      { U_STRINGREP_FROM_CONSTANT("compress") },
-      { U_STRINGREP_FROM_CONSTANT("character-set") }
-   };
-
-   U_NEW_ULIB_OBJECT(str_host,          U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_port,          U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_root,          U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_UTF8,          U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_UTF16,         U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_dbname,        U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_timeout,       U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_compress,      U_STRING_FROM_STRINGREP_STORAGE(7));
-   U_NEW_ULIB_OBJECT(str_character_set, U_STRING_FROM_STRINGREP_STORAGE(8));
-}
-
 UOrmDriver::~UOrmDriver()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UOrmDriver)
@@ -88,7 +41,7 @@ UOrmDriver::~UOrmDriver()
 
 void UOrmDriver::clear()
 {
-   U_TRACE(0, "UOrmDriver::clear()")
+   U_TRACE_NO_PARAM(0, "UOrmDriver::clear()")
 
    if (driver_dir) delete driver_dir;
 
@@ -157,9 +110,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
    U_TRACE(0, "UOrmDriver::loadDriver(%V,%V)", dir.rep, driver_list.rep)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   if (str_host) U_RETURN(true);
-
-   str_allocate();
+   if (vdriver) U_RETURN(true);
 
    if (dir) setDriverDirectory(dir);
 
@@ -303,7 +254,7 @@ bool UOrmDriver::setOption(const UString& option)
    if (n == 1) dbname = vopt[0];
    else
       {
-      n = vopt.find(*str_dbname, false);
+      n = vopt.find(*UString::str_dbname, false);
 
       if (n != U_NOT_FOUND) dbname = vopt[n+1];
       }
@@ -328,7 +279,7 @@ UString UOrmDriver::getOptionValue(const char* _name, uint32_t len)
    U_TRACE(0, "UOrmDriver::getOptionValue(%*S,%u)", len, _name, len)
 
    if (vopt.size() == 1 &&
-       str_dbname->equal(_name, len))
+       UString::str_dbname->equal(_name, len))
       {
       U_RETURN_STRING(dbname);
       }

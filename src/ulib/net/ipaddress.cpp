@@ -404,7 +404,7 @@ char* UIPAddress::resolveStrAddress(int iAddressType, const void* src, char* ip)
 
 void UIPAddress::resolveStrAddress()
 {
-   U_TRACE(0, "UIPAddress::resolveStrAddress()")
+   U_TRACE_NO_PARAM(0, "UIPAddress::resolveStrAddress()")
 
    U_CHECK_MEMORY
 
@@ -430,7 +430,7 @@ void UIPAddress::resolveStrAddress()
 
 void UIPAddress::resolveHostName()
 {
-   U_TRACE(1, "UIPAddress::resolveHostName()")
+   U_TRACE_NO_PARAM(1, "UIPAddress::resolveHostName()")
 
    U_CHECK_MEMORY
 
@@ -563,7 +563,7 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
 
 __pure bool UIPAddress::isPrivate()
 {
-   U_TRACE(0, "UIPAddress::isPrivate()")
+   U_TRACE_NO_PARAM(0, "UIPAddress::isPrivate()")
 
    U_CHECK_MEMORY
 
@@ -588,7 +588,7 @@ __pure bool UIPAddress::isPrivate()
 
 __pure bool UIPAddress::isWildCard()
 {
-   U_TRACE(0, "UIPAddress::isWildCard()")
+   U_TRACE_NO_PARAM(0, "UIPAddress::isWildCard()")
 
    U_CHECK_MEMORY
 
@@ -904,7 +904,7 @@ bool UIPAllow::getNetworkInterface(UVector<UIPAllow*>& vipallow)
 
          family = ifa->ifa_addr->sa_family;
 
-#     if !defined(__NetBSD__) && !defined(__UNIKERNEL__)
+#     if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
          U_INTERNAL_DUMP("%s => family: %d%s", ifa->ifa_name, family,
                                  (family == AF_PACKET) ? " (AF_PACKET)" :
                                  (family == AF_INET)   ? " (AF_INET)"   :

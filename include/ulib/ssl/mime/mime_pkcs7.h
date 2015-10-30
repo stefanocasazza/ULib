@@ -46,7 +46,7 @@ public:
 
    bool isValid() const
       {
-      U_TRACE(0, "UMimePKCS7::isValid()")
+      U_TRACE_NO_PARAM(0, "UMimePKCS7::isValid()")
 
       bool result = (pkcs7.isValid() && valid_content);
 

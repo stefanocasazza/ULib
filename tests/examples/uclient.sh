@@ -19,4 +19,4 @@ DIR_CMD="../../examples/uclient"
 #STRACE=$TRUSS
 start_prg uclient -i -c uclient.cfg http://10.30.1.131:5280/check
 
-killall userver_tcp userver_ssl
+pkill userver_tcp userver_ssl

@@ -106,7 +106,7 @@ public:
 
    void reset()
       {
-      U_TRACE(0, "UFlexer::reset()")
+      U_TRACE_NO_PARAM(0, "UFlexer::reset()")
 
    // yyFlexLexer::yy_flush_buffer(yyFlexLexer::yy_current_buffer);
 
@@ -130,7 +130,7 @@ public:
 
    int getParsedChars()
       {
-      U_TRACE(0, "UFlexer::getParsedChars()")
+      U_TRACE_NO_PARAM(0, "UFlexer::getParsedChars()")
 
       U_RETURN(parsed_chars);
       }

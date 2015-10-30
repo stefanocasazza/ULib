@@ -16,11 +16,10 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/semaphore.h>
 
-#ifndef __clang__
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && !defined(__clang__)
 U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #endif
 
-UFile*      USemaphore::flock;
 USemaphore* USemaphore::first;
 
 /**
@@ -34,42 +33,46 @@ void USemaphore::init(sem_t* ptr, int resource)
 {
    U_TRACE(1, "USemaphore::init(%p,%d)", ptr, resource)
 
-#if defined(HAVE_SEM_INIT) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
-   if (ptr)
+   U_INTERNAL_ASSERT_EQUALS(psem, 0)
+
+#if defined(__MACOSX__) || defined(__APPLE__)
+   (void) u__snprintf(name, sizeof(name), "/sem%X", ptr);
+
+   psem = (sem_t*) U_SYSCALL(sem_open, "%S,%d,%d,%u", name, O_CREAT, 0644, 1);
+
+   if (psem == SEM_FAILED)
       {
-      psem = ptr;
-
-      // initialize semaphore object sem to value, share it with other processes
-
-      U_INTERNAL_ASSERT_POINTER(psem)
-
-      bool broken = (U_SYSCALL(sem_init, "%p,%d,%u", psem, 1, resource) == -1); // 1 -> semaphore is shared between processes
-
-      if (broken) U_ERROR("USemaphore::init(%p,%u) failed", ptr, resource);
-
-      next  = first;
-      first = this;
-
-      U_INTERNAL_DUMP("first = %p next = %p", first, next)
-
-      U_INTERNAL_ASSERT_DIFFERS(first, next)
+      U_ERROR_SYSCALL("USemaphore::init() failed");
       }
+#elif defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
+   U_INTERNAL_ASSERT_POINTER(ptr)
+
+   // initialize semaphore object sem to value, share it with other processes
+
+   if (U_SYSCALL(sem_init, "%p,%d,%u", psem = ptr, 1, resource) == -1) // 1 -> semaphore is shared between processes
+      {
+      U_ERROR("USemaphore::init(%p,%u) failed", ptr, resource);
+      }
+#elif defined(_MSWINDOWS_)
+   psem = (sem_t*) ::CreateSemaphore((LPSECURITY_ATTRIBUTES)NULL, (LONG)resource, 1000000, (LPCTSTR)NULL);
+#else
+   psem = U_NEW(UFile);
+
+   if (psem->mkTemp(0) == false) U_ERROR("USemaphore::init(%p,%u) failed", ptr, resource);
+#endif
+
+#if !defined(__MACOSX__) && !defined(__APPLE__) && defined(HAVE_SEM_GETVALUE)
+   next  = first;
+           first = this;
 
 # ifdef DEBUG
+   U_INTERNAL_DUMP("first = %p next = %p", first, next)
+
+   U_INTERNAL_ASSERT_DIFFERS(first, next)
+
    int _value = getValue();
 
    if (_value != resource) U_ERROR("USemaphore::init(%p,%u) failed - value = %d", ptr, resource, _value);
-# endif
-#else
-# ifdef _MSWINDOWS_
-   psem = (sem_t*) ::CreateSemaphore((LPSECURITY_ATTRIBUTES)NULL, (LONG)resource, 1000000, (LPCTSTR)NULL);
-# else
-   if (flock == 0)
-      {
-      flock = U_NEW(UFile);
-
-      if (flock->mkTemp(0) == false) U_ERROR("USemaphore::init(%p,%u) failed", ptr, resource);
-      }
 # endif
 #endif
 }
@@ -83,16 +86,17 @@ USemaphore::~USemaphore()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USemaphore)
 
-#if defined(HAVE_SEM_INIT) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
-   U_INTERNAL_ASSERT_POINTER(psem)
+   U_INTERNAL_ASSERT_DIFFERS(psem, 0)
 
+#if defined(__MACOSX__) || defined(__APPLE__)
+   (void) U_SYSCALL(sem_close,  "%p", psem);
+   (void) U_SYSCALL(sem_unlink, "%S", name);
+#elif defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
    (void) sem_destroy(psem); // Free resources associated with semaphore object sem
-#else
-# ifdef _MSWINDOWS_
+#elif defined(_MSWINDOWS_)
    ::CloseHandle((HANDLE)psem);
-# else
-   (void) flock->close();
-# endif
+#else
+   delete psem;
 #endif
 }
 
@@ -105,23 +109,23 @@ USemaphore::~USemaphore()
 
 void USemaphore::post()
 {
-   U_TRACE(1, "USemaphore::post()")
+   U_TRACE_NO_PARAM(1, "USemaphore::post()")
 
-#if defined(HAVE_SEM_INIT) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
-   U_INTERNAL_ASSERT_POINTER(psem)
+   U_INTERNAL_ASSERT_DIFFERS(psem, 0)
 
    U_INTERNAL_DUMP("value = %d", getValue())
 
+#if defined(__MACOSX__) || defined(__APPLE__)
    (void) U_SYSCALL(sem_post, "%p", psem); // unlock a semaphore
+#elif defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
+   (void) U_SYSCALL(sem_post, "%p", psem); // unlock a semaphore
+#elif defined(_MSWINDOWS_)
+   ::ReleaseSemaphore((HANDLE)psem, 1, (LPLONG)NULL);
+#else
+   (void) psem->unlock();
+#endif
 
    U_INTERNAL_DUMP("value = %d", getValue())
-#else
-# ifdef _MSWINDOWS_
-   ::ReleaseSemaphore((HANDLE)psem, 1, (LPLONG)NULL);
-# else
-   (void) flock->unlock();
-# endif
-#endif
 }
 
 // NB: check if process has restarted and it had a lock armed (DEADLOCK)...
@@ -130,7 +134,7 @@ bool USemaphore::checkForDeadLock(UTimeVal& time)
 {
    U_TRACE(1, "USemaphore::checkForDeadLock(%p)", &time)
 
-#if defined(HAVE_SEM_INIT) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
+#if !defined(__MACOSX__) && !defined(__APPLE__) && defined(HAVE_SEM_GETVALUE)
    bool sleeped = false;
 
    for (USemaphore* item = first; item; item = item->next)
@@ -169,12 +173,13 @@ bool USemaphore::wait(time_t timeoutMS)
 {
    U_TRACE(1, "USemaphore::wait(%ld)", timeoutMS) // problem with sanitize address
 
+   U_INTERNAL_ASSERT_DIFFERS(psem, 0)
    U_INTERNAL_ASSERT_MAJOR(timeoutMS, 0)
 
-#if defined(HAVE_SEM_INIT) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
-   U_INTERNAL_ASSERT_POINTER(psem)
-
    U_INTERNAL_DUMP("value = %d", getValue())
+
+#if defined(__MACOSX__) || defined(__APPLE__) || \
+   (defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)))
 
    // Wait for sem being posted
 
@@ -189,12 +194,10 @@ bool USemaphore::wait(time_t timeoutMS)
    U_INTERNAL_DUMP("value = %d", getValue())
 
    if (rc == 0) U_RETURN(true);
-#else
-# ifdef _MSWINDOWS_
+#elif defined(_MSWINDOWS_)
    if (::WaitForSingleObject((HANDLE)psem, timeoutMS) == WAIT_OBJECT_0) U_RETURN(true);
-# else
-   if (flock->unlock()) U_RETURN(true);
-# endif
+#else
+   if (psem->lock()) U_RETURN(true);
 #endif
 
    U_RETURN(false);
@@ -202,20 +205,23 @@ bool USemaphore::wait(time_t timeoutMS)
 
 void USemaphore::lock()
 {
-   U_TRACE(1, "USemaphore::lock()")
+   U_TRACE_NO_PARAM(1, "USemaphore::lock()")
 
-#if defined(HAVE_SEM_INIT) && LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)
-   U_INTERNAL_ASSERT_POINTER(psem)
+   U_INTERNAL_ASSERT_DIFFERS(psem, 0)
 
+   U_INTERNAL_DUMP("value = %d", getValue())
+
+#if defined(__MACOSX__) || defined(__APPLE__)
+   (void) U_SYSCALL(sem_wait, "%p", psem);
+#elif defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
    /**
-    * sem_wait() decrements (locks) the semaphore pointed to by sem. If the semaphore's value is greater than zero, then the decrement proceeds, and the function returns, immediately.
-    * If the semaphore currently has the value zero, then the call blocks until either it becomes possible to perform the decrement (i.e., the semaphore value rises above zero), or a
-    * signal handler interrupts the call
+    * sem_wait() decrements (locks) the semaphore pointed to by sem. If the semaphore's value is greater than zero,
+    * then the decrement proceeds, and the function returns, immediately.  * If the semaphore currently has the value
+    * zero, then the call blocks until either it becomes possible to perform the decrement (i.e., the semaphore value
+    * rises above zero), or a * signal handler interrupts the call
     */
 
 wait:
-   U_INTERNAL_DUMP("value = %d", getValue())
-
    int rc = U_SYSCALL(sem_wait, "%p", psem);
 
    if (rc == -1)
@@ -230,16 +236,14 @@ wait:
          }
       }
 
-   U_INTERNAL_DUMP("value = %d", getValue())
-
    U_INTERNAL_ASSERT_EQUALS(rc, 0)
-#else
-# ifdef _MSWINDOWS_
+#elif defined(_MSWINDOWS_)
    (void) ::WaitForSingleObject((HANDLE)psem, INFINITE);
-# else
-   (void) flock->unlock();
-# endif
+#else
+   (void) psem->lock();
 #endif
+
+   U_INTERNAL_DUMP("value = %d", getValue())
 }
 
 // DEBUG
@@ -247,9 +251,8 @@ wait:
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
 const char* USemaphore::dump(bool reset) const
 {
-   *UObjectIO::os << "next         " << (void*)next  << '\n'
-                  << "psem         " << (void*)psem  << '\n'
-                  << "flock (UFile " << (void*)flock << ')';
+   *UObjectIO::os << "next " << (void*)next  << '\n'
+                  << "psem " << (void*)psem;
 
    if (reset)
       {

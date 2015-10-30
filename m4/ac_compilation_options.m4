@@ -61,7 +61,7 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_MSG_CHECKING(for use of the new linker flags)
 	AC_ARG_ENABLE(new-ldflags,
 				[  --enable-new-ldflags      enable the new linker flags (enable-new-dtags,as-needed,...) [[default=yes]]])
-	if test -z "$enable_new_ldflags"; then
+	if test -z "$enable_new_ldflags" -a test "x$OPERATINGSYSTEM" = xlinux; then
 		enable_new_ldflags="yes"
 	fi
 	AC_MSG_RESULT([${enable_new_ldflags}])

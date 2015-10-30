@@ -74,7 +74,7 @@ public:
 
    virtual void setFailed()
       {
-      U_TRACE(0, "URPCObject::setFailed()")
+      U_TRACE_NO_PARAM(0, "URPCObject::setFailed()")
 
       URPCMethod::pFault = U_NEW(URPCFault);
       }

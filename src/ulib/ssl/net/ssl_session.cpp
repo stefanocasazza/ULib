@@ -38,7 +38,7 @@ SSL_SESSION* USSLSession::sess;
 
 char* USSLSession::toBuffer()
 {
-   U_TRACE(0, "USSLSession::toBuffer()")
+   U_TRACE_NO_PARAM(0, "USSLSession::toBuffer()")
 
    U_INTERNAL_ASSERT_POINTER(sess)
 

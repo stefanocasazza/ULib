@@ -79,7 +79,7 @@ public:
 
    const char* getName() const
       {
-      U_TRACE(0, "UXML2Node::getName()")
+      U_TRACE_NO_PARAM(0, "UXML2Node::getName()")
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 
@@ -169,7 +169,7 @@ public:
 
    const char* getNameSpacePrefix() const
       {
-      U_TRACE(0, "UXML2Node::getNameSpacePrefix()")
+      U_TRACE_NO_PARAM(0, "UXML2Node::getNameSpacePrefix()")
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 
@@ -373,7 +373,7 @@ public:
 
    const char* getPath() const
       {
-      U_TRACE(1, "UXML2Node::getPath()")
+      U_TRACE_NO_PARAM(1, "UXML2Node::getPath()")
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 

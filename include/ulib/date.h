@@ -176,7 +176,7 @@ public:
 
    int getDayOfWeek()
       {
-      U_TRACE(0, "UTimeDate::getDayOfWeek()")
+      U_TRACE_NO_PARAM(0, "UTimeDate::getDayOfWeek()")
 
       // (julian + 1) % 7 gives the value 0 for Sunday ... 6 for Saturday
 
@@ -202,7 +202,7 @@ public:
 
    time_t getSecond()
       {
-      U_TRACE(0, "UTimeDate::getSecond()")
+      U_TRACE_NO_PARAM(0, "UTimeDate::getSecond()")
 
       time_t t = getSecondFromJulian(getJulian());
 
@@ -229,7 +229,7 @@ public:
 
    void setCurrentDate() // UNIX system time - SecsSince1Jan1970UTC
       {
-      U_TRACE(0, "UTimeDate::setCurrentDate()")
+      U_TRACE_NO_PARAM(0, "UTimeDate::setCurrentDate()")
 
       U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 

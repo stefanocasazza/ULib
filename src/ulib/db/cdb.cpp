@@ -102,7 +102,7 @@ bool UCDB::open(bool brdonly)
 
 bool UCDB::find()
 {
-   U_TRACE(0, "UCDB::find()")
+   U_TRACE_NO_PARAM(0, "UCDB::find()")
 
    U_INTERNAL_ASSERT_MAJOR(UFile::st_size,0)
 
@@ -196,7 +196,7 @@ U_NO_EXPORT inline bool UCDB::match(uint32_t pos)
 
 bool UCDB::findNext()
 {
-   U_TRACE(0, "UCDB::findNext()")
+   U_TRACE_NO_PARAM(0, "UCDB::findNext()")
 
    uint32_t pos;
 
@@ -258,7 +258,7 @@ bool UCDB::findNext()
 
 UString UCDB::at()
 {
-   U_TRACE(0, "UCDB::at()")
+   U_TRACE_NO_PARAM(0, "UCDB::at()")
 
    cdb_hash();
 
@@ -534,7 +534,7 @@ fine:
 
 void UCDB::call1()
 {
-   U_TRACE(0, "UCDB::call1()")
+   U_TRACE_NO_PARAM(0, "UCDB::call1()")
 
    U_INTERNAL_ASSERT_POINTER(function_to_call)
 
@@ -717,7 +717,7 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
 
 UString UCDB::print()
 {
-   U_TRACE(0, "UCDB::print()")
+   U_TRACE_NO_PARAM(0, "UCDB::print()")
 
    if (UFile::st_size)
       {
@@ -869,7 +869,7 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpv
 #ifdef DEBUG
 U_NO_EXPORT void UCDB::checkForAllEntry()
 {
-   U_TRACE(0+256, "UCDB::checkForAllEntry()")
+   U_TRACE_NO_PARAM(0+256, "UCDB::checkForAllEntry()")
 
    U_INTERNAL_DUMP("nrecord = %u", nrecord)
 

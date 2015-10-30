@@ -14,6 +14,7 @@
 #ifndef U_HTTP_CLIENT_H
 #define U_HTTP_CLIENT_H 1
 
+#include <ulib/mime/entity.h>
 #include <ulib/net/client/client.h>
 
 /**
@@ -56,11 +57,28 @@ public:
     * @param value the value to be associated with the named property
     */
 
-   void    setHeader(const UString& name, const UString& value);
-   void removeHeader(const UString& name);
+   void setHeader(const char* key, uint32_t keylen, const UString& value)
+      {
+      U_TRACE(0, "UHttpClient_Base::setHeader(%.*S,%u,%V)", keylen, key, keylen, value.rep)
 
-   void setHeaderHostPort( const UString& h) { setHeader(*UString::str_host, h); }
-   void setHeaderUserAgent(const UString& u) { setHeader(*UString::str_user_agent, u); }
+      U_INTERNAL_ASSERT(value)
+      U_INTERNAL_ASSERT_POINTER(requestHeader)
+
+      requestHeader->setHeader(key, keylen, value);
+      }
+
+   void removeHeader(const UString& name)
+      {
+      U_TRACE(0, "UHttpClient_Base::removeHeader(%V,)", name.rep)
+
+      U_INTERNAL_ASSERT(name)
+      U_INTERNAL_ASSERT_POINTER(requestHeader)
+
+      requestHeader->removeHeader(name);
+      }
+
+   void setHeaderHostPort( const UString& h) { setHeader(U_CONSTANT_TO_PARAM("Host"), h); }
+   void setHeaderUserAgent(const UString& u) { setHeader(U_CONSTANT_TO_PARAM("User-Agent"), u); }
 
    // Returns the MIME header that were received in response from the HTTP server
 
@@ -81,7 +99,7 @@ public:
 
    bool isPasswordAuthentication() const
       {
-      U_TRACE(0, "UHttpClient_Base::isPasswordAuthentication()")
+      U_TRACE_NO_PARAM(0, "UHttpClient_Base::isPasswordAuthentication()")
 
       bool result = (user && password);
 
@@ -175,7 +193,13 @@ protected:
    // COSTRUTTORI
 
     UHttpClient_Base(UFileConfig* _cfg);
-   ~UHttpClient_Base();
+   ~UHttpClient_Base()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UHttpClient_Base)
+
+      delete requestHeader;
+      delete responseHeader;
+      }
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS

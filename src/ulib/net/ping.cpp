@@ -232,7 +232,7 @@ inline void UPing::cksum(void* hdr, int len)
 
 bool UPing::initPing()
 {
-   U_TRACE(0, "UPing::initPing()")
+   U_TRACE_NO_PARAM(0, "UPing::initPing()")
 
    USocket::_socket(SOCK_RAW, 0, IPPROTO_ICMP);
 
@@ -349,7 +349,7 @@ loop: // wait for response
 
 fd_set* UPing::pingAsyncCompletion()
 {
-   U_TRACE(0, "UPing::pingAsyncCompletion()")
+   U_TRACE_NO_PARAM(0, "UPing::pingAsyncCompletion()")
 
    U_INTERNAL_ASSERT_POINTER(proc)
 
@@ -430,7 +430,7 @@ fd_set* UPing::ping(UVector<UIPAddress*>& vaddr, bool async, const char* device)
 #ifdef HAVE_NETPACKET_PACKET_H
 int UPing::recvArpPing()
 {
-   U_TRACE(0, "UPing::recvArpPing()")
+   U_TRACE_NO_PARAM(0, "UPing::recvArpPing()")
 
    int ret;
    UPing::arpmsg reply;

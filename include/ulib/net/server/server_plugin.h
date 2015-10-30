@@ -79,28 +79,28 @@ public:
 
    virtual int handlerInit()
       {
-      U_TRACE(0, "UServerPlugIn::handlerInit()")
+      U_TRACE_NO_PARAM(0, "UServerPlugIn::handlerInit()")
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
    virtual int handlerRun()
       {
-      U_TRACE(0, "UServerPlugIn::handlerRun()")
+      U_TRACE_NO_PARAM(0, "UServerPlugIn::handlerRun()")
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
    virtual int handlerFork()
       {
-      U_TRACE(0, "UServerPlugIn::handlerFork()")
+      U_TRACE_NO_PARAM(0, "UServerPlugIn::handlerFork()")
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
    virtual int handlerStop()
       {
-      U_TRACE(0, "UServerPlugIn::handlerStop()")
+      U_TRACE_NO_PARAM(0, "UServerPlugIn::handlerStop()")
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
@@ -109,14 +109,14 @@ public:
 
    virtual int handlerREAD()
       {
-      U_TRACE(0, "UServerPlugIn::handlerREAD()")
+      U_TRACE_NO_PARAM(0, "UServerPlugIn::handlerREAD()")
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
 
    virtual int handlerRequest()
       {
-      U_TRACE(0, "UServerPlugIn::handlerRequest()")
+      U_TRACE_NO_PARAM(0, "UServerPlugIn::handlerRequest()")
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }
@@ -125,7 +125,7 @@ public:
 
    virtual int handlerSigHUP()
       {
-      U_TRACE(0, "UServerPlugIn::handlerSigHUP()")
+      U_TRACE_NO_PARAM(0, "UServerPlugIn::handlerSigHUP()")
 
       U_RETURN(U_PLUGIN_HANDLER_GO_ON);
       }

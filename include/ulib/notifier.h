@@ -53,11 +53,6 @@ class UClientThrottling;
 class U_EXPORT UNotifier {
 public:
 
-#if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
-   static struct epoll_event* pevents;
-#endif
-   static uint32_t min_connection, num_connection, max_connection;
-
    // SERVICES
 
    static void clear();
@@ -72,7 +67,7 @@ public:
 #ifdef HAVE_EPOLL_CTL_BATCH
    static void insertBatch()
       {
-      U_TRACE(0, "UNotifier::insertBatch()")
+      U_TRACE_NO_PARAM(0, "UNotifier::insertBatch()")
 
       if (ctl_cmd_cnt)
          {
@@ -85,9 +80,13 @@ public:
    static void batch((UEventFd* handler_event);
 #endif
 
+   static uint32_t min_connection,
+                   num_connection,
+                   max_connection;
+
    static bool empty()
       {
-      U_TRACE(0, "UNotifier::empty()")
+      U_TRACE_NO_PARAM(0, "UNotifier::empty()")
 
       U_INTERNAL_ASSERT_POINTER(lo_map_fd)
       U_INTERNAL_ASSERT_POINTER(hi_map_fd)
@@ -124,37 +123,42 @@ protected:
    static UEventFd* handler_event;
    static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
 
-#ifdef DEBUG
-   static uint32_t nwatches;
-   static uint32_t max_nfd_ready;
-#endif
-#if defined(U_EPOLLET_POSTPONE_STRATEGY) || defined(DEBUG)
+#if defined(DEBUG) || defined(U_EPOLLET_POSTPONE_STRATEGY)
    static bool bepollet;
    static uint32_t bepollet_threshold;
+# ifdef DEBUG
+   static uint32_t nwatches, max_nfd_ready;
+# endif
 #endif
 
-#ifdef USE_LIBEVENT
-// nothing
-#elif defined(HAVE_EPOLL_WAIT)
+#ifndef USE_LIBEVENT
+# ifdef HAVE_EPOLL_WAIT
    static int epollfd;
-   static struct epoll_event* events;
-#else
+   static struct epoll_event*  events;
+   static struct epoll_event* pevents;
+#  ifdef HAVE_EPOLL_CTL_BATCH
+   static int ctl_cmd_cnt;
+   static struct epoll_ctl_cmd ctl_cmd[U_EPOLL_CTL_CMD_SIZE];
+#  endif
+# elif defined(HAVE_KQUEUE)
+   static int kq, nkqevents;
+   static struct kevent* kqevents;
+   static struct kevent* kqrevents;
+# else
    static UEventFd* first;
    static fd_set fd_set_read, fd_set_write;
    static int fd_set_max, fd_read_cnt, fd_write_cnt;
 
    static int  getNFDS();     // nfds is the highest-numbered file descriptor in any of the three sets, plus 1.
    static void removeBadFd(); // rimuove i descrittori di file diventati invalidi (possibile con EPIPE)
+# endif
 #endif
+
 #ifndef HAVE_POLL_H
    static UEventTime* time_obj;
 #else
    static struct pollfd fds[1];
    static int waitForEvent(int timeoutMS);
-#endif
-#ifdef HAVE_EPOLL_CTL_BATCH
-   static int ctl_cmd_cnt;
-   static struct epoll_ctl_cmd ctl_cmd[U_EPOLL_CTL_CMD_SIZE];
 #endif
 
    static bool isHandler(int fd);

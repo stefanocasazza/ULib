@@ -19,7 +19,7 @@
 
 char* UDataStorage::toBuffer()
 {
-   U_TRACE(0, "UDataStorage::toBuffer()")
+   U_TRACE_NO_PARAM(0, "UDataStorage::toBuffer()")
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
@@ -51,11 +51,11 @@ void UDataStorage::fromData(const char* ptr, uint32_t len)
 
 void UDataStorage::setKeyId()
 {
-   U_TRACE(0, "UDataStorage::setKeyId()")
+   U_TRACE_NO_PARAM(0, "UDataStorage::setKeyId()")
 
    U_INTERNAL_DUMP("keyid = %V", keyid.rep)
 
-   keyid = *UHTTP::str_storage_keyid;
+   keyid = *UString::str_storage_keyid;
 }
 
 UString UDataSession::setKeyIdDataSession(uint32_t counter)

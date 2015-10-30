@@ -18,7 +18,7 @@
 #ifdef DEBUG
 void UFlexer::test()
 {
-   U_TRACE(0, "UFlexer::test()")
+   U_TRACE_NO_PARAM(0, "UFlexer::test()")
 
    YYSTYPE yyval;
 

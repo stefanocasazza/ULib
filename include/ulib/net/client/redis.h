@@ -191,14 +191,14 @@ public:
 
    bool ping() // Ping the server
       {
-      U_TRACE(0, "UREDISClient_Base::ping()")
+      U_TRACE_NO_PARAM(0, "UREDISClient_Base::ping()")
 
       return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("PING"));
       }
 
    bool quit() // Close the connection
       {
-      U_TRACE(0, "UREDISClient_Base::quit()")
+      U_TRACE_NO_PARAM(0, "UREDISClient_Base::quit()")
 
       return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("QUIT"));
       }
@@ -207,7 +207,7 @@ public:
 
    bool time() // Return the current server time 
       {
-      U_TRACE(0, "UREDISClient_Base::time()")
+      U_TRACE_NO_PARAM(0, "UREDISClient_Base::time()")
 
       return processRequest(U_RC_MULTIBULK, U_CONSTANT_TO_PARAM("TIME"));
       }
@@ -261,7 +261,7 @@ public:
 
    bool randomkey() // Return a random key from the keyspace
       {
-      U_TRACE(0, "UREDISClient_Base::randomkey()")
+      U_TRACE_NO_PARAM(0, "UREDISClient_Base::randomkey()")
 
       return processRequest(U_RC_BULK, U_CONSTANT_TO_PARAM("RANDOMKEY"));
       }

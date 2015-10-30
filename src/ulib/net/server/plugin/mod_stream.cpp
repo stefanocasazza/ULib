@@ -102,7 +102,7 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
 
 int UStreamPlugIn::handlerInit()
 {
-   U_TRACE(0, "UStreamPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(0, "UStreamPlugIn::handlerInit()")
 
    static int fd_stderr;
 
@@ -133,7 +133,7 @@ int UStreamPlugIn::handlerInit()
 
 int UStreamPlugIn::handlerRun()
 {
-   U_TRACE(0, "UStreamPlugIn::handlerRun()")
+   U_TRACE_NO_PARAM(0, "UStreamPlugIn::handlerRun()")
 
    U_INTERNAL_ASSERT_EQUALS(pid,-1)
 
@@ -183,7 +183,7 @@ int UStreamPlugIn::handlerRun()
 
 int UStreamPlugIn::handlerRequest()
 {
-   U_TRACE(0, "UStreamPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UStreamPlugIn::handlerRequest()")
 
    if (U_HTTP_URI_EQUAL(*uri_path) == false) U_RETURN(U_PLUGIN_HANDLER_GO_ON);
 

@@ -291,7 +291,7 @@ public:
 
    void reset()
       {
-      U_TRACE(0, "USqliteStatement::reset()")
+      U_TRACE_NO_PARAM(0, "USqliteStatement::reset()")
 
       U_ASSERT_EQUALS(num_bind_param,  vparam.size())
       U_ASSERT_EQUALS(num_bind_result, vresult.size())
@@ -328,23 +328,17 @@ public:
 class U_EXPORT UOrmDriverSqlite : public UOrmDriver {
 public:
 
-   static const UString* str_name;
-   static const UString* str_dbdir;
-   static const UString* str_memory;
-
-   static void str_allocate();
-
    // COSTRUTTORE
 
    UOrmDriverSqlite()
       {
       U_TRACE_REGISTER_OBJECT(0, UOrmDriverSqlite, "")
 
-      str_allocate();
+      U_INTERNAL_ASSERT_POINTER(UString::str_sqlite_name)
 
       encoding_UTF16 = false;
 
-      UOrmDriver::name = *str_name;
+      UOrmDriver::name = *UString::str_sqlite_name;
       }
 
    UOrmDriverSqlite(const UString& name_drv) : UOrmDriver(name_drv)

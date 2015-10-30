@@ -34,13 +34,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static const UString* str_FOLLOW_REDIRECTS;
-   static const UString* str_CLIENT_CERTIFICATE;
-   static const UString* str_REMOTE_ADDRESS_IP;
-   static const UString* str_WEBSOCKET;
-
-   static void str_allocate();
-
    enum Error {
       INTERNAL_ERROR            = 1, // NB: we need to start from 1 because we use a vector...
       BAD_REQUEST               = 2,
@@ -74,7 +67,7 @@ public:
 
    bool isAuthorization() const
       {
-      U_TRACE(0, "UModProxyService::isAuthorization()")
+      U_TRACE_NO_PARAM(0, "UModProxyService::isAuthorization()")
 
       if (    user.empty() == false &&
           password.empty() == false)

@@ -49,7 +49,7 @@ uint32_t URDB::nerror;
 
 U_NO_EXPORT inline void URDB::setNodeLeft()
 {
-   U_TRACE(0, "URDB::setNodeLeft()")
+   U_TRACE_NO_PARAM(0, "URDB::setNodeLeft()")
 
    U_CHECK_MEMORY
 
@@ -64,7 +64,7 @@ U_NO_EXPORT inline void URDB::setNodeLeft()
 
 U_NO_EXPORT inline void URDB::setNodeRight()
 {
-   U_TRACE(0, "URDB::setNodeRight()")
+   U_TRACE_NO_PARAM(0, "URDB::setNodeRight()")
 
    U_CHECK_MEMORY
 
@@ -559,7 +559,7 @@ void URDB::setShared(sem_t* psem, char* spinlock)
 
 bool URDB::compactionJournal()
 {
-   U_TRACE(0, "URDB::compactionJournal()")
+   U_TRACE_NO_PARAM(0, "URDB::compactionJournal()")
 
    U_CHECK_MEMORY
 
@@ -739,7 +739,7 @@ void URDB::close(bool breference)
 
 void URDB::reset()
 {
-   U_TRACE(1, "URDB::reset()")
+   U_TRACE_NO_PARAM(1, "URDB::reset()")
 
    U_CHECK_MEMORY
 
@@ -758,7 +758,7 @@ void URDB::reset()
 
 bool URDB::beginTransaction()
 {
-   U_TRACE(0, "URDB::beginTransaction()")
+   U_TRACE_NO_PARAM(0, "URDB::beginTransaction()")
 
    lock();
 
@@ -767,7 +767,7 @@ bool URDB::beginTransaction()
 
 void URDB::commitTransaction()
 {
-   U_TRACE(0, "URDB::commitTransaction()")
+   U_TRACE_NO_PARAM(0, "URDB::commitTransaction()")
 
    msync();
    fsync();
@@ -777,7 +777,7 @@ void URDB::commitTransaction()
 
 void URDB::abortTransaction()
 {
-   U_TRACE(0, "URDB::abortTransaction()")
+   U_TRACE_NO_PARAM(0, "URDB::abortTransaction()")
 
    U_INTERNAL_DUMP("RDB_reference = %u", RDB_reference(this))
 
@@ -790,7 +790,7 @@ void URDB::abortTransaction()
 
 void URDB::msync()
 {
-   U_TRACE(0, "URDB::msync()")
+   U_TRACE_NO_PARAM(0, "URDB::msync()")
 
    U_CHECK_MEMORY
 
@@ -811,7 +811,7 @@ void URDB::msync()
 
 bool URDB::closeReorganize()
 {
-   U_TRACE(0, "URDB::closeReorganize()")
+   U_TRACE_NO_PARAM(0, "URDB::closeReorganize()")
 
    resetReference();
 
@@ -1043,7 +1043,7 @@ U_NO_EXPORT void URDB::getKeys1(UCDB* pcdb, uint32_t _offset) // entry presenti 
 
 bool URDB::reorganize()
 {
-   U_TRACE(0, "URDB::reorganize()")
+   U_TRACE_NO_PARAM(0, "URDB::reorganize()")
 
    U_CHECK_MEMORY
 
@@ -1180,7 +1180,7 @@ char* URDB::parseLine(const char* ptr, UCDB::datum* _key, UCDB::datum* _data)
 
 UString URDB::print()
 {
-   U_TRACE(0, "URDB::print()")
+   U_TRACE_NO_PARAM(0, "URDB::print()")
 
    U_CHECK_MEMORY
 
@@ -1308,7 +1308,7 @@ void URDB::callForAllEntrySorted(iPFprpr function, qcompare compare_obj)
 
 UString URDB::printSorted()
 {
-   U_TRACE(0, "URDB::printSorted()")
+   U_TRACE_NO_PARAM(0, "URDB::printSorted()")
 
    U_CHECK_MEMORY
 
@@ -1350,7 +1350,7 @@ UString URDB::printSorted()
 
 bool URDB::isDeleted()
 {
-   U_TRACE(0, "URDB::isDeleted()")
+   U_TRACE_NO_PARAM(0, "URDB::isDeleted()")
 
    U_CHECK_MEMORY
 
@@ -1375,7 +1375,7 @@ bool URDB::isDeleted()
 
 bool URDB::_fetch()
 {
-   U_TRACE(0, "URDB::_fetch()")
+   U_TRACE_NO_PARAM(0, "URDB::_fetch()")
 
    bool result;
 
@@ -1410,7 +1410,7 @@ bool URDB::_fetch()
 
 bool URDB::fetch()
 {
-   U_TRACE(0, "URDB::fetch()")
+   U_TRACE_NO_PARAM(0, "URDB::fetch()")
 
    bool result;
 
@@ -1429,7 +1429,7 @@ bool URDB::fetch()
 
 UString URDB::at()
 {
-   U_TRACE(0, "URDB::at()")
+   U_TRACE_NO_PARAM(0, "URDB::at()")
 
    UString result;
 
@@ -1561,7 +1561,7 @@ int URDB::store(int _flag)
 
 int URDB::remove()
 {
-   U_TRACE(0, "URDB::remove()")
+   U_TRACE_NO_PARAM(0, "URDB::remove()")
 
    int result = 0;
    bool record_cache_deleted = false;
@@ -1882,7 +1882,7 @@ bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(int op)
 
 bool URDBObjectHandler<UDataStorage*>::putDataStorage()
 {
-   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::putDataStorage()")
+   U_TRACE_NO_PARAM(0, "URDBObjectHandler<UDataStorage*>::putDataStorage()")
 
    U_CHECK_MEMORY
 
@@ -2049,7 +2049,7 @@ void URDBObjectHandler<UDataStorage*>::callForAllEntry(iPFprpr function, vPF fun
 
 void URDBObjectHandler<UDataStorage*>::close()
 {
-   U_TRACE(0, "URDBObjectHandler<UDataStorage*>::close()")
+   U_TRACE_NO_PARAM(0, "URDBObjectHandler<UDataStorage*>::close()")
 
    U_CHECK_MEMORY
 

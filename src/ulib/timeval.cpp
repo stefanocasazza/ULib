@@ -21,7 +21,7 @@ extern "C" { int nanosleep (const struct timespec* requested_time,
                                   struct timespec* remaining); }
 #endif
 
-#if !defined(__suseconds_t_defined) && !defined(__UNIKERNEL__) && !defined(__NetBSD__)
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && !defined(__suseconds_t_defined)
 typedef long suseconds_t;
 #endif
 
@@ -50,7 +50,7 @@ void UTimeVal::adjust(void* tv_sec, void* tv_usec)
 
 void UTimeVal::nanosleep()
 {
-   U_TRACE(1, "UTimeVal::nanosleep()")
+   U_TRACE_NO_PARAM(1, "UTimeVal::nanosleep()")
 
    int result;
    struct timespec req, rem;

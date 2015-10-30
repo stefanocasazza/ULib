@@ -19,7 +19,7 @@
 #include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
 
-#if defined(__NetBSD__) || defined(__UNIKERNEL__)
+#if defined(__OSX__) || defined(__NetBSD__) || defined(__UNIKERNEL__)
 extern char** environ;
 #endif
 
@@ -30,7 +30,7 @@ pid_t UCommand::pid;
 
 void UCommand::freeCommand()
 {
-   U_TRACE(0, "UCommand::freeCommand()")
+   U_TRACE_NO_PARAM(0, "UCommand::freeCommand()")
 
    if (pathcmd)
       {
@@ -53,7 +53,7 @@ void UCommand::freeCommand()
 
 void UCommand::freeEnvironment()
 {
-   U_TRACE(0, "UCommand::freeEnvironment()")
+   U_TRACE_NO_PARAM(0, "UCommand::freeEnvironment()")
 
    if (envp_exec)
       {
@@ -89,7 +89,7 @@ void UCommand::reset(const UString* penv)
 
 void UCommand::setCommand()
 {
-   U_TRACE(0, "UCommand::setCommand()")
+   U_TRACE_NO_PARAM(0, "UCommand::setCommand()")
 
    U_INTERNAL_ASSERT(command)
 
@@ -184,7 +184,7 @@ void UCommand::setEnvironment(const UString* penv)
 
 void UCommand::setFileArgument()
 {
-   U_TRACE(0, "UCommand::setFileArgument()")
+   U_TRACE_NO_PARAM(0, "UCommand::setFileArgument()")
 
    U_INTERNAL_ASSERT_POINTER(argv_exec)
 
@@ -404,7 +404,7 @@ U_NO_EXPORT bool UCommand::postCommand(UString* input, UString* output)
 
 U_NO_EXPORT bool UCommand::wait()
 {
-   U_TRACE(0, "UCommand::wait()")
+   U_TRACE_NO_PARAM(0, "UCommand::wait()")
 
    UProcess::waitpid(pid, &status, 0);
 
@@ -579,7 +579,7 @@ UCommand* UCommand::loadConfigCommand(UFileConfig* cfg)
          U_RETURN_POINTER(0,UCommand);
          }
 
-      UString environment = (*cfg)[*UString::str_ENVIRONMENT];
+      UString environment = cfg->at(U_CONSTANT_TO_PARAM("ENVIRONMENT"));
 
       if (environment)
          {

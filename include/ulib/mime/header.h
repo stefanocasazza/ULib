@@ -122,7 +122,7 @@ public:
 
    void   removeHeader(const char* key, uint32_t keylen);
    bool containsHeader(const char* key, uint32_t keylen) { return table.find(key, keylen); }
-   UString   getHeader(const char* key, uint32_t keylen) { return table.at(key, keylen); }
+   UString   getHeader(const char* key, uint32_t keylen) { return table.at(  key, keylen); }
 
    // Sets a header field, overwriting any existing value
 
@@ -147,13 +147,15 @@ public:
          }
       }
 
-   bool setHeaderIfAbsent(const UString& key, const UString& value)
+   bool setHeaderIfAbsent(const char* key, uint32_t keylen, const UString& value)
       {
-      U_TRACE(0, "UMimeHeader::setHeaderIfAbsent(%V,%V)", key.rep, value.rep)
+      U_TRACE(0, "UMimeHeader::setHeaderIfAbsent(%.*S,%u,%V)", keylen, key, keylen, value.rep)
 
-      if (containsHeader(key) == false)
+      if (containsHeader(key, keylen) == false)
          {
-         table.insertAfterFind(key, value);
+         UString x(key, keylen);
+
+         table.insertAfterFind(x, value);
 
          U_RETURN(true);
          }
@@ -170,11 +172,11 @@ public:
 
    UString getHost()
       {
-      U_TRACE(0, "UMimeHeader::getHost()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::getHost()")
 
       U_ASSERT(empty() == false)
 
-      UString host = getHeader(*UString::str_host);
+      UString host = getHeader(U_CONSTANT_TO_PARAM("Host"));
 
       U_RETURN_STRING(host);
       }
@@ -183,11 +185,11 @@ public:
 
    bool isClose()
       {
-      U_TRACE(0, "UMimeHeader::isClose()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::isClose()")
 
       U_ASSERT(empty() == false)
 
-      bool result = getHeader(*UString::str_connection).equal(U_CONSTANT_TO_PARAM("close"));
+      bool result = getHeader(U_CONSTANT_TO_PARAM("Connection")).equal(U_CONSTANT_TO_PARAM("close"));
 
       U_RETURN(result);
       }
@@ -196,11 +198,11 @@ public:
 
    bool isChunked()
       {
-      U_TRACE(0, "UMimeHeader::isChunked()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::isChunked()")
 
       U_ASSERT(empty() == false)
 
-      bool result = (getHeader(*UString::str_Transfer_Encoding) == *UString::str_chunked);
+      bool result = (getHeader(U_CONSTANT_TO_PARAM("Transfer-Encoding")) == *UString::str_chunked);
 
       U_RETURN(result);
       }
@@ -209,11 +211,11 @@ public:
 
    UString getCookie()
       {
-      U_TRACE(0, "UMimeHeader::getCookie()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::getCookie()")
 
       U_ASSERT(empty() == false)
 
-      UString cookie = getHeader(*UString::str_cookie);
+      UString cookie = getHeader(U_CONSTANT_TO_PARAM("Cookie"));
 
       U_RETURN_STRING(cookie);
       }
@@ -222,7 +224,7 @@ public:
 
    bool isSetCookie()
       {
-      U_TRACE(0, "UMimeHeader::isSetCookie()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::isSetCookie()")
 
       U_ASSERT(empty() == false)
 
@@ -235,7 +237,7 @@ public:
 
    UString getLocation()
       {
-      U_TRACE(0, "UMimeHeader::getLocation()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::getLocation()")
 
       U_ASSERT(empty() == false)
 
@@ -248,7 +250,7 @@ public:
 
    UString getRefresh()
       {
-      U_TRACE(0, "UMimeHeader::getRefresh()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::getRefresh()")
 
       U_ASSERT(empty() == false)
 
@@ -261,7 +263,7 @@ public:
 
    UString getMimeVersion()
       {
-      U_TRACE(0, "UMimeHeader::getMimeVersion()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::getMimeVersion()")
 
       U_ASSERT(empty() == false)
 
@@ -272,7 +274,7 @@ public:
 
    bool isMime()
       {
-      U_TRACE(0, "UMimeHeader::isMime()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::isMime()")
 
       bool result = ((table.empty()            == false) &&
                      (getMimeVersion().empty() == false));
@@ -294,11 +296,11 @@ public:
 
    UString getContentType()
       {
-      U_TRACE(0, "UMimeHeader::getContentType()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::getContentType()")
 
       U_ASSERT(empty() == false)
 
-      UString content_type = getHeader(*UString::str_content_type);
+      UString content_type = getHeader(U_CONSTANT_TO_PARAM("Content-Type"));
 
       U_RETURN_STRING(content_type);
       }
@@ -387,7 +389,7 @@ public:
       U_RETURN_STRING(value);
       }
 
-   static uint32_t     getAttributeFromKeyValue(const UString& key_value, UVector<UString>& name_value);
+   static uint32_t getAttributeFromKeyValue(const UString& key_value, UVector<UString>& name_value);
 
    static UString getValueAttributeFromKeyValue(const UString& key_value, const UString& name_attr, bool ignore_case)
          { return getValueAttributeFromKeyValue(key_value, U_STRING_TO_PARAM(name_attr), ignore_case); }
@@ -402,7 +404,7 @@ public:
 
    UString getContentDisposition()
       {
-      U_TRACE(0, "UMimeHeader::getContentDisposition()")
+      U_TRACE_NO_PARAM(0, "UMimeHeader::getContentDisposition()")
 
       U_ASSERT(empty() == false)
 
@@ -413,7 +415,7 @@ public:
 
    static bool getNames(const UString& cdisposition, UString& name, UString& filename);
 
-   static UString getFileName(const UString& cdisposition) { return getValueAttributeFromKeyValue(cdisposition, *UString::str_filename, false); }
+   static UString getFileName(const UString& cdisposition) { return getValueAttributeFromKeyValue(cdisposition, U_CONSTANT_TO_PARAM("filename"), false); }
 
    // read from socket
 

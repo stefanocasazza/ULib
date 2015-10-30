@@ -55,7 +55,7 @@ public:
 
    void init()
       {
-      U_TRACE(0, "UModNoCatPeer::init()")
+      U_TRACE_NO_PARAM(0, "UModNoCatPeer::init()")
 
       next = 0;
 
@@ -132,12 +132,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static const UString* str_without_label;
-   static const UString* str_allowed_members_default;
-// static const UString* str_IPHONE_SUCCESS;
-
-   static void str_allocate();
-
    enum CheckType {
       U_CHECK_ARP_CACHE = 0x001,
       U_CHECK_ARP_PING  = 0x002,
@@ -166,7 +160,7 @@ public:
 
    virtual int handlerTime() U_DECL_FINAL
       {
-      U_TRACE(0, "UNoCatPlugIn::handlerTime()")
+      U_TRACE_NO_PARAM(0, "UNoCatPlugIn::handlerTime()")
 
       checkSystem();
 
@@ -271,14 +265,14 @@ protected:
 
    static void preallocatePeers()
       {
-      U_TRACE(0+256, "UNoCatPlugIn::preallocatePeers()")
+      U_TRACE_NO_PARAM(0+256, "UNoCatPlugIn::preallocatePeers()")
 
       peers_preallocate = new UModNoCatPeer[num_peers_preallocate];
       } 
 
    static bool getARPCache()
       {
-      U_TRACE(0+256, "UNoCatPlugIn::getARPCache()")
+      U_TRACE_NO_PARAM(0+256, "UNoCatPlugIn::getARPCache()")
 
       return USocketExt::getARPCache(*arp_cache, *varp_cache);
       }
@@ -292,7 +286,7 @@ protected:
 
    static bool isPingAsyncPending()
       {
-      U_TRACE(0, "UNoCatPlugIn::isPingAsyncPending()")
+      U_TRACE_NO_PARAM(0, "UNoCatPlugIn::isPingAsyncPending()")
 
       U_INTERNAL_DUMP("check_type = %B nfds = %u paddrmask = %p", check_type, nfds, paddrmask)
 

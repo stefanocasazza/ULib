@@ -67,9 +67,6 @@
 #  define U_STRINGREP_FROM_CONSTANT(c_str)                                       U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #endif
 
-#define U_STRING_FROM_STRINGREP_STORAGE_WITH_VAR(var,n) UString(&(var[n]))
-#define U_STRING_FROM_STRINGREP_STORAGE(n)              U_STRING_FROM_STRINGREP_STORAGE_WITH_VAR(stringrep_storage,n)
-
 class Url;
 class UCDB;
 class URDB;
@@ -124,7 +121,7 @@ public:
 
    bool uniq() const
       {
-      U_TRACE(0, "UStringRep::uniq()")
+      U_TRACE_NO_PARAM(0, "UStringRep::uniq()")
 
       U_CHECK_MEMORY
 
@@ -135,7 +132,7 @@ public:
 
    void hold()
       {
-      U_TRACE(0, "UStringRep::hold()")
+      U_TRACE_NO_PARAM(0, "UStringRep::hold()")
 
       U_CHECK_MEMORY
 
@@ -146,7 +143,7 @@ public:
 
    void release() // NB: we don't use delete (dtor) because add a deallocation to the destroy object process...
       {
-      U_TRACE(0, "UStringRep::release()")
+      U_TRACE_NO_PARAM(0, "UStringRep::release()")
 
       U_INTERNAL_DUMP("this = %p parent = %p references = %u child = %d", this, parent, references, child)
 
@@ -169,7 +166,7 @@ public:
 
    bool empty() const
       {
-      U_TRACE(0, "UStringRep::empty()")
+      U_TRACE_NO_PARAM(0, "UStringRep::empty()")
 
       U_CHECK_MEMORY
 
@@ -178,7 +175,7 @@ public:
 
    uint32_t capacity() const
       {
-      U_TRACE(0, "UStringRep::capacity()")
+      U_TRACE_NO_PARAM(0, "UStringRep::capacity()")
 
       U_CHECK_MEMORY
 
@@ -187,7 +184,7 @@ public:
 
    bool writeable() const
       {
-      U_TRACE(0, "UStringRep::writeable()")
+      U_TRACE_NO_PARAM(0, "UStringRep::writeable()")
 
       U_CHECK_MEMORY
 
@@ -199,7 +196,7 @@ public:
 
    uint32_t space() const
       {
-      U_TRACE(0, "UStringRep::space()")
+      U_TRACE_NO_PARAM(0, "UStringRep::space()")
 
       U_CHECK_MEMORY
 
@@ -262,7 +259,7 @@ public:
 
    char first_char() const
       {
-      U_TRACE(0, "UStringRep::first_char()")
+      U_TRACE_NO_PARAM(0, "UStringRep::first_char()")
 
       U_CHECK_MEMORY
 
@@ -273,7 +270,7 @@ public:
 
    char last_char() const
       {
-      U_TRACE(0, "UStringRep::last_char()")
+      U_TRACE_NO_PARAM(0, "UStringRep::last_char()")
 
       U_CHECK_MEMORY
 
@@ -393,7 +390,7 @@ public:
 
    void size_adjust()
       {
-      U_TRACE(0+256, "UStringRep::size_adjust()")
+      U_TRACE_NO_PARAM(0+256, "UStringRep::size_adjust()")
 
       U_CHECK_MEMORY
 
@@ -467,7 +464,7 @@ public:
 
    void size_adjust_force()
       {
-      U_TRACE(0, "UStringRep::size_adjust_force()")
+      U_TRACE_NO_PARAM(0, "UStringRep::size_adjust_force()")
 
       U_CHECK_MEMORY
 
@@ -643,14 +640,14 @@ public:
 #ifdef HAVE_STRTOLD
    long double strtold() const;
 #endif
-   long strtol(int base = 0) const;
+   long strtol(int base = 10) const;
 #ifdef HAVE_STRTOULL
-   int64_t strtoll(int base = 0) const;
+   int64_t strtoll(int base = 10) const;
 #endif
 
    uint32_t hash() const
       {
-      U_TRACE(0, "UStringRep::hash()")
+      U_TRACE_NO_PARAM(0, "UStringRep::hash()")
 
       U_CHECK_MEMORY
 
@@ -663,7 +660,7 @@ public:
 
    uint32_t hashIgnoreCase() const
       {
-      U_TRACE(0, "UStringRep::hashIgnoreCase()")
+      U_TRACE_NO_PARAM(0, "UStringRep::hashIgnoreCase()")
 
       U_CHECK_MEMORY
 
@@ -699,7 +696,7 @@ public:
 
    void unQuote()
       {
-      U_TRACE(0, "UStringRep::unQuote()")
+      U_TRACE_NO_PARAM(0, "UStringRep::unQuote()")
 
       U_CHECK_MEMORY
 
@@ -784,7 +781,7 @@ protected:
 private:
     UStringRep()
       {
-      U_TRACE(0, "UStringRep::UStringRep()")
+      U_TRACE_NO_PARAM(0, "UStringRep::UStringRep()")
 
       u__memcpy(this, string_rep_null, sizeof(UStringRep), __PRETTY_FUNCTION__);
       }
@@ -801,7 +798,7 @@ private:
 
    ~UStringRep()
       {
-      U_TRACE(0, "UStringRep::~UStringRep()")
+      U_TRACE_NO_PARAM(0, "UStringRep::~UStringRep()")
 
       // NB: we don't use delete (dtor) because it add a deallocation to the destroy process...
 
@@ -926,34 +923,20 @@ public:
    U_MEMORY_DEALLOCATOR
 
    static const UString* str_host;
-   static const UString* str_cookie;
-   static const UString* str_connection;
-   static const UString* str_user_agent;
-   static const UString* str_authorization;
-   static const UString* str_content_type;
-   static const UString* str_content_length;
-   static const UString* str_accept;
-   static const UString* str_accept_encoding;
-   static const UString* str_referer;
-   static const UString* str_X_Real_IP;
-   static const UString* str_Transfer_Encoding;
-   static const UString* str_X_Progress_ID;
    static const UString* str_chunked;
    static const UString* str_without_mac;
-   static const UString* str_encoding;
-   static const UString* str_user;
-   static const UString* str_name;
    static const UString* str_localhost;
    static const UString* str_http;
-   static const UString* str_filename;
    static const UString* str_msg_rfc;
    static const UString* str_txt_plain;
    static const UString* str_address;
+   static const UString* str_CLIENT_QUEUE_DIR;
+   static const UString* str_point;
+   static const UString* str_true;
+   static const UString* str_false;
+   static const UString* str_response;
+   // SOAP
    static const UString* str_ns;
-   static const UString* str_METHOD_NAME;
-   static const UString* str_RESPONSE_TYPE;
-   static const UString* str_xmlns;
-   static const UString* str_fault;
    static const UString* str_boolean;
    static const UString* str_byte;
    static const UString* str_unsignedByte;
@@ -967,26 +950,131 @@ public:
    static const UString* str_double;
    static const UString* str_string;
    static const UString* str_base64Binary;
-   static const UString* str_PORT;
-   static const UString* str_USER;
-   static const UString* str_SERVER;
-   static const UString* str_CA_FILE;
-   static const UString* str_CA_PATH;
-   static const UString* str_KEY_FILE;
-   static const UString* str_LOG_FILE;
-   static const UString* str_PASSWORD;
-   static const UString* str_PID_FILE;
-   static const UString* str_CERT_FILE;
-   static const UString* str_LOG_FILE_SZ;
-   static const UString* str_SOCKET_NAME;
-   static const UString* str_VERIFY_MODE;
-   static const UString* str_ENVIRONMENT;
-   static const UString* str_CLIENT_QUEUE_DIR;
-   static const UString* str_point;
-   static const UString* str_true;
-   static const UString* str_false;
+   // IMAP
+   static const UString* str_recent;
+   static const UString* str_unseen;
+   static const UString* str_uidnext;
+   static const UString* str_uidvalidity;
+   // PROXY SERVICE
+   static const UString* str_FOLLOW_REDIRECTS;
+   static const UString* str_CLIENT_CERTIFICATE;
+   static const UString* str_REMOTE_ADDRESS_IP;
+   static const UString* str_WEBSOCKET;
+   // NOCAT
+   static const UString* str_without_label;
+   static const UString* str_allowed_members_default;
+   // SSI
+   static const UString* str_cgi;
+   static const UString* str_var;
+   // HTTP
+   static const UString* str_origin;
+   static const UString* str_indexhtml;
+   static const UString* str_ctype_tsa;
+   static const UString* str_ctype_txt;
+   static const UString* str_ctype_html;
+   static const UString* str_ctype_soap;
+   static const UString* str_ulib_header;
+   static const UString* str_storage_keyid;
+   static const UString* str_websocket_key;
+   static const UString* str_websocket_prot;
+   // QUERY PARSER
+   static const UString* str_p1;
+   static const UString* str_p2;
+   static const UString* str_or;
+   static const UString* str_and;
+   static const UString* str_not;
+   // ORM
+   static const UString* str_port;
+   static const UString* str_root;
+   static const UString* str_UTF8;
+   static const UString* str_UTF16;
+   static const UString* str_dbname;
+   static const UString* str_timeout;
+   static const UString* str_compress;
+   static const UString* str_character_set;
+   static const UString* str_auto_reconnect;
+   // ORM PGSQL
+   static const UString* str_pgsql_name;
+   static const UString* str_memory;
+   // ORM MYSQL
+   static const UString* str_mysql_name;
+   static const UString* str_secure_auth;
+   // ORM SQLITE
+   static const UString* str_sqlite_name;
+   static const UString* str_dbdir;
+#ifdef U_HTTP2_DISABLE
+   static ustringrep stringrep_storage[66];
+#else
+   static const UString* str_authority;
+   static const UString* str_method;
+   static const UString* str_method_get;
+   static const UString* str_method_post;
+   static const UString* str_path;
+   static const UString* str_path_root;
+   static const UString* str_path_index;
+   static const UString* str_scheme;
+   static const UString* str_scheme_http;
+   static const UString* str_scheme_https;
+   static const UString* str_status;
+   static const UString* str_status_200;
+   static const UString* str_status_204;
+   static const UString* str_status_206;
+   static const UString* str_status_304;
+   static const UString* str_status_400;
+   static const UString* str_status_404;
+   static const UString* str_status_500;
+   static const UString* str_accept_charset;
+   static const UString* str_accept_encoding;
+   static const UString* str_accept_encoding_value;
+   static const UString* str_accept_language;
+   static const UString* str_accept_ranges;
+   static const UString* str_accept;
+   static const UString* str_access_control_allow_origin;
+   static const UString* str_age;
+   static const UString* str_allow;
+   static const UString* str_authorization;
+   static const UString* str_cache_control;
+   static const UString* str_content_disposition;
+   static const UString* str_content_encoding;
+   static const UString* str_content_language;
+   static const UString* str_content_length;
+   static const UString* str_content_location;
+   static const UString* str_content_range;
+   static const UString* str_content_type;
+   static const UString* str_cookie;
+   static const UString* str_date;
+   static const UString* str_etag;
+   static const UString* str_expect;
+   static const UString* str_expires;
+   static const UString* str_from;
+   static const UString* str_if_match;
+   static const UString* str_if_modified_since;
+   static const UString* str_if_none_match;
+   static const UString* str_if_range;
+   static const UString* str_if_unmodified_since;
+   static const UString* str_last_modified;
+   static const UString* str_link;
+   static const UString* str_location;
+   static const UString* str_max_forwards;
+   static const UString* str_proxy_authenticate;
+   static const UString* str_proxy_authorization;
+   static const UString* str_range;
+   static const UString* str_referer;
+   static const UString* str_refresh;
+   static const UString* str_retry_after;
+   static const UString* str_server;
+   static const UString* str_set_cookie;
+   static const UString* str_strict_transport_security;
+   static const UString* str_transfer_encoding;
+   static const UString* str_user_agent;
+   static const UString* str_vary;
+   static const UString* str_via;
+   static const UString* str_www_authenticate;
 
-   static void str_allocate();
+   static ustringrep stringrep_storage[132];
+#endif
+
+   static void str_allocate(int which);
 
    // null string (for container etc...)
 
@@ -1313,7 +1401,7 @@ public:
 # if defined(DEBUG) || !defined(__GNUC__) // || GCC_VERSION_NUM >= 60000 // hope
    UString(UString && str)
       {
-      U_TRACE(0, "UString::UString(move)")
+      U_TRACE_NO_PARAM(0, "UString::UString(move)")
 
           rep = str.rep;
       str.rep = UStringRep::string_rep_null;
@@ -1321,7 +1409,7 @@ public:
 # endif
    UString& operator=(UString && str)
       {
-      U_TRACE(0, "UString::operator=(move)")
+      U_TRACE_NO_PARAM(0, "UString::operator=(move)")
 
       swap(str);
 
@@ -1361,7 +1449,7 @@ public:
 
    char* _begin()
       {
-      U_TRACE(0, "UString::_begin()")
+      U_TRACE_NO_PARAM(0, "UString::_begin()")
 
       if (uniq() == false) duplicate();
 
@@ -1370,7 +1458,7 @@ public:
 
    char* _end()
       {
-      U_TRACE(0, "UString::_end()")
+      U_TRACE_NO_PARAM(0, "UString::_end()")
 
       if (uniq() == false) duplicate();
 
@@ -1379,7 +1467,7 @@ public:
 
    char* _rbegin()
       {
-      U_TRACE(0, "UString::_rbegin()")
+      U_TRACE_NO_PARAM(0, "UString::_rbegin()")
 
       if (uniq() == false) duplicate();
 
@@ -1388,7 +1476,7 @@ public:
 
    char* _rend()
       {
-      U_TRACE(0, "UString::_rend()")
+      U_TRACE_NO_PARAM(0, "UString::_rend()")
 
       if (uniq() == false) duplicate();
 
@@ -1459,7 +1547,7 @@ public:
 
    void _append()
       {
-      U_TRACE(0, "UString::_append()")
+      U_TRACE_NO_PARAM(0, "UString::_append()")
 
       U_INTERNAL_ASSERT_POINTER(ptrbuf)
       U_INTERNAL_ASSERT_POINTER(appbuf)
@@ -1499,7 +1587,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UString::clear()")
+      U_TRACE_NO_PARAM(0, "UString::clear()")
 
       _assign(UStringRep::string_rep_null);
 
@@ -1519,7 +1607,7 @@ public:
 
    const char* c_str() const
       {
-      U_TRACE(0, "UString::c_str()")
+      U_TRACE_NO_PARAM(0, "UString::c_str()")
 
       if (isNullTerminated() == false) setNullTerminated();
 
@@ -1731,7 +1819,7 @@ public:
 
    bool isMmap() const
       {
-      U_TRACE(0, "UString::isMmap()")
+      U_TRACE_NO_PARAM(0, "UString::isMmap()")
 
       if (rep->_capacity == U_NOT_FOUND) U_RETURN(true);
 
@@ -1744,7 +1832,7 @@ public:
 
    void setEmpty()
       {
-      U_TRACE(0, "UString::setEmpty()")
+      U_TRACE_NO_PARAM(0, "UString::setEmpty()")
 
       U_INTERNAL_ASSERT_DIFFERS(rep->_capacity, 0) // mode: 0 -> const
 
@@ -1753,7 +1841,7 @@ public:
 
    void setEmptyForce()
       {
-      U_TRACE(0, "UString::setEmptyForce()")
+      U_TRACE_NO_PARAM(0, "UString::setEmptyForce()")
 
       U_INTERNAL_ASSERT_DIFFERS(rep->_capacity, 0) // mode: 0 -> const
 
@@ -1909,17 +1997,17 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   bool strtob() const                 { return rep->strtob(); }
+   bool strtob() const                  { return rep->strtob(); }
 #ifdef HAVE_STRTOF
-   float strtof() const                { return rep->strtof(); }
+   float strtof() const                 { return rep->strtof(); }
 #endif
-   double strtod() const               { return rep->strtod(); }
+   double strtod() const                { return rep->strtod(); }
 #ifdef HAVE_STRTOLD
-   long double strtold() const         { return rep->strtold(); }
+   long double strtold() const          { return rep->strtold(); }
 #endif
-   long strtol(int base = 0) const     { return rep->strtol(base); }
+   long strtol(int base = 10) const     { return rep->strtol(base); }
 #ifdef HAVE_STRTOULL
-   int64_t strtoll(int base = 0) const { return rep->strtoll(base); }
+   int64_t strtoll(int base = 10) const { return rep->strtoll(base); }
 #endif
 
    // UTF8 <--> ISO Latin 1

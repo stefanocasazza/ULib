@@ -102,9 +102,9 @@ public:
 
       client = new UHttpClient<USSLSocket>(&cfg);
 
-      user             = cfg[*UString::str_USER];
-      password         = cfg[U_STRING_FROM_CONSTANT("PASSWORD_AUTH")];
-      follow_redirects = cfg.readBoolean(U_STRING_FROM_CONSTANT("FOLLOW_REDIRECTS"));
+      user             = cfg.at(U_CONSTANT_TO_PARAM("USER"));
+      password         = cfg.at(U_CONSTANT_TO_PARAM("PASSWORD_AUTH"));
+      follow_redirects = cfg.readBoolean(U_CONSTANT_TO_PARAM("FOLLOW_REDIRECTS"));
 
       client->setFollowRedirects(follow_redirects);
       client->getResponseHeader()->setIgnoreCase(true);

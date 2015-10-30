@@ -61,7 +61,7 @@ UVector<UString>* UShibTarget::setcookie;
 
 UShibTarget::UShibTarget()
 {
-   U_TRACE(5, "UShibTarget::UShibTarget()")
+   U_TRACE_NO_PARAM(5, "UShibTarget::UShibTarget()")
 
    m_dc = create_shib_dir_config();
 
@@ -93,7 +93,7 @@ void UShibTarget::log(ShibLogLevel level, const string& msg)
 
 string UShibTarget::getCookies() const
 {
-   U_TRACE(0, "UShibTarget::getCookies()")
+   U_TRACE_NO_PARAM(0, "UShibTarget::getCookies()")
 
    string c = cookies;
 
@@ -114,14 +114,14 @@ void UShibTarget::setCookie(const string& name, const string& value)
 
 string UShibTarget::getArgs()
 {
-   U_TRACE(0, "UShibTarget::getArgs()")
+   U_TRACE_NO_PARAM(0, "UShibTarget::getArgs()")
 
    return string("");
 }
 
 string UShibTarget::getPostData()
 {
-   U_TRACE(0, "UShibTarget::getPostData()")
+   U_TRACE_NO_PARAM(0, "UShibTarget::getPostData()")
 
    string cgistr(postdata_ptr, postdata_len);
 
@@ -154,7 +154,7 @@ void UShibTarget::setRemoteUser(const string& user)
 
 string UShibTarget::getRemoteUser()
 {
-   U_TRACE(0, "UShibTarget::getRemoteUser()")
+   U_TRACE_NO_PARAM(0, "UShibTarget::getRemoteUser()")
 
    string c = remote_addr;
 
@@ -193,14 +193,14 @@ void* UShibTarget::sendRedirect(const string& url)
 
 void* UShibTarget::returnDecline()
 {
-   U_TRACE(0, "UShibTarget::returnDecline()")
+   U_TRACE_NO_PARAM(0, "UShibTarget::returnDecline()")
 
    return (void*)1;
 }
 
 void* UShibTarget::returnOK()
 {
-   U_TRACE(0, "UShibTarget::returnOK()")
+   U_TRACE_NO_PARAM(0, "UShibTarget::returnOK()")
 
    return (void*)0;
 }
@@ -408,7 +408,7 @@ const IPropertySet* URequestMapper::getPropertySet(const char* name, const char*
 
 const DOMElement* URequestMapper::getElement() const
 {
-   U_TRACE(0, "URequestMapper::getElement()")
+   U_TRACE_NO_PARAM(0, "URequestMapper::getElement()")
 
    const IPropertySet* s = reinterpret_cast<const IPropertySet*>(m_propsKey->getData());
 
@@ -438,7 +438,7 @@ static IPlugIn* URequestMapFactory(const DOMElement* e)
 
 static int shib_check_user()
 {
-   U_TRACE(0, "shib_check_user()")
+   U_TRACE_NO_PARAM(0, "shib_check_user()")
 
    ostringstream threadid;
    threadid << "[" << getpid() << "] shib_check_user" << '\0';
@@ -481,7 +481,7 @@ static int shib_check_user()
 
 static int shib_handler()
 {
-   U_TRACE(0, "shib_handler()")
+   U_TRACE_NO_PARAM(0, "shib_handler()")
 
    ostringstream threadid;
    threadid << "[" << getpid() << "] shib_handler" << '\0';
@@ -520,14 +520,14 @@ U_CREAT_FUNC(mod_shib, UShibPlugIn)
 
 UShibPlugIn::UShibPlugIn()
 {
-   U_TRACE(0, "UShibPlugIn::UShibPlugIn()")
+   U_TRACE_NO_PARAM(0, "UShibPlugIn::UShibPlugIn()")
 
    conf = 0;
 }
 
 UShibPlugIn::~UShibPlugIn()
 {
-   U_TRACE(0, "UShibPlugIn::~UShibPlugIn()")
+   U_TRACE_NO_PARAM(0, "UShibPlugIn::~UShibPlugIn()")
 
    conf->shutdown();
 }
@@ -557,7 +557,7 @@ int UShibPlugIn::handlerConfig(UFileConfig& cfg)
 
 int UShibPlugIn::handlerInit()
 {
-   U_TRACE(0, "UShibPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(0, "UShibPlugIn::handlerInit()")
 
    U_INTERNAL_ASSERT_EQUALS(conf,0)
 
@@ -598,7 +598,7 @@ int UShibPlugIn::handlerInit()
 
 int UShibPlugIn::handlerRequest()
 {
-   U_TRACE(0, "UShibPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UShibPlugIn::handlerRequest()")
 
    U_INTERNAL_DUMP("uri = %.*S", U_HTTP_URI_TO_TRACE)
 

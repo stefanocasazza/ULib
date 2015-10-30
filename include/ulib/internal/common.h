@@ -115,6 +115,28 @@ extern U_EXPORT void  operator delete[](void*);
 #include <ulib/internal/memory_pool.h>
 #include <ulib/internal/macro.h>
 
+enum StringAllocationType {
+   STR_ALLOCATE_SOAP         = 0x00000001,
+   STR_ALLOCATE_IMAP         = 0x00000002,
+   STR_ALLOCATE_SSI          = 0x00000004,
+   STR_ALLOCATE_NOCAT        = 0x00000008,
+   STR_ALLOCATE_HTTP         = 0x00000010,
+   STR_ALLOCATE_QUERY_PARSER = 0x00000020,
+   STR_ALLOCATE_ORM          = 0x00000040,
+   STR_ALLOCATE_HTTP2        = 0x00000080
+};
+
+enum StringAllocationIndex {
+   STR_ALLOCATE_INDEX_SOAP         = 14,
+   STR_ALLOCATE_INDEX_IMAP         = STR_ALLOCATE_INDEX_SOAP+14,
+   STR_ALLOCATE_INDEX_SSI          = STR_ALLOCATE_INDEX_IMAP+4,
+   STR_ALLOCATE_INDEX_NOCAT        = STR_ALLOCATE_INDEX_SSI+2,
+   STR_ALLOCATE_INDEX_HTTP         = STR_ALLOCATE_INDEX_NOCAT+2,
+   STR_ALLOCATE_INDEX_QUERY_PARSER = STR_ALLOCATE_INDEX_HTTP+10,
+   STR_ALLOCATE_INDEX_ORM          = STR_ALLOCATE_INDEX_QUERY_PARSER+5,
+   STR_ALLOCATE_INDEX_HTTP2        = STR_ALLOCATE_INDEX_ORM+15
+};
+
 // json value representation
 
 union anyvalue {

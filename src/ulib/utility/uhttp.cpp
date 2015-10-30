@@ -156,55 +156,12 @@ UString* UHTTP::uri_strict_transport_security_mask;
 #ifdef U_LOG_ENABLE
 char         UHTTP::iov_buffer[20];
 struct iovec UHTTP::iov_vec[10];
-#  ifndef U_CACHE_REQUEST_DISABLE
+#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
 uint32_t UHTTP::agent_offset;
 uint32_t UHTTP::request_offset;
 uint32_t UHTTP::referer_offset;
 #  endif
 #endif
-
-const UString* UHTTP::str_origin;
-const UString* UHTTP::str_indexhtml;
-const UString* UHTTP::str_ctype_tsa;
-const UString* UHTTP::str_ctype_txt;
-const UString* UHTTP::str_ctype_html;
-const UString* UHTTP::str_ctype_soap;
-const UString* UHTTP::str_ulib_header;
-const UString* UHTTP::str_storage_keyid;
-
-void UHTTP::str_allocate()
-{
-   U_TRACE(0+256, "UHTTP::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_indexhtml, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_ctype_tsa, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_ctype_txt, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_ctype_html, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_ctype_soap, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_origin, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_ulib_header, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_storage_keyid, 0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("index.html") },
-      { U_STRINGREP_FROM_CONSTANT("application/timestamp-reply\r\n") },
-      { U_STRINGREP_FROM_CONSTANT(U_CTYPE_TEXT U_CRLF) },
-      { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML U_CRLF) },
-      { U_STRINGREP_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"\r\n") },
-      { U_STRINGREP_FROM_CONSTANT("Origin") },
-      { U_STRINGREP_FROM_CONSTANT("X-Powered-By: ULib/" ULIB_VERSION "\r\n") },
-      { U_STRINGREP_FROM_CONSTANT("StiD") }
-   };
-
-   U_NEW_ULIB_OBJECT(str_indexhtml,     U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_ctype_tsa,     U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_ctype_txt,     U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_ctype_html,    U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_ctype_soap,    U_STRING_FROM_STRINGREP_STORAGE(4));
-   U_NEW_ULIB_OBJECT(str_origin,        U_STRING_FROM_STRINGREP_STORAGE(5));
-   U_NEW_ULIB_OBJECT(str_ulib_header,   U_STRING_FROM_STRINGREP_STORAGE(6));
-   U_NEW_ULIB_OBJECT(str_storage_keyid, U_STRING_FROM_STRINGREP_STORAGE(7));
-}
 
 uint32_t UHTTP::num_item_tot;
 uint32_t UHTTP::num_page_cur;
@@ -214,7 +171,7 @@ uint32_t UHTTP::num_item_for_page;
 
 UString UHTTP::getLinkPagination()
 {
-   U_TRACE(0, "UHTTP::getLinkPagination()")
+   U_TRACE_NO_PARAM(0, "UHTTP::getLinkPagination()")
 
    U_INTERNAL_DUMP("num_page_cur = %u num_item_tot = %u num_page_start = %u num_page_end = %u num_item_for_page = %u",
                     num_page_cur,     num_item_tot,     num_page_start,     num_page_end,     num_item_for_page)
@@ -402,7 +359,7 @@ UHTTP::UFileCacheData* UHTTP::inotify_file_data;
 
 U_NO_EXPORT void UHTTP::setInotifyPathname()
 {
-   U_TRACE(0, "UHTTP::setInotifyPathname()")
+   U_TRACE_NO_PARAM(0, "UHTTP::setInotifyPathname()")
 
    inotify_pathname->setBuffer(inotify_dir->size() + 1 + inotify_len);
 
@@ -437,7 +394,7 @@ U_NO_EXPORT bool UHTTP::getInotifyPathDirectory(UStringRep* key, void* value)
 
 void UHTTP::in_READ()
 {
-   U_TRACE(1+256, "UHTTP::in_READ()")
+   U_TRACE_NO_PARAM(1+256, "UHTTP::in_READ()")
 
    U_INTERNAL_ASSERT_POINTER(cache_file)
    U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_inotify)
@@ -739,6 +696,8 @@ bool UHTTP::UCServletPage::compile(const UString& program)
 }
 
 #ifdef U_STATIC_ONLY
+extern "C" void __cxa_pure_virtual() { U_ERROR("__cxa_pure_virtual"); }
+
 #  ifdef U_STATIC_SERVLET_WI_AUTH
 //#   define WI_AUTH_DOMAIN "auth.t-unwired.com"
 #     define WI_AUTH_DOMAIN "wifi-aaa.comune.fi.it"
@@ -767,9 +726,11 @@ U_NO_EXPORT void UHTTP::loadStaticLinkedServlet(const char* name, uint32_t len, 
 }
 #endif
 
-void UHTTP::ctor()
+void UHTTP::init()
 {
-   U_TRACE(1, "UHTTP::ctor()")
+   U_TRACE_NO_PARAM(1, "UHTTP::init()")
+
+   UString::str_allocate(STR_ALLOCATE_HTTP);
 
    U_INTERNAL_ASSERT_EQUALS(ext, 0)
    U_INTERNAL_ASSERT_EQUALS(etag, 0)
@@ -778,17 +739,14 @@ void UHTTP::ctor()
    U_INTERNAL_ASSERT_EQUALS(geoip, 0)
    U_INTERNAL_ASSERT_EQUALS(tmpdir, 0)
    U_INTERNAL_ASSERT_EQUALS(request, 0)
-   U_INTERNAL_ASSERT_EQUALS(pathname, 0)
    U_INTERNAL_ASSERT_EQUALS(qcontent, 0)
+   U_INTERNAL_ASSERT_EQUALS(pathname, 0)
    U_INTERNAL_ASSERT_EQUALS(rpathname, 0)
    U_INTERNAL_ASSERT_EQUALS(formMulti, 0)
    U_INTERNAL_ASSERT_EQUALS(set_cookie, 0)
    U_INTERNAL_ASSERT_EQUALS(form_name_value, 0)
    U_INTERNAL_ASSERT_EQUALS(set_cookie_option, 0)
    U_INTERNAL_ASSERT_EQUALS(string_HTTP_Variables, 0)
-
-               str_allocate();
-   UWebSocket::str_allocate();
 
    file                  = U_NEW(UFile);
    pcmd                  = U_NEW(UCommand);
@@ -809,13 +767,6 @@ void UHTTP::ctor()
 
    if (cache_file_mask   == 0) cache_file_mask   = U_NEW(U_STRING_FROM_CONSTANT("*.css|*.js|*.*html|*.png|*.gif|*.jpg"));
    if (cgi_cookie_option == 0) cgi_cookie_option = U_NEW(U_STRING_FROM_CONSTANT("[\"\" 0]"));
-
-   U_INTERNAL_ASSERT_POINTER(UString::str_host)
-   U_INTERNAL_ASSERT_POINTER(UString::str_accept)
-   U_INTERNAL_ASSERT_POINTER(UString::str_cookie)
-   U_INTERNAL_ASSERT_POINTER(UString::str_connection)
-   U_INTERNAL_ASSERT_POINTER(UString::str_content_type)
-   U_INTERNAL_ASSERT_POINTER(UString::str_content_length)
 
 #ifdef U_ALIAS
    U_INTERNAL_ASSERT_EQUALS(alias, 0)
@@ -1302,6 +1253,10 @@ next:
 
    // various setting...
 
+   U_INTERNAL_DUMP("U_http_method_list = %p", U_http_method_list)
+
+   u_init_http_method_list();
+
    U_http_info.nResponseCode = HTTP_OK;
 
    setStatusDescription();
@@ -1337,7 +1292,7 @@ U_NO_EXPORT bool UHTTP::check_memory(UStringRep* key, void* value)
 
 bool UHTTP::cache_file_check_memory()
 {
-   U_TRACE(0, "UHTTP::cache_file_check_memory()")
+   U_TRACE_NO_PARAM(0, "UHTTP::cache_file_check_memory()")
 
    U_INTERNAL_ASSERT_POINTER(cache_file)
 
@@ -1351,7 +1306,7 @@ bool UHTTP::cache_file_check_memory()
 
 void UHTTP::checkFileForCache()
 {
-   U_TRACE(0, "UHTTP::checkFileForCache()")
+   U_TRACE_NO_PARAM(0, "UHTTP::checkFileForCache()")
 
    U_INTERNAL_ASSERT_POINTER(pathname)
 
@@ -1386,7 +1341,7 @@ void UHTTP::setGlobalAlias(const UString& _alias) // NB: automatic alias for all
 
 void UHTTP::dtor()
 {
-   U_TRACE(0, "UHTTP::dtor()")
+   U_TRACE_NO_PARAM(0, "UHTTP::dtor()")
 
    if (vservice)              delete vservice;
    if (vmsg_error)            delete vmsg_error;
@@ -1505,7 +1460,7 @@ void UHTTP::dtor()
 
 __pure bool UHTTP::isMobile()
 {
-   U_TRACE(0, "UHTTP::isMobile()")
+   U_TRACE_NO_PARAM(0, "UHTTP::isMobile()")
 
    if (U_http_info.user_agent_len &&
        UServices::dosMatchWithOR(U_HTTP_USER_AGENT_TO_PARAM,
@@ -1838,7 +1793,7 @@ next:
 
                U_INTERNAL_DUMP("U_line_terminator_len = %u U_http_info.startHeader(%u) = %.20S", U_line_terminator_len, U_http_info.startHeader, ptr)
 
-#           ifndef U_CACHE_REQUEST_DISABLE
+#           if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
                UClientImage_Base::uri_offset = U_http_info.uri - start; 
 
                U_INTERNAL_DUMP("UClientImage_Base::uri_offset = %u", UClientImage_Base::uri_offset)
@@ -1959,7 +1914,7 @@ bool UHTTP::scanfHeaderResponse(const char* ptr, uint32_t size)
 
 U_NO_EXPORT bool UHTTP::readHeaderRequest()
 {
-   U_TRACE(0, "UHTTP::readHeaderRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::readHeaderRequest()")
 
    uint32_t sz     = UClientImage_Base::request->size();
    const char* ptr = UClientImage_Base::request->data();
@@ -2151,7 +2106,7 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
 
    if (U_http_data_chunked == false)
       {
-      const char* chunk_ptr = getHeaderValuePtr(*pbuffer, *UString::str_Transfer_Encoding, true);
+      const char* chunk_ptr = getHeaderValuePtr(*pbuffer, U_CONSTANT_TO_PARAM("Transfer-Encoding"), true);
 
       if (chunk_ptr)
          {
@@ -2262,7 +2217,7 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
 
 U_NO_EXPORT bool UHTTP::readBodyRequest()
 {
-   U_TRACE(0, "UHTTP::readBodyRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::readBodyRequest()")
 
    U_ASSERT(UClientImage_Base::body->empty())
    U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
@@ -2411,7 +2366,7 @@ bool UHTTP::readBodyResponse(USocket* sk, UString* pbuffer, UString& body)
 
 U_NO_EXPORT void UHTTP::checkRequestForHeader()
 {
-   U_TRACE(0, "UHTTP::checkRequestForHeader()")
+   U_TRACE_NO_PARAM(0, "UHTTP::checkRequestForHeader()")
 
    U_INTERNAL_DUMP("U_line_terminator_len = %d", U_line_terminator_len)
 
@@ -2636,7 +2591,7 @@ set_content_type:    U_http_content_type_len  = pos2-pos1;
                   else if (c1 == 'L' &&
                            memcmp(p1, U_CONSTANT_TO_PARAM("ength")) == 0)
                      {
-set_content_length:  U_http_info.clength = (uint32_t) strtoul(ptr+pos1, 0, 0);
+set_content_length:  U_http_info.clength = (uint32_t) strtoul(ptr+pos1, 0, 10);
 
                      U_INTERNAL_DUMP("Content-Length: = %.*S U_http_info.clength = %u", 10, ptr+pos1, U_http_info.clength)
                      }
@@ -2919,7 +2874,7 @@ next: U_INTERNAL_DUMP("char (after cr/newline) = %C", pn[2])
 
 bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
 {
-   U_TRACE(1, "UHTTP::checkIfSourceHasChangedAndCompileUSP()")
+   U_TRACE_NO_PARAM(1, "UHTTP::checkIfSourceHasChangedAndCompileUSP()")
 
 #if defined(DEBUG) && !defined(U_STATIC_ONLY)
    checkForPathName();
@@ -3075,7 +3030,7 @@ next: U_DUMP("UServer_Base::isParallelizationChild() = %b UServer_Base::isParall
 
 U_NO_EXPORT bool UHTTP::runDynamicPage()
 {
-   U_TRACE(0, "UHTTP::runDynamicPage()")
+   U_TRACE_NO_PARAM(0, "UHTTP::runDynamicPage()")
 
    U_INTERNAL_ASSERT_POINTER(file_data)
    U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
@@ -3166,7 +3121,7 @@ next:
 
 U_NO_EXPORT bool UHTTP::callService()
 {
-   U_TRACE(0, "UHTTP::callService()")
+   U_TRACE_NO_PARAM(0, "UHTTP::callService()")
 
    pathname->setBuffer(U_CAPACITY);
 
@@ -3243,11 +3198,11 @@ bool UHTTP::callService(const UString& path) // NB: it is used also by server_pl
 
 bool UHTTP::handlerCache()
 {
-   U_TRACE(0, "UHTTP::handlerCache()")
+   U_TRACE_NO_PARAM(0, "UHTTP::handlerCache()")
 
    U_INTERNAL_ASSERT(U_ClientImage_request_is_cached)
 
-#ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
    const char* ptr = UClientImage_Base::request->data();
 
    switch (u_get_unalignedp32(ptr))
@@ -3257,7 +3212,12 @@ bool UHTTP::handlerCache()
       case U_MULTICHAR_CONSTANT32('h','e','a','d'):
       case U_MULTICHAR_CONSTANT32('H','E','A','D'): U_http_method_type = HTTP_HEAD; U_http_method_num = 1; break;
 
-      default: U_RETURN(false);
+      default:
+         {
+         U_INTERNAL_DUMP("U_ClientImage_advise_for_parallelization = %b", U_ClientImage_advise_for_parallelization)
+
+         if (U_ClientImage_advise_for_parallelization == false) U_RETURN(false);
+         }
       }
 
    if (U_ClientImage_pipeline)
@@ -3354,6 +3314,10 @@ next2:
       }
 #  endif
 
+# ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+   if (U_ClientImage_advise_for_parallelization) U_RETURN(true);
+# endif
+
    if (UClientImage_Base::csfd > 0)
       {
       U_INTERNAL_ASSERT(U_http_sendfile)
@@ -3393,7 +3357,7 @@ next2:
 
 int UHTTP::handlerREAD()
 {
-   U_TRACE(0, "UHTTP::handlerREAD()")
+   U_TRACE_NO_PARAM(0, "UHTTP::handlerREAD()")
 
    U_INTERNAL_DUMP("UClientImage_Base::request(%u) = %V", UClientImage_Base::request->size(), UClientImage_Base::request->rep)
 
@@ -3435,7 +3399,8 @@ int UHTTP::handlerREAD()
          U_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
          }
       else if (U_http_version == 0 &&
-               U_http_info.uri_len)
+               U_http_info.uri_len &&
+               U_http_info.query == 0)
          {
          U_http_info.nResponseCode = HTTP_VERSION;
          }
@@ -3528,7 +3493,7 @@ int UHTTP::handlerREAD()
 
 int UHTTP::manageRequest()
 {
-   U_TRACE(0, "UHTTP::manageRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::manageRequest()")
 
    // check the HTTP message
 
@@ -3957,7 +3922,7 @@ end: // NB: we check if we can shortcut the http request processing...
 
 int UHTTP::processRequest()
 {
-   U_TRACE(0, "UHTTP::processRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::processRequest()")
 
    U_ASSERT(UClientImage_Base::isRequestNeedProcessing())
 
@@ -4041,9 +4006,9 @@ int UHTTP::processRequest()
 
       if (U_http_info.query_len == 0)
          {
-         uint32_t sz      = file->getPathRelativLen(), len = str_indexhtml->size();
+         uint32_t sz      = file->getPathRelativLen(), len = UString::str_indexhtml->size();
          const char* ptr  = file->getPathRelativ();
-         const char* ptr1 = str_indexhtml->data();
+         const char* ptr1 = UString::str_indexhtml->data();
 
          U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
@@ -4219,7 +4184,7 @@ empty_file: // NB: now we check for empty file...
 
 void UHTTP::setEndRequestProcessing()
 {
-   U_TRACE(0, "UHTTP::setEndRequestProcessing()")
+   U_TRACE_NO_PARAM(0, "UHTTP::setEndRequestProcessing()")
 
    // if any clear form data
 
@@ -4317,16 +4282,7 @@ void UHTTP::setEndRequestProcessing()
        UClientImage_Base::isRequestCacheable() &&
        U_IS_HTTP_SUCCESS(U_http_info.nResponseCode))
       {
-      U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 2)
-      U_INTERNAL_ASSERT_MAJOR(UClientImage_Base::size_request, 0)
-      U_INTERNAL_ASSERT_RANGE(1,UClientImage_Base::uri_offset,64)
-
-      U_http_info.startHeader -= UClientImage_Base::uri_offset + U_CONSTANT_SIZE(" HTTP/1.1\r\n");
-
-      u__memcpy(UClientImage_Base::cbuffer, UClientImage_Base::request->c_pointer(UClientImage_Base::uri_offset), U_http_info.startHeader, __PRETTY_FUNCTION__);
-
-      U_INTERNAL_DUMP("request(%u) = %V", UClientImage_Base::request->size(), UClientImage_Base::request->rep)
-      U_INTERNAL_DUMP("UClientImage_Base::cbuffer(%u) = %.*S", U_http_info.startHeader, U_http_info.startHeader, UClientImage_Base::cbuffer)
+      UClientImage_Base::setRequestToCache();
 
       U_INTERNAL_DUMP("file_data = %p U_http_sendfile = %b", file_data, U_http_sendfile)
 
@@ -4492,7 +4448,7 @@ void UHTTP::setCookie(const UString& param)
 
 void UHTTP::initDbNotFound()
 {
-   U_TRACE(0, "UHTTP::initDbNotFound()")
+   U_TRACE_NO_PARAM(0, "UHTTP::initDbNotFound()")
 
    U_INTERNAL_ASSERT_EQUALS(db_not_found, 0)
    U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_inotify)
@@ -4518,7 +4474,7 @@ void UHTTP::initDbNotFound()
 
 void UHTTP::initSession()
 {
-   U_TRACE(0, "UHTTP::initSession()")
+   U_TRACE_NO_PARAM(0, "UHTTP::initSession()")
 
    if (db_session == 0)
       {
@@ -4547,7 +4503,7 @@ void UHTTP::initSession()
 
 void UHTTP::clearSession()
 {
-   U_TRACE(0, "UHTTP::clearSession()")
+   U_TRACE_NO_PARAM(0, "UHTTP::clearSession()")
 
    U_INTERNAL_ASSERT_POINTER(db_session)
 
@@ -4563,7 +4519,7 @@ void UHTTP::clearSession()
 #ifdef USE_LIBSSL
 void UHTTP::initSessionSSL()
 {
-   U_TRACE(0, "UHTTP::initSessionSSL()")
+   U_TRACE_NO_PARAM(0, "UHTTP::initSessionSSL()")
 
    U_INTERNAL_ASSERT_EQUALS(db_session_ssl, 0)
    U_INTERNAL_ASSERT_EQUALS(data_session_ssl, 0)
@@ -4622,7 +4578,7 @@ void UHTTP::initSessionSSL()
 
 void UHTTP::clearSessionSSL()
 {
-   U_TRACE(0, "UHTTP::clearSessionSSL()")
+   U_TRACE_NO_PARAM(0, "UHTTP::clearSessionSSL()")
 
    U_INTERNAL_ASSERT_POINTER(db_session_ssl)
 
@@ -4668,7 +4624,7 @@ U_NO_EXPORT void UHTTP::removeDataSession(const UString& token)
 
 void UHTTP::removeDataSession()
 {
-   U_TRACE(0, "UHTTP::removeDataSession()")
+   U_TRACE_NO_PARAM(0, "UHTTP::removeDataSession()")
 
    U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_session)
@@ -4737,7 +4693,7 @@ bool UHTTP::getCookie(UString* cookie)
       if (u_get_unalignedp32(start)   == U_MULTICHAR_CONSTANT32('u','l','i','b') &&
           u_get_unalignedp16(start+4) == U_MULTICHAR_CONSTANT16('.','s'))
          {
-         sid_counter_cur = strtol(start + U_CONSTANT_SIZE("ulib.s"), &ptr, 0);
+         sid_counter_cur = strtol(start + U_CONSTANT_SIZE("ulib.s"), &ptr, 10);
 
          U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
 
@@ -4770,7 +4726,7 @@ bool UHTTP::getCookie(UString* cookie)
 
                if (token.compare(0U, UServer_Base::client_address_len, UServer_Base::client_address, UServer_Base::client_address_len) == 0) // IP
                   {
-                  agent = strtol(token.c_pointer(UServer_Base::client_address_len+1), &ptr, 0);
+                  agent = strtol(token.c_pointer(UServer_Base::client_address_len+1), &ptr, 10);
 
                   U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
 
@@ -4783,7 +4739,7 @@ bool UHTTP::getCookie(UString* cookie)
                         {
                         do { ++ptr; } while (*ptr != '_');
 
-                        check = (sid_counter_cur == (uint32_t)strtol(ptr+1, 0, 0)); // COUNTER
+                        check = (sid_counter_cur == (uint32_t)strtol(ptr+1, 0, 10)); // COUNTER
                         }
                      }
                   }
@@ -4842,7 +4798,7 @@ remove:
 
 bool UHTTP::getDataStorage()
 {
-   U_TRACE(0, "UHTTP::getDataStorage()")
+   U_TRACE_NO_PARAM(0, "UHTTP::getDataStorage()")
 
    U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_storage)
@@ -4873,7 +4829,7 @@ bool UHTTP::getDataStorage(uint32_t index, UString& value)
 
 bool UHTTP::getDataSession()
 {
-   U_TRACE(0, "UHTTP::getDataSession()")
+   U_TRACE_NO_PARAM(0, "UHTTP::getDataSession()")
 
    U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_session)
@@ -4907,7 +4863,7 @@ bool UHTTP::getDataSession(uint32_t index, UString& value)
 
 void UHTTP::putDataSession()
 {
-   U_TRACE(0, "UHTTP::putDataSession()")
+   U_TRACE_NO_PARAM(0, "UHTTP::putDataSession()")
 
    U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_session)
@@ -4936,7 +4892,7 @@ void UHTTP::putDataSession(uint32_t index, const char* value, uint32_t size)
 
 void UHTTP::putDataStorage()
 {
-   U_TRACE(0, "UHTTP::putDataStorage()")
+   U_TRACE_NO_PARAM(0, "UHTTP::putDataStorage()")
 
    U_INTERNAL_ASSERT_POINTER(db_session)
    U_INTERNAL_ASSERT_POINTER(data_storage)
@@ -5058,7 +5014,7 @@ const char* UHTTP::getStatusDescription(uint32_t* plen)
 
 U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
 {
-   U_TRACE(0, "UHTTP::getHTMLDirectoryList()")
+   U_TRACE_NO_PARAM(0, "UHTTP::getHTMLDirectoryList()")
 
    U_INTERNAL_ASSERT(file->pathname.isNullTerminated())
 
@@ -5266,7 +5222,7 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len, uint32
 
 uint32_t UHTTP::processForm()
 {
-   U_TRACE(0, "UHTTP::processForm()")
+   U_TRACE_NO_PARAM(0, "UHTTP::processForm()")
 
    U_ASSERT(tmpdir->empty())
    U_ASSERT(qcontent->empty())
@@ -5370,7 +5326,7 @@ uint32_t UHTTP::processForm()
 
 void UHTTP::setStatusDescription()
 {
-   U_TRACE(0, "UHTTP::setStatusDescription()")
+   U_TRACE_NO_PARAM(0, "UHTTP::setStatusDescription()")
 
    if (response_code != U_http_info.nResponseCode)
       {
@@ -5502,7 +5458,7 @@ void UHTTP::setStatusDescription()
 
 void UHTTP::handlerResponse()
 {
-   U_TRACE(0, "UHTTP::handlerResponse()")
+   U_TRACE_NO_PARAM(0, "UHTTP::handlerResponse()")
 
    U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
 
@@ -5917,7 +5873,7 @@ void UHTTP::setErrorResponse(const UString* content_type, int code, const char* 
 
 void UHTTP::setUnAuthorized()
 {
-   U_TRACE(0, "UHTTP::setUnAuthorized()")
+   U_TRACE_NO_PARAM(0, "UHTTP::setUnAuthorized()")
 
    UString ext(100U);
 
@@ -5941,7 +5897,7 @@ void UHTTP::setUnAuthorized()
 
 void UHTTP::setDynamicResponse()
 {
-   U_TRACE(0, "UHTTP::setDynamicResponse()")
+   U_TRACE_NO_PARAM(0, "UHTTP::setDynamicResponse()")
 
    U_INTERNAL_DUMP("U_http_info.endHeader = %u U_http_content_type_len = %u mime_index = %C",
                     U_http_info.endHeader,     U_http_content_type_len,     mime_index)
@@ -6106,12 +6062,12 @@ end:
 
 U_NO_EXPORT bool UHTTP::processAuthorization()
 {
-   U_TRACE(0, "UHTTP::processAuthorization()")
+   U_TRACE_NO_PARAM(0, "UHTTP::processAuthorization()")
 
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
    bool result     = false;
-   const char* ptr = getHeaderValuePtr(*UString::str_authorization, false);
+   const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("Authorization"), false);
 
    if (ptr)
       {
@@ -6386,7 +6342,7 @@ bool UHTTP::isUserAuthorized(const UString& user, const UString& password)
 
 __pure bool UHTTP::isSOAPRequest()
 {
-   U_TRACE(0, "UHTTP::isSOAPRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::isSOAPRequest()")
 
    // NB: soap is NOT a static page, so to avoid stat() syscall we use alias mechanism...
 
@@ -6407,7 +6363,7 @@ __pure bool UHTTP::isSOAPRequest()
 
 __pure bool UHTTP::isTSARequest()
 {
-   U_TRACE(0, "UHTTP::isTSARequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::isTSARequest()")
 
    // NB: tsa is NOT a static page, so to avoid stat() syscall we use alias mechanism...
 
@@ -6430,7 +6386,7 @@ __pure bool UHTTP::isTSARequest()
 
 bool UHTTP::isProxyRequest()
 {
-   U_TRACE(0, "UHTTP::isProxyRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::isProxyRequest()")
 
    U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
 
@@ -6465,7 +6421,7 @@ bool UHTTP::isProxyRequest()
 
 __pure bool UHTTP::isFCGIRequest()
 {
-   U_TRACE(0, "UHTTP::isFCGIRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::isFCGIRequest()")
 
    U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
 
@@ -6484,7 +6440,7 @@ __pure bool UHTTP::isFCGIRequest()
 
 __pure bool UHTTP::isSCGIRequest()
 {
-   U_TRACE(0, "UHTTP::isSCGIRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::isSCGIRequest()")
 
    U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
 
@@ -6504,7 +6460,7 @@ __pure bool UHTTP::isSCGIRequest()
 #ifdef USE_LIBSSL
 bool UHTTP::checkUriProtected()
 {
-   U_TRACE(0, "UHTTP::checkUriProtected()")
+   U_TRACE_NO_PARAM(0, "UHTTP::checkUriProtected()")
 
    U_INTERNAL_ASSERT_POINTER(uri_protected_mask)
 
@@ -6537,7 +6493,7 @@ bool UHTTP::checkUriProtected()
 
 __pure bool UHTTP::isUriRequestProtected()
 {
-   U_TRACE(0, "UHTTP::isUriRequestProtected()")
+   U_TRACE_NO_PARAM(0, "UHTTP::isUriRequestProtected()")
 
    // check if the uri is protected
 
@@ -6555,7 +6511,7 @@ __pure bool UHTTP::isUriRequestProtected()
 
 __pure bool UHTTP::isUriRequestNeedCertificate()
 {
-   U_TRACE(0, "UHTTP::isUriRequestNeedCertificate()")
+   U_TRACE_NO_PARAM(0, "UHTTP::isUriRequestNeedCertificate()")
 
    // check if the uri request need a certificate
 
@@ -6576,7 +6532,7 @@ __pure bool UHTTP::isUriRequestNeedCertificate()
 #ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
 __pure bool UHTTP::isUriRequestStrictTransportSecurity()
 {
-   U_TRACE(0, "UHTTP::isUriRequestStrictTransportSecurity()")
+   U_TRACE_NO_PARAM(0, "UHTTP::isUriRequestStrictTransportSecurity()")
 
    // check if the uri use HTTP Strict Transport Security to force client to use secure connections only
 
@@ -7205,7 +7161,7 @@ U_NO_EXPORT bool UHTTP::compileUSP(const char* path, uint32_t len)
 
 U_NO_EXPORT void UHTTP::manageDataForCache()
 {
-   U_TRACE(1, "UHTTP::manageDataForCache()")
+   U_TRACE_NO_PARAM(1, "UHTTP::manageDataForCache()")
 
    const char* ptr;
    UString file_name;
@@ -7359,8 +7315,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    // NB: when a pathfile ends with "*.[so|usp|c|dll]" it is assumed to be a dynamic page...
 
-   if (ptr &&
-       UServices::dosMatchWithOR(file_name, U_CONSTANT_TO_PARAM("*.so|*.usp|*.c|*.dll"), 0))
+   if (ptr                                                                              &&
+       (UServices::dosMatch(      file_name, U_CONSTANT_TO_PARAM("*.0.so"), 0) == false && // MACOSX
+        UServices::dosMatchWithOR(file_name, U_CONSTANT_TO_PARAM("*.so|*.usp|*.c|*.dll"), 0)))
       {
       uint32_t sz, len;
       char buffer[U_PATH_MAX];
@@ -7626,7 +7583,7 @@ UString UHTTP::getDataFromCache(int idx)
 
 U_NO_EXPORT bool UHTTP::processFileCache()
 {
-   U_TRACE(0, "UHTTP::processFileCache()")
+   U_TRACE_NO_PARAM(0, "UHTTP::processFileCache()")
 
    U_INTERNAL_ASSERT_POINTER(file_data)
 
@@ -7703,7 +7660,7 @@ U_NO_EXPORT bool UHTTP::checkPath(uint32_t len)
 
 void UHTTP::setPathName()
 {
-   U_TRACE(0, "UHTTP::setPathName()")
+   U_TRACE_NO_PARAM(0, "UHTTP::setPathName()")
 
    U_INTERNAL_ASSERT(pathname->empty())
    U_ASSERT(pathname->capacity() >= u_cwd_len + U_http_info.uri_len)
@@ -7718,7 +7675,7 @@ void UHTTP::setPathName()
 
 U_NO_EXPORT void UHTTP::checkPath()
 {
-   U_TRACE(0, "UHTTP::checkPath()")
+   U_TRACE_NO_PARAM(0, "UHTTP::checkPath()")
 
    U_INTERNAL_DUMP("     pathname(%3u) = %V", pathname->size(), pathname->rep)
    U_INTERNAL_DUMP("document_root(%3u) = %V", UServer_Base::document_root_size, UServer_Base::document_root->rep)
@@ -7949,7 +7906,7 @@ UVector<UHTTP::RewriteRule*>* UHTTP::vRewriteRule;
 
 U_NO_EXPORT void UHTTP::processRewriteRule()
 {
-   U_TRACE(0, "UHTTP::processRewriteRule()")
+   U_TRACE_NO_PARAM(0, "UHTTP::processRewriteRule()")
 
    uint32_t pos, len;
    UHTTP::RewriteRule* rule;
@@ -8251,8 +8208,8 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
          {
          // The environment must not contain the keys HTTP_CONTENT_TYPE or HTTP_CONTENT_LENGTH (we use the versions without HTTP_)
 
-         requestHeader.removeHeader(*UString::str_content_type);
-         requestHeader.removeHeader(*UString::str_content_length);
+         requestHeader.removeHeader(U_CONSTANT_TO_PARAM("Content-Type"));
+         requestHeader.removeHeader(U_CONSTANT_TO_PARAM("Content-Length"));
 
          if (requestHeader.empty() == false) prequestHeader = &(requestHeader.table);
          }
@@ -8271,7 +8228,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
 
       if (prequestHeader)
          {
-         requestHeader.removeHeader(*UString::str_host);
+         requestHeader.removeHeader(U_CONSTANT_TO_PARAM("Host"));
 
          if (requestHeader.empty()) prequestHeader = 0;
          }
@@ -8303,7 +8260,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
 
       if (prequestHeader)
          {
-         requestHeader.removeHeader(*UString::str_cookie);
+         requestHeader.removeHeader(U_CONSTANT_TO_PARAM("Cookie"));
 
          if (requestHeader.empty()) prequestHeader = 0;
          }
@@ -8317,7 +8274,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
 
       if (prequestHeader)
          {
-         requestHeader.removeHeader(*UString::str_referer);
+         requestHeader.removeHeader(U_CONSTANT_TO_PARAM("Referer"));
 
          if (requestHeader.empty()) prequestHeader = 0;
          }
@@ -8331,7 +8288,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
 
       if (prequestHeader)
          {
-         requestHeader.removeHeader(*UString::str_user_agent);
+         requestHeader.removeHeader(U_CONSTANT_TO_PARAM("User-Agent"));
 
          if (requestHeader.empty()) prequestHeader = 0;
          }
@@ -8343,7 +8300,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
 
       if (prequestHeader)
          {
-         requestHeader.removeHeader(*UString::str_accept);
+         requestHeader.removeHeader(U_CONSTANT_TO_PARAM("Accept"));
 
          if (requestHeader.empty()) prequestHeader = 0;
          }
@@ -8804,7 +8761,7 @@ loop:
                {
                ptr1 = ptr + U_CONSTANT_SIZE("Status: ");
 
-               U_http_info.nResponseCode = strtol(ptr1, 0, 0);
+               U_http_info.nResponseCode = strtol(ptr1, 0, 10);
 
                U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
 
@@ -8987,7 +8944,7 @@ loop:
                {
                ptr += U_CONSTANT_SIZE("ent-Length: ");
 
-               U_INTERNAL_DUMP("Content-Length: = %ld", strtol(ptr, 0, 0))
+               U_INTERNAL_DUMP("Content-Length: = %ld", strtol(ptr, 0, 10))
 
                ptr1 = (const char*) memchr(ptr, '\n', endptr - ptr);
 
@@ -9153,17 +9110,24 @@ bool UHTTP::checkContentLength(uint32_t length, uint32_t pos)
    if (pos != U_NOT_FOUND) ptr = ext->c_pointer(pos);  
    else
       {
-      pos = ext->find(*UString::str_content_length);
+      pos = U_STRING_FIND(*ext, 0, "Content-Length");
 
       U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
 
-      ptr = ext->c_pointer(pos + UString::str_content_length->size() + 1);
+      ptr = ext->c_pointer(pos += U_CONSTANT_SIZE("Content-Length") + 1);
       }
 
-   if (u__isblank(*ptr)) ++ptr; // NB: weighttp need at least one space...
+   if (u__isblank(*ptr)) // NB: weighttp need at least one space...
+      {
+      ++ptr;
+      ++pos;
+      }
 
-   char* nptr;
-   uint32_t clength = (uint32_t) strtoul(ptr, &nptr, 0);
+   uint32_t end = ext->findWhiteSpace(pos);
+
+   U_INTERNAL_ASSERT_DIFFERS(end, U_NOT_FOUND)
+
+   uint32_t clength = u_strtoul(ptr, ext->c_pointer(end));
 
    U_INTERNAL_DUMP("ptr = %.20S clength = %u", ptr, clength)
 
@@ -9171,7 +9135,7 @@ bool UHTTP::checkContentLength(uint32_t length, uint32_t pos)
       {
       char bp[12];
 
-      uint32_t sz_len1 = nptr - ptr,
+      uint32_t sz_len1 = end - pos,
                sz_len2 = u_num2str32(bp, length);
                          
       U_INTERNAL_DUMP("sz_len1 = %u sz_len2 = %u", sz_len1, sz_len2)
@@ -9233,7 +9197,7 @@ typedef struct { uint32_t start, end; } HTTPRange;
 
 U_NO_EXPORT bool UHTTP::checkGetRequestIfRange()
 {
-   U_TRACE(0, "UHTTP::checkGetRequestIfRange()")
+   U_TRACE_NO_PARAM(0, "UHTTP::checkGetRequestIfRange()")
 
    const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("If-Range"), false);
 
@@ -9329,18 +9293,18 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
 
       if (*spec == '-')
          {
-         cur_start = strtol(spec, &pend, 0) + range_size;
+         cur_start = strtol(spec, &pend, 10) + range_size;
          cur_end   = range_size - 1;
          }
       else
          {
-         cur_start = strtol(spec, &pend, 0);
+         cur_start = strtol(spec, &pend, 10);
 
          if (*pend == '-') ++pend;
 
          U_INTERNAL_DUMP("item.remain(pend) = %u", item.remain(pend))
 
-         cur_end = (item.remain(pend) ? strtol(pend, &pend, 0) : range_size - 1);
+         cur_end = (item.remain(pend) ? strtol(pend, &pend, 10) : range_size - 1);
          }
 
       U_INTERNAL_DUMP("cur_start = %u cur_end = %u", cur_start, cur_end)
@@ -9497,7 +9461,7 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
 
 U_NO_EXPORT bool UHTTP::checkGetRequestIfModified()
 {
-   U_TRACE(0, "UHTTP::checkGetRequestIfModified()")
+   U_TRACE_NO_PARAM(0, "UHTTP::checkGetRequestIfModified()")
 
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
@@ -9564,7 +9528,7 @@ U_NO_EXPORT bool UHTTP::checkGetRequestIfModified()
 
 U_NO_EXPORT void UHTTP::processGetRequest()
 {
-   U_TRACE(0, "UHTTP::processGetRequest()")
+   U_TRACE_NO_PARAM(0, "UHTTP::processGetRequest()")
 
    U_INTERNAL_ASSERT_POINTER(file_data)
    U_INTERNAL_ASSERT_MAJOR(file_data->size, 0)
@@ -9711,7 +9675,7 @@ error:
 #ifdef U_LOG_ENABLE
 void UHTTP::initApacheLikeLog()
 {
-   U_TRACE(0, "UHTTP::initApacheLikeLog()")
+   U_TRACE_NO_PARAM(0, "UHTTP::initApacheLikeLog()")
 
    iov_vec[1].iov_base = (caddr_t)       " - - [";
    iov_vec[1].iov_len  = U_CONSTANT_SIZE(" - - [");
@@ -9733,7 +9697,7 @@ void UHTTP::initApacheLikeLog()
 
 void UHTTP::prepareApacheLikeLog()
 {
-   U_TRACE(0, "UHTTP::prepareApacheLikeLog()")
+   U_TRACE_NO_PARAM(0, "UHTTP::prepareApacheLikeLog()")
 
    U_INTERNAL_ASSERT_EQUALS(iov_vec[0].iov_len, 0)
 

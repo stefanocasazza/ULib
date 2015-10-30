@@ -118,7 +118,7 @@ void UFile::setPathRelativ(const UString* environment)
 
 void UFile::setRoot()
 {
-   U_TRACE(0, "UFile::setRoot()")
+   U_TRACE_NO_PARAM(0, "UFile::setRoot()")
 
    reset();
 
@@ -205,7 +205,7 @@ bool UFile::creat(const UString& path, int flags, mode_t mode)
 
 bool UFile::stat()
 {
-   U_TRACE(1, "UFile::stat()")
+   U_TRACE_NO_PARAM(1, "UFile::stat()")
 
    U_CHECK_MEMORY
 
@@ -335,7 +335,7 @@ void UFile::setPath(const UFile& file, char* buffer_path, const char* suffix, ui
 
 UString UFile::getName() const
 {
-   U_TRACE(0, "UFile::getName()")
+   U_TRACE_NO_PARAM(0, "UFile::getName()")
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
@@ -375,7 +375,7 @@ bool UFile::isNameDosMatch(const char* mask, uint32_t mask_len) const
 
 UString UFile::getDirName() const
 {
-   U_TRACE(0, "UFile::getDirName()")
+   U_TRACE_NO_PARAM(0, "UFile::getDirName()")
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
@@ -657,7 +657,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 
 void UFile::munmap()
 {
-   U_TRACE(0, "UFile::munmap()")
+   U_TRACE_NO_PARAM(0, "UFile::munmap()")
 
    U_CHECK_MEMORY
 
@@ -977,7 +977,7 @@ bool UFile::lock(short l_type, uint32_t start, uint32_t len) const
     * Advisory file segment locking data type - information passed to system by user
     */
 
-#if defined(__NetBSD__) || defined(__UNIKERNEL__)
+#if defined(__NetBSD__) || defined(__UNIKERNEL__) || defined(__OSX__)
    /*
    struct flock {
       off_t l_start;    // starting offset
@@ -1533,7 +1533,7 @@ void UFile::substitute(UFile& file)
 
 UString UFile::getSuffix() const
 {
-   U_TRACE(0, "UFile::getSuffix()")
+   U_TRACE_NO_PARAM(0, "UFile::getSuffix()")
 
    U_INTERNAL_ASSERT_POINTER(path_relativ)
 

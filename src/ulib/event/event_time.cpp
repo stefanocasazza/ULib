@@ -17,6 +17,8 @@
 #  include <ulib/libevent/event.h>
 #endif
 
+struct timespec UEventTime::timeout;
+
 UEventTime::UEventTime(long sec, long usec) : UTimeVal(sec, usec)
 {
    U_TRACE_REGISTER_OBJECT(0, UEventTime, "%ld,%ld", sec, usec)

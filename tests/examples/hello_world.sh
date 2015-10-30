@@ -40,7 +40,7 @@ compile_usp
 # ab -f SSL3 -n 100000 -c10 -t 1 https://stefano/usp/hello_world.usp
 
 #$SLEEP
-#killall userver_tcp userver_ssl
+#pkill userver_tcp userver_ssl
 
  mv err/userver_tcp.err err/hello_world.err
 #mv err/userver_ssl.err err/hello_world.err

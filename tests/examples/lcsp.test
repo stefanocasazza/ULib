@@ -158,7 +158,7 @@ $SLEEP
 PID=$LPID
 kill_prg userver_ipc TERM
 
-killall userver_ssl 2>/dev/null
+pkill userver_ssl 2>/dev/null
 
 mv err/userver_ipc.err err/lcspserver.err
 

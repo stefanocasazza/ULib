@@ -84,7 +84,6 @@ public:
     * @param  timeout period in milliseconds to wait
     */
 
-   void lock();
    bool wait(time_t timeoutMS);
 
    /**
@@ -94,6 +93,7 @@ public:
     * threads to execute, one must perform multiple post operations
     */
 
+   void   lock();
    void unlock() { post(); }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -101,17 +101,23 @@ public:
 #endif
 
 protected:
-   sem_t* psem;
    USemaphore* next;
+#if defined(__MACOSX__) || defined(__APPLE__)
+   sem_t* psem;
+   char name[24];
+#elif defined(_MSWINDOWS_) || (defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)))
+   sem_t* psem;
+#else
+   UFile* psem;
+#endif
 
-   static UFile* flock;
    static USemaphore* first;
 
    void post();
 
    static bool checkForDeadLock(UTimeVal& time); // NB: check if process has restarted and it had a lock active...
-   
-#ifdef HAVE_SEM_GETVALUE
+
+#if !defined(__MACOSX__) && !defined(__APPLE__) && defined(HAVE_SEM_GETVALUE)
    int getValue() { int value = -1; (void) sem_getvalue(psem, &value); return value; }
 #else
    int getValue() { return -1; }

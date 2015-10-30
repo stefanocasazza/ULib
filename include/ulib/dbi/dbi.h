@@ -153,7 +153,7 @@ public:
 
    template <typename ProcessQuery> typename ProcessQuery::ReturnType Exec()
       {
-      U_TRACE(1, "UDBI::Exec()")
+      U_TRACE_NO_PARAM(1, "UDBI::Exec()")
 
       U_CHECK_MEMORY
 
@@ -173,7 +173,7 @@ public:
 
    unsigned long long affected()
       {
-      U_TRACE(1, "UDBI::affected()")
+      U_TRACE_NO_PARAM(1, "UDBI::affected()")
 
       U_RETURN(affected_rows);
       }
@@ -339,7 +339,7 @@ public:
 
    unsigned int cols()
       {
-      U_TRACE(1, "UDBIRow::cols()")
+      U_TRACE_NO_PARAM(1, "UDBIRow::cols()")
 
       U_INTERNAL_ASSERT_POINTER_MSG(res, "DBI: using unititilized row")
 
@@ -510,7 +510,7 @@ public:
 
    void clear()
       {
-      U_TRACE(1, "UDBISet::clear()")
+      U_TRACE_NO_PARAM(1, "UDBISet::clear()")
 
       U_INTERNAL_ASSERT_POINTER_MSG(res, "DBI: no result assigned")
 
@@ -534,7 +534,7 @@ public:
 
    unsigned int cols()
       {
-      U_TRACE(1, "UDBISet::cols()")
+      U_TRACE_NO_PARAM(1, "UDBISet::cols()")
 
       U_INTERNAL_ASSERT_POINTER_MSG(res, "DBI: no result assigned")
 
@@ -607,7 +607,7 @@ public:
 
    void commit()
       {
-      U_TRACE(0, "UDBITransaction::commit()")
+      U_TRACE_NO_PARAM(0, "UDBITransaction::commit()")
 
       sql << "COMMIT",exec();
 
@@ -618,7 +618,7 @@ public:
 
    void rollback()
       {
-      U_TRACE(0, "UDBITransaction::rollback()")
+      U_TRACE_NO_PARAM(0, "UDBITransaction::rollback()")
 
       sql << "ROLLBACK",exec();
 

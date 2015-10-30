@@ -1136,7 +1136,7 @@ UString USocketExt::getMacAddress(int fd, const char* device)
 
    UString result(100U);
 
-#if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H) && !defined(__UNIKERNEL__) && !defined(__NetBSD__)
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
    U_INTERNAL_ASSERT(fd != -1)
 
    struct ifreq ifr;
@@ -1169,7 +1169,7 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    UString result(100U);
 
-#if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H) && !defined(__UNIKERNEL__) && !defined(__NetBSD__)
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
    struct ifreq ifr;
 
    (void) u__strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
@@ -1202,7 +1202,7 @@ UString USocketExt::getNetworkAddress(int fd, const char* device)
 
    UString result(100U);
 
-#if !defined(_MSWINDOWS_) && defined(HAVE_SYS_IOCTL_H) && !defined(__UNIKERNEL__) && !defined(__NetBSD__)
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
    struct ifreq ifaddr, ifnetmask;
 
    (void) u__strncpy(   ifaddr.ifr_name, device, IFNAMSIZ-1);
@@ -1273,7 +1273,7 @@ U_NO_EXPORT void USocketExt::callbackResolv(void* arg, int status, int timeouts,
 
 void USocketExt::waitResolv()
 {
-   U_TRACE(1, "USocketExt::waitResolv()")
+   U_TRACE_NO_PARAM(1, "USocketExt::waitResolv()")
 
    U_INTERNAL_ASSERT_POINTER(resolv_channel)
 

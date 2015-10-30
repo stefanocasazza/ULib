@@ -391,19 +391,15 @@ public:
 class U_EXPORT UOrmDriverPgSql : public UOrmDriver {
 public:
 
-   static const UString* str_name;
-
-   static void str_allocate();
-
    // COSTRUTTORE
 
    UOrmDriverPgSql()
       {
       U_TRACE_REGISTER_OBJECT(0, UOrmDriverPgSql, "")
 
-      str_allocate();
+      U_INTERNAL_ASSERT_POINTER(UString::str_pgsql_name)
 
-      UOrmDriver::name = *str_name;
+      UOrmDriver::name = *UString::str_pgsql_name;
       }
 
    UOrmDriverPgSql(const UString& name_drv) : UOrmDriver(name_drv)

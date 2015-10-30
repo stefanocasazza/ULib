@@ -31,7 +31,7 @@ URDB* URDBClientImage::rdb;
 
 int URDBClientImage::handlerRead()
 {
-   U_TRACE(0, "URDBClientImage::handlerRead()")
+   U_TRACE_NO_PARAM(0, "URDBClientImage::handlerRead()")
 
    if (UClientImage_Base::manageRead() == U_NOTIFIER_DELETE) U_RETURN(U_NOTIFIER_DELETE);
 

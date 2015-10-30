@@ -201,7 +201,7 @@ U_NO_EXPORT char* UREDISClient_Base::getResponseItem(const UString& response, ch
 
 U_NO_EXPORT void UREDISClient_Base::processResponse()
 {
-   U_TRACE(0, "UREDISClient_Base::processResponse()")
+   U_TRACE_NO_PARAM(0, "UREDISClient_Base::processResponse()")
 
    U_INTERNAL_DUMP("err = %d", err)
 

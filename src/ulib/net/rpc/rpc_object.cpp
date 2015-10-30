@@ -41,8 +41,8 @@ void URPCObject::readFileMethod(UFileConfig& file_method)
    while (file_method.loadSection(0,0))
       {
       method_ns     = file_method.at(U_CONSTANT_TO_PARAM("NAMESPACE"));
-      method_name   = file_method[*UString::str_METHOD_NAME];
-      response_type = file_method[*UString::str_RESPONSE_TYPE];
+      method_name   = file_method.at(U_CONSTANT_TO_PARAM("METHOD_NAME"));
+      response_type = file_method.at(U_CONSTANT_TO_PARAM("RESPONSE_TYPE"));
 
       int rtype  = (response_type.equal(U_CONSTANT_TO_PARAM("success_or_failure"))       ?       success_or_failure :
                     response_type.equal(U_CONSTANT_TO_PARAM("stdin_success_or_failure")) ? stdin_success_or_failure :

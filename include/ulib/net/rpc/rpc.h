@@ -33,7 +33,7 @@ public:
 
    static void allocate()
       {
-      U_TRACE(0, "URPC::allocate()")
+      U_TRACE_NO_PARAM(0, "URPC::allocate()")
 
       U_INTERNAL_ASSERT_EQUALS(rpc_info,0)
 
@@ -42,7 +42,7 @@ public:
 
    static void resetInfo()
       {
-      U_TRACE(0, "URPC::resetInfo()")
+      U_TRACE_NO_PARAM(0, "URPC::resetInfo()")
 
       U_INTERNAL_ASSERT_POINTER(rpc_info)
 

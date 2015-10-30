@@ -31,7 +31,7 @@ U_EXPORT void  operator delete[](void* p) { free(p); }
 
 void ULib_init_openssl()
 {
-   U_TRACE(1, "ULib_init_openssl()")
+   U_TRACE_NO_PARAM(1, "ULib_init_openssl()")
 
    // A typical TLS/SSL application will start with the library initialization,
    // will provide readable error messages and will seed the PRNG (Pseudo Random Number Generator).
@@ -67,7 +67,7 @@ void ULib_init_openssl()
 
 void ULib_init()
 {
-   U_TRACE(1, "ULib_init()")
+   U_TRACE_NO_PARAM(1, "ULib_init()")
 
 #ifdef DEBUG
    static bool init;
@@ -198,5 +198,5 @@ void ULib_init()
    ULib_init_openssl();
 #endif
 
-   UString::str_allocate();
+   UString::str_allocate(0);
 }

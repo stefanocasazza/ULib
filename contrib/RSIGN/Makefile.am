@@ -6,7 +6,7 @@ EXTRA_DIST = RSIGN.err
 
 RSIGN_la_SOURCES = RSIGN.c
 RSIGN_la_LIBADD  = -lcrypto -lz
-RSIGN_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+RSIGN_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
 if MINGW
 RSIGN_la_LIBADD += -lwsock32 -lgdi32
 endif

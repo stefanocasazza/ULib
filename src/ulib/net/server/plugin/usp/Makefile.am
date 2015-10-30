@@ -43,7 +43,7 @@ moduledir = @ULIB_MODULEDIR@/usp
 	@$(WINELOADER) ./usp_translator$(EXEEXT) $<
 
 .lo.la:
-	$(CXXLINK) @USP_LDFLAGS@ -rpath $(moduledir) -module $(MODULE_LIBTOOL_OPTIONS) $< $(ulib_la) @USP_LIBS@ @ULIB_LIBS@
+	$(CXXLINK) @USP_LDFLAGS@ -rpath $(moduledir) -module @MODULE_LIBTOOL_OPTIONS@ $< $(ulib_la) @USP_LIBS@ @ULIB_LIBS@
 
 #all: usp_translator db.la fortune.la json.la plaintext.la query.la update.la
 

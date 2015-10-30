@@ -20,6 +20,10 @@
 #  include <ulib/utility/http2.h>
 #endif
 
+#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+#  define U_NUM_CLIENT_THRESHOLD 128
+#endif
+
 int           UClientImage_Base::idx;
 int           UClientImage_Base::csfd;
 int           UClientImage_Base::iovcnt;
@@ -61,7 +65,7 @@ UString* UClientImage_Base::_encoded;
 #ifdef U_LOG_ENABLE
 void UClientImage_Base::logRequest()
 {
-   U_TRACE(0, "UClientImage_Base::logRequest()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::logRequest()")
 
    U_INTERNAL_ASSERT(*request)
    U_INTERNAL_ASSERT_POINTER(logbuf)
@@ -171,7 +175,7 @@ UClientImage_Base::~UClientImage_Base()
 
 void UClientImage_Base::set()
 {
-   U_TRACE(0, "UClientImage_Base::set()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::set()")
 
    U_INTERNAL_DUMP("this = %p socket = %p UEventFd::fd = %d", this, socket, UEventFd::fd)
 
@@ -221,7 +225,7 @@ void UClientImage_Base::set()
 #ifdef DEBUG
 bool UClientImage_Base::check_memory()
 {
-   U_TRACE(0, "UClientImage_Base::check_memory()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::check_memory()")
 
    U_INTERNAL_DUMP("u_check_memory_vector<T>: elem %u of %u", this-UServer_Base::pClientImage, UNotifier::max_connection)
 
@@ -239,7 +243,7 @@ bool UClientImage_Base::check_memory()
 #ifdef DEBUG
 void UClientImage_Base::saveRequestResponse()
 {
-   U_TRACE(0, "UClientImage_Base::saveRequestResponse()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::saveRequestResponse()")
 
                                   (void) UFile::writeToTmp(U_STRING_TO_PARAM(*rbuffer), false,  "request.%P", 0);
    if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4,                  false, "response.%P", 0);
@@ -254,7 +258,7 @@ U_NO_EXPORT bool UClientImage_Base::isValidRequestExt(const char* ptr, uint32_t 
 
 void UClientImage_Base::init()
 {
-   U_TRACE(0, "UClientImage_Base::init()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::init()")
 
    U_INTERNAL_ASSERT_EQUALS(body, 0)
    U_INTERNAL_ASSERT_EQUALS(_value, 0)
@@ -292,7 +296,7 @@ void UClientImage_Base::init()
 
 void UClientImage_Base::clear()
 {
-   U_TRACE(0, "UClientImage_Base::clear()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::clear()")
 
    U_INTERNAL_ASSERT_POINTER(body)
    U_INTERNAL_ASSERT_POINTER(wbuffer)
@@ -336,7 +340,7 @@ __pure bool UClientImage_Base::isAllowed(UVector<UIPAllow*>& vallow_IP)
 #ifndef U_CACHE_REQUEST_DISABLE
 __pure bool UClientImage_Base::isRequestCacheable()
 {
-   U_TRACE(0, "UClientImage_Base::isRequestCacheable()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestCacheable()")
 
    if ((U_ClientImage_request & NO_CACHE) == 0   &&
         U_ClientImage_request_is_cached == false &&
@@ -353,7 +357,7 @@ __pure bool UClientImage_Base::isRequestCacheable()
 
 bool UClientImage_Base::logCertificate()
 {
-   U_TRACE(0, "UClientImage_Base::logCertificate()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::logCertificate()")
 
    // NB: OpenSSL has already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
 
@@ -380,7 +384,7 @@ bool UClientImage_Base::logCertificate()
 
 bool UClientImage_Base::askForClientCertificate()
 {
-   U_TRACE(0, "UClientImage_Base::askForClientCertificate()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::askForClientCertificate()")
 
 #ifdef USE_LIBSSL
    U_ASSERT(((USSLSocket*)socket)->isSSL())
@@ -414,7 +418,7 @@ void UClientImage_Base::setSendfile(int _sfd, uint32_t _start, uint32_t _count)
 
 void UClientImage_Base::handlerDelete()
 {
-   U_TRACE(0, "UClientImage_Base::handlerDelete()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerDelete()")
 
    bool bsocket_open = socket->isOpen();
 
@@ -522,7 +526,7 @@ void UClientImage_Base::handlerDelete()
 
 int UClientImage_Base::handlerTimeout()
 {
-   U_TRACE(0, "UClientImage_Base::handlerTimeout()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerTimeout()")
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(socket->iSockDesc == -1))
@@ -598,7 +602,7 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
 
 bool UClientImage_Base::startRequest()
 {
-   U_TRACE(0, "UClientImage_Base::startRequest()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::startRequest()")
 
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    long time_elapsed = chronometer->restart();
@@ -622,10 +626,23 @@ bool UClientImage_Base::startRequest()
          {
 #     ifdef DEBUG
          U_MESSAGE("%9D (pid %P) UClientImage_Base::startRequest(): time_between_request(%ld) < time_run(%ld) - isParallelizationGoingToStart(%u) = %b request = %V",
-                     time_between_request, time_run, UServer_Base::num_client_threshold, UServer_Base::isParallelizationGoingToStart(UServer_Base::num_client_threshold), request->rep);
+                     time_between_request, time_run, U_NUM_CLIENT_THRESHOLD, UServer_Base::isParallelizationGoingToStart(U_NUM_CLIENT_THRESHOLD), request->rep);
 #     endif
 
-         U_RETURN(true);
+         if (U_http_info.startHeader > 2 &&
+             UServer_Base::isParallelizationGoingToStart(U_NUM_CLIENT_THRESHOLD))
+            {
+            U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
+
+            if (U_ClientImage_request_is_cached == false)
+               {
+               U_ClientImage_advise_for_parallelization = true;
+
+               UClientImage_Base::setRequestToCache();
+               }
+
+            U_RETURN(true);
+            }
          }
       }
 #endif
@@ -635,7 +652,7 @@ bool UClientImage_Base::startRequest()
 
 void UClientImage_Base::endRequest()
 {
-   U_TRACE(0, "UClientImage_Base::endRequest()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::endRequest()")
 
 #ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
@@ -822,7 +839,7 @@ next2:
 
 void UClientImage_Base::resetReadBuffer()
 {
-   U_TRACE(0, "UClientImage_Base::resetReadBuffer()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::resetReadBuffer()")
 
    request->clear();
 
@@ -841,7 +858,7 @@ void UClientImage_Base::resetReadBuffer()
 
 void UClientImage_Base::prepareForRead()
 {
-   U_TRACE(0, "UClientImage_Base::prepareForRead()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::prepareForRead()")
 
    U_clientimage_flag.u = 0; // NB: U_ClientImage_parallelization is reset by this...
 
@@ -892,7 +909,7 @@ void UClientImage_Base::prepareForRead()
 
 bool UClientImage_Base::genericRead()
 {
-   U_TRACE(0, "UClientImage_Base::genericRead()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::genericRead()")
 
 #ifdef DEBUG
    if (UNLIKELY(socket->iSockDesc == -1))
@@ -962,14 +979,19 @@ bool UClientImage_Base::genericRead()
       }
 
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-   if (advise_for_parallelization &&
-       UServer_Base::startParallelization(UServer_Base::num_client_threshold))
+   if (advise_for_parallelization)
       {
-      // parent
+      if (checkRequestToCache() == 2 &&
+          UServer_Base::startParallelization(U_NUM_CLIENT_THRESHOLD))
+         {
+         // parent
 
-      U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
+         U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
 
-      U_RETURN(false);
+         U_RETURN(false);
+         }
+
+      if (U_ClientImage_advise_for_parallelization) U_ClientImage_request_is_cached = false;
       }
 #endif
 
@@ -980,7 +1002,7 @@ bool UClientImage_Base::genericRead()
 
 int UClientImage_Base::handlerRead() // Connection-wide hooks
 {
-   U_TRACE(0, "UClientImage_Base::handlerRead()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerRead()")
 
    int result;
    uint32_t sz;
@@ -1100,40 +1122,19 @@ dmiss:
       }
 
 #ifndef U_CACHE_REQUEST_DISABLE
-   U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
-
    if (U_ClientImage_request_is_cached)
       {
-      const char* ptr = request->data();
-                  sz  = request->size();
+      sz = checkRequestToCache();
 
-      U_INTERNAL_DUMP("cbuffer(%u) = %.*S", U_http_info.startHeader, U_http_info.startHeader, cbuffer)
-      U_INTERNAL_DUMP("request(%u) = %.*S", sz, sz, ptr)
-
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u uri_offset = %u", U_ClientImage_pipeline, size_request, uri_offset)
-
-      U_INTERNAL_ASSERT_MAJOR(size_request, 0)
-      U_INTERNAL_ASSERT_RANGE(1,uri_offset,64)
-      U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 0)
-      U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 0)
-      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
-
-      if (u__isblank((ptr+uri_offset)[U_http_info.startHeader]) &&
-          memcmp(ptr+uri_offset, cbuffer, U_http_info.startHeader) == 0)
+      if (sz)
          {
-         if (size_request > sz &&
-             (callerIsValidMethod( ptr)     == false ||
-              callerIsValidRequest(ptr, sz) == false))
-            {
-            goto dmiss; // partial valid (not complete)
-            }
+         if (sz == 1) goto dmiss; // partial valid (not complete)
 
-         if (callerHandlerCache())
-            {
-            setRequestProcessed();
+         U_INTERNAL_ASSERT_EQUALS(sz, 2)
 
-            goto next;
-            }
+         setRequestProcessed();
+
+         goto next;
          }
 
       csfd                            = -1;
@@ -1410,7 +1411,7 @@ death:
 
 bool UClientImage_Base::writeResponse()
 {
-   U_TRACE(0, "UClientImage_Base::writeResponse()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::writeResponse()")
 
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_close = %b nrequest = %u", U_ClientImage_pipeline, U_ClientImage_close, nrequest)
 
@@ -1637,7 +1638,7 @@ end:
 
 void UClientImage_Base::close()
 {
-   U_TRACE(0, "UClientImage_Base::close()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::close()")
 
    UServer_Base::csocket->close();
 
@@ -1650,7 +1651,7 @@ void UClientImage_Base::close()
 
 void UClientImage_Base::abortive_close()
 {
-   U_TRACE(0, "UClientImage_Base::abortive_close()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::abortive_close()")
 
    setRequestProcessed();
 
@@ -1663,7 +1664,7 @@ void UClientImage_Base::abortive_close()
 
 void UClientImage_Base::resetPipeline()
 {
-   U_TRACE(0, "UClientImage_Base::resetPipeline()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::resetPipeline()")
 
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d U_ClientImage_request_is_cached = %b U_ClientImage_close = %b",
                     U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_request_is_cached,     U_ClientImage_close)
@@ -1681,7 +1682,7 @@ void UClientImage_Base::resetPipeline()
 
 void UClientImage_Base::prepareForSendfile()
 {
-   U_TRACE(0, "UClientImage_Base::prepareForSendfile()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::prepareForSendfile()")
 
    U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT_DIFFERS(sfd, -1)
@@ -1703,7 +1704,7 @@ void UClientImage_Base::prepareForSendfile()
 
 int UClientImage_Base::handlerResponse()
 {
-   U_TRACE(0, "UClientImage_Base::handlerResponse()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerResponse()")
 
    if (writeResponse()) U_RETURN(U_NOTIFIER_OK);
 
@@ -1767,7 +1768,7 @@ int UClientImage_Base::handlerResponse()
 
 int UClientImage_Base::handlerWrite()
 {
-   U_TRACE(0, "UClientImage_Base::handlerWrite()")
+   U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerWrite()")
 
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(count == 0))

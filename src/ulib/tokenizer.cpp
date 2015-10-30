@@ -310,7 +310,7 @@ bool UTokenizer::skipNumber(bool& isReal)
 
 UString UTokenizer::getTokenQueryParser()
 {
-   U_TRACE(0, "UTokenizer::getTokenQueryParser()")
+   U_TRACE_NO_PARAM(0, "UTokenizer::getTokenQueryParser()")
 
    skipSpaces();
 

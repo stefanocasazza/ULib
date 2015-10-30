@@ -90,6 +90,10 @@ endif
 
 if !SEMAPHORE
 SRC_C += replace/sem.c
+else
+if !SEM_TIMEDWAIT
+SRC_C += replace/sem_timedwait.c
+endif
 endif
 
 if !STRPTIME

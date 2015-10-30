@@ -20,7 +20,7 @@ bool UXML2Document::binit;
 
 void UXML2Document::init()
 {
-   U_TRACE(1, "UXML2Document::init()")
+   U_TRACE_NO_PARAM(1, "UXML2Document::init()")
 
    binit = true;
 

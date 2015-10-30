@@ -48,28 +48,28 @@ public:
 
    bool null() const
       {
-      U_TRACE(0, "UTree<void*>::null()")
+      U_TRACE_NO_PARAM(0, "UTree<void*>::null()")
 
       U_RETURN(_elem == 0);
       }
 
    bool root() const
       {
-      U_TRACE(0, "UTree<void*>::root()")
+      U_TRACE_NO_PARAM(0, "UTree<void*>::root()")
 
       U_RETURN(_parent == 0);
       }
 
    bool empty() const
       {
-      U_TRACE(0, "UTree<void*>::empty()")
+      U_TRACE_NO_PARAM(0, "UTree<void*>::empty()")
 
       U_RETURN(_elem == 0 && _length == 0);
       }
 
    uint32_t numChild() const
       {
-      U_TRACE(0, "UTree<void*>::numChild()")
+      U_TRACE_NO_PARAM(0, "UTree<void*>::numChild()")
 
       U_RETURN(_length);
       }
@@ -78,7 +78,7 @@ public:
 
    uint32_t depth() const __pure
       {
-      U_TRACE(0, "UTree<void*>::depth()")
+      U_TRACE_NO_PARAM(0, "UTree<void*>::depth()")
 
       uint32_t result = 0;
       const UTree<void*>* p = this;
@@ -145,14 +145,14 @@ public:
 
    UTree<void*>* last() // return last element
       {
-      U_TRACE(0, "UTree<void*>::last()")
+      U_TRACE_NO_PARAM(0, "UTree<void*>::last()")
 
       return (UTree<void*>*) UVector<void*>::last();
       }
 
    UTree<void*>* pop() // remove last element
       {
-      U_TRACE(0, "UTree<void*>::pop()")
+      U_TRACE_NO_PARAM(0, "UTree<void*>::pop()")
 
       return (UTree<void*>*) UVector<void*>::pop();
       }
@@ -206,7 +206,7 @@ public:
 
    void clear() // erase all element
       {
-      U_TRACE(0, "UTree<T*>::clear()")
+      U_TRACE_NO_PARAM(0, "UTree<T*>::clear()")
 
       if (_elem)
          {
@@ -297,14 +297,14 @@ public:
 
    UTree<T*>* last() // return last element
       {
-      U_TRACE(0, "UTree<T*>::last()")
+      U_TRACE_NO_PARAM(0, "UTree<T*>::last()")
 
       return (UTree<T*>*) UVector<void*>::last();
       }
 
    UTree<T*>* pop() // remove last element
       {
-      U_TRACE(0, "UTree<T*>::pop()")
+      U_TRACE_NO_PARAM(0, "UTree<T*>::pop()")
 
       return (UTree<T*>*) UVector<void*>::pop();
       }
@@ -404,7 +404,7 @@ public:
 
    UString elem() const
       {
-      U_TRACE(0, "UTree<UString>::elem()")
+      U_TRACE_NO_PARAM(0, "UTree<UString>::elem()")
 
       if (_elem)
          {
@@ -459,14 +459,14 @@ public:
 
    UTree<UString>* last()
       {
-      U_TRACE(0, "UTree<UString>::last()")
+      U_TRACE_NO_PARAM(0, "UTree<UString>::last()")
 
       return (UTree<UString>*) UTree<UStringRep*>::last();
       }
 
    UTree<UString>* pop()
       {
-      U_TRACE(0, "UTree<UString>::pop()")
+      U_TRACE_NO_PARAM(0, "UTree<UString>::pop()")
 
       return (UTree<UString>*) UTree<UStringRep*>::pop();
       }

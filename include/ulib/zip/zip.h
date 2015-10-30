@@ -53,7 +53,7 @@ public:
 
    bool isValid() const
       {
-      U_TRACE(0, "UZIP::isValid()")
+      U_TRACE_NO_PARAM(0, "UZIP::isValid()")
 
       U_RETURN(valid);
       }

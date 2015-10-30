@@ -9,7 +9,7 @@ ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES = server_plugin_php.la
 server_plugin_php_la_SOURCES = mod_php.cpp
-server_plugin_php_la_LDFLAGS = $(PHPCONFIGLDFLAGS) -Wl,--start-group $(PHPCONFIGLIBS) -Wl,--end-group -module $(MODULE_LIBTOOL_OPTIONS)
+server_plugin_php_la_LDFLAGS = $(PHPCONFIGLDFLAGS) -Wl,--start-group $(PHPCONFIGLIBS) -Wl,--end-group -module @MODULE_LIBTOOL_OPTIONS@
 server_plugin_php_la_LIBADD  = $(ulib_la) @ULIB_LIBS@
 
 clean-local:

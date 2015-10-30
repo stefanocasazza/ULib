@@ -18,7 +18,7 @@ UPlugIn<void*>* UPlugIn<void*>::first;
 
 UPlugIn<void*>::~UPlugIn()
 {
-   U_TRACE(0, "UPlugIn<void*>::~UPlugIn()")
+   U_TRACE_NO_PARAM(0, "UPlugIn<void*>::~UPlugIn()")
 
    if (name) U_SYSCALL_VOID(free, "%p", (void*)name);
    if (next) delete next;
@@ -57,7 +57,7 @@ void* UPlugIn<void*>::create(const char* _name, uint32_t _name_len)
 
 void UPlugIn<void*>::clear()
 {
-   U_TRACE(0, "UPlugIn<void*>::clear()")
+   U_TRACE_NO_PARAM(0, "UPlugIn<void*>::clear()")
 
    if (first)
       {

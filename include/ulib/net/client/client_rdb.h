@@ -33,14 +33,14 @@ public:
 
    void reset()
       {
-      U_TRACE(0, "URDBClient_Base::reset()")
+      U_TRACE_NO_PARAM(0, "URDBClient_Base::reset()")
 
       URPC::resetInfo();
       }
 
    bool isOK()
       {
-      U_TRACE(0, "URDBClient_Base::isOK()")
+      U_TRACE_NO_PARAM(0, "URDBClient_Base::isOK()")
 
       U_RETURN(nResponseCode == 200);
       }

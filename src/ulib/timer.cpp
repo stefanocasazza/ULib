@@ -41,7 +41,7 @@ void UTimer::init(Type _mode)
 
 U_NO_EXPORT void UTimer::insertEntry()
 {
-   U_TRACE(1, "UTimer::insertEntry()")
+   U_TRACE_NO_PARAM(1, "UTimer::insertEntry()")
 
    U_CHECK_MEMORY
 
@@ -72,7 +72,7 @@ U_NO_EXPORT void UTimer::insertEntry()
 
 bool UTimer::callHandlerTimeout()
 {
-   U_TRACE(0, "UTimer::callHandlerTimeout()")
+   U_TRACE_NO_PARAM(0, "UTimer::callHandlerTimeout()")
 
    U_INTERNAL_ASSERT_POINTER(first)
 
@@ -101,7 +101,7 @@ bool UTimer::callHandlerTimeout()
 
 bool UTimer::run()
 {
-   U_TRACE(1, "UTimer::run()")
+   U_TRACE_NO_PARAM(1, "UTimer::run()")
 
    U_INTERNAL_ASSERT_POINTER(first)
 
@@ -131,7 +131,7 @@ loop:
 
 void UTimer::setTimer()
 {
-   U_TRACE(1, "UTimer::setTimer()")
+   U_TRACE_NO_PARAM(1, "UTimer::setTimer()")
 
    U_INTERNAL_ASSERT_POINTER(first)
    U_INTERNAL_ASSERT_DIFFERS(mode, NOSIGNAL)
@@ -210,7 +210,7 @@ void UTimer::erase(UEventTime* a)
 
 void UTimer::clear()
 {
-   U_TRACE(0, "UTimer::clear()")
+   U_TRACE_NO_PARAM(0, "UTimer::clear()")
 
    U_INTERNAL_DUMP("mode = %d first = %p pool = %p", mode, first, pool)
 
@@ -246,7 +246,7 @@ void UTimer::clear()
 #ifdef DEBUG
 bool UTimer::invariant()
 {
-   U_TRACE(0, "UTimer::invariant()")
+   U_TRACE_NO_PARAM(0, "UTimer::invariant()")
 
    if (first)
       {

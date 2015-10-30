@@ -50,7 +50,7 @@ protected:
 
    virtual void setFailed()
       {
-      U_TRACE(0, "USOAPGenericMethod::setFailed()")
+      U_TRACE_NO_PARAM(0, "USOAPGenericMethod::setFailed()")
 
       pFault = (URPCFault*) U_NEW(USOAPFault);
       }

@@ -20,7 +20,7 @@ CURLM* UCURL::multiHandle;
 
 const char* UCURL::error()
 {
-   U_TRACE(0, "UCURL::error()")
+   U_TRACE_NO_PARAM(0, "UCURL::error()")
 
    U_CHECK_MEMORY
 
@@ -111,7 +111,7 @@ const char* UCURL::error()
 
 U_NO_EXPORT void UCURL::setup()
 {
-   U_TRACE(1, "UCURL::setup()")
+   U_TRACE_NO_PARAM(1, "UCURL::setup()")
 
    U_INTERNAL_ASSERT_EQUALS(inited,false)
 
@@ -200,7 +200,7 @@ UCURL::~UCURL()
 
 void UCURL::infoComplete()
 {
-   U_TRACE(1, "UCURL::infoComplete()")
+   U_TRACE_NO_PARAM(1, "UCURL::infoComplete()")
 
    U_CHECK_MEMORY
 
@@ -226,7 +226,7 @@ void UCURL::infoComplete()
 
 bool UCURL::perform()
 {
-   U_TRACE(1, "UCURL::perform()")
+   U_TRACE_NO_PARAM(1, "UCURL::perform()")
 
    UCURL* entry;
    CURLMcode mresult;

@@ -162,7 +162,7 @@ bool UCertificate::isIssued(const UCertificate& ca) const
 
 bool UCertificate::isSameIssuerAndSubject() const
 {
-   U_TRACE(1, "UCertificate::isSameIssuerAndSubject()")
+   U_TRACE_NO_PARAM(1, "UCertificate::isSameIssuerAndSubject()")
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
@@ -630,7 +630,7 @@ UString UCertificate::getEncoded(const char* format) const
 
 UString UCertificate::getModulus() const
 {
-   U_TRACE(1, "UCertificate::getModulus()")
+   U_TRACE_NO_PARAM(1, "UCertificate::getModulus()")
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
@@ -659,7 +659,7 @@ UString UCertificate::getModulus() const
 
 UString UCertificate::getExponent() const
 {
-   U_TRACE(1, "UCertificate::getExponent()")
+   U_TRACE_NO_PARAM(1, "UCertificate::getExponent()")
 
    U_INTERNAL_ASSERT_POINTER(x509)
 

@@ -173,6 +173,8 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5, "main(%d)",argc)
 
+   UString::str_allocate(STR_ALLOCATE_SOAP);
+
    UFileConfig method_file;
 
    method_file.load(UString(argv[1]));

@@ -48,7 +48,7 @@ public:
 
    virtual void setFailed() U_DECL_OVERRIDE
       {
-      U_TRACE(0, "USOAPObject::setFailed()")
+      U_TRACE_NO_PARAM(0, "USOAPObject::setFailed()")
 
       URPCMethod::pFault = U_NEW(USOAPFault);
       }

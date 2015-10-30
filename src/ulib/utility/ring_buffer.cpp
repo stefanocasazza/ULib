@@ -35,7 +35,7 @@ URingBuffer::~URingBuffer()
 
 U_NO_EXPORT void URingBuffer::checkLocking()
 {
-   U_TRACE(0, "URingBuffer::checkLocking()")
+   U_TRACE_NO_PARAM(0, "URingBuffer::checkLocking()")
 
    U_CHECK_MEMORY
 
@@ -53,7 +53,7 @@ U_NO_EXPORT void URingBuffer::checkLocking()
 
 int URingBuffer::open()
 {
-   U_TRACE(0, "URingBuffer::open()")
+   U_TRACE_NO_PARAM(0, "URingBuffer::open()")
 
    U_CHECK_MEMORY
 
@@ -99,7 +99,7 @@ void URingBuffer::close(int readd)
 
 U_NO_EXPORT __pure int URingBuffer::min_pread()
 {
-   U_TRACE(0, "URingBuffer::min_pread()")
+   U_TRACE_NO_PARAM(0, "URingBuffer::min_pread()")
 
    U_CHECK_MEMORY
 

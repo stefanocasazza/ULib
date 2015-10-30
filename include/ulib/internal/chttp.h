@@ -199,20 +199,20 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 }
 #endif
 
-#define U_http_info                    u_clientimage_info.http_info
-#define U_clientimage_flag             u_clientimage_info.flag
-#define U_http_method_list             u_clientimage_info.http_method_list
-#define U_http_method_type             u_clientimage_info.http_info.method_type
+#define U_http_info        u_clientimage_info.http_info
+#define U_clientimage_flag u_clientimage_info.flag
+#define U_http_method_list u_clientimage_info.http_method_list
+#define U_http_method_type u_clientimage_info.http_info.method_type
 
-#define U_flag_user1                   u_clientimage_info.flag.c[0]
-#define U_line_terminator_len          u_clientimage_info.flag.c[1]
+#define U_line_terminator_len                    u_clientimage_info.flag.c[0]
 
-#define U_ClientImage_state            u_clientimage_info.flag.c[2]
-#define U_ClientImage_close            u_clientimage_info.flag.c[3]
-#define U_ClientImage_request          u_clientimage_info.flag.c[4]
-#define U_ClientImage_pipeline         u_clientimage_info.flag.c[5]
-#define U_ClientImage_data_missing     u_clientimage_info.flag.c[6]
-#define U_ClientImage_parallelization  u_clientimage_info.flag.c[7]
+#define U_ClientImage_state                      u_clientimage_info.flag.c[1]
+#define U_ClientImage_close                      u_clientimage_info.flag.c[2]
+#define U_ClientImage_request                    u_clientimage_info.flag.c[3]
+#define U_ClientImage_pipeline                   u_clientimage_info.flag.c[4]
+#define U_ClientImage_data_missing               u_clientimage_info.flag.c[5]
+#define U_ClientImage_parallelization            u_clientimage_info.flag.c[6]
+#define U_ClientImage_advise_for_parallelization u_clientimage_info.flag.c[7]
 
 #define U_http_version                 u_clientimage_info.http_info.flag[ 0]
 #define U_http_sendfile                u_clientimage_info.http_info.flag[ 1]

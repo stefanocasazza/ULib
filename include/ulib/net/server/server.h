@@ -53,10 +53,10 @@ public: \
 const char* dump(bool reset) const { return UServer<socket_type>::dump(reset); } \
 protected: \
 virtual void preallocate() U_DECL_FINAL { \
-U_TRACE(5+256, #server_class "::preallocate()") \
+U_TRACE_NO_PARAM(5+256, #server_class "::preallocate()") \
 vClientImage = new client_type[UNotifier::max_connection]; } \
 virtual void deallocate() U_DECL_FINAL { \
-U_TRACE(5+256, #server_class "::deallocate()") \
+U_TRACE_NO_PARAM(5+256, #server_class "::deallocate()") \
 delete[] (client_type*)vClientImage; }  \
 virtual bool check_memory() U_DECL_FINAL { return u_check_memory_vector<client_type>((client_type*)vClientImage, UNotifier::max_connection); } }
 #else
@@ -207,7 +207,7 @@ public:
 
    static UString getDocumentRoot()
       {
-      U_TRACE(0, "UServer_Base::getDocumentRoot()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::getDocumentRoot()")
 
       U_INTERNAL_ASSERT_POINTER(document_root)
 
@@ -329,7 +329,7 @@ public:
 
    static void setLockUser1()
       {
-      U_TRACE(0, "UServer_Base::setLockUser1()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::setLockUser1()")
 
       U_INTERNAL_ASSERT_EQUALS(lock_user1, 0)
 
@@ -340,7 +340,7 @@ public:
 
    static void setLockUser2()
       {
-      U_TRACE(0, "UServer_Base::setLockUser2()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::setLockUser2()")
 
       U_INTERNAL_ASSERT_EQUALS(lock_user2, 0)
 
@@ -379,7 +379,7 @@ public:
 
    static bool isPreForked()
       {
-      U_TRACE(0, "UServer_Base::isPreForked()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::isPreForked()")
 
       U_INTERNAL_DUMP("preforked_num_kids = %d", preforked_num_kids)
 
@@ -390,7 +390,7 @@ public:
 
    static bool isClassic()
       {
-      U_TRACE(0, "UServer_Base::isClassic()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::isClassic()")
 
       U_INTERNAL_DUMP("preforked_num_kids = %d", preforked_num_kids)
 
@@ -401,7 +401,7 @@ public:
 
    static bool isChild()
       {
-      U_TRACE(0, "UServer_Base::isChild()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::isChild()")
 
       U_INTERNAL_DUMP("preforked_num_kids = %d", preforked_num_kids)
 
@@ -422,7 +422,7 @@ public:
 
    static bool isParallelizationChild()
       {
-      U_TRACE(0, "UServer_Base::isParallelizationChild()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::isParallelizationChild()")
 
       U_INTERNAL_DUMP("U_ClientImage_parallelization = %d proc->child() = %b",
                        U_ClientImage_parallelization,     proc->child())
@@ -434,7 +434,7 @@ public:
 
    static bool isParallelizationParent()
       {
-      U_TRACE(0, "UServer_Base::isParallelizationParent()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::isParallelizationParent()")
 
       U_INTERNAL_DUMP("U_ClientImage_parallelization = %d proc->parent() = %b",
                        U_ClientImage_parallelization,     proc->parent())
@@ -572,7 +572,7 @@ protected:
 
    static void setLockOCSPStaple()
       {
-      U_TRACE(0, "UServer_Base::setLockOCSPStaple()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::setLockOCSPStaple()")
 
       U_INTERNAL_ASSERT_EQUALS(lock_ocsp_staple, 0)
 
@@ -600,7 +600,7 @@ protected:
    virtual int  handlerRead()   U_DECL_FINAL; // This method is called to accept a new connection on the server socket
    virtual void handlerDelete() U_DECL_FINAL
       {
-      U_TRACE(0, "UServer_Base::handlerDelete()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::handlerDelete()")
 
       U_INTERNAL_DUMP("UEventFd::fd = %d", UEventFd::fd)
 
@@ -611,7 +611,7 @@ protected:
 
    virtual void handlerSignal()
       {
-      U_TRACE(0, "UServer_Base::handlerSignal()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::handlerSignal()")
       }
 
    virtual void preallocate()  = 0;
@@ -624,7 +624,7 @@ protected:
 
    static void _preallocate()
       {
-      U_TRACE(0, "UServer_Base::_preallocate()")
+      U_TRACE_NO_PARAM(0, "UServer_Base::_preallocate()")
 
       U_INTERNAL_ASSERT_POINTER(pthis)
 
@@ -712,7 +712,7 @@ protected:
 
    virtual void preallocate() U_DECL_OVERRIDE
       {
-      U_TRACE(0+256, "UServer<Socket>::preallocate()")
+      U_TRACE_NO_PARAM(0+256, "UServer<Socket>::preallocate()")
 
       // NB: array are not pointers (virtual table can shift the address of this)...
 
@@ -790,7 +790,7 @@ protected:
 
    virtual void preallocate() U_DECL_OVERRIDE
       {
-      U_TRACE(0+256, "UServer<USSLSocket>::preallocate()")
+      U_TRACE_NO_PARAM(0+256, "UServer<USSLSocket>::preallocate()")
 
       // NB: array are not pointers (virtual table can shift the address of this)...
 
@@ -800,7 +800,7 @@ protected:
 #ifdef DEBUG
    virtual void deallocate() U_DECL_OVERRIDE
       {
-      U_TRACE(0+256, "UServer<USSLSocket>::deallocate()")
+      U_TRACE_NO_PARAM(0+256, "UServer<USSLSocket>::deallocate()")
 
       // NB: array are not pointers (virtual table can shift the address of this)...
 

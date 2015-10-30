@@ -45,7 +45,7 @@ int UServices::getDevNull(const char* file)
 
 bool UServices::isSetuidRoot()
 {
-   U_TRACE(1, "UServices::isSetuidRoot()")
+   U_TRACE_NO_PARAM(1, "UServices::isSetuidRoot()")
 
    if (u_user_name_len == 0) u_init_ulib_username();
 
@@ -67,7 +67,7 @@ bool UServices::isSetuidRoot()
 
 void UServices::closeStdInputOutput()
 {
-   U_TRACE(1, "UServices::closeStdInputOutput()")
+   U_TRACE_NO_PARAM(1, "UServices::closeStdInputOutput()")
 
    int fd = UFile::open("/dev/null", O_RDONLY, 0);
 
@@ -230,7 +230,7 @@ int UServices::askToLDAP(UString* pinput, UHashMap<UString>* ptable, const char*
 
 uint64_t UServices::getUniqUID()
 {
-   U_TRACE(0, "UServices::getUniqUID()")
+   U_TRACE_NO_PARAM(0, "UServices::getUniqUID()")
 
    static uint64_t unique_num;
 
@@ -248,7 +248,7 @@ uint64_t UServices::getUniqUID()
 
 UString UServices::getUUID()
 {
-   U_TRACE(1, "UServices::getUUID()")
+   U_TRACE_NO_PARAM(1, "UServices::getUUID()")
 
    UString buffer(36U);
    char* id = buffer.data();
@@ -341,7 +341,7 @@ X509_STORE* UServices::store;
 
 void UServices::setOpenSSLError()
 {
-   U_TRACE(0, "UServices::setOpenSSLError()")
+   U_TRACE_NO_PARAM(0, "UServices::setOpenSSLError()")
 
    long i;
 

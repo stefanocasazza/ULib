@@ -16,21 +16,6 @@
 
 U_CREAT_FUNC(orm_driver_pgsql, UOrmDriverPgSql)
 
-const UString* UOrmDriverPgSql::str_name;
-
-void UOrmDriverPgSql::str_allocate()
-{
-   U_TRACE(0, "UOrmDriverPgSql::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_name,0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("pgsql") },
-   };
-
-   U_NEW_ULIB_OBJECT(str_name, U_STRING_FROM_STRINGREP_STORAGE(0));
-}
-
 UOrmDriverPgSql::~UOrmDriverPgSql()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UOrmDriverPgSql)
@@ -41,7 +26,7 @@ UOrmDriverPgSql::~UOrmDriverPgSql()
 
 void UOrmDriverPgSql::handlerError()
 {
-   U_TRACE(0, "UOrmDriverPgSql::UOrmDriverPgSql()")
+   U_TRACE_NO_PARAM(0, "UOrmDriverPgSql::UOrmDriverPgSql()")
 
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
@@ -73,7 +58,7 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 {
    U_TRACE(0, "UOrmDriverPgSql::handlerConnect(%V)", option.rep)
 
-   UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverPgSql(*str_name)) : this);
+   UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverPgSql(*UString::str_pgsql_name)) : this);
 
    // PQconnectdb accepts additional options as a string of "key=value" pairs
 
@@ -110,7 +95,7 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 
 void UOrmDriverPgSql::handlerDisConnect()
 {
-   U_TRACE(0, "UOrmDriverPgSql::handlerDisConnect()")
+   U_TRACE_NO_PARAM(0, "UOrmDriverPgSql::handlerDisConnect()")
 
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
@@ -224,7 +209,7 @@ UPgSqlStatement::~UPgSqlStatement()
 
 void UPgSqlStatement::reset()
 {
-   U_TRACE(0, "UPgSqlStatement::reset()")
+   U_TRACE_NO_PARAM(0, "UPgSqlStatement::reset()")
 
    U_ASSERT_EQUALS(num_bind_param,  vparam.size())
    U_ASSERT_EQUALS(num_bind_result, vresult.size())

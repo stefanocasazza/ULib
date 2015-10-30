@@ -150,7 +150,7 @@ const char* ULDAPEntry::getCStr(int index_names, int index_entry)
 
 void ULDAP::clear()
 {
-   U_TRACE(1, "ULDAP::clear()")
+   U_TRACE_NO_PARAM(1, "ULDAP::clear()")
 
    if (ludpp)
       {
@@ -202,7 +202,7 @@ void ULDAP::clear()
 
 void ULDAP::setStatus()
 {
-   U_TRACE(0, "ULDAP::setStatus()")
+   U_TRACE_NO_PARAM(0, "ULDAP::setStatus()")
 
    U_CHECK_MEMORY
 

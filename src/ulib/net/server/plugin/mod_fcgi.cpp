@@ -119,7 +119,7 @@ static FCGI_BeginRequestRecord beginRecord;
 
 void UFCGIPlugIn::set_FCGIBeginRequest()
 {
-   U_TRACE(0, "UFCGIPlugIn::set_FCGIBeginRequest()")
+   U_TRACE_NO_PARAM(0, "UFCGIPlugIn::set_FCGIBeginRequest()")
 
    beginRecord.header.version    = FCGI_VERSION_1;
 // beginRecord.header.request_id = htons((uint16_t)u_pid);
@@ -205,7 +205,7 @@ int UFCGIPlugIn::handlerConfig(UFileConfig& cfg)
 
 int UFCGIPlugIn::handlerInit()
 {
-   U_TRACE(1, "UFCGIPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(1, "UFCGIPlugIn::handlerInit()")
 
    if (connection &&
        UHTTP::fcgi_uri_mask)
@@ -252,7 +252,7 @@ int UFCGIPlugIn::handlerInit()
 
 int UFCGIPlugIn::handlerRequest()
 {
-   U_TRACE(0, "UFCGIPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UFCGIPlugIn::handlerRequest()")
 
    if (connection &&
        UHTTP::isFCGIRequest())

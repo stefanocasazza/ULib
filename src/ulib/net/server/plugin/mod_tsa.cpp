@@ -58,7 +58,7 @@ int UTsaPlugIn::handlerConfig(UFileConfig& cfg)
 
 int UTsaPlugIn::handlerInit()
 {
-   U_TRACE(0, "UTsaPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(0, "UTsaPlugIn::handlerInit()")
 
    if (command)
       {
@@ -83,7 +83,7 @@ int UTsaPlugIn::handlerInit()
 
 int UTsaPlugIn::handlerRequest()
 {
-   U_TRACE(0, "UTsaPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UTsaPlugIn::handlerRequest()")
 
    if (UHTTP::isTSARequest())
       {
@@ -95,7 +95,7 @@ int UTsaPlugIn::handlerRequest()
          {
          U_http_info.nResponseCode = HTTP_OK;
 
-         UHTTP::setResponse(UHTTP::str_ctype_tsa, &body);
+         UHTTP::setResponse(UString::str_ctype_tsa, &body);
          }
       else
          {

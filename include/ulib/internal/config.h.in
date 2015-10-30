@@ -32,6 +32,9 @@
 /* Define if you have d_reclen in struct dirent */
 #undef DIRENT_HAVE_D_RECLEN
 
+/* Define if you have d_type in struct dirent */
+#undef DIRENT_HAVE_D_TYPE
+
 /* Define if disable ipv6 support */
 #undef DISABLE_IPV6
 
@@ -195,6 +198,12 @@
 /* struct iphdr needed for IPv6 support */
 #undef HAVE_IPHDR
 
+/* has kqueue */
+#undef HAVE_KQUEUE
+
+/* has kqueue1 */
+#undef HAVE_KQUEUE1
+
 /* Define to 1 if you have the `GeoIP' library (-lGeoIP). */
 #undef HAVE_LIBGEOIP
 
@@ -350,6 +359,9 @@
 /* has sem_init */
 #undef HAVE_SEM_INIT
 
+/* has sem_timedwait */
+#undef HAVE_SEM_TIMEDWAIT
+
 /* has sendfile */
 #undef HAVE_SENDFILE
 
@@ -452,6 +464,9 @@
 
 /* Define to 1 if you have the <sys/dir.h> header file. */
 #undef HAVE_SYS_DIR_H
+
+/* Define to 1 if you have the <sys/endian.h> header file. */
+#undef HAVE_SYS_ENDIAN_H
 
 /* Define to 1 if you have the <sys/inotify.h> header file. */
 #undef HAVE_SYS_INOTIFY_H
@@ -833,7 +848,7 @@
 /* STATIC_HANDLER_TSA */
 #undef U_STATIC_HANDLER_TSA
 
-/* STATIC_ONLY */
+/* we want only static linking */
 #undef U_STATIC_ONLY
 
 /* STATIC_ORM_DRIVER_MYSQL */

@@ -237,7 +237,7 @@ public:
 
    bool dataTransferComplete()
       {
-      U_TRACE(0, "UFtpClient::dataTransferComplete()")
+      U_TRACE_NO_PARAM(0, "UFtpClient::dataTransferComplete()")
 
       readCommandResponse();
 

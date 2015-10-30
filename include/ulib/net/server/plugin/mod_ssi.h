@@ -19,11 +19,6 @@
 class U_EXPORT USSIPlugIn : public UServerPlugIn {
 public:
 
-   static const UString* str_cgi;
-   static const UString* str_var;
-
-   static void str_allocate();
-
    // Check for memory error
    U_MEMORY_TEST
 

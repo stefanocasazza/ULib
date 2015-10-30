@@ -29,7 +29,7 @@
 
 U_NO_EXPORT void UPop3Client::setStatus()
 {
-   U_TRACE(0, "UPop3Client::setStatus()")
+   U_TRACE_NO_PARAM(0, "UPop3Client::setStatus()")
 
    const char* descr1;
    const char* descr2;
@@ -246,7 +246,7 @@ end:
 
 bool UPop3Client::startTLS()
 {
-   U_TRACE(0, "UPop3Client::startTLS()")
+   U_TRACE_NO_PARAM(0, "UPop3Client::startTLS()")
 
 #ifdef USE_LIBSSL
    U_ASSERT(Socket::isSSL())
@@ -539,7 +539,7 @@ int UPop3Client::getAllMessage(UVector<UString>& vec)
 
 bool UPop3Client::deleteAllMessage()
 {
-   U_TRACE(0, "UPop3Client::deleteAllMessage()")
+   U_TRACE_NO_PARAM(0, "UPop3Client::deleteAllMessage()")
 
    int size_msg = getSizeMessage(0);
 
@@ -564,7 +564,7 @@ bool UPop3Client::deleteAllMessage()
 
 bool UPop3Client::reset()
 {
-   U_TRACE(0, "UPop3Client::reset()")
+   U_TRACE_NO_PARAM(0, "UPop3Client::reset()")
 
    if (syncCommand(-1, "RSET"))
       {
@@ -578,7 +578,7 @@ bool UPop3Client::reset()
 
 bool UPop3Client::quit()
 {
-   U_TRACE(0, "UPop3Client::quit()")
+   U_TRACE_NO_PARAM(0, "UPop3Client::quit()")
 
    if (syncCommand(-1, "QUIT"))
       {

@@ -69,7 +69,7 @@ UString UCrl::getIssuer(X509_CRL* _crl, bool ldap)
 
 bool UCrl::isUpToDate() const
 {
-   U_TRACE(0, "UCrl::isUpToDate()")
+   U_TRACE_NO_PARAM(0, "UCrl::isUpToDate()")
 
    U_INTERNAL_ASSERT_POINTER(crl)
 
@@ -234,7 +234,7 @@ time_t UCrl::getIssueTime(X509_CRL* _crl)
 
 UString UCrl::print() const
 {
-   U_TRACE(1, "UCrl::print()")
+   U_TRACE_NO_PARAM(1, "UCrl::print()")
 
    U_INTERNAL_ASSERT_POINTER(crl)
 

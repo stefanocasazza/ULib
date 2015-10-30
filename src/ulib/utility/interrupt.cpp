@@ -226,7 +226,7 @@ void UInterrupt::waitForSignal(int signo)
 
 void UInterrupt::callHandlerSignal()
 {
-   U_TRACE(0, "UInterrupt::callHandlerSignal()")
+   U_TRACE_NO_PARAM(0, "UInterrupt::callHandlerSignal()")
 
    int i;
 
@@ -311,7 +311,7 @@ void UInterrupt::setMaskInterrupt(sigset_t* mask, int signo)
 
 void UInterrupt::init()
 {
-   U_TRACE(1, "UInterrupt::init()")
+   U_TRACE_NO_PARAM(1, "UInterrupt::init()")
 
 #ifdef HAVE_SIGINFO_T
    act.sa_flags     = SA_SIGINFO;

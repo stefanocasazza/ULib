@@ -69,7 +69,7 @@ public:
 
    void clear()
       {
-      U_TRACE(1, "UCrl::clear()")
+      U_TRACE_NO_PARAM(1, "UCrl::clear()")
 
       U_INTERNAL_ASSERT_POINTER(crl)
 
@@ -89,7 +89,7 @@ public:
 
    bool isValid() const
       {
-      U_TRACE(0, "UCrl::isValid()")
+      U_TRACE_NO_PARAM(0, "UCrl::isValid()")
 
       U_RETURN(crl != 0);
       }
@@ -121,7 +121,7 @@ public:
 
    long hashCode() const
       {
-      U_TRACE(0, "UCrl::hashCode()")
+      U_TRACE_NO_PARAM(0, "UCrl::hashCode()")
 
       U_INTERNAL_ASSERT_POINTER(crl)
 
@@ -147,7 +147,7 @@ public:
 
    long getVersionNumber() const
       {
-      U_TRACE(1, "UCrl::getVersionNumber()")
+      U_TRACE_NO_PARAM(1, "UCrl::getVersionNumber()")
 
       U_INTERNAL_ASSERT_POINTER(crl)
 
@@ -162,7 +162,7 @@ public:
 
    UString getSignature() const
       {
-      U_TRACE(0, "UCrl::getSignature()")
+      U_TRACE_NO_PARAM(0, "UCrl::getSignature()")
 
       U_INTERNAL_ASSERT_POINTER(crl)
 
@@ -178,7 +178,7 @@ public:
 
    const char* getLastUpdate() const __pure
       {
-      U_TRACE(0, "UCrl::getLastUpdate()")
+      U_TRACE_NO_PARAM(0, "UCrl::getLastUpdate()")
 
       U_INTERNAL_ASSERT_POINTER(crl)
 
@@ -196,7 +196,7 @@ public:
 
    const char* getNextUpdate() const __pure
       {
-      U_TRACE(0, "UCrl::getNextUpdate()")
+      U_TRACE_NO_PARAM(0, "UCrl::getNextUpdate()")
 
       U_INTERNAL_ASSERT_POINTER(crl)
 

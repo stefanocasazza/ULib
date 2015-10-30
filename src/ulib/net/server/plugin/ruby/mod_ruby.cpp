@@ -620,7 +620,7 @@ end:
 extern U_EXPORT void URUBY_end();
        U_EXPORT void URUBY_end()
 {
-   U_TRACE(0, "URUBY_end()")
+   U_TRACE_NO_PARAM(0, "URUBY_end()")
 
    if (dollar_zero)
       {

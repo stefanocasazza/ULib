@@ -9,7 +9,7 @@ ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 moduledir = @ULIB_MODULEDIR@
 module_LTLIBRARIES = server_plugin_v8.la
 server_plugin_v8_la_SOURCES = mod_v8.cpp
-server_plugin_v8_la_LDFLAGS = -module $(MODULE_LIBTOOL_OPTIONS)
+server_plugin_v8_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
 server_plugin_v8_la_LIBADD  = -lv8 $(ulib_la) @ULIB_LIBS@
 
 clean-local:

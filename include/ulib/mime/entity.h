@@ -80,7 +80,7 @@ public:
 
    bool isEmpty()
       {
-      U_TRACE(0, "UMimeEntity::isEmpty()")
+      U_TRACE_NO_PARAM(0, "UMimeEntity::isEmpty()")
 
       bool result = content.empty();
 
@@ -89,7 +89,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UMimeEntity::clear()")
+      U_TRACE_NO_PARAM(0, "UMimeEntity::clear()")
 
               data.clear();
            content.clear();
@@ -104,7 +104,7 @@ public:
 
    bool parse()
       {
-      U_TRACE(0, "UMimeEntity::parse()")
+      U_TRACE_NO_PARAM(0, "UMimeEntity::parse()")
 
       U_INTERNAL_ASSERT(data)
 
@@ -126,7 +126,7 @@ public:
 
    bool isParsingOk()
       {
-      U_TRACE(0, "UMimeEntity::isParsingOk()")
+      U_TRACE_NO_PARAM(0, "UMimeEntity::isParsingOk()")
 
       U_INTERNAL_ASSERT_POINTER(header)
 
@@ -174,7 +174,7 @@ public:
 
    UString getContentDisposition() const
       {
-      U_TRACE(0, "UMimeEntity::getContentDisposition()")
+      U_TRACE_NO_PARAM(0, "UMimeEntity::getContentDisposition()")
 
       U_INTERNAL_ASSERT_POINTER(header)
 
@@ -185,7 +185,7 @@ public:
 
    bool isAttachment() const
       {
-      U_TRACE(0, "UMimeEntity::isAttachment()")
+      U_TRACE_NO_PARAM(0, "UMimeEntity::isAttachment()")
 
       UString value = getContentDisposition();
 
@@ -197,10 +197,10 @@ public:
 
    bool isBodyMessage() const
       {
-      U_TRACE(0, "UMimeEntity::isBodyMessage()")
+      U_TRACE_NO_PARAM(0, "UMimeEntity::isBodyMessage()")
 
       bool result = (isText()                                                                                        &&
-                     UMimeHeader::getValueAttributeFromKeyValue(content_type, *UString::str_name, false).empty() &&
+                     UMimeHeader::getValueAttributeFromKeyValue(content_type, U_CONSTANT_TO_PARAM("name"), false).empty() &&
                      isAttachment() == false);
 
       U_RETURN(result);
@@ -243,7 +243,7 @@ protected:
 
    bool checkContentType()
       {
-      U_TRACE(0, "UMimeEntity::checkContentType()")
+      U_TRACE_NO_PARAM(0, "UMimeEntity::checkContentType()")
 
       U_INTERNAL_ASSERT_POINTER(header)
 
@@ -412,7 +412,7 @@ protected:
 
    bool isEmpty()
       {
-      U_TRACE(0, "UMimeMultipart::isEmpty()")
+      U_TRACE_NO_PARAM(0, "UMimeMultipart::isEmpty()")
 
       bool result = (UMimeEntity::isEmpty() && getNumBodyPart() == 0);
 
@@ -421,7 +421,7 @@ protected:
 
    void setEmpty()
       {
-      U_TRACE(0, "UMimeMultipart::setEmpty()")
+      U_TRACE_NO_PARAM(0, "UMimeMultipart::setEmpty()")
 
       bodypart.clear();
 

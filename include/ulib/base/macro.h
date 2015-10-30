@@ -233,14 +233,14 @@ typedef enum {
 #define U_INT2PTR(x) (       (void*)(long)x)
 
 union uucflag {
-   char c[4];
+   unsigned char c[4];
    uint16_t lo; 
    uint16_t hi; 
    uint32_t u;
 };
 
 union uucflag64 {
-   char c[8];
+   unsigned char c[8];
    uint32_t s;
    uint64_t u;
 };

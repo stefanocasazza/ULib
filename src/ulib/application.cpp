@@ -20,12 +20,12 @@ uint32_t UApplication::num_args;
 
 UApplication::UApplication() : opt(126)
 {
-   U_TRACE(0, "UApplication::UApplication()")
+   U_TRACE_NO_PARAM(0, "UApplication::UApplication()")
 }
 
 UApplication::~UApplication()
 {
-   U_TRACE(0+256, "UApplication::~UApplication()")
+   U_TRACE_NO_PARAM(0+256, "UApplication::~UApplication()")
 
    // AT EXIT
 

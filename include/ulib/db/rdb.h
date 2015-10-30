@@ -119,7 +119,7 @@ public:
 
    uint32_t size() const
       {
-      U_TRACE(0, "URDB::size()")
+      U_TRACE_NO_PARAM(0, "URDB::size()")
 
       U_INTERNAL_DUMP("UCDB::nrecord = %u RDB_nrecord = %u", UCDB::nrecord, RDB_nrecord(this))
 
@@ -327,7 +327,7 @@ protected:
 
    void resetReference()
       {
-      U_TRACE(0, "URDB::resetReference()")
+      U_TRACE_NO_PARAM(0, "URDB::resetReference()")
 
       U_CHECK_MEMORY
 
@@ -338,7 +338,7 @@ protected:
 
    bool cdbLookup() // NB: set the value of struct UCDB::data...
       {
-      U_TRACE(0, "URDB::cdbLookup()")
+      U_TRACE_NO_PARAM(0, "URDB::cdbLookup()")
 
       U_CHECK_MEMORY
 

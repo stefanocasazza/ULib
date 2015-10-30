@@ -19,37 +19,6 @@ UVector<UString>**    UQueryParser::positives;
 UVector<UString>**    UQueryParser::negatives;
 UVector<UQueryNode*>* UQueryParser::termRoots;
 
-const UString* UQueryParser::str_p1;
-const UString* UQueryParser::str_p2;
-const UString* UQueryParser::str_or;
-const UString* UQueryParser::str_and;
-const UString* UQueryParser::str_not;
-
-void UQueryParser::str_allocate()
-{
-   U_TRACE(0, "UQueryParser::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_p1,0)
-   U_INTERNAL_ASSERT_EQUALS(str_p2,0)
-   U_INTERNAL_ASSERT_EQUALS(str_or,0)
-   U_INTERNAL_ASSERT_EQUALS(str_and,0)
-   U_INTERNAL_ASSERT_EQUALS(str_not,0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("(") },
-      { U_STRINGREP_FROM_CONSTANT(")") },
-      { U_STRINGREP_FROM_CONSTANT("OR") },
-      { U_STRINGREP_FROM_CONSTANT("AND") },
-      { U_STRINGREP_FROM_CONSTANT("NOT") }
-   };
-
-   U_NEW_ULIB_OBJECT(str_p1,  U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_p2,  U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_or,  U_STRING_FROM_STRINGREP_STORAGE(2));
-   U_NEW_ULIB_OBJECT(str_and, U_STRING_FROM_STRINGREP_STORAGE(3));
-   U_NEW_ULIB_OBJECT(str_not, U_STRING_FROM_STRINGREP_STORAGE(4));
-}
-
 UQueryNode::UQueryNode(Type t, UQueryNode* l, UQueryNode* r) : left(l), right(r), type(t)
 {
    U_TRACE_REGISTER_OBJECT(0, UQueryNode, "%d,%p,%p", t, l, r)
@@ -70,7 +39,7 @@ UQueryNode::~UQueryNode()
 
 void UQueryParser::clear()
 {
-   U_TRACE(0, "UQueryParser::clear()")
+   U_TRACE_NO_PARAM(0, "UQueryParser::clear()")
 
    if (tree)
       {
@@ -157,7 +126,7 @@ bool UQueryParser::parse(const UString& query)
 
 U_NO_EXPORT UQueryNode* UQueryParser::parseExpr()
 {
-   U_TRACE(0, "UQueryParser::parseExpr()")
+   U_TRACE_NO_PARAM(0, "UQueryParser::parseExpr()")
 
    UQueryNode* left = parseTerm();
 
@@ -172,7 +141,7 @@ U_NO_EXPORT UQueryNode* UQueryParser::parseExpr()
 
 U_NO_EXPORT UQueryNode* UQueryParser::parseTerm()
 {
-   U_TRACE(0, "UQueryParser::parseTerm()")
+   U_TRACE_NO_PARAM(0, "UQueryParser::parseTerm()")
 
    UQueryNode* left = parseFactor();
 
@@ -187,7 +156,7 @@ U_NO_EXPORT UQueryNode* UQueryParser::parseTerm()
 
 U_NO_EXPORT UQueryNode* UQueryParser::parseFactor()
 {
-   U_TRACE(0, "UQueryParser::parseFactor()")
+   U_TRACE_NO_PARAM(0, "UQueryParser::parseFactor()")
 
    bool v = true;
 
@@ -204,7 +173,7 @@ U_NO_EXPORT UQueryNode* UQueryParser::parseFactor()
 
 U_NO_EXPORT UQueryNode* UQueryParser::parseAtom()
 {
-   U_TRACE(0, "UQueryParser::parseAtom()")
+   U_TRACE_NO_PARAM(0, "UQueryParser::parseAtom()")
 
    if (isBraceStart())
       {
@@ -228,7 +197,7 @@ Determines if the tree rooted at this node is in the DNF
 
 __pure bool UQueryNode::isDisjunctiveNormalForm() const
 {
-   U_TRACE(0, "UQueryNode::isDisjunctiveNormalForm()")
+   U_TRACE_NO_PARAM(0, "UQueryNode::isDisjunctiveNormalForm()")
 
    U_CHECK_MEMORY
 
@@ -676,7 +645,7 @@ void UQueryNode::getTreeVariables(UVector<UString>* positives, UVector<UString>*
 
 U_NO_EXPORT bool UQueryNode::isDNFTermUseful() const
 {
-   U_TRACE(0, "UQueryNode::isDNFTermUseful()")
+   U_TRACE_NO_PARAM(0, "UQueryNode::isDNFTermUseful()")
 
    U_CHECK_MEMORY
 
@@ -943,7 +912,7 @@ inline bool UQueryParser::neg_evaluate(void* _word)
 
 bool UQueryParser::evaluate() const
 {
-   U_TRACE(0, "UQueryParser::evaluate()")
+   U_TRACE_NO_PARAM(0, "UQueryParser::evaluate()")
 
    U_INTERNAL_ASSERT_POINTER(termRoots)
 
@@ -987,13 +956,13 @@ U_EXPORT ostream& operator<<(ostream& os, const UQueryNode& e)
          bool parent = (e.right->type == UQueryNode::AND ||
                         e.right->type == UQueryNode::OR);
 
-         os << ' ' << *UQueryParser::str_not << ' ';
+         os << ' ' << *UString::str_not << ' ';
 
-         if (parent) os << *UQueryParser::str_p1;
+         if (parent) os << *UString::str_p1;
 
          os << *(e.right);
 
-         if (parent) os << *UQueryParser::str_p2;
+         if (parent) os << *UString::str_p2;
          }
       break;
 
@@ -1001,7 +970,7 @@ U_EXPORT ostream& operator<<(ostream& os, const UQueryNode& e)
          {
          os << *(e.left);
 
-         os << ' ' << *UQueryParser::str_or << ' ';
+         os << ' ' << *UString::str_or << ' ';
 
          os << *(e.right);
          }
@@ -1011,21 +980,21 @@ U_EXPORT ostream& operator<<(ostream& os, const UQueryNode& e)
          {
          bool parent = (e.left->type == UQueryNode::OR);
 
-         if (parent) os << *UQueryParser::str_p1;
+         if (parent) os << *UString::str_p1;
 
          os << *(e.left);
 
-         if (parent) os << *UQueryParser::str_p2;
+         if (parent) os << *UString::str_p2;
 
-         os << ' ' << *UQueryParser::str_and << ' ';
+         os << ' ' << *UString::str_and << ' ';
 
          parent = (e.right->type == UQueryNode::OR);
 
-         if (parent) os << *UQueryParser::str_p1;
+         if (parent) os << *UString::str_p1;
 
          os << *(e.right);
 
-         if (parent) os << *UQueryParser::str_p2;
+         if (parent) os << *UString::str_p2;
          }
       break;
       }

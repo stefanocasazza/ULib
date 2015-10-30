@@ -29,7 +29,7 @@ public:
 
    virtual bool sendRequest()
       {
-      U_TRACE(0, "USOAPClient_Base::sendRequest()")
+      U_TRACE_NO_PARAM(0, "USOAPClient_Base::sendRequest()")
 
       if (UClient_Base::sendRequest()) U_RETURN(true);
 

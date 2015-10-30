@@ -38,7 +38,7 @@ GeoIPRegion* UGeoIPPlugIn::region;
 
 bool UGeoIPPlugIn::setCountryCode()
 {
-   U_TRACE(1, "UGeoIPPlugIn::setCountryCode()")
+   U_TRACE_NO_PARAM(1, "UGeoIPPlugIn::setCountryCode()")
 
    gir = 0;
    region = 0;
@@ -118,7 +118,7 @@ bool UGeoIPPlugIn::setCountryCode()
 
 bool UGeoIPPlugIn::checkCountryForbidden()
 {
-   U_TRACE(0, "UGeoIPPlugIn::checkCountryForbidden()")
+   U_TRACE_NO_PARAM(0, "UGeoIPPlugIn::checkCountryForbidden()")
 
    if (UServices::dosMatchWithOR(country_code, 2, U_STRING_TO_PARAM(*country_forbidden_mask), 0))
       {
@@ -173,7 +173,7 @@ int UGeoIPPlugIn::handlerConfig(UFileConfig& cfg)
 
 int UGeoIPPlugIn::handlerInit()
 {
-   U_TRACE(1, "UGeoIPPlugIn::handlerInit()")
+   U_TRACE_NO_PARAM(1, "UGeoIPPlugIn::handlerInit()")
 
    U_SYSCALL_VOID_NO_PARAM(_GeoIP_setup_dbfilename);
 
@@ -209,7 +209,7 @@ int UGeoIPPlugIn::handlerInit()
 
 int UGeoIPPlugIn::handlerREAD()
 {
-   U_TRACE(0, "UGeoIPPlugIn::handlerREAD()")
+   U_TRACE_NO_PARAM(0, "UGeoIPPlugIn::handlerREAD()")
 
    if (country_id || gir) UHTTP::geoip->setEmpty();
 
@@ -225,7 +225,7 @@ int UGeoIPPlugIn::handlerREAD()
 
 int UGeoIPPlugIn::handlerRequest()
 {
-   U_TRACE(0, "UGeoIPPlugIn::handlerRequest()")
+   U_TRACE_NO_PARAM(0, "UGeoIPPlugIn::handlerRequest()")
 
    if (country_forbidden_mask &&
        setCountryCode()       &&

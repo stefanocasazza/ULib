@@ -58,7 +58,7 @@ public:
 
    bool atEnd()
       {
-      U_TRACE(0, "UTokenizer::atEnd()")
+      U_TRACE_NO_PARAM(0, "UTokenizer::atEnd()")
 
       bool result = (s >= end);
 
@@ -76,7 +76,7 @@ public:
 
    void skipSpaces()
       {
-      U_TRACE(0, "UTokenizer::skipSpaces()")
+      U_TRACE_NO_PARAM(0, "UTokenizer::skipSpaces()")
 
       while (s < end && u__isspace(*s)) ++s;
       }
@@ -92,14 +92,14 @@ public:
 
    const char* getPointer() const
       {
-      U_TRACE(0, "UTokenizer::getPointer()")
+      U_TRACE_NO_PARAM(0, "UTokenizer::getPointer()")
 
       U_RETURN(s);
       }
 
    const char* getEnd() const
       {
-      U_TRACE(0, "UTokenizer::getEnd()")
+      U_TRACE_NO_PARAM(0, "UTokenizer::getEnd()")
 
       U_RETURN(end);
       }
@@ -124,7 +124,7 @@ public:
 
    char current()
       {
-      U_TRACE(0, "UTokenizer::current()")
+      U_TRACE_NO_PARAM(0, "UTokenizer::current()")
 
       if (s >= end) U_RETURN('\0');
 
@@ -135,7 +135,7 @@ public:
 
    void back()
       {
-      U_TRACE(0, "UTokenizer::back()")
+      U_TRACE_NO_PARAM(0, "UTokenizer::back()")
 
       U_INTERNAL_ASSERT_MAJOR(s, str.data())
 
@@ -146,7 +146,7 @@ public:
 
    char next()
       {
-      U_TRACE(0, "UTokenizer::next()")
+      U_TRACE_NO_PARAM(0, "UTokenizer::next()")
 
       if (s >= end) U_RETURN('\0');
 
@@ -167,7 +167,7 @@ public:
 
    UString substr() const
       {
-      U_TRACE(0, "UTokenizer::substr()")
+      U_TRACE_NO_PARAM(0, "UTokenizer::substr()")
 
       U_INTERNAL_ASSERT(s <= end)
 

@@ -20,29 +20,6 @@ extern "C" {
 
 U_CREAT_FUNC(orm_driver_mysql, UOrmDriverMySql)
 
-const UString* UOrmDriverMySql::str_name;
-const UString* UOrmDriverMySql::str_secure_auth;
-const UString* UOrmDriverMySql::str_auto_reconnect;
-
-void UOrmDriverMySql::str_allocate()
-{
-   U_TRACE(0, "UOrmDriverMySql::str_allocate()")
-
-   U_INTERNAL_ASSERT_EQUALS(str_name, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_secure_auth, 0)
-   U_INTERNAL_ASSERT_EQUALS(str_auto_reconnect, 0)
-
-   static ustringrep stringrep_storage[] = {
-      { U_STRINGREP_FROM_CONSTANT("mysql") },
-      { U_STRINGREP_FROM_CONSTANT("secure-auth") },
-      { U_STRINGREP_FROM_CONSTANT("auto-reconnect") }
-   };
-
-   U_NEW_ULIB_OBJECT(str_name,           U_STRING_FROM_STRINGREP_STORAGE(0));
-   U_NEW_ULIB_OBJECT(str_secure_auth,    U_STRING_FROM_STRINGREP_STORAGE(1));
-   U_NEW_ULIB_OBJECT(str_auto_reconnect, U_STRING_FROM_STRINGREP_STORAGE(2));
-}
-
 UOrmDriverMySql::~UOrmDriverMySql()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UOrmDriverMySql)
@@ -53,7 +30,7 @@ UOrmDriverMySql::~UOrmDriverMySql()
 
 void UOrmDriverMySql::handlerError()
 {
-   U_TRACE(0, "UOrmDriverMySql::UOrmDriverMySql()")
+   U_TRACE_NO_PARAM(0, "UOrmDriverMySql::UOrmDriverMySql()")
 
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
@@ -159,7 +136,7 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 {
    U_TRACE(0, "UOrmDriverMySql::handlerConnect(%V)", option.rep)
 
-   UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverMySql(*str_name)) : this);
+   UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverMySql(*UString::str_mysql_name)) : this);
 
    if (pdrv->setOption(option) == false)
       {
@@ -181,26 +158,26 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
       U_RETURN_POINTER(0, UOrmDriver);
       }
 
-   int timeout = pdrv->getOptionValue(*UOrmDriver::str_timeout).strtol(); // generic timeout is specified in seconds
+   int timeout = pdrv->getOptionValue(*UString::str_timeout).strtol(); // generic timeout is specified in seconds
 
    (void) U_SYSCALL(mysql_options, "%p", (MYSQL*)pdrv->connection, MYSQL_OPT_CONNECT_TIMEOUT, (const char*)&timeout);
 
-   int port = pdrv->getOptionValue(*UOrmDriver::str_port).strtol();
+   int port = pdrv->getOptionValue(*UString::str_port).strtol();
 
    if (port <= 0 || port > 65535) port = 3306; // if no port was specified, use MySQL's default port to let things run gracefully
 
-   UString host = pdrv->getOptionValue(*UOrmDriver::str_host);
+   UString host = pdrv->getOptionValue(*UString::str_host);
 
    if (host) host.setNullTerminated();
    else      host = *UString::str_localhost;
 
-   UString user           = pdrv->getOptionValue(*UString::str_user),
-           encoding       = pdrv->getOptionValue(*UString::str_encoding),
+   UString user           = pdrv->getOptionValue(U_CONSTANT_TO_PARAM("user")),
+           encoding       = pdrv->getOptionValue(U_CONSTANT_TO_PARAM("encoding")),
            password       = pdrv->getOptionValue(U_CONSTANT_TO_PARAM("password")),
-           compress       = pdrv->getOptionValue(*UOrmDriver::str_compress),
-           secure_auth    = pdrv->getOptionValue(*str_secure_auth),
-           character_set  = pdrv->getOptionValue(*UOrmDriver::str_character_set),
-           auto_reconnect = pdrv->getOptionValue(*str_auto_reconnect);
+           compress       = pdrv->getOptionValue(*UString::str_compress),
+           secure_auth    = pdrv->getOptionValue(*UString::str_secure_auth),
+           character_set  = pdrv->getOptionValue(*UString::str_character_set),
+           auto_reconnect = pdrv->getOptionValue(*UString::str_auto_reconnect);
 
    /**
     * mysql_options() should be called after mysql_init() and before mysql_connect() or mysql_real_connect().
@@ -247,7 +224,7 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 
 void UOrmDriverMySql::handlerDisConnect()
 {
-   U_TRACE(0, "UOrmDriverMySql::handlerDisConnect()")
+   U_TRACE_NO_PARAM(0, "UOrmDriverMySql::handlerDisConnect()")
 
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
@@ -314,7 +291,7 @@ USqlStatement* UOrmDriverMySql::handlerStatementCreation(const char* stmt, uint3
 
 void UMySqlStatement::reset()
 {
-   U_TRACE(0, "UMySqlStatement::reset()")
+   U_TRACE_NO_PARAM(0, "UMySqlStatement::reset()")
 
    U_ASSERT_EQUALS(num_bind_param,  vparam.size())
    U_ASSERT_EQUALS(num_bind_result, vresult.size())
@@ -430,7 +407,7 @@ USqlStatementBindParam* UOrmDriverMySql::creatSqlStatementBindParam(USqlStatemen
 
 void UMySqlStatement::setStringBindedAsResult()
 {
-   U_TRACE(0, "UMySqlStatement::setStringBindedAsResult()")
+   U_TRACE_NO_PARAM(0, "UMySqlStatement::setStringBindedAsResult()")
 
    U_INTERNAL_ASSERT_MAJOR(num_bind_result, 0)
    U_ASSERT_EQUALS(num_bind_result, vresult.size())

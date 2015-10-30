@@ -223,7 +223,7 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
       {
       for (int32_t i = 0, n = name_value.size(); i < n; i += 2)
          {
-         if (name_value[i].equal(*UString::str_name))
+         if (name_value[i].equal(U_CONSTANT_TO_PARAM("name")))
             {
             name = name_value[i+1];
 
@@ -233,7 +233,7 @@ bool UMimeHeader::getNames(const UString& cdisposition, UString& name, UString& 
 
             U_INTERNAL_DUMP("name = %V", name.rep)
             }
-         else if (name_value[i].equal(*UString::str_filename))
+         else if (name_value[i].equal(U_CONSTANT_TO_PARAM("filename")))
             {
             filename = name_value[i+1];
 
@@ -331,7 +331,7 @@ void UMimeHeader::writeHeaders(UString& buffer)
 
 UString UMimeHeader::getHeaders()
 {
-   U_TRACE(0, "UMimeHeader::getHeaders()")
+   U_TRACE_NO_PARAM(0, "UMimeHeader::getHeaders()")
 
    if (empty() == false)
       {

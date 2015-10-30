@@ -207,12 +207,12 @@ uint32_t u_xml_decode(const char* restrict input, uint32_t len, unsigned char* r
 
             union uuarg i = { ++input };
 
-            *r++ = (unsigned char) strtol(i.cp, &i.p, 0);
+            *r++ = (unsigned char) strtol(i.cp, &i.p, 10);
             */
 
             ++input;
 
-            *r++ = (unsigned char) strtol((const char*)input, (char**)&input, 0);
+            *r++ = (unsigned char) strtol((const char*)input, (char**)&input, 10);
 
             ++input;
             }

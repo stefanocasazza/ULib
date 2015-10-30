@@ -107,7 +107,7 @@ UPCRE* UPCRE::username_mask;
 
 U_NO_EXPORT bool UPCRE::checkBrackets()
 {
-   U_TRACE(1, "UPCRE::checkBrackets()")
+   U_TRACE_NO_PARAM(1, "UPCRE::checkBrackets()")
 
    /*
    certainly we need an anchor, we want to check if the whole arg is in brackets
@@ -249,7 +249,7 @@ void UPCRE::set(const UString& expression, const char* flags)
 
 void UPCRE::clear()
 {
-   U_TRACE(0, "UPCRE::clear()")
+   U_TRACE_NO_PARAM(0, "UPCRE::clear()")
 
    /* avoid deleting of uninitialized pointers */
 

@@ -82,7 +82,7 @@ UIptAccount::~UIptAccount()
 
 void UIptAccount::freeEntries()
 {
-   U_TRACE(0, "UIptAccount::freeEntries()")
+   U_TRACE_NO_PARAM(0, "UIptAccount::freeEntries()")
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    U_INTERNAL_ASSERT_POINTER(handle)
@@ -168,7 +168,7 @@ bool UIptAccount::readEntries(const char* table, bool dont_flush)
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
 struct ipt_acc_handle_ip* UIptAccount::getNextEntry()
 {
-   U_TRACE(0, "UIptAccount::getNextEntry()")
+   U_TRACE_NO_PARAM(0, "UIptAccount::getNextEntry()")
 
    // Empty or no more items left to return ?
 
@@ -186,7 +186,7 @@ struct ipt_acc_handle_ip* UIptAccount::getNextEntry()
 
 int UIptAccount::getHandleUsage()
 {
-   U_TRACE(0, "UIptAccount::getHandleUsage()")
+   U_TRACE_NO_PARAM(0, "UIptAccount::getHandleUsage()")
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    uint32_t s = sizeof(struct ipt_acc_handle_sockopt);
@@ -206,7 +206,7 @@ int UIptAccount::getHandleUsage()
 
 bool UIptAccount::freeAllHandles()
 {
-   U_TRACE(0, "UIptAccount::freeAllHandles()")
+   U_TRACE_NO_PARAM(0, "UIptAccount::freeAllHandles()")
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    if (USocket::setSockOpt(IPPROTO_IP, IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL, 0, 0)) U_RETURN(true);
@@ -218,7 +218,7 @@ bool UIptAccount::freeAllHandles()
     
 bool UIptAccount::getTableNames()
 {
-   U_TRACE(0, "UIptAccount::getTableNames()")
+   U_TRACE_NO_PARAM(0, "UIptAccount::getTableNames()")
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    if (USocket::getSockOpt(IPPROTO_IP, IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES, data, data_size))
@@ -235,7 +235,7 @@ bool UIptAccount::getTableNames()
 
 const char* UIptAccount::getNextName()
 {
-   U_TRACE(0, "UIptAccount::getNextName()")
+   U_TRACE_NO_PARAM(0, "UIptAccount::getNextName()")
 
    const char* rtn = 0;
 
