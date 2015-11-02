@@ -228,7 +228,7 @@ case "$target_os" in
 		AC_MSG_RESULT([ok ($target_os)])
 
 		enable_stdcpp="no"
-		CPPFLAGS="$CPPFLAGS -D__USE_CRTIMP"
+		CPPFLAGS="$CPPFLAGS -D__USE_CRTIMP -Wno-sign-compare"
 
 		if test "$enable_static" = "yes"; then
 			AC_MSG_WARN([Disabling static library build, must build as DLL on Windows])

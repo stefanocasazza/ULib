@@ -16,6 +16,45 @@
 #  endif
 #endif
 
+/* see if targeting legacy Microsoft windows platform */
+
+#if defined(_MSC_VER) || defined(WIN32) || defined(_WIN32)
+#  define _MSWINDOWS_
+#  if defined(_MSC_VER)
+#     define NOMINMAX
+#  endif
+#  if defined(_M_X64) || defined(_M_ARM)
+#     define _MSCONDITIONALS_
+#     ifndef _WIN32_WINNT
+#     define _WIN32_WINNT 0x0600
+#     endif
+#  endif
+#  ifdef  _MSC_VER
+#     pragma warning(disable: 4251)
+#     pragma warning(disable: 4996)
+#     pragma warning(disable: 4355)
+#     pragma warning(disable: 4290)
+#     pragma warning(disable: 4291)
+#  endif
+#  if defined(__BORLANDC__) && !defined(__MT__)
+#     error Please enable multithreading
+#  endif
+#  if defined(_MSC_VER) && !defined(_MT)
+#     error Please enable multithreading (Project -> Settings -> C/C++ -> Code Generation -> Use Runtime Library)
+#  endif
+/* Require for compiling with critical sections */
+#  ifndef _WIN32_WINNT
+#  define _WIN32_WINNT 0x0600
+#  endif
+/* Make sure we're consistent with _WIN32_WINNT */
+#  ifndef WINVER
+#  define WINVER _WIN32_WINNT
+#  endif
+#  ifndef WIN32_LEAN_AND_MEAN
+#  define WIN32_LEAN_AND_MEAN
+#  endif
+#endif
+
 #ifdef __GNUC__
 #  if    __GNUC__ > 1
 #     if __GNUC__ < 3
@@ -44,7 +83,7 @@
                            __GNUC_MINOR__ *   100 + \
                            __GNUC_PATCHLEVEL__)
 #  if GCC_VERSION_NUM > 29600 && GCC_VERSION_NUM != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
-#    if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#    if defined(LINUX) || defined(__LINUX__) || defined(__linux__) || defined(_MSWINDOWS_)
 #     define __pure                       __attribute__((pure))
 #    endif
 #     define LIKELY(x)                    __builtin_expect(!!(x), 1)
@@ -181,45 +220,6 @@
 #ifdef DEBUG
 #  ifdef NDEBUG
 #  undef NDEBUG
-#  endif
-#endif
-
-/* see if targeting legacy Microsoft windows platform */
-
-#if defined(_MSC_VER) || defined(WIN32) || defined(_WIN32)
-#  define _MSWINDOWS_
-#  if defined(_MSC_VER)
-#     define NOMINMAX
-#  endif
-#  if defined(_M_X64) || defined(_M_ARM)
-#     define _MSCONDITIONALS_
-#     ifndef _WIN32_WINNT
-#     define _WIN32_WINNT 0x0600
-#     endif
-#  endif
-#  ifdef  _MSC_VER
-#     pragma warning(disable: 4251)
-#     pragma warning(disable: 4996)
-#     pragma warning(disable: 4355)
-#     pragma warning(disable: 4290)
-#     pragma warning(disable: 4291)
-#  endif
-#  if defined(__BORLANDC__) && !defined(__MT__)
-#     error Please enable multithreading
-#  endif
-#  if defined(_MSC_VER) && !defined(_MT)
-#     error Please enable multithreading (Project -> Settings -> C/C++ -> Code Generation -> Use Runtime Library)
-#  endif
-/* Require for compiling with critical sections */
-#  ifndef _WIN32_WINNT
-#  define _WIN32_WINNT 0x0600
-#  endif
-/* Make sure we're consistent with _WIN32_WINNT */
-#  ifndef WINVER
-#  define WINVER _WIN32_WINNT
-#  endif
-#  ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN
 #  endif
 #endif
 

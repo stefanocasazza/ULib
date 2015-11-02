@@ -7550,7 +7550,7 @@ fi
 $as_echo "ok ($target_os)" >&6; }
 
 		enable_stdcpp="no"
-		CPPFLAGS="$CPPFLAGS -D__USE_CRTIMP"
+		CPPFLAGS="$CPPFLAGS -D__USE_CRTIMP -Wno-sign-compare"
 
 		if test "$enable_static" = "yes"; then
 			{ $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Disabling static library build, must build as DLL on Windows" >&5

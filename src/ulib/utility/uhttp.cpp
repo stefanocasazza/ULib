@@ -543,7 +543,7 @@ next:
             }
          }
       }
-#ifdef U_EPOLLET_POSTPONE_STRATEGY
+#if defined(U_EPOLLET_POSTPONE_STRATEGY)
    else if (errno == EAGAIN) U_ClientImage_state = U_PLUGIN_HANDLER_AGAIN;
 #endif
 

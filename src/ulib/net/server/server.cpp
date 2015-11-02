@@ -2870,7 +2870,7 @@ try_accept:
          }
 #  endif
 
-#  ifdef U_EPOLLET_POSTPONE_STRATEGY
+#  if defined(U_EPOLLET_POSTPONE_STRATEGY)
       if (CSOCKET->iState == -EAGAIN) U_ClientImage_state = U_PLUGIN_HANDLER_AGAIN;
 #  endif
 

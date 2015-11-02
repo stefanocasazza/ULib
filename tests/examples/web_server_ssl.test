@@ -135,7 +135,7 @@ fi
 cat <<EOF >inp/webserver.cfg
 userver {
  PORT 4443
- RUN_AS_USER apache
+ RUN_AS_USER nobody
  REQ_TIMEOUT 30
 #MIN_SIZE_FOR_SENDFILE 2k
  LOG_FILE webserver_ssl$1.log

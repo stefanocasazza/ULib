@@ -193,10 +193,11 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
       goto read;
       }
 
-#ifdef U_EPOLLET_POSTPONE_STRATEGY
+#if defined(U_EPOLLET_POSTPONE_STRATEGY)
    if (UNotifier::bepollet == false)
 #endif
    {
+#if defined(U_LOG_ENABLE) || defined(USE_LIBZ)
    if (sk->isBlocking() == false)
       {
       /**
@@ -212,7 +213,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
        * The suggested way to use epoll as an edge-triggered (EPOLLET) interface is as follows:
        *
        * 1) with nonblocking file descriptors
-       * 2) by waiting for an event only after read(2) or write(2) return EAGAIN.
+       * 2) by waiting for an event only after read(2) or write(2) return EAGAIN
        * -------------------------------------------------------------------------------------------------------------------
        * Edge-triggered semantics allow a more efficient internal implementation than level-triggered semantics.
        *
@@ -227,6 +228,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
       goto read;
       }
+#endif
    }
 
 done:

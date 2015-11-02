@@ -35,6 +35,15 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 # endif
 #endif
 
+#ifdef __UNIKERNEL__
+#  include <rump/rump.h>
+#  include <rump/rump_syscalls.h>
+
+#  define  open(...) rump_sys_open(__VA_ARGS__)
+#  define write(...) rump_sys_write(__VA_ARGS__)
+#  define close(...) rump_sys_close(__VA_ARGS__)
+#endif
+
 static void printInfo(void)
 {
    U_INTERNAL_TRACE("printInfo()")
@@ -277,8 +286,6 @@ void u_trace_init(int bsignal)
          /* NB: O_RDWR is needed for mmap(MAP_SHARED)... */
 
          u_trace_fd = open(name, O_CREAT | O_RDWR | O_BINARY | (u_fork_called ? O_APPEND : 0), 0666);
-
-      /* u_trace_fd = rump_sys_open(name, RUMP_O_RDWR); */
 
          if (u_trace_fd == -1)
             {

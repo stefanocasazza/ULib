@@ -22,10 +22,10 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # PLAINTEXT
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
- UMEMPOOL="52,0,0,39,8205,8205,-11,-20,22"
+#UMEMPOOL="52,0,0,39,8205,8205,-11,-20,22"
 #UMEMPOOL="982,0,0,36,9846,-24,-23,1727,1151"
- sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
- sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 4000|g"							 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 8000|g" benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -59,11 +59,11 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#UMEMPOOL="56,0,0,40,150,-24,-13,-20,0"
-#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 50|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 100|g"  benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ UMEMPOOL="56,0,0,40,150,-24,-13,-20,0"
+ sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 50|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 100|g"  benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/json
 #  4 threads and 256 connections

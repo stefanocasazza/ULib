@@ -881,7 +881,7 @@ loop0:
 #  else
       int i = 0;
       pevents = events;
-#    ifdef U_EPOLLET_POSTPONE_STRATEGY
+#    if defined(U_EPOLLET_POSTPONE_STRATEGY)
       bool bloop1 = false;
       bepollet = ((uint32_t)nfd_ready >= bepollet_threshold);
 
@@ -926,11 +926,11 @@ loop0:
                           handler_event->fd = -1;
 #                       endif
 
-#        ifdef U_EPOLLET_POSTPONE_STRATEGY
+#        if defined(U_EPOLLET_POSTPONE_STRATEGY)
             if (bepollet) pevents->events = 0;
 #        endif
             }
-#       ifdef U_EPOLLET_POSTPONE_STRATEGY
+#       if defined(U_EPOLLET_POSTPONE_STRATEGY)
          else if (bepollet)
             {
             if (U_ClientImage_state != U_PLUGIN_HANDLER_AGAIN &&
@@ -953,7 +953,7 @@ loop0:
          goto loop0;
          }
 
-#    ifdef U_EPOLLET_POSTPONE_STRATEGY
+#    if defined(U_EPOLLET_POSTPONE_STRATEGY)
       if (bepollet)
          {
          if (bloop1 == false)
