@@ -922,6 +922,7 @@ public:
    static UString* cache_file_mask;
    static UString* cache_avoid_mask;
    static UString* cache_file_store;
+   static UString* nocache_file_mask;
    static UFileCacheData* file_data;
    static UHashMap<UFileCacheData*>* cache_file;
    static UFileCacheData* file_not_in_cache_data;
@@ -934,9 +935,9 @@ public:
 
       U_INTERNAL_DUMP("file_data->array = %p", file_data->array)
 
-      bool result = (file_data->array != 0);
+      if (file_data->array != 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool isDataCompressFromCache()
@@ -946,12 +947,23 @@ public:
       U_INTERNAL_ASSERT_POINTER(file_data)
       U_INTERNAL_ASSERT_POINTER(file_data->array)
 
-      bool result = (file_data->array->size() > 2);
+      if (file_data->array->size() > 2) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
-   static void checkFileForCache();
+   static void checkFileForCache()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::checkFileForCache()")
+
+      U_INTERNAL_ASSERT_POINTER(pathname)
+
+      file->setPath(*pathname);
+
+      if (file->stat()) manageDataForCache(); // NB: file->stat() get also the size of the file...
+      }
+
+   static void renewFileDataInCache();
    static void checkFileInCache(const char* path, uint32_t len);
 
    static bool isFileInCache()
@@ -1013,17 +1025,19 @@ private:
    static void processRewriteRule() U_NO_EXPORT;
 #endif
 
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
-   static int             inotify_wd;
-   static char*           inotify_name;
-   static uint32_t        inotify_len;
-   static UString*        inotify_pathname;
-   static UStringRep*     inotify_dir;
-   static UFileCacheData* inotify_file_data;
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+   static int               inotify_wd;
+   static char*             inotify_name;
+   static uint32_t          inotify_len;
+   static UString*          inotify_pathname;
+   static UStringRep*       inotify_dir;
+   static UFileCacheData*   inotify_file_data;
 
    static void in_READ();
+   static void initInotify();
    static void setInotifyPathname() U_NO_EXPORT;
    static bool getInotifyPathDirectory(UStringRep* key, void* value) U_NO_EXPORT;
+   static bool checkForInotifyDirectory(UStringRep* key, void* value) U_NO_EXPORT;
 #endif
 
 #ifdef U_STATIC_ONLY

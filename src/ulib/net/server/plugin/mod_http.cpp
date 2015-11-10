@@ -70,7 +70,8 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    //
    // ENABLE_INOTIFY         enable automatic update of document root image with inotify
    // CACHE_FILE_MASK        mask (DOS regexp) of pathfile that content      be cached in memory (default: "*.css|*.js|*.*html|*.png|*.gif|*.jpg")
-   // CACHE_AVOID_MASK       mask (DOS regexp) of pathfile that presence NOT be cached in memory 
+   // CACHE_AVOID_MASK       mask (DOS regexp) of pathfile that presence NOT be cached in memory
+   // NOCACHE_FILE_MASK      mask (DOS regexp) of pathfile that content  NOT be cached in memory
    // CACHE_FILE_STORE       pathfile of memory cache stored on filesystem
    //
    // CGI_TIMEOUT            timeout for cgi execution
@@ -204,6 +205,17 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          UHTTP::cache_avoid_mask = U_NEW(UString(x));
          }
 
+      x = cfg.at(U_CONSTANT_TO_PARAM("NOCACHE_FILE_MASK"));
+
+      if (x)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UHTTP::nocache_file_mask, 0)
+
+         if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
+
+         UHTTP::nocache_file_mask = U_NEW(UString(x));
+         }
+
 #  ifdef U_STDCPP_ENABLE
       x = cfg.at(U_CONSTANT_TO_PARAM("CACHE_FILE_STORE"));
 
@@ -267,20 +279,28 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       // INOTIFY
 
-#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
+#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
       if (cfg.readBoolean(U_CONSTANT_TO_PARAM("ENABLE_INOTIFY")))
          {
-         // NB: we ask to notify for change of file system (inotify)
-         //     in the thread approach this is very dangerous...
+         UServer_Base::handler_inotify = this;
 
-#     if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-         if (UNotifier::pthread)
+#     ifdef U_CLASSIC_SUPPORT
+         if (UServer_Base::isClassic())
             {
-            U_SRV_LOG("WARNING: Sorry, I can't enable inode based directory notification because PREFORK_CHILD == -1 (server thread approach)");
+            UServer_Base::handler_inotify = 0;
+
+            U_SRV_LOG("WARNING: Sorry, I can't enable inode based directory notification because PREFORK_CHILD == 1 (server classic mode)");
             }
          else
 #     endif
-         UServer_Base::handler_inotify = this;
+#     if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+         if (UNotifier::pthread) // NB: we ask to notify for change of file system (inotify), in the thread approach this is not safe so far...
+            {
+            UServer_Base::handler_inotify = 0;
+
+            U_SRV_LOG("WARNING: Sorry, I can't enable inode based directory notification because PREFORK_CHILD == -1 (server thread approach)");
+            }
+#     endif
          }
 #  endif
 
@@ -497,6 +517,10 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 int UHttpPlugIn::handlerFork()
 {
    U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerFork()")
+
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+   UHTTP::initInotify();
+#endif
 
    if (UHTTP::bcallInitForAllUSP) UHTTP::cache_file->callForAllEntry(UHTTP::callAfterForkForAllUSP);
 

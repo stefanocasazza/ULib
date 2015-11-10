@@ -58,9 +58,7 @@
 #     ifdef HAVE_SYS_INOTIFY_H
 #     undef HAVE_SYS_INOTIFY_H
 #     endif
-#     ifndef _MSWINDOWS_
-#        include <ulib/replace/inotify-nosys.h>
-#     endif
+#     include <ulib/replace/inotify-nosys.h>
 #  endif
 #endif
 
@@ -91,6 +89,7 @@ UString*    UHTTP::mount_point;
 UString*    UHTTP::fcgi_uri_mask;
 UString*    UHTTP::scgi_uri_mask;
 UString*    UHTTP::cache_file_mask;
+UString*    UHTTP::nocache_file_mask;
 UString*    UHTTP::cache_avoid_mask;
 UString*    UHTTP::cache_file_store;
 UString*    UHTTP::cgi_cookie_option;
@@ -333,23 +332,22 @@ UHTTP::UFileCacheData::~UFileCacheData()
 
    if (array) delete array;
 
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
-   if (UServer_Base::handler_inotify)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+   if (wd != -1                      &&
+       UServer_Base::handler_inotify &&
+       UServer_Base::isChild() == false)
       {
-      U_INTERNAL_ASSERT_DIFFERS(UServer_Base::handler_inotify->fd,-1)
+      U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_inotify)
+      U_INTERNAL_ASSERT_DIFFERS(UServer_Base::handler_inotify->fd, -1)
 
-      if (wd != -1 &&
-          UServer_Base::isChild() == false)
-         {
-         (void) inotify_rm_watch(UServer_Base::handler_inotify->fd, wd);
-         }
+      (void) inotify_rm_watch(UServer_Base::handler_inotify->fd, wd);
       }
 #endif
 }
 
 // INOTIFY FOR CACHE FILE SYSTEM
 
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
 int                    UHTTP::inotify_wd;
 char*                  UHTTP::inotify_name;
 uint32_t               UHTTP::inotify_len;
@@ -388,6 +386,68 @@ U_NO_EXPORT bool UHTTP::getInotifyPathDirectory(UStringRep* key, void* value)
       }
 
    U_RETURN(true);
+}
+
+U_NO_EXPORT bool UHTTP::checkForInotifyDirectory(UStringRep* key, void* value)
+{
+   U_TRACE(0, "UHTTP::checkForInotifyDirectory(%V,%p)", key, value)
+
+   U_INTERNAL_ASSERT_POINTER(value)
+
+   UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
+
+   if (cptr->ptr  == 0     &&
+       cptr->link == false &&
+       S_ISDIR(cptr->mode))
+      {
+      U_INTERNAL_ASSERT_EQUALS(cptr->array, 0)
+      U_INTERNAL_ASSERT(key->isNullTerminated())
+
+      cptr->wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u",
+                                 UServer_Base::handler_inotify->fd,
+                                 key->data(),
+                                 IN_ONLYDIR | IN_CREATE | IN_DELETE | IN_MODIFY);
+      }
+
+   U_RETURN(true);
+}
+
+void UHTTP::initInotify()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::initInotify()")
+
+   if (UServer_Base::handler_inotify)
+      {
+      // INIT INOTIFY FOR DOCUMENT ROOT CACHE
+
+      U_INTERNAL_ASSERT_POINTER(cache_file)
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::handler_inotify->fd, -1)
+
+#  ifdef HAVE_INOTIFY_INIT1
+      UServer_Base::handler_inotify->fd = U_SYSCALL(inotify_init1, "%d", IN_NONBLOCK | IN_CLOEXEC);
+
+      if (UServer_Base::handler_inotify->fd != -1 || errno != ENOSYS) goto next;
+#  endif
+
+      UServer_Base::handler_inotify->fd = U_SYSCALL_NO_PARAM(inotify_init);
+
+      (void) U_SYSCALL(fcntl, "%d,%d,%d", UServer_Base::handler_inotify->fd, F_SETFL, O_NONBLOCK | O_CLOEXEC);
+next:
+      if (UServer_Base::handler_inotify->fd == -1)
+         {
+         UServer_Base::handler_inotify = 0;
+
+         U_SRV_LOG("WARNING: inode based directory notification failed");
+
+         return;
+         }
+
+      U_SRV_LOG("Inode based directory notification enabled");
+
+      inotify_pathname = U_NEW(UString(U_CAPACITY));
+
+      cache_file->callForAllEntry(checkForInotifyDirectory);
+      }
 }
 
 #define IN_BUFLEN (1024 * (sizeof(struct inotify_event) + 16))
@@ -477,62 +537,48 @@ void UHTTP::in_READ()
 
             cache_file->callForAllEntry(getInotifyPathDirectory);
 next:
-            if ((mask & IN_CREATE) != 0)
+            if (*inotify_name != '.' ||
+                memcmp(inotify_name + len - U_CONSTANT_SIZE(".swp"), U_CONSTANT_TO_PARAM(".swp"))) // NB: vi tmp...
                {
-               if (inotify_file_data == 0) checkFileForCache();
-               }
-            else
-               {
-               if ((mask & IN_DELETE) != 0)
+               if ((mask & IN_CREATE) != 0)
                   {
-                  if (inotify_file_data)
-                     {
-                     if (file_data == 0)
-                        {
-                        file_data = cache_file->at(*inotify_pathname);
-
-                        U_INTERNAL_ASSERT_EQUALS(file_data, inotify_file_data)
-                        }
-
-                     cache_file->eraseAfterFind();
-
-                     inotify_file_data = 0;
-                     }
+                  if (inotify_file_data == 0) checkFileForCache();
                   }
-               else if ((mask & IN_MODIFY) != 0)
+               else
                   {
-                  if (inotify_file_data)
+                  if ((mask & IN_DELETE) != 0)
                      {
-                     // NB: check if we have the content of file in cache...
-
-                     if (inotify_file_data->array) inotify_file_data->expire = 0; // NB: we delay the renew...
-                     else
+                     if (inotify_file_data)
                         {
-                        int fd = inotify_file_data->fd;
-
                         if (file_data == 0)
                            {
                            file_data = cache_file->at(*inotify_pathname);
 
                            U_INTERNAL_ASSERT_EQUALS(file_data, inotify_file_data)
-
-                           uint32_t sz = inotify_pathname->size();
-
-                           pathname->setBuffer(sz);
-
-                           pathname->snprintf("%v", inotify_pathname->rep);
                            }
 
                         cache_file->eraseAfterFind();
 
-                        checkFileForCache();
+                        inotify_file_data = 0;
+                        }
+                     }
+                  else if ((mask & IN_MODIFY) != 0)
+                     {
+                     if (inotify_file_data)
+                        {
+                        // NB: check if we have the content of file in cache...
 
-                        if (fd != -1 &&
-                            file->st_ino) // stat() ok...
+                        if (inotify_file_data->array) inotify_file_data->expire = 0; // NB: we delay the renew...
+                        else
                            {
-                           UFile::close(fd);
+                           if (file_data == 0)
+                              {
+                              file_data = cache_file->at(*inotify_pathname);
 
-                           if (file->open()) file_data->fd = file->fd;
+                              U_INTERNAL_ASSERT_EQUALS(file_data, inotify_file_data)
+                              }
+
+                           renewFileDataInCache();
                            }
                         }
                      }
@@ -974,38 +1020,6 @@ void UHTTP::init()
 
    (void) UServer_Base::senvironment->shrink();
 
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
-   if (UServer_Base::handler_inotify)
-      {
-      // INIT INOTIFY FOR DOCUMENT ROOT CACHE
-
-#  ifdef HAVE_INOTIFY_INIT1
-      UServer_Base::handler_inotify->fd = U_SYSCALL(inotify_init1, "%d", IN_NONBLOCK | IN_CLOEXEC);
-
-      if (UServer_Base::handler_inotify->fd != -1 || errno != ENOSYS) goto next;
-#  endif
-
-      UServer_Base::handler_inotify->fd = U_SYSCALL_NO_PARAM(inotify_init);
-
-      (void) U_SYSCALL(fcntl, "%d,%d,%d", UServer_Base::handler_inotify->fd, F_SETFL, O_NONBLOCK | O_CLOEXEC);
-next:
-      if (UServer_Base::handler_inotify->fd != -1)
-         {
-         U_SRV_LOG("Inode based directory notification enabled");
-
-         inotify_pathname = U_NEW(UString(U_CAPACITY));
-         }
-      else
-         {
-         UServer_Base::handler_inotify = 0;
-
-         U_SRV_LOG("WARNING: inode based directory notification failed");
-         }
-      }
-#else
-   UServer_Base::handler_inotify = 0;
-#endif
-
    // CACHE DOCUMENT ROOT FILE SYSTEM
 
    uint32_t n = 0, sz;
@@ -1219,7 +1233,7 @@ next:
 
    U_INTERNAL_DUMP("cache size = %u", sz)
 
-#ifndef _MSWINDOWS_
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
    uint32_t rlim = (sz + UNotifier::max_connection + 100);
 
    U_INTERNAL_DUMP("rlim = %u", rlim)
@@ -1304,19 +1318,6 @@ bool UHTTP::cache_file_check_memory()
 }
 #endif
 
-void UHTTP::checkFileForCache()
-{
-   U_TRACE_NO_PARAM(0, "UHTTP::checkFileForCache()")
-
-   U_INTERNAL_ASSERT_POINTER(pathname)
-
-   file->setPath(*pathname);
-
-   // NB: file->stat() get also the size of the file...
-
-   if (file->stat()) manageDataForCache();
-}
-
 #ifdef U_ALIAS
 void UHTTP::setGlobalAlias(const UString& _alias) // NB: automatic alias for all uri request without suffix...
 {
@@ -1342,6 +1343,18 @@ void UHTTP::setGlobalAlias(const UString& _alias) // NB: automatic alias for all
 void UHTTP::dtor()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::dtor()")
+
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+   if (UServer_Base::handler_inotify && // inotify: Inode based directory notification...
+       UServer_Base::handler_inotify->fd != -1)
+      {
+      (void) U_SYSCALL(close, "%d", UServer_Base::handler_inotify->fd);
+
+      delete inotify_pathname;
+
+      UServer_Base::handler_inotify = 0;
+      }
+#endif
 
    if (vservice)              delete vservice;
    if (vmsg_error)            delete vmsg_error;
@@ -1371,9 +1384,10 @@ void UHTTP::dtor()
       delete cgi_cookie_option;
       delete set_cookie_option;
 
-      if (htpasswd)    delete htpasswd;
-      if (htdigest)    delete htdigest;
-      if (mount_point) delete mount_point;
+      if (htpasswd)          delete htpasswd;
+      if (htdigest)          delete htdigest;
+      if (mount_point)       delete mount_point;
+      if (nocache_file_mask) delete nocache_file_mask;
 
 #  ifdef U_ALIAS
                                  delete  alias;
@@ -1396,21 +1410,6 @@ void UHTTP::dtor()
 #  endif
 #  ifdef USE_LIBV8
       if (v8_javascript) delete v8_javascript;
-#  endif
-
-#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
-      if (UServer_Base::handler_inotify)
-         {
-         delete inotify_pathname;
-
-         // inotify: Inode based directory notification...
-
-         U_INTERNAL_ASSERT_DIFFERS(UServer_Base::handler_inotify->fd,-1)
-
-         (void) U_SYSCALL(close, "%d", UServer_Base::handler_inotify->fd);
-
-         UServer_Base::handler_inotify = 0;
-         }
 #  endif
 
       // CACHE DOCUMENT ROOT FILE SYSTEM
@@ -3922,7 +3921,7 @@ end: // NB: we check if we can shortcut the http request processing...
 
 int UHTTP::processRequest()
 {
-   U_TRACE_NO_PARAM(0, "UHTTP::processRequest()")
+   U_TRACE_NO_PARAM(1, "UHTTP::processRequest()")
 
    U_ASSERT(UClientImage_Base::isRequestNeedProcessing())
 
@@ -4141,13 +4140,7 @@ check_file: // now we check the file...
 
    errno = 0;
 
-   if (file->modified())
-      {
-      file_data->mode  = file->st_mode;
-      file_data->size  = file->st_size;
-      file_data->mtime = file->st_mtime;
-      }
-   else
+   if (U_SYSCALL(fstat, "%d,%p", file->fd, (struct stat*)file) != 0)
       {
       U_INTERNAL_DUMP("errno = %d", errno)
 
@@ -4155,8 +4148,14 @@ check_file: // now we check the file...
           file->open())
          {
          file_data->fd = file->fd;
+
+         if (U_SYSCALL(fstat, "%d,%p", file->fd, (struct stat*)file) != 0) goto error;
          }
       }
+
+   file_data->mode  = file->st_mode;
+   file_data->size  = file->st_size;
+   file_data->mtime = file->st_mtime;
 
    U_INTERNAL_DUMP("file_data->fd = %d file_data->size = %u st_mode = %d st_size = %u st_mtime = %ld", file_data->fd, file_data->size, file->st_mode, file->st_size, file->st_mtime)
 
@@ -4169,7 +4168,7 @@ empty_file: // NB: now we check for empty file...
       if (file_data->size) processGetRequest();
       else
          {
-         file->close();
+error:   file->close();
 
          file_data->fd = -1;
 
@@ -7054,6 +7053,8 @@ U_NO_EXPORT bool UHTTP::checkIfUSPLink(UStringRep* key, void* value)
 
    if (cptr->mime_index == U_usp)
       {
+      U_INTERNAL_ASSERT_POINTER(cptr->ptr)
+
       UServletPage* usp_page1 = (UServletPage*)cptr->ptr;
       UServletPage* usp_page2 = (UServletPage*)file_data->ptr;
 
@@ -7193,20 +7194,10 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
       {
       U_INTERNAL_ASSERT(S_ISDIR(file_data->mode))
 
-#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
-      if (UServer_Base::handler_inotify)
-         {
-         file_data->wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u",
-                                    UServer_Base::handler_inotify->fd,
-                                    pathname->c_str(),
-                                    IN_ONLYDIR | IN_CREATE | IN_DELETE | IN_MODIFY);
-         }
-#  endif
-
       goto end;
       }
 
-#ifndef _MSWINDOWS_
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
    if (rpathname->empty() && // NB: check if we are called from here...
        (file->lstat(), file->slink()))
       {
@@ -7288,7 +7279,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
          {
          U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
          }
-      else if (file->open())
+      else if ((nocache_file_mask == 0                                                                   ||
+                UServices::dosMatchWithOR(file_name, U_STRING_TO_PARAM(*nocache_file_mask), 0) == false) &&
+               file->open())
          {
          UString content = file->getContent(true, false, true);
 
@@ -7530,6 +7523,42 @@ void UHTTP::checkFileInCache(const char* path, uint32_t len)
       }
 }
 
+void UHTTP::renewFileDataInCache()
+{
+   U_TRACE(0, "UHTTP::renewFileDataInCache()")
+
+   U_ASSERT_EQUALS(file_data, cache_file->elem())
+
+   // NB: we need to do this before call eraseAfterFind()...
+
+   int fd                = file_data->fd;
+   const UStringRep* key = cache_file->key();
+
+   if (fd != -1) UFile::close(fd);
+
+   U_INTERNAL_DUMP("file_data->fd = %d cache_file->key = %V", file_data->fd, key)
+
+   pathname->setBuffer(key->size());
+
+   pathname->snprintf("%v", key);
+
+   U_SRV_LOG("WARNING: renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b",
+               pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire));
+
+   cache_file->eraseAfterFind();
+
+   checkFileForCache();
+
+   if (fd != -1     &&
+       file->st_ino && // stat() ok...
+       file->open())
+      {
+      file_data->fd = file->fd;
+      }
+
+   U_INTERNAL_DUMP("file_data->array = %p", file_data->array)
+}
+
 UString UHTTP::getDataFromCache(int idx)
 {
    U_TRACE(0, "UHTTP::getDataFromCache(%d)", idx)
@@ -7539,37 +7568,9 @@ UString UHTTP::getDataFromCache(int idx)
    U_INTERNAL_DUMP("u_now->tv_sec     = %#3D", u_now->tv_sec)
    U_INTERNAL_DUMP("file_data->expire = %#3D", file_data->expire)
 
-   if (u_now->tv_sec > file_data->expire)
-      {
-      // NB: we need to do this before call erase()...
-
-      int fd  = file_data->fd;
-      const UStringRep* key = cache_file->key();
-
-      U_INTERNAL_DUMP("file_data->fd = %d cache_file->key = %V", file_data->fd, key)
-
-      uint32_t sz = key->size();
-
-      pathname->setBuffer(sz);
-
-      pathname->snprintf("%.*s", sz, key->data());
-
-      cache_file->eraseAfterFind();
-
-      checkFileForCache();
-
-      if (fd != -1 &&
-          file->st_ino) // stat() ok...
-         {
-         UFile::close(fd);
-
-         if (file->open()) file_data->fd = file->fd;
-         }
-
-      U_INTERNAL_DUMP("file_data->array = %p", file_data->array)
-      }
-
    UString result;
+
+   if (u_now->tv_sec > file_data->expire) renewFileDataInCache();
 
    if (file_data->array)
       {
@@ -7796,7 +7797,7 @@ nocontent:
          }
 #  endif
 
-#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
+#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
       bool bstat = false;
 
       if (db_not_found)

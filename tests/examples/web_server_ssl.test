@@ -104,7 +104,7 @@ done
 
 rm    -rf      uploads
 mkdir -p		   uploads
-$CHOWN apache: uploads
+$CHOWN nobody: uploads 2>/dev/null
 chmod 777      uploads
 
 TIMEOUT 10 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://localhost:4443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err

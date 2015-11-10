@@ -115,7 +115,7 @@ void UThread::yield()
 
 #ifdef HAVE_PTHREAD_CANCEL
    U_SYSCALL_VOID_NO_PARAM(pthread_testcancel);
-#elif !defined(_MSWINDOWS_)
+#elif !defined(_MSWINDOWS_) && !defined(__UNIKERNEL__)
    sigset_t old = 0;
 
    if (cancel != cancelInitial &&
@@ -143,7 +143,7 @@ void UThread::yield()
    (void) U_SYSCALL_NO_PARAM(pthread_yield);
 #endif
 
-#if !defined(HAVE_PTHREAD_CANCEL) && !defined(_MSWINDOWS_)
+#if !defined(HAVE_PTHREAD_CANCEL) && !defined(_MSWINDOWS_) && !defined(__UNIKERNEL__)
    if (old) (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_SETMASK, &old, 0);
 #endif
 }

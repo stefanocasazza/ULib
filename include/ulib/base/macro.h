@@ -70,12 +70,17 @@
 #endif
 
 #if defined(DEBUG) || defined(U_TEST)
+#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#     define U_NULL_POINTER (const void*)0x0000ffff
+#  else
+#     define U_NULL_POINTER (const void*)0
+#  endif
 #  define U_INTERNAL_ASSERT(expr)        { U_ASSERT_MACRO(expr,"ASSERTION FALSE","") }
 #  define U_INTERNAL_ASSERT_MINOR(a,b)   { U_ASSERT_MACRO((a)<(b),"NOT LESS","") }
 #  define U_INTERNAL_ASSERT_MAJOR(a,b)   { U_ASSERT_MACRO((a)>(b),"NOT GREATER","") }
 #  define U_INTERNAL_ASSERT_EQUALS(a,b)  { U_ASSERT_MACRO((a)==(b),"NOT EQUALS","") }
 #  define U_INTERNAL_ASSERT_DIFFERS(a,b) { U_ASSERT_MACRO((a)!=(b),"NOT DIFFERENT","") }
-#  define U_INTERNAL_ASSERT_POINTER(ptr) { U_ASSERT_MACRO((const void*)ptr>(const void*)0x0000ffff,"~NULL POINTER","") }
+#  define U_INTERNAL_ASSERT_POINTER(ptr) { U_ASSERT_MACRO((const void*)ptr>U_NULL_POINTER,"~NULL POINTER","") }
 #  define U_INTERNAL_ASSERT_RANGE(a,x,b) { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE","") }
 
 #  define U_INTERNAL_ASSERT_MSG(expr,info) \
@@ -89,7 +94,7 @@
 #  define U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info) \
           { U_ASSERT_MACRO((a)!=(b),"NOT DIFFERENT",info) }
 #  define U_INTERNAL_ASSERT_POINTER_MSG(ptr,info) \
-          { U_ASSERT_MACRO((const void*)ptr>(const void*)0x0000ffff,"~NULL POINTER",info) }
+          { U_ASSERT_MACRO((const void*)ptr>U_NULL_POINTER,"~NULL POINTER",info) }
 #  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) \
           { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE",info) }
 #else

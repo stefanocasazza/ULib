@@ -137,9 +137,9 @@ static WiAuthDataStorage* data_rec;
 static URDBObjectHandler<UDataStorage*>* db_user;
 static URDBObjectHandler<UDataStorage*>* db_nodog;
 
-#define IP_UNIFI                "151.11.47.5"
-#define IP_UNIFI_TMP            "159.213.248.230"
+#define IP_UNIFI                "159.213.248.230"
 #define IP_CASCINE              "159.213.248.232"
+#define IP_UNIFI_TMP            "151.11.47.5"
 #define NAMED_PIPE              "/tmp/wi_auth_db.op"
 #define FIRENZECARD_REDIR       "http://wxfi.comune.fi.it/?ap=%v"
 #define LOGIN_VALIDATE_REDIR    "http://www.google.com/login_validate?%v"
@@ -1427,46 +1427,57 @@ static void setAccessPointReference(const char* s, uint32_t n)
 {
    U_TRACE(5, "::setAccessPointReference(%.*S,%u)", n, s, n)
 
-   // Ex: ap@10.8.1.2 => X0256Rap
-
-   char* ptr;
-   unsigned char c = *s;
-   uint32_t count = 0, certid = 0;
-
-   while (n--)
-      {
-   // U_INTERNAL_DUMP("c = %C n = %u count = %u certid = %u", c, n, count, certid)
-
-      if (c == '.') ++count;
-      else
-         {
-         U_INTERNAL_ASSERT(u__isdigit(c))
-
-         if (count == 2)
-            {
-            certid = 254 * strtol(s, &ptr, 10);
-
-            c = *(s = ptr);
-
-            continue;
-            }
-
-         if (count == 3)
-            {
-            certid += strtol(s, 0, 10);
-
-            break;
-            }
-         }
-
-      c = *(++s);
-      }
+   ap_ref->setBuffer(100U);
 
    if (ap_label->empty()) (void) ap_label->assign(U_CONSTANT_TO_PARAM("ap"));
 
-   ap_ref->setBuffer(100U);
+   if (U_STREQ(s, n, IP_UNIFI)   ||
+       U_STREQ(s, n, IP_CASCINE) ||
+       U_STREQ(s, n, IP_UNIFI_TMP))
+      {
+           if (ap_label->equal(U_CONSTANT_TO_PARAM("05"))) ap_ref->snprintf("Xcareggi", 0);
+      else if (U_STREQ(s, n, IP_CASCINE))                  ap_ref->snprintf("Xcascine", 0);
+      else                                                 ap_ref->snprintf("Xunifi", 0);
+      }
+   else
+      {
+      // Ex: ap@10.8.1.2 => X0256Rap
 
-   ap_ref->snprintf("X%04dR%v", certid, ap_label->rep);
+      char* ptr;
+      unsigned char c = *s;
+      uint32_t count = 0, certid = 0;
+
+      while (n--)
+         {
+      // U_INTERNAL_DUMP("c = %C n = %u count = %u certid = %u", c, n, count, certid)
+
+         if (c == '.') ++count;
+         else
+            {
+            U_INTERNAL_ASSERT(u__isdigit(c))
+
+            if (count == 2)
+               {
+               certid = 254 * strtol(s, &ptr, 10);
+
+               c = *(s = ptr);
+
+               continue;
+               }
+
+            if (count == 3)
+               {
+               certid += strtol(s, 0, 10);
+
+               break;
+               }
+            }
+
+         c = *(++s);
+         }
+
+      ap_ref->snprintf("X%04dR%v", certid, ap_label->rep);
+      }
 
    U_INTERNAL_DUMP("ap_ref = %V", ap_ref->rep)
 }
@@ -1484,7 +1495,9 @@ static void usp_init_wi_auth()
 
 #ifdef DEBUG
    if ((setAccessPointReference(U_CONSTANT_TO_PARAM("10.8.1.2")),      ap_ref->equal(U_CONSTANT_TO_PARAM("X0256Rap")))  == false ||
-       (setAccessPointReference(U_CONSTANT_TO_PARAM("10.10.100.115")), ap_ref->equal(U_CONSTANT_TO_PARAM("X25515Rap"))) == false)
+       (setAccessPointReference(U_CONSTANT_TO_PARAM("10.10.100.115")), ap_ref->equal(U_CONSTANT_TO_PARAM("X25515Rap"))) == false ||
+       (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_UNIFI)),        ap_ref->equal(U_CONSTANT_TO_PARAM("Xunifi")))    == false ||
+       (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_CASCINE)),      ap_ref->equal(U_CONSTANT_TO_PARAM("Xcascine")))  == false)
       {
       U_ERROR("setAccessPointReference() failed");
       }
@@ -2859,38 +2872,13 @@ static void setAccessPointLocalization()
    U_INTERNAL_ASSERT_POINTER(url_banner_ap_path)
    U_INTERNAL_ASSERT_POINTER(url_banner_comune_path)
 
-   if (ap_address->equal(U_CONSTANT_TO_PARAM(IP_UNIFI)) ||
-       ap_address->equal(U_CONSTANT_TO_PARAM(IP_UNIFI)))
-      {
-      if (ap_label->equal(U_CONSTANT_TO_PARAM("05"))) // careggi
-         {
-         ap_ref_ap->snprintf(    "/Xcareggi", 0);
-         ap_ref_comune->snprintf("/Xcareggi", 0);
-         }
-      else
-         {
-         ap_ref_ap->snprintf(    "/Xunifi", 0);
-         ap_ref_comune->snprintf("/Xunifi", 0);
-         }
-
-      return;
-      }
-
-   if (ap_address->equal(U_CONSTANT_TO_PARAM(IP_CASCINE)))
-      {
-      ap_ref_ap->snprintf(    "/Xcascine", 0);
-      ap_ref_comune->snprintf("/Xcascine", 0);
-
-      return;
-      }
-
    ap_ref_ap->setEmpty();
    ap_ref_comune->setEmpty();
 
-   if ((ap_address->empty()                                    ||
-        u_isIPv4Addr(U_STRING_TO_PARAM(*ap_address)) == false) ||
-       (url_banner_ap_default     == 0                         &&
-        url_banner_comune_default == 0))
+   U_INTERNAL_DUMP("ap_address = %V", ap_address->rep)
+
+   if (ap_address->empty() ||
+       u_isIPv4Addr(U_STRING_TO_PARAM(*ap_address)) == false)
       {
       return;
       }
@@ -2898,6 +2886,7 @@ static void setAccessPointLocalization()
    char* ptr;
    uint32_t len;
    char buffer[4096];
+   UHTTP::UFileCacheData* ptr_file_data;
 
    setAccessPointReference(U_STRING_TO_PARAM(*ap_address));
 
@@ -2910,11 +2899,10 @@ static void setAccessPointLocalization()
 
       ptr = buffer + (len = u__snprintf(buffer, sizeof(buffer), "%v%v/%v/", virtual_name->rep, url_banner_ap->rep, ap_ref->rep));
 
-      if (UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%s",   "full/banner.html")) ||
-          UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%s", "mobile/banner.html")))
-         {
-         ap_ref_ap->snprintf("/%v", ap_ref->rep);
-         }
+                              ptr_file_data = UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%.*s", U_CONSTANT_TO_TRACE("  full/banner.html")));
+      if (ptr_file_data == 0) ptr_file_data = UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%.*s", U_CONSTANT_TO_TRACE("mobile/banner.html")));
+
+      if (ptr_file_data) ap_ref_ap->snprintf("/%v", ap_ref->rep);
 
       /*
       banner.snprintf("%v/%v", url_banner_ap_path->rep, ap_ref->rep);
@@ -2942,11 +2930,10 @@ static void setAccessPointLocalization()
 
       ptr = buffer + (len = u__snprintf(buffer, sizeof(buffer), "%v%v/%v/", virtual_name->rep, url_banner_comune->rep, ap_ref->rep));
 
-      if (UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%s",   "full/banner.html")) ||
-          UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%s", "mobile/banner.html")))
-         {
-         ap_ref_comune->snprintf("/%v", ap_ref->rep);
-         }
+                              ptr_file_data = UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%.*s", U_CONSTANT_TO_TRACE("  full/banner.html")));
+      if (ptr_file_data == 0) ptr_file_data = UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%.*s", U_CONSTANT_TO_TRACE("mobile/banner.html")));
+
+      if (ptr_file_data) ap_ref_comune->snprintf("/%v", ap_ref->rep);
 
       /*
       banner.snprintf("%v/%v", url_banner_comune_path->rep, ap_ref->rep);
@@ -4370,7 +4357,11 @@ static void GET_login() // MAIN PAGE
 
       sz += request1.size();
 
-      setAccessPointLocalization();
+      if (url_banner_ap_default ||
+          url_banner_comune_default)
+         {
+         setAccessPointLocalization();
+         }
 
       U_INTERNAL_DUMP("request1 = %V", request1.rep)
 
@@ -4968,7 +4959,11 @@ error:
    bool ball         = false,
         bfirenzecard = false;
 
-   if (user_rec->_auth_domain.find("firenzecard") != U_NOT_FOUND)
+   if (user_rec->_auth_domain.find("firenzecard") == U_NOT_FOUND)
+      {
+      if (user_rec->_auth_domain.find("all") != U_NOT_FOUND) ball = true;
+      }
+   else
       {
       bfirenzecard = true;
 
@@ -4977,10 +4972,6 @@ error:
       redir->setBuffer(U_CAPACITY);
 
       redir->snprintf(FIRENZECARD_REDIR, ap_ref->rep);
-      }
-   else
-      {
-      if (user_rec->_auth_domain.find("all") != U_NOT_FOUND) ball = true;
       }
 
    // NB: we may be a different process from what it has updated so that we need to read the record...

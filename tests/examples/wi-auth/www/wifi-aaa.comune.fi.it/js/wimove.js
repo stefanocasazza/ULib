@@ -1,4 +1,7 @@
 (function(w, d) {
+if (!Date.now) {
+    Date.now = function() { return new Date().getTime(); }
+}
 var wimoveFetchUrl = this.wimoveFetchUrl = function(url) {
   var request = false;
   if (window.XMLHttpRequest) {
@@ -60,8 +63,8 @@ var wimoveBuildBanner = this.wimoveBuildBanner = function(baseUrl) {
 var wimoveGetBanner = this.wimoveGetBanner = function(baseUrl,ap) {
   var bannerUrls = new Array();
 
-  if (ap) bannerUrls.push(baseUrl + ap			  + (isMobile() ? '/mobile' : '/full') + '/banner.html');
-			 bannerUrls.push(baseUrl + '/default' + (isMobile() ? '/mobile' : '/full') + '/banner.html');
+  if (ap) bannerUrls.push(baseUrl + ap			  + (isMobile() ? '/mobile' : '/full') + '/banner.html?ts=' + (Date.now() / 1000 | 0));
+			 bannerUrls.push(baseUrl + '/default' + (isMobile() ? '/mobile' : '/full') + '/banner.html?ts=' + (Date.now() / 1000 | 0));
 
   var banner;
   for (var idx in bannerUrls) {  

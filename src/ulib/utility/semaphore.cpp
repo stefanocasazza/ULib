@@ -86,7 +86,7 @@ USemaphore::~USemaphore()
 {
    U_TRACE_UNREGISTER_OBJECT(0, USemaphore)
 
-   U_INTERNAL_ASSERT_DIFFERS(psem, 0)
+   U_INTERNAL_ASSERT_POINTER(psem)
 
 #if defined(__MACOSX__) || defined(__APPLE__)
    (void) U_SYSCALL(sem_close,  "%p", psem);
@@ -111,7 +111,7 @@ void USemaphore::post()
 {
    U_TRACE_NO_PARAM(1, "USemaphore::post()")
 
-   U_INTERNAL_ASSERT_DIFFERS(psem, 0)
+   U_INTERNAL_ASSERT_POINTER(psem)
 
    U_INTERNAL_DUMP("value = %d", getValue())
 
@@ -173,7 +173,7 @@ bool USemaphore::wait(time_t timeoutMS)
 {
    U_TRACE(1, "USemaphore::wait(%ld)", timeoutMS) // problem with sanitize address
 
-   U_INTERNAL_ASSERT_DIFFERS(psem, 0)
+   U_INTERNAL_ASSERT_POINTER(psem)
    U_INTERNAL_ASSERT_MAJOR(timeoutMS, 0)
 
    U_INTERNAL_DUMP("value = %d", getValue())
@@ -207,7 +207,7 @@ void USemaphore::lock()
 {
    U_TRACE_NO_PARAM(1, "USemaphore::lock()")
 
-   U_INTERNAL_ASSERT_DIFFERS(psem, 0)
+   U_INTERNAL_ASSERT_POINTER(psem)
 
    U_INTERNAL_DUMP("value = %d", getValue())
 

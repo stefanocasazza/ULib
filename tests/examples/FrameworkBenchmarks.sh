@@ -68,30 +68,30 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 #Running 15s test @ http://localhost:8080/json
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency     1.20ms  682.33us  12.52ms   64.81%
-#    Req/Sec    37.41k    14.81k   71.00k    55.06%
+#    Latency   454.29us  279.11us  21.29ms   95.78%
+#    Req/Sec    74.50k     9.20k  134.33k    82.76%
 #  Latency Distribution
-#     50%    1.10ms
-#     75%    1.67ms
-#     90%    2.15ms
-#     99%    2.80ms
-#  2109926 requests in 15.00s, 330.00MB read
-#Requests/sec: 140658.66
-#Transfer/sec:     22.00MB
+#     50%  441.00us
+#     75%  561.00us
+#     90%  649.00us
+#     99%    0.90ms
+#  4203920 requests in 15.00s, 657.50MB read
+#Requests/sec: 280264.58
+#Transfer/sec:     43.83MB
 #
-# Running 15s test @ http://laptop:8080/json
-#   4 threads and 256 connections
-#   Thread Stats   Avg      Stdev     Max   +/- Stdev
-#     Latency    18.39ms    3.77ms 233.91ms   91.22%
-#     Req/Sec     3.47k   386.95     4.81k    79.18%
-#   Latency Distribution
-#      50%   18.67ms
-#      75%   19.96ms
-#      90%   21.26ms
-#      99%   23.31ms
-#   205436 requests in 15.00s, 32.13MB read
-# Requests/sec:  13695.12
-# Transfer/sec:      2.14MB
+#Running 15s test @ http://laptop:8080/json
+#  4 threads and 256 connections
+#  Thread Stats   Avg      Stdev     Max   +/- Stdev
+#    Latency    18.95ms   24.43ms 239.50ms   98.69%
+#    Req/Sec     3.37k   647.94     5.19k    65.72%
+#  Latency Distribution
+#     50%   16.50ms
+#     75%   17.92ms
+#     90%   19.30ms
+#     99%  225.25ms
+#  199539 requests in 15.00s, 31.21MB read
+#Requests/sec:  13299.02
+#Transfer/sec:      2.08MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # DB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------

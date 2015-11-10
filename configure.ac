@@ -131,6 +131,7 @@ if test "$cross_compiling" = "yes"; then
 	if test "x$STAGING_DIR" != "x" ; then
 		CROSS_ENVIRONMENT=$STAGING_DIR
 	fi
+	AC_DEFINE([CROSS_COMPILE],[1],[Define if we are cross compiling])
 else
 	AM_CONDITIONAL(CROSS_COMPILING, false)
 	PKG_CONFIG_PATH=`pkg-config --variable pc_path pkg-config`
@@ -272,12 +273,14 @@ case "$target_os" in
 	*netbsd*)
 		AC_MSG_RESULT([ok ($target_os)])
 
-		ULIB_LIBS="$ULIB_LIBS -lexecinfo"
 		CPPFLAGS="$CPPFLAGS -fpermissive -Wno-sign-compare"
 
 		if test "$target_os" = "netbsd"; then
 			CPPFLAGS="$CPPFLAGS -D__UNIKERNEL__"
+		##	LDFLAGS="${LDFLAGS} -Wl,--no-as-needed -lrump -Wl,--no-as-needed -lrumpuser"
+			AC_CHECK_HEADERS([rump/rump.h],, AC_MSG_ERROR([rump kernel required]))
 		else
+			ULIB_LIBS="$ULIB_LIBS -lexecinfo"
 			# Disable -ffunction-sections -fdata-sections and accompanying --gc-sections on netbsd because --gc-sections doesn't work with the netbsd-4 and netbsd-5 linker
 			LDFLAGS="${LDFLAGS} -Wl,--no-gc-sections"
 		fi
@@ -499,7 +502,7 @@ if test "$enable_static" = "yes" -a "$enable_shared" = "no"; then
 	if test -z "$enable_stdcpp"; then
 		enable_stdcpp="no"
 	fi
-	if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
+	if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "$target_os" != "netbsd"; then
 		ULIB_LIBS="$ULIB_LIBS -lgcc"
 	fi
 else
@@ -2028,7 +2031,7 @@ CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 
 # If gcc compiler add values to *FLAGS...
 
-if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
+if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATINGSYSTEM" = xlinux; then
 
 	TWOCAN_CONF_MSG(Checking for gcc compiler flags)
 

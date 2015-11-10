@@ -139,6 +139,7 @@ userver {
 # ENABLE_INOTIFY             enable automatic update of cached document root image with inotify
 # CACHE_FILE_MASK            mask (DOS regexp) of pathfile that content      be cached in memory (default: "*.css|*.js|*.*html|*.png|*.gif|*.jpg")
 # CACHE_AVOID_MASK           mask (DOS regexp) of pathfile that presence NOT be cached in memory 
+# NOCACHE_FILE_MASK          mask (DOS regexp) of pathfile that content  NOT be cached in memory
 # CACHE_FILE_STORE           pathfile of memory cache stored on filesystem
 #
 # CGI_TIMEOUT					  timeout for cgi execution

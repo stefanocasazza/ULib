@@ -6,7 +6,7 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_MSG_CHECKING(if you want to enable use of memory pool)
 	AC_ARG_ENABLE(memory-pool,
 				[  --enable-memory-pool      enable memory pool features [[default=yes]]])
-	if test -z "$enable_memory_pool"; then
+	if test -z "$enable_memory_pool" -a "x$OPERATINGSYSTEM" = xlinux; then
 		enable_memory_pool="yes"
 	fi
 	if test "$enable_memory_pool" = "yes"; then
@@ -43,7 +43,7 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_MSG_CHECKING(for compile with GCC optimizations flags enabled)
 	AC_ARG_ENABLE(gcc-optimized,
 				[  --enable-gcc-optimized    compile with GCC optimizations flags enabled (-finline,-fstrict-aliasing,...) [[default=yes]]])
-	if test -z "$enable_gcc_optimized"; then
+	if test -z "$enable_gcc_optimized" -a "x$OPERATINGSYSTEM" = xlinux; then
 		enable_gcc_optimized="yes"
 	fi
 	AC_MSG_RESULT([${enable_gcc_optimized}])
@@ -61,7 +61,7 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_MSG_CHECKING(for use of the new linker flags)
 	AC_ARG_ENABLE(new-ldflags,
 				[  --enable-new-ldflags      enable the new linker flags (enable-new-dtags,as-needed,...) [[default=yes]]])
-	if test -z "$enable_new_ldflags" -a test "x$OPERATINGSYSTEM" = xlinux; then
+	if test -z "$enable_new_ldflags" -a "x$OPERATINGSYSTEM" = xlinux; then
 		enable_new_ldflags="yes"
 	fi
 	AC_MSG_RESULT([${enable_new_ldflags}])

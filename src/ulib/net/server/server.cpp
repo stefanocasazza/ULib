@@ -265,10 +265,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTimeoutConnection::handlerTime()")
 
-      U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::min_connection = %u", UNotifier::num_connection, UNotifier::min_connection)
-
       U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
-      U_INTERNAL_ASSERT_MAJOR(UNotifier::num_connection, UNotifier::min_connection)
 
       U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
 
@@ -293,7 +290,9 @@ public:
 
       UServer_Base::last_event = u_now->tv_sec;
 
-      UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
+      U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::min_connection = %u", UNotifier::num_connection, UNotifier::min_connection)
+
+      if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
 
 #  ifdef U_LOG_ENABLE
       if (U_CNT_PARALLELIZATION)
@@ -618,7 +617,7 @@ public:
 
          // Now update the sending rate on all the currently-sending connections, redistributing it evenly
 
-         U_INTERNAL_DUMP("UNotifier::num_connection = %d", UNotifier::num_connection)
+         U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::min_connection = %u", UNotifier::num_connection, UNotifier::min_connection)
 
          if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(updateSendingRate);
          }
@@ -869,7 +868,7 @@ public:
       }
 };
 
-#  ifndef _MSWINDOWS_
+#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
 class UTimeThread : public UThread {
 public:
 
@@ -1051,7 +1050,7 @@ UServer_Base::~UServer_Base()
       }
 # endif
 
-# ifndef _MSWINDOWS_
+# if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
    if (u_pthread_time)
       {
       delete (UTimeThread*)u_pthread_time;
@@ -2254,7 +2253,7 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
    bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
 #else
    bool bpthread_time = false; 
@@ -2267,7 +2266,7 @@ void UServer_Base::init()
 #endif
    ULog::initDate();
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
    if (bpthread_time)
       {
       U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
@@ -2281,7 +2280,7 @@ void UServer_Base::init()
       }
 #endif
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
    // NB: we block SIGHUP and SIGTERM; the threads created will inherit a copy of the signal mask...
 # ifdef sigemptyset
                     sigemptyset(&mask);
@@ -2302,7 +2301,7 @@ void UServer_Base::init()
 
    flag_loop = true; // NB: UTimeThread loop depend on this setting...
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
    if (bpthread_time)
       {
       U_INTERNAL_ASSERT_EQUALS(ULog::prwlock, 0)
@@ -2560,7 +2559,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
@@ -2582,7 +2581,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
                 UInterrupt::insert(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
 #endif
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
@@ -2609,7 +2608,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
    if (proc->parent())
       {
-#  if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#  if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
       if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 #  endif
 
@@ -3199,7 +3198,7 @@ void UServer_Base::runLoop(const char* user)
 
    socket->reusePort(socket_flags);
 
-#ifndef _MSWINDOWS
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
    if (bipc == false)
       {
       U_ASSERT_EQUALS(socket->isUDP(), false)
@@ -3300,7 +3299,7 @@ void UServer_Base::runLoop(const char* user)
 #  endif
 #endif
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
    (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
 #endif
 
@@ -3376,7 +3375,16 @@ void UServer_Base::run()
     * >1 - pool of process serialize plus monitoring process
     */
 
-   if (monitoring_process)
+   if (monitoring_process == false)
+      {
+#ifdef U_SERVER_CAPTIVE_PORTAL
+no_monitoring_process:
+#endif
+      if (pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage fork failed");
+
+      runLoop(user);
+      }
+   else
       {
       /**
        * Main loop for the parent process with the new preforked implementation.
@@ -3389,7 +3397,7 @@ void UServer_Base::run()
       bool baffinity = false;
       UTimeVal to_sleep(0L, 500L * 1000L);
 
-#  if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(HAVE_SCHED_GETAFFINITY)
+#  if defined(HAVE_SCHED_GETAFFINITY) && !defined(U_SERVER_CAPTIVE_PORTAL)
       if (preforked_num_kids <= u_get_num_cpu() &&
           u_num_cpu > 1)
          {
@@ -3440,7 +3448,7 @@ void UServer_Base::run()
                {
                U_INTERNAL_DUMP("child = %P UNotifier::num_connection = %d", UNotifier::num_connection)
 
-#           ifdef HAVE_LIBNUMA
+#           if defined(HAVE_LIBNUMA) && !defined(U_SERVER_CAPTIVE_PORTAL)
                if (U_SYSCALL_NO_PARAM(numa_max_node))
                   {
                   struct bitmask* bmask = (struct bitmask*) U_SYSCALL(numa_bitmask_alloc, "%u", 16);
@@ -3467,8 +3475,7 @@ void UServer_Base::run()
                 * UInterrupt::setHandlerForSignal(SIGCHLD, (sighandler_t)UServer_Base::handlerForSigCHLD);
                 */
 
-               // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
-               UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN);
+               UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN); // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
 
                if (pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage fork failed");
 
@@ -3493,7 +3500,7 @@ void UServer_Base::run()
 
          // wait for any children to exit, and then start some more
 
-#     if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#     if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
          (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
 #     endif
 
@@ -3538,15 +3545,6 @@ void UServer_Base::run()
          }
 
       U_INTERNAL_ASSERT(proc->parent())
-      }
-   else
-      {
-#  ifdef U_SERVER_CAPTIVE_PORTAL
-no_monitoring_process:
-      if (pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage fork failed");
-#  endif
-
-      runLoop(user);
       }
 
    if (pluginsHandlerStop() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage stop failed");

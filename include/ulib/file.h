@@ -536,7 +536,11 @@ public:
 
       fstat();
 
-      U_RETURN(mtime != st_mtime);
+      U_INTERNAL_DUMP("mtime = %ld, st_mtime = %ld", (long)mtime, (long)st_mtime)
+
+      if (mtime != st_mtime) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    static bool isBlocking(int _fd, int& flags) // actual state is blocking...?

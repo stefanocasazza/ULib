@@ -35,6 +35,7 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 # endif
 #endif
 
+/*
 #ifdef __UNIKERNEL__
 #  include <rump/rump.h>
 #  include <rump/rump_syscalls.h>
@@ -43,6 +44,7 @@ static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 #  define write(...) rump_sys_write(__VA_ARGS__)
 #  define close(...) rump_sys_close(__VA_ARGS__)
 #endif
+*/
 
 static void printInfo(void)
 {
@@ -449,3 +451,11 @@ void u_trace_initFork(void)
 
    printInfo();
 }
+
+/*
+#ifdef __UNIKERNEL__
+#  undef  open
+#  undef write
+#  undef close
+#endif
+*/

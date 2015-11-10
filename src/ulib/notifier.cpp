@@ -1183,6 +1183,7 @@ void UNotifier::removeBadFd()
 {
    U_TRACE_NO_PARAM(1, "UNotifier::removeBadFd()")
 
+   int nfd;
    bool bwrite;
    fd_set fdmask;
    fd_set* rmask;
@@ -1206,16 +1207,16 @@ void UNotifier::removeBadFd()
 
          U_INTERNAL_DUMP("fdmask = %B", __FDS_BITS(&fdmask)[0])
 
-         nfd_ready = U_SYSCALL(select, "%d,%p,%p,%p,%p", fd+1, rmask, wmask, 0, &polling);
+         nfd = U_SYSCALL(select, "%d,%p,%p,%p,%p", fd+1, rmask, wmask, 0, &polling);
 
          U_INTERNAL_DUMP("fd = %d op_mask = %B ISSET(read) = %b ISSET(write) = %b", fd, handler_event->op_mask,
                            (rmask ? FD_ISSET(fd, rmask) : false),
                            (wmask ? FD_ISSET(fd, wmask) : false))
 
-         if (nfd_ready)
+         if (nfd)
             {
-            if ( nfd_ready == -1 &&
-                (nfd_ready = (bread + bwrite)))
+            if (nfd == -1 &&
+                (bread || bwrite))
                {
                handlerDelete(handler_event);
                }

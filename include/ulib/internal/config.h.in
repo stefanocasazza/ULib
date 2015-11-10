@@ -14,6 +14,9 @@
    */
 #undef CRAY_STACKSEG_END
 
+/* Define if we are cross compiling */
+#undef CROSS_COMPILE
+
 /* C++ Flags */
 #undef CXXFLAGS_VAR
 
@@ -343,6 +346,9 @@
 
 /* Define to 1 if the system has the type `ptrdiff_t'. */
 #undef HAVE_PTRDIFF_T
+
+/* Define to 1 if you have the <rump/rump.h> header file. */
+#undef HAVE_RUMP_RUMP_H
 
 /* has sched_getaffinity */
 #undef HAVE_SCHED_GETAFFINITY
