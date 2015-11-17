@@ -495,6 +495,8 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
       UClientImage_Base::callerIsValidRequest    = UHTTP::isValidRequest;
       UClientImage_Base::callerIsValidRequestExt = UHTTP::isValidRequestExt;
       UClientImage_Base::callerHandlerEndRequest = UHTTP::setEndRequestProcessing;
+
+      if (UServer_Base::vplugin_size == 1) UClientImage_Base::callerHandlerRequest = UHTTP::processRequest;
       }
 
    U_ASSERT(UHTTP::cache_file_check_memory())

@@ -2883,26 +2883,31 @@ static void setAccessPointLocalization()
       return;
       }
 
+   /*
    char* ptr;
    uint32_t len;
    char buffer[4096];
    UHTTP::UFileCacheData* ptr_file_data;
+   */
 
    setAccessPointReference(U_STRING_TO_PARAM(*ap_address));
 
-   if (url_banner_ap_default)
+// if (url_banner_ap_default)
       {
-      U_ASSERT(url_banner_ap_default->dir())
+//    U_ASSERT(url_banner_ap_default->dir())
 
       // "wifi-aaa.comune.fi.it/banner/luoghi/X0054R13/full/banner.html"
       // "wifi-aaa.comune.fi.it/banner/luoghi/X0054R13/mobile/banner.html"
 
+      /*
       ptr = buffer + (len = u__snprintf(buffer, sizeof(buffer), "%v%v/%v/", virtual_name->rep, url_banner_ap->rep, ap_ref->rep));
 
                               ptr_file_data = UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%.*s", U_CONSTANT_TO_TRACE("  full/banner.html")));
       if (ptr_file_data == 0) ptr_file_data = UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%.*s", U_CONSTANT_TO_TRACE("mobile/banner.html")));
 
-      if (ptr_file_data) ap_ref_ap->snprintf("/%v", ap_ref->rep);
+      if (ptr_file_data)
+      */
+      ap_ref_ap->snprintf("/%v", ap_ref->rep);
 
       /*
       banner.snprintf("%v/%v", url_banner_ap_path->rep, ap_ref->rep);
@@ -2921,19 +2926,22 @@ static void setAccessPointLocalization()
       */
       }
 
-   if (url_banner_comune_default)
+// if (url_banner_comune_default)
       {
-      U_ASSERT(url_banner_comune_default->dir())
+//    U_ASSERT(url_banner_comune_default->dir())
 
       // "wifi-aaa.comune.fi.it/banner/eventi/X0054R13/full/banner.html"
       // "wifi-aaa.comune.fi.it/banner/eventi/X0054R13/mobile/banner.html"
 
+      /*
       ptr = buffer + (len = u__snprintf(buffer, sizeof(buffer), "%v%v/%v/", virtual_name->rep, url_banner_comune->rep, ap_ref->rep));
 
                               ptr_file_data = UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%.*s", U_CONSTANT_TO_TRACE("  full/banner.html")));
       if (ptr_file_data == 0) ptr_file_data = UHTTP::getFileInCache(buffer, len + u__snprintf(ptr, sizeof(buffer)-len, "%.*s", U_CONSTANT_TO_TRACE("mobile/banner.html")));
 
-      if (ptr_file_data) ap_ref_comune->snprintf("/%v", ap_ref->rep);
+      if (ptr_file_data)
+      */
+      ap_ref_comune->snprintf("/%v", ap_ref->rep);
 
       /*
       banner.snprintf("%v/%v", url_banner_comune_path->rep, ap_ref->rep);
@@ -4357,12 +4365,6 @@ static void GET_login() // MAIN PAGE
 
       sz += request1.size();
 
-      if (url_banner_ap_default ||
-          url_banner_comune_default)
-         {
-         setAccessPointLocalization();
-         }
-
       U_INTERNAL_DUMP("request1 = %V", request1.rep)
 
       if (UStringExt::startsWith(*title_default, U_CONSTANT_TO_PARAM("Firenze ")))
@@ -4374,6 +4376,8 @@ static void GET_login() // MAIN PAGE
          sz += request2.size();
 
          U_INTERNAL_DUMP("request2 = %S", request2.rep)
+
+         setAccessPointLocalization();
 
          USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login.tmpl")), sz, false,
                                            title_default->data(), 0, 0,

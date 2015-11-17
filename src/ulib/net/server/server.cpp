@@ -215,7 +215,7 @@ public:
 
       if (UServer_Base::stats_bytes)
          {
-         U_MESSAGE("%9D (pid %P): %v", UServer_Base::getStats().rep);
+         U_DEBUG("%v", UServer_Base::getStats().rep);
 
          UServer_Base::stats_bytes = 0;
          }
@@ -1686,17 +1686,12 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
    UServerPlugIn* _plugin;
    int result = U_PLUGIN_HANDLER_ERROR;
 
-   if (plugin_list.empty())
+   if (plugin_list) vplugin_size = vplugin_name->split(U_STRING_TO_PARAM(plugin_list)); // NB: we don't use split with substr() cause of dependency from config var PLUGIN...
+   else
       {
       vplugin_size = 1;
 
       vplugin_name->push_back(*UString::str_http);
-      }
-   else
-      {
-      UClientImage_Base::callerHandlerRequest = pluginsHandlerRequest;
-
-      vplugin_size = vplugin_name->split(U_STRING_TO_PARAM(plugin_list)); // NB: we don't use split with substr() cause of dependency from config var PLUGIN...
       }
 
    /**

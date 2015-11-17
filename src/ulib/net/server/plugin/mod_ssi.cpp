@@ -983,14 +983,28 @@ int USSIPlugIn::handlerRequest()
 
          // read the SSI file
 
-         if (bcache == false) *body = UHTTP::file->getContent();
+         if (bcache == false)
+            {
+            *body = UHTTP::file->getContent();
+
+            if (body->empty())
+               {
+               U_DEBUG("USSIPlugIn::handlerRequest() SSI file empty: %.*S", U_FILE_TO_TRACE(*UHTTP::file));
+
+               UClientImage_Base::environment->setEmpty();
+
+               UHTTP::setInternalError();
+
+               U_RETURN(U_PLUGIN_HANDLER_GO_ON);
+               }
+            }
          else
             {
             U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %V", UClientImage_Base::body->size(), UClientImage_Base::body->rep)
 
             U_ASSERT(UHTTP::isDataFromCache())
             U_INTERNAL_ASSERT_POINTER(UHTTP::file_data->array)
-            U_INTERNAL_ASSERT_EQUALS( UHTTP::file_data->array->size(),2)
+            U_INTERNAL_ASSERT_EQUALS( UHTTP::file_data->array->size(), 2)
 
             (void) header->append(UHTTP::getHeaderFromCache()); // NB: after now 'file_data' can change...
 

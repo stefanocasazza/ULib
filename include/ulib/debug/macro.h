@@ -67,6 +67,9 @@
 #endif
 
 #ifdef DEBUG
+
+#define U_DEBUG(fmt,args...) u__printf(STDERR_FILENO, "%W%N%W: %WDEBUG: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET)
+
 // Manage class test for memory corruption
 
 #  define U_MEMORY_TEST         UMemoryError memory;
@@ -148,6 +151,8 @@ if (envp) \
 #endif
 
 #else /* DEBUG */
+
+#define U_DEBUG(fmt,args...)
 
 #  define U_MEMORY_TEST
 #  define U_CHECK_MEMORY

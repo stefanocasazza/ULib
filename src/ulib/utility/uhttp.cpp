@@ -396,17 +396,14 @@ U_NO_EXPORT bool UHTTP::checkForInotifyDirectory(UStringRep* key, void* value)
 
    UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
 
-   if (cptr->ptr  == 0     &&
-       cptr->link == false &&
-       S_ISDIR(cptr->mode))
+   if (S_ISDIR(cptr->mode) &&
+       cptr->link == false)
       {
+      U_INTERNAL_ASSERT_EQUALS(cptr->ptr, 0)
       U_INTERNAL_ASSERT_EQUALS(cptr->array, 0)
       U_INTERNAL_ASSERT(key->isNullTerminated())
 
-      cptr->wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u",
-                                 UServer_Base::handler_inotify->fd,
-                                 key->data(),
-                                 IN_ONLYDIR | IN_CREATE | IN_DELETE | IN_MODIFY);
+      cptr->wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u", UServer_Base::handler_inotify->fd, key->data(), IN_ONLYDIR | IN_CREATE | IN_DELETE | IN_MODIFY);
       }
 
    U_RETURN(true);
@@ -496,20 +493,20 @@ void UHTTP::in_READ()
             len  = event.ip->len;
             name = event.ip->name;
 
-            U_INTERNAL_DUMP("The %s %s(%u) was %s", (mask & IN_ISDIR  ? "directory" : "file"), name, len,
-                                                    (mask & IN_CREATE ? "created"   :
-                                                     mask & IN_DELETE ? "deleted"   :
-                                                     mask & IN_MODIFY ? "modified"  : "???"))
-
             // NB: The length contains any potential padding that is, the result of strlen() on the name field may be smaller than len...
 
             while (name[len-1] == '\0') --len;
+
+            U_DEBUG("INOTIFY: %s %.*S was %s", (mask & IN_ISDIR  ? "DIRECTORY" : "FILE"), len, name,
+                                               (mask & IN_CREATE ? "created"   :
+                                                mask & IN_DELETE ? "deleted"   :
+                                                mask & IN_MODIFY ? "modified"  : "???"));
 
             U_INTERNAL_ASSERT_EQUALS(len, u__strlen(name, __PRETTY_FUNCTION__))
 
             file_data = 0;
 
-            if (wd  == inotify_wd)
+            if (wd == inotify_wd)
                {
                if (inotify_file_data  &&
                    len == inotify_len &&
@@ -550,33 +547,32 @@ next:
                      {
                      if (inotify_file_data)
                         {
-                        if (file_data == 0)
+                        if (file_data == 0) file_data = cache_file->at(*inotify_pathname);
+
+                        if (file_data)
                            {
-                           file_data = cache_file->at(*inotify_pathname);
-
                            U_INTERNAL_ASSERT_EQUALS(file_data, inotify_file_data)
-                           }
 
-                        cache_file->eraseAfterFind();
+                           cache_file->eraseAfterFind();
+                           }
 
                         inotify_file_data = 0;
                         }
                      }
                   else if ((mask & IN_MODIFY) != 0)
                      {
-                     if (inotify_file_data)
+                     U_INTERNAL_ASSERT_POINTER(inotify_file_data)
+
+                     // NB: check if we have the content of file in cache...
+
+                     if (inotify_file_data->array) inotify_file_data->expire = 0; // NB: we delay the renew...
+                     else
                         {
-                        // NB: check if we have the content of file in cache...
+                        if (file_data == 0) file_data = cache_file->at(*inotify_pathname);
 
-                        if (inotify_file_data->array) inotify_file_data->expire = 0; // NB: we delay the renew...
-                        else
+                        if (file_data)
                            {
-                           if (file_data == 0)
-                              {
-                              file_data = cache_file->at(*inotify_pathname);
-
-                              U_INTERNAL_ASSERT_EQUALS(file_data, inotify_file_data)
-                              }
+                           U_INTERNAL_ASSERT_EQUALS(file_data, inotify_file_data)
 
                            renewFileDataInCache();
                            }
@@ -3148,7 +3144,7 @@ U_NO_EXPORT bool UHTTP::callService()
 
    if (file_data == 0) U_RETURN(false);
 
-   U_SRV_LOG("WARNING: called service not in cache: %.*S - inotify %s enabled", U_FILE_TO_TRACE(*file), UServer_Base::handler_inotify ? "is" : "NOT");
+   U_DEBUG("called service not in cache: %.*S - inotify %s enabled", U_FILE_TO_TRACE(*file), UServer_Base::handler_inotify ? "is" : "NOT");
 
    U_RETURN(true);
 }
@@ -3780,8 +3776,7 @@ file_in_cache:
 
       if (u__isdigit(mime_index))
          {
-         if (u_is_ssi(mime_index)) checkForPathName();
-         else
+         if (u_is_ssi(mime_index) == false)
             {
             UClientImage_Base::setRequestNoCache();
 
@@ -3830,6 +3825,8 @@ from_cache:
           processFileCache() == false)
          {
 file_exist_and_need_to_be_processed: // NB: if we can't service the content of file directly from cache, set status to 'file exist and need to be processed'...
+
+         checkForPathName();
 
          UClientImage_Base::setRequestNeedProcessing();
          }
@@ -3906,15 +3903,20 @@ need_to_be_processed:
 #endif
 
 #if !defined(U_HTTP_STRICT_TRANSPORT_SECURITY) && !defined(USE_LIBSSL)
-end: // NB: we check if we can shortcut the http request processing...
+end:
 #endif
-   if (UClientImage_Base::isRequestNeedProcessing() &&
-       UClientImage_Base::callerHandlerRequest == 0)
+#ifdef DEBUG
+   if (file_data                                 &&
+       UClientImage_Base::isRequestInFileCache() &&
+       UClientImage_Base::isRequestNeedProcessing())
       {
-      U_ASSERT_EQUALS(UServer_Base::vplugin_name->last(), *UString::str_http)
+      U_INTERNAL_DUMP("pathname = %V file->getPath() = %V", pathname->rep, file->getPath().rep)
 
-      return processRequest();
+      U_INTERNAL_ASSERT(*pathname)
+      U_ASSERT(UStringExt::endsWith(file->getPath(), *pathname))
+      U_ASSERT_EQUALS(UClientImage_Base::isRequestNotFound(), false)
       }
+#endif
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
@@ -3983,8 +3985,6 @@ int UHTTP::processRequest()
 // ext->snprintf("Etag: %v\r\n", etag->rep));
 
    bool result;
-
-   checkForPathName();
 
    if (file->dir())
       {
@@ -4101,6 +4101,8 @@ check_file: // now we check the file...
 
    U_INTERNAL_DUMP("file_data = %p", file_data)
 
+   errno = 0;
+
    if (file_data)
       {
       if (file_data->fd == -1)
@@ -4131,7 +4133,11 @@ check_file: // now we check the file...
 
    if (result == false)
       {
-      setForbidden(); // set forbidden error response...
+      U_INTERNAL_DUMP("errno = %d", errno)
+
+           if (errno == ENOENT) setNotFound();
+      else if (errno == EPERM)  setForbidden();
+      else                      setServiceUnavailable();
 
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
@@ -7542,8 +7548,7 @@ void UHTTP::renewFileDataInCache()
 
    pathname->snprintf("%v", key);
 
-   U_SRV_LOG("WARNING: renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b",
-               pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire));
+   U_DEBUG("renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire));
 
    cache_file->eraseAfterFind();
 
@@ -7863,7 +7868,7 @@ nocontent:
 
          (void) pathname->replace(U_FILE_TO_PARAM(*file));
 
-         U_SRV_LOG("WARNING: found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT");
+         U_DEBUG("found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT");
 
          manageDataForCache();
 
@@ -7882,7 +7887,7 @@ nocontent:
 
             if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0)
                {
-               U_SRV_LOG("WARNING: request usp service not in cache: %V - try to compile", pathname->rep);
+               U_DEBUG("request usp service not in cache: %V - try to compile", pathname->rep);
 
                (void) pathname->replace(buffer, sz);
 

@@ -163,9 +163,7 @@ read:
 
    if (value == (ssize_t)ncount)
       {
-#  ifdef DEBUG
-      U_MESSAGE("UServices::read(%u) ran out of buffer space(%u)", count, ncount);
-#  endif
+      U_DEBUG("UServices::read(%u) ran out of buffer space(%u)", count, ncount);
 
       buffer.size_adjust_force(start + byte_read); // NB: we force because string can be referenced...
 

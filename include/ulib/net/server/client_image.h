@@ -455,6 +455,15 @@ protected:
    static void   endRequest();
    static bool startRequest();
 
+   static void do_nothing() {}
+
+   // NB: we have default to true to manage pipeline for protocol as RPC...
+
+   static bool handlerCache()                                  { return true; }
+   static bool isValidMethod(    const char* ptr)              { return true; }
+   static bool isValidRequest(   const char* ptr, uint32_t sz) { return true; }
+   static bool isValidRequestExt(const char* ptr, uint32_t sz) { return true; }
+
 #ifndef U_CACHE_REQUEST_DISABLE
    static bool isRequestCacheable() __pure;
 #endif
@@ -469,10 +478,6 @@ protected:
 #endif
 
 private:
-   static bool isValidMethod(    const char* ptr)              U_NO_EXPORT;
-   static bool isValidRequest(   const char* ptr, uint32_t sz) U_NO_EXPORT;
-   static bool isValidRequestExt(const char* ptr, uint32_t sz) U_NO_EXPORT;
-
    UClientImage_Base(const UClientImage_Base&) : UEventFd() {}
    UClientImage_Base& operator=(const UClientImage_Base&)   { return *this; }
 

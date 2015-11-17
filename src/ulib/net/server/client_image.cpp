@@ -28,17 +28,17 @@ int           UClientImage_Base::idx;
 int           UClientImage_Base::csfd;
 int           UClientImage_Base::iovcnt;
 iPF           UClientImage_Base::callerHandlerRead;
-iPF           UClientImage_Base::callerHandlerRequest;
-bPF           UClientImage_Base::callerHandlerCache;
-vPF           UClientImage_Base::callerHandlerEndRequest;
+bPF           UClientImage_Base::callerHandlerCache = handlerCache;
+iPF           UClientImage_Base::callerHandlerRequest = UServer_Base::pluginsHandlerRequest;
+vPF           UClientImage_Base::callerHandlerEndRequest = do_nothing;
 bool          UClientImage_Base::bIPv6;
 bool          UClientImage_Base::log_request_partial;
 char          UClientImage_Base::cbuffer[128];
 long          UClientImage_Base::time_run;
 long          UClientImage_Base::time_between_request = 10;
-bPFpc         UClientImage_Base::callerIsValidMethod;
-bPFpcu        UClientImage_Base::callerIsValidRequest;
-bPFpcu        UClientImage_Base::callerIsValidRequestExt;
+bPFpc         UClientImage_Base::callerIsValidMethod = isValidMethod;
+bPFpcu        UClientImage_Base::callerIsValidRequest = isValidRequest;
+bPFpcu        UClientImage_Base::callerIsValidRequestExt = isValidRequestExt;
 uint32_t      UClientImage_Base::resto;
 uint32_t      UClientImage_Base::rstart;
 uint32_t      UClientImage_Base::ncount;
@@ -250,12 +250,6 @@ void UClientImage_Base::saveRequestResponse()
 }
 #endif
 
-// NB: we have default to true to manage pipeline for protocol as RPC...
-
-U_NO_EXPORT bool UClientImage_Base::isValidMethod(    const char* ptr)              { return true; }
-U_NO_EXPORT bool UClientImage_Base::isValidRequest(   const char* ptr, uint32_t sz) { return true; }
-U_NO_EXPORT bool UClientImage_Base::isValidRequestExt(const char* ptr, uint32_t sz) { return true; }
-
 void UClientImage_Base::init()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::init()")
@@ -284,10 +278,6 @@ void UClientImage_Base::init()
    _value   = U_NEW(UString(U_CAPACITY));
    _buffer  = U_NEW(UString(U_CAPACITY));
    _encoded = U_NEW(UString(U_CAPACITY));
-
-   callerIsValidMethod     = isValidMethod;
-   callerIsValidRequest    = isValidRequest;
-   callerIsValidRequestExt = isValidRequestExt;
 
 #ifdef DEBUG
    UError::callerDataDump = saveRequestResponse;
@@ -624,10 +614,8 @@ bool UClientImage_Base::startRequest()
 
       if ((time_run - time_between_request) > 10L)
          {
-#     ifdef DEBUG
-         U_MESSAGE("%9D (pid %P) UClientImage_Base::startRequest(): time_between_request(%ld) < time_run(%ld) - isParallelizationGoingToStart(%u) = %b request = %V",
+         U_DEBUG("UClientImage_Base::startRequest(): time_between_request(%ld) < time_run(%ld) - isParallelizationGoingToStart(%u) = %b request = %V",
                      time_between_request, time_run, U_NUM_CLIENT_THRESHOLD, UServer_Base::isParallelizationGoingToStart(U_NUM_CLIENT_THRESHOLD), request->rep);
-#     endif
 
          if (U_http_info.startHeader > 2 &&
              UServer_Base::isParallelizationGoingToStart(U_NUM_CLIENT_THRESHOLD))
@@ -670,7 +658,7 @@ void UClientImage_Base::endRequest()
 # endif
 #endif
 
-   if (callerHandlerEndRequest) callerHandlerEndRequest();
+   callerHandlerEndRequest();
 
    U_http_method_type = 0; // NB: this mark the end of http request processing...
 

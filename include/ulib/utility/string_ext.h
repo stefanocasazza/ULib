@@ -128,27 +128,27 @@ public:
       {
       U_TRACE(0, "UStringExt::startsWith(%V,%V)", s1.rep, s2.rep)
 
-      bool result = u_startsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2));
+      if (u_startsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2))) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool startsWith(const UString& s1, const char* s2, uint32_t n2)
       {
       U_TRACE(0, "UStringExt::startsWith(%V,%.*S,%u)", s1.rep, n2, s2, n2)
 
-      bool result = u_startsWith(U_STRING_TO_PARAM(s1), s2, n2);
+      if (u_startsWith(U_STRING_TO_PARAM(s1), s2, n2)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool startsWith(const char* s1, uint32_t n1, const char* s2, uint32_t n2)
       {
       U_TRACE(0, "UStringExt::startsWith(%.*S,%u,%.*S,%u)", n1, s1, n1, n2, s2, n2)
 
-      bool result = u_startsWith(s1, n1, s2, n2);
+      if (u_startsWith(s1, n1, s2, n2)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // check if string s1 terminate with string s2
@@ -157,27 +157,27 @@ public:
       {
       U_TRACE(0, "UStringExt::endsWith(%V,%V)", s1.rep, s2.rep)
 
-      bool result = u_endsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2));
+      if (u_endsWith(U_STRING_TO_PARAM(s1), U_STRING_TO_PARAM(s2))) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool endsWith(const UString& s1, const char* s2, uint32_t n2)
       {
       U_TRACE(0, "UStringExt::endsWith(%V,%.*S,%u)", s1.rep, n2, s2, n2)
 
-      bool result = u_endsWith(U_STRING_TO_PARAM(s1), s2, n2);
+      if (u_endsWith(U_STRING_TO_PARAM(s1), s2, n2)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool endsWith(const char* s1, uint32_t n1, const char* s2, uint32_t n2)
       {
       U_TRACE(0, "UStringExt::endsWith(%.*S,%u,%.*S,%u)", n1, s1, n1, n2, s2, n2)
 
-      bool result = u_endsWith(s1, n1, s2, n2);
+      if (u_endsWith(s1, n1, s2, n2)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // SUBSTITUTE: replace all occurrences of 'a' with 'b'
