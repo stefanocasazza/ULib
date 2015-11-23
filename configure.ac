@@ -260,6 +260,8 @@ case "$target_os" in
 	cygwin*)
 		AC_MSG_RESULT([ok ($target_os)])
 
+		CPPFLAGS="$CPPFLAGS -U__STRICT_ANSI__" # if not, the functions fdopen, fileno and strptime will not available...
+
 		MODULE_LIBTOOL_OPTIONS="-shared -no-undefined"
 
 		AM_CONDITIONAL(LINUX, false)

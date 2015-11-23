@@ -185,7 +185,7 @@ UString UServer_Base::getStats()
 
    UString x(U_CAPACITY);
 
-   x.snprintf("%3u connections (%5.2f/sec), %3u max simultaneous, %4u %s (%5.2f/sec) - %v/sec", UServer_Base::stats_connections,
+   x.snprintf("%4u connections (%5.2f/sec), %3u max simultaneous, %4u %s (%5.2f/sec) - %v/sec", UServer_Base::stats_connections,
                (float) UServer_Base::stats_connections / U_ONE_HOUR_IN_SECOND, UServer_Base::stats_simultaneous, UNotifier::nwatches, U_WHICH,
                (float) UNotifier::nwatches / U_ONE_HOUR_IN_SECOND, UStringExt::printSize(UServer_Base::stats_bytes).rep);
 
@@ -1566,7 +1566,7 @@ void UServer_Base::loadConfigParam()
    // load ORM driver modules...
 
    if (orm_driver_list &&
-       (UString::str_allocate(STR_ALLOCATE_ORM), UOrmDriver::loadDriver(orm_driver_list)) == false)
+       UOrmDriver::loadDriver(orm_driver_list) == false)
       {
       U_ERROR("ORM drivers load failed");
       }
@@ -1742,8 +1742,6 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
    U_INTERNAL_ASSERT_EQUALS(vplugin_name->size(), vplugin_name_static->size())
 
    delete vplugin_name_static;
-
-   UClientImage_Base::callerHandlerRead = pluginsHandlerREAD;
 
    if (cfg)
       {

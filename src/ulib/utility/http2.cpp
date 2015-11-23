@@ -1017,6 +1017,25 @@ insert:
       }
 }
 
+void UHTTP2::openStream()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP2::openStream()")
+
+   U_INTERNAL_ASSERT_POINTER(pStream)
+   U_INTERNAL_ASSERT(pConnection->max_open_stream_id <= frame.stream_id)
+
+       pStream->input_window  =
+   pConnection->input_window  = settings.initial_window_size;
+       pStream->output_window =
+   pConnection->output_window = pConnection->peer_settings.initial_window_size;
+
+   pStream->id                     =
+   pConnection->max_open_stream_id = frame.stream_id;
+   pConnection->hpack_max_capacity = settings.header_table_size;
+
+   pStream->state = ((frame.flags & FLAG_END_STREAM) != 0 ? STREAM_STATE_HALF_CLOSED : STREAM_STATE_OPEN);
+}
+
 void UHTTP2::readFrame()
 {
    U_TRACE_NO_PARAM(0, "UHTTP2::readFrame()")
@@ -1075,7 +1094,7 @@ loop:
    frame.stream_id = ntohl(*(uint32_t*)(ptr+5) & 0x7fffffff);
 
    U_DUMP("frame { length = %d stream_id = %d type = (%d, %s) flags = %d } = %#.*S", frame.length,
-                frame.stream_id, frame.type, getFrameTypeDescription(frame.type), frame.flags, frame.length, ptr + HTTP2_FRAME_HEADER_SIZE)
+             frame.stream_id, frame.type, getFrameTypeDescription(frame.type), frame.flags, frame.length, ptr + HTTP2_FRAME_HEADER_SIZE)
 
    U_INTERNAL_ASSERT_MINOR(frame.length, (int32_t)settings.max_frame_size)
 
@@ -1150,26 +1169,25 @@ loop:
             {
             // TODO
 
+            U_INTERNAL_DUMP("settings_ack = %b UClientImage_Base::rbuffer->size() = %u UClientImage_Base::rstart = %u",
+                             settings_ack,     UClientImage_Base::rbuffer->size(),     UClientImage_Base::rstart)
+
+            if (settings_ack &&
+                UClientImage_Base::rbuffer->size() == UClientImage_Base::rstart)
+               {
+               U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+
+               openStream();
+
+               goto end;
+               }
+
             goto loop;
             }
 
          if (frame.type == HEADERS)
             {
-            // open the stream
-
-            U_INTERNAL_ASSERT_POINTER(pStream)
-            U_INTERNAL_ASSERT(pConnection->max_open_stream_id <= frame.stream_id)
-
-                pStream->input_window  =
-            pConnection->input_window  = settings.initial_window_size;
-                pStream->output_window =
-            pConnection->output_window = pConnection->peer_settings.initial_window_size;
-
-            pStream->id                     =
-            pConnection->max_open_stream_id = frame.stream_id;
-            pConnection->hpack_max_capacity = settings.header_table_size;
-
-            pStream->state = ((frame.flags & FLAG_END_STREAM) != 0 ? STREAM_STATE_HALF_CLOSED : STREAM_STATE_OPEN);
+            openStream();
 
             manageHeaders();
 
@@ -1353,6 +1371,7 @@ void UHTTP2::sendError()
    U_TRACE_NO_PARAM(0, "UHTTP2::sendError()")
 
    U_INTERNAL_ASSERT_DIFFERS(nerror, NO_ERROR)
+   U_INTERNAL_ASSERT(UServer_Base::csocket->isOpen())
 
    char buffer[HTTP2_FRAME_HEADER_SIZE+8] = { 0, 0, 4,    // frame size
                                               RST_STREAM, // header frame
@@ -1663,13 +1682,54 @@ int UHTTP2::handlerRequest()
 
    U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
 
-   U_INTERNAL_DUMP("HTTP2-Settings: = %.*S U_http_method_type = %B", U_http2_settings_len, UHTTP2::upgrade_settings, U_http_method_type)
+   pConnection    = (Connection*)UServer_Base::pClientImage->connection;
+   pConnectionEnd = (char*)pConnection + sizeof(Connection);
 
-   if (U_http2_settings_len &&
-       USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_CONNECTION_UPGRADE_AND_SETTING_BIN), UServer_Base::timeoutMS) !=
-                                                    U_CONSTANT_SIZE(HTTP2_CONNECTION_UPGRADE_AND_SETTING_BIN))
+   pConnection->state         = CONN_STATE_OPEN;
+   pConnection->peer_settings = settings;
+
+   pConnection->max_open_stream_id      =
+   pConnection->num_responding_streams  =
+   pConnection->max_processed_stream_id = 0;
+
+   pStream = pConnection->streams;
+
+   pStream->state = STREAM_STATE_IDLE;
+
+   U_INTERNAL_DUMP("HTTP2-Settings(%u): = %.*S U_http_method_type = %d %B", U_http2_settings_len, U_http2_settings_len, upgrade_settings, U_http_method_type, U_http_method_type)
+
+   uint32_t sz;
+
+   if (U_http2_settings_len)
       {
-      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      if (USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_CONNECTION_UPGRADE_AND_SETTING_BIN), UServer_Base::timeoutMS) !=
+                                                       U_CONSTANT_SIZE(HTTP2_CONNECTION_UPGRADE_AND_SETTING_BIN))
+         {
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+
+      UString buffer_settings(U_CAPACITY);
+
+      UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer_settings);
+
+      if (buffer_settings.empty() ||
+          updateSetting((unsigned char*)U_STRING_TO_PARAM(buffer_settings)) == false)
+         {
+         U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+
+      U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 2)
+      U_INTERNAL_ASSERT_RANGE(1,UClientImage_Base::uri_offset,64)
+
+      sz = U_http_info.startHeader - UClientImage_Base::uri_offset + U_CONSTANT_SIZE(" HTTP/1.1\r\n");
+
+      if (sz > sizeof(UClientImage_Base::cbuffer)) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
+      U_http_info.uri = UClientImage_Base::cbuffer;
+
+      (void) u__memcpy(UClientImage_Base::cbuffer, UClientImage_Base::request->c_pointer(UClientImage_Base::uri_offset), sz, __PRETTY_FUNCTION__);
+
+      U_INTERNAL_DUMP("U_http_info.uri(%u) = %.*S", U_http_info.uri_len, U_http_info.uri_len, U_http_info.uri)
       }
 
    U_INTERNAL_ASSERT(UClientImage_Base::request->same(*UClientImage_Base::rbuffer))
@@ -1678,7 +1738,7 @@ int UHTTP2::handlerRequest()
 
    // maybe we have read more data than necessary...
 
-   uint32_t sz = UClientImage_Base::rbuffer->size();
+   sz = UClientImage_Base::rbuffer->size();
 
    U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
@@ -1709,35 +1769,11 @@ int UHTTP2::handlerRequest()
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
-   pConnection    = (Connection*)UServer_Base::pClientImage->connection;
-   pConnectionEnd = (char*)pConnection + sizeof(Connection);
-
-   pConnection->state         = CONN_STATE_OPEN;
-   pConnection->peer_settings = settings;
-
-   pConnection->max_open_stream_id      =
-   pConnection->num_responding_streams  =
-   pConnection->max_processed_stream_id = 0;
-
-   pStream = pConnection->streams;
-
-   pStream->state = STREAM_STATE_IDLE;
-
-   if (U_http2_settings_len == 0)
+   if (U_http2_settings_len == 0 &&
+       USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_SETTINGS_BIN), UServer_Base::timeoutMS) !=
+                                                    U_CONSTANT_SIZE(HTTP2_SETTINGS_BIN))
       {
-      if (USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_SETTINGS_BIN), UServer_Base::timeoutMS) != U_CONSTANT_SIZE(HTTP2_SETTINGS_BIN)) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-      }
-   else
-      {
-      UString buffer(U_CAPACITY);
-
-      UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer);
-
-      if (buffer.empty() ||
-          updateSetting((unsigned char*)U_STRING_TO_PARAM(buffer)) == false)
-         {
-         U_RETURN(U_PLUGIN_HANDLER_ERROR);
-         }
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
 
    settings_ack = false;
@@ -1764,10 +1800,24 @@ loop:
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
 
+      if (U_http2_settings_len)
+         {
+         /**
+          * The HTTP/1.1 request that is sent prior to upgrade is assigned a stream identifier of 1 with default priority values.
+          * Stream 1 is implicitly "half-closed" from the client toward the server, since the request is completed as an HTTP/1.1 request.
+          * After commencing the HTTP/2 connection, stream 1 is used for the response
+          */
+
+         pStream->id                     = 
+         pConnection->max_open_stream_id = 1;
+
+         pStream->state = STREAM_STATE_HALF_CLOSED;
+         }
+
       return UHTTP::manageRequest();
       }
 
-   sendError();
+   if (UServer_Base::csocket->isOpen()) sendError();
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
 }

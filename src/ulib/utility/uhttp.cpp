@@ -2492,10 +2492,12 @@ advance: U_INTERNAL_ASSERT_EQUALS(*pn, ':')
             break;
 #        ifndef U_HTTP2_DISABLE
             case U_MULTICHAR_CONSTANT32('H','T','T','P'):
+            case U_MULTICHAR_CONSTANT32('h','t','t','p'):
                {
                // HTTP2-Settings
 
-               if (u_get_unalignedp64(p+4) == U_MULTICHAR_CONSTANT64('2','-','S','e','t','t','i','n'))
+               if (u_get_unalignedp64(p+4) == U_MULTICHAR_CONSTANT64('2','-','S','e','t','t','i','n') ||
+                   u_get_unalignedp64(p+4) == U_MULTICHAR_CONSTANT64('2','-','s','e','t','t','i','n'))
                   {
                   U_http2_settings_len     = pos2-pos1;
                   UHTTP2::upgrade_settings =  ptr+pos1;
@@ -2842,7 +2844,8 @@ set_x_http_forward_for: U_http_info.ip_client =  ptr+pos1;
             }
          }
 
-next: U_INTERNAL_DUMP("char (after cr/newline) = %C", pn[2])
+next:
+      U_INTERNAL_DUMP("char (after cr/newline) = %C U_http_version = %C U_ClientImage_data_missing = %b", pn[2], U_http_version, U_ClientImage_data_missing)
 
       if (U_http_info.endHeader == 0 &&
           u_get_unalignedp32(pn) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))

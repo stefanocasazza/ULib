@@ -27,7 +27,7 @@
 int           UClientImage_Base::idx;
 int           UClientImage_Base::csfd;
 int           UClientImage_Base::iovcnt;
-iPF           UClientImage_Base::callerHandlerRead;
+iPF           UClientImage_Base::callerHandlerRead = UServer_Base::pluginsHandlerREAD;
 bPF           UClientImage_Base::callerHandlerCache = handlerCache;
 iPF           UClientImage_Base::callerHandlerRequest = UServer_Base::pluginsHandlerRequest;
 vPF           UClientImage_Base::callerHandlerEndRequest = do_nothing;
@@ -653,7 +653,7 @@ void UClientImage_Base::endRequest()
 
    if ((time_run - time_between_request) > 10L)
       {
-      U_MESSAGE("%9D (pid %P) UClientImage_Base::endRequest(): time_between_request(%ld) < time_run(%ld) - request = %V", time_between_request, time_run, request->rep);
+      U_DEBUG("UClientImage_Base::endRequest(): time_between_request(%ld) < time_run(%ld) - request = %V", time_between_request, time_run, request->rep);
       }
 # endif
 #endif

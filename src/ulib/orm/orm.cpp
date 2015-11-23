@@ -22,7 +22,7 @@ __noreturn U_NO_EXPORT void UOrmSession::loadDriverFail(const char* ptr, uint32_
 {
    U_TRACE(0, "UOrmSession::loadDriverFail(%.*S,%u)", len, ptr, len)
 
-   U_MESSAGE("load of ORM driver failed: %.*S", len, ptr);
+   U_WARNING("load of ORM driver failed: %.*S", len, ptr);
 
    U_EXIT(EXIT_FAILURE);   
 }

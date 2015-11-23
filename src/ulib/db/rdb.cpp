@@ -614,7 +614,7 @@ bool URDB::compactionJournal()
       uint32_t sz1 =     getCapacity(),
                sz2 = rdb.getCapacity();
 
-      U_MESSAGE("URDB::compactionJournal() - nrecords (%u => %u) capacity (%.2fM (%u bytes) => %.2fM (%u bytes)) nerror=%u",
+      U_DEBUG("URDB::compactionJournal() - nrecords (%u => %u) capacity (%.2fM (%u bytes) => %.2fM (%u bytes)) nerror=%u",
                         size(), rdb.size(),
                         (double)sz1 / (1024.0 * 1024.0), sz1,
                         (double)sz2 / (1024.0 * 1024.0), sz2, nerror);

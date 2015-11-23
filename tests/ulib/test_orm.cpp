@@ -406,8 +406,6 @@ U_EXPORT main(int argc, char* argv[])
 
    U_TRACE(5,"main(%d)", argc)
 
-   UString::str_allocate(STR_ALLOCATE_ORM);
-
    UString orm_driver_dir( argv[1]);
    UString orm_driver_list(argv[2]);
 

@@ -7757,6 +7757,8 @@ fi
 		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ok ($target_os)" >&5
 $as_echo "ok ($target_os)" >&6; }
 
+		CPPFLAGS="$CPPFLAGS -U__STRICT_ANSI__" # if not, the functions fdopen, fileno and strptime will not available...
+
 		MODULE_LIBTOOL_OPTIONS="-shared -no-undefined"
 
 		 if false; then

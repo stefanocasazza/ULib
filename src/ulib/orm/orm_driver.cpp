@@ -116,6 +116,8 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
 
    if (driver_dir) UDynamic::setPluginDirectory(*driver_dir);
 
+   UString::str_allocate(STR_ALLOCATE_ORM);
+
    vdriver             = U_NEW(UVector<UOrmDriver*>(10U));
    vdriver_name        = U_NEW(UVector<UString>(10U));
    vdriver_name_static = U_NEW(UVector<UString>(20U));

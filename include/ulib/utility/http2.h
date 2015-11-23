@@ -172,6 +172,7 @@ protected:
 
    static void readFrame();
    static void sendError();
+   static void openStream();
    static void manageData();
    static void manageHeaders();
    static int  handlerRequest();
