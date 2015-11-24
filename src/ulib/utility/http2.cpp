@@ -1053,6 +1053,18 @@ loop:
 
    if (sz == UClientImage_Base::rstart)
       {
+      U_INTERNAL_DUMP("settings_ack = %b U_http2_settings_len = %b", settings_ack, U_http2_settings_len)
+
+      if (settings_ack &&
+          U_http2_settings_len)
+         {
+         U_DEBUG("HTTP2 upgrade: User-Agent = %.*S", U_HTTP_USER_AGENT_TO_TRACE);
+
+         openStream();
+
+         goto end;
+         }
+
       UClientImage_Base::rstart = 0;
 
       UClientImage_Base::rbuffer->setEmpty();
@@ -1168,19 +1180,6 @@ loop:
          if (frame.type == PRIORITY)
             {
             // TODO
-
-            U_INTERNAL_DUMP("settings_ack = %b UClientImage_Base::rbuffer->size() = %u UClientImage_Base::rstart = %u",
-                             settings_ack,     UClientImage_Base::rbuffer->size(),     UClientImage_Base::rstart)
-
-            if (settings_ack &&
-                UClientImage_Base::rbuffer->size() == UClientImage_Base::rstart)
-               {
-               U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
-
-               openStream();
-
-               goto end;
-               }
 
             goto loop;
             }

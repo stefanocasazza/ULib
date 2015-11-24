@@ -313,6 +313,7 @@ check_for_netcat() {
 			NC=nc
 		fi
 		if [ "$NC_TEST" = "Ncat 6.47 " ] || \
+			[ "$NC_TEST" = "Ncat 7.00 " ] || \
 			[ "$NC_TEST" = "usage: nc [-46DdhklnrStUuvzC] [-i interval] [-p source_port]" ] || \
 			[ "$NC_TEST" = "This is nc from the netcat-openbsd package. An alternative nc is available in the netcat-traditional package." ]; then
 			NC=nc
