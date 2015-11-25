@@ -22,11 +22,11 @@
 #  include <sys/event.h>
 #endif
 
-#ifdef HAVE_POLL_H
+#ifndef HAVE_POLL_H
+UEventTime*   UNotifier::time_obj;
+#else
 #  include <poll.h>
 struct pollfd UNotifier::fds[1];
-#else
-UEventTime*   UNotifier::time_obj;
 #endif
 
 #include <errno.h>
@@ -728,37 +728,24 @@ int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEv
 #else
    int result;
 # ifdef HAVE_EPOLL_WAIT
-   int timeoutMS = (ptimeout ? ptimeout->getTimerVal() : -1);
-
-   result = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, timeoutMS);
+   result = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, UEventTime::getMilliSecond(ptimeout));
 # elif defined(HAVE_KQUEUE)
-   struct timespec* timeout = (ptimeout ? ptimeout->getTimerValSpec() : 0); 
-
-   result    = U_SYSCALL(kevent, "%d,%p,%d,%p,%d,%p", kq, kqevents, nkqevents, kqrevents, max_connection, timeout);
+   result = U_SYSCALL(kevent, "%d,%p,%d,%p,%d,%p", kq, kqevents, nkqevents, kqrevents, max_connection, UEventTime::getTimeSpec(ptimeout));
    nkqevents = 0;
 # else
-   static struct timeval   tmp;
-          struct timeval* ptmp;
+   // If both fields of the timeval structure are zero, then select() returns immediately.
+   // (This is useful for polling). If ptimeout is NULL (no timeout), select() can block indefinitely...
+   //
+   // On Linux, the function select modifies timeout to reflect the amount of time not slept; most other implementations do not do this.
+   // This causes problems both when Linux code which reads timeout is ported to other operating systems, and when code is ported to Linux
+   // that reuses a struct timeval for multiple selects in a loop without reinitializing it. Consider timeout to be undefined after select returns
 
 # if defined(DEBUG) && !defined(_MSWINDOWS_)
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
    if (write_set) U_INTERNAL_DUMP("write_set = %B", __FDS_BITS(write_set)[0])
 # endif
 
-   if (ptimeout == 0) ptmp = 0;
-   else
-      {
-      // On Linux, the function select modifies timeout to reflect the amount of time not slept; most other implementations do not do this.
-      // This causes problems both when Linux code which reads timeout is ported to other operating systems, and when code is ported to Linux
-      // that reuses a struct timeval for multiple selects in a loop without reinitializing it. Consider timeout to be undefined after select returns
-
-      ptimeout->setTimerVal(ptmp = &tmp);
-      }
-
-   // If both fields of the timeval structure are zero, then select() returns immediately.
-   // (This is useful for polling). If ptmp is NULL (no timeout), select() can block indefinitely...
-
-   result = U_SYSCALL(select, "%d,%p,%p,%p,%p", fd_max, read_set, write_set, 0, ptmp);
+   result = U_SYSCALL(select, "%d,%p,%p,%p,%p", fd_max, read_set, write_set, 0, UEventTime::getTimeVal(ptimeout));
 
 # if defined(DEBUG) && !defined(_MSWINDOWS_)
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
@@ -793,9 +780,7 @@ loop:
                 ptimeout);
 # elif defined(HAVE_KQUEUE)
 loop:
-   struct timespec* timeout = (ptimeout ? ptimeout->getTimerValSpec() : 0); 
-
-   nfd_ready = U_SYSCALL(kevent, "%d,%p,%d,%p,%d,%p", kq, kqevents, nkqevents, kqrevents, max_connection, timeout);
+   nfd_ready = U_SYSCALL(kevent, "%d,%p,%d,%p,%d,%p", kq, kqevents, nkqevents, kqrevents, max_connection, UEventTime::getTimeSpec(ptimeout));
 # ifdef DEBUG
    if (nfd_ready == -1 &&
        errno == EINVAL)
@@ -806,9 +791,7 @@ loop:
    nkqevents = 0;
 # else
 loop:
-   int timeoutMS = (ptimeout ? ptimeout->getTimerVal() : -1);
-
-   nfd_ready = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, timeoutMS);
+   nfd_ready = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, UEventTime::getMilliSecond(ptimeout));
 # endif
 
    if (nfd_ready > 0)
@@ -1045,11 +1028,11 @@ loop:
    waitForEvent(ptimeout = UTimer::getTimeout());
 
    if (nfd_ready == 0 &&
-       ptimeout)
+       ptimeout  != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(UTimer::first->alarm, ptimeout)
 
-      (void) UTimer::callHandlerTimeout();
+      UTimer::callHandlerTimeout();
 
       goto loop;
       }
@@ -1322,7 +1305,7 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
 # endif
 
    // If both fields of the timeval structure are zero, then select() returns immediately.
-   // (This is useful for polling). If ptmp is NULL (no timeout), select() can block indefinitely...
+   // (This is useful for polling). If ptime is NULL (no timeout), select() can block indefinitely...
 
    UEventTime* ptime;
 
@@ -1377,9 +1360,9 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
       }
 #else
 
-#  ifdef _MSWINDOWS_
+# ifdef _MSWINDOWS_
    if (is_pipe(fd) != INVALID_HANDLE_VALUE) U_RETURN(1);
-#  endif
+# endif
 
    // If both fields of the timeval structure are zero, then select() returns immediately.
    // (This is useful for polling). If ptmp is NULL (no timeout), select() can block indefinitely...

@@ -149,15 +149,6 @@ public:
    void setSecond(long sec)            { tv_sec = sec; }
    void setMicroSecond(long micro_sec) { tv_usec = micro_sec; }
 
-   void setMilliSecond(long timeoutMS)
-      {
-      U_TRACE(0, "UTimeVal::setMilliSecond(%ld)", timeoutMS)
-
-      tv_usec = timeoutMS * 1000L;
-
-      adjust();
-      }
-
    long getSecond() const
       {
       U_TRACE_NO_PARAM(0, "UTimeVal::getSecond()")
@@ -181,15 +172,6 @@ public:
       U_RETURN(ms);
       }
 
-   long getTolerance() const
-      {
-      U_TRACE_NO_PARAM(0, "UTimeVal::getTolerance()")
-
-      long ms = getMilliSecond() / 128;
-
-      U_RETURN(ms);
-      }
-
    double getMicroSecond() const
       {
       U_TRACE_NO_PARAM(0, "UTimeVal::getMicroSecond()")
@@ -197,6 +179,18 @@ public:
       double micro_sec = (double) tv_sec + (tv_usec / 1000000.);
 
       U_RETURN(micro_sec);
+      }
+
+   void setMilliSecond(long timeoutMS)
+      {
+      U_TRACE(0, "UTimeVal::setMilliSecond(%ld)", timeoutMS)
+
+      tv_sec  = 0L;
+      tv_usec = timeoutMS * 1000L;
+
+      adjust();
+
+      U_ASSERT_EQUALS(timeoutMS, getMilliSecond())
       }
 
    // OPERATOR

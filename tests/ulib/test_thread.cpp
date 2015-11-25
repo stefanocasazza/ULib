@@ -10,7 +10,6 @@
 
 #define TEST_CHANGE(b) {if(!TestChange(b))return 1;}
 
-static bool status;
 static volatile int n;
 static int time_to_sleep = 5;
 
@@ -83,7 +82,7 @@ public:
       if (WaitNValue(2)) // wait for main thread
          {
 #     ifdef DEBUG
-         status = UTrace::suspend();
+         UTrace::suspend();
 #     endif
 
          while (true)
@@ -261,7 +260,7 @@ int U_EXPORT main(int argc, char* argv[])
    time_to_sleep = 5000;
 
 #ifdef DEBUG
-   UTrace::resume(status);
+   UTrace::resume();
 #endif
 
    // Test child thread destroying before father

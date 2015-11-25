@@ -51,6 +51,8 @@ typedef const unsigned char* pcuchar_t;
 // typedef int (*x11error_t)  (void*, void*);
 // typedef int (*x11IOerror_t)(void*);
 
+class UCrono;
+
 class U_EXPORT UTrace {
 public:
 
@@ -121,12 +123,15 @@ public:
    U_MANAGE_SYSRETURN_VALUE(tdbdata_t,          "%J",   false)
 #endif
 
-   static int suspend()           { int status = u_trace_suspend; u_trace_suspend = 1; return status; }
-   static void resume(int status) {                               u_trace_suspend = status; }
+   static void resume()  {                           u_trace_suspend = status; }
+   static void suspend() { status = u_trace_suspend; u_trace_suspend = 1; }
 
 private:
    char buffer_trace[1019], buffer_syscall[1019];
    uint32_t buffer_trace_len, buffer_syscall_len;
+
+   static int status;
+   static UCrono* time_syscall_read_or_write;
 
    void set(int level) U_NO_EXPORT;
 };

@@ -17,21 +17,21 @@
 // Design by contract - if (expr == false) then stop
 
 #ifdef DEBUG
-#  define U_ASSERT(expr)                 { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT(expr);                 UTrace::resume(_status_); }
-#  define U_ASSERT_MINOR(a,b)            { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_MINOR(a,b);            UTrace::resume(_status_); }
-#  define U_ASSERT_MAJOR(a,b)            { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_MAJOR(a,b);            UTrace::resume(_status_); }
-#  define U_ASSERT_EQUALS(a,b)           { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_EQUALS(a,b);           UTrace::resume(_status_); }
-#  define U_ASSERT_DIFFERS(a,b)          { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_DIFFERS(a,b);          UTrace::resume(_status_); }
-#  define U_ASSERT_POINTER(ptr)          { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_POINTER(ptr);          UTrace::resume(_status_); }
-#  define U_ASSERT_RANGE(a,x,b)          { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_RANGE(a,x,b);          UTrace::resume(_status_); }
+#  define U_ASSERT(expr)                 { UTrace::suspend(); U_INTERNAL_ASSERT(expr);                 UTrace::resume(); }
+#  define U_ASSERT_MINOR(a,b)            { UTrace::suspend(); U_INTERNAL_ASSERT_MINOR(a,b);            UTrace::resume(); }
+#  define U_ASSERT_MAJOR(a,b)            { UTrace::suspend(); U_INTERNAL_ASSERT_MAJOR(a,b);            UTrace::resume(); }
+#  define U_ASSERT_EQUALS(a,b)           { UTrace::suspend(); U_INTERNAL_ASSERT_EQUALS(a,b);           UTrace::resume(); }
+#  define U_ASSERT_DIFFERS(a,b)          { UTrace::suspend(); U_INTERNAL_ASSERT_DIFFERS(a,b);          UTrace::resume(); }
+#  define U_ASSERT_POINTER(ptr)          { UTrace::suspend(); U_INTERNAL_ASSERT_POINTER(ptr);          UTrace::resume(); }
+#  define U_ASSERT_RANGE(a,x,b)          { UTrace::suspend(); U_INTERNAL_ASSERT_RANGE(a,x,b);          UTrace::resume(); }
 
-#  define U_ASSERT_MSG(expr,info)        { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_MSG(expr,info);        UTrace::resume(_status_); }
-#  define U_ASSERT_MINOR_MSG(a,b,info)   { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_MINOR_MSG(a,b,info);   UTrace::resume(_status_); }
-#  define U_ASSERT_MAJOR_MSG(a,b,info)   { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_MAJOR_MSG(a,b,info);   UTrace::resume(_status_); }
-#  define U_ASSERT_EQUALS_MSG(a,b,info)  { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_EQUALS_MSG(a,b,info);  UTrace::resume(_status_); }
-#  define U_ASSERT_DIFFERS_MSG(a,b,info) { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info); UTrace::resume(_status_); }
-#  define U_ASSERT_POINTER_MSG(ptr,info) { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_POINTER_MSG(ptr,info); UTrace::resume(_status_); }
-#  define U_ASSERT_RANGE_MSG(a,x,b,info) { int _status_ = UTrace::suspend(); U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info); UTrace::resume(_status_); }
+#  define U_ASSERT_MSG(expr,info)        { UTrace::suspend(); U_INTERNAL_ASSERT_MSG(expr,info);        UTrace::resume(); }
+#  define U_ASSERT_MINOR_MSG(a,b,info)   { UTrace::suspend(); U_INTERNAL_ASSERT_MINOR_MSG(a,b,info);   UTrace::resume(); }
+#  define U_ASSERT_MAJOR_MSG(a,b,info)   { UTrace::suspend(); U_INTERNAL_ASSERT_MAJOR_MSG(a,b,info);   UTrace::resume(); }
+#  define U_ASSERT_EQUALS_MSG(a,b,info)  { UTrace::suspend(); U_INTERNAL_ASSERT_EQUALS_MSG(a,b,info);  UTrace::resume(); }
+#  define U_ASSERT_DIFFERS_MSG(a,b,info) { UTrace::suspend(); U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info); UTrace::resume(); }
+#  define U_ASSERT_POINTER_MSG(ptr,info) { UTrace::suspend(); U_INTERNAL_ASSERT_POINTER_MSG(ptr,info); UTrace::resume(); }
+#  define U_ASSERT_RANGE_MSG(a,x,b,info) { UTrace::suspend(); U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info); UTrace::resume(); }
 #elif defined(U_TEST)
 #  define U_ASSERT(expr)                  U_INTERNAL_ASSERT(expr)
 #  define U_ASSERT_MINOR(a,b)             U_INTERNAL_ASSERT_MINOR(a,b)
@@ -85,20 +85,20 @@
 
 // NB: U_DUMP, U_SYSCALL() and U_RETURN() depend on presence of U_TRACE()
 
-#  define U_INTERNAL_DUMP(args...) { if (utr.active[0])                                     u_trace_dump(args); }
-#  define          U_DUMP(args...) { if (utr.active[0]) { int _status_ = UTrace::suspend(); u_trace_dump(args); UTrace::resume(_status_); } }
-
-#  define U_SYSCALL(name,format,args...) (utr.trace_syscall("::"#name"(" format ")" , ##args), \
-                                          utr.trace_sysreturn_type(::name(args)))
+#  define U_INTERNAL_DUMP(args...) { if (utr.active[0])                      u_trace_dump(args); }
+#  define          U_DUMP(args...) { if (utr.active[0]) { UTrace::suspend(); u_trace_dump(args); UTrace::resume(); } }
 
 #  define U_SYSCALL_NO_PARAM(name) (utr.trace_syscall("::"#name"()",0), \
                                     utr.trace_sysreturn_type(::name()))
 
-#  define U_SYSCALL_VOID(name,format,args...) {utr.trace_syscall("::"#name"(" format ")" , ##args); \
-                                               name(args); utr.trace_sysreturn(false,0);}
+#  define U_SYSCALL_VOID_NO_PARAM(name) { utr.trace_syscall("::"#name"()",0); \
+                                          name(); utr.trace_sysreturn(false,0); }
 
-#  define U_SYSCALL_VOID_NO_PARAM(name) {utr.trace_syscall("::"#name"()",0); \
-                                         name(); utr.trace_sysreturn(false,0);}
+#  define U_SYSCALL(name,format,args...) (UTrace::suspend(), utr.trace_syscall("::"#name"(" format ")" , ##args), \
+                                          UTrace::resume(),  utr.trace_sysreturn_type(::name(args)))
+
+#  define U_SYSCALL_VOID(name,format,args...) { UTrace::suspend();              utr.trace_syscall("::"#name"(" format ")" , ##args); \
+                                                UTrace::resume(); ::name(args); utr.trace_sysreturn(false,0); }
 
 #  define U_RETURN(r)                                                 return (utr.trace_return_type((r)))
 #  define U_RETURN_STRING(str) {U_INTERNAL_ASSERT((str).invariant()); return (utr.trace_return("%V",(str).rep),(str));}

@@ -41,7 +41,7 @@ void UTimer::init(Type _mode)
 
 U_NO_EXPORT void UTimer::insertEntry()
 {
-   U_TRACE_NO_PARAM(1, "UTimer::insertEntry()")
+   U_TRACE_NO_PARAM(0, "UTimer::insertEntry()")
 
    U_CHECK_MEMORY
 
@@ -70,7 +70,7 @@ U_NO_EXPORT void UTimer::insertEntry()
    U_ASSERT(invariant())
 }
 
-bool UTimer::callHandlerTimeout()
+void UTimer::callHandlerTimeout()
 {
    U_TRACE_NO_PARAM(0, "UTimer::callHandlerTimeout()")
 
@@ -87,72 +87,82 @@ bool UTimer::callHandlerTimeout()
 
       item->insertEntry();
 
-      U_RETURN(true);
+      item->alarm->setMilliSecond();
       }
+   else
+      {
+      // put it on the free list
 
-   // put it on the free list
-
-   item->alarm = 0;
-   item->next  = pool;
-         pool  = item;
-
-   U_RETURN(false);
+      item->alarm = 0;
+      item->next  = pool;
+            pool  = item;
+      }
 }
 
-bool UTimer::run()
+void UTimer::run()
 {
    U_TRACE_NO_PARAM(1, "UTimer::run()")
 
-   U_INTERNAL_ASSERT_POINTER(first)
-
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-   U_INTERNAL_DUMP("u_now = { %ld %6ld }", u_now->tv_sec, u_now->tv_usec)
+   U_INTERNAL_DUMP("u_now = { %ld %6ld } first = %p", u_now->tv_sec, u_now->tv_usec, first)
+
+   UTimer* item = first;
+   bool bnosignal = (mode == NOSIGNAL), bexpired;
 
 loop:
-   if ((mode == NOSIGNAL ? first->alarm->isOld()
-                         : first->alarm->isExpired()))
-      {
-      if (callHandlerTimeout() ||
-          first)
-         {
-         goto loop;
-         }
+#ifdef DEBUG
+   U_INTERNAL_DUMP("item = %p item->next = %p", item, item->next)
 
-      U_RETURN(false);
+   U_INTERNAL_ASSERT_POINTER(item)
+
+   if (item->next) U_INTERNAL_ASSERT(*item <= *(item->next))
+#endif
+
+   bexpired = (bnosignal ? item->alarm->isExpired()
+                         : item->alarm->isExpiredWithTolerance());
+
+   if (bexpired)
+      {
+      item = item->next;
+
+      callHandlerTimeout();
+
+      if (item) goto loop;
       }
 
    U_INTERNAL_DUMP("first = %p", first)
-
-   if (first) U_RETURN(true);
-
-   U_RETURN(false);
 }
 
 void UTimer::setTimer()
 {
    U_TRACE_NO_PARAM(1, "UTimer::setTimer()")
 
-   U_INTERNAL_ASSERT_POINTER(first)
    U_INTERNAL_ASSERT_DIFFERS(mode, NOSIGNAL)
 
-   if (run())
-      {
-      U_INTERNAL_ASSERT_POINTER(first)
+   run();
 
-      first->alarm->setTimerVal(&UInterrupt::timerval.it_value);
-      }
-   else
+   if (first == 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(first, 0)
-
       UInterrupt::timerval.it_value.tv_sec =
       UInterrupt::timerval.it_value.tv_usec = 0L;
       }
+   else
+      {
+      UEventTime* item = first->alarm;
 
-   // NB: can happen that setitimer() produce immediatly a signal because the interval is very short (< 10ms)... 
+      UInterrupt::timerval.it_value.tv_sec  = item->ctime.tv_sec  + item->tv_sec  - u_now->tv_sec;
+      UInterrupt::timerval.it_value.tv_usec = item->ctime.tv_usec + item->tv_usec - u_now->tv_usec;
+
+      UTimeVal::adjust(&(UInterrupt::timerval.it_value.tv_sec), &(UInterrupt::timerval.it_value.tv_usec));
+      }
+
+   // NB: it can happen that setitimer() produce immediatly a signal because the interval is very short (< 10ms)... 
 
    U_INTERNAL_DUMP("UInterrupt::timerval.it_value = { %ld %6ld }", UInterrupt::timerval.it_value.tv_sec, UInterrupt::timerval.it_value.tv_usec)
+
+   U_INTERNAL_ASSERT(UInterrupt::timerval.it_value.tv_sec  >= 0 &&
+                     UInterrupt::timerval.it_value.tv_usec >= 0)
 
    (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &UInterrupt::timerval, 0);
 }
@@ -161,7 +171,7 @@ void UTimer::insert(UEventTime* a)
 {
    U_TRACE(0, "UTimer::insert(%p,%b)", a)
 
-   // set an alarm to more than 2 month is very strange...
+   // set an alarm to more than 2 month is very suspect...
 
    U_INTERNAL_ASSERT_MINOR(a->tv_sec, 60L * U_ONE_DAY_IN_SECOND) // 60 gg (2 month)
 
@@ -210,14 +220,14 @@ void UTimer::erase(UEventTime* a)
 
 void UTimer::clear()
 {
-   U_TRACE_NO_PARAM(0, "UTimer::clear()")
+   U_TRACE_NO_PARAM(1, "UTimer::clear()")
 
    U_INTERNAL_DUMP("mode = %d first = %p pool = %p", mode, first, pool)
 
    if (mode != NOSIGNAL)
       {
       UInterrupt::timerval.it_value.tv_sec  =
-      UInterrupt::timerval.it_value.tv_usec = 0;
+      UInterrupt::timerval.it_value.tv_usec = 0L;
 
       (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &UInterrupt::timerval, 0);
       }
@@ -252,7 +262,7 @@ bool UTimer::invariant()
       {
       for (UTimer* item = first; item->next; item = item->next)
          {
-         U_INTERNAL_ASSERT(*item <= *(item->next))
+         if (item->next) U_INTERNAL_ASSERT(*item <= *(item->next))
          }
       }
 

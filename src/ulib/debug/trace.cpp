@@ -23,7 +23,8 @@
 
 #include <errno.h>
 
-static UCrono* time_syscall_read_or_write;
+int     UTrace::status;
+UCrono* UTrace::time_syscall_read_or_write;
 
 U_NO_EXPORT void UTrace::set(int level)
 {

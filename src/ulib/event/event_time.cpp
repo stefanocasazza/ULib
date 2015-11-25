@@ -17,13 +17,18 @@
 #  include <ulib/libevent/event.h>
 #endif
 
-struct timespec UEventTime::timeout;
+long            UEventTime::ms;
+struct timeval  UEventTime::timeout1;
+struct timespec UEventTime::timeout2;
 
-UEventTime::UEventTime(long sec, long usec) : UTimeVal(sec, usec)
+UEventTime::UEventTime(long sec, long micro_sec) : UTimeVal(sec, micro_sec)
 {
-   U_TRACE_REGISTER_OBJECT(0, UEventTime, "%ld,%ld", sec, usec)
+   U_TRACE_REGISTER_OBJECT(0, UEventTime, "%ld,%ld", sec, micro_sec)
 
-   reset();
+   setTolerance();
+
+   ctime.tv_sec =
+   ctime.tv_usec = 0L;
 
 #ifdef USE_LIBEVENT
    if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);

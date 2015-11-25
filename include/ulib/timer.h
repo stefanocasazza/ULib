@@ -85,15 +85,15 @@ public:
 
    // run the list of timers. Your main program needs to call this every so often, or as indicated by getTimeout()
 
-   static bool run();
+   static void run();
    static void setTimer();
 
    static UEventTime* getTimeout() // returns a timeout indicating how long until the next timer triggers
       {
       U_TRACE_NO_PARAM(0, "UTimer::getTimeout()")
 
-      if (first &&
-          run())
+      if (        first &&
+          (run(), first))
          {
          U_RETURN_POINTER(first->alarm, UEventTime);
          }
@@ -129,12 +129,12 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    static void   printInfo(ostream& os);
           void outputEntry(ostream& os) const U_NO_EXPORT;
 
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:
@@ -145,7 +145,7 @@ protected:
    static UTimer* pool;  //   free list 
    static UTimer* first; // active list 
 
-   static bool callHandlerTimeout();
+   static void callHandlerTimeout();
 
 #ifdef DEBUG
    static bool invariant();
