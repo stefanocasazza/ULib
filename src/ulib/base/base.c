@@ -2451,7 +2451,7 @@ case_o:
       goto nosign;
 
 case_p: /* The argument shall be a pointer to void. The value of the pointer is converted to a sequence of printable characters, in an implementation-defined manner */
-#  if defined(HAVE_ARCH64) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
+#  if defined(HAVE_ARCH64) && defined(U_LINUX)
       argument = (long) VA_ARG(const char* restrict);
 #  else
       argument = (long) VA_ARG(const char* restrict) & 0x00000000ffffffffLL;

@@ -1138,7 +1138,7 @@ UString USocketExt::getMacAddress(int fd, const char* device)
 
    UString result(100U);
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
    U_INTERNAL_ASSERT(fd != -1)
 
    struct ifreq ifr;
@@ -1171,7 +1171,7 @@ UString USocketExt::getIPAddress(int fd, const char* device)
 
    UString result(100U);
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
    struct ifreq ifr;
 
    (void) u__strncpy(ifr.ifr_name, device, IFNAMSIZ-1);
@@ -1204,7 +1204,7 @@ UString USocketExt::getNetworkAddress(int fd, const char* device)
 
    UString result(100U);
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
    struct ifreq ifaddr, ifnetmask;
 
    (void) u__strncpy(   ifaddr.ifr_name, device, IFNAMSIZ-1);
@@ -1326,7 +1326,7 @@ void USocketExt::startResolv(const char* name, int family)
 }
 #endif
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
 #  include <linux/types.h>
 #  include <linux/rtnetlink.h>
 #endif
@@ -1339,7 +1339,7 @@ UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
 
    // Ex: ip route show to exact 192.168.1.0/24
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
    static int sock;
 
    if (sock == 0) sock = USocket::socket(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);

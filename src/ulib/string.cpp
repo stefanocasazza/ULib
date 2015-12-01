@@ -619,8 +619,13 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
 #else
    if (need > U_CAPACITY)
       {
-      _ptr = UFile::mmap(&need, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
+      U_INTERNAL_DUMP("UFile::nr_hugepages = %u UFile::rlimit_memfree = %u", UFile::nr_hugepages, UFile::rlimit_memfree)
 
+      _ptr = (need >= U_2M &&
+              UFile::nr_hugepages
+                  ? UFile::mmap_anon_huge(&need, MAP_PRIVATE | U_MAP_ANON)
+                  : UFile::mmap(&need, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, 0));
+      
       if (_ptr == MAP_FAILED) U_RETURN_POINTER(string_rep_null, UStringRep);
 
       r = U_MALLOC_TYPE(UStringRep);
@@ -895,11 +900,7 @@ void UStringRep::_release()
             }
          else
 #     endif
-         {
-         U_INTERNAL_ASSERT_EQUALS(_capacity & U_PAGEMASK, 0)
-
          UMemoryPool::deallocate((void*)str, _capacity);
-         }
          }
       else
          {
@@ -1236,7 +1237,7 @@ UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::de
    U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%u,%p", len, sz, ptr)
 
    U_INTERNAL_ASSERT_MAJOR(sz, U_CAPACITY)
-   U_INTERNAL_ASSERT_EQUALS(sz & U_PAGEMASK, 0)
+   U_ASSERT(UFile::checkPageAlignment(sz))
 
    rep = U_MALLOC_TYPE(UStringRep);
 
@@ -1371,7 +1372,7 @@ void UString::mmap(const char* map, uint32_t len)
 
       rep->_capacity = U_NOT_FOUND;
 
-#  if defined(MADV_SEQUENTIAL)
+#  if defined(U_LINUX) && defined(MADV_SEQUENTIAL)
       if (len > (64 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", (void*)map, len, MADV_SEQUENTIAL);
 #  endif
       }

@@ -18,7 +18,9 @@
 
 /* see if targeting legacy Microsoft windows platform */
 
-#if defined(_MSC_VER) || defined(WIN32) || defined(_WIN32)
+#if defined(LINUX) || defined(__LINUX__) || defined(__linux__) || defined(__linux)
+#  define U_LINUX
+#elif defined(_MSC_VER) || defined(WIN32) || defined(_WIN32)
 #  define _MSWINDOWS_
 #  if defined(_MSC_VER)
 #     define NOMINMAX
@@ -83,7 +85,7 @@
                            __GNUC_MINOR__ *   100 + \
                            __GNUC_PATCHLEVEL__)
 #  if GCC_VERSION_NUM > 29600 && GCC_VERSION_NUM != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
-#    if defined(LINUX) || defined(__LINUX__) || defined(__linux__) || defined(_MSWINDOWS_)
+#    if defined(U_LINUX) || defined(_MSWINDOWS_)
 #     define __pure                       __attribute__((pure))
 #    endif
 #     define LIKELY(x)                    __builtin_expect(!!(x), 1)
@@ -344,18 +346,35 @@ typedef int socket_t;
 #undef putchar
 
 #if !defined(_GNU_SOURCE) || defined(__OSX__) || defined(__NetBSD__) || defined(__UNIKERNEL__)
-typedef void (*sighandler_t)(int);  /* Convenient typedef for signal handlers */
+typedef void (*sighandler_t)(int); /* Convenient typedef for signal handlers */
 #endif
-typedef unsigned long timeout_t;    /* Typedef for millisecond timer values */
+typedef unsigned long timeout_t; /* Typedef for millisecond timer values */
 
 #include <stdlib.h>
 #include <ctype.h>
 #include <time.h>
 
-#ifdef MAP_UNINITIALIZED // (since Linux 2.6.33)
-#define U_MAP_ANON (MAP_PRIVATE | MAP_ANONYMOUS | MAP_UNINITIALIZED)
+#ifndef U_LINUX
+#  define U_MAP_ANON           MAP_ANONYMOUS
+#  define MAP_HUGETLB          0
+#  define U_MAP_ANON_HUGE      0
+#  define U_MAP_ANON_HUGE_ADDR (void*)(0x0UL)
 #else
-#define U_MAP_ANON (MAP_PRIVATE | MAP_ANONYMOUS)
+#  ifdef MAP_UNINITIALIZED /* (since Linux 2.6.33) */
+#     define U_MAP_ANON (MAP_ANONYMOUS | MAP_UNINITIALIZED)
+#  else
+#     define U_MAP_ANON  MAP_ANONYMOUS
+#  endif
+#  ifndef MAP_HUGETLB /* (since Linux 2.6.32) */
+#  define MAP_HUGETLB 0x40000 /* arch specific */
+#  endif
+#  ifdef __ia64__ /* Only ia64 requires this */
+#     define U_MAP_ANON_HUGE      (MAP_HUGETLB | MAP_FIXED)
+#     define U_MAP_ANON_HUGE_ADDR (void*)(0x8000000000000000UL)
+#  else
+#     define U_MAP_ANON_HUGE      MAP_HUGETLB 
+#     define U_MAP_ANON_HUGE_ADDR (void*)(0x0UL)
+#  endif
 #endif
 
 #endif

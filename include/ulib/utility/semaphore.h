@@ -105,7 +105,7 @@ protected:
 #if defined(__MACOSX__) || defined(__APPLE__)
    sem_t* psem;
    char name[24];
-#elif defined(_MSWINDOWS_) || (defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)))
+#elif defined(_MSWINDOWS_) || (defined(HAVE_SEM_INIT) && (!defined(U_LINUX) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)))
    sem_t* psem;
 #else
    UFile* psem;
@@ -117,8 +117,7 @@ protected:
 
    static bool checkForDeadLock(UTimeVal& time); // NB: check if process has restarted and it had a lock active...
 
-#if !defined(__MACOSX__) && !defined(__APPLE__) && defined(HAVE_SEM_GETVALUE) && \
-  ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
+#if !defined(__MACOSX__) && !defined(__APPLE__) && defined(HAVE_SEM_GETVALUE) && (!defined(U_LINUX) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
    int getValue() { int value = -1; (void) sem_getvalue(psem, &value); return value; }
 #else
    int getValue() { return -1; }

@@ -28,7 +28,7 @@ vPF UError::callerDataDump;
 #  include <cxxabi.h>
 #  ifdef HAVE_DLFCN_H
 #  include <dlfcn.h>
-#   if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#   ifdef U_LINUX
 static uint32_t execute_addr2line(char* buffer, uint32_t buffer_size, const char* image, void* addr)
 {
    ssize_t len;
@@ -170,7 +170,7 @@ void UError::stackDump()
 
    if (trace_size <= 2) abort();
 
-# if !defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)
+# ifndef U_LINUX
    // This function is similar to backtrace_symbols() but it writes the result immediately
    // to a file and can therefore also be used in situations where malloc() is not usable anymore
 

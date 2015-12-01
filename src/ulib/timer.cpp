@@ -24,7 +24,7 @@ void UTimer::init(Type _mode)
    if (u_start_time     == 0 &&
        u_setStartTime() == false)
       {
-      U_ERROR("UTimer::init: system date not updated");
+      U_ERROR("UTimer::init(%d): system date not updated", _mode);
       }
 
    mode = _mode;
@@ -108,7 +108,7 @@ void UTimer::run()
    U_INTERNAL_DUMP("u_now = { %ld %6ld } first = %p", u_now->tv_sec, u_now->tv_usec, first)
 
    UTimer* item = first;
-   bool bnosignal = (mode == NOSIGNAL), bexpired;
+   bool bnosignal = (mode == NOSIGNAL);
 
 loop:
 #ifdef DEBUG
@@ -119,10 +119,8 @@ loop:
    if (item->next) U_INTERNAL_ASSERT(*item <= *(item->next))
 #endif
 
-   bexpired = (bnosignal ? item->alarm->isExpired()
-                         : item->alarm->isExpiredWithTolerance());
-
-   if (bexpired)
+   if (bnosignal ? item->alarm->isExpired()
+                 : item->alarm->isExpiredWithTolerance())
       {
       item = item->next;
 
@@ -154,7 +152,8 @@ void UTimer::setTimer()
       UInterrupt::timerval.it_value.tv_sec  = item->ctime.tv_sec  + item->tv_sec  - u_now->tv_sec;
       UInterrupt::timerval.it_value.tv_usec = item->ctime.tv_usec + item->tv_usec - u_now->tv_usec;
 
-      UTimeVal::adjust(&(UInterrupt::timerval.it_value.tv_sec), &(UInterrupt::timerval.it_value.tv_usec));
+      UTimeVal::adjust(&(UInterrupt::timerval.it_value.tv_sec),
+                       &(UInterrupt::timerval.it_value.tv_usec));
       }
 
    // NB: it can happen that setitimer() produce immediatly a signal because the interval is very short (< 10ms)... 

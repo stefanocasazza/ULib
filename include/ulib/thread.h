@@ -17,19 +17,17 @@
 #include <ulib/timeval.h>
 #include <ulib/container/vector.h>
 
-#ifdef _MSWINDOWS_
+#ifdef U_LINUX
+#  define U_SIGSTOP (SIGRTMIN+5)
+#  define U_SIGCONT (SIGRTMIN+6)
+#elif defined(_MSWINDOWS_)
 #  include <synchapi.h>
 #  undef sleep
 #  undef signal
 #  define PTHREAD_CREATE_DETACHED 1
 #else
-#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
-#     define U_SIGSTOP (SIGRTMIN+5)
-#     define U_SIGCONT (SIGRTMIN+6)
-#  else
-#     define U_SIGSTOP SIGSTOP
-#     define U_SIGCONT SIGCONT
-#  endif
+#  define U_SIGSTOP SIGSTOP
+#  define U_SIGCONT SIGCONT
 #endif
 
 class UNotifier;

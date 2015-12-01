@@ -40,9 +40,9 @@ void ULib_init_openssl()
    U_SYSCALL_VOID_NO_PARAM(SSL_load_error_strings);
    U_SYSCALL_VOID_NO_PARAM(SSL_library_init);
 
-#  ifdef HAVE_OPENSSL_97
+# ifdef HAVE_OPENSSL_97
    U_SYSCALL_VOID(OPENSSL_config, "%S", 0);
-#  endif
+# endif
    U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_ciphers);
    U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_digests);
 
@@ -50,7 +50,7 @@ void ULib_init_openssl()
    // the randomness device is used to seed the PRNG transparently. However, on all other systems, the application
    // is responsible for seeding the PRNG by calling RAND_add(),
 
-#  ifdef _MSWINDOWS_
+# ifdef _MSWINDOWS_
    U_SYSCALL_VOID(srand, "%ld", u_start_time); // seed with time
 
    while (RAND_status() == 0) // Seed PRNG only if needed
@@ -61,7 +61,7 @@ void ULib_init_openssl()
 
       RAND_seed(&tmp, sizeof(int));
       }
-#  endif
+# endif
 }
 #endif
 
@@ -107,16 +107,16 @@ void ULib_init()
 
    u_err_buffer = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(256));
 
-#  ifdef DEBUG
+# ifdef DEBUG
    UMemoryError::pbuffer = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
-#  endif
+# endif
 #else
    u_buffer     = (char*) U_SYSCALL(malloc, "%u", U_BUFFER_SIZE);
    u_err_buffer = (char*) U_SYSCALL(malloc, "%u", 256);
 
-#  ifdef DEBUG
+# ifdef DEBUG
    UMemoryError::pbuffer = (char*) U_SYSCALL(malloc, "%u", U_MAX_SIZE_PREALLOCATE);
-#  endif
+# endif
 #endif
 
    UString::ptrbuf =
@@ -124,9 +124,9 @@ void ULib_init()
    UFile::cwd_save = (char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(1024));
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
-#  ifdef DEBUG
+# ifdef DEBUG
    UMemoryPool::obj_class = UMemoryPool::func_call = 0;
-#  endif
+# endif
    UObjectIO::init((char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE)), U_MAX_SIZE_PREALLOCATE);
 #endif
 
@@ -161,23 +161,21 @@ void ULib_init()
       U_ERROR("Couldn't find useable Winsock DLL. Must be at least 2.2");
       }
 
-#  ifdef HAVE_ATEXIT
+# ifdef HAVE_ATEXIT
    (void) U_SYSCALL(atexit, "%p", (vPF)&WSACleanup);
-#  endif
+# endif
 #endif
 
 #if defined(SOLARIS) && (defined(SPARC) || defined(sparc)) && !defined(HAVE_ARCH64)
-   // make this if there are pointer misalligned
-   // (because pointers must be always a multiple of 4 (when running 32 bit applications))
-   asm("ta 6");
+   asm("ta 6"); // make this if there are pointer misalligned (because pointers must be always a multiple of 4 (when running 32 bit applications))
 #endif
 
 #if defined(DEBUG) && defined(__GNUC__) && defined(U_ENABLE_ALIGNMENT_CHECKING)
-#  ifdef __i386__
+# ifdef __i386__
    __asm__("pushf\norl $0x40000,(%esp)\npopf"); // Enable Alignment Checking on x86
-#  elif defined(__x86_64__)
+# elif defined(__x86_64__)
    __asm__("pushf\norl $0x40000,(%rsp)\npopf"); // Enable Alignment Checking on x86_64
-#  endif
+# endif
 #endif
 
    U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), sizeof(ustringrep))
@@ -188,11 +186,12 @@ void ULib_init()
 
    U_INTERNAL_DUMP("u_dosmatch = %p u_dosmatch_with_OR = %p u_pfn_match = %p u_pfn_flags = %u", u_dosmatch, u_dosmatch_with_OR, u_pfn_match, u_pfn_flags)
 
-/* NB: there are to many exceptions...
-#if defined(_LARGEFILE_SOURCE) && !defined(_MSWINDOWS_) 
-   U_INTERNAL_ASSERT_EQUALS(sizeof(off_t), SIZEOF_OFF_T)
-#endif
-*/
+/**
+ * NB: there are to many exceptions...
+ * #if defined(_LARGEFILE_SOURCE) && !defined(_MSWINDOWS_) 
+ * U_INTERNAL_ASSERT_EQUALS(sizeof(off_t), SIZEOF_OFF_T)
+ * #endif
+ */
 
 #ifdef USE_LIBSSL
    ULib_init_openssl();

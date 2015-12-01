@@ -85,6 +85,8 @@ U_EXPORT main (int argc, char* argv[])
 
    x.setPath(tmp);
    U_ASSERT( x.getPath() == tmp )
+   U_ASSERT( x.mkTempForLock() )
+   U_ASSERT( x.mkTemp() && (x.close(), x._unlink()) )
 
 #ifndef __MINGW32__
    buffer.assign(argv[1]);

@@ -123,14 +123,14 @@ public:
    U_MANAGE_SYSRETURN_VALUE(tdbdata_t,          "%J",   false)
 #endif
 
-   static void resume()  {                           u_trace_suspend = status; }
-   static void suspend() { status = u_trace_suspend; u_trace_suspend = 1; }
+   void resume()  {                           u_trace_suspend = status; }
+   void suspend() { status = u_trace_suspend; u_trace_suspend = 1; }
 
 private:
-   char buffer_trace[1019], buffer_syscall[1019];
+   char buffer_trace[1017], buffer_syscall[1017];
    uint32_t buffer_trace_len, buffer_syscall_len;
+   int status;
 
-   static int status;
    static UCrono* time_syscall_read_or_write;
 
    void set(int level) U_NO_EXPORT;

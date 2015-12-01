@@ -70,7 +70,7 @@
 #endif
 
 #if defined(DEBUG) || defined(U_TEST)
-#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#  ifdef U_LINUX
 #     define U_NULL_POINTER (const void*)0x0000ffff
 #  else
 #     define U_NULL_POINTER (const void*)0
@@ -162,7 +162,13 @@
 #define MAX_FILENAME_LEN 255U
 #endif
 
+#define U_2M    (2U*1024U*1024U)
+#define U_1G (1024U*1024U*1024U)
+
+#define U_2M_MASK      (U_2M-1)
+#define U_1G_MASK      (U_1G-1)
 #define U_PAGEMASK (PAGESIZE-1)
+
 #define U_TO_FREE   ((uint32_t)-2)
 #define U_NOT_FOUND ((uint32_t)-1)
 

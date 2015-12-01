@@ -6,7 +6,7 @@
 #include <ulib/utility/string_ext.h>
 
 #ifdef __MINGW32__
-#define _GLIBCXX_USE_C99_DYNAMIC 1
+#  define _GLIBCXX_USE_C99_DYNAMIC 1
 #endif
 
 #undef min
@@ -1473,12 +1473,57 @@ static void test_stream_09()
 }
 #endif
 
+static void check_HugeTLB(char* ptr, uint32_t size)
+{
+   U_TRACE(5, "check_HugeTLB(%p,%u)", ptr, size)
+
+   for (uint32_t j = 0; j < size; ++j)     ptr[j]  = 'A';
+   for (uint32_t k = 0; k < size; ++k) if (ptr[k] != 'A') U_ERROR("HugeTLB read failed :-( at index %u", k);
+}
+
+void U_EXPORT check_mmap(uint32_t map_size)
+{
+   U_TRACE(5, "check_mmap(%u)", map_size)
+
+   for (uint32_t i = 0; i < 1; ++i)
+      {
+      UString buffer(map_size);
+
+      buffer.size_adjust(U_2M);
+
+      check_HugeTLB(buffer.data(), U_2M);
+      }
+
+   char* place = UFile::mmap(&map_size);
+
+   check_HugeTLB(place, U_2M);
+
+   for (uint32_t i = 0; i < 21; ++i)
+      {
+      UMemoryPool::deallocate(place + i * U_2M, U_2M);
+      }
+
+   UFile::munmap(place, map_size);
+
+   map_size = U_1G;
+
+   place = UFile::mmap(&map_size);
+
+   check_HugeTLB(place, U_2M);
+
+   UFile::munmap(place, map_size);
+}
+
 int
 U_EXPORT main (int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
 
    U_TRACE(5, "main(%d)", argc)
+
+   check_mmap(21 * U_2M);
+
+// return 0;
 
    int year = 0;
    char sep = 0;

@@ -239,7 +239,7 @@ UString USocket::getMacAddress(const char* device)
 
    UString result(100U);
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_ARPA_INET_H)
+#if defined(U_LINUX) && defined(HAVE_SYS_IOCTL_H) && defined(HAVE_ARPA_INET_H)
    U_INTERNAL_ASSERT(isOpen())
 
    /**
@@ -352,7 +352,7 @@ void USocket::setReusePort()
     * SO_REUSEPORT distributes datagrams evenly across all of the receiving threads
     */
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
+#if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(U_LINUX) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
 # ifndef SO_REUSEPORT
 # define SO_REUSEPORT 15
 # endif
@@ -389,7 +389,7 @@ void USocket::setTcpKeepAlive()
 #ifdef SO_KEEPALIVE
    (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 }, sizeof(int));
 
-# ifdef __linux__ // Default settings are more or less garbage, with the keepalive time set to 7200 by default on Linux. Modify settings to make the feature actually useful
+# ifdef U_LINUX // Default settings are more or less garbage, with the keepalive time set to 7200 by default on Linux. Modify settings to make the feature actually useful
 
    (void) setSockOpt(IPPROTO_TCP, TCP_KEEPIDLE, (const int[]){ 15 }, sizeof(int)); // Send first probe after interval
 
@@ -558,7 +558,7 @@ void USocket::reusePort(int _flags)
 
    U_CHECK_MEMORY
 
-#if !defined(U_SERVER_CAPTIVE_PORTAL) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
+#if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(U_LINUX)
    U_INTERNAL_DUMP("tcp_reuseport = %b", tcp_reuseport)
 
    if (tcp_reuseport)

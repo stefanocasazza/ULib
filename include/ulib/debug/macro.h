@@ -16,22 +16,22 @@
 
 // Design by contract - if (expr == false) then stop
 
-#ifdef DEBUG
-#  define U_ASSERT(expr)                 { UTrace::suspend(); U_INTERNAL_ASSERT(expr);                 UTrace::resume(); }
-#  define U_ASSERT_MINOR(a,b)            { UTrace::suspend(); U_INTERNAL_ASSERT_MINOR(a,b);            UTrace::resume(); }
-#  define U_ASSERT_MAJOR(a,b)            { UTrace::suspend(); U_INTERNAL_ASSERT_MAJOR(a,b);            UTrace::resume(); }
-#  define U_ASSERT_EQUALS(a,b)           { UTrace::suspend(); U_INTERNAL_ASSERT_EQUALS(a,b);           UTrace::resume(); }
-#  define U_ASSERT_DIFFERS(a,b)          { UTrace::suspend(); U_INTERNAL_ASSERT_DIFFERS(a,b);          UTrace::resume(); }
-#  define U_ASSERT_POINTER(ptr)          { UTrace::suspend(); U_INTERNAL_ASSERT_POINTER(ptr);          UTrace::resume(); }
-#  define U_ASSERT_RANGE(a,x,b)          { UTrace::suspend(); U_INTERNAL_ASSERT_RANGE(a,x,b);          UTrace::resume(); }
+#ifdef DEBUG                             // NB: we need to save the status on the stack because of thread (ex. time resolution optimation) 
+#  define U_ASSERT(expr)                 { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT(expr);                 u_trace_suspend = _s; }
+#  define U_ASSERT_MINOR(a,b)            { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_MINOR(a,b);            u_trace_suspend = _s; }
+#  define U_ASSERT_MAJOR(a,b)            { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_MAJOR(a,b);            u_trace_suspend = _s; }
+#  define U_ASSERT_EQUALS(a,b)           { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_EQUALS(a,b);           u_trace_suspend = _s; }
+#  define U_ASSERT_DIFFERS(a,b)          { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_DIFFERS(a,b);          u_trace_suspend = _s; }
+#  define U_ASSERT_POINTER(ptr)          { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_POINTER(ptr);          u_trace_suspend = _s; }
+#  define U_ASSERT_RANGE(a,x,b)          { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_RANGE(a,x,b);          u_trace_suspend = _s; }
 
-#  define U_ASSERT_MSG(expr,info)        { UTrace::suspend(); U_INTERNAL_ASSERT_MSG(expr,info);        UTrace::resume(); }
-#  define U_ASSERT_MINOR_MSG(a,b,info)   { UTrace::suspend(); U_INTERNAL_ASSERT_MINOR_MSG(a,b,info);   UTrace::resume(); }
-#  define U_ASSERT_MAJOR_MSG(a,b,info)   { UTrace::suspend(); U_INTERNAL_ASSERT_MAJOR_MSG(a,b,info);   UTrace::resume(); }
-#  define U_ASSERT_EQUALS_MSG(a,b,info)  { UTrace::suspend(); U_INTERNAL_ASSERT_EQUALS_MSG(a,b,info);  UTrace::resume(); }
-#  define U_ASSERT_DIFFERS_MSG(a,b,info) { UTrace::suspend(); U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info); UTrace::resume(); }
-#  define U_ASSERT_POINTER_MSG(ptr,info) { UTrace::suspend(); U_INTERNAL_ASSERT_POINTER_MSG(ptr,info); UTrace::resume(); }
-#  define U_ASSERT_RANGE_MSG(a,x,b,info) { UTrace::suspend(); U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info); UTrace::resume(); }
+#  define U_ASSERT_MSG(expr,info)        { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_MSG(expr,info);        u_trace_suspend = _s; }
+#  define U_ASSERT_MINOR_MSG(a,b,info)   { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_MINOR_MSG(a,b,info);   u_trace_suspend = _s; }
+#  define U_ASSERT_MAJOR_MSG(a,b,info)   { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_MAJOR_MSG(a,b,info);   u_trace_suspend = _s; }
+#  define U_ASSERT_EQUALS_MSG(a,b,info)  { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_EQUALS_MSG(a,b,info);  u_trace_suspend = _s; }
+#  define U_ASSERT_DIFFERS_MSG(a,b,info) { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info); u_trace_suspend = _s; }
+#  define U_ASSERT_POINTER_MSG(ptr,info) { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_POINTER_MSG(ptr,info); u_trace_suspend = _s; }
+#  define U_ASSERT_RANGE_MSG(a,x,b,info) { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info); u_trace_suspend = _s; }
 #elif defined(U_TEST)
 #  define U_ASSERT(expr)                  U_INTERNAL_ASSERT(expr)
 #  define U_ASSERT_MINOR(a,b)             U_INTERNAL_ASSERT_MINOR(a,b)
@@ -85,8 +85,8 @@
 
 // NB: U_DUMP, U_SYSCALL() and U_RETURN() depend on presence of U_TRACE()
 
-#  define U_INTERNAL_DUMP(args...) { if (utr.active[0])                      u_trace_dump(args); }
-#  define          U_DUMP(args...) { if (utr.active[0]) { UTrace::suspend(); u_trace_dump(args); UTrace::resume(); } }
+#  define U_INTERNAL_DUMP(args...) { if (utr.active[0])                  u_trace_dump(args); }
+#  define          U_DUMP(args...) { if (utr.active[0]) { utr.suspend(); u_trace_dump(args); utr.resume(); } }
 
 #  define U_SYSCALL_NO_PARAM(name) (utr.trace_syscall("::"#name"()",0), \
                                     utr.trace_sysreturn_type(::name()))
@@ -94,11 +94,11 @@
 #  define U_SYSCALL_VOID_NO_PARAM(name) { utr.trace_syscall("::"#name"()",0); \
                                           name(); utr.trace_sysreturn(false,0); }
 
-#  define U_SYSCALL(name,format,args...) (UTrace::suspend(), utr.trace_syscall("::"#name"(" format ")" , ##args), \
-                                          UTrace::resume(),  utr.trace_sysreturn_type(::name(args)))
+#  define U_SYSCALL(name,format,args...) (utr.suspend(), utr.trace_syscall("::"#name"(" format ")" , ##args), \
+                                          utr.resume(),  utr.trace_sysreturn_type(::name(args)))
 
-#  define U_SYSCALL_VOID(name,format,args...) { UTrace::suspend();              utr.trace_syscall("::"#name"(" format ")" , ##args); \
-                                                UTrace::resume(); ::name(args); utr.trace_sysreturn(false,0); }
+#  define U_SYSCALL_VOID(name,format,args...) { utr.suspend();               utr.trace_syscall("::"#name"(" format ")" , ##args); \
+                                                utr.resume();  ::name(args); utr.trace_sysreturn(false,0); }
 
 #  define U_RETURN(r)                                                 return (utr.trace_return_type((r)))
 #  define U_RETURN_STRING(str) {U_INTERNAL_ASSERT((str).invariant()); return (utr.trace_return("%V",(str).rep),(str));}

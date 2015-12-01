@@ -868,7 +868,7 @@ public:
       }
 };
 
-#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#  ifdef U_LINUX
 class UTimeThread : public UThread {
 public:
 
@@ -974,7 +974,7 @@ UOCSPStapling* UServer_Base::pthread_ocsp;
 #endif
 #endif
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
 static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
 #endif
 
@@ -1050,7 +1050,7 @@ UServer_Base::~UServer_Base()
       }
 # endif
 
-# if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+# ifdef U_LINUX
    if (u_pthread_time)
       {
       delete (UTimeThread*)u_pthread_time;
@@ -1120,7 +1120,7 @@ UServer_Base::~UServer_Base()
       }
 #endif
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
    if (as_user->empty() &&
        isChild() == false)
       {
@@ -2094,7 +2094,7 @@ void UServer_Base::init()
 
       u_need_root(false);
 
-#  if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#  ifdef U_LINUX
       /**
        * timeout_timewait parameter: Determines the time that must elapse before TCP/IP can release a closed connection
        * and reuse its resources. This interval between closure and release is known as the TIME_WAIT state or twice the
@@ -2246,7 +2246,7 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
 #else
    bool bpthread_time = false; 
@@ -2259,7 +2259,7 @@ void UServer_Base::init()
 #endif
    ULog::initDate();
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (bpthread_time)
       {
       U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
@@ -2273,7 +2273,7 @@ void UServer_Base::init()
       }
 #endif
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    // NB: we block SIGHUP and SIGTERM; the threads created will inherit a copy of the signal mask...
 # ifdef sigemptyset
                     sigemptyset(&mask);
@@ -2294,7 +2294,7 @@ void UServer_Base::init()
 
    flag_loop = true; // NB: UTimeThread loop depend on this setting...
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (bpthread_time)
       {
       U_INTERNAL_ASSERT_EQUALS(ULog::prwlock, 0)
@@ -2552,7 +2552,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 
 # if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
@@ -2574,7 +2574,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
                 UInterrupt::insert(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
 #endif
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
@@ -2601,7 +2601,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
    if (proc->parent())
       {
-#  if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
+#  if defined(U_LINUX) && defined(ENABLE_THREAD)
       if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 #  endif
 
@@ -3191,7 +3191,7 @@ void UServer_Base::runLoop(const char* user)
 
    socket->reusePort(socket_flags);
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
    if (bipc == false)
       {
       U_ASSERT_EQUALS(socket->isUDP(), false)
@@ -3223,7 +3223,7 @@ void UServer_Base::runLoop(const char* user)
        * NB: Takes an integer value (seconds)
        */
 
-#  if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#  if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL)
                                  socket->setTcpFastOpen();
                                  socket->setTcpDeferAccept();
       if (bssl == false)         socket->setBufferSND(min_size_for_sendfile);
@@ -3292,7 +3292,7 @@ void UServer_Base::runLoop(const char* user)
 #  endif
 #endif
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
 #endif
 
@@ -3493,7 +3493,7 @@ no_monitoring_process:
 
          // wait for any children to exit, and then start some more
 
-#     if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && defined(ENABLE_THREAD)
+#     if defined(U_LINUX) && defined(ENABLE_THREAD)
          (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
 #     endif
 

@@ -16,7 +16,7 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/semaphore.h>
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) && !defined(__clang__)
+#if defined(U_LINUX) && !defined(__clang__)
 U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #endif
 
@@ -44,7 +44,7 @@ void USemaphore::init(sem_t* ptr, int resource)
       {
       U_ERROR_SYSCALL("USemaphore::init() failed");
       }
-#elif defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
+#elif defined(HAVE_SEM_INIT) && (!defined(U_LINUX) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
    U_INTERNAL_ASSERT_POINTER(ptr)
 
    // initialize semaphore object sem to value, share it with other processes
@@ -58,7 +58,7 @@ void USemaphore::init(sem_t* ptr, int resource)
 #else
    psem = U_NEW(UFile);
 
-   if (psem->mkTemp(0) == false) U_ERROR("USemaphore::init(%p,%u) failed", ptr, resource);
+   if (psem->mkTempForLock() == false) U_ERROR("USemaphore::init(%p,%u) failed", ptr, resource);
 #endif
 
 #if !defined(__MACOSX__) && !defined(__APPLE__) && defined(HAVE_SEM_GETVALUE)
@@ -91,11 +91,13 @@ USemaphore::~USemaphore()
 #if defined(__MACOSX__) || defined(__APPLE__)
    (void) U_SYSCALL(sem_close,  "%p", psem);
    (void) U_SYSCALL(sem_unlink, "%S", name);
-#elif defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
+#elif defined(HAVE_SEM_INIT) && (!defined(U_LINUX) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
    (void) sem_destroy(psem); // Free resources associated with semaphore object sem
 #elif defined(_MSWINDOWS_)
-   ::CloseHandle((HANDLE)psem);
+   (void) ::CloseHandle((HANDLE)psem);
 #else
+   (void) (psem->close(), psem->_unlink());
+
    delete psem;
 #endif
 }
@@ -117,7 +119,7 @@ void USemaphore::post()
 
 #if defined(__MACOSX__) || defined(__APPLE__)
    (void) U_SYSCALL(sem_post, "%p", psem); // unlock a semaphore
-#elif defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
+#elif defined(HAVE_SEM_INIT) && (!defined(U_LINUX) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
    (void) U_SYSCALL(sem_post, "%p", psem); // unlock a semaphore
 #elif defined(_MSWINDOWS_)
    ::ReleaseSemaphore((HANDLE)psem, 1, (LPLONG)NULL);
@@ -179,7 +181,7 @@ bool USemaphore::wait(time_t timeoutMS)
    U_INTERNAL_DUMP("value = %d", getValue())
 
 #if defined(__MACOSX__) || defined(__APPLE__) || \
-   (defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)))
+   (defined(HAVE_SEM_INIT) && (!defined(U_LINUX) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)))
 
    // Wait for sem being posted
 
@@ -213,7 +215,7 @@ void USemaphore::lock()
 
 #if defined(__MACOSX__) || defined(__APPLE__)
    (void) U_SYSCALL(sem_wait, "%p", psem);
-#elif defined(HAVE_SEM_INIT) && ((!defined(LINUX) && !defined(__LINUX__) && !defined(__linux__)) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
+#elif defined(HAVE_SEM_INIT) && (!defined(U_LINUX) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7))
    /**
     * sem_wait() decrements (locks) the semaphore pointed to by sem. If the semaphore's value is greater than zero,
     * then the decrement proceeds, and the function returns, immediately.  * If the semaphore currently has the value

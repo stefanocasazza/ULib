@@ -904,7 +904,7 @@ bool UIPAllow::getNetworkInterface(UVector<UIPAllow*>& vipallow)
 
          family = ifa->ifa_addr->sa_family;
 
-#     if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#     ifdef U_LINUX
          U_INTERNAL_DUMP("%s => family: %d%s", ifa->ifa_name, family,
                                  (family == AF_PACKET) ? " (AF_PACKET)" :
                                  (family == AF_INET)   ? " (AF_INET)"   :

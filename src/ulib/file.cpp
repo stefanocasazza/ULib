@@ -25,6 +25,7 @@
 char*    UFile::cwd_save;
 char*    UFile::pfree;
 uint32_t UFile::nfree;
+uint32_t UFile::nr_hugepages;
 uint32_t UFile::cwd_save_len;
 uint32_t UFile::rlimit_memfree  =  16U * 1024U;
 uint32_t UFile::rlimit_memalloc = 256U * 1024U * 1024U;
@@ -465,7 +466,81 @@ void UFile::shm_unlink(const char* name)
 #endif
 }
 
-// On 64-bit platforms maps (but not reserves) 256+ Megabytes of virtual address space
+// On linux platforms maps (but not reserves) 256+ Megabytes of virtual address space
+
+char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
+{
+   U_TRACE(1, "UFile::mmap_anon_huge(%p,%d,%u)", plength, flags)
+
+#ifdef U_LINUX
+   if (nr_hugepages)
+      {
+      char* ptr;
+      uint32_t length;
+
+      U_INTERNAL_DUMP("nr_hugepages = %u rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
+
+      U_INTERNAL_ASSERT_EQUALS(rlimit_memfree, U_2M)
+
+#  ifdef MAP_HUGE_1GB /* (since Linux 3.8) */
+      if (*plength >= U_1G)
+         {
+         length = (*plength + U_1G_MASK) & ~U_1G_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+
+         U_INTERNAL_ASSERT_EQUALS(length & U_1G_MASK, 0)
+
+         U_DEBUG("we are going to allocate (%u GB - %u bytes) MAP_HUGE_1GB - nfree = %u flags = %B", length / U_1G, length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB);
+
+         ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB, -1, 0);
+
+         if (ptr != (char*)MAP_FAILED)
+            {
+            *plength = length;
+
+            return ptr;
+            }
+         }
+#  endif
+#  ifdef MAP_HUGE_2MB /* (since Linux 3.8) */
+      length = (*plength + U_2M_MASK) & ~U_2M_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+
+      U_INTERNAL_ASSERT_EQUALS(length & U_2M_MASK, 0)
+
+      U_DEBUG("we are going to allocate (%u MB - %u bytes) MAP_HUGE_2MB - nfree = %u flags = %B", length / (1024U*1024U), length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB);
+
+      ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB, -1, 0);
+
+      if (ptr != (char*)MAP_FAILED)
+         {
+         *plength = length;
+
+         return ptr;
+         }
+
+      if (*plength < U_1G)
+         {
+         unsigned long vsz, rss;
+
+         u_get_memusage(&vsz, &rss);
+
+         U_ERROR("cannot allocate %u bytes (%u MB) of memory MAP_HUGE_2MB - "
+                  "address space usage: %.2f MBytes - "
+                            "rss usage: %.2f MBytes",
+                  *plength, *plength / (1024U*1024U), (double)vsz / (1024.0 * 1024.0),
+                                                      (double)rss / (1024.0 * 1024.0));
+         }
+#  endif
+      }
+#endif
+
+   *plength = (*plength + U_PAGEMASK) & ~U_PAGEMASK;
+
+   U_INTERNAL_ASSERT_EQUALS(*plength & U_PAGEMASK, 0)
+
+   U_DEBUG("we are going to allocate (%u KB - %u bytes) - nfree = %u flags = %B", *plength / 1024U, *plength, nfree, flags);
+
+   return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, PROT_READ | PROT_WRITE, flags, -1, 0);
+}
 
 char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offset)
 {
@@ -473,44 +548,45 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 
    U_INTERNAL_ASSERT_POINTER(plength)
 
-#ifndef _MSWINDOWS_
-#  ifndef HAVE_ARCH64
+#ifdef U_LINUX
+# ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_RANGE(1U, *plength, 3U * 1024U * 1024U * 1024U) // limit of linux system on 32bit
-#  endif
+# endif
    if (_fd != -1)
 #endif
    return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, flags, _fd, offset);
 
-   *plength = (*plength + U_PAGEMASK) & ~U_PAGEMASK;
+   U_INTERNAL_ASSERT_EQUALS(prot, PROT_READ | PROT_WRITE)
 
-   U_INTERNAL_ASSERT_EQUALS(*plength & U_PAGEMASK, 0)
+   if ((flags & MAP_SHARED) != 0)
+      {
+      U_INTERNAL_ASSERT_DIFFERS(flags & MAP_ANONYMOUS, 0)
 
-   if ((flags & MAP_SHARED) != 0) return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, flags, -1, 0);
+      return mmap_anon_huge(plength, flags);
+      }
+
+   U_INTERNAL_ASSERT_DIFFERS(flags & MAP_PRIVATE, 0)
 
    char* _ptr;
    bool _abort = false;
 
-   if (*plength >= rlimit_memalloc) // NB: we try to save some swap pressure...
+   if (*plength >= rlimit_memalloc) // NB: we try to avoid huge swap pressure...
       {
-#if !defined(U_SERVER_CAPTIVE_PORTAL)
+#ifndef U_SERVER_CAPTIVE_PORTAL
 try_from_file_system:
 #endif
       UFile tmp;
-      char _template[32];
 
-#  ifdef DEBUG
-      U_WARNING("we are going to allocate from file system (%u KB - %u bytes) (pid %P)", *plength / 1024, *plength);
-#  endif
+      *plength = (*plength + U_PAGEMASK) & ~U_PAGEMASK;
 
-      // By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp.
-      // This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem 
+      U_INTERNAL_ASSERT_EQUALS(*plength & U_PAGEMASK, 0)
 
-      (void) strcpy(_template, "/var/tmp/mapXXXXXX");
+      U_DEBUG("we are going to allocate from file system (%u KB - %u bytes)", *plength / 1024, *plength);
 
-      _ptr = (tmp.mkTemp(_template)   == false ||
+      _ptr = (tmp.mkTemp()            == false ||
               tmp.fallocate(*plength) == false
                   ? (char*)MAP_FAILED
-                  : (char*)U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, tmp.st_size, prot, MAP_PRIVATE | MAP_NORESERVE, tmp.fd, 0));
+                  : (char*)U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, tmp.st_size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, tmp.fd, 0));
 
       if (tmp.isOpen()) tmp.close();
 
@@ -530,11 +606,10 @@ try_from_file_system:
          }
       }
 
-#if defined(U_SERVER_CAPTIVE_PORTAL)
-#  ifdef DEBUG
-   U_WARNING("we are going to malloc %u bytes (%u KB) (pid %P)", *plength, *plength / 1024);
-#  endif
-   _ptr = (char*) U_SYSCALL(malloc, "%u", *plength);
+#ifdef U_SERVER_CAPTIVE_PORTAL
+   U_DEBUG("we are going to malloc %u bytes (%u KB)", *plength, *plength / 1024);
+
+   return (char*) U_SYSCALL(malloc, "%u", *plength);
 #else
    U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
 
@@ -545,16 +620,20 @@ try_from_file_system:
 
       u_get_memusage(&vsz, &rss);
 
-      U_WARNING("we are going to allocate %u MB (pid %P) - "
+      U_DEBUG("we are going to allocate %u MB - "
                  "address space usage: %.2f MBytes - "
                            "rss usage: %.2f MBytes",
                         rlimit_memalloc / (1024 * 1024),
-                        (double)vsz / (1024.0 * 1024.0),
-                        (double)rss / (1024.0 * 1024.0));
+                            (double)vsz / (1024.0 * 1024.0),
+                            (double)rss / (1024.0 * 1024.0));
 #  endif
 
       nfree = rlimit_memalloc;
-      pfree = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, nfree, prot, U_MAP_ANON, -1, 0);
+#  ifdef U_MEMALLOC_WITH_HUGE_PAGE
+      pfree = mmap_anon_huge(&nfree, MAP_PRIVATE | U_MAP_ANON);
+#  else
+      pfree = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, nfree, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, -1, 0);
+#  endif
 
       if (pfree == (char*)MAP_FAILED)
          {
@@ -565,11 +644,7 @@ try_from_file_system:
 
    if (*plength > nfree)
       {
-#  ifdef DEBUG
-      U_WARNING("we are going to allocate (%u KB - %u bytes) (pid %P) - nfree = %u", *plength / 1024, *plength, nfree);
-#  endif
-
-      _ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, U_MAP_ANON, -1, 0);
+      _ptr = mmap_anon_huge(plength, MAP_PRIVATE | U_MAP_ANON);
 
       if (_ptr == (char*)MAP_FAILED)
          {
@@ -580,6 +655,34 @@ try_from_file_system:
 
       return _ptr;
       }
+
+# ifdef U_MEMALLOC_WITH_HUGE_PAGE
+   if (nr_hugepages)
+      {
+#  ifdef MAP_HUGE_1GB
+      if (*plength >= U_1G)
+         {
+         *plength = (*plength + U_1G_MASK) & ~U_1G_MASK;
+
+         U_INTERNAL_ASSERT_EQUALS(*plength & U_1G_MASK, 0)
+         }
+      else
+#  endif
+#  ifdef MAP_HUGE_2MB
+      {
+      *plength = (*plength + U_2M_MASK) & ~U_2M_MASK;
+
+      U_INTERNAL_ASSERT_EQUALS(*plength & U_2M_MASK, 0)
+      }
+#  endif
+      }
+   else
+# endif
+   {
+   *plength = (*plength + U_PAGEMASK) & ~U_PAGEMASK;
+
+   U_INTERNAL_ASSERT_EQUALS(*plength & U_PAGEMASK, 0)
+   }
 
    _ptr   = pfree;
    nfree -= *plength;
@@ -592,9 +695,9 @@ try_from_file_system:
       }
 
    U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
-#endif
 
    return _ptr;
+#endif
 }
 
 bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
@@ -607,8 +710,8 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
-   U_INTERNAL_ASSERT_DIFFERS(fd,-1)
-   U_INTERNAL_ASSERT_MAJOR(st_size,0)
+   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+   U_INTERNAL_ASSERT_MAJOR(st_size, 0)
 
 #ifdef _MSWINDOWS_
    U_INTERNAL_ASSERT((off_t)length <= st_size) // NB: don't allow mappings beyond EOF since Windows can't handle that POSIX like...
@@ -978,33 +1081,32 @@ bool UFile::lock(short l_type, uint32_t start, uint32_t len) const
     */
 
 #if defined(__NetBSD__) || defined(__UNIKERNEL__) || defined(__OSX__)
-   /*
-   struct flock {
-      off_t l_start;    // starting offset
-      off_t l_len;      // len = 0 means until end of file
-      pid_t l_pid;      // lock owner
-      short l_type;     // lock type: read/write, etc.
-      short l_whence;   // type of l_start
-   };
-   */
+   /**
+    * struct flock {
+    *    off_t l_start;  // starting offset
+    *    off_t l_len;    // len = 0 means until end of file
+    *    pid_t l_pid;    // lock owner
+    *    short l_type;   // lock type: read/write, etc.
+    *    short l_whence; // type of l_start
+    * };
+    */
 
    struct flock flock = { start, len, u_pid, SEEK_SET, l_type };
 #else
-   /*
-   struct flock {
-      short l_type;    // Type of lock: F_RDLCK, F_WRLCK, F_UNLCK
-      short l_whence;  // How to interpret l_start: SEEK_SET, SEEK_CUR, SEEK_END
-      off_t l_start;   // Starting offset for lock
-      off_t l_len;     // Number of bytes to lock
-      pid_t l_pid;     // PID of process blocking our lock (F_GETLK only)
-   };
-   */
+   /**
+    * struct flock {
+    *    short l_type;   // Type of lock: F_RDLCK, F_WRLCK, F_UNLCK
+    *    short l_whence; // How to interpret l_start: SEEK_SET, SEEK_CUR, SEEK_END
+    *    off_t l_start;  // Starting offset for lock
+    *    off_t l_len;    // Number of bytes to lock
+    *    pid_t l_pid;    // PID of process blocking our lock (F_GETLK only)
+    * };
+    */
 
    struct flock flock = { l_type, SEEK_SET, start, len, u_pid };
 #endif
 
    /**
-    * ---------------------------------------------------------------------------------------------------------------------
     *  F_SETLK: Acquire a lock (when l_type is F_RDLCK or F_WRLCK) or release a lock (when l_type is F_UNLCK) on the
     *           bytes specified by the l_whence, l_start, and l_len fields of lock. If a conflicting lock is held by another
     *           process, this call returns -1 and sets errno to EACCES or EAGAIN.
@@ -1078,9 +1180,12 @@ bool UFile::fallocate(uint32_t n)
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+#if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
    U_INTERNAL_ASSERT_POINTER(path_relativ)
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+#endif
 
 #ifdef U_COVERITY_FALSE_POSITIVE
    if (fd <= 0) U_RETURN(false);
@@ -1229,7 +1334,7 @@ int UFile::setBlocking(int _fd, int flags, bool block)
 
    U_INTERNAL_ASSERT_DIFFERS(_fd, -1)
 
-   /* ------------------------------------------------------
+   /**
     * #define O_RDONLY           00
     * #define O_WRONLY           01
     * #define O_RDWR             02
@@ -1302,29 +1407,29 @@ UString UFile::getRealPath(const char* path, bool brelativ)
    return UString::getStringNull();
 }
 
-// ----------------------------------------------------------------------------------------------------------------------
 // create a unique temporary file
-// ----------------------------------------------------------------------------------------------------------------------
-// char pathname[] = "/tmp/dataXXXXXX"
-// The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique
-// ----------------------------------------------------------------------------------------------------------------------
 
-bool UFile::mkTemp(char* _template)
+bool UFile::mkTemp()
 {
-   U_TRACE(1, "UFile::mkTemp(%S)", _template)
+   U_TRACE(1, "UFile::mkTemp()")
 
-#ifdef O_TMPFILE
-   fd = U_SYSCALL(open, "%S,%d,%d", "", O_TMPFILE | O_RDWR, PERM_FILE);
+   /**
+    * O_TMPFILE is a new open(2)/openat(2) flag that makes easier the creation of secure temporary files. Files opened with the O_TMPFILE
+    * flag are created but they are not visible in the filesystem. And as soon as they are closed, they get deleted - just as a file you
+    * would have opened and unlinked
+    *
+    * http://kernelnewbies.org/Linux_3.11#head-8be09d59438b31c2a724547838f234cb33c40357
+    *
+    * By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp.
+    * This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem 
+    */
+
+#if defined(U_LINUX) && defined(O_TMPFILE)
+   fd = U_SYSCALL(open, "%S,%d,%d", "/var/tmp", O_TMPFILE | O_RDWR, PERM_FILE);
 #else
-   if (_template) setPath(_template);
-   else
-      {
-      UString path(U_PATH_MAX);
+   UString path((void*)U_CONSTANT_TO_PARAM("/var/tmp/mapXXXXXX"));
 
-      path.snprintf("%s/lockXXXXXX", u_tmpdir);
-
-      setPath(path);
-      }
+   setPath(path);
 
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 
@@ -1338,6 +1443,31 @@ bool UFile::mkTemp(char* _template)
 #endif
 
    if (isOpen()) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
+bool UFile::mkTempForLock()
+{
+   U_TRACE(1, "UFile::mkTempForLock()")
+
+   UString path(U_PATH_MAX);
+
+   path.snprintf("%s/lockXXXXXX", u_tmpdir); // The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique
+
+   setPath(path);
+
+   U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+   fd = U_SYSCALL(mkstemp, "%S", U_PATH_CONV((char*)path_relativ));
+
+   if (isOpen())
+      {
+      U_ASSERT(  lock() &&
+               unlock())
+
+      U_RETURN(true);
+      }
 
    U_RETURN(false);
 }

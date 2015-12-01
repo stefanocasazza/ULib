@@ -1414,7 +1414,7 @@ UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compre
          }
 #  endif
 
-      sz = (len + U_PAGEMASK) & ~U_PAGEMASK;
+      sz = UFile::getSizeAligned(len);
 
       UString result(len, sz, UFile::pfree);
 

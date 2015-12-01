@@ -782,6 +782,7 @@ public:
 
       U_CHECK_MEMORY
 
+      U_INTERNAL_ASSERT(_mac)
       U_INTERNAL_ASSERT(nodog)
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
@@ -841,6 +842,8 @@ public:
       is.get(); // skip ' '
 
       _user.get(is);
+
+      U_INTERNAL_ASSERT(_mac)
       }
 
    UString getAP(UString& label)
@@ -1268,6 +1271,8 @@ next:
 
       U_INTERNAL_DUMP("db_user->isRecordFound() = %b _index_access_point = %u nodog = %V", db_user->isRecordFound(), _index_access_point, nodog.rep)
 
+      U_INTERNAL_ASSERT(*mac)
+
       _ip           = *ip;
       _mac          = *mac;
    // agent         = UHTTP::getUserAgent();
@@ -1328,6 +1333,8 @@ next:
        * 2012/08/08 14:56:00 op: PASS_AUTH, uid: 33437934, ap: 00@10.8.1.2, ip: 172.16.1.172, mac: 00:14:a5:6e:9c:cb, timeout: 233, traffic: 342, policy: DAILY
        * ------------------------------------------------------------------------------------------------------------------------------------------------------ 
        */
+
+      U_INTERNAL_ASSERT(_mac)
 
       ULog::log(file_LOG->getFd(), "op: %s, uid: %v, ap: %v, ip: %v, mac: %v, timeout: %v, traffic: %v, policy: %v",
                                     op,     uid->rep, getAP().rep, _ip.rep, _mac.rep, time_counter->rep, traffic_counter->rep, getPolicy().rep);
@@ -4213,6 +4220,8 @@ next:
       if (write_to_log &&
           user_rec->setNodogReference())
          {
+         ask_logout = true; 
+
          user_rec->writeToLOG(write_to_log);
          }
 

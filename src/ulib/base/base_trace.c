@@ -191,10 +191,10 @@ void u_trace_close(void)
          {
          ptrdiff_t write_size = file_ptr - file_mem;
 
-         U_INTERNAL_ASSERT_MINOR(write_size,(ptrdiff_t)file_size)
+         U_INTERNAL_ASSERT_MINOR(write_size, (ptrdiff_t)file_size)
 
-      // (void)  msync(file_mem, write_size, MS_SYNC);
-         (void) munmap(file_mem, file_size);
+         (void)  msync(file_mem, write_size, MS_SYNC | MS_INVALIDATE);
+         (void) munmap(file_mem,  file_size);
 
          (void) ftruncate(lfd, write_size);
          (void) fsync(lfd);

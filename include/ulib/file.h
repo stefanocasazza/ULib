@@ -16,6 +16,12 @@
 
 #include <ulib/string.h>
 
+#ifdef _MSWINDOWS_
+#define st_ino u_inode
+#elif defined(U_LINUX)
+#  include <asm/mman.h>
+#endif
+
 #include <errno.h>
 
 // struct stat {
@@ -33,10 +39,6 @@
 //    time_t    st_mtime;    /* time of last modification */
 //    time_t    st_ctime;    /* time of last change */
 // };
-
-#ifdef _MSWINDOWS_
-#define st_ino u_inode
-#endif
 
 // File-permission-bit symbols
 
@@ -634,9 +636,8 @@ public:
 
    // LOCKING
 
-   bool lock(short l_type = F_WRLCK, uint32_t start = 0, uint32_t len = 0) const; /* set the lock, waiting if necessary */
-
-   bool unlock(uint32_t start = 0, uint32_t len = 0) const { return lock(F_UNLCK, start, len); }
+   bool   lock(short l_type = F_WRLCK, uint32_t start = 0, uint32_t len = 0) const; // set the lock, waiting if necessary
+   bool unlock(                        uint32_t start = 0, uint32_t len = 0) const { return lock(F_UNLCK, start, len); }
 
    // MEMORY MAPPED I/O (Basically, you can tell the OS that some file is the backing store for a certain portion of the process memory)
 
@@ -848,19 +849,17 @@ public:
    // ----------------------------------------------------------------------------------------------------------------------
    // create a unique temporary file
    // ----------------------------------------------------------------------------------------------------------------------
-   // char pathname[] = "/tmp/dataXXXXXX"
-   // The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique
-   // ----------------------------------------------------------------------------------------------------------------------
 
-   bool mkTemp(char* _template);
+   bool mkTemp();
+   bool mkTempForLock();
 
    // --------------------------------------------------------------------------------------------------------------
    // mkdtemp - create a unique temporary directory
    // --------------------------------------------------------------------------------------------------------------
    // The mkdtemp() function generates a uniquely-named temporary directory from template. The last six characters
-   // of template must be XXXXXX and these are replaced with a string that makes the directory name unique.
-   // The directory is then created with permissions 0700.
-   // Since it will be modified, template must not be a string constant, but should be declared as a character array
+   // of template must be XXXXXX and these are replaced with a string that makes the directory name unique. The
+   // directory is then created with permissions 0700. Since it will be modified, template must not be a string
+   // constant, but should be declared as a character array
    // --------------------------------------------------------------------------------------------------------------
 
    static bool mkdtemp(UString& _template);
@@ -881,15 +880,81 @@ public:
 
    // MEMORY POOL
 
+   static uint32_t getPageMask(uint32_t length) // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+      {
+      U_TRACE(0, "UFile::getPageMask(%u)", length)
+
+#  if defined(U_LINUX) && defined(U_MEMALLOC_WITH_HUGE_PAGE) && (defined(MAP_HUGE_1GB) || defined(MAP_HUGE_2MB)) // (since Linux 3.8)
+      if (nr_hugepages)
+         {
+         U_INTERNAL_DUMP("nr_hugepages = %u rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
+
+         U_INTERNAL_ASSERT_EQUALS(rlimit_memfree, U_2M)
+
+#     ifdef MAP_HUGE_1GB
+         if (length >= U_1G) U_RETURN(U_1G_MASK);
+#     endif
+#     ifdef MAP_HUGE_2MB
+         U_RETURN(U_2M_MASK);
+#     endif
+         }
+# endif
+
+      U_RETURN(U_PAGEMASK);
+      }
+
+   static bool checkPageAlignment(uint32_t length) // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+      {
+      U_TRACE(0, "UFile::checkPageAlignment(%u)", length)
+
+#  if defined(U_LINUX) && defined(U_MEMALLOC_WITH_HUGE_PAGE) && (defined(MAP_HUGE_1GB) || defined(MAP_HUGE_2MB)) // (since Linux 3.8)
+      if (nr_hugepages)
+         {
+         U_INTERNAL_DUMP("nr_hugepages = %u rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
+
+         U_INTERNAL_ASSERT_EQUALS(rlimit_memfree, U_2M)
+
+#     ifdef MAP_HUGE_1GB
+         if (length >= U_1G)
+            {
+            if ((length & U_1G_MASK) == 0) U_RETURN(true);
+
+            U_RETURN(false);
+            }
+#     endif
+#     ifdef MAP_HUGE_2MB
+         if ((length & U_2M_MASK) == 0) U_RETURN(true);
+
+         U_RETURN(false);
+#     endif
+         }
+# endif
+      if ((length & U_PAGEMASK) == 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static uint32_t getSizeAligned(uint32_t length) // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+      {
+      U_TRACE(0, "UFile::getSizeAligned(%u)", length)
+
+      uint32_t pmask = getPageMask(length),
+               sz = (length + pmask) & ~pmask;
+
+      U_ASSERT(checkPageAlignment(sz))
+
+      U_RETURN(sz);
+      }
+
    static bool isAllocableFromPool(uint32_t sz)
       {
       U_TRACE(0, "UFile::isAllocableFromPool(%u)", sz)
 
-#  if defined(ENABLE_MEMPOOL)
+#  ifdef ENABLE_MEMPOOL
       U_INTERNAL_DUMP("nfree = %u pfree = %p", nfree, pfree)
 
       if (sz > U_CAPACITY &&
-          nfree > (sz + rlimit_memfree))
+          nfree > (getSizeAligned(sz) + rlimit_memfree))
          {
          U_RETURN(true);
          }
@@ -902,8 +967,7 @@ public:
       {
       U_TRACE(0, "UFile::isLastAllocation(%p,%lu)", ptr, sz)
 
-#  if defined(ENABLE_MEMPOOL)
-      U_INTERNAL_ASSERT_EQUALS(sz & U_PAGEMASK, 0)
+#  ifdef ENABLE_MEMPOOL
       U_INTERNAL_ASSERT(sz >= U_MAX_SIZE_PREALLOCATE)
 
       U_INTERNAL_DUMP("nfree = %u pfree = %p", nfree, pfree)
@@ -912,7 +976,12 @@ public:
          {
          U_INTERNAL_ASSERT_MAJOR(nfree, rlimit_memfree)
 
-         if ((pfree - sz) == ptr) U_RETURN(true);
+         if ((pfree - sz) == ptr)
+            {
+            U_ASSERT(UFile::checkPageAlignment(sz)) // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+
+            U_RETURN(true);
+            }
          }
 #  endif
 
@@ -936,7 +1005,7 @@ protected:
    static uint32_t cwd_save_len;
 
    static char*    pfree;
-   static uint32_t nfree, rlimit_memfree, rlimit_memalloc;
+   static uint32_t nfree, rlimit_memfree, rlimit_memalloc, nr_hugepages;
 
    void substitute(UFile& file);
    bool creatForWrite(bool append, bool bmkdirs);
@@ -946,6 +1015,8 @@ protected:
    static void ftw_tree_up();
    static void ftw_tree_push();
    static void ftw_vector_push();
+
+   static char* mmap_anon_huge(uint32_t* plength, int flags);
 
 private:
 #ifdef _MSWINDOWS_

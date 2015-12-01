@@ -42,9 +42,9 @@
 /**
  * Valid opcodes ( "op" parameter ) to issue to epoll_ctl()
  *
- * #define EPOLL_CTL_ADD 1 // Add a file descriptor to the interface
+ * #define EPOLL_CTL_ADD 1 //    Add a file descriptor to the interface
  * #define EPOLL_CTL_DEL 2 // Remove a file descriptor from the interface
- * #define EPOLL_CTL_MOD 3 // Change file descriptor epoll_event structure
+ * #define EPOLL_CTL_MOD 3 // Change a file descriptor in epoll_event structure
  */
 
 class U_EXPORT UEventFd {

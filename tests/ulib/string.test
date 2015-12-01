@@ -6,10 +6,12 @@
 
 start_msg string
 
-#UTRACE="0 50M 0"
+#UTRACE="0 50M -1"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR
+
+UMEMPOOL=0,0,0,0,0,0,0,0,0:20971520,2097152
 
 start_prg string 10
 

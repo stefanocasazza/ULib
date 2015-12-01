@@ -21,7 +21,7 @@ extern "C" { int nanosleep (const struct timespec* requested_time,
                                   struct timespec* remaining); }
 #endif
 
-#if (defined(LINUX) || defined(__LINUX__) || defined(__linux__) || defined(_MSWINDOWS_)) && !defined(__suseconds_t_defined)
+#if (defined(U_LINUX) || defined(_MSWINDOWS_)) && !defined(__suseconds_t_defined)
 typedef long suseconds_t;
 #endif
 

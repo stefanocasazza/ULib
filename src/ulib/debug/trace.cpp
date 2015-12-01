@@ -23,7 +23,6 @@
 
 #include <errno.h>
 
-int     UTrace::status;
 UCrono* UTrace::time_syscall_read_or_write;
 
 U_NO_EXPORT void UTrace::set(int level)
@@ -48,7 +47,7 @@ UTrace::UTrace(int level, uint32_t len, const char* name)
 {
    U_INTERNAL_TRACE("UTrace::UTrace(%d,%u,%s)", level, len, name)
 
-   U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_trace), 1019)
+   U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_trace), 1017)
 
    buffer_trace_len   =
    buffer_syscall_len = 0;
@@ -67,7 +66,7 @@ UTrace::UTrace(int level, const char* format, ...)
 {
    U_INTERNAL_TRACE("UTrace::UTrace(%d,%s)", level, format)
 
-   U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_trace), 1019)
+   U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_trace), 1017)
 
    buffer_trace_len   =
    buffer_syscall_len = 0;
@@ -117,7 +116,7 @@ void UTrace::trace_return(const char* format, ...)
 {
    U_INTERNAL_TRACE("UTrace::trace_return(%s)", format)
 
-   U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_trace), 1019)
+   U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_trace), 1017)
 
    if (active[0] &&
        (sizeof(buffer_trace) - buffer_trace_len) > 32)
@@ -178,7 +177,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
 {
    U_INTERNAL_TRACE("UTrace::trace_sysreturn(%d,%s)", error, format)
 
-   U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_syscall), 1019)
+   U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_syscall), 1017)
 
 #ifdef _MSWINDOWS_
    if (format         &&

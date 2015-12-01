@@ -178,13 +178,7 @@ public:
       if (pointer_block < &mem_pointer_block[0] ||
           pointer_block > &mem_pointer_block[U_NUM_STACK_TYPE * U_NUM_ENTRY_MEM_BLOCK * 2])
          {
-         uint32_t size = space * sizeof(void*);
-
-         U_INTERNAL_DUMP("size = %u", size)
-
-         U_INTERNAL_ASSERT_EQUALS(size & U_PAGEMASK, 0)
-
-         UMemoryPool::deallocate(pointer_block, size);
+         UMemoryPool::deallocate(pointer_block, space * sizeof(void*));
          }
 #  endif
       }
@@ -195,12 +189,12 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(index, 0)
 
-      // NB: si alloca lo space per numero totale puntatori
-      //     (blocchi allocati precedentemente + un nuovo insieme di blocchi)
-      //     relativi a type 'dimensione' stack corrente...
+      // NB: si alloca lo space per numero totale puntatori (blocchi allocati precedentemente + un nuovo insieme di blocchi) relativi a type 'dimensione' stack corrente...
 
       uint32_t size = new_space * sizeof(void*);
-      void** new_block = (void**) UFile::mmap(&size, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
+
+      void** new_block = (void**) UFile::mmap(&size, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, 0);
+
       new_space = (size / sizeof(void*));
 
       if (len) U_MEMCPY(new_block, pointer_block, len * sizeof(void*));
@@ -231,7 +225,7 @@ public:
          {
          U_INTERNAL_ASSERT_EQUALS(len, 0)
 
-         pointer_block = (void**) UFile::mmap(&size, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
+         pointer_block = (void**) UFile::mmap(&size, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE |  U_MAP_ANON, 0);
            len = space = (size / type);
 
 #     if defined(DEBUG) && defined(ENABLE_MEMPOOL)
@@ -413,7 +407,7 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-#if defined(ENABLE_MEMPOOL)
+#ifdef ENABLE_MEMPOOL
    int value;
    void* addr;
    uint32_t i;
@@ -440,7 +434,19 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
 
       value = strtol(endptr + 1, &endptr, 10);
 
-      if (value) UFile::rlimit_memfree = value;
+      if (value)
+         {
+         UFile::rlimit_memfree = value;
+
+#     if defined(U_LINUX) && MAP_HUGE_2MB
+         if (value == U_2M)
+            {
+            // cat /proc/meminfo | grep Huge
+
+            UFile::nr_hugepages = UFile::setSysParam("/proc/sys/vm/nr_hugepages", U_2M * 64);
+            }
+#     endif
+         }
       }
 
    for (i = 1; i < U_NUM_STACK_TYPE; ++i)
@@ -529,9 +535,9 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
    U_INTERNAL_DUMP("length = %u", length)
 
 #if !defined(ENABLE_MEMPOOL)
-#  ifndef HAVE_ARCH64
+# ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_RANGE(4, length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
-#  endif
+# endif
    ptr = U_SYSCALL(malloc, "%u", length);
 #else
    if (length <= U_MAX_SIZE_PREALLOCATE)
@@ -543,7 +549,9 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
       }
    else
       {
-      ptr = UFile::mmap(&length, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
+      ptr = UFile::mmap(&length, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, 0);
+
+      U_INTERNAL_DUMP("length = %u", length)
       }
 #endif
 
@@ -563,22 +571,19 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
 
    U_INTERNAL_DUMP("length = %u", length)
 
-#if !defined(ENABLE_MEMPOOL)
-#  ifndef HAVE_ARCH64
+#ifndef ENABLE_MEMPOOL
+# ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_MINOR(length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
-#  endif
+# endif
    ptr = U_SYSCALL(malloc, "%u", length);
 #else
-   if (length <= U_MAX_SIZE_PREALLOCATE)
+   if (length > U_MAX_SIZE_PREALLOCATE) ptr = UFile::mmap(&length, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, 0);
+   else
       {
       int stack_index = U_SIZE_TO_STACK_INDEX(length);
 
       ptr    = pop(stack_index);
       length = U_STACK_INDEX_TO_SIZE[stack_index];
-      }
-   else
-      {
-      ptr = UFile::mmap(&length, -1, PROT_READ | PROT_WRITE, U_MAP_ANON, 0);
       }
 
    *pnum = length / type_size;
@@ -604,26 +609,32 @@ void UMemoryPool::deallocate(void* ptr, uint32_t length)
       UFile::nfree += length;
 
       U_INTERNAL_DUMP("UFile::nfree = %u UFile::pfree = %p", UFile::nfree, UFile::pfree)
+
+      return;
       }
-   else
-      {
-#  ifdef HAVE_ARCH64
-      // MADV_DONTNEED causes the kernel to reclaim the indicated pages immediately and drop their contents
 
-      (void) U_SYSCALL(madvise, "%p,%lu,%d", (void*)ptr, length, MADV_DONTNEED);
-#  else
-      // munmap() is expensive. A series of page table entries must be cleaned up, and the VMA must be unlinked.
-      // By contrast, madvise(MADV_DONTNEED) only needs to set a flag in the VMA and has the further benefit that
-      // no system call is required to reallocate the memory. That operation informs the kernel that the pages can
-      // be (destructively) discarded from memory; if the process tries to access the pages again, they will either
-      // be faulted in from the underlying file, for a file mapping, or re-created as zero-filled pages, for the
-      // anonymous mappings that are employed by user-space allocators. Of course, re-creating the pages zero filled
-      // is normally exactly the desired behavior for a user-space memory allocator. (The only potential downside is
-      // that process address space is not freed, but this tends not to matter on 64-bit systems) 
+# if defined(U_LINUX) && defined(HAVE_ARCH64)
+#  if defined(MAP_HUGE_1GB) || defined(MAP_HUGE_2MB) // (since Linux 3.8)
+   U_INTERNAL_DUMP("UFile::nr_hugepages = %u", UFile::nr_hugepages)
 
-      (void) U_SYSCALL(munmap, "%p,%lu", (void*)ptr, length);
+   if (UFile::nr_hugepages == 0) // NB: MADV_DONTNEED cannot be applied to locked pages, Huge TLB pages, or VM_PFNMAP pages...
 #  endif
-      }
+   {
+   (void) U_SYSCALL(madvise, "%p,%lu,%d", (void*)ptr, length, MADV_DONTNEED); // MADV_DONTNEED causes the kernel to reclaim the indicated pages immediately and drop their contents
+
+   return;
+   }
+# endif
+   /**
+    * munmap() is expensive. A series of page table entries must be cleaned up, and the VMA must be unlinked. By contrast, madvise(MADV_DONTNEED) only needs to set
+    * a flag in the VMA and has the further benefit that no system call is required to reallocate the memory. That operation informs the kernel that the pages can
+    * be (destructively) discarded from memory; if the process tries to access the pages again, they will either be faulted in from the underlying file, for a file
+    * mapping, or re-created as zero-filled pages, for the anonymous mappings that are employed by user-space allocators. Of course, re-creating the pages zero filled
+    * is normally exactly the desired behavior for a user-space memory allocator. (The only potential downside is that process address space is not freed, but this tends
+    * not to matter on 64-bit systems)
+    */
+
+   (void) U_SYSCALL(munmap, "%p,%lu", (void*)ptr, length);
 #endif
 }
 
@@ -639,7 +650,7 @@ void UMemoryPool::_free(void* ptr, uint32_t num, uint32_t type_size)
    U_INTERNAL_DUMP("length = %u", length)
 
    if (length <= U_MAX_SIZE_PREALLOCATE)       push(ptr, U_SIZE_TO_STACK_INDEX(length));
-   else                                  deallocate(ptr, (length + U_PAGEMASK) & ~U_PAGEMASK);
+   else                                  deallocate(ptr, UFile::getSizeAligned(length));
 #endif
 }
 
@@ -648,7 +659,7 @@ void UStackMemoryPool::paint(ostream& os) // paint info
 {
    U_TRACE(0, "UStackMemoryPool::paint(%p)", &os)
 
-#  if defined(ENABLE_MEMPOOL)
+# if defined(ENABLE_MEMPOOL)
    char buffer[256];
    uint32_t max_space = 0;
    UStackMemoryPool* pstack;
@@ -737,7 +748,7 @@ void UStackMemoryPool::paint(ostream& os) // paint info
 
    os << buffer << endl;
    */
-#  endif
+# endif
 }
 
 void UMemoryPool::printInfo(ostream& os)
@@ -751,7 +762,7 @@ void UMemoryPool::writeInfoTo(const char* format, ...)
 {
    U_TRACE(0+256, "UMemoryPool::writeInfoTo(%S)", format)
 
-#  if defined(ENABLE_MEMPOOL) && !defined(_MSWINDOWS_)
+# if defined(ENABLE_MEMPOOL) && !defined(_MSWINDOWS_)
    char name[256];
 
    va_list argp;
@@ -766,7 +777,7 @@ void UMemoryPool::writeInfoTo(const char* format, ...)
    if (!of) return;
 
    UStackMemoryPool::paint(of);
-#  endif
+# endif
 }
 #endif
 

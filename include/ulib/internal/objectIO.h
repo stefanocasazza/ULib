@@ -120,7 +120,8 @@ template <class T> inline char* U_OBJECT_TO_TRACE(T& object)
    U_INTERNAL_TRACE("U_OBJECT_TO_TRACE(%p)", &object)
 
 #ifdef DEBUG
-   UTrace::suspend();
+   int status = u_trace_suspend;
+                u_trace_suspend = 1;
 #endif
 
    char* str = UObject2String<T>(object);
@@ -128,7 +129,7 @@ template <class T> inline char* U_OBJECT_TO_TRACE(T& object)
    str = strndup(str, UObjectIO::buffer_output_len);
 
 #ifdef DEBUG
-   UTrace::resume();
+   u_trace_suspend = status;
 #endif
 
    return str;

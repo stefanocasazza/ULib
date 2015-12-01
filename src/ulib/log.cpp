@@ -39,6 +39,7 @@ long              ULog::tv_sec_old_1;
 long              ULog::tv_sec_old_2;
 long              ULog::tv_sec_old_3;
 ULog*             ULog::pthis;
+uint32_t          ULog::log_data_sz;
 const char*       ULog::prefix;
 struct iovec      ULog::iov_vec[5];
 ULog::log_date    ULog::date;
@@ -502,11 +503,9 @@ void ULog::setShared(log_data* ptr, uint32_t _size, bool breference)
       {
       if (_size == 0)
          {
-         log_gzip_sz = sizeof(log_data);
+         log_data_sz = sizeof(log_data);
 
-         uint32_t length = (sizeof(log_data) + U_PAGEMASK) & ~U_PAGEMASK;
-
-         ptr = (log_data*) UFile::mmap(&length);
+         ptr = (log_data*) UFile::mmap(&log_data_sz);
 
          U_INTERNAL_ASSERT_DIFFERS(ptr, MAP_FAILED)
          }
@@ -980,14 +979,7 @@ void ULog::closeLog()
 
    UFile::close();
 
-   if (log_gzip_sz == sizeof(log_data))
-      {
-      uint32_t length = (sizeof(log_data) + U_PAGEMASK) & ~U_PAGEMASK;
-
-      U_INTERNAL_ASSERT_EQUALS(length & U_PAGEMASK, 0)
-
-      UFile::munmap(ptr_log_data, length);
-      }
+   if (log_gzip_sz == sizeof(log_data)) UFile::munmap(ptr_log_data, log_data_sz);
 }
 
 void ULog::close()

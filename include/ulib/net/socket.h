@@ -460,7 +460,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(sk)
 
-#  if defined(TCP_CORK) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
+#  if defined(TCP_CORK) && defined(U_LINUX)
       (void) sk->setSockOpt(SOL_TCP, TCP_CORK, (const void*)&value, sizeof(uint32_t));
 #  endif
       }
@@ -475,7 +475,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "USocket::setTcpDeferAccept()")
 
-#  if defined(TCP_DEFER_ACCEPT) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
+#  if defined(TCP_DEFER_ACCEPT) && defined(U_LINUX)
       (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 1 }, sizeof(int));
 #  endif
       }
@@ -484,7 +484,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "USocket::setTcpFastOpen()")
 
-#  if !defined(U_SERVER_CAPTIVE_PORTAL) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__)) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
+#  if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(U_LINUX) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,6,0)
 #    ifndef TCP_FASTOPEN
 #    define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
 #    endif
@@ -496,7 +496,7 @@ public:
       {
       U_TRACE(0, "USocket::setTcpQuickAck(%d)", value)
 
-#  if defined(TCP_QUICKACK) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
+#  if defined(TCP_QUICKACK) && defined(U_LINUX)
       (void) setSockOpt(SOL_TCP, TCP_QUICKACK, &value, sizeof(int));
 #  endif
       }
@@ -514,7 +514,7 @@ public:
       {
       U_TRACE(0, "USocket::setTcpCongestion(%S)", value)
 
-#  if defined(TCP_CONGESTION) && (defined(LINUX) || defined(__LINUX__) || defined(__linux__))
+#  if defined(TCP_CONGESTION) && defined(U_LINUX)
       (void) setSockOpt(IPPROTO_TCP, TCP_CONGESTION, (const void*)&value, u__strlen(value, __PRETTY_FUNCTION__) + 1);
 #  endif
       }

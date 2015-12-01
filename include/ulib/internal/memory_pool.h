@@ -508,6 +508,8 @@ private:
    friend class UNoCatPlugIn;
    friend class UStackMemoryPool;
 
+   friend void check_mmap(uint32_t);
+
    template <class T> friend class UVector;
 };
 

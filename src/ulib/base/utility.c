@@ -38,7 +38,7 @@
 
 #ifndef _MSWINDOWS_
 #  include <pwd.h>
-#  if defined(__linux__) && defined(HAVE_LIBCAP)
+#  if defined(U_LINUX) && defined(HAVE_LIBCAP)
 #     include <sys/prctl.h>
 #     include <sys/capability.h>
 #     ifdef SECBIT_KEEP_CAPS
@@ -265,7 +265,7 @@ uint32_t u_gettid(void)
    GetCurrentThreadId();
 # elif defined(HAVE_PTHREAD_GETTHREADID_NP)
    pthread_getthreadid_np();
-# elif defined(linux)
+# elif defined(U_LINUX)
    syscall(SYS_gettid);
 # elif defined(__sun)
    pthread_self();
@@ -392,7 +392,7 @@ void u_dont_need_root(void)
 void u_never_need_root(void)
 {
 #ifndef _MSWINDOWS_
-#  if defined(__linux__) && defined(HAVE_LIBCAP)
+#  if defined(U_LINUX) && defined(HAVE_LIBCAP)
 /*
 cap_list[] = {
    {"chown",               CAP_CHOWN},

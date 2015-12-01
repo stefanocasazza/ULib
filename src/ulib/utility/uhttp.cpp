@@ -54,7 +54,7 @@
 #ifdef U_HTTP_INOTIFY_SUPPORT
 #  ifdef SYS_INOTIFY_H_EXISTS_AND_WORKS
 #     include <sys/inotify.h>
-#  elif defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#  elif defined(U_LINUX)
 #     ifdef HAVE_SYS_INOTIFY_H
 #     undef HAVE_SYS_INOTIFY_H
 #     endif
@@ -1229,7 +1229,7 @@ void UHTTP::init()
 
    U_INTERNAL_DUMP("cache size = %u", sz)
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
    uint32_t rlim = (sz + UNotifier::max_connection + 100);
 
    U_INTERNAL_DUMP("rlim = %u", rlim)
@@ -7218,7 +7218,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
       goto end;
       }
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
+#ifdef U_LINUX
    if (rpathname->empty() && // NB: check if we are called from here...
        (file->lstat(), file->slink()))
       {

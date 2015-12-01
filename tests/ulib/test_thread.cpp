@@ -82,7 +82,7 @@ public:
       if (WaitNValue(2)) // wait for main thread
          {
 #     ifdef DEBUG
-         UTrace::suspend();
+         u_trace_suspend = 1;
 #     endif
 
          while (true)
@@ -260,7 +260,7 @@ int U_EXPORT main(int argc, char* argv[])
    time_to_sleep = 5000;
 
 #ifdef DEBUG
-   UTrace::resume();
+   u_trace_suspend = 0;
 #endif
 
    // Test child thread destroying before father

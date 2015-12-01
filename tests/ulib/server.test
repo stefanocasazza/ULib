@@ -7,10 +7,12 @@
 start_msg server
 
 #UTRACE="0 50M 0"
-#UTRACE_SIGNAL="0 100M 0"
+#UTRACE_SIGNAL="0 10M 0"
 #UOBJDUMP="0 50M 1000"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
+
+UMEMPOOL=0,0,0,0,0,0,0,0,0:20971520,2097152
 
 if [ "$TERM" != "cygwin" ]; then
 	DIR=../../src/ulib/net/server/plugin/.libs

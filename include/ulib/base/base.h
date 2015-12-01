@@ -26,15 +26,15 @@
 #  endif
 #endif
 
-#if defined(LINUX) || defined(__LINUX__) || defined(__linux__)
-#ifdef HAVE__USR_SRC_LINUX_INCLUDE_GENERATED_UAPI_LINUX_VERSION_H
+#ifdef U_LINUX
+# ifdef HAVE__USR_SRC_LINUX_INCLUDE_GENERATED_UAPI_LINUX_VERSION_H
 #  include "/usr/src/linux/include/generated/uapi/linux/version.h"
-#  else
+# else
 #  include <linux/version.h>
-#  endif
-#  ifndef LINUX_VERSION_CODE
-#     error "You need to use at least 2.0 Linux kernel."
-#  endif
+# endif
+# ifndef LINUX_VERSION_CODE
+#  error "You need to use at least 2.0 Linux kernel."
+# endif
 #endif
 
 #ifdef USE_LIBSSL

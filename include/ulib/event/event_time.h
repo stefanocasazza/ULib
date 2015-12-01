@@ -56,8 +56,6 @@ public:
       ms = (diff1 * 1000L) +
            (diff2 / 1000L);
 
-      U_INTERNAL_DUMP("ms = %ld", ms)
-
       U_ASSERT(checkMilliSecond())
 
       U_RETURN(false);

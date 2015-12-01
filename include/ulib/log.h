@@ -138,6 +138,7 @@ protected:
    void checkForLogRotateDataToWrite();
 #endif
 
+   static uint32_t log_data_sz;
    static long tv_sec_old_1, tv_sec_old_2, tv_sec_old_3;
 
    void write(const struct iovec* iov, int n);
