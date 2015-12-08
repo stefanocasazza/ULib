@@ -507,6 +507,8 @@ bool UClient_Base::readResponse(uint32_t count)
 {
    U_TRACE(0, "UClient_Base::readResponse(%u)", count)
 
+   U_ASSERT(response.uniq())
+
    if (USocketExt::read(socket, response, count, timeoutMS))
       {
       if (log &&

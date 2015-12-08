@@ -1484,7 +1484,7 @@ void UHTTP2::handlerResponse()
 
    u_put_unalignedp64(dst, U_MULTICHAR_CONSTANT64('v','\004','U','L','i','b','a','\0'));
 
-#if defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+#if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
    U_INTERNAL_ASSERT_POINTER(u_pthread_time)
    U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #else

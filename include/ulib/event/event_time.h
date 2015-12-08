@@ -40,13 +40,13 @@ public:
 
       U_CHECK_MEMORY
 
-      long diff1 = ctime.tv_sec  + tv_sec  - u_now->tv_sec,
-           diff2 = ctime.tv_usec + tv_usec - u_now->tv_usec;
+      long diff1 = ctime.tv_sec  + tv_sec  - timeout1.tv_sec,
+           diff2 = ctime.tv_usec + tv_usec - timeout1.tv_usec;
 
       U_INTERNAL_DUMP("this = { %ld %6ld }, diff1 = %ld diff2 = %ld", ctime.tv_sec  + tv_sec,
                                                                       ctime.tv_usec + tv_usec, diff1, diff2)
 
-      if ( diff1  < 0 ||
+      if ( diff1 <  0 ||
           (diff1 == 0 &&
            diff2 <= 0))
          {
@@ -130,8 +130,8 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UEventTime::setMilliSecond()")
 
-      ms = ((ctime.tv_sec  + tv_sec  - u_now->tv_sec)  * 1000L) +
-           ((ctime.tv_usec + tv_usec - u_now->tv_usec) / 1000L);
+      ms = ((ctime.tv_sec  + tv_sec  - timeout1.tv_sec)  * 1000L) +
+           ((ctime.tv_usec + tv_usec - timeout1.tv_usec) / 1000L);
 
       U_ASSERT(checkTolerance())
       }
@@ -140,14 +140,12 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UEventTime::checkMilliSecond()")
 
-      U_INTERNAL_DUMP("ms = %ld", ms)
+      long ms_calculated = ((ctime.tv_sec  + tv_sec  - timeout1.tv_sec)  * 1000L) +
+                           ((ctime.tv_usec + tv_usec - timeout1.tv_usec) / 1000L);
 
-      long ms_calculated = ((ctime.tv_sec  + tv_sec  - u_now->tv_sec)  * 1000L) +
-                           ((ctime.tv_usec + tv_usec - u_now->tv_usec) / 1000L);
+      if ((ms - ms_calculated) <= 1) U_RETURN(true);
 
-      if (ms == ms_calculated) U_RETURN(true);
-
-      U_INTERNAL_DUMP("ms_calculated = %ld", ms_calculated)
+      U_DEBUG("ms = %ld ms_calculated = %ld", ms, ms_calculated);
 
       U_RETURN(false);
       }
@@ -168,14 +166,12 @@ protected:
 
       U_ASSERT(checkMilliSecond())
 
-      U_INTERNAL_DUMP("tolerance = %ld", tolerance)
-
       long tolerance_calculated = ((tv_sec  * 1000L) +
                                    (tv_usec / 1000L)) / 128;
 
-      if (tolerance == tolerance_calculated) U_RETURN(true);
+      if ((tolerance - tolerance_calculated) <= 1) U_RETURN(true);
 
-      U_INTERNAL_DUMP("tolerance_calculated = %ld", tolerance_calculated)
+      U_DEBUG("tolerance = %ld tolerance_calculated = %ld", tolerance, tolerance_calculated);
 
       U_RETURN(false);
       }

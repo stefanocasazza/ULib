@@ -85,7 +85,7 @@ U_NO_EXPORT bool UREDISClient_Base::processRequest(char recvtype)
    U_TRACE(0, "UREDISClient_Base::processRequest(%C)", recvtype)
 
    if (UClient_Base::sendRequest() &&
-       (UClient_Base::response.setBuffer(U_CAPACITY), UClient_Base::readResponse(U_SINGLE_READ)))
+       (vitem.clear(), UClient_Base::response.setBuffer(U_CAPACITY), UClient_Base::readResponse(U_SINGLE_READ)))
       {
       char prefix = UClient_Base::response[0];
 
@@ -206,8 +206,6 @@ U_NO_EXPORT void UREDISClient_Base::processResponse()
    U_INTERNAL_DUMP("err = %d", err)
 
    U_INTERNAL_ASSERT_EQUALS(err, U_RC_OK)
-
-   vitem.clear();
 
          char* ptr = UClient_Base::response.data();
    const char* end = UClient_Base::response.end();

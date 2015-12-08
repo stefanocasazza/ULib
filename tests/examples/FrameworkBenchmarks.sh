@@ -14,7 +14,7 @@ rm -f benchmark/FrameworkBenchmarks/benchmark.log* \
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
 #VALGRIND="valgrind -v --trace-children=yes"
- UMEMUSAGE=yes
+#UMEMUSAGE=yes
  export UTRACE UOBJDUMP USIMERR VALGRIND UMEMUSAGE
 
 unset  ORM_DRIVER ORM_OPTION
@@ -22,12 +22,9 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # PLAINTEXT
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#UMEMPOOL="52,0,0,39,8205,8205,-11,-20,22"
-#UMEMPOOL="982,0,0,36,9846,-24,-23,1727,1151"
-#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 4000|g"							 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 8000|g" benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#UMEMPOOL="58,0,0,39,16401,-14,-15,11,25"
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"		 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/plaintext
 #  4 threads and 256 connections
@@ -59,11 +56,9 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
- UMEMPOOL="56,0,0,40,150,-24,-13,-20,0"
- sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
- sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
- sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 50|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
- sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 100|g"  benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#UMEMPOOL="58,0,0,40,273,-15,-14,-20,36"
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/json
 #  4 threads and 256 connections
@@ -101,11 +96,9 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass character-set=utf8 dbname=hello_world"
 #ORM_DRIVER="pgsql"
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass dbname=hello_world"
-#UMEMPOOL="146,0,0,90,150,-22,-12,-20,0"
+#UMEMPOOL="545,0,0,41,275,-14,-13,-25,41"
 #sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 80|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 100|g"  benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # Running 15s test @ http://laptop:8080/fortune
 #   4 threads and 256 connections
@@ -150,11 +143,9 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # Transfer/sec: 5.96MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #export REDIS_HOST=localhost
-#UMEMPOOL="146,0,0,90,150,-22,-12,-20,0"
+#UMEMPOOL="1057,0,0,39,274,-14,-15,-24,40"
 #sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|CLIENT_THRESHOLD .*|CLIENT_THRESHOLD 80|g"								 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 100|g"  benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 DIR_CMD="../../examples/userver"
 

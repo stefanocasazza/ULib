@@ -202,7 +202,12 @@ public:
       tree.clear();
       }
 
-   virtual ~USOAPParser();
+   virtual ~USOAPParser()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, USOAPParser)
+
+      clearData();
+      }
 
    // SERVICES
 

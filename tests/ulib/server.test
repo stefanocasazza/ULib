@@ -12,8 +12,6 @@ start_msg server
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
 
-UMEMPOOL=0,0,0,0,0,0,0,0,0:20971520,2097152
-
 if [ "$TERM" != "cygwin" ]; then
 	DIR=../../src/ulib/net/server/plugin/.libs
 	test -d $DIR &&

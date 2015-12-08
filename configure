@@ -19887,7 +19887,7 @@ _ACEOF
 
 fi
 
-for ac_header in arpa/inet.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h \
+for ac_header in arpa/inet.h asm/mman.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h \
 						string.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h sys/timeb.h sys/resource.h syslog.h termios.h unistd.h wchar.h \
 						assert.h byteswap.h endian.h execinfo.h ifaddrs.h mcheck.h ndir.h dirent.h ndir.h string.h netpacket/packet.h sched.h \
 						semaphore.h sysexits.h streambuf.h poll.h net/if_arp.h sys/dir.h sys/endian.h sys/ndir.h sys/inotify.h sys/sendfile.h sys/sched.h \

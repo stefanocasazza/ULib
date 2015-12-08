@@ -132,16 +132,6 @@ void ULib_init()
 
    UInterrupt::init();
 
-   // TMPDIR is the canonical Unix environment variable which points to user scratch space. Most Unix utilities will honor the setting of this
-   // variable and use its value to denote the scratch area for temporary files instead of the common default of /tmp.
-   // Other forms sometimes accepted are TEMP, TEMPDIR, and TMP but these are used more commonly by non-POSIX Operating systems.
-
-   // if defined, otherwise it will be created in /tmp
-
-   u_tmpdir = (const char*) U_SYSCALL(getenv, "%S", "TMPDIR");
-
-   if (u_tmpdir == 0) u_tmpdir = "/tmp";
-
 #ifdef _MSWINDOWS_
    WSADATA wsaData;
    WORD version_requested = MAKEWORD(2, 2); // version_high, version_low
@@ -193,9 +183,9 @@ void ULib_init()
  * #endif
  */
 
+   UString::str_allocate(0);
+
 #ifdef USE_LIBSSL
    ULib_init_openssl();
 #endif
-
-   UString::str_allocate(0);
 }

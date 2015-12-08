@@ -18,7 +18,7 @@
 
 #ifdef _MSWINDOWS_
 #define st_ino u_inode
-#elif defined(U_LINUX)
+#elif defined(HAVE_ASM_MMAN_H)
 #  include <asm/mman.h>
 #endif
 
@@ -360,9 +360,11 @@ public:
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
+#  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+#  endif
 
 #  ifdef U_COVERITY_FALSE_POSITIVE
       if (fd > 0)
@@ -393,14 +395,19 @@ public:
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+#  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+#  endif
 
       st_size = lseek(U_SEEK_BEGIN, SEEK_END);
 
       U_INTERNAL_ASSERT(st_size >= U_SEEK_BEGIN)
       }
+
+   bool ftruncate(uint32_t n);
 
    off_t size(bool bstat = false);
 
@@ -619,9 +626,11 @@ public:
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
+#  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+#  endif
 
 #  ifdef U_COVERITY_FALSE_POSITIVE
       if (fd > 0)
@@ -629,15 +638,73 @@ public:
       (void) U_SYSCALL(fsync, "%d", fd);
       }
 
-   bool fallocate(uint32_t n);
-   bool ftruncate(uint32_t n);
+   bool fallocate(uint32_t n)
+      {
+      U_TRACE(0, "UFile::fallocate(%u)", n)
 
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+#  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+#  endif
+
+      if (fallocate(fd, n))
+         {
+         st_size = n;
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   static bool fallocate(int fd, uint32_t n);
    static bool chdir(const char* path, bool flag_save = false);
 
    // LOCKING
 
-   bool   lock(short l_type = F_WRLCK, uint32_t start = 0, uint32_t len = 0) const; // set the lock, waiting if necessary
-   bool unlock(                        uint32_t start = 0, uint32_t len = 0) const { return lock(F_UNLCK, start, len); }
+   bool lock(short l_type = F_WRLCK, uint32_t start = 0, uint32_t len = 0) const
+      {
+      U_TRACE(0, "UFile::lock(%d,%u,%u)", l_type, start, len)
+
+      // set the lock, waiting if necessary
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+#  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+#  endif
+
+      return lock(fd, l_type, start, len);
+      }
+
+   bool unlock(uint32_t start = 0, uint32_t len = 0) const
+      {
+      U_TRACE(0, "UFile::unlock(%u,%u)", start, len)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+#  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+#  endif
+
+      return lock(fd, F_UNLCK, start, len);
+      }
+
+   static bool   lock(int fd, short l_type = F_WRLCK, uint32_t start = 0, uint32_t len = 0);
+   static bool unlock(int fd,                         uint32_t start = 0, uint32_t len = 0) { return lock(fd, F_UNLCK, start, len); }
 
    // MEMORY MAPPED I/O (Basically, you can tell the OS that some file is the backing store for a certain portion of the process memory)
 
@@ -766,9 +833,12 @@ public:
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+#  if defined(DEBUG) && !defined(U_LINUX) && !defined(O_TMPFILE)
       U_INTERNAL_ASSERT_POINTER(path_relativ)
 
       U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+#  endif
 
 #  ifdef U_COVERITY_FALSE_POSITIVE
       if (fd <= 0) U_RETURN(0);
@@ -780,9 +850,7 @@ public:
 
    bool write(const char* data,  uint32_t sz, bool append = false, bool bmkdirs = false);
    bool write(const struct iovec* iov, int n, bool append = false, bool bmkdirs = false);
-
-   bool write(const UString& data, bool append = false, bool bmkdirs = false)
-      { return write(U_STRING_TO_PARAM(data), append, bmkdirs); }
+   bool write(const UString& data,            bool append = false, bool bmkdirs = false) { return write(U_STRING_TO_PARAM(data), append, bmkdirs); }
 
    static int     setSysParam(  const char* name, int value, bool force = false);
    static int     getSysParam(  const char* name);
@@ -846,12 +914,7 @@ public:
 
    // TEMP OP
 
-   // ----------------------------------------------------------------------------------------------------------------------
-   // create a unique temporary file
-   // ----------------------------------------------------------------------------------------------------------------------
-
-   bool mkTemp();
-   bool mkTempForLock();
+   static int mkTemp(); // create a unique temporary file
 
    // --------------------------------------------------------------------------------------------------------------
    // mkdtemp - create a unique temporary directory

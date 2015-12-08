@@ -79,7 +79,7 @@ void UTimer::callHandlerTimeout()
    UTimer* item = first;
                   first = first->next; // remove it from its active list
 
-   U_INTERNAL_DUMP("u_now = %#19D (next alarm expire) = %#19D", u_now->tv_sec, item->next ? item->next->alarm->expire() : 0L)
+   U_INTERNAL_DUMP("UEventTime::timeout1 = %#19D (next alarm expire) = %#19D", UEventTime::timeout1.tv_sec, item->next ? item->next->alarm->expire() : 0L)
 
    if (item->alarm->handlerTime() == 0) // 0 => monitoring
       {
@@ -103,9 +103,9 @@ void UTimer::run()
 {
    U_TRACE_NO_PARAM(1, "UTimer::run()")
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+   (void) U_SYSCALL(gettimeofday, "%p,%p", &UEventTime::timeout1, 0);
 
-   U_INTERNAL_DUMP("u_now = { %ld %6ld } first = %p", u_now->tv_sec, u_now->tv_usec, first)
+   U_INTERNAL_DUMP("UEventTime::timeout1 = { %ld %6ld } first = %p", UEventTime::timeout1.tv_sec, UEventTime::timeout1.tv_usec, first)
 
    UTimer* item = first;
    bool bnosignal = (mode == NOSIGNAL);
@@ -149,8 +149,8 @@ void UTimer::setTimer()
       {
       UEventTime* item = first->alarm;
 
-      UInterrupt::timerval.it_value.tv_sec  = item->ctime.tv_sec  + item->tv_sec  - u_now->tv_sec;
-      UInterrupt::timerval.it_value.tv_usec = item->ctime.tv_usec + item->tv_usec - u_now->tv_usec;
+      UInterrupt::timerval.it_value.tv_sec  = item->ctime.tv_sec  + item->tv_sec  - UEventTime::timeout1.tv_sec;
+      UInterrupt::timerval.it_value.tv_usec = item->ctime.tv_usec + item->tv_usec - UEventTime::timeout1.tv_usec;
 
       UTimeVal::adjust(&(UInterrupt::timerval.it_value.tv_sec),
                        &(UInterrupt::timerval.it_value.tv_usec));

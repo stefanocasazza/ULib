@@ -1207,7 +1207,8 @@ __pure uint32_t UStringExt::getBaseNameLen(const UString& s)
    U_RETURN(len);
 }
 
-/* Sort two version numbers, comparing equivalently seperated strings of digits numerically.
+/**
+ * Sort two version numbers, comparing equivalently seperated strings of digits numerically.
  *
  * Returns a positive number if (a > b)
  * Returns a negative number if (a < b)
@@ -1246,8 +1247,11 @@ __pure int UStringExt::compareversion(const char* a, uint32_t alen, const char* 
 
       U_INTERNAL_ASSERT_DIFFERS(apos1,apos2) 
 
-      /* isdigit(a[0]) != isdigit(b[0])
-       * arbitrarily sort the non-digit first */
+      /**
+       * isdigit(a[0]) != isdigit(b[0])
+       *
+       * arbitrarily sort the non-digit first
+       */
 
       if (bpos1 == bpos2) U_RETURN(isnum ? 1 : -1);
 

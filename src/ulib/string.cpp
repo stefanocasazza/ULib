@@ -591,9 +591,9 @@ void UStringRep::set(uint32_t __length, uint32_t __capacity, const char* ptr)
 
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
    parent = 0;
-#  ifdef DEBUG
+# ifdef DEBUG
    child  = 0;
-#  endif
+# endif
 #endif
 
    _length    = __length;
@@ -619,14 +619,14 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
 #else
    if (need > U_CAPACITY)
       {
-      U_INTERNAL_DUMP("UFile::nr_hugepages = %u UFile::rlimit_memfree = %u", UFile::nr_hugepages, UFile::rlimit_memfree)
+      _ptr = UFile::mmap(&need, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, 0);
 
-      _ptr = (need >= U_2M &&
-              UFile::nr_hugepages
-                  ? UFile::mmap_anon_huge(&need, MAP_PRIVATE | U_MAP_ANON)
-                  : UFile::mmap(&need, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, 0));
-      
-      if (_ptr == MAP_FAILED) U_RETURN_POINTER(string_rep_null, UStringRep);
+      if (_ptr == MAP_FAILED)
+         {
+         string_rep_null->references++;
+
+         U_RETURN_POINTER(string_rep_null, UStringRep);
+         }
 
       r = U_MALLOC_TYPE(UStringRep);
       }
@@ -798,13 +798,17 @@ void UStringRep::_release()
    U_INTERNAL_DUMP("_capacity = %u str(%u) = %.*S", _capacity, _length, _length, str)
 
    U_INTERNAL_ASSERT_EQUALS(references, 0)
+#if defined(__GNUC__) && GCC_VERSION_NUM >= 50300
+   if (this == string_rep_null) return;
+#else
    U_INTERNAL_ASSERT_DIFFERS(this, string_rep_null)
+#endif
 
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
    if (parent)
-#  ifdef U_SUBSTR_INC_REF
+# ifdef U_SUBSTR_INC_REF
       parent->release(); // NB: solo la morte della substring de-referenzia la source...
-#  else
+# else
       {
       U_INTERNAL_ASSERT_EQUALS(child, 0)
 
@@ -851,10 +855,10 @@ void UStringRep::_release()
             }
          }
       }
-#  endif
-#  ifdef DEBUG
+# endif
+#ifdef DEBUG
    U_UNREGISTER_OBJECT(0, this)
-#  endif
+#endif
 #endif
 
 #ifndef ENABLE_MEMPOOL

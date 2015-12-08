@@ -961,30 +961,32 @@ public:
          }
       else
          {
-         if (c != '-') write_to_log = "EXIT"; // old compatibility
+         connected = false;
+
+         if (c != '-' ||
+             logout.size() > 2)
+            {
+            write_to_log = "EXIT"; // old compatibility
+            }
          else
             {
-            connected = false;
+            U_ASSERT_EQUALS(logout.size(), 2)
 
-            if (logout.size() > 2) write_to_log = "EXIT"; // old compatibility
-            else
+            switch (logout.c_char(1) - '0')
                {
-               U_ASSERT_EQUALS(logout.size(), 2)
+               case U_LOGOUT_NO_TRAFFIC:           write_to_log = "EXIT_NO_TRAFFIC";           break;
+               case U_LOGOUT_NO_ARP_CACHE:         write_to_log = "EXIT_NO_ARP_CACHE";         break;
+               case U_LOGOUT_NO_ARP_REPLY:         write_to_log = "EXIT_NO_ARP_REPLY";         break;
+               case U_LOGOUT_NO_MORE_TIME:         write_to_log = "EXIT_NO_MORE_TIME";         break;
+               case U_LOGOUT_NO_MORE_TRAFFIC:      write_to_log = "EXIT_NO_MORE_TRAFFIC";      break;
+               case U_LOGOUT_CHECK_FIREWALL:       write_to_log = "EXIT_CHECK_FIREWALL";       break;
+               case U_LOGOUT_REQUEST_FROM_AUTH:    write_to_log = "EXIT_REQUEST_FROM_AUTH";    break;
+               case U_LOGOUT_DIFFERENT_MAC_FOR_IP: write_to_log = "EXIT_DIFFERENT_MAC_FOR_IP"; break;
 
-               switch (logout.c_char(1) - '0')
-                  {
-                  case U_LOGOUT_NO_TRAFFIC:           write_to_log = "EXIT_NO_TRAFFIC";           break;
-                  case U_LOGOUT_NO_ARP_CACHE:         write_to_log = "EXIT_NO_ARP_CACHE";         break;
-                  case U_LOGOUT_NO_ARP_REPLY:         write_to_log = "EXIT_NO_ARP_REPLY";         break;
-                  case U_LOGOUT_NO_MORE_TIME:         write_to_log = "EXIT_NO_MORE_TIME";         break;
-                  case U_LOGOUT_NO_MORE_TRAFFIC:      write_to_log = "EXIT_NO_MORE_TRAFFIC";      break;
-                  case U_LOGOUT_CHECK_FIREWALL:       write_to_log = "EXIT_CHECK_FIREWALL";       break;
-                  case U_LOGOUT_REQUEST_FROM_AUTH:    write_to_log = "EXIT_REQUEST_FROM_AUTH";    break;
-                  case U_LOGOUT_DIFFERENT_MAC_FOR_IP: write_to_log = "EXIT_DIFFERENT_MAC_FOR_IP"; break;
-                  }
+               default: U_ERROR("unexpected value for logout: %S", logout.rep);
                }
             }
-            
+
          U_INTERNAL_DUMP("_auth_domain = %V", _auth_domain.rep)
 
          if (_auth_domain == *account_auth)
@@ -1335,6 +1337,7 @@ next:
        */
 
       U_INTERNAL_ASSERT(_mac)
+      U_INTERNAL_ASSERT(*traffic_counter)
 
       ULog::log(file_LOG->getFd(), "op: %s, uid: %v, ap: %v, ip: %v, mac: %v, timeout: %v, traffic: %v, policy: %v",
                                     op,     uid->rep, getAP().rep, _ip.rep, _mac.rep, time_counter->rep, traffic_counter->rep, getPolicy().rep);
@@ -4220,8 +4223,6 @@ next:
       if (write_to_log &&
           user_rec->setNodogReference())
          {
-         ask_logout = true; 
-
          user_rec->writeToLOG(write_to_log);
          }
 
@@ -4636,7 +4637,8 @@ static void GET_login_validate()
 
    if (checkLoginRequest(0, 14, 0, false) == false ||
        checkLoginValidate(true)           == false ||
-       nodog_rec->findLabel()             == false)
+       nodog_rec->findLabel()             == false ||
+       mac->empty()) // sometimes happen !
       {
       loginWithProblem();
 

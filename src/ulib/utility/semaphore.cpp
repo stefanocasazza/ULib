@@ -56,9 +56,9 @@ void USemaphore::init(sem_t* ptr, int resource)
 #elif defined(_MSWINDOWS_)
    psem = (sem_t*) ::CreateSemaphore((LPSECURITY_ATTRIBUTES)NULL, (LONG)resource, 1000000, (LPCTSTR)NULL);
 #else
-   psem = U_NEW(UFile);
+   psem = UFile::mkTemp();
 
-   if (psem->mkTempForLock() == false) U_ERROR("USemaphore::init(%p,%u) failed", ptr, resource);
+   if (psem == -1) U_ERROR("USemaphore::init(%p,%u) failed", ptr, resource);
 #endif
 
 #if !defined(__MACOSX__) && !defined(__APPLE__) && defined(HAVE_SEM_GETVALUE)
@@ -96,9 +96,7 @@ USemaphore::~USemaphore()
 #elif defined(_MSWINDOWS_)
    (void) ::CloseHandle((HANDLE)psem);
 #else
-   (void) (psem->close(), psem->_unlink());
-
-   delete psem;
+   UFile::close(psem);
 #endif
 }
 
@@ -124,7 +122,7 @@ void USemaphore::post()
 #elif defined(_MSWINDOWS_)
    ::ReleaseSemaphore((HANDLE)psem, 1, (LPLONG)NULL);
 #else
-   (void) psem->unlock();
+   (void) UFile::unlock(psem);
 #endif
 
    U_INTERNAL_DUMP("value = %d", getValue())
@@ -199,7 +197,7 @@ bool USemaphore::wait(time_t timeoutMS)
 #elif defined(_MSWINDOWS_)
    if (::WaitForSingleObject((HANDLE)psem, timeoutMS) == WAIT_OBJECT_0) U_RETURN(true);
 #else
-   if (psem->lock()) U_RETURN(true);
+   if (UFile::lock(psem)) U_RETURN(true);
 #endif
 
    U_RETURN(false);
@@ -242,7 +240,7 @@ wait:
 #elif defined(_MSWINDOWS_)
    (void) ::WaitForSingleObject((HANDLE)psem, INFINITE);
 #else
-   (void) psem->lock();
+   (void) UFile::lock(psem);
 #endif
 
    U_INTERNAL_DUMP("value = %d", getValue())

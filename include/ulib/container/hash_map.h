@@ -110,6 +110,10 @@ public:
    ~UHashMap()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UHashMap<void*>)
+
+      U_INTERNAL_ASSERT_EQUALS(_length, 0)
+
+      if (_capacity) _deallocate();
       }
 
    // allocate and deallocate methods
@@ -118,7 +122,12 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHashMap<void*>::deallocate()")
 
-      _capacity = 0;
+      if (_capacity)
+         {
+         _deallocate();
+
+         _capacity = 0;
+         }
       }
 
    void allocate(uint32_t n);
@@ -314,6 +323,8 @@ protected:
    void init(uint32_t n)
       {
       U_TRACE(0, "UHashMap<void*>::init(%u)", n)
+
+      U_INTERNAL_DUMP("this = %p", this)
 
       node = 0;
 

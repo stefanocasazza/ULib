@@ -169,6 +169,7 @@ int U_EXPORT main (int argc, char* argv[])
    check1(y);
    check2(y);
 
+   y.destroy();
    y.table.assign(x);
 
    x.clear();

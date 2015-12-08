@@ -16,17 +16,6 @@
 #include <ulib/xml/soap/soap_parser.h>
 #include <ulib/xml/soap/soap_encoder.h>
 
-USOAPParser::~USOAPParser()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, USOAPParser)
-
-   clearData();
-
-#ifdef U_SOAP_NAMESPACE
-   XMLNStoURN.deallocate();
-#endif
-}
-
 bool USOAPParser::parse(const UString& msg)
 {
    U_TRACE(0+256, "USOAPParser::parse(%V)", msg.rep)

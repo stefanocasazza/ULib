@@ -408,7 +408,6 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
    U_INTERNAL_ASSERT_POINTER(ptr)
 
 #ifdef ENABLE_MEMPOOL
-   int value;
    void* addr;
    uint32_t i;
    char* endptr;
@@ -428,26 +427,31 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
 
    if (*endptr == ':')
       {
-      value = strtol(ptr, &endptr, 10);
+      int value = strtol(ptr, &endptr, 10);
 
       if (value) UFile::rlimit_memalloc = value;
 
       value = strtol(endptr + 1, &endptr, 10);
 
-      if (value)
-         {
-         UFile::rlimit_memfree = value;
-
-#     if defined(U_LINUX) && MAP_HUGE_2MB
-         if (value == U_2M)
-            {
-            // cat /proc/meminfo | grep Huge
-
-            UFile::nr_hugepages = UFile::setSysParam("/proc/sys/vm/nr_hugepages", U_2M * 64);
-            }
-#     endif
-         }
+      if (value) UFile::rlimit_memfree = value;
       }
+
+#if defined(U_LINUX) && defined(MAP_HUGE_2MB)
+   if (UFile::rlimit_memfree == U_2M)
+      {
+#  ifdef DEBUG
+      char buffer[256];
+
+      if (u_err_buffer == 0) u_err_buffer = buffer;
+#  endif
+
+      // cat /proc/meminfo | grep Huge
+
+      UFile::nr_hugepages = UFile::setSysParam("/proc/sys/vm/nr_hugepages", 64);
+
+      U_DEBUG("creation of 64 huge pages %s", UFile::nr_hugepages ? "success" : "FAILED");
+      }
+#endif
 
    for (i = 1; i < U_NUM_STACK_TYPE; ++i)
       {

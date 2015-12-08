@@ -1838,7 +1838,8 @@ U_EXPORT main (int argc, char* argv[])
    U_ASSERT_DIFFERS( z.size(), u_cwd_len )
    U_ASSERT( z == U_STRING_FROM_CONSTANT("/mnt/storage/stefano/ulib/nodebug/64/gentoo/ULib-1.0.5/tests/examples/www.sito1.com/cgi-bin/redirect.sh") )
 
-   /* Sort two version numbers, comparing equivalently seperated strings of digits numerically
+   /**
+    * Sort two version numbers, comparing equivalently seperated strings of digits numerically
     *
     * Returns a positive number if (a > b)
     * Returns a negative number if (a < b)

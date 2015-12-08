@@ -15,7 +15,7 @@ start_msg web_server
 
 DOC_ROOT=docroot
 
-rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/*.memusage.* \
+rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/soap.res /tmp/*.memusage.* \
 		$DOC_ROOT/webserver*.log* $DOC_ROOT/uploads/* /var/log/httpd/access_log \
       out/userver_tcp.out err/userver_tcp.err web_server.err \
 					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \

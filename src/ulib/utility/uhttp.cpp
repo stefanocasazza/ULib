@@ -6018,22 +6018,26 @@ end:
 
       if (u_is_html(mime_index))
          {
-#     if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+#     if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+         u_put_unalignedp64(ptr1, U_MULTICHAR_CONSTANT64('/','h','t','m','l','\r','\n','\0'));
+
+         sz += U_CONSTANT_SIZE("Content-Type: text/html\r\n");
+#     else
          u_put_unalignedp64(ptr1,    U_MULTICHAR_CONSTANT64('/','h','t','m','l',';',' ','c'));
          u_put_unalignedp64(ptr1+8,  U_MULTICHAR_CONSTANT64('h','a','r','s','e','t','=','U'));
          u_put_unalignedp32(ptr1+16, U_MULTICHAR_CONSTANT32('T','F','-','8'));
          u_put_unalignedp16(ptr1+20, U_MULTICHAR_CONSTANT16('\r','\n'));
 
          sz += U_CONSTANT_SIZE("Content-Type: " U_CTYPE_HTML "\r\n");
-#     else
-         u_put_unalignedp64(ptr1, U_MULTICHAR_CONSTANT64('/','h','t','m','l','\r','\n','\0'));
-
-         sz += U_CONSTANT_SIZE("Content-Type: text/html\r\n");
 #     endif
          }
       else
          {
-#     if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+#     if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+         u_put_unalignedp64(ptr1, U_MULTICHAR_CONSTANT64('/','p','l','a','i','n','\r','\n'));
+
+         sz += U_CONSTANT_SIZE("Content-Type: text/plain\r\n");
+#     else
          u_put_unalignedp64(ptr1,    U_MULTICHAR_CONSTANT64('/','p','l','a','i','n',';',' '));
          u_put_unalignedp64(ptr1+8,  U_MULTICHAR_CONSTANT64('c','h','a','r','s','e','t','='));
          u_put_unalignedp32(ptr1+16, U_MULTICHAR_CONSTANT32('U','T','F','-'));
@@ -6041,10 +6045,6 @@ end:
          u_put_unalignedp16(ptr1+21, U_MULTICHAR_CONSTANT16('\r','\n'));
 
          sz += U_CONSTANT_SIZE("Content-Type: " U_CTYPE_TEXT "\r\n");
-#     else
-         u_put_unalignedp64(ptr1, U_MULTICHAR_CONSTANT64('/','p','l','a','i','n','\r','\n'));
-
-         sz += U_CONSTANT_SIZE("Content-Type: text/plain\r\n");
 #     endif
          }
       }

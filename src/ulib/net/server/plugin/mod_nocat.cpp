@@ -1191,7 +1191,6 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
 
 end:
    args.clear();
-   args.deallocate();
 
    U_RETURN(result);
 }
@@ -1329,7 +1328,6 @@ void UNoCatPlugIn::setNewPeer()
                {
                peer->mac = (*varp_cache)[i+1].copy();
 
-               U_INTERNAL_ASSERT(peer->mac)
                U_ASSERT_EQUALS(peer->ifname, (*varp_cache)[i+2])
 
                break;
@@ -1337,6 +1335,7 @@ void UNoCatPlugIn::setNewPeer()
             }
          }
 
+      U_INTERNAL_ASSERT(peer->mac)
       U_ASSERT_EQUALS(peer->mac, USocketExt::getMacAddress(peer->ip))
       }
 
@@ -1372,11 +1371,9 @@ next:
    setFireWallCommand(peer->fw, *fw_cmd, peer->mac, peer->ip);
 
    /**
-    * --------------------------------------------------------------------------------------------------------------------
     * NB: tutto il traffico viene rediretto sulla 80 (CAPTIVE PORTAL) e quindi windows update, antivrus, etc...
     * questo introduce la possibilita' che durante la fase di autorizzazione il token generato per il ticket autorizzativo
     * non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
-    * ---------------------------------------------------------------------------------------------------------------------
     */
 
    peer->token = UStringExt::numberToString(u_random(u_now->tv_usec));
@@ -1406,6 +1403,8 @@ void UNoCatPlugIn::checkOldPeer()
 
       U_SRV_LOG("WARNING: different MAC (%v) for peer: IP %v MAC %v", mac.rep, peer->ip.rep, peer->mac.rep);
 
+      U_INTERNAL_ASSERT(peer->mac)
+
       (void) getARPCache();
 
       int disconnected = peer->checkPeerInfo(true);
@@ -1418,11 +1417,11 @@ void UNoCatPlugIn::checkOldPeer()
 
       peer->fw.setArgument(4, peer->mac.data());
 
-      // ---------------------------------------------------------------------------------------------------------------------
-      // NB: tutto il traffico viene rediretto sulla 80 (CAPTIVE PORTAL) e quindi windows update, antivrus, etc...
-      // questo introduce la possibilita' che durante la fase di autorizzazione il token generato per il ticket autorizzativo
-      // non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
-      // ---------------------------------------------------------------------------------------------------------------------
+      /**
+       * NB: tutto il traffico viene rediretto sulla 80 (CAPTIVE PORTAL) e quindi windows update, antivrus, etc...
+       * questo introduce la possibilita' che durante la fase di autorizzazione il token generato per il ticket autorizzativo
+       * non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
+       */
 
       peer->token = UStringExt::numberToString(u_random(u_now->tv_usec));
       }
@@ -1433,6 +1432,7 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
    U_TRACE(0, "UNoCatPlugIn::addPeerInfo(%d)", disconnected)
 
    U_INTERNAL_ASSERT_POINTER(peer)
+   U_INTERNAL_ASSERT(peer->mac)
    U_INTERNAL_ASSERT(peer->user)
    U_INTERNAL_ASSERT(u_now->tv_sec >= peer->ctime)
 
@@ -2622,7 +2622,7 @@ set_redirect_to_AUTH:
 
       if (mode == UHTTP::NO_BODY          && // login_validate
           (check_type & U_CHECK_MAC) != 0 && // not unifi (L2)
-          peer->mac == *UString::str_without_mac)
+          (peer->mac == *UString::str_without_mac || peer->mac.empty()))
          {
          mode = UHTTP::REFRESH | UHTTP::NO_BODY;
 
@@ -2635,6 +2635,7 @@ set_redirect_to_AUTH:
       else
          {
          U_INTERNAL_ASSERT_POINTER(peer)
+         U_INTERNAL_ASSERT(peer->mac)
 
          Url* auth = (*vauth_url)[index_AUTH];
          uint32_t sz = (buffer.size() * 3);

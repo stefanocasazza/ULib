@@ -25,7 +25,6 @@ extern "C" { int sem_getvalue(sem_t* sem, int* sval); }
 #  endif
 #endif
 
-class UFile;
 class UTimeVal;
 class UServer_Base;
 
@@ -108,7 +107,7 @@ protected:
 #elif defined(_MSWINDOWS_) || (defined(HAVE_SEM_INIT) && (!defined(U_LINUX) || LINUX_VERSION_CODE > KERNEL_VERSION(2,6,7)))
    sem_t* psem;
 #else
-   UFile* psem;
+   int psem;
 #endif
 
    static USemaphore* first;

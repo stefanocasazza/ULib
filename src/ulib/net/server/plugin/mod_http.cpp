@@ -475,7 +475,7 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
       UClientImage_Base::iov_vec[1].iov_base = (caddr_t)ULog::date.date3; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
       UClientImage_Base::iov_vec[1].iov_len  = 6+29+2+12+2+17+2;
 
-#  if defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+#  if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
 
       UClientImage_Base::iov_vec[1].iov_base = (caddr_t)UServer_Base::ptr_shared_data->log_date_shared.date3;

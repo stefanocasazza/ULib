@@ -1444,7 +1444,7 @@ bool UClientImage_Base::writeResponse()
 
       u__memcpy(iov_sav, iov_vec, U_IOV_TO_SAVE, __PRETTY_FUNCTION__);
 
-#  if defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+#  if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
@@ -1614,12 +1614,7 @@ end:
    if (nrequest) u_buffer_len = 0;
 #endif
 
-   if (bflag)
-      {
-      // restore socket status flags
-
-      socket->setNonBlocking();
-      }
+   if (bflag) socket->setNonBlocking(); // restore socket status flags
 
    U_RETURN(result);
 }
@@ -1705,27 +1700,14 @@ int UClientImage_Base::handlerResponse()
 #  ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
       resetPipelineAndSetCloseConnection();
 #  else
-      char path[MAX_FILENAME_LEN];
-
-      // By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp.
-      // This will reduce the I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem. 
-
-      const char* format = (ncount < (2 * 1024 * 1024)
-                                 ?     "/tmp/pwrite.%P.%4D"
-                                 : "/var/tmp/pwrite.%P.%4D");
-
-      uint32_t len = u__snprintf(path, sizeof(path), format, 0);
-
-      sfd = UFile::creat(path);
+      sfd = UFile::mkTemp();
 
       if (sfd == -1)
          {
-         U_SRV_LOG("partial write failed: (remain %u bytes) - error on create temporary file %.*S sock_fd %d sfd %d", ncount, len, path, socket->iSockDesc, sfd);
+         U_SRV_LOG("partial write failed: (remain %u bytes) - error on create temporary file - sock_fd %d", ncount, socket->iSockDesc);
 
          U_RETURN(U_NOTIFIER_DELETE);
          }
-
-      (void) UFile::_unlink(path);
 
       U_INTERNAL_ASSERT_POINTER(piov)
 
@@ -1733,7 +1715,7 @@ int UClientImage_Base::handlerResponse()
 
       if (iBytesWrite != (int)ncount)
          {
-         U_SRV_LOG("partial write failed: (remain %u bytes) - error on write (%d bytes) on temporary file %.*S sock_fd %d sfd %d", ncount, iBytesWrite, len, path, socket->iSockDesc, sfd);
+         U_SRV_LOG("partial write failed: (remain %u bytes) - error on write (%d bytes) on temporary file - sock_fd %d sfd %d", ncount, iBytesWrite, socket->iSockDesc, sfd);
 
          UFile::close(sfd);
                       sfd = -1;
@@ -1741,9 +1723,9 @@ int UClientImage_Base::handlerResponse()
          U_RETURN(U_NOTIFIER_DELETE);
          }
 
-      U_SRV_LOG("partial write: (remain %u bytes) - create temporary file %.*S sock_fd %d sfd %d", ncount, len, path, socket->iSockDesc, sfd);
+      U_SRV_LOG("partial write: (remain %u bytes) - create temporary file - sock_fd %d sfd %d", ncount, socket->iSockDesc, sfd);
 
-      setPendingSendfile(); // NB: we have a pending sendfile...
+      setPendingSendfile(); // NB: now we have a pending sendfile...
 
       U_RETURN(U_NOTIFIER_OK);
 #  endif

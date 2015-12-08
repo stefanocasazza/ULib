@@ -141,7 +141,7 @@ char                 u_hostname[HOST_NAME_MAX+1];
 int32_t              u_printf_string_max_length;
 uint32_t             u_hostname_len, u_user_name_len, u_seed_hash = 0xdeadbeef;
 const int            MultiplyDeBruijnBitPosition2[32] = { 0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9 };
-const char* restrict u_tmpdir;
+const char* restrict u_tmpdir = "/tmp";
 const unsigned char  u_alphabet[]  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 const unsigned char  u_hex_upper[] = "0123456789ABCDEF";
 const unsigned char  u_hex_lower[] = "0123456789abcdef";

@@ -31,8 +31,6 @@ public:
    ~UFileConfig()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UFileConfig)
-
-      destroy();
       }
 
    // SERVICES

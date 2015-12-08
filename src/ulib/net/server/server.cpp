@@ -1015,6 +1015,18 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
       U_WARNING("System date not updated: %#5D", u_now->tv_sec);
       }
 
+   /**
+    * TMPDIR is the canonical Unix environment variable which points to user scratch space. Most Unix utilities will honor the setting of this
+    * variable and use its value to denote the scratch area for temporary files instead of the common default of /tmp. Other forms sometimes
+    * accepted are TEMP, TEMPDIR, and TMP but these are used more commonly by non-POSIX Operating systems. If defined, otherwise it will be
+    * /tmp. By default, /tmp on Fedora 18 will be on a tmpfs. Storage of large temporary files should be done in /var/tmp. This will reduce the
+    * I/O generated on disks, increase SSD lifetime, save power, and improve performance of the /tmp filesystem 
+    */
+
+   const char* tmpdir = (const char*) getenv("TMPDIR");
+
+   u_tmpdir = (tmpdir ? tmpdir : "/var/tmp");
+
    if (pcfg)
       {
       U_INTERNAL_ASSERT_EQUALS(cfg, 0)
