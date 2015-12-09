@@ -852,8 +852,8 @@ public:
    bool write(const struct iovec* iov, int n, bool append = false, bool bmkdirs = false);
    bool write(const UString& data,            bool append = false, bool bmkdirs = false) { return write(U_STRING_TO_PARAM(data), append, bmkdirs); }
 
-   static int     setSysParam(  const char* name, int value, bool force = false);
-   static int     getSysParam(  const char* name);
+   static long    setSysParam(  const char* name, long value, bool force = false);
+   static long    getSysParam(  const char* name);
    static UString getSysContent(const char* name);
 
    static bool writeToTmp(const char* data,  uint32_t sz, bool append, const char* fmt, ...);
@@ -950,7 +950,7 @@ public:
 #  if defined(U_LINUX) && defined(U_MEMALLOC_WITH_HUGE_PAGE) && (defined(MAP_HUGE_1GB) || defined(MAP_HUGE_2MB)) // (since Linux 3.8)
       if (nr_hugepages)
          {
-         U_INTERNAL_DUMP("nr_hugepages = %u rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
+         U_INTERNAL_DUMP("nr_hugepages = %ld rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
 
          U_INTERNAL_ASSERT_EQUALS(rlimit_memfree, U_2M)
 
@@ -973,7 +973,7 @@ public:
 #  if defined(U_LINUX) && defined(U_MEMALLOC_WITH_HUGE_PAGE) && (defined(MAP_HUGE_1GB) || defined(MAP_HUGE_2MB)) // (since Linux 3.8)
       if (nr_hugepages)
          {
-         U_INTERNAL_DUMP("nr_hugepages = %u rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
+         U_INTERNAL_DUMP("nr_hugepages = %ld rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
 
          U_INTERNAL_ASSERT_EQUALS(rlimit_memfree, U_2M)
 
@@ -1067,8 +1067,9 @@ protected:
    static char*    cwd_save;
    static uint32_t cwd_save_len;
 
-   static char*    pfree;
-   static uint32_t nfree, rlimit_memfree, rlimit_memalloc, nr_hugepages;
+   static char* pfree;
+   static long nr_hugepages;
+   static uint32_t nfree, rlimit_memfree, rlimit_memalloc;
 
    void substitute(UFile& file);
    bool creatForWrite(bool append, bool bmkdirs);

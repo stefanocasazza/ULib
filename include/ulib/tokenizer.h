@@ -184,7 +184,7 @@ public:
       }
 
    UString getTokenQueryParser();
-   int     getTokenId(UString& token);
+   int     getTokenId(UString* ptoken);
    bool    tokenSeen(const UString* x);
 
    bool skipNumber(bool& isReal);

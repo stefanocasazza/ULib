@@ -42,7 +42,7 @@ static void test_memmove_01()
    const char str_lit1[] = "montara and ocean beach";
    char array2[sizeof(str_lit1) + sizeof(array1) - 1] = { '\0', '\0' };
 
-   U_ASSERT( str_lit1[0] == 'm' );
+   U_ASSERT( str_lit1[0] == 'm' )
 
    char c1 = array2[0];
    char c2 = str_lit1[0];
@@ -51,35 +51,35 @@ static void test_memmove_01()
 
 // memmove(array2, str_lit1, 0);
 
-   U_ASSERT( array2[0] == c1 );
-   U_ASSERT( str_lit1[0] == c2 );
+   U_ASSERT( array2[0] == c1 )
+   U_ASSERT( str_lit1[0] == c2 )
 
    memmove(array2, str_lit1, 1);
 
-   U_ASSERT( array2[0] == c2 );
-   U_ASSERT( str_lit1[0] == c2 );
-   U_ASSERT( array2[1] == c3 );
-   U_ASSERT( str_lit1[1] == c4 );
+   U_ASSERT( array2[0] == c2 )
+   U_ASSERT( str_lit1[0] == c2 )
+   U_ASSERT( array2[1] == c3 )
+   U_ASSERT( str_lit1[1] == c4 )
 
    memmove(array2, str_lit1, 2);
 
-   U_ASSERT( array2[0] == c2 );
-   U_ASSERT( str_lit1[0] == c2 );
-   U_ASSERT( array2[1] == c4 );
-   U_ASSERT( str_lit1[1] == c4 );
+   U_ASSERT( array2[0] == c2 )
+   U_ASSERT( str_lit1[0] == c2 )
+   U_ASSERT( array2[1] == c4 )
+   U_ASSERT( str_lit1[1] == c4 )
 
    char* pc1 = array1 + 1;
    c1 = pc1[0];
    c2 = array1[0];
-   U_ASSERT( c1 != c2 );
+   U_ASSERT( c1 != c2 )
 
    char* pc2 = (char*)memmove(array1, pc1, 0);
 
    c3 = pc1[0];
    c4 = array1[0];
-   U_ASSERT( c1 == c3 );
-   U_ASSERT( c2 == c4 );
-   U_ASSERT( pc2 == array1 );
+   U_ASSERT( c1 == c3 )
+   U_ASSERT( c2 == c4 )
+   U_ASSERT( pc2 == array1 )
 
    c1 = pc1[0];
    c2 = array1[0];
@@ -89,13 +89,13 @@ static void test_memmove_01()
 
    c3 = pc1[0];
    c4 = array1[0];
-   U_ASSERT( c1 != c3 ); // underlying char array changed.
-   U_ASSERT( c4 != c3 );
-   U_ASSERT( pc2 == array1 );
-   U_ASSERT( pc3 == pc1 ); // but pointers o-tay
+   U_ASSERT( c1 != c3 ) // underlying char array changed.
+   U_ASSERT( c4 != c3 )
+   U_ASSERT( pc2 == array1 )
+   U_ASSERT( pc3 == pc1 ) // but pointers o-tay
    c1 = *(str_01.data());
    c2 = array1[0];
-   U_ASSERT( c1 != c2 );
+   U_ASSERT( c1 != c2 )
 }
 #endif
 
@@ -118,14 +118,14 @@ static void test_assign_01()
    // UString& append(const UString&)
    str05 = str02;
    str05.append(str05);
-   U_ASSERT( str05 == "corpus, corpus, " );
+   U_ASSERT( str05 == "corpus, corpus, " )
    str05.append(str01);
-   U_ASSERT( str05 == "corpus, corpus, point bolivar, texas" );
+   U_ASSERT( str05 == "corpus, corpus, point bolivar, texas" )
    str05.append(str03);
-   U_ASSERT( str05 == "corpus, corpus, point bolivar, texas" );
+   U_ASSERT( str05 == "corpus, corpus, point bolivar, texas" )
    UString str06;
    str06.append(str05);
-   U_ASSERT( str06 == str05 );
+   U_ASSERT( str06 == str05 )
 
    // UString& append(const UString&, unsigned pos, unsigned n)
    str05.erase();
@@ -134,67 +134,67 @@ static void test_assign_01()
    str05 = str02;
    str05.append(str01, 0, npos);
    U_ASSERT( str05 == "corpus, point bolivar, texas" );
-   U_ASSERT( str05 != str02 );
+   U_ASSERT( str05 != str02 )
 
    str06 = str02;
    str06.append(str01, 15, npos);
-   U_ASSERT( str06 == "corpus, texas" );
-   U_ASSERT( str02 != str06 );
+   U_ASSERT( str06 == "corpus, texas" )
+   U_ASSERT( str02 != str06 )
 
    // UString& append(const char* s)
    str05.erase();
    str06.erase();
    str05.append("");
-   U_ASSERT( str05 == str03 );
+   U_ASSERT( str05 == str03 )
 
    str05.append(str_lit01);
-   U_ASSERT( str05 == str01 );
+   U_ASSERT( str05 == str01 )
 
    str06 = str02;
    str06.append("corpus, ");
-   U_ASSERT( str06 == "corpus, corpus, " );
+   U_ASSERT( str06 == "corpus, corpus, " )
 
    // UString& append(const char* s, unsigned n)
    str05.erase();
    str06.erase();
    str05.append("", 0);
-   U_ASSERT( str05.size() == 0 );
-   U_ASSERT( str05 == str03 );
+   U_ASSERT( str05.size() == 0 )
+   U_ASSERT( str05 == str03 )
 
    str05.append(str_lit01, sizeof(str_lit01) - 1);
-   U_ASSERT( str05 == str01 );
+   U_ASSERT( str05 == str01 )
 
    str06 = str02;
    str06.append("corpus, ", 6);
-   U_ASSERT( str06 == "corpus, corpus" );
+   U_ASSERT( str06 == "corpus, corpus" )
 
    str06 = str02;
    str06.append(U_CONSTANT_TO_PARAM("corpus, "));
-   U_ASSERT( str06 == "corpus, corpus, " );
+   U_ASSERT( str06 == "corpus, corpus, " )
 
    // UString& append(unsigned n, char c)
    str05.erase();
    str06.erase();
    str05.append(0, 'a');
-   U_ASSERT( str05 == str03 );
+   U_ASSERT( str05 == str03 )
    str06.append(8, '.');
-   U_ASSERT( str06 == "........" );
+   U_ASSERT( str06 == "........" )
 
    str05.erase();
    str06.erase();
    str05.append(str03);
-   U_ASSERT( str05 == str03 );
+   U_ASSERT( str05 == str03 )
 
    str06 = str02;
    str06.append(str01.data(), str01.find('r')); 
-   U_ASSERT( str06 == "corpus, point boliva" );
-   U_ASSERT( str06 != str01 );
-   U_ASSERT( str06 != str02 );
+   U_ASSERT( str06 == "corpus, point boliva" )
+   U_ASSERT( str06 != str01 )
+   U_ASSERT( str06 != str02 )
 
    str05 = str01;
    str05.append(str05.data(), str05.find('r')); 
-   U_ASSERT( str05 ==  "point bolivar, texaspoint boliva" );
-   U_ASSERT( str05 != str01 );
+   U_ASSERT( str05 ==  "point bolivar, texaspoint boliva" )
+   U_ASSERT( str05 != str01 )
 }
 #endif
 
@@ -210,27 +210,27 @@ static void test_capacity_01()
    unsigned sz01 = str01.capacity();
    str01.reserve(100);
    unsigned sz02 = str01.capacity();
-   U_ASSERT( sz02 >= sz01 );
-   U_ASSERT( sz02 >= 100 );
+   U_ASSERT( sz02 >= sz01 )
+   U_ASSERT( sz02 >= 100 )
    str01.reserve(1);
    sz01 = str01.capacity();
-   U_ASSERT( sz01 > 0 );
+   U_ASSERT( sz01 > 0 )
 
    sz01 = str01.size() + 5;
    str01.resize(sz01);
    sz02 = str01.size();
-   U_ASSERT( sz01 == sz02 );
+   U_ASSERT( sz01 == sz02 )
 
    sz01 = str01.size() - 5;
    str01.resize(sz01);
    sz02 = str01.size();
-   U_ASSERT( sz01 == sz02 );
+   U_ASSERT( sz01 == sz02 )
 
    UString str05(30, 'q');
    UString str06 = str05;
    str05 = str06 + str05;
-   U_ASSERT( str05.capacity() >= str05.size() );
-   U_ASSERT( str06.capacity() >= str06.size() );
+   U_ASSERT( str05.capacity() >= str05.size() )
+   U_ASSERT( str06.capacity() >= str06.size() )
 
    UString str02;
    unsigned sz03;
@@ -239,52 +239,54 @@ static void test_capacity_01()
    sz03 = str02.capacity();
    str02.reserve(100);
    sz04 = str02.capacity();
-   U_ASSERT( sz04 >= sz03 );
-   U_ASSERT( sz04 >= 100 );
+   U_ASSERT( sz04 >= sz03 )
+   U_ASSERT( sz04 >= 100 )
    str02.reserve(1);
    sz03 = str02.capacity();
-   U_ASSERT( sz03 > 0 );
+   U_ASSERT( sz03 > 0 )
 
    sz03 = str02.size() + 5;
    str02.resize(sz03);
    sz04 = str02.size();
-   U_ASSERT( sz03 == sz04 );
+   U_ASSERT( sz03 == sz04 )
 
    sz03 = str02.size() - 5;
    str02.resize(sz03);
    sz04 = str02.size();
-   U_ASSERT( sz03 == sz04 );
+   U_ASSERT( sz03 == sz04 )
 
    char inst_obj = '\0';
    UString str07(30, inst_obj);
    UString str08 = str07;
    str07 = str08 + str07;
-   U_ASSERT( str07.capacity() >= str07.size() );
-   U_ASSERT( str08.capacity() >= str08.size() );
+   U_ASSERT( str07.capacity() >= str07.size() )
+   U_ASSERT( str08.capacity() >= str08.size() )
 
    // 3 POD types: size, length, max_size, clear(), empty()
    bool b01;
    UString str011;
    b01 = str01.empty();  
-   U_ASSERT( b01 == true );
+   U_ASSERT( b01 )
    sz01 = str01.size();
    sz02 = str01.length();
-   U_ASSERT( sz01 == sz02 );
+   U_ASSERT( sz01 == sz02 )
    str01.c_str();
    sz01 = str01.size();
    sz02 = str01.length();
-   U_ASSERT( sz01 == sz02 );
+   U_ASSERT( sz01 == sz02 )
 
    sz01 = str01.length();
    str01.c_str();
+
+   U_INTERNAL_DUMP("_LINE_ = %u __PRETTY_FUNCTION__ = %S", __LINE__, __PRETTY_FUNCTION__)
+
    str011 = str01 +  "_addendum_";
    str01.c_str();
    sz02 = str01.length();    
-   U_ASSERT( sz01 == sz02 );
+   U_ASSERT( sz01 == sz02 )
    sz02 = str011.length();
-   U_ASSERT( sz02 > sz01 );
+   U_ASSERT( sz02 > sz01 )
 
-   // trickster allocator (__USE_MALLOC, luke) issues involved with these:
    UString str3 = U_STRING_FROM_CONSTANT("8-chars_8-chars_");
    (void) str3.c_str();
    UString str4 = str3 + U_STRING_FROM_CONSTANT("7-chars");
@@ -292,34 +294,34 @@ static void test_capacity_01()
 
    sz01 = str01.size();
    sz02 = str01.max_size();  
-   U_ASSERT( sz02 >= sz01 );
+   U_ASSERT( sz02 >= sz01 )
 
    sz01 = str01.size();
    str01.clear();  
    b01 = str01.empty(); 
-   U_ASSERT( b01 == true );
+   U_ASSERT( b01 )
    sz02 = str01.size();  
-   U_ASSERT( sz01 >= sz02 );
+   U_ASSERT( sz01 >= sz02 )
 
    b01 = str02.empty();  
-   U_ASSERT( b01 == true );
+   U_ASSERT( b01 )
    sz03 = str02.size();
    sz04 = str02.length();
-   U_ASSERT( sz03 == sz04 );
+   U_ASSERT( sz03 == sz04 )
    str02.c_str();
    sz03 = str02.size();
    sz04 = str02.length();
-   U_ASSERT( sz03 == sz04 );
+   U_ASSERT( sz03 == sz04 )
 
    sz03 = str02.max_size();  
-   U_ASSERT( sz03 >= sz04 );
+   U_ASSERT( sz03 >= sz04 )
 
    sz03 = str02.size();
    str02.clear();  
    b01 = str02.empty(); 
-   U_ASSERT( b01 == true );
+   U_ASSERT( b01 )
    sz04 = str02.size();  
-   U_ASSERT( sz03 >= sz04 );
+   U_ASSERT( sz03 >= sz04 )
 }
 
 static void test_capacity_02()
@@ -330,7 +332,7 @@ static void test_capacity_02()
    // str01 becomes shared
    UString str02 = str01;
    str01.reserve(1);
-   U_ASSERT( str01.capacity() >= 12 );
+   U_ASSERT( str01.capacity() >= 12 )
 }
 #endif
 
@@ -357,7 +359,7 @@ static void test_value(int result, want_value expected)
       default: pass = false; // should not get here
       }
 
-   U_ASSERT( pass == true )
+   U_ASSERT( pass )
 }
  
 static void test_compare_01()
@@ -431,22 +433,22 @@ static void test_constructors_01()
    // UString(const UString&, unsigned pos = 0, unsigned n = npos)
    csz01 = str01.size();
    UString str03(str01, csz01);
-   U_ASSERT( str03.size() == 0 );
-   U_ASSERT( str03.size() <= str03.capacity() );
+   U_ASSERT( str03.size() == 0 )
+   U_ASSERT( str03.size() <= str03.capacity() )
 
    // UString(const char* s)
    UString str04(str_lit01);
-   U_ASSERT( str01 == str04 );
+   U_ASSERT( str01 == str04 )
 
    // UString(unsigned n, char c)
    csz01 = str01.max_size() / 1024;
 
    UString str05(csz01 - 1, 'z');
-   U_ASSERT( str05.size() != 0 );
-   U_ASSERT( str05.size() <= str05.capacity() );
+   U_ASSERT( str05.size() != 0 )
+   U_ASSERT( str05.size() <= str05.capacity() )
 
    UString str06(str01.data(), str01.size());
-   U_ASSERT( str06 == str01 );
+   U_ASSERT( str06 == str01 )
 }
 
 static void test_constructors_02()
@@ -454,7 +456,7 @@ static void test_constructors_02()
    U_TRACE(5, "test_constructors_02()")
 
    UString s(10,0);
-   U_ASSERT( s.size() == 10 );
+   U_ASSERT( s.size() == 10 )
 }
 
 static void test_constructors_03()
@@ -467,9 +469,9 @@ static void test_constructors_03()
    // bytes.  Obviously UString(char*) will halt at the first one, but
    // nothing else should.
    UString s1 (with_nulls, 28);
-   U_ASSERT( s1.size() == 28 );
+   U_ASSERT( s1.size() == 28 )
    UString s2 (s1);
-   U_ASSERT( s2.size() == 28 );
+   U_ASSERT( s2.size() == 28 )
 }
 #endif
 
@@ -485,22 +487,22 @@ static void test_access_01()
    // char operator[] (unsigned pos) const;
    csz01 = str01.size();
    char ref1 = str01[csz01 - 1];
-   U_ASSERT( ref1 == 'a' );
+   U_ASSERT( ref1 == 'a' )
    ref1 = str01[csz01 - 2];
-   U_ASSERT( ref1 == 'c' );
+   U_ASSERT( ref1 == 'c' )
 
    csz02 = str02.size();
    char ref2 = str02[csz02 - 1];
-   U_ASSERT( ref2 == 'a' );
+   U_ASSERT( ref2 == 'a' )
    ref2 = str02[1];
-   U_ASSERT( ref2 == '4' );
+   U_ASSERT( ref2 == '4' )
 
    // char at(unsigned pos) const;
    ref1 = str01.at(csz01 - 1);
-   U_ASSERT( ref1 == 'a' );
+   U_ASSERT( ref1 == 'a' )
 
    ref2 = str02.at(csz02 - 1);
-   U_ASSERT( ref2 == 'a' );
+   U_ASSERT( ref2 == 'a' )
 }
 #endif
 
@@ -519,73 +521,73 @@ static void test_find_01()
 
    // unsigned find(const UString&, unsigned pos = 0) const;
    csz01 = str01.find(str01);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.find(str01, 4);
-   U_ASSERT( csz01 == npos );
+   U_ASSERT( csz01 == npos )
    csz01 = str01.find(str02, 0);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.find(str02, 3);
-   U_ASSERT( csz01 == npos );
+   U_ASSERT( csz01 == npos )
    csz01 = str01.find(str03, 0);
-   U_ASSERT( csz01 == 8 );
+   U_ASSERT( csz01 == 8 )
    csz01 = str01.find(str03, 3);
-   U_ASSERT( csz01 == 8 );
+   U_ASSERT( csz01 == 8 )
    csz01 = str01.find(str03, 12);
-   U_ASSERT( csz01 == npos );
+   U_ASSERT( csz01 == npos )
 
    // An empty UString consists of no characters
    // therefore it should be found at every point in a UString,
    // except beyond the end
    /*
    csz01 = str01.find(str04, 0);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.find(str04, 5);
-   U_ASSERT( csz01 == 5 );
+   U_ASSERT( csz01 == 5 )
    csz01 = str01.find(str04, str01.size());
-   U_ASSERT( csz01 == str01.size() ); 
+   U_ASSERT( csz01 == str01.size() );
    csz01 = str01.find(str04, str01.size()+1);
-   U_ASSERT( csz01 == npos ); 
+   U_ASSERT( csz01 == npos )
    */
 
    // unsigned find(const char* s, unsigned pos, unsigned n) const;
    csz01 = str01.find(str_lit01, 0, 3);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
 // csz01 = str01.find(str_lit01.c_str(), 3, 0);
-// U_ASSERT( csz01 == 3 );
+// U_ASSERT( csz01 == 3 )
 
    // unsigned find(const char* s, unsigned pos = 0) const;
    csz01 = str01.find(str_lit01);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.find(str_lit01, 3);
-   U_ASSERT( csz01 == npos );
+   U_ASSERT( csz01 == npos )
 
    // unsigned find(char c, unsigned pos = 0) const;
    csz01 = str01.find('z');
    csz02 = str01.size() - 1;
-   U_ASSERT( csz01 == csz02 );
+   U_ASSERT( csz01 == csz02 )
    csz01 = str01.find('/');
    U_ASSERT( csz01 == npos );
 
    // unsigned find_first_of(const UString&, unsigned pos = 0) const;
    UString str05("xena rulez");
    csz01 = str01.find_first_of(str01);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.find_first_of(str01, 4);
-   U_ASSERT( csz01 == 4 );
+   U_ASSERT( csz01 == 4 )
    csz01 = str01.find_first_of(str02, 0);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.find_first_of(str02, 3);
-   U_ASSERT( csz01 == 3 );
+   U_ASSERT( csz01 == 3 )
    csz01 = str01.find_first_of(str03, 0);
-   U_ASSERT( csz01 == 8 );
+   U_ASSERT( csz01 == 8 )
    csz01 = str01.find_first_of(str03, 3);
-   U_ASSERT( csz01 == 8 );
+   U_ASSERT( csz01 == 8 )
    csz01 = str01.find_first_of(str03, 12);
-   U_ASSERT( csz01 == 16 );
+   U_ASSERT( csz01 == 16 )
    csz01 = str01.find_first_of(str05, 0);
-   U_ASSERT( csz01 == 1 );
+   U_ASSERT( csz01 == 1 )
    csz01 = str01.find_first_of(str05, 4);
-   U_ASSERT( csz01 == 4 );
+   U_ASSERT( csz01 == 4 )
 
    // An empty UString consists of no characters
    // therefore it should be found at every point in a UString,
@@ -594,27 +596,27 @@ static void test_find_01()
    // str1 (starting at pos) that exists in str2, which is none for empty str2
    /*
    csz01 = str01.find_first_of(str04, 0);
-   U_ASSERT( csz01 == npos );
+   U_ASSERT( csz01 == npos )
    csz01 = str01.find_first_of(str04, 5);
-   U_ASSERT( csz01 == npos );
+   U_ASSERT( csz01 == npos )
    */
 
    // unsigned find_first_of(const char* s, unsigned pos, unsigned n) const;
    csz01 = str01.find_first_of(str_lit01, 0, 3);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.find_first_of(str_lit01, 3, 0);
-   U_ASSERT( csz01 == npos );
+   U_ASSERT( csz01 == npos )
 
    // unsigned find_first_of(const char* s, unsigned pos = 0) const;
    csz01 = str01.find_first_of(str_lit01);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.find_first_of(str_lit01, 3);
-   U_ASSERT( csz01 == 3 );
+   U_ASSERT( csz01 == 3 )
 
    // unsigned find_first_of(char c, unsigned pos = 0) const;
    csz01 = str01.find_first_of('z');
    csz02 = str01.size() - 1;
-   U_ASSERT( csz01 == csz02 );
+   U_ASSERT( csz01 == csz02 )
 
    // unsigned find_last_of(const UString& str, unsigned pos = 0) const;
    // unsigned find_last_of(const char* s, unsigned pos, unsigned n) const;
@@ -624,45 +626,45 @@ static void test_find_01()
    unsigned pos;
    UString x("X");
    pos = x.find_last_not_of('X');
-   U_ASSERT( pos == npos );
+   U_ASSERT( pos == npos )
    pos = x.find_last_not_of("XYZ");
-   U_ASSERT( pos == npos );
+   U_ASSERT( pos == npos )
 
    UString y("a");
    pos = y.find_last_not_of('X');
-   U_ASSERT( pos == 0 );
+   U_ASSERT( pos == 0 )
    pos = y.find_last_not_of('a');
-   U_ASSERT( pos == npos );
+   U_ASSERT( pos == npos )
    pos = y.find_last_not_of("XYZ");
-   U_ASSERT( pos == 0 );
+   U_ASSERT( pos == 0 )
    pos = y.find_last_not_of("a");
-   U_ASSERT( pos == npos );
+   U_ASSERT( pos == npos )
 
    UString z("ab");
    pos = z.find_last_not_of('X');
-   U_ASSERT( pos == 1 );
+   U_ASSERT( pos == 1 )
    pos = z.find_last_not_of("XYZ");
-   U_ASSERT( pos == 1 );
+   U_ASSERT( pos == 1 )
    pos = z.find_last_not_of('b');
-   U_ASSERT( pos == 0 );
+   U_ASSERT( pos == 0 )
    pos = z.find_last_not_of("Xb");
-   U_ASSERT( pos == 0 );
+   U_ASSERT( pos == 0 )
    pos = z.find_last_not_of("Xa");
-   U_ASSERT( pos == 1 );
+   U_ASSERT( pos == 1 )
    pos = z.find_last_of("ab");
-   U_ASSERT( pos == 1 );
+   U_ASSERT( pos == 1 )
    pos = z.find_last_of("Xa");
-   U_ASSERT( pos == 0 );
+   U_ASSERT( pos == 0 )
    pos = z.find_last_of("Xb");
-   U_ASSERT( pos == 1 );
+   U_ASSERT( pos == 1 )
    pos = z.find_last_of("XYZ");
    U_ASSERT( pos == npos );
    pos = z.find_last_of('a');
-   U_ASSERT( pos == 0 );
+   U_ASSERT( pos == 0 )
    pos = z.find_last_of('b');
-   U_ASSERT( pos == 1 );
+   U_ASSERT( pos == 1 )
    pos = z.find_last_of('X');
-   U_ASSERT( pos == npos );
+   U_ASSERT( pos == npos )
 }
 
 // UString rfind
@@ -679,50 +681,50 @@ static void test_rfind_01()
 
    // unsigned rfind(const UString&, unsigned pos = 0) const;
    csz01 = str01.rfind(str01);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.rfind(str01, 4);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.rfind(str02,3);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.rfind(str02);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.rfind(str03);
-   U_ASSERT( csz01 == 8 );
+   U_ASSERT( csz01 == 8 )
    csz01 = str01.rfind(str03, 3);
-   U_ASSERT( csz01 == npos );
+   U_ASSERT( csz01 == npos )
    csz01 = str01.rfind(str03, 12);
-   U_ASSERT( csz01 == 8 );
+   U_ASSERT( csz01 == 8 )
 
    // An empty UString consists of no characters
    // therefore it should be found at every point in a UString,
    // except beyond the end
    csz01 = str01.rfind(str04, 0);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.rfind(str04, 5);
-   U_ASSERT( csz01 == 5 );
+   U_ASSERT( csz01 == 5 )
    csz01 = str01.rfind(str04, str01.size());
-   U_ASSERT( csz01 == str01.size() );
+   U_ASSERT( csz01 == str01.size() )
    csz01 = str01.rfind(str04, str01.size()+1);
-   U_ASSERT( csz01 == str01.size() );
+   U_ASSERT( csz01 == str01.size() )
 
    // unsigned rfind(const char* s, unsigned pos, unsigned n) const;
    csz01 = str01.rfind(str_lit01, 0, 3);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.rfind(str_lit01, 3, 0);
-   U_ASSERT( csz01 == 3 );
+   U_ASSERT( csz01 == 3 )
 
    // unsigned rfind(const char* s, unsigned pos = 0) const;
    csz01 = str01.rfind(str_lit01);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
    csz01 = str01.rfind(str_lit01, 3);
-   U_ASSERT( csz01 == 0 );
+   U_ASSERT( csz01 == 0 )
 
    // unsigned rfind(char c, unsigned pos = 0) const;
    csz01 = str01.rfind('z');
    csz02 = str01.size() - 1;
-   U_ASSERT( csz01 == csz02 );
+   U_ASSERT( csz01 == csz02 )
    csz01 = str01.rfind('/');
-   U_ASSERT( csz01 == npos );
+   U_ASSERT( csz01 == npos )
 }
 #endif
 
@@ -754,19 +756,19 @@ static void test_insert_01()
    csz02 = str02.size();
 
    str03.insert(13, str02, 0, 12); 
-   U_ASSERT( str03 == "rodeo beach, baker beach,marin" );
+   U_ASSERT( str03 == "rodeo beach, baker beach,marin" )
 
    str03 = str01; 
    csz01 = str03.size();
    csz02 = str02.size();
-   str03.insert(0, str02, 0, 12); 
-   U_ASSERT( str03 == "baker beach,rodeo beach, marin" );
+   str03.insert(0, str02, 0, 12);
+   U_ASSERT( str03 == "baker beach,rodeo beach, marin" )
 
    str03 = str01;
    csz01 = str03.size();
    csz02 = str02.size();
    str03.insert(csz01, str02, 0, csz02); 
-   U_ASSERT( str03 == "rodeo beach, marinbaker beach, san francisco" );
+   U_ASSERT( str03 == "rodeo beach, marinbaker beach, san francisco" )
 
    // UString& insert(unsigned p, const UString& str);
    // insert(p1, str, 0, npos)
@@ -774,53 +776,53 @@ static void test_insert_01()
    csz01 = str03.size();
    csz02 = str02.size();
    str03.insert(csz01, str02); 
-   U_ASSERT( str03 == "rodeo beach, marinbaker beach, san francisco" );
+   U_ASSERT( str03 == "rodeo beach, marinbaker beach, san francisco" )
 
    str03 = str01;
    csz01 = str03.size();
    csz02 = str02.size();
    str03.insert(0, str02); 
-   U_ASSERT( str03 == "baker beach, san franciscorodeo beach, marin" );
+   U_ASSERT( str03 == "baker beach, san franciscorodeo beach, marin" )
 
    // UString& insert(unsigned p, const char* s, unsigned n);
    // insert(p1, UString(s,n))
    str03 = str02;
    csz01 = str03.size();
    str03.insert(0, "-break at the bridge", 20); 
-   U_ASSERT( str03 == "-break at the bridgebaker beach, san francisco" );
+   U_ASSERT( str03 == "-break at the bridgebaker beach, san francisco" )
 
    // UString& insert(unsigned p, const char* s);
    // insert(p1, UString(s))
    str03 = str02;
    str03.insert(0, "-break at the bridge"); 
-   U_ASSERT( str03 == "-break at the bridgebaker beach, san francisco" );
+   U_ASSERT( str03 == "-break at the bridgebaker beach, san francisco" )
 
    // UString& insert(unsigned p, unsigned n, char c)
    // insert(p1, UString(n,c))
    str03 = str02;
    csz01 = str03.size();
    str03.insert(csz01, 5, 'z');
-   U_ASSERT( str03 == "baker beach, san franciscozzzzz" );
+   U_ASSERT( str03 == "baker beach, san franciscozzzzz" )
 
    // iterator insert(unsigned p, unsigned n, char c)
    // inserts n copies of c before the character referred to by p
    str03 = str02; 
    str03.insert(0, 1, 'u'); 
-   U_ASSERT( str03 == "ubaker beach, san francisco" );
+   U_ASSERT( str03 == "ubaker beach, san francisco" )
 
    str03 = str02; 
    str03.insert(0, 5, 'u'); 
-   U_ASSERT( str03 == "uuuuubaker beach, san francisco" );
+   U_ASSERT( str03 == "uuuuubaker beach, san francisco" )
 
    str03 = str02; 
    csz01 = str03.size();
    str03.insert(0, str01);
-   U_ASSERT( str03 == "rodeo beach, marinbaker beach, san francisco" );
+   U_ASSERT( str03 == "rodeo beach, marinbaker beach, san francisco" )
 
    str03 = str02;
    csz01 = str03.size();
    str03.insert(str03.size(), str01);
-   U_ASSERT( str03 == "baker beach, san franciscorodeo beach, marin" );
+   U_ASSERT( str03 == "baker beach, san franciscorodeo beach, marin" )
 }
 #endif
 
@@ -848,21 +850,21 @@ static void test_replace_01()
    UString x = X;
 
    char ch = x[0];
-   U_ASSERT( ch == 'H' );
+   U_ASSERT( ch == 'H' )
 
    UString z = x.substr(2U, 3U);
-   U_ASSERT( z == U_STRING_FROM_CONSTANT("llo") );
+   U_ASSERT( z == U_STRING_FROM_CONSTANT("llo") )
 
    x.replace(2, 2, "r");
-   U_ASSERT( x == U_STRING_FROM_CONSTANT("Hero") );
+   U_ASSERT( x == U_STRING_FROM_CONSTANT("Hero") )
 
    x = X;
    x.replace(0, 1, "j");
-   U_ASSERT( x == U_STRING_FROM_CONSTANT("jello") );
+   U_ASSERT( x == U_STRING_FROM_CONSTANT("jello") )
 
    const char ar[] = { 'H', 'e', 'l', 'l', 'o', '\0' };
    x.replace(x.find('l'), 2, ar, (sizeof(ar) / sizeof(ar[0])) - 1);
-   U_ASSERT( x == U_STRING_FROM_CONSTANT("jeHelloo") );
+   U_ASSERT( x == U_STRING_FROM_CONSTANT("jeHelloo") )
 }
 #endif
 
@@ -880,125 +882,125 @@ static void test_not_member_01()
 
    str_4 = str_0;
    //comparisons between UString objects
-   U_ASSERT( !(str_0 == str_1) );
-   U_ASSERT( !(str_0 == str_2) );
-   U_ASSERT( !(str_0 == str_3) );
-   U_ASSERT( !(str_1 == str_0) );
-   U_ASSERT( !(str_2 == str_0) );
-   U_ASSERT( !(str_3 == str_0) );
-   U_ASSERT( str_4 == str_0 );
-   U_ASSERT( str_0 == str_4 );
+   U_ASSERT( !(str_0 == str_1) )
+   U_ASSERT( !(str_0 == str_2) )
+   U_ASSERT( !(str_0 == str_3) )
+   U_ASSERT( !(str_1 == str_0) )
+   U_ASSERT( !(str_2 == str_0) )
+   U_ASSERT( !(str_3 == str_0) )
+   U_ASSERT( str_4 == str_0 )
+   U_ASSERT( str_0 == str_4 )
 
-   U_ASSERT( str_0 != str_1 );
-   U_ASSERT( str_0 != str_2 );
-   U_ASSERT( str_0 != str_3 );
-   U_ASSERT( str_1 != str_0 );
-   U_ASSERT( str_2 != str_0 );
-   U_ASSERT( str_3 != str_0 );
-   U_ASSERT( !(str_0 != str_4) );
-   U_ASSERT( !(str_4 != str_0) );
+   U_ASSERT( str_0 != str_1 )
+   U_ASSERT( str_0 != str_2 )
+   U_ASSERT( str_0 != str_3 )
+   U_ASSERT( str_1 != str_0 )
+   U_ASSERT( str_2 != str_0 )
+   U_ASSERT( str_3 != str_0 )
+   U_ASSERT( !(str_0 != str_4) )
+   U_ASSERT( !(str_4 != str_0) )
 
-   U_ASSERT( str_0 > str_1 ); //true cuz r>m
-   U_ASSERT( str_0 > str_2 );
-   U_ASSERT( !(str_0 > str_3) );
-   U_ASSERT( !(str_1 > str_0) ); //false cuz m<r
-   U_ASSERT( !(str_2 > str_0) );
-   U_ASSERT( str_3 > str_0 );
-   U_ASSERT( !(str_0 > str_4) );
-   U_ASSERT( !(str_4 > str_0) );
+   U_ASSERT( str_0 > str_1 ) //true cuz r>m
+   U_ASSERT( str_0 > str_2 )
+   U_ASSERT( !(str_0 > str_3) )
+   U_ASSERT( !(str_1 > str_0) ) //false cuz m<r
+   U_ASSERT( !(str_2 > str_0) )
+   U_ASSERT( str_3 > str_0 )
+   U_ASSERT( !(str_0 > str_4) )
+   U_ASSERT( !(str_4 > str_0) )
 
-   U_ASSERT( !(str_0 < str_1) ); //false cuz r>m
-   U_ASSERT( !(str_0 < str_2) );
-   U_ASSERT( str_0 < str_3 );
-   U_ASSERT( str_1 < str_0 ); //true cuz m<r
-   U_ASSERT( str_2 < str_0 );
-   U_ASSERT( !(str_3 < str_0) );
-   U_ASSERT( !(str_0 < str_4) );
-   U_ASSERT( !(str_4 < str_0) );
+   U_ASSERT( !(str_0 < str_1) ) //false cuz r>m
+   U_ASSERT( !(str_0 < str_2) )
+   U_ASSERT( str_0 < str_3 )
+   U_ASSERT( str_1 < str_0 ) //true cuz m<r
+   U_ASSERT( str_2 < str_0 )
+   U_ASSERT( !(str_3 < str_0) )
+   U_ASSERT( !(str_0 < str_4) )
+   U_ASSERT( !(str_4 < str_0) )
 
-   U_ASSERT( str_0 >= str_1 ); //true cuz r>m
-   U_ASSERT( str_0 >= str_2 );
-   U_ASSERT( !(str_0 >= str_3) );
-   U_ASSERT( !(str_1 >= str_0) );//false cuz m<r
-   U_ASSERT( !(str_2 >= str_0) );
-   U_ASSERT( str_3 >= str_0 );
-   U_ASSERT( str_0 >= str_4 );
-   U_ASSERT( str_4 >= str_0 );
+   U_ASSERT( str_0 >= str_1 ) //true cuz r>m
+   U_ASSERT( str_0 >= str_2 )
+   U_ASSERT( !(str_0 >= str_3) )
+   U_ASSERT( !(str_1 >= str_0) ) //false cuz m<r
+   U_ASSERT( !(str_2 >= str_0) )
+   U_ASSERT( str_3 >= str_0 )
+   U_ASSERT( str_0 >= str_4 )
+   U_ASSERT( str_4 >= str_0 )
 
-   U_ASSERT( !(str_0 <= str_1) );//false cuz r>m
-   U_ASSERT( !(str_0 <= str_2) );
-   U_ASSERT( str_0 <= str_3 );
-   U_ASSERT( str_1 <= str_0 );//true cuz m<r
-   U_ASSERT( str_2 <= str_0 );
-   U_ASSERT( !(str_3 <= str_0) );
-   U_ASSERT( str_0 <= str_4 );
-   U_ASSERT( str_4 <= str_0 );
+   U_ASSERT( !(str_0 <= str_1) ) //false cuz r>m
+   U_ASSERT( !(str_0 <= str_2) )
+   U_ASSERT( str_0 <= str_3 )
+   U_ASSERT( str_1 <= str_0 ) //true cuz m<r
+   U_ASSERT( str_2 <= str_0 )
+   U_ASSERT( !(str_3 <= str_0) )
+   U_ASSERT( str_0 <= str_4 )
+   U_ASSERT( str_4 <= str_0 )
 
    //comparisons between UString object and UString literal
-   U_ASSERT( !(str_0 == "costa marbella") );
-   U_ASSERT( !(str_0 == "cost") );
-   U_ASSERT( !(str_0 == "costa ricans") );
-   U_ASSERT( !("costa marbella" == str_0) );
-   U_ASSERT( !("cost" == str_0) );
-   U_ASSERT( !("costa ricans" == str_0) );
-   U_ASSERT( "costa rica" == str_0 );
-   U_ASSERT( str_0 == "costa rica" );
+   U_ASSERT( !(str_0 == "costa marbella") )
+   U_ASSERT( !(str_0 == "cost") )
+   U_ASSERT( !(str_0 == "costa ricans") )
+   U_ASSERT( !("costa marbella" == str_0) )
+   U_ASSERT( !("cost" == str_0) )
+   U_ASSERT( !("costa ricans" == str_0) )
+   U_ASSERT( "costa rica" == str_0 )
+   U_ASSERT( str_0 == "costa rica" )
 
-   U_ASSERT( str_0 != "costa marbella" );
-   U_ASSERT( str_0 != "cost" );
-   U_ASSERT( str_0 != "costa ricans" );
-   U_ASSERT( "costa marbella" != str_0 );
-   U_ASSERT( "cost" != str_0 );
-   U_ASSERT( "costa ricans" != str_0 );
-   U_ASSERT( !("costa rica" != str_0) );
-   U_ASSERT( !(str_0 != "costa rica") );
+   U_ASSERT( str_0 != "costa marbella" )
+   U_ASSERT( str_0 != "cost" )
+   U_ASSERT( str_0 != "costa ricans" )
+   U_ASSERT( "costa marbella" != str_0 )
+   U_ASSERT( "cost" != str_0 )
+   U_ASSERT( "costa ricans" != str_0 )
+   U_ASSERT( !("costa rica" != str_0) )
+   U_ASSERT( !(str_0 != "costa rica") )
 
-   U_ASSERT( str_0 > "costa marbella" ); //true cuz r>m
-   U_ASSERT( str_0 > "cost" );
-   U_ASSERT( !(str_0 > "costa ricans") );
-   U_ASSERT( !("costa marbella" > str_0) );//false cuz m<r
-   U_ASSERT( !("cost" > str_0) );
-   U_ASSERT( "costa ricans" > str_0 );
-   U_ASSERT( !("costa rica" > str_0) );
-   U_ASSERT( !(str_0 > "costa rica") );
+   U_ASSERT( str_0 > "costa marbella" ) //true cuz r>m
+   U_ASSERT( str_0 > "cost" )
+   U_ASSERT( !(str_0 > "costa ricans") )
+   U_ASSERT( !("costa marbella" > str_0) ) //false cuz m<r
+   U_ASSERT( !("cost" > str_0) )
+   U_ASSERT( "costa ricans" > str_0 )
+   U_ASSERT( !("costa rica" > str_0) )
+   U_ASSERT( !(str_0 > "costa rica") )
 
-   U_ASSERT( !(str_0 < "costa marbella") );//false cuz r>m
-   U_ASSERT( !(str_0 < "cost") );
-   U_ASSERT( str_0 < "costa ricans" );
-   U_ASSERT( "costa marbella" < str_0 );//true cuz m<r
-   U_ASSERT( "cost" < str_0 );
-   U_ASSERT( !("costa ricans" < str_0) );
-   U_ASSERT( !("costa rica" < str_0) );
-   U_ASSERT( !(str_0 < "costa rica") );
+   U_ASSERT( !(str_0 < "costa marbella") ) //false cuz r>m
+   U_ASSERT( !(str_0 < "cost") )
+   U_ASSERT( str_0 < "costa ricans" )
+   U_ASSERT( "costa marbella" < str_0 ) //true cuz m<r
+   U_ASSERT( "cost" < str_0 )
+   U_ASSERT( !("costa ricans" < str_0) )
+   U_ASSERT( !("costa rica" < str_0) )
+   U_ASSERT( !(str_0 < "costa rica") )
 
-   U_ASSERT( str_0 >= "costa marbella" );//true cuz r>m
-   U_ASSERT( str_0 >= "cost" );
-   U_ASSERT( !(str_0 >= "costa ricans") );
-   U_ASSERT( !("costa marbella" >= str_0) );//false cuz m<r
-   U_ASSERT( !("cost" >= str_0) );
-   U_ASSERT( "costa ricans" >= str_0 );
-   U_ASSERT( "costa rica" >= str_0 );
-   U_ASSERT( str_0 >= "costa rica" );
+   U_ASSERT( str_0 >= "costa marbella" )//true cuz r>m
+   U_ASSERT( str_0 >= "cost" )
+   U_ASSERT( !(str_0 >= "costa ricans") )
+   U_ASSERT( !("costa marbella" >= str_0) )//false cuz m<r
+   U_ASSERT( !("cost" >= str_0) )
+   U_ASSERT( "costa ricans" >= str_0 )
+   U_ASSERT( "costa rica" >= str_0 )
+   U_ASSERT( str_0 >= "costa rica" )
 
-   U_ASSERT( !(str_0 <= "costa marbella") );//false cuz r>m
-   U_ASSERT( !(str_0 <= "cost") );
-   U_ASSERT( str_0 <= "costa ricans" );
-   U_ASSERT( "costa marbella" <= str_0 );//true cuz m<r
-   U_ASSERT( "cost" <= str_0 );
-   U_ASSERT( !("costa ricans" <= str_0) );
-   U_ASSERT( "costa rica" <= str_0 );
-   U_ASSERT( str_0 <= "costa rica" );
+   U_ASSERT( !(str_0 <= "costa marbella") )//false cuz r>m
+   U_ASSERT( !(str_0 <= "cost") )
+   U_ASSERT( str_0 <= "costa ricans" )
+   U_ASSERT( "costa marbella" <= str_0 )//true cuz m<r
+   U_ASSERT( "cost" <= str_0 )
+   U_ASSERT( !("costa ricans" <= str_0) )
+   U_ASSERT( "costa rica" <= str_0 )
+   U_ASSERT( str_0 <= "costa rica" )
 
    str_4 = str_0 + "ns";
    U_ASSERT( str_4 == str_3 );
 
    const UString str_5(" marbella");
    str_4 = "costa" + str_5;
-   U_ASSERT( str_4 == str_1 );
+   U_ASSERT( str_4 == str_1 )
 
    UString str_6("ns");
    str_4 = str_0 + str_6;
-   U_ASSERT( str_4 == str_3 );
+   U_ASSERT( str_4 == str_3 )
 
    str_4 = str_0 + 'n';
    str_4 = str_4 + 's';
@@ -1014,7 +1016,7 @@ static void test_not_member_01()
    str_4 = 's' + str_4;
    str_4 = 'o' + str_4;
    str_4 = 'c' + str_4;
-   U_ASSERT( str_4 == str_3 );
+   U_ASSERT( str_4 == str_3 )
 }
 #endif
 
@@ -1053,12 +1055,12 @@ static void test_substr_01()
    // UString substr(unsigned pos = 0, unsigned n = npos) const;
    csz01 = str01.size();
    str02 = str01.substr(0U, 1U);
-   U_ASSERT( str02 == "r" );
+   U_ASSERT( str02 == "r" )
    str02 = str01.substr(10U);
-   U_ASSERT( str02 == "pacifica" );
+   U_ASSERT( str02 == "pacifica" )
 
    str02 = str01.substr(csz01);
-   U_ASSERT( str02.size() == 0 );
+   U_ASSERT( str02.size() == 0 )
 }
 #endif
 
@@ -1088,8 +1090,8 @@ static void test_class_01()
       str01._begin();
 
    *it1 = 'x';
-   U_ASSERT( str01[0] == 'x' );
-   U_ASSERT( str03[0] == 'm' );
+   U_ASSERT( str01[0] == 'x' )
+   U_ASSERT( str03[0] == 'm' )
 
    str03 = str01; 
    csz01 = str01.size();
@@ -1102,8 +1104,8 @@ static void test_class_01()
       str01._rbegin();
 
    *rit1 = 'z';
-   U_ASSERT( str01[csz01 - 1] == 'z' );
-   U_ASSERT( str03[csz01 - 1] == 'y' );
+   U_ASSERT( str01[csz01 - 1] == 'z' )
+   U_ASSERT( str03[csz01 - 1] == 'y' )
 
    str03 = str01;
    csz01 = str01.size();
@@ -1116,10 +1118,10 @@ static void test_class_01()
 #endif
       str01.at(csz01 - 2);
 
-   U_ASSERT( str03 == str01 );
+   U_ASSERT( str03 == str01 )
    r1 = 'd';
-   U_ASSERT( str01[csz01 - 2] == 'd' );
-   U_ASSERT( str03[csz01 - 2] == 'a' );
+   U_ASSERT( str01[csz01 - 2] == 'd' )
+   U_ASSERT( str03[csz01 - 2] == 'a' )
 
    str03 = str01; 
    csz01 = str01.size();
@@ -1131,27 +1133,27 @@ static void test_class_01()
 #endif
       str01[csz01 - 3];
 
-   U_ASSERT( str03 == str01 );
+   U_ASSERT( str03 == str01 )
    r2 = 'w';
-   U_ASSERT( str01[csz01 - 3] == 'w' );
-   U_ASSERT( str03[csz01 - 3] == 'b' );
+   U_ASSERT( str01[csz01 - 3] == 'w' )
+   U_ASSERT( str03[csz01 - 3] == 'b' )
 */
    str03 = str01;
    csz02 = str01.size();
    it1 = str01._end();
-   U_ASSERT( str03 == str01 );
+   U_ASSERT( str03 == str01 )
    --it1;
    *it1 = 'q'; 
-   U_ASSERT( str01[csz02 - 1] == 'q' );
-   U_ASSERT( str03[csz02 - 1] == 'z' );
+   U_ASSERT( str01[csz02 - 1] == 'q' )
+   U_ASSERT( str03[csz02 - 1] == 'z' )
 
    str03 = str01;
    rit1 = str01._rend();
-   U_ASSERT( str03 == str01 );
+   U_ASSERT( str03 == str01 )
    --rit1;
    *rit1 = 'p';
-   U_ASSERT( str01[0] == 'p' );
-   U_ASSERT( str03[0] == 'x' );
+   U_ASSERT( str01[0] == 'p' )
+   U_ASSERT( str03[0] == 'x' )
 }
 
 // Do another sanity check, this time for member functions that return
@@ -1172,18 +1174,18 @@ static void test_class_02()
 #endif
 
    UString str03 = str02;
-   U_ASSERT( str03 == str02 );
+   U_ASSERT( str03 == str02 )
    *p = '!';
 
 #ifdef U_STD_STRING
-   U_ASSERT( *str03.c_str() == ' ' );
+   U_ASSERT( *str03.c_str() == ' ' )
 #endif
 
 // str03[0] = '@';
-   U_ASSERT( str02[0] == '!' );
-   U_ASSERT( *p == '!' );
-   U_ASSERT( str02 != str05 );
-// U_ASSERT( str02 != str03 );
+   U_ASSERT( str02[0] == '!' )
+   U_ASSERT( *p == '!' )
+   U_ASSERT( str02 != str05 )
+// U_ASSERT( str02 != str03 )
 
    UString str10 = str01;
 
@@ -1197,7 +1199,7 @@ static void test_class_02()
    *p2 = 'e';
 
 #ifdef U_STD_STRING
-   U_ASSERT( str11 != str10 );
+   U_ASSERT( str11 != str10 )
 #endif
 
    UString str06 = str01;
@@ -1210,21 +1212,21 @@ static void test_class_02()
 #endif
 
    UString str08 = str06;
-   U_ASSERT( str08 == str06 );
+   U_ASSERT( str08 == str06 )
    *p = '!';
 
 #ifdef U_STD_STRING
-   U_ASSERT( *str08.c_str() == 't' );
+   U_ASSERT( *str08.c_str() == 't' )
 #endif
 
 // str08[0] = '@';
-   U_ASSERT( str06[0] == '!' );
-   U_ASSERT( *p == '!' );
-   U_ASSERT( str06 != str07 );
+   U_ASSERT( str06[0] == '!' )
+   U_ASSERT( *p == '!' )
+   U_ASSERT( str06 != str07 )
 
 /*
 #ifdef U_STD_STRING
-   U_ASSERT( str06 != str08 );
+   U_ASSERT( str06 != str08 )
 #endif
 */
 
@@ -1240,7 +1242,7 @@ static void test_class_02()
    *p2 = 'e';
 
 #ifdef U_STD_STRING
-   U_ASSERT( str12 != str13 );
+   U_ASSERT( str12 != str13 )
 #endif
 }
 #endif
@@ -1262,20 +1264,20 @@ static void test_stream_01()
    // istream& operator>>(istream&, UString&)
    istrstream istrs01(U_STRING_TO_PARAM(str01));
    istrs01 >> str10;
-   U_ASSERT( str10 == str02 );
+   U_ASSERT( str10 == str02 )
 
    int i01 = istrs01.peek(); //a-boo
-   U_ASSERT( i01 == ' ' );
+   U_ASSERT( i01 == ' ' )
 
    istrs01 >> str10; 
-   U_ASSERT( str10 == str03 ); 
+   U_ASSERT( str10 == str03 )
    istrs01 >> str10; 
-   U_ASSERT( str10 == str04 ); // sentry picks out the white spaces. . 
+   U_ASSERT( str10 == str04 ) // sentry picks out the white spaces. . 
 
 #if __GNUC__ >= 3
    istrstream istrs02(U_STRING_TO_PARAM(str05)); // empty
    istrs02 >> str10;
-   // U_ASSERT( str10 == str04 );
+   // U_ASSERT( str10 == str04 )
 #endif
 
    // istream& getline(istream&, UString&, char)
@@ -1285,43 +1287,43 @@ static void test_stream_01()
 #endif
 
    getline(istrs01, str10, '\n');
-   U_ASSERT( !istrs01.fail() );
-   U_ASSERT( !istrs01.eof() );
-   U_ASSERT( istrs01.good() );
-   U_ASSERT( str10 == " bay" );
+   U_ASSERT( !istrs01.fail() )
+   U_ASSERT( !istrs01.eof() )
+   U_ASSERT( istrs01.good() )
+   U_ASSERT( str10 == " bay" )
 
    istrs01.clear();
    getline(istrs01, str10, '\t');
-   U_ASSERT( !istrs01.fail() );
-   U_ASSERT( !istrs01.eof() );
-   U_ASSERT( istrs01.good() );
-   U_ASSERT( str10 == str05 );
+   U_ASSERT( !istrs01.fail() )
+   U_ASSERT( !istrs01.eof() )
+   U_ASSERT( istrs01.good() )
+   U_ASSERT( str10 == str05 )
 
    istrs01.clear();
    getline(istrs01, str10, '\t');
-   U_ASSERT( !istrs01.fail() );
-   U_ASSERT( !istrs01.eof() );
-   U_ASSERT( istrs01.good() );
-   U_ASSERT( str10 == str05 );
+   U_ASSERT( !istrs01.fail() )
+   U_ASSERT( !istrs01.eof() )
+   U_ASSERT( istrs01.good() )
+   U_ASSERT( str10 == str05 )
 
    istrs01.clear();
    getline(istrs01, str10, '.');
-   U_ASSERT( !istrs01.fail() );
-   U_ASSERT( istrs01.eof() );
-   U_ASSERT( !istrs01.good() );
-   U_ASSERT( str10 == "\t    from Elk Rapids to the point reminds me of miles" );
+   U_ASSERT( !istrs01.fail() )
+   U_ASSERT( istrs01.eof() )
+   U_ASSERT( !istrs01.good() )
+   U_ASSERT( str10 == "\t    from Elk Rapids to the point reminds me of miles" )
 #if __GNUC__ >= 3
    getline(istrs02, str10, '\n');
-   U_ASSERT( istrs02.fail() );
-   U_ASSERT( istrs02.eof() );
-   U_ASSERT( str10 == "\t    from Elk Rapids to the point reminds me of miles" );
+   U_ASSERT( istrs02.fail() )
+   U_ASSERT( istrs02.eof() )
+   U_ASSERT( str10 == "\t    from Elk Rapids to the point reminds me of miles" )
 #endif
 
    // ostream& operator<<(ostream&, const UString&)
    char buffer[1024];
    ostrstream ostrs01(buffer, sizeof(buffer));
    ostrs01 << str01 << '\0';
-   U_ASSERT( str01 == ostrs01.str() );
+   U_ASSERT( str01 == ostrs01.str() )
 }
 
 // testing UStringbuf::xsputn via stress testing with large UStrings
@@ -1336,20 +1338,20 @@ static void test_stream_04(unsigned size)
    ostrstream oss(buffer, sizeof(buffer));
 
    // sanity checks
-   U_ASSERT( str.size() == size );
-   U_ASSERT( oss.good() );
+   U_ASSERT( str.size() == size )
+   U_ASSERT( oss.good() )
 
    // stress test
    oss << str << std::endl;
-   U_ASSERT( oss.good() );
+   U_ASSERT( oss.good() )
 
    oss << str << std::endl << '\0';
-   U_ASSERT( oss.good() );
+   U_ASSERT( oss.good() )
 
-   U_ASSERT( str.size() == size );
-   U_ASSERT( oss.good() );
+   U_ASSERT( str.size() == size )
+   U_ASSERT( oss.good() )
    UString str_tmp = UString(oss.str());
-   U_ASSERT( str_tmp.size() == expected_size );
+   U_ASSERT( str_tmp.size() == expected_size )
 }
 
 // testing filebuf::xsputn via stress testing with large UStrings
@@ -1364,17 +1366,16 @@ static void test_stream_05(unsigned size)
    UString str(size, fillc);
 
    // sanity checks
-   U_ASSERT( str.size() == size );
-   U_ASSERT( ofs.good() );
+   U_ASSERT( str.size() == size )
+   U_ASSERT( ofs.good() )
 
    // stress test
    ofs << str << std::endl;
-   U_ASSERT( ofs.good() == true );
+   U_ASSERT( ofs.good() )
 
    ofs << str << std::endl;
-   U_ASSERT( ofs.good() == true );
-
-   U_ASSERT( str.size() == size );
+   U_ASSERT( ofs.good() )
+   U_ASSERT( str.size() == size )
 
    ofs.close();
 
@@ -1394,7 +1395,7 @@ static void test_stream_05(unsigned size)
          break;
       }
 
-   U_ASSERT( count == 2 * size );
+   U_ASSERT( count == (2 * size) )
 
    unlink(filename);
 }
@@ -1409,13 +1410,13 @@ static void test_stream_06()
    unsigned i01 = str01.size();
    str01.erase(0, 1);
    unsigned i03 = str01.size();
-   U_ASSERT( i01 - 1 == i03 );
+   U_ASSERT( i01 - 1 == i03 )
 
    istrstream is(U_STRING_TO_PARAM(str01));
    UString str02;
    is >> str02;
    unsigned i05 = str02.size();
-   U_ASSERT( i05 == i03 );
+   U_ASSERT( i05 == i03 )
 }
 
 // istream::operator>>(UString)
@@ -1431,8 +1432,8 @@ static void test_stream_07()
    UString s;
    while (iss >> s) ++i;
 
-   U_ASSERT( i < 3 );
-   U_ASSERT( static_cast<bool>(iss.rdstate() & ios::failbit) );
+   U_ASSERT( i < 3 )
+   U_ASSERT( static_cast<bool>(iss.rdstate() & ios::failbit) )
 }
 
 static void test_stream_08()
@@ -1462,7 +1463,7 @@ static void test_stream_09()
    char buffer[1024];
    ostrstream oss1(buffer, sizeof(buffer));
    oss1 << foo << '\0';
-   U_ASSERT( foo == oss1.str() );
+   U_ASSERT( foo == oss1.str() )
 
    ostrstream oss2(buffer, sizeof(buffer));
    oss2.width(20);

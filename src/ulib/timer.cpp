@@ -81,21 +81,26 @@ void UTimer::callHandlerTimeout()
 
    U_INTERNAL_DUMP("UEventTime::timeout1 = %#19D (next alarm expire) = %#19D", UEventTime::timeout1.tv_sec, item->next ? item->next->alarm->expire() : 0L)
 
-   if (item->alarm->handlerTime() == 0) // 0 => monitoring
-      {
-      // add it back in to its new list, sorted correctly
-
-      item->insertEntry();
-
-      item->alarm->setMilliSecond();
-      }
-   else
+   if (item->alarm->handlerTime())
       {
       // put it on the free list
 
       item->alarm = 0;
       item->next  = pool;
             pool  = item;
+      }
+   else // 0 => monitoring
+      {
+      // add it back in to its new list, sorted correctly
+
+      item->insertEntry();
+
+      UEventTime* a = item->alarm;
+
+      UEventTime::ms = ((a->ctime.tv_sec  + a->tv_sec  - UEventTime::timeout1.tv_sec)  * 1000L) +
+                       ((a->ctime.tv_usec + a->tv_usec - UEventTime::timeout1.tv_usec) / 1000L);
+
+      U_ASSERT(a->checkTolerance())
       }
 }
 

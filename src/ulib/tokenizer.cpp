@@ -352,9 +352,9 @@ UString UTokenizer::getTokenQueryParser()
  * starts_with: ~=
  */
 
-int UTokenizer::getTokenId(UString& token)
+int UTokenizer::getTokenId(UString* ptoken)
 {
-   U_TRACE(0, "UTokenizer::getTokenId(%p)", &token)
+   U_TRACE(0, "UTokenizer::getTokenId(%p)", ptoken)
 
    static const int dispatch_table[] = {
       (int)((char*)&&case_exclamation-(char*)&&cvalue),/* '!' */
@@ -454,6 +454,7 @@ int UTokenizer::getTokenId(UString& token)
    };
 
    char c;
+   long sz;
    int tid = 0;
    const char* p1;
    const char* p2;
@@ -602,9 +603,17 @@ cvalue:
    tid = (c == '(' ? U_TK_FN_CALL : U_TK_VALUE);
 
 end:
-   token = str.substr(p1, p2 - p1);
+   if (ptoken)
+      {
+      sz = (p2 -p1);
 
-   U_INTERNAL_DUMP("token = %V", token.rep)
+      if (sz)
+         {
+         *ptoken = str.substr(p1, sz);
+
+         U_INTERNAL_DUMP("token = %V", ptoken->rep)
+         }
+      }
 
    U_RETURN(tid);
 }

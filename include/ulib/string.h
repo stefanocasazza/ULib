@@ -1283,6 +1283,8 @@ public:
       {
       U_TRACE(0, "UString::substr(%.*S,%u)", tlen, t, tlen)
 
+      if (tlen == 0) return *string_null; 
+
       UString result(rep, t, tlen);
 
       U_RETURN_STRING(result);
@@ -1398,7 +1400,7 @@ public:
    void swap(UString& lhs, UString& rhs) { lhs.swap(rhs); }
 
 #ifdef U_COMPILER_RVALUE_REFS
-# if defined(DEBUG) || !defined(__GNUC__) // || GCC_VERSION_NUM >= 60000 // hope
+# if !defined(__GNUC__) // || GCC_VERSION_NUM >= 60000 // hope
    UString(UString && str)
       {
       U_TRACE_NO_PARAM(0, "UString::UString(move)")
@@ -1562,9 +1564,9 @@ public:
 
    // operator +
 
-   friend UString operator+(const UString& lhs, const char*    rhs) { UString str(lhs); (void) str.append(rhs, u__strlen(rhs, __PRETTY_FUNCTION__)); return str; }
-   friend UString operator+(const UString& lhs,       char     rhs) { UString str(lhs); (void) str.append(1U, rhs);                                  return str; }
-   friend UString operator+(const UString& lhs, const UString& rhs) { UString str(lhs); (void) str.append(rhs);                                      return str; }
+   friend UString operator+(const UString& lhs, const char*    rhs);
+   friend UString operator+(const UString& lhs,       char     rhs);
+   friend UString operator+(const UString& lhs, const UString& rhs);
    friend UString operator+(char           lhs, const UString& rhs);
    friend UString operator+(const char*    lhs, const UString& rhs);
 

@@ -619,7 +619,7 @@ void UMemoryPool::deallocate(void* ptr, uint32_t length)
 
 # if defined(U_LINUX) && defined(HAVE_ARCH64)
 #  if defined(MAP_HUGE_1GB) || defined(MAP_HUGE_2MB) // (since Linux 3.8)
-   U_INTERNAL_DUMP("UFile::nr_hugepages = %u", UFile::nr_hugepages)
+   U_INTERNAL_DUMP("UFile::nr_hugepages = %ld", UFile::nr_hugepages)
 
    if (UFile::nr_hugepages == 0) // NB: MADV_DONTNEED cannot be applied to locked pages, Huge TLB pages, or VM_PFNMAP pages...
 #  endif

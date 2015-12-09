@@ -24,8 +24,8 @@
 
 char*    UFile::cwd_save;
 char*    UFile::pfree;
+long     UFile::nr_hugepages;
 uint32_t UFile::nfree;
-uint32_t UFile::nr_hugepages;
 uint32_t UFile::cwd_save_len;
 
 #if defined(U_LINUX) && (defined(MAP_HUGE_1GB) || defined(MAP_HUGE_2MB)) // (since Linux 3.8)
@@ -482,7 +482,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
       char* ptr;
       uint32_t length;
 
-      U_INTERNAL_DUMP("nr_hugepages = %u rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
+      U_INTERNAL_DUMP("nr_hugepages = %ld rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
 
       U_INTERNAL_ASSERT_EQUALS(rlimit_memfree, U_2M)
 
@@ -527,11 +527,13 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
          u_get_memusage(&vsz, &rss);
 
-         U_ERROR("cannot allocate %u bytes (%u MB) of memory MAP_HUGE_2MB - "
-                  "address space usage: %.2f MBytes - "
-                            "rss usage: %.2f MBytes",
-                  *plength, *plength / (1024U*1024U), (double)vsz / (1024.0 * 1024.0),
-                                                      (double)rss / (1024.0 * 1024.0));
+         U_WARNING("cannot allocate %u bytes (%u MB) of memory MAP_HUGE_2MB - "
+                   "address space usage: %.2f MBytes - "
+                             "rss usage: %.2f MBytes",
+                   *plength, *plength / (1024U*1024U), (double)vsz / (1024.0 * 1024.0),
+                                                       (double)rss / (1024.0 * 1024.0));
+
+         nr_hugepages = 0;
          }
 #  endif
       }
@@ -589,14 +591,13 @@ try_from_file_system:
          {
          U_DEBUG("we are going to allocate from file system (%u KB - %u bytes)", *plength / 1024, *plength);
 
-         if (fallocate(fd, *plength))
-            {
-            _ptr = (char*)U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, fd, 0);
-
-            if (_ptr != (char*)MAP_FAILED) return _ptr;
-            }
+         _ptr = (fallocate(fd, *plength)
+                     ? (char*)U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, fd, 0)
+                     : (char*)MAP_FAILED);
 
          close(fd);
+
+         if (_ptr != (char*)MAP_FAILED) return _ptr;
          }
 
       if (_abort)
@@ -1219,18 +1220,27 @@ UString UFile::getSysContent(const char* name)
    U_RETURN_STRING(fileContent);
 }
 
-int UFile::getSysParam(const char* name)
+long UFile::getSysParam(const char* name)
 {
    U_TRACE(0, "UFile::getSysParam(%S)", name)
 
-   int value = -1,
-          fd = open(name, O_RDONLY, PERM_FILE);
+   long value = -1;
+   int fd = open(name, O_RDONLY, PERM_FILE);
 
    if (fd != -1)
       {
       char buffer[32];
 
-      if (U_SYSCALL(read, "%d,%p,%u", fd, buffer, sizeof(buffer)-1) > 0) value = strtol(buffer, 0, 10);
+      ssize_t bytes_read = U_SYSCALL(read, "%d,%p,%u", fd, buffer, sizeof(buffer)-1);
+
+      if (bytes_read > 0)
+         {
+         U_INTERNAL_ASSERT_MINOR((uint32_t)bytes_read, sizeof(buffer))
+
+         buffer[bytes_read] = '\0';
+
+         value = strtol(buffer, 0, 10);
+         }
 
       close(fd);
       }
@@ -1238,27 +1248,37 @@ int UFile::getSysParam(const char* name)
    U_RETURN(value);
 }
 
-int UFile::setSysParam(const char* name, int value, bool force)
+long UFile::setSysParam(const char* name, long value, bool force)
 {
-   U_TRACE(0, "UFile::setSysParam(%S,%u,%b)", name, value, force)
+   U_TRACE(0, "UFile::setSysParam(%S,%ld,%b)", name, value, force)
 
-   int old_value = -1,
-              fd = open(name, O_RDWR, PERM_FILE);
+   long old_value = -1;
+   int fd = open(name, O_RDWR, PERM_FILE);
 
    if (fd != -1)
       {
       char buffer[32];
 
-      if (U_SYSCALL(read, "%d,%p,%u", fd, buffer, sizeof(buffer)-1) > 0)
+      ssize_t bytes_read = U_SYSCALL(read, "%d,%p,%u", fd, buffer, sizeof(buffer)-1);
+
+      if (bytes_read > 0)
          {
+         U_INTERNAL_ASSERT_MINOR((uint32_t)bytes_read, sizeof(buffer))
+
+         buffer[bytes_read] = '\0';
+
          old_value = strtol(buffer, 0, 10);
-         
+
          if (force ||
              old_value < value)
             {
             char* ptr = buffer;
 
+#        if SIZEOF_LONG == 4
             if (pwrite(fd, buffer, u_num2str32s(ptr, value), 0) > 0) old_value = value;
+#        else
+            if (pwrite(fd, buffer, u_num2str64s(ptr, value), 0) > 0) old_value = value;
+#        endif
             }
          }
 

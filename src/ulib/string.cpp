@@ -349,6 +349,10 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_response, 0)
       U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, 0)
 
+#  if defined(__GNUC__) && GCC_VERSION_NUM == 50300
+   // UStringRep::string_rep_null->hold();
+#  endif
+
       U_NEW_ULIB_OBJECT(str_host,             UString(stringrep_storage+0));
       U_NEW_ULIB_OBJECT(str_chunked,          UString(stringrep_storage+1));
       U_NEW_ULIB_OBJECT(str_without_mac,      UString(stringrep_storage+2));
@@ -798,16 +802,14 @@ void UStringRep::_release()
    U_INTERNAL_DUMP("_capacity = %u str(%u) = %.*S", _capacity, _length, _length, str)
 
    U_INTERNAL_ASSERT_EQUALS(references, 0)
-#if defined(__GNUC__) && GCC_VERSION_NUM >= 50300
-   if (this == string_rep_null) return;
-#else
    U_INTERNAL_ASSERT_DIFFERS(this, string_rep_null)
-#endif
+
+// if (this == string_rep_null) return;
 
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
    if (parent)
 # ifdef U_SUBSTR_INC_REF
-      parent->release(); // NB: solo la morte della substring de-referenzia la source...
+      parent->release(); // NB: only the death of substring de-reference the source...
 # else
       {
       U_INTERNAL_ASSERT_EQUALS(child, 0)
@@ -2583,23 +2585,65 @@ U_EXPORT ostream& operator<<(ostream& out, const UString& str)
 
 // operator +
 
+U_EXPORT UString operator+(const UString& lhs, const UString& rhs)
+{
+   uint32_t sz1 = lhs.size(),
+            sz2 = rhs.size();
+
+   UString str(sz1 + sz2);
+
+   (void) str.append(lhs.data(), sz1);
+   (void) str.append(rhs.data(), sz2);
+
+   return str;
+}
+
+U_EXPORT UString operator+(const UString& lhs, const char* rhs)
+{
+   uint32_t sz1 = lhs.size(),
+            sz2 = u__strlen(rhs, __PRETTY_FUNCTION__);
+
+   UString str(sz1 + sz2);
+
+   (void) str.append(lhs.data(), sz1);
+   (void) str.append(rhs,        sz2);
+
+   return str;
+}
+
 U_EXPORT UString operator+(const char* lhs, const UString& rhs)
 {
-   uint32_t len = u__strlen(lhs, __PRETTY_FUNCTION__);
-   UString str(len + rhs.size());
+   uint32_t sz2 = rhs.size(),
+            sz1 = u__strlen(lhs, __PRETTY_FUNCTION__);
 
-   (void) str.append(lhs, len);
-   (void) str.append(rhs);
+   UString str(sz1 + sz2);
+
+   (void) str.append(lhs,        sz1);
+   (void) str.append(rhs.data(), sz2);
+
+   return str;
+}
+
+U_EXPORT UString operator+(const UString& lhs, char rhs)
+{
+   uint32_t sz = lhs.size();
+
+   UString str(sz + 1U);
+
+   (void) str.append(lhs.data(), sz);
+   (void) str.append(1U, rhs);
 
    return str;
 }
 
 U_EXPORT UString operator+(char lhs, const UString& rhs)
 {
-   UString str(1U + rhs.size());
+   uint32_t sz = rhs.size();
+
+   UString str(sz + 1U);
 
    (void) str.append(1U, lhs);
-   (void) str.append(rhs);
+   (void) str.append(rhs.data(), sz);
 
    return str;
 }

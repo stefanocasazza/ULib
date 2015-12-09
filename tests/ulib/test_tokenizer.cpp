@@ -123,15 +123,15 @@ U_EXPORT main (int argc, char* argv[])
 
    t.setData(U_STRING_FROM_CONSTANT(" ( $QUERY_STRING  =  'submitted' ) "));
 
-   while (t.getTokenId(z) > 0);
+   while (t.getTokenId(0) > 0);
 
-   U_ASSERT( t.getTokenId(z) == 0 )
+   U_ASSERT( t.getTokenId(0) == 0 )
 
    t.setData(U_STRING_FROM_CONSTANT(" ( ${QUERY_STRING}  !=  submitted ) "));
 
-   while (t.getTokenId(z) > 0);
+   while (t.getTokenId(0) > 0);
 
-   U_ASSERT( t.getTokenId(z) == 0 )
+   U_ASSERT( t.getTokenId(0) == 0 )
 
    t.setData(U_STRING_FROM_CONSTANT("!!!.,;'?pippo.,;'?!!!"));
 

@@ -126,16 +126,6 @@ protected:
       UTimeVal::setMilliSecond(ms = timeoutMS);
       }
 
-   void setMilliSecond() 
-      {
-      U_TRACE_NO_PARAM(0, "UEventTime::setMilliSecond()")
-
-      ms = ((ctime.tv_sec  + tv_sec  - timeout1.tv_sec)  * 1000L) +
-           ((ctime.tv_usec + tv_usec - timeout1.tv_usec) / 1000L);
-
-      U_ASSERT(checkTolerance())
-      }
-
    bool checkMilliSecond() const 
       {
       U_TRACE_NO_PARAM(0, "UEventTime::checkMilliSecond()")

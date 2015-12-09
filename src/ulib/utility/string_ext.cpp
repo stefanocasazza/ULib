@@ -761,38 +761,58 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
 
    int token_id;
    UTokenizer t(expr);
-   UString token, result = *UString::str_true;
+   UString* ptoken = 0;
+   UString result = *UString::str_true;
+
+   static UString* token;
+
+   if (token == 0) token = U_NEW(UString);
 
    void* pParser = expressionParserAlloc(malloc);
 
-#ifdef DEBUG
-// (void) fprintf(stderr, "start parsing expr: \"%v\"\n", expr));
-// expressionParserTrace(stderr, (char*)"parser: ");
-#endif
+   /**
+    * #ifdef DEBUG
+    *    (void) fprintf(stderr, "start parsing expr: \"%v\"\n", expr));
+    *
+    *    expressionParserTrace(stderr, (char*)"parser: ");
+    * #endif
+    */
 
    while (result &&
           (token_id = t.getTokenId(token)) > 0)
       {
       if (token_id == U_TK_NAME)
          {
-         token    = UStringExt::getEnvironmentVar(token, &environment);
-         token_id = U_TK_VALUE;
+         *token    = UStringExt::getEnvironmentVar(*token, &environment);
+          token_id = U_TK_VALUE;
          }
       else if (token_id == U_TK_PID)
          {
-         token    = UStringExt::getPidProcess();
-         token_id = U_TK_VALUE;
+         *token    = UStringExt::getPidProcess();
+          token_id = U_TK_VALUE;
          }
 
-      expressionParser( pParser, token_id, U_NEW(UString(token)), &result);
+      expressionParser( pParser, token_id, ptoken = U_NEW(UString(*token)), &result);
       }
 
-   expressionParser(    pParser,        0,                     0, &result);
+   expressionParser(pParser, 0, 0, &result);
 
    expressionParserFree(pParser, free);
 
-#ifdef DEBUG
-// (void) fprintf(stderr, "ended parsing expr: \"%v\"\n", expr));
+#if defined(DEBUG) && !defined(U_SUBSTR_INC_REF)
+   if (ptoken)
+      {
+      // (void) fprintf(stderr, "ended parsing expr: \"%v\"\n", expr));
+
+      U_INTERNAL_DUMP("ptoken->rep->parent->child = %d", ptoken->rep->parent->child)
+
+      if (ptoken->rep->parent->child >= 1)
+         {
+         token->clear();
+
+      // delete ptoken;
+         }
+      }
 #endif
 
    U_RETURN_STRING(result);

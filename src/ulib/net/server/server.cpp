@@ -975,7 +975,7 @@ UOCSPStapling* UServer_Base::pthread_ocsp;
 #endif
 
 #ifdef U_LINUX
-static int sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
+static long sysctl_somaxconn, tcp_abort_on_overflow, sysctl_max_syn_backlog, tcp_fin_timeout;
 #endif
 
 UServer_Base::UServer_Base(UFileConfig* pcfg)
@@ -1493,7 +1493,7 @@ void UServer_Base::loadConfigParam()
 
       U_INTERNAL_ASSERT(x.isNullTerminated())
 
-      old_pid = UFile::getSysParam(x.data());
+      old_pid = (int) UFile::getSysParam(x.data());
 
       (void) UFile::writeTo(x, UString(u_pid_str, u_pid_str_len));
       }

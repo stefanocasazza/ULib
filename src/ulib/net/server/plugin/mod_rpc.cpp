@@ -68,10 +68,7 @@ int URpcPlugIn::handlerREAD()
       {
       is_rpc_msg = URPC::readRequest(UServer_Base::csocket); // NB: URPC::resetInfo() it is already called by clearData()...
 
-      if (is_rpc_msg)
-         {
-         U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_FINISHED);
-         }
+      if (is_rpc_msg) U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_FINISHED);
       }
 
    U_RETURN(U_PLUGIN_HANDLER_GO_ON);
