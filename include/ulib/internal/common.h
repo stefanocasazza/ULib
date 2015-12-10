@@ -127,7 +127,7 @@ enum StringAllocationType {
 };
 
 enum StringAllocationIndex {
-   STR_ALLOCATE_INDEX_SOAP         = 14,
+   STR_ALLOCATE_INDEX_SOAP         = 18,
    STR_ALLOCATE_INDEX_IMAP         = STR_ALLOCATE_INDEX_SOAP+14,
    STR_ALLOCATE_INDEX_SSI          = STR_ALLOCATE_INDEX_IMAP+4,
    STR_ALLOCATE_INDEX_NOCAT        = STR_ALLOCATE_INDEX_SSI+2,

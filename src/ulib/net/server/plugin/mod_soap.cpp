@@ -62,8 +62,8 @@ int USoapPlugIn::handlerInit()
 #  else
       if (UHTTP::valias == 0) UHTTP::valias = U_NEW(UVector<UString>(2U));
 
-      UHTTP::valias->push_back(U_STRING_FROM_CONSTANT("/soap"));
-      UHTTP::valias->push_back(U_STRING_FROM_CONSTANT("/nostat"));
+      UHTTP::valias->push_back(*UString::str_soap);
+      UHTTP::valias->push_back(*UString::str_nostat);
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 #  endif

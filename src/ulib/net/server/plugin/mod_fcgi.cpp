@@ -233,7 +233,7 @@ int UFCGIPlugIn::handlerInit()
          if (UHTTP::valias == 0) UHTTP::valias = U_NEW(UVector<UString>(2U));
 
          UHTTP::valias->push_back(*UHTTP::fcgi_uri_mask);
-         UHTTP::valias->push_back(U_STRING_FROM_CONSTANT("/nostat"));
+         UHTTP::valias->push_back(*UString::str_nostat);
 
          environment_type = (UHTTP::fcgi_uri_mask->equal(U_CONSTANT_TO_PARAM("*.php")) ? U_PHP : U_CGI);
 

@@ -23,13 +23,14 @@
 ** input grammar file:
 */
 #include <stdio.h>
-#include <assert.h>
 /************ Begin %include sections from the grammar ************************/
 #line 1 "expression.y"
 
 #include <ulib/tokenizer.h>
 #include <ulib/dynamic/dynamic.h>
 #include <ulib/utility/string_ext.h>
+
+#include <assert.h>
 
 typedef long (*lPFv)(void);
 typedef long (*lPFll)(long, long);
@@ -48,7 +49,7 @@ void token_destructor(UString* token) {
    delete token;
 }
 
-#line 51 "expression.c"
+#line 53 "expression.c"
 /**************** End of %include directives **********************************/
 /* These constants specify the various numeric values for terminal symbols
 ** in a format understandable to "makeheaders".  This section is blank unless
@@ -521,19 +522,19 @@ static void yy_destructor(
     case 22: /* VALUE */
     case 23: /* COMMA */
 {
-#line 30 "expression.y"
+#line 32 "expression.y"
  token_destructor((yypminor->yy0)); 
-#line 526 "expression.c"
+#line 528 "expression.c"
 }
       break;
     case 25: /* params */
 {
-#line 32 "expression.y"
+#line 34 "expression.y"
 
    U_TRACE(0, "::params_destructor(%p)", (yypminor->yy49))
    delete (yypminor->yy49);
 
-#line 536 "expression.c"
+#line 538 "expression.c"
 }
       break;
 /********* End destructor definitions *****************************************/
@@ -706,11 +707,11 @@ static void yyStackOverflow(yyParser *yypParser, YYMINORTYPE *yypMinor){
    /* Here code is inserted which will execute if the parser
    ** stack every overflows */
 /******** Begin %stack_overflow code ******************************************/
-#line 54 "expression.y"
+#line 56 "expression.y"
 
    U_TRACE_NO_PARAM(0, "::stack_overflow()")
    U_WARNING("Parse stack overflow");
-#line 713 "expression.c"
+#line 715 "expression.c"
 /******** End %stack_overflow code ********************************************/
    expressionParserARG_STORE; /* Suppress warning about unused %extra_argument var */
 }
@@ -857,7 +858,7 @@ static void yy_reduce(
   */
 /********** Begin reduce actions **********************************************/
       case 0: /* input ::= booleanExpression */
-#line 77 "expression.y"
+#line 79 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "input ::= booleanExpression(yymsp[0].minor.yy3)")
 
@@ -870,10 +871,10 @@ static void yy_reduce(
 
    delete yymsp[0].minor.yy3;
 }
-#line 873 "expression.c"
+#line 875 "expression.c"
         break;
       case 1: /* booleanExpression ::= booleanExpression booleanCond equalityExpression */
-#line 90 "expression.y"
+#line 92 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "booleanExpression(yygotominor.yy3) ::= booleanExpression(yymsp[-2].minor.yy3) booleanCond(yymsp[-1].minor.yy12) equalityExpression(yymsp[0].minor.yy3)")
 
@@ -894,10 +895,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 897 "expression.c"
+#line 899 "expression.c"
         break;
       case 2: /* booleanExpression ::= equalityExpression */
-#line 111 "expression.y"
+#line 113 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "booleanExpression(yygotominor.yy3) ::= equalityExpression(yymsp[0].minor.yy3)")
 
@@ -909,10 +910,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 912 "expression.c"
+#line 914 "expression.c"
         break;
       case 3: /* equalityExpression ::= equalityExpression equalityCond relationalExpression */
-#line 123 "expression.y"
+#line 125 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "equalityExpression(yygotominor.yy3) ::= equalityExpression(yymsp[-2].minor.yy3) equalityCond(yymsp[-1].minor.yy12) relationalExpression(yymsp[0].minor.yy3)")
 
@@ -947,10 +948,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 950 "expression.c"
+#line 952 "expression.c"
         break;
       case 4: /* equalityExpression ::= relationalExpression */
-#line 158 "expression.y"
+#line 160 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "equalityExpression(yygotominor.yy3) ::= relationalExpression(yymsp[0].minor.yy3)")
 
@@ -962,10 +963,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 965 "expression.c"
+#line 967 "expression.c"
         break;
       case 5: /* relationalExpression ::= relationalExpression relationalCond additiveExpression */
-#line 170 "expression.y"
+#line 172 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "relationalExpression(yygotominor.yy3) ::= relationalExpression(yymsp[-2].minor.yy3) relationalCond(yymsp[-1].minor.yy12) additiveExpression(yymsp[0].minor.yy3)")
 
@@ -997,10 +998,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1000 "expression.c"
+#line 1002 "expression.c"
         break;
       case 6: /* relationalExpression ::= additiveExpression */
-#line 202 "expression.y"
+#line 204 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "relationalExpression(yygotominor.yy3) ::= additiveExpression(yymsp[0].minor.yy3)")
 
@@ -1012,10 +1013,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1015 "expression.c"
+#line 1017 "expression.c"
         break;
       case 7: /* additiveExpression ::= additiveExpression additiveCond multiplicativeExpression */
-#line 214 "expression.y"
+#line 216 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "additiveExpression(yygotominor.yy3) ::= additiveExpression(yymsp[-2].minor.yy3) additiveCond(yymsp[-1].minor.yy12) multiplicativeExpression(yymsp[0].minor.yy3)")
 
@@ -1036,10 +1037,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1039 "expression.c"
+#line 1041 "expression.c"
         break;
       case 8: /* additiveExpression ::= multiplicativeExpression */
-#line 235 "expression.y"
+#line 237 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "additiveExpression(yygotominor.yy3) ::= multiplicativeExpression(yymsp[0].minor.yy3)")
 
@@ -1051,10 +1052,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1054 "expression.c"
+#line 1056 "expression.c"
         break;
       case 9: /* multiplicativeExpression ::= multiplicativeExpression multiplicativeCond unaryExpression */
-#line 247 "expression.y"
+#line 249 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "multiplicativeExpression(yygotominor.yy3) ::= multiplicativeExpression(yymsp[-2].minor.yy3) multiplicativeCond(yymsp[-1].minor.yy12) unaryExpression(yymsp[0].minor.yy3)")
 
@@ -1067,7 +1068,7 @@ static void yy_reduce(
         Blo = yymsp[-2].minor.yy3->strtol(),
         Dlo = yymsp[0].minor.yy3->strtol();
 
-   if (Dlo == 0) yygotominor.yy3 = U_NEW(UString(U_STRING_FROM_CONSTANT("0")));
+   if (Dlo == 0) yygotominor.yy3 = U_NEW(UString(*UString::str_zero));
    else
       {
       lo = (yymsp[-1].minor.yy12 == U_TK_MULT ? Blo * Dlo :
@@ -1082,10 +1083,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1085 "expression.c"
+#line 1087 "expression.c"
         break;
       case 10: /* multiplicativeExpression ::= unaryExpression */
-#line 275 "expression.y"
+#line 277 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "multiplicativeExpression(yygotominor.yy3) ::= unaryExpression(yymsp[0].minor.yy3)")
 
@@ -1097,10 +1098,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1100 "expression.c"
+#line 1102 "expression.c"
         break;
       case 11: /* unaryExpression ::= NOT primaryExpression */
-#line 287 "expression.y"
+#line 289 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "unaryExpression(yygotominor.yy3) ::= NOT primaryExpression(yymsp[0].minor.yy3)")
 
@@ -1115,10 +1116,10 @@ static void yy_reduce(
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
   yy_destructor(yypParser,18,&yymsp[-1].minor);
 }
-#line 1118 "expression.c"
+#line 1120 "expression.c"
         break;
       case 12: /* unaryExpression ::= primaryExpression */
-#line 301 "expression.y"
+#line 303 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "unaryExpression(yygotominor.yy3) ::= primaryExpression(yymsp[0].minor.yy3)")
 
@@ -1130,10 +1131,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1133 "expression.c"
+#line 1135 "expression.c"
         break;
       case 13: /* primaryExpression ::= LPAREN booleanExpression RPAREN */
-#line 313 "expression.y"
+#line 315 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "primaryExpression(yygotominor.yy3) ::= LPAREN booleanExpression(yymsp[-1].minor.yy3) RPAREN")
 
@@ -1147,10 +1148,10 @@ static void yy_reduce(
   yy_destructor(yypParser,20,&yymsp[-2].minor);
   yy_destructor(yypParser,21,&yymsp[0].minor);
 }
-#line 1150 "expression.c"
+#line 1152 "expression.c"
         break;
       case 14: /* primaryExpression ::= value */
-#line 325 "expression.y"
+#line 327 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "primaryExpression(yygotominor.yy3) ::= value(yymsp[0].minor.yy3)")
 
@@ -1162,10 +1163,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1165 "expression.c"
+#line 1167 "expression.c"
         break;
       case 15: /* value ::= VALUE */
-#line 337 "expression.y"
+#line 339 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "value(yygotominor.yy3) ::= VALUE(yymsp[0].minor.yy0)")
 
@@ -1177,10 +1178,10 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1180 "expression.c"
+#line 1182 "expression.c"
         break;
       case 16: /* value ::= value VALUE */
-#line 349 "expression.y"
+#line 351 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "value(yygotominor.yy3) ::= value(yymsp[-1].minor.yy3) VALUE(yymsp[0].minor.yy0)")
 
@@ -1196,163 +1197,163 @@ static void yy_reduce(
 
    U_INTERNAL_DUMP("yygotominor.yy3 = %V", yygotominor.yy3->rep)
 }
-#line 1199 "expression.c"
+#line 1201 "expression.c"
         break;
       case 17: /* booleanCond ::= OR */
-#line 365 "expression.y"
+#line 367 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "booleanCond(yygotominor.yy12) ::= OR")
    yygotominor.yy12 = U_TK_OR;
   yy_destructor(yypParser,2,&yymsp[0].minor);
 }
-#line 1208 "expression.c"
+#line 1210 "expression.c"
         break;
       case 18: /* booleanCond ::= AND */
-#line 369 "expression.y"
+#line 371 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "booleanCond(yygotominor.yy12) ::= AND")
    yygotominor.yy12 = U_TK_AND;
   yy_destructor(yypParser,1,&yymsp[0].minor);
 }
-#line 1217 "expression.c"
+#line 1219 "expression.c"
         break;
       case 19: /* equalityCond ::= EQ */
-#line 373 "expression.y"
+#line 375 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "equalityCond(yygotominor.yy12) ::= EQ")
    yygotominor.yy12 = U_TK_EQ;
   yy_destructor(yypParser,3,&yymsp[0].minor);
 }
-#line 1226 "expression.c"
+#line 1228 "expression.c"
         break;
       case 20: /* equalityCond ::= NE */
-#line 377 "expression.y"
+#line 379 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "equalityCond(yygotominor.yy12) ::= NE")
    yygotominor.yy12 = U_TK_NE;
   yy_destructor(yypParser,4,&yymsp[0].minor);
 }
-#line 1235 "expression.c"
+#line 1237 "expression.c"
         break;
       case 21: /* equalityCond ::= STARTS_WITH */
-#line 381 "expression.y"
+#line 383 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "equalityCond(yygotominor.yy12) ::= STARTS_WITH")
    yygotominor.yy12 = U_TK_STARTS_WITH;
   yy_destructor(yypParser,9,&yymsp[0].minor);
 }
-#line 1244 "expression.c"
+#line 1246 "expression.c"
         break;
       case 22: /* equalityCond ::= ENDS_WITH */
-#line 385 "expression.y"
+#line 387 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "equalityCond(yygotominor.yy12) ::= ENDS_WITH")
    yygotominor.yy12 = U_TK_ENDS_WITH;
   yy_destructor(yypParser,10,&yymsp[0].minor);
 }
-#line 1253 "expression.c"
+#line 1255 "expression.c"
         break;
       case 23: /* equalityCond ::= IS_PRESENT */
-#line 389 "expression.y"
+#line 391 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "equalityCond(yygotominor.yy12) ::= IS_PRESENT")
    yygotominor.yy12 = U_TK_IS_PRESENT;
   yy_destructor(yypParser,11,&yymsp[0].minor);
 }
-#line 1262 "expression.c"
+#line 1264 "expression.c"
         break;
       case 24: /* equalityCond ::= CONTAINS */
-#line 393 "expression.y"
+#line 395 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "equalityCond(yygotominor.yy12) ::= CONTAINS")
    yygotominor.yy12 = U_TK_CONTAINS;
   yy_destructor(yypParser,12,&yymsp[0].minor);
 }
-#line 1271 "expression.c"
+#line 1273 "expression.c"
         break;
       case 25: /* relationalCond ::= GT */
-#line 397 "expression.y"
+#line 399 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "relationalCond(yygotominor.yy12) ::= GT")
    yygotominor.yy12 = U_TK_GT;
   yy_destructor(yypParser,5,&yymsp[0].minor);
 }
-#line 1280 "expression.c"
+#line 1282 "expression.c"
         break;
       case 26: /* relationalCond ::= GE */
-#line 401 "expression.y"
+#line 403 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "relationalCond(yygotominor.yy12) ::= GE")
    yygotominor.yy12 = U_TK_GE;
   yy_destructor(yypParser,6,&yymsp[0].minor);
 }
-#line 1289 "expression.c"
+#line 1291 "expression.c"
         break;
       case 27: /* relationalCond ::= LT */
-#line 405 "expression.y"
+#line 407 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "relationalCond(yygotominor.yy12) ::= LT")
    yygotominor.yy12 = U_TK_LT;
   yy_destructor(yypParser,7,&yymsp[0].minor);
 }
-#line 1298 "expression.c"
+#line 1300 "expression.c"
         break;
       case 28: /* relationalCond ::= LE */
-#line 409 "expression.y"
+#line 411 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "relationalCond(yygotominor.yy12) ::= LE")
    yygotominor.yy12 = U_TK_LE;
   yy_destructor(yypParser,8,&yymsp[0].minor);
 }
-#line 1307 "expression.c"
+#line 1309 "expression.c"
         break;
       case 29: /* additiveCond ::= PLUS */
-#line 413 "expression.y"
+#line 415 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "additiveCond(yygotominor.yy12) ::= PLUS")
    yygotominor.yy12 = U_TK_PLUS;
   yy_destructor(yypParser,13,&yymsp[0].minor);
 }
-#line 1316 "expression.c"
+#line 1318 "expression.c"
         break;
       case 30: /* additiveCond ::= MINUS */
-#line 417 "expression.y"
+#line 419 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "additiveCond(yygotominor.yy12) ::= MINUS")
    yygotominor.yy12 = U_TK_MINUS;
   yy_destructor(yypParser,14,&yymsp[0].minor);
 }
-#line 1325 "expression.c"
+#line 1327 "expression.c"
         break;
       case 31: /* multiplicativeCond ::= MULT */
-#line 421 "expression.y"
+#line 423 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "multiplicativeCond(yygotominor.yy12) ::= MULT")
    yygotominor.yy12 = U_TK_MULT;
   yy_destructor(yypParser,15,&yymsp[0].minor);
 }
-#line 1334 "expression.c"
+#line 1336 "expression.c"
         break;
       case 32: /* multiplicativeCond ::= DIV */
-#line 425 "expression.y"
+#line 427 "expression.y"
 {
    U_TRACE(0, "multiplicativeCond(yygotominor.yy12) ::= DIV")
    yygotominor.yy12 = U_TK_DIV;
   yy_destructor(yypParser,16,&yymsp[0].minor);
 }
-#line 1343 "expression.c"
+#line 1345 "expression.c"
         break;
       case 33: /* multiplicativeCond ::= MOD */
-#line 429 "expression.y"
+#line 431 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "multiplicativeCond(yygotominor.yy12) ::= MOD")
    yygotominor.yy12 = U_TK_MOD;
   yy_destructor(yypParser,17,&yymsp[0].minor);
 }
-#line 1352 "expression.c"
+#line 1354 "expression.c"
         break;
       case 34: /* primaryExpression ::= FN_CALL LPAREN RPAREN */
-#line 434 "expression.y"
+#line 436 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "primaryExpression(yygotominor.yy3) ::= FN_CALL(yymsp[-2].minor.yy0) LPAREN RPAREN")
 
@@ -1373,10 +1374,10 @@ static void yy_reduce(
   yy_destructor(yypParser,20,&yymsp[-1].minor);
   yy_destructor(yypParser,21,&yymsp[0].minor);
 }
-#line 1376 "expression.c"
+#line 1378 "expression.c"
         break;
       case 35: /* primaryExpression ::= FN_CALL LPAREN params RPAREN */
-#line 453 "expression.y"
+#line 455 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "primaryExpression(yygotominor.yy3) ::= FN_CALL(yymsp[-3].minor.yy0) LPAREN params(yymsp[-1].minor.yy49) RPAREN")
 
@@ -1398,10 +1399,10 @@ static void yy_reduce(
   yy_destructor(yypParser,20,&yymsp[-2].minor);
   yy_destructor(yypParser,21,&yymsp[0].minor);
 }
-#line 1401 "expression.c"
+#line 1403 "expression.c"
         break;
       case 36: /* params ::= VALUE */
-#line 473 "expression.y"
+#line 475 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "params(yygotominor.yy49) ::= VALUE(yymsp[0].minor.yy0)")
 
@@ -1415,10 +1416,10 @@ static void yy_reduce(
 
    delete yymsp[0].minor.yy0;
 }
-#line 1418 "expression.c"
+#line 1420 "expression.c"
         break;
       case 37: /* params ::= params COMMA VALUE */
-#line 487 "expression.y"
+#line 489 "expression.y"
 {
    U_TRACE_NO_PARAM(0, "params(yygotominor.yy49) ::= params(yymsp[-2].minor.yy49) COMMA VALUE(yymsp[0].minor.yy0)")
 
@@ -1434,7 +1435,7 @@ static void yy_reduce(
    delete yymsp[0].minor.yy0;
   yy_destructor(yypParser,23,&yymsp[-1].minor);
 }
-#line 1437 "expression.c"
+#line 1439 "expression.c"
         break;
       default:
         break;
@@ -1484,13 +1485,13 @@ static void yy_parse_failed(
   /* Here code is inserted which will be executed whenever the
   ** parser fails */
 /************ Begin %parse_failure code ***************************************/
-#line 42 "expression.y"
+#line 44 "expression.y"
 
    U_TRACE_NO_PARAM(0, "::parse_failure()")
    U_INTERNAL_ASSERT_POINTER(result)
    result->clear();
    U_WARNING("Parse failure!");
-#line 1493 "expression.c"
+#line 1495 "expression.c"
 /************ End %parse_failure code *****************************************/
   expressionParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
@@ -1507,13 +1508,13 @@ static void yy_syntax_error(
   expressionParserARG_FETCH;
 #define TOKEN (yyminor.yy0)
 /************ Begin %syntax_error code ****************************************/
-#line 48 "expression.y"
+#line 50 "expression.y"
 
    U_TRACE_NO_PARAM(0, "::syntax_error()")
    U_INTERNAL_ASSERT_POINTER(result)
    result->clear();
    U_WARNING("Syntax error!");
-#line 1516 "expression.c"
+#line 1518 "expression.c"
 /************ End %syntax_error code ******************************************/
   expressionParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }
@@ -1534,12 +1535,12 @@ static void yy_accept(
   /* Here code is inserted which will be executed whenever the
   ** parser accepts */
 /*********** Begin %parse_accept code *****************************************/
-#line 37 "expression.y"
+#line 39 "expression.y"
 
    U_TRACE_NO_PARAM(0, "::parse_accept()")
    U_INTERNAL_ASSERT_POINTER(result)
    U_INTERNAL_DUMP("result = %V", result->rep)
-#line 1542 "expression.c"
+#line 1544 "expression.c"
 /*********** End %parse_accept code *******************************************/
   expressionParserARG_STORE; /* Suppress warning about unused %extra_argument variable */
 }

@@ -45,6 +45,10 @@ const UString* UString::str_point;
 const UString* UString::str_true;
 const UString* UString::str_false;
 const UString* UString::str_response;
+const UString* UString::str_zero;
+const UString* UString::str_nostat;
+const UString* UString::str_tsa;
+const UString* UString::str_soap;
 // SOAP
 const UString* UString::str_ns;
 const UString* UString::str_boolean;
@@ -179,9 +183,9 @@ const UString* UString::str_vary;
 const UString* UString::str_via;
 const UString* UString::str_www_authenticate;
 
-ustringrep UString::stringrep_storage[132] = {
+ustringrep UString::stringrep_storage[136] = {
 #else
-ustringrep UString::stringrep_storage[66] = {
+ustringrep UString::stringrep_storage[70] = {
 #endif
    { U_STRINGREP_FROM_CONSTANT("host") },
    { U_STRINGREP_FROM_CONSTANT("chunked") },
@@ -196,6 +200,10 @@ ustringrep UString::stringrep_storage[66] = {
    { U_STRINGREP_FROM_CONSTANT("true") },
    { U_STRINGREP_FROM_CONSTANT("false") },
    { U_STRINGREP_FROM_CONSTANT("response") },
+   { U_STRINGREP_FROM_CONSTANT("0") },
+   { U_STRINGREP_FROM_CONSTANT("/nostat") },
+   { U_STRINGREP_FROM_CONSTANT("/tsa") },
+   { U_STRINGREP_FROM_CONSTANT("/soap") },
    { U_STRINGREP_FROM_CONSTANT("") },
    // SOAP
    { U_STRINGREP_FROM_CONSTANT("ns") },
@@ -347,11 +355,11 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_true, 0)
       U_INTERNAL_ASSERT_EQUALS(str_false, 0)
       U_INTERNAL_ASSERT_EQUALS(str_response, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_zero, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_nostat, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_tsa, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_soap, 0)
       U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, 0)
-
-#  if defined(__GNUC__) && GCC_VERSION_NUM == 50300
-   // UStringRep::string_rep_null->hold();
-#  endif
 
       U_NEW_ULIB_OBJECT(str_host,             UString(stringrep_storage+0));
       U_NEW_ULIB_OBJECT(str_chunked,          UString(stringrep_storage+1));
@@ -366,8 +374,12 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_OBJECT(str_true,             UString(stringrep_storage+10));
       U_NEW_ULIB_OBJECT(str_false,            UString(stringrep_storage+11));
       U_NEW_ULIB_OBJECT(str_response,         UString(stringrep_storage+12));
+      U_NEW_ULIB_OBJECT(str_zero,             UString(stringrep_storage+13));
+      U_NEW_ULIB_OBJECT(str_nostat,           UString(stringrep_storage+14));
+      U_NEW_ULIB_OBJECT(str_tsa,              UString(stringrep_storage+15));
+      U_NEW_ULIB_OBJECT(str_soap,             UString(stringrep_storage+16));
 
-      uustringrep key1 = { stringrep_storage+13 };
+      uustringrep key1 = { stringrep_storage+17 };
 
       UHashMap<void*>::pkey = key1.p2;
 
@@ -512,7 +524,7 @@ void UString::str_allocate(int which)
    else if ((which & STR_ALLOCATE_HTTP2) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(str_authority, 0)
-      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 132)
+      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 136)
 
       U_NEW_ULIB_OBJECT(str_authority,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+0));
       U_NEW_ULIB_OBJECT(str_method,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+1));
@@ -581,7 +593,7 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_OBJECT(str_www_authenticate,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+64));
       }
 #else
-   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 66)
+   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 70)
 #endif
 }
 

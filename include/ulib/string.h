@@ -935,6 +935,10 @@ public:
    static const UString* str_true;
    static const UString* str_false;
    static const UString* str_response;
+   static const UString* str_zero;
+   static const UString* str_nostat;
+   static const UString* str_tsa;
+   static const UString* str_soap;
    // SOAP
    static const UString* str_ns;
    static const UString* str_boolean;
@@ -1003,7 +1007,7 @@ public:
    static const UString* str_sqlite_name;
    static const UString* str_dbdir;
 #ifdef U_HTTP2_DISABLE
-   static ustringrep stringrep_storage[66];
+   static ustringrep stringrep_storage[70];
 #else
    static const UString* str_authority;
    static const UString* str_method;
@@ -1071,7 +1075,7 @@ public:
    static const UString* str_via;
    static const UString* str_www_authenticate;
 
-   static ustringrep stringrep_storage[132];
+   static ustringrep stringrep_storage[136];
 #endif
 
    static void str_allocate(int which);
@@ -1400,7 +1404,7 @@ public:
    void swap(UString& lhs, UString& rhs) { lhs.swap(rhs); }
 
 #ifdef U_COMPILER_RVALUE_REFS
-# if !defined(__GNUC__) // || GCC_VERSION_NUM >= 60000 // hope
+# if !defined(__GNUC__) || (defined(DEBUG) && GCC_VERSION_NUM < 50300) // || GCC_VERSION_NUM >= 60000 // hope
    UString(UString && str)
       {
       U_TRACE_NO_PARAM(0, "UString::UString(move)")
