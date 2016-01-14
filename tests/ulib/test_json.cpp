@@ -61,6 +61,8 @@ U_EXPORT main (int argc, char* argv[])
 
    cout << '\n';
 
+   testQuery( U_STRING_FROM_CONSTANT("{ \"_id\" : 3457, \"id\" : 3457, \"randomNumber\" : 8427 }"), "{'randomNumber'", U_STRING_FROM_CONSTANT("8427") );
+
    testQuery( exampleJson, "", exampleJson );
    testQuery( exampleJson, "[1", U_STRING_FROM_CONSTANT("") );
    testQuery( exampleJson, "{'astring'", U_STRING_FROM_CONSTANT("This is a string") );

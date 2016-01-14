@@ -49,6 +49,7 @@ uint32_t                   UNoCatPlugIn::num_radio;
 uint32_t                   UNoCatPlugIn::check_expire;
 uint32_t                   UNoCatPlugIn::time_available;
 uint32_t                   UNoCatPlugIn::total_connections;
+uint32_t                   UNoCatPlugIn::idx_peers_preallocate;
 uint32_t                   UNoCatPlugIn::num_peers_preallocate;
 uint64_t                   UNoCatPlugIn::traffic_available;
 UString*                   UNoCatPlugIn::input;
@@ -159,6 +160,30 @@ int UModNoCatPeer::handlerTime()
    U_RETURN(-1);
 }
 
+int UNoCatPlugIn::handlerTime()
+{
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::handlerTime()")
+
+   U_INTERNAL_ASSERT_MAJOR(check_expire, 0)
+
+   next_event_time = check_expire;
+
+   checkSystem();
+
+   // ---------------
+   // return value:
+   // ---------------
+   // -1 - normal
+   //  0 - monitoring
+   // ---------------
+
+   U_INTERNAL_DUMP("check_expire = %u next_event_time = %u", check_expire, next_event_time)
+
+   UTimeVal::setSecond(next_event_time);
+
+   U_RETURN(0);
+}
+
 UNoCatPlugIn::UNoCatPlugIn()
 {
    U_TRACE_REGISTER_OBJECT(0, UNoCatPlugIn, "")
@@ -257,12 +282,10 @@ UNoCatPlugIn::~UNoCatPlugIn()
 
    if (peers_delete)
       {
-      peer = peers_delete;
+      UModNoCatPeer* p = peers_delete;
 
-      do { delete peer; } while ((peer = peer->next));
+      do { delete[] peers_delete; } while ((peers_delete = p->next));
       }
-
-   if (peers_preallocate) delete[] peers_preallocate;
 
 #ifdef USE_LIBTDB
    if (pdata) delete (UTDB*)pdata;
@@ -426,31 +449,32 @@ void UNoCatPlugIn::getTraffic()
    U_TRACE_NO_PARAM(0, "UNoCatPlugIn::getTraffic()")
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
-   union uuaddr {
-      uint32_t       a;
-      struct in_addr addr;
-   };
-
-   union uuaddr u;
-   const char* ip;
+   UString ip(17U);
    uint32_t traffic;
+   const char* table;
    UModNoCatPeer* _peer;
+   const unsigned char* bytep;
    struct ipt_acc_handle_ip* entry;
 
    for (uint32_t i = 0, n = vLocalNetworkMask->size(); i < n; ++i)
       {
       U_INTERNAL_ASSERT((*vLocalNetworkMask)[i]->spec.isNullTerminated())
 
-      const char* table = (*vLocalNetworkMask)[i]->spec.data();
+      table = (*vLocalNetworkMask)[i]->spec.data();
 
-      if (ipt->readEntries(table, false))
+      if (ipt->readEntries(table, true))
          {
          while ((entry = ipt->getNextEntry()))
             {
-            u.a = entry->ip;
-            ip  = inet_ntoa(u.addr);
+            bytep = (const unsigned char*) &(entry->ip);
 
-            U_INTERNAL_DUMP("IP: %s SRC packets: %u bytes: %u DST packets: %u bytes: %u", ip, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes)
+#        ifdef HAVE_ARCH64
+            ip.snprintf("%u.%u.%u.%u", bytep[3], bytep[2], bytep[1], bytep[0]);
+#        else
+            ip.snprintf("%u.%u.%u.%u", bytep[0], bytep[1], bytep[2], bytep[3]);
+#        endif
+
+            U_INTERNAL_DUMP("IP: %v SRC packets: %u bytes: %u DST packets: %u bytes: %u", ip.rep, entry->src_packets, entry->src_bytes, entry->dst_packets, entry->dst_bytes)
 
             _peer = (*peers)[ip];
 
@@ -769,6 +793,8 @@ bool UNoCatPlugIn::checkFirewall()
 
    output.clear();
 
+   last_request_firewall = u_now->tv_sec;
+
    U_RETURN(true);
 }
 
@@ -779,10 +805,9 @@ void UNoCatPlugIn::checkSystem()
    uint32_t i, n;
    long check_interval;
 
-   U_INTERNAL_DUMP("flag_check_system = %b check_expire = %u U_http_method_type = %u", flag_check_system, check_expire, U_http_method_type)
+   U_INTERNAL_DUMP("flag_check_system = %b check_expire = %u", flag_check_system, check_expire)
 
    U_INTERNAL_ASSERT_MAJOR(check_expire, 0)
-   U_INTERNAL_ASSERT_EQUALS(U_http_method_type, 0)
    U_INTERNAL_ASSERT_EQUALS(flag_check_system, false)
 
    flag_check_system = true;
@@ -1199,43 +1224,28 @@ void UNoCatPlugIn::creatNewPeer()
 {
    U_TRACE_NO_PARAM(0, "UNoCatPlugIn::creatNewPeer()")
 
-   U_INTERNAL_DUMP("peer = %p peers_delete = %p num_peers_preallocate = %u", peer, peers_delete, num_peers_preallocate)
+   U_INTERNAL_DUMP("peer = %p peers_delete = %p idx_peers_preallocate = %u num_peers_preallocate = %u", peer, peers_delete, idx_peers_preallocate, num_peers_preallocate)
 
    U_INTERNAL_ASSERT_EQUALS(peer, 0)
+   U_INTERNAL_ASSERT_POINTER(peers_preallocate)
 
-   if (num_peers_preallocate)
+   if ((idx_peers_preallocate+1) < num_peers_preallocate) peer = &(peers_preallocate[idx_peers_preallocate++]);
+   else
       {
-      U_INTERNAL_ASSERT_POINTER(peers_preallocate)
+      UString msg(200U);
 
-      peer = peers_preallocate + --num_peers_preallocate;
+      msg.snprintf("/error_ap?ap=%v@%v&public=%v%%3A%u&msg=%u", label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, num_peers_preallocate);
 
-      return;
+      sendMsgToPortal(0, msg, 0);
+
+      UInterrupt::setHandlerForSegv(preallocatePeers, preallocatePeersFault);
+
+      peer = &(peers_preallocate[0]);
+
+      idx_peers_preallocate = 1;
       }
 
-   // U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P.creatNewPeer", 0)
-
-   peer = U_NEW(UModNoCatPeer);
-
-   if (peer == 0)
-      {
-      unsigned long vsz, rss;
-
-      u_get_memusage(&vsz, &rss);
-
-      double _vsz = (double)vsz / (1024.0 * 1024.0),
-             _rss = (double)rss / (1024.0 * 1024.0);
-
-      U_ERROR("cannot allocate %u bytes (%u KB) of memory - "
-                  "address space usage: %.2f MBytes - "
-                            "rss usage: %.2f MBytes\n",
-                  sizeof(UModNoCatPeer),
-                  sizeof(UModNoCatPeer) / 1024, _vsz, _rss);
-      }
-
-   // put the new allocated peer on the delete list
-
-   peer->next = peers_delete;
-                peers_delete = peer;
+   U_INTERNAL_ASSERT_POINTER(peer)
 }
 
 bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
@@ -1417,6 +1427,8 @@ void UNoCatPlugIn::checkOldPeer()
 
       peer->fw.setArgument(4, peer->mac.data());
 
+      (void) peer->user.assign(U_CONSTANT_TO_PARAM("anonymous"));
+
       /**
        * NB: tutto il traffico viene rediretto sulla 80 (CAPTIVE PORTAL) e quindi windows update, antivrus, etc...
        * questo introduce la possibilita' che durante la fase di autorizzazione il token generato per il ticket autorizzativo
@@ -1437,10 +1449,9 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
    U_INTERNAL_ASSERT(u_now->tv_sec >= peer->ctime)
 
    char* ptr;
+   uint32_t sz;
    char buffer[64];
-   UString info = (*vinfo_data)[U_peer_index_AUTH],
-            str = UStringExt::substitute(peer->mac, ':', U_CONSTANT_TO_PARAM("%3A"));
-   uint32_t sz  = info.size();
+   UString info = (*vinfo_data)[U_peer_index_AUTH], str = UStringExt::substitute(peer->mac, ':', U_CONSTANT_TO_PARAM("%3A"));
 
    U_INTERNAL_DUMP("U_peer_index_AUTH = %u info = %V peer->ip = %V", U_peer_index_AUTH, info.rep, peer->ip.rep)
 
@@ -1457,9 +1468,9 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
    // /info?Mac=98%3A0c%3A82%3A76%3A3b%3A39&ip=172.16.1.8&gateway=172.16.1.254%3A5280&ap=ap%4010.8.0.1&User=1212&logout=-1&connected=3&traffic=0
    // ------------------------------------------------------------------------------------------------------------------------------------------
 
-   (void) info.reserve(sz + 200);
+   (void) info.reserve((sz = info.size()) + 200U);
 
-   info.snprintf_add("%sMac=%v&ip=%v&", (sz ? "&" : ""), str.rep, peer->ip.rep);
+   info.snprintf_add("%.*sMac=%v&ip=%v&", (sz > 0), "&", str.rep, peer->ip.rep);
 
    info.snprintf_add("gateway=%.*s&ap=%v%%40%v&User=",
                       u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->gateway), (unsigned char*)buffer), buffer, peer->label.rep, IP_address_trust->rep);
@@ -1500,7 +1511,7 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
    ptr += u_num2str32(ptr, peer->ctraffic);
                            peer->ctraffic = 0;
 
-   info.size_adjust(ptr);
+   info.size_adjust_force(ptr);
 
    U_INTERNAL_DUMP("info(%u) = %V", info.size(), info.rep)
 
@@ -1704,7 +1715,7 @@ void UNoCatPlugIn::sendInfoData(uint32_t index_AUTH)
 
       (void) client->sendPOSTRequestAsync(body, url, true, log_msg);
 
-      vinfo_data->getStringRep(index_AUTH)->size_adjust(0U);
+      vinfo_data->getStringRep(index_AUTH)->size_adjust_force(0U);
       }
 }
 
@@ -1840,9 +1851,12 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
    // *decrypt_cmd = cfg.at(U_CONSTANT_TO_PARAM("DECRYPT_CMD"));
       *decrypt_key = cfg.at(U_CONSTANT_TO_PARAM("DECRYPT_KEY"));
 
-      check_type            = cfg.readLong(U_CONSTANT_TO_PARAM("CHECK_TYPE"));
-      check_expire          = cfg.readLong(U_CONSTANT_TO_PARAM("CHECK_EXPIRE_INTERVAL"));
-      num_peers_preallocate = cfg.readLong(U_CONSTANT_TO_PARAM("NUM_PEERS_PREALLOCATE"), 512);
+      check_type   = cfg.readLong(U_CONSTANT_TO_PARAM("CHECK_TYPE"));
+      check_expire = cfg.readLong(U_CONSTANT_TO_PARAM("CHECK_EXPIRE_INTERVAL"));
+
+      tmp = cfg.at(U_CONSTANT_TO_PARAM("NUM_PEERS_PREALLOCATE"));
+
+      num_peers_preallocate = (tmp ? tmp.strtol() : 512);
 
       tmp = cfg.at(U_CONSTANT_TO_PARAM("LOGIN_TIMEOUT"));
 
@@ -2176,6 +2190,8 @@ int UNoCatPlugIn::handlerFork()
 
    // initialize the firewall: direct all port 80 traffic to us...
 
+   total_connections = 0;
+
    fw->setArgument(4, allowed_web_hosts.data());
 
    (void) fw->executeAndWait(0, -1, fd_stderr);
@@ -2280,7 +2296,7 @@ int UNoCatPlugIn::handlerRequest()
       // 6) /logout        - logout specific user
       // -----------------------------------------------------
 
-      U_INTERNAL_DUMP("vauth_ip = %S", UObject2String(*vauth_ip))
+      U_INTERNAL_DUMP("vauth_ip = %p vauth_ip = %S", vauth_ip, UObject2String(*vauth_ip))
 
       uint32_t index_AUTH = vauth_ip->find(U_CLIENT_ADDRESS_TO_PARAM);
 
@@ -2358,11 +2374,7 @@ int UNoCatPlugIn::handlerRequest()
 
             (void) getARPCache();
 
-            if (total_connections > peers->size() && // anomalous
-                checkFirewall())
-               {
-               sendInfoData(index_AUTH);
-               }
+            if (total_connections > peers->size()) (void) checkFirewall(); // anomalous
 
             setStatusContent(ap_label); // NB: peer == 0 -> request from AUTH to get status access point...
             }
@@ -2490,7 +2502,8 @@ next:       (void) getARPCache();
          goto set_redirect_to_AUTH;
          }
 
-      if (UServices::dosMatchWithOR(U_HTTP_USER_AGENT_TO_PARAM, U_CONSTANT_TO_PARAM("*BDNC*|*TMUFE*"), FNM_IGNORECASE))
+      if (U_http_info.user_agent_len &&
+          UServices::dosMatchWithOR(U_HTTP_USER_AGENT_TO_PARAM, U_CONSTANT_TO_PARAM("*BDNC*|*TMUFE*"), FNM_IGNORECASE))
          {
 #     ifdef DEBUG
          U_SRV_LOG("Detected User-Agent: (TMUFE|BDNC) (AntiVirus) from peer: IP %.*s", U_CLIENT_ADDRESS_TO_TRACE);

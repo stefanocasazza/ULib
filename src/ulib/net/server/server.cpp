@@ -75,7 +75,6 @@
 #endif
 
 int           UServer_Base::rkids;
-int           UServer_Base::old_pid;
 int           UServer_Base::timeoutMS;
 int           UServer_Base::verify_mode;
 int           UServer_Base::socket_flags;
@@ -295,7 +294,7 @@ public:
       if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
 
 #  ifdef U_LOG_ENABLE
-      if (U_CNT_PARALLELIZATION)
+      if (U_SRV_CNT_PARALLELIZATION)
 #  endif
       UServer_Base::removeZombies();
 
@@ -721,7 +720,7 @@ void UServer_Base::initThrottlingServer(const UString& x)
       {
       db_throttling = U_NEW(URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/BandWidthThrottling"), -1, (throttling_rec = U_NEW(UThrottling))));
 
-      if (isPreForked()) db_throttling->setShared(U_LOCK_THROTTLING, U_SPINLOCK_THROTTLING);
+      if (isPreForked()) db_throttling->setShared(U_SRV_LOCK_THROTTLING, U_SRV_SPINLOCK_THROTTLING);
 
       bool result = db_throttling->open(32 * 1024, false, true); // NB: we don't want truncate (we have only the journal)...
 
@@ -1095,7 +1094,9 @@ UServer_Base::~UServer_Base()
 
    delete socket;
    delete vplugin_name;
+#ifndef U_SERVER_CAPTIVE_PORTAL
    delete vplugin;
+#endif
 
    UOrmDriver::clear();
 
@@ -1485,19 +1486,6 @@ void UServer_Base::loadConfigParam()
    enable_rfc1918_filter = cfg->readBoolean(U_CONSTANT_TO_PARAM("ENABLE_RFC1918_FILTER"));
 #endif
 
-   x = cfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
-
-   if (x)
-      {
-      // write pid on file
-
-      U_INTERNAL_ASSERT(x.isNullTerminated())
-
-      old_pid = (int) UFile::getSysParam(x.data());
-
-      (void) UFile::writeTo(x, UString(u_pid_str, u_pid_str_len));
-      }
-
    // If you want the webserver to run as a process of a defined user, you can do it.
    // For the change of user to work, it's necessary to execute the server with root privileges.
    // If it's started by a user that that doesn't have root privileges, this step will be omitted
@@ -1540,6 +1528,28 @@ void UServer_Base::loadConfigParam()
 #  ifdef U_LOG_ENABLE
       else bmsg = true;
 #  endif
+      }
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("PID_FILE"));
+
+   if (x)
+      {
+      // write pid on file
+
+      U_INTERNAL_ASSERT(x.isNullTerminated())
+
+      int old_pid = (int) UFile::getSysParam(x.data());
+
+      if (old_pid > 0)
+         {
+#     ifdef U_LOG_ENABLE
+         if (isLog()) ULog::log("Trying to kill another instance of userver that is running with pid %d", old_pid);
+#     endif
+
+         UProcess::kill(old_pid, SIGTERM); // SIGTERM is sent to every process in the process group of the calling process...
+         }
+
+      (void) UFile::writeTo(x, UString(u_pid_str, u_pid_str_len));
       }
 
    // DOCUMENT_ROOT: The directory out of which we will serve your documents
@@ -2336,7 +2346,7 @@ void UServer_Base::init()
    last_event = u_now->tv_sec;
 
 #ifdef U_LOG_ENABLE
-   U_INTERNAL_ASSERT_EQUALS(U_TOT_CONNECTION, 0)
+   U_INTERNAL_ASSERT_EQUALS(U_SRV_TOT_CONNECTION, 0)
 #endif
 
 #ifdef DEBUG
@@ -2452,15 +2462,6 @@ void UServer_Base::init()
    UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
    UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); //  sync signal
 #endif
-
-   if (old_pid > 0)
-      {
-#  ifdef U_LOG_ENABLE
-      if (isLog()) ULog::log("Trying to kill another instance of userver that is running with pid %d", old_pid);
-#  endif
-
-      UProcess::kill(old_pid, SIGTERM); // SIGTERM is sent to every process in the process group of the calling process...
-      }
 }
 
 bool UServer_Base::addLog(UFile* _log, int flags)
@@ -2595,7 +2596,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 #endif
 
 #ifdef U_LOG_ENABLE
-   U_TOT_CONNECTION = 0;
+   U_SRV_TOT_CONNECTION = 0;
 #endif
 
    if (preforked_num_kids > 1) rkids = 0;
@@ -2957,9 +2958,9 @@ try_accept:
 #endif
 
 #ifdef U_LOG_ENABLE
-   U_TOT_CONNECTION++;
+   U_SRV_TOT_CONNECTION++;
 
-   U_INTERNAL_DUMP("U_TOT_CONNECTION = %u", U_TOT_CONNECTION)
+   U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", U_SRV_TOT_CONNECTION)
 #endif
 
    ++UNotifier::num_connection;
@@ -3061,6 +3062,15 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    else
 #endif
    {
+#if defined(SO_INCOMING_CPU) && defined(DEBUG)
+   int cpu;
+   uint32_t len = sizeof(socklen_t);
+
+   (void) CSOCKET->getSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&cpu, len);
+
+   U_INTERNAL_DUMP("cpu = %d USocket::incoming_cpu = %d", cpu, USocket::incoming_cpu)
+#endif
+
    if (CLIENT_IMAGE_HANDLER_READ == false) goto next;
    }
 
@@ -3143,7 +3153,7 @@ uint32_t UServer_Base::getNumConnection(char* ptr)
       *ptr  = '(';
        ptr += 1+u_num2str32(ptr+1, UNotifier::num_connection - UNotifier::min_connection - 1);
       *ptr  = '/';
-       ptr += 1+u_num2str32(ptr+1, U_TOT_CONNECTION - flag_loop); // NB: check for SIGTERM event...
+       ptr += 1+u_num2str32(ptr+1, U_SRV_TOT_CONNECTION - flag_loop); // NB: check for SIGTERM event...
       *ptr  = ')';
 
       len = ptr-start+1;
@@ -3440,7 +3450,14 @@ no_monitoring_process:
 
                CPU_ZERO(&cpuset);
 
-               if (baffinity) u_bind2cpu(&cpuset, pid, rkids); // Pin the process to a particular cpu...
+               if (baffinity)
+                  {
+#              ifdef SO_INCOMING_CPU
+                  USocket::incoming_cpu = rkids-1;
+#              endif
+
+                  u_bind2cpu(&cpuset, pid, rkids); // Pin the process to a particular cpu...
+                  }
 
                U_SRV_LOG("Started new child (pid %d), up to %u children, affinity mask: %x", pid, rkids, CPUSET_BITS(&cpuset)[0]);
 
@@ -3593,7 +3610,7 @@ void UServer_Base::removeZombies()
 #else
    uint32_t n = UProcess::removeZombies();
 
-   if (n) U_SRV_LOG("removed %u zombies - current parallelization (%d)", n, U_CNT_PARALLELIZATION);
+   if (n) U_SRV_LOG("removed %u zombies - current parallelization (%d)", n, U_SRV_CNT_PARALLELIZATION);
 #endif
 }
 
@@ -3615,9 +3632,9 @@ pid_t UServer_Base::startNewChild()
 #  else
       uint32_t n = UProcess::removeZombies();
 
-      U_CNT_PARALLELIZATION++;
+      U_SRV_CNT_PARALLELIZATION++;
 
-      U_SRV_LOG("Started new child (pid %d) for parallelization (%d) - removed %u zombies", pid, U_CNT_PARALLELIZATION, n);
+      U_SRV_LOG("Started new child (pid %d) for parallelization (%d) - removed %u zombies", pid, U_SRV_CNT_PARALLELIZATION, n);
 #  endif
 
       U_RETURN(pid); // parent
@@ -3638,11 +3655,11 @@ __noreturn void UServer_Base::endNewChild()
 #endif
 
 #ifdef U_LOG_ENABLE
-   if (LIKELY(U_CNT_PARALLELIZATION)) U_CNT_PARALLELIZATION--;
+   if (LIKELY(U_SRV_CNT_PARALLELIZATION)) U_SRV_CNT_PARALLELIZATION--;
 
-   U_INTERNAL_DUMP("cnt_parallelization = %d", U_CNT_PARALLELIZATION)
+   U_INTERNAL_DUMP("cnt_parallelization = %d", U_SRV_CNT_PARALLELIZATION)
 
-   U_SRV_LOG("child for parallelization ended (%d)", U_CNT_PARALLELIZATION);
+   U_SRV_LOG("child for parallelization ended (%d)", U_SRV_CNT_PARALLELIZATION);
 #endif
 
    U_EXIT(0);

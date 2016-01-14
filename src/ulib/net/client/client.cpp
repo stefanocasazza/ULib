@@ -297,7 +297,7 @@ bool UClient_Base::connect()
 
    if (socket->connectServer(server, port, timeoutMS)) U_RETURN(true);
 
-   response.snprintf("Sorry, couldn't connect to server %V%R", host_port.rep, 0); // NB: the last argument (0) is necessary...
+   response.snprintf("Sorry, couldn't connect to server %v%R", host_port.rep, 0); // NB: the last argument (0) is necessary...
 
    if (log) ULog::log("%s%v", log_shared_with_server ? UServer_Base::mod_name[0] : "", response.rep);
 
@@ -311,6 +311,8 @@ bool UClient_Base::connectServer(const UString& _url)
    reset();
 
    if (setUrl(_url)) close(); // NB: is changed server and/or port to connect...
+
+   iovcnt = 0;
 
    // QUEUE MODE
 
@@ -328,8 +330,6 @@ bool UClient_Base::connectServer(const UString& _url)
 
       U_RETURN(true);
       }
-
-   iovcnt = 0;
 
    if (connect()) U_RETURN(true);
 

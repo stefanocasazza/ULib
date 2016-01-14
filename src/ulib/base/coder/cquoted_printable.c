@@ -135,8 +135,9 @@ uint32_t u_quoted_printable_encode(const unsigned char* restrict inptr, uint32_t
             ws = '\0';
             }
 
-         *outptr++ = '=';
-         *outptr++ = '\n';
+         u_put_unalignedp16(outptr, U_MULTICHAR_CONSTANT16('=','\n'));
+         
+         outptr += 2;
 
          n = 0;
          }

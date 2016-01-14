@@ -742,6 +742,8 @@ SSL_TS_FALSE
 SSL_TS_TRUE
 SSL_FALSE
 SSL_TRUE
+MONGODB_FALSE
+MONGODB_TRUE
 RUBYCONFIGLIBS
 RUBYCONFIGLDFLAGS
 RUBYCPPFLAGS
@@ -835,8 +837,6 @@ STDCPP_TRUE
 STATIC_ONLY_FALSE
 STATIC_ONLY_TRUE
 MODULE_LIBTOOL_OPTIONS
-MS_LIB_AVAILABLE_FALSE
-MS_LIB_AVAILABLE_TRUE
 OTOOL64
 OTOOL
 LIPO
@@ -856,6 +856,8 @@ LIBTOOL
 OBJDUMP
 DLLTOOL
 AS
+MS_LIB_AVAILABLE_FALSE
+MS_LIB_AVAILABLE_TRUE
 CXXCPP
 ms_librarian
 WINDRES
@@ -1064,6 +1066,10 @@ with_php_ldflags
 with_php_libs
 with_ruby_embedded
 with_ruby_command
+with_mongodb
+with_mongodb_includes
+with_mongodb_ldflags
+with_mongodb_libs
 enable_static_server_plugin
 enable_static_orm_driver
 enable_static_servlet
@@ -1802,6 +1808,10 @@ Optional Packages:
   --with-php-libs=LIBS       php-config lib locations
   --with-ruby-embedded       use ruby-embedded
   --with-ruby-command=RUBY   name of the Ruby command (default: ruby)
+  --with-mongodb                 use mongodb client
+  --with-mongodb-includes=PATHS  mongodb include locations
+  --with-mongodb-ldflags=LDFLAGS mongodb ldflags list
+  --with-mongodb-libs=LIBS       mongodb lib locations
 
 Some influential environment variables:
   CC          C compiler command
@@ -3410,7 +3420,6 @@ $as_echo "" >&6; }
 $as_echo "${T_MD}Initial phase:${T_ME}" >&6; }
 
 
-# Check what platform we are running on
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
   if test -f "$ac_dir/install-sh"; then
@@ -3550,6 +3559,7 @@ test -n "$target_alias" &&
   test "$program_prefix$program_suffix$program_transform_name" = \
     NONENONEs,x,x, &&
   program_prefix=${target_alias}-
+
 # Pick a newer and better tar implementation like tar-pax
 am__api_version='1.15'
 
@@ -5784,6 +5794,86 @@ $as_echo "$CFLAGS" >&6; }
 ac_config_headers="$ac_config_headers include/ulib/internal/config.h"
 
 
+
+
+# Check what platform we are running on
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking which platform we are running on" >&5
+$as_echo_n "checking which platform we are running on... " >&6; }
+
+local_os_type="unknown"
+is_librt_available="yes"
+
+LDFLAGS="$LDFLAGS -L/usr/local/lib"
+CXXFLAGS="$CXXFLAGS -I/usr/local/include"
+
+case "$host" in
+	*-sco*) as_fn_error $? "We do not support SCO's products!" "$LINENO" 5 ;;
+
+	*-aix*)	  local_os_type="aix" ;;
+	*-osf*)	  local_os_type="osf" ;;
+	*-irix*)   local_os_type="irix" ;;
+	*-hpux*)	  local_os_type="hpux" ;;
+	*-linux*)  local_os_type="linux" ;;
+	*-cygwin*) local_os_type="cygwin" ;;
+
+	*-darwin*)
+		local_os_type="darwin"
+		is_librt_available="no"
+	;;
+
+	*-netbsd*)
+		 local_os_type="netbsd"
+
+		 LDFLAGS="$LDFLAGS -L/usr/local/v6/lib"
+	;;
+
+	*-openbsd*)
+		 local_os_type="openbsd"
+
+		 LIBS="$LIBS -L/usr/local/lib"
+	;;
+
+	*mingw*)
+		 local_os_type="mingw"
+		 is_librt_available="no"
+
+		 CPPFLAGS="$CPPFLAGS -I/mingw/include -L/mingw/lib -D__USE_MINGW_ANSI_STDIO=1"
+		 CXXFLAGS="$CXXFLAGS -I/mingw/include -L/mingw/lib"
+		 LDFLAGS="$LDFLAGS -L/mingw/lib"
+	;;
+
+	*-sunos*)
+		 local_os_type="sunos"
+
+		 CXXFLAGS="$CXXFLAGS -pthreads"
+		 LDFLAGS="$LDFLAGS -lsocket -lnsl -lresolv"
+	;;
+
+	*-solaris*)
+		 local_os_type="solaris"
+
+		 CXXFLAGS="$CXXFLAGS -pthreads"
+		 LDFLAGS="$LDFLAGS -lsocket -lnsl"
+	;;
+
+	*-freebsd*)
+		 local_os_type="freebsd"
+
+		 CXXFLAGS="$CXXFLAGS -pthread"
+		 LDFLAGS="$LDFLAGS -L/usr/local/v6/lib"
+	;;
+
+	*)	local_os_type=unknown ;;
+esac
+
+if test "x$local_os_type" = xunknown; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: unknown" >&5
+$as_echo "unknown" >&6; }
+elif test "x$local_os_type" != xunknown; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $local_os_type" >&5
+$as_echo "$local_os_type" >&6; }
+fi
+
 # Check for architecture for the target
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking which architecture the target is" >&5
 $as_echo_n "checking which architecture the target is... " >&6; }
@@ -5826,10 +5916,10 @@ $as_echo_n "checking which operating system the target is... " >&6; }
 OPERATINGSYSTEM=
 TARGET_LIBC=
 case $target in
-	*-*-linux-*)		OPERATINGSYSTEM=linux ;;
-	*netbsd*)			OPERATINGSYSTEM=NetBSD ;;
-	*-none-*)			OPERATINGSYSTEM=baremetal ;;
-	*)						OPERATINGSYSTEM=unknown ;;
+	*-*-linux-*)	OPERATINGSYSTEM=linux ;;
+	*netbsd*)		OPERATINGSYSTEM=NetBSD ;;
+	*-none-*)		OPERATINGSYSTEM=baremetal ;;
+	*)					OPERATINGSYSTEM=unknown ;;
 esac
 
 #AC_SUBST(OPERATINGSYSTEM)
@@ -8303,6 +8393,15 @@ fi
 
 	;;
 esac
+
+ if test x$ms_librarian = xyes; then
+  MS_LIB_AVAILABLE_TRUE=
+  MS_LIB_AVAILABLE_FALSE='#'
+else
+  MS_LIB_AVAILABLE_TRUE='#'
+  MS_LIB_AVAILABLE_FALSE=
+fi
+
 
 # Check for the compiler support
 gcc_major_4_1="no"
@@ -19099,17 +19198,6 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 
 
 
- if test x$ms_librarian = xyes; then
-  MS_LIB_AVAILABLE_TRUE=
-  MS_LIB_AVAILABLE_FALSE='#'
-else
-  MS_LIB_AVAILABLE_TRUE='#'
-  MS_LIB_AVAILABLE_FALSE=
-fi
-
-
-
-
 
 
 if test "$enable_static" = "yes" -a "$enable_shared" = "no"; then
@@ -26501,7 +26589,7 @@ fi
 
 
 
-	# List of php-config include paths
+	# List of php-config lib paths
 
 # Check whether --with-php-libs was given.
 if test "${with_php_libs+set}" = set; then :
@@ -26515,6 +26603,13 @@ fi
 		PHPCONFIGLIBS="-lphp5 `$PHPCONFIG --libs`"
 	fi
 
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for libraries specific:${T_ME}" >&5
+$as_echo "${T_MD}Checking for libraries specific:${T_ME}" >&6; }
 
 fi
 # ---------------------------------------------------------------------------------------------------
@@ -26706,8 +26801,272 @@ $as_echo "$rubyhdrdir" >&6; }
 
 
 	fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for libraries specific:${T_ME}" >&5
+$as_echo "${T_MD}Checking for libraries specific:${T_ME}" >&6; }
+
 fi
 # ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+# Check for MONGODB
+# ---------------------------------------------------------------------------------------------------
+ if false; then
+  MONGODB_TRUE=
+  MONGODB_FALSE='#'
+else
+  MONGODB_TRUE='#'
+  MONGODB_FALSE=
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to use a mongoDB client" >&5
+$as_echo_n "checking if you want to use a mongoDB client... " >&6; }
+
+# Check whether --with-mongodb was given.
+if test "${with_mongodb+set}" = set; then :
+  withval=$with_mongodb; use_mongodb=$withval
+else
+  use_mongodb=no
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_mongodb" >&5
+$as_echo "$use_mongodb" >&6; }
+
+if test "$use_mongodb" = "yes"; then
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for mongodb package specific:${T_ME}" >&5
+$as_echo "${T_MD}Checking for mongodb package specific:${T_ME}" >&6; }
+
+
+	# List of MONGODB include paths
+
+# Check whether --with-mongodb-includes was given.
+if test "${with_mongodb_includes+set}" = set; then :
+  withval=$with_mongodb_includes; MONGODBINCLUDES="$withval"
+else
+  MONGODBINCLUDES=""
+fi
+
+
+	if test -z "$MONGODBINCLUDES"; then
+		MONGODBINCLUDES="-I/usr/include/libmongoc-1.0/ -I/usr/include/libbson-1.0 -I/usr/local/include/libmongoc-1.0/ -I/usr/local/include/libbson-1.0"
+	fi
+
+	# Check for mongoc.h and bson.h
+	ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	save_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $MONGODBINCLUDES"
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether mongodb mongoc.h header actually works" >&5
+$as_echo_n "checking whether mongodb mongoc.h header actually works... " >&6; }
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <mongoc.h>
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: exists and works correctly" >&5
+$as_echo "exists and works correctly" >&6; }
+else
+  as_fn_error $? "Cannot find mongodb mongoc.h header" "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether mongodb bson.h header actually works" >&5
+$as_echo_n "checking whether mongodb bson.h header actually works... " >&6; }
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <bson.h>
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: exists and works correctly" >&5
+$as_echo "exists and works correctly" >&6; }
+else
+  as_fn_error $? "Cannot find mongodb bson.h header" "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+	CPPFLAGS=$save_CPPFLAGS
+	ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+	# List of mongodb ldflags
+
+# Check whether --with-mongodb-ldflags was given.
+if test "${with_mongodb_ldflags+set}" = set; then :
+  withval=$with_mongodb_ldflags; MONGODBLDFLAGS="$withval"
+else
+  MONGODBLDFLAGS=""
+fi
+
+
+	if test -n "$MONGODBLDFLAGS"; then
+		LDFLAGS="$LDFLAGS $MONGODBLDFLAGS"
+	fi
+
+	# List of mongodb lib paths
+
+# Check whether --with-mongodb-libs was given.
+if test "${with_mongodb_libs+set}" = set; then :
+  withval=$with_mongodb_libs; MONGODBLIBS="$withval"
+else
+  MONGODBLIBS=""
+fi
+
+
+	if test -z "$MONGODBLIBS"; then
+		MONGODBLIBS="-lmongoc-1.0 -lbson-1.0"
+	fi
+
+	ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+   save_LIBS="$LIBS"
+   LIBS="$LIBS $MONGODBLIBS"
+
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mongoc_init in -lmongoc-1.0" >&5
+$as_echo_n "checking for mongoc_init in -lmongoc-1.0... " >&6; }
+if ${ac_cv_lib_mongoc_1_0_mongoc_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lmongoc-1.0  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char mongoc_init ();
+int
+main ()
+{
+return mongoc_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_mongoc_1_0_mongoc_init=yes
+else
+  ac_cv_lib_mongoc_1_0_mongoc_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_mongoc_1_0_mongoc_init" >&5
+$as_echo "$ac_cv_lib_mongoc_1_0_mongoc_init" >&6; }
+if test "x$ac_cv_lib_mongoc_1_0_mongoc_init" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBMONGOC_1_0 1
+_ACEOF
+
+  LIBS="-lmongoc-1.0 $LIBS"
+
+else
+  as_fn_error $? "Not found libmongoc library" "$LINENO" 5
+fi
+
+   { $as_echo "$as_me:${as_lineno-$LINENO}: checking for bson_new in -lbson-1.0" >&5
+$as_echo_n "checking for bson_new in -lbson-1.0... " >&6; }
+if ${ac_cv_lib_bson_1_0_bson_new+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lbson-1.0  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char bson_new ();
+int
+main ()
+{
+return bson_new ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_bson_1_0_bson_new=yes
+else
+  ac_cv_lib_bson_1_0_bson_new=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_bson_1_0_bson_new" >&5
+$as_echo "$ac_cv_lib_bson_1_0_bson_new" >&6; }
+if test "x$ac_cv_lib_bson_1_0_bson_new" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_LIBBSON_1_0 1
+_ACEOF
+
+  LIBS="-lbson-1.0 $LIBS"
+
+else
+  as_fn_error $? "Not found libbson library" "$LINENO" 5
+fi
+
+
+   LIBS="$save_LIBS"
+	ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+	ULIB_LIBS="$ULIB_LIBS $MONGODBLIBS"
+	CXXFLAGS="$CXXFLAGS $MONGODBINCLUDES"
+
+	 if true; then
+  MONGODB_TRUE=
+  MONGODB_FALSE='#'
+else
+  MONGODB_TRUE='#'
+  MONGODB_FALSE=
+fi
+
+
+$as_echo "#define USE_MONGODB 1" >>confdefs.h
+
+fi
+# ---------------------------------------------------------------------------------------------------
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for typedefs:${T_ME}" >&5
+$as_echo "${T_MD}Checking for typedefs:${T_ME}" >&6; }
+
 
  if test "$USE_LIBSSL"		= "yes"; then
   SSL_TRUE=
@@ -30561,6 +30920,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${TCC_TRUE}" && test -z "${TCC_FALSE}"; then
   as_fn_error $? "conditional \"TCC\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MONGODB_TRUE}" && test -z "${MONGODB_FALSE}"; then
+  as_fn_error $? "conditional \"MONGODB\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MONGODB_TRUE}" && test -z "${MONGODB_FALSE}"; then
+  as_fn_error $? "conditional \"MONGODB\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SSL_TRUE}" && test -z "${SSL_FALSE}"; then

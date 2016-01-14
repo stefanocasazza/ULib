@@ -1,52 +1,17 @@
 #!/bin/bash
 
-# --------------------------------------------------------------------------------------------------------
-# install.sh
-# --------------------------------------------------------------------------------------------------------
-# toolset/run-tests.py --install server --test ULib-mysql  --type all --verbose
-# toolset/run-tests.py --install server --test ULib-sqlite --type all --verbose
-# --------------------------------------------------------------------------------------------------------
-# TROOT - Path of this test's directory
-# IROOT - Path of this test's install directory ($FWROOT/installs or $FWROOT/installs/pertest/<test-name>)
-# --------------------------------------------------------------------------------------------------------
-# INFO:root:Running installation for ULib
-# INSTALL: 
-#    export TROOT=$FWROOT/ULib && 
-#    export IROOT=$FWROOT/installs && 
-#    . $FWROOT/toolset/setup/linux/bash_functions.sh && 
-#    . $FWROOT/ULib/install.sh (cwd=$FWROOT//installs)
-# --------------------------------------------------------------------------------------------------------
+DIR=FrameworkBenchmarks
 
 ULIB_VERSION=1.4.2
+IROOT=/mnt/data/$DIR/installs
 ULIB_ROOT=$IROOT/ULib
 ULIB_DOCUMENT_ROOT=$ULIB_ROOT/ULIB_DOCUMENT_ROOT
 
-# Check if ULib is already installed
-ULIB_INSTALLED_FILE="$IROOT/ULib-${ULIB_VERSION}.installed"
-RETCODE=$(fw_exists $ULIB_INSTALLED_FILE)
-[ ! "$RETCODE" == 0 ] || { return 0; }
+rm -rf $ULIB_ROOT
+mkdir -p $ULIB_ROOT
 
-# Create a run directory for ULIB
-[ ! -e $ULIB_INSTALLED_FILE -a -d $IROOT/ULib ] && rm -rf $IROOT/ULib*
-
-if [ ! -d "$ULIB_ROOT" ]; then
-  mkdir -p $ULIB_ROOT
-fi
-
-# AVOID "fatal error: postgres_fe.h: No such file or directory"
-sudo apt-get install -y postgresql-server-dev-all
-
-# make use of FIFO scheduling policy possible
-type setcap >/dev/null 2>/dev/null
-
-if [ $? -ne 0 ]; then
-   sudo apt-get install -y libcap2-bin
-fi
-
-# Add a simple configuration file to it
-cd $ULIB_ROOT
-if [ ! -f "benchmark.cfg" ]; then
-  cat <<EOF >benchmark.cfg
+if [ ! -f "$ULIB_ROOT/benchmark.cfg" ]; then
+  cat <<EOF >$ULIB_ROOT/benchmark.cfg
 userver {
  PORT 8080
  PREFORK_CHILD 4
@@ -58,58 +23,56 @@ userver {
 EOF
 fi
 
-# 1. Download ULib
-cd $IROOT
-fw_get -o ULib-${ULIB_VERSION}.tar.gz https://github.com/stefanocasazza/ULib/archive/v${ULIB_VERSION}.tar.gz 
-fw_untar  ULib-${ULIB_VERSION}.tar.gz
+#wget -O ULib-${ULIB_VERSION}.tar.gz https://github.com/stefanocasazza/ULib/archive/v${ULIB_VERSION}.tar.gz
+#tar  xf ULib-${ULIB_VERSION}.tar.gz
+cd       ULib-${ULIB_VERSION}
 
-# 2. Compile application (userver_tcp)
-cd ULib-$ULIB_VERSION
-
-# Check for the compiler support (We want at least g++ 4.8)
-CC=gcc  # C   compiler command
-CXX=g++ # C++ compiler command
-
-gcc_version=`g++ -dumpversion`
-
-case "$gcc_version" in
-  3*|4.0*|4.1*|4.2*|4.3*|4.4*|4.5*|4.6*|4.7*)
-	  CC='gcc-4.9'
-	 CXX='g++-4.9'
-  ;;
-esac
-
-export CC CXX
-
-# AVOID "configure: error: newly created file is older than distributed files! Check your system clock"
-find . -exec touch {} \;
+#rm -f config.cache ../config.cache
+cp ../config.cache .
 
 USP_FLAGS="-DAS_cpoll_cppsp_DO" \
-./configure --prefix=$ULIB_ROOT \
-   --disable-static --disable-examples \
-   --with-mysql --with-pgsql --with-sqlite3 \
-   --without-ssl --without-pcre --without-expat \
-   --without-libz --without-libuuid --without-magic --without-libares \
-   --enable-static-orm-driver='mysql pgsql sqlite' --enable-static-server-plugin=http
-#  --enable-debug \
+./configure -C --prefix=$ULIB_ROOT \
+  --enable-debug --enable-HCRS --enable-HPRS --disable-CRPWS --disable-check-time --disable-HIS --disable-log --disable-GSDS --disable-alias --disable-HSTS \
+  --disable-static --disable-examples \
+  --without-libtdb --without-libzopfli \
+  --with-mysql --with-pgsql --with-sqlite3 --with-mongodb \
+  --without-ssl --without-pcre --without-expat \
+  --without-libz --without-libuuid --without-magic --without-libares \
+  --enable-static-orm-driver='mysql pgsql sqlite' --enable-static-server-plugin=http \
+  	--with-mongodb --with-mongodb-includes="-I$IROOT/include/libbson-1.0 -I$IROOT/include/libmongoc-1.0" --with-mongodb-ldflags="-L$IROOT"
+# --enable-debug --enable-HCRS --enable-HPRS --disable-CRPWS --disable-check-time --disable-HIS --disable-log --disable-GSDS --disable-alias --disable-HSTS \
 #USP_LIBS="-ljson" \
 
-make install
+cp config.cache ..
+
+make -j4 install
 cp -r tests/examples/benchmark/FrameworkBenchmarks/ULib/db $ULIB_ROOT
 
 cd examples/userver
+make clean
 make install
 
-# 3. Compile usp pages for benchmark
 cd ../../src/ulib/net/server/plugin/usp
-make db.la fortune.la json.la plaintext.la query.la update.la rdb.la rquery.la rupdate.la rfortune.la
-
-# Check that compilation worked
-if [ ! -e .libs/db.so ]; then
-   exit 1
-fi
+make json.la plaintext.la db.la query.la update.la fortune.la rdb.la rquery.la rupdate.la rfortune.la mdb.la mquery.la mupdate.la mfortune.la
 
 mkdir -p $ULIB_DOCUMENT_ROOT
-cp .libs/db.so .libs/fortune.so .libs/json.so .libs/plaintext.so .libs/query.so .libs/update.so .libs/rdb.so .libs/rquery.so .libs/rupdate.so .libs/rfortune.so $ULIB_DOCUMENT_ROOT
+cp .libs/json.so .libs/plaintext.so \
+   .libs/db.so  .libs/query.so  .libs/update.so  .libs/fortune.so \
+   .libs/rdb.so .libs/rquery.so .libs/rupdate.so .libs/rfortune.so \
+   .libs/mdb.so .libs/mquery.so .libs/mupdate.so .libs/mfortune.so $ULIB_DOCUMENT_ROOT
 
-touch $ULIB_INSTALLED_FILE
+echo "export ULIB_VERSION=${ULIB_VERSION}" > $IROOT/ulib.installed
+echo "export ULIB_ROOT=${ULIB_ROOT}" >> $IROOT/ulib.installed
+echo "export ULIB_DOCUMENT_ROOT=${ULIB_DOCUMENT_ROOT}" >> $IROOT/ulib.installed
+echo -e "export PATH=\$ULIB_ROOT/bin:\$PATH" >> $IROOT/ulib.installed
+
+#sudo /etc/init.d/ssh start
+#sudo /etc/init.d/mysql start
+
+#ORM_DRIVER="sqlite" ORM_OPTION="host=10.30.1.131 dbname=../db/%.*s"
+#ORM_DRIVER="pgsql"  ORM_OPTION="host='10.30.1.131' user='benchmarkdbuser' password='benchmarkdbpass' client_encoding='UTF8' dbname='hello_world' sslmode='allow'"
+#ORM_DRIVER="mysql"  ORM_OPTION="host=10.30.1.131 user=benchmarkdbuser password=benchmarkdbpass character-set=utf8 dbname=hello_world"
+#/mnt/data/$DIR/installs/ULib/bin/userver_tcp -c /mnt/data/$DIR/installs/ULib/benchmark.cfg
+
+#sudo /bin/bash -c "ulimit -r 99 && exec su stefano -p -c \"$IROOT/ULib/bin/userver_tcp -c $IROOT/ULib/benchmark.cfg\"" &
+#sudo /bin/bash -c "ulimit -r 99 && exec su stefano -p -c \"strace -f $IROOT/ULib/bin/userver_tcp -c $IROOT/ULib/benchmark.cfg >/tmp/a 2>&1\"" &

@@ -38,15 +38,20 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
       GET_ENTRY(admin_export_view_using_historical_as_csv),
       GET_ENTRY(admin_historical_statistics_login),
       GET_ENTRY(admin_login_nodog),
+      GET_ENTRY(admin_login_nodog_historical),
+      GET_ENTRY(admin_login_nodog_historical_view_data),
       GET_ENTRY(admin_printlog),
       GET_ENTRY(admin_recovery),
       GET_ENTRY(admin_status_network),
       GET_ENTRY(admin_status_nodog),
+      GET_ENTRY(admin_status_nodog_and_user),
+      GET_ENTRY(admin_status_nodog_and_user_as_csv),
       GET_ENTRY(admin_view_statistics_login),
       GET_ENTRY(admin_view_statistics_registration),
       GET_ENTRY(admin_view_user),
       GET_ENTRY(admin_view_using),
       GET_ENTRY(admin_view_using_historical),
+      GET_ENTRY(calendar),
       GET_ENTRY(error_ap),
       GET_ENTRY(fake_login_validate),
       GET_ENTRY(gen_activation),
@@ -78,10 +83,8 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
       GET_ENTRY(start_ap),
       GET_ENTRY(stato_utente),
       GET_ENTRY(status_ap),
-      /*
-      GET_ENTRY(unifi),
-      GET_ENTRY(unifi_login_request),
-      */
+      GET_ENTRY(status_ap_no_label),
+      GET_ENTRY(tavarnelle),
       GET_ENTRY(webif_ap)
    };
    

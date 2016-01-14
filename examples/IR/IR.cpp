@@ -178,7 +178,7 @@ void IR::loadFiles()
    UDirWalk dirwalk;
 
    UDirWalk::setSortingForInode();
-   UDirWalk::setRecurseSubDirs(false);
+   UDirWalk::setRecurseSubDirs(true, false);
 
                                      dirwalk.call_internal = IR::processFile;
    if (UPosting::dir_content_as_doc) dirwalk.call_if_up    = IR::processDirectory;

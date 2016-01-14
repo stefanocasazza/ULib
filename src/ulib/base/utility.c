@@ -850,8 +850,9 @@ uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n
                {
                print_nothing = true;
 
-               *bp++ = '*';
-               *bp++ = '\n';
+               u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('*','\n'));
+
+               bp += 2;
                }
 
             cp += 16;
@@ -870,15 +871,19 @@ iteration:
             {
             c = *cp++;
 
-            *bp++   = u_hex_lower[((c >> 4) & 0x0F)];
-            *bp++   = u_hex_lower[( c       & 0x0F)];
+            u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(u_hex_lower[((c >> 4) & 0x0F)],
+                                                          u_hex_lower[( c       & 0x0F)]));
+
+            bp += 2;
 
             text[j] = (u__isprint(c) ? c : '.');
             }
          else
             {
-            *bp++   = ' ';
-            *bp++   = ' ';
+            u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(' ',' '));
+
+            bp += 2;
+
             text[j] = ' ';
             }
 
@@ -1391,7 +1396,7 @@ __pure bool u_isNumber(const char* restrict s, uint32_t n)
    return (s == end);
 }
 
-/* find char not quoted */
+/* find first char not quoted */
 
 __pure const char* u_find_char(const char* restrict s, const char* restrict end, char c)
 {
@@ -2331,23 +2336,26 @@ bool u_canonicalize_pathname(char* restrict path)
    U_INTERNAL_TRACE("u_canonicalize_pathname(%s)", path)
 
 #ifdef _MSWINDOWS_
-   if (u__isalpha(path[0]) && path[1] == ':') lpath += 2; /* Skip over the disk name in MSDOS pathnames */
+   if (u__isalpha(path[0]) &&
+                  path[1] == ':')
+      {
+      lpath += 2; /* Skip over the disk name in MSDOS pathnames */
+      }
 #endif
 
    /* Collapse multiple slashes */
 
    for (p = lpath; *p; ++p)
       {
-      if (p[0] == '/' &&
-          p[1] == '/')
+      if (u_get_unalignedp16(p) == U_MULTICHAR_CONSTANT16('/','/'))
          {
-         s = p + 1;
+         s = p+1;
 
          while (*(++s) == '/') {}
 
          is_modified = true;
 
-         for (src = s, dst = p + 1; (*dst = *src); ++src, ++dst) {} /* u__strcpy(p + 1, s); */
+         for (src = s, dst = p+1; (*dst = *src); ++src, ++dst) {} /* u__strcpy(p + 1, s); */
 
          U_INTERNAL_PRINT("path = %s", path)
          }
@@ -2360,12 +2368,11 @@ bool u_canonicalize_pathname(char* restrict path)
    while (*p)
       {
       if (p[0] == '/' &&
-          p[1] == '.' &&
-          p[2] == '/')
+          u_get_unalignedp16(p+1) == U_MULTICHAR_CONSTANT16('.','/'))
          {
          is_modified = true;
 
-         for (src = p + 2, dst = p; (*dst = *src); ++src, ++dst) {} /* u__strcpy(p, p + 2); */
+         for (src = p+2, dst = p; (*dst = *src); ++src, ++dst) {} /* u__strcpy(p, p + 2); */
 
          U_INTERNAL_PRINT("path = %s", path)
          }
@@ -2389,8 +2396,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
    /* Remove leading "./" */
 
-   if (lpath[0] == '.' &&
-       lpath[1] == '/')
+   if (u_get_unalignedp16(lpath) == U_MULTICHAR_CONSTANT16('.','/'))
       {
       if (lpath[2] == 0)
          {
@@ -2401,7 +2407,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
       is_modified = true;
 
-      for (src = lpath + 2, dst = lpath; (*dst = *src); ++src, ++dst) {} /* u__strcpy(lpath, lpath + 2); */
+      for (src = lpath+2, dst = lpath; (*dst = *src); ++src, ++dst) {} /* u__strcpy(lpath, lpath + 2); */
 
       U_INTERNAL_PRINT("path = %s", path)
       }
@@ -2412,16 +2418,15 @@ bool u_canonicalize_pathname(char* restrict path)
 
    if (len < 2) goto end;
 
-   if (lpath[len - 1] == '/')
+   if (lpath[len-1] == '/')
       {
-      lpath[len - 1] = 0;
+      lpath[len-1] = 0;
 
       is_modified = true;
       }
    else
       {
-      if (lpath[len - 1] == '.' &&
-          lpath[len - 2] == '/')
+      if (u_get_unalignedp16(lpath+len-2) == U_MULTICHAR_CONSTANT16('/','.'))
          {
          if (len == 2)
             {
@@ -2432,7 +2437,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
          is_modified = true;
 
-         lpath[len - 2] = 0;
+         lpath[len-2] = 0;
          }
       }
 
@@ -2457,7 +2462,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
       /* search for the previous token */
 
-      s = p - 1;
+      s = p-1;
 
       while (s >= lpath && *s != '/') --s;
 
@@ -2465,8 +2470,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
       /* If the previous token is "..", we cannot collapse it */
 
-      if (s[0]    == '.' &&
-          s[1]    == '.' &&
+      if (u_get_unalignedp16(s) == U_MULTICHAR_CONSTANT16('.','.') &&
           (s + 2) == p)
          {
          p += 3;
@@ -2481,7 +2485,7 @@ bool u_canonicalize_pathname(char* restrict path)
 
          is_modified = true;
 
-         for (src = p + 4, dst = s + (s == lpath && *s == '/'); (*dst = *src); ++src, ++dst) {} /* u__strcpy(s + (s == lpath && *s == '/'), p + 4); */
+         for (src = p+4, dst = s + (s == lpath && *s == '/'); (*dst = *src); ++src, ++dst) {} /* u__strcpy(s + (s == lpath && *s == '/'), p + 4); */
 
          U_INTERNAL_PRINT("path = %s", path)
 
@@ -2682,7 +2686,9 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
 
       if (flags & FNM_CASEFOLD) c = u__tolower((unsigned char)c);
 
-      if (*pattern == '-' && (c2 = *(pattern+1)) != ']' && (pattern+1) != end_p)
+      if (      * pattern     == '-' &&
+          (c2 = *(pattern+1)) != ']' &&
+                 (pattern+1)  != end_p)
          {
          pattern += 2;
 
@@ -2879,31 +2885,32 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
 
 #define U_LOOP_STRING( exec_code ) unsigned char c = *s; while (n--) { exec_code ; c = *(++s); }
 
-/*
-#if !defined(GCOV)
-
-(Duff's device) This is INCREDIBLY ugly, but fast. We break the string up into 8 byte units. On the first
-time through the loop we get the "leftover bytes" (strlen % 8). On every other iteration, we perform 8 BODY's
-so we handle all 8 bytes. Essentially, this saves us 7 cmp & branch instructions. If this routine is heavily
-used enough, it's worth the ugly coding
-
-#  undef  U_LOOP_STRING
-#  define U_LOOP_STRING( exec_code ) {     \
-   unsigned char c;                        \
-   uint32_t U_LOOP_CNT = (n + 8 - 1) >> 3; \
-   switch (n & (8 - 1)) {                  \
-      case 0:                              \
-         do { { c = *s++; exec_code; }     \
-      case 7: { c = *s++; exec_code; }     \
-      case 6: { c = *s++; exec_code; }     \
-      case 5: { c = *s++; exec_code; }     \
-      case 4: { c = *s++; exec_code; }     \
-      case 3: { c = *s++; exec_code; }     \
-      case 2: { c = *s++; exec_code; }     \
-      case 1: { c = *s++; exec_code; }     \
-         } while (--U_LOOP_CNT); } }
-#endif
-*/
+/**
+ * #if !defined(GCOV)
+ *
+ * (Duff's device) This is INCREDIBLY ugly, but fast. We break the string up into 8 byte units. On the first
+ * time through the loop we get the "leftover bytes" (strlen % 8). On every other iteration, we perform 8 BODY's
+ * so we handle all 8 bytes. Essentially, this saves us 7 cmp & branch instructions. If this routine is heavily
+ * used enough, it's worth the ugly coding
+ *
+ * #undef  U_LOOP_STRING
+ * #define U_LOOP_STRING( exec_code ) { \
+ * unsigned char c; \
+ * uint32_t U_LOOP_CNT = (n + 8 - 1) >> 3; \
+ * switch (n & (8 - 1)) { \
+ * case 0: \
+ * do {    { c = *s++; exec_code; } \
+ * case 7: { c = *s++; exec_code; } \
+ * case 6: { c = *s++; exec_code; } \
+ * case 5: { c = *s++; exec_code; } \
+ * case 4: { c = *s++; exec_code; } \
+ * case 3: { c = *s++; exec_code; } \
+ * case 2: { c = *s++; exec_code; } \
+ * case 1: { c = *s++; exec_code; } \
+ * } while (--U_LOOP_CNT); } }
+ *
+ * #endif
+ */
 
 __pure bool u_isName(const char* restrict s, uint32_t n)
 {
@@ -3285,46 +3292,27 @@ __pure bool u_isHTML(const char* restrict ptr)
 {
    /* NB: we check for <(h(1-6|tml)|!DOCTYPE) */
 
-   enum {
-      VAL_h1      = U_MULTICHAR_CONSTANT32('<','h','1','>'),
-      VAL_H1      = U_MULTICHAR_CONSTANT32('<','H','1','>'),
-      VAL_h2      = U_MULTICHAR_CONSTANT32('<','h','2','>'),
-      VAL_H2      = U_MULTICHAR_CONSTANT32('<','H','2','>'),
-      VAL_h3      = U_MULTICHAR_CONSTANT32('<','h','3','>'),
-      VAL_H3      = U_MULTICHAR_CONSTANT32('<','H','3','>'),
-      VAL_h4      = U_MULTICHAR_CONSTANT32('<','h','4','>'),
-      VAL_H4      = U_MULTICHAR_CONSTANT32('<','H','4','>'),
-      VAL_h5      = U_MULTICHAR_CONSTANT32('<','h','5','>'),
-      VAL_H5      = U_MULTICHAR_CONSTANT32('<','H','5','>'),
-      VAL_h6      = U_MULTICHAR_CONSTANT32('<','h','6','>'),
-      VAL_H6      = U_MULTICHAR_CONSTANT32('<','H','6','>'),
-      VAL_html    = U_MULTICHAR_CONSTANT32('<','h','t','m'),
-      VAL_HTML    = U_MULTICHAR_CONSTANT32('<','H','T','M'),
-      VAL_doctype = U_MULTICHAR_CONSTANT32('<','!','d','o'),
-      VAL_DOCTYPE = U_MULTICHAR_CONSTANT32('<','!','D','O')
-   };
-
    U_INTERNAL_TRACE("u_isHTML(%.*s)", 12, ptr)
 
    switch (u_get_unalignedp32(ptr))
       {
-      case VAL_h1:
-      case VAL_H1:
-      case VAL_h2:
-      case VAL_H2:
-      case VAL_h3:
-      case VAL_H3:
-      case VAL_h4:
-      case VAL_H4:
-      case VAL_h5:
-      case VAL_H5:
-      case VAL_h6:
-      case VAL_H6:
-      case VAL_html:
-      case VAL_HTML:
-      case VAL_doctype:
-      case VAL_DOCTYPE: return true;
-      default:          return false;
+      case U_MULTICHAR_CONSTANT32('<','h','1','>'):
+      case U_MULTICHAR_CONSTANT32('<','H','1','>'):
+      case U_MULTICHAR_CONSTANT32('<','h','2','>'):
+      case U_MULTICHAR_CONSTANT32('<','H','2','>'):
+      case U_MULTICHAR_CONSTANT32('<','h','3','>'):
+      case U_MULTICHAR_CONSTANT32('<','H','3','>'):
+      case U_MULTICHAR_CONSTANT32('<','h','4','>'):
+      case U_MULTICHAR_CONSTANT32('<','H','4','>'):
+      case U_MULTICHAR_CONSTANT32('<','h','5','>'):
+      case U_MULTICHAR_CONSTANT32('<','H','5','>'):
+      case U_MULTICHAR_CONSTANT32('<','h','6','>'):
+      case U_MULTICHAR_CONSTANT32('<','H','6','>'):
+      case U_MULTICHAR_CONSTANT32('<','h','t','m'):
+      case U_MULTICHAR_CONSTANT32('<','H','T','M'):
+      case U_MULTICHAR_CONSTANT32('<','!','d','o'):
+      case U_MULTICHAR_CONSTANT32('<','!','D','O'): return true;
+      default:                                      return false;
       }
 }
 
@@ -3497,9 +3485,9 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 
    if (len < 2) return 0;
 
-   if      (buf[0] == 0xff && buf[1] == 0xfe) be = 0;
-   else if (buf[0] == 0xfe && buf[1] == 0xff) be = 1;
-   else                                       return 0;
+   if      (u_get_unalignedp16(buf) == U_MULTICHAR_CONSTANT16(0xff,0xfe)) be = 0;
+   else if (u_get_unalignedp16(buf) == U_MULTICHAR_CONSTANT16(0xfe,0xff)) be = 1;
+   else return 0;
 
    for(i = 2; i + 1 < len; i += 2)
       {

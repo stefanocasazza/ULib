@@ -47,7 +47,7 @@ public:
    bool getTableNames();
    bool freeAllHandles();
    int  getHandleUsage();
-   bool readEntries(const char* table, bool dont_flush);
+   bool readEntries(const char* table, bool bflush);
 
    const char*               getError() { return error_str; }
    const char*               getNextName();

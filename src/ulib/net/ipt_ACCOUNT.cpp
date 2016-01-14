@@ -21,15 +21,40 @@
 #  endif
 #  include <linux/netfilter_ipv4/ip_tables.h>
 
-#  define IPT_SO_SET_ACCOUNT_HANDLE_FREE         (IPT_BASE_CTL + 3)
-#  define IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL     (IPT_BASE_CTL + 4)
-#  define IPT_SO_GET_ACCOUNT_PREPARE_READ        (IPT_BASE_CTL + 4)
-#  define IPT_SO_GET_ACCOUNT_PREPARE_READ_FLUSH  (IPT_BASE_CTL + 5)
-#  define IPT_SO_GET_ACCOUNT_GET_DATA            (IPT_BASE_CTL + 6)
-#  define IPT_SO_GET_ACCOUNT_GET_HANDLE_USAGE    (IPT_BASE_CTL + 7)
-#  define IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES     (IPT_BASE_CTL + 8)
-#  define IPT_SO_SET_ACCOUNT_MAX                  IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL
-#  define IPT_SO_GET_ACCOUNT_MAX                  IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES
+/**
+ * Socket option interface shared between kernel (xt_ACCOUNT) and userspace library (libxt_ACCOUNT_cl).
+ * Hopefully we are unique at least within our kernel & xtables-addons space. Turned out often enough we are not
+ *
+ *  64- 67 used by ip_tables, ip6_tables
+ *  96-100 used by arp_tables
+ * 128-131 used by ebtables
+ */
+
+#ifdef HAVE_ARCH64
+#  define IPT_ACCOUNT_TWEAK_BASE_CTL_NUMBER_FOR_SETSOCKOPTS
+#endif
+#  ifndef IPT_ACCOUNT_TWEAK_BASE_CTL_NUMBER_FOR_SETSOCKOPTS
+#     define IPT_SO_SET_ACCOUNT_HANDLE_FREE         (IPT_BASE_CTL + 3)
+#     define IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL     (IPT_BASE_CTL + 4)
+
+#     define IPT_SO_GET_ACCOUNT_PREPARE_READ        (IPT_BASE_CTL + 4)
+#     define IPT_SO_GET_ACCOUNT_PREPARE_READ_FLUSH  (IPT_BASE_CTL + 5)
+#     define IPT_SO_GET_ACCOUNT_GET_DATA            (IPT_BASE_CTL + 6)
+#     define IPT_SO_GET_ACCOUNT_GET_HANDLE_USAGE    (IPT_BASE_CTL + 7)
+#     define IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES     (IPT_BASE_CTL + 8)
+#  else
+#     define SO_ACCOUNT_BASE_CTL 70
+#     define IPT_SO_SET_ACCOUNT_HANDLE_FREE        (SO_ACCOUNT_BASE_CTL + 1)
+#     define IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL    (SO_ACCOUNT_BASE_CTL + 2)
+#     define IPT_SO_GET_ACCOUNT_PREPARE_READ       (SO_ACCOUNT_BASE_CTL + 4)
+#     define IPT_SO_GET_ACCOUNT_PREPARE_READ_FLUSH (SO_ACCOUNT_BASE_CTL + 5)
+#     define IPT_SO_GET_ACCOUNT_GET_DATA           (SO_ACCOUNT_BASE_CTL + 6)
+#     define IPT_SO_GET_ACCOUNT_GET_HANDLE_USAGE   (SO_ACCOUNT_BASE_CTL + 7)
+#     define IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES    (SO_ACCOUNT_BASE_CTL + 8)
+#  endif
+
+#  define IPT_SO_SET_ACCOUNT_MAX IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL
+#  define IPT_SO_GET_ACCOUNT_MAX IPT_SO_GET_ACCOUNT_GET_TABLE_NAMES
 #endif
 
 #define IPT_ACCOUNT_MIN_BUFSIZE 4096 // Don't set this below the size of struct ipt_account_handle_sockopt
@@ -100,9 +125,9 @@ void UIptAccount::freeEntries()
 #endif
 }
 
-bool UIptAccount::readEntries(const char* table, bool dont_flush)
+bool UIptAccount::readEntries(const char* table, bool bflush)
 {
-   U_TRACE(0, "UIptAccount::readEntries(%S,%b)", table, dont_flush)
+   U_TRACE(0, "UIptAccount::readEntries(%S,%b)", table, bflush)
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    uint32_t s = sizeof(struct ipt_acc_handle_sockopt);
@@ -111,7 +136,7 @@ bool UIptAccount::readEntries(const char* table, bool dont_flush)
 
    // Get table information
 
-   if (USocket::getSockOpt(IPPROTO_IP, (dont_flush ? IPT_SO_GET_ACCOUNT_PREPARE_READ : IPT_SO_GET_ACCOUNT_PREPARE_READ_FLUSH), handle, s) == false)
+   if (USocket::getSockOpt(IPPROTO_IP, (bflush ? IPT_SO_GET_ACCOUNT_PREPARE_READ_FLUSH : IPT_SO_GET_ACCOUNT_PREPARE_READ), handle, s) == false)
       {
       error_str = "Can't get table information from kernel. Is the table existing ?";
 

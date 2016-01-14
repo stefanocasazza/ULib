@@ -167,7 +167,7 @@ loop: if (upload)
          UFile file;
          uint32_t i, n, pos;
          UVector<UString> vec(64);
-         UString req, name, location(U_CAPACITY), mask(100U);
+         UString req, name, location, mask(100U);
 
          to_sleep.setSecond(to_sleep.getSecond() * 10L);
 
@@ -204,6 +204,8 @@ loop: if (upload)
 
                   U_INTERNAL_ASSERT_DIFFERS(pos, U_NOT_FOUND)
 
+                  location.setBuffer(U_CAPACITY);
+
                   location.snprintf("http://%.*s", pos, name.data());
 
                   (void) location.shrink();
@@ -218,6 +220,9 @@ loop: if (upload)
                (void) file._unlink();
                }
 
+#        ifdef DEBUG
+            name.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+#        endif
             vec.clear();
 
             if (client->isOpen()) client->close();

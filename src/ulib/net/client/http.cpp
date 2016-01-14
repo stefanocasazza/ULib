@@ -914,6 +914,10 @@ bool UHttpClient_Base::sendRequest(const UString& req)
 
    parseRequest();
 
+   bool result = false;
+   char http_method_num_save = U_http_method_num;
+                               U_http_method_num = 0;
+
    if (UHTTP::scanfHeaderRequest((const char*)UClient_Base::iov[0].iov_base, UClient_Base::iov[0].iov_len))
       {
       U_INTERNAL_DUMP("U_http_method_type = %B", U_http_method_type)
@@ -924,10 +928,12 @@ bool UHttpClient_Base::sendRequest(const UString& req)
 
       (void) UClient_Base::uri.assign(U_HTTP_URI_QUERY_TO_PARAM);
 
-      if (sendRequest()) U_RETURN(true);
+      if (sendRequest()) result = true;
       }
 
-   U_RETURN(false);
+   U_http_method_num = http_method_num_save;
+
+   U_RETURN(result);
 }
 
 bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const char* content_type)

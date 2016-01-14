@@ -34,7 +34,7 @@ int UHttpPlugIn::handlerRead()
 {
    U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerRead()")
    
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
    U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
 
    UHTTP::in_READ();

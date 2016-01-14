@@ -675,7 +675,8 @@ uint32_t UVector<UString>::split(const UString& str, char delim)
    const char* s    = str.data();
    const char* _end = s + str.size();
 
-   if (str.isQuoted())
+   if (delim != ';' && // usp translator (printfor)
+       str.isQuoted())
       {
       ++s;
       --_end;
@@ -979,11 +980,15 @@ uint32_t UVector<UString>::loadFromData(const char* ptr, uint32_t sz)
    const char* _end   = ptr + sz;
    const char* _start = ptr;
 
-   char c = *ptr++; // skip '[' or '('
+   char terminator = 0, c = *ptr;
 
-   U_INTERNAL_ASSERT(c == '[' || c == '(')
+   if (c == '(' ||
+       c == '[')
+      {
+      ++ptr; // skip '(' or '['
 
-   char terminator = (c == '[' ? ']' : ')');
+      terminator = (c == '(' ? ')' : ']');
+      }
 
    U_INTERNAL_DUMP("terminator = %C", terminator)
 
@@ -997,7 +1002,12 @@ uint32_t UVector<UString>::loadFromData(const char* ptr, uint32_t sz)
 
    // U_INTERNAL_DUMP("c = %C", c)
 
-      if (c == terminator) break;
+      if ( terminator == c ||
+          (terminator == 0 &&
+           (c == '}' || c == ']')))
+         {
+         break;
+         }
 
       if (c == '#')
          {

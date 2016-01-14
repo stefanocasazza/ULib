@@ -14,6 +14,11 @@ config NODOG_MEMPOOL
    depends on DEVEL && PACKAGE_nodog
    default n
 
+config NODOG_GCC_OPTIMIZED
+   bool "Enable compilation of gcc optimized"
+   depends on DEVEL && PACKAGE_nodog
+   default n
+
 #config NODOG_OPENSSL
 #   bool "Enable use of openssl features"
 #   depends on DEVEL && PACKAGE_libopenssl

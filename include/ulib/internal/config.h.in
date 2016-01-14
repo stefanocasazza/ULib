@@ -210,11 +210,17 @@
 /* has kqueue1 */
 #undef HAVE_KQUEUE1
 
+/* Define to 1 if you have the `bson-1.0' library (-lbson-1.0). */
+#undef HAVE_LIBBSON_1_0
+
 /* Define to 1 if you have the `GeoIP' library (-lGeoIP). */
 #undef HAVE_LIBGEOIP
 
 /* Define to 1 if you have the <libintl.h> header file. */
 #undef HAVE_LIBINTL_H
+
+/* Define to 1 if you have the `mongoc-1.0' library (-lmongoc-1.0). */
+#undef HAVE_LIBMONGOC_1_0
 
 /* Define to 1 if you have the
    <libnetfilter_conntrack/libnetfilter_conntrack.h> header file. */
@@ -717,6 +723,9 @@
 
 /* Define if enable libzopfli support */
 #undef USE_LIBZOPFLI
+
+/* Define if enable mongodb support */
+#undef USE_MONGODB
 
 /* Define if enable MySQL database support */
 #undef USE_MYSQL

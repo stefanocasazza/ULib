@@ -89,44 +89,43 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@PTHREAD_TRUE@am__append_1 = test_thread
-@PTHREAD_TRUE@am__append_2 = thread.test
-@ZIP_TRUE@am__append_3 = test_zip
-@ZIP_TRUE@am__append_4 = zip.test
-@LIBTDB_TRUE@am__append_5 = test_tdb
-@LIBTDB_TRUE@am__append_6 = tdb.test
-@USE_PARSER_TRUE@am__append_7 = flexer.test
-@USE_PARSER_TRUE@am__append_8 = test_flexer test_bison
-@PCRE_TRUE@am__append_9 = test_pcre
-@PCRE_TRUE@am__append_10 = pcre.test
-@SSL_TRUE@am__append_11 = test_des3 test_digest test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7 test_url
-@SSL_TRUE@am__append_12 = des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test url.test
-@SSL_TRUE@@SSL_TS_TRUE@am__append_13 = test_timestamp
-@SSL_TRUE@@SSL_TS_TRUE@am__append_14 = timestamp.test
-@SSH_TRUE@am__append_15 = test_ssh_client
-@SSH_TRUE@am__append_16 = ssh_client.test
-@LDAP_TRUE@am__append_17 = test_ldap
-@LDAP_TRUE@am__append_18 = ldap.test
-@CURL_TRUE@am__append_19 = test_curl
-@CURL_TRUE@am__append_20 = curl.test
-@MAGIC_TRUE@am__append_21 = test_magic
-@MAGIC_TRUE@am__append_22 = magic.test
-@EXPAT_TRUE@am__append_23 = test_expat test_soap_server test_soap_client
-@EXPAT_TRUE@am__append_24 = expat.test soap_server.test soap_client.test
-@MEMORY_POOL_TRUE@am__append_25 = test_memory_pool
-@MEMORY_POOL_TRUE@am__append_26 = memory_pool.test
-@DBI_TRUE@am__append_27 = test_dbi
-@DBI_TRUE@am__append_28 = dbi.test
-@HAVE_SQLITE3_TRUE@am__append_29 = test_orm
-@HAVE_SQLITE3_TRUE@am__append_30 = orm.test
-@LIBEVENT_TRUE@am__append_31 = test_event
-@LIBEVENT_TRUE@am__append_32 = event.test
-@LINUX_TRUE@am__append_33 = test_process test_interrupt test_unixsocket_client test_unixsocket_server test_arping
-@LINUX_TRUE@am__append_34 = process.test interrupt.test unixsocket.test
+@MONGODB_TRUE@am__append_1 = test_mongodb
+@PTHREAD_TRUE@am__append_2 = test_thread
+@PTHREAD_TRUE@am__append_3 = thread.test
+@ZIP_TRUE@am__append_4 = test_zip
+@ZIP_TRUE@am__append_5 = zip.test
+@LIBTDB_TRUE@am__append_6 = test_tdb
+@LIBTDB_TRUE@am__append_7 = tdb.test
+@PCRE_TRUE@am__append_8 = test_pcre
+@PCRE_TRUE@am__append_9 = pcre.test
+@SSL_TRUE@am__append_10 = test_des3 test_digest test_certificate test_crl test_pkcs10 test_ssl_client test_ssl_server test_https test_pkcs7 test_url
+@SSL_TRUE@am__append_11 = des3.test digest.test certificate.test crl.test pkcs10.test ssl_client_server.test https.test pkcs7.test url.test
+@SSL_TRUE@@SSL_TS_TRUE@am__append_12 = test_timestamp
+@SSL_TRUE@@SSL_TS_TRUE@am__append_13 = timestamp.test
+@SSH_TRUE@am__append_14 = test_ssh_client
+@SSH_TRUE@am__append_15 = ssh_client.test
+@LDAP_TRUE@am__append_16 = test_ldap
+@LDAP_TRUE@am__append_17 = ldap.test
+@CURL_TRUE@am__append_18 = test_curl
+@CURL_TRUE@am__append_19 = curl.test
+@MAGIC_TRUE@am__append_20 = test_magic
+@MAGIC_TRUE@am__append_21 = magic.test
+@EXPAT_TRUE@am__append_22 = test_expat test_soap_server test_soap_client
+@EXPAT_TRUE@am__append_23 = expat.test soap_server.test soap_client.test
+@MEMORY_POOL_TRUE@am__append_24 = test_memory_pool
+@MEMORY_POOL_TRUE@am__append_25 = memory_pool.test
+@DBI_TRUE@am__append_26 = test_dbi
+@DBI_TRUE@am__append_27 = dbi.test
+@HAVE_SQLITE3_TRUE@am__append_28 = test_orm
+@HAVE_SQLITE3_TRUE@am__append_29 = orm.test
+@LIBEVENT_TRUE@am__append_30 = test_event
+@LIBEVENT_TRUE@am__append_31 = event.test
+@LINUX_TRUE@am__append_32 = test_process test_interrupt test_unixsocket_client test_unixsocket_server test_arping
+@LINUX_TRUE@am__append_33 = process.test interrupt.test unixsocket.test
+@LINUX_TRUE@@SANITIZE_TRUE@am__append_34 = -lubsan
 @LINUX_TRUE@@SANITIZE_TRUE@am__append_35 = -lubsan
-@LINUX_TRUE@@SANITIZE_TRUE@am__append_36 = -lubsan
-@PLUGIN_TRUE@@STDCPP_TRUE@am__append_37 = test_plugin
-@PLUGIN_TRUE@@STDCPP_TRUE@am__append_38 = plugin.test
+@PLUGIN_TRUE@@STDCPP_TRUE@am__append_36 = test_plugin
+@PLUGIN_TRUE@@STDCPP_TRUE@am__append_37 = plugin.test
 check_PROGRAMS = $(am__EXEEXT_19)
 subdir = tests/ulib
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -175,11 +174,10 @@ product2_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX $(AM_LIBTOOLFLAGS) \
 	$(LIBTOOLFLAGS) --mode=link $(CXXLD) $(AM_CXXFLAGS) \
 	$(CXXFLAGS) $(product2_la_LDFLAGS) $(LDFLAGS) -o $@
 @PLUGIN_TRUE@@STDCPP_TRUE@am_product2_la_rpath =
-@PTHREAD_TRUE@am__EXEEXT_1 = test_thread$(EXEEXT)
-@ZIP_TRUE@am__EXEEXT_2 = test_zip$(EXEEXT)
-@LIBTDB_TRUE@am__EXEEXT_3 = test_tdb$(EXEEXT)
-@USE_PARSER_TRUE@am__EXEEXT_4 = test_flexer$(EXEEXT) \
-@USE_PARSER_TRUE@	test_bison$(EXEEXT)
+@MONGODB_TRUE@am__EXEEXT_1 = test_mongodb$(EXEEXT)
+@PTHREAD_TRUE@am__EXEEXT_2 = test_thread$(EXEEXT)
+@ZIP_TRUE@am__EXEEXT_3 = test_zip$(EXEEXT)
+@LIBTDB_TRUE@am__EXEEXT_4 = test_tdb$(EXEEXT)
 @PCRE_TRUE@am__EXEEXT_5 = test_pcre$(EXEEXT)
 @SSL_TRUE@am__EXEEXT_6 = test_des3$(EXEEXT) test_digest$(EXEEXT) \
 @SSL_TRUE@	test_certificate$(EXEEXT) test_crl$(EXEEXT) \
@@ -238,12 +236,6 @@ am_test_base64_OBJECTS = test_base64.$(OBJEXT)
 test_base64_OBJECTS = $(am_test_base64_OBJECTS)
 test_base64_LDADD = $(LDADD)
 test_base64_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
-am__test_bison_SOURCES_DIST = test_bison_flexer.ll test_bison.yy
-@USE_PARSER_TRUE@am_test_bison_OBJECTS = test_bison_flexer.$(OBJEXT) \
-@USE_PARSER_TRUE@	test_bison.$(OBJEXT)
-test_bison_OBJECTS = $(am_test_bison_OBJECTS)
-test_bison_LDADD = $(LDADD)
-test_bison_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am_test_cache_OBJECTS = test_cache.$(OBJEXT)
 test_cache_OBJECTS = $(am_test_cache_OBJECTS)
 test_cache_LDADD = $(LDADD)
@@ -320,11 +312,6 @@ am_test_file_config_OBJECTS = test_file_config.$(OBJEXT)
 test_file_config_OBJECTS = $(am_test_file_config_OBJECTS)
 test_file_config_LDADD = $(LDADD)
 test_file_config_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
-am__test_flexer_SOURCES_DIST = test_flexer.ll
-@USE_PARSER_TRUE@am_test_flexer_OBJECTS = test_flexer.$(OBJEXT)
-test_flexer_OBJECTS = $(am_test_flexer_OBJECTS)
-test_flexer_LDADD = $(LDADD)
-test_flexer_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am_test_ftp_OBJECTS = test_ftp.$(OBJEXT)
 test_ftp_OBJECTS = $(am_test_ftp_OBJECTS)
 test_ftp_LDADD = $(LDADD)
@@ -380,6 +367,10 @@ am__test_memory_pool_SOURCES_DIST = test_memory_pool.cpp
 test_memory_pool_OBJECTS = $(am_test_memory_pool_OBJECTS)
 test_memory_pool_LDADD = $(LDADD)
 test_memory_pool_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+am_test_mongodb_OBJECTS = test_mongodb.$(OBJEXT)
+test_mongodb_OBJECTS = $(am_test_mongodb_OBJECTS)
+test_mongodb_LDADD = $(LDADD)
+test_mongodb_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am_test_multipart_OBJECTS = test_multipart.$(OBJEXT)
 test_multipart_OBJECTS = $(am_test_multipart_OBJECTS)
 test_multipart_LDADD = $(LDADD)
@@ -586,107 +577,69 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-@MAINTAINER_MODE_FALSE@am__skiplex = test -f $@ ||
-LEXCOMPILE = $(LEX) $(AM_LFLAGS) $(LFLAGS)
-LTLEXCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(LEX) $(AM_LFLAGS) $(LFLAGS)
-AM_V_LEX = $(am__v_LEX_@AM_V@)
-am__v_LEX_ = $(am__v_LEX_@AM_DEFAULT_V@)
-am__v_LEX_0 = @echo "  LEX     " $@;
-am__v_LEX_1 = 
-YLWRAP = $(top_srcdir)/ylwrap
-@MAINTAINER_MODE_FALSE@am__skipyacc = test -f $@ ||
-am__yacc_c2h = sed -e s/cc$$/hh/ -e s/cpp$$/hpp/ -e s/cxx$$/hxx/ \
-		   -e s/c++$$/h++/ -e s/c$$/h/
-YACCCOMPILE = $(YACC) $(AM_YFLAGS) $(YFLAGS)
-LTYACCCOMPILE = $(LIBTOOL) $(AM_V_lt) $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(YACC) $(AM_YFLAGS) $(YFLAGS)
-AM_V_YACC = $(am__v_YACC_@AM_V@)
-am__v_YACC_ = $(am__v_YACC_@AM_DEFAULT_V@)
-am__v_YACC_0 = @echo "  YACC    " $@;
-am__v_YACC_1 = 
-COMPILE = $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) \
-	$(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS)
-LTCOMPILE = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) \
-	$(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) \
-	$(AM_CFLAGS) $(CFLAGS)
-AM_V_CC = $(am__v_CC_@AM_V@)
-am__v_CC_ = $(am__v_CC_@AM_DEFAULT_V@)
-am__v_CC_0 = @echo "  CC      " $@;
-am__v_CC_1 = 
-CCLD = $(CC)
-LINK = $(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) \
-	$(LIBTOOLFLAGS) --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
-	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-AM_V_CCLD = $(am__v_CCLD_@AM_V@)
-am__v_CCLD_ = $(am__v_CCLD_@AM_DEFAULT_V@)
-am__v_CCLD_0 = @echo "  CCLD    " $@;
-am__v_CCLD_1 = 
 SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
 	$(test_application_SOURCES) $(test_arping_SOURCES) \
-	$(test_base64_SOURCES) $(test_bison_SOURCES) \
-	$(test_cache_SOURCES) $(test_cdb_SOURCES) \
-	$(test_certificate_SOURCES) $(test_command_SOURCES) \
-	$(test_compress_SOURCES) $(test_crl_SOURCES) \
-	$(test_curl_SOURCES) $(test_date_SOURCES) $(test_dbi_SOURCES) \
-	$(test_des3_SOURCES) $(test_dialog_SOURCES) \
-	$(test_digest_SOURCES) $(test_entity_SOURCES) \
-	$(test_event_SOURCES) $(test_expat_SOURCES) \
-	$(test_file_SOURCES) $(test_file_config_SOURCES) \
-	$(test_flexer_SOURCES) $(test_ftp_SOURCES) \
+	$(test_base64_SOURCES) $(test_cache_SOURCES) \
+	$(test_cdb_SOURCES) $(test_certificate_SOURCES) \
+	$(test_command_SOURCES) $(test_compress_SOURCES) \
+	$(test_crl_SOURCES) $(test_curl_SOURCES) $(test_date_SOURCES) \
+	$(test_dbi_SOURCES) $(test_des3_SOURCES) \
+	$(test_dialog_SOURCES) $(test_digest_SOURCES) \
+	$(test_entity_SOURCES) $(test_event_SOURCES) \
+	$(test_expat_SOURCES) $(test_file_SOURCES) \
+	$(test_file_config_SOURCES) $(test_ftp_SOURCES) \
 	$(test_header_SOURCES) $(test_http_SOURCES) \
 	$(test_https_SOURCES) $(test_imap_SOURCES) \
 	$(test_interrupt_SOURCES) $(test_ipaddress_SOURCES) \
 	$(test_json_SOURCES) $(test_ldap_SOURCES) $(test_log_SOURCES) \
 	$(test_magic_SOURCES) $(test_memory_pool_SOURCES) \
-	$(test_multipart_SOURCES) $(test_notifier_SOURCES) \
-	$(test_options_SOURCES) $(test_orm_SOURCES) \
-	$(test_pcre_SOURCES) $(test_pkcs10_SOURCES) \
-	$(test_pkcs7_SOURCES) $(test_plugin_SOURCES) \
-	$(test_pop3_SOURCES) $(test_process_SOURCES) \
-	$(test_query_parser_SOURCES) $(test_rdb_SOURCES) \
-	$(test_rdb_client_SOURCES) $(test_rdb_server_SOURCES) \
-	$(test_redis_SOURCES) $(test_server_SOURCES) \
-	$(test_services_SOURCES) $(test_smtp_SOURCES) \
-	$(test_soap_client_SOURCES) $(test_soap_server_SOURCES) \
-	$(test_socket_SOURCES) $(test_ssh_client_SOURCES) \
-	$(test_ssl_client_SOURCES) $(test_ssl_server_SOURCES) \
-	$(test_string_SOURCES) $(test_tdb_SOURCES) \
-	$(test_thread_SOURCES) $(test_timer_SOURCES) \
-	$(test_timestamp_SOURCES) $(test_timeval_SOURCES) \
-	$(test_tokenizer_SOURCES) $(test_tree_SOURCES) \
-	$(test_unixsocket_client_SOURCES) \
+	$(test_mongodb_SOURCES) $(test_multipart_SOURCES) \
+	$(test_notifier_SOURCES) $(test_options_SOURCES) \
+	$(test_orm_SOURCES) $(test_pcre_SOURCES) \
+	$(test_pkcs10_SOURCES) $(test_pkcs7_SOURCES) \
+	$(test_plugin_SOURCES) $(test_pop3_SOURCES) \
+	$(test_process_SOURCES) $(test_query_parser_SOURCES) \
+	$(test_rdb_SOURCES) $(test_rdb_client_SOURCES) \
+	$(test_rdb_server_SOURCES) $(test_redis_SOURCES) \
+	$(test_server_SOURCES) $(test_services_SOURCES) \
+	$(test_smtp_SOURCES) $(test_soap_client_SOURCES) \
+	$(test_soap_server_SOURCES) $(test_socket_SOURCES) \
+	$(test_ssh_client_SOURCES) $(test_ssl_client_SOURCES) \
+	$(test_ssl_server_SOURCES) $(test_string_SOURCES) \
+	$(test_tdb_SOURCES) $(test_thread_SOURCES) \
+	$(test_timer_SOURCES) $(test_timestamp_SOURCES) \
+	$(test_timeval_SOURCES) $(test_tokenizer_SOURCES) \
+	$(test_tree_SOURCES) $(test_unixsocket_client_SOURCES) \
 	$(test_unixsocket_server_SOURCES) $(test_url_SOURCES) \
 	$(test_vector_SOURCES) $(test_zip_SOURCES)
 DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(am__product2_la_SOURCES_DIST) $(test_application_SOURCES) \
 	$(am__test_arping_SOURCES_DIST) $(test_base64_SOURCES) \
-	$(am__test_bison_SOURCES_DIST) $(test_cache_SOURCES) \
-	$(test_cdb_SOURCES) $(am__test_certificate_SOURCES_DIST) \
-	$(test_command_SOURCES) $(test_compress_SOURCES) \
-	$(am__test_crl_SOURCES_DIST) $(am__test_curl_SOURCES_DIST) \
-	$(test_date_SOURCES) $(am__test_dbi_SOURCES_DIST) \
-	$(am__test_des3_SOURCES_DIST) $(test_dialog_SOURCES) \
-	$(am__test_digest_SOURCES_DIST) $(test_entity_SOURCES) \
-	$(am__test_event_SOURCES_DIST) $(am__test_expat_SOURCES_DIST) \
-	$(test_file_SOURCES) $(test_file_config_SOURCES) \
-	$(am__test_flexer_SOURCES_DIST) $(test_ftp_SOURCES) \
+	$(test_cache_SOURCES) $(test_cdb_SOURCES) \
+	$(am__test_certificate_SOURCES_DIST) $(test_command_SOURCES) \
+	$(test_compress_SOURCES) $(am__test_crl_SOURCES_DIST) \
+	$(am__test_curl_SOURCES_DIST) $(test_date_SOURCES) \
+	$(am__test_dbi_SOURCES_DIST) $(am__test_des3_SOURCES_DIST) \
+	$(test_dialog_SOURCES) $(am__test_digest_SOURCES_DIST) \
+	$(test_entity_SOURCES) $(am__test_event_SOURCES_DIST) \
+	$(am__test_expat_SOURCES_DIST) $(test_file_SOURCES) \
+	$(test_file_config_SOURCES) $(test_ftp_SOURCES) \
 	$(test_header_SOURCES) $(test_http_SOURCES) \
 	$(am__test_https_SOURCES_DIST) $(test_imap_SOURCES) \
 	$(am__test_interrupt_SOURCES_DIST) $(test_ipaddress_SOURCES) \
 	$(test_json_SOURCES) $(am__test_ldap_SOURCES_DIST) \
 	$(test_log_SOURCES) $(am__test_magic_SOURCES_DIST) \
-	$(am__test_memory_pool_SOURCES_DIST) $(test_multipart_SOURCES) \
-	$(test_notifier_SOURCES) $(test_options_SOURCES) \
-	$(am__test_orm_SOURCES_DIST) $(am__test_pcre_SOURCES_DIST) \
-	$(am__test_pkcs10_SOURCES_DIST) $(am__test_pkcs7_SOURCES_DIST) \
-	$(am__test_plugin_SOURCES_DIST) $(test_pop3_SOURCES) \
-	$(am__test_process_SOURCES_DIST) $(test_query_parser_SOURCES) \
-	$(test_rdb_SOURCES) $(test_rdb_client_SOURCES) \
-	$(test_rdb_server_SOURCES) $(test_redis_SOURCES) \
-	$(test_server_SOURCES) $(test_services_SOURCES) \
-	$(test_smtp_SOURCES) $(am__test_soap_client_SOURCES_DIST) \
+	$(am__test_memory_pool_SOURCES_DIST) $(test_mongodb_SOURCES) \
+	$(test_multipart_SOURCES) $(test_notifier_SOURCES) \
+	$(test_options_SOURCES) $(am__test_orm_SOURCES_DIST) \
+	$(am__test_pcre_SOURCES_DIST) $(am__test_pkcs10_SOURCES_DIST) \
+	$(am__test_pkcs7_SOURCES_DIST) $(am__test_plugin_SOURCES_DIST) \
+	$(test_pop3_SOURCES) $(am__test_process_SOURCES_DIST) \
+	$(test_query_parser_SOURCES) $(test_rdb_SOURCES) \
+	$(test_rdb_client_SOURCES) $(test_rdb_server_SOURCES) \
+	$(test_redis_SOURCES) $(test_server_SOURCES) \
+	$(test_services_SOURCES) $(test_smtp_SOURCES) \
+	$(am__test_soap_client_SOURCES_DIST) \
 	$(am__test_soap_server_SOURCES_DIST) $(test_socket_SOURCES) \
 	$(am__test_ssh_client_SOURCES_DIST) \
 	$(am__test_ssl_client_SOURCES_DIST) \
@@ -928,8 +881,7 @@ TEST_LOG_DRIVER = $(SHELL) $(top_srcdir)/test-driver
 TEST_LOG_COMPILE = $(TEST_LOG_COMPILER) $(AM_TEST_LOG_FLAGS) \
 	$(TEST_LOG_FLAGS)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/depcomp \
-	$(top_srcdir)/test-driver $(top_srcdir)/ylwrap README \
-	test_bison.cc test_bison_flexer.cc test_flexer.cc
+	$(top_srcdir)/test-driver README
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 ACLOCAL = @ACLOCAL@
 ALLOCA = @ALLOCA@
@@ -1119,12 +1071,12 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_imap test_ftp test_http test_rdb_client test_tokenizer \
 	test_query_parser test_multipart test_command test_dialog \
 	test_rdb_server test_json test_server test_redis \
-	$(am__append_1) $(am__append_3) $(am__append_5) \
-	$(am__append_8) $(am__append_9) $(am__append_11) \
-	$(am__append_13) $(am__append_15) $(am__append_17) \
-	$(am__append_19) $(am__append_21) $(am__append_23) \
-	$(am__append_25) $(am__append_27) $(am__append_29) \
-	$(am__append_31) $(am__append_33) $(am__append_37)
+	$(am__append_1) $(am__append_2) $(am__append_4) \
+	$(am__append_6) $(am__append_8) $(am__append_10) \
+	$(am__append_12) $(am__append_14) $(am__append_16) \
+	$(am__append_18) $(am__append_20) $(am__append_22) \
+	$(am__append_24) $(am__append_26) $(am__append_28) \
+	$(am__append_30) $(am__append_32) $(am__append_36)
 TST = timeval.test timer.test notifier.test string.test file.test \
 	cdb.test rdb.test file_config.test log.test vector.test \
 	options.test application.test tree.test compress.test \
@@ -1132,13 +1084,12 @@ TST = timeval.test timer.test notifier.test string.test file.test \
 	entity.test ipaddress.test socket.test smtp.test pop3.test \
 	imap.test ftp.test http.test tokenizer.test query_parser.test \
 	multipart.test rdb_client_server.test command.test json.test \
-	server.test server_rpc.test $(am__append_2) $(am__append_4) \
-	$(am__append_6) $(am__append_7) $(am__append_10) \
-	$(am__append_12) $(am__append_14) $(am__append_16) \
-	$(am__append_18) $(am__append_20) $(am__append_22) \
-	$(am__append_24) $(am__append_26) $(am__append_28) \
-	$(am__append_30) $(am__append_32) $(am__append_34) \
-	$(am__append_38)
+	server.test server_rpc.test $(am__append_3) $(am__append_5) \
+	$(am__append_7) $(am__append_9) $(am__append_11) \
+	$(am__append_13) $(am__append_15) $(am__append_17) \
+	$(am__append_19) $(am__append_21) $(am__append_23) \
+	$(am__append_25) $(am__append_27) $(am__append_29) \
+	$(am__append_31) $(am__append_33) $(am__append_37)
 test_ipaddress_SOURCES = test_ipaddress.cpp
 test_socket_SOURCES = test_socket.cpp
 test_ftp_SOURCES = test_ftp.cpp
@@ -1176,11 +1127,10 @@ test_rdb_server_SOURCES = test_rdb_server.cpp
 test_json_SOURCES = test_json.cpp
 test_server_SOURCES = test_server.cpp
 test_redis_SOURCES = test_redis.cpp
+test_mongodb_SOURCES = test_mongodb.cpp
 @PTHREAD_TRUE@test_thread_SOURCES = test_thread.cpp
 @ZIP_TRUE@test_zip_SOURCES = test_zip.cpp
 @LIBTDB_TRUE@test_tdb_SOURCES = test_tdb.cpp
-@USE_PARSER_TRUE@test_bison_SOURCES = test_bison_flexer.ll test_bison.yy
-@USE_PARSER_TRUE@test_flexer_SOURCES = test_flexer.ll
 @PCRE_TRUE@test_pcre_SOURCES = test_pcre.cpp
 @SSL_TRUE@test_des3_SOURCES = test_des3.cpp
 @SSL_TRUE@test_digest_SOURCES = test_digest.cpp
@@ -1209,8 +1159,8 @@ test_redis_SOURCES = test_redis.cpp
 @LINUX_TRUE@test_interrupt_SOURCES = test_interrupt.cpp
 @LINUX_TRUE@test_unixsocket_client_SOURCES = test_unixsocket_client.cpp
 @LINUX_TRUE@test_unixsocket_server_SOURCES = test_unixsocket_server.cpp
-@LINUX_TRUE@test_process_LDADD = $(LDADD) $(am__append_35)
-@LINUX_TRUE@test_interrupt_LDADD = $(LDADD) $(am__append_36)
+@LINUX_TRUE@test_process_LDADD = $(LDADD) $(am__append_34)
+@LINUX_TRUE@test_interrupt_LDADD = $(LDADD) $(am__append_35)
 @PLUGIN_TRUE@@STDCPP_TRUE@test_plugin_SOURCES = test_plugin.cpp
 @PLUGIN_TRUE@@STDCPP_TRUE@product1_la_SOURCES = plugin/product1.cpp
 @PLUGIN_TRUE@@STDCPP_TRUE@product1_la_LIBADD = $(LDADD)
@@ -1223,7 +1173,7 @@ TESTS = $(TST) ../reset.color
 all: all-am
 
 .SUFFIXES:
-.SUFFIXES: .cc .cpp .ll .lo .log .o .obj .test .test$(EXEEXT) .trs .yy
+.SUFFIXES: .cpp .lo .log .o .obj .test .test$(EXEEXT) .trs
 $(srcdir)/Makefile.in: @MAINTAINER_MODE_TRUE@ $(srcdir)/Makefile.am  $(am__configure_deps)
 	@for dep in $?; do \
 	  case '$(am__configure_deps)' in \
@@ -1302,10 +1252,6 @@ test_base64$(EXEEXT): $(test_base64_OBJECTS) $(test_base64_DEPENDENCIES) $(EXTRA
 	@rm -f test_base64$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_base64_OBJECTS) $(test_base64_LDADD) $(LIBS)
 
-test_bison$(EXEEXT): $(test_bison_OBJECTS) $(test_bison_DEPENDENCIES) $(EXTRA_test_bison_DEPENDENCIES) 
-	@rm -f test_bison$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(test_bison_OBJECTS) $(test_bison_LDADD) $(LIBS)
-
 test_cache$(EXEEXT): $(test_cache_OBJECTS) $(test_cache_DEPENDENCIES) $(EXTRA_test_cache_DEPENDENCIES) 
 	@rm -f test_cache$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_cache_OBJECTS) $(test_cache_LDADD) $(LIBS)
@@ -1374,10 +1320,6 @@ test_file_config$(EXEEXT): $(test_file_config_OBJECTS) $(test_file_config_DEPEND
 	@rm -f test_file_config$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_file_config_OBJECTS) $(test_file_config_LDADD) $(LIBS)
 
-test_flexer$(EXEEXT): $(test_flexer_OBJECTS) $(test_flexer_DEPENDENCIES) $(EXTRA_test_flexer_DEPENDENCIES) 
-	@rm -f test_flexer$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(test_flexer_OBJECTS) $(test_flexer_LDADD) $(LIBS)
-
 test_ftp$(EXEEXT): $(test_ftp_OBJECTS) $(test_ftp_DEPENDENCIES) $(EXTRA_test_ftp_DEPENDENCIES) 
 	@rm -f test_ftp$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_ftp_OBJECTS) $(test_ftp_LDADD) $(LIBS)
@@ -1425,6 +1367,10 @@ test_magic$(EXEEXT): $(test_magic_OBJECTS) $(test_magic_DEPENDENCIES) $(EXTRA_te
 test_memory_pool$(EXEEXT): $(test_memory_pool_OBJECTS) $(test_memory_pool_DEPENDENCIES) $(EXTRA_test_memory_pool_DEPENDENCIES) 
 	@rm -f test_memory_pool$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_memory_pool_OBJECTS) $(test_memory_pool_LDADD) $(LIBS)
+
+test_mongodb$(EXEEXT): $(test_mongodb_OBJECTS) $(test_mongodb_DEPENDENCIES) $(EXTRA_test_mongodb_DEPENDENCIES) 
+	@rm -f test_mongodb$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_mongodb_OBJECTS) $(test_mongodb_LDADD) $(LIBS)
 
 test_multipart$(EXEEXT): $(test_multipart_OBJECTS) $(test_multipart_DEPENDENCIES) $(EXTRA_test_multipart_DEPENDENCIES) 
 	@rm -f test_multipart$(EXEEXT)
@@ -1585,8 +1531,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_application.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_arping.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_base64.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_bison.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_bison_flexer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_cache.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_cdb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_certificate.Po@am__quote@
@@ -1604,7 +1548,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_expat.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_file.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_file_config.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_flexer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_ftp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_header.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_http.Po@am__quote@
@@ -1617,6 +1560,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_magic.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_memory_pool.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_mongodb.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_multipart.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_notifier.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_options.Po@am__quote@
@@ -1657,30 +1601,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@plugin/$(DEPDIR)/product1.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@plugin/$(DEPDIR)/product2.Plo@am__quote@
 
-.cc.o:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ $<
-
-.cc.obj:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.obj$$||'`;\
-@am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ `$(CYGPATH_W) '$<'` &&\
-@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Po
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
-
-.cc.lo:
-@am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.lo$$||'`;\
-@am__fastdepCXX_TRUE@	$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
-@am__fastdepCXX_TRUE@	$(am__mv) $$depbase.Tpo $$depbase.Plo
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
-
 .cpp.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
 @am__fastdepCXX_TRUE@	$(CXXCOMPILE) -MT $@ -MD -MP -MF $$depbase.Tpo -c -o $@ $< &&\
@@ -1704,12 +1624,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	$(AM_V_CXX)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(AM_V_CXX@am__nodep@)$(LTCXXCOMPILE) -c -o $@ $<
-
-.ll.cc:
-	$(AM_V_LEX)$(am__skiplex) $(SHELL) $(YLWRAP) $< $(LEX_OUTPUT_ROOT).c $@ -- $(LEXCOMPILE)
-
-.yy.cc:
-	$(AM_V_YACC)$(am__skipyacc) $(SHELL) $(YLWRAP) $< y.tab.c $@ y.tab.h `echo $@ | $(am__yacc_c2h)` y.output $*.output -- $(YACCCOMPILE)
 
 mostlyclean-libtool:
 	-rm -f *.lo
@@ -2004,9 +1918,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-rm -f test_bison.cc
-	-rm -f test_bison_flexer.cc
-	-rm -f test_flexer.cc
 	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 

@@ -24,10 +24,11 @@
 #include <ulib/utility/string_ext.h>
 #include <ulib/net/server/plugin/mod_ssi.h>
 
-// Server Side Include (SSI) commands are executed by the server as it parses your HTML file.
-// Server side includes can be used to include the value of various server environment variables
-// within your HTML such as the local date and time. One might use a server side include to add
-// a signature file to an HTML file or company logo. 
+/**
+ * Server Side Include (SSI) commands are executed by the server as it parses your HTML file. Server side includes can be used to include
+ * the value of various server environment variables within your HTML such as the local date and time. One might use a server side include
+ * to add a signature file to an HTML file or company logo
+ */
 
 U_CREAT_FUNC(server_plugin_ssi, USSIPlugIn)
 
@@ -137,6 +138,25 @@ void USSIPlugIn::setAlternativeResponse(UString& _body)
 
       UHTTP::setResponse(u_is_know(UHTTP::mime_index) ? UString::str_ctype_txt : UString::str_ctype_html, &_body);
       }
+}
+
+void USSIPlugIn::setAlternativeInclude(const char* title_txt, const UString& output)
+{
+   U_TRACE(0, "USSIPlugIn::setAlternativeInclude(%S,%V)", title_txt, output.rep)
+
+   U_INTERNAL_ASSERT_POINTER(title_txt)
+
+   *alternative_include = output;
+
+   U_http_info.nResponseCode = HTTP_NO_CONTENT;
+
+   UString buffer(U_CAPACITY);
+
+   buffer.snprintf("'TITLE_TXT=%s'\n", title_txt);
+
+   (void) UClientImage_Base::environment->append(buffer);
+
+   UClientImage_Base::wbuffer->setBuffer(U_CAPACITY); // NB: to avoid append on output...
 }
 
 void USSIPlugIn::setAlternativeInclude(const UString& tmpl, uint32_t estimated_size, bool bprocess, const char* title_txt, const char* ssi_head, const char* body_style, ...)

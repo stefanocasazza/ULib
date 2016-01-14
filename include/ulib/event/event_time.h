@@ -25,14 +25,14 @@ template <class T> class UTimerEv;
 class U_EXPORT UEventTime : public UTimeVal {
 public:
 
-   struct timeval ctime;
-
             UEventTime(long sec = 0L, long micro_sec = 1L);
    virtual ~UEventTime();
 
-   bool operator<(const UEventTime& t) const __pure;
-
    // SERVICES
+
+   struct timeval xtime;
+
+   time_t expire() const { return xtime.tv_sec; }
 
    bool isExpired() const __pure
       {
@@ -40,11 +40,10 @@ public:
 
       U_CHECK_MEMORY
 
-      long diff1 = ctime.tv_sec  + tv_sec  - timeout1.tv_sec,
-           diff2 = ctime.tv_usec + tv_usec - timeout1.tv_usec;
+      diff1 = xtime.tv_sec  - timeout1.tv_sec,
+      diff2 = xtime.tv_usec - timeout1.tv_usec;
 
-      U_INTERNAL_DUMP("this = { %ld %6ld }, diff1 = %ld diff2 = %ld", ctime.tv_sec  + tv_sec,
-                                                                      ctime.tv_usec + tv_usec, diff1, diff2)
+      U_INTERNAL_DUMP("xtime = { %ld %6ld }, diff1 = %ld diff2 = %ld", xtime.tv_sec, xtime.tv_usec, diff1, diff2)
 
       if ( diff1 <  0 ||
           (diff1 == 0 &&
@@ -52,11 +51,6 @@ public:
          {
          U_RETURN(true);
          }
-
-      ms = (diff1 * 1000L) +
-           (diff2 / 1000L);
-
-      U_ASSERT(checkMilliSecond())
 
       U_RETURN(false);
       }
@@ -69,27 +63,44 @@ public:
          {
          U_ASSERT(checkTolerance())
 
+         long ms = (diff1 * 1000L) +
+                   (diff2 / 1000L);
+
          if (ms > tolerance) U_RETURN(false);
          }
 
       U_RETURN(true);
       }
 
-   time_t expire() const { return (ctime.tv_sec + tv_sec); }
-
-   // -------------------------------------------
+   // ------------------------
    // method VIRTUAL to define
-   // -------------------------------------------
-   // return value: -1 -> normal, 0 -> monitoring
-   // -------------------------------------------
+   // ------------------------
 
-   virtual int handlerTime() { return -1; }
+   virtual int handlerTime() { return -1; } // return value: -1 -> normal,
+                                            //                0 -> monitoring
 
 #ifdef USE_LIBEVENT
    UTimerEv<UEventTime>* pevent;
 
    void operator()(int fd, short event);
 #endif
+
+   bool operator<(const UEventTime& t) const __pure
+      {
+      U_TRACE(0, "UEventTime::operator<(%p)", &t)
+
+      U_INTERNAL_DUMP("{ %ld %6ld } < { %ld %6ld }",   xtime.tv_sec,   xtime.tv_usec,
+                                                     t.xtime.tv_sec, t.xtime.tv_usec)
+
+      if (  xtime.tv_sec <  t.xtime.tv_sec  ||
+          ((xtime.tv_sec == t.xtime.tv_sec) &&
+          ((xtime.tv_usec < t.xtime.tv_usec))))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
 #ifdef U_STDCPP_ENABLE
    friend U_EXPORT ostream& operator<<(ostream& os, const UEventTime& t);
@@ -102,42 +113,62 @@ public:
 protected:
    long tolerance;
 
-   static long ms;
+   static long diff1, diff2;
    static struct timeval  timeout1;
    static struct timespec timeout2;
 
-   void setCurrentTime()
-      {
-      U_TRACE_NO_PARAM(1, "UEventTime::setCurrentTime()")
-
-      U_CHECK_MEMORY
-
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &ctime, 0);
-
-      U_INTERNAL_DUMP("ctime = { %ld %6ld }", ctime.tv_sec, ctime.tv_usec)
-      }
-
-   void setTime(long timeoutMS)
-      {
-      U_TRACE(0, "UEventTime::setTime(%ld)", timeoutMS)
-
-      setCurrentTime();
-
-      UTimeVal::setMilliSecond(ms = timeoutMS);
-      }
-
-   bool checkMilliSecond() const 
+   bool checkMilliSecond() const
       {
       U_TRACE_NO_PARAM(0, "UEventTime::checkMilliSecond()")
 
-      long ms_calculated = ((ctime.tv_sec  + tv_sec  - timeout1.tv_sec)  * 1000L) +
-                           ((ctime.tv_usec + tv_usec - timeout1.tv_usec) / 1000L);
+      long ms1 = (tv_sec  * 1000L) +
+                 (tv_usec / 1000L),
+           ms2 = ((xtime.tv_sec  - timeout1.tv_sec)  * 1000L) +
+                 ((xtime.tv_usec - timeout1.tv_usec) / 1000L);
 
-      if ((ms - ms_calculated) <= 1) U_RETURN(true);
+      if ((ms1 - ms2) <= 1) U_RETURN(true);
 
-      U_DEBUG("ms = %ld ms_calculated = %ld", ms, ms_calculated);
+      U_DEBUG("ms1 = %ld ms2 = %ld", ms1, ms2);
 
       U_RETURN(false);
+      }
+
+   void setTimeToExpire()
+      {
+      U_TRACE_NO_PARAM(1, "UEventTime::setTimeToExpire()")
+
+      U_CHECK_MEMORY
+
+      (void) U_SYSCALL(gettimeofday, "%p,%p", &xtime, 0);
+
+      U_INTERNAL_DUMP("now = { %ld %6ld } xtime = { %ld %6ld }", xtime.tv_sec, xtime.tv_usec, xtime.tv_sec + tv_sec, xtime.tv_usec + tv_usec)
+
+      xtime.tv_sec  += tv_sec;
+      xtime.tv_usec += tv_usec;
+      }
+
+   void updateTimeToExpire()
+      {
+      U_TRACE_NO_PARAM(1, "UEventTime::updateTimeToExpire()")
+
+      U_CHECK_MEMORY
+
+      xtime.tv_sec  = timeout1.tv_sec  + tv_sec;
+      xtime.tv_usec = timeout1.tv_usec + tv_usec;
+
+      U_ASSERT(checkTolerance())
+      U_ASSERT(checkMilliSecond())
+      }
+
+   void setTimeToExpire(int timeoutMS)
+      {
+      U_TRACE(0, "UEventTime::setTimeToExpire(%d)", timeoutMS)
+
+      UTimeVal::setMilliSecond(timeoutMS);
+
+      (void) U_SYSCALL(gettimeofday, "%p,%p", &timeout1, 0);
+
+      updateTimeToExpire();
       }
 
    void setTolerance() 
@@ -153,8 +184,6 @@ protected:
    bool checkTolerance() const 
       {
       U_TRACE_NO_PARAM(0, "UEventTime::checkTolerance()")
-
-      U_ASSERT(checkMilliSecond())
 
       long tolerance_calculated = ((tv_sec  * 1000L) +
                                    (tv_usec / 1000L)) / 128;
@@ -172,7 +201,8 @@ protected:
 
       if (ptimeout == 0) U_RETURN(-1);
 
-      U_ASSERT(ptimeout->checkMilliSecond())
+      long ms = ((ptimeout->xtime.tv_sec  - timeout1.tv_sec)  * 1000L) +
+                ((ptimeout->xtime.tv_usec - timeout1.tv_usec) / 1000L);
 
       U_RETURN(ms);
       }
@@ -183,8 +213,6 @@ protected:
 
       if (ptimeout == 0) U_RETURN_POINTER(0, struct timeval);
 
-      U_ASSERT(ptimeout->checkMilliSecond())
-
       /**
        * struct timeval {
        *    long tv_sec;  //      seconds
@@ -192,14 +220,30 @@ protected:
        * };
        */
 
-      long us = ms * 1000L;
+      timeout1.tv_sec  = ptimeout->xtime.tv_sec  - timeout1.tv_sec;
+      timeout1.tv_usec = ptimeout->xtime.tv_usec - timeout1.tv_usec;
 
-      timeout1.tv_sec  = us / 1000000L;
-      timeout1.tv_usec = us % 1000000L;
+      UTimeVal::adjust(&(timeout1.tv_sec), &(timeout1.tv_usec));
 
       U_INTERNAL_DUMP("timeout1 = { %ld %9ld }", timeout1.tv_sec, timeout1.tv_usec)
 
+      U_INTERNAL_ASSERT(timeout1.tv_sec <= ptimeout->tv_sec)
+
       U_RETURN_POINTER(&timeout1, struct timeval);
+      }
+
+   void setTimeVal(struct timeval* timerval)
+      {
+      U_TRACE(0, "UEventTime::setTimeVal(%p)", timerval)
+
+      timerval->tv_sec  = xtime.tv_sec  - timeout1.tv_sec;
+      timerval->tv_usec = xtime.tv_usec - timeout1.tv_usec;
+
+      UTimeVal::adjust(&(timerval->tv_sec), &(timerval->tv_usec));
+
+      U_INTERNAL_DUMP("timerval = { %ld %9ld }", timerval->tv_sec, timerval->tv_usec)
+
+      U_INTERNAL_ASSERT(timerval->tv_sec <= tv_sec)
       }
 
    static struct timespec* getTimeSpec(UEventTime* ptimeout)
@@ -208,8 +252,6 @@ protected:
 
       if (ptimeout == 0) U_RETURN_POINTER(0, struct timespec);
 
-      U_ASSERT(ptimeout->checkMilliSecond())
-
       /**
        * struct timespec {
        *    time_t tv_sec;  //     seconds
@@ -217,10 +259,8 @@ protected:
        * };
        */
 
-      long ns = ms * 1000000L;
-
-      timeout2.tv_sec  = ns / 1000000000L;
-      timeout2.tv_nsec = ns % 1000000000L;
+      timeout2.tv_sec  =  ptimeout->xtime.tv_sec  - timeout1.tv_sec;
+      timeout2.tv_nsec = (ptimeout->xtime.tv_usec - timeout1.tv_usec) * 1000L;
 
       U_INTERNAL_DUMP("timeout2 = { %ld %9ld }", timeout2.tv_sec, timeout2.tv_nsec)
 

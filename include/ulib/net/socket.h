@@ -22,6 +22,9 @@
 #else
 #  define CAST(a) a
 #  include <netinet/tcp.h>
+#  if defined(U_LINUX) && !defined(SO_INCOMING_CPU)
+#     define SO_INCOMING_CPU 49
+#  endif
 #endif
 
 #include <errno.h>
@@ -238,7 +241,7 @@ public:
     * The setsockopt() function is called with the provided parameters to obtain the desired value
     */
 
-   bool setSockOpt(int iCodeLevel, int iOptionName, const void* pOptionData, uint32_t iDataLength)
+   bool setSockOpt(int iCodeLevel, int iOptionName, const void* pOptionData, uint32_t iDataLength = sizeof(int))
       {
       U_TRACE(1, "USocket::setSockOpt(%d,%d,%p,%u)", iCodeLevel, iOptionName, pOptionData, iDataLength) // problem with sanitize address
 
@@ -372,7 +375,7 @@ public:
       {
       U_TRACE(1, "USocket::setBufferRCV(%u)", size)
 
-      if (setSockOpt(SOL_SOCKET, SO_RCVBUF, (const void*)&size, sizeof(uint32_t))) U_RETURN(true);
+      if (setSockOpt(SOL_SOCKET, SO_RCVBUF, (const void*)&size)) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -381,7 +384,7 @@ public:
       {
       U_TRACE(1, "USocket::setBufferSND(%u)", size)
 
-      if (setSockOpt(SOL_SOCKET, SO_SNDBUF, (const void*)&size, sizeof(uint32_t))) U_RETURN(true); 
+      if (setSockOpt(SOL_SOCKET, SO_SNDBUF, (const void*)&size)) U_RETURN(true); 
 
       U_RETURN(false);
       }
@@ -461,7 +464,7 @@ public:
       U_INTERNAL_ASSERT_POINTER(sk)
 
 #  if defined(TCP_CORK) && defined(U_LINUX)
-      (void) sk->setSockOpt(SOL_TCP, TCP_CORK, (const void*)&value, sizeof(uint32_t));
+      (void) sk->setSockOpt(SOL_TCP, TCP_CORK, (const void*)&value);
 #  endif
       }
 
@@ -476,7 +479,7 @@ public:
       U_TRACE_NO_PARAM(0, "USocket::setTcpDeferAccept()")
 
 #  if defined(TCP_DEFER_ACCEPT) && defined(U_LINUX)
-      (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 1 }, sizeof(int));
+      (void) setSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (const int[]){ 1 });
 #  endif
       }
 
@@ -488,7 +491,7 @@ public:
 #    ifndef TCP_FASTOPEN
 #    define TCP_FASTOPEN 23 /* Enable FastOpen on listeners */
 #    endif
-      (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const int[]){ 5 }, sizeof(int));
+      (void) setSockOpt(SOL_TCP, TCP_FASTOPEN, (const int[]){ 5 });
 #  endif
       }
 
@@ -497,7 +500,7 @@ public:
       U_TRACE(0, "USocket::setTcpQuickAck(%d)", value)
 
 #  if defined(TCP_QUICKACK) && defined(U_LINUX)
-      (void) setSockOpt(SOL_TCP, TCP_QUICKACK, &value, sizeof(int));
+      (void) setSockOpt(SOL_TCP, TCP_QUICKACK, &value);
 #  endif
       }
 
@@ -506,7 +509,7 @@ public:
       U_TRACE_NO_PARAM(0, "USocket::setTcpNoDelay()")
 
 #  ifdef TCP_NODELAY
-      (void) setSockOpt(SOL_TCP, TCP_NODELAY, (const int[]){ 1 }, sizeof(int));
+      (void) setSockOpt(SOL_TCP, TCP_NODELAY, (const int[]){ 1 });
 #  endif
       }
 
@@ -669,7 +672,7 @@ protected:
 
    static bool tcp_reuseport;
    static SocketAddress* cLocal;
-   static int iBackLog, accept4_flags; // If flags is 0, then accept4() is the same as accept()
+   static int iBackLog, incoming_cpu, accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
    /**
     * The _socket() function is called to create the socket of the specified type.

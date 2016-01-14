@@ -24,18 +24,24 @@ bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
    if (phost) (void) host.assign(phost);
    else
       {
-      const char* env_redis_host  = (const char*) U_SYSCALL(getenv, "%S", "REDIS_HOST");
-      const char* env_redis_port  = (const char*) U_SYSCALL(getenv, "%S", "REDIS_PORT");
+      const char* env_redis_host = (const char*) U_SYSCALL(getenv, "%S", "REDIS_HOST");
+
+      if (env_redis_host == 0)
+         {
+         UClient_Base::response.snprintf("connection disabled");
+
+         U_RETURN(false);
+         }
+
+      (void) host.assign(env_redis_host, u__strlen(env_redis_host, __PRETTY_FUNCTION__));
+
+      const char* env_redis_port = (const char*) U_SYSCALL(getenv, "%S", "REDIS_PORT");
 
       if (env_redis_port) _port = atoi(env_redis_port);
-
-      uint32_t env_redis_host_len = (env_redis_host ? u__strlen(env_redis_host, __PRETTY_FUNCTION__) : 0);
-
-      if (env_redis_host_len) (void) host.assign(env_redis_host, env_redis_host_len);
-      else                           host = *UString::str_localhost;
       }
 
-   if (UClient_Base::setHostPort(host, _port) && UClient_Base::connect())
+   if (UClient_Base::setHostPort(host, _port) &&
+       UClient_Base::connect())
       {
       UClient_Base::iovcnt = 4;
 

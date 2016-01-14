@@ -126,8 +126,11 @@ struct tm u_strftime_tm;
 struct timeval u_timeval;
 struct timeval* u_now = &u_timeval;
 
-const char* u_months[]    = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
-const char* u_months_it[] = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
+const char* u_months[12]     = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
+const char* u_months_it[12]  = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
+
+const char* u_day_name[7]    = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+const char* u_month_name[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
 /* Services */
 int                  u_errno; /* An errno value */
@@ -635,12 +638,8 @@ void u_init_http_method_list(void)
 
 uint32_t u_strftime1(char* restrict s, uint32_t maxsize, const char* restrict format)
 {
-   static const char* dname[7]  = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-   static const char* mname[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September",
-                                    "October", "November", "December" };
-
-   static const int dname_len[7]  = { 6, 6, 7, 9, 8, 6, 8 };
-   static const int mname_len[12] = { 7, 8, 5, 5, 3, 4, 4, 6, 9, 7, 8, 8 };
+   static const int   day_name_len[7]  = { 6, 6, 7, 9, 8, 6, 8 };
+   static const int month_name_len[12] = { 7, 8, 5, 5, 3, 4, 4, 6, 9, 7, 8, 8 };
 
    /**
     * %% A single character %
@@ -784,12 +783,12 @@ cdefault:
       goto *((char*)&&cdefault + dispatch_table[ch-'A']);
 
 case_A: /* %A The full name for the day of the week */
-      for (i = 0; i < dname_len[u_strftime_tm.tm_wday]; ++i) s[count++] = dname[u_strftime_tm.tm_wday][i];
+      for (i = 0; i < day_name_len[u_strftime_tm.tm_wday]; ++i) s[count++] = u_day_name[u_strftime_tm.tm_wday][i];
 
       continue;
 
 case_B: /* %B The full name of the month */
-      for (i = 0; i < mname_len[u_strftime_tm.tm_mon]; ++i) s[count++] = mname[u_strftime_tm.tm_mon][i];
+      for (i = 0; i < month_name_len[u_strftime_tm.tm_mon]; ++i) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
 
       continue;
 
@@ -906,12 +905,12 @@ case_Z: /* %Z Defined by ANSI C as eliciting the time zone if available */
       continue;
 
 case_a: /* %a An abbreviation for the day of the week */
-      for (i = 0; i < 3; ++i) s[count++] = dname[u_strftime_tm.tm_wday][i];
+      for (i = 0; i < 3; ++i) s[count++] = u_day_name[u_strftime_tm.tm_wday][i];
 
       continue;
 
 case_b: /* %b An abbreviation for the month name - %h Equivalent to %b (SU) */
-      for (i = 0; i < 3; ++i) s[count++] = mname[u_strftime_tm.tm_mon][i];
+      for (i = 0; i < 3; ++i) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
 
       continue;
 
@@ -920,9 +919,9 @@ case_c: /* %c A string representing the complete date and time, in the form Mon 
 
    // if (count >= (maxsize - 24)) return 0;
 
-      for (i = 0; i < 3; ++i) s[count++] = dname[u_strftime_tm.tm_wday][i];
+      for (i = 0; i < 3; ++i) s[count++] = u_day_name[u_strftime_tm.tm_wday][i];
                               s[count++] = ' ';
-      for (i = 0; i < 3; ++i) s[count++] = mname[u_strftime_tm.tm_mon][i];
+      for (i = 0; i < 3; ++i) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
 
       (void) sprintf(&s[count], " %.2d %2.2d:%2.2d:%2.2d %.4d", u_strftime_tm.tm_mday, u_strftime_tm.tm_hour,
                                                                 u_strftime_tm.tm_min,  u_strftime_tm.tm_sec,
@@ -1004,9 +1003,9 @@ case_x: /* %x A string representing the complete date, in a format like Mon Apr 
 
    /* if (count >= (maxsize - 15)) return 0; */
 
-      for (i = 0; i < 3; i++) s[count++] = dname[u_strftime_tm.tm_wday][i];
+      for (i = 0; i < 3; i++) s[count++] = u_day_name[u_strftime_tm.tm_wday][i];
                               s[count++] = ' ';
-      for (i = 0; i < 3; i++) s[count++] = mname[u_strftime_tm.tm_mon][i];
+      for (i = 0; i < 3; i++) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
 
       (void) sprintf(&s[count], " %.2d %.4d", u_strftime_tm.tm_mday, 1900 + u_strftime_tm.tm_year);
 
@@ -1735,13 +1734,16 @@ case_float:
       if (sign != '\0')              *cp++ = sign;
 
       *cp++ = '*'; /* width */
-      *cp++ = '.';
-      *cp++ = '*'; /* prec */
+
+      u_put_unalignedp16(cp, U_MULTICHAR_CONSTANT16('.','*')); /* prec */
+
+      cp += 2;
 
       if (flags & LONGDBL) *cp++ = 'L';
 
-      *cp++ = ch;
-      *cp   = '\0';
+      u_put_unalignedp16(cp, U_MULTICHAR_CONSTANT16(ch,'\0'));
+
+      ++cp;
 
       if (flags & LONGDBL)
          {
@@ -1858,7 +1860,8 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
             {
             /* to be continued... */
 
-                              *bp++ = '.';
+            *bp++ = '.';
+
             u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('.','.'));
 
             bp += 2;
@@ -1950,8 +1953,9 @@ case_C: /* extension: print formatted char */
          if (c == '"') *bp++ = '"';
          else
             {
-            *bp++ = '\\';
-            *bp++ = '\'';
+            u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('\\','\''));
+
+            bp += 2;
             }
          }
 
@@ -2018,14 +2022,24 @@ case_D: /* extension: print date and time in various format */
          }
       else if (width == 4) /* _millisec */
          {
+         long ms;
          char tmp[16];
          uint32_t len1;
 
 #     ifdef ENABLE_THREAD
-         if (u_pthread_time) (void) gettimeofday(u_now, 0);
-#     endif
+         if (u_pthread_time)
+            {
+            struct timeval tval;
 
-         (void) sprintf(tmp, "_%03ld", u_now->tv_usec / 1000L);
+            (void) gettimeofday(&tval, 0);
+
+            ms = tval.tv_usec / 1000L;
+            }
+         else
+#     endif
+         ms = u_now->tv_usec / 1000L;
+
+         (void) sprintf(tmp, "_%03ld", ms);
 
          len1 = u__strlen(tmp, __PRETTY_FUNCTION__);
 
@@ -2121,7 +2135,8 @@ case_R: /* extension: print msg - u_getSysError() */
 
       if ((flags & ALT) == 0)
          {
-                           *bp++ = ' ';
+         *bp++ = ' ';
+
          u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('-',' '));
 
          bp  += 2;
@@ -2142,7 +2157,8 @@ case_R: /* extension: print msg - u_getSysError() */
          bp  += len;
          ret += len;
 
-                           *bp++ = ' ';
+         *bp++ = ' ';
+
          u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('-',' '));
 
          bp  += 2;
@@ -2358,7 +2374,8 @@ case_b: /* extension: print bool */
          }
       else
          {
-                           *bp++ = 'f';
+         *bp++ = 'f';
+
          u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32('a','l','s','e'));
 
          ret += 5;
@@ -2593,8 +2610,9 @@ next:
             else      ret  += 2;
             }
 
-         *bp++ = '0';
-         *bp++ = ch;
+         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('0',ch));
+
+         bp += 2;
          }
 
       /* right-adjusting zero padding */

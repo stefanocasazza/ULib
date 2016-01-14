@@ -123,18 +123,18 @@ public:
       path.replace(pthis->pathname+2, pthis->pathlen-2);
       }
 
-   static void setFollowLinks(bool _bfollowlinks = true)
+   static void setFollowLinks(bool _bfollowlinks)
       {
       U_TRACE(0, "UDirWalk::setFollowLinks(%b)", _bfollowlinks)
 
       bfollowlinks = _bfollowlinks;
       }
 
-   static void setRecurseSubDirs(bool bcall_if_directory = true)
+   static void setRecurseSubDirs(bool recurse, bool bcall_if_directory)
       {
-      U_TRACE(0, "UDirWalk::setRecurseSubDirs(%b)", bcall_if_directory)
+      U_TRACE(0, "UDirWalk::setRecurseSubDirs(%b,%b)", recurse, bcall_if_directory)
 
-      brecurse          = true;
+      brecurse          = recurse;
       call_if_directory = bcall_if_directory;
       }
 
@@ -157,9 +157,9 @@ public:
       bfollowlinks = (filter_len = _filter_len);
       }
 
-   static bool setDirectory(const UString& dir, const char* filter = 0, uint32_t filter_len = 0);
+   static void setFilter(const UString& _filter) { setFilter(U_STRING_TO_PARAM(_filter)); }
 
-   static void setFilter( const UString& _filter)                       { setFilter(U_STRING_TO_PARAM(_filter)); }
+   static bool setDirectory(const UString& dir, const char* f = 0, uint32_t flen = 0);
    static void setDirectory(const UString& dir, const UString& _filter) { setDirectory(dir, U_STRING_TO_PARAM(_filter)); }
 
    // DEBUG

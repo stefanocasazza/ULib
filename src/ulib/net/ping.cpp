@@ -531,7 +531,7 @@ void UPing::initArpPing(const char* device)
 #  ifdef U_ARP_WITH_BROADCAST
       uint32_t value = 1;
 
-      if (USocket::setSockOpt(SOL_SOCKET, SO_BROADCAST, (const void*)&value, sizeof(uint32_t)) == false) U_ERROR("can't enable bcast on packet socket");
+      if (USocket::setSockOpt(SOL_SOCKET, SO_BROADCAST, (const void*)&value) == false) U_ERROR("can't enable bcast on packet socket");
 #  endif
 
       struct ifreq ifr;

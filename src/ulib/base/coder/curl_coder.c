@@ -140,8 +140,11 @@ uint32_t u_url_encode(const unsigned char* restrict input, uint32_t len, unsigne
          else
             {
             *r++ = '%';
-            *r++ = u_hex_upper[(ch >> 4) & 0x0F];
-            *r++ = u_hex_upper[ ch       & 0x0F];
+
+            u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(u_hex_upper[(ch >> 4) & 0x0F],
+                                                         u_hex_upper[ ch       & 0x0F]));
+
+            r += 2;
             }
          }
       }

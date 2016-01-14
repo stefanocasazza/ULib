@@ -7,7 +7,7 @@
 # SERVER       host name or ip address for server
 # PORT         port number for the server
 #
-#	PID_FILE     write pid on file indicated
+#  PID_FILE     write pid on file indicated
 # RES_TIMEOUT  timeout for response from server
 #
 # LOG_FILE     locations   for file log

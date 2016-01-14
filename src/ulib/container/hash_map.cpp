@@ -716,10 +716,16 @@ uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
          str.setFromData(&ptr, _end - ptr, terminator);
          }
 
-      U_INTERNAL_ASSERT(str)
-      U_INTERNAL_ASSERT(str.isNullTerminated())
+      if (str.empty())
+         {
+         U_WARNING("UHashMap<UString>::loadFromData() has found a key(%u) = %V without value", _key.size(), _key.rep);
+         }
+      else
+         {
+         U_INTERNAL_ASSERT(str.isNullTerminated())
 
-      insert(_key, str);
+         insert(_key, str);
+         }
       }
 
    U_INTERNAL_DUMP("ptr - _start = %lu", ptr - _start)

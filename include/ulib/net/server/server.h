@@ -260,10 +260,24 @@ public:
 
    typedef struct shared_data {
    // ---------------------------------
-      uint32_t     cnt_user1;
-      uint32_t     cnt_user2;
-      uint64_t     cnt_user3;
-      uint64_t     cnt_user4;
+      uint32_t cnt_usr1;
+      uint32_t cnt_usr2;
+      uint32_t cnt_usr3;
+      uint32_t cnt_usr4;
+      uint32_t cnt_usr5;
+      uint32_t cnt_usr6;
+      uint32_t cnt_usr7;
+      uint32_t cnt_usr8;
+      uint32_t cnt_usr9;
+   // ---------------------------------
+      char buffer1[512];
+      char buffer2[512];
+      char buffer3[512];
+      char buffer4[512];
+      char buffer5[512];
+      char buffer6[512];
+      char buffer7[512];
+   // ---------------------------------
       sig_atomic_t cnt_connection;
       sig_atomic_t cnt_parallelization;
    // ---------------------------------
@@ -298,26 +312,38 @@ public:
    // --------------------------------------------------------------------------------
    } shared_data;
 
-#define U_CNT_USER1                 UServer_Base::ptr_shared_data->cnt_user1
-#define U_CNT_USER2                 UServer_Base::ptr_shared_data->cnt_user2
-#define U_CNT_USER3                 UServer_Base::ptr_shared_data->cnt_user3
-#define U_CNT_USER4                 UServer_Base::ptr_shared_data->cnt_user4
-#define U_TOT_CONNECTION            UServer_Base::ptr_shared_data->cnt_connection
-#define U_CNT_PARALLELIZATION       UServer_Base::ptr_shared_data->cnt_parallelization
-#define U_LOCK_USER1              &(UServer_Base::ptr_shared_data->lock_user1)
-#define U_LOCK_USER2              &(UServer_Base::ptr_shared_data->lock_user2)
-#define U_LOCK_THROTTLING         &(UServer_Base::ptr_shared_data->lock_throttling)
-#define U_LOCK_RDB_SERVER         &(UServer_Base::ptr_shared_data->lock_rdb_server)
-#define U_LOCK_SSL_SESSION        &(UServer_Base::ptr_shared_data->lock_ssl_session)
-#define U_LOCK_DATA_SESSION       &(UServer_Base::ptr_shared_data->lock_data_session)
-#define U_LOCK_DB_NOT_FOUND       &(UServer_Base::ptr_shared_data->lock_db_not_found)
-#define U_SPINLOCK_USER1            UServer_Base::ptr_shared_data->spinlock_user1
-#define U_SPINLOCK_USER2            UServer_Base::ptr_shared_data->spinlock_user2
-#define U_SPINLOCK_THROTTLING       UServer_Base::ptr_shared_data->spinlock_throttling
-#define U_SPINLOCK_RDB_SERVER       UServer_Base::ptr_shared_data->spinlock_rdb_server
-#define U_SPINLOCK_SSL_SESSION      UServer_Base::ptr_shared_data->spinlock_ssl_session
-#define U_SPINLOCK_DATA_SESSION     UServer_Base::ptr_shared_data->spinlock_data_session
-#define U_SPINLOCK_DB_NOT_FOUND     UServer_Base::ptr_shared_data->spinlock_db_not_found
+#define U_SRV_BUF1                  UServer_Base::ptr_shared_data->buffer1
+#define U_SRV_BUF2                  UServer_Base::ptr_shared_data->buffer2
+#define U_SRV_BUF3                  UServer_Base::ptr_shared_data->buffer3
+#define U_SRV_BUF4                  UServer_Base::ptr_shared_data->buffer4
+#define U_SRV_BUF5                  UServer_Base::ptr_shared_data->buffer5
+#define U_SRV_BUF6                  UServer_Base::ptr_shared_data->buffer6
+#define U_SRV_BUF7                  UServer_Base::ptr_shared_data->buffer7
+#define U_SRV_CNT_USR1              UServer_Base::ptr_shared_data->cnt_usr1
+#define U_SRV_CNT_USR2              UServer_Base::ptr_shared_data->cnt_usr2
+#define U_SRV_CNT_USR3              UServer_Base::ptr_shared_data->cnt_usr3
+#define U_SRV_CNT_USR4              UServer_Base::ptr_shared_data->cnt_usr4
+#define U_SRV_CNT_USR5              UServer_Base::ptr_shared_data->cnt_usr5
+#define U_SRV_CNT_USR6              UServer_Base::ptr_shared_data->cnt_usr6
+#define U_SRV_CNT_USR7              UServer_Base::ptr_shared_data->cnt_usr7
+#define U_SRV_CNT_USR8              UServer_Base::ptr_shared_data->cnt_usr8
+#define U_SRV_CNT_USR9              UServer_Base::ptr_shared_data->cnt_usr9
+#define U_SRV_TOT_CONNECTION        UServer_Base::ptr_shared_data->cnt_connection
+#define U_SRV_CNT_PARALLELIZATION   UServer_Base::ptr_shared_data->cnt_parallelization
+#define U_SRV_LOCK_USER1          &(UServer_Base::ptr_shared_data->lock_user1)
+#define U_SRV_LOCK_USER2          &(UServer_Base::ptr_shared_data->lock_user2)
+#define U_SRV_LOCK_THROTTLING     &(UServer_Base::ptr_shared_data->lock_throttling)
+#define U_SRV_LOCK_RDB_SERVER     &(UServer_Base::ptr_shared_data->lock_rdb_server)
+#define U_SRV_LOCK_SSL_SESSION    &(UServer_Base::ptr_shared_data->lock_ssl_session)
+#define U_SRV_LOCK_DATA_SESSION   &(UServer_Base::ptr_shared_data->lock_data_session)
+#define U_SRV_LOCK_DB_NOT_FOUND   &(UServer_Base::ptr_shared_data->lock_db_not_found)
+#define U_SRV_SPINLOCK_USER1        UServer_Base::ptr_shared_data->spinlock_user1
+#define U_SRV_SPINLOCK_USER2        UServer_Base::ptr_shared_data->spinlock_user2
+#define U_SRV_SPINLOCK_THROTTLING   UServer_Base::ptr_shared_data->spinlock_throttling
+#define U_SRV_SPINLOCK_RDB_SERVER   UServer_Base::ptr_shared_data->spinlock_rdb_server
+#define U_SRV_SPINLOCK_SSL_SESSION  UServer_Base::ptr_shared_data->spinlock_ssl_session
+#define U_SRV_SPINLOCK_DATA_SESSION UServer_Base::ptr_shared_data->spinlock_data_session
+#define U_SRV_SPINLOCK_DB_NOT_FOUND UServer_Base::ptr_shared_data->spinlock_db_not_found
 
    static pid_t pid;
    static ULock* lock_user1;
@@ -507,12 +533,12 @@ protected:
    static UString* name_sock;  // name file for the listening socket
    static UString* IP_address; // IP address of this server
 
+   static int rkids;
    static UString* host;
    static sigset_t mask;
    static UProcess* proc;
    static UEventTime* ptime;
    static time_t last_event;
-   static int rkids, old_pid;
    static UServer_Base* pthis;
    static UString* cenvironment;
    static UString* senvironment;

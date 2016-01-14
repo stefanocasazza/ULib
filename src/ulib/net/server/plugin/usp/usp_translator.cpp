@@ -205,7 +205,7 @@ public:
 
             declaration = UStringExt::trim(directive + U_CONSTANT_SIZE("declaration"), n);
 
-            binit   = (U_STRING_FIND(declaration, 0, "static void usp_init_")   != U_NOT_FOUND); // usp_init  (    Server-wide hooks)...
+            binit   = (U_STRING_FIND(declaration, 0, "static void usp_init_")   != U_NOT_FOUND); // usp_init  (Server-wide hooks)...
             bend    = (U_STRING_FIND(declaration, 0, "static void usp_end_")    != U_NOT_FOUND); // usp_end
             bsighup = (U_STRING_FIND(declaration, 0, "static void usp_sighup_") != U_NOT_FOUND); // usp_sighup
             bfork   = (U_STRING_FIND(declaration, 0, "static void usp_fork_")   != U_NOT_FOUND); // usp_fork
@@ -355,19 +355,17 @@ public:
                (void) output.append(buffer);
                }
             }
-         else if (strncmp(directive, U_CONSTANT_TO_PARAM("xcode")) == 0)
+         else if (strncmp(directive, U_CONSTANT_TO_PARAM("number")) == 0)
             {
-            bvar = true;
+            n = token.size() - U_CONSTANT_SIZE("number") - 2;
 
-            n = token.size() - U_CONSTANT_SIZE("xcode") - 2;
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("number"), n);
 
-            token = UStringExt::trim(directive + U_CONSTANT_SIZE("xcode"), n);
+            (void) buffer.reserve(token.size() + 100U);
 
-            (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t"));
+            buffer.snprintf("\n\tUStringExt::appendNumber32(*UClientImage_Base::wbuffer, (%v));\n\t", token.rep);
 
-            (void) xoutput.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
-
-            (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t\n"));
+            (void) output.append(buffer);
             }
          else if (strncmp(directive, U_CONSTANT_TO_PARAM("puts")) == 0)
             {
@@ -377,29 +375,53 @@ public:
 
             (void) buffer.reserve(token.size() + 100U);
 
-            buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append(%v);\n\t", token.rep);
+            buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append((%v));\n\t", token.rep);
 
             (void) output.append(buffer);
             }
-         else if (strncmp(directive, U_CONSTANT_TO_PARAM("xputs")) == 0)
+         else if (strncmp(directive, U_CONSTANT_TO_PARAM("xmlputs")) == 0)
             {
-            n = token.size() - U_CONSTANT_SIZE("xputs") - 2;
+            n = token.size() - U_CONSTANT_SIZE("xmlputs") - 2;
 
-            token = UStringExt::trim(directive + U_CONSTANT_SIZE("xputs"), n);
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("xmlputs"), n);
 
-            buffer.snprintf("\n\tUSP_PUTS_XML(%v);\n\t", token.rep);
+            buffer.snprintf("\n\tUSP_XML_PUTS((%v));\n\t", token.rep);
 
             (void) output.append(buffer);
             }
-         else if (strncmp(directive, U_CONSTANT_TO_PARAM("number")) == 0)
+         else if (strncmp(directive, U_CONSTANT_TO_PARAM("print")) == 0)
             {
-            n = token.size() - U_CONSTANT_SIZE("number") - 2;
+            bvar = true;
 
-            token = UStringExt::trim(directive + U_CONSTANT_SIZE("number"), n);
+            bool bfor = (strncmp(directive + U_CONSTANT_SIZE("print"), U_CONSTANT_TO_PARAM("for")) == 0);
 
-            (void) buffer.reserve(token.size() + 100U);
+            if (bfor)
+               {
+               n = token.size() - U_CONSTANT_SIZE("printfor") - 2;
 
-            buffer.snprintf("\n\tUStringExt::appendNumber32(*UClientImage_Base::wbuffer, %v);\n\t", token.rep);
+               token = UStringExt::trim(directive + U_CONSTANT_SIZE("printfor"), n);
+               }
+            else
+               {
+               n = token.size() - U_CONSTANT_SIZE("print") - 2;
+
+               token = UStringExt::trim(directive + U_CONSTANT_SIZE("print"), n);
+               }
+
+            UVector<UString> vec(token, ';');
+
+            (void) buffer.reserve(token.size() + 200U);
+
+            if (bfor)
+               {
+               buffer.snprintf("\n\tfor (%v; %v; %v) { usp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
+                               "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz); }\n\t", vec[0].rep, vec[1].rep, vec[2].rep, vec[3].rep, vec[4].rep);
+               }
+            else
+               {
+               buffer.snprintf("\n\tusp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
+                               "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t", vec[0].rep, vec[1].rep);
+               }
 
             (void) output.append(buffer);
             }
@@ -411,9 +433,9 @@ public:
 
             token = UStringExt::trim(directive + U_CONSTANT_SIZE("cout"), n);
 
-            (void) buffer.reserve(token.size() + 150U);
+            (void) buffer.reserve(token.size() + 200U);
 
-            buffer.snprintf("\n\tusp_sz = UObject2String(%v, usp_buffer, sizeof(usp_buffer));"
+            buffer.snprintf("\n\tusp_sz = UObject2String((%v), usp_buffer, sizeof(usp_buffer));"
                             "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t", token.rep);
 
             (void) output.append(buffer);
@@ -435,6 +457,18 @@ public:
                n = token.size() - U_CONSTANT_SIZE("code") - 2;
 
                token = UStringExt::trim(directive + U_CONSTANT_SIZE("code"), n);
+               }
+            else if (strncmp(directive, U_CONSTANT_TO_PARAM("xcode")) == 0)
+               {
+               bvar = true;
+
+               token = UStringExt::trim(directive + U_CONSTANT_SIZE("xcode"), token.size() - U_CONSTANT_SIZE("xcode") - 2);
+
+               (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t"));
+
+               (void) xoutput.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
+
+               (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t\n"));
                }
 
             if (n)

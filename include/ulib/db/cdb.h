@@ -191,12 +191,20 @@ public:
 
    char* getPattern() { return pattern; }
 
-   void addEntryToVector()               { U_cdb_add_entry_to_vector(this) = true; }
-   void setFunctionToCall(iPFprpr func)  { function_to_call = func; }
-   void setVector(UVector<UString>* ptr) { ptr_vector = ptr; }
+   void addEntryToVector() { U_cdb_add_entry_to_vector(this) = true; }
+
+   iPFprpr getFunctionToCall()             { return function_to_call; }
+   void    setFunctionToCall(iPFprpr func) { function_to_call  = func; }
+
+   UVector<UString>* getVector()                      { return ptr_vector; }
+   void              setVector(UVector<UString>* ptr) { ptr_vector = ptr; }
 
    void callForAllEntrySorted(     iPFprpr function);
    void callForAllEntryWithPattern(iPFprpr function, UString* pattern);
+
+   iPFprpr getFilterToFunctionToCall()                 { return filter_function_to_call; }
+   void  resetFilterToFunctionToCall()                 { filter_function_to_call = functionCall; }
+   void    setFilterToFunctionToCall(iPFprpr function) { filter_function_to_call = function; }
 
    uint32_t getValuesWithKeyNask(UVector<UString>& vec_values, const UString& mask_key, uint32_t* size = 0);
 
@@ -225,9 +233,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:
@@ -241,8 +249,8 @@ protected:
 
    char* pattern;
    UString* pbuffer;
-   iPFprpr function_to_call;
    UVector<UString>* ptr_vector;
+   iPFprpr function_to_call, filter_function_to_call;
 
    // when mmap not available we use this storage...
 
@@ -278,7 +286,8 @@ protected:
       U_RETURN(result);
       }
 
-   void cdb_hash()                            { khash = cdb_hash((const char*)key.dptr, key.dsize); }
+   void cdb_hash() { khash = cdb_hash((const char*)key.dptr, key.dsize); }
+
    void setHash(uint32_t _hash)               { khash = _hash; }
    void setHash(const char* t, uint32_t tlen) { khash = cdb_hash(t, tlen); }
 
@@ -290,6 +299,8 @@ protected:
    // Call function for all entry
 
    void callForAllEntry(vPFpvpc function);
+
+   static int functionCall(UStringRep* key, UStringRep* data) { return 1; }
 
    // Save memory hash table as Constant DataBase
 

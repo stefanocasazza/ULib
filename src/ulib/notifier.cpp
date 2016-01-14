@@ -23,7 +23,7 @@
 #endif
 
 #ifndef HAVE_POLL_H
-UEventTime*   UNotifier::time_obj;
+UEventTime* UNotifier::time_obj;
 #else
 #  include <poll.h>
 struct pollfd UNotifier::fds[1];
@@ -1310,13 +1310,7 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
    UEventTime* ptime;
 
    if (timeoutMS < 0) ptime = 0;
-   else
-      {
-      U_INTERNAL_ASSERT_POINTER(time_obj)
-
-              time_obj->setTime(timeoutMS);
-      ptime = time_obj;
-      }
+   else              (ptime = time_obj)->setTimeToExpire(timeoutMS);
 
    fd_set fdmask;
    FD_ZERO(&fdmask);
@@ -1332,7 +1326,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
 {
    U_TRACE(0, "UNotifier::waitForWrite(%d,%d)", fd, timeoutMS)
 
-   U_INTERNAL_ASSERT_RANGE(0,fd,64*1024)
+   U_INTERNAL_ASSERT_RANGE(0, fd, 64*1024)
    U_INTERNAL_ASSERT_DIFFERS(timeoutMS, 0)
 
 #ifdef DEBUG
@@ -1370,13 +1364,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
    UEventTime* ptime;
 
    if (timeoutMS < 0) ptime = 0;
-   else
-      {
-      U_INTERNAL_ASSERT_POINTER(time_obj)
-
-              time_obj->setTime(timeoutMS);
-      ptime = time_obj;
-      }
+   else              (ptime = time_obj)->setTimeToExpire(timeoutMS);
 
    fd_set fdmask;
    FD_ZERO(&fdmask);

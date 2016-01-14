@@ -412,9 +412,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, URDBObjectHandler<UDataStorage*>, "%V,%d,%p", pathdb.rep, _ignore_case, ptr)
 
-      pDataStorage     = (UDataStorage*)ptr;
-      brecfound        = false;
-      function_to_call = 0;
+      pDataStorage = (UDataStorage*)ptr;
+      brecfound    = false;
       }
 
    // coverity[VIRTUAL_DTOR]
@@ -516,7 +515,7 @@ public:
    bool          isRecordFound() const     { return brecfound; }
    UDataStorage* getPointerToDataStorage() { return pDataStorage; }
 
-   void setPointerToDataStorage(UDataStorage* ptr) { pDataStorage = ptr; }
+   void setPointerToDataStorage(UDataStorage* ptr)  { pDataStorage = ptr; }
 
    // Call function for all entry
 
@@ -530,9 +529,8 @@ public:
    UDataStorage* pDataStorage;
    bool brecfound;
 protected:
-   iPFprpr function_to_call;
-
    static char* data_buffer;
+   static iPFpvpv ds_function_to_call;
    static URDBObjectHandler<UDataStorage*>* pthis;
 
    bool _insertDataStorage(int op);

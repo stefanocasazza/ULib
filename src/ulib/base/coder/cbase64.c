@@ -21,7 +21,7 @@
 
 #include <ctype.h>
 
-#define PAD '='
+#define U_PAD '='
 
 int u_base64_errors;
 int u_base64_max_columns;
@@ -47,10 +47,12 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
       if (++char_count != 3) bits <<= 8;
       else
          {
-         *r++ = u_alphabet[ bits >> 18];
-         *r++ = u_alphabet[(bits >> 12) & 0x3f];
-         *r++ = u_alphabet[(bits >>  6) & 0x3f];
-         *r++ = u_alphabet[ bits        & 0x3f];
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_alphabet[ bits >> 18],
+                                                      u_alphabet[(bits >> 12) & 0x3f],
+                                                      u_alphabet[(bits >>  6) & 0x3f],
+                                                      u_alphabet[ bits        & 0x3f]));
+
+         r += 4;
 
          if (u_base64_max_columns)
             {
@@ -62,7 +64,7 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
                columns = true;
 
                if (U_line_terminator_len == 2) *r++ = '\r';
-                                                    *r++ = '\n';
+                                               *r++ = '\n';
                }
             }
 
@@ -75,26 +77,22 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
       {
       bits <<= (16 - (8 * char_count));
 
-      *r++ = u_alphabet[ bits >> 18];
-      *r++ = u_alphabet[(bits >> 12) & 0x3f];
+      u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(u_alphabet[ bits >> 18],
+                                                   u_alphabet[(bits >> 12) & 0x3f]));
 
-      if (char_count == 1)
-         {
-         *r++ = PAD;
-         *r++ = PAD;
-         }
-      else
-         {
-         *r++ = u_alphabet[(bits >> 6) & 0x3f];
-         *r++ = PAD;
-         }
+      r += 2;
+
+      if (char_count == 1) u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(                         U_PAD,U_PAD));
+      else                 u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(u_alphabet[(bits >> 6) & 0x3f],U_PAD));
+
+      r += 2;
       }
 
    if (columns &&
        cols > 0)
       {
       if (U_line_terminator_len == 2) *r++ = '\r';
-                                           *r++ = '\n';
+                                      *r++ = '\n';
       }
 
    *r = 0;
@@ -180,7 +178,7 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
       {
       c = *ptr;
 
-      if (c == PAD      ||
+      if (c == U_PAD    ||
           u__isspace(c) ||
           member[(int)c])
          {
@@ -200,7 +198,7 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
       {
       c = input[i];
 
-      if (c == PAD) break;
+      if (c == U_PAD) break;
 
       if (member[(int)c] == 0) continue;
 
@@ -262,8 +260,10 @@ case_2:
    goto next;
 
 case_3:
-   *r++ =  bits >> 16;
-   *r++ = (bits >>  8) & 0xff;
+   u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16( bits >> 16,
+                                                (bits >>  8) & 0xff));
+
+   r += 2;
 
 next:
    *r = 0;
@@ -291,10 +291,12 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
       if (++char_count != 3) bits <<= 8;
       else
          {
-         *r++ = b64url[ bits >> 18];
-         *r++ = b64url[(bits >> 12) & 0x3f];
-         *r++ = b64url[(bits >>  6) & 0x3f];
-         *r++ = b64url[ bits        & 0x3f];
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(b64url[ bits >> 18],
+                                                      b64url[(bits >> 12) & 0x3f],
+                                                      b64url[(bits >>  6) & 0x3f],
+                                                      b64url[ bits        & 0x3f]));
+
+         r += 4;
 
          if (u_base64_max_columns)
             {
@@ -306,7 +308,7 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
                columns = true;
 
                if (U_line_terminator_len == 2) *r++ = '\r';
-                                                    *r++ = '\n';
+                                               *r++ = '\n';
                }
             }
 
@@ -319,8 +321,10 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
       {
       bits <<= (16 - (8 * char_count));
 
-      *r++ = b64url[ bits >> 18];
-      *r++ = b64url[(bits >> 12) & 0x3f];
+      u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(b64url[ bits >> 18],
+                                                   b64url[(bits >> 12) & 0x3f]));
+
+      r += 2;
 
       if (char_count == 2) *r++ = b64url[(bits >> 6) & 0x3f];
       }
@@ -329,7 +333,7 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
        cols > 0)
       {
       if (U_line_terminator_len == 2) *r++ = '\r';
-                                           *r++ = '\n';
+                                      *r++ = '\n';
       }
 
    *r = 0;
@@ -480,8 +484,10 @@ case_2:
    goto next;
 
 case_3:
-   *r++ =  bits >> 16;
-   *r++ = (bits >>  8) & 0xff;
+   u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16( bits >> 16,
+                                                (bits >>  8) & 0xff));
+
+   r += 2;
 
 next:
    *r = 0;
@@ -563,7 +569,7 @@ uint32_t u_base64all_decode(const char* restrict input, uint32_t len, unsigned c
       {
       c = *ptr;
 
-      if (c == PAD      ||
+      if (c == U_PAD    ||
           u__isspace(c) ||
           member[(int)c])
          {
@@ -583,7 +589,7 @@ uint32_t u_base64all_decode(const char* restrict input, uint32_t len, unsigned c
       {
       c = input[i];
 
-      if (c == PAD) break;
+      if (c == U_PAD) break;
 
       if (member[(int)c] == 0) continue;
 
@@ -626,8 +632,10 @@ case_2:
    goto next;
 
 case_3:
-   *r++ =  bits >> 16;
-   *r++ = (bits >>  8) & 0xff;
+   u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16( bits >> 16,
+                                                (bits >>  8) & 0xff));
+
+   r += 2;
 
 next:
    *r = 0;

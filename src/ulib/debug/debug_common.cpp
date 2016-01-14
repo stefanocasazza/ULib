@@ -107,7 +107,7 @@ extern "C" void U_EXPORT u_debug_init(void)
    print_info();
 
    USimulationError::init();
-          UObjectDB::init(true, true);
+   UObjectDB::init(true, true);
 
    // we go to check if there are previous creation of global
    // objects that can have forced the initialization of trace file...

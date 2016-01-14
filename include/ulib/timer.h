@@ -95,7 +95,11 @@ public:
       if (        first &&
           (run(), first))
          {
-         U_RETURN_POINTER(first->alarm, UEventTime);
+         UEventTime* a = first->alarm;
+
+         U_ASSERT(a->checkTolerance())
+
+         U_RETURN_POINTER(a, UEventTime);
          }
 
       U_RETURN_POINTER(0, UEventTime);

@@ -47,8 +47,8 @@ fi
 
 TWOCAN_CONF_MSG(Initial phase)
 
-# Check what platform we are running on
 AC_CANONICAL_TARGET
+
 # Pick a newer and better tar implementation like tar-pax
 AM_INIT_AUTOMAKE([subdir-objects no-define tar-pax])
 AM_MAINTAINER_MODE
@@ -65,6 +65,79 @@ AC_MSG_RESULT($CFLAGS)
 
 # Generate a header file with all settings, a config.h file (Automake will add -DHAVE_CONFIG_H)
 AC_CONFIG_HEADERS([include/ulib/internal/config.h])
+
+AC_CANONICAL_HOST
+
+# Check what platform we are running on
+AC_MSG_CHECKING([which platform we are running on])
+
+local_os_type="unknown"
+is_librt_available="yes"
+
+LDFLAGS="$LDFLAGS -L/usr/local/lib"
+CXXFLAGS="$CXXFLAGS -I/usr/local/include"
+
+case "$host" in
+	*-sco*) AC_MSG_ERROR([We do not support SCO's products!]) ;;
+
+	*-aix*)	  local_os_type="aix" ;;
+	*-osf*)	  local_os_type="osf" ;;
+	*-irix*)   local_os_type="irix" ;;
+	*-hpux*)	  local_os_type="hpux" ;;
+	*-linux*)  local_os_type="linux" ;;
+	*-cygwin*) local_os_type="cygwin" ;;
+
+	*-darwin*)
+		local_os_type="darwin"
+		is_librt_available="no"
+	;;
+
+	*-netbsd*)
+		 local_os_type="netbsd"
+
+		 LDFLAGS="$LDFLAGS -L/usr/local/v6/lib"
+	;;
+
+	*-openbsd*)
+		 local_os_type="openbsd"
+
+		 LIBS="$LIBS -L/usr/local/lib"
+	;;
+
+	*mingw*)
+		 local_os_type="mingw"
+		 is_librt_available="no"
+
+		 CPPFLAGS="$CPPFLAGS -I/mingw/include -L/mingw/lib -D__USE_MINGW_ANSI_STDIO=1"
+		 CXXFLAGS="$CXXFLAGS -I/mingw/include -L/mingw/lib"
+		 LDFLAGS="$LDFLAGS -L/mingw/lib"
+	;;
+
+	*-sunos*)
+		 local_os_type="sunos"
+
+		 CXXFLAGS="$CXXFLAGS -pthreads"
+		 LDFLAGS="$LDFLAGS -lsocket -lnsl -lresolv"
+	;;
+
+	*-solaris*)
+		 local_os_type="solaris"
+
+		 CXXFLAGS="$CXXFLAGS -pthreads"
+		 LDFLAGS="$LDFLAGS -lsocket -lnsl"
+	;;
+
+	*-freebsd*)
+		 local_os_type="freebsd"
+
+		 CXXFLAGS="$CXXFLAGS -pthread"
+		 LDFLAGS="$LDFLAGS -L/usr/local/v6/lib"
+	;;
+
+	*)	local_os_type=unknown ;;
+esac
+
+AS_IF([test "x$local_os_type" = xunknown], [AC_MSG_RESULT([unknown])], [test "x$local_os_type" != xunknown], [AC_MSG_RESULT([$local_os_type])])
 
 # Check for architecture for the target
 AC_MSG_CHECKING([which architecture the target is])
@@ -96,10 +169,10 @@ AC_MSG_CHECKING([which operating system the target is])
 OPERATINGSYSTEM=
 TARGET_LIBC=
 case $target in
-	*-*-linux-*)		OPERATINGSYSTEM=linux ;;
-	*netbsd*)			OPERATINGSYSTEM=NetBSD ;;
-	*-none-*)			OPERATINGSYSTEM=baremetal ;;
-	*)						OPERATINGSYSTEM=unknown ;;
+	*-*-linux-*)	OPERATINGSYSTEM=linux ;;
+	*netbsd*)		OPERATINGSYSTEM=NetBSD ;;
+	*-none-*)		OPERATINGSYSTEM=baremetal ;;
+	*)					OPERATINGSYSTEM=unknown ;;
 esac
 
 #AC_SUBST(OPERATINGSYSTEM)
@@ -168,9 +241,6 @@ AC_MSG_RESULT([$GCC_IS_CLANG])
 #AC_SUBST(GCC_IS_CLANG)
 
 ULIB_LIBS=
-dnl ********************************************************
-dnl * Options to pass to libtool
-dnl ********************************************************
 MODULE_LIBTOOL_OPTIONS="-shared -export-dynamic -avoid-version"
 
 os_version=`uname -a`
@@ -360,6 +430,8 @@ case "$target_os" in
 	;;
 esac
 
+AM_CONDITIONAL(MS_LIB_AVAILABLE, test x$ms_librarian = xyes)
+
 # Check for the compiler support
 gcc_major_4_1="no"
 if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
@@ -491,11 +563,7 @@ fi
 
 dnl Initialize Libtool
 m4_ifdef([LT_INIT], [LT_INIT([dlopen shared static win32-dll])], [AC_LIBTOOL_DLOPEN AC_LIBTOOL_WIN32_DLL])
-
-AM_CONDITIONAL(MS_LIB_AVAILABLE, test x$ms_librarian = xyes)
-
 LT_INIT
-
 AC_SUBST(MODULE_LIBTOOL_OPTIONS)
 
 if test "$enable_static" = "yes" -a "$enable_shared" = "no"; then
@@ -1390,7 +1458,7 @@ if test "$use_php" = "yes" ; then
 
 	AC_SUBST(PHPCONFIGLDFLAGS)
 
-	# List of php-config include paths
+	# List of php-config lib paths
 	AC_ARG_WITH(php-libs,
 		 [  --with-php-libs=LIBS       php-config lib locations],
 		 [PHPCONFIGLIBS="$withval"],
@@ -1401,6 +1469,8 @@ if test "$use_php" = "yes" ; then
 	fi
 
 	AC_SUBST(PHPCONFIGLIBS)
+
+	TWOCAN_CONF_MSG(Checking for libraries specific)
 fi
 # ---------------------------------------------------------------------------------------------------
 
@@ -1532,8 +1602,93 @@ if test "$use_ruby" = "yes"; then
 
 		AC_SUBST(RUBYCONFIGLIBS)
 	fi
+
+	TWOCAN_CONF_MSG(Checking for libraries specific)
 fi
 # ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+# Check for MONGODB
+# ---------------------------------------------------------------------------------------------------
+AM_CONDITIONAL(MONGODB, false)
+
+AC_MSG_CHECKING(if you want to use a mongoDB client)
+AC_ARG_WITH(mongodb,
+	[  --with-mongodb                 use mongodb client],
+	[use_mongodb=$withval],
+	[use_mongodb=no])
+AC_MSG_RESULT($use_mongodb)
+
+if test "$use_mongodb" = "yes"; then
+	TWOCAN_CONF_MSG(Checking for mongodb package specific)
+
+	# List of MONGODB include paths
+	AC_ARG_WITH(mongodb-includes,
+		 [  --with-mongodb-includes=PATHS  mongodb include locations],
+		 [MONGODBINCLUDES="$withval"],
+		 [MONGODBINCLUDES=""])
+
+	if test -z "$MONGODBINCLUDES"; then
+		MONGODBINCLUDES="-I/usr/include/libmongoc-1.0/ -I/usr/include/libbson-1.0 -I/usr/local/include/libmongoc-1.0/ -I/usr/local/include/libbson-1.0"
+	fi
+
+	# Check for mongoc.h and bson.h
+	AC_LANG([C])
+	save_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $MONGODBINCLUDES"
+
+	AC_MSG_CHECKING([whether mongodb mongoc.h header actually works])
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#include <mongoc.h>]], [[return 0;]])],
+						 [AC_MSG_RESULT([exists and works correctly])],
+						 [AC_MSG_ERROR([Cannot find mongodb mongoc.h header])])
+
+	AC_MSG_CHECKING([whether mongodb bson.h header actually works])
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#include <bson.h>]], [[return 0;]])],
+						 [AC_MSG_RESULT([exists and works correctly])],
+						 [AC_MSG_ERROR([Cannot find mongodb bson.h header])])
+
+	CPPFLAGS=$save_CPPFLAGS
+	AC_LANG([C++])
+
+	# List of mongodb ldflags
+	AC_ARG_WITH(mongodb-ldflags,
+		 [  --with-mongodb-ldflags=LDFLAGS mongodb ldflags list],
+		 [MONGODBLDFLAGS="$withval"],
+		 [MONGODBLDFLAGS=""])
+
+	if test -n "$MONGODBLDFLAGS"; then
+		LDFLAGS="$LDFLAGS $MONGODBLDFLAGS"
+	fi
+
+	# List of mongodb lib paths
+	AC_ARG_WITH(mongodb-libs,
+		 [  --with-mongodb-libs=LIBS       mongodb lib locations],
+		 [MONGODBLIBS="$withval"],
+		 [MONGODBLIBS=""])
+
+	if test -z "$MONGODBLIBS"; then
+		MONGODBLIBS="-lmongoc-1.0 -lbson-1.0"
+	fi
+
+	AC_LANG([C])
+   save_LIBS="$LIBS"
+   LIBS="$LIBS $MONGODBLIBS"
+
+   AC_CHECK_LIB(mongoc-1.0, mongoc_init, , [AC_MSG_ERROR([Not found libmongoc library])])
+   AC_CHECK_LIB(bson-1.0, bson_new, , [AC_MSG_ERROR([Not found libbson library])])
+
+   LIBS="$save_LIBS"
+	AC_LANG([C++])
+
+	ULIB_LIBS="$ULIB_LIBS $MONGODBLIBS"
+	CXXFLAGS="$CXXFLAGS $MONGODBINCLUDES"
+
+	AM_CONDITIONAL(MONGODB, true)
+	AC_DEFINE(USE_MONGODB, 1, [Define if enable mongodb support])
+fi
+# ---------------------------------------------------------------------------------------------------
+
+TWOCAN_CONF_MSG(Checking for typedefs)
 
 AM_CONDITIONAL(SSL,			test "$USE_LIBSSL"		= "yes")
 AM_CONDITIONAL(SSL_TS,		test "$HAVE_SSL_TS"		= "yes")

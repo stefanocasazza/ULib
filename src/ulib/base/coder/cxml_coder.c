@@ -11,6 +11,10 @@
 //
 // ============================================================================
 
+/*
+#define DEBUG_DEBUG
+*/
+
 #include <ulib/base/utility.h>
 #include <ulib/base/coder/xml.h>
 
@@ -20,67 +24,51 @@
  * -------------------------------------------------------------------
  *  Character  XML escape sequence  name
  * -------------------------------------------------------------------
- *  '"'          "&quot;"           quote
- *  '&'          "&amp;"            amp
- *  '\''         "&apos;"           apostrophe
- *  '<'          "&lt;"             lower than
- *  '>'          "&gt;"             greater than
+ *    '"'        "&quot;"           quote
+ *    '&'        "&amp;"            amp
+ *    '\''       "&apos;"           apostrophe
+ *    '<'        "&lt;"             lower than
+ *    '>'        "&gt;"             greater than
  * -------------------------------------------------------------------
  */
 
 static inline unsigned char* u_set_quot(unsigned char* restrict r)
 {
-   *r++ = '&';
-   *r++ = 'q';
-   *r++ = 'u';
-   *r++ = 'o';
-   *r++ = 't';
-   *r++ = ';';
+   u_put_unalignedp32(r,   U_MULTICHAR_CONSTANT32('&','q','u','o'));
+   u_put_unalignedp16(r+4, U_MULTICHAR_CONSTANT16('t',';'));
 
-   return r;
+   return r + U_CONSTANT_SIZE("&quot;");
 }
 
 static inline unsigned char* u_set_amp(unsigned char* restrict r)
 {
-   *r++ = '&';
-   *r++ = 'a';
-   *r++ = 'm';
-   *r++ = 'p';
-   *r++ = ';';
+   u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32('&','a','m','p'));
 
-   return r;
+   r[4] = ';';
+
+   return r + U_CONSTANT_SIZE("&amp;");
 }
 
 static inline unsigned char* u_set_apos(unsigned char* restrict r)
 {
-   *r++ = '&';
-   *r++ = 'a';
-   *r++ = 'p';
-   *r++ = 'o';
-   *r++ = 's';
-   *r++ = ';';
+   u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32('&','a','p','o'));
+   u_put_unalignedp16(r+4, U_MULTICHAR_CONSTANT16('s',';'));
 
-   return r;
+   return r + U_CONSTANT_SIZE("&apos;");
 }
 
 static inline unsigned char* u_set_lt(unsigned char* restrict r)
 {
-   *r++ = '&';
-   *r++ = 'l';
-   *r++ = 't';
-   *r++ = ';';
+   u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32('&','l','t',';'));
 
-   return r;
+   return r + U_CONSTANT_SIZE("&lt;");
 }
 
 static inline unsigned char* u_set_gt(unsigned char* restrict r)
 {
-   *r++ = '&';
-   *r++ = 'g';
-   *r++ = 't';
-   *r++ = ';';
+   u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32('&','g','t',';'));
 
-   return r;
+   return r + U_CONSTANT_SIZE("&gt;");
 }
 
 uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
@@ -96,11 +84,15 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
       {
       unsigned char ch = *input++;
 
+      U_INTERNAL_PRINT("ch = %C *input = %C", ch, *input)
+
       if ( u__isalnum(ch)          ||
           (u__isquote(ch) == false &&
            u__ishtmlc(ch) == false))
          {
-         *r++ = ch;
+         if (ch != '\\') *r++ = ch;
+
+         U_INTERNAL_PRINT("r = %.20s", r-1)
 
          continue;
          }
@@ -149,6 +141,8 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
       }
 
    *r = 0;
+
+   U_INTERNAL_PRINT("result = %s", result)
 
    return (r - result);
 }

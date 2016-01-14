@@ -50,7 +50,8 @@ NODOG_OPTIONS:= --disable-examples \
 					 --disable-stdcpp --disable-gcc-optimized --disable-thread --disable-HCRS --disable-HPRS \
 					 $(if $(CONFIG_NODOG_DEBUG),--enable-debug) \
 					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) \
-					 $(if $(CONFIG_NODOG_MEMPOOL),--enable-memory-pool,--disable-memory-pool)
+					 $(if $(CONFIG_NODOG_MEMPOOL),--enable-memory-pool,--disable-memory-pool) \
+					 $(if $(CONFIG_NODOG_GCC_OPTIMIZED),--enable-gcc-optimized,--disable-gcc-optimized)
 
 define Build/Configure
 	$(call Build/Configure/Default, \

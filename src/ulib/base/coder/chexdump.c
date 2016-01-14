@@ -31,8 +31,10 @@ uint32_t u_hexdump_encode(const unsigned char* restrict input, uint32_t len, uns
       {
       unsigned char ch = input[i];
 
-      *r++ = u_hex_lower[(ch >> 4) & 0x0F];
-      *r++ = u_hex_lower[(ch     ) & 0x0F];
+      u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(u_hex_lower[(ch >> 4) & 0x0F],
+                                                   u_hex_lower[(ch     ) & 0x0F]));
+
+      r += 2;
       }
 
    *r = 0;

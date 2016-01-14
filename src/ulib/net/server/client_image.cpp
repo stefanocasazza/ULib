@@ -453,9 +453,9 @@ void UClientImage_Base::handlerDelete()
       }
 #endif
 
-   U_TOT_CONNECTION--;
+   U_SRV_TOT_CONNECTION--;
 
-   U_INTERNAL_DUMP("tot_connection = %d", U_TOT_CONNECTION)
+   U_INTERNAL_DUMP("tot_connection = %d", U_SRV_TOT_CONNECTION)
 
 #ifdef U_CLASSIC_SUPPORT
    if (UServer_Base::isClassic()) U_EXIT(0);
@@ -1531,7 +1531,7 @@ loop:
    U_INTERNAL_ASSERT_MAJOR(iBytesWrite, 0)
 
    U_SRV_LOG_WITH_ADDR("sent partial response: (%u bytes of %u)%.*s parallelization(%u,%u) - to",
-                        iBytesWrite, ncount, msg_len, " [pipeline]", U_ClientImage_parallelization, U_CNT_PARALLELIZATION);
+                        iBytesWrite, ncount, msg_len, " [pipeline]", U_ClientImage_parallelization, U_SRV_CNT_PARALLELIZATION);
 
    ncount -= iBytesWrite;
 

@@ -45,8 +45,6 @@ U_NO_EXPORT void UTimer::insertEntry()
 
    U_CHECK_MEMORY
 
-   alarm->setCurrentTime();
-
    if (first == 0) // The list is empty
       {
       next  = 0;
@@ -70,6 +68,30 @@ U_NO_EXPORT void UTimer::insertEntry()
    U_ASSERT(invariant())
 }
 
+void UTimer::insert(UEventTime* a)
+{
+   U_TRACE(0, "UTimer::insert(%p,%b)", a)
+
+   // set an alarm to more than 2 month is very suspect...
+
+   U_INTERNAL_ASSERT_MINOR(a->tv_sec, 60L * U_ONE_DAY_IN_SECOND) // 60 gg (2 month)
+
+   UTimer* item;
+
+   if (pool == 0) item = U_NEW(UTimer);
+   else
+      {
+      item = pool;
+      pool = pool->next;
+      }
+
+   // add it in to its new list, sorted correctly
+
+   (item->alarm = a)->setTimeToExpire();
+
+   item->insertEntry();
+}
+
 void UTimer::callHandlerTimeout()
 {
    U_TRACE_NO_PARAM(0, "UTimer::callHandlerTimeout()")
@@ -81,26 +103,27 @@ void UTimer::callHandlerTimeout()
 
    U_INTERNAL_DUMP("UEventTime::timeout1 = %#19D (next alarm expire) = %#19D", UEventTime::timeout1.tv_sec, item->next ? item->next->alarm->expire() : 0L)
 
-   if (item->alarm->handlerTime())
+   int result = item->alarm->handlerTime();
+
+   (void) U_SYSCALL(gettimeofday, "%p,%p", &UEventTime::timeout1, 0);
+
+   U_INTERNAL_DUMP("UEventTime::timeout1 = { %ld %6ld } first = %p", UEventTime::timeout1.tv_sec, UEventTime::timeout1.tv_usec, first)
+
+   if (result == 0) // 0 => monitoring
+      {
+      // add it back in to its new list, sorted correctly
+
+      item->alarm->updateTimeToExpire();
+
+      item->insertEntry();
+      }
+   else
       {
       // put it on the free list
 
       item->alarm = 0;
       item->next  = pool;
             pool  = item;
-      }
-   else // 0 => monitoring
-      {
-      // add it back in to its new list, sorted correctly
-
-      item->insertEntry();
-
-      UEventTime* a = item->alarm;
-
-      UEventTime::ms = ((a->ctime.tv_sec  + a->tv_sec  - UEventTime::timeout1.tv_sec)  * 1000L) +
-                       ((a->ctime.tv_usec + a->tv_usec - UEventTime::timeout1.tv_usec) / 1000L);
-
-      U_ASSERT(a->checkTolerance())
       }
 }
 
@@ -135,6 +158,8 @@ loop:
       }
 
    U_INTERNAL_DUMP("first = %p", first)
+
+   if (UInterrupt::event_signal_pending) UInterrupt::callHandlerSignal();
 }
 
 void UTimer::setTimer()
@@ -145,20 +170,11 @@ void UTimer::setTimer()
 
    run();
 
-   if (first == 0)
-      {
-      UInterrupt::timerval.it_value.tv_sec =
-      UInterrupt::timerval.it_value.tv_usec = 0L;
-      }
+   if (first) first->alarm->setTimeVal(&(UInterrupt::timerval.it_value));
    else
       {
-      UEventTime* item = first->alarm;
-
-      UInterrupt::timerval.it_value.tv_sec  = item->ctime.tv_sec  + item->tv_sec  - UEventTime::timeout1.tv_sec;
-      UInterrupt::timerval.it_value.tv_usec = item->ctime.tv_usec + item->tv_usec - UEventTime::timeout1.tv_usec;
-
-      UTimeVal::adjust(&(UInterrupt::timerval.it_value.tv_sec),
-                       &(UInterrupt::timerval.it_value.tv_usec));
+      UInterrupt::timerval.it_value.tv_sec  =
+      UInterrupt::timerval.it_value.tv_usec = 0L;
       }
 
    // NB: it can happen that setitimer() produce immediatly a signal because the interval is very short (< 10ms)... 
@@ -169,30 +185,6 @@ void UTimer::setTimer()
                      UInterrupt::timerval.it_value.tv_usec >= 0)
 
    (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &UInterrupt::timerval, 0);
-}
-
-void UTimer::insert(UEventTime* a)
-{
-   U_TRACE(0, "UTimer::insert(%p,%b)", a)
-
-   // set an alarm to more than 2 month is very suspect...
-
-   U_INTERNAL_ASSERT_MINOR(a->tv_sec, 60L * U_ONE_DAY_IN_SECOND) // 60 gg (2 month)
-
-   UTimer* item;
-
-   if (pool == 0) item = U_NEW(UTimer);
-   else
-      {
-      item = pool;
-      pool = pool->next;
-      }
-
-   item->alarm = a;
-
-   // add it in to its new list, sorted correctly
-
-   item->insertEntry();
 }
 
 void UTimer::erase(UEventTime* a)

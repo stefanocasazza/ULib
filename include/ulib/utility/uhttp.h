@@ -363,9 +363,6 @@ public:
    static UString* htdigest;
    static bool digest_authentication; // authentication method (digest|basic)
 
-   static UString getUserHA1(const UString& user, const UString& realm);
-   static bool    isUserAuthorized(const UString& user, const UString& password);
-
 #ifdef USE_LIBSSL
    static UString* uri_protected_mask;
    static UVector<UIPAllow*>* vallow_IP;
@@ -411,6 +408,8 @@ public:
    static UString* tmpdir;
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
+
+   static int getFormFirstNumericValue(int _min, int _max);
 
    static uint32_t processForm();
    static void     getFormValue(UString& value, const char* name, uint32_t len);

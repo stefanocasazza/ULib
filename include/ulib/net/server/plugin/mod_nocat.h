@@ -158,21 +158,7 @@ public:
 
    // define method VIRTUAL of class UEventTime
 
-   virtual int handlerTime() U_DECL_FINAL
-      {
-      U_TRACE_NO_PARAM(0, "UNoCatPlugIn::handlerTime()")
-
-      checkSystem();
-
-      // ---------------
-      // return value:
-      // ---------------
-      // -1 - normal
-      //  0 - monitoring
-      // ---------------
-
-      U_RETURN(0);
-      }
+   virtual int handlerTime() U_DECL_FINAL;
 
    // DEBUG
 
@@ -226,7 +212,7 @@ protected:
    static uint64_t traffic_available;
    static int fd_stderr, check_type, next_event_time;
    static long last_request_firewall, last_request_check;
-   static uint32_t total_connections, nfds, num_radio, num_peers_preallocate, time_available, check_expire;
+   static uint32_t total_connections, nfds, num_radio, idx_peers_preallocate, num_peers_preallocate, time_available, check_expire;
 
    static UModNoCatPeer* peers_delete; // delete list 
    static UModNoCatPeer* peers_preallocate;
@@ -268,7 +254,12 @@ protected:
       U_TRACE_NO_PARAM(0+256, "UNoCatPlugIn::preallocatePeers()")
 
       peers_preallocate = new UModNoCatPeer[num_peers_preallocate];
-      } 
+
+      // put the new preallocated peers on the delete list
+
+      peers_preallocate->next = peers_delete;
+                                peers_delete = peers_preallocate;
+      }
 
    static bool getARPCache()
       {
@@ -304,8 +295,6 @@ protected:
       peer->fw.setArgument(3, (type == UModNoCatPeer::PEER_PERMIT ? "permit" : "deny"));
 
       if (peer->fw.executeAndWait(0, -1, fd_stderr)) U_peer_status = type;
-
-      last_request_firewall = u_now->tv_sec;
 
 #  ifdef U_LOG_ENABLE
       UServer_Base::logCommandMsgError(peer->fw.getCommand(), false);

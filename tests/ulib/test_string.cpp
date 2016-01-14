@@ -3,7 +3,9 @@
 #include <ulib/file.h>
 #include <ulib/debug/crono.h>
 #include <ulib/utility/escape.h>
+#include <ulib/utility/services.h>
 #include <ulib/utility/string_ext.h>
+#include <ulib/utility/xml_escape.h>
 
 #ifdef __MINGW32__
 #  define _GLIBCXX_USE_C99_DYNAMIC 1
@@ -1522,9 +1524,46 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
 
+   UString buffer(U_CAPACITY), encoded(U_CAPACITY);
+
+   UXMLEscape::encode(U_CONSTANT_TO_PARAM("<script>alert(\\\"This should not be displayed in a browser alert box.\\\");<\\/script>"), encoded);
+
+   buffer.snprintf(
+      "<tr>"
+      "<td>%u</td>"
+      "<td>%v</td>"
+      "</tr>",
+      11, encoded.rep);
+
+   U_ASSERT_EQUALS( buffer, U_STRING_FROM_CONSTANT("<tr><td>11</td><td>&lt;script&gt;alert(&quot;This should not be displayed in a browser alert box.&quot;);&lt;/script&gt;</td></tr>") )
+
+// return 0;
+
    check_mmap(21 * U_2M);
 
 // return 0;
+
+   U_ASSERT( UServices::dosMatchExtWithOR( U_CONSTANT_TO_PARAM("10.8.0.2"),   U_CONSTANT_TO_PARAM("10.8.[0-1].[1-2][0-9][0-9]|10.8.[0-1].[1-9][0-9]|10.8.[0-1].[0-9]"), 0) == true )
+
+   U_ASSERT( UServices::dosMatchExtWithOR( U_CONSTANT_TO_PARAM("10.8.0.2"),   U_CONSTANT_TO_PARAM("10.8.[0-1].[1-2][0-9][0-9]|10.8.[0-1].[1-9][0-9]|10.8.[0-1].[0-9]"), 0) == true )
+   U_ASSERT( UServices::dosMatchExtWithOR( U_CONSTANT_TO_PARAM("10.8.1.29"),  U_CONSTANT_TO_PARAM("10.8.[0-1].[1-2][0-9][0-9]|10.8.[0-1].[1-9][0-9]|10.8.[0-1].[0-9]"), 0) == true )
+   U_ASSERT( UServices::dosMatchExtWithOR( U_CONSTANT_TO_PARAM("10.8.0.148"), U_CONSTANT_TO_PARAM("10.8.[0-1].[1-2][0-9][0-9]|10.8.[0-1].[1-9][0-9]|10.8.[0-1].[0-9]"), 0) == true )
+   U_ASSERT( UServices::dosMatchExtWithOR( U_CONSTANT_TO_PARAM("10.8.1.10a"), U_CONSTANT_TO_PARAM("10.8.[0-1].[1-2][0-9][0-9]|10.8.[0-1].[1-9][0-9]|10.8.[0-1].[0-9]"), 0) == false )
+   U_ASSERT( UServices::dosMatchExtWithOR( U_CONSTANT_TO_PARAM("10.8.3.2"),   U_CONSTANT_TO_PARAM("10.8.[0-1].[1-2][0-9][0-9]|10.8.[0-1].[1-9][0-9]|10.8.[0-1].[0-9]"), 0) == false )
+
+   UVector<UString> vec;
+
+   U_ASSERT_EQUALS( vec.loadFromData(U_STRING_FROM_CONSTANT(
+"#dc:9f:db:30:63:27 172.16.13.253 Member   ### wdsRepWinetown-r29587_picoM2\n"
+"\n"
+"## wdsRep: wan@eth0, br-lan@wlan0+wlan0-1\n"
+"#\n"
+"00:27:22:9a:d9:bd 172.16.13.252 Member   ### wdsRepLab16-r29587_picoM2\n"
+"\n"
+"## wdsRep: br-lan@eth0+wlan0+wlan0-1\n"
+"#\n"
+"#00:27:22:9b:d9:bd 172.16.13.252 Member   ### wdsRepLab16-r29587_picoM2\n"
+   )), 3 )
 
    int year = 0;
    char sep = 0;
@@ -1650,10 +1689,10 @@ U_EXPORT main (int argc, char* argv[])
    */
 
    UCrono crono;
-   UVector<UString> vec;
    UString x = U_STRING_FROM_CONSTANT("172.31.1.0/24 172.31.2.0/24  172.31.3.0/24 \t\t\t\t\t\t\t\t\t\t\t\t\t"
                                       "172.31.4.0/24 172.31.5.0/24  172.31.6.0/24 \t\t\t\t\t\t\t\t\t\t\t\t\t172.31.7.0/24");
 
+              vec.clear();
    int i, n = vec.split(x);
 
    U_INTERNAL_ASSERT_EQUALS(n, 7)

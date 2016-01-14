@@ -1,4 +1,4 @@
 <!--#args
 name;
 -->
-<h1>Hello <!--#xputs name --></h1>
+<h1>Hello <!--#xmlputs name --></h1>

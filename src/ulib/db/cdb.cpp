@@ -26,10 +26,11 @@ void UCDB::init_internal(int ignore_case)
    slot = 0;
    hp   = 0;
 
-   pattern = 0;
-   pbuffer = 0;
-   function_to_call = 0;
-   ptr_vector = 0;
+   pattern                 = 0;
+   pbuffer                 = 0;
+   ptr_vector              = 0;
+   function_to_call        = 0;
+   filter_function_to_call = functionCall;
 
    // when mmap not available we use this storage...
 
@@ -546,31 +547,31 @@ void UCDB::call1()
 
    U_INTERNAL_DUMP("skey = %#V sdata = %#V)", skey, sdata)
 
-   U_cdb_result_call(this) = function_to_call(skey, sdata);
-
-   U_INTERNAL_DUMP("U_cdb_result_call = %d U_cdb_add_entry_to_vector = %b", U_cdb_result_call(this), U_cdb_add_entry_to_vector(this))
-
-   if (U_cdb_result_call(this) == 2 || // NB: for remove...
-       U_cdb_add_entry_to_vector(this))
+   if (filter_function_to_call(skey, sdata))
       {
-      U_INTERNAL_ASSERT_POINTER(ptr_vector)
+      U_cdb_result_call(this) = function_to_call(skey, sdata);
 
-      ptr_vector->UVector<void*>::push(skey);
+      U_INTERNAL_DUMP("U_cdb_result_call = %d U_cdb_add_entry_to_vector = %b", U_cdb_result_call(this), U_cdb_add_entry_to_vector(this))
 
-      if (U_cdb_add_entry_to_vector(this) == false) goto next;
+      if (U_cdb_result_call(this) == 2 || // NB: for remove...
+          U_cdb_add_entry_to_vector(this))
+         {
+         U_INTERNAL_ASSERT_POINTER(ptr_vector)
 
-      U_cdb_add_entry_to_vector(this) = false;
+         ptr_vector->UVector<void*>::push(skey);
 
-      ptr_vector->UVector<void*>::push(sdata);
+         if (U_cdb_add_entry_to_vector(this) == false) goto next;
+
+         U_cdb_add_entry_to_vector(this) = false;
+
+         ptr_vector->UVector<void*>::push(sdata);
+
+         return;
+         }
       }
-   else
-      {
-      // NB: we don't use delete (dtor) because it add a deallocation to the destroy process...
 
        skey->release();
-next:
-      sdata->release();
-      }
+next: sdata->release();
 }
 
 void UCDB::call1(const char*  key_ptr, uint32_t  key_size,
@@ -606,7 +607,7 @@ void UCDB::getKeys2(UCDB* pcdb, char* src)
 {
    U_TRACE(0, "UCDB::getKeys2(%p,%p)", pcdb, src)
 
-   UStringRep* rep;
+   UStringRep* skey;
    UCDB::cdb_record_header* ptr_hr = (UCDB::cdb_record_header*)src;
 
    uint32_t klen = u_get_unaligned32(ptr_hr->klen); // key length
@@ -618,9 +619,10 @@ void UCDB::getKeys2(UCDB* pcdb, char* src)
 
    src += sizeof(UCDB::cdb_record_header);
 
-   U_NEW_DBG(UStringRep, rep, UStringRep(src, klen));
+   U_NEW_DBG(UStringRep, skey, UStringRep(src, klen));
 
-   pcdb->ptr_vector->UVector<void*>::push(rep);
+   if (pcdb->filter_function_to_call(skey, 0) == 0) skey->release();
+   else                                             pcdb->ptr_vector->UVector<void*>::push(skey);
 }
 
 void UCDB::print2(UCDB* pcdb, char* src)

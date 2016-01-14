@@ -93,6 +93,10 @@
 #  include "db/tdb.cpp"
 #endif
 
+#ifdef USE_MONGODB
+#  include "net/client/mongodb.cpp"
+#endif
+
 #ifndef U_HTTP2_DISABLE
 #  include "utility/http2.cpp"
 #endif

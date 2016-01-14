@@ -39,6 +39,7 @@ U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #  include <net/if_arp.h>
 #endif
 
+int            USocket::incoming_cpu = -1;
 int            USocket::iBackLog = SOMAXCONN;
 int            USocket::accept4_flags;  // If flags is 0, then accept4() is the same as accept()
 bool           USocket::tcp_reuseport;
@@ -358,8 +359,8 @@ void USocket::setReusePort()
 # endif
    U_INTERNAL_DUMP("U_socket_Type = %d %B", U_socket_Type(this), U_socket_Type(this))
 
-   tcp_reuseport = ((U_socket_Type(this) & SK_UNIX) == 0                                  &&
-                    setSockOpt(SOL_SOCKET, SO_REUSEPORT, (const int[]){ 1 }, sizeof(int)) &&
+   tcp_reuseport = ((U_socket_Type(this) & SK_UNIX) == 0                     &&
+                    setSockOpt(SOL_SOCKET, SO_REUSEPORT, (const int[]){ 1 }) &&
                     (U_socket_Type(this) & SK_DGRAM) == 0);
 
    U_INTERNAL_DUMP("tcp_reuseport = %b", tcp_reuseport)
@@ -374,10 +375,10 @@ void USocket::setReuseAddress()
     * SO_REUSEADDR allows your server to bind to an address which is in a TIME_WAIT state.
     * It does not allow more than one server to bind to the same address. It was mentioned
     * that use of this flag can create a security risk because another server can bind to a
-    * the same port, by binding to a specific address as opposed to INADDR_ANY.
+    * the same port, by binding to a specific address as opposed to INADDR_ANY
     */
 
-   (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, (const int[]){ 1 }, sizeof(int)); 
+   (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, (const int[]){ 1 }); 
 }
 
 void USocket::setTcpKeepAlive()
@@ -387,19 +388,18 @@ void USocket::setTcpKeepAlive()
    // Set TCP keep alive option to detect dead peers
 
 #ifdef SO_KEEPALIVE
-   (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 }, sizeof(int));
+   (void) setSockOpt(SOL_SOCKET, SO_KEEPALIVE, (const int[]){ 1 });
 
 # ifdef U_LINUX // Default settings are more or less garbage, with the keepalive time set to 7200 by default on Linux. Modify settings to make the feature actually useful
-
-   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPIDLE, (const int[]){ 15 }, sizeof(int)); // Send first probe after interval
+   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPIDLE, (const int[]){ 15 }); // Send first probe after interval
 
    // Send next probes after the specified interval. Note that we set the delay as interval / 3, as we send three probes before detecting an error (see the next setsockopt call)
 
-   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPINTVL, (const int[]){ 15 / 3 }, sizeof(int)); // Send next probe after interval
+   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPINTVL, (const int[]){ 15 / 3 }); // Send next probe after interval
 
    // Consider the socket in error state after three we send three ACK probes without getting a reply
 
-   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPCNT, (const int[]){ 3 }, sizeof(int));
+   (void) setSockOpt(IPPROTO_TCP, TCP_KEEPCNT, (const int[]){ 3 });
 # endif
 #endif
 }
@@ -589,6 +589,10 @@ void USocket::reusePort(int _flags)
          U_ERROR("SO_REUSEPORT failed, port %d", iLocalPort);
          }
 
+#  ifdef SO_INCOMING_CPU
+      if (incoming_cpu != -1) (void) setSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&incoming_cpu);
+#  endif
+
       (void) U_SYSCALL(close, "%d", old);
       }
 #endif
@@ -758,7 +762,7 @@ bool USocket::setTimeoutRCV(uint32_t timeoutMS)
    // sockets use a timeval
 
 #ifdef _MSWINDOWS_
-   bool result = setSockOpt(SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeoutMS, sizeof(uint32_t));
+   bool result = setSockOpt(SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeoutMS);
 #else
    // Convert the timeout value (in milliseconds) into a timeval struct
 
@@ -783,7 +787,7 @@ bool USocket::setTimeoutSND(uint32_t timeoutMS)
 #endif
 
 #ifdef _MSWINDOWS_
-   bool result = setSockOpt(SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeoutMS, sizeof(uint32_t));
+   bool result = setSockOpt(SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeoutMS);
 #else
    // Convert the timeout value (in milliseconds) into a timeval struct
 

@@ -145,7 +145,7 @@ static int u_finish(unsigned char* restrict ptr, int base64)
 
    if (base64 ==  0) return u_hexdump_encode(u_mdValue, u_mdLen, ptr);
    if (base64 ==  1) return u_base64_encode( u_mdValue, u_mdLen, ptr);
-   if (base64 == -1) u__memcpy(ptr, u_mdValue, u_mdLen, __PRETTY_FUNCTION__);
+   if (base64 == -1)        u__memcpy(ptr, u_mdValue, u_mdLen, __PRETTY_FUNCTION__);
 
    return u_mdLen;
 }

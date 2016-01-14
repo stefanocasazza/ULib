@@ -37,11 +37,11 @@ uint32_t u_escape_encode(const unsigned char* restrict inptr, uint32_t len, char
 
       if (outptr >= outend)
          {
-         *outptr++ = '.';
-         *outptr++ = '.';
-         *outptr++ = '.';
+         u_put_unalignedp32(outptr, U_MULTICHAR_CONSTANT32('.','.','.','"'));
 
-         break;
+         outptr[4] = '\0';
+
+         return (outptr - out) + 4;
          }
       }
 
@@ -197,8 +197,10 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
 
                if (c <= 0x7FF) /* U+0080..U+07FF */
                   {
-                  *outptr++ = (unsigned char)(0xC0 |  c >> 6);
-                  *outptr++ = (unsigned char)(0x80 | (c & 0x3F));
+                  u_put_unalignedp16(outptr, U_MULTICHAR_CONSTANT16((unsigned char)(0xC0 |  c >> 6),
+                                                                    (unsigned char)(0x80 | (c & 0x3F))));
+
+                  outptr += 2;
                   }
                else if (c <= 0xFFFF) /* U+0800..U+FFFF */
                   {
@@ -210,10 +212,12 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
                   {
                   U_INTERNAL_ASSERT(c <= 0x10FFFF)
 
-                  *outptr++ = (unsigned char)(0xF0 |  c >> 18);
-                  *outptr++ = (unsigned char)(0x80 | (c >> 12 & 0x3F));
-                  *outptr++ = (unsigned char)(0x80 | (c >>  6 & 0x3F));
-                  *outptr++ = (unsigned char)(0x80 | (c       & 0x3F));
+                  u_put_unalignedp32(outptr, U_MULTICHAR_CONSTANT32((unsigned char)(0xF0 |  c >> 18),
+                                                                    (unsigned char)(0x80 | (c >> 12 & 0x3F)),
+                                                                    (unsigned char)(0x80 | (c >>  6 & 0x3F)),
+                                                                    (unsigned char)(0x80 | (c        & 0x3F))));
+
+                  outptr += 4;
                   }
 
                continue;

@@ -35,7 +35,7 @@ else
        <td bgcolor="#E0E0FF">First Name: <!--#puts first_name --></td>
        <td bgcolor="#E0E0FF">Last Name: <!--#puts last_name --></td>
        <td bgcolor="#E0E0FF">Email: <!--#puts email --></td>
-       <td bgcolor="#E0E0FF">your comments: <!--#xputs comments --></td>
+       <td bgcolor="#E0E0FF">your comments: <!--#xmlputs comments --></td>
      </tr>
    </table>
    </blockquote>

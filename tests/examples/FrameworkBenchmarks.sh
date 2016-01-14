@@ -22,71 +22,43 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # PLAINTEXT
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#UMEMPOOL="58,0,0,39,16401,-14,-15,11,25"
+#UMEMPOOL="58,0,0,41,16401,-14,-15,11,25"
 #sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"		 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 16384|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/plaintext
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency     1.07ms  292.99us  17.09ms   83.28%
-#    Req/Sec   509.25k    28.12k  568.89k    75.06%
+#    Latency     1.00ms  220.28us  17.02ms   74.17%
+#    Req/Sec   552.46k    33.92k  614.40k    54.19%
 #  Latency Distribution
-#     50%    1.07ms
-#     75%    1.22ms
-#     90%    1.34ms
-#     99%    1.53ms
-#  29127120 requests in 15.00s, 3.91GB read
-#Requests/sec: 1941819.65
-#Transfer/sec:    266.67MB
-#
-# Running 15s test @ http://laptop:8080/plaintext
-#   4 threads and 256 connections
-#   Thread Stats   Avg      Stdev     Max   +/- Stdev
-#     Latency   220.76ms   49.25ms 937.77ms   86.40%
-#     Req/Sec     4.68k   355.58     5.69k    71.20%
-#   Latency Distribution
-#      50%  220.85ms
-#      75%  235.07ms
-#      90%  254.43ms
-#      99%  353.92ms
-#   279265 requests in 15.02s, 38.35MB read
-# Requests/sec:  18588.96
-# Transfer/sec:      2.55MB
+#     50%    1.00ms
+#     75%    1.13ms
+#     90%    1.24ms
+#     99%    1.43ms
+#  31102816 requests in 14.97s, 3.74GB read
+#Requests/sec: 2077107.68
+#Transfer/sec:    255.53MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # JSON
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-#UMEMPOOL="58,0,0,40,273,-15,-14,-20,36"
+#UMEMPOOL="58,0,0,41,273,-15,-14,-20,36"
 #sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 #sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	 benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #Running 15s test @ http://localhost:8080/json
 #  4 threads and 256 connections
 #  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency   454.29us  279.11us  21.29ms   95.78%
-#    Req/Sec    74.50k     9.20k  134.33k    82.76%
+#    Latency   449.69us  236.81us  20.50ms   89.87%
+#    Req/Sec    76.61k     5.88k   99.00k    54.11%
 #  Latency Distribution
-#     50%  441.00us
-#     75%  561.00us
-#     90%  649.00us
-#     99%    0.90ms
-#  4203920 requests in 15.00s, 657.50MB read
-#Requests/sec: 280264.58
-#Transfer/sec:     43.83MB
-#
-#Running 15s test @ http://laptop:8080/json
-#  4 threads and 256 connections
-#  Thread Stats   Avg      Stdev     Max   +/- Stdev
-#    Latency    18.95ms   24.43ms 239.50ms   98.69%
-#    Req/Sec     3.37k   647.94     5.19k    65.72%
-#  Latency Distribution
-#     50%   16.50ms
-#     75%   17.92ms
-#     90%   19.30ms
-#     99%  225.25ms
-#  199539 requests in 15.00s, 31.21MB read
-#Requests/sec:  13299.02
-#Transfer/sec:      2.08MB
+#     50%  443.00us
+#     75%  562.00us
+#     90%  645.00us
+#     99%  823.00us
+#  4323309 requests in 15.00s, 614.33MB read
+#Requests/sec: 288235.65
+#Transfer/sec:     40.96MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 # DB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -96,56 +68,75 @@ export ORM_DRIVER ORM_OPTION UMEMPOOL
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass character-set=utf8 dbname=hello_world"
 #ORM_DRIVER="pgsql"
 #ORM_OPTION="host=localhost user=benchmarkdbuser password=benchmarkdbpass dbname=hello_world"
-#UMEMPOOL="545,0,0,41,275,-14,-13,-25,41"
-#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#UMEMPOOL="545,0,0,49,275,-14,-13,-25,41"
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
-# Running 15s test @ http://laptop:8080/fortune
-#   4 threads and 256 connections
-#   Thread Stats   Avg      Stdev     Max   +/- Stdev
-#     Latency    53.07ms   28.32ms 155.09ms   65.25%
-#     Req/Sec     1.22k   164.62     1.57k    72.42%
-#   Latency Distribution
-#      50%   51.15ms
-#      75%   72.30ms
-#      90%   88.69ms
-#      99%  134.90ms
-#   72743 requests in 15.00s, 94.28MB read
-# Requests/sec: 4849.05
-# Transfer/sec: 6.28MB
+#Running 15s test @ http://localhost:8080/fortune
+#  4 threads and 256 connections
+#  Thread Stats   Avg      Stdev     Max   +/- Stdev
+#    Latency     0.97ms  444.01us   7.95ms   66.95%
+#    Req/Sec    35.76k     4.13k   53.33k    62.05%
+#  Latency Distribution
+#     50%    0.93ms
+#     75%    1.26ms
+#     90%    1.56ms
+#     99%    2.16ms
+#  2023409 requests in 15.00s, 2.53GB read
+#Requests/sec: 134905.88
+#Transfer/sec:    172.91MB
 #
-# Running 15s test @ http://laptop:8080/db
-#   4 threads and 256 connections
-#   Thread Stats   Avg      Stdev     Max   +/- Stdev
-#     Latency    18.44ms    3.19ms  29.77ms   87.44%
-#     Req/Sec     3.45k   439.79     4.98k    78.05%
-#   Latency Distribution
-#      50%   18.80ms
-#      75%   20.13ms
-#      90%   21.27ms
-#      99%   23.43ms
-#   203711 requests in 15.00s, 32.60MB read
-# Requests/sec: 13583.13
-# Transfer/sec: 2.17MB
+#Running 15s test @ http://localhost:8080/db
+#  4 threads and 256 connections
+#  Thread Stats   Avg      Stdev     Max   +/- Stdev
+#    Latency   663.80us  318.91us  22.24ms   74.68%
+#    Req/Sec    51.90k     4.80k   69.00k    76.78%
+#  Latency Distribution
+#     50%  631.00us
+#     75%  839.00us
+#     90%    1.04ms
+#     99%    1.47ms
+#  2917228 requests in 15.00s, 425.05MB read
+#Requests/sec: 194484.25
+#Transfer/sec:     28.34MB
 #
-# Running 15s test @ http://laptop:8080/query?queries=20
-#   4 threads and 256 connections
-#   Thread Stats   Avg      Stdev     Max   +/- Stdev
-#     Latency    31.59ms    5.02ms  52.48ms   68.50%
-#     Req/Sec     2.03k   167.87     2.45k    64.85%
-#   Latency Distribution
-#      50%   31.69ms
-#      75%   34.52ms
-#      90%   38.22ms
-#      99%   43.36ms
-#   121069 requests in 15.00s, 89.44MB read
-# Requests/sec: 8072.57
-# Transfer/sec: 5.96MB
+#Running 15s test @ http://localhost:8080/query?queries=20
+#  4 threads and 256 connections
+#  Thread Stats   Avg      Stdev     Max   +/- Stdev
+#    Latency     2.44ms    1.20ms  32.83ms   68.96%
+#    Req/Sec    14.40k     2.68k   24.89k    68.36%
+#  Latency Distribution
+#     50%    2.31ms
+#     75%    3.16ms
+#     90%    4.05ms
+#     99%    5.66ms
+#  817586 requests in 15.00s, 592.28MB read
+#Requests/sec:  54503.98
+#Transfer/sec:     39.48MB
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 #export REDIS_HOST=localhost
-#UMEMPOOL="1057,0,0,39,274,-14,-15,-24,40"
-#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
-#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"									 benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#UMEMPOOL="1261,0,0,49,274,-14,-15,-24,40"
+#sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
+#sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------
+#Running 15s test @ http://localhost:8080/rquery?queries=20
+#  4 threads and 256 connections
+#  Thread Stats   Avg      Stdev     Max   +/- Stdev
+#    Latency     6.26ms    1.50ms  12.84ms   58.54%
+#    Req/Sec    10.58k   651.81    13.07k    69.19%
+#  Latency Distribution
+#     50%    6.47ms
+#     75%    7.63ms
+#     90%    8.26ms
+#     99%    8.67ms
+#  613843 requests in 15.00s, 444.69MB read
+#Requests/sec:  40924.11
+#Transfer/sec:     29.65MB
+# ----------------------------------------------------------------------------------------------------------------------------------------------------------
+ export MONGODB_HOST=localhost
+ UMEMPOOL="1057,0,0,49,274,-14,-15,-24,40"
+ sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
+ sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"	benchmark/FrameworkBenchmarks/fbenchmark.cfg
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------
 DIR_CMD="../../examples/userver"
 
@@ -163,10 +154,17 @@ if [ "$TERM" != "cygwin" ]; then
 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/json.so; \
 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/plaintext.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/db.so; \
+ 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/rdb.so; \
+ 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/mdb.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/update.so; \
+ 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/rupdate.so; \
+ 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/mupdate.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/query.so; \
  	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/rquery.so; \
- 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/fortune.so )
+ 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/mquery.so; \
+ 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/fortune.so; \
+ 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/rfortune.so; \
+ 	  ln -sf ../../../../../../src/ulib/net/server/plugin/usp/.libs/mfortune.so )
 fi
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------------

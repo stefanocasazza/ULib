@@ -911,7 +911,7 @@ void UStringRep::_release()
          {
          U_INTERNAL_DUMP("_capacity = %d", (int32_t)_capacity)
 
-#     ifdef USE_LIBTDB
+#     if defined(USE_LIBTDB) || defined(USE_MONGODB)
          if (_capacity == U_TO_FREE)
             {
             U_SYSCALL_VOID(free, "%p", (void*)str);
@@ -2751,17 +2751,15 @@ void UString::vsnprintf_check(const char* format) const
       //                  format = "%v:" - ok_writeable = false ok_isNull = false ok_references = false ok_format = false
       // -----------------------------------------------------------------------------------------------------------------------------------------
 
-      U_ERROR("UString::vsnprintf_check() this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %V format = %S - "
+      U_ERROR("UString::vsnprintf_check() this = %p parent = %p rep = %p references = %u child = %d _capacity = %u str(%u) = %V format = %S - "
               "ok_writeable = %b ok_isNull = %b ok_references = %b ok_format = %b",
-               this, rep->parent, rep->references, rep->child, rep->_capacity, rep->_length, rep->_length, rep, format,
-               ok_writeable, ok_isNull, ok_references, ok_format);
+               this, rep->parent, rep, rep->references, rep->child, rep->_capacity, rep->_length, rep, format, ok_writeable, ok_isNull, ok_references, ok_format);
       }
    else if (ok_references == false)
       {
-      U_WARNING("UString::vsnprintf_check() this = %p parent = %p references = %u child = %d _capacity = %u str(%u) = %V format = %S - "
+      U_WARNING("UString::vsnprintf_check() this = %p parent = %p rep = %p references = %u child = %d _capacity = %u str(%u) = %V format = %S - "
                 "ok_writeable = %b ok_isNull = %b ok_references = %b ok_format = %b",
-                this, rep->parent, rep->references, rep->child, rep->_capacity, rep->_length, rep->_length, rep, format,
-                ok_writeable, ok_isNull, ok_references, ok_format);
+                this, rep->parent, rep, rep->references, rep->child, rep->_capacity, rep->_length, rep, format, ok_writeable, ok_isNull, ok_references, ok_format);
       }
 }
 #endif

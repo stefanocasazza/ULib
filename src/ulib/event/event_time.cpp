@@ -17,7 +17,8 @@
 #  include <ulib/libevent/event.h>
 #endif
 
-long            UEventTime::ms;
+long            UEventTime::diff1;
+long            UEventTime::diff2;
 struct timeval  UEventTime::timeout1;
 struct timespec UEventTime::timeout2;
 
@@ -27,8 +28,8 @@ UEventTime::UEventTime(long sec, long micro_sec) : UTimeVal(sec, micro_sec)
 
    setTolerance();
 
-   ctime.tv_sec =
-   ctime.tv_usec = 0L;
+   xtime.tv_sec =
+   xtime.tv_usec = 0L;
 
 #ifdef USE_LIBEVENT
    if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
@@ -69,26 +70,6 @@ void UEventTime::operator()(int fd, short event)
 }
 #endif
 
-__pure bool UEventTime::operator<(const UEventTime& t) const
-{
-   U_TRACE(0, "UEventTime::operator<(%p)", &t)
-
-   long t1 = (  ctime.tv_sec +   tv_sec),
-        t2 = (t.ctime.tv_sec + t.tv_sec);
-
-   U_INTERNAL_DUMP("{ %ld %6ld } < { %ld %6ld }", t1,   ctime.tv_usec +   tv_usec,
-                                                  t2, t.ctime.tv_usec + t.tv_usec)
-
-   if (  t1 <  t2  ||
-       ((t1 == t2) &&
-       ((ctime.tv_usec + tv_usec) < (t.ctime.tv_usec + t.tv_usec))))
-      {
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
 // STREAM
 
 #ifdef U_STDCPP_ENABLE
@@ -98,10 +79,10 @@ U_EXPORT ostream& operator<<(ostream& os, const UEventTime& t)
 
    os.put('{');
    os.put(' ');
-   os << t.ctime.tv_sec;
+   os << t.xtime.tv_sec;
    os.put(' ');
    os.width(6);
-   os << t.ctime.tv_usec;
+   os << t.xtime.tv_usec;
    os.put(' ');
    os.put('{');
    os.put(' ');
@@ -125,8 +106,8 @@ const char* UEventTime::dump(bool _reset) const
    UTimeVal::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "ctime   " << "{ " << ctime.tv_sec
-                                << " "  << ctime.tv_usec
+                  << "xtime   " << "{ " << xtime.tv_sec
+                                << " "  << xtime.tv_usec
                                 << " }";
 
    if (_reset)

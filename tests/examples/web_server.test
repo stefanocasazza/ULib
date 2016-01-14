@@ -200,6 +200,8 @@ c
 c
 EOF
 
+cp $DOC_ROOT/../.htpasswd $DOC_ROOT/../tmp.htpasswd
+
 export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
 
 # webserver-1

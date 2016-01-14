@@ -44,11 +44,20 @@ public:
    static int alternative_response;
    static UString* alternative_include;
 
+   static void setMessagePage(const UString& tmpl, const char* message)
+      {
+      U_TRACE(0, "USSIPlugIn::setMessagePage(%V,%S)", tmpl.rep, message)
+
+      setAlternativeInclude(tmpl, 1024, false, "Service not available", 0, 0,
+                            message); // NB: vararg...
+      }
+
    static void setMessagePage(const UString& tmpl, const char* title_txt, const char* message)
       {
       U_TRACE(0, "USSIPlugIn::setMessagePage(%V,%S,%S)", tmpl.rep, title_txt, message)
 
-      setAlternativeInclude(tmpl, 1024, false, title_txt, 0, 0, title_txt, message);
+      setAlternativeInclude(tmpl, 1024, false, title_txt, 0, 0,
+                            title_txt, message); // NB: vararg...
       }
 
    static void setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, ...);
@@ -57,8 +66,8 @@ public:
    static void setAlternativeResponse();
    static void setAlternativeResponse(UString& body);
    static void setAlternativeRedirect(const char* fmt, ...);
-   static void setAlternativeInclude(const UString& tmpl, uint32_t estimated_size, bool bprocess,
-                                     const char* title_txt, const char* ssi_head, const char* body_style, ...);
+   static void setAlternativeInclude(const char* title_txt, const UString& output);
+   static void setAlternativeInclude(const UString& tmpl, uint32_t estimated_size, bool bprocess, const char* title_txt, const char* ssi_head, const char* body_style, ...);
 
    // DEBUG
 

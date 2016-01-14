@@ -26,6 +26,11 @@ TST = timeval.test timer.test notifier.test string.test \
 		tokenizer.test query_parser.test multipart.test rdb_client_server.test command.test json.test server.test server_rpc.test
 ## 	dialog.test redis.test
 
+if MONGODB
+  PRG += test_mongodb
+##TST += mongodb.test
+endif
+
 test_ipaddress_SOURCES = test_ipaddress.cpp
 test_socket_SOURCES = test_socket.cpp
 test_ftp_SOURCES = test_ftp.cpp
@@ -63,6 +68,7 @@ test_rdb_server_SOURCES = test_rdb_server.cpp
 test_json_SOURCES = test_json.cpp
 test_server_SOURCES = test_server.cpp
 test_redis_SOURCES = test_redis.cpp
+test_mongodb_SOURCES = test_mongodb.cpp
 
 if PTHREAD
 PRG += test_thread
@@ -86,16 +92,16 @@ endif
 ## TESTS_ENVIRONMENT = srcdir=$(srcdir)
 ## AM_LFLAGS = -olex.yy.c -S$(shell pwd)/../../include/ulib/flex/flex.skl
 ## NB: il comando per generare il file .cc dal file .ll viene lanciato in una subdirectory:
-## sh -x /mnt/source/ulib/autoconf/ylwrap test_flexer.ll lex.yy.c test_flexer.cc -- flex -olex.yy.c -S../../include/ulib/flex/flex.skl
+## sh -x ../../ylwrap test_flexer.ll lex.yy.c test_flexer.cc -- flex -olex.yy.c -S/usr/src/ULib-1.4.2/include/ulib/flex/flex.skl
 
 if USE_PARSER
 ##AM_LFLAGS = -olex.yy.c
 ##AM_YFLAGS = -d -v # -Sbison.skl
-TST += flexer.test
+##TST += flexer.test
 ##TST += bison.test
-PRG += test_flexer test_bison
-test_bison_SOURCES = test_bison_flexer.ll test_bison.yy
-test_flexer_SOURCES = test_flexer.ll
+##PRG += test_flexer test_bison
+##test_bison_SOURCES = test_bison_flexer.ll test_bison.yy
+##test_flexer_SOURCES = test_flexer.ll
 endif
 
 if PCRE

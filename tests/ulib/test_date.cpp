@@ -68,21 +68,22 @@ U_EXPORT main (int argc, char* argv[])
 
    U_INTERNAL_DUMP("date1 = %.17S date2 = %.26S date3+6 = %.29S", log_date.date1, log_date.date2, log_date.date3+6)
 
-   /*
-   for (int i = 0; i < 360; ++i)
+   // (01/01/2015) Giovedì
+   // (02/01/2015) Venerdì
+   // (03/01/2015) Sabato
+
+   for (int i = 0; i < 357; ++i)
       {
-      u_now->tv_sec++;
+      data1.setYearAndWeek(2015, (i/7)+1);
+      data1.setDayOfWeek(i%7);
 
-      UTimeDate::updateTime(log_date.date1   + 12);
-      UTimeDate::updateTime(log_date.date2   + 15);
-      UTimeDate::updateTime(log_date.date3+6 + 20);
+      data3 = data2 = data1;
 
-      cout.write(log_date.date1, 17);
-      cout.write(" - ", 3);
-      cout.write(log_date.date2, 26);
-      cout.write(" - ", 3);
-      cout.write(log_date.date3+6, 29);
-      cout.put('\n');
+      data2.setPrevWeek();
+      data3.setNextWeek();
+
+      U_DUMP("setPrevWeek() = %V data = %V setNextWeek() = %V", data2.strftime("%d/%m/%y").rep, data1.strftime("%d/%m/%y").rep, data3.strftime("%d/%m/%y").rep)
+
+      cout << data1.strftime("%d/%m/%y") << '\n';
       }
-   */
 }

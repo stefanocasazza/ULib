@@ -30,7 +30,7 @@ filepath;
     <!--#puts UStringExt::basename(filepath) --> (<!--#number size --> bytes)<br>
     md5sum: <!--#puts md5sum --><br>
     data:
-    <pre><!--#xputs dump --></pre>
+    <pre><!--#xmlputs dump --></pre>
     </p>
 
 <!--#code

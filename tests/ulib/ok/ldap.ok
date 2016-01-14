@@ -118,3 +118,7 @@ dn:   uid=assistenza.fea.bnl,o=mail
 cn:   Assistenza FEA BNL
 mail: assistenza.fea.bnl@unirel.com; assistenza.fea.bnl@unirel.it
 
+dn:   uid=admin.t-unwired,o=mail
+cn:   Alberico Gualfetti - T-Unwired
+mail: admin.t-unwired@unirel.com
+

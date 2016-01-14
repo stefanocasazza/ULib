@@ -70,7 +70,7 @@
 #endif
 
 #if defined(DEBUG) || defined(U_TEST)
-#  ifdef U_LINUX
+#  if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL)
 #     define U_NULL_POINTER (const void*)0x0000ffff
 #  else
 #     define U_NULL_POINTER (const void*)0
@@ -147,6 +147,9 @@
 #endif
 #ifndef U_max
 #define U_max(x,y) ((x) >= (y) ? (x) : (y))
+#endif
+#ifndef U_abs
+#define U_abs(x,y) ((x) >= (y) ? (x-y) : (y-x))
 #endif
 
 #ifndef O_CLOEXEC

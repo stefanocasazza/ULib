@@ -966,19 +966,19 @@ void UHTTP::init()
 #endif
 
    /**
+    * -------------------------------------------------------------------------------------------------------------------------------------------
     * Set up static environment variables
     * -------------------------------------------------------------------------------------------------------------------------------------------
-    * server static variable Description
-    * -------------------------------------------------------------------------------------------------------------------------------------------
-    * SERVER_PORT
-    * SERVER_ADDR
-    * SERVER_NAME       Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs
-    * DOCUMENT_ROOT     The root directory of your server
-    * SERVER_SOFTWARE   Name and version of the information server software answering the request (and running the gateway). Format: name/version
-    * GATEWAY_INTERFACE CGI specification revision with which this server complies. Format: CGI/revision
-    * -------------------------------------------------------------------------------------------------------------------------------------------
+    * static variable server description:
+    *
+    * - SERVER_PORT
+    * - SERVER_ADDR
+    * - SERVER_NAME       Server's hostname, DNS alias, or IP address as it appears in self-referencing URLs
+    * - DOCUMENT_ROOT     The root directory of your server
+    * - SERVER_SOFTWARE   Name and version of the information server software answering the request (and running the gateway). Format: name/version
+    * - GATEWAY_INTERFACE CGI specification revision with which this server complies. Format: CGI/revision
+    *
     * Example:
-    * -------------------------------------------------------------------------------------------------------------------------------------------
     * SERVER_PORT=80
     * SERVER_ADDR=127.0.0.1
     * SERVER_NAME=localhost
@@ -1020,7 +1020,7 @@ void UHTTP::init()
 
    uint32_t n = 0, sz;
    UVector<UString> vec(4000);
-   UString content_cache, item;
+   UString content_cache, item, updir = U_STRING_FROM_CONSTANT("..");
 
    U_INTERNAL_ASSERT_EQUALS(cache_file, 0)
 
@@ -1041,24 +1041,31 @@ void UHTTP::init()
 
    file_not_in_cache_data = U_NEW(UHTTP::UFileCacheData);
 
+   // manage authorization data...
+
+   UDirWalk dirwalk(&updir, U_CONSTANT_TO_PARAM("*.htpasswd|*.htdigest"));
+
+   n = dirwalk.walk(vec);
+
    if (cache_file_mask->equal(U_CONSTANT_TO_PARAM("_off_")) == false)
       {
-      UDirWalk dirwalk;
-
 #  ifdef DEBUG
-      UDirWalk::setFollowLinks();
+      UDirWalk::setFollowLinks(true);
 #  endif
-      UDirWalk::setRecurseSubDirs();
+      UDirWalk::setRecurseSubDirs(true, true);
       UDirWalk::setSuffixFileType(U_CONSTANT_TO_PARAM("usp|c|cgi|template|" U_LIB_SUFFIX));
 
-      if (cache_avoid_mask)
+      if (cache_avoid_mask == 0) UDirWalk::setDirectory(*UString::str_point);
+      else
          {
-         UDirWalk::setFilter(*cache_avoid_mask);
+         UDirWalk::setDirectory(*UString::str_point, *cache_avoid_mask);
 
          u_pfn_flags |= FNM_INVERT;
          }
 
       n = dirwalk.walk(vec);
+
+      UDirWalk::setRecurseSubDirs(false, false);
       }
 
    if (cache_file_store)
@@ -1157,20 +1164,22 @@ void UHTTP::init()
 
    // manage authorization data...
 
-   UString content = UFile::contentOf("../.htpasswd");
+   file_data = cache_file->at(U_CONSTANT_TO_PARAM("../.htpasswd"));
 
-   if (content)
+   if (file_data)
       {
-      htpasswd = U_NEW(UString(content));
+      U_INTERNAL_ASSERT_POINTER(file_data->array)
+
+      htpasswd = U_NEW(UString(file_data->array->operator[](0)));
 
       U_SRV_LOG("File data users permission: ../.htpasswd loaded");
       }
 
-   content = UFile::contentOf("../.htdigest");
+   file_data = cache_file->at(U_CONSTANT_TO_PARAM("../.htdigest"));
 
-   if (content)
+   if (file_data)
       {
-      htdigest = U_NEW(UString(content));
+      htdigest = U_NEW(UString(file_data->array->operator[](0)));
 
       U_SRV_LOG("File data users permission: ../.htdigest loaded");
       }
@@ -4467,7 +4476,7 @@ void UHTTP::initDbNotFound()
       {
       U_SRV_LOG("db NotFound initialization success");
 
-      if (UServer_Base::isPreForked()) db_not_found->setShared(U_LOCK_DB_NOT_FOUND, U_SPINLOCK_DB_NOT_FOUND);
+      if (UServer_Base::isPreForked()) db_not_found->setShared(U_SRV_LOCK_DB_NOT_FOUND, U_SRV_SPINLOCK_DB_NOT_FOUND);
       }
    else
       {
@@ -4497,7 +4506,7 @@ void UHTTP::initSession()
               if (data_session) db_session->setPointerToDataStorage(data_session);
          else if (data_storage) db_session->setPointerToDataStorage(data_storage);
 
-         if (UServer_Base::isPreForked()) db_session->setShared(U_LOCK_DATA_SESSION, U_SPINLOCK_DATA_SESSION);
+         if (UServer_Base::isPreForked()) db_session->setShared(U_SRV_LOCK_DATA_SESSION, U_SRV_SPINLOCK_DATA_SESSION);
          }
       else
          {
@@ -4542,7 +4551,7 @@ void UHTTP::initSessionSSL()
 
       db_session_ssl->reset(); // Initialize the cache to contain no entries
 
-      if (UServer_Base::isPreForked()) db_session_ssl->setShared(U_LOCK_SSL_SESSION, U_SPINLOCK_SSL_SESSION);
+      if (UServer_Base::isPreForked()) db_session_ssl->setShared(U_SRV_LOCK_SSL_SESSION, U_SRV_SPINLOCK_SSL_SESSION);
 
       /**
        * In order to allow external session caching, synchronization with the internal session cache is realized via callback functions.
@@ -5132,6 +5141,32 @@ end:
 
 // retrieve information on specific HTML form elements
 // (such as checkboxes, radio buttons, and text fields, or uploaded files)
+
+int UHTTP::getFormFirstNumericValue(int _min, int _max)
+{
+   U_TRACE(0, "UHTTP::getFormFirstNumericValue(%d,%d)", _min, _max)
+
+   int value = _min;
+
+   if (U_http_info.query_len)
+      {
+      const char* ptr = U_http_info.query;
+
+      U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
+
+      do { ++ptr; } while (*ptr != '=');
+
+      if (u__isdigit(*++ptr))
+         {
+         value = u_strtoul(ptr, U_http_info.query + U_http_info.query_len);
+
+              if (value < _min) value = _min;
+         else if (value > _max) value = _max;
+         }
+      }
+
+   U_RETURN(value);
+}
 
 void UHTTP::getFormValue(UString& buffer, uint32_t n)
 {
@@ -6018,18 +6053,12 @@ end:
 
       if (u_is_html(mime_index))
          {
-#     if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
-         u_put_unalignedp64(ptr1, U_MULTICHAR_CONSTANT64('/','h','t','m','l','\r','\n','\0'));
-
-         sz += U_CONSTANT_SIZE("Content-Type: text/html\r\n");
-#     else
          u_put_unalignedp64(ptr1,    U_MULTICHAR_CONSTANT64('/','h','t','m','l',';',' ','c'));
          u_put_unalignedp64(ptr1+8,  U_MULTICHAR_CONSTANT64('h','a','r','s','e','t','=','U'));
          u_put_unalignedp32(ptr1+16, U_MULTICHAR_CONSTANT32('T','F','-','8'));
          u_put_unalignedp16(ptr1+20, U_MULTICHAR_CONSTANT16('\r','\n'));
 
          sz += U_CONSTANT_SIZE("Content-Type: " U_CTYPE_HTML "\r\n");
-#     endif
          }
       else
          {
@@ -6086,13 +6115,16 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
 
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
-   bool result     = false;
+   bool result = false, bpass = false;
    const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("Authorization"), false);
 
    if (ptr)
       {
       UTokenizer t;
-      UString content, tmp, user(100U);
+      const char* psuffix;
+      uint32_t sz, pos = 0;
+      UHTTP::UFileCacheData* ptr_file_data;
+      UString content, tmp, user(100U), buffer(100U), fpasswd;
 
       U_INTERNAL_DUMP("digest_authentication = %b", digest_authentication)
 
@@ -6115,6 +6147,38 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
       t.setDelimiter(U_CRLF2);
 
       if (t.next(content, (bool*)0) == false) goto end;
+
+      ptr = UClientImage_Base::getRequestUri(sz);
+
+      psuffix = u_getsuffix(ptr, sz);
+
+      if (psuffix)
+         {
+         U_INTERNAL_ASSERT_EQUALS(psuffix[0], '.')
+
+         pos = (ptr + sz) - psuffix;
+         }
+
+      buffer.snprintf("..%.*s.ht%s", sz-pos, ptr, digest_authentication ? "digest" : "passwd");
+
+      ptr_file_data = cache_file->at(U_STRING_TO_PARAM(buffer));
+
+      if (ptr_file_data) fpasswd = ptr_file_data->array->operator[](0);
+      else
+         {
+         if (digest_authentication)
+            {
+            if (htdigest) fpasswd = *htdigest;
+            }
+         else
+            {
+            if (htpasswd) fpasswd = *htpasswd;
+            }
+         }
+
+      if (fpasswd.empty()) goto end;
+
+      bpass = true;
 
       if (digest_authentication)
          {
@@ -6154,11 +6218,8 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
                      {
                      U_ASSERT(_uri.empty())
 
-                     uint32_t sz1, n1 = value.size();
-                     const char* ptr1 = UClientImage_Base::getRequestUri(sz1);
-
-                     if (sz1 > n1   ||
-                         memcmp(ptr1, value.data(), sz1))
+                     if (sz > value.size()   ||
+                         memcmp(ptr, value.data(), sz))
                         {
                         goto end;
                         }
@@ -6241,11 +6302,27 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
                }
             }
 
-         UString  a2(4 + 1 + _uri.size()),      //     method : uri
-                 ha2(33U),                      // MD5(method : uri)
-                 ha1 = getUserHA1(user, realm), // MD5(user : realm : password)
+         UString  a2(4 + 1 + _uri.size()), //     method : uri
+                 ha2(33U),                 // MD5(method : uri)
+                 ha1,                      // MD5(user : realm : password)
                   a3(200U),
                  ha3(33U);
+
+         // MD5(user : realm : password)
+
+         buffer.snprintf("%v:%v:", user.rep, realm.rep);
+
+         // s.casazza:Protected Area:b9ee2af50be37...........\n
+
+         pos = fpasswd.find(buffer);
+
+         if (pos != U_NOT_FOUND)
+            {
+            pos += buffer.size();
+            ha1  = fpasswd.substr(pos, 32);
+
+            U_INTERNAL_ASSERT_EQUALS(fpasswd.c_char(pos + 32), '\n')
+            }
 
          // MD5(method : uri)
 
@@ -6271,8 +6348,6 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
          {
          // Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x==
 
-         UString buffer(100U);
-
          UBase64::decode(content, buffer);
 
          if (buffer)
@@ -6283,10 +6358,17 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
             UString password(100U);
 
             if (t.next(user,     (bool*)0) &&
-                t.next(password, (bool*)0) &&
-                isUserAuthorized(user, password))
+                t.next(password, (bool*)0))
                {
-               result = true;
+               UString line(100U), output(100U);
+
+               UServices::generateDigest(U_HASH_SHA1, 0, password, output, true);
+
+               line.snprintf("%v:{SHA}%v\n", user.rep, output.rep);
+
+               // s.casazza:{SHA}Lkii1ZE7k.....\n
+
+               if (fpasswd.find(line) != U_NOT_FOUND) result = true;
                }
             }
          }
@@ -6296,68 +6378,15 @@ end:
 
    if (result == false)
       {
-      // NB: we cannot authorize someone if it is not present in document root almost one passwd file... 
+      // NB: we cannot authorize someone if it is not present above document root almost one passwd file... 
 
-      if (htdigest ||
-          htpasswd)
-         {
-         setUnAuthorized();
-         }
-      else
-         {
-         setForbidden();
-         }
+      if (bpass || htdigest || htpasswd) setUnAuthorized();
+      else                                  setForbidden();
 
       U_RETURN(false);
       }
 
    U_RETURN(true);
-}
-
-UString UHTTP::getUserHA1(const UString& user, const UString& realm)
-{
-   U_TRACE(0, "UHTTP::getUserHA1(%V,%V)", user.rep, realm.rep)
-
-   UString ha1;
-
-   if (htdigest)
-      {
-      // s.casazza:Protected Area:...............\n
-
-      UString line(100U);
-
-      line.snprintf("%v:%v:", user.rep, realm.rep);
-
-      uint32_t pos = htdigest->find(line);
-
-      if (pos != U_NOT_FOUND)
-         {
-         pos += line.size();
-         ha1  = htdigest->substr(pos, 32);
-
-         U_INTERNAL_ASSERT_EQUALS(htdigest->c_char(pos + 32), '\n')
-         }
-      }
-
-   U_RETURN_STRING(ha1);
-}
-
-bool UHTTP::isUserAuthorized(const UString& user, const UString& password)
-{
-   U_TRACE(0, "UHTTP::isUserAuthorized(%V,%V)", user.rep, password.rep)
-
-   if (htpasswd)
-      {
-      UString line(100U), output(100U);
-
-      UServices::generateDigest(U_HASH_SHA1, 0, password, output, true);
-
-      line.snprintf("%v:{SHA}%v\n", user.rep, output.rep);
-
-      if (htpasswd->find(line) != U_NOT_FOUND) U_RETURN(true);
-      }
-
-   U_RETURN(false);
 }
 
 __pure bool UHTTP::isSOAPRequest()
@@ -6610,6 +6639,7 @@ not_found:
 
    service_info* key;
    uint32_t target_len;
+   const char* psuffix;
    int32_t cmp = -1, probe, low = -1;
    const char* target = UClientImage_Base::getRequestUri(target_len);
 
@@ -6619,6 +6649,15 @@ not_found:
 
    target     += 1;
    target_len -= 1;
+
+   psuffix = u_getsuffix(target, target_len);
+
+   if (psuffix)
+      {
+      U_INTERNAL_ASSERT_EQUALS(psuffix[0], '.')
+
+      target_len -= (target + target_len) - psuffix;
+      }
 
    U_INTERNAL_DUMP("target(%u) = %.*S", target_len, target_len, target)
 
@@ -7293,6 +7332,20 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
    *suffix   = file->getSuffix();
    ptr       = (suffix->empty() ? 0 : suffix->data());
    file_name = UStringExt::basename(file->getPath());
+
+   // manage authorization data...
+
+   if (suffix->equal(U_CONSTANT_TO_PARAM("htpasswd")) ||
+       suffix->equal(U_CONSTANT_TO_PARAM("htdigest")))
+      {
+      U_NEW_DBG(UVector<UString>, file_data->array, UVector<UString>(1U));
+
+      file_data->array->push_back(file->getContent(true, false, true));
+
+      U_SRV_LOG("File cached: %V - %u bytes", pathname->rep, file_data->size);
+
+      goto end;
+      }
 
    if (UServices::dosMatchWithOR(file_name, U_STRING_TO_PARAM(*cache_file_mask), 0))
       {

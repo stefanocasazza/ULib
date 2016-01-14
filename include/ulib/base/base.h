@@ -212,8 +212,11 @@ extern U_EXPORT struct timeval* u_now;
 extern U_EXPORT struct tm u_strftime_tm;
 extern U_EXPORT struct timeval u_timeval;
 
-extern U_EXPORT const char* u_months[];    /* "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" */
-extern U_EXPORT const char* u_months_it[]; /* "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" */
+extern U_EXPORT const char* u_months[12];    /* "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" */
+extern U_EXPORT const char* u_months_it[12]; /* "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" */
+
+extern U_EXPORT const char* u_day_name[7];    /* "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" */
+extern U_EXPORT const char* u_month_name[12]; /* "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" */
 
 U_EXPORT bool     u_setStartTime(void);
 U_EXPORT int      u_getMonth(const char* buf) __pure;

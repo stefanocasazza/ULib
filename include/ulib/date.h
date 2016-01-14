@@ -26,8 +26,8 @@
  * time we expect UTimeDate to be obsolete...
  */
 
-#define FIRST_DAY   2361222 // Julian day for 1752/09/14
-#define FIRST_YEAR  1752    // wrong for many countries
+#define FIRST_DAY  2361222 // Julian day for 1752/09/14
+#define FIRST_YEAR 1752    // wrong for many countries
 
 class U_EXPORT UTimeDate {
 public:
@@ -68,7 +68,25 @@ public:
       fromUTC(str, UTC ? "%02u%02u%02u" : "%d/%d/%d");
       }
 
-   void setYear(int year);
+   // set the current object by year
+
+   void setYear(int year)
+      {
+      U_TRACE(0, "UTimeDate::setYear(%d)", year)
+
+      // [   0,  50) -> [2000,2050)
+      // [  50, 150] -> [1950,2050)
+      // [1752,8000] -> [1752,8000]
+
+      _year = year;
+
+      if (year < 150) _year += 1900;
+      if (year <  50) _year +=  100;
+
+      U_INTERNAL_ASSERT_RANGE(1752, _year, 8000)
+
+      julian = toJulian(_day, _month, _year);
+      }
 
    void set(int day, int month, int year)
       {
@@ -77,19 +95,30 @@ public:
       U_INTERNAL_ASSERT_RANGE(1,   day, 31)
       U_INTERNAL_ASSERT_RANGE(1, month, 12)
 
-      julian = 0;
       _day   = day;
       _month = month;
 
       setYear(year);
       }
 
-   // Construct a UTimeDate with a given day of the year and a given year.
-   // The base date for this computation is 31 Dec. of the previous year.
-   // i.e., UTimeDate(-1,1901) = 31 Dec. 1900 and UTimeDate(1,1901) = 2 Jan. 1901
+   // Construct a UTimeDate with a given day of the year and a given year. The base date for this computation
+   // is 31 Dec. of the previous year. i.e., UTimeDate(-1,1901) = 31 Dec. 1900 and UTimeDate(1,1901) = 2 Jan. 1901
 
-   UTimeDate(int day,            int year);
-   UTimeDate(int day, int month, int year);
+   UTimeDate(int day, int year)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%d,%d", day, year)
+
+      julian = toJulian(1,1,year) - 1 + day;
+
+      fromJulian(julian);
+      }
+
+   UTimeDate(int day, int month, int year)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%d,%d,%d", day, month, year)
+
+      set(day, month, year);
+      }
 
    ~UTimeDate()
       {
@@ -128,12 +157,47 @@ public:
 
    // SERVICES
 
-   int getJulian();
+   int getJulian()
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::getJulian()")
+
+      if (julian == 0) julian = toJulian(_day, _month, _year);
+
+      U_RETURN(julian);
+      }
+
+   bool isValid() const __pure;
+
    int getDay() const   { return _day; }
    int getYear() const  { return _year; }
    int getMonth() const { return _month; }
 
-   bool isValid() const __pure;
+   const char* getDayName()
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::getDayName()")
+
+      U_INTERNAL_ASSERT_RANGE(1, _day, 31)
+
+      return u_day_name[getDayOfWeek()];
+      }
+
+   UString getDayNameShort()
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::getDayNameShort()")
+
+      UString result = UString(getDayName(), 3);
+
+      U_RETURN_STRING(result);
+      }
+
+   const char* getMonthName() const
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::getMonthName()")
+
+      U_INTERNAL_ASSERT_RANGE(1, _month, 12)
+
+      return u_month_name[_month-1];
+      }
 
    static void updateTime(char* ptr)
       {
@@ -151,51 +215,166 @@ public:
       {
       U_TRACE(0, "UTimeDate::daysTo(%p)", &date)
 
-      U_RETURN(date.getJulian() - getJulian());
+      int diff = (date.getJulian() - getJulian());
+
+      U_RETURN(diff);
       }
 
-   void addDays(int days)
+   void addDays(int day)
       {
-      U_TRACE(0, "UTimeDate::addDays(%d)", days)
+      U_TRACE(0, "UTimeDate::addDays(%d)", day)
 
-      julian = getJulian() + days;
+      // NB: we need to consider the case (day < 0)...
+
+      julian = getJulian() + day;
 
       fromJulian(julian);
       }
 
-   void addMonths(int months);
-
-   void addYears(int years)
+   void addYears(int year)
       {
-      U_TRACE(0, "UTimeDate::addYears(%d)", years)
+      U_TRACE(0, "UTimeDate::addYears(%d)", year)
 
-      _year += years;
+      julian = toJulian(_day, _month, _year += year);
+      }
 
-      julian = toJulian(_day, _month, _year);
+   void addMonths(int month);
+
+   // Returns the number of days in the month (28..31) for this date
+
+   int getDaysInMonth() const __pure
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::getDaysInMonth()")
+
+      if (_month == 2 &&
+          leapYear(_year))
+         {
+         U_RETURN(29);
+         }
+
+      U_RETURN(monthDays[_month]);
+      }
+
+   // Returns the day of the year [1,366] for this date
+
+   int getDayOfYear() __pure
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::getDayOfYear()")
+
+      int      y = _year - 1901,
+          result = getJulian() - (y * 365) - (y / 4) - 2415385; // 2415385 -> 31/12/1900
+
+      U_RETURN(result);
+      }
+
+   // Returns true if the specified year is a leap year; otherwise returns false
+
+   static bool leapYear(int year)
+      {
+      U_TRACE(0, "UTimeDate::leapYear(%d)", year)
+
+      // 1. Every year that is divisible by four is a leap year
+      // 2. of those years, if it can be divided by 100, it is NOT a leap year, unless
+      // 3. the year is divisible by 400. Then it is a leap year
+
+      if ( ((year %   4) == 0) &&
+          (((year % 100) != 0) ||
+           ((year % 400) == 0)))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   // Week management 
+
+   int getWeekOfYear()
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::getWeekOfYear()")
+
+      int week_number = ((getJulian() - toJulian(1, 1, _year)) / 7) + 1;
+
+      U_RETURN(week_number);
       }
 
    int getDayOfWeek()
       {
       U_TRACE_NO_PARAM(0, "UTimeDate::getDayOfWeek()")
 
-      // (julian + 1) % 7 gives the value 0 for Sunday ... 6 for Saturday
+      int day_of_week = (getJulian() + 1) % 7; // gives the value 0 for Sunday ... 6 for Saturday
 
-      U_RETURN((getJulian() + 1) % 7);
+      U_RETURN(day_of_week);
       }
 
-   // Returns the number of days in the month (28..31) for this date
+   void setPrevWeek()
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::setPrevWeek()")
 
-   int getDaysInMonth() const __pure;
+      int day_of_week = getDayOfWeek();
 
-   // Returns the day of the year [1,366] for this date
+      // 1 => -7
+      // 2 => -1
+      // 3 => -2
+      // 4 => -3
+      // 5 => -4
+      // 6 => -5
+      // 0 => -6
 
-   int getDayOfYear() __pure;
+      addDays(day_of_week >= 2 ? -day_of_week+1 : -6-day_of_week);
+      }
 
-   // Returns true if the specified year is a leap year; otherwise returns false
+   void setNextWeek()
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::setNextWeek()")
 
-   static bool leapYear(int y);
+      int day_of_week = getDayOfWeek();
 
-   // print date with format
+      // 1 => 7
+      // 2 => 6
+      // 3 => 5
+      // 4 => 4
+      // 5 => 3
+      // 6 => 2
+      // 0 => 1
+
+      addDays(day_of_week ? 8-day_of_week : 1);
+      }
+
+   void setDayOfWeek(int day_of_week)
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::setDayOfWeek()")
+
+      int diff = day_of_week - getDayOfWeek();
+
+      U_INTERNAL_DUMP("diff = %d", diff)
+
+      if (diff) addDays(diff);
+
+      U_ASSERT_EQUALS(day_of_week, getDayOfWeek())
+      }
+
+   void setYearAndWeek(int year, int week)
+      {
+      U_TRACE(0, "UTimeDate::setYearAndWeek(%d,%d)", year, week)
+
+      U_INTERNAL_ASSERT_RANGE(1, week, 53)
+
+      set(1, 1, year);
+
+      if (week > 1) addDays((week-1) * 7);
+      }
+
+   void setPrevMonth()
+      {
+      U_TRACE_NO_PARAM(0, "UTimeDate::setPrevMonth()")
+
+      addDays(-_day);
+
+      setDayOfWeek(1);
+      }
+      
+   // Print date with format
 
           UString strftime(const char* fmt);
    static UString strftime(const char* fmt, time_t t, bool blocale = false);
@@ -209,7 +388,19 @@ public:
       U_RETURN(t);
       }
 
-   static time_t getSecondFromJulian(int _julian);
+   static time_t getSecondFromJulian(int _julian)
+      {
+      U_TRACE(0, "UTimeDate::getSecondFromJulian(%d)", _julian)
+
+      if (_julian >= 2440588) // 2440588 -> 01/01/1970
+         {
+         time_t t = (_julian - 2440588) * U_ONE_DAY_IN_SECOND;
+
+         U_RETURN(t);
+         }
+
+      U_RETURN(0);
+      }
 
    static time_t getSecondFromTime(const char* str) // seconds from string in HH:MM:SS format
       {
@@ -245,20 +436,29 @@ public:
 
    // OPERATOR
 
-   bool operator==(UTimeDate& date);
+   bool operator==(UTimeDate& date)
+      {
+      U_TRACE(0, "UTimeDate::operator==(%p,%p)", this, &date)
+
+      if (getJulian() == date.getJulian()) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    bool operator!=(UTimeDate& date);
    bool operator< (UTimeDate& date);
    bool operator<=(UTimeDate& date);
    bool operator> (UTimeDate& date);
    bool operator>=(UTimeDate& date);
 
+   UTimeDate& operator++() { addDays( 1); return *this; }
+   UTimeDate& operator--() { addDays(-1); return *this; }
+
    UTimeDate& operator+=(UTimeDate& d)
       {
       U_TRACE(0, "UTimeDate::operator+=(%p)", &d)
 
-      julian = getJulian() + d.getJulian();
-
-      fromJulian(julian);
+      fromJulian(getJulian() + d.getJulian());
 
       return *this;
       }
@@ -267,9 +467,7 @@ public:
       {
       U_TRACE(0, "UTimeDate::operator-=(%p)", &d)
 
-      julian = getJulian() - d.getJulian();
-
-      fromJulian(julian);
+      fromJulian(getJulian() - d.getJulian());
 
       return *this;
       }
@@ -319,25 +517,26 @@ public:
 
       return UTimeDate(d) -= days;
       }
-
+   
    // STREAM
 
 #ifdef U_STDCPP_ENABLE
    friend U_EXPORT istream& operator>>(istream& is,       UTimeDate& d); // dd/mm/yyyy
    friend U_EXPORT ostream& operator<<(ostream& os, const UTimeDate& d); // dd/mm/yyyy
 
-#  ifdef DEBUG
+# ifdef DEBUG
    bool invariant() { return (julian >= FIRST_DAY); } // 14/09/1752
 
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:
    int julian, _day, _month, _year;
 
-   void fromJulian(int julian);
+   static const short monthDays[13];
 
-   static int toJulian(int day, int month, int year);
+          void fromJulian(int julian);
+   static int    toJulian(int day, int month, int year);
 };
 #endif

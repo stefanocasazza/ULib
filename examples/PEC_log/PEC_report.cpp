@@ -1198,7 +1198,7 @@ void PEC_report::loadFiles()
 
    UDirWalk dirwalk;
 
-   UDirWalk::setRecurseSubDirs(false);
+   UDirWalk::setRecurseSubDirs(true, false);
 
    dirwalk.call_internal = PEC_report::processFiles;
 

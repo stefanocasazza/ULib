@@ -93,6 +93,7 @@ class UHttpPlugIn;
 class Application;
 class UServer_Base;
 class UHashMapNode;
+class UMongoDBClient;
 class URDBClient_Base;
 class UQuotedPrintable;
 class UClientImage_Base;
@@ -438,30 +439,6 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   void size_adjust(const char* ptr)
-      {
-      U_TRACE(0+256, "UStringRep::size_adjust(%p)", ptr)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_MAJOR((int32_t)_capacity, 0)
-
-#  ifdef DEBUG
-      if (references)
-         {
-         string_rep_share = this;
-
-         U_DUMP_OBJECT("shared with this", checkIfReferences)
-
-         U_INTERNAL_ASSERT_MSG(false, "CANNOT ADJUST SIZE OF A REFERENCED STRING...")
-         }
-#  endif
-
-      ((char*)str)[_length = distance(ptr)] = '\0';
-
-      U_INTERNAL_ASSERT(invariant())
-      }
-
    void size_adjust_force()
       {
       U_TRACE_NO_PARAM(0, "UStringRep::size_adjust_force()")
@@ -488,6 +465,9 @@ public:
 
       U_INTERNAL_ASSERT(invariant())
       }
+
+   void size_adjust(      const char* ptr) { size_adjust(      distance(ptr)); }
+   void size_adjust_force(const char* ptr) { size_adjust_force(distance(ptr)); }
 
    void replace(const char* s, uint32_t n)
       {
@@ -786,7 +766,7 @@ private:
       u__memcpy(this, string_rep_null, sizeof(UStringRep), __PRETTY_FUNCTION__);
       }
 
-   explicit UStringRep(const char* t, uint32_t tlen) // NB: use with caution...
+   explicit UStringRep(const char* t, uint32_t tlen) // NB: to use only with new(UStringRep(t,tlen))...
       {
       U_TRACE_REGISTER_OBJECT(0, UStringRep, "%.*S,%u", tlen, t, tlen)
 
@@ -902,6 +882,7 @@ private:
    friend class Application;
    friend class UHashMapNode;
    friend class UServer_Base;
+   friend class UMongoDBClient;
    friend class URDBClient_Base;
    friend class UQuotedPrintable;
    friend class UClientImage_Base;
@@ -1886,12 +1867,13 @@ public:
       va_end(argp);
       }
 
-   void size_adjust()                     { rep->size_adjust(); }
-   void size_adjust_force()               { rep->size_adjust_force(); }
+   void size_adjust()                      { rep->size_adjust(); }
+   void size_adjust(uint32_t value)        { rep->size_adjust(value); }
+   void size_adjust(const char* ptr)       { rep->size_adjust(ptr); }
 
-   void size_adjust(uint32_t value)       { rep->size_adjust(value); }
-   void size_adjust(const char* ptr)      { rep->size_adjust(ptr); }
-   void size_adjust_force(uint32_t value) { rep->size_adjust_force(value); }
+   void size_adjust_force()                { rep->size_adjust_force(); }
+   void size_adjust_force(uint32_t value)  { rep->size_adjust_force(value); }
+   void size_adjust_force(const char* ptr) { rep->size_adjust_force(ptr); }
 
    void setFromNumber32(uint32_t number)
       {

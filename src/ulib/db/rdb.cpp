@@ -1020,11 +1020,12 @@ U_NO_EXPORT void URDB::getKeys1(UCDB* pcdb, uint32_t _offset) // entry presenti 
 
    if (offset_data)
       {
-      UStringRep* rep;
+      UStringRep* skey;
 
-      U_NEW_DBG(UStringRep, rep, UStringRep((const char*)((ptrdiff_t)journal.map+(ptrdiff_t)RDB_cache_node(n,key.dptr)), RDB_cache_node(n,key.dsize)));
+      U_NEW_DBG(UStringRep, skey, UStringRep((const char*)((ptrdiff_t)journal.map+(ptrdiff_t)RDB_cache_node(n,key.dptr)), RDB_cache_node(n,key.dsize)));
 
-      pcdb->UCDB::ptr_vector->UVector<void*>::push(rep);
+      if (UCDB::filter_function_to_call(skey, 0) == 0) skey->release();
+      else                                             pcdb->UCDB::ptr_vector->UVector<void*>::push(skey);
       }
    else if (RDB_cache_node(n,data.dsize) != U_NOT_FOUND)
       {
@@ -1212,13 +1213,16 @@ void URDB::callForAllEntry(iPFprpr function, UVector<UString>* pvec)
 
    lock();
 
+   iPFprpr       function_prev = UCDB::getFunctionToCall();
+   UVector<UString>* pvec_prev = UCDB::getVector();
+
    UCDB::setVector(pvec);
    UCDB::setFunctionToCall(function);
 
    U_FOR_EACH_ENTRY(this, call1, UCDB::call2)
 
-   UCDB::setVector(0);
-   UCDB::setFunctionToCall(0);
+   UCDB::setVector(pvec_prev);
+   UCDB::setFunctionToCall(function_prev);
 
    unlock();
 }
@@ -1248,11 +1252,13 @@ void URDB::getKeys(UVector<UString>& vec)
 
    lock();
 
+   UVector<UString>* pvec_prev = UCDB::getVector();
+
    UCDB::setVector(&vec);
 
    U_FOR_EACH_ENTRY(this, getKeys1, UCDB::getKeys2)
 
-   UCDB::setVector(0);
+   UCDB::setVector(pvec_prev);
 
    unlock();
 }
@@ -1283,6 +1289,7 @@ void URDB::callForAllEntrySorted(iPFprpr function, qcompare compare_obj)
       lock();
 
       UCDB::setFunctionToCall(function);
+      UCDB::resetFilterToFunctionToCall();
 
       for (i = 0; i < n; ++i)
          {
@@ -1828,7 +1835,8 @@ bool URDBObjectHandler<UDataStorage*>::getDataStorage()
    U_RETURN(false);
 }
 
-char* URDBObjectHandler<UDataStorage*>::data_buffer;
+char*   URDBObjectHandler<UDataStorage*>::data_buffer;
+iPFpvpv URDBObjectHandler<UDataStorage*>::ds_function_to_call;
 
 bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(int op)
 {
@@ -1916,7 +1924,6 @@ void URDBObjectHandler<UDataStorage*>::setEntry(UStringRep* _key, UStringRep* _d
    U_TRACE(0, "URDBObjectHandler<UDataStorage*>::setEntry(%V,%V)", _key, _data)
 
    U_INTERNAL_ASSERT_POINTER(pDataStorage)
-   U_INTERNAL_ASSERT_POINTER(function_to_call)
 
    pDataStorage->clear();
 
@@ -1936,25 +1943,31 @@ int URDBObjectHandler<UDataStorage*>::callEntryCheck(UStringRep* _key, UStringRe
    U_TRACE(0, "URDBObjectHandler<UDataStorage*>::callEntryCheck(%V,%V)", _key, _data)
 
    U_INTERNAL_ASSERT_POINTER(pthis)
-   U_INTERNAL_ASSERT_POINTER(pthis->function_to_call)
+   U_INTERNAL_ASSERT_POINTER(ds_function_to_call)
+   U_INTERNAL_ASSERT_POINTER(pthis->UCDB::filter_function_to_call)
 
-   int result = pthis->function_to_call(_key, _data);
-
-   if (result == 4) // NB: call function later after set record value from db with setEntry()...
+   if (pthis->UCDB::filter_function_to_call(_key, _data))
       {
-      pthis->setEntry(_key, _data);
+      int result = ds_function_to_call(_key, _data);
 
-      result = pthis->function_to_call(0, 0);
-
-      if (result == 3) // NB: call function later without lock on db...
+      if (result == 4) // NB: call function later after set record value from db with setEntry()...
          {
-         result = 1;
+         pthis->setEntry(_key, _data);
 
-         pthis->UCDB::addEntryToVector();
+         result = ds_function_to_call(0, 0);
+
+         if (result == 3) // NB: call function later without lock on db...
+            {
+            result = 1;
+
+            pthis->UCDB::addEntryToVector();
+            }
          }
+
+      U_RETURN(result);
       }
 
-   U_RETURN(result);
+   U_RETURN(1);
 }
 
 void URDBObjectHandler<UDataStorage*>::callForAllEntry(iPFprpr function, vPF function_no_lock, qcompare compare_obj)
@@ -1967,84 +1980,99 @@ void URDBObjectHandler<UDataStorage*>::callForAllEntry(iPFprpr function, vPF fun
 
    if (n == 0) return;
 
-   pthis            = this;
-   brecfound        = true;
-   function_to_call = function;
+   iPFpvpv                           ds_function_to_call_prev = ds_function_to_call;
+   URDBObjectHandler<UDataStorage*>*               pthis_prev = pthis;
+
+   pthis               = this;
+   brecfound           = true;
+   ds_function_to_call = (iPFpvpv)function;
 
    if (compare_obj      == 0 &&
        function_no_lock == 0)
       {
       URDB::callForAllEntry(callEntryCheck, 0);
-
-      return;
-      }
-
-   int i;
-   UVector<UString> vec(n);
-
-   if (compare_obj == 0)
-      {
-      U_INTERNAL_ASSERT_POINTER(function_no_lock)
-
-      URDB::callForAllEntry(callEntryCheck, &vec);
       }
    else
       {
-      UVector<UString> vkey(n);
+      int i;
+      UVector<UString> vec(n);
 
-      getKeys(vkey);
-
-      n = vkey.size();
-
-      if (n > 1)
+      if (compare_obj == 0)
          {
-         if (compare_obj != (qcompare)-1) vkey.UVector<void*>::sort(compare_obj);
-         else                             vkey.sort(UCDB::ignoreCase());
+         U_INTERNAL_ASSERT_POINTER(function_no_lock)
+
+         URDB::callForAllEntry(callEntryCheck, &vec);
+         }
+      else
+         {
+         UVector<UString> vkey(n);
+         UVector<UString>* pvec_prev = 0;
+         iPFprpr function_prev = UCDB::getFunctionToCall();
+
+         getKeys(vkey);
+
+         n = vkey.size();
+
+         if (n > 1)
+            {
+            if (compare_obj != (qcompare)-1) vkey.UVector<void*>::sort(compare_obj);
+            else                             vkey.sort(UCDB::ignoreCase());
+            }
+
+         lock();
+
+         UCDB::resetFilterToFunctionToCall();
+         UCDB::setFunctionToCall(callEntryCheck);
+
+         if (function_no_lock)
+            {
+            pvec_prev = UCDB::getVector();
+                        UCDB::setVector(&vec);
+            }
+
+         for (i = 0; i < (int)n; ++i)
+            {
+            UStringRep* r = vkey.UVector<UStringRep*>::at(i);
+
+            UCDB::setKey(r);
+
+            UCDB::cdb_hash();
+
+            if (_fetch())
+               {
+               UCDB::call1();
+
+               if (U_cdb_result_call(this) == 0) break;
+               }
+            }
+
+         UCDB::setFunctionToCall(function_prev);
+
+         if (function_no_lock) UCDB::setVector(pvec_prev);
+
+         unlock();
          }
 
-      lock();
-
-      if (function_no_lock) UCDB::setVector(&vec);
-                            UCDB::setFunctionToCall(callEntryCheck);
-
-      for (i = 0; i < (int)n; ++i)
+      for (i = 0, n = vec.size(); i < (int)n; i += 2)
          {
-         UStringRep* r = vkey.UVector<UStringRep*>::at(i);
+         UStringRep* _key = vec.UVector<UStringRep*>::at(i);
+         UStringRep*_data = vec.UVector<UStringRep*>::at(i+1);
 
-         UCDB::setKey(r);
+         pthis->setEntry(_key, _data);
 
-         UCDB::cdb_hash();
+         int result = ds_function_to_call((void*)-1, (void*)function_no_lock);
 
-         if (_fetch())
+         if (result == 2) // remove
             {
-            UCDB::call1();
+            UCDB::setKey(_key);
 
-            if (U_cdb_result_call(this) == 0) break;
+            (void) URDB::remove();
             }
          }
-
-      if (function_no_lock) UCDB::setVector(0);
-                            UCDB::setFunctionToCall(0);
-
-      unlock();
       }
 
-   for (i = 0, n = vec.size(); i < (int)n; i += 2)
-      {
-      UStringRep* _key = vec.UVector<UStringRep*>::at(i);
-      UStringRep*_data = vec.UVector<UStringRep*>::at(i+1);
-
-      pthis->setEntry(_key, _data);
-
-      int result = ((iPFpvpv)(pthis->function_to_call))((void*)-1, (void*)function_no_lock);
-
-      if (result == 2) // remove
-         {
-         UCDB::setKey(_key);
-
-         (void) URDB::remove();
-         }
-      }
+   pthis               =               pthis_prev;
+   ds_function_to_call = ds_function_to_call_prev;
 }
 
 void URDBObjectHandler<UDataStorage*>::close()
@@ -2130,10 +2158,10 @@ const char* URDBObjectHandler<UDataStorage*>::dump(bool _reset) const
    URDB::dump(false);
 
    *UObjectIO::os << "\n"
-                  << "brecfound                 " << brecfound               << '\n'
-                  << "pDataStorage              " << (void*)pDataStorage     << '\n'
-                  << "function_to_call          " << (void*)function_to_call << '\n'
-                  << "recval (UString           " << (void*)&recval          << ')';
+                  << "brecfound                 " << brecfound                   << '\n'
+                  << "pDataStorage              " << (void*)pDataStorage         << '\n'
+                  << "ds_function_to_call       " << (void*)ds_function_to_call  << '\n'
+                  << "recval (UString           " << (void*)&recval              << ')';
 
    if (_reset)
       {

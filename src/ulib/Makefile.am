@@ -48,6 +48,10 @@ if LIBTDB
 SRC_CPP += db/tdb.cpp
 endif
 
+if MONGODB
+SRC_CPP += net/client/mongodb.cpp
+endif
+
 if HTTP2
 SRC_CPP += utility/http2.cpp
 endif

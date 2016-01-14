@@ -575,7 +575,7 @@ uint32_t UDirWalk::walk(UTree<UString>& tree)
    ptree     = &tree;
    tree_root = true;
 
-   setRecurseSubDirs();
+   setRecurseSubDirs(true, true);
 
    call_if_up    = treeUp;
    call_internal = treePush;

@@ -22,7 +22,7 @@ The current version offers the following features :
    * Support for automatic update of caching document root with inotify (on Linux).
    * Support for pipelining.
    * Support for virtual hosts (also with SSL).
-   * Support for basic/digest authentication.
+   * Support for basic/digest authentication optionally based on url mask.
    * Support for directory listings via basic/digest authentication.
    * Support for uri protection.
    * Support for aliases/redirection.
@@ -76,7 +76,7 @@ It is the main software component of [city of Florence wireless network](http://
 
 ## Benchmark
 
-userver application server is in the [10th round of TechEmpower's web framework benchmarks](http://www.techempower.com/benchmarks). This independent work tests a large number of frameworks and platforms against a set of tests common to web applications, such as JSON serialization, database queries and templating.
+userver application server is since 10th round in the [TechEmpower's web framework benchmarks](http://www.techempower.com/benchmarks). This independent work tests a large number of frameworks and platforms against a set of tests common to web applications, such as JSON serialization, database queries and templating.
 
 ## Contributing
 
