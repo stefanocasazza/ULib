@@ -1052,9 +1052,9 @@ int u_get_num_cpu(void)
 
 /* Pin the process to a particular core */
 
-void u_bind2cpu(cpu_set_t* cpuset, pid_t pid, int n)
+void u_bind2cpu(cpu_set_t* cpuset, int n)
 {
-   U_INTERNAL_TRACE("u_bind2cpu(%p,%d,%d)", cpuset, pid, n)
+   U_INTERNAL_TRACE("u_bind2cpu(%p,%d)", cpuset, n)
 
    /**
     * CPU mask of CPUs available to this process,
@@ -1067,26 +1067,26 @@ void u_bind2cpu(cpu_set_t* cpuset, pid_t pid, int n)
 #if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(HAVE_SCHED_GETAFFINITY)
    CPU_SET(n, cpuset);
 
-   (void) sched_setaffinity(pid, sizeof(cpu_set_t), cpuset);
+   (void) sched_setaffinity(u_pid, sizeof(cpu_set_t), cpuset);
 
    CPU_ZERO(cpuset);
 
-   (void) sched_getaffinity(pid, sizeof(cpu_set_t), cpuset);
+   (void) sched_getaffinity(u_pid, sizeof(cpu_set_t), cpuset);
 
    U_INTERNAL_PRINT("cpuset = %ld", CPUSET_BITS(cpuset)[0])
 #endif
 }
 
-void u_switch_to_realtime_priority(pid_t pid)
+void u_switch_to_realtime_priority()
 {
 #if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
    struct sched_param sp;
 
-   U_INTERNAL_TRACE("u_switch_to_realtime_priority(%d)", pid)
+   U_INTERNAL_TRACE("u_switch_to_realtime_priority()")
 
-/* sched_getscheduler(pid); // SCHED_FIFO | SCHED_RR | SCHED_OTHER */
+/* sched_getscheduler(u_pid); // SCHED_FIFO | SCHED_RR | SCHED_OTHER */
 
-   (void) sched_getparam(pid, &sp);
+   (void) sched_getparam(u_pid, &sp);
 
    sp.sched_priority = sched_get_priority_max(SCHED_FIFO);
 
@@ -1095,16 +1095,16 @@ void u_switch_to_realtime_priority(pid_t pid)
    /*
    struct rlimit rlim_old, rlim_new = { sp.sched_priority, sp.sched_priority };
 
-   (void) prlimit(pid, RLIMIT_RTPRIO, &rlim_new, &rlim_old);
+   (void) prlimit(u_pid, RLIMIT_RTPRIO, &rlim_new, &rlim_old);
 
    U_INTERNAL_PRINT("Previous RLIMIT_RTPRIO limits: soft=%lld; hard=%lld\n", (long long)rlim_old.rlim_cur, (long long)rlim_old.rlim_max);
 
-   (void) prlimit(pid, RLIMIT_RTPRIO, 0, &rlim_old);
+   (void) prlimit(u_pid, RLIMIT_RTPRIO, 0, &rlim_old);
 
    U_INTERNAL_PRINT("New RLIMIT_RTPRIO limits: soft=%lld; hard=%lld\n", (long long)rlim_old.rlim_cur, (long long)rlim_old.rlim_max);
    */
 
-   if (sched_setscheduler(pid, SCHED_FIFO, &sp) == -1)
+   if (sched_setscheduler(u_pid, SCHED_FIFO, &sp) == -1)
       {
       U_WARNING("Cannot set posix realtime scheduling policy");
       }

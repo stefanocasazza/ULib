@@ -22,7 +22,7 @@ static void usp_fork_mquery()
 
    if (mc->connect() == false)
       {
-      U_WARNING("usp_fork_mquery(): connection failed");
+      U_WARNING("usp_fork_mquery(): connection disabled or failed");
 
       return;
       }
@@ -63,25 +63,12 @@ static void usp_end_mquery()
 }
 #endif
 -->
-<!--#args
-queries;
--->
 <!--#header
 Content-Type: application/json
 -->
 <!--#code
-UString result;
-int i = 0, num_queries;
-const char* ptr = queries.data();
-
-if (u__isdigit(*ptr) == false) num_queries = 1;
-else
-   {
-   num_queries = u_strtoul(ptr, queries.end());
-
-        if (num_queries <   1) num_queries = 1;
-   else if (num_queries > 500) num_queries = 500;
-   }
+UString rnumber;
+int i = 0, num_queries = UHTTP::getFormFirstNumericValue(1, 500);
 
 #ifdef AS_cpoll_cppsp_DO
 USP_PUTS_CHAR('[');
@@ -91,13 +78,13 @@ while (true)
    {
    (void) mc->findOne(pworld_query->id = u_get_num_random(10000));
 
-   (void) UValue::jread(mc->vitem[0], *jquery, result); // { "_id" : 8980.000000, "id" : 8980.000000, "randomNumber" : 2131.000000 }
-
-   pworld_query->randomNumber = u_strtoul(result.data(), result.end());
+   (void) UValue::jread(mc->vitem[0], *jquery, rnumber); // { "_id" : 8980.000000, "id" : 8980.000000, "randomNumber" : 2131.000000 }
 
 #ifdef AS_cpoll_cppsp_DO
-   USP_PRINTF("{\"id\":%u,\"randomNumber\":%v}", pworld_query->id, result.rep);
+   USP_PRINTF("{\"id\":%u,\"randomNumber\":%v}", pworld_query->id, rnumber.rep);
 #else
+   pworld_query->randomNumber = u_strtoul(rnumber.data(), rnumber.end());
+
    pvworld_query->push_back(U_NEW(World(*pworld_query)));
 #endif
 

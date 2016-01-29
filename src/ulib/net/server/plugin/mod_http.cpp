@@ -19,6 +19,10 @@
 #include <ulib/utility/string_ext.h>
 #include <ulib/net/server/plugin/mod_http.h>
 
+#ifndef U_HTTP2_DISABLE
+#  include <ulib/utility/http2.h>
+#endif
+
 U_CREAT_FUNC(server_plugin_http, UHttpPlugIn)
 
 UHttpPlugIn::~UHttpPlugIn()
@@ -460,6 +464,10 @@ int UHttpPlugIn::handlerInit()
 int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit() because now we have the shared data allocated by UServer...
 {
    U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerRun()")
+
+#ifndef U_HTTP2_DISABLE
+   UHTTP2::Connection::preallocate(UNotifier::max_connection);
+#endif
 
 #ifdef USE_LIBSSL
    if (UServer_Base::bssl) UHTTP::initSessionSSL();

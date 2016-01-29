@@ -243,7 +243,6 @@ http {
 # FCGI_KEEP_CONN If not zero, the server FCGI does not close the connection after
 #                responding to request; the plugin retains responsibility for the connection
 #
-#
 # LOG_FILE       location for file log (use server log if same value)
 # -----------------------------------------------------------------------------------------------
 #
@@ -275,7 +274,6 @@ http {
 # RES_TIMEOUT    timeout for response from server SCGI
 # SCGI_KEEP_CONN If not zero, the server SCGI does not close the connection after
 #                responding to request; the plugin retains responsibility for the connection
-#
 #
 # LOG_FILE       location for file log (use server log if same value)
 # -----------------------------------------------------------------------------------------------

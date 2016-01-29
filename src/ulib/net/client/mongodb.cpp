@@ -192,9 +192,9 @@ bool UMongoDBClient::update(uint32_t old_value, const char* key, uint32_t new_va
    U_RETURN(result);
 }
 
-bool UMongoDBClient::findAndModify(bson_t* query, bson_t* update)
+bool UMongoDBClient::findAndModify(bson_t* query, bson_t* _update)
 {
-   U_TRACE(0, "UMongoDBClient::findAndModify(%p,%p)", query, update)
+   U_TRACE(0, "UMongoDBClient::findAndModify(%p,%p)", query, _update)
 
    U_INTERNAL_ASSERT_POINTER(client)
    U_INTERNAL_ASSERT_POINTER(collection)
@@ -202,7 +202,7 @@ bool UMongoDBClient::findAndModify(bson_t* query, bson_t* update)
    bson_t reply;
    bson_error_t error;
 
-   if (U_SYSCALL(mongoc_collection_find_and_modify, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, query, 0, update, 0, false, false, true, &reply, &error) == false)
+   if (U_SYSCALL(mongoc_collection_find_and_modify, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, query, 0, _update, 0, false, false, true, &reply, &error) == false)
       {
       U_WARNING("mongoc_collection_find_and_modify(): %S", error.message);
       }

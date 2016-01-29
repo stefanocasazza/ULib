@@ -35,6 +35,7 @@
 
 class UCommand;
 class UServer_Base;
+class UNoCatPlugIn;
 
 class U_EXPORT UProcess {
 public:
@@ -159,6 +160,7 @@ private:
 
    friend class UCommand;
    friend class UServer_Base;
+   friend class UNoCatPlugIn;
 };
 
 #endif

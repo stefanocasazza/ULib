@@ -21,7 +21,7 @@ static void usp_fork_mupdate()
 
    if (mc->connect() == false)
       {
-      U_WARNING("usp_fork_mupdate(): connection failed");
+      U_WARNING("usp_fork_mupdate(): connection disabled or failed");
 
       return;
       }
@@ -60,24 +60,11 @@ static void usp_end_mupdate()
 }
 #endif
 -->
-<!--#args
-queries;
--->
 <!--#header
 Content-Type: application/json
 -->
 <!--#code
-int i = 0, num_queries;
-const char* ptr = queries.data();
-
-if (u__isdigit(*ptr) == false) num_queries = 1;
-else
-   {
-   num_queries = u_strtoul(ptr, queries.end());
-
-        if (num_queries <   1) num_queries = 1;
-   else if (num_queries > 500) num_queries = 500;
-   }
+int i = 0, num_queries = UHTTP::getFormFirstNumericValue(1, 500);
 
 #ifdef AS_cpoll_cppsp_DO
 USP_PUTS_CHAR('[');

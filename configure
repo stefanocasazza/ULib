@@ -792,6 +792,8 @@ POW_LIB
 LIBOBJS
 SEM_TIMEDWAIT_FALSE
 SEM_TIMEDWAIT_TRUE
+SCHED_GETCPU_FALSE
+SCHED_GETCPU_TRUE
 GETOPT_LONG_FALSE
 GETOPT_LONG_TRUE
 FALLOCATE64_FALSE
@@ -21697,6 +21699,14 @@ else
 fi
 
  if false; then
+  SCHED_GETCPU_TRUE=
+  SCHED_GETCPU_FALSE='#'
+else
+  SCHED_GETCPU_TRUE='#'
+  SCHED_GETCPU_FALSE=
+fi
+
+ if false; then
   SEM_TIMEDWAIT_TRUE=
   SEM_TIMEDWAIT_FALSE='#'
 else
@@ -22871,7 +22881,7 @@ fi
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     as_ac_var=`$as_echo "ac_cv_func_$func" | $as_tr_sh`
 ac_fn_cxx_check_func "$LINENO" "$func" "$as_ac_var"
@@ -23217,6 +23227,19 @@ fi
 
 
 $as_echo "#define HAVE_PREAD 1" >>confdefs.h
+
+        ;;
+    sched_getcpu)
+		   if true; then
+  SCHED_GETCPU_TRUE=
+  SCHED_GETCPU_FALSE='#'
+else
+  SCHED_GETCPU_TRUE='#'
+  SCHED_GETCPU_FALSE=
+fi
+
+
+$as_echo "#define HAVE_SCHED_GETCPU 1" >>confdefs.h
 
         ;;
     sched_getaffinity)
@@ -30315,7 +30338,12 @@ See include/ulib/internal/config.h for further configuration information
 
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
+
+
+#	examples/parser/Makefile \
+#	src/ulib/base/Makefile src/ulib/debug/Makefile \
+#	ulib-config ,[chmod a+x ulib-config] )
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -30786,6 +30814,10 @@ if test -z "${GETOPT_LONG_TRUE}" && test -z "${GETOPT_LONG_FALSE}"; then
   as_fn_error $? "conditional \"GETOPT_LONG\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${SCHED_GETCPU_TRUE}" && test -z "${SCHED_GETCPU_FALSE}"; then
+  as_fn_error $? "conditional \"SCHED_GETCPU\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${SEM_TIMEDWAIT_TRUE}" && test -z "${SEM_TIMEDWAIT_FALSE}"; then
   as_fn_error $? "conditional \"SEM_TIMEDWAIT\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -30828,6 +30860,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PREAD_TRUE}" && test -z "${PREAD_FALSE}"; then
   as_fn_error $? "conditional \"PREAD\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SCHED_GETCPU_TRUE}" && test -z "${SCHED_GETCPU_FALSE}"; then
+  as_fn_error $? "conditional \"SCHED_GETCPU\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SEMAPHORE_TRUE}" && test -z "${SEMAPHORE_FALSE}"; then
@@ -32122,6 +32158,10 @@ do
     "doc/Makefile") CONFIG_FILES="$CONFIG_FILES doc/Makefile" ;;
     "include/Makefile") CONFIG_FILES="$CONFIG_FILES include/Makefile" ;;
     "contrib/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/Makefile" ;;
+    "include/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES include/ulib/Makefile" ;;
+    "contrib/HCSP/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/HCSP/Makefile" ;;
+    "contrib/RSIGN/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/RSIGN/Makefile" ;;
+    "contrib/signer/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/signer/Makefile" ;;
     "src/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/Makefile" ;;
     "src/ulib/ULib.rc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.rc" ;;
     "src/ulib/ULib.pc") CONFIG_FILES="$CONFIG_FILES src/ulib/ULib.pc" ;;
@@ -32129,16 +32169,12 @@ do
     "src/ulib/net/server/plugin/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/Makefile" ;;
     "src/ulib/net/server/plugin/v8/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/v8/Makefile" ;;
     "src/ulib/net/server/plugin/php/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/php/Makefile" ;;
-    "src/ulib/net/server/plugin/ruby/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/ruby/Makefile" ;;
     "src/ulib/net/server/plugin/usp/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/Makefile" ;;
+    "src/ulib/net/server/plugin/ruby/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/ruby/Makefile" ;;
     "src/ulib/net/server/plugin/mod_shib/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_shib/Makefile" ;;
     "src/ulib/net/server/plugin/mod_geoip/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_geoip/Makefile" ;;
     "src/ulib/net/server/plugin/usp/usp_compile.sh") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/usp_compile.sh" ;;
     "src/ulib/net/server/plugin/page_speed/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/page_speed/Makefile" ;;
-    "include/ulib/Makefile") CONFIG_FILES="$CONFIG_FILES include/ulib/Makefile" ;;
-    "contrib/HCSP/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/HCSP/Makefile" ;;
-    "contrib/RSIGN/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/RSIGN/Makefile" ;;
-    "contrib/signer/Makefile") CONFIG_FILES="$CONFIG_FILES contrib/signer/Makefile" ;;
     "examples/Makefile") CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
     "examples/IR/Makefile") CONFIG_FILES="$CONFIG_FILES examples/IR/Makefile" ;;
     "examples/csp/Makefile") CONFIG_FILES="$CONFIG_FILES examples/csp/Makefile" ;;
@@ -33748,10 +33784,6 @@ if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
 $as_echo "$as_me: WARNING: unrecognized options: $ac_unrecognized_opts" >&2;}
 fi
 
-
-#			 examples/parser/Makefile \
-#			 src/ulib/base/Makefile src/ulib/debug/Makefile \
-#			 ulib-config ,[chmod a+x ulib-config] )
 
 awk -f configure_log.awk config.log							  > include/ulib/internal/config1.h
 awk -f configure_h.awk   include/ulib/internal/config.h > include/ulib/internal/config2.h

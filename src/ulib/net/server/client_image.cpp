@@ -13,9 +13,11 @@
 
 #include <ulib/net/server/server.h>
 #include <ulib/utility/websocket.h>
-
 #include <ulib/debug/error.h>
 
+#ifdef HAVE_SCHED_GETCPU
+#  include <sched.h>
+#endif
 #ifndef U_HTTP2_DISABLE
 #  include <ulib/utility/http2.h>
 #endif
@@ -143,12 +145,6 @@ UClientImage_Base::UClientImage_Base()
       UServer_Base::pClientImage = this;
       UServer_Base::eClientImage = this + UNotifier::max_connection;
       }
-
-#ifndef U_HTTP2_DISABLE
-   connection = U_NEW(UHTTP2::Connection);
-
-   ((UHTTP2::Connection*)connection)->itable.setIndexFunction(UHTTP2::setIndexStaticTable);
-#endif
 }
 
 UClientImage_Base::~UClientImage_Base()
@@ -167,10 +163,6 @@ UClientImage_Base::~UClientImage_Base()
 
       delete logbuf;
       }
-
-#ifndef U_HTTP2_DISABLE
-   delete (UHTTP2::Connection*)connection;
-#endif
 }
 
 void UClientImage_Base::set()
@@ -689,8 +681,11 @@ void UClientImage_Base::endRequest()
 
       // NB: URI requested can be URL encoded (ex: vuoto%2Etxt) so we cannot use snprintf()...
 
-      char buffer[256];
-      char* ptr1 = buffer;
+      char buffer1[256],
+           buffer2[64];
+
+      uint32_t sz2 = 0;
+      char* ptr1 = buffer1;
 
       u__memcpy(ptr1, "request \"", U_CONSTANT_SIZE("request \""), __PRETTY_FUNCTION__);
                 ptr1 +=             U_CONSTANT_SIZE("request \"");
@@ -699,7 +694,7 @@ void UClientImage_Base::endRequest()
          {
          U_INTERNAL_DUMP("sz = %u", sz)
 
-         if (sz > (sizeof(buffer)-32)) sz = sizeof(buffer)-32;
+         if (sz > (sizeof(buffer1)-32)) sz = sizeof(buffer1)-32;
 
          u__memcpy(ptr1, ptr, sz, __PRETTY_FUNCTION__);
                    ptr1 +=    sz;
@@ -708,12 +703,24 @@ void UClientImage_Base::endRequest()
       u__memcpy(ptr1, "\" run in ", U_CONSTANT_SIZE("\" run in "), __PRETTY_FUNCTION__);
                 ptr1 +=             U_CONSTANT_SIZE("\" run in ");
 
-      if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer)-(ptr1-buffer), "%ld ms", time_run);
-      else               ptr1 += u__snprintf(ptr1, sizeof(buffer)-(ptr1-buffer),  "%g ms", chronometer->getTimeElapsed());
+      int cpu = U_SYSCALL_NO_PARAM(sched_getcpu);
 
-      U_INTERNAL_ASSERT_MINOR((ptrdiff_t)(ptr1-buffer), (ptrdiff_t)sizeof(buffer))
+      U_INTERNAL_DUMP("cpu = %d USocket::incoming_cpu = %d", cpu, USocket::incoming_cpu)
 
-      ULog::write(buffer, ptr1-buffer);
+#  ifdef SO_INCOMING_CPU
+      if (USocket::incoming_cpu != cpu &&
+          USocket::incoming_cpu != -1)
+         {
+         sz2 = u__snprintf(buffer2, sizeof(buffer2), " (EXPECTED CPU %d)", USocket::incoming_cpu);
+         }
+#  endif
+
+      if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), "%ld ms on cpu %d%.*s",                      time_run, cpu, sz2, buffer2);
+      else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1),  "%g ms on cpu %d%.*s", chronometer->getTimeElapsed(), cpu, sz2, buffer2);
+
+      U_INTERNAL_ASSERT_MINOR((ptrdiff_t)(ptr1-buffer1), (ptrdiff_t)sizeof(buffer1))
+
+      ULog::write(buffer1, ptr1-buffer1);
       }
 #endif
 

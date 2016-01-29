@@ -144,6 +144,10 @@ if MEMORY_POOL
 SRC_CPP += internal/memory_pool.cpp
 endif
 
+if !SCHED_GETCPU
+SRC_C += replace/sched_getcpu.c
+endif
+
 if ZIP
 SRC_C   += base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c base/zip/ziptool.c
 SRC_CPP += zip/zip.cpp

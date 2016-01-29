@@ -573,8 +573,10 @@ void USocket::reusePort(int _flags)
                           U_socket_IPv6(this)                  ? AF_INET6 : AF_INET),
           iSocketType = ((U_socket_Type(this) & SK_DGRAM) != 0 ? SOCK_DGRAM : SOCK_STREAM);
 
+#  ifndef U_COVERITY_FALSE_POSITIVE // NEGATIVE_RETURNS
       // coverity[+alloc]
       iSockDesc = U_SYSCALL(socket, "%d,%d,%d", domain, iSocketType, 0);
+#  endif
 
       U_INTERNAL_DUMP("iLocalPort = %u cLocal->getPortNumber() = %u", iLocalPort, cLocal->getPortNumber())
 
@@ -589,7 +591,7 @@ void USocket::reusePort(int _flags)
          U_ERROR("SO_REUSEPORT failed, port %d", iLocalPort);
          }
 
-#  ifdef SO_INCOMING_CPU
+#  if defined(SO_INCOMING_CPU) && !defined(U_COVERITY_FALSE_POSITIVE)
       if (incoming_cpu != -1) (void) setSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&incoming_cpu);
 #  endif
 

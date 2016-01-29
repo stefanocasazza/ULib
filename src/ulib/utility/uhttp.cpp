@@ -2235,9 +2235,9 @@ U_NO_EXPORT bool UHTTP::readBodyRequest()
       {
       if (U_http_info.clength > limit_request_body)
          {
-         U_http_info.nResponseCode = HTTP_ENTITY_TOO_LARGE;
-
          UClientImage_Base::setCloseConnection();
+
+         U_http_info.nResponseCode = HTTP_ENTITY_TOO_LARGE;
 
          setResponse(0, 0);
 
@@ -2287,9 +2287,9 @@ parallelization: // parent
          {
          // HTTP/1.1 compliance: no missing Content-Length on POST requests
 
-         U_http_info.nResponseCode = HTTP_LENGTH_REQUIRED;
-
          UClientImage_Base::setCloseConnection();
+
+         U_http_info.nResponseCode = HTTP_LENGTH_REQUIRED;
 
          setResponse(0, 0);
 
@@ -2308,9 +2308,9 @@ parallelization: // parent
          {
          if (UServer_Base::csocket->isTimeout())
             {
-            U_http_info.nResponseCode = HTTP_CLIENT_TIMEOUT;
-
             UClientImage_Base::setCloseConnection();
+
+            U_http_info.nResponseCode = HTTP_CLIENT_TIMEOUT;
 
             setResponse(0, 0);
             }
@@ -3370,8 +3370,6 @@ int UHTTP::handlerREAD()
 
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
-   bool result_read_body;
-
    // ------------------------------
    // U_http_info.uri
    // ....
@@ -3469,12 +3467,31 @@ int UHTTP::handlerREAD()
 
    UClientImage_Base::size_request = (U_http_info.endHeader ? U_http_info.endHeader : U_http_info.startHeader + U_CONSTANT_SIZE(U_CRLF2));
 
+   return manageRequest();
+}
+
+int UHTTP::manageRequest()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::manageRequest()")
+
+   // check the HTTP message
+
+   U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
+
+   U_ASSERT(UClientImage_Base::isRequestNotFound())
+
    U_DUMP("U_http_info.clength = %u isPOSTorPUTorPATCH() = %b", U_http_info.clength, isPOSTorPUTorPATCH())
 
 #ifndef U_SERVER_CAPTIVE_PORTAL
    if (U_http_info.clength ||
        isPOSTorPUTorPATCH())
       {
+      bool result_read_body;
+
+#  ifndef U_HTTP2_DISABLE
+      if (U_http_version == '2') result_read_body = UHTTP2::readBodyRequest();
+      else
+#  endif
       result_read_body = readBodyRequest();
 
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
@@ -3491,22 +3508,12 @@ int UHTTP::handlerREAD()
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
 
+#  ifndef U_HTTP2_DISABLE
+      if (U_http_version != '2')
+#  endif
       UClientImage_Base::size_request += U_http_info.clength;
       }
 #endif
-
-   return manageRequest();
-}
-
-int UHTTP::manageRequest()
-{
-   U_TRACE_NO_PARAM(0, "UHTTP::manageRequest()")
-
-   // check the HTTP message
-
-   U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
-
-   U_ASSERT(UClientImage_Base::isRequestNotFound())
 
    // manage alias uri
 
@@ -5142,7 +5149,7 @@ end:
 // retrieve information on specific HTML form elements
 // (such as checkboxes, radio buttons, and text fields, or uploaded files)
 
-int UHTTP::getFormFirstNumericValue(int _min, int _max)
+__pure int UHTTP::getFormFirstNumericValue(int _min, int _max)
 {
    U_TRACE(0, "UHTTP::getFormFirstNumericValue(%d,%d)", _min, _max)
 
@@ -7823,9 +7830,9 @@ U_NO_EXPORT void UHTTP::checkPath()
           UStringExt::endsWith(ptr, len, U_CONSTANT_TO_PARAM("nocontent")))
          {
 nocontent:
-         U_http_info.nResponseCode = HTTP_NO_CONTENT;
-
          UClientImage_Base::setCloseConnection();
+
+         U_http_info.nResponseCode = HTTP_NO_CONTENT;
 
          setResponse(0, 0);
 
@@ -8135,12 +8142,48 @@ U_NO_EXPORT bool UHTTP::addHTTPVariables(UStringRep* key, void* value)
 
    uint32_t      key_sz  =                  key->size(),
                value_sz  = ((UStringRep*)value)->size();
+   const char*   key_ptr = ((UStringRep*)  key)->data();
    const char* value_ptr = ((UStringRep*)value)->data();
 
 // if (u_isBinary((const unsigned char*)value_ptr, value_sz) == false)
       {
+#  ifndef U_HTTP2_DISABLE
+      /**
+       * +-------+-----------------------------+---------------+
+       * | 1     | :authority                  |               |
+       * | 2     | :method                     | GET           |
+       * | 3     | :method                     | POST          |
+       * | 4     | :path                       | /             |
+       * | 5     | :path                       | /index.html   |
+       * | 6     | :scheme                     | http          |
+       * | 7     | :scheme                     | https         |
+       * | 8     | :status                     | 200           |
+       * | 9     | :status                     | 204           |
+       * | 10    | :status                     | 206           |
+       * | 11    | :status                     | 304           |
+       * | 12    | :status                     | 400           |
+       * | 13    | :status                     | 404           |
+       * | 14    | :status                     | 500           |
+       * ...
+       * +-------+-----------------------------+---------------+
+       */
+
+      if (U_http_version == '2'                       &&
+          (*key_ptr == ':'                            ||
+           U_STREQ(key_ptr, key_sz, "cookie")         ||
+           U_STREQ(key_ptr, key_sz, "accept")         ||
+           U_STREQ(key_ptr, key_sz, "referer")        ||
+           U_STREQ(key_ptr, key_sz, "user-agent")     ||
+           U_STREQ(key_ptr, key_sz, "content-type")   ||
+           U_STREQ(key_ptr, key_sz, "content-length") ||
+           U_STREQ(key_ptr, key_sz, "accept-language")))
+         {
+         U_RETURN(true);
+         }
+#  endif
+
       UString buffer(20U + key_sz + value_sz),
-              str = UStringExt::substitute(UStringExt::toupper(key->data(), key_sz), '-', '_');
+              str = UStringExt::substitute(UStringExt::toupper(key_ptr, key_sz), '-', '_');
 
       buffer.snprintf("'HTTP_%.*s=%.*s'\n", key_sz, str.data(), value_sz, value_ptr);
 
@@ -8274,6 +8317,8 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
    UMimeHeader requestHeader;
    UHashMap<UString>* prequestHeader = 0;
 
+   U_INTERNAL_DUMP("U_http_info.endHeader = %u", U_http_info.endHeader)
+
    if (U_http_info.endHeader) // NB: we can have HTTP 1.0 request without headers...
       {
       requestHeader.setIgnoreCase(true);
@@ -8391,6 +8436,15 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
          if (requestHeader.empty()) prequestHeader = 0;
          }
       }
+
+#ifndef U_HTTP2_DISABLE
+   if (U_http_version == '2')
+      {
+      U_INTERNAL_ASSERT_EQUALS(prequestHeader, 0)
+
+      prequestHeader = &(UHTTP2::pConnection->itable);
+      }
+#endif
 
    if (prequestHeader)
       {
@@ -9585,9 +9639,9 @@ U_NO_EXPORT bool UHTTP::checkGetRequestIfModified()
 
          if (file->st_mtime > since)
             {
-            U_http_info.nResponseCode = HTTP_PRECON_FAILED;
-
             UClientImage_Base::setCloseConnection();
+
+            U_http_info.nResponseCode = HTTP_PRECON_FAILED;
 
             setResponse(0, 0);
 

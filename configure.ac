@@ -884,6 +884,7 @@ AM_CONDITIONAL(SEMAPHORE, false)
 AM_CONDITIONAL(FALLOCATE, false)
 AM_CONDITIONAL(FALLOCATE64, false)
 AM_CONDITIONAL(GETOPT_LONG, false)
+AM_CONDITIONAL(SCHED_GETCPU, false)
 AM_CONDITIONAL(SEM_TIMEDWAIT, false)
 
 if test "$enable_thread" != "yes"; then
@@ -927,7 +928,7 @@ AC_FUNC_CLOSEDIR_VOID
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     AC_CHECK_FUNC($func,[
         found=$func
@@ -1029,6 +1030,10 @@ for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch 
     pread)
 		  AM_CONDITIONAL(PREAD, true)
         AC_DEFINE(HAVE_PREAD, [1], [has pread])
+        ;;
+    sched_getcpu)
+		  AM_CONDITIONAL(SCHED_GETCPU, true)
+        AC_DEFINE(HAVE_SCHED_GETCPU, [1], [has sched_getcpu])
         ;;
     sched_getaffinity)
         AC_DEFINE(HAVE_SCHED_GETAFFINITY, [1], [has sched_getaffinity])
@@ -2575,60 +2580,28 @@ See include/ulib/internal/config.h for further configuration information
 
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 
-AC_OUTPUT([Makefile \
-			 rpm.sh \
-			 ULib.spec \
-			 m4/Makefile \
-			 doc/Makefile \
-			 include/Makefile \
-			 contrib/Makefile \
-			 src/ulib/Makefile \
-			 src/ulib/ULib.rc \
-			 src/ulib/ULib.pc \
-			 src/ulib/orm/driver/Makefile \
-			 src/ulib/net/server/plugin/Makefile \
-			 src/ulib/net/server/plugin/v8/Makefile \
-			 src/ulib/net/server/plugin/php/Makefile \
-			 src/ulib/net/server/plugin/ruby/Makefile \
-			 src/ulib/net/server/plugin/usp/Makefile \
-			 src/ulib/net/server/plugin/mod_shib/Makefile \
-			 src/ulib/net/server/plugin/mod_geoip/Makefile \
-			 src/ulib/net/server/plugin/usp/usp_compile.sh \
-			 src/ulib/net/server/plugin/page_speed/Makefile \
-			 include/ulib/Makefile \
-			 contrib/HCSP/Makefile \
-			 contrib/RSIGN/Makefile \
-			 contrib/signer/Makefile \
-			 examples/Makefile \
-			 examples/IR/Makefile \
-			 examples/csp/Makefile \
-			 examples/lcsp/Makefile \
-			 examples/rsign/Makefile \
-			 examples/hello/Makefile \
-			 examples/WiAuth/Makefile \
-			 examples/xml2txt/Makefile \
-			 examples/uclient/Makefile \
-			 examples/userver/Makefile \
-			 examples/PEC_log/Makefile \
-			 examples/workflow/Makefile \
-			 examples/doc_parse/Makefile \
-			 examples/lrp_session/Makefile \
-			 examples/http_header/Makefile \
-			 examples/test_manager/Makefile \
-			 examples/doc_classifier/Makefile \
-			 examples/form_completion/Makefile \
-			 examples/simple_client_server/Makefile \
-			 examples/download_accelerator/Makefile \
-			 examples/XAdES/Makefile examples/XAdES/XAdES.spec \
-			 examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec \
-			 examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec \
-			 examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec  examples/PEC_log/PEC_log.spec \
-			 examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec \
-			 tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile])
+AC_CONFIG_FILES([
+	Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile
+	include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile
+	src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile
+	src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile
+	src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile
+	src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile
+	examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile
+	examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile
+	examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile
+	examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile
+	examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec
+	examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec
+	examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec 
+	examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec
+	tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile])
 
-#			 examples/parser/Makefile \
-#			 src/ulib/base/Makefile src/ulib/debug/Makefile \
-#			 ulib-config ,[chmod a+x ulib-config] )
+#	examples/parser/Makefile \
+#	src/ulib/base/Makefile src/ulib/debug/Makefile \
+#	ulib-config ,[chmod a+x ulib-config] )
+
+AC_OUTPUT
 
 awk -f configure_log.awk config.log							  > include/ulib/internal/config1.h
 awk -f configure_h.awk   include/ulib/internal/config.h > include/ulib/internal/config2.h

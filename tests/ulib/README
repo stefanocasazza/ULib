@@ -12,8 +12,8 @@ https://wiki.debian.org/LTS/
 Debian 7.9, or wheezy.  Access this release through dists/oldstable
 Debian 7.9 was released Saturday, 5th September 2015.
 
-Debian 8.2, or jessie.  Access this release through dists/stable
-Debian 8.2 was released Saturday, 5th September 2015.
+Debian 8.3, or jessie.  Access this release through dists/stable
+Debian 8.3 was released Saturday, 23rd January 2016.
 
 Testing, or stretch.  Access this release through dists/testing.  The
 current tested development snapshot is named stretch.  Packages which

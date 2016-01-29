@@ -2179,7 +2179,7 @@ int UNoCatPlugIn::handlerFork()
 
    UString msg(300U), output(U_CAPACITY), allowed_web_hosts(U_CAPACITY);
 
-   msg.snprintf("/start_ap?ap=%v@%v&public=%v%%3A%u&pid=%u", label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, UServer_Base::pid);
+   msg.snprintf("/start_ap?ap=%v@%v&public=%v%%3A%u&pid=%u", label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, UServer_Base::proc->_pid);
 
    for (i = 0, n = vauth_url->size(); i < n; ++i)
       {

@@ -409,7 +409,7 @@ public:
    static UMimeMultipart* formMulti;
    static UVector<UString>* form_name_value;
 
-   static int getFormFirstNumericValue(int _min, int _max);
+   static int getFormFirstNumericValue(int _min, int _max) __pure;
 
    static uint32_t processForm();
    static void     getFormValue(UString& value, const char* name, uint32_t len);

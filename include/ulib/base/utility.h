@@ -348,11 +348,11 @@ U_EXPORT int u_get_num_cpu(void);
 
 /* Pin the process to a particular core */
 
-U_EXPORT void u_bind2cpu(cpu_set_t* cpuset, pid_t pid, int n);
+U_EXPORT void u_bind2cpu(cpu_set_t* cpuset, int n);
 
 /* Set the process to maximum priority that can be used with the scheduling algorithm */
 
-U_EXPORT void u_switch_to_realtime_priority(pid_t pid);
+U_EXPORT void u_switch_to_realtime_priority(void);
 
 /**
  * --------------------------------------------------------------------------------

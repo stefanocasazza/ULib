@@ -103,3 +103,7 @@
 #ifndef HAVE_PREAD
 #  include "replace/pread.c"
 #endif
+
+#ifndef HAVE_SCHED_GETCPU
+#  include "replace/sched_getcpu.c"
+#endif

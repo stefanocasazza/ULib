@@ -14,6 +14,16 @@
 #ifndef ULIB_REPLACE_H
 #define ULIB_REPLACE_H 1
 
+#ifndef HAVE_SCHED_GETCPU
+#  ifdef __cplusplus
+extern "C" {
+#  endif
+int sched_getcpu(void);
+#  ifdef __cplusplus
+}
+#  endif
+#endif
+
 #ifndef HAVE_NANOSLEEP
 #  ifdef __cplusplus
 extern "C" {

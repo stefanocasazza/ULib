@@ -26,6 +26,9 @@
 #else
 #  include <pwd.h>
 #  include <ulib/net/unixsocket.h>
+#  ifdef HAVE_SCHED_GETCPU
+#     include <sched.h>
+#  endif
 #  ifdef HAVE_LIBNUMA
 #     include <numa.h>
 #  endif
@@ -97,7 +100,6 @@ bool          UServer_Base::update_date3;
 char          UServer_Base::mod_name[2][16];
 ULog*         UServer_Base::log;
 ULog*         UServer_Base::apache_like_log;
-pid_t         UServer_Base::pid;
 char*         UServer_Base::client_address;
 ULock*        UServer_Base::lock_user1;
 ULock*        UServer_Base::lock_user2;
@@ -140,8 +142,8 @@ UServer_Base* UServer_Base::pthis;
 
 UVector<UString>*                 UServer_Base::vplugin_name;
 UVector<UString>*                 UServer_Base::vplugin_name_static;
-UClientImage_Base*                UServer_Base::pClientImage;
 UClientImage_Base*                UServer_Base::vClientImage;
+UClientImage_Base*                UServer_Base::pClientImage;
 UClientImage_Base*                UServer_Base::eClientImage;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin;
 UServer_Base::shared_data*        UServer_Base::ptr_shared_data;
@@ -2992,7 +2994,7 @@ try_accept:
       if (proc->fork() &&
           proc->parent())
          {
-         int status;
+         int pid, status;
 
          CSOCKET->close();
 
@@ -3408,8 +3410,8 @@ no_monitoring_process:
 
       int nkids;
       cpu_set_t cpuset;
-      pid_t pid_to_wait;
       bool baffinity = false;
+      pid_t pid, pid_to_wait;
       UTimeVal to_sleep(0L, 500L * 1000L);
 
 #  if defined(HAVE_SCHED_GETAFFINITY) && !defined(U_SERVER_CAPTIVE_PORTAL)
@@ -3424,12 +3426,7 @@ no_monitoring_process:
 
       U_INTERNAL_ASSERT_EQUALS(rkids, 0)
 
-      if (preforked_num_kids <= 0) nkids = 1;
-      else
-         {
-         pid_to_wait  = -1;
-         nkids        = preforked_num_kids;
-         }
+      nkids = (preforked_num_kids <= 0 ? 1 : (pid_to_wait = -1, preforked_num_kids));
 
       U_INTERNAL_DUMP("nkids = %d", nkids)
 
@@ -3444,33 +3441,46 @@ no_monitoring_process:
                {
                ++rkids;
 
+               if (preforked_num_kids <= 0) pid_to_wait = proc->_pid;
+
+               U_SRV_LOG("Started new child (pid %d), up to %u children", proc->_pid, rkids);
+
                U_INTERNAL_DUMP("up to %u children, UNotifier::num_connection = %d", rkids, UNotifier::num_connection)
-
-               pid = proc->pid();
-
-               CPU_ZERO(&cpuset);
-
-               if (baffinity)
-                  {
-#              ifdef SO_INCOMING_CPU
-                  USocket::incoming_cpu = rkids-1;
-#              endif
-
-                  u_bind2cpu(&cpuset, pid, rkids); // Pin the process to a particular cpu...
-                  }
-
-               U_SRV_LOG("Started new child (pid %d), up to %u children, affinity mask: %x", pid, rkids, CPUSET_BITS(&cpuset)[0]);
-
-               if (preforked_num_kids <= 0) pid_to_wait = pid;
-
-               if (set_realtime_priority) u_switch_to_realtime_priority(pid);
                }
 
             if (proc->child())
                {
                U_INTERNAL_DUMP("child = %P UNotifier::num_connection = %d", UNotifier::num_connection)
 
-#           if defined(HAVE_LIBNUMA) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#           ifndef U_SERVER_CAPTIVE_PORTAL
+               if (baffinity)
+                  {
+                  int cpu;
+                  char buffer[64];
+                  uint32_t sz = 0;
+
+                  CPU_ZERO(&cpuset);
+
+                  u_bind2cpu(&cpuset, rkids); // Pin the process to a particular cpu...
+
+#              ifdef SO_INCOMING_CPU
+                  USocket::incoming_cpu = rkids;
+#              endif
+
+                  cpu = U_SYSCALL_NO_PARAM(sched_getcpu);
+
+#              ifdef HAVE_SCHED_GETCPU
+                  if (USocket::incoming_cpu != cpu &&
+                      USocket::incoming_cpu != -1)
+                     {
+                     sz = u__snprintf(buffer, sizeof(buffer), " (EXPECTED CPU %d)", USocket::incoming_cpu);
+                     }
+#             endif
+
+                  U_SRV_LOG("New child started, affinity mask: %x, cpu: %d%.*s", CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
+                  }
+
+#             ifdef HAVE_LIBNUMA
                if (U_SYSCALL_NO_PARAM(numa_max_node))
                   {
                   struct bitmask* bmask = (struct bitmask*) U_SYSCALL(numa_bitmask_alloc, "%u", 16);
@@ -3480,6 +3490,9 @@ no_monitoring_process:
                   U_SYSCALL_VOID(numa_set_membind,  "%p", bmask);
                   U_SYSCALL_VOID(numa_bitmask_free, "%p", bmask);
                   }
+#             endif
+
+               if (set_realtime_priority) u_switch_to_realtime_priority();
 #           endif
 
                /**

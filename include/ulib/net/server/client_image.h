@@ -360,9 +360,6 @@ public:
 
 protected:
    USocket* socket;
-#ifndef U_HTTP2_DISABLE
-   void* connection;
-#endif
 #ifdef U_THROTTLING_SUPPORT
    UString uri;
    uint64_t bytes_sent;

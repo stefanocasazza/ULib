@@ -6636,7 +6636,7 @@ static int checkStatusNodog(UStringRep* key, UStringRep* data)
    U_INTERNAL_ASSERT_MAJOR(nodog_rec->sz, 0)
 
    if (nodog_rec->status == 2 &&
-       nodog_rec->since <= (start_op - (3 * 30 * 24 * 60 * 60))) // 3 month
+       nodog_rec->since <= (start_op - (2 * 30 * 24 * 60 * 60))) // 2 month
       {
       U_LOGGER("*** AP TO REMOVE: AP(%v) ***", nodog_rec->hostname.rep);
 

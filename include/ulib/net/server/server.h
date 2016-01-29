@@ -345,7 +345,6 @@ public:
 #define U_SRV_SPINLOCK_DATA_SESSION UServer_Base::ptr_shared_data->spinlock_data_session
 #define U_SRV_SPINLOCK_DB_NOT_FOUND UServer_Base::ptr_shared_data->spinlock_db_not_found
 
-   static pid_t pid;
    static ULock* lock_user1;
    static ULock* lock_user2;
    static int preforked_num_kids; // keeping a pool of children and that they accept connections themselves
@@ -399,8 +398,8 @@ public:
       }
 
    static uint32_t           nClientIndex;
-   static UClientImage_Base* pClientImage;
    static UClientImage_Base* vClientImage;
+   static UClientImage_Base* pClientImage;
    static UClientImage_Base* eClientImage;
 
    static bool isPreForked()

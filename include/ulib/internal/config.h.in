@@ -362,6 +362,9 @@
 /* has sched_getaffinity */
 #undef HAVE_SCHED_GETAFFINITY
 
+/* has sched_getcpu */
+#undef HAVE_SCHED_GETCPU
+
 /* Define to 1 if you have the <sched.h> header file. */
 #undef HAVE_SCHED_H
 

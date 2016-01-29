@@ -20,14 +20,117 @@
 #define HTTP2_CONNECTION_PREFACE "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n" // (24 bytes)
 
 class UHTTP;
-class UClientImage_Base;
 class UHashMap<UString>;
+class UClientImage_Base;
 
 class U_EXPORT UHTTP2 {
 public:
 
+   enum SettingsId {
+      HEADER_TABLE_SIZE      = 1,
+      ENABLE_PUSH            = 2,
+      MAX_CONCURRENT_STREAMS = 3,
+      INITIAL_WINDOW_SIZE    = 4,
+      MAX_FRAME_SIZE         = 5,
+      MAX_HEADER_LIST_SIZE   = 6
+   };
+
+   struct Settings {
+      uint32_t header_table_size;
+      uint32_t enable_push;
+      uint32_t max_concurrent_streams;
+      uint32_t initial_window_size;
+      uint32_t max_frame_size;
+      uint32_t max_header_list_size;
+   };
+
+   enum StreamState {
+      STREAM_STATE_IDLE        = 0x000,
+      STREAM_STATE_RESERVED    = 0x001,
+      STREAM_STATE_OPEN        = 0x002,
+      STREAM_STATE_HALF_CLOSED = 0x004,
+      STREAM_STATE_CLOSED      = 0x008
+   };
+
+   enum ConnectionState {
+      CONN_STATE_IDLE          = 0x000,
+      CONN_STATE_OPEN          = 0x001,
+      CONN_STATE_IS_CLOSING    = 0x002
+   };
+
+   struct Stream {
+      int32_t id;
+      int32_t state;
+      // internal
+      int32_t inp_window;
+      int32_t out_window;
+      // priority
+      uint32_t priority_dependency; // 0 if not set
+          char priority_weight;     // 0 if not set
+          bool priority_exclusive;
+   };
+
    static void ctor();
    static void dtor();
+
+   class Connection {
+   public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   UHashMap<UString> itable; // headers request
+   Settings peer_settings; // settings
+   ConnectionState state; // state
+   // internal
+   int32_t inp_window;
+   int32_t out_window;
+   int32_t hpack_max_capacity; // the value set by SETTINGS_HEADER_TABLE_SIZE
+   // streams
+   int32_t max_open_stream_id;
+   int32_t max_processed_stream_id;
+   Stream streams[100];
+
+   // COSTRUTTORI
+
+    Connection();
+   ~Connection()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, Connection)
+      }
+
+   // SERVICES
+
+   static void preallocate(uint32_t max_connection)
+      {
+      U_TRACE(0+256, "UHTTP2::Connection::preallocate(%u)", max_connection)
+
+      U_INTERNAL_ASSERT_EQUALS(vConnection, 0)
+
+      U_INTERNAL_DUMP("sizeof(Connection) = %u sizeof(Stream) = %u", sizeof(Connection), sizeof(Stream))
+
+      vConnection = new Connection[max_connection];
+      }
+
+   // DEBUG
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const U_EXPORT;
+#endif
+
+   private:
+#ifdef U_COMPILER_DELETE_MEMBERS
+   Connection(const Connection&) = delete;
+   Connection& operator=(const Connection&) = delete;
+#else
+   Connection(const Connection&)            {}
+   Connection& operator=(const Connection&) { return *this; }
+#endif
+   };
 
 protected:
    enum FrameTypesId {
@@ -94,63 +197,6 @@ protected:
       uint8_t flags;
    };
 
-   enum SettingsId {
-      HEADER_TABLE_SIZE      = 1,
-      ENABLE_PUSH            = 2,
-      MAX_CONCURRENT_STREAMS = 3,
-      INITIAL_WINDOW_SIZE    = 4,
-      MAX_FRAME_SIZE         = 5,
-      MAX_HEADER_LIST_SIZE   = 6
-   };
-
-   struct Settings {
-      uint32_t header_table_size;
-      uint32_t enable_push;
-      uint32_t max_concurrent_streams;
-      uint32_t initial_window_size;
-      uint32_t max_frame_size;
-      uint32_t max_header_list_size;
-   };
-
-   enum StreamState {
-      STREAM_STATE_IDLE        = 0x000,
-      STREAM_STATE_RESERVED    = 0x001,
-      STREAM_STATE_OPEN        = 0x002,
-      STREAM_STATE_HALF_CLOSED = 0x004,
-      STREAM_STATE_CLOSED      = 0x008
-   };
-
-   enum ConnectionState {
-      CONN_STATE_OPEN,
-      CONN_STATE_IS_CLOSING
-   };
-
-   struct Stream {
-      int id;
-      int state;
-      int  input_window;
-      int output_window;
-      // priority
-      uint32_t priority_dependency; // 0 if not set
-          char priority_weight;     // 0 if not set
-          bool priority_exclusive;
-   };
-
-   struct Connection {
-      ConnectionState state; // state
-      Settings peer_settings; // settings
-      UHashMap<UString> itable; // headers request
-      // internal
-      uint32_t  input_window;
-      uint32_t output_window;
-       int32_t hpack_max_capacity; // the value set by SETTINGS_HEADER_TABLE_SIZE
-      // streams
-      int max_open_stream_id;
-      uint32_t num_responding_streams;
-      uint32_t max_processed_stream_id;
-      Stream streams[100];
-   };
-
    struct HpackHeaderTableEntry {
       const UString* name;
       const UString* value;
@@ -158,14 +204,14 @@ protected:
 
    static int nerror;
    static Stream* pStream;
-   static bool settings_ack;
    static FrameHeader frame;
-   static void* pConnectionEnd;
+   static bool settings_ack;
+   static Connection* vConnection;
    static Connection* pConnection;
    static const Settings settings;
    static const char* upgrade_settings;
 
-   static uint32_t hash_static_table[61];
+   static uint32_t               hash_static_table[61];
    static HpackHeaderTableEntry hpack_static_table[61];
 
    // SERVICES
@@ -175,6 +221,7 @@ protected:
    static void openStream();
    static void manageData();
    static void manageHeaders();
+   static void resetDataRead();
    static int  handlerRequest();
    static void handlerResponse();
    static bool readBodyRequest();
