@@ -452,7 +452,7 @@ public:
       U_INTERNAL_DUMP("U_ClientImage_parallelization = %d proc->child() = %b",
                        U_ClientImage_parallelization,     proc->child())
 
-      if (U_ClientImage_parallelization == 1) U_RETURN(true); // 1 => child of parallelization
+      if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -464,7 +464,7 @@ public:
       U_INTERNAL_DUMP("U_ClientImage_parallelization = %d proc->parent() = %b",
                        U_ClientImage_parallelization,     proc->parent())
 
-      if (U_ClientImage_parallelization == 2) U_RETURN(true); // 2 => parent of parallelization
+      if (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT) U_RETURN(true);
 
       U_RETURN(false);
       }

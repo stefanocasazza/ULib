@@ -109,7 +109,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
 
          if (errno != EAGAIN)
             {
-            if (U_ClientImage_parallelization != 1) // 1 => child of parallelization
+            if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD)
                {
                if (errno != ECONNRESET &&
                    sk == UServer_Base::csocket)
@@ -143,7 +143,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
             {
             U_INTERNAL_DUMP("byte_read = %d errno = %d", byte_read, errno)
 
-            if (U_ClientImage_parallelization != 1) sk->abortive_close(); // 1 => child of parallelization
+            if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD) sk->abortive_close();
 
             U_RETURN(false);
             }

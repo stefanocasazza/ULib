@@ -3024,8 +3024,8 @@ next: U_DUMP("UServer_Base::isParallelizationChild() = %b UServer_Base::isParall
       U_INTERNAL_DUMP("U_http_info.nResponseCode = %d UClientImage_Base::wbuffer(%u) = %V UClientImage_Base::body(%u) = %V",
                        U_http_info.nResponseCode,     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep, UClientImage_Base::body->size(), UClientImage_Base::body->rep)
 
-      if (set_environment == false            ||
-          (U_ClientImage_parallelization != 2 && // 2 => parent of parallelization
+      if (set_environment == false                                   ||
+          (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT &&
            processCGIOutput(cgi->environment_type == U_SHELL, false)))
          {
          U_RETURN(true);
@@ -3101,7 +3101,7 @@ next:
    U_DUMP("UServer_Base::isParallelizationChild() = %b UServer_Base::isParallelizationParent() = %b",
            UServer_Base::isParallelizationChild(),     UServer_Base::isParallelizationParent())
 
-   if (U_ClientImage_parallelization != 2) // 2 => parent of parallelization
+   if (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)
       {
       U_INTERNAL_DUMP("U_http_info.nResponseCode = %d UClientImage_Base::wbuffer(%u) = %V UClientImage_Base::body(%u) = %V",
                        U_http_info.nResponseCode,     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep, UClientImage_Base::body->size(), UClientImage_Base::body->rep)
@@ -3779,7 +3779,7 @@ file_in_cache:
 
          usp_page->runDynamicPage(0);
 
-         if (U_ClientImage_parallelization != 2) setDynamicResponse(); // 2 => parent of parallelization
+         if (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT) setDynamicResponse();
 
          U_RESET_MODULE_NAME;
 
@@ -4226,7 +4226,7 @@ void UHTTP::setEndRequestProcessing()
 
          U_INTERNAL_DUMP("U_ClientImage_parallelization = %d", U_ClientImage_parallelization)
 
-         if (U_ClientImage_parallelization <= 1) // 1 => child of parallelization
+         if (U_ClientImage_parallelization <= U_PARALLELIZATION_CHILD)
             {
             (void) UFile::rmdir(*tmpdir, true);
 

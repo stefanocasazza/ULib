@@ -485,7 +485,7 @@ void UClientImage_Base::handlerDelete()
                     "UEventFd::fd = %d socket->iSockDesc = %d "
                     "UNotifier::num_connection = %d UNotifier::min_connection = %d "
                     "U_ClientImage_parallelization = %d sfd = %d UEventFd::op_mask = %B",
-                    UEventFd::fd,   socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
+                    UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
                     U_ClientImage_parallelization, sfd, UEventFd::op_mask);
             }
 #     endif
@@ -681,10 +681,7 @@ void UClientImage_Base::endRequest()
 
       // NB: URI requested can be URL encoded (ex: vuoto%2Etxt) so we cannot use snprintf()...
 
-      char buffer1[256],
-           buffer2[64];
-
-      uint32_t sz2 = 0;
+      char buffer1[256];
       char* ptr1 = buffer1;
 
       u__memcpy(ptr1, "request \"", U_CONSTANT_SIZE("request \""), __PRETTY_FUNCTION__);
@@ -703,20 +700,26 @@ void UClientImage_Base::endRequest()
       u__memcpy(ptr1, "\" run in ", U_CONSTANT_SIZE("\" run in "), __PRETTY_FUNCTION__);
                 ptr1 +=             U_CONSTANT_SIZE("\" run in ");
 
-      int cpu = U_SYSCALL_NO_PARAM(sched_getcpu);
+      if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), "%ld ms", time_run);
+      else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1),  "%g ms", chronometer->getTimeElapsed());
 
-      U_INTERNAL_DUMP("cpu = %d USocket::incoming_cpu = %d", cpu, USocket::incoming_cpu)
-
-#  ifdef SO_INCOMING_CPU
-      if (USocket::incoming_cpu != cpu &&
-          USocket::incoming_cpu != -1)
+      if (UServer_Base::csocket->isOpen())
          {
-         sz2 = u__snprintf(buffer2, sizeof(buffer2), " (EXPECTED CPU %d)", USocket::incoming_cpu);
-         }
-#  endif
+         uint32_t len = 0;
+         int cpu = U_SYSCALL_NO_PARAM(sched_getcpu), scpu = -1;
 
-      if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), "%ld ms on cpu %d%.*s",                      time_run, cpu, sz2, buffer2);
-      else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1),  "%g ms on cpu %d%.*s", chronometer->getTimeElapsed(), cpu, sz2, buffer2);
+#     ifdef SO_INCOMING_CPU
+         len = sizeof(socklen_t);
+
+         (void) UServer_Base::csocket->getSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&scpu, len);
+
+         len = ((USocket::incoming_cpu == scpu || USocket::incoming_cpu == -1) ? 0 : U_CONSTANT_SIZE(" [DIFFER]"));
+#     endif
+
+         U_INTERNAL_DUMP("USocket::incoming_cpu = %d sched cpu = %d socket cpu = %d", USocket::incoming_cpu, cpu, scpu)
+
+         if (len) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), ", CPU: %d sched(%d) socket(%d)%.*s", USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
+         }
 
       U_INTERNAL_ASSERT_MINOR((ptrdiff_t)(ptr1-buffer1), (ptrdiff_t)sizeof(buffer1))
 
@@ -862,7 +865,7 @@ void UClientImage_Base::prepareForRead()
       {
       U_ASSERT(UServer_Base::proc->child())
 
-      U_ClientImage_parallelization = 1; // 1 => child of parallelization
+      U_ClientImage_parallelization = U_PARALLELIZATION_CHILD;
       }
 #endif
 
@@ -1011,7 +1014,7 @@ start:
    if (genericRead() == false)
       {
       if (U_ClientImage_state == U_PLUGIN_HANDLER_AGAIN &&
-          U_ClientImage_parallelization != 1) // 1 => child of parallelization
+          U_ClientImage_parallelization != U_PARALLELIZATION_CHILD)
          {
          U_INTERNAL_ASSERT(socket->isOpen())
 
@@ -1076,7 +1079,7 @@ pipeline:
 dmiss:
       U_INTERNAL_DUMP("U_ClientImage_parallelization = %d", U_ClientImage_parallelization)
 
-      if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
+      if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD)
          {
          if (UNotifier::waitForRead(UServer_Base::csocket->iSockDesc, U_TIMEOUT_MS) != 1 ||
              (resetReadBuffer(), USocketExt::read(UServer_Base::csocket, *rbuffer, getCountToRead(), 0)) == false)
@@ -1111,7 +1114,7 @@ dmiss:
       U_INTERNAL_DUMP("data_pending(%u) = %V", data_pending->size(), data_pending->rep)
 
       U_INTERNAL_ASSERT(socket->isOpen())
-      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
       U_RETURN(U_NOTIFIER_OK);
       }
@@ -1272,7 +1275,7 @@ processing:
    if (isRequestNeedProcessing())
       {
       U_INTERNAL_ASSERT_POINTER(callerHandlerRequest)
-      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 2) // 2 => parent of parallelization
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_state & (U_PLUGIN_HANDLER_AGAIN | U_PLUGIN_HANDLER_ERROR), 0)
 
       U_ClientImage_state = callerHandlerRequest();
@@ -1291,7 +1294,7 @@ processing:
       U_INTERNAL_DUMP("U_http_info.nResponseCode = %u count = %u UEventFd::op_mask = %d %B",
                        U_http_info.nResponseCode,     count,     UEventFd::op_mask, UEventFd::op_mask)
 
-      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 2) // 2 => parent of parallelization
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
       if (count == 0)
          {
@@ -1377,14 +1380,14 @@ error:
 
    if (U_ClientImage_close)
       {
-end:  if (U_ClientImage_parallelization == 1) goto death; // 1 => child of parallelization
+end:  if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) goto death;
 
       U_RETURN(U_NOTIFIER_DELETE);
       }
 
    // NB: maybe we have some more request to services on the same connection...
 
-   if (U_ClientImage_parallelization == 1)
+   if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD)
       {
       U_INTERNAL_ASSERT_DIFFERS(socket->iSockDesc, -1)
 
@@ -1397,7 +1400,7 @@ death:
    last_event = u_now->tv_sec;
 
    U_INTERNAL_ASSERT(socket->isOpen())
-   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // 1 => child of parallelization
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
    U_INTERNAL_DUMP("request(%u) = %V", request->size(), request->rep);
 
@@ -1412,7 +1415,7 @@ bool UClientImage_Base::writeResponse()
 
    U_INTERNAL_ASSERT(*wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
-   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 2) // 2 => parent of parallelization
+   U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
    int iBytesWrite;
    uint32_t sz1     = wbuffer->size(),
@@ -1567,7 +1570,7 @@ loop:
 #endif
    {
 #ifdef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
-   if (U_ClientImage_parallelization != 1) goto end; // 1 => child of parallelization
+   if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD) goto end;
 #endif
    }
 
@@ -1589,7 +1592,7 @@ loop:
       if (iBytesWrite > 0)
          {
          if (UServer_Base::bssl ||
-             U_ClientImage_parallelization == 1) // NB: we must not have pending write...
+             U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
             {
             if (bflag == false)
                {
@@ -1701,7 +1704,7 @@ int UClientImage_Base::handlerResponse()
    if (socket->isOpen())
       {
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
-      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 1) // NB: we must not have pending write...
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
       U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
 
 #  ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
@@ -1802,8 +1805,8 @@ write:
 #  ifdef DEBUG
       else
          {
-         U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, 2) // 2 => parent of parallelization
          U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
+         U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
          }
 #  endif
 
@@ -1829,7 +1832,7 @@ write:
 
       if (bwrite) U_RETURN(U_NOTIFIER_OK);
 
-      if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
+      if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD)
          {
 wait:    if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto write;
 
@@ -1845,7 +1848,7 @@ wait:    if (UNotifier::waitForWrite(socket->iSockDesc, U_TIMEOUT_MS) == 1) goto
          U_RETURN(U_NOTIFIER_DELETE);
          }
 
-      if (U_ClientImage_parallelization == 1) goto wait; // 1 => child of parallelization
+      if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) goto wait;
 
       prepareForSendfile();
 

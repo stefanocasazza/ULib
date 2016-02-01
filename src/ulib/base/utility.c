@@ -1077,7 +1077,7 @@ void u_bind2cpu(cpu_set_t* cpuset, int n)
 #endif
 }
 
-void u_switch_to_realtime_priority()
+void u_switch_to_realtime_priority(void)
 {
 #if !defined(U_SERVER_CAPTIVE_PORTAL) && defined(_POSIX_PRIORITY_SCHEDULING) && (_POSIX_PRIORITY_SCHEDULING > 0) && (defined(HAVE_SCHED_H) || defined(HAVE_SYS_SCHED_H))
    struct sched_param sp;

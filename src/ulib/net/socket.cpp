@@ -599,7 +599,9 @@ void USocket::reusePort(int _flags)
       }
 #endif
 
+#ifndef U_COVERITY_FALSE_POSITIVE // USE_AFTER_FREE
    setFlags(_flags);
+#endif
 }
 
 void USocket::setRemote()
@@ -940,7 +942,7 @@ void USocket::closesocket()
 
    U_INTERNAL_DUMP("U_ClientImage_parallelization = %u", U_ClientImage_parallelization)
 
-   if (U_ClientImage_parallelization == 1) // 1 => child of parallelization
+   if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD)
       {
       iSockDesc = -1;
 

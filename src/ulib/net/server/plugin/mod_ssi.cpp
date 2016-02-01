@@ -278,7 +278,7 @@ U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& val
 
    if (result == false      ||
        alternative_response ||
-       U_ClientImage_parallelization == 2) // 2 => parent of parallelization
+       U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)
       {
       alternative_response = 1; // 1 => response already complete (nothing to do)
 
