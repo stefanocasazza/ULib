@@ -291,7 +291,7 @@ void u_trace_init(int bsignal)
 
          if (u_trace_fd == -1)
             {
-            U_WARNING("error on create file %S", name);
+            U_WARNING("Error on create file %S", name);
 
             return;
             }
@@ -304,7 +304,7 @@ void u_trace_init(int bsignal)
 
             if (ftruncate(u_trace_fd, file_size))
                {
-               U_WARNING("out of space on file system, (required %u bytes)", file_size);
+               U_WARNING("Out of space on file system, (required %u bytes)", file_size);
 
                file_size = 0;
 

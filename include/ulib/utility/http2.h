@@ -62,8 +62,8 @@ public:
       int32_t id;
       int32_t state;
       // internal
-      int32_t inp_window;
       int32_t out_window;
+      int32_t inp_window;
       // priority
       uint32_t priority_dependency; // 0 if not set
           char priority_weight;     // 0 if not set
@@ -87,8 +87,8 @@ public:
    Settings peer_settings; // settings
    ConnectionState state; // state
    // internal
-   int32_t inp_window;
-   int32_t out_window;
+   int32_t out_window; //   sender flow control window
+   int32_t inp_window; // receiver flow control window
    int32_t hpack_max_capacity; // the value set by SETTINGS_HEADER_TABLE_SIZE
    // streams
    int32_t max_open_stream_id;

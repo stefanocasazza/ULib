@@ -919,7 +919,7 @@ void UHTTP::init()
 
          if (UFile::chdir(dir.data(), true) == false)
             {
-            U_ERROR("chdir to directory %V failed", dir.rep);
+            U_ERROR("Chdir to directory %V failed", dir.rep);
             }
 
          ruby_on_rails = ruby_embed->runRUBY(0, 0);
@@ -3156,7 +3156,7 @@ U_NO_EXPORT bool UHTTP::callService()
 
    if (file_data == 0) U_RETURN(false);
 
-   U_DEBUG("called service not in cache: %.*S - inotify %s enabled", U_FILE_TO_TRACE(*file), UServer_Base::handler_inotify ? "is" : "NOT");
+   U_DEBUG("Called service not in cache: %.*S - inotify %s enabled", U_FILE_TO_TRACE(*file), UServer_Base::handler_inotify ? "is" : "NOT");
 
    U_RETURN(true);
 }
@@ -3628,7 +3628,7 @@ set_uri: U_http_info.uri     = alias->data();
       // U_ASSERT_EQUALS(UClientImage_Base::request_uri->findWhiteSpace(0), U_NOT_FOUND)
 
 #     ifdef DEBUG
-         if (UClientImage_Base::request_uri->findWhiteSpace(0) != U_NOT_FOUND) U_ERROR("request URI has space: %V", UClientImage_Base::request_uri->rep);
+         if (UClientImage_Base::request_uri->findWhiteSpace(0) != U_NOT_FOUND) U_ERROR("Request URI has space: %V", UClientImage_Base::request_uri->rep);
 #     endif
          }
       }
@@ -4614,6 +4614,17 @@ void UHTTP::clearSessionSSL()
           db_session_ssl = 0;
 }
 #endif
+
+/**
+ * How Does Authorization Work ?
+ *
+ * 1) User submits login form. Form sends login and password to ULib server.
+ * 2) ULib server validates login data, generates random string (session id), saves it to closed server storage
+ *    in pair with user login, and sends session id to browser in response as cookie. Browser stores cookie.
+ * 3) User visits any page on this domain and browser sends a cookie to server for each request.
+ * 4) ULib server checks if cookie has been sent, if such cookie exists in server storage with pair with login. Identifies user, provides access to his private content.
+ * 5) Logout button removes the cookie from browser and sid-login pair from server storage. Browser does not send cookies, server does not see it and does not see sid-login pair.
+ */
 
 void UHTTP::addSetCookie(const UString& cookie)
 {
@@ -7911,7 +7922,7 @@ nocontent:
 
             if (result)
                {
-               U_WARNING("insert data on db %.*S failed with error %d", U_FILE_TO_TRACE(*db_not_found), result);
+               U_WARNING("Insert data on db %.*S failed with error %d", U_FILE_TO_TRACE(*db_not_found), result);
                }
 
             return;
@@ -7943,7 +7954,7 @@ nocontent:
 
          (void) pathname->replace(U_FILE_TO_PARAM(*file));
 
-         U_DEBUG("found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT");
+         U_DEBUG("Found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT");
 
          manageDataForCache();
 
@@ -7962,7 +7973,7 @@ nocontent:
 
             if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0)
                {
-               U_DEBUG("request usp service not in cache: %V - try to compile", pathname->rep);
+               U_DEBUG("Request usp service not in cache: %V - try to compile", pathname->rep);
 
                (void) pathname->replace(buffer, sz);
 

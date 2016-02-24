@@ -108,9 +108,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%d,%d", day, year)
 
-      julian = toJulian(1,1,year) - 1 + day;
-
-      fromJulian(julian);
+      fromJulian(julian = toJulian(1,1,year) - 1 + day);
       }
 
    UTimeDate(int day, int month, int year)
@@ -226,9 +224,7 @@ public:
 
       // NB: we need to consider the case (day < 0)...
 
-      julian = getJulian() + day;
-
-      fromJulian(julian);
+      fromJulian(julian = getJulian() + day);
       }
 
    void addYears(int year)
@@ -307,9 +303,9 @@ public:
       U_RETURN(day_of_week);
       }
 
-   void setPrevWeek()
+   void setMondayPrevWeek()
       {
-      U_TRACE_NO_PARAM(0, "UTimeDate::setPrevWeek()")
+      U_TRACE_NO_PARAM(0, "UTimeDate::setMondayPrevWeek()")
 
       int day_of_week = getDayOfWeek();
 
@@ -324,9 +320,9 @@ public:
       addDays(day_of_week >= 2 ? -day_of_week+1 : -6-day_of_week);
       }
 
-   void setNextWeek()
+   void setMondayNextWeek()
       {
-      U_TRACE_NO_PARAM(0, "UTimeDate::setNextWeek()")
+      U_TRACE_NO_PARAM(0, "UTimeDate::setMondayNextWeek()")
 
       int day_of_week = getDayOfWeek();
 
@@ -365,15 +361,15 @@ public:
       if (week > 1) addDays((week-1) * 7);
       }
 
-   void setPrevMonth()
+   void setMondayPrevMonth(int month) // set monday of previous month
       {
-      U_TRACE_NO_PARAM(0, "UTimeDate::setPrevMonth()")
+      U_TRACE(0, "UTimeDate::setMondayPrevMonth(%d)", month)
 
-      addDays(-_day);
+      fromJulian(julian = toJulian(1, month, _year));
 
       setDayOfWeek(1);
       }
-      
+
    // Print date with format
 
           UString strftime(const char* fmt);

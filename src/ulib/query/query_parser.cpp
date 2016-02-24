@@ -93,7 +93,7 @@ bool UQueryParser::parse(const UString& query)
 
    if (tree)
       {
-      if (t.atEnd() == false) U_ERROR("syntax error on query - GARBAGE AT END");
+      if (t.atEnd() == false) U_ERROR("Syntax error on query - GARBAGE AT END");
 
       switch (tree->type)
          {
@@ -179,7 +179,7 @@ U_NO_EXPORT UQueryNode* UQueryParser::parseAtom()
       {
       UQueryNode* expr = parseExpr();
 
-      if (isBraceEnd() == false) U_ERROR("syntax error on query - RUNAWAY PARENTHESIS");
+      if (isBraceEnd() == false) U_ERROR("Syntax error on query - RUNAWAY PARENTHESIS");
 
       U_RETURN_POINTER(expr,UQueryNode);
       }

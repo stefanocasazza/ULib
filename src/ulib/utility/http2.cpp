@@ -652,7 +652,7 @@ host: U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
 case_2_3: // GET - POST
 
-      if (value_is_indexed) U_http_method_type = (index == 2 ? HTTP_GET : HTTP_POST);
+      if (value_is_indexed) U_http_method_type = (index == 2 ? HTTP_GET : (U_http_method_num = 2, HTTP_POST));
       else
          {
          ptr = hpackDecodeString(ptr, endptr, &value);
@@ -1041,9 +1041,9 @@ void UHTTP2::openStream()
    U_INTERNAL_ASSERT(pConnection->max_open_stream_id <= frame.stream_id)
 
        pStream->out_window =
-   pConnection->out_window =                   settings.initial_window_size;
+   pConnection->out_window =                   settings.initial_window_size; //   sender flow control window
        pStream->inp_window =
-   pConnection->inp_window = pConnection->peer_settings.initial_window_size;
+   pConnection->inp_window = pConnection->peer_settings.initial_window_size; // receiver flow control window
 
    pStream->id                     =
    pConnection->max_open_stream_id = frame.stream_id;
@@ -1495,13 +1495,15 @@ void UHTTP2::handlerResponse()
 {
    U_TRACE_NO_PARAM(0, "UHTTP2::handlerResponse()")
 
-   U_ASSERT(UClientImage_Base::wbuffer->empty())
-   U_ASSERT(UClientImage_Base::wbuffer->capacity())
-
    U_INTERNAL_DUMP("ext(%u) = %#V", UHTTP::ext->size(), UHTTP::ext->rep)
 
-   char* ptr   = UClientImage_Base::wbuffer->data();
-   uint32_t sz = HTTP2_FRAME_HEADER_SIZE+1, sz1 = UHTTP::set_cookie->size(), sz2 = UHTTP::ext->size();
+   uint32_t sz  = HTTP2_FRAME_HEADER_SIZE+1,
+            sz1 = UHTTP::set_cookie->size(),
+            sz2 = UHTTP::ext->size();
+
+   UClientImage_Base::wbuffer->setBuffer(200U + sz1 + sz2);
+
+            char* ptr = UClientImage_Base::wbuffer->data();
    unsigned char* dst = (unsigned char*)ptr+HTTP2_FRAME_HEADER_SIZE+1;
 
    if (U_http_info.nResponseCode == HTTP_NOT_IMPLEMENTED ||
@@ -1968,8 +1970,8 @@ const char* UHTTP2::getFrameTypeDescription(char type)
 U_EXPORT const char* UHTTP2::Connection::dump(bool reset) const
 {
    *UObjectIO::os << "state                     " << state                   << '\n'
-                  << "inp_window                " << inp_window              << '\n'
                   << "out_window                " << out_window              << '\n'
+                  << "inp_window                " << inp_window              << '\n'
                   << "hpack_max_capacity        " << hpack_max_capacity      << '\n'
                   << "max_open_stream_id        " << max_open_stream_id      << '\n'
                   << "max_processed_stream_id   " << max_processed_stream_id << '\n'

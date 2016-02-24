@@ -95,7 +95,7 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      if (argv[1] == 0) U_ERROR("filename not specified");
+      if (argv[1] == 0) U_ERROR("Filename not specified");
 
       UString filename(argv[1]);
 
@@ -118,7 +118,7 @@ public:
             bpreprocessing_failed = true;
 #        endif
 
-            U_WARNING("preprocessing %V failed", filename.rep);
+            U_WARNING("Preprocessing %V failed", filename.rep);
             }
          }
       

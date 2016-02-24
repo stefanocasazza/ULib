@@ -326,7 +326,7 @@ void UObjectDB::init(bool flag, bool info)
             {
             if (ftruncate(fd, file_size))
                {
-               U_WARNING("out of space on file system, (required %u bytes)", file_size);
+               U_WARNING("Out of space on file system, (required %u bytes)", file_size);
 
                file_size = 0;
                }

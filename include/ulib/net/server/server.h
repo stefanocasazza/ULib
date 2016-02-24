@@ -786,7 +786,7 @@ public:
       if (pcfg &&
           bssl == false)
          {
-         U_ERROR("you need to set bssl before loading the configuration");
+         U_ERROR("You need to set bssl before loading the configuration");
          }
 #  endif
 

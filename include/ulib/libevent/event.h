@@ -19,7 +19,7 @@
 
 #include <event.h>
 
-U_EXPORT struct event_base* u_ev_base;
+extern U_EXPORT struct event_base* u_ev_base;
 
 /**
  * Basic event from which all events derive.
@@ -29,13 +29,13 @@ U_EXPORT struct event_base* u_ev_base;
  * libevent is a popular API that provides a mechanism to execute a callback
  * function when a specific event occurs on a file descriptor or after a
  * timeout has been reached. Furthermore, libevent also support callbacks due
- * to signals or regular timeouts.
+ * to signals or regular timeouts
  */
 
 class U_EXPORT UEvent_Base : public event {
 public:
 
-   // NB: l'oggetto puo' essere usato come (struct event) in quanto UMemoryError viene allocato dopo...
+   // Check Memory
    U_MEMORY_TEST
 
    // Allocator e Deallocator
@@ -43,20 +43,20 @@ public:
    U_MEMORY_DEALLOCATOR
 
    /**
-    * Event's file descriptor.
+    * Event's file descriptor
     *
-    * @return Event's file descriptor.
+    * @return Event's file descriptor
     */
 
    int fd() { return EVENT_FD(this); }
 
    /**
-    * Checks if there is an event pending.
+    * Checks if there is an event pending
     *
     * @param ev type of event to check. There are 4 kind of events: EV_TIMEOUT, EV_READ, EV_WRITE or EV_SIGNAL. EV_PERSIST is not
-    *           an event, is an event modifier flag, that tells libevent that this event should live until del() is called.
+    *           an event, is an event modifier flag, that tells libevent that this event should live until del() is called
     *
-    * @return true if there is a pending event, false if not.
+    * @return true if there is a pending event, false if not
     */
 
    bool pending(short __ev = EV_READ, UTimeVal* tv = 0)
@@ -69,28 +69,25 @@ public:
       }
 
    /**
-    * Timeout of the event.
+    * Timeout of the event
     *
-    * @return Timeout of the event.
+    * @return Timeout of the event
     */
 
    bool timeout(UTimeVal& tv) { return pending(EV_TIMEOUT, &tv); }
 
    /**
-    * Sets the event's priority.
+    * Sets the event's priority
     *
-    * @param priority New event priority.
+    * @param priority New event priority
     *
-    * @pre The event must be added to UDispatcher.
-    *
+    * @pre The event must be added to UDispatcher
     * @see UDispatcher::priority_init()
     */
 
    bool priority(int _priority)
       {
       U_TRACE(1, "UEvent_Base::priority(%d)", _priority)
-
-      U_INTERNAL_ASSERT_MSG((ev_flags & EVLIST_ACTIVE) != 0, "can't change the priority of an active event")
 
       if (U_SYSCALL(event_priority_set, "%p,%d", this, _priority)) U_RETURN(false);
 
@@ -102,7 +99,7 @@ public:
 #endif
 
 protected:
-   UEvent_Base()                              {} // NB: This is an concept class, you can't instantiate it.
+   UEvent_Base() {} // NB: This is an concept class, you can't instantiate it
 
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS
@@ -115,16 +112,12 @@ private:
 };
 
 /**
- * Generic event object.
+ * Generic event object
  *
- * This object stores all the information about an event, including a callback
- * functor, which is called when the event is fired. The template parameter
- * must be a functor (callable object or function) that can take 2 parameters:
- * an integer (the file descriptor of the fired event) and an event::type (the
- * type of event being fired).
- * There is a specialized version of this class which takes as the template
- * parameter a C function with the ccallback_type signature, just like
- * C @libevent API does.
+ * This object stores all the information about an event, including a callback functor, which is called when the event is fired. The template parameter
+ * must be a functor (callable object or function) that can take 2 parameters: an integer (the file descriptor of the fired event) and an event::type (the
+ * type of event being fired). There is a specialized version of this class which takes as the template parameter a C function with the ccallback_type
+ * signature, just like C @libevent API does
  *
  * @see event< ccallback_type >
  */
@@ -137,9 +130,9 @@ public:
    /**
    * Creates a new event
    *
-   * @param fd       File descriptor to monitor for events.
-   * @param ev       Type of events to monitor (see event::type).
-   * @param handler  Callback functor.
+   * @param fd       File descriptor to monitor for events
+   * @param ev       Type of events to monitor (see event::type)
+   * @param handler  Callback functor
    */
 
    UEvent(int _fd, short __ev, F& handler)
@@ -181,7 +174,7 @@ private:
 };
 
 /**
- * This is the specialization of UEvent for C-style callbacks.
+ * This is the specialization of UEvent for C-style callbacks
  *
  * @see UEvent 
  */
@@ -190,12 +183,12 @@ template <> class U_EXPORT UEvent<ccallback_type> : public UEvent_Base {
 public:
 
    /**
-    * Creates a new event.
+    * Creates a new event
     *
-    * @param fd      File descriptor to monitor for events.
-    * @param ev      Type of events to monitor (see event::type).
-    * @param handler C-style callback function.
-    * @param arg     Arbitrary pointer to pass to the handler as argument.
+    * @param fd      File descriptor to monitor for events
+    * @param ev      Type of events to monitor (see event::type)
+    * @param handler C-style callback function
+    * @param arg     Arbitrary pointer to pass to the handler as argument
     */
 
    UEvent(int _fd, short __ev, ccallback_type handler, void* arg = 0)
@@ -228,16 +221,14 @@ private:
 };
 
 /**
- * UTimerEv event object.
+ * UTimerEv event object
  *
- * This is just a special case of event that is fired only when a timeout is
- * reached. It's just a shortcut to:
- *
+ * This is just a special case of event that is fired only when a timeout is reached. It's just a shortcut to:
  * @code
  * UEvent(-1, 0, handler);
  * @endcode
  *
- * @note This event can't EV_PERSIST.
+ * @note This event can't EV_PERSIST
  *
  * @see timer< ccallback_type >
  */
@@ -246,9 +237,9 @@ template <typename F> class U_EXPORT UTimerEv : public UEvent<F> {
 public:
 
    /**
-    * Creates a new timer event.
+    * Creates a new timer event
     *
-    * @param handler Callback functor.
+    * @param handler Callback functor
     */
 
    UTimerEv(F& handler)
@@ -282,9 +273,9 @@ private:
 
 
 /**
- * This is the specialization of UTimerEv for C-style callbacks.
+ * This is the specialization of UTimerEv for C-style callbacks
  *
- * @note This event can't PERSIST.
+ * @note This event can't PERSIST
  *
  * @see UTimerEv
  */
@@ -293,10 +284,10 @@ template <> class U_EXPORT UTimerEv<ccallback_type> : public UEvent<ccallback_ty
 public:
 
    /**
-    * Creates a new timer event.
+    * Creates a new timer event
     *
-    * @param handler C-style callback function.
-    * @param arg     Arbitrary pointer to pass to the handler as argument.
+    * @param handler C-style callback function
+    * @param arg     Arbitrary pointer to pass to the handler as argument
     */
 
    UTimerEv(ccallback_type handler, void* arg = 0)
@@ -329,16 +320,14 @@ private:
 };
 
 /**
- * Signal event object.
+ * Signal event object
  *
- * This is just a special case of event that is fired when a signal is raised
- * (instead of a file descriptor being active). It's just a shortcut to:
- *
+ * This is just a special case of event that is fired when a signal is raised (instead of a file descriptor being active). It's just a shortcut to:
  * @code
  * event(signum, EV_SIGNAL, handler);
  * @endcode
  *
- * @note This event always EV_PERSIST.
+ * @note This event always EV_PERSIST
  *
  * @see signal< ccallback_type >
  */
@@ -347,10 +336,10 @@ template <typename F> class U_EXPORT USignal : public UEvent<F> {
 public:
 
    /**
-    * Creates a new signal event.
+    * Creates a new signal event
     *
-    * @param signum  Signal number to monitor.
-    * @param handler Callback functor.
+    * @param signum  Signal number to monitor
+    * @param handler Callback functor
     */
 
    USignal(int _signum, F& handler)
@@ -366,9 +355,9 @@ public:
       }
 
    /**
-    * Event's signal number.
+    * Event's signal number
     *
-    * @return Event's signal number.
+    * @return Event's signal number
     */
 
    int signum() const { return EVENT_SIGNAL(this); }
@@ -392,9 +381,9 @@ private:
 
 
 /**
- * This is the specialization of USignal for C-style callbacks.
+ * This is the specialization of USignal for C-style callbacks
  *
- * @note This event always EV_PERSIST.
+ * @note This event always EV_PERSIST
  *
  * @see USignal
  */
@@ -403,11 +392,11 @@ template <> class U_EXPORT USignal<ccallback_type> : public UEvent<ccallback_typ
 public:
 
    /**
-    * Creates a new signal event.
+    * Creates a new signal event
     *
-    * @param signum  Signal number to monitor.
-    * @param handler C-style callback function.
-    * @param arg     Arbitrary pointer to pass to the handler as argument.
+    * @param signum  Signal number to monitor
+    * @param handler C-style callback function
+    * @param arg     Arbitrary pointer to pass to the handler as argument
     */
 
    USignal(int _signum, ccallback_type handler, void* arg = 0)
@@ -423,9 +412,9 @@ public:
       }
 
    /**
-    * Event's signal number.
+    * Event's signal number
     *
-    * @return Event's signal number.
+    * @return Event's signal number
     */
 
    int signum() const { return EVENT_SIGNAL(this); }
@@ -447,33 +436,28 @@ private:
 #endif
 };
 
-typedef UEvent<ccallback_type>   cevent;  // Shortcut to C-style event.
-typedef USignal<ccallback_type>  csignal; // Shortcut to C-style signal handler.
-typedef UTimerEv<ccallback_type> ctimer;  // Shortcut to C-style timer.
+typedef UEvent<ccallback_type>   cevent;  // Shortcut to C-style event
+typedef USignal<ccallback_type>  csignal; // Shortcut to C-style signal handler
+typedef UTimerEv<ccallback_type> ctimer;  // Shortcut to C-style timer
 
 /**
- * Helper functor to use an arbitrary member function as an event handler.
+ * Helper functor to use an arbitrary member function as an event handler
  *
- * With this wrapper, you can use any object method, which accepts the right
- * parameters (int, short) and returns void, as an event handler. This way you
- * don't have to overload the operator() which can be confusing depending on the
- * context.
+ * With this wrapper, you can use any object method, which accepts the right parameters (int, short) and returns void, as an event handler.
+ * This way you don't have to overload the operator() which can be confusing depending on the context
  */
 
 template <typename O, typename M> class U_EXPORT UMemCb {
 public:
 
    /**
-    * Member function callback constructor.
+    * Member function callback constructor
     *
-    * It expects to receive a class as the first parameter (O), and a
-    * member function (of that class O) as the second parameter.
+    * It expects to receive a class as the first parameter (O), and a member function (of that class O) as the second parameter
+    * When this instance is called with fd and ev as function arguments, object.method(fd, ev) will be called
     *
-    * When this instance is called with fd and ev as function arguments,
-    * object.method(fd, ev) will be called.
-    *
-    * @param object Object to be used.
-    * @param method Method to be called.
+    * @param object Object to be used
+    * @param method Method to be called
     */
 
    UMemCb(O& object, M method) : _object(object), _method(method) {}
@@ -486,17 +470,13 @@ protected:
 };
 
 /**
- * Event dispatcher.
+ * Event dispatcher
  *
- * This class is the responsible for looping and dispatching events. Every time
- * you need an event loop you should use this class.
+ * This class is the responsible for looping and dispatching events. Every time you need an event loop you should use this class
  *
- * You can @link UDispatcher::add add @endlink events to the UDispatcher, and you
- * can @link UDispatcher::del remove @endlink them later or you can @link
- * UDispatcher::add_once add events to be processed just once @endlink. You can
- * @link UDispatcher::dispatch loop once or forever @endlink (well, of course you
- * can break that forever removing all the events or by @link UDispatcher::exit
- * exiting the loop @endlink).
+ * You can @link UDispatcher::add add @endlink events to the UDispatcher, and you can @link UDispatcher::del remove @endlink them later or
+ * you can @link UDispatcher::add_once add events to be processed just once @endlink. You can @link UDispatcher::dispatch loop once or forever
+ * @endlink (well, of course you can break that forever removing all the events or by @link UDispatcher::exit exiting the loop @endlink)
  */
 
 class U_EXPORT UDispatcher {
@@ -505,15 +485,15 @@ public:
    // Miscellaneous constants
 
    enum {
-      DEFAULT_PRIORITY = -1,              // Default priority (the middle value).
-      ONCE             = EVLOOP_ONCE,     // Loop just once.
-      NONBLOCK         = EVLOOP_NONBLOCK  // Don't block the event loop.
+      DEFAULT_PRIORITY = -1,              // Default priority (the middle value)
+      ONCE             = EVLOOP_ONCE,     // Loop just once
+      NONBLOCK         = EVLOOP_NONBLOCK  // Don't block the event loop
    };
 
    /**
-   * set npriorities priorities.
+   * set npriorities priorities
    *
-   * @param npriorities Number of priority queues to use.
+   * @param npriorities Number of priority queues to use
    */
 
    static bool priority_init(int npriorities)
@@ -526,10 +506,10 @@ public:
       }
 
    /**
-   * Adds an event to UDispatcher.
+   * Adds an event to UDispatcher
    *
-   * @param e        Event to add.
-   * @param priority Priority of the event.
+   * @param e        Event to add
+   * @param priority Priority of the event
    */
 
    static bool add(UEvent_Base& e, int priority = DEFAULT_PRIORITY)
@@ -550,14 +530,13 @@ public:
       }
 
    /**
-   * Adds an event to UDispatcher with a timeout.
+   * Adds an event to UDispatcher with a timeout
    *
-   * The event is fired when there is activity on e or when to has elapsed,
-   * whatever come first.
+   * The event is fired when there is activity on e or when to has elapsed, whatever come first
    *
-   * @param e        Event to add.
-   * @param to       Timeout.
-   * @param priority Priority of the event.
+   * @param e        Event to add
+   * @param to       Timeout
+   * @param priority Priority of the event
    */
 
    static bool add(UEvent_Base& e, const UTimeVal& to, int priority = DEFAULT_PRIORITY)
@@ -578,14 +557,13 @@ public:
       }
 
    /**
-   * Adds a temporary event.
+   * Adds a temporary event
    *
-   * Adds a temporary event, without the need of instantiating a new event
-   * object. Events added this way can't EV_PERSIST.
+   * Adds a temporary event, without the need of instantiating a new event object. Events added this way can't EV_PERSIST
    *
-   * @param fd       File descriptor to monitor for events.
-   * @param ev       Type of events to monitor.
-   * @param handler  Callback function.
+   * @param fd       File descriptor to monitor for events
+   * @param ev       Type of events to monitor
+   * @param handler  Callback function
    */
 
    template <typename F> static bool add_once(int fd, short _ev, F& handler)
@@ -598,15 +576,14 @@ public:
       }
 
    /**
-   * Adds a temporary event.
+   * Adds a temporary event
    *
-   * Adds a temporary event, without the need of instantiating a new event
-   * object. Events added this way can't EV_PERSIST.
+   * Adds a temporary event, without the need of instantiating a new event object. Events added this way can't EV_PERSIST
    *
-   * @param fd       File descriptor to monitor for events.
-   * @param ev       Type of events to monitor.
-   * @param handler  Callback function.
-   * @param to       Timeout.
+   * @param fd       File descriptor to monitor for events
+   * @param ev       Type of events to monitor
+   * @param handler  Callback function
+   * @param to       Timeout
    */
 
    template <typename F> static bool add_once(int fd, short _ev, F& handler, const UTimeVal& to)
@@ -619,15 +596,14 @@ public:
       }
 
    /**
-   * Adds a temporary event to with a C-style callback.
+   * Adds a temporary event to with a C-style callback
    *
-   * Adds a temporary event, without the need of instantiating a new event
-   * object. Events added this way can't EV_PERSIST.
+   * Adds a temporary event, without the need of instantiating a new event object. Events added this way can't EV_PERSIST
    *
-   * @param fd       File descriptor to monitor for events.
-   * @param ev       Type of events to monitor.
-   * @param handler  Callback function.
-   * @param arg      Arbitrary pointer to pass to the handler as argument.
+   * @param fd       File descriptor to monitor for events
+   * @param ev       Type of events to monitor
+   * @param handler  Callback function
+   * @param arg      Arbitrary pointer to pass to the handler as argument
    */
 
    static bool add_once(int fd, short _ev, ccallback_type handler, void* arg)
@@ -640,16 +616,15 @@ public:
       }
 
    /**
-   * Adds a temporary event with a C-style callback.
+   * Adds a temporary event with a C-style callback
    *
-   * Adds a temporary event, without the need of instantiating a new event
-   * object. Events added this way can't EV_PERSIST.
+   * Adds a temporary event, without the need of instantiating a new event object. Events added this way can't EV_PERSIST
    *
-   * @param fd       File descriptor to monitor for events.
-   * @param ev       Type of events to monitor.
-   * @param handler  Callback function.
-   * @param arg      Arbitrary pointer to pass to the handler as argument.
-   * @param to       Timeout.
+   * @param fd       File descriptor to monitor for events
+   * @param ev       Type of events to monitor
+   * @param handler  Callback function
+   * @param arg      Arbitrary pointer to pass to the handler as argument
+   * @param to       Timeout
    */
 
    static bool add_once(int fd, short _ev, ccallback_type handler, void* arg, const UTimeVal& to)
@@ -662,13 +637,12 @@ public:
       }
 
    /**
-   * Adds a temporary timer.
+   * Adds a temporary timer
    *
-   * Adds a temporary timer, without the need of instantiating a new timer
-   * object.
+   * Adds a temporary timer, without the need of instantiating a new timer object
    *
-   * @param handler  Callback function.
-   * @param to       UTimerEv's timeout.
+   * @param handler  Callback function
+   * @param to       UTimerEv's timeout
    */
 
    template <typename F> static bool add_once_timer(F& handler, const UTimeVal& to)
@@ -681,14 +655,13 @@ public:
       }
 
    /**
-   * Adds a temporary timer with a C-style callback.
+   * Adds a temporary timer with a C-style callback
    *
-   * Adds a temporary timer, without the need of instantiating a new timer
-   * object.
+   * Adds a temporary timer, without the need of instantiating a new timer object
    *
-   * @param handler  Callback function.
-   * @param arg      Arbitrary pointer to pass to the handler as argument.
-   * @param to       UTimerEv's timeout.
+   * @param handler  Callback function
+   * @param arg      Arbitrary pointer to pass to the handler as argument
+   * @param to       UTimerEv's timeout
    */
 
    static bool add_once_timer(ccallback_type handler, void* arg, const UTimeVal& to)
@@ -701,11 +674,11 @@ public:
       }
 
    /**
-   * Removes an event.
+   * Removes an event
    *
-   * The event e will be no longer monitored by UDispatcher.
+   * The event e will be no longer monitored by UDispatcher
    *
-   * @param e Event to remove.
+   * @param e Event to remove
    */
 
    static bool del(UEvent_Base* e)
@@ -720,25 +693,23 @@ public:
       }
 
    /**
-   * Main UDispatcher loop.
+   * Main UDispatcher loop
    *
-   * This function takes the control of the program, waiting for an event
-   * and calling its callbacks when it's fired. It only returns under
-   * this conditions:
-   * - exit() was called.
-   * - All events were del()eted.
-   * - Another internal error.
-   * - ONCE flag was set.
-   * - NONBLOCK flag was set.
+   * This function takes the control of the program, waiting for an event and calling its callbacks when it's fired. It only returns under this conditions:
+   * - exit() was called
+   * - All events were del()eted
+   * - Another internal error
+   * - ONCE flag was set
+   * - NONBLOCK flag was set
    *
    * @param flags If ONCE is specified, then just one event is
    *              processed, if NONBLOCK is specified, then this
-   *              function returns even if there are no pending events.
+   *              function returns even if there are no pending events
    *
    * @return 0 if NONBLOCK or ONCE is set, 1 if there
    *         are no more events registered and EINTR if you use the
    *         @libevent's  @c event_gotsig and return -1 in your
-   *         @c event_sigcb callback.
+   *         @c event_sigcb callback
    */
 
    static int dispatch(int flags = 0)
@@ -751,10 +722,9 @@ public:
       }
 
    /**
-   * Exit the dispatch() loop.
+   * Exit the dispatch() loop
    *
-   * @param to If a timeout is given, the loop exits after the specified
-   *           time is elapsed.
+   * @param to If a timeout is given, the loop exits after the specified time is elapsed
    *
    * @return Not very well specified by @libevent
    */

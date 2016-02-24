@@ -86,7 +86,7 @@ void u_dgst_algoritm(int alg)
       default:               u_md = 0;
       }
 
-   if (u_md == 0) U_ERROR("loading digest algorithm '%d' failed", alg);
+   if (u_md == 0) U_ERROR("Loading digest algorithm '%d' failed", alg);
 
    u_hashType = (UHashType)alg;
 }

@@ -199,7 +199,7 @@ UString UCertificate::checkForSerialNumber(long number)
 {
    U_TRACE(1, "UCertificate::checkForSerialNumber(%ld)", number)
 
-   if (number == 0) U_ERROR("serial number certificate not valid");
+   if (number == 0) U_ERROR("Serial number certificate not valid");
 
    ASN1_INTEGER* a = ASN1_INTEGER_new();
 

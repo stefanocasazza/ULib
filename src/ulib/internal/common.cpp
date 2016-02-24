@@ -188,4 +188,10 @@ void ULib_init()
 #ifdef USE_LIBSSL
    ULib_init_openssl();
 #endif
+
+#ifndef HAVE_POLL_H
+   U_INTERNAL_ASSERT_EQUALS(UNotifier::time_obj, 0)
+
+   U_NEW_ULIB_OBJECT(UNotifier::time_obj, UEventTime);
+#endif
 }

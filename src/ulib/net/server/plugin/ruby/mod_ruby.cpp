@@ -463,7 +463,7 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
             {
             esito = false;
 
-            U_WARNING("RUBY script %S load failed", script);
+            U_WARNING("Ruby script %S load failed", script);
 
             goto end;
             }
@@ -587,7 +587,7 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
             {
             esito = false;
 
-            U_WARNING("unable to find RACK entry point in Ruby on Rails");
+            U_WARNING("Unable to find RACK entry point in Ruby on Rails");
 
             goto end;
             }

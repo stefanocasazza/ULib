@@ -313,7 +313,7 @@ void u_init_security(void)
    if (leffective_uid != (int) real_uid &&
        leffective_uid != 0)
       {
-      U_WARNING("setuid but not to root (uid=%ld, euid=%d), dropping setuid privileges now", (long) real_uid, leffective_uid);
+      U_WARNING("Setuid but not to root (uid=%ld, euid=%d), dropping setuid privileges now", (long) real_uid, leffective_uid);
 
       u_never_need_root();
       }
@@ -341,9 +341,9 @@ void u_need_root(bool necessary)
 
    if (effective_uid)
       {
-      if (necessary) U_ERROR("require root privilege but not setuid root");
+      if (necessary) U_ERROR("Require root privilege but not setuid root");
 #              ifdef DEBUG
-                   U_WARNING("require root privilege but not setuid root");
+                   U_WARNING("Require root privilege but not setuid root");
 #              endif
 
       return;
@@ -356,9 +356,9 @@ void u_need_root(bool necessary)
    if (seteuid(effective_uid) == -1 ||
        geteuid()              !=  0)
       {
-      if (necessary) U_ERROR("did not get root privilege");
+      if (necessary) U_ERROR("Did not get root privilege");
 #              ifdef DEBUG
-                   U_WARNING("did not get root privilege");
+                   U_WARNING("Did not get root privilege");
 #              endif
       }
 #endif
@@ -382,7 +382,7 @@ void u_dont_need_root(void)
    if (seteuid(real_uid) == -1 ||
        geteuid() != real_uid)
       {
-      U_ERROR("did not drop root privilege");
+      U_ERROR("Did not drop root privilege");
       }
 #endif
 }
@@ -485,7 +485,7 @@ cap_list[] = {
    if (geteuid() != real_uid ||
        getuid()  != real_uid)
       {
-      U_ERROR("did not drop root privilege");
+      U_ERROR("Did not drop root privilege");
       }
 
    effective_uid = real_uid;
@@ -508,9 +508,9 @@ void u_need_group(bool necessary)
     if (setegid(effective_gid) == -1 ||
         getegid() != effective_gid)
       {
-      if (necessary) U_ERROR("did not get group privilege");
+      if (necessary) U_ERROR("Did not get group privilege");
 #              ifdef DEBUG
-                   U_WARNING("did not get group privilege");
+                   U_WARNING("Did not get group privilege");
 #              endif
       }
 #endif
@@ -532,7 +532,7 @@ void u_dont_need_group(void)
     if (setegid(real_gid) == -1 ||
         getegid() != real_gid)
       {
-      U_ERROR("did not drop group privilege");
+      U_ERROR("Did not drop group privilege");
       }
 #endif
 }

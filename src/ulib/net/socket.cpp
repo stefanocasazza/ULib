@@ -43,6 +43,7 @@ int            USocket::incoming_cpu = -1;
 int            USocket::iBackLog = SOMAXCONN;
 int            USocket::accept4_flags;  // If flags is 0, then accept4() is the same as accept()
 bool           USocket::tcp_reuseport;
+bool           USocket::bincoming_cpu;
 SocketAddress* USocket::cLocal;
 
 #include "socket_address.cpp"
@@ -592,7 +593,7 @@ void USocket::reusePort(int _flags)
          }
 
 #  if defined(SO_INCOMING_CPU) && !defined(U_COVERITY_FALSE_POSITIVE)
-      if (incoming_cpu != -1) (void) setSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&incoming_cpu);
+      if (incoming_cpu != -1) bincoming_cpu = setSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&incoming_cpu);
 #  endif
 
       (void) U_SYSCALL(close, "%d", old);

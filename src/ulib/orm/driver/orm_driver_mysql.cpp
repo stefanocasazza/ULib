@@ -460,7 +460,7 @@ bool UMySqlStatement::setBindResult(UOrmDriver* pdrv)
 
          if (columns_count != num_bind_result)
             {
-            U_ERROR("invalid column count (%u) returned by MySQL - total columns (%u) in SELECT statement", columns_count, num_bind_result);
+            U_ERROR("Invalid column count (%u) returned by MySQL - total columns (%u) in SELECT statement", columns_count, num_bind_result);
             }
 
          U_SYSCALL_VOID(mysql_free_result, "%p", result);

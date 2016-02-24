@@ -130,6 +130,6 @@ void USSLSession::removeSession(SSL_CTX* ctx, SSL_SESSION* _sess)
    if (result &&
        result != -2)
       {
-      U_WARNING("remove of SSL session on db failed with error %d", result);
+      U_WARNING("Remove of SSL session on db failed with error %d", result);
       }
 }

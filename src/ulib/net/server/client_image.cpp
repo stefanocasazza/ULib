@@ -504,6 +504,17 @@ void UClientImage_Base::handlerDelete()
    U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((socket->flags & O_CLOEXEC)  != 0))
    U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_NONBLOCK) != 0),((socket->flags & O_NONBLOCK) != 0))
 #endif
+
+#ifdef USE_LIBEVENT
+   if (UEventFd::pevent)
+      {
+      U_INTERNAL_DUMP("UEventFd::pevent = %p", UEventFd::pevent)
+
+      UDispatcher::del(pevent);
+                delete pevent;
+                       pevent = 0;
+      }
+#endif
 }
 
 int UClientImage_Base::handlerTimeout()
@@ -709,14 +720,17 @@ void UClientImage_Base::endRequest()
          int cpu = U_SYSCALL_NO_PARAM(sched_getcpu), scpu = -1;
 
 #     ifdef SO_INCOMING_CPU
-         len = sizeof(socklen_t);
+         if (USocket::bincoming_cpu)
+            {
+            len = sizeof(socklen_t);
 
-         (void) UServer_Base::csocket->getSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&scpu, len);
+            (void) UServer_Base::csocket->getSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&scpu, len);
 
-         len = ((USocket::incoming_cpu == scpu || USocket::incoming_cpu == -1) ? 0 : U_CONSTANT_SIZE(" [DIFFER]"));
+            len = (USocket::incoming_cpu == scpu ? 0 : U_CONSTANT_SIZE(" [DIFFER]"));
+            }
 #     endif
 
-         U_INTERNAL_DUMP("USocket::incoming_cpu = %d sched cpu = %d socket cpu = %d", USocket::incoming_cpu, cpu, scpu)
+         U_INTERNAL_DUMP("USocket::incoming_cpu = %d USocket::bincoming_cpu = %b sched cpu = %d socket cpu = %d", USocket::incoming_cpu, USocket::bincoming_cpu, cpu, scpu)
 
          if (len) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), ", CPU: %d sched(%d) socket(%d)%.*s", USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
          }

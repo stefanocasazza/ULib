@@ -82,14 +82,14 @@ UXML2Document::UXML2Document(const UString& _data) : data(_data)
 
    if (impl_ == NULL)
       {
-      U_ERROR("unable to parse xml document");
+      U_ERROR("Unable to parse xml document");
       }
 
    /*
     * Check the document is of the right kind
     */
 
-   if (getRootNode() == NULL) U_ERROR("empty xml document");
+   if (getRootNode() == NULL) U_ERROR("Empty xml document");
 }
 
 uint32_t UXML2Document::getElement(UString& element, uint32_t pos, const char* tag, uint32_t tag_len)
@@ -320,7 +320,7 @@ UString UXML2Document::xmlC14N(int mode, int with_comments, unsigned char** incl
 
    int ret = U_SYSCALL(xmlC14NDocDumpMemory, "%p,%p,%d,%p,%d,%p", impl_, NULL, mode, inclusive_namespaces, with_comments, &result);
 
-   if (ret < 0) U_WARNING("failed to canonicalize buffer data (%d)", ret);
+   if (ret < 0) U_WARNING("Failed to canonicalize buffer data (%d)", ret);
 
    if (result != NULL)
       {

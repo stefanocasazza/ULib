@@ -2225,8 +2225,9 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		4.5*) # openwrt: SIGSEGV 
 		;;
 		*)
-			    MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
- 		##	CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -std=c++0x -std=c++11" # -std=c++14
+			    MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn \
+													-Wlogical-op -Wduplicated-cond -Wshift-overflow=2 -Wnull-dereference" # -Wsuggest-attribute=const
+ 			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wtemplates -Wmultiple-inheritance -Wvirtual-inheritance -Wnamespaces" ## -std=c++0x -std=c++11 -std=c++14
 
 			if test "$enable_gcc_optimized" = "yes" -a "$enable_coverage" != "yes"; then
 				## ----------------------------------------------------------------------------------------------------------------------------------

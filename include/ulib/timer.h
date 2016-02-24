@@ -76,8 +76,8 @@ public:
       }
 
    static void clear();                    // cancel all timers and free storage, usually in preparation for exitting
+   static void init(Type mode);            // initialize the timer package
    static void insert(UEventTime* alarm);  // set up a timer, either periodic or one-shot
-   static void init(Type mode = NOSIGNAL); // initialize the timer package
 
    // deschedule a timer. Note that non-periodic timers are automatically descheduled when they run, so you don't have to call this on them
 

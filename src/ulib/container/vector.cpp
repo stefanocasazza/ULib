@@ -467,7 +467,7 @@ UString UVector<UString>::operator[](uint32_t pos) const
 #ifdef DEBUG
    if (pos >= _length)
       {
-      U_ERROR("array access out of bounds - UVector<UString>::at(pos:%u >= _length:%u) _capacity = %u elem(0) = %V elem(%u) = %V",
+      U_ERROR("Array access out of bounds - UVector<UString>::at(pos:%u >= _length:%u) _capacity = %u elem(0) = %V elem(%u) = %V",
                pos, _length, _capacity, vec[0], _length-1, (_length ? vec[_length-1] : UStringRep::string_rep_null));
       }
 #endif

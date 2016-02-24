@@ -54,12 +54,26 @@ struct pollfd UNotifier::fds[1];
  * };
  */
 
-#if defined(U_EPOLLET_POSTPONE_STRATEGY) || defined(DEBUG)
-bool     UNotifier::bepollet;
-uint32_t UNotifier::bepollet_threshold = 10;
-#  ifdef DEBUG
+int                             UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
+uint32_t                        UNotifier::min_connection;
+uint32_t                        UNotifier::num_connection;
+uint32_t                        UNotifier::max_connection;
+UEventFd*                       UNotifier::handler_event;
+UEventFd**                      UNotifier::lo_map_fd;
+UGenericHashMap<int,UEventFd*>* UNotifier::hi_map_fd; // maps a fd to a node pointer
+
+#ifdef DEBUG
 uint32_t UNotifier::nwatches;
 uint32_t UNotifier::max_nfd_ready;
+uint32_t UNotifier::bepollet_threshold = 10;
+#endif
+
+#if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+UThread* UNotifier::pthread;
+#  ifdef _MSWINDOWS_
+CRITICAL_SECTION UNotifier::mutex;
+#  else
+pthread_mutex_t UNotifier::mutex = PTHREAD_MUTEX_INITIALIZER;
 #  endif
 #endif
 
@@ -72,65 +86,20 @@ void UEventFd::operator()(int _fd, short event)
 
    U_INTERNAL_DUMP("ret = %d", ret)
 
-   if (ret == U_NOTIFIER_DELETE) UNotifier::erase(this);
+   if (ret == U_NOTIFIER_DELETE) UNotifier::handlerDelete(this);
 }
-#elif defined(HAVE_EPOLL_WAIT)
+#else
+# ifdef HAVE_EPOLL_WAIT
 int                  UNotifier::epollfd;
 struct epoll_event*  UNotifier::events;
 struct epoll_event*  UNotifier::pevents;
+#   ifdef U_EPOLLET_POSTPONE_STRATEGY
+bool                 UNotifier::bepollet;
+#  endif
 #  ifdef HAVE_EPOLL_CTL_BATCH
 int                  UNotifier::ctl_cmd_cnt;
 struct epoll_ctl_cmd UNotifier::ctl_cmd[U_EPOLL_CTL_CMD_SIZE];
-#  endif
-# elif defined(HAVE_KQUEUE)
-int                  UNotifier::kq;
-int                  UNotifier::nkqevents;
-struct kevent*       UNotifier::kqevents;
-struct kevent*       UNotifier::kqrevents;
-#else
-int                  UNotifier::fd_set_max;
-int                  UNotifier::fd_read_cnt;
-int                  UNotifier::fd_write_cnt;
-fd_set               UNotifier::fd_set_read;
-fd_set               UNotifier::fd_set_write;
-#endif
-int                  UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
-bool                 UNotifier::bread;
-uint32_t             UNotifier::min_connection;
-uint32_t             UNotifier::num_connection;
-uint32_t             UNotifier::max_connection;
-UEventFd*            UNotifier::handler_event;
-UEventFd**           UNotifier::lo_map_fd;
 
-UGenericHashMap<int,UEventFd*>* UNotifier::hi_map_fd; // maps a fd to a node pointer
-
-#ifndef USE_LIBEVENT
-U_NO_EXPORT void UNotifier::notifyHandlerEvent()
-{
-   U_TRACE_NO_PARAM(0, "UNotifier::notifyHandlerEvent()")
-
-   U_INTERNAL_ASSERT_POINTER(handler_event)
-
-   U_INTERNAL_DUMP("handler_event = %p bread = %b nfd_ready = %d fd = %d op_mask = %d %B",
-                    handler_event, bread, nfd_ready, handler_event->fd, handler_event->op_mask, handler_event->op_mask)
-
-   if ((bread ? handler_event->handlerRead()
-              : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
-      {
-      handlerDelete(handler_event);
-      }
-}
-# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-UThread* UNotifier::pthread;
-#  ifdef _MSWINDOWS_
-CRITICAL_SECTION UNotifier::mutex;
-#  else
-pthread_mutex_t UNotifier::mutex = PTHREAD_MUTEX_INITIALIZER;
-#  endif
-# endif
-#endif
-
-#ifdef HAVE_EPOLL_CTL_BATCH
 void UNotifier::batch((UEventFd* item)
 {
    U_TRACE(0, "UNotifier::batch(%p)", item)
@@ -147,24 +116,42 @@ void UNotifier::batch((UEventFd* item)
 
    if (++ctl_cmd_cnt >= U_EPOLL_CTL_CMD_SIZE) insertBatch();
 }
-#endif
+#  endif
+# elif defined(HAVE_KQUEUE)
+int            UNotifier::kq;
+int            UNotifier::nkqevents;
+struct kevent* UNotifier::kqevents;
+struct kevent* UNotifier::kqrevents;
+# else
+int            UNotifier::fd_set_max;
+int            UNotifier::fd_read_cnt;
+int            UNotifier::fd_write_cnt;
+fd_set         UNotifier::fd_set_read;
+fd_set         UNotifier::fd_set_write;
+# endif
+bool           UNotifier::bread;
+
+U_NO_EXPORT void UNotifier::notifyHandlerEvent()
+{
+   U_TRACE_NO_PARAM(0, "UNotifier::notifyHandlerEvent()")
+
+   U_INTERNAL_ASSERT_POINTER(handler_event)
+
+   U_INTERNAL_DUMP("handler_event = %p bread = %b nfd_ready = %d fd = %d op_mask = %d %B",
+                    handler_event, bread, nfd_ready, handler_event->fd, handler_event->op_mask, handler_event->op_mask)
+
+   if ((bread ? handler_event->handlerRead()
+              : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
+      {
+      handlerDelete(handler_event);
+      }
+}
 
 void UNotifier::init(bool bacquisition)
 {
    U_TRACE(0, "UNotifier::init(%b)", bacquisition)
 
-#ifndef HAVE_POLL_H
-   U_INTERNAL_ASSERT_EQUALS(time_obj, 0)
-
-   U_NEW_ULIB_OBJECT(time_obj, UEventTime);
-#endif
-
-#ifdef USE_LIBEVENT
-   if (u_ev_base) (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // NB: reinitialized the event base after fork()...
-   else           u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
-
-   U_INTERNAL_ASSERT_POINTER(u_ev_base)
-#elif defined(HAVE_EPOLL_WAIT)
+#ifdef HAVE_EPOLL_WAIT
    int old = epollfd;
 
    U_INTERNAL_DUMP("old = %d", old)
@@ -199,7 +186,7 @@ next:
 
                struct epoll_event _events = { handler_event->op_mask, { handler_event } };
 
-               (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, fd, &_events);
+               (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD | EPOLLEXCLUSIVE | EPOLLROUNDROBIN, fd, &_events);
                }
             }
 
@@ -214,7 +201,7 @@ next:
 
                struct epoll_event _events = { handler_event->op_mask, { handler_event } };
 
-               (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, handler_event->fd, &_events);
+               (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD | EPOLLEXCLUSIVE | EPOLLROUNDROBIN, handler_event->fd, &_events);
                }
             while (hi_map_fd->next());
             }
@@ -295,394 +282,29 @@ next:
        kqrevents[0].ident != -1                                                                   ||
        kqrevents[0].flags != EV_ERROR)
       {
-      U_ERROR("detected broken kevent()...");
+      U_ERROR("Detected broken kevent()...");
       }
 #endif
 
    if (lo_map_fd == 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(hi_map_fd, 0)
-      U_INTERNAL_ASSERT_MAJOR(max_connection, 0)
+      createMapFd();
 
-      lo_map_fd = (UEventFd**) UMemoryPool::_malloc(max_connection, sizeof(UEventFd*), true);
-
-      hi_map_fd = U_NEW(UGenericHashMap<int,UEventFd*>);
-
-      hi_map_fd->allocate(max_connection);
-
-#  if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT)
+#ifdef HAVE_EPOLL_WAIT
       U_INTERNAL_ASSERT_EQUALS(events, 0)
 
        events =
       pevents = (struct epoll_event*) UMemoryPool::_malloc(max_connection+1, sizeof(struct epoll_event), true);
-#  endif
-      }
 
-#if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)
-   for (int i = 0; i < U_EPOLL_CTL_CMD_SIZE; ++i)
-      {
-      ctl_cmd[i].op     = EPOLL_CTL_ADD;
-      ctl_cmd[i].events = EPOLLIN | EPOLLRDHUP | EPOLLET;
-      }
-#endif
-}
-
-bool UNotifier::isHandler(int fd)
-{
-   U_TRACE(0, "UNotifier::isHandler(%d)", fd)
-
-   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-
-   U_INTERNAL_DUMP("num_connection = %d min_connection = %d", num_connection, min_connection)
-
-   if (num_connection > min_connection)
-      {
-      U_INTERNAL_ASSERT_POINTER(lo_map_fd)
-      U_INTERNAL_ASSERT_POINTER(hi_map_fd)
-
-      if (fd < (int32_t)max_connection)
+#  ifdef HAVE_EPOLL_CTL_BATCH
+      for (int i = 0; i < U_EPOLL_CTL_CMD_SIZE; ++i)
          {
-         if (lo_map_fd[fd]) U_RETURN(true);
-
-         U_RETURN(false);
+         ctl_cmd[i].op     = EPOLL_CTL_ADD;
+         ctl_cmd[i].events = EPOLLIN | EPOLLRDHUP | EPOLLET;
          }
-
-      bool result;
-
-      lock();
-
-      result = hi_map_fd->find(fd);
-
-      unlock();
-
-      if (result) U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-void UNotifier::resetHandler(int fd)
-{
-   U_TRACE(0, "UNotifier::resetHandler(%d)", fd)
-
-   if (fd < (int32_t)max_connection) lo_map_fd[fd] = 0;
-   else
-      {
-      lock();
-
-      (void) hi_map_fd->erase(fd);
-
-      unlock();
-      }
-}
-
-bool UNotifier::setHandler(int fd)
-{
-   U_TRACE(0, "UNotifier::setHandler(%d)", fd)
-
-   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-   U_INTERNAL_ASSERT_POINTER(lo_map_fd)
-   U_INTERNAL_ASSERT_POINTER(hi_map_fd)
-
-   if (fd < (int32_t)max_connection)
-      {
-      if (lo_map_fd[fd])
-         {
-         handler_event = lo_map_fd[fd];
-
-         U_INTERNAL_DUMP("handler_event = %p", handler_event)
-
-         U_RETURN(true);
-         }
-      }
-
-   bool result;
-
-   lock();
-
-   result = hi_map_fd->find(fd);
-
-   unlock();
-
-   if (result)
-      {
-      handler_event = hi_map_fd->elem();
-
-      U_INTERNAL_DUMP("handler_event = %p", handler_event)
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
-void UNotifier::insert(UEventFd* item)
-{
-   U_TRACE(0, "UNotifier::insert(%p)", item)
-
-   U_INTERNAL_ASSERT_POINTER(item)
-
-   int fd = item->fd;
-
-   U_INTERNAL_DUMP("fd = %d item->op_mask = %B num_connection = %d", fd, item->op_mask, num_connection)
-
-   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
-
-   if (fd < (int32_t)max_connection) lo_map_fd[fd] = item;
-   else
-      {
-      lock();
-
-      hi_map_fd->insert(fd, item);
-
-      unlock();
-      }
-
-#ifdef USE_LIBEVENT
-   U_INTERNAL_ASSERT_POINTER(u_ev_base)
-
-   int mask = EV_PERSIST | ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0 ? EV_READ : EV_WRITE);
-
-   U_INTERNAL_DUMP("mask = %B", mask)
-
-   item->pevent = U_NEW(UEvent<UEventFd>(fd, mask, *item));
-
-   (void) UDispatcher::add(*(item->pevent));
-#elif defined(HAVE_EPOLL_WAIT)
-   U_INTERNAL_ASSERT_MAJOR(epollfd, 0)
-
-   struct epoll_event _events = { item->op_mask, { item } };
-
-   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, fd, &_events);
-#elif defined(HAVE_KQUEUE)
-   U_INTERNAL_ASSERT_MAJOR(kq, 0)
-   U_INTERNAL_ASSERT_MINOR(nkqevents, max_connection)
-
-   EV_SET(kqevents+nkqevents++, fd, ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0) ? EVFILT_READ : EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, (void*)item);
-#else
-   if ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0)
-      {
-      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_read), 0)
-      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
-
-      FD_SET(fd, &fd_set_read);
-
-      U_INTERNAL_ASSERT(fd_read_cnt >= 0)
-
-      ++fd_read_cnt;
-
-#  ifndef _MSWINDOWS_
-      U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
 #  endif
-      }
-   else
-      {
-      U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
-      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
-
-      FD_SET(fd, &fd_set_write);
-
-      U_INTERNAL_ASSERT(fd_write_cnt >= 0)
-
-      ++fd_write_cnt;
-
-#  ifndef _MSWINDOWS_
-      U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
-#  endif
-      }
-
-   if (fd_set_max <= fd) fd_set_max = fd + 1;
-
-   U_INTERNAL_DUMP("fd_set_max = %d", fd_set_max)
 #endif
-}
-
-void UNotifier::modify(UEventFd* item)
-{
-   U_TRACE(0, "UNotifier::modify(%p)", item)
-
-   U_INTERNAL_ASSERT_POINTER(item)
-
-   int fd = item->fd;
-
-   U_INTERNAL_DUMP("fd = %d op_mask = %B", fd, item->op_mask)
-
-#ifdef USE_LIBEVENT
-   U_INTERNAL_ASSERT_POINTER(u_ev_base)
-
-   int mask = EV_PERSIST | ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0 ? EV_READ : EV_WRITE);
-
-   U_INTERNAL_DUMP("mask = %B", mask)
-
-   UDispatcher::del(item->pevent);
-             delete item->pevent;
-                    item->pevent = U_NEW(UEvent<UEventFd>(fd, mask, *item));
-
-   (void) UDispatcher::add(*(item->pevent));
-#elif defined(HAVE_EPOLL_WAIT)
-   U_INTERNAL_ASSERT_MAJOR(epollfd, 0)
-
-   struct epoll_event _events = { item->op_mask, { item } };
-
-   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_MOD, fd, &_events);
-#elif defined(HAVE_KQUEUE)
-   U_INTERNAL_ASSERT_MAJOR(kq, 0)
-   U_INTERNAL_ASSERT_MINOR(nkqevents, max_connection)
-
-   int read_flags, write_flags;
-
-   if ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0)
-      {
-       read_flags = EV_ADD    | EV_ENABLE;
-      write_flags = EV_DELETE | EV_DISABLE;
       }
-   else
-      {
-      U_INTERNAL_DUMP("op_mask = %d", item->op_mask)
-
-      U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
-
-       read_flags = EV_DELETE | EV_DISABLE;
-      write_flags = EV_ADD    | EV_ENABLE;
-      }
-
-   EV_SET(kqevents+nkqevents++, fd, EVFILT_READ,   read_flags, 0, 0, (void*)item);
-   EV_SET(kqevents+nkqevents++, fd, EVFILT_WRITE, write_flags, 0, 0, (void*)item);
-#else
-#  ifndef _MSWINDOWS_
-   U_INTERNAL_DUMP("fd_set_read  = %B", __FDS_BITS(&fd_set_read)[0])
-   U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
-#endif
-
-   if ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0)
-      {
-      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_write))
-      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_read), 0)
-
-      FD_SET(fd, &fd_set_read);
-      FD_CLR(fd, &fd_set_write);
-
-      ++fd_read_cnt;
-      --fd_write_cnt;
-      }
-   else
-      {
-      U_INTERNAL_DUMP("op_mask = %d", item->op_mask)
-
-      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_read))
-      U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
-      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
-
-      FD_CLR(fd, &fd_set_read);
-      FD_SET(fd, &fd_set_write);
-
-      --fd_read_cnt;
-      ++fd_write_cnt;
-      }
-
-#  ifndef _MSWINDOWS_
-   U_INTERNAL_DUMP("fd_set_read  = %B", __FDS_BITS(&fd_set_read)[0])
-   U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
-#endif
-
-   U_INTERNAL_ASSERT(fd_read_cnt  >= 0)
-   U_INTERNAL_ASSERT(fd_write_cnt >= 0)
-#endif
-}
-
-void UNotifier::erase(UEventFd* item)
-{
-   U_TRACE(0, "UNotifier::erase(%p)", item)
-
-   U_INTERNAL_ASSERT_POINTER(item)
-
-#ifdef U_COVERITY_FALSE_POSITIVE
-   if (item->fd > 0)
-#endif
-   handlerDelete(item);
-
-#ifdef USE_LIBEVENT
-   UDispatcher::del(item->pevent);
-             delete item->pevent;
-                    item->pevent = 0;
-#endif
-}
-
-void UNotifier::handlerDelete(int fd, int mask)
-{
-   U_TRACE(0, "UNotifier::handlerDelete(%d,%d)", fd, mask)
-
-   U_INTERNAL_ASSERT_MAJOR(fd, 0)
-
-   resetHandler(fd);
-
-#if !defined(USE_LIBEVENT) && !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_KQUEUE)
-   if ((mask & (EPOLLIN | EPOLLRDHUP)) != 0)
-      {
-      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_read))
-      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
-
-      FD_CLR(fd, &fd_set_read);
-
-#  ifndef _MSWINDOWS_
-      U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
-#  endif
-
-      --fd_read_cnt;
-
-      U_INTERNAL_ASSERT(fd_read_cnt >= 0)
-      }
-   else
-      {
-      U_INTERNAL_ASSERT_DIFFERS(mask & EPOLLOUT, 0)
-      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_write))
-      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_read), 0)
-
-      FD_CLR(fd, &fd_set_write);
-
-#  ifndef _MSWINDOWS_
-      U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
-#  endif
-
-      --fd_write_cnt;
-
-      U_INTERNAL_ASSERT(fd_write_cnt >= 0)
-      }
-
-   if (empty() == false) fd_set_max = getNFDS();
-#endif
-}
-
-void UNotifier::suspend(UEventFd* item)
-{
-   U_TRACE(0, "UNotifier::suspend(%p)", item)
-
-   U_INTERNAL_ASSERT_POINTER(item)
-   U_INTERNAL_ASSERT_EQUALS(item->op_mask, EPOLLOUT)
-
-#ifdef USE_LIBEVENT
-// ???
-#elif defined(HAVE_EPOLL_WAIT)
-   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, item->fd, (struct epoll_event*)1);
-#elif defined(HAVE_KQUEUE)
-   U_INTERNAL_ASSERT_MAJOR(kq, 0)
-   U_INTERNAL_ASSERT_MINOR(nkqevents, max_connection)
-
-   EV_SET(kqevents+nkqevents++, item->fd, EVFILT_WRITE, EV_DELETE | EV_DISABLE, 0, 0, (void*)item);
-#else
-   U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
-   U_INTERNAL_ASSERT(FD_ISSET(item->fd, &fd_set_write))
-
-   FD_CLR(item->fd, &fd_set_write);
-
-# ifndef _MSWINDOWS_
-   U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
-# endif
-
-   --fd_write_cnt;
-
-   U_INTERNAL_ASSERT(fd_write_cnt >= 0)
-#endif
 }
 
 void UNotifier::resume(UEventFd* item)
@@ -692,9 +314,7 @@ void UNotifier::resume(UEventFd* item)
    U_INTERNAL_ASSERT_POINTER(item)
    U_INTERNAL_ASSERT_EQUALS(item->op_mask, EPOLLOUT)
 
-#ifdef USE_LIBEVENT
-// ???
-#elif defined(HAVE_EPOLL_WAIT)
+#ifdef HAVE_EPOLL_WAIT
    struct epoll_event _events = { EPOLLOUT, { item } };
 
    (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, item->fd, &_events);
@@ -719,20 +339,48 @@ void UNotifier::resume(UEventFd* item)
 #endif
 }
 
+void UNotifier::suspend(UEventFd* item)
+{
+   U_TRACE(0, "UNotifier::suspend(%p)", item)
+
+   U_INTERNAL_ASSERT_POINTER(item)
+   U_INTERNAL_ASSERT_EQUALS(item->op_mask, EPOLLOUT)
+
+#ifdef HAVE_EPOLL_WAIT
+   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_DEL, item->fd, (struct epoll_event*)1);
+#elif defined(HAVE_KQUEUE)
+   U_INTERNAL_ASSERT_MAJOR(kq, 0)
+   U_INTERNAL_ASSERT_MINOR(nkqevents, max_connection)
+
+   EV_SET(kqevents+nkqevents++, item->fd, EVFILT_WRITE, EV_DELETE | EV_DISABLE, 0, 0, (void*)item);
+#else
+   U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
+   U_INTERNAL_ASSERT(FD_ISSET(item->fd, &fd_set_write))
+
+   FD_CLR(item->fd, &fd_set_write);
+
+# ifndef _MSWINDOWS_
+   U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+# endif
+
+   --fd_write_cnt;
+
+   U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+#endif
+}
+
 int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout)
 {
    U_TRACE(1, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, ptimeout)
 
-#ifdef USE_LIBEVENT
-   U_RETURN(-1);
-#else
    int result;
-# ifdef HAVE_EPOLL_WAIT
+
+#ifdef HAVE_EPOLL_WAIT
    result = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, UEventTime::getMilliSecond(ptimeout));
-# elif defined(HAVE_KQUEUE)
+#elif defined(HAVE_KQUEUE)
    result = U_SYSCALL(kevent, "%d,%p,%d,%p,%d,%p", kq, kqevents, nkqevents, kqrevents, max_connection, UEventTime::getTimeSpec(ptimeout));
    nkqevents = 0;
-# else
+#else
    // If both fields of the timeval structure are zero, then select() returns immediately.
    // (This is useful for polling). If ptimeout is NULL (no timeout), select() can block indefinitely...
    //
@@ -751,20 +399,16 @@ int UNotifier::waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEv
    if ( read_set) U_INTERNAL_DUMP(" read_set = %B", __FDS_BITS( read_set)[0])
    if (write_set) U_INTERNAL_DUMP("write_set = %B", __FDS_BITS(write_set)[0])
 # endif
-# endif
+#endif
 
    U_RETURN(result);
-#endif
 }
 
 void UNotifier::waitForEvent(UEventTime* ptimeout)
 {
    U_TRACE(0, "UNotifier::waitForEvent(%p)", ptimeout)
 
-#ifdef USE_LIBEVENT
-   (void) UDispatcher::dispatch(UDispatcher::ONCE);
-#else
-# if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_KQUEUE)
+#if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_KQUEUE)
    fd_set read_set, write_set;
 loop:
    U_INTERNAL_ASSERT(fd_read_cnt > 0 || fd_write_cnt > 0)
@@ -778,7 +422,7 @@ loop:
                 (fd_write_cnt ? &write_set
                               : 0),
                 ptimeout);
-# elif defined(HAVE_KQUEUE)
+#elif defined(HAVE_KQUEUE)
 loop:
    nfd_ready = U_SYSCALL(kevent, "%d,%p,%d,%p,%d,%p", kq, kqevents, nkqevents, kqrevents, max_connection, UEventTime::getTimeSpec(ptimeout));
 # ifdef DEBUG
@@ -789,10 +433,10 @@ loop:
       }
 # endif
    nkqevents = 0;
-# else
+#else
 loop:
    nfd_ready = U_SYSCALL(epoll_wait, "%d,%p,%u,%d", epollfd, events, max_connection, UEventTime::getMilliSecond(ptimeout));
-# endif
+#endif
 
    if (nfd_ready > 0)
       {
@@ -1009,7 +653,6 @@ loop2:         if (pevents->events)
          }
 #  endif
       }
-#endif
 }
 
 void UNotifier::waitForEvent()
@@ -1020,10 +663,8 @@ void UNotifier::waitForEvent()
    ++nwatches;
 #endif
 
-#ifdef USE_LIBEVENT
-   (void) UDispatcher::dispatch(UDispatcher::ONCE);
-#else
    UEventTime* ptimeout;
+
 loop:
    waitForEvent(ptimeout = UTimer::getTimeout());
 
@@ -1036,6 +677,317 @@ loop:
 
       goto loop;
       }
+}
+#endif
+
+void UNotifier::createMapFd()
+{
+   U_TRACE_NO_PARAM(0, "UNotifier::createMapFd()")
+
+   U_INTERNAL_ASSERT_EQUALS(lo_map_fd, 0)
+   U_INTERNAL_ASSERT_EQUALS(hi_map_fd, 0)
+   U_INTERNAL_ASSERT_MAJOR(max_connection, 0)
+
+   lo_map_fd = (UEventFd**) UMemoryPool::_malloc(max_connection, sizeof(UEventFd*), true);
+
+   hi_map_fd = U_NEW(UGenericHashMap<int,UEventFd*>);
+
+   hi_map_fd->allocate(max_connection);
+}
+
+bool UNotifier::isHandler(int fd)
+{
+   U_TRACE(0, "UNotifier::isHandler(%d)", fd)
+
+   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+   bool result = false;
+
+   U_INTERNAL_DUMP("num_connection = %d min_connection = %d", num_connection, min_connection)
+
+   if (num_connection > min_connection)
+      {
+      U_INTERNAL_ASSERT_POINTER(lo_map_fd)
+      U_INTERNAL_ASSERT_POINTER(hi_map_fd)
+
+      if (fd < (int32_t)max_connection) result = (lo_map_fd[fd] != 0);
+      else
+         {
+         lock();
+
+         result = hi_map_fd->find(fd);
+
+         unlock();
+         }
+      }
+
+   U_RETURN(result);
+}
+
+bool UNotifier::setHandler(int fd)
+{
+   U_TRACE(0, "UNotifier::setHandler(%d)", fd)
+
+   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+   U_INTERNAL_ASSERT_POINTER(lo_map_fd)
+   U_INTERNAL_ASSERT_POINTER(hi_map_fd)
+
+   if (fd < (int32_t)max_connection)
+      {
+      if (lo_map_fd[fd])
+         {
+         handler_event = lo_map_fd[fd];
+
+         U_INTERNAL_DUMP("handler_event = %p", handler_event)
+
+         U_RETURN(true);
+         }
+      }
+
+   bool result;
+
+   lock();
+
+   result = hi_map_fd->find(fd);
+
+   unlock();
+
+   if (result)
+      {
+      handler_event = hi_map_fd->elem();
+
+      U_INTERNAL_DUMP("handler_event = %p", handler_event)
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+void UNotifier::insert(UEventFd* item, int op)
+{
+   U_TRACE(0, "UNotifier::insert(%p%d)", item, op)
+
+   U_INTERNAL_ASSERT_POINTER(item)
+
+   int fd = item->fd;
+
+   U_INTERNAL_DUMP("fd = %d item->op_mask = %B num_connection = %d", fd, item->op_mask, num_connection)
+
+   U_INTERNAL_ASSERT_DIFFERS(fd, -1)
+
+   if (fd < (int32_t)max_connection) lo_map_fd[fd] = item;
+   else
+      {
+      lock();
+
+      hi_map_fd->insert(fd, item);
+
+      unlock();
+      }
+
+#ifdef USE_LIBEVENT
+   U_INTERNAL_ASSERT_POINTER(u_ev_base)
+
+   int mask = EV_PERSIST | ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0 ? EV_READ : EV_WRITE);
+
+   U_INTERNAL_DUMP("mask = %B", mask)
+
+   item->pevent = U_NEW(UEvent<UEventFd>(fd, mask, *item));
+
+   (void) UDispatcher::add(*(item->pevent));
+#elif defined(HAVE_EPOLL_WAIT)
+   U_INTERNAL_ASSERT_MAJOR(epollfd, 0)
+
+   struct epoll_event _events = { item->op_mask, { item } };
+
+   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD | op, fd, &_events);
+#elif defined(HAVE_KQUEUE)
+   U_INTERNAL_ASSERT_MAJOR(kq, 0)
+   U_INTERNAL_ASSERT_MINOR(nkqevents, max_connection)
+
+   EV_SET(kqevents+nkqevents++, fd, ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0) ? EVFILT_READ : EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, (void*)item);
+#else
+   if ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0)
+      {
+      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_read), 0)
+      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
+
+      FD_SET(fd, &fd_set_read);
+
+      U_INTERNAL_ASSERT(fd_read_cnt >= 0)
+
+      ++fd_read_cnt;
+
+#  ifndef _MSWINDOWS_
+      U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
+#  endif
+      }
+   else
+      {
+      U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
+      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
+
+      FD_SET(fd, &fd_set_write);
+
+      U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+
+      ++fd_write_cnt;
+
+#  ifndef _MSWINDOWS_
+      U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+#  endif
+      }
+
+   if (fd_set_max <= fd) fd_set_max = fd + 1;
+
+   U_INTERNAL_DUMP("fd_set_max = %d", fd_set_max)
+#endif
+}
+
+void UNotifier::modify(UEventFd* item)
+{
+   U_TRACE(0, "UNotifier::modify(%p)", item)
+
+   U_INTERNAL_ASSERT_POINTER(item)
+
+   int fd = item->fd;
+
+   U_INTERNAL_DUMP("fd = %d op_mask = %B", fd, item->op_mask)
+
+#ifdef USE_LIBEVENT
+   U_INTERNAL_ASSERT_POINTER(u_ev_base)
+
+   int mask = EV_PERSIST | ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0 ? EV_READ : EV_WRITE);
+
+   U_INTERNAL_DUMP("mask = %B", mask)
+
+   UDispatcher::del(item->pevent);
+             delete item->pevent;
+                    item->pevent = U_NEW(UEvent<UEventFd>(fd, mask, *item));
+
+   (void) UDispatcher::add(*(item->pevent));
+#elif defined(HAVE_EPOLL_WAIT)
+   U_INTERNAL_ASSERT_MAJOR(epollfd, 0)
+
+   struct epoll_event _events = { item->op_mask, { item } };
+
+   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_MOD, fd, &_events);
+#elif defined(HAVE_KQUEUE)
+   U_INTERNAL_ASSERT_MAJOR(kq, 0)
+   U_INTERNAL_ASSERT_MINOR(nkqevents, max_connection)
+
+   int read_flags, write_flags;
+
+   if ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0)
+      {
+       read_flags = EV_ADD    | EV_ENABLE;
+      write_flags = EV_DELETE | EV_DISABLE;
+      }
+   else
+      {
+      U_INTERNAL_DUMP("op_mask = %d", item->op_mask)
+
+      U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
+
+       read_flags = EV_DELETE | EV_DISABLE;
+      write_flags = EV_ADD    | EV_ENABLE;
+      }
+
+   EV_SET(kqevents+nkqevents++, fd, EVFILT_READ,   read_flags, 0, 0, (void*)item);
+   EV_SET(kqevents+nkqevents++, fd, EVFILT_WRITE, write_flags, 0, 0, (void*)item);
+#else
+#  ifndef _MSWINDOWS_
+   U_INTERNAL_DUMP("fd_set_read  = %B", __FDS_BITS(&fd_set_read)[0])
+   U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+#endif
+
+   if ((item->op_mask & (EPOLLIN | EPOLLRDHUP)) != 0)
+      {
+      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_write))
+      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_read), 0)
+
+      FD_SET(fd, &fd_set_read);
+      FD_CLR(fd, &fd_set_write);
+
+      ++fd_read_cnt;
+      --fd_write_cnt;
+      }
+   else
+      {
+      U_INTERNAL_DUMP("op_mask = %d", item->op_mask)
+
+      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_read))
+      U_INTERNAL_ASSERT_DIFFERS(item->op_mask & EPOLLOUT, 0)
+      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
+
+      FD_CLR(fd, &fd_set_read);
+      FD_SET(fd, &fd_set_write);
+
+      --fd_read_cnt;
+      ++fd_write_cnt;
+      }
+
+#  ifndef _MSWINDOWS_
+   U_INTERNAL_DUMP("fd_set_read  = %B", __FDS_BITS(&fd_set_read)[0])
+   U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+#endif
+
+   U_INTERNAL_ASSERT(fd_read_cnt  >= 0)
+   U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+#endif
+}
+
+void UNotifier::handlerDelete(int fd, int mask)
+{
+   U_TRACE(0, "UNotifier::handlerDelete(%d,%d)", fd, mask)
+
+   U_INTERNAL_ASSERT_MAJOR(fd, 0)
+
+   if (fd < (int32_t)max_connection) lo_map_fd[fd] = 0;
+   else
+      {
+      lock();
+
+      (void) hi_map_fd->erase(fd);
+
+      unlock();
+      }
+
+#if !defined(USE_LIBEVENT) && !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_KQUEUE)
+   if ((mask & (EPOLLIN | EPOLLRDHUP)) != 0)
+      {
+      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_read))
+      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_write), 0)
+
+      FD_CLR(fd, &fd_set_read);
+
+#  ifndef _MSWINDOWS_
+      U_INTERNAL_DUMP("fd_set_read = %B", __FDS_BITS(&fd_set_read)[0])
+#  endif
+
+      --fd_read_cnt;
+
+      U_INTERNAL_ASSERT(fd_read_cnt >= 0)
+      }
+   else
+      {
+      U_INTERNAL_ASSERT_DIFFERS(mask & EPOLLOUT, 0)
+      U_INTERNAL_ASSERT(FD_ISSET(fd, &fd_set_write))
+      U_INTERNAL_ASSERT_EQUALS(FD_ISSET(fd, &fd_set_read), 0)
+
+      FD_CLR(fd, &fd_set_write);
+
+#  ifndef _MSWINDOWS_
+      U_INTERNAL_DUMP("fd_set_write = %B", __FDS_BITS(&fd_set_write)[0])
+#  endif
+
+      --fd_write_cnt;
+
+      U_INTERNAL_ASSERT(fd_write_cnt >= 0)
+      }
+
+   if (empty() == false) fd_set_max = getNFDS();
 #endif
 }
 
@@ -1055,7 +1007,11 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
          {
          U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
 
-         if (function(item)) erase(item);
+         if (item->fd != fd ||
+             function(item))
+            {
+            handlerDelete(item);
+            }
          }
       }
 
@@ -1066,7 +1022,11 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
 
          U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
 
-         if (function(item)) erase(item);
+         if (item->fd == -1 ||
+             function(item))
+            {
+            handlerDelete(item);
+            }
          }
       while (hi_map_fd->next());
       }
@@ -1095,7 +1055,12 @@ void UNotifier::clear()
             {
             U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
 
-            if (item->fd != -1) erase(item);
+            if (item->fd != -1)
+               {
+               U_INTERNAL_ASSERT_EQUALS(item->fd, fd)
+
+               handlerDelete(item);
+               }
             }
          }
 
@@ -1106,7 +1071,7 @@ void UNotifier::clear()
 
             U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
 
-            if (item->fd != -1) erase(item);
+            if (item->fd != -1) handlerDelete(item);
             }
          while (hi_map_fd->next());
          }
@@ -1441,7 +1406,7 @@ uint32_t UNotifier::write(int fd, const char* str, int count, int timeoutMS)
    do {
       if (timeoutMS >= 0)
          {
-         if (fd < 0) U_RETURN(-1);
+         if (fd < 0) U_RETURN(U_NOT_FOUND);
 
          if (waitForWrite(fd, timeoutMS) <= 0) break;
 

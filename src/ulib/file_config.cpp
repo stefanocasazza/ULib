@@ -187,7 +187,7 @@ void UFileConfig::load()
       }
    else
       {
-      U_ERROR("configuration file %.*S processing failed", U_FILE_TO_TRACE(*this));
+      U_ERROR("Configuration file %.*S processing failed", U_FILE_TO_TRACE(*this));
       }
 }
 

@@ -2183,7 +2183,7 @@ void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
          if (file.open(pathname)) *this = file.getContent();
          else
             {
-            U_WARNING("open file %S specified in configuration failed", pathname);
+            U_WARNING("Open file %S specified in configuration failed", pathname);
             }
 
          U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
@@ -2691,7 +2691,7 @@ bool UStringRep::invariant() const
    if (_capacity &&
        _capacity < _length)
       {
-      U_WARNING("error on rep string: (overflow)\n"
+      U_WARNING("Error on rep string: (overflow)\n"
                 "--------------------------------------------------\n%s", UStringRep::dump(true));
 
       return false;
@@ -2699,7 +2699,7 @@ bool UStringRep::invariant() const
 
    if ((int32_t)references < 0)
       {
-      U_WARNING("error on rep string: (leak reference)\n"
+      U_WARNING("Error on rep string: (leak reference)\n"
                 "--------------------------------------------------\n%s", UStringRep::dump(true));
 
       return false;
@@ -2711,7 +2711,7 @@ bool UStringRep::invariant() const
 
       if (_length)
          {
-         U_WARNING("error on string_rep_null: (not empty)\n"
+         U_WARNING("Error on string_rep_null: (not empty)\n"
                    "--------------------------------------------------\n%s", UStringRep::dump(true));
 
          return false;
@@ -2727,7 +2727,7 @@ bool UString::invariant() const
 {
    if (rep == 0)
       {
-      U_WARNING("error on string: (rep = null pointer)");
+      U_WARNING("Error on string: (rep = null pointer)");
 
       return false;
       }

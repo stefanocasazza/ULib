@@ -395,7 +395,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    UNotifier::init(false);
    UNotifier::insert(c);
-   UNotifier::erase(c);
+   UNotifier::handlerDelete(c);
    UNotifier::insert(d);
 
 #ifdef __unix__

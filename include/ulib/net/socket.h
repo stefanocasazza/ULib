@@ -670,8 +670,8 @@ protected:
    void  closesocket();
    void _closesocket();
 
-   static bool tcp_reuseport;
    static SocketAddress* cLocal;
+   static bool tcp_reuseport, bincoming_cpu;
    static int iBackLog, incoming_cpu, accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
    /**

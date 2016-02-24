@@ -40,6 +40,9 @@ const char*  UMemoryPool::func_call;
 #  endif
 #endif
 
+const uint32_t UMemoryPool::U_STACK_INDEX_TO_SIZE[U_NUM_STACK_TYPE] = { U_STACK_TYPE_0, U_STACK_TYPE_1, U_STACK_TYPE_2, U_STACK_TYPE_3, U_STACK_TYPE_4,
+                                                                        U_STACK_TYPE_5, U_STACK_TYPE_6, U_STACK_TYPE_7, U_STACK_TYPE_8, U_MAX_SIZE_PREALLOCATE };
+
 /*
 uint32_t UMemoryPool::stackIndexToSize(uint32_t sz)
 {
@@ -129,9 +132,6 @@ typedef struct ustackmemorypool {
             num_call_allocateMemoryBlocks;
 #endif
 } ustackmemorypool;
-
-static const uint32_t U_STACK_INDEX_TO_SIZE[] = { U_STACK_TYPE_0, U_STACK_TYPE_1, U_STACK_TYPE_2, U_STACK_TYPE_3, U_STACK_TYPE_4,
-                                                  U_STACK_TYPE_5, U_STACK_TYPE_6, U_STACK_TYPE_7, U_STACK_TYPE_8, U_MAX_SIZE_PREALLOCATE };
 
 /*
            --   --        --   --   --        --   -- 
@@ -304,7 +304,7 @@ public:
       U_INTERNAL_ASSERT_MAJOR(index, 0)
       U_INTERNAL_ASSERT_MINOR(index, U_NUM_STACK_TYPE) // 10
       U_INTERNAL_ASSERT_EQUALS(index, U_SIZE_TO_STACK_INDEX(type))
-      U_INTERNAL_ASSERT_EQUALS(type, U_STACK_INDEX_TO_SIZE[index])
+      U_INTERNAL_ASSERT_EQUALS(type, UMemoryPool::U_STACK_INDEX_TO_SIZE[index])
       U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)), 0) // memory aligned
 
       if (len == space) growPointerBlock(space << 1); // NB: this call can change len...
@@ -345,42 +345,7 @@ public:
 #endif
 };
 
-#if defined(ENABLE_MEMPOOL) && defined(DEBUG)
-bool UMemoryPool::check(void* ptr)
-{
-   U_TRACE(0, "UMemoryPool::check(%p)", ptr)
-
-   UStackMemoryPool* pstack;
-
-   for (uint32_t stack_index = 0; stack_index < U_NUM_STACK_TYPE; ++stack_index)
-      {
-      pstack = (UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index);
-
-      U_INTERNAL_DUMP("stack[%u]: type = %4u len = %5u space = %5u depth = %4u max_depth = %4u pop_cnt = %5u push_cnt = %5u allocateMemoryBlocks = %u",
-                           stack_index, pstack->type, pstack->len, pstack->space,
-                           pstack->depth, pstack->max_depth,
-                           pstack->pop_cnt, pstack->push_cnt,
-                           pstack->num_call_allocateMemoryBlocks);
-
-      U_CHECK_MEMORY_OBJECT(pstack)
-
-      for (uint32_t i = 0; i < pstack->len; ++i)
-         {
-         if (ptr == pstack->pointer_block[i])
-            {
-            U_ERROR("duplicate entry on memory pool: stack[%u].index = %u stack[%u].len = %u stack[%u].space = %u stack[%u].pointer_block[%u] = %p",
-                       stack_index,    pstack->index,
-                       stack_index,    pstack->len,
-                       stack_index,    pstack->space,
-                       stack_index, i, pstack->pointer_block[i]);
-            }
-         }
-      }
-
-   U_RETURN(true);
-}
-#endif
-
+#ifdef ENABLE_MEMPOOL
 void UMemoryPool::allocateMemoryBlocks(int stack_index, uint32_t n)
 {
    U_TRACE(0+256, "UMemoryPool::allocateMemoryBlocks(%d,%u)", stack_index, n)
@@ -388,7 +353,6 @@ void UMemoryPool::allocateMemoryBlocks(int stack_index, uint32_t n)
    U_INTERNAL_ASSERT_MAJOR(stack_index, 0)
    U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
-#if defined(ENABLE_MEMPOOL)
    UStackMemoryPool* pstack = (UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index);
 
    U_INTERNAL_DUMP("stack[%u]: type = %4u len = %5u space = %5u depth = %4u max_depth = %4u pop_cnt = %5u push_cnt = %5u allocateMemoryBlocks = %u",
@@ -398,7 +362,6 @@ void UMemoryPool::allocateMemoryBlocks(int stack_index, uint32_t n)
                         pstack->num_call_allocateMemoryBlocks);
 
    if (n > pstack->len) pstack->allocateMemoryBlocks(n);
-#endif
 }
 
 void UMemoryPool::allocateMemoryBlocks(const char* ptr)
@@ -407,7 +370,6 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-#ifdef ENABLE_MEMPOOL
    void* addr;
    uint32_t i;
    char* endptr;
@@ -449,7 +411,7 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
 
       UFile::nr_hugepages = UFile::setSysParam("/proc/sys/vm/nr_hugepages", 64);
 
-      U_DEBUG("creation of 64 huge pages %s", UFile::nr_hugepages ? "success" : "FAILED");
+      U_DEBUG("Creation of 64 huge pages %s", UFile::nr_hugepages ? "success" : "FAILED");
       }
 #endif
 
@@ -483,7 +445,6 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
             }
          }
       }
-#endif
 }
 
 void UMemoryPool::push(void* ptr, int stack_index)
@@ -492,40 +453,79 @@ void UMemoryPool::push(void* ptr, int stack_index)
 
    U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
-#if !defined(ENABLE_MEMPOOL)
-   U_SYSCALL_VOID(free, "%p", ptr);
-#else
    if (stack_index) ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->push(ptr);
-#endif
+}
+
+void UMemoryPool::_free(void* ptr, uint32_t num, uint32_t type_size)
+{
+   U_TRACE(1, "UMemoryPool::_free(%p,%u,%u)", ptr, num, type_size) // problem with sanitize address
+
+   uint32_t length = (num * type_size);
+
+   U_INTERNAL_DUMP("length = %u", length)
+
+   if (length <= U_MAX_SIZE_PREALLOCATE)       push(ptr, U_SIZE_TO_STACK_INDEX(length));
+   else                                  deallocate(ptr, UFile::getSizeAligned(length));
 }
 
 void* UMemoryPool::pop(int stack_index)
 {
-   U_TRACE(0+256, "UMemoryPool::pop(%d)", stack_index) // problem with sanitize address
+   U_TRACE(0+256, "UMemoryPool::pop(%d)", stack_index)
 
    U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
-#if !defined(ENABLE_MEMPOOL)
-   void* ptr = U_SYSCALL(malloc, "%u", U_STACK_INDEX_TO_SIZE[stack_index]);
-#else
    UStackMemoryPool* pstack = (UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index);
 
-#  ifdef DEBUG
+#ifdef DEBUG
    if (pstack->index &&
        pstack->len == 0)
       {
-      U_WARNING("we are going to call allocateMemoryBlocks() (pid %P) - object = %S func = %S"
+      U_WARNING("We are going to call allocateMemoryBlocks() (pid %P) - object = %S func = %S"
                 " index = %u type = %u len = %u space = %u depth = %u max_depth = %u num_call_allocateMemoryBlocks = %u pop_cnt = %u push_cnt = %u",
                   obj_class, func_call, pstack->index, pstack->type, pstack->len, pstack->space, pstack->depth,
                   pstack->max_depth, pstack->num_call_allocateMemoryBlocks, pstack->pop_cnt, pstack->push_cnt);
       }
-#  endif
-
-   void* ptr = pstack->pop();
 #endif
 
-   U_RETURN(ptr);
+   return pstack->pop();
 }
+
+#  ifdef DEBUG
+bool UMemoryPool::check(void* ptr)
+{
+   U_TRACE(0, "UMemoryPool::check(%p)", ptr)
+
+   UStackMemoryPool* pstack;
+
+   for (uint32_t stack_index = 0; stack_index < U_NUM_STACK_TYPE; ++stack_index)
+      {
+      pstack = (UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index);
+
+      U_INTERNAL_DUMP("stack[%u]: type = %4u len = %5u space = %5u depth = %4u max_depth = %4u pop_cnt = %5u push_cnt = %5u allocateMemoryBlocks = %u",
+                           stack_index, pstack->type, pstack->len, pstack->space,
+                           pstack->depth, pstack->max_depth,
+                           pstack->pop_cnt, pstack->push_cnt,
+                           pstack->num_call_allocateMemoryBlocks);
+
+      U_CHECK_MEMORY_OBJECT(pstack)
+
+      for (uint32_t i = 0; i < pstack->len; ++i)
+         {
+         if (ptr == pstack->pointer_block[i])
+            {
+            U_ERROR("Duplicate entry on memory pool: stack[%u].index = %u stack[%u].len = %u stack[%u].space = %u stack[%u].pointer_block[%u] = %p",
+                       stack_index,    pstack->index,
+                       stack_index,    pstack->len,
+                       stack_index,    pstack->space,
+                       stack_index, i, pstack->pointer_block[i]);
+            }
+         }
+      }
+
+   U_RETURN(true);
+}
+#  endif
+#endif
 
 void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
 {
@@ -600,13 +600,11 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
    U_RETURN(ptr);
 }
 
+#if defined(ENABLE_MEMPOOL) && !defined(U_SERVER_CAPTIVE_PORTAL)
 void UMemoryPool::deallocate(void* ptr, uint32_t length)
 {
    U_TRACE(1, "UMemoryPool::deallocate(%p,%u)", ptr, length)
 
-#if !defined(ENABLE_MEMPOOL) || defined(U_SERVER_CAPTIVE_PORTAL)
-   U_SYSCALL_VOID(free, "%p", ptr);
-#else
    if (UFile::isLastAllocation(ptr, length))
       {
       UFile::pfree  = (char*)ptr;
@@ -617,18 +615,18 @@ void UMemoryPool::deallocate(void* ptr, uint32_t length)
       return;
       }
 
-# if defined(U_LINUX) && defined(HAVE_ARCH64)
-#  if defined(MAP_HUGE_1GB) || defined(MAP_HUGE_2MB) // (since Linux 3.8)
+#if defined(U_LINUX) && defined(HAVE_ARCH64)
+# if defined(MAP_HUGE_1GB) || defined(MAP_HUGE_2MB) // (since Linux 3.8)
    U_INTERNAL_DUMP("UFile::nr_hugepages = %ld", UFile::nr_hugepages)
 
    if (UFile::nr_hugepages == 0) // NB: MADV_DONTNEED cannot be applied to locked pages, Huge TLB pages, or VM_PFNMAP pages...
-#  endif
+# endif
    {
-   (void) U_SYSCALL(madvise, "%p,%lu,%d", (void*)ptr, length, MADV_DONTNEED); // MADV_DONTNEED causes the kernel to reclaim the indicated pages immediately and drop their contents
+   (void) U_SYSCALL(madvise, "%p,%lu,%d", (void*)ptr, length, MADV_DONTNEED); // causes the kernel to reclaim the indicated pages immediately and drop their contents
 
    return;
    }
-# endif
+#endif
    /**
     * munmap() is expensive. A series of page table entries must be cleaned up, and the VMA must be unlinked. By contrast, madvise(MADV_DONTNEED) only needs to set
     * a flag in the VMA and has the further benefit that no system call is required to reallocate the memory. That operation informs the kernel that the pages can
@@ -639,24 +637,8 @@ void UMemoryPool::deallocate(void* ptr, uint32_t length)
     */
 
    (void) U_SYSCALL(munmap, "%p,%lu", (void*)ptr, length);
-#endif
 }
-
-void UMemoryPool::_free(void* ptr, uint32_t num, uint32_t type_size)
-{
-   U_TRACE(1, "UMemoryPool::_free(%p,%u,%u)", ptr, num, type_size) // problem with sanitize address
-
-#if !defined(ENABLE_MEMPOOL)
-   U_SYSCALL_VOID(free, "%p", ptr);
-#else
-   uint32_t length = (num * type_size);
-
-   U_INTERNAL_DUMP("length = %u", length)
-
-   if (length <= U_MAX_SIZE_PREALLOCATE)       push(ptr, U_SIZE_TO_STACK_INDEX(length));
-   else                                  deallocate(ptr, UFile::getSizeAligned(length));
 #endif
-}
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
 void UStackMemoryPool::paint(ostream& os) // paint info

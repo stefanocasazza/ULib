@@ -56,7 +56,7 @@ void UFile::dec_num_file_object(int fd)
 {
    --num_file_object;
 
-   if (fd != -1) U_WARNING("file descriptor %d not closed...", fd);
+   if (fd != -1) U_WARNING("File descriptor %d not closed...", fd);
 }
 
 void UFile::chk_num_file_object()
@@ -493,7 +493,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
          U_INTERNAL_ASSERT_EQUALS(length & U_1G_MASK, 0)
 
-         U_DEBUG("we are going to allocate (%u GB - %u bytes) MAP_HUGE_1GB - nfree = %u flags = %B", length / U_1G, length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB);
+         U_DEBUG("We are going to allocate (%u GB - %u bytes) MAP_HUGE_1GB - nfree = %u flags = %B", length / U_1G, length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB);
 
          ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB, -1, 0);
 
@@ -510,7 +510,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
       U_INTERNAL_ASSERT_EQUALS(length & U_2M_MASK, 0)
 
-      U_DEBUG("we are going to allocate (%u MB - %u bytes) MAP_HUGE_2MB - nfree = %u flags = %B", length / (1024U*1024U), length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB);
+      U_DEBUG("We are going to allocate (%u MB - %u bytes) MAP_HUGE_2MB - nfree = %u flags = %B", length / (1024U*1024U), length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB);
 
       ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB, -1, 0);
 
@@ -527,7 +527,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
          u_get_memusage(&vsz, &rss);
 
-         U_WARNING("cannot allocate %u bytes (%u MB) of memory MAP_HUGE_2MB - "
+         U_WARNING("Cannot allocate %u bytes (%u MB) of memory MAP_HUGE_2MB - "
                    "address space usage: %.2f MBytes - "
                              "rss usage: %.2f MBytes",
                    *plength, *plength / (1024U*1024U), (double)vsz / (1024.0 * 1024.0),
@@ -543,7 +543,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
    U_INTERNAL_ASSERT_EQUALS(*plength & U_PAGEMASK, 0)
 
-   U_DEBUG("we are going to allocate (%u KB - %u bytes) - nfree = %u flags = %B", *plength / 1024U, *plength, nfree, flags);
+   U_DEBUG("We are going to allocate (%u KB - %u bytes) - nfree = %u flags = %B", *plength / 1024U, *plength, nfree, flags);
 
    return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, PROT_READ | PROT_WRITE, flags, -1, 0);
 }
@@ -589,7 +589,7 @@ try_from_file_system:
 
       if (fd != -1)
          {
-         U_DEBUG("we are going to allocate from file system (%u KB - %u bytes)", *plength / 1024, *plength);
+         U_DEBUG("We are going to allocate from file system (%u KB - %u bytes)", *plength / 1024, *plength);
 
          _ptr = (fallocate(fd, *plength)
                      ? (char*)U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, fd, 0)
@@ -606,16 +606,16 @@ try_from_file_system:
 
          u_get_memusage(&vsz, &rss);
 
-         U_ERROR("cannot allocate %u bytes (%u KB) of memory - "
-                  "address space usage: %.2f MBytes - "
-                            "rss usage: %.2f MBytes",
+         U_ERROR("Cannot allocate %u bytes (%u KB) of memory - "
+                 "address space usage: %.2f MBytes - "
+                           "rss usage: %.2f MBytes",
                   *plength, *plength / 1024, (double)vsz / (1024.0 * 1024.0),
                                              (double)rss / (1024.0 * 1024.0));
          }
       }
 
 #ifdef U_SERVER_CAPTIVE_PORTAL
-   U_DEBUG("we are going to malloc %u bytes (%u KB)", *plength, *plength / 1024);
+   U_DEBUG("We are going to malloc %u bytes (%u KB)", *plength, *plength / 1024);
 
    return (char*) U_SYSCALL(malloc, "%u", *plength);
 #else
@@ -628,7 +628,7 @@ try_from_file_system:
 
       u_get_memusage(&vsz, &rss);
 
-      U_DEBUG("we are going to allocate %u MB - "
+      U_DEBUG("We are going to allocate %u MB - "
                  "address space usage: %.2f MBytes - "
                            "rss usage: %.2f MBytes",
                         rlimit_memalloc / (1024 * 1024),
@@ -925,7 +925,8 @@ bool UFile::creatForWrite(bool append, bool bmkdirs)
 
       esito = creat(flags, PERM_FILE);
 
-      if (esito == false && bmkdirs)
+      if (esito == false &&
+          bmkdirs)
          {
          // Make any missing parent directories for each directory argument
 
@@ -957,8 +958,8 @@ bool UFile::write(const char* data, uint32_t sz, bool append, bool bmkdirs)
 
    bool esito = false;
 
-   if (sz &&
-       creatForWrite(append, bmkdirs))
+   if (creatForWrite(append, bmkdirs) &&
+       sz)
       {
       if (sz <= PAGESIZE) esito = UFile::write(fd, data, sz);
       else
@@ -971,7 +972,7 @@ bool UFile::write(const char* data, uint32_t sz, bool append, bool bmkdirs)
             {
             readSize();
 
-            U_WARNING("no more space on disk for requested size %u - acquired only %u bytes", offset + sz, st_size);
+            U_WARNING("No more space on disk for requested size %u - acquired only %u bytes", offset + sz, st_size);
 
             sz = (st_size > offset ? st_size - offset : 0);
             }

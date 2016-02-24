@@ -52,8 +52,8 @@ public:
       // manage options
 
       time_t queue_time = 0;
-      UString outpath, result;
-      bool include = false, bstdin = false;
+      UString outpath, result, req(U_CAPACITY);
+      bool ok = false, include = false, bstdin = false;
 
       if (UApplication::isOptions())
          {
@@ -116,49 +116,53 @@ loop: if (upload)
          {
          UFile file(upload);
 
-         if (client->upload(url, file)) UApplication::exit_value = 0;
+         if (client->upload(url, file)) ok = true;
          }
       else if (client->connectServer(url))
          {
-         bool ok;
-
          if (bstdin == false) ok = client->sendRequest();
          else
             {
-            UString req(U_CAPACITY);
+            if (req.empty())
+               {
+               UServices::readEOF(STDIN_FILENO, req);
 
-            UServices::readEOF(STDIN_FILENO, req);
-
-            if (req.empty()) U_ERROR("cannot read data from <stdin>");
+               if (req.empty()) U_ERROR("Cannot read data from <stdin>");
+               }
 
             ok = client->sendRequest(req);
             }
-
-         if (ok) UApplication::exit_value = 0;
          }
 
-      result = (include ? client->getResponse()
-                        : client->getContent());
-
-      if (result)
+      if (ok)
          {
-#     ifdef USE_LIBZ
-         if (UStringExt::isGzip(result)) result = UStringExt::gunzip(result);
-#     endif
+         UApplication::exit_value = 0;
 
-         if (outpath) UFile::writeTo(outpath, result);
-         else         (void) write(1, U_STRING_TO_PARAM(result));
+         result = (include ? client->getResponse()
+                           : client->getContent());
+
+         if (result)
+            {
+#        ifdef USE_LIBZ
+            if (UStringExt::isGzip(result)) result = UStringExt::gunzip(result);
+#        endif
+
+            if (outpath) UFile::writeTo(outpath, result);
+            else         (void) write(1, U_STRING_TO_PARAM(result));
+            }
          }
 
       if (queue_time)
          {
-         UTimeVal to_sleep(queue_time / 10L);
-
          U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, 0)
 
-         if (result.empty() &&
-             UApplication::exit_value == 1)
+         UTimeVal to_sleep(queue_time / 10L);
+
+         if (ok == false ||
+             result.empty())
             {
+            client->close();
+
             to_sleep.nanosleep();
 
             goto loop;
@@ -167,13 +171,13 @@ loop: if (upload)
          UFile file;
          uint32_t i, n, pos;
          UVector<UString> vec(64);
-         UString req, name, location, mask(100U);
+         UString name, location, mask(100U);
 
          to_sleep.setSecond(to_sleep.getSecond() * 10L);
 
          mask.snprintf("%v.*", client->UClient_Base::host_port.rep);
 
-         U_MESSAGE("monitoring directory %V every %u sec - file mask: %V", UString::str_CLIENT_QUEUE_DIR->rep, to_sleep.getSecond(), mask.rep);
+         U_MESSAGE("Monitoring directory %V every %u sec - file mask: %V", UString::str_CLIENT_QUEUE_DIR->rep, to_sleep.getSecond(), mask.rep);
 
 #     ifdef USE_LIBSSL
          client->UClient_Base::setActive(false);
@@ -225,7 +229,7 @@ loop: if (upload)
 #        endif
             vec.clear();
 
-            if (client->isOpen()) client->close();
+            client->close();
 
             to_sleep.nanosleep();
             }

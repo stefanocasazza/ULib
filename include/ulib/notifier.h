@@ -33,6 +33,13 @@
 #  endif
 #endif
 
+#ifndef EPOLLEXCLUSIVE // Provides exclusive wakeups when attaching multiple epoll fds to a shared wakeup source
+#define EPOLLEXCLUSIVE 0 // (1 << 28)
+#endif
+#ifndef EPOLLROUNDROBIN // Provides balancing for exclusive wakeups when attaching multiple epoll fds to a shared wakeup soruce
+#define EPOLLROUNDROBIN 0 // (1 << 27)
+#endif
+
 #if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && !defined(U_SERVER_CAPTIVE_PORTAL) && \
       (!defined(U_LINUX) || !defined(ENABLE_THREAD) || defined(U_LOG_ENABLE) || defined(USE_LIBZ))
 #  define U_EPOLLET_POSTPONE_STRATEGY
@@ -54,36 +61,11 @@ class UClientThrottling;
 class U_EXPORT UNotifier {
 public:
 
-   // SERVICES
-
-   static void clear();
-   static void waitForEvent();
-   static void init(bool bacquisition);
-   static void erase( UEventFd* handler_event);
-   static void modify(UEventFd* handler_event);
-   static void insert(UEventFd* handler_event);
-   static void waitForEvent(UEventTime* timeout);
-   static void callForAllEntryDynamic(bPFpv function);
-
-#ifdef HAVE_EPOLL_CTL_BATCH
-   static void insertBatch()
-      {
-      U_TRACE_NO_PARAM(0, "UNotifier::insertBatch()")
-
-      if (ctl_cmd_cnt)
-         {
-         (void) U_SYSCALL(epoll_ctl_batch, "%d,%d,%d,%p", epollfd, 0, ctl_cmd_cnt, ctl_cmd);
-
-         ctl_cmd_cnt = 0;
-         }
-      }
-
-   static void batch((UEventFd* handler_event);
-#endif
-
    static uint32_t min_connection,
                    num_connection,
                    max_connection;
+
+   // SERVICES
 
    static bool empty()
       {
@@ -101,6 +83,107 @@ public:
 
       U_RETURN(false);
       }
+
+   static void handlerDelete(UEventFd* item)
+      {
+      U_TRACE(0, "UNotifier::handlerDelete(%p)", item)
+
+      U_INTERNAL_ASSERT_POINTER(item)
+
+            handlerDelete(item->fd, item->op_mask);
+      item->handlerDelete();
+      }
+
+   static void clear();
+   static void modify(UEventFd* handler_event);
+   static void callForAllEntryDynamic(bPFpv function);
+   static void insert(UEventFd* handler_event, int op = 0);
+
+#ifndef USE_LIBEVENT
+   static void resume(UEventFd* item);
+   static void suspend(UEventFd* item);
+   static void init(bool bacquisition);
+
+   static void waitForEvent();
+   static void waitForEvent(                                                 UEventTime* ptimeout);
+   static int  waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout);
+
+# ifdef HAVE_EPOLL_CTL_BATCH
+   static void insertBatch()
+      {
+      U_TRACE_NO_PARAM(0, "UNotifier::insertBatch()")
+
+      if (ctl_cmd_cnt)
+         {
+         (void) U_SYSCALL(epoll_ctl_batch, "%d,%d,%d,%p", epollfd, 0, ctl_cmd_cnt, ctl_cmd);
+
+         ctl_cmd_cnt = 0;
+         }
+      }
+
+   static void batch((UEventFd* handler_event);
+# endif
+#else
+   static void init(bool bacquisition)
+      {
+      U_TRACE(0, "UNotifier::init(%b)", bacquisition)
+
+      if (u_ev_base &&
+          bacquisition)
+         {
+         (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // NB: reinitialized the event base after fork()...
+         }
+
+      if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
+
+      U_INTERNAL_ASSERT_POINTER(u_ev_base)
+
+      if (lo_map_fd == 0) createMapFd();
+      }
+
+   static void suspend(UEventFd* item)
+      {
+      U_TRACE(0, "UNotifier::suspend(%p)", item)
+
+      U_INTERNAL_ASSERT_POINTER(item)
+
+      // TODO
+      }
+
+   static void resume(UEventFd* item)
+      {
+      U_TRACE(0, "UNotifier::resume(%p)", item)
+
+      U_INTERNAL_ASSERT_POINTER(item)
+
+      // TODO
+      }
+
+   static int waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* ptimeout)
+      {
+      U_TRACE(0, "UNotifier::waitForEvent(%d,%p,%p,%p)", fd_max, read_set, write_set, ptimeout)
+
+      U_RETURN(-1);
+      }
+
+   static void waitForEvent(UEventTime* ptimeout)
+      {
+      U_TRACE(0, "UNotifier::waitForEvent(%p)", ptimeout)
+
+      (void) UDispatcher::dispatch(UDispatcher::ONCE);
+      }
+
+   static void waitForEvent()
+      {
+      U_TRACE_NO_PARAM(0, "UNotifier::waitForEvent()")
+
+      (void) UDispatcher::dispatch(UDispatcher::ONCE);
+
+#  ifdef DEBUG
+      ++nwatches;
+#  endif
+      }
+#endif
 
    // READ - WRITE
 
@@ -124,19 +207,14 @@ protected:
    static UEventFd* handler_event;
    static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
 
-#if defined(DEBUG) || defined(U_EPOLLET_POSTPONE_STRATEGY)
-   static bool bepollet;
-   static uint32_t bepollet_threshold;
-# ifdef DEBUG
-   static uint32_t nwatches, max_nfd_ready;
-# endif
-#endif
-
 #ifndef USE_LIBEVENT
 # ifdef HAVE_EPOLL_WAIT
    static int epollfd;
    static struct epoll_event*  events;
    static struct epoll_event* pevents;
+#  ifdef U_EPOLLET_POSTPONE_STRATEGY
+   static bool bepollet;
+#  endif
 #  ifdef HAVE_EPOLL_CTL_BATCH
    static int ctl_cmd_cnt;
    static struct epoll_ctl_cmd ctl_cmd[U_EPOLL_CTL_CMD_SIZE];
@@ -155,6 +233,10 @@ protected:
 # endif
 #endif
 
+#ifdef DEBUG
+   static uint32_t nwatches, max_nfd_ready, bepollet_threshold;
+#endif
+
 #ifndef HAVE_POLL_H
    static UEventTime* time_obj;
 #else
@@ -162,42 +244,29 @@ protected:
    static int waitForEvent(int timeoutMS);
 #endif
 
+   static void createMapFd();
    static bool isHandler(int fd);
    static bool setHandler(int fd);
-   static void resetHandler(int fd);
-   static void resume(UEventFd* item);
-   static void suspend(UEventFd* item);
-   static int  waitForEvent(int fd_max, fd_set* read_set, fd_set* write_set, UEventTime* timeout);
 
 private:
-   static void handlerDelete(UEventFd* item)
-      {
-      U_TRACE(0, "UNotifier::handlerDelete(%p)", item)
-
-      U_INTERNAL_ASSERT_POINTER(item)
-
-      item->handlerDelete();
-
-      handlerDelete(item->fd, item->op_mask);
-      }
-
    static void handlerDelete(int fd, int mask);
 
 #ifndef USE_LIBEVENT
    static void notifyHandlerEvent() U_NO_EXPORT;
-# if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+#endif
+
+#if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    static UThread* pthread;
-#  ifdef _MSWINDOWS_
+# ifdef _MSWINDOWS_
    static CRITICAL_SECTION mutex;
-#  else
+# else
    static pthread_mutex_t mutex;
-#  endif
+# endif
    static void   lock() { if (pthread) UThread::lock(&mutex); }
    static void unlock() { if (pthread) UThread::unlock(&mutex); }
-# else
+#else
    static void   lock() {}
    static void unlock() {}
-# endif
 #endif
 
 #ifdef U_COMPILER_DELETE_MEMBERS
@@ -207,6 +276,8 @@ private:
    UNotifier(const UNotifier&)            {}
    UNotifier& operator=(const UNotifier&) { return *this; }
 #endif
+
+   friend void ULib_init();
 
    friend class USocket;
    friend class UTimeStat;

@@ -79,10 +79,10 @@ U_EXPORT main (int argc, char* argv[])
 
       data3 = data2 = data1;
 
-      data2.setPrevWeek();
-      data3.setNextWeek();
+      data2.setMondayPrevWeek();
+      data3.setMondayNextWeek();
 
-      U_DUMP("setPrevWeek() = %V data = %V setNextWeek() = %V", data2.strftime("%d/%m/%y").rep, data1.strftime("%d/%m/%y").rep, data3.strftime("%d/%m/%y").rep)
+      U_DUMP("setMondayPrevWeek() = %V data = %V setMondayNextWeek() = %V", data2.strftime("%d/%m/%y").rep, data1.strftime("%d/%m/%y").rep, data3.strftime("%d/%m/%y").rep)
 
       cout << data1.strftime("%d/%m/%y") << '\n';
       }

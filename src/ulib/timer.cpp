@@ -27,16 +27,11 @@ void UTimer::init(Type _mode)
       U_ERROR("UTimer::init(%d): system date not updated", _mode);
       }
 
-   mode = _mode;
-
-        if (_mode ==  SYNC) UInterrupt::setHandlerForSignal(SIGALRM, (sighandler_t)UTimer::handlerAlarm);
-   else if (_mode == ASYNC) UInterrupt::insert(             SIGALRM, (sighandler_t)UTimer::handlerAlarm); // async signal
-
-#ifdef USE_LIBEVENT
-   if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
-
-   U_INTERNAL_ASSERT_POINTER(u_ev_base)
-#endif
+   if ((mode = _mode) != NOSIGNAL)
+      {
+           if (_mode ==  SYNC) UInterrupt::setHandlerForSignal(SIGALRM, (sighandler_t)UTimer::handlerAlarm);
+      else if (_mode == ASYNC) UInterrupt::insert(             SIGALRM, (sighandler_t)UTimer::handlerAlarm); // async signal
+      }
 }
 
 U_NO_EXPORT void UTimer::insertEntry()

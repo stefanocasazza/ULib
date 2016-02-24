@@ -242,9 +242,12 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                u_errno = errno;
                }
 
-            if (errno != EAGAIN      &&
-                errno != EINPROGRESS &&
-                strstr(buffer_syscall, "::getenv") == 0)
+            if (errno != EAGAIN                            &&
+                errno != EINPROGRESS                       &&
+#           ifdef USE_LIBPCRE
+                strstr(buffer_syscall, "::pcre_exec") == 0 &&
+#           endif
+                strstr(buffer_syscall, "::getenv")    == 0)
                {
                U_WARNING("%s", buffer_syscall);
                }

@@ -1986,7 +1986,7 @@ bool UValue::invariant() const
        *key &&
         key->isUTF8(0) == false)
       {
-      U_WARNING("error on value: (key contains invalid UTF-8)\n"
+      U_WARNING("Error on value: (key contains invalid UTF-8)\n"
                 "--------------------------------------------------\n%s", dump(true));
 
       return false;
@@ -1995,7 +1995,7 @@ bool UValue::invariant() const
    if (type_ < 0 ||
        type_ > OBJECT_VALUE)
       {
-      U_WARNING("error on value: (tag is invalid)\n"
+      U_WARNING("Error on value: (tag is invalid)\n"
                 "--------------------------------------------------\n%s", dump(true));
 
       return false;
@@ -2005,7 +2005,7 @@ bool UValue::invariant() const
        value.bool_ != false   &&
        value.bool_ != true)
       {
-      U_WARNING("error on value: (bool_ is neither false nor true)\n"
+      U_WARNING("Error on value: (bool_ is neither false nor true)\n"
                 "--------------------------------------------------\n%s", dump(true));
 
       return false;
@@ -2017,7 +2017,7 @@ bool UValue::invariant() const
 
       if (str == 0)
          {
-         U_WARNING("error on value: (string is NULL)\n"
+         U_WARNING("Error on value: (string is NULL)\n"
                    "--------------------------------------------------\n%s", dump(true));
 
          return false;
@@ -2026,7 +2026,7 @@ bool UValue::invariant() const
       if (*str &&
            str->isUTF8(0) == false)
          {
-         U_WARNING("error on value: (string contains invalid UTF-8)\n"
+         U_WARNING("Error on value: (string contains invalid UTF-8)\n"
                    "--------------------------------------------------\n%s", dump(true));
 
          return false;
@@ -2040,7 +2040,7 @@ bool UValue::invariant() const
          {
          if (children.head)
             {
-            U_WARNING("error on value: (tail is NULL, but head is not)\n"
+            U_WARNING("Error on value: (tail is NULL, but head is not)\n"
                       "--------------------------------------------------\n%s", dump(true));
 
             return false;
@@ -2048,7 +2048,7 @@ bool UValue::invariant() const
 
          if (children.tail)
             {
-            U_WARNING("error on value: (head is NULL, but tail is not)\n"
+            U_WARNING("Error on value: (head is NULL, but tail is not)\n"
                       "--------------------------------------------------\n%s", dump(true));
 
             return false;
@@ -2058,7 +2058,7 @@ bool UValue::invariant() const
          {
          if (children.head->prev)
             {
-            U_WARNING("error on value: (First child's prev pointer is not NULL)\n"
+            U_WARNING("Error on value: (First child's prev pointer is not NULL)\n"
                       "--------------------------------------------------\n%s", dump(true));
 
             return false;
@@ -2070,7 +2070,7 @@ bool UValue::invariant() const
             {
             if (child == this)
                {
-               U_WARNING("error on value: (it is its own child)\n"
+               U_WARNING("Error on value: (it is its own child)\n"
                          "--------------------------------------------------\n%s", dump(true));
 
                return false;
@@ -2078,7 +2078,7 @@ bool UValue::invariant() const
 
             if (child->next == child)
                {
-               U_WARNING("error on value: (child->next == child (cycle))\n"
+               U_WARNING("Error on value: (child->next == child (cycle))\n"
                          "--------------------------------------------------\n%s", dump(true));
 
                return false;
@@ -2086,7 +2086,7 @@ bool UValue::invariant() const
 
             if (child->next == children.head)
                {
-               U_WARNING("error on value: (child->next == head (cycle))\n"
+               U_WARNING("Error on value: (child->next == head (cycle))\n"
                          "--------------------------------------------------\n%s", dump(true));
 
                return false;
@@ -2094,7 +2094,7 @@ bool UValue::invariant() const
 
             if (child->parent != this)
                {
-               U_WARNING("error on value: (child does not point back to parent)\n"
+               U_WARNING("Error on value: (child does not point back to parent)\n"
                          "--------------------------------------------------\n%s", dump(true));
 
                return false;
@@ -2103,7 +2103,7 @@ bool UValue::invariant() const
             if (child->next &&
                 child->next->prev != child)
                {
-               U_WARNING("error on value: (child->next does not point back to child)\n"
+               U_WARNING("Error on value: (child->next does not point back to child)\n"
                          "--------------------------------------------------\n%s", dump(true));
 
                return false;
@@ -2111,7 +2111,7 @@ bool UValue::invariant() const
 
             if (type_ == ARRAY_VALUE && child->key)
                {
-               U_WARNING("error on value: (Array element's key is not NULL)\n"
+               U_WARNING("Error on value: (Array element's key is not NULL)\n"
                          "--------------------------------------------------\n%s", dump(true));
 
                return false;
@@ -2119,7 +2119,7 @@ bool UValue::invariant() const
 
             if (type_ == OBJECT_VALUE && child->key == 0)
                {
-               U_WARNING("error on value: (Object member's key is NULL)\n"
+               U_WARNING("Error on value: (Object member's key is NULL)\n"
                          "--------------------------------------------------\n%s", dump(true));
 
                return false;
@@ -2130,7 +2130,7 @@ bool UValue::invariant() const
 
          if (last != children.tail)
             {
-            U_WARNING("error on value: (tail does not match pointer found by starting at head and following next links)\n"
+            U_WARNING("Error on value: (tail does not match pointer found by starting at head and following next links)\n"
                       "--------------------------------------------------\n%s", dump(true));
 
             return false;

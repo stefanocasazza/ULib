@@ -1869,7 +1869,7 @@ bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(int op)
          {
          ++nerror;
 
-         U_WARNING("RDB store: db(%.*S) op(%d) data(%u) - to: %.*S from: %.*S", U_FILE_TO_TRACE(*this), op, u_buffer_len, sz, ptr, sz, data_buffer);
+         U_WARNING("URDB store: db(%.*S) op(%d) data(%u) - to: %.*S from: %.*S", U_FILE_TO_TRACE(*this), op, u_buffer_len, sz, ptr, sz, data_buffer);
          }
 #  endif
       }
@@ -1880,7 +1880,7 @@ bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(int op)
 
    if (result)
       {
-      U_WARNING("store data with op %d on db %.*S failed with error %d", op, U_FILE_TO_TRACE(*this), result);
+      U_WARNING("Store data with op %d on db %.*S failed with error %d", op, U_FILE_TO_TRACE(*this), result);
 
       U_RETURN(false);
       }

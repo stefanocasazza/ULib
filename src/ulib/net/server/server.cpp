@@ -1279,7 +1279,7 @@ bool UServer_Base::setDocumentRoot(const UString& dir)
 
          if (document_root->empty())
             {
-            U_WARNING("var DOCUMENT_ROOT %S expansion failed", document_root_ptr);
+            U_WARNING("Var DOCUMENT_ROOT %S expansion failed", document_root_ptr);
 
             U_RETURN(false);
             }
@@ -1296,7 +1296,7 @@ bool UServer_Base::setDocumentRoot(const UString& dir)
 
    if (UFile::chdir(document_root_ptr, false) == false)
       {
-      U_WARNING("chdir to working directory (DOCUMENT_ROOT) %S failed", document_root_ptr);
+      U_WARNING("Chdir to working directory (DOCUMENT_ROOT) %S failed", document_root_ptr);
 
       U_RETURN(false);
       }
@@ -1558,7 +1558,7 @@ void UServer_Base::loadConfigParam()
 
    if (setDocumentRoot(cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false)
       {
-      U_ERROR("setting DOCUMENT ROOT %V failed", document_root->rep);
+      U_ERROR("Setting DOCUMENT ROOT %V failed", document_root->rep);
       }
 
 #ifdef U_LOG_ENABLE
@@ -2224,7 +2224,7 @@ void UServer_Base::init()
 
    if (preforked_num_kids > 1) monitoring_process = true;
 
-   UTimer::init();
+   UTimer::init(UTimer::NOSIGNAL);
 
    UClientImage_Base::init();
 
@@ -2803,7 +2803,7 @@ loop:
             
             if (handlerTimeoutConnection(CLIENT_INDEX))
                {
-               UNotifier::erase((UEventFd*)CLIENT_INDEX);
+               UNotifier::handlerDelete((UEventFd*)CLIENT_INDEX);
 
                goto try_accept;
                }
@@ -3069,14 +3069,17 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    int cpu = U_SYSCALL_NO_PARAM(sched_getcpu), scpu = -1;
 
 # ifdef SO_INCOMING_CPU
-   len = sizeof(socklen_t);
+   if (USocket::bincoming_cpu)
+      {
+      len = sizeof(socklen_t);
 
-   (void) CSOCKET->getSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&scpu, len);
+      (void) CSOCKET->getSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&scpu, len);
 
-   len = ((USocket::incoming_cpu == scpu || USocket::incoming_cpu == -1) ? 0 : U_CONSTANT_SIZE(" [DIFFER]"));
+      len = (USocket::incoming_cpu == scpu ? 0 : U_CONSTANT_SIZE(" [DIFFER]"));
+      }
 # endif
 
-   U_INTERNAL_DUMP("USocket::incoming_cpu = %d sched cpu = %d socket cpu = %d", USocket::incoming_cpu, cpu, scpu)
+   U_INTERNAL_DUMP("USocket::incoming_cpu = %d USocket::bincoming_cpu = %b sched cpu = %d socket cpu = %d", USocket::incoming_cpu, USocket::bincoming_cpu, cpu, scpu)
 
    if (len) U_DEBUG("UServer_Base::handlerRead(): CPU: %d sched(%d) socket(%d)%.*s", USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
 #endif
@@ -3182,7 +3185,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
    U_INTERNAL_ASSERT_POINTER(ptime)
    U_INTERNAL_ASSERT_DIFFERS(timeoutMS, -1)
 
-   U_INTERNAL_DUMP("pthis = %p handler_other = %p handler_inotify = %p ", pthis, handler_other, handler_inotify)
+   U_INTERNAL_DUMP("pthis = %p handler_other = %p handler_inotify = %p", pthis, handler_other, handler_inotify)
 
    if (cimg == pthis         ||
        cimg == handler_other ||
@@ -3268,7 +3271,7 @@ void UServer_Base::runLoop(const char* user)
 #ifndef _MSWINDOWS_
    if (user)
       {
-      if (u_runAsUser(user, false) == false) U_ERROR("set user %S context failed", user);
+      if (u_runAsUser(user, false) == false) U_ERROR("Set user %S context failed", user);
 
       U_SRV_LOG("Server run with user %S permission", user);
       }
@@ -3290,9 +3293,9 @@ void UServer_Base::runLoop(const char* user)
 
    if (UNotifier::min_connection)
       {
-      if (binsert)         UNotifier::insert(pthis);           // NB: we ask to be notified for request of connection (=> accept)
-      if (handler_other)   UNotifier::insert(handler_other);   // NB: we ask to be notified for request from generic system
-      if (handler_inotify) UNotifier::insert(handler_inotify); // NB: we ask to be notified for change of file system (=> inotify)
+      if (binsert)         UNotifier::insert(pthis,           EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for request of connection (=> accept)
+      if (handler_other)   UNotifier::insert(handler_other,   EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for request from generic system
+      if (handler_inotify) UNotifier::insert(handler_inotify, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for change of file system (=> inotify)
       }
 
 #ifdef U_LOG_ENABLE
@@ -3468,8 +3471,8 @@ no_monitoring_process:
                   u_bind2cpu(&cpuset, rkids % u_num_cpu); // Pin the process to a particular cpu...
 
 #              if !defined(U_LOG_DISABLE) || defined(HAVE_SCHED_GETCPU)
-                  uint32_t sz;
                   char buffer[64];
+                  uint32_t sz = 0;
                   int cpu = U_SYSCALL_NO_PARAM(sched_getcpu);
 #              endif
 
@@ -3478,12 +3481,8 @@ no_monitoring_process:
 #              endif
 
 #              ifdef HAVE_SCHED_GETCPU
-                  if (USocket::incoming_cpu == cpu ||
-                      USocket::incoming_cpu == -1)
-                     {
-                     sz = 0;
-                     }
-                  else
+                  if (USocket::incoming_cpu != cpu &&
+                      USocket::incoming_cpu != -1)
                      {
                      sz = u__snprintf(buffer, sizeof(buffer), " (EXPECTED CPU %d)", USocket::incoming_cpu);
                      }

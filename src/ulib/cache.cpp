@@ -189,7 +189,7 @@ char* UCache::add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t _
          {
          if (info->writer <= info->hsize)
             {
-            U_ERROR("cache exhausted");
+            U_ERROR("Cache exhausted");
 
             U_RETURN((char*)0);
             }

@@ -323,7 +323,7 @@ loop:
       {
       newsize += 256;
 
-      U_WARNING("current working directory need a bigger buffer (%u bytes), doing reallocation", newsize);
+      U_WARNING("Current working directory need a bigger buffer (%u bytes), doing reallocation", newsize);
 
       goto loop;
       }
@@ -560,7 +560,7 @@ void u_init_ulib(char** restrict argv)
        strncmp(u_cwd, pwd, u_cwd_len) != 0)
       {
 #  ifdef DEBUG
-      U_WARNING("current working directory from environment (PWD): %s differ from system getcwd(): %.*s", pwd, u_cwd_len, u_cwd);
+      U_WARNING("Current working directory from environment (PWD): %s differ from system getcwd(): %.*s", pwd, u_cwd_len, u_cwd);
 #  endif
       }
 #endif

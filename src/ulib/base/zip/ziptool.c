@@ -948,7 +948,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
       if (method != 8 &&
           (flags & 0x0008))
          {
-         U_WARNING("not compressed but data_descriptor - filename: %s", filename);
+         U_WARNING("Not compressed but data_descriptor - filename: %s", filename);
 
          return 0;
          }
@@ -1028,7 +1028,7 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          if (signature != 0x08074b50)
             {
-            U_WARNING("missing data_descriptor - filename: %s", filename);
+            U_WARNING("Missing data_descriptor - filename: %s", filename);
 
             return 0;
             }
