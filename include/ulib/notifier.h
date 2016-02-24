@@ -205,6 +205,7 @@ protected:
    static int nfd_ready; // the number of file descriptors ready for the requested I/O
    static UEventFd** lo_map_fd;
    static UEventFd* handler_event;
+   static uint32_t bepollet_threshold;
    static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
 
 #ifndef USE_LIBEVENT
@@ -234,7 +235,7 @@ protected:
 #endif
 
 #ifdef DEBUG
-   static uint32_t nwatches, max_nfd_ready, bepollet_threshold;
+   static uint32_t nwatches, max_nfd_ready;
 #endif
 
 #ifndef HAVE_POLL_H

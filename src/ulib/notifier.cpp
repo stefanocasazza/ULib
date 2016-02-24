@@ -58,6 +58,7 @@ int                             UNotifier::nfd_ready; // the number of file desc
 uint32_t                        UNotifier::min_connection;
 uint32_t                        UNotifier::num_connection;
 uint32_t                        UNotifier::max_connection;
+uint32_t                        UNotifier::bepollet_threshold = 10;
 UEventFd*                       UNotifier::handler_event;
 UEventFd**                      UNotifier::lo_map_fd;
 UGenericHashMap<int,UEventFd*>* UNotifier::hi_map_fd; // maps a fd to a node pointer
@@ -65,7 +66,6 @@ UGenericHashMap<int,UEventFd*>* UNotifier::hi_map_fd; // maps a fd to a node poi
 #ifdef DEBUG
 uint32_t UNotifier::nwatches;
 uint32_t UNotifier::max_nfd_ready;
-uint32_t UNotifier::bepollet_threshold = 10;
 #endif
 
 #if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
@@ -508,7 +508,7 @@ loop0:
 #  else
       int i = 0;
       pevents = events;
-#    if defined(U_EPOLLET_POSTPONE_STRATEGY)
+#    ifdef U_EPOLLET_POSTPONE_STRATEGY
       bool bloop1 = false;
       bepollet = ((uint32_t)nfd_ready >= bepollet_threshold);
 
@@ -580,7 +580,7 @@ loop0:
          goto loop0;
          }
 
-#    if defined(U_EPOLLET_POSTPONE_STRATEGY)
+#    ifdef U_EPOLLET_POSTPONE_STRATEGY
       if (bepollet)
          {
          if (bloop1 == false)
