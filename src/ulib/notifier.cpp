@@ -1022,11 +1022,9 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
 
          U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
 
-         if (item->fd == -1 ||
-             function(item))
-            {
-            handlerDelete(item);
-            }
+         U_INTERNAL_ASSERT_MAJOR(item->fd, 0)
+
+         if (function(item)) handlerDelete(item);
          }
       while (hi_map_fd->next());
       }
