@@ -37,7 +37,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				libz_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -lz";
-			if test $libzdir != "${CROSS_ENVIRONMENT}/" -a $libzdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libzdir != "${CROSS_ENVIRONMENT}/" -a $libzdir != "${CROSS_ENVIRONMENT}/usr" -a $libzdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libzdir/include"
 				LDFLAGS="$LDFLAGS -L$libzdir/lib -Wl,-R$libzdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzdir/lib";
@@ -89,7 +89,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				libtdb_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -ltdb";
-			if test $libtdbdir != "${CROSS_ENVIRONMENT}/" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libtdbdir != "${CROSS_ENVIRONMENT}/" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libtdbdir/include"
 				LDFLAGS="$LDFLAGS -L$libtdbdir/lib -Wl,-R$libtdbdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libtdbdir/lib";
@@ -132,7 +132,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				libzopfli_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -lzopfli";
-			if test $libzopflidir != "${CROSS_ENVIRONMENT}/" -a $libzopflidir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libzopflidir != "${CROSS_ENVIRONMENT}/" -a $libzopflidir != "${CROSS_ENVIRONMENT}/usr" -a $libzopflidir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libzopflidir/include"
 				LDFLAGS="$LDFLAGS -L$libzopflidir/lib -Wl,-R$libzopflidir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzopflidir/lib";
@@ -175,7 +175,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				libmagic_version="unknown"
 			fi
          ULIB_LIBS="-lmagic $ULIB_LIBS";
-			if test $magicdir != "${CROSS_ENVIRONMENT}/" -a $magicdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $magicdir != "${CROSS_ENVIRONMENT}/" -a $magicdir != "${CROSS_ENVIRONMENT}/usr" -a $magicdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$magicdir/include";
 				LDFLAGS="$LDFLAGS -L$magicdir/lib -Wl,-R$magicdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$magicdir/lib";
@@ -239,7 +239,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			if test -z "${ssl_version}"; then
 				ssl_version="unknown";
 			fi
-			if test $ssldir != "${CROSS_ENVIRONMENT}/" -a $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $ssldir != "${CROSS_ENVIRONMENT}/" -a $ssldir != "${CROSS_ENVIRONMENT}/usr" -a $ssldir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
 				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ssldir/lib";
@@ -282,7 +282,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				pcre_version="unknown"
 			fi
 			ULIB_LIBS="-lpcre $ULIB_LIBS";
-			if test $pcredir != "${CROSS_ENVIRONMENT}/" -a $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $pcredir != "${CROSS_ENVIRONMENT}/" -a $pcredir != "${CROSS_ENVIRONMENT}/usr" -a $pcredir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$pcredir/include"
 				LDFLAGS="$LDFLAGS -L$pcredir/lib -Wl,-R$pcredir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$pcredir/lib";
@@ -328,7 +328,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				expat_version="unknown"
 			fi
 			ULIB_LIBS="-lexpat $ULIB_LIBS";
-			if test $expatdir != "${CROSS_ENVIRONMENT}/" -a $expatdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $expatdir != "${CROSS_ENVIRONMENT}/" -a $expatdir != "${CROSS_ENVIRONMENT}/usr" -a $expatdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$expatdir/include"
 				LDFLAGS="$LDFLAGS -L$expatdir/lib -Wl,-R$expatdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$expatdir/lib";
@@ -368,7 +368,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				libuuid_version="unknown"
 			fi
          ULIB_LIBS="-luuid $ULIB_LIBS";
-			if test $libuuiddir != "${CROSS_ENVIRONMENT}/" -a $libuuiddir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libuuiddir != "${CROSS_ENVIRONMENT}/" -a $libuuiddir != "${CROSS_ENVIRONMENT}/usr" -a $libuuiddir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libuuiddir/include";
 				LDFLAGS="$LDFLAGS -L$libuuiddir/lib -Wl,-R$libuuiddir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libuuiddir/lib";
@@ -414,7 +414,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 				cares_version="unknown"
 			fi
          ULIB_LIBS="-lcares $ULIB_LIBS";
-			if test $caresdir != "${CROSS_ENVIRONMENT}/" -a $caresdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $caresdir != "${CROSS_ENVIRONMENT}/" -a $caresdir != "${CROSS_ENVIRONMENT}/usr" -a $caresdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$caresdir/include"
 				LDFLAGS="$LDFLAGS -L$caresdir/lib -Wl,-R$caresdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$caresdir/lib";
@@ -448,7 +448,7 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 				libssh_version="unknown"
 			fi
 			ULIB_LIBS="-lssh $ULIB_LIBS";
-			if test $sshdir != "${CROSS_ENVIRONMENT}/" -a $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $sshdir != "${CROSS_ENVIRONMENT}/" -a $sshdir != "${CROSS_ENVIRONMENT}/usr" -a $sshdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
 				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
@@ -481,7 +481,7 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 				libcurl_version="unknown"
 			fi
 			ULIB_LIBS="-lcurl $ULIB_LIBS";
-			if test $curldir != "${CROSS_ENVIRONMENT}/" -a $curldir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $curldir != "${CROSS_ENVIRONMENT}/" -a $curldir != "${CROSS_ENVIRONMENT}/usr" -a $curldir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$curldir/include";
 				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$curldir/lib";
@@ -537,7 +537,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 				ldap_version="unknown"
 			fi
 			ULIB_LIBS="$LDAP_LIBS $ULIB_LIBS";
-			if test $ldapdir != "${CROSS_ENVIRONMENT}/" -a $ldapdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $ldapdir != "${CROSS_ENVIRONMENT}/" -a $ldapdir != "${CROSS_ENVIRONMENT}/usr" -a $ldapdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$LDAP_INCS"
 				LDFLAGS="$LDFLAGS -L$LDAP_LDFLAGS -Wl,-R$LDAP_LDFLAGS"
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ldapdir/lib";
@@ -570,7 +570,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 				libdbi_version="unknown"
 			fi
 			ULIB_LIBS="-ldbi $ULIB_LIBS";
-			if test $dbidir != "${CROSS_ENVIRONMENT}/" -a $dbidir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $dbidir != "${CROSS_ENVIRONMENT}/" -a $dbidir != "${CROSS_ENVIRONMENT}/usr" -a $dbidir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$dbidir/include";
 				LDFLAGS="$LDFLAGS -L$dbidir/lib -Wl,-R$dbidir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$dbidir/lib";
@@ -608,7 +608,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 				libevent_version="unknown"
 			fi
 			ULIB_LIBS="-levent $ULIB_LIBS";
-			if test $libeventdir != "${CROSS_ENVIRONMENT}/" -a $libeventdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libeventdir != "${CROSS_ENVIRONMENT}/" -a $libeventdir != "${CROSS_ENVIRONMENT}/usr" -a $libeventdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libeventdir/include";
 				LDFLAGS="$LDFLAGS -L$libeventdir/lib -Wl,-R$libeventdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libeventdir/lib";
@@ -643,7 +643,7 @@ dnl		ldap_version=$(ldapsearch -VV 2>&1 | tail -n1 | cut -d':' -f2 | cut -d')' -
 				libxml2_version="unknown"
 			fi
 			ULIB_LIBS="-lxml2 $ULIB_LIBS";
-			if test $libxml2dir != "${CROSS_ENVIRONMENT}/" -a $libxml2dir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libxml2dir != "${CROSS_ENVIRONMENT}/" -a $libxml2dir != "${CROSS_ENVIRONMENT}/usr" -a $libxml2dir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libxml2dir/include/libxml2";
 				LDFLAGS="$LDFLAGS -L$libxml2dir/lib -Wl,-R$libxml2dir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libxml2dir/lib";

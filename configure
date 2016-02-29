@@ -875,7 +875,6 @@ MINGW_FALSE
 MINGW_TRUE
 LINUX_FALSE
 LINUX_TRUE
-PKG_CONFIG
 LN_S
 am__fastdepCXX_FALSE
 am__fastdepCXX_TRUE
@@ -883,6 +882,7 @@ CXXDEPMODE
 ac_ct_CXX
 CXXFLAGS
 CXX
+PKG_CONFIG
 CROSS_COMPILING_FALSE
 CROSS_COMPILING_TRUE
 EGREP
@@ -5959,7 +5959,60 @@ $as_echo "$TARGET_LIBC" >&6; }
 fi
 
 # check for cross compiling
-if test "$cross_compiling" = "yes"; then
+if test "$cross_compiling" != "yes"; then
+	 if false; then
+  CROSS_COMPILING_TRUE=
+  CROSS_COMPILING_FALSE='#'
+else
+  CROSS_COMPILING_TRUE='#'
+  CROSS_COMPILING_FALSE=
+fi
+
+	# Extract the first word of "pkg-config", so it can be a program name with args.
+set dummy pkg-config; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PKG_CONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PKG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
+  ;;
+esac
+fi
+PKG_CONFIG=$ac_cv_path_PKG_CONFIG
+if test -n "$PKG_CONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
+$as_echo "$PKG_CONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	if test "X$PKG_CONFIG" != "X"; then
+		PKG_CONFIG_PATH=`pkg-config --variable pc_path pkg-config`
+	fi
+else
 	 if true; then
   CROSS_COMPILING_TRUE=
   CROSS_COMPILING_FALSE='#'
@@ -5981,16 +6034,6 @@ $as_echo "${T_MD}Build for Target <${target}> with Environment <${STAGING_DIR}>:
 
 $as_echo "#define CROSS_COMPILE 1" >>confdefs.h
 
-else
-	 if false; then
-  CROSS_COMPILING_TRUE=
-  CROSS_COMPILING_FALSE='#'
-else
-  CROSS_COMPILING_TRUE='#'
-  CROSS_COMPILING_FALSE=
-fi
-
-	PKG_CONFIG_PATH=`pkg-config --variable pc_path pkg-config`
 fi
 
 # checks for programs
@@ -7333,47 +7376,6 @@ else
 $as_echo "no" >&6; }
   SET_MAKE="MAKE=${MAKE-make}"
 fi
-
-# Extract the first word of "pkg-config", so it can be a program name with args.
-set dummy pkg-config; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PKG_CONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PKG_CONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PKG_CONFIG="$PKG_CONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PKG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  test -z "$ac_cv_path_PKG_CONFIG" && ac_cv_path_PKG_CONFIG="no"
-  ;;
-esac
-fi
-PKG_CONFIG=$ac_cv_path_PKG_CONFIG
-if test -n "$PKG_CONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PKG_CONFIG" >&5
-$as_echo "$PKG_CONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
 
 
 
@@ -24732,27 +24734,27 @@ fi
 
 # SECTION 4: checks for libraries
 
-libz_version="no"
-libzopfli_version="no"
-libtdb_version="no"
-pcre_version="no"
-ldap_version="no"
-expat_version="no"
-libssh_version="no"
-libcurl_version="no"
-ssl_version="no"
-libmagic_version="no"
-libmysql_version="no"
-libsqlite_version="no"
-pgsql_version="no"
-libuuid_version="no"
-libevent_version="no"
-libxml2_version="no"
-libdbi_version="no"
-page_speed_version="no"
-v8_version="no"
-php_version="no"
-rubyversion="no"
+libz_version="unknow"
+libzopfli_version="unknown"
+libtdb_version="unknown"
+pcre_version="unknown"
+ldap_version="unknown"
+expat_version="unknown"
+libssh_version="unknown"
+libcurl_version="unknown"
+ssl_version="unknown"
+libmagic_version="unknown"
+libmysql_version="unknown"
+libsqlite_version="unknown"
+pgsql_version="unknown"
+libuuid_version="unknown"
+libevent_version="unknown"
+libxml2_version="unknown"
+libdbi_version="unknown"
+page_speed_version="unknown"
+v8_version="unknown"
+php_version="unknown"
+rubyversion="unknown"
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
@@ -24805,7 +24807,7 @@ $as_echo "#define USE_LIBZ 1" >>confdefs.h
 				libz_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -lz";
-			if test $libzdir != "${CROSS_ENVIRONMENT}/" -a $libzdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libzdir != "${CROSS_ENVIRONMENT}/" -a $libzdir != "${CROSS_ENVIRONMENT}/usr" -a $libzdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libzdir/include"
 				LDFLAGS="$LDFLAGS -L$libzdir/lib -Wl,-R$libzdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzdir/lib";
@@ -24877,7 +24879,7 @@ $as_echo "#define USE_LIBTDB 1" >>confdefs.h
 				libtdb_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -ltdb";
-			if test $libtdbdir != "${CROSS_ENVIRONMENT}/" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libtdbdir != "${CROSS_ENVIRONMENT}/" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libtdbdir/include"
 				LDFLAGS="$LDFLAGS -L$libtdbdir/lib -Wl,-R$libtdbdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libtdbdir/lib";
@@ -24934,7 +24936,7 @@ $as_echo "#define USE_LIBZOPFLI 1" >>confdefs.h
 				libzopfli_version="unknown"
 			fi
          ULIB_LIBS="$ULIB_LIBS -lzopfli";
-			if test $libzopflidir != "${CROSS_ENVIRONMENT}/" -a $libzopflidir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libzopflidir != "${CROSS_ENVIRONMENT}/" -a $libzopflidir != "${CROSS_ENVIRONMENT}/usr" -a $libzopflidir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libzopflidir/include"
 				LDFLAGS="$LDFLAGS -L$libzopflidir/lib -Wl,-R$libzopflidir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libzopflidir/lib";
@@ -24990,7 +24992,7 @@ $as_echo "#define USE_LIBMAGIC 1" >>confdefs.h
 				libmagic_version="unknown"
 			fi
          ULIB_LIBS="-lmagic $ULIB_LIBS";
-			if test $magicdir != "${CROSS_ENVIRONMENT}/" -a $magicdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $magicdir != "${CROSS_ENVIRONMENT}/" -a $magicdir != "${CROSS_ENVIRONMENT}/usr" -a $magicdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$magicdir/include";
 				LDFLAGS="$LDFLAGS -L$magicdir/lib -Wl,-R$magicdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$magicdir/lib";
@@ -25069,7 +25071,7 @@ $as_echo "#define HAVE_SSL_TS 1" >>confdefs.h
 			if test -z "${ssl_version}"; then
 				ssl_version="unknown";
 			fi
-			if test $ssldir != "${CROSS_ENVIRONMENT}/" -a $ssldir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $ssldir != "${CROSS_ENVIRONMENT}/" -a $ssldir != "${CROSS_ENVIRONMENT}/usr" -a $ssldir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$ssldir/include";
 				LDFLAGS="$LDFLAGS -L$ssldir/lib -Wl,-R$ssldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ssldir/lib";
@@ -25125,7 +25127,7 @@ $as_echo "#define USE_LIBPCRE 1" >>confdefs.h
 				pcre_version="unknown"
 			fi
 			ULIB_LIBS="-lpcre $ULIB_LIBS";
-			if test $pcredir != "${CROSS_ENVIRONMENT}/" -a $pcredir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $pcredir != "${CROSS_ENVIRONMENT}/" -a $pcredir != "${CROSS_ENVIRONMENT}/usr" -a $pcredir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$pcredir/include"
 				LDFLAGS="$LDFLAGS -L$pcredir/lib -Wl,-R$pcredir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$pcredir/lib";
@@ -25184,7 +25186,7 @@ $as_echo "#define USE_LIBEXPAT 1" >>confdefs.h
 				expat_version="unknown"
 			fi
 			ULIB_LIBS="-lexpat $ULIB_LIBS";
-			if test $expatdir != "${CROSS_ENVIRONMENT}/" -a $expatdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $expatdir != "${CROSS_ENVIRONMENT}/" -a $expatdir != "${CROSS_ENVIRONMENT}/usr" -a $expatdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$expatdir/include"
 				LDFLAGS="$LDFLAGS -L$expatdir/lib -Wl,-R$expatdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$expatdir/lib";
@@ -25237,7 +25239,7 @@ $as_echo "#define USE_LIBUUID 1" >>confdefs.h
 				libuuid_version="unknown"
 			fi
          ULIB_LIBS="-luuid $ULIB_LIBS";
-			if test $libuuiddir != "${CROSS_ENVIRONMENT}/" -a $libuuiddir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libuuiddir != "${CROSS_ENVIRONMENT}/" -a $libuuiddir != "${CROSS_ENVIRONMENT}/usr" -a $libuuiddir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libuuiddir/include";
 				LDFLAGS="$LDFLAGS -L$libuuiddir/lib -Wl,-R$libuuiddir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libuuiddir/lib";
@@ -25297,7 +25299,7 @@ $as_echo "#define USE_C_ARES 1" >>confdefs.h
 				cares_version="unknown"
 			fi
          ULIB_LIBS="-lcares $ULIB_LIBS";
-			if test $caresdir != "${CROSS_ENVIRONMENT}/" -a $caresdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $caresdir != "${CROSS_ENVIRONMENT}/" -a $caresdir != "${CROSS_ENVIRONMENT}/usr" -a $caresdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$caresdir/include"
 				LDFLAGS="$LDFLAGS -L$caresdir/lib -Wl,-R$caresdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$caresdir/lib";
@@ -25342,7 +25344,7 @@ $as_echo "#define USE_LIBSSH 1" >>confdefs.h
 				libssh_version="unknown"
 			fi
 			ULIB_LIBS="-lssh $ULIB_LIBS";
-			if test $sshdir != "${CROSS_ENVIRONMENT}/" -a $sshdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $sshdir != "${CROSS_ENVIRONMENT}/" -a $sshdir != "${CROSS_ENVIRONMENT}/usr" -a $sshdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$sshdir/include";
 				LDFLAGS="$LDFLAGS -L$sshdir/lib -Wl,-R$sshdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$sshdir/lib";
@@ -25387,7 +25389,7 @@ $as_echo "#define USE_LIBCURL 1" >>confdefs.h
 				libcurl_version="unknown"
 			fi
 			ULIB_LIBS="-lcurl $ULIB_LIBS";
-			if test $curldir != "${CROSS_ENVIRONMENT}/" -a $curldir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $curldir != "${CROSS_ENVIRONMENT}/" -a $curldir != "${CROSS_ENVIRONMENT}/usr" -a $curldir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$curldir/include";
 				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$curldir/lib";
@@ -25453,7 +25455,7 @@ $as_echo "#define USE_LIBLDAP 1" >>confdefs.h
 				ldap_version="unknown"
 			fi
 			ULIB_LIBS="$LDAP_LIBS $ULIB_LIBS";
-			if test $ldapdir != "${CROSS_ENVIRONMENT}/" -a $ldapdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $ldapdir != "${CROSS_ENVIRONMENT}/" -a $ldapdir != "${CROSS_ENVIRONMENT}/usr" -a $ldapdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$LDAP_INCS"
 				LDFLAGS="$LDFLAGS -L$LDAP_LDFLAGS -Wl,-R$LDAP_LDFLAGS"
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$ldapdir/lib";
@@ -25498,7 +25500,7 @@ $as_echo "#define USE_LIBDBI 1" >>confdefs.h
 				libdbi_version="unknown"
 			fi
 			ULIB_LIBS="-ldbi $ULIB_LIBS";
-			if test $dbidir != "${CROSS_ENVIRONMENT}/" -a $dbidir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $dbidir != "${CROSS_ENVIRONMENT}/" -a $dbidir != "${CROSS_ENVIRONMENT}/usr" -a $dbidir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$dbidir/include";
 				LDFLAGS="$LDFLAGS -L$dbidir/lib -Wl,-R$dbidir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$dbidir/lib";
@@ -25548,7 +25550,7 @@ $as_echo "#define USE_LIBEVENT 1" >>confdefs.h
 				libevent_version="unknown"
 			fi
 			ULIB_LIBS="-levent $ULIB_LIBS";
-			if test $libeventdir != "${CROSS_ENVIRONMENT}/" -a $libeventdir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libeventdir != "${CROSS_ENVIRONMENT}/" -a $libeventdir != "${CROSS_ENVIRONMENT}/usr" -a $libeventdir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libeventdir/include";
 				LDFLAGS="$LDFLAGS -L$libeventdir/lib -Wl,-R$libeventdir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libeventdir/lib";
@@ -25595,7 +25597,7 @@ $as_echo "#define USE_LIBXML2 1" >>confdefs.h
 				libxml2_version="unknown"
 			fi
 			ULIB_LIBS="-lxml2 $ULIB_LIBS";
-			if test $libxml2dir != "${CROSS_ENVIRONMENT}/" -a $libxml2dir != "${CROSS_ENVIRONMENT}/usr"; then
+			if test $libxml2dir != "${CROSS_ENVIRONMENT}/" -a $libxml2dir != "${CROSS_ENVIRONMENT}/usr" -a $libxml2dir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$libxml2dir/include/libxml2";
 				LDFLAGS="$LDFLAGS -L$libxml2dir/lib -Wl,-R$libxml2dir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$libxml2dir/lib";

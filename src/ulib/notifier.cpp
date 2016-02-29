@@ -493,9 +493,6 @@ loop0:
                                                               : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
             {
             handlerDelete(handler_event);
-#                       ifndef U_COVERITY_FALSE_POSITIVE // Improper use of negative value (NEGATIVE_RETURNS)
-                          handler_event->fd = -1;
-#                       endif
             }
          }
 
@@ -549,9 +546,6 @@ loop0:
                                                                        : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
             {
             handlerDelete(handler_event);
-#                       ifndef U_COVERITY_FALSE_POSITIVE // Improper use of negative value (NEGATIVE_RETURNS)
-                          handler_event->fd = -1;
-#                       endif
 
 #        if defined(U_EPOLLET_POSTPONE_STRATEGY)
             if (bepollet) pevents->events = 0;
@@ -607,9 +601,6 @@ loop2:         if (pevents->events)
                   if (handler_event->handlerRead() == U_NOTIFIER_DELETE)
                      {
                      handlerDelete(handler_event);
-#                                ifndef U_COVERITY_FALSE_POSITIVE // Improper use of negative value (NEGATIVE_RETURNS)
-                                   handler_event->fd = -1;
-#                                endif
 
                      pevents->events = 0;
                      }

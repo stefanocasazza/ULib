@@ -32,6 +32,8 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
    
    static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alphabetically for binary search...
       GET_ENTRY(admin),
+      GET_ENTRY(admin_continuing_status_ap),
+      GET_ENTRY(admin_current_status_ap),
       GET_ENTRY(admin_edit_ap),
       GET_ENTRY(admin_export_statistics_login_as_csv),
       GET_ENTRY(admin_export_statistics_registration_as_csv),

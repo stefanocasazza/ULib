@@ -155,6 +155,7 @@ public:
    const char*  getResponseData() const { return response.data(); }
    unsigned int getPort() const         { return port; }
 
+   bool setUrl(const UString& url); // NB: return if it has modified host or port...
    bool remoteIPAddress(UIPAddress& addr);
    bool setHostPort(const UString& host, unsigned int port);
 
@@ -232,7 +233,6 @@ protected:
    static bool log_shared_with_server, bIPv6;
 
    bool readHTTPResponse();
-   bool setUrl(const UString& url); // NB: return if it has modified host or port...
 
    void prepareRequest(const char* req, uint32_t len)
       {

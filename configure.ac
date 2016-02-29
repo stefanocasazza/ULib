@@ -197,7 +197,13 @@ fi
 AS_IF([test "x$TARGET_LIBC" = xunknown], [AC_MSG_RESULT([unknown])], [test "x$TARGET_LIBC" != xunknown], [AC_MSG_RESULT([$TARGET_LIBC])])
 
 # check for cross compiling
-if test "$cross_compiling" = "yes"; then
+if test "$cross_compiling" != "yes"; then
+	AM_CONDITIONAL(CROSS_COMPILING, false)
+	AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+	if test "X$PKG_CONFIG" != "X"; then
+		PKG_CONFIG_PATH=`pkg-config --variable pc_path pkg-config`
+	fi
+else
 	AM_CONDITIONAL(CROSS_COMPILING, true)
 	PKG_CONFIG_PATH=${STAGING_DIR}/usr/lib/pkgconfig
 	TWOCAN_CONF_MSG(Build for Target <${target}> with Environment <${STAGING_DIR}>)
@@ -205,9 +211,6 @@ if test "$cross_compiling" = "yes"; then
 		CROSS_ENVIRONMENT=$STAGING_DIR
 	fi
 	AC_DEFINE([CROSS_COMPILE],[1],[Define if we are cross compiling])
-else
-	AM_CONDITIONAL(CROSS_COMPILING, false)
-	PKG_CONFIG_PATH=`pkg-config --variable pc_path pkg-config`
 fi
 
 # checks for programs
@@ -220,7 +223,6 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_LN_S
 AC_PROG_MAKE_SET
-AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
 
 AC_C_RESTRICT
 AC_C_VOLATILE
@@ -1290,27 +1292,27 @@ fi
 
 # SECTION 4: checks for libraries
 
-libz_version="no"
-libzopfli_version="no"
-libtdb_version="no"
-pcre_version="no"
-ldap_version="no"
-expat_version="no"
-libssh_version="no"
-libcurl_version="no"
-ssl_version="no"
-libmagic_version="no"
-libmysql_version="no"
-libsqlite_version="no"
-pgsql_version="no"
-libuuid_version="no"
-libevent_version="no"
-libxml2_version="no"
-libdbi_version="no"
-page_speed_version="no"
-v8_version="no"
-php_version="no"
-rubyversion="no"
+libz_version="unknow"
+libzopfli_version="unknown"
+libtdb_version="unknown"
+pcre_version="unknown"
+ldap_version="unknown"
+expat_version="unknown"
+libssh_version="unknown"
+libcurl_version="unknown"
+ssl_version="unknown"
+libmagic_version="unknown"
+libmysql_version="unknown"
+libsqlite_version="unknown"
+pgsql_version="unknown"
+libuuid_version="unknown"
+libevent_version="unknown"
+libxml2_version="unknown"
+libdbi_version="unknown"
+page_speed_version="unknown"
+v8_version="unknown"
+php_version="unknown"
+rubyversion="unknown"
 
 TWOCAN_CONF_MSG(Checking for libraries to link against)
 

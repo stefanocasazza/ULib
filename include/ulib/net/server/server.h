@@ -114,7 +114,6 @@ class UDataStorage;
 class UStreamPlugIn;
 class UModNoCatPeer;
 class UClientThread;
-class UOCSPStapling;
 class UHttpClient_Base;
 class UWebSocketPlugIn;
 class UModProxyService;
@@ -188,8 +187,8 @@ public:
 
    // tipologia server...
 
-   static bool bssl, bipc;
    static UFileConfig* cfg;
+   static bool bssl, bipc, flag_loop;
    static unsigned int port; // the port number to bind to
 
    static int          getReqTimeout() { return (ptime ? ptime->UTimeVal::tv_sec : 0); }
@@ -296,7 +295,7 @@ public:
 #  ifdef USE_LIBSSL
       sem_t    lock_ssl_session;
       char spinlock_ssl_session[1];
-#    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
       sem_t    lock_ocsp_staple;
       char spinlock_ocsp_staple[1];
 #    endif
@@ -509,6 +508,22 @@ public:
    static UString getNetworkDevice( const char* exclude) { return USocketExt::getNetworkDevice(exclude); }
    static UString getNetworkAddress(const char* device)  { return USocketExt::getNetworkAddress(socket->getFd(), device); }
 
+#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
+   static UThread* pthread_ocsp;
+   static ULock* lock_ocsp_staple;
+
+   static void setLockOCSPStaple()
+      {
+      U_TRACE_NO_PARAM(0, "UServer_Base::setLockOCSPStaple()")
+
+      U_INTERNAL_ASSERT_EQUALS(lock_ocsp_staple, 0)
+
+      lock_ocsp_staple = U_NEW(ULock);
+
+      lock_ocsp_staple->init(&(ptr_shared_data->lock_ocsp_staple), ptr_shared_data->spinlock_ocsp_staple);
+      }
+#endif
+
    // DEBUG
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
@@ -542,7 +557,8 @@ protected:
    static UString* cenvironment;
    static UString* senvironment;
    static UString* str_preforked_num_kids;
-   static bool flag_loop, flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive;
+   static bool flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive, called_from_handlerTime;
+
 
    static uint32_t                 vplugin_size;
    static UVector<UString>*        vplugin_name;
@@ -591,22 +607,6 @@ protected:
    static void initThrottlingServer(const UString& data);
 #endif
 
-#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   static ULock* lock_ocsp_staple;
-   static UOCSPStapling* pthread_ocsp;
-
-   static void setLockOCSPStaple()
-      {
-      U_TRACE_NO_PARAM(0, "UServer_Base::setLockOCSPStaple()")
-
-      U_INTERNAL_ASSERT_EQUALS(lock_ocsp_staple, 0)
-
-      lock_ocsp_staple = U_NEW(ULock);
-
-      lock_ocsp_staple->init(&(ptr_shared_data->lock_ocsp_staple), ptr_shared_data->spinlock_ocsp_staple);
-      }
-#endif
-
    // COSTRUTTORI
 
             UServer_Base(UFileConfig* pcfg);
@@ -615,8 +615,6 @@ protected:
    // VARIE
 
 #ifdef U_LOG_ENABLE
-   static bool called_from_handlerTime;
-
    static uint32_t getNumConnection(char* buffer);
 #endif
 
@@ -678,7 +676,6 @@ private:
    friend class UNoCatPlugIn;
    friend class UGeoIPPlugIn;
    friend class UClient_Base;
-   friend class UOCSPStapling;
    friend class UStreamPlugIn;
    friend class UClientThread;
    friend class UModNoCatPeer;

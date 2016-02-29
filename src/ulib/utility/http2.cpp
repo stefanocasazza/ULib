@@ -1040,9 +1040,9 @@ void UHTTP2::openStream()
    U_INTERNAL_ASSERT_POINTER(pStream)
    U_INTERNAL_ASSERT(pConnection->max_open_stream_id <= frame.stream_id)
 
-       pStream->out_window =
-   pConnection->out_window =                   settings.initial_window_size; //   sender flow control window
-       pStream->inp_window =
+//     pStream->out_window =
+// pConnection->out_window =                   settings.initial_window_size; //   sender flow control window
+//     pStream->inp_window =
    pConnection->inp_window = pConnection->peer_settings.initial_window_size; // receiver flow control window
 
    pStream->id                     =
@@ -1052,7 +1052,7 @@ void UHTTP2::openStream()
 
    pStream->state = ((frame.flags & FLAG_END_STREAM) != 0 ? STREAM_STATE_HALF_CLOSED : STREAM_STATE_OPEN);
 
-   U_INTERNAL_DUMP("pStream->id = %d pStream->state = %d pStream->inp_window = %d", pStream->id, pStream->state, pStream->inp_window)
+   U_INTERNAL_DUMP("pStream->id = %d pStream->state = %d", pStream->id, pStream->state)
 }
 
 void UHTTP2::readFrame()
@@ -1164,8 +1164,8 @@ loop:
          }
 #  endif
 
-      if (frame.stream_id)     pStream->out_window += window_size_increment;
-      else                 pConnection->out_window += window_size_increment;
+   // if (frame.stream_id)     pStream->out_window += window_size_increment;
+   // else                 pConnection->out_window += window_size_increment;
 
       goto loop;
       }
@@ -1302,9 +1302,9 @@ void UHTTP2::manageHeaders()
 
    if ((frame.flags & FLAG_PRIORITY) == 0)
       {
-      pStream->priority_exclusive  = false;
-      pStream->priority_dependency = 0;
-      pStream->priority_weight     = 0;
+   // pStream->priority_exclusive  = false;
+   // pStream->priority_dependency = 0;
+   // pStream->priority_weight     = 0;
       }
    else
       {
@@ -1317,12 +1317,12 @@ void UHTTP2::manageHeaders()
          }
 #  endif
 
-      uint32_t u4 = ntohl(*(uint32_t*)ptr);
+   // uint32_t u4 = ntohl(*(uint32_t*)ptr);
                                       ptr += 4;
 
-      pStream->priority_exclusive  = (u4 >> 31) != 0;
-      pStream->priority_dependency =  u4 & 0x7fffffff;
-      pStream->priority_weight     = (uint16_t)*ptr++ + 1;
+   // pStream->priority_exclusive  = (u4 >> 31) != 0;
+   // pStream->priority_dependency =  u4 & 0x7fffffff;
+   // pStream->priority_weight     = (uint16_t)*ptr++ + 1;
       }
 
    if ((frame.flags & FLAG_END_HEADERS) != 0) decodeHeaders(ptr, endptr); // parse header block fragment
@@ -1970,7 +1970,7 @@ const char* UHTTP2::getFrameTypeDescription(char type)
 U_EXPORT const char* UHTTP2::Connection::dump(bool reset) const
 {
    *UObjectIO::os << "state                     " << state                   << '\n'
-                  << "out_window                " << out_window              << '\n'
+               // << "out_window                " << out_window              << '\n'
                   << "inp_window                " << inp_window              << '\n'
                   << "hpack_max_capacity        " << hpack_max_capacity      << '\n'
                   << "max_open_stream_id        " << max_open_stream_id      << '\n'

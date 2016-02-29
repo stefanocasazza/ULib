@@ -3411,6 +3411,20 @@ static void GET_admin()
    USSIPlugIn::setAlternativeRedirect("https://%v/admin.html", ip_server->rep);
 }
 
+static void GET_admin_continuing_status_ap()
+{
+   U_TRACE_NO_PARAM(5, "::GET_admin_continuing_status_ap()")
+
+   if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
+}
+
+static void GET_admin_current_status_ap()
+{
+   U_TRACE_NO_PARAM(5, "::GET_admin_current_status_ap()")
+
+   if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
+}
+
 static void GET_admin_edit_ap()
 {
    U_TRACE_NO_PARAM(5, "::GET_admin_edit_ap()")
@@ -6771,6 +6785,18 @@ static void GET_tavarnelle()
       else if (U_HTTP_QUERY_STREQ("admin_view_statistics_login")) // STATISTICHE: Accessi
          {
          GET_admin_view_statistics_login();
+         }
+      else if (U_HTTP_QUERY_STREQ("admin_view_statistics_login")) // STATISTICHE: Accessi
+         {
+         GET_admin_view_statistics_login();
+         }
+      else if (U_HTTP_QUERY_STREQ("admin_current_status_ap")) // SITUAZIONE CORRENTE
+         {
+         GET_admin_current_status_ap();
+         }
+      else if (U_HTTP_QUERY_STREQ("admin_continuing_status_ap")) // MONITORAGGIO CONTINUATIVO
+         {
+         GET_admin_continuing_status_ap();
          }
       else
          {

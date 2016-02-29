@@ -97,6 +97,7 @@ bool          UServer_Base::update_date;
 bool          UServer_Base::update_date1;
 bool          UServer_Base::update_date2;
 bool          UServer_Base::update_date3;
+bool          UServer_Base::called_from_handlerTime;
 char          UServer_Base::mod_name[2][16];
 ULog*         UServer_Base::log;
 ULog*         UServer_Base::apache_like_log;
@@ -272,11 +273,13 @@ public:
 
       // there are idle connection... (timeout)
 
+#  if defined(U_LOG_ENABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
+      UServer_Base::called_from_handlerTime = true;
+#  endif
+
 #  ifdef U_LOG_ENABLE
       if (UServer_Base::isLog())
          {
-         UServer_Base::called_from_handlerTime = true;
-
 #     ifdef DEBUG
          long delta = (u_now->tv_sec - UServer_Base::last_event) - UTimeVal::tv_sec;
 
@@ -852,7 +855,7 @@ bool UServer_Base::checkThrottlingBeforeSend(bool bwrite)
 #endif
 
 #ifdef ENABLE_THREAD
-#include <ulib/thread.h>
+#  include <ulib/thread.h>
 
 class UClientThread : public UThread {
 public:
@@ -931,8 +934,9 @@ public:
          }
       }
 };
+#  endif
 
-#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
 #  include <ulib/net/tcpsocket.h>
 #  include <ulib/net/client/client.h>
 
@@ -967,12 +971,38 @@ public:
          (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
          }
       }
+
+   static bool init()
+      {
+      U_TRACE_NO_PARAM(0, "UOCSPStapling::init()")
+
+      if (USSLSocket::setDataForStapling() == false) U_RETURN(false);
+
+      USSLSocket::staple.data = UServer_Base::getPointerToDataShare(USSLSocket::staple.data);
+
+      UServer_Base::setLockOCSPStaple();
+
+      U_INTERNAL_ASSERT_EQUALS(USSLSocket::staple.client, 0)
+
+      USSLSocket::staple.client = U_NEW(UClient<UTCPSocket>(0));
+
+      (void) USSLSocket::staple.client->setUrl(*USSLSocket::staple.url);
+
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::pthread_ocsp, 0)
+
+      U_NEW_ULIB_OBJECT(UServer_Base::pthread_ocsp, UOCSPStapling);
+
+      U_INTERNAL_DUMP("UServer_Base::pthread_ocsp = %p", UServer_Base::pthread_ocsp)
+
+      UServer_Base::pthread_ocsp->start(0);
+
+      U_RETURN(true);
+      }
 };
 
-ULock*         UServer_Base::lock_ocsp_staple;
-UOCSPStapling* UServer_Base::pthread_ocsp;
-#endif
-#endif
+ULock*   UServer_Base::lock_ocsp_staple;
+UThread* UServer_Base::pthread_ocsp;
+#  endif
 #endif
 
 #ifdef U_LINUX
@@ -2415,32 +2445,10 @@ void UServer_Base::init()
    pthis->preallocate();
 
 #if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
-   if (bssl)
+   if (bssl &&
+       UOCSPStapling::init() == false)
       {
-      if (USSLSocket::setDataForStapling() == false)
-         {
-         U_WARNING("SSL: OCSP stapling ignored, some error occured...");
-         }
-      else
-         {
-         USSLSocket::staple.data = getPointerToDataShare(USSLSocket::staple.data);
-
-         setLockOCSPStaple();
-
-         U_INTERNAL_ASSERT_EQUALS(USSLSocket::staple.client, 0)
-
-         USSLSocket::staple.client = U_NEW(UClient<UTCPSocket>(0));
-
-         (void) USSLSocket::staple.client->setUrl(*USSLSocket::staple.url);
-
-         U_INTERNAL_ASSERT_EQUALS(pthread_ocsp, 0)
-
-         U_NEW_ULIB_OBJECT(pthread_ocsp, UOCSPStapling);
-
-         U_INTERNAL_DUMP("pthread_ocsp = %p", pthread_ocsp)
-
-         pthread_ocsp->start(0);
-         }
+      U_WARNING("SSL: OCSP stapling ignored, some error occured...");
       }
 #endif
 
@@ -2797,10 +2805,10 @@ loop:
 
          if ((u_now->tv_sec - CLIENT_INDEX->last_event) >= ptime->UTimeVal::tv_sec)
             {
-#        ifdef U_LOG_ENABLE
+#        if defined(U_LOG_ENABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
             called_from_handlerTime = false;
 #        endif
-            
+
             if (handlerTimeoutConnection(CLIENT_INDEX))
                {
                UNotifier::handlerDelete((UEventFd*)CLIENT_INDEX);
@@ -3150,8 +3158,6 @@ end:
 #undef CLIENT_IMAGE_HANDLER_READ
 
 #ifdef U_LOG_ENABLE
-bool UServer_Base::called_from_handlerTime;
-
 uint32_t UServer_Base::getNumConnection(char* ptr)
 {
    U_TRACE(0, "UServer_Base::getNumConnection(%p)", ptr)
@@ -3206,11 +3212,23 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
             }
          else
             {
-            U_INTERNAL_ASSERT_EQUALS(cimg, pClientImage)
-
-            ULog::log("%shandlerTimeoutConnection: client connected didn't send any request in %u secs (timeout), close connection %v",
+            ULog::log("%shandlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v",
                         UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
+         }
+#  endif
+#  if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
+      if (called_from_handlerTime)
+         {
+         U_WARNING("%shandlerTime: client connected didn't send any request in %u secs (timeout)", UServer_Base::mod_name[0], ptime->UTimeVal::tv_sec);
+         }
+      else
+         {
+         U_WARNING("%shandlerTimeoutConnection: client connected didn't send any request in %u secs - "
+                   "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
+                   UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event,
+                                                           ((UClientImage_Base*)cimg)->UEventFd::fd,
+                                                           ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection);
          }
 #  endif
 

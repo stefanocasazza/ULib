@@ -77,7 +77,6 @@ class UTCPSocket;
 class UHttpPlugIn;
 class UClient_Base;
 class UServer_Base;
-class UOCSPStapling;
 class UClientImage_Base;
 
 template <class T> class UClient;
@@ -253,6 +252,37 @@ public:
 
    virtual bool connectServer(const UString& server, unsigned int iServPort, int timeoutMS = 0) U_DECL_FINAL;
 
+   /**
+    * OCSP stapling is a way for a SSL server to obtain OCSP responses for his own certificate, and provide them to the client,
+    * under the assumption that the client may need them. This makes the whole process more efficient: the client does not have
+    * to open extra connections to get the OCSP responses itself, and the same OCSP response can be sent by the server to all
+    * clients within a given time frame. One way to see it is that the SSL server acts as a Web proxy for the purpose of
+    * downloading OCSP responses.
+    */
+
+#if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   typedef struct stapling {
+      void* data;
+      char* path;
+      long valid;
+      X509* cert;
+      X509* issuer;
+      UString* url;
+      EVP_PKEY* pkey;
+      int len, verify;
+      OCSP_CERTID* id;
+      OCSP_REQUEST* req;
+      UClient<UTCPSocket>* client;
+   } stapling;
+
+   static stapling staple;
+   static bool doStapling();
+
+   static void cleanupStapling();
+   static bool setDataForStapling();
+   static void certificate_status_callback(SSL* _ssl, void* data);
+#endif
+
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;
 #endif
@@ -288,37 +318,6 @@ protected:
    static int callback_ServerNameIndication(SSL* _ssl, int* alert, void* data);
 #endif
 
-   /**
-    * OCSP stapling is a way for a SSL server to obtain OCSP responses for his own certificate, and provide them to the client,
-    * under the assumption that the client may need them. This makes the whole process more efficient: the client does not have
-    * to open extra connections to get the OCSP responses itself, and the same OCSP response can be sent by the server to all
-    * clients within a given time frame. One way to see it is that the SSL server acts as a Web proxy for the purpose of
-    * downloading OCSP responses.
-    */
-
-#if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   typedef struct stapling {
-      void* data;
-      char* path;
-      long valid;
-      X509* cert;
-      X509* issuer;
-      UString* url;
-      EVP_PKEY* pkey;
-      int len, verify;
-      OCSP_CERTID* id;
-      OCSP_REQUEST* req;
-      UClient<UTCPSocket>* client;
-   } stapling;
-
-   static stapling staple;
-
-   static bool doStapling();
-   static void cleanupStapling();
-   static bool setDataForStapling();
-   static void certificate_status_callback(SSL* _ssl, void* data);
-#endif
-
 private:
    static int nextProto(SSL* ssl, const unsigned char** data, unsigned int* len, void* arg) U_NO_EXPORT;
 #if OPENSSL_VERSION_NUMBER >= 0x10002000L
@@ -338,7 +337,6 @@ private:
                       friend class UHttpPlugIn;
                       friend class UClient_Base;
                       friend class UServer_Base;
-                      friend class UOCSPStapling;
                       friend class UClientImage_Base;
    template <class T> friend class UClient;
    template <class T> friend class UServer;

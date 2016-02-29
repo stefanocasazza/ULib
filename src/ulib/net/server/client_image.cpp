@@ -498,6 +498,8 @@ void UClientImage_Base::handlerDelete()
 
    flag.u = 0;
 
+   UEventFd::fd = -1;
+
    U_INTERNAL_ASSERT_EQUALS(data_pending, 0)
    U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
 #ifdef HAVE_ACCEPT4
