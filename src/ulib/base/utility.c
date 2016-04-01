@@ -17,6 +17,8 @@
 
 #include <ulib/base/utility.h>
 
+#include <sched.h>
+
 #ifdef HAVE_SYSEXITS_H
 #  include <sysexits.h>
 #else
@@ -2593,7 +2595,12 @@ uint32_t u_get_num_random(uint32_t range)
 
    result = (u_m_z << 16) + u_m_w;
 
-   if (range) result = ((result % range) + 1);
+   if (range)
+      {
+      result = ((result % range) + 1);
+
+      U_INTERNAL_ASSERT(result <= range)
+      }
 
    return result;
 }
@@ -2983,7 +2990,7 @@ __pure bool u_isPrintable(const char* restrict s, uint32_t n, bool bline)
 
 __pure bool u_isFileName(const char* restrict s, uint32_t n)
 {
-   U_LOOP_STRING( if (u__isfname(c) == false) return false )
+   U_LOOP_STRING( if (u__isvalidchar(c) == false || u__isfnameinvalid(c)) return false )
 
    U_INTERNAL_TRACE("u_isFileName(%.*s,%u)", U_min(n,128), s, n)
 
@@ -3563,61 +3570,62 @@ __pure bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u
 #define __J  0x01000000 /* HTML special:    '&' (38 0x26) | '<' (60 0x3C) | '>' (62 0x3E) */
 #define __UE 0x02000000 /* TO   URL encode: ' ' (32 0x20) | ... */
 #define __UQ 0x04000000 /* FROM URL query:  '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
-#define __UF 0x08000000 /* filename: char >= 0x20 except: '"' '*' ':' '<' '>' '?' '\' '|' */
+#define __UF 0x08000000 /* filename invalid char: '"' '*' ':' '<' '>' '?' '\' '|' */
+#define __XM 0x10000000 /* char >= (32 0x20) */
 
 #define LU    (__L | __U)
 #define LX    (__L | __X)
 #define UX    (__U | __X)
-#define ITK   (__I | __T | __K)
-#define LT    (__L | __T |                         __UF)
-#define UT    (__U | __T |                         __UF)
-#define ITF   (__I | __T |                         __UF) 
-#define ITA   (__I | __T | __A |                   __UF)
-#define ITQ   (__I | __T | __Q |                   __UF)
-#define LTE   (__L | __T |             __E |       __UF)
-#define LTY   (__L | __T | __Y |       __E |       __UF)
-#define UXT   (__U | __X | __T |       __E |       __UF)
-#define DT    (__D | __T |             __E |       __UF)
-#define ITN   (__I | __T | __N |       __E |       __UF)
-#define ITO   (__I | __T | __O |       __E |       __UF)
-#define DTZ   (__D | __T | __Z |       __E |       __UF)
-#define UTE   (__U | __T |             __E |       __UF)
-#define UTY   (__U | __T | __Y |       __E |       __UF)
-#define UTM   (__U | __T | __M |       __E |       __UF)
-#define LTM   (__L | __T | __M |       __E |       __UF)
-#define LXT   (__L | __X | __T |       __E |       __UF)
-#define LTMY  (__L | __T | __M | __Y | __E |       __UF)
-#define UTMY  (__U | __T | __M | __Y | __E |       __UF)
-#define UXTM  (__U | __X | __T | __M | __E |       __UF)
-#define UXTY  (__U | __X | __T | __Y | __E |       __UF)
-#define LXTM  (__L | __X | __T | __M | __E |       __UF)
-#define LXTY  (__L | __X | __T | __Y | __E |       __UF)
-#define LXTMY (__L | __X | __T | __M | __E | __Y | __UF)
-#define UXTMY (__U | __X | __T | __M | __E | __Y | __UF)
-#define IT    (__I | __T |             __E)
+#define ITK   (__I | __T | __K | __UF |             __XM)
+#define LT    (__L | __T |                          __XM)
+#define UT    (__U | __T |                          __XM)
+#define ITF   (__I | __T |                          __XM) 
+#define ITA   (__I | __T | __A |                    __XM)
+#define ITQ   (__I | __T | __Q |                    __XM)
+#define LTE   (__L | __T |             __E |        __XM)
+#define LTY   (__L | __T | __Y |       __E |        __XM)
+#define UXT   (__U | __X | __T |       __E |        __XM)
+#define DT    (__D | __T |             __E |        __XM)
+#define ITN   (__I | __T | __N |       __E |        __XM)
+#define ITO   (__I | __T | __O |       __E |        __XM)
+#define DTZ   (__D | __T | __Z |       __E |        __XM)
+#define UTE   (__U | __T |             __E |        __XM)
+#define UTY   (__U | __T | __Y |       __E |        __XM)
+#define UTM   (__U | __T | __M |       __E |        __XM)
+#define LTM   (__L | __T | __M |       __E |        __XM)
+#define LXT   (__L | __X | __T |       __E |        __XM)
+#define LTMY  (__L | __T | __M | __Y | __E |        __XM)
+#define UTMY  (__U | __T | __M | __Y | __E |        __XM)
+#define UXTM  (__U | __X | __T | __M | __E |        __XM)
+#define UXTY  (__U | __X | __T | __Y | __E |        __XM)
+#define LXTM  (__L | __X | __T | __M | __E |        __XM)
+#define LXTY  (__L | __X | __T | __Y | __E |        __XM)
+#define LXTMY (__L | __X | __T | __M | __E |  __Y | __XM)
+#define UXTMY (__U | __X | __T | __M | __E |  __Y | __XM)
+#define IT    (__I |       __T |       __E | __UF | __XM)
 
-#define FUE   (__F |                   __UE)
-#define IF    (__I | __F |             __UE)
-#define CF    (__C | __F |             __UE)
-#define CT    (__C | __T |             __UE)
-#define WF    (__W | __F |             __UE)
-#define ITUE  (__I | __T |             __UE)
-#define CWT   (__C | __W | __T |       __UE)
-#define CWF   (__C | __W | __F |       __UE)
-#define ITG   (__I | __T | __G |       __UE)
-#define ITJ   (__I | __T | __J |       __UE)
-#define CWBT  (__C | __W | __B | __T | __UE)
-#define CWRT  (__C | __W | __R | __T | __UE)
-#define ITUQ  (__I | __T |             __UE | __UF)
-#define SWT   (__S | __W | __T |       __UE | __UF | __E)
-#define ITAH  (__I | __T | __A | __H | __UE | __UF | __E)
-#define ITAU  (__I | __T | __A |       __UE | __UF | __UQ)
-#define ITJU  (__I | __T | __J |       __UE | __UF | __UQ)
-#define ITVF  (__I | __T | __V |              __UF)
-#define ITKF  (__I | __T | __K |              __UF | __E)
+#define FUE   (__F |                    __UE | __XM)
+#define IF    (__I | __F |              __UE)
+#define CF    (__C | __F |              __UE)
+#define CT    (__C | __T |              __UE)
+#define WF    (__W | __F |              __UE)
+#define ITUE  (__I | __T |       __UF | __UE | __XM)
+#define CWT   (__C | __W | __T |        __UE)
+#define CWF   (__C | __W | __F |        __UE)
+#define ITG   (__I | __T | __G | __UF | __UE | __XM)
+#define ITJ   (__I | __T | __J | __UF |        __XM)
+#define CWBT  (__C | __W | __B |  __T | __UE)
+#define CWRT  (__C | __W | __R |  __T | __UE)
+#define ITUQ  (__I | __T |              __UE | __XM)
+#define SWT   (__S | __W | __T |        __UE | __XM | __E)
+#define ITAH  (__I | __T | __A |  __H | __UE | __XM | __E)
+#define ITAU  (__I | __T | __A |        __UE | __XM | __UQ)
+#define ITJU  (__I | __T | __J |        __UE | __XM | __UQ)
+#define ITVF  (__I | __T | __V |               __XM)
+#define ITKF  (__I | __T | __K |               __XM | __E)
 
-#define ITUEF  (__I | __T | __UE | __UF)
-#define ITUEFQ (__I | __T | __UE | __UF | __UQ | __E)
+#define ITUEF  (__I | __T | __UE | __XM)
+#define ITUEFQ (__I | __T | __UE | __XM | __UQ | __E)
 
 const unsigned int u__ct_tab[256] = {
 /*                         BEL  BS    HT    LF        FF    CR                 */
@@ -3688,6 +3696,7 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef __UE
 #undef __UQ
 #undef __UF
+#undef __XM
 
 #undef CF
 #undef CT

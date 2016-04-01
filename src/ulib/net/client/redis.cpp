@@ -200,7 +200,7 @@ U_NO_EXPORT char* UREDISClient_Base::getResponseItem(const UString& response, ch
          }
       }
 
-   U_INTERNAL_DUMP("vec = %O", U_OBJECT_TO_TRACE(vec))
+   U_DUMP_CONTAINER(vec)
 
    return ptr;
 }
@@ -219,7 +219,7 @@ U_NO_EXPORT void UREDISClient_Base::processResponse()
    do {
       ptr = getResponseItem(UClient_Base::response, ptr, vitem, 0);
 
-      U_INTERNAL_DUMP("vitem = %O", U_OBJECT_TO_TRACE(vitem))
+      U_DUMP_CONTAINER(vitem)
 
       U_INTERNAL_ASSERT_EQUALS(memcmp(ptr, "\r\n", 2), 0)
 

@@ -368,6 +368,43 @@ __pure int u_getMonth(const char* buf)
    return 0;
 }
 
+void u_initRandom(void)
+{
+   U_INTERNAL_TRACE("u_initRandom()")
+
+   U_INTERNAL_ASSERT_POINTER(u_now)
+   U_INTERNAL_ASSERT_MAJOR(u_now->tv_usec, 0)
+
+   /**
+    * The "hash seed" is a feature to perturb the results to avoid "algorithmic complexity attacks"
+    *
+    * http://lwn.net/Articles/474365
+    */
+
+   u_seed_hash = u_random((uint32_t)u_pid ^ (uint32_t)u_now->tv_usec);
+
+#ifdef SYS_getrandom
+   if (syscall(SYS_getrandom, &u_seed_hash, sizeof(u_seed_hash), 0) == sizeof(u_seed_hash)) u_seed_hash |= 1;
+   else
+#endif
+   {
+#ifndef U_COVERITY_FALSE_POSITIVE /* RESOURCE_LEAK */
+   int         fd = open("/dev/urandom", O_CLOEXEC | O_RDONLY);
+   if (fd < 0) fd = open("/dev/random",  O_CLOEXEC | O_RDONLY);
+   if (fd > 0)
+      {
+      if (read(fd, &u_seed_hash, sizeof(u_seed_hash)) == sizeof(u_seed_hash)) u_seed_hash |= 1;
+
+      (void) close(fd);
+      }
+#endif
+   }
+
+   /* seed the random generator */
+
+   u_set_seed_random(u_seed_hash >> 16, u_seed_hash % 4294967296);
+}
+
 bool u_setStartTime(void)
 {
    struct tm tm;
@@ -391,35 +428,6 @@ bool u_setStartTime(void)
     */
 
    (void) gettimeofday(u_now, 0);
-
-   /**
-    * The "hash seed" is a feature to perturb the results to avoid "algorithmic complexity attacks"
-    *
-    * http://lwn.net/Articles/474365
-    */
- 
-   u_seed_hash = u_random((uint32_t)u_pid ^ (uint32_t)u_now->tv_usec);
-
-#ifdef SYS_getrandom
-   if (syscall(SYS_getrandom, &u_seed_hash, sizeof(u_seed_hash), 0) == sizeof(u_seed_hash)) u_seed_hash |= 1;
-   else
-#endif
-   {
-#ifndef U_COVERITY_FALSE_POSITIVE /* RESOURCE_LEAK */
-   int         fd = open("/dev/urandom", O_CLOEXEC | O_RDONLY);
-   if (fd < 0) fd = open("/dev/random",  O_CLOEXEC | O_RDONLY);
-   if (fd > 0)
-      {
-      if (read(fd, &u_seed_hash, sizeof(u_seed_hash)) == sizeof(u_seed_hash)) u_seed_hash |= 1;
-
-      (void) close(fd);
-      }
-#endif
-   }
-
-   /* seed the random generator */
-
-   u_set_seed_random(u_seed_hash >> 16, u_seed_hash % 4294967296);
 
    /* initialize time conversion information */
 
@@ -469,7 +477,7 @@ bool u_setStartTime(void)
 
    compilation_date = __DATE__; /* Dec  6 2012 */
 
-// (void) memset(&tm, 0, sizeof(struct tm));
+   /* (void) memset(&tm, 0, sizeof(struct tm)); */
 
    tm.tm_min   = 0;
    tm.tm_hour  = 0;
@@ -488,7 +496,12 @@ bool u_setStartTime(void)
    if (lnow >= t ||
        (t - lnow) < U_ONE_DAY_IN_SECOND)
       {
-      u_start_time = lnow; /* u_now->tv_sec + u_now_adjust */
+      if (u_start_time == 0)
+         {
+         u_start_time = lnow; /* u_now->tv_sec + u_now_adjust */
+
+         u_initRandom();
+         }
 
       /**
        * The mktime() function modifies the fields of the tm structure as follows: tm_wday and tm_yday are set to values
@@ -500,10 +513,10 @@ bool u_setStartTime(void)
 
 #  ifndef TM_HAVE_TM_GMTOFF
       u_daylight = (tm.tm_isdst != 0);
-
-      U_INTERNAL_PRINT("u_daylight = %d tzname[2] = { %s, %s }",
-                        u_daylight,     tzname[0], tzname[1])
 #  endif
+
+      U_DEBUG("System date update: u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %d tzname[2] = { %s, %s }",
+                                   u_now_adjust,     timezone,      daylight,     u_daylight,     tzname[0], tzname[1]);
 
       return true;
       }
@@ -571,11 +584,11 @@ void u_init_ulib(char** restrict argv)
    (void) atexit(u_exit); /* initialize AT EXIT */
 #endif
 
-   (void) u_setStartTime();
-
 #ifdef DEBUG
    u_debug_init();
 #endif
+
+   (void) u_setStartTime();
 }
 
 #ifdef ENTRY
@@ -1364,9 +1377,9 @@ uint32_t u_sprintc(char* restrict out, unsigned char c)
 
    if (c > 126)
       {
-      *out++ = '\\';
-
       /* \DDD number formed of 1-3 octal digits */
+
+      *out++ = '\\';
 next:
       cp = out + 3;
 
@@ -1727,11 +1740,11 @@ case_float:
 
       cp = fmt_float + 1;
 
-      if (flags & ALT)               *cp++ = '#';
-      if (flags & ZEROPAD)           *cp++ = '0';
-      if (flags & LADJUST)           *cp++ = '-';
-      if (flags & THOUSANDS_GROUPED) *cp++ = '\'';
-      if (sign != '\0')              *cp++ = sign;
+      if ((flags & ALT)     != 0)           *cp++ = '#';
+      if ((flags & ZEROPAD) != 0)           *cp++ = '0';
+      if ((flags & LADJUST) != 0)           *cp++ = '-';
+      if ((flags & THOUSANDS_GROUPED) != 0) *cp++ = '\'';
+      if (sign != '\0')                     *cp++ = sign;
 
       *cp++ = '*'; /* width */
 
@@ -1811,9 +1824,11 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
 
          len = prec;
 
-         maxlen = (u_printf_string_max_length > 0
-                        ? u_printf_string_max_length
-                        : 128);
+#     if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+         if (ch == 'O') maxlen = 4096; 
+         else
+#     endif
+         maxlen = (u_printf_string_max_length > 0 ? u_printf_string_max_length : 128);
 
          if (prec < 0 || /* NB: no precision specified... */
              prec > maxlen)
@@ -1821,57 +1836,68 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
             prec = maxlen;
             }
 
+         n         = 0;
+         sign      = 0;
+         pbase     = bp;
          remaining = buffer_size - ret;
 
-         if ((flags & ALT) == 0) /* NB: # -> force print of all binary string (compatibly with buffer size)... */
+         if ((flags & ALT) != 0) /* NB: # -> force print of all binary string (compatibly with buffer size)... */
             {
-            remaining -= (prec * 4); /* worst case is \DDD number formed of 1-3 octal digits */
+            remaining -= (prec * 2);
+
+            if (u__isprint(*cp) == false) sign = 1; /* we want to print buffer as exadecimal... */
             }
 
-         n     = 0;
-         pbase = bp;
          *bp++ = '"';
 
          while (true)
             {
-            if (cp[n] == '\0' &&
-                (flags & ALT) == 0)
+            c = cp[n];
+
+            if (sign)
                {
-               break;
+               u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(u_hex_lower[(c >> 4) & 0x0F],
+                                                             u_hex_lower[(c     ) & 0x0F]));
+
+               bp        += 2;
+               remaining -= 2;
+               }
+            else
+               {
+               if (c == '\0') break;
+
+               i = u_sprintc(bp, c);
+
+               bp        += i;
+               remaining -= i;
                }
 
-            i = u_sprintc(bp, cp[n]);
-
-            bp        += i;
-            remaining -= i;
-
-            if (++n >= prec ||
+            if (++n == prec ||
                 remaining <= 60)
                {
+               if (sign ||
+                   len < 0) /* NB: no precision specified... */
+                  {
+                  /* NB: print something that have meaning 'to be continued'... */
+
+                  *bp++ = '.';
+
+                  u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('.','.'));
+
+                  bp += 2;
+                  }
+
                break;
                }
             }
 
          *bp++ = '"';
 
-         if (cp[n]   && /* NB: no null terminator... */
-             len < 0 && /* NB: no precision specified... */
-             n == prec)
-            {
-            /* to be continued... */
-
-            *bp++ = '.';
-
-            u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('.','.'));
-
-            bp += 2;
-            }
-
-         ret += (bp - pbase);
-
 #     if defined(DEBUG) && defined(U_STDCPP_ENABLE)
          if (ch == 'O') free(cp);
 #     endif
+
+         ret += (bp - pbase);
 
          continue;
          }
@@ -1966,7 +1992,7 @@ case_C: /* extension: print formatted char */
       continue;
 
 case_D: /* extension: print date and time in various format */
-      if (flags & ALT) t = VA_ARG(time_t); /* flag '#' => var-argument */
+      if ((flags & ALT) != 0) t = VA_ARG(time_t); /* flag '#' => var-argument */
       else
          {
          U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
@@ -2005,7 +2031,7 @@ case_D: /* extension: print date and time in various format */
 
       if (width == 2) /* check for days */
          {
-         if (flags & ALT &&
+         if ((flags & ALT) != 0 &&
              t > U_ONE_DAY_IN_SECOND)
             {
             char tmp[16];
@@ -2230,8 +2256,8 @@ case_X:
 
       /* leading 0x/X only if non-zero */
 
-      if ((flags & ALT) &&
-          (argument != 0LL))
+      if ((flags & ALT) != 0 &&
+          argument != 0LL)
          {
          flags |= HEXPREFIX;
          }
@@ -2259,7 +2285,7 @@ number: if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             /* handle octal leading 0 */
 
-            if (flags & ALT &&
+            if ((flags & ALT) != 0 &&
                 *cp != '0')
                {
                *--cp = '0';

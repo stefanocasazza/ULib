@@ -413,13 +413,12 @@ void UOptions::printHelp(vPF func)
       if (name_max_len < name_len) name_max_len = name_len;
       }
 
-   char* ptr;
    char buffer[256] = { ' ', ' ', ' ', '-', 'c', ' ', ' ', '-', '-' };
    ptr_long_options = long_options;
 
    for (i = 0; i < 2 + length; ++i, ++ptr_long_options)
       {
-      ptr = buffer + 3;
+      char* ptr = buffer + 3;
 
       if (ptr_long_options->val)
          {

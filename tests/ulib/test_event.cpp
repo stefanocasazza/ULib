@@ -292,7 +292,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)", argc)
 
-   u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
+   u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_base_new);
 
    check_mixed_way();
    check_prio_test();

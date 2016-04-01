@@ -176,8 +176,6 @@ void UError::stackDump()
 
    backtrace_symbols_fd(array, trace_size, fd);
 # else
-   uint32_t output_len;
-   char* functionNameEnd;
    char buffer[128 * 1024];
 
    FILE* f = fdopen(fd, "w");
@@ -189,8 +187,6 @@ void UError::stackDump()
 # else
    int status;
    char* realname;
-   char* lastparen;
-   char* firstparen;
 # endif
 
    char** strings = backtrace_symbols(array, trace_size);
@@ -208,6 +204,8 @@ void UError::stackDump()
       (void) fprintf(f, "#%d %s\n", i-2, strings[i]);
 
 #   ifdef HAVE_DLFCN_H
+      uint32_t output_len;
+
       if (dladdr(array[i], &dlinf)          == 0 ||
           strcmp(name_buf, dlinf.dli_fname) == 0)
          {
@@ -224,7 +222,7 @@ void UError::stackDump()
       if (output_len &&
           buffer[0] != '?')
          {
-         functionNameEnd = strchr(buffer, '\n');
+         char* functionNameEnd = strchr(buffer, '\n');
 
          if (functionNameEnd)
             {
@@ -236,8 +234,8 @@ void UError::stackDump()
 
       (void) fwrite(U_CONSTANT_TO_PARAM("--------------------------------------------------------------------\n"), 1, f);
 #    else
-      firstparen = strchr(strings[i], '('); // extract the identifier from strings[i]. It's inside of parens
-      lastparen  = strchr(strings[i], '+');
+      char* firstparen = strchr(strings[i], '('); // extract the identifier from strings[i]. It's inside of parens
+      char* lastparen  = strchr(strings[i], '+');
 
       if (firstparen &&
           lastparen  &&

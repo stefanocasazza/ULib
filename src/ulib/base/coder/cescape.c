@@ -105,8 +105,8 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
          if (p == 0) break;
          }
 
-           inptr = p+1;
-      c = *inptr++;
+      inptr = p+1;
+          c = *inptr++;
 
       U_INTERNAL_PRINT("c = %d", c)
 

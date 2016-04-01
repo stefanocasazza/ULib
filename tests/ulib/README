@@ -1,14 +1,6 @@
 See http://www.debian.org/ for information about Debian GNU/Linux.
 Four Debian releases are available on the main site:
 
-Debian 6.0.10, or squeeze.  Access this release through dists/oldoldstable
-Debian 6.0.10 was released Saturday, 19th July 2014. Please note that
-the 6.0 distribution is no longer receiving security support. If you
-are using the amd64 or i386 architecture and not able to upgrade to the
-current stable release, you may wish to investigate the "squeeze-lts"
-distribution. More information is available at:
-https://wiki.debian.org/LTS/ 
-
 Debian 7.9, or wheezy.  Access this release through dists/oldstable
 Debian 7.9 was released Saturday, 5th September 2015.
 

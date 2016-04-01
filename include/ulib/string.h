@@ -988,7 +988,7 @@ public:
    static const UString* str_sqlite_name;
    static const UString* str_dbdir;
 #ifdef U_HTTP2_DISABLE
-   static ustringrep stringrep_storage[70];
+   static ustringrep stringrep_storage[71];
 #else
    static const UString* str_authority;
    static const UString* str_method;
@@ -1055,8 +1055,9 @@ public:
    static const UString* str_vary;
    static const UString* str_via;
    static const UString* str_www_authenticate;
+   static const UString* str_ULib;
 
-   static ustringrep stringrep_storage[136];
+   static ustringrep stringrep_storage[137];
 #endif
 
    static void str_allocate(int which);
@@ -1241,6 +1242,8 @@ public:
 
       U_INTERNAL_ASSERT(invariant())
       }
+
+   explicit UString(uint32_t n, const char* format, ...); // ctor with var arg
 
    explicit UString(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND);
 

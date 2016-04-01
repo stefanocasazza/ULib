@@ -86,6 +86,17 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
 
       U_INTERNAL_PRINT("ch = %C *input = %C", ch, *input)
 
+      /**
+       * From xml spec valid chars:
+       *
+       * #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD]
+       *                                 | [#x10000-#x10FFFF]     
+       *
+       * any Unicode character, excluding the surrogate blocks, FFFE, and FFFF
+       */
+
+      if (u__isxmlvalidchar(ch) == false) continue; 
+
       if ( u__isalnum(ch)          ||
           (u__isquote(ch) == false &&
            u__ishtmlc(ch) == false))

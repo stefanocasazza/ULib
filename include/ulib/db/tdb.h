@@ -122,8 +122,10 @@ public:
 
       _uudata key, dbuf;
 
-       key.d1 = { (unsigned char*)_key,   keylen };
-      dbuf.d1 = { (unsigned char*)_data, datalen };
+       key.d1.dptr  = (unsigned char*)_key;
+       key.d1.dsize = keylen;
+      dbuf.d1.dptr  = (unsigned char*)_data;
+      dbuf.d1.dsize = datalen;
 
       if (U_SYSCALL(tdb_store, "%p,%J,%J,%d", context, key.d2, dbuf.d2, _flag)) U_RETURN(false);
 
@@ -142,7 +144,8 @@ public:
 
       _uudata key;
 
-      key.d1 = { (unsigned char*)_key, keylen };
+      key.d1.dptr  = (unsigned char*)_key;
+      key.d1.dsize = keylen;
 
       if (U_SYSCALL(tdb_delete, "%p,%J", context, key.d2)) U_RETURN(false);
 
@@ -159,7 +162,8 @@ public:
 
       _uudata key;
 
-      key.d1 = { (unsigned char*)_key, keylen };
+      key.d1.dptr  = (unsigned char*)_key;
+      key.d1.dsize = keylen;
 
       TDB_DATA dbuf = (TDB_DATA) U_SYSCALL(tdb_fetch, "%p,%J", context, key.d2);
 
@@ -197,14 +201,17 @@ public:
 
       _uudata key;
 
-       key.d1 = { (unsigned char*)_key.data(), _key.size() };
+      key.d1.dptr  = (unsigned char*)_key.data();
+      key.d1.dsize = _key.size();
 
       if (U_SYSCALL(tdb_delete, "%p,%J", context, key.d2) == 0)
          {
          _uudata dbuf;
 
-          key.d1 = { (unsigned char*)new_key.data(), new_key.size() };
-         dbuf.d1 = { (unsigned char*)  _data.data(),   _data.size() };
+          key.d1.dptr  = (unsigned char*)new_key.data();
+          key.d1.dsize = new_key.size();
+         dbuf.d1.dptr  = (unsigned char*)_data.data();
+         dbuf.d1.dsize = _data.size();
 
          if (U_SYSCALL(tdb_store, "%p,%J,%J,%d", context, key.d2, dbuf.d2, TDB_INSERT) == 0) U_RETURN(true);
          }
@@ -225,7 +232,8 @@ public:
 
       _uudata key;
 
-      key.d1 = { (unsigned char*)_key, keylen };
+      key.d1.dptr  = (unsigned char*)_key;
+      key.d1.dsize = keylen;
 
       if (U_SYSCALL(tdb_exists, "%p,%J", context, key.d2)) U_RETURN(true);
 

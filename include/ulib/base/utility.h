@@ -199,8 +199,7 @@ U_EXPORT const char* u__strpbrk(const char* restrict s, uint32_t slen, const cha
 /* Search a string for a terminator of a group of delimitator {} [] () <%%>...*/
 
 U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen,
-                                      const char* restrict group_delimitor, uint32_t group_delimitor_len,
-                                      char skip_line_comment) __pure;
+                               const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment) __pure;
 
 /**
  * --------------------------------------------------------------------------------
@@ -422,13 +421,14 @@ static inline bool u__istext( unsigned char c)   { return ((u_cttab(c) & 0x00020
                                                                       /* 0x00040000              __T character       appears in plain ASCII text */
                                                                       /* 0x00080000              __X Hexadecimal */
                                                                       /* 0x00100000              __A BASE64 encoded: '+' | '/' (47 0x2F) | '=' (61 0x3D) */
+                                                                      /* 0x08000000              __UF filename invalid char: ":<>*?\| */
+                                                                      /* 0x10000000              __XM char >= (32 0x20) */
 static inline bool u__ismethod( unsigned char c) { return ((u_cttab(c) & 0x00200000) != 0); } /* __M HTTP (COPY,DELETE,GET,HEAD|HTTP,OPTIONS,POST/PUT/PATCH) */
 static inline bool u__isheader( unsigned char c) { return ((u_cttab(c) & 0x00400000) != 0); } /* __Y HTTP header (Host,Range,...) */
 static inline bool u__isquote(  unsigned char c) { return ((u_cttab(c) & 0x00800000) != 0); } /* __K string quote: '"' (34 0x22) | ''' (39 0x27) */
 static inline bool u__ishtmlc(  unsigned char c) { return ((u_cttab(c) & 0x01000000) != 0); } /* __J HTML: '&' (38 0x26) | '<' (60 0x3C) | '>' (62 0x3E) */
 static inline bool u__is2urlenc(unsigned char c) { return ((u_cttab(c) & 0x02000000) != 0); } /* __UE URL: char TO encoded ... */ 
 static inline bool u__isurlqry( unsigned char c) { return ((u_cttab(c) & 0x04000000) != 0); } /* __UQ URL: char FROM query '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
-static inline bool u__isfname(  unsigned char c) { return ((u_cttab(c) & 0x08000000) != 0); } /* __UF filename: char > 31 except: ":<>*?\| */
 
 static inline bool u__isprintf(unsigned char c)  { return ((u_cttab(c) & 0x00000002) != 0); } /*  __E                                  */
 static inline bool u__isipv4(  unsigned char c)  { return ((u_cttab(c) & 0x00001020) != 0); } /* (__N | __D)                           */
@@ -448,6 +448,10 @@ static inline bool u__isprint( unsigned char c)  { return ((u_cttab(c) & 0x0000F
 static inline bool u__ishname( unsigned char c)  { return ((u_cttab(c) & 0x0000B0B0) != 0); } /* (__O | __N | __Q | __L | __U | __D)   */
 static inline bool u__isbase64(unsigned char c)  { return ((u_cttab(c) & 0x0010B000) != 0); } /* (__A | __L | __U | __D)               */
 static inline bool u__isb64url(unsigned char c)  { return ((u_cttab(c) & 0x0000B090) != 0); } /* (      __L | __U | __D | __O | __Q)   */
+
+static inline bool u__isvalidchar(   unsigned char c) { return ((u_cttab(c) & 0x10000000) != 0); } /* __XM */
+static inline bool u__isxmlvalidchar(unsigned char c) { return ((u_cttab(c) & 0x10000300) != 0); } /* __XM | __B | __R */
+static inline bool u__isfnameinvalid(unsigned char c) { return ((u_cttab(c) & 0x08000000) != 0); } /* __UF */
 
 /* buffer type identification - Assumed an ISO-1 character set */
 

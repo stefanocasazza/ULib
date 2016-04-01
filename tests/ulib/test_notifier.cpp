@@ -393,7 +393,7 @@ int U_EXPORT main(int argc, char* argv[])
    handlerInput* c = U_NEW(handlerInput);
    handlerInput* d = U_NEW(handlerInput);
 
-   UNotifier::init(false);
+   UNotifier::init();
    UNotifier::insert(c);
    UNotifier::handlerDelete(c);
    UNotifier::insert(d);

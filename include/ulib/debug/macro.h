@@ -67,11 +67,7 @@
 #endif
 
 #ifdef DEBUG
-
-#define U_DEBUG(fmt,args...) u__printf(STDERR_FILENO, "%W%N%W: %WDEBUG: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET)
-
 // Manage class test for memory corruption
-
 #  define U_MEMORY_TEST         UMemoryError memory;
 #  define U_MEMORY_TEST_COPY(o)   memory = o.memory;
 
@@ -79,7 +75,6 @@
 #  define U_CHECK_MEMORY           U_CHECK_MEMORY_OBJECT(this)
 
 // Manage info on execution of program
-
 #  define U_TRACE(level,args...)       UTrace utr(level , ##args);
 #  define U_TRACE_NO_PARAM(level,name) UTrace utr(level, sizeof(name)-1, name);
 
@@ -151,8 +146,6 @@ if (envp) \
 #endif
 
 #else /* DEBUG */
-
-#define U_DEBUG(fmt,args...)
 
 #  define U_MEMORY_TEST
 #  define U_CHECK_MEMORY
@@ -228,7 +221,9 @@ if (envp) \
                uint32_t _n = UObjectDB::dumpObject(_buffer, sizeof(_buffer), obj); \
                if (utr.active[0]) u_trace_dump(msg " = \n%.*s\n", U_min(_n,4000), _buffer); }
 
-#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)  UMemoryPool::writeInfoTo(fmt,args)
+#  define U_DUMP_CONTAINER(obj) { if (utr.active[0]) u_trace_dump(#obj" = %O", U_OBJECT_TO_TRACE((obj))); }
+
+#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...) UMemoryPool::writeInfoTo(fmt,args)
 
 // Manage location info for object allocation
 
@@ -251,6 +246,7 @@ if (envp) \
 #  define U_UNREGISTER_OBJECT(level,pointer)
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)
 
+#  define U_DUMP_CONTAINER(obj)
 #  define U_DUMP_OBJECT(msg,obj)
 #  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)
 

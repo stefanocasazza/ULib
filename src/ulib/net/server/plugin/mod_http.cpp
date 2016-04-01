@@ -550,10 +550,10 @@ int UHttpPlugIn::handlerStop()
    UHTTP::bcallInitForAllUSP = false;
 
 #ifdef USE_PHP
-   UHTTP::php_embed->php_end();
+   if (UHTTP::php_embed) UHTTP::php_embed->php_end();
 #endif
 #ifdef USE_RUBY
-   UHTTP::ruby_embed->ruby_end();
+   if (UHTTP::ruby_embed) UHTTP::ruby_embed->ruby_end();
 #endif
 
    U_RESET_MODULE_NAME;

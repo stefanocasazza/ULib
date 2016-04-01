@@ -36,7 +36,7 @@
 
 #ifdef USE_LIBTDB
 #  include <tdb.h>
-typedef struct TDB_DATA tdbdata_t;
+typedef TDB_DATA tdbdata_t;
 #endif
 
 typedef                 DIR* pdir_t;

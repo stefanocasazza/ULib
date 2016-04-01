@@ -24,6 +24,10 @@
 #include <ulib/net/server/client_image.h>
 #include <ulib/net/server/server_plugin.h>
 
+#ifndef SIGWINCH
+#define SIGWINCH 28
+#endif
+
 /**
  * @class UServer
  *
@@ -632,9 +636,9 @@ protected:
 
    // method VIRTUAL to redefine
 
-   virtual void handlerSignal()
+   virtual void handlerSignal(int signo)
       {
-      U_TRACE_NO_PARAM(0, "UServer_Base::handlerSignal()")
+      U_TRACE(0, "UServer_Base::handlerSignal(%d)", signo)
       }
 
    virtual void preallocate()  = 0;
@@ -654,9 +658,12 @@ protected:
       pthis->preallocate();
       }
 
-   static RETSIGTYPE handlerForSigHUP( int signo);
-   static RETSIGTYPE handlerForSigTERM(int signo);
-   static RETSIGTYPE handlerForSigCHLD(int signo);
+   static RETSIGTYPE handlerForSigHUP(  int signo);
+   static RETSIGTYPE handlerForSigTERM( int signo);
+   static RETSIGTYPE handlerForSigCHLD( int signo);
+   static RETSIGTYPE handlerForSigWINCH(int signo);
+
+   static void sendSignalToAllChildren(int signo, sighandler_t handler);
 
 private:
    friend class UHTTP;

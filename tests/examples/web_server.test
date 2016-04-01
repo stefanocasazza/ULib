@@ -15,7 +15,7 @@ start_msg web_server
 
 DOC_ROOT=docroot
 
-rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/soap.res /tmp/*.memusage.* \
+rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/soap.res /tmp/*.memusage.* /tmp/*.hpack.* \
 		$DOC_ROOT/webserver*.log* $DOC_ROOT/uploads/* /var/log/httpd/access_log \
       out/userver_tcp.out err/userver_tcp.err web_server.err \
 					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
@@ -44,7 +44,7 @@ upload_test() {
 
 rm    -rf      uploads
 mkdir -p		   uploads
-$CHOWN nobody: uploads 2>/dev/null
+$CHOWN nobody: uploads docroot 2>/dev/null
 chmod 777      uploads
 
 $CURL -s -F 'file=@vuoto.txt'											 -F "name=prova" http://$1/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
@@ -223,7 +223,8 @@ export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
  creat_config V 2
  start_test $NCAT www.sito1.com
 
-pkill -9 userver_tcp lt-userver_tcp 2>/dev/null
+pkill -9    userver_tcp 2>/dev/null
+pkill -9 lt-userver_tcp 2>/dev/null
 
 # -----------------------------------------------------------------------------------
 # for GDB

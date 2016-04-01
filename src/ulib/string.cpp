@@ -182,10 +182,11 @@ const UString* UString::str_user_agent;
 const UString* UString::str_vary;
 const UString* UString::str_via;
 const UString* UString::str_www_authenticate;
+const UString* UString::str_ULib;
 
-ustringrep UString::stringrep_storage[136] = {
+ustringrep UString::stringrep_storage[137] = {
 #else
-ustringrep UString::stringrep_storage[70] = {
+ustringrep UString::stringrep_storage[71] = {
 #endif
    { U_STRINGREP_FROM_CONSTANT("host") },
    { U_STRINGREP_FROM_CONSTANT("chunked") },
@@ -332,7 +333,8 @@ ustringrep UString::stringrep_storage[70] = {
    { U_STRINGREP_FROM_CONSTANT("user-agent") },
    { U_STRINGREP_FROM_CONSTANT("vary") },
    { U_STRINGREP_FROM_CONSTANT("via") },
-   { U_STRINGREP_FROM_CONSTANT("www-authenticate") }
+   { U_STRINGREP_FROM_CONSTANT("www-authenticate") },
+   { U_STRINGREP_FROM_CONSTANT("ULib") }
 #endif
 };
 
@@ -524,7 +526,7 @@ void UString::str_allocate(int which)
    else if ((which & STR_ALLOCATE_HTTP2) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(str_authority, 0)
-      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 136)
+      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 137)
 
       U_NEW_ULIB_OBJECT(str_authority,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+0));
       U_NEW_ULIB_OBJECT(str_method,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+1));
@@ -591,9 +593,10 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_OBJECT(str_vary,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+62));
       U_NEW_ULIB_OBJECT(str_via,                         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+63));
       U_NEW_ULIB_OBJECT(str_www_authenticate,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+64));
+      U_NEW_ULIB_OBJECT(str_ULib,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+65));
       }
 #else
-   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 70)
+   U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 71)
 #endif
 }
 
@@ -1219,6 +1222,22 @@ UString::UString(ustringrep* r)
    _copy(u.p2);
 
    U_INTERNAL_ASSERT(invariant())
+}
+
+UString::UString(uint32_t n, const char* format, ...) // ctor with var arg
+{
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%S", n, format)
+
+   U_INTERNAL_ASSERT_POINTER(format)
+
+   va_list argp;
+   va_start(argp, format);
+
+   rep = UStringRep::create(0U, n, 0);
+
+   UString::vsnprintf(format, argp); 
+
+   va_end(argp);
 }
 
 UString UString::copy() const

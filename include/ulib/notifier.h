@@ -34,9 +34,13 @@
 #endif
 
 #ifndef EPOLLEXCLUSIVE // Provides exclusive wakeups when attaching multiple epoll fds to a shared wakeup source
-#define EPOLLEXCLUSIVE 0 // (1 << 28)
+#  if !defined(U_LINUX) || LINUX_VERSION_CODE < KERNEL_VERSION(4,5,0)
+#     define EPOLLEXCLUSIVE 0
+#  else
+#     define EPOLLEXCLUSIVE (1 << 28)
+#  endif
 #endif
-#ifndef EPOLLROUNDROBIN // Provides balancing for exclusive wakeups when attaching multiple epoll fds to a shared wakeup soruce
+#ifndef EPOLLROUNDROBIN // Provides balancing for exclusive wakeups when attaching multiple epoll fds to a shared wakeup source
 #define EPOLLROUNDROBIN 0 // (1 << 27)
 #endif
 
@@ -100,9 +104,9 @@ public:
    static void insert(UEventFd* handler_event, int op = 0);
 
 #ifndef USE_LIBEVENT
+   static void init();
    static void resume(UEventFd* item);
    static void suspend(UEventFd* item);
-   static void init(bool bacquisition);
 
    static void waitForEvent();
    static void waitForEvent(                                                 UEventTime* ptimeout);
@@ -124,17 +128,12 @@ public:
    static void batch((UEventFd* handler_event);
 # endif
 #else
-   static void init(bool bacquisition)
+   static void init()
       {
-      U_TRACE(0, "UNotifier::init(%b)", bacquisition)
+      U_TRACE(0, "UNotifier::init()")
 
-      if (u_ev_base &&
-          bacquisition)
-         {
-         (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // NB: reinitialized the event base after fork()...
-         }
-
-      if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
+      if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_base_new);
+      else (void) U_SYSCALL(event_reinit, "%p", u_ev_base); // NB: reinitialized the event base after fork()...
 
       U_INTERNAL_ASSERT_POINTER(u_ev_base)
 

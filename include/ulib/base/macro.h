@@ -97,6 +97,8 @@
           { U_ASSERT_MACRO((const void*)ptr>U_NULL_POINTER,"~NULL POINTER",info) }
 #  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) \
           { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE",info) }
+
+#  define U_DEBUG(fmt,args...) u__printf(STDERR_FILENO, "%W%N%W: %WDEBUG: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET)
 #else
 #  define U_INTERNAL_ASSERT(expr)
 #  define U_INTERNAL_ASSERT_MINOR(a,b)
@@ -113,6 +115,8 @@
 #  define U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info)
 #  define U_INTERNAL_ASSERT_POINTER_MSG(ptr,info)
 #  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info)
+
+#  define U_DEBUG(fmt,args...)
 #endif
 
 /* Manage message info */

@@ -31,12 +31,9 @@ istream& operator>>(istream& is, Prima& l)
 
 ostream& operator<<(ostream& os, const Prima& l) 
 {
-   // per simulare ricorsione in U_OBJECT_TO_TRACE()
-
    U_TRACE(5, "Prima::operator<<()")
 
-// U_INTERNAL_DUMP("this=%O", U_OBJECT_TO_TRACE(l))
-   U_INTERNAL_DUMP("this=%O", 0)
+   U_DUMP_CONTAINER(l) // per simulare ricorsione in U_OBJECT_TO_TRACE()
 
    os << l.a;
 
@@ -67,14 +64,11 @@ istream& operator>>(istream& is, Seconda& l)
 
 ostream& operator<<(ostream& os, const Seconda& l)
 {
-   // per simulare ricorsione in U_OBJECT_TO_TRACE()
-
    U_TRACE(5+256, "Seconda::operator<<()")
 
    Prima a1;
 
-// U_INTERNAL_DUMP("a1=%O", U_OBJECT_TO_TRACE(a1))
-   U_INTERNAL_DUMP("a1=%O", 0)
+   U_DUMP_CONTAINER(a1) // per simulare ricorsione in U_OBJECT_TO_TRACE()
 
    os << l.b;
 
@@ -99,9 +93,9 @@ int U_EXPORT main(int argc, char** argv)
    U_SET_LOCATION_INFO;
    Seconda b, b1;
 
-   U_INTERNAL_DUMP("Prima=%O",            U_OBJECT_TO_TRACE(a))
-   U_INTERNAL_DUMP("Seconda=%O",                                  U_OBJECT_TO_TRACE(b))
-   U_INTERNAL_DUMP("Prima=%O Seconda=%O", U_OBJECT_TO_TRACE(a),   U_OBJECT_TO_TRACE(b))
+   U_DUMP_CONTAINER(a)
+   U_DUMP_CONTAINER(b)
+   U_INTERNAL_DUMP("Prima = %O Seconda = %O", U_OBJECT_TO_TRACE(a), U_OBJECT_TO_TRACE(b))
 
    U_SET_LOCATION_INFO;
 

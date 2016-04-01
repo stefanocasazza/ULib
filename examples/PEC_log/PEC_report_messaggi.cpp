@@ -204,9 +204,13 @@ public:
 
    static bool reportMessaggi(UStringRep* key, void* list)
       {
-      U_TRACE(5, "Application::reportMessaggi(%p,%p)", key, list)
+      U_TRACE(5, "Application::reportMessaggi(%V,%p)", key, list)
 
-      (void) sprintf(buffer, U_XML_MSG_ENTRY_START, U_STRING_TO_TRACE(*key));
+      UString tmp(U_CAPACITY);
+
+      UXMLEscape::encode(U_STRING_TO_PARAM(*key), tmp);
+
+      (void) sprintf(buffer, U_XML_MSG_ENTRY_START, U_STRING_TO_TRACE(tmp));
 
       std::cout << buffer;
 

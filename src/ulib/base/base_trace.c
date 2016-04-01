@@ -291,7 +291,7 @@ void u_trace_init(int bsignal)
 
          if (u_trace_fd == -1)
             {
-            U_WARNING("Error on create file %S", name);
+            U_WARNING("Failed to create file %S - current working directory: %.*s", name, u_cwd_len, u_cwd);
 
             return;
             }

@@ -404,8 +404,13 @@ public:
 #endif
 
 private:
+#ifdef U_COMPILER_DELETE_MEMBERS
+   UThrottling(const UThrottling&) = delete;
+   UThrottling& operator=(const UThrottling&) = delete;
+#else
    UThrottling(const UThrottling&) : UDataStorage() {}
    UThrottling& operator=(const UThrottling&)       { return *this; }
+#endif
 };
 
 class U_NO_EXPORT UBandWidthThrottling : public UEventTime {
@@ -641,8 +646,13 @@ public:
 #endif
 
 private:
+#ifdef U_COMPILER_DELETE_MEMBERS
+   UBandWidthThrottling(const UBandWidthThrottling&) = delete;
+   UBandWidthThrottling& operator=(const UBandWidthThrottling&) = delete;
+#else
    UBandWidthThrottling(const UBandWidthThrottling&) : UEventTime() {}
    UBandWidthThrottling& operator=(const UBandWidthThrottling&)     { return *this; }
+#endif
 };
 
 class U_NO_EXPORT UClientThrottling : public UEventTime {
@@ -690,8 +700,13 @@ protected:
    UClientImage_Base* pClientImage;
 
 private:
+#ifdef U_COMPILER_DELETE_MEMBERS
+   UClientThrottling(const UClientThrottling&) = delete;
+   UClientThrottling& operator=(const UClientThrottling&) = delete;
+#else
    UClientThrottling(const UClientThrottling&) : UEventTime() {}
    UClientThrottling& operator=(const UClientThrottling&)     { return *this; }
+#endif
 };
 
 bool                              UServer_Base::throttling_chk;
@@ -2415,9 +2430,10 @@ void UServer_Base::init()
          if (timeoutMS > 0) ptime = U_NEW(UTimeoutConnection);
 #     endif
 
-         pthis->UEventFd::op_mask |= EPOLLET;
+         pthis->UEventFd::op_mask |=  EPOLLET;
+         pthis->UEventFd::op_mask &= ~EPOLLRDHUP;
 
-         U_INTERNAL_ASSERT_EQUALS(pthis->UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
+         U_INTERNAL_ASSERT_EQUALS(pthis->UEventFd::op_mask, EPOLLIN | EPOLLET)
 
          /**
           * There may not always be a connection waiting after a SIGIO is delivered or select(2) or poll(2) return a readability
@@ -2429,8 +2445,19 @@ void UServer_Base::init()
          socket_flags |= O_NONBLOCK;
          }
 
-      if (handler_other)   UNotifier::min_connection++;
-      if (handler_inotify) UNotifier::min_connection++;
+      if (handler_other)
+         {
+         UNotifier::min_connection++;
+
+         handler_other->UEventFd::op_mask &= ~EPOLLRDHUP;
+         }
+
+      if (handler_inotify)
+         {
+         UNotifier::min_connection++;
+
+         handler_inotify->UEventFd::op_mask &= ~EPOLLRDHUP;
+         }
       }
 
    UNotifier::max_connection = (UNotifier::max_connection ? UNotifier::max_connection : USocket::iBackLog) + (UNotifier::num_connection = UNotifier::min_connection);
@@ -2466,11 +2493,13 @@ void UServer_Base::init()
    UInterrupt::exit_loop_wait_event_for_signal = true;
 
 #if !defined(USE_LIBEVENT) && !defined(USE_RUBY)
-   UInterrupt::insert(              SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  // async signal
-   UInterrupt::insert(             SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
+   UInterrupt::insert(               SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);   // async signal
+   UInterrupt::insert(              SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM);  // async signal
+   UInterrupt::insert(             SIGWINCH, (sighandler_t)UServer_Base::handlerForSigWINCH); // async signal
 #else
-   UInterrupt::setHandlerForSignal( SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);  //  sync signal
-   UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); //  sync signal
+   UInterrupt::setHandlerForSignal(  SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);   //  sync signal
+   UInterrupt::setHandlerForSignal( SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM);  //  sync signal
+   UInterrupt::setHandlerForSignal(SIGWINCH, (sighandler_t)UServer_Base::handlerForSigWINCH); //  sync signal
 #endif
 }
 
@@ -2528,33 +2557,72 @@ U_NO_EXPORT void UServer_Base::logMemUsage(const char* signame)
 #endif
 }
 
-RETSIGTYPE UServer_Base::handlerForSigCHLD(int signo)
+RETSIGTYPE UServer_Base::handlerForSigWINCH(int signo)
 {
-   U_TRACE(0, "[SIGCHLD] UServer_Base::handlerForSigCHLD(%d)", signo)
+   U_TRACE(0, "[SIGWINCH] UServer_Base::handlerForSigWINCH(%d)", signo)
 
-   U_INTERNAL_ASSERT_POINTER(proc)
+   if (proc->parent())
+      {
+      sendSignalToAllChildren(SIGWINCH, (sighandler_t)UServer_Base::handlerForSigWINCH);
 
-   if (proc->parent()) proc->wait();
+      return;
+      }
+
+   if (u_setStartTime() == false)
+      {
+      U_WARNING("System date update failed: %#5D", u_now->tv_sec);
+      }
 }
 
-U_NO_EXPORT void UServer_Base::manageSigHUP()
+void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 {
-   U_TRACE_NO_PARAM(0, "UServer_Base::manageSigHUP()")
+   U_TRACE(0, "UServer_Base::sendSignalToAllChildren(%d,%p)", signo, handler)
 
    U_INTERNAL_ASSERT_POINTER(proc)
+   U_INTERNAL_ASSERT_POINTER(pthis)
+   U_INTERNAL_ASSERT(proc->parent())
 
-   (void) proc->waitAll(1);
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
+   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
 
-   if (pluginsHandlerSigHUP() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage SigHUP failed...");
+# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (pthread_ocsp) pthread_ocsp->suspend();
+# endif
+#endif
+
+   // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
+
+   UInterrupt::setHandlerForSignal(signo, (sighandler_t)SIG_IGN);
+
+   if (signo != SIGWINCH) pthis->handlerSignal(signo); // manage signal before we send it to the preforked pool of children...
+   else
+      {
+      if (u_setStartTime() == false)
+         {
+         U_WARNING("System date update failed: %#5D", u_now->tv_sec);
+         }
+      }
+
+   UProcess::kill(0, signo); // signo is sent to every process in the process group of the calling process...
+
+#ifndef USE_LIBEVENT
+                UInterrupt::insert(signo, handler); // async signal
+#else
+   UInterrupt::setHandlerForSignal(signo, handler); //  sync signal
+#endif
+
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
+   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
+
+#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+   if (pthread_ocsp) pthread_ocsp->resume();
+#  endif
+#endif
 }
 
 RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 {
    U_TRACE(0, "[SIGHUP] UServer_Base::handlerForSigHUP(%d)", signo)
-
-   U_INTERNAL_ASSERT_POINTER(proc)
-   U_INTERNAL_ASSERT_POINTER(pthis)
-   U_INTERNAL_ASSERT(proc->parent())
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids == -1) return;
@@ -2575,35 +2643,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
 
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->suspend();
-
-# if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp) pthread_ocsp->suspend();
-# endif
-#endif
-
-   pthis->handlerSignal(); // manage signal before we regenering the preforked pool of children...
-
-   // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
-
-   UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)SIG_IGN);
-
-   UProcess::kill(0, SIGTERM); // SIGTERM is sent to every process in the process group of the calling process...
-
-#if defined(USE_LIBEVENT)
-   UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); //  sync signal
-#else
-                UInterrupt::insert(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM); // async signal
-#endif
-
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_pthread_time) ((UTimeThread*)u_pthread_time)->resume();
-
-#  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-   if (pthread_ocsp) pthread_ocsp->resume();
-#  endif
-#endif
+   sendSignalToAllChildren(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM);
 
 #ifdef U_LOG_ENABLE
    U_SRV_TOT_CONNECTION = 0;
@@ -2611,6 +2651,26 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    if (preforked_num_kids > 1) rkids = 0;
    else                        manageSigHUP();
+}
+
+RETSIGTYPE UServer_Base::handlerForSigCHLD(int signo)
+{
+   U_TRACE(0, "[SIGCHLD] UServer_Base::handlerForSigCHLD(%d)", signo)
+
+   U_INTERNAL_ASSERT_POINTER(proc)
+
+   if (proc->parent()) proc->wait();
+}
+
+U_NO_EXPORT void UServer_Base::manageSigHUP()
+{
+   U_TRACE_NO_PARAM(0, "UServer_Base::manageSigHUP()")
+
+   U_INTERNAL_ASSERT_POINTER(proc)
+
+   (void) proc->waitAll(1);
+
+   if (pluginsHandlerSigHUP() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage SigHUP failed...");
 }
 
 RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
@@ -2780,10 +2840,8 @@ loop:
 
             if (UNotifier::num_connection < num_client_threshold)
                {
-#           ifdef DEBUG
-               U_WARNING("It has returned below the client threshold(%u): preallocation(%u) num_connection(%u)",
+               U_DEBUG("It has returned below the client threshold(%u): preallocation(%u) num_connection(%u)",
                            num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
-#           endif
 
                goto end;
                }
@@ -2842,9 +2900,7 @@ try_next:
 
             num_client_threshold = (UNotifier::num_connection * 2) / 3;
 
-#        ifdef DEBUG
-            U_WARNING("Out of space on client image preallocation(%u): num_connection(%u)", UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
-#        endif
+            U_DEBUG("Out of space on client image preallocation(%u): num_connection(%u)", UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
             }
          }
 
@@ -3029,7 +3085,20 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
          U_RETURN(U_NOTIFIER_OK);
          }
 
-      if (proc->child()) UNotifier::init(false);
+      if (proc->child())
+         {
+         // ---------------------------------------------------------------------------------------------------------
+         // NB: the forked child don't accept new client, but we need anyway the event manager because
+         //     the forked child must feel the possibly timeout for request from the new client...
+         // ---------------------------------------------------------------------------------------------------------
+
+         uint32_t num_connection_save = UNotifier::num_connection;
+                                        UNotifier::num_connection = 0;
+
+         UNotifier::init();
+
+         UNotifier::num_connection = num_connection_save;
+         }
       }
 #endif
 
@@ -3128,10 +3197,8 @@ next:
 
       CLIENT_INDEX = vClientImage;
 
-#  ifdef DEBUG
-      U_WARNING("It has passed the client threshold(%u): preallocation(%u) num_connection(%u)",
+      U_DEBUG("It has passed the client threshold(%u): preallocation(%u) num_connection(%u)",
                   num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
-#  endif
       }
 
    goto loop;
@@ -3220,19 +3287,23 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 #  if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
       if (called_from_handlerTime)
          {
-         U_WARNING("%shandlerTime: client connected didn't send any request in %u secs (timeout)", UServer_Base::mod_name[0], ptime->UTimeVal::tv_sec);
+         U_DEBUG("%shandlerTime: client connected didn't send any request in %u secs (timeout %u sec) - "
+                 "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
+                 UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
+                                               ((UClientImage_Base*)cimg)->UEventFd::fd,
+                                               ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection);
          }
       else
          {
-         U_WARNING("%shandlerTimeoutConnection: client connected didn't send any request in %u secs - "
-                   "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
-                   UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event,
+         U_DEBUG("%shandlerTimeoutConnection: client connected didn't send any request in %u secs - "
+                 "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
+                 UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event,
                                                            ((UClientImage_Base*)cimg)->UEventFd::fd,
                                                            ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection);
          }
 #  endif
 
-      U_RETURN(true); // NB: return true mean that we want erase the item...
+      U_RETURN(true); // NB: return true mean that we want to erase the item...
       }
 
    U_RETURN(false);
@@ -3241,6 +3312,8 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 void UServer_Base::runLoop(const char* user)
 {
    U_TRACE(0, "UServer_Base::runLoop(%S)", user)
+
+   if (pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage fork failed");
 
    socket->reusePort(socket_flags);
 
@@ -3305,7 +3378,7 @@ void UServer_Base::runLoop(const char* user)
 
    pthis->UEventFd::fd = socket->iSockDesc;
 
-   UNotifier::init(false);
+   UNotifier::init();
 
    U_INTERNAL_DUMP("UNotifier::min_connection = %d", UNotifier::min_connection)
 
@@ -3389,7 +3462,7 @@ void UServer_Base::runLoop(const char* user)
          }
       }
 
-      // NB: we go directly on accept() and block on it...
+      // NB: we can go directly on accept() and block on it...
 
       U_INTERNAL_ASSERT_EQUALS(socket_flags & O_NONBLOCK, 0)
 
@@ -3410,6 +3483,8 @@ void UServer_Base::run()
    init();
 
    int status;
+   bool baffinity = false;
+   UTimeVal to_sleep(0L, 500L * 1000L);
    const char* user = (as_user->empty() ? 0 : as_user->data());
 
    /**
@@ -3423,194 +3498,188 @@ void UServer_Base::run()
 
    if (monitoring_process == false)
       {
-#ifdef U_SERVER_CAPTIVE_PORTAL
-no_monitoring_process:
-#endif
-      if (pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage fork failed");
-
       runLoop(user);
+
+      goto stop;
       }
-   else
+
+   /**
+    * Main loop for the parent process with the new preforked implementation.
+    * The parent is just responsible for keeping a pool of children and they accept connections themselves...
+    */
+
+   int nkids;
+   cpu_set_t cpuset;
+   pid_t pid, pid_to_wait;
+
+#if defined(HAVE_SCHED_GETAFFINITY) && !defined(U_SERVER_CAPTIVE_PORTAL)
+   if (u_get_num_cpu() > 1 &&
+       (preforked_num_kids % u_num_cpu) == 0)
       {
-      /**
-       * Main loop for the parent process with the new preforked implementation.
-       * The parent is just responsible for keeping a pool of children and they accept connections themselves...
-       */
+      baffinity = true;
 
-      int nkids;
-      cpu_set_t cpuset;
-      bool baffinity = false;
-      pid_t pid, pid_to_wait;
-      UTimeVal to_sleep(0L, 500L * 1000L);
+      U_SRV_LOG("cpu affinity is to be set; thread count (%u) multiple of cpu count (%u)", preforked_num_kids, u_num_cpu);
+      }
+#endif
 
-#  if defined(HAVE_SCHED_GETAFFINITY) && !defined(U_SERVER_CAPTIVE_PORTAL)
-      if (u_get_num_cpu() > 1 &&
-          (preforked_num_kids % u_num_cpu) == 0)
+   U_INTERNAL_ASSERT_EQUALS(rkids, 0)
+
+   nkids = (preforked_num_kids <= 0 ? 1 : (pid_to_wait = -1, preforked_num_kids));
+
+   U_INTERNAL_DUMP("nkids = %u", nkids)
+
+   while (flag_loop)
+      {
+      u_need_root(false);
+
+      while (rkids < nkids)
          {
-         baffinity = true;
-
-         U_SRV_LOG("cpu affinity is to be set; thread count (%u) multiple of cpu count (%u)", preforked_num_kids, u_num_cpu);
-         }
-#  endif
-
-      U_INTERNAL_ASSERT_EQUALS(rkids, 0)
-
-      nkids = (preforked_num_kids <= 0 ? 1 : (pid_to_wait = -1, preforked_num_kids));
-
-      U_INTERNAL_DUMP("nkids = %u", nkids)
-
-      while (flag_loop)
-         {
-         u_need_root(false);
-
-         while (rkids < nkids)
+         if (proc->fork() &&
+             proc->parent())
             {
-            if (proc->fork() &&
-                proc->parent())
+            ++rkids;
+
+            if (preforked_num_kids <= 0) pid_to_wait = proc->_pid;
+
+            U_SRV_LOG("Started new child (pid %d), up to %u children", proc->_pid, rkids);
+
+            U_INTERNAL_DUMP("up to %u children, UNotifier::num_connection = %d", rkids, UNotifier::num_connection)
+            }
+
+         if (proc->child())
+            {
+            U_INTERNAL_DUMP("child = %P UNotifier::num_connection = %d", UNotifier::num_connection)
+
+#        ifndef U_SERVER_CAPTIVE_PORTAL
+            if (baffinity)
                {
-               ++rkids;
+               CPU_ZERO(&cpuset);
 
-               if (preforked_num_kids <= 0) pid_to_wait = proc->_pid;
+               u_bind2cpu(&cpuset, rkids % u_num_cpu); // Pin the process to a particular cpu...
 
-               U_SRV_LOG("Started new child (pid %d), up to %u children", proc->_pid, rkids);
-
-               U_INTERNAL_DUMP("up to %u children, UNotifier::num_connection = %d", rkids, UNotifier::num_connection)
-               }
-
-            if (proc->child())
-               {
-               U_INTERNAL_DUMP("child = %P UNotifier::num_connection = %d", UNotifier::num_connection)
-
-#           ifndef U_SERVER_CAPTIVE_PORTAL
-               if (baffinity)
-                  {
-                  CPU_ZERO(&cpuset);
-
-                  u_bind2cpu(&cpuset, rkids % u_num_cpu); // Pin the process to a particular cpu...
-
-#              if !defined(U_LOG_DISABLE) || defined(HAVE_SCHED_GETCPU)
-                  char buffer[64];
-                  uint32_t sz = 0;
-                  int cpu = U_SYSCALL_NO_PARAM(sched_getcpu);
-#              endif
-
-#              ifdef SO_INCOMING_CPU
-                  USocket::incoming_cpu = rkids % u_num_cpu;
-#              endif
-
-#              ifdef HAVE_SCHED_GETCPU
-                  if (USocket::incoming_cpu != cpu &&
-                      USocket::incoming_cpu != -1)
-                     {
-                     sz = u__snprintf(buffer, sizeof(buffer), " (EXPECTED CPU %d)", USocket::incoming_cpu);
-                     }
-#             endif
-
-                  U_SRV_LOG("New child started, affinity mask: %x, cpu: %d%.*s", CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
-                  }
-
-#             ifdef HAVE_LIBNUMA
-               if (U_SYSCALL_NO_PARAM(numa_max_node))
-                  {
-                  struct bitmask* bmask = (struct bitmask*) U_SYSCALL(numa_bitmask_alloc, "%u", 16);
-
-                  (void) U_SYSCALL(numa_bitmask_setbit, "%p,%u", bmask, rkids % 2);
-
-                  U_SYSCALL_VOID(numa_set_membind,  "%p", bmask);
-                  U_SYSCALL_VOID(numa_bitmask_free, "%p", bmask);
-                  }
-#             endif
-
-               if (set_realtime_priority) u_switch_to_realtime_priority();
+#           if !defined(U_LOG_DISABLE) || defined(HAVE_SCHED_GETCPU)
+               char buffer[64];
+               uint32_t sz = 0;
+               int cpu = U_SYSCALL_NO_PARAM(sched_getcpu);
 #           endif
 
-               /**
-                * POSIX.1-1990 disallowed setting the action for SIGCHLD to SIG_IGN.
-                * POSIX.1-2001 allows this possibility, so that ignoring SIGCHLD can be
-                * used to prevent the creation of zombies (see wait(2)). Nevertheless, the
-                * historical BSD and System V behaviors for ignoring SIGCHLD differ, so that
-                * the only completely portable method of ensuring that terminated children do
-                * not become zombies is to catch the SIGCHLD signal and perform a wait(2) or similar.
-                *
-                * NB: we cannot use SIGCHLD to avoid zombie for parallelization because in this way we
-                *     interfere with waiting of cgi-bin processing that write on pipe and also to know
-                *     exit status from script...
-                *
-                * UInterrupt::setHandlerForSignal(SIGCHLD, (sighandler_t)UServer_Base::handlerForSigCHLD);
-                */
+#           ifdef SO_INCOMING_CPU
+               USocket::incoming_cpu = rkids % u_num_cpu;
+#           endif
 
-               UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN); // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
+#           ifdef HAVE_SCHED_GETCPU
+               if (USocket::incoming_cpu != cpu &&
+                   USocket::incoming_cpu != -1)
+                  {
+                  sz = u__snprintf(buffer, sizeof(buffer), " (EXPECTED CPU %d)", USocket::incoming_cpu);
+                  }
+#          endif
 
-               if (pluginsHandlerFork() != U_PLUGIN_HANDLER_FINISHED) U_ERROR("Plugins stage fork failed");
-
-               runLoop(user);
-
-               return;
+               U_SRV_LOG("New child started, affinity mask: %x, cpu: %d%.*s", CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
                }
 
-            // Don't start them too quickly, or we might overwhelm a machine that's having trouble
-
-            to_sleep.nanosleep();
-
-#        ifdef U_SERVER_CAPTIVE_PORTAL
-            if (proc->_pid == -1)
+#          ifdef HAVE_LIBNUMA
+            if (U_SYSCALL_NO_PARAM(numa_max_node))
                {
-               monitoring_process = false;
+               struct bitmask* bmask = (struct bitmask*) U_SYSCALL(numa_bitmask_alloc, "%u", 16);
 
-               goto no_monitoring_process;
+               (void) U_SYSCALL(numa_bitmask_setbit, "%p,%u", bmask, rkids % 2);
+
+               U_SYSCALL_VOID(numa_set_membind,  "%p", bmask);
+               U_SYSCALL_VOID(numa_bitmask_free, "%p", bmask);
                }
+#             endif
+
+            if (set_realtime_priority) u_switch_to_realtime_priority();
 #        endif
+
+            /**
+             * POSIX.1-1990 disallowed setting the action for SIGCHLD to SIG_IGN.
+             * POSIX.1-2001 allows this possibility, so that ignoring SIGCHLD can be
+             * used to prevent the creation of zombies (see wait(2)). Nevertheless, the
+             * historical BSD and System V behaviors for ignoring SIGCHLD differ, so that
+             * the only completely portable method of ensuring that terminated children do
+             * not become zombies is to catch the SIGCHLD signal and perform a wait(2) or similar.
+             *
+             * NB: we cannot use SIGCHLD to avoid zombie for parallelization because in this way we
+             *     interfere with waiting of cgi-bin processing that write on pipe and also to know
+             *     exit status from script...
+             *
+             * UInterrupt::setHandlerForSignal(SIGCHLD, (sighandler_t)UServer_Base::handlerForSigCHLD);
+             */
+
+            UInterrupt::setHandlerForSignal(SIGHUP, (sighandler_t)SIG_IGN); // NB: we can't use UInterrupt::erase() because it restore the old action (UInterrupt::init)...
+
+            runLoop(user);
+
+            return;
             }
 
-         // wait for any children to exit, and then start some more
+         // Don't start them too quickly, or we might overwhelm a machine that's having trouble
 
-#     if defined(U_LINUX) && defined(ENABLE_THREAD)
-         (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
+         to_sleep.nanosleep();
+
+#     ifdef U_SERVER_CAPTIVE_PORTAL
+         if (proc->_pid == -1) // If the child don't start (low memory) we disable the monitoring process...
+            {
+            monitoring_process = false;
+
+            runLoop(user);
+
+            goto stop;
+            }
 #     endif
-
-         u_dont_need_root();
-
-         pid = UProcess::waitpid(pid_to_wait, &status, 0);
-
-         U_INTERNAL_DUMP("rkids = %d", rkids)
-
-         if (rkids == 0)  // NB: check for SIGHUP event...
-            {
-            manageSigHUP();
-
-            continue;
-            }
-
-         if (pid > 0 &&
-             flag_loop) // NB: check for SIGTERM event...
-            {
-            U_INTERNAL_ASSERT_MAJOR(rkids, 0)
-
-            --rkids;
-
-            baffinity = false;
-
-            U_INTERNAL_DUMP("down to %u children", rkids)
-
-            // Another little safety brake here: since children should not
-            // exit too quickly, pausing before starting them should be harmless
-
-            if (USemaphore::checkForDeadLock(to_sleep) == false) to_sleep.nanosleep();
-
-#        ifdef U_LOG_ENABLE
-            if (isLog())
-               {
-               char buffer[128];
-
-               ULog::log("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children", mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
-               }
-#        endif
-            }
          }
 
-      U_INTERNAL_ASSERT(proc->parent())
+      // wait for any children to exit, and then start some more
+
+#  if defined(U_LINUX) && defined(ENABLE_THREAD)
+      (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
+#  endif
+
+      u_dont_need_root();
+
+      pid = UProcess::waitpid(pid_to_wait, &status, 0);
+
+      U_INTERNAL_DUMP("rkids = %d", rkids)
+
+      if (rkids == 0)  // NB: check for SIGHUP event...
+         {
+         manageSigHUP();
+
+         continue;
+         }
+
+      if (pid > 0 &&
+          flag_loop) // NB: check for SIGTERM event...
+         {
+         U_INTERNAL_ASSERT_MAJOR(rkids, 0)
+
+         --rkids;
+
+         baffinity = false;
+
+         U_INTERNAL_DUMP("down to %u children", rkids)
+
+         // Another little safety brake here: since children should not
+         // exit too quickly, pausing before starting them should be harmless
+
+         if (USemaphore::checkForDeadLock(to_sleep) == false) to_sleep.nanosleep();
+
+#     ifdef U_LOG_ENABLE
+         if (isLog())
+            {
+            char buffer[128];
+
+            ULog::log("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children", mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
+            }
+#     endif
+         }
       }
 
+   U_INTERNAL_ASSERT(proc->parent())
+
+stop:
    if (pluginsHandlerStop() != U_PLUGIN_HANDLER_FINISHED) U_WARNING("Plugins stage stop failed");
 
    status = proc->waitAll(2);

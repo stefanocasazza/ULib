@@ -457,7 +457,7 @@ static void test_constructors_02()
 {
    U_TRACE(5, "test_constructors_02()")
 
-   UString s(10,0);
+   UString s(10U,(unsigned char)'\0');
    U_ASSERT( s.size() == 10 )
 }
 

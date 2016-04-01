@@ -823,7 +823,7 @@ void UHTTP::init()
 #endif
 
 #ifdef USE_LIBSSL
-   if (UServer_Base::bssl) enable_caching_by_proxy_servers = true;
+// if (UServer_Base::bssl) enable_caching_by_proxy_servers = true;
 #endif
 
 #if defined(USE_PAGE_SPEED) || defined(USE_LIBV8) || defined(USE_RUBY) || defined(USE_PHP)
@@ -2097,7 +2097,22 @@ __pure const char* UHTTP::getHeaderValuePtr(const UString& request, const char* 
 }
 
 __pure const char* UHTTP::getHeaderValuePtr(const char* name, uint32_t name_len, bool nocase)
-{ return getHeaderValuePtr(*UClientImage_Base::request, name, name_len, nocase); }
+{
+   U_TRACE(0, "UHTTP::getHeaderValuePtr(%.*S,%u,%b)", name_len, name, name_len, nocase)
+
+#ifndef U_HTTP2_DISABLE
+   if (U_http_version == '2')
+      {
+      UHTTP2::pConnection->itable.hash = u_hash_ignore_case((unsigned char*)name, name_len);
+
+      *UClientImage_Base::request = UHTTP2::pConnection->itable.at(name, name_len);
+
+      return (*UClientImage_Base::request ? UClientImage_Base::request->data() : (const char*)0);
+      }
+#endif
+
+   return getHeaderValuePtr(*UClientImage_Base::request, name, name_len, nocase);
+}
 
 U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& body)
 {
@@ -3366,8 +3381,9 @@ int UHTTP::handlerREAD()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::handlerREAD()")
 
-   U_INTERNAL_DUMP("UClientImage_Base::request(%u) = %V", UClientImage_Base::request->size(), UClientImage_Base::request->rep)
+   U_INTERNAL_DUMP("UClientImage_Base::request(%u) = %V U_http_version = %C", UClientImage_Base::request->size(), UClientImage_Base::request->rep, U_http_version)
 
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
    // ------------------------------
@@ -3545,7 +3561,6 @@ int UHTTP::manageRequest()
    if (valias)
       {
       UString str;
-      const char* ptr;
       int i, n = valias->size();
 
       // Ex: /admin /admin.html
@@ -3557,7 +3572,8 @@ int UHTTP::manageRequest()
          int flag = 0;
 
          str = (*valias)[i];
-         ptr = str.data();
+
+         const char* ptr = str.data();
 
          int len = str.size();
 
@@ -3649,6 +3665,8 @@ set_uri: U_http_info.uri     = alias->data();
 
    U_INTERNAL_DUMP("U_http_method_type = %B old_path_len = %u URI = %.*S u_cwd(%u) = %.*S", U_http_method_type, old_path_len, U_HTTP_URI_TO_TRACE, u_cwd_len, u_cwd_len, u_cwd)
 
+   U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 0)
+
    pathname->setBuffer(u_cwd_len + U_http_info.uri_len);
 
    old_path_len = U_http_info.uri_len-1;
@@ -3738,7 +3756,9 @@ set_uri: U_http_info.uri     = alias->data();
    // 5) the file is not present in FILE CACHE or in DOC_ROOT and it is already processed
    // -----------------------------------------------------------------------------------
 
+#ifndef U_SERVER_CAPTIVE_PORTAL
 manage:
+#endif
    U_INTERNAL_DUMP("file_data = %p U_ClientImage_request = %B U_http_info.flag = %.8S", file_data, U_ClientImage_request, U_http_info.flag)
 
    if (file_data &&
@@ -5273,7 +5293,7 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len, uint32
 
          if (buffer != tmp)
             {
-            U_WARNING("UHTTP::getFormValue(%p,%.*S,%u,%u,%u,%u) = %V differ from getFormValue(%.*S,%u,%u,%u) = %V",
+            U_DEBUG("UHTTP::getFormValue(%p,%.*S,%u,%u,%u,%u) = %V differ from getFormValue(%.*S,%u,%u,%u) = %V",
                         &buffer, len, name, len, start, pos, end, buffer.rep, len, name, len, start, end, tmp.rep);
             }
 #     endif
@@ -5537,7 +5557,14 @@ void UHTTP::handlerResponse()
    UClientImage_Base::setRequestProcessed();
 
 #ifndef U_HTTP2_DISABLE
-   if (U_http_version == '2') UHTTP2::handlerResponse();
+   if (U_http_version == '2')
+      {
+      UHTTP2::handlerResponse();
+
+#  ifdef DEBUG
+      UHTTP2::decodeHeadersResponse();
+#  endif
+      }
    else
 #endif
    {
@@ -5707,21 +5734,13 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
 
       ptr += sz;
 
-#  ifndef U_HTTP2_DISABLE
-      if (U_http_version != '2')
-#  endif
-      {
       u_put_unalignedp64(ptr,   U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
       u_put_unalignedp64(ptr+8, U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
 
       ptr += U_CONSTANT_SIZE("Content-Length: ");
-      }
 
       if (pbody == 0)
          {
-#     ifndef U_HTTP2_DISABLE
-         if (U_http_version != '2')
-#     endif
          *ptr++ = '0';
 
          UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
@@ -5734,9 +5753,6 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
          {
          if (U_http_is_accept_gzip == false) *pbody = UStringExt::gunzip(*pbody);
 
-#     ifndef U_HTTP2_DISABLE
-         if (U_http_version != '2')
-#     endif
          ptr += u_num2str32(ptr, pbody->size());
 
          if (U_http_is_accept_gzip)
@@ -5751,9 +5767,6 @@ void UHTTP::setResponse(const UString* content_type, UString* pbody)
       else
 #  endif
       {
-#  ifndef U_HTTP2_DISABLE
-      if (U_http_version != '2')
-#  endif
       ptr += u_num2str32(ptr, pbody->size());
       }
 
@@ -6130,8 +6143,6 @@ end:
 U_NO_EXPORT bool UHTTP::processAuthorization()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::processAuthorization()")
-
-   U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
    bool result = false, bpass = false;
    const char* ptr = getHeaderValuePtr(U_CONSTANT_TO_PARAM("Authorization"), false);
@@ -6813,20 +6824,26 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
                   header.snprintf_add("Last-Modified: %#8D\r\n", file->st_mtime);
       }
 
+   U_INTERNAL_DUMP("u_is_css(%d) = %b u_is_js(%d) = %b", mime_index, u_is_css(mime_index), mime_index, u_is_js(mime_index))
+
+#ifdef DEBUG
    if (u_is_css(mime_index))
       {
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".css")))
       U_INTERNAL_ASSERT_EQUALS(memcmp(content_type, U_CONSTANT_TO_PARAM("text/css")), 0)
 
-      (void) header.append("Content-Style-Type: text/css\r\n");
+   // (void) header.append("Content-Style-Type: text/css\r\n");
       }
    else if (u_is_js(mime_index))
       {
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
       U_INTERNAL_ASSERT_EQUALS(memcmp(content_type, U_CONSTANT_TO_PARAM("text/javascript")), 0)
 
-      (void) header.append("Content-Script-Type: text/javascript\r\n");
+   // (void) header.append("Content-Script-Type: text/javascript\r\n");
       }
+#endif
+
+   U_INTERNAL_DUMP("enable_caching_by_proxy_servers = %b", enable_caching_by_proxy_servers)
 
    if (enable_caching_by_proxy_servers)
       {
@@ -7254,7 +7271,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    if (pathname->equal(U_FILE_TO_PARAM(*file)) == false) // NB: can happen with inotify...
       {
-      U_WARNING("UHTTP::manageDataForCache() pathname(%u) = %.*S file(%u) = %.*S", pathname->size(), pathname->rep, file->getPathRelativLen(), U_FILE_TO_TRACE(*file));
+      U_DEBUG("UHTTP::manageDataForCache() pathname(%u) = %.*S file(%u) = %.*S", pathname->size(), pathname->rep, file->getPathRelativLen(), U_FILE_TO_TRACE(*file));
       }
 #endif
 
@@ -7682,6 +7699,8 @@ U_NO_EXPORT bool UHTTP::processFileCache()
    if (checkGetRequestIfModified() == false) U_RETURN(true); // NB: we have already a response...
 
 #ifdef USE_LIBZ
+   U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+
    if (U_http_is_accept_gzip &&
        isDataCompressFromCache())
       {
@@ -9602,8 +9621,6 @@ U_NO_EXPORT bool UHTTP::checkGetRequestIfModified()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::checkGetRequestIfModified()")
 
-   U_INTERNAL_ASSERT(*UClientImage_Base::request)
-
    /**
     * The If-Modified-Since: header is used with a GET request. If the requested resource has been modified since the given date, ignore the header
     * and return the resource as you normally would. Otherwise, return a "304 Not Modified" response, including the Date: header and no message body, like
@@ -9876,6 +9893,24 @@ void UHTTP::prepareApacheLikeLog()
       }
    else
       {
+#  ifndef U_HTTP2_DISABLE
+      if (U_http_version == '2')
+         {
+         uint32_t sz;
+         const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+         request = UClientImage_Base::cbuffer;
+
+         request_len = u__snprintf(UClientImage_Base::cbuffer, sizeof(UClientImage_Base::cbuffer), "%.*s %.*s ", U_HTTP_METHOD_TO_TRACE, sz, ptr);
+
+         if (request_len > (sizeof(UClientImage_Base::cbuffer) - U_CONSTANT_SIZE("HTTP/2.0"))) request_len = U_NOT_FOUND;
+         else
+            {
+            (void) u__memcpy((void*)(request + request_len), "HTTP/2.0", U_CONSTANT_SIZE("HTTP/2.0"), __PRETTY_FUNCTION__);
+            }
+         }
+      else
+#  endif
       request_len = U_STRING_FIND(*UClientImage_Base::request, 0, "HTTP/");
 
       U_INTERNAL_DUMP("request_len = %u", request_len)

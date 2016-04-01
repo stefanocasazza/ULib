@@ -14,6 +14,11 @@
 #include <ulib/file.h>
 #include <ulib/utility/interrupt.h>
 
+#ifndef HAVE_POLL_H
+#  include <ulib/notifier.h>
+#  include <ulib/event/event_time.h>
+#endif
+
 #ifndef U_STDCPP_ENABLE
 U_EXPORT bool __cxa_guard_acquire() { return 1; }
 U_EXPORT bool __cxa_guard_release() { return 1; }

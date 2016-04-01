@@ -259,6 +259,7 @@ struct flock {
 #define SIGUSR1   16 /* ,30,10 */
 #define SIGUSR2   17 /* ,31,12 */
 #define SIGCHLD   20 /* ,17,18 */
+#define SIGWINCH  28
 
 #ifndef SIG_SETMASK
 #define SIG_SETMASK   0    /* set mask with sigprocmask() */

@@ -20,23 +20,23 @@ fi
 # TODO: This should already be installed and unnecessary.
 sudo apt-get install -y postgresql-server-dev-all
 
-# make use of FIFO scheduling policy possible
-type setcap >/dev/null 2>/dev/null
+# make use of FIFO scheduling policy possible (we must avoid use of test because bash signal trapping)
+#type setcap >/dev/null 2>/dev/null
 
-if [ $? -ne 0 ]; then
-   sudo apt-get install -y libcap2-bin
-fi
+#if [ $? -ne 0 ]; then
+  sudo apt-get install -y libcap2-bin
+#fi
 
 # We need to install mongo-c-driver (we don't have a ubuntu package)
-#RETCODE=$(fw_exists ${IROOT}/mongo-c-driver.installed)
-#if [ "$RETCODE" != 0 ]; then
-  fw_get --ignore-content-length -O https://github.com/mongodb/mongo-c-driver/releases/download/1.1.10/mongo-c-driver-1.1.10.tar.gz
-  fw_untar mongo-c-driver-1.1.10.tar.gz
+RETCODE=$(fw_exists ${IROOT}/mongo-c-driver.installed)
+if [ "$RETCODE" != 0 ]; then
+  wget https://github.com/mongodb/mongo-c-driver/releases/download/1.1.10/mongo-c-driver-1.1.10.tar.gz
+  tar -xzf mongo-c-driver-1.1.10.tar.gz
   cd mongo-c-driver-1.1.10/
   ./configure --prefix=$IROOT --libdir=$IROOT
-  make && make install
-# touch ${IROOT}/mongo-c-driver.installed
-#fi
+  make && sudo make install
+  touch ${IROOT}/mongo-c-driver.installed
+fi
 
 # Add a simple configuration file to it
 cd $ULIB_ROOT
@@ -68,7 +68,7 @@ CXX=g++ # C++ compiler command
 gcc_version=`g++ -dumpversion`
 
 case "$gcc_version" in
-  3*|4.0*|4.1*|4.2*|4.3*|4.4*|4.5*|4.6*|4.7*)
+  3*|4.0*|4.1*|4.2*|4.3*|4.4*|4.5*|4.6*|4.7*|4.8*)
 	  CC='gcc-4.9'
 	 CXX='g++-4.9'
   ;;
@@ -96,9 +96,11 @@ cp -r tests/examples/benchmark/FrameworkBenchmarks/ULib/db $ULIB_ROOT
 cd examples/userver
 make install
 
-# 3. Compile usp pages for benchmark
+# 3. Compile usp pages for benchmark (no more REDIS)
 cd ../../src/ulib/net/server/plugin/usp
-make json.la plaintext.la db.la query.la update.la fortune.la rdb.la rquery.la rupdate.la rfortune.la mdb.la mquery.la mupdate.la mfortune.la
+make json.la plaintext.la  db.la  query.la  update.la  fortune.la \
+                          mdb.la mquery.la mupdate.la mfortune.la
+#                         rdb.la rquery.la rupdate.la rfortune.la
 
 # Check that compilation worked
 if [ ! -e .libs/db.so ]; then
@@ -108,8 +110,8 @@ fi
 mkdir -p $ULIB_DOCUMENT_ROOT
 cp .libs/json.so .libs/plaintext.so \
 	.libs/db.so  .libs/query.so  .libs/update.so  .libs/fortune.so \
-	.libs/rdb.so .libs/rquery.so .libs/rupdate.so .libs/rfortune.so \
 	.libs/mdb.so .libs/mquery.so .libs/mupdate.so .libs/mfortune.so $ULIB_DOCUMENT_ROOT
+#  .libs/rdb.so .libs/rquery.so .libs/rupdate.so .libs/rfortune.so \
 
 echo "export ULIB_VERSION=${ULIB_VERSION}" >> $IROOT/ulib.installed
 echo "export ULIB_ROOT=${ULIB_ROOT}" >> $IROOT/ulib.installed

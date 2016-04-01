@@ -451,6 +451,7 @@ void UMemoryPool::push(void* ptr, int stack_index)
 {
    U_TRACE(0+256, "UMemoryPool::push(%p,%d)", ptr, stack_index) // problem with sanitize address
 
+   U_INTERNAL_ASSERT_POINTER(ptr)
    U_INTERNAL_ASSERT_MINOR(stack_index, U_NUM_STACK_TYPE) // 10
 
    if (stack_index) ((UStackMemoryPool*)(UStackMemoryPool::mem_stack+stack_index))->push(ptr);
@@ -459,6 +460,9 @@ void UMemoryPool::push(void* ptr, int stack_index)
 void UMemoryPool::_free(void* ptr, uint32_t num, uint32_t type_size)
 {
    U_TRACE(1, "UMemoryPool::_free(%p,%u,%u)", ptr, num, type_size) // problem with sanitize address
+
+   U_INTERNAL_ASSERT_POINTER(ptr)
+   U_INTERNAL_ASSERT_MAJOR(num, 0)
 
    uint32_t length = (num * type_size);
 

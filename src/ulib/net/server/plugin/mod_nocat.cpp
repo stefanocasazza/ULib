@@ -19,6 +19,7 @@
 #include <ulib/utility/base64.h>
 #include <ulib/utility/escape.h>
 #include <ulib/net/ipt_ACCOUNT.h>
+#include <ulib/utility/hexdump.h>
 #include <ulib/utility/services.h>
 #include <ulib/utility/dir_walk.h>
 #include <ulib/net/server/server.h>
@@ -1301,25 +1302,6 @@ void UNoCatPlugIn::setNewPeer()
       U_ERROR("IP address for new peer %V not found in LocalNetworkMask %V", peer->ip.rep, localnet->rep);
       }
 
-#ifdef USE_LIBTDB
-   if (pdata)
-      {
-      UString value = (*(UTDB*)pdata)[peer->ip];
-
-      if (value)
-         {
-         UVector<UString> ventry(value);
-
-         peer->mac   = ventry[2].copy(); 
-         peer->label = ventry[1].copy();
-
-         goto next;
-         }
-      }
-#endif
-
-   peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *UString::str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
-
    if ((check_type & U_CHECK_MAC) != 0 && // not unifi (L2)
        peer->mac == *UString::str_without_mac)
       {
@@ -1349,10 +1331,7 @@ void UNoCatPlugIn::setNewPeer()
       U_ASSERT_EQUALS(peer->mac, USocketExt::getMacAddress(peer->ip))
       }
 
-#ifdef USE_LIBTDB
-next:
-#endif
-   U_INTERNAL_DUMP("peer->label = %V peer->mac", peer->label.rep, peer->mac.rep)
+   U_INTERNAL_DUMP("peer->mac", peer->mac.rep)
 
    UIPAllow* pallow = vLocalNetworkMask->at(U_peer_index_network);
 
@@ -1375,6 +1354,53 @@ next:
       }
 
    U_INTERNAL_DUMP("peer->ifname = %V U_peer_index_device = %u", peer->ifname.rep, U_peer_index_device)
+
+   peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *UString::str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
+
+#ifdef USE_LIBTDB
+   if (pdata)
+      {
+      typedef struct { uint8_t hwaddr[6], ip[4]; } __attribute__((packed)) tdbkey_t;
+
+      tdbkey_t ks;
+      uint32_t t1, t2, t3, t4, t5, t6;
+
+      if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p", peer->ip.data(), "%u.%u.%u.%u", &t1, &t2, &t3, &t4) == 4)
+         {
+         ks.ip[0] = t4;
+         ks.ip[1] = t3;
+         ks.ip[2] = t2;
+         ks.ip[3] = t1;
+
+         if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p,%p,%p", peer->mac.data(), "%x:%x:%x:%x:%x:%x", &t1, &t2, &t3, &t4, &t5, &t6) == 6)
+            {
+            ks.hwaddr[0] = t1;
+            ks.hwaddr[1] = t2;
+            ks.hwaddr[2] = t3;
+            ks.hwaddr[3] = t4;
+            ks.hwaddr[4] = t5;
+            ks.hwaddr[5] = t6;
+
+            UString value = ((UTDB*)pdata)->at((const char*)&ks, 10);
+
+            if (value)
+               {
+            // typedef struct { uint32_t area, leasetime; time_t expiration; } __attribute__((packed)) tdbdata;
+
+               UString area(10U);
+
+               UHexDump::encode(value.data(), sizeof(uint32_t), area);
+
+               U_SRV_LOG("get data from DHCP_DATA_FILE - key: %#.*S data: %V", 10, &ks, area.rep);
+
+               peer->label = area;
+               }
+            }
+         }
+      }
+#endif
+
+   U_INTERNAL_DUMP("peer->label = %V", peer->label.rep)
 
    // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
 
@@ -1956,13 +1982,17 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (tmp)
          {
-         pdata = U_NEW(UTDB());
+         pdata = U_NEW(UTDB);
 
          U_INTERNAL_ASSERT(tmp.isNullTerminated())
 
-         if (((UTDB*)pdata)->open(tmp.data()) == false)
+         if (((UTDB*)pdata)->open(tmp.data()))
             {
-            U_SRV_LOG("WARNING: cannot open DHCP_DATA_FILE %V", tmp.rep);
+            U_SRV_LOG("open DHCP_DATA_FILE %V", tmp.rep);
+            }
+         else
+            {
+            U_SRV_LOG("WARNING: fail to open DHCP_DATA_FILE %V", tmp.rep);
 
             delete (UTDB*)pdata;
                           pdata = 0;

@@ -249,7 +249,10 @@ public:
       // Per ogni riga [ ESCLUSI tipo=non-accettazione o senza tipo es: tipo= (BustaAnomalia)) ] si traccia lo stato...
 
       if (tipology[U_busta_anomalia] ||
-          tipology[U_non_accettazione]) U_RETURN(false);
+          tipology[U_non_accettazione])
+         {
+         U_RETURN(false);
+         }
 
       U_RETURN(true);
       }

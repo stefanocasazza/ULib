@@ -2261,9 +2261,8 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		MAYBE_FLAGS="$MAYBE_FLAGS -Winline -Wno-unused-parameter -Wno-unused-variable"
 	else
 		## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
-		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto"
-		# -Wzero-as-null-pointer-constant"
-		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat"
+		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
+		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat" # -Wzero-as-null-pointer-constant"
 	fi
 
 	AC_CACHE_CHECK([for gcc supported flags], ulib_cv_flags, [

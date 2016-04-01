@@ -218,6 +218,7 @@ extern U_EXPORT const char* u_months_it[12]; /* "gen", "feb", "mar", "apr", "mag
 extern U_EXPORT const char* u_day_name[7];    /* "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" */
 extern U_EXPORT const char* u_month_name[12]; /* "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" */
 
+U_EXPORT void     u_initRandom(void);
 U_EXPORT bool     u_setStartTime(void);
 U_EXPORT int      u_getMonth(const char* buf) __pure;
 U_EXPORT uint32_t u_strftime1(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt);

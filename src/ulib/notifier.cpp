@@ -147,9 +147,9 @@ U_NO_EXPORT void UNotifier::notifyHandlerEvent()
       }
 }
 
-void UNotifier::init(bool bacquisition)
+void UNotifier::init()
 {
-   U_TRACE(0, "UNotifier::init(%b)", bacquisition)
+   U_TRACE(0, "UNotifier::init()")
 
 #ifdef HAVE_EPOLL_WAIT
    int old = epollfd;
@@ -168,8 +168,7 @@ next:
       {
       U_INTERNAL_DUMP("num_connection = %u", num_connection)
 
-      if (bacquisition &&
-          num_connection)
+      if (num_connection)
          {
          U_INTERNAL_ASSERT_POINTER(lo_map_fd)
          U_INTERNAL_ASSERT_POINTER(hi_map_fd)
@@ -184,9 +183,9 @@ next:
 
                (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", old, EPOLL_CTL_DEL, fd, (struct epoll_event*)1);
 
-               struct epoll_event _events = { handler_event->op_mask, { handler_event } };
+               struct epoll_event _events = { handler_event->op_mask | EPOLLEXCLUSIVE | EPOLLROUNDROBIN, { handler_event } };
 
-               (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD | EPOLLEXCLUSIVE | EPOLLROUNDROBIN, fd, &_events);
+               (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, fd, &_events);
                }
             }
 
@@ -199,9 +198,9 @@ next:
 
                (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", old, EPOLL_CTL_DEL, handler_event->fd, (struct epoll_event*)1);
 
-               struct epoll_event _events = { handler_event->op_mask, { handler_event } };
+               struct epoll_event _events = { handler_event->op_mask | EPOLLEXCLUSIVE | EPOLLROUNDROBIN, { handler_event } };
 
-               (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD | EPOLLEXCLUSIVE | EPOLLROUNDROBIN, handler_event->fd, &_events);
+               (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, handler_event->fd, &_events);
                }
             while (hi_map_fd->next());
             }
@@ -228,8 +227,7 @@ next:
       {
       U_INTERNAL_DUMP("num_connection = %u", num_connection)
 
-      if (bacquisition &&
-          num_connection)
+      if (num_connection)
          {
          U_INTERNAL_ASSERT_POINTER(kqevents)
          U_INTERNAL_ASSERT_POINTER(kqrevents)
@@ -790,9 +788,16 @@ void UNotifier::insert(UEventFd* item, int op)
 #elif defined(HAVE_EPOLL_WAIT)
    U_INTERNAL_ASSERT_MAJOR(epollfd, 0)
 
-   struct epoll_event _events = { item->op_mask, { item } };
+# ifdef DEBUG
+   if (op)
+      {
+      U_INTERNAL_ASSERT_EQUALS(item->op_mask & EPOLLRDHUP, 0)
+      }
+# endif
 
-   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD | op, fd, &_events);
+   struct epoll_event _events = { item->op_mask | op, { item } };
+
+   (void) U_SYSCALL(epoll_ctl, "%d,%d,%d,%p", epollfd, EPOLL_CTL_ADD, fd, &_events);
 #elif defined(HAVE_KQUEUE)
    U_INTERNAL_ASSERT_MAJOR(kq, 0)
    U_INTERNAL_ASSERT_MINOR(nkqevents, max_connection)
@@ -996,6 +1001,15 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
       {
       if ((item = lo_map_fd[fd]))
          {
+#     ifdef DEBUG
+         if (UNLIKELY((const void*)item <= U_NULL_POINTER))
+            {
+            U_WARNING("UNotifier::callForAllEntryDynamic(): lo_map_fd[%d] = %d", fd, item);
+
+            return;
+            }
+#     endif
+
          U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
 
          if (item->fd != fd ||

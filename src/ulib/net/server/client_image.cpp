@@ -82,6 +82,8 @@ void UClientImage_Base::logRequest()
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
 #ifndef U_HTTP2_DISABLE
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
    if (U_http_version != '2')
 #endif
    {
@@ -236,6 +238,23 @@ bool UClientImage_Base::check_memory()
 void UClientImage_Base::saveRequestResponse()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::saveRequestResponse()")
+
+#ifndef U_HTTP2_DISABLE
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+   if (U_http_version == '2')
+      {
+      char buffer[2 * 1024 * 1024];
+
+      uint32_t sz = UObject2String(UHTTP2::pConnection->itable, buffer, sizeof(buffer));
+
+      U_INTERNAL_ASSERT_MINOR(sz, sizeof(buffer))
+
+      (void) UFile::writeToTmp(buffer, sz, false, "request.%P", 0);
+
+      return;
+      }
+#endif
 
                                   (void) UFile::writeToTmp(U_STRING_TO_PARAM(*rbuffer), false,  "request.%P", 0);
    if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4,                  false, "response.%P", 0);
@@ -451,6 +470,17 @@ void UClientImage_Base::handlerDelete()
 
 #ifdef U_CLASSIC_SUPPORT
    if (UServer_Base::isClassic()) U_EXIT(0);
+#endif
+
+#ifndef U_HTTP2_DISABLE
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+   if (U_http_version == '2')
+      {
+      UHTTP2::reset(this - UServer_Base::vClientImage, bsocket_open);
+
+      bsocket_open = socket->isOpen();
+      }
 #endif
 
    if (bsocket_open) socket->close();
@@ -758,6 +788,8 @@ void UClientImage_Base::manageReadBufferResize(uint32_t n)
            U_ClientImage_pipeline,     size_request,     rbuffer->size(),     rbuffer->capacity(),     request->size(),     rstart)
 
 #ifndef U_HTTP2_DISABLE
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
    if (U_http_version == '2')
       {
       if (rstart)
@@ -1163,6 +1195,28 @@ dmiss:
    U_INTERNAL_DUMP("wbuffer(%u) = %V", wbuffer->size(), wbuffer->rep)
 
    wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
+
+#ifndef U_HTTP2_DISABLE
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+   if (U_http_version == '2')
+      {
+      U_ASSERT_EQUALS(request->isPrintable(), false)
+
+#  if defined(DEBUG) && defined(U_LOG_ENABLE)
+      U_http_info.uri_len = 0;
+#    ifdef U_ALIAS
+      request_uri->clear();
+#    endif
+#  endif
+
+      U_ClientImage_state = UHTTP2::handlerRequest();
+
+      if (UNLIKELY((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0)) goto error;
+
+      goto processing;
+      }
+#endif
 
    U_ClientImage_state = callerHandlerRead();
 

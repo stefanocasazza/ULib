@@ -880,6 +880,7 @@ private:
 #endif
 
    friend class UHTTP;
+   friend class UHTTP2;
    friend class UFileConfig;
    friend class UMimeHeader;
    friend class UNoCatPlugIn;

@@ -287,8 +287,6 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_HTTP_URI_STREQ(str)                     U_STREQ(u_clientimage_info.http_info.uri,  u_clientimage_info.http_info.uri_len, str)
 #define U_HTTP_HOST_STREQ(str) (U_http_host_len ? U_STREQ(u_clientimage_info.http_info.host, U_http_host_len,                       str) : false)
 
-#define U_HTTP_QUERY_STREQ(str) (u_clientimage_info.http_info.query_len ? U_STREQ(u_clientimage_info.http_info.query, u_clientimage_info.http_info.query_len, str) : false)
-
 #define U_HTTP_REFERER_STREQ(str) (u_clientimage_info.http_info.referer_len ? U_STREQ(u_clientimage_info.http_info.referer, u_clientimage_info.http_info.referer_len, str) : false)
 
 #define U_HTTP_USER_AGENT_STREQ(str) (u_clientimage_info.http_info.user_agent_len \

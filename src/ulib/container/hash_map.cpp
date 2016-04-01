@@ -56,8 +56,8 @@ void UHashMap<void*>::lookup(const UStringRep* keyr)
    U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
 
    const UStringRep* keyn;
+   uint32_t sz1 = keyr->size();
    const char* ptr1  = keyr->data();
-   uint32_t sz2, sz1 = keyr->size();
 
    bool ignore_case = set_index(this, ptr1, sz1);
 
@@ -69,7 +69,7 @@ void UHashMap<void*>::lookup(const UStringRep* keyr)
       {
       U_INTERNAL_ASSERT_POINTER(node->key)
 
-      sz2 = (keyn = node->key)->size();
+      uint32_t sz2 = (keyn = node->key)->size();
 
       U_INTERNAL_DUMP("node->key(%u) = %p %V",  sz2, keyn, keyn)
 
@@ -233,7 +233,7 @@ void UHashMap<void*>::reserve(uint32_t n)
    int sum = 0, max = 0, min = 1024, width;
 #endif
 
-   // inserisco i vecchi elementi
+   // we insert the old elements
 
    UHashMapNode* _next;
 

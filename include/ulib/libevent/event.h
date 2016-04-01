@@ -541,7 +541,7 @@ public:
 
    static bool add(UEvent_Base& e, const UTimeVal& to, int priority = DEFAULT_PRIORITY)
       {
-      U_TRACE(1, "UDispatcher::add(%p,%O,%d)", &e, U_OBJECT_TO_TRACE(to), priority)
+      U_TRACE(1, "UDispatcher::add(%p,%p,%d)", &e, &to, priority)
 
    // if (U_SYSCALL(event_base_set, "%p,%p", u_ev_base, &e)) U_RETURN(false);
 
@@ -588,7 +588,7 @@ public:
 
    template <typename F> static bool add_once(int fd, short _ev, F& handler, const UTimeVal& to)
       {
-      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%O)", fd, _ev, &handler, U_OBJECT_TO_TRACE(to))
+      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%p)", fd, _ev, &handler, &to)
 
       if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, _ev, UDispatcher::wrapper<F>, (void*)&handler, (timeval*)&to)) U_RETURN(false);
 
@@ -629,7 +629,7 @@ public:
 
    static bool add_once(int fd, short _ev, ccallback_type handler, void* arg, const UTimeVal& to)
       {
-      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%p,%O)", fd, _ev, handler, arg, U_OBJECT_TO_TRACE(to))
+      U_TRACE(1, "UDispatcher::add_once(%d,%hd,%p,%p,%p)", fd, _ev, handler, arg, &to)
 
       if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", fd, _ev, handler, arg, (timeval*)&to)) U_RETURN(false);
 
@@ -647,7 +647,7 @@ public:
 
    template <typename F> static bool add_once_timer(F& handler, const UTimeVal& to)
       {
-      U_TRACE(1, "UDispatcher::add_once_timer(%p,%O)", &handler, U_OBJECT_TO_TRACE(to))
+      U_TRACE(1, "UDispatcher::add_once_timer(%p,%p)", &handler, &to)
 
       if (U_SYSCALL(event_once,"%d,%hd,%p,%p,%p",-1,EV_TIMEOUT,UDispatcher::wrapper<F>,(void*)&handler,(timeval*)&to)) U_RETURN(false);
 
@@ -666,7 +666,7 @@ public:
 
    static bool add_once_timer(ccallback_type handler, void* arg, const UTimeVal& to)
       {
-      U_TRACE(1, "UDispatcher::add_once_timer(%p,%p,%O)", handler, arg, U_OBJECT_TO_TRACE(to))
+      U_TRACE(1, "UDispatcher::add_once_timer(%p,%p,%p)", handler, arg, &to)
 
       if (U_SYSCALL(event_once, "%d,%hd,%p,%p,%p", -1, EV_TIMEOUT, handler, arg, (timeval*)&to)) U_RETURN(false);
 

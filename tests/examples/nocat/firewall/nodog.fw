@@ -432,6 +432,8 @@ initialize_fw() {
 	done
 	# --------------------------------------------------------------------------
 
+	[ -S /tmp/evfwdsock ] && /usr/sbin/fwevhandler i
+
 	# Bandwidth limits
 	# --------------------------------------------------------------------------
 	[ $EnableBandwidthLimits -gt 0 ] || return
@@ -695,6 +697,8 @@ access_fw() {
 			fi
 		fi
 	fi
+
+	[ -S /tmp/evfwdsock ] && /usr/sbin/fwevhandler "$action" "$mac" "$ip"
 }
 
 access_fw_check() {

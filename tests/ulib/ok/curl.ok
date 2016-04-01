@@ -43,19 +43,11 @@ URL: ftp://ftp.at.debian.org/debian/README
 See http://www.debian.org/ for information about Debian GNU/Linux.
 Four Debian releases are available on the main site:
 
-Debian 6.0.10, or squeeze.  Access this release through dists/oldoldstable
-Debian 6.0.10 was released Saturday, 19th July 2014. Please note that
-the 6.0 distribution is no longer receiving security support. If you
-are using the amd64 or i386 architecture and not able to upgrade to the
-current stable release, you may wish to investigate the "squeeze-lts"
-distribution. More information is available at:
-https://wiki.debian.org/LTS/ 
+Debian 7.9, or wheezy.  Access this release through dists/oldstable
+Debian 7.9 was released Saturday, 5th September 2015.
 
-Debian 7.8, or wheezy.  Access this release through dists/oldstable
-Debian 7.8 was released Saturday, 10th January 2015.
-
-Debian 8.0, or jessie.  Access this release through dists/stable
-Debian 8.0 was released Saturday, 25th April 2015.
+Debian 8.3, or jessie.  Access this release through dists/stable
+Debian 8.3 was released Saturday, 23rd January 2016.
 
 Testing, or stretch.  Access this release through dists/testing.  The
 current tested development snapshot is named stretch.  Packages which
@@ -113,7 +105,7 @@ the <a href="mailto:webmaster@unirel.com">webmaster</a>.
 <address>
   <a href="/">www.unirel.com</a><br />
   
-  <span>Thu May  7 13:03:36 2015<br />
+  <span>Wed Mar  2 18:45:49 2016<br />
   Apache/2.0.49 (Linux/SuSE)</span>
 </address>
 </body>

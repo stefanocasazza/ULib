@@ -32,7 +32,7 @@ UEventTime::UEventTime(long sec, long micro_sec) : UTimeVal(sec, micro_sec)
    xtime.tv_usec = 0L;
 
 #ifdef USE_LIBEVENT
-   if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_init);
+   if (u_ev_base == 0) u_ev_base = (struct event_base*) U_SYSCALL_NO_PARAM(event_base_new);
 
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
 
