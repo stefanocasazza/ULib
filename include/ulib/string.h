@@ -71,6 +71,7 @@ class Url;
 class UCDB;
 class URDB;
 class UTDB;
+class UFile;
 class UDES3;
 class UHTTP;
 class UHTTP2;
@@ -402,7 +403,7 @@ public:
          {
          string_rep_share = this;
 
-         U_DUMP_OBJECT("shared with this", checkIfReferences)
+         U_DUMP_OBJECT_WITH_CHECK("shared with this", checkIfReferences)
 
          U_INTERNAL_ASSERT_MSG(false, "CANNOT ADJUST SIZE OF A REFERENCED STRING...")
          }
@@ -426,7 +427,7 @@ public:
          {
          string_rep_share = this;
 
-         U_DUMP_OBJECT("shared with this", checkIfReferences)
+         U_DUMP_OBJECT_WITH_CHECK("shared with this", checkIfReferences)
 
          U_INTERNAL_ASSERT_MSG(false, "CANNOT ADJUST SIZE OF A REFERENCED STRING...")
          }
@@ -724,24 +725,6 @@ public:
    friend ostream& operator<<(ostream& os, const UStringRep& r) { r.write(os); return os; }
 #endif
 
-   // JSON
-
-   void fromValue(UStringRep* r)
-      {
-      U_TRACE(0, "UStringRep::fromValue(%V)", r)
-
-      U_INTERNAL_DUMP("r = %p r->parent = %p r->references = %d r->child = %d - %V", r, r->parent, r->references, r->child, r)
-
-      U_INTERNAL_ASSERT(r->_capacity)
-      U_INTERNAL_ASSERT_EQUALS(memcmp(this, string_rep_null, sizeof(UStringRep)), 0)
-
-      u__memcpy(this, r, sizeof(UStringRep), __PRETTY_FUNCTION__);
-
-      r->_capacity = 0; // NB: no room for data, constant string...
-
-      U_INTERNAL_ASSERT(invariant())
-      }
-
 protected:
    uint32_t _length,
             _capacity,  // [0 const | -1 mmap]...
@@ -762,6 +745,8 @@ private:
     UStringRep()
       {
       U_TRACE_NO_PARAM(0, "UStringRep::UStringRep()")
+
+      U_INTERNAL_DUMP("this = %p", this)
 
       u__memcpy(this, string_rep_null, sizeof(UStringRep), __PRETTY_FUNCTION__);
       }
@@ -1076,6 +1061,7 @@ protected:
 
                       friend void ULib_init();
 
+                      friend class UFile;
                       friend class UHTTP2;
                       friend class UValue;
                       friend class UStringExt;
@@ -1128,9 +1114,8 @@ protected:
 
       U_INTERNAL_ASSERT_DIFFERS(rep,r)
 
-      rep->release();
-
-      rep = r;
+      rep->release(); // 1. release existing resource
+      rep = r;        // 2. bind copy to self
 
       U_CHECK_MEMORY_OBJECT(rep)
       }
@@ -1139,8 +1124,7 @@ protected:
       {
       U_TRACE(0, "UString::_copy(%p)", r)
 
-      rep = r;
-
+      rep = r;  // bind copy to self
       rep->hold();
 
       U_CHECK_MEMORY_OBJECT(rep)
@@ -1151,13 +1135,11 @@ public:
       {
       U_TRACE(0, "UString::_assign(%p)", r)
 
-      // NB: works also int the case of (rep == r)...
+      // NB: it works also in the case of (rep == r)...
 
-      r->hold();        // 1. take a copy of new resource
-
-      rep->release();   // 2. release existing resource
-
-      rep = r;          // 3. bind copy to self
+        r->hold();    // 1. take a copy of new resource
+      rep->release(); // 2. release existing resource
+      rep = r;        // 3. bind copy to self
 
       U_CHECK_MEMORY_OBJECT(rep)
       }
@@ -1756,8 +1738,9 @@ public:
    bool   isEndHeader(uint32_t pos = 0) const                   { return rep->isEndHeader(pos); }
    bool findEndHeader(uint32_t pos = 0) const                   { return rep->findEndHeader(pos); }
 
-   char  last_char() const             { return rep->last_char(); }
-   char  first_char() const            { return rep->first_char(); }
+   char  last_char() const { return rep->last_char(); }
+   char first_char() const { return rep->first_char(); }
+
    char  c_char(uint32_t pos) const    { return rep->at(pos); }
    char* c_pointer(uint32_t pos) const { return (char*)rep->c_pointer(pos); }
 
@@ -2032,6 +2015,8 @@ public:
 private:
    char* __append(uint32_t n);
    char* __replace(uint32_t pos, uint32_t n1, uint32_t n2);
+
+   template <class T> friend class UJsonTypeHandler;
 };
 
 // operator ==

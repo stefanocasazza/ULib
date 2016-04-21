@@ -49,7 +49,7 @@ protected:
 
       if (U_ClientImage_state == U_PLUGIN_HANDLER_GO_ON)
          {
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       if (UClientImage_Base::logbuf) 
          {
          *UClientImage_Base::request = *UClientImage_Base::rbuffer;

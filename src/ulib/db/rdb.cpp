@@ -617,7 +617,7 @@ bool URDB::compactionJournal()
       U_DEBUG("URDB::compactionJournal() - nrecords (%u => %u) capacity (%.2fM (%u bytes) => %.2fM (%u bytes)) nerror=%u",
                         size(), rdb.size(),
                         (double)sz1 / (1024.0 * 1024.0), sz1,
-                        (double)sz2 / (1024.0 * 1024.0), sz2, nerror);
+                        (double)sz2 / (1024.0 * 1024.0), sz2, nerror)
 
       nerror = 0;
 #  endif
@@ -2098,7 +2098,7 @@ void URDBObjectHandler<UDataStorage*>::close()
          /*
          UString x = URDB::print();
 
-         (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), false, "%.*s.end", U_FILE_TO_TRACE(*this));
+         (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), O_RDWR | O_TRUNC, "%.*s.end", U_FILE_TO_TRACE(*this));
          */
 
          (void) URDB::closeReorganize();

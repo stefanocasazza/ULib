@@ -1,6 +1,5 @@
 // test_file_config.cpp
 
-#include <ulib/json/value.h>
 #include <ulib/file_config.h>
 #include <ulib/debug/crono.h>
 
@@ -171,39 +170,6 @@ int U_EXPORT main (int argc, char* argv[])
 
    y.destroy();
    y.table.assign(x);
-
-   x.clear();
-
-   UString tmp = U_STRING_FROM_CONSTANT("{ \"key1\" : \"riga 1\", \"key2\" : \"riga 2\", \"key3\" : \"riga 3\", \"key4\" : \"riga 4\" }");
-
-   bool result = JSON_parse(tmp, x);
-
-   U_INTERNAL_ASSERT( result )
-
-   tmp    = x["key1"];
-   result = ( tmp == U_STRING_FROM_CONSTANT("riga 1") );
-
-   U_INTERNAL_ASSERT( result )
-
-   tmp    = x["key2"];
-   result = ( tmp == U_STRING_FROM_CONSTANT("riga 2") );
-
-   U_INTERNAL_ASSERT( result )
-
-   tmp    = x["key3"];
-   result = ( tmp == U_STRING_FROM_CONSTANT("riga 3") );
-
-   U_INTERNAL_ASSERT( result )
-
-   tmp    = x["key4"];
-   result = ( tmp == U_STRING_FROM_CONSTANT("riga 4") );
-
-   U_INTERNAL_ASSERT( result )
-
-   UValue json(OBJECT_VALUE);
-   tmp = JSON_stringify(json, x);
-
-   U_ASSERT( tmp.size() == U_CONSTANT_SIZE("{\"key4\":\"riga 4\",\"key3\":\"riga 3\",\"key1\":\"riga 1\",\"key2\":\"riga 2\"}") )
 
    x.clear();
 

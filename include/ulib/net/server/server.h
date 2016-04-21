@@ -86,7 +86,6 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 #  define U_SRV_LOG(          fmt,args...) {}
 #  define U_SRV_LOG_WITH_ADDR(fmt,args...) {}
 #else
-#  define U_LOG_ENABLE
 #  define U_RESET_MODULE_NAME              { if (UServer_Base::isLog())   (void) strcpy(UServer_Base::mod_name[0], UServer_Base::mod_name[1]); }
 #  define   U_SET_MODULE_NAME(name)        { if (UServer_Base::isLog()) { (void) strcpy(UServer_Base::mod_name[1], UServer_Base::mod_name[0]); \
                                                                           (void) strcpy(UServer_Base::mod_name[0], "["#name"] "); } }
@@ -618,7 +617,7 @@ protected:
 
    // VARIE
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    static uint32_t getNumConnection(char* buffer);
 #endif
 

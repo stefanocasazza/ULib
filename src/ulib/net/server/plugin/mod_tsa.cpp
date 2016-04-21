@@ -102,7 +102,7 @@ int UTsaPlugIn::handlerRequest()
          UHTTP::setInternalError();
          }
 
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       UServer_Base::logCommandMsgError(command->getCommand(), true);
 #  endif
 

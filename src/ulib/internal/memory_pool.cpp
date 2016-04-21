@@ -411,7 +411,7 @@ void UMemoryPool::allocateMemoryBlocks(const char* ptr)
 
       UFile::nr_hugepages = UFile::setSysParam("/proc/sys/vm/nr_hugepages", 64);
 
-      U_DEBUG("Creation of 64 huge pages %s", UFile::nr_hugepages ? "success" : "FAILED");
+      U_DEBUG("Creation of 64 huge pages %s", UFile::nr_hugepages ? "success" : "FAILED")
       }
 #endif
 

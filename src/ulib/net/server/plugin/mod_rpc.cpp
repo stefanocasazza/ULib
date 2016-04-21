@@ -92,7 +92,7 @@ int URpcPlugIn::handlerRequest()
 
       U_SRV_LOG_WITH_ADDR("method %V process %s for", method.rep, (bSendingFault ? "failed" : "passed"));
 
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       if (UServer_Base::isLog()) (void) UClientImage_Base::request_uri->assign(method);
 #  endif
 

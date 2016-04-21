@@ -141,6 +141,8 @@ start() { { log starting
 		test -f $stopfile && return
 		log "waiting for conf file (`cat $portalfile` `cat $keyfile`) ..." ; done
 	
+	rm -f /usr/lib/nodog/www/stack.userver_tcp.* 
+
 	## ... now it's time to start server
 	#
 	#export UTRACE="-0 10M 0"

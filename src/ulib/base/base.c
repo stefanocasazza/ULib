@@ -516,7 +516,7 @@ bool u_setStartTime(void)
 #  endif
 
       U_DEBUG("System date update: u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %d tzname[2] = { %s, %s }",
-                                   u_now_adjust,     timezone,      daylight,     u_daylight,     tzname[0], tzname[1]);
+                                   u_now_adjust,     timezone,      daylight,     u_daylight,     tzname[0], tzname[1])
 
       return true;
       }
@@ -745,8 +745,8 @@ uint32_t u_strftime1(char* restrict s, uint32_t maxsize, const char* restrict fo
    };
 
    char ch;                      /* character from format */
-   int i, n, val;                /* handy integer (short term usage) */
    uint32_t count = 0;           /* return value accumulator */
+   int i, n, val, len;           /* handy integer (short term usage) */
    const char* restrict fmark;   /* for remembering a place in format */
 
    U_INTERNAL_TRACE("u_strftime1(%u,%s)", maxsize, format)
@@ -898,7 +898,9 @@ case_Y: /* %Y The full year, formatted with four digits to include the century *
 
    /* if (count >= (maxsize - 4)) return 0; */
 
-      (void) sprintf(s+count, "%.4d", 1900 + u_strftime_tm.tm_year);
+      len = sprintf(s+count, "%.4d", 1900 + u_strftime_tm.tm_year);
+
+      U_INTERNAL_ASSERT_EQUALS(len, 4)
 
       count += 4;
 
@@ -936,9 +938,11 @@ case_c: /* %c A string representing the complete date and time, in the form Mon 
                               s[count++] = ' ';
       for (i = 0; i < 3; ++i) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
 
-      (void) sprintf(&s[count], " %.2d %2.2d:%2.2d:%2.2d %.4d", u_strftime_tm.tm_mday, u_strftime_tm.tm_hour,
-                                                                u_strftime_tm.tm_min,  u_strftime_tm.tm_sec,
-                                                                1900 + u_strftime_tm.tm_year);
+      len = sprintf(&s[count], " %.2d %2.2d:%2.2d:%2.2d %.4d", u_strftime_tm.tm_mday, u_strftime_tm.tm_hour,
+                                                               u_strftime_tm.tm_min,  u_strftime_tm.tm_sec,
+                                                               1900 + u_strftime_tm.tm_year);
+
+      U_INTERNAL_ASSERT_EQUALS(len, 17)
 
       count += 17;
 
@@ -974,7 +978,9 @@ case_j: /* %j The count of days in the year, formatted with three digits (from 1
 
    /* if (count >= (maxsize - 3)) return 0; */
 
-      (void) sprintf(s+count, "%.3d", u_strftime_tm.tm_yday+1);
+      len = sprintf(s+count, "%.3d", u_strftime_tm.tm_yday+1);
+
+      U_INTERNAL_ASSERT_EQUALS(len, 3)
 
       count += 3;
 
@@ -1020,7 +1026,9 @@ case_x: /* %x A string representing the complete date, in a format like Mon Apr 
                               s[count++] = ' ';
       for (i = 0; i < 3; i++) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
 
-      (void) sprintf(&s[count], " %.2d %.4d", u_strftime_tm.tm_mday, 1900 + u_strftime_tm.tm_year);
+      len = sprintf(&s[count], " %.2d %.4d", u_strftime_tm.tm_mday, 1900 + u_strftime_tm.tm_year);
+
+      U_INTERNAL_ASSERT_EQUALS(len, 8)
 
       count += 8;
 
@@ -1257,10 +1265,8 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
 
    if (abrt)
       {
-#ifdef DEBUG
-      /* NB: registra l'errore sul file di trace, check stderr per evitare duplicazione messaggio a video */
-
-      if (u_trace_fd > STDERR_FILENO)
+#  ifdef DEBUG
+      if (u_trace_fd > STDERR_FILENO) /* NB: registra l'errore sul file di trace, check stderr per evitare duplicazione messaggio a video */
          {
          struct iovec iov[1] = { { (caddr_t)u_internal_buf, bytes_written } };
 
@@ -1268,7 +1274,7 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
          }
 
       if (u_askForContinue() == false)
-#endif
+#  endif
          {
          u_flag_exit = -2; // abort...
 
@@ -1762,16 +1768,16 @@ case_float:
          {
          long double ldbl = VA_ARG(long double);
 
-         (void) sprintf(bp, (const char* restrict)fmt_float, width, prec, ldbl);
+         len = sprintf(bp, (const char* restrict)fmt_float, width, prec, ldbl);
          }
       else
          {
          double dbl = VA_ARG(double);
 
-         (void) sprintf(bp, (const char* restrict)fmt_float, width, prec, dbl);
+         len = sprintf(bp, (const char* restrict)fmt_float, width, prec, dbl);
          }
 
-      len = u__strlen(bp, __PRETTY_FUNCTION__);
+      U_INTERNAL_ASSERT_EQUALS(len, (int)strlen(bp))
 
       bp  += len;
       ret += len;
@@ -2034,44 +2040,28 @@ case_D: /* extension: print date and time in various format */
          if ((flags & ALT) != 0 &&
              t > U_ONE_DAY_IN_SECOND)
             {
-            char tmp[16];
-            uint32_t len1;
+            bp  += len;
+            ret += len;
 
-            (void) sprintf(tmp, " +%ld days", (long)t / U_ONE_DAY_IN_SECOND);
+            len = sprintf(bp, " +%ld days", (long)t / U_ONE_DAY_IN_SECOND);
 
-            len1 = u__strlen(tmp, __PRETTY_FUNCTION__);
-
-            u__memcpy(bp+len, tmp, len1, __PRETTY_FUNCTION__);
-
-            len += len1;
+            U_INTERNAL_ASSERT_EQUALS(len, (int)strlen(bp))
             }
          }
       else if (width == 4) /* _millisec */
          {
-         long ms;
-         char tmp[16];
-         uint32_t len1;
+         static long old_ms;
+                long     ms = u_now->tv_usec / 1000L;
 
-#     ifdef ENABLE_THREAD
-         if (u_pthread_time)
-            {
-            struct timeval tval;
+         if (old_ms >= ms) ms = (old_ms >= 999 ? 0 : old_ms+1);
+             old_ms  = ms;
 
-            (void) gettimeofday(&tval, 0);
+         bp  += len;
+         ret += len;
 
-            ms = tval.tv_usec / 1000L;
-            }
-         else
-#     endif
-         ms = u_now->tv_usec / 1000L;
+         len = sprintf(bp, "_%03ld", ms);
 
-         (void) sprintf(tmp, "_%03ld", ms);
-
-         len1 = u__strlen(tmp, __PRETTY_FUNCTION__);
-
-         u__memcpy(bp+len, tmp, len1, __PRETTY_FUNCTION__);
-
-         len += len1;
+         U_INTERNAL_ASSERT_EQUALS(len, (int)strlen(bp))
          }
 
       bp  += len;
@@ -2714,9 +2704,7 @@ void u__printf(int fd, const char* format, ...)
    if (u_flag_exit)
       {
 #  ifdef DEBUG
-      /* NB: registra l'errore sul file di trace, check stderr per evitare duplicazione messaggio a video */
-
-      if (u_trace_fd > STDERR_FILENO)
+      if (u_trace_fd > STDERR_FILENO) /* NB: registra l'errore sul file di trace, check stderr per evitare duplicazione messaggio a video */
          {
          /* check if warning due to syscall */
 

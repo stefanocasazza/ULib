@@ -163,7 +163,9 @@ read:
 
    if (value == (ssize_t)ncount)
       {
-      U_DEBUG("UServices::read(%u) ran out of buffer space(%u)", count, ncount);
+#  ifndef U_SERVER_CAPTIVE_PORTAL
+      U_DEBUG("UServices::read(%u) ran out of buffer space(%u)", count, ncount)
+#  endif
 
       buffer.size_adjust_force(start + byte_read); // NB: we force because string can be referenced...
 

@@ -435,7 +435,7 @@ int UFCGIPlugIn::handlerRequest()
             break;
 
             case FCGI_STDERR:
-               (void) UFile::writeToTmp(connection->response.c_pointer(pos), clength, true, "server_plugin_fcgi.err", 0);
+               (void) UFile::writeToTmp(connection->response.c_pointer(pos), clength, O_RDWR | O_APPEND, "server_plugin_fcgi.err", 0);
             break;
 
             case FCGI_END_REQUEST:

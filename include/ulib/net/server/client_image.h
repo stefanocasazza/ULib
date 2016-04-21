@@ -371,6 +371,12 @@ protected:
    uucflag flag;
    time_t last_event;
 
+#ifndef U_LOG_DISABLE
+   static int log_request_partial;
+
+   void logRequest();
+#endif
+
    void   set();
    void reset()
       {
@@ -430,11 +436,6 @@ protected:
       U_RETURN(U_SINGLE_READ);
       }
 
-   static void setSendfile(int _sfd, uint32_t _start, uint32_t _count);
-
-#ifndef U_LOG_DISABLE
-   void logRequest();
-#endif
    bool writeResponse();
    bool logCertificate(); // append on log the peer certicate of client ("issuer","serial")
    bool askForClientCertificate();
@@ -442,17 +443,17 @@ protected:
    static struct iovec* piov;
    static int csfd, idx, iovcnt;
    static UTimeVal* chronometer;
-   static bool log_request_partial;
    static long time_between_request, time_run;
    static uint32_t ncount, nrequest, resto, uri_offset;
+
+   static void   endRequest();
+   static bool startRequest();
 
    static void resetReadBuffer();
    static void resetWriteBuffer();
    static void saveRequestResponse();
    static void manageReadBufferResize(uint32_t n);
-
-   static void   endRequest();
-   static bool startRequest();
+   static void setSendfile(int _sfd, uint32_t _start, uint32_t _count);
 
    static void do_nothing() {}
 

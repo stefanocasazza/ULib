@@ -217,7 +217,7 @@ public:
 
       if (UServer_Base::stats_bytes)
          {
-         U_DEBUG("%v", UServer_Base::getStats().rep);
+         U_DEBUG("%v", UServer_Base::getStats().rep)
 
          UServer_Base::stats_bytes = 0;
          }
@@ -273,11 +273,11 @@ public:
 
       // there are idle connection... (timeout)
 
-#  if defined(U_LOG_ENABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
+#  if !defined(U_LOG_DISABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
       UServer_Base::called_from_handlerTime = true;
 #  endif
 
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       if (UServer_Base::isLog())
          {
 #     ifdef DEBUG
@@ -298,7 +298,7 @@ public:
 
       if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
 
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       if (U_SRV_CNT_PARALLELIZATION)
 #  endif
       UServer_Base::removeZombies();
@@ -515,7 +515,7 @@ public:
 
       (void) UServer_Base::db_throttling->putDataStorage();
 
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       if (UServer_Base::isLog())
          {
          if (UServer_Base::throttling_rec->num_sending)
@@ -909,7 +909,7 @@ public:
 
          (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
 
-#     if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+#     if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
          if (UServer_Base::log)                         UServer_Base::log->checkForLogRotateDataToWrite();
          if (UServer_Base::apache_like_log) UServer_Base::apache_like_log->checkForLogRotateDataToWrite();
 #     endif
@@ -924,7 +924,7 @@ public:
 
             if (UServer_Base::update_date)
                {
-#           if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+#           if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
                (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
 #           endif
 
@@ -941,7 +941,7 @@ public:
                   if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, "%a, %d %b %Y %T", u_timeval.tv_sec);                // GMT can't change...
                   }
 
-#           if defined(U_LOG_ENABLE) && defined(USE_LIBZ)
+#           if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
                (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
 #           endif
                }
@@ -1229,7 +1229,7 @@ void UServer_Base::closeLog()
 {
    U_TRACE_NO_PARAM(0, "UServer_Base::closeLog()")
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (log &&
        log->isOpen())
       {
@@ -1537,7 +1537,7 @@ void UServer_Base::loadConfigParam()
    // For the change of user to work, it's necessary to execute the server with root privileges.
    // If it's started by a user that that doesn't have root privileges, this step will be omitted
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    bool bmsg = false;
 #endif
 
@@ -1572,7 +1572,7 @@ void UServer_Base::loadConfigParam()
 #        endif
             }
          }
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       else bmsg = true;
 #  endif
       }
@@ -1589,14 +1589,20 @@ void UServer_Base::loadConfigParam()
 
       if (old_pid > 0)
          {
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          if (isLog()) ULog::log("Trying to kill another instance of userver that is running with pid %d", old_pid);
 #     endif
+
+         U_INTERNAL_ASSERT_DIFFERS(old_pid, u_pid)
 
          UProcess::kill(old_pid, SIGTERM); // SIGTERM is sent to every process in the process group of the calling process...
          }
 
-      (void) UFile::writeTo(x, UString(u_pid_str, u_pid_str_len));
+      UString pid_str = UString(u_pid_str, u_pid_str_len);
+
+      (void) UFile::writeTo(x, pid_str);
+
+      U_DEBUG("We have %s the PID_FILE %V with content: %V", (old_pid > 0 ? "updated" : "created"), x.rep, pid_str.rep);
       }
 
    // DOCUMENT_ROOT: The directory out of which we will serve your documents
@@ -1606,7 +1612,7 @@ void UServer_Base::loadConfigParam()
       U_ERROR("Setting DOCUMENT ROOT %V failed", document_root->rep);
       }
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
 
    if (x)
@@ -1660,7 +1666,7 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 
    if (vplugin_name->find(x) != U_NOT_FOUND) // NB: we load only the plugin that we want from configuration (PLUGIN var)...
       {
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       const char* fmt = "WARNING: Link phase of static plugin %s failed\n";
 #  endif
 
@@ -1718,13 +1724,13 @@ next:
          vplugin->push_back(_plugin);
          vplugin_name_static->push_back(x);
 
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          fmt = "Link phase of static plugin %s success";
 #     endif
          }
 #endif
 
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       if (isLog()) ULog::log(fmt, name);
 #  endif
       }
@@ -1787,7 +1793,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
       _plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(_name));
 
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       if (isLog())
          {
          (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), "[%v] ", item.rep);
@@ -1827,13 +1833,13 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
             _plugin = vplugin->at(i);
 
-#        ifdef U_LOG_ENABLE
+#        ifndef U_LOG_DISABLE
             if (isLog()) (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), "[%v] ", item.rep);
 #        endif
 
             result = _plugin->handlerConfig(*cfg);
 
-#        ifdef U_LOG_ENABLE
+#        ifndef U_LOG_DISABLE
             if (isLog())
                {
                if ((result & (U_PLUGIN_HANDLER_ERROR | U_PLUGIN_HANDLER_PROCESSED)) != 0)
@@ -2283,7 +2289,7 @@ void UServer_Base::init()
 
    proc->setProcessGroup();
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    uint32_t log_rotate_size = 0;
 
 # ifdef USE_LIBZ
@@ -2323,7 +2329,7 @@ void UServer_Base::init()
 
    U_INTERNAL_DUMP("bpthread_time = %b", bpthread_time)
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (isLog() == false)
 #endif
    ULog::initDate();
@@ -2379,7 +2385,7 @@ void UServer_Base::init()
       }
 #endif
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (isLog())
       {
       // NB: if log is mapped must be always shared because the possibility of fork() by parallelization...
@@ -2392,7 +2398,7 @@ void UServer_Base::init()
 
    last_event = u_now->tv_sec;
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    U_INTERNAL_ASSERT_EQUALS(U_SRV_TOT_CONNECTION, 0)
 #endif
 
@@ -2544,7 +2550,7 @@ U_NO_EXPORT void UServer_Base::logMemUsage(const char* signame)
 
    U_INTERNAL_ASSERT(isLog())
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    unsigned long vsz, rss;
 
    u_get_memusage(&vsz, &rss);
@@ -2630,7 +2636,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    // NB: for logrotate...
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (isLog())
       {
       logMemUsage("SIGHUP");
@@ -2645,7 +2651,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    sendSignalToAllChildren(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM);
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    U_SRV_TOT_CONNECTION = 0;
 #endif
 
@@ -2729,7 +2735,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
          U_INTERNAL_ASSERT_MINOR(len, sizeof(buffer))
 
-         (void) UFile::writeToTmp(buffer, len, false, "%N.memusage.%P", 0);
+         (void) UFile::writeToTmp(buffer, len, O_RDWR | O_TRUNC, "%N.memusage.%P", 0);
          }
 #  endif
 
@@ -2742,7 +2748,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 #       endif
 #     endif
 
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          if (isLog()) logMemUsage("SIGTERM");
 #     endif
 
@@ -2841,7 +2847,7 @@ loop:
             if (UNotifier::num_connection < num_client_threshold)
                {
                U_DEBUG("It has returned below the client threshold(%u): preallocation(%u) num_connection(%u)",
-                           num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
+                           num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection)
 
                goto end;
                }
@@ -2863,7 +2869,7 @@ loop:
 
          if ((u_now->tv_sec - CLIENT_INDEX->last_event) >= ptime->UTimeVal::tv_sec)
             {
-#        if defined(U_LOG_ENABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
+#        if !defined(U_LOG_DISABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
             called_from_handlerTime = false;
 #        endif
 
@@ -2900,7 +2906,7 @@ try_next:
 
             num_client_threshold = (UNotifier::num_connection * 2) / 3;
 
-            U_DEBUG("Out of space on client image preallocation(%u): num_connection(%u)", UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
+            U_DEBUG("Out of space on client image preallocation(%u): num_connection(%u)", UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection)
             }
          }
 
@@ -2924,7 +2930,8 @@ try_accept:
          ++wakeup_for_nothing;
          }
 #  endif
-#  ifdef U_LOG_ENABLE
+
+#  ifndef U_LOG_DISABLE
       if (isLog()                   &&
           flag_loop                 && // NB: we check to avoid SIGTERM event...
           CSOCKET->iState != -EINTR && // NB: we check to avoid log spurious EINTR on accept() by any timer...
@@ -3023,7 +3030,7 @@ try_accept:
       }
 #endif
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    U_SRV_TOT_CONNECTION++;
 
    U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", U_SRV_TOT_CONNECTION)
@@ -3078,7 +3085,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
             goto retry;
             }
 
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          if (isLog()) ULog::log("Waiting for connection on port %u", port);
 #     endif
 
@@ -3102,7 +3109,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
       }
 #endif
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (isLog())
       {
 #  ifdef USE_LIBSSL
@@ -3141,7 +3148,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    else
 #endif
    {
-#ifdef DEBUG
+#if defined(DEBUG) && !defined(U_SERVER_CAPTIVE_PORTAL)
    uint32_t len = 0;
    int cpu = U_SYSCALL_NO_PARAM(sched_getcpu), scpu = -1;
 
@@ -3158,7 +3165,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
 
    U_INTERNAL_DUMP("USocket::incoming_cpu = %d USocket::bincoming_cpu = %b sched cpu = %d socket cpu = %d", USocket::incoming_cpu, USocket::bincoming_cpu, cpu, scpu)
 
-   if (len) U_DEBUG("UServer_Base::handlerRead(): CPU: %d sched(%d) socket(%d)%.*s", USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
+   if (len) U_DEBUG("UServer_Base::handlerRead(): CPU: %d sched(%d) socket(%d)%.*s", USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]")
 #endif
 
    if (CLIENT_IMAGE_HANDLER_READ == false) goto next;
@@ -3198,7 +3205,7 @@ next:
       CLIENT_INDEX = vClientImage;
 
       U_DEBUG("It has passed the client threshold(%u): preallocation(%u) num_connection(%u)",
-                  num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection);
+                  num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection)
       }
 
    goto loop;
@@ -3224,7 +3231,7 @@ end:
 #undef CLIENT_ADDRESS_LEN
 #undef CLIENT_IMAGE_HANDLER_READ
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
 uint32_t UServer_Base::getNumConnection(char* ptr)
 {
    U_TRACE(0, "UServer_Base::getNumConnection(%p)", ptr)
@@ -3269,7 +3276,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
 
    if (((UClientImage_Base*)cimg)->handlerTimeout() == U_NOTIFIER_DELETE)
       {
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       if (isLog())
          {
          if (called_from_handlerTime)
@@ -3291,7 +3298,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
                  "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
                  UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
                                                ((UClientImage_Base*)cimg)->UEventFd::fd,
-                                               ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection);
+                                               ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
          }
       else
          {
@@ -3299,7 +3306,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
                  "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
                  UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event,
                                                            ((UClientImage_Base*)cimg)->UEventFd::fd,
-                                                           ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection);
+                                                           ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
          }
 #  endif
 
@@ -3389,7 +3396,7 @@ void UServer_Base::runLoop(const char* user)
       if (handler_inotify) UNotifier::insert(handler_inotify, EPOLLEXCLUSIVE | EPOLLROUNDROBIN); // NB: we ask to be notified for change of file system (=> inotify)
       }
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (isLog()) ULog::log("Waiting for connection on port %u", port);
 #endif
 
@@ -3666,7 +3673,7 @@ void UServer_Base::run()
 
          if (USemaphore::checkForDeadLock(to_sleep) == false) to_sleep.nanosleep();
 
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          if (isLog())
             {
             char buffer[128];
@@ -3691,7 +3698,7 @@ stop:
       (void) proc->waitAll(2);
       }
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (isLog() &&
        flag_sigterm)
       {
@@ -3716,7 +3723,7 @@ void UServer_Base::removeZombies()
 
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
 
-#ifndef U_LOG_ENABLE
+#ifdef U_LOG_DISABLE
          (void) UProcess::removeZombies();
 #else
    uint32_t n = UProcess::removeZombies();
@@ -3738,7 +3745,7 @@ pid_t UServer_Base::startNewChild()
       {
       pid_t pid = p.pid();
 
-#  ifndef U_LOG_ENABLE
+#  ifdef U_LOG_DISABLE
             (void) UProcess::removeZombies();
 #  else
       uint32_t n = UProcess::removeZombies();
@@ -3765,7 +3772,7 @@ __noreturn void UServer_Base::endNewChild()
    UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)SIG_IGN);
 #endif
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (LIKELY(U_SRV_CNT_PARALLELIZATION)) U_SRV_CNT_PARALLELIZATION--;
 
    U_INTERNAL_DUMP("cnt_parallelization = %d", U_SRV_CNT_PARALLELIZATION)
@@ -3839,7 +3846,7 @@ void UServer_Base::logCommandMsgError(const char* cmd, bool balways)
 {
    U_TRACE(0, "UServer_Base::logCommandMsgError(%S,%b)", cmd, balways)
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (isLog())
       {
       if (UCommand::setMsgError(cmd, !balways) || balways) ULog::log("%s%.*s", mod_name[0], u_buffer_len, u_buffer);
@@ -3894,3 +3901,4 @@ const char* UServer_Base::dump(bool reset) const
    return 0;
 }
 #endif
+

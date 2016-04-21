@@ -152,7 +152,7 @@ URDBObjectHandler<UDataStorage*>* UHTTP::db_session_ssl;
 #ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
 UString* UHTTP::uri_strict_transport_security_mask;
 #endif
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
 char         UHTTP::iov_buffer[20];
 struct iovec UHTTP::iov_vec[10];
 #  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
@@ -500,7 +500,7 @@ void UHTTP::in_READ()
             U_DEBUG("INOTIFY: %s %.*S was %s", (mask & IN_ISDIR  ? "DIRECTORY" : "FILE"), len, name,
                                                (mask & IN_CREATE ? "created"   :
                                                 mask & IN_DELETE ? "deleted"   :
-                                                mask & IN_MODIFY ? "modified"  : "???"));
+                                                mask & IN_MODIFY ? "modified"  : "???"))
 
             U_INTERNAL_ASSERT_EQUALS(len, u__strlen(name, __PRETTY_FUNCTION__))
 
@@ -535,7 +535,7 @@ void UHTTP::in_READ()
             cache_file->callForAllEntry(getInotifyPathDirectory);
 next:
             if (*inotify_name != '.' ||
-                memcmp(inotify_name + len - U_CONSTANT_SIZE(".swp"), U_CONSTANT_TO_PARAM(".swp"))) // NB: vi tmp...
+                u_get_unalignedp32(inotify_name + len - U_CONSTANT_SIZE(".swp")) == U_MULTICHAR_CONSTANT32('.','s','w','p')) // NB: vi tmp...
                {
                if ((mask & IN_CREATE) != 0)
                   {
@@ -2452,13 +2452,13 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
          else if (pn[ 5] == ':') pn +=  5; // "Range:"
          else if (pn[ 6] == ':') pn +=  6; // "Cookie|Accept:"
          else if (pn[ 7] == ':') pn +=  7; // "Referer|Upgrade:"
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          else if (pn[ 9] == ':') pn +=  9; // "X-Real-IP:"
 #     endif
          else if (pn[10] == ':') pn += 10; // "Connection|User-Agent:"
          else if (pn[12] == ':') pn += 12; // "Content-Type:"
          else if (pn[14] == ':') pn += 14; // "Content-Length:|HTTP2-Settings:"
-#     if defined(U_LOG_ENABLE) || defined(USE_LIBZ)
+#     if !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
          else if (pn[15] == ':') pn += 15; // "Accept-Encoding/Language|X-Forwarded-For:"
 #     endif
          else if (pn[17] == ':') pn += 17; // "If-Modified-Since|Sec-WebSocket-Key:"
@@ -2582,7 +2582,7 @@ advance: U_INTERNAL_ASSERT_EQUALS(*pn, ':')
             case U_MULTICHAR_CONSTANT32('u','p','g','r'):
             case U_MULTICHAR_CONSTANT32('U','p','g','r'): goto set_upgrade;
             case U_MULTICHAR_CONSTANT32('I','f','-','M'): goto set_if_mod_since;
-#        ifdef U_LOG_ENABLE
+#        ifndef U_LOG_DISABLE
             case U_MULTICHAR_CONSTANT32('R','e','f','e'): goto set_referer;
             case U_MULTICHAR_CONSTANT32('X','-','F','o'): goto set_x_forwarded_for;
             case U_MULTICHAR_CONSTANT32('X','-','R','e'): goto set_x_real_ip;
@@ -2724,9 +2724,9 @@ set_hostname:     setHostname(ptr+pos1, pos2-pos1);
 
             case 'U':
                {
-               if (u__toupper(p[4]) == 'A'                       &&
-                   memcmp(p,   U_CONSTANT_TO_PARAM("ser-")) == 0 &&
-                   memcmp(p+5, U_CONSTANT_TO_PARAM("gent")) == 0)
+               if (u__toupper(p[4]) == 'A'                                            &&
+                   u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('s','e','r','-') &&
+                   u_get_unalignedp32(p+5) == U_MULTICHAR_CONSTANT32('g','e','n','t'))
                   {
 set_user_agent:   U_http_info.user_agent     =  ptr+pos1;
                   U_http_info.user_agent_len = pos2-pos1;
@@ -2752,11 +2752,11 @@ set_upgrade:      p1 = ptr+pos1;
 
             case 'I': // If-Modified-Since
                {
-               if (u__toupper(p[2])  == 'M'                           &&
-                   u__toupper(p[11]) == 'S'                           &&
-                   memcmp(p,    U_CONSTANT_TO_PARAM("f-"))       == 0 &&
-                   memcmp(p+3,  U_CONSTANT_TO_PARAM("odified-")) == 0 &&
-                   memcmp(p+12, U_CONSTANT_TO_PARAM("ince"))     == 0)
+               if (u__toupper(p[2])  == 'M'                                                            &&
+                   u__toupper(p[11]) == 'S'                                                            &&
+                   u_get_unalignedp16(p)    == U_MULTICHAR_CONSTANT16('f','-')                         &&
+                   u_get_unalignedp64(p+3)  == U_MULTICHAR_CONSTANT64('o','d','i','f','i','e','d','-') &&
+                   u_get_unalignedp32(p+12) == U_MULTICHAR_CONSTANT32('i','n','c','e'))
                   {
 set_if_mod_since: U_http_info.if_modified_since = UTimeDate::getSecondFromTime(ptr+pos1, true);
 
@@ -2767,16 +2767,18 @@ set_if_mod_since: U_http_info.if_modified_since = UTimeDate::getSecondFromTime(p
 
             case 'R':
                {
-               if (memcmp(p, U_CONSTANT_TO_PARAM("ange")) == 0 &&
-                   memcmp(ptr+pos1, U_CONSTANT_TO_PARAM("bytes=")) == 0)
+               if (u_get_unalignedp32(p)          == U_MULTICHAR_CONSTANT32('a','n','g','e') &&
+                   u_get_unalignedp32(ptr+pos1)   == U_MULTICHAR_CONSTANT32('b','y','t','e') &&
+                   u_get_unalignedp16(ptr+pos1+4) == U_MULTICHAR_CONSTANT16('s','='))
                   {
 set_range:        U_http_info.range =  ptr+pos1+U_CONSTANT_SIZE("bytes=");
                   U_http_range_len  = pos2-pos1-U_CONSTANT_SIZE("bytes=");
 
                   U_INTERNAL_DUMP("Range = %.*S", U_HTTP_RANGE_TO_TRACE)
                   }
-#           ifdef U_LOG_ENABLE
-               else if (memcmp(p, U_CONSTANT_TO_PARAM("eferer")) == 0)
+#           ifndef U_LOG_DISABLE
+               if (u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('e','f','e','r') &&
+                   u_get_unalignedp16(p+4) == U_MULTICHAR_CONSTANT16('e','r'))
                   {
 set_referer:      U_http_info.referer     =  ptr+pos1;
                   U_http_info.referer_len = pos2-pos1;
@@ -2787,7 +2789,7 @@ set_referer:      U_http_info.referer     =  ptr+pos1;
                }
             break;
 
-#        ifdef U_LOG_ENABLE
+#        ifndef U_LOG_DISABLE
             case 'X':
                {
                if (p[0] == '-')
@@ -2800,7 +2802,7 @@ set_referer:      U_http_info.referer     =  ptr+pos1;
                      {
                      if (u__toupper(p[11]) == 'F'                            &&
                          memcmp(p+2,  U_CONSTANT_TO_PARAM("orwarded-")) == 0 &&
-                         memcmp(p+12, U_CONSTANT_TO_PARAM("or"))        == 0)
+                         u_get_unalignedp16(p+12) == U_MULTICHAR_CONSTANT16('o','r'))
                         {
 set_x_forwarded_for:    U_http_info.ip_client =  ptr+pos1;
                         U_http_ip_client_len  = pos2-pos1;
@@ -2812,7 +2814,7 @@ set_x_forwarded_for:    U_http_info.ip_client =  ptr+pos1;
                      {
                      if (u__toupper(p[6]) == 'I' &&
                          u__toupper(p[7]) == 'P' &&
-                         memcmp(p+2, U_CONSTANT_TO_PARAM("eal-")) == 0)
+                         u_get_unalignedp32(p+2) == U_MULTICHAR_CONSTANT32('e','a','l','-'))
                         {
 set_x_real_ip:          U_http_info.ip_client =  ptr+pos1;
                         U_http_ip_client_len  = pos2-pos1;
@@ -2827,7 +2829,7 @@ set_x_real_ip:          U_http_info.ip_client =  ptr+pos1;
                          u__toupper(p[4])  == 'P'                            &&
                          u__toupper(p[18]) == 'F'                            &&
                          memcmp(p+9,  U_CONSTANT_TO_PARAM("orwarded-")) == 0 &&
-                         memcmp(p+19, U_CONSTANT_TO_PARAM("or"))        == 0)
+                         u_get_unalignedp16(p+19) == U_MULTICHAR_CONSTANT16('o','r'))
                         {
 set_x_http_forward_for: U_http_info.ip_client =  ptr+pos1;
                         U_http_ip_client_len  = pos2-pos1;
@@ -3171,7 +3173,7 @@ U_NO_EXPORT bool UHTTP::callService()
 
    if (file_data == 0) U_RETURN(false);
 
-   U_DEBUG("Called service not in cache: %.*S - inotify %s enabled", U_FILE_TO_TRACE(*file), UServer_Base::handler_inotify ? "is" : "NOT");
+   U_DEBUG("Called service not in cache: %.*S - inotify %s enabled", U_FILE_TO_TRACE(*file), UServer_Base::handler_inotify ? "is" : "NOT")
 
    U_RETURN(true);
 }
@@ -3349,7 +3351,7 @@ next2:
 
    UClientImage_Base::setHeaderForResponse(6+29+2+12+2); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (UServer_Base::apache_like_log)
       {
       U_INTERNAL_ASSERT_EQUALS(iov_vec[0].iov_len, 0)
@@ -3459,7 +3461,7 @@ int UHTTP::handlerREAD()
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
       }
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    else if (UServer_Base::public_address && // NB: as protection from DNS rebinding attack web servers can reject HTTP requests with an unrecognized Host header...
             ((U_http_host_len - U_http_host_vlen) > (1 + 5) || // NB: ':' + 0-65536
              u_isHostName(U_HTTP_VHOST_TO_PARAM) == false))
@@ -4265,7 +4267,7 @@ void UHTTP::setEndRequestProcessing()
 
    if (data_session) data_session->resetDataSession();
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (UServer_Base::apache_like_log)
       {
       U_INTERNAL_DUMP("iov_vec[0].iov_len = %u", iov_vec[0].iov_len)
@@ -5294,7 +5296,7 @@ void UHTTP::getFormValue(UString& buffer, const char* name, uint32_t len, uint32
          if (buffer != tmp)
             {
             U_DEBUG("UHTTP::getFormValue(%p,%.*S,%u,%u,%u,%u) = %V differ from getFormValue(%.*S,%u,%u,%u) = %V",
-                        &buffer, len, name, len, start, pos, end, buffer.rep, len, name, len, start, end, tmp.rep);
+                        &buffer, len, name, len, start, pos, end, buffer.rep, len, name, len, start, end, tmp.rep)
             }
 #     endif
          }
@@ -6093,7 +6095,7 @@ end:
          }
       else
          {
-#     if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+#     if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
          u_put_unalignedp64(ptr1, U_MULTICHAR_CONSTANT64('/','p','l','a','i','n','\r','\n'));
 
          sz += U_CONSTANT_SIZE("Content-Type: text/plain\r\n");
@@ -6744,9 +6746,14 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
          mime_index = file_data->mime_index = U_gz;
          }
 
-      if (memcmp(content_type, U_CONSTANT_TO_PARAM("application/x-gzip")) == 0) content_type = file->getMimeType();
+      if (u_get_unalignedp64(content_type)    == U_MULTICHAR_CONSTANT64('a','p','p','l','i','c','a','t') &&
+          u_get_unalignedp64(content_type+8)  == U_MULTICHAR_CONSTANT64('i','o','n','/','x','-','g','z') &&
+          u_get_unalignedp16(content_type+16) == U_MULTICHAR_CONSTANT16('i','p'))
+         {
+         content_type = file->getMimeType();
+         }
 
-      U_ASSERT_DIFFERS(memcmp(content_type, U_CONSTANT_TO_PARAM("application/x-gzip")), 0)
+      U_INTERNAL_ASSERT_DIFFERS(memcmp(content_type, U_CONSTANT_TO_PARAM("application/x-gzip")), 0)
 
       (void) header.assign(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
       }
@@ -7243,7 +7250,7 @@ U_NO_EXPORT bool UHTTP::compileUSP(const char* path, uint32_t len)
 
    bool ok = cmd.executeAndWait(0, -1, fd_stderr);
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (UServer_Base::isLog())
       {
       UServer_Base::logCommandMsgError(cmd.getCommand(), false);
@@ -7271,7 +7278,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    if (pathname->equal(U_FILE_TO_PARAM(*file)) == false) // NB: can happen with inotify...
       {
-      U_DEBUG("UHTTP::manageDataForCache() pathname(%u) = %.*S file(%u) = %.*S", pathname->size(), pathname->rep, file->getPathRelativLen(), U_FILE_TO_TRACE(*file));
+      U_DEBUG("UHTTP::manageDataForCache() pathname(%u) = %.*S file(%u) = %.*S", pathname->size(), pathname->rep, file->getPathRelativLen(), U_FILE_TO_TRACE(*file))
       }
 #endif
 
@@ -7433,7 +7440,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
          {
          bool exist;
          struct stat st;
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          const char* link;
 #     endif
          UServletPage* usp_page;
@@ -7651,7 +7658,7 @@ void UHTTP::renewFileDataInCache()
 
    pathname->snprintf("%v", key);
 
-   U_DEBUG("renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire));
+   U_DEBUG("renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire))
 
    cache_file->eraseAfterFind();
 
@@ -7973,7 +7980,7 @@ nocontent:
 
          (void) pathname->replace(U_FILE_TO_PARAM(*file));
 
-         U_DEBUG("Found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT");
+         U_DEBUG("Found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT")
 
          manageDataForCache();
 
@@ -7992,7 +7999,7 @@ nocontent:
 
             if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0)
                {
-               U_DEBUG("Request usp service not in cache: %V - try to compile", pathname->rep);
+               U_DEBUG("Request usp service not in cache: %V - try to compile", pathname->rep)
 
                (void) pathname->replace(buffer, sz);
 
@@ -8549,7 +8556,7 @@ end:
    if (buffer.isBinary())
       {
 #  ifdef DEBUG
-      (void) UFile::writeToTmp(U_STRING_TO_PARAM(buffer), false, "getCGIEnvironment.bin.%P", 0);
+      (void) UFile::writeToTmp(U_STRING_TO_PARAM(buffer), O_RDWR | O_TRUNC, "getCGIEnvironment.bin.%P", 0);
 #  endif
 
       setBadRequest();
@@ -8648,7 +8655,7 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
                            "%v" \
                            "\r\n", pathname->rep, ext->rep);
 
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          if (UServer_Base::apache_like_log) prepareApacheLikeLog();
 #     endif
 
@@ -8778,9 +8785,9 @@ bool UHTTP::processCGIOutput(bool cgi_sh_script, bool bheaders)
 
    U_INTERNAL_DUMP("U_http_info.endHeader = %u U_line_terminator_len = %d UClientImage_Base::wbuffer(%u) = %.*S", U_http_info.endHeader, U_line_terminator_len, sz, sz, ptr)
 
-//#ifdef DEBUG
-// (void) UFile::writeToTmp(ptr, sz, false, "processCGIOutput.%P", 0);
-//#endif
+#ifdef DEBUG
+// (void) UFile::writeToTmp(ptr, sz, O_RDWR | O_TRUNC, "processCGIOutput.%P", 0);
+#endif
 
    if (bheaders == false)
       {
@@ -9217,7 +9224,7 @@ bool UHTTP::processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi)
 
    if (cgi) (void) UFile::chdir(0, true);
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    UServer_Base::logCommandMsgError(cmd->getCommand(), false);
 #endif
 
@@ -9605,7 +9612,7 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
    (void) checkContentLength(content_length, U_NOT_FOUND);
 
 #ifdef DEBUG
-   (void) UFile::writeToTmp(U_STRING_TO_PARAM(*ext), false, "byteranges.%P", 0);
+   (void) UFile::writeToTmp(U_STRING_TO_PARAM(*ext), O_RDWR | O_TRUNC, "byteranges.%P", 0);
 #endif
 
    U_http_info.nResponseCode = HTTP_PARTIAL;
@@ -9828,7 +9835,7 @@ error:
 // Each line in a file stored in the Common Log Format has the following syntax: host ident authuser date request status bytes
 // -------------------------------------------------------------------------------------------------------------------------------------
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
 void UHTTP::initApacheLikeLog()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::initApacheLikeLog()")
@@ -10086,7 +10093,7 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
 #           ifdef DEBUG
                if (decoded.size() != d.size)
                   {
-                  (void) UFile::writeToTmp(U_STRING_TO_PARAM(decoded), false, "decoded.differ.%P", 0);
+                  (void) UFile::writeToTmp(U_STRING_TO_PARAM(decoded), O_RDWR | O_TRUNC, "decoded.differ.%P", 0);
 
                   U_INTERNAL_ASSERT_MSG(false, "decoded differ")
                   }

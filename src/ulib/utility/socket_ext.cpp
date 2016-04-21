@@ -197,7 +197,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
    if (UNotifier::bepollet == false)
 #endif
    {
-#if !defined(U_LINUX) || !defined(ENABLE_THREAD) || defined(U_LOG_ENABLE) || defined(USE_LIBZ)
+#if !defined(U_LINUX) || !defined(ENABLE_THREAD) || !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
    if (sk->isBlocking() == false)
       {
       /**
@@ -911,12 +911,14 @@ UString USocketExt::getNetworkDevice(const char* exclude)
 
    if (U_SYSCALL(fscanf, "%p,%S", route, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s") != EOF) // Skip the first line
       {
-      char dev[7], dest[9];
+      char  dev[7],
+           dest[9];
+      char* ptr = dest;
 
       while (U_SYSCALL(fscanf, "%p,%S", route, "%6s %8s %*s %*s %*s %*s %*s %*s %*s %*s %*s\n", dev, dest) != EOF)
          {
-         bool found = (exclude ? (strncmp(dev, exclude, 6) != 0)   // not the whatever it is
-                               : (strcmp(dest, "00000000") == 0)); // default route
+         bool found = (exclude ? (strncmp(dev, exclude, 6) != 0)                                                        // not the whatever it is
+                               : (u_get_unalignedp64(ptr) == U_MULTICHAR_CONSTANT64('0','0','0','0','0','0','0','0'))); // default route
 
          if (found)
             {

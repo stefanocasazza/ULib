@@ -45,7 +45,7 @@
 #endif
 
 #if defined(HAVE_EPOLL_WAIT) && !defined(USE_LIBEVENT) && !defined(U_SERVER_CAPTIVE_PORTAL) && \
-      (!defined(U_LINUX) || !defined(ENABLE_THREAD) || defined(U_LOG_ENABLE) || defined(USE_LIBZ))
+      (!defined(U_LINUX) || !defined(ENABLE_THREAD) || !defined(U_LOG_DISABLE) || defined(USE_LIBZ))
 #  define U_EPOLLET_POSTPONE_STRATEGY
 #endif
 

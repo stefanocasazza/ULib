@@ -128,7 +128,7 @@ protected:
 
       if ((ms1 - ms2) <= 1) U_RETURN(true);
 
-      U_DEBUG("ms1 = %ld ms2 = %ld", ms1, ms2);
+      U_DEBUG("ms1 = %ld ms2 = %ld", ms1, ms2)
 
       U_RETURN(false);
       }
@@ -190,7 +190,7 @@ protected:
 
       if ((tolerance - tolerance_calculated) <= 1) U_RETURN(true);
 
-      U_DEBUG("tolerance = %ld tolerance_calculated = %ld", tolerance, tolerance_calculated);
+      U_DEBUG("tolerance = %ld tolerance_calculated = %ld", tolerance, tolerance_calculated)
 
       U_RETURN(false);
       }

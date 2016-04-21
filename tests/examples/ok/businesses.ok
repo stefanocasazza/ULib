@@ -1,0 +1,15 @@
+HTTP/1.1 200 OK
+Date: Thu, 21 Apr 2016 13:40:48 GMT
+Server: ULib
+Connection: close
+Content-Length: 418
+Content-Type: application/json
+
+[{"name":"Business 1","rating":"Red","address":"123 park lane, New York, NY, USA 10028","phone":"12126465788","url":"www.business1.com"},{"name":"Business 2","rating":"Yellow","address":"837 mott street, New York, NY, USA 10019","phone":"12124829384","url":"www.business2.com"},{"name":"Business 3","rating":"Green","address":"838 mott street, New York, NY, USA 10019","phone":"12124829385","url":"www.business3.com"}]HTTP/1.1 200 OK
+Date: Thu, 21 Apr 2016 13:40:49 GMT
+Server: ULib
+Connection: close
+Content-Length: 418
+Content-Type: application/json
+
+[{"name":"Business 1","rating":"Red","address":"123 park lane, New York, NY, USA 10028","phone":"12126465788","url":"www.business1.com"},{"name":"Business 2","rating":"Yellow","address":"837 mott street, New York, NY, USA 10019","phone":"12124829384","url":"www.business2.com"},{"name":"Business 3","rating":"Green","address":"838 mott street, New York, NY, USA 10019","phone":"12124829385","url":"www.business3.com"}]

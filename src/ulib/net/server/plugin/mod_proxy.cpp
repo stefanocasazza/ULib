@@ -153,7 +153,7 @@ int UProxyPlugIn::handlerRequest()
             {
             UWebSocket::checkForInitialData(); // check if we have read more data than necessary...
 
-            while (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK                                                             &&
+            while (UWebSocket::handleDataFraming(UServer_Base::csocket) == STATUS_CODE_OK                                                            &&
                    (client_http->UClient_Base::prepareRequest(*UClientImage_Base::wbuffer), client_http->UClient_Base::sendRequestAndReadResponse()) &&
                    UWebSocket::sendData(UWebSocket::message_type, (const unsigned char*)U_STRING_TO_PARAM(client_http->UClient_Base::response)))
                {
@@ -168,7 +168,7 @@ int UProxyPlugIn::handlerRequest()
                                                 client_http->setFollowRedirects(UHTTP::service->isFollowRedirects(), true);
          if (UHTTP::service->isAuthorization()) client_http->setRequestPasswordAuthentication(UHTTP::service->getUser(), UHTTP::service->getPassword());
 
-         // connect to server and send request and get response
+         // connect to server, send request and get response
 
          if (output_to_server == false) *UClientImage_Base::wbuffer = *UClientImage_Base::request;
 
@@ -217,7 +217,7 @@ int UProxyPlugIn::handlerRequest()
                UHTTP::setResponse(&content_type, &body);
                }
             }
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          else if (UServer_Base::isLog()) ULog::logResponse(*UClientImage_Base::wbuffer, UServer_Base::mod_name[0], "", 0);
 #     endif
 

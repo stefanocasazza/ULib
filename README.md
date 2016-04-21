@@ -13,7 +13,7 @@ It include as application example a powerful search engine with relative [web in
 
 The current version offers the following features :
 
-   * HTTP/1.0 and 1.1 protocols supported and initial implementations of HTTP/2.
+   * HTTP/1.0 and 1.1 protocols supported and experimental implementations of HTTP/2.
    * Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.
    * Browser cache management (headers: If-Modified-Since/Last-modified).
    * Chunk-encoding transfers support.

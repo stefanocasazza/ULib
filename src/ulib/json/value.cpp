@@ -1128,7 +1128,7 @@ bool UValue::parse(const UString& document)
         c == '{' ) && 
        readValue(tok, this))
       {
-      U_INTERNAL_ASSERT(invariant())
+      U_ASSERT(invariant())
 
       U_RETURN(true);
       }
@@ -1162,11 +1162,46 @@ void UJsonTypeHandler<UStringRep>::fromJSON(UValue& json)
 
    UStringRep* rep = json.getString()->rep;
 
-   U_INTERNAL_DUMP("rep = %V", rep)
+   U_INTERNAL_DUMP("pval(%p) = %p rep(%p) = %V", pval, pval, rep, rep)
 
-   ((UStringRep*)pval)->fromValue(rep);
+   U_INTERNAL_ASSERT(rep->_capacity)
 
-   U_INTERNAL_DUMP("pval(%p) = %V", pval, pval)
+   U_INTERNAL_ASSERT_EQUALS(memcmp(pval, UStringRep::string_rep_null, sizeof(UStringRep)), 0)
+
+   u__memcpy(pval, rep, sizeof(UStringRep), __PRETTY_FUNCTION__);
+
+   rep->_capacity = 0; // NB: no room for data, constant string...
+
+   U_INTERNAL_ASSERT(((UStringRep*)pval)->invariant())
+}
+
+void UJsonTypeHandler<UString>::toJSON(UValue& json)
+{
+   U_TRACE(0, "UJsonTypeHandler<UString>::toJSON(%p)", &json)
+
+   U_INTERNAL_DUMP("pval(%p) = %V", pval, ((UString*)pval)->rep)
+
+   U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
+
+   json.type_      = STRING_VALUE;
+   json.value.ptr_ = U_NEW(UString(*((UString*)pval)));
+}
+
+void UJsonTypeHandler<UString>::fromJSON(UValue& json)
+{
+   U_TRACE(0, "UJsonTypeHandler<UString>::fromJSON(%p)", &json)
+
+   U_ASSERT(json.isString())
+
+   UStringRep* rep = json.getString()->rep;
+
+   U_INTERNAL_DUMP("pval(%p) = %p rep(%p) = %V", pval, ((UString*)pval)->rep, rep, rep)
+
+   U_INTERNAL_ASSERT(rep->_capacity)
+
+   ((UString*)pval)->_assign(rep);
+
+   U_INTERNAL_ASSERT(((UString*)pval)->invariant())
 }
 
 // =======================================================================================================================

@@ -73,7 +73,7 @@ public:
                {
                UString key(argv[optind]), value = x[key]; 
 
-               (void) UFile::writeToTmp(U_STRING_TO_PARAM(value), false, U_FILE_OUTPUT, 0);
+               (void) UFile::writeToTmp(U_STRING_TO_PARAM(value), O_RDWR | O_TRUNC, U_FILE_OUTPUT, 0);
                }
             break;
 
@@ -119,7 +119,7 @@ public:
                UString value = x.print();
 
                if (value.empty()) (void) UFile::_unlink(U_DIR_OUTPUT U_FILE_OUTPUT);
-               else               (void) UFile::writeToTmp(U_STRING_TO_PARAM(value), false, U_FILE_OUTPUT, 0);
+               else               (void) UFile::writeToTmp(U_STRING_TO_PARAM(value), O_RDWR | O_TRUNC, U_FILE_OUTPUT, 0);
                }
             break;
 

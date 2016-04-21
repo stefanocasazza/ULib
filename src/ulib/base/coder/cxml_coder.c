@@ -95,7 +95,7 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
        * any Unicode character, excluding the surrogate blocks, FFFE, and FFFF
        */
 
-      if (u__isxmlvalidchar(ch) == false) continue; 
+      if (u__isxmlvalidchar(ch) == false) continue;
 
       if ( u__isalnum(ch)          ||
           (u__isquote(ch) == false &&
@@ -115,16 +115,10 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
          case '&':
             {
             /**
-             * skip if already encoded... hexadecimal or decimal numerical
-             * entities and named entities (&amp; &lt; &gt; &quot; &apos;)
+             * skip if already encoded: hexadecimal or decimal numerical entities...
              */
 
-            if (      *input == '#'                              ||
-                memcmp(input, U_CONSTANT_TO_PARAM("quot;")) == 0 ||
-                memcmp(input, U_CONSTANT_TO_PARAM("amp;"))  == 0 ||
-                memcmp(input, U_CONSTANT_TO_PARAM("lt;"))   == 0 ||
-                memcmp(input, U_CONSTANT_TO_PARAM("gt;"))   == 0 ||
-                memcmp(input, U_CONSTANT_TO_PARAM("apos;")) == 0)
+            if (*input == '#')
                {
                *r++ = '&';
 
@@ -133,11 +127,58 @@ uint32_t u_xml_encode(const unsigned char* restrict input, uint32_t len, unsigne
                   ++r;
                   ++input;
                   }
+
+               continue;
                }
-            else
+
+            /**
+             * ...and named entities (&amp; &lt; &gt; &quot; &apos;)
+             */
+
+            if (input[2] == ';')
                {
-               r = u_set_amp(r);
+               if (u_get_unalignedp16(input) == U_MULTICHAR_CONSTANT16('l','t'))
+                  {
+                  r = u_set_lt(r);
+
+                  input += U_CONSTANT_SIZE("lt;");
+
+                  continue;
+                  }
+
+               if (u_get_unalignedp16(input) == U_MULTICHAR_CONSTANT16('g','t'))
+                  {
+                  r = u_set_gt(r);
+
+                  input += U_CONSTANT_SIZE("gt;");
+
+                  continue;
+                  }
                }
+            else if (input[4] == ';')
+               {
+               if (u_get_unalignedp32(input) == U_MULTICHAR_CONSTANT32('q','u','o','t'))
+                  {
+                  r = u_set_quot(r);
+
+                  input += U_CONSTANT_SIZE("quot;");
+
+                  continue;
+                  }
+
+               if (u_get_unalignedp32(input) == U_MULTICHAR_CONSTANT32('a','p','o','s'))
+                  {
+                  r = u_set_apos(r);
+
+                  input += U_CONSTANT_SIZE("apos;");
+
+                  continue;
+                  }
+               }
+
+            r = u_set_amp(r);
+
+            if (u_get_unalignedp32(input) == U_MULTICHAR_CONSTANT32('a','m','p',';')) input += U_CONSTANT_SIZE("amp;");
             }
          break;
 
@@ -163,7 +204,7 @@ uint32_t u_xml_decode(const char* restrict input, uint32_t len, unsigned char* r
          unsigned char* restrict r   = result;
    const          char* restrict end = input + len;
 
-   U_INTERNAL_TRACE("u_xml_decode(%.*s,%u,%p,%lu)", U_min(len,128), input, len, result)
+   U_INTERNAL_TRACE("u_xml_decode(%.*s,%u,%p,%p)", U_min(len,128), input, len, result)
 
    U_INTERNAL_ASSERT_POINTER(input)
 
@@ -171,61 +212,97 @@ uint32_t u_xml_decode(const char* restrict input, uint32_t len, unsigned char* r
       {
       char ch = *input++;
 
-      if (ch != '&') *r++ = ch;
-      else
-         {
-         /* check for hexadecimal or decimal numerical entities and named entities (&amp; &lt; &gt; &quot; &apos;) */
+      /**
+       * From xml spec valid chars:
+       *
+       * #x9 | #xA | #xD | [#x20-#xD7FF] | [#xE000-#xFFFD]
+       *                                 | [#x10000-#x10FFFF]     
+       *
+       * any Unicode character, excluding the surrogate blocks, FFFE, and FFFF
+       */
 
-         if (memcmp(input, U_CONSTANT_TO_PARAM("amp;")) == 0)       /* '&' <-> &amp; */
-            {
-            *r++   = '&';
-            input += U_CONSTANT_SIZE("amp;");
-            }
-         else if (memcmp(input, U_CONSTANT_TO_PARAM("lt;")) == 0)   /* '<' <-> &lt; */
+      U_INTERNAL_PRINT("ch = %C *input = %C", ch, *input)
+
+      U_INTERNAL_ASSERT(u__isxmlvalidchar(ch))
+
+      if (ch != '&')
+         {
+         *r++ = ch;
+
+         continue;
+         }
+
+      /* check for hexadecimal or decimal numerical entities and named entities (&amp; &lt; &gt; &quot; &apos;) */
+
+      if (*input == '#')
+         {
+         /*
+         union uuarg {
+                           char* p;
+            const          char* cp;
+            const unsigned char* cup;
+         };
+
+         union uuarg i = { ++input };
+
+         *r++ = (unsigned char) strtol(i.cp, &i.p, 10);
+         */
+
+         ++input;
+
+         *r++ = (unsigned char)strtol((const char*)input, (char**)&input, 10);
+
+         ++input;
+
+         continue;
+         }
+
+      if (u_get_unalignedp32(input) == U_MULTICHAR_CONSTANT32('a','m','p',';')) /* '&' <-> &amp; */
+         {
+         *r++   = '&';
+         input += U_CONSTANT_SIZE("amp;");
+
+         continue;
+         }
+
+      if (input[2] == ';')
+         {
+         if (u_get_unalignedp16(input) == U_MULTICHAR_CONSTANT16('l','t')) /* '<' <-> &lt; */
             {
             *r++   = '<';
             input += U_CONSTANT_SIZE("lt;");
+
+            continue;
             }
-         else if (memcmp(input, U_CONSTANT_TO_PARAM("gt;")) == 0)   /* '>' <-> &gt; */
+
+         if (u_get_unalignedp16(input) == U_MULTICHAR_CONSTANT16('g','t')) /* '>' <-> &gt; */
             {
             *r++   = '>';
             input += U_CONSTANT_SIZE("gt;");
+
+            continue;
             }
-         else if (memcmp(input, U_CONSTANT_TO_PARAM("quot;")) == 0) /* '"' <-> &quot; */
+         }
+      else if (input[4] == ';')
+         {
+         if (u_get_unalignedp32(input) == U_MULTICHAR_CONSTANT32('q','u','o','t')) /* '"' <-> &quot; */
             {
             *r++   = '"';
             input += U_CONSTANT_SIZE("quot;");
+
+            continue;
             }
-         else if (memcmp(input, U_CONSTANT_TO_PARAM("apos;")) == 0) /* '\'' <-> &apos; */
+
+         if (u_get_unalignedp32(input) == U_MULTICHAR_CONSTANT32('a','p','o','s')) /* '\'' <-> &apos; */
             {
             *r++   = '\'';
             input += U_CONSTANT_SIZE("apos;");
-            }
-         else if (*input == '#')
-            {
-            /*
-            union uuarg {
-                              char* p;
-               const          char* cp;
-               const unsigned char* cup;
-            };
 
-            union uuarg i = { ++input };
-
-            *r++ = (unsigned char) strtol(i.cp, &i.p, 10);
-            */
-
-            ++input;
-
-            *r++ = (unsigned char) strtol((const char*)input, (char**)&input, 10);
-
-            ++input;
-            }
-         else
-            {
-            *r++ = ch;
+            continue;
             }
          }
+
+      *r++ = ch;
       }
 
    *r = 0;

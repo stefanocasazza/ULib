@@ -34,7 +34,6 @@ bPF           UClientImage_Base::callerHandlerCache = handlerCache;
 iPF           UClientImage_Base::callerHandlerRequest = UServer_Base::pluginsHandlerRequest;
 vPF           UClientImage_Base::callerHandlerEndRequest = do_nothing;
 bool          UClientImage_Base::bIPv6;
-bool          UClientImage_Base::log_request_partial;
 char          UClientImage_Base::cbuffer[128];
 long          UClientImage_Base::time_run;
 long          UClientImage_Base::time_between_request = 10;
@@ -64,7 +63,9 @@ UString* UClientImage_Base::_value;
 UString* UClientImage_Base::_buffer;
 UString* UClientImage_Base::_encoded;
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
+int UClientImage_Base::log_request_partial;
+
 void UClientImage_Base::logRequest()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::logRequest()")
@@ -95,19 +96,19 @@ void UClientImage_Base::logRequest()
          {
          str_partial         =                 "[partial] ";
          str_partial_len     = U_CONSTANT_SIZE("[partial] ");
-         log_request_partial = true;
+         log_request_partial = UEventFd::fd;
 
          u_printf_string_max_length = U_min(sz,1000);
          }
       else
          {
-         if (u_printf_string_max_length < 18) u_printf_string_max_length = 128; // 18 -> "GET / HTTP/1.0\r\n\r\n"
+         if (u_printf_string_max_length < U_CONSTANT_SIZE("GET / HTTP/1.0\r\n\r\n")) u_printf_string_max_length = 128;
 
-         if (log_request_partial)
+         if (log_request_partial == UEventFd::fd)
             {
             str_partial         =                 "[complete] ";
             str_partial_len     = U_CONSTANT_SIZE("[complete] ");
-            log_request_partial = false;
+            log_request_partial = 0;
             }
          }
 
@@ -239,25 +240,19 @@ void UClientImage_Base::saveRequestResponse()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::saveRequestResponse()")
 
-#ifndef U_HTTP2_DISABLE
+# if defined(U_STDCPP_ENABLE) && !defined(U_HTTP2_DISABLE)
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
    if (U_http_version == '2')
       {
-      char buffer[2 * 1024 * 1024];
-
-      uint32_t sz = UObject2String(UHTTP2::pConnection->itable, buffer, sizeof(buffer));
-
-      U_INTERNAL_ASSERT_MINOR(sz, sizeof(buffer))
-
-      (void) UFile::writeToTmp(buffer, sz, false, "request.%P", 0);
+      U_DUMP_OBJECT_TO_TMP(UHTTP2::pConnection->itable, "request")
 
       return;
       }
 #endif
 
-                                  (void) UFile::writeToTmp(U_STRING_TO_PARAM(*rbuffer), false,  "request.%P", 0);
-   if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4,                  false, "response.%P", 0);
+   if (*rbuffer)                  (void) UFile::writeToTmp(U_STRING_TO_PARAM(*rbuffer), O_RDWR | O_TRUNC, "request.%P",  0);
+   if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4,                  O_RDWR | O_TRUNC, "response.%P", 0);
 }
 #endif
 
@@ -362,7 +357,7 @@ bool UClientImage_Base::logCertificate()
 
    // NB: OpenSSL has already tested the cert validity during SSL handshake and returns a X509 ptr just if the certificate is valid...
 
-#if defined(USE_LIBSSL) && defined(U_LOG_ENABLE)
+#if defined(USE_LIBSSL) && !defined(U_LOG_DISABLE)
    X509* x509 = ((USSLSocket*)socket)->getPeerCertificate();
 
    if (x509)
@@ -436,7 +431,7 @@ void UClientImage_Base::handlerDelete()
       }
 #endif
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (UServer_Base::isLog())
       {
       U_INTERNAL_ASSERT_POINTER(logbuf)
@@ -461,6 +456,8 @@ void UClientImage_Base::handlerDelete()
                    UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask, fd_logbuf);
          }
 #  endif
+
+      if (log_request_partial == UEventFd::fd) log_request_partial = 0;
       }
 #endif
 
@@ -487,7 +484,7 @@ void UClientImage_Base::handlerDelete()
 
    --UNotifier::num_connection;
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (UServer_Base::isLog())
       {
       logbuf->setEmpty();
@@ -650,7 +647,7 @@ bool UClientImage_Base::startRequest()
       if ((time_run - time_between_request) > 10L)
          {
          U_DEBUG("UClientImage_Base::startRequest(): time_between_request(%ld) < time_run(%ld) - isParallelizationGoingToStart(%u) = %b request = %V",
-                     time_between_request, time_run, U_NUM_CLIENT_THRESHOLD, UServer_Base::isParallelizationGoingToStart(U_NUM_CLIENT_THRESHOLD), request->rep);
+                     time_between_request, time_run, U_NUM_CLIENT_THRESHOLD, UServer_Base::isParallelizationGoingToStart(U_NUM_CLIENT_THRESHOLD), request->rep)
 
          if (U_http_info.startHeader > 2 &&
              UServer_Base::isParallelizationGoingToStart(U_NUM_CLIENT_THRESHOLD))
@@ -688,7 +685,7 @@ void UClientImage_Base::endRequest()
 
    if ((time_run - time_between_request) > 10L)
       {
-      U_DEBUG("UClientImage_Base::endRequest(): time_between_request(%ld) < time_run(%ld) - request = %V", time_between_request, time_run, request->rep);
+      U_DEBUG("UClientImage_Base::endRequest(): time_between_request(%ld) < time_run(%ld) - request = %V", time_between_request, time_run, request->rep)
       }
 # endif
 #endif
@@ -697,7 +694,7 @@ void UClientImage_Base::endRequest()
 
    U_http_method_type = 0; // NB: this mark the end of http request processing...
 
-#if defined(DEBUG) && defined(U_LOG_ENABLE)
+#if defined(DEBUG) && !defined(U_LOG_DISABLE)
    if (UServer_Base::isLog())
       {
       uint32_t sz = 0;
@@ -746,6 +743,7 @@ void UClientImage_Base::endRequest()
       if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), "%ld ms", time_run);
       else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1),  "%g ms", chronometer->getTimeElapsed());
 
+#  ifndef U_SERVER_CAPTIVE_PORTAL
       if (UServer_Base::csocket->isOpen())
          {
          uint32_t len = 0;
@@ -766,6 +764,7 @@ void UClientImage_Base::endRequest()
 
          if (len) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), ", CPU: %d sched(%d) socket(%d)%.*s", USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
          }
+#  endif
 
       U_INTERNAL_ASSERT_MINOR((ptrdiff_t)(ptr1-buffer1), (ptrdiff_t)sizeof(buffer1))
 
@@ -1116,7 +1115,7 @@ pipeline:
 
    U_INTERNAL_ASSERT(request->invariant())
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    if (logbuf) logRequest();
 #endif
 
@@ -1203,7 +1202,7 @@ dmiss:
       {
       U_ASSERT_EQUALS(request->isPrintable(), false)
 
-#  if defined(DEBUG) && defined(U_LOG_ENABLE)
+#  if defined(DEBUG) && !defined(U_LOG_DISABLE)
       U_http_info.uri_len = 0;
 #    ifdef U_ALIAS
       request_uri->clear();
@@ -1239,8 +1238,10 @@ dmiss:
 
    if (LIKELY(size_request))
       {
-#  if defined(U_LOG_ENABLE) && !defined(U_COVERITY_FALSE_POSITIVE)
-      if (log_request_partial) logRequest();
+#  if !defined(U_LOG_DISABLE) && !defined(U_COVERITY_FALSE_POSITIVE)
+      U_INTERNAL_DUMP("log_request_partial = %u UEventFd::fd = %d", log_request_partial, UEventFd::fd)
+
+      if (log_request_partial == UEventFd::fd) logRequest();
 #  endif
 #  ifndef U_CACHE_REQUEST_DISABLE
 next:
@@ -1524,7 +1525,7 @@ bool UClientImage_Base::writeResponse()
 
       u__memcpy(iov_sav, iov_vec, U_IOV_TO_SAVE, __PRETTY_FUNCTION__);
 
-#  if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+#  if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #  else
@@ -1533,7 +1534,7 @@ bool UClientImage_Base::writeResponse()
       ULog::updateDate3();
 #  endif
 
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       if (logbuf) ULog::log(iov_vec+idx, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, " to %v", logbuf->rep);
 #  endif
       }

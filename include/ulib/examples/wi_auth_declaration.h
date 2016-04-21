@@ -1979,15 +1979,15 @@ static void db_open()
       {
       UString x = db_nodog->print();
 
-      (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), false, "WiAuthAccessPoint.init", 0);
+      (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), O_RDWR | O_TRUNC, "WiAuthAccessPoint.init", 0);
 
       x = db_user->print();
 
-      (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), false, "WiAuthUser.init", 0);
+      (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), O_RDWR | O_TRUNC, "WiAuthUser.init", 0);
 
       x = db_ap->print();
 
-      (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), false, "WiAuthVirtualAccessPoint.init", 0);
+      (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), O_RDWR | O_TRUNC, "WiAuthVirtualAccessPoint.init", 0);
 
       (void) UFile::_unlink("/tmp/WiAuthUser.end");
       (void) UFile::_unlink("/tmp/WiAuthAccessPoint.end");

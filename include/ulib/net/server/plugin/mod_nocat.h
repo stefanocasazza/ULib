@@ -294,11 +294,13 @@ protected:
 
       peer->fw.setArgument(3, (type == UModNoCatPeer::PEER_PERMIT ? "permit" : "deny"));
 
-      if (peer->fw.executeAndWait(0, -1, fd_stderr)) U_peer_status = type;
+      (void) peer->fw.executeAndWait(0, -1, fd_stderr);
 
-#  ifdef U_LOG_ENABLE
+#  ifndef U_LOG_DISABLE
       UServer_Base::logCommandMsgError(peer->fw.getCommand(), false);
 #  endif
+
+      U_peer_status = type;
       }
 
    static UString getUrlForSendMsgToPortal(uint32_t index_AUTH, const char* msg, uint32_t msg_len)

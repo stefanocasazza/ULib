@@ -912,7 +912,7 @@ bool UIPAllow::getNetworkInterface(UVector<UIPAllow*>& vipallow)
 #     endif
 
          if (family == AF_INET &&
-             strncmp(ifa->ifa_name, U_CONSTANT_TO_PARAM("lo")) != 0) // Name of interface
+             u_get_unalignedp16(ifa->ifa_name) != U_MULTICHAR_CONSTANT16('l','o')) // Name of interface
             {
             gai_err = U_SYSCALL(getnameinfo, "%p,%d,%p,%d,%p,%d,%d", ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, 0, 0, NI_NUMERICHOST);
 

@@ -471,13 +471,14 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
    liov[0].iov_len  =  u__strlen(dumper->name_class, __PRETTY_FUNCTION__);
    liov[0].iov_base = (caddr_t)  dumper->name_class;
 
-   (void) sprintf(buffer1, " %p size %d level %d", // cnt %09d",
-                  dumper->ptr_object, dumper->sz_obj, dumper->level); //, dumper->cnt);
+   liov[1].iov_len  = sprintf(buffer1, " %p size %d level %d", // cnt %09d",
+                              dumper->ptr_object, dumper->sz_obj, dumper->level); //, dumper->cnt);
 
-   (void) sprintf(buffer2, "\n%s(%d)\n", dumper->name_file, dumper->num_line);
+   U_INTERNAL_ASSERT_EQUALS(liov[1].iov_len, strlen(buffer1))
 
-   liov[1].iov_len  = u__strlen(buffer1, __PRETTY_FUNCTION__);
-   liov[2].iov_len  = u__strlen(buffer2, __PRETTY_FUNCTION__);
+   liov[2].iov_len  = sprintf(buffer2, "\n%s(%d)\n", dumper->name_file, dumper->num_line);
+
+   U_INTERNAL_ASSERT_EQUALS(liov[2].iov_len, strlen(buffer2))
 
    liov[3].iov_len  = u__strlen(dumper->name_function, __PRETTY_FUNCTION__);
    liov[3].iov_base = (caddr_t) dumper->name_function;
@@ -488,9 +489,9 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
    if (_this == (void*)U_CHECK_MEMORY_SENTINEL) liov[4].iov_len = 0;
    else
       {
-      (void) sprintf(buffer3, "\nERROR ON MEMORY [sentinel = " U_CHECK_MEMORY_SENTINEL_STR " _this = %p - %s]\n", _this, (_this ? "ABW" : "FMR"));
+      liov[4].iov_len = sprintf(buffer3, "\nERROR ON MEMORY [sentinel = " U_CHECK_MEMORY_SENTINEL_STR " _this = %p - %s]\n", _this, (_this ? "ABW" : "FMR"));
 
-      liov[4].iov_len = u__strlen(buffer3, __PRETTY_FUNCTION__);
+      U_INTERNAL_ASSERT_EQUALS(liov[4].iov_len, strlen(buffer3))
       }
 
    liov[6].iov_base = (caddr_t) dumper->dump();

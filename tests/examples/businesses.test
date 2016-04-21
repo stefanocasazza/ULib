@@ -1,0 +1,60 @@
+#!/bin/sh
+
+. ../.function
+
+## businesses.test -- Test prototype for Victor Stewart
+
+#cat <<EOF >tmp/create.js
+#use database
+#db.businesses.drop()
+#db.businesses.save( {_id: 1, name: "Business 1", rating: 'Red', address : "123 park lane, New York, NY, USA 10028", phone : "12126465788", url : "www.business1.com" } );
+#db.businesses.save( {_id: 2, name: "Business 2", rating: "Yellow", address : "837 mott street, New York, NY, USA 10019", phone : "12124829384", url : "www.business2.com" } );
+#db.businesses.save( {_id: 3, name: "Business 3", rating: 'Green', address : "838 mott street, New York, NY, USA 10019", phone : "12124829385", url : "www.business3.com" } );
+#db.businesses.ensureIndex({_id: 1})
+#EOF
+#mongo < tmp/create.js
+#rm -f tmp/create.js
+
+start_msg businesses
+
+#UTRACE="0 15M 0"
+#UOBJDUMP="0 10M 10"
+#USIMERR="error.sim"
+ export UTRACE UOBJDUMP USIMERR
+
+DOC_ROOT=benchmark/docroot
+
+rm -rf $DOC_ROOT/*log /tmp/request.* /tmp/response.* \
+		 out/userver_tcp.out err/userver_tcp.err \
+                trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
+      $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
+
+check_for_netcat
+
+cat <<EOF >inp/webserver.cfg
+userver {
+ PORT 8080
+ LOG_FILE businesses.log
+ LOG_FILE_SZ 1M
+ DOCUMENT_ROOT $DOC_ROOT
+ PREFORK_CHILD 0
+}
+EOF
+
+export MONGODB_HOST=localhost
+
+DIR_CMD="../../examples/userver"
+
+start_prg_background userver_tcp -c inp/webserver.cfg
+
+send_req $NCAT localhost 8080 inp/http/businesses.req businesses 2
+$SLEEP
+send_req $NCAT localhost 8080 inp/http/businesses.req businesses 2
+$SLEEP
+
+kill_prg userver_tcp TERM
+
+mv err/userver_tcp.err err/businesses.err
+
+# Test against expected output
+test_output_wc l businesses

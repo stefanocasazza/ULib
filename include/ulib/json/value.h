@@ -878,21 +878,10 @@ public:
 
 template <> class U_EXPORT UJsonTypeHandler<UString> : public UJsonTypeHandler_Base {
 public:
-   explicit UJsonTypeHandler(UString& val) : UJsonTypeHandler_Base(val.rep) {}
+   explicit UJsonTypeHandler(UString& val) : UJsonTypeHandler_Base(&val) {}
 
-   void toJSON(UValue& json)
-      {
-      U_TRACE(0, "UJsonTypeHandler<UString>::toJSON(%p)", &json)
-
-      ((UJsonTypeHandler<UStringRep>*)this)->toJSON(json);
-      }
-
-   void fromJSON(UValue& json)
-      {
-      U_TRACE(0, "UJsonTypeHandler<UString>::fromJSON(%p)", &json)
-
-      ((UJsonTypeHandler<UStringRep>*)this)->fromJSON(json);
-      }
+   void   toJSON(UValue& json);
+   void fromJSON(UValue& json);
 };
 
 // TEMPLATE SPECIALIZATIONS FOR CONTAINERS

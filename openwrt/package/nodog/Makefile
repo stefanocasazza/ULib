@@ -42,12 +42,10 @@ define Package/nodog/conffiles
 /usr/lib/nodog/firewall/tcrules.awk
 endef
 
-NODOG_OPTIONS:= --disable-examples \
-					 --with-ssl --with-libz \
-					 --without-expat --without-magic --without-pcre \
-					 --disable-static --disable-new-ldflags --disable-zip --disable-LFS \
-					 --enable-log --enable-captive-portal --enable-static-server-plugin="nocat http" \
-					 --disable-stdcpp --disable-gcc-optimized --disable-thread --disable-HCRS --disable-HPRS \
+NODOG_OPTIONS:= --without-expat --without-magic --without-pcre \
+					 --disable-stdcpp --disable-thread --disable-HCRS --disable-HPRS \
+					 --disable-examples --disable-static --disable-new-ldflags --disable-zip --disable-LFS \
+					 --with-ssl --with-libz --enable-log --enable-captive-portal --enable-static-server-plugin="nocat http" \
 					 $(if $(CONFIG_NODOG_DEBUG),--enable-debug) \
 					 $(if $(CONFIG_NODOG_UUID),--with-libuuid,--without-libuuid) \
 					 $(if $(CONFIG_NODOG_MEMPOOL),--enable-memory-pool,--disable-memory-pool) \

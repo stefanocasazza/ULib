@@ -112,7 +112,7 @@ int UStreamPlugIn::handlerInit()
 
    bool result = command->execute(0, (UString*)-1, -1, fd_stderr);
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    UServer_Base::logCommandMsgError(command->getCommand(), true);
 #endif
 
@@ -139,7 +139,7 @@ int UStreamPlugIn::handlerRun()
 
    rbuf = U_NEW(URingBuffer((URingBuffer::rbuf_data*) UServer_Base::getPointerToDataShare(ptr), U_RING_BUFFER_SIZE));
 
-   // NB: feeding by a child of this...
+   // NB: we are feeding by a child of us...
 
    UProcess proc;
 

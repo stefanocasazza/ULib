@@ -592,7 +592,7 @@ public:
    // 10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET /unirel_logo.gif HTTP/1.1" 200 3414 "http://www.unirel.com/" "Mozilla/5.0 (X11; Linux x86_64)"
    // ------------------------------------------------------------------------------------------------------------------------------------------------- 
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    static char iov_buffer[20];
    static struct iovec iov_vec[10];
 # if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 

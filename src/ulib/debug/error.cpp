@@ -96,7 +96,11 @@ void UError::stackDump()
 
    char name[128];
 
+#ifndef U_SERVER_CAPTIVE_PORTAL
    (void) u__snprintf(name, sizeof(name), "stack.%N.%P", 0);
+#else
+   (void) u__snprintf(name, sizeof(name), "/tmp/stack.%N.%P", 0);
+#endif
 
    int fd = open(name, O_CREAT | O_WRONLY | O_APPEND | O_BINARY, 0666);
 
@@ -258,4 +262,12 @@ void UError::stackDump()
    (void) fclose(f);
 # endif
 #endif
+
+   fd = open(name, O_RDONLY, 0666);
+
+   if (fd == -1) return;
+
+   if (lseek(fd, U_SEEK_BEGIN, SEEK_END) == 0) (void) unlink(name);
+
+   (void) close(fd);
 }

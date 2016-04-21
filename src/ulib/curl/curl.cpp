@@ -104,7 +104,7 @@ const char* UCURL::error()
 
    static char buffer[CURL_ERROR_SIZE+32];
 
-   (void) sprintf(buffer, "%s (%d, %s)", (result >= 0 && result < U_NUM_ELEMENTS(errlist) ? errlist[result] : ""), result, errorBuffer);
+   (void) u__snprintf(buffer, sizeof(buffer), "%s (%d, %s)", (result >= 0 && result < U_NUM_ELEMENTS(errlist) ? errlist[result] : ""), result, errorBuffer);
 
    U_RETURN(buffer);
 }

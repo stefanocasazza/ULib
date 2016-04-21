@@ -4,7 +4,6 @@
 #include <ulib/container/vector.h>
 #include <ulib/file.h>
 #include <ulib/base/hash.h>
-#include <ulib/json/value.h>
 #include <ulib/utility/dir_walk.h>
 
 #ifdef __MINGW32__
@@ -479,37 +478,6 @@ U_EXPORT main (int argc, char* argv[])
 
    res = y.empty();
    U_INTERNAL_ASSERT( res )
-
-   tmp = U_STRING_FROM_CONSTANT("[ \"riga 1\" \"riga 2\" \"riga 3\" \"riga 4\" ]");
-
-   bool result = JSON_parse( tmp, y );
-
-   U_INTERNAL_ASSERT( result )
-
-   tmp    = y[0];
-   result = ( tmp == U_STRING_FROM_CONSTANT("riga 1") );
-
-   U_INTERNAL_ASSERT( result )
-
-   tmp    = y[1];
-   result = ( tmp == U_STRING_FROM_CONSTANT("riga 2") );
-
-   U_INTERNAL_ASSERT( result )
-
-   tmp    = y[2];
-   result = ( tmp == U_STRING_FROM_CONSTANT("riga 3") );
-
-   U_INTERNAL_ASSERT( result )
-
-   tmp    = y[3];
-   result = ( tmp == U_STRING_FROM_CONSTANT("riga 4") );
-
-   U_INTERNAL_ASSERT( result )
-
-   UValue json(ARRAY_VALUE);
-   tmp = JSON_stringify(json, y);
-
-   U_ASSERT( tmp == U_STRING_FROM_CONSTANT("[\"riga 1\",\"riga 2\",\"riga 3\",\"riga 4\"]") )
 
    // RING BUFFER
 

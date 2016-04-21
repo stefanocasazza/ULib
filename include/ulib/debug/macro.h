@@ -215,13 +215,20 @@ if (envp) \
 
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS) U_UNREGISTER_OBJECT(level,this); UTrace utr(level, #CLASS"::~"#CLASS"()");
 
-#  define U_DUMP_OBJECT(msg,obj) \
+#  define U_DUMP_OBJECT(obj) { u_trace_dump(#obj" = %S", (obj).dump(true)); }
+#  define U_DUMP_CONTAINER(obj) { if (utr.active[0]) u_trace_dump(#obj" = %O", U_OBJECT_TO_TRACE((obj))); }
+
+#  define U_DUMP_OBJECT_TO_TMP(obj,fname) \
+            { char _buffer[2 * 1024 * 1024]; \
+               uint32_t _n = UObject2String((obj), _buffer, sizeof(_buffer)); \
+               U_INTERNAL_ASSERT_MINOR(_n, sizeof(_buffer)) \
+               (void) UFile::writeToTmp(_buffer, _n, O_RDWR | O_TRUNC, #fname"%P", 0); }
+
+#  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object) \
             if (UObjectDB::fd > 0) { \
                char _buffer[4096]; \
-               uint32_t _n = UObjectDB::dumpObject(_buffer, sizeof(_buffer), obj); \
+               uint32_t _n = UObjectDB::dumpObject(_buffer, sizeof(_buffer), (check_object)); \
                if (utr.active[0]) u_trace_dump(msg " = \n%.*s\n", U_min(_n,4000), _buffer); }
-
-#  define U_DUMP_CONTAINER(obj) { if (utr.active[0]) u_trace_dump(#obj" = %O", U_OBJECT_TO_TRACE((obj))); }
 
 #  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...) UMemoryPool::writeInfoTo(fmt,args)
 
@@ -246,8 +253,10 @@ if (envp) \
 #  define U_UNREGISTER_OBJECT(level,pointer)
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)
 
+#  define U_DUMP_OBJECT(obj)
 #  define U_DUMP_CONTAINER(obj)
-#  define U_DUMP_OBJECT(msg,obj)
+#  define U_DUMP_OBJECT_TO_TMP(obj,fname)
+#  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object)
 #  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)
 
 #  define U_NEW(args...)                       new args

@@ -127,7 +127,7 @@ int UWebSocketPlugIn::handlerRequest()
 
          if (command->execute((UString*)-1, (UString*)-1, -1, fd_stderr))
             {
-#        ifdef U_LOG_ENABLE
+#        ifndef U_LOG_DISABLE
             UServer_Base::logCommandMsgError(command->getCommand(), true);
 #        endif
 

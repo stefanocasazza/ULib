@@ -164,7 +164,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
          vdriver->push_back(_driver);
          vdriver_name_static->push_back(item);
 
-#     ifdef U_LOG_ENABLE
+#     ifndef U_LOG_DISABLE
          if (UServer_Base::isLog()) ULog::log("[%v] Load of driver success", item.rep);
 #     endif
          }

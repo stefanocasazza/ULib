@@ -2605,12 +2605,14 @@ AC_CONFIG_FILES([
 
 AC_OUTPUT
 
-awk -f configure_log.awk config.log							  > include/ulib/internal/config1.h
-awk -f configure_h.awk   include/ulib/internal/config.h > include/ulib/internal/config2.h
-cd include/ulib/internal
-cat   config2.h config1.h >> config.h
-rm -f config2.h config1.h
-cd ../../..
+if test -n "$AWK"; then
+  $AWK -f configure_log.awk config.log							> include/ulib/internal/config1.h
+  $AWK -f configure_h.awk   include/ulib/internal/config.h > include/ulib/internal/config2.h
+  cd include/ulib/internal
+  cat   config2.h config1.h >> config.h
+  rm -f config2.h config1.h
+  cd ../../..
+fi
 
 # Verify the integrity of the current configuration
 

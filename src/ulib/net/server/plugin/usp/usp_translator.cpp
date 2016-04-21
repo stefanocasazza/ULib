@@ -121,13 +121,12 @@ public:
             U_WARNING("Preprocessing %V failed", filename.rep);
             }
          }
-      
+
       const char* ptr;
       uint32_t i, n, size;
-      UString token, declaration, http_header(U_CAPACITY), buffer(U_CAPACITY),
-              bufname(100U), output(U_CAPACITY), output1(U_CAPACITY), xoutput(U_CAPACITY);
-      bool bgroup, binit = false, bend = false, bsighup = false, bfork = false, bcomment = false,
-           bvar = false, bform = false, test_if_html = false, is_html = false, bsession = false, bstorage = false, bparallelization = false;
+      UString token, declaration, http_header(U_CAPACITY), buffer(U_CAPACITY), bufname(100U), output(U_CAPACITY), output1(U_CAPACITY), xoutput(U_CAPACITY);
+      bool bgroup, binit = false, bend = false, bsighup = false, bfork = false, bcomment = false, bvar = false, bform = false, test_if_html = false, is_html = false,
+           bsession = false, bstorage = false, bparallelization = false;
 
       // Anything that is not enclosed in <!-- ... --> tags is assumed to be HTML
 
@@ -168,7 +167,7 @@ public:
 
                if (test_if_html == false)
                   {
-                   test_if_html  = true;
+                  test_if_html = true;
 
                   if (u_isHTML(token.data())) is_html = true;
                   }
@@ -189,9 +188,9 @@ public:
 
          if (t.next(token, &bgroup) == false) break;
 
-         U_INTERNAL_ASSERT(bgroup)
-
          U_INTERNAL_DUMP("token = %V", token.rep)
+
+         U_INTERNAL_ASSERT(bgroup)
 
          const char* directive = token.c_pointer(2); // "-#"...
 
@@ -199,13 +198,13 @@ public:
 
          if (strncmp(directive, U_CONSTANT_TO_PARAM("declaration")) == 0)
             {
-            U_INTERNAL_ASSERT_EQUALS((bool)declaration, false) // NB: <!--#declaration ... --> must be at the beginning...
+            U_ASSERT(declaration.empty()) // NB: <!--#declaration ... --> must be at the beginning...
 
             n = token.size() - U_CONSTANT_SIZE("declaration") - 2;
 
             declaration = UStringExt::trim(directive + U_CONSTANT_SIZE("declaration"), n);
 
-            binit   = (U_STRING_FIND(declaration, 0, "static void usp_init_")   != U_NOT_FOUND); // usp_init  (Server-wide hooks)...
+            binit   = (U_STRING_FIND(declaration, 0, "static void usp_init_")   != U_NOT_FOUND); // usp_init (Server-wide hooks)...
             bend    = (U_STRING_FIND(declaration, 0, "static void usp_end_")    != U_NOT_FOUND); // usp_end
             bsighup = (U_STRING_FIND(declaration, 0, "static void usp_sighup_") != U_NOT_FOUND); // usp_sighup
             bfork   = (U_STRING_FIND(declaration, 0, "static void usp_fork_")   != U_NOT_FOUND); // usp_fork
@@ -214,7 +213,7 @@ public:
             }
          else if (strncmp(directive, U_CONSTANT_TO_PARAM("header")) == 0)
             {
-            U_INTERNAL_ASSERT_EQUALS((bool)http_header, false)
+            U_ASSERT(http_header.empty())
 
             n = token.size() - U_CONSTANT_SIZE("header") - 2;
 
@@ -235,16 +234,14 @@ public:
                }
             else
                {
+               UString tmp, name;
+               UVector<UString> vec(token, "\t\n;");
+
                bvar = true;
 
                (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
-
                (void) output.append(token);
-
                (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
-
-               UString tmp, name;
-               UVector<UString> vec(token, "\t\n;");
 
                for (i = 0, n = vec.size(); i < n; ++i)
                   {
@@ -285,16 +282,14 @@ public:
                }
             else
                {
+               UString tmp, name;
+               UVector<UString> vec(token, "\t\n;");
+
                bvar = true;
 
                (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
-
                (void) output.append(token);
-
                (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
-
-               UString tmp, name;
-               UVector<UString> vec(token, "\t\n;");
 
                for (i = 0, n = vec.size(); i < n; ++i)
                   {
@@ -344,13 +339,7 @@ public:
 
                buffer.snprintf("\n\tUString %v = USP_FORM_VALUE(%u);\n\t", name.rep, i);
 
-               if (pos != U_NOT_FOUND)
-                  {
-                  ptr  = name.data();
-                  size = name.size();
-
-                  buffer.snprintf_add("\n\tif (%.*s.empty()) %.*s = U_STRING_FROM_CONSTANT(%.*s);\n\t", size, ptr, size, ptr, tmp.size() - pos - 2, tmp.c_pointer(pos + 1));  
-                  }
+               if (pos != U_NOT_FOUND) buffer.snprintf_add("\n\tif (%v.empty()) %v = U_STRING_FROM_CONSTANT(%.*s);\n\t", name.rep, name.rep, tmp.size() - pos - 2, tmp.c_pointer(pos + 1));  
 
                (void) output.append(buffer);
                }
@@ -465,18 +454,14 @@ public:
                token = UStringExt::trim(directive + U_CONSTANT_SIZE("xcode"), token.size() - U_CONSTANT_SIZE("xcode") - 2);
 
                (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t"));
-
                (void) xoutput.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
-
                (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t\n"));
                }
 
             if (n)
                {
                (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
-
                (void) output.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
-
                (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
                }
             }

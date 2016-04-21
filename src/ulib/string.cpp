@@ -853,7 +853,7 @@ void UStringRep::_release()
             {
             parent_destroy = this;
 
-            U_DUMP_OBJECT("DEAD OF SOURCE STRING WITH CHILD ALIVE - child of this", checkIfChild)
+            U_DUMP_OBJECT_WITH_CHECK("DEAD OF SOURCE STRING WITH CHILD ALIVE - child of this", checkIfChild)
             }
          else
             {

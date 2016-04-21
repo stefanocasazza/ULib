@@ -830,7 +830,7 @@ uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n
    unsigned char c;
    unsigned int offset = 0;
    char* restrict start_buffer = bp;
-   int i, j, line, remain, _remain = 16;
+   int i, j, k, line, remain, _remain = 16;
    bool prev_is_zero = false, print_nothing = false;
 
    static char bufzero[16];
@@ -863,7 +863,9 @@ uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n
             }
          }
 iteration:
-      (void) sprintf(bp, "%07X|", offset);
+      k = sprintf(bp, "%07X|", offset);
+
+      U_INTERNAL_ASSERT_EQUALS(k, 8)
 
       bp += 8;
 
@@ -907,7 +909,9 @@ iteration:
 
    if (print_nothing)
       {
-      (void) sprintf(bp, "%07X\n", offset);
+      k = sprintf(bp, "%07X\n", offset);
+
+      U_INTERNAL_ASSERT_EQUALS(k, 8)
 
       bp += 8;
       }

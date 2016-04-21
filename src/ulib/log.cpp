@@ -169,16 +169,16 @@ ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(
       UString name = UFile::getName();
       uint32_t len = u__strlen(dir_log_gz, __PRETTY_FUNCTION__), sz = name.size();
 
-      (void) memcpy(ptr, dir_log_gz, len);
+      u__memcpy(ptr, dir_log_gz, len, __PRETTY_FUNCTION__);
 
        ptr  += len;
       *ptr++ = '/';
 
       buf_path_compress->size_adjust(len + 1 + sz + len_suffix);
 
-      (void) memcpy(ptr, name.data(), sz);
-                    ptr            += sz;
-      (void) memcpy(ptr, suffix, len_suffix);
+      u__memcpy(ptr, name.data(), sz, __PRETTY_FUNCTION__);
+                ptr += sz;
+      u__memcpy(ptr, suffix, len_suffix, __PRETTY_FUNCTION__);
 
       index_path_compress = buf_path_compress->distance(ptr) + 1;
       }
@@ -612,11 +612,11 @@ void ULog::write(const struct iovec* iov, int n)
 
                UString data_to_write = UStringExt::deflate(UFile::map, file_ptr, 1);
 
-               (void) u__snprintf(buf_path_compress->c_pointer(index_path_compress), 17, "%4D");
+               char* ptr1 = buf_path_compress->c_pointer(index_path_compress);
 
-               U_ASSERT_EQUALS(UFile::access(buf_path_compress->data(), R_OK | W_OK), false)
+               ptr1[u__snprintf(ptr1, 17, "%4D")] = '.';
 
-               (void) UFile::writeTo(*buf_path_compress, data_to_write, false, false);
+               (void) UFile::writeTo(*buf_path_compress, data_to_write, O_RDWR | O_EXCL, false);
                }
 #        endif
 
@@ -1021,11 +1021,11 @@ void ULog::checkForLogRotateDataToWrite()
       {
       // there are previous data to write
 
-      (void) u__snprintf(buf_path_compress->c_pointer(index_path_compress), 17, "%4D");
+      char* ptr1 = buf_path_compress->c_pointer(index_path_compress);
 
-      U_ASSERT_EQUALS(UFile::access(buf_path_compress->data(), R_OK | W_OK), false)
+      ptr1[u__snprintf(ptr1, 17, "%4D")] = '.';
 
-      (void) UFile::writeTo(*buf_path_compress, (char*)ptr_log_data+sizeof(log_data), ptr_log_data->gzip_len, false, false);
+      (void) UFile::writeTo(*buf_path_compress, (char*)ptr_log_data+sizeof(log_data), ptr_log_data->gzip_len, O_RDWR | O_EXCL, false);
 
       ptr_log_data->gzip_len = 0;
       }

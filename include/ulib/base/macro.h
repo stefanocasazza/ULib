@@ -98,7 +98,7 @@
 #  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) \
           { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE",info) }
 
-#  define U_DEBUG(fmt,args...) u__printf(STDERR_FILENO, "%W%N%W: %WDEBUG: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET)
+#  define U_DEBUG(fmt,args...) u__printf(STDERR_FILENO, "%W%N%W: %WDEBUG: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET);
 #else
 #  define U_INTERNAL_ASSERT(expr)
 #  define U_INTERNAL_ASSERT_MINOR(a,b)
@@ -465,9 +465,9 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 /* Optimization if it is enough a resolution of one second */
 
 #ifdef ENABLE_THREAD
-#  define U_gettimeofday  { if (u_pthread_time == 0)    (void) gettimeofday(u_now, 0); }
+#  define U_gettimeofday  { if (u_pthread_time == 0) (void) gettimeofday(u_now, 0); }
 #else
-#  define U_gettimeofday                                (void) gettimeofday(u_now, 0);
+#  define U_gettimeofday                             (void) gettimeofday(u_now, 0);
 #endif
 
 /* To print size of class */

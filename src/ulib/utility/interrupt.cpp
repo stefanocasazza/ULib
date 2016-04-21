@@ -182,13 +182,11 @@ RETSIGTYPE UInterrupt::handlerInterrupt(int signo)
 
    U_MESSAGE("(pid %P) program interrupt - %Y", signo);
 
-#ifdef DEBUG
    if (signo == SIGBUS || //  7
        signo == SIGSEGV)  // 11 
       {
       u_debug_at_exit(); 
       }
-#endif
 
 // U_EXIT(-1);
 

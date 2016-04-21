@@ -52,11 +52,9 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
       {
       u_recursion = true;
 
-#  ifndef U_SERVER_CAPTIVE_PORTAL
       UError::stackDump();
 
       if (UError::callerDataDump) UError::callerDataDump();
-#  endif
 
 #  ifdef USE_LIBSSL
       ERR_print_errors_fp(stderr);
@@ -68,12 +66,11 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
           *cmd_on_exit)
          {
          char command[U_PATH_MAX];
+         uint32_t len = u__snprintf(command, sizeof(command), "%s %s %P %N", cmd_on_exit, u_progpath);
 
-         (void) u__snprintf(command, sizeof(command), "%s %s %P %N", cmd_on_exit, u_progpath);
+         U_INTERNAL_PRINT("command = %.*s", len, command)
 
-         U_INTERNAL_PRINT("command = %s", command)
-
-         if (u_is_tty) U_WARNING("EXEC_ON_EXIT<%Won%W>: COMMAND=%W%S%W\n", GREEN, YELLOW, CYAN, YELLOW, command);
+         if (u_is_tty) U_MESSAGE("EXEC_ON_EXIT<on>: COMMAND=%.*S", len, command);
 
          (void) system(command);
          }

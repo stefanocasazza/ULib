@@ -493,7 +493,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
          U_INTERNAL_ASSERT_EQUALS(length & U_1G_MASK, 0)
 
-         U_DEBUG("We are going to allocate (%u GB - %u bytes) MAP_HUGE_1GB - nfree = %u flags = %B", length / U_1G, length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB);
+         U_DEBUG("We are going to allocate (%u GB - %u bytes) MAP_HUGE_1GB - nfree = %u flags = %B", length / U_1G, length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB)
 
          ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB, -1, 0);
 
@@ -510,7 +510,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
       U_INTERNAL_ASSERT_EQUALS(length & U_2M_MASK, 0)
 
-      U_DEBUG("We are going to allocate (%u MB - %u bytes) MAP_HUGE_2MB - nfree = %u flags = %B", length / (1024U*1024U), length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB);
+      U_DEBUG("We are going to allocate (%u MB - %u bytes) MAP_HUGE_2MB - nfree = %u flags = %B", length / (1024U*1024U), length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB)
 
       ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB, -1, 0);
 
@@ -543,7 +543,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
    U_INTERNAL_ASSERT_EQUALS(*plength & U_PAGEMASK, 0)
 
-   U_DEBUG("We are going to allocate (%u KB - %u bytes) - nfree = %u flags = %B", *plength / 1024U, *plength, nfree, flags);
+   U_DEBUG("We are going to allocate (%u KB - %u bytes) - nfree = %u flags = %B", *plength / 1024U, *plength, nfree, flags)
 
    return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, PROT_READ | PROT_WRITE, flags, -1, 0);
 }
@@ -589,7 +589,7 @@ try_from_file_system:
 
       if (fd != -1)
          {
-         U_DEBUG("We are going to allocate from file system (%u KB - %u bytes)", *plength / 1024, *plength);
+         U_DEBUG("We are going to allocate from file system (%u KB - %u bytes)", *plength / 1024, *plength)
 
          _ptr = (fallocate(fd, *plength)
                      ? (char*)U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, fd, 0)
@@ -615,9 +615,9 @@ try_from_file_system:
       }
 
 #ifdef U_SERVER_CAPTIVE_PORTAL
-   U_DEBUG("We are going to malloc %u bytes (%u KB)", *plength, *plength / 1024);
+   _ptr = (char*) U_SYSCALL(malloc, "%u", *plength);
 
-   return (char*) U_SYSCALL(malloc, "%u", *plength);
+   return _ptr;
 #else
    U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
 
@@ -633,7 +633,7 @@ try_from_file_system:
                            "rss usage: %.2f MBytes",
                         rlimit_memalloc / (1024 * 1024),
                             (double)vsz / (1024.0 * 1024.0),
-                            (double)rss / (1024.0 * 1024.0));
+                            (double)rss / (1024.0 * 1024.0))
 #  endif
 
       nfree = rlimit_memalloc;
@@ -909,9 +909,9 @@ UString UFile::contentOf(const char* _pathname, int flags, bool bstat, const USt
    U_RETURN_STRING(content);
 }
 
-bool UFile::creatForWrite(bool append, bool bmkdirs)
+bool UFile::creatForWrite(int flags, bool bmkdirs)
 {
-   U_TRACE(1, "UFile::creatForWrite(%b,%b)", append, bmkdirs)
+   U_TRACE(1, "UFile::creatForWrite(%d,%b)", flags, bmkdirs)
 
    U_INTERNAL_ASSERT_POINTER(path_relativ)
 
@@ -921,8 +921,6 @@ bool UFile::creatForWrite(bool append, bool bmkdirs)
 
    if (esito == false)
       {
-      int flags = O_RDWR | (append ? O_APPEND : O_TRUNC);
-
       esito = creat(flags, PERM_FILE);
 
       if (esito == false &&
@@ -952,19 +950,19 @@ bool UFile::creatForWrite(bool append, bool bmkdirs)
    U_RETURN(esito);
 }
 
-bool UFile::write(const char* data, uint32_t sz, bool append, bool bmkdirs)
+bool UFile::write(const char* data, uint32_t sz, int flags, bool bmkdirs)
 {
-   U_TRACE(0, "UFile::write(%.*S,%u,%b,%b)", sz, data, sz, append, bmkdirs)
+   U_TRACE(0, "UFile::write(%.*S,%u,%d,%b)", sz, data, sz, flags, bmkdirs)
 
    bool esito = false;
 
-   if (creatForWrite(append, bmkdirs) &&
+   if (creatForWrite(flags, bmkdirs) &&
        sz)
       {
       if (sz <= PAGESIZE) esito = UFile::write(fd, data, sz);
       else
          {
-         uint32_t offset = (append ? size() : 0);
+         uint32_t offset = ((flags & O_APPEND) != 0 ? size() : 0);
 
          esito = fallocate(offset + sz);
 
@@ -990,11 +988,11 @@ bool UFile::write(const char* data, uint32_t sz, bool append, bool bmkdirs)
    U_RETURN(esito);
 }
 
-bool UFile::write(const struct iovec* iov, int n, bool append, bool bmkdirs)
+bool UFile::write(const struct iovec* iov, int n, int flags, bool bmkdirs)
 {
-   U_TRACE(0, "UFile::write(%p,%d,%b,%b)", iov, n, append, bmkdirs)
+   U_TRACE(0, "UFile::write(%p,%d,%d,%b)", iov, n, flags, bmkdirs)
 
-   if (creatForWrite(append, bmkdirs) &&
+   if (creatForWrite(flags, bmkdirs) &&
        writev(iov, n))
       {
       U_RETURN(true);
@@ -1003,41 +1001,41 @@ bool UFile::write(const struct iovec* iov, int n, bool append, bool bmkdirs)
    U_RETURN(false);
 }
 
-bool UFile::writeTo(const UString& path, const char* data, uint32_t sz, bool append, bool bmkdirs)
+bool UFile::writeTo(const UString& path, const char* data, uint32_t sz, int flags, bool bmkdirs)
 {
-   U_TRACE(0, "UFile::writeTo(%V,%.*S,%u,%b,%b)", path.rep, sz, data, sz, append, bmkdirs)
+   U_TRACE(0, "UFile::writeTo(%V,%.*S,%u,%d,%b)", path.rep, sz, data, sz, flags, bmkdirs)
 
    UFile tmp(path);
 
-   bool result = tmp.write(data, sz, append, bmkdirs);
+   bool result = tmp.write(data, sz, flags, bmkdirs);
 
    if (tmp.isOpen()) tmp.close();
 
    U_RETURN(result);
 }
 
-bool UFile::writeTo(const UString& path, const struct iovec* iov, int n, bool append, bool bmkdirs)
+bool UFile::writeTo(const UString& path, const struct iovec* iov, int n, int flags, bool bmkdirs)
 {
-   U_TRACE(0, "UFile::writeTo(%V,%p,%d,%b,%b)", path.rep, iov, n, append, bmkdirs)
+   U_TRACE(0, "UFile::writeTo(%V,%p,%d,%d,%b)", path.rep, iov, n, flags, bmkdirs)
 
    UFile tmp(path);
 
-   bool result = tmp.write(iov, n, append, bmkdirs);
+   bool result = tmp.write(iov, n, flags, bmkdirs);
 
    if (tmp.isOpen()) tmp.close();
 
    U_RETURN(result);
 }
 
-bool UFile::writeToTmp(const char* data, uint32_t sz, bool append, const char* format, ...)
+bool UFile::writeToTmp(const char* data, uint32_t sz, int flags, const char* format, ...)
 {
-   U_TRACE(0+256, "UFile::writeToTmp(%.*S,%u,%b,%S)", sz, data, sz, append, format)
+   U_TRACE(0+256, "UFile::writeToTmp(%.*S,%u,%d,%S)", sz, data, sz, flags, format)
 
    bool result = false;
 
    if (sz)
       {
-      UString path((void*)U_CONSTANT_TO_PARAM("/tmp/"));
+      UString path((unsigned char*)U_CONSTANT_TO_PARAM("/tmp/"), 200U);
 
       va_list argp;
       va_start(argp, format);
@@ -1046,21 +1044,21 @@ bool UFile::writeToTmp(const char* data, uint32_t sz, bool append, const char* f
 
       va_end(argp);
 
-      result = UFile::writeTo(path, data, sz, append, false);
+      result = UFile::writeTo(path, data, sz, flags, false);
       }
 
    U_RETURN(result);
 }
 
-bool UFile::writeToTmp(const struct iovec* iov, int n, bool append, const char* format, ...)
+bool UFile::writeToTmp(const struct iovec* iov, int n, int flags, const char* format, ...)
 {
-   U_TRACE(0+256, "UFile::writeToTmp(%p,%d,%b,%S)", iov, n, append, format)
+   U_TRACE(0+256, "UFile::writeToTmp(%p,%d,%d,%S)", iov, n, flags, format)
 
    bool result = false;
 
    if (n)
       {
-      UString path((void*)U_CONSTANT_TO_PARAM("/tmp/"));
+      UString path((unsigned char*)U_CONSTANT_TO_PARAM("/tmp/"), 200U);
 
       va_list argp;
       va_start(argp, format);
@@ -1069,7 +1067,7 @@ bool UFile::writeToTmp(const struct iovec* iov, int n, bool append, const char* 
 
       va_end(argp);
 
-      result = UFile::writeTo(path, iov, n, append, false);
+      result = UFile::writeTo(path, iov, n, flags, false);
       }
 
    U_RETURN(result);

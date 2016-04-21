@@ -19,7 +19,9 @@
 #define UINT32_MAX (4294967295U)
 #endif
 
+#define HTTP2_MAX_WINDOW_SIZE (2147483647U-1)
 #define HTTP2_HEADER_TABLE_OFFSET 62
+#define HTTP2_DEFAULT_WINDOW_SIZE 65535 
 
 int                           UHTTP2::nerror;
 bool                          UHTTP2::continue100;
@@ -260,8 +262,6 @@ bool UHTTP2::updateSetting(unsigned char* ptr, uint32_t len)
 
    U_INTERNAL_ASSERT_POINTER(pConnection)
 
-   uint32_t old_initial_window_size = pConnection->peer_settings.initial_window_size;
-
    for (; len >= 6; len -= 6, ptr += 6)
       {
       uint32_t value = ntohl(*(uint32_t*)(ptr+2));
@@ -283,19 +283,9 @@ bool UHTTP2::updateSetting(unsigned char* ptr, uint32_t len)
                      pConnection->peer_settings.header_table_size,   pConnection->peer_settings.enable_push,    pConnection->peer_settings.max_concurrent_streams,
                      pConnection->peer_settings.initial_window_size, pConnection->peer_settings.max_frame_size, pConnection->peer_settings.max_header_list_size)
 
-   if (len == 0)
-      {
-      if (pConnection->peer_settings.initial_window_size)
-         {
-         pConnection->inp_window += pConnection->peer_settings.initial_window_size - old_initial_window_size; // receiver flow control window
+   if (len) U_RETURN(false);
 
-         U_INTERNAL_DUMP("old_initial_window_size = %u pConnection->inp_window = %d", old_initial_window_size, pConnection->inp_window)
-         }
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
+   U_RETURN(true);
 }
 
 unsigned char* UHTTP2::hpackDecodeInt(unsigned char* src, unsigned char* src_end, int32_t* pvalue, uint8_t prefix_max)
@@ -495,7 +485,7 @@ void UHTTP2::addHpackDynTblEntry(HpackDynamicTable* table, const UString& name, 
 
       if (size_add > table->hpack_capacity)
          {
-         U_DEBUG("HTTP decompressor literal with index not inserted due to size (%u > %u)", size_add, table->hpack_capacity);
+         U_DEBUG("HTTP decompressor literal with index not inserted due to size (%u > %u)", size_add, table->hpack_capacity)
 
          U_SRV_LOG("WARNING: HTTP decompressor literal with index not inserted due to size (%u > %u)", size_add, table->hpack_capacity);
 
@@ -739,7 +729,7 @@ void UHTTP2::decodeHeaders(UHashMap<UString>* table, HpackDynamicTable* dyntbl, 
 
       index = *ptr;
 
-      U_INTERNAL_DUMP("index = (%X %u) %B", index, index, index)
+      U_INTERNAL_DUMP("index = (%u 0x%X) %B", index, index, index)
 
       if (index & 0x80) // (128: 10000000) - indexed header field representation
          {
@@ -747,16 +737,30 @@ void UHTTP2::decodeHeaders(UHashMap<UString>* table, HpackDynamicTable* dyntbl, 
 
          ptr = hpackDecodeInt(ptr, endptr, &index, (1<<7)-1); // (127: 01111111)
 
-         goto check;
+         U_INTERNAL_DUMP("index = %d value_is_indexed = %b binsert_dynamic_table = %b", index, value_is_indexed, binsert_dynamic_table)
+
+         U_INTERNAL_ASSERT_MAJOR(index, 0)
+
+         goto check2;
          }
 
-      if (index & 0x40) // (64: 01000000) - literal header field with incremental indexing representation 
+      /**
+       * Literal Header Field Representation
+       *
+       * header field names are provided either as a literal or by reference to an existing table entry, either from the static table or the dynamic table
+       */
+
+      if (index & 0x40) // (64: 01000000) - literal header field with incremental indexing
          {
-         binsert_dynamic_table = true; // incremental indexing implicitly adds a row to the header dynamic table
+         binsert_dynamic_table = true; // incremental indexing implicitly adds a new entry into the dynamic table
 
          ptr = hpackDecodeInt(ptr, endptr, &index, (1<<6)-1); // (63: 00111111)
 
-         goto check;
+         U_INTERNAL_DUMP("index = %d value_is_indexed = %b binsert_dynamic_table = %b", index, value_is_indexed, binsert_dynamic_table)
+
+         U_INTERNAL_ASSERT(index >= 0)
+
+         goto check1;
          }
 
       if (index & 0x20) // (32: 00100000) - context update
@@ -775,50 +779,52 @@ void UHTTP2::decodeHeaders(UHashMap<UString>* table, HpackDynamicTable* dyntbl, 
          continue;
          }
 
+      /**
+       * Literal Header Field without Indexing
+       *
+       * a literal header field without indexing representation results in appending a header field to the decoded header list without altering the dynamic table
+       */
+
       ptr = hpackDecodeInt(ptr, endptr, &index, (1<<4)-1); // (15: 00001111)
 
-check:
       U_INTERNAL_DUMP("index = %d value_is_indexed = %b binsert_dynamic_table = %b", index, value_is_indexed, binsert_dynamic_table)
 
-      if (index <= 0)
+      U_INTERNAL_ASSERT(index >= 0)
+
+check1:
+      if (index == 0) // not-existing name
          {
-         if (index == 0) // not-existing name
+         U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+
+         ptr = hpackDecodeString(ptr, endptr, &name);
+
+         if (name)
             {
-            U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+            ptr = hpackDecodeString(ptr, endptr, &value);
 
-            ptr = hpackDecodeString(ptr, endptr, &name);
-
-            if (name)
+            if (value)
                {
-               ptr = hpackDecodeString(ptr, endptr, &value);
+               table->hash = name.hash();
 
-               if (value)
-                  {
-                  table->hash = name.hash();
-
-                  goto next;
-                  }
+               goto next;
                }
             }
 
-error:   nerror = COMPRESSION_ERROR;
-
-         return;
+         goto error;
          }
 
-      // determine the header
-
+check2:
       if (index >= HTTP2_HEADER_TABLE_OFFSET)
          {
          index -= HTTP2_HEADER_TABLE_OFFSET;
 
          U_INTERNAL_DUMP("index = %d dyntbl->num_entries = %u", index, dyntbl->num_entries)
 
+         value_is_indexed      =
+         binsert_dynamic_table = false;
+
          if (index < (int32_t)dyntbl->num_entries)
             {
-            value_is_indexed      =
-            binsert_dynamic_table = false;
-
             entry = getHpackDynTblEntry(dyntbl, index);
 
              name = *(entry->name);
@@ -829,11 +835,16 @@ error:   nerror = COMPRESSION_ERROR;
             goto insert;
             }
 
+         U_DUMP_CONTAINER(*dyntbl)
+         U_DUMP_OBJECT_TO_TMP(*dyntbl, "dtable.hpack")
+
 #     if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-         saveHpackDynamicTable(dyntbl);
+         continue;
 #     endif
 
-         goto error;
+error:   nerror = COMPRESSION_ERROR;
+
+         return;
          }
 
       // existing name
@@ -1218,7 +1229,7 @@ case_51: // referer
 
 case_57: // transfer-encoding
 
-      U_DEBUG("Transfer-Encoding is not supported in HTTP/2");
+      U_DEBUG("Transfer-Encoding is not supported in HTTP/2")
 
       U_SRV_LOG("WARNING: Transfer-Encoding is not supported in HTTP/2");
 
@@ -1296,10 +1307,12 @@ void UHTTP2::openStream()
    U_TRACE_NO_PARAM(0, "UHTTP2::openStream()")
 
    U_INTERNAL_ASSERT_POINTER(pStream)
-   U_INTERNAL_ASSERT(pConnection->max_open_stream_id <= (uint32_t)frame.stream_id)
 
-   pStream->id                     =
-   pConnection->max_open_stream_id = frame.stream_id;
+   pStream->id = frame.stream_id;
+
+   U_INTERNAL_DUMP("pConnection->max_processed_stream_id = %u pStream->id = %u", pConnection->max_processed_stream_id, pStream->id)
+
+   if (pConnection->max_processed_stream_id < pStream->id) pConnection->max_processed_stream_id = pStream->id;
 
 #ifdef DEBUG
    pConnection->ddyntbl.hpack_capacity     =
@@ -1312,7 +1325,7 @@ void UHTTP2::openStream()
 
    pStream->state = ((frame.flags & FLAG_END_STREAM) != 0 ? STREAM_STATE_HALF_CLOSED : STREAM_STATE_OPEN);
 
-   U_DUMP("pStream->id = %d pStream->state = (%d, %s)", pStream->id, pStream->state, getStreamStatusDescription())
+   U_DUMP("pStream->state = (%d, %s)", pStream->state, getStreamStatusDescription())
 }
 
 void UHTTP2::readFrame()
@@ -1338,7 +1351,9 @@ loop:
       if (settings_ack &&
           U_http2_settings_len)
          {
-         U_DEBUG("HTTP2 upgrade: User-Agent = %.*S", U_HTTP_USER_AGENT_TO_TRACE);
+         U_DEBUG("HTTP2 upgrade: User-Agent = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+
+         U_INTERNAL_ASSERT(pConnection->max_open_stream_id <= frame.stream_id)
 
          openStream();
 
@@ -1381,7 +1396,7 @@ loop:
    U_DUMP("frame { length = %d stream_id = %d type = (%d, %s) flags = %d %B } = %#.*S", frame.length,
            frame.stream_id, frame.type, getFrameTypeDescription(frame.type), frame.flags, frame.flags, frame.length, ptr + HTTP2_FRAME_HEADER_SIZE)
 
-   U_INTERNAL_ASSERT_MINOR(frame.length, (int32_t)settings.max_frame_size)
+   U_INTERNAL_ASSERT_MINOR(frame.length, settings.max_frame_size)
 
    len = UClientImage_Base::rbuffer->size() - (UClientImage_Base::rstart += HTTP2_FRAME_HEADER_SIZE) - frame.length;
 
@@ -1414,15 +1429,26 @@ loop:
 
       U_INTERNAL_DUMP("pConnection->out_window = %d window_size_increment = %u", pConnection->out_window, window_size_increment)
 
+#  ifdef DEBUG
       if (frame.length != 4 ||
           window_size_increment == 0)
          {
-         nerror = PROTOCOL_ERROR;
+         nerror = FRAME_SIZE_ERROR;
 
          goto err;
          }
+#  endif
 
       pConnection->out_window += window_size_increment;
+
+#  ifdef DEBUG
+      if ((uint32_t)pConnection->out_window > HTTP2_MAX_WINDOW_SIZE)
+         {
+         nerror = FLOW_CONTROL_ERROR;
+
+         goto err;
+         }
+#  endif
 
       goto loop;
       }
@@ -1435,7 +1461,7 @@ loop:
 
          const char* descr = getFrameErrorCodeDescription(error);
 
-         U_DEBUG("Received GOAWAY frame with error (%u, %s)", error, descr);
+         U_DEBUG("Received GOAWAY frame with error (%u, %s)", error, descr)
 
          U_SRV_LOG("WARNING: Received GOAWAY frame with error (%u, %s)", error, descr);
 
@@ -1455,7 +1481,7 @@ loop:
 
          if (frame.flags == 0)
             {
-            U_DEBUG("Received PING frame with data (%#.8S)", frame.payload);
+            U_DEBUG("Received PING frame with data (%#.8S)", frame.payload)
 
             U_SRV_LOG("WARNING: Received PING frame with data (%#.8S)", frame.payload);
 
@@ -1495,12 +1521,16 @@ loop:
 
             pConnection->out_window = settings.initial_window_size; // sender flow control window
 
-            U_INTERNAL_DUMP("pConnection->out_window = %d", pConnection->out_window)
+            U_INTERNAL_DUMP("pConnection->out_window = %d pConnection->inp_window = %d", pConnection->out_window, pConnection->inp_window)
 
             if (UClientImage_Base::rbuffer->size() == UClientImage_Base::rstart) return;
             }
          else
             {
+            uint32_t old_initial_window_size = pConnection->peer_settings.initial_window_size;
+
+            U_INTERNAL_DUMP("old_initial_window_size = %u settings_ack = %b", old_initial_window_size, settings_ack)
+
             if (updateSetting(frame.payload, frame.length) == false ||
                 USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM(HTTP2_SETTINGS_ACK), UServer_Base::timeoutMS) != U_CONSTANT_SIZE(HTTP2_SETTINGS_ACK))
                {
@@ -1508,6 +1538,21 @@ loop:
 
                goto err;
                }
+
+            // receiver flow control window
+
+            if (pConnection->peer_settings.initial_window_size) pConnection->inp_window += pConnection->peer_settings.initial_window_size - old_initial_window_size;
+            else
+               {
+               if (settings_ack == false)
+                  {
+                  U_INTERNAL_ASSERT_EQUALS(old_initial_window_size, 0)
+
+                  pConnection->inp_window = HTTP2_DEFAULT_WINDOW_SIZE;
+                  }
+               }
+
+            U_INTERNAL_DUMP("pConnection->inp_window = %d", pConnection->inp_window)
 
             HpackDynamicTable* dyntbl = &(pConnection->odyntbl);
 
@@ -1549,27 +1594,7 @@ loop:
       return;
       }
 
-   U_INTERNAL_DUMP("pStream->id = %d", pStream->id)
-
-   if (pStream->id != (uint32_t)frame.stream_id)
-      {
-      U_INTERNAL_DUMP("pConnection->max_open_stream_id = %u", pConnection->max_open_stream_id)
-
-      if ((uint32_t)frame.stream_id <= pConnection->max_open_stream_id)
-         {
-         for (Stream* pStreamEnd = (pStream = pConnection->streams) + 100; pStream < pStreamEnd; ++pStream)
-            {
-            if (pStream->id == (uint32_t)frame.stream_id) goto next;
-            }
-         }
-
-      nerror = FLOW_CONTROL_ERROR;
-
-      goto err;
-      }
-
-next:
-   if ((frame.flags & FLAG_END_STREAM) != 0) pStream->state = STREAM_STATE_HALF_CLOSED;
+   U_INTERNAL_DUMP("pStream->id = %u", pStream->id)
 
    if (frame.type == RST_STREAM)
       {
@@ -1579,16 +1604,30 @@ next:
 
       const char* descr = getFrameErrorCodeDescription(error);
 
-      U_DEBUG("Received RST_STREAM frame with error (%u, %s)", error, descr);
+      U_DEBUG("Received RST_STREAM frame for stream %u with error (%u, %s)", frame.stream_id, error, descr)
 
-      U_SRV_LOG("WARNING: Received RST_STREAM frame with error (%u, %s)", error, descr);
+      U_SRV_LOG("WARNING: Received RST_STREAM frame for stream %u with error (%u, %s)", frame.stream_id, error, descr);
 
-      U_INTERNAL_ASSERT_EQUALS(pStream->state, STREAM_STATE_HALF_CLOSED)
+      if (pStream->id == frame.stream_id ||
+          setStream())
+         {
+         U_INTERNAL_ASSERT_EQUALS(pStream->state, STREAM_STATE_HALF_CLOSED)
 
-      pStream->state = STREAM_STATE_CLOSED;
+         pStream->state = STREAM_STATE_CLOSED;
+         }
 
       return;
       }
+
+   if (pStream->id != frame.stream_id &&
+       setStream() == false)
+      {
+      nerror = PROTOCOL_ERROR;
+
+      goto err;
+      }
+
+   if ((frame.flags & FLAG_END_STREAM) != 0) pStream->state = STREAM_STATE_HALF_CLOSED;
 
    if (frame.type == DATA)
       {
@@ -1613,7 +1652,7 @@ void UHTTP2::manageHeaders()
 {
    U_TRACE_NO_PARAM(0, "UHTTP2::manageHeaders()")
 
-   int32_t padlen;
+   uint32_t padlen;
    unsigned char* ptr;
    unsigned char* endptr = (ptr = frame.payload) + frame.length;
 
@@ -1630,7 +1669,7 @@ void UHTTP2::manageHeaders()
       {
       padlen = *ptr++;
 
-      U_INTERNAL_DUMP("padlen = %d", padlen)
+      U_INTERNAL_DUMP("padlen = %u", padlen)
 
 #  ifdef DEBUG
       if (frame.length < padlen)
@@ -1717,10 +1756,10 @@ void UHTTP2::manageData()
 
    // Send Window Update if current window size is not sufficient
 
-   U_DUMP("pStream->id = %d pStream->state = (%d, %s) pConnection->inp_window = %d", pStream->id, pStream->state, getStreamStatusDescription(), pConnection->inp_window)
+   U_DUMP("pStream->id = %u pStream->state = (%d, %s) pConnection->inp_window = %d frame.length = %u",
+           pStream->id,     pStream->state, getStreamStatusDescription(), pConnection->inp_window, frame.length)
 
-   if (pConnection->inp_window > frame.length) pConnection->inp_window -= frame.length;
-   else
+   if (pConnection->inp_window <= (int32_t)frame.length)
       {
       char buffer[HTTP2_FRAME_HEADER_SIZE+4] = { 0, 0, 4,       // frame size
                                                  WINDOW_UPDATE, // header frame
@@ -1730,13 +1769,8 @@ void UHTTP2::manageData()
 
       char* ptr = buffer;
 
-      pConnection->inp_window += U_http_info.clength;
-
-      U_INTERNAL_DUMP("pConnection->inp_window = %d", pConnection->inp_window)
-
-      *(uint32_t*)(ptr+9) = htonl(pConnection->inp_window);
-
-   // ptr[9] &= ~(0x01 << 7);
+      *(uint32_t*)(ptr+9)  = htonl(HTTP2_MAX_WINDOW_SIZE - pConnection->inp_window);
+   //              ptr[9] &= ~(0x01 << 7);
 
       if (USocketExt::write(UServer_Base::csocket, buffer, sizeof(buffer), UServer_Base::timeoutMS) != sizeof(buffer))
          {
@@ -1744,16 +1778,20 @@ void UHTTP2::manageData()
 
          return;
          }
+
+      pConnection->inp_window = HTTP2_MAX_WINDOW_SIZE;
       }
+
+   pConnection->inp_window -= frame.length;
 
    unsigned char* ptr = frame.payload;
 
    if ((frame.flags & FLAG_PADDED) != 0)
       {
-      int32_t padlen = *ptr;
+      uint32_t padlen = *ptr;
 
 #  ifdef DEBUG
-      U_INTERNAL_DUMP("frame.length = %u padlen = %d", frame.length, padlen)
+      U_INTERNAL_DUMP("frame.length = %u padlen = %u", frame.length, padlen)
 
       if (frame.length < padlen)
          {
@@ -1813,7 +1851,7 @@ void UHTTP2::sendGoAway()
 
    const char* descr = getFrameErrorCodeDescription(nerror);
 
-   U_DEBUG("Sent GOAWAY frame with error (%u, %s)", nerror, descr);
+   U_DEBUG("Sent GOAWAY frame with error (%u, %s)", nerror, descr)
 
    U_SRV_LOG("WARNING: Sent GOAWAY frame with error (%u, %s)", nerror, descr);
 
@@ -1895,48 +1933,45 @@ int32_t UHTTP2::getIndexStaticTable(const UString& key)
    U_RETURN(index);
 }
 
-unsigned char* UHTTP2::hpackEncodeHeader(unsigned char* dst, HpackDynamicTable* dyntbl, UVector<UString>& vec, UString& key, const UString& value, bool bfirst)
+unsigned char* UHTTP2::hpackEncodeHeader(unsigned char* dst, HpackDynamicTable* dyntbl, UString& key, const UString& value, UVector<UString>* pvec)
 {
-   U_TRACE(0, "UHTTP2::hpackEncodeHeader(%p,%p,%p,%V,%V,%b)", dst, dyntbl, &vec, key.rep, value.rep, bfirst)
+   U_TRACE(0, "UHTTP2::hpackEncodeHeader(%p,%p,%V,%V,%p)", dst, dyntbl, key.rep, value.rep, pvec)
 
    U_INTERNAL_ASSERT_EQUALS(u_isBinary((unsigned char*)U_STRING_TO_PARAM(key)), false)
    U_INTERNAL_ASSERT_EQUALS(u_isBinary((unsigned char*)U_STRING_TO_PARAM(value)), false)
 
    int32_t index = getIndexStaticTable(key);
 
-   if (index < 0) // literal header field with incremental indexing representation
+   if (index < 0) // literal header field with incremental indexing
       {
       U_INTERNAL_ASSERT_DIFFERS(index, -1)
 
-      if (bfirst == false)
+      if (pvec)
          {
-         vec.push(key);
-         vec.push(value);
+         pvec->push(key);
+         pvec->push(value);
 
          return dst;
          }
 
       *dst = 0x40;
-
-      /*
-      if (index == -1) dst = hpackEncodeString(++dst, U_STRING_TO_PARAM(key)); // new name
-      else
-      */
-      dst = hpackEncodeInt(dst, -index, (1<<6)-1); // indexed name
+       dst = hpackEncodeInt(dst, -index, (1<<6)-1);
 
       addHpackDynTblEntry(dyntbl, key, value);
       }
-   else if (index) // literal header field without indexing - indexed name
+   else
       {
-      *dst = 0x10;
-       dst = hpackEncodeInt(dst, index, (1<<4)-1);
-      }
-   else // literal header field without indexing - new name
-      {
-      if (u__isupper(key.c_char(0))) key = UStringExt::tolower(key);
+      // literal header field without indexing
 
-      *dst = 0x00;
-       dst = hpackEncodeString(++dst, U_STRING_TO_PARAM(key));
+      *dst = 0x10;
+
+      if (index) dst = hpackEncodeInt(dst, index, (1<<4)-1);
+      else
+         {
+         if (u__isupper(key.c_char(0))) key = UStringExt::tolower(key);
+
+         dst = hpackEncodeString(++dst, U_STRING_TO_PARAM(key));
+         }
       }
 
    return hpackEncodeString(dst, U_STRING_TO_PARAM(value));
@@ -1968,7 +2003,7 @@ void UHTTP2::handlerResponse()
          {
          // TODO: we must wait for a Window Update frame if current window size is not sufficient (we need something like a pending data frame to write)...
 
-         U_DEBUG("Current window size %d is not sufficient for data size %u", pConnection->out_window+sz3, sz3);
+         U_DEBUG("Current window size %d is not sufficient for data size %u", pConnection->out_window+sz3, sz3)
 
          U_SRV_LOG("WARNING: Current window size %d is not sufficient for data size %u", pConnection->out_window+sz3, sz3);
          }
@@ -2057,7 +2092,7 @@ void UHTTP2::handlerResponse()
     * -------------------------------------------------
     */
 
-#if defined(U_LINUX) && defined(ENABLE_THREAD) && !defined(U_LOG_ENABLE) && !defined(USE_LIBZ)
+#if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
    U_INTERNAL_ASSERT_POINTER(u_pthread_time)
    U_INTERNAL_ASSERT_EQUALS(UClientImage_Base::iov_vec[1].iov_base, ULog::ptr_shared_date->date3)
 #else
@@ -2071,12 +2106,7 @@ void UHTTP2::handlerResponse()
    U_INTERNAL_DUMP("num_entries = %u entry_capacity = %u entry_start_index = %u hpack_size = %u hpack_capacity = %u hpack_max_capacity = %u",
                      dyntbl->num_entries, dyntbl->entry_capacity, dyntbl->entry_start_index, dyntbl->hpack_size, dyntbl->hpack_capacity, dyntbl->hpack_max_capacity)
 
-   if (bfirst == false)
-      {
-      vdyntbl.push(*UString::str_server);
-      vdyntbl.push(*UString::str_ULib);
-      }
-   else
+   if (bfirst)
       {
       /**
        * -------------------------------------------------
@@ -2134,7 +2164,7 @@ void UHTTP2::handlerResponse()
          pos = row.find_first_of(':');
 
          key = row.substr(0U, pos);
-         dst = hpackEncodeHeader(dst, dyntbl, vdyntbl, key, row.substr(pos+2), bfirst); 
+         dst = hpackEncodeHeader(dst, dyntbl, key, row.substr(pos+2), bfirst ? 0 : &vdyntbl); 
          }
       }
    else // content-length: 0
@@ -2156,16 +2186,21 @@ void UHTTP2::handlerResponse()
    if (bfirst == false)
       {
       UString key;
-      bool bdate = false;
+      bool bdate   = false,
+           bserver = false;
 
-      for (uint32_t index = dyntbl->entry_start_index, e = dyntbl->num_entries; e != 0; --e)
+      U_DUMP_CONTAINER(*dyntbl)
+
+      for (uint32_t i = dyntbl->entry_start_index, e = dyntbl->num_entries; e != 0; --e)
          {
-         HpackHeaderTableEntry* entry = dyntbl->entries + index;
-         const UString* pname         = entry->name;
-         const UString* pvalue        = entry->value;
+         HpackHeaderTableEntry* entry = dyntbl->entries + i;
 
-         U_INTERNAL_DUMP("entry[%u]->name = %V entry[%u]->value = %V", index - dyntbl->entry_start_index, pname->rep,
-                                                                       index - dyntbl->entry_start_index, pvalue->rep)
+         const UString* pname  = entry->name;
+         const UString* pvalue = entry->value;
+
+         uint32_t index = i - dyntbl->entry_start_index;
+
+         U_INTERNAL_DUMP("entry[%u]->name = %V entry[%u]->value = %V", index, pname->rep, index, pvalue->rep)
 
          if (bdate == false &&
              pname->equal(*UString::str_date))
@@ -2178,52 +2213,60 @@ void UHTTP2::handlerResponse()
             if (u_get_unalignedp64(ptr1) == u_get_unalignedp64(ptr2))
                {
                *dst = 0x80;
-                dst = hpackEncodeInt(dst, HTTP2_HEADER_TABLE_OFFSET + index - dyntbl->entry_start_index, (1<<7)-1);
+                dst = hpackEncodeInt(dst, HTTP2_HEADER_TABLE_OFFSET+index, (1<<7)-1);
                }
             else
                {
                /**
-                * -------------------------------------------------
-                * *dst = 0x40;
-                *  dst = hpackEncodeInt(dst, 33, (1<<6)-1);
-                * -------------------------------------------------
+                * Literal Header Field without Indexing
                 */
 
-               *dst++ = 0x61;
-                dst   = hpackEncodeString(dst, date.data(), 29); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
+               *dst = 0x10;
+                dst = hpackEncodeInt(dst, 33, (1<<4)-1);
+                dst = hpackEncodeString(dst, date.data(), 29); // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
                }
+            }
+         else if (bserver == false &&
+                  pname->equal(*UString::str_server))
+            {
+            bserver = true;
+
+            *dst = 0x80;
+             dst = hpackEncodeInt(dst, HTTP2_HEADER_TABLE_OFFSET+index, (1<<7)-1);
             }
          else
             {
-            for (int32_t i = 0, n = vdyntbl.size(); i < n; i += 2)
+            U_DUMP_CONTAINER(vdyntbl)
+
+            for (int32_t j = 0, n = vdyntbl.size(); j < n; j += 2)
                {
-               key = vdyntbl[i];
+               key = vdyntbl[j];
 
                U_INTERNAL_DUMP("key = %V", key.rep)
 
                if (pname->equal(key))
                   {
 #              ifdef DEBUG
-                  UString value = vdyntbl[i+1];
+                  UString value = vdyntbl[j+1];
 
                   U_INTERNAL_DUMP("value = %V", value.rep)
 
                   U_INTERNAL_ASSERT_EQUALS(*pvalue, value)
-                  U_ASSERT_EQUALS(*(getHpackDynTblEntry(dyntbl, index - dyntbl->entry_start_index)->name),    key)
-                  U_ASSERT_EQUALS(*(getHpackDynTblEntry(dyntbl, index - dyntbl->entry_start_index)->value), value)
+                  U_ASSERT_EQUALS(*(getHpackDynTblEntry(dyntbl, index)->name),    key)
+                  U_ASSERT_EQUALS(*(getHpackDynTblEntry(dyntbl, index)->value), value)
 #              endif
 
-                  *dst = 0x80;
-                   dst = hpackEncodeInt(dst, HTTP2_HEADER_TABLE_OFFSET + index - dyntbl->entry_start_index, (1<<7)-1);
+                  vdyntbl.erase(j, j+2);
 
-                  vdyntbl.erase(i, i+2);
+                  *dst = 0x80;
+                   dst = hpackEncodeInt(dst, HTTP2_HEADER_TABLE_OFFSET+index, (1<<7)-1);
 
                   break;
                   }
                }
             }
 
-         if (++index == dyntbl->entry_capacity) index = 0;
+         if (++i == dyntbl->entry_capacity) i = 0;
          }
 
       U_DUMP_CONTAINER(vdyntbl)
@@ -2231,7 +2274,7 @@ void UHTTP2::handlerResponse()
       for (int32_t i = 0, n = vdyntbl.size(); i < n; i += 2)
          {
          key = vdyntbl[i];
-         dst = hpackEncodeHeader(dst, dyntbl, vdyntbl, key, vdyntbl[i+1], true); 
+         dst = hpackEncodeHeader(dst, dyntbl, key, vdyntbl[i+1]); 
          }
       }
 
@@ -2458,6 +2501,8 @@ int UHTTP2::handlerRequest()
 
       UBase64::decodeUrl(upgrade_settings, U_http2_settings_len, buffer_settings);
 
+      U_INTERNAL_ASSERT_EQUALS(settings_ack, false)
+
       if (buffer_settings.empty() ||
           updateSetting((unsigned char*)U_STRING_TO_PARAM(buffer_settings)) == false)
          {
@@ -2545,7 +2590,7 @@ loop:
 
    if (nerror == NO_ERROR)
       {
-      U_INTERNAL_DUMP("settings_ack = %b U_http_method_type = %d pStream->state = %u", settings_ack, U_http_method_type, pStream->state)
+      U_DUMP("settings_ack = %b U_http_method_type = %d pStream->state = (%d, %s)", settings_ack, U_http_method_type, pStream->state, getStreamStatusDescription())
 
       if (settings_ack == false || // we wait for SETTINGS ack...
           pStream->state == STREAM_STATE_IDLE)
@@ -2555,12 +2600,6 @@ loop:
 
       if (frame.type != GOAWAY)
          {
-         U_INTERNAL_DUMP("pConnection->max_processed_stream_id = %u pStream->id = %u", pConnection->max_processed_stream_id, pStream->id)
-
-         if (pConnection->max_processed_stream_id < pStream->id) pConnection->max_processed_stream_id = pStream->id;
-
-         if (frame.type == RST_STREAM) goto next;
-
          if (U_http_method_type == 0 ||
              U_http_method_type == HTTP_OPTIONS)
             {
@@ -2587,7 +2626,6 @@ loop:
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
-next:
    if (UServer_Base::csocket->isOpen())
       {
       sendGoAway();
@@ -2741,6 +2779,8 @@ ostream& operator<<(ostream& _os, const UHTTP2::HpackDynamicTable& v)
       entry->value->write(_os);
 
       _os.put('\n');
+
+      if (++index == v.entry_capacity) index = 0;
       }
 
    _os.put(']');

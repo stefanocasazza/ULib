@@ -194,7 +194,7 @@ void UCommand::setFileArgument()
       {
       U_INTERNAL_DUMP("argv_exec[%d] = %S", i, argv_exec[i])
 
-      if (strncmp(argv_exec[i], U_CONSTANT_TO_PARAM("$FILE")) == 0)
+      if (u_get_unalignedp32(argv_exec[i]) == U_MULTICHAR_CONSTANT32('$','F','I','L'))
          {
          nfile = i;
 
@@ -479,9 +479,13 @@ bool UCommand::executeAndWait(UString* input, int fd_stdin, int fd_stderr)
 {
    U_TRACE(0, "UCommand::executeAndWait(%p,%d,%d)", input, fd_stdin, fd_stderr)
 
-   bool result = execute(input, 0, fd_stdin, fd_stderr) && wait();
+   if (execute(input, 0, fd_stdin, fd_stderr) &&
+       wait())
+      {
+      U_RETURN(true);
+      }
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 bool UCommand::execute(UString* input, UString* output, int fd_stdin, int fd_stderr)
@@ -496,9 +500,9 @@ bool UCommand::execute(UString* input, UString* output, int fd_stdin, int fd_std
 
    execute(flag_stdin, flag_stdout, flag_stderr);
 
-   bool result = postCommand(input, output);
+   if (postCommand(input, output)) U_RETURN(true);
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 // Return output of command

@@ -848,22 +848,22 @@ public:
       U_RETURN(result);
       }
 
-   bool write(const char* data,  uint32_t sz, bool append = false, bool bmkdirs = false);
-   bool write(const struct iovec* iov, int n, bool append = false, bool bmkdirs = false);
-   bool write(const UString& data,            bool append = false, bool bmkdirs = false) { return write(U_STRING_TO_PARAM(data), append, bmkdirs); }
+   bool write(const char* data,  uint32_t sz, int flags = O_RDWR | O_TRUNC, bool bmkdirs = false);
+   bool write(const struct iovec* iov, int n, int flags = O_RDWR | O_TRUNC, bool bmkdirs = false);
+   bool write(const UString& data,            int flags = O_RDWR | O_TRUNC, bool bmkdirs = false) { return write(U_STRING_TO_PARAM(data), flags, bmkdirs); }
 
    static long    setSysParam(  const char* name, long value, bool force = false);
    static long    getSysParam(  const char* name);
    static UString getSysContent(const char* name);
 
-   static bool writeToTmp(const char* data,  uint32_t sz, bool append, const char* fmt, ...);
-   static bool writeToTmp(const struct iovec* iov, int n, bool append, const char* fmt, ...);
+   static bool writeToTmp(const char* data,  uint32_t sz, int flags, const char* fmt, ...);
+   static bool writeToTmp(const struct iovec* iov, int n, int flags, const char* fmt, ...);
 
-   static bool writeTo(const UString& path, const char* data,  uint32_t sz, bool append = false, bool bmkdirs = false);
-   static bool writeTo(const UString& path, const struct iovec* iov, int n, bool append = false, bool bmkdirs = false);
+   static bool writeTo(const UString& path, const char* data,  uint32_t sz, int flags = O_RDWR | O_TRUNC, bool bmkdirs = false);
+   static bool writeTo(const UString& path, const struct iovec* iov, int n, int flags = O_RDWR | O_TRUNC, bool bmkdirs = false);
 
-   static bool writeTo(const UString& path, const UString& data, bool append = false, bool bmkdirs = false)
-      { return writeTo(path, U_STRING_TO_PARAM(data), append, bmkdirs); }
+   static bool writeTo(const UString& path, const UString& data, int flags = O_RDWR | O_TRUNC, bool bmkdirs = false)
+      { return writeTo(path, U_STRING_TO_PARAM(data), flags, bmkdirs); }
 
    // symlink creates a symbolic link named newpath which contains the string oldpath (make one pathname be an alias for another)
 
@@ -1072,7 +1072,7 @@ protected:
    static uint32_t nfree, rlimit_memfree, rlimit_memalloc;
 
    void substitute(UFile& file);
-   bool creatForWrite(bool append, bool bmkdirs);
+   bool creatForWrite(int flags, bool bmkdirs);
    void setPathRelativ(const UString* environment = 0);
    void setPath(const UFile& file, char* buffer_path, const char* suffix, uint32_t len);
 

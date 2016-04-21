@@ -33,25 +33,36 @@ __pure int u_dgst_get_algoritm(const char* restrict alg)
 
    U_INTERNAL_TRACE("u_dgst_get_algoritm(%s)", alg)
 
-        if (memcmp(alg, U_CONSTANT_TO_PARAM("md5")) == 0)       result = U_HASH_MD5;
-#ifndef OPENSSL_NO_MD2
-   else if (memcmp(alg, U_CONSTANT_TO_PARAM("md2")) == 0)       result = U_HASH_MD2;
-   #endif
-#ifndef OPENSSL_NO_SHA0
-   else if (memcmp(alg, U_CONSTANT_TO_PARAM("sha")) == 0)       result = U_HASH_SHA;
-#endif
-   else if (memcmp(alg, U_CONSTANT_TO_PARAM("sha1")) == 0)      result = U_HASH_SHA1;
-#ifdef HAVE_OPENSSL_98
-   else if (memcmp(alg, U_CONSTANT_TO_PARAM("sha224")) == 0)    result = U_HASH_SHA224;
-   else if (memcmp(alg, U_CONSTANT_TO_PARAM("sha256")) == 0)    result = U_HASH_SHA256;
-   else if (memcmp(alg, U_CONSTANT_TO_PARAM("sha384")) == 0)    result = U_HASH_SHA384;
-   else if (memcmp(alg, U_CONSTANT_TO_PARAM("sha512")) == 0)    result = U_HASH_SHA512;
-#endif
-#ifndef OPENSSL_NO_MDC2
-   else if (memcmp(alg, U_CONSTANT_TO_PARAM("mdc2")) == 0)      result = U_HASH_MDC2;
-   #endif
+   if (u_get_unalignedp16(alg) == U_MULTICHAR_CONSTANT16('m','d'))
+      {
+           if (alg[2] == '5') result = U_HASH_MD5;
+#  ifndef OPENSSL_NO_MD2
+      else if (alg[2] == '2') result = U_HASH_MD2;
+#  endif
+#  ifndef OPENSSL_NO_MDC2
+      else if (u_get_unalignedp16(alg+2) == U_MULTICHAR_CONSTANT16('c','2')) result = U_HASH_MDC2;
+#  endif
+      }
+   else if (u_get_unalignedp16(alg) == U_MULTICHAR_CONSTANT16('s','h'))
+      {
+           if (u_get_unalignedp16(alg+2) == U_MULTICHAR_CONSTANT16('a','1')) result = U_HASH_SHA1;
+#  ifdef HAVE_OPENSSL_98
+      else if (u_get_unalignedp32(alg+2) == U_MULTICHAR_CONSTANT32('a','2','2','4')) result = U_HASH_SHA224;
+      else if (u_get_unalignedp32(alg+2) == U_MULTICHAR_CONSTANT32('a','2','5','6')) result = U_HASH_SHA256;
+      else if (u_get_unalignedp32(alg+2) == U_MULTICHAR_CONSTANT32('a','3','8','4')) result = U_HASH_SHA384;
+      else if (u_get_unalignedp32(alg+2) == U_MULTICHAR_CONSTANT32('a','5','1','2')) result = U_HASH_SHA512;
+#  endif
+#  ifndef OPENSSL_NO_SHA0
+      else if (alg[2] == 'a') result = U_HASH_SHA;
+#  endif
+      }
 #ifndef OPENSSL_NO_RMD160
-   else if (memcmp(alg, U_CONSTANT_TO_PARAM("ripemd160")) == 0) result = U_HASH_RIPEMD160;
+   else if (u_get_unalignedp64(alg) == U_MULTICHAR_CONSTANT64('r','i','p','e','m','d','1','6'))
+      {
+      U_INTERNAL_ASSERT_EQUALS(alg[8], '0')
+
+      result = U_HASH_RIPEMD160;
+      }
 #endif
 
    return result;

@@ -8,7 +8,7 @@ start_msg log
 
 rm -f tmp/test_log.log*
 
-#UTRACE="0 5M 0"
+#UTRACE="0 5M -1"
 #UOBJDUMP="-1 1M 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR 

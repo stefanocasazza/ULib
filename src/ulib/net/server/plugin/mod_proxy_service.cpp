@@ -117,11 +117,11 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
 
          if (x)
             {
-#        ifdef USE_LIBPCRE
+#        ifndef USE_LIBPCRE
+            service->uri_mask = x;
+#        else
             service->uri_mask.set(x, 0);
             service->uri_mask.study();
-#        else
-            service->uri_mask = x;
 #        endif
             }
 
@@ -229,11 +229,11 @@ __pure UModProxyService* UModProxyService::findService(const char* host, uint32_
          if ((elem->method_mask     == 0    || (U_http_method_type & elem->method_mask) != 0)                                                  &&
              (elem->vremote_address == 0    || UClientImage_Base::isAllowed(*(elem->vremote_address)))                                         &&
              (elem->host_mask.empty()       || (host_len && UServices::dosMatchWithOR(host, host_len, U_STRING_TO_PARAM(elem->host_mask), 0))) &&
-#        ifdef USE_LIBPCRE
+#           ifdef USE_LIBPCRE
              (elem->uri_mask.getPcre() == 0 || elem->uri_mask.search(uri, uri_len)))
-#        else
+#           else
              (elem->uri_mask.empty()        || UServices::dosMatchWithOR(uri, uri_len, U_STRING_TO_PARAM(elem->uri_mask), 0)))
-#        endif
+#           endif
             {
             U_RETURN_POINTER(elem, UModProxyService);
             }
@@ -266,7 +266,7 @@ UString UModProxyService::getServer() const
 
    if (u_get_unalignedp16(ptr) == U_MULTICHAR_CONSTANT16('$','<'))
       {
-      // NB: as example look at Service_GOOGLE_MAP for nodog...
+      // NB: look for example at Service_GOOGLE_MAP for nodog...
 
       UString result(U_HTTP_VHOST_TO_PARAM);
 
@@ -316,12 +316,13 @@ void UModProxyService::setMsgError(int err)
 {
    U_TRACE(0, "UModProxyService::setMsgError(%d)", err)
 
-   /*
-   INTERNAL_ERROR = 1, // NB: we need to start from 1 because we use a vector...
-   BAD_REQUEST    = 2,
-   NOT_FOUND      = 3,
-   FORBIDDEN      = 4,
-   */
+   /**
+    * INTERNAL_ERROR = 1, // NB: we need to start from 1 because we use a vector...
+    * BAD_REQUEST    = 2,
+    * NOT_FOUND      = 3,
+    * FORBIDDEN      = 4,
+    * ....
+    */
 
    U_INTERNAL_ASSERT_RANGE(1, err, UModProxyService::ERROR_A_X509_NOBASICAUTH)
 

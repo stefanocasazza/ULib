@@ -27,7 +27,7 @@
 /**
  * Server Side Include (SSI) commands are executed by the server as it parses your HTML file. Server side includes can be used to include
  * the value of various server environment variables within your HTML such as the local date and time. One might use a server side include
- * to add a signature file to an HTML file or company logo
+ * to add a signature file to an HTML file or company logo for example
  */
 
 U_CREAT_FUNC(server_plugin_ssi, USSIPlugIn)
@@ -393,65 +393,84 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
       int op = SSI_NONE;
 
-      if (strncmp(directive, U_CONSTANT_TO_PARAM("include ")) == 0)
+      if (u_get_unalignedp16(directive) == U_MULTICHAR_CONSTANT16('i','f'))
          {
-         op = SSI_INCLUDE;
-         i += U_CONSTANT_SIZE("include ");
-         }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("if ")) == 0)
-         {
+         U_INTERNAL_ASSERT_EQUALS(directive[2], ' ')
+
          op = SSI_IF;
          i += U_CONSTANT_SIZE("if ");
          }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("else ")) == 0)
+      else if (u_get_unalignedp32(directive) == U_MULTICHAR_CONSTANT32('s','e','t',' '))
          {
+         op = SSI_SET;
+         i += U_CONSTANT_SIZE("set ");
+         }
+      else if (u_get_unalignedp32(directive) == U_MULTICHAR_CONSTANT32('e','l','s','e'))
+         {
+         U_INTERNAL_ASSERT_EQUALS(directive[4], ' ')
+
          op = SSI_ELSE;
          i += U_CONSTANT_SIZE("else ");
          }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("elif ")) == 0)
+      else if (u_get_unalignedp32(directive) == U_MULTICHAR_CONSTANT32('e','l','i','f'))
          {
+         U_INTERNAL_ASSERT_EQUALS(directive[4], ' ')
+
          op = SSI_ELIF;
          i += U_CONSTANT_SIZE("elif ");
          }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("endif ")) == 0)
+      else if (u_get_unalignedp32(directive) == U_MULTICHAR_CONSTANT32('e','x','e','c'))
+         {
+         U_INTERNAL_ASSERT_EQUALS(directive[4], ' ')
+
+         op = SSI_EXEC;
+         i += U_CONSTANT_SIZE("exec ");
+         }
+      else if (u_get_unalignedp32(directive) == U_MULTICHAR_CONSTANT32('e','c','h','o'))
+         {
+         U_INTERNAL_ASSERT_EQUALS(directive[4], ' ')
+
+         op = SSI_ECHO;
+         i += U_CONSTANT_SIZE("echo ");
+         }
+      else if (u_get_unalignedp32(directive)   == U_MULTICHAR_CONSTANT32('e','n','d','i') &&
+               u_get_unalignedp16(directive+4) == U_MULTICHAR_CONSTANT16('f',' '))
          {
          op = SSI_ENDIF;
          i += U_CONSTANT_SIZE("endif ");
          }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("exec ")) == 0)
-         {
-         op = SSI_EXEC;
-         i += U_CONSTANT_SIZE("exec ");
-         }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("echo ")) == 0)
-         {
-         op = SSI_ECHO;
-         i += U_CONSTANT_SIZE("echo ");
-         }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("config ")) == 0)
-         {
-         op = SSI_CONFIG;
-         i += U_CONSTANT_SIZE("config ");
-         }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("flastmod ")) == 0)
-         {
-         op = SSI_FLASTMOD;
-         i += U_CONSTANT_SIZE("flastmod ");
-         }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("fsize ")) == 0)
+      else if (u_get_unalignedp32(directive)   == U_MULTICHAR_CONSTANT32('f','s','i','z') &&
+               u_get_unalignedp16(directive+4) == U_MULTICHAR_CONSTANT16('e',' '))
          {
          op = SSI_FSIZE;
          i += U_CONSTANT_SIZE("fsize ");
          }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("printenv ")) == 0)
+      else if (u_get_unalignedp32(directive)   == U_MULTICHAR_CONSTANT32('c','o','n','f') &&
+               u_get_unalignedp16(directive+4) == U_MULTICHAR_CONSTANT16('i','g'))
          {
+         U_INTERNAL_ASSERT_EQUALS(directive[6], ' ')
+
+         op = SSI_CONFIG;
+         i += U_CONSTANT_SIZE("config ");
+         }
+      else if (u_get_unalignedp64(directive) == U_MULTICHAR_CONSTANT64('i','n','c','l','u','d','e',' '))
+         {
+         op = SSI_INCLUDE;
+         i += U_CONSTANT_SIZE("include ");
+         }
+      else if (u_get_unalignedp64(directive) == U_MULTICHAR_CONSTANT64('f','l','a','s','t','m','o','d'))
+         {
+         U_INTERNAL_ASSERT_EQUALS(directive[8], ' ')
+
+         op = SSI_FLASTMOD;
+         i += U_CONSTANT_SIZE("flastmod ");
+         }
+      else if (u_get_unalignedp64(directive) == U_MULTICHAR_CONSTANT64('p','r','i','n','t','e','n','v'))
+         {
+         U_INTERNAL_ASSERT_EQUALS(directive[8], ' ')
+
          op = SSI_PRINTENV;
          i += U_CONSTANT_SIZE("printenv ");
-         }
-      else if (strncmp(directive, U_CONSTANT_TO_PARAM("set ")) == 0)
-         {
-         op = SSI_SET;
-         i += U_CONSTANT_SIZE("set ");
          }
 
       int n = token.size() - i;
@@ -481,13 +500,13 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
       switch (op)
          {
-         /*
-         <!--#if expr="${Sec_Nav}" -->
-            <!--#include virtual="secondary_nav.txt" -->
-         <!--#elif expr="${Pri_Nav}" -->
-            <!--#include virtual="primary_nav.txt" -->
-         <!--#endif -->
-         */
+         /**
+          * <!--#if expr="${Sec_Nav}" -->
+          *    <!--#include virtual="secondary_nav.txt" -->
+          * <!--#elif expr="${Pri_Nav}" -->
+          *    <!--#include virtual="primary_nav.txt" -->
+          * <!--#endif -->
+          */
 
          case SSI_IF:
          case SSI_ELIF:
@@ -576,16 +595,16 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
 
       switch (op)
          {
-         /*
-         <!--#printenv -->
-         */
+         /**
+          * <!--#printenv -->
+          */
          case SSI_PRINTENV: (void) output.append(U_STRING_TO_PARAM(*UClientImage_Base::environment)); break;
 
-         /*
-         <!--#config sizefmt="bytes" -->
-         <!--#config timefmt="%y %m %d" -->
-         <!--#config errmsg="SSI command failed!" -->
-         */
+         /**
+          * <!--#config sizefmt="bytes" -->
+          * <!--#config timefmt="%y %m %d" -->
+          * <!--#config errmsg="SSI command failed!" -->
+          */
          case SSI_CONFIG:
             {
             for (i = 0; i < n; i += 2)
@@ -600,10 +619,10 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             }
          break;
 
-         /*
-         <!--#echo var=$BODY_STYLE -->
-         <!--#echo [encoding="..."] var="..." [encoding="..."] var="..." ... -->
-         */
+         /**
+          * <!--#echo var=$BODY_STYLE -->
+          * <!--#echo [encoding="..."] var="..." [encoding="..."] var="..." ... -->
+          */
          case SSI_ECHO:
             {
             encode = E_NONE;
@@ -670,10 +689,10 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             }
          break;
 
-         /*
-         <!--#fsize file="script.pl" -->
-         <!--#flastmod virtual="index.html" -->
-         */
+         /**
+          * <!--#fsize file="script.pl" -->
+          * <!--#flastmod virtual="index.html" -->
+          */
          case SSI_FSIZE:
          case SSI_FLASTMOD:
             {
@@ -719,9 +738,9 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             }
          break;
 
-         /*
-         <!--#include file=footer.html -->
-         */
+         /**
+          * <!--#include file=footer.html -->
+          */
          case SSI_INCLUDE:
             {
             if (n == 2)
@@ -788,11 +807,11 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             }
          break;
 
-         /*
-         <!--#exec cmd="ls -l" -->
-         <!--#exec cgi=/cgi-bin/foo.cgi -->
-         <!--#exec servlet=/servlet/mchat -->
-         */
+         /**
+          * <!--#exec cmd="ls -l" -->
+          * <!--#exec cgi=/cgi-bin/foo.cgi -->
+          * <!--#exec servlet=/servlet/mchat -->
+          */
          case SSI_EXEC:
             {
             if (n == 2)
@@ -804,11 +823,11 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
             }
          break;
 
-         /*
-         <!--#set cmd="env -l" -->
-         <!--#set var="foo" value="bar" -->
-         <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
-         */
+         /**
+          * <!--#set cmd="env -l" -->
+          * <!--#set var="foo" value="bar" -->
+          * <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
+          */
          case SSI_SET:
             {
             bvar = false;
@@ -1009,7 +1028,7 @@ int USSIPlugIn::handlerRequest()
 
             if (body->empty())
                {
-               U_DEBUG("USSIPlugIn::handlerRequest() SSI file empty: %.*S", U_FILE_TO_TRACE(*UHTTP::file));
+               U_DEBUG("USSIPlugIn::handlerRequest() SSI file empty: %.*S", U_FILE_TO_TRACE(*UHTTP::file))
 
                UClientImage_Base::environment->setEmpty();
 

@@ -204,10 +204,10 @@ protected:
 
    struct FrameHeader {
       unsigned char* payload;
-      int32_t length,    // The length field of this frame, excluding frame header
-              stream_id; // The stream identifier (aka, stream ID)
-      uint8_t type,      // The type of this frame
-              flags;
+      uint32_t length,    // The length field of this frame, excluding frame header
+               stream_id; // The stream identifier (aka, stream ID)
+      uint8_t  type,      // The type of this frame
+               flags;
    };
 
    static int nerror;
@@ -276,6 +276,27 @@ protected:
          }
       }
 
+   static bool setStream()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP2::setStream()")
+
+      U_INTERNAL_DUMP("pStream->id = %u frame.stream_id = %u pConnection->max_open_stream_id = %u", pStream->id, frame.stream_id, pConnection->max_open_stream_id)
+
+      U_INTERNAL_ASSERT_DIFFERS(pStream->id, frame.stream_id)
+
+      U_INTERNAL_DUMP("pConnection->max_open_stream_id = %u", pConnection->max_open_stream_id)
+
+      if ((uint32_t)frame.stream_id <= pConnection->max_open_stream_id)
+         {
+         for (Stream* pStreamEnd = (pStream = pConnection->streams) + 100; pStream < pStreamEnd; ++pStream)
+            {
+            if (pStream->id == frame.stream_id) U_RETURN(true);
+            }
+         }
+
+      U_RETURN(false);
+      }
+
    static void readFrame();
    static void openStream();
    static void manageData();
@@ -309,19 +330,6 @@ protected:
 
 # ifdef U_STDCPP_ENABLE
    friend ostream& operator<<(ostream& _os, const HpackDynamicTable& v);
-
-   static void saveHpackDynamicTable(HpackDynamicTable* table)
-      {
-      U_TRACE(0+256, "UHTTP2::saveHpackDynamicTable(%p)", table)
-
-      char buffer[2 * 1024 * 1024];
-
-      uint32_t len = UObject2String(*table, buffer, sizeof(buffer));
-
-      U_INTERNAL_ASSERT_MINOR(len, sizeof(buffer))
-
-      (void) UFile::writeToTmp(buffer, len, false, "dtable.hpack.%P", 0);
-      }
 # endif
 
    static void decodeHeadersResponse()
@@ -330,7 +338,6 @@ protected:
 
       bdecodeHeadersDebug = true;
 
-      char buffer[2 * 1024 * 1024];
       const char* start = UClientImage_Base::wbuffer->c_pointer(HTTP2_FRAME_HEADER_SIZE);
 
       decodeHeaders(&(pConnection->dtable),
@@ -338,13 +345,8 @@ protected:
 
       bdecodeHeadersDebug = false;
 
-      uint32_t len = UObject2String(pConnection->dtable, buffer, sizeof(buffer));
+   // U_DUMP_OBJECT_TO_TMP(pConnection->dtable, "response.hpack")
 
-      U_INTERNAL_ASSERT_MINOR(len, sizeof(buffer))
-
-      (void) UFile::writeToTmp(buffer, len, false, "response.hpack.%P", 0);
-
-      U_ASSERT(findHeader( 7)) // UString::str_status
       U_ASSERT(findHeader(53)) // UString::str_server
       U_ASSERT(findHeader(32)) // UString::str_date
       U_ASSERT(findHeader(27)) // UString::str_content_length
@@ -360,11 +362,9 @@ protected:
        * ./inflatehd < inflatehd.json => { "cases": [ { "wire": "8285" } ] }
        */
 
-      UString tmp(U_CAPACITY);
-
-      UHexDump::encode(ptr, len, tmp);
-
-      (void) UFile::writeToTmp(U_STRING_TO_PARAM(tmp), false, "%s.hpack.%P", breq ? "request" : "response");
+   // UString tmp(U_CAPACITY);
+   // UHexDump::encode(ptr, len, tmp);
+   // (void) UFile::writeToTmp(U_STRING_TO_PARAM(tmp), O_RDWR | O_TRUNC, "%s.hpack.%P", breq ? "request" : "response");
       }
 
    static const char* getStreamStatusDescription();
@@ -444,7 +444,7 @@ protected:
 
       HpackHeaderTableEntry* entry = getHpackDynTblEntry(table, table->num_entries);
 
-      U_DEBUG("HTTP compressor header table index %u: (%V %V) removed for size %u", table->num_entries, entry->name->rep, entry->value->rep, table->hpack_size);
+      U_DEBUG("HTTP compressor header table index %u: (%V %V) removed for size %u", table->num_entries, entry->name->rep, entry->value->rep, table->hpack_size)
 
       table->hpack_size -= entry->name->size() + entry->value->size() + HTTP2_HEADER_TABLE_ENTRY_SIZE_OFFSET;
 
@@ -522,7 +522,7 @@ protected:
    static unsigned char* hpackDecodeString(unsigned char* src, unsigned char* src_end, UString* pvalue);
 
    static unsigned char* hpackEncodeString(unsigned char* dst, const char* src, uint32_t len);
-   static unsigned char* hpackEncodeHeader(unsigned char* dst, HpackDynamicTable* dyntbl, UVector<UString>& vec, UString& key, const UString& value, bool bfirst);
+   static unsigned char* hpackEncodeHeader(unsigned char* dst, HpackDynamicTable* dyntbl, UString& key, const UString& value, UVector<UString>* pvec = 0);
 
 private:
    friend class UHTTP;

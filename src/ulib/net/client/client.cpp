@@ -229,7 +229,7 @@ void UClient_Base::loadConfigParam()
 
    if (x) (void) UFile::writeTo(x, UString(u_pid_str, u_pid_str_len));
 
-#ifdef U_LOG_ENABLE
+#ifndef U_LOG_DISABLE
    x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
 
    if (x)
@@ -322,13 +322,13 @@ bool UClient_Base::connectServer(const UString& _url)
 
       char _buffer[U_PATH_MAX];
 
-      (void) u__snprintf(_buffer, sizeof(_buffer), "%v/%v.%4D", queue_dir->rep, host_port.rep);
+      (void) u__snprintf(_buffer, sizeof(_buffer), "%v/%v.%4D", queue_dir->rep, host_port.rep); // 4D => _millisec
 
-      queue_fd = UFile::creat(_buffer);
+      queue_fd = UFile::creat(_buffer, O_RDWR | O_EXCL, PERM_FILE);
 
-      if (queue_fd == -1) U_RETURN(false);
+      if (queue_fd != -1) U_RETURN(true);
 
-      U_RETURN(true);
+      U_RETURN(false);
       }
 
    if (connect()) U_RETURN(true);

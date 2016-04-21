@@ -4,6 +4,84 @@
 #include <ulib/json/value.h>
 #include <ulib/debug/crono.h>
 
+class Request {
+public:
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   UString token, type, radius, location;
+
+   Request()
+      {
+      U_TRACE_REGISTER_OBJECT(5, Request, "")
+      }
+
+   Request(const Request& r) : token(r.token), type(r.type), radius(r.radius), location(r.location)
+      {
+      U_TRACE_REGISTER_OBJECT(5, Request, "%p", &r)
+
+      U_MEMORY_TEST_COPY(r)
+      }
+
+   ~Request()
+      {
+      U_TRACE_UNREGISTER_OBJECT(5, Request)
+      }
+
+#ifdef DEBUG
+   const char* dump(bool breset) const
+      {
+      *UObjectIO::os << "token    (UString " << (void*)&token    << ")\n"
+                     << "type     (UString " << (void*)&type     << ")\n"
+                     << "radius   (UString " << (void*)&radius   << ")\n"
+                     << "location (UString " << (void*)&location << ')';
+
+      if (breset)
+         {
+         UObjectIO::output();
+
+         return UObjectIO::buffer_output;
+         }
+
+      return 0;
+      }
+#endif
+
+private:
+   Request& operator=(const Request&) { return *this; }
+};
+
+// JSON TEMPLATE SPECIALIZATIONS
+
+template <> class U_EXPORT UJsonTypeHandler<Request> : public UJsonTypeHandler_Base {
+public:
+   explicit UJsonTypeHandler(Request& val) : UJsonTypeHandler_Base(&val) {}
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<Request>::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_TYPE_HANDLER(Request, token,    UString));
+      json.toJSON(U_JSON_TYPE_HANDLER(Request, type,     UString));
+      json.toJSON(U_JSON_TYPE_HANDLER(Request, radius,   UString));
+      json.toJSON(U_JSON_TYPE_HANDLER(Request, location, UString));
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<Request>::fromJSON(%p)", &json)
+
+      json.fromJSON(U_JSON_TYPE_HANDLER(Request, token,    UString));
+      json.fromJSON(U_JSON_TYPE_HANDLER(Request, type,     UString));
+      json.fromJSON(U_JSON_TYPE_HANDLER(Request, radius,   UString));
+      json.fromJSON(U_JSON_TYPE_HANDLER(Request, location, UString));
+      }
+};
+
 // Do a query and print the results
 
 static void testQuery(const UString& json, const char* cquery, const UString& expected)
@@ -18,6 +96,120 @@ static void testQuery(const UString& json, const char* cquery, const UString& ex
               dataType, UValue::getDataTypeDescription(dataType), query.rep, result.size(), result.rep, UValue::jread_elements, UValue::jread_error, UValue::getJReadErrorDescription()));
 
    U_INTERNAL_ASSERT_EQUALS(result, expected)
+}
+
+static void testVector()
+{
+   U_TRACE(5, "testVector()")
+
+   bool ok;
+   UVector<UString> y;
+   UValue json_vec(ARRAY_VALUE);
+   UString result, vecJson = U_STRING_FROM_CONSTANT("[\"riga 1\",\"riga 2\",\"riga 3\",\"riga 4\"]");
+
+   ok = JSON_parse(vecJson, y);
+   U_INTERNAL_ASSERT(ok)
+
+   ok = (y[0] == U_STRING_FROM_CONSTANT("riga 1"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[1] == U_STRING_FROM_CONSTANT("riga 2"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[2] == U_STRING_FROM_CONSTANT("riga 3"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[3] == U_STRING_FROM_CONSTANT("riga 4"));
+   U_INTERNAL_ASSERT(ok)
+
+   y.clear();
+
+   ok = JSON_parse(vecJson, y);
+   U_INTERNAL_ASSERT(ok)
+
+   ok = (y[0] == U_STRING_FROM_CONSTANT("riga 1"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[1] == U_STRING_FROM_CONSTANT("riga 2"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[2] == U_STRING_FROM_CONSTANT("riga 3"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[3] == U_STRING_FROM_CONSTANT("riga 4"));
+   U_INTERNAL_ASSERT(ok)
+
+   result = JSON_stringify(json_vec, y);
+
+   U_ASSERT( result == vecJson )
+}
+
+static void testMap()
+{
+   U_TRACE(5, "testMap()")
+
+   bool ok;
+   UHashMap<UString> x;
+   UValue json_obj(OBJECT_VALUE);
+   UString result, mapJson = U_STRING_FROM_CONSTANT("{\"key1\":\"riga 1\",\"key2\":\"riga 2\",\"key3\":\"riga 3\",\"key4\":\"riga 4\"}");
+
+   ok = JSON_parse(mapJson, x);
+   U_INTERNAL_ASSERT(ok)
+
+   ok = (x["key1"] == U_STRING_FROM_CONSTANT("riga 1"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (x["key2"] == U_STRING_FROM_CONSTANT("riga 2"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (x["key3"] == U_STRING_FROM_CONSTANT("riga 3"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (x["key4"] == U_STRING_FROM_CONSTANT("riga 4"));
+   U_INTERNAL_ASSERT(ok)
+
+   x.clear();
+
+   ok = JSON_parse(mapJson, x);
+   U_INTERNAL_ASSERT(ok)
+
+   ok = (x["key1"] == U_STRING_FROM_CONSTANT("riga 1"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (x["key2"] == U_STRING_FROM_CONSTANT("riga 2"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (x["key3"] == U_STRING_FROM_CONSTANT("riga 3"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (x["key4"] == U_STRING_FROM_CONSTANT("riga 4"));
+   U_INTERNAL_ASSERT(ok)
+
+   result = JSON_stringify(json_obj, x);
+
+   U_ASSERT( result.size() == mapJson.size() )
+}
+
+static void testObject()
+{
+   U_TRACE(5, "testObject()")
+
+   bool ok;
+   Request request;
+   UValue json_obj(OBJECT_VALUE);
+   UString result, reqJson = U_STRING_FROM_CONSTANT("{\"token\":\"A619828KAIJ6D3\",\"type\":\"localesData\",\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\"}");
+
+   ok = JSON_parse(reqJson, request);
+   U_INTERNAL_ASSERT(ok)
+
+   U_DUMP_OBJECT(request)
+
+   U_INTERNAL_ASSERT_EQUALS(request.token,    "A619828KAIJ6D3")
+   U_INTERNAL_ASSERT_EQUALS(request.type,     "localesData")
+   U_INTERNAL_ASSERT_EQUALS(request.radius,   "near")
+   U_INTERNAL_ASSERT_EQUALS(request.location, "40.7831 N, 73.9712 W")
+
+   ok = JSON_parse(reqJson, request);
+   U_INTERNAL_ASSERT(ok)
+
+   U_DUMP_OBJECT(request)
+
+   U_INTERNAL_ASSERT_EQUALS(request.token,    "A619828KAIJ6D3")
+   U_INTERNAL_ASSERT_EQUALS(request.type,     "localesData")
+   U_INTERNAL_ASSERT_EQUALS(request.radius,   "near")
+   U_INTERNAL_ASSERT_EQUALS(request.location, "40.7831 N, 73.9712 W")
+
+   result = JSON_stringify(json_obj, request);
+
+   U_ASSERT( result == reqJson )
 }
 
 int
@@ -42,6 +234,10 @@ U_EXPORT main (int argc, char* argv[])
                                                 "  \"yes\": true,\n"
                                                 "  \"no\":  false\n"
                                                 "}");
+
+   testMap();
+   testVector();
+   testObject();
 
    while (cin >> filename)
       {

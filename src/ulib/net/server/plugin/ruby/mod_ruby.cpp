@@ -482,7 +482,7 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
             U_SRV_LOG("RUBY script %S return (%d, %s)", script, result, c_e_msg);
 
 #        ifdef DEBUG
-            if (memcmp(c_e_msg, U_CONSTANT_TO_PARAM("exit")) != 0)
+            if (u_get_unalignedp32(c_e_msg) != U_MULTICHAR_CONSTANT32('e','x','i','t'))
                {
                char buffer[8192];
 
@@ -490,7 +490,7 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
                      trace_str = rb_funcall(trace, rb_intern("join"), 1, rb_str_new_cstr("\n"));
 
                (void) UFile::writeToTmp(buffer, u__snprintf(buffer, sizeof(buffer), "Error: \"%s\"\n\n%s", c_e_msg, StringValueCStr(trace_str)),
-                                        false, "ruby_embedded.err", 0);
+                                        O_RDWR | O_APPEND, "ruby_embedded.err", 0);
                }
 #        endif
             }

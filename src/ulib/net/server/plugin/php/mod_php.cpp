@@ -257,7 +257,7 @@ extern U_EXPORT void UPHP_end();
    if (php_embed_module.ini_entries)
       {
 #  ifdef DEBUG
-      (void) UFile::writeToTmp(php_embed_module.ini_entries, strlen(php_embed_module.ini_entries), false, "php_embed_module.ini", 0);
+      (void) UFile::writeToTmp(php_embed_module.ini_entries, strlen(php_embed_module.ini_entries), O_RDWR | O_TRUNC, "php_embed_module.ini", 0);
 #  endif
 
       free(php_embed_module.ini_entries);
