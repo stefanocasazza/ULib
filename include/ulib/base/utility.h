@@ -68,7 +68,7 @@ typedef uint64_t cpu_set_t;
 
 /**
  * TOKEN ID
- **/
+ */
 #define U_TK_ERROR       -1
 #define U_TK_AND          1
 #define U_TK_OR           2
@@ -158,7 +158,7 @@ U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const v
 U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n);
 
 #ifdef DEBUG
-/* NB: u_strlen() and u_memcpy conflit with /usr/include/unicode/urename.h */
+/* NB: u_strlen() and u_memcpy() conflit with /usr/include/unicode/urename.h */
 U_EXPORT size_t   u__strlen(const char* restrict s, const char* function);
 U_EXPORT void     u__strcpy( char* restrict dest, const char* restrict src);
 U_EXPORT void*    u__memcpy( void* restrict dest, const void* restrict src, size_t n, const char* function);
@@ -202,7 +202,6 @@ U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen,
                                const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment) __pure;
 
 /**
- * --------------------------------------------------------------------------------
  * WILDCARD PATTERN - The rules are as follows (POSIX.2, 3.13)
  * --------------------------------------------------------------------------------
  * Wildcard Matching
@@ -251,7 +250,6 @@ U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen,
  *
  * Now that regular expressions have bracket expressions where the negation is indicated by a '^', POSIX has declared the
  * effect of a wildcard pattern '[^...]' to be undefined
- * --------------------------------------------------------------------------------
  */
 
 typedef bool (*bPFpcupcud)(const char*, uint32_t, const char*, uint32_t, int);
@@ -354,7 +352,6 @@ U_EXPORT void u_bind2cpu(cpu_set_t* cpuset, int n);
 U_EXPORT void u_switch_to_realtime_priority(void);
 
 /**
- * --------------------------------------------------------------------------------
  * Canonicalize PATH, and build a new path. The new path differs from PATH in that:
  * --------------------------------------------------------------------------------
  * Multiple    '/'   are collapsed to a single '/'
@@ -362,19 +359,16 @@ U_EXPORT void u_switch_to_realtime_priority(void);
  * Trailing    '/.'  are removed
  * Trailing    '/'   are removed
  * Non-leading '../' and trailing '..' are handled by removing portions of the path
- * --------------------------------------------------------------------------------
  */
 
 U_EXPORT bool u_canonicalize_pathname(char* restrict path);
 
 /**
- * --------------------------------------------------------------------------------
  * find a FILE MODE along PATH
  * --------------------------------------------------------------
  * pathfind looks for a a file with name FILENAME and MODE access
  * along colon delimited PATH, and returns the full pathname as a
  * string, or NULL if not found
- * --------------------------------------------------------------
  */
 
 U_EXPORT bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode); /* R_OK | X_OK */
@@ -394,7 +388,7 @@ extern U_EXPORT const unsigned int  u__ct_tab[256];
 extern U_EXPORT const unsigned char u__ct_tol[256];
 extern U_EXPORT const unsigned char u__ct_tou[256];
 
-/* NB: we use u__tolower(), u__toupper, u__isspace, ... because conflit with /usr/include/unicode/uchar.h */
+/* NB: we use u__tolower(), u__toupper(), u__isspace(), ... cause of conflit with /usr/include/unicode/uchar.h */
 
 static inline unsigned int  u_cttab(   unsigned char c) { return u__ct_tab[c]; }
 static inline unsigned char u__tolower(unsigned char c) { return u__ct_tol[c]; }
@@ -543,11 +537,9 @@ extern U_EXPORT const unsigned char u__ct_hex2int[112];
 
 static inline unsigned int u__hexc2int(unsigned char c) { return u__ct_hex2int[c]; }
 
-static inline void u_int2hex(char* restrict p, uint32_t n)
-   { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = u_hex_upper[((n >> s) & 0x0F)]; }
+static inline void u_int2hex(char* restrict p, uint32_t n) { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = u_hex_upper[((n >> s) & 0x0F)]; }
 
-static inline uint32_t u_hex2int(const char* restrict p, uint32_t len)
-   { uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u__hexc2int(*p++); return n; }
+static inline uint32_t u_hex2int(const char* restrict p, uint32_t len) { uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u__hexc2int(*p++); return n; }
 
 static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
 
@@ -558,16 +550,6 @@ U_EXPORT bool u_isIPv6Addr(const char* restrict s, uint32_t n) __pure;
 
 static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n)
                                                                                             : u_isIPv4Addr(p, n)); }
-
-/**
- * The u_passwd_cb() function must write the password into the provided buffer buf which is of size size.
- * The actual length of the password must be returned to the calling function. rwflag indicates whether the
- * callback is used for reading/decryption (rwflag=0) or writing/encryption (rwflag=1).
- * See man SSL_CTX_set_default_passwd_cb(3) for more information
- */
-#ifdef USE_LIBSSL
-U_EXPORT int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict password);
-#endif
 
 #ifdef __cplusplus
 }

@@ -58,7 +58,7 @@ USSLSocket::stapling USSLSocket::staple;
  * A pitfall to avoid: Don't assume that SSL_read() will just read from the underlying transport or that SSL_write() will just write to it
  * it is also possible that SSL_write() cannot do any useful work until there is data to read, or that SSL_read() cannot do anything until
  * it is possible to send data. One reason for this is that the peer may request a new TLS/SSL handshake at any time during the protocol,
- * requiring a bi-directional message exchange; both SSL_read() and SSL_write() will try to continue any pending handshake.
+ * requiring a bi-directional message exchange; both SSL_read() and SSL_write() will try to continue any pending handshake
  */
 
 USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool bserver) : USocket(bSocketIsIPv6)
@@ -154,7 +154,7 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool bserver, long options)
        * This is the best choice when compatibility is a concern. The list of protocols available can later be limited using the
        * SSL_OP_NO_SSLv2, SSL_OP_NO_SSLv3, SSL_OP_NO_TLSv1 options of the SSL_CTX_set_options() or SSL_set_options() functions.
        * Using these options it is possible to choose e.g. SSLv23_server_method() and be able to negotiate with all possible clients,
-       * but to only allow newer protocols like SSLv3 or TLSv1.
+       * but to only allow newer protocols like SSLv3 or TLSv1
        */
 
       if (bserver) method = (SSL_METHOD*)SSLv23_server_method();
@@ -191,6 +191,7 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool bserver, long options)
 
 /**
  * get OpenSSL-specific options (default: NO_SSLv2, CIPHER_SERVER_PREFERENCE, NO_COMPRESSION)
+ *
  * to overwrite defaults you need to explicitly specify the reverse flag (toggle "NO_" prefix)
  *
  * example: use sslv2 and compression: [ options: ("SSLv2", "COMPRESSION") ]
@@ -416,23 +417,9 @@ bool USSLSocket::useDHFile(const char* dh_file)
 
       switch (ciphersuite_model)
          {
-         case Modern:
-            {
-            dh->p = BN_bin2bn(dh2048_p, sizeof(dh2048_p), 0);
-            }
-         break;
-
-         case Old:
-            {
-            dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), 0);
-            }
-         break;
-
-         default: // Intermediate
-            {
-            dh->p = BN_bin2bn(dh2048_p, sizeof(dh2048_p), 0);
-            }
-         break;
+         case Modern: dh->p = BN_bin2bn(dh2048_p, sizeof(dh2048_p), 0); break;
+         case    Old: dh->p = BN_bin2bn(dh1024_p, sizeof(dh1024_p), 0); break;
+         default:     dh->p = BN_bin2bn(dh2048_p, sizeof(dh2048_p), 0); break; // Intermediate
          }
 
       U_INTERNAL_ASSERT_POINTER(dh->p)
@@ -457,16 +444,6 @@ bool USSLSocket::useDHFile(const char* dh_file)
    U_SYSCALL_VOID(DH_free, "%p", dh);
 
    U_RETURN(true);
-}
-
-U_NO_EXPORT int USSLSocket::nextProto(SSL* ssl, const unsigned char** data, unsigned int* len, void* arg)
-{
-   U_TRACE(0, "USSLSocket::nextProto(%p,%p,%p,%p)", ssl, data, len, arg)
-
-   *data = (unsigned char*)arg;
-   *len  = U_CONSTANT_SIZE("\x2h2\x5h2-16\x5h2-14");
-
-   U_RETURN(SSL_TLSEXT_ERR_OK);
 }
 
 #if OPENSSL_VERSION_NUMBER >= 0x10002000L
@@ -546,7 +523,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
       if ( passwd &&
           *passwd)
          {
-         U_SYSCALL_VOID(SSL_CTX_set_default_passwd_cb,          "%p,%p", ctx, u_passwd_cb);
+         U_SYSCALL_VOID(SSL_CTX_set_default_passwd_cb,          "%p,%p", ctx, UServices::passwd_cb);
          U_SYSCALL_VOID(SSL_CTX_set_default_passwd_cb_userdata, "%p,%S", ctx, (void*)passwd);
          }
 
@@ -687,9 +664,9 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
 
 #ifndef U_HTTP2_DISABLE
    U_SYSCALL_VOID(SSL_CTX_set_next_protos_advertised_cb, "%p,%p,%p", ctx, nextProto, (unsigned char*)"\x2h2\x5h2-16\x5h2-14");
-#  if OPENSSL_VERSION_NUMBER >= 0x10002000L
+# if OPENSSL_VERSION_NUMBER >= 0x10002000L
    U_SYSCALL_VOID(SSL_CTX_set_alpn_select_cb, "%p,%p,%p", ctx, selectProto, 0); // ALPN selection callback
-#  endif
+# endif
 #endif
 
    U_RETURN(true);
@@ -799,6 +776,7 @@ bool USSLSocket::secureConnection()
 
    // When beginning a new handshake, the SSL engine must know whether it must call the connect (client) or accept (server) routines.
    // Even though it may be clear from the method chosen, whether client or server mode was requested, the handshake routines must be explicitly set.
+   //
    // U_SYSCALL_VOID(SSL_set_connect_state, "%p", ssl); // init SSL client session
 
    ret = 0;
@@ -875,7 +853,7 @@ bool USSLSocket::askForClientCertificate()
     *              This flag must be used together with SSL_VERIFY_PEER
     * -------------------------------------------------------------------------------------
     * The only difference between the calls is that SSL_CTX_set_verify() sets the verification
-    * mode for all SSL objects derived from a given SSL_CTX —as long as they are created
+    * mode for all SSL objects derived from a given SSL_CTX as long as they are created
     * after SSL_CTX_set_verify() is called, whereas SSL_set_verify() only affects the SSL
     * object that it is called on
     * -------------------------------------------------------------------------------------
@@ -1211,7 +1189,7 @@ int USSLSocket::callback_ServerNameIndication(SSL* _ssl, int* alert, void* data)
 
    if (servername == 0)
       {
-   // U_WARNING("SSL: server name not provided via TLS extension");
+      U_DEBUG("SSL: server name not provided via TLS extension");
 
       U_RETURN(SSL_TLSEXT_ERR_OK);
       }
@@ -1222,6 +1200,7 @@ int USSLSocket::callback_ServerNameIndication(SSL* _ssl, int* alert, void* data)
 
    /**
     * RFC 6066 section 3 says:
+    *
     * "It is NOT RECOMMENDED to send a warning-level unrecognized_name(112) alert,
     * because the client's behavior in response to warning-level alerts is unpredictable"
     *
@@ -1230,7 +1209,7 @@ int USSLSocket::callback_ServerNameIndication(SSL* _ssl, int* alert, void* data)
     * one of two actions: either abort the handshake by sending a fatal-level unrecognized_name(112) alert or continue
     * the handshake"
 
-    U_WARNING("SSL: no matching SSL virtual host for servername %s found", servername);
+    U_DEBUG("SSL: no matching SSL virtual host for servername %s found", servername);
 
     U_RETURN(SSL_TLSEXT_ERR_NOACK);
     */
@@ -1242,7 +1221,7 @@ int USSLSocket::callback_ServerNameIndication(SSL* _ssl, int* alert, void* data)
  * under the assumption that the client may need them. This makes the whole process more efficient: the client does not have
  * to open extra connections to get the OCSP responses itself, and the same OCSP response can be sent by the server to all
  * clients within a given time frame. One way to see it is that the SSL server acts as a Web proxy for the purpose of
- * downloading OCSP responses.
+ * downloading OCSP responses
  */
 
 #if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)

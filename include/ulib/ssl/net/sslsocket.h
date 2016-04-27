@@ -257,7 +257,7 @@ public:
     * under the assumption that the client may need them. This makes the whole process more efficient: the client does not have
     * to open extra connections to get the OCSP responses itself, and the same OCSP response can be sent by the server to all
     * clients within a given time frame. One way to see it is that the SSL server acts as a Web proxy for the purpose of
-    * downloading OCSP responses.
+    * downloading OCSP responses
     */
 
 #if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
@@ -319,7 +319,16 @@ protected:
 #endif
 
 private:
-   static int nextProto(SSL* ssl, const unsigned char** data, unsigned int* len, void* arg) U_NO_EXPORT;
+   static int nextProto(SSL* ssl, const unsigned char** data, unsigned int* len, void* arg)
+      {
+      U_TRACE(0, "USSLSocket::nextProto(%p,%p,%p,%p)", ssl, data, len, arg)
+
+      *data = (unsigned char*)arg;
+      *len  = U_CONSTANT_SIZE("\x2h2\x5h2-16\x5h2-14");
+
+      U_RETURN(SSL_TLSEXT_ERR_OK);
+      }
+
 #if OPENSSL_VERSION_NUMBER >= 0x10002000L
    static int selectProto(SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in, unsigned int inlen, void* arg) U_NO_EXPORT;
 #endif

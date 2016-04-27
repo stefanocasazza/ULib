@@ -7578,12 +7578,13 @@ check:      if (usp_src) goto end;
 
          ptr = pathname->c_pointer(pathname->size() - 2);
 
-              if (suffix->equal(U_CONSTANT_TO_PARAM("sh")))  { cgi->interpreter = U_PATH_SHELL; cgi->environment_type = U_SHELL; }
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("php"))) { cgi->interpreter = "php-cgi";    cgi->environment_type = U_PHP; }
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("pl")))  { cgi->interpreter = "perl";       cgi->environment_type = U_CGI; }
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("py")))  { cgi->interpreter = "python";     cgi->environment_type = U_CGI; }
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("rb")))  { cgi->interpreter = "ruby";       cgi->environment_type = U_CGI; }
-         else                                                { cgi->interpreter = 0;            cgi->environment_type = U_CGI; }
+              if (suffix->equal(U_CONSTANT_TO_PARAM("sh")))   { cgi->interpreter = U_PATH_SHELL; cgi->environment_type = U_SHELL; }
+         else if (suffix->equal(U_CONSTANT_TO_PARAM("bash"))) { cgi->interpreter = 0;            cgi->environment_type = U_SHELL; }
+         else if (suffix->equal(U_CONSTANT_TO_PARAM("php")))  { cgi->interpreter = "php-cgi";    cgi->environment_type = U_PHP; }
+         else if (suffix->equal(U_CONSTANT_TO_PARAM("pl")))   { cgi->interpreter = "perl";       cgi->environment_type = U_CGI; }
+         else if (suffix->equal(U_CONSTANT_TO_PARAM("py")))   { cgi->interpreter = "python";     cgi->environment_type = U_CGI; }
+         else if (suffix->equal(U_CONSTANT_TO_PARAM("rb")))   { cgi->interpreter = "ruby";       cgi->environment_type = U_CGI; }
+         else                                                 { cgi->interpreter = 0;            cgi->environment_type = U_CGI; }
 
          U_INTERNAL_DUMP("cgi->environment_type = %d cgi->interpreter = %S", cgi->environment_type, cgi->interpreter)
 

@@ -51,9 +51,8 @@ bool UServices::isSetuidRoot()
 
    U_INTERNAL_DUMP("u_user_name(%u) = %.*S", u_user_name_len, u_user_name_len, u_user_name)
 
-   bool i_am_root = (u_user_name_len == 4 && (uid_t) U_SYSCALL_NO_PARAM(getuid) == 0);
-
-   if (i_am_root ||
+   if ((u_user_name_len == 4                     &&
+        (uid_t) U_SYSCALL_NO_PARAM(getuid) == 0) ||
        ((uid_t) U_SYSCALL_NO_PARAM(geteuid) == 0 ||
         (uid_t) U_SYSCALL_NO_PARAM(getegid) == 0))
       {
@@ -103,7 +102,7 @@ void UServices::closeStdInputOutput()
  * I/O - read while not received almost count data
  *
  * timeoutMS specified the timeout value, in milliseconds.
- *           A negative value indicates no timeout, i.e. an infinite wait.
+ *           A negative value indicates no timeout, i.e. an infinite wait
  */
 
 bool UServices::read(int fd, UString& buffer, uint32_t count, int timeoutMS)
@@ -391,6 +390,25 @@ UString UServices::getFileName(long hash, bool crl)
    return UString::getStringNull();
 }
 
+/* The passwd_cb() function must write the password into the provided buffer buf which is of length 'size' */
+
+int UServices::passwd_cb(char* buf, int size, int rwflag, void* password)
+{
+   U_TRACE(0, "UServices::passwd_cb(%p,%d,%d,%p)", buf, size, rwflag, password)
+
+   U_VAR_UNUSED(rwflag)
+
+   uint32_t written = u__strlen((const char*)password, __PRETTY_FUNCTION__);
+
+   u__memcpy(buf, (const char*)password, written+1, __PRETTY_FUNCTION__);
+
+   U_INTERNAL_ASSERT_MINOR((int)written, size)
+
+   U_INTERNAL_DUMP("buf(%u) = %.*S", written, written, buf)
+
+   U_RETURN(written);
+}
+
 void UServices::setVerifyStatus(long result)
 {
    U_TRACE(0, "UServices::setVerifyStatus(%ld)", result)
@@ -621,8 +639,8 @@ EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
    pkey = (EVP_PKEY*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0
-                        ? (_private ? U_SYSCALL(PEM_read_bio_PrivateKey, "%p,%p,%p,%p", in, 0, (password ? u_passwd_cb : 0), (void*)password)
-                                    : U_SYSCALL(PEM_read_bio_PUBKEY,     "%p,%p,%p,%p", in, 0, (password ? u_passwd_cb : 0), (void*)password))
+                        ? (_private ? U_SYSCALL(PEM_read_bio_PrivateKey, "%p,%p,%p,%p", in, 0, (password ? passwd_cb : 0), (void*)password)
+                                    : U_SYSCALL(PEM_read_bio_PUBKEY,     "%p,%p,%p,%p", in, 0, (password ? passwd_cb : 0), (void*)password))
                         : (_private ? U_SYSCALL(d2i_PrivateKey_bio,      "%p,%p",       in, 0)
                                     : U_SYSCALL(d2i_PUBKEY_bio,          "%p,%p",       in, 0)));
 

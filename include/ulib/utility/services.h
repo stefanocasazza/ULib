@@ -30,12 +30,11 @@ typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
 #  define U_STORE_FLAGS (X509_V_FLAG_CRL_CHECK | X509_V_FLAG_CRL_CHECK_ALL)
 #endif
 
-#ifndef FNM_CASEFOLD
-#define FNM_CASEFOLD FNM_IGNORECASE
-#endif
-
 #ifndef FNM_LEADING_DIR
 #define FNM_LEADING_DIR FNM_PERIOD
+#endif
+#ifndef FNM_CASEFOLD
+#define FNM_CASEFOLD FNM_IGNORECASE
 #endif
 
 struct U_EXPORT UServices {
@@ -167,22 +166,21 @@ struct U_EXPORT UServices {
    static UString generateToken(const UString& data, time_t expire);
    static bool    getTokenData(       UString& data, const UString& value, time_t& expire);
 
-#ifdef USE_LIBSSL
-   static void generateDigest(int alg, const UString& data) { generateDigest(alg, (unsigned char*)U_STRING_TO_PARAM(data)); }
-   static void generateDigest(int alg, unsigned char* data, uint32_t size);
-#endif
-
-   static void generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, int base64 = 0);
-   static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, int base64 = 0)
-      { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
-
    // creat a new unique UUID value - 16 bytes (128 bits) long
    // return from the binary representation a 36-byte string (plus tailing '\0') of the form 1b4e28ba-2fa1-11d2-883f-0016d3cca427
 
    static UString  getUUID();
    static uint64_t getUniqUID(); // creat a new unique UUID value - 8 bytes (64 bits) long
 
+   static void generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, int base64 = 0);
+   static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, int base64 = 0)
+      { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
+
 #ifdef USE_LIBSSL
+   static void generateDigest(int alg, unsigned char* data, uint32_t size);
+
+   static void generateDigest(int alg, const UString& data) { generateDigest(alg, (unsigned char*)U_STRING_TO_PARAM(data)); }
+
    /**
     * setup OPENSSL standard certificate directory. The X509_STORE holds the tables etc for verification stuff.
     * A X509_STORE_CTX is used while validating a single certificate. The X509_STORE has X509_LOOKUPs for looking
@@ -199,6 +197,16 @@ struct U_EXPORT UServices {
    static int verify_error;
    static int verify_depth;            /* how far to go looking up certs */
    static X509* verify_current_cert;   /* current certificate */
+
+   /**
+    * The passwd_cb() function must write the password into the provided buffer buf which is of size size.
+    * The actual length of the password must be returned to the calling function. rwflag indicates whether the
+    * callback is used for reading/decryption (rwflag=0) or writing/encryption (rwflag=1).
+    *
+    * See man SSL_CTX_set_default_passwd_cb(3) for more information
+    */
+
+   static int passwd_cb(char* buf, int size, int rwflag, void* restrict password);
 
    static void setVerifyStatus(long result);
 

@@ -2445,6 +2445,9 @@ if test "$enable_stdcpp" != "yes"; then
 	AC_CHECK_LIB(Systemstubs, printf, [ULIB_LIBS="$ULIB_LIBS -lSystemstubs -lgcc"])
 fi
 
+# On Ubuntu 16.04 bug: #65612 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612 
+ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
+
 # Check for availablity of "old style" C++ strstream header
 AC_CHECK_HEADERS([strstream.h])
 

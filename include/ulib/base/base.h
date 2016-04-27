@@ -161,9 +161,9 @@ typedef struct ustringrep {
 #endif
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
    struct ustringrep* parent; /* manage substring for increment reference of source string */
-#  ifdef DEBUG
+# ifdef DEBUG
    int32_t child; /* manage substring for capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'... */
-#  endif
+# endif
 #endif
    uint32_t _length, _capacity, references;
    const char* str;
@@ -175,7 +175,7 @@ extern U_EXPORT struct ustringrep u_empty_string_rep_storage;
 /* Internal buffer */
 extern U_EXPORT char* u_buffer;
 extern U_EXPORT char* u_err_buffer;
-extern U_EXPORT uint32_t u_buffer_len; /* assert that is busy if != 0 */
+extern U_EXPORT uint32_t u_buffer_len; /* assert that u_buffer is busy if u_buffer_len != 0 */
 
 /* Startup */
 extern U_EXPORT pid_t u_pid;
@@ -330,7 +330,7 @@ static inline bool u_is_img(int mime_index)    { return (mime_index == U_png ||
 
 extern U_EXPORT int32_t u_printf_string_max_length;
 
-/* NB: u_printf(), u_vsnprintf and u_snprintf conflit with /usr/include/unicode/urename.h */
+/* NB: u_printf(), u_vsnprintf() and u_snprintf() conflit with /usr/include/unicode/urename.h */
 
 U_EXPORT void u__printf(int fd,           const char* restrict format, ...);
 U_EXPORT void u_internal_print(bool abrt, const char* restrict format, ...);

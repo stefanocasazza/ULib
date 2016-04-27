@@ -11,10 +11,14 @@
 //
 // ============================================================================
 
+/*
+#define DEBUG_DEBUG
+*/
+
+#include <ulib/internal/common.h>
+
 #include <ulib/base/hash.h>
 #include <ulib/base/utility.h>
-
-#include <ulib/debug/objectDB.h>
 #include <ulib/debug/error_memory.h>
 
 typedef bool (*vPFpObjectDumpable)(const UObjectDumpable*);
@@ -130,8 +134,7 @@ public:
 
       if (node)
          {
-         U_INTERNAL_PRINT("ptr_object = %p base_class = %s derived_class = %s",
-                           dumper->ptr_object, node->objDumper->name_class, dumper->name_class);
+         U_INTERNAL_PRINT("ptr_object = %p base_class = %s derived_class = %s", dumper->ptr_object, node->objDumper->name_class, dumper->name_class);
 
          delete node->objDumper;
          }
@@ -171,8 +174,8 @@ public:
             {
             U_INTERNAL_ASSERT_EQUALS(pnode->objDumper->ptr_object, ptr_object)
 
-            /* lista self-organizing (move-to-front), antepongo l'elemento
-             * trovato all'inizio della lista delle collisioni...
+            /**
+             * lista self-organizing (move-to-front), antepongo l'elemento trovato all'inizio della lista delle collisioni...
              */
 
             if (prev)
@@ -192,8 +195,8 @@ public:
 
       U_INTERNAL_PRINT("prev = %p", prev)
 
-      /* presuppone l'elemento da cancellare all'inizio della lista
-       * delle collisioni - lista self-organizing (move-to-front)...
+      /**
+       * presuppone l'elemento da cancellare all'inizio della lista delle collisioni - lista self-organizing (move-to-front)...
        */
 
       U_INTERNAL_ASSERT_EQUALS(node,table[index])
@@ -495,7 +498,10 @@ void UObjectDB::dumpObject(const UObjectDumpable* dumper)
       }
 
    liov[6].iov_base = (caddr_t) dumper->dump();
-   liov[6].iov_len  = u__strlen((const char*)liov[6].iov_base, __PRETTY_FUNCTION__);
+   liov[6].iov_len  = (UObjectIO::buffer_output_len ? UObjectIO::buffer_output_len : u__strlen((const char*)liov[6].iov_base, __PRETTY_FUNCTION__));
+
+   U_INTERNAL_PRINT("UObjectIO::buffer_output(%u) = \"%.*s\" liov[6](%u) = \"%.*s\"",
+                     UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, UObjectIO::buffer_output, liov[6].iov_len, liov[6].iov_len, liov[6].iov_base)
 }
 
 // dump single object...
@@ -618,6 +624,8 @@ void UObjectDB::dumpObjects()
 
       if (dumper->level >= level_active)
          {
+         UObjectIO::buffer_output_len = 0;
+
          dumpObject(dumper);
 
          _write(liov, 8);

@@ -1,8 +1,8 @@
 /* csp_interface.h */
 
 #ifndef HAVE__BOOL
-#define true  1
-#define false 0
+#  define true  1
+#  define false 0
 typedef _Bool bool;
 #endif
 

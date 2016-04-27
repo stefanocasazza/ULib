@@ -32,14 +32,13 @@
 // UString content and size
 
 #ifdef DEBUG_DEBUG
-#define U_STRING_TO_TRACE(str)  U_min(128,(str).size()),(str).data()
+#  define U_STRING_TO_TRACE(str)  U_min(128,(str).size()),(str).data()
 #else
-#define U_STRING_TO_TRACE(str)            (str).size(), (str).data()
+#  define U_STRING_TO_TRACE(str)            (str).size(), (str).data()
 #endif
-#define U_STRING_TO_PARAM(str)            (str).data(),(str).size()
+#define   U_STRING_TO_PARAM(str)            (str).data(), (str).size()
 
 /**
- * ---------------------------------------------------------------------------------------------------------
  * UStringRep: string representation
  * ---------------------------------------------------------------------------------------------------------
  * The string object requires only one allocation. The allocation function which gets a block of raw bytes
@@ -56,7 +55,6 @@
  * Note that the UStringRep object is a POD so that you can have a static "empty string" UStringRep object
  * already "constructed" before static constructors have run. The reference-count encoding is chosen so that
  * a 0 indicates 1 reference, so you never try to destroy the empty-string UStringRep object
- * ---------------------------------------------------------------------------------------------------------
  */
 
 #ifdef DEBUG
@@ -158,7 +156,7 @@ public:
 #  endif
 
       if (references) --references;
-      else            _release();
+      else _release();
       }
 
    // Size and Capacity
@@ -742,15 +740,6 @@ protected:
 #endif
 
 private:
-    UStringRep()
-      {
-      U_TRACE_NO_PARAM(0, "UStringRep::UStringRep()")
-
-      U_INTERNAL_DUMP("this = %p", this)
-
-      u__memcpy(this, string_rep_null, sizeof(UStringRep), __PRETTY_FUNCTION__);
-      }
-
    explicit UStringRep(const char* t, uint32_t tlen) // NB: to use only with new(UStringRep(t,tlen))...
       {
       U_TRACE_REGISTER_OBJECT(0, UStringRep, "%.*S,%u", tlen, t, tlen)
@@ -770,6 +759,8 @@ private:
       U_ERROR("I can't use UStringRep on stack");
       }
 
+   void _release();
+
    void shift(ptrdiff_t diff)
       {
       U_TRACE(0, "UStringRep::shift(%p)", diff)
@@ -786,8 +777,26 @@ private:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   void _release();
-   void set(uint32_t length, uint32_t capacity, const char* ptr);
+   void set(uint32_t __length, uint32_t __capacity, const char* ptr)
+      {
+      U_TRACE(0, "UStringRep::set(%u,%u,%p)", __length, __capacity, ptr)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_POINTER(ptr)
+
+#  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+      parent = 0;
+#    ifdef DEBUG
+      child  = 0;
+#    endif
+#  endif
+
+      _length    = __length;
+      _capacity  = __capacity; // [0 const | -1 mmap | -2 to free]...
+      references = 0;
+      str        = ptr;
+      }
 
    // Equal lookup use case
 
@@ -1401,7 +1410,7 @@ public:
          {
          _reserve(*this, n);
 
-         U_RETURN(true); // return true if has changed rep...
+         U_RETURN(true); // return true if it has changed rep...
          }
 
       U_RETURN(false);
@@ -1715,9 +1724,9 @@ public:
 
 #ifdef DEBUG
    bool invariant() const;
-#  ifdef U_STDCPP_ENABLE
+# ifdef U_STDCPP_ENABLE
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
    // -----------------------------------------------------------------------------------------------------------------------

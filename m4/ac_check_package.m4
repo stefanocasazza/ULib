@@ -830,10 +830,10 @@ else
 
 	if test "$ac_mysql_incdir" = "no"; then
 		MYSQL_INCLUDE=`mysql_config --include`
-		libmysql_version=$(grep MYSQL_VERSION_ID /usr/include/mysql/mysql_version.h 2>/dev/null | cut -f3)
+		libmysql_version=$(grep LIBMYSQL_VERSION     /usr/include/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	else
 		MYSQL_INCLUDE=-I$ac_mysql_incdir
-		libmysql_version=$(grep MYSQL_VERSION_ID $ac_mysql_incdir/mysql/mysql_version.h 2>/dev/null | cut -f3)
+		libmysql_version=$(grep LIBMYSQL_VERSION $ac_mysql_incdir/mysql/mysql_version.h 2>/dev/null | head -n1 | cut -d'"' -f2)
 	fi
 	if test "$ac_mysql_libdir" = "no"; then
 	   	if test "$ac_mysql_threadsafe" = "YES"; then

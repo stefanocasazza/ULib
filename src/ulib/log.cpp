@@ -905,7 +905,7 @@ __pure U_NO_EXPORT int ULog::decode(const char* name, uint32_t len, bool bfacili
    U_TRACE(0, "ULog::decode(%.*S,%u,%b)", len, name, len, bfacility)
 
 #ifndef _MSWINDOWS_
-   for (CODE* c = (bfacility ? facilitynames : prioritynames); c->c_name; ++c) if (strncasecmp(name, c->c_name, len) == 0) U_RETURN(c->c_val);
+   for (CODE* c = (bfacility ? facilitynames : prioritynames); c->c_name; ++c) if (u__strncasecmp(name, c->c_name, len) == 0) U_RETURN(c->c_val);
 #endif
 
    U_RETURN(-1);

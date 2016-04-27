@@ -66,34 +66,35 @@ public:
       // ---------------------------------------------------------------------------------------------------------------------------------------
       // userver - configuration parameters
       // ---------------------------------------------------------------------------------------------------------------------------------------
-      // ENABLE_IPV6    flag to indicate use of ipv6
+      // ENABLE_IPV6    flag to indicate the use of ipv6
       // SERVER         host name or ip address for the listening socket
-      // PORT           port number for the listening socket
-      // SOCKET_NAME    file name   for the listening socket
+      // PORT           port number             for the listening socket
+      // SOCKET_NAME    file name               for the listening socket
       // IP_ADDRESS     ip address of host for the interface connected to the Internet (autodetected if not specified)
       //
       // ALLOWED_IP            list of comma separated client address for IP-based access control (IPADDR[/MASK])
       // ALLOWED_IP_PRIVATE    list of comma separated client private address for IP-based access control (IPADDR[/MASK]) for public server
       // ENABLE_RFC1918_FILTER reject request from private IP to public server address
+      //
       // MIN_SIZE_FOR_SENDFILE for major size it is better to use sendfile() to serve static content
       //
       // LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
       // SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
-      // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization 
+      // CLIENT_FOR_PARALLELIZATION minum number of clients to active parallelization 
       //
-      // PID_FILE       write pid on file indicated
-      // WELCOME_MSG    message of welcome to send initially to client
+      // PID_FILE       write main process pid on file indicated
+      // WELCOME_MSG    message of welcome to send initially to client connected
       // RUN_AS_USER    downgrade security to that user account
-      // DOCUMENT_ROOT  The directory out of which you will serve your documents
+      // DOCUMENT_ROOT  The directory out of which we will serve your documents
       //
-      // LOG_FILE       locations for file log
+      // LOG_FILE         locations for file log
       // LOG_FILE_SZ    memory size for file log
-      // LOG_MSG_SIZE  limit length of print network message to LOG_MSG_SIZE chars (default 128)
+      // LOG_MSG_SIZE   limit length of printed log entry to LOG_MSG_SIZE chars (default 128)
       //
       // PLUGIN         list of plugins to load, a flexible way to add specific functionality to the server
-      // PLUGIN_DIR     directory of plugins to load
+      // PLUGIN_DIR     directory where there are plugins to load
       //
-      // REQ_TIMEOUT    timeout for request from client
+      // REQ_TIMEOUT    timeout for request from client connected
       // TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel
       // TCP_LINGER_SET Specifies how the TCP initiated the close
       // MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session. (Value <= 0 will disable Keep-Alive)

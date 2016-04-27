@@ -65,10 +65,6 @@ void UFile::chk_num_file_object()
 }
 #endif
 
-#ifndef MAP_POPULATE // (since Linux 2.5.46)
-#define MAP_POPULATE 0
-#endif
-
 #ifndef MREMAP_MAYMOVE
 #define MREMAP_MAYMOVE 1
 #endif
@@ -740,10 +736,10 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    U_INTERNAL_DUMP("resto = %u", resto)
 
 #ifdef HAVE_ARCH64
-   U_INTERNAL_ASSERT_MINOR_MSG(length, U_STRING_MAX_SIZE, "we can't manage file bigger than 4G...") // limit of UString
+   U_INTERNAL_ASSERT_MINOR_MSG(length, U_STRING_MAX_SIZE, "we can't manage file size bigger than 4G...") // limit of UString
 #endif
 
-   U_INTERNAL_ASSERT_EQUALS((offset % PAGESIZE),0) // offset should be a multiple of the page size as returned by getpagesize(2)
+   U_INTERNAL_ASSERT_EQUALS((offset % PAGESIZE), 0) // offset should be a multiple of the page size as returned by getpagesize(2)
 
    if (map != (char*)MAP_FAILED)
       {
@@ -752,13 +748,30 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
       map_size = 0;
       }
 
-   map = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, length, prot, MAP_SHARED | MAP_POPULATE, fd, offset);
+   int flags = MAP_SHARED;
+
+#if defined(U_LINUX) && defined(MAP_POPULATE) // (since Linux 2.5.46)
+   if (prot == PROT_READ) flags |= MAP_POPULATE;
+#endif
+
+   map = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, length, prot, flags, fd, offset);
 
    if (map != (char*)MAP_FAILED)
       {
       map_size = length;
 
-      if (str) str->mmap(map + resto, length - resto);
+      if (str)
+         {
+         str->mmap(map + resto, length - resto);
+
+#     if defined(U_LINUX) && defined(MADV_SEQUENTIAL)
+         if (prot == PROT_READ &&
+             length > (32 * PAGESIZE))
+            {
+            (void) U_SYSCALL(madvise, "%p,%u,%d", (void*)map, length, MADV_SEQUENTIAL);
+            }
+#     endif
+         }
 
       U_RETURN(true);
       }

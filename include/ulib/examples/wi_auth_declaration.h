@@ -2067,10 +2067,11 @@ static void usp_init_wi_auth()
 #endif
 
 #ifdef DEBUG
-   if ((setAccessPointReference(U_CONSTANT_TO_PARAM("10.8.1.2")),      ap_ref->equal(U_CONSTANT_TO_PARAM("X0256Rap")))  == false ||
-       (setAccessPointReference(U_CONSTANT_TO_PARAM("10.10.100.115")), ap_ref->equal(U_CONSTANT_TO_PARAM("X25515Rap"))) == false ||
-       (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_UNIFI)),        ap_ref->equal(U_CONSTANT_TO_PARAM("Xunifi")))    == false ||
-       (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_CASCINE)),      ap_ref->equal(U_CONSTANT_TO_PARAM("Xcascine")))  == false)
+   if ((setAccessPointReference(U_CONSTANT_TO_PARAM("10.8.1.2")),        ap_ref->equal(U_CONSTANT_TO_PARAM("X0256Rap")))  == false ||
+       (setAccessPointReference(U_CONSTANT_TO_PARAM("10.10.100.115")),   ap_ref->equal(U_CONSTANT_TO_PARAM("X25515Rap"))) == false ||
+       (setAccessPointReference(U_CONSTANT_TO_PARAM("159.213.248.233")), ap_ref->equal(U_CONSTANT_TO_PARAM("X63225Rap"))) == false ||
+       (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_UNIFI)),          ap_ref->equal(U_CONSTANT_TO_PARAM("Xunifi")))    == false ||
+       (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_CASCINE)),        ap_ref->equal(U_CONSTANT_TO_PARAM("Xcascine")))  == false)
       {
       U_ERROR("setAccessPointReference() failed");
       }

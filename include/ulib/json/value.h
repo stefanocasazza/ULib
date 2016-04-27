@@ -389,7 +389,7 @@ public:
     *
     * \param document UTF-8 encoded string containing the document to read.
     *
-    * \return \c true if the document was successfully parsed, \c false if an error occurred.
+    * \return \c true if the document was successfully parsed, \c false if an error occurred
     */
 
    bool parse(const UString& document);
@@ -398,7 +398,7 @@ public:
     * \brief Outputs a UValue in <a HREF="http://www.json.org">JSON</a> format without formatting (not human friendly).
     *
     * The JSON document is written in a single line. It is not intended for 'human' consumption,
-    * but may be usefull to support feature such as RPC where bandwith is limited.
+    * but may be usefull to support feature such as RPC where bandwith is limited
     */
 
    UString output()
@@ -872,16 +872,62 @@ template <> class U_EXPORT UJsonTypeHandler<UStringRep> : public UJsonTypeHandle
 public:
    explicit UJsonTypeHandler(UStringRep& val) : UJsonTypeHandler_Base(&val) {}
 
-   void   toJSON(UValue& json);
-   void fromJSON(UValue& json);
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UStringRep>::toJSON(%p)", &json)
+
+      U_INTERNAL_DUMP("pval(%p) = %V", pval, pval)
+
+      U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
+
+      json.type_      = STRING_VALUE;
+      json.value.ptr_ = U_NEW(UString((UStringRep*)pval));
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UStringRep>::fromJSON(%p)", &json)
+
+      U_ASSERT(json.isString())
+
+      UStringRep* rep = json.getString()->rep;
+
+      U_INTERNAL_DUMP("pval(%p) = %p rep(%p) = %V", pval, pval, rep, rep)
+
+      U_ERROR("UJsonTypeHandler<UStringRep>::fromJSON(): sorry, we cannot use UStringRep type from JSON type handler...");
+      }
 };
 
 template <> class U_EXPORT UJsonTypeHandler<UString> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(UString& val) : UJsonTypeHandler_Base(&val) {}
 
-   void   toJSON(UValue& json);
-   void fromJSON(UValue& json);
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UString>::toJSON(%p)", &json)
+
+      U_INTERNAL_DUMP("pval(%p) = %V", pval, ((UString*)pval)->rep)
+
+      U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
+
+      json.type_      = STRING_VALUE;
+      json.value.ptr_ = U_NEW(UString(*((UString*)pval)));
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UString>::fromJSON(%p)", &json)
+
+      U_ASSERT(json.isString())
+
+      UStringRep* rep = json.getString()->rep;
+
+      U_INTERNAL_DUMP("pval(%p) = %p rep(%p) = %V", pval, ((UString*)pval)->rep, rep, rep)
+
+      ((UString*)pval)->_assign(rep);
+
+      U_INTERNAL_ASSERT(((UString*)pval)->invariant())
+      }
 };
 
 // TEMPLATE SPECIALIZATIONS FOR CONTAINERS
@@ -922,11 +968,11 @@ public:
 
       for (UValue* child = json.children.head; child; child = child->next)
          {
-         T* elem = U_NEW(T);
+         T* pelem = U_NEW(T);
 
-         child->fromJSON(UJsonTypeHandler<T>(*elem));
+         child->fromJSON(UJsonTypeHandler<T>(*pelem));
 
-         ((uvector*)pval)->push_back(elem);
+         ((uvector*)pval)->push_back(pelem);
          }
       }
 };
@@ -937,8 +983,23 @@ public:
 
    explicit UJsonTypeHandler(UVector<UString>& val) : UJsonTypeHandler<uvectorbase>(*((uvector*)&val)) {}
 
-   void   toJSON(UValue& json) { ((UJsonTypeHandler<uvectorbase>*)this)->toJSON(json); }
-   void fromJSON(UValue& json) { ((UJsonTypeHandler<uvectorbase>*)this)->fromJSON(json); }
+   void toJSON(UValue& json) { ((UJsonTypeHandler<uvectorbase>*)this)->toJSON(json); }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UVector<UString>>::fromJSON(%p)", &json)
+
+      U_ASSERT(json.isArray())
+
+      for (UValue* child = json.children.head; child; child = child->next)
+         {
+         UString elem;
+
+         child->fromJSON(UJsonTypeHandler<UString>(elem));
+
+         ((UVector<UString>*)pval)->push_back(elem);
+         }
+      }
 };
 
 template <class T> class U_EXPORT UJsonTypeHandler<UHashMap<T*> > : public UJsonTypeHandler_Base {
@@ -1012,8 +1073,29 @@ public:
 
    explicit UJsonTypeHandler(UHashMap<UString>& val) : UJsonTypeHandler<uhashmapbase>(*((uhashmap*)&val)) {}
 
-   void   toJSON(UValue& json) { ((UJsonTypeHandler<uhashmapbase>*)this)->toJSON(json); }
-   void fromJSON(UValue& json) { ((UJsonTypeHandler<uhashmapbase>*)this)->fromJSON(json); }
+   void toJSON(UValue& json) { ((UJsonTypeHandler<uhashmapbase>*)this)->toJSON(json); }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<<UVector<UString>>::fromJSON(%p)", &json)
+
+      U_ASSERT(json.isObject())
+
+      uhashmap* pmap = (uhashmap*)pval;
+
+      for (UValue* child = json.children.head; child; child = child->next)
+         {
+         UString elem;
+
+         child->fromJSON(UJsonTypeHandler<UString>(elem));
+
+         U_INTERNAL_ASSERT_POINTER(child->key)
+
+         pmap->lookup(*(child->key));
+
+         pmap->insertAfterFind(*(child->key), elem.rep);
+         }
+      }
 };
 
 #endif

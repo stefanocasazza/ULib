@@ -6,13 +6,15 @@
 
 #ifdef DEBUG
 #  include "debug/trace.cpp"
-#  include "debug/objectDB.cpp"
 #  include "debug/error_memory.cpp"
 #  include "debug/error_simulation.cpp"
 #endif
 
 #ifdef U_STDCPP_ENABLE
 #  include "internal/objectIO.cpp"
+#  ifdef DEBUG
+#     include "debug/objectDB.cpp"
+#  endif
 #endif
 
 #include "debug/error.cpp"

@@ -600,27 +600,6 @@ void UString::str_allocate(int which)
 #endif
 }
 
-void UStringRep::set(uint32_t __length, uint32_t __capacity, const char* ptr)
-{
-   U_TRACE(0, "UStringRep::set(%u,%u,%p)", __length, __capacity, ptr) // problem with sanitize address
-
-   U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT_POINTER(ptr)
-
-#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   parent = 0;
-# ifdef DEBUG
-   child  = 0;
-# endif
-#endif
-
-   _length    = __length;
-   _capacity  = __capacity; // [0 const | -1 mmap | -2 to free]...
-   references = 0;
-   str        = ptr;
-}
-
 UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
 {
    U_TRACE(1, "UStringRep::create(%u,%u,%p)", length, need, ptr)
@@ -814,68 +793,68 @@ void UStringRep::_release()
 {
    U_TRACE_NO_PARAM(0, "UStringRep::_release()")
 
-   U_INTERNAL_DUMP("_capacity = %u str(%u) = %.*S", _capacity, _length, _length, str)
+   U_INTERNAL_DUMP("_capacity = %u str(%u) = %V", _capacity, _length, this)
 
    U_INTERNAL_ASSERT_EQUALS(references, 0)
    U_INTERNAL_ASSERT_DIFFERS(this, string_rep_null)
 
-// if (this == string_rep_null) return;
-
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
    if (parent)
 # ifdef U_SUBSTR_INC_REF
-      parent->release(); // NB: only the death of substring de-reference the source...
+   parent->release(); // NB: only the death of substring de-reference the source...
 # else
+   {
+   U_INTERNAL_ASSERT_EQUALS(child, 0)
+
+   U_INTERNAL_DUMP("parent->child = %d", parent->child)
+
+// U_INTERNAL_ASSERT_RANGE(1, parent->child, max_child)
+
+   if (parent->child >= 1 &&
+       parent->child <= max_child)
       {
-      U_INTERNAL_ASSERT_EQUALS(child, 0)
+      parent->child--;
 
-      U_INTERNAL_DUMP("parent->child = %d", parent->child)
-
-   // U_INTERNAL_ASSERT_RANGE(1, parent->child, max_child)
-
-      if (parent->child >= 1 &&
-          parent->child <= max_child)
+      U_INTERNAL_DUMP("this = %p parent = %p parent->references = %u parent->child = %d", this, parent, parent->references, parent->child)
+      }
+   else
+      {
+      U_WARNING("parent->child has value(%d) out of range [1-%d]", parent->child, max_child);
+      }
+   }
+   else // source...
+   {
+   if (child)
+      {
+#  ifdef U_STDCPP_ENABLE
+      if (UObjectDB::fd > 0)
          {
-         parent->child--;
+         parent_destroy = this;
 
-         U_INTERNAL_DUMP("this = %p parent = %p parent->references = %u parent->child = %d", this, parent, parent->references, parent->child)
+         U_DUMP_OBJECT_WITH_CHECK("DEAD OF SOURCE STRING WITH CHILD ALIVE - child of this", checkIfChild)
+         }
+      else
+#  endif
+      {
+      char buffer[4096];
+
+      uint32_t len = u__snprintf(buffer, sizeof(buffer), "DEAD OF SOURCE STRING WITH CHILD ALIVE: child(%u) source(%u) = %V", child, _length, this);
+
+      if (check_dead_of_source_string_with_child_alive)
+         {
+         U_INTERNAL_ASSERT_MSG(false, buffer)
          }
       else
          {
-         U_WARNING("parent->child has value(%d) out of range (1-%d)", parent->child, max_child);
+         U_WARNING("%.*s", len, buffer);
          }
       }
-   else // source...
-      {
-      if (child)
-         {
-         if (UObjectDB::fd > 0)
-            {
-            parent_destroy = this;
-
-            U_DUMP_OBJECT_WITH_CHECK("DEAD OF SOURCE STRING WITH CHILD ALIVE - child of this", checkIfChild)
-            }
-         else
-            {
-            char buffer[4096];
-
-            (void) u__snprintf(buffer, sizeof(buffer), "DEAD OF SOURCE STRING WITH CHILD ALIVE: child(%u) source(%u) = %.*S", child, _length, _length, str);
-
-            if (check_dead_of_source_string_with_child_alive)
-               {
-               U_INTERNAL_ASSERT_MSG(false, buffer)
-               }
-            else
-               {
-               U_WARNING("%s", buffer);
-               }
-            }
-         }
       }
+   }
 # endif
-#ifdef DEBUG
+# ifdef DEBUG
    U_UNREGISTER_OBJECT(0, this)
-#endif
+# endif
 #endif
 
 #ifndef ENABLE_MEMPOOL
@@ -891,16 +870,14 @@ void UStringRep::_release()
          uint32_t sz = _capacity + (1 + sizeof(UStringRep));
 
          /**
-          * -----------
           * power of 2:
           * -----------
-          * 2^7   128
-          * 2^8   256
-          * 2^9   512
+          * 2^7    128
+          * 2^8    256
+          * 2^9    512
           * 2^10  1024
           * 2^11  2048
           * 2^12  4096
-          * -----------
           */
 
          U_INTERNAL_ASSERT_EQUALS(sz & (sz-1), 0) // must be a power of 2
@@ -943,8 +920,7 @@ void UStringRep::_release()
 #endif
 }
 
-#ifdef DEBUG
-// substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
+#ifdef DEBUG // substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
 int32_t     UStringRep::max_child;
 UStringRep* UStringRep::parent_destroy;
 UStringRep* UStringRep::string_rep_share;
@@ -1177,7 +1153,7 @@ __pure bool UStringRep::findEndHeader(uint32_t pos) const
       const char* ptr  = str + pos;
       uint32_t _remain = (_length - pos);
 
-      if (u_findEndHeader1(ptr, _remain) != U_NOT_FOUND) U_RETURN(true); /* find sequence of U_CRLF2 */
+      if (u_findEndHeader1(ptr, _remain) != U_NOT_FOUND) U_RETURN(true); // find sequence of U_CRLF2
       }
 
    U_RETURN(false);
@@ -1224,16 +1200,16 @@ UString::UString(ustringrep* r)
    U_INTERNAL_ASSERT(invariant())
 }
 
-UString::UString(uint32_t n, const char* format, ...) // ctor with var arg
+UString::UString(uint32_t sz, const char* format, ...) // ctor with var arg
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%S", n, format)
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%S", sz, format)
 
    U_INTERNAL_ASSERT_POINTER(format)
 
    va_list argp;
    va_start(argp, format);
 
-   rep = UStringRep::create(0U, n, 0);
+   rep = UStringRep::create(0U, sz, 0);
 
    UString::vsnprintf(format, argp); 
 
@@ -1408,10 +1384,6 @@ void UString::mmap(const char* map, uint32_t len)
       _set(U_NEW(UStringRep(map, len)));
 
       rep->_capacity = U_NOT_FOUND;
-
-#  if defined(U_LINUX) && defined(MADV_SEQUENTIAL)
-      if (len > (64 * PAGESIZE)) (void) U_SYSCALL(madvise, "%p,%u,%d", (void*)map, len, MADV_SEQUENTIAL);
-#  endif
       }
 
    U_INTERNAL_ASSERT(invariant())
@@ -1534,7 +1506,7 @@ char* UString::__append(uint32_t n)
 
 UString& UString::append(uint32_t n, char c)
 {
-   U_TRACE(0, "UString::append(%u,%C)", n, c)
+   U_TRACE(1, "UString::append(%u,%C)", n, c)
 
    if (n)
       {
@@ -1853,31 +1825,22 @@ __pure bool UStringRep::strtob() const
 
    if (_length)
       {
-      enum {
-         VAL_yes  = U_MULTICHAR_CONSTANT32('y','e','s',0),
-         VAL_Yes  = U_MULTICHAR_CONSTANT32('Y','e','s',0),
-         VAL_YES  = U_MULTICHAR_CONSTANT32('Y','E','S',0),
-         VAL_true = U_MULTICHAR_CONSTANT32('t','r','u','e'),
-         VAL_True = U_MULTICHAR_CONSTANT32('T','r','u','e'),
-         VAL_TRUE = U_MULTICHAR_CONSTANT32('T','R','U','E')
-      };
-
-      switch (u_get_unalignedp32(str))
-         {
-         case VAL_yes:
-         case VAL_Yes:
-         case VAL_YES:
-         case VAL_true:
-         case VAL_True:
-         case VAL_TRUE: U_RETURN(true); 
-         }
-
       switch (u_get_unalignedp16(str))
          {
          case U_MULTICHAR_CONSTANT16('1',0):
          case U_MULTICHAR_CONSTANT16('o','n'):
          case U_MULTICHAR_CONSTANT16('O','n'):
          case U_MULTICHAR_CONSTANT16('O','N'): U_RETURN(true);
+         }
+
+      switch (u_get_unalignedp32(str))
+         {
+         case U_MULTICHAR_CONSTANT32('y','e','s',0):
+         case U_MULTICHAR_CONSTANT32('Y','e','s',0):
+         case U_MULTICHAR_CONSTANT32('Y','E','S',0):
+         case U_MULTICHAR_CONSTANT32('t','r','u','e'):
+         case U_MULTICHAR_CONSTANT32('T','r','u','e'):
+         case U_MULTICHAR_CONSTANT32('T','R','U','E'): U_RETURN(true); 
          }
       }
 
@@ -2434,7 +2397,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
          if (str)
             {
             if (str.uniq()) str.setEmpty();
-            else            str._set(UStringRep::create(0U, U_CAPACITY, 0)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:823)...
+            else            str._set(UStringRep::create(0U, U_CAPACITY, 0)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
             }
 
          streamsize w = in.width();
@@ -2487,7 +2450,7 @@ istream& UString::getline(istream& in, unsigned char delim)
       if (size())
          {
          if (uniq()) setEmpty();
-         else        _set(UStringRep::create(0U, U_CAPACITY, 0)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:823)...
+         else        _set(UStringRep::create(0U, U_CAPACITY, 0)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
          }
 
       streambuf* sb = in.rdbuf();

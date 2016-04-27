@@ -1,0 +1,5 @@
+This example (simple_client_server) is very old code and maybe now it can be source of confusion.
+In general the need to subclass UClientImage<socket_type> or to make a plugin is very unusual.
+I think that can be necessary in some unusual context, for example to manage a new protocol or some messaging system,
+but in general the better way to generate dynamic response with ULib is to write a USP page.
+There are many examples of USP pages in the directory: src/ulib/net/server/plugin/usp

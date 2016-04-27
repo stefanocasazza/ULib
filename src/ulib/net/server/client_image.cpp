@@ -1660,7 +1660,10 @@ loop:
 
    if (iBytesWrite != (int)ncount)
       {
-      if (iBytesWrite > 0)
+      bopen = socket->isOpen();
+
+      if (bopen &&
+          iBytesWrite > 0)
          {
          if (UServer_Base::bssl ||
              U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
@@ -1677,7 +1680,6 @@ loop:
          }
 
       bflag = false;
-      bopen = socket->isOpen();
 
       U_SRV_LOG_WITH_ADDR("sending partial response: failed - sk %s, (%u bytes of %u)%.*s to", bopen ? "open" : "close", iBytesWrite, ncount, msg_len, " [pipeline]");
 

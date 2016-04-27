@@ -526,7 +526,7 @@ bool u_setStartTime(void)
 
 void u_init_ulib(char** restrict argv)
 {
-#ifndef _MSWINDOWS_
+#if !defined(_MSWINDOWS_) && defined(DEBUG)
    const char* restrict pwd;
 #endif
 
@@ -546,7 +546,7 @@ void u_init_ulib(char** restrict argv)
 #ifdef USE_HARDWARE_CRC32
    __builtin_cpu_init();
 
-   if (__builtin_cpu_supports ("sse4.2"))
+   if (__builtin_cpu_supports("sse4.2"))
       {
       uint32_t h = 0xABAD1DEA;
 
@@ -566,15 +566,13 @@ void u_init_ulib(char** restrict argv)
 
    u_getcwd(); /* get current working directory */
 
-#ifndef _MSWINDOWS_
+#if !defined(_MSWINDOWS_) && defined(DEBUG)
    pwd = getenv("PWD"); /* check for bash setting */
 
    if (pwd &&
        strncmp(u_cwd, pwd, u_cwd_len) != 0)
       {
-#  ifdef DEBUG
       U_WARNING("Current working directory from environment (PWD): %s differ from system getcwd(): %.*s", pwd, u_cwd_len, u_cwd);
-#  endif
       }
 #endif
 
@@ -590,55 +588,6 @@ void u_init_ulib(char** restrict argv)
 
    (void) u_setStartTime();
 }
-
-#ifdef ENTRY
-#undef ENTRY
-#endif
-#define ENTRY(n,x) U_http_method_list[n].name =                 #x, \
-                   U_http_method_list[n].len  = U_CONSTANT_SIZE(#x)
-
-void u_init_http_method_list(void)
-{
-   U_INTERNAL_TRACE("u_init_http_method_list()")
-
-   if (U_http_method_list[0].len == 0)
-      {
-      /* request methods */
-      ENTRY(0,GET);
-      ENTRY(1,HEAD);
-      ENTRY(2,POST);
-      ENTRY(3,PUT);
-      ENTRY(4,DELETE);
-      ENTRY(5,OPTIONS);
-      /* pathological */
-      ENTRY(6,TRACE);
-      ENTRY(7,CONNECT);
-      /* webdav */
-      ENTRY(8,COPY);
-      ENTRY(9,MOVE);
-      ENTRY(10,LOCK);
-      ENTRY(11,UNLOCK);
-      ENTRY(12,MKCOL);
-      ENTRY(13,SEARCH);
-      ENTRY(14,PROPFIND);
-      ENTRY(15,PROPPATCH);
-      /* rfc-5789 */
-      ENTRY(16,PATCH);
-      ENTRY(17,PURGE);
-      /* subversion */
-      ENTRY(18,MERGE);
-      ENTRY(19,REPORT);
-      ENTRY(20,CHECKOUT);
-      ENTRY(21,MKACTIVITY);
-      /* upnp */
-      ENTRY(22,NOTIFY);
-      ENTRY(23,MSEARCH);
-      ENTRY(24,SUBSCRIBE);
-      ENTRY(25,UNSUBSCRIBE);
-      }
-}
-
-#undef ENTRY
 
 /**
  * Places characters into the array pointed to by s as controlled by the string
@@ -745,8 +694,8 @@ uint32_t u_strftime1(char* restrict s, uint32_t maxsize, const char* restrict fo
    };
 
    char ch;                      /* character from format */
+   int i, n, val;                /* handy integer (short term usage) */
    uint32_t count = 0;           /* return value accumulator */
-   int i, n, val, len;           /* handy integer (short term usage) */
    const char* restrict fmark;   /* for remembering a place in format */
 
    U_INTERNAL_TRACE("u_strftime1(%u,%s)", maxsize, format)
@@ -898,9 +847,9 @@ case_Y: /* %Y The full year, formatted with four digits to include the century *
 
    /* if (count >= (maxsize - 4)) return 0; */
 
-      len = sprintf(s+count, "%.4d", 1900 + u_strftime_tm.tm_year);
+      (void) sprintf(s+count, "%.4d", 1900 + u_strftime_tm.tm_year);
 
-      U_INTERNAL_ASSERT_EQUALS(len, 4)
+      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 4)
 
       count += 4;
 
@@ -938,11 +887,11 @@ case_c: /* %c A string representing the complete date and time, in the form Mon 
                               s[count++] = ' ';
       for (i = 0; i < 3; ++i) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
 
-      len = sprintf(&s[count], " %.2d %2.2d:%2.2d:%2.2d %.4d", u_strftime_tm.tm_mday, u_strftime_tm.tm_hour,
-                                                               u_strftime_tm.tm_min,  u_strftime_tm.tm_sec,
-                                                               1900 + u_strftime_tm.tm_year);
+      (void) sprintf(s+count, " %.2d %2.2d:%2.2d:%2.2d %.4d", u_strftime_tm.tm_mday, u_strftime_tm.tm_hour,
+                                                              u_strftime_tm.tm_min,  u_strftime_tm.tm_sec,
+                                                              1900 + u_strftime_tm.tm_year);
 
-      U_INTERNAL_ASSERT_EQUALS(len, 17)
+      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 17)
 
       count += 17;
 
@@ -978,9 +927,9 @@ case_j: /* %j The count of days in the year, formatted with three digits (from 1
 
    /* if (count >= (maxsize - 3)) return 0; */
 
-      len = sprintf(s+count, "%.3d", u_strftime_tm.tm_yday+1);
+      (void) sprintf(s+count, "%.3d", u_strftime_tm.tm_yday+1);
 
-      U_INTERNAL_ASSERT_EQUALS(len, 3)
+      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 3)
 
       count += 3;
 
@@ -1026,9 +975,9 @@ case_x: /* %x A string representing the complete date, in a format like Mon Apr 
                               s[count++] = ' ';
       for (i = 0; i < 3; i++) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
 
-      len = sprintf(&s[count], " %.2d %.4d", u_strftime_tm.tm_mday, 1900 + u_strftime_tm.tm_year);
+      (void) sprintf(s+count, " %.2d %.4d", u_strftime_tm.tm_mday, 1900 + u_strftime_tm.tm_year);
 
-      U_INTERNAL_ASSERT_EQUALS(len, 8)
+      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 8)
 
       count += 8;
 
@@ -1041,7 +990,7 @@ case_y: /* %y The last two digits of the year */
 
       /**
        * The year could be greater than 100, so we need the value modulo 100.
-       * The year could be negative, so we need to correct for a possible negative remainder.
+       * The year could be negative, so we need to correct for a possible negative remainder
        */
 
       U_NUM2STR16(s+count, ((u_strftime_tm.tm_year % 100) + 100) % 100);
@@ -1168,7 +1117,7 @@ uint32_t u_num2str64(char* restrict cp, uint64_t num)
    i     = 0;
    start = cp;
 
-   /* Maximum value an `unsigned long long int' can hold: 18446744073709551615ULL */
+   /* Maximum value an 'unsigned long long int' can hold: 18446744073709551615ULL */
 
    while (num >= 100ULL)
       {
@@ -1266,7 +1215,7 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
    if (abrt)
       {
 #  ifdef DEBUG
-      if (u_trace_fd > STDERR_FILENO) /* NB: registra l'errore sul file di trace, check stderr per evitare duplicazione messaggio a video */
+      if (u_trace_fd > STDERR_FILENO) /* NB: write error on trace file, check stderr to avoid duplication message on terminal */
          {
          struct iovec iov[1] = { { (caddr_t)u_internal_buf, bytes_written } };
 
@@ -2437,7 +2386,8 @@ case_l: /* field length modifier: l ll */
 
       goto rflag;
 
-/* "%n" format specifier, which writes the number of characters written to an address that is passed
+/**
+ * "%n" format specifier, which writes the number of characters written to an address that is passed
  *      as an argument on the stack. It is the format specifier of choice for those performing format string attacks
  *
  * case_n:
@@ -2704,7 +2654,7 @@ void u__printf(int fd, const char* format, ...)
    if (u_flag_exit)
       {
 #  ifdef DEBUG
-      if (u_trace_fd > STDERR_FILENO) /* NB: registra l'errore sul file di trace, check stderr per evitare duplicazione messaggio a video */
+      if (u_trace_fd > STDERR_FILENO) /* NB: write error on trace file, check stderr to avoid duplication message on terminal */
          {
          /* check if warning due to syscall */
 
@@ -2806,6 +2756,55 @@ void u_exit(void)
          }
       }
 }
+
+#ifdef ENTRY
+#undef ENTRY
+#endif
+#define ENTRY(n,x) U_http_method_list[n].name =                 #x, \
+                   U_http_method_list[n].len  = U_CONSTANT_SIZE(#x)
+
+void u_init_http_method_list(void)
+{
+   U_INTERNAL_TRACE("u_init_http_method_list()")
+
+   if (U_http_method_list[0].len == 0)
+      {
+      /* request methods */
+      ENTRY(0,GET);
+      ENTRY(1,HEAD);
+      ENTRY(2,POST);
+      ENTRY(3,PUT);
+      ENTRY(4,DELETE);
+      ENTRY(5,OPTIONS);
+      /* pathological */
+      ENTRY(6,TRACE);
+      ENTRY(7,CONNECT);
+      /* webdav */
+      ENTRY(8,COPY);
+      ENTRY(9,MOVE);
+      ENTRY(10,LOCK);
+      ENTRY(11,UNLOCK);
+      ENTRY(12,MKCOL);
+      ENTRY(13,SEARCH);
+      ENTRY(14,PROPFIND);
+      ENTRY(15,PROPPATCH);
+      /* rfc-5789 */
+      ENTRY(16,PATCH);
+      ENTRY(17,PURGE);
+      /* subversion */
+      ENTRY(18,MERGE);
+      ENTRY(19,REPORT);
+      ENTRY(20,CHECKOUT);
+      ENTRY(21,MKACTIVITY);
+      /* upnp */
+      ENTRY(22,NOTIFY);
+      ENTRY(23,MSEARCH);
+      ENTRY(24,SUBSCRIBE);
+      ENTRY(25,UNSUBSCRIBE);
+      }
+}
+
+#undef ENTRY
 
 /*
 #if defined(U_ALL_C) && !defined(DEBUG)

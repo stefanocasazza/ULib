@@ -22,9 +22,10 @@
  * Base class that defines a uniform interface for all object dumping
  *
  * A mechanism that allow all objects to be registered with a central in-memory "database" that can dump the state of all
- * live objects. The macros which allow easy registration and removal of objects to be dumped (U_REGISTER_OBJECT and
- * U_UNREGISTER_OBJECT) are turned into no-ops by compiling with the DEBUG macro undefined. This allows usage to be removed
- * in "release mode" builds without changing code. There are several interesting aspects to this design:
+ * live objects. The macros which allow easy registration and removal of objects to be dumped (U_REGISTER_OBJECT_PTR,
+ * U_TRACE_REGISTER_OBJECT and U_UNREGISTER_OBJECT, U_TRACE_UNREGISTER_OBJECT) are turned into no-ops by compiling with
+ * the DEBUG macro undefined. This allows usage to be removed in "release mode" builds without changing code. There are
+ * several interesting aspects to this design:
  *
  * 1. It uses the External Polymorphism pattern to avoid having to derive all classes from a common base class that has
  * virtual methods (this is crucial to avoid unnecessary overhead). In addition, there is no additional space added
@@ -54,7 +55,7 @@ public:
 
    virtual ~UObjectDumpable() {}
 
-   virtual const char* dump() const = 0; // This pure virtual method must be filled in by a subclass.
+   virtual const char* dump() const = 0; // This pure virtual method must be filled in by a subclass
 
 protected:
    int level, num_line;
@@ -118,9 +119,7 @@ public:
    static void init(bool flag, bool info);
 
    static void U_EXPORT   registerObject(UObjectDumpable* dumper); // Add the 'dumper' to the list of registered objects
-   static void U_EXPORT unregisterObject(const void* ptr_object);  // Use 'ptr_object' to locate and remove the
-                                                                   // associated 'dumper' from the list of
-                                                                   // registered objects
+   static void U_EXPORT unregisterObject(const void* ptr_object);  // Use 'ptr_object' to locate and remove the associated 'dumper' from the list of registered objects
 
    // Iterates through the entire set of registered objects and dumps their state
 

@@ -2497,8 +2497,11 @@ next:       (void) getARPCache();
       // ---------------------------
 
       index_AUTH = getIndexAUTH(UServer_Base::client_address);
-      url        = *((*vauth_url)[index_AUTH]);
-      peer       = peers->at(U_CLIENT_ADDRESS_TO_PARAM);
+
+      url  = *((*vauth_url)[index_AUTH]);
+      peer = peers->at(U_CLIENT_ADDRESS_TO_PARAM);
+
+      U_SRV_LOG("Start CHECK_REQUEST_FROM_USER phase of plugin nocat: index_AUTH = %u peer = %p", index_AUTH, peer);
 
       // NB: check for strange initial WiFi behaviour of the iPhone...
 
@@ -2655,7 +2658,7 @@ next:       (void) getARPCache();
 
       if (peer                  &&
           U_http_version == '1' &&
-          host           == peer->gateway)
+          host == peer->gateway)
          {
          U_SRV_LOG("WARNING: missing ticket from peer: IP %.*s", U_CLIENT_ADDRESS_TO_TRACE);
          }

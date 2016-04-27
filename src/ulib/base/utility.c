@@ -65,8 +65,8 @@ const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
 
 /**
  * Random number generator
- * these values are not magical, just the default values
- * Marsaglia used. Any pair of unsigned integers should be fine
+ *
+ * these values are not magical, just the default values Marsaglia used. Any pair of unsigned integers should be fine
  */ 
 uint32_t u_m_w = 521288629,
          u_m_z = 362436069;
@@ -80,9 +80,11 @@ bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n)
         if (src < dst) return ((src + n - 1) >= dst);
    else if (dst < src) return ((dst + n - 1) >= src);
 
+   /* They start at same place. Since we know neither of them has zero length, they must overlap */
+
    U_INTERNAL_ASSERT_EQUALS(dst, src)
 
-   return true; /* They start at same place. Since we know neither of them has zero length, they must overlap */
+   return true;
 }
 
 #ifdef DEBUG
@@ -288,10 +290,10 @@ uint32_t u_gettid(void)
 /* Security functions */
 
 #ifndef _MSWINDOWS_
-static uid_t real_uid      = (uid_t)(-1);
-static gid_t real_gid      = (gid_t)(-1);
-static uid_t effective_uid = (uid_t)(-1);
-static gid_t effective_gid = (gid_t)(-1);
+static uid_t real_uid      = (uid_t)-1;
+static gid_t real_gid      = (gid_t)-1;
+static uid_t effective_uid = (uid_t)-1;
+static gid_t effective_gid = (gid_t)-1;
 #endif
 
 void u_init_security(void)
@@ -344,9 +346,7 @@ void u_need_root(bool necessary)
    if (effective_uid)
       {
       if (necessary) U_ERROR("Require root privilege but not setuid root");
-#              ifdef DEBUG
-                   U_WARNING("Require root privilege but not setuid root");
-#              endif
+                     U_DEBUG("Require root privilege but not setuid root");
 
       return;
       }
@@ -359,9 +359,7 @@ void u_need_root(bool necessary)
        geteuid()              !=  0)
       {
       if (necessary) U_ERROR("Did not get root privilege");
-#              ifdef DEBUG
-                   U_WARNING("Did not get root privilege");
-#              endif
+                     U_DEBUG("Did not get root privilege");
       }
 #endif
 }
@@ -511,9 +509,7 @@ void u_need_group(bool necessary)
         getegid() != effective_gid)
       {
       if (necessary) U_ERROR("Did not get group privilege");
-#              ifdef DEBUG
-                   U_WARNING("Did not get group privilege");
-#              endif
+                     U_DEBUG("Did not get group privilege");
       }
 #endif
 }
@@ -555,7 +551,7 @@ void u_never_need_group(void)
    if (getegid() != real_gid ||
        getgid()  != real_gid)
       {
-      U_ERROR("did not drop group privilege");
+      U_ERROR("Did not drop group privilege");
       }
 
     effective_gid = real_gid;
@@ -830,7 +826,7 @@ uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n
    unsigned char c;
    unsigned int offset = 0;
    char* restrict start_buffer = bp;
-   int i, j, k, line, remain, _remain = 16;
+   int i, j, line, remain, _remain = 16;
    bool prev_is_zero = false, print_nothing = false;
 
    static char bufzero[16];
@@ -863,9 +859,9 @@ uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n
             }
          }
 iteration:
-      k = sprintf(bp, "%07X|", offset);
+      (void) sprintf(bp, "%07X|", offset);
 
-      U_INTERNAL_ASSERT_EQUALS(k, 8)
+      U_INTERNAL_ASSERT_EQUALS(strlen(bp), 8)
 
       bp += 8;
 
@@ -909,9 +905,9 @@ iteration:
 
    if (print_nothing)
       {
-      k = sprintf(bp, "%07X\n", offset);
+      (void) sprintf(bp, "%07X\n", offset);
 
-      U_INTERNAL_ASSERT_EQUALS(k, 8)
+      U_INTERNAL_ASSERT_EQUALS(strlen(bp), 8)
 
       bp += 8;
       }
@@ -2626,32 +2622,8 @@ double u_get_uniform(void)
    return (u + 1.0) * 2.328306435454494e-10;
 }
 
-/* The u_passwd_cb() function must write the password into the provided buffer buf which is of length 'size' */
-
-#ifdef USE_LIBSSL
-int u_passwd_cb(char* restrict buf, int size, int rwflag, void* restrict password)
-{
-   int written;
-
-   U_VAR_UNUSED(rwflag)
-
-   U_INTERNAL_TRACE("u_passwd_cb(%p,%d,%d,%p)", buf, size, rwflag, password)
-
-   written = u__strlen((const char* restrict)password, __PRETTY_FUNCTION__);
-
-   u__memcpy(buf, (const char* restrict)password, written+1, __PRETTY_FUNCTION__);
-
-   U_INTERNAL_ASSERT_MINOR(written, size)
-
-   U_INTERNAL_PRINT("buf(%d) = %.*s", written, U_min(written,128), buf)
-
-   return written;
-}
-#endif
-
 /**
- * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6.
- * Compares a filename or pathname to a pattern
+ * Function fnmatch() as specified in POSIX 1003.2-1992, section B.6. Compares a filename or pathname to a pattern
  */
 
 static const char* restrict end_p;
@@ -2676,9 +2648,7 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
    if (flags & FNM_CASEFOLD) test = u__tolower((unsigned char)test);
 
    /**
-    * A right bracket shall lose its special meaning and represent
-    * itself in a bracket expression if it occurs first in the list.
-    * -- POSIX.2 2.8.3.2
+    * A right bracket shall lose its special meaning and represent itself in a bracket expression if it occurs first in the list. -- POSIX.2 2.8.3.2
     */
 
    ok = 0;

@@ -22,12 +22,12 @@ const char* UMemoryError::getErrorType(const void* pobj) const
 
    // (ABW) Array Beyond Write | (FMR) Free Memory Read
 
-   (void) sprintf(pbuffer, "[pobj = %p _this = %p - %s]", pobj, _this, (_this ? "ABW" : "FMR"));
+   uint32_t n = sprintf(pbuffer, "[pobj = %p _this = %p - %s]", pobj, _this, (_this ? "ABW" : "FMR"));
 
+#ifdef U_STDCPP_ENABLE
    if (UObjectDB::fd > 0)
       {
-      uint32_t n = u__strlen(pbuffer, __PRETTY_FUNCTION__),
-               l = UObjectDB::dumpObject(pbuffer+n+1, U_MAX_SIZE_PREALLOCATE-n-1, pobj);
+      uint32_t l = UObjectDB::dumpObject(pbuffer+n+1, U_MAX_SIZE_PREALLOCATE-n-1, pobj);
 
       if (l)
          {
@@ -36,6 +36,7 @@ const char* UMemoryError::getErrorType(const void* pobj) const
          pbuffer[n+l+2] = '\0';
          }
       }
+#endif
 
    return pbuffer;
 }

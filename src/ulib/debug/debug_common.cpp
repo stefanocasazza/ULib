@@ -76,7 +76,9 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
          }
 
 #  ifdef DEBUG
+#    ifdef U_STDCPP_ENABLE
       UObjectDB::close();
+#    endif
 
       u_trace_close();
 
@@ -104,7 +106,10 @@ extern "C" void U_EXPORT u_debug_init(void)
    print_info();
 
    USimulationError::init();
+
+#ifdef U_STDCPP_ENABLE
    UObjectDB::init(true, true);
+#endif
 
    // we go to check if there are previous creation of global
    // objects that can have forced the initialization of trace file...
@@ -159,8 +164,11 @@ pid_t U_EXPORT u_debug_fork(pid_t _pid, int trace_active)
 
       print_info(); // print program mode and info for ULib...
 
-                                u_trace_initFork();
+      u_trace_initFork();
+
+#  ifdef U_STDCPP_ENABLE
       if (UObjectDB::fd > 0) UObjectDB::initFork();
+#  endif
       }
 
    if (trace_active)
@@ -234,8 +242,11 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
 
    if (u_fork_called)
       {
+#  ifdef U_STDCPP_ENABLE
       if (UObjectDB::fd > 0) UObjectDB::close();
-      if (u_trace_fd    > 0)    u_trace_close();
+#  endif
+
+      if (u_trace_fd > 0) u_trace_close();
       }
 
    u_exec_failed = false;

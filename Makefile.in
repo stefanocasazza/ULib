@@ -206,7 +206,7 @@ am__DIST_COMMON = $(srcdir)/Makefile.in $(srcdir)/ULib.spec.in \
 	$(srcdir)/rpm.sh.in \
 	$(top_srcdir)/include/ulib/internal/config.h.in AUTHORS \
 	ChangeLog INSTALL NEWS README THANKS TODO compile config.guess \
-	config.sub depcomp install-sh ltmain.sh missing ylwrap
+	config.sub install-sh ltmain.sh missing ylwrap
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 distdir = $(PACKAGE)-$(VERSION)
 top_distdir = $(distdir)
@@ -299,6 +299,7 @@ LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
+LT_SYS_LIBRARY_PATH = @LT_SYS_LIBRARY_PATH@
 MAINT = @MAINT@
 MAKEINFO = @MAKEINFO@
 MANIFEST_TOOL = @MANIFEST_TOOL@
@@ -412,6 +413,7 @@ pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 psdir = @psdir@
+runstatedir = @runstatedir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 srcdir = @srcdir@
