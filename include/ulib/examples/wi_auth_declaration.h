@@ -1804,7 +1804,7 @@ static int setLoginNodog(UStringRep* key, UStringRep* data)
 
 static int checkIfUserExist(UStringRep* key, UStringRep* data)
 {
-   U_TRACE(5, "::checkIfUserExist(%p,%p)", key, data)
+   U_TRACE(5, "::checkIfUserExist(%V,%V)", key, data)
 
    if (key)
       {
