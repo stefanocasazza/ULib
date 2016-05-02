@@ -16,11 +16,11 @@ U_EXPORT main (int argc, char* argv[])
 
    y.setPrefix(U_SERVER_LOG_PREFIX);
 
-   int i, n = (argc > 1 ? atoi(argv[1]) : 10);
+   uint32_t i, n = (argc > 1 ? atoi(argv[1]) : 10);
 
-   for (i = 1; i <= n; ++i)
+   for (i = 0; i < n; ++i)
       {
-      y.log("message %6d - %H %U %w", i);
+      y.log("message %6d - %H %U %w", i+1);
 
       y.msync();
       }

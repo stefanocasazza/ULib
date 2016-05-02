@@ -68,7 +68,7 @@ int UProxyPlugIn::handlerInit()
 #endif
 */
 
-   client_http = U_NEW(UHttpClient<UTCPSocket>((UFileConfig*)0));
+   U_NEW(UHttpClient<UTCPSocket>, client_http, UHttpClient<UTCPSocket>((UFileConfig*)0));
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }

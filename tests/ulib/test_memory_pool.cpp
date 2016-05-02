@@ -223,7 +223,7 @@ U_EXPORT main(int argc, char** argv)
             {
             vptr[k] = new char[3 << j];
 
-            obj[k] = U_NEW(UString(U_CONSTANT_TO_PARAM("allocated")));
+            U_NEW(UString, obj[k], UString(U_CONSTANT_TO_PARAM("allocated")));
             }
 
          for (k = 0; k < n; ++k)

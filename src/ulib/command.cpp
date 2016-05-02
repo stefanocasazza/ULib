@@ -572,7 +572,7 @@ UCommand* UCommand::loadConfigCommand(UFileConfig* cfg)
          command = buffer;
          }
 
-      cmd = U_NEW(UCommand(command));
+      U_NEW(UCommand, cmd, UCommand(command));
 
       if (cmd->checkForExecute() == false)
          {

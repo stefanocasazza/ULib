@@ -87,7 +87,9 @@ bool UTranformXPointer::setExpr(const char* expr, int nodeSetType, xmlNodePtr no
 
    UBaseTransform::hereNode = node;
 
-   UXPathData* data = U_NEW(UXPathData(UXPathData::XPOINTER, nodeSetType, expr));
+   UXPathData* data;
+
+   U_NEW(UXPathData, data, UXPathData(UXPathData::XPOINTER, nodeSetType, expr));
 
    if (data->registerNamespaces(node))
       {

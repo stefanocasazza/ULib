@@ -17,8 +17,7 @@
 #include <ulib/internal/common.h>
 
 /**
- * Functor used by UGenericHashMap class to generate a hashcode for an object of type T
- * It must be specialized for your own class
+ * Functor used by UGenericHashMap class to generate a hashcode for an object of type T. It must be specialized for your own class
  */
 
 template <typename T> struct UHashCodeFunctor;
@@ -31,7 +30,7 @@ template <typename T> struct UHashCodeFunctor;
 template <typename T> struct UEqualsFunctor { bool operator()(const T& a, const T& b) const { return (a == b); } };
 
 /**
- * UGenericHashMap is a general purpose templated hash table class.
+ * UGenericHashMap is a general purpose templated hash table class
  */
 
 template <typename K, typename I,
@@ -93,8 +92,6 @@ protected:
       }
 
 public:
-   // Costruttori e distruttore
-
    UGenericHashMap()
       {
       U_TRACE_REGISTER_OBJECT(0, UGenericHashMap, "", 0)
@@ -110,7 +107,7 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UGenericHashMap)
       }
 
-   // allocate and deallocate methods
+   // Allocate and deallocate methods
 
    void allocate(uint32_t n = 53)
       {
@@ -135,7 +132,7 @@ public:
       _capacity = 0;
       }
 
-   // Size and Capacity
+   // Size and capacity
 
    uint32_t size() const
       {
@@ -160,7 +157,7 @@ public:
       U_RETURN(true);
       }
 
-   // Ricerche
+   // Find
 
    template <typename X> bool find(const X& _key)
       {
@@ -192,8 +189,6 @@ public:
 
    const K& key() const { return node->key; }
 
-   // dopo avere chiamato find() (non effettuano il lookup)
-
    void eraseAfterFind()
       {
       U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::eraseAfterFind()")
@@ -209,8 +204,8 @@ public:
          if (pnode == node)
             {
             /**
-             * lista self-organizing (move-to-front), antepongo l'elemento
-             * trovato all'inizio della lista delle collisioni...
+             * list self-organizing (move-to-front), we place before
+             * the element at the beginning of the list of collisions
              */
 
             if (prev)
@@ -231,8 +226,8 @@ public:
       U_INTERNAL_DUMP("prev = %p", prev)
 
       /**
-       * presuppone l'elemento da cancellare all'inizio della lista
-       * delle collisioni - lista self-organizing (move-to-front)...
+       * list self-organizing (move-to-front), we requires the
+       * item to be deleted at the beginning of the list of collisions
        */
 
       U_INTERNAL_ASSERT_EQUALS(node, table[index])
@@ -254,9 +249,14 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(node, 0)
 
-      // antepongo l'elemento all'inizio della lista delle collisioni
+      /**
+       * list self-organizing (move-to-front), we place before
+       * the element at the beginning of the list of collisions
+       */
 
-      node = table[index] = U_NEW(UGenericHashMapNode(_key, _elem, table[index], hash));
+      U_NEW(UGenericHashMapNode, table[index], UGenericHashMapNode(_key, _elem, table[index], hash));
+
+      node = table[index];
 
       ++_length;
 
@@ -312,7 +312,7 @@ public:
 
       allocate(new_capacity);
 
-      // inserisco i vecchi elementi
+      // we insert the old elements
 
       UGenericHashMapNode* _next;
 
@@ -328,7 +328,10 @@ public:
 
                U_INTERNAL_DUMP("i = %u index = %u hash = %u", i, index, node->hash)
 
-               // antepongo l'elemento all'inizio della lista delle collisioni
+               /**
+                * list self-organizing (move-to-front), we place before
+                * the element at the beginning of the list of collisions
+                */
 
                node->next   = table[index];
                table[index] = node;
@@ -339,8 +342,6 @@ public:
 
       UMemoryPool::_free(old_table, old_capacity, sizeof(UGenericHashMapNode*));
       }
-
-   // Cancellazione tabella
 
    void clear()
       {

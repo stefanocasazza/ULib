@@ -36,7 +36,7 @@ UEventTime::UEventTime(long sec, long micro_sec) : UTimeVal(sec, micro_sec)
 
    U_INTERNAL_ASSERT_POINTER(u_ev_base)
 
-   pevent = U_NEW(UTimerEv<UEventTime>(*this));
+   U_NEW(UTimerEv<UEventTime>, pevent, UTimerEv<UEventTime>(*this));
 
    (void) UDispatcher::add(*pevent, *(UTimeVal*)this);
 #endif

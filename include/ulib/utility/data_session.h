@@ -251,7 +251,7 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UDataSession::init()")
 
-      vec_var = U_NEW(UVector<UString>);
+      U_NEW(UVector<UString>, vec_var, UVector<UString>);
 
       creation = last_access = u_now->tv_sec;
       }

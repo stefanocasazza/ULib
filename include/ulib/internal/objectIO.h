@@ -30,15 +30,15 @@ struct U_EXPORT UObjectIO {
    static uint32_t buffer_output_sz, buffer_output_len;
 
    static void output();
-   static void  init(char* t, uint32_t sz);
-   static void input(char* t, uint32_t tlen);
+   static void  init(      char* t, uint32_t sz);
+   static void input(const char* t, uint32_t tlen);
 
    static UStringRep* create(bool bcopy);
 };
 
-template <class T> inline void UString2Object(char* t, uint32_t tlen, T& object)
+template <class T> inline void UString2Object(const char* t, uint32_t tlen, T& object)
 {
-   U_INTERNAL_TRACE("UString2Object(%s,%u,%p)", t, tlen, &object)
+   U_INTERNAL_TRACE("UString2Object(%.*s,%u,%p)", tlen, t, tlen, &object)
 
 #ifdef U_STDCPP_ENABLE
    UObjectIO::input(t, tlen);

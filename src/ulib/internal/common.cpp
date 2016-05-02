@@ -197,6 +197,6 @@ void ULib_init()
 #ifndef HAVE_POLL_H
    U_INTERNAL_ASSERT_EQUALS(UNotifier::time_obj, 0)
 
-   U_NEW_ULIB_OBJECT(UNotifier::time_obj, UEventTime);
+   U_NEW_ULIB_OBJECT(UEventTime, UNotifier::time_obj, UEventTime);
 #endif
 }

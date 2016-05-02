@@ -28,7 +28,9 @@ void* UPlugIn<void*>::create(const char* _name, uint32_t _name_len)
 {
    U_TRACE(0, "UPlugIn<void*>::create(%.*S,%u)", _name_len, _name, _name_len)
 
-   UPlugIn<void*>* item = U_NEW(UPlugIn<void*>);
+   UPlugIn<void*>* item;
+
+   U_NEW(UPlugIn<void*>, item, UPlugIn<void*>);
 
    item->next = first;
    first      = item;

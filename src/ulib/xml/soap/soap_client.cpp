@@ -55,7 +55,7 @@ bool USOAPClient_Base::processRequest(URPCMethod& method)
    if (sendRequest() &&
        readResponse())
       {
-      if (parser == 0) parser = U_NEW(USOAPParser);
+      if (parser == 0) U_NEW(USOAPParser, parser, USOAPParser);
 
       if (parser->parse(UClient_Base::response))
          {

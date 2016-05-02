@@ -77,7 +77,7 @@ int UWebSocketPlugIn::handlerRun()
 
    U_INTERNAL_ASSERT_EQUALS(UWebSocket::rbuffer, 0)
 
-   UWebSocket::rbuffer = U_NEW(UString(U_CAPACITY));
+   U_NEW(UString, UWebSocket::rbuffer, UString(U_CAPACITY));
 
    UHTTP::UServletPage* usp = UHTTP::getUSP(U_CONSTANT_TO_PARAM("/modsocket"));
 

@@ -535,8 +535,8 @@ void UHTTP2::addHpackDynTblEntry(HpackDynamicTable* table, const UString& name, 
 
    UHTTP2::HpackHeaderTableEntry* entry = table->entries + table->entry_start_index;
 
-   entry->name  = U_NEW(UString( name));
-   entry->value = U_NEW(UString(value));
+   U_NEW(UString, entry->name,  UString(name));
+   U_NEW(UString, entry->value, UString(value));
 
    U_INTERNAL_DUMP("num_entries = %u entry_capacity = %u entry_start_index = %u hpack_size = %u hpack_capacity = %u hpack_max_capacity = %u",
                      table->num_entries, table->entry_capacity, table->entry_start_index, table->hpack_size, table->hpack_capacity, table->hpack_max_capacity)

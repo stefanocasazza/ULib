@@ -65,13 +65,13 @@ U_NO_EXPORT void UOrmDriver::loadStaticLinkedModules(const char* name)
    UOrmDriver* _driver = 0;
 
 #  ifdef U_STATIC_ORM_DRIVER_SQLITE
-   if (x.equal(U_CONSTANT_TO_PARAM("sqlite"))) { _driver = U_NEW(UOrmDriverSqlite); goto next; }
+   if (x.equal(U_CONSTANT_TO_PARAM("sqlite"))) { U_NEW(UOrmDriverSqlite, _driver, UOrmDriverSqlite);  goto next; }
 #  endif
 #  ifdef U_STATIC_ORM_DRIVER_MYSQL
-   if (x.equal(U_CONSTANT_TO_PARAM("mysql")))  { _driver = U_NEW(UOrmDriverMySql);  goto next; }
+   if (x.equal(U_CONSTANT_TO_PARAM("mysql")))  { U_NEW(UOrmDriverMySql, _driver, UOrmDriverMySql); goto next; }
 #  endif
 #  ifdef U_STATIC_ORM_DRIVER_PGSQL
-   if (x.equal(U_CONSTANT_TO_PARAM("pgsql")))  { _driver = U_NEW(UOrmDriverPgSql);  goto next; }
+   if (x.equal(U_CONSTANT_TO_PARAM("pgsql")))  { U_NEW(UOrmDriverPgSql, _driver, UOrmDriverPgSql); goto next; }
 #  endif
 next:
    if (_driver)
@@ -92,7 +92,7 @@ void UOrmDriver::setDriverDirectory(const UString& dir)
 
    U_INTERNAL_ASSERT_EQUALS(driver_dir, 0)
 
-   driver_dir = U_NEW(UString);
+   U_NEW(UString, driver_dir, UString);
 
    // NB: we can't use relativ path because after we call chdir()...
 
@@ -118,9 +118,10 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
 
    UString::str_allocate(STR_ALLOCATE_ORM);
 
-   vdriver             = U_NEW(UVector<UOrmDriver*>(10U));
-   vdriver_name        = U_NEW(UVector<UString>(10U));
-   vdriver_name_static = U_NEW(UVector<UString>(20U));
+   U_NEW(UVector<UOrmDriver*>, vdriver, UVector<UOrmDriver*>(10U));
+
+   U_NEW(UVector<UString>, vdriver_name,        UVector<UString>(10U));
+   U_NEW(UVector<UString>, vdriver_name_static, UVector<UString>(20U));
 
    uint32_t i, n;
    UOrmDriver* _driver;
@@ -313,7 +314,8 @@ USqlStatementBindParam::USqlStatementBindParam(const char* s, int n, bool bstati
       }
    else
       {
-      pstr   = U_NEW(UString((void*)s, n));
+      U_NEW(UString, pstr, UString((void*)s, n));
+
       buffer = pstr->data();
       }
 }
@@ -348,7 +350,8 @@ USqlStatementBindParam* UOrmDriver::creatSqlStatementBindParam(USqlStatement* ps
    if (bstatic) param->buffer = (void*)s;
    else
       {
-      param->pstr   = U_NEW(UString((void*)s, n));
+      U_NEW(UString, param->pstr, UString((void*)s, n));
+
       param->buffer = param->pstr->data();
       }
 

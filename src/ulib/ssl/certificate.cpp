@@ -280,7 +280,9 @@ int UCertificate::verifyCallback(int ok, X509_STORE_CTX* ctx)
 
       if (UServices::verify_depth > 0)
          {
-         UCertificate* cert = U_NEW(UCertificate(UServices::verify_current_cert));
+         UCertificate* cert;
+         
+         U_NEW(UCertificate, cert, UCertificate(UServices::verify_current_cert));
 
          cert->duplicate();
 

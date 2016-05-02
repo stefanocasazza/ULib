@@ -119,7 +119,7 @@ public:
 
       // load config file section REQUEST_AND_RESPONSE
 
-      request_response = U_NEW(UVector<UString>);
+      U_NEW(UVector<UString>, request_response, UVector<UString>);
 
       if (cfg.loadVector(*request_response) == false) U_ERROR("config file '%s' not valid", cfg.getPath().data());
 

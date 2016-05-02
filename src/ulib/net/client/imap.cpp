@@ -245,7 +245,8 @@ bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResp
 
             i += 2;
             attributes = v1[i++];
-            elem = U_NEW(ListResponse);
+
+            U_NEW(ListResponse, elem, ListResponse);
 
             elem->marked      = elem->unmarked =
             elem->noSelect    = elem->noInferiors =

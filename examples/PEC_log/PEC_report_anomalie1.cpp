@@ -79,7 +79,9 @@ public:
          {
          if (msg->isAnomalia()) PEC_report_anomalie::reportAnomalie(0, msg);
 
-         UStringRep* rep = U_NEW(UStringRep((const char*)&(msg->start), sizeof(time_t)));
+         UStringRep* rep;
+
+         U_NEW(UStringRep, rep, UStringRep((const char*)&(msg->start), sizeof(time_t)));
 
          delete msg;
 

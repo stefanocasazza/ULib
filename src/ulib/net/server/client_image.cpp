@@ -133,8 +133,10 @@ UClientImage_Base::UClientImage_Base()
    U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
 
    socket       = 0;
-   logbuf       = (UServer_Base::isLog() ? U_NEW(UString(200U)) : 0);
+   logbuf       = 0;
    data_pending = 0;
+
+   if (UServer_Base::isLog()) U_NEW(UString, logbuf, UString(200U));
 
    reset();
 
@@ -269,21 +271,22 @@ void UClientImage_Base::init()
    U_INTERNAL_ASSERT_EQUALS(_encoded, 0)
    U_INTERNAL_ASSERT_EQUALS(request_uri, 0)
 
-   body        = U_NEW(UString);
-   rbuffer     = U_NEW(UString(8192));
-   wbuffer     = U_NEW(UString(U_CAPACITY));
-   request     = U_NEW(UString);
-   request_uri = U_NEW(UString);
-   environment = U_NEW(UString);
-   chronometer = U_NEW(UTimeVal);
-
-   chronometer->start();
+   U_NEW(UString, body, UString);
+   U_NEW(UString, rbuffer, UString(8192));
+   U_NEW(UString, wbuffer, UString(U_CAPACITY));
+   U_NEW(UString, request, UString);
+   U_NEW(UString, request_uri, UString);
+   U_NEW(UString, environment, UString);
 
    // NB: these are for ULib Servlet Page (USP) - USP_PRINTF...
 
-   _value   = U_NEW(UString(U_CAPACITY));
-   _buffer  = U_NEW(UString(U_CAPACITY));
-   _encoded = U_NEW(UString(U_CAPACITY));
+   U_NEW(UString, _value, UString(U_CAPACITY));
+   U_NEW(UString, _buffer, UString(U_CAPACITY));
+   U_NEW(UString, _encoded, UString(U_CAPACITY));
+
+   U_NEW(UTimeVal, chronometer, UTimeVal);
+
+   chronometer->start();
 
 #ifdef DEBUG
    UError::callerDataDump = saveRequestResponse;
@@ -1156,7 +1159,7 @@ dmiss:
 
       U_INTERNAL_ASSERT_EQUALS(data_pending, 0)
 
-      data_pending = U_NEW(UString((void*)U_STRING_TO_PARAM(*request)));
+      U_NEW(UString, data_pending, UString((void*)U_STRING_TO_PARAM(*request)));
 
       U_INTERNAL_DUMP("data_pending(%u) = %V", data_pending->size(), data_pending->rep)
 

@@ -1022,7 +1022,7 @@ U_NO_EXPORT void URDB::getKeys1(UCDB* pcdb, uint32_t _offset) // entry presenti 
       {
       UStringRep* skey;
 
-      U_NEW_DBG(UStringRep, skey, UStringRep((const char*)((ptrdiff_t)journal.map+(ptrdiff_t)RDB_cache_node(n,key.dptr)), RDB_cache_node(n,key.dsize)));
+      U_NEW(UStringRep, skey, UStringRep((const char*)((ptrdiff_t)journal.map+(ptrdiff_t)RDB_cache_node(n,key.dptr)), RDB_cache_node(n,key.dsize)));
 
       if (UCDB::filter_function_to_call(skey, 0) == 0) skey->release();
       else                                             pcdb->UCDB::ptr_vector->UVector<void*>::push(skey);

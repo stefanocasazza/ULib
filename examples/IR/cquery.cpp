@@ -38,11 +38,13 @@ void WeightWord::push()
 
    U_INTERNAL_ASSERT(*UPosting::filename)
 
-   WeightWord* item = U_NEW(WeightWord(*UPosting::filename, UPosting::word_freq));
+   WeightWord* item;
+
+   U_NEW(WeightWord, item, WeightWord(*UPosting::filename, UPosting::word_freq));
 
    if (check_for_duplicate)
       {
-      if (tbl == 0) tbl = U_NEW(UHashMap<WeightWord*>);
+      if (tbl == 0) U_NEW(UHashMap<WeightWord*>, tbl, UHashMap<WeightWord*>);
 
       if (tbl->find(*UPosting::filename))
          {
@@ -56,7 +58,7 @@ void WeightWord::push()
       tbl->insertAfterFind(*UPosting::filename, item);
       }
 
-   if (vec == 0) vec = U_NEW(UVector<WeightWord*>);
+   if (vec == 0) U_NEW(UVector<WeightWord*>, vec, UVector<WeightWord*>);
 
    vec->push_back(item);
 }
@@ -105,8 +107,8 @@ Query::Query()
    U_INTERNAL_ASSERT_EQUALS(parser,  0)
    U_INTERNAL_ASSERT_EQUALS(request, 0)
 
-   parser  = U_NEW(UQueryParser);
-   request = U_NEW(UString);
+   U_NEW(UQueryParser, parser, UQueryParser);
+   U_NEW(UString, request, UString);
 }
 
 Query::~Query()

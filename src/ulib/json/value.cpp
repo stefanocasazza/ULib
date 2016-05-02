@@ -50,13 +50,15 @@ UValue::UValue(const UString& _key, const UString& value_)
    value.ptr_ = 0;
    type_      = OBJECT_VALUE;
 
-   UValue* child = U_NEW(UValue(STRING_VALUE));
+   UValue* child;
+
+   U_NEW(UValue, child, UValue(STRING_VALUE));
 
    children.head =
    children.tail = child;
 
-   child->key        = U_NEW(UString(_key));
-   child->value.ptr_ = U_NEW(UString(value_));
+   U_NEW(UString, child->key, UString(_key));
+   U_NEW(UString, child->value.ptr_, UString(value_));
 }
 
 void UValue::reset()
@@ -1001,7 +1003,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
          if (sz)
             {
-            _value->value.ptr_ = U_NEW(UString(sz));
+            U_NEW(UString, _value->value.ptr_, UString(sz));
 
             UEscape::decode(ptr, sz, *(_value->getString()));
 
@@ -1009,7 +1011,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
             }
          else
             {
-            _value->value.ptr_ = U_NEW(UString); // NB: omit the () when invoking the default constructor...
+            U_NEW(UString, _value->value.ptr_, UString); // NB: omit the () when invoking the default constructor...
 
             result = true;
             }
@@ -1038,7 +1040,9 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
             if (c != ',') tok.back();
 
-            UValue* child = U_NEW(UValue);
+            UValue* child;
+
+            U_NEW(UValue, child, UValue);
 
             if (readValue(tok, child) == false)
                {
@@ -1084,7 +1088,9 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
                U_RETURN(false);
                }
 
-            UValue* child = U_NEW(UValue);
+            UValue* child;
+
+            U_NEW(UValue, child, UValue);
 
             if (readValue(tok, child) == false)
                {

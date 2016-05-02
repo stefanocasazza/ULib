@@ -1317,7 +1317,14 @@ void USocketExt::startResolv(const char* name, int family)
 
       struct ares_options options;
 
-      status = U_SYSCALL(ares_init_options, "%p,%p,%d", (ares_channel*)&resolv_channel, &options, 0);
+      union uuares_channeldata {
+                  void** p1;
+      ares_channeldata** p2;
+      };
+
+      union uuares_channeldata p = { &resolv_channel };
+
+      status = U_SYSCALL(ares_init_options, "%p,%p,%d", p.p2, &options, 0);
 
       if (status != ARES_SUCCESS) U_ERROR("ares_init_options() failed: %s", ares_strerror(status));
       }

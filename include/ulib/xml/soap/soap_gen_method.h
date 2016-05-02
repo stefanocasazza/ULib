@@ -52,7 +52,7 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "USOAPGenericMethod::setFailed()")
 
-      pFault = (URPCFault*) U_NEW(USOAPFault);
+      U_NEW(USOAPFault, pFault, USOAPFault);
       }
 
 private:

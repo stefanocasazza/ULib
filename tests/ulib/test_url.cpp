@@ -47,7 +47,7 @@ int U_EXPORT main(int argc, char* argv[])
       check(dati, filename);
       }
 
-    Url url[] = {
+    Url url[20] = {
        Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/")),
        Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/index.html")),
        Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/form?var=foo")),
@@ -67,11 +67,12 @@ int U_EXPORT main(int argc, char* argv[])
        Url(U_STRING_FROM_CONSTANT("mailto:nobody")),
        Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu")),
        Url(U_STRING_FROM_CONSTANT("file:/etc/passwd")),
-       Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/form?var=foo&url=http%3a//www/%3fkkk//")) };
+       Url(U_STRING_FROM_CONSTANT("http://www.cs.wustl.edu/form?var=foo&url=http%3a//www/%3fkkk//"))
+    };
 
-   int i, nurl = sizeof(url)/sizeof(url[0]);
+   uint32_t i;
 
-   for (i = 0; i < nurl; ++i)
+   for (i = 0; i < 20; ++i)
       {
       cout  << '"' << url[i]              << "\" "
             << '"' << url[i].getService() << "\" "
@@ -82,7 +83,7 @@ int U_EXPORT main(int argc, char* argv[])
             << '"' << url[i].getQuery()   << "\"\n";
       }
 
-   for (i = 0; i < nurl; ++i)
+   for (i = 0; i < 20; ++i)
       {
       url[i].eraseUser();
       url[i].eraseQuery();

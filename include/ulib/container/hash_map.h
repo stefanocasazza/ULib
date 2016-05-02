@@ -619,7 +619,7 @@ public:
                U_INTERNAL_ASSERT_EQUALS(*ptr, 0)
 
                do {
-                  *ptr = U_NEW(UHashMapNode(_node, *ptr)); // we place it in the list collisions
+                  U_NEW(UHashMapNode, *ptr, UHashMapNode(_node, *ptr)); // we place it in the list collisions
 
                   _elem = (const T*) (*ptr)->elem;
 
@@ -658,7 +658,9 @@ public:
          {
          istream_loading = true; // NB: we need this flag for distinguish this operation in type's ctor...
 
-         const T* _elem = U_NEW(T);
+         const T* _elem;
+         
+         U_NEW(T, _elem, T);
 
          streambuf* sb = is.rdbuf();
 

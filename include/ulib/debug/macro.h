@@ -234,15 +234,19 @@ if (envp) \
 
 // Manage location info for object allocation
 
-#  define U_NEW(args...)               (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, new args)
-#  define U_NEW_DBG(CLASS,obj,args...) (UMemoryPool::obj_class = #CLASS, \
-                                        UMemoryPool::func_call = __PRETTY_FUNCTION__, \
-                                        obj = U_NEW(args), \
-                                        UMemoryPool::obj_class = UMemoryPool::func_call = 0)
+# ifndef ENABLE_MEMPOOL
+#  define U_NEW(CLASS,obj,args...) (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, (obj) = new args)
+# else
+#  define U_NEW(CLASS,obj,args...) (UMemoryPool::obj_class = #CLASS, \
+                                    UMemoryPool::func_call = __PRETTY_FUNCTION__, \
+                                    U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, (obj) = new args, \
+                                    UMemoryPool::obj_class = UMemoryPool::func_call = 0)
+# endif
 
-#  define U_NEW_ULIB_OBJECT(obj,args...) UObjectDB::flag_ulib_object = true, \
-                                         obj = U_NEW(args), \
-                                         UObjectDB::flag_ulib_object = false
+
+#  define U_NEW_ULIB_OBJECT(CLASS,obj,args...) (UObjectDB::flag_ulib_object = true, \
+                                                U_NEW(CLASS,obj,args), \
+                                                UObjectDB::flag_ulib_object = false)
 
 #else // DEBUG && U_STDCPP_ENABLE
 
@@ -259,9 +263,8 @@ if (envp) \
 #  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object)
 #  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)
 
-#  define U_NEW(args...)                       new args
-#  define U_NEW_DBG(CLASS,obj,args...)   obj = new args
-#  define U_NEW_ULIB_OBJECT(obj,args...) obj = new args
+#  define U_NEW(CLASS,obj,args...)             (obj) = new args
+#  define U_NEW_ULIB_OBJECT(CLASS,obj,args...) (obj) = new args
 
 #endif // DEBUG && U_STDCPP_ENABLE
 

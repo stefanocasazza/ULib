@@ -8,6 +8,7 @@ static uint32_t n, cnt, sides, maxroll;
 
 int main(int argc, char* argv[])
 {
+   uint32_t faces[100];
 #ifdef DEBUG
    uint32_t hash1, hash2, hash3;
 #endif
@@ -26,10 +27,7 @@ int main(int argc, char* argv[])
    sides   = (argc > 1 ? atol(argv[1]) :    6);
    maxroll = (argc > 2 ? atol(argv[2]) : 1000);
 
-   {
-   uint32_t faces[sides];
-
-   memset(faces, 0, sides * sizeof(long));
+   (void) memset(faces, 0, sides * sizeof(long));
 
    for (cnt = 0; cnt < maxroll; ++cnt)
       {
@@ -42,11 +40,7 @@ int main(int argc, char* argv[])
    printf("Number of rolls: %u\n", maxroll);
    printf("Face    Frequency      Percent\n");
 
-   for (cnt = 0; cnt < sides; ++cnt)
-      {
-      printf("%.2u      %.4u             %.2f%%\n", cnt + 1, faces[cnt], (float)faces[cnt] / maxroll * 100);
-      }
-   }
+   for (cnt = 0; cnt < sides; ++cnt) printf("%.2u      %.4u             %.2f%%\n", cnt + 1, faces[cnt], (float)faces[cnt] / maxroll * 100);
 
    return 0;
 }

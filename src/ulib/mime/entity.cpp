@@ -32,9 +32,10 @@ UMimeEntity::UMimeEntity(const UString& _data) : data(_data)
 {
    U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "%V", _data.rep)
 
-   header       = U_NEW(UMimeHeader);
    startHeader  = 0;
    parse_result = false;
+
+   U_NEW(UMimeHeader, header, UMimeHeader);
 
    if (parse()) decodeBody();
 }
@@ -43,9 +44,10 @@ UMimeEntity::UMimeEntity(const char* ptr, uint32_t len) : data(ptr, len)
 {
    U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "%.*S,%u", len, ptr, len)
 
-   header       = U_NEW(UMimeHeader);
    startHeader  = 0;
    parse_result = false;
+
+   U_NEW(UMimeHeader, header, UMimeHeader);
 
    if (parse(ptr, len)) decodeBody();
 }
@@ -456,7 +458,9 @@ bool UMimeMultipart::parse(bool digest)
 
       len = (bfind ? (boundaryStart - pos) : (isFinal = true, endPos - pos));
 
-      UMimeEntity* item = U_NEW(UMimeEntity(UMimeEntity::content.c_pointer(pos), len));
+      UMimeEntity* item;
+
+      U_NEW(UMimeEntity, item, UMimeEntity(UMimeEntity::content.c_pointer(pos), len));
 
       if (item->isParsingOk() == false)
          {

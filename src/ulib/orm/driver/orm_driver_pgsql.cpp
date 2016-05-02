@@ -58,7 +58,10 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 {
    U_TRACE(0, "UOrmDriverPgSql::handlerConnect(%V)", option.rep)
 
-   UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverPgSql(*UString::str_pgsql_name)) : this);
+   UOrmDriver* pdrv;
+
+   if (UOrmDriver::connection == 0) pdrv = this;
+   else U_NEW(UOrmDriverPgSql, pdrv, UOrmDriverPgSql(*UString::str_pgsql_name));
 
    // PQconnectdb accepts additional options as a string of "key=value" pairs
 
@@ -416,7 +419,9 @@ USqlStatementBindParam* UOrmDriverPgSql::creatSqlStatementBindParam(USqlStatemen
 
    if (rebind == -1)
       {
-      USqlStatementBindParam* ptr = U_NEW(UPgSqlStatementBindParam(s, n, bstatic));
+      USqlStatementBindParam* ptr;
+      
+      U_NEW(UPgSqlStatementBindParam, ptr, UPgSqlStatementBindParam(s, n, bstatic));
 
       U_RETURN_POINTER(ptr, USqlStatementBindParam);
       }

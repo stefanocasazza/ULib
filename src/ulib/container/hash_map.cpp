@@ -118,8 +118,9 @@ void UHashMap<void*>::insertAfterFind(const UStringRep* _key, const void* _elem)
     * the element at the beginning of the list of collisions
     */
 
-   node         =
-   table[index] = U_NEW(UHashMapNode(_key, _elem, table[index], hash));
+   U_NEW(UHashMapNode, table[index], UHashMapNode(_key, _elem, table[index], hash));
+
+   node = table[index];
 
    ++_length;
 

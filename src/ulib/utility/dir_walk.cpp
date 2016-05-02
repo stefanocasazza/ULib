@@ -120,7 +120,7 @@ void UDirWalk::setSuffixFileType(const char* format, ...)
 
    U_INTERNAL_ASSERT_EQUALS(suffix_file_type, 0)
 
-   suffix_file_type = U_NEW(UString(100U));
+   U_NEW(UString, suffix_file_type, UString(100U));
 
    va_list argp;
    va_start(argp, format);
@@ -469,7 +469,7 @@ U_NO_EXPORT int UDirWalk::cmp_modify(const void* a, const void* b)
       {
       UString key(*(UStringRep**)a);
 
-      ra = U_NEW(UFile(key));
+      U_NEW(UFile, ra, UFile(key));
 
       (void) ra->stat();
 
@@ -482,7 +482,7 @@ U_NO_EXPORT int UDirWalk::cmp_modify(const void* a, const void* b)
       {
       UString key(*(UStringRep**)b);
 
-      rb = U_NEW(UFile(key));
+      U_NEW(UFile, rb, UFile(key));
 
       (void) rb->stat();
 
@@ -517,7 +517,7 @@ uint32_t UDirWalk::walk(UVector<UString>& vec, qcompare compare_obj)
       if (compare_obj == U_ALPHABETIC_SORT) vec.sort();
       else
          {
-         if (cache_file_for_compare == 0) cache_file_for_compare = U_NEW(UHashMap<UFile*>);
+         if (cache_file_for_compare == 0) U_NEW(UHashMap<UFile*>, cache_file_for_compare, UHashMap<UFile*>);
 
          uint32_t sz       = n + (15 * (n / 100)) + 32,
                   capacity = cache_file_for_compare->capacity();

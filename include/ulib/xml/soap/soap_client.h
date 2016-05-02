@@ -56,7 +56,8 @@ protected:
       u_init_http_method_list();
 
       delete URPCMethod::encoder;
-             URPCMethod::encoder = U_NEW(USOAPEncoder);
+
+      U_NEW(USOAPEncoder, URPCMethod::encoder, USOAPEncoder);
       }
 
    virtual ~USOAPClient_Base();
@@ -80,7 +81,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, USOAPClient, "%p", _cfg)
 
-      UClient_Base::socket = U_NEW(Socket(UClient_Base::bIPv6));
+      U_NEW(Socket, UClient_Base::socket, Socket(UClient_Base::bIPv6));
       }
 
    virtual ~USOAPClient()

@@ -363,23 +363,23 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_soap, 0)
       U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, 0)
 
-      U_NEW_ULIB_OBJECT(str_host,             UString(stringrep_storage+0));
-      U_NEW_ULIB_OBJECT(str_chunked,          UString(stringrep_storage+1));
-      U_NEW_ULIB_OBJECT(str_without_mac,      UString(stringrep_storage+2));
-      U_NEW_ULIB_OBJECT(str_localhost,        UString(stringrep_storage+3));
-      U_NEW_ULIB_OBJECT(str_http,             UString(stringrep_storage+4));
-      U_NEW_ULIB_OBJECT(str_msg_rfc,          UString(stringrep_storage+5));
-      U_NEW_ULIB_OBJECT(str_txt_plain,        UString(stringrep_storage+6));
-      U_NEW_ULIB_OBJECT(str_address,          UString(stringrep_storage+7));
-      U_NEW_ULIB_OBJECT(str_CLIENT_QUEUE_DIR, UString(stringrep_storage+8));
-      U_NEW_ULIB_OBJECT(str_point,            UString(stringrep_storage+9));
-      U_NEW_ULIB_OBJECT(str_true,             UString(stringrep_storage+10));
-      U_NEW_ULIB_OBJECT(str_false,            UString(stringrep_storage+11));
-      U_NEW_ULIB_OBJECT(str_response,         UString(stringrep_storage+12));
-      U_NEW_ULIB_OBJECT(str_zero,             UString(stringrep_storage+13));
-      U_NEW_ULIB_OBJECT(str_nostat,           UString(stringrep_storage+14));
-      U_NEW_ULIB_OBJECT(str_tsa,              UString(stringrep_storage+15));
-      U_NEW_ULIB_OBJECT(str_soap,             UString(stringrep_storage+16));
+      U_NEW_ULIB_OBJECT(UString, str_host,             UString(stringrep_storage+0));
+      U_NEW_ULIB_OBJECT(UString, str_chunked,          UString(stringrep_storage+1));
+      U_NEW_ULIB_OBJECT(UString, str_without_mac,      UString(stringrep_storage+2));
+      U_NEW_ULIB_OBJECT(UString, str_localhost,        UString(stringrep_storage+3));
+      U_NEW_ULIB_OBJECT(UString, str_http,             UString(stringrep_storage+4));
+      U_NEW_ULIB_OBJECT(UString, str_msg_rfc,          UString(stringrep_storage+5));
+      U_NEW_ULIB_OBJECT(UString, str_txt_plain,        UString(stringrep_storage+6));
+      U_NEW_ULIB_OBJECT(UString, str_address,          UString(stringrep_storage+7));
+      U_NEW_ULIB_OBJECT(UString, str_CLIENT_QUEUE_DIR, UString(stringrep_storage+8));
+      U_NEW_ULIB_OBJECT(UString, str_point,            UString(stringrep_storage+9));
+      U_NEW_ULIB_OBJECT(UString, str_true,             UString(stringrep_storage+10));
+      U_NEW_ULIB_OBJECT(UString, str_false,            UString(stringrep_storage+11));
+      U_NEW_ULIB_OBJECT(UString, str_response,         UString(stringrep_storage+12));
+      U_NEW_ULIB_OBJECT(UString, str_zero,             UString(stringrep_storage+13));
+      U_NEW_ULIB_OBJECT(UString, str_nostat,           UString(stringrep_storage+14));
+      U_NEW_ULIB_OBJECT(UString, str_tsa,              UString(stringrep_storage+15));
+      U_NEW_ULIB_OBJECT(UString, str_soap,             UString(stringrep_storage+16));
 
       uustringrep key1 = { stringrep_storage+17 };
 
@@ -407,20 +407,20 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_string, 0)
       U_INTERNAL_ASSERT_EQUALS(str_base64Binary, 0)
 
-      U_NEW_ULIB_OBJECT(str_ns,            UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+0));
-      U_NEW_ULIB_OBJECT(str_boolean,       UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+1));
-      U_NEW_ULIB_OBJECT(str_byte,          UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+2));
-      U_NEW_ULIB_OBJECT(str_unsignedByte,  UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+3));
-      U_NEW_ULIB_OBJECT(str_short,         UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+4));
-      U_NEW_ULIB_OBJECT(str_unsignedShort, UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+5));
-      U_NEW_ULIB_OBJECT(str_int,           UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+6));
-      U_NEW_ULIB_OBJECT(str_unsignedInt,   UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+7));
-      U_NEW_ULIB_OBJECT(str_long,          UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+8));
-      U_NEW_ULIB_OBJECT(str_unsignedLong,  UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+9));
-      U_NEW_ULIB_OBJECT(str_float,         UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+10));
-      U_NEW_ULIB_OBJECT(str_double,        UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+11));
-      U_NEW_ULIB_OBJECT(str_string,        UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+12));
-      U_NEW_ULIB_OBJECT(str_base64Binary,  UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+13));
+      U_NEW_ULIB_OBJECT(UString, str_ns,            UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+0));
+      U_NEW_ULIB_OBJECT(UString, str_boolean,       UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+1));
+      U_NEW_ULIB_OBJECT(UString, str_byte,          UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+2));
+      U_NEW_ULIB_OBJECT(UString, str_unsignedByte,  UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+3));
+      U_NEW_ULIB_OBJECT(UString, str_short,         UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+4));
+      U_NEW_ULIB_OBJECT(UString, str_unsignedShort, UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+5));
+      U_NEW_ULIB_OBJECT(UString, str_int,           UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+6));
+      U_NEW_ULIB_OBJECT(UString, str_unsignedInt,   UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+7));
+      U_NEW_ULIB_OBJECT(UString, str_long,          UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+8));
+      U_NEW_ULIB_OBJECT(UString, str_unsignedLong,  UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+9));
+      U_NEW_ULIB_OBJECT(UString, str_float,         UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+10));
+      U_NEW_ULIB_OBJECT(UString, str_double,        UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+11));
+      U_NEW_ULIB_OBJECT(UString, str_string,        UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+12));
+      U_NEW_ULIB_OBJECT(UString, str_base64Binary,  UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+13));
       }
    else if ((which & STR_ALLOCATE_IMAP) != 0)
       {
@@ -429,26 +429,26 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_uidnext, 0)
       U_INTERNAL_ASSERT_EQUALS(str_uidvalidity, 0)
 
-      U_NEW_ULIB_OBJECT(str_recent,      UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+0));
-      U_NEW_ULIB_OBJECT(str_unseen,      UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+1));
-      U_NEW_ULIB_OBJECT(str_uidnext,     UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+2));
-      U_NEW_ULIB_OBJECT(str_uidvalidity, UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+3));
+      U_NEW_ULIB_OBJECT(UString, str_recent,      UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+0));
+      U_NEW_ULIB_OBJECT(UString, str_unseen,      UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+1));
+      U_NEW_ULIB_OBJECT(UString, str_uidnext,     UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+2));
+      U_NEW_ULIB_OBJECT(UString, str_uidvalidity, UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+3));
       }
    else if ((which & STR_ALLOCATE_SSI) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(str_cgi, 0)
       U_INTERNAL_ASSERT_EQUALS(str_var, 0)
 
-      U_NEW_ULIB_OBJECT(str_cgi, UString(stringrep_storage+STR_ALLOCATE_INDEX_SSI+0));
-      U_NEW_ULIB_OBJECT(str_var, UString(stringrep_storage+STR_ALLOCATE_INDEX_SSI+1));
+      U_NEW_ULIB_OBJECT(UString, str_cgi, UString(stringrep_storage+STR_ALLOCATE_INDEX_SSI+0));
+      U_NEW_ULIB_OBJECT(UString, str_var, UString(stringrep_storage+STR_ALLOCATE_INDEX_SSI+1));
       }
    else if ((which & STR_ALLOCATE_NOCAT) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(str_without_label, 0)
       U_INTERNAL_ASSERT_EQUALS(str_allowed_members_default, 0)
 
-      U_NEW_ULIB_OBJECT(str_without_label,           UString(stringrep_storage+STR_ALLOCATE_INDEX_NOCAT+0));
-      U_NEW_ULIB_OBJECT(str_allowed_members_default, UString(stringrep_storage+STR_ALLOCATE_INDEX_NOCAT+1));
+      U_NEW_ULIB_OBJECT(UString, str_without_label,           UString(stringrep_storage+STR_ALLOCATE_INDEX_NOCAT+0));
+      U_NEW_ULIB_OBJECT(UString, str_allowed_members_default, UString(stringrep_storage+STR_ALLOCATE_INDEX_NOCAT+1));
       }
    else if ((which & STR_ALLOCATE_HTTP) != 0)
       {
@@ -463,16 +463,16 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_websocket_key, 0)
       U_INTERNAL_ASSERT_EQUALS(str_websocket_prot, 0)
 
-      U_NEW_ULIB_OBJECT(str_indexhtml,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+0));
-      U_NEW_ULIB_OBJECT(str_ctype_tsa,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+1));
-      U_NEW_ULIB_OBJECT(str_ctype_txt,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+2));
-      U_NEW_ULIB_OBJECT(str_ctype_html,     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+3));
-      U_NEW_ULIB_OBJECT(str_ctype_soap,     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+4));
-      U_NEW_ULIB_OBJECT(str_origin,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+5));
-      U_NEW_ULIB_OBJECT(str_ulib_header,    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+6));
-      U_NEW_ULIB_OBJECT(str_storage_keyid,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+7));
-      U_NEW_ULIB_OBJECT(str_websocket_key,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+8));
-      U_NEW_ULIB_OBJECT(str_websocket_prot, UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+9));
+      U_NEW_ULIB_OBJECT(UString, str_indexhtml,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+0));
+      U_NEW_ULIB_OBJECT(UString, str_ctype_tsa,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+1));
+      U_NEW_ULIB_OBJECT(UString, str_ctype_txt,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+2));
+      U_NEW_ULIB_OBJECT(UString, str_ctype_html,     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+3));
+      U_NEW_ULIB_OBJECT(UString, str_ctype_soap,     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+4));
+      U_NEW_ULIB_OBJECT(UString, str_origin,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+5));
+      U_NEW_ULIB_OBJECT(UString, str_ulib_header,    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+6));
+      U_NEW_ULIB_OBJECT(UString, str_storage_keyid,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+7));
+      U_NEW_ULIB_OBJECT(UString, str_websocket_key,  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+8));
+      U_NEW_ULIB_OBJECT(UString, str_websocket_prot, UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+9));
       }
    else if ((which & STR_ALLOCATE_QUERY_PARSER) != 0)
       {
@@ -482,11 +482,11 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_and, 0)
       U_INTERNAL_ASSERT_EQUALS(str_not, 0)
 
-      U_NEW_ULIB_OBJECT(str_p1,  UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+0));
-      U_NEW_ULIB_OBJECT(str_p2,  UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+1));
-      U_NEW_ULIB_OBJECT(str_or,  UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+2));
-      U_NEW_ULIB_OBJECT(str_and, UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+3));
-      U_NEW_ULIB_OBJECT(str_not, UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+4));
+      U_NEW_ULIB_OBJECT(UString, str_p1,  UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+0));
+      U_NEW_ULIB_OBJECT(UString, str_p2,  UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+1));
+      U_NEW_ULIB_OBJECT(UString, str_or,  UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+2));
+      U_NEW_ULIB_OBJECT(UString, str_and, UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+3));
+      U_NEW_ULIB_OBJECT(UString, str_not, UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+4));
       }
    else if ((which & STR_ALLOCATE_ORM) != 0)
       {
@@ -506,21 +506,21 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_auto_reconnect, 0)
       U_INTERNAL_ASSERT_EQUALS(str_pgsql_name, 0)
 
-      U_NEW_ULIB_OBJECT(str_port,           UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+0));
-      U_NEW_ULIB_OBJECT(str_root,           UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+1));
-      U_NEW_ULIB_OBJECT(str_UTF8,           UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+2));
-      U_NEW_ULIB_OBJECT(str_UTF16,          UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+3));
-      U_NEW_ULIB_OBJECT(str_dbname,         UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+4));
-      U_NEW_ULIB_OBJECT(str_timeout,        UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+5));
-      U_NEW_ULIB_OBJECT(str_compress,       UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+6));
-      U_NEW_ULIB_OBJECT(str_character_set,  UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+7));
-      U_NEW_ULIB_OBJECT(str_sqlite_name,    UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+8));
-      U_NEW_ULIB_OBJECT(str_dbdir,          UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+9));
-      U_NEW_ULIB_OBJECT(str_memory,         UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+10));
-      U_NEW_ULIB_OBJECT(str_mysql_name,     UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+11));
-      U_NEW_ULIB_OBJECT(str_secure_auth,    UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+12));
-      U_NEW_ULIB_OBJECT(str_auto_reconnect, UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+13));
-      U_NEW_ULIB_OBJECT(str_pgsql_name,     UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+14));
+      U_NEW_ULIB_OBJECT(UString, str_port,           UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+0));
+      U_NEW_ULIB_OBJECT(UString, str_root,           UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+1));
+      U_NEW_ULIB_OBJECT(UString, str_UTF8,           UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+2));
+      U_NEW_ULIB_OBJECT(UString, str_UTF16,          UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+3));
+      U_NEW_ULIB_OBJECT(UString, str_dbname,         UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+4));
+      U_NEW_ULIB_OBJECT(UString, str_timeout,        UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+5));
+      U_NEW_ULIB_OBJECT(UString, str_compress,       UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+6));
+      U_NEW_ULIB_OBJECT(UString, str_character_set,  UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+7));
+      U_NEW_ULIB_OBJECT(UString, str_sqlite_name,    UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+8));
+      U_NEW_ULIB_OBJECT(UString, str_dbdir,          UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+9));
+      U_NEW_ULIB_OBJECT(UString, str_memory,         UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+10));
+      U_NEW_ULIB_OBJECT(UString, str_mysql_name,     UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+11));
+      U_NEW_ULIB_OBJECT(UString, str_secure_auth,    UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+12));
+      U_NEW_ULIB_OBJECT(UString, str_auto_reconnect, UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+13));
+      U_NEW_ULIB_OBJECT(UString, str_pgsql_name,     UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+14));
       }
 #ifndef U_HTTP2_DISABLE
    else if ((which & STR_ALLOCATE_HTTP2) != 0)
@@ -528,72 +528,72 @@ void UString::str_allocate(int which)
       U_INTERNAL_ASSERT_EQUALS(str_authority, 0)
       U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 137)
 
-      U_NEW_ULIB_OBJECT(str_authority,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+0));
-      U_NEW_ULIB_OBJECT(str_method,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+1));
-      U_NEW_ULIB_OBJECT(str_method_get,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+2));
-      U_NEW_ULIB_OBJECT(str_method_post,                 UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+3));
-      U_NEW_ULIB_OBJECT(str_path,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+4));
-      U_NEW_ULIB_OBJECT(str_path_root,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+5));
-      U_NEW_ULIB_OBJECT(str_path_index,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+6));
-      U_NEW_ULIB_OBJECT(str_scheme,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+7));
-      U_NEW_ULIB_OBJECT(str_scheme_http,                 UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+8));
-      U_NEW_ULIB_OBJECT(str_scheme_https,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+9));
-      U_NEW_ULIB_OBJECT(str_status,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+10));
-      U_NEW_ULIB_OBJECT(str_status_200,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+11));
-      U_NEW_ULIB_OBJECT(str_status_204,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+12));
-      U_NEW_ULIB_OBJECT(str_status_206,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+13));
-      U_NEW_ULIB_OBJECT(str_status_304,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+14));
-      U_NEW_ULIB_OBJECT(str_status_400,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+15));
-      U_NEW_ULIB_OBJECT(str_status_404,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+16));
-      U_NEW_ULIB_OBJECT(str_status_500,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+17));
-      U_NEW_ULIB_OBJECT(str_accept_charset,              UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+18));
-      U_NEW_ULIB_OBJECT(str_accept_encoding,             UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+19));
-      U_NEW_ULIB_OBJECT(str_accept_encoding_value,       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+20));
-      U_NEW_ULIB_OBJECT(str_accept_language,             UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+21));
-      U_NEW_ULIB_OBJECT(str_accept_ranges,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+22));
-      U_NEW_ULIB_OBJECT(str_accept,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+23));
-      U_NEW_ULIB_OBJECT(str_access_control_allow_origin, UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+24));
-      U_NEW_ULIB_OBJECT(str_age,                         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+25));
-      U_NEW_ULIB_OBJECT(str_allow,                       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+26));
-      U_NEW_ULIB_OBJECT(str_authorization,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+27));
-      U_NEW_ULIB_OBJECT(str_cache_control,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+28));
-      U_NEW_ULIB_OBJECT(str_content_disposition,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+29));
-      U_NEW_ULIB_OBJECT(str_content_encoding,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+30));
-      U_NEW_ULIB_OBJECT(str_content_language,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+31));
-      U_NEW_ULIB_OBJECT(str_content_length,              UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+32));
-      U_NEW_ULIB_OBJECT(str_content_location,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+33));
-      U_NEW_ULIB_OBJECT(str_content_range,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+34));
-      U_NEW_ULIB_OBJECT(str_content_type,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+35));
-      U_NEW_ULIB_OBJECT(str_cookie,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+36));
-      U_NEW_ULIB_OBJECT(str_date,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+37));
-      U_NEW_ULIB_OBJECT(str_etag,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+38));
-      U_NEW_ULIB_OBJECT(str_expect,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+39));
-      U_NEW_ULIB_OBJECT(str_expires,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+40));
-      U_NEW_ULIB_OBJECT(str_from,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+41));
-      U_NEW_ULIB_OBJECT(str_if_match,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+42));
-      U_NEW_ULIB_OBJECT(str_if_modified_since,           UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+43));
-      U_NEW_ULIB_OBJECT(str_if_none_match,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+44));
-      U_NEW_ULIB_OBJECT(str_if_range,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+45));
-      U_NEW_ULIB_OBJECT(str_if_unmodified_since,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+46));
-      U_NEW_ULIB_OBJECT(str_last_modified,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+47));
-      U_NEW_ULIB_OBJECT(str_link,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+48));
-      U_NEW_ULIB_OBJECT(str_location,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+49));
-      U_NEW_ULIB_OBJECT(str_max_forwards,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+50));
-      U_NEW_ULIB_OBJECT(str_proxy_authenticate,          UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+51));
-      U_NEW_ULIB_OBJECT(str_proxy_authorization,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+52));
-      U_NEW_ULIB_OBJECT(str_range,                       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+53));
-      U_NEW_ULIB_OBJECT(str_referer,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+54));
-      U_NEW_ULIB_OBJECT(str_refresh,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+55));
-      U_NEW_ULIB_OBJECT(str_retry_after,                 UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+56));
-      U_NEW_ULIB_OBJECT(str_server,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+57));
-      U_NEW_ULIB_OBJECT(str_set_cookie,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+58));
-      U_NEW_ULIB_OBJECT(str_strict_transport_security,   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+59));
-      U_NEW_ULIB_OBJECT(str_transfer_encoding,           UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+60));
-      U_NEW_ULIB_OBJECT(str_user_agent,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+61));
-      U_NEW_ULIB_OBJECT(str_vary,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+62));
-      U_NEW_ULIB_OBJECT(str_via,                         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+63));
-      U_NEW_ULIB_OBJECT(str_www_authenticate,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+64));
-      U_NEW_ULIB_OBJECT(str_ULib,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+65));
+      U_NEW_ULIB_OBJECT(UString, str_authority,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+0));
+      U_NEW_ULIB_OBJECT(UString, str_method,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+1));
+      U_NEW_ULIB_OBJECT(UString, str_method_get,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+2));
+      U_NEW_ULIB_OBJECT(UString, str_method_post,                 UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+3));
+      U_NEW_ULIB_OBJECT(UString, str_path,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+4));
+      U_NEW_ULIB_OBJECT(UString, str_path_root,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+5));
+      U_NEW_ULIB_OBJECT(UString, str_path_index,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+6));
+      U_NEW_ULIB_OBJECT(UString, str_scheme,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+7));
+      U_NEW_ULIB_OBJECT(UString, str_scheme_http,                 UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+8));
+      U_NEW_ULIB_OBJECT(UString, str_scheme_https,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+9));
+      U_NEW_ULIB_OBJECT(UString, str_status,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+10));
+      U_NEW_ULIB_OBJECT(UString, str_status_200,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+11));
+      U_NEW_ULIB_OBJECT(UString, str_status_204,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+12));
+      U_NEW_ULIB_OBJECT(UString, str_status_206,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+13));
+      U_NEW_ULIB_OBJECT(UString, str_status_304,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+14));
+      U_NEW_ULIB_OBJECT(UString, str_status_400,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+15));
+      U_NEW_ULIB_OBJECT(UString, str_status_404,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+16));
+      U_NEW_ULIB_OBJECT(UString, str_status_500,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+17));
+      U_NEW_ULIB_OBJECT(UString, str_accept_charset,              UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+18));
+      U_NEW_ULIB_OBJECT(UString, str_accept_encoding,             UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+19));
+      U_NEW_ULIB_OBJECT(UString, str_accept_encoding_value,       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+20));
+      U_NEW_ULIB_OBJECT(UString, str_accept_language,             UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+21));
+      U_NEW_ULIB_OBJECT(UString, str_accept_ranges,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+22));
+      U_NEW_ULIB_OBJECT(UString, str_accept,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+23));
+      U_NEW_ULIB_OBJECT(UString, str_access_control_allow_origin, UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+24));
+      U_NEW_ULIB_OBJECT(UString, str_age,                         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+25));
+      U_NEW_ULIB_OBJECT(UString, str_allow,                       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+26));
+      U_NEW_ULIB_OBJECT(UString, str_authorization,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+27));
+      U_NEW_ULIB_OBJECT(UString, str_cache_control,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+28));
+      U_NEW_ULIB_OBJECT(UString, str_content_disposition,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+29));
+      U_NEW_ULIB_OBJECT(UString, str_content_encoding,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+30));
+      U_NEW_ULIB_OBJECT(UString, str_content_language,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+31));
+      U_NEW_ULIB_OBJECT(UString, str_content_length,              UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+32));
+      U_NEW_ULIB_OBJECT(UString, str_content_location,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+33));
+      U_NEW_ULIB_OBJECT(UString, str_content_range,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+34));
+      U_NEW_ULIB_OBJECT(UString, str_content_type,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+35));
+      U_NEW_ULIB_OBJECT(UString, str_cookie,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+36));
+      U_NEW_ULIB_OBJECT(UString, str_date,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+37));
+      U_NEW_ULIB_OBJECT(UString, str_etag,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+38));
+      U_NEW_ULIB_OBJECT(UString, str_expect,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+39));
+      U_NEW_ULIB_OBJECT(UString, str_expires,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+40));
+      U_NEW_ULIB_OBJECT(UString, str_from,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+41));
+      U_NEW_ULIB_OBJECT(UString, str_if_match,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+42));
+      U_NEW_ULIB_OBJECT(UString, str_if_modified_since,           UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+43));
+      U_NEW_ULIB_OBJECT(UString, str_if_none_match,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+44));
+      U_NEW_ULIB_OBJECT(UString, str_if_range,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+45));
+      U_NEW_ULIB_OBJECT(UString, str_if_unmodified_since,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+46));
+      U_NEW_ULIB_OBJECT(UString, str_last_modified,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+47));
+      U_NEW_ULIB_OBJECT(UString, str_link,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+48));
+      U_NEW_ULIB_OBJECT(UString, str_location,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+49));
+      U_NEW_ULIB_OBJECT(UString, str_max_forwards,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+50));
+      U_NEW_ULIB_OBJECT(UString, str_proxy_authenticate,          UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+51));
+      U_NEW_ULIB_OBJECT(UString, str_proxy_authorization,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+52));
+      U_NEW_ULIB_OBJECT(UString, str_range,                       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+53));
+      U_NEW_ULIB_OBJECT(UString, str_referer,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+54));
+      U_NEW_ULIB_OBJECT(UString, str_refresh,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+55));
+      U_NEW_ULIB_OBJECT(UString, str_retry_after,                 UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+56));
+      U_NEW_ULIB_OBJECT(UString, str_server,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+57));
+      U_NEW_ULIB_OBJECT(UString, str_set_cookie,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+58));
+      U_NEW_ULIB_OBJECT(UString, str_strict_transport_security,   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+59));
+      U_NEW_ULIB_OBJECT(UString, str_transfer_encoding,           UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+60));
+      U_NEW_ULIB_OBJECT(UString, str_user_agent,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+61));
+      U_NEW_ULIB_OBJECT(UString, str_vary,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+62));
+      U_NEW_ULIB_OBJECT(UString, str_via,                         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+63));
+      U_NEW_ULIB_OBJECT(UString, str_www_authenticate,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+64));
+      U_NEW_ULIB_OBJECT(UString, str_ULib,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+65));
       }
 #else
    U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 71)
@@ -975,7 +975,7 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
       {
       U_INTERNAL_ASSERT_RANGE(str, t, end())
 
-      r = U_NEW(UStringRep(t, tlen));
+      U_NEW(UStringRep, r, UStringRep(t, tlen));
 
 #  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
       UStringRep* p = this;
@@ -1165,7 +1165,7 @@ UString::UString(const char* t)
 
    uint32_t len = (t ? u__strlen(t, __PRETTY_FUNCTION__) : 0);
 
-   if (len) rep = U_NEW(UStringRep(t, len));
+   if (len) U_NEW(UStringRep, rep, UStringRep(t, len));
    else     _copy(UStringRep::string_rep_null);
 
    U_INTERNAL_ASSERT(invariant())
@@ -1272,8 +1272,18 @@ UString& UString::assign(const char* s, uint32_t n)
    if (rep->references ||
        rep->_capacity < n)
       {
-      if (n) _set(U_NEW(UStringRep(s, n)));
-      else _assign(UStringRep::string_rep_null);
+      if (n)
+         {
+         UStringRep* r;
+
+         U_NEW(UStringRep, r, UStringRep(s, n));
+
+         _set(r);
+         }
+      else
+         {
+         _assign(UStringRep::string_rep_null);
+         }
       }
    else
       {
@@ -1381,7 +1391,11 @@ void UString::mmap(const char* map, uint32_t len)
       }
    else
       {
-      _set(U_NEW(UStringRep(map, len)));
+      UStringRep* r;
+
+      U_NEW(UStringRep, r, UStringRep(map, len));
+
+      _set(r);
 
       rep->_capacity = U_NOT_FOUND;
       }

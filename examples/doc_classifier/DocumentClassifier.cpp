@@ -29,7 +29,7 @@ void DocumentClassifier::addCertificate(UCertificate* cert)
 
    cert->duplicate();
 
-   if (vtcert == 0) vtcert = U_NEW(UVector<TreeCertificate*>);
+   if (vtcert == 0) U_NEW(UVector<TreeCertificate*>, vtcert, UVector<TreeCertificate*>);
 
    if (ca == 0)
       {
@@ -44,7 +44,7 @@ void DocumentClassifier::addCertificate(UCertificate* cert)
          if (*ca_root == *cert) goto done;
          }
 
-      ptcert = U_NEW(TreeCertificate(cert));
+      U_NEW(TreeCertificate, ptcert, TreeCertificate(cert));
 
       vtcert->push(ptcert);
       }
@@ -92,7 +92,9 @@ int DocumentClassifier::verifyCallback(int ok, X509_STORE_CTX* ctx) // callback
 
    (void) UServices::X509Callback(ok, ctx);
 
-   UCertificate* cert = U_NEW(UCertificate(UServices::verify_current_cert));
+   UCertificate* cert;
+
+   U_NEW(UCertificate, cert, UCertificate(UServices::verify_current_cert));
 
    ok = cert->verify(0, certsVerificationTime);
 
@@ -101,7 +103,7 @@ int DocumentClassifier::verifyCallback(int ok, X509_STORE_CTX* ctx) // callback
       {
       verify_result = false;
 
-      if (label_ko == 0) label_ko = U_NEW(UString(4000U));
+      if (label_ko == 0) U_NEW(UString, label_ko, UString(4000U));
 
       // TO DO
 

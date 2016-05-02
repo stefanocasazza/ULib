@@ -162,7 +162,7 @@ int UGeoIPPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x)
          {
-         country_forbidden_mask = U_NEW(UString(x));
+         U_NEW(UString, country_forbidden_mask, UString(x));
 
          U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
          }

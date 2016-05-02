@@ -121,7 +121,9 @@ public:
       {
       U_TRACE(0, "UTree<void*>::push(%p)", __elem)
 
-      UTree<void*>* p = U_NEW(UTree<void*>(__elem, this, (size_allocate ? : 64)));
+      UTree<void*>* p;
+
+      U_NEW(UTree<void*>, p, UTree<void*>(__elem, this, (size_allocate ? : 64)));
 
       UVector<void*>::push(p);
 
@@ -163,7 +165,9 @@ public:
       {
       U_TRACE(0, "UTree<void*>::insert(%u,%p)", pos, __elem)
 
-      UTree<void*>* p = U_NEW(UTree<void*>(__elem, this));
+      UTree<void*>* p;
+
+      U_NEW(UTree<void*>, p, UTree<void*>(__elem, this));
 
       UVector<void*>::insert(pos, p);
 

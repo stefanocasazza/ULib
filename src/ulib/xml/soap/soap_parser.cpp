@@ -153,8 +153,9 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
    U_DUMP("flag_state = %d ptree = %p ptree->parent() = %p ptree->numChild() = %u ptree->depth() = %u",
            flag_state, ptree, ptree->parent(), ptree->numChild(), ptree->depth())
 
-   current = U_NEW(UXMLElement(str, accessorName, namespaceName));
-   ptree   = ptree->push(current);
+   U_NEW(UXMLElement, current, UXMLElement(str, accessorName, namespaceName));
+
+   ptree = ptree->push(current);
 
    if (flag_state <= 2)
       {
@@ -180,7 +181,7 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
 
       UXMLElement::splitNamespaceAndName(str, namespaceName, accessorName);
 
-      attribute = U_NEW(UXMLAttribute(str, accessorName, namespaceName, value));
+      U_NEW(UXMLAttribute, attribute, UXMLAttribute(str, accessorName, namespaceName, value));
 
       current->addAttribute(attribute);
 

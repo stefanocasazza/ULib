@@ -22,6 +22,7 @@ int U_EXPORT main(int argc, char** argv)
    UPing* sockp[128];
    UVector<UIPAddress*>* vaddr[128];
 
+   // -----------------------------------------------------------------------------------------
    // eth0 10.10.100.123 10.1.1.1 eth0 10.30.1.110 10.30.1.111 eth0 10.10.100.124 10.10.100.125
    // -----------------------------------------------------------------------------------------
    // 1    2             3        4    5           6           7    8             9
@@ -35,15 +36,15 @@ int U_EXPORT main(int argc, char** argv)
 
       vInternalDevice.push(x);
 
-      sockp[i] = U_NEW(UPing(3000, false));
+      U_NEW(UPing, sockp[i], UPing(3000, false));
 
       sockp[i]->initArpPing(device);
 
-      vaddr[i] = U_NEW(UVector<UIPAddress*>);
+      U_NEW(UVector<UIPAddress*>, vaddr[i], UVector<UIPAddress*>);
 
       for (j = 0; j < 2; ++j)
          {
-         item = U_NEW(UIPAddress);
+         U_NEW(UIPAddress, item, UIPAddress);
 
          hostname = argv[2+(i*3)+j];
 

@@ -42,7 +42,7 @@ int USoapPlugIn::handlerConfig(UFileConfig& cfg)
 
    // Perform registration of server SOAP method
 
-   soap_parser = U_NEW(USOAPParser);
+   U_NEW(USOAPParser, soap_parser, USOAPParser);
 
    USOAPObject::loadGenericMethod(&cfg);
 
@@ -60,7 +60,7 @@ int USoapPlugIn::handlerInit()
 #  ifndef U_ALIAS
       U_SRV_LOG("WARNING: Sorry, I can't run soap plugin because alias URI support is missing, please recompile ULib...");
 #  else
-      if (UHTTP::valias == 0) UHTTP::valias = U_NEW(UVector<UString>(2U));
+      if (UHTTP::valias == 0) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U));
 
       UHTTP::valias->push_back(*UString::str_soap);
       UHTTP::valias->push_back(*UString::str_nostat);

@@ -21,10 +21,10 @@
       U_INTERNAL_ASSERT_EQUALS(crono,0)
       U_INTERNAL_ASSERT_EQUALS(footer,0)
    
-      ir     = U_NEW(IR);
-      query  = U_NEW(Query);
-      crono  = U_NEW(UCrono);
-      footer = U_NEW(UString(200U));
+      U_NEW(IR, ir, IR);
+      U_NEW(Query, query, Query);
+      U_NEW(UCrono, crono, UCrono);
+      U_NEW(UString, footer, UString(200U));
    
       ir->loadFileConfig();
    
@@ -35,7 +35,7 @@
    
       footer->snprintf("ver. %s, with %u documents and %u words.", ULIB_VERSION, cdb_names->size(), cdb_words->size());
    
-      UHTTP::data_session = U_NEW(IRDataSession);
+      U_NEW(IRDataSession, UHTTP::data_session, IRDataSession);
    
       UHTTP::initSession();
    }

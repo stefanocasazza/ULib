@@ -76,7 +76,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "URPCObject::setFailed()")
 
-      URPCMethod::pFault = U_NEW(URPCFault);
+      U_NEW(URPCFault, URPCMethod::pFault, URPCFault);
       }
 
    // GLOBAL SERVICES
@@ -158,7 +158,11 @@ protected:
       {
    // U_TRACE(0, "URPCObject::insertGenericMethod(%V,%V,%p,%d)", n.rep, ns.rep, cmd, rtype) // problem with sanitize address
 
-      methodList.push_back(U_NEW(URPCGenericMethod(n, ns, cmd, rtype)));
+      URPCMethod* pmethod;
+
+      U_NEW(URPCGenericMethod, pmethod, URPCGenericMethod(n, ns, cmd, rtype));
+
+      methodList.push_back(pmethod);
       }
 
 private:

@@ -74,7 +74,7 @@ void ULDAPEntry::set(char* attribute, char** values, int index_entry)
          {
          U_INTERNAL_DUMP("ULDAPEntry(%d): %S", k, attr_name[j])
 
-         attr_val[k] = U_NEW(UString((void*)values[0]));
+         U_NEW(UString, attr_val[k], UString((void*)values[0]));
 
          for (j = 1; values[j]; ++j)
             {
@@ -101,7 +101,7 @@ void ULDAPEntry::set(char* attribute, char* value, uint32_t len, int index_entry
          {
          U_INTERNAL_DUMP("ULDAPEntry(%d): %S", k, attr_name[j])
 
-         attr_val[k] = U_NEW(UString((void*)value, len));
+         U_NEW(UString, attr_val[k], UString((void*)value, len));
 
          U_INTERNAL_DUMP("value = %V", attr_val[k]->rep)
 

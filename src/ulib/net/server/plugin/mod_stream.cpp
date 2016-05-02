@@ -44,8 +44,8 @@ UStreamPlugIn::UStreamPlugIn()
 {
    U_TRACE_REGISTER_OBJECT(0, UStreamPlugIn, "")
 
-   uri_path     = U_NEW(UString);
-   content_type = U_NEW(UString);
+   U_NEW(UString, uri_path,     UString);
+   U_NEW(UString, content_type, UString);
 }
 
 UStreamPlugIn::~UStreamPlugIn()
@@ -87,7 +87,7 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
       {
       UString x = cfg.at(U_CONSTANT_TO_PARAM("METADATA"));
 
-      if (x) metadata = U_NEW(UString(x));
+      if (x) U_NEW(UString, metadata, UString(x));
 
       *uri_path     = cfg.at(U_CONSTANT_TO_PARAM("URI_PATH"));
       *content_type = cfg.at(U_CONSTANT_TO_PARAM("CONTENT_TYPE"));
@@ -137,7 +137,7 @@ int UStreamPlugIn::handlerRun()
 
    U_INTERNAL_ASSERT_EQUALS(pid,-1)
 
-   rbuf = U_NEW(URingBuffer((URingBuffer::rbuf_data*) UServer_Base::getPointerToDataShare(ptr), U_RING_BUFFER_SIZE));
+   U_NEW(URingBuffer, rbuf, URingBuffer((URingBuffer::rbuf_data*) UServer_Base::getPointerToDataShare(ptr), U_RING_BUFFER_SIZE));
 
    // NB: we are feeding by a child of us...
 

@@ -764,7 +764,7 @@ uint32_t UIPAllow::parseMask(const UString& vspec, UVector<UIPAllow*>& vipallow)
 
    for (uint32_t i = 0, vlen = vec.size(); i < vlen; ++i)
       {
-      elem = U_NEW(UIPAllow);
+      U_NEW(UIPAllow, elem, UIPAllow);
 
       if (elem->parseMask(vec[i])) vipallow.push_back(elem);
       else                         delete elem;

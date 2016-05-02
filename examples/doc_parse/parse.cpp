@@ -185,11 +185,11 @@ public:
                   {
                   if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/xsltproc.err");
 
-                  row          = U_NEW(UString);
-                  vec          = U_NEW(UVector<UString>);
-                  xsltproc     = U_NEW(UCommand);
-                  xsltproc_cmd = U_NEW(UString("xsltproc -"));
-                  xsltproc_out = U_NEW(UString(U_CAPACITY));
+                  U_NEW(UString, row, UString);
+                  U_NEW(UVector<UString>, vec, UVector<UString>);
+                  U_NEW(UCommand, xsltproc, UCommand);
+                  U_NEW(UString, xsltproc_cmd, UString("xsltproc -"));
+                  U_NEW(UString, xsltproc_out, UString(U_CAPACITY));
 
                   xsltproc->set(*xsltproc_cmd, (char**)0);
                   }
@@ -696,11 +696,11 @@ public:
 
          tmp = opt['e'];
 
-         if (tmp) extract = U_NEW(UString(tmp));
+         if (tmp) U_NEW(UString, extract, UString(tmp));
 
          tmp = opt['s'];
 
-         if (tmp) css_url = U_NEW(UString(tmp));
+         if (tmp) U_NEW(UString, css_url, UString(tmp));
          }
 
       // manage arg operation
@@ -711,18 +711,18 @@ public:
 
       U_INTERNAL_DUMP("htmlview = %b treeview = %b inner_p7 = %b", htmlview, treeview, inner_p7)
 
-      content = U_NEW(UString);
+      U_NEW(UString, content, UString);
 
       if (loadDocument() &&
           checkIfNeedParsing())
          {
          if (treeview)
             {
-            dialog = U_NEW(UDialog(0, 24, 80));
+            U_NEW(UDialog, dialog, UDialog(0, 24, 80));
 
             if (UDialog::isXdialog() == false) U_ERROR("I don't find Xdialog");
 
-            output = U_NEW(UString(U_CAPACITY));
+            U_NEW(UString, output, UString(U_CAPACITY));
             }
          else if (htmlview)
             {
@@ -748,8 +748,8 @@ public:
          (void) U_SYSCALL(memset, "%p,%d,%u", tab, '\t', U_MAX_TAB);
 #     endif
 
-         pfile = U_NEW(UString);
-         stype = U_NEW(UString);
+         U_NEW(UString, pfile, UString);
+         U_NEW(UString, stype, UString);
 
 #     ifdef DEBUG
       // UStringRep::check_dead_of_source_string_with_child_alive = false;

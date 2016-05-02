@@ -31,7 +31,7 @@ static void regex(const UString& expression, const UString& stuff)
 {
    U_TRACE(5, "regex(%.*S,%.*S)", U_STRING_TO_TRACE(expression), U_STRING_TO_TRACE(stuff))
 
-   UPCRE reg(expression, 0); /* UPCRE object */
+   UPCRE reg(expression, 0U); /* UPCRE object */
 
    bool result = reg.search(stuff);
 
@@ -114,7 +114,7 @@ static void replace() // Sample of replace() usage
 
    UString orig = U_STRING_FROM_CONSTANT("Hans ist 22 Jahre alt. Er ist 8 Jahre älter als Fred.");
 
-   UPCRE p(U_STRING_FROM_CONSTANT("([0-9]+)"), 0); // define a regex for digits (character class)
+   UPCRE p(U_STRING_FROM_CONSTANT("([0-9]+)"), 0U); // define a regex for digits (character class)
 
    UString n = p.replace(orig, U_STRING_FROM_CONSTANT("zweiundzwanzig($1)")); // replace the 1st occurence of [0-9]+ with "zweiundzwanzig"
 
@@ -143,7 +143,7 @@ static void multisearch()
    U_TRACE(5, "multisearch()")
 
    size_t i = 0, pos = 0;
-   UPCRE reg(U_STRING_FROM_CONSTANT("([^\\n]+\\n)"), 0);
+   UPCRE reg(U_STRING_FROM_CONSTANT("([^\\n]+\\n)"), 0U);
    UString str = U_STRING_FROM_CONSTANT("\nline1\nline2\nline3\n"), vec[3];
 
    while (pos <= str.length() && reg.search(str, pos))
@@ -217,7 +217,7 @@ static bool read_data(const char* file)
    string line, regex;
    bool is_regex = false;
    vector<string> content;
-   UPCRE find_end(U_STRING_FROM_CONSTANT("\\/[gimsxADEGIMNSUX8L\\+]{0,2}$"), 0);
+   UPCRE find_end(U_STRING_FROM_CONSTANT("\\/[gimsxADEGIMNSUX8L\\+]{0,2}$"), 0U);
 
    while (data)
       {

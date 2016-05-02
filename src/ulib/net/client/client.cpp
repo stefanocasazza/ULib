@@ -95,7 +95,7 @@ void UClient_Base::setSSLContext()
 {
    U_TRACE_NO_PARAM(0, "UClient_Base::setSSLContext()")
 
-   socket = U_NEW(USSLSocket(bIPv6, 0, false));
+   U_NEW(USSLSocket, socket, USSLSocket(bIPv6, 0, false));
 
    U_ASSERT(((USSLSocket*)socket)->isSSL())
 
@@ -242,7 +242,7 @@ void UClient_Base::loadConfigParam()
          }
       else
          {
-         log = U_NEW(ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
+         U_NEW(ULog, log, ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
 
          u_atexit(&ULog::close); // register function of close at exit()...
 

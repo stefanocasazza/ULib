@@ -230,9 +230,12 @@ unsigned UPKCS7::getSignerCertificates(UVector<UCertificate*>& vec, int flags) c
 
       for (int i = 0; i < n; ++i)
          {
+         UCertificate* cert;
          X509* x = sk_X509_value(signers, i);
 
-         vec.push_back(U_NEW(UCertificate(x)));
+         U_NEW(UCertificate, cert, UCertificate(x));
+
+         vec.push_back(cert);
          }
 
       U_SYSCALL_VOID(sk_X509_free, "%p", signers);
@@ -245,17 +248,17 @@ unsigned UPKCS7::getSignerCertificates(UVector<UCertificate*>& vec, int flags) c
    U_RETURN(0);
 }
 
-/*
-creates and returns a PKCS#7 signedData structure
-
-data     is the data to be signed
-signcert is the certificate to sign with
-pkey     is the corresponsding private key
-passwd   is the corresponsding password for the private key
-certs    is an optional additional set of certificates to include in the PKCS#7 structure
-         (for example any intermediate CAs in the chain)
-flags    is an optional set of flags (PKCS7_TEXT, PKCS7_NOCERTS, PKCS7_DETACHED, PKCS7_BINARY, ...)
-*/
+/**
+ * creates and returns a PKCS#7 signedData structure
+ *
+ * data     is the data to be signed
+ * signcert is the certificate to sign with
+ * pkey     is the corresponsding private key
+ * passwd   is the corresponsding password for the private key
+ * certs    is an optional additional set of certificates to include in the PKCS#7 structure
+ *          (for example any intermediate CAs in the chain)
+ * flags    is an optional set of flags (PKCS7_TEXT, PKCS7_NOCERTS, PKCS7_DETACHED, PKCS7_BINARY, ...)
+ */
 
 PKCS7* UPKCS7::sign(const UString& data, const UString& signcert, const UString& pkey, const UString& passwd, const UString& certs, int flags)
 {

@@ -24,7 +24,7 @@ if (message)
    if (chat_message.size() > 20) chat_message.erase(0, 2);
    }
 
-for (uint32_t i = 0, n = chat_message.size(); i < n; i += 2)
+for (int32_t i = 0, n = chat_message.size(); i < n; i += 2)
    {
    person  = chat_message[i];
    message = chat_message[i+1];

@@ -76,7 +76,7 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::vmsg_error, 0)
 
-         UHTTP::vmsg_error = U_NEW(UVector<UString>(n));
+         U_NEW(UVector<UString>, UHTTP::vmsg_error, UVector<UString>(n));
 
          for (uint32_t i = 0; i < n; ++i)
             {
@@ -92,11 +92,11 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
    UString x;
    UModProxyService* service;
 
-   UHTTP::vservice = U_NEW(UVector<UModProxyService*>);
+   U_NEW(UVector<UModProxyService*>, UHTTP::vservice, UVector<UModProxyService*>);
 
    while (cfg.searchForObjectStream())
       {
-      service = U_NEW(UModProxyService);
+      U_NEW(UModProxyService, service, UModProxyService);
 
       (void) cfg.loadVector(service->vreplace_response, "REPLACE_RESPONSE");
 
@@ -120,7 +120,7 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
 #        ifndef USE_LIBPCRE
             service->uri_mask = x;
 #        else
-            service->uri_mask.set(x, 0);
+            service->uri_mask.set(x, 0U);
             service->uri_mask.study();
 #        endif
             }
@@ -178,7 +178,7 @@ loop:       switch (u_get_unalignedp32(msk))
 
          if (x)
             {
-            service->vremote_address = U_NEW(UVector<UIPAllow*>);
+            U_NEW(UVector<UIPAllow*>, service->vremote_address, UVector<UIPAllow*>);
 
             if (UIPAllow::parseMask(x, *(service->vremote_address)) == 0)
                {

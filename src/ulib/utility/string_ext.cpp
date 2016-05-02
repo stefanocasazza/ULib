@@ -110,10 +110,10 @@ UString UStringExt::sanitize(const UString& input)
 
    if (strip1 == 0)
       {
-      U_NEW_ULIB_OBJECT(strip1, UPCRE(U_STRING_FROM_CONSTANT("@<script[^>]*?>.*?</script>@si"), 0)); // Strip out javascript
-      U_NEW_ULIB_OBJECT(strip2, UPCRE(U_STRING_FROM_CONSTANT("@<[/!]*?[^<>]*?>@si"), 0));            // Strip out HTML tags
-      U_NEW_ULIB_OBJECT(strip3, UPCRE(U_STRING_FROM_CONSTANT("@<style[^>]*?>.*?</style>@siU"), 0));  // Strip style tags properly
-      U_NEW_ULIB_OBJECT(strip4, UPCRE(U_STRING_FROM_CONSTANT("@<![sS]*?--[ \t\n\r]*>@"), 0));        // Strip multi-line comments
+      U_NEW_ULIB_OBJECT(UPCRE, strip1, UPCRE(U_STRING_FROM_CONSTANT("@<script[^>]*?>.*?</script>@si"), 0U)); // Strip out javascript
+      U_NEW_ULIB_OBJECT(UPCRE, strip2, UPCRE(U_STRING_FROM_CONSTANT("@<[/!]*?[^<>]*?>@si"),            0U)); // Strip out HTML tags
+      U_NEW_ULIB_OBJECT(UPCRE, strip3, UPCRE(U_STRING_FROM_CONSTANT("@<style[^>]*?>.*?</style>@siU"),  0U)); // Strip style tags properly
+      U_NEW_ULIB_OBJECT(UPCRE, strip4, UPCRE(U_STRING_FROM_CONSTANT("@<![sS]*?--[ \t\n\r]*>@"),        0U)); // Strip multi-line comments
 
       strip1->study();
       strip2->study();
@@ -760,6 +760,7 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
    U_TRACE(0, "UStringExt::evalExpression(%V,%V)", expr.rep, environment.rep)
 
    int token_id;
+   UString* ptoken;
    UTokenizer t(expr);
    UString token, result = *UString::str_true;
 
@@ -784,7 +785,9 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
          token_id = U_TK_VALUE;
          }
 
-      expressionParser(pParser, token_id, U_NEW(UString(token)), &result);
+      U_NEW(UString, ptoken, UString(token));
+
+      expressionParser(pParser, token_id, ptoken, &result);
 
       U_INTERNAL_DUMP("result = %V", result.rep)
 

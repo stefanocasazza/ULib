@@ -16,6 +16,9 @@ public:
    Prima() { a = "io_sono_la_classe_Prima"; }
 
    bool operator==(const Prima& l) { return (memcmp(a, l.a, strlen(a)) == 0); }
+
+   friend istream& operator>>(istream& is,       Prima& l);
+   friend ostream& operator<<(ostream& os, const Prima& l);
 };
 
 istream& operator>>(istream& is, Prima& l)
@@ -49,6 +52,9 @@ public:
    Seconda() { b = "io_sono_la_classe_Seconda"; }
 
    bool operator==(const Seconda& l) { return (memcmp(b, l.b, strlen(b)) == 0); }
+
+   friend istream& operator>>(istream& is,       Seconda& l);
+   friend ostream& operator<<(ostream& os, const Seconda& l);
 };
 
 istream& operator>>(istream& is, Seconda& l)
@@ -99,7 +105,7 @@ int U_EXPORT main(int argc, char** argv)
 
    U_SET_LOCATION_INFO;
 
-   char* a_str = UObject2String(a);
+   const char* a_str = UObject2String(a);
 
    U_SET_LOCATION_INFO;
 
@@ -109,7 +115,7 @@ int U_EXPORT main(int argc, char** argv)
 
    if (!(a == a1)) U_ERROR("Error on UString2Object()...", 0);
 
-   char* b_str = UObject2String(b);
+   const char* b_str = UObject2String(b);
 
    if (memcmp(b_str, U_CONSTANT_TO_PARAM("io_sono_la_classe_Seconda"))) U_ERROR("Error on UObject2String()...", 0);
 

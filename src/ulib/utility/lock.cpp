@@ -21,7 +21,7 @@ void ULock::init(sem_t* ptr_lock, char* ptr_spinlock)
 
    if (ptr_lock)
       {
-      psem = U_NEW(USemaphore);
+      U_NEW(USemaphore, psem, USemaphore);
 
       psem->init(ptr_lock);
       }

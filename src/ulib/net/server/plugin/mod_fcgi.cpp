@@ -187,13 +187,13 @@ int UFCGIPlugIn::handlerConfig(UFileConfig& cfg)
       {
       UClient_Base::cfg = &cfg;
 
-      connection = U_NEW(UClient_Base(&cfg));
+      U_NEW(UClient_Base, connection, UClient_Base(&cfg));
 
       UString x = cfg.at(U_CONSTANT_TO_PARAM("FCGI_URI_MASK"));
 
       U_INTERNAL_ASSERT_EQUALS(UHTTP::fcgi_uri_mask,0)
 
-      if (x) UHTTP::fcgi_uri_mask = U_NEW(UString(x));
+      if (x) U_NEW(UString, UHTTP::fcgi_uri_mask, UString(x));
 
       fcgi_keep_conn = cfg.readBoolean(U_CONSTANT_TO_PARAM("CGI_KEEP_CONN"));
 
@@ -213,10 +213,10 @@ int UFCGIPlugIn::handlerInit()
 #  ifdef _MSWINDOWS_
       U_INTERNAL_ASSERT_DIFFERS(connection->port, 0)
 
-      connection->socket = (USocket*)U_NEW(UTCPSocket(connection->bIPv6));
+      U_NEW(UTCPSocket, connection->socket, UTCPSocket(connection->bIPv6));
 #  else
-      connection->socket = connection->port ? (USocket*)U_NEW(UTCPSocket(connection->bIPv6))
-                                            : (USocket*)U_NEW(UUnixSocket);
+      if (connection->port) U_NEW(UTCPSocket,  connection->socket, UTCPSocket(connection->bIPv6));
+      else                  U_NEW(UUnixSocket, connection->socket, UUnixSocket);
 #  endif
 
       if (connection->connect())
@@ -230,7 +230,7 @@ int UFCGIPlugIn::handlerInit()
 #     else
          // NB: FCGI is NOT a static page...
 
-         if (UHTTP::valias == 0) UHTTP::valias = U_NEW(UVector<UString>(2U));
+         if (UHTTP::valias == 0) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U));
 
          UHTTP::valias->push_back(*UHTTP::fcgi_uri_mask);
          UHTTP::valias->push_back(*UString::str_nostat);

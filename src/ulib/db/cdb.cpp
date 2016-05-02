@@ -542,8 +542,8 @@ void UCDB::call1()
    UStringRep* skey;
    UStringRep* sdata;
 
-   U_NEW_DBG(UStringRep, skey,  UStringRep((const char*) key.dptr,  key.dsize));
-   U_NEW_DBG(UStringRep, sdata, UStringRep((const char*)data.dptr, data.dsize));
+   U_NEW(UStringRep, skey,  UStringRep((const char*) key.dptr,  key.dsize));
+   U_NEW(UStringRep, sdata, UStringRep((const char*)data.dptr, data.dsize));
 
    U_INTERNAL_DUMP("skey = %#V sdata = %#V)", skey, sdata)
 
@@ -619,7 +619,7 @@ void UCDB::getKeys2(UCDB* pcdb, char* src)
 
    src += sizeof(UCDB::cdb_record_header);
 
-   U_NEW_DBG(UStringRep, skey, UStringRep(src, klen));
+   U_NEW(UStringRep, skey, UStringRep(src, klen));
 
    if (pcdb->filter_function_to_call(skey, 0) == 0) skey->release();
    else                                             pcdb->ptr_vector->UVector<void*>::push(skey);
@@ -696,7 +696,7 @@ uint32_t UCDB::getValuesWithKeyNask(UVector<UString>& vec_values, const UString&
          {
          U_INTERNAL_DUMP("key = %#.*S data = %#.*S)", klen, ptr + sizeof(UCDB::cdb_record_header), dlen, tmp - dlen)
 
-         U_NEW_DBG(UStringRep, rep, UStringRep(tmp - dlen, dlen));
+         U_NEW(UStringRep, rep, UStringRep(tmp - dlen, dlen));
 
          vec_values.UVector<void*>::push(rep);
 

@@ -73,7 +73,7 @@ void UTimer::insert(UEventTime* a)
 
    UTimer* item;
 
-   if (pool == 0) item = U_NEW(UTimer);
+   if (pool == 0) U_NEW(UTimer, item, UTimer);
    else
       {
       item = pool;

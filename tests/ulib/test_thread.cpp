@@ -135,7 +135,9 @@ public:
 
       cout << "starting child thread" << endl;
 
-      Child* ch = U_NEW(Child);
+      Child* ch;
+
+      U_NEW(Child, ch, Child);
 
       ch->start();
 
@@ -267,7 +269,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    cout << "\nstarting father thread" << endl;
 
-   th = U_NEW(Father);
+   U_NEW(Father, th, Father);
 
    th->start();
 
@@ -281,7 +283,7 @@ int U_EXPORT main(int argc, char* argv[])
 
    cout << "\nstarting thread" << endl;
 
-   th = U_NEW(myThread);
+   U_NEW(myThread, th, myThread);
 
    th->start();
 
@@ -293,7 +295,14 @@ int U_EXPORT main(int argc, char* argv[])
 
    UThreadPool tp(2);
 
-   for (int i = 0; i < 4; ++i) tp.addTask(U_NEW(Task));
+   for (int i = 0; i < 4; ++i)
+      {
+      Task* p;
+
+      U_NEW(Task, p, Task);
+
+      tp.addTask(p);
+      }
 
    tp.waitForWorkToBeFinished();
 

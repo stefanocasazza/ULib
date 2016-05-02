@@ -360,7 +360,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(lock_user1, 0)
 
-      lock_user1 = U_NEW(ULock);
+      U_NEW(ULock, lock_user1, ULock);
 
       lock_user1->init(&(ptr_shared_data->lock_user1), ptr_shared_data->spinlock_user1);
       }
@@ -371,7 +371,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(lock_user2, 0)
 
-      lock_user2 = U_NEW(ULock);
+      U_NEW(ULock, lock_user2, ULock);
 
       lock_user2->init(&(ptr_shared_data->lock_user2), ptr_shared_data->spinlock_user2);
       }
@@ -521,7 +521,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(lock_ocsp_staple, 0)
 
-      lock_ocsp_staple = U_NEW(ULock);
+      U_NEW(ULock, lock_ocsp_staple, ULock);
 
       lock_ocsp_staple->init(&(ptr_shared_data->lock_ocsp_staple), ptr_shared_data->spinlock_ocsp_staple);
       }
@@ -715,7 +715,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UServer, "%p", pcfg)
 
-      socket = U_NEW(Socket(UClientImage_Base::bIPv6));
+      U_NEW(Socket, socket, Socket(UClientImage_Base::bIPv6));
       }
 
    virtual ~UServer()
@@ -793,7 +793,7 @@ public:
          }
 #  endif
 
-      socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6, 0, true));
+      U_NEW(USSLSocket, socket, USSLSocket(UClientImage_Base::bIPv6, 0, true));
       }
 
    virtual ~UServer()

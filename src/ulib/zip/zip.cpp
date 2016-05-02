@@ -100,7 +100,8 @@ U_NO_EXPORT void UZIP::assignFilenames()
    U_INTERNAL_ASSERT_POINTER(filenames_len)
 
    UString name;
-   zippartname = U_NEW(UVector<UString>(npart));
+
+   U_NEW(UVector<UString>, zippartname, UVector<UString>(npart));
 
    for (uint32_t i = 0; i < npart; ++i)
       {
@@ -132,7 +133,7 @@ bool UZIP::extract(const UString* _tmpdir, bool bdir)
    if (UFile::mkdirs(dir) &&
        UFile::chdir(dir, true))
       {
-      if (file == 0) file = U_NEW(UFile);
+      if (file == 0) U_NEW(UFile, file, UFile);
 
       file->setPath(U_STRING_FROM_CONSTANT("tmp.zip"));
 
@@ -238,7 +239,7 @@ bool UZIP::readContent()
       {
       assignFilenames();
 
-      zippartcontent = U_NEW(UVector<UString>(npart));
+      U_NEW(UVector<UString>, zippartcontent, UVector<UString>(npart));
 
       for (uint32_t i = 0; i < npart; ++i)
          {

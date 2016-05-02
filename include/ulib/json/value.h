@@ -205,8 +205,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UValue, "%V", value_)
 
-      type_      = STRING_VALUE;
-      value.ptr_ = U_NEW(UString(value_));
+      type_ = STRING_VALUE;
+
+      U_NEW(UString, value.ptr_, UString(value_));
 
       reset();
       }
@@ -215,8 +216,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UValue, "%V", value_.rep)
 
-      type_      = STRING_VALUE;
-      value.ptr_ = U_NEW(UString(value_));
+      type_ = STRING_VALUE;
+
+      U_NEW(UString, value.ptr_, UString(value_));
 
       reset();
       }
@@ -434,9 +436,10 @@ public:
 
       type_ = OBJECT_VALUE;
 
-      UValue* child = U_NEW(UValue);
+      UValue* child;
 
-      child->key = U_NEW(UString(name, len));
+      U_NEW(UValue,  child,      UValue);
+      U_NEW(UString, child->key, UString(name, len));
 
       member.toJSON(*child);
 
@@ -880,8 +883,9 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
 
-      json.type_      = STRING_VALUE;
-      json.value.ptr_ = U_NEW(UString((UStringRep*)pval));
+      json.type_ = STRING_VALUE;
+
+      U_NEW(UString, json.value.ptr_, UString((UStringRep*)pval));
       }
 
    void fromJSON(UValue& json)
@@ -910,8 +914,9 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
 
-      json.type_      = STRING_VALUE;
-      json.value.ptr_ = U_NEW(UString(*((UString*)pval)));
+      json.type_ = STRING_VALUE;
+
+      U_NEW(UString, json.value.ptr_, UString(*((UString*)pval)));
       }
 
    void fromJSON(UValue& json)
@@ -952,7 +957,7 @@ public:
 
       for (; ptr < end; ++ptr)
          {
-         child = U_NEW(UValue);
+         U_NEW(UValue, child, UValue);
 
          child->toJSON(UJsonTypeHandler<T>(*(T*)(*ptr)));
 
@@ -968,7 +973,9 @@ public:
 
       for (UValue* child = json.children.head; child; child = child->next)
          {
-         T* pelem = U_NEW(T);
+         T* pelem;
+
+         U_NEW(T, pelem, T);
 
          child->fromJSON(UJsonTypeHandler<T>(*pelem));
 
@@ -1031,9 +1038,8 @@ public:
             do {
                next = node->next;
 
-               child = U_NEW(UValue);
-
-               child->key = U_NEW(UString((UStringRep*)node->key));
+               U_NEW(UValue,  child,      UValue);
+               U_NEW(UString, child->key, UString((UStringRep*)node->key));
 
                child->toJSON(UJsonTypeHandler<T>(*(T*)node->elem)); // *child << *((T*)node->elem);
 
@@ -1054,7 +1060,9 @@ public:
 
       for (UValue* child = json.children.head; child; child = child->next)
          {
-         T* elem = U_NEW(T);
+         T* elem;
+
+         U_NEW(T, elem, T);
 
          child->fromJSON(UJsonTypeHandler<T>(*elem)); // *elem << *child;
 

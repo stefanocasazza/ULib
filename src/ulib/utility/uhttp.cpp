@@ -441,7 +441,7 @@ next:
 
       U_SRV_LOG("Inode based directory notification enabled");
 
-      inotify_pathname = U_NEW(UString(U_CAPACITY));
+      U_NEW(UString, inotify_pathname, UString(U_CAPACITY));
 
       cache_file->callForAllEntry(checkForInotifyDirectory);
       }
@@ -750,10 +750,10 @@ U_NO_EXPORT void UHTTP::loadStaticLinkedServlet(const char* name, uint32_t len, 
 {
    U_TRACE(0, "UHTTP::loadStaticLinkedServlet(%.*S,%u,%p)", len, name, len, runDynamicPage)
 
-   U_NEW_DBG(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
+   U_NEW(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
+   U_NEW(UHTTP::UServletPage,   file_data->ptr, UHTTP::UServletPage);
 
                    file_data->mime_index           = U_usp;
-                   file_data->ptr                  = U_NEW(UHTTP::UServletPage);
    ((UServletPage*)file_data->ptr)->runDynamicPage = runDynamicPage;
 
    (void) pathname->replace(name, len);
@@ -790,30 +790,31 @@ void UHTTP::init()
    U_INTERNAL_ASSERT_EQUALS(set_cookie_option, 0)
    U_INTERNAL_ASSERT_EQUALS(string_HTTP_Variables, 0)
 
-   file                  = U_NEW(UFile);
-   pcmd                  = U_NEW(UCommand);
-   ext                   = U_NEW(UString);
-   etag                  = U_NEW(UString);
-   geoip                 = U_NEW(UString(U_CAPACITY));
-   suffix                = U_NEW(UString);
-   tmpdir                = U_NEW(UString(U_PATH_MAX));
-   request               = U_NEW(UString);
-   qcontent              = U_NEW(UString);
-   pathname              = U_NEW(UString(U_CAPACITY));
-   rpathname             = U_NEW(UString);
-   formMulti             = U_NEW(UMimeMultipart);
-   set_cookie            = U_NEW(UString);
-   form_name_value       = U_NEW(UVector<UString>);
-   set_cookie_option     = U_NEW(UString(200U));
-   string_HTTP_Variables = U_NEW(UString(U_CAPACITY));
+   U_NEW(UFile, file, UFile);
+   U_NEW(UCommand, pcmd, UCommand);
+   U_NEW(UMimeMultipart, formMulti, UMimeMultipart);
+   U_NEW(UVector<UString>, form_name_value, UVector<UString>);
 
-   if (cache_file_mask   == 0) cache_file_mask   = U_NEW(U_STRING_FROM_CONSTANT("*.css|*.js|*.*html|*.png|*.gif|*.jpg"));
-   if (cgi_cookie_option == 0) cgi_cookie_option = U_NEW(U_STRING_FROM_CONSTANT("[\"\" 0]"));
+   U_NEW(UString, ext, UString);
+   U_NEW(UString, etag, UString);
+   U_NEW(UString, geoip, UString(U_CAPACITY));
+   U_NEW(UString, suffix, UString);
+   U_NEW(UString, tmpdir, UString(U_PATH_MAX));
+   U_NEW(UString, request, UString);
+   U_NEW(UString, qcontent, UString);
+   U_NEW(UString, pathname, UString(U_CAPACITY));
+   U_NEW(UString, rpathname, UString);
+   U_NEW(UString, set_cookie, UString);
+   U_NEW(UString, set_cookie_option, UString(200U));
+   U_NEW(UString, string_HTTP_Variables, UString(U_CAPACITY));
+
+   if (cache_file_mask   == 0) U_NEW(UString, cache_file_mask,   U_STRING_FROM_CONSTANT("*.css|*.js|*.*html|*.png|*.gif|*.jpg"));
+   if (cgi_cookie_option == 0) U_NEW(UString, cgi_cookie_option, U_STRING_FROM_CONSTANT("[\"\" 0]"));
 
 #ifdef U_ALIAS
    U_INTERNAL_ASSERT_EQUALS(alias, 0)
 
-   alias = U_NEW(UString);
+   U_NEW(UString, alias, UString);
 
    if (virtual_host) U_SRV_LOG("Virtual host service enabled");
 #endif
@@ -833,7 +834,7 @@ void UHTTP::init()
 #ifdef USE_PAGE_SPEED
    U_INTERNAL_ASSERT_EQUALS(page_speed, 0)
 
-   page_speed = U_NEW(UHTTP::UPageSpeed);
+   U_NEW(UHTTP::UPageSpeed, page_speed, UHTTP::UPageSpeed);
 
    msg = "WARNING: load of plugin pagespeed failed";
 
@@ -863,7 +864,7 @@ void UHTTP::init()
 #ifdef USE_LIBV8
    U_INTERNAL_ASSERT_EQUALS(v8_javascript, 0)
 
-   v8_javascript = U_NEW(UHTTP::UV8JavaScript);
+   U_NEW(UHTTP::UV8JavaScript, v8_javascript, UHTTP::UV8JavaScript);
 
    msg = "WARNING: load of plugin v8 failed";
 
@@ -887,7 +888,7 @@ void UHTTP::init()
 #ifdef USE_RUBY
    U_INTERNAL_ASSERT_EQUALS(ruby_embed, 0)
 
-   ruby_embed = U_NEW(UHTTP::URUBY);
+   U_NEW(UHTTP::URUBY, ruby_embed, UHTTP::URUBY);
 
    msg = "WARNING: load of plugin ruby failed";
 
@@ -937,7 +938,7 @@ void UHTTP::init()
 #ifdef USE_PHP
    U_INTERNAL_ASSERT_EQUALS(php_embed, 0)
 
-   php_embed = U_NEW(UHTTP::UPHP);
+   U_NEW(UHTTP::UPHP, php_embed, UHTTP::UPHP);
 
    msg = "WARNING: load of plugin php failed";
 
@@ -1024,7 +1025,7 @@ void UHTTP::init()
 
    U_INTERNAL_ASSERT_EQUALS(cache_file, 0)
 
-   cache_file = U_NEW(UHashMap<UHTTP::UFileCacheData*>);
+   U_NEW(UHashMap<UHTTP::UFileCacheData*>, cache_file, UHashMap<UHTTP::UFileCacheData*>);
 
 #ifdef U_STATIC_ONLY
 # if defined(U_ALIAS) && !defined(U_STATIC_SERVLET_WI_AUTH)
@@ -1039,7 +1040,7 @@ void UHTTP::init()
 
    U_INTERNAL_ASSERT_EQUALS(file_not_in_cache_data, 0)
 
-   file_not_in_cache_data = U_NEW(UHTTP::UFileCacheData);
+   U_NEW(UHTTP::UFileCacheData, file_not_in_cache_data, UHTTP::UFileCacheData);
 
    // manage authorization data...
 
@@ -1170,7 +1171,7 @@ void UHTTP::init()
       {
       U_INTERNAL_ASSERT_POINTER(file_data->array)
 
-      htpasswd = U_NEW(UString(file_data->array->operator[](0)));
+      U_NEW(UString, htpasswd, UString(file_data->array->operator[](0)));
 
       U_SRV_LOG("File data users permission: ../.htpasswd loaded");
       }
@@ -1179,7 +1180,7 @@ void UHTTP::init()
 
    if (file_data)
       {
-      htdigest = U_NEW(UString(file_data->array->operator[](0)));
+      U_NEW(UString, htdigest, UString(file_data->array->operator[](0)));
 
       U_SRV_LOG("File data users permission: ../.htdigest loaded");
       }
@@ -1339,7 +1340,7 @@ void UHTTP::setGlobalAlias(const UString& _alias) // NB: automatic alias for all
 
    U_INTERNAL_ASSERT_EQUALS(global_alias, 0)
 
-   global_alias = U_NEW(UString(_alias));
+   U_NEW(UString, global_alias, UString(_alias));
 
    if (global_alias->first_char() != '/') (void) global_alias->insert(0, '/');
 }
@@ -2949,7 +2950,7 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
 
       if (usp_page) U_RETURN(true);
 
-      usp_page = U_NEW(UHTTP::UServletPage);
+      U_NEW(UHTTP::UServletPage, usp_page, UHTTP::UServletPage);
 
       // NB: dlopen() fail if the module name is not prefixed with "./"...
 
@@ -4499,7 +4500,7 @@ void UHTTP::initDbNotFound()
    U_INTERNAL_ASSERT_EQUALS(db_not_found, 0)
    U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_inotify)
 
-   db_not_found = U_NEW(URDB(U_STRING_FROM_CONSTANT("../db/NotFound.http"), -1));
+   U_NEW(URDB, db_not_found, URDB(U_STRING_FROM_CONSTANT("../db/NotFound.http"), -1));
 
    if (db_not_found->open(4 * 1024 * 1024, false, true)) // NB: we don't want truncate (we have only the journal)...
       {
@@ -4526,7 +4527,7 @@ void UHTTP::initSession()
       {
       // NB: the old sessions are automatically NOT valid because UServer generate the crypto key at startup...
 
-      db_session = U_NEW(URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.http"), -1, 0));
+      U_NEW(URDBObjectHandler<UDataStorage*>, db_session, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.http"), -1, 0));
 
       if (db_session->open(4 * 1024 * 1024, false, true)) // NB: we don't want truncate (we have only the journal)...
          {
@@ -4570,9 +4571,8 @@ void UHTTP::initSessionSSL()
    U_INTERNAL_ASSERT_EQUALS(db_session_ssl, 0)
    U_INTERNAL_ASSERT_EQUALS(data_session_ssl, 0)
 
-   data_session_ssl = U_NEW(USSLSession);
-
-   db_session_ssl = U_NEW(URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.ssl"), -1, data_session_ssl));
+   U_NEW(USSLSession, data_session_ssl, USSLSession);
+   U_NEW(URDBObjectHandler<UDataStorage*>, db_session_ssl, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.ssl"), -1, data_session_ssl));
 
    if (db_session_ssl->open(4 * 1024 * 1024, false, true)) // NB: we don't want truncate (we have only the journal)...
       {
@@ -6895,7 +6895,7 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    const char* motivation = 0;
    UString header(U_CAPACITY);
 
-   U_NEW_DBG(UVector<UString>, file_data->array, UVector<UString>(4U));
+   U_NEW(UVector<UString>, file_data->array, UVector<UString>(4U));
 
    file_data->array->push_back(content);
 
@@ -7266,8 +7266,9 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 {
    U_TRACE_NO_PARAM(1, "UHTTP::manageDataForCache()")
 
-   const char* ptr;
    UString file_name;
+   uint32_t suffix_len;
+   const char* suffix_ptr;
 
 #ifdef DEBUG
    U_INTERNAL_ASSERT_POINTER(file)
@@ -7282,7 +7283,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
       }
 #endif
 
-   U_NEW_DBG(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
+   U_NEW(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
 
    // NB: copy the attributes from file...
 
@@ -7371,16 +7372,16 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
       }
 #endif
 
-   *suffix   = file->getSuffix();
-   ptr       = (suffix->empty() ? 0 : suffix->data());
-   file_name = UStringExt::basename(file->getPath());
+   suffix_len = (*suffix = file->getSuffix()).size();
+   suffix_ptr = (suffix_len ? suffix->data() : 0);
 
    // manage authorization data...
 
-   if (suffix->equal(U_CONSTANT_TO_PARAM("htpasswd")) ||
-       suffix->equal(U_CONSTANT_TO_PARAM("htdigest")))
+   if (suffix_len == 8                                                                            &&
+       (u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','p','a','s','s','w','d') ||
+        u_get_unalignedp64(suffix_ptr) == U_MULTICHAR_CONSTANT64('h','t','d','i','g','e','s','t')))
       {
-      U_NEW_DBG(UVector<UString>, file_data->array, UVector<UString>(1U));
+      U_NEW(UVector<UString>, file_data->array, UVector<UString>(1U));
 
       file_data->array->push_back(file->getContent(true, false, true));
 
@@ -7388,6 +7389,8 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
       goto end;
       }
+
+   file_name = UStringExt::basename(file->getPath());
 
    if (UServices::dosMatchWithOR(file_name, U_STRING_TO_PARAM(*cache_file_mask), 0))
       {
@@ -7411,7 +7414,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
             {
             mime_index = U_unknow;
 
-            const char* ctype = file->getMimeType(ptr, &mime_index);
+            const char* ctype = file->getMimeType(suffix_ptr, &mime_index);
 
             file_data->mime_index = mime_index;
 
@@ -7424,16 +7427,24 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    // NB: when a pathfile ends with "*.[so|usp|c|dll]" it is assumed to be a dynamic page...
 
-   if (ptr                                                                              &&
+   if (suffix_len                                                                       &&
        (UServices::dosMatch(      file_name, U_CONSTANT_TO_PARAM("*.0.so"), 0) == false && // MACOSX
         UServices::dosMatchWithOR(file_name, U_CONSTANT_TO_PARAM("*.so|*.usp|*.c|*.dll"), 0)))
       {
-      uint32_t sz, len;
+      uint32_t len;
+      const char* ptr;
       char buffer[U_PATH_MAX];
       char run_dynamic_page[128];
 
       bool usp_dll = false,
-           usp_src = suffix->equal(U_CONSTANT_TO_PARAM("usp"));
+           usp_src = false;
+
+      if (suffix_len == 3                                                   &&
+          u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('u','s') &&
+          suffix_ptr[2] == 'p')
+         {
+         usp_src = true;
+         }
 
       if ( usp_src ||
           (usp_dll = suffix->equal(U_CONSTANT_TO_PARAM(U_LIB_SUFFIX))))
@@ -7446,7 +7457,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
          UServletPage* usp_page;
 
          ptr = file->getPathRelativ();
-         len = file->getPathRelativLen()-(sz = suffix->size());
+         len = file->getPathRelativLen() - suffix_len;
 
          U_INTERNAL_DUMP("ptr(%u) = %.*S", len, len, ptr)
 
@@ -7469,7 +7480,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
          (void) u__snprintf(buffer, sizeof(buffer), "./%.*s%s", len, ptr, U_LIB_SUFFIX);
 
-         usp_page = U_NEW(UHTTP::UServletPage);
+         U_NEW(UHTTP::UServletPage, usp_page, UHTTP::UServletPage);
 
          if (usp_page->UDynamic::load(buffer) == false)
             {
@@ -7482,7 +7493,7 @@ check:      if (usp_src) goto end;
             goto error;
             }
 
-         (void) u__snprintf(run_dynamic_page, sizeof(run_dynamic_page), "runDynamicPage_%.*s", file_name.size()-sz-1, file_name.data());
+         (void) u__snprintf(run_dynamic_page, sizeof(run_dynamic_page), "runDynamicPage_%.*s", file_name.size() - suffix_len - 1, file_name.data());
 
          usp_page->runDynamicPage = (vPFi)(*usp_page)[run_dynamic_page];
 
@@ -7500,7 +7511,7 @@ check:      if (usp_src) goto end;
 
             cache_file->insert(*pathname, file_data);
 
-            U_NEW_DBG(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
+            U_NEW(UHTTP::UFileCacheData, file_data, UHTTP::UFileCacheData);
 
             file_data->mtime = u_now->tv_sec;
             }
@@ -7519,14 +7530,21 @@ check:      if (usp_src) goto end;
 
          U_SRV_LOG("USP found: %S%s, USP service registered (URI): %V", buffer, link, pathname->rep);
 
-         if (bcallInitForAllUSP) callInitForAllUSP(pathname->rep, file_data);
+         if (bcallInitForAllUSP)
+            {
+            callInitForAllUSP(     pathname->rep, file_data);
+            callAfterForkForAllUSP(pathname->rep, file_data);
+            }
          }
 #  ifdef HAVE_LIBTCC
-      else if (suffix->equal(U_CONSTANT_TO_PARAM("c")))
+      else if (suffix_len == 1 &&
+               suffix_ptr[0] == 'c')
          {
          UString program = file->getContent();
 
-         UCServletPage* csp_page = U_NEW(UHTTP::UCServletPage);
+         UCServletPage* csp_page;
+
+         U_NEW(UHTTP::UCServletPage, csp_page, UHTTP::UCServletPage);
 
          if (program.empty()            == false &&
              csp_page->compile(program) == false)
@@ -7564,27 +7582,41 @@ check:      if (usp_src) goto end;
 
       pos += U_CONSTANT_SIZE("cgi-bin");
 
-      if (pathname->c_char(pos+2) != '.') // NB: the directory "cgi-bin" often have some "functions file" (that starts with '.')...
+      if (pathname->c_char(pos+2) != '.') // NB: the directory "cgi-bin" often contains some "functions file" (that starts with '.')...
          {
          UHTTP::ucgi* cgi = U_MALLOC_TYPE(UHTTP::ucgi);
 
+         cgi->interpreter      = 0;
+         cgi->environment_type = U_CGI;
+
          pathname->copy(cgi->dir);
+                        cgi->dir[pos] = '\0';
 
-         U_INTERNAL_DUMP("cgi_dir = %S", cgi->dir)
+         U_INTERNAL_DUMP("cgi_dir = %S cgi_doc = %S", cgi->dir, cgi->dir + u__strlen(cgi->dir, __PRETTY_FUNCTION__) + 1)
 
-         cgi->dir[pos] = '\0';
-
-         U_INTERNAL_DUMP("cgi_doc = %S", cgi->dir + u__strlen(cgi->dir, __PRETTY_FUNCTION__) + 1)
-
-         ptr = pathname->c_pointer(pathname->size() - 2);
-
-              if (suffix->equal(U_CONSTANT_TO_PARAM("sh")))   { cgi->interpreter = U_PATH_SHELL; cgi->environment_type = U_SHELL; }
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("bash"))) { cgi->interpreter = 0;            cgi->environment_type = U_SHELL; }
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("php")))  { cgi->interpreter = "php-cgi";    cgi->environment_type = U_PHP; }
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("pl")))   { cgi->interpreter = "perl";       cgi->environment_type = U_CGI; }
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("py")))   { cgi->interpreter = "python";     cgi->environment_type = U_CGI; }
-         else if (suffix->equal(U_CONSTANT_TO_PARAM("rb")))   { cgi->interpreter = "ruby";       cgi->environment_type = U_CGI; }
-         else                                                 { cgi->interpreter = 0;            cgi->environment_type = U_CGI; }
+         if (suffix_len == 2)
+            {
+            if (u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('s','h'))
+               {
+               cgi->interpreter      = U_PATH_SHELL;
+               cgi->environment_type = U_SHELL;
+               }
+            else if (u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('p','l')) cgi->interpreter = "perl";
+            else if (u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('p','y')) cgi->interpreter = "python";
+            else if (u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('r','b')) cgi->interpreter = "ruby";
+            }
+         else if (suffix_len == 3                                                   &&
+                  u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('p','h') &&
+                  suffix_ptr[2] == 'p')
+            {
+            cgi->interpreter      = "php-cgi";
+            cgi->environment_type = U_PHP;
+            }
+         else if (suffix_len == 4 &&
+                  u_get_unalignedp32(suffix_ptr) == U_MULTICHAR_CONSTANT32('b','a','s','h'))
+            {
+            cgi->environment_type = U_SHELL;
+            }
 
          U_INTERNAL_DUMP("cgi->environment_type = %d cgi->interpreter = %S", cgi->environment_type, cgi->interpreter)
 
@@ -7599,7 +7631,7 @@ check:      if (usp_src) goto end;
       goto error;
       }
 
-   if (ptr) (void) u_get_mimetype(ptr, &file_data->mime_index);
+   if (suffix_len) (void) u_get_mimetype(suffix_ptr, &file_data->mime_index);
 
 end:
    U_INTERNAL_DUMP("file_data->mime_index(%u) = %C", file_data->mime_index, file_data->mime_index)
@@ -10069,7 +10101,7 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
 
             if (vec.empty() == false)
                {
-               U_NEW_DBG(UVector<UString>, d.array, UVector<UString>(4U));
+               U_NEW(UVector<UString>, d.array, UVector<UString>(4U));
 
                UString encoded, decoded;
 

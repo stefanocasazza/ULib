@@ -37,7 +37,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(rpc_info,0)
 
-      rpc_info = U_NEW(UVector<UString>);
+      U_NEW(UVector<UString>, rpc_info, UVector<UString>);
       }
 
    static void resetInfo()

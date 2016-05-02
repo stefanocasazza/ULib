@@ -110,7 +110,10 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 {
    U_TRACE(1, "UOrmDriverSqlite::handlerConnect(%V)", option.rep)
 
-   UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverSqlite(*UString::str_sqlite_name)) : this);
+   UOrmDriver* pdrv;
+
+   if (UOrmDriver::connection == 0) pdrv = this;
+   else U_NEW(UOrmDriverSqlite, pdrv, UOrmDriverSqlite(*UString::str_sqlite_name));
 
    if (pdrv->setOption(option) == false)
       {
@@ -156,10 +159,15 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
    ((UOrmDriverSqlite*)pdrv)->encoding_UTF16 = (pdrv->getOptionValue(U_CONSTANT_TO_PARAM("encoding")) == *UString::str_UTF16);
 
-   sqlite3** pconnection = (sqlite3**)&(pdrv->connection);
+   union uusqlite3 {
+      void** p1;
+   sqlite3** p2;
+   };
 
-   pdrv->errcode = (((UOrmDriverSqlite*)pdrv)->encoding_UTF16 ? U_SYSCALL(sqlite3_open16, "%S,%p", fullpath, pconnection)
-                                                              : U_SYSCALL(sqlite3_open,   "%S,%p", fullpath, pconnection));
+   union uusqlite3 pconnection = { &(pdrv->connection) };
+
+   pdrv->errcode = (((UOrmDriverSqlite*)pdrv)->encoding_UTF16 ? U_SYSCALL(sqlite3_open16, "%S,%p", fullpath, pconnection.p2)
+                                                              : U_SYSCALL(sqlite3_open,   "%S,%p", fullpath, pconnection.p2));
 
    if (pdrv->errcode)
       {
@@ -265,7 +273,9 @@ USqlStatement* UOrmDriverSqlite::handlerStatementCreation(const char* stmt, uint
    uint32_t num_bind_param  = U_SYSCALL(sqlite3_bind_parameter_count, "%p", pHandle),
             num_bind_result = U_SYSCALL(sqlite3_column_count,         "%p", pHandle);
 
-   USqlStatement* pstmt = U_NEW(USqliteStatement(pHandle, num_bind_param, num_bind_result));
+   USqlStatement* pstmt;
+
+   U_NEW(USqliteStatement, pstmt, USqliteStatement(pHandle, num_bind_param, num_bind_result));
 
    U_RETURN_POINTER(pstmt, USqlStatement);
 }
@@ -417,7 +427,9 @@ USqlStatementBindParam* UOrmDriverSqlite::creatSqlStatementBindParam(USqlStateme
 
    if (rebind == -1)
       {
-      USqlStatementBindParam* ptr = U_NEW(USqliteStatementBindParam(s, n, bstatic));
+      USqlStatementBindParam* ptr;
+      
+      U_NEW(USqliteStatementBindParam, ptr, USqliteStatementBindParam(s, n, bstatic));
 
       U_RETURN_POINTER(ptr, USqlStatementBindParam);
       }

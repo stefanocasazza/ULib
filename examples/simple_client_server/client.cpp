@@ -144,7 +144,7 @@ public:
 
          u_init_ulib_username();
 
-         ulog = U_NEW(ULog(log_file, 1024 * 1024));
+         U_NEW(ULog, ulog, ULog(log_file, 1024 * 1024));
 
          ulog->setPrefix(U_SERVER_LOG_PREFIX);
 

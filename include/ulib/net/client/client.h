@@ -299,7 +299,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UClient, "%p", pcfg)
 
-      socket = U_NEW(Socket(UClient_Base::bIPv6));
+      U_NEW(Socket, socket, Socket(UClient_Base::bIPv6));
       }
 
    ~UClient()

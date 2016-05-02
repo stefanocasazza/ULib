@@ -56,7 +56,7 @@ protected:
       {
       U_TRACE_REGISTER_OBJECT(0, URPCClient_Base, "%p", _cfg)
 
-      URPCMethod::encoder = U_NEW(URPCEncoder);
+      U_NEW(URPCEncoder, URPCMethod::encoder, URPCEncoder);
       }
 
    ~URPCClient_Base()
@@ -91,7 +91,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, URPCClient, "%p", _cfg)
 
-      UClient_Base::socket = U_NEW(Socket(UClient_Base::bIPv6));
+      U_NEW(Socket, UClient_Base::socket, Socket(UClient_Base::bIPv6));
       }
 
    ~URPCClient()

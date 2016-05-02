@@ -113,59 +113,15 @@ UBaseTransform* UTransformCtx::findByHref(const char* href)
 
    switch (i)
       {
-      case 1: // "base64"
-         {
-         ptr = U_NEW(UTranformBase64);
-         }
-      break;
-
-      case 3: // "c14n"
-         {
-         ptr = U_NEW(UTranformInclC14N);
-         }
-      break;
-
-      case 5: // "xpointer"
-         {
-         ptr = U_NEW(UTranformXPointer);
-         }
-      break;
-
-      case 7: // "sha1"
-         {
-         ptr = U_NEW(UTranformSha1);
-         }
-      break;
-
-      case 9: // "sha256"
-         {
-         ptr = U_NEW(UTranformSha256);
-         }
-      break;
-
-      case 11: // "rsa-md5"
-         {
-         ptr = U_NEW(UTranformRsaMd5);
-         }
-      break;
-
-      case 13: // "rsa-sha1"
-         {
-         ptr = U_NEW(UTranformRsaSha1);
-         }
-      break;
-
-      case 15: // "rsa-sha256"
-         {
-         ptr = U_NEW(UTranformRsaSha256);
-         }
-      break;
-
-      default:
-         {
-         ptr = 0;
-         }
-      break;
+      case  1: U_NEW(UTranformBase64,    ptr, UTranformBase64);    break; // "base64"
+      case  3: U_NEW(UTranformInclC14N,  ptr, UTranformInclC14N);  break; // "c14n"
+      case  5: U_NEW(UTranformXPointer,  ptr, UTranformXPointer);  break; // "xpointer"
+      case  7: U_NEW(UTranformSha1,      ptr, UTranformSha1);      break; // "sha1"
+      case  9: U_NEW(UTranformSha256,    ptr, UTranformSha256);    break; // "sha256"
+      case 11: U_NEW(UTranformRsaMd5,    ptr, UTranformRsaMd5);    break; // "rsa-md5"
+      case 13: U_NEW(UTranformRsaSha1,   ptr, UTranformRsaSha1);   break; // "rsa-sha1"
+      case 15: U_NEW(UTranformRsaSha256, ptr, UTranformRsaSha256); break; // "rsa-sha256"
+      default:                           ptr = 0;                  break;
       }
 
    U_INTERNAL_ASSERT_POINTER(ptr)
@@ -267,7 +223,7 @@ UDSIGContext::UDSIGContext()
 
    U_INTERNAL_ASSERT_EQUALS(UTransformCtx::enabledTransforms, 0)
 
-   UTransformCtx::enabledTransforms = U_NEW(UVector<UString>);
+   U_NEW(UVector<UString>, UTransformCtx::enabledTransforms, UVector<UString>);
 
    UTransformCtx::registerDefault();
 
@@ -275,21 +231,29 @@ UDSIGContext::UDSIGContext()
 
    U_INTERNAL_ASSERT_EQUALS(UTranformInputURI::allIOCallbacks, 0)
 
-   UTranformInputURI::allIOCallbacks = U_NEW(UVector<UIOCallback*>);
+   U_NEW(UVector<UIOCallback*>, UTranformInputURI::allIOCallbacks, UVector<UIOCallback*>);
+
+   UIOCallback* p;
 
 #ifdef LIBXML_FTP_ENABLED       
    U_SYSCALL_VOID_NO_PARAM(xmlNanoFTPInit);
 
-   UTranformInputURI::allIOCallbacks->push(U_NEW(UIOCallback(xmlIOFTPMatch, xmlIOFTPOpen, xmlIOFTPRead, xmlIOFTPClose)));
+   U_NEW(UIOCallback, p, UIOCallback(xmlIOFTPMatch, xmlIOFTPOpen, xmlIOFTPRead, xmlIOFTPClose));
+
+   UTranformInputURI::allIOCallbacks->push(p);
 #endif
 
 #ifdef LIBXML_HTTP_ENABLED
    U_SYSCALL_VOID_NO_PARAM(xmlNanoHTTPInit);
 
-   UTranformInputURI::allIOCallbacks->push(U_NEW(UIOCallback(xmlIOHTTPMatch, xmlIOHTTPOpen, xmlIOHTTPRead, xmlIOHTTPClose)));
+   U_NEW(UIOCallback, p, UIOCallback(xmlIOHTTPMatch, xmlIOHTTPOpen, xmlIOHTTPRead, xmlIOHTTPClose));
+
+   UTranformInputURI::allIOCallbacks->push(p);
 #endif
 
-   UTranformInputURI::allIOCallbacks->push(U_NEW(UIOCallback(xmlFileMatch, xmlFileOpen, xmlFileRead, xmlFileClose)));
+   U_NEW(UIOCallback, p, UIOCallback(xmlFileMatch, xmlFileOpen, xmlFileRead, xmlFileClose));
+
+   UTranformInputURI::allIOCallbacks->push(p);
 }
 
 UDSIGContext::~UDSIGContext()
@@ -350,7 +314,7 @@ bool UDSIGContext::processManifestNode(xmlNodePtr node)
       {
       /* create reference */
 
-      ref = U_NEW(UReferenceCtx(UReferenceCtx::MANIFEST));
+      U_NEW(UReferenceCtx, ref, UReferenceCtx(UReferenceCtx::MANIFEST));
 
       /* add to the list */
 
@@ -828,7 +792,9 @@ bool UDSIGContext::processSignedInfoNode(const char*& alg, UString& data)
       {
       /* create reference */
 
-      UReferenceCtx* ref = U_NEW(UReferenceCtx(UReferenceCtx::SIGNED_INFO));
+      UReferenceCtx* ref;
+
+      U_NEW(UReferenceCtx, ref, UReferenceCtx(UReferenceCtx::SIGNED_INFO));
 
       /* add to the list */
 
@@ -938,7 +904,9 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
 
    if (xptr == 0)
       {
-      UBaseTransform* uriTransform = U_NEW(UTranformInputURI(_uri));
+      UBaseTransform* uriTransform;
+
+      U_NEW(UTranformInputURI, uriTransform, UTranformInputURI(_uri));
 
       chain.insert(0, uriTransform);
 
@@ -981,7 +949,9 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
 
    // we need to create XPointer transform to execute expr
 
-   UTranformXPointer* transform = U_NEW(UTranformXPointer);
+   UTranformXPointer* transform;
+
+   U_NEW(UTranformXPointer, transform, UTranformXPointer);
 
    if (transform->setExpr(xptr, nodeSetType, node))
       {
@@ -991,7 +961,11 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
          {
          transform->tag = U_STRING_FROM_CONSTANT("xades:SignedProperties");
 
-         chain.insert(0, U_NEW(UTranformInclC14N));
+         UTranformInclC14N* p;
+
+         U_NEW(UTranformInclC14N, p, UTranformInclC14N);
+
+         chain.insert(0, p);
          }
 
       chain.insert(0, transform);

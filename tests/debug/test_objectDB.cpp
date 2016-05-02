@@ -60,14 +60,18 @@ static void one()
 {
    U_TRACE(5, "one()")
 
-   Figlio* vettore_figli = U_NEW(Figlio[3]);
+   Figlio* vettore_figli;
+
+   U_NEW(Figlio, vettore_figli, Figlio[3]);
 }
 
 static void two()
 {
    U_TRACE(5, "two()")
 
-   Figlio* vettore_figli = U_NEW(Figlio[3]);
+   Figlio* vettore_figli;
+
+   U_NEW(Figlio, vettore_figli, Figlio[3]);
 }
 
 int U_EXPORT main (int argc, char* argv[])
@@ -86,7 +90,9 @@ int U_EXPORT main (int argc, char* argv[])
    one();
    two();
 
-   Figlio* vettore_figli = U_NEW(Figlio[sz]);
+   Figlio* vettore_figli;
+
+   U_NEW(Figlio, vettore_figli, Figlio[sz]);
 
    delete[] vettore_figli;
 

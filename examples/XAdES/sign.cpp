@@ -630,21 +630,27 @@ public:
 
       // manage arguments...
 
-      U_INTERNAL_ASSERT_POINTER(U_DATA_URI)
+      if ( U_DATA_URI &&
+          *U_DATA_URI == '\0')
+         {
+         U_ERROR("DATA_URI is mandatory");
+         }
 
-      if (*U_DATA_URI == '\0') U_ERROR("DATA_URI is mandatory");
+      if ( U_X509 &&
+          *U_X509 == '\0')
+         {
+         U_ERROR("X509 is mandatory");
+         }
 
-      U_INTERNAL_ASSERT_POINTER(U_X509)
-
-      if (*U_X509 == '\0') U_ERROR("X509 is mandatory");
+      if ( U_KEY_HANDLE &&
+          *U_KEY_HANDLE == '\0')
+         {
+         U_ERROR("KEY_HANDLE is mandatory");
+         }
 
       UCertificate cert(UString(U_X509));
 
       if (cert.isValid() == false) U_ERROR("certificate not valid");
-
-      U_INTERNAL_ASSERT_POINTER(U_KEY_HANDLE)
-
-      if (*U_KEY_HANDLE == '\0') U_ERROR("KEY_HANDLE is mandatory");
 
       U_INTERNAL_DUMP("U_CA_STORE = %S", U_CA_STORE)
 

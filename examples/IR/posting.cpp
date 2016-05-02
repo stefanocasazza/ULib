@@ -92,10 +92,10 @@ UPosting::UPosting(uint32_t dimension, bool parsing, bool index)
    U_INTERNAL_ASSERT_EQUALS(filename,0)
    U_INTERNAL_ASSERT_EQUALS(str_cur_doc_id,0)
 
-   word           = U_NEW(UString);
-   posting        = U_NEW(UString);
-   filename       = U_NEW(UString);
-   str_cur_doc_id = U_NEW(UString(sizeof(cur_doc_id)));
+   U_NEW(UString, word, UString);
+   U_NEW(UString, posting, UString);
+   U_NEW(UString, filename, UString);
+   U_NEW(UString, str_cur_doc_id, UString(sizeof(cur_doc_id)));
 
    approximate_num_words = 2000 + (dimension * 8);
 
@@ -106,8 +106,8 @@ UPosting::UPosting(uint32_t dimension, bool parsing, bool index)
 
       dimension += dimension / 4;
 
-      tbl_name  = U_NEW(UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(dimension)));
-      tbl_words = U_NEW(UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(approximate_num_words), ignore_case));
+      U_NEW(UHashMap<UString>, tbl_name,  UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(dimension)));
+      U_NEW(UHashMap<UString>, tbl_words, UHashMap<UString>(U_GET_NEXT_PRIME_NUMBER(approximate_num_words), ignore_case));
       }
 
    if (parsing)
@@ -115,8 +115,8 @@ UPosting::UPosting(uint32_t dimension, bool parsing, bool index)
       U_INTERNAL_ASSERT_EQUALS(file,0)
       U_INTERNAL_ASSERT_EQUALS(content,0)
 
-      file    = U_NEW(UFile);
-      content = U_NEW(UString);
+      U_NEW(UFile, file, UFile);
+      U_NEW(UString, content, UString);
       }
 }
 
@@ -937,10 +937,11 @@ U_NO_EXPORT bool UPosting::setVectorCompositeWord()
    U_INTERNAL_ASSERT_EQUALS(vec_sub_word,0)
    U_INTERNAL_ASSERT_EQUALS(vec_sub_word_posting,0)
 
-   sub_word             = U_NEW(UString);
-   vec_sub_word         = U_NEW(UVector<UString>(*word));
-   vec_sub_word_posting = U_NEW(UVector<UString>);
-   vec_sub_word_size    = vec_sub_word->size();
+   U_NEW(UString, sub_word, UString);
+   U_NEW(UVector<UString>, vec_sub_word, UVector<UString>(*word));
+   U_NEW(UVector<UString>, vec_sub_word_posting, UVector<UString>);
+
+   vec_sub_word_size = vec_sub_word->size();
 
    for (uint32_t i = 0; i < vec_sub_word_size; ++i)
       {
@@ -1077,10 +1078,11 @@ bool UPosting::findDocID(UStringRep* word_rep)
       {
       // allocation property...
 
-      i           = U_NOT_FOUND;
-      vec_word    = U_NEW(UVector<UString>(32));
-      vec_entry   = U_NEW(UVector<UString>(approximate_num_words));
-      vec_posting = U_NEW(UVector<UString>(32));
+      i = U_NOT_FOUND;
+
+      U_NEW(UVector<UString>, vec_word, UVector<UString>(32));
+      U_NEW(UVector<UString>, vec_entry, UVector<UString>(approximate_num_words));
+      U_NEW(UVector<UString>, vec_posting, UVector<UString>(32));
       }
 
    // check if exist property for this word...
@@ -1443,7 +1445,7 @@ void UPosting::printDB(ostream& s)
 #ifdef U_STDCPP_ENABLE
    os = &s;
 
-   buffer = U_NEW(UString(U_CAPACITY));
+   U_NEW(UString, buffer, UString(U_CAPACITY));
 
    if (tbl_words) tbl_words->callForAllEntry((bPFprpv)print);
    else

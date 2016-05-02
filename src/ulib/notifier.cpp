@@ -679,7 +679,9 @@ void UNotifier::createMapFd()
 
    lo_map_fd = (UEventFd**) UMemoryPool::_malloc(max_connection, sizeof(UEventFd*), true);
 
-   hi_map_fd = U_NEW(UGenericHashMap<int,UEventFd*>);
+   typedef UGenericHashMap<int,UEventFd*> umapfd;
+
+   U_NEW(umapfd, hi_map_fd, umapfd);
 
    hi_map_fd->allocate(max_connection);
 }
@@ -782,7 +784,7 @@ void UNotifier::insert(UEventFd* item, int op)
 
    U_INTERNAL_DUMP("mask = %B", mask)
 
-   item->pevent = U_NEW(UEvent<UEventFd>(fd, mask, *item));
+   U_NEW(UEvent<UEventFd>, item->pevent, UEvent<UEventFd>(fd, mask, *item));
 
    (void) UDispatcher::add(*(item->pevent));
 #elif defined(HAVE_EPOLL_WAIT)
@@ -860,7 +862,8 @@ void UNotifier::modify(UEventFd* item)
 
    UDispatcher::del(item->pevent);
              delete item->pevent;
-                    item->pevent = U_NEW(UEvent<UEventFd>(fd, mask, *item));
+
+   U_NEW(UEvent<UEventFd>, item->pevent, UEvent<UEventFd>(fd, mask, *item));
 
    (void) UDispatcher::add(*(item->pevent));
 #elif defined(HAVE_EPOLL_WAIT)

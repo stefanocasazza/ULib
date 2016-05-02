@@ -211,7 +211,7 @@ static void usp_fork_businesses()
 {
    U_TRACE(5, "::usp_fork_businesses()")
 
-   mc = U_NEW(UMongoDBClient);
+   U_NEW(UMongoDBClient, mc, UMongoDBClient);
 
    if (mc->connect() == false)
       {
@@ -227,10 +227,10 @@ static void usp_fork_businesses()
       return;
       }
 
-   pvalue     = U_NEW(UValue(ARRAY_VALUE));
-   prequest   = U_NEW(Request);
-   presponse  = U_NEW(Response);
-   pvresponse = U_NEW(UVector<Response*>);
+   U_NEW(Request, prequest, Request);
+   U_NEW(Response, presponse, Response);
+   U_NEW(UValue, pvalue, UValue(ARRAY_VALUE));
+   U_NEW(UVector<Response*>, pvresponse, UVector<Response*>);
 }
 
 #ifdef DEBUG
@@ -270,7 +270,11 @@ if (JSON_parse(*UClientImage_Base::body, *prequest))
 
       if (true)
          {
-         pvresponse->push_back(U_NEW(Response(*presponse)));
+         Response* nresponse;
+
+         U_NEW(Response, nresponse, Response(*presponse));
+
+         pvresponse->push_back(nresponse);
          }
       }
 

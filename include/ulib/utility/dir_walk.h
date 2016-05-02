@@ -146,7 +146,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(suffix_file_type, 0)
 
-      suffix_file_type = U_NEW(UString(str, len));
+      U_NEW(UString, suffix_file_type, UString(str, len));
       }
 
    static void setFilter(const char* _filter, uint32_t _filter_len)

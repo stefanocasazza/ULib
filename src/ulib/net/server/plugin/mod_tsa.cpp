@@ -67,7 +67,7 @@ int UTsaPlugIn::handlerInit()
 #  ifndef U_ALIAS
       U_SRV_LOG("WARNING: Sorry, I can't enable TSA plugin because alias URI support is missing, please recompile ULib");
 #  else
-      if (UHTTP::valias == 0) UHTTP::valias = U_NEW(UVector<UString>(2U));
+      if (UHTTP::valias == 0) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U));
 
       UHTTP::valias->push_back(*UString::str_tsa);
       UHTTP::valias->push_back(*UString::str_nostat);

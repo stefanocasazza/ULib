@@ -879,7 +879,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
 
             pvalue->release();
 
-            pvalue = U_NEW(UStringRep(optarg, u__strlen(optarg, __PRETTY_FUNCTION__)));
+            U_NEW(UStringRep, pvalue, UStringRep(optarg, u__strlen(optarg, __PRETTY_FUNCTION__)));
             }
          break;
          }

@@ -5,30 +5,30 @@
 
 #include "IR.h"
 
-/*
-inverted index: (data structure)
-
-Definition: An index into a set of texts of the words in the texts. The index is accessed by some search method.
-Each index entry gives the word and a list of texts, possibly with locations within the text, where the word occurs.
-See also full inverted index, inverted file index, block addressing index, index file, external index, forward index.
-
-Note: Suppose we want to search the texts "i love you," "god is love," "love is blind," and "blind justice."
-(The words of the text are all lower case for simplicity) If we index by (text, character within the text),
-the index with location in text is:
-
- blind   (3,8);(4,0)
- god     (2,0)
- i       (1,0)
- is      (2,4);(3,5)
- justice (4,6)
- love    (1,2);(2,7);(3,0)
- you     (1,7)
-
-The word "blind" is in document 3 ("love is blind") starting at character 8, so has an entry (3,8).
-To find, for instance, documents with both "is" and "love," first look up the words in the index,
-then find the intersection of the texts in each list. In this case, documents 2 and 3 have both words.
-We can quickly find documents where the words appear close to each other by comparing the character within the text
-*/
+/**
+ * inverted index: (data structure)
+ *
+ * Definition: An index into a set of texts of the words in the texts. The index is accessed by some search method.
+ * Each index entry gives the word and a list of texts, possibly with locations within the text, where the word occurs.
+ * See also full inverted index, inverted file index, block addressing index, index file, external index, forward index.
+ *
+ * Note: Suppose we want to search the texts "i love you," "god is love," "love is blind," and "blind justice."
+ * (The words of the text are all lower case for simplicity) If we index by (text, character within the text),
+ * the index with location in text is:
+ *
+ * blind   (3,8);(4,0)
+ * god     (2,0)
+ * i       (1,0)
+ * is      (2,4);(3,5)
+ * justice (4,6)
+ * love    (1,2);(2,7);(3,0)
+ * you     (1,7)
+ *
+ * The word "blind" is in document 3 ("love is blind") starting at character 8, so has an entry (3,8).
+ * To find, for instance, documents with both "is" and "love," first look up the words in the index,
+ * then find the intersection of the texts in each list. In this case, documents 2 and 3 have both words.
+ * We can quickly find documents where the words appear close to each other by comparing the character within the text
+ */
 
 UCDB* cdb_names;
 UCDB* cdb_words;
@@ -74,7 +74,7 @@ void IR::setBadWords()
 
    if (cfg_bad_words)
       {
-      bad_words = U_NEW(UString(cfg_bad_words)); 
+      U_NEW(UString, bad_words, UString(cfg_bad_words)); 
 
       u_setPfnMatch(U_DOSMATCH_WITH_OR, UPosting::ignore_case);
 

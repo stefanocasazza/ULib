@@ -341,7 +341,7 @@ public:
 
                if (handler_output == 0)
                   {
-                  handler_output = U_NEW(handlerOutput);
+                  U_NEW(handlerOutput, handler_output, handlerOutput);
 
                   UNotifier::insert(handler_output);
                   }
@@ -390,8 +390,11 @@ int U_EXPORT main(int argc, char* argv[])
    fd_input  = fds[0];
    fd_output = fds[1];
 
-   handlerInput* c = U_NEW(handlerInput);
-   handlerInput* d = U_NEW(handlerInput);
+   handlerInput* c;
+   handlerInput* d;
+
+   U_NEW(handlerInput, c, handlerInput);
+   U_NEW(handlerInput, d, handlerInput);
 
    UNotifier::init();
    UNotifier::insert(c);
@@ -403,8 +406,11 @@ int U_EXPORT main(int argc, char* argv[])
 #endif
    U_ASSERT(UNotifier::waitForWrite(fds[1], 500) >= 1)
 
-   MyAlarm1* a = U_NEW(MyAlarm1(1L, 0L));
-   MyAlarm2* b = U_NEW(MyAlarm2(1L, 0L));
+   MyAlarm1* a;
+   MyAlarm2* b;
+
+   U_NEW(MyAlarm1, a, MyAlarm1(1L, 0L));
+   U_NEW(MyAlarm2, b, MyAlarm2(1L, 0L));
 
    UTimer::init(UTimer::ASYNC);
 
@@ -428,7 +434,9 @@ int U_EXPORT main(int argc, char* argv[])
              UNotifier::waitForEvent(&timeout);
       (void) UNotifier::waitForRead(fds[0], 500);
 
-      UTimer::insert(U_NEW(MyAlarm1(1L, 0L)));
+      U_NEW(MyAlarm1, a, MyAlarm1(1L, 0L));
+
+      UTimer::insert(a);
 
       UTimer::setTimer();
       

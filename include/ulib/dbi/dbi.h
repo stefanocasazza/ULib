@@ -669,7 +669,7 @@ struct U_EXPORT UWithData
 {
    // The policy for the query with entire dataset
 
-   static UDBISet* deepQuery(dbi_result res) { return U_NEW(UDBISet(res)); }
+   static UDBISet* deepQuery(dbi_result res) { UDBISet* r; U_NEW(UDBISet, r, UDBISet(res)); return r; }
 };
 
 template <class T> struct U_EXPORT UCheckOneRecord

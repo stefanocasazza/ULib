@@ -407,8 +407,11 @@ int U_EXPORT main(int iArgC, char** ppcArgV)
       UString hostname(    ppcArgV[++iCurrentArg]);
       const char* device = ppcArgV[++iCurrentArg];
 
+      UIPAddress* paddr;
       UVector<UIPAddress*> vaddr;
-      UIPAddress* paddr = U_NEW(UIPAddress);
+
+      U_NEW(UIPAddress, paddr, UIPAddress);
+
       (void) paddr->setHostName(hostname);
 
       vaddr.push(paddr);

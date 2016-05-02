@@ -1517,6 +1517,12 @@ void U_EXPORT check_mmap(uint32_t map_size)
    UFile::munmap(place, map_size);
 }
 
+#define U_STR0 "\026\003\001"
+#define U_STR1 "The string \xC3\xBC@foo-bar" // "The string ü@foo-bar"
+#define U_STR2 "binary: \xC3\xBC\x88\x01\x0B" 
+#define U_STR3 "ã~C~Uã~C¬ã~C¼ã~C| ã~C¯ã~C¼ã~B¯ã~A®ã~C~Yã~C³ã~C~Aã~C~^ã~C¼ã~B¯"
+            // "\343~C~U\343~C\254\343~C\274\343~C| \343~C\257\343~C\274\343~B\257\343~A\256\343~C~Y\343~C\263\343~C~A\343~C~^\343~C\274\343~B\257"
+
 int
 U_EXPORT main (int argc, char* argv[])
 {
@@ -1610,70 +1616,58 @@ U_EXPORT main (int argc, char* argv[])
    U_INTERNAL_DUMP("u__ct_tab[ '\000'] = %d %B", u_cttab('\000'), u_cttab('\000'))
    U_INTERNAL_DUMP("u__istext('\000') = %b", u__istext('\000'))
 
-   const char* str;
-   uint32_t str_len;
+   UString z;
 
-   str     = "\026\003\001";
-   str_len = strlen(str) + 1;
-
-   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
-   U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == true )
-   U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
-   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == false )
+   U_INTERNAL_ASSERT( u_isText(  (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR0)) == false )
+   U_INTERNAL_ASSERT( u_isUTF8(  (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR0)) == true )
+   U_INTERNAL_ASSERT( u_isUTF16( (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR0)) == false )
+   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)U_CONSTANT_TO_PARAM(U_STR0)) == false )
  
    // NB: in UTF-8 the character ü is encoded as two bytes C3 (hex) and BC (hex)
 
-   str     = "The string \xC3\xBC@foo-bar"; // "The string ü@foo-bar"
-   str_len = strlen(str);
-
-   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
-   U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == true )
-   U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
-   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == false )
+   U_INTERNAL_ASSERT( u_isText(  (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR1)) == false )
+   U_INTERNAL_ASSERT( u_isUTF8(  (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR1)) == true )
+   U_INTERNAL_ASSERT( u_isUTF16( (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR1)) == false )
+   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)U_CONSTANT_TO_PARAM(U_STR1)) == false )
  
-   UString z = UString::fromUTF8((const unsigned char*)str, str_len);
+   z = UString::fromUTF8((const unsigned char*)U_CONSTANT_TO_PARAM(U_STR1));
 
    U_INTERNAL_ASSERT( z.isText()   == false )
    U_INTERNAL_ASSERT( z.isUTF8()   == false )
    U_INTERNAL_ASSERT( z.isUTF16()  == false )
    U_INTERNAL_ASSERT( z.isBinary() == true )
 
-   U_INTERNAL_ASSERT( UString::toUTF8((const unsigned char*)z.data(), z.size()) == str )
+   U_INTERNAL_ASSERT( UString::toUTF8((const unsigned char*)U_STRING_TO_PARAM(z)) == U_STRING_FROM_CONSTANT(U_STR1) )
 
-   str     = "binary: \xC3\xBC\x88\x01\x0B";
-   str_len = strlen(str);
+   U_INTERNAL_ASSERT( u_isText(  (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR2)) == false )
+   U_INTERNAL_ASSERT( u_isUTF8(  (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR2)) == false )
+   U_INTERNAL_ASSERT( u_isUTF16( (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR2)) == false )
+   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)U_CONSTANT_TO_PARAM(U_STR2)) == true )
 
-   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
-   U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == false )
-   U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
-   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == true )
-
-   z = UString::fromUTF8((const unsigned char*)str, str_len);
+   z = UString::fromUTF8((const unsigned char*)U_CONSTANT_TO_PARAM(U_STR2));
 
    U_INTERNAL_ASSERT( z.isUTF8()   == false )
    U_INTERNAL_ASSERT( z.isUTF16()  == false )
    U_INTERNAL_ASSERT( z.isText()   == false )
    U_INTERNAL_ASSERT( z.isBinary() == true )
 
-   str = "ã~C~Uã~C¬ã~C¼ã~C| ã~C¯ã~C¼ã~B¯ã~A®ã~C~Yã~C³ã~C~Aã~C~^ã~C¼ã~B¯";
-      // "\343~C~U\343~C\254\343~C\274\343~C| \343~C\257\343~C\274\343~B\257\343~A\256\343~C~Y\343~C\263\343~C~A\343~C~^\343~C\274\343~B\257"
-
-   str_len = strlen(str);
-   z       = UString::toUTF8((const unsigned char*)str, str_len);
+   z = UString::toUTF8((const unsigned char*)U_CONSTANT_TO_PARAM(U_STR3));
 
    U_INTERNAL_DUMP("toUTF8(%u) = %#*.S", z.size(), U_STRING_TO_TRACE(z))
 
-   U_INTERNAL_ASSERT( u_isText((const unsigned char*)str, str_len)   == false )
-   U_INTERNAL_ASSERT( u_isUTF8((const unsigned char*)str, str_len)   == false )
-   U_INTERNAL_ASSERT( u_isUTF16((const unsigned char*)str, str_len)  == false )
-   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)str, str_len) == true )
+   U_INTERNAL_ASSERT( u_isText(  (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR3)) == false )
+   U_INTERNAL_ASSERT( u_isUTF8(  (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR3)) == false )
+   U_INTERNAL_ASSERT( u_isUTF16( (const unsigned char*)U_CONSTANT_TO_PARAM(U_STR3)) == false )
+   U_INTERNAL_ASSERT( u_isBinary((const unsigned char*)U_CONSTANT_TO_PARAM(U_STR3)) == true )
 
    U_INTERNAL_ASSERT( z.isText()   == false )
    U_INTERNAL_ASSERT( z.isUTF8()   == true )
    U_INTERNAL_ASSERT( z.isUTF16()  == false )
    U_INTERNAL_ASSERT( z.isBinary() == false )
 
-   U_INTERNAL_ASSERT( UString::fromUTF8((const unsigned char*)z.data(), z.size()) == str )
+   U_INTERNAL_ASSERT( UString::fromUTF8((const unsigned char*)U_STRING_TO_PARAM(z)) == U_STRING_FROM_CONSTANT(U_STR3) )
+
+   const char* str;
 
    /*
    str     = "A list is only as strong as its weakest link. \xe2 Donald Knuth"; // â
@@ -1702,7 +1696,7 @@ U_EXPORT main (int argc, char* argv[])
    vec.clear();
 
    n = vec.split(U_CONSTANT_TO_PARAM("172.31.1.0/24 172.31.2.0/24  172.31.3.0/24 \t\t\t\t\t\t\t\t\t\t\t\t\t"
-                                     "172.31.4.0/24 172.31.5.0/24  172.31.6.0/24 \t\t\t\t\t\t\t\t\t\t\t\t\t172.31.7.0/24"));
+                                       "172.31.4.0/24 172.31.5.0/24  172.31.6.0/24 \t\t\t\t\t\t\t\t\t\t\t\t\t172.31.7.0/24"));
 
    U_INTERNAL_ASSERT_EQUALS(n, 7)
 
@@ -2040,7 +2034,6 @@ U_EXPORT main (int argc, char* argv[])
 // expressions = U_STRING_FROM_CONSTANT("/pippo/pluto == UStringExt::expandEnvironmentVar('$HOME', 5, 0)/pluto"); // = false
 // cout << UStringExt::evalExpression(expressions, UString::getStringNull()) << "\n";
 
-
 #ifdef USE_LIBPCRE
    // date (YYYY/MM/DD) --> (DD/MM/YYYY)
 
@@ -2202,6 +2195,4 @@ U_EXPORT main (int argc, char* argv[])
 
    y.clear();
 */
-
-   U_RETURN(0);
 }

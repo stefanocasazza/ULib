@@ -237,14 +237,14 @@ public:
 
    // ELEMENT ACCESS
 
-         char* begin()        { return (char*)str; }
-   const char* begin() const  { return str; }
+         char* begin()        { return (char*) str; }
+   const char* begin() const  { return         str; }
          char* end()          { return (char*)(str + _length); }
-   const char* end() const    { return str + _length; }
+   const char* end() const    { return         str + _length; }
          char* rbegin()       { return (char*)(str + _length - 1); }
-   const char* rbegin() const { return str + _length - 1; }
+   const char* rbegin() const { return         str + _length - 1; }
          char* rend()         { return (char*)(str + 1); }
-   const char* rend() const   { return str + 1; }
+   const char* rend() const   { return         str + 1; }
 
    char at(uint32_t pos) const
       {
@@ -1056,7 +1056,7 @@ public:
 
    static void str_allocate(int which);
 
-   // null string (for container etc...)
+   // null string (for container, etc...)
 
    static UString& getStringNull()
       {
@@ -1079,6 +1079,11 @@ protected:
 
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
+
+   explicit UString(UStringRep** pr) : rep(*pr) // NB: for toUTF8() and fromUTF8()...
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", pr)
+      }
 
    explicit UString(uint32_t len, uint32_t sz, char* ptr); // NB: for UStringExt::deflate()...
 
@@ -1115,6 +1120,7 @@ public:
    static uint32_t max_size() { return U_STRING_MAX_SIZE; }
 
 protected:
+
    // in 'memory reference' distinction is made between set, copy, e assign...
 
    void _set(UStringRep* r)
@@ -1184,13 +1190,29 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
+#ifdef U_COMPILER_RVALUE_REFS
+   UString(UString && str)
+      {
+      U_TRACE_NO_PARAM(0, "UString::UString(move)")
+
+          rep = str.rep;
+      str.rep = UStringRep::string_rep_null;
+
+      UStringRep::string_rep_null->hold();
+
+      U_INTERNAL_DUMP("rep = %p", rep)
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+#endif
+
    explicit UString(const char* t);
    explicit UString(const char* t, uint32_t tlen)
       {
       U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u", tlen, t, tlen)
 
-      if (tlen) rep = U_NEW(UStringRep(t, tlen));
-      else     _copy(UStringRep::string_rep_null);
+      if (tlen) U_NEW(UStringRep, rep, UStringRep(t, tlen));
+      else      _copy(UStringRep::string_rep_null);
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1337,6 +1359,20 @@ public:
    UString& replace(uint32_t pos, uint32_t n, const char* s)      { return replace(pos,     n, s, u__strlen(s, __PRETTY_FUNCTION__)); }
    UString& replace(uint32_t pos, uint32_t n, const UString& str) { return replace(pos,     n, U_STRING_TO_PARAM(str)); }
 
+   // swap
+
+   void swap(UString& str)
+      {
+      U_TRACE(0, "UString::swap(%p)", &str)
+
+      UStringRep* tmp = rep;
+
+          rep = str.rep;
+      str.rep = tmp;
+      }
+
+   void swap(UString& lhs, UString& rhs) { lhs.swap(rhs); }
+
    // Assignment - NB: assign() DOES NOT WARRANT PROPERTIES OF STRING, replace() YES...
 
    UString& assign(const char* s, uint32_t n);
@@ -1366,28 +1402,7 @@ public:
       return *this;
       }
 
-   void swap(UString& str)
-      {
-      U_TRACE(0, "UString::swap(%p)", &str)
-
-      UStringRep* tmp = rep;
-
-          rep = str.rep;
-      str.rep = tmp;
-      }
-
-   void swap(UString& lhs, UString& rhs) { lhs.swap(rhs); }
-
 #ifdef U_COMPILER_RVALUE_REFS
-# if !defined(__GNUC__) || (defined(DEBUG) && GCC_VERSION_NUM < 50300) // || GCC_VERSION_NUM >= 60000 // hope
-   UString(UString && str)
-      {
-      U_TRACE_NO_PARAM(0, "UString::UString(move)")
-
-          rep = str.rep;
-      str.rep = UStringRep::string_rep_null;
-      }
-# endif
    UString& operator=(UString && str)
       {
       U_TRACE_NO_PARAM(0, "UString::operator=(move)")
@@ -1792,7 +1807,11 @@ public:
       {
       U_TRACE(0, "UString::setConstant(%.*S,%u)", tlen, t, tlen)
 
-      _set(U_NEW(UStringRep(t, tlen)));
+      UStringRep* r;
+
+      U_NEW(UStringRep, r, UStringRep(t, tlen));
+
+      _set(r);
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -2001,7 +2020,9 @@ public:
 
       if (tlen == 0) return *string_null; 
 
-      UString utf8(UStringRep::toUTF8(t, tlen));
+      UStringRep* rep = UStringRep::toUTF8(t, tlen);
+
+      UString utf8(&rep);
 
       U_RETURN_STRING(utf8);
       }
@@ -2012,7 +2033,9 @@ public:
 
       if (tlen == 0) return *string_null; 
 
-      UString isolat1(UStringRep::fromUTF8(t, tlen));
+      UStringRep* rep = UStringRep::fromUTF8(t, tlen);
+
+      UString isolat1(&rep);
 
       U_RETURN_STRING(isolat1);
       }

@@ -33,8 +33,8 @@
 // --------------------------------------------------------------------------------------
 
 #ifdef DEBUG
-const char*  UMemoryPool::obj_class;
-const char*  UMemoryPool::func_call;
+const char* UMemoryPool::obj_class;
+const char* UMemoryPool::func_call;
 #  ifdef U_STDCPP_ENABLE
 #     include <fstream>
 #  endif

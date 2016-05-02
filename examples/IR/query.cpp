@@ -56,8 +56,9 @@ public:
          {
          uint32_t len;
 
-         query = U_NEW(Query);
-         ptr   = Query::checkQuoting(argv, len);
+         U_NEW(Query, query, Query);
+
+         ptr = Query::checkQuoting(argv, len);
 
          query->run(ptr, len, 0);
 

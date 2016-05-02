@@ -138,7 +138,10 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 {
    U_TRACE(0, "UOrmDriverMySql::handlerConnect(%V)", option.rep)
 
-   UOrmDriver* pdrv = (UOrmDriver::connection ? U_NEW(UOrmDriverMySql(*UString::str_mysql_name)) : this);
+   UOrmDriver* pdrv;
+
+   if (UOrmDriver::connection == 0) pdrv = this;
+   else U_NEW(UOrmDriverMySql, pdrv, UOrmDriverMySql(*UString::str_mysql_name));
 
    if (pdrv->setOption(option) == false)
       {
@@ -286,7 +289,9 @@ USqlStatement* UOrmDriverMySql::handlerStatementCreation(const char* stmt, uint3
    uint32_t num_bind_param  = U_SYSCALL(mysql_stmt_param_count, "%p", pHandle),
             num_bind_result = U_SYSCALL(mysql_stmt_field_count, "%p", pHandle);
 
-   USqlStatement* pstmt = U_NEW(UMySqlStatement(pHandle, num_bind_param, num_bind_result));
+   USqlStatement* pstmt;
+
+   U_NEW(UMySqlStatement, pstmt, UMySqlStatement(pHandle, num_bind_param, num_bind_result));
 
    U_RETURN_POINTER(pstmt, USqlStatement);
 }
@@ -384,7 +389,9 @@ USqlStatementBindParam* UOrmDriverMySql::creatSqlStatementBindParam(USqlStatemen
 
    if (rebind == -1)
       {
-      USqlStatementBindParam* ptr = U_NEW(UMySqlStatementBindParam(s, n, bstatic));
+      USqlStatementBindParam* ptr;
+
+      U_NEW(UMySqlStatementBindParam, ptr, UMySqlStatementBindParam(s, n, bstatic));
 
       U_RETURN_POINTER(ptr, USqlStatementBindParam);
       }

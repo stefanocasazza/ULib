@@ -24,7 +24,7 @@ template <class T> inline void u_construct(const T** ptr, bool stream_loading)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
 
-   if (stream_loading) *ptr = U_NEW(T(**ptr));
+   if (stream_loading) U_NEW(T, *ptr, T(**ptr));
 }
 
 template <class T> inline void u_construct(const T* ptr, uint32_t n)

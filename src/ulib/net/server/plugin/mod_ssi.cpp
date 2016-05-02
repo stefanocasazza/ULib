@@ -47,9 +47,9 @@ USSIPlugIn::USSIPlugIn()
 {
    U_TRACE_REGISTER_OBJECT(0, USSIPlugIn, "")
 
-   errmsg  = U_NEW(UString);
-   timefmt = U_NEW(UString);
-   docname = U_NEW(UString);
+   U_NEW(UString, errmsg,  UString);
+   U_NEW(UString, timefmt, UString);
+   U_NEW(UString, docname, UString);
 
    UString::str_allocate(STR_ALLOCATE_SSI);
 }
@@ -943,7 +943,7 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (x)
          {
-         environment = U_NEW(UString(UStringExt::prepareForEnvironmentVar(UFile::contentOf(x))));
+         U_NEW(UString, environment, UString(UStringExt::prepareForEnvironmentVar(UFile::contentOf(x))));
 
          const char* home = U_SYSCALL(getenv, "%S", "HOME");
 
@@ -972,9 +972,9 @@ int USSIPlugIn::handlerInit()
    U_INTERNAL_ASSERT_EQUALS(header, 0)
    U_INTERNAL_ASSERT_EQUALS(alternative_include, 0)
 
-   body                = U_NEW(UString);
-   header              = U_NEW(UString);
-   alternative_include = U_NEW(UString);
+   U_NEW(UString, body,  UString);
+   U_NEW(UString, header, UString);
+   U_NEW(UString, alternative_include, UString);
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }

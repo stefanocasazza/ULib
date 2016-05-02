@@ -469,7 +469,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UREDISClient, "", 0)
 
-      UClient_Base::socket = U_NEW(Socket(UClient_Base::bIPv6));
+      U_NEW(Socket, UClient_Base::socket, Socket(UClient_Base::bIPv6));
       }
 
    ~UREDISClient()

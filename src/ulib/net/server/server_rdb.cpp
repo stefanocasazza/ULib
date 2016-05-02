@@ -22,7 +22,7 @@ URDBServer::URDBServer(UFileConfig* cfg, bool ignore_case) : UServer<UTCPSocket>
 {
    U_TRACE_REGISTER_OBJECT(0, URDBServer, "%p,%b", cfg, ignore_case)
 
-   rdb = U_NEW(URDB(ignore_case));
+   U_NEW(URDB, rdb, URDB(ignore_case));
 
    URPC::allocate();
 }

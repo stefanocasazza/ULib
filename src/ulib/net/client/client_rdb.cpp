@@ -258,6 +258,9 @@ void URDBClient_Base::_callForAllEntry(vPFprpr function, bool sorted)
 
       while (*ptr == '+')
          {
+         UStringRep* key;
+         UStringRep* data;
+
          U_ASSERT(ptr < response.rep->end())
 
          ptr = URDB::parseLine(ptr, &_key, &_data);
@@ -265,8 +268,8 @@ void URDBClient_Base::_callForAllEntry(vPFprpr function, bool sorted)
          U_INTERNAL_ASSERT_MAJOR(_key.dsize,0)
          U_INTERNAL_ASSERT_MAJOR(_data.dsize,0)
 
-         UStringRep* key  = U_NEW(UStringRep((const char*) _key.dptr,  _key.dsize));
-         UStringRep* data = U_NEW(UStringRep((const char*)_data.dptr, _data.dsize));
+         U_NEW(UStringRep, key,  UStringRep((const char*) _key.dptr,  _key.dsize));
+         U_NEW(UStringRep, data, UStringRep((const char*)_data.dptr, _data.dsize));
 
          function(key, data);
 

@@ -848,6 +848,7 @@ public:
       U_INTERNAL_ASSERT(*ap_address)
 
       int op = -1;
+      WiAuthAccessPoint* p;
 
       if (ap_label->empty()) (void) ap_label->assign(U_CONSTANT_TO_PARAM("ap"));
 
@@ -878,7 +879,9 @@ public:
 
             index_access_point = sz++;
 
-            vec_access_point.push_back(U_NEW(WiAuthAccessPoint(*ap_label)));
+            U_NEW(WiAuthAccessPoint, p, WiAuthAccessPoint(*ap_label));
+
+            vec_access_point.push_back(p);
             }
          }
       else
@@ -895,7 +898,10 @@ public:
          index_access_point = 0;
 
          vec_access_point.clear();
-         vec_access_point.push_back(U_NEW(WiAuthAccessPoint(*ap_label)));
+
+         U_NEW(WiAuthAccessPoint, p, WiAuthAccessPoint(*ap_label));
+
+         vec_access_point.push_back(p);
          }
 
       if (op != -1)
@@ -2059,8 +2065,8 @@ static void usp_init_wi_auth()
 {
    U_TRACE_NO_PARAM(5, "::usp_init_wi_auth()")
 
-   ap_ref   = U_NEW(UString(100U));
-   ap_label = U_NEW(UString);
+   U_NEW(UString, ap_ref, UString(100U));
+   U_NEW(UString, ap_label, UString);
 
 #ifndef U_ALIAS
    U_ERROR("Sorry, I can't run wi_auth(USP) because alias URI support is missing, please recompile ULib");
@@ -2077,7 +2083,7 @@ static void usp_init_wi_auth()
       }
 #endif
 
-   sockp = U_NEW(UPing(5000, UClientImage_Base::bIPv6));
+   U_NEW(UPing, sockp, UPing(5000, UClientImage_Base::bIPv6));
 
    if (sockp->initPing() == false)
       {
@@ -2085,90 +2091,89 @@ static void usp_init_wi_auth()
              sockp = 0;
       }
 
-   ip                   = U_NEW(UString);
-   ap                   = U_NEW(UString);
-   uid                  = U_NEW(UString);
-   mac                  = U_NEW(UString);
-   date                 = U_NEW(UTimeDate);
-   yearName             = U_NEW(UString(U_STRING_FROM_CONSTANT("year")));
-   monthName            = U_NEW(UString(U_STRING_FROM_CONSTANT("month")));
-   weekName             = U_NEW(UString(U_STRING_FROM_CONSTANT("week")));
-   pbody                = U_NEW(U_STRING_FROM_CONSTANT("reboot=+Yes%2C+really+reboot+now+"));
-   redir                = U_NEW(UString);
-   token                = U_NEW(UString);
-   output               = U_NEW(UString);
-   policy               = U_NEW(UString);
-   gateway              = U_NEW(UString);
-   ip_auth              = U_NEW(U_STRING_FROM_CONSTANT("IP_AUTH"));
-   redirect             = U_NEW(UString);
-   mac_auth             = U_NEW(U_STRING_FROM_CONSTANT("MAC_AUTH"));
-   ip_server            = U_NEW(UString(UServer_Base::getIPAddress()));
-   empty_str            = U_NEW(U_STRING_FROM_CONSTANT("\"\""));
-   url_nodog            = U_NEW(UString(U_CAPACITY));
-   cert_auth            = U_NEW(U_STRING_FROM_CONSTANT("CERT_AUTH"));
-   ap_ref_ap            = U_NEW(UString(100U));
-   nodog_conf           = U_NEW(UString(UFile::contentOf("ap/nodog.conf.template")));
-   logout_url           = U_NEW(UString(200U));
-   ap_address           = U_NEW(UString);
-   empty_list           = U_NEW(U_STRING_FROM_CONSTANT("()"));
-   auth_domain          = U_NEW(UString);
-   ap_hostname          = U_NEW(UString);
-   cookie_auth          = U_NEW(U_STRING_FROM_CONSTANT("COOKIE_AUTH_"));
-   account_auth         = U_NEW(U_STRING_FROM_CONSTANT("ACCOUNT_AUTH"));
-   ap_ref_comune        = U_NEW(UString(100U));
-   user_UploadRate      = U_NEW(UString(10U));
-   user_DownloadRate    = U_NEW(UString(10U));
-   allowed_web_hosts    = U_NEW(UString);
-   dir_server_address   = U_NEW(UString(200U));
-   max_time_no_traffic  = U_NEW(UString);
+   U_NEW(UString, ip, UString);
+   U_NEW(UString, ap, UString);
+   U_NEW(UString, uid, UString);
+   U_NEW(UString, mac, UString);
+   U_NEW(UString, yearName, UString(U_STRING_FROM_CONSTANT("year")));
+   U_NEW(UString, monthName, UString(U_STRING_FROM_CONSTANT("month")));
+   U_NEW(UString, weekName, UString(U_STRING_FROM_CONSTANT("week")));
+   U_NEW(UString, pbody, U_STRING_FROM_CONSTANT("reboot=+Yes%2C+really+reboot+now+"));
+   U_NEW(UString, redir, UString);
+   U_NEW(UString, token, UString);
+   U_NEW(UString, output, UString);
+   U_NEW(UString, policy, UString);
+   U_NEW(UString, gateway, UString);
+   U_NEW(UString, ip_auth, U_STRING_FROM_CONSTANT("IP_AUTH"));
+   U_NEW(UString, redirect, UString);
+   U_NEW(UString, mac_auth, U_STRING_FROM_CONSTANT("MAC_AUTH"));
+   U_NEW(UString, ip_server, UString(UServer_Base::getIPAddress()));
+   U_NEW(UString, empty_str, U_STRING_FROM_CONSTANT("\"\""));
+   U_NEW(UString, url_nodog, UString(U_CAPACITY));
+   U_NEW(UString, cert_auth, U_STRING_FROM_CONSTANT("CERT_AUTH"));
+   U_NEW(UString, ap_ref_ap, UString(100U));
+   U_NEW(UString, nodog_conf, UString(UFile::contentOf("ap/nodog.conf.template")));
+   U_NEW(UString, logout_url, UString(200U));
+   U_NEW(UString, ap_address, UString);
+   U_NEW(UString, empty_list, U_STRING_FROM_CONSTANT("()"));
+   U_NEW(UString, auth_domain, UString);
+   U_NEW(UString, ap_hostname, UString);
+   U_NEW(UString, cookie_auth, U_STRING_FROM_CONSTANT("COOKIE_AUTH_"));
+   U_NEW(UString, account_auth, U_STRING_FROM_CONSTANT("ACCOUNT_AUTH"));
+   U_NEW(UString, ap_ref_comune, UString(100U));
+   U_NEW(UString, user_UploadRate, UString(10U));
+   U_NEW(UString, user_DownloadRate, UString(10U));
+   U_NEW(UString, allowed_web_hosts, UString);
+   U_NEW(UString, dir_server_address, UString(200U));
+   U_NEW(UString, max_time_no_traffic, UString);
 
-   policy_flat          = U_NEW(U_STRING_FROM_CONSTANT("FLAT"));
-   policy_daily         = U_NEW(U_STRING_FROM_CONSTANT("DAILY"));
-   policy_traffic       = U_NEW(U_STRING_FROM_CONSTANT("TRAFFIC"));
+   U_NEW(UString, time_done, UString(20U));
+   U_NEW(UString, time_counter, UString(20U));
+   U_NEW(UString, time_consumed, UString(20U));
+   U_NEW(UString, time_available, UString);
+   U_NEW(UString, traffic_done, UString(20U));
+   U_NEW(UString, traffic_counter, UString(20U));
+   U_NEW(UString, traffic_consumed, UString(20U));
+   U_NEW(UString, traffic_available, UString);
+   U_NEW(UString, policy_flat, U_STRING_FROM_CONSTANT("FLAT"));
+   U_NEW(UString, policy_daily, U_STRING_FROM_CONSTANT("DAILY"));
+   U_NEW(UString, policy_traffic, U_STRING_FROM_CONSTANT("TRAFFIC"));
 
-   time_done            = U_NEW(UString(20U));
-   time_counter         = U_NEW(UString(20U));
-   time_consumed        = U_NEW(UString(20U));
-   time_available       = U_NEW(UString);
-   traffic_done         = U_NEW(UString(20U));
-   traffic_counter      = U_NEW(UString(20U));
-   traffic_consumed     = U_NEW(UString(20U));
-   traffic_available    = U_NEW(UString);
+   U_NEW(UTimeDate, date, UTimeDate);
 
    U_INTERNAL_ASSERT_POINTER(USSIPlugIn::environment)
 
-   environment  = U_NEW(UString(*USSIPlugIn::environment));
-   virtual_name = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("VIRTUAL_NAME"), environment)));
+   U_NEW(UString, environment, UString(*USSIPlugIn::environment));
+   U_NEW(UString, virtual_name, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("VIRTUAL_NAME"),  environment)));
 
    (void) environment->append(U_CONSTANT_TO_PARAM("VIRTUAL_HOST="));
    (void) environment->append(*virtual_name);
 
-   UString dir_root;
+   UString dir_root = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_ROOT"), environment);
 
-   dir_reg            = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_REG"),            environment)));
-   dir_root           =               UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_ROOT"),           environment);
-   title_default      = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("TITLE_DEFAULT"),      environment)));
-   historical_log_dir = U_NEW(UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HISTORICAL_LOG_DIR"), environment)));
+   U_NEW(UString, dir_reg, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_REG"), environment)));
+   U_NEW(UString, title_default, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("TITLE_DEFAULT"), environment)));
+   U_NEW(UString, historical_log_dir, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HISTORICAL_LOG_DIR"), environment)));
 
    dir_server_address->snprintf("%v/client", dir_root.rep);
 
    UString tmp1 = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("LDAP_CARD_PARAM"),    environment),
            tmp2 = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("WIAUTH_CARD_BASEDN"), environment);
 
-     ldap_card_param  = U_NEW(UString(UStringExt::expandEnvironmentVar(tmp1, environment)));
-   wiauth_card_basedn = U_NEW(UString(UStringExt::expandEnvironmentVar(tmp2, environment)));
+   U_NEW(UString, ldap_card_param, UString(UStringExt::expandEnvironmentVar(tmp1, environment)));
+   U_NEW(UString, wiauth_card_basedn, UString(UStringExt::expandEnvironmentVar(tmp2, environment)));
 
    tmp1 = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("LDAP_USER_PARAM"),    environment),
    tmp2 = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("WIAUTH_USER_BASEDN"), environment);
 
-     ldap_user_param  = U_NEW(UString(UStringExt::expandEnvironmentVar(tmp1, environment)));
-   wiauth_user_basedn = U_NEW(UString(UStringExt::expandEnvironmentVar(tmp2, environment)));
+   U_NEW(UString, ldap_user_param, UString(UStringExt::expandEnvironmentVar(tmp1, environment)));
+   U_NEW(UString, wiauth_user_basedn, UString(UStringExt::expandEnvironmentVar(tmp2, environment)));
 
    tmp1 = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("LDAP_SESSION_PARAM"),    environment),
    tmp2 = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("WIAUTH_SESSION_BASEDN"), environment);
 
-     ldap_session_param  = U_NEW(UString(UStringExt::expandEnvironmentVar(tmp1, environment)));
-   wiauth_session_basedn = U_NEW(UString(UStringExt::expandEnvironmentVar(tmp2, environment)));
+   U_NEW(UString, ldap_session_param, UString(UStringExt::expandEnvironmentVar(tmp1, environment)));
+   U_NEW(UString, wiauth_session_basedn, UString(UStringExt::expandEnvironmentVar(tmp2, environment)));
 
    UString content = UFile::contentOf("$DIR_ROOT/etc/AllowedWebHosts.txt", O_RDONLY, false, environment);
 
@@ -2179,9 +2184,9 @@ static void usp_init_wi_auth()
       if (vec.empty() == false) *allowed_web_hosts = vec.join(' ') + ' ';
       }
 
-          cache = U_NEW(UCache);
-    admin_cache = U_NEW(UCache);
-   policy_cache = U_NEW(UCache);
+   U_NEW(UCache, cache, UCache);
+   U_NEW(UCache, admin_cache, UCache);
+   U_NEW(UCache, policy_cache, UCache);
 
    UString x(U_CAPACITY);
 
@@ -2197,53 +2202,51 @@ static void usp_init_wi_auth()
 
    (void) admin_cache->open(x, U_STRING_FROM_CONSTANT("$DIR_ADMIN_TEMPLATE"), environment, true);
 
-   message_page_template    = U_NEW(UString(      cache->getContent(U_CONSTANT_TO_PARAM("message_page.tmpl"))));
-   login_nodog_template     = U_NEW(UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("login_nodog_body.tmpl"))));
-   status_network_template  = U_NEW(UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("status_network_body.tmpl"))));
-   status_nodog_template    = U_NEW(UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("status_nodog_body.tmpl"))));
-   status_nodog_ap_template = U_NEW(UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("status_nodog_body_ap.tmpl"))));
-
-   status_nodog_and_user_body_template = U_NEW(UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("status_nodog_and_user_body.tmpl"))));
+   U_NEW(UString, message_page_template, UString(cache->getContent(U_CONSTANT_TO_PARAM("message_page.tmpl"))));
+   U_NEW(UString, login_nodog_template, UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("login_nodog_body.tmpl"))));
+   U_NEW(UString, status_network_template, UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("status_network_body.tmpl"))));
+   U_NEW(UString, status_nodog_template, UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("status_nodog_body.tmpl"))));
+   U_NEW(UString, status_nodog_ap_template, UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("status_nodog_body_ap.tmpl"))));
+   U_NEW(UString, status_nodog_and_user_body_template, UString(admin_cache->getContent(U_CONSTANT_TO_PARAM("status_nodog_and_user_body.tmpl"))));
 
    x.snprintf("$DIR_ROOT/etc/%v/script.conf", virtual_name->rep);
 
    content = UFile::contentOf(x.data(), O_RDONLY, false, environment);
 
-   table = U_NEW(UHashMap<UString>);
+   U_NEW(UHashMap<UString>, table, UHashMap<UString>);
 
    if (UFileConfig::loadProperties(*table, content.data(), content.end()))
       {
-      telefono          = U_NEW(UString((*table)["TELEFONO"]));
-      fmt_auth_cmd      = U_NEW(UString((*table)["FMT_AUTH_CMD"]));
-      redirect_default  = U_NEW(UString((*table)["REDIRECT_DEFAULT"]));
+      U_NEW(UString, telefono, UString((*table)["TELEFONO"]));
+      U_NEW(UString, fmt_auth_cmd, UString((*table)["FMT_AUTH_CMD"]));
+      U_NEW(UString, redirect_default, UString((*table)["REDIRECT_DEFAULT"]));
 
-               help_url = U_NEW(UString(UStringExt::expandEnvironmentVar((*table)["HELP_URL"],          environment)));
-              login_url = U_NEW(UString(UStringExt::expandEnvironmentVar((*table)["LOGIN_URL"],         environment)));
-             wallet_url = U_NEW(UString(UStringExt::expandEnvironmentVar((*table)["WALLET_URL"],        environment)));
-           password_url = U_NEW(UString(UStringExt::expandEnvironmentVar((*table)["PASSWORD_URL"],      environment)));
-      registrazione_url = U_NEW(UString(UStringExt::expandEnvironmentVar((*table)["REGISTRAZIONE_URL"], environment)));
+      U_NEW(UString, help_url, UString(UStringExt::expandEnvironmentVar((*table)["HELP_URL"],           environment)));
+      U_NEW(UString, login_url, UString(UStringExt::expandEnvironmentVar((*table)["LOGIN_URL"],         environment)));
+      U_NEW(UString, wallet_url, UString(UStringExt::expandEnvironmentVar((*table)["WALLET_URL"],       environment)));
+      U_NEW(UString, password_url, UString(UStringExt::expandEnvironmentVar((*table)["PASSWORD_URL"],      environment)));
+      U_NEW(UString, registrazione_url, UString(UStringExt::expandEnvironmentVar((*table)["REGISTRAZIONE_URL"], environment)));
 
       logout_url->snprintf("%v/logout", login_url->rep);
 
-      url_banner_ap = U_NEW(UString(UStringExt::expandPath((*table)["URL_BANNER_AP"], environment)));
+      U_NEW(UString, url_banner_ap, UString(UStringExt::expandPath((*table)["URL_BANNER_AP"], environment)));
 
       x.snprintf("$DIR_WEB/%v%v", virtual_name->rep, url_banner_ap->rep);
 
-      url_banner_ap_path = U_NEW(UString(UStringExt::expandPath(x, environment)));
+      U_NEW(UString, url_banner_ap_path, UString(UStringExt::expandPath(x, environment)));
 
       x.snprintf("%v/default", url_banner_ap_path->rep);
 
-      url_banner_ap_default = U_NEW(UFile(x.copy(), environment));
-
-      url_banner_comune = U_NEW(UString(UStringExt::expandPath((*table)["URL_BANNER_COMUNE"], environment)));
+      U_NEW(UFile, url_banner_ap_default, UFile(x.copy(), environment));
+      U_NEW(UString, url_banner_comune, UString(UStringExt::expandPath((*table)["URL_BANNER_COMUNE"], environment)));
 
       x.snprintf("$DIR_WEB/%v%v", virtual_name->rep, url_banner_comune->rep);
 
-      url_banner_comune_path = U_NEW(UString(UStringExt::expandPath(x, environment)));
+      U_NEW(UString, url_banner_comune_path, UString(UStringExt::expandPath(x, environment)));
 
       x.snprintf("%v/default", url_banner_comune_path->rep);
 
-      url_banner_comune_default = U_NEW(UFile(x, environment));
+      U_NEW(UFile, url_banner_comune_default, UFile(x, environment));
 
       if (url_banner_ap_default->stat() == false)
          {
@@ -2258,7 +2261,7 @@ static void usp_init_wi_auth()
          }
 
 #  ifdef USE_LIBSSL
-      des3_key = U_NEW(UString((*table)["DES3_KEY"]));
+      U_NEW(UString, des3_key, UString((*table)["DES3_KEY"]));
 
       UDES3::setPassword(des3_key->c_str());
 #  endif
@@ -2266,7 +2269,7 @@ static void usp_init_wi_auth()
 
    table->clear();
 
-   client = U_NEW(UHttpClient<UTCPSocket>(0));
+   U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(0));
 
    client->setFollowRedirects(true, false);
 
@@ -2296,13 +2299,13 @@ static void usp_init_wi_auth()
          }
 #  endif
 
-   file_LOG = U_NEW(UFile(U_STRING_FROM_CONSTANT("$FILE_LOG"), environment));
+   U_NEW(UFile, file_LOG, UFile(U_STRING_FROM_CONSTANT("$FILE_LOG"), environment));
 
    UString dir = UStringExt::dirname(file_LOG->getPath());
 
-   file_WARNING  = U_NEW(UFile(dir + U_STRING_FROM_CONSTANT("/wifi-warning")));
-   file_RECOVERY = U_NEW(UFile(dir + U_STRING_FROM_CONSTANT("/wifi-recovery")));
-   file_UTILIZZO = U_NEW(UFile(dir + U_STRING_FROM_CONSTANT("/wifi-utilizzo")));
+   U_NEW(UFile, file_WARNING,  UFile(dir + U_STRING_FROM_CONSTANT("/wifi-warning")));
+   U_NEW(UFile, file_RECOVERY, UFile(dir + U_STRING_FROM_CONSTANT("/wifi-recovery")));
+   U_NEW(UFile, file_UTILIZZO, UFile(dir + U_STRING_FROM_CONSTANT("/wifi-utilizzo")));
 
    UServer_Base::update_date  =
    UServer_Base::update_date1 = true;
@@ -2312,9 +2315,9 @@ static void usp_init_wi_auth()
    (void) UServer_Base::addLog(file_RECOVERY, O_APPEND | O_RDWR);
    (void) UServer_Base::addLog(file_UTILIZZO, O_APPEND | O_RDWR);
 
-   vuid              = U_NEW(UVector<UString>);
-   vallow_IP_user    = U_NEW(UVector<UIPAllow*>);
-   vallow_IP_request = U_NEW(UVector<UIPAllow*>);
+   U_NEW(UVector<UString>, vuid, UVector<UString>);
+   U_NEW(UVector<UIPAllow*>, vallow_IP_user, UVector<UIPAllow*>);
+   U_NEW(UVector<UIPAllow*>, vallow_IP_request, UVector<UIPAllow*>);
 
    (void) x.assign(U_CONSTANT_TO_PARAM("172.0.0.0/8, " IP_UNIFI ", " IP_UNIFI_TMP ", " IP_CASCINE)); // NB: unifi and cascine has MasqueradeDevice...
 
@@ -2324,7 +2327,7 @@ static void usp_init_wi_auth()
 
    // RECORD - DB
 
-   data_rec = U_NEW(WiAuthDataStorage);
+   U_NEW(WiAuthDataStorage, data_rec, WiAuthDataStorage);
 
    if (UHTTP::db_session == 0) UHTTP::initSession();
 
@@ -2339,9 +2342,13 @@ static void usp_init_wi_auth()
       U_LOGGER("*** DATA STORAGE EMPTY ***");
       }
 
-   db_user  = U_NEW(URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthUser.cdb"),               -1, ( user_rec = U_NEW(WiAuthUser))));
-   db_nodog = U_NEW(URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthAccessPoint.cdb"),        -1, (nodog_rec = U_NEW(WiAuthNodog))));
-   db_ap    = U_NEW(URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthVirtualAccessPoint.cdb"), -1, (  vap_rec = U_NEW(WiAuthVirtualAccessPoint))));
+   U_NEW(WiAuthUser, user_rec, WiAuthUser);
+   U_NEW(WiAuthNodog, nodog_rec, WiAuthNodog);
+   U_NEW(WiAuthVirtualAccessPoint, vap_rec, WiAuthVirtualAccessPoint);
+
+   U_NEW(URDBObjectHandler<UDataStorage*>, db_user, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthUser.cdb"),             -1, user_rec));
+   U_NEW(URDBObjectHandler<UDataStorage*>, db_nodog, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthAccessPoint.cdb"),     -1, nodog_rec));
+   U_NEW(URDBObjectHandler<UDataStorage*>, db_ap, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthVirtualAccessPoint.cdb"), -1, vap_rec));
 
     db_user->setShared(U_SRV_LOCK_USER1, U_SRV_SPINLOCK_USER1);
    db_nodog->setShared(               0,                    0); // POSIX shared memory object (interprocess - can be used by unrelated processes)
@@ -2353,7 +2360,7 @@ static void usp_init_wi_auth()
 
    // TAVARNELLE
 
-   db_filter_tavarnelle = U_NEW(UString(UFile::contentOf("../tavarnelle.rule")));
+   U_NEW(UString, db_filter_tavarnelle, UString(UFile::contentOf("../tavarnelle.rule")));
 
    if (*db_filter_tavarnelle) *db_filter_tavarnelle = UStringExt::trim(*db_filter_tavarnelle);
 }
@@ -7123,7 +7130,7 @@ static void GET_error_ap()
 
                for (uint32_t i = 0, n = vec.size(); i < n; i += 5)
                   {
-                  elem = U_NEW(UIPAllow);
+                  U_NEW(UIPAllow, elem, UIPAllow);
 
                   if (elem->parseMask(vec[i+1]) == false)
                      {

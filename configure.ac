@@ -2201,21 +2201,25 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 
 	AC_CC_TRY_FLAG
 
-	MAYBE_FLAGS="-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings -Wlogical-op \
+	MAYBE_FLAGS="-Wstrict-aliasing=2 -Wall -Wextra -Wsign-compare -Wpointer-arith -Wwrite-strings \
 					 -Wmissing-declarations -Wpacked -Wswitch-enum -Wmissing-format-attribute -Winit-self -Wformat \
-					 -Wformat-extra-args -Wenum-compare -Wswitch-bool -Wlogical-not-parentheses -Wsizeof-array-argument -Wbool-compare"
+					 -Wformat-extra-args -Wenum-compare -Wlogical-not-parentheses -Wsizeof-array-argument -Wbool-compare"
+
 	# -------------------------------------------------------------------------------------
 	# to turn various gcc/glibc-specific preprocessor checks
 	# -------------------------------------------------------------------------------------
 	# -Wno-format -Wno-format-extra-args
 	# -Wsuggest-final-methods -Wsuggest-final-types
 	# -------------------------------------------------------------------------------------
-
 	# -Wcast-qual
-	CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
-						 -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
+	# -------------------------------------------------------------------------------------
 
+	 CC_MAYBE_FLAGS="-Werror-implicit-function-declaration -Wstrict-prototypes -Wc++-compat \
+						  -Wmissing-prototypes -Wnested-externs -Wdeclaration-after-statement -Wold-style-definition -Wsizeof-pointer-memaccess"
 	CXX_MAYBE_FLAGS="-fno-check-new -fno-enforce-eh-specs -Wno-deprecated -Wdelete-non-virtual-dtor -Wodr"
+
+		 MAYBE_FLAGS_MODERN=""
+	CXX_MAYBE_FLAGS_MODERN=""
 
 	case "$gcc_version" in
 		2*|3*|4.0*|4.1*|4.2*)
@@ -2224,27 +2228,35 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		;;
 		4.4*) # centOS 64: ... c++/4.4.7/bits/shared_ptr.h:1005: error: cannot use typeid with -fno-rtti
 		;;
-		4.5*) # openwrt: SIGSEGV 
+		4.5*) # openwrt: SIGSEGV
 		;;
-		*)
-			    MAYBE_FLAGS="$MAYBE_FLAGS -Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn \
-													-Wlogical-op -Wduplicated-cond -Wshift-overflow=2 -Wnull-dereference" # -Wsuggest-attribute=const
- 			CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wtemplates -Wmultiple-inheritance -Wvirtual-inheritance -Wnamespaces" ## -std=c++0x -std=c++11 -std=c++14
-
-			if test "$enable_gcc_optimized" = "yes" -a "$enable_coverage" != "yes"; then
-				## ----------------------------------------------------------------------------------------------------------------------------------
-				## -fgcse Perform a global common subexpression elimination pass. This pass also performs global constant and copy propagation. When
-				##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
-				##			 common subexpression elimination pass by adding -fno-gcse to the command line
-				## ----------------------------------------------------------------------------------------------------------------------------------
-				MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -fno-math-errno -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
-
-				if test "$use_distcc" != "yes"; then
-					MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -mtune=native" # NB: distcc don't work with this...
-				fi
-			fi
+		4.6*|4.7*|4.8*|4.9*|5*)
+			 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn" # -Wsuggest-attribute=const
+		;;
+		6.1.0|*)
+			 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn \
+									  -Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
+									  -Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
+		CXX_MAYBE_FLAGS_MODERN="-Wterminate -Wlto-type-mismatch -Wsubobject-linkage -Wplacement-new -Woverride-init-side-effects \
+										-Wvirtual-inheritance -Wnamespaces" # -Wtemplates -Wmultiple-inheritance
 		;;
 	esac
+
+		 MAYBE_FLAGS="    $MAYBE_FLAGS     $MAYBE_FLAGS_MODERN"
+	CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS $CXX_MAYBE_FLAGS_MODERN"
+
+	if test "$enable_gcc_optimized" = "yes" -a "$enable_coverage" != "yes"; then
+		## ----------------------------------------------------------------------------------------------------------------------------------
+		## -fgcse Perform a global common subexpression elimination pass. This pass also performs global constant and copy propagation. When
+		##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
+		##			 common subexpression elimination pass by adding -fno-gcse to the command line
+		## ----------------------------------------------------------------------------------------------------------------------------------
+		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -fno-math-errno -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
+
+		if test "$use_distcc" != "yes"; then
+			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -mtune=native" # NB: distcc don't work with this...
+		fi
+	fi
 
 	## -------------------------------------------------------------------------------------
 	##	-fno-common
@@ -2445,8 +2457,13 @@ if test "$enable_stdcpp" != "yes"; then
 	AC_CHECK_LIB(Systemstubs, printf, [ULIB_LIBS="$ULIB_LIBS -lSystemstubs -lgcc"])
 fi
 
-# On Ubuntu 16.04 bug: #65612 https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612 
-ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
+# On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
+if test "$gcc_version" = "5.3.1"; then
+	gcc_v=`gcc --version | head -n 1`
+	if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413"; then
+		ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
+	fi
+fi
 
 # Check for availablity of "old style" C++ strstream header
 AC_CHECK_HEADERS([strstream.h])

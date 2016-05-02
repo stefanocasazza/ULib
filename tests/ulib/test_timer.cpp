@@ -88,8 +88,11 @@ int U_EXPORT main (int argc, char* argv[])
 
    UTimeVal s(0L, 50L * 1000L);
 
-   MyAlarm1* a = U_NEW(MyAlarm1(0L, 50L * 1000L));
-   MyAlarm2* b = U_NEW(MyAlarm2(0L, 50L * 1000L));
+   MyAlarm1* a;
+   MyAlarm2* b;
+
+   U_NEW(MyAlarm1, a, MyAlarm1(0L, 50L * 1000L));
+   U_NEW(MyAlarm2, b, MyAlarm2(0L, 50L * 1000L));
 
    UTimer::insert(a);
    UTimer::insert(b);
@@ -110,7 +113,9 @@ int U_EXPORT main (int argc, char* argv[])
       {
       s.nanosleep();
 
-      UTimer::insert(U_NEW(MyAlarm1(0L, 50L * 1000L)));
+      U_NEW(MyAlarm1, a, MyAlarm1(0L, 50L * 1000L));
+
+      UTimer::insert(a);
 
       UTimer::setTimer();
 

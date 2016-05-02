@@ -152,7 +152,7 @@ UPing::UPing(int _timeoutMS, bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
    (void) memset(&arp, 0, sizeof(arpmsg));
 #endif
 
-   if (proc     == 0) proc = U_NEW(UProcess);
+   if (proc     == 0) U_NEW(UProcess, proc, UProcess);
    if (addrmask == 0)
       {
       map_size = sizeof(fd_set) + sizeof(uint32_t);

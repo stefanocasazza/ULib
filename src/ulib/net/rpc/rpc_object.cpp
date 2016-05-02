@@ -26,8 +26,8 @@ void URPCObject::loadGenericMethod(UFileConfig* file_method)
    U_INTERNAL_ASSERT_EQUALS(dispatcher, 0)
    U_INTERNAL_ASSERT_EQUALS(URPCMethod::encoder, 0)
 
-   dispatcher          = U_NEW(URPCObject);
-   URPCMethod::encoder = U_NEW(URPCEncoder);
+   U_NEW(URPCObject, dispatcher, URPCObject);
+   U_NEW(URPCEncoder, URPCMethod::encoder, URPCEncoder);
 
    if (file_method) readGenericMethod(*file_method);
 }

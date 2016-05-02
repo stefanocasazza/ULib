@@ -216,8 +216,8 @@ UHttpClient_Base::UHttpClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
 
    u_init_http_method_list();
 
-   requestHeader  = U_NEW(UMimeHeader);
-   responseHeader = U_NEW(UMimeHeader);
+   U_NEW(UMimeHeader, requestHeader, UMimeHeader);
+   U_NEW(UMimeHeader, responseHeader, UMimeHeader);
 }
 
 void UHttpClient_Base::reset()

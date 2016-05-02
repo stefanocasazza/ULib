@@ -42,7 +42,7 @@ int URpcPlugIn::handlerConfig(UFileConfig& cfg)
 
    // Perform registration of server RPC method
 
-   rpc_parser = U_NEW(URPCParser);
+   U_NEW(URPCParser, rpc_parser, URPCParser);
 
    URPCObject::loadGenericMethod(&cfg);
 

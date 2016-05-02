@@ -558,7 +558,7 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
 
    for (uint32_t i = 0; i < size; ++i)
       {
-      th = U_NEW(UThread(UThread::detachstate));
+      U_NEW(UThread, th, UThread(UThread::detachstate));
 
       if (_beginthreadex(NO_SECURITY_ATTRIBUTES, USE_DEFAULT_STACK_SIZE, execHandler, this, CREATE_IN_RUN_STATE, (unsigned int*)&id) == 0)
          {
@@ -595,7 +595,7 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
 
    for (uint32_t i = 0; i < size; ++i)
       {
-      th = U_NEW(UThread(UThread::detachstate));
+      U_NEW(UThread, th, UThread(UThread::detachstate));
 
       if (pthread_create(&(th->tid), &attr, (pvPFpv)execHandler, this))
          {

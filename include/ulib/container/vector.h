@@ -827,7 +827,9 @@ public:
          {
          istream_loading = true; // NB: we need this flag for distinguish this operation in type's ctor...
 
-         T* _elem = U_NEW(T);
+         T* _elem;
+
+         U_NEW(T, _elem, T);
 
          streambuf* sb = is.rdbuf();
 

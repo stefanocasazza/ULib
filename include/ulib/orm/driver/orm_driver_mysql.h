@@ -377,41 +377,71 @@ public:
 
    // CREATE BIND PARAM
 
-   virtual USqlStatementBindParam* creatSqlStatementBindParam()                       { return U_NEW(UMySqlStatementBindParam()); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(int* v)                 { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(bool* v)                { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(char* v)                { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(long* v)                { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(short* v)               { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(float* v)               { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(double* v)              { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(long long* v)           { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(long double* v)         { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  int* v)       { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  char* v)      { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  long* v)      { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  short* v)     { return U_NEW(UMySqlStatementBindParam(v)); }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v)  { return U_NEW(UMySqlStatementBindParam(v)); }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam()
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam()); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(int* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(bool* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(char* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(short* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(float* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(double* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long long* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long double* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  int* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  char* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  long* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  short* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v)
+      { UMySqlStatementBindParam* r; U_NEW(UMySqlStatementBindParam, r, UMySqlStatementBindParam(v)); return r; }
 
    virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind);
 
    // CREATE BIND RESULT
 
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(int* v)                { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(bool* v)               { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(char* v)               { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(long* v)               { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(short* v)              { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(float* v)              { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)             { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& str)       { return U_NEW(UMySqlStatementBindResult(str)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)          { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)        { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned char* v)      { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned short* v)     { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned int* v)       { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long* v)      { return U_NEW(UMySqlStatementBindResult(v)); }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long long* v) { return U_NEW(UMySqlStatementBindResult(v)); }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(int* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(bool* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(char* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(long* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(short* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(float* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned char* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned short* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned int* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long long* v)
+      { UMySqlStatementBindResult* r; U_NEW(UMySqlStatementBindResult, r, UMySqlStatementBindResult(v)); return r; }
 
    // DEBUG
 

@@ -189,38 +189,37 @@ UNoCatPlugIn::UNoCatPlugIn()
 {
    U_TRACE_REGISTER_OBJECT(0, UNoCatPlugIn, "")
 
-   fw                  = U_NEW(UCommand);
-   label               = U_NEW(UString);
-   input               = U_NEW(UString(U_CAPACITY));
-   fw_cmd              = U_NEW(UString);
-   fw_env              = U_NEW(UString);
-   extdev              = U_NEW(UString);
-   intdev              = U_NEW(UString);
-   mempool             = U_NEW(UString(UFile::contentOf("/etc/nodog.mempool")));
-   hostname            = U_NEW(UString);
-   localnet            = U_NEW(UString);
-   location            = U_NEW(UString(U_CAPACITY));
-   arp_cache           = U_NEW(UString);
-   auth_login          = U_NEW(UString);
-   decrypt_key         = U_NEW(UString);
-   allowed_members     = U_NEW(UString);
-   IP_address_trust    = U_NEW(UString);
+   U_NEW(UCommand, fw, UCommand);
 
-   vauth               = U_NEW(UVector<UString>(4U));
-   vauth_ip            = U_NEW(UVector<UString>(4U));
-   vauth_url           = U_NEW(UVector<Url*>(4U));
-   varp_cache          = U_NEW(UVector<UString>);
-   vinfo_data          = U_NEW(UVector<UString>(4U));
-   vLoginValidate      = U_NEW(UVector<UString>);
-   vInternalDevice     = U_NEW(UVector<UString>(64U));
-   vLocalNetworkMask   = U_NEW(UVector<UIPAllow*>);
-   vLocalNetworkLabel  = U_NEW(UVector<UString>(64U));
+   U_NEW(UString, label, UString);
+   U_NEW(UString, input, UString(U_CAPACITY));
+   U_NEW(UString, fw_cmd, UString);
+   U_NEW(UString, fw_env, UString);
+   U_NEW(UString, extdev, UString);
+   U_NEW(UString, intdev, UString);
+   U_NEW(UString, mempool, UString(UFile::contentOf("/etc/nodog.mempool")));
+   U_NEW(UString, hostname, UString);
+   U_NEW(UString, localnet, UString);
+   U_NEW(UString, location, UString(U_CAPACITY));
+   U_NEW(UString, arp_cache, UString);
+   U_NEW(UString, auth_login, UString);
+   U_NEW(UString, decrypt_key, UString);
+   U_NEW(UString, allowed_members, UString);
+   U_NEW(UString, IP_address_trust, UString);
+   U_NEW(UString, peer_present_in_arp_cache, UString);
 
-   client = U_NEW(UHttpClient<UTCPSocket>(0));
+   U_NEW(UVector<Url*>, vauth_url, UVector<Url*>(4U));
+   U_NEW(UVector<UString>, vauth, UVector<UString>(4U));
+   U_NEW(UVector<UString>, vauth_ip, UVector<UString>(4U));
+   U_NEW(UVector<UString>, varp_cache, UVector<UString>);
+   U_NEW(UVector<UString>, vinfo_data, UVector<UString>(4U));
+   U_NEW(UVector<UString>, vLoginValidate, UVector<UString>);
+   U_NEW(UVector<UString>, vInternalDevice, UVector<UString>(64U));
+   U_NEW(UVector<UString>, vLocalNetworkLabel, UVector<UString>(64U));
+   U_NEW(UVector<UIPAllow*>, vLocalNetworkMask, UVector<UIPAllow*>);
+   U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(0));
 
    client->UClient_Base::setTimeOut(UServer_Base::timeoutMS);
-
-   peer_present_in_arp_cache = U_NEW(UString);
 
    UString::str_allocate(STR_ALLOCATE_NOCAT);
 }
@@ -1981,7 +1980,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (tmp)
          {
-         pdata = U_NEW(UTDB);
+         U_NEW(UTDB, pdata, UTDB);
 
          U_INTERNAL_ASSERT(tmp.isNullTerminated())
 
@@ -2023,8 +2022,9 @@ int UNoCatPlugIn::handlerInit()
 
    for (uint32_t i = 0, n = vauth->size(); i < n; ++i)
       {
-      ip  = (*vauth)[i];
-      url = U_NEW(Url(ip));
+      ip = (*vauth)[i];
+
+      U_NEW(Url, url, Url(ip));
 
       vauth_url->push(url);
 
@@ -2111,16 +2111,16 @@ int UNoCatPlugIn::handlerInit()
 
    // users traffic
 
-   ipt = U_NEW(UIptAccount(UClientImage_Base::bIPv6));
+   U_NEW(UIptAccount, ipt, UIptAccount(UClientImage_Base::bIPv6));
 
    // users table
  
    U_INTERNAL_DUMP("num_peers_preallocate = %u", num_peers_preallocate)
 
-   peers = U_NEW(UHashMap<UModNoCatPeer*>(num_peers_preallocate < 49157U ? U_GET_NEXT_PRIME_NUMBER(num_peers_preallocate * 8) : 49157U));
+   U_NEW(UHashMap<UModNoCatPeer*>, peers, UHashMap<UModNoCatPeer*>(num_peers_preallocate < 49157U ? U_GET_NEXT_PRIME_NUMBER(num_peers_preallocate * 8) : 49157U));
 
-   openlist       = U_NEW(UVector<UString>);
-   status_content = U_NEW(UString(U_CAPACITY));
+   U_NEW(UString, status_content, UString(U_CAPACITY));
+   U_NEW(UVector<UString>, openlist, UVector<UString>);
 
    U_INTERNAL_ASSERT_EQUALS(peers_preallocate, 0)
 
@@ -2187,8 +2187,8 @@ int UNoCatPlugIn::handlerFork()
 
    for (i = 0; i < num_radio; ++i)
       {
-      vaddr[i] = U_NEW(UVector<UIPAddress*>);
-      sockp[i] = U_NEW(UPing(3000, UClientImage_Base::bIPv6));
+      U_NEW(UVector<UIPAddress*>, vaddr[i], UVector<UIPAddress*>);
+      U_NEW(UPing, sockp[i], UPing(3000, UClientImage_Base::bIPv6));
 
       if (((check_type & U_CHECK_ARP_PING) != 0))
          {
@@ -2292,7 +2292,7 @@ int UNoCatPlugIn::handlerFork()
    U_INTERNAL_ASSERT_EQUALS(dirwalk, 0)
 
 #if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
-   if (UServer_Base::isLog()) dirwalk = U_NEW(UDirWalk(ULog::getDirLogGz(), U_CONSTANT_TO_PARAM("*.gz")));
+   if (UServer_Base::isLog()) U_NEW(UDirWalk, dirwalk, UDirWalk(ULog::getDirLogGz(), U_CONSTANT_TO_PARAM("*.gz")));
 #endif
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);

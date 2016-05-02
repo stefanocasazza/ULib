@@ -366,7 +366,7 @@ void UServices::setCApath(const char* _CApath)
 
    U_INTERNAL_ASSERT(_CApath && *_CApath)
 
-   if (CApath == 0) U_NEW_ULIB_OBJECT(CApath, UString);
+   if (CApath == 0) U_NEW_ULIB_OBJECT(UString, CApath, UString);
 
    *CApath = UFile::getRealPath(_CApath);
 }

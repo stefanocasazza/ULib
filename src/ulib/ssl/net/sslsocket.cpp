@@ -1331,7 +1331,7 @@ bool USSLSocket::setDataForStapling()
 
             staple.id = (OCSP_CERTID*) U_SYSCALL(OCSP_cert_to_id, "%p,%p,%p", 0, staple.cert, staple.issuer);
 
-            staple.url = U_NEW(UString((void*)s, len));
+            U_NEW(UString, staple.url, UString((void*)s, len));
 
             (void) U_SYSCALL(OCSP_request_add0_id, "%p,%p", staple.req, staple.id);
 

@@ -121,7 +121,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::maintenance_mode_page, 0)
 
-         UHTTP::maintenance_mode_page = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::maintenance_mode_page, UString(x));
 
          U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
          }
@@ -147,7 +147,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
             U_INTERNAL_ASSERT_EQUALS(UHTTP::valias, 0)
 
-            UHTTP::valias = U_NEW(UVector<UString>(vec, n));
+            U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(vec, n));
             }
          }
 
@@ -166,13 +166,15 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          U_INTERNAL_ASSERT_EQUALS(UHTTP::vRewriteRule, 0)
 
-         UHTTP::vRewriteRule = U_NEW(UVector<UHTTP::RewriteRule*>(n));
+         U_NEW(UVector<UHTTP::RewriteRule*>, UHTTP::vRewriteRule, UVector<UHTTP::RewriteRule*>(n));
 
          for (int32_t i = 0; i < (int32_t)n; i += 2)
             {
-            UHTTP::RewriteRule* rule = U_NEW(UHTTP::RewriteRule(vec[i], vec[i+1]));
+            UHTTP::RewriteRule* prule;
+            
+            U_NEW(UHTTP::RewriteRule, prule, UHTTP::RewriteRule(vec[i], vec[i+1]));
 
-            UHTTP::vRewriteRule->push_back(rule);
+            UHTTP::vRewriteRule->push_back(prule);
             }
          }
 #   endif
@@ -195,7 +197,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         UHTTP::cache_file_mask = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::cache_file_mask, UString(x));
          }
 
       x = cfg.at(U_CONSTANT_TO_PARAM("CACHE_AVOID_MASK"));
@@ -206,7 +208,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         UHTTP::cache_avoid_mask = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::cache_avoid_mask, UString(x));
          }
 
       x = cfg.at(U_CONSTANT_TO_PARAM("NOCACHE_FILE_MASK"));
@@ -217,7 +219,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         UHTTP::nocache_file_mask = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::nocache_file_mask, UString(x));
          }
 
 #  ifdef U_STDCPP_ENABLE
@@ -229,7 +231,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         UHTTP::cache_file_store = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::cache_file_store, UString(x));
          }
 #  endif
 
@@ -241,7 +243,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::cgi_cookie_option, 0)
 
-         UHTTP::cgi_cookie_option = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::cgi_cookie_option, UString(x));
          }
 
       // HTTP STRICT TRANSPORT SECURITY
@@ -266,7 +268,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
             }
          else
 #     endif
-         UHTTP::uri_strict_transport_security_mask = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::uri_strict_transport_security_mask, UString(x));
          }
 #  endif
 
@@ -278,7 +280,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::mount_point, 0)
 
-         UHTTP::mount_point = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::mount_point, UString(x));
          }
 
       // INOTIFY
@@ -336,7 +338,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         UHTTP::uri_protected_mask = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::uri_protected_mask, UString(x));
          }
 
       x = cfg.at(U_CONSTANT_TO_PARAM("URI_PROTECTED_ALLOWED_IP"));
@@ -345,7 +347,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          {
          U_INTERNAL_ASSERT_EQUALS(UHTTP::vallow_IP, 0)
 
-         UHTTP::vallow_IP = U_NEW(UVector<UIPAllow*>);
+         U_NEW(UVector<UIPAllow*>, UHTTP::vallow_IP, UVector<UIPAllow*>);
 
          if (UIPAllow::parseMask(x, *UHTTP::vallow_IP) == 0)
             {
@@ -362,7 +364,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          if (x.findWhiteSpace() != U_NOT_FOUND) x = UStringExt::removeWhiteSpace(x);
 
-         UHTTP::uri_request_cert_mask = U_NEW(UString(x));
+         U_NEW(UString, UHTTP::uri_request_cert_mask, UString(x));
          }
 #  endif
 
@@ -378,7 +380,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
          U_INTERNAL_ASSERT_EQUALS(UServer_Base::apache_like_log, 0)
 
-         UServer_Base::apache_like_log = U_NEW(ULog(x, size));
+         U_NEW(ULog, UServer_Base::apache_like_log, ULog(x, size));
 
 #     ifdef USE_LIBZ
          if (size)

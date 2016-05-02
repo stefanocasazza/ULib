@@ -224,7 +224,9 @@ public:
 
       UString log_file = opt['l'];
 
-      ulog = (log_file ? U_NEW(ULog(log_file, 1024 * 1024)) : 0);
+      ulog = 0;
+
+      if (log_file) U_NEW(ULog, ulog, ULog(log_file, 1024 * 1024));
 
       if (ulog)
          {

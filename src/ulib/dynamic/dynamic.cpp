@@ -120,7 +120,7 @@ void UDynamic::setPluginDirectory(const UString& dir)
 
    U_INTERNAL_ASSERT(dir.isNullTerminated())
 
-   if (plugin_dir == 0) plugin_dir = U_NEW(UString(dir));
+   if (plugin_dir == 0) U_NEW(UString, plugin_dir, UString(dir));
    else
       {
       U_INTERNAL_DUMP("plugin_dir = %V", plugin_dir->rep)
@@ -148,7 +148,7 @@ bool UDynamic::load(const char* _name, uint32_t _name_len)
 
    U_INTERNAL_ASSERT_EQUALS(handle, 0)
 
-   if (plugin_dir == 0) plugin_dir = U_NEW(UString(U_STRING_FROM_CONSTANT(U_LIBEXECDIR)));
+   if (plugin_dir == 0) U_NEW(UString, plugin_dir, UString(U_STRING_FROM_CONSTANT(U_LIBEXECDIR)));
 
    U_INTERNAL_ASSERT(plugin_dir->isNullTerminated())
 

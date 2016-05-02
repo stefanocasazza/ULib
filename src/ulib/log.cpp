@@ -141,7 +141,8 @@ ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(
 
    U_INTERNAL_ASSERT(ptr_log_data->file_ptr <= UFile::st_size)
 
-   lock                    = U_NEW(ULock);
+   U_NEW(ULock, lock, ULock);
+
    U_Log_syslog(this)      = false;
    ptr_log_data->gzip_len  = 0;
    ptr_log_data->file_page = ptr_log_data->file_ptr;
@@ -150,7 +151,7 @@ ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(
    char suffix[32];
    uint32_t len_suffix = u__snprintf(suffix, sizeof(suffix), ".%4D.gz");
 
-   buf_path_compress = U_NEW(UString(MAX_FILENAME_LEN));
+   U_NEW(UString, buf_path_compress, UString(MAX_FILENAME_LEN));
 
    char* ptr = buf_path_compress->data();
 

@@ -738,7 +738,8 @@ void UServer_Base::initThrottlingServer(const UString& x)
 
    if (bssl == false) // NB: we can't use throttling with SSL...
       {
-      db_throttling = U_NEW(URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/BandWidthThrottling"), -1, (throttling_rec = U_NEW(UThrottling))));
+      U_NEW(UThrottling, throttling_rec, UThrottling);
+      U_NEW(URDBObjectHandler<UDataStorage*>, db_throttling, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/BandWidthThrottling"), -1, throttling_rec));
 
       if (isPreForked()) db_throttling->setShared(U_SRV_LOCK_THROTTLING, U_SRV_SPINLOCK_THROTTLING);
 
@@ -854,11 +855,17 @@ bool UServer_Base::checkThrottlingBeforeSend(bool bwrite)
 
          if (krate > pClientImage->max_limit)
             {
-            // How long should we wait to get back on schedule? If less than a second (integer math rounding), use 1/2 second
+            // how long should we wait to get back on schedule? If less than a second (integer math rounding), use 1/2 second
 
             time_t coast = kbytes_sent / pClientImage->max_limit - elapsed;
 
-            UTimer::insert(U_NEW(UClientThrottling(pClientImage, coast, coast ? 0 : U_SECOND / 2L))); // set up the wakeup timer
+            // set up the wakeup timer
+
+            UClientThrottling* pc;
+
+            U_NEW(UClientThrottling, pc, UClientThrottling(pClientImage, coast, coast ? 0 : U_SECOND / 2L));
+
+            UTimer::insert(pc);
 
             U_RETURN(false);
             }
@@ -999,13 +1006,13 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(USSLSocket::staple.client, 0)
 
-      USSLSocket::staple.client = U_NEW(UClient<UTCPSocket>(0));
+      U_NEW(UClient<UTCPSocket>, USSLSocket::staple.client, UClient<UTCPSocket>(0));
 
       (void) USSLSocket::staple.client->setUrl(*USSLSocket::staple.url);
 
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::pthread_ocsp, 0)
 
-      U_NEW_ULIB_OBJECT(UServer_Base::pthread_ocsp, UOCSPStapling);
+      U_NEW_ULIB_OBJECT(UOCSPStapling, UServer_Base::pthread_ocsp, UOCSPStapling);
 
       U_INTERNAL_DUMP("UServer_Base::pthread_ocsp = %p", UServer_Base::pthread_ocsp)
 
@@ -1035,20 +1042,20 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
    port  = 80;
    pthis = this;
 
-   as_user       = U_NEW(UString);
-   dh_file       = U_NEW(UString);
-   cert_file     = U_NEW(UString);
-   key_file      = U_NEW(UString);
-   password      = U_NEW(UString);
-   ca_file       = U_NEW(UString);
-   ca_path       = U_NEW(UString);
-   name_sock     = U_NEW(UString);
-   IP_address    = U_NEW(UString);
-   document_root = U_NEW(UString);
+   U_NEW(UString, as_user,       UString);
+   U_NEW(UString, dh_file,       UString);
+   U_NEW(UString, cert_file,     UString);
+   U_NEW(UString, key_file,      UString);
+   U_NEW(UString, password,      UString);
+   U_NEW(UString, ca_file,       UString);
+   U_NEW(UString, ca_path,       UString);
+   U_NEW(UString, name_sock,     UString);
+   U_NEW(UString, IP_address,    UString);
+   U_NEW(UString, cenvironment,  UString(U_CAPACITY));
+   U_NEW(UString, senvironment,  UString(U_CAPACITY));
+   U_NEW(UString, document_root, UString);
 
-   vlog          = U_NEW(UVector<file_LOG*>);
-   cenvironment  = U_NEW(UString(U_CAPACITY));
-   senvironment  = U_NEW(UString(U_CAPACITY));
+   U_NEW(UVector<file_LOG*>, vlog, UVector<file_LOG*>);
 
    u_init_ulib_hostname();
    u_init_ulib_username();
@@ -1283,7 +1290,7 @@ void UServer_Base::setMsgWelcome(const UString& msg)
 
    U_INTERNAL_ASSERT(msg)
 
-   msg_welcome = U_NEW(UString(U_CAPACITY));
+   U_NEW(UString, msg_welcome, UString(U_CAPACITY));
 
    UEscape::decode(msg, *msg_welcome);
 
@@ -1425,7 +1432,7 @@ void UServer_Base::loadConfigParam()
    UString x  = cfg->at(U_CONSTANT_TO_PARAM("SERVER"));
    *name_sock = cfg->at(U_CONSTANT_TO_PARAM("SOCKET_NAME"));
 
-   if (x) server = U_NEW(UString(x));
+   if (x) U_NEW(UString, server, UString(x));
 
    *IP_address = cfg->at(U_CONSTANT_TO_PARAM("IP_ADDRESS"));
 
@@ -1460,7 +1467,7 @@ void UServer_Base::loadConfigParam()
 
    x = cfg->at(U_CONSTANT_TO_PARAM("PREFORK_CHILD"));
 
-   if (x) str_preforked_num_kids = U_NEW(UString(x));
+   if (x) U_NEW(UString, str_preforked_num_kids, UString(x));
 
 #ifdef U_WELCOME_SUPPORT
    x = cfg->at(U_CONSTANT_TO_PARAM("WELCOME_MSG"));
@@ -1498,8 +1505,8 @@ void UServer_Base::loadConfigParam()
 
    if (x)
       {
-       allow_IP = U_NEW(UString(x));
-      vallow_IP = U_NEW(UVector<UIPAllow*>);
+      U_NEW(UString,             allow_IP, UString(x));
+      U_NEW(UVector<UIPAllow*>, vallow_IP, UVector<UIPAllow*>);
 
       if (UIPAllow::parseMask(*allow_IP, *vallow_IP) == 0)
          {
@@ -1517,8 +1524,8 @@ void UServer_Base::loadConfigParam()
 
    if (x)
       {
-       allow_IP_prv = U_NEW(UString(x));
-      vallow_IP_prv = U_NEW(UVector<UIPAllow*>);
+      U_NEW(UString,             allow_IP_prv, UString(x));
+      U_NEW(UVector<UIPAllow*>, vallow_IP_prv, UVector<UIPAllow*>);
 
       if (UIPAllow::parseMask(*allow_IP_prv, *vallow_IP_prv) == 0)
          {
@@ -1622,7 +1629,7 @@ void UServer_Base::loadConfigParam()
       update_date  =
       update_date1 = true;
 
-      log = U_NEW(ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
+      U_NEW(ULog, log, ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
 
       log->init(U_SERVER_LOG_PREFIX);
 
@@ -1677,46 +1684,46 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
     defined(U_STATIC_HANDLER_NOCAT)  || defined(U_STATIC_HANDLER_HTTP)
       const UServerPlugIn* _plugin = 0;
 #  ifdef U_STATIC_HANDLER_RPC
-      if (x.equal(U_CONSTANT_TO_PARAM("rpc")))    { _plugin = U_NEW(URpcPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("rpc")))    { U_NEW(URpcPlugIn, _plugin, URpcPlugIn);  goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SHIB
-      if (x.equal(U_CONSTANT_TO_PARAM("shib")))   { _plugin = U_NEW(UShibPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("shib")))   { U_NEW(UShibPlugIn, _plugin, UShibPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_ECHO
-      if (x.equal(U_CONSTANT_TO_PARAM("echo")))   { _plugin = U_NEW(UEchoPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("echo")))   { U_NEW(UEchoPlugIn, _plugin, UEchoPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_STREAM
-      if (x.equal(U_CONSTANT_TO_PARAM("stream"))) { _plugin = U_NEW(UStreamPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("stream"))) { U_NEW(UStreamPlugIn, _plugin, UStreamPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SOCKET
-      if (x.equal(U_CONSTANT_TO_PARAM("socket"))) { _plugin = U_NEW(UWebSocketPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("socket"))) { U_NEW(UWebSocketPlugIn, _plugin, UWebSocketPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SCGI
-      if (x.equal(U_CONSTANT_TO_PARAM("scgi")))   { _plugin = U_NEW(USCGIPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("scgi")))   { U_NEW(USCGIPlugIn, _plugin, USCGIPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_FCGI
-      if (x.equal(U_CONSTANT_TO_PARAM("fcgi")))   { _plugin = U_NEW(UFCGIPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("fcgi")))   { U_NEW(UFCGIPlugIn, _plugin, UFCGIPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_GEOIP
-      if (x.equal(U_CONSTANT_TO_PARAM("geoip")))  { _plugin = U_NEW(UGeoIPPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("geoip")))  { U_NEW(UGeoIPPlugIn, _plugin, UGeoIPPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_PROXY
-      if (x.equal(U_CONSTANT_TO_PARAM("proxy")))  { _plugin = U_NEW(UProxyPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("proxy")))  { U_NEW(UProxyPlugIn, _plugin, UProxyPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SOAP
-      if (x.equal(U_CONSTANT_TO_PARAM("soap")))   { _plugin = U_NEW(USoapPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("soap")))   { U_NEW(USoapPlugIn, _plugin, USoapPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_SSI
-      if (x.equal(U_CONSTANT_TO_PARAM("ssi")))    { _plugin = U_NEW(USSIPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("ssi")))    { U_NEW(USSIPlugIn, _plugin, USSIPlugIn);  goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_TSA
-      if (x.equal(U_CONSTANT_TO_PARAM("tsa")))    { _plugin = U_NEW(UTsaPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("tsa")))    { U_NEW(UTsaPlugIn, _plugin, UTsaPlugIn);  goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_NOCAT
-      if (x.equal(U_CONSTANT_TO_PARAM("nocat")))  { _plugin = U_NEW(UNoCatPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("nocat")))  { U_NEW(UNoCatPlugIn, _plugin, UNoCatPlugIn); goto next; }
 #  endif
 #  ifdef U_STATIC_HANDLER_HTTP
-      if (x.equal(U_CONSTANT_TO_PARAM("http")))   { _plugin = U_NEW(UHttpPlugIn); goto next; }
+      if (x.equal(U_CONSTANT_TO_PARAM("http")))   { U_NEW(UHttpPlugIn, _plugin, UHttpPlugIn); goto next; }
 #  endif
 next:
       if (_plugin)
@@ -1752,9 +1759,10 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
       UDynamic::setPluginDirectory(plugin_dir);
       }
 
-   vplugin             = U_NEW(UVector<UServerPlugIn*>(10U));
-   vplugin_name        = U_NEW(UVector<UString>(10U));
-   vplugin_name_static = U_NEW(UVector<UString>(20U));
+   U_NEW(UVector<UServerPlugIn*>, vplugin, UVector<UServerPlugIn*>(10U));
+
+   U_NEW(UVector<UString>, vplugin_name,        UVector<UString>(10U));
+   U_NEW(UVector<UString>, vplugin_name_static, UVector<UString>(20U));
 
    uint32_t i;
    UString item, _name;
@@ -2100,7 +2108,7 @@ void UServer_Base::init()
 
    // get name host
 
-   host = U_NEW(UString(server ? *server : USocketExt::getNodeName()));
+   U_NEW(UString, host, UString(server ? *server : USocketExt::getNodeName()));
 
    if (port != 80)
       {
@@ -2283,7 +2291,7 @@ void UServer_Base::init()
 
    U_INTERNAL_ASSERT_EQUALS(proc, 0)
 
-   proc = U_NEW(UProcess);
+   U_NEW(UProcess, proc, UProcess);
 
    U_INTERNAL_ASSERT_POINTER(proc)
 
@@ -2375,7 +2383,7 @@ void UServer_Base::init()
       U_INTERNAL_ASSERT_EQUALS(ULog::prwlock, 0)
       U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
 
-      U_NEW_ULIB_OBJECT(u_pthread_time, UTimeThread);
+      U_NEW_ULIB_OBJECT(UTimeThread, u_pthread_time, UTimeThread);
 
       U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
 
@@ -2403,10 +2411,19 @@ void UServer_Base::init()
 #endif
 
 #ifdef DEBUG
-   UTimer::insert(pstat = U_NEW(UTimeStat));
+   U_NEW(UTimeStat, pstat, UTimeStat);
+
+   UTimer::insert(pstat);
 #endif
 #ifdef U_THROTTLING_SUPPORT
-   if (db_throttling) UTimer::insert(throttling_time = U_NEW(UBandWidthThrottling)); // set up the throttles timer
+   if (db_throttling)
+      {
+      // set up the throttles timer
+
+      U_NEW(UBandWidthThrottling, throttling_time, UBandWidthThrottling);
+
+      UTimer::insert(throttling_time);
+      }
 #endif
 
    // ---------------------------------------------------------------------------------------------------------
@@ -2433,7 +2450,7 @@ void UServer_Base::init()
          UNotifier::min_connection = 1;
 
 #     ifndef USE_LIBEVENT
-         if (timeoutMS > 0) ptime = U_NEW(UTimeoutConnection);
+         if (timeoutMS > 0) U_NEW(UTimeoutConnection, ptime, UTimeoutConnection);
 #     endif
 
          pthis->UEventFd::op_mask |=  EPOLLET;
@@ -2517,7 +2534,9 @@ bool UServer_Base::addLog(UFile* _log, int flags)
 
    if (_log->creat(flags, PERM_FILE))
       {
-      file_LOG* item = U_NEW(file_LOG);
+      file_LOG* item;
+
+      U_NEW(file_LOG, item, file_LOG);
 
       item->LOG   = _log;
       item->flags = flags;
@@ -3405,7 +3424,7 @@ void UServer_Base::runLoop(const char* user)
       {
       U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, 0)
 
-      UNotifier::pthread = U_NEW(UClientThread);
+      U_NEW(UClientThread, UNotifier::pthread, UClientThread);
 
 #  ifdef _MSWINDOWS_
       InitializeCriticalSection(&UNotifier::mutex);

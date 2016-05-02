@@ -146,11 +146,18 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(5, USOAPExample, "%p", &file_method)
 
-      dispatcher          = U_NEW(USOAPObject);
-      URPCMethod::encoder = U_NEW(USOAPEncoder);
+      U_NEW(USOAPObject, dispatcher, USOAPObject);
+      U_NEW(USOAPEncoder, URPCMethod::encoder, USOAPEncoder);
 
-      USOAPObject::insertMethod(U_NEW(AddMethod));
-      USOAPObject::insertMethod(U_NEW(ReverseMethod));
+      URPCMethod* pmethod;
+
+      U_NEW(AddMethod, pmethod, AddMethod);
+
+      USOAPObject::insertMethod(pmethod);
+
+      U_NEW(ReverseMethod, pmethod, ReverseMethod);
+
+      USOAPObject::insertMethod(pmethod);
 
       // Load generic method
 
@@ -187,7 +194,11 @@ U_EXPORT main (int argc, char* argv[])
 
    bool bSendingFault;
    UString filename, msg;
-   USOAPParser parser(U_NEW(UVector<UString>));
+   UVector<UString>* pvec;
+
+   U_NEW(UVector<UString>, pvec, UVector<UString>);
+
+   USOAPParser parser(pvec);
 
    while (cin >> filename)
       {

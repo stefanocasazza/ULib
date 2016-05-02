@@ -50,7 +50,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "USOAPObject::setFailed()")
 
-      URPCMethod::pFault = U_NEW(USOAPFault);
+      U_NEW(USOAPFault, URPCMethod::pFault, USOAPFault);
       }
 
    // GLOBAL SERVICES
@@ -62,8 +62,8 @@ public:
       U_INTERNAL_ASSERT_EQUALS(dispatcher,0)
       U_INTERNAL_ASSERT_EQUALS(URPCMethod::encoder,0)
 
-      dispatcher          = U_NEW(USOAPObject);
-      URPCMethod::encoder = U_NEW(USOAPEncoder);
+      U_NEW(USOAPObject, dispatcher, USOAPObject);
+      U_NEW(USOAPEncoder, URPCMethod::encoder, USOAPEncoder);
 
       if (file_method) URPCObject::readGenericMethod(*file_method);
       }
@@ -80,7 +80,11 @@ protected:
       {
       U_TRACE(0, "USOAPObject::insertGenericMethod(%V,%V,%p,%d)", n.rep, ns.rep, cmd, rtype)
 
-      methodList.push_back(U_NEW(USOAPGenericMethod(n, ns, cmd, rtype)));
+      URPCMethod* pmethod;
+
+      U_NEW(USOAPGenericMethod, pmethod, USOAPGenericMethod(n, ns, cmd, rtype));
+
+      methodList.push_back(pmethod);
       }
 
 private:

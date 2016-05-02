@@ -507,7 +507,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UClientImage<Socket>, "", 0)
 
-      socket = U_NEW(Socket(UClientImage_Base::bIPv6));
+      U_NEW(Socket, socket, Socket(UClientImage_Base::bIPv6));
 
       set();
       }
@@ -536,7 +536,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UClientImage<USSLSocket>, "", 0)
 
-      socket = U_NEW(USSLSocket(UClientImage_Base::bIPv6, USSLSocket::sctx, true));
+      U_NEW(USSLSocket, socket, USSLSocket(UClientImage_Base::bIPv6, USSLSocket::sctx, true));
 
       set();
       }
