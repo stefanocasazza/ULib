@@ -267,7 +267,7 @@ public:
 
    // OPERATOR
 
-   bool operator==(const UValue& v) const;
+   bool operator==(const UValue& v) const __pure;
    bool operator!=(const UValue& v) const { return ! operator==(v); }
 
    // SERVICES

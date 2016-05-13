@@ -252,7 +252,7 @@ void UValue::set(const UValue& v)
    U_ASSERT(invariant())
 }
 
-bool UValue::operator==(const UValue& v) const
+__pure bool UValue::operator==(const UValue& v) const
 {
    U_TRACE(0+256, "UValue::operator==(%p)", &v)
 

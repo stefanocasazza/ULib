@@ -95,6 +95,8 @@ while (true)
 #ifdef AS_cpoll_cppsp_DO
    USP_PUTS_CHAR(',');
 #endif
+
+   rnumber.clear();
    }
 
 #ifdef AS_cpoll_cppsp_DO
