@@ -222,7 +222,7 @@ if (envp) \
             { char _buffer[2 * 1024 * 1024]; \
                uint32_t _n = UObject2String((obj), _buffer, sizeof(_buffer)); \
                U_INTERNAL_ASSERT_MINOR(_n, sizeof(_buffer)) \
-               (void) UFile::writeToTmp(_buffer, _n, O_RDWR | O_TRUNC, #fname"%P", 0); }
+               (void) UFile::writeToTmp(_buffer, _n, O_RDWR | O_TRUNC, #fname".%P", 0); }
 
 #  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object) \
             if (UObjectDB::fd > 0) { \

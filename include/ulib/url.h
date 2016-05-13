@@ -175,7 +175,16 @@ public:
       return *this;
       }
 
-   void set(const UString& x);
+   void set(const char* str, uint32_t len)
+      {
+      U_TRACE(0, "Url::set(%.*S,%u)", len, str, len)
+
+      (void) url.replace(str, len);
+
+      findpos();
+      }
+
+   void set(const UString& x) { set(U_STRING_TO_PARAM(x)); }
 
    UString   get() const { return url; }
    bool    empty() const { return url.empty(); }

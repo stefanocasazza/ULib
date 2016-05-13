@@ -676,6 +676,9 @@ void USSLSocket::setStatus(SSL* _ssl, int _ret, bool _flag)
 {
    U_TRACE(1, "USSLSocket::setStatus(%p,%d,%b)", _ssl, _ret, _flag)
 
+   uint32_t sz;
+   char buf[1024];
+   long i1 = 0, i2;
    const char* descr  = "SSL_ERROR_NONE";
    const char* errstr = "ok";
 
@@ -762,7 +765,20 @@ void USSLSocket::setStatus(SSL* _ssl, int _ret, bool _flag)
 
    u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "(%d, %s) - %s", _ret, descr, errstr);
 
-   UServices::setOpenSSLError();
+   while ((i2 = ERR_get_error()))
+      {
+      if (i1 == i2) continue;
+
+      (void) ERR_error_string_n(i1 = i2, buf, sizeof(buf));
+
+      sz = u__strlen(buf, __PRETTY_FUNCTION__);
+
+      U_INTERNAL_DUMP("buf = %.*S", sz, buf)
+
+      u_buffer_len += u__snprintf(u_buffer + u_buffer_len, U_BUFFER_SIZE - u_buffer_len, " (%ld, %.*s)", i2, sz, buf);
+      }
+
+   U_INTERNAL_DUMP("status = %.*S", u_buffer_len, u_buffer)
 }
 
 bool USSLSocket::secureConnection()
@@ -819,11 +835,7 @@ loop:
       ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
 #  ifdef DEBUG
-      setStatus(false);
-
-      U_INTERNAL_DUMP("status = %.*S", u_buffer_len, u_buffer)
-
-      u_buffer_len = 0;
+      dumpStatus(false);
 #  endif
 
            if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
@@ -844,7 +856,6 @@ bool USSLSocket::askForClientCertificate()
    U_TRACE_NO_PARAM(1, "USSLSocket::askForClientCertificate()")
 
    /**
-    * -------------------------------------------------------------------------------------
     * SSL_VERIFY_CLIENT_ONCE
     * -------------------------------------------------------------------------------------
     * Client mode: ignored
@@ -856,7 +867,6 @@ bool USSLSocket::askForClientCertificate()
     * mode for all SSL objects derived from a given SSL_CTX as long as they are created
     * after SSL_CTX_set_verify() is called, whereas SSL_set_verify() only affects the SSL
     * object that it is called on
-    * -------------------------------------------------------------------------------------
     */
 
    U_SYSCALL_VOID(SSL_set_verify, "%p,%d,%p", ssl, SSL_VERIFY_PEER_STRICT, 0); // | SSL_VERIFY_CLIENT_ONCE
@@ -870,11 +880,7 @@ bool USSLSocket::askForClientCertificate()
    if (ret != 1)
       {
 #  ifdef DEBUG
-      setStatus(true);
-
-      U_INTERNAL_DUMP("status = %.*S", u_buffer_len, u_buffer)
-
-      u_buffer_len = 0;
+      dumpStatus(true);
 #  endif
 
       U_RETURN(false);
@@ -885,11 +891,7 @@ bool USSLSocket::askForClientCertificate()
    if (ret != 1)
       {
 #  ifdef DEBUG
-      setStatus(true);
-
-      U_INTERNAL_DUMP("status = %.*S", u_buffer_len, u_buffer)
-
-      u_buffer_len = 0;
+      dumpStatus(true);
 #  endif
 
       U_RETURN(false);
@@ -902,11 +904,7 @@ bool USSLSocket::askForClientCertificate()
    if (ret != 1)
       {
 #  ifdef DEBUG
-      setStatus(true);
-
-      U_INTERNAL_DUMP("status = %.*S", u_buffer_len, u_buffer)
-
-      u_buffer_len = 0;
+      dumpStatus(true);
 #  endif
 
       U_RETURN(false);
@@ -963,12 +961,10 @@ loop:
    pcNewConnection->ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
 #ifdef DEBUG
-   setStatus(ssl, pcNewConnection->ret, false);
-
-   U_INTERNAL_DUMP("count = %u status = %.*S", count, u_buffer_len, u_buffer)
-
-   u_buffer_len = 0;
+   dumpStatus(pcNewConnection->ret, false);
 #endif
+
+   U_INTERNAL_DUMP("count = %u", count)
 
    if (count++ < 5)
       {
@@ -1008,21 +1004,14 @@ void USSLSocket::closesocket()
       U_SYSCALL_VOID(SSL_set_shutdown,       "%p,%d", ssl, mode);
       U_SYSCALL_VOID(SSL_set_quiet_shutdown, "%p,%d", ssl, 1);
 
-loop:
-      ret = U_SYSCALL(SSL_shutdown, "%p", ssl); // Send SSL shutdown signal to peer
+loop: ret = U_SYSCALL(SSL_shutdown, "%p", ssl); // Send SSL shutdown signal to peer
 
-      // SSL_shutdown() never returns -1, on error it returns 0
-
-      if (ret == 0)
+      if (ret <= 0)
          {
          ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
 
 #     ifdef DEBUG
-         setStatus(false);
-
-         U_INTERNAL_DUMP("status = %.*S", u_buffer_len, u_buffer)
-
-         u_buffer_len = 0;
+         dumpStatus(false);
 #     endif
 
               if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
@@ -1102,18 +1091,14 @@ loop:
 
    if (errno) lerrno = errno;
 
-   ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+   ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, iBytesRead);
 
 #ifdef DEBUG
-   setStatus(false);
-
-   U_INTERNAL_DUMP("status = %.*S", u_buffer_len, u_buffer)
-
-   u_buffer_len = 0;
+   dumpStatus(false);
 #endif
 
-        if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
-   else if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+        if (ret == SSL_ERROR_WANT_WRITE) { if (UNotifier::waitForWrite(USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
+// else if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
 
    errno = lerrno;
 
@@ -1155,14 +1140,10 @@ loop:
 
    if (errno) lerrno = errno;
 
-   ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, ret);
+   ret = U_SYSCALL(SSL_get_error, "%p,%d", ssl, iBytesWrite);
 
 #ifdef DEBUG
-   setStatus(false);
-
-   U_INTERNAL_DUMP("status = %.*S", u_buffer_len, u_buffer)
-
-   u_buffer_len = 0;
+   dumpStatus(false);
 #endif
 
         if (ret == SSL_ERROR_WANT_READ)  { if (UNotifier::waitForRead( USocket::iSockDesc, U_SSL_TIMEOUT_MS) > 0) goto loop; }
@@ -1189,7 +1170,7 @@ int USSLSocket::callback_ServerNameIndication(SSL* _ssl, int* alert, void* data)
 
    if (servername == 0)
       {
-      U_DEBUG("SSL: server name not provided via TLS extension");
+   // U_DEBUG("SSL: server name not provided via TLS extension");
 
       U_RETURN(SSL_TLSEXT_ERR_OK);
       }
@@ -1290,7 +1271,7 @@ bool USSLSocket::setDataForStapling()
       U_RETURN(false);
       }
 
-   next: // extract OCSP responder URL from certificate
+next: // extract OCSP responder URL from certificate
 
    aia = (STACK_OF(OPENSSL_STRING)*) U_SYSCALL(X509_get1_ocsp, "%p", staple.cert);
 

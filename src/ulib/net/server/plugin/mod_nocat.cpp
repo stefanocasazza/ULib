@@ -1755,7 +1755,7 @@ void UNoCatPlugIn::notifyAuthOfUsersInfo(uint32_t index_AUTH)
 
    UClientImage_Base::setCloseConnection();
 
-   UHTTP::setResponse(0, 0);
+   UHTTP::setResponse();
 }
 
 void UNoCatPlugIn::setHTTPResponse(const UString& content, int mime_index)
@@ -1766,7 +1766,7 @@ void UNoCatPlugIn::setHTTPResponse(const UString& content, int mime_index)
       {
       U_http_info.nResponseCode = HTTP_NO_CONTENT;
 
-      UHTTP::setResponse(0, 0);
+      UHTTP::setResponse();
       }
    else
       {

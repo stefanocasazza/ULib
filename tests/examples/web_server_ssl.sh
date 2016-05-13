@@ -11,7 +11,7 @@ rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/*.memusage.* /tm
       $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* $DOC_ROOT/mempool.*userver_ssl*.[0-9]*
 
  UTRACE="0 50M 0"
-#UTRACE_SIGNAL="0 50M 0"
+#UTRACE_SIGNAL="0 50M -1"
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
 export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
@@ -44,7 +44,8 @@ userver {
 http {
 #ALIAS "[ / /index.php ]"
 #VIRTUAL_HOST yes
-#ENABLE_INOTIFY yes
+ ENABLE_INOTIFY yes
+ URI_PROTECTED_MASK /admin*
  LIMIT_REQUEST_BODY 1M 
  REQUEST_READ_TIMEOUT 30
 #DIGEST_AUTHENTICATION yes

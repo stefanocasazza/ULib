@@ -1057,7 +1057,7 @@ bool UFile::writeToTmp(const char* data, uint32_t sz, int flags, const char* for
 
       va_end(argp);
 
-      result = UFile::writeTo(path, data, sz, flags, false);
+      result = writeTo(path, data, sz, flags, false);
       }
 
    U_RETURN(result);
@@ -1080,7 +1080,7 @@ bool UFile::writeToTmp(const struct iovec* iov, int n, int flags, const char* fo
 
       va_end(argp);
 
-      result = UFile::writeTo(path, iov, n, flags, false);
+      result = writeTo(path, iov, n, flags, false);
       }
 
    U_RETURN(result);

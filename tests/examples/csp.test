@@ -107,19 +107,17 @@ EOF
 
 DIR_CMD="../../examples/csp"
 
-#UTRACE="0 50M 0"
  start_prg cspclient -c inp/webclient.cfg --  1 CA   300
-#unset UTRACE
  start_prg cspclient -c inp/webclient.cfg --  1 CA_1 400 '"$CNF"'
  start_prg cspclient -c inp/webclient.cfg --  1 CA   300
-#exit 0
  start_prg cspclient -c inp/webclient.cfg --  2
  start_prg cspclient -c inp/webclient.cfg --  3 CA   '"$P10"' policy_ServerCerts
+#UTRACE="0 50M 0"
  start_prg cspclient -c inp/webclient.cfg --  5 CA 1
+#unset UTRACE
  start_prg cspclient -c inp/webclient.cfg --  6 CA 1
  start_prg cspclient -c inp/webclient.cfg --  3 CA_1 '"$P10"' policy_ServerCerts
  start_prg cspclient -c inp/webclient.cfg --  7 CA
-#exit 0
  start_prg cspclient -c inp/webclient.cfg -- 10 CA
  start_prg cspclient -c inp/webclient.cfg --  4 CA '"$SPKAC"' policy_ServerCerts
  start_prg cspclient -c inp/webclient.cfg --  4 CA '"$SPKAC"' policy_ServerCerts

@@ -4,7 +4,6 @@
 #include <ulib/mime/entity.h>
 
 #ifdef USE_LIBSSL
-#  include <ulib/utility/services.h>
 #  include <ulib/ssl/mime/mime_pkcs7.h>
 #endif
 
@@ -104,23 +103,6 @@ static void parse(const UString& dati, const UString& file)
 
 #     ifdef USE_LIBSSL
          UMimePKCS7 item(tmp);
-
-         /*
-         if (item.isValid()) cout << item << "\n";
-         else
-            {
-            UServices::setOpenSSLError();
-
-            if (u_buffer_len)
-               {
-               cout.write(u_buffer, u_buffer_len);
-
-               cout << "\n";
-
-               u_buffer_len = 0;
-               }
-            }
-         */
 
          check_pkcs7(item, file);
 #     endif

@@ -78,26 +78,36 @@ bool USocketExt::read(USocket* sk, UString& buffer, uint32_t count, int timeoutM
 
    ptr = buffer.c_pointer(start);
 
-   /**
-    * When packets in SSL arrive at a destination, they are pulled off the socket in chunks of sizes
-    * controlled by the encryption protocol being used, decrypted, and placed in SSL-internal buffers.
-    * The buffer content is then transferred to the application program through SSL_read(). If you've
-    * read only part of the decrypted data, there will still be pending input data on the SSL connection,
-    * but it won't show up on the underlying file descriptor via select(). Your code needs to call
-    * SSL_pending() explicitly to see if there is any pending data to be read...
-    */
 read:
-#ifdef USE_LIBSSL
-   if (sk->isSSLActive() == false) // NB: without this csp test fail (we have timeout (10 seconds) to read SOAP body response)...
-#endif
-   {
    if (sk->isBlocking() &&
-       timeoutMS != 0   &&
-       (errno = 0, UNotifier::waitForRead(sk->iSockDesc, timeoutMS) != 1))
+       timeoutMS != 0)
       {
-      goto error;
+#  ifndef USE_LIBSSL
+      if (errno = 0, UNotifier::waitForRead(sk->iSockDesc, timeoutMS) != 1) goto error;
+#  else
+      /**
+       * When packets in SSL arrive at a destination, they are pulled off the socket in chunks of sizes
+       * controlled by the encryption protocol being used, decrypted, and placed in SSL-internal buffers.
+       * The buffer content is then transferred to the application program through SSL_read(). If you've
+       * read only part of the decrypted data, there will still be pending input data on the SSL connection,
+       * but it won't show up on the underlying file descriptor via select(). Your code needs to call
+       * SSL_pending() explicitly to see if there is any pending data to be read.
+       */
+
+      U_DUMP("sk->pending() = %u", ((USSLSocket*)sk)->pending())
+
+      /**
+       * What I see by myself is that for blocking socket SSL_read() can return some data though
+       * it won't show up on the underlying file descriptor via select() while SSL_pending() return 0...
+       */
+
+      if (sk->isSSLActive() == false && // NB: without this csp test fail: we have a timeout(10 seconds) when we try to read SOAP body response...
+          (errno = 0, UNotifier::waitForRead(sk->iSockDesc, timeoutMS) != 1))
+         {
+         goto error;
+         }
+#  endif
       }
-   }
 
    value = sk->recv(ptr + byte_read, ncount);
 
@@ -165,7 +175,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
       U_INTERNAL_ASSERT_DIFFERS(count, U_SINGLE_READ)
 
       if (time_limit &&
-          sk->checkTime(time_limit, timeout) == false) // NB: may be is attacked by a "slow loris"... http://lwn.net/Articles/337853/
+          sk->checkTime(time_limit, timeout) == false) // NB: may be we are attacked by a "slow loris"... http://lwn.net/Articles/337853/
          {
          sk->iState |= USocket::TIMEOUT;
 
@@ -193,7 +203,7 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
       goto read;
       }
 
-#if defined(U_EPOLLET_POSTPONE_STRATEGY)
+#ifdef U_EPOLLET_POSTPONE_STRATEGY
    if (UNotifier::bepollet == false)
 #endif
    {
@@ -201,7 +211,6 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
    if (sk->isBlocking() == false)
       {
       /**
-       * -------------------------------------------------------------------------------------------------------------------
        * Edge trigger (EPOLLET) simply means (unless you've used EPOLLONESHOT) that you'll get 1 event when something
        * enters the (kernel) buffer. Thus, if you get 1 EPOLLIN event and do nothing about it, you'll get another
        * EPOLLIN the next time some data arrives on that descriptor - if no new data arrives, you will not get an
@@ -218,7 +227,6 @@ error:   U_INTERNAL_DUMP("errno = %d", errno)
        * Edge-triggered semantics allow a more efficient internal implementation than level-triggered semantics.
        *
        * see: https://raw.githubusercontent.com/dankamongmen/libtorque/master/doc/mteventqueues
-       * -------------------------------------------------------------------------------------------------------------------
        */
 
       buffer.rep->_length = start + byte_read;
@@ -238,7 +246,7 @@ done:
       {
       start += byte_read;
 
-      if (start > buffer.size()) buffer.size_adjust_force(start); // NB: we force because string can be referenced...
+      if (start > buffer.size()) buffer.size_adjust_force(start); // NB: we force because the string can be referenced...
 
       if (byte_read >= (int)count &&
           sk->iState != USocket::CLOSE)

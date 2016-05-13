@@ -98,7 +98,7 @@ $SLEEP
 rm -f TSA/response/response*
 
 #../../tmp/openssl/ssl/misc/tsget -h https://localhost:443/tsa -C TSA/request/cacert.pem TSA/request/tsq.req
-TIMEOUT 5 $LCMD <TSA/request/http.req >TSA/response/response 2>>err/tsa_https.err
+TIMEOUT 5 $LCMD <TSA/request/http.req >TSA/response/response 2>>err/userver_ssl.err
 
 tail -c +155 TSA/response/response > TSA/response/response.tsr
 

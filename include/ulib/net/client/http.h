@@ -153,7 +153,9 @@ public:
    bool putRequestOnQueue();
 
    bool upload(const UString& url, UFile& file, const char* filename = 0, uint32_t filename_len = 0);
-   bool sendPost(const UString& url, const UString& pbody, const char* content_type = "application/x-www-form-urlencoded");
+   bool sendPost(const UString& url, const UString& pbody,
+                 const char* content_type =                     "application/x-www-form-urlencoded",
+                    uint32_t content_type_len = U_CONSTANT_SIZE("application/x-www-form-urlencoded"));
 
    UString getContent() const     { return body; }
    UString getSetCookie() const   { return setcookie; }
@@ -176,16 +178,16 @@ protected:
 
    bool sendRequestEngine();
    void parseRequest(uint32_t n = 3);
-   void composeRequest(const char* content_type = 0);
+   void composeRequest(const char* content_type = 0, uint32_t content_type_len = 0);
    int  sendRequestAsync(const UString& url, bool bqueue, const char* log_msg, int log_fd);
+   bool sendRequest(int method, const char* content_type, uint32_t content_type_len, const char* data, uint32_t data_len, const char* uri, uint32_t uri_len);
 
    // Add the MIME-type headers to the request for HTTP server
 
    static UString wrapRequest(UString* req, const UString& host_port, uint32_t method_num,
-                              const char* uri, uint32_t uri_len, const char* extension, const char* content_type = 0);
+                              const char* uri, uint32_t uri_len, const char* extension, const char* content_type = 0, uint32_t content_type_len = 0);
 
-   // In response to a HTTP_UNAUTHORISED response from the HTTP server, this function will attempt
-   // to generate an Authentication header to satisfy the server
+   // In response to a HTTP_UNAUTHORISED response from the HTTP server, this function will attempt to generate an Authentication header to satisfy the server
 
    bool createAuthorizationHeader();
    int  checkResponse(int& redirectCount);
@@ -217,6 +219,7 @@ private:
    friend class UProxyPlugIn;
    friend class UNoCatPlugIn;
    friend class USOAPClient_Base;
+   friend class UElasticSearchClient;
 };
 
 template <class Socket> class U_EXPORT UHttpClient : public UHttpClient_Base {

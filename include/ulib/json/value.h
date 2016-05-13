@@ -144,7 +144,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // Costruttori
+   // constructors
 
    UValue(ValueType _type = NULL_VALUE)
       {
@@ -223,7 +223,7 @@ public:
       reset();
       }
 
-    UValue(const UString& key, const UString& value_);
+    UValue(const UString& _key, const UString& value_);
 
    ~UValue()
       {
@@ -232,11 +232,49 @@ public:
       clear(); 
       }
 
+   // ASSIGNMENT
+
+   UValue(const UValue& v)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UValue, "%p", &v)
+
+      U_MEMORY_TEST_COPY(v)
+
+      set(v);
+      }
+
+   UValue& operator=(const UValue& v)
+      {
+      U_TRACE(0, "UValue::operator=(%p)", &v)
+
+      U_MEMORY_TEST_COPY(v)
+
+      clear();
+
+      set(v);
+
+      return *this;
+      }
+
+#ifdef U_COMPILER_RVALUE_REFS
+   UValue& operator=(UValue && v);
+# if (!defined(__GNUC__) || GCC_VERSION_NUM > 50300) // GCC has problems dealing with move constructor, so turn the feature on for 5.3.1 and above, only
+   UValue(UValue && v);
+# endif
+#endif
+
+   void set(const UValue& v);
+
+   // OPERATOR
+
+   bool operator==(const UValue& v) const;
+   bool operator!=(const UValue& v) const { return ! operator==(v); }
+
    // SERVICES
 
    void clear();
 
-   bool isNull()
+   bool isNull() const
       {
       U_TRACE_NO_PARAM(0, "UValue::isNull()")
 
@@ -247,7 +285,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isBool()
+   bool isBool() const
       {
       U_TRACE_NO_PARAM(0, "UValue::isBool()")
 
@@ -258,7 +296,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isInt()
+   bool isInt() const
       {
       U_TRACE_NO_PARAM(0, "UValue::isInt()")
 
@@ -269,7 +307,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isUInt()
+   bool isUInt() const
       {
       U_TRACE_NO_PARAM(0, "UValue::isUInt()")
 
@@ -280,7 +318,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isIntegral()
+   bool isIntegral() const
       {
       U_TRACE_NO_PARAM(0, "UValue::isIntegral()")
 
@@ -296,7 +334,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isDouble()
+   bool isDouble() const
       {
       U_TRACE_NO_PARAM(0, "UValue::isDouble()")
 
@@ -307,7 +345,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isNumeric()
+   bool isNumeric() const
       {
       U_TRACE_NO_PARAM(0, "UValue::isNumeric()")
 
@@ -371,10 +409,18 @@ public:
 
    // manage values in array or object
 
-   UValue& operator[](uint32_t pos) __pure;
-   UValue& operator[](const UString& key) __pure;
+   UValue* at(uint32_t pos) const __pure;
+   UValue* at(const char* _key, uint32_t key_len) const __pure;
 
-   UString* getString() const { return (UString*)value.ptr_; }
+   UValue& operator[](uint32_t pos)           const { return *at(pos); }
+   UValue& operator[](const UString& _key)    const { return *at(U_STRING_TO_PARAM(_key)); }
+   UValue& operator[](const UStringRep* _key) const { return *at(U_STRING_TO_PARAM(*_key)); }
+
+   bool isMemberExist(const char* _key, uint32_t key_len) const { return (at(_key, key_len)            != 0); }
+   bool isMemberExist(const UString& _key) const                { return (at(U_STRING_TO_PARAM(_key))  != 0); }
+   bool isMemberExist(const UStringRep* _key) const             { return (at(U_STRING_TO_PARAM(*_key)) != 0); }
+
+   UString& getString() const { return *(UString*)value.ptr_; }
 
    /**
     * \brief Return a list of the member names.
@@ -484,7 +530,8 @@ public:
    static int      jread_error;
    static uint32_t jread_elements, jread_pos;
 
-   static int jread(const UString& json, const UString& query, UString& result, uint32_t* queryParams = 0);
+   static bool jfind(const UString& json, const UString& query, UString& result);
+   static int  jread(const UString& json, const UString& query, UString& result, uint32_t* queryParams = 0);
 
    // reads one value from an array
 
@@ -894,7 +941,7 @@ public:
 
       U_ASSERT(json.isString())
 
-      UStringRep* rep = json.getString()->rep;
+      UStringRep* rep = json.getString().rep;
 
       U_INTERNAL_DUMP("pval(%p) = %p rep(%p) = %V", pval, pval, rep, rep)
 
@@ -925,7 +972,7 @@ public:
 
       U_ASSERT(json.isString())
 
-      UStringRep* rep = json.getString()->rep;
+      UStringRep* rep = json.getString().rep;
 
       U_INTERNAL_DUMP("pval(%p) = %p rep(%p) = %V", pval, ((UString*)pval)->rep, rep, rep)
 

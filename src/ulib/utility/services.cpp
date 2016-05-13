@@ -338,26 +338,6 @@ X509*       UServices::verify_current_cert;
 UString*    UServices::CApath;
 X509_STORE* UServices::store;
 
-void UServices::setOpenSSLError()
-{
-   U_TRACE_NO_PARAM(0, "UServices::setOpenSSLError()")
-
-   long i;
-
-   while ((i = ERR_get_error()))
-      {
-      char buf[1024];
-
-      (void) ERR_error_string_n(i, buf, sizeof(buf));
-
-      uint32_t sz = u__strlen(buf, __PRETTY_FUNCTION__);
-
-      U_INTERNAL_DUMP("buf = %.*S", sz, buf)
-
-      u_buffer_len += u__snprintf(u_buffer + u_buffer_len, U_BUFFER_SIZE - u_buffer_len, " (%ld, %.*s)", i, sz, buf);
-      }
-}
-
 // setup OPENSSL standard certificate directory
 
 void UServices::setCApath(const char* _CApath)

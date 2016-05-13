@@ -59,6 +59,7 @@
 #include "net/client/ftp.cpp"
 #include "net/client/http.cpp"
 #include "net/client/redis.cpp"
+#include "net/client/elasticsearch.cpp"
 #include "net/rpc/rpc.cpp"
 #include "net/rpc/rpc_client.cpp"
 #include "net/rpc/rpc_encoder.cpp"

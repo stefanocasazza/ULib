@@ -39,6 +39,7 @@ class UProxyPlugIn;
 class UNoCatPlugIn;
 class UServer_Base;
 class UHttpClient_Base;
+class UElasticSearchClient;
 
 class U_EXPORT UClient_Base {
 public:
@@ -155,13 +156,17 @@ public:
    const char*  getResponseData() const { return response.data(); }
    unsigned int getPort() const         { return port; }
 
-   bool setUrl(const UString& url); // NB: return if it has modified host or port...
-   bool remoteIPAddress(UIPAddress& addr);
-   bool setHostPort(const UString& host, unsigned int port);
-
    bool connect();
    void clearData();
+   bool remoteIPAddress(UIPAddress& addr);
    bool readResponse(uint32_t count = U_SINGLE_READ);
+   bool setHostPort(const UString& host, unsigned int port);
+
+   // NB: return if it has modified host or port...
+
+   bool setUrl(const char* str, uint32_t len);
+
+   bool setUrl(const UString& _url) { return setUrl(U_STRING_TO_PARAM(_url)); }
 
    /**
     * Establishes a TCP/IP socket connection with the host that will satisfy requests for the provided URL.
@@ -288,6 +293,7 @@ private:
    friend class UNoCatPlugIn;
    friend class UServer_Base;
    friend class UHttpClient_Base;
+   friend class UElasticSearchClient;
 };
 
 template <class Socket> class U_EXPORT UClient : public UClient_Base {

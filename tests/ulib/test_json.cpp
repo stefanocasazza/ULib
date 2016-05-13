@@ -223,8 +223,7 @@ U_EXPORT main (int argc, char* argv[])
    UCrono crono;
    char buffer[4096];
    uint32_t i, n, params[2] = { 2, 1 };
-   UString filename, content, array, result,
-           exampleJson = U_STRING_FROM_CONSTANT("{"
+   UString exampleJson = U_STRING_FROM_CONSTANT("{"
                                                 "  \"astring\": \"This is a string\",\n"
                                                 "  \"number1\": 42,\n"
                                                 "  \"number2\":  -123.45,\n"
@@ -233,7 +232,16 @@ U_EXPORT main (int argc, char* argv[])
                                                 "  \"isnull\":null,\n"
                                                 "  \"yes\": true,\n"
                                                 "  \"no\":  false\n"
-                                                "}");
+                                                "}"),
+           searchJson = U_STRING_FROM_CONSTANT("{\"took\":1,\"timed_out\":false,\"_shards\":{\"total\":1,\"successful\":1,\"failed\":0},"
+                                               "\"hits\":{\"total\":1,\"max_score\":1.0,\"hits\":[{\"_index\":\"tfb\",\"_type\":\"world\",\"_id\":\"6464\",\"_score\":1.0,"
+                                               "\"_source\":{ \"randomNumber\" : 9342 }}]}}"), filename, content, array, result, result1;
+
+   (void) UValue::jread(searchJson, U_STRING_FROM_CONSTANT("{'randomNumber'"), result);
+
+   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "randomNumber = %V\n", result.rep));
+
+   result.clear();
 
    testMap();
    testVector();
@@ -293,6 +301,8 @@ U_EXPORT main (int argc, char* argv[])
       {
       // index the array using queryParam
 
+      result.clear();
+
       (void) UValue::jread(array, U_STRING_FROM_CONSTANT("[*"), result, &i); 
 
       cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "anArray[%d] = %V\n", i, result.rep));
@@ -300,11 +310,15 @@ U_EXPORT main (int argc, char* argv[])
 
    // example using a parameter array
 
+   result.clear();
+
    (void) UValue::jread(array, U_STRING_FROM_CONSTANT("[*{*"), result, params);
 
    cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "\nanArray[%d] objectKey[%d] = %V\n\n", params[0], params[1], result.rep));
 
    // identify the whole JSON element
+
+   result.clear();
 
    array = UFile::contentOf("inp/TESTJSON.json");
 
@@ -318,6 +332,8 @@ U_EXPORT main (int argc, char* argv[])
 
    for (i = 0, n = UValue::jread_elements; i < n; ++i)
       {
+      result.clear();
+
       (void) UValue::jread(array, U_STRING_FROM_CONSTANT("[*{'Users'"), result, &i);
 
    // cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "array[%d] \"Users\": = %V\n", i, result.rep));
@@ -335,12 +351,15 @@ U_EXPORT main (int argc, char* argv[])
 
    for (i = 0; i < n; ++i)
       {
-      if (UValue::jreadArrayStep(array, result) != OBJECT_VALUE)
+      result.clear();
+      result1.clear();
+
+      if (UValue::jreadArrayStep(array, result1) != OBJECT_VALUE)
          {
          U_ERROR("Array element wasn't an object! i = %d UValue::jread_pos = %u", i, UValue::jread_pos);
          }
 
-      (void) UValue::jread(result, U_STRING_FROM_CONSTANT("{'Users'"), result);
+      (void) UValue::jread(result1, U_STRING_FROM_CONSTANT("{'Users'"), result);
 
    // cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "array[%d] \"Users\": = %V\n", i, result.rep));
       }

@@ -446,6 +446,8 @@ protected:
 
       U_DEBUG("HTTP compressor header table index %u: (%V %V) removed for size %u", table->num_entries, entry->name->rep, entry->value->rep, table->hpack_size)
 
+      U_INTERNAL_DUMP("HTTP compressor header table index %u: (%V %V) removed for size %u", table->num_entries, entry->name->rep, entry->value->rep, table->hpack_size)
+
       table->hpack_size -= entry->name->size() + entry->value->size() + HTTP2_HEADER_TABLE_ENTRY_SIZE_OFFSET;
 
       delete entry->name;
@@ -499,28 +501,10 @@ protected:
    static const HuffSym    huff_sym_table[];
    static const HuffDecode huff_decode_table[][16];
 
-   static unsigned char* hpackEncodeInt(unsigned char* dst, uint32_t value, uint8_t prefix_max)
-      {
-      U_TRACE(0, "UHTTP2::hpackEncodeInt(%p,%u,%u)", dst, value, prefix_max)
-
-      if (value <= prefix_max) *dst++ |= value;
-      else
-         {
-         value -= prefix_max;
-
-         U_INTERNAL_ASSERT(value <= 0x0fffffff)
-
-         for (*dst++ |= prefix_max; value >= 256; value >>= 8) *dst++ = 0x80 | value;
-
-         *dst++ = value;
-         }
-
-      return dst;
-      }
-
    static unsigned char* hpackDecodeInt(   unsigned char* src, unsigned char* src_end, int32_t* pvalue, uint8_t prefix_max);
    static unsigned char* hpackDecodeString(unsigned char* src, unsigned char* src_end, UString* pvalue);
 
+   static unsigned char* hpackEncodeInt(   unsigned char* dst, uint32_t value, uint8_t prefix_max);
    static unsigned char* hpackEncodeString(unsigned char* dst, const char* src, uint32_t len);
    static unsigned char* hpackEncodeHeader(unsigned char* dst, HpackDynamicTable* dyntbl, UString& key, const UString& value, UVector<UString>* pvec = 0);
 

@@ -75,6 +75,7 @@ http {
 EOF
 
 export ORM_DRIVER="sqlite"
+export ELASTICSEARCH_HOST="localhost"
 export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
 export ORM_OPTION="host=localhost dbname=../db/hello_world"
 

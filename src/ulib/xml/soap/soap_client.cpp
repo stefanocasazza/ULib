@@ -50,7 +50,8 @@ bool USOAPClient_Base::processRequest(URPCMethod& method)
 
    UString req = URPCMethod::encoder->encodeMethodCall(method, *UString::str_ns);
 
-   UClient_Base::prepareRequest(UHttpClient_Base::wrapRequest(&req, UClient_Base::host_port, 2, U_CONSTANT_TO_PARAM("/soap"), "", "application/soap+xml; charset=\"utf-8\""));
+   UClient_Base::prepareRequest(UHttpClient_Base::wrapRequest(&req, UClient_Base::host_port, 2,
+                                U_CONSTANT_TO_PARAM("/soap"), "", U_CONSTANT_TO_PARAM("application/soap+xml; charset=\"utf-8\"")));
 
    if (sendRequest() &&
        readResponse())

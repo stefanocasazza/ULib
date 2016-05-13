@@ -1,0 +1,18 @@
+#!/bin/sh
+
+. ../.function
+
+## elasticsearch.test -- Test elasticsearch feature
+
+start_msg elasticsearch
+
+ UTRACE="0 5M 0"
+ UOBJDUMP="0 500k 100"
+#USIMERR="error.sim"
+ELASTICSEARCH_HOST=localhost
+ export UTRACE UOBJDUMP USIMERR ELASTICSEARCH_HOST
+
+ start_prg elasticsearch
+
+# Test against expected output
+test_output_wc l elasticsearch

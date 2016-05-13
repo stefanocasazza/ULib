@@ -742,7 +742,7 @@ protected:
 private:
    explicit UStringRep(const char* t, uint32_t tlen) // NB: to use only with new(UStringRep(t,tlen))...
       {
-      U_TRACE_REGISTER_OBJECT(0, UStringRep, "%.*S,%u", tlen, t, tlen)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UStringRep, "%.*S,%u", tlen, t, tlen)
 
       U_INTERNAL_ASSERT_POINTER(t)
       U_INTERNAL_ASSERT_MAJOR(tlen, 0)
@@ -1120,10 +1120,7 @@ public:
    static uint32_t max_size() { return U_STRING_MAX_SIZE; }
 
 protected:
-
-   // in 'memory reference' distinction is made between set, copy, e assign...
-
-   void _set(UStringRep* r)
+   void _set(UStringRep* r) // in 'memory reference' distinction is made between set, copy, e assign...
       {
       U_TRACE(0, "UString::_set(%p)", r)
 
@@ -1159,7 +1156,7 @@ public:
       U_CHECK_MEMORY_OBJECT(rep)
       }
 
-   // COSTRUTTORI
+   // constructors
 
    UString() : rep(UStringRep::string_rep_null)
       {
@@ -1180,31 +1177,6 @@ public:
       }
 
    explicit UString(ustringrep* r);
-
-   UString(const UString& str) : rep(str.rep)
-      {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", &str)
-
-      rep->hold();
-
-      U_INTERNAL_ASSERT(invariant())
-      }
-
-#ifdef U_COMPILER_RVALUE_REFS
-   UString(UString && str)
-      {
-      U_TRACE_NO_PARAM(0, "UString::UString(move)")
-
-          rep = str.rep;
-      str.rep = UStringRep::string_rep_null;
-
-      UStringRep::string_rep_null->hold();
-
-      U_INTERNAL_DUMP("rep = %p", rep)
-
-      U_INTERNAL_ASSERT(invariant())
-      }
-#endif
 
    explicit UString(const char* t);
    explicit UString(const char* t, uint32_t tlen)
@@ -1315,6 +1287,53 @@ public:
       rep->release();
       }
 
+   // ASSIGNMENT
+
+   UString(const UString& str) : rep(str.rep)
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", &str)
+
+      rep->hold();
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   UString& operator=(const UString& str)
+      {
+      U_TRACE(0, "UString::operator=(%p)", &str)
+
+      _assign(str.rep);
+
+      return *this;
+      }
+
+#ifdef U_COMPILER_RVALUE_REFS
+   UString& operator=(UString && str)
+      {
+      U_TRACE_NO_PARAM(0, "UString::operator=(move)")
+
+      swap(str);
+
+      return *this;
+      }
+
+# if (!defined(__GNUC__) || GCC_VERSION_NUM > 50300) // GCC has problems dealing with move constructor, so turn the feature on for 5.3.1 and above, only
+   UString(UString && str)
+      {
+      U_TRACE_NO_PARAM(0, "UString::UString(move)")
+
+          rep = str.rep;
+      str.rep = UStringRep::string_rep_null;
+
+      UStringRep::string_rep_null->hold();
+
+      U_INTERNAL_DUMP("rep = %p", rep)
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+# endif
+#endif
+
    // Replace
 
    UString& replace(uint32_t pos, uint32_t n1, uint32_t n2, char c) // NB: unsigned char conflict with a uint32_t at the same parameter position...
@@ -1392,26 +1411,6 @@ public:
 
    UString& operator=(const char* s)   { return assign(s); }
    UString& operator=(unsigned char c) { return assign(1U, c); }
-
-   UString& operator=(const UString& str)
-      {
-      U_TRACE(0, "UString::operator=(%p)", &str)
-
-      _assign(str.rep);
-
-      return *this;
-      }
-
-#ifdef U_COMPILER_RVALUE_REFS
-   UString& operator=(UString && str)
-      {
-      U_TRACE_NO_PARAM(0, "UString::operator=(move)")
-
-      swap(str);
-
-      return *this;
-      }
-#endif
 
    void shift(ptrdiff_t diff) { rep->shift(diff); }
 
@@ -1585,7 +1584,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UString::clear()")
 
-      _assign(UStringRep::string_rep_null);
+      if (rep != UStringRep::string_rep_null) _assign(UStringRep::string_rep_null);
 
       U_INTERNAL_ASSERT(invariant())
       }

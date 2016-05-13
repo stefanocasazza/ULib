@@ -133,7 +133,7 @@
 #    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 405
        /* C++11 features supported in GCC 4.5: */
 #      define U_COMPILER_DECLTYPE
-//#    define U_COMPILER_RVALUE_REFS
+#      define U_COMPILER_RVALUE_REFS
 #      define U_COMPILER_STATIC_ASSERT
 #      define U_COMPILER_VARIADIC_MACROS
 #      define U_COMPILER_ATOMICS
@@ -174,11 +174,6 @@
 #      define U_COMPILER_INHERITING_CONSTRUCTORS
 #      define U_COMPILER_THREAD_LOCAL
 #    endif
-#   if (__GNUC__ * 100 + __GNUC_MINOR__) >= 601
-       /* GCC [4|5].x has problems dealing with move expressions,
-        * so turn the feature on for 6.1 and above, only */
-#      define U_COMPILER_RVALUE_REFS
-#   endif
 #  endif
 #else
 #  define GCC_VERSION_NUM 0

@@ -57,7 +57,7 @@ UValue::UValue(const UString& _key, const UString& value_)
    children.head =
    children.tail = child;
 
-   U_NEW(UString, child->key, UString(_key));
+   U_NEW(UString, child->key,        UString(_key));
    U_NEW(UString, child->value.ptr_, UString(value_));
 }
 
@@ -72,6 +72,8 @@ void UValue::reset()
 
    children.head =
    children.tail = 0;
+
+   U_INTERNAL_DUMP("this = %p", this)
 }
 
 void UValue::clear()
@@ -80,7 +82,7 @@ void UValue::clear()
 
    U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
-   U_INTERNAL_DUMP("parent = %p prev = %p next = %p key = %p", parent, prev, next, key)
+   U_INTERNAL_DUMP("this = %p parent = %p prev = %p next = %p key = %p", this, parent, prev, next, key)
 
    if (parent)
       {
@@ -107,7 +109,7 @@ void UValue::clear()
       {
       U_INTERNAL_ASSERT_POINTER(value.ptr_)
 
-      delete getString();
+      delete (UString*)value.ptr_;
 
       type_ = NULL_VALUE;
       }
@@ -130,6 +132,198 @@ void UValue::clear()
       children.head =
       children.tail = 0;
       }
+}
+
+#ifdef U_COMPILER_RVALUE_REFS
+UValue& UValue::operator=(UValue && v)
+{
+   U_TRACE_NO_PARAM(0, "UValue::operator=(move)")
+
+   UValue*        tmp  = parent;
+   UString*       tmpk = key;
+   union anyvalue tmpv = value;
+   int            tmpi = type_;
+
+     parent = v.parent;
+   v.parent = tmp;
+
+   tmp = prev;
+
+     prev = v.prev;
+   v.prev = tmp;
+
+   tmp = next;
+
+     next = v.next;
+   v.next = tmp;
+
+     key = v.key;
+   v.key = tmpk;
+
+   tmp = children.head;
+
+     children.head = v.children.head;
+   v.children.head = tmp;
+
+   tmp = children.tail;
+
+     children.tail = v.children.tail;
+   v.children.tail = tmp;
+
+     value = v.value;
+   v.value = tmpv;
+
+     type_ = v.type_;
+   v.type_ = tmpi;
+
+   return *this;
+}
+
+# if (!defined(__GNUC__) || GCC_VERSION_NUM > 50300) // GCC has problems dealing with move constructor, so turn the feature on for 5.3.1 and above, only
+UValue::UValue(UValue && v)
+{
+   U_TRACE_NO_PARAM(0, "UValue::UValue(move)")
+
+          parent = v.parent;
+            prev = v.prev;
+            next = v.next;
+            key  = v.key;
+   children.head = v.children.head;
+   children.tail = v.children.tail;
+           type_ = v.type_;
+           value = v.value;
+
+   v.reset();
+
+   v.type_       = NULL_VALUE;
+   v.value.real_ = .0;
+
+   U_ASSERT(  invariant())
+   U_ASSERT(v.invariant())
+}
+# endif
+#endif
+
+void UValue::set(const UValue& v)
+{
+   U_TRACE(0, "UValue::set(%p)", &v)
+
+   U_INTERNAL_ASSERT_RANGE(0,v.type_,OBJECT_VALUE)
+
+   parent   = v.parent;
+   prev     = v.prev;
+   next     = v.next;
+   key      = v.key;
+
+   type_ = v.type_;
+   value = v.value;
+
+   children.head =
+   children.tail = 0;
+
+   if (type_ == STRING_VALUE)
+      {
+      U_INTERNAL_ASSERT_POINTER(v.value.ptr_)
+
+      U_NEW(UString, value.ptr_, UString(v.getString()));
+      }
+   else if (type_ ==  ARRAY_VALUE ||
+            type_ == OBJECT_VALUE)
+      {
+      U_INTERNAL_DUMP("v.parent = %p v.prev = %p v.next = %p v.key = %p", v.parent, v.prev, v.next, v.key)
+
+      if (v.key)
+         {
+         U_INTERNAL_DUMP("v.key = %V", v.key->rep)
+
+         U_NEW(UString, key, UString(*(v.key)));
+         }
+
+      for (UValue* child = v.children.head; child; child = child->next)
+         {
+         UValue* _child;
+
+         U_NEW(UValue, _child, UValue(*child));
+
+         appendNode(this, _child);
+         }
+      }
+
+   U_ASSERT(invariant())
+}
+
+bool UValue::operator==(const UValue& v) const
+{
+   U_TRACE(0+256, "UValue::operator==(%p)", &v)
+
+   U_INTERNAL_DUMP("  type_ = %d   parent = %p   prev = %p   next = %p   key = %p",   type_,   parent,   prev,   next,   key)
+   U_INTERNAL_DUMP("v.type_ = %d v.parent = %p v.prev = %p v.next = %p v.key = %p", v.type_, v.parent, v.prev, v.next, v.key)
+
+   U_INTERNAL_ASSERT_RANGE(0,  type_,OBJECT_VALUE)
+   U_INTERNAL_ASSERT_RANGE(0,v.type_,OBJECT_VALUE)
+
+   if (type_ != v.type_) U_RETURN(false);
+
+   if (type_ == NULL_VALUE) U_RETURN(true); // Both null types
+
+   if (type_ == BOOLEAN_VALUE)
+      {
+      if (value.bool_ == v.value.bool_) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   if (type_ == STRING_VALUE)
+      {
+      if (getString() == v.getString()) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   if (type_ ==  ARRAY_VALUE ||
+       type_ == OBJECT_VALUE)
+      {
+      if (  parent &&
+          v.parent)
+         {
+         if ( key && !v.key) U_RETURN(false);
+         if (!key &&  v.key) U_RETURN(false);
+         if ( key &&  v.key)
+            {
+            U_INTERNAL_DUMP("key = %V v.key = %V", key->rep, v.key->rep)
+
+            if (*key != *v.key) U_RETURN(false);
+            }
+         }
+
+      U_INTERNAL_DUMP("  children.head = %p   children.tail = %p",   children.head,   children.tail)
+      U_INTERNAL_DUMP("v.children.head = %p v.children.tail = %p", v.children.head, v.children.tail)
+
+      if ( children.head && !v.children.head) U_RETURN(false);
+      if (!children.head &&  v.children.head) U_RETURN(false);
+      if ( children.tail && !v.children.tail) U_RETURN(false);
+      if (!children.tail &&  v.children.tail) U_RETURN(false);
+
+      UValue* child1 =   children.head;
+      UValue* child2 = v.children.head;
+
+      for (; child1 && child2; child1 = child1->next, child2 = child2->next)
+         {
+         if (*child1 != *child2) U_RETURN(false);
+         }
+
+      if ( child1 && !child2) U_RETURN(false);
+      if (!child1 &&  child2) U_RETURN(false);
+
+      U_RETURN(true);
+      }
+
+   if (isNumeric())
+      {
+      if (asDouble() == v.asDouble()) U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 // CONVERSION
@@ -180,7 +374,7 @@ case_ullong:   U_RETURN(value.ullong_);
 case_float:    U_RETURN(value.float_ != 0.0);
 case_double:   U_RETURN(value.real_  != 0.0);
 case_ldouble:  U_RETURN(value.lreal_ != 0.0);
-case_string:   U_RETURN(getString()->empty() == false);
+case_string:   U_RETURN(getString().empty() == false);
 case_array:
 case_object:   U_RETURN(children.head == 0);
 }
@@ -428,7 +622,7 @@ case_ldouble:
 
    return UString::getStringNull();
 
-case_string: U_RETURN_STRING(*getString());
+case_string: U_RETURN_STRING(getString());
 
 case_array:
 case_object:
@@ -505,14 +699,14 @@ case_ldouble:  U_RETURN((other == NULL_VALUE && value.lreal_ ==     0.0)        
                          other == REAL_VALUE                                                         ||
                          other == BOOLEAN_VALUE);
 
-case_string:   U_RETURN((other == NULL_VALUE && getString()->empty()) || other == STRING_VALUE); 
+case_string:   U_RETURN((other == NULL_VALUE && getString().empty()) || other == STRING_VALUE); 
 case_array:    U_RETURN((other == NULL_VALUE && (children.head == 0)) || other ==  ARRAY_VALUE);
 case_object:   U_RETURN((other == NULL_VALUE && (children.head == 0)) || other == OBJECT_VALUE);
 }
 
-__pure UValue& UValue::operator[](uint32_t pos)
+__pure UValue* UValue::at(uint32_t pos) const
 {
-   U_TRACE(0, "UValue::operator[](%u)", pos)
+   U_TRACE(0, "UValue::at(%u)", pos)
 
    if (type_ == ARRAY_VALUE)
       {
@@ -520,16 +714,16 @@ __pure UValue& UValue::operator[](uint32_t pos)
 
       for (UValue* child = children.head; child; ++i, child = child->next)
          {
-         if (i == pos) return *child;
+         if (i == pos) U_RETURN_POINTER(child, UValue);
          }
       }
 
-   return *this;
+   U_RETURN_POINTER(0, UValue);
 }
 
-__pure UValue& UValue::operator[](const UString& _key)
+__pure UValue* UValue::at(const char* _key, uint32_t key_len) const
 {
-   U_TRACE(0, "UValue::operator[](%V)", _key.rep)
+   U_TRACE(0, "UValue::at(%.*S)", key_len, _key)
 
    if (type_ == OBJECT_VALUE)
       {
@@ -537,11 +731,11 @@ __pure UValue& UValue::operator[](const UString& _key)
          {
          U_INTERNAL_ASSERT_POINTER(child->key)
 
-         if (child->key->equal(_key)) return *child;
+         if (child->key->equal(_key, key_len)) U_RETURN_POINTER(child, UValue);
          }
       }
 
-   return *this;
+   U_RETURN_POINTER(0, UValue);
 }
 
 uint32_t UValue::getMemberNames(UVector<UString>& members) const
@@ -829,7 +1023,7 @@ next:
    return;
 
 case_string:
-   pstring = _value.getString();
+   pstring = (UString*)_value.value.ptr_;
 
    (void) result.reserve((sz = result.size()) + (keysz = pstring->size()) * 6);
 
@@ -1005,9 +1199,9 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
             {
             U_NEW(UString, _value->value.ptr_, UString(sz));
 
-            UEscape::decode(ptr, sz, *(_value->getString()));
+            UEscape::decode(ptr, sz, _value->getString());
 
-            result = ((_value->getString())->empty() == false);
+            result = (_value->getString().empty() == false);
             }
          else
             {
@@ -1018,7 +1212,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
          if (last < _end) tok.setPointer(last+1);
 
-         U_INTERNAL_DUMP("_value.ptr_ = %V", _value->getString()->rep)
+         U_INTERNAL_DUMP("_value.ptr_ = %V", _value->getString().rep)
          }
       break;
 
@@ -1101,7 +1295,7 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
             U_INTERNAL_ASSERT_EQUALS(name.type_, STRING_VALUE)
 
-            child->key = name.getString();
+            child->key = (UString*)name.value.ptr_;
 
             appendNode(_value, child);
 
@@ -1501,11 +1695,14 @@ U_NO_EXPORT UString UValue::jread_object(UTokenizer& tok, uint32_t keyIndex)
 
 int UValue::jread(const UString& json, const UString& query, UString& result, uint32_t* queryParams)
 {
-   U_TRACE(0+256, "UValue::jread(%V,%V,%V,%p)", json.rep, query.rep, result.rep, queryParams)
+   U_TRACE(0+256, "UValue::jread(%V,%V,%p,%p)", json.rep, query.rep, &result, queryParams)
+
+   U_ASSERT(result.empty())
 
    bool breal;
    const char* start;
    uint32_t count, index;
+   UString jElement, qElement; // qElement = query 'key'
 
    UTokenizer tok1(json),
               tok2(query);
@@ -1616,7 +1813,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
             goto end;
             }
 
-         UString jElement, qElement = jread_string(tok2); // qElement = query 'key'
+         qElement = jread_string(tok2);
 
          // read <key> : <value> , ... }
          // loop 'til key matched
@@ -1799,9 +1996,12 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
       if (jread_error == 0) jread_error = 7; // terminal value found before end of query
       }
 
-   U_INTERNAL_DUMP("jread_error = %d", jread_error)
+   if (jread_error)
+      {
+      jread_elements = 0;
 
-   if (jread_error) jread_elements = 0;
+      U_INTERNAL_DUMP("jread_error = %d qElement = %V", jread_error, qElement.rep)
+      }
 
 end:
    jread_pos = tok1.getDistance();
@@ -1809,6 +2009,50 @@ end:
    U_DUMP("jTok = (%d %S) result = %V jread_pos = %u", jTok, getDataTypeDescription(jTok), result.rep, jread_pos)
 
    U_RETURN(jTok);
+}
+
+bool UValue::jfind(const UString& json, const UString& query, UString& result)
+{
+   U_TRACE(0, "UValue::jfind(%V,%V,%p)", json.rep, query.rep, &result)
+
+   U_ASSERT(result.empty())
+
+   uint32_t pos = json.find(query);
+
+   U_INTERNAL_DUMP("pos = %d", pos)
+
+   if (pos != U_NOT_FOUND)
+      {
+      pos += query.size();
+
+      if (u__isquote(json.c_char(pos))) ++pos;
+
+      UTokenizer tok(json.substr(pos));
+
+      int sTok = jreadFindToken(tok);
+
+      U_DUMP("sTok = (%d %S)", sTok, getDataTypeDescription(sTok))
+
+      if ( sTok != U_JR_EOL   &&
+          (sTok == U_JR_COMMA ||
+           sTok == U_JR_COLON))
+         {
+         ++tok;
+         }
+
+      tok.skipSpaces();
+
+      const char* start = tok.getPointer();
+
+      if (jread_skip(tok) != -1)
+         {
+         (void) result.assign(start, tok.getPointer()-start);
+
+         U_RETURN(true);
+         }
+      }
+
+   U_RETURN(false);
 }
 
 // reads one value from an array - assumes jarray points at the start of an array or array element

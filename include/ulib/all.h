@@ -22,6 +22,7 @@
 #include <ulib/net/client/imap.h>
 #include <ulib/net/client/redis.h>
 #include <ulib/net/client/mongodb.h>
+#include <ulib/net/client/elasticsearch.h>
 #include <ulib/orm/orm_driver.h>
 #include <ulib/net/rpc/rpc_client.h>
 #include <ulib/net/rpc/rpc_object.h>

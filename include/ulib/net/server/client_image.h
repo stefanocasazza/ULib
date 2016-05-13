@@ -131,11 +131,12 @@ public:
    // request state processing
 
    enum RequestStatusType {
-   // NOT_FOUND         = 0x0000,
-      FORBIDDEN         = 0x0001,
-      NO_CACHE          = 0x0002,
-      IN_FILE_CACHE     = 0x0004,
-      ALREADY_PROCESSED = 0x0008
+   // NOT_FOUND            = 0x0000,
+      FORBIDDEN            = 0x0001,
+      NO_CACHE             = 0x0002,
+      IN_FILE_CACHE        = 0x0004,
+      ALREADY_PROCESSED    = 0x0008,
+      FILE_CACHE_PROCESSED = 0x0010
    };
 
    static bool isRequestNotFound()
@@ -248,6 +249,26 @@ public:
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
 
       if ((U_ClientImage_request & IN_FILE_CACHE) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static void setRequestFileCacheProcessed()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestFileCacheProcessed()")
+
+      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
+
+      U_ClientImage_request |= FILE_CACHE_PROCESSED;
+      }
+
+   static bool isRequestFileCacheProcessed()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestFileCacheProcessed()")
+
+      U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
+
+      if ((U_ClientImage_request & FILE_CACHE_PROCESSED) != 0) U_RETURN(true);
 
       U_RETURN(false);
       }

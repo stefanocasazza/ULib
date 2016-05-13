@@ -189,7 +189,7 @@ int UStreamPlugIn::handlerRequest()
 
    U_http_info.nResponseCode = HTTP_OK;
 
-   UHTTP::setResponse(content_type, 0);
+   UHTTP::setResponse(*content_type, 0);
 
    UClientImage_Base::setCloseConnection();
 

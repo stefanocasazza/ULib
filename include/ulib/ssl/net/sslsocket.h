@@ -302,7 +302,23 @@ protected:
    static void setStatus(SSL* _ssl, int _ret, bool _flag);
    static void info_callback(const SSL* ssl, int where, int ret);
 
-   void setStatus(bool _flag) const { return setStatus(ssl, ret, _flag); }
+   void setStatus(bool _flag) const { setStatus(ssl, ret, _flag); }
+
+#ifdef DEBUG
+   void dumpStatus(bool _flag) const
+      {
+      setStatus(ssl, ret, _flag);
+
+      u_buffer_len = 0;
+      }
+
+   void dumpStatus(int _ret, bool _flag) const
+      {
+      setStatus(ssl, _ret, _flag);
+
+      u_buffer_len = 0;
+      }
+#endif
 
    static SSL_CTX* getClientContext() { return getContext(0, false, 0); }
    static SSL_CTX* getServerContext() { return getContext(0, true,  0); }

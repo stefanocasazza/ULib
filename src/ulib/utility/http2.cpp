@@ -128,24 +128,24 @@ void UHTTP2::ctor()
    UString::str_allocate(STR_ALLOCATE_HTTP2);
 
    hpack_static_table[0].name   = UString::str_authority;
-    hash_static_table[0]        = UString::str_authority->hash();
+    hash_static_table[0]        = UString::str_authority->hashIgnoreCase();
    hpack_static_table[1].name   = UString::str_method;
-    hash_static_table[1]        = UString::str_method->hash();
+    hash_static_table[1]        = UString::str_method->hashIgnoreCase();
    hpack_static_table[1].value  = UString::str_method_get;
    hpack_static_table[2].name   = UString::str_method;
    hpack_static_table[2].value  = UString::str_method_post;
    hpack_static_table[3].name   = UString::str_path;
-    hash_static_table[3]        = UString::str_path->hash();
+    hash_static_table[3]        = UString::str_path->hashIgnoreCase();
    hpack_static_table[3].value  = UString::str_path_root;
    hpack_static_table[4].name   = UString::str_path;
    hpack_static_table[4].value  = UString::str_path_index;
    hpack_static_table[5].name   = UString::str_scheme;
-    hash_static_table[5]        = UString::str_scheme->hash();
+    hash_static_table[5]        = UString::str_scheme->hashIgnoreCase();
    hpack_static_table[5].value  = UString::str_scheme_http;
    hpack_static_table[6].name   = UString::str_scheme;
    hpack_static_table[6].value  = UString::str_scheme_https;
    hpack_static_table[7].name   = UString::str_status;
-    hash_static_table[7]        = UString::str_status->hash();
+    hash_static_table[7]        = UString::str_status->hashIgnoreCase();
    hpack_static_table[7].value  = UString::str_status_200;
    hpack_static_table[8].name   = UString::str_status;
    hpack_static_table[8].value  = UString::str_status_204;
@@ -160,100 +160,100 @@ void UHTTP2::ctor()
    hpack_static_table[13].name  = UString::str_status;
    hpack_static_table[13].value = UString::str_status_500;
    hpack_static_table[14].name  = UString::str_accept_charset;
-    hash_static_table[14]       = UString::str_accept_charset->hash();
+    hash_static_table[14]       = UString::str_accept_charset->hashIgnoreCase();
    hpack_static_table[15].name  = UString::str_accept_encoding;
-    hash_static_table[15]       = UString::str_accept_encoding->hash();
+    hash_static_table[15]       = UString::str_accept_encoding->hashIgnoreCase();
    hpack_static_table[15].value = UString::str_accept_encoding_value;
    hpack_static_table[16].name  = UString::str_accept_language;
-    hash_static_table[16]       = UString::str_accept_language->hash();
+    hash_static_table[16]       = UString::str_accept_language->hashIgnoreCase();
    hpack_static_table[17].name  = UString::str_accept_ranges;
-    hash_static_table[17]       = UString::str_accept_ranges->hash();
+    hash_static_table[17]       = UString::str_accept_ranges->hashIgnoreCase();
    hpack_static_table[18].name  = UString::str_accept;
-    hash_static_table[18]       = UString::str_accept->hash();
+    hash_static_table[18]       = UString::str_accept->hashIgnoreCase();
    hpack_static_table[19].name  = UString::str_access_control_allow_origin;
-    hash_static_table[19]       = UString::str_access_control_allow_origin->hash();
+    hash_static_table[19]       = UString::str_access_control_allow_origin->hashIgnoreCase();
    hpack_static_table[20].name  = UString::str_age;
-    hash_static_table[20]       = UString::str_age->hash();
+    hash_static_table[20]       = UString::str_age->hashIgnoreCase();
    hpack_static_table[21].name  = UString::str_allow;
-    hash_static_table[21]       = UString::str_allow->hash();
+    hash_static_table[21]       = UString::str_allow->hashIgnoreCase();
    hpack_static_table[22].name  = UString::str_authorization;
-    hash_static_table[22]       = UString::str_authorization->hash();
+    hash_static_table[22]       = UString::str_authorization->hashIgnoreCase();
    hpack_static_table[23].name  = UString::str_cache_control;
-    hash_static_table[23]       = UString::str_cache_control->hash();
+    hash_static_table[23]       = UString::str_cache_control->hashIgnoreCase();
    hpack_static_table[24].name  = UString::str_content_disposition;
-    hash_static_table[24]       = UString::str_content_disposition->hash();
+    hash_static_table[24]       = UString::str_content_disposition->hashIgnoreCase();
    hpack_static_table[25].name  = UString::str_content_encoding;
-    hash_static_table[25]       = UString::str_content_encoding->hash();
+    hash_static_table[25]       = UString::str_content_encoding->hashIgnoreCase();
    hpack_static_table[26].name  = UString::str_content_language;
-    hash_static_table[26]       = UString::str_content_language->hash();
+    hash_static_table[26]       = UString::str_content_language->hashIgnoreCase();
    hpack_static_table[27].name  = UString::str_content_length;
-    hash_static_table[27]       = UString::str_content_length->hash();
+    hash_static_table[27]       = UString::str_content_length->hashIgnoreCase();
    hpack_static_table[28].name  = UString::str_content_location;
-    hash_static_table[28]       = UString::str_content_location->hash();
+    hash_static_table[28]       = UString::str_content_location->hashIgnoreCase();
    hpack_static_table[29].name  = UString::str_content_range;
-    hash_static_table[29]       = UString::str_content_range->hash();
+    hash_static_table[29]       = UString::str_content_range->hashIgnoreCase();
    hpack_static_table[30].name  = UString::str_content_type;
-    hash_static_table[30]       = UString::str_content_type->hash();
+    hash_static_table[30]       = UString::str_content_type->hashIgnoreCase();
    hpack_static_table[31].name  = UString::str_cookie;
-    hash_static_table[31]       = UString::str_cookie->hash();
+    hash_static_table[31]       = UString::str_cookie->hashIgnoreCase();
    hpack_static_table[32].name  = UString::str_date;
-    hash_static_table[32]       = UString::str_date->hash();
+    hash_static_table[32]       = UString::str_date->hashIgnoreCase();
    hpack_static_table[33].name  = UString::str_etag;
-    hash_static_table[33]       = UString::str_etag->hash();
+    hash_static_table[33]       = UString::str_etag->hashIgnoreCase();
    hpack_static_table[34].name  = UString::str_expect;
-    hash_static_table[34]       = UString::str_expect->hash();
+    hash_static_table[34]       = UString::str_expect->hashIgnoreCase();
    hpack_static_table[35].name  = UString::str_expires;
-    hash_static_table[35]       = UString::str_expires->hash();
+    hash_static_table[35]       = UString::str_expires->hashIgnoreCase();
    hpack_static_table[36].name  = UString::str_from;
-    hash_static_table[36]       = UString::str_from->hash();
+    hash_static_table[36]       = UString::str_from->hashIgnoreCase();
    hpack_static_table[37].name  = UString::str_host;
-    hash_static_table[37]       = UString::str_host->hash();
+    hash_static_table[37]       = UString::str_host->hashIgnoreCase();
    hpack_static_table[38].name  = UString::str_if_match;
-    hash_static_table[38]       = UString::str_if_match->hash();
+    hash_static_table[38]       = UString::str_if_match->hashIgnoreCase();
    hpack_static_table[39].name  = UString::str_if_modified_since;
-    hash_static_table[39]       = UString::str_if_modified_since->hash();
+    hash_static_table[39]       = UString::str_if_modified_since->hashIgnoreCase();
    hpack_static_table[40].name  = UString::str_if_none_match;
-    hash_static_table[40]       = UString::str_if_none_match->hash();
+    hash_static_table[40]       = UString::str_if_none_match->hashIgnoreCase();
    hpack_static_table[41].name  = UString::str_if_range;
-    hash_static_table[41]       = UString::str_if_range->hash();
+    hash_static_table[41]       = UString::str_if_range->hashIgnoreCase();
    hpack_static_table[42].name  = UString::str_if_unmodified_since;
-    hash_static_table[42]       = UString::str_if_unmodified_since->hash();
+    hash_static_table[42]       = UString::str_if_unmodified_since->hashIgnoreCase();
    hpack_static_table[43].name  = UString::str_last_modified;
-    hash_static_table[43]       = UString::str_last_modified->hash();
+    hash_static_table[43]       = UString::str_last_modified->hashIgnoreCase();
    hpack_static_table[44].name  = UString::str_link;
-    hash_static_table[44]       = UString::str_link->hash();
+    hash_static_table[44]       = UString::str_link->hashIgnoreCase();
    hpack_static_table[45].name  = UString::str_location;
-    hash_static_table[45]       = UString::str_location->hash();
+    hash_static_table[45]       = UString::str_location->hashIgnoreCase();
    hpack_static_table[46].name  = UString::str_max_forwards;
-    hash_static_table[46]       = UString::str_max_forwards->hash();
+    hash_static_table[46]       = UString::str_max_forwards->hashIgnoreCase();
    hpack_static_table[47].name  = UString::str_proxy_authenticate;
-    hash_static_table[47]       = UString::str_proxy_authenticate->hash();
+    hash_static_table[47]       = UString::str_proxy_authenticate->hashIgnoreCase();
    hpack_static_table[48].name  = UString::str_proxy_authorization;
-    hash_static_table[48]       = UString::str_proxy_authorization->hash();
+    hash_static_table[48]       = UString::str_proxy_authorization->hashIgnoreCase();
    hpack_static_table[49].name  = UString::str_range;
-    hash_static_table[49]       = UString::str_range->hash();
+    hash_static_table[49]       = UString::str_range->hashIgnoreCase();
    hpack_static_table[50].name  = UString::str_referer;
-    hash_static_table[50]       = UString::str_referer->hash();
+    hash_static_table[50]       = UString::str_referer->hashIgnoreCase();
    hpack_static_table[51].name  = UString::str_refresh;
-    hash_static_table[51]       = UString::str_refresh->hash();
+    hash_static_table[51]       = UString::str_refresh->hashIgnoreCase();
    hpack_static_table[52].name  = UString::str_retry_after;
-    hash_static_table[52]       = UString::str_retry_after->hash();
+    hash_static_table[52]       = UString::str_retry_after->hashIgnoreCase();
    hpack_static_table[53].name  = UString::str_server;
-    hash_static_table[53]       = UString::str_server->hash();
+    hash_static_table[53]       = UString::str_server->hashIgnoreCase();
    hpack_static_table[54].name  = UString::str_set_cookie;
-    hash_static_table[54]       = UString::str_set_cookie->hash();
+    hash_static_table[54]       = UString::str_set_cookie->hashIgnoreCase();
    hpack_static_table[55].name  = UString::str_strict_transport_security;
-    hash_static_table[55]       = UString::str_strict_transport_security->hash();
+    hash_static_table[55]       = UString::str_strict_transport_security->hashIgnoreCase();
    hpack_static_table[56].name  = UString::str_transfer_encoding;
-    hash_static_table[56]       = UString::str_transfer_encoding->hash();
+    hash_static_table[56]       = UString::str_transfer_encoding->hashIgnoreCase();
    hpack_static_table[57].name  = UString::str_user_agent;
-    hash_static_table[57]       = UString::str_user_agent->hash();
+    hash_static_table[57]       = UString::str_user_agent->hashIgnoreCase();
    hpack_static_table[58].name  = UString::str_vary;
-    hash_static_table[58]       = UString::str_vary->hash();
+    hash_static_table[58]       = UString::str_vary->hashIgnoreCase();
    hpack_static_table[59].name  = UString::str_via;
-    hash_static_table[59]       = UString::str_via->hash();
+    hash_static_table[59]       = UString::str_via->hashIgnoreCase();
    hpack_static_table[60].name  = UString::str_www_authenticate;
-    hash_static_table[60]       = UString::str_www_authenticate->hash();
+    hash_static_table[60]       = UString::str_www_authenticate->hashIgnoreCase();
 }
 
 bool UHTTP2::updateSetting(unsigned char* ptr, uint32_t len)
@@ -309,13 +309,46 @@ unsigned char* UHTTP2::hpackDecodeInt(unsigned char* src, unsigned char* src_end
          {
          *pvalue += (*src & 127) * mult;
 
-         if ((*src++ & 128) == 0) return src;
+         if ((*src++ & 128) == 0) U_RETURN_POINTER(src, unsigned char);
          }
 
       *pvalue = -1;
       }
 
-   return src;
+   U_INTERNAL_DUMP("*pvalue = %d", *pvalue)
+
+   U_RETURN_POINTER(src, unsigned char);
+}
+
+unsigned char* UHTTP2::hpackEncodeInt(unsigned char* dst, uint32_t value, uint8_t prefix_max)
+{
+   U_TRACE(0+256, "UHTTP2::hpackEncodeInt(%p,%u,%u)", dst, value, prefix_max)
+
+#ifdef DEBUG
+    int32_t _value;
+   uint32_t  value1 = value;
+   unsigned char* src = dst;
+#endif
+
+   if (value <= prefix_max) *dst++ |= value;
+   else
+      {
+      value -= prefix_max;
+
+      U_INTERNAL_ASSERT(value <= 0x0fffffff)
+
+      for (*dst++ |= prefix_max; value >= 256; value >>= 8) *dst++ = 0x80 | value;
+
+      *dst++ = value;
+      }
+
+#ifdef DEBUG
+   (void) hpackDecodeInt(src, src+(dst-src), &_value, prefix_max);
+
+   U_INTERNAL_ASSERT_EQUALS(value1, (uint32_t)_value)
+#endif
+
+   U_RETURN_POINTER(dst, unsigned char);
 }
 
 unsigned char* UHTTP2::hpackEncodeString(unsigned char* dst, const char* src, uint32_t len)
@@ -323,6 +356,12 @@ unsigned char* UHTTP2::hpackEncodeString(unsigned char* dst, const char* src, ui
    U_TRACE(0+256, "UHTTP2::hpackEncodeString(%p,%.*S,%u)", dst, len, src, len)
 
    U_INTERNAL_ASSERT_MAJOR(len, 0)
+
+#ifdef DEBUG
+   uint32_t       len1 = len;
+   const    char* src1 = src;
+   unsigned char* dst1 = dst;
+#endif
 
    if (len < 29)
       {
@@ -400,12 +439,20 @@ asis: *dst = '\0';
       u__memcpy(dst, _dst_start, len, __PRETTY_FUNCTION__);
       }
 
-   return dst+len;
+#ifdef DEBUG
+   UString value;
+
+   (void) hpackDecodeString(dst1, dst+len, &value);
+
+   U_INTERNAL_ASSERT(value.equal(src1, len1))
+#endif
+
+   U_RETURN_POINTER(dst+len, unsigned char);
 }
 
 unsigned char* UHTTP2::hpackDecodeString(unsigned char* src, unsigned char* src_end, UString* pvalue)
 {
-   U_TRACE(0+256, "UHTTP2::hpackDecodeString(%p,%p,%p)", src, src_end, pvalue)
+   U_TRACE(0, "UHTTP2::hpackDecodeString(%p,%p,%p)", src, src_end, pvalue)
 
    int32_t len;
    bool is_huffman = ((*src & 0x80) != 0);
@@ -416,7 +463,9 @@ unsigned char* UHTTP2::hpackDecodeString(unsigned char* src, unsigned char* src_
       {
 err:  pvalue->clear();
 
-      return src;
+      U_INTERNAL_DUMP("len = %u", len)
+
+      U_RETURN_POINTER(src, unsigned char);
       }
 
    U_INTERNAL_DUMP("is_huffman = %b len = %u src = %#.*S", is_huffman, len, len, src)
@@ -427,7 +476,9 @@ err:  pvalue->clear();
 
       (void) pvalue->replace((const char*)src, len);
 
-      return (src+len);
+      U_INTERNAL_DUMP("len = %u", len)
+
+      U_RETURN_POINTER(src+len, unsigned char);
       }
 
    uint8_t state = 0;
@@ -456,7 +507,7 @@ err:  pvalue->clear();
 
    *pvalue = result;
 
-   return src_end;
+   U_RETURN_POINTER(src_end, unsigned char);
 }
 
 void UHTTP2::addHpackDynTblEntry(HpackDynamicTable* table, const UString& name, const UString& value)
@@ -464,7 +515,6 @@ void UHTTP2::addHpackDynTblEntry(HpackDynamicTable* table, const UString& name, 
    U_TRACE(1, "UHTTP2::addHpackDynTblEntry(%p,%V,%V)", table, name.rep, value.rep)
 
    U_INTERNAL_ASSERT(name)
-   U_INTERNAL_ASSERT(value)
 
    uint32_t size_add = name.size() + value.size() + HTTP2_HEADER_TABLE_ENTRY_SIZE_OFFSET;
 
@@ -488,6 +538,8 @@ void UHTTP2::addHpackDynTblEntry(HpackDynamicTable* table, const UString& name, 
          U_DEBUG("HTTP decompressor literal with index not inserted due to size (%u > %u)", size_add, table->hpack_capacity)
 
          U_SRV_LOG("WARNING: HTTP decompressor literal with index not inserted due to size (%u > %u)", size_add, table->hpack_capacity);
+
+         U_INTERNAL_DUMP("HTTP decompressor literal with index not inserted due to size (%u > %u)", size_add, table->hpack_capacity)
 
          return;
          }
@@ -585,7 +637,7 @@ void UHTTP2::decodeHeaders(unsigned char* ptr, unsigned char* endptr)
 
             U_http_info.nResponseCode = HTTP_ENTITY_TOO_LARGE;
 
-            UHTTP::setResponse(0, 0);
+            UHTTP::setResponse();
 
             return;
             }
@@ -771,7 +823,12 @@ void UHTTP2::decodeHeaders(UHashMap<UString>* table, HpackDynamicTable* dyntbl, 
 
          if (index != (int32_t)dyntbl->hpack_capacity)
             {
-            if (index > (int32_t)dyntbl->hpack_max_capacity) goto error;
+            if (index > (int32_t)dyntbl->hpack_max_capacity)
+               {
+               nerror = COMPRESSION_ERROR;
+
+               return;
+               }
 
             setHpackDynTblCapacity(dyntbl, index);
             }
@@ -804,13 +861,15 @@ check1:
 
             if (value)
                {
-               table->hash = name.hash();
+               table->hash = name.hashIgnoreCase();
 
                goto next;
                }
             }
 
-         goto error;
+         nerror = COMPRESSION_ERROR;
+
+         return;
          }
 
 check2:
@@ -830,26 +889,26 @@ check2:
              name = *(entry->name);
             value = *(entry->value);
 
-            table->hash = name.hash();
+            table->hash = name.hashIgnoreCase();
 
             goto insert;
             }
 
          U_DUMP_CONTAINER(*dyntbl)
-         U_DUMP_OBJECT_TO_TMP(*dyntbl, "dtable.hpack")
+         U_DUMP_OBJECT_TO_TMP(*dyntbl, dtable.hpack)
 
 #     if defined(U_STDCPP_ENABLE) && defined(DEBUG)
          continue;
 #     endif
 
-error:   nerror = COMPRESSION_ERROR;
+         nerror = COMPRESSION_ERROR;
 
          return;
          }
 
       // existing name
 
-      U_INTERNAL_PRINT("dispatch_table[%d] = %p &&cdefault = %p", index, dispatch_table[index], &&cdefault)
+      U_INTERNAL_DUMP("dispatch_table[%d] = %p &&cdefault = %p", index, dispatch_table[index], &&cdefault)
 
       goto *((char*)&&cdefault + dispatch_table[index]);
 
@@ -870,7 +929,12 @@ host: U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
       sz = value.size();
 
-      if (sz == 0) goto error;
+      if (sz == 0)
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       UHTTP::setHostname(value.data(), sz);
 
@@ -896,7 +960,12 @@ case_2_3: // GET - POST
 
          ptr1 = value.data();
 
-         if (*ptr1 == '\0') goto error;
+         if (*ptr1 == '\0')
+            {
+            nerror = COMPRESSION_ERROR;
+
+            return;
+            }
 
          switch (u_get_unalignedp32(ptr1))
             {
@@ -964,7 +1033,12 @@ case_4_5: // / - /index.html
 
          sz = value.size();
 
-         if (sz == 0) goto error;
+         if (sz == 0)
+            {
+            nerror = COMPRESSION_ERROR;
+
+            return;
+            }
 
          setURI(value.data(), sz);
          }
@@ -1015,7 +1089,12 @@ case_16: // accept-encoding: gzip, deflate
          {
          ptr = hpackDecodeString(ptr, endptr, &value);
 
-         if (value.empty()) goto error;
+         if (value.empty())
+            {
+            nerror = COMPRESSION_ERROR;
+
+            return;
+            }
          }
 
       setEncoding(value);
@@ -1036,7 +1115,12 @@ case_17: // accept-language
 
       U_http_accept_language_len = value.size();
 
-      if (U_http_accept_language_len == 0) goto error;
+      if (U_http_accept_language_len == 0)
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       U_http_info.accept_language = value.data();
 
@@ -1058,7 +1142,12 @@ case_19: // accept
 
       U_http_accept_len = value.size();
 
-      if (U_http_accept_len == 0) goto error;
+      if (U_http_accept_len == 0)
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       U_http_info.accept = value.data();
 
@@ -1076,7 +1165,12 @@ case_28: // content_length
 
       ptr = hpackDecodeString(ptr, endptr, &value);
 
-      if (value.empty()) goto error;
+      if (value.empty())
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
 #  ifdef DEBUG
       if (bdecodeHeadersDebug == false)
@@ -1105,7 +1199,12 @@ case_31: // content_type
       {
       U_http_content_type_len = value.size();
 
-      if (U_http_content_type_len == 0) goto error;
+      if (U_http_content_type_len == 0)
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       U_http_info.content_type = value.data();
 
@@ -1127,7 +1226,12 @@ case_32: // cookie
 
       sz = value.size();
 
-      if (sz == 0) goto error;
+      if (sz == 0)
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       if (U_http_info.cookie_len) value = UString(U_CAPACITY, "%.*s; %v", U_HTTP_COOKIE_TO_TRACE, value.rep);
 
@@ -1147,7 +1251,12 @@ case_35: // expect
 
       ptr = hpackDecodeString(ptr, endptr, &value);
 
-      if (value.empty()) goto error;
+      if (value.empty())
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       U_INTERNAL_DUMP("name = %V value = %V", hpack_static_table[35-1].name->rep, value.rep)
 
@@ -1175,7 +1284,12 @@ case_40: // if-modified-since
 
       ptr = hpackDecodeString(ptr, endptr, &value);
 
-      if (value.empty()) goto error;
+      if (value.empty())
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       U_http_info.if_modified_since = UTimeDate::getSecondFromTime(value.data(), true);
 
@@ -1196,7 +1310,12 @@ case_50: // range
 
       U_http_range_len = value.size() - U_CONSTANT_SIZE("bytes=");
 
-      if (U_http_range_len <= 0) goto error;
+      if (U_http_range_len <= 0)
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       U_http_info.range = value.data() + U_CONSTANT_SIZE("bytes=");
 
@@ -1217,7 +1336,12 @@ case_51: // referer
 
       U_http_info.referer_len = value.size();
 
-      if (U_http_info.referer_len == 0) goto error;
+      if (U_http_info.referer_len == 0)
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       U_http_info.referer = value.data();
 
@@ -1233,7 +1357,11 @@ case_57: // transfer-encoding
 
       U_SRV_LOG("WARNING: Transfer-Encoding is not supported in HTTP/2");
 
-      goto error;
+      U_INTERNAL_DUMP("Transfer-Encoding is not supported in HTTP/2")
+
+      nerror = COMPRESSION_ERROR;
+
+      return;
 
 case_58: // user-agent
 
@@ -1246,7 +1374,12 @@ case_58: // user-agent
 
       U_http_info.user_agent_len = value.size();
 
-      if (U_http_info.user_agent_len == 0) goto error;
+      if (U_http_info.user_agent_len == 0)
+         {
+         nerror = COMPRESSION_ERROR;
+
+         return;
+         }
 
       U_http_info.user_agent = value.data();
 
@@ -1259,9 +1392,30 @@ case_58: // user-agent
 cdefault:
       entry = hpack_static_table + --index;
 
+      name = *(entry->name);
+
       table->hash = hash_static_table[index];
 
-      name = *(entry->name);
+      U_INTERNAL_DUMP("table->hash = %u name = %V", table->hash, name.rep)
+
+      if (table->hash == 0)
+         {
+         value_is_indexed = false;
+
+         if (binsert_dynamic_table)
+            {
+            /*
+            binsert_dynamic_table = false;
+            addHpackDynTblEntry(dyntbl, name, UString::getStringNull());
+            */
+
+            nerror = COMPRESSION_ERROR;
+
+            return;
+            }
+
+         continue;
+         }
 
       // determine the value (if necessary)
 
@@ -1269,16 +1423,43 @@ cdefault:
          {
          value_is_indexed = false;
 
-         value = *(entry->value);
+         if (entry->value) value = *(entry->value);
+         else
+            {
+            U_INTERNAL_ASSERT_EQUALS(binsert_dynamic_table, false)
+
+            nerror = COMPRESSION_ERROR;
+
+            return;
+            }
          }
       else
          {
          ptr = hpackDecodeString(ptr, endptr, &value);
 
-         if (value.empty()) goto error;
+         if (value.empty())
+            {
+            if (binsert_dynamic_table)
+               {
+               /*
+               binsert_dynamic_table = false;
+               addHpackDynTblEntry(dyntbl, name, value);
+               */
+
+               nerror = COMPRESSION_ERROR;
+
+               return;
+               }
+
+            continue;
+            }
          }
 
-next: U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
+next:
+      U_INTERNAL_ASSERT(name)
+      U_INTERNAL_ASSERT(value)
+      U_INTERNAL_ASSERT(table->hash)
+      U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 
       if (binsert_dynamic_table)
          {
@@ -1290,6 +1471,7 @@ next: U_INTERNAL_ASSERT_EQUALS(value_is_indexed, false)
 insert:
       U_INTERNAL_ASSERT(name)
       U_INTERNAL_ASSERT(value)
+      U_INTERNAL_ASSERT(table->hash)
 
       table->insert(name, value); // add the decoded header to the header table
 
@@ -2416,9 +2598,13 @@ void UHTTP2::clearHpackDynTbl(HpackDynamicTable* table)
 
       UMemoryPool::_free(table->entries, table->entry_capacity, sizeof(HpackHeaderTableEntry));
 
+      table->entry_capacity    =
+      table->entry_start_index =
+      table->hpack_size        = 0;
       table->entries           = 0;
-      table->entry_capacity    = 0;
-      table->entry_start_index = 0;
+
+      U_INTERNAL_DUMP("num_entries = %u entry_capacity = %u entry_start_index = %u hpack_size = %u hpack_capacity = %u hpack_max_capacity = %u",
+                        table->num_entries, table->entry_capacity, table->entry_start_index, table->hpack_size, table->hpack_capacity, table->hpack_max_capacity)
       }
 }
 
@@ -2445,6 +2631,10 @@ void UHTTP2::reset(uint32_t idx, bool bsocket_open)
 #endif
 
    if (bsocket_open) sendGoAway();
+   else
+      {
+      pConnection->state = CONN_STATE_IDLE;
+      }
 
    U_INTERNAL_DUMP("U_http2_settings_len = %u", U_http2_settings_len)
 
@@ -2461,13 +2651,13 @@ int UHTTP2::handlerRequest()
    const char* ptr;
    uint32_t sz = (UServer_Base::pClientImage - UServer_Base::vClientImage);
 
-   U_INTERNAL_DUMP("sz = %u UNotifier::max_connection = %u", sz, UNotifier::max_connection)
+   U_INTERNAL_DUMP("idx = %u UNotifier::max_connection = %u", sz, UNotifier::max_connection)
 
    U_INTERNAL_ASSERT_MINOR(sz, UNotifier::max_connection)
 
    pStream = (pConnection = (vConnection + sz))->streams;
 
-   U_INTERNAL_DUMP("pConnection->state = %u pStream->state = %u", pConnection->state, pStream->state)
+   U_DUMP("pConnection->state = (%d, %s) pStream->state = (%d, %s)", pConnection->state, getConnectionStatusDescription(), pStream->state, getStreamStatusDescription())
 
    if (pConnection->state == CONN_STATE_OPEN)
       {
@@ -2606,7 +2796,7 @@ loop:
             U_http_info.nResponseCode = (U_http_method_type ? HTTP_OPTIONS_RESPONSE
                                                             : HTTP_NOT_IMPLEMENTED);
 
-            UHTTP::setResponse(0, 0);
+            UHTTP::setResponse();
 
             U_RETURN(U_PLUGIN_HANDLER_FINISHED);
             }

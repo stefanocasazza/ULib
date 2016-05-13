@@ -70,7 +70,7 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UTimeVal)
       }
 
-   // ASSEGNAZIONI
+   // ASSIGNMENT
 
    void set(long sec, long micro_sec = 0L)
       { tv_sec = sec; tv_usec = micro_sec; }

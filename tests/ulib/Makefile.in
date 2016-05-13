@@ -217,12 +217,13 @@ am__EXEEXT_19 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_multipart$(EXEEXT) test_command$(EXEEXT) \
 	test_dialog$(EXEEXT) test_rdb_server$(EXEEXT) \
 	test_json$(EXEEXT) test_server$(EXEEXT) test_redis$(EXEEXT) \
-	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
-	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
-	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
-	$(am__EXEEXT_10) $(am__EXEEXT_11) $(am__EXEEXT_12) \
-	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
-	$(am__EXEEXT_16) $(am__EXEEXT_17) $(am__EXEEXT_18)
+	test_elasticsearch$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
+	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
+	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
+	$(am__EXEEXT_9) $(am__EXEEXT_10) $(am__EXEEXT_11) \
+	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14) \
+	$(am__EXEEXT_15) $(am__EXEEXT_16) $(am__EXEEXT_17) \
+	$(am__EXEEXT_18)
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -290,6 +291,11 @@ am__test_digest_SOURCES_DIST = test_digest.cpp
 test_digest_OBJECTS = $(am_test_digest_OBJECTS)
 test_digest_LDADD = $(LDADD)
 test_digest_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
+am_test_elasticsearch_OBJECTS = test_elasticsearch.$(OBJEXT)
+test_elasticsearch_OBJECTS = $(am_test_elasticsearch_OBJECTS)
+test_elasticsearch_LDADD = $(LDADD)
+test_elasticsearch_DEPENDENCIES =  \
+	$(top_builddir)/src/ulib/lib@ULIB@.la
 am_test_entity_OBJECTS = test_entity.$(OBJEXT)
 test_entity_OBJECTS = $(am_test_entity_OBJECTS)
 test_entity_LDADD = $(LDADD)
@@ -585,31 +591,32 @@ SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
 	$(test_crl_SOURCES) $(test_curl_SOURCES) $(test_date_SOURCES) \
 	$(test_dbi_SOURCES) $(test_des3_SOURCES) \
 	$(test_dialog_SOURCES) $(test_digest_SOURCES) \
-	$(test_entity_SOURCES) $(test_event_SOURCES) \
-	$(test_expat_SOURCES) $(test_file_SOURCES) \
-	$(test_file_config_SOURCES) $(test_ftp_SOURCES) \
-	$(test_header_SOURCES) $(test_http_SOURCES) \
-	$(test_https_SOURCES) $(test_imap_SOURCES) \
-	$(test_interrupt_SOURCES) $(test_ipaddress_SOURCES) \
-	$(test_json_SOURCES) $(test_ldap_SOURCES) $(test_log_SOURCES) \
-	$(test_magic_SOURCES) $(test_memory_pool_SOURCES) \
-	$(test_mongodb_SOURCES) $(test_multipart_SOURCES) \
-	$(test_notifier_SOURCES) $(test_options_SOURCES) \
-	$(test_orm_SOURCES) $(test_pcre_SOURCES) \
-	$(test_pkcs10_SOURCES) $(test_pkcs7_SOURCES) \
-	$(test_plugin_SOURCES) $(test_pop3_SOURCES) \
-	$(test_process_SOURCES) $(test_query_parser_SOURCES) \
-	$(test_rdb_SOURCES) $(test_rdb_client_SOURCES) \
-	$(test_rdb_server_SOURCES) $(test_redis_SOURCES) \
-	$(test_server_SOURCES) $(test_services_SOURCES) \
-	$(test_smtp_SOURCES) $(test_soap_client_SOURCES) \
-	$(test_soap_server_SOURCES) $(test_socket_SOURCES) \
-	$(test_ssh_client_SOURCES) $(test_ssl_client_SOURCES) \
-	$(test_ssl_server_SOURCES) $(test_string_SOURCES) \
-	$(test_tdb_SOURCES) $(test_thread_SOURCES) \
-	$(test_timer_SOURCES) $(test_timestamp_SOURCES) \
-	$(test_timeval_SOURCES) $(test_tokenizer_SOURCES) \
-	$(test_tree_SOURCES) $(test_unixsocket_client_SOURCES) \
+	$(test_elasticsearch_SOURCES) $(test_entity_SOURCES) \
+	$(test_event_SOURCES) $(test_expat_SOURCES) \
+	$(test_file_SOURCES) $(test_file_config_SOURCES) \
+	$(test_ftp_SOURCES) $(test_header_SOURCES) \
+	$(test_http_SOURCES) $(test_https_SOURCES) \
+	$(test_imap_SOURCES) $(test_interrupt_SOURCES) \
+	$(test_ipaddress_SOURCES) $(test_json_SOURCES) \
+	$(test_ldap_SOURCES) $(test_log_SOURCES) $(test_magic_SOURCES) \
+	$(test_memory_pool_SOURCES) $(test_mongodb_SOURCES) \
+	$(test_multipart_SOURCES) $(test_notifier_SOURCES) \
+	$(test_options_SOURCES) $(test_orm_SOURCES) \
+	$(test_pcre_SOURCES) $(test_pkcs10_SOURCES) \
+	$(test_pkcs7_SOURCES) $(test_plugin_SOURCES) \
+	$(test_pop3_SOURCES) $(test_process_SOURCES) \
+	$(test_query_parser_SOURCES) $(test_rdb_SOURCES) \
+	$(test_rdb_client_SOURCES) $(test_rdb_server_SOURCES) \
+	$(test_redis_SOURCES) $(test_server_SOURCES) \
+	$(test_services_SOURCES) $(test_smtp_SOURCES) \
+	$(test_soap_client_SOURCES) $(test_soap_server_SOURCES) \
+	$(test_socket_SOURCES) $(test_ssh_client_SOURCES) \
+	$(test_ssl_client_SOURCES) $(test_ssl_server_SOURCES) \
+	$(test_string_SOURCES) $(test_tdb_SOURCES) \
+	$(test_thread_SOURCES) $(test_timer_SOURCES) \
+	$(test_timestamp_SOURCES) $(test_timeval_SOURCES) \
+	$(test_tokenizer_SOURCES) $(test_tree_SOURCES) \
+	$(test_unixsocket_client_SOURCES) \
 	$(test_unixsocket_server_SOURCES) $(test_url_SOURCES) \
 	$(test_vector_SOURCES) $(test_zip_SOURCES)
 DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
@@ -621,14 +628,15 @@ DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(am__test_curl_SOURCES_DIST) $(test_date_SOURCES) \
 	$(am__test_dbi_SOURCES_DIST) $(am__test_des3_SOURCES_DIST) \
 	$(test_dialog_SOURCES) $(am__test_digest_SOURCES_DIST) \
-	$(test_entity_SOURCES) $(am__test_event_SOURCES_DIST) \
-	$(am__test_expat_SOURCES_DIST) $(test_file_SOURCES) \
-	$(test_file_config_SOURCES) $(test_ftp_SOURCES) \
-	$(test_header_SOURCES) $(test_http_SOURCES) \
-	$(am__test_https_SOURCES_DIST) $(test_imap_SOURCES) \
-	$(am__test_interrupt_SOURCES_DIST) $(test_ipaddress_SOURCES) \
-	$(test_json_SOURCES) $(am__test_ldap_SOURCES_DIST) \
-	$(test_log_SOURCES) $(am__test_magic_SOURCES_DIST) \
+	$(test_elasticsearch_SOURCES) $(test_entity_SOURCES) \
+	$(am__test_event_SOURCES_DIST) $(am__test_expat_SOURCES_DIST) \
+	$(test_file_SOURCES) $(test_file_config_SOURCES) \
+	$(test_ftp_SOURCES) $(test_header_SOURCES) \
+	$(test_http_SOURCES) $(am__test_https_SOURCES_DIST) \
+	$(test_imap_SOURCES) $(am__test_interrupt_SOURCES_DIST) \
+	$(test_ipaddress_SOURCES) $(test_json_SOURCES) \
+	$(am__test_ldap_SOURCES_DIST) $(test_log_SOURCES) \
+	$(am__test_magic_SOURCES_DIST) \
 	$(am__test_memory_pool_SOURCES_DIST) $(test_mongodb_SOURCES) \
 	$(test_multipart_SOURCES) $(test_notifier_SOURCES) \
 	$(test_options_SOURCES) $(am__test_orm_SOURCES_DIST) \
@@ -1061,7 +1069,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = ## dist-shar dist-zip
-EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg file_config.cf file_config.gperf file_config.gperf.sh file_config.key test_bison.h
+EXTRA_DIST = random.cdb plugin inp ok *.test *.cpp CA private server_rpc.cfg file_config.cf file_config.gperf \
+				 file_config.gperf.sh file_config.key test_bison.h dialog.test redis.test elasticsearch.test
+
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
@@ -1073,12 +1083,13 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_imap test_ftp test_http test_rdb_client test_tokenizer \
 	test_query_parser test_multipart test_command test_dialog \
 	test_rdb_server test_json test_server test_redis \
-	$(am__append_1) $(am__append_2) $(am__append_4) \
-	$(am__append_6) $(am__append_8) $(am__append_10) \
-	$(am__append_12) $(am__append_14) $(am__append_16) \
-	$(am__append_18) $(am__append_20) $(am__append_22) \
-	$(am__append_24) $(am__append_26) $(am__append_28) \
-	$(am__append_30) $(am__append_32) $(am__append_36)
+	test_elasticsearch $(am__append_1) $(am__append_2) \
+	$(am__append_4) $(am__append_6) $(am__append_8) \
+	$(am__append_10) $(am__append_12) $(am__append_14) \
+	$(am__append_16) $(am__append_18) $(am__append_20) \
+	$(am__append_22) $(am__append_24) $(am__append_26) \
+	$(am__append_28) $(am__append_30) $(am__append_32) \
+	$(am__append_36)
 TST = timeval.test timer.test notifier.test string.test file.test \
 	cdb.test rdb.test file_config.test log.test vector.test \
 	options.test application.test tree.test compress.test \
@@ -1130,6 +1141,7 @@ test_json_SOURCES = test_json.cpp
 test_server_SOURCES = test_server.cpp
 test_redis_SOURCES = test_redis.cpp
 test_mongodb_SOURCES = test_mongodb.cpp
+test_elasticsearch_SOURCES = test_elasticsearch.cpp
 @PTHREAD_TRUE@test_thread_SOURCES = test_thread.cpp
 @ZIP_TRUE@test_zip_SOURCES = test_zip.cpp
 @LIBTDB_TRUE@test_tdb_SOURCES = test_tdb.cpp
@@ -1301,6 +1313,10 @@ test_dialog$(EXEEXT): $(test_dialog_OBJECTS) $(test_dialog_DEPENDENCIES) $(EXTRA
 test_digest$(EXEEXT): $(test_digest_OBJECTS) $(test_digest_DEPENDENCIES) $(EXTRA_test_digest_DEPENDENCIES) 
 	@rm -f test_digest$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_digest_OBJECTS) $(test_digest_LDADD) $(LIBS)
+
+test_elasticsearch$(EXEEXT): $(test_elasticsearch_OBJECTS) $(test_elasticsearch_DEPENDENCIES) $(EXTRA_test_elasticsearch_DEPENDENCIES) 
+	@rm -f test_elasticsearch$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(test_elasticsearch_OBJECTS) $(test_elasticsearch_LDADD) $(LIBS)
 
 test_entity$(EXEEXT): $(test_entity_OBJECTS) $(test_entity_DEPENDENCIES) $(EXTRA_test_entity_DEPENDENCIES) 
 	@rm -f test_entity$(EXEEXT)
@@ -1545,6 +1561,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_des3.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_dialog.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_digest.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_elasticsearch.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_entity.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_event.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_expat.Po@am__quote@

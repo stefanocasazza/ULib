@@ -94,7 +94,7 @@ $SLEEP
 
 rm -f TSA/response/response*
 
-TIMEOUT 6 $LCMD <TSA/request/soap.req >TSA/response/soap.res 2>>err/tsa_ssoap.err
+TIMEOUT 6 $LCMD <TSA/request/soap.req >TSA/response/soap.res 2>>err/userver_ssl.err
  tail -c +471 TSA/response/soap.res | cut -d'<' -f1 | $WINELOADER ../base/crypto_base64$SUFFIX -d > TSA/response/soap.tsr
 #tail -c +471 TSA/response/soap.res																					  > TSA/response/soap.tsr
 

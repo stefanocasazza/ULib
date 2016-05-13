@@ -98,7 +98,7 @@ int USoapPlugIn::handlerRequest()
 
          U_http_info.nResponseCode = HTTP_OK;
 
-         UHTTP::setResponse(UString::str_ctype_soap, &body);
+         UHTTP::setResponse(*UString::str_ctype_soap, &body);
          }
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);

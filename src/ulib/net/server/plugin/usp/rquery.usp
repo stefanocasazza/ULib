@@ -5,6 +5,7 @@ TechEmpower Web Framework Benchmarks
 <!--#declaration
 #include "world.h"
 
+static char buffer[128];
 static UREDISClient_Base* rc;
 static UVector<World*>* pvworld_query;
 
@@ -56,7 +57,7 @@ Content-Type: application/json
 <!--#code
 World* pworld;
 UStringRep* rep;
-char* pbuffer = u_buffer;
+char* pbuffer = buffer;
 int i, num_queries = UHTTP::getFormFirstNumericValue(1, 500);
 
 #ifdef AS_cpoll_cppsp_DO
@@ -74,7 +75,7 @@ for (i = 0; i < num_queries; ++i)
    pbuffer += 7+u_num2str32(pbuffer+7, pworld->id = u_get_num_random(10000-1));
    }
 
-(void) rc->mget(u_buffer, pbuffer-u_buffer);
+(void) rc->mget(buffer, pbuffer-buffer);
 
 i = 0;
 

@@ -6,6 +6,7 @@ TechEmpower Web Framework Benchmarks
 #include "world.h"
 
 static World* pworld;
+static char buffer[128];
 static UREDISClient_Base* rc;
 
 #ifndef AS_cpoll_cppsp_DO
@@ -31,7 +32,7 @@ static void usp_fork_rdb()
    U_NEW(UValue, pvalue, UValue(OBJECT_VALUE));
 #endif
 
-   u__memcpy(u_buffer, "world:", U_CONSTANT_SIZE("world:"), __PRETTY_FUNCTION__);
+   u__memcpy(buffer, "world:", U_CONSTANT_SIZE("world:"), __PRETTY_FUNCTION__);
 }
 
 #ifdef DEBUG
@@ -58,7 +59,7 @@ Content-Type: application/json
 <!--#code
 UStringRep* rep;
 
-(void) rc->get(u_buffer, 6+u_num2str32(u_buffer+6, pworld->id = u_get_num_random(10000-1)));
+(void) rc->get(buffer, 6+u_num2str32(buffer+6, pworld->id = u_get_num_random(10000-1)));
 
 rep = rc->vitem[0].rep;
 

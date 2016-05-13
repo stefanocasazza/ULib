@@ -63,12 +63,12 @@ done
 #mkdir -p /tmp/web_server
 #for i in $LS
 #do
-# TIMEOUT 10 $LCMD1 <inp/http/and/$i >/tmp/web_server/$i
+#TIMEOUT 10 $LCMD1 <inp/http/and/$i >/tmp/web_server/$i
 #done
 
 #TIMEOUT 10 $LCMD 10.30.1.111:4443 <inp/http/all6.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 #exit 0
-#TIMEOUT 10 $LCMD1					 <inp/http/all5.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+#TIMEOUT 10 $LCMD1					  <inp/http/all5.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 #return
 
 LS=`ls inp/http/close`

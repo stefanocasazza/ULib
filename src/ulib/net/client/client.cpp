@@ -350,20 +350,21 @@ bool UClient_Base::remoteIPAddress(UIPAddress& addr)
    U_RETURN(false);
 }
 
-bool UClient_Base::setUrl(const UString& location)
+bool UClient_Base::setUrl(const char* str, uint32_t len)
 {
-   U_TRACE(0, "UClient_Base::setUrl(%V)", location.rep)
+   U_TRACE(0, "UClient_Base::setUrl(%.*S,%u)", len, str, len)
 
-   U_INTERNAL_ASSERT(location)
+   U_INTERNAL_ASSERT_POINTER(str)
+   U_INTERNAL_ASSERT_MAJOR(len, 0)
 
    // check we've been passed a absolute URL
 
-   if (u_isUrlScheme(U_STRING_TO_PARAM(location)) == 0)
+   if (u_isUrlScheme(str, len) == 0)
       {
       char* p;
       char* ptr;
       char* dest;
-      uint32_t len;
+      uint32_t sz;
       char buf[U_PATH_MAX];
 
       const char*  src =       uri.data();
@@ -379,19 +380,17 @@ bool UClient_Base::setUrl(const UString& location)
 
          if (p == 0) break;
 
-         len = p - src + 1;
+         sz = p - src + 1;
 
-         U_INTERNAL_DUMP("segment = %.*S", len, src)
+         U_INTERNAL_DUMP("segment = %.*S", sz, src)
 
-         U_MEMCPY(dest, src, len);
+         U_MEMCPY(dest, src, sz);
 
          src   = p + 1;
-         dest += len;
+         dest += sz;
          }
 
-      len = location.size();
-
-      U_MEMCPY(dest, location.data(), len);
+      U_MEMCPY(dest, str, len);
 
       (void) uri.replace(buf, dest - ptr + len);
 
@@ -400,7 +399,7 @@ bool UClient_Base::setUrl(const UString& location)
       U_RETURN(false);
       }
 
-   url.set(location);
+   url.set(str, len);
 
    if (socket->isSSL()) socket->setSSLActive(url.isHTTPS());
 

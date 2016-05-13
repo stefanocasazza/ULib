@@ -214,7 +214,7 @@ int UProxyPlugIn::handlerRequest()
                   }
 #           endif
 
-               UHTTP::setResponse(&content_type, &body);
+               UHTTP::setResponse(content_type, &body);
                }
             }
 #     ifndef U_LOG_DISABLE

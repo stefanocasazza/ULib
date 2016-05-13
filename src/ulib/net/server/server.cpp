@@ -3140,7 +3140,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
       U_INTERNAL_ASSERT(CLIENT_INDEX->logbuf->isNullTerminated())
 
       char buffer[32];
-      uint32_t len = getNumConnection(buffer);
+      uint32_t len = setNumConnection(buffer);
 
       ULog::log("New client connected from %v, %.*s clients currently connected", CLIENT_INDEX->logbuf->rep, len, buffer);
 
@@ -3251,9 +3251,9 @@ end:
 #undef CLIENT_IMAGE_HANDLER_READ
 
 #ifndef U_LOG_DISABLE
-uint32_t UServer_Base::getNumConnection(char* ptr)
+uint32_t UServer_Base::setNumConnection(char* ptr)
 {
-   U_TRACE(0, "UServer_Base::getNumConnection(%p)", ptr)
+   U_TRACE(0, "UServer_Base::setNumConnection(%p)", ptr)
 
    uint32_t len;
 

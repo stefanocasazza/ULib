@@ -55,7 +55,7 @@ $SLEEP
 
 rm -f TSA/response/rpc*
 
-TIMEOUT 4 $LCMD <TSA/request/rpc.req.bin >TSA/response/rpc.res 2>>err/tsa_rpc.err
+TIMEOUT 4 $LCMD <TSA/request/rpc.req.bin >TSA/response/rpc.res 2>>err/userver_ssl.err
 tail -c +13 TSA/response/rpc.res > TSA/response/rpc.tsr
 
 TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
@@ -63,7 +63,7 @@ TSA/bin/openssl ts -verify -queryfile TSA/request/tsq.req \
 
 rm -f TSA/response/rpc*
 
-TIMEOUT 4 $LCMD <TSA/request/rpc.req.b64 >TSA/response/rpc.res 2>>err/tsa_rpc.err
+TIMEOUT 4 $LCMD <TSA/request/rpc.req.b64 >TSA/response/rpc.res 2>>err/userver_ssl.err
 tail -c +13 TSA/response/rpc.res > TSA/response/rpc.tsr
 
 $SLEEP

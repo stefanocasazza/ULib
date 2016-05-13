@@ -286,9 +286,18 @@ public:
    };
 
    static void setDynamicResponse();
-   static void setResponse(const UString* content_type, UString* pbody);
+   static void setResponse(const UString& content_type, UString* pbody);
    static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
-   static void setErrorResponse(const UString* content_type, int code, const char* fmt, uint32_t len);
+   static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t len);
+
+   static void setResponse()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::setResponse()")
+
+      ext->clear();
+
+      handlerResponse();
+      }
 
    // set HTTP main error message
 
@@ -296,7 +305,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setNotFound()")
 
-      setErrorResponse(UString::str_ctype_html, HTTP_NOT_FOUND, "Your requested URL %.*S was not found on this server", 0);
+      setErrorResponse(*UString::str_ctype_html, HTTP_NOT_FOUND, "Your requested URL %.*S was not found on this server", 0);
       }
 
    static void setBadMethod()
@@ -305,7 +314,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, HTTP_BAD_METHOD)
 
-      setErrorResponse(UString::str_ctype_html, HTTP_BAD_METHOD, "The requested method is not allowed for the URL %.*S", 0);
+      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_METHOD, "The requested method is not allowed for the URL %.*S", 0);
       }
 
    static void setBadRequest()
@@ -314,7 +323,7 @@ public:
 
       UClientImage_Base::resetPipelineAndSetCloseConnection();
 
-      setErrorResponse(UString::str_ctype_html, HTTP_BAD_REQUEST, "Your requested URL %.*S was a request that this server could not understand", 0);
+      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_REQUEST, "Your requested URL %.*S was a request that this server could not understand", 0);
       }
 
    static void setForbidden()
@@ -323,14 +332,14 @@ public:
 
       UClientImage_Base::setRequestForbidden();
 
-      setErrorResponse(UString::str_ctype_html, HTTP_FORBIDDEN, "You don't have permission to access %.*S on this server", 0);
+      setErrorResponse(*UString::str_ctype_html, HTTP_FORBIDDEN, "You don't have permission to access %.*S on this server", 0);
       }
 
    static void setInternalError()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setInternalError()")
 
-      setErrorResponse(UString::str_ctype_html, HTTP_INTERNAL_ERROR,
+      setErrorResponse(*UString::str_ctype_html, HTTP_INTERNAL_ERROR,
                        U_CONSTANT_TO_PARAM("The server encountered an internal error or misconfiguration "
                                            "and was unable to complete your request. Please contact the server "
                                            "administrator, and inform them of the time the error occurred, and "
@@ -342,7 +351,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setServiceUnavailable()")
 
-      setErrorResponse(UString::str_ctype_html, HTTP_UNAVAILABLE,
+      setErrorResponse(*UString::str_ctype_html, HTTP_UNAVAILABLE,
                        U_CONSTANT_TO_PARAM("Sorry, the service you requested is not available at this moment. "
                                            "Please contact the server administrator and inform them about this"));
       }

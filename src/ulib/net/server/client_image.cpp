@@ -247,7 +247,7 @@ void UClientImage_Base::saveRequestResponse()
 
    if (U_http_version == '2')
       {
-      U_DUMP_OBJECT_TO_TMP(UHTTP2::pConnection->itable, "request")
+      U_DUMP_OBJECT_TO_TMP(UHTTP2::pConnection->itable, request)
 
       return;
       }
@@ -442,7 +442,7 @@ void UClientImage_Base::handlerDelete()
       U_INTERNAL_DUMP("UEventFd::fd = %d logbuf = %V", UEventFd::fd, logbuf->rep)
 
       char buffer[32];
-      uint32_t len = UServer_Base::getNumConnection(buffer);
+      uint32_t len = UServer_Base::setNumConnection(buffer);
 
       ULog::log("%s%.6s close connection from %v, %.*s clients still connected", UServer_Base::mod_name[0], bsocket_open ? "Client" : "Server", logbuf->rep, len, buffer);
 

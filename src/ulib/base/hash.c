@@ -22,19 +22,19 @@
  * Quick 4byte hashing function
  *
  * References: http://mia.ece.uic.edu/cgi-bin/lxr/http/ident?v=ipband-0.7.2;i=makehash
- * -----------------------------------------------------------------------------------
- *  Performs a one to one mapping between input integer and output integers, in other words, two different
- *  input integers i, j will ALWAYS result in two different output hash(i) and hash(j). This hash function
- *  is designed so that a changing just one bit in input 'i' will potentially affect the every bit in hash(i),
- *  and the correlation between succesive hashes is (hopefully) extremely small (if not zero). It also can be
- *  used as a quick, dirty, portable and open source random number generator that generates randomness on all 32 bits
+ * -----------------------------------------------------------------------------------------------------------------
+ * Performs a one to one mapping between input integer and output integers, in other words, two different
+ * input integers i, j will ALWAYS result in two different output hash(i) and hash(j). This hash function
+ * is designed so that a changing just one bit in input 'i' will potentially affect the every bit in hash(i),
+ * and the correlation between succesive hashes is (hopefully) extremely small (if not zero). It also can be
+ * used as a quick, dirty, portable and open source random number generator that generates randomness on all 32 bits
  */
 
 __pure uint32_t u_random(uint32_t a)
 {
    /**
     * Random sequence table - source of random numbers.
-    * The random() routine 'amplifies' this 2**8 long sequence into a 2**32 long sequence.
+    * The random() routine 'amplifies' this 2**8 long sequence into a 2**32 long sequence
     */
 
    static const unsigned char rseq[259] = {

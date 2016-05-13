@@ -630,7 +630,7 @@ int UHttpClient_Base::sendRequestAsync(const UString& _url, bool bqueue, const c
       {
       // we need to compose the request to the HTTP server...
 
-      composeRequest("application/x-www-form-urlencoded");
+      composeRequest(U_CONSTANT_TO_PARAM("application/x-www-form-urlencoded"));
 
       UClient_Base::adjustTimeOut();
 
@@ -722,9 +722,10 @@ void UHttpClient_Base::parseRequest(uint32_t n)
    UClient_Base::iov[2].iov_len  = last_request.size() - startHeader;
 }
 
-UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, uint32_t method_num, const char* _uri, uint32_t uri_len, const char* extension, const char* content_type)
+UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, uint32_t method_num, const char* _uri,
+                                      uint32_t uri_len, const char* extension, const char* content_type, uint32_t content_type_len)
 {
-   U_TRACE(0, "UHttpClient_Base::wrapRequest(%p,%V,%u,%.*S,%u,%S,%S)", req, host_port.rep, method_num, uri_len, _uri, uri_len, extension, content_type)
+   U_TRACE(0, "UHttpClient_Base::wrapRequest(%p,%V,%u,%.*S,%u,%S,%.*S,%u)",req,host_port.rep,method_num,uri_len,_uri,uri_len,extension,content_type_len,content_type,content_type_len)
 
    U_INTERNAL_ASSERT_MAJOR(uri_len, 0)
    U_INTERNAL_ASSERT_MAJOR(U_http_method_list[0].len, 0)
@@ -747,11 +748,12 @@ UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, ui
       {
       U_INTERNAL_ASSERT(*req)
       U_INTERNAL_ASSERT_POINTER(content_type)
+      U_INTERNAL_ASSERT_MAJOR(content_type_len, 0)
 
-      tmp.snprintf_add("Content-Type: %s\r\n"
+      tmp.snprintf_add("Content-Type: %.*s\r\n"
                        "Content-Length: %u\r\n"
                        "\r\n",
-                       content_type,
+                       content_type_len, content_type,
                        req->size());
 
       (void) tmp.append(*req);
@@ -760,9 +762,9 @@ UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, ui
    U_RETURN_STRING(tmp);
 }
 
-void UHttpClient_Base::composeRequest(const char* content_type)
+void UHttpClient_Base::composeRequest(const char* content_type, uint32_t content_type_len)
 {
-   U_TRACE(0, "UHttpClient_Base::composeRequest(%S)", content_type)
+   U_TRACE(0, "UHttpClient_Base::composeRequest(%.*S,%u)", content_type_len, content_type, content_type_len)
 
    U_INTERNAL_ASSERT(UClient_Base::uri)
 
@@ -776,7 +778,8 @@ void UHttpClient_Base::composeRequest(const char* content_type)
       }
    else
       {
-      U_INTERNAL_ASSERT_EQUALS(method_num, 2) // POST 
+      U_INTERNAL_ASSERT_POINTER(content_type)
+      U_INTERNAL_ASSERT_MAJOR(content_type_len, 0)
 
       uint32_t sz = body.size();
 
@@ -787,13 +790,14 @@ void UHttpClient_Base::composeRequest(const char* content_type)
 
       (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
 
-      last_request.snprintf("POST %v HTTP/1.1\r\n"
+      last_request.snprintf("%.*s %v HTTP/1.1\r\n"
                             "Host: %v:%u\r\n"
                             "User-Agent: ULib/1.0\r\n"
                             "Content-Length: %d\r\n"
-                            "Content-Type: %s\r\n"
+                            "Content-Type: %.*s\r\n"
                             "\r\n",
-                            UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, sz, content_type);
+                            U_HTTP_METHOD_NUM_TO_TRACE(method_num),
+                            UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, sz, content_type_len, content_type);
 
       parseRequest(4);
       }
@@ -936,9 +940,27 @@ bool UHttpClient_Base::sendRequest(const UString& req)
    U_RETURN(result);
 }
 
-bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const char* content_type)
+bool UHttpClient_Base::sendRequest(int method, const char* content_type, uint32_t content_type_len, const char* data, uint32_t data_len, const char* _uri, uint32_t uri_len)
 {
-   U_TRACE(0, "UHttpClient_Base::sendPost(%V,%V,%S)", _url.rep, _body.rep, content_type)
+   U_TRACE(0, "UHttpClient_Base::sendRequest(%d,%.*S,%u,%.*S,%u,%.*S,%u)", method, content_type_len, content_type, content_type_len, data_len, data, data_len, uri_len, _uri, uri_len)
+
+   if ( uri_len) (void) setUrl(_uri, uri_len);
+   if (data_len) (void) body.assign(data, data_len);
+
+   method_num = method;
+
+   composeRequest(content_type, content_type_len);
+
+   // send post request to server and get response
+
+   if (sendRequest()) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
+bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const char* content_type, uint32_t content_type_len)
+{
+   U_TRACE(0, "UHttpClient_Base::sendPost(%V,%V,%.*S,%u)", _url.rep, _body.rep, content_type_len, content_type, content_type_len)
 
    if (UClient_Base::connectServer(_url) == false)
       {
@@ -947,14 +969,9 @@ bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const
       U_RETURN(false);
       }
 
-   body       = _body;
-   method_num = 2; // POST
+   // send POST(2) request to server and get response
 
-   composeRequest(content_type);
-
-   // send post request to server and get response
-
-   if (sendRequest()) U_RETURN(true);
+   if (sendRequest(2, content_type, content_type_len, U_STRING_TO_PARAM(_body), 0, 0)) U_RETURN(true);
 
    U_RETURN(false);
 }

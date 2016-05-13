@@ -16,15 +16,6 @@
 
 // gcc: call is unlikely and code size would grow
 
-void Url::set(const UString& x)
-{
-   U_TRACE(0, "Url::set(%V)", x.rep)
-
-   url = x;
-
-   findpos();
-}
-
 UString Url::getService() const
 {
    U_TRACE_NO_PARAM(0, "Url::getService()")

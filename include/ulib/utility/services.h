@@ -222,7 +222,6 @@ struct U_EXPORT UServices {
       X509_STORE_set_verify_cb_func(store, func);
       }
 
-   static void setOpenSSLError();
    static void releaseEngine(ENGINE* e, bool bkey);
    static int X509Callback(int ok, X509_STORE_CTX* ctx);
    static UString getFileName(long hash, bool crl = false);

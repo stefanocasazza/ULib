@@ -618,7 +618,7 @@ protected:
    // VARIE
 
 #ifndef U_LOG_DISABLE
-   static uint32_t getNumConnection(char* buffer);
+   static uint32_t setNumConnection(char* buffer);
 #endif
 
    // define method VIRTUAL of class UEventFd
