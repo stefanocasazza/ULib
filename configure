@@ -30630,6 +30630,9 @@ if test "$gcc_version" = "5.3.1"; then
 	if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413"; then
 		ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
 	fi
+# TRAVIS CI
+elif test "$gcc_version" = "4.9.3"; then
+	ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
 fi
 
 # Check for availablity of "old style" C++ strstream header
