@@ -129,9 +129,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClient_Base::reset()")
 
-#  ifdef DEBUG
       uri.clear(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE... (uri can be a substr of url)
-#  endif
       url.clear();
       }
 

@@ -82,9 +82,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UMimeEntity::isEmpty()")
 
-      bool result = content.empty();
+      if (content.empty()) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    void clear()
@@ -189,21 +189,27 @@ public:
 
       UString value = getContentDisposition();
 
-      bool result = (value.empty()                         == false &&
-                     U_STRING_FIND(value, 0, "attachment") != U_NOT_FOUND);
+      if (value.empty()                         == false &&
+          U_STRING_FIND(value, 0, "attachment") != U_NOT_FOUND)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isBodyMessage() const
       {
       U_TRACE_NO_PARAM(0, "UMimeEntity::isBodyMessage()")
 
-      bool result = (isText()                                                                                        &&
-                     UMimeHeader::getValueAttributeFromKeyValue(content_type, U_CONSTANT_TO_PARAM("name"), false).empty() &&
-                     isAttachment() == false);
+      if (isText()                                                                                             &&
+          UMimeHeader::getValueAttributeFromKeyValue(content_type, U_CONSTANT_TO_PARAM("name"), false).empty() &&
+          isAttachment() == false)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    UString getFileName() const { return UMimeHeader::getFileName(getContentDisposition()); }
@@ -312,9 +318,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:
@@ -391,9 +397,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:
@@ -414,9 +420,13 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UMimeMultipart::isEmpty()")
 
-      bool result = (UMimeEntity::isEmpty() && getNumBodyPart() == 0);
+      if (UMimeEntity::isEmpty() &&
+          getNumBodyPart() == 0)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    void setEmpty()

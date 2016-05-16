@@ -5,9 +5,10 @@ TechEmpower Web Framework Benchmarks
 <!--#declaration
 #include "world.h"
 
+static char* pbuffer1;
+static char* pbuffer2;
 static char buffer1[128];
 static char buffer2[128];
-static World* pworld_update;
 static UElasticSearchClient* es;
 
 #ifndef AS_cpoll_cppsp_DO
@@ -31,15 +32,18 @@ static void usp_fork_eupdate()
       return;
       }
 
-   U_NEW(World, pworld_update, World);
+   u__memcpy(buffer1, "/tfb/world/", ULEN, __PRETTY_FUNCTION__);
+
+   pbuffer1 = buffer1 + ULEN;
+
+   u__memcpy(buffer2, "{\"doc\":{\"_id\":\"", QLEN, __PRETTY_FUNCTION__);
+
+   pbuffer2 = buffer2 + QLEN;
 
 #ifndef AS_cpoll_cppsp_DO
    U_NEW(UValue, pvalue, UValue(ARRAY_VALUE));
    U_NEW(UVector<World*>, pvworld_update, UVector<World*>(500));
 #endif
-
-   u__memcpy(buffer1, "/tfb/world/",          ULEN, __PRETTY_FUNCTION__);
-   u__memcpy(buffer2, "{\"doc\":{\"_id\":\"", QLEN, __PRETTY_FUNCTION__);
 }
 
 #ifdef DEBUG
@@ -49,15 +53,13 @@ static void usp_end_eupdate()
 
    delete es;
 
-   if (pworld_update)
+#ifndef AS_cpoll_cppsp_DO
+   if (pvalue)
       {
-      delete pworld_update;
-
-#  ifndef AS_cpoll_cppsp_DO
       delete pvalue;
       delete pvworld_update;
-#  endif
       }
+#endif
 }
 #endif
 -->
@@ -65,7 +67,7 @@ static void usp_end_eupdate()
 Content-Type: application/json
 -->
 <!--#code
-World* pworld;
+uint32_t len1, len2, id, rnum;
 int i = 0, num_queries = UHTTP::getFormFirstNumericValue(1, 500);
 
 #ifdef AS_cpoll_cppsp_DO
@@ -74,14 +76,17 @@ USP_PUTS_CHAR('[');
 
 while (true)
    {
-   (void) es->sendPOST(buffer1, ULEN+u__snprintf(buffer1+ULEN, 128, "%u/_update", pworld_update->id           = u_get_num_random(10000-1)),
-                       buffer2, QLEN+u__snprintf(buffer2+QLEN, 128, "%u\"}}",     pworld_update->randomNumber = u_get_num_random(10000-1)));
+   len1 = u__snprintf(pbuffer1, 100, "%u/_update", id = u_get_num_random(10000-1));
+   len2 = u__snprintf(pbuffer2, 100, "%u\"}}",   rnum = u_get_num_random(10000-1));
+
+   (void) es->sendPOST(buffer1, len1+ULEN, buffer2, len2+QLEN);
 
 #ifdef AS_cpoll_cppsp_DO
-   USP_PRINTF("{\"id\":%u,\"randomNumber\":%u}", pworld_update->id, pworld_update->randomNumber);
+   USP_PRINTF("{\"id\":%u,\"randomNumber\":%u}", id, rnum);
 #else
+   World* pworld;
 
-   U_NEW(World, pworld, World(*pworld_update));
+   U_NEW(World, pworld, World(id, rnum));
 
    pvworld_update->push_back(pworld);
 #endif

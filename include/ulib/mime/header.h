@@ -189,9 +189,10 @@ public:
 
       U_ASSERT(empty() == false)
 
-      bool result = getHeader(U_CONSTANT_TO_PARAM("Connection")).equal(U_CONSTANT_TO_PARAM("close"));
+      if (getHeader(U_CONSTANT_TO_PARAM("Connection")).equal(U_CONSTANT_TO_PARAM("close")))
 
-      U_RETURN(result);
+      U_RETURN(true);
+      U_RETURN(false);
       }
 
    // Transfer-Encoding: chunked
@@ -202,9 +203,9 @@ public:
 
       U_ASSERT(empty() == false)
 
-      bool result = (getHeader(U_CONSTANT_TO_PARAM("Transfer-Encoding")) == *UString::str_chunked);
+      if (getHeader(U_CONSTANT_TO_PARAM("Transfer-Encoding")) == *UString::str_chunked) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // Cookie
@@ -228,9 +229,9 @@ public:
 
       U_ASSERT(empty() == false)
 
-      bool result = containsHeader(U_CONSTANT_TO_PARAM("Set-Cookie"));
+      if (containsHeader(U_CONSTANT_TO_PARAM("Set-Cookie"))) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // Location
@@ -276,10 +277,13 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UMimeHeader::isMime()")
 
-      bool result = ((table.empty()            == false) &&
-                     (getMimeVersion().empty() == false));
+      if (table.empty()            == false &&
+          getMimeVersion().empty() == false)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    /**
@@ -311,10 +315,11 @@ public:
 
       if (content_type)
          {
-         bool result = (ignore_case ? u__strncasecmp(content_type.data(), type, len)
-                                    :        strncmp(content_type.data(), type, len)) == 0;
-
-         U_RETURN(result);
+         if ((ignore_case ? u__strncasecmp(content_type.data(), type, len)
+                          :        strncmp(content_type.data(), type, len)) == 0)
+            {
+            U_RETURN(true);
+            }
          }
 
       U_RETURN(false);

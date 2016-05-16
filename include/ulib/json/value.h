@@ -530,8 +530,10 @@ public:
    static int      jread_error;
    static uint32_t jread_elements, jread_pos;
 
-   static bool jfind(const UString& json, const UString& query, UString& result);
-   static int  jread(const UString& json, const UString& query, UString& result, uint32_t* queryParams = 0);
+   static int  jread(const UString& json, const UString& query,                 UString& result, uint32_t* queryParams = 0);
+   static bool jfind(const UString& json, const char* query, uint32_t quey_len, UString& result);
+
+   static bool jfind(const UString& json, const UString& query, UString& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
 
    // reads one value from an array
 

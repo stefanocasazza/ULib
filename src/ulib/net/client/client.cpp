@@ -357,42 +357,46 @@ bool UClient_Base::setUrl(const char* str, uint32_t len)
    U_INTERNAL_ASSERT_POINTER(str)
    U_INTERNAL_ASSERT_MAJOR(len, 0)
 
-   // check we've been passed a absolute URL
+   // we check we've been passed a absolute URL
 
    if (u_isUrlScheme(str, len) == 0)
       {
-      char* p;
-      char* ptr;
-      char* dest;
-      uint32_t sz;
-      char buf[U_PATH_MAX];
-
-      const char*  src =       uri.data();
-      const char* _end = src + uri.size();
-
       U_INTERNAL_DUMP("uri = %V", uri.rep)
 
-      ptr = dest = buf;
-
-      while (src < _end)
+      if (uri.empty()) (void) uri.replace(str, len);
+      else
          {
-         p = (char*) memchr(src, '/', _end - src);
+         char* p;
+         char* ptr;
+         char* dest;
+         uint32_t sz;
+         char buf[U_PATH_MAX];
 
-         if (p == 0) break;
+         const char*  src =       uri.data();
+         const char* _end = src + uri.size();
 
-         sz = p - src + 1;
+         ptr = dest = buf;
 
-         U_INTERNAL_DUMP("segment = %.*S", sz, src)
+         while (src < _end)
+            {
+            p = (char*) memchr(src, '/', _end - src);
 
-         U_MEMCPY(dest, src, sz);
+            if (p == 0) break;
 
-         src   = p + 1;
-         dest += sz;
+            sz = p - src + 1;
+
+            U_INTERNAL_DUMP("segment = %.*S", sz, src)
+
+            U_MEMCPY(dest, src, sz);
+
+            src   = p + 1;
+            dest += sz;
+            }
+
+         U_MEMCPY(dest, str, len);
+
+         (void) uri.replace(buf, dest - ptr + len);
          }
-
-      U_MEMCPY(dest, str, len);
-
-      (void) uri.replace(buf, dest - ptr + len);
 
       U_INTERNAL_DUMP("uri = %V", uri.rep)
 

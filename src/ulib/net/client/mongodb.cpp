@@ -78,14 +78,27 @@ bool UMongoDBClient::insert(bson_t* doc)
    U_RETURN(false);
 }
 
-bool UMongoDBClient::find(bson_t* query)
+bool UMongoDBClient::find(bson_t* query, bson_t* projection)
 {
-   U_TRACE(0, "UMongoDBClient::find(%p)", query)
+   U_TRACE(0, "UMongoDBClient::find(%p,%p)", query, projection)
 
    U_INTERNAL_ASSERT_POINTER(client)
    U_INTERNAL_ASSERT_POINTER(collection)
 
-   cursor = (mongoc_cursor_t*) U_SYSCALL(mongoc_collection_find, "%p,%d,%u,%u,%u,%p,%p,%p", collection, MONGOC_QUERY_NONE, 0, 0, 0, query, 0, 0);
+   /**
+    * Parameters
+    *
+    * collection  A mongoc_collection_t
+    * flags       A mongoc_query_flags_t
+    * skip        A uint32_t of number of documents to skip or 0
+    * limit       A uint32_t of max number of documents to return or 0
+    * batch_size  A uint32_t containing batch size of document result sets or 0 for default. Default is 100
+    * query       A bson_t containing the query and options to execute
+    * fields      A bson_t containing fields to return or NULL
+    * read_prefs  A mongoc_read_prefs_t or NULL for default read preferences
+    */
+
+   cursor = (mongoc_cursor_t*) U_SYSCALL(mongoc_collection_find, "%p,%d,%u,%u,%u,%p,%p,%p", collection, MONGOC_QUERY_NONE, 0, 0, 0, query, projection, 0);
 
    if (cursor)
       {
@@ -143,7 +156,7 @@ bool UMongoDBClient::findOne(const char* json, uint32_t len)
       }
    else
       {
-      bool result = find(bson);
+      bool result = find(bson, 0);
 
       U_SYSCALL_VOID(bson_destroy, "%p", bson);
 

@@ -60,9 +60,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTokenizer::atEnd()")
 
-      bool result = (s >= end);
+      if (s >= end) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    void setDelimiter(const char* sep)

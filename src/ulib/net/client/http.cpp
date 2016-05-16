@@ -953,9 +953,16 @@ bool UHttpClient_Base::sendRequest(int method, const char* content_type, uint32_
 
    // send post request to server and get response
 
-   if (sendRequest()) U_RETURN(true);
+   bool ok = sendRequest();
 
-   U_RETURN(false);
+   // reset reference to request...
+
+   UClient_Base::reset();
+
+    requestHeader->clear();
+   responseHeader->clear();
+
+   U_RETURN(ok);
 }
 
 bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const char* content_type, uint32_t content_type_len)

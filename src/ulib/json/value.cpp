@@ -2011,19 +2011,19 @@ end:
    U_RETURN(jTok);
 }
 
-bool UValue::jfind(const UString& json, const UString& query, UString& result)
+bool UValue::jfind(const UString& json, const char* query, uint32_t query_len, UString& result)
 {
-   U_TRACE(0, "UValue::jfind(%V,%V,%p)", json.rep, query.rep, &result)
+   U_TRACE(0, "UValue::jfind(%V,%.*S,%u,%p)", json.rep, query_len, query, query_len, &result)
 
    U_ASSERT(result.empty())
 
-   uint32_t pos = json.find(query);
+   uint32_t pos = json.find(query, query_len);
 
    U_INTERNAL_DUMP("pos = %d", pos)
 
    if (pos != U_NOT_FOUND)
       {
-      pos += query.size();
+      pos += query_len;
 
       if (u__isquote(json.c_char(pos))) ++pos;
 
@@ -2046,7 +2046,17 @@ bool UValue::jfind(const UString& json, const UString& query, UString& result)
 
       if (jread_skip(tok) != -1)
          {
-         (void) result.assign(start, tok.getPointer()-start);
+         const char* end = tok.getPointer();
+
+         if (u__isquote(*start))
+            {
+            ++start;
+            --end;
+
+            U_INTERNAL_ASSERT(u__isquote(*end))
+            }
+
+         (void) result.assign(start, end-start);
 
          U_RETURN(true);
          }

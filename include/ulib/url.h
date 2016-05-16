@@ -148,13 +148,13 @@ public:
    void set(const Url& u)
       {
       service_end = u.service_end;
-      user_begin  = u.user_begin;
-      user_end    = u.user_end;
-      host_begin  = u.host_begin;
-      host_end    = u.host_end;
-      path_begin  = u.path_begin;
-      path_end    = u.path_end;
-      query       = u.query;
+       user_begin = u.user_begin;
+         user_end = u.user_end;
+       host_begin = u.host_begin;
+         host_end = u.host_end;
+       path_begin = u.path_begin;
+         path_end = u.path_end;
+            query = u.query;
       }
 
    Url(const Url& u) : url(u.url)
@@ -198,7 +198,14 @@ public:
 
       url.clear();
 
-      service_end = user_begin = user_end = host_begin = host_end = path_begin = path_end = query = -1;
+      service_end =
+       user_begin =
+         user_end =
+       host_begin =
+         host_end =
+       path_begin =
+         path_end =
+            query = -1;
       }
 
    /**
@@ -216,36 +223,45 @@ public:
       {
       U_TRACE_NO_PARAM(0, "Url::isHTTP()")
 
-      bool result = (getService() == *UString::str_http);
+      if (service_end == 4 &&
+          UString::str_http->equal(url.data(), (uint32_t)service_end))
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isHTTPS() const
       {
       U_TRACE_NO_PARAM(0, "Url::isHTTPS()")
 
-      bool result = getService().equal(U_CONSTANT_TO_PARAM("https"));
+      if (service_end == 5     &&
+          url.c_char(4) == 's' &&
+          UString::str_http->equal(url.data(), 4))
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isLDAP() const
       {
       U_TRACE_NO_PARAM(0, "Url::isLDAP()")
 
-      bool result = getService().equal(U_CONSTANT_TO_PARAM("ldap"));
+      if (getService().equal(U_CONSTANT_TO_PARAM("ldap"))) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isLDAPS() const
       {
       U_TRACE_NO_PARAM(0, "Url::isLDAPS()")
 
-      bool result = getService().equal(U_CONSTANT_TO_PARAM("ldaps"));
+      if (getService().equal(U_CONSTANT_TO_PARAM("ldaps"))) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    /**
@@ -304,9 +320,11 @@ public:
       {
       U_TRACE_NO_PARAM(0, "Url::isLocalFile()")
 
-      bool result = (host_begin < host_end ? true : false); // Is there a host ?
+      // Is there a host ?
 
-      U_RETURN(result);
+      if (host_begin < host_end) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    /**
@@ -364,9 +382,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "Url::isPath()")
 
-      bool result = (path_begin < path_end);
+      if (path_begin < path_end) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    /**
@@ -412,9 +430,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "Url::isQuery()")
 
-      bool result = (path_end < (int)(url.size() - 1));
+      if (path_end < (int)(url.size() - 1)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    /**

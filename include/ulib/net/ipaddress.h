@@ -125,9 +125,13 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UIPAllow::isEmpty()")
 
-      bool result = (device.empty() || host.empty());
+      if (device.empty() ||
+           host.empty())
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool getNetworkInterface(UVector<UIPAllow*>& vipallow);
@@ -292,11 +296,14 @@ public:
       {
       U_TRACE(0, "UIPAddress::operator==(%p)", &cOtherAddr)
 
-      bool result = (iAddressType   == cOtherAddr.iAddressType) &&
-                    (iAddressLength == cOtherAddr.iAddressLength) &&
-                    (memcmp(pcAddress.p, cOtherAddr.pcAddress.p, iAddressLength) == 0);
+      if (iAddressType   == cOtherAddr.iAddressType   &&
+          iAddressLength == cOtherAddr.iAddressLength &&
+          (memcmp(pcAddress.p, cOtherAddr.pcAddress.p, iAddressLength) == 0))
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool operator!=(const UIPAddress& cOtherAddr) const { return !operator==(cOtherAddr); }

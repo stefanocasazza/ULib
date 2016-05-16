@@ -36,8 +36,9 @@ void Url::setService(const char* service, uint32_t n)
    if (service_end > 0) (void) url.replace(0, service_end, service, n);
    else
       {
-      (void) url.insert(0, U_CONSTANT_TO_PARAM("://"));
-      (void) url.insert(0, service, n);
+      char buffer[32];
+
+      (void) url.insert(0, buffer, u__snprintf(buffer, sizeof(buffer), "%.*s://", n, service));
       }
 
    findpos();
@@ -49,10 +50,7 @@ UString Url::getUser()
 
    UString usr;
 
-   if (user_begin < user_end)
-      {
-      usr = url.substr(user_begin, user_end - user_begin);
-      }
+   if (user_begin < user_end) usr = url.substr(user_begin, user_end - user_begin);
 
    U_RETURN_STRING(usr);
 }
@@ -67,14 +65,12 @@ bool Url::setUser(const char* user, uint32_t n)
 
    if (host_begin < host_end)
       {
-      if (user_begin < user_end)
-         {
-         (void) url.replace(user_begin, user_end - user_begin, user, n);
-         }
+      if (user_begin < user_end) (void) url.replace(user_begin, user_end - user_begin, user, n);
       else
          {
-         (void) url.insert(user_begin, 1, '@');
-         (void) url.insert(user_begin, user, n);
+         char buffer[128];
+
+         (void) url.insert(user_begin, buffer, u__snprintf(buffer, sizeof(buffer), "%.*s@", n, user));
          }
 
       findpos();
@@ -199,10 +195,7 @@ void Url::setPath(const char* path, uint32_t n)
 
    if (path_begin < path_end)
       {
-      if (*path != '/')
-         {
-         ++path_begin;
-         }
+      if (*path != '/') ++path_begin;
 
       (void) url.replace(path_begin, path_end - path_begin, path, n);
       }
@@ -335,7 +328,14 @@ void Url::findpos()
 
    if (service_end < 0)
       {
-      service_end = user_begin = user_end = host_begin = host_end = path_begin = path_end = query = 0;
+      service_end =
+       user_begin =
+         user_end =
+       host_begin =
+         host_end =
+       path_begin =
+         path_end =
+            query = 0;
 
       return;
       }

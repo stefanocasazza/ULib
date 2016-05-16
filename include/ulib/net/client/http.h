@@ -101,9 +101,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHttpClient_Base::isPasswordAuthentication()")
 
-      bool result = (user && password);
+      if (user && password) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    void setRequestPasswordAuthentication(const UString& _user, const UString& _password)

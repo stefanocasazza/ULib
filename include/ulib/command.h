@@ -152,11 +152,11 @@ public:
       {
       U_TRACE(0, "UCommand::getArgument(%d)", n)
 
-      char* result = (argv_exec ? argv_exec[n] : 0);
+      char* arg = (argv_exec ? argv_exec[n] : 0);
 
-      U_INTERNAL_ASSERT(result == 0 || u_isText((const unsigned char*)result, u__strlen(result, __PRETTY_FUNCTION__)))
+      U_INTERNAL_ASSERT(arg == 0 || u_isText((const unsigned char*)arg, u__strlen(arg, __PRETTY_FUNCTION__)))
 
-      U_RETURN(result);
+      U_RETURN(arg);
       }
 
    void setNumArgument(int32_t n = 1, bool bfree = false);
@@ -217,9 +217,9 @@ public:
 
       U_INTERNAL_ASSERT(command)
 
-      bool result = (strncmp(command.data(), U_CONSTANT_TO_PARAM(U_PATH_SHELL)) == 0);
+      if (strncmp(command.data(), U_CONSTANT_TO_PARAM(U_PATH_SHELL)) == 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    char* getCommand() const __pure { return getArgument(isShellScript() ? 2 : 0); }
@@ -252,9 +252,9 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(argv_exec)
 
-      bool result = (U_SYSCALL(access, "%S,%d", argv_exec[0], mode) == 0);
+      if (U_SYSCALL(access, "%S,%d", argv_exec[0], mode) == 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // MANAGE MESSAGE ERROR
@@ -263,18 +263,18 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UCommand::isStarted()")
 
-      bool result = (pid > 0);
+      if (pid > 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool isTimeout()
       {
       U_TRACE_NO_PARAM(0, "UCommand::isTimeout()")
 
-      bool result = (exit_value == -EAGAIN);
+      if (exit_value == -EAGAIN) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static void printMsgError()

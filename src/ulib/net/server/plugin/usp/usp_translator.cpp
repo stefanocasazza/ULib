@@ -527,7 +527,7 @@ public:
 
          UString tmp(encoded.size() + 200U);
 
-         tmp.snprintf("\n\t\tU_INTERNAL_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false);"
+         tmp.snprintf("\n\t\tU_INTERNAL_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
                       "\n\t\tU_http_info.endHeader = %u;"
                       "\n\t\t(void) UClientImage_Base::wbuffer->insert(0, \n\tU_CONSTANT_TO_PARAM(%v));\n", n, encoded.rep);
 
@@ -563,7 +563,8 @@ public:
           bsighup == false ||
           bfork   == false)
          {
-         ptr6 = "\n\t\tif (param >= U_DPAGE_FORK) return;\n";
+         ptr6 = (bfork ? "\n\t\tif (param >  U_DPAGE_FORK) return;\n"
+                       : "\n\t\tif (param >= U_DPAGE_FORK) return;\n");
          }
 
       if (bparallelization) ptr7 = "\t\n\t\tif (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization)) return;\n\t\n";

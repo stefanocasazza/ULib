@@ -107,19 +107,26 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTimeVal::isZero()")
 
-      bool result = (tv_sec  == 0L &&
-                     tv_usec <= 1L);
+      if (tv_sec  == 0L &&
+          tv_usec <= 1L)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isNegativ() const
       {
       U_TRACE_NO_PARAM(0,"UTimeVal::isNegativ()")
 
-      bool result = (tv_sec < 0L || tv_usec < 0L);
+      if (tv_sec  < 0L ||
+          tv_usec < 0L)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool notZero() const    { return (isZero()    == false); }
@@ -155,9 +162,9 @@ public:
 
       U_CHECK_MEMORY
 
-      long result = tv_sec + (tv_usec >= 500000L ? 1L : 0L);
+      long sec = tv_sec + (tv_usec >= 500000L ? 1L : 0L);
 
-      U_RETURN(result);
+      U_RETURN(sec);
       }
 
    long getMilliSecond() const
@@ -204,9 +211,13 @@ public:
 
       U_CHECK_MEMORY
 
-      bool result = (tv_sec == t.tv_sec && tv_usec == t.tv_usec);
+      if (tv_sec  == t.tv_sec &&
+          tv_usec == t.tv_usec)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool operator==(const UTimeVal& t) const
@@ -215,9 +226,13 @@ public:
 
       U_CHECK_MEMORY
 
-      bool result = (tv_sec == t.tv_sec && tv_usec == t.tv_usec);
+      if (tv_sec  == t.tv_sec &&
+          tv_usec == t.tv_usec)
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool operator< (const UTimeVal& t) const __pure;
@@ -343,10 +358,14 @@ public:
 
       U_INTERNAL_ASSERT_RANGE(0L, tv_usec, U_SECOND)
 
-      bool result = (tv_sec >  t->tv_sec ||
-                    (tv_sec == t->tv_sec && ((tv_usec * 1000L) > t->tv_nsec)));
+      if ( tv_sec >  t->tv_sec ||
+          (tv_sec == t->tv_sec &&
+           ((tv_usec * 1000L) > t->tv_nsec)))
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // SERVICES

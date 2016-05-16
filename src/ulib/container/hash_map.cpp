@@ -542,6 +542,48 @@ UString UHashMap<UString>::erase(const UString& _key)
    return UString::getStringNull();
 }
 
+__pure bool UHashMap<UString>::operator==(const UHashMap<UString>& t)
+{
+   U_TRACE(0, "UHashMap<UString>::operator==(%p)", &t)
+
+   U_CHECK_MEMORY
+
+   if (_length == t._length)
+      {
+      U_INTERNAL_DUMP("_length = %u", _length)
+
+      UHashMapNode* _node;
+      UHashMapNode* _next;
+      UHashMapNode** ptr;
+      UHashMapNode** end;
+
+      for (end = (ptr = t.table) + t._capacity; ptr < end; ++ptr)
+         {
+         if (*ptr)
+            {
+            _node = *ptr;
+
+            do {
+               _next = _node->next;
+
+               UHashMap<void*>::lookup((UStringRep*)_node->key);
+            
+               if (node == 0 ||
+                   ((UStringRep*)_node->elem)->equal(elem()) == false)
+                  {
+                  U_RETURN(false);
+                  }
+               }
+            while ((_node = _next));
+            }
+         }
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 // OPERATOR []
 
 UString UHashMap<UString>::at(const UStringRep* _key)

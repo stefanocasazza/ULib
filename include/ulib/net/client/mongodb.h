@@ -82,7 +82,7 @@ public:
 
       BSON_APPEND_INT32(query, "_id", value);
 
-      bool result = find(query);
+      bool result = find(query, 0);
 
       U_SYSCALL_VOID(bson_destroy, "%p", query);
 
@@ -102,7 +102,7 @@ public:
 
       bson_t* query = (bson_t*) U_SYSCALL_NO_PARAM(bson_new);  
 
-      bool result = find(query);
+      bool result = find(query, 0);
 
       U_SYSCALL_VOID(bson_destroy, "%p", query);
 
@@ -121,6 +121,8 @@ public:
    bool insert(bson_t* doc);
 
    bool findOne(const char* json, uint32_t len);
+
+   bool find(bson_t* query, bson_t* projection);
 
    bool        update(bson_t* query, bson_t* update);
    bool findAndModify(bson_t* query, bson_t* update);
@@ -143,8 +145,6 @@ protected:
    mongoc_client_t* client;
    mongoc_cursor_t* cursor;
    mongoc_collection_t* collection;
-
-   bool find(bson_t* query);
 #endif
 
 private:

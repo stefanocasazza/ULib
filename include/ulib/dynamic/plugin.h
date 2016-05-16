@@ -53,9 +53,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UPlugIn<void*>::empty()")
 
-      bool result = (first == 0);
+      if (first == 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static UPlugIn<void*>* getObjWrapper(void* obj) __pure;

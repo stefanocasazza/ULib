@@ -39,8 +39,7 @@ USP_FLAGS="-DAS_cpoll_cppsp_DO" \
   --without-ssl --without-pcre --without-expat \
   --without-libz --without-libuuid --without-magic --without-libares \
   --enable-static-orm-driver='mysql pgsql sqlite' --enable-static-server-plugin=http \
-  	--with-mongodb --with-mongodb-includes="-I$IROOT/include/libbson-1.0 -I$IROOT/include/libmongoc-1.0" --with-mongodb-ldflags="-L$IROOT"
-# --enable-debug --enable-HCRS --enable-HPRS --disable-CRPWS --disable-check-time --disable-HIS --disable-log --disable-GSDS --disable-alias --disable-HSTS \
+  --with-mongodb --with-mongodb-includes="-I$IROOT/include/libbson-1.0 -I$IROOT/include/libmongoc-1.0" --with-mongodb-ldflags="-L$IROOT"
 #USP_LIBS="-ljson" \
 
 cp config.cache ..
@@ -53,10 +52,11 @@ make clean
 make install
 
 cd ../../src/ulib/net/server/plugin/usp
-make json.la plaintext.la db.la query.la update.la fortune.la rdb.la rquery.la rupdate.la rfortune.la mdb.la mquery.la mupdate.la mfortune.la
+make json.la plaintext.la db.la query.la update.la fortune.la rdb.la rquery.la rupdate.la rfortune.la mdb.la mquery.la mupdate.la mfortune.la edb.la equery.la eupdate.la
 
 mkdir -p $ULIB_DOCUMENT_ROOT
 cp .libs/json.so .libs/plaintext.so \
+   .libs/edb.so .libs/equery.so .libs/eupdate.so \
    .libs/db.so  .libs/query.so  .libs/update.so  .libs/fortune.so \
    .libs/rdb.so .libs/rquery.so .libs/rupdate.so .libs/rfortune.so \
    .libs/mdb.so .libs/mquery.so .libs/mupdate.so .libs/mfortune.so $ULIB_DOCUMENT_ROOT

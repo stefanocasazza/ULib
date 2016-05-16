@@ -851,6 +851,11 @@ public:
       UHashMap<UStringRep*>::insertAfterFind(_key, str.rep);
       }
 
+   // OPERATOR
+
+   bool operator==(const UHashMap<UString>& v) __pure;
+   bool operator!=(const UHashMap<UString>& v) { return ! operator==(v); }
+
    // OPERATOR []
 
    UString operator[](const char*       _key);

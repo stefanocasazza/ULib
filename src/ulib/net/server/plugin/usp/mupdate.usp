@@ -6,7 +6,6 @@ TechEmpower Web Framework Benchmarks
 #include "world.h"
 
 static UMongoDBClient* mc;
-static World* pworld_update;
 
 #ifndef AS_cpoll_cppsp_DO
 static UValue* pvalue;
@@ -33,8 +32,6 @@ static void usp_fork_mupdate()
       return;
       }
 
-   U_NEW(World, pworld_update, World);
-
 #ifndef AS_cpoll_cppsp_DO
    U_NEW(UValue, pvalue, UValue(ARRAY_VALUE));
    U_NEW(UVector<World*>, pvworld_update, UVector<World*>(500));
@@ -48,15 +45,13 @@ static void usp_end_mupdate()
 
    delete mc;
 
-   if (pworld_update)
+#ifndef AS_cpoll_cppsp_DO
+   if (pvalue)
       {
-      delete pworld_update;
-
-#  ifndef AS_cpoll_cppsp_DO
       delete pvalue;
       delete pvworld_update;
-#  endif
       }
+#endif
 }
 #endif
 -->
@@ -64,6 +59,7 @@ static void usp_end_mupdate()
 Content-Type: application/json
 -->
 <!--#code
+uint32_t id, rnum;
 int i = 0, num_queries = UHTTP::getFormFirstNumericValue(1, 500);
 
 #ifdef AS_cpoll_cppsp_DO
@@ -72,17 +68,15 @@ USP_PUTS_CHAR('[');
 
 while (true)
    {
-   (void) mc->findOne(pworld_update->id = u_get_num_random(10000-1));
-
-   (void) mc->update(pworld_update->id, "randomNumber", pworld_update->randomNumber = u_get_num_random(10000-1));
+   (void) mc->findOne(                     id = u_get_num_random(10000-1));
+   (void) mc->update(id, "randomNumber", rnum = u_get_num_random(10000-1));
 
 #ifdef AS_cpoll_cppsp_DO
-   USP_PRINTF("{\"id\":%u,\"randomNumber\":%u}", pworld_update->id, pworld_update->randomNumber);
+   USP_PRINTF("{\"id\":%u,\"randomNumber\":%u}", id, rnum);
 #else
-
    World* pworld;
 
-   U_NEW(World, pworld, World(*pworld_update));
+   U_NEW(World, pworld, World(id, rnum));
 
    pvworld_update->push_back(pworld);
 #endif
