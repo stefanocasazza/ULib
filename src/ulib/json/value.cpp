@@ -59,6 +59,8 @@ UValue::UValue(const UString& _key, const UString& value_)
 
    U_NEW(UString, child->key,        UString(_key));
    U_NEW(UString, child->value.ptr_, UString(value_));
+
+   U_INTERNAL_DUMP("this = %p", this)
 }
 
 void UValue::reset()

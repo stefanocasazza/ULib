@@ -544,7 +544,12 @@ bool UClient_Base::readHTTPResponse()
 
          U_http_info.clength = (end != U_NOT_FOUND ? u_strtoul(buffer.c_pointer(pos), buffer.c_pointer(end)) : 0);
 
-         if (U_http_info.clength == 0) U_http_data_chunked = false;
+         if (U_http_info.clength == 0)
+            {
+            U_http_flag &= ~HTTP_IS_DATA_CHUNKED;
+
+            U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
+            }
 
          if (UHTTP::readBodyResponse(socket, &buffer, response))
             {

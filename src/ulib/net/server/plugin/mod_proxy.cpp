@@ -188,7 +188,9 @@ int UProxyPlugIn::handlerRequest()
                }
             else
                {
-               U_http_data_chunked = false;
+               U_http_flag &= ~HTTP_IS_DATA_CHUNKED;
+
+               U_INTERNAL_DUMP("U_http_data_chunked = %b", U_http_data_chunked)
 
                // NB: in this case we broke the transparency of the response to avoid a duplication of effort to read chunked data...
 
@@ -207,8 +209,8 @@ int UProxyPlugIn::handlerRequest()
                U_ASSERT(UStringExt::endsWith(content_type, U_CONSTANT_TO_PARAM(U_CRLF)))
 
 #           ifdef USE_LIBZ
-               if (body.size() > U_MIN_SIZE_FOR_DEFLATE &&
-                   UHttpClient_Base::u_http_info_save.flag[12]) // U_http_is_accept_gzip
+               if (U_http_is_accept_gzip_save &&
+                   body.size() > U_MIN_SIZE_FOR_DEFLATE)
                   {
                   body = UStringExt::deflate(body, 1);
                   }

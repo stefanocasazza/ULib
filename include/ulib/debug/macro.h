@@ -102,7 +102,7 @@
 
 #  define U_MEMCPY(a,b,n) (void) U_SYSCALL(u__memcpy, "%p,%p,%u,%S",(void*)(a),(const void*)(b),(n),__PRETTY_FUNCTION__)
 
-// Dump argument for exec()...
+// Dump argument for exec()
 
 #  define U_DUMP_EXEC(argv, envp) { uint32_t _i; \
 for (_i = 0; argv[_i]; ++_i) \
@@ -119,7 +119,7 @@ if (envp) \
    U_INTERNAL_DUMP("envp[%2u] = %p %S", _i, envp[_i], envp[_i]) \
    } }
 
-// Dump attributes...
+// Dump attributes
 
 #  define U_DUMP_ATTRS(attrs)   { uint32_t _i; for (_i = 0; attrs[_i]; ++_i) { U_INTERNAL_DUMP("attrs[%2u] = %S", _i, attrs[_i]) } }
 #  define U_DUMP_IOVEC(iov,cnt) {      int _i; for (_i = 0;  _i < cnt; ++_i) { U_INTERNAL_DUMP("iov[%2u] = %.*S", _i, iov[_i].iov_len, iov[_i].iov_base) } }
@@ -135,7 +135,7 @@ if (envp) \
 #  define U_EXIT(exit_value)  { if (utr.active[0]) u_debug_exit(exit_value); ::exit(exit_value); }
 #  define U_EXEC(pathname, argv, envp) u_debug_exec(pathname, argv, envp, utr.active[0])
 
-// Dump fd_set...
+// Dump fd_set
 
 #ifndef __FDS_BITS
 #  ifdef _MSWINDOWS_
@@ -144,6 +144,87 @@ if (envp) \
 #     define __FDS_BITS(fd_set) ((fd_set)->fds_bits)
 #  endif
 #endif
+
+// A mechanism that allow all objects to be registered with a central in-memory "database" that can dump the state of all live objects
+
+# ifdef U_STDCPP_ENABLE
+#  define U_REGISTER_OBJECT_PTR(level,CLASS,p,pmemory) \
+            if (UObjectDB::fd > 0 && \
+                (level) >= UObjectDB::level_active) { \
+                  UObjectDB::registerObject(new UObjectDumpable_Adapter<CLASS>(level,#CLASS,p,pmemory)); }
+
+#  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...) if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
+                                                                  UObjectDB::flag_new_object =  false; \
+                                                              U_REGISTER_OBJECT_PTR(level,CLASS,this,&(this->memory._this)) \
+                                                              UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
+
+#  define U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS,format,args...) \
+                                                              if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
+                                                                  UObjectDB::flag_new_object =  false; \
+                                                              U_REGISTER_OBJECT_PTR(level,CLASS,this,0) \
+                                                              UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
+
+#  define U_UNREGISTER_OBJECT(level,ptr) \
+            if (UObjectDB::fd > 0 && \
+                (level) >= UObjectDB::level_active) { \
+                UObjectDB::unregisterObject(ptr); }
+
+#  define U_TRACE_UNREGISTER_OBJECT(level,CLASS) U_UNREGISTER_OBJECT(level,this); UTrace utr(level, #CLASS"::~"#CLASS"()");
+
+// Manage location info for object allocation
+
+# ifdef ENABLE_MEMPOOL
+#  define U_NEW(CLASS,obj,args...) (UMemoryPool::obj_class = #CLASS, \
+                                    UMemoryPool::func_call = __PRETTY_FUNCTION__, \
+                                    U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, (obj) = new args, \
+                                    UMemoryPool::obj_class = UMemoryPool::func_call = 0)
+# else
+#  define U_NEW(CLASS,obj,args...) (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, (obj) = new args)
+# endif
+
+#  define U_NEW_ULIB_OBJECT(CLASS,obj,args...) (UObjectDB::flag_ulib_object = true, \
+                                                U_NEW(CLASS,obj,args), \
+                                                UObjectDB::flag_ulib_object = false)
+
+#  define U_DUMP_OBJECT(obj) { u_trace_dump(#obj" = %S", (obj).dump(true)); }
+#  define U_DUMP_CONTAINER(obj) { if (utr.active[0]) u_trace_dump(#obj" = %O", U_OBJECT_TO_TRACE((obj))); }
+
+#  define U_DUMP_OBJECT_TO_TMP(obj,fname) \
+            { char _buffer[2 * 1024 * 1024]; \
+               uint32_t _n = UObject2String((obj), _buffer, sizeof(_buffer)); \
+               U_INTERNAL_ASSERT_MINOR(_n, sizeof(_buffer)) \
+               (void) UFile::writeToTmp(_buffer, _n, O_RDWR | O_TRUNC, #fname".%P", 0); }
+
+#  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object) \
+            if (UObjectDB::fd > 0) { \
+               char _buffer[4096]; \
+               uint32_t _n = UObjectDB::dumpObject(_buffer, sizeof(_buffer), (check_object)); \
+               if (utr.active[0]) u_trace_dump(msg " = \n%.*s\n", U_min(_n,4000), _buffer); }
+
+# else /* U_STDCPP_ENABLE */
+#  define U_UNREGISTER_OBJECT(level,ptr)
+#  define U_REGISTER_OBJECT_PTR(level,CLASS,p,pmemory)
+#  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...)                      UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
+#  define U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS,format,args...) UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
+#  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)                                   UTrace utr(level, #CLASS"::~"#CLASS"()");
+
+# ifdef ENABLE_MEMPOOL
+#  define U_NEW(CLASS,obj,args...) (UMemoryPool::obj_class = #CLASS, \
+                                    UMemoryPool::func_call = __PRETTY_FUNCTION__, \
+                                    U_SET_LOCATION_INFO, (obj) = new args, \
+                                    UMemoryPool::obj_class = UMemoryPool::func_call = 0)
+# else
+#  define U_NEW(CLASS,obj,args...) (U_SET_LOCATION_INFO, (obj) = new args)
+# endif
+
+#  define U_NEW_ULIB_OBJECT(CLASS,obj,args...) U_NEW(CLASS,obj,args)
+
+#  define U_DUMP_OBJECT(obj)
+#  define U_DUMP_CONTAINER(obj)
+#  define U_DUMP_OBJECT_TO_TMP(obj,fname)
+#  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object)
+
+# endif /* U_STDCPP_ENABLE */
 
 #else /* DEBUG */
 
@@ -186,69 +267,6 @@ if (envp) \
 #  define U_EXEC(pathname, argv, envp) u_exec_failed = false; ::execve(pathname, argv, envp); u_exec_failed = true; \
                                        U_WARNING("::execve(%s,%p,%p) = -1%R", pathname, argv, envp, NULL); \
                                        ::_exit(EX_UNAVAILABLE)
-#endif /* DEBUG */
-
-// A mechanism that allow all objects to be registered with a central in-memory "database" that can dump the state of all live objects
-
-#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
-
-#  define U_REGISTER_OBJECT_PTR(level,CLASS,p,pmemory) \
-            if (UObjectDB::fd > 0 && \
-                (level) >= UObjectDB::level_active) { \
-                  UObjectDB::registerObject(new UObjectDumpable_Adapter<CLASS>(level,#CLASS,p,pmemory)); }
-
-#  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...) if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
-                                                                  UObjectDB::flag_new_object =  false; \
-                                                              U_REGISTER_OBJECT_PTR(level,CLASS,this,&(this->memory._this)) \
-                                                              UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
-
-#  define U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS,format,args...) \
-                                                              if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
-                                                                  UObjectDB::flag_new_object =  false; \
-                                                              U_REGISTER_OBJECT_PTR(level,CLASS,this,0) \
-                                                              UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
-
-#  define U_UNREGISTER_OBJECT(level,ptr) \
-            if (UObjectDB::fd > 0 && \
-                (level) >= UObjectDB::level_active) { \
-                UObjectDB::unregisterObject(ptr); }
-
-#  define U_TRACE_UNREGISTER_OBJECT(level,CLASS) U_UNREGISTER_OBJECT(level,this); UTrace utr(level, #CLASS"::~"#CLASS"()");
-
-#  define U_DUMP_OBJECT(obj) { u_trace_dump(#obj" = %S", (obj).dump(true)); }
-#  define U_DUMP_CONTAINER(obj) { if (utr.active[0]) u_trace_dump(#obj" = %O", U_OBJECT_TO_TRACE((obj))); }
-
-#  define U_DUMP_OBJECT_TO_TMP(obj,fname) \
-            { char _buffer[2 * 1024 * 1024]; \
-               uint32_t _n = UObject2String((obj), _buffer, sizeof(_buffer)); \
-               U_INTERNAL_ASSERT_MINOR(_n, sizeof(_buffer)) \
-               (void) UFile::writeToTmp(_buffer, _n, O_RDWR | O_TRUNC, #fname".%P", 0); }
-
-#  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object) \
-            if (UObjectDB::fd > 0) { \
-               char _buffer[4096]; \
-               uint32_t _n = UObjectDB::dumpObject(_buffer, sizeof(_buffer), (check_object)); \
-               if (utr.active[0]) u_trace_dump(msg " = \n%.*s\n", U_min(_n,4000), _buffer); }
-
-#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...) UMemoryPool::writeInfoTo(fmt,args)
-
-// Manage location info for object allocation
-
-# ifndef ENABLE_MEMPOOL
-#  define U_NEW(CLASS,obj,args...) (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, (obj) = new args)
-# else
-#  define U_NEW(CLASS,obj,args...) (UMemoryPool::obj_class = #CLASS, \
-                                    UMemoryPool::func_call = __PRETTY_FUNCTION__, \
-                                    U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, (obj) = new args, \
-                                    UMemoryPool::obj_class = UMemoryPool::func_call = 0)
-# endif
-
-
-#  define U_NEW_ULIB_OBJECT(CLASS,obj,args...) (UObjectDB::flag_ulib_object = true, \
-                                                U_NEW(CLASS,obj,args), \
-                                                UObjectDB::flag_ulib_object = false)
-
-#else // DEBUG && U_STDCPP_ENABLE
 
 #  define U_REGISTER_OBJECT_PTR(level,CLASS,p,pmemory)
 #  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...)
@@ -257,15 +275,14 @@ if (envp) \
 #  define U_UNREGISTER_OBJECT(level,pointer)
 #  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)
 
+#  define U_NEW(CLASS,obj,args...)             (obj) = new args
+#  define U_NEW_ULIB_OBJECT(CLASS,obj,args...) (obj) = new args
+
 #  define U_DUMP_OBJECT(obj)
 #  define U_DUMP_CONTAINER(obj)
 #  define U_DUMP_OBJECT_TO_TMP(obj,fname)
 #  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object)
-#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)
 
-#  define U_NEW(CLASS,obj,args...)             (obj) = new args
-#  define U_NEW_ULIB_OBJECT(CLASS,obj,args...) (obj) = new args
-
-#endif // DEBUG && U_STDCPP_ENABLE
+#endif /* DEBUG */
 
 #endif

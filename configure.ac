@@ -2457,16 +2457,23 @@ if test "$enable_stdcpp" != "yes"; then
 	AC_CHECK_LIB(Systemstubs, printf, [ULIB_LIBS="$ULIB_LIBS -lSystemstubs -lgcc"])
 fi
 
-# On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
-if test "$gcc_version" = "5.3.1"; then
-	gcc_v=`gcc --version | head -n 1`
-	if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413"; then
+if test "x$ac_cv_crc32_intrinsics" = xyes; then
+##########################
+# to avoid: hidden symbol `__cpu_indicator_init' in /usr/lib/gcc/x86_64-linux-gnu/4.8/libgcc.a(cpuinfo.o) is referenced by DSO
+##########################
+	# TRAVIS CI
+	if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 		ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
+#  On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
+ 	else if test "$gcc_version" = "5.3.1"; then
+ 		gcc_v=`gcc --version | head -n 1`
+ 		if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413"; then
+ 			ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
+ 		fi
+ 	 fi
 	fi
-# TRAVIS CI
-elif test "$gcc_version" = "4.9.3"; then
-	ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
 fi
+##########################
 
 # Check for availablity of "old style" C++ strstream header
 AC_CHECK_HEADERS([strstream.h])

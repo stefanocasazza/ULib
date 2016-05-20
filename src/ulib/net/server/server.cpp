@@ -17,6 +17,7 @@
 #include <ulib/net/udpsocket.h>
 #include <ulib/utility/escape.h>
 #include <ulib/orm/orm_driver.h>
+#include <ulib/net/client/http.h>
 #include <ulib/dynamic/dynamic.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
@@ -3512,6 +3513,8 @@ void UServer_Base::run()
    bool baffinity = false;
    UTimeVal to_sleep(0L, 500L * 1000L);
    const char* user = (as_user->empty() ? 0 : as_user->data());
+
+   UHttpClient_Base::server_context_flag = true;
 
    /**
     * PREFORK_CHILD number of child server processes created at startup:

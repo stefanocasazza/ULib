@@ -1388,8 +1388,9 @@ void UNoCatPlugIn::setNewPeer()
 
                UString area(10U);
 
-               area.snprintf("%06x", *(uint32_t*)value.data()); 
+               area.snprintf("%u", *(uint32_t*)value.data()); 
 
+            // area.snprintf("%06x", *(uint32_t*)value.data()); 
             // UHexDump::encode(value.data(), sizeof(uint32_t), area);
 
                U_SRV_LOG("get data from DHCP_DATA_FILE - key: %#.*S data: %V", 10, &ks, area.rep);

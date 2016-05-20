@@ -141,6 +141,7 @@ static WiAuthNodog*            nodog_rec;
 static WiAuthDataStorage*       data_rec;
 static WiAuthVirtualAccessPoint* vap_rec;
 
+static UString* db_anagrafica;
 static UString* db_filter_tavarnelle;
 static URDBObjectHandler<UDataStorage*>* db_ap;
 static URDBObjectHandler<UDataStorage*>* db_user;
@@ -635,10 +636,11 @@ public:
          {
          index_access_point = vap_rec->_index_access_point;
 
-         U_ASSERT_MINOR(index_access_point, vec_access_point.size())
-         U_ASSERT_EQUALS(*ap_label, vec_access_point[index_access_point]->label)
-
-         U_RETURN(true);
+         if (index_access_point < vec_access_point.size() &&
+             *ap_label == vec_access_point[index_access_point]->label)
+            {
+            U_RETURN(true);
+            }
          }
 
       for (index_access_point = 0; index_access_point < sz; ++index_access_point)
@@ -1049,7 +1051,7 @@ public:
 
       if (label.empty()) label = U_STRING_FROM_CONSTANT("ap");
 
-      UString x(100U);
+      UString x(U_CAPACITY);
 
       x.snprintf("%v@%v:%u/%v", label.rep, nodog.rep, nodog_rec->port, nodog_rec->hostname.rep);
 
@@ -1960,9 +1962,9 @@ static void db_open()
 
    bool no_ssl = (UServer_Base::bssl == false);
 
-   bool result1 = db_nodog->open(       32 * 1024, false, false, no_ssl); // 32k
+   bool result1 = db_nodog->open(10 * 1024 * 1024, false, false, no_ssl); // 10M
    bool result2 =  db_user->open(10 * 1024 * 1024, false, false, no_ssl); // 10M
-   bool result3 =    db_ap->open(       32 * 1024, false, false, no_ssl); // 32k
+   bool result3 =    db_ap->open(10 * 1024 * 1024, false, false, no_ssl); // 10M
 
    num_ap              =
    num_users           =
@@ -2010,53 +2012,56 @@ static void setAccessPointReference(const char* s, uint32_t n)
 
    if (ap_label->empty()) (void) ap_label->assign(U_CONSTANT_TO_PARAM("ap"));
 
-   if (U_STREQ(s, n, IP_UNIFI)   ||
-       U_STREQ(s, n, IP_CASCINE) ||
-       U_STREQ(s, n, IP_UNIFI_TMP))
+   if (db_anagrafica == 0)
       {
-           if (ap_label->equal(U_CONSTANT_TO_PARAM("05"))) ap_ref->snprintf("Xcareggi", 0);
-      else if (U_STREQ(s, n, IP_CASCINE))                  ap_ref->snprintf("Xcascine", 0);
-      else                                                 ap_ref->snprintf("Xunifi", 0);
-      }
-   else
-      {
-      // Ex: ap@10.8.1.2 => X0256Rap
-
-      char* ptr;
-      unsigned char c = *s;
-      uint32_t count = 0, certid = 0;
-
-      while (n--)
+      if (U_STREQ(s, n, IP_UNIFI)   ||
+          U_STREQ(s, n, IP_CASCINE) ||
+          U_STREQ(s, n, IP_UNIFI_TMP))
          {
-      // U_INTERNAL_DUMP("c = %C n = %u count = %u certid = %u", c, n, count, certid)
+              if (ap_label->equal(U_CONSTANT_TO_PARAM("05"))) ap_ref->snprintf("Xcareggi", 0);
+         else if (U_STREQ(s, n, IP_CASCINE))                  ap_ref->snprintf("Xcascine", 0);
+         else                                                 ap_ref->snprintf("Xunifi", 0);
 
-         if (c == '.') ++count;
-         else
+         return;
+         }
+      }
+
+   // Ex: ap@10.8.1.2 => X0256Rap
+
+   char* ptr;
+   unsigned char c = *s;
+   uint32_t count = 0, certid = 0;
+
+   while (n--)
+      {
+   // U_INTERNAL_DUMP("c = %C n = %u count = %u certid = %u", c, n, count, certid)
+
+      if (c == '.') ++count;
+      else
+         {
+         U_INTERNAL_ASSERT(u__isdigit(c))
+
+         if (count == 2)
             {
-            U_INTERNAL_ASSERT(u__isdigit(c))
+            certid = 254 * strtol(s, &ptr, 10);
 
-            if (count == 2)
-               {
-               certid = 254 * strtol(s, &ptr, 10);
+            c = *(s = ptr);
 
-               c = *(s = ptr);
-
-               continue;
-               }
-
-            if (count == 3)
-               {
-               certid += strtol(s, 0, 10);
-
-               break;
-               }
+            continue;
             }
 
-         c = *(++s);
+         if (count == 3)
+            {
+            certid += strtol(s, 0, 10);
+
+            break;
+            }
          }
 
-      ap_ref->snprintf("X%04dR%v", certid, ap_label->rep);
+      c = *(++s);
       }
+
+   ap_ref->snprintf("X%04dR%v", certid, ap_label->rep);
 
    U_INTERNAL_DUMP("ap_ref = %V", ap_ref->rep)
 }
@@ -2073,13 +2078,16 @@ static void usp_init_wi_auth()
 #endif
 
 #ifdef DEBUG
-   if ((setAccessPointReference(U_CONSTANT_TO_PARAM("10.8.1.2")),        ap_ref->equal(U_CONSTANT_TO_PARAM("X0256Rap")))  == false ||
-       (setAccessPointReference(U_CONSTANT_TO_PARAM("10.10.100.115")),   ap_ref->equal(U_CONSTANT_TO_PARAM("X25515Rap"))) == false ||
-       (setAccessPointReference(U_CONSTANT_TO_PARAM("159.213.248.233")), ap_ref->equal(U_CONSTANT_TO_PARAM("X63225Rap"))) == false ||
-       (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_UNIFI)),          ap_ref->equal(U_CONSTANT_TO_PARAM("Xunifi")))    == false ||
-       (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_CASCINE)),        ap_ref->equal(U_CONSTANT_TO_PARAM("Xcascine")))  == false)
+   if (db_anagrafica == 0)
       {
-      U_ERROR("setAccessPointReference() failed");
+      if ((setAccessPointReference(U_CONSTANT_TO_PARAM("10.8.1.2")),        ap_ref->equal(U_CONSTANT_TO_PARAM("X0256Rap")))  == false ||
+          (setAccessPointReference(U_CONSTANT_TO_PARAM("10.10.100.115")),   ap_ref->equal(U_CONSTANT_TO_PARAM("X25515Rap"))) == false ||
+          (setAccessPointReference(U_CONSTANT_TO_PARAM("159.213.248.233")), ap_ref->equal(U_CONSTANT_TO_PARAM("X63225Rap"))) == false ||
+          (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_UNIFI)),          ap_ref->equal(U_CONSTANT_TO_PARAM("Xunifi")))    == false ||
+          (setAccessPointReference(U_CONSTANT_TO_PARAM(IP_CASCINE)),        ap_ref->equal(U_CONSTANT_TO_PARAM("Xcascine")))  == false)
+         {
+         U_ERROR("setAccessPointReference() failed");
+         }
       }
 #endif
 
@@ -2363,6 +2371,12 @@ static void usp_init_wi_auth()
    U_NEW(UString, db_filter_tavarnelle, UString(UFile::contentOf("../tavarnelle.rule")));
 
    if (*db_filter_tavarnelle) *db_filter_tavarnelle = UStringExt::trim(*db_filter_tavarnelle);
+
+   // ANAGRAFICA
+
+   content = UFile::contentOf("../anagrafica.txt");
+
+   if (content) U_NEW(UString, db_anagrafica, UString(content));
 }
 
 static void usp_sighup_wi_auth()
@@ -4246,19 +4260,6 @@ static void GET_get_config()
 
             if (_body.empty())
                {
-               _body = *nodog_conf;
-
-               if (u_isIPv4Addr(U_STRING_TO_PARAM(key))) *ip = key;
-               else                                      (void) ip->assign(U_CLIENT_ADDRESS_TO_PARAM);
-
-               UVector<UString> vec(*ip, '.');
-
-               buffer.snprintf("%w/ap/%v/nodog.conf.local", ip->rep);
-
-               UString local = UFile::contentOf(buffer);
-
-               buffer.snprintf("%u.%v", 16 + vec[2].strtol(), vec[3].rep);
-
                const char* lan = "???";
                uint32_t len = U_CONSTANT_SIZE("???");
 
@@ -4296,10 +4297,73 @@ static void GET_get_config()
                      }
                   }
 
-               _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<LAN>"),                                              lan, len);
-               _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<CCC>.<DDD>"),                                        U_STRING_TO_PARAM(buffer));
+               if (u_isIPv4Addr(U_STRING_TO_PARAM(key))) *ip = key;
+               else                                      (void) ip->assign(U_CLIENT_ADDRESS_TO_PARAM);
+
+               buffer.snprintf("%w/ap/%v/nodog.conf.local", ip->rep);
+
+               uint32_t pos  = U_NOT_FOUND;
+               UString local = UFile::contentOf(buffer);
+
+               _body = *nodog_conf;
+               _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<LAN>"), lan, len);
+
+               if (db_anagrafica)
+                  {
+                  /**
+                   * 10.8.0.156      172.16.156.0/24 111
+                   * 159.213.248.233 172.25.0.0/22   213
+                   */
+
+                  pos = db_anagrafica->find(U_STRING_TO_PARAM(*ip));
+
+                  U_INTERNAL_DUMP("pos = %d", pos)
+
+                  if (pos != U_NOT_FOUND)
+                     {
+                     pos += ip->size();
+
+                     while (u__isspace(db_anagrafica->c_char(pos)) == false) ++pos;
+
+                     UString netmask, label;
+                     UTokenizer tok(db_anagrafica->substr(pos));
+
+                     (void) tok.next(netmask, (bool*)0);
+                     (void) tok.next(  label, (bool*)0);
+
+                     U_INTERNAL_ASSERT(label)
+                     U_INTERNAL_ASSERT(netmask)
+
+                     uint32_t lbl = label.strtol();
+
+                     _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("172.<CCC>.<DDD>.0/24"), U_STRING_TO_PARAM(netmask));
+
+                     buffer.snprintf("LOCAL_NETWORK_LABEL %06x", lbl);
+
+                     _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("LOCAL_NETWORK_LABEL ap"), U_STRING_TO_PARAM(buffer));
+
+                     if (local)
+                        {
+                        UString tmp(200U + local.size());
+
+                        tmp.snprintf(local.data(), U_STRING_TO_TRACE(netmask), lbl); 
+
+                        local = tmp;
+                        }
+                     }
+                  }
+
                _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("#include \"ap/<AAA.BBB.CCC.DDD>/nodog.conf.local\""), U_STRING_TO_PARAM(local));
-               _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<AAA.BBB.CCC.DDD>"),                                  U_STRING_TO_PARAM(*ip));
+               _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM(              "<AAA.BBB.CCC.DDD>"),                    U_STRING_TO_PARAM(*ip));
+
+               if (pos == U_NOT_FOUND)
+                  {
+                  UVector<UString> vec(*ip, '.');
+
+                  buffer.snprintf("%u.%v", 16 + vec[2].strtol(), vec[3].rep);
+
+                  _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<CCC>.<DDD>"), U_STRING_TO_PARAM(buffer));
+                  }
 
                UFileConfig cfg(_body, true);
 
@@ -6569,7 +6633,10 @@ next1:
 
                ap_rec->num_users_connected = num_users_connected_on_nodog;
 
-               U_LOGGER("*** INFO: ON AP(%v@%v) THE NUMBER OF USER CONNECTED IS NOT ALIGNED (0=>%u) ***", ap_rec->label.rep, ap_address->rep, num_users_connected_on_nodog);
+               if (num_users_connected_on_nodog)
+                  {
+                  U_LOGGER("*** INFO: ON AP(%v@%v) THE NUMBER OF USER CONNECTED IS NOT ALIGNED (0=>%u) ***", ap_rec->label.rep, ap_address->rep, num_users_connected_on_nodog);
+                  }
                }
             }
 

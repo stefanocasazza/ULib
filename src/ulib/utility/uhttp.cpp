@@ -2135,7 +2135,7 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
          {
          if (UString::str_chunked->equal(chunk_ptr, U_CONSTANT_SIZE("chunked")) == false) U_RETURN(false);
 
-         U_http_data_chunked = true;
+         U_http_flag |= HTTP_IS_DATA_CHUNKED;
          }
       }
 
@@ -2634,9 +2634,9 @@ set_content_length:  U_http_info.clength = (uint32_t) strtoul(ptr+pos1, 0, 10);
                      {
                      if (u__strncasecmp(p1+1, U_CONSTANT_TO_PARAM("eep-alive")) == 0)
                         {
-set_connection_kalive:  U_http_keep_alive = '1';
+set_connection_kalive:  U_http_flag |= HTTP_IS_KEEP_ALIVE;
 
-                        U_INTERNAL_DUMP("U_http_keep_alive = %C", U_http_keep_alive)
+                        U_INTERNAL_DUMP("U_http_keep_alive = %b", U_http_keep_alive)
                         }
                      }
                   /*
@@ -2685,9 +2685,9 @@ set_accept_encoding:    p1 = ptr+pos1;
                         if (                   p2 &&
                             u_get_unalignedp32(p2) != U_MULTICHAR_CONSTANT32(';','q','=','0'))
                            {
-                           U_http_is_accept_gzip = '1';
+                           U_http_flag |= HTTP_IS_ACCEPT_GZIP;
 
-                           U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+                           U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
                            }
                         }
                      else if (c1 == 'L' &&
@@ -2743,7 +2743,7 @@ set_upgrade:      p1 = ptr+pos1;
                   if (u_get_unalignedp16(p1) != U_MULTICHAR_CONSTANT16('h','2') &&
                           u__strncasecmp(p1, U_CONSTANT_TO_PARAM("websocket")) == 0)
                      {
-                     U_http_is_request_nostat = '1';
+                     U_http_flag |= HTTP_IS_REQUEST_NOSTAT;
 
                      U_INTERNAL_DUMP("U_http_websocket_len = %u U_http_is_request_nostat = %b", U_http_websocket_len, U_http_is_request_nostat)
                      }
@@ -3263,7 +3263,7 @@ bool UHTTP::handlerCache()
    const char* p;
    unsigned char c;
    bool http_gzip = false;
-   char http_keep_alive = '\0';
+   char http_keep_alive = false;
 
    U_INTERNAL_DUMP("UClientImage_Base::uri_offset = %u", UClientImage_Base::uri_offset)
 
@@ -3291,12 +3291,12 @@ bool UHTTP::handlerCache()
             if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('k','e','e','p') ||
                 u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('K','e','e','p'))
                {
-               http_keep_alive = '1';
+               http_keep_alive = true;
 
-               U_INTERNAL_DUMP("http_keep_alive = %C", http_keep_alive)
+               U_INTERNAL_DUMP("http_keep_alive = %b", http_keep_alive)
                }
 
-            if (U_http_is_accept_gzip != '2' || http_gzip) goto next2;
+            if (U_http_is_response_gzip == false || http_gzip) goto next2;
 
             p += U_CONSTANT_SIZE("keep-alive\r");
 
@@ -3306,7 +3306,7 @@ bool UHTTP::handlerCache()
          goto next1;
          }
 
-      if (U_http_is_accept_gzip != '2' || http_gzip) goto next1;
+      if (U_http_is_response_gzip == false || http_gzip) goto next1;
 
       if (c == 'A' &&
           u_get_unalignedp64(p+1) == U_MULTICHAR_CONSTANT64('c','c','e','p','t','-','E','n'))
@@ -3329,11 +3329,11 @@ next1:
       do { ++pos; } while (pos < end && ptr[pos] != '\n');
       }
 next2:
-   U_INTERNAL_DUMP("U_http_version = %C http_keep_alive = %C U_http_keep_alive = %C http_gzip = %b U_http_is_accept_gzip = %C",
+   U_INTERNAL_DUMP("U_http_version = %C http_keep_alive = %b U_http_keep_alive = %b http_gzip = %b U_http_is_accept_gzip = %b",
                     U_http_version,     http_keep_alive,     U_http_keep_alive,     http_gzip,     U_http_is_accept_gzip)
 
    if (http_keep_alive != U_http_keep_alive ||
-       (http_gzip == false && U_http_is_accept_gzip == '2'))
+       (http_gzip == false && U_http_is_response_gzip))
       {
       U_RETURN(false);
       }
@@ -3607,7 +3607,7 @@ int UHTTP::manageRequest()
 
       if (i < n)
          {
-         U_http_is_request_nostat = UStringExt::endsWith(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM("nostat")); // NOT a static page...
+         if (UStringExt::endsWith(U_STRING_TO_PARAM(str), U_CONSTANT_TO_PARAM("nostat"))) U_http_flag |= HTTP_IS_REQUEST_NOSTAT; // NOT a static page...
 
          U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
          }
@@ -3688,11 +3688,25 @@ set_uri: U_http_info.uri     = alias->data();
 
    setPathName();
 
+#ifndef U_SERVER_CAPTIVE_PORTAL
+   if (nocache_file_mask &&
+       UServices::dosMatchWithOR(UStringExt::basename(U_HTTP_URI_TO_PARAM), U_STRING_TO_PARAM(*nocache_file_mask), 0))
+      {
+      U_http_flag |= HTTP_IS_NOCACHE_FILE;
+
+      U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
+      }
+#endif
+
    checkPath();
 
    if (UClientImage_Base::isRequestNotFound())
       {
 #  ifndef U_SERVER_CAPTIVE_PORTAL
+      U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
+
+      if (U_http_is_nocache_file) goto manage;
+
       // ------------------------------------------------------------------------------
       // NB: if status is 'file not found' and we have virtual host
       //     we check if it is present as shared file (without the virtual host prefix)
@@ -3977,12 +3991,18 @@ int UHTTP::processRequest()
 
    if (isGETorHEAD() == false)
       {
+      if (isPOSTorPUTorPATCH())
+         {
+         setBadRequest();
+
+         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         }
+
       // NB: we don't want to process this kind of request here and now...
 
-      U_http_info.nResponseCode = (isPOSTorPUTorPATCH() ? HTTP_BAD_REQUEST
-                                                        : HTTP_NOT_IMPLEMENTED);
+      U_http_flag |= HTTP_METHOD_NOT_IMPLEMENTED;
 
-      setResponse();
+      U_INTERNAL_DUMP("U_http_method_not_implemented = %b", U_http_method_not_implemented)
 
       // NB: maybe there are other plugin after this...
 
@@ -4071,7 +4091,9 @@ int UHTTP::processRequest()
                if (U_http_is_accept_gzip &&
                    isDataCompressFromCache())
                   {
-                  U_http_is_accept_gzip = '2';
+                  U_http_flag |= HTTP_IS_RESPONSE_GZIP;
+
+                  U_INTERNAL_DUMP("U_http_is_response_gzip = %b", U_http_is_response_gzip)
 
                   *ext = getHeaderCompressFromCache();
 
@@ -4115,7 +4137,9 @@ int UHTTP::processRequest()
 #     ifdef USE_LIBZ
          if (U_http_is_accept_gzip)
             {
-             U_http_is_accept_gzip = '2';
+            U_http_flag |= HTTP_IS_RESPONSE_GZIP;
+
+            U_INTERNAL_DUMP("U_http_is_response_gzip = %b", U_http_is_response_gzip)
 
             (void) ext->append(U_CONSTANT_TO_PARAM("Content-Encoding: gzip\r\n"));
 
@@ -5643,7 +5667,7 @@ void UHTTP::handlerResponse()
 
    if (U_ClientImage_close == false)
       {
-      U_INTERNAL_DUMP("U_http_version = %C U_http_keep_alive = %C", U_http_version, U_http_keep_alive)
+      U_INTERNAL_DUMP("U_http_version = %C U_http_keep_alive = %b", U_http_version, U_http_keep_alive)
 
       // HTTP/1.0 compliance: if Keep-Alive not requested we force close
 
@@ -7394,8 +7418,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
          {
          U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
          }
-      else if ((nocache_file_mask == 0                                                                   ||
-                UServices::dosMatchWithOR(file_name, U_STRING_TO_PARAM(*nocache_file_mask), 0) == false) &&
+      else if (U_http_is_nocache_file == false &&
                file->open())
          {
          UString content = file->getContent(true, false, true);
@@ -7743,12 +7766,14 @@ U_NO_EXPORT bool UHTTP::processFileCache()
       }
 
 #ifdef USE_LIBZ
-   U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+   U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
 
    if (U_http_is_accept_gzip &&
        isDataCompressFromCache())
       {
-      U_http_is_accept_gzip = '2';
+      U_http_flag |= HTTP_IS_RESPONSE_GZIP;
+
+      U_INTERNAL_DUMP("U_http_is_response_gzip = %b", U_http_is_response_gzip)
 
       *ext = getHeaderCompressFromCache();
 
@@ -7801,7 +7826,9 @@ U_NO_EXPORT bool UHTTP::processFileCache()
       U_RETURN(true);
       }
 
-   U_http_sendfile = true;
+   U_http_flag |= HTTP_IS_SENDFILE;
+
+   U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
 
    U_RETURN(false);
 }
@@ -7964,8 +7991,9 @@ nocontent:
          {
          U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
 
-         if (nocache_file_mask == 0 ||
-             UServices::dosMatchWithOR(UStringExt::basename(ptr, len), U_STRING_TO_PARAM(*nocache_file_mask), 0) == false)
+         U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
+
+         if (U_http_is_nocache_file == false)
             {
             db_not_found->lock();
 
@@ -9142,11 +9170,18 @@ loop:
 
                ptr += U_CONSTANT_SIZE("ent-Type: ");
 
-               if (u_get_unalignedp32(ptr) != U_MULTICHAR_CONSTANT32('t','e','x','t')) U_http_is_accept_gzip = 0;
+               if (u_get_unalignedp32(ptr) != U_MULTICHAR_CONSTANT32('t','e','x','t'))
+                  {
+                  U_http_flag &= ~HTTP_IS_ACCEPT_GZIP;
+
+                  U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
+                  }
                }
             else if (u_get_unalignedp64(ptr) == U_MULTICHAR_CONSTANT64('e','n','t','-','E','n','c','o'))
                {
-               U_http_is_accept_gzip = 0;
+               U_http_flag &= ~HTTP_IS_ACCEPT_GZIP;
+
+               U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
 
                ptr += U_CONSTANT_SIZE("ent-Encoding: ");
                }
@@ -9845,7 +9880,9 @@ next:
 
    if (range_size >= UServer_Base::min_size_for_sendfile)
       {
-      U_http_sendfile = true;
+      U_http_flag |= HTTP_IS_SENDFILE;
+
+      U_INTERNAL_DUMP("U_http_sendfile = %b", U_http_sendfile)
 
 sendfile:
       UClientImage_Base::setSendfile(file->fd, range_start, range_size);

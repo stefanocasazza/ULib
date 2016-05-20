@@ -665,9 +665,9 @@ void UHTTP2::decodeHeaders(unsigned char* ptr, unsigned char* endptr)
          (void) UClientImage_Base::body->reserve(U_http_info.clength);
          }
 
-      U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+      U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
 
-      if (U_http_is_accept_gzip == 0)
+      if (U_http_is_accept_gzip == false)
          {
          table->hash = hash_static_table[15]; // accept-encoding
 

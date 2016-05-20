@@ -1066,7 +1066,7 @@ int USSIPlugIn::handlerRequest()
             U_INTERNAL_ASSERT_MAJOR(size,0)
 
 #        ifdef USE_LIBZ
-            U_INTERNAL_DUMP("U_http_is_accept_gzip = %C", U_http_is_accept_gzip)
+            U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
 
             if (U_http_is_accept_gzip &&
                 size > U_MIN_SIZE_FOR_DEFLATE)

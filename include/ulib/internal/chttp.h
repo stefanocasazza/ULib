@@ -218,21 +218,45 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_ClientImage_advise_for_parallelization u_clientimage_info.flag.c[7]
 
 #define U_http_version                 u_clientimage_info.http_info.flag[ 0]
-#define U_http_sendfile                u_clientimage_info.http_info.flag[ 1]
+#define U_http_method_num              u_clientimage_info.http_info.flag[ 1]
 #define U_http_host_len                u_clientimage_info.http_info.flag[ 2]
 #define U_http_host_vlen               u_clientimage_info.http_info.flag[ 3]
 #define U_http_range_len               u_clientimage_info.http_info.flag[ 4]
 #define U_http_accept_len              u_clientimage_info.http_info.flag[ 5]
-#define U_http_keep_alive              u_clientimage_info.http_info.flag[ 6]
-#define U_http_method_num              u_clientimage_info.http_info.flag[ 7]
-#define U_http_data_chunked            u_clientimage_info.http_info.flag[ 8]
-#define U_http_websocket_len           u_clientimage_info.http_info.flag[ 9]
-#define U_http2_settings_len           u_clientimage_info.http_info.flag[10]
-#define U_http_ip_client_len           u_clientimage_info.http_info.flag[11]
-#define U_http_is_accept_gzip          u_clientimage_info.http_info.flag[12] /* NB: this position(12) is locked by mod_proxy (UHttpClient_Base::u_http_info_save)... */
-#define U_http_content_type_len        u_clientimage_info.http_info.flag[13]
-#define U_http_is_request_nostat       u_clientimage_info.http_info.flag[14]
-#define U_http_accept_language_len     u_clientimage_info.http_info.flag[15]
+#define U_http_websocket_len           u_clientimage_info.http_info.flag[ 6]
+#define U_http2_settings_len           u_clientimage_info.http_info.flag[ 7]
+#define U_http_ip_client_len           u_clientimage_info.http_info.flag[ 8]
+#define U_http_content_type_len        u_clientimage_info.http_info.flag[ 9]
+#define U_http_accept_language_len     u_clientimage_info.http_info.flag[10]
+#define U_http_len_user1               u_clientimage_info.http_info.flag[12]
+#define U_http_len_user2               u_clientimage_info.http_info.flag[13]
+#define U_http_len_user3               u_clientimage_info.http_info.flag[14]
+#define U_http_len_user4               u_clientimage_info.http_info.flag[15]
+
+#define U_http_flag                    u_clientimage_info.http_info.flag[11]
+#define U_http_flag_save               UHttpClient_Base::u_http_info_save.flag[11]
+
+enum HttpRequestType {
+   HTTP_IS_SENDFILE            = 0x0001,
+   HTTP_IS_KEEP_ALIVE          = 0x0002,
+   HTTP_IS_DATA_CHUNKED        = 0x0004,
+   HTTP_IS_ACCEPT_GZIP         = 0x0008,
+   HTTP_IS_NOCACHE_FILE        = 0x0010,
+   HTTP_IS_RESPONSE_GZIP       = 0x0020,
+   HTTP_IS_REQUEST_NOSTAT      = 0x0040,
+   HTTP_METHOD_NOT_IMPLEMENTED = 0x0080
+};
+
+#define U_http_sendfile               ((U_http_flag & HTTP_IS_SENDFILE)            != 0)
+#define U_http_keep_alive             ((U_http_flag & HTTP_IS_KEEP_ALIVE)          != 0)
+#define U_http_data_chunked           ((U_http_flag & HTTP_IS_DATA_CHUNKED)        != 0)
+#define U_http_is_nocache_file        ((U_http_flag & HTTP_IS_NOCACHE_FILE)        != 0)
+#define U_http_is_response_gzip       ((U_http_flag & HTTP_IS_RESPONSE_GZIP)       != 0)
+#define U_http_is_request_nostat      ((U_http_flag & HTTP_IS_REQUEST_NOSTAT)      != 0)
+#define U_http_method_not_implemented ((U_http_flag & HTTP_METHOD_NOT_IMPLEMENTED) != 0)
+
+#define U_http_is_accept_gzip         ((U_http_flag      & HTTP_IS_ACCEPT_GZIP)    != 0)
+#define U_http_is_accept_gzip_save    ((U_http_flag_save & HTTP_IS_ACCEPT_GZIP)    != 0)
 
 #define U_HTTP_INFO_INIT(c)  (void) U_SYSCALL(memset, "%p,%d,%u", &(u_clientimage_info.http_info),               c, sizeof(uhttpinfo))
 #define U_HTTP_INFO_RESET(c) (void) U_SYSCALL(memset, "%p,%d,%u", &(u_clientimage_info.http_info.nResponseCode), c, 52)

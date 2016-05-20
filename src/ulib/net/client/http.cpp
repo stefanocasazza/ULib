@@ -204,6 +204,7 @@
 
 #define U_MAX_REDIRECTS 10 // HTTP 1.0 used to suggest 5
 
+bool             UHttpClient_Base::server_context_flag;
 struct uhttpinfo UHttpClient_Base::u_http_info_save;
 
 UHttpClient_Base::UHttpClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
@@ -848,12 +849,21 @@ bool UHttpClient_Base::sendRequestEngine()
 
          U_http_info.clength = responseHeader->getHeader(U_CONSTANT_TO_PARAM("Content-Length")).strtol();
 
-         if ((U_http_info.clength == 0                                      &&
-              (U_http_data_chunked = responseHeader->isChunked()) == false) ||
-              UHTTP::readBodyResponse(UClient_Base::socket, &response, body))
+         U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+
+         if (U_http_info.clength == 0)
             {
-            U_RETURN(true);
+            bool is_chunked = responseHeader->isChunked();
+
+            if (is_chunked) U_http_flag |=  HTTP_IS_DATA_CHUNKED;
+            else            U_http_flag &= ~HTTP_IS_DATA_CHUNKED;
+
+            U_INTERNAL_DUMP("is_chunked = %b U_http_data_chunked = %b", is_chunked, U_http_data_chunked)
+
+            if (is_chunked == false) U_RETURN(true);
             }
+
+         if (UHTTP::readBodyResponse(UClient_Base::socket, &response, body)) U_RETURN(true);
 
          if (U_http_info.nResponseCode == HTTP_CLIENT_TIMEOUT ||
              U_http_info.nResponseCode == HTTP_ENTITY_TOO_LARGE)
@@ -881,10 +891,16 @@ bool UHttpClient_Base::sendRequest()
 
    U_INTERNAL_ASSERT_RANGE(0,UClient_Base::iovcnt,6)
 
-   U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
+   U_INTERNAL_DUMP("server_context_flag = %b U_ClientImage_close = %b", server_context_flag, U_ClientImage_close)
 
-   u_http_info_save   = U_http_info;
-   uint64_t flag_save = u_clientimage_info.flag.u;
+   bool ok;
+   uint64_t flag_save = 0;
+
+   if (server_context_flag)
+      {
+      u_http_info_save = U_http_info;
+             flag_save = u_clientimage_info.flag.u;
+      }
 
    if (UClient_Base::iovcnt == 0)
       {
@@ -895,15 +911,17 @@ bool UHttpClient_Base::sendRequest()
       composeRequest();
       }
 
-   bool ok = sendRequestEngine();
+   ok = sendRequestEngine();
 
-   u_http_info_save.nResponseCode = U_http_info.nResponseCode;
+   if (server_context_flag)
+      {
+      u_clientimage_info.flag.u = flag_save;
 
-   U_http_info = u_http_info_save;
+                    u_http_info_save.nResponseCode = U_http_info.nResponseCode;
+      U_http_info = u_http_info_save;
+      }
 
-   U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
-
-   u_clientimage_info.flag.u = flag_save;
+   U_INTERNAL_DUMP("server_context_flag = %b U_ClientImage_close = %b", server_context_flag, U_ClientImage_close)
 
    U_RETURN(ok);
 }

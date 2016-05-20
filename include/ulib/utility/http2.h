@@ -247,13 +247,15 @@ protected:
       {
       U_TRACE(0, "UHTTP2::setEncoding(%V)", x.rep)
 
-      U_INTERNAL_ASSERT_EQUALS(U_http_is_accept_gzip, 0)
+      U_INTERNAL_ASSERT_EQUALS(U_http_is_accept_gzip, false)
 
       U_INTERNAL_DUMP("Accept-Encoding: = %V", x.rep)
 
       U_INTERNAL_ASSERT(u_find(x.data(), 30, U_CONSTANT_TO_PARAM("gzip")))
 
-      U_http_is_accept_gzip = '1';
+      U_http_flag |= HTTP_IS_ACCEPT_GZIP;
+
+      U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
       }
 
    static void setURI(const char* ptr, uint32_t len)

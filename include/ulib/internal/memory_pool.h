@@ -573,6 +573,12 @@ template <class T> bool u_check_memory_vector(T* _vec, uint32_t n)
 }
 #endif
 
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...) UMemoryPool::writeInfoTo(fmt,args)
+#else
+#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)
+#endif
+
 #ifdef ENABLE_MEMPOOL
 #  define U_MALLOC_TYPE(  type) (type*)UMemoryPool::pop(     U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE)
 #  define U_FREE_TYPE(ptr,type)      { UMemoryPool::push(ptr,U_SIZE_TO_STACK_INDEX(sizeof(type)));U_INTERNAL_ASSERT(sizeof(type)<=U_MAX_SIZE_PREALLOCATE) } 
