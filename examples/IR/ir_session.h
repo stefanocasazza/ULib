@@ -91,12 +91,14 @@ public:
       is >> vec;
 
       sz = vec.size();
+#  endif
 
       last_access = u_now->tv_sec;
       }
 
    // STREAMS
 
+#ifdef U_STDCPP_ENABLE
    friend istream& operator>>(istream& is, IRDataSession& d) { d.fromStream(is); return is; }
    friend ostream& operator<<(ostream& os, IRDataSession& d) {   d.toStream(os); return os; }
 #endif

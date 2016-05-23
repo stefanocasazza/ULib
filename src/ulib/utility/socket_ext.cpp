@@ -1408,7 +1408,9 @@ UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
          do {
             // Receive response from the kernel
 
-            if ((readLen = U_SYSCALL(recv, "%d,%p,%u,%d", sock, CAST(bufPtr), 4096 - msgLen, 0)) < 0) break;
+            readLen = U_SYSCALL(recv, "%d,%p,%u,%d", sock, CAST(bufPtr), 4096 - msgLen, 0);
+
+            if (readLen < 0) break;
 
             nlHdr.p = bufPtr;
 
@@ -1443,14 +1445,13 @@ UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
          int rtLen;
          char* dst;
          char dstMask[32];
-         struct rtmsg* rtMsg;
          struct rtattr* rtAttr;
          char ifName[IF_NAMESIZE];
          struct in_addr dstAddr, srcAddr, gateWay;
 
          for (; NLMSG_OK(nlMsg.h,msgLen); nlMsg.h = NLMSG_NEXT(nlMsg.h,msgLen))
             {
-            rtMsg = (struct rtmsg*) NLMSG_DATA(nlMsg.h);
+            struct rtmsg* rtMsg = (struct rtmsg*) NLMSG_DATA(nlMsg.h);
 
             U_INTERNAL_DUMP("rtMsg = %p msgLen = %u rtm_family = %u rtm_table = %u", rtMsg, msgLen, rtMsg->rtm_family, rtMsg->rtm_table)
 

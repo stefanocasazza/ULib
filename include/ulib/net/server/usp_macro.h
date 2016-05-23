@@ -25,6 +25,7 @@
 #define USP_PRINTF_ADD(fmt,args...)   UClientImage_Base::wbuffer->snprintf_add(fmt , ##args)
 
 #define USP_JSON_PUTS(json)                     UValue::stringify(*UClientImage_Base::wbuffer, (json))
+#define USP_JSON_REQUEST_PARSE(obj)             JSON_parse(*UClientImage_Base::body, (obj))
 #define USP_JSON_stringify(json,class_name,obj) ((json).toJSON(UJsonTypeHandler<class_name>(obj)), USP_JSON_PUTS(json))
 
 #define USP_XML_PUTS(string) \

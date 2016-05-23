@@ -46,7 +46,7 @@ public:
 
    // COSTRUTTORE
 
-            UClientXAdES(UFileConfig* cfg) : USOAPClient<T>(cfg) {}
+   explicit UClientXAdES(UFileConfig* cfg) : USOAPClient<T>(cfg) {}
    virtual ~UClientXAdES()                                       {}
 
    // OBJECT FOR METHOD REQUEST

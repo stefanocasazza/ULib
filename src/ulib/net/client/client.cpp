@@ -369,7 +369,6 @@ bool UClient_Base::setUrl(const char* str, uint32_t len)
          char* p;
          char* ptr;
          char* dest;
-         uint32_t sz;
          char buf[U_PATH_MAX];
 
          const char*  src =       uri.data();
@@ -383,7 +382,7 @@ bool UClient_Base::setUrl(const char* str, uint32_t len)
 
             if (p == 0) break;
 
-            sz = p - src + 1;
+            uint32_t sz = p - src + 1;
 
             U_INTERNAL_DUMP("segment = %.*S", sz, src)
 

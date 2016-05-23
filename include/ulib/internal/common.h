@@ -14,7 +14,7 @@
 #ifndef ULIB_INTERNAL_COMMON_H
 #define ULIB_INTERNAL_COMMON_H 1
 
-// Manage file to include
+// Manage which file headers to include
 
 #include <ulib/base/base.h>
 

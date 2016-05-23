@@ -84,7 +84,7 @@ int DocumentClassifier::verifyCallback(int ok, X509_STORE_CTX* ctx) // callback
 
    if (flag_ricorsione || verify_result == false) U_RETURN(ok);
 
-   if (ok == false) U_RETURN(1);
+   if (ok == 0) U_RETURN(1);
 
    flag_ricorsione = true;
 

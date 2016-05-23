@@ -2336,14 +2336,14 @@ void UHTTP2::handlerResponse()
 
    if (sz2)
       {
-      uint32_t pos;
       UString row, key;
       UVector<UString> vext(20);
 
       for (uint32_t i = 0, n = vext.split(*UHTTP::ext, U_CRLF); i < n; ++i)
          {
          row = vext[i];
-         pos = row.find_first_of(':');
+
+         uint32_t pos = row.find_first_of(':');
 
          key = row.substr(0U, pos);
          dst = hpackEncodeHeader(dst, dyntbl, key, row.substr(pos+2), bfirst ? 0 : &vdyntbl); 

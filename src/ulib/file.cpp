@@ -475,9 +475,6 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 #ifdef U_LINUX
    if (nr_hugepages)
       {
-      char* ptr;
-      uint32_t length;
-
       U_INTERNAL_DUMP("nr_hugepages = %ld rlimit_memfree = %u", nr_hugepages, rlimit_memfree)
 
       U_INTERNAL_ASSERT_EQUALS(rlimit_memfree, U_2M)
@@ -485,13 +482,13 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 #  ifdef MAP_HUGE_1GB /* (since Linux 3.8) */
       if (*plength >= U_1G)
          {
-         length = (*plength + U_1G_MASK) & ~U_1G_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+         uint32_t length = (*plength + U_1G_MASK) & ~U_1G_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
 
          U_INTERNAL_ASSERT_EQUALS(length & U_1G_MASK, 0)
 
          U_DEBUG("We are going to allocate (%u GB - %u bytes) MAP_HUGE_1GB - nfree = %u flags = %B", length / U_1G, length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB)
 
-         ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB, -1, 0);
+         char* ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB, -1, 0);
 
          if (ptr != (char*)MAP_FAILED)
             {
@@ -502,13 +499,13 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
          }
 #  endif
 #  ifdef MAP_HUGE_2MB /* (since Linux 3.8) */
-      length = (*plength + U_2M_MASK) & ~U_2M_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
+      uint32_t length = (*plength + U_2M_MASK) & ~U_2M_MASK; // NB: munmap() length of MAP_HUGETLB memory must be hugepage aligned...
 
       U_INTERNAL_ASSERT_EQUALS(length & U_2M_MASK, 0)
 
       U_DEBUG("We are going to allocate (%u MB - %u bytes) MAP_HUGE_2MB - nfree = %u flags = %B", length / (1024U*1024U), length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB)
 
-      ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB, -1, 0);
+      char* ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB, -1, 0);
 
       if (ptr != (char*)MAP_FAILED)
          {

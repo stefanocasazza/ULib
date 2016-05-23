@@ -118,21 +118,20 @@ HttpCookie::HttpCookie(const char* name_, unsigned name_len, const char* value_,
 
    (void) cookie_split(tvec, buffer, "=");
 
-   const char* s;
-   const char* p;
    const char* pc;
+   unsigned i, num;
    const char* delim;
-   unsigned i, num, size;
 
    for (i = 0; i < tvec.size(); i++)
       {
-      s    = tvec[i].data();
+      const char* s = tvec[i].data();
 
       /* modifica stefano */
-      size = tvec[i].size();
+      unsigned size = tvec[i].size();
 
       pc = (const char*) memrchr(s, ',', size);
-      p  = (const char*) memrchr(s, ';', size);
+
+      const char* p = (const char*) memrchr(s, ';', size);
 
       if (pc > p)
          {

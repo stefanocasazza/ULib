@@ -479,7 +479,7 @@ public:
 
    // COSTRUTTORI
 
-   UTranformInputURI(const char* uri);
+   explicit UTranformInputURI(const char* uri);
 
    virtual ~UTranformInputURI()
       {

@@ -19,7 +19,7 @@ public:
 
    // COSTRUTTORE
 
-            UClientCSP(UFileConfig* cfg) : URPCClient<T>(cfg) {}
+   explicit UClientCSP(UFileConfig* cfg) : URPCClient<T>(cfg) {}
    virtual ~UClientCSP()                                      {}
 
    // OBJECT FOR METHOD REQUEST

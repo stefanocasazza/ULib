@@ -254,7 +254,7 @@ static void usp_end_businesses()
 Content-Type: application/json
 -->
 <!--#code
-if (JSON_parse(*UClientImage_Base::body, *prequest))
+if (USP_JSON_REQUEST_PARSE(*prequest))
    {
    uint32_t i, n;
 

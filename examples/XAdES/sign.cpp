@@ -425,7 +425,6 @@ public:
       UString completeCertificateRef(U_CAPACITY), completeCertificateRefs(U_CAPACITY);
 
       uint32_t i, n;
-      long CASerialNumber;
       UVector<UString> vec_CACertificateValue;
       UString item(U_CAPACITY), CACertificateValue(U_CAPACITY), CAIssuerName, CACertificate, DigestValue(U_CAPACITY);
 
@@ -437,7 +436,6 @@ public:
 
          CAIssuerName   = ca->getIssuerForLDAP();
          CACertificate  = ca->getEncoded("DER");
-         CASerialNumber = ca->getSerialNumber();
 
          DigestValue.setEmpty();
 
@@ -447,7 +445,7 @@ public:
                        U_STRING_TO_TRACE(digest_algorithm),
                        U_STRING_TO_TRACE(DigestValue),
                        U_STRING_TO_TRACE(CAIssuerName),
-                       CASerialNumber);
+                       ca->getSerialNumber());
 
          (void) completeCertificateRef.append(item);
 

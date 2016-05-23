@@ -3095,12 +3095,17 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
 
          if (pid > 0)
             {
-            char buffer[128];
-
             --UNotifier::num_connection;
 
-            U_SRV_LOG("Child (pid %d) exited with value %d (%s), down to %u children",
-                              pid, status, UProcess::exitInfo(buffer, status), UNotifier::num_connection - UNotifier::min_connection);
+#        ifndef U_LOG_DISABLE
+            if (isLog())
+               {
+               char buffer[128];
+
+               ULog::log("%sChild (pid %d) exited with value %d (%s), down to %u children",
+                         UServer_Base::mod_name[0], pid, status, UProcess::exitInfo(buffer, status), UNotifier::num_connection - UNotifier::min_connection);
+               }
+#        endif
 
             goto retry;
             }
@@ -3586,25 +3591,30 @@ void UServer_Base::run()
 
                u_bind2cpu(&cpuset, rkids % u_num_cpu); // Pin the process to a particular cpu...
 
-#           if !defined(U_LOG_DISABLE) || defined(HAVE_SCHED_GETCPU)
-               char buffer[64];
-               uint32_t sz = 0;
-               int cpu = U_SYSCALL_NO_PARAM(sched_getcpu);
-#           endif
-
 #           ifdef SO_INCOMING_CPU
                USocket::incoming_cpu = rkids % u_num_cpu;
 #           endif
 
-#           ifdef HAVE_SCHED_GETCPU
-               if (USocket::incoming_cpu != cpu &&
-                   USocket::incoming_cpu != -1)
+#           ifndef U_LOG_DISABLE
+               if (isLog())
                   {
-                  sz = u__snprintf(buffer, sizeof(buffer), " (EXPECTED CPU %d)", USocket::incoming_cpu);
-                  }
-#          endif
+                  uint32_t sz;
+                  char buffer[64];
+                  int cpu = U_SYSCALL_NO_PARAM(sched_getcpu);
 
-               U_SRV_LOG("New child started, affinity mask: %x, cpu: %d%.*s", CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
+#              ifdef HAVE_SCHED_GETCPU
+                  if (USocket::incoming_cpu != cpu &&
+                      USocket::incoming_cpu != -1)
+                     {
+                     sz = u__snprintf(buffer, sizeof(buffer), " (EXPECTED CPU %d)", USocket::incoming_cpu);
+                     }
+                  else
+#              endif
+                  sz = 0;
+
+                  ULog::log("%sNew child started, affinity mask: %x, cpu: %d%.*s",  mod_name[0], CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
+                  }
+#           endif
                }
 
 #          ifdef HAVE_LIBNUMA

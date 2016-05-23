@@ -8330,9 +8330,9 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
 
    if ((mask & U_RAKE) == 0)
       {
+#  ifdef U_ALIAS
       bool brequest = false;
 
-#  ifdef U_ALIAS
       if (*UClientImage_Base::request_uri)
          {
          // The interpreted pathname of the original requested document (relative to the document root)
@@ -8348,9 +8348,10 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
             buffer.snprintf_add("REQUEST_URI=%.*s?%.*s\n", sz, ptr, U_HTTP_QUERY_TO_TRACE);
             }
          }
-#  endif
 
-      if (brequest == false) buffer.snprintf_add("REQUEST_URI=%.*s\n", sz, ptr);
+      if (brequest == false)
+#  endif
+      buffer.snprintf_add("REQUEST_URI=%.*s\n", sz, ptr);
       }
 
    if ((mask & U_PHP) != 0)

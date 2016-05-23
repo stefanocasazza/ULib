@@ -267,7 +267,6 @@ long USSLSocket::getOptions(const UVector<UString>& vec)
 
    uint32_t j;
    UString key;
-   const char* ptr;
 
    long options = SSL_OP_NO_SSLv2       |
 #              ifdef SSL_OP_NO_COMPRESSION
@@ -277,9 +276,8 @@ long USSLSocket::getOptions(const UVector<UString>& vec)
 
    for (uint32_t i = 0, n = vec.size(); i < n; ++i)
       {
-      uint32_t len = key.size();
-
-      ptr = key.data();
+      uint32_t len    = key.size();
+      const char* ptr = key.data();
 
       char positive = 1;
 

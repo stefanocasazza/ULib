@@ -100,7 +100,7 @@ bool                 UNotifier::bepollet;
 int                  UNotifier::ctl_cmd_cnt;
 struct epoll_ctl_cmd UNotifier::ctl_cmd[U_EPOLL_CTL_CMD_SIZE];
 
-void UNotifier::batch((UEventFd* item)
+void UNotifier::batch(UEventFd* item)
 {
    U_TRACE(0, "UNotifier::batch(%p)", item)
 

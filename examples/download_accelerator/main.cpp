@@ -229,7 +229,7 @@ public:
 
             U_APPEND_LITERAL("   ");
 
-            (void) sprintf(p, " ETA %02d:%02d", eta_min, eta_sec);
+            (void) sprintf(p, " ETA %02u:%02u", eta_min, eta_sec);
             }
          else
             {
@@ -237,7 +237,7 @@ public:
 
             if (eta_hrs < 10) *p++ = ' ';
 
-            (void) sprintf(p, " ETA %d:%02d:%02d", eta_hrs, eta_min, eta_sec);
+            (void) sprintf(p, " ETA %u:%02u:%02u", eta_hrs, eta_min, eta_sec);
             }
 
          p += u__strlen(p, __PRETTY_FUNCTION__);
@@ -616,8 +616,8 @@ public:
       rcvsock.iSockDesc = rcvsock_fd;
       sndsock.iSockDesc = sndsock_fd;
 
+      int code, lag;
       unsigned must_continue = numhosts;
-      int code, startcount, hostcount, lag;
       int seq = 0, endcount = 0, min_lag = 100;
 
       if (rcvsock.setTimeoutRCV(50) == false) U_RETURN(false); /* transmit time must be <= min_lag / 2 */
@@ -651,7 +651,8 @@ public:
          */
 
          bool sent_one = false;
-         startcount    = hostcount = endcount;
+         int startcount = endcount;
+         int hostcount = endcount;
          must_continue = 0;
 
          do {

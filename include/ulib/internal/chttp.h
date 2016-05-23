@@ -319,7 +319,7 @@ enum HttpRequestType {
 /**
  * The hostname of your server from header's request.
  * The difference between U_HTTP_HOST_.. and U_HTTP_VHOST_.. is that
- * U_HTTP_HOST_.. can include the «:PORT» text, and U_HTTP_VHOST_.. only the name
+ * U_HTTP_HOST_.. can include the :PORT text, and U_HTTP_VHOST_.. only the name
  */
 
 #define U_HTTP_HOST_TO_PARAM  u_clientimage_info.http_info.host, U_http_host_len

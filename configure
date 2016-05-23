@@ -1757,14 +1757,14 @@ Optional Features:
   --enable-captive-portal   enable server captive portal mode [default=no]
   --enable-thread-approach  enable server thread approach support [default=no]
   --enable-HIS              enable HTTP Inotify Support [default=no]
-  --enable-log              enable client and server log support [default=no]
+  --enable-log              enable client and server log support [default=yes]
   --enable-GSDS             enable GDB Stack Dump Support [default=no]
   --enable-HCRS             enable Cache Request Support [default=no]
-  --enable-HPRS             enable Homogeneous Pipeline Request Support [default=yes]
+  --enable-HPRS             enable Homogeneous Pipeline Request Support [default=no]
   --enable-http2            enable HTTP/2 support [default=no]
   --enable-classic          enable server classic model support [default=no]
   --enable-throttling       enable server bandwidth throttling support [default=no]
-  --enable-alias            enable alias URI support [default=no]
+  --enable-alias            enable alias URI support [default=yes]
   --enable-welcome          enable welcome message support [default=no]
   --enable-ACL              enable ACL filtering support [default=no]
   --enable-RFC1918          enable RFC1918 filtering support [default=no]
@@ -24539,10 +24539,10 @@ if test "${enable_log+set}" = set; then :
 fi
 
 	if test -z "$enable_log"; then
-		if test "$enable_debug" = "yes"; then
-			enable_log="yes"
-		else
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_log="no"
+		else
+			enable_log="yes"
 		fi
 	fi
 	if test "$enable_log" != "yes"; then
@@ -24583,10 +24583,10 @@ if test "${enable_HCRS+set}" = set; then :
 fi
 
 	if test -z "$enable_HCRS"; then
-		if test "$enable_debug" = "yes"; then
-			enable_HCRS="no"
-		else
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_HCRS="yes"
+		else
+			enable_HCRS="no"
 		fi
 	fi
 	if test "$enable_HCRS" != "yes"; then
@@ -24605,10 +24605,10 @@ if test "${enable_HPRS+set}" = set; then :
 fi
 
 	if test -z "$enable_HPRS"; then
-		if test "$enable_debug" = "yes"; then
-			enable_HPRS="no"
-		else
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_HPRS="yes"
+		else
+			enable_HPRS="no"
 		fi
 	fi
 	if test "$enable_HPRS" != "yes"; then
@@ -24681,10 +24681,10 @@ if test "${enable_alias+set}" = set; then :
 fi
 
 	if test -z "$enable_alias"; then
-		if test "$enable_debug" = "yes"; then
-			enable_alias="yes"
-		else
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_alias="no"
+		else
+			enable_alias="yes"
 		fi
 	fi
 	if test "$enable_alias" = "yes"; then

@@ -417,14 +417,14 @@ void UThread::setCancel(int mode)
 {
    U_TRACE(1, "UThread::setCancel(%d)", mode)
 
-   int old;
-
    switch (mode)
       {
       case cancelDeferred:
       case cancelImmediate:
          {
 #     ifdef HAVE_PTHREAD_CANCEL
+         int old;
+
          (void) U_SYSCALL(pthread_setcancelstate, "%d,%p",                           PTHREAD_CANCEL_ENABLE,        &old);
          (void) U_SYSCALL(pthread_setcanceltype,  "%d,%p", (mode == cancelDeferred ? PTHREAD_CANCEL_DEFERRED
                                                                                    : PTHREAD_CANCEL_ASYNCHRONOUS), &old);
@@ -436,6 +436,8 @@ void UThread::setCancel(int mode)
       case cancelDisabled:
          {
 #     ifdef HAVE_PTHREAD_CANCEL
+         int old;
+
          (void) U_SYSCALL(pthread_setcancelstate, "%d,%p", PTHREAD_CANCEL_DISABLE, &old);
 #     endif
          }

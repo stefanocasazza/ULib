@@ -156,12 +156,12 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 
 	AC_MSG_CHECKING(if you want to enable client and server log support)
 	AC_ARG_ENABLE(log,
-				[  --enable-log              enable client and server log support [[default=no]]])
+				[  --enable-log              enable client and server log support [[default=yes]]])
 	if test -z "$enable_log"; then
-		if test "$enable_debug" = "yes"; then
-			enable_log="yes"
-		else
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_log="no"
+		else
+			enable_log="yes"
 		fi
 	fi
 	if test "$enable_log" != "yes"; then
@@ -188,10 +188,10 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	AC_ARG_ENABLE(HCRS,
 				[  --enable-HCRS             enable Cache Request Support [[default=no]]])
 	if test -z "$enable_HCRS"; then
-		if test "$enable_debug" = "yes"; then
-			enable_HCRS="no"
-		else
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_HCRS="yes"
+		else
+			enable_HCRS="no"
 		fi
 	fi
 	if test "$enable_HCRS" != "yes"; then
@@ -201,12 +201,12 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 
 	AC_MSG_CHECKING(if you want to enable homogeneous pipeline request support)
 	AC_ARG_ENABLE(HPRS,
-				[  --enable-HPRS             enable Homogeneous Pipeline Request Support [[default=yes]]])
+				[  --enable-HPRS             enable Homogeneous Pipeline Request Support [[default=no]]])
 	if test -z "$enable_HPRS"; then
-		if test "$enable_debug" = "yes"; then
-			enable_HPRS="no"
-		else
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_HPRS="yes"
+		else
+			enable_HPRS="no"
 		fi
 	fi
 	if test "$enable_HPRS" != "yes"; then
@@ -249,12 +249,12 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 
 	AC_MSG_CHECKING(if you want to enable alias URI support)
 	AC_ARG_ENABLE(alias,
-				[  --enable-alias            enable alias URI support [[default=no]]])
+				[  --enable-alias            enable alias URI support [[default=yes]]])
 	if test -z "$enable_alias"; then
-		if test "$enable_debug" = "yes"; then
-			enable_alias="yes"
-		else
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			enable_alias="no"
+		else
+			enable_alias="yes"
 		fi
 	fi
 	if test "$enable_alias" = "yes"; then

@@ -451,7 +451,6 @@ void UNoCatPlugIn::getTraffic()
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
    UString ip(17U);
    uint32_t traffic;
-   const char* table;
    UModNoCatPeer* _peer;
    const unsigned char* bytep;
    struct ipt_acc_handle_ip* entry;
@@ -460,7 +459,7 @@ void UNoCatPlugIn::getTraffic()
       {
       U_INTERNAL_ASSERT((*vLocalNetworkMask)[i]->spec.isNullTerminated())
 
-      table = (*vLocalNetworkMask)[i]->spec.data();
+      const char* table = (*vLocalNetworkMask)[i]->spec.data();
 
       if (ipt->readEntries(table, true))
          {

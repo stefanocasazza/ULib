@@ -36,7 +36,7 @@ public:
    UTree<Element*>* node_to_delete;
    UString description, content_type, filename;
 
-   Element(Type t) : type(t)
+   explicit Element(Type t) : type(t)
       {
       U_TRACE_REGISTER_OBJECT(5, Element, "%d", t)
 
@@ -117,8 +117,8 @@ public:
 
    // COSTRUTTORE
 
-    DocumentClassifier(const char* filename);
-   ~DocumentClassifier();
+   explicit DocumentClassifier(const char* filename);
+           ~DocumentClassifier();
 
    // SERVICES
 

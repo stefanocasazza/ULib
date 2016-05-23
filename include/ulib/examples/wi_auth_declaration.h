@@ -4334,11 +4334,11 @@ static void GET_get_config()
                      U_INTERNAL_ASSERT(label)
                      U_INTERNAL_ASSERT(netmask)
 
-                     uint32_t lbl = label.strtol();
-
                      _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("172.<CCC>.<DDD>.0/24"), U_STRING_TO_PARAM(netmask));
 
-                     buffer.snprintf("LOCAL_NETWORK_LABEL %06x", lbl);
+                     uint32_t lbl = label.strtol();
+
+                     buffer.snprintf("LOCAL_NETWORK_LABEL %u", lbl);
 
                      _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("LOCAL_NETWORK_LABEL ap"), U_STRING_TO_PARAM(buffer));
 
