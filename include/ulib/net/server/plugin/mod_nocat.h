@@ -25,14 +25,14 @@
 #include <ulib/net/server/server_plugin.h>
 
 enum LogoutType {
-      U_LOGOUT_NO_TRAFFIC           = 1,
-      U_LOGOUT_NO_ARP_CACHE         = 2,
-      U_LOGOUT_NO_ARP_REPLY         = 3,
-      U_LOGOUT_NO_MORE_TIME         = 4,
-      U_LOGOUT_NO_MORE_TRAFFIC      = 5,
-      U_LOGOUT_CHECK_FIREWALL       = 6, 
-      U_LOGOUT_REQUEST_FROM_AUTH    = 7,
-      U_LOGOUT_DIFFERENT_MAC_FOR_IP = 8 
+   U_LOGOUT_NO_TRAFFIC           = 1,
+   U_LOGOUT_NO_ARP_CACHE         = 2,
+   U_LOGOUT_NO_ARP_REPLY         = 3,
+   U_LOGOUT_NO_MORE_TIME         = 4,
+   U_LOGOUT_NO_MORE_TRAFFIC      = 5,
+   U_LOGOUT_CHECK_FIREWALL       = 6, 
+   U_LOGOUT_REQUEST_FROM_AUTH    = 7,
+   U_LOGOUT_DIFFERENT_MAC_FOR_IP = 8 
 };
 
 class UDirWalk;
@@ -224,6 +224,7 @@ protected:
    static void checkSystem();
    static void checkOldPeer();
    static void creatNewPeer();
+   static void setPeerLabel();
    static bool checkFirewall();
    static bool preallocatePeersFault();
    static bool getPeer(uint32_t i) __pure;

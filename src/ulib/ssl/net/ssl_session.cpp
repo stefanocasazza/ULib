@@ -50,6 +50,8 @@ char* USSLSession::toBuffer()
 
    U_INTERNAL_ASSERT_MAJOR(u_buffer_len, 0)
 
+   buffer_len = u_buffer_len;
+
    U_RETURN(u_buffer);
 }
 

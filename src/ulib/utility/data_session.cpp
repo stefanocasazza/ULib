@@ -15,6 +15,8 @@
 #include <ulib/net/server/server.h>
 #include <ulib/utility/data_session.h>
 
+uint32_t UDataStorage::buffer_len;
+
 // method VIRTUAL to define
 
 char* UDataStorage::toBuffer()
@@ -32,6 +34,8 @@ char* UDataStorage::toBuffer()
 #endif
 
    U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_BUFFER_SIZE)
+
+   buffer_len = u_buffer_len;
 
    U_RETURN(u_buffer);
 }

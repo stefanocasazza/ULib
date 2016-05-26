@@ -100,13 +100,15 @@ public:
    friend istream& operator>>(istream& is, UDataStorage& d) { d.fromStream(is); return is; }
    friend ostream& operator<<(ostream& os, UDataStorage& d) {   d.toStream(os); return os; }
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:
    UString keyid;
+
+   static uint32_t buffer_len;
 
    // method VIRTUAL to define
 

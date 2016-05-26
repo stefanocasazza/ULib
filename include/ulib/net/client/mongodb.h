@@ -124,6 +124,8 @@ public:
 
    bool find(bson_t* query, bson_t* projection);
 
+   bool findAggregation(bson_t* pipeline, bson_t* options = 0, mongoc_query_flags_t flags = MONGOC_QUERY_NONE, mongoc_read_prefs_t* read_prefs = 0); // Execute an 'aggregation' query
+
    bool        update(bson_t* query, bson_t* update);
    bool findAndModify(bson_t* query, bson_t* update);
 

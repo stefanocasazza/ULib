@@ -62,7 +62,7 @@ public:
 
       (void) buffer_data.append(U_CONSTANT_TO_PARAM(" ]"));
 
-      u_buffer_len = buffer_data.size();
+      buffer_len = buffer_data.size();
 
       U_RETURN(buffer_data.data());
       }

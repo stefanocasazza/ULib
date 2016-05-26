@@ -17,6 +17,7 @@
 
 static UString* ap;
 static UString* ip;
+static UString* ts;
 static UString* uid;
 static UString* mac;
 static UString* pbody;
@@ -141,6 +142,7 @@ static WiAuthNodog*            nodog_rec;
 static WiAuthDataStorage*       data_rec;
 static WiAuthVirtualAccessPoint* vap_rec;
 
+static UString* buffer_data;
 static UString* db_anagrafica;
 static UString* db_filter_tavarnelle;
 static URDBObjectHandler<UDataStorage*>* db_ap;
@@ -209,6 +211,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
+        buffer_len =
       u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE,
                                  "%u %u %llu",
                              utenti_connessi_giornaliero_globale,
@@ -314,11 +317,13 @@ public:
 
       U_INTERNAL_ASSERT(label)
 
-      u_buffer_len += u__snprintf(u_buffer + u_buffer_len, U_BUFFER_SIZE,
+      char buffer[1024];
+
+      (void) buffer_data->append(buffer, u__snprintf(buffer, sizeof(buffer),
                         " %c%u %v \"%v\" \"%v\""
                         " %u %u %u %llu",
                         noconsume ? '-' : '+', num_users_connected, label.rep, group_account_mask.rep, mac_mask.rep,
-                        num_login, num_auth_domain_ALL, num_auth_domain_FICARD, traffic_done);
+                        num_login, num_auth_domain_ALL, num_auth_domain_FICARD, traffic_done));
       }
 
    // STREAMS
@@ -477,6 +482,7 @@ public:
       U_INTERNAL_ASSERT(nodog)
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
+        buffer_len =
       u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "%u %v", _index_access_point, nodog.rep);
 
       U_RETURN(u_buffer);
@@ -558,11 +564,9 @@ public:
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT(hostname)
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
       U_ASSERT_EQUALS(sz, vec_access_point.size())
 
-      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE,
-                        "%d %ld %ld %u %v %ld [",
+      buffer_data->snprintf("%d %ld %ld %u %v %ld [",
                         status,
                         last_info,
                         since,
@@ -572,13 +576,11 @@ public:
 
       for (uint32_t i = 0; i < sz; ++i) vec_access_point[i]->toBuffer();
 
-      u_buffer[u_buffer_len++] = ' ';
-      u_buffer[u_buffer_len++] = ']';
-      u_buffer[u_buffer_len]   = '\0';
+      (void) buffer_data->append(U_CONSTANT_TO_PARAM(" ]"));
 
-      U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_BUFFER_SIZE)
+      buffer_len = buffer_data->size();
 
-      U_RETURN(u_buffer);
+      U_RETURN(buffer_data->data());
       }
 
 #if defined(U_STDCPP_ENABLE)
@@ -871,7 +873,8 @@ public:
 
          if (findLabel() == false)
             {
-            if (ap_address_trust == false ||
+            if (ap_address_trust == false  ||
+                ap_label->c_char(0) == '0' ||
                 sz > 4096)
                {
                U_RETURN(false);
@@ -977,6 +980,7 @@ public:
 
       // 172.16.1.172 0 1391085937 1391085921 0 0 878 7200 0 314572800 0 1 3291889980 0 0 MAC_AUTH_all 00:14:a5:6e:9c:cb DAILY 10.10.100.115 "anonymous"
 
+        buffer_len =
       u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE,
                           "%v %u "
                           "%ld %ld "
@@ -2070,7 +2074,7 @@ static void usp_init_wi_auth()
 {
    U_TRACE_NO_PARAM(5, "::usp_init_wi_auth()")
 
-   U_NEW(UString, ap_ref, UString(100U));
+   U_NEW(UString, ap_ref,   UString(100U));
    U_NEW(UString, ap_label, UString);
 
 #ifndef U_ALIAS
@@ -2101,6 +2105,7 @@ static void usp_init_wi_auth()
 
    U_NEW(UString, ip, UString);
    U_NEW(UString, ap, UString);
+   U_NEW(UString, ts, UString);
    U_NEW(UString, uid, UString);
    U_NEW(UString, mac, UString);
    U_NEW(UString, yearName, UString(U_STRING_FROM_CONSTANT("year")));
@@ -2118,6 +2123,7 @@ static void usp_init_wi_auth()
    U_NEW(UString, ip_server, UString(UServer_Base::getIPAddress()));
    U_NEW(UString, empty_str, U_STRING_FROM_CONSTANT("\"\""));
    U_NEW(UString, url_nodog, UString(U_CAPACITY));
+   U_NEW(UString, buffer_data, UString(U_CAPACITY));
    U_NEW(UString, cert_auth, U_STRING_FROM_CONSTANT("CERT_AUTH"));
    U_NEW(UString, ap_ref_ap, UString(100U));
    U_NEW(UString, nodog_conf, UString(UFile::contentOf("ap/nodog.conf.template")));
@@ -2429,6 +2435,7 @@ static void usp_end_wi_auth()
 #  ifdef DEBUG
       delete ip;
       delete ap;
+      delete ts;
       delete uid;
       delete mac;
       delete pbody;
@@ -2451,6 +2458,7 @@ static void usp_end_wi_auth()
       delete ap_address;
       delete nodog_conf;
       delete empty_list;
+      delete buffer_data;
       delete cookie_auth;
       delete ap_hostname;
       delete auth_domain;
@@ -3102,6 +3110,7 @@ static bool checkLoginRequest(uint32_t n, uint32_t end, int tolerance, bool bemp
 
             ap->clear();
             ip->clear();
+            ts->clear();
            uid->clear();
            mac->clear();
          redir->clear();
@@ -3160,6 +3169,8 @@ static bool checkLoginRequest(uint32_t n, uint32_t end, int tolerance, bool bemp
       if (*mac &&
           nodog_rec->setRecord(5280))
          {
+         UHTTP::getFormValue(*ts, U_CONSTANT_TO_PARAM("ts"), 0, 15, n);
+
          U_RETURN(true);
          }
       }
@@ -4336,9 +4347,7 @@ static void GET_get_config()
 
                      _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("172.<CCC>.<DDD>.0/24"), U_STRING_TO_PARAM(netmask));
 
-                     uint32_t lbl = label.strtol();
-
-                     buffer.snprintf("LOCAL_NETWORK_LABEL %u", lbl);
+                     buffer.snprintf("LOCAL_NETWORK_LABEL %.*s", U_STRING_TO_TRACE(label));
 
                      _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("LOCAL_NETWORK_LABEL ap"), U_STRING_TO_PARAM(buffer));
 
@@ -4346,7 +4355,7 @@ static void GET_get_config()
                         {
                         UString tmp(200U + local.size());
 
-                        tmp.snprintf(local.data(), U_STRING_TO_TRACE(netmask), lbl); 
+                        tmp.snprintf(local.data(), U_STRING_TO_TRACE(netmask), U_STRING_TO_TRACE(label));
 
                         local = tmp;
                         }
@@ -4466,14 +4475,27 @@ static void GET_login() // MAIN PAGE (se il portatile non mostra la login page c
    // $5 -> timeout
    // $6 -> token
    // $7 -> ap (with localization => '@')
+   // $8 -> ts (timestamp)
    // -----------------------------------------------------------------------------------------------------------------------------------------------
    // GET /login?mac=00%3A14%3AA5%3A6E%3A9C%3ACB&ip=192.168.226.2&redirect=http%3A%2F%2Fgoogle&gateway=192.168.226.1%3A5280&timeout=0&token=x&ap=lab2
    // -----------------------------------------------------------------------------------------------------------------------------------------------
 
    bool login_validate = false;
 
-   if (checkLoginRequest(0, 14, 0, true))
+   if (checkLoginRequest(0, 14, 2, true))
       {
+      long timestamp;
+
+      if (*ts &&
+          (u_now->tv_sec - (timestamp = ts->strtol())) > (5L * 60L))
+         {
+         U_LOGGER("*** GET_login() IP(%v) MAC(%v) AP(%v) request expired: %#5D ***", ip->rep, mac->rep, ap->rep, timestamp);
+
+         USSIPlugIn::setAlternativeRedirect("http://www.google.com", 0);
+
+         return;
+         }
+
       if (WiAuthNodog::checkMAC())
          {
          *uid         = *mac;
@@ -4820,9 +4842,10 @@ static void GET_login_validate()
    // $5 -> timeout
    // $6 -> token
    // $7 -> ap (with localization => '@')
+   // $8 -> ts (timestamp)
    // ---------------------------------------------------------------------------------------------------
 
-   if (checkLoginRequest(0, 14, 0, false) == false ||
+   if (checkLoginRequest(0, 14, 2, false) == false ||
        checkLoginValidate(true)           == false)
       {
       loginWithProblem();
@@ -5072,9 +5095,11 @@ static void GET_postlogin()
    // $5 -> timeout
    // $6 -> token
    // $7 -> ap (with localization => '@')
+   // $8 -> ts (timestamp)
    // -----------------------------------------------------------------------------------
 
-   if (n != 14)
+   if (n != 14 &&
+       n != 16)
       {
    // U_LOGGER("*** NUM ARGS(%u) DIFFERENT FROM EXPECTED(14) ***", n);
 
@@ -5084,7 +5109,7 @@ error:
       return;
       }
 
-   if (checkLoginRequest(n, 14, 0, false) == false ||
+   if (checkLoginRequest(n, 14, 2, false) == false ||
        checkLoginValidate(false)          == false)
       {
       goto error;

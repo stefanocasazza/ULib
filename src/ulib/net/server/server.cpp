@@ -385,6 +385,8 @@ public:
 
       U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_BUFFER_SIZE)
 
+      buffer_len = u_buffer_len;
+
       U_RETURN(u_buffer);
       }
 

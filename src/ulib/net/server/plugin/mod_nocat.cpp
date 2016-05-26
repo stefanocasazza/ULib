@@ -1039,11 +1039,10 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
 
    uint32_t pos;
    time_t timeout;
-   Url destination;
    int64_t traffic;
    bool result = false;
    UHashMap<UString> args;
-   UString action, redirect;
+   UString action, redirect, user;
 
    args.loadFromData(msg);
 
@@ -1101,26 +1100,27 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
 
    // check user id
 
-   peer->user = args.at(U_CONSTANT_TO_PARAM("User")).copy();
+   user = args.at(U_CONSTANT_TO_PARAM("User"));
 
-   pos = vLoginValidate->find(peer->user);
+   pos = vLoginValidate->find(user);
 
    if (pos != U_NOT_FOUND)
       {
-      U_SRV_LOG("Validation of user id %V in ticket from peer: IP %v MAC %v", peer->user.rep, peer->ip.rep, peer->mac.rep);
+      U_SRV_LOG("Validation of user id %V in ticket from peer: IP %v MAC %v", user.rep, peer->ip.rep, peer->mac.rep);
 
       vLoginValidate->erase(pos);
       }
 
+   peer->user = user.copy();
+
    // get redirect (destination)
 
-   redirect = args.at(U_CONSTANT_TO_PARAM("Redirect")).copy();
+   redirect = args.at(U_CONSTANT_TO_PARAM("Redirect"));
 
    if (redirect)
       {
+      Url destination(redirect);
       UVector<UString> name_value;
-
-      destination.set(redirect);
 
       if (destination.getQuery(name_value) == 0)
          {
@@ -1138,7 +1138,14 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
          goto end;
          }
 
-      (void) location->replace(destination.get());
+      if (destination.get() != redirect)
+         {
+         U_SRV_LOG("WARNING: error on check Redirect: %V in ticket from peer: IP %v MAC %v", U_URL_TO_TRACE(destination), peer->ip.rep, peer->mac.rep);
+
+         goto end;
+         }
+
+      (void) location->replace(redirect);
       }
 
    // check for user policy FLAT
@@ -1286,6 +1293,59 @@ bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
    U_RETURN(true);
 }
 
+void UNoCatPlugIn::setPeerLabel()
+{
+   U_TRACE_NO_PARAM(0, "UNoCatPlugIn::setPeerLabel()")
+
+#ifdef USE_LIBTDB
+   if (pdata)
+      {
+      typedef struct { uint8_t hwaddr[6], ip[4]; } __attribute__((packed)) tdbkey_t;
+
+      tdbkey_t ks;
+      uint32_t t1, t2, t3, t4, t5, t6;
+
+      if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p", peer->ip.data(), "%u.%u.%u.%u", &t1, &t2, &t3, &t4) == 4)
+         {
+         ks.ip[0] = t4;
+         ks.ip[1] = t3;
+         ks.ip[2] = t2;
+         ks.ip[3] = t1;
+
+         if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p,%p,%p", peer->mac.data(), "%x:%x:%x:%x:%x:%x", &t1, &t2, &t3, &t4, &t5, &t6) == 6)
+            {
+            ks.hwaddr[0] = t1;
+            ks.hwaddr[1] = t2;
+            ks.hwaddr[2] = t3;
+            ks.hwaddr[3] = t4;
+            ks.hwaddr[4] = t5;
+            ks.hwaddr[5] = t6;
+
+            UString value = ((UTDB*)pdata)->at((const char*)&ks, 10);
+
+            if (value)
+               {
+            // typedef struct { uint32_t area, leasetime; time_t expiration; } __attribute__((packed)) tdbdata;
+
+               UString area(10U);
+
+               area.snprintf("%u", *(uint32_t*)value.data()); 
+
+            // area.snprintf("%06x", *(uint32_t*)value.data()); 
+            // UHexDump::encode(value.data(), sizeof(uint32_t), area);
+
+               U_SRV_LOG("get data from DHCP_DATA_FILE - key: %#.*S data: %V", 10, &ks, area.rep);
+
+               peer->label = area;
+               }
+            }
+         }
+      }
+#endif
+
+   U_INTERNAL_DUMP("peer->label = %V", peer->label.rep)
+}
+
 void UNoCatPlugIn::setNewPeer()
 {
    U_TRACE_NO_PARAM(0, "UNoCatPlugIn::setNewPeer()")
@@ -1355,53 +1415,7 @@ void UNoCatPlugIn::setNewPeer()
 
    peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *UString::str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
 
-#ifdef USE_LIBTDB
-   if (pdata)
-      {
-      typedef struct { uint8_t hwaddr[6], ip[4]; } __attribute__((packed)) tdbkey_t;
-
-      tdbkey_t ks;
-      uint32_t t1, t2, t3, t4, t5, t6;
-
-      if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p", peer->ip.data(), "%u.%u.%u.%u", &t1, &t2, &t3, &t4) == 4)
-         {
-         ks.ip[0] = t4;
-         ks.ip[1] = t3;
-         ks.ip[2] = t2;
-         ks.ip[3] = t1;
-
-         if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p,%p,%p", peer->mac.data(), "%x:%x:%x:%x:%x:%x", &t1, &t2, &t3, &t4, &t5, &t6) == 6)
-            {
-            ks.hwaddr[0] = t1;
-            ks.hwaddr[1] = t2;
-            ks.hwaddr[2] = t3;
-            ks.hwaddr[3] = t4;
-            ks.hwaddr[4] = t5;
-            ks.hwaddr[5] = t6;
-
-            UString value = ((UTDB*)pdata)->at((const char*)&ks, 10);
-
-            if (value)
-               {
-            // typedef struct { uint32_t area, leasetime; time_t expiration; } __attribute__((packed)) tdbdata;
-
-               UString area(10U);
-
-               area.snprintf("%u", *(uint32_t*)value.data()); 
-
-            // area.snprintf("%06x", *(uint32_t*)value.data()); 
-            // UHexDump::encode(value.data(), sizeof(uint32_t), area);
-
-               U_SRV_LOG("get data from DHCP_DATA_FILE - key: %#.*S data: %V", 10, &ks, area.rep);
-
-               peer->label = area;
-               }
-            }
-         }
-      }
-#endif
-
-   U_INTERNAL_DUMP("peer->label = %V", peer->label.rep)
+   setPeerLabel();
 
    // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
 
@@ -1461,6 +1475,8 @@ void UNoCatPlugIn::checkOldPeer()
 
       peer->token = UStringExt::numberToString(u_random(u_now->tv_usec));
       }
+
+   setPeerLabel();
 }
 
 void UNoCatPlugIn::addPeerInfo(int disconnected)
@@ -2723,7 +2739,7 @@ set_redirect_to_AUTH:
 
          U_INTERNAL_ASSERT(peer->token)
 
-         location->snprintf_add("%v&ap=%v@%v", peer->token.rep, peer->label.rep, IP_address_trust->rep);
+         location->snprintf_add("%v&ap=%v@%v&ts=%ld", peer->token.rep, peer->label.rep, IP_address_trust->rep, u_now->tv_sec);
          }
 
 redirect:

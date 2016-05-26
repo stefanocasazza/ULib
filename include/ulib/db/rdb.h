@@ -479,6 +479,7 @@ public:
       U_INTERNAL_ASSERT_POINTER(pDataStorage)
 
       data_buffer = pDataStorage->toBuffer();
+      data_len    = UDataStorage::buffer_len;
 
       return _insertDataStorage(op);
       }
@@ -530,6 +531,7 @@ public:
    bool brecfound;
 protected:
    static char* data_buffer;
+   static uint32_t data_len;
    static iPFpvpv ds_function_to_call;
    static URDBObjectHandler<UDataStorage*>* pthis;
 

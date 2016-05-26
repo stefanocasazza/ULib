@@ -73,7 +73,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // LOG_FILE_SZ            memory size for file apache like log
    //
    // ENABLE_INOTIFY         enable automatic update of document root image with inotify
-   // CACHE_FILE_MASK        mask (DOS regexp) of pathfile that content      be cached in memory (default: "*.css|*.js|*.*html|*.png|*.gif|*.jpg")
+   // CACHE_FILE_MASK        mask (DOS regexp) of pathfile that content      be cached in memory (default: "*.css|*.js|*.html|*.png|*.gif|*.jpg")
    // CACHE_AVOID_MASK       mask (DOS regexp) of pathfile that presence NOT be cached in memory
    // NOCACHE_FILE_MASK      mask (DOS regexp) of pathfile that content  NOT be cached in memory
    // CACHE_FILE_STORE       pathfile of memory cache stored on filesystem

@@ -4968,12 +4968,6 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
 
    switch (u_get_unalignedp16(suffix))
       {
-      case U_MULTICHAR_CONSTANT16('j','s'):
-         {
-         if (pmime_index) *pmime_index = U_js;
-
-         return "text/javascript";
-         }
       case U_MULTICHAR_CONSTANT16('g','z'):
          {
          if (pmime_index) *pmime_index = U_gz;
@@ -5050,6 +5044,13 @@ loop:
       if (pmime_index) *pmime_index = U_know;
 
       return ptr->type;
+      }
+
+   if (u_get_unalignedp16(suffix) == U_MULTICHAR_CONSTANT16('j','s')) // NB: must be here because of conflit with .json
+      {
+      if (pmime_index) *pmime_index = U_js;
+
+      return "text/javascript";
       }
 
    if (pmime_index) *pmime_index = U_unknow;

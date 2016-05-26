@@ -140,6 +140,57 @@ bool UMongoDBClient::find(bson_t* query, bson_t* projection)
    U_RETURN(false);
 }
 
+// Execute an 'aggregation' query
+
+bool UMongoDBClient::findAggregation(bson_t* pipeline, bson_t* options, mongoc_query_flags_t flags, mongoc_read_prefs_t* read_prefs)
+{
+   U_TRACE(0, "UMongoDBClient::findAggregation(%p,%p,%d,%p)", pipeline, options, flags, read_prefs)
+
+   U_INTERNAL_ASSERT_POINTER(client)
+   U_INTERNAL_ASSERT_POINTER(collection)
+
+   cursor = (mongoc_cursor_t*) U_SYSCALL(mongoc_collection_aggregate, "%p,%d,%u,%u,%u,%p,%p,%p", collection, flags, pipeline, options, read_prefs);
+
+   if (cursor)
+      {
+      char* str;
+      size_t length;
+      const bson_t* doc;
+      bson_error_t error;
+
+#  ifdef DEBUG
+      str = bson_as_json(pipeline, &length);
+
+      U_INTERNAL_DUMP("pipeline = %.*S", length, str);
+
+      bson_free(str);
+#  endif
+
+      vitem.clear();
+
+      while (U_SYSCALL(mongoc_cursor_next, "%p,%p", cursor, &doc))
+         {
+         str = U_SYSCALL(bson_as_json, "%p,%p", doc, &length);
+
+         UString x((const char*)str, length);
+
+         x.rep->_capacity = U_TO_FREE;
+
+         U_INTERNAL_DUMP("x = %V", x.rep);
+
+         vitem.push(x);
+         }
+
+      if (U_SYSCALL(mongoc_cursor_error, "%p,%p", cursor, &error)) U_WARNING("mongoc_cursor_error(): %S", error.message);
+
+      U_SYSCALL_VOID(mongoc_cursor_destroy, "%p", cursor);
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 bool UMongoDBClient::findOne(const char* json, uint32_t len)
 {
    U_TRACE(0, "UMongoDBClient::findOne(%.*S,%u)", len, json, len)

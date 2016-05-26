@@ -160,7 +160,7 @@ http {
  REQUEST_READ_TIMEOUT 30
  DIGEST_AUTHENTICATION no
  APACHE_LIKE_LOG /var/log/httpd/access_log
- CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.*html|*.flv|*.svgz
+ CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.html|*.flv|*.svgz
  CACHE_AVOID_MASK www.sito1.com|ruby
 }
 EOF

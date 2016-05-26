@@ -1127,7 +1127,7 @@ char* URDB::parseLine(const char* ptr, UCDB::datum* _key, UCDB::datum* _data)
 
    U_INTERNAL_DUMP("*ptr = %C", *ptr)
 
-   U_INTERNAL_ASSERT_EQUALS(*ptr,'+')
+   U_INTERNAL_ASSERT_EQUALS(*ptr, '+')
 
    _key->dsize = (*++ptr == '0' ? (++ptr, 0) : strtol(ptr, (char**)&ptr, 10));
 
@@ -1835,8 +1835,9 @@ bool URDBObjectHandler<UDataStorage*>::getDataStorage()
    U_RETURN(false);
 }
 
-char*   URDBObjectHandler<UDataStorage*>::data_buffer;
-iPFpvpv URDBObjectHandler<UDataStorage*>::ds_function_to_call;
+char*    URDBObjectHandler<UDataStorage*>::data_buffer;
+uint32_t URDBObjectHandler<UDataStorage*>::data_len;
+iPFpvpv  URDBObjectHandler<UDataStorage*>::ds_function_to_call;
 
 bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(int op)
 {
@@ -1848,7 +1849,7 @@ bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(int op)
    lock();
 
    UCDB::setKey(pDataStorage->keyid);
-   UCDB::setData(data_buffer, u_buffer_len);
+   UCDB::setData(data_buffer, data_len);
 
    UCDB::cdb_hash();
 
@@ -1862,14 +1863,14 @@ bool URDBObjectHandler<UDataStorage*>::_insertDataStorage(int op)
       char* ptr   = recval.data();
       uint32_t sz = recval.size();
 
-      if (sz > 40)           sz = 40;
-      if (sz > u_buffer_len) sz = u_buffer_len;
+      if (sz > 40)       sz = 40;
+      if (sz > data_len) sz = data_len;
 
       if (strncmp(ptr, data_buffer, sz))
          {
          ++nerror;
 
-         U_WARNING("URDB store: db(%.*S) op(%d) data(%u) - to: %.*S from: %.*S", U_FILE_TO_TRACE(*this), op, u_buffer_len, sz, ptr, sz, data_buffer);
+         U_WARNING("URDB store: db(%.*S) op(%d) data(%u) - to: %.*S from: %.*S", U_FILE_TO_TRACE(*this), op, data_len, sz, ptr, sz, data_buffer);
          }
 #  endif
       }
@@ -1900,16 +1901,17 @@ bool URDBObjectHandler<UDataStorage*>::putDataStorage()
    uint32_t sz = recval.size();
 
    data_buffer = pDataStorage->toBuffer();
+   data_len    = UDataStorage::buffer_len;
 
-   U_INTERNAL_DUMP("new_rec_size(%u) = %.*S old_rec_size(%u) = %.*S", u_buffer_len, u_buffer_len, data_buffer, sz, sz, ptr)
+   U_INTERNAL_DUMP("new_rec_size(%u) = %.*S old_rec_size(%u) = %.*S", data_len, data_len, data_buffer, sz, sz, ptr)
 
-   if (u_buffer_len <= sz)
+   if (data_len <= sz)
       {
-      U_MEMCPY(ptr, data_buffer, u_buffer_len);
+      U_MEMCPY(ptr, data_buffer, data_len);
 
-      sz -= u_buffer_len;
+      sz -= data_len;
 
-      if (sz) (void) memset(ptr + u_buffer_len, ' ', sz);
+      if (sz) (void) memset(ptr + data_len, ' ', sz);
 
       u_buffer_len = 0;
 

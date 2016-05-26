@@ -254,12 +254,7 @@ uint32_t Url::getQuery(UVector<UString>& vec)
 
    int _end = url.size() - 1;
 
-   if (path_end < _end)
-      {
-      uint32_t result = UStringExt::getNameValueFromData(url.substr(path_end + 1, _end - path_end), vec, U_CONSTANT_TO_PARAM("&"));
-
-      U_RETURN(result);
-      }
+   if (path_end < _end) return UStringExt::getNameValueFromData(url.substr(path_end + 1, _end - path_end), vec, U_CONSTANT_TO_PARAM("&"));
 
    U_RETURN(0);
 }

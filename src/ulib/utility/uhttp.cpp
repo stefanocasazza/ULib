@@ -809,7 +809,7 @@ void UHTTP::init()
    U_NEW(UString, set_cookie_option, UString(200U));
    U_NEW(UString, string_HTTP_Variables, UString(U_CAPACITY));
 
-   if (cache_file_mask   == 0) U_NEW(UString, cache_file_mask,   U_STRING_FROM_CONSTANT("*.css|*.js|*.*html|*.png|*.gif|*.jpg"));
+   if (cache_file_mask   == 0) U_NEW(UString, cache_file_mask,   U_STRING_FROM_CONSTANT("*.css|*.js|*.html|*.png|*.gif|*.jpg"));
    if (cgi_cookie_option == 0) U_NEW(UString, cgi_cookie_option, U_STRING_FROM_CONSTANT("[\"\" 0]"));
 
 #ifdef U_ALIAS
@@ -4208,6 +4208,9 @@ check_file: // now we check the file...
 
    errno = 0;
 
+   U_INTERNAL_DUMP("file_data->fd = %d file_data->size = %u file_data->mode = %d file_data->mtime = %ld",
+                    file_data->fd,     file_data->size,     file_data->mode,     file_data->mtime)
+
    if (U_SYSCALL(fstat, "%d,%p", file->fd, (struct stat*)file) != 0)
       {
       U_INTERNAL_DUMP("errno = %d", errno)
@@ -4221,11 +4224,11 @@ check_file: // now we check the file...
          }
       }
 
+   U_INTERNAL_DUMP("file->st_mode = %d file->st_size = %u file->st_mtime = %ld", file->st_mode, file->st_size, file->st_mtime)
+
    file_data->mode  = file->st_mode;
    file_data->size  = file->st_size;
    file_data->mtime = file->st_mtime;
-
-   U_INTERNAL_DUMP("file_data->fd = %d file_data->size = %u st_mode = %d st_size = %u st_mtime = %ld", file_data->fd, file_data->size, file->st_mode, file->st_size, file->st_mtime)
 
    U_INTERNAL_ASSERT_EQUALS(file->st_size, file_data->size)
 
@@ -7286,6 +7289,10 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 {
    U_TRACE_NO_PARAM(1, "UHTTP::manageDataForCache()")
 
+   U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
+
+   U_INTERNAL_ASSERT_EQUALS(U_http_is_nocache_file, false)
+
    UString file_name;
    uint32_t suffix_len;
    const char* suffix_ptr;
@@ -7412,14 +7419,15 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    file_name = UStringExt::basename(file->getPath());
 
+   U_INTERNAL_ASSERT_POINTER(cache_file_mask)
+
    if (UServices::dosMatchWithOR(file_name, U_STRING_TO_PARAM(*cache_file_mask), 0))
       {
       if (file_data->size == 0)
          {
          U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
          }
-      else if (U_http_is_nocache_file == false &&
-               file->open())
+      else if (file->open())
          {
          UString content = file->getContent(true, false, true);
 
@@ -7650,7 +7658,28 @@ check:      if (usp_src) goto end;
       goto error;
       }
 
-   if (suffix_len) (void) u_get_mimetype(suffix_ptr, &file_data->mime_index);
+   if (suffix_len)
+      {
+      (void) u_get_mimetype(suffix_ptr, &file_data->mime_index);
+
+      U_INTERNAL_DUMP("u_is_ssi(%d) = %b", file_data->mime_index, u_is_ssi(file_data->mime_index))
+
+      if (u_is_ssi(file_data->mime_index))
+         {
+         UString content = file->getContent(true, false, true);
+
+         if (content.empty())
+            {
+            U_SRV_LOG("WARNING: found empty file: %V", pathname->rep);
+            }
+         else
+            {
+            mime_index = file_data->mime_index;
+
+            putDataInCache(getHeaderMimeType(content.data(), 0, U_CTYPE_HTML, U_TIME_FOR_EXPIRE), content);
+            }
+         }
+      }
 
 end:
    U_INTERNAL_DUMP("file_data->mime_index(%u) = %C", file_data->mime_index, file_data->mime_index)
@@ -8055,11 +8084,16 @@ nocontent:
 
          (void) pathname->replace(U_FILE_TO_PARAM(*file));
 
-         U_DEBUG("Found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT")
+         U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
 
-         manageDataForCache();
+         if (U_http_is_nocache_file == false)
+            {
+            U_DEBUG("Found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT")
 
-         U_INTERNAL_ASSERT_POINTER(file_data)
+            manageDataForCache();
+
+            U_INTERNAL_ASSERT_POINTER(file_data)
+            }
          }
 #  if defined(DEBUG) && !defined(U_STATIC_ONLY)
       else
