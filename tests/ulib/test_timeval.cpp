@@ -116,7 +116,7 @@ int U_EXPORT main (int argc, char* argv[])
    U_ASSERT(tv1 != tv2);
    U_ASSERT(tv6 != tv1);
 
-   U_gettimeofday;
+   U_gettimeofday
 
    U_ASSERT(y < *u_now);
 

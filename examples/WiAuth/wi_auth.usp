@@ -78,6 +78,7 @@ static UHTTP::service_info POST_table[] = { // NB: the table must be ordered alp
    POST_ENTRY(login_request_IdP),
    POST_ENTRY(password),
    POST_ENTRY(registrazione),
+   POST_ENTRY(roaming),
    POST_ENTRY(tavarnelle),
    POST_ENTRY(uploader)
 };

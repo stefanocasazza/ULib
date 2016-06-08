@@ -185,7 +185,7 @@ bool USocket::checkTime(long time_limit, long& timeout)
 
    U_INTERNAL_ASSERT_RANGE(1,time_limit,8L*60L) // 8 minuts
 
-   U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
    if (timeout == 0) timeout = u_now->tv_sec + time_limit;
 

@@ -809,7 +809,6 @@ void UHTTP::init()
    U_NEW(UString, set_cookie_option, UString(200U));
    U_NEW(UString, string_HTTP_Variables, UString(U_CAPACITY));
 
-   if (cache_file_mask   == 0) U_NEW(UString, cache_file_mask,   U_STRING_FROM_CONSTANT("*.css|*.js|*.html|*.png|*.gif|*.jpg"));
    if (cgi_cookie_option == 0) U_NEW(UString, cgi_cookie_option, U_STRING_FROM_CONSTANT("[\"\" 0]"));
 
 #ifdef U_ALIAS
@@ -1049,21 +1048,27 @@ void UHTTP::init()
 
    n = dirwalk.walk(vec);
 
-   if (cache_file_mask->equal(U_CONSTANT_TO_PARAM("_off_")) == false)
+   if (cache_file_mask &&
+       cache_file_mask->equal(U_CONSTANT_TO_PARAM("_off_")))
       {
-#  ifdef DEBUG
-      UDirWalk::setFollowLinks(true);
-#  endif
-      UDirWalk::setRecurseSubDirs(true, true);
-      UDirWalk::setSuffixFileType(U_CONSTANT_TO_PARAM("usp|c|cgi|template|" U_LIB_SUFFIX));
-
+      if (nocache_file_mask == 0) U_NEW(UString, nocache_file_mask, U_STRING_FROM_CONSTANT("*"));
+      }
+   else
+      {
       if (cache_avoid_mask == 0) UDirWalk::setDirectory(*UString::str_point);
       else
          {
-         UDirWalk::setDirectory(*UString::str_point, *cache_avoid_mask);
-
          u_pfn_flags |= FNM_INVERT;
+
+         UDirWalk::setDirectory(*UString::str_point, *cache_avoid_mask);
          }
+
+#  ifdef DEBUG
+      UDirWalk::setFollowLinks(true);
+#  endif
+      UDirWalk::setSuffixFileType(U_CONSTANT_TO_PARAM("usp|c|cgi|template|" U_LIB_SUFFIX));
+
+      UDirWalk::setRecurseSubDirs(true, true);
 
       n = dirwalk.walk(vec);
 
@@ -1133,34 +1138,6 @@ void UHTTP::init()
       if (UFile::writeTo(*cache_file_store, buffer, sz)) U_SRV_LOG("Saved (%u bytes) cache file store: %V", sz, cache_file_store->rep);
       }
 #endif
-
-   // manage favicon...
-
-   file_data = cache_file->at(U_CONSTANT_TO_PARAM("favicon.ico"));
-
-   if (file_data &&
-       file_data->array == 0)
-      {
-      (void) pathname->replace(U_CONSTANT_TO_PARAM("favicon.ico"));
-
-      file->setPath(*pathname);
-
-      U_INTERNAL_ASSERT(file->stat())
-
-      UString content = file->getContent();
-
-      mime_index = U_unknow;
-
-      const char* ctype = file->getMimeType("ico", &mime_index);
-
-      file_data->mime_index = mime_index;
-
-      putDataInCache(getHeaderMimeType(0, 0, ctype, U_TIME_FOR_EXPIRE), content);
-
-      U_INTERNAL_ASSERT_POINTER(file_data->array)
-
-      U_ASSERT(file_data->array->check_memory())
-      }
 
    U_ASSERT(cache_file_check_memory())
 
@@ -1386,7 +1363,6 @@ void UHTTP::dtor()
       delete formMulti;
       delete set_cookie;
       delete form_name_value;
-      delete cache_file_mask;
       delete cache_avoid_mask;
       delete cgi_cookie_option;
       delete set_cookie_option;
@@ -1394,6 +1370,7 @@ void UHTTP::dtor()
       if (htpasswd)          delete htpasswd;
       if (htdigest)          delete htdigest;
       if (mount_point)       delete mount_point;
+      if (  cache_file_mask) delete   cache_file_mask;
       if (nocache_file_mask) delete nocache_file_mask;
 
 #  ifdef U_ALIAS
@@ -3037,10 +3014,12 @@ bool UHTTP::runCGI(bool set_environment)
 
    if (processCGIRequest(pcmd, cgi)) // NB: in case of failure we have already the response...
       {
-next: U_DUMP("UServer_Base::isParallelizationChild() = %b UServer_Base::isParallelizationParent() = %b", UServer_Base::isParallelizationChild(), UServer_Base::isParallelizationParent())
+next: U_DUMP("UServer_Base::isParallelizationChild() = %b UServer_Base::isParallelizationParent() = %b",
+              UServer_Base::isParallelizationChild(),     UServer_Base::isParallelizationParent())
 
       U_INTERNAL_DUMP("U_http_info.nResponseCode = %d UClientImage_Base::wbuffer(%u) = %V UClientImage_Base::body(%u) = %V",
-                       U_http_info.nResponseCode,     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep, UClientImage_Base::body->size(), UClientImage_Base::body->rep)
+                       U_http_info.nResponseCode,     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep,
+                       UClientImage_Base::body->size(), UClientImage_Base::body->rep)
 
       if (set_environment == false                                   ||
           (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT &&
@@ -3122,7 +3101,8 @@ next:
    if (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT)
       {
       U_INTERNAL_DUMP("U_http_info.nResponseCode = %d UClientImage_Base::wbuffer(%u) = %V UClientImage_Base::body(%u) = %V",
-                       U_http_info.nResponseCode,     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep, UClientImage_Base::body->size(), UClientImage_Base::body->rep)
+                       U_http_info.nResponseCode,     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep,
+                       UClientImage_Base::body->size(), UClientImage_Base::body->rep)
 
       if (processCGIOutput(false, false) == false)
          {
@@ -3170,13 +3150,21 @@ U_NO_EXPORT bool UHTTP::callService()
       psuffix = (const char*)U_INT2PTR(0xffff);
       }
 
-   manageDataForCache();
+   U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
 
-   if (file_data == 0) U_RETURN(false);
+   if (U_http_is_nocache_file == false)
+      {
+      manageDataForCache();
 
-   U_DEBUG("Called service not in cache: %.*S - inotify %s enabled", U_FILE_TO_TRACE(*file), UServer_Base::handler_inotify ? "is" : "NOT")
+      if (file_data)
+         {
+         U_DEBUG("Called service not in cache: %.*S - inotify %s enabled", U_FILE_TO_TRACE(*file), UServer_Base::handler_inotify ? "is" : "NOT")
 
-   U_RETURN(true);
+         U_RETURN(true);
+         }
+      }
+
+   U_RETURN(false);
 }
 
 bool UHTTP::callService(const UString& path) // NB: it is used also by server_plugin_ssi...
@@ -3186,7 +3174,7 @@ bool UHTTP::callService(const UString& path) // NB: it is used also by server_pl
    file->setPath(path, UClientImage_Base::environment);
 
    if (isFileInCache() == false &&
-         callService() == false)
+       callService()   == false)
       {
       // NB: st_ino => stat() ok...
 
@@ -3783,7 +3771,7 @@ manage:
 file_in_cache:
       mime_index = file_data->mime_index;
 
-      U_INTERNAL_DUMP("mime_index(%u) = %C u_is_ssi() = %b", mime_index, mime_index, u_is_ssi(mime_index))
+      U_INTERNAL_DUMP("mime_index(%d) = %C u_is_ssi() = %b", mime_index, mime_index, u_is_ssi(mime_index))
 
       /**
        * MIME type for dynamic content
@@ -5998,8 +5986,8 @@ void UHTTP::setDynamicResponse()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::setDynamicResponse()")
 
-   U_INTERNAL_DUMP("U_http_info.endHeader = %u U_http_content_type_len = %u mime_index = %C",
-                    U_http_info.endHeader,     U_http_content_type_len,     mime_index)
+   U_INTERNAL_DUMP("U_http_info.endHeader = %u U_http_content_type_len = %u mime_index(%d) = %C",
+                    U_http_info.endHeader,     U_http_content_type_len,     mime_index, mime_index)
 
    U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %V", UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
@@ -6764,7 +6752,7 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
       {
       if (file_data)
          {
-         U_INTERNAL_DUMP("mime_index(%u) = %C file_data->mime_index(%u) = %C", mime_index, mime_index, file_data->mime_index, file_data->mime_index)
+         U_INTERNAL_DUMP("mime_index(%d) = %C file_data->mime_index(%d) = %C", mime_index, mime_index, file_data->mime_index, file_data->mime_index)
 
          mime_index = file_data->mime_index = U_gz;
          }
@@ -6841,7 +6829,7 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
 
    header.snprintf_add("Content-Type: %s\r\n", content_type);
 
-   U_INTERNAL_DUMP("mime_index = %C", mime_index)
+   U_INTERNAL_DUMP("mime_index(%d) = %C", mime_index, mime_index)
 
    const char* fmt = "Content-Length: %u\r\n\r\n";
 
@@ -6867,9 +6855,9 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
    else if (u_is_js(mime_index))
       {
       U_INTERNAL_ASSERT(u_endsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM(".js")))
-      U_INTERNAL_ASSERT_EQUALS(memcmp(content_type, U_CONSTANT_TO_PARAM("text/javascript")), 0)
+      U_INTERNAL_ASSERT_EQUALS(memcmp(content_type, U_CONSTANT_TO_PARAM("application/javascript")), 0)
 
-   // (void) header.append("Content-Script-Type: text/javascript\r\n");
+   // (void) header.append("Content-Script-Type: application/javascript\r\n");
       }
 #endif
 
@@ -7174,7 +7162,8 @@ U_NO_EXPORT bool UHTTP::checkIfUSPLink(UStringRep* key, void* value)
 
    UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
 
-   U_INTERNAL_DUMP("cptr->link = %b cptr->mime_index= %C file_data->mime_index = %C", cptr->link, cptr->mime_index, file_data->mime_index)
+   U_INTERNAL_DUMP("cptr->link = %b cptr->mime_index(%d) = %C file_data->mime_index(%d)  = %C",
+                    cptr->link,     cptr->mime_index, cptr->mime_index, file_data->mime_index, file_data->mime_index)
 
    if (cptr->mime_index == U_usp)
       {
@@ -7212,7 +7201,7 @@ U_NO_EXPORT bool UHTTP::checkIfUSP(UStringRep* key, void* value)
 
    UHTTP::UFileCacheData* cptr = (UHTTP::UFileCacheData*)value;
 
-   U_INTERNAL_DUMP("cptr->link = %b cptr->mime_index= %C", cptr->link, cptr->mime_index)
+   U_INTERNAL_DUMP("cptr->link = %b cptr->mime_index(%d) = %C", cptr->link, cptr->mime_index, cptr->mime_index)
 
    if (cptr->ptr           &&
        cptr->link == false &&
@@ -7283,6 +7272,29 @@ U_NO_EXPORT bool UHTTP::compileUSP(const char* path, uint32_t len)
 #endif
 
    U_RETURN(ok);
+}
+
+void UHTTP::checkFileForCache()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::checkFileForCache()")
+
+   U_INTERNAL_ASSERT_POINTER(pathname)
+
+   file->setPath(*pathname);
+
+   if (file->stat()) // NB: file->stat() get also the size of the file...
+      {
+      U_INTERNAL_DUMP("nocache_file_mask = %p U_http_is_nocache_file = %b", nocache_file_mask, U_http_is_nocache_file)
+
+      if (U_http_is_nocache_file ||
+          (nocache_file_mask     &&
+           UServices::dosMatchWithOR(UStringExt::basename(file->getPath()), U_STRING_TO_PARAM(*nocache_file_mask), 0)))
+         {
+         return;
+         }
+
+      manageDataForCache();
+      }
 }
 
 U_NO_EXPORT void UHTTP::manageDataForCache()
@@ -7419,9 +7431,8 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    file_name = UStringExt::basename(file->getPath());
 
-   U_INTERNAL_ASSERT_POINTER(cache_file_mask)
-
-   if (UServices::dosMatchWithOR(file_name, U_STRING_TO_PARAM(*cache_file_mask), 0))
+   if (cache_file_mask &&
+       UServices::dosMatchWithOR(file_name, U_STRING_TO_PARAM(*cache_file_mask), 0))
       {
       if (file_data->size == 0)
          {
@@ -7660,11 +7671,11 @@ check:      if (usp_src) goto end;
 
    if (suffix_len)
       {
-      (void) u_get_mimetype(suffix_ptr, &file_data->mime_index);
+      const char* ctype = u_get_mimetype(suffix_ptr, &file_data->mime_index);
 
-      U_INTERNAL_DUMP("u_is_ssi(%d) = %b", file_data->mime_index, u_is_ssi(file_data->mime_index))
+      U_INTERNAL_DUMP("u_is_cacheable(%d) = %b ctype = %S", file_data->mime_index, u_is_cacheable(file_data->mime_index), ctype)
 
-      if (u_is_ssi(file_data->mime_index))
+      if (u_is_cacheable(file_data->mime_index))
          {
          UString content = file->getContent(true, false, true);
 
@@ -7676,13 +7687,13 @@ check:      if (usp_src) goto end;
             {
             mime_index = file_data->mime_index;
 
-            putDataInCache(getHeaderMimeType(content.data(), 0, U_CTYPE_HTML, U_TIME_FOR_EXPIRE), content);
+            putDataInCache(getHeaderMimeType(content.data(), 0, ctype, U_TIME_FOR_EXPIRE), content);
             }
          }
       }
 
 end:
-   U_INTERNAL_DUMP("file_data->mime_index(%u) = %C", file_data->mime_index, file_data->mime_index)
+   U_INTERNAL_DUMP("file_data->mime_index(%d) = %C", file_data->mime_index, file_data->mime_index)
 
    (void) pathname->shrink();
 
@@ -8045,14 +8056,11 @@ nocontent:
                {
                db_not_found->UCDB::setData(U_CLIENT_ADDRESS_TO_PARAM);
 
-               int result = db_not_found->_store(RDB_INSERT, false);
+               int ko = db_not_found->_store(RDB_INSERT, false);
 
                db_not_found->unlock();
 
-               if (result)
-                  {
-                  U_WARNING("Insert data on db %.*S failed with error %d", U_FILE_TO_TRACE(*db_not_found), result);
-                  }
+               if (ko) U_WARNING("Insert data on db %.*S failed with error %d", U_FILE_TO_TRACE(*db_not_found), ko);
 
                return;
                }
@@ -8702,8 +8710,8 @@ U_NO_EXPORT void UHTTP::setCGIShellScript(UString& command)
           item.isBinary())
          {
          c    = '\'';
-         ptr  = 0;
          sz   = 0;
+         ptr  = 0;
 
          if (item)
             {
@@ -8720,8 +8728,8 @@ U_NO_EXPORT void UHTTP::setCGIShellScript(UString& command)
          }
       else
          {
-         ptr = item.data();
          sz  = item.size();
+         ptr = item.data();
 
          // we find how to escape the param...
 
@@ -8785,7 +8793,7 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
       if (UStringExt::startsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("/tmp/"))) file->_unlink();
 
       file_data       = file_not_in_cache_data;
-      mime_index      = '9'; // NB: '9' => we assert a dynamic page to avoid 'Last-Modified: ...' in header response...
+      mime_index      = '9'; // NB: '9' => we declare a dynamic page to avoid 'Last-Modified: ...' in header response...
       file_data->fd   = file->fd;
       file_data->size = file->st_size;
 
@@ -10140,7 +10148,7 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
             d.mtime      = ptr_file_data->mtime;
             d.expire     = ptr_file_data->expire;
 
-            U_INTERNAL_DUMP("d.ptr = %p d.mime_index = %C d.size = %u", d.ptr, d.mime_index, d.size)
+            U_INTERNAL_DUMP("d.ptr = %p d.mime_index(%d) = %C d.size = %u", d.ptr, d.mime_index, d.mime_index, d.size)
 
             if (d.size >= UServer_Base::min_size_for_sendfile)
                {
@@ -10161,7 +10169,7 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
             >> d.mtime      // time of last modification
             >> d.expire;    // expire time of the entry
 
-         U_INTERNAL_DUMP("d.mime_index = %C d.size = %u", d.mime_index, d.size)
+         U_INTERNAL_DUMP("d.mime_index(%d) = %C d.size = %u", d.mime_index, d.mime_index, d.size)
 
          U_INTERNAL_ASSERT_MINOR(d.size, 64 * 1024)
 

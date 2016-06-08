@@ -10,6 +10,7 @@ TO_INC = ulib/README \
 			ulib/base/zip/*.h \
 			ulib/base/ssl/*.h \
 			ulib/base/miniz/*.h \
+			ulib/base/xxhash/*.h \
 			ulib/base/coder/*.h \
 			ulib/base/win32/*.h \
 			ulib/base/replace/*.h \

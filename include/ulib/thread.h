@@ -21,7 +21,6 @@
 #  define U_SIGSTOP (SIGRTMIN+5)
 #  define U_SIGCONT (SIGRTMIN+6)
 #elif defined(_MSWINDOWS_)
-#  include <synchapi.h>
 #  undef sleep
 #  undef signal
 #  define PTHREAD_CREATE_DETACHED 1
@@ -92,26 +91,9 @@ public:
       LeaveCriticalSection(pmutex);
       }
 
-   static void wait(CRITICAL_SECTION* pmutex, CONDITION_VARIABLE* pcond)
-      {
-      U_TRACE(0, "UThread::wait(%p,%p)", pmutex, pcond)
-
-      SleepConditionVariableCS(pcond, pmutex, INFINITE); // block until we are signalled from other...
-      }
-
-   static void signal(CONDITION_VARIABLE* pcond)
-      {
-      U_TRACE(0, "UThread::signal(%p)", pcond)
-
-      WakeConditionVariable(pcond); // signal to waiting thread...
-      }
-
-   static void signalAll(CONDITION_VARIABLE* pcond)
-      {
-      U_TRACE(0, "UThread::signalAll(%p)", pcond)
-
-      WakeAllConditionVariable(pcond); // signal to waiting thread...
-      }
+   static void signal(   CONDITION_VARIABLE* pcond);
+   static void signalAll(CONDITION_VARIABLE* pcond);
+   static void wait(CRITICAL_SECTION* pmutex, CONDITION_VARIABLE* pcond);
 #else
    static void lock(pthread_mutex_t* pmutex)
       {

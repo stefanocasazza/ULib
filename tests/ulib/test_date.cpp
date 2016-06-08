@@ -10,6 +10,32 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5,"main(%d)",argc)
 
+   UTimeDate date0(28,12,14);
+
+   cout << date0.strftime("%d/%m/%Y") << ' '
+        << date0.ago(7U) << '\n';
+
+   u_now->tv_sec = time(0);
+
+   cout << UTimeDate::ago(u_now->tv_sec -  1) << ' '
+        << UTimeDate::ago(u_now->tv_sec -  1, 7U) << '\n';
+   cout << UTimeDate::ago(u_now->tv_sec - 10) << ' '
+        << UTimeDate::ago(u_now->tv_sec - 10, 7U) << '\n';
+   cout << UTimeDate::ago(u_now->tv_sec - 60) << ' '
+        << UTimeDate::ago(u_now->tv_sec - 60, 7U) << '\n';
+   cout << UTimeDate::ago(u_now->tv_sec - 10 * 60) << ' '
+        << UTimeDate::ago(u_now->tv_sec - 10 * 60, 7U) << '\n';
+   cout << UTimeDate::ago(u_now->tv_sec - U_ONE_HOUR_IN_SECOND) << ' '
+        << UTimeDate::ago(u_now->tv_sec - U_ONE_HOUR_IN_SECOND, 7U) << '\n';
+   cout << UTimeDate::ago(u_now->tv_sec - U_ONE_DAY_IN_SECOND) << ' '
+        << UTimeDate::ago(u_now->tv_sec - U_ONE_DAY_IN_SECOND, 7U) << '\n';
+   cout << UTimeDate::ago(u_now->tv_sec - U_ONE_WEEK_IN_SECOND) << ' '
+        << UTimeDate::ago(u_now->tv_sec - U_ONE_WEEK_IN_SECOND, 7U) << '\n';
+   cout << UTimeDate::ago(u_now->tv_sec - U_ONE_MONTH_IN_SECOND) << ' '
+        << UTimeDate::ago(u_now->tv_sec - U_ONE_MONTH_IN_SECOND, 7U) << '\n';
+   cout << UTimeDate::ago(u_now->tv_sec - U_ONE_YEAR_IN_SECOND) << ' '
+        << UTimeDate::ago(u_now->tv_sec - U_ONE_YEAR_IN_SECOND, 7U) << '\n';
+
    UTimeDate data1(31,12,99), data2("31/12/99");
 
    U_ASSERT( UTimeDate("14/09/1752").getJulian() == 2361222 )
@@ -84,6 +110,8 @@ U_EXPORT main (int argc, char* argv[])
 
       U_DUMP("setMondayPrevWeek() = %V data = %V setMondayNextWeek() = %V", data2.strftime("%d/%m/%y").rep, data1.strftime("%d/%m/%y").rep, data3.strftime("%d/%m/%y").rep)
 
-      cout << data1.strftime("%d/%m/%y") << '\n';
+      cout << data1.strftime("%d/%m/%y") << ' '
+           << data1.ago()                << ' '
+           << data1.ago(7U)              << '\n';
       }
 }

@@ -152,7 +152,7 @@ typedef struct U_DATA {
 } U_DATA;
 
 /**
- * #define U_SUBSTR_INC_REF // NB: in this way we don't capture the event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
+ * #define U_SUBSTR_INC_REF // NB: be aware that in this way we don't capture the event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
  */
 
 typedef struct ustringrep {
@@ -287,8 +287,13 @@ static inline bool u_is_img(int mime_index)    { return (mime_index == U_png ||
                                                          mime_index == U_jpg ||
                                                          mime_index == U_ico); }
 
+static inline bool u_is_cacheable(int mime_index) { return (u_is_js(mime_index)  ||
+                                                            u_is_css(mime_index) ||
+                                                            u_is_img(mime_index) ||
+                                                            u_is_ssi(mime_index) ||
+                                                            u_is_html(mime_index)); }
+
 /**
- * ----------------------------------------------------------------------------
  * Print with format extension: bBCDHMNOPQrRSvVUYwW
  * ----------------------------------------------------------------------------
  * '%b': print bool ("true" or "false")
@@ -338,6 +343,74 @@ U_EXPORT void u_internal_print(bool abrt, const char* restrict format, ...);
 U_EXPORT uint32_t u_sprintc(   char* restrict buffer, unsigned char c);
 U_EXPORT uint32_t u__snprintf( char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
 U_EXPORT uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
+
+#if (defined(U_LINUX) || defined(_MSWINDOWS_)) && !defined(__suseconds_t_defined)
+typedef long suseconds_t;
+#endif
+
+#define U_SECOND 1000000L
+
+static inline void u_adjtime(void* tv_sec, void* tv_usec)
+{
+   long r = *((suseconds_t*)tv_usec) / U_SECOND;
+
+   U_INTERNAL_TRACE("u_adjtime(%p,%p)", tv_sec, tv_usec)
+
+   // NB: r can be negativ...
+
+   if (r)
+      {
+      *((long*)tv_sec)         += r;
+      *((suseconds_t*)tv_usec) %= U_SECOND;
+      }
+
+   U_INTERNAL_ASSERT_MINOR(*((suseconds_t*)tv_usec), U_SECOND)
+
+   if (*((suseconds_t*)tv_usec) < 0) { *((suseconds_t*)tv_usec) += U_SECOND; --(*((long*)tv_sec)); }
+
+   U_INTERNAL_ASSERT_RANGE(0, *((suseconds_t*)tv_usec), U_SECOND)
+}
+
+static inline void u_gettimenow(void)
+{
+   U_INTERNAL_TRACE("u_gettimenow()")
+
+   (void) gettimeofday(u_now, 0);
+}
+
+static inline void u_gettimeofday(struct timeval* tv)
+{
+   U_INTERNAL_TRACE("u_gettimeofday(%p)", tv)
+
+   (void) gettimeofday(tv, 0);
+}
+
+/**
+#ifdef HAVE_CLOCK_GETTIME
+extern U_EXPORT struct timeval u_start_clock;
+
+ * struct timespec {
+ *    time_t tv_sec;  //     seconds
+ *    long   tv_nsec; // nanoseconds
+ * };
+
+static inline void u_gettimenow(void)
+{
+   struct timespec ts;
+
+   U_INTERNAL_TRACE("u_gettimenow()")
+
+   (void) clock_gettime(CLOCK_MONOTONIC_COARSE, &ts);
+
+   u_now->tv_sec  = u_start_clock.tv_sec  +  ts.tv_sec;
+   u_now->tv_usec = u_start_clock.tv_usec + (ts.tv_nsec / 1000L);
+
+   u_adjtime(&(u_now->tv_sec), &(u_now->tv_usec));
+
+   U_INTERNAL_PRINT("u_now = { %lu, %lu }", u_now->tv_sec, u_now->tv_usec)
+}
+#endif
+*/
 
 #ifdef __cplusplus
 }

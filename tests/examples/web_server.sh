@@ -70,7 +70,7 @@ http {
  REQUEST_READ_TIMEOUT 30
 #DIGEST_AUTHENTICATION yes
 #CACHE_FILE_STORE nocat/webif.gz
-#CACHE_FILE_MASK *.jpg|*.png|*.css|*.js|*.gif|inp/http/data/file1|*.html|*.flv|*.svgz
+#CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
 }
 EOF
 

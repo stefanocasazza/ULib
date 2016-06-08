@@ -1,17 +1,16 @@
 plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  plugin/product.h ../../include/ulib/dynamic/plugin.h \
  ../../include/ulib/dynamic/dynamic.h ../../include/ulib/string.h \
- ../../include/ulib/internal/common.h ../../include/ulib/base/base.h \
- ../../include/ulib/internal/config.h \
+ ../../include/ulib/base/hash.h ../../include/ulib/base/xxhash/xxhash.h \
+ /usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/stddef.h \
+ ../../include/ulib/base/base.h ../../include/ulib/internal/config.h \
  ../../include/ulib/internal/platform.h /usr/include/sys/mman.h \
  /usr/include/features.h /usr/include/sys/cdefs.h \
  /usr/include/bits/wordsize.h /usr/include/gnu/stubs.h \
  /usr/include/gnu/stubs-64.h /usr/include/bits/types.h \
- /usr/include/bits/typesizes.h \
- /usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/stddef.h \
- /usr/include/bits/mman.h /usr/include/bits/mman-linux.h \
- /usr/include/stdio.h /usr/include/libio.h /usr/include/_G_config.h \
- /usr/include/wchar.h \
+ /usr/include/bits/typesizes.h /usr/include/bits/mman.h \
+ /usr/include/bits/mman-linux.h /usr/include/stdio.h /usr/include/libio.h \
+ /usr/include/_G_config.h /usr/include/wchar.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/stdarg.h \
  /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
  /usr/include/bits/stdio.h \
@@ -53,6 +52,7 @@ plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  /usr/include/bits/posix2_lim.h /usr/include/bits/xopen_lim.h \
  ../../include/ulib/base/color.h ../../include/ulib/base/macro.h \
  /usr/include/zlib.h /usr/include/zconf.h \
+ ../../include/ulib/internal/common.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/g++-v6/iostream \
  /usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/g++-v6/ostream \
  /usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/g++-v6/ios \
@@ -149,8 +149,8 @@ plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  ../../include/ulib/debug/objectDB.h \
  ../../include/ulib/internal/objectIO.h \
  ../../include/ulib/internal/memory_pool.h \
- ../../include/ulib/internal/macro.h ../../include/ulib/base/hash.h \
- /usr/include/dlfcn.h /usr/include/bits/dlfcn.h
+ ../../include/ulib/internal/macro.h /usr/include/dlfcn.h \
+ /usr/include/bits/dlfcn.h
 
 /usr/include/stdc-predef.h:
 
@@ -162,7 +162,11 @@ plugin/product.h:
 
 ../../include/ulib/string.h:
 
-../../include/ulib/internal/common.h:
+../../include/ulib/base/hash.h:
+
+../../include/ulib/base/xxhash/xxhash.h:
+
+/usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/stddef.h:
 
 ../../include/ulib/base/base.h:
 
@@ -185,8 +189,6 @@ plugin/product.h:
 /usr/include/bits/types.h:
 
 /usr/include/bits/typesizes.h:
-
-/usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/stddef.h:
 
 /usr/include/bits/mman.h:
 
@@ -347,6 +349,8 @@ plugin/product.h:
 /usr/include/zlib.h:
 
 /usr/include/zconf.h:
+
+../../include/ulib/internal/common.h:
 
 /usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/g++-v6/iostream:
 
@@ -561,8 +565,6 @@ plugin/product.h:
 ../../include/ulib/internal/memory_pool.h:
 
 ../../include/ulib/internal/macro.h:
-
-../../include/ulib/base/hash.h:
 
 /usr/include/dlfcn.h:
 

@@ -139,8 +139,6 @@ http {
 #                  ]
 
 # ENABLE_INOTIFY        yes
-  CACHE_FILE_MASK       *.css|*.js|*.jpg|*.png|*.*html
-
 # VIRTUAL_HOST          yes
   DIGEST_AUTHENTICATION yes
  

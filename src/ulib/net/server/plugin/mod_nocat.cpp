@@ -83,6 +83,7 @@ UVector<UString>*          UNoCatPlugIn::vauth_ip;
 UVector<UString>*          UNoCatPlugIn::openlist;
 UVector<UString>*          UNoCatPlugIn::varp_cache;
 UVector<UString>*          UNoCatPlugIn::vinfo_data;
+UVector<UString>*          UNoCatPlugIn::vroaming_data;
 UVector<UString>*          UNoCatPlugIn::vLoginValidate;
 UVector<UString>*          UNoCatPlugIn::vInternalDevice;
 UVector<UString>*          UNoCatPlugIn::vLocalNetworkLabel;
@@ -213,6 +214,7 @@ UNoCatPlugIn::UNoCatPlugIn()
    U_NEW(UVector<UString>, vauth_ip, UVector<UString>(4U));
    U_NEW(UVector<UString>, varp_cache, UVector<UString>);
    U_NEW(UVector<UString>, vinfo_data, UVector<UString>(4U));
+   U_NEW(UVector<UString>, vroaming_data, UVector<UString>(4U));
    U_NEW(UVector<UString>, vLoginValidate, UVector<UString>);
    U_NEW(UVector<UString>, vInternalDevice, UVector<UString>(64U));
    U_NEW(UVector<UString>, vLocalNetworkLabel, UVector<UString>(64U));
@@ -250,6 +252,7 @@ UNoCatPlugIn::~UNoCatPlugIn()
    delete vauth_ip;
    delete vauth_url;
    delete vinfo_data;
+   delete vroaming_data;
    delete vLoginValidate;
    delete vInternalDevice;
    delete vLocalNetworkMask;
@@ -907,7 +910,14 @@ result:
       paddrmask = 0;
       }
 
-   for (i = 0, n = vauth_url->size(); i < n; ++i) sendInfoData(i);
+   for (i = 0, n = vauth_url->size(); i < n; ++i)
+      {
+      sendInfoData(i);
+
+#  ifdef USE_LIBTDB
+      sendRoamingData(i);
+#  endif
+      }
 
    // check if there are some log file to upload
 
@@ -1293,50 +1303,52 @@ bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
    U_RETURN(true);
 }
 
-void UNoCatPlugIn::setPeerLabel()
+bool UNoCatPlugIn::setPeerLabel()
 {
    U_TRACE_NO_PARAM(0, "UNoCatPlugIn::setPeerLabel()")
 
 #ifdef USE_LIBTDB
-   if (pdata)
+   typedef struct { uint8_t hwaddr[6], ip[4]; } __attribute__((packed)) tdbkey_t;
+
+   tdbkey_t ks;
+   uint32_t t1, t2, t3, t4, t5, t6;
+
+   if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p", peer->ip.data(), "%u.%u.%u.%u", &t1, &t2, &t3, &t4) == 4)
       {
-      typedef struct { uint8_t hwaddr[6], ip[4]; } __attribute__((packed)) tdbkey_t;
+      ks.ip[0] = t4;
+      ks.ip[1] = t3;
+      ks.ip[2] = t2;
+      ks.ip[3] = t1;
 
-      tdbkey_t ks;
-      uint32_t t1, t2, t3, t4, t5, t6;
-
-      if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p", peer->ip.data(), "%u.%u.%u.%u", &t1, &t2, &t3, &t4) == 4)
+      if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p,%p,%p", peer->mac.data(), "%x:%x:%x:%x:%x:%x", &t1, &t2, &t3, &t4, &t5, &t6) == 6)
          {
-         ks.ip[0] = t4;
-         ks.ip[1] = t3;
-         ks.ip[2] = t2;
-         ks.ip[3] = t1;
+         ks.hwaddr[0] = t1;
+         ks.hwaddr[1] = t2;
+         ks.hwaddr[2] = t3;
+         ks.hwaddr[3] = t4;
+         ks.hwaddr[4] = t5;
+         ks.hwaddr[5] = t6;
 
-         if (U_SYSCALL(sscanf, "%p,%S,%p,%p,%p,%p,%p,%p", peer->mac.data(), "%x:%x:%x:%x:%x:%x", &t1, &t2, &t3, &t4, &t5, &t6) == 6)
+         UString value = ((UTDB*)pdata)->at((const char*)&ks, 10);
+
+         if (value)
             {
-            ks.hwaddr[0] = t1;
-            ks.hwaddr[1] = t2;
-            ks.hwaddr[2] = t3;
-            ks.hwaddr[3] = t4;
-            ks.hwaddr[4] = t5;
-            ks.hwaddr[5] = t6;
+         // typedef struct { uint32_t area, leasetime; time_t expiration; } __attribute__((packed)) tdbdata;
 
-            UString value = ((UTDB*)pdata)->at((const char*)&ks, 10);
+            UString area(10U);
 
-            if (value)
+            area.snprintf("%u", *(uint32_t*)value.data()); 
+
+         // area.snprintf("%06x", *(uint32_t*)value.data()); 
+         // UHexDump::encode(value.data(), sizeof(uint32_t), area);
+
+            U_SRV_LOG("get data from DHCP_DATA_FILE - key: %#.*S data: %V", 10, &ks, area.rep);
+
+            if (peer->label != area)
                {
-            // typedef struct { uint32_t area, leasetime; time_t expiration; } __attribute__((packed)) tdbdata;
-
-               UString area(10U);
-
-               area.snprintf("%u", *(uint32_t*)value.data()); 
-
-            // area.snprintf("%06x", *(uint32_t*)value.data()); 
-            // UHexDump::encode(value.data(), sizeof(uint32_t), area);
-
-               U_SRV_LOG("get data from DHCP_DATA_FILE - key: %#.*S data: %V", 10, &ks, area.rep);
-
                peer->label = area;
+
+               U_RETURN(true);
                }
             }
          }
@@ -1344,6 +1356,8 @@ void UNoCatPlugIn::setPeerLabel()
 #endif
 
    U_INTERNAL_DUMP("peer->label = %V", peer->label.rep)
+
+   U_RETURN(false);
 }
 
 void UNoCatPlugIn::setNewPeer()
@@ -1415,7 +1429,9 @@ void UNoCatPlugIn::setNewPeer()
 
    peer->label = ((uint32_t)U_peer_index_network >= vLocalNetworkLabel->size() ? *UString::str_without_label : (*vLocalNetworkLabel)[U_peer_index_network]);
 
-   setPeerLabel();
+#ifdef USE_LIBTDB
+   if (pdata) (void) setPeerLabel();
+#endif
 
    // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
 
@@ -1476,7 +1492,9 @@ void UNoCatPlugIn::checkOldPeer()
       peer->token = UStringExt::numberToString(u_random(u_now->tv_usec));
       }
 
-   setPeerLabel();
+#ifdef USE_LIBTDB
+   if (pdata) (void) setPeerLabel();
+#endif
 }
 
 void UNoCatPlugIn::addPeerInfo(int disconnected)
@@ -1556,6 +1574,46 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
    U_INTERNAL_DUMP("info(%u) = %V", info.size(), info.rep)
 
    (void) vinfo_data->replace(U_peer_index_AUTH, info);
+}
+
+void UNoCatPlugIn::addPeerRoaming()
+{
+   U_TRACE(0, "UNoCatPlugIn::addPeerRoaming()")
+
+#ifdef USE_LIBTDB
+   U_INTERNAL_ASSERT_POINTER(peer)
+   U_INTERNAL_ASSERT(peer->mac)
+   U_INTERNAL_ASSERT(peer->user)
+
+   uint32_t sz;
+   char buffer[64];
+   UString data = (*vroaming_data)[U_peer_index_AUTH], str = UStringExt::substitute(peer->mac, ':', U_CONSTANT_TO_PARAM("%3A"));
+
+   U_INTERNAL_DUMP("U_peer_index_AUTH = %u data = %V peer->ip = %V", U_peer_index_AUTH, data.rep, peer->ip.rep)
+
+   // -------------------------------------------------------------------------------------------------------------
+   // $1 -> mac
+   // $2 -> ip
+   // $3 -> gateway
+   // $4 -> ap (with localization => '@')
+   // $5 -> => UID <=
+   // -------------------------------------------------------------------------------------------------------------
+   // /roaming?Mac=98%3A0c%3A82%3A76%3A3b%3A39&ip=172.16.1.8&gateway=172.16.1.254%3A5280&ap=ap%4010.8.0.1&User=1212
+   // -------------------------------------------------------------------------------------------------------------
+
+   (void) data.reserve((sz = data.size()) + 200U);
+
+   data.snprintf_add("%.*sMac=%v&ip=%v&", (sz > 0), "&", str.rep, peer->ip.rep);
+
+   data.snprintf_add("gateway=%.*s&ap=%v%%40%v&User=",
+                      u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->gateway), (unsigned char*)buffer), buffer, peer->label.rep, IP_address_trust->rep);
+
+   data.snprintf_add("%.*s", u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->user), (unsigned char*)buffer), buffer);
+
+   U_INTERNAL_DUMP("data(%u) = %V", data.size(), data.rep)
+
+   (void) vroaming_data->replace(U_peer_index_AUTH, data);
+#endif
 }
 
 int UModNoCatPeer::checkPeerInfo(bool btraffic)
@@ -1687,6 +1745,14 @@ bool UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
 
          vaddr[index_device]->push(peer);
          }
+
+#  ifdef USE_LIBTDB
+      if (pdata &&
+          setPeerLabel())
+         {
+         addPeerRoaming();
+         }
+#  endif
       }
 
    U_RETURN(true);
@@ -1720,6 +1786,39 @@ __pure bool UNoCatPlugIn::getPeer(uint32_t n)
    U_RETURN(false);
 }
 
+void UNoCatPlugIn::sendData(uint32_t index_AUTH, const UString& data, const char* service, uint32_t service_len)
+{
+   U_TRACE(0, "UNoCatPlugIn::sendData(%u,%V,%.*S,%u)", index_AUTH, data.rep, service_len, service, service_len)
+
+   U_INTERNAL_ASSERT(data)
+   U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, 0)
+
+   // NB: we can't try to send immediately the info data on users to portal because the worst we have a hole
+   //     of 10 seconds and the portal can have need to ask us something (to logout some user, the list of peer permitted, ...)
+
+   char buffer[4096];
+   const char* log_msg = 0;
+   uint32_t sz = data.size();
+   UString body = data, url = getUrlForSendMsgToPortal(index_AUTH, service, service_len);
+
+#ifdef USE_LIBZ
+   if (sz > U_MIN_SIZE_FOR_DEFLATE) body = UStringExt::deflate(data, 1);
+#endif
+
+#ifndef U_LOG_DISABLE
+   if (UServer_Base::isLog())
+      {
+      UString str = UStringExt::substitute(data.data(), U_min(sz,200), '%', U_CONSTANT_TO_PARAM("%%")); // NB: we need this because we have a message with url encoded char...
+
+      (void) u__snprintf(buffer, sizeof(buffer), "[nocat] Sent %.*s %%s (%u bytes) after %%d attempts to AUTH(%u): %V", service_len, service, sz, index_AUTH, str.rep);
+
+      log_msg = buffer;
+      }
+#endif
+
+   (void) client->sendPOSTRequestAsync(body, url, true, log_msg);
+}
+
 void UNoCatPlugIn::sendInfoData(uint32_t index_AUTH)
 {
    U_TRACE(0, "UNoCatPlugIn::sendInfoData(%u)", index_AUTH)
@@ -1728,35 +1827,26 @@ void UNoCatPlugIn::sendInfoData(uint32_t index_AUTH)
 
    if (info)
       {
-      U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, 0)
-
-      // NB: we can't try to send immediately the info data on users to portal because the worst we have a hole
-      //     of 10 seconds and the portal can have need to ask us something (to logout some user, the list of peer permitted, ...)
-
-      char buffer[4096];
-      const char* log_msg = 0;
-      uint32_t sz = info.size();
-      UString body = info, url = getUrlForSendMsgToPortal(index_AUTH, U_CONSTANT_TO_PARAM("/info"));
-
-#  ifdef USE_LIBZ
-      if (sz > U_MIN_SIZE_FOR_DEFLATE) body = UStringExt::deflate(info, 1);
-#  endif
-
-#  ifndef U_LOG_DISABLE
-      if (UServer_Base::isLog())
-         {
-         UString str = UStringExt::substitute(info.data(), U_min(sz,200), '%', U_CONSTANT_TO_PARAM("%%")); // NB: we need this because we have a message with url encoded char...
-
-         (void) u__snprintf(buffer, sizeof(buffer), "[nocat] Sent info %%s (%u bytes) after %%d attempts to AUTH(%u): %V", sz, index_AUTH, str.rep);
-
-         log_msg = buffer;
-         }
-#  endif
-
-      (void) client->sendPOSTRequestAsync(body, url, true, log_msg);
+      sendData(index_AUTH, info, U_CONSTANT_TO_PARAM("/info"));
 
       vinfo_data->getStringRep(index_AUTH)->size_adjust_force(0U);
       }
+}
+
+void UNoCatPlugIn::sendRoamingData(uint32_t index_AUTH)
+{
+   U_TRACE(0, "UNoCatPlugIn::sendRoamingData(%u)", index_AUTH)
+
+#ifdef USE_LIBTDB
+   UString data = (*vroaming_data)[index_AUTH];
+
+   if (data)
+      {
+      sendData(index_AUTH, data, U_CONSTANT_TO_PARAM("/roaming"));
+
+      vroaming_data->getStringRep(index_AUTH)->size_adjust_force(0U);
+      }
+#endif
 }
 
 void UNoCatPlugIn::notifyAuthOfUsersInfo(uint32_t index_AUTH)
@@ -2032,7 +2122,7 @@ int UNoCatPlugIn::handlerInit()
 
    Url* url;
    UIPAddress addr;
-   UString auth_ip, ip, info(U_CAPACITY);
+   UString auth_ip, ip, info(U_CAPACITY), data(U_CAPACITY);
 
    // NB: get IP address of AUTH hosts...
 
@@ -2059,11 +2149,13 @@ int UNoCatPlugIn::handlerInit()
          vauth_ip->push(auth_ip);
          }
 
-      vinfo_data->push(info);
+         vinfo_data->push(info);
+      vroaming_data->push(data);
       }
 
-   U_ASSERT_EQUALS(vauth->size(),   vauth_ip->size())
-   U_ASSERT_EQUALS(vauth->size(), vinfo_data->size())
+   U_ASSERT_EQUALS(vauth->size(),      vauth_ip->size())
+   U_ASSERT_EQUALS(vauth->size(),    vinfo_data->size())
+   U_ASSERT_EQUALS(vauth->size(), vroaming_data->size())
  
    *hostname = USocketExt::getNodeName();
 

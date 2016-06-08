@@ -16,8 +16,6 @@
 
 #include <ulib/string.h>
 
-#define U_SECOND 1000000L
-
 class U_EXPORT UTimeVal : public timeval {
 public:
 
@@ -30,15 +28,13 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   static void adjust(void* tv_sec, void* tv_usec);
-
    void adjust()
       {
       U_TRACE_NO_PARAM(0, "UTimeVal::adjust()")
 
       U_CHECK_MEMORY
 
-      adjust(&tv_sec, &tv_usec);
+      u_adjtime(&tv_sec, &tv_usec);
       }
 
    // COSTRUTTORI
@@ -381,14 +377,14 @@ public:
       {
       U_TRACE_NO_PARAM(1, "UTimeVal::start()")
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", this, 0);
+      u_gettimeofday(this);
       }
 
    long stop()
       {
       U_TRACE_NO_PARAM(1, "UTimeVal::stop()")
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &time_stop, 0);
+      u_gettimeofday(&time_stop);
 
       long ms = (time_stop.tv_sec * 1000L + (time_stop.tv_usec / 1000L)) -
                 (          tv_sec * 1000L + (          tv_usec / 1000L));

@@ -108,10 +108,6 @@
 #  include "net/unixsocket.cpp"
 #endif
 
-#ifdef ENABLE_THREAD
-#  include "thread.cpp"
-#endif
-
 #ifdef ENABLE_ZIP
 #  include "zip/zip.cpp"
 #endif
@@ -179,6 +175,10 @@
 
 #ifdef USE_LIBEVENT
 #  include "libevent/event.cpp"
+#endif
+
+#ifdef ENABLE_THREAD
+#  include "thread.cpp"
 #endif
 
 // Handler static/dynamic plugin

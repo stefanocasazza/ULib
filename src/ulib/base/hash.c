@@ -94,7 +94,7 @@ __pure uint32_t u_crc32(unsigned char* restrict bp, uint32_t len)
 
    uint32_t h1 = 0xABAD1DEA;
 
-#  ifdef HAVE_ARCH64
+# ifdef HAVE_ARCH64
    while (len >= sizeof(uint64_t))
       {
       h1 = __builtin_ia32_crc32di(h1, u_get_unalignedp64(bp));
@@ -102,7 +102,7 @@ __pure uint32_t u_crc32(unsigned char* restrict bp, uint32_t len)
       bp  += sizeof(uint64_t);
       len -= sizeof(uint64_t);
       }
-#  endif
+# endif
    while (len >= sizeof(uint32_t))
       {
       h1 = __builtin_ia32_crc32si(h1, u_get_unalignedp32(bp));

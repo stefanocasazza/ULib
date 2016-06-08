@@ -95,16 +95,18 @@ public:
       }
 
    void add(       const UString& key, const UString& data,    uint32_t _ttl = 0);
-   void addContent(const UString& key, const UString& content, uint32_t _ttl = 0); // NB: + null terminator...
+   void addContent(const UString& key, const UString& content, uint32_t _ttl = 0); // NB: +null terminator...
 
    UString get(       const char* key, uint32_t len);
-   UString getContent(const char* key, uint32_t len); // NB: - null terminator...
+   UString getContent(const char* key, uint32_t len); // NB: -null terminator...
+
+   UString getContent(const UString& key) { return getContent(U_STRING_TO_PARAM(key)); }
 
    void loadContentOf(const UString& directory, const char* filter = 0, uint32_t filter_len = 0);
 
    // operator []
 
-   UString operator[](const UString& key) { return get(U_STRING_TO_PARAM(key)); }
+   UString operator[](const UString& key) { return getContent(key); }
 
    // SERVICES
 
@@ -119,7 +121,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UCache::getTime()")
 
-      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
       uint32_t now = (uint32_t)(u_now->tv_sec - start);
 

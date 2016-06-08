@@ -17,7 +17,7 @@ pkgconfig_DATA = ULib.pc
 ## base/lzo/minilzo.c
 ## base/mkqsort.c base/rsort.c
 
-SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c base/miniz/miniz.c \
+SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c base/miniz/miniz.c base/xxhash/xxhash.c \
 		  base/coder/cbase64.c base/coder/cquoted_printable.c base/coder/curl_coder.c base/coder/cxml_coder.c base/coder/cescape.c base/coder/chexdump.c
 
 SRC_CPP = internal/common.cpp \
@@ -308,7 +308,7 @@ endif
 endif
 
 if FINAL
-lib@ULIB@_la_SOURCES = all_c.c all_cpp.cpp
+lib@ULIB@_la_SOURCES = all_c.c base/xxhash/xxhash.c all_cpp.cpp
 else
 lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 endif

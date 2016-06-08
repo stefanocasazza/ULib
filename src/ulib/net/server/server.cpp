@@ -270,7 +270,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
 
-      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
       // there are idle connection... (timeout)
 
@@ -830,7 +830,7 @@ bool UServer_Base::checkThrottlingBeforeSend(bool bwrite)
 
       if (pClientImage->max_limit != U_NOT_FOUND)
          {
-         U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+         U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
          if (bwrite == false)
             {
@@ -926,7 +926,7 @@ public:
 
          U_INTERNAL_DUMP("u_timeval.tv_sec = %ld u_now->tv_sec = %ld", u_timeval.tv_sec, u_now->tv_sec)
 
-         (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+         u_gettimenow();
 
          if (u_timeval.tv_sec != u_now->tv_sec)
             {
@@ -2669,7 +2669,7 @@ RETSIGTYPE UServer_Base::handlerForSigHUP(int signo)
 
    if (isOtherLog()) reopenLog();
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+   u_gettimenow();
 
    sendSignalToAllChildren(SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM);
 
@@ -2887,7 +2887,7 @@ loop:
          {
          U_INTERNAL_ASSERT_POINTER(ptime)
 
-         U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+         U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
          if ((u_now->tv_sec - CLIENT_INDEX->last_event) >= ptime->UTimeVal::tv_sec)
             {

@@ -105,7 +105,7 @@ bool UCDB::find()
 {
    U_TRACE_NO_PARAM(0, "UCDB::find()")
 
-   U_INTERNAL_ASSERT_MAJOR(UFile::st_size,0)
+   U_INTERNAL_ASSERT_MAJOR(UFile::st_size, 0)
 
    // A record is located as follows. Compute the hash value of the key in the record.
    // The hash value modulo CDB_NUM_HASH_TABLE_POINTER is the number of a hash table

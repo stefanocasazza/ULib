@@ -14,9 +14,9 @@
 #ifndef ULIB_USTRING_H
 #define ULIB_USTRING_H 1
 
+#include <ulib/base/hash.h>
 #include <ulib/internal/common.h>
 
-#include <ulib/base/hash.h>
 #include <ulib/base/utility.h>
 
 // macro for constant string like "xxx"

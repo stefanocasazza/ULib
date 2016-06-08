@@ -57,7 +57,7 @@ U_NO_EXPORT void UCache::init(UFile& _x, uint32_t size, bool bexist, bool brdonl
 
       U_INTERNAL_DUMP("hsize = %u writer = %u oldest = %u unused = %u size = %u", info->hsize, info->writer, info->oldest, info->unused, info->size)
 
-      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
       start = u_now->tv_sec;
       }
@@ -123,7 +123,7 @@ bool UCache::open(const UString& path, const UString& dir, const UString* enviro
                {
                vec2.push_back(content);
 
-               size += sizeof(UCache::cache_hash_table_entry) + UStringExt::getBaseNameLen(item) + _y.getSize() + 1; // NB: + null-terminator...
+               size += sizeof(UCache::cache_hash_table_entry) + UStringExt::getBaseNameLen(item) + _y.getSize() + 1; // NB: 1 => (+null-terminator)...
                }
             }
 
@@ -142,15 +142,18 @@ bool UCache::open(const UString& path, const UString& dir, const UString* enviro
          U_INTERNAL_ASSERT_EQUALS(info->hsize, hsize)
          U_INTERNAL_ASSERT_EQUALS(info->size, size - sizeof(UCache::cache_info))
 
-         for (i = 0, n = vec2.size(); i < n; ++i) addContent(UStringExt::basename(vec1[i]), vec2[i]);
+         for (i = 0, n = vec2.size(); i < n; ++i)
+            {
+            addContent(UStringExt::basename(vec1[i]), vec2[i]);
+
+            U_ASSERT_EQUALS(getContent(UStringExt::basename(vec1[i])), vec2[i])
+            }
 
          U_INTERNAL_DUMP("hsize = %u writer = %u oldest = %u unused = %u size = %u", info->hsize, info->writer, info->oldest, info->unused, info->size)
 
          U_INTERNAL_ASSERT_EQUALS(info->writer, info->size)
 
-         // flushes changes made to memory mapped file back to disk
-
-      // (void) U_SYSCALL(msync, "%p,%u,%d", (char*)info, sizeof(UCache::cache_info) + info->size, MS_SYNC);
+      // (void) U_SYSCALL(msync, "%p,%u,%d", (char*)info, sizeof(UCache::cache_info) + info->size, MS_SYNC); // flushes changes made to memory mapped file back to disk
          }
 
       U_RETURN(true);
@@ -273,12 +276,14 @@ void UCache::addContent(const UString& _key, const UString& content, uint32_t _t
    const char*  key =    _key.data();
    const char* data = content.data();
    uint32_t keylen  =    _key.size(),
-            datalen = content.size() + 1; // NB: + null-terminator...
+            datalen = content.size() + 1; // NB: 1 => (+null-terminator)...
 
    char* ptr = add(key, keylen, datalen, _ttl);
 
    U_MEMCPY(ptr,           key,  keylen);
    U_MEMCPY(ptr + keylen, data, datalen);
+
+   if (content.isNullTerminated() == false) ptr[keylen+datalen-1] = '\0';
 }
 
 UString UCache::get(const char* key, uint32_t keylen)
@@ -334,7 +339,7 @@ UString UCache::get(const char* key, uint32_t keylen)
             }
          }
 
-      if (++loop > 100U) break; /* to protect against hash flooding */
+      if (++loop > 100U) break; // to protect against hash flooding
 
       uint32_t nextpos = prevpos ^ getLink(pos);
 
@@ -349,8 +354,6 @@ UString UCache::getContent(const char* key, uint32_t keylen)
 {
    U_TRACE(0, "UCache::getContent(%.*S,%u)", keylen, key, keylen)
 
-   UString content;
-
 #ifdef DEBUG
    struct stat st;
    char buffer[U_PATH_MAX];
@@ -360,18 +363,16 @@ UString UCache::getContent(const char* key, uint32_t keylen)
    if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0 &&
        st.st_mtime >= dir_template_mtime)
       {
-      content = UFile::contentOf(buffer); 
-
-      U_RETURN_STRING(content);
+      return UFile::contentOf(buffer); 
       }
 #endif
 
-   content = get(key, keylen);
+   UString content = get(key, keylen);
 
    if (content &&
-       content.isNullTerminated() == false)
+       content.last_char() == '\0')
       {
-      content.rep->_length -= 1; // NB: minus null-terminator...
+      content.rep->_length -= 1; // NB: 1 => (-null-terminator)...
 
       U_INTERNAL_ASSERT(content.isNullTerminated())
       }

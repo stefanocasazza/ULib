@@ -4994,7 +4994,7 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
          }
       }
 
-   i = *suffix++;
+   i = *suffix;
 
    if (i < 'a' || i > 'z') goto cdefault;
 
@@ -5033,7 +5033,7 @@ loop:
 
       for (i = 0; i < ptr->name_len; ++i)
          {
-         if (suffix[i] != ptr->name[i])
+         if (suffix[i+1] != ptr->name[i])
             {
             ++ptr;
 
@@ -5050,7 +5050,7 @@ loop:
       {
       if (pmime_index) *pmime_index = U_js;
 
-      return "text/javascript";
+      return "application/javascript"; // RFC 4329 (2006) now recommends the use of application/javascript
       }
 
    if (pmime_index) *pmime_index = U_unknow;

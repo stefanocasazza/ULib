@@ -13,7 +13,9 @@
 
 #include <ulib/date.h>
 
-const short UTimeDate::monthDays[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+const char*    UTimeDate::periods[8]    = { "second", "minute", "hour", "day", "week", "month",   "year", "decade" };
+const uint32_t UTimeDate::lengths[8]    = {        1,       60,   3600, 86400, 604800, 2630880, 31570560, 315705600 };
+const short    UTimeDate::monthDays[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
 
 __pure bool UTimeDate::isValid() const
 {
@@ -178,7 +180,7 @@ void UTimeDate::fromUTC(const char* str, const char* format)
       {
       // Complete for the user
 
-      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
 #  if defined(DEBUG) && !defined(_MSWINDOWS_)
       U_SYSCALL_VOID(localtime_r, "%p,%p",      &(u_now->tv_sec), &u_strftime_tm);
@@ -415,6 +417,51 @@ void UTimeDate::addMonths(int nmonths)
    if (_day > days_in_month) _day = days_in_month;
 
    U_INTERNAL_DUMP("_day = %d, _month = %d, _year = %d", _day, _month, _year)
+}
+
+// This can be used for comments and other from of communication to tell the time ago instead of the exact time which might not be correct to some one in another time zone
+
+UString UTimeDate::_ago(time_t tm, uint32_t granularity)
+{
+   U_TRACE(0, "UTimeDate::_ago(%ld,%u)", tm, granularity)
+
+   int j = 7;
+   UString result(100U);
+   uint32_t no, diff, difference = u_now->tv_sec - tm;
+
+   U_INTERNAL_ASSERT(u_now->tv_sec >= tm)
+
+   while (true)
+      {
+      if ((no = (difference / lengths[j])) >= 1)
+         {
+         U_INTERNAL_DUMP("j = %u no = %u", j, no)
+
+         break;
+         }
+
+      if (--j < 0)
+         {
+         j = 0;
+
+         break;
+         }
+      }
+
+   result.snprintf("%lu %s%s", no, periods[j], no != 1 ? "s " : " ");
+
+   if (granularity > 0 &&
+       j >= 1          &&
+       (u_now->tv_sec - (diff = (u_now->tv_sec - (difference % lengths[j])))) > 0)
+      {
+      (void) result.append(_ago(diff, --granularity));
+
+      U_RETURN_STRING(result);
+      }
+
+   (void) result.append(U_CONSTANT_TO_PARAM("ago"));
+
+   U_RETURN_STRING(result);
 }
 
 // STREAM

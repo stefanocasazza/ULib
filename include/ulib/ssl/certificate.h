@@ -373,7 +373,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UCertificate::checkValidity()")
 
-      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
       bool result = checkValidity(u_now->tv_sec);
 

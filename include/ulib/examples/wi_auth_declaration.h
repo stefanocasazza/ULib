@@ -20,6 +20,7 @@ static UString* ip;
 static UString* ts;
 static UString* uid;
 static UString* mac;
+static UString* realm;
 static UString* pbody;
 static UString* redir;
 static UString* token;
@@ -119,6 +120,9 @@ static UTimeDate* date;
 static UString* yearName;
 static UString* monthName;
 static UString* weekName;
+
+static uint32_t time_available_daily, time_available_flat;
+static uint64_t traffic_available_daily, traffic_available_flat;
 
 static bool     user_exist, brenew, isIP, isMAC, ap_address_trust, db_user_filter_tavarnelle;
 static uint32_t index_access_point, num_users, num_users_connected, num_users_connected_on_nodog,
@@ -721,7 +725,6 @@ public:
       U_CHECK_MEMORY
 
       U_INTERNAL_ASSERT(*ap_address)
-   // U_INTERNAL_ASSERT_RANGE(-2,status,2)
       U_INTERNAL_ASSERT_RANGE(0,_status,3)
 
       // NB: we may be a different process from what it has updated so that we need to read the record...
@@ -921,6 +924,30 @@ public:
       }
 };
 
+static bool checkTypeUID() // NB: return if uid is a mac or an ip address...
+{
+   U_TRACE_NO_PARAM(5, "::checkTypeUID()")
+
+   U_INTERNAL_ASSERT(*uid)
+   U_ASSERT_EQUALS(*uid, UStringExt::trim(*uid))
+
+   uint32_t sz     = uid->size();
+   const char* ptr = uid->data();
+
+   isIP  = u_isIPv4Addr(ptr, sz);
+   isMAC = u_isMacAddr( ptr, sz);
+
+   U_INTERNAL_DUMP("isIP = %b isMAC = %b uid = %V mac = %V ip = %V", isIP, isMAC, uid->rep, mac->rep, ip->rep)
+
+   if (isMAC ||
+       isIP)
+      {
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
 class WiAuthUser : public UDataStorage {
 public:
 
@@ -990,8 +1017,8 @@ public:
                           "%v %v %v %v \"%v\"",
                           _ip.rep, connected,
                           last_modified, login_time,
-                          _time_consumed, _traffic_consumed,
-                          _time_done, _time_available, _traffic_done, _traffic_available,
+                          _time_done, _traffic_done,
+                          _time_consumed, _time_available, _traffic_consumed, _traffic_available,
                           _index_access_point, consume, agent, DownloadRate, UploadRate,
                           _auth_domain.rep, _mac.rep, _policy.rep, nodog.rep, _user.rep);
 
@@ -1011,10 +1038,10 @@ public:
 
       is >> connected
          >> last_modified >> login_time
-         >>    _time_consumed
-         >> _traffic_consumed
-         >>    _time_done >>    _time_available
-         >> _traffic_done >> _traffic_available
+         >>    _time_done
+         >> _traffic_done
+         >>    _time_consumed >>   _time_available
+         >> _traffic_consumed >> _traffic_available
          >> _index_access_point >> consume >> agent >> DownloadRate >> UploadRate;
 
       is.get(); // skip ' '
@@ -1080,9 +1107,9 @@ public:
 
       U_INTERNAL_ASSERT(u__isspace(ptr[0]))
 
-      bool result = (ptr[1] == '1');
+      if (ptr[1] == '1') U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    void setConnected(bool bconnected)
@@ -1110,28 +1137,32 @@ public:
       {
       U_TRACE(5, "WiAuthUser::updateCounter(%V,%ld,%llu,%b)", logout.rep, time_connected, traffic, ask_logout)
 
-      _time_done    += time_connected;
+         _time_done += time_connected;
       _traffic_done += traffic;
 
       if (consume)
          {
-         if (_time_done > _time_available)
+            _time_consumed += time_connected;
+         _traffic_consumed += traffic;
+
+         if (_time_consumed > _time_available)
             {
             ask_logout = true;
 
             /*
-            long time_diff = _time_done - _time_available;
+            long time_diff = _time_consumed - _time_available;
 
-            U_LOGGER("*** updateCounter() UID(%v) IP(%v) MAC(%v) AP(%v@%v) EXCEED TIME_AVAILABLE (%ld sec) ***", uid->rep, _ip.rep, _mac.rep, ap_label->rep, ap_address->rep, time_diff);
+            U_LOGGER("*** updateCounter() UID(%v) IP(%v) MAC(%v) AP(%v@%v) EXCEED TIME_AVAILABLE (%ld sec) ***",
+                                          uid->rep, _ip.rep, _mac.rep, ap_label->rep, ap_address->rep, time_diff);
             */
             }
 
-         if (_traffic_done > _traffic_available)
+         if (_traffic_consumed > _traffic_available)
             {
             ask_logout = true;
 
             /*
-            uint64_t traffic_diff = _traffic_done - _traffic_available;
+            uint64_t traffic_diff = _traffic_consumed - _traffic_available;
 
             U_LOGGER("*** updateCounter() UID(%v) IP(%v) MAC(%v) AP(%v@%v) connected=%b EXCEED TRAFFIC_AVAILABLE (%llu bytes) ***",
                                           uid->rep, _ip.rep, _mac.rep, ap_label->rep, ap_address->rep, connected, traffic_diff);
@@ -1233,8 +1264,18 @@ next:
 
       U_CHECK_MEMORY
 
-         time_done->setFromNumber32(_time_done / 60);
+         time_done->setFromNumber32(   _time_done / 60U);
       traffic_done->setFromNumber64(_traffic_done / (1024ULL * 1024ULL));
+      }
+
+   void getConsumed()
+      {
+      U_TRACE_NO_PARAM(5, "WiAuthUser::getConsumed()")
+
+      U_CHECK_MEMORY
+
+         time_consumed->setFromNumber32(   _time_consumed / 60);
+      traffic_consumed->setFromNumber64(_traffic_consumed / (1024ULL * 1024ULL));
       }
 
    void getCounter()
@@ -1243,18 +1284,8 @@ next:
 
       U_CHECK_MEMORY
 
-         time_counter->setFromNumber32s(((int32_t)   _time_available - (int32_t)   _time_done) /   60);
-      traffic_counter->setFromNumber64s(((int64_t)_traffic_available - (int64_t)_traffic_done) / (1024LL * 1024LL));
-      }
-
-   void getConsumed()
-      {
-      U_TRACE_NO_PARAM(5, "WiAuthUser::getConsume()")
-
-      U_CHECK_MEMORY
-
-         time_consumed->setFromNumber32((   _time_consumed +    _time_done) / 60U);
-      traffic_consumed->setFromNumber64((_traffic_consumed + _traffic_done) / (1024ULL * 1024ULL));
+         time_counter->setFromNumber32s(((int32_t)   _time_available - (int32_t)   _time_consumed) /  60);
+      traffic_counter->setFromNumber64s(((int64_t)_traffic_available - (int64_t)_traffic_consumed) / (1024LL * 1024LL));
       }
 
    UString getPolicy()
@@ -1298,37 +1329,13 @@ next:
       U_RETURN(true);
       }
 
-   static bool checkUserID()
-      {
-      U_TRACE_NO_PARAM(5, "WiAuthUser::checkUserID()")
-
-      U_INTERNAL_ASSERT(*uid)
-      U_ASSERT_EQUALS(*uid, UStringExt::trim(*uid))
-
-      uint32_t sz     = uid->size();
-      const char* ptr = uid->data();
-
-      isIP  = u_isIPv4Addr(ptr, sz);
-      isMAC = u_isMacAddr( ptr, sz);
-
-      U_INTERNAL_DUMP("isIP = %b isMAC = %b uid = %V mac = %V ip = %V", isIP, isMAC, uid->rep, mac->rep, ip->rep)
-
-      if (isMAC ||
-          isIP)
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
-
    static UString get_UserName()
       {
       U_TRACE_NO_PARAM(5, "WiAuthUser::get_UserName()")
 
       UString user, content;
 
-      if (checkUserID() == false)
+      if (checkTypeUID() == false) // NB: checkTypeUID() return if uid is a mac or an ip address...
          {
          UString pathname(U_CAPACITY);
 
@@ -1395,7 +1402,7 @@ next:
 
       if (key_time)
          {
-                                  *time_available      = (*table)[key_time];
+                                     *time_available   = (*table)[key_time];
                                   *traffic_available   = (*table)[key_traffic];
          if (key_time_no_traffic) *max_time_no_traffic = (*table)[key_time_no_traffic];
          }
@@ -1527,7 +1534,7 @@ next:
 
       U_INTERNAL_ASSERT_POINTER(op)
 
-      getCounter();
+      getDone();
 
       /**
        * Example
@@ -1537,10 +1544,11 @@ next:
        */
 
       U_INTERNAL_ASSERT(_mac)
-      U_INTERNAL_ASSERT(*traffic_counter)
+      U_INTERNAL_ASSERT(*time_done)
+      U_INTERNAL_ASSERT(*traffic_done)
 
-      ULog::log(file_LOG->getFd(), "op: %s, uid: %v, ap: %v, ip: %v, mac: %v, timeout: %v, traffic: %v, policy: %v",
-                                    op,     uid->rep, getAP().rep, _ip.rep, _mac.rep, time_counter->rep, traffic_counter->rep, getPolicy().rep);
+      ULog::log(file_LOG->getFd(), "op: %s, uid: %v, ap: %v, ip: %v, mac: %v, time: %v, traffic: %v, policy: %v",
+                                    op,     uid->rep, getAP().rep, _ip.rep, _mac.rep, time_done->rep, traffic_done->rep, getPolicy().rep);
       }
 };
 
@@ -1865,13 +1873,16 @@ static int quitUserConnected(UStringRep* key, UStringRep* data)
    U_RETURN(1);
 }
 
-static int checkIfUserHasPolicyDaily(UStringRep* key, UStringRep* data)
+static int checkForUserPolicy(UStringRep* key, UStringRep* data)
 {
-   U_TRACE(5, "::checkIfUserHasPolicyDaily(%p,%p)", key, data)
+   U_TRACE(5, "::checkForUserPolicy(%p,%p)", key, data)
 
    if (key) U_RETURN(4); // NB: call us later (after set record value from db)...
 
-   if (user_rec->_policy == *policy_daily)
+   bool bflat = (*policy == *policy_flat);
+
+   if (bflat ||
+       user_rec->_policy == *policy_daily)
       {
       *uid = db_user->getKeyID();
 
@@ -1881,17 +1892,26 @@ static int checkIfUserHasPolicyDaily(UStringRep* key, UStringRep* data)
 
          if (traffic)
             {
-            U_LOGGER("*** checkIfUserHasPolicyDaily() UID(%v) IP(%v) MAC(%v) AP(%v) traffic: %llu ***", uid->rep, user_rec->_ip.rep, user_rec->_mac.rep, user_rec->nodog.rep, traffic);
+            U_LOGGER("*** checkForUserPolicy() UID(%v) IP(%v) MAC(%v) AP(%v) POLICY(%v) traffic: %llu ***",
+                           uid->rep, user_rec->_ip.rep, user_rec->_mac.rep, user_rec->nodog.rep, user_rec->_policy.rep, traffic);
             }
          }
 
-      user_rec->_time_consumed    += user_rec->_time_done;
-                                     user_rec->_time_done = 0;
-      user_rec->_traffic_consumed += user_rec->_traffic_done;
-                                     user_rec->_traffic_done = 0;
+      user_rec->_time_done        =
+      user_rec->_time_consumed    = 0;
+      user_rec->_traffic_done     =
+      user_rec->_traffic_consumed = 0;
 
-      user_rec->_time_available   =     time_available->strtol();
-      user_rec->_traffic_available = traffic_available->strtoll();
+      if (bflat)
+         {
+         user_rec->_time_available    =    time_available_flat;
+         user_rec->_traffic_available = traffic_available_flat; 
+         }
+      else
+         {
+         user_rec->_time_available    =    time_available_daily;
+         user_rec->_traffic_available = traffic_available_daily; 
+         }
 
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
 
@@ -1920,17 +1940,28 @@ static int getStatusUser(UStringRep* key, UStringRep* data)
 
    if (user_rec->setNodogReference())
       {
-      user_rec->getDone();
+      UStringRep* p3;
+      UStringRep* p4;
 
       if (user_rec->consume)
          {
          ptr1 = "green";
          ptr2 = "yes";
+
+         user_rec->getConsumed();
+
+         p3 =    time_consumed->rep;
+         p4 = traffic_consumed->rep;
          }
       else
          {
          ptr1 = "orange";
          ptr2 = "no";
+
+         user_rec->getDone();
+
+         p3 =    time_done->rep;
+         p4 = traffic_done->rep;
          }
 
       UString label,
@@ -1948,7 +1979,7 @@ static int getStatusUser(UStringRep* key, UStringRep* data)
                     user_rec->login_time + u_now_adjust,
                     x.rep,
                     ptr1, ptr2,
-                    time_done->rep, traffic_done->rep,
+                    p3, p4,
                     virtual_name->rep,
                     label.rep, nodog_rec->hostname.rep, user_rec->nodog.rep, nodog_rec->port, y.rep);
 
@@ -2108,6 +2139,7 @@ static void usp_init_wi_auth()
    U_NEW(UString, ts, UString);
    U_NEW(UString, uid, UString);
    U_NEW(UString, mac, UString);
+   U_NEW(UString, realm, UString);
    U_NEW(UString, yearName, UString(U_STRING_FROM_CONSTANT("year")));
    U_NEW(UString, monthName, UString(U_STRING_FROM_CONSTANT("month")));
    U_NEW(UString, weekName, UString(U_STRING_FROM_CONSTANT("week")));
@@ -2144,14 +2176,9 @@ static void usp_init_wi_auth()
    U_NEW(UString, time_done, UString(20U));
    U_NEW(UString, time_counter, UString(20U));
    U_NEW(UString, time_consumed, UString(20U));
-   U_NEW(UString, time_available, UString);
    U_NEW(UString, traffic_done, UString(20U));
    U_NEW(UString, traffic_counter, UString(20U));
    U_NEW(UString, traffic_consumed, UString(20U));
-   U_NEW(UString, traffic_available, UString);
-   U_NEW(UString, policy_flat, U_STRING_FROM_CONSTANT("FLAT"));
-   U_NEW(UString, policy_daily, U_STRING_FROM_CONSTANT("DAILY"));
-   U_NEW(UString, policy_traffic, U_STRING_FROM_CONSTANT("TRAFFIC"));
 
    U_NEW(UTimeDate, date, UTimeDate);
 
@@ -2282,6 +2309,27 @@ static void usp_init_wi_auth()
       }
 
    table->clear();
+
+   // POLICY
+
+   U_NEW(UString, time_available, UString);
+   U_NEW(UString, traffic_available, UString);
+
+   U_NEW(UString, policy_flat, U_STRING_FROM_CONSTANT("FLAT"));
+   U_NEW(UString, policy_daily, U_STRING_FROM_CONSTANT("DAILY"));
+   U_NEW(UString, policy_traffic, U_STRING_FROM_CONSTANT("TRAFFIC"));
+
+   WiAuthUser::loadPolicy(*policy_daily); // NB: time_available e traffic_available sono valorizzati da loadPolicy()...
+
+      time_available_daily =    time_available->strtol();
+   traffic_available_daily = traffic_available->strtoll();
+
+   WiAuthUser::loadPolicy(*policy_flat); // NB: time_available e traffic_available sono valorizzati da loadPolicy()...
+
+      time_available_flat =    time_available->strtol();
+   traffic_available_flat = traffic_available->strtoll();
+
+   // HTTP client
 
    U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(0));
 
@@ -2438,6 +2486,7 @@ static void usp_end_wi_auth()
       delete ts;
       delete uid;
       delete mac;
+      delete realm;
       delete pbody;
       delete redir;
       delete token;
@@ -2706,9 +2755,9 @@ static int askToLDAP(UString* pinput, const char* title_txt, const char* message
    U_RETURN(result);
 }
 
-static bool runAuthCmd(const char* password, const char* realm)
+static bool runAuthCmd(const char* password, const char* prealm)
 {
-   U_TRACE(5, "::runAuthCmd(%S,%S)", password, realm)
+   U_TRACE(5, "::runAuthCmd(%S,%S)", password, prealm)
 
    U_INTERNAL_ASSERT(*fmt_auth_cmd)
 
@@ -2718,7 +2767,7 @@ static bool runAuthCmd(const char* password, const char* realm)
 
    if (uid->size() > 32) goto error;
 
-   cmd.snprintf(fmt_auth_cmd->data(), uid->c_str(), password, realm);
+   cmd.snprintf(fmt_auth_cmd->data(), uid->c_str(), password, prealm);
 
    if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/auth_cmd.err");
 
@@ -2729,7 +2778,7 @@ static bool runAuthCmd(const char* password, const char* realm)
    if (UCommand::exit_value ||
        output->empty())
       {
-   // U_LOGGER("*** AUTH_CMD failed: EXIT_VALUE=%d RESPONSE=%V - realm=%s uid=%s pass=%s ***", UCommand::exit_value, output->rep, realm, _uid, password);
+   // U_LOGGER("*** AUTH_CMD failed: EXIT_VALUE=%d RESPONSE=%V - realm=%s uid=%s pass=%s ***", UCommand::exit_value, output->rep, prealm, _uid, password);
 
 error:
       char msg[4096];
@@ -2824,7 +2873,8 @@ static bool askNodogToLogoutUser(const UString& _ip, const UString& _mac, bool b
          char log_msg[4096];
 
          (void) u__snprintf(log_msg, sizeof(log_msg),
-                            "%v: *** LOGOUT %%s AFTER %%d ATTEMPTS: UID(%v) IP(%v) MAC(%v) AP(%v) ***", UClientImage_Base::request_uri->rep, uid->rep, _ip.rep, _mac.rep, ap_address->rep);
+                            "%v: *** LOGOUT %%s AFTER %%d ATTEMPTS: UID(%v) IP(%v) MAC(%v) AP(%v) ***",
+                            UClientImage_Base::request_uri->rep, uid->rep, _ip.rep, _mac.rep, ap_address->rep);
 
          (void) client->sendGETRequestAsync(*url_nodog, false, log_msg, file_WARNING->getFd());
 
@@ -3178,9 +3228,36 @@ static bool checkLoginRequest(uint32_t n, uint32_t end, int tolerance, bool bemp
    U_RETURN(false);
 }
 
-static void getLoginRequest(UString& timeout, UString& realm)
+static bool checkTimeRequest()
 {
-   U_TRACE(5, "::getLoginRequest(%p,%p)", &timeout, &realm)
+   U_TRACE(5, "::checkTimeRequest()")
+
+   long timestamp;
+
+   if (*ts &&
+       (u_now->tv_sec - (timestamp = ts->strtol())) > (5L * 60L))
+      {
+      U_LOGGER("*** IP(%v) MAC(%v) AP(%v) request expired: %#5D ***", ip->rep, mac->rep, ap->rep, timestamp);
+
+      if (*redirect &&
+          strncmp(redirect->c_pointer(U_CONSTANT_SIZE("http://")), U_STRING_TO_PARAM(*virtual_name)))
+         {
+         USSIPlugIn::setAlternativeRedirect("%v", redirect->rep);
+         }
+      else
+         {
+         USSIPlugIn::setAlternativeRedirect("http://www.google.com", 0);
+         }
+
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
+}
+
+static void getLoginRequest(UString& timeout)
+{
+   U_TRACE(5, "::getLoginRequest(%p)", &timeout)
 
    uint32_t n = UHTTP::processForm();
 
@@ -3191,10 +3268,10 @@ static void getLoginRequest(UString& timeout, UString& realm)
       UHTTP::getFormValue(*ap,     U_CONSTANT_TO_PARAM("ap"),      0, 13, n);
       }
 
-   UHTTP::getFormValue(realm,  U_CONSTANT_TO_PARAM("realm"),    0, 15, n);
+   UHTTP::getFormValue(*realm, U_CONSTANT_TO_PARAM("realm"),    0, 15, n);
    UHTTP::getFormValue(*redir, U_CONSTANT_TO_PARAM("redir_to"), 0, 17, n);
 
-   if (realm.empty())
+   if (realm->empty())
       {
       /*
       USSIPlugIn::setMessagePage(*message_page_template, "Errore", "Errore Autorizzazione - dominio vuoto");
@@ -3202,35 +3279,65 @@ static void getLoginRequest(UString& timeout, UString& realm)
       return;
       */
 
-      realm = U_STRING_FROM_CONSTANT("all");
+      *realm = U_STRING_FROM_CONSTANT("all");
       }
 }
 
-static void checkUserID()
+static bool checkMAC()
+{
+   U_TRACE_NO_PARAM(5, ":checkMAC()")
+
+   if (mac->empty())
+      {
+      USSIPlugIn::setMessagePage(*message_page_template, "Errore", "Errore Autorizzazione - MAC vuoto");
+
+      U_RETURN(false);
+      }
+
+   if (*mac != *UString::str_without_mac)
+      {
+      *uid         = *mac;
+      *auth_domain = *mac_auth + "_" + *realm;
+      }
+   else
+      {
+      if (ip->empty())
+         {
+         USSIPlugIn::setMessagePage(*message_page_template, "Errore", "Errore Autorizzazione - IP vuoto");
+
+         U_RETURN(false);
+         }
+
+      *uid         = *ip;
+      *auth_domain = *ip_auth + "_" + *realm;
+      }
+
+   U_RETURN(true);
+}
+
+static bool checkUserID()
 {
    U_TRACE_NO_PARAM(5, "::checkUserID()")
 
-   if (WiAuthUser::checkUserID())
+   if (checkTypeUID()) // NB: checkTypeUID() return if uid is a mac or an ip address...
       {
       if (isMAC &&
           *mac != *uid)
          {
          U_LOGGER("*** MAC MISMATCH: UID(%v) IP(%v) MAC(%v) AP(%v@%v) REDIR(%v) ***", uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep, redir->rep);
 
-      // U_ASSERT(UStringExt::startsWith(*auth_domain, *mac_auth))
-
          UString x;
 
          if (*mac) x = UStringExt::trim(*mac);
 
          if (x) *uid = x;
+
+         if (checkMAC() == false) U_RETURN(false);
          }
       else if (isIP &&
                *ip != *uid)
          {
          U_LOGGER("*** IP MISMATCH: UID(%v) IP(%v) MAC(%v) AP(%v@%v) REDIR(%v) ***", uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep, redir->rep);
-
-      // U_ASSERT(UStringExt::startsWith(*auth_domain, *ip_auth))
 
          UString x;
 
@@ -3239,6 +3346,8 @@ static void checkUserID()
          if (x) *uid = x;
          }
       }
+
+   U_RETURN(true);
 }
 
 static bool checkLoginValidate(bool all)
@@ -3376,7 +3485,8 @@ static bool getCookie(UString* prealm, UString* pid)
                   if (prealm &&
                       prealm->equal(x) == false)
                      {
-                  // U_LOGGER("*** COOKIE REALM DIFFER(%v=>%v) - UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***", prealm->rep, x.rep, uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
+                  // U_LOGGER("*** COOKIE REALM DIFFER(%v=>%v) - UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***",
+                  //             prealm->rep, x.rep, uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
 
                      *prealm = UStringExt::trim(x);
                      }
@@ -4053,7 +4163,7 @@ static void GET_admin_view_user()
       USSIPlugIn::setAlternativeInclude(admin_cache->getContent(U_CONSTANT_TO_PARAM("get_user_id.tmpl")), 0, false,
                             "Visualizzazione dati utente",
                             "<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\" />"
-                            "<script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>", 0,
+                            "<script type=\"application/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>", 0,
                             "Visualizzazione dati utente", "admin_view_user");
       }
 }
@@ -4484,17 +4594,7 @@ static void GET_login() // MAIN PAGE (se il portatile non mostra la login page c
 
    if (checkLoginRequest(0, 14, 2, true))
       {
-      long timestamp;
-
-      if (*ts &&
-          (u_now->tv_sec - (timestamp = ts->strtol())) > (5L * 60L))
-         {
-         U_LOGGER("*** GET_login() IP(%v) MAC(%v) AP(%v) request expired: %#5D ***", ip->rep, mac->rep, ap->rep, timestamp);
-
-         USSIPlugIn::setAlternativeRedirect("http://www.google.com", 0);
-
-         return;
-         }
+      if (checkTimeRequest() == false) return;
 
       if (WiAuthNodog::checkMAC())
          {
@@ -4649,12 +4749,12 @@ static void GET_LoginRequest(bool idp)
    // $9 -> redir_to
    // -----------------------------------------------------------------------------
 
-   UString id, timeout, realm;
+   UString id, timeout;
 
-   getLoginRequest(timeout, realm);
+   getLoginRequest(timeout);
 
    if (idp == false &&
-       getCookie(&realm, &id))
+       getCookie(realm, &id))
       {
       (void) checkIfUserConnected();
 
@@ -4677,9 +4777,9 @@ static void GET_LoginRequest(bool idp)
 
       table->clear();
 
-      *auth_domain = *cookie_auth + realm;
+      *auth_domain = *cookie_auth + *realm;
 
-      if (realm.equal(U_CONSTANT_TO_PARAM("firenzecard")))
+      if (realm->equal(U_CONSTANT_TO_PARAM("firenzecard")))
          {
          *policy = *policy_traffic;
 
@@ -4695,7 +4795,7 @@ static void GET_LoginRequest(bool idp)
          }
       else
          {
-         if (realm.equal(U_CONSTANT_TO_PARAM("all")) == false ||
+         if (realm->equal(U_CONSTANT_TO_PARAM("all")) == false ||
              askToLDAP(0,0,0,"ldapsearch -LLL -b %v %v waLogin=%v", wiauth_card_basedn->rep, ldap_card_param->rep, uid->rep) == -1)
             {
             *policy = (user_exist ? user_rec->_policy : *policy_daily);
@@ -4717,14 +4817,14 @@ static void GET_LoginRequest(bool idp)
 
    UString tmp1, tmp2; // = U_STRING_FROM_CONSTANT("<a href=\"password\">Non riesci a ricordare la password?</a>");
 
-   if (realm.equal(U_CONSTANT_TO_PARAM("firenzecard")) == false)
+   if (realm->equal(U_CONSTANT_TO_PARAM("firenzecard")) == false)
       {
       tmp1 = U_STRING_FROM_CONSTANT("<p><input type=\"checkbox\" name=\"PersistentCookie\" "
                                     "id=\"PersistentCookie\" value=\"yes\" checked=\"checked\"><strong>Resta connesso</strong></p>");
 
       USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("login_request.tmpl")), 0, false,
                                         title_default->data(), 0, 0,
-                                        login_url->rep, mac->rep, ip->rep, redirect->rep, gateway->rep, timeout.rep, token->rep, ap->rep, realm.rep, redir->rep,
+                                        login_url->rep, mac->rep, ip->rep, redirect->rep, gateway->rep, timeout.rep, token->rep, ap->rep, realm->rep, redir->rep,
                                         tmp1.rep, tmp2.rep);
       }
    else
@@ -4774,41 +4874,19 @@ static void GET_login_request_by_MAC()
    // $9 -> redir_to
    // -----------------------------------------------------------------------------
 
-   UString timeout, realm;
+   UString timeout;
 
-   getLoginRequest(timeout, realm);
+   getLoginRequest(timeout);
 
-   if (mac->empty())
+   if (checkMAC())
       {
-      USSIPlugIn::setMessagePage(*message_page_template, "Errore", "Errore Autorizzazione - MAC vuoto");
+      *policy = *policy_daily;
 
-      return;
+      user_DownloadRate->replace('0');
+      user_UploadRate->replace('0');
+
+      sendLoginValidate(); // NB: in questo modo l'utente ripassa dal firewall e NoDog lo rimanda da noi (login_validate) con i dati rinnovati...
       }
-
-   if (*mac == *UString::str_without_mac)
-      {
-      if (ip->empty())
-         {
-         USSIPlugIn::setMessagePage(*message_page_template, "Errore", "Errore Autorizzazione - IP vuoto");
-
-         return;
-         }
-
-      *uid         = *ip;
-      *auth_domain = *ip_auth + "_" + realm;
-      }
-   else
-      {
-      *uid         = *mac;
-      *auth_domain = *mac_auth + "_" + realm;
-      }
-
-   *policy = *policy_daily;
-
-   user_DownloadRate->replace('0');
-   user_UploadRate->replace('0');
-
-   sendLoginValidate(); // NB: in questo modo l'utente ripassa dal firewall e NoDog lo rimanda da noi (login_validate) con i dati rinnovati...
 }
 
 static void GET_login_validate()
@@ -4853,11 +4931,15 @@ static void GET_login_validate()
       return;
       }
 
+   if (checkUserID()      == false ||
+       checkTimeRequest() == false)
+      {
+      return;
+      }
+
    brenew = false;
    UVector<UString> vec;
    UString x, signed_data(500U + U_http_info.query_len);
-
-   checkUserID();
 
    if (checkIfUserConnected() &&
        isIP == false)
@@ -4915,6 +4997,8 @@ static void GET_login_validate()
             return;
             }
 
+         U_ASSERT_DIFFERS(*mac, *UString::str_without_mac)
+
          brenew = true;
 
          U_LOGGER("*** RENEW: UID(%v) IP(%v=>%v) MAC(%v=>%v) ADDRESS(%v@%v=>%v@%v) AUTH_DOMAIN(%v) ***", uid->rep,
@@ -4933,12 +5017,12 @@ static void GET_login_validate()
 
    if (user_rec->consume == false)
       {
-         time_counter->snprintf("%v", time_available->rep);
+         time_counter->snprintf("%v",    time_available->rep);
       traffic_counter->snprintf("%v", traffic_available->rep);
       }
    else
       {
-      if (user_rec->_time_done >= user_rec->_time_available)
+      if (user_rec->_time_consumed >= user_rec->_time_available)
          {
          char msg[4096];
 
@@ -4952,7 +5036,7 @@ static void GET_login_validate()
          goto end;
          }
 
-      if (user_rec->_traffic_done >= user_rec->_traffic_available)
+      if (user_rec->_traffic_consumed >= user_rec->_traffic_available)
          {
          char msg[4096];
 
@@ -4966,8 +5050,8 @@ static void GET_login_validate()
          goto end;
          }
 
-         time_counter->setFromNumber32s(user_rec->_time_available    - user_rec->_time_done);
-      traffic_counter->setFromNumber64s(user_rec->_traffic_available - user_rec->_traffic_done);
+         time_counter->setFromNumber32s(user_rec->_time_available    - user_rec->_time_consumed);
+      traffic_counter->setFromNumber64s(user_rec->_traffic_available - user_rec->_traffic_consumed);
       }
 
    // redirect back to the gateway appending a signed ticket that will signal NoDog to unlock the firewall...
@@ -5035,7 +5119,7 @@ static void GET_password()
    USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("password.tmpl")), 0, false,
                          "Modifica password utente",
                          "<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\" />"
-                         "<script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>", 0,
+                         "<script type=\"application/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>", 0,
                          password_url->rep);
 }
 
@@ -5120,7 +5204,7 @@ error:
    U_INTERNAL_ASSERT(*redir)
    U_ASSERT_MINOR(redir->size(), 2048)
 
-   checkUserID();
+   if (checkUserID() == false) return;
 
    if (checkIfUserConnected())
       {
@@ -5221,7 +5305,7 @@ error:
    buffer.snprintf("onload=\"doOnLoad('postlogin?uid=%v','%v')\"", uid_encoded.rep, redir->rep); 
 
    USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("postlogin.tmpl")), 0, false,
-                                     title_default->data(), "<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>", buffer.data(),
+                                     title_default->data(), "<script type=\"application/javascript\" src=\"js/logout_popup.js\"></script>", buffer.data(),
                                      uid->rep, redir->rep, redir->rep);
 }
 
@@ -5273,7 +5357,7 @@ static void GET_registrazione()
    USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("registrazione.tmpl")), 0, false,
                          "Registrazione utente",
                          "<link type=\"text/css\" href=\"css/livevalidation.css\" rel=\"stylesheet\" />"
-                         "<script type=\"text/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>", 0,
+                         "<script type=\"application/javascript\" src=\"js/livevalidation_standalone.compressed.js\"></script>", 0,
                          registrazione_url->rep, tutela_dati.rep);
 }
 
@@ -5326,9 +5410,7 @@ static void GET_reset_policy()
 
       // reset policy
 
-      WiAuthUser::loadPolicy(*policy_daily);
-
-      db_user->callForAllEntry(checkIfUserHasPolicyDaily);
+      db_user->callForAllEntry(checkForUserPolicy);
 
       USSIPlugIn::setAlternativeResponse();
       }
@@ -5830,13 +5912,11 @@ static void POST_LoginRequest(bool idp)
       return;
       }
 
-   UString realm;
+   UHTTP::getFormValue(*realm, U_CONSTANT_TO_PARAM("realm"), 0, 15, 24);
 
-   UHTTP::getFormValue(realm, U_CONSTANT_TO_PARAM("realm"), 0, 15, 24);
+   U_INTERNAL_DUMP("realm = %V", realm->rep)
 
-   U_INTERNAL_DUMP("realm = %V", realm.rep)
-
-   if (realm.empty())
+   if (realm->empty())
       {
       USSIPlugIn::setMessagePage(*message_page_template, "Errore", "Errore Autorizzazione - dominio vuoto");
 
@@ -5858,15 +5938,15 @@ static void POST_LoginRequest(bool idp)
 
    UHTTP::getFormValue(*redir, U_CONSTANT_TO_PARAM("redir_to"), 0, 17, 24);
 
-   if (realm.equal(U_CONSTANT_TO_PARAM("all")) == false)
+   if (realm->equal(U_CONSTANT_TO_PARAM("all")) == false)
       {
       if (fmt_auth_cmd->empty() ||
-          runAuthCmd(password.c_str(), realm.c_str()) == false)
+          runAuthCmd(password.c_str(), realm->c_str()) == false)
          {
          return;
          }
 
-      *policy = *(realm.equal(U_CONSTANT_TO_PARAM("firenzecard"))
+      *policy = *(realm->equal(U_CONSTANT_TO_PARAM("firenzecard"))
                      ? policy_traffic
                      : policy_daily);
 
@@ -5895,7 +5975,7 @@ static void POST_LoginRequest(bool idp)
          // NB: realm is 'all' and we not have a MD5 password so we check credential by AUTH command...
 
          if (fmt_auth_cmd->empty() ||
-             runAuthCmd(password.c_str(), realm.c_str()) == false)
+             runAuthCmd(password.c_str(), realm->c_str()) == false)
             {
             return;
             }
@@ -5905,14 +5985,14 @@ static void POST_LoginRequest(bool idp)
          UString x    = UStringExt::trim(*output);
          uint32_t pos = x.findWhiteSpace();
 
-         if (pos != U_NOT_FOUND) (void) realm.assign(x.data(), pos);
+         if (pos != U_NOT_FOUND) (void) realm->assign(x.data(), pos);
             {
-            pos   = x.size();
-            realm = x;
+            pos    = x.size();
+            *realm = x;
             }
 
          auth_domain->setBuffer(80U);
-         auth_domain->snprintf("AUTH_%v", realm.rep);
+         auth_domain->snprintf("AUTH_%v", realm->rep);
 
          user_DownloadRate->replace('0');
          user_UploadRate->replace('0');
@@ -6008,7 +6088,7 @@ static void POST_LoginRequest(bool idp)
        UClientImage_Base::isAllowed(*vallow_IP_request) == false) // 172.0.0.0/8, ...
       {
       U_LOGGER("*** PARAM IP(%v) FROM AP(%v@%v) IS DIFFERENT FROM CLIENT ADDRESS(%.*s) - REALM(%v) UID(%v) ***",
-                     ip->rep, ap_label->rep, ap_address->rep, U_CLIENT_ADDRESS_TO_TRACE, realm.rep, uid->rep);
+                     ip->rep, ap_label->rep, ap_address->rep, U_CLIENT_ADDRESS_TO_TRACE, realm->rep, uid->rep);
       }
 
    if (UServer_Base::bssl)
@@ -6040,7 +6120,7 @@ static void POST_LoginRequest(bool idp)
                            "waCookieId: %s\n"
                            "objectClass: waSession\n"
                            "waFederatedUserId: %v@%v\n", // Ex: 3343793489@all
-                           hexdump, hexdump, uid->rep, realm.rep);
+                           hexdump, hexdump, uid->rep, realm->rep);
 
             if (askToLDAP(&input, "Errore", "LDAP error", "ldapadd -c %v", ldap_session_param->rep) == 1) setCookie((const char*)hexdump);
             }
@@ -6142,7 +6222,7 @@ static void POST_login_request()
 
       if (bpopup)
          {
-         ptr1 = "<script type=\"text/javascript\" src=\"js/logout_popup.js\"></script>";
+         ptr1 = "<script type=\"application/javascript\" src=\"js/logout_popup.js\"></script>";
          ptr2 = "<br>\n"
                 "<form method=\"post\" action=\"\">\n"
                 "<input type=\"button\" value=\"Close\" onclick=\"CloseItOnClick()\" style=\"display:block;height:3em;width:10em;margin:2em auto;\">\n"
@@ -6321,27 +6401,27 @@ static int dbUserFilter(UStringRep* key, UStringRep* data)
 
    ++ptr;
 
-   U_INTERNAL_DUMP("char (_time_consumed field) = %C", *ptr)
-
-   U_INTERNAL_ASSERT(u__isdigit(*ptr))
-
-   while (u__isdigit(*++ptr)) {}
-
-   U_INTERNAL_ASSERT(u__isblank(*ptr))
-
-   ++ptr;
-
-   U_INTERNAL_DUMP("char (_traffic_consumed field) = %C", *ptr)
-
-   U_INTERNAL_ASSERT(u__isdigit(*ptr))
-
-   while (u__isdigit(*++ptr)) {}
-
-   U_INTERNAL_ASSERT(u__isblank(*ptr))
-
-   ++ptr;
-
    U_INTERNAL_DUMP("char (_time_done field) = %C", *ptr)
+
+   U_INTERNAL_ASSERT(u__isdigit(*ptr))
+
+   while (u__isdigit(*++ptr)) {}
+
+   U_INTERNAL_ASSERT(u__isblank(*ptr))
+
+   ++ptr;
+
+   U_INTERNAL_DUMP("char (_traffic_done field) = %C", *ptr)
+
+   U_INTERNAL_ASSERT(u__isdigit(*ptr))
+
+   while (u__isdigit(*++ptr)) {}
+
+   U_INTERNAL_ASSERT(u__isblank(*ptr))
+
+   ++ptr;
+
+   U_INTERNAL_DUMP("char (_time_consumed field) = %C", *ptr)
 
    U_INTERNAL_ASSERT(u__isdigit(*ptr))
 
@@ -6361,7 +6441,7 @@ static int dbUserFilter(UStringRep* key, UStringRep* data)
 
    ++ptr;
 
-   U_INTERNAL_DUMP("char (_traffic_done field) = %C", *ptr)
+   U_INTERNAL_DUMP("char (_traffic_consumed field) = %C", *ptr)
 
    U_INTERNAL_ASSERT(u__isdigit(*ptr))
 
@@ -6514,6 +6594,7 @@ static void GET_info()
    long time_connected;
    UVector<UString> vec;
    const char* write_to_log;
+   WiAuthAccessPoint* ap_rec;
    UString logout, connected, traffic;
    bool blogout, ask_logout = false, bcheckIfUserConnected, bsetAccessPointAddress, bsetNodogReference;
 
@@ -6569,7 +6650,7 @@ static void GET_info()
             goto next0;
             }
 
-         goto next2;
+         continue;
          }
 
       // Check if change of connection context for user id (mobility between access point)...
@@ -6639,7 +6720,7 @@ next0:      _traffic =   traffic.strtoll();
 
          U_INTERNAL_ASSERT_DIFFERS(index_access_point, U_NOT_FOUND)
 next1:
-         WiAuthAccessPoint* ap_rec = nodog_rec->vec_access_point[index_access_point];
+         ap_rec = nodog_rec->vec_access_point[index_access_point];
 
          ap_rec->traffic_done += _traffic;
 
@@ -6682,7 +6763,6 @@ next1:
          user_rec->writeToLOG(write_to_log);
          }
 
-next2:
       if (ask_logout)
          {
          ask_logout = false;
@@ -6710,6 +6790,101 @@ static void POST_info()
 #endif
 
    GET_info();
+}
+
+static void POST_roaming()
+{
+   U_TRACE_NO_PARAM(5, "::POST_roaming()")
+
+   uint32_t end;
+   UVector<UString> vec;
+   WiAuthAccessPoint* ap_rec;
+   bool ask_logout = false, bcheckIfUserConnected, bsetAccessPointAddress, bsetNodogReference;
+
+   for (int32_t i = 0, n = UHTTP::processForm(); i < n; i += 10)
+      {
+      // --------------------------------------------------------------------------------------------------------------
+      // $1 -> mac
+      // $2 -> ip
+      // $3 -> gateway
+      // $4 -> ap (with localization => '@')
+      // $5 -> => UID <=
+      // -------------------------------------------------------------------------------------------------------------
+      // /roaming?Mac=98%3A0c%3A82%3A76%3A3b%3A39&ip=172.16.1.8&gateway=172.16.1.254%3A5280&ap=ap%4010.8.0.1&User=1212
+      // -------------------------------------------------------------------------------------------------------------
+
+      end = i+10;
+
+      if (end > (uint32_t)n) end = n;
+
+      UHTTP::getFormValue(*mac, U_CONSTANT_TO_PARAM("Mac"),   i, i+1,  end);
+      UHTTP::getFormValue(*ip,  U_CONSTANT_TO_PARAM("ip"),    i, i+3,  end);
+      UHTTP::getFormValue(*ap,  U_CONSTANT_TO_PARAM("ap"),    i, i+7,  end);
+      UHTTP::getFormValue(*uid, U_CONSTANT_TO_PARAM("User"),  i, i+9,  end);
+
+         ap_label->clear();
+       ap_address->clear();
+      ap_hostname->clear();
+
+      bcheckIfUserConnected  = checkIfUserConnected(),
+      bsetAccessPointAddress = (*ap && setAccessPointAddress()),
+      bsetNodogReference     = (user_exist && bsetAccessPointAddress ? user_rec->setNodogReference() : false);
+
+      if (bsetNodogReference     == false ||
+          bcheckIfUserConnected  == false ||
+          bsetAccessPointAddress == false)
+         {
+         U_LOGGER("*** ROAMING(%b,%b,%b): UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***",
+                     bcheckIfUserConnected, bsetAccessPointAddress, bsetNodogReference, uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
+
+         if (bsetAccessPointAddress)
+            {
+            ask_logout = true;
+
+         // goto next;
+            }
+
+         continue;
+         }
+
+      WiAuthVirtualAccessPoint::setIndexAccessPoint();
+
+      if (index_access_point == U_NOT_FOUND)
+         {
+         ask_logout = true;
+
+      // goto next;
+         }
+
+      U_LOGGER("*** ROAMING: UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***", uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
+
+      continue;
+
+      ap_rec = nodog_rec->vec_access_point[index_access_point];
+
+      brenew  = true;
+      *policy = (ap_rec->noconsume ? *policy_flat
+                                   : *policy_daily);
+
+      user_rec->setRecord();
+
+//next:
+      if (ask_logout)
+         {
+         ask_logout = false;
+
+         if (user_rec->nodog)
+            {
+            vec.push_back(user_rec->nodog);
+            vec.push_back(user_rec->_ip);
+            vec.push_back(user_rec->_mac);
+            }
+         }
+      }
+
+   USSIPlugIn::setAlternativeResponse();
+
+   if (vec.empty() == false) askNodogToLogoutUser(vec, false);
 }
 
 static bool status_nodog_and_user_resync;
@@ -6815,7 +6990,8 @@ static int setStatusNodogAndUser(UStringRep* key, UStringRep* data)
                {
                bchange = true;
 
-               U_LOGGER("*** ON AP(%v@%v) THE NUMBER OF USER CONNECTED IS NOT ALIGNED (%u=>%u) ***", plabel, ap_address->rep, ap_rec->num_users_connected, num_users_connected_on_nodog);
+               U_LOGGER("*** ON AP(%v@%v) THE NUMBER OF USER CONNECTED IS NOT ALIGNED (%u=>%u) ***",
+                           plabel, ap_address->rep, ap_rec->num_users_connected, num_users_connected_on_nodog);
 
                ap_rec->num_users_connected = num_users_connected_on_nodog;
                }
@@ -7083,7 +7259,8 @@ static int checkStatusUserOnNodog(UStringRep* key, UStringRep* data)
             if (user_rec->connected == false &&
                 vuid->find(*uid) != U_NOT_FOUND)
                {
-               U_LOGGER("*** USER NOT ALIGNED: UID(%v) IP(%v) MAC(%v) AP(%v) POLICY(%v) ***", uid->rep, user_rec->_ip.rep, user_rec->_mac.rep, user_rec->nodog.rep, user_rec->_policy.rep);
+               U_LOGGER("*** USER NOT ALIGNED: UID(%v) IP(%v) MAC(%v) AP(%v) POLICY(%v) ***",
+                           uid->rep, user_rec->_ip.rep, user_rec->_mac.rep, user_rec->nodog.rep, user_rec->_policy.rep);
 
                if (user_rec->last_modified < start_op) blogout = true;
                }

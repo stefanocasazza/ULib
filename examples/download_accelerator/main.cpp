@@ -57,7 +57,6 @@ typedef struct {
 } HostData;
 
 static HostData* place;
-static struct timeval now;
 
 /* Download progress - "Thermometer" (bar) progress
    The progress bar should look like this:
@@ -288,12 +287,12 @@ no_eta:
       {
       U_TRACE(5, "ProgressBar::progress()")
 
-      (void) gettimeofday(&now, 0);
+      u_gettimenow();
 
-      dltime         = (now.tv_sec  -   time.tv_sec)  * 1000 +
-                       (now.tv_usec -   time.tv_usec) / 1000;
-      dl_total_time  = (now.tv_sec  - _start.tv_sec)  * 1000 +
-                       (now.tv_usec - _start.tv_usec) / 1000;
+      dltime         = (u_now->tv_sec  -   time.tv_sec)  * 1000 +
+                       (u_now->tv_usec -   time.tv_usec) / 1000;
+      dl_total_time  = (u_now->tv_sec  - _start.tv_sec)  * 1000 +
+                       (u_now->tv_usec - _start.tv_usec) / 1000;
 
       U_INTERNAL_DUMP("dltime = %ld dl_total_time = %ld", dltime, dl_total_time)
       }
@@ -329,7 +328,7 @@ no_eta:
 
       progress();
 
-      time = now;
+      time = *u_now;
 
       display(); /* Inform the progress gauge of newly received bytes */
 
@@ -461,8 +460,8 @@ public:
 
       delta_time = ((host->send_time.tv_sec  != 0 ||
                      host->send_time.tv_usec != 0)
-                        ? (now.tv_sec  - host->send_time.tv_sec)  * 1000 +
-                          (now.tv_usec - host->send_time.tv_usec) / 1000
+                        ? (u_now->tv_sec  - host->send_time.tv_sec)  * 1000 +
+                          (u_now->tv_usec - host->send_time.tv_usec) / 1000
                         : 0);
 
       U_INTERNAL_DUMP("delta_time = %ld", delta_time)
@@ -638,7 +637,7 @@ public:
 
       /* keep going until most of the hosts have been finished */
 
-      (void) gettimeofday(&now, 0);
+      u_gettimenow();
 
       while (must_continue &&
              must_continue >= numhosts/2)
@@ -689,7 +688,7 @@ public:
                   host->num_out++;
                   host->retries++;
 
-                  host->send_time = now;
+                  host->send_time = *u_now;
 
                   if (sendProbe() == false) U_RETURN(false);
 
@@ -716,7 +715,7 @@ public:
 
          code = waitForReply() - 1; /* ICMP error code returned */
 
-         (void) gettimeofday(&now, 0);
+         u_gettimenow();
 
          if (u_is_tty) (void) UFile::write(STDOUT_FILENO, U_CONSTANT_TO_PARAM(".")); 
 

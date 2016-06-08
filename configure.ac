@@ -930,7 +930,7 @@ AC_FUNC_CLOSEDIR_VOID
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     AC_CHECK_FUNC($func,[
         found=$func
@@ -957,6 +957,9 @@ for func in accept4 atexit daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch 
         ;;
     atexit)
         AC_DEFINE(HAVE_ATEXIT, [1], [has atexit])
+        ;;
+    clock_gettime)
+		  AC_DEFINE(HAVE_CLOCK_GETTIME, [1], [has clock_gettime])
         ;;
     daemon)
 		  AM_CONDITIONAL(DAEMON, true)
@@ -2235,8 +2238,8 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		;;
 		6.1.0|*)
 			 MAYBE_FLAGS_MODERN="-Wno-unused-result -Wshadow -Wsuggest-attribute=pure -Wsuggest-attribute=noreturn \
-									  -Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
-									  -Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
+									   -Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
+									   -Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
 		CXX_MAYBE_FLAGS_MODERN="-Wterminate -Wlto-type-mismatch -Wsubobject-linkage -Wplacement-new -Woverride-init-side-effects \
 										-Wvirtual-inheritance -Wnamespaces" # -Wtemplates -Wmultiple-inheritance
 		;;
@@ -2251,7 +2254,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
 		##			 common subexpression elimination pass by adding -fno-gcse to the command line
 		## ----------------------------------------------------------------------------------------------------------------------------------
-		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -fno-math-errno -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
+		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
 
 		if test "$use_distcc" != "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -mtune=native" # NB: distcc don't work with this...

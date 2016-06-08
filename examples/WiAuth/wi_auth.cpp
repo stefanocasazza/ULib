@@ -100,6 +100,7 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
       POST_ENTRY(login_request_IdP),
       POST_ENTRY(password),
       POST_ENTRY(registrazione),
+      POST_ENTRY(roaming),
       POST_ENTRY(tavarnelle),
       POST_ENTRY(uploader)
    };

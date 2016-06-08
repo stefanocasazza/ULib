@@ -62,25 +62,38 @@ bool UMongoDBClient::selectCollection(const char* db, const char* name_collectio
    U_RETURN(false);
 }
 
-bool UMongoDBClient::insert(bson_t* doc)
+void UMongoDBClient::readFromCursor()
 {
-   U_TRACE(0, "UMongoDBClient::insert(%p)", doc)
+   U_TRACE_NO_PARAM(0, "UMongoDBClient::readFromCursor()")
 
-   U_INTERNAL_ASSERT_POINTER(client)
-   U_INTERNAL_ASSERT_POINTER(collection)
-
+   char* str;
+   size_t length;
+   const bson_t* doc;
    bson_error_t error;
 
-   if (U_SYSCALL(mongoc_collection_insert, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_INSERT_NONE, doc, 0, &error)) U_RETURN(true);
+   vitem.clear();
 
-   U_WARNING("mongoc_collection_insert(): %", error.message);
+   while (U_SYSCALL(mongoc_cursor_next, "%p,%p", cursor, &doc))
+      {
+      str = U_SYSCALL(bson_as_json, "%p,%p", doc, &length);
 
-   U_RETURN(false);
+      UString x((const char*)str, length);
+
+      x.rep->_capacity = U_TO_FREE;
+
+      U_INTERNAL_DUMP("x = %V", x.rep);
+
+      vitem.push(x);
+      }
+
+   if (U_SYSCALL(mongoc_cursor_error, "%p,%p", cursor, &error)) U_WARNING("mongoc_cursor_error(): %S", error.message);
+
+   U_SYSCALL_VOID(mongoc_cursor_destroy, "%p", cursor);
 }
 
-bool UMongoDBClient::find(bson_t* query, bson_t* projection)
+bool UMongoDBClient::find(bson_t* query, bson_t* projection, mongoc_query_flags_t flags, mongoc_read_prefs_t* read_prefs)
 {
-   U_TRACE(0, "UMongoDBClient::find(%p,%p)", query, projection)
+   U_TRACE(0, "UMongoDBClient::find(%p,%p,%d,%p)", query, projection, flags, read_prefs)
 
    U_INTERNAL_ASSERT_POINTER(client)
    U_INTERNAL_ASSERT_POINTER(collection)
@@ -98,41 +111,11 @@ bool UMongoDBClient::find(bson_t* query, bson_t* projection)
     * read_prefs  A mongoc_read_prefs_t or NULL for default read preferences
     */
 
-   cursor = (mongoc_cursor_t*) U_SYSCALL(mongoc_collection_find, "%p,%d,%u,%u,%u,%p,%p,%p", collection, MONGOC_QUERY_NONE, 0, 0, 0, query, projection, 0);
+   cursor = (mongoc_cursor_t*) U_SYSCALL(mongoc_collection_find, "%p,%d,%u,%u,%u,%p,%p,%p", collection, flags, 0, 0, 0, query, projection, read_prefs);
 
    if (cursor)
       {
-      char* str;
-      size_t length;
-      const bson_t* doc;
-      bson_error_t error;
-
-#  ifdef DEBUG
-      str = bson_as_json(query, &length);
-
-      U_INTERNAL_DUMP("query = %.*S", length, str);
-
-      bson_free(str);
-#  endif
-
-      vitem.clear();
-
-      while (U_SYSCALL(mongoc_cursor_next, "%p,%p", cursor, &doc))
-         {
-         str = U_SYSCALL(bson_as_json, "%p,%p", doc, &length);
-
-         UString x((const char*)str, length);
-
-         x.rep->_capacity = U_TO_FREE;
-
-         U_INTERNAL_DUMP("x = %V", x.rep);
-
-         vitem.push(x);
-         }
-
-      if (U_SYSCALL(mongoc_cursor_error, "%p,%p", cursor, &error)) U_WARNING("mongoc_cursor_error(): %S", error.message);
-
-      U_SYSCALL_VOID(mongoc_cursor_destroy, "%p", cursor);
+      readFromCursor();
 
       U_RETURN(true);
       }
@@ -149,41 +132,11 @@ bool UMongoDBClient::findAggregation(bson_t* pipeline, bson_t* options, mongoc_q
    U_INTERNAL_ASSERT_POINTER(client)
    U_INTERNAL_ASSERT_POINTER(collection)
 
-   cursor = (mongoc_cursor_t*) U_SYSCALL(mongoc_collection_aggregate, "%p,%d,%u,%u,%u,%p,%p,%p", collection, flags, pipeline, options, read_prefs);
+   cursor = (mongoc_cursor_t*) U_SYSCALL(mongoc_collection_aggregate, "%p,%d,%p,%p,%p", collection, flags, pipeline, options, read_prefs);
 
    if (cursor)
       {
-      char* str;
-      size_t length;
-      const bson_t* doc;
-      bson_error_t error;
-
-#  ifdef DEBUG
-      str = bson_as_json(pipeline, &length);
-
-      U_INTERNAL_DUMP("pipeline = %.*S", length, str);
-
-      bson_free(str);
-#  endif
-
-      vitem.clear();
-
-      while (U_SYSCALL(mongoc_cursor_next, "%p,%p", cursor, &doc))
-         {
-         str = U_SYSCALL(bson_as_json, "%p,%p", doc, &length);
-
-         UString x((const char*)str, length);
-
-         x.rep->_capacity = U_TO_FREE;
-
-         U_INTERNAL_DUMP("x = %V", x.rep);
-
-         vitem.push(x);
-         }
-
-      if (U_SYSCALL(mongoc_cursor_error, "%p,%p", cursor, &error)) U_WARNING("mongoc_cursor_error(): %S", error.message);
-
-      U_SYSCALL_VOID(mongoc_cursor_destroy, "%p", cursor);
+      readFromCursor();
 
       U_RETURN(true);
       }
@@ -201,11 +154,7 @@ bool UMongoDBClient::findOne(const char* json, uint32_t len)
    bson_error_t error;
    bson_t* bson = (bson_t*) U_SYSCALL(bson_new_from_json, "%p,%u,%p", (const uint8_t*)json, len, &error);
 
-   if (bson == 0)
-      {
-      U_WARNING("bson_new_from_json(): %S", error.message);
-      }
-   else
+   if (bson)
       {
       bool result = find(bson, 0);
 
@@ -214,7 +163,28 @@ bool UMongoDBClient::findOne(const char* json, uint32_t len)
       U_RETURN(result);
       }
 
+   U_WARNING("bson_new_from_json(): %S", error.message);
+
    U_RETURN(false);
+}
+
+bool UMongoDBClient::insert(bson_t* doc)
+{
+   U_TRACE(0, "UMongoDBClient::insert(%p)", doc)
+
+   U_INTERNAL_ASSERT_POINTER(client)
+   U_INTERNAL_ASSERT_POINTER(collection)
+
+   bson_error_t error;
+
+   if (U_SYSCALL(mongoc_collection_insert, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_INSERT_NONE, doc, 0, &error) == false)
+      {
+      U_WARNING("mongoc_collection_insert(): %", error.message);
+
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
 }
 
 bool UMongoDBClient::update(bson_t* query, bson_t* _update)
@@ -266,11 +236,7 @@ bool UMongoDBClient::findAndModify(bson_t* query, bson_t* _update)
    bson_t reply;
    bson_error_t error;
 
-   if (U_SYSCALL(mongoc_collection_find_and_modify, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, query, 0, _update, 0, false, false, true, &reply, &error) == false)
-      {
-      U_WARNING("mongoc_collection_find_and_modify(): %S", error.message);
-      }
-   else
+   if (U_SYSCALL(mongoc_collection_find_and_modify, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, query, 0, _update, 0, false, false, true, &reply, &error))
       {
       UString x;
       size_t length;
@@ -287,6 +253,8 @@ bool UMongoDBClient::findAndModify(bson_t* query, bson_t* _update)
 
       U_RETURN(true);
       }
+
+   U_WARNING("mongoc_collection_find_and_modify(): %S", error.message);
 
    U_RETURN(false);
 }

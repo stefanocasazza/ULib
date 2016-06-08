@@ -418,7 +418,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTimeDate::setCurrentDate()")
 
-      U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
       fromTime(u_now->tv_sec);
       }
@@ -428,6 +428,24 @@ public:
       U_TRACE(0, "UTimeDate::setCurrentDate(%p)", &date)
 
       date.setCurrentDate();
+      }
+
+   // This can be used for comments and other from of communication to tell the time ago instead of the exact time which might not be correct to some one in another time zone
+
+   UString ago(uint32_t granularity = 0)
+      {
+      U_TRACE(0, "UTimeDate::ago(%u)", granularity)
+
+      return ago(getSecond(), granularity);
+      }
+
+   static UString ago(time_t tm, uint32_t granularity = 0)
+      {
+      U_TRACE(0, "UTimeDate::ago(%ld,%u)", tm, granularity)
+
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
+
+      return _ago(tm, granularity);
       }
 
    // OPERATOR
@@ -530,9 +548,12 @@ public:
 protected:
    int julian, _day, _month, _year;
 
+   static const char* periods[8];
+   static const uint32_t lengths[8];
    static const short monthDays[13];
 
           void fromJulian(int julian);
    static int    toJulian(int day, int month, int year);
+   static UString _ago(time_t tm, uint32_t granularity);
 };
 #endif

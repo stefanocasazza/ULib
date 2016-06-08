@@ -139,7 +139,7 @@ protected:
 
       U_CHECK_MEMORY
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &xtime, 0);
+      u_gettimeofday(&xtime);
 
       U_INTERNAL_DUMP("now = { %ld %6ld } xtime = { %ld %6ld }", xtime.tv_sec, xtime.tv_usec, xtime.tv_sec + tv_sec, xtime.tv_usec + tv_usec)
 
@@ -166,7 +166,7 @@ protected:
 
       UTimeVal::setMilliSecond(timeoutMS);
 
-      (void) U_SYSCALL(gettimeofday, "%p,%p", &timeout1, 0);
+      u_gettimeofday(&timeout1);
 
       updateTimeToExpire();
       }
@@ -223,7 +223,7 @@ protected:
       timeout1.tv_sec  = ptimeout->xtime.tv_sec  - timeout1.tv_sec;
       timeout1.tv_usec = ptimeout->xtime.tv_usec - timeout1.tv_usec;
 
-      UTimeVal::adjust(&(timeout1.tv_sec), &(timeout1.tv_usec));
+      u_adjtime(&(timeout1.tv_sec), &(timeout1.tv_usec));
 
       U_INTERNAL_DUMP("timeout1 = { %ld %9ld }", timeout1.tv_sec, timeout1.tv_usec)
 
@@ -239,7 +239,7 @@ protected:
       timerval->tv_sec  = xtime.tv_sec  - timeout1.tv_sec;
       timerval->tv_usec = xtime.tv_usec - timeout1.tv_usec;
 
-      UTimeVal::adjust(&(timerval->tv_sec), &(timerval->tv_usec));
+      u_adjtime(&(timerval->tv_sec), &(timerval->tv_usec));
 
       U_INTERNAL_DUMP("timerval = { %ld %9ld }", timerval->tv_sec, timerval->tv_usec)
 

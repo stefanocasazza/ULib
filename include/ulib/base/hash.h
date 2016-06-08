@@ -14,6 +14,9 @@
 #ifndef ULIB_BASE_HASH_H
 #define ULIB_BASE_HASH_H 1
 
+#include <ulib/base/xxhash/xxhash.h>
+
+#undef GCC_VERSION
 #include <ulib/base/base.h>
 
 #define U_hash_size(n) (1U<<(n))
@@ -75,7 +78,8 @@ U_EXPORT uint32_t u_hash(unsigned char* restrict t, uint32_t tlen) __pure;
 # else
 U_EXPORT uint32_t murmurhash3_x86_64(unsigned char* restrict t, uint32_t tlen) __pure;
 
-static inline uint32_t u_hash(unsigned char* restrict t, uint32_t tlen) { return murmurhash3_x86_64(t, tlen); }
+static inline uint32_t u_hash(    unsigned char* restrict t, uint32_t tlen) { return (uint32_t)XXH64(t, tlen, u_seed_hash); }
+static inline uint32_t u_hash_old(unsigned char* restrict t, uint32_t tlen) { return murmurhash3_x86_64(t, tlen); }
 # endif
 #endif
 

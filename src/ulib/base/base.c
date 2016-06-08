@@ -126,6 +126,12 @@ struct tm u_strftime_tm;
 struct timeval u_timeval;
 struct timeval* u_now = &u_timeval;
 
+/*
+#ifdef HAVE_CLOCK_GETTIME
+struct timeval u_start_clock;
+#endif
+*/
+
 const char* u_months[12]     = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
 const char* u_months_it[12]  = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
 
@@ -491,7 +497,7 @@ bool u_setStartTime(void)
 
    t = mktime(&tm); /* NB: The timelocal() function is equivalent to the POSIX standard function mktime(3) */
 
-   U_INTERNAL_PRINT("lnow = %ld t = %ld", lnow, t)
+   U_INTERNAL_PRINT("lnow = %ld t = %ld u_now = { %lu, %lu }", lnow, t, u_now->tv_sec, u_now->tv_usec)
 
    if (lnow >= t ||
        (t - lnow) < U_ONE_DAY_IN_SECOND)
@@ -514,6 +520,21 @@ bool u_setStartTime(void)
 #  ifndef TM_HAVE_TM_GMTOFF
       u_daylight = (tm.tm_isdst != 0);
 #  endif
+
+/*
+#  ifdef HAVE_CLOCK_GETTIME
+      {
+      struct timespec ts;
+
+      (void) clock_gettime(CLOCK_MONOTONIC_COARSE, &ts);
+
+      u_start_clock.tv_sec  = u_now->tv_sec  -  ts.tv_sec;
+      u_start_clock.tv_usec = u_now->tv_usec - (ts.tv_nsec / 1000L);
+
+      U_INTERNAL_PRINT("u_now = { %lu, %lu } u_start_clock = { %ld, %ld }", u_now->tv_sec, u_now->tv_usec, u_start_clock.tv_sec, u_start_clock.tv_usec)
+      }
+#  endif
+*/
 
       U_DEBUG("System date update: u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %d tzname[2] = { %s, %s }",
                                    u_now_adjust,     timezone,      daylight,     u_daylight,     tzname[0], tzname[1])
@@ -1950,7 +1971,7 @@ case_D: /* extension: print date and time in various format */
       if ((flags & ALT) != 0) t = VA_ARG(time_t); /* flag '#' => var-argument */
       else
          {
-         U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+         U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
                          t  = u_now->tv_sec;
          if (width != 8) t += u_now_adjust;

@@ -390,10 +390,13 @@ U_EXPORT int            setitimer(int which, const struct itimerval* value, stru
 
 /** implemented in MINGW Runtime
  *
- * U_EXPORT int         gettimeofday(struct timeval* tv, void* tz);
- * U_EXPORT int         truncate(const char* fname, off_t distance);
- * U_EXPORT const char* inet_ntop(int af, const void* src, char* dst, size_t size);
+ * U_EXPORT int gettimeofday(struct timeval* tv, void* tz);
+ * U_EXPORT int truncate(const char* fname, off_t distance);
  */
+
+#if _WIN32_WINNT < 0x0600
+   U_EXPORT const CHAR* inet_ntop(INT, PVOID, LPSTR, size_t);
+#endif
 
 U_EXPORT int             raise_w32(int nsig);
 U_EXPORT int            unlink_w32(const char* path);

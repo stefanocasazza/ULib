@@ -209,7 +209,7 @@ void ULog::initDate()
    iov_vec[2].iov_base = (caddr_t)u_buffer;
    iov_vec[4].iov_base = (caddr_t)U_LF;
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+   u_gettimenow();
 
    tv_sec_old_1 =
    tv_sec_old_2 =
@@ -319,7 +319,7 @@ void ULog::updateDate1()
    {
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+   u_gettimenow();
 
    if (tv_sec_old_1 != u_now->tv_sec)
       {
@@ -391,7 +391,7 @@ void ULog::updateDate2()
    {
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+   u_gettimenow();
 
    if (tv_sec_old_2 != u_now->tv_sec)
       {
@@ -464,7 +464,7 @@ void ULog::updateDate3()
    {
    U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", u_now, 0);
+   u_gettimenow();
 
    if (tv_sec_old_3 != u_now->tv_sec)
       {

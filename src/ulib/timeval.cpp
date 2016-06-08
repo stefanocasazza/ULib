@@ -21,32 +21,7 @@ extern "C" { int nanosleep (const struct timespec* requested_time,
                                   struct timespec* remaining); }
 #endif
 
-#if (defined(U_LINUX) || defined(_MSWINDOWS_)) && !defined(__suseconds_t_defined)
-typedef long suseconds_t;
-#endif
-
 struct timeval UTimeVal::time_stop;
-
-void UTimeVal::adjust(void* tv_sec, void* tv_usec)
-{
-   U_TRACE(0, "UTimeVal::adjust(%p, %p)", tv_sec, tv_usec)
-
-   long riporto = *((suseconds_t*)tv_usec) / U_SECOND;
-
-   // NB: riporto can be also negativ...
-
-   if (riporto)
-      {
-      *((long*)tv_sec)         += riporto;
-      *((suseconds_t*)tv_usec) %= U_SECOND;
-      }
-
-   U_INTERNAL_ASSERT_MINOR(*((suseconds_t*)tv_usec), U_SECOND)
-
-   if (*((suseconds_t*)tv_usec) < 0) { *((suseconds_t*)tv_usec) += U_SECOND; --(*((long*)tv_sec)); }
-
-   U_INTERNAL_ASSERT_RANGE(0, *((suseconds_t*)tv_usec), U_SECOND)
-}
 
 void UTimeVal::nanosleep()
 {

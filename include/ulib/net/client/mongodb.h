@@ -122,8 +122,7 @@ public:
 
    bool findOne(const char* json, uint32_t len);
 
-   bool find(bson_t* query, bson_t* projection);
-
+   bool find(bson_t* query, bson_t* projection = 0,            mongoc_query_flags_t flags = MONGOC_QUERY_NONE, mongoc_read_prefs_t* read_prefs = 0);
    bool findAggregation(bson_t* pipeline, bson_t* options = 0, mongoc_query_flags_t flags = MONGOC_QUERY_NONE, mongoc_read_prefs_t* read_prefs = 0); // Execute an 'aggregation' query
 
    bool        update(bson_t* query, bson_t* update);
@@ -149,6 +148,8 @@ protected:
    mongoc_collection_t* collection;
 #endif
 
+   void readFromCursor();
+   
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS
    UMongoDBClient(const UMongoDBClient&) = delete;

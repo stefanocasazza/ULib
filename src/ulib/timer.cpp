@@ -100,7 +100,7 @@ void UTimer::callHandlerTimeout()
 
    int result = item->alarm->handlerTime();
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", &UEventTime::timeout1, 0);
+   u_gettimeofday(&UEventTime::timeout1);
 
    U_INTERNAL_DUMP("UEventTime::timeout1 = { %ld %6ld } first = %p", UEventTime::timeout1.tv_sec, UEventTime::timeout1.tv_usec, first)
 
@@ -126,7 +126,7 @@ void UTimer::run()
 {
    U_TRACE_NO_PARAM(1, "UTimer::run()")
 
-   (void) U_SYSCALL(gettimeofday, "%p,%p", &UEventTime::timeout1, 0);
+   u_gettimeofday(&UEventTime::timeout1);
 
    U_INTERNAL_DUMP("UEventTime::timeout1 = { %ld %6ld } first = %p", UEventTime::timeout1.tv_sec, UEventTime::timeout1.tv_usec, first)
 

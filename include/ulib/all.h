@@ -1,5 +1,6 @@
 // all.h
 
+#include <ulib/base/hash.h>
 #include <ulib/log.h>
 #include <ulib/cache.h>
 #include <ulib/timer.h>

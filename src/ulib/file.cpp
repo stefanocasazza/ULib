@@ -1689,7 +1689,10 @@ const char* UFile::getMimeType(const char* suffix, int* pmime_index)
    if (suffix) content_type = u_get_mimetype(suffix, pmime_index);
    else
       {
-      suffix       = u_getsuffix(path_relativ, path_relativ_len);
+      suffix = u_getsuffix(path_relativ, path_relativ_len);
+
+      U_INTERNAL_DUMP("suffix = %.*S", suffix ? (path_relativ_len-(suffix-path_relativ)-1) : 0, suffix+1)
+
       content_type = (suffix ? u_get_mimetype(suffix+1, pmime_index) : 0);
       }
 

@@ -18,11 +18,11 @@
 
 struct U_EXPORT UCrono {
 
-   void start() { (void) gettimeofday(&t0, 0); }
+   void start() { u_gettimeofday(&t0); }
 
    void stop()
       {
-      (void) gettimeofday(&t1, 0);
+      u_gettimeofday(&t1);
 
       t1.tv_sec  -= t0.tv_sec;
       t1.tv_usec -= t0.tv_usec;

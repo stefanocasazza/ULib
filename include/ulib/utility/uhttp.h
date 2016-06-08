@@ -960,17 +960,7 @@ public:
       U_RETURN(false);
       }
 
-   static void checkFileForCache()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP::checkFileForCache()")
-
-      U_INTERNAL_ASSERT_POINTER(pathname)
-
-      file->setPath(*pathname);
-
-      if (file->stat()) manageDataForCache(); // NB: file->stat() get also the size of the file...
-      }
-
+   static void checkFileForCache();
    static void renewFileDataInCache();
    static void checkFileInCache(const char* path, uint32_t len);
 

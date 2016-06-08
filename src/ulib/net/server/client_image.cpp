@@ -678,7 +678,7 @@ void UClientImage_Base::endRequest()
    U_TRACE_NO_PARAM(0, "UClientImage_Base::endRequest()")
 
 #ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-   U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 #else
    time_run = chronometer->stop();
 
@@ -978,7 +978,7 @@ bool UClientImage_Base::genericRead()
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
 #ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-   U_gettimeofday; // NB: optimization if it is enough a time resolution of one second...
+   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 #else
    bool advise_for_parallelization = startRequest();
 #endif

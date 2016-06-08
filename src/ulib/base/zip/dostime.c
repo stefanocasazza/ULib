@@ -24,7 +24,7 @@ time_t dos2unixtime(unsigned long dostime)
 {
    struct tm ltime;
 
-   U_gettimeofday; /* NB: optimization if it is enough a time resolution of one second... */
+   U_gettimeofday /* NB: optimization if it is enough a time resolution of one second... */
 
    /* Call localtime to initialize timezone in TIME */
    ltime = *localtime(&(u_now->tv_sec));

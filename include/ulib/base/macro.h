@@ -116,7 +116,7 @@
 #  define U_INTERNAL_ASSERT_POINTER_MSG(ptr,info)
 #  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info)
 
-#  define U_DEBUG(fmt,args...)
+#  define U_DEBUG(fmt,args...) {}
 #endif
 
 /* Manage message info */
@@ -207,7 +207,7 @@ enum AffermationType {
 #define U_gif     'g' /* image/gif */
 #define U_html    'h' /* text/html */
 #define U_ico     'i' /* image/x-icon */
-#define U_js      'j' /* text/javascript */
+#define U_js      'j' /* application/javascript */
 #define U_png     'p' /* image/png */
 #define U_txt     't' /* text/plain */
 
@@ -465,9 +465,9 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 /* Optimization if it is enough a resolution of one second */
 
 #ifdef ENABLE_THREAD
-#  define U_gettimeofday  { if (u_pthread_time == 0) (void) gettimeofday(u_now, 0); }
+#  define U_gettimeofday { if (u_pthread_time == 0) u_now->tv_sec = time(0); }
 #else
-#  define U_gettimeofday                             (void) gettimeofday(u_now, 0);
+#  define U_gettimeofday                            u_now->tv_sec = time(0);
 #endif
 
 /* To print size of class */

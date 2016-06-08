@@ -13,8 +13,6 @@
 
 #include <ulib/thread.h>
 
-#include <time.h>
-
 #ifndef _MSWINDOWS_
 #  ifndef HAVE_PTHREAD_CANCEL
 #     ifdef SIGCANCEL
@@ -24,6 +22,8 @@
 #     endif
 #  endif
 #endif
+
+#include <time.h>
 
 #ifndef HAVE_NANOSLEEP
 extern "C" { int nanosleep (const struct timespec* requested_time,
@@ -148,7 +148,34 @@ void UThread::yield()
 #endif
 }
 
-#ifndef _MSWINDOWS_
+#ifdef _MSWINDOWS_
+void UThread::wait(CRITICAL_SECTION* pmutex, CONDITION_VARIABLE* pcond)
+{
+   U_TRACE(0, "UThread::wait(%p,%p)", pmutex, pcond)
+
+#if _WIN32_WINNT >= 0x0600
+   SleepConditionVariableCS(pcond, pmutex, INFINITE); // block until we are signalled from other...
+#endif
+}
+
+void UThread::signal(CONDITION_VARIABLE* pcond)
+{
+   U_TRACE(0, "UThread::signal(%p)", pcond)
+
+#if _WIN32_WINNT >= 0x0600
+   WakeConditionVariable(pcond); // signal to waiting thread...
+#endif
+}
+
+void UThread::signalAll(CONDITION_VARIABLE* pcond)
+{
+   U_TRACE(0, "UThread::signalAll(%p)", pcond)
+
+#if _WIN32_WINNT >= 0x0600
+   WakeAllConditionVariable(pcond); // signal to waiting thread...
+#endif
+}
+#else
 void UThread::sigInstall(int signo)
 {
    U_TRACE(1, "UThread::sigInstall(%d)", signo)
@@ -546,12 +573,14 @@ UThreadPool::UThreadPool(uint32_t size) : UThread(PTHREAD_CREATE_DETACHED), pool
 
    active = true;
 
-#ifdef _MSWINDOWS_
+#if defined(_MSWINDOWS_)
    // Task queue mutex
    InitializeCriticalSection(&tasks_mutex);
+# if _WIN32_WINNT >= 0x0600
    // Condition variable
    InitializeConditionVariable(&condition);
    InitializeConditionVariable(&condition_task_finished);
+# endif
    // This starts a free standing procedure as a thread.
    // That thread instantiates the class and calls its main method
    void* NO_SECURITY_ATTRIBUTES = NULL;

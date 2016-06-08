@@ -193,6 +193,7 @@ protected:
    static UVector<UString>* varp_cache;
    static UVector<UString>* vinfo_data;
    static UVector<UIPAddress*>** vaddr;
+   static UVector<UString>* vroaming_data;
    static UHttpClient<UTCPSocket>* client;
    static UHashMap<UModNoCatPeer*>* peers;
    static UVector<UString>* vLoginValidate;
@@ -224,8 +225,9 @@ protected:
    static void checkSystem();
    static void checkOldPeer();
    static void creatNewPeer();
-   static void setPeerLabel();
+   static bool setPeerLabel();
    static bool checkFirewall();
+   static void addPeerRoaming();
    static bool preallocatePeersFault();
    static bool getPeer(uint32_t i) __pure;
    static void addPeerInfo(int disconnected);
@@ -233,6 +235,7 @@ protected:
    static bool creatNewPeer(uint32_t index_AUTH);
    static void sendInfoData(uint32_t index_AUTH);
    static bool getPeerFromMAC(const UString& mac);
+   static void sendRoamingData(uint32_t index_AUTH);
    static bool checkAuthMessage(const UString& msg);
    static void setStatusContent(const UString& label);
    static void deny(int disconnected, bool bcheck_expire);
@@ -244,6 +247,7 @@ protected:
    static void setHTTPResponse(const UString& content, int mime_index);
    static void permit(const UString& UserDownloadRate, const UString& UserUploadRate);
    static void sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UString* poutput);
+   static void sendData(uint32_t index_AUTH, const UString& data, const char* service, uint32_t service_len);
 
    static uint32_t checkFirewall(UString& output);
    static uint32_t getIndexAUTH(const char* ip_address) __pure;
@@ -304,16 +308,16 @@ protected:
       U_peer_status = type;
       }
 
-   static UString getUrlForSendMsgToPortal(uint32_t index_AUTH, const char* msg, uint32_t msg_len)
+   static UString getUrlForSendMsgToPortal(uint32_t index_AUTH, const char* service, uint32_t service_len)
       {
-      U_TRACE(0, "UNoCatPlugIn::getUrlForSendMsgToPortal(%u,%.*S,%u)", index_AUTH, msg_len, msg, msg_len)
+      U_TRACE(0, "UNoCatPlugIn::getUrlForSendMsgToPortal(%u,%.*S,%u)", index_AUTH, service_len, service, service_len)
 
       Url* auth = (*vauth_url)[index_AUTH];
       UString auth_host    = auth->getHost(),
               auth_service = auth->getService(),
-              url(200U + auth_host.size() + auth_service.size() + msg_len);
+              url(200U + auth_host.size() + auth_service.size() + service_len);
 
-      url.snprintf("%v://%v%.*s", auth_service.rep, auth_host.rep, msg_len, msg);
+      url.snprintf("%v://%v%.*s", auth_service.rep, auth_host.rep, service_len, service);
 
       U_RETURN_STRING(url);
       }
