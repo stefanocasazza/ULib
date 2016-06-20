@@ -257,8 +257,8 @@ loop:
          }
       }
 
-   // NB: can happen that in manage the signal the calling function produce another signal because the interval is too short (< 10ms)
-   //     in this case the parameter to the calling function is zero...
+   // NB: it can happen that in manage the signal the calling function produce another signal because
+   // the interval is too short (< 10ms) in this case the parameter to the calling function is zero...
 
    if (event_signal_pending) goto loop;
 }
@@ -422,8 +422,8 @@ RETSIGTYPE UInterrupt::handlerSegvWithInfo(int signo, siginfo_t* info, void* con
        * If you do catch SIGSEGV and you don't exit, thereby interfering with
        * the normal flow, you must:
        *
-       *  fix things such that the offending operation doesn't restart or
-       *  fix the memory layout such that what was offending will be ok on the next run
+       * fix things such that the offending operation doesn't restart or
+       * fix the memory layout such that what was offending will be ok on the next run
        */
 
       longjmp(jbuf, 1);

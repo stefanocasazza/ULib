@@ -357,7 +357,7 @@ bool UClient_Base::setUrl(const char* str, uint32_t len)
    U_INTERNAL_ASSERT_POINTER(str)
    U_INTERNAL_ASSERT_MAJOR(len, 0)
 
-   // we check we've been passed a absolute URL
+   // we check we've been passed an absolute URL
 
    if (u_isUrlScheme(str, len) == 0)
       {

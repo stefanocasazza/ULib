@@ -94,18 +94,16 @@ U_NO_EXPORT void UZIP::assignFilenames()
 {
    U_TRACE_NO_PARAM(0, "UZIP::assignFilenames()")
 
-   U_INTERNAL_ASSERT_MAJOR(npart,0)
-   U_INTERNAL_ASSERT_EQUALS(zippartname,0)
+   U_INTERNAL_ASSERT_MAJOR(npart, 0)
    U_INTERNAL_ASSERT_POINTER(filenames)
+   U_INTERNAL_ASSERT_EQUALS(zippartname, 0)
    U_INTERNAL_ASSERT_POINTER(filenames_len)
-
-   UString name;
 
    U_NEW(UVector<UString>, zippartname, UVector<UString>(npart));
 
    for (uint32_t i = 0; i < npart; ++i)
       {
-      (void) name.assign(filenames[i], filenames_len[i]);
+      UString name(filenames[i], filenames_len[i]);
 
       zippartname->push_back(name);
       }
@@ -165,7 +163,7 @@ bool UZIP::extract(const UString& data, const UString* _tmpdir, bool bdir)
 {
    U_TRACE(0, "UZIP::extract(%V,%p,%b)", data.rep, _tmpdir, bdir)
 
-   U_INTERNAL_ASSERT_EQUALS(valid,false)
+   U_INTERNAL_ASSERT_EQUALS(valid, false)
 
    if (strncmp(data.data(), U_CONSTANT_TO_PARAM(U_ZIP_ARCHIVE)) == 0)
       {
@@ -182,7 +180,7 @@ UString UZIP::archive(const char** add_to_filenames)
 
    U_INTERNAL_ASSERT(tmpdir)
    U_INTERNAL_ASSERT(content)
-   U_INTERNAL_ASSERT_MAJOR(npart,0)
+   U_INTERNAL_ASSERT_MAJOR(npart, 0)
    U_INTERNAL_ASSERT_POINTER(add_to_filenames)
 
    UString result;
@@ -231,7 +229,7 @@ bool UZIP::readContent()
    U_CHECK_MEMORY
 
    U_INTERNAL_ASSERT(content)
-   U_INTERNAL_ASSERT_EQUALS(zippartname,0)
+   U_INTERNAL_ASSERT_EQUALS(zippartname, 0)
 
    npart = U_SYSCALL(zip_get_content, "%p,%u,%p,%p,%p,%p", U_STRING_TO_PARAM(content), &filenames, &filenames_len, &filecontents, &filecontents_len);
 
@@ -243,8 +241,9 @@ bool UZIP::readContent()
 
       for (uint32_t i = 0; i < npart; ++i)
          {
-         if (filecontents_len[i]) zippartcontent->push_back(UString(filecontents[i], filecontents_len[i]));
-         else                     zippartcontent->push_back(UString::getStringNull());
+         UString item(filecontents[i], filecontents_len[i]);
+
+         zippartcontent->push_back(item);
          }
 
       U_RETURN(true);
@@ -270,7 +269,7 @@ UString UZIP::getFileContentAt(int index)
 
       buffer.snprintf("%v/%v", tmpdir.rep, filename.rep);
 
-      dati = (file->setPath(buffer), file->getContent(true,true));
+      dati = (file->setPath(buffer), file->getContent(true, true));
       }
 
    U_RETURN_STRING(dati);

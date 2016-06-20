@@ -253,10 +253,16 @@ public:
 
    void reserve(uint32_t n);
 
-   // call function for all entry
+   // Traverse the hash table for all entry
 
-   bool  next();
-   bool first();
+   UHashMapNode* first();
+
+   // We need to pass the pointer because we can lost the internal pointer between the call...
+
+   bool          next();
+   UHashMapNode* next(UHashMapNode* node);
+
+   // call function for all entry
 
    void getKeys(UVector<UString>& vec);
 

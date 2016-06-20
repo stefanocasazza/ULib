@@ -3,8 +3,6 @@ static void usp_end_wi_auth();
 static void usp_init_wi_auth();
 static void usp_sighup_wi_auth();
 
-static long start_op;
-
 #include <ulib/examples/wi_auth_declaration.h> 
 -->
 <!--#code
@@ -42,7 +40,6 @@ static UHTTP::service_info GET_table[] = { // NB: the table must be ordered alph
    GET_ENTRY(get_config),
    GET_ENTRY(get_users_info),
    GET_ENTRY(help_wifi),
-   GET_ENTRY(info),
    GET_ENTRY(logged),
    GET_ENTRY(logged_login_request),
    GET_ENTRY(login),
@@ -82,8 +79,6 @@ static UHTTP::service_info POST_table[] = { // NB: the table must be ordered alp
    POST_ENTRY(tavarnelle),
    POST_ENTRY(uploader)
 };
-
-start_op = u_now->tv_sec;
 
 U_http_info.nResponseCode = 0;
 

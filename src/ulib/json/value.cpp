@@ -2019,7 +2019,7 @@ bool UValue::jfind(const UString& json, const char* query, uint32_t query_len, U
 
    U_ASSERT(result.empty())
 
-   uint32_t pos = json.find(query, query_len);
+   uint32_t pos = json.find(query, 0, query_len);
 
    U_INTERNAL_DUMP("pos = %d", pos)
 

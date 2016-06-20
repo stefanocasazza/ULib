@@ -65,6 +65,7 @@ class UClientThrottling;
 class U_EXPORT UNotifier {
 public:
 
+   static long last_event;
    static uint32_t min_connection,
                    num_connection,
                    max_connection;
@@ -204,8 +205,8 @@ protected:
    static int nfd_ready; // the number of file descriptors ready for the requested I/O
    static UEventFd** lo_map_fd;
    static UEventFd* handler_event;
-   static uint32_t bepollet_threshold;
    static UGenericHashMap<int,UEventFd*>* hi_map_fd; // maps a fd to a node pointer
+   static uint32_t bepollet_threshold, lo_map_fd_len;
 
 #ifndef USE_LIBEVENT
 # ifdef HAVE_EPOLL_WAIT

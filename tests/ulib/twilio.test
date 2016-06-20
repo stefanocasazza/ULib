@@ -1,0 +1,20 @@
+#!/bin/sh
+
+. ../.function
+
+## twilio -- Test twilio feature
+
+start_msg twilio
+
+ UTRACE="0 50M 0"
+#UTRACE_SIGNAL="0 100M 0"
+#UOBJDUMP="0 50M 1000"
+#USIMERR="error.sim"
+REDIS_HOST=localhost
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL REDIS_HOST
+
+#STRACE=$TRUSS
+start_prg twilio
+
+# Test against expected output
+test_output_wc w twilio

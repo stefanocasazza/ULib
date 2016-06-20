@@ -259,9 +259,9 @@ uint32_t Url::getQuery(UVector<UString>& vec)
    U_RETURN(0);
 }
 
-bool Url::setQuery(const char* query_, uint32_t n)
+bool Url::setQuery(const char* query_, uint32_t query_len)
 {
-   U_TRACE(0, "Url::setQuery(%S,%u)", query_, n)
+   U_TRACE(0, "Url::setQuery(%S,%u)", query_, query_len)
 
    U_INTERNAL_ASSERT_POINTER(query_)
 
@@ -269,7 +269,7 @@ bool Url::setQuery(const char* query_, uint32_t n)
       {
       if (*query_ == '?') ++query_;
 
-      (void) url.replace(path_end + 1, url.size() - path_end - 1, query_, n);
+      (void) url.replace(path_end + 1, url.size() - path_end - 1, query_, query_len);
 
       U_RETURN(true);
       }
@@ -287,7 +287,7 @@ bool Url::setQuery(UVector<UString>& vec)
       {
       UString name, value;
 
-      for (int32_t i = 0, n  = vec.size(); i < n; ++i)
+      for (int32_t i = 0, n = vec.size(); i < n; ++i)
          {
          name  = vec[i++];
          value = vec[i];
@@ -299,6 +299,35 @@ bool Url::setQuery(UVector<UString>& vec)
       }
 
    U_RETURN(false);
+}
+
+UString Url::getQueryBody(UVector<UString>& vec)
+{
+   U_TRACE(0, "Url::getQueryBody(%p)", &vec)
+
+   U_INTERNAL_ASSERT_EQUALS(vec.empty(), false)
+
+   char buffer[4096];
+   uint32_t sz, encoded_sz, value_sz;
+   UString name, value, query(U_CAPACITY);
+
+   for (int32_t i = 0, n = vec.size(); i < n; ++i)
+      {
+      name  = vec[i++];
+      value = vec[i];
+
+      (void) query.reserve(3U +         name.size()  +
+                           (      sz = query.size()) +
+                           (value_sz = value.size()));
+
+      encoded_sz = u_url_encode((const unsigned char*)value.data(), value_sz, (unsigned char*)buffer);
+
+      U_INTERNAL_ASSERT_MINOR(encoded_sz, sizeof(buffer))
+
+      query.snprintf_add("%.*s%v=%.*s", (sz > 0), "&", name.rep, encoded_sz, buffer);
+      }
+
+   U_RETURN_STRING(query);
 }
 
 UString Url::getPathAndQuery()
@@ -453,7 +482,9 @@ void Url::addQuery(const char* entry, uint32_t entry_len, const char* value, uin
 
    if (prepareForQuery())
       {
-      uint32_t v_size = 0, b_size = entry_len, e_size = b_size;
+      uint32_t v_size = 0,
+               b_size = entry_len,
+               e_size = b_size;
 
       if (value) v_size = value_len;
 

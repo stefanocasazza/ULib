@@ -18,6 +18,8 @@
 
 #ifndef USE_MONGODB
 typedef int bson_t;
+typedef int mongoc_write_concern_t;
+typedef int mongoc_bulk_operation_t;
 #else
 #  include <mongoc.h>
 #endif
@@ -111,9 +113,12 @@ public:
       }
 
 #ifndef USE_MONGODB
+   bool executeBulk(mongoc_bulk_operation_t* bulk) { return false; }
    bool connect(const char* host = 0, unsigned int _port = 27017) { return false; }
    bool selectCollection(const char* db, const char* name_collection) { return false; }
    bool update(uint32_t old_value, const char* key, uint32_t new_value) { return false; }
+   void updateOneBulk(mongoc_bulk_operation_t* bulk, uint32_t old_value, const char* key, uint32_t new_value) {}
+   mongoc_bulk_operation_t* createBulk(bool ordered, const mongoc_write_concern_t* write_concern = 0) { return 0; }
 # if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const { return ""; }
 # endif
@@ -133,6 +138,39 @@ public:
    bool update(uint32_t old_value, const char* key, uint32_t new_value);
 
    bool connect(const char* host = 0, unsigned int _port = 27017); // connect to MongoDB server
+
+   // BULK
+
+   bool   executeBulk(mongoc_bulk_operation_t* bulk);
+   void updateOneBulk(mongoc_bulk_operation_t* bulk, uint32_t old_value, const char* key, uint32_t new_value);
+
+   mongoc_bulk_operation_t* createBulk(bool ordered, const mongoc_write_concern_t* write_concern = 0)
+      {
+      U_TRACE(0, "UMongoDBClient::createBulk(%b,%p)", ordered, write_concern)
+
+#  ifndef USE_MONGODB
+      U_RETURN_POINTER(0, mongoc_bulk_operation_t);
+#  else
+      U_INTERNAL_ASSERT_POINTER(client)
+      U_INTERNAL_ASSERT_POINTER(collection)
+
+      mongoc_bulk_operation_t* bulk = (mongoc_bulk_operation_t*) U_SYSCALL(mongoc_collection_create_bulk_operation, "%p,%b,%p", collection, ordered, write_concern);  
+
+      U_RETURN_POINTER(bulk, mongoc_bulk_operation_t);
+#  endif
+      }
+
+   void insertBulk(mongoc_bulk_operation_t* bulk, const bson_t* doc)
+      {
+      U_TRACE(0, "UMongoDBClient::insertBulk(%p,%p)", bulk, doc)
+
+#  ifdef USE_MONGODB
+      U_INTERNAL_ASSERT_POINTER(client)
+      U_INTERNAL_ASSERT_POINTER(collection)
+
+      U_SYSCALL_VOID(mongoc_bulk_operation_insert, "%p,%p", bulk, doc);
+#  endif
+      }
 
 # if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;

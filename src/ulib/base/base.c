@@ -1104,16 +1104,18 @@ uint32_t u_num2str32(char* restrict cp, uint32_t num)
 
 uint32_t u_num2str32s(char* restrict cp, int32_t num)
 {
+   uint32_t bsign = (num < 0);
+
    U_INTERNAL_TRACE("u_num2str32s(%p,%d)", cp, num)
 
-   if (num < 0)
+   if (bsign)
       {
       num = -num;
 
       *cp++ = '-';
       }
 
-   return u_num2str32(cp, num);
+   return u_num2str32(cp, num) + bsign;
 }
 
 uint32_t u_num2str64(char* restrict cp, uint64_t num)
@@ -1168,6 +1170,8 @@ uint32_t u_num2str64(char* restrict cp, uint64_t num)
 
 uint32_t u_num2str64s(char* restrict cp, int64_t num)
 {
+   uint32_t bsign = (num < 0LL);
+
    U_INTERNAL_TRACE("u_num2str64s(%p,%lld)", cp, num)
 
    if (num < 0LL)
@@ -1177,7 +1181,7 @@ uint32_t u_num2str64s(char* restrict cp, int64_t num)
       *cp++ = '-';
       }
 
-   return u_num2str64(cp, num);
+   return u_num2str64(cp, num) + bsign;
 }
 
 #ifdef DEBUG
@@ -1821,7 +1825,11 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
             {
             remaining -= (prec * 2);
 
-            if (u__isprint(*cp) == false) sign = 1; /* we want to print buffer as exadecimal... */
+            if (u__isprint(*cp) == false &&
+                u__isspace(*cp) == false)
+               {
+               sign = 1; /* we want to print buffer as exadecimal... */
+               }
             }
 
          *bp++ = '"';

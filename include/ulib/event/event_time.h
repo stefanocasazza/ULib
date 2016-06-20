@@ -102,6 +102,22 @@ public:
       U_RETURN(false);
       }
 
+   bool operator==(const UEventTime& t) const __pure
+      {
+      U_TRACE(0, "UEventTime::operator==(%p)", &t)
+
+      U_INTERNAL_DUMP("{ %ld %6ld } == { %ld %6ld }",   xtime.tv_sec,   xtime.tv_usec,
+                                                      t.xtime.tv_sec, t.xtime.tv_usec)
+
+      if (xtime.tv_sec  == t.xtime.tv_sec &&
+          xtime.tv_usec == t.xtime.tv_usec)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
 #ifdef U_STDCPP_ENABLE
    friend U_EXPORT ostream& operator<<(ostream& os, const UEventTime& t);
 
@@ -155,6 +171,8 @@ protected:
 
       xtime.tv_sec  = timeout1.tv_sec  + tv_sec;
       xtime.tv_usec = timeout1.tv_usec + tv_usec;
+
+      U_INTERNAL_DUMP("now = { %ld %6ld } xtime = { %ld %6ld }", xtime.tv_sec, xtime.tv_usec, xtime.tv_sec + tv_sec, xtime.tv_usec + tv_usec)
 
       U_ASSERT(checkTolerance())
       U_ASSERT(checkMilliSecond())

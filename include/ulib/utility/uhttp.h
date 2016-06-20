@@ -166,6 +166,15 @@ public:
       U_RETURN(false);
       }
 
+   static bool isGETorHEADorPOST()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::isGETorHEADorPOST()")
+
+      if ((U_http_method_type & (HTTP_GET | HTTP_HEAD | HTTP_POST)) != 0) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    static bool isPOSTorPUTorPATCH()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::isPOSTorPUTorPATCH()")
@@ -191,6 +200,7 @@ public:
    static UString* qcontent;
    static UString* pathname;
    static UString* rpathname;
+   static UString* upload_dir;
    static UString* mount_point;
    static UString* string_HTTP_Variables;
 
@@ -203,6 +213,15 @@ public:
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
    static bool enable_caching_by_proxy_servers;
    static uint32_t npathinfo, limit_request_body, request_read_timeout, range_start, range_size, response_code;
+
+   static void setUploadDir(const UString& dir)
+      {
+      U_TRACE(0, "UHTTP::setUploadDir(%V)", dir.rep)
+
+      U_INTERNAL_ASSERT_POINTER(upload_dir)
+
+      *upload_dir = dir;
+      }
 
    static uint32_t getUserAgent()
       {
@@ -294,7 +313,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setResponse()")
 
-      ext->clear();
+      U_ASSERT(ext->empty())
+
+      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 
       handlerResponse();
       }
@@ -401,8 +422,8 @@ public:
 
    // NB: the tables must be ordered alphabetically by binary search...
 
-#  define  GET_ENTRY(name) {#name,U_CONSTANT_SIZE(#name), GET_##name}
-#  define POST_ENTRY(name) {#name,U_CONSTANT_SIZE(#name),POST_##name}
+#define  GET_ENTRY(name) {#name,U_CONSTANT_SIZE(#name), GET_##name}
+#define POST_ENTRY(name) {#name,U_CONSTANT_SIZE(#name),POST_##name}
 
    static void manageRequest(service_info*  GET_table, uint32_t n1,
                              service_info* POST_table, uint32_t n2);

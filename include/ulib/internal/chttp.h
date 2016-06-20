@@ -302,19 +302,20 @@ enum HttpRequestType {
 #define U_HTTP_METHOD_NUM_TO_PARAM(num) u_clientimage_info.http_method_list[num].name, u_clientimage_info.http_method_list[num].len
 #define U_HTTP_METHOD_NUM_TO_TRACE(num) u_clientimage_info.http_method_list[num].len,  u_clientimage_info.http_method_list[num].name
 
-#define U_HTTP_QUERY_MEMEQ(str) (u_clientimage_info.http_info.query_len ?  memcmp(u_clientimage_info.http_info.query, U_CONSTANT_TO_PARAM(str)) == 0 : false)
-#define U_HTTP_QUERY_STREQ(str) (u_clientimage_info.http_info.query_len ? U_STREQ(u_clientimage_info.http_info.query, u_clientimage_info.http_info.query_len, str) : false)
-
-#define U_HTTP_CTYPE_MEMEQ(str) (U_http_content_type_len ?  memcmp(u_clientimage_info.http_info.content_type,  U_CONSTANT_TO_PARAM(str)) == 0 : false)
-#define U_HTTP_CTYPE_STREQ(str) (U_http_content_type_len ? U_STREQ(u_clientimage_info.http_info.content_type, U_http_content_type_len, str)   : false)
-
-#define U_HTTP_URI_STREQ(str)                     U_STREQ(u_clientimage_info.http_info.uri,  u_clientimage_info.http_info.uri_len, str)
-#define U_HTTP_HOST_STREQ(str) (U_http_host_len ? U_STREQ(u_clientimage_info.http_info.host, U_http_host_len,                       str) : false)
+#define U_HTTP_HOST_STREQ(str) (U_http_host_len ? U_STREQ(u_clientimage_info.http_info.host, U_http_host_len, str) : false)
 
 #define U_HTTP_REFERER_STREQ(str) (u_clientimage_info.http_info.referer_len ? U_STREQ(u_clientimage_info.http_info.referer, u_clientimage_info.http_info.referer_len, str) : false)
 
-#define U_HTTP_USER_AGENT_STREQ(str) (u_clientimage_info.http_info.user_agent_len \
-                                          ? U_STREQ(u_clientimage_info.http_info.user_agent, u_clientimage_info.http_info.user_agent_len, str) : false)
+#define U_HTTP_USER_AGENT_STREQ(str) (u_clientimage_info.http_info.user_agent_len ? U_STREQ(u_clientimage_info.http_info.user_agent, u_clientimage_info.http_info.user_agent_len, str) : false)
+
+#define U_HTTP_URI_MEMEQ(str)   memcmp(u_clientimage_info.http_info.uri, U_CONSTANT_TO_PARAM(str)) == 0
+#define U_HTTP_URI_STREQ(str)  U_STREQ(u_clientimage_info.http_info.uri, u_clientimage_info.http_info.uri_len, str)
+
+#define U_HTTP_CTYPE_MEMEQ(str) (U_http_content_type_len ?  memcmp(u_clientimage_info.http_info.content_type, U_CONSTANT_TO_PARAM(str)) == 0 : false)
+#define U_HTTP_CTYPE_STREQ(str) (U_http_content_type_len ? U_STREQ(u_clientimage_info.http_info.content_type, U_http_content_type_len, str)  : false)
+
+#define U_HTTP_QUERY_MEMEQ(str) (u_clientimage_info.http_info.query_len ?  memcmp(u_clientimage_info.http_info.query, U_CONSTANT_TO_PARAM(str)) == 0 : false)
+#define U_HTTP_QUERY_STREQ(str) (u_clientimage_info.http_info.query_len ? U_STREQ(u_clientimage_info.http_info.query, u_clientimage_info.http_info.query_len, str) : false)
 
 /**
  * The hostname of your server from header's request.

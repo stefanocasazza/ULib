@@ -110,9 +110,7 @@ Content-Encoding: identity
 Content-Type: application/jsonrequest
 Content-Length: 72
 
-{"user":"doctoravatar@penzance.com","forecast":7,"t":"vlIj","zip":94089}
-
-GET /cgi-bin/redirect.sh HTTP/1.1
+{"user":"doctoravatar@penzance.com","forecast":7,"t":"vlIj","zip":94089}GET /cgi-bin/redirect.sh HTTP/1.1
 x-wap-profile:
 Host: 10.30.1.131
 

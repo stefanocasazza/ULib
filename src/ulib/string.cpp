@@ -955,7 +955,7 @@ bool UStringRep::checkIfChild(const char* name_class, const void* ptr_object)
 }
 #endif
 
-UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
+UStringRep* UStringRep::substr(const char* t, uint32_t tlen) const
 {
    U_TRACE(0+256, "UStringRep::substr(%.*S,%u)", tlen, t, tlen)
 
@@ -978,7 +978,7 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen)
       U_NEW(UStringRep, r, UStringRep(t, tlen));
 
 #  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-      UStringRep* p = this;
+      UStringRep* p = (UStringRep*)this;
 
       while (p->parent)
          {
@@ -1267,7 +1267,7 @@ UString::UString(uint32_t len, uint32_t sz, char* ptr) // NB: for UStringExt::de
 
 UString& UString::assign(const char* s, uint32_t n)
 {
-   U_TRACE(0, "UString::assign(%S,%u)", s, n)
+   U_TRACE(0, "UString::assign(%.*S,%u)", n, s, n)
 
    if (rep->references ||
        rep->_capacity < n)
@@ -1593,7 +1593,7 @@ void UString::resize(uint32_t n, unsigned char c)
 
 __pure uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much) const
 {
-   U_TRACE(0, "UString::find(%S,%u,%u,%u)", s, pos, s_len, how_much)
+   U_TRACE(0, "UString::find(%.*S,%u,%u,%u)", s_len, s, pos, s_len, how_much)
 
    U_INTERNAL_ASSERT_MAJOR(s_len, 0)
 
@@ -1616,7 +1616,7 @@ __pure uint32_t UString::find(const char* s, uint32_t pos, uint32_t s_len, uint3
 
 __pure uint32_t UString::findnocase(const char* s, uint32_t pos, uint32_t s_len, uint32_t how_much) const
 {
-   U_TRACE(0, "UString::findnocase(%S,%u,%u,%u)", s, pos, s_len, how_much)
+   U_TRACE(0, "UString::findnocase(%.*S,%u,%u,%u)", s_len, s, pos, s_len, how_much)
 
    U_INTERNAL_ASSERT_MAJOR(s_len, 1)
 
@@ -1686,7 +1686,7 @@ __pure uint32_t UString::rfind(unsigned char c, uint32_t pos) const
 
 __pure uint32_t UString::rfind(const char* s, uint32_t pos, uint32_t n) const
 {
-   U_TRACE(0, "UString::rfind(%S,%u,%u)", s, pos, n)
+   U_TRACE(0, "UString::rfind(%.*S,%u,%u)", n, s, pos, n)
 
    uint32_t sz = size();
 
@@ -1710,7 +1710,7 @@ __pure uint32_t UString::rfind(const char* s, uint32_t pos, uint32_t n) const
 
 __pure uint32_t UString::find_first_of(const char* s, uint32_t pos, uint32_t n) const
 {
-   U_TRACE(0, "UString::find_first_of(%S,%u,%u)", s, pos, n)
+   U_TRACE(0, "UString::find_first_of(%.*S,%u,%u)", n, s, pos, n)
 
    if (n)
       {
@@ -1729,7 +1729,7 @@ __pure uint32_t UString::find_first_of(const char* s, uint32_t pos, uint32_t n) 
 
 __pure uint32_t UString::find_last_of(const char* s, uint32_t pos, uint32_t n) const
 {
-   U_TRACE(0, "UString::find_last_of(%S,%u,%u)", s, pos, n)
+   U_TRACE(0, "UString::find_last_of(%.*S,%u,%u)", n, s, pos, n)
 
    uint32_t sz = size();
 
@@ -1752,7 +1752,7 @@ __pure uint32_t UString::find_last_of(const char* s, uint32_t pos, uint32_t n) c
 
 __pure uint32_t UString::find_first_not_of(const char* s, uint32_t pos, uint32_t n) const
 {
-   U_TRACE(0, "UString::find_first_not_of(%S,%u,%u)", s, pos, n)
+   U_TRACE(0, "UString::find_first_not_of(%.*S,%u,%u)", n, s, pos, n)
 
    if (n)
       {
@@ -1789,11 +1789,12 @@ __pure uint32_t UString::find_first_not_of(unsigned char c, uint32_t pos) const
 
 __pure uint32_t UString::find_last_not_of(const char* s, uint32_t pos, uint32_t n) const
 {
-   U_TRACE(0, "UString::find_last_not_of(%S,%u,%u)", s, pos, n)
+   U_TRACE(0, "UString::find_last_not_of(%.*S,%u,%u)", n, s, pos, n)
 
    uint32_t sz = size();
 
-   if (sz && n)
+   if (n &&
+       sz)
       {
       if (--sz > pos) sz = pos;
 

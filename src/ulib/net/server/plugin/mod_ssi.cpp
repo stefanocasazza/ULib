@@ -313,7 +313,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
       // Find next SSI tag
 
       uint32_t distance = t.getDistance(),
-               pos      = content.find("<!--#", distance);
+               pos      = U_STRING_FIND(content, distance, "<!--#");
 
       if (pos)
          {
@@ -640,7 +640,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                   }
                else if (name == *UString::str_var)
                   {
-                  U_INTERNAL_ASSERT_MAJOR(u_user_name_len,0)
+                  U_INTERNAL_ASSERT_MAJOR(u_user_name_len, 0)
 
                   /**
                    * DATE_GMT       The current date in Greenwich Mean Time.
@@ -652,15 +652,25 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                    *                nested include files, this is not then URL for the current document.
                    */
 
-                       if (value.equal(U_CONSTANT_TO_PARAM("DATE_GMT")))      x = UTimeDate::strftime(timefmt->data(), u_now->tv_sec);
-                  else if (value.equal(U_CONSTANT_TO_PARAM("DATE_LOCAL")))    x = UTimeDate::strftime(timefmt->data(), u_now->tv_sec, true);
-                  else if (value.equal(U_CONSTANT_TO_PARAM("LAST_MODIFIED"))) x = UTimeDate::strftime(timefmt->data(), last_modified);
-                  else if (value.equal(U_CONSTANT_TO_PARAM("USER_NAME")))     (void) x.assign(u_user_name, u_user_name_len);
-                  else if (value.equal(U_CONSTANT_TO_PARAM("DOCUMENT_URI")))  (void) x.assign(U_HTTP_URI_TO_PARAM);
-                  else if (value.equal(U_CONSTANT_TO_PARAM("DOCUMENT_NAME"))) x = *docname;
+                  bool blocal = false;
+
+                  if (          value.equal(U_CONSTANT_TO_PARAM("DATE_GMT")) ||
+                      (blocal = value.equal(U_CONSTANT_TO_PARAM("DATE_LOCAL"))))
+                     {
+                     U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
+
+                     x = UTimeDate::strftime(timefmt->data(), u_now->tv_sec, blocal);
+                     }
                   else
                      {
-                     x = UStringExt::expandEnvironmentVar(value, UClientImage_Base::environment);
+                          if (value.equal(U_CONSTANT_TO_PARAM("LAST_MODIFIED"))) x = UTimeDate::strftime(timefmt->data(), last_modified);
+                     else if (value.equal(U_CONSTANT_TO_PARAM("USER_NAME")))     (void) x.assign(u_user_name, u_user_name_len);
+                     else if (value.equal(U_CONSTANT_TO_PARAM("DOCUMENT_URI")))  (void) x.assign(U_HTTP_URI_TO_PARAM);
+                     else if (value.equal(U_CONSTANT_TO_PARAM("DOCUMENT_NAME"))) x = *docname;
+                     else
+                        {
+                        x = UStringExt::expandEnvironmentVar(value, UClientImage_Base::environment);
+                        }
                      }
 
                   if (x.empty()) continue;

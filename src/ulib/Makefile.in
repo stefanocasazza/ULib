@@ -123,7 +123,7 @@ target_triplet = @target@
 @USE_PARSER_TRUE@am__append_31 = flex/flexer.cpp flex/bison.cpp
 @PCRE_TRUE@am__append_32 = pcre/pcre.cpp
 @SSL_TRUE@am__append_33 = base/ssl/cdes3.c base/ssl/dgst.c
-@SSL_TRUE@am__append_34 = ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp \
+@SSL_TRUE@am__append_34 = ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp net/client/twilio.cpp \
 @SSL_TRUE@		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp utility/des3.cpp
 
 @SSL_TRUE@@SSL_TS_TRUE@am__append_35 = ssl/timestamp.cpp
@@ -263,10 +263,11 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	debug/error_simulation.cpp debug/objectDB.cpp \
 	internal/memory_pool.cpp zip/zip.cpp flex/flexer.cpp \
 	flex/bison.cpp pcre/pcre.cpp ssl/certificate.cpp ssl/pkcs7.cpp \
-	ssl/crl.cpp ssl/pkcs10.cpp ssl/mime/mime_pkcs7.cpp \
-	ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp utility/des3.cpp \
-	ssl/timestamp.cpp ssh/net/sshsocket.cpp ldap/ldap.cpp \
-	curl/curl.cpp xml/expat/attribute.cpp xml/expat/element.cpp \
+	ssl/crl.cpp ssl/pkcs10.cpp net/client/twilio.cpp \
+	ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp \
+	ssl/net/ssl_session.cpp utility/des3.cpp ssl/timestamp.cpp \
+	ssh/net/sshsocket.cpp ldap/ldap.cpp curl/curl.cpp \
+	xml/expat/attribute.cpp xml/expat/element.cpp \
 	xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
 	xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp \
 	xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp \
@@ -339,9 +340,9 @@ am__objects_24 = base/base.lo base/base_error.lo base/hash.lo \
 @USE_PARSER_TRUE@am__objects_34 = flex/flexer.lo flex/bison.lo
 @PCRE_TRUE@am__objects_35 = pcre/pcre.lo
 @SSL_TRUE@am__objects_36 = ssl/certificate.lo ssl/pkcs7.lo ssl/crl.lo \
-@SSL_TRUE@	ssl/pkcs10.lo ssl/mime/mime_pkcs7.lo \
-@SSL_TRUE@	ssl/net/sslsocket.lo ssl/net/ssl_session.lo \
-@SSL_TRUE@	utility/des3.lo
+@SSL_TRUE@	ssl/pkcs10.lo net/client/twilio.lo \
+@SSL_TRUE@	ssl/mime/mime_pkcs7.lo ssl/net/sslsocket.lo \
+@SSL_TRUE@	ssl/net/ssl_session.lo utility/des3.lo
 @SSL_TRUE@@SSL_TS_TRUE@am__objects_37 = ssl/timestamp.lo
 @SSH_TRUE@am__objects_38 = ssh/net/sshsocket.lo
 @LDAP_TRUE@am__objects_39 = ldap/ldap.lo
@@ -1208,6 +1209,8 @@ ssl/certificate.lo: ssl/$(am__dirstamp) ssl/$(DEPDIR)/$(am__dirstamp)
 ssl/pkcs7.lo: ssl/$(am__dirstamp) ssl/$(DEPDIR)/$(am__dirstamp)
 ssl/crl.lo: ssl/$(am__dirstamp) ssl/$(DEPDIR)/$(am__dirstamp)
 ssl/pkcs10.lo: ssl/$(am__dirstamp) ssl/$(DEPDIR)/$(am__dirstamp)
+net/client/twilio.lo: net/client/$(am__dirstamp) \
+	net/client/$(DEPDIR)/$(am__dirstamp)
 ssl/mime/$(am__dirstamp):
 	@$(MKDIR_P) ssl/mime
 	@: > ssl/mime/$(am__dirstamp)
@@ -1552,6 +1555,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@net/client/$(DEPDIR)/pop3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/client/$(DEPDIR)/redis.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/client/$(DEPDIR)/smtp.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@net/client/$(DEPDIR)/twilio.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/rpc/$(DEPDIR)/rpc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/rpc/$(DEPDIR)/rpc_client.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@net/rpc/$(DEPDIR)/rpc_encoder.Plo@am__quote@

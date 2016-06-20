@@ -557,10 +557,9 @@ static void test_find_01()
 // csz01 = str01.find(str_lit01.c_str(), 3, 0);
 // U_ASSERT( csz01 == 3 )
 
-   // unsigned find(const char* s, unsigned pos = 0) const;
-   csz01 = str01.find(str_lit01);
+   csz01 = str01.find(str_lit01, 0, strlen(str_lit01));
    U_ASSERT( csz01 == 0 )
-   csz01 = str01.find(str_lit01, 3);
+   csz01 = str01.find(str_lit01, 3, strlen(str_lit01));
    U_ASSERT( csz01 == npos )
 
    // unsigned find(char c, unsigned pos = 0) const;
@@ -609,10 +608,9 @@ static void test_find_01()
    csz01 = str01.find_first_of(str_lit01, 3, 0);
    U_ASSERT( csz01 == npos )
 
-   // unsigned find_first_of(const char* s, unsigned pos = 0) const;
-   csz01 = str01.find_first_of(str_lit01);
+   csz01 = str01.find_first_of(str_lit01, 0, strlen(str_lit01));
    U_ASSERT( csz01 == 0 )
-   csz01 = str01.find_first_of(str_lit01, 3);
+   csz01 = str01.find_first_of(str_lit01, 3, strlen(str_lit01));
    U_ASSERT( csz01 == 3 )
 
    // unsigned find_first_of(char c, unsigned pos = 0) const;
@@ -629,7 +627,7 @@ static void test_find_01()
    UString x("X");
    pos = x.find_last_not_of('X');
    U_ASSERT( pos == npos )
-   pos = x.find_last_not_of("XYZ");
+   pos = x.find_last_not_of("XYZ", 0, 3);
    U_ASSERT( pos == npos )
 
    UString y("a");
@@ -637,29 +635,29 @@ static void test_find_01()
    U_ASSERT( pos == 0 )
    pos = y.find_last_not_of('a');
    U_ASSERT( pos == npos )
-   pos = y.find_last_not_of("XYZ");
+   pos = y.find_last_not_of("XYZ", 0, 3);
    U_ASSERT( pos == 0 )
-   pos = y.find_last_not_of("a");
+   pos = y.find_last_not_of("a", 0, 1);
    U_ASSERT( pos == npos )
 
    UString z("ab");
    pos = z.find_last_not_of('X');
    U_ASSERT( pos == 1 )
-   pos = z.find_last_not_of("XYZ");
+   pos = z.find_last_not_of("XYZ", U_NOT_FOUND, 3);
    U_ASSERT( pos == 1 )
    pos = z.find_last_not_of('b');
    U_ASSERT( pos == 0 )
-   pos = z.find_last_not_of("Xb");
+   pos = z.find_last_not_of("Xb", U_NOT_FOUND, 2);
    U_ASSERT( pos == 0 )
-   pos = z.find_last_not_of("Xa");
+   pos = z.find_last_not_of("Xa", U_NOT_FOUND, 2);
    U_ASSERT( pos == 1 )
-   pos = z.find_last_of("ab");
+   pos = z.find_last_of("ab", U_NOT_FOUND, 2);
    U_ASSERT( pos == 1 )
-   pos = z.find_last_of("Xa");
+   pos = z.find_last_of("Xa", U_NOT_FOUND, 2);
    U_ASSERT( pos == 0 )
-   pos = z.find_last_of("Xb");
+   pos = z.find_last_of("Xb", U_NOT_FOUND, 2);
    U_ASSERT( pos == 1 )
-   pos = z.find_last_of("XYZ");
+   pos = z.find_last_of("XYZ", U_NOT_FOUND, 3);
    U_ASSERT( pos == npos );
    pos = z.find_last_of('a');
    U_ASSERT( pos == 0 )
@@ -715,10 +713,9 @@ static void test_rfind_01()
    csz01 = str01.rfind(str_lit01, 3, 0);
    U_ASSERT( csz01 == 3 )
 
-   // unsigned rfind(const char* s, unsigned pos = 0) const;
-   csz01 = str01.rfind(str_lit01);
+   csz01 = str01.rfind(str_lit01, 0, strlen(str_lit01));
    U_ASSERT( csz01 == 0 )
-   csz01 = str01.rfind(str_lit01, 3);
+   csz01 = str01.rfind(str_lit01, 3, strlen(str_lit01));
    U_ASSERT( csz01 == 0 )
 
    // unsigned rfind(char c, unsigned pos = 0) const;
@@ -1531,6 +1528,21 @@ U_EXPORT main (int argc, char* argv[])
    U_TRACE(5, "main(%d)", argc)
 
    UString buffer(U_CAPACITY), encoded(U_CAPACITY);
+
+   buffer.setFromNumber64s(-34LL);
+
+   U_ASSERT_EQUALS( buffer, U_STRING_FROM_CONSTANT("-34") )
+
+   UString db_anagrafica = U_STRING_FROM_CONSTANT("10.8.0.93 172.16.93.0/24 91\n"
+                                                  "10.20.0.4 172.23.0.0/20 47\n"
+                                                  "10.20.0.7 \"172.22.0.0/20 172.22.16.0/20 172.22.32.0/20 172.22.48.0/20 172.22.128.0/20\" \"60 61 78 83 90\"\n");
+
+
+   uint32_t pos = U_STRING_FIND(db_anagrafica, 0, "10.8.0.93");
+
+   U_INTERNAL_DUMP("pos = %d", pos)
+
+   U_INTERNAL_ASSERT_DIFFERS( pos, U_NOT_FOUND )
 
    UXMLEscape::encode(U_CONSTANT_TO_PARAM("<script>alert(\\\"This should not be displayed in a browser alert box.\\\");<\\/script>"), encoded);
 

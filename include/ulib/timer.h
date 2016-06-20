@@ -18,6 +18,7 @@
 #include <ulib/utility/interrupt.h>
 
 class UNotifier;
+class UServer_Base;
 
 // UNotifier use this class to notify a timeout from select()
 
@@ -46,9 +47,6 @@ public:
    ~UTimer()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UTimer)
-
-      if (next)  delete next;
-      if (alarm) delete alarm;
       }
 
    // SERVICES
@@ -77,11 +75,27 @@ public:
 
    static void clear();                    // cancel all timers and free storage, usually in preparation for exitting
    static void init(Type mode);            // initialize the timer package
-   static void insert(UEventTime* alarm);  // set up a timer, either periodic or one-shot
+   static void insert(UEventTime* palarm); // set up a timer, either periodic or one-shot
 
    // deschedule a timer. Note that non-periodic timers are automatically descheduled when they run, so you don't have to call this on them
 
-   static void erase(UEventTime* alarm);
+   static void erase(UTimer* item)
+      {
+      U_TRACE(0, "UTimer::erase(%p)", item)
+
+      U_INTERNAL_ASSERT_POINTER(first)
+
+      if (mode != NOSIGNAL) delete item;
+      else
+         {
+         // put it on the free list
+
+         item->next = pool;
+               pool = item;
+         }
+      }
+
+   static void erase(UEventTime* palarm);
 
    // run the list of timers. Your main program needs to call this every so often, or as indicated by getTimeout()
 
@@ -111,7 +125,12 @@ public:
 
       for (UTimer* item = first; item; item = item->next)
          {
-         if (item->alarm == palarm) U_RETURN(true);
+         if (item->alarm == palarm)
+            {
+            U_INTERNAL_DUMP("item = %p", item)
+
+            U_RETURN(true);
+            }
          }
 
       U_RETURN(false);
@@ -150,6 +169,7 @@ protected:
    static UTimer* first; // active list 
 
    static void callHandlerTimeout();
+   static void updateTimeToExpire(UEventTime* ptime);
 
 #ifdef DEBUG
    static bool invariant();
@@ -166,6 +186,7 @@ private:
    bool operator!=(const UTimer& t) const { return !  operator==(t); }
 
    friend class UNotifier;
+   friend class UServer_Base;
 
 #ifdef U_COMPILER_DELETE_MEMBERS
    UTimer(const UTimer&) = delete;

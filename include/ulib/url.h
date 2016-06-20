@@ -107,7 +107,7 @@ public:
    /**
     * Constructor of the class
     *
-    * This constructor copy the url from the string
+    * This constructor set the url from the string
     *
     * @param x Reference to a string with an url
     */
@@ -446,6 +446,8 @@ public:
    UString  getQuery();
    uint32_t getQuery(UVector<UString>& vec);
 
+   static UString getQueryBody(UVector<UString>& vec);
+
    /**
     * This methode set the query of the url
     *
@@ -453,7 +455,7 @@ public:
     */
 
    bool setQuery(UVector<UString>& vec);
-   bool setQuery(const char* query, uint32_t n);
+   bool setQuery(const char* query, uint32_t query_len);
 
    /**
     * This methode erase the query from the url
@@ -538,9 +540,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:

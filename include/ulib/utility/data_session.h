@@ -51,7 +51,14 @@ public:
 
    // SERVICES
 
-   void setKeyId();
+   void setKeyId()
+      {
+      U_TRACE_NO_PARAM(0, "UDataStorage::setKeyId()")
+
+      U_INTERNAL_DUMP("keyid = %V", keyid.rep)
+
+      keyid = *UString::str_storage_keyid;
+      }
 
    bool isDataSession()
       {

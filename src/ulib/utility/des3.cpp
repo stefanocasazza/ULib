@@ -29,18 +29,6 @@ UString UDES3::signData(const char* fmt, ...)
 
    va_end(argp);
 
-// uint32_t sz1 = buffer1.size();
-//
-// if (sz1 <= 2048) encode((const unsigned char*)ptr, sz1, buffer2);
-// else
-//    {
-//    UString data = UStringExt::compress(ptr, sz1);
-//    uint32_t sz2 = data.size();
-//
-//    if (sz2 < (sz1 - (sz1 / 4))) encode((const unsigned char*)data.data(), sz2, buffer2);
-//    else                         encode((const unsigned char*)ptr,         sz1, buffer2);
-//    }
-
    encode((const unsigned char*)ptr, buffer1.size(), buffer2);
 
    UBase64::encodeUrl(buffer2, signed_data);
@@ -61,14 +49,9 @@ UString UDES3::getSignedData(const char* ptr, uint32_t len)
    if (buffer &&
        u_base64_errors == 0)
       {
-      UDES3::decode(buffer, output);
+      decode(buffer, output);
 
-      if (output)
-         {
-         if (UStringExt::isCompress(output)) output = UStringExt::decompress(output);
-
-         (void) output.shrink();
-         }
+      (void) output.shrink();
       }
 
    U_RETURN_STRING(output);

@@ -51,14 +51,14 @@
 
 vPF               UDirWalk::call_if_up;
 vPF               UDirWalk::call_internal;
-UString*          UDirWalk::suffix_file_type;
-bool              UDirWalk::brecurse; // recurse subdirectories ?
+bool              UDirWalk::brecurse;     // recurse subdirectories ?
 bool              UDirWalk::bfollowlinks; // recurse subdirectories when are symbolic link ?
 bool              UDirWalk::tree_root;
 bool              UDirWalk::call_if_directory;
-qcompare          UDirWalk::sort_by;
 uint32_t          UDirWalk::max;
 uint32_t          UDirWalk::filter_len;
+qcompare          UDirWalk::sort_by;
+UString*          UDirWalk::suffix_file_type;
 UDirWalk*         UDirWalk::pthis;
 const char*       UDirWalk::filter;
 UTree<UString>*   UDirWalk::ptree;
@@ -69,14 +69,16 @@ void UDirWalk::ctor(const UString* dir, const char* _filter, uint32_t _filter_le
 {
    U_TRACE(0, "UDirWalk::ctor(%p,%.*S,%u)", dir, _filter_len, _filter, _filter_len)
 
-   max               = 128 * 1024;
+   max               = 128U * 1024U;
    depth             = -1; // starting recursion depth
    pthis             = this;
    sort_by           = 0;
    call_if_up        = 0;
    call_internal     = 0;
    suffix_file_type  = 0;
-   call_if_directory = brecurse = is_directory = false;
+   call_if_directory =
+   brecurse          =
+   is_directory      = false;
 
    if (dir) (void) setDirectory(*dir, _filter, _filter_len);
    else
@@ -274,12 +276,12 @@ found_file:
          qdir.pfree  = 0;
          }
 
-      // -----------------------------------------
-      // NB: NON sono sempre le prime due entry !!
-      // -----------------------------------------
+      // -----------------------------------------------
+      // NB: these are NOT always the first two entry !!
+      // -----------------------------------------------
       // (void) readdir(dirp); // skip '.'
       // (void) readdir(dirp); // skip '..'
-      // -----------------------------------------
+      // -----------------------------------------------
 
       while ((dp = readdir(dirp))) // NB: we don't use the macro U_SYSCALL to avoid warning on stderr...
          {

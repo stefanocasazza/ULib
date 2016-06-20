@@ -1,0 +1,10 @@
+stack[0]: type =    8 len =   511 space =   512 allocateMemoryBlocks =  1 depth =    33 max_depth =    33 pop_cnt =        33 push_cnt =         0
+stack[1]: type =   40 len =   465 space =  1024 allocateMemoryBlocks =  2 depth =   181 max_depth =   181 pop_cnt =       228 push_cnt =        47
+stack[2]: type =   48 len =    29 space =    64 allocateMemoryBlocks =  0 depth =     3 max_depth =     3 pop_cnt =         3 push_cnt =         0
+stack[3]: type =   64 len =    31 space =    64 allocateMemoryBlocks =  0 depth =     1 max_depth =     1 pop_cnt =         1 push_cnt =         0
+stack[4]: type =  128 len =    31 space =    64 allocateMemoryBlocks =  0 depth =     1 max_depth =     2 pop_cnt =         3 push_cnt =         2
+stack[5]: type =  256 len =    19 space =    64 allocateMemoryBlocks =  0 depth =    13 max_depth =    13 pop_cnt =        13 push_cnt =         0
+stack[6]: type =  512 len =    31 space =    64 allocateMemoryBlocks =  0 depth =     1 max_depth =     2 pop_cnt =         5 push_cnt =         4
+stack[7]: type = 1024 len =    29 space =    64 allocateMemoryBlocks =  0 depth =     3 max_depth =     3 pop_cnt =         4 push_cnt =         1
+stack[8]: type = 2048 len =    32 space =    64 allocateMemoryBlocks =  0 depth =     0 max_depth =     0 pop_cnt =         0 push_cnt =         0
+stack[9]: type = 4096 len =    23 space =    64 allocateMemoryBlocks =  0 depth =     9 max_depth =     9 pop_cnt =         9 push_cnt =         0

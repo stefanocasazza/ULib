@@ -47,8 +47,9 @@ mkdir -p		   uploads
 $CHOWN nobody: uploads docroot 2>/dev/null
 chmod 777      uploads
 
-$CURL -s -F 'file=@vuoto.txt'											 -F "name=prova" http://$1/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
-$CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$1/cgi-bin/uploader.sh >>out/web_server.out 2>>err/web_server.err
+$CURL -s -F 'file=@vuoto.txt'											 -F "name=prova" http://$1/cgi-bin/uploader.sh    >>out/web_server.out 2>>err/web_server.err
+$CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$1/cgi-bin/uploader.sh    >>out/web_server.out 2>>err/web_server.err
+$CURL -s -T web_server.test                                                  http://$1/upload/web_server.test >>out/web_server.out 2>>err/web_server.err
 
 if [ $? -ne 0 ]; then
    kill_prg userver_tcp TERM
@@ -58,6 +59,7 @@ fi
 
 # function : kill_server
 kill_server() {
+
 kill_prg userver_tcp TERM
 if [ $? -ne 0 ]; then
 	for i in 1 2 3 4 5; do
@@ -67,8 +69,10 @@ if [ $? -ne 0 ]; then
 		fi
 		$SLEEP
 	done
-	exit 1
 fi
+
+pkill -9    userver_tcp 2>/dev/null
+pkill -9 lt-userver_tcp 2>/dev/null
 }
 
 # function : start_test
@@ -223,8 +227,7 @@ export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
  creat_config V 2
  start_test $NCAT www.sito1.com
 
-pkill -9    userver_tcp 2>/dev/null
-pkill -9 lt-userver_tcp 2>/dev/null
+kill_server
 
 # -----------------------------------------------------------------------------------
 # for GDB
@@ -234,6 +237,10 @@ pkill -9 lt-userver_tcp 2>/dev/null
 
 diff inp/xml2txt/operazione.xml uploads/operazione.xml
 RESULT=$?
+if [ "$RESULT" = "0" ]; then
+	diff web_server.test uploads/web_server.test
+	RESULT=$?
+fi
 
 mv err/userver_tcp.err err/web_server.err
 

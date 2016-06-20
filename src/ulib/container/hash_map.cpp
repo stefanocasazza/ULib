@@ -376,7 +376,7 @@ loop:    U_INTERNAL_ASSERT_POINTER(pnode)
 }
 #endif
 
-bool UHashMap<void*>::first()
+UHashMapNode* UHashMap<void*>::first()
 {
    U_TRACE_NO_PARAM(0, "UHashMap<void*>::first()")
 
@@ -388,11 +388,11 @@ bool UHashMap<void*>::first()
          {
          node = table[index];
 
-         U_RETURN(true);
+         U_RETURN_POINTER(node, UHashMapNode);
          }
       }
 
-   U_RETURN(false);
+   U_RETURN_POINTER(0, UHashMapNode);
 }
 
 bool UHashMap<void*>::next()
@@ -401,7 +401,7 @@ bool UHashMap<void*>::next()
 
    U_INTERNAL_DUMP("index = %u node = %p next = %p", index, node, node->next)
 
-   if ((node = node->next)) U_RETURN(true);
+   if ((node = node->next)) U_RETURN_POINTER(node, UHashMapNode);
 
    for (++index; index < _capacity; ++index)
       {
@@ -414,6 +414,27 @@ bool UHashMap<void*>::next()
       }
 
    U_RETURN(false);
+}
+
+UHashMapNode* UHashMap<void*>::next(UHashMapNode* _node)
+{
+   U_TRACE(0, "UHashMap<void*>::next(%p)", _node)
+
+   U_INTERNAL_DUMP("index = %u node = %p next = %p", index, node, node->next)
+
+   if ((node = _node->next)) U_RETURN_POINTER(node, UHashMapNode);
+
+   for (++index; index < _capacity; ++index)
+      {
+      if (table[index])
+         {
+         node = table[index];
+
+         U_RETURN_POINTER(node, UHashMapNode);
+         }
+      }
+
+   U_RETURN_POINTER(0, UHashMapNode);
 }
 
 void UHashMap<void*>::callForAllEntry(bPFprpv function)

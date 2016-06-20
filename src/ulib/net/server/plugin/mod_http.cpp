@@ -393,12 +393,24 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
             }
 #     endif
          }
-#  endif
+#   endif
 
 #  ifdef U_THROTTLING_SUPPORT
       x = cfg.at(U_CONSTANT_TO_PARAM("BANDWIDTH_THROTTLING_MASK"));
 
-      if (x) UServer_Base::initThrottlingServer(x);
+      if (x)
+         {
+#     if defined(ENABLE_THREAD) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+         if (UServer_Base::preforked_num_kids == -1) // NB: in the thread approach this is not safe so far...
+            {
+            U_SRV_LOG("WARNING: Sorry, I can't enable bandwidth throttling because PREFORK_CHILD == -1 (server thread approach)");
+            }
+         else
+#     endif
+         {
+         U_NEW(UString, UServer_Base::throttling_mask, UString(x));
+         }
+         }
 #  endif
 
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
@@ -520,6 +532,8 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
    UHTTP::cache_file->callForAllEntry(UHTTP::callInitForAllUSP);
 
    UHTTP::bcallInitForAllUSP = true;
+
+   if (UHTTP::upload_dir->empty()) (void) UHTTP::upload_dir->assign(U_CONSTANT_TO_PARAM("uploads"));
 
    U_RESET_MODULE_NAME;
 

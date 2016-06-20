@@ -43,7 +43,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-protected:
    struct UGenericHashMapNode // structure for keeping a linked-list of elements
       {
       K key;
@@ -66,6 +65,7 @@ protected:
    UGenericHashMapNode** table;
    uint32_t _length, _capacity, index, hash;
 
+protected:
    // Find a elem in the array with <key>
 
    template <typename X> void lookup(const X& _key)
@@ -391,9 +391,9 @@ public:
       _length = 0;
       }
 
-   // Call function for all entry
+   // Traverse the hash table for all entry
 
-   bool first()
+   UGenericHashMapNode* first()
       {
       U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::first()")
 
@@ -405,11 +405,11 @@ public:
             {
             node = table[index];
 
-            U_RETURN(true);
+            U_RETURN_POINTER(node, UGenericHashMapNode);
             }
          }
 
-      U_RETURN(false);
+      U_RETURN_POINTER(0, UGenericHashMapNode);
       }
 
    bool next()
@@ -418,7 +418,7 @@ public:
 
       U_INTERNAL_DUMP("index = %u node = %p next = %p", index, node, node->next)
 
-      if ((node = node->next)) U_RETURN(true);
+      if ((node = node->next)) U_RETURN_POINTER(node, UGenericHashMapNode);
 
       for (++index; index < _capacity; ++index)
          {
@@ -432,6 +432,31 @@ public:
 
       U_RETURN(false);
       }
+
+   // We need to pass the pointer because we can lost the internal pointer between the call...
+
+   UGenericHashMapNode* next(UGenericHashMapNode* _node)
+      {
+      U_TRACE(0, "UGenericHashMap<K,I>::next(%p)", _node)
+
+      U_INTERNAL_DUMP("index = %u", index)
+
+      if ((node = _node->next)) U_RETURN_POINTER(node, UGenericHashMapNode);
+
+      for (++index; index < _capacity; ++index)
+         {
+         if (table[index])
+            {
+            node = table[index];
+
+            U_RETURN_POINTER(node, UGenericHashMapNode);
+            }
+         }
+
+      U_RETURN_POINTER(0, UGenericHashMapNode);
+      }
+
+   // Call function for all entry
 
    void callForAllEntry(bPFpvpv function)
       {

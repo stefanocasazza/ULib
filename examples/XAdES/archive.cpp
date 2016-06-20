@@ -308,7 +308,7 @@ public:
          {
          x = vec[i];
 
-         if (x.find("xades:QualifyingProperties") == U_NOT_FOUND) to_digest += UXML2Document::xmlC14N(x);
+         if (U_STRING_FIND(x, 0, "xades:QualifyingProperties") == U_NOT_FOUND) to_digest += UXML2Document::xmlC14N(x);
          }
 
       u_base64_max_columns  = U_OPENSSL_BASE64_MAX_COLUMN;

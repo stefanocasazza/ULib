@@ -105,7 +105,6 @@ ULog*         UServer_Base::apache_like_log;
 char*         UServer_Base::client_address;
 ULock*        UServer_Base::lock_user1;
 ULock*        UServer_Base::lock_user2;
-time_t        UServer_Base::last_event;
 uint32_t      UServer_Base::map_size;
 uint32_t      UServer_Base::vplugin_size;
 uint32_t      UServer_Base::nClientIndex;
@@ -130,7 +129,6 @@ UString*      UServer_Base::IP_address;
 UString*      UServer_Base::cenvironment;
 UString*      UServer_Base::senvironment;
 UString*      UServer_Base::document_root;
-UString*      UServer_Base::str_preforked_num_kids;
 USocket*      UServer_Base::socket;
 USocket*      UServer_Base::csocket;
 UProcess*     UServer_Base::proc;
@@ -165,6 +163,9 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #endif
 
 #ifdef DEBUG
+#  ifndef U_LOG_DISABLE
+long UServer_Base::last_event;
+#  endif
 #  ifdef USE_LIBEVENT
 #     define U_WHICH "libevent" 
 #  elif defined(HAVE_EPOLL_WAIT)
@@ -270,8 +271,6 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(UServer_Base::ptr_shared_data)
 
-      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
-
       // there are idle connection... (timeout)
 
 #  if !defined(U_LOG_DISABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
@@ -293,8 +292,6 @@ public:
          }
 #  endif
 
-      UServer_Base::last_event = u_now->tv_sec;
-
       U_INTERNAL_DUMP("UNotifier::num_connection = %u UNotifier::min_connection = %u", UNotifier::num_connection, UNotifier::min_connection)
 
       if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(UServer_Base::handlerTimeoutConnection);
@@ -304,14 +301,7 @@ public:
 #  endif
       UServer_Base::removeZombies();
 
-      // ---------------
-      // return value:
-      // ---------------
-      // -1 - normal
-      //  0 - monitoring
-      // ---------------
-
-      U_RETURN(-1);
+      U_RETURN(0); // monitoring
       }
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
@@ -439,7 +429,7 @@ public:
 
       if (key)
          {
-         if (UServices::dosMatchWithOR(U_STRING_TO_PARAM(UServer_Base::pClientImage->uri), U_STRING_TO_PARAM(*key))) U_RETURN(4); // NB: call us later (after set record value from db)...
+         if (UServices::dosMatchWithOR(U_STRING_TO_PARAM(UServer_Base::pClientImage->uri), U_STRING_TO_PARAM(*key))) U_RETURN(4); // NB: call us later (after set record value from db)
 
          U_RETURN(1);
          }
@@ -581,8 +571,9 @@ public:
 
       uint32_t l = UServer_Base::throttling_rec->max_limit / UServer_Base::throttling_rec->num_sending;
 
-      UServer_Base::pClientImage->max_limit = (UServer_Base::pClientImage->max_limit == U_NOT_FOUND ?      l
-                                                                                                    : U_min(l, UServer_Base::pClientImage->max_limit));
+      UServer_Base::pClientImage->max_limit = (UServer_Base::pClientImage->max_limit == U_NOT_FOUND
+                                                   ?       l
+                                                   : U_min(l, UServer_Base::pClientImage->max_limit));
 
       U_RETURN(1);
       }
@@ -606,7 +597,8 @@ public:
 
       UServer_Base::pClientImage = ((UClientImage_Base*)cimg);
 
-      U_INTERNAL_DUMP("UServer_Base::pClientImage->min_limit = %u UServer_Base::pClientImage->max_limit = %u", UServer_Base::pClientImage->min_limit, UServer_Base::pClientImage->max_limit)
+      U_INTERNAL_DUMP("UServer_Base::pClientImage->min_limit = %u UServer_Base::pClientImage->max_limit = %u",
+                       UServer_Base::pClientImage->min_limit,     UServer_Base::pClientImage->max_limit)
 
       UServer_Base::pClientImage->max_limit = U_NOT_FOUND;
 
@@ -713,6 +705,7 @@ private:
 };
 
 bool                              UServer_Base::throttling_chk;
+UString*                          UServer_Base::throttling_mask;
 UEventTime*                       UServer_Base::throttling_time;
 UThrottling*                      UServer_Base::throttling_rec;
 URDBObjectHandler<UDataStorage*>* UServer_Base::db_throttling;
@@ -732,11 +725,11 @@ void UServer_Base::initThrottlingClient()
       }
 }
 
-void UServer_Base::initThrottlingServer(const UString& x)
+void UServer_Base::initThrottlingServer()
 {
-   U_TRACE(0, "UServer_Base::initThrottlingServer(%V)", x.rep)
+   U_TRACE_NO_PARAM(0, "UServer_Base::initThrottlingServer()")
 
-   U_INTERNAL_ASSERT(x)
+   U_INTERNAL_ASSERT(*throttling_mask)
    U_INTERNAL_ASSERT_EQUALS(db_throttling, 0)
 
    if (bssl == false) // NB: we can't use throttling with SSL...
@@ -744,7 +737,13 @@ void UServer_Base::initThrottlingServer(const UString& x)
       U_NEW(UThrottling, throttling_rec, UThrottling);
       U_NEW(URDBObjectHandler<UDataStorage*>, db_throttling, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/BandWidthThrottling"), -1, throttling_rec));
 
-      if (isPreForked()) db_throttling->setShared(U_SRV_LOCK_THROTTLING, U_SRV_SPINLOCK_THROTTLING);
+      if (isPreForked())
+         {
+         U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+         U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
+
+         db_throttling->setShared(U_SRV_LOCK_THROTTLING, U_SRV_SPINLOCK_THROTTLING);
+         }
 
       bool result = db_throttling->open(32 * 1024, false, true); // NB: we don't want truncate (we have only the journal)...
 
@@ -758,8 +757,8 @@ void UServer_Base::initThrottlingServer(const UString& x)
       else
          {
          char* ptr;
-         UVector<UString> vec(x);
          UString pattern, number;
+         UVector<UString> vec(*throttling_mask);
 
          min_size_for_sendfile = 4096; // 4k
 
@@ -1143,8 +1142,6 @@ UServer_Base::~UServer_Base()
    delete pstat;
 #endif
 
-   if (ptime) delete ptime;
-
    UTimer::clear();
 
    UClientImage_Base::clear();
@@ -1167,6 +1164,7 @@ UServer_Base::~UServer_Base()
 
 #ifdef U_THROTTLING_SUPPORT
    if (throttling_rec)  delete throttling_rec;
+   if (throttling_mask) delete throttling_mask;
    if (throttling_time) delete throttling_time;
 #endif
 
@@ -1470,7 +1468,53 @@ void UServer_Base::loadConfigParam()
 
    x = cfg->at(U_CONSTANT_TO_PARAM("PREFORK_CHILD"));
 
-   if (x) U_NEW(UString, str_preforked_num_kids, UString(x));
+   if (x)
+      {
+      preforked_num_kids = x.strtol();
+
+#  ifdef U_SERVER_CAPTIVE_PORTAL
+      if (x.c_char(0) == '0') monitoring_process = true;
+#  endif
+
+#  if !defined(ENABLE_THREAD) || defined(USE_LIBEVENT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+      if (preforked_num_kids == -1)
+         {
+         U_WARNING("Sorry, I was compiled without server thread approach so I can't accept PREFORK_CHILD == -1");
+
+         preforked_num_kids = 2;
+         }
+#  endif
+      }
+#ifndef _MSWINDOWS_
+   else
+      {
+      preforked_num_kids = u_get_num_cpu();
+
+      U_INTERNAL_DUMP("num_cpu = %d", preforked_num_kids)
+
+      if (preforked_num_kids < 2) preforked_num_kids = 2;
+      }
+#endif
+
+#ifndef U_CLASSIC_SUPPORT
+   if (isClassic())
+      {
+      U_WARNING("Sorry, I was compiled without server classic model support so I can't accept PREFORK_CHILD == 1");
+
+      preforked_num_kids = 2;
+      }
+#endif
+
+#ifdef _MSWINDOWS_
+   if (preforked_num_kids > 0)
+      {
+      U_WARNING("Sorry, I was compiled on Windows so I can't accept PREFORK_CHILD > 0");
+
+      preforked_num_kids = 0;
+      }
+#endif
+
+   if (preforked_num_kids > 1) monitoring_process = true;
 
 #ifdef U_WELCOME_SUPPORT
    x = cfg->at(U_CONSTANT_TO_PARAM("WELCOME_MSG"));
@@ -2235,57 +2279,6 @@ void UServer_Base::init()
       }
 #endif
 
-   if (str_preforked_num_kids)
-      {
-      preforked_num_kids = str_preforked_num_kids->strtol();
-
-#  ifdef U_SERVER_CAPTIVE_PORTAL
-      if (str_preforked_num_kids->c_char(0) == '0') monitoring_process = true;
-#  endif
-
-      delete str_preforked_num_kids;
-             str_preforked_num_kids = 0;
-
-#  if !defined(ENABLE_THREAD) || defined(USE_LIBEVENT) || !defined(U_SERVER_THREAD_APPROACH_SUPPORT)
-      if (preforked_num_kids == -1)
-         {
-         U_WARNING("Sorry, I was compiled without server thread approach so I can't accept PREFORK_CHILD == -1");
-
-         preforked_num_kids = 2;
-         }
-#  endif
-      }
-#ifndef _MSWINDOWS_
-   else
-      {
-      preforked_num_kids = u_get_num_cpu();
-
-      U_INTERNAL_DUMP("num_cpu = %d", preforked_num_kids)
-
-      if (preforked_num_kids < 2) preforked_num_kids = 2;
-      }
-#endif
-
-#ifndef U_CLASSIC_SUPPORT
-   if (isClassic())
-      {
-      U_WARNING("Sorry, I was compiled without server classic model support so I can't accept PREFORK_CHILD == 1");
-
-      preforked_num_kids = 2;
-      }
-#endif
-
-#ifdef _MSWINDOWS_
-   if (preforked_num_kids > 0)
-      {
-      U_WARNING("Sorry, I was compiled on Windows so I can't accept PREFORK_CHILD > 0");
-
-      preforked_num_kids = 0;
-      }
-#endif
-
-   if (preforked_num_kids > 1) monitoring_process = true;
-
    UTimer::init(UTimer::NOSIGNAL);
 
    UClientImage_Base::init();
@@ -2407,8 +2400,6 @@ void UServer_Base::init()
       }
 #endif
 
-   last_event = u_now->tv_sec;
-
 #ifndef U_LOG_DISABLE
    U_INTERNAL_ASSERT_EQUALS(U_SRV_TOT_CONNECTION, 0)
 #endif
@@ -2513,6 +2504,10 @@ void UServer_Base::init()
       U_ERROR("System date not updated");
       }
 
+#ifdef U_THROTTLING_SUPPORT
+   if (throttling_mask) initThrottlingServer();
+#endif
+
    if (cfg) cfg->clear();
 
    UInterrupt::syscall_restart                 = false;
@@ -2596,10 +2591,7 @@ RETSIGTYPE UServer_Base::handlerForSigWINCH(int signo)
       return;
       }
 
-   if (u_setStartTime() == false)
-      {
-      U_WARNING("System date update failed: %#5D", u_now->tv_sec);
-      }
+   if (u_setStartTime() == false) U_WARNING("System date update failed: %#5D", u_now->tv_sec);
 }
 
 void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
@@ -2625,10 +2617,7 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
    if (signo != SIGWINCH) pthis->handlerSignal(signo); // manage signal before we send it to the preforked pool of children...
    else
       {
-      if (u_setStartTime() == false)
-         {
-         U_WARNING("System date update failed: %#5D", u_now->tv_sec);
-         }
+      if (u_setStartTime() == false) U_WARNING("System date update failed: %#5D", u_now->tv_sec);
       }
 
    UProcess::kill(0, signo); // signo is sent to every process in the process group of the calling process...
@@ -2885,8 +2874,6 @@ loop:
          }
       else if (ptime) // NB: we check if the connection is idle...
          {
-         U_INTERNAL_ASSERT_POINTER(ptime)
-
          U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
          if ((u_now->tv_sec - CLIENT_INDEX->last_event) >= ptime->UTimeVal::tv_sec)
@@ -3210,8 +3197,6 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    if (++CLIENT_INDEX >= eClientImage) CLIENT_INDEX = vClientImage;
 
 next:
-   last_event = u_now->tv_sec;
-
 #ifdef USE_LIBEVENT
    goto end;
 #endif
@@ -3314,7 +3299,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          else
             {
             ULog::log("%shandlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v",
-                        UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
+                        UServer_Base::mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
          }
 #  endif
@@ -3323,7 +3308,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          {
          U_DEBUG("%shandlerTime: client connected didn't send any request in %u secs (timeout %u sec) - "
                  "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
-                 UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
+                 UServer_Base::mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ptime->UTimeVal::tv_sec,
                                                ((UClientImage_Base*)cimg)->UEventFd::fd,
                                                ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
          }
@@ -3331,7 +3316,7 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          {
          U_DEBUG("%shandlerTimeoutConnection: client connected didn't send any request in %u secs - "
                  "UEventFd::fd = %d socket->iSockDesc = %d UNotifier::num_connection = %d UNotifier::min_connection = %d",
-                 UServer_Base::mod_name[0], last_event - ((UClientImage_Base*)cimg)->last_event,
+                 UServer_Base::mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event,
                                                            ((UClientImage_Base*)cimg)->UEventFd::fd,
                                                            ((UClientImage_Base*)cimg)->socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection)
          }
@@ -3456,12 +3441,21 @@ void UServer_Base::runLoop(const char* user)
    (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
 #endif
 
+   if (ptime)
+      {
+      UTimer::insert(ptime);
+
+#  if !defined(U_LOG_DISABLE) && defined(DEBUG)
+      last_event = u_now->tv_sec;
+#  endif
+      }
+
    while (flag_loop)
       {
       U_INTERNAL_ASSERT_EQUALS(UInterrupt::event_signal_pending, 0)
 
-      U_INTERNAL_DUMP("ptime = %p handler_other = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
-                       ptime,     handler_other,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
+      U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
+                       handler_other,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
 
 #  if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
       if (preforked_num_kids != -1)
@@ -3469,25 +3463,15 @@ void UServer_Base::runLoop(const char* user)
       {
       if (UNotifier::min_connection) // NB: we need to notify someone for something...
          {
-         if (ptime == 0) UNotifier::waitForEvent();
-         else
+         UNotifier::waitForEvent();
+
+         if (ptime)
             {
-            bool some_client = (UNotifier::num_connection > UNotifier::min_connection);
+#        if !defined(U_LOG_DISABLE) && defined(DEBUG)
+            last_event = u_now->tv_sec;
+#        endif
 
-            if (some_client) // NB: we must feel the possibly timeout for request from the client...
-               {
-               UTimer::insert(ptime);
-
-               last_event = u_now->tv_sec;
-               }
-
-            UNotifier::waitForEvent();
-
-            if (some_client &&
-                UNotifier::nfd_ready > 0)
-               {
-               UTimer::erase(ptime);
-               }
+            if (UNotifier::nfd_ready > 0) UTimer::updateTimeToExpire(ptime);
             }
 
          U_ASSERT_EQUALS(UNotifier::empty(), false)
@@ -3900,7 +3884,6 @@ const char* UServer_Base::dump(bool reset) const
                   << "map_size                  " << map_size                   << '\n'
                   << "flag_loop                 " << flag_loop                  << '\n'
                   << "timeoutMS                 " << timeoutMS                  << '\n'
-                  << "last_event                " << last_event                 << '\n'
                   << "verify_mode               " << verify_mode                << '\n'
                   << "shared_data_add           " << shared_data_add            << '\n'
                   << "ptr_shared_data           " << (void*)ptr_shared_data     << '\n'

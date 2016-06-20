@@ -217,7 +217,7 @@ UHttpClient_Base::UHttpClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
 
    u_init_http_method_list();
 
-   U_NEW(UMimeHeader, requestHeader, UMimeHeader);
+   U_NEW(UMimeHeader,  requestHeader, UMimeHeader);
    U_NEW(UMimeHeader, responseHeader, UMimeHeader);
 }
 
@@ -234,18 +234,51 @@ void UHttpClient_Base::reset()
    UClient_Base::server.clear();
 }
 
-//=======================================================================================
+// =====================================================================================
 // In response to a HTTP_UNAUTHORISED response from the HTTP server,
-// this function will attempt to generate an Authentication header to satisfy the server.
-//=======================================================================================
+// this function will attempt to generate an Authentication header to satisfy the server
+// =====================================================================================
 
-bool UHttpClient_Base::createAuthorizationHeader()
+UString UHttpClient_Base::getBasicAuthorizationHeader()
 {
-   U_TRACE(0, "UHttpClient_Base::createAuthorizationHeader()")
+   U_TRACE_NO_PARAM(0, "UHttpClient_Base::getBasicAuthorizationHeader()")
+
+   UString headerValue(300U), tmp(100U), data(100U);
+
+   // ---------------------------------------------------------------------------------------------------------------------------
+   // According to RFC 2617 HTTP Authentication: Basic and Digest Access Authentication
+   // ---------------------------------------------------------------------------------------------------------------------------
+   // For "Basic" authentication, the user and password are concatentated with a colon separator before being encoded in base64.
+   // According to RFC 2068 (HTTP/1.1) the Username and Password are defined as TEXT productions and are therefore supposed to be
+   // encoded in ISO-8859-1 before being Base64-encoded
+   // ---------------------------------------------------------------------------------------------------------------------------
+
+   tmp.snprintf("%v:%v", user.rep, password.rep);
+
+   UBase64::encode(tmp, data);
+
+   // Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
+
+   headerValue.snprintf("Basic %v", data.rep);
+
+   U_RETURN_STRING(headerValue);
+}
+
+bool UHttpClient_Base::createAuthorizationHeader(bool bProxy)
+{
+   U_TRACE(0, "UHttpClient_Base::createAuthorizationHeader(%b)", bProxy)
+
+   if (    user.empty() ||
+       password.empty())
+      {
+      // If the registered Authenticator cannot supply a user/password then we cannot continue.
+      // This is signalled by returning false to the sendRequest() function
+
+      U_RETURN(false);
+      }
 
    uint32_t keylen;
    const char* key;
-   bool bProxy = (U_http_info.nResponseCode == HTTP_PROXY_AUTH);
 
    if (bProxy)
       {
@@ -267,18 +300,9 @@ bool UHttpClient_Base::createAuthorizationHeader()
       U_RETURN(false);
       }
 
-   if (    user.empty() ||
-       password.empty())
-      {
-      // If the registered Authenticator cannot supply a user/password then we cannot continue.
-      // This is signalled by returning false to the sendRequest() function
-
-      U_RETURN(false);
-      }
-
    // ---------------------------------------------------------------------------------------------------------------------------
-   // The authentication header is constructed like a tagged attribute list (Ex.)
-   // -------------------------------------------------------------------------------
+   // The authentication header is constructed like a tagged attribute list:
+   // ---------------------------------------------------------------------------------------------------------------------------
    // WWW-Authenticate: Basic  realm="SokEvo"
    // WWW-Authenticate: Digest realm="Autenticazione su LDAP/SSL", nonce="GkPcSTxaBAA=666065cb86c557d75991c7b3fa362e7f881abb93",
    //                   algorithm=MD5, qop="auth"
@@ -300,23 +324,12 @@ bool UHttpClient_Base::createAuthorizationHeader()
    // ---------------------------------------------------------------------------------------------------------------------------
    // According to RFC 2617 HTTP Authentication: Basic and Digest Access Authentication
    // ---------------------------------------------------------------------------------------------------------------------------
-   // For "Basic" authentication, the user and password are concatentated with a colon separator before being encoded in base64
+   // For "Basic" authentication, the user and password are concatentated with a colon separator before being encoded in base64.
    // According to RFC 2068 (HTTP/1.1) the Username and Password are defined as TEXT productions and are therefore supposed to be
    // encoded in ISO-8859-1 before being Base64-encoded
    // ---------------------------------------------------------------------------------------------------------------------------
 
-   if (scheme.equal(U_CONSTANT_TO_PARAM("Basic")))
-      {
-      UString tmp(100U), data(100U);
-
-      tmp.snprintf("%v:%v", user.rep, password.rep);
-
-      UBase64::encode(tmp, data);
-
-      // Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
-
-      headerValue.snprintf("Basic %v", data.rep);
-      }
+   if (scheme.equal(U_CONSTANT_TO_PARAM("Basic"))) headerValue = getBasicAuthorizationHeader();
    else
       {
       // WWW-Authenticate: Digest realm="Autenticazione su LDAP/SSL", nonce="86c557d75991c7b3fa362e7f881abb93", algorithm=MD5, qop="auth"
@@ -426,12 +439,11 @@ bool UHttpClient_Base::createAuthorizationHeader()
       }
 
    // Only basic and digest authentication is supported at present. By failing to create an authentication header,
-   // and returning false, we signal to the caller that the authenticate response should be treated as an error.
+   // and returning false, we signal to the caller that the authenticate response should be treated as an error
 
    if (headerValue)
       {
-      if (bProxy == false) requestHeader->setHeader(U_CONSTANT_TO_PARAM("Authorization"),       headerValue);
-      else                 requestHeader->setHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"), headerValue);
+      setAuthorizationHeader(bProxy, headerValue);
 
       U_RETURN(true);
       }
@@ -468,16 +480,19 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
    // 5xx indicates an error on the server's part
    // ------------------------------------------------------------
 
-   if (U_http_info.nResponseCode == HTTP_UNAUTHORIZED || // 401
-       U_http_info.nResponseCode == HTTP_PROXY_AUTH)     // 407
+   bool bAuth  = (U_http_info.nResponseCode == HTTP_UNAUTHORIZED), // 401
+        bProxy = (U_http_info.nResponseCode == HTTP_PROXY_AUTH);   // 407
+
+   if (bAuth ||
+       bProxy)
       {
       // If we haven't already done so, attempt to create an Authentication header. If this fails
       // (due to application not passing the credentials), then we treat it as an error.
-      // If we already have one then the server is rejecting it so we have an error anyway.
+      // If we already have one then the server is rejecting it so we have an error anyway
 
-      if ((U_http_info.nResponseCode == HTTP_UNAUTHORIZED && requestHeader->containsHeader(U_CONSTANT_TO_PARAM("Authorization")))       ||
-          (U_http_info.nResponseCode == HTTP_PROXY_AUTH   && requestHeader->containsHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"))) ||
-          (redirectCount == -1 || createAuthorizationHeader() == false))
+      if ((bAuth  && requestHeader->containsHeader(U_CONSTANT_TO_PARAM("Authorization")))       ||
+          (bProxy && requestHeader->containsHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"))) ||
+          (redirectCount == -1 || createAuthorizationHeader(bProxy) == false))
          {
          U_RETURN(-2);
          }
@@ -793,7 +808,7 @@ void UHttpClient_Base::composeRequest(const char* content_type, uint32_t content
 
       last_request.snprintf("%.*s %v HTTP/1.1\r\n"
                             "Host: %v:%u\r\n"
-                            "User-Agent: ULib/1.0\r\n"
+                            "User-Agent: ULib/1.4.2\r\n"
                             "Content-Length: %d\r\n"
                             "Content-Type: %.*s\r\n"
                             "\r\n",
@@ -911,6 +926,14 @@ bool UHttpClient_Base::sendRequest()
       composeRequest();
       }
 
+#ifdef USE_LIBSSL
+   if (isPasswordAuthentication() &&
+       UClient_Base::socket->isSSLActive())
+      {
+      setAuthorizationHeader(false, getBasicAuthorizationHeader());
+      }
+#endif
+
    ok = sendRequestEngine();
 
    if (server_context_flag)
@@ -962,14 +985,14 @@ bool UHttpClient_Base::sendRequest(int method, const char* content_type, uint32_
 {
    U_TRACE(0, "UHttpClient_Base::sendRequest(%d,%.*S,%u,%.*S,%u,%.*S,%u)", method, content_type_len, content_type, content_type_len, data_len, data, data_len, uri_len, _uri, uri_len)
 
-   if ( uri_len) (void) setUrl(_uri, uri_len);
+   if ( uri_len) (void) UClient_Base::setUrl(_uri, uri_len);
    if (data_len) (void) body.assign(data, data_len);
 
    method_num = method;
 
    composeRequest(content_type, content_type_len);
 
-   // send post request to server and get response
+   // send method requested to server and get response
 
    bool ok = sendRequest();
 
@@ -1001,70 +1024,116 @@ bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const
    U_RETURN(false);
 }
 
-bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* filename, uint32_t filename_len)
+bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* filename, uint32_t filename_len, int method)
 {
-   U_TRACE(0, "UHttpClient_Base::upload(%V,%.*S,%.*S,%u)", _url.rep, U_FILE_TO_TRACE(file), filename_len, filename, filename_len)
+   U_TRACE(0, "UHttpClient_Base::upload(%V,%.*S,%.*S,%u,%d)", _url.rep, U_FILE_TO_TRACE(file), filename_len, filename, filename_len, method)
 
-   if (UClient_Base::connectServer(_url) == false)
+   if (UClient_Base::connectServer(_url) == false) body = UClient_Base::response; // NB: it contains the error message...
+   else
       {
-      body = UClient_Base::response; // NB: it contains the error message...
+      UString content = file.getContent();
 
-      U_RETURN(false);
+      uint32_t sz = content.size();
+
+      if (sz)
+         {
+         U_INTERNAL_ASSERT(UClient_Base::uri)
+
+#     ifdef USE_LIBMAGIC
+         if (UMagic::magic == 0) (void) UMagic::init();
+#     endif
+
+         /**
+          * The PUT method, though not as widely used as the POST method is perhaps the more efficient way of uploading files to a server.
+          * This is because in a POST upload the files need to be combined together into a multipart message and this message has to be
+          * decoded at the server. In contrast, the PUT method allows you to simply write the contents of the file to the socket connection
+          * that is established with the server.
+          *
+          * When using the POST method, all the files are combined together into a single multipart/form-data type object. This MIME message
+          * when transferred to the server, has to be decoded by the server side handler. The decoding process may consume significant amounts
+          * of memory and CPU cycles for very large files.
+          *
+          * The fundamental difference between the POST and PUT requests is reflected in the different meaning of the Request-URI. The URI in a
+          * POST request identifies the resource that will handle the enclosed entity. That resource might be a data-accepting process, a gateway
+          * to some other protocol, or a separate entity that accepts annotations. In contrast, the URI in a PUT request identifies the entity
+          * enclosed with the request
+          */
+
+         if (method == 3) // 3 => PUT
+            {
+            uint32_t nup = (filename_len == 0 ? 0
+                                              : U_CONSTANT_SIZE("/upload/"));
+
+            if (nup == 0)
+               {
+               filename     = UClient_Base::uri.data();
+               filename_len = UClient_Base::uri.size();
+               }
+
+            (void) last_request.reserve(filename_len + UClient_Base::server.size() + 300U);
+
+            last_request.snprintf("PUT %.*s%.*s HTTP/1.1\r\n"
+                                  "Host: %v:%u\r\n"
+                                  "User-Agent: ULib/1.4.2\r\n"
+                                  "Content-Length: %u\r\n"
+                                  "Content-Type: %s\r\n"
+                                  "\r\n",
+                                  nup, "/upload/",
+                                  filename_len, filename,
+                                  UClient_Base::server.rep, UClient_Base::port,
+                                  sz, file.getMimeType());
+
+            UClient_Base::iov[3].iov_base = (caddr_t)content.data();
+            UClient_Base::iov[3].iov_len  = sz;
+
+            parseRequest(4);
+            }
+         else
+            {
+            U_INTERNAL_ASSERT_EQUALS(method, 2) // 2 => POST
+
+            if (filename_len == 0)
+               {
+               filename     = file.getPathRelativ();
+               filename_len = file.getPathRelativLen();
+               }
+
+            UString _body(filename_len + 300U);
+
+            _body.snprintf("------------------------------b34551106891\r\n"
+                           "Content-Disposition: form-data; name=\"file\"; filename=\"%.*s\"\r\n"
+                           "Content-Type: %s\r\n"
+                           "\r\n",
+                           filename_len, filename,
+                           file.getMimeType());
+
+            UClient_Base::iov[3].iov_base = (caddr_t)_body.data();
+            UClient_Base::iov[3].iov_len  = _body.size();
+            UClient_Base::iov[4].iov_base = (caddr_t)content.data();
+            UClient_Base::iov[4].iov_len  = sz;
+            UClient_Base::iov[5].iov_base = (caddr_t)       "\r\n"
+                                                            "------------------------------b34551106891--\r\n";
+            UClient_Base::iov[5].iov_len  = U_CONSTANT_SIZE("\r\n"
+                                                            "------------------------------b34551106891--\r\n");
+
+            (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
+
+            last_request.snprintf("POST %v HTTP/1.1\r\n"
+                                  "Host: %v:%u\r\n"
+                                  "User-Agent: ULib/1.4.2\r\n"
+                                  "Content-Length: %u\r\n"
+                                  "Content-Type: multipart/form-data; boundary=----------------------------b34551106891\r\n"
+                                  "\r\n",
+                                  UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, _body.size() + sz + UClient_Base::iov[5].iov_len);
+
+            parseRequest(6);
+            }
+
+         // send upload request to server and get response
+
+         if (sendRequest()) U_RETURN(true);
+         }
       }
-
-   method_num = 2; // POST
-
-   UString content = file.getContent();
-
-   if (content.empty()) U_RETURN(false);
-
-   U_INTERNAL_ASSERT(UClient_Base::uri)
-
-   if (filename_len == 0)
-      {
-      filename     = file.getPathRelativ();
-      filename_len = file.getPathRelativLen();
-      }
-
-   uint32_t sz = content.size();
-
-   UString _body(filename_len + 300U);
-
-#ifdef USE_LIBMAGIC
-   if (UMagic::magic == 0) (void) UMagic::init();
-#endif
-
-   _body.snprintf("------------------------------b34551106891\r\n"
-                  "Content-Disposition: form-data; name=\"file\"; filename=\"%.*s\"\r\n"
-                  "Content-Type: %s\r\n"
-                  "\r\n",
-                  filename_len, filename,
-                  file.getMimeType());
-
-   UClient_Base::iov[3].iov_base = (caddr_t)_body.data();
-   UClient_Base::iov[3].iov_len  = _body.size();
-   UClient_Base::iov[4].iov_base = (caddr_t)content.data();
-   UClient_Base::iov[4].iov_len  = sz;
-   UClient_Base::iov[5].iov_base = (caddr_t)       "\r\n"
-                                                   "------------------------------b34551106891--\r\n";
-   UClient_Base::iov[5].iov_len  = U_CONSTANT_SIZE("\r\n"
-                                                   "------------------------------b34551106891--\r\n");
-
-   (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
-
-   last_request.snprintf("POST %v HTTP/1.1\r\n"
-                         "Host: %v:%u\r\n"
-                         "User-Agent: ULib/1.0\r\n"
-                         "Content-Length: %d\r\n"
-                         "Content-Type: multipart/form-data; boundary=----------------------------b34551106891\r\n"
-                         "\r\n",
-                         UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, _body.size() + sz + UClient_Base::iov[5].iov_len);
-
-   parseRequest(6);
-
-   // send upload request to server and get response
-
-   if (sendRequest()) U_RETURN(true);
 
    U_RETURN(false);
 }

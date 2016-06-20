@@ -345,7 +345,7 @@ public:
 
       U_INTERNAL_DUMP("c = %C", c)
 
-      if (u__isdigit(c)) // compatibility
+      if (u__isdigit(c)) // old compatibility
          {
          U_INTERNAL_ASSERT(c == '1' || c == '0')
 
@@ -876,9 +876,11 @@ public:
 
          if (findLabel() == false)
             {
-            if (ap_address_trust == false  ||
-                ap_label->c_char(0) == '0' ||
-                sz > 4096)
+            if (sz > 4096                    ||
+                ap_address_trust == false    ||
+                (db_anagrafica               &&
+                 (ap_label->c_char(0) == '0' ||
+                  ap_label->c_char(0) == 'a')))
                {
                U_RETURN(false);
                }
@@ -1137,6 +1139,8 @@ public:
       {
       U_TRACE(5, "WiAuthUser::updateCounter(%V,%ld,%llu,%b)", logout.rep, time_connected, traffic, ask_logout)
 
+      const char* write_to_log = 0;
+
          _time_done += time_connected;
       _traffic_done += traffic;
 
@@ -1144,33 +1148,7 @@ public:
          {
             _time_consumed += time_connected;
          _traffic_consumed += traffic;
-
-         if (_time_consumed > _time_available)
-            {
-            ask_logout = true;
-
-            /*
-            long time_diff = _time_consumed - _time_available;
-
-            U_LOGGER("*** updateCounter() UID(%v) IP(%v) MAC(%v) AP(%v@%v) EXCEED TIME_AVAILABLE (%ld sec) ***",
-                                          uid->rep, _ip.rep, _mac.rep, ap_label->rep, ap_address->rep, time_diff);
-            */
-            }
-
-         if (_traffic_consumed > _traffic_available)
-            {
-            ask_logout = true;
-
-            /*
-            uint64_t traffic_diff = _traffic_consumed - _traffic_available;
-
-            U_LOGGER("*** updateCounter() UID(%v) IP(%v) MAC(%v) AP(%v@%v) connected=%b EXCEED TRAFFIC_AVAILABLE (%llu bytes) ***",
-                                          uid->rep, _ip.rep, _mac.rep, ap_label->rep, ap_address->rep, connected, traffic_diff);
-            */
-            }
          }
-
-      const char* write_to_log = 0;
 
       char c = (logout ? logout.first_char() : '0');
 
@@ -1185,6 +1163,32 @@ public:
             U_LOGGER("*** updateCounter() UID(%v) IP(%v) MAC(%v) AP(%v@%v) connected=%b EXCEED MAX_TIME_NO_TRAFFIC(%ld secs) ***",
                                           uid->rep, _ip.rep, _mac.rep, ap_label->rep, ap_address->rep, connected, time_connected);
             */
+            }
+         else if (consume)
+            {
+            if (_time_consumed > _time_available)
+               {
+               ask_logout = true;
+
+               /*
+               long time_diff = _time_consumed - _time_available;
+
+               U_LOGGER("*** updateCounter() UID(%v) IP(%v) MAC(%v) AP(%v@%v) EXCEED TIME_AVAILABLE (%ld sec) ***",
+                                             uid->rep, _ip.rep, _mac.rep, ap_label->rep, ap_address->rep, time_diff);
+               */
+               }
+
+            if (_traffic_consumed > _traffic_available)
+               {
+               ask_logout = true;
+
+               /*
+               uint64_t traffic_diff = _traffic_consumed - _traffic_available;
+
+               U_LOGGER("*** updateCounter() UID(%v) IP(%v) MAC(%v) AP(%v@%v) connected=%b EXCEED TRAFFIC_AVAILABLE (%llu bytes) ***",
+                                             uid->rep, _ip.rep, _mac.rep, ap_label->rep, ap_address->rep, connected, traffic_diff);
+               */
+               }
             }
          }
       else
@@ -1538,9 +1542,9 @@ next:
 
       /**
        * Example
-       * ------------------------------------------------------------------------------------------------------------------------------------------------------ 
-       * 2012/08/08 14:56:00 op: PASS_AUTH, uid: 33437934, ap: 00@10.8.1.2, ip: 172.16.1.172, mac: 00:14:a5:6e:9c:cb, timeout: 233, traffic: 342, policy: DAILY
-       * ------------------------------------------------------------------------------------------------------------------------------------------------------ 
+       * ----------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+       * 2012/08/08 14:56:00 op: PASS_AUTH, uid: 33437934, ap: 00@10.8.1.2, ip: 172.16.1.172, mac: 00:14:a5:6e:9c:cb, time: 233, traffic: 342, policy: DAILY consume: true
+       * ----------------------------------------------------------------------------------------------------------------------------------------------------------------- 
        */
 
       U_INTERNAL_ASSERT(_mac)
@@ -1879,7 +1883,7 @@ static int checkForUserPolicy(UStringRep* key, UStringRep* data)
 
    if (key) U_RETURN(4); // NB: call us later (after set record value from db)...
 
-   bool bflat = (*policy == *policy_flat);
+   bool bflat = (user_rec->_policy == *policy_flat);
 
    if (bflat ||
        user_rec->_policy == *policy_daily)
@@ -1932,7 +1936,7 @@ static int getStatusUser(UStringRep* key, UStringRep* data)
       U_RETURN(1);
       }
 
-   U_INTERNAL_DUMP("user_rec->last_modified = %ld start_op = %ld user_rec->connected = %b", user_rec->last_modified, start_op, user_rec->connected)
+   U_INTERNAL_DUMP("user_rec->last_modified = %ld UNotifier::last_event = %ld user_rec->connected = %b", user_rec->last_modified, UNotifier::last_event, user_rec->connected)
 
    U_INTERNAL_ASSERT(user_rec->connected)
 
@@ -2195,6 +2199,8 @@ static void usp_init_wi_auth()
    U_NEW(UString, dir_reg, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_REG"), environment)));
    U_NEW(UString, title_default, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("TITLE_DEFAULT"), environment)));
    U_NEW(UString, historical_log_dir, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HISTORICAL_LOG_DIR"), environment)));
+
+   UHTTP::setUploadDir(*historical_log_dir);
 
    dir_server_address->snprintf("%v/client", dir_root.rep);
 
@@ -3233,12 +3239,24 @@ static bool checkTimeRequest()
    U_TRACE(5, "::checkTimeRequest()")
 
    long timestamp;
+   bool ko = (*ts && (u_now->tv_sec - (timestamp = ts->strtol())) > (5L * 60L));
 
-   if (*ts &&
-       (u_now->tv_sec - (timestamp = ts->strtol())) > (5L * 60L))
+   if (ko)
       {
       U_LOGGER("*** IP(%v) MAC(%v) AP(%v) request expired: %#5D ***", ip->rep, mac->rep, ap->rep, timestamp);
+      }
+   else
+      {
+      ko = (ts->empty() && db_anagrafica);
 
+      if (ko)
+         {
+         U_LOGGER("*** IP(%v) MAC(%v) AP(%v) request without timestamp ***", ip->rep, mac->rep, ap->rep);
+         }
+      }
+
+   if (ko)
+      {
       if (*redirect &&
           strncmp(redirect->c_pointer(U_CONSTANT_SIZE("http://")), U_STRING_TO_PARAM(*virtual_name)))
          {
@@ -4436,7 +4454,7 @@ static void GET_get_config()
                    * 159.213.248.233 172.25.0.0/22   213
                    */
 
-                  pos = db_anagrafica->find(U_STRING_TO_PARAM(*ip));
+                  pos = db_anagrafica->find(*ip);
 
                   U_INTERNAL_DUMP("pos = %d", pos)
 
@@ -5246,9 +5264,9 @@ error:
    bool ball         = false,
         bfirenzecard = false;
 
-   if (user_rec->_auth_domain.find("firenzecard") == U_NOT_FOUND)
+   if (U_STRING_FIND(user_rec->_auth_domain, 0, "firenzecard") == U_NOT_FOUND)
       {
-      if (user_rec->_auth_domain.find("all") != U_NOT_FOUND) ball = true;
+      if (U_STRING_FIND(user_rec->_auth_domain, 0, "all") != U_NOT_FOUND) ball = true;
       }
    else
       {
@@ -6151,7 +6169,7 @@ static void POST_login_request()
       bool bpopup;
       UVector<UString> vec;
       uint32_t end = UHTTP::processForm();
-      UString uid_cookie = (uid->clear(), (void)getCookie(0,0), *uid);
+      UString buffer(U_CAPACITY), uid_cookie = (uid->clear(), (void)getCookie(0,0), *uid);
 
       // ----------------------------
       // $1 -> uid
@@ -6167,10 +6185,7 @@ static void POST_login_request()
 
          if (uid_cookie)
             {
-            if (uid->equal(uid_cookie) == false)
-               {
-               U_LOGGER("*** UID DIFFER(%v=>%v) ***", uid->rep, uid_cookie.rep);
-               }
+            if (uid->equal(uid_cookie) == false) U_LOGGER("*** UID DIFFER(%v=>%v) ***", uid->rep, uid_cookie.rep);
             }
          }
       else
@@ -6234,10 +6249,21 @@ static void POST_login_request()
          ptr2 = "";
          }
 
+      if (user_rec->consume)
+         {
+         if (   time_counter->first_char() == '-')    time_counter->setFromNumber32(0);
+         if (traffic_counter->first_char() == '-') traffic_counter->setFromNumber64(0LL);
+
+         buffer.snprintf("<table class=\"centered\" border=\"1\">"
+                            "<tr><th class=\"header\" colspan=\"2\" align=\"left\">Utente&nbsp;&nbsp;&nbsp;%v</th></tr>"
+                            "<tr><td class=\"header\">Tempo residuo (min)</td><td class=\"data_italic\">%v</td></tr>"
+                            "<tr><td class=\"header\">Traffico residuo (MB)</td><td class=\"data_italic\">%v</td></tr>"
+                         "</table>", uid->rep, time_counter->rep, traffic_counter->rep);
+         }
+
       USSIPlugIn::setAlternativeInclude(cache->getContent(U_CONSTANT_TO_PARAM("ringraziamenti.tmpl")), 0, true,
                                         title_default->data(), ptr1, 0,
-                                        uid->rep,
-                                        time_counter->rep, traffic_counter->rep, ptr2);
+                                        buffer.rep, ptr2);
 
       if (vec.empty() == false) askNodogToLogoutUser(vec, false);
       }
@@ -6585,9 +6611,13 @@ static int dbUserFilter(UStringRep* key, UStringRep* data)
 
 // INFO
 
-static void GET_info()
+static void POST_info()
 {
-   U_TRACE_NO_PARAM(5, "::GET_info()")
+   U_TRACE_NO_PARAM(5, "::POST_info()")
+
+#ifdef USE_LIBZ
+   if (UStringExt::isGzip(*UClientImage_Base::body)) *UClientImage_Base::body = UStringExt::gunzip(*UClientImage_Base::body);
+#endif
 
    uint32_t end;
    uint64_t _traffic;
@@ -6724,7 +6754,7 @@ next1:
 
          ap_rec->traffic_done += _traffic;
 
-         if (write_to_log)
+         if (blogout)
             {
             if (ap_rec->num_users_connected) ap_rec->num_users_connected--;
             else
@@ -6781,20 +6811,13 @@ next1:
    if (vec.empty() == false) askNodogToLogoutUser(vec, false);
 }
 
-static void POST_info()
+static void POST_roaming()
 {
-   U_TRACE_NO_PARAM(5, "::POST_info()")
+   U_TRACE_NO_PARAM(5, "::POST_roaming()")
 
 #ifdef USE_LIBZ
    if (UStringExt::isGzip(*UClientImage_Base::body)) *UClientImage_Base::body = UStringExt::gunzip(*UClientImage_Base::body);
 #endif
-
-   GET_info();
-}
-
-static void POST_roaming()
-{
-   U_TRACE_NO_PARAM(5, "::POST_roaming()")
 
    uint32_t end;
    UVector<UString> vec;
@@ -6834,8 +6857,8 @@ static void POST_roaming()
           bcheckIfUserConnected  == false ||
           bsetAccessPointAddress == false)
          {
-         U_LOGGER("*** ROAMING(%b,%b,%b): UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***",
-                     bcheckIfUserConnected, bsetAccessPointAddress, bsetNodogReference, uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
+         U_LOGGER("*** ROAMING(%b,%b,%b): UID(%v) IP(%v) MAC(%v) AP(%v@%v=>%v) ***",
+                     bcheckIfUserConnected, bsetAccessPointAddress, bsetNodogReference, uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep, ap->rep);
 
          if (bsetAccessPointAddress)
             {
@@ -6856,7 +6879,7 @@ static void POST_roaming()
       // goto next;
          }
 
-      U_LOGGER("*** ROAMING: UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***", uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
+      U_LOGGER("*** ROAMING: UID(%v) IP(%v) MAC(%v) AP(%v@%v=>%v) ***", uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep, ap->rep);
 
       continue;
 
@@ -7191,12 +7214,13 @@ static int checkStatusNodog(UStringRep* key, UStringRep* data)
       U_RETURN(4); // NB: call us later (after set record value from db)...
       }
 
-   U_INTERNAL_DUMP("nodog_rec->sz = %u start_op = %ld nodog_rec->since = %ld nodog_rec->hostname = %V", nodog_rec->sz, start_op, nodog_rec->since, nodog_rec->hostname.rep)
+   U_INTERNAL_DUMP("nodog_rec->sz = %u UNotifier::last_event = %ld nodog_rec->since = %ld nodog_rec->hostname = %V",
+                    nodog_rec->sz,     UNotifier::last_event,      nodog_rec->since,      nodog_rec->hostname.rep)
 
    U_INTERNAL_ASSERT_MAJOR(nodog_rec->sz, 0)
 
    if (nodog_rec->status == 2 &&
-       nodog_rec->since <= (start_op - (2 * 30 * 24 * 60 * 60))) // 2 month
+       nodog_rec->since <= (UNotifier::last_event - (2 * 30 * 24 * 60 * 60))) // 2 month
       {
       U_LOGGER("*** AP TO REMOVE: AP(%v) ***", nodog_rec->hostname.rep);
 
@@ -7223,11 +7247,11 @@ static int checkStatusUser(UStringRep* key, UStringRep* data)
       }
    else
       {
-      U_INTERNAL_DUMP("user_rec->last_modified = %ld start_op = %ld user_rec->connected = %b", user_rec->last_modified, start_op, user_rec->connected)
+      U_INTERNAL_DUMP("user_rec->last_modified = %ld UNotifier::last_event = %ld user_rec->connected = %b", user_rec->last_modified, UNotifier::last_event, user_rec->connected)
 
       U_INTERNAL_ASSERT_EQUALS(user_rec->connected, false)
 
-      if (user_rec->last_modified <= (start_op - (30 * 24 * 60 * 60))) // 1 month
+      if (user_rec->last_modified <= (UNotifier::last_event - (30 * 24 * 60 * 60))) // 1 month
          {
          *uid = db_user->getKeyID();
 
@@ -7262,12 +7286,12 @@ static int checkStatusUserOnNodog(UStringRep* key, UStringRep* data)
                U_LOGGER("*** USER NOT ALIGNED: UID(%v) IP(%v) MAC(%v) AP(%v) POLICY(%v) ***",
                            uid->rep, user_rec->_ip.rep, user_rec->_mac.rep, user_rec->nodog.rep, user_rec->_policy.rep);
 
-               if (user_rec->last_modified < start_op) blogout = true;
+               if (user_rec->last_modified < UNotifier::last_event) blogout = true;
                }
             }
          }
       else if (user_rec->connected &&
-               user_rec->last_modified <= (start_op - (2 * 60 * 60))) // 2h
+               user_rec->last_modified <= (UNotifier::last_event - (2 * 60 * 60))) // 2h
          {
          blogout = true;
 

@@ -30,7 +30,11 @@ URingBuffer::~URingBuffer()
 {
    U_TRACE_UNREGISTER_OBJECT(0, URingBuffer)
 
-   if (ptr && map_size) UFile::munmap(ptr, map_size);
+   if (ptr &&
+       map_size)
+      {
+      UFile::munmap(ptr, map_size);
+      }
 }
 
 U_NO_EXPORT void URingBuffer::checkLocking()

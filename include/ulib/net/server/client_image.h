@@ -390,7 +390,7 @@ protected:
    uint32_t start, count;
    int sfd;
    uucflag flag;
-   time_t last_event;
+   long last_event;
 
 #ifndef U_LOG_DISABLE
    static int log_request_partial;

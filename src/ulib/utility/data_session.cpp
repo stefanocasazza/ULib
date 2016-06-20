@@ -53,15 +53,6 @@ void UDataStorage::fromData(const char* ptr, uint32_t len)
 #endif
 }
 
-void UDataStorage::setKeyId()
-{
-   U_TRACE_NO_PARAM(0, "UDataStorage::setKeyId()")
-
-   U_INTERNAL_DUMP("keyid = %V", keyid.rep)
-
-   keyid = *UString::str_storage_keyid;
-}
-
 UString UDataSession::setKeyIdDataSession(uint32_t counter)
 {
    U_TRACE(0, "UDataSession::setKeyIdDataSession(%u)", counter)

@@ -102,7 +102,7 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(U_line_terminator_len, 0)
    // U_ASSERT_EQUALS(_section.find("MIME-Version: 1.0"), U_NOT_FOUND) /* con rfc822 si possono avere duplicazioni */
-      U_ASSERT_EQUALS(_section.find(boundary+U_line_terminator_len), U_NOT_FOUND)
+      U_ASSERT_EQUALS(_section.find(boundary, U_line_terminator_len, boundary_len), U_NOT_FOUND)
 
       vec_part.push(_section);
       }

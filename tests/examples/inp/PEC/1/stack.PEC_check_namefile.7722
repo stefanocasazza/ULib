@@ -1,0 +1,34 @@
+To enable execution of this file add
+	add-auto-load-safe-path /lib64/libthread_db-1.0.so
+line to your configuration file "/root/.gdbinit".
+To completely disable this security protection add
+	set auto-load safe-path /
+line to your configuration file "/root/.gdbinit".
+For more information about this security protection see the
+"Auto-loading safe path" section in the GDB manual.  E.g., run from the shell:
+	info "(gdb)Auto-loading safe path"
+0x00007f5c930548b0 in nanosleep () from /lib64/libc.so.6
+
+Thread 1 (process 7722):
+#0  0x00007f5c930548b0 in nanosleep () from /lib64/libc.so.6
+No symbol table info available.
+#1  0x00007f5c92bcbf83 in UError::stackDump() () from /usr/src/ULib-1.4.2/src/ulib/.libs/libulib_g-1.4.2.so.1
+No symbol table info available.
+#2  0x00007f5c92bcc32b in u_debug_at_exit.part () from /usr/src/ULib-1.4.2/src/ulib/.libs/libulib_g-1.4.2.so.1
+No symbol table info available.
+#3  0x00007f5c92be04ce in u.printf () from /usr/src/ULib-1.4.2/src/ulib/.libs/libulib_g-1.4.2.so.1
+No symbol table info available.
+#4  0x00007f5c92b82114 in UString::UString(void*, unsigned int) [clone .lto_priv.325] () from /usr/src/ULib-1.4.2/src/ulib/.libs/libulib_g-1.4.2.so.1
+No symbol table info available.
+#5  0x00007f5c92b86bc5 in UStringExt::BIOtoString(bio_st*) () from /usr/src/ULib-1.4.2/src/ulib/.libs/libulib_g-1.4.2.so.1
+No symbol table info available.
+#6  0x00007f5c92a87e3c in UPKCS7::getContent(bool*) const () from /usr/src/ULib-1.4.2/src/ulib/.libs/libulib_g-1.4.2.so.1
+No symbol table info available.
+#7  0x0000000000408b82 in PEC_report::readContent() ()
+No symbol table info available.
+#8  0x0000000000411098 in PEC_report::processFile(UStringRep*, void*) ()
+No symbol table info available.
+#9  0x00007f5c92b714b6 in UHashMap<void*>::_callForAllEntrySorted(bool (*)(UStringRep*, void*)) () from /usr/src/ULib-1.4.2/src/ulib/.libs/libulib_g-1.4.2.so.1
+No symbol table info available.
+#10 0x0000000000405895 in main ()
+No symbol table info available.

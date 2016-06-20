@@ -107,7 +107,7 @@ U_EXPORT main (int argc, char* argv[])
          cout << "------------------------------------------\n";
 
          uint32_t distance = t.getDistance(),
-                  pos      = dati.find("<%", distance);
+                  pos      = U_STRING_FIND(dati, distance, "<%");
 
          if (pos == U_NOT_FOUND) pos = dati.size();
 

@@ -177,7 +177,8 @@ public:
       U_RETURN(false);
       }
 
-   bool deleteDocument(const UString& _index, const UString& type, const UString& id) { return deleteDocument(U_STRING_TO_PARAM(_index), U_STRING_TO_PARAM(type), U_STRING_TO_PARAM(id)); }
+   bool deleteDocument(const UString& _index, const UString& type, const UString& id)
+      { return deleteDocument(U_STRING_TO_PARAM(_index), U_STRING_TO_PARAM(type), U_STRING_TO_PARAM(id)); }
 
    // generic POST
 

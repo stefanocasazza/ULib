@@ -555,11 +555,9 @@ protected:
    static sigset_t mask;
    static UProcess* proc;
    static UEventTime* ptime;
-   static time_t last_event;
    static UServer_Base* pthis;
    static UString* cenvironment;
    static UString* senvironment;
-   static UString* str_preforked_num_kids;
    static bool flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive, called_from_handlerTime;
 
 
@@ -589,6 +587,9 @@ protected:
 #endif
 
 #ifdef DEBUG
+# ifndef U_LOG_DISABLE
+   static long last_event;
+# endif
    static UEventTime* pstat;
    static uint64_t stats_bytes;
    static uint32_t max_depth, wakeup_for_nothing, nread, nread_again, stats_connections, stats_simultaneous;
@@ -598,6 +599,7 @@ protected:
 
 #ifdef U_THROTTLING_SUPPORT
    static bool         throttling_chk;
+   static UString*     throttling_mask;
    static UEventTime*  throttling_time;
    static UThrottling* throttling_rec;
    static URDBObjectHandler<UDataStorage*>* db_throttling;
@@ -607,7 +609,7 @@ protected:
    static bool checkThrottlingBeforeSend(bool bwrite);
 
    static void initThrottlingClient();
-   static void initThrottlingServer(const UString& data);
+   static void initThrottlingServer();
 #endif
 
    // COSTRUTTORI

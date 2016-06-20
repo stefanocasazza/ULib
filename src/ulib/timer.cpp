@@ -40,16 +40,15 @@ U_NO_EXPORT void UTimer::insertEntry()
 
    U_CHECK_MEMORY
 
-   if (first == 0) // The list is empty
-      {
-      next  = 0;
-      first = this;
-      }
-   else
+   U_INTERNAL_DUMP("first = %p", first)
+
+   if (first)
       {
       UTimer** ptr = &first;
 
       do {
+         U_INTERNAL_DUMP("this = %p *ptr = %p", this, *ptr)
+
          if (*this < **ptr) break;
 
          ptr = &(*ptr)->next;
@@ -59,13 +58,20 @@ U_NO_EXPORT void UTimer::insertEntry()
       next = *ptr;
       *ptr = this;
       }
+   else
+      {
+      // The list is empty
+
+      next  = 0;
+      first = this;
+      }
 
    U_ASSERT(invariant())
 }
 
 void UTimer::insert(UEventTime* a)
 {
-   U_TRACE(0, "UTimer::insert(%p,%b)", a)
+   U_TRACE(0, "UTimer::insert(%p)", a)
 
    // set an alarm to more than 2 month is very suspect...
 
@@ -73,7 +79,11 @@ void UTimer::insert(UEventTime* a)
 
    UTimer* item;
 
-   if (pool == 0) U_NEW(UTimer, item, UTimer);
+   if (pool == 0 ||
+       mode != NOSIGNAL)
+      {
+      U_NEW(UTimer, item, UTimer);
+      }
    else
       {
       item = pool;
@@ -96,30 +106,60 @@ void UTimer::callHandlerTimeout()
    UTimer* item = first;
                   first = first->next; // remove it from its active list
 
-   U_INTERNAL_DUMP("UEventTime::timeout1 = %#19D (next alarm expire) = %#19D", UEventTime::timeout1.tv_sec, item->next ? item->next->alarm->expire() : 0L)
+   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
    int result = item->alarm->handlerTime();
 
-   u_gettimeofday(&UEventTime::timeout1);
-
-   U_INTERNAL_DUMP("UEventTime::timeout1 = { %ld %6ld } first = %p", UEventTime::timeout1.tv_sec, UEventTime::timeout1.tv_usec, first)
-
-   if (result == 0) // 0 => monitoring
+        if (result == -1) erase(item); // -1 => normal
+   else if (result ==  0)              //  0 => monitoring
       {
+      U_INTERNAL_DUMP("UEventTime::timeout1 = %#19D (next alarm expire) = %#19D", UEventTime::timeout1.tv_sec, item->next ? item->next->alarm->expire() : 0L)
+
+      u_gettimeofday(&UEventTime::timeout1);
+
+      U_INTERNAL_DUMP("UEventTime::timeout1 = { %ld %6ld } first = %p", UEventTime::timeout1.tv_sec, UEventTime::timeout1.tv_usec, first)
+
       // add it back in to its new list, sorted correctly
 
       item->alarm->updateTimeToExpire();
 
       item->insertEntry();
       }
-   else
-      {
-      // put it on the free list
+}
 
-      item->alarm = 0;
-      item->next  = pool;
-            pool  = item;
+void UTimer::updateTimeToExpire(UEventTime* ptime)
+{
+   U_TRACE(0, "UTimer::updateTimeToExpire(%p)", ptime)
+
+   U_INTERNAL_ASSERT_POINTER(first)
+
+   UTimer* item;
+
+   for (UTimer** ptr = &first; (item = *ptr); ptr = &(*ptr)->next)
+      {
+      if (item->alarm == ptime)
+         {
+         U_INTERNAL_DUMP("*ptr = %p item->next = %p", *ptr, item->next)
+
+         *ptr = item->next; // remove it from its active list
+
+         break;
+         }
       }
+
+   U_ASSERT(invariant())
+
+   U_INTERNAL_DUMP("UEventTime::timeout1 = %#19D (next alarm expire) = %#19D", UEventTime::timeout1.tv_sec, item->next ? item->next->alarm->expire() : 0L)
+
+   u_gettimeofday(&UEventTime::timeout1);
+
+   U_INTERNAL_DUMP("UEventTime::timeout1 = { %ld %6ld } first = %p", UEventTime::timeout1.tv_sec, UEventTime::timeout1.tv_usec, first)
+
+   // add it back in to its new list, sorted correctly
+
+   ptime->updateTimeToExpire();
+
+   item->insertEntry();
 }
 
 void UTimer::run()
@@ -182,9 +222,9 @@ void UTimer::setTimer()
    (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &UInterrupt::timerval, 0);
 }
 
-void UTimer::erase(UEventTime* a)
+void UTimer::erase(UEventTime* palarm)
 {
-   U_TRACE(0, "UTimer::erase(%p)", a)
+   U_TRACE(0, "UTimer::erase(%p)", palarm)
 
    U_INTERNAL_ASSERT_POINTER(first)
 
@@ -192,21 +232,19 @@ void UTimer::erase(UEventTime* a)
 
    for (UTimer** ptr = &first; (item = *ptr); ptr = &(*ptr)->next)
       {
-      if (item->alarm == a)
+      if (item->alarm == palarm)
          {
+         U_INTERNAL_DUMP("*ptr = %p item->next = %p", *ptr, item->next)
+
          *ptr = item->next; // remove it from its active list
 
-         U_ASSERT(invariant())
-
-         // and we put it on the free list
-
-         item->alarm = 0;
-         item->next  = pool;
-                pool = item;
+         erase(item);
 
          break;
          }
       }
+
+   U_ASSERT(invariant())
 }
 
 void UTimer::clear()
@@ -223,24 +261,18 @@ void UTimer::clear()
       (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &UInterrupt::timerval, 0);
       }
 
-   UTimer* item = first;
-
    if (first)
       {
-      do { item->alarm = 0; } while ((item = item->next));
+      for (UTimer* item = first; item; item = item->next) delete item;
 
-      delete first;
-             first = 0;
+      first = 0;
       }
 
    if (pool)
       {
-      item = pool;
+      for (UTimer* item = pool; item; item = item->next) delete item;
 
-      do { item->alarm = 0; } while ((item = item->next));
-
-      delete pool;
-             pool = 0;
+      pool = 0;
       }
 }
 
@@ -253,7 +285,13 @@ bool UTimer::invariant()
       {
       for (UTimer* item = first; item->next; item = item->next)
          {
-         if (item->next) U_INTERNAL_ASSERT(*item <= *(item->next))
+         if (          item->next &&
+             *item > *(item->next))
+            {
+            U_ERROR("UTimer::invariant() failed: item = %p { %ld %6ld } item->next = %p { %ld %6ld }",
+                        item,             item->alarm->xtime.tv_sec,       item->alarm->xtime.tv_usec,
+                        item->next, item->next->alarm->xtime.tv_sec, item->next->alarm->xtime.tv_usec);
+            }
          }
       }
 

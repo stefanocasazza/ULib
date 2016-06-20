@@ -38,6 +38,7 @@ class WiAuthNodog;
 class UServer_Base;
 class UProxyPlugIn;
 class UNoCatPlugIn;
+class UTwilioClient;
 class USOAPClient_Base;
 
 class U_EXPORT UHttpClient_Base : public UClient_Base {
@@ -101,7 +102,11 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHttpClient_Base::isPasswordAuthentication()")
 
-      if (user && password) U_RETURN(true);
+      if (user &&
+          password)
+         {
+         U_RETURN(true);
+         }
 
       U_RETURN(false);
       }
@@ -152,14 +157,15 @@ public:
 
    bool putRequestOnQueue();
 
-   bool upload(const UString& url, UFile& file, const char* filename = 0, uint32_t filename_len = 0);
    bool sendPost(const UString& url, const UString& pbody,
-                 const char* content_type =                     "application/x-www-form-urlencoded",
-                    uint32_t content_type_len = U_CONSTANT_SIZE("application/x-www-form-urlencoded"));
+                 const char* content_type     =                 "application/x-www-form-urlencoded",
+                 uint32_t    content_type_len = U_CONSTANT_SIZE("application/x-www-form-urlencoded"));
 
    UString getContent() const     { return body; }
    UString getSetCookie() const   { return setcookie; }
    UString getLastRequest() const { return last_request; }
+
+   bool upload(const UString& url, UFile& file, const char* filename = 0, uint32_t filename_len = 0, int method = 2); // 2 => POST
 
    // DEBUG
 
@@ -190,8 +196,17 @@ protected:
 
    // In response to a HTTP_UNAUTHORISED response from the HTTP server, this function will attempt to generate an Authentication header to satisfy the server
 
-   bool createAuthorizationHeader();
-   int  checkResponse(int& redirectCount);
+   UString getBasicAuthorizationHeader();
+   int     checkResponse(int& redirectCount);
+   bool    createAuthorizationHeader(bool bProxy);
+
+   void setAuthorizationHeader(bool bProxy, const UString& headerValue)
+      {
+      U_TRACE(0, "UHttpClient_Base::setAuthorizationHeader(%b,%V)", bProxy, headerValue.rep)
+
+      if (bProxy == false) requestHeader->setHeader(U_CONSTANT_TO_PARAM("Authorization"),       headerValue);
+      else                 requestHeader->setHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"), headerValue);
+      }
 
    // COSTRUTTORI
 
@@ -219,6 +234,7 @@ private:
    friend class UServer_Base;
    friend class UProxyPlugIn;
    friend class UNoCatPlugIn;
+   friend class UTwilioClient;
    friend class USOAPClient_Base;
    friend class UElasticSearchClient;
 };

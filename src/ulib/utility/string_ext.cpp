@@ -43,12 +43,12 @@ UString UStringExt::BIOtoString(BIO* bio)
 {
    U_TRACE(1, "UStringExt::BIOtoString(%p)", bio)
 
-   char* buffer = 0;
-   long len     = BIO_get_mem_data(bio, &buffer);
+   char* buffer;
+   long len = BIO_get_mem_data(bio, &buffer);
 
    if (len > 0)
       {
-      UString result((void*)buffer, len);
+      UString result((const void*)buffer, len);
 
       // only bio needs to be freed :)
 
@@ -75,11 +75,9 @@ UString UStringExt::ASN1TimetoString(ASN1_GENERALIZEDTIME* t)
       (void) U_SYSCALL(ASN1_GENERALIZEDTIME_print, "%p,%p", bio, t);
 
       result = BIOtoString(bio);
-
-      U_RETURN_STRING(result);
       }
 
-   return UString::getStringNull();
+   U_RETURN_STRING(result);
 }
 #endif
 
@@ -91,11 +89,7 @@ UString UStringExt::pregReplace(const UString& pattern, const UString& replaceme
 {
    U_TRACE(0, "UStringExt::pregReplace(%V,%V,%V)", pattern.rep, replacement.rep, subject.rep)
 
-   UPCRE _pcre(pattern, PCRE_FOR_REPLACE);
-
-   UString result = _pcre.replace(subject, replacement);
-
-   U_RETURN_STRING(result);
+   return UPCRE(pattern, PCRE_FOR_REPLACE).replace(subject, replacement);
 }
 
 UString UStringExt::sanitize(const UString& input)
@@ -154,7 +148,7 @@ UString UStringExt::stringFromNumber(long n)
 {
    U_TRACE(0, "UStringExt::stringFromNumber(%lld)", n)
 
-   UString x(20U);
+   UString x(22U);
 
 #if SIZEOF_LONG == 4
    x.setFromNumber32s(n);
@@ -709,8 +703,8 @@ loop:
          while (++ptr < end);
 
          n = end - s;
-assign:
-         U_INTERNAL_DUMP("n = %u", n)
+
+assign:  U_INTERNAL_DUMP("n = %u", n)
 
          U_INTERNAL_ASSERT_MAJOR(n, 0)
 
@@ -720,8 +714,7 @@ assign:
       }
    else
       {
-next:
-      char buffer[128];
+next: char buffer[128];
 
       U_INTERNAL_ASSERT_MINOR(n, sizeof(buffer))
 
@@ -944,7 +937,7 @@ UString UStringExt::trimPunctuation(const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringExt::trimPunctuation(%.*S,%u)", n, s, n)
 
-   // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+// U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
    int32_t i = 0;
    UString result(n);
@@ -970,13 +963,13 @@ UString UStringExt::trimPunctuation(const char* s, uint32_t n)
 }
 
 // returns a string that has whitespace removed from the start and the end,
-// and which has each sequence of internal whitespace replaced with a single space.
+// and which has each sequence of internal whitespace replaced with a single space
 
 UString UStringExt::simplifyWhiteSpace(const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringExt::simplifyWhiteSpace(%.*S,%u)", n, s, n)
 
-// U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+// U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
    UString result(n);
    uint32_t sz1, sz = 0;
@@ -1024,7 +1017,7 @@ UString UStringExt::removeWhiteSpace(const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringExt::removeWhiteSpace(%.*S,%u)", n, s, n)
 
-   // U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+// U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
    UString result(n);
    uint32_t sz1, sz = 0;
@@ -1070,7 +1063,7 @@ UString UStringExt::removeEmptyLine(const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringExt::removeEmptyLine(%.*S,%u)", n, s, n)
 
-// U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
+// U_INTERNAL_ASSERT_MAJOR_MSG(n, 0, "elaborazione su stringa vuota: inserire if empty()...")
 
    UString result(n);
    uint32_t sz1, sz = 0;
@@ -1113,7 +1106,7 @@ UString UStringExt::removeEmptyLine(const char* s, uint32_t n)
 }
 
 // Within a string we can count number of occurrence of another string by using substr_count function.
-// This function takes the main string and the search string as inputs and returns number of time search string is found inside the main string.
+// This function takes the main string and the search string as inputs and returns number of time search string is found inside the main string
 
 __pure uint32_t UStringExt::substr_count(const char* s, uint32_t n, const char* a, uint32_t n1)
 {

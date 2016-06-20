@@ -340,8 +340,8 @@ public:
 
    // Equal
 
-          bool equal(const UStringRep* rep) const { return equal(rep->str, rep->_length); }
-   __pure bool equal(const char* s, uint32_t n) const
+   bool equal(const UStringRep* rep) const { return equal(rep->str, rep->_length); }
+   bool equal(const char* s, uint32_t n) const
       {
       U_TRACE(0, "UStringRep::equal(%#.*S,%u)", n, s, n)
 
@@ -360,8 +360,8 @@ public:
 
    // Equal with ignore case
 
-          bool equalnocase(const UStringRep* rep) const { return equalnocase(rep->str, rep->_length); }
-   __pure bool equalnocase(const char* s, uint32_t n) const
+   bool equalnocase(const UStringRep* rep) const { return equalnocase(rep->str, rep->_length); }
+   bool equalnocase(const char* s, uint32_t n) const
       {
       U_TRACE(0, "UStringRep::equalnocase(%.*S,%u)", n, s, n)
 
@@ -382,9 +382,9 @@ public:
 
    bool isSubStringOf(UStringRep* rep) const __pure;
 
-   UStringRep* substr(const char* t, uint32_t tlen);
+   UStringRep* substr(const char* t, uint32_t tlen) const;
 
-   UStringRep* substr(uint32_t pos, uint32_t n) { return substr(str + pos, n); }
+   UStringRep* substr(uint32_t pos, uint32_t n)  const { return substr(str + pos, n); }
 
    // Assignment
 
@@ -487,7 +487,7 @@ public:
 
    // EXTENSION
 
-   __pure bool isBinary(uint32_t pos) const
+   bool isBinary(uint32_t pos) const
       {
       U_TRACE(0, "UStringRep::isBinary(%u)", pos)
 
@@ -500,7 +500,7 @@ public:
       U_RETURN(false);
       }
 
-   __pure bool isBase64(uint32_t pos) const
+   bool isBase64(uint32_t pos) const
       {
       U_TRACE(0, "UStringRep::isBase64(%u)", pos)
 
@@ -516,7 +516,7 @@ public:
       U_RETURN(false);
       }
 
-   __pure bool isBase64Url(uint32_t pos) const
+   bool isBase64Url(uint32_t pos) const
       {
       U_TRACE(0, "UStringRep::isBase64Url(%u)", pos)
 
@@ -532,7 +532,7 @@ public:
       U_RETURN(false);
       }
 
-   __pure bool isPrintable(uint32_t pos, bool bline = false) const
+   bool isPrintable(uint32_t pos, bool bline = false) const
       {
       U_TRACE(0, "UStringRep::isPrintable(%u,%b)", pos, bline)
 
@@ -548,7 +548,7 @@ public:
       U_RETURN(false);
       }
 
-   __pure bool isWhiteSpace(uint32_t pos) const
+   bool isWhiteSpace(uint32_t pos) const
       {
       U_TRACE(0, "UStringRep::isWhiteSpace(%u)", pos)
 
@@ -564,7 +564,7 @@ public:
       U_RETURN(true);
       }
 
-   __pure bool isText(uint32_t pos) const
+   bool isText(uint32_t pos) const
       {
       U_TRACE(0, "UStringRep::isText(%u)", pos)
 
@@ -580,7 +580,7 @@ public:
       U_RETURN(false);
       }
 
-   __pure bool isUTF8(uint32_t pos) const
+   bool isUTF8(uint32_t pos) const
       {
       U_TRACE(0, "UStringRep::isUTF8(%u)", pos)
 
@@ -593,7 +593,7 @@ public:
       U_RETURN(false);
       }
 
-   __pure bool isUTF16(uint32_t pos) const
+   bool isUTF16(uint32_t pos) const
       {
       U_TRACE(0, "UStringRep::isUTF16(%u)", pos)
 
@@ -1204,7 +1204,7 @@ public:
 
    // Copy from string
 
-   explicit UString(void* t)
+   explicit UString(const void* t)
       {
       U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%S", (char*)t)
 
@@ -1217,7 +1217,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   explicit UString(void* t, uint32_t tlen)
+   explicit UString(const void* t, uint32_t tlen)
       {
       U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u", tlen, (char*)t, tlen)
 
@@ -1234,7 +1234,7 @@ public:
 
    // SUBSTRING
 
-   explicit UString(UStringRep* _rep, const char* t, uint32_t tlen)
+   explicit UString(const UStringRep* _rep, const char* t, uint32_t tlen)
       {
       U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%p,%u", _rep, t, tlen)
 
@@ -1243,7 +1243,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   explicit UString(UStringRep* _rep, uint32_t pos, uint32_t n = U_NOT_FOUND)
+   explicit UString(const UStringRep* _rep, uint32_t pos, uint32_t n = U_NOT_FOUND)
       {
       U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%u,%u", _rep, pos, n)
 
@@ -1439,8 +1439,8 @@ public:
    const char* rbegin() const { return rep->rbegin(); }
    const char* rend()   const { return rep->rend(); }
 
-   __pure char at(uint32_t pos) const         { return rep->at(pos); }
-          char operator[](uint32_t pos) const { return rep->operator[](pos); }
+   char         at(uint32_t pos) const { return rep->at(pos); }
+   char operator[](uint32_t pos) const { return rep->operator[](pos); }
 
    char* _begin()
       {
@@ -1621,55 +1621,47 @@ public:
    // its starting position. You can supply the parameter pos to specify the position where search must begin
 
    uint32_t find(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const __pure;
-   uint32_t find(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const __pure { return find(str.data(), pos, str.size(), how_much); }
+   uint32_t find(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const { return find(str.data(), pos, str.size(), how_much); }
 
-   uint32_t find(const char* s,   uint32_t pos = 0) const { return find(s, pos, u__strlen(s, __PRETTY_FUNCTION__), U_NOT_FOUND); }
    uint32_t find(unsigned char c, uint32_t pos = 0) const __pure;
 
    // The `rfind' function searches from end to beginning string for a specified string (possibly a single character)
    // and returns its starting position. You can supply the parameter pos to specify the position where search must begin
 
    uint32_t rfind(const char* s,      uint32_t pos, uint32_t n) const __pure;
-   uint32_t rfind(const char* s,      uint32_t pos = U_NOT_FOUND) const { return rfind(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t rfind(unsigned char c,    uint32_t pos = U_NOT_FOUND) const __pure;
    uint32_t rfind(const UString& str, uint32_t pos = U_NOT_FOUND) const { return rfind(str.data(), pos, str.size()); }
 
    // The `find_first_of' function searches string for the first match of any character stored in s and returns its position
 
    uint32_t find_first_of(const char* s,      uint32_t pos, uint32_t n) const __pure;
-   uint32_t find_first_of(const char* s,      uint32_t pos = 0) const { return find_first_of(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t find_first_of(unsigned char c,    uint32_t pos = 0) const { return find(c, pos); }
    uint32_t find_first_of(const UString& str, uint32_t pos = 0) const { return find_first_of(str.data(), pos, str.size()); }
 
    // The `find_last_of' function searches string for the last  match of any character stored in s and returns its position
 
    uint32_t find_last_of(const char* s,       uint32_t pos, uint32_t n) const __pure;
-   uint32_t find_last_of(const char* s,       uint32_t pos = U_NOT_FOUND) const { return find_last_of(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t find_last_of(unsigned char c,     uint32_t pos = U_NOT_FOUND) const { return rfind(c, pos); }
    uint32_t find_last_of(const UString& str,  uint32_t pos = U_NOT_FOUND) const { return find_last_of(str.data(), pos, str.size()); }
 
    // The `find_first_not_of' function searches the first element of string that doesn't match any character stored in s and returns its position
 
    uint32_t find_first_not_of(const char* s,      uint32_t pos, uint32_t n) const __pure;
-   uint32_t find_first_not_of(const char* s,      uint32_t pos = 0) const { return find_first_not_of(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t find_first_not_of(unsigned char c,    uint32_t pos = 0) const __pure;
    uint32_t find_first_not_of(const UString& str, uint32_t pos = 0) const { return find_first_not_of(str.data(), pos, str.size()); }
 
-   // The `find_last_not_of' function searches the last  element of string that doesn't match any character stored in s and returns its position
+   // The `find_last_not_of' function searches the last element of string that doesn't match any character stored in s and returns its position
 
    uint32_t find_last_not_of(const char* s,      uint32_t pos, uint32_t n) const __pure;
-   uint32_t find_last_not_of(const char* s,      uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(s, pos, u__strlen(s, __PRETTY_FUNCTION__)); }
    uint32_t find_last_not_of(unsigned char c,    uint32_t pos = U_NOT_FOUND) const __pure;
    uint32_t find_last_not_of(const UString& str, uint32_t pos = U_NOT_FOUND) const { return find_last_not_of(str.data(), pos, str.size()); }
 
    // Find with ignore case
 
    uint32_t findnocase(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const __pure;
-   uint32_t findnocase(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const __pure { return findnocase(str.data(), pos, str.size(), how_much); }
+   uint32_t findnocase(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const { return findnocase(str.data(), pos, str.size(), how_much); }
 
-   uint32_t findnocase(const char* s,      uint32_t pos = 0) const { return findnocase(s, pos, u__strlen(s, __PRETTY_FUNCTION__), U_NOT_FOUND); }
-
-   __pure uint32_t findWhiteSpace(uint32_t pos = 0) const { return rep->findWhiteSpace(pos); }
+   uint32_t findWhiteSpace(uint32_t pos = 0) const { return rep->findWhiteSpace(pos); }
 
    // Compare
 
@@ -1688,10 +1680,10 @@ public:
    int compare(uint32_t pos, uint32_t n, const char* s) const
       { return rep->compare(pos, U_min(size() - pos, n), s, u__strlen(s, __PRETTY_FUNCTION__)); }
 
-   __pure int compare(uint32_t pos, uint32_t n, const UString& str) const
+   int compare(uint32_t pos, uint32_t n, const UString& str) const
       { return rep->compare(pos, U_min(size() - pos, n), U_STRING_TO_PARAM(str)); }
 
-   __pure int compare(uint32_t pos1, uint32_t n1, const UString& str, uint32_t pos2, uint32_t n2) const
+   int compare(uint32_t pos1, uint32_t n1, const UString& str, uint32_t pos2, uint32_t n2) const
       { return rep->compare(pos1, U_min(size() - pos1, n1), str.data() + pos2, U_min(str.size() - pos2, n2)); }
 
    // Compare with ignore case
@@ -1709,17 +1701,17 @@ public:
 
    // Equal
 
-   bool equal(const char* s) const __pure             { return rep->equal(s, u__strlen(s, __PRETTY_FUNCTION__)); }
-   bool equal(const char* s, uint32_t n) const __pure { return rep->equal(s, n); }
-   bool equal(UStringRep* _rep) const __pure          { return same(_rep) || rep->equal(_rep); }
-   bool equal(const UString& str) const               { return equal(str.rep); }
+   bool equal(const char* s) const             { return rep->equal(s, u__strlen(s, __PRETTY_FUNCTION__)); }
+   bool equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
+   bool equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }
+   bool equal(const UString& str) const        { return equal(str.rep); }
 
    // Equal with ignore case
 
    bool equalnocase(const char* s) const             { return rep->equalnocase(s, u__strlen(s, __PRETTY_FUNCTION__)); }
    bool equalnocase(const char* s, uint32_t n) const { return rep->equalnocase(s, n); }
    bool equalnocase(UStringRep* _rep) const          { return same(_rep) || rep->equalnocase(_rep); }
-   bool equalnocase(const UString& str) const __pure { return equalnocase(str.rep); }
+   bool equalnocase(const UString& str) const        { return equalnocase(str.rep); }
 
    // STREAM
 
@@ -1767,8 +1759,8 @@ public:
    char  c_char(uint32_t pos) const    { return rep->at(pos); }
    char* c_pointer(uint32_t pos) const { return (char*)rep->c_pointer(pos); }
 
-         ptrdiff_t remain(  const char* ptr) const { return rep->remain(ptr); }
-   __pure uint32_t distance(const char* ptr) const { return rep->distance(ptr); }
+   ptrdiff_t  remain(const char* ptr) const { return rep->remain(ptr); }
+   uint32_t distance(const char* ptr) const { return rep->distance(ptr); }
 
    void setFromInode(uint64_t* p)  { (void) replace((const char*)p, sizeof(uint64_t)); }
 

@@ -85,6 +85,7 @@ UString*    UHTTP::qcontent;
 UString*    UHTTP::pathname;
 UString*    UHTTP::rpathname;
 UString*    UHTTP::set_cookie;
+UString*    UHTTP::upload_dir;
 UString*    UHTTP::mount_point;
 UString*    UHTTP::fcgi_uri_mask;
 UString*    UHTTP::scgi_uri_mask;
@@ -456,30 +457,38 @@ void UHTTP::in_READ()
    U_INTERNAL_ASSERT_POINTER(cache_file)
    U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_inotify)
 
-   /**
-    * struct inotify_event {
-    *    int wd;           // The watch descriptor
-    *    uint32_t mask;    // Watch mask
-    *    uint32_t cookie;  // A cookie to tie two events together
-    *    uint32_t len;     // The length of the filename found in the name field
-    *    char name[];      // The name of the file, padding to the end with NULs
-    * }
-    */
-
-   union uuinotify_event {
-      char*  p;
-      struct inotify_event* ip;
-   };
-
-   int wd;
-   char* name;
-   uint32_t len, mask;
    char buffer[IN_BUFLEN];
-   union uuinotify_event event;
-   int i = 0, length = U_SYSCALL(read, "%d,%p,%u", UServer_Base::handler_inotify->fd, buffer, IN_BUFLEN);  
+   int length = U_SYSCALL(read, "%d,%p,%u", UServer_Base::handler_inotify->fd, buffer, IN_BUFLEN);  
 
-   if (length > 0)
+   if (length <= 0)
       {
+#  ifdef U_EPOLLET_POSTPONE_STRATEGY
+      if (errno == EAGAIN) U_ClientImage_state = U_PLUGIN_HANDLER_AGAIN;
+#  endif
+      }
+   else
+      {
+      /**
+       * struct inotify_event {
+       *    int wd;           // The watch descriptor
+       *    uint32_t mask;    // Watch mask
+       *    uint32_t cookie;  // A cookie to tie two events together
+       *    uint32_t len;     // The length of the filename found in the name field
+       *    char name[];      // The name of the file, padding to the end with NULs
+       * }
+       */
+
+      union uuinotify_event {
+         char*  p;
+         struct inotify_event* ip;
+      };
+
+      char* name;
+      int wd, i = 0;  
+      uint32_t len, mask;
+      bool binotify_path; 
+      union uuinotify_event event;
+
       while (i < length)
          {
          event.p = buffer + i;
@@ -506,40 +515,49 @@ void UHTTP::in_READ()
 
             file_data = 0;
 
+            binotify_path = false;
+
             if (wd == inotify_wd)
                {
                if (inotify_file_data  &&
                    len == inotify_len &&
                    memcmp(name, inotify_name, len) == 0)
                   {
-                  goto next;
+                  binotify_path = true;
                   }
-
-               if (inotify_dir)
+               else if (inotify_dir)
                   {
                   inotify_len  = len;
                   inotify_name = name;
 
                   setInotifyPathname();
 
-                  goto next;
+                  binotify_path = true;
                   }
                }
 
-            inotify_wd        = wd;
-            inotify_len       = len;
-            inotify_name      = name;
-            inotify_dir       = 0; 
-            inotify_file_data = 0;
-
-            cache_file->callForAllEntry(getInotifyPathDirectory);
-next:
-            if (*inotify_name != '.' ||
-                u_get_unalignedp32(inotify_name + len - U_CONSTANT_SIZE(".swp")) == U_MULTICHAR_CONSTANT32('.','s','w','p')) // NB: vi tmp...
+            if (binotify_path == false)
                {
+               inotify_wd        = wd;
+               inotify_len       = len;
+               inotify_name      = name;
+               inotify_dir       = 0;
+               inotify_file_data = 0;
+               }
+
+            if (*inotify_name != '.' ||
+                u_get_unalignedp32(inotify_name + len - U_CONSTANT_SIZE(".swp")) != U_MULTICHAR_CONSTANT32('.','s','w','p')) // NB: vi tmp...
+               {
+               if (binotify_path == false) cache_file->callForAllEntry(getInotifyPathDirectory);
+
                if ((mask & IN_CREATE) != 0)
                   {
-                  if (inotify_file_data == 0) checkFileForCache();
+                  if (inotify_file_data == 0)
+                     {
+                     (void) pathname->replace(*inotify_pathname);
+
+                     checkFileForCache();
+                     }
                   }
                else
                   {
@@ -586,9 +604,6 @@ next:
             }
          }
       }
-#if defined(U_EPOLLET_POSTPONE_STRATEGY)
-   else if (errno == EAGAIN) U_ClientImage_state = U_PLUGIN_HANDLER_AGAIN;
-#endif
 
    file_data = 0;
 }
@@ -786,6 +801,7 @@ void UHTTP::init()
    U_INTERNAL_ASSERT_EQUALS(pathname, 0)
    U_INTERNAL_ASSERT_EQUALS(rpathname, 0)
    U_INTERNAL_ASSERT_EQUALS(formMulti, 0)
+   U_INTERNAL_ASSERT_EQUALS(upload_dir, 0)
    U_INTERNAL_ASSERT_EQUALS(set_cookie, 0)
    U_INTERNAL_ASSERT_EQUALS(form_name_value, 0)
    U_INTERNAL_ASSERT_EQUALS(set_cookie_option, 0)
@@ -805,6 +821,7 @@ void UHTTP::init()
    U_NEW(UString, qcontent, UString);
    U_NEW(UString, pathname, UString(U_CAPACITY));
    U_NEW(UString, rpathname, UString);
+   U_NEW(UString, upload_dir, UString);
    U_NEW(UString, set_cookie, UString);
    U_NEW(UString, set_cookie_option, UString(200U));
    U_NEW(UString, string_HTTP_Variables, UString(U_CAPACITY));
@@ -1063,9 +1080,7 @@ void UHTTP::init()
          UDirWalk::setDirectory(*UString::str_point, *cache_avoid_mask);
          }
 
-#  ifdef DEBUG
       UDirWalk::setFollowLinks(true);
-#  endif
       UDirWalk::setSuffixFileType(U_CONSTANT_TO_PARAM("usp|c|cgi|template|" U_LIB_SUFFIX));
 
       UDirWalk::setRecurseSubDirs(true, true);
@@ -1361,6 +1376,7 @@ void UHTTP::dtor()
       delete pathname;
       delete rpathname;
       delete formMulti;
+      delete upload_dir;
       delete set_cookie;
       delete form_name_value;
       delete cache_avoid_mask;
@@ -3488,46 +3504,51 @@ int UHTTP::manageRequest()
 
    U_ASSERT(UClientImage_Base::isRequestNotFound())
 
-   U_DUMP("U_http_info.clength = %u isPOSTorPUTorPATCH() = %b", U_http_info.clength, isPOSTorPUTorPATCH())
+   U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
 
-#ifndef U_SERVER_CAPTIVE_PORTAL
-   if (U_http_info.clength ||
-       isPOSTorPUTorPATCH())
+   if (isGETorHEAD() == false)
       {
-      bool result_read_body;
+      U_http_flag |= HTTP_IS_NOCACHE_FILE | HTTP_IS_REQUEST_NOSTAT;
 
-#  ifndef U_HTTP2_DISABLE
-      if (U_http_version == '2') result_read_body = UHTTP2::readBodyRequest();
-      else
-#  endif
-      result_read_body = readBodyRequest();
+      U_INTERNAL_DUMP("U_http_is_nocache_file = %b U_http_is_request_nostat = %b", U_http_is_nocache_file, U_http_is_request_nostat)
 
-      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
-
-      if (result_read_body == false)
+#  ifndef U_SERVER_CAPTIVE_PORTAL
+      if (U_http_info.clength ||
+          isPOSTorPUTorPATCH())
          {
-         U_INTERNAL_DUMP("UServer_Base::csocket->isClosed() = %b UClientImage_Base::wbuffer(%u) = %V",
-                          UServer_Base::csocket->isClosed(),     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
+         bool result_read_body;
 
-         if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+#     ifndef U_HTTP2_DISABLE
+         if (U_http_version == '2') result_read_body = UHTTP2::readBodyRequest();
+         else
+#     endif
+         result_read_body = readBodyRequest();
 
-         if (UClientImage_Base::wbuffer->empty()) setBadRequest();
+         U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
 
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+         if (result_read_body == false)
+            {
+            U_INTERNAL_DUMP("UServer_Base::csocket->isClosed() = %b UClientImage_Base::wbuffer(%u) = %V",
+                             UServer_Base::csocket->isClosed(),     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
+
+            if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+
+            if (UClientImage_Base::wbuffer->empty()) setBadRequest();
+
+            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+            }
+
+#     ifndef U_HTTP2_DISABLE
+         if (U_http_version != '2')
+#     endif
+         UClientImage_Base::size_request += U_http_info.clength;
          }
-
-#  ifndef U_HTTP2_DISABLE
-      if (U_http_version != '2')
 #  endif
-      UClientImage_Base::size_request += U_http_info.clength;
       }
-#endif
 
    // manage alias uri
 
 #ifdef U_ALIAS
-   alias->clear();
-
    if (maintenance_mode_page &&
        U_HTTP_URI_STREQ("favicon.ico") == false)
       {
@@ -3643,7 +3664,8 @@ set_uri: U_http_info.uri     = alias->data();
    // ...process the HTTP message
 
 #ifdef U_THROTTLING_SUPPORT
-   if (UServer_Base::checkThrottling() == false)
+   if (isGETorHEAD() &&
+       UServer_Base::checkThrottling() == false)
       {
       setServiceUnavailable();
 
@@ -3680,9 +3702,9 @@ set_uri: U_http_info.uri     = alias->data();
    if (nocache_file_mask &&
        UServices::dosMatchWithOR(UStringExt::basename(U_HTTP_URI_TO_PARAM), U_STRING_TO_PARAM(*nocache_file_mask), 0))
       {
-      U_http_flag |= HTTP_IS_NOCACHE_FILE;
+      U_http_flag |= HTTP_IS_NOCACHE_FILE | HTTP_IS_REQUEST_NOSTAT;
 
-      U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
+      U_INTERNAL_DUMP("U_http_is_nocache_file = %b U_http_is_request_nostat = %b", U_http_is_nocache_file, U_http_is_request_nostat)
       }
 #endif
 
@@ -3968,7 +3990,105 @@ int UHTTP::processRequest()
 
    U_ASSERT(UClientImage_Base::isRequestNeedProcessing())
 
-   if (UClientImage_Base::isRequestNotFound())
+   if (isGETorHEADorPOST() == false)
+      {
+      if (isPUT())
+         {
+         uint32_t sz;
+         const char* ptr = UClientImage_Base::getRequestUri(sz);
+
+         if (memcmp(ptr, U_CONSTANT_TO_PARAM("/upload")) == 0)
+            {
+            U_INTERNAL_ASSERT(*upload_dir)
+
+            /**
+             * The PUT method, though not as widely used as the POST method is perhaps the more efficient way of uploading files to a server.
+             * This is because in a POST upload the files need to be combined together into a multipart message and this message has to be
+             * decoded at the server. In contrast, the PUT method allows you to simply write the contents of the file to the socket connection
+             * that is established with the server.
+             *
+             * When using the POST method, all the files are combined together into a single multipart/form-data type object. This MIME message
+             * when transferred to the server, has to be decoded by the server side handler. The decoding process may consume significant amounts
+             * of memory and CPU cycles for very large files.
+             *
+             * The fundamental difference between the POST and PUT requests is reflected in the different meaning of the Request-URI. The URI in a
+             * POST request identifies the resource that will handle the enclosed entity. That resource might be a data-accepting process, a gateway
+             * to some other protocol, or a separate entity that accepts annotations. In contrast, the URI in a PUT request identifies the entity
+             * enclosed with the request
+             */
+
+            U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+
+            if (*UClientImage_Base::body)
+               {
+               UString dest(U_CAPACITY),
+                       basename = UStringExt::basename(ptr, sz);
+
+               dest.snprintf("%v/%v", upload_dir->rep, basename.rep);
+
+               if (UFile::writeTo(dest, *UClientImage_Base::body)) UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+               else                                                U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+
+               handlerResponse();
+
+               U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+               }
+
+            // ---------------------------------------------------------------------------------------------------------------------------------------------------
+            // TODO
+            // ---------------------------------------------------------------------------------------------------------------------------------------------------
+            // To check how much of a file has transferred, perform the exact same PUT request without the file data and with the header: Content-Range: bytes */*
+            //
+            // An example request:
+            //
+            // PUT http://1234.cloud.vimeo.com/upload
+            // Host: 1.2.3.4:8080
+            // Content-Length: 0
+            // Content-Range: bytes */*
+            //
+            // If this file exists, this will return a response with a HTTP 308 status code and a Range header with the number of bytes on the server.
+            //
+            // HTTP/1.1 308
+            // Content-Length: 0
+            // Range: bytes=0-1000
+            //
+            // If you perform a request like this and find that the returned number is NOT the size of your uploaded file, then it is a good idea to
+            // resume where you left off. To resume, perform the same PUT you did before but with an additional header:
+            // Content-Range: bytes (last byte on server + 1)-(last byte I will be sending)/(total filesize) 
+            //
+            // As shown before our uploaded file was 339108 total bytes in size but our "Content-Range: bytes */*" verification call
+            // returned a value of 1000. To resume, we would send the following headers with the binary data of our file starting at byte 1001:
+            //
+            // PUT http://1234.cloud.vimeo.com/upload/video.mp4
+            // Host: 1.2.3.4:8080
+            // Content-Length: 338108
+            // Content-Type: video/mp4
+            // Content-Range: bytes 1001-339108/339108
+            // .... binary data of your file here ....
+            //
+            // If all goes well, you will receive a 200 status code. A 400 code means the Content-Range header did not resume from the last byte on the server
+            // ---------------------------------------------------------------------------------------------------------------------------------------------------
+            }
+         }
+
+      U_http_flag |= HTTP_METHOD_NOT_IMPLEMENTED;
+
+      U_INTERNAL_DUMP("U_http_method_not_implemented = %b", U_http_method_not_implemented)
+
+      if (UServer_Base::vplugin_name->last() != *UString::str_http) U_RETURN(U_PLUGIN_HANDLER_GO_ON); // NB: there are other plugin after this...
+
+      U_http_info.nResponseCode = HTTP_NOT_IMPLEMENTED;
+
+      handlerResponse();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
+
+   U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
+
+   if ((*UClientImage_Base::body         ||
+        U_http_is_nocache_file == false) &&
+       UClientImage_Base::isRequestNotFound())
       {
       setNotFound();
 
@@ -3976,28 +4096,6 @@ int UHTTP::processRequest()
       }
 
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
-
-   if (isGETorHEAD() == false)
-      {
-      if (isPOSTorPUTorPATCH())
-         {
-         setBadRequest();
-
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-         }
-
-      // NB: we don't want to process this kind of request here and now...
-
-      U_http_flag |= HTTP_METHOD_NOT_IMPLEMENTED;
-
-      U_INTERNAL_DUMP("U_http_method_not_implemented = %b", U_http_method_not_implemented)
-
-      // NB: maybe there are other plugin after this...
-
-      U_RETURN(U_PLUGIN_HANDLER_GO_ON);
-      }
-
-   U_ASSERT(UClientImage_Base::body->empty())
 
    ext->setBuffer(U_CAPACITY);
 
@@ -4176,9 +4274,6 @@ check_file: // now we check the file...
       file_data        = file_not_in_cache_data;
       mime_index       = U_unknow;
       file_data->fd    = file->fd;
-      file_data->size  = file->st_size;
-      file_data->mode  = file->st_mode;
-      file_data->mtime = file->st_mtime;
       }
 
    if (result == false)
@@ -4192,12 +4287,10 @@ check_file: // now we check the file...
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
-   if (file_data == file_not_in_cache_data) goto empty_file;
-
-   errno = 0;
-
    U_INTERNAL_DUMP("file_data->fd = %d file_data->size = %u file_data->mode = %d file_data->mtime = %ld",
                     file_data->fd,     file_data->size,     file_data->mode,     file_data->mtime)
+
+   errno = 0;
 
    if (U_SYSCALL(fstat, "%d,%p", file->fd, (struct stat*)file) != 0)
       {
@@ -4212,21 +4305,31 @@ check_file: // now we check the file...
          }
       }
 
-   U_INTERNAL_DUMP("file->st_mode = %d file->st_size = %u file->st_mtime = %ld", file->st_mode, file->st_size, file->st_mtime)
-
    file_data->mode  = file->st_mode;
    file_data->size  = file->st_size;
    file_data->mtime = file->st_mtime;
 
+   U_INTERNAL_DUMP("file->st_mode = %d file->st_size = %u file->st_mtime = %ld", file->st_mode, file->st_size, file->st_mtime)
+
    U_INTERNAL_ASSERT_EQUALS(file->st_size, file_data->size)
 
-   if (checkGetRequestIfModified())
+   if (file_data == file_not_in_cache_data ||
+       checkGetRequestIfModified())
       {
-empty_file: // NB: now we check for empty file...
-
       if (file_data->size)
          {
+         U_INTERNAL_ASSERT_EQUALS(U_http_sendfile, false)
+
          processGetRequest();
+
+         U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
+
+         if (U_http_is_nocache_file)
+            {
+            file->close();
+
+            file_data->fd = -1;
+            }
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
@@ -4245,6 +4348,12 @@ error:
 void UHTTP::setEndRequestProcessing()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::setEndRequestProcessing()")
+
+   ext->clear();
+
+#ifdef U_ALIAS
+   alias->clear();
+#endif
 
    // if any clear form data
 
@@ -5588,19 +5697,26 @@ void UHTTP::handlerResponse()
    if (U_http_info.nResponseCode == HTTP_NOT_IMPLEMENTED ||
        U_http_info.nResponseCode == HTTP_OPTIONS_RESPONSE)
       {
-      (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("Allow: "
-         "GET, HEAD, POST, PUT, DELETE, OPTIONS, "     // request methods
-         "TRACE, CONNECT, "                            // pathological
-         "COPY, MOVE, LOCK, UNLOCK, MKCOL, PROPFIND, " // webdav
-         "PATCH, PURGE, "                              // rfc-5789
-         "MERGE, REPORT, CHECKOUT, MKACTIVITY, "       // subversion
-         "NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE"     // upnp
-         "\r\nContent-Length: 0\r\n\r\n"));
+      U_INTERNAL_DUMP("U_http_method_not_implemented = %b", U_http_method_not_implemented)
+
+      if (U_http_method_not_implemented) (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("Your browser request a method that this server has not implemented"));
+      else
+         {
+         (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("Allow: "
+            "GET, HEAD, POST, PUT, DELETE, OPTIONS, "     // request methods
+            "TRACE, CONNECT, "                            // pathological
+            "COPY, MOVE, LOCK, UNLOCK, MKCOL, PROPFIND, " // webdav
+            "PATCH, PURGE, "                              // rfc-5789
+            "MERGE, REPORT, CHECKOUT, MKACTIVITY, "       // subversion
+            "NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE"     // upnp
+            "\r\nContent-Length: 0\r\n\r\n"));
+
+         UClientImage_Base::setCloseConnection();
+
+         if (U_http_info.nResponseCode == HTTP_OPTIONS_RESPONSE) U_http_info.nResponseCode = HTTP_OK;
+         }
 
       UClientImage_Base::setRequestNoCache();
-      UClientImage_Base::setCloseConnection();
-
-      if (U_http_info.nResponseCode == HTTP_OPTIONS_RESPONSE) U_http_info.nResponseCode = HTTP_OK;
 
       setStatusDescription();
 
@@ -5622,7 +5738,7 @@ void UHTTP::handlerResponse()
 
       if (U_http_info.nResponseCode == HTTP_OK)
          {
-         U_http_info.nResponseCode = HTTP_NO_CONTENT;
+         if (isGETorHEAD()) U_http_info.nResponseCode = HTTP_NO_CONTENT;
 
          // A server implements an HSTS policy by supplying a header over an HTTPS connection (HSTS headers over HTTP are ignored)
 
@@ -5894,9 +6010,20 @@ void UHTTP::setErrorResponse(const UString& content_type, int code, const char* 
 
    U_INTERNAL_ASSERT(U_IS_HTTP_ERROR(code))
 
-   UString body(1000U);
-
    UClientImage_Base::setCloseConnection();
+
+   U_INTERNAL_DUMP("U_http_is_request_nostat = %b U_HTTP_URI_QUERY_LEN = %u", U_http_is_request_nostat, U_HTTP_URI_QUERY_LEN)
+
+   if (len == 0                  &&
+       (U_http_is_request_nostat ||
+        U_HTTP_URI_QUERY_LEN == 0))
+      {
+      fmt  =                 "Your browser sent a request that this server could not understand";
+      len  = U_CONSTANT_SIZE("Your browser sent a request that this server could not understand");
+      code = HTTP_BAD_REQUEST;
+      }
+
+   UString body(1000U);
 
    body.snprintf("ErrorDocument/%u.html", U_http_info.nResponseCode = code);
 
@@ -5921,26 +6048,14 @@ void UHTTP::setErrorResponse(const UString& content_type, int code, const char* 
          }
       else
          {
+         // NB: we encoding to avoid cross-site scripting (XSS)...
+
+         char output[512];
+
          U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-         U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
-
-         if (U_http_is_request_nostat ||
-             U_HTTP_URI_QUERY_LEN == 0)
-            {
-            U_http_info.nResponseCode = HTTP_BAD_REQUEST;
-
-            u__memcpy(u_buffer,                      "Your browser sent a request that this server could not understand",
-                      u_buffer_len = U_CONSTANT_SIZE("Your browser sent a request that this server could not understand"), __PRETTY_FUNCTION__);
-            }
-         else
-            {
-            char output[512];
-
-            // NB: we encoding to avoid cross-site scripting (XSS)...
-
-            u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, fmt, u_xml_encode((const unsigned char*)U_http_info.uri, U_min(100, U_HTTP_URI_QUERY_LEN), (unsigned char*)output), output);
-            }
+         u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, fmt,
+                                    u_xml_encode((const unsigned char*)U_http_info.uri, U_min(100, U_HTTP_URI_QUERY_LEN), (unsigned char*)output), output);
 
          U_INTERNAL_ASSERT_MINOR(u_buffer_len, U_BUFFER_SIZE)
 
@@ -7798,8 +7913,6 @@ U_NO_EXPORT bool UHTTP::processFileCache()
 
    if (checkGetRequestIfModified() == false)
       {
-      ext->clear();
-
       UClientImage_Base::setRequestFileCacheProcessed();
 
       U_RETURN(true);
@@ -9721,8 +9834,6 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
                                               UMimeMultipartMsg::NONE, "", "",
                                               buffer, ptr - buffer));
       }
-
-   ext->clear();
 
    uint32_t content_length = response.message(*ext, false);
 

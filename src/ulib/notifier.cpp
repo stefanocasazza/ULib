@@ -55,9 +55,11 @@ struct pollfd UNotifier::fds[1];
  */
 
 int                             UNotifier::nfd_ready; // the number of file descriptors ready for the requested I/O
+long                            UNotifier::last_event;
 uint32_t                        UNotifier::min_connection;
 uint32_t                        UNotifier::num_connection;
 uint32_t                        UNotifier::max_connection;
+uint32_t                        UNotifier::lo_map_fd_len;
 uint32_t                        UNotifier::bepollet_threshold = 10;
 UEventFd*                       UNotifier::handler_event;
 UEventFd**                      UNotifier::lo_map_fd;
@@ -175,7 +177,7 @@ next:
 
          // NB: reinitialized all after fork()...
 
-         for (int fd = 1; fd < (int32_t)max_connection; ++fd)
+         for (int fd = 1; fd < (int32_t)lo_map_fd_len; ++fd)
             {
             if ((handler_event = lo_map_fd[fd]))
                {
@@ -236,7 +238,7 @@ next:
 
          // NB: reinitialized all after fork()...
 
-         for (int fd = 1; fd < (int32_t)max_connection; ++fd)
+         for (int fd = 1; fd < (int32_t)lo_map_fd_len; ++fd)
             {
             if ((handler_event = lo_map_fd[fd]))
                {
@@ -444,6 +446,10 @@ loop:
       U_INTERNAL_DUMP("max_nfd_ready = %u", max_nfd_ready)
 #  endif
 
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
+
+      last_event = u_now->tv_sec;
+
 #  if !defined(HAVE_EPOLL_WAIT) && !defined(HAVE_KQUEUE)
       int fd = 1, fd_cnt = (fd_read_cnt + fd_write_cnt);
 
@@ -539,9 +545,9 @@ loop0:
           *  EPOLLIN  EPOLLRDHUP
           */
 
-         if (UNLIKELY((pevents->events & (EPOLLERR | EPOLLHUP))  != 0) ||
-              (LIKELY((pevents->events & (EPOLLIN | EPOLLRDHUP)) != 0) ? handler_event->handlerRead()
-                                                                       : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
+         if (UNLIKELY((pevents->events & (EPOLLERR | EPOLLHUP))   != 0) ||
+              (LIKELY((pevents->events & (EPOLLIN  | EPOLLRDHUP)) != 0) ? handler_event->handlerRead()
+                                                                        : handler_event->handlerWrite()) == U_NOTIFIER_DELETE)
             {
             handlerDelete(handler_event);
 
@@ -655,6 +661,10 @@ void UNotifier::waitForEvent()
    UEventTime* ptimeout;
 
 loop:
+   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
+
+   last_event = u_now->tv_sec;
+
    waitForEvent(ptimeout = UTimer::getTimeout());
 
    if (nfd_ready == 0 &&
@@ -677,7 +687,8 @@ void UNotifier::createMapFd()
    U_INTERNAL_ASSERT_EQUALS(hi_map_fd, 0)
    U_INTERNAL_ASSERT_MAJOR(max_connection, 0)
 
-   lo_map_fd = (UEventFd**) UMemoryPool::_malloc(max_connection, sizeof(UEventFd*), true);
+   lo_map_fd_len = 20+max_connection;
+   lo_map_fd     = (UEventFd**) UMemoryPool::_malloc(&lo_map_fd_len, sizeof(UEventFd*), true);
 
    typedef UGenericHashMap<int,UEventFd*> umapfd;
 
@@ -701,7 +712,7 @@ bool UNotifier::isHandler(int fd)
       U_INTERNAL_ASSERT_POINTER(lo_map_fd)
       U_INTERNAL_ASSERT_POINTER(hi_map_fd)
 
-      if (fd < (int32_t)max_connection) result = (lo_map_fd[fd] != 0);
+      if (fd < (int32_t)lo_map_fd_len) result = (lo_map_fd[fd] != 0);
       else
          {
          lock();
@@ -723,7 +734,7 @@ bool UNotifier::setHandler(int fd)
    U_INTERNAL_ASSERT_POINTER(lo_map_fd)
    U_INTERNAL_ASSERT_POINTER(hi_map_fd)
 
-   if (fd < (int32_t)max_connection)
+   if (fd < (int32_t)lo_map_fd_len)
       {
       if (lo_map_fd[fd])
          {
@@ -767,7 +778,7 @@ void UNotifier::insert(UEventFd* item, int op)
 
    U_INTERNAL_ASSERT_DIFFERS(fd, -1)
 
-   if (fd < (int32_t)max_connection) lo_map_fd[fd] = item;
+   if (fd < (int32_t)lo_map_fd_len) lo_map_fd[fd] = item;
    else
       {
       lock();
@@ -943,7 +954,7 @@ void UNotifier::handlerDelete(int fd, int mask)
 
    U_INTERNAL_ASSERT_MAJOR(fd, 0)
 
-   if (fd < (int32_t)max_connection) lo_map_fd[fd] = 0;
+   if (fd < (int32_t)lo_map_fd_len) lo_map_fd[fd] = 0;
    else
       {
       lock();
@@ -1000,14 +1011,14 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
 
    UEventFd* item;
 
-   for (int fd = 1; fd < (int32_t)max_connection; ++fd)
+   for (int fd = 1; fd < (int32_t)lo_map_fd_len; ++fd)
       {
       if ((item = lo_map_fd[fd]))
          {
 #     ifdef DEBUG
          if (UNLIKELY((const void*)item <= U_NULL_POINTER))
             {
-            U_WARNING("UNotifier::callForAllEntryDynamic(): lo_map_fd[%d] = %d", fd, item);
+            U_DEBUG("UNotifier::callForAllEntryDynamic(): lo_map_fd[%d] = %p", fd, item);
 
             return;
             }
@@ -1019,22 +1030,35 @@ void UNotifier::callForAllEntryDynamic(bPFpv function)
              function(item))
             {
             handlerDelete(item);
+
+            U_INTERNAL_DUMP("num_connection = %u", num_connection)
+
+            if (num_connection == min_connection) return;
             }
          }
       }
 
-   if (hi_map_fd->first())
+   UGenericHashMap<int,UEventFd*>::UGenericHashMapNode* _node;
+
+   if ((_node = hi_map_fd->first()))
       {
       do {
          item = hi_map_fd->elem();
 
-         U_INTERNAL_DUMP("fd = %d op_mask = %B", item->fd, item->op_mask)
-
          U_INTERNAL_ASSERT_MAJOR(item->fd, 0)
 
-         if (function(item)) handlerDelete(item);
+         if (function(item))
+            {
+            U_DEBUG("UNotifier::callForAllEntryDynamic(): hi_map_fd(%p) = %p %d", _node, item, item->fd);
+
+            handlerDelete(item);
+
+            U_INTERNAL_DUMP("num_connection = %u", num_connection)
+
+            if (num_connection == min_connection) return;
+            }
          }
-      while (hi_map_fd->next());
+      while ((_node = hi_map_fd->next(_node)));
       }
 }
 
@@ -1055,7 +1079,7 @@ void UNotifier::clear()
 
    if (num_connection)
       {
-      for (int fd = 1; fd < (int32_t)max_connection; ++fd)
+      for (int fd = 1; fd < (int32_t)lo_map_fd_len; ++fd)
          {
          if ((item = lo_map_fd[fd]))
             {
@@ -1070,7 +1094,9 @@ void UNotifier::clear()
             }
          }
 
-      if (hi_map_fd->first())
+      UGenericHashMap<int,UEventFd*>::UGenericHashMapNode* _node;
+
+      if ((_node = hi_map_fd->first()))
          {
          do {
             item = hi_map_fd->elem();
@@ -1079,11 +1105,11 @@ void UNotifier::clear()
 
             if (item->fd != -1) handlerDelete(item);
             }
-         while (hi_map_fd->next());
+         while ((_node = hi_map_fd->next(_node)));
          }
       }
 
-   UMemoryPool::_free(lo_map_fd, max_connection, sizeof(UEventFd*));
+   UMemoryPool::_free(lo_map_fd, lo_map_fd_len, sizeof(UEventFd*));
 
    hi_map_fd->deallocate();
 
@@ -1230,7 +1256,7 @@ loop:
 }
 #endif
 
-// param timeoutms specified the timeout value, in milliseconds.
+// param timeoutMS specified the timeout value, in milliseconds.
 // a negative value indicates no timeout, i.e. an infinite wait
 
 int UNotifier::waitForRead(int fd, int timeoutMS)
@@ -1347,7 +1373,7 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
    U_RETURN(ret);
 }
 
-// param timeoutms specified the timeout value, in milliseconds.
+// param timeoutMS specified the timeout value, in milliseconds.
 // a negative value indicates no timeout, i.e. an infinite wait
 
 int UNotifier::read(int fd, char* buffer, int count, int timeoutMS)
@@ -1416,7 +1442,7 @@ uint32_t UNotifier::write(int fd, const char* str, int count, int timeoutMS)
 
          if (waitForWrite(fd, timeoutMS) <= 0) break;
 
-         timeoutMS = -1; // in this way it is only for the first write...
+         timeoutMS = -1; // NB: in this way it is only for the first write...
          }
 
 #  ifdef _MSWINDOWS_
@@ -1471,6 +1497,7 @@ const char* UNotifier::dump(bool reset) const
     UObjectIO::os->put('\n');
 #endif
    *UObjectIO::os << "nfd_ready                   " << nfd_ready      << '\n'
+                  << "last_event                  " << last_event     << '\n'
                   << "min_connection              " << min_connection << '\n'
                   << "num_connection              " << num_connection << '\n'
                   << "max_connection              " << max_connection;

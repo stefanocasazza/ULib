@@ -24,7 +24,6 @@ Accept: */*
 GET /get_funky_content_length_body_hello HTTP/1.0
 content-length: 5
 
-HELLO
 POST /post_identity_body_world?q=search#hey HTTP/1.0
 Accept: */*
 Transfer-Encoding: identity
@@ -106,13 +105,3 @@ If-Match: 0023aa4e\r
 Content-Length: 10
 
 cccccccccc
-GET / HTTP/1.1
-X-SSL-Bullshit: -----BEGIN CERTIFICATE-----
-MIIFbTCCBFWgAwIBAgICH4cwDQYJKoZIhvcNAQEFBQAwcDELMAkGA1UEBhMCVUsx
-cHBvcnQuYWMudmT4sopwqlBWsvcHViL2NybC9jYWNybC5jcmwwPQYJYIZIAYb4QgEDBDAWLmh0
-dHA6Ly9jYS5ncmlkLXN1cHBvcnQuYWMudWsvcHViL2NybC9jYWNybC5jcmwwPwYD
-VR0fBDgwNjA0oDKgMIYuaHR0cDovL2NhLmdyaWQt5hYy51ay9wdWIv
-Yhixw1aKEPzNjNowuIseVogKOLXxWI5vAi5HgXdS0/ES5gDGsABo4fqovUKlgop3
-RA==
------END CERTIFICATE-----
-

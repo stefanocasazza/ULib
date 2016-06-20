@@ -177,7 +177,7 @@ bool UMongoDBClient::insert(bson_t* doc)
 
    bson_error_t error;
 
-   if (U_SYSCALL(mongoc_collection_insert, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_INSERT_NONE, doc, 0, &error) == false)
+   if (U_SYSCALL(mongoc_collection_insert, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_INSERT_NONE, doc, 0, &error) == 0)
       {
       U_WARNING("mongoc_collection_insert(): %", error.message);
 
@@ -196,7 +196,7 @@ bool UMongoDBClient::update(bson_t* query, bson_t* _update)
 
    bson_error_t error;
 
-   if (U_SYSCALL(mongoc_collection_update, "%p,%d,%p,%p,%p,%p", collection, MONGOC_UPDATE_NONE, query, _update, 0, &error) == false)
+   if (U_SYSCALL(mongoc_collection_update, "%p,%d,%p,%p,%p,%p", collection, MONGOC_UPDATE_NONE, query, _update, 0, &error) == 0)
       {
       U_WARNING("mongoc_collection_update(): %S", error.message);
 
@@ -255,6 +255,63 @@ bool UMongoDBClient::findAndModify(bson_t* query, bson_t* _update)
       }
 
    U_WARNING("mongoc_collection_find_and_modify(): %S", error.message);
+
+   U_RETURN(false);
+}
+
+// BULK
+
+void UMongoDBClient::updateOneBulk(mongoc_bulk_operation_t* bulk, uint32_t old_value, const char* key, uint32_t new_value)
+{
+   U_TRACE(0, "UMongoDBClient::updateOneBulk(%p,%u,%S,%u)", bulk, old_value, key, new_value)
+
+   U_INTERNAL_ASSERT_POINTER(client)
+   U_INTERNAL_ASSERT_POINTER(collection)
+
+   bson_t* query   = (bson_t*) U_SYSCALL_NO_PARAM(bson_new);
+   bson_t* _update = BCON_NEW ("$set", "{", key, BCON_INT32( new_value ), "}");
+
+   BSON_APPEND_INT32(query, "_id", old_value);
+
+   U_SYSCALL_VOID(mongoc_bulk_operation_update_one, "%p,%p,%p,%b", bulk, query, _update, false);
+
+   U_SYSCALL_VOID(bson_destroy, "%p", query);
+   U_SYSCALL_VOID(bson_destroy, "%p", _update);
+}
+
+bool UMongoDBClient::executeBulk(mongoc_bulk_operation_t* bulk)
+{
+   U_TRACE(0, "UMongoDBClient::executeBulk(%p)", bulk)
+
+   U_INTERNAL_ASSERT_POINTER(client)
+   U_INTERNAL_ASSERT_POINTER(collection)
+
+   bool ok;
+   bson_t reply;
+   bson_error_t error;
+
+   if ((ok = (U_SYSCALL(mongoc_bulk_operation_execute, "%p,%p,%p", bulk, &reply, &error) != 0)))
+      {
+      UString x;
+      size_t length;
+      char* str = U_SYSCALL(bson_as_json, "%p,%p", &reply, &length);
+
+      x.setConstant((const char*)str, length);
+
+      x.rep->_capacity = U_TO_FREE;
+
+      U_INTERNAL_DUMP("x = %V", x.rep);
+
+      vitem.clear();
+      vitem.push(x);
+      }
+
+   U_SYSCALL_VOID(bson_destroy, "%p", &reply);
+   U_SYSCALL_VOID(mongoc_bulk_operation_destroy, "%p", bulk);
+
+   if (ok) U_RETURN(true);
+
+   U_WARNING("mongoc_bulk_operation_execute(): %S", error.message);
 
    U_RETURN(false);
 }

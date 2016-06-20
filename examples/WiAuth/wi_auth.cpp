@@ -6,8 +6,6 @@ static void usp_end_wi_auth();
    static void usp_init_wi_auth();
    static void usp_sighup_wi_auth();
    
-   static long start_op;
-   
    #include <ulib/examples/wi_auth_declaration.h>  
    
 extern "C" {
@@ -64,7 +62,6 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
       GET_ENTRY(get_config),
       GET_ENTRY(get_users_info),
       GET_ENTRY(help_wifi),
-      GET_ENTRY(info),
       GET_ENTRY(logged),
       GET_ENTRY(logged_login_request),
       GET_ENTRY(login),
@@ -104,8 +101,6 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
       POST_ENTRY(tavarnelle),
       POST_ENTRY(uploader)
    };
-   
-   start_op = u_now->tv_sec;
    
    U_http_info.nResponseCode = 0;
    

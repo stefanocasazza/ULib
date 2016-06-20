@@ -134,7 +134,9 @@ int U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( y.table.size() == TOTAL_KEYWORDS )
 
-   int n = y.table.first();
+   uint32_t n = 1;
+   
+   (void) y.table.first();
 
    while (y.table.next()) ++n;
 
@@ -180,7 +182,7 @@ int U_EXPORT main (int argc, char* argv[])
    UCrono crono;
 
    crono.start();
-   for (int i = 0; i < n; ++i) check(y);
+   for (int i = 0; i < (int)n; ++i) check(y);
    crono.stop();
 
    check1(y);
