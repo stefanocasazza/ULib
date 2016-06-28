@@ -563,8 +563,6 @@ int UClientImage_Base::handlerTimeout()
                 UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
                 UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
 
-      last_event = u_now->tv_sec;
-
       U_RETURN(U_NOTIFIER_OK);
       }
 

@@ -106,8 +106,6 @@ void UTimer::callHandlerTimeout()
    UTimer* item = first;
                   first = first->next; // remove it from its active list
 
-   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
-
    int result = item->alarm->handlerTime();
 
         if (result == -1) erase(item); // -1 => normal
@@ -263,14 +261,22 @@ void UTimer::clear()
 
    if (first)
       {
-      for (UTimer* item = first; item; item = item->next) delete item;
+      for (UTimer* item = first; item; item = item->next)
+         {
+         delete item->alarm;
+         delete item;
+         }
 
       first = 0;
       }
 
    if (pool)
       {
-      for (UTimer* item = pool; item; item = item->next) delete item;
+      for (UTimer* item = pool; item; item = item->next)
+         {
+         delete item->alarm;
+         delete item;
+         }
 
       pool = 0;
       }

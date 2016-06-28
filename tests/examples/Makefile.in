@@ -111,6 +111,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
 	$(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/m4/socket_SO_RCVTIMEO.m4 \
+	$(top_srcdir)/m4/m4_ax_python_devel.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -431,6 +432,16 @@ PHPCONFIGLIBS = @PHPCONFIGLIBS@
 PKG_CONFIG = @PKG_CONFIG@
 POW_LIB = @POW_LIB@
 PRG_LDFLAGS = @PRG_LDFLAGS@
+PYTHON = @PYTHON@
+PYTHONCONFIGLDFLAGS = @PYTHONCONFIGLDFLAGS@
+PYTHONCONFIGLIBS = @PYTHONCONFIGLIBS@
+PYTHONCPPFLAGS = @PYTHONCPPFLAGS@
+PYTHON_CPPFLAGS = @PYTHON_CPPFLAGS@
+PYTHON_EXTRA_LDFLAGS = @PYTHON_EXTRA_LDFLAGS@
+PYTHON_EXTRA_LIBS = @PYTHON_EXTRA_LIBS@
+PYTHON_LDFLAGS = @PYTHON_LDFLAGS@
+PYTHON_SITE_PKG = @PYTHON_SITE_PKG@
+PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
 RPM_CONFIGURE = @RPM_CONFIGURE@
 RUBYCONFIGINCLUDES = @RUBYCONFIGINCLUDES@
@@ -524,7 +535,7 @@ top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir) -I$(top_srcdir)/include -I$(top_srcdir)/examples/http_header/include
-EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA IR/WEB IR/benchmark IR/doc_dir *.cfg .htpasswd .htdigest \
+EXTRA_DIST = inp ok CA CSP LCSP TSA RSIGN XAdES nocat wi-auth WAGSM RA IR/WEB IR/benchmark IR/doc_dir *.cfg .htpasswd .htdigest python \
 				 *.properties *.test *.sh error_msg workflow doc_parse robots.txt alias.txt throttling.txt css js benchmark websocket docroot php.sh
 
 TESTS = client_server.test test_manager.test IR.test web_server.test \

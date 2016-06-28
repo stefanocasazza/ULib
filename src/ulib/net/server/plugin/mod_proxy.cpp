@@ -88,7 +88,7 @@ int UProxyPlugIn::handlerRequest()
          {
          U_ASSERT(UClientImage_Base::environment->empty())
 
-         if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_CGI))
+         if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_GENERIC))
             {
             if (UHTTP::service->environment) UClientImage_Base::environment->append(UHTTP::service->environment);
 

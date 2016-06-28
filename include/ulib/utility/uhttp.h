@@ -50,40 +50,19 @@ class UModProxyService;
 
 template <class T> class URDBObjectHandler;
 
-enum EnvironmentType {
-   U_CGI   = 0x001,
-   U_PHP   = 0x002,
-   U_RAKE  = 0x004,
-   U_SHELL = 0x008
-};
-
-enum DynamicPageType {
-   U_DPAGE_INIT    = -1,
-   U_DPAGE_RESET   = -2,
-   U_DPAGE_DESTROY = -3,
-   U_DPAGE_SIGHUP  = -4,
-   U_DPAGE_FORK    = -5
-};
-
 class U_EXPORT UHTTP {
 public:
-
-   // COSTRUTTORE e DISTRUTTORE
 
    static void init();
    static void dtor();
 
-   static bool readRequest();
-   static void setStatusDescription();
-   static bool isValidMethod(const char* ptr) __pure;
-   static bool scanfHeaderRequest(const char* ptr, uint32_t size);
-   static bool scanfHeaderResponse(const char* ptr, uint32_t size);
-   static bool readHeaderResponse(USocket* socket, UString& buffer);
-   static bool isValidRequest(   const char* ptr, uint32_t size) __pure;
-   static bool isValidRequestExt(const char* ptr, uint32_t size) __pure;
-   static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
-
    // TYPE
+
+   static bool isMobile() __pure;
+   static bool isProxyRequest();
+
+   static bool isTSARequest() __pure;
+   static bool isSOAPRequest() __pure;
 
    static bool isGET()
       {
@@ -184,12 +163,6 @@ public:
       U_RETURN(false);
       }
 
-   static bool isMobile() __pure;
-   static bool isProxyRequest();
-
-   static bool isTSARequest() __pure;
-   static bool isSOAPRequest() __pure;
-
    // SERVICES
 
    static UFile* file;
@@ -214,25 +187,27 @@ public:
    static bool enable_caching_by_proxy_servers;
    static uint32_t npathinfo, limit_request_body, request_read_timeout, range_start, range_size, response_code;
 
-   static void setUploadDir(const UString& dir)
-      {
-      U_TRACE(0, "UHTTP::setUploadDir(%V)", dir.rep)
+   static int  handlerREAD();
+   static bool readRequest();
+   static bool handlerCache();
+   static int  manageRequest();
+   static int  processRequest();
+   static void initDbNotFound();
+   static void setStatusDescription();
+   static void setEndRequestProcessing();
+   static bool callService(const UString& path);
+   static bool isUriRequestNeedCertificate() __pure;
+   static bool isValidMethod(const char* ptr) __pure;
+   static bool manageSendfile(const char* ptr, uint32_t len);
+   static bool checkContentLength(uint32_t length, uint32_t pos);
+   static bool scanfHeaderRequest(const char* ptr, uint32_t size);
+   static bool scanfHeaderResponse(const char* ptr, uint32_t size);
+   static bool readHeaderResponse(USocket* socket, UString& buffer);
+   static bool isValidRequest(   const char* ptr, uint32_t size) __pure;
+   static bool isValidRequestExt(const char* ptr, uint32_t size) __pure;
+   static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
 
-      U_INTERNAL_ASSERT_POINTER(upload_dir)
-
-      *upload_dir = dir;
-      }
-
-   static uint32_t getUserAgent()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP::getUserAgent()")
-
-      uint32_t agent = (U_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, -1) : 0);
-
-      U_RETURN(agent);
-      }
-
-   static void setPathName();
+   static void      setPathName();
    static void checkForPathName()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::checkForPathName()")
@@ -245,6 +220,24 @@ public:
 
          U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
          }
+      }
+
+   static uint32_t getUserAgent()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::getUserAgent()")
+
+      uint32_t agent = (U_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, -1) : 0);
+
+      U_RETURN(agent);
+      }
+
+   static void setUploadDir(const UString& dir)
+      {
+      U_TRACE(0, "UHTTP::setUploadDir(%V)", dir.rep)
+
+      U_INTERNAL_ASSERT_POINTER(upload_dir)
+
+      *upload_dir = dir;
       }
 
    static void setHostname(const char* ptr, uint32_t len)
@@ -273,17 +266,6 @@ public:
 
       U_INTERNAL_DUMP("U_http_host_vlen = %u U_HTTP_VHOST = %.*S", U_http_host_vlen, U_HTTP_VHOST_TO_TRACE)
       }
-
-   static int  handlerREAD();
-   static bool handlerCache();
-   static int  manageRequest();
-   static int  processRequest();
-   static void initDbNotFound();
-   static void setEndRequestProcessing();
-   static bool callService(const UString& path);
-   static bool isUriRequestNeedCertificate() __pure;
-   static bool manageSendfile(const char* ptr, uint32_t len);
-   static bool checkContentLength(uint32_t length, uint32_t pos);
 
    static const char* getStatusDescription(uint32_t* plen = 0);
 
@@ -356,6 +338,8 @@ public:
       setErrorResponse(*UString::str_ctype_html, HTTP_FORBIDDEN, "You don't have permission to access %.*S on this server", 0);
       }
 
+   static void setUnAuthorized();
+
    static void setInternalError()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setInternalError()")
@@ -376,10 +360,6 @@ public:
                        U_CONSTANT_TO_PARAM("Sorry, the service you requested is not available at this moment. "
                                            "Please contact the server administrator and inform them about this"));
       }
-
-   static void setUnAuthorized();
-
-   // HTTP STRICT TRANSPORT SECURITY
 
 #ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
    static UString* uri_strict_transport_security_mask;
@@ -412,15 +392,13 @@ public:
    static void setGlobalAlias(const UString& alias);
 #endif
 
-   // manage HTTP request service
+   // manage HTTP request service: the tables must be ordered alphabetically cause of binary search...
 
    typedef struct service_info {
       const char* name;
       uint32_t    len;
       vPF         function;
    } service_info;
-
-   // NB: the tables must be ordered alphabetically by binary search...
 
 #define  GET_ENTRY(name) {#name,U_CONSTANT_SIZE(#name), GET_##name}
 #define POST_ENTRY(name) {#name,U_CONSTANT_SIZE(#name),POST_##name}
@@ -560,9 +538,84 @@ public:
    static bool isSCGIRequest() __pure;
 
    static bool runCGI(bool set_environment);
-   static bool getCGIEnvironment(UString& environment, int mask);
+   static bool getCGIEnvironment(UString& environment, int type);
    static bool processCGIOutput(bool cgi_sh_script, bool bheaders);
    static bool processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi = 0);
+   static bool setEnvironmentForLanguageProcessing(int type, void* env, vPFpvpcpc func);
+
+#if defined(U_ALIAS) && defined(USE_LIBPCRE) // REWRITE RULE
+   class RewriteRule {
+   public:
+
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   // COSTRUTTORI
+
+   UPCRE key;
+   UString replacement;
+
+   RewriteRule(const UString& _key, const UString& _replacement) : key(_key, PCRE_FOR_REPLACE), replacement(_replacement)
+      {
+      U_TRACE_REGISTER_OBJECT(0, RewriteRule, "%V,%V", _key.rep, _replacement.rep)
+
+      key.study();
+      }
+
+   ~RewriteRule()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, RewriteRule)
+      }
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const U_EXPORT;
+#endif
+
+   private:
+#ifdef U_COMPILER_DELETE_MEMBERS
+   RewriteRule& operator=(const RewriteRule&) = delete;
+#else
+   RewriteRule& operator=(const RewriteRule&) { return *this; }
+#endif      
+   };
+
+   static UVector<RewriteRule*>* vRewriteRule;
+#endif      
+
+   // ------------------------------------------------------------------------------------------------------------------------------------------------ 
+   // COMMON LOG FORMAT (APACHE LIKE LOG)
+   // ------------------------------------------------------------------------------------------------------------------------------------------------ 
+   // The Common Log Format, also known as the NCSA Common log format, is a standardized text file format used by web servers
+   // when generating server log files. Because the format is standardized, the files may be analyzed by a variety of web analysis programs.
+   // Each line in a file stored in the Common Log Format has the following syntax: host ident authuser date request status bytes
+   // ------------------------------------------------------------------------------------------------------------------------------------------------ 
+   // 10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET / HTTP/1.1" 200 598 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.5 (KHTML, like Gecko)"
+   // 10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET /unirel_logo.gif HTTP/1.1" 200 3414 "http://www.unirel.com/" "Mozilla/5.0 (X11; Linux x86_64)"
+   // ------------------------------------------------------------------------------------------------------------------------------------------------ 
+
+#ifndef U_LOG_DISABLE
+   static char iov_buffer[20];
+   static struct iovec iov_vec[10];
+# if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
+   static uint32_t request_offset, referer_offset, agent_offset;
+# endif
+
+   static void    initApacheLikeLog();
+   static void prepareApacheLikeLog();
+   static void   resetApacheLikeLog()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::resetApacheLikeLog()")
+
+      iov_vec[6].iov_len  =
+      iov_vec[8].iov_len  = 1;
+      iov_vec[6].iov_base =
+      iov_vec[8].iov_base = (caddr_t) "-";
+      }
+#endif
 
    // USP (ULib Servlet Page)
 
@@ -604,43 +657,12 @@ public:
    static uint32_t usp_page_key_len;
    static UServletPage* usp_page_ptr;
 
-   static bool callEndForAllUSP(UStringRep* key, void* value);
-   static bool callInitForAllUSP(UStringRep* key, void* value);
-   static bool callSigHUPForAllUSP(UStringRep* key, void* value);
+   static bool       callEndForAllUSP(UStringRep* key, void* value);
+   static bool      callInitForAllUSP(UStringRep* key, void* value);
+   static bool    callSigHUPForAllUSP(UStringRep* key, void* value);
    static bool callAfterForkForAllUSP(UStringRep* key, void* value);
 
    static UServletPage* getUSP(const char* key, uint32_t key_len);
-
-   // ------------------------------------------------------------------------------------------------------------------------------------------------- 
-   // COMMON LOG FORMAT (APACHE LIKE LOG)
-   // ------------------------------------------------------------------------------------------------------------------------------------------------- 
-   // The Common Log Format, also known as the NCSA Common log format, is a standardized text file format used by web servers
-   // when generating server log files. Because the format is standardized, the files may be analyzed by a variety of web analysis programs.
-   // Each line in a file stored in the Common Log Format has the following syntax: host ident authuser date request status bytes
-   // ------------------------------------------------------------------------------------------------------------------------------------------------- 
-   // 10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET / HTTP/1.1" 200 598 "-" "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.5 (KHTML, like Gecko)"
-   // 10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET /unirel_logo.gif HTTP/1.1" 200 3414 "http://www.unirel.com/" "Mozilla/5.0 (X11; Linux x86_64)"
-   // ------------------------------------------------------------------------------------------------------------------------------------------------- 
-
-#ifndef U_LOG_DISABLE
-   static char iov_buffer[20];
-   static struct iovec iov_vec[10];
-# if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
-   static uint32_t request_offset, referer_offset, agent_offset;
-# endif
-
-   static void    initApacheLikeLog();
-   static void prepareApacheLikeLog();
-   static void   resetApacheLikeLog()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP::resetApacheLikeLog()")
-
-      iov_vec[6].iov_len  =
-      iov_vec[8].iov_len  = 1;
-      iov_vec[6].iov_base =
-      iov_vec[8].iov_base = (caddr_t) "-";
-      }
-#endif
 
    // CSP (C Servlet Page)
 
@@ -695,86 +717,6 @@ public:
    UCServletPage& operator=(const UCServletPage&) { return *this; }
 #endif      
    };
-
-   typedef void (*vPFstr)(UString&);
-
-#ifdef USE_PAGE_SPEED // (Google Page Speed)
-   typedef void (*vPFpcstr)(const char*, UString&);
-
-   class UPageSpeed : public UDynamic {
-   public:
-
-   vPFpcstr minify_html;
-   vPFstr optimize_gif, optimize_png, optimize_jpg;
-
-   // COSTRUTTORI
-
-   UPageSpeed()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UPageSpeed, "", 0)
-
-      minify_html  = 0;
-      optimize_gif = optimize_png = optimize_jpg = 0;
-      }
-
-   ~UPageSpeed()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UPageSpeed)
-      }
-
-#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-   const char* dump(bool reset) const U_EXPORT;
-#endif
-
-   private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UPageSpeed(const UPageSpeed&) = delete;
-   UPageSpeed& operator=(const UPageSpeed&) = delete;
-#else
-   UPageSpeed(const UPageSpeed&) : UDynamic() {}
-   UPageSpeed& operator=(const UPageSpeed&)   { return *this; }
-#endif      
-   };
-
-   static UPageSpeed* page_speed;
-#endif
-
-#ifdef USE_LIBV8 // (Google V8 JavaScript Engine)
-   class UV8JavaScript : public UDynamic {
-   public:
-
-   vPFstr runv8;
-
-   // COSTRUTTORI
-
-   UV8JavaScript()
-      {
-      U_TRACE_REGISTER_OBJECT(0, UV8JavaScript, "", 0)
-
-      runv8 = 0;
-      }
-
-   ~UV8JavaScript()
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UV8JavaScript)
-      }
-
-#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-   const char* dump(bool reset) const U_EXPORT;
-#endif
-
-   private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UV8JavaScript(const UV8JavaScript&) = delete;
-   UV8JavaScript& operator=(const UV8JavaScript&) = delete;
-#else
-   UV8JavaScript(const UV8JavaScript&) : UDynamic() {}
-   UV8JavaScript& operator=(const UV8JavaScript&)   { return *this; }
-#endif      
-   };
-
-   static UV8JavaScript* v8_javascript;
-#endif
 
 #ifdef USE_PHP // (wrapper to embed the PHP interpreter)
    class UPHP : public UDynamic {
@@ -855,32 +797,26 @@ public:
    static bool ruby_on_rails;
 #endif
 
-#if defined(U_ALIAS) && defined(USE_LIBPCRE) // REWRITE RULE
-   class RewriteRule {
+#ifdef USE_PYTHON // (wrapper to embed the PYTHON interpreter)
+   class UPYTHON : public UDynamic {
    public:
 
-   // Check for memory error
-   U_MEMORY_TEST
-
-   // Allocator e Deallocator
-   U_MEMORY_ALLOCATOR
-   U_MEMORY_DEALLOCATOR
+   vPF python_end;
+   bPFpcpcpcpc runPYTHON;
 
    // COSTRUTTORI
 
-   UPCRE key;
-   UString replacement;
-
-   RewriteRule(const UString& _key, const UString& _replacement) : key(_key, PCRE_FOR_REPLACE), replacement(_replacement)
+   UPYTHON()
       {
-      U_TRACE_REGISTER_OBJECT(0, RewriteRule, "%V,%V", _key.rep, _replacement.rep)
+      U_TRACE_REGISTER_OBJECT(0, UPYTHON, "", 0)
 
-      key.study();
+      runPYTHON  = 0;
+      python_end = 0;
       }
 
-   ~RewriteRule()
+   ~UPYTHON()
       {
-      U_TRACE_UNREGISTER_OBJECT(0, RewriteRule)
+      U_TRACE_UNREGISTER_OBJECT(0, UPYTHON)
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
@@ -889,14 +825,101 @@ public:
 
    private:
 #ifdef U_COMPILER_DELETE_MEMBERS
-   RewriteRule& operator=(const RewriteRule&) = delete;
+   UPYTHON(const UPYTHON&) = delete;
+   UPYTHON& operator=(const UPYTHON&) = delete;
 #else
-   RewriteRule& operator=(const RewriteRule&) { return *this; }
+   UPYTHON(const UPYTHON&) : UDynamic() {}
+   UPYTHON& operator=(const UPYTHON&)   { return *this; }
 #endif      
    };
 
-   static UVector<RewriteRule*>* vRewriteRule;
+   static UPYTHON* python_embed;
+   static const char* py_project_app;
+   static const char* py_project_root;
+   static const char* py_virtualenv_path;
+#endif
+
+#if defined(USE_PAGE_SPEED) || defined(USE_LIBV8)
+   typedef void (*vPFstr)(UString&);
+#endif
+
+#ifdef USE_PAGE_SPEED // (Google Page Speed)
+   typedef void (*vPFpcstr)(const char*, UString&);
+
+   class UPageSpeed : public UDynamic {
+   public:
+
+   vPFpcstr minify_html;
+   vPFstr optimize_gif, optimize_png, optimize_jpg;
+
+   // COSTRUTTORI
+
+   UPageSpeed()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UPageSpeed, "", 0)
+
+      minify_html  = 0;
+      optimize_gif = optimize_png = optimize_jpg = 0;
+      }
+
+   ~UPageSpeed()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UPageSpeed)
+      }
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const U_EXPORT;
+#endif
+
+   private:
+#ifdef U_COMPILER_DELETE_MEMBERS
+   UPageSpeed(const UPageSpeed&) = delete;
+   UPageSpeed& operator=(const UPageSpeed&) = delete;
+#else
+   UPageSpeed(const UPageSpeed&) : UDynamic() {}
+   UPageSpeed& operator=(const UPageSpeed&)   { return *this; }
 #endif      
+   };
+
+   static UPageSpeed* page_speed;
+#endif
+
+#ifdef USE_LIBV8 // (Google V8 JavaScript Engine)
+   class UV8JavaScript : public UDynamic {
+   public:
+
+   vPFstr runv8;
+
+   // COSTRUTTORI
+
+   UV8JavaScript()
+      {
+      U_TRACE_REGISTER_OBJECT(0, UV8JavaScript, "", 0)
+
+      runv8 = 0;
+      }
+
+   ~UV8JavaScript()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UV8JavaScript)
+      }
+
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   const char* dump(bool reset) const U_EXPORT;
+#endif
+
+   private:
+#ifdef U_COMPILER_DELETE_MEMBERS
+   UV8JavaScript(const UV8JavaScript&) = delete;
+   UV8JavaScript& operator=(const UV8JavaScript&) = delete;
+#else
+   UV8JavaScript(const UV8JavaScript&) : UDynamic() {}
+   UV8JavaScript& operator=(const UV8JavaScript&)   { return *this; }
+#endif      
+   };
+
+   static UV8JavaScript* v8_javascript;
+#endif
 
    // DOCUMENT ROOT CACHE
 
@@ -933,9 +956,9 @@ public:
    friend U_EXPORT istream& operator>>(istream& is,       UFileCacheData& d);
    friend U_EXPORT ostream& operator<<(ostream& os, const UFileCacheData& d);
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const U_EXPORT;
-#  endif
+# endif
 #endif
 
    private:
@@ -1021,7 +1044,7 @@ private:
    static void    handlerResponse();
    static UString getHTMLDirectoryList() U_NO_EXPORT;
 
-   static void setMimeIndex() // NB: it is used by server_plugin_ssi...
+   static void setMimeIndex()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setMimeIndex()")
 
@@ -1035,6 +1058,21 @@ private:
       if (ptr) (void) u_get_mimetype(ptr+1, &mime_index);
       }
 
+   static const char* setMimeIndex(const char* suffix_ptr)
+      {
+      U_TRACE(0, "UHTTP::setMimeIndex(%S)", suffix_ptr)
+
+      U_INTERNAL_ASSERT_POINTER(file)
+
+      mime_index = U_unknow;
+
+      const char* ctype = file->getMimeType(suffix_ptr, &mime_index);
+
+      file_data->mime_index = mime_index;
+
+      return ctype;
+      }
+
 #ifdef DEBUG
    static bool cache_file_check_memory();
    static bool check_memory(UStringRep* key, void* value) U_NO_EXPORT;
@@ -1045,12 +1083,12 @@ private:
 #endif
 
 #if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
-   static int               inotify_wd;
-   static char*             inotify_name;
-   static uint32_t          inotify_len;
-   static UString*          inotify_pathname;
-   static UStringRep*       inotify_dir;
-   static UFileCacheData*   inotify_file_data;
+   static int             inotify_wd;
+   static char*           inotify_name;
+   static uint32_t        inotify_len;
+   static UString*        inotify_pathname;
+   static UStringRep*     inotify_dir;
+   static UFileCacheData* inotify_file_data;
 
    static void in_READ();
    static void initInotify();
@@ -1060,8 +1098,7 @@ private:
 #endif
 
 #ifdef U_STATIC_ONLY
-   static uint32_t getHtmlEncodedForResponse(char* buffer, uint32_t size, const char* fmt);
-   static void     loadStaticLinkedServlet(const char* name, uint32_t len, vPFi runDynamicPage) U_NO_EXPORT;
+   static void loadStaticLinkedServlet(const char* name, uint32_t len, vPFi runDynamicPage) U_NO_EXPORT;
 #endif      
 
    static void checkPath() U_NO_EXPORT;

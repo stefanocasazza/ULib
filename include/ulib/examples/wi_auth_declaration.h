@@ -4475,7 +4475,7 @@ static void GET_get_config()
 
                      _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("172.<CCC>.<DDD>.0/24"), U_STRING_TO_PARAM(netmask));
 
-                     buffer.snprintf("LOCAL_NETWORK_LABEL %.*s", U_STRING_TO_TRACE(label));
+                     buffer.snprintf("LOCAL_NETWORK_LABEL \"%.*s\"", U_STRING_TO_TRACE(label));
 
                      _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("LOCAL_NETWORK_LABEL ap"), U_STRING_TO_PARAM(buffer));
 

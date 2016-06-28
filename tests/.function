@@ -115,6 +115,7 @@ prepare_usp() {
 		  ln -sf ../v8/.libs/server_plugin_v8.so; \
 		  ln -sf ../php/.libs/server_plugin_php.so; \
 		  ln -sf ../ruby/.libs/server_plugin_ruby.so; \
+		  ln -sf ../python/.libs/server_plugin_python.so; \
 		  ln -sf ../mod_shib/.libs/server_plugin_shib.so; \
 		  ln -sf ../mod_geoip/.libs/server_plugin_geoip.so; \
 		  ln -sf ../page_speed/.libs/server_plugin_pagespeed.so )

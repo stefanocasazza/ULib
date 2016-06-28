@@ -14,7 +14,6 @@
 #ifndef U_MOD_FCGI_H
 #define U_MOD_FCGI_H 1
 
-#include <ulib/string.h>
 #include <ulib/net/server/server_plugin.h>
 
 class UClient_Base;

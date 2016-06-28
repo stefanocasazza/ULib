@@ -63,6 +63,8 @@ dnl Initial CFLAGS
 AC_MSG_CHECKING(initial CFLAGS)
 AC_MSG_RESULT($CFLAGS)
 
+m4_include([m4/m4_ax_python_devel.m4])
+
 # Generate a header file with all settings, a config.h file (Automake will add -DHAVE_CONFIG_H)
 AC_CONFIG_HEADERS([include/ulib/internal/config.h])
 
@@ -1145,7 +1147,7 @@ ulib_pagespeed_msg="no (--with-page-speed)"
        ulib_v8_msg="no (--with-v8-javascript)"
       ulib_php_msg="no (--with-php-embedded)"
      ulib_ruby_msg="no (--with-ruby-embedded)"
-     ulib_ruby_msg="no (--with-ruby-embedded)"
+   ulib_python_msg="no (--with-python-embedded)"
      ulib_ipv6_msg="no (--with-ipv6)"
       ulib_LFS_msg="no (--enable-LFS)"
     ulib_final_msg="no (--enable-final)"
@@ -1315,7 +1317,8 @@ libdbi_version="unknown"
 page_speed_version="unknown"
 v8_version="unknown"
 php_version="unknown"
-rubyversion="unknown"
+ruby_version="unknown"
+ac_python_version="unknown"
 
 TWOCAN_CONF_MSG(Checking for libraries to link against)
 
@@ -1402,222 +1405,6 @@ case "$target_os" in
 esac
 
 # ---------------------------------------------------------------------------------------------------
-# Check for PHP embedded
-# ---------------------------------------------------------------------------------------------------
-AC_MSG_CHECKING(if you want to use php-embedded)
-AC_ARG_WITH(php-embedded,
-	[  --with-php-embedded        use php-embedded],
-	[use_php=$withval],
-	[use_php=no])
-AC_MSG_RESULT($use_php)
-
-if test "$use_php" = "yes" ; then
-	TWOCAN_CONF_MSG(Checking for php-embedded package specific)
-
-	# Path to php-config program
-	AC_ARG_WITH(php-config,
-		[  --with-php-config=PATH     Path to php-config tool. EX: /<localpath>/php-config],
-		[PHPCONFIG="$withval"],
-		[AC_PATH_PROGS(PHPCONFIG, php-config, , $PATH)])
-
-	if test -z "$PHPCONFIG"; then
-		AC_MSG_ERROR([Program php-config not found. Required for further processing. Use --with-php-config=path to specify absolute path to the php-config tool.])
-	fi
-
-	AC_SUBST(PHPCONFIG)
-
-	USE_PHP=yes
-	php_prefix=`$PHPCONFIG --prefix`
-	php_version=$(php-config --version)
-	AC_DEFINE(USE_PHP, 1, [Define if enable php support])
-
-	# List of php-config include paths
-	AC_ARG_WITH(php-includes,
-		 [  --with-php-includes=PATHS  php-config include locations],
-		 [PHPCONFIGINCLUDES="$withval"],
-		 [PHPCONFIGINCLUDES=""])
-
-	if test -z "$PHPCONFIGINCLUDES"; then
-		PHPCONFIGINCLUDES="-I${php_prefix}/include/php5/sapi/embed `$PHPCONFIG --includes`"
-	fi
-
-	AC_SUBST(PHPCONFIGINCLUDES)
-
-	# Check for php_embed.h
-	AC_LANG([C])
-	save_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS $PHPCONFIGINCLUDES"
-
-	AC_MSG_CHECKING([whether php_embed.h actually works])
-	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#include <php_embed.h>]], [[return 0;]])],
-						 [AC_MSG_RESULT([php_embed.h exists and works correctly])],
-						 [AC_MSG_ERROR([Cannot find php_embed.h. Check if php was compiled with the --enable-embed option.])])
-
-	CPPFLAGS=$save_CPPFLAGS
-	AC_LANG([C++])
-
-	# List of php-config ldflags
-	AC_ARG_WITH(php-ldflags,
-		 [  --with-php-ldflags=LDFLAGS php-config ldflags list],
-		 [PHPCONFIGLDFLAGS="$withval"],
-		 [PHPCONFIGLDFLAGS=""])
-
-	if test -z "$PHPCONFIGLDFLAGS"; then
-		PHPCONFIGLDFLAGS="-L${php_prefix}/lib -L${php_prefix}/lib32 -L${php_prefix}/lib64 `$PHPCONFIG --ldflags`"
-	fi
-
-	AC_SUBST(PHPCONFIGLDFLAGS)
-
-	# List of php-config lib paths
-	AC_ARG_WITH(php-libs,
-		 [  --with-php-libs=LIBS       php-config lib locations],
-		 [PHPCONFIGLIBS="$withval"],
-		 [PHPCONFIGLIBS=""])
-
-	if test -z "$PHPCONFIGLIBS"; then
-		PHPCONFIGLIBS="-lphp5 `$PHPCONFIG --libs`"
-	fi
-
-	AC_SUBST(PHPCONFIGLIBS)
-
-	TWOCAN_CONF_MSG(Checking for libraries specific)
-fi
-# ---------------------------------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------------------------------
-# Check for RUBY embedded
-# ---------------------------------------------------------------------------------------------------
-AC_MSG_CHECKING(if you want to use ruby-embedded)
-AC_ARG_WITH(ruby-embedded,
-	[  --with-ruby-embedded       use ruby-embedded],
-	[use_ruby=$withval],
-	[use_ruby=no])
-AC_MSG_RESULT($use_ruby)
-
-if test "$use_ruby" = "yes"; then
-	TWOCAN_CONF_MSG(Checking for ruby-embedded package specific)
-
-	AC_MSG_CHECKING(--with-ruby-command argument)
-
-	AC_ARG_WITH(ruby-command, [  --with-ruby-command=RUBY   name of the Ruby command (default: ruby)],
-		RUBY_CMD="$withval"; cv_path_ruby="$withval"; AC_MSG_RESULT($RUBY_CMD),
-		RUBY_CMD="ruby"; AC_MSG_RESULT(defaulting to $RUBY_CMD))
-
-	AC_PATH_PROG(cv_path_ruby, $RUBY_CMD)
-
-	if test "X$cv_path_ruby" = "X"; then
-		AC_MSG_ERROR(not found; disabling Ruby)
-	fi
-
-	AC_MSG_CHECKING(Ruby version)
-
-	if `$cv_path_ruby -e 'exit 1 if (VERSION rescue RUBY_VERSION) >= "1.8.0"'`; then
-		AC_MSG_ERROR(Your Ruby is too old! At least Ruby-1.8.0 is required)
-	else
-		AC_MSG_RESULT(OK)
-	fi
-
-	USE_RUBY=yes
-	AC_DEFINE(USE_RUBY, 1, [Define if enable ruby support])
-
-	AC_MSG_CHECKING(Ruby rbconfig)
-
-	ruby_rbconfig="RbConfig"
-
-	if ! $cv_path_ruby -r rbconfig -e 'RbConfig' >/dev/null 2>/dev/null; then
-		ruby_rbconfig="Config"
-	fi
-
-	AC_MSG_RESULT($ruby_rbconfig)
-	AC_MSG_CHECKING(Ruby header files)
-
-	dnl Locate "ruby.h", "intern.h"
-	rubyhdrdir=`$cv_path_ruby -r mkmf -e "print $ruby_rbconfig::CONFIG[['rubyhdrdir']] || $ruby_rbconfig::CONFIG[['archdir']] || \\$hdrdir" 2>/dev/null`
-
-	if test "X$rubyhdrdir" != "X"; then
-		AC_MSG_RESULT($rubyhdrdir)
-
-		rubyarch=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG[['arch']]"`
-
-		if ! test -d "$rubyhdrdir/$rubyarch"; then
-			RUBYCONFIGINCLUDES="-I$rubyhdrdir"
-		else
-			RUBYCONFIGINCLUDES="-I$rubyhdrdir -I$rubyhdrdir/$rubyarch"
-		fi
-
-		AC_SUBST(RUBYCONFIGINCLUDES)
-
-		libruby=`$cv_path_ruby -r rbconfig -e "puts $ruby_rbconfig::CONFIG[['LIBRUBY_SO']]"`
-
-		rubyversion=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG[['ruby_version']].gsub(/\./, '')[[0,2]]"`
-
-		if test "X$rubyversion" = "X"; then
-			rubyversion=`$cv_path_ruby -e "print ((VERSION rescue RUBY_VERSION)).gsub(/\./, '')[[0,2]]"`
-		fi
-
-		RUBYCPPFLAGS="-DRUBY_VERSION=$rubyversion -DDYNAMIC_RUBY_DLL=\\\"$libruby\\\" -DDYNAMIC_RUBY_VER=$rubyversion"
-
-		AC_SUBST(RUBYCPPFLAGS)
-
-		RUBYCONFIGLDFLAGS=""
-
-		rubyldflags=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG[['LDFLAGS']]"`
-
-		if test "X$rubyldflags" != "X"; then
-
-			dnl Ruby on Mac OS X 10.5 adds "-arch" flags but these should only
-			dnl be included if requested by passing --with-mac-arch to
-			dnl configure, so strip these flags first (if present)
-
-			rubyldflags=`echo "$rubyldflags" | sed -e 's/-arch\ ppc//' -e 's/-arch\ i386//' -e 's/-arch\ x86_64//'`
-
-			if test "X$rubyldflags" != "X"; then
-				if test "X`echo \"$LDFLAGS\" | grep -F -e \"$rubyldflags\"`" = "X"; then
-					RUBYCONFIGLDFLAGS="$rubyldflags"
-				fi
-			fi
-		fi
-
-		AC_SUBST(RUBYCONFIGLDFLAGS)
-
-		dnl Locate libruby-static.a + extra libraries (libcrypt)
-		dnl rubylibs=`$ruby_path -r mkmf -e 'c=Config::CONFIG; libs=c[["libdir"]]+"/"+c[["LIBRUBY"]]+" "+c[["LIBS"]]; print libs'`
-
-		RUBYCONFIGLIBS=""
-
-		rubylibs=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG[['LIBS']]"`
-
-		if test "X$rubylibs" != "X"; then
-			RUBYCONFIGLIBS="$rubylibs"
-		fi
-
-		librubya=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG[['LIBRUBY_A']])"`
-
-		rubylibdir=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG[['libdir']])"`
-
-		librubyarg=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG[['LIBRUBYARG']])"`
-
-		if test -f "$rubylibdir/$librubya"; then
-			librubyarg="$librubyarg"
-			RUBYCONFIGLIBS="$RUBYCONFIGLIBS -L$rubylibdir"
-		elif test "$librubyarg" = "libruby.a"; then
-			dnl Required on Mac OS 10.3 where libruby.a doesn't exist
-			librubyarg="-lruby"
-			RUBYCONFIGLIBS="$RUBYCONFIGLIBS -L$rubylibdir"
-		fi
-
-		if test "X$librubyarg" != "X"; then
-			RUBYCONFIGLIBS="$librubyarg $RUBYCONFIGLIBS"
-		fi
-
-		AC_SUBST(RUBYCONFIGLIBS)
-	fi
-
-	TWOCAN_CONF_MSG(Checking for libraries specific)
-fi
-# ---------------------------------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------------------------------
 # Check for MONGODB
 # ---------------------------------------------------------------------------------------------------
 AM_CONDITIONAL(MONGODB, false)
@@ -1698,6 +1485,253 @@ if test "$use_mongodb" = "yes"; then
 fi
 # ---------------------------------------------------------------------------------------------------
 
+TWOCAN_CONF_MSG(Checking for language support)
+
+# ---------------------------------------------------------------------------------------------------
+# Check for PHP embedded
+# ---------------------------------------------------------------------------------------------------
+AC_MSG_CHECKING(if you want to use php-embedded)
+AC_ARG_WITH(php-embedded,
+	[  --with-php-embedded        use php-embedded],
+	[use_php=$withval],
+	[use_php=no])
+AC_MSG_RESULT($use_php)
+
+if test "$use_php" = "yes" ; then
+	TWOCAN_CONF_MSG(Checking for php-embedded package specific)
+
+	# Path to php-config program
+	AC_ARG_WITH(php-config,
+		[  --with-php-config=PATH     Path to php-config tool. EX: /<localpath>/php-config],
+		[PHPCONFIG="$withval"],
+		[AC_PATH_PROGS(PHPCONFIG, php-config, , $PATH)])
+
+	if test -z "$PHPCONFIG"; then
+		AC_MSG_ERROR([Program php-config not found. Required for further processing. Use --with-php-config=path to specify absolute path to the php-config tool.])
+	fi
+
+	AC_SUBST(PHPCONFIG)
+
+	USE_PHP=yes
+	php_prefix=`$PHPCONFIG --prefix`
+	php_version=$(php-config --version)
+	AC_DEFINE(USE_PHP, 1, [Define if enable php support])
+
+	# List of php-config include paths
+	AC_ARG_WITH(php-includes,
+		 [  --with-php-includes=PATHS  php-config include locations],
+		 [PHPCONFIGINCLUDES="$withval"],
+		 [PHPCONFIGINCLUDES=""])
+
+	if test -z "$PHPCONFIGINCLUDES"; then
+		PHPCONFIGINCLUDES="-I${php_prefix}/include/php5/sapi/embed `$PHPCONFIG --includes`"
+	fi
+
+	AC_SUBST(PHPCONFIGINCLUDES)
+
+	# Check for php_embed.h
+	AC_LANG([C])
+	save_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $PHPCONFIGINCLUDES"
+
+	AC_MSG_CHECKING([whether php_embed.h actually works])
+	AC_COMPILE_IFELSE([AC_LANG_SOURCE([[#include <php_embed.h>]], [[return 0;]])],
+						 [AC_MSG_RESULT([php_embed.h exists and works correctly])],
+						 [AC_MSG_ERROR([Cannot find php_embed.h. Check if php was compiled with the --enable-embed option.])])
+
+	CPPFLAGS=$save_CPPFLAGS
+	AC_LANG([C++])
+
+	# List of php-config ldflags
+	AC_ARG_WITH(php-ldflags,
+		 [  --with-php-ldflags=LDFLAGS php-config ldflags list],
+		 [PHPCONFIGLDFLAGS="$withval"],
+		 [PHPCONFIGLDFLAGS=""])
+
+	if test -z "$PHPCONFIGLDFLAGS"; then
+		PHPCONFIGLDFLAGS="-L${php_prefix}/lib -L${php_prefix}/lib32 -L${php_prefix}/lib64 `$PHPCONFIG --ldflags`"
+	fi
+
+	AC_SUBST(PHPCONFIGLDFLAGS)
+
+	# List of php-config lib paths
+	AC_ARG_WITH(php-libs,
+		 [  --with-php-libs=LIBS       php-config lib locations],
+		 [PHPCONFIGLIBS="$withval"],
+		 [PHPCONFIGLIBS=""])
+
+	if test -z "$PHPCONFIGLIBS"; then
+		PHPCONFIGLIBS="-lphp5 `$PHPCONFIG --libs`"
+	fi
+
+	AC_SUBST(PHPCONFIGLIBS)
+
+	TWOCAN_CONF_MSG(Checking for language support)
+fi
+# ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+# Check for RUBY embedded
+# ---------------------------------------------------------------------------------------------------
+AC_MSG_CHECKING(if you want to use ruby-embedded)
+AC_ARG_WITH(ruby-embedded,
+	[  --with-ruby-embedded       use ruby-embedded],
+	[use_ruby=$withval],
+	[use_ruby=no])
+AC_MSG_RESULT($use_ruby)
+
+if test "$use_ruby" = "yes"; then
+	TWOCAN_CONF_MSG(Checking for ruby-embedded package specific)
+
+	AC_MSG_CHECKING(--with-ruby-command argument)
+
+	AC_ARG_WITH(ruby-command, [  --with-ruby-command=RUBY   name of the Ruby command (default: ruby)],
+		RUBY_CMD="$withval"; cv_path_ruby="$withval"; AC_MSG_RESULT($RUBY_CMD),
+		RUBY_CMD="ruby"; AC_MSG_RESULT(defaulting to $RUBY_CMD))
+
+	AC_PATH_PROG(cv_path_ruby, $RUBY_CMD)
+
+	if test "X$cv_path_ruby" = "X"; then
+		AC_MSG_ERROR(not found; disabling Ruby)
+	fi
+
+	AC_MSG_CHECKING(Ruby version)
+
+	if `$cv_path_ruby -e 'exit 1 if (VERSION rescue RUBY_VERSION) >= "1.8.0"'`; then
+		AC_MSG_ERROR(Your Ruby is too old! At least Ruby-1.8.0 is required)
+	else
+		AC_MSG_RESULT(OK)
+	fi
+
+	USE_RUBY=yes
+	AC_DEFINE(USE_RUBY, 1, [Define if enable ruby support])
+
+	AC_MSG_CHECKING(Ruby rbconfig)
+
+	ruby_rbconfig="RbConfig"
+
+	if ! $cv_path_ruby -r rbconfig -e 'RbConfig' >/dev/null 2>/dev/null; then
+		ruby_rbconfig="Config"
+	fi
+
+	AC_MSG_RESULT($ruby_rbconfig)
+	AC_MSG_CHECKING(Ruby header files)
+
+	dnl Locate "ruby.h", "intern.h"
+	rubyhdrdir=`$cv_path_ruby -r mkmf -e "print $ruby_rbconfig::CONFIG[['rubyhdrdir']] || $ruby_rbconfig::CONFIG[['archdir']] || \\$hdrdir" 2>/dev/null`
+
+	if test "X$rubyhdrdir" != "X"; then
+		AC_MSG_RESULT($rubyhdrdir)
+
+		rubyarch=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG[['arch']]"`
+
+		if ! test -d "$rubyhdrdir/$rubyarch"; then
+			RUBYCONFIGINCLUDES="-I$rubyhdrdir"
+		else
+			RUBYCONFIGINCLUDES="-I$rubyhdrdir -I$rubyhdrdir/$rubyarch"
+		fi
+
+		AC_SUBST(RUBYCONFIGINCLUDES)
+
+		libruby=`$cv_path_ruby -r rbconfig -e "puts $ruby_rbconfig::CONFIG[['LIBRUBY_SO']]"`
+
+		ruby_version=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG[['ruby_version']].gsub(/\./, '')[[0,2]]"`
+
+		if test "X$ruby_version" = "X"; then
+			ruby_version=`$cv_path_ruby -e "print ((VERSION rescue RUBY_VERSION)).gsub(/\./, '')[[0,2]]"`
+		fi
+
+		RUBYCPPFLAGS="-DRUBY_VERSION=$ruby_version -DDYNAMIC_RUBY_DLL=\\\"$libruby\\\" -DDYNAMIC_RUBY_VER=$ruby_version"
+
+		AC_SUBST(RUBYCPPFLAGS)
+
+		RUBYCONFIGLDFLAGS=""
+
+		rubyldflags=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG[['LDFLAGS']]"`
+
+		if test "X$rubyldflags" != "X"; then
+
+			dnl Ruby on Mac OS X 10.5 adds "-arch" flags but these should only
+			dnl be included if requested by passing --with-mac-arch to
+			dnl configure, so strip these flags first (if present)
+
+			rubyldflags=`echo "$rubyldflags" | sed -e 's/-arch\ ppc//' -e 's/-arch\ i386//' -e 's/-arch\ x86_64//'`
+
+			if test "X$rubyldflags" != "X"; then
+				if test "X`echo \"$LDFLAGS\" | grep -F -e \"$rubyldflags\"`" = "X"; then
+					RUBYCONFIGLDFLAGS="$rubyldflags"
+				fi
+			fi
+		fi
+
+		AC_SUBST(RUBYCONFIGLDFLAGS)
+
+		dnl Locate libruby-static.a + extra libraries (libcrypt)
+		dnl rubylibs=`$ruby_path -r mkmf -e 'c=Config::CONFIG; libs=c[["libdir"]]+"/"+c[["LIBRUBY"]]+" "+c[["LIBS"]]; print libs'`
+
+		RUBYCONFIGLIBS=""
+
+		rubylibs=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG[['LIBS']]"`
+
+		if test "X$rubylibs" != "X"; then
+			RUBYCONFIGLIBS="$rubylibs"
+		fi
+
+		librubya=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG[['LIBRUBY_A']])"`
+
+		rubylibdir=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG[['libdir']])"`
+
+		librubyarg=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG[['LIBRUBYARG']])"`
+
+		if test -f "$rubylibdir/$librubya"; then
+			librubyarg="$librubyarg"
+			RUBYCONFIGLIBS="$RUBYCONFIGLIBS -L$rubylibdir"
+		elif test "$librubyarg" = "libruby.a"; then
+			dnl Required on Mac OS 10.3 where libruby.a doesn't exist
+			librubyarg="-lruby"
+			RUBYCONFIGLIBS="$RUBYCONFIGLIBS -L$rubylibdir"
+		fi
+
+		if test "X$librubyarg" != "X"; then
+			RUBYCONFIGLIBS="$librubyarg $RUBYCONFIGLIBS"
+		fi
+
+		AC_SUBST(RUBYCONFIGLIBS)
+	fi
+
+	TWOCAN_CONF_MSG(Checking for language support)
+fi
+# ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+# Check for PYTHON embedded
+# ---------------------------------------------------------------------------------------------------
+AC_MSG_CHECKING(if you want to use python-embedded)
+AC_ARG_WITH(python-embedded,
+	[  --with-python-embedded     use python-embedded],
+	[use_python=$withval],
+	[use_python=no])
+AC_MSG_RESULT($use_python)
+
+if test "$use_python" = "yes"; then
+  TWOCAN_CONF_MSG(Checking for python-embedded package specific)
+
+  AX_PYTHON_DEVEL()
+
+  if test $pythonexists = "yes"; then
+	 USE_PYTHON=yes
+	 AC_DEFINE(USE_PYTHON, 1, [Define if enable python support])
+
+	 PYTHONCPPFLAGS="${PYTHON_CPPFLAGS}"
+	 PYTHONCONFIGLIBS="${PYTHON_EXTRA_LIBS}"
+	 PYTHONCONFIGLDFLAGS="${PYTHON_LDFLAGS} ${PYTHON_EXTRA_LDFLAGS}"
+
+	 AC_SUBST(PYTHONCPPFLAGS)
+	 AC_SUBST(PYTHONCONFIGLIBS)
+	 AC_SUBST(PYTHONCONFIGLDFLAGS)
+  fi
+fi
+
 TWOCAN_CONF_MSG(Checking for typedefs)
 
 AM_CONDITIONAL(SSL,			test "$USE_LIBSSL"		= "yes")
@@ -1718,6 +1752,7 @@ AM_CONDITIONAL(V8,			test "$USE_LIBV8"			= "yes")
 AM_CONDITIONAL(PHP,			test "$USE_PHP"			= "yes")
 AM_CONDITIONAL(RUBY,			test "$USE_RUBY"			= "yes")
 AM_CONDITIONAL(CARES,		test "$USE_C_ARES"		= "yes")
+AM_CONDITIONAL(PYTHON,		test "$USE_PYTHON"		= "yes")
 
 AC_DEFINE_UNQUOTED(_FLEX_VERSION,		 "$flex_version",			[Flex version])
 AC_DEFINE_UNQUOTED(_BISON_VERSION,		 "$bison_version",		[Bison version])
@@ -1741,7 +1776,8 @@ AC_DEFINE_UNQUOTED(_LIBXML2_VERSION,	 "$libxml2_version",		[libxml2 - version 2 
 AC_DEFINE_UNQUOTED(_PAGE_SPEED_VERSION, "$page_speed_version", [PageSpeed - version of Google page speed SDK])
 AC_DEFINE_UNQUOTED(_V8_VERSION,			 "$v8_version",			[V8 - version of Google V8 JavaScript Engine])
 AC_DEFINE_UNQUOTED(_PHP_VERSION,			 "$php_version",			[version of PHP language runtime engine embed SAPIs])
-AC_DEFINE_UNQUOTED(_RUBY_VERSION,		 "$rubyversion",			[version of RUBY language runtime engine embed])
+AC_DEFINE_UNQUOTED(_RUBY_VERSION,		 "$ruby_version",			[version of RUBY language runtime engine embed])
+AC_DEFINE_UNQUOTED(_PYTHON_VERSION,		 "$ac_python_version",	[version of PYTHON language runtime engine embed])
 AC_DEFINE_UNQUOTED(_C_ARES_VERSION,		 "$cares_version",		[version of c-ares library for asynchronous DNS requests])
 
 # SECTION 5: Checks for header files
@@ -1906,7 +1942,11 @@ if test "$USE_PHP" = "yes"; then
 fi
 
 if test "$USE_RUBY" = "yes"; then
-   ulib_ruby_msg="yes ( $rubyversion )"
+   ulib_ruby_msg="yes ( $ruby_version )"
+fi
+
+if test "$USE_PYTHON" = "yes"; then
+   ulib_python_msg="yes ( $ac_python_version )"
 fi
 
 AM_CONDITIONAL(GEOIP, true)
@@ -2553,61 +2593,62 @@ AC_SUBST(ULIB_SYSCONFDIR)
 
 AC_MSG_NOTICE([Configured to build src/ulib/lib${ULIB}:
 ------------------------------------------------------------------------
-          ULib version: ${ULIB_VERSION}
-            Build ULib: Shared=${enable_shared}, Static=${enable_static}
+           ULib version: ${ULIB_VERSION}
+             Build ULib: Shared=${enable_shared}, Static=${enable_static}
 
-            Host setup: ${host}
-        Install prefix: ${u_prefixdir}
-        Install plugin: ${u_libexecdir}
-    Configuration data: ${u_sysconfdir}
+             Host setup: ${host}
+         Install prefix: ${u_prefixdir}
+         Install plugin: ${u_libexecdir}
+     Configuration data: ${u_sysconfdir}
 
-      Operating System: $os_version
-          C++ Compiler: ${CXX} ( $gcc_version )
-                Linker: ${LD} ( $ld_version )
-  Standard C   library: ${libc_version}
-  Standard C++ library: ${stdgpp_version}
-             Libraries: ${ULIB_LIBS}
+       Operating System: $os_version
+           C++ Compiler: ${CXX} ( $gcc_version )
+                 Linker: ${LD} ( $ld_version )
+   Standard C   library: ${libc_version}
+   Standard C++ library: ${stdgpp_version}
+              Libraries: ${ULIB_LIBS}
 
-             C   Flags: ${CFLAGS}
-             C++ Flags: ${CXXFLAGS}
-          Linker Flags: ${LDFLAGS}
-    Preprocessor Flags: ${CPPFLAGS}
+              C   Flags: ${CFLAGS}
+              C++ Flags: ${CXXFLAGS}
+           Linker Flags: ${LDFLAGS}
+     Preprocessor Flags: ${CPPFLAGS}
 
-         debug support: ${ulib_dbg_msg}
-      final build mode: ${ulib_final_msg}
-   memory pool support: ${ulib_memp_msg}
-           LFS support: ${ulib_LFS_msg}
-          ipv6 support: ${ulib_ipv6_msg}
-           zip support: ${ulib_zip_msg}
-        thread support: ${ulib_thread_msg}
+          debug support: ${ulib_dbg_msg}
+       final build mode: ${ulib_final_msg}
+    memory pool support: ${ulib_memp_msg}
+            LFS support: ${ulib_LFS_msg}
+           ipv6 support: ${ulib_ipv6_msg}
+            zip support: ${ulib_zip_msg}
+         thread support: ${ulib_thread_msg}
 
-          LIBZ support: ${ulib_libz_msg}
-     LIBZOPFLI support: ${ulib_libzopfli_msg}
-        LIBTDB support: ${ulib_libtdb_msg}
-          PCRE support: ${ulib_pcre_msg}
-           SSL support: ${ulib_ssl_msg}
-           SSH support: ${ulib_ssh_msg}
-          LDAP support: ${ulib_ldap_msg}
-          cURL support: ${ulib_curl_msg}
-           XML support: ${ulib_expat_msg}
-         MAGIC support: ${ulib_magic_msg}
-        SQLite support: ${ulib_sqlite_msg}
-         MySQL support: ${ulib_mysql_msg}
-         PgSQL support: ${ulib_pgsql_msg}
-           DBI support: ${ulib_dbi_msg}
-       libuuid support: ${ulib_libuuid_msg}
-      libevent support: ${ulib_libevent_msg}
-       libxml2 support: ${ulib_libxml2_msg}
-        c-ares support: ${ulib_cares_msg}
-    Page-Speed support: ${ulib_pagespeed_msg}
- V8 JavaScript support: ${ulib_v8_msg}
-  PHP language support: ${ulib_php_msg}
- RUBY language support: ${ulib_ruby_msg}
+           LIBZ support: ${ulib_libz_msg}
+      LIBZOPFLI support: ${ulib_libzopfli_msg}
+         LIBTDB support: ${ulib_libtdb_msg}
+           PCRE support: ${ulib_pcre_msg}
+            SSL support: ${ulib_ssl_msg}
+            SSH support: ${ulib_ssh_msg}
+           LDAP support: ${ulib_ldap_msg}
+           cURL support: ${ulib_curl_msg}
+            XML support: ${ulib_expat_msg}
+          MAGIC support: ${ulib_magic_msg}
+         SQLite support: ${ulib_sqlite_msg}
+          MySQL support: ${ulib_mysql_msg}
+          PgSQL support: ${ulib_pgsql_msg}
+            DBI support: ${ulib_dbi_msg}
+        libuuid support: ${ulib_libuuid_msg}
+       libevent support: ${ulib_libevent_msg}
+        libxml2 support: ${ulib_libxml2_msg}
+         c-ares support: ${ulib_cares_msg}
+     Page-Speed support: ${ulib_pagespeed_msg}
+  V8 JavaScript support: ${ulib_v8_msg}
+   PHP language support: ${ulib_php_msg}
+  RUBY language support: ${ulib_ruby_msg}
+PYTHON language support: ${ulib_python_msg}
 
-      Examples:         ${ulib_examples}
-      LEX/YACC support: ${ulib_parser_msg}
-      Lexical analyzer: ${LEX} ( ${flex_version} )
-      Parser generator: ${YACC} ( ${bison_version} )
+       Examples:         ${ulib_examples}
+       LEX/YACC support: ${ulib_parser_msg}
+       Lexical analyzer: ${LEX} ( ${flex_version} )
+       Parser generator: ${YACC} ( ${bison_version} )
 
 See include/ulib/internal/config.h for further configuration information
 ------------------------------------------------------------------------])
@@ -2621,7 +2662,7 @@ AC_CONFIG_FILES([
 	src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile
 	src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile
 	src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile
-	src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile
+	src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile
 	examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile
 	examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile
 	examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile

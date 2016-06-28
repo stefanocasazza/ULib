@@ -38,31 +38,20 @@
 
 extern "C" {
 
+static void UPHP_set_environment(void* env, char* name, char* value)
+{
+   U_TRACE(0, "UPHP_set_environment(%p,%S,%S)", env, name, value)
+
+   php_register_variable_safe(name, value, strlen(value), track_vars_array TSRMLS_CC);
+}
+
 static void register_server_variables(zval* track_vars_array TSRMLS_DC)
 {
    U_TRACE(0, "PHP::register_server_variables(%p)", track_vars_array)
 
-   if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_PHP))
-      {
-      char** envp;
-      int32_t nenv = UCommand::setEnvironment(*UClientImage_Base::environment, envp);
+   php_import_environment_variables(track_vars_array TSRMLS_CC);
 
-      php_import_environment_variables(track_vars_array TSRMLS_CC);
-
-      for (uint32_t i = 0; envp[i]; ++i)
-         {
-         char* ptr = strchr(envp[i], '=');
-
-         if (ptr)
-            {
-            *ptr++ = '\0';
-
-            php_register_variable_safe(envp[i], ptr, strlen(ptr), track_vars_array TSRMLS_CC);
-            }
-         }
-
-      UCommand::freeEnvironment(envp, nenv);
-      }
+   (void) UHTTP::setEnvironmentForLanguageProcessing(U_PHP, 0, UPHP_set_environment);
 }
 
 static int send_headers(sapi_headers_struct* sapi_headers)

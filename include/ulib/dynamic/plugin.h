@@ -23,6 +23,15 @@
 
 #define U_CREAT_FUNC(name, obj) extern "C" { void* u_creat_##name(); U_EXPORT void* u_creat_##name() { return new obj(); } }
 
+enum EnvironmentType {
+   U_CGI     = 0x001,
+   U_PHP     = 0x002,
+   U_RAKE    = 0x004,
+   U_SHELL   = 0x008,
+   U_WSCGI   = 0x010,
+   U_GENERIC = 0x020
+};
+
 class UHTTP;
 
 template <class T> class UPlugIn;

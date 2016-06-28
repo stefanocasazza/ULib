@@ -181,7 +181,6 @@ uint64_t    UServer_Base::stats_bytes;
 uint32_t    UServer_Base::stats_connections;
 uint32_t    UServer_Base::stats_simultaneous;
 uint32_t    UServer_Base::wakeup_for_nothing;
-UEventTime* UServer_Base::pstat;
 
 UString UServer_Base::getStats()
 {
@@ -288,6 +287,8 @@ public:
             {
             U_SRV_LOG("handlerTime: server delta timeout exceed 1 sec: diff %ld sec", delta);
             }
+
+         UServer_Base::last_event = u_now->tv_sec;
 #     endif
          }
 #  endif
@@ -706,7 +707,6 @@ private:
 
 bool                              UServer_Base::throttling_chk;
 UString*                          UServer_Base::throttling_mask;
-UEventTime*                       UServer_Base::throttling_time;
 UThrottling*                      UServer_Base::throttling_rec;
 URDBObjectHandler<UDataStorage*>* UServer_Base::db_throttling;
 
@@ -1138,10 +1138,6 @@ UServer_Base::~UServer_Base()
 # endif
 #endif
 
-# ifdef DEBUG
-   delete pstat;
-#endif
-
    UTimer::clear();
 
    UClientImage_Base::clear();
@@ -1165,7 +1161,6 @@ UServer_Base::~UServer_Base()
 #ifdef U_THROTTLING_SUPPORT
    if (throttling_rec)  delete throttling_rec;
    if (throttling_mask) delete throttling_mask;
-   if (throttling_time) delete throttling_time;
 #endif
 
 #ifdef U_WELCOME_SUPPORT
@@ -2405,6 +2400,8 @@ void UServer_Base::init()
 #endif
 
 #ifdef DEBUG
+   UEventTime* pstat;
+
    U_NEW(UTimeStat, pstat, UTimeStat);
 
    UTimer::insert(pstat);
@@ -2413,6 +2410,8 @@ void UServer_Base::init()
    if (db_throttling)
       {
       // set up the throttles timer
+
+      UEventTime* throttling_time;
 
       U_NEW(UBandWidthThrottling, throttling_time, UBandWidthThrottling);
 
@@ -3461,17 +3460,18 @@ void UServer_Base::runLoop(const char* user)
       if (preforked_num_kids != -1)
 #  endif
       {
-      if (UNotifier::min_connection) // NB: we need to notify someone for something...
+      if (UNotifier::min_connection) // NB: we need to notify something to someone...
          {
          UNotifier::waitForEvent();
 
-         if (ptime)
+         if (ptime &&
+             UNotifier::nfd_ready > 0)
             {
 #        if !defined(U_LOG_DISABLE) && defined(DEBUG)
             last_event = u_now->tv_sec;
 #        endif
 
-            if (UNotifier::nfd_ready > 0) UTimer::updateTimeToExpire(ptime);
+            UTimer::updateTimeToExpire(ptime);
             }
 
          U_ASSERT_EQUALS(UNotifier::empty(), false)
@@ -3918,4 +3918,3 @@ const char* UServer_Base::dump(bool reset) const
    return 0;
 }
 #endif
-

@@ -33,6 +33,14 @@ extern "C" {
 typedef void* HINSTANCE;
 #endif
 
+enum DynamicPageType {
+   U_DPAGE_INIT    = -1,
+   U_DPAGE_RESET   = -2,
+   U_DPAGE_DESTROY = -3,
+   U_DPAGE_SIGHUP  = -4,
+   U_DPAGE_FORK    = -5
+};
+
 /**
  * @class UDynamic
  * @short  Dynamic class file loader

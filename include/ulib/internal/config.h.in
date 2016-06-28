@@ -359,6 +359,9 @@
 /* Define to 1 if the system has the type `ptrdiff_t'. */
 #undef HAVE_PTRDIFF_T
 
+/* If available, contains the Python version number currently in use. */
+#undef HAVE_PYTHON
+
 /* Define to 1 if you have the <rump/rump.h> header file. */
 #undef HAVE_RUMP_RUMP_H
 
@@ -747,6 +750,9 @@
 /* Define if enable php support */
 #undef USE_PHP
 
+/* Define if enable python support */
+#undef USE_PYTHON
+
 /* Define if enable ruby support */
 #undef USE_RUBY
 
@@ -983,6 +989,9 @@
 
 /* Define to 1 if you need to in order for `stat' and other things to work. */
 #undef _POSIX_SOURCE
+
+/* version of PYTHON language runtime engine embed */
+#undef _PYTHON_VERSION
 
 /* version of RUBY language runtime engine embed */
 #undef _RUBY_VERSION

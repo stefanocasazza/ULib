@@ -123,28 +123,30 @@
 extern "C" {
 #endif
 
-typedef int   (*iPF)     (void);
-typedef int   (*iPFpv)   (void*);
-typedef int   (*iPFpvpv) (      void*,      void*);
-typedef int   (*qcompare)(const void*,const void*);
-typedef bool  (*bPFi)    (int);
-typedef bool  (*bPF)     (void);
-typedef bool  (*bPFpv)   (void*);
-typedef bool  (*bPFpvpv) (void*,void*);
-typedef bool  (*bPFpc)   (const char*);
-typedef bool  (*bPFpcu)  (const char*, uint32_t);
-typedef bool  (*bPFpcpc) (const char*,const char*);
-typedef bool  (*bPFpcpv) (const char*,const void*);
-typedef void  (*vPF)     (void);
-typedef void  (*vPFi)    (int);
-typedef void  (*vPFpv)   (void*);
-typedef void  (*vPFpc)   (const char*);
-typedef void  (*vPFpvpc) (void*,char*);
-typedef void  (*vPFpvpv) (void*,void*);
-typedef void  (*vPFpvu)  (void*,uint32_t);
-typedef void* (*pvPF)    (void);
-typedef void* (*pvPFpv)  (void*);
-typedef void* (*pvPFpvpb)(void*,bool*);
+typedef int   (*iPF)         (void);
+typedef int   (*iPFpv)       (void*);
+typedef int   (*iPFpvpv)     (      void*,      void*);
+typedef int   (*qcompare)    (const void*,const void*);
+typedef bool  (*bPFi)        (int);
+typedef bool  (*bPF)         (void);
+typedef bool  (*bPFpv)       (void*);
+typedef bool  (*bPFpvpv)     (void*,void*);
+typedef bool  (*bPFpc)       (const char*);
+typedef bool  (*bPFpcu)      (const char*,uint32_t);
+typedef bool  (*bPFpcpc)     (const char*,const char*);
+typedef bool  (*bPFpcpv)     (const char*,const void*);
+typedef bool  (*bPFpcpcpcpc) (const char*,const char*,const char*,const char*);
+typedef void  (*vPF)         (void);
+typedef void  (*vPFi)        (int);
+typedef void  (*vPFpv)       (void*);
+typedef void  (*vPFpc)       (const char*);
+typedef void  (*vPFpvpc)     (void*,char*);
+typedef void  (*vPFpvpv)     (void*,void*);
+typedef void  (*vPFpvu)      (void*,uint32_t);
+typedef void  (*vPFpvpcpc)   (void*,char*,char*);
+typedef void* (*pvPF)        (void);
+typedef void* (*pvPFpv)      (void*);
+typedef void* (*pvPFpvpb)    (void*,bool*);
 
 typedef struct U_DATA {
    unsigned char* dptr;
@@ -278,6 +280,7 @@ static inline bool u_is_cgi(int mime_index)    { return (mime_index == U_cgi); }
 static inline bool u_is_ssi(int mime_index)    { return (mime_index == U_ssi); }
 static inline bool u_is_php(int mime_index)    { return (mime_index == U_php); }
 static inline bool u_is_ruby(int mime_index)   { return (mime_index == U_ruby); }
+static inline bool u_is_python(int mime_index) { return (mime_index == U_python); }
 
 static inline bool u_is_know(int mime_index)   { return (mime_index == U_know); }
 static inline bool u_is_unknow(int mime_index) { return (mime_index == U_unknow); }

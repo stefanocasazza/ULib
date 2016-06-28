@@ -121,7 +121,7 @@ int UWebSocketPlugIn::handlerRequest()
 
          (void) environment.append(command->getStringEnvironment());
 
-         if (UHTTP::getCGIEnvironment(environment, U_CGI) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         if (UHTTP::getCGIEnvironment(environment, U_GENERIC) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
          command->setEnvironment(&environment);
 

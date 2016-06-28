@@ -706,6 +706,8 @@ GEOIP_FALSE
 GEOIP_TRUE
 PLUGIN_FALSE
 PLUGIN_TRUE
+PYTHON_FALSE
+PYTHON_TRUE
 CARES_FALSE
 CARES_TRUE
 RUBY_FALSE
@@ -742,8 +744,16 @@ SSL_TS_FALSE
 SSL_TS_TRUE
 SSL_FALSE
 SSL_TRUE
-MONGODB_FALSE
-MONGODB_TRUE
+PYTHONCONFIGLDFLAGS
+PYTHONCONFIGLIBS
+PYTHONCPPFLAGS
+PYTHON_EXTRA_LDFLAGS
+PYTHON_EXTRA_LIBS
+PYTHON_SITE_PKG
+PYTHON_LDFLAGS
+PYTHON_CPPFLAGS
+PYTHON
+PYTHON_VERSION
 RUBYCONFIGLIBS
 RUBYCONFIGLDFLAGS
 RUBYCPPFLAGS
@@ -753,6 +763,8 @@ PHPCONFIGLIBS
 PHPCONFIGLDFLAGS
 PHPCONFIGINCLUDES
 PHPCONFIG
+MONGODB_FALSE
+MONGODB_TRUE
 ZIP_FALSE
 ZIP_TRUE
 TCC_FALSE
@@ -1064,6 +1076,10 @@ enable_mysql_threadsafe
 with_pgsql
 with_pgsql_incdir
 with_pgsql_libdir
+with_mongodb
+with_mongodb_includes
+with_mongodb_ldflags
+with_mongodb_libs
 with_php_embedded
 with_php_config
 with_php_includes
@@ -1071,10 +1087,7 @@ with_php_ldflags
 with_php_libs
 with_ruby_embedded
 with_ruby_command
-with_mongodb
-with_mongodb_includes
-with_mongodb_ldflags
-with_mongodb_libs
+with_python_embedded
 enable_static_server_plugin
 enable_static_orm_driver
 enable_static_servlet
@@ -1094,7 +1107,8 @@ CCC
 CXXCPP
 LT_SYS_LIBRARY_PATH
 YACC
-YFLAGS'
+YFLAGS
+PYTHON_VERSION'
 
 
 # Initialize some variables set by options.
@@ -1821,6 +1835,10 @@ Optional Packages:
   --with-pgsql            Include PostgreSQL support
   --with-pgsql-incdir     Specifies where the PostgreSQL include files are
   --with-pgsql-libdir     Specifies where the PostgreSQL libraries are
+  --with-mongodb                 use mongodb client
+  --with-mongodb-includes=PATHS  mongodb include locations
+  --with-mongodb-ldflags=LDFLAGS mongodb ldflags list
+  --with-mongodb-libs=LIBS       mongodb lib locations
   --with-php-embedded        use php-embedded
   --with-php-config=PATH     Path to php-config tool. EX: /<localpath>/php-config
   --with-php-includes=PATHS  php-config include locations
@@ -1828,10 +1846,7 @@ Optional Packages:
   --with-php-libs=LIBS       php-config lib locations
   --with-ruby-embedded       use ruby-embedded
   --with-ruby-command=RUBY   name of the Ruby command (default: ruby)
-  --with-mongodb                 use mongodb client
-  --with-mongodb-includes=PATHS  mongodb include locations
-  --with-mongodb-ldflags=LDFLAGS mongodb ldflags list
-  --with-mongodb-libs=LIBS       mongodb lib locations
+  --with-python-embedded     use python-embedded
 
 Some influential environment variables:
   CC          C compiler command
@@ -1853,6 +1868,10 @@ Some influential environment variables:
   YFLAGS      The list of arguments that will be passed by default to $YACC.
               This script will default YFLAGS to the empty string to avoid a
               default value of `-d' given by some make applications.
+  PYTHON_VERSION
+              The installed Python version to use, for example '2.3'. This
+              string will be appended to the Python interpreter canonical
+              name.
 
 Use these variables to override the choices made by `configure' or to help
 it to find libraries and programs with nonstandard names/locations.
@@ -5811,6 +5830,98 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 $as_echo_n "checking initial CFLAGS... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CFLAGS" >&5
 $as_echo "$CFLAGS" >&6; }
+
+# ===========================================================================
+#      http://www.gnu.org/software/autoconf-archive/ax_python_devel.html
+# ===========================================================================
+#
+# SYNOPSIS
+#
+#   AX_PYTHON_DEVEL([version])
+#
+# DESCRIPTION
+#
+#   Note: Defines as a precious variable "PYTHON_VERSION". Don't override it
+#   in your configure.ac.
+#
+#   This macro checks for Python and tries to get the include path to
+#   'Python.h'. It provides the $(PYTHON_CPPFLAGS) and $(PYTHON_LDFLAGS)
+#   output variables. It also exports $(PYTHON_EXTRA_LIBS) and
+#   $(PYTHON_EXTRA_LDFLAGS) for embedding Python in your code.
+#
+#   You can search for some particular version of Python by passing a
+#   parameter to this macro, for example ">= '2.3.1'", or "== '2.4'". Please
+#   note that you *have* to pass also an operator along with the version to
+#   match, and pay special attention to the single quotes surrounding the
+#   version number. Don't use "PYTHON_VERSION" for this: that environment
+#   variable is declared as precious and thus reserved for the end-user.
+#
+#   This macro should work for all versions of Python >= 2.1.0. As an end
+#   user, you can disable the check for the python version by setting the
+#   PYTHON_NOVERSIONCHECK environment variable to something else than the
+#   empty string.
+#
+#   If you need to use this macro for an older Python version, please
+#   contact the authors. We're always open for feedback.
+#
+# LICENSE
+#
+#   Copyright (c) 2009 Sebastian Huber <sebastian-huber@web.de>
+#   Copyright (c) 2009 Alan W. Irwin
+#   Copyright (c) 2009 Rafael Laboissiere <rafael@laboissiere.net>
+#   Copyright (c) 2009 Andrew Collier
+#   Copyright (c) 2009 Matteo Settenvini <matteo@member.fsf.org>
+#   Copyright (c) 2009 Horst Knorr <hk_classes@knoda.org>
+#
+#   This program is free software: you can redistribute it and/or modify it
+#   under the terms of the GNU General Public License as published by the
+#   Free Software Foundation, either version 3 of the License, or (at your
+#   option) any later version.
+#
+#   This program is distributed in the hope that it will be useful, but
+#   WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
+#   Public License for more details.
+#
+#   You should have received a copy of the GNU General Public License along
+#   with this program. If not, see <http://www.gnu.org/licenses/>.
+#
+#   As a special exception, the respective Autoconf Macro's copyright owner
+#   gives unlimited permission to copy, distribute and modify the configure
+#   scripts that are the output of Autoconf when processing the Macro. You
+#   need not follow the terms of the GNU General Public License when using
+#   or distributing such scripts, even though portions of the text of the
+#   Macro appear in them. The GNU General Public License (GPL) does govern
+#   all other use of the material that constitutes the Autoconf Macro.
+#
+#   This special exception to the GPL applies to versions of the Autoconf
+#   Macro released by the Autoconf Archive. When you make and distribute a
+#   modified version of the Autoconf Macro, you may extend this special
+#   exception to the GPL to apply to your modified version as well.
+
+#serial 12
+
+# This is what autoupdate's m4 run will expand.  It fires
+# the warning (with _au_warn_XXX), outputs it into the
+# updated configure.ac (with AC_DIAGNOSE), and then outputs
+# the replacement expansion.
+
+
+# This is an auxiliary macro that is also run when
+# autoupdate runs m4.  It simply calls m4_warning, but
+# we need a wrapper so that each warning is emitted only
+# once.  We break the quoting in m4_warning's argument in
+# order to expand this macro's arguments, not AU_DEFUN's.
+
+
+# Finally, this is the expansion that is picked up by
+# autoconf.  It tells the user to run autoupdate, and
+# then outputs the replacement expansion.  We do not care
+# about autoupdate's warning because that contains
+# information on what to do *after* running autoupdate.
+
+
+
 
 # Generate a header file with all settings, a config.h file (Automake will add -DHAVE_CONFIG_H)
 ac_config_headers="$ac_config_headers include/ulib/internal/config.h"
@@ -24106,7 +24217,7 @@ ulib_pagespeed_msg="no (--with-page-speed)"
        ulib_v8_msg="no (--with-v8-javascript)"
       ulib_php_msg="no (--with-php-embedded)"
      ulib_ruby_msg="no (--with-ruby-embedded)"
-     ulib_ruby_msg="no (--with-ruby-embedded)"
+   ulib_python_msg="no (--with-python-embedded)"
      ulib_ipv6_msg="no (--with-ipv6)"
       ulib_LFS_msg="no (--enable-LFS)"
     ulib_final_msg="no (--enable-final)"
@@ -25397,7 +25508,8 @@ libdbi_version="unknown"
 page_speed_version="unknown"
 v8_version="unknown"
 php_version="unknown"
-rubyversion="unknown"
+ruby_version="unknown"
+ac_python_version="unknown"
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
@@ -27103,383 +27215,6 @@ $as_echo "no" >&6; }
 esac
 
 # ---------------------------------------------------------------------------------------------------
-# Check for PHP embedded
-# ---------------------------------------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to use php-embedded" >&5
-$as_echo_n "checking if you want to use php-embedded... " >&6; }
-
-# Check whether --with-php-embedded was given.
-if test "${with_php_embedded+set}" = set; then :
-  withval=$with_php_embedded; use_php=$withval
-else
-  use_php=no
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_php" >&5
-$as_echo "$use_php" >&6; }
-
-if test "$use_php" = "yes" ; then
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
-$as_echo "" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for php-embedded package specific:${T_ME}" >&5
-$as_echo "${T_MD}Checking for php-embedded package specific:${T_ME}" >&6; }
-
-
-	# Path to php-config program
-
-# Check whether --with-php-config was given.
-if test "${with_php_config+set}" = set; then :
-  withval=$with_php_config; PHPCONFIG="$withval"
-else
-  for ac_prog in php-config
-do
-  # Extract the first word of "$ac_prog", so it can be a program name with args.
-set dummy $ac_prog; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_PHPCONFIG+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $PHPCONFIG in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_PHPCONFIG="$PHPCONFIG" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_PHPCONFIG="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-PHPCONFIG=$ac_cv_path_PHPCONFIG
-if test -n "$PHPCONFIG"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PHPCONFIG" >&5
-$as_echo "$PHPCONFIG" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-  test -n "$PHPCONFIG" && break
-done
-
-fi
-
-
-	if test -z "$PHPCONFIG"; then
-		as_fn_error $? "Program php-config not found. Required for further processing. Use --with-php-config=path to specify absolute path to the php-config tool." "$LINENO" 5
-	fi
-
-
-
-	USE_PHP=yes
-	php_prefix=`$PHPCONFIG --prefix`
-	php_version=$(php-config --version)
-
-$as_echo "#define USE_PHP 1" >>confdefs.h
-
-
-	# List of php-config include paths
-
-# Check whether --with-php-includes was given.
-if test "${with_php_includes+set}" = set; then :
-  withval=$with_php_includes; PHPCONFIGINCLUDES="$withval"
-else
-  PHPCONFIGINCLUDES=""
-fi
-
-
-	if test -z "$PHPCONFIGINCLUDES"; then
-		PHPCONFIGINCLUDES="-I${php_prefix}/include/php5/sapi/embed `$PHPCONFIG --includes`"
-	fi
-
-
-
-	# Check for php_embed.h
-	ac_ext=c
-ac_cpp='$CPP $CPPFLAGS'
-ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_c_compiler_gnu
-
-	save_CPPFLAGS="$CPPFLAGS"
-	CPPFLAGS="$CPPFLAGS $PHPCONFIGINCLUDES"
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether php_embed.h actually works" >&5
-$as_echo_n "checking whether php_embed.h actually works... " >&6; }
-	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <php_embed.h>
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: php_embed.h exists and works correctly" >&5
-$as_echo "php_embed.h exists and works correctly" >&6; }
-else
-  as_fn_error $? "Cannot find php_embed.h. Check if php was compiled with the --enable-embed option." "$LINENO" 5
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-	CPPFLAGS=$save_CPPFLAGS
-	ac_ext=cpp
-ac_cpp='$CXXCPP $CPPFLAGS'
-ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
-ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
-ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
-
-
-	# List of php-config ldflags
-
-# Check whether --with-php-ldflags was given.
-if test "${with_php_ldflags+set}" = set; then :
-  withval=$with_php_ldflags; PHPCONFIGLDFLAGS="$withval"
-else
-  PHPCONFIGLDFLAGS=""
-fi
-
-
-	if test -z "$PHPCONFIGLDFLAGS"; then
-		PHPCONFIGLDFLAGS="-L${php_prefix}/lib -L${php_prefix}/lib32 -L${php_prefix}/lib64 `$PHPCONFIG --ldflags`"
-	fi
-
-
-
-	# List of php-config lib paths
-
-# Check whether --with-php-libs was given.
-if test "${with_php_libs+set}" = set; then :
-  withval=$with_php_libs; PHPCONFIGLIBS="$withval"
-else
-  PHPCONFIGLIBS=""
-fi
-
-
-	if test -z "$PHPCONFIGLIBS"; then
-		PHPCONFIGLIBS="-lphp5 `$PHPCONFIG --libs`"
-	fi
-
-
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
-$as_echo "" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for libraries specific:${T_ME}" >&5
-$as_echo "${T_MD}Checking for libraries specific:${T_ME}" >&6; }
-
-fi
-# ---------------------------------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------------------------------
-# Check for RUBY embedded
-# ---------------------------------------------------------------------------------------------------
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to use ruby-embedded" >&5
-$as_echo_n "checking if you want to use ruby-embedded... " >&6; }
-
-# Check whether --with-ruby-embedded was given.
-if test "${with_ruby_embedded+set}" = set; then :
-  withval=$with_ruby_embedded; use_ruby=$withval
-else
-  use_ruby=no
-fi
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_ruby" >&5
-$as_echo "$use_ruby" >&6; }
-
-if test "$use_ruby" = "yes"; then
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
-$as_echo "" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for ruby-embedded package specific:${T_ME}" >&5
-$as_echo "${T_MD}Checking for ruby-embedded package specific:${T_ME}" >&6; }
-
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking --with-ruby-command argument" >&5
-$as_echo_n "checking --with-ruby-command argument... " >&6; }
-
-
-# Check whether --with-ruby-command was given.
-if test "${with_ruby_command+set}" = set; then :
-  withval=$with_ruby_command; RUBY_CMD="$withval"; cv_path_ruby="$withval"; { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RUBY_CMD" >&5
-$as_echo "$RUBY_CMD" >&6; }
-else
-  RUBY_CMD="ruby"; { $as_echo "$as_me:${as_lineno-$LINENO}: result: defaulting to $RUBY_CMD" >&5
-$as_echo "defaulting to $RUBY_CMD" >&6; }
-fi
-
-
-	# Extract the first word of "$RUBY_CMD", so it can be a program name with args.
-set dummy $RUBY_CMD; ac_word=$2
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
-$as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_path_cv_path_ruby+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  case $cv_path_ruby in
-  [\\/]* | ?:[\\/]*)
-  ac_cv_path_cv_path_ruby="$cv_path_ruby" # Let the user override the test with a path.
-  ;;
-  *)
-  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
-for as_dir in $PATH
-do
-  IFS=$as_save_IFS
-  test -z "$as_dir" && as_dir=.
-    for ac_exec_ext in '' $ac_executable_extensions; do
-  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_path_cv_path_ruby="$as_dir/$ac_word$ac_exec_ext"
-    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
-    break 2
-  fi
-done
-  done
-IFS=$as_save_IFS
-
-  ;;
-esac
-fi
-cv_path_ruby=$ac_cv_path_cv_path_ruby
-if test -n "$cv_path_ruby"; then
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $cv_path_ruby" >&5
-$as_echo "$cv_path_ruby" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
-
-	if test "X$cv_path_ruby" = "X"; then
-		as_fn_error $? "not found; disabling Ruby" "$LINENO" 5
-	fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Ruby version" >&5
-$as_echo_n "checking Ruby version... " >&6; }
-
-	if `$cv_path_ruby -e 'exit 1 if (VERSION rescue RUBY_VERSION) >= "1.8.0"'`; then
-		as_fn_error $? "Your Ruby is too old! At least Ruby-1.8.0 is required" "$LINENO" 5
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: OK" >&5
-$as_echo "OK" >&6; }
-	fi
-
-	USE_RUBY=yes
-
-$as_echo "#define USE_RUBY 1" >>confdefs.h
-
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Ruby rbconfig" >&5
-$as_echo_n "checking Ruby rbconfig... " >&6; }
-
-	ruby_rbconfig="RbConfig"
-
-	if ! $cv_path_ruby -r rbconfig -e 'RbConfig' >/dev/null 2>/dev/null; then
-		ruby_rbconfig="Config"
-	fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ruby_rbconfig" >&5
-$as_echo "$ruby_rbconfig" >&6; }
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Ruby header files" >&5
-$as_echo_n "checking Ruby header files... " >&6; }
-
-		rubyhdrdir=`$cv_path_ruby -r mkmf -e "print $ruby_rbconfig::CONFIG['rubyhdrdir'] || $ruby_rbconfig::CONFIG['archdir'] || \\$hdrdir" 2>/dev/null`
-
-	if test "X$rubyhdrdir" != "X"; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $rubyhdrdir" >&5
-$as_echo "$rubyhdrdir" >&6; }
-
-		rubyarch=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG['arch']"`
-
-		if ! test -d "$rubyhdrdir/$rubyarch"; then
-			RUBYCONFIGINCLUDES="-I$rubyhdrdir"
-		else
-			RUBYCONFIGINCLUDES="-I$rubyhdrdir -I$rubyhdrdir/$rubyarch"
-		fi
-
-
-
-		libruby=`$cv_path_ruby -r rbconfig -e "puts $ruby_rbconfig::CONFIG['LIBRUBY_SO']"`
-
-		rubyversion=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG['ruby_version'].gsub(/\./, '')[0,2]"`
-
-		if test "X$rubyversion" = "X"; then
-			rubyversion=`$cv_path_ruby -e "print ((VERSION rescue RUBY_VERSION)).gsub(/\./, '')[0,2]"`
-		fi
-
-		RUBYCPPFLAGS="-DRUBY_VERSION=$rubyversion -DDYNAMIC_RUBY_DLL=\\\"$libruby\\\" -DDYNAMIC_RUBY_VER=$rubyversion"
-
-
-
-		RUBYCONFIGLDFLAGS=""
-
-		rubyldflags=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG['LDFLAGS']"`
-
-		if test "X$rubyldflags" != "X"; then
-
-
-			rubyldflags=`echo "$rubyldflags" | sed -e 's/-arch\ ppc//' -e 's/-arch\ i386//' -e 's/-arch\ x86_64//'`
-
-			if test "X$rubyldflags" != "X"; then
-				if test "X`echo \"$LDFLAGS\" | grep -F -e \"$rubyldflags\"`" = "X"; then
-					RUBYCONFIGLDFLAGS="$rubyldflags"
-				fi
-			fi
-		fi
-
-
-
-
-		RUBYCONFIGLIBS=""
-
-		rubylibs=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG['LIBS']"`
-
-		if test "X$rubylibs" != "X"; then
-			RUBYCONFIGLIBS="$rubylibs"
-		fi
-
-		librubya=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG['LIBRUBY_A'])"`
-
-		rubylibdir=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG['libdir'])"`
-
-		librubyarg=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG['LIBRUBYARG'])"`
-
-		if test -f "$rubylibdir/$librubya"; then
-			librubyarg="$librubyarg"
-			RUBYCONFIGLIBS="$RUBYCONFIGLIBS -L$rubylibdir"
-		elif test "$librubyarg" = "libruby.a"; then
-						librubyarg="-lruby"
-			RUBYCONFIGLIBS="$RUBYCONFIGLIBS -L$rubylibdir"
-		fi
-
-		if test "X$librubyarg" != "X"; then
-			RUBYCONFIGLIBS="$librubyarg $RUBYCONFIGLIBS"
-		fi
-
-
-	fi
-
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
-$as_echo "" >&6; }
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for libraries specific:${T_ME}" >&5
-$as_echo "${T_MD}Checking for libraries specific:${T_ME}" >&6; }
-
-fi
-# ---------------------------------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------------------------------
 # Check for MONGODB
 # ---------------------------------------------------------------------------------------------------
  if false; then
@@ -27732,6 +27467,782 @@ fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
 $as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for language support:${T_ME}" >&5
+$as_echo "${T_MD}Checking for language support:${T_ME}" >&6; }
+
+
+# ---------------------------------------------------------------------------------------------------
+# Check for PHP embedded
+# ---------------------------------------------------------------------------------------------------
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to use php-embedded" >&5
+$as_echo_n "checking if you want to use php-embedded... " >&6; }
+
+# Check whether --with-php-embedded was given.
+if test "${with_php_embedded+set}" = set; then :
+  withval=$with_php_embedded; use_php=$withval
+else
+  use_php=no
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_php" >&5
+$as_echo "$use_php" >&6; }
+
+if test "$use_php" = "yes" ; then
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for php-embedded package specific:${T_ME}" >&5
+$as_echo "${T_MD}Checking for php-embedded package specific:${T_ME}" >&6; }
+
+
+	# Path to php-config program
+
+# Check whether --with-php-config was given.
+if test "${with_php_config+set}" = set; then :
+  withval=$with_php_config; PHPCONFIG="$withval"
+else
+  for ac_prog in php-config
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PHPCONFIG+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PHPCONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PHPCONFIG="$PHPCONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PHPCONFIG="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PHPCONFIG=$ac_cv_path_PHPCONFIG
+if test -n "$PHPCONFIG"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PHPCONFIG" >&5
+$as_echo "$PHPCONFIG" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+  test -n "$PHPCONFIG" && break
+done
+
+fi
+
+
+	if test -z "$PHPCONFIG"; then
+		as_fn_error $? "Program php-config not found. Required for further processing. Use --with-php-config=path to specify absolute path to the php-config tool." "$LINENO" 5
+	fi
+
+
+
+	USE_PHP=yes
+	php_prefix=`$PHPCONFIG --prefix`
+	php_version=$(php-config --version)
+
+$as_echo "#define USE_PHP 1" >>confdefs.h
+
+
+	# List of php-config include paths
+
+# Check whether --with-php-includes was given.
+if test "${with_php_includes+set}" = set; then :
+  withval=$with_php_includes; PHPCONFIGINCLUDES="$withval"
+else
+  PHPCONFIGINCLUDES=""
+fi
+
+
+	if test -z "$PHPCONFIGINCLUDES"; then
+		PHPCONFIGINCLUDES="-I${php_prefix}/include/php5/sapi/embed `$PHPCONFIG --includes`"
+	fi
+
+
+
+	# Check for php_embed.h
+	ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	save_CPPFLAGS="$CPPFLAGS"
+	CPPFLAGS="$CPPFLAGS $PHPCONFIGINCLUDES"
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether php_embed.h actually works" >&5
+$as_echo_n "checking whether php_embed.h actually works... " >&6; }
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <php_embed.h>
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: php_embed.h exists and works correctly" >&5
+$as_echo "php_embed.h exists and works correctly" >&6; }
+else
+  as_fn_error $? "Cannot find php_embed.h. Check if php was compiled with the --enable-embed option." "$LINENO" 5
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+
+	CPPFLAGS=$save_CPPFLAGS
+	ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+
+	# List of php-config ldflags
+
+# Check whether --with-php-ldflags was given.
+if test "${with_php_ldflags+set}" = set; then :
+  withval=$with_php_ldflags; PHPCONFIGLDFLAGS="$withval"
+else
+  PHPCONFIGLDFLAGS=""
+fi
+
+
+	if test -z "$PHPCONFIGLDFLAGS"; then
+		PHPCONFIGLDFLAGS="-L${php_prefix}/lib -L${php_prefix}/lib32 -L${php_prefix}/lib64 `$PHPCONFIG --ldflags`"
+	fi
+
+
+
+	# List of php-config lib paths
+
+# Check whether --with-php-libs was given.
+if test "${with_php_libs+set}" = set; then :
+  withval=$with_php_libs; PHPCONFIGLIBS="$withval"
+else
+  PHPCONFIGLIBS=""
+fi
+
+
+	if test -z "$PHPCONFIGLIBS"; then
+		PHPCONFIGLIBS="-lphp5 `$PHPCONFIG --libs`"
+	fi
+
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for language support:${T_ME}" >&5
+$as_echo "${T_MD}Checking for language support:${T_ME}" >&6; }
+
+fi
+# ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+# Check for RUBY embedded
+# ---------------------------------------------------------------------------------------------------
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to use ruby-embedded" >&5
+$as_echo_n "checking if you want to use ruby-embedded... " >&6; }
+
+# Check whether --with-ruby-embedded was given.
+if test "${with_ruby_embedded+set}" = set; then :
+  withval=$with_ruby_embedded; use_ruby=$withval
+else
+  use_ruby=no
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_ruby" >&5
+$as_echo "$use_ruby" >&6; }
+
+if test "$use_ruby" = "yes"; then
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for ruby-embedded package specific:${T_ME}" >&5
+$as_echo "${T_MD}Checking for ruby-embedded package specific:${T_ME}" >&6; }
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking --with-ruby-command argument" >&5
+$as_echo_n "checking --with-ruby-command argument... " >&6; }
+
+
+# Check whether --with-ruby-command was given.
+if test "${with_ruby_command+set}" = set; then :
+  withval=$with_ruby_command; RUBY_CMD="$withval"; cv_path_ruby="$withval"; { $as_echo "$as_me:${as_lineno-$LINENO}: result: $RUBY_CMD" >&5
+$as_echo "$RUBY_CMD" >&6; }
+else
+  RUBY_CMD="ruby"; { $as_echo "$as_me:${as_lineno-$LINENO}: result: defaulting to $RUBY_CMD" >&5
+$as_echo "defaulting to $RUBY_CMD" >&6; }
+fi
+
+
+	# Extract the first word of "$RUBY_CMD", so it can be a program name with args.
+set dummy $RUBY_CMD; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_cv_path_ruby+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $cv_path_ruby in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_cv_path_ruby="$cv_path_ruby" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_cv_path_ruby="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+cv_path_ruby=$ac_cv_path_cv_path_ruby
+if test -n "$cv_path_ruby"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $cv_path_ruby" >&5
+$as_echo "$cv_path_ruby" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+
+	if test "X$cv_path_ruby" = "X"; then
+		as_fn_error $? "not found; disabling Ruby" "$LINENO" 5
+	fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Ruby version" >&5
+$as_echo_n "checking Ruby version... " >&6; }
+
+	if `$cv_path_ruby -e 'exit 1 if (VERSION rescue RUBY_VERSION) >= "1.8.0"'`; then
+		as_fn_error $? "Your Ruby is too old! At least Ruby-1.8.0 is required" "$LINENO" 5
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: OK" >&5
+$as_echo "OK" >&6; }
+	fi
+
+	USE_RUBY=yes
+
+$as_echo "#define USE_RUBY 1" >>confdefs.h
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Ruby rbconfig" >&5
+$as_echo_n "checking Ruby rbconfig... " >&6; }
+
+	ruby_rbconfig="RbConfig"
+
+	if ! $cv_path_ruby -r rbconfig -e 'RbConfig' >/dev/null 2>/dev/null; then
+		ruby_rbconfig="Config"
+	fi
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ruby_rbconfig" >&5
+$as_echo "$ruby_rbconfig" >&6; }
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking Ruby header files" >&5
+$as_echo_n "checking Ruby header files... " >&6; }
+
+		rubyhdrdir=`$cv_path_ruby -r mkmf -e "print $ruby_rbconfig::CONFIG['rubyhdrdir'] || $ruby_rbconfig::CONFIG['archdir'] || \\$hdrdir" 2>/dev/null`
+
+	if test "X$rubyhdrdir" != "X"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $rubyhdrdir" >&5
+$as_echo "$rubyhdrdir" >&6; }
+
+		rubyarch=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG['arch']"`
+
+		if ! test -d "$rubyhdrdir/$rubyarch"; then
+			RUBYCONFIGINCLUDES="-I$rubyhdrdir"
+		else
+			RUBYCONFIGINCLUDES="-I$rubyhdrdir -I$rubyhdrdir/$rubyarch"
+		fi
+
+
+
+		libruby=`$cv_path_ruby -r rbconfig -e "puts $ruby_rbconfig::CONFIG['LIBRUBY_SO']"`
+
+		ruby_version=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG['ruby_version'].gsub(/\./, '')[0,2]"`
+
+		if test "X$ruby_version" = "X"; then
+			ruby_version=`$cv_path_ruby -e "print ((VERSION rescue RUBY_VERSION)).gsub(/\./, '')[0,2]"`
+		fi
+
+		RUBYCPPFLAGS="-DRUBY_VERSION=$ruby_version -DDYNAMIC_RUBY_DLL=\\\"$libruby\\\" -DDYNAMIC_RUBY_VER=$ruby_version"
+
+
+
+		RUBYCONFIGLDFLAGS=""
+
+		rubyldflags=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG['LDFLAGS']"`
+
+		if test "X$rubyldflags" != "X"; then
+
+
+			rubyldflags=`echo "$rubyldflags" | sed -e 's/-arch\ ppc//' -e 's/-arch\ i386//' -e 's/-arch\ x86_64//'`
+
+			if test "X$rubyldflags" != "X"; then
+				if test "X`echo \"$LDFLAGS\" | grep -F -e \"$rubyldflags\"`" = "X"; then
+					RUBYCONFIGLDFLAGS="$rubyldflags"
+				fi
+			fi
+		fi
+
+
+
+
+		RUBYCONFIGLIBS=""
+
+		rubylibs=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig::CONFIG['LIBS']"`
+
+		if test "X$rubylibs" != "X"; then
+			RUBYCONFIGLIBS="$rubylibs"
+		fi
+
+		librubya=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG['LIBRUBY_A'])"`
+
+		rubylibdir=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG['libdir'])"`
+
+		librubyarg=`$cv_path_ruby -r rbconfig -e "print $ruby_rbconfig.expand($ruby_rbconfig::CONFIG['LIBRUBYARG'])"`
+
+		if test -f "$rubylibdir/$librubya"; then
+			librubyarg="$librubyarg"
+			RUBYCONFIGLIBS="$RUBYCONFIGLIBS -L$rubylibdir"
+		elif test "$librubyarg" = "libruby.a"; then
+						librubyarg="-lruby"
+			RUBYCONFIGLIBS="$RUBYCONFIGLIBS -L$rubylibdir"
+		fi
+
+		if test "X$librubyarg" != "X"; then
+			RUBYCONFIGLIBS="$librubyarg $RUBYCONFIGLIBS"
+		fi
+
+
+	fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for language support:${T_ME}" >&5
+$as_echo "${T_MD}Checking for language support:${T_ME}" >&6; }
+
+fi
+# ---------------------------------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------------------------------
+# Check for PYTHON embedded
+# ---------------------------------------------------------------------------------------------------
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to use python-embedded" >&5
+$as_echo_n "checking if you want to use python-embedded... " >&6; }
+
+# Check whether --with-python-embedded was given.
+if test "${with_python_embedded+set}" = set; then :
+  withval=$with_python_embedded; use_python=$withval
+else
+  use_python=no
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $use_python" >&5
+$as_echo "$use_python" >&6; }
+
+if test "$use_python" = "yes"; then
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for python-embedded package specific:${T_ME}" >&5
+$as_echo "${T_MD}Checking for python-embedded package specific:${T_ME}" >&6; }
+
+
+
+	#
+	# Allow the use of a (user set) custom python version
+	#
+
+
+	# Extract the first word of "python[$PYTHON_VERSION]", so it can be a program name with args.
+set dummy python$PYTHON_VERSION; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_PYTHON+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $PYTHON in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PYTHON="$PYTHON" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_PYTHON="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+PYTHON=$ac_cv_path_PYTHON
+if test -n "$PYTHON"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHON" >&5
+$as_echo "$PYTHON" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	if test -z "$PYTHON"; then
+	   as_fn_error $? "Cannot find python$PYTHON_VERSION in your system path" "$LINENO" 5
+	   PYTHON_VERSION=""
+	fi
+
+	#
+	# Check for a version of Python >= 2.1.0
+	#
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for a version of Python >= '2.1.0'" >&5
+$as_echo_n "checking for a version of Python >= '2.1.0'... " >&6; }
+	ac_supports_python_ver=`$PYTHON -c "import sys; \
+		ver = sys.version.split ()[0]; \
+		print (ver >= '2.1.0')"`
+	if test "$ac_supports_python_ver" != "True"; then
+		if test -z "$PYTHON_NOVERSIONCHECK"; then
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+			{ { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "
+This version of the AC_PYTHON_DEVEL macro
+doesn't work properly with versions of Python before
+2.1.0. You may need to re-run configure, setting the
+variables PYTHON_CPPFLAGS, PYTHON_LDFLAGS, PYTHON_SITE_PKG,
+PYTHON_EXTRA_LIBS and PYTHON_EXTRA_LDFLAGS by hand.
+Moreover, to disable this check, set PYTHON_NOVERSIONCHECK
+to something else than an empty string.
+
+See \`config.log' for more details" "$LINENO" 5; }
+		else
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: skip at user request" >&5
+$as_echo "skip at user request" >&6; }
+		fi
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	fi
+
+	#
+	# if the macro parameter ``version'' is set, honour it
+	#
+	if test -n ""; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for a version of Python " >&5
+$as_echo_n "checking for a version of Python ... " >&6; }
+		ac_supports_python_ver=`$PYTHON -c "import sys; \
+			ver = sys.version.split ()[0]; \
+			print (ver )"`
+		if test "$ac_supports_python_ver" = "True"; then
+		   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		else
+			{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+			as_fn_error $? "this package requires Python .
+If you have it installed, but it isn't the default Python
+interpreter in your system path, please pass the PYTHON_VERSION
+variable to configure. See \`\`configure --help'' for reference.
+" "$LINENO" 5
+			PYTHON_VERSION=""
+		fi
+	fi
+
+	#
+	# Check if you have distutils, else fail
+	#
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for the distutils Python package" >&5
+$as_echo_n "checking for the distutils Python package... " >&6; }
+	ac_distutils_result=`$PYTHON -c "import distutils" 2>&1`
+	if test -z "$ac_distutils_result"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+		as_fn_error $? "cannot import Python module \"distutils\".
+Please check your Python installation. The error was:
+$ac_distutils_result" "$LINENO" 5
+		PYTHON_VERSION=""
+	fi
+
+	#
+	# Check for Python include path
+	#
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python include path" >&5
+$as_echo_n "checking for Python include path... " >&6; }
+	if test -z "$PYTHON_CPPFLAGS"; then
+		python_path=`$PYTHON -c "import distutils.sysconfig; \
+			print (distutils.sysconfig.get_python_inc ());"`
+		if test -n "${python_path}"; then
+			python_path="-I$python_path"
+		fi
+		PYTHON_CPPFLAGS=$python_path
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHON_CPPFLAGS" >&5
+$as_echo "$PYTHON_CPPFLAGS" >&6; }
+
+
+	#
+	# Check for Python library path
+	#
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python library path" >&5
+$as_echo_n "checking for Python library path... " >&6; }
+	if test -z "$PYTHON_LDFLAGS"; then
+		# (makes two attempts to ensure we've got a version number
+		# from the interpreter)
+		ac_python_version=`cat<<EOD | $PYTHON -
+
+# join all versioning strings, on some systems
+# major/minor numbers could be in different list elements
+from distutils.sysconfig import *
+e = get_config_var('VERSION')
+if e is not None:
+	print(e)
+EOD`
+
+		if test -z "$ac_python_version"; then
+			if test -n "$PYTHON_VERSION"; then
+				ac_python_version=$PYTHON_VERSION
+			else
+				ac_python_version=`$PYTHON -c "import sys; \
+					print (sys.version[:3])"`
+			fi
+		fi
+
+		# Make the versioning information available to the compiler
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_PYTHON "$ac_python_version"
+_ACEOF
+
+
+		# First, the library directory:
+		ac_python_libdir=`cat<<EOD | $PYTHON -
+
+# There should be only one
+import distutils.sysconfig
+e = distutils.sysconfig.get_config_var('LIBDIR')
+if e is not None:
+	print (e)
+EOD`
+
+		# Before checking for libpythonX.Y, we need to know
+		# the extension the OS we're on uses for libraries
+		# (we take the first one, if there's more than one fix me!):
+		ac_python_soext=`$PYTHON -c \
+		  "import distutils.sysconfig; \
+		  print (distutils.sysconfig.get_config_var('SO'))"`
+
+		# Now, for the library:
+		ac_python_soname=`$PYTHON -c \
+		  "import distutils.sysconfig; \
+		  print (distutils.sysconfig.get_config_var('LDLIBRARY'))"`
+
+		# Strip away extension from the end to canonicalize its name:
+		ac_python_library=`echo "$ac_python_soname" | sed "s/${ac_python_soext}$//"`
+		# If that did not work, try to strip the ending ".so".
+		# This is needed for Arch Linux, where $ac_python_soname is
+		# "libpython3.3m.so" but $ac_python_soext is ".cpython-33m.so".
+		if test x"$ac_python_library" == x"$ac_python_soname"
+		then
+			ac_python_library=`echo "$ac_python_soname" | sed "s/\.so$//"`
+		fi
+
+		# This small piece shamelessly adapted from PostgreSQL python macro;
+		# credits goes to momjian, I think. I'd like to put the right name
+		# in the credits, if someone can point me in the right direction... ?
+		#
+		if test -n "$ac_python_libdir" -a -n "$ac_python_library" \
+			-a x"$ac_python_library" != x"$ac_python_soname"
+		then
+			# use the official shared library
+			ac_python_library=`echo "$ac_python_library" | sed "s/^lib//"`
+			PYTHON_LDFLAGS="-L$ac_python_libdir -l$ac_python_library"
+		else
+			# old way: use libpython from python_configdir
+			ac_python_libdir=`$PYTHON -c \
+			  "from distutils.sysconfig import get_python_lib as f; \
+			  import os; \
+			  print (os.path.join(f(plat_specific=1, standard_lib=1), 'config'));"`
+			PYTHON_LDFLAGS="-L$ac_python_libdir -lpython$ac_python_version"
+		fi
+
+		if test -z "PYTHON_LDFLAGS"; then
+			as_fn_error $? "
+  Cannot determine location of your Python DSO. Please check it was installed with
+  dynamic libraries enabled, or try setting PYTHON_LDFLAGS by hand.
+			" "$LINENO" 5
+		fi
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHON_LDFLAGS" >&5
+$as_echo "$PYTHON_LDFLAGS" >&6; }
+
+
+	#
+	# Check for site packages
+	#
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for Python site-packages path" >&5
+$as_echo_n "checking for Python site-packages path... " >&6; }
+	if test -z "$PYTHON_SITE_PKG"; then
+		PYTHON_SITE_PKG=`$PYTHON -c "import distutils.sysconfig; \
+			print (distutils.sysconfig.get_python_lib(0,0));"`
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHON_SITE_PKG" >&5
+$as_echo "$PYTHON_SITE_PKG" >&6; }
+
+
+	#
+	# libraries which must be linked in when embedding
+	#
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python extra libraries" >&5
+$as_echo_n "checking python extra libraries... " >&6; }
+	if test -z "$PYTHON_EXTRA_LIBS"; then
+	   PYTHON_EXTRA_LIBS=`$PYTHON -c "import distutils.sysconfig; \
+                conf = distutils.sysconfig.get_config_var; \
+                print (conf('LOCALMODLIBS') + ' ' + conf('LIBS'))"`
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHON_EXTRA_LIBS" >&5
+$as_echo "$PYTHON_EXTRA_LIBS" >&6; }
+
+
+	#
+	# linking flags needed when embedding
+	#
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking python extra linking flags" >&5
+$as_echo_n "checking python extra linking flags... " >&6; }
+	if test -z "$PYTHON_EXTRA_LDFLAGS"; then
+		PYTHON_EXTRA_LDFLAGS=`$PYTHON -c "import distutils.sysconfig; \
+			conf = distutils.sysconfig.get_config_var; \
+			print (conf('LINKFORSHARED'))"`
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $PYTHON_EXTRA_LDFLAGS" >&5
+$as_echo "$PYTHON_EXTRA_LDFLAGS" >&6; }
+
+
+	#
+	# final check to see if everything compiles alright
+	#
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking consistency of all components of python development environment" >&5
+$as_echo_n "checking consistency of all components of python development environment... " >&6; }
+	# save current global flags
+	ac_save_LIBS="$LIBS"
+	ac_save_CPPFLAGS="$CPPFLAGS"
+	LIBS="$ac_save_LIBS $PYTHON_LDFLAGS $PYTHON_EXTRA_LDFLAGS $PYTHON_EXTRA_LIBS"
+	CPPFLAGS="$ac_save_CPPFLAGS $PYTHON_CPPFLAGS"
+	ac_ext=c
+ac_cpp='$CPP $CPPFLAGS'
+ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+		#include <Python.h>
+int
+main ()
+{
+Py_Initialize();
+  ;
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  pythonexists=yes
+else
+  pythonexists=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+	ac_ext=cpp
+ac_cpp='$CXXCPP $CPPFLAGS'
+ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
+ac_link='$CXX -o conftest$ac_exeext $CXXFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
+ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
+
+	# turn back to default flags
+	CPPFLAGS="$ac_save_CPPFLAGS"
+	LIBS="$ac_save_LIBS"
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $pythonexists" >&5
+$as_echo "$pythonexists" >&6; }
+
+        if test ! "x$pythonexists" = "xyes"; then
+	   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "
+  Could not link test program to Python. Maybe the main Python library has been
+  installed in some non-standard library path. If so, pass it to configure,
+  via the LDFLAGS environment variable.
+  Example: ./configure LDFLAGS=\"-L/usr/non-standard-path/python/lib\"
+  ============================================================================
+   ERROR!
+   You probably have to install the development version of the Python package
+   for your distribution.  The exact name of this package varies among them.
+  ============================================================================
+
+See \`config.log' for more details" "$LINENO" 5; }
+	  PYTHON_VERSION=""
+	fi
+
+	#
+	# all done!
+	#
+
+
+  if test $pythonexists = "yes"; then
+	 USE_PYTHON=yes
+
+$as_echo "#define USE_PYTHON 1" >>confdefs.h
+
+
+	 PYTHONCPPFLAGS="${PYTHON_CPPFLAGS}"
+	 PYTHONCONFIGLIBS="${PYTHON_EXTRA_LIBS}"
+	 PYTHONCONFIGLDFLAGS="${PYTHON_LDFLAGS} ${PYTHON_EXTRA_LDFLAGS}"
+
+
+
+
+  fi
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
+$as_echo "" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${T_MD}Checking for typedefs:${T_ME}" >&5
 $as_echo "${T_MD}Checking for typedefs:${T_ME}" >&6; }
 
@@ -27880,6 +28391,14 @@ else
   CARES_FALSE=
 fi
 
+ if test "$USE_PYTHON"		= "yes"; then
+  PYTHON_TRUE=
+  PYTHON_FALSE='#'
+else
+  PYTHON_TRUE='#'
+  PYTHON_FALSE=
+fi
+
 
 
 cat >>confdefs.h <<_ACEOF
@@ -27993,7 +28512,12 @@ _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define _RUBY_VERSION "$rubyversion"
+#define _RUBY_VERSION "$ruby_version"
+_ACEOF
+
+
+cat >>confdefs.h <<_ACEOF
+#define _PYTHON_VERSION "$ac_python_version"
 _ACEOF
 
 
@@ -29262,7 +29786,11 @@ if test "$USE_PHP" = "yes"; then
 fi
 
 if test "$USE_RUBY" = "yes"; then
-   ulib_ruby_msg="yes ( $rubyversion )"
+   ulib_ruby_msg="yes ( $ruby_version )"
+fi
+
+if test "$USE_PYTHON" = "yes"; then
+   ulib_python_msg="yes ( $ac_python_version )"
 fi
 
  if true; then
@@ -30891,121 +31419,123 @@ ULIB_SYSCONFDIR="$u_sysconfdir"
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: Configured to build src/ulib/lib${ULIB}:
 ------------------------------------------------------------------------
-          ULib version: ${ULIB_VERSION}
-            Build ULib: Shared=${enable_shared}, Static=${enable_static}
+           ULib version: ${ULIB_VERSION}
+             Build ULib: Shared=${enable_shared}, Static=${enable_static}
 
-            Host setup: ${host}
-        Install prefix: ${u_prefixdir}
-        Install plugin: ${u_libexecdir}
-    Configuration data: ${u_sysconfdir}
+             Host setup: ${host}
+         Install prefix: ${u_prefixdir}
+         Install plugin: ${u_libexecdir}
+     Configuration data: ${u_sysconfdir}
 
-      Operating System: $os_version
-          C++ Compiler: ${CXX} ( $gcc_version )
-                Linker: ${LD} ( $ld_version )
-  Standard C   library: ${libc_version}
-  Standard C++ library: ${stdgpp_version}
-             Libraries: ${ULIB_LIBS}
+       Operating System: $os_version
+           C++ Compiler: ${CXX} ( $gcc_version )
+                 Linker: ${LD} ( $ld_version )
+   Standard C   library: ${libc_version}
+   Standard C++ library: ${stdgpp_version}
+              Libraries: ${ULIB_LIBS}
 
-             C   Flags: ${CFLAGS}
-             C++ Flags: ${CXXFLAGS}
-          Linker Flags: ${LDFLAGS}
-    Preprocessor Flags: ${CPPFLAGS}
+              C   Flags: ${CFLAGS}
+              C++ Flags: ${CXXFLAGS}
+           Linker Flags: ${LDFLAGS}
+     Preprocessor Flags: ${CPPFLAGS}
 
-         debug support: ${ulib_dbg_msg}
-      final build mode: ${ulib_final_msg}
-   memory pool support: ${ulib_memp_msg}
-           LFS support: ${ulib_LFS_msg}
-          ipv6 support: ${ulib_ipv6_msg}
-           zip support: ${ulib_zip_msg}
-        thread support: ${ulib_thread_msg}
+          debug support: ${ulib_dbg_msg}
+       final build mode: ${ulib_final_msg}
+    memory pool support: ${ulib_memp_msg}
+            LFS support: ${ulib_LFS_msg}
+           ipv6 support: ${ulib_ipv6_msg}
+            zip support: ${ulib_zip_msg}
+         thread support: ${ulib_thread_msg}
 
-          LIBZ support: ${ulib_libz_msg}
-     LIBZOPFLI support: ${ulib_libzopfli_msg}
-        LIBTDB support: ${ulib_libtdb_msg}
-          PCRE support: ${ulib_pcre_msg}
-           SSL support: ${ulib_ssl_msg}
-           SSH support: ${ulib_ssh_msg}
-          LDAP support: ${ulib_ldap_msg}
-          cURL support: ${ulib_curl_msg}
-           XML support: ${ulib_expat_msg}
-         MAGIC support: ${ulib_magic_msg}
-        SQLite support: ${ulib_sqlite_msg}
-         MySQL support: ${ulib_mysql_msg}
-         PgSQL support: ${ulib_pgsql_msg}
-           DBI support: ${ulib_dbi_msg}
-       libuuid support: ${ulib_libuuid_msg}
-      libevent support: ${ulib_libevent_msg}
-       libxml2 support: ${ulib_libxml2_msg}
-        c-ares support: ${ulib_cares_msg}
-    Page-Speed support: ${ulib_pagespeed_msg}
- V8 JavaScript support: ${ulib_v8_msg}
-  PHP language support: ${ulib_php_msg}
- RUBY language support: ${ulib_ruby_msg}
+           LIBZ support: ${ulib_libz_msg}
+      LIBZOPFLI support: ${ulib_libzopfli_msg}
+         LIBTDB support: ${ulib_libtdb_msg}
+           PCRE support: ${ulib_pcre_msg}
+            SSL support: ${ulib_ssl_msg}
+            SSH support: ${ulib_ssh_msg}
+           LDAP support: ${ulib_ldap_msg}
+           cURL support: ${ulib_curl_msg}
+            XML support: ${ulib_expat_msg}
+          MAGIC support: ${ulib_magic_msg}
+         SQLite support: ${ulib_sqlite_msg}
+          MySQL support: ${ulib_mysql_msg}
+          PgSQL support: ${ulib_pgsql_msg}
+            DBI support: ${ulib_dbi_msg}
+        libuuid support: ${ulib_libuuid_msg}
+       libevent support: ${ulib_libevent_msg}
+        libxml2 support: ${ulib_libxml2_msg}
+         c-ares support: ${ulib_cares_msg}
+     Page-Speed support: ${ulib_pagespeed_msg}
+  V8 JavaScript support: ${ulib_v8_msg}
+   PHP language support: ${ulib_php_msg}
+  RUBY language support: ${ulib_ruby_msg}
+PYTHON language support: ${ulib_python_msg}
 
-      Examples:         ${ulib_examples}
-      LEX/YACC support: ${ulib_parser_msg}
-      Lexical analyzer: ${LEX} ( ${flex_version} )
-      Parser generator: ${YACC} ( ${bison_version} )
+       Examples:         ${ulib_examples}
+       LEX/YACC support: ${ulib_parser_msg}
+       Lexical analyzer: ${LEX} ( ${flex_version} )
+       Parser generator: ${YACC} ( ${bison_version} )
 
 See include/ulib/internal/config.h for further configuration information
 ------------------------------------------------------------------------" >&5
 $as_echo "$as_me: Configured to build src/ulib/lib${ULIB}:
 ------------------------------------------------------------------------
-          ULib version: ${ULIB_VERSION}
-            Build ULib: Shared=${enable_shared}, Static=${enable_static}
+           ULib version: ${ULIB_VERSION}
+             Build ULib: Shared=${enable_shared}, Static=${enable_static}
 
-            Host setup: ${host}
-        Install prefix: ${u_prefixdir}
-        Install plugin: ${u_libexecdir}
-    Configuration data: ${u_sysconfdir}
+             Host setup: ${host}
+         Install prefix: ${u_prefixdir}
+         Install plugin: ${u_libexecdir}
+     Configuration data: ${u_sysconfdir}
 
-      Operating System: $os_version
-          C++ Compiler: ${CXX} ( $gcc_version )
-                Linker: ${LD} ( $ld_version )
-  Standard C   library: ${libc_version}
-  Standard C++ library: ${stdgpp_version}
-             Libraries: ${ULIB_LIBS}
+       Operating System: $os_version
+           C++ Compiler: ${CXX} ( $gcc_version )
+                 Linker: ${LD} ( $ld_version )
+   Standard C   library: ${libc_version}
+   Standard C++ library: ${stdgpp_version}
+              Libraries: ${ULIB_LIBS}
 
-             C   Flags: ${CFLAGS}
-             C++ Flags: ${CXXFLAGS}
-          Linker Flags: ${LDFLAGS}
-    Preprocessor Flags: ${CPPFLAGS}
+              C   Flags: ${CFLAGS}
+              C++ Flags: ${CXXFLAGS}
+           Linker Flags: ${LDFLAGS}
+     Preprocessor Flags: ${CPPFLAGS}
 
-         debug support: ${ulib_dbg_msg}
-      final build mode: ${ulib_final_msg}
-   memory pool support: ${ulib_memp_msg}
-           LFS support: ${ulib_LFS_msg}
-          ipv6 support: ${ulib_ipv6_msg}
-           zip support: ${ulib_zip_msg}
-        thread support: ${ulib_thread_msg}
+          debug support: ${ulib_dbg_msg}
+       final build mode: ${ulib_final_msg}
+    memory pool support: ${ulib_memp_msg}
+            LFS support: ${ulib_LFS_msg}
+           ipv6 support: ${ulib_ipv6_msg}
+            zip support: ${ulib_zip_msg}
+         thread support: ${ulib_thread_msg}
 
-          LIBZ support: ${ulib_libz_msg}
-     LIBZOPFLI support: ${ulib_libzopfli_msg}
-        LIBTDB support: ${ulib_libtdb_msg}
-          PCRE support: ${ulib_pcre_msg}
-           SSL support: ${ulib_ssl_msg}
-           SSH support: ${ulib_ssh_msg}
-          LDAP support: ${ulib_ldap_msg}
-          cURL support: ${ulib_curl_msg}
-           XML support: ${ulib_expat_msg}
-         MAGIC support: ${ulib_magic_msg}
-        SQLite support: ${ulib_sqlite_msg}
-         MySQL support: ${ulib_mysql_msg}
-         PgSQL support: ${ulib_pgsql_msg}
-           DBI support: ${ulib_dbi_msg}
-       libuuid support: ${ulib_libuuid_msg}
-      libevent support: ${ulib_libevent_msg}
-       libxml2 support: ${ulib_libxml2_msg}
-        c-ares support: ${ulib_cares_msg}
-    Page-Speed support: ${ulib_pagespeed_msg}
- V8 JavaScript support: ${ulib_v8_msg}
-  PHP language support: ${ulib_php_msg}
- RUBY language support: ${ulib_ruby_msg}
+           LIBZ support: ${ulib_libz_msg}
+      LIBZOPFLI support: ${ulib_libzopfli_msg}
+         LIBTDB support: ${ulib_libtdb_msg}
+           PCRE support: ${ulib_pcre_msg}
+            SSL support: ${ulib_ssl_msg}
+            SSH support: ${ulib_ssh_msg}
+           LDAP support: ${ulib_ldap_msg}
+           cURL support: ${ulib_curl_msg}
+            XML support: ${ulib_expat_msg}
+          MAGIC support: ${ulib_magic_msg}
+         SQLite support: ${ulib_sqlite_msg}
+          MySQL support: ${ulib_mysql_msg}
+          PgSQL support: ${ulib_pgsql_msg}
+            DBI support: ${ulib_dbi_msg}
+        libuuid support: ${ulib_libuuid_msg}
+       libevent support: ${ulib_libevent_msg}
+        libxml2 support: ${ulib_libxml2_msg}
+         c-ares support: ${ulib_cares_msg}
+     Page-Speed support: ${ulib_pagespeed_msg}
+  V8 JavaScript support: ${ulib_v8_msg}
+   PHP language support: ${ulib_php_msg}
+  RUBY language support: ${ulib_ruby_msg}
+PYTHON language support: ${ulib_python_msg}
 
-      Examples:         ${ulib_examples}
-      LEX/YACC support: ${ulib_parser_msg}
-      Lexical analyzer: ${LEX} ( ${flex_version} )
-      Parser generator: ${YACC} ( ${bison_version} )
+       Examples:         ${ulib_examples}
+       LEX/YACC support: ${ulib_parser_msg}
+       Lexical analyzer: ${LEX} ( ${flex_version} )
+       Parser generator: ${YACC} ( ${bison_version} )
 
 See include/ulib/internal/config.h for further configuration information
 ------------------------------------------------------------------------" >&6;}
@@ -31013,7 +31543,7 @@ See include/ulib/internal/config.h for further configuration information
 
 # SECTION 16: `AC_CONFIG_FILES([FILE...])
 
-ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
+ac_config_files="$ac_config_files Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile src/ulib/net/server/plugin/usp/usp_compile.sh src/ulib/net/server/plugin/page_speed/Makefile src/ulib/net/server/plugin/python/Makefile examples/Makefile examples/IR/Makefile examples/csp/Makefile examples/lcsp/Makefile examples/rsign/Makefile examples/hello/Makefile examples/WiAuth/Makefile examples/xml2txt/Makefile examples/uclient/Makefile examples/userver/Makefile examples/PEC_log/Makefile examples/workflow/Makefile examples/doc_parse/Makefile examples/lrp_session/Makefile examples/http_header/Makefile examples/test_manager/Makefile examples/doc_classifier/Makefile examples/form_completion/Makefile examples/simple_client_server/Makefile examples/download_accelerator/Makefile examples/XAdES/Makefile examples/XAdES/XAdES.spec examples/xml2txt/xml2txt.spec examples/IR/searchengine-bin.spec examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile"
 
 
 #	examples/parser/Makefile \
@@ -31711,6 +32241,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${CARES_TRUE}" && test -z "${CARES_FALSE}"; then
   as_fn_error $? "conditional \"CARES\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${PYTHON_TRUE}" && test -z "${PYTHON_FALSE}"; then
+  as_fn_error $? "conditional \"PYTHON\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${PLUGIN_TRUE}" && test -z "${PLUGIN_FALSE}"; then
@@ -32856,6 +33390,7 @@ do
     "src/ulib/net/server/plugin/mod_geoip/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/mod_geoip/Makefile" ;;
     "src/ulib/net/server/plugin/usp/usp_compile.sh") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/usp/usp_compile.sh" ;;
     "src/ulib/net/server/plugin/page_speed/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/page_speed/Makefile" ;;
+    "src/ulib/net/server/plugin/python/Makefile") CONFIG_FILES="$CONFIG_FILES src/ulib/net/server/plugin/python/Makefile" ;;
     "examples/Makefile") CONFIG_FILES="$CONFIG_FILES examples/Makefile" ;;
     "examples/IR/Makefile") CONFIG_FILES="$CONFIG_FILES examples/IR/Makefile" ;;
     "examples/csp/Makefile") CONFIG_FILES="$CONFIG_FILES examples/csp/Makefile" ;;

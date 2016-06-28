@@ -992,7 +992,6 @@ public:
    static const UString* str_path_root;
    static const UString* str_path_index;
    static const UString* str_scheme;
-   static const UString* str_scheme_http;
    static const UString* str_scheme_https;
    static const UString* str_status;
    static const UString* str_status_200;
@@ -1051,7 +1050,7 @@ public:
    static const UString* str_www_authenticate;
    static const UString* str_ULib;
 
-   static ustringrep stringrep_storage[137];
+   static ustringrep stringrep_storage[136];
 #endif
 
    static void str_allocate(int which);

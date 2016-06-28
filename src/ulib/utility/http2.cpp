@@ -141,7 +141,7 @@ void UHTTP2::ctor()
    hpack_static_table[4].value  = UString::str_path_index;
    hpack_static_table[5].name   = UString::str_scheme;
     hash_static_table[5]        = UString::str_scheme->hashIgnoreCase();
-   hpack_static_table[5].value  = UString::str_scheme_http;
+   hpack_static_table[5].value  = UString::str_http;
    hpack_static_table[6].name   = UString::str_scheme;
    hpack_static_table[6].value  = UString::str_scheme_https;
    hpack_static_table[7].name   = UString::str_status;

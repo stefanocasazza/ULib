@@ -188,23 +188,21 @@ public:
 
    static void run(); // loop waiting for connection
 
-   // tipologia server...
-
    static UFileConfig* cfg;
    static bool bssl, bipc, flag_loop;
    static unsigned int port; // the port number to bind to
 
-   static int          getReqTimeout() { return (ptime ? ptime->UTimeVal::tv_sec : 0); }
-   static bool         isIPv6()        { return UClientImage_Base::bIPv6; }
-   static UString      getHost()       { return *host; }
-   static unsigned int getPort()       { return port; }
+   static int          getReqTimeout()  { return (ptime ? ptime->UTimeVal::tv_sec : 0); }
+   static bool         isIPv6()         { return UClientImage_Base::bIPv6; }
+   static UString      getHost()        { return *host; }
+   static unsigned int getPort()        { return port; }
 
    static UCommand* loadConfigCommand() { return UCommand::loadConfigCommand(cfg); }
 
    // The directory out of which you will serve your documents...
 
-   static UString* document_root;
-   static uint32_t document_root_size;
+   static UString*    document_root;
+   static uint32_t    document_root_size;
    static const char* document_root_ptr;
 
    static UString getDocumentRoot()
@@ -222,6 +220,9 @@ public:
    static void setMsgWelcome(const UString& msg);
 #endif
 
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
+#endif
+
    // -------------------------------------------------------------------
    // MANAGE PLUGIN MODULES
    // -------------------------------------------------------------------
@@ -230,8 +231,7 @@ public:
    static UEventFd* handler_other;
    static UEventFd* handler_inotify;
 
-   // load plugin modules and call server-wide hooks handlerConfig()...
-   static int loadPlugins(UString& plugin_dir, const UString& plugin_list);
+   static int loadPlugins(UString& plugin_dir, const UString& plugin_list); // load plugin modules and call server-wide hooks handlerConfig()...
 
    // ---------------------------------
    // Server-wide hooks
@@ -560,7 +560,6 @@ protected:
    static UString* senvironment;
    static bool flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive, called_from_handlerTime;
 
-
    static uint32_t                 vplugin_size;
    static UVector<UString>*        vplugin_name;
    static UVector<UString>*        vplugin_name_static;
@@ -590,7 +589,6 @@ protected:
 # ifndef U_LOG_DISABLE
    static long last_event;
 # endif
-   static UEventTime* pstat;
    static uint64_t stats_bytes;
    static uint32_t max_depth, wakeup_for_nothing, nread, nread_again, stats_connections, stats_simultaneous;
 
@@ -600,7 +598,6 @@ protected:
 #ifdef U_THROTTLING_SUPPORT
    static bool         throttling_chk;
    static UString*     throttling_mask;
-   static UEventTime*  throttling_time;
    static UThrottling* throttling_rec;
    static URDBObjectHandler<UDataStorage*>* db_throttling;
 

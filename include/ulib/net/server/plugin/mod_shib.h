@@ -166,8 +166,6 @@ typedef struct shib_dir_config {
 
 #include <ulib/string.h>
 
-template <class T> class UVector;
-
 class UShibTarget : public ShibTarget {
 public:
    shib_dir_config* m_dc;

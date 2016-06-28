@@ -123,12 +123,18 @@ URDBObjectHandler<UDataStorage*>* UHTTP::db_session;
          UHTTP::UFileCacheData*   UHTTP::file_not_in_cache_data;
 UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 
+#ifdef USE_PHP
+UHTTP::UPHP* UHTTP::php_embed;
+#endif
 #ifdef USE_RUBY
 bool          UHTTP::ruby_on_rails;
 UHTTP::URUBY* UHTTP::ruby_embed;
 #endif
-#ifdef USE_PHP
-UHTTP::UPHP* UHTTP::php_embed;
+#ifdef USE_PYTHON
+const char*     UHTTP::py_project_app = "hello.hello_world_app"; // full python name of WSGI entry point
+const char*     UHTTP::py_project_root = "."; // defaults to workdir
+const char*     UHTTP::py_virtualenv_path = "";
+UHTTP::UPYTHON* UHTTP::python_embed;
 #endif
 #ifdef USE_PAGE_SPEED
 UHTTP::UPageSpeed* UHTTP::page_speed;
@@ -844,7 +850,7 @@ void UHTTP::init()
 // if (UServer_Base::bssl) enable_caching_by_proxy_servers = true;
 #endif
 
-#if defined(USE_PAGE_SPEED) || defined(USE_LIBV8) || defined(USE_RUBY) || defined(USE_PHP)
+#if defined(USE_PAGE_SPEED) || defined(USE_LIBV8) || defined(USE_RUBY) || defined(USE_PHP) || defined(USE_PYTHON)
    const char* msg;
 #endif
 
@@ -952,6 +958,36 @@ void UHTTP::init()
    if (msg) { U_SRV_LOG("%s", msg); }
 #endif
 
+#ifdef USE_PYTHON
+   U_INTERNAL_ASSERT_EQUALS(python_embed, 0)
+
+   U_NEW(UHTTP::UPYTHON, python_embed, UHTTP::UPYTHON);
+
+   msg = "WARNING: load of plugin python failed";
+
+   if (python_embed->load(U_CONSTANT_TO_PARAM("server_plugin_python")) == false)
+      {
+      delete python_embed;
+             python_embed = 0;
+      }
+   else
+      {
+      python_embed->runPYTHON  = (bPFpcpcpcpc)(*python_embed)["runPYTHON"];
+      python_embed->python_end =         (vPF)(*python_embed)["UPYTHON_end"];
+
+      U_INTERNAL_ASSERT_POINTER(python_embed->runPYTHON)
+      U_INTERNAL_ASSERT_POINTER(python_embed->python_end)
+
+      if (py_project_app == 0) msg = 0; // python wsgi app not specified; skipping python initialization...
+      else
+         {
+         if (python_embed->runPYTHON(0, py_project_root, py_project_app, py_virtualenv_path)) msg = "Load of plugin python success";
+         }
+      }
+
+   if (msg) { U_SRV_LOG("%s", msg); }
+#endif
+
 #ifdef USE_PHP
    U_INTERNAL_ASSERT_EQUALS(php_embed, 0)
 
@@ -1020,15 +1056,10 @@ void UHTTP::init()
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::senvironment)
 
-   UString ip_server = UServer_Base::getIPAddress();
-
    UServer_Base::senvironment->snprintf_add("SERVER_ADDR=%v\n"
-                                            "DOCUMENT_ROOT=%w\n", // The root directory of your server
-                                            ip_server.rep);
-
-   (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM(
-                                             "GATEWAY_INTERFACE=CGI/1.1\n"
-                                             "SERVER_SOFTWARE=" PACKAGE_NAME "/" ULIB_VERSION "\n"));
+                                            "DOCUMENT_ROOT=%w\n" // The root directory of your server
+                                            "SERVER_SOFTWARE=" PACKAGE_NAME "/" ULIB_VERSION "\n",
+                                            UServer_Base::getIPAddress().rep);
 
    U_ASSERT_EQUALS(UServer_Base::senvironment->isBinary(), false)
 
@@ -1399,11 +1430,14 @@ void UHTTP::dtor()
 #    endif
 #  endif
 
+#  ifdef USE_PHP
+      if (php_embed)     delete php_embed;
+#  endif
 #  ifdef USE_RUBY
       if (ruby_embed)    delete ruby_embed;
 #  endif
-#  ifdef USE_PHP
-      if (php_embed)     delete php_embed;
+#  ifdef USE_PYTHON
+      if (python_embed)  delete python_embed;
 #  endif
 #  ifdef USE_PAGE_SPEED
       if (page_speed)    delete page_speed;
@@ -2888,7 +2922,7 @@ next:
       }
 }
 
-// manage dynamic page request (CGI - C/ULib Servlet Page - RUBY - PHP)
+// manage dynamic page request (CGI - C/ULib Servlet Page - RUBY - PHP - PYTHON)
 
 bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
 {
@@ -2897,12 +2931,12 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
 #if defined(DEBUG) && !defined(U_STATIC_ONLY)
    checkForPathName();
 
-   UString suffix = file->getSuffix();
+   *suffix = file->getSuffix();
 
-   U_INTERNAL_DUMP("pathname = %V file = %.*S suffix = %V", pathname->rep, U_FILE_TO_TRACE(*file), suffix.rep)
+   U_INTERNAL_DUMP("pathname = %V file = %.*S suffix = %V", pathname->rep, U_FILE_TO_TRACE(*file), suffix->rep)
 
    const char* ptr  = file->getPathRelativ();
-   uint32_t sz, len = file->getPathRelativLen() - (sz = suffix.size());
+   uint32_t sz, len = file->getPathRelativLen() - (sz = suffix->size());
 
    U_INTERNAL_DUMP("ptr(%u) = %#.*S", len, len, ptr)
 
@@ -2911,7 +2945,7 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
    char buffer[U_PATH_MAX];
    UServletPage* usp_page = (UServletPage*)file_data->ptr;
 
-   if (suffix.empty())
+   if (suffix->empty())
       {
       struct stat st;
 
@@ -2937,7 +2971,7 @@ bool UHTTP::checkIfSourceHasChangedAndCompileUSP()
       U_RETURN(true);
       }
 
-   if (suffix.equal(U_CONSTANT_TO_PARAM("usp")))
+   if (suffix->equal(U_CONSTANT_TO_PARAM("usp")))
       {
       if (U_HTTP_QUERY_STREQ("_nav_")) U_RETURN(false);
 
@@ -2959,7 +2993,7 @@ compile:
          {
 err:     setInternalError();
 
-         if (suffix) delete usp_page;
+         if (*suffix) delete usp_page;
 
          U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
 
@@ -3069,6 +3103,16 @@ U_NO_EXPORT bool UHTTP::runDynamicPage()
       goto next;
       }
 #endif
+#ifdef USE_PYTHON
+   if (u_is_python(mime_index))
+      {
+      U_INTERNAL_ASSERT_POINTER(python_embed->runPYTHON)
+
+      (void) python_embed->runPYTHON(file->getPathRelativ(), 0, 0, 0);
+
+      goto next;
+      }
+#endif
 #ifdef USE_PHP
    if (u_is_php(mime_index))
       {
@@ -3109,7 +3153,7 @@ U_NO_EXPORT bool UHTTP::runDynamicPage()
 
    U_RETURN(false);
 
-#if defined(USE_RUBY) || defined(USE_PHP) || defined(HAVE_LIBTCC)
+#if defined(USE_RUBY) || defined(USE_PHP) || defined(HAVE_LIBTCC) || defined(USE_PYTHON)
 next:
    U_DUMP("UServer_Base::isParallelizationChild() = %b UServer_Base::isParallelizationParent() = %b",
            UServer_Base::isParallelizationChild(),     UServer_Base::isParallelizationParent())
@@ -3787,6 +3831,29 @@ manage:
 #endif
    U_INTERNAL_DUMP("file_data = %p U_ClientImage_request = %B U_http_info.flag = %.8S", file_data, U_ClientImage_request, U_http_info.flag)
 
+#if defined(DEBUG) && !defined(U_STATIC_ONLY)
+   if (file_data == 0 &&
+       file->getSuffix().empty())
+      {
+      struct stat st;
+      char buffer[U_PATH_MAX];
+      uint32_t sz = u__snprintf(buffer, sizeof(buffer), "%.*s.usp", U_FILE_TO_TRACE(*file));
+
+      if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0)
+         {
+         U_DEBUG("Request usp service not in cache: %V - try to compile", pathname->rep)
+
+         (void) pathname->replace(buffer, sz);
+
+         file->setPath(*pathname);
+
+         manageDataForCache();
+
+         U_INTERNAL_ASSERT_POINTER(file_data)
+         }
+      }
+#endif
+
    if (file_data &&
        UClientImage_Base::isRequestInFileCache()) // => 3
       {
@@ -3854,7 +3921,7 @@ file_in_cache:
 
             U_INTERNAL_DUMP("U_http_is_request_nostat = %b query(%u) = %.*S", U_http_is_request_nostat, U_http_info.query_len, U_HTTP_QUERY_TO_TRACE)
 
-#        if defined(USE_RUBY) || defined(USE_PHP) || defined(HAVE_LIBTCC)
+#        if defined(USE_RUBY) || defined(USE_PHP) || defined(HAVE_LIBTCC) || defined(USE_PYTHON)
             if (U_http_is_request_nostat    == false &&
                 U_HTTP_QUERY_STREQ("_nav_") == false &&
                 (checkForPathName(), runDynamicPage()))
@@ -3915,15 +3982,14 @@ need_to_be_processed:
 
          char redirect_url[32 * 1024];
 
-         UString ip_server = UServer_Base::getIPAddress();
-
          // The Strict-Transport-Security header is ignored by the browser when your site is accessed using HTTP;
          // this is because an attacker may intercept HTTP connections and inject the header or remove it.
          // When your site is accessed over HTTPS with no certificate errors, the browser knows your site is HTTPS
          // capable and will honor the Strict-Transport-Security header
 
          setRedirectResponse(NO_BODY, (const char*)redirect_url,
-                             u__snprintf(redirect_url, sizeof(redirect_url), "%s:/%v%.*s", U_http_websocket_len ? "wss" : "https", ip_server.rep, U_HTTP_URI_QUERY_TO_TRACE));
+                             u__snprintf(redirect_url, sizeof(redirect_url), "%s:/%v%.*s", U_http_websocket_len ? "wss" : "https",
+                             UServer_Base::getIPAddress().rep, U_HTTP_URI_QUERY_TO_TRACE));
 
          U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %S", redirect_url);
 
@@ -4270,10 +4336,10 @@ check_file: // now we check the file...
       {
       // NB: this can happen (ex: we don't cache usp file)...
 
-      result           = file->open();
-      file_data        = file_not_in_cache_data;
-      mime_index       = U_unknow;
-      file_data->fd    = file->fd;
+      result        = file->open();
+      file_data     = file_not_in_cache_data;
+      mime_index    = U_unknow;
+      file_data->fd = file->fd;
       }
 
    if (result == false)
@@ -5711,10 +5777,10 @@ void UHTTP::handlerResponse()
             "NOTIFY, MSEARCH, SUBSCRIBE, UNSUBSCRIBE"     // upnp
             "\r\nContent-Length: 0\r\n\r\n"));
 
-         UClientImage_Base::setCloseConnection();
-
          if (U_http_info.nResponseCode == HTTP_OPTIONS_RESPONSE) U_http_info.nResponseCode = HTTP_OK;
          }
+
+      UClientImage_Base::setCloseConnection();
 
       UClientImage_Base::setRequestNoCache();
 
@@ -6939,7 +7005,7 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
     * Use the Cache control: public directive to enable HTTPS caching for Firefox. Some versions of Firefox require that the Cache control: public
     * header to be set in order for resources sent over SSL to be cached on disk, even if the other caching headers are explicitly set. Although this
     * header is normally used to enable caching by proxy servers (as described below), proxies cannot cache any content sent over HTTPS, so it is
-    * always safe to set this header for HTTPS resources. 
+    * always safe to set this header for HTTPS resources
     */
 
    header.snprintf_add("Content-Type: %s\r\n", content_type);
@@ -7416,10 +7482,6 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 {
    U_TRACE_NO_PARAM(1, "UHTTP::manageDataForCache()")
 
-   U_INTERNAL_DUMP("U_http_is_nocache_file = %b", U_http_is_nocache_file)
-
-   U_INTERNAL_ASSERT_EQUALS(U_http_is_nocache_file, false)
-
    UString file_name;
    uint32_t suffix_len;
    const char* suffix_ptr;
@@ -7563,16 +7625,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
           * file_data->fd = file->fd; (void) file->memmap(PROT_READ, &content);
           */
 
-         if (content)
-            {
-            mime_index = U_unknow;
-
-            const char* ctype = file->getMimeType(suffix_ptr, &mime_index);
-
-            file_data->mime_index = mime_index;
-
-            putDataInCache(getHeaderMimeType(content.data(), 0, ctype, U_TIME_FOR_EXPIRE), content);
-            }
+         if (content) putDataInCache(getHeaderMimeType(content.data(), 0, setMimeIndex(suffix_ptr), U_TIME_FOR_EXPIRE), content);
          }
 
       goto end;
@@ -7754,9 +7807,13 @@ check:      if (usp_src) goto end;
                cgi->interpreter      = U_PATH_SHELL;
                cgi->environment_type = U_SHELL;
                }
-            else if (u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('p','l')) cgi->interpreter = "perl";
-            else if (u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('p','y')) cgi->interpreter = "python";
             else if (u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('r','b')) cgi->interpreter = "ruby";
+            else if (u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('p','l')) cgi->interpreter = "perl";
+            else if (u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('p','y'))
+               {
+               cgi->interpreter      = "python";
+               cgi->environment_type = U_WSCGI;
+               }
             }
          else if (suffix_len == 3                                                   &&
                   u_get_unalignedp16(suffix_ptr) == U_MULTICHAR_CONSTANT16('p','h') &&
@@ -8082,8 +8139,8 @@ U_NO_EXPORT void UHTTP::checkPath()
 
       // we don't wont to process this kind of request (usually aliased)...
 
-      len = file->getPathRelativLen();
       ptr = file->getPathRelativ();
+      len = file->getPathRelativLen();
 
       if (len >= U_PATH_MAX               ||
           u_isFileName(ptr, len) == false ||
@@ -8216,32 +8273,6 @@ nocontent:
             U_INTERNAL_ASSERT_POINTER(file_data)
             }
          }
-#  if defined(DEBUG) && !defined(U_STATIC_ONLY)
-      else
-         {
-         *suffix = file->getSuffix();
-
-         if (suffix->empty())
-            {
-            struct stat st;
-            char buffer[U_PATH_MAX];
-            uint32_t sz = u__snprintf(buffer, sizeof(buffer), "%.*s.usp", U_FILE_TO_TRACE(*file));
-
-            if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0)
-               {
-               U_DEBUG("Request usp service not in cache: %V - try to compile", pathname->rep)
-
-               (void) pathname->replace(buffer, sz);
-
-               file->setPath(*pathname);
-
-               manageDataForCache();
-
-               U_INTERNAL_ASSERT_POINTER(file_data)
-               }
-            }
-         }
-#  endif
       }
 
    if (file_data) UClientImage_Base::setRequestInFileCache();
@@ -8460,9 +8491,38 @@ U_NO_EXPORT bool UHTTP::addHTTPVariables(UStringRep* key, void* value)
    U_RETURN(true);
 }
 
-bool UHTTP::getCGIEnvironment(UString& environment, int mask)
+bool UHTTP::setEnvironmentForLanguageProcessing(int type, void* env, vPFpvpcpc func)
 {
-   U_TRACE(0, "UHTTP::getCGIEnvironment(%V,%d)", environment.rep, mask)
+   U_TRACE(0, "UHTTP::setEnvironmentForLanguageProcessing(%d,%p,%p)", type, env, func)
+
+   if (getCGIEnvironment(*UClientImage_Base::environment, type) == false) U_RETURN(false);
+
+   char* ptr;
+   char** envp  = 0;
+   int32_t nenv = UCommand::setEnvironment(*UClientImage_Base::environment, envp);
+
+   for (int i = 0; envp[i]; ++i)
+      {
+      U_INTERNAL_DUMP("envp[%d] = %S", i, envp[i])
+
+      ptr = strchr(envp[i], '=');
+
+      if (ptr)
+         {
+         *ptr++ = '\0';
+
+         func(env, envp[i], ptr);
+         }
+      }
+
+   UCommand::freeEnvironment(envp, nenv);
+
+   U_RETURN(true);
+}
+
+bool UHTTP::getCGIEnvironment(UString& environment, int type)
+{
+   U_TRACE(0, "UHTTP::getCGIEnvironment(%V,%d)", environment.rep, type)
 
    UString buffer(2000U + u_cwd_len + U_http_info.endHeader + U_http_info.query_len);
 
@@ -8483,7 +8543,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
    uint32_t sz     = U_http_info.uri_len;
    const char* ptr = U_http_info.uri;
 
-   if ((mask & U_RAKE) == 0)
+   if ((type & U_RAKE) == 0)
       {
 #  ifdef U_ALIAS
       bool brequest = false;
@@ -8496,7 +8556,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
          ptr = UClientImage_Base::request_uri->data();
 
          if (U_http_info.query_len &&
-             (mask & U_SHELL) == 0)
+             (type & U_SHELL) == 0)
             {
             brequest = true;
 
@@ -8509,13 +8569,13 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
       buffer.snprintf_add("REQUEST_URI=%.*s\n", sz, ptr);
       }
 
-   if ((mask & U_PHP) != 0)
+   if ((type & U_PHP) != 0)
       {
-      // ---------------------------------------------------------------------------------------------------
+      // ---------------------------------------------------------------------------------------
       // see: http://woozle.org/~neale/papers/php-cgi.html
-      // ---------------------------------------------------------------------------------------------------
+      // ---------------------------------------------------------------------------------------
       // PHP_SELF: The filename of the currently executing script, relative to the document root
-      // ---------------------------------------------------------------------------------------------------
+      // ---------------------------------------------------------------------------------------
 
       buffer.snprintf_add("PHP_SELF=%.*s\n"
                           "REDIRECT_STATUS=1\n"
@@ -8723,18 +8783,14 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
       string_HTTP_Variables->clear();
       }
 
-   if ((mask & U_RAKE) != 0) goto end;
-
-   buffer.snprintf_add("SERVER_PROTOCOL=HTTP/1.%c\n", U_http_version ? U_http_version : '0');
-
-   (void) buffer.append(*UServer_Base::senvironment);
-
 #ifdef USE_LIBSSL
    if (UServer_Base::bssl)
       {
-      (void) buffer.append(U_CONSTANT_TO_PARAM("HTTPS=on\n")); // "on" if the script is being called through a secure server
+           if ((type & U_RAKE)  != 0) (void) buffer.append(U_CONSTANT_TO_PARAM("rack.url_scheme=https\n"));
+      else if ((type & U_WSCGI) != 0) (void) buffer.append(U_CONSTANT_TO_PARAM("wsgi.url_scheme=https\n"));
+      else                            (void) buffer.append(U_CONSTANT_TO_PARAM("HTTPS=on\n")); // "on" if the script is being called through a secure server
 
-      if ((mask & U_SHELL) != 0)
+      if ((type & U_SHELL) != 0)
          {
          X509* x509 = ((USSLSocket*)UServer_Base::csocket)->getPeerCertificate();
 
@@ -8749,41 +8805,55 @@ bool UHTTP::getCGIEnvironment(UString& environment, int mask)
             }
          }
       }
+   else
 #endif
+   {
+        if ((type & U_RAKE)  != 0) (void) buffer.append(U_CONSTANT_TO_PARAM("rack.url_scheme=http\n"));
+   else if ((type & U_WSCGI) != 0) (void) buffer.append(U_CONSTANT_TO_PARAM("wsgi.url_scheme=http\n"));
+   }
 
-   if ((mask & U_SHELL) != 0)
+   if ((type & U_RAKE) == 0)
       {
-      uint32_t agent  = getUserAgent();
-      int remote_port = UServer_Base::csocket->remotePortNumber();
+           if ((type & U_CGI)   != 0) (void) buffer.append(U_CONSTANT_TO_PARAM("GATEWAY_INTERFACE=CGI/1.1\n"));
+      else if ((type & U_WSCGI) != 0) (void) buffer.append(U_CONSTANT_TO_PARAM("SCGI=1\n"));
 
-      buffer.snprintf_add(
-       // "REMOTE_HOST=%.*s\n"      // The hostname of the visitor (if your server has reverse-name-lookups on; otherwise this is IP address again)
-       // "REMOTE_USER=%.*s\n"      // The visitor's username (for .htaccess-protected pages)
-       // "SERVER_ADMIN=%.*s\n"     // The email address for your server's webmaster
-          "REMOTE_PORT=%d\n"        // The port the visitor is connected to on the web server
-          "REMOTE_ADDR=%.*s\n"      // The IP address of the visitor
-          "SESSION_ID=%.*s:%u\n"    // The IP address of the visitor        + HTTP_USER_AGENT hashed (NB: it is weak respect to netfilter MASQUERADE)
-          "REQUEST_ID=%.*s:%d:%u\n" // The IP address of the visitor + port + HTTP_USER_AGENT hashed
-          "PWD=%w",
-          remote_port,
-          U_CLIENT_ADDRESS_TO_TRACE,
-          U_CLIENT_ADDRESS_TO_TRACE,              agent,
-          U_CLIENT_ADDRESS_TO_TRACE, remote_port, agent);
+      buffer.snprintf_add("SERVER_PROTOCOL=HTTP/1.%c\n", U_http_version ? U_http_version : '0');
 
-      if (file_data &&
-          u_is_cgi(file_data->mime_index))
+      (void) buffer.append(*UServer_Base::senvironment);
+
+      if ((type & U_SHELL) != 0)
          {
-         (void) buffer.push('/');
+         uint32_t agent  = getUserAgent();
+         int remote_port = UServer_Base::csocket->remotePortNumber();
 
-         (void) buffer.append(((UHTTP::ucgi*)file_data->ptr)->dir);
+         buffer.snprintf_add(
+          // "REMOTE_HOST=%.*s\n"      // The hostname of the visitor (if your server has reverse-name-lookups on; otherwise this is IP address again)
+          // "REMOTE_USER=%.*s\n"      // The visitor's username (for .htaccess-protected pages)
+          // "SERVER_ADMIN=%.*s\n"     // The email address for your server's webmaster
+             "REMOTE_PORT=%d\n"        // The port the visitor is connected to on the web server
+             "REMOTE_ADDR=%.*s\n"      // The IP address of the visitor
+             "SESSION_ID=%.*s:%u\n"    // The IP address of the visitor        + HTTP_USER_AGENT hashed (NB: it is weak respect to netfilter MASQUERADE)
+             "REQUEST_ID=%.*s:%d:%u\n" // The IP address of the visitor + port + HTTP_USER_AGENT hashed
+             "PWD=%w",
+             remote_port,
+             U_CLIENT_ADDRESS_TO_TRACE,
+             U_CLIENT_ADDRESS_TO_TRACE,              agent,
+             U_CLIENT_ADDRESS_TO_TRACE, remote_port, agent);
+
+         if (file_data &&
+             u_is_cgi(file_data->mime_index))
+            {
+            (void) buffer.push('/');
+
+            (void) buffer.append(((UHTTP::ucgi*)file_data->ptr)->dir);
+            }
+
+         (void) buffer.append(U_CONSTANT_TO_PARAM("\nPATH=/usr/local/bin:/usr/bin:/bin\n"));
+
+         if (*geoip) (void) buffer.append(*geoip);
          }
-
-      (void) buffer.append(U_CONSTANT_TO_PARAM("\nPATH=/usr/local/bin:/usr/bin:/bin\n"));
-
-      if (*geoip) (void) buffer.append(*geoip);
       }
 
-end:
    if (buffer.isBinary())
       {
 #  ifdef DEBUG
@@ -8879,24 +8949,6 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
          {
          U_INTERNAL_ASSERT(u_endsWith(U_STRING_TO_PARAM(*ext), U_CONSTANT_TO_PARAM(U_CRLF)))
 
-         /*
-         request->setBuffer(U_CAPACITY);
-
-         request->snprintf("GET %v HTTP/1.1\r\n" \
-                           "%v" \
-                           "\r\n", pathname->rep, ext->rep);
-
-#     ifndef U_LOG_DISABLE
-         if (UServer_Base::apache_like_log) prepareApacheLikeLog();
-#     endif
-
-         U_http_info.startHeader = U_CONSTANT_SIZE("GET / HTTP/1.1\r\n") + len - IS_DIR_SEPARATOR(*ptr);
-         U_http_info.endHeader   = request->size();
-
-         U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S U_http_info.endHeader(%u) = %.20S",
-                          U_http_info.startHeader, request->c_pointer(U_http_info.startHeader), U_http_info.endHeader, request->c_pointer(U_http_info.endHeader))
-         */
-
          ext->setBuffer(U_CAPACITY);
          }
 
@@ -8906,7 +8958,6 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
       if (UStringExt::startsWith(U_FILE_TO_PARAM(*file), U_CONSTANT_TO_PARAM("/tmp/"))) file->_unlink();
 
       file_data       = file_not_in_cache_data;
-      mime_index      = '9'; // NB: '9' => we declare a dynamic page to avoid 'Last-Modified: ...' in header response...
       file_data->fd   = file->fd;
       file_data->size = file->st_size;
 
@@ -9921,8 +9972,8 @@ U_NO_EXPORT void UHTTP::processGetRequest()
    U_INTERNAL_ASSERT_EQUALS(file->fd, file_data->fd)
    U_INTERNAL_ASSERT_EQUALS(file->st_size, file_data->size)
 
+   UString mmap;
    time_t expire;
-   UString x, mmap;
    const char* ctype;
 
    // NB: we check if we need to send the body with sendfile()...
@@ -9938,26 +9989,19 @@ U_NO_EXPORT void UHTTP::processGetRequest()
 
    if (file->memmap(PROT_READ, &mmap) == false) goto error;
 
-   if (file_data != file_not_in_cache_data)
+   if (file_data == file_not_in_cache_data)
       {
-      expire     = U_TIME_FOR_EXPIRE;
-      mime_index = U_unknow;
-
-      ctype = file->getMimeType(0, &mime_index);
-
-      file_data->mime_index = mime_index;
+      ctype      = file->getMimeType();
+      expire     = 0L;
+      mime_index = '9'; // NB: '9' => we declare a dynamic page to avoid 'Last-Modified: ...' in header response...
       }
    else
       {
-      expire = 0L;
-
-      ctype = (mime_index == U_unknow ? "text/plain"
-                                      : file->getMimeType());
+      ctype  = setMimeIndex(0);
+      expire = U_TIME_FOR_EXPIRE;
       }
 
-   x = getHeaderMimeType(file->map, file->st_size, ctype, expire);
-
-   (void) ext->append(x);
+   (void) ext->append(getHeaderMimeType(file->map, file->st_size, ctype, expire));
 
    range_size  = file->st_size;
    range_start = 0;
@@ -10563,6 +10607,24 @@ U_EXPORT const char* UHTTP::URUBY::dump(bool reset) const
    *UObjectIO::os << '\n'
                   << "runRUBY       " << (void*)runRUBY << '\n'
                   << "ruby_on_rails " << ruby_on_rails;
+
+   if (reset)
+      {
+      UObjectIO::output();
+
+      return UObjectIO::buffer_output;
+      }
+
+   return 0;
+}
+#  endif
+#  ifdef USE_PYTHON
+U_EXPORT const char* UHTTP::UPYTHON::dump(bool reset) const
+{
+   UDynamic::dump(false);
+
+   *UObjectIO::os << '\n'
+                  << "runPYTHON     " << (void*)runPYTHON << '\n';
 
    if (reset)
       {

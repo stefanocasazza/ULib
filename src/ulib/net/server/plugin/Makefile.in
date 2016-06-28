@@ -105,8 +105,9 @@ target_triplet = @target@
 @V8_TRUE@am__append_14 = v8
 @PHP_TRUE@am__append_15 = php
 @RUBY_TRUE@am__append_16 = ruby
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_FALSE@am__append_17 = mod_geoip
-@MOD_SHIB_TRUE@@PCRE_TRUE@@SSL_TRUE@@STATIC_HANDLER_SHIB_FALSE@am__append_18 = mod_shib
+@PYTHON_TRUE@am__append_17 = python
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_FALSE@am__append_18 = mod_geoip
+@MOD_SHIB_TRUE@@PCRE_TRUE@@SSL_TRUE@@STATIC_HANDLER_SHIB_FALSE@am__append_19 = mod_shib
 subdir = src/ulib/net/server/plugin
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -121,6 +122,7 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
 	$(top_srcdir)/m4/lt~obsolete.m4 \
 	$(top_srcdir)/m4/socket_SO_RCVTIMEO.m4 \
+	$(top_srcdir)/m4/m4_ax_python_devel.m4 \
 	$(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
@@ -405,7 +407,7 @@ am__define_uniq_tagged_files = \
   done | $(am__uniquify_input)`
 ETAGS = etags
 CTAGS = ctags
-DIST_SUBDIRS = usp page_speed v8 php ruby mod_geoip mod_shib
+DIST_SUBDIRS = usp page_speed v8 php ruby python mod_geoip mod_shib
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/depcomp
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
 am__relativize = \
@@ -519,6 +521,16 @@ PHPCONFIGLIBS = @PHPCONFIGLIBS@
 PKG_CONFIG = @PKG_CONFIG@
 POW_LIB = @POW_LIB@
 PRG_LDFLAGS = @PRG_LDFLAGS@
+PYTHON = @PYTHON@
+PYTHONCONFIGLDFLAGS = @PYTHONCONFIGLDFLAGS@
+PYTHONCONFIGLIBS = @PYTHONCONFIGLIBS@
+PYTHONCPPFLAGS = @PYTHONCPPFLAGS@
+PYTHON_CPPFLAGS = @PYTHON_CPPFLAGS@
+PYTHON_EXTRA_LDFLAGS = @PYTHON_EXTRA_LDFLAGS@
+PYTHON_EXTRA_LIBS = @PYTHON_EXTRA_LIBS@
+PYTHON_LDFLAGS = @PYTHON_LDFLAGS@
+PYTHON_SITE_PKG = @PYTHON_SITE_PKG@
+PYTHON_VERSION = @PYTHON_VERSION@
 RANLIB = @RANLIB@
 RPM_CONFIGURE = @RPM_CONFIGURE@
 RUBYCONFIGINCLUDES = @RUBYCONFIGINCLUDES@
@@ -616,7 +628,8 @@ EXTRA_DIST = *.cpp Makefile.* \
 				 page_speed/*.cpp page_speed/Makefile.* \
 				 v8/*.cpp v8/Makefile.* \
 				 php/*.cpp php/Makefile.* \
-				 ruby/*.cpp ruby/Makefile.*
+				 ruby/*.cpp ruby/Makefile.* \
+				 python/*.cpp python/Makefile.*
 
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
@@ -663,7 +676,8 @@ module_LTLIBRARIES = $(am__append_1) $(am__append_2) $(am__append_3) \
 @STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_LIBADD = $(ulib_la) @ULIB_LIBS@
 @STATIC_HANDLER_ECHO_FALSE@server_plugin_echo_la_LDFLAGS = -module @MODULE_LIBTOOL_OPTIONS@
 SUBDIRS = usp $(am__append_13) $(am__append_14) $(am__append_15) \
-	$(am__append_16) $(am__append_17) $(am__append_18)
+	$(am__append_16) $(am__append_17) $(am__append_18) \
+	$(am__append_19)
 all: all-recursive
 
 .SUFFIXES:

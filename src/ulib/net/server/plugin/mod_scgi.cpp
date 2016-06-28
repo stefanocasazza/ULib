@@ -101,8 +101,6 @@ int USCGIPlugIn::handlerInit()
          {
          U_SRV_LOG("connection to the scgi-backend %V accepted", connection->host_port.rep);
 
-         (void) UServer_Base::senvironment->append(U_CONSTANT_TO_PARAM("SCGI=1\n"));
-
 #     ifndef U_ALIAS
          U_ERROR("Sorry, I can't run scgi plugin because alias URI support is missing, please recompile ULib");
 #     else
@@ -139,7 +137,7 @@ int USCGIPlugIn::handlerRequest()
       char* envp[128];
       UString environment(U_CAPACITY);
 
-      if (UHTTP::getCGIEnvironment(environment, U_CGI) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      if (UHTTP::getCGIEnvironment(environment, U_WSCGI) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
       int n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
 

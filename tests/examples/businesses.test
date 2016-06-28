@@ -17,7 +17,7 @@
 
 start_msg businesses
 
-#UTRACE="0 15M 0"
+ UTRACE="0 15M 0"
 #UOBJDUMP="0 10M 10"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR

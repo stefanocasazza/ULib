@@ -61,16 +61,7 @@ fi
 kill_server() {
 
 kill_prg userver_tcp TERM
-if [ $? -ne 0 ]; then
-	for i in 1 2 3 4 5; do
-		pgrep userver_tcp >/dev/null 2>/dev/null
-		if [ $? -ne 0 ]; then
-			return
-		fi
-		$SLEEP
-	done
-fi
-
+$SLEEP
 pkill -9    userver_tcp 2>/dev/null
 pkill -9 lt-userver_tcp 2>/dev/null
 }
@@ -93,7 +84,6 @@ for i in 1 2 3 4 5; do
 	if [ $? -eq 0 ]; then
 		break
 	fi
-	$SLEEP
 done
 
 #LS=tst_90
@@ -115,16 +105,16 @@ done
 LS=`ls inp/http/close`
 for i in $LS; do
 	send_req $1 $2 8080 inp/http/close/$i web_server 2
-	if [ $? -ne 0 ]; then
-	   kill_prg userver_tcp TERM
-		exit 1
-	fi
+#	if [ $? -ne 0 ]; then
+#		kill_server
+#		exit 1
+#  fi
 done
 
 for i in all.inp all0.inp all01.inp all1.inp all2.inp plaintext.inp post.inp; do
 	send_req $1 $2 8080 inp/http/$i web_server 4
 #	if [ $? -ne 0 ]; then
-#	   kill_prg userver_tcp TERM
+#		kill_server
 #		exit 1
 #	fi
 done

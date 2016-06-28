@@ -672,6 +672,10 @@ loop:
       {
       U_INTERNAL_ASSERT_EQUALS(UTimer::first->alarm, ptimeout)
 
+      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
+
+      last_event = u_now->tv_sec;
+
       UTimer::callHandlerTimeout();
 
       goto loop;

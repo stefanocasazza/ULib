@@ -125,7 +125,6 @@ const UString* UString::str_path;
 const UString* UString::str_path_root;
 const UString* UString::str_path_index;
 const UString* UString::str_scheme;
-const UString* UString::str_scheme_http;
 const UString* UString::str_scheme_https;
 const UString* UString::str_status;
 const UString* UString::str_status_200;
@@ -184,7 +183,7 @@ const UString* UString::str_via;
 const UString* UString::str_www_authenticate;
 const UString* UString::str_ULib;
 
-ustringrep UString::stringrep_storage[137] = {
+ustringrep UString::stringrep_storage[136] = {
 #else
 ustringrep UString::stringrep_storage[71] = {
 #endif
@@ -277,7 +276,6 @@ ustringrep UString::stringrep_storage[71] = {
    { U_STRINGREP_FROM_CONSTANT("/") },
    { U_STRINGREP_FROM_CONSTANT("/index.html") },
    { U_STRINGREP_FROM_CONSTANT(":scheme") },
-   { U_STRINGREP_FROM_CONSTANT("http") },
    { U_STRINGREP_FROM_CONSTANT("https") },
    { U_STRINGREP_FROM_CONSTANT(":status") },
    { U_STRINGREP_FROM_CONSTANT("200") },
@@ -526,7 +524,7 @@ void UString::str_allocate(int which)
    else if ((which & STR_ALLOCATE_HTTP2) != 0)
       {
       U_INTERNAL_ASSERT_EQUALS(str_authority, 0)
-      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 137)
+      U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 136)
 
       U_NEW_ULIB_OBJECT(UString, str_authority,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+0));
       U_NEW_ULIB_OBJECT(UString, str_method,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+1));
@@ -536,64 +534,63 @@ void UString::str_allocate(int which)
       U_NEW_ULIB_OBJECT(UString, str_path_root,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+5));
       U_NEW_ULIB_OBJECT(UString, str_path_index,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+6));
       U_NEW_ULIB_OBJECT(UString, str_scheme,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+7));
-      U_NEW_ULIB_OBJECT(UString, str_scheme_http,                 UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+8));
-      U_NEW_ULIB_OBJECT(UString, str_scheme_https,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+9));
-      U_NEW_ULIB_OBJECT(UString, str_status,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+10));
-      U_NEW_ULIB_OBJECT(UString, str_status_200,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+11));
-      U_NEW_ULIB_OBJECT(UString, str_status_204,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+12));
-      U_NEW_ULIB_OBJECT(UString, str_status_206,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+13));
-      U_NEW_ULIB_OBJECT(UString, str_status_304,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+14));
-      U_NEW_ULIB_OBJECT(UString, str_status_400,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+15));
-      U_NEW_ULIB_OBJECT(UString, str_status_404,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+16));
-      U_NEW_ULIB_OBJECT(UString, str_status_500,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+17));
-      U_NEW_ULIB_OBJECT(UString, str_accept_charset,              UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+18));
-      U_NEW_ULIB_OBJECT(UString, str_accept_encoding,             UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+19));
-      U_NEW_ULIB_OBJECT(UString, str_accept_encoding_value,       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+20));
-      U_NEW_ULIB_OBJECT(UString, str_accept_language,             UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+21));
-      U_NEW_ULIB_OBJECT(UString, str_accept_ranges,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+22));
-      U_NEW_ULIB_OBJECT(UString, str_accept,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+23));
-      U_NEW_ULIB_OBJECT(UString, str_access_control_allow_origin, UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+24));
-      U_NEW_ULIB_OBJECT(UString, str_age,                         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+25));
-      U_NEW_ULIB_OBJECT(UString, str_allow,                       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+26));
-      U_NEW_ULIB_OBJECT(UString, str_authorization,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+27));
-      U_NEW_ULIB_OBJECT(UString, str_cache_control,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+28));
-      U_NEW_ULIB_OBJECT(UString, str_content_disposition,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+29));
-      U_NEW_ULIB_OBJECT(UString, str_content_encoding,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+30));
-      U_NEW_ULIB_OBJECT(UString, str_content_language,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+31));
-      U_NEW_ULIB_OBJECT(UString, str_content_length,              UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+32));
-      U_NEW_ULIB_OBJECT(UString, str_content_location,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+33));
-      U_NEW_ULIB_OBJECT(UString, str_content_range,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+34));
-      U_NEW_ULIB_OBJECT(UString, str_content_type,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+35));
-      U_NEW_ULIB_OBJECT(UString, str_cookie,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+36));
-      U_NEW_ULIB_OBJECT(UString, str_date,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+37));
-      U_NEW_ULIB_OBJECT(UString, str_etag,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+38));
-      U_NEW_ULIB_OBJECT(UString, str_expect,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+39));
-      U_NEW_ULIB_OBJECT(UString, str_expires,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+40));
-      U_NEW_ULIB_OBJECT(UString, str_from,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+41));
-      U_NEW_ULIB_OBJECT(UString, str_if_match,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+42));
-      U_NEW_ULIB_OBJECT(UString, str_if_modified_since,           UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+43));
-      U_NEW_ULIB_OBJECT(UString, str_if_none_match,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+44));
-      U_NEW_ULIB_OBJECT(UString, str_if_range,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+45));
-      U_NEW_ULIB_OBJECT(UString, str_if_unmodified_since,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+46));
-      U_NEW_ULIB_OBJECT(UString, str_last_modified,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+47));
-      U_NEW_ULIB_OBJECT(UString, str_link,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+48));
-      U_NEW_ULIB_OBJECT(UString, str_location,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+49));
-      U_NEW_ULIB_OBJECT(UString, str_max_forwards,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+50));
-      U_NEW_ULIB_OBJECT(UString, str_proxy_authenticate,          UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+51));
-      U_NEW_ULIB_OBJECT(UString, str_proxy_authorization,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+52));
-      U_NEW_ULIB_OBJECT(UString, str_range,                       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+53));
-      U_NEW_ULIB_OBJECT(UString, str_referer,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+54));
-      U_NEW_ULIB_OBJECT(UString, str_refresh,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+55));
-      U_NEW_ULIB_OBJECT(UString, str_retry_after,                 UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+56));
-      U_NEW_ULIB_OBJECT(UString, str_server,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+57));
-      U_NEW_ULIB_OBJECT(UString, str_set_cookie,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+58));
-      U_NEW_ULIB_OBJECT(UString, str_strict_transport_security,   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+59));
-      U_NEW_ULIB_OBJECT(UString, str_transfer_encoding,           UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+60));
-      U_NEW_ULIB_OBJECT(UString, str_user_agent,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+61));
-      U_NEW_ULIB_OBJECT(UString, str_vary,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+62));
-      U_NEW_ULIB_OBJECT(UString, str_via,                         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+63));
-      U_NEW_ULIB_OBJECT(UString, str_www_authenticate,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+64));
-      U_NEW_ULIB_OBJECT(UString, str_ULib,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+65));
+      U_NEW_ULIB_OBJECT(UString, str_scheme_https,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+8));
+      U_NEW_ULIB_OBJECT(UString, str_status,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+9));
+      U_NEW_ULIB_OBJECT(UString, str_status_200,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+10));
+      U_NEW_ULIB_OBJECT(UString, str_status_204,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+11));
+      U_NEW_ULIB_OBJECT(UString, str_status_206,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+12));
+      U_NEW_ULIB_OBJECT(UString, str_status_304,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+13));
+      U_NEW_ULIB_OBJECT(UString, str_status_400,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+14));
+      U_NEW_ULIB_OBJECT(UString, str_status_404,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+15));
+      U_NEW_ULIB_OBJECT(UString, str_status_500,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+16));
+      U_NEW_ULIB_OBJECT(UString, str_accept_charset,              UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+17));
+      U_NEW_ULIB_OBJECT(UString, str_accept_encoding,             UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+18));
+      U_NEW_ULIB_OBJECT(UString, str_accept_encoding_value,       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+19));
+      U_NEW_ULIB_OBJECT(UString, str_accept_language,             UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+20));
+      U_NEW_ULIB_OBJECT(UString, str_accept_ranges,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+21));
+      U_NEW_ULIB_OBJECT(UString, str_accept,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+22));
+      U_NEW_ULIB_OBJECT(UString, str_access_control_allow_origin, UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+23));
+      U_NEW_ULIB_OBJECT(UString, str_age,                         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+24));
+      U_NEW_ULIB_OBJECT(UString, str_allow,                       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+25));
+      U_NEW_ULIB_OBJECT(UString, str_authorization,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+26));
+      U_NEW_ULIB_OBJECT(UString, str_cache_control,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+27));
+      U_NEW_ULIB_OBJECT(UString, str_content_disposition,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+28));
+      U_NEW_ULIB_OBJECT(UString, str_content_encoding,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+29));
+      U_NEW_ULIB_OBJECT(UString, str_content_language,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+30));
+      U_NEW_ULIB_OBJECT(UString, str_content_length,              UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+31));
+      U_NEW_ULIB_OBJECT(UString, str_content_location,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+32));
+      U_NEW_ULIB_OBJECT(UString, str_content_range,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+33));
+      U_NEW_ULIB_OBJECT(UString, str_content_type,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+34));
+      U_NEW_ULIB_OBJECT(UString, str_cookie,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+35));
+      U_NEW_ULIB_OBJECT(UString, str_date,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+36));
+      U_NEW_ULIB_OBJECT(UString, str_etag,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+37));
+      U_NEW_ULIB_OBJECT(UString, str_expect,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+38));
+      U_NEW_ULIB_OBJECT(UString, str_expires,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+39));
+      U_NEW_ULIB_OBJECT(UString, str_from,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+40));
+      U_NEW_ULIB_OBJECT(UString, str_if_match,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+41));
+      U_NEW_ULIB_OBJECT(UString, str_if_modified_since,           UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+42));
+      U_NEW_ULIB_OBJECT(UString, str_if_none_match,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+43));
+      U_NEW_ULIB_OBJECT(UString, str_if_range,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+44));
+      U_NEW_ULIB_OBJECT(UString, str_if_unmodified_since,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+45));
+      U_NEW_ULIB_OBJECT(UString, str_last_modified,               UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+46));
+      U_NEW_ULIB_OBJECT(UString, str_link,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+47));
+      U_NEW_ULIB_OBJECT(UString, str_location,                    UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+48));
+      U_NEW_ULIB_OBJECT(UString, str_max_forwards,                UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+49));
+      U_NEW_ULIB_OBJECT(UString, str_proxy_authenticate,          UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+50));
+      U_NEW_ULIB_OBJECT(UString, str_proxy_authorization,         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+51));
+      U_NEW_ULIB_OBJECT(UString, str_range,                       UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+52));
+      U_NEW_ULIB_OBJECT(UString, str_referer,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+53));
+      U_NEW_ULIB_OBJECT(UString, str_refresh,                     UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+54));
+      U_NEW_ULIB_OBJECT(UString, str_retry_after,                 UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+55));
+      U_NEW_ULIB_OBJECT(UString, str_server,                      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+56));
+      U_NEW_ULIB_OBJECT(UString, str_set_cookie,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+57));
+      U_NEW_ULIB_OBJECT(UString, str_strict_transport_security,   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+58));
+      U_NEW_ULIB_OBJECT(UString, str_transfer_encoding,           UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+59));
+      U_NEW_ULIB_OBJECT(UString, str_user_agent,                  UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+60));
+      U_NEW_ULIB_OBJECT(UString, str_vary,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+61));
+      U_NEW_ULIB_OBJECT(UString, str_via,                         UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+62));
+      U_NEW_ULIB_OBJECT(UString, str_www_authenticate,            UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+63));
+      U_NEW_ULIB_OBJECT(UString, str_ULib,                        UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+64));
       }
 #else
    U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 71)

@@ -2276,7 +2276,8 @@ number: if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
                 * [u]divdi3() and [u]moddi3(), and they call another function in its turn. On FreeBSD it is the qdivrem()
                 * function, its source code is about 170 lines of the code. The glibc counterpart is about 150 lines of code.
                 *
-                * For 32-bit numbers and some divisors gcc and icc use a inlined multiplication and shifts.
+                * For 32-bit numbers and some divisors gcc and icc use a inlined multiplication and shifts:
+                *
                 * For example, unsigned "i32 / 10" is compiled to (i32 * 0xCCCCCCCD) >> 35
                 */
 
@@ -2530,7 +2531,6 @@ case_w: /* extension: print current working directory */
       continue;
 
       /**
-       * ---------------------------------------------------------------------------------
        * char sign   - sign prefix (' ', '+', '-', or \0)
        * int size    - size of converted field or string
        * int width   - width from format (%8d), or 0
@@ -2549,7 +2549,6 @@ case_w: /* extension: print current working directory */
        * any left-hand padding and prefixing, emit zeroes required by a decimal
        * [diouxX] precision, then print the string proper, then emit zeroes
        * required by any leftover floating precision; finally, if LADJUST, pad with blanks
-       * ---------------------------------------------------------------------------------
        */
 next:
       U_INTERNAL_PRINT("size = %d width = %d prec = %d dprec = %d sign = %c", size, width, prec, dprec, sign)
@@ -2577,7 +2576,8 @@ next:
 
       bpad = 0;
 
-      if (pads && (flags & (LADJUST | ZEROPAD)) == 0)
+      if (pads &&
+          (flags & (LADJUST | ZEROPAD)) == 0)
          {
          for (bpad = pads; pads; --pads) *bp++ = ' ';
          }
@@ -2595,8 +2595,7 @@ next:
 
          *bp++ = sign;
          }
-
-      else if (flags & HEXPREFIX)
+      else if ((flags & HEXPREFIX) != 0)
          {
          if (bpad) bp -= 2;
          else
@@ -2627,7 +2626,7 @@ next:
 
       /* left-adjusting padding (always blank) */
 
-      if (flags & LADJUST)
+      if ((flags & LADJUST) != 0)
          {
          for (; pads; --pads) *bp++ = ' ';
          }

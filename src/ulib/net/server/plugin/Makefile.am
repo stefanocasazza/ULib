@@ -6,7 +6,8 @@ EXTRA_DIST = *.cpp Makefile.* \
 				 page_speed/*.cpp page_speed/Makefile.* \
 				 v8/*.cpp v8/Makefile.* \
 				 php/*.cpp php/Makefile.* \
-				 ruby/*.cpp ruby/Makefile.*
+				 ruby/*.cpp ruby/Makefile.* \
+				 python/*.cpp python/Makefile.*
 
 MAINTAINERCLEANFILES = Makefile.in
 
@@ -121,6 +122,10 @@ endif
 
 if RUBY
 SUBDIRS += ruby
+endif
+
+if PYTHON
+SUBDIRS += python
 endif
 
 if GEOIP

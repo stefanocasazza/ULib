@@ -302,6 +302,13 @@ static void URUBY_rack_hack_dollar_zero(VALUE name, ID id)
    rb_obj_taint(dollar_zero);
 }
 
+static void URUBY_set_environment(void* env, char* name, char* value)
+{
+   U_TRACE(0, "URUBY_set_environment(%p,%S,%S)", env, name, value)
+
+   (void) rb_hash_aset((VALUE)env, rb_str_new2(name), rb_str_new2(value));
+}
+
 extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
        U_EXPORT bool runRUBY(const char* libdir, const char* script)
 {
@@ -315,19 +322,16 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
       {
       if (UHTTP::ruby_on_rails)
          {
-         char* ptr;
-         VALUE rbv, env;
-         char** envp = 0;
+         VALUE env = rb_hash_new();
 
-         if (UHTTP::getCGIEnvironment(*UClientImage_Base::environment, U_RAKE) == false)
+         if (UHTTP::setEnvironmentForLanguageProcessing(U_RAKE, (void*)env, URUBY_set_environment) == false)
             {
             esito = false;
 
             goto end;
             }
 
-         rbv = rb_ary_new();
-         env = rb_hash_new();
+         VALUE rbv = rb_ary_new();
 
          /**
           * "rack.version"=>[1, 0],
@@ -345,32 +349,6 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
          (void) rb_hash_aset(env, rb_str_new2("rack.run_once"),     Qfalse);
          (void) rb_hash_aset(env, rb_str_new2("rack.multithread"),  Qfalse);
          (void) rb_hash_aset(env, rb_str_new2("rack.multiprocess"), UServer_Base::isPreForked() ? Qtrue : Qfalse);
-
-#     ifdef USE_LIBSSL
-         if (UServer_Base::bssl) (void) rb_hash_aset(env, rb_str_new2("rack.url_scheme"), rb_str_new2("https"));
-         else
-#     endif
-            {
-            (void) rb_hash_aset(env, rb_str_new2("rack.url_scheme"), rb_str_new2("http"));
-            }
-
-         int32_t nenv = UCommand::setEnvironment(*UClientImage_Base::environment, envp);
-
-         for (int i = 0; envp[i]; ++i)
-            {
-            U_INTERNAL_DUMP("envp[%d] = %S", i, envp[i])
-
-            ptr = strchr(envp[i], '=');
-
-            if (ptr)
-               {
-               *ptr++ = '\0';
-
-               (void) rb_hash_aset(env, rb_str_new2(envp[i]), rb_str_new2(ptr));
-               }
-            }
-
-         UCommand::freeEnvironment(envp, nenv);
 
          VALUE nw       = rb_intern("new"),
                io_class = (VALUE) U_SYSCALL(rb_const_get, "%llu,%llu", rb_cObject, rb_intern("IO"));
@@ -529,7 +507,7 @@ extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
 
    // U_SYSCALL_VOID_NO_PARAM(ruby_show_version);
 
-      // Sets the name of the Ruby script (and $0) to name
+   // Sets the name of the Ruby script (and $0) to name
 
       U_SYSCALL_VOID(ruby_script, "%S", "userver");
 

@@ -2,8 +2,6 @@
 prototype for Victor Stewart
 -->
 <!--#declaration
-#include <ulib/json/value.h>
-
 /**
  * {
  * "token": "A619828KAIJ6D3",
@@ -201,11 +199,82 @@ public:
       }
 };
 
+class HTTP2Push : public UEventTime {
+public:
+
+   UString message;
+   const char* http2_server;
+   const char* apple_cert;
+   const char* app_bundle_id;
+   const char* token;
+
+   // COSTRUTTORI
+
+   HTTP2Push() : UEventTime(15L * 60L, 0L), message(U_CAPACITY)
+      {
+      U_TRACE_REGISTER_OBJECT(0, HTTP2Push, "", 0)
+
+      http2_server  = "https://api.development.push.apple.com";
+      apple_cert    = "/certificates/samplepush/development.pem";
+      app_bundle_id = "it.tabasoft.samplepush";
+      token         = "dbdaeae86abcde56rtyww1859fb41d2c7b2cberrttyyy053ec48987847";
+      }
+
+   virtual ~HTTP2Push() U_DECL_FINAL
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, HTTP2Push)
+      }
+
+   // define method VIRTUAL of class UEventTime
+
+   virtual int handlerTime() U_DECL_FINAL
+      {
+      U_TRACE_NO_PARAM(0, "HTTP2Push::handlerTime()")
+
+      pid_t pid = UServer_Base::startNewChild();
+
+      if (pid > 0) U_RETURN(0); // parent
+
+      // child
+
+      message.snprintf("{\"aps\":{\"alert\":\"Hi!\",\"sound\":\"default\"}}", 0);
+
+      if (UCURL::sendHTTP2Push(http2_server, apple_cert, app_bundle_id, token, message) == false)
+         {
+         U_WARNING("sendHTTP2Push() failed");
+         }
+
+      if (pid == 0) UServer_Base::endNewChild();
+
+      U_RETURN(0);
+      }
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
+#endif
+
+private:
+   HTTP2Push(const HTTP2Push&) : UEventTime() {}
+   HTTP2Push& operator=(const HTTP2Push&)     { return *this; }
+};
+#endif
+
 static UValue* pvalue;
 static Request* prequest;
 static UMongoDBClient* mc;
 static Response* presponse;
 static UVector<Response*>* pvresponse;
+
+static void usp_init_businesses()
+{
+   U_TRACE(5, "::usp_init_businesses()")
+
+   UEventTime* push;
+
+   U_NEW(HTTP2Push, push, HTTP2Push);
+
+   UTimer::insert(push);
+}
 
 static void usp_fork_businesses()
 {
