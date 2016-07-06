@@ -51,6 +51,8 @@ typedef uint32_t in_addr_t;
 #  include <sys/sched.h>
 #endif
 
+#include <ulib/base/apex/apex_memmove.h>
+
 #ifndef HAVE_CPU_SET_T
 typedef uint64_t cpu_set_t;
 #endif
@@ -159,14 +161,14 @@ U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, s
 
 #ifdef DEBUG
 /* NB: u_strlen() and u_memcpy() conflit with /usr/include/unicode/urename.h */
-U_EXPORT size_t   u__strlen(const char* restrict s, const char* function);
-U_EXPORT void     u__strcpy( char* restrict dest, const char* restrict src);
-U_EXPORT void*    u__memcpy( void* restrict dest, const void* restrict src, size_t n, const char* function);
-U_EXPORT char*    u__strncpy(char* restrict dest, const char* restrict src, size_t n);
+U_EXPORT size_t u__strlen(const char* restrict s,    const char* function);
+U_EXPORT void   u__strcpy(      char* restrict dest, const char* restrict src);
+U_EXPORT void   u__memcpy(      void* restrict dest, const void* restrict src, size_t n, const char* function);
+U_EXPORT char*  u__strncpy(     char* restrict dest, const char* restrict src, size_t n);
 #else
 #  define u__strlen(s,func)                 strlen((s))
 #  define u__strcpy(dest,src)        (void) strcpy( (dest),(src))
-#  define u__memcpy(dest,src,n,func) (void) memcpy( (dest),(src),(n))
+#  define u__memcpy(dest,src,n,func) (void) apex_memcpy( (dest),(src),(n))
 #  define u__strncpy(dest,src,n)            strncpy((dest),(src),(n))
 #endif
 

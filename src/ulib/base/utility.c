@@ -126,7 +126,7 @@ char* u__strncpy(char* restrict dest, const char* restrict src, size_t n)
    return dest;
 }
 
-void* u__memcpy(void* restrict dst, const void* restrict src, size_t n, const char* called_by_function)
+void u__memcpy(void* restrict dst, const void* restrict src, size_t n, const char* called_by_function)
 {
    U_INTERNAL_TRACE("u__memcpy(%p,%p,%lu,%s)", dst, src, n, called_by_function)
 
@@ -134,25 +134,16 @@ void* u__memcpy(void* restrict dst, const void* restrict src, size_t n, const ch
    U_INTERNAL_ASSERT_POINTER(dst)
    U_INTERNAL_ASSERT_POINTER(called_by_function)
 
-   if (n == 0)
-      {
-      U_WARNING("*** Zero copy in memcpy *** - %s", called_by_function);
-
-      return 0;
-      }
+   if (n == 0) U_WARNING("*** Zero copy in memcpy *** - %s", called_by_function);
 
    if (u_is_overlap((const char* restrict)dst, (const char* restrict)src, n))
       {
       U_WARNING("*** Source and Destination OVERLAP in memcpy *** - %s", called_by_function);
 
-      (void) memmove(dst, src, n);
-
-      return 0;
+      (void) apex_memmove(dst, src, n);
       }
 
-   (void) memcpy(dst, src, n);
-
-   return dst;
+   (void) apex_memcpy(dst, src, n);
 }
 #endif
 

@@ -88,8 +88,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@STATIC_ONLY_FALSE@am__append_1 = test_objectIO
-@STATIC_ONLY_FALSE@am__append_2 = objectIO.test
+@STDCPP_TRUE@am__append_1 = test_objectDB test_objectIO
+@STDCPP_TRUE@am__append_2 = objectDB.test objectIO.test
 check_PROGRAMS = $(am__EXEEXT_2)
 subdir = tests/debug
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -114,9 +114,10 @@ mkinstalldirs = $(install_sh) -d
 CONFIG_HEADER = $(top_builddir)/include/ulib/internal/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
-@STATIC_ONLY_FALSE@am__EXEEXT_1 = test_objectIO$(EXEEXT)
+@STDCPP_TRUE@am__EXEEXT_1 = test_objectDB$(EXEEXT) \
+@STDCPP_TRUE@	test_objectIO$(EXEEXT)
 am__EXEEXT_2 = test_trace$(EXEEXT) test_memerror$(EXEEXT) \
-	test_objectDB$(EXEEXT) $(am__EXEEXT_1)
+	$(am__EXEEXT_1)
 am_test_memerror_OBJECTS = test_memerror.$(OBJEXT)
 test_memerror_OBJECTS = $(am_test_memerror_OBJECTS)
 test_memerror_LDADD = $(LDADD)
@@ -125,12 +126,13 @@ AM_V_lt = $(am__v_lt_@AM_V@)
 am__v_lt_ = $(am__v_lt_@AM_DEFAULT_V@)
 am__v_lt_0 = --silent
 am__v_lt_1 = 
-am_test_objectDB_OBJECTS = test_objectDB.$(OBJEXT)
+am__test_objectDB_SOURCES_DIST = test_objectDB.cpp
+@STDCPP_TRUE@am_test_objectDB_OBJECTS = test_objectDB.$(OBJEXT)
 test_objectDB_OBJECTS = $(am_test_objectDB_OBJECTS)
 test_objectDB_LDADD = $(LDADD)
 test_objectDB_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am__test_objectIO_SOURCES_DIST = test_objectIO.cpp
-@STATIC_ONLY_FALSE@am_test_objectIO_OBJECTS = test_objectIO.$(OBJEXT)
+@STDCPP_TRUE@am_test_objectIO_OBJECTS = test_objectIO.$(OBJEXT)
 test_objectIO_OBJECTS = $(am_test_objectIO_OBJECTS)
 test_objectIO_LDADD = $(LDADD)
 test_objectIO_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
@@ -173,7 +175,8 @@ am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
 SOURCES = $(test_memerror_SOURCES) $(test_objectDB_SOURCES) \
 	$(test_objectIO_SOURCES) $(test_trace_SOURCES)
-DIST_SOURCES = $(test_memerror_SOURCES) $(test_objectDB_SOURCES) \
+DIST_SOURCES = $(test_memerror_SOURCES) \
+	$(am__test_objectDB_SOURCES_DIST) \
 	$(am__test_objectIO_SOURCES_DIST) $(test_trace_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
@@ -597,13 +600,13 @@ EXTRA_DIST = error.sim ok $(TESTS)
 AUTOMAKE_OPTIONS = ## dist-shar dist-zip
 MAINTAINERCLEANFILES = Makefile.in
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
-PRG = test_trace test_memerror test_objectDB $(am__append_1)
-TESTS = trace.test memerror.test objectDB.test simerr.test \
-	$(am__append_2) ../reset.color
+PRG = test_trace test_memerror $(am__append_1)
+TESTS = trace.test memerror.test simerr.test $(am__append_2) \
+	../reset.color
 test_trace_SOURCES = test_trace.cpp
 test_memerror_SOURCES = test_memerror.cpp
-test_objectDB_SOURCES = test_objectDB.cpp
-@STATIC_ONLY_FALSE@test_objectIO_SOURCES = test_objectIO.cpp
+@STDCPP_TRUE@test_objectDB_SOURCES = test_objectDB.cpp
+@STDCPP_TRUE@test_objectIO_SOURCES = test_objectIO.cpp
 LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 all: all-am
 

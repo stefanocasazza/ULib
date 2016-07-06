@@ -654,7 +654,7 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
    char* ptr   = (char*)_iov;
    uint32_t sz = sizeof(struct iovec) * iovcnt;
 
-   u__memcpy(ptr, iov, sz, __PRETTY_FUNCTION__);
+   U_MEMCPY(ptr, iov, sz);
 
 #ifdef U_PIPELINE_HOMOGENEOUS_DISABLE
    U_INTERNAL_ASSERT_EQUALS(cloop, 1)
@@ -663,8 +663,8 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
       {
       for (uint32_t i = 1; i < cloop; ++i)
          {
-                   ptr +=    sz;
-         u__memcpy(ptr, iov, sz, __PRETTY_FUNCTION__);
+                  ptr +=    sz;
+         U_MEMCPY(ptr, iov, sz);
          }
 
       iov     = _iov;
@@ -682,7 +682,7 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
    int byte_written = _writev(sk, iov, iovcnt, count, timeoutMS);
 #endif
 
-        if (cloop == 1) u__memcpy(iov, _iov, sz, __PRETTY_FUNCTION__);
+        if (cloop == 1) U_MEMCPY(iov, _iov, sz);
 #ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
    else if (cloop > 1                 &&
             byte_written < (int)count &&
@@ -697,8 +697,8 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
          {
          if (iov[i].iov_len)
             {
-            u__memcpy(ptr, iov[i].iov_base, iov[i].iov_len, __PRETTY_FUNCTION__);
-                      ptr                += iov[i].iov_len;
+            U_MEMCPY(ptr, iov[i].iov_base, iov[i].iov_len);
+                     ptr +=                iov[i].iov_len;
             }
          }
 

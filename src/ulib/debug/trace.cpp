@@ -56,7 +56,7 @@ UTrace::UTrace(int level, uint32_t len, const char* name)
 
    if (active[0])
       {
-      (void) u__memcpy(buffer_trace, name, buffer_trace_len = len, __PRETTY_FUNCTION__);
+      u__memcpy(buffer_trace, name, buffer_trace_len = len, __PRETTY_FUNCTION__);
 
       set(level);
       }

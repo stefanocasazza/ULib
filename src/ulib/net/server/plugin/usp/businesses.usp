@@ -239,10 +239,12 @@ public:
 
       message.snprintf("{\"aps\":{\"alert\":\"Hi!\",\"sound\":\"default\"}}", 0);
 
+#  ifdef USE_LIBCURL
       if (UCURL::sendHTTP2Push(http2_server, apple_cert, app_bundle_id, token, message) == false)
-         {
-         U_WARNING("sendHTTP2Push() failed");
-         }
+#  endif
+      {
+      U_WARNING("UCURL::sendHTTP2Push() failed");
+      }
 
       if (pid == 0) UServer_Base::endNewChild();
 
@@ -257,7 +259,6 @@ private:
    HTTP2Push(const HTTP2Push&) : UEventTime() {}
    HTTP2Push& operator=(const HTTP2Push&)     { return *this; }
 };
-#endif
 
 static UValue* pvalue;
 static Request* prequest;

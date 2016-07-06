@@ -103,7 +103,7 @@ void UVector<void*>::insert(uint32_t pos, const void* elem) // add elem before p
       }
    else
       {
-      (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos + 1, vec + pos, (_length - pos) * sizeof(void*));
+      (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + pos + 1, vec + pos, (_length - pos) * sizeof(void*));
       }
 
    vec[pos] = elem;
@@ -139,7 +139,7 @@ void UVector<void*>::insert(uint32_t pos, uint32_t n, const void* elem) // add n
       }
    else
       {
-      (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos + n, vec + pos, (_length - pos) * sizeof(void*));
+      (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + pos + n, vec + pos, (_length - pos) * sizeof(void*));
       }
 
    for (uint32_t i = 0; i < n; ++i) vec[pos++] = elem;

@@ -585,6 +585,10 @@ void u_init_ulib(char** restrict argv)
    u_init_ulib_mingw();
 #endif
 
+#if !defined(__MINGW32__) && defined(HAVE_ARCH64)
+   apex_memmove_dispatcher();
+#endif
+
    u_getcwd(); /* get current working directory */
 
 #if !defined(_MSWINDOWS_) && defined(DEBUG)

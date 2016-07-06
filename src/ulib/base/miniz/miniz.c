@@ -27,9 +27,10 @@
 // File: miniz.c
 
 #ifndef U_ALL_C
-#include <ulib/internal/config.h>
+#  include <ulib/internal/config.h>
 #endif
 #include <ulib/base/miniz/miniz.h>
+#include <ulib/base/apex/apex_memmove.h>
 
 typedef unsigned char mz_validate_uint16[sizeof(mz_uint16) == 2 ? 1 : -1];
 typedef unsigned char mz_validate_uint32[sizeof(mz_uint32) == 4 ? 1 : -1];
@@ -462,7 +463,7 @@ int mz_inflate(mz_streamp pStream, int flush)
     if (pState->m_dict_avail)
     {
         n = MZ_MIN(pState->m_dict_avail, pStream->avail_out);
-        memcpy(pStream->next_out, pState->m_dict + pState->m_dict_ofs, n);
+        (void) apex_memcpy(pStream->next_out, pState->m_dict + pState->m_dict_ofs, n);
         pStream->next_out += n;
         pStream->avail_out -= n;
         pStream->total_out += n;
@@ -487,7 +488,7 @@ int mz_inflate(mz_streamp pStream, int flush)
         pState->m_dict_avail = (mz_uint)out_bytes;
 
         n = MZ_MIN(pState->m_dict_avail, pStream->avail_out);
-        memcpy(pStream->next_out, pState->m_dict + pState->m_dict_ofs, n);
+        (void) apex_memcpy(pStream->next_out, pState->m_dict + pState->m_dict_ofs, n);
         pStream->next_out += n;
         pStream->avail_out -= n;
         pStream->total_out += n;
@@ -578,7 +579,7 @@ const char *mz_error(int err)
 
 // ------------------- Low-level Decompression (completely independent from all compression API's)
 
-#define TINFL_MEMCPY(d, s, l) memcpy(d, s, l)
+#define TINFL_MEMCPY(d, s, l) (void) apex_memcpy(d, s, l)
 #define TINFL_MEMSET(p, c, l) memset(p, c, l)
 
 #define TINFL_CR_BEGIN  \
@@ -1590,8 +1591,8 @@ static void tdefl_start_dynamic_block(tdefl_compressor *d)
         if (d->m_huff_code_sizes[1][num_dist_codes - 1])
             break;
 
-    memcpy(code_sizes_to_pack, &d->m_huff_code_sizes[0][0], num_lit_codes);
-    memcpy(code_sizes_to_pack + num_lit_codes, &d->m_huff_code_sizes[1][0], num_dist_codes);
+    (void) apex_memcpy(code_sizes_to_pack, &d->m_huff_code_sizes[0][0], num_lit_codes);
+    (void) apex_memcpy(code_sizes_to_pack + num_lit_codes, &d->m_huff_code_sizes[1][0], num_dist_codes);
     total_code_sizes_to_pack = num_lit_codes + num_dist_codes;
     num_packed_code_sizes = 0;
     rle_z_count = 0;
@@ -1953,7 +1954,7 @@ static int tdefl_flush_block(tdefl_compressor *d, int flush)
         else if (pOutput_buf_start == d->m_output_buf)
         {
             int bytes_to_copy = (int)MZ_MIN((size_t)n, (size_t)(*d->m_pOut_buf_size - d->m_out_buf_ofs));
-            memcpy((mz_uint8 *)d->m_pOut_buf + d->m_out_buf_ofs, d->m_output_buf, bytes_to_copy);
+            (void) apex_memcpy((mz_uint8 *)d->m_pOut_buf + d->m_out_buf_ofs, d->m_output_buf, bytes_to_copy);
             d->m_out_buf_ofs += bytes_to_copy;
             if ((n -= bytes_to_copy) != 0)
             {
@@ -2089,9 +2090,9 @@ static mz_bool tdefl_compress_fast(tdefl_compressor *d)
         while (num_bytes_to_process)
         {
             mz_uint32 n = MZ_MIN(TDEFL_LZ_DICT_SIZE - dst_pos, num_bytes_to_process);
-            memcpy(d->m_dict + dst_pos, d->m_pSrc, n);
+            (void) apex_memcpy(d->m_dict + dst_pos, d->m_pSrc, n);
             if (dst_pos < (TDEFL_MAX_MATCH_LEN - 1))
-                memcpy(d->m_dict + TDEFL_LZ_DICT_SIZE + dst_pos, d->m_pSrc, MZ_MIN(n, (TDEFL_MAX_MATCH_LEN - 1) - dst_pos));
+                (void) apex_memcpy(d->m_dict + TDEFL_LZ_DICT_SIZE + dst_pos, d->m_pSrc, MZ_MIN(n, (TDEFL_MAX_MATCH_LEN - 1) - dst_pos));
             d->m_pSrc += n;
             dst_pos = (dst_pos + n) & TDEFL_LZ_DICT_SIZE_MASK;
             num_bytes_to_process -= n;
@@ -2446,7 +2447,7 @@ static tdefl_status tdefl_flush_output_buffer(tdefl_compressor *d)
     if (d->m_pOut_buf_size)
     {
         size_t n = MZ_MIN(*d->m_pOut_buf_size - d->m_out_buf_ofs, d->m_output_flush_remaining);
-        memcpy((mz_uint8 *)d->m_pOut_buf + d->m_out_buf_ofs, d->m_output_buf + d->m_output_flush_ofs, n);
+        (void) apex_memcpy((mz_uint8 *)d->m_pOut_buf + d->m_out_buf_ofs, d->m_output_buf + d->m_output_flush_ofs, n);
         d->m_output_flush_ofs += (mz_uint)n;
         d->m_output_flush_remaining -= (mz_uint)n;
         d->m_out_buf_ofs += n;
@@ -2616,7 +2617,7 @@ static mz_bool tdefl_output_buffer_putter(const void *pBuf, int len, void *pUser
         p->m_pBuf = pNew_buf;
         p->m_capacity = new_capacity;
     }
-    memcpy((mz_uint8 *)p->m_pBuf + p->m_size, pBuf, len);
+    (void) apex_memcpy((mz_uint8 *)p->m_pBuf + p->m_size, pBuf, len);
     p->m_size = new_size;
     return MZ_TRUE;
 }
@@ -2727,7 +2728,7 @@ void *tdefl_write_image_to_png_file_in_memory_ex(const void *pImage, int w, int 
         c = (mz_uint32)mz_crc32(MZ_CRC32_INIT, pnghdr + 12, 17);
         for (i = 0; i < 4; ++i, c <<= 8)
             ((mz_uint8 *)(pnghdr + 29))[i] = (mz_uint8)(c >> 24);
-        memcpy(out_buf.m_pBuf, pnghdr, 41);
+        (void) apex_memcpy(out_buf.m_pBuf, pnghdr, 41);
     }
     // write footer (IDAT CRC-32, followed by IEND chunk)
     if (!tdefl_output_buffer_putter("\0\0\0\0\0\0\0\0\x49\x45\x4e\x44\xae\x42\x60\x82", 16, &out_buf))

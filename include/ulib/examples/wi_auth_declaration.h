@@ -5015,8 +5015,6 @@ static void GET_login_validate()
             return;
             }
 
-         U_ASSERT_DIFFERS(*mac, *UString::str_without_mac)
-
          brenew = true;
 
          U_LOGGER("*** RENEW: UID(%v) IP(%v=>%v) MAC(%v=>%v) ADDRESS(%v@%v=>%v@%v) AUTH_DOMAIN(%v) ***", uid->rep,
@@ -7353,6 +7351,8 @@ static void GET_resync()
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
       {
+      if (UServer_Base::startParallelization()) return; // parent
+
       num_users_delete = 0;
 
       status_nodog_and_user_resync = true;

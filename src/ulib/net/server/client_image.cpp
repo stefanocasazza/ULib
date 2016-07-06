@@ -723,8 +723,8 @@ void UClientImage_Base::endRequest()
       char buffer1[256];
       char* ptr1 = buffer1;
 
-      u__memcpy(ptr1, "request \"", U_CONSTANT_SIZE("request \""), __PRETTY_FUNCTION__);
-                ptr1 +=             U_CONSTANT_SIZE("request \"");
+      U_MEMCPY(ptr1, "request \"", U_CONSTANT_SIZE("request \""));
+               ptr1 +=             U_CONSTANT_SIZE("request \"");
 
       if (sz)
          {
@@ -732,12 +732,12 @@ void UClientImage_Base::endRequest()
 
          if (sz > (sizeof(buffer1)-32)) sz = sizeof(buffer1)-32;
 
-         u__memcpy(ptr1, ptr, sz, __PRETTY_FUNCTION__);
-                   ptr1 +=    sz;
+         U_MEMCPY(ptr1, ptr, sz);
+                  ptr1 +=    sz;
          }
 
-      u__memcpy(ptr1, "\" run in ", U_CONSTANT_SIZE("\" run in "), __PRETTY_FUNCTION__);
-                ptr1 +=             U_CONSTANT_SIZE("\" run in ");
+      U_MEMCPY(ptr1, "\" run in ", U_CONSTANT_SIZE("\" run in "));
+               ptr1 +=             U_CONSTANT_SIZE("\" run in ");
 
       if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), "%ld ms", time_run);
       else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1),  "%g ms", chronometer->getTimeElapsed());
@@ -775,7 +775,7 @@ void UClientImage_Base::endRequest()
    request_uri->clear();
 #endif
 
-   u__memcpy(iov_vec, iov_sav, U_IOV_TO_SAVE, __PRETTY_FUNCTION__);
+   U_MEMCPY(iov_vec, iov_sav, U_IOV_TO_SAVE);
 }
 
 void UClientImage_Base::manageReadBufferResize(uint32_t n)
@@ -990,7 +990,7 @@ bool UClientImage_Base::genericRead()
       {
       U_INTERNAL_DUMP("data_pending(%u) = %V", data_pending->size(), data_pending->rep)
 
-      u__memcpy(rbuffer->data(), data_pending->data(), rbuffer->rep->_length = data_pending->size(), __PRETTY_FUNCTION__);
+      U_MEMCPY(rbuffer->data(), data_pending->data(), rbuffer->rep->_length = data_pending->size());
       }
 
    socket->iState = USocket::CONNECT; // prepare socket before read
@@ -1522,7 +1522,7 @@ bool UClientImage_Base::writeResponse()
       ncount += iov_vec[0].iov_len +
                 iov_vec[1].iov_len;
 
-      u__memcpy(iov_sav, iov_vec, U_IOV_TO_SAVE, __PRETTY_FUNCTION__);
+      U_MEMCPY(iov_sav, iov_vec, U_IOV_TO_SAVE);
 
 #  if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)

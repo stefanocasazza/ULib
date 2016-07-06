@@ -142,6 +142,7 @@ plugin/product1.lo: plugin/product1.cpp /usr/include/stdc-predef.h \
  ../../include/ulib/debug/macro.h ../../include/ulib/debug/trace.h \
  ../../include/ulib/base/trace.h ../../include/ulib/base/utility.h \
  /usr/include/dirent.h /usr/include/bits/dirent.h /usr/include/fnmatch.h \
+ ../../include/ulib/base/apex/apex_memmove.h \
  ../../include/ulib/debug/error_simulation.h /usr/include/tdb.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/stdbool.h \
  ../../include/ulib/debug/common.h ../../include/ulib/debug/error.h \
@@ -545,6 +546,8 @@ plugin/product.h:
 /usr/include/bits/dirent.h:
 
 /usr/include/fnmatch.h:
+
+../../include/ulib/base/apex/apex_memmove.h:
 
 ../../include/ulib/debug/error_simulation.h:
 

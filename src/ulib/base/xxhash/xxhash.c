@@ -102,6 +102,7 @@ You can contact the author at :
 #  endif /* __STDC_VERSION__ */
 #endif
 
+#include <ulib/base/apex/apex_memmove.h>
 
 /* *************************************
 *  Includes & Memory related functions
@@ -113,7 +114,7 @@ static void* XXH_malloc(size_t s) { return malloc(s); }
 static void  XXH_free  (void* p)  { free(p); }
 /* for memcpy() */
 #include <string.h>
-static void* XXH_memcpy(void* dest, const void* src, size_t size) { return memcpy(dest,src,size); }
+static void* XXH_memcpy(void* dest, const void* src, size_t size) { return apex_memcpy(dest,src,size); }
 
 #include <ulib/base/xxhash/xxhash.h>
 
@@ -163,14 +164,14 @@ static U64 XXH_read64(const void* ptr) { return ((const unalign*)ptr)->u64; }
 static U32 XXH_read32(const void* memPtr)
 {
     U32 val;
-    memcpy(&val, memPtr, sizeof(val));
+    (void) apex_memcpy(&val, memPtr, sizeof(val));
     return val;
 }
 
 static U64 XXH_read64(const void* memPtr)
 {
     U64 val;
-    memcpy(&val, memPtr, sizeof(val));
+    (void) apex_memcpy(&val, memPtr, sizeof(val));
     return val;
 }
 
@@ -180,6 +181,9 @@ static U64 XXH_read64(const void* memPtr)
 /* ****************************************
 *  Compiler-specific Functions and Macros
 ******************************************/
+#ifdef GCC_VERSION
+#undef GCC_VERSION
+#endif
 #define GCC_VERSION (__GNUC__ * 100 + __GNUC_MINOR__)
 
 /* Note : although _rotl exists for minGW (GCC under windows), performance seems poor */
@@ -609,7 +613,7 @@ XXH_PUBLIC_API XXH_errorcode XXH32_reset(XXH32_state_t* statePtr, unsigned int s
     state.v2 = seed + PRIME32_2;
     state.v3 = seed + 0;
     state.v4 = seed - PRIME32_1;
-    memcpy(statePtr, &state, sizeof(state));
+    (void) apex_memcpy(statePtr, &state, sizeof(state));
     return XXH_OK;
 }
 
@@ -623,7 +627,7 @@ XXH_PUBLIC_API XXH_errorcode XXH64_reset(XXH64_state_t* statePtr, unsigned long 
     state.v2 = seed + PRIME64_2;
     state.v3 = seed + 0;
     state.v4 = seed - PRIME64_1;
-    memcpy(statePtr, &state, sizeof(state));
+    (void) apex_memcpy(statePtr, &state, sizeof(state));
     return XXH_OK;
 }
 
@@ -989,14 +993,14 @@ XXH_PUBLIC_API void XXH32_canonicalFromHash(XXH32_canonical_t* dst, XXH32_hash_t
 {
     XXH_STATIC_ASSERT(sizeof(XXH32_canonical_t) == sizeof(XXH32_hash_t));
     if (XXH_CPU_LITTLE_ENDIAN) hash = XXH_swap32(hash);
-    memcpy(dst, &hash, sizeof(*dst));
+    (void) apex_memcpy(dst, &hash, sizeof(*dst));
 }
 
 XXH_PUBLIC_API void XXH64_canonicalFromHash(XXH64_canonical_t* dst, XXH64_hash_t hash)
 {
     XXH_STATIC_ASSERT(sizeof(XXH64_canonical_t) == sizeof(XXH64_hash_t));
     if (XXH_CPU_LITTLE_ENDIAN) hash = XXH_swap64(hash);
-    memcpy(dst, &hash, sizeof(*dst));
+    (void) apex_memcpy(dst, &hash, sizeof(*dst));
 }
 
 XXH_PUBLIC_API XXH32_hash_t XXH32_hashFromCanonical(const XXH32_canonical_t* src)

@@ -101,7 +101,7 @@ const CHAR* inet_ntop(INT af, PVOID src, LPSTR dst, size_t size)
 
       in.sin_family = AF_INET;
 
-      (void) memcpy(&in.sin_addr, src, sizeof(struct in_addr));
+      u__memcpy(&in.sin_addr, src, sizeof(struct in_addr), __PRETTY_FUNCTION__);
 
       getnameinfo((struct sockaddr*)&in, sizeof(struct sockaddr_in), dst, size, 0, 0, NI_NUMERICHOST);
 
@@ -116,7 +116,7 @@ const CHAR* inet_ntop(INT af, PVOID src, LPSTR dst, size_t size)
 
       in.sin6_family = AF_INET6;
 
-      (void) memcpy(&in.sin6_addr, src, sizeof(struct in_addr6));
+      u__memcpy(&in.sin6_addr, src, sizeof(struct in_addr6), __PRETTY_FUNCTION__);
 
       getnameinfo((struct sockaddr*)&in, sizeof(struct sockaddr_in6), dst, size, NULL, 0, NI_NUMERICHOST);
 

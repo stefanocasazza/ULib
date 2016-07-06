@@ -30,7 +30,7 @@
 #  include <sys/uio.h>
 #endif
 
-#define U_APPEND_LITERAL(ptr,str) (void) memcpy(ptr, str, U_CONSTANT_SIZE(str)); ptr += U_CONSTANT_SIZE(str)
+#define U_APPEND_LITERAL(ptr,str) (void) apex_memcpy(ptr, str, U_CONSTANT_SIZE(str)); ptr += U_CONSTANT_SIZE(str)
 
 /* currently-known information about a host */
 
@@ -148,7 +148,7 @@ public:
       U_INTERNAL_ASSERT(percentage <= 100)
 
       if (percentage < 100) sprintf(p, "%2u%% ", percentage);
-      else                  (void) memcpy(p, U_CONSTANT_TO_PARAM("100%"));
+      else                  U_MEMCPY(p, "100%", U_CONSTANT_SIZE("100%"));
 
       p += 4;
 

@@ -172,6 +172,21 @@ public:
 #  endif
       }
 
+   void updateBulk(mongoc_bulk_operation_t* bulk, bson_t* query, bson_t* _update) // This function queues an update as part of a bulk operation
+      {
+      U_TRACE(0, "UMongoDBClient::updateBulk(%p,%p,%p)", bulk, query, _update)
+
+#  ifdef USE_MONGODB
+      U_INTERNAL_ASSERT_POINTER(client)
+      U_INTERNAL_ASSERT_POINTER(collection)
+
+      U_SYSCALL_VOID(mongoc_bulk_operation_update, "%p,%p,%p,%b", bulk, query, _update, false);
+
+      U_SYSCALL_VOID(bson_destroy, "%p", query);
+      U_SYSCALL_VOID(bson_destroy, "%p", _update);
+#  endif
+      }
+
 # if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;
 # endif

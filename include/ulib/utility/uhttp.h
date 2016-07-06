@@ -174,7 +174,6 @@ public:
    static UString* pathname;
    static UString* rpathname;
    static UString* upload_dir;
-   static UString* mount_point;
    static UString* string_HTTP_Variables;
 
    static URDB* db_not_found;
@@ -185,7 +184,7 @@ public:
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
    static bool enable_caching_by_proxy_servers;
-   static uint32_t npathinfo, limit_request_body, request_read_timeout, range_start, range_size, response_code;
+   static uint32_t limit_request_body, request_read_timeout, range_start, range_size, response_code;
 
    static int  handlerREAD();
    static bool readRequest();
@@ -722,8 +721,9 @@ public:
    class UPHP : public UDynamic {
    public:
 
-   vPF php_end;
-   bPFpc runPHP;
+   bPF initPHP;
+   bPF  runPHP;
+   vPF  endPHP;
 
    // COSTRUTTORI
 
@@ -731,8 +731,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UPHP, "", 0)
 
-      runPHP  = 0;
-      php_end = 0;
+      initPHP =
+       runPHP = 0;
+       endPHP = 0;
       }
 
    ~UPHP()
@@ -756,13 +757,16 @@ public:
 
    static UPHP* php_embed;
 #endif
+   static uint32_t npathinfo;
+   static UString* php_mount_point;
 
 #ifdef USE_RUBY // (wrapper to embed the RUBY interpreter)
    class URUBY : public UDynamic {
    public:
 
-   vPF ruby_end;
-   bPFpcpc runRUBY;
+   bPF initRUBY;
+   bPF  runRUBY;
+   vPF  endRUBY;
 
    // COSTRUTTORI
 
@@ -770,8 +774,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, URUBY, "", 0)
 
-      runRUBY  = 0;
-      ruby_end = 0;
+      initRUBY =
+       runRUBY = 0;
+       endRUBY = 0;
       }
 
    ~URUBY()
@@ -795,14 +800,16 @@ public:
 
    static URUBY* ruby_embed;
    static bool ruby_on_rails;
+   static UString* ruby_libdir;
 #endif
 
 #ifdef USE_PYTHON // (wrapper to embed the PYTHON interpreter)
    class UPYTHON : public UDynamic {
    public:
 
-   vPF python_end;
-   bPFpcpcpcpc runPYTHON;
+   bPF initPYTHON;
+   bPF  runPYTHON;
+   vPF  endPYTHON;
 
    // COSTRUTTORI
 
@@ -810,8 +817,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UPYTHON, "", 0)
 
-      runPYTHON  = 0;
-      python_end = 0;
+      initPYTHON =
+       runPYTHON = 0;
+       endPYTHON = 0;
       }
 
    ~UPYTHON()
@@ -834,9 +842,9 @@ public:
    };
 
    static UPYTHON* python_embed;
-   static const char* py_project_app;
-   static const char* py_project_root;
-   static const char* py_virtualenv_path;
+   static UString* py_project_app;
+   static UString* py_project_root;
+   static UString* py_virtualenv_path;
 #endif
 
 #if defined(USE_PAGE_SPEED) || defined(USE_LIBV8)

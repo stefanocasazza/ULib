@@ -7723,6 +7723,8 @@ $as_echo "unsupported ($kernel)" >&6; }
 			;;
 		esac
 
+		enable_stdcpp="yes"
+
 		 if true; then
   LINUX_TRUE=
   LINUX_FALSE='#'
@@ -7778,6 +7780,7 @@ fi
 $as_echo "ok ($target_os)" >&6; }
 
 		enable_stdcpp="no"
+
 		CPPFLAGS="$CPPFLAGS -D__USE_CRTIMP -Wno-sign-compare"
 
 		if test "$enable_static" = "yes"; then
@@ -19969,7 +19972,13 @@ $as_echo "#define U_STATIC_ONLY 1" >>confdefs.h
 		enable_stdcpp="no"
 	fi
 	if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "$target_os" != "netbsd"; then
-		ULIB_LIBS="$ULIB_LIBS -lgcc"
+		if test "$enable_stdcpp" != "yes"; then
+			ULIB_LIBS="$ULIB_LIBS -lgcc"
+		else
+			gcc_lib=`gcc -print-libgcc-file-name`
+			gcc_dir=`dirname $gcc_lib`
+			ULIB_LIBS="$ULIB_LIBS $gcc_dir/libstdc++.a $gcc_lib"
+		fi
 	fi
 else
 	 if false; then

@@ -23,10 +23,18 @@
 U_EXPORT bool __cxa_guard_acquire() { return 1; }
 U_EXPORT bool __cxa_guard_release() { return 1; }
 
-U_EXPORT void* operator new(size_t n)     { return malloc(n); }
+U_EXPORT void* operator new(  size_t n)   { return malloc(n); }
 U_EXPORT void* operator new[](size_t n)   { return malloc(n); }
-U_EXPORT void  operator delete(void* p)   { free(p); }
+U_EXPORT void  operator delete(  void* p) { free(p); }
 U_EXPORT void  operator delete[](void* p) { free(p); }
+
+#  ifdef __MINGW32__
+U_EXPORT void  operator delete(  void* p,      unsigned int) { free(p); }
+U_EXPORT void  operator delete[](void* p,      unsigned int) { free(p); }
+#  else
+U_EXPORT void  operator delete(  void* p, long unsigned int) { free(p); }
+U_EXPORT void  operator delete[](void* p, long unsigned int) { free(p); }
+#  endif
 #endif
 
 #ifdef USE_LIBSSL

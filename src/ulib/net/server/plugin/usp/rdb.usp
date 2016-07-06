@@ -25,7 +25,7 @@ static void usp_fork_rdb()
       return;
       }
 
-   u__memcpy(buffer, "world:", U_CONSTANT_SIZE("world:"), __PRETTY_FUNCTION__);
+   U_MEMCPY(buffer, "world:", U_CONSTANT_SIZE("world:"));
 
 #ifndef AS_cpoll_cppsp_DO
    U_NEW(UValue, pvalue, UValue(OBJECT_VALUE));

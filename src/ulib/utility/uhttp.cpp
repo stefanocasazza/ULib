@@ -86,7 +86,6 @@ UString*    UHTTP::pathname;
 UString*    UHTTP::rpathname;
 UString*    UHTTP::set_cookie;
 UString*    UHTTP::upload_dir;
-UString*    UHTTP::mount_point;
 UString*    UHTTP::fcgi_uri_mask;
 UString*    UHTTP::scgi_uri_mask;
 UString*    UHTTP::cache_file_mask;
@@ -96,7 +95,6 @@ UString*    UHTTP::cache_file_store;
 UString*    UHTTP::cgi_cookie_option;
 UString*    UHTTP::set_cookie_option;
 UString*    UHTTP::string_HTTP_Variables;
-uint32_t    UHTTP::npathinfo;
 uint32_t    UHTTP::range_size;
 uint32_t    UHTTP::range_start;
 uint32_t    UHTTP::old_path_len;
@@ -126,14 +124,17 @@ UHashMap<UHTTP::UFileCacheData*>* UHTTP::cache_file;
 #ifdef USE_PHP
 UHTTP::UPHP* UHTTP::php_embed;
 #endif
+uint32_t     UHTTP::npathinfo;
+UString*     UHTTP::php_mount_point;
 #ifdef USE_RUBY
 bool          UHTTP::ruby_on_rails;
+UString*      UHTTP::ruby_libdir;
 UHTTP::URUBY* UHTTP::ruby_embed;
 #endif
 #ifdef USE_PYTHON
-const char*     UHTTP::py_project_app = "hello.hello_world_app"; // full python name of WSGI entry point
-const char*     UHTTP::py_project_root = "."; // defaults to workdir
-const char*     UHTTP::py_virtualenv_path = "";
+UString*        UHTTP::py_project_app;  // full python name of WSGI entry point expected in form <module>.<app>
+UString*        UHTTP::py_project_root; // python module search root; relative to workdir
+UString*        UHTTP::py_virtualenv_path;
 UHTTP::UPYTHON* UHTTP::python_embed;
 #endif
 #ifdef USE_PAGE_SPEED
@@ -760,6 +761,7 @@ bool UHTTP::UCServletPage::compile(const UString& program)
 }
 
 #ifdef U_STATIC_ONLY
+extern "C" void __cxa_pure_virtual();
 extern "C" void __cxa_pure_virtual() { U_ERROR("__cxa_pure_virtual"); }
 
 #  ifdef U_STATIC_SERVLET_WI_AUTH
@@ -922,18 +924,20 @@ void UHTTP::init()
       }
    else
       {
-      ruby_embed->runRUBY  = (bPFpcpc)(*ruby_embed)["runRUBY"];
-      ruby_embed->ruby_end =     (vPF)(*ruby_embed)["URUBY_end"];
+      ruby_embed->initRUBY = (bPF)(*ruby_embed)["initRUBY"];
+      ruby_embed->runRUBY  = (bPF)(*ruby_embed)["runRUBY"];
+      ruby_embed->endRUBY  = (vPF)(*ruby_embed)["endRUBY"];
 
+      U_INTERNAL_ASSERT_POINTER(ruby_embed->initRUBY)
       U_INTERNAL_ASSERT_POINTER(ruby_embed->runRUBY)
-      U_INTERNAL_ASSERT_POINTER(ruby_embed->ruby_end)
+      U_INTERNAL_ASSERT_POINTER(ruby_embed->endRUBY)
 
       // check for RoR (Ruby on Rails)
 
       if (UStringExt::endsWith(u_cwd, u_cwd_len, U_CONSTANT_TO_PARAM("public")) == false ||
           UFile::access("../config.ru", R_OK) == false)
          {
-         if (ruby_embed->runRUBY(0, 0)) msg = "Load of plugin ruby success";
+         if (ruby_embed->initRUBY()) msg = "Load of plugin ruby success";
          }
       else
          {
@@ -941,12 +945,9 @@ void UHTTP::init()
 
          UString dir = UStringExt::dirname(u_cwd, u_cwd_len).copy();
 
-         if (UFile::chdir(dir.data(), true) == false)
-            {
-            U_ERROR("Chdir to directory %V failed", dir.rep);
-            }
+         if (UFile::chdir(dir.data(), true) == false) U_ERROR("Chdir to directory %V failed", dir.rep);
 
-         ruby_on_rails = ruby_embed->runRUBY(0, 0);
+         ruby_on_rails = ruby_embed->initRUBY();
 
          if (ruby_on_rails) msg = 0;
          else               msg = "WARNING: load of Ruby on Rails application failed";
@@ -972,16 +973,18 @@ void UHTTP::init()
       }
    else
       {
-      python_embed->runPYTHON  = (bPFpcpcpcpc)(*python_embed)["runPYTHON"];
-      python_embed->python_end =         (vPF)(*python_embed)["UPYTHON_end"];
+      python_embed->initPYTHON = (bPF)(*python_embed)["initPYTHON"];
+      python_embed->runPYTHON  = (bPF)(*python_embed)["runPYTHON"];
+      python_embed->endPYTHON  = (vPF)(*python_embed)["endPYTHON"];
 
+      U_INTERNAL_ASSERT_POINTER(python_embed->initPYTHON)
       U_INTERNAL_ASSERT_POINTER(python_embed->runPYTHON)
-      U_INTERNAL_ASSERT_POINTER(python_embed->python_end)
+      U_INTERNAL_ASSERT_POINTER(python_embed->endPYTHON)
 
       if (py_project_app == 0) msg = 0; // python wsgi app not specified; skipping python initialization...
       else
          {
-         if (python_embed->runPYTHON(0, py_project_root, py_project_app, py_virtualenv_path)) msg = "Load of plugin python success";
+         if (python_embed->initPYTHON()) msg = "Load of plugin python success";
          }
       }
 
@@ -1002,13 +1005,15 @@ void UHTTP::init()
       }
    else
       {
-      php_embed->runPHP   = (bPFpc)(*php_embed)["runPHP"];
-      php_embed->php_end  = (vPF)  (*php_embed)["UPHP_end"];
+      php_embed->initPHP = (bPF)(*php_embed)["initPHP"];
+      php_embed->runPHP  = (bPF)(*php_embed)["runPHP"];
+      php_embed->endPHP  = (vPF)(*php_embed)["endPHP"];
 
+      U_INTERNAL_ASSERT_POINTER(php_embed->initPHP)
       U_INTERNAL_ASSERT_POINTER(php_embed->runPHP)
-      U_INTERNAL_ASSERT_POINTER(php_embed->php_end)
+      U_INTERNAL_ASSERT_POINTER(php_embed->endPHP)
 
-      if (php_embed->runPHP(0))
+      if (php_embed->initPHP())
          {
          msg = 0;
 
@@ -1309,9 +1314,7 @@ void UHTTP::init()
 
    U_INTERNAL_ASSERT_EQUALS(response_code, HTTP_OK)
 
-   (void) memcpy(response_buffer,
-                 UClientImage_Base::iov_vec[0].iov_base,
-                 UClientImage_Base::iov_vec[0].iov_len);
+   U_MEMCPY(response_buffer, UClientImage_Base::iov_vec[0].iov_base, UClientImage_Base::iov_vec[0].iov_len);
 
    U_INTERNAL_ASSERT_EQUALS(strncmp(response_buffer, U_CONSTANT_TO_PARAM("HTTP/1.1 200 OK\r\n")), 0)
 
@@ -1416,7 +1419,6 @@ void UHTTP::dtor()
 
       if (htpasswd)          delete htpasswd;
       if (htdigest)          delete htdigest;
-      if (mount_point)       delete mount_point;
       if (  cache_file_mask) delete   cache_file_mask;
       if (nocache_file_mask) delete nocache_file_mask;
 
@@ -1426,21 +1428,26 @@ void UHTTP::dtor()
       if (global_alias)          delete global_alias;
       if (maintenance_mode_page) delete maintenance_mode_page;
 #    ifdef USE_LIBPCRE
-      if (vRewriteRule)          delete vRewriteRule;
+      if (vRewriteRule) delete vRewriteRule;
 #    endif
 #  endif
 
 #  ifdef USE_PHP
-      if (php_embed)     delete php_embed;
+      if (php_embed)       delete php_embed;
 #  endif
+      if (php_mount_point) delete php_mount_point;
 #  ifdef USE_RUBY
-      if (ruby_embed)    delete ruby_embed;
+      if (ruby_embed)  delete ruby_embed;
+      if (ruby_libdir) delete ruby_libdir;
 #  endif
 #  ifdef USE_PYTHON
-      if (python_embed)  delete python_embed;
+      if (python_embed)       delete python_embed;
+      if (py_project_app)     delete py_project_app;
+      if (py_project_root)    delete py_project_root;
+      if (py_virtualenv_path) delete py_virtualenv_path;
 #  endif
 #  ifdef USE_PAGE_SPEED
-      if (page_speed)    delete page_speed;
+      if (page_speed) delete page_speed;
 #  endif
 #  ifdef USE_LIBV8
       if (v8_javascript) delete v8_javascript;
@@ -2251,7 +2258,7 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
 
          while (*inp++ != '\n') {} // discard the rest of the line
 
-         u__memcpy(out, inp, chunkSize, __PRETTY_FUNCTION__);
+         U_MEMCPY(out, inp, chunkSize);
 
          inp += chunkSize + 2;
          out += chunkSize;
@@ -3092,13 +3099,22 @@ U_NO_EXPORT bool UHTTP::runDynamicPage()
    U_INTERNAL_ASSERT_EQUALS(u_is_cgi(mime_index), false)
    U_INTERNAL_ASSERT_EQUALS(mime_index, file_data->mime_index)
 
+#ifdef USE_PHP
+   if (u_is_php(mime_index))
+      {
+      U_INTERNAL_ASSERT_POINTER(php_embed->runPHP)
+
+      (void) php_embed->runPHP();
+
+      goto next;
+      }
+#endif
 #ifdef USE_RUBY
    if (u_is_ruby(mime_index))
       {
       U_INTERNAL_ASSERT_POINTER(ruby_embed->runRUBY)
 
-   // if (ruby_on_rails)
-      (void) ruby_embed->runRUBY(0, file->getPathRelativ());
+      (void) ruby_embed->runRUBY();
 
       goto next;
       }
@@ -3108,17 +3124,7 @@ U_NO_EXPORT bool UHTTP::runDynamicPage()
       {
       U_INTERNAL_ASSERT_POINTER(python_embed->runPYTHON)
 
-      (void) python_embed->runPYTHON(file->getPathRelativ(), 0, 0, 0);
-
-      goto next;
-      }
-#endif
-#ifdef USE_PHP
-   if (u_is_php(mime_index))
-      {
-      U_INTERNAL_ASSERT_POINTER(php_embed->runPHP)
-
-      (void) php_embed->runPHP(file->getPathRelativ());
+      (void) python_embed->runPYTHON();
 
       goto next;
       }
@@ -3787,7 +3793,7 @@ set_uri: U_http_info.uri     = alias->data();
             {
             file->path_relativ_len = U_http_info.uri_len - U_http_host_vlen - 1;
 
-            (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)ptr, ptr + 1 + U_http_host_vlen, file->path_relativ_len);
+            (void) U_SYSCALL(apex_memmove, "%p,%p,%u", (void*)ptr, ptr + 1 + U_http_host_vlen, file->path_relativ_len);
             }
 
          if (checkPath(file->path_relativ_len)) goto manage;
@@ -3832,7 +3838,9 @@ manage:
    U_INTERNAL_DUMP("file_data = %p U_ClientImage_request = %B U_http_info.flag = %.8S", file_data, U_ClientImage_request, U_http_info.flag)
 
 #if defined(DEBUG) && !defined(U_STATIC_ONLY)
-   if (file_data == 0 &&
+   if (file_data == 0         &&
+       isGETorHEAD()          &&
+       U_http_is_nocache_file &&
        file->getSuffix().empty())
       {
       struct stat st;
@@ -5830,8 +5838,8 @@ void UHTTP::handlerResponse()
       {
       UClientImage_Base::setRequestNoCache();
 
-      u__memcpy(ptr, set_cookie->data(), sz1, __PRETTY_FUNCTION__);
-                ptr +=                   sz1;
+      U_MEMCPY(ptr, set_cookie->data(), sz1);
+               ptr +=                   sz1;
 
       set_cookie->setEmpty();
       }
@@ -5852,8 +5860,8 @@ void UHTTP::handlerResponse()
              uri_strict_transport_security_mask != (void*)1L &&
              U_HTTP_USER_AGENT_STREQ("SSL Labs (https://www.ssllabs.com/about/assessment.html)"))
             {
-            u__memcpy(ptr,         "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\n",
-                   U_CONSTANT_SIZE("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\n"), __PRETTY_FUNCTION__);
+            U_MEMCPY(ptr,          "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\n",
+                   U_CONSTANT_SIZE("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\n"));
             ptr += U_CONSTANT_SIZE("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\n");
             }
          else
@@ -5893,7 +5901,7 @@ void UHTTP::handlerResponse()
          }
       }
 
-   u__memcpy(ptr, ptr2, sz2, __PRETTY_FUNCTION__);
+   U_MEMCPY(ptr, ptr2, sz2);
 
    UClientImage_Base::wbuffer->size_adjust((ptr - base) + sz2);
    }
@@ -5923,7 +5931,7 @@ void UHTTP::setResponse(const UString& content_type, UString* pbody)
 
    ptr += U_CONSTANT_SIZE("Content-Type: ");
 
-   u__memcpy(ptr, content_type.data(), sz, __PRETTY_FUNCTION__);
+   U_MEMCPY(ptr, content_type.data(), sz);
 
    ptr += sz;
 
@@ -6324,7 +6332,7 @@ end:
 
       U_INTERNAL_ASSERT(u_endsWith(pEndHeader, U_http_info.endHeader, U_CONSTANT_TO_PARAM(U_CRLF2)))
 
-      u__memcpy(ptr1, pEndHeader, U_http_info.endHeader, __PRETTY_FUNCTION__);
+      U_MEMCPY(ptr1, pEndHeader, U_http_info.endHeader);
 
       ptr1 += U_http_info.endHeader;
       }
@@ -8065,8 +8073,8 @@ void UHTTP::setPathName()
 
    char* ptr = pathname->data();
 
-   u__memcpy(ptr,                     u_cwd,           u_cwd_len, __PRETTY_FUNCTION__);
-   u__memcpy(ptr+u_cwd_len, U_http_info.uri, U_http_info.uri_len, __PRETTY_FUNCTION__);
+   U_MEMCPY(ptr,                     u_cwd,           u_cwd_len);
+   U_MEMCPY(ptr+u_cwd_len, U_http_info.uri, U_http_info.uri_len);
 
    pathname->size_adjust_force(u_cwd_len + U_http_info.uri_len); // NB: pathname can be referenced by file obj...
 }
@@ -8569,78 +8577,76 @@ bool UHTTP::getCGIEnvironment(UString& environment, int type)
       buffer.snprintf_add("REQUEST_URI=%.*s\n", sz, ptr);
       }
 
-   if ((type & U_PHP) != 0)
+   buffer.snprintf_add("CONTENT_LENGTH=%u\n"   // The "CONTENT_LENGTH" header must always be present, even if its value is "0"
+                       "REQUEST_METHOD=%.*s\n",
+                       UClientImage_Base::body->size(),
+                       U_HTTP_METHOD_TO_TRACE);
+
+   if ((type & U_PHP) == 0) buffer.snprintf_add("SCRIPT_NAME=%.*s\n", sz, ptr);
+   else
       {
-      // ---------------------------------------------------------------------------------------
-      // see: http://woozle.org/~neale/papers/php-cgi.html
-      // ---------------------------------------------------------------------------------------
-      // PHP_SELF: The filename of the currently executing script, relative to the document root
-      // ---------------------------------------------------------------------------------------
+      /**
+       * see: http://woozle.org/~neale/papers/php-cgi.html
+       *
+       * PHP_SELF    The filename of the currently executing script, relative to the document root
+       *
+       * SCRIPT_NAME The initial portion of the request URL path that corresponds to the application object, so that the application knows
+       *             its virtual location. This may be an empty string, if the application corresponds to the root of the server
+       * 
+       * PATH_INFO   The remainder of the request URL path, designating the virtual location of the request target within the application.
+       *             This may be an empty string, if the request URL targets the application root and does not have a trailing slash. This value may
+       *             be percent-encoded when I originating from a URL
+       * 
+       * One of SCRIPT_NAME or PATH_INFO must be set. PATH_INFO should be / if SCRIPT_NAME is empty. SCRIPT_NAME never should be /, but instead be empty
+       * 
+       * http(s)://${SERVER_NAME}:${SERVER_PORT}${SCRIPT_NAME}${PATH_INFO} will always be an accessible URL that points to the current script
+       * 
+       * -----------------------------------
+       * Mount Point:
+       * -----------------------------------
+       * URL: /something
+       * SCRIPT_NAME:
+       * PATH_INFO: /something
+       * -----------------------------------
+       * Mount Point: /application
+       * -----------------------------------
+       * URL: /application
+       * SCRIPT_NAME: /application
+       * PATH_INFO:
+       * 
+       * URL: /application/
+       * SCRIPT_NAME: /application
+       * PATH_INFO: /
+       * 
+       * URL: /application/something
+       * SCRIPT_NAME: /application
+       * PATH_INFO: /something
+       * --------------------------------------------------------------------------------------------------------------------
+       * see: http://dev.phpldapadmin.org/pla/issues/34
+       * --------------------------------------------------------------------------------------------------------------------
+       * There is a redirect loop when using Fast CGI. The problem is that in this case $_SERVER['SCRIPT_NAME']
+       * is not filled with the running PHP script but the CGI wrapper. So PLA will redirect to index.php over and over again
+       * --------------------------------------------------------------------------------------------------------------------
+       */
+
+      uint32_t start = (php_mount_point &&
+                        UStringExt::startsWith(ptr, sz, U_STRING_TO_PARAM(*php_mount_point))
+                              ? php_mount_point->size()
+                              : 0);
+
+      U_INTERNAL_DUMP("start = %u", start)
 
       buffer.snprintf_add("PHP_SELF=%.*s\n"
                           "REDIRECT_STATUS=1\n"
-                          "SCRIPT_FILENAME=%w%.*s\n",
-                          sz, ptr, sz, ptr);
+                          "SCRIPT_FILENAME=%w%.*s\n"
+                          "SCRIPT_NAME=%.*s\n"
+                          "PATH_INFO=%.*s\n",
+                          sz, ptr, sz, ptr,
+                          sz + npathinfo - start, ptr + start,
+                          sz - npathinfo,        ptr + npathinfo);
       }
 
    (void) buffer.append(*UServer_Base::cenvironment); // SERVER_(NAME|PORT)
-
-   /**
-    * SCRIPT_NAME The initial portion of the request URL path that corresponds to the application object, so that the application knows
-    *             its virtual location. This may be an empty string, if the application corresponds to the root of the server
-    * 
-    * PATH_INFO   The remainder of the request URL path, designating the virtual location of the request target within the application.
-    *             This may be an empty string, if the request URL targets the application root and does not have a trailing slash. This value may
-    *             be percent-encoded when I originating from a URL
-    * 
-    * One of SCRIPT_NAME or PATH_INFO must be set. PATH_INFO should be / if SCRIPT_NAME is empty. SCRIPT_NAME never should be /, but instead be empty
-    * 
-    * http(s)://${SERVER_NAME}:${SERVER_PORT}${SCRIPT_NAME}${PATH_INFO} will always be an accessible URL that points to the current script
-    * 
-    * -----------------------------------
-    * Mount Point:
-    * -----------------------------------
-    * URL: /something
-    * SCRIPT_NAME:
-    * PATH_INFO: /something
-    * -----------------------------------
-    * Mount Point: /application
-    * -----------------------------------
-    * URL: /application
-    * SCRIPT_NAME: /application
-    * PATH_INFO:
-    * 
-    * URL: /application/
-    * SCRIPT_NAME: /application
-    * PATH_INFO: /
-    * 
-    * URL: /application/something
-    * SCRIPT_NAME: /application
-    * PATH_INFO: /something
-    * --------------------------------------------------------------------------------------------------------------------
-    * see: http://dev.phpldapadmin.org/pla/issues/34
-    * --------------------------------------------------------------------------------------------------------------------
-    * There is a redirect loop when using Fast CGI. The problem is that in this case $_SERVER['SCRIPT_NAME']
-    * is not filled with the running PHP script but the CGI wrapper. So PLA will redirect to index.php over and over again
-    * --------------------------------------------------------------------------------------------------------------------
-    */
-
-   uint32_t start = (mount_point &&
-                     UStringExt::startsWith(ptr, sz, U_STRING_TO_PARAM(*mount_point))
-                           ? mount_point->size()
-                           : 0);
-
-   U_INTERNAL_DUMP("start = %u", start)
-
-   buffer.snprintf_add(
-          "CONTENT_LENGTH=%u\n"   // The "CONTENT_LENGTH" header must always be present, even if its value is "0"
-          "REQUEST_METHOD=%.*s\n"
-          "SCRIPT_NAME=%.*s\n"
-          "PATH_INFO=%.*s\n",
-          UClientImage_Base::body->size(),
-          U_HTTP_METHOD_TO_TRACE,
-          sz + npathinfo - start, ptr + start,
-          sz - npathinfo,         ptr + npathinfo);
 
    UMimeHeader requestHeader;
    UHashMap<UString>* prequestHeader = 0;
@@ -10188,7 +10194,7 @@ void UHTTP::prepareApacheLikeLog()
          if (request_len > (sizeof(UClientImage_Base::cbuffer) - U_CONSTANT_SIZE("HTTP/2.0"))) request_len = U_NOT_FOUND;
          else
             {
-            (void) u__memcpy((void*)(request + request_len), "HTTP/2.0", U_CONSTANT_SIZE("HTTP/2.0"), __PRETTY_FUNCTION__);
+            U_MEMCPY((void*)(request + request_len), "HTTP/2.0", U_CONSTANT_SIZE("HTTP/2.0"));
             }
          }
       else
@@ -10605,8 +10611,9 @@ U_EXPORT const char* UHTTP::URUBY::dump(bool reset) const
    UDynamic::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "runRUBY       " << (void*)runRUBY << '\n'
-                  << "ruby_on_rails " << ruby_on_rails;
+                  << "runRUBY              " << (void*)runRUBY     << '\n'
+                  << "ruby_on_rails        " << ruby_on_rails      << '\n'
+                  << "ruby_libdir (UString " << (void*)ruby_libdir << ')';
 
    if (reset)
       {
@@ -10624,7 +10631,10 @@ U_EXPORT const char* UHTTP::UPYTHON::dump(bool reset) const
    UDynamic::dump(false);
 
    *UObjectIO::os << '\n'
-                  << "runPYTHON     " << (void*)runPYTHON << '\n';
+                  << "runPYTHON                   " << (void*)runPYTHON          << '\n'
+                  << "py_project_app     (UString " << (void*)py_project_app     << ")\n"
+                  << "py_project_root    (UString " << (void*)py_project_root    << ")\n"
+                  << "py_virtualenv_path (UString " << (void*)py_virtualenv_path << ')';
 
    if (reset)
       {

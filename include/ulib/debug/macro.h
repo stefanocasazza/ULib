@@ -100,7 +100,7 @@
 #  define U_RETURN_OBJECT(obj)                                        return (utr.trace_return("%O",U_OBJECT_TO_TRACE((obj))),(obj))
 #  define U_RETURN_POINTER(ptr,type)                                  return ((type*)utr.trace_return_type((void*)(ptr)))
 
-#  define U_MEMCPY(a,b,n) (void) U_SYSCALL(u__memcpy, "%p,%p,%u,%S",(void*)(a),(const void*)(b),(n),__PRETTY_FUNCTION__)
+#  define U_MEMCPY(a,b,n) U_SYSCALL_VOID(u__memcpy, "%p,%p,%u,%S",(void*)(a),(const void*)(b),(n),__PRETTY_FUNCTION__)
 
 // Dump argument for exec()
 
@@ -242,7 +242,7 @@ if (envp) \
 #  define U_SYSCALL(name,format,args...)      ::name(args)
 #  define U_SYSCALL_VOID(name,format,args...) ::name(args)
 
-#  define U_MEMCPY(a,b,n) (void) memcpy((void*)(a),(const void*)(b),(n))
+#  define U_MEMCPY(a,b,n) (void) apex_memcpy((void*)(a),(const void*)(b),(n))
 
 #  define U_RETURN(r)                return (r)
 #  define U_RETURN_STRING(r)         return (r)

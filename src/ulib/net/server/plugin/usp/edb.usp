@@ -27,7 +27,7 @@ static void usp_fork_edb()
       return;
       }
 
-   u__memcpy(buffer, "{\"query\":{\"match\":{\"_id\":\"", QLEN, __PRETTY_FUNCTION__);
+   U_MEMCPY(buffer,  "{\"query\":{\"match\":{\"_id\":\"", QLEN);
 
 #ifndef AS_cpoll_cppsp_DO
    U_NEW(UValue, pvalue, UValue(OBJECT_VALUE));

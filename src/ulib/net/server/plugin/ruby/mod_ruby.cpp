@@ -309,283 +309,293 @@ static void URUBY_set_environment(void* env, char* name, char* value)
    (void) rb_hash_aset((VALUE)env, rb_str_new2(name), rb_str_new2(value));
 }
 
-extern U_EXPORT bool runRUBY(const char* libdir, const char* script);
-       U_EXPORT bool runRUBY(const char* libdir, const char* script)
+extern U_EXPORT bool initRUBY();
+       U_EXPORT bool initRUBY()
 {
-   U_TRACE(0, "::runRUBY(%S,%S)", libdir, script)
+   U_TRACE(0, "::initRUBY()")
 
    bool esito = true;
 
    U_SET_MODULE_NAME(ruby);
 
-   if (script)
+#if RUBY_VERSION >= 19
+   int argc      = 2;
+   char* sargv[] = { (char*) "userver", (char*) "-e0" };
+   char** argv   = sargv;
+
+   U_SYSCALL_VOID(ruby_sysinit, "%p,%p", &argc, &argv);
+
+   RUBY_INIT_STACK;
+#endif
+
+   U_SYSCALL_VOID_NO_PARAM(ruby_init); // Sets up and initializes the interpreter. This function should be called before any other Ruby-related functions
+
+#if RUBY_VERSION >= 19
+   if (UHTTP::ruby_libdir)
       {
-      if (UHTTP::ruby_on_rails)
-         {
-         VALUE env = rb_hash_new();
+      U_SYSCALL_VOID(ruby_incpush, "%S", UHTTP::ruby_libdir->data());
 
-         if (UHTTP::setEnvironmentForLanguageProcessing(U_RAKE, (void*)env, URUBY_set_environment) == false)
-            {
-            esito = false;
-
-            goto end;
-            }
-
-         VALUE rbv = rb_ary_new();
-
-         /**
-          * "rack.version"=>[1, 0],
-          * "rack.run_once"=>false,
-          * "rack.multithread"=>false,
-          * "rack.multiprocess"=>false,
-          * "rack.url_scheme"=>"http",
-          * "rack.errors"=>#<IO:<STDERR>>,
-          * "rack.input"=>#<StringIO:0x007fa1bce039f8>,
-          */
-
-         (void) rb_ary_store(rbv, 0, INT2NUM(1));
-         (void) rb_ary_store(rbv, 1, INT2NUM(1));
-         (void) rb_hash_aset(env, rb_str_new2("rack.version"),      rbv);
-         (void) rb_hash_aset(env, rb_str_new2("rack.run_once"),     Qfalse);
-         (void) rb_hash_aset(env, rb_str_new2("rack.multithread"),  Qfalse);
-         (void) rb_hash_aset(env, rb_str_new2("rack.multiprocess"), UServer_Base::isPreForked() ? Qtrue : Qfalse);
-
-         VALUE nw       = rb_intern("new"),
-               io_class = (VALUE) U_SYSCALL(rb_const_get, "%llu,%llu", rb_cObject, rb_intern("IO"));
-
-         (void) rb_hash_aset(env, rb_str_new2("rack.errors"), rb_funcall(      io_class, nw, 2, INT2NUM(2), rb_str_new("w", 1)));
-         (void) rb_hash_aset(env, rb_str_new2("rack.input"),  rb_funcall(URUBY_io_class, nw, 1));
-
-         URUBY_io_rewind(Qnil, Qnil);
-
-         VALUE ret = rb_funcall(dispatcher, call, 1, env), status, headers, body, result;
-
-         U_INTERNAL_DUMP("ret = %llu", ret)
-
-         if (ret == Qnil          ||
-             TYPE(ret) != T_ARRAY ||
-             RARRAY_LEN(ret) != 3)
-            {
-            esito = false;
-
-            U_WARNING("Ruby on Rails failed - invalid RACK response");
-
-            goto end;
-            }
-
-         status  = rb_obj_as_string(RARRAY_PTR(ret)[0]);
-         headers =                  RARRAY_PTR(ret)[1];
-         body    =                  RARRAY_PTR(ret)[2];
-         result  = Qnil;
-
-         // get the status code
-
-         U_http_info.nResponseCode = strtol(RSTRING_PTR(status), 0, 10);
-
-         U_DUMP("HTTP status = (%d %S)", U_http_info.nResponseCode, UHTTP::getStatusDescription())
-
-         // get the body
-
-         if (rb_respond_to(body, rb_intern("to_path")))
-            {
-            char buffer[U_PATH_MAX];
-
-            // If the Body responds to to_path, it must return a String identifying the location of a file whose contents are
-            // identical to that produced by calling each; this may be used by the server as an alternative, possibly more
-            // efficient way to transport the response
-
-            result = rb_funcall(body, rb_intern("to_path"), 0);
-
-            U_http_info.endHeader = u__snprintf(buffer, sizeof(buffer), "X-Sendfile: %.*s\r\n\r\n", RSTRING_LEN(result), RSTRING_PTR(result));
-
-            (void) UClientImage_Base::wbuffer->append(buffer, U_http_info.endHeader);
-            }
-         else
-            {
-            // get the headers
-
-            if (rb_respond_to(headers, rb_intern("each")))
-               {
-#           if RUBY_VERSION >= 19
-               result = rb_block_call(headers, rb_intern("each"), 0, 0, (VALUE(*)(ANYARGS))URUBY_send_header, headers);
-#           else
-               result = rb_iterate(rb_each, headers, URUBY_send_header, headers);
-#           endif
-               }
-
-            (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
-
-            U_http_info.endHeader = UClientImage_Base::wbuffer->size();
-
-            if (rb_respond_to(body, rb_intern("each")))
-               {
-#           if RUBY_VERSION >= 19
-               result = rb_block_call(body, rb_intern("each"), 0, 0, (VALUE(*)(ANYARGS))URUBY_send_body, 0);
-#           else
-               result = rb_iterate(rb_each, body, URUBY_send_body, 0);
-#           endif
-               }
-            }
-
-         if (rb_respond_to(body, rb_intern("close"))) result = rb_funcall(body, rb_intern("close"), 0);
-
-         U_INTERNAL_DUMP("result = %llu", result)
-
-         UClientImage_Base::environment->setEmpty();
-         }
-      else
-         {
-         void* node = U_SYSCALL(rb_load_file, "%S", script); // Loads the given file into the interpreter
-
-         if (node == 0)
-            {
-            esito = false;
-
-            U_WARNING("Ruby script %S load failed", script);
-
-            goto end;
-            }
-
-         int result = U_SYSCALL(ruby_exec_node, "%p", node);
-
-         if (result)
-            {
-         // VALUE err    = rb_errinfo();
-         // VALUE eclass = rb_class_name(rb_class_of(err));
-
-            VALUE global_bang = rb_gv_get("$!");
-            VALUE e_msg       = rb_funcall(global_bang, rb_intern("message"), 0);
-            char* c_e_msg     = StringValueCStr(e_msg);
-
-            U_SRV_LOG("RUBY script %S return (%d, %s)", script, result, c_e_msg);
-
-#        ifdef DEBUG
-            if (u_get_unalignedp32(c_e_msg) != U_MULTICHAR_CONSTANT32('e','x','i','t'))
-               {
-               char buffer[8192];
-
-               VALUE trace     = rb_funcall(global_bang, rb_intern("backtrace"), 0),
-                     trace_str = rb_funcall(trace, rb_intern("join"), 1, rb_str_new_cstr("\n"));
-
-               (void) UFile::writeToTmp(buffer, u__snprintf(buffer, sizeof(buffer), "Error: \"%s\"\n\n%s", c_e_msg, StringValueCStr(trace_str)),
-                                        O_RDWR | O_APPEND, "ruby_embedded.err", 0);
-               }
-#        endif
-            }
-         }
+      U_SRV_LOG("directory %rV added to the ruby libdir search path", UHTTP::ruby_libdir->rep);
       }
-   else
-      {
-#  if RUBY_VERSION >= 19
-      int argc      = 2;
-      char* sargv[] = { (char*) "userver", (char*) "-e0" };
-      char** argv   = sargv;
 
-      U_SYSCALL_VOID(ruby_sysinit, "%p,%p", &argc, &argv);
+   (void) U_SYSCALL(ruby_options, "%d,%p", argc, argv);
+#elif RUBY_VERSION < 19
+   VALUE dummy;
 
-      RUBY_INIT_STACK;
-#  endif
+   Init_stack(&dummy);
 
-      U_SYSCALL_VOID_NO_PARAM(ruby_init); // Sets up and initializes the interpreter. This function should be called before any other Ruby-related functions
-
-#  if RUBY_VERSION >= 19
-      if (libdir)
-         {
-         U_SYSCALL_VOID(ruby_incpush, "%S", libdir);
-
-         U_SRV_LOG("directory %S added to the ruby libdir search path", libdir);
-         }
-
-      (void) U_SYSCALL(ruby_options, "%d,%p", argc, argv);
-#  elif RUBY_VERSION < 19
-      VALUE dummy;
-
-      Init_stack(&dummy);
-
-      U_SYSCALL_VOID_NO_PARAM(ruby_init_loadpath);
-#  endif
+   U_SYSCALL_VOID_NO_PARAM(ruby_init_loadpath);
+#endif
 
    // U_SYSCALL_VOID_NO_PARAM(ruby_show_version);
 
    // Sets the name of the Ruby script (and $0) to name
 
-      U_SYSCALL_VOID(ruby_script, "%S", "userver");
+   U_SYSCALL_VOID(ruby_script, "%S", "userver");
 
-      dollar_zero = rb_str_new2("userver");
+   dollar_zero = rb_str_new2("userver");
 
-      rb_define_hooked_variable("$0",            &dollar_zero, 0, (void(*)(ANYARGS))URUBY_rack_hack_dollar_zero);
-      rb_define_hooked_variable("$PROGRAM_NAME", &dollar_zero, 0, (void(*)(ANYARGS))URUBY_rack_hack_dollar_zero);
+   rb_define_hooked_variable("$0",            &dollar_zero, 0, (void(*)(ANYARGS))URUBY_rack_hack_dollar_zero);
+   rb_define_hooked_variable("$PROGRAM_NAME", &dollar_zero, 0, (void(*)(ANYARGS))URUBY_rack_hack_dollar_zero);
 
-      if (UHTTP::ruby_on_rails)
+   if (UHTTP::ruby_on_rails)
+      {
+#  if RUBY_VERSION < 19
+      (void) U_SYSCALL(rb_require, "%S", "rubygems");
+#  endif
+      (void) rb_funcall(rb_cObject, rb_intern("require"), 1, rb_str_new2("rack"));
+
+      VALUE rack = (VALUE) U_SYSCALL(rb_const_get, "%llu,%llu", rb_cObject, rb_intern("Rack"));
+
+#  if RUBY_VERSION == 19
+      ID BodyProxy = rb_intern("BodyProxy");
+
+      VALUE result = rb_funcall(rack, rb_intern("const_defined?"), 1, ID2SYM(BodyProxy));
+
+      if (result == Qtrue)
          {
-#     if RUBY_VERSION < 19
-         (void) U_SYSCALL(rb_require, "%S", "rubygems");
-#     endif
-         (void) rb_funcall(rb_cObject, rb_intern("require"), 1, rb_str_new2("rack"));
+         VALUE bodyproxy = (VALUE) U_SYSCALL(rb_const_get, "%llu,%llu", rack, BodyProxy);
 
-         VALUE rack = (VALUE) U_SYSCALL(rb_const_get, "%llu,%llu", rb_cObject, rb_intern("Rack"));
+         // get the list of available instance_methods
 
-#     if RUBY_VERSION == 19
-         ID BodyProxy = rb_intern("BodyProxy");
+         VALUE arg          = Qfalse;
+         VALUE methods_list = rb_class_instance_methods(1, &arg, bodyproxy);
 
-         VALUE result = rb_funcall(rack, rb_intern("const_defined?"), 1, ID2SYM(BodyProxy));
+         U_INTERNAL_DUMP("methods_list = %S", RSTRING_PTR(rb_inspect(methods_list)))
 
-         if (result == Qtrue)
+         if (rb_ary_includes(methods_list, ID2SYM(rb_intern("each"))) == Qfalse &&
+             rb_eval_string("module Rack;class BodyProxy;def each(&block);@body.each(&block);end;end;end"))
             {
-            VALUE bodyproxy = (VALUE) U_SYSCALL(rb_const_get, "%llu,%llu", rack, BodyProxy);
+            U_SRV_LOG("Rack::BodyProxy successfully patched");
+            }
+         }
+#  endif
 
-            // get the list of available instance_methods
+      VALUE builder = (VALUE) U_SYSCALL(rb_const_get, "%llu,%llu", rack, rb_intern("Builder"));
 
-            VALUE arg          = Qfalse;
-            VALUE methods_list = rb_class_instance_methods(1, &arg, bodyproxy);
+      U_INTERNAL_DUMP("builder = %llu", builder)
 
-            U_INTERNAL_DUMP("methods_list = %S", RSTRING_PTR(rb_inspect(methods_list)))
+      VALUE rackup = rb_funcall(builder, rb_intern("parse_file"), 1, rb_str_new2("config.ru"));
 
-            if (rb_ary_includes(methods_list, ID2SYM(rb_intern("each"))) == Qfalse &&
-                rb_eval_string("module Rack;class BodyProxy;def each(&block);@body.each(&block);end;end;end"))
-               {
-               U_SRV_LOG("Rack::BodyProxy successfully patched");
-               }
+      call = rb_intern("call");
+
+      U_INTERNAL_DUMP("rackup = %llu call = %llu", rackup, call)
+
+      if (call == 0               ||
+          TYPE(rackup) != T_ARRAY ||
+          RARRAY_LEN(rackup) < 1)
+         {
+         esito = false;
+
+         U_WARNING("Unable to find RACK entry point in Ruby on Rails");
+
+         goto end;
+         }
+
+      dispatcher = RARRAY_PTR(rackup)[0];
+
+      URUBY_io_class = (VALUE) U_SYSCALL(rb_define_class, "%S,%llu", "URUBY_IO", rb_cObject);
+
+      U_SYSCALL_VOID(rb_gc_register_address, "%p", &call);
+      U_SYSCALL_VOID(rb_gc_register_address, "%p", &dispatcher);
+      U_SYSCALL_VOID(rb_gc_register_address, "%p", &URUBY_io_class);
+
+      rb_define_singleton_method(URUBY_io_class, "new",        (VALUE(*)(ANYARGS))URUBY_io_new,    1);
+      rb_define_method(          URUBY_io_class, "initialize", (VALUE(*)(ANYARGS))URUBY_io_init,  -1);
+      rb_define_method(          URUBY_io_class, "gets",       (VALUE(*)(ANYARGS))URUBY_io_gets,   0);
+      rb_define_method(          URUBY_io_class, "each",       (VALUE(*)(ANYARGS))URUBY_io_each,   0);
+      rb_define_method(          URUBY_io_class, "read",       (VALUE(*)(ANYARGS))URUBY_io_read,  -2);
+      rb_define_method(          URUBY_io_class, "rewind",     (VALUE(*)(ANYARGS))URUBY_io_rewind, 0);
+
+      U_SRV_LOG("Ruby(%d) on Rails application successfully loaded", RUBY_VERSION);
+      }
+
+end:
+   U_RESET_MODULE_NAME;
+
+   U_RETURN(esito);
+}
+
+extern U_EXPORT bool runRUBY();
+       U_EXPORT bool runRUBY()
+{
+   U_TRACE(0, "::runRUBY()")
+
+   bool esito = true;
+
+   U_SET_MODULE_NAME(ruby);
+
+   if (UHTTP::ruby_on_rails)
+      {
+      VALUE env = rb_hash_new();
+
+      if (UHTTP::setEnvironmentForLanguageProcessing(U_RAKE, (void*)env, URUBY_set_environment) == false)
+         {
+         esito = false;
+
+         goto end;
+         }
+
+      VALUE rbv = rb_ary_new();
+
+      /**
+       * "rack.version"=>[1, 0],
+       * "rack.run_once"=>false,
+       * "rack.multithread"=>false,
+       * "rack.multiprocess"=>false,
+       * "rack.url_scheme"=>"http",
+       * "rack.errors"=>#<IO:<STDERR>>,
+       * "rack.input"=>#<StringIO:0x007fa1bce039f8>,
+       */
+
+      (void) rb_ary_store(rbv, 0, INT2NUM(1));
+      (void) rb_ary_store(rbv, 1, INT2NUM(1));
+      (void) rb_hash_aset(env, rb_str_new2("rack.version"),      rbv);
+      (void) rb_hash_aset(env, rb_str_new2("rack.run_once"),     Qfalse);
+      (void) rb_hash_aset(env, rb_str_new2("rack.multithread"),  Qfalse);
+      (void) rb_hash_aset(env, rb_str_new2("rack.multiprocess"), UServer_Base::isPreForked() ? Qtrue : Qfalse);
+
+      VALUE nw       = rb_intern("new"),
+            io_class = (VALUE) U_SYSCALL(rb_const_get, "%llu,%llu", rb_cObject, rb_intern("IO"));
+
+      (void) rb_hash_aset(env, rb_str_new2("rack.errors"), rb_funcall(      io_class, nw, 2, INT2NUM(2), rb_str_new("w", 1)));
+      (void) rb_hash_aset(env, rb_str_new2("rack.input"),  rb_funcall(URUBY_io_class, nw, 1));
+
+      URUBY_io_rewind(Qnil, Qnil);
+
+      VALUE ret = rb_funcall(dispatcher, call, 1, env), status, headers, body, result;
+
+      U_INTERNAL_DUMP("ret = %llu", ret)
+
+      if (ret == Qnil          ||
+          TYPE(ret) != T_ARRAY ||
+          RARRAY_LEN(ret) != 3)
+         {
+         esito = false;
+
+         U_WARNING("Ruby on Rails failed - invalid RACK response");
+
+         goto end;
+         }
+
+      status  = rb_obj_as_string(RARRAY_PTR(ret)[0]);
+      headers =                  RARRAY_PTR(ret)[1];
+      body    =                  RARRAY_PTR(ret)[2];
+      result  = Qnil;
+
+      // get the status code
+
+      U_http_info.nResponseCode = strtol(RSTRING_PTR(status), 0, 10);
+
+      U_DUMP("HTTP status = (%d %S)", U_http_info.nResponseCode, UHTTP::getStatusDescription())
+
+      // get the body
+
+      if (rb_respond_to(body, rb_intern("to_path")))
+         {
+         char buffer[U_PATH_MAX];
+
+         // If the Body responds to to_path, it must return a String identifying the location of a file whose contents are
+         // identical to that produced by calling each; this may be used by the server as an alternative, possibly more
+         // efficient way to transport the response
+
+         result = rb_funcall(body, rb_intern("to_path"), 0);
+
+         U_http_info.endHeader = u__snprintf(buffer, sizeof(buffer), "X-Sendfile: %.*s\r\n\r\n", RSTRING_LEN(result), RSTRING_PTR(result));
+
+         (void) UClientImage_Base::wbuffer->append(buffer, U_http_info.endHeader);
+         }
+      else
+         {
+         // get the headers
+
+         if (rb_respond_to(headers, rb_intern("each")))
+            {
+#     if RUBY_VERSION >= 19
+            result = rb_block_call(headers, rb_intern("each"), 0, 0, (VALUE(*)(ANYARGS))URUBY_send_header, headers);
+#     else
+            result = rb_iterate(rb_each, headers, URUBY_send_header, headers);
+#     endif
+            }
+
+         (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_CRLF));
+
+         U_http_info.endHeader = UClientImage_Base::wbuffer->size();
+
+         if (rb_respond_to(body, rb_intern("each")))
+            {
+#        if RUBY_VERSION >= 19
+            result = rb_block_call(body, rb_intern("each"), 0, 0, (VALUE(*)(ANYARGS))URUBY_send_body, 0);
+#        else
+            result = rb_iterate(rb_each, body, URUBY_send_body, 0);
+#        endif
+            }
+         }
+
+      if (rb_respond_to(body, rb_intern("close"))) result = rb_funcall(body, rb_intern("close"), 0);
+
+      U_INTERNAL_DUMP("result = %llu", result)
+
+      UClientImage_Base::environment->setEmpty();
+      }
+   else
+      {
+      void* node = U_SYSCALL(rb_load_file, "%S", UHTTP::file->getPathRelativ()); // Loads the given file into the interpreter
+
+      if (node == 0)
+         {
+         esito = false;
+
+         U_WARNING("Ruby script %.*S load failed", U_FILE_TO_TRACE(*UHTTP::file));
+
+         goto end;
+         }
+
+      int result = U_SYSCALL(ruby_exec_node, "%p", node);
+
+      if (result)
+         {
+      // VALUE err    = rb_errinfo();
+      // VALUE eclass = rb_class_name(rb_class_of(err));
+
+         VALUE global_bang = rb_gv_get("$!");
+         VALUE e_msg       = rb_funcall(global_bang, rb_intern("message"), 0);
+         char* c_e_msg     = StringValueCStr(e_msg);
+
+         U_SRV_LOG("RUBY script %.*S return (%d, %s)", U_FILE_TO_TRACE(*UHTTP::file), result, c_e_msg);
+
+#     ifdef DEBUG
+         if (u_get_unalignedp32(c_e_msg) != U_MULTICHAR_CONSTANT32('e','x','i','t'))
+            {
+            char buffer[8192];
+
+            VALUE trace     = rb_funcall(global_bang, rb_intern("backtrace"), 0),
+                  trace_str = rb_funcall(trace, rb_intern("join"), 1, rb_str_new_cstr("\n"));
+
+            (void) UFile::writeToTmp(buffer, u__snprintf(buffer, sizeof(buffer), "Error: \"%s\"\n\n%s", c_e_msg, StringValueCStr(trace_str)),
+                                     O_RDWR | O_APPEND, "ruby_embedded.err", 0);
             }
 #     endif
-
-         VALUE builder = (VALUE) U_SYSCALL(rb_const_get, "%llu,%llu", rack, rb_intern("Builder"));
-
-         U_INTERNAL_DUMP("builder = %llu", builder)
-
-         VALUE rackup = rb_funcall(builder, rb_intern("parse_file"), 1, rb_str_new2("config.ru"));
-
-         call = rb_intern("call");
-
-         U_INTERNAL_DUMP("rackup = %llu call = %llu", rackup, call)
-
-         if (call == 0               ||
-             TYPE(rackup) != T_ARRAY ||
-             RARRAY_LEN(rackup) < 1)
-            {
-            esito = false;
-
-            U_WARNING("Unable to find RACK entry point in Ruby on Rails");
-
-            goto end;
-            }
-
-         dispatcher = RARRAY_PTR(rackup)[0];
-
-         URUBY_io_class = (VALUE) U_SYSCALL(rb_define_class, "%S,%llu", "URUBY_IO", rb_cObject);
-
-         U_SYSCALL_VOID(rb_gc_register_address, "%p", &call);
-         U_SYSCALL_VOID(rb_gc_register_address, "%p", &dispatcher);
-         U_SYSCALL_VOID(rb_gc_register_address, "%p", &URUBY_io_class);
-
-         rb_define_singleton_method(URUBY_io_class, "new",        (VALUE(*)(ANYARGS))URUBY_io_new,    1);
-         rb_define_method(          URUBY_io_class, "initialize", (VALUE(*)(ANYARGS))URUBY_io_init,  -1);
-         rb_define_method(          URUBY_io_class, "gets",       (VALUE(*)(ANYARGS))URUBY_io_gets,   0);
-         rb_define_method(          URUBY_io_class, "each",       (VALUE(*)(ANYARGS))URUBY_io_each,   0);
-         rb_define_method(          URUBY_io_class, "read",       (VALUE(*)(ANYARGS))URUBY_io_read,  -2);
-         rb_define_method(          URUBY_io_class, "rewind",     (VALUE(*)(ANYARGS))URUBY_io_rewind, 0);
-
-         U_SRV_LOG("Ruby(%d) on Rails application successfully loaded", RUBY_VERSION);
          }
       }
 
@@ -595,10 +605,10 @@ end:
    U_RETURN(esito);
 }
 
-extern U_EXPORT void URUBY_end();
-       U_EXPORT void URUBY_end()
+extern U_EXPORT void endRUBY();
+       U_EXPORT void endRUBY()
 {
-   U_TRACE_NO_PARAM(0, "URUBY_end()")
+   U_TRACE_NO_PARAM(0, "endRUBY()")
 
    if (dollar_zero)
       {

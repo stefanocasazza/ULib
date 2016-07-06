@@ -12,6 +12,7 @@
 #include "base/coder/chexdump.c"
 #include "base/coder/curl_coder.c"
 #include "base/coder/cxml_coder.c"
+#include "base/apex/apex_memmove.c"
 #include "base/coder/cquoted_printable.c"
 
 #ifdef DEBUG

@@ -291,6 +291,8 @@ case "$target_os" in
 			;;
 		esac
 
+		enable_stdcpp="yes"
+
 		AM_CONDITIONAL(LINUX, true)
 		AM_CONDITIONAL(MINGW, false)
 		AM_CONDITIONAL(CYGWIN, false)
@@ -303,6 +305,7 @@ case "$target_os" in
 		AC_MSG_RESULT([ok ($target_os)])
 
 		enable_stdcpp="no"
+
 		CPPFLAGS="$CPPFLAGS -D__USE_CRTIMP -Wno-sign-compare"
 
 		if test "$enable_static" = "yes"; then
@@ -577,7 +580,13 @@ if test "$enable_static" = "yes" -a "$enable_shared" = "no"; then
 		enable_stdcpp="no"
 	fi
 	if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "$target_os" != "netbsd"; then
-		ULIB_LIBS="$ULIB_LIBS -lgcc"
+		if test "$enable_stdcpp" != "yes"; then
+			ULIB_LIBS="$ULIB_LIBS -lgcc"
+		else
+			gcc_lib=`gcc -print-libgcc-file-name`
+			gcc_dir=`dirname $gcc_lib`
+			ULIB_LIBS="$ULIB_LIBS $gcc_dir/libstdc++.a $gcc_lib"
+		fi
 	fi
 else
 	AM_CONDITIONAL(STATIC_ONLY, false)

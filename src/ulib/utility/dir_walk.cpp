@@ -143,7 +143,7 @@ U_NO_EXPORT void UDirWalk::prepareForCallingRecurse(char* d_name, uint32_t d_nam
        d_type == DT_LNK ||
        d_type == DT_UNKNOWN)
       {
-      u__memcpy(pathname + pathlen, d_name, d_namlen, __PRETTY_FUNCTION__);
+      U_MEMCPY(pathname + pathlen, d_name, d_namlen);
 
       pathlen += d_namlen;
 
@@ -337,7 +337,7 @@ found_file:
                ds->d_ino  = dp->d_ino;
                ds->d_type = U_DT_TYPE;
 
-               u__memcpy(qdir.free + (ds->d_name = qdir.pfree), dp->d_name, (ds->d_namlen = d_namlen), __PRETTY_FUNCTION__);
+               U_MEMCPY(qdir.free + (ds->d_name = qdir.pfree), dp->d_name, (ds->d_namlen = d_namlen));
 
                qdir.pfree += d_namlen;
                qdir.nfree -= d_namlen;
@@ -403,7 +403,7 @@ void UDirWalk::walk()
 
       // NB: we need our own backup of current directory (see IR)...
 
-      u__memcpy(cwd_save, u_cwd, u_cwd_len, __PRETTY_FUNCTION__);
+      U_MEMCPY(cwd_save, u_cwd, u_cwd_len);
 
       cwd_save[u_cwd_len] = '\0';
 
@@ -412,13 +412,13 @@ void UDirWalk::walk()
          char pathname_save[U_PATH_MAX];
          uint32_t pathlen_save = pathlen;
 
-         u__memcpy(pathname_save, pathname, pathlen, __PRETTY_FUNCTION__);
+         U_MEMCPY(pathname_save, pathname, pathlen);
 
          recurse();
 
          (void) UFile::chdir(cwd_save, false);
 
-         u__memcpy(pathname, pathname_save, (pathlen = pathlen_save), __PRETTY_FUNCTION__);
+         U_MEMCPY(pathname, pathname_save, (pathlen = pathlen_save));
 
          pathname[pathlen] = '\0';
          }

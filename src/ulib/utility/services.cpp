@@ -380,7 +380,7 @@ int UServices::passwd_cb(char* buf, int size, int rwflag, void* password)
 
    uint32_t written = u__strlen((const char*)password, __PRETTY_FUNCTION__);
 
-   u__memcpy(buf, (const char*)password, written+1, __PRETTY_FUNCTION__);
+   U_MEMCPY(buf, (const char*)password, written+1);
 
    U_INTERNAL_ASSERT_MINOR((int)written, size)
 

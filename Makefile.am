@@ -115,6 +115,7 @@ cleandist:
 		$(distdir)/tests/examples/nocat/.ht* \
 		$(distdir)/tests/examples/nocat/image \
 		$(distdir)/tests/examples/nocat/webif* \
+		$(distdir)/tests/examples/python/*.pyc \
 		$(distdir)/tests/examples/TSA/log \
 		$(distdir)/tests/examples/TSA/TSA \
 		$(distdir)/tests/examples/TSA/.rnd \

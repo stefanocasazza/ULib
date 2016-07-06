@@ -2321,7 +2321,11 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
+#  if defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
+      bool bpthread_time = true; 
+#  else
+      bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
+#  endif
 #else
    bool bpthread_time = false; 
 #endif

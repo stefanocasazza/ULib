@@ -170,16 +170,16 @@ ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(
       UString name = UFile::getName();
       uint32_t len = u__strlen(dir_log_gz, __PRETTY_FUNCTION__), sz = name.size();
 
-      u__memcpy(ptr, dir_log_gz, len, __PRETTY_FUNCTION__);
+      U_MEMCPY(ptr, dir_log_gz, len);
 
        ptr  += len;
       *ptr++ = '/';
 
       buf_path_compress->size_adjust(len + 1 + sz + len_suffix);
 
-      u__memcpy(ptr, name.data(), sz, __PRETTY_FUNCTION__);
-                ptr += sz;
-      u__memcpy(ptr, suffix, len_suffix, __PRETTY_FUNCTION__);
+      U_MEMCPY(ptr, name.data(), sz);
+               ptr +=            sz;
+      U_MEMCPY(ptr, suffix, len_suffix);
 
       index_path_compress = buf_path_compress->distance(ptr) + 1;
       }
@@ -628,8 +628,7 @@ void ULog::write(const struct iovec* iov, int n)
          if (len == 1) UFile::map[file_ptr++] = *ptr;
          else
             {
-         // U_MEMCPY( UFile::map + file_ptr, ptr, len);
-            u__memcpy(UFile::map + file_ptr, ptr, len, __PRETTY_FUNCTION__);
+            U_MEMCPY(UFile::map + file_ptr, ptr, len);
 
             file_ptr += len;
 
@@ -797,14 +796,14 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
          U_INTERNAL_ASSERT_MAJOR(length, 0)
          U_INTERNAL_ASSERT_MINOR(length, (int)sizeof(buffer1))
 
-         u__memcpy(buffer1, (const char*)iov[0].iov_base, length, __PRETTY_FUNCTION__);
+         U_MEMCPY(buffer1, (const char*)iov[0].iov_base, length);
          }
 
       if (iov[1].iov_len)
          {
          U_INTERNAL_ASSERT_MINOR(length+iov[1].iov_len, sizeof(buffer1))
 
-         u__memcpy(buffer1+length, (const char*)iov[1].iov_base, iov[1].iov_len, __PRETTY_FUNCTION__);
+         U_MEMCPY(buffer1+length, (const char*)iov[1].iov_base, iov[1].iov_len);
          }
 
       U_INTERNAL_ASSERT_MINOR(length+iov[1].iov_len+sz, sizeof(buffer1))
@@ -813,7 +812,7 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
          {
          U_INTERNAL_ASSERT_POINTER(ptr)
 
-         u__memcpy(buffer1+length+iov[1].iov_len, ptr, sz, __PRETTY_FUNCTION__);
+         U_MEMCPY(buffer1+length+iov[1].iov_len, ptr, sz);
          }
 
       sz += sz1;

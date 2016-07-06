@@ -11,10 +11,12 @@
 #  define _GLIBCXX_USE_C99_DYNAMIC 1
 #endif
 
+#ifdef U_STDCPP_ENABLE
 #undef min
 using std::min;
 #include <fstream>
 #include <iomanip>
+#endif
 
 #define TEST_MEMMOVE
 #define TEST_ASSIGN
@@ -51,19 +53,19 @@ static void test_memmove_01()
    char c3 = array2[1];
    char c4 = str_lit1[1];
 
-// memmove(array2, str_lit1, 0);
+// apex_memmove(array2, str_lit1, 0);
 
    U_ASSERT( array2[0] == c1 )
    U_ASSERT( str_lit1[0] == c2 )
 
-   memmove(array2, str_lit1, 1);
+   apex_memmove(array2, str_lit1, 1);
 
    U_ASSERT( array2[0] == c2 )
    U_ASSERT( str_lit1[0] == c2 )
    U_ASSERT( array2[1] == c3 )
    U_ASSERT( str_lit1[1] == c4 )
 
-   memmove(array2, str_lit1, 2);
+   apex_memmove(array2, str_lit1, 2);
 
    U_ASSERT( array2[0] == c2 )
    U_ASSERT( str_lit1[0] == c2 )
@@ -75,7 +77,7 @@ static void test_memmove_01()
    c2 = array1[0];
    U_ASSERT( c1 != c2 )
 
-   char* pc2 = (char*)memmove(array1, pc1, 0);
+   char* pc2 = (char*)apex_memmove(array1, pc1, 0);
 
    c3 = pc1[0];
    c4 = array1[0];
@@ -87,7 +89,7 @@ static void test_memmove_01()
    c2 = array1[0];
    char* pc3 = pc1;
 
-   pc2 = (char*)memmove(array1, pc1, 10);
+   pc2 = (char*)apex_memmove(array1, pc1, 10);
 
    c3 = pc1[0];
    c4 = array1[0];
@@ -1260,6 +1262,7 @@ static void test_stream_01()
    const UString str05;
          UString str10;
 
+#ifdef U_STDCPP_ENABLE
    // istream& operator>>(istream&, UString&)
    istrstream istrs01(U_STRING_TO_PARAM(str01));
    istrs01 >> str10;
@@ -1323,6 +1326,7 @@ static void test_stream_01()
    ostrstream ostrs01(buffer, sizeof(buffer));
    ostrs01 << str01 << '\0';
    U_ASSERT( str01 == ostrs01.str() )
+#endif
 }
 
 // testing UStringbuf::xsputn via stress testing with large UStrings
@@ -1334,6 +1338,7 @@ static void test_stream_04(unsigned size)
    UString str(size, 's');
    unsigned expected_size = (2 * (size + sizeof(char)));
    char buffer[expected_size+1];
+#ifdef U_STDCPP_ENABLE
    ostrstream oss(buffer, sizeof(buffer));
 
    // sanity checks
@@ -1351,6 +1356,7 @@ static void test_stream_04(unsigned size)
    U_ASSERT( oss.good() )
    UString str_tmp = UString(oss.str());
    U_ASSERT( str_tmp.size() == expected_size )
+#endif
 }
 
 // testing filebuf::xsputn via stress testing with large UStrings
@@ -1361,6 +1367,7 @@ static void test_stream_05(unsigned size)
 
    const char* filename = "inserters_extractors-1.txt";
    const char fillc = 'f';
+#ifdef U_STDCPP_ENABLE
    ofstream ofs(filename);
    UString str(size, fillc);
 
@@ -1397,6 +1404,7 @@ static void test_stream_05(unsigned size)
    U_ASSERT( count == (2 * size) )
 
    unlink(filename);
+#endif
 }
 
 // istrstream extractor properly size buffer based on
@@ -1411,11 +1419,13 @@ static void test_stream_06()
    unsigned i03 = str01.size();
    U_ASSERT( i01 - 1 == i03 )
 
+#ifdef U_STDCPP_ENABLE
    istrstream is(U_STRING_TO_PARAM(str01));
    UString str02;
    is >> str02;
    unsigned i05 = str02.size();
    U_ASSERT( i05 == i03 )
+#endif
 }
 
 // istream::operator>>(UString)
@@ -1426,6 +1436,7 @@ static void test_stream_07()
    U_TRACE(5, "test_stream_07()")
 
    const UString name("z6.cc");
+#ifdef U_STDCPP_ENABLE
    istrstream iss(U_STRING_TO_PARAM(name));
    int i = 0;
    UString s;
@@ -1433,12 +1444,14 @@ static void test_stream_07()
 
    U_ASSERT( i < 3 )
    U_ASSERT( static_cast<bool>(iss.rdstate() & ios::failbit) )
+#endif
 }
 
 static void test_stream_08()
 {
    U_TRACE(5, "test_stream_08()")
 
+#ifdef U_STDCPP_ENABLE
    istrstream istrm(U_CONSTANT_TO_PARAM("enero :2001"));
    int      year = 0;
    char     sep = 0;
@@ -1448,6 +1461,7 @@ static void test_stream_08()
    U_ASSERT( month.size() == 5 )
    U_ASSERT( sep == ':' )
    U_ASSERT( year == 2001 )
+#endif
 }
 
 static void test_stream_09()
@@ -1460,6 +1474,7 @@ static void test_stream_09()
    foo += "& love";
 
    char buffer[1024];
+#ifdef U_STDCPP_ENABLE
    ostrstream oss1(buffer, sizeof(buffer));
    oss1 << foo << '\0';
    U_ASSERT( foo == oss1.str() )
@@ -1470,6 +1485,7 @@ static void test_stream_09()
    oss2.put('\0');
    U_ASSERT( foo != oss2.str() )
    U_ASSERT( strlen(oss2.str()) == 20 )
+#endif
 }
 #endif
 
@@ -1586,6 +1602,7 @@ U_EXPORT main (int argc, char* argv[])
    int year = 0;
    char sep = 0;
    UString month(U_CAPACITY);
+#ifdef U_STDCPP_ENABLE
    istrstream istrm(U_CONSTANT_TO_PARAM("enero :2001"));
 
    istrm >> month
@@ -1599,6 +1616,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( month.size() == 5 )
    U_ASSERT( month.capacity() == (U_STACK_TYPE_4 - (1 + sizeof(UStringRep))) )
+#endif
 
    U_INTERNAL_DUMP("u__ct_tab['\\r'] = %d %B", u__ct_tab['\r'], u__ct_tab['\r'])
    U_INTERNAL_DUMP("u__ct_tab['\\n'] = %d %B", u__ct_tab['\n'], u__ct_tab['\n'])
@@ -2020,6 +2038,7 @@ U_EXPORT main (int argc, char* argv[])
    U_INTERNAL_ASSERT( U_STRING_FROM_CONSTANT("           \n\t\r").isWhiteSpace() )
    U_INTERNAL_ASSERT( U_STRING_FROM_CONSTANT("gXWUj7VekBdkycg3Z9kXuglV9plUl2cs4XkNLSDhe5VHRgE03e63VypMChCWDGI=").isBase64() )
 
+#ifdef U_STDCPP_ENABLE
    UString expressions;
 
    expressions = U_STRING_FROM_CONSTANT("2 + 3 + 5"); // = 10
@@ -2045,6 +2064,7 @@ U_EXPORT main (int argc, char* argv[])
 
 // expressions = U_STRING_FROM_CONSTANT("/pippo/pluto == UStringExt::expandEnvironmentVar('$HOME', 5, 0)/pluto"); // = false
 // cout << UStringExt::evalExpression(expressions, UString::getStringNull()) << "\n";
+#endif
 
 #ifdef USE_LIBPCRE
    // date (YYYY/MM/DD) --> (DD/MM/YYYY)
@@ -2112,6 +2132,7 @@ U_EXPORT main (int argc, char* argv[])
    U_ASSERT( z == U_STRING_FROM_CONSTANT("HOME=TSA\nOPENSSL=bin/openssl\nOPENSSL_CNF=CA/openssl.cnf\n'UTRACE=0 5M 0'\n"
                                          "TSA_CACERT=CA/cacert.pem\nTSA_CERT=CA/server.crt\nTSA_KEY=CA/server.key\n") )
 
+#ifdef U_STDCPP_ENABLE
    istrstream istrs02(U_CONSTANT_TO_PARAM("\"DEBUG=1 \\\n"
                                           "  FW_CONF=etc/nodog_fw.conf \\\n"
                                           "  AllowedWebHosts=159.213.0.0/16 \\\n"
@@ -2129,6 +2150,7 @@ U_EXPORT main (int argc, char* argv[])
                                          "'InternalDevice=ath0 ath0'\n"
                                          "'LocalNetwork=10.30.1.0/24 10.1.0.1/16'\n"
                                          "'AuthServiceAddr=http://www.auth-firenze.com/login http://localhost'\n") )
+#endif
 
    y = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("LocalNetwork"), &z);
 

@@ -481,6 +481,7 @@ U_EXPORT main (int argc, char* argv[])
 
    // RING BUFFER
 
+#if defined(U_RING_BUFFER) && !defined(U_STATIC_ONLY)
    UVector<UString> y1(5);
 
    tmp = U_STRING_FROM_CONSTANT("riga 1");
@@ -516,4 +517,5 @@ U_EXPORT main (int argc, char* argv[])
    y1.get(tmp);
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("riga 4") )
    U_ASSERT( y1.get(tmp) == false )
+#endif
 }

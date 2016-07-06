@@ -142,7 +142,6 @@ userver {
 # CACHE_FILE_STORE           pathfile of memory cache stored on filesystem
 #
 # CGI_TIMEOUT                timeout for cgi execution
-# MOUNT_POINT                mount point application (to adjust var SCRIPT_NAME)
 # VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine, as differentiated by their apparent hostname 
 # DIGEST_AUTHENTICATION      flag authentication method (yes = digest, no = basic)
 #
@@ -160,6 +159,22 @@ userver {
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # LIMIT_REQUEST_BODY         restricts the total size of the HTTP request body sent from the client
 # REQUEST_READ_TIMEOUT       set timeout for receiving requests
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+#
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# PHP
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# MOUNT_POINT        mount point application (to adjust var SCRIPT_NAME)
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# RUBY
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# RUBY_LIBDIR			directory to add to the ruby libdir search path
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# PYTHON
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# PY_PROJECT_APP		full python name of WSGI entry point expected in form <module>.<app>
+# PY_PROJECT_ROOT		python module search root; relative to workdir
+# PY_VIRTUALENV_PATH
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 
 http {

@@ -370,7 +370,7 @@ unsigned char* UHTTP2::hpackEncodeString(unsigned char* dst, const char* src, ui
 asis: *dst = '\0';
        dst = hpackEncodeInt(dst, len, (1<<7)-1);
 
-      u__memcpy(dst, src, len, __PRETTY_FUNCTION__);
+      U_MEMCPY(dst, src, len);
       }
    else
       {
@@ -436,7 +436,7 @@ asis: *dst = '\0';
       *dst = '\x80';
        dst = hpackEncodeInt(dst, (len = _dst-_dst_start), (1<<7)-1);
 
-      u__memcpy(dst, _dst_start, len, __PRETTY_FUNCTION__);
+      U_MEMCPY(dst, _dst_start, len);
       }
 
 #ifdef DEBUG
@@ -1673,7 +1673,7 @@ loop:
                                                        0, 0, 0, 0, // stream id
                                                        0, 0, 0, 0, 0, 0, 0, 0 };
 
-            if (*(uint64_t*)frame.payload) (void) u__memcpy(buffer+HTTP2_FRAME_HEADER_SIZE, frame.payload, 8, __PRETTY_FUNCTION__);
+            if (*(uint64_t*)frame.payload) U_MEMCPY(buffer+HTTP2_FRAME_HEADER_SIZE, frame.payload, 8);
 
             if (USocketExt::write(UServer_Base::csocket, buffer, sizeof(buffer), UServer_Base::timeoutMS) != sizeof(buffer))
                {
@@ -2494,7 +2494,7 @@ void UHTTP2::handlerResponse()
 
       char* ptr0 = ptr + sz0;
 
-      (void) U_SYSCALL(memmove, "%p,%p,%u", ptr0+HTTP2_FRAME_HEADER_SIZE, ptr0, sz1); // void* dest, const void* src, ...
+      (void) U_SYSCALL(apex_memmove, "%p,%p,%u", ptr0+HTTP2_FRAME_HEADER_SIZE, ptr0, sz1); // void* dest, const void* src, ...
 
       *(uint32_t*) ptr0   = htonl(sz1 << 8);
                    ptr0[3] = CONTINUATION;
@@ -2708,7 +2708,7 @@ int UHTTP2::handlerRequest()
 
       U_http_info.uri = UClientImage_Base::cbuffer;
 
-      (void) u__memcpy(UClientImage_Base::cbuffer, UClientImage_Base::request->c_pointer(UClientImage_Base::uri_offset), sz, __PRETTY_FUNCTION__);
+      U_MEMCPY(UClientImage_Base::cbuffer, UClientImage_Base::request->c_pointer(UClientImage_Base::uri_offset), sz);
 
       U_INTERNAL_DUMP("U_http_info.uri(%u) = %.*S", U_http_info.uri_len, U_http_info.uri_len, U_http_info.uri)
       }

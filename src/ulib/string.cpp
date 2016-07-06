@@ -1339,7 +1339,7 @@ void UString::moveToBeginDataInBuffer(uint32_t n)
 
    rep->_length -= n;
 
-   (void) U_SYSCALL(memmove, "%p,%p,%u", (void*)rep->str, rep->str + n, rep->_length);
+   (void) U_SYSCALL(apex_memmove, "%p,%p,%u", (void*)rep->str, rep->str + n, rep->_length);
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -1454,7 +1454,7 @@ char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
    else if (how_much > 0 &&
             n1 != n2)
       {
-      (void) U_SYSCALL(memmove, "%p,%p,%u", str + pos + n2, src, how_much);
+      (void) U_SYSCALL(apex_memmove, "%p,%p,%u", str + pos + n2, src, how_much);
       }
 
    U_ASSERT(uniq())
@@ -1480,7 +1480,7 @@ void UString::unQuote()
 
       char* ptr = (char*) rep->str;
 
-      (void) U_SYSCALL(memmove, "%p,%p,%u", ptr, ptr + 1, len);
+      (void) U_SYSCALL(apex_memmove, "%p,%p,%u", ptr, ptr + 1, len);
 
       ptr[(rep->_length = len)] = '\0';
       }

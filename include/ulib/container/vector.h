@@ -77,7 +77,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UVector<void*>, "%u", n)
 
-#  ifdef U_RING_BUFFER
+#  if defined(U_RING_BUFFER) && !defined(U_STATIC_ONLY)
       head = tail = 0;
 #  endif
 
@@ -207,7 +207,7 @@ public:
       U_INTERNAL_ASSERT_MINOR(pos, _length)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
-      if (--_length) (void) U_SYSCALL(memmove, "%p,%p,%u", vec + pos, vec + pos + 1, (_length - pos) * sizeof(void*));
+      if (--_length) (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + pos, vec + pos + 1, (_length - pos) * sizeof(void*));
       }
 
    void erase(uint32_t first, uint32_t _last) // erase [first,last[
@@ -223,7 +223,7 @@ public:
 
       uint32_t new_length = (_length - (_last - first));
 
-      if (new_length) (void) U_SYSCALL(memmove, "%p,%p,%u", vec + first, vec + _last, (_length - _last) * sizeof(void*));
+      if (new_length) (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + first, vec + _last, (_length - _last) * sizeof(void*));
 
       _length = new_length;
       }
@@ -312,7 +312,7 @@ public:
 
    void move(UVector<void*>& source); // add to end and reset source
 
-#ifdef U_RING_BUFFER
+#if defined(U_RING_BUFFER) && !defined(U_STATIC_ONLY)
    bool isEmptyRingBuffer()
       {
       U_TRACE_NO_PARAM(0, "UVector<void*>::isEmptyRingBuffer()")
@@ -381,7 +381,7 @@ public:
 protected:
    const void** vec;
    uint32_t _length, _capacity;
-#ifdef U_RING_BUFFER
+#if defined(U_RING_BUFFER) && !defined(U_STATIC_ONLY)
    volatile uint32_t tail; //  input index
    volatile uint32_t head; // output index
 #endif
@@ -589,7 +589,7 @@ public:
       _length = n;
       }
 
-#ifdef U_RING_BUFFER
+#if defined(U_RING_BUFFER) && !defined(U_STATIC_ONLY)
    bool put(const T* elem) // queue an element at the end
       {
       U_TRACE(0, "UVector<T*>::put(%p)", elem)
@@ -1077,7 +1077,7 @@ public:
       UVector<UStringRep*>::assign(n, str.rep);
       }
 
-#ifdef U_RING_BUFFER
+#if defined(U_RING_BUFFER) && !defined(U_STATIC_ONLY)
    bool put(const UString& str) // queue an element at the end
       {
       U_TRACE(0, "UVector<UString>::put(%V)", str.rep)

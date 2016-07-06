@@ -464,10 +464,14 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 
 /* Optimization if it is enough a resolution of one second */
 
-#ifdef ENABLE_THREAD
-#  define U_gettimeofday { if (u_pthread_time == 0) u_now->tv_sec = time(0); }
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
+#  if defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
+#     define U_gettimeofday
+#  else
+#     define U_gettimeofday { if (u_pthread_time == 0) u_now->tv_sec = time(0); }
+#  endif
 #else
-#  define U_gettimeofday                            u_now->tv_sec = time(0);
+#  define U_gettimeofday u_now->tv_sec = time(0);
 #endif
 
 /* To print size of class */

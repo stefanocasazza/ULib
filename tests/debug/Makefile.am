@@ -8,22 +8,21 @@ MAINTAINERCLEANFILES	= Makefile.in
 
 DEFAULT_INCLUDES =  -I. -I$(top_srcdir)/include
 
-PRG 	= test_trace test_memerror test_objectDB
-TESTS = trace.test memerror.test objectDB.test simerr.test
+PRG 	= test_trace test_memerror
+TESTS = trace.test memerror.test simerr.test
 
 test_trace_SOURCES 	 = test_trace.cpp
 test_memerror_SOURCES = test_memerror.cpp
-test_objectDB_SOURCES = test_objectDB.cpp
 
-if STATIC_ONLY
-else
-PRG 	+= test_objectIO
-TESTS += objectIO.test
+if STDCPP
+PRG 	+= test_objectDB test_objectIO
+TESTS += objectDB.test objectIO.test
+test_objectDB_SOURCES = test_objectDB.cpp
 test_objectIO_SOURCES = test_objectIO.cpp
 endif
 
-check_PROGRAMS  = $(PRG)
-TESTS 			+= ../reset.color
+check_PROGRAMS = $(PRG)
+TESTS 		  += ../reset.color
 
 LDADD = @ULIBS@ $(top_builddir)/src/ulib/lib@ULIB@.la @ULIB_LIBS@
 

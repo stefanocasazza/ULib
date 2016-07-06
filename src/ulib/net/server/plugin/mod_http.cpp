@@ -79,9 +79,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // CACHE_FILE_STORE       pathfile of memory cache stored on filesystem
    //
    // CGI_TIMEOUT            timeout for cgi execution
-   // MOUNT_POINT            mount point application (to adjust var SCRIPT_NAME)
-   // VIRTUAL_HOST           flag to activate practice of maintaining more than one server on one machine,
-   //                        as differentiated by their apparent hostname
+   // VIRTUAL_HOST           flag to activate practice of maintaining more than one server on one machine, as differentiated by their apparent hostname
    // DIGEST_AUTHENTICATION  flag authentication method (yes = digest, no = basic)
    //
    // ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add "Cache control: public" directive)
@@ -100,6 +98,22 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
    // LIMIT_REQUEST_BODY   restricts the total size of the HTTP request body sent from the client
    // REQUEST_READ_TIMEOUT set timeout for receiving requests
    // ------------------------------------------------------------------------------------------------------------------------------------------------
+   //
+   // ------------------------------------------------------------------------------------------------------------------------------------------------
+   // PHP
+   // ------------------------------------------------------------------------------------------------------------------------------------------------
+   // MOUNT_POINT          mount point application (to adjust var SCRIPT_NAME)
+   // ------------------------------------------------------------------------------------------------------------------------------------------------
+   // RUBY
+   // ------------------------------------------------------------------------------------------------------------------------------------------------
+   // RUBY_LIBDIR          directory to add to the ruby libdir search path
+   // ------------------------------------------------------------------------------------------------------------------------------------------------
+   // PYTHON
+   // ------------------------------------------------------------------------------------------------------------------------------------------------
+   // PY_PROJECT_APP       full python name of WSGI entry point expected in form <module>.<app>
+   // PY_PROJECT_ROOT      python module search root; relative to workdir
+   // PY_VIRTUALENV_PATH
+   // ------------------------------------------------------------------------------------------------------------------------------------------------
 
    if (cfg.loadTable())
       {
@@ -110,10 +124,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
       bool bvirtual_host = cfg.readBoolean(U_CONSTANT_TO_PARAM("VIRTUAL_HOST"));
 
 #  ifndef U_ALIAS
-      if (bvirtual_host)
-         {
-         U_SRV_LOG("WARNING: Sorry, I can't enable virtual hosting because alias URI support is missing, please recompile ULib");
-         }
+      if (bvirtual_host) U_SRV_LOG("WARNING: Sorry, I can't enable virtual hosting because alias URI support is missing, please recompile ULib");
 #  else
       x = cfg.at(U_CONSTANT_TO_PARAM("MAINTENANCE_MODE"));
 
@@ -140,10 +151,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
             UVector<UString> vec(x);
             uint32_t n = vec.size();
 
-            if (n < 2)
-               {
-               U_ERROR("UHttpPlugIn::handlerConfig(): vector ALIAS malformed: %S", x.rep);
-               }
+            if (n < 2) U_ERROR("UHttpPlugIn::handlerConfig(): vector ALIAS malformed: %S", x.rep);
 
             U_INTERNAL_ASSERT_EQUALS(UHTTP::valias, 0)
 
@@ -159,10 +167,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          UVector<UString> vec(x);
          uint32_t n = vec.size();
 
-         if (n < 2)
-            {
-            U_ERROR("UHttpPlugIn::handlerConfig(): vector REWRITE_RULE_NF malformed: %S", x.rep);
-            }
+         if (n < 2) U_ERROR("UHttpPlugIn::handlerConfig(): vector REWRITE_RULE_NF malformed: %S", x.rep);
 
          U_INTERNAL_ASSERT_EQUALS(UHTTP::vRewriteRule, 0)
 
@@ -271,17 +276,6 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          U_NEW(UString, UHTTP::uri_strict_transport_security_mask, UString(x));
          }
 #  endif
-
-      // MOUNT POINT
-
-      x = cfg.at(U_CONSTANT_TO_PARAM("MOUNT_POINT"));
-
-      if (x)
-         {
-         U_INTERNAL_ASSERT_EQUALS(UHTTP::mount_point, 0)
-
-         U_NEW(UString, UHTTP::mount_point, UString(x));
-         }
 
       // INOTIFY
 
@@ -413,6 +407,55 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          }
 #  endif
 
+      x = cfg.at(U_CONSTANT_TO_PARAM("MOUNT_POINT"));
+
+      if (x)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UHTTP::php_mount_point, 0)
+
+         U_NEW(UString, UHTTP::php_mount_point, UString(x));
+         }
+
+#  ifdef USE_RUBY
+      x = cfg.at(U_CONSTANT_TO_PARAM("RUBY_LIBDIR")); // directory to add to the ruby libdir search path
+
+      if (x)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UHTTP::ruby_libdir, 0)
+
+         U_NEW(UString, UHTTP::ruby_libdir, UString(x));
+         }
+#  endif
+
+#  ifdef USE_PYTHON
+      x = cfg.at(U_CONSTANT_TO_PARAM("PY_PROJECT_APP")); // full python name of WSGI entry point expected in form <module>.<app> 
+
+      if (x)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UHTTP::py_project_app, 0)
+
+         U_NEW(UString, UHTTP::py_project_app, UString(x));
+         }
+
+      x = cfg.at(U_CONSTANT_TO_PARAM("PY_PROJECT_ROOT")); // python module search root; relative to workdir
+
+      if (x)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UHTTP::py_project_root, 0)
+
+         U_NEW(UString, UHTTP::py_project_root, UString(x));
+         }
+
+      x = cfg.at(U_CONSTANT_TO_PARAM("PY_VIRTUALENV_PATH"));
+
+      if (x)
+         {
+         U_INTERNAL_ASSERT_EQUALS(UHTTP::py_virtualenv_path, 0)
+
+         U_NEW(UString, UHTTP::py_virtualenv_path, UString(x));
+         }
+#  endif
+
       U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
       }
 
@@ -431,24 +474,19 @@ int UHttpPlugIn::handlerInit()
       if (U_SYSCALL_NO_PARAM(SSLeay) < OPENSSL_VERSION_NUMBER)
          {
          U_ERROR("SSL: this version of mod_http was compiled against a newer library (%s, "
-                 "version currently loaded is %s) - may result in undefined or erroneous behavior", OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
+                 "version currently loaded is %s) - may result in undefined or erroneous behavior",
+                 OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
          }
 
-/*
-#  ifdef OPENSSL_FIPS
-      if (U_SYSCALL_NO_PARAM(FIPS_mode) == false)
-         {
-         if (U_SYSCALL(FIPS_mode_set, "%d", 1))
-            {
-            U_SRV_LOG("SSL: Operating in SSL FIPS mode");
-            }
-         else
-            {
-            U_WARNING("SSL: FIPS mode failed");
-            }
-         }
-#  endif
-*/
+/**
+ * #ifdef OPENSSL_FIPS
+ * if (U_SYSCALL_NO_PARAM(FIPS_mode) == false)
+ *    {
+ *    if (U_SYSCALL(FIPS_mode_set, "%d", 1)) U_SRV_LOG("SSL: Operating in SSL FIPS mode");
+ *    else                                   U_WARNING("SSL: FIPS mode failed");
+ *    }
+ * #endif
+ */
 
    // Configure TLS extensions support
 
@@ -507,7 +545,7 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
                        UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base,
                        UClientImage_Base::iov_vec[1].iov_len, UClientImage_Base::iov_vec[1].iov_base)
 
-      u__memcpy(UClientImage_Base::iov_sav, UClientImage_Base::iov_vec, sizeof(struct iovec) * 4, __PRETTY_FUNCTION__);
+      U_MEMCPY(UClientImage_Base::iov_sav, UClientImage_Base::iov_vec, sizeof(struct iovec) * 4);
 
       // NB: we can shortcut the http request processing...
 
@@ -566,10 +604,13 @@ int UHttpPlugIn::handlerStop()
    UHTTP::bcallInitForAllUSP = false;
 
 #ifdef USE_PHP
-   if (UHTTP::php_embed) UHTTP::php_embed->php_end();
+   if (UHTTP::php_embed) UHTTP::php_embed->endPHP();
 #endif
 #ifdef USE_RUBY
-   if (UHTTP::ruby_embed) UHTTP::ruby_embed->ruby_end();
+   if (UHTTP::ruby_embed) UHTTP::ruby_embed->endRUBY();
+#endif
+#ifdef USE_PYTHON
+   if (UHTTP::python_embed) UHTTP::python_embed->endPYTHON();
 #endif
 
    U_RESET_MODULE_NAME;

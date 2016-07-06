@@ -125,9 +125,11 @@ extern "C" {
    inline void pthread_mutex_lock(pthread_mutex_t* mutex)          {      EnterCriticalSection(mutex); }
    inline void pthread_mutex_unlock(pthread_mutex_t* mutex)        {      LeaveCriticalSection(mutex); }
 #endif
+   /*
    inline char* strdup(  const char* s)                            { return _strdup(s); }
    inline int   stricmp( const char* s1, const char* s2)           { return _stricmp(s1, s2); }
    inline int   strnicmp(const char* s1, const char* s2, size_t l) { return _strnicmp(s1, s2, l); }
+   */
 #ifdef __cplusplus
 }
 #endif
