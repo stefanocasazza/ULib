@@ -39,7 +39,6 @@ int UTsaPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UTsaPlugIn::handlerConfig(%p)", &cfg)
 
-   // -----------------------------------------------
    // Perform registration of userver method
    // -----------------------------------------------
    // COMMAND                      command to execute

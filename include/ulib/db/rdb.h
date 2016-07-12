@@ -70,8 +70,6 @@ class URDBClientImage;
 class U_EXPORT URDB : public UCDB {
 public:
 
-   // COSTRUTTORI
-
    URDB(int _ignore_case) : UCDB(_ignore_case)
       {
       U_TRACE_REGISTER_OBJECT(0, URDB, "%d", _ignore_case)
@@ -191,8 +189,6 @@ public:
 
    int substitute(const UString& _key, const UString& new_key, const UString& _data, int flag = RDB_INSERT);
 
-   // Ricerche
-
    bool fetch();
    bool find(const UString& _key)                   { return find(U_STRING_TO_PARAM(_key)); }
    bool find(const char*    _key, uint32_t keylen);
@@ -271,9 +267,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:
@@ -405,8 +401,6 @@ private:
 
 template <> class U_EXPORT URDBObjectHandler<UDataStorage*> : public URDB {
 public:
-
-   // COSTRUTTORI
 
    URDBObjectHandler(const UString& pathdb, int _ignore_case, const UDataStorage* ptr) : URDB(pathdb, _ignore_case)
       {

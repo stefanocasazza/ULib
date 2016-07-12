@@ -177,6 +177,8 @@ struct U_EXPORT UServices {
       { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
 
 #ifdef USE_LIBSSL
+   static UString createToken(int alg = U_HASH_SHA256);
+
    static void generateDigest(int alg, unsigned char* data, uint32_t size);
 
    static void generateDigest(int alg, const UString& data) { generateDigest(alg, (unsigned char*)U_STRING_TO_PARAM(data)); }

@@ -18,10 +18,10 @@
 #include <ulib/net/rpc/rpc_envelope.h>
 
 /**
-   @class URPCParser
-
-   @brief URPCParser is a parser RPC
-*/
+ * @class URPCParser
+ *
+ * @brief URPCParser is a parser RPC
+ */
 
 class URPCObject;
 
@@ -34,8 +34,6 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
 
     URPCParser(UVector<UString>* arg = 0);
 

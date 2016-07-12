@@ -51,7 +51,7 @@ UString URPCFault::getFaultCode()
     * Receiver: The message could not be processed for reasons attributable to the processing of the message
     * rather than to the contents of the message itself. For example, processing could include
     * communicating with an upstream SOAP node, which did not respond.  The message could succeed
-    * if resent at a later point in time.
+    * if resent at a later point in time
     * ----------------------------------------------------------------------------------------------------
     */
 

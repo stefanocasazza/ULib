@@ -88,8 +88,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UMimeHeader()
       {
       U_TRACE_REGISTER_OBJECT(0, UMimeHeader, "", 0)
@@ -109,8 +107,6 @@ public:
 
    UString      erase(const UString& key) { return table.erase(key); }
    UString operator[](const UString& key) { return table[key]; }
-
-   // VARIE
 
    uint32_t parse(const char* ptr, uint32_t n);
 
@@ -287,6 +283,7 @@ public:
       }
 
    /**
+    * ===================================================================================================================
     * Content types:
     *   "text"        / [ "plain" (RFC-1521), "richtext" (RFC-1341), "enriched", "html", "xvcard", "vcal", "rtf", "xml" ],
     *   "audio"       / [ "basic" ],
@@ -296,6 +293,7 @@ public:
     *   "multipart"   / [ "mixed", "alternative", "digest", "parallel", "signed", "encrypted", "report", "form-data" ],
     *   "application" / [ "postscript", "octet-stream", "pgp-signature", "pgp-encrypted", "pgp-clearsigned",
     *                     "pkcs7-signature", "pkcs7-mime", "ms-tnef", "x-www-form-urlencoded" ]
+    * ===================================================================================================================
     */
 
    UString getContentType()
@@ -346,31 +344,16 @@ public:
    static UString getCharSet(      const UString& content_type); // get charset/content-type info
    static UString shortContentType(const UString& content_type);
 
-   // VARIE
+   static bool isMessage(    const UString& content_type) { return isContentType(content_type, U_CONSTANT_TO_PARAM("message")); }
+   static bool isMultipart(  const UString& content_type) { return isContentType(content_type, U_CONSTANT_TO_PARAM("multipart")); }
+   static bool isApplication(const UString& content_type) { return isContentType(content_type, U_CONSTANT_TO_PARAM("application")); }
+   static bool isXML(        const UString& content_type) { return isContentType(content_type, U_CONSTANT_TO_PARAM("text/xml")); }
+   static bool isText(       const UString& content_type) { return isContentType(content_type, U_STRING_TO_PARAM(*UString::str_txt_plain)); }
+   static bool isRFC822(     const UString& content_type) { return isContentType(content_type, U_STRING_TO_PARAM(*UString::str_msg_rfc)); }
 
-   static bool isMessage(const UString& content_type)
-      { return isContentType(content_type, U_CONSTANT_TO_PARAM("message")); }
-
-   static bool isMultipart(const UString& content_type)
-      { return isContentType(content_type, U_CONSTANT_TO_PARAM("multipart")); }
-
-   static bool isApplication(const UString& content_type)
-      { return isContentType(content_type, U_CONSTANT_TO_PARAM("application")); }
-
-   static bool isXML(const UString& content_type)
-      { return isContentType(content_type, U_CONSTANT_TO_PARAM("text/xml")); }
-
-   static bool isText(const UString& content_type)
-      { return isContentType(content_type, U_STRING_TO_PARAM(*UString::str_txt_plain)); }
-
-   static bool isRFC822(const UString& content_type)
-      { return isContentType(content_type, U_STRING_TO_PARAM(*UString::str_msg_rfc)); }
-
-   static bool isPKCS7(const UString& ctype)             { return isType(ctype, U_CONSTANT_TO_PARAM("pkcs7")); }
-   static bool isURLEncoded(const UString& ctype)        { return isType(ctype, U_CONSTANT_TO_PARAM("urlencoded")); }
-   static bool isMultipartFormData(const UString& ctype) { return isContentType(ctype, U_CONSTANT_TO_PARAM("multipart/form-data")); }
-
-   // VARIE
+   static bool isPKCS7(            const UString& ctype)  { return isType(ctype, U_CONSTANT_TO_PARAM("pkcs7")); }
+   static bool isURLEncoded(       const UString& ctype)  { return isType(ctype, U_CONSTANT_TO_PARAM("urlencoded")); }
+   static bool isMultipartFormData(const UString& ctype)  { return isContentType(ctype, U_CONSTANT_TO_PARAM("multipart/form-data")); }
 
    static UString getBoundary(const UString& content_type)
       {
@@ -433,9 +416,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:

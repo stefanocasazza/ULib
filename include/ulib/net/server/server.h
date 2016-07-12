@@ -609,12 +609,8 @@ protected:
    static void initThrottlingServer();
 #endif
 
-   // COSTRUTTORI
-
             UServer_Base(UFileConfig* pcfg);
    virtual ~UServer_Base();
-
-   // VARIE
 
 #ifndef U_LOG_DISABLE
    static uint32_t setNumConnection(char* buffer);
@@ -773,8 +769,7 @@ private:
 #endif
 };
 
-#ifdef USE_LIBSSL // specializzazione con USSLSocket
-
+#ifdef USE_LIBSSL
 template <> class U_EXPORT UServer<USSLSocket> : public UServer_Base {
 public:
 
@@ -788,7 +783,7 @@ public:
       if (pcfg &&
           bssl == false)
          {
-         U_ERROR("You need to set bssl before loading the configuration");
+         U_ERROR("You need to set bssl var before loading the configuration");
          }
 #  endif
 
@@ -846,6 +841,5 @@ private:
    UServer<USSLSocket>& operator=(const UServer<USSLSocket>&)        { return *this; }
 #endif
 };
-
 #endif
 #endif

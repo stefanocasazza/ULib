@@ -47,11 +47,11 @@ template <class T> inline void UString2Object(const char* t, uint32_t tlen, T& o
 
    *UObjectIO::is >> object;
 
-#  ifdef HAVE_OLD_IOSTREAM
+# ifdef HAVE_OLD_IOSTREAM
    delete UObjectIO::is;
-#  else
+# else
    UObjectIO::is->~istrstream();
-#  endif
+# endif
 #endif
 }
 
@@ -59,7 +59,9 @@ template <class T> inline char* UObject2String(T& object)
 {
    U_INTERNAL_TRACE("UObject2String(%p)", &object)
 
-#ifdef U_STDCPP_ENABLE
+#ifndef U_STDCPP_ENABLE
+   return 0;
+#else
    U_INTERNAL_ASSERT_POINTER(UObjectIO::os)
 
    *UObjectIO::os << object;
@@ -67,8 +69,6 @@ template <class T> inline char* UObject2String(T& object)
    UObjectIO::output();
 
    return UObjectIO::buffer_output;
-#else
-   return 0;
 #endif
 }
 
@@ -76,14 +76,14 @@ template <class T> inline UStringRep* UObject2StringRep(T& object, bool bcopy)
 {
    U_INTERNAL_TRACE("UObject2StringRep(%p,%b)", &object, bcopy)
 
-#ifdef U_STDCPP_ENABLE
+#ifndef U_STDCPP_ENABLE
+   return 0;
+#else
    U_INTERNAL_ASSERT_POINTER(UObjectIO::os)
 
    *UObjectIO::os << object;
 
    return UObjectIO::create(bcopy);
-#else
-   return 0;
 #endif
 }
 
@@ -91,11 +91,11 @@ template <class T> inline uint32_t UObject2String(T& object, char* _buffer, uint
 {
    U_INTERNAL_TRACE("UObject2String(%p,%p,%u)", &object, _buffer, buffer_size)
 
+#ifndef U_STDCPP_ENABLE
+   return 0;
+#else
    uint32_t len;
 
-#ifndef U_STDCPP_ENABLE
-   len = 0;
-#else
    ostrstream _os(_buffer, buffer_size);
 
    _os << object;
@@ -103,18 +103,20 @@ template <class T> inline uint32_t UObject2String(T& object, char* _buffer, uint
    len = _os.pcount();
 
    U_INTERNAL_PRINT("_os.pcount() = %u", len)
-#endif
 
    U_INTERNAL_ASSERT_MINOR(len, buffer_size)
 
    return len;
+#endif
 }
 
 #ifdef U_OBJECT_TO_TRACE
 #undef U_OBJECT_TO_TRACE
 #endif
 
-#ifdef U_STDCPP_ENABLE
+#ifndef U_STDCPP_ENABLE
+#  define U_OBJECT_TO_TRACE(obj) "not available"
+#else
 template <class T> inline char* U_OBJECT_TO_TRACE(T& object)
 {
    U_INTERNAL_TRACE("U_OBJECT_TO_TRACE(%p)", &object)
@@ -134,8 +136,6 @@ template <class T> inline char* U_OBJECT_TO_TRACE(T& object)
 
    return str;
 }
-#else
-#  define U_OBJECT_TO_TRACE(obj) "not available"
 #endif
 
 #endif

@@ -81,8 +81,6 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UUnixSocket)
       }
 
-   // VARIE
-
    static void setPath(const char* pathname);
 
    // VIRTUAL METHOD

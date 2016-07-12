@@ -23,8 +23,8 @@
 #define U_RPC_ENCODE_RES(tok,res)   URPCMethod::encoder->encodeResponse(tok, res)
 
 /**
-   @class URPCEncoder
-*/
+ * @class URPCEncoder
+ */
 
 class U_EXPORT URPCEncoder {
 public:
@@ -35,8 +35,6 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
 
    URPCEncoder() : buffer(U_CAPACITY), encodedValue(U_CAPACITY)
       {
@@ -49,8 +47,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, URPCEncoder)
       }
-
-   // dipendenze di USOAPParser...
 
    void clearData()
       {

@@ -198,7 +198,7 @@ UString UStringExt::numberToString(uint64_t n)
 {
    U_TRACE(0, "UStringExt::numberToString(%llu)", n)
 
-   int i;
+   unsigned int i;
    UString x(32U);
    uint64_t u = 1024ULL;
 

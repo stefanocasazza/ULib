@@ -1,4 +1,4 @@
-// ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ULib - c++ library
@@ -9,9 +9,11 @@
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================
+// ============================================================================ */
 
-// #define DEBUG_DEBUG
+/*
+#define DEBUG_DEBUG
+*/
 
 #include <ulib/base/coder/gzio.h>
 
@@ -59,7 +61,8 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
    int err;
    z_stream stream;
 
-   /* stream.zalloc    = // Set zalloc, zfree, and opaque to Z_NULL so  
+   /**
+    * stream.zalloc    = // Set zalloc, zfree, and opaque to Z_NULL so  
     * stream.zfree     = // that when we call deflateInit2 they will be  
     * stream.opaque    = // updated to use default allocation functions.  
     * stream.total_out = // Total number of output bytes produced so far  
@@ -71,7 +74,8 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
 
    U_INTERNAL_ASSERT_POINTER(input)
 
-   /* Before we can begin compressing (aka "deflating") data using the zlib 
+   /**
+    * Before we can begin compressing (aka "deflating") data using the zlib 
     * functions, we must initialize zlib. Normally this is done by calling the 
     * deflateInit() function; in this case, however, we'll use deflateInit2() so 
     * that the compressed data will have gzip headers. This will make it easy to 
@@ -93,34 +97,35 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
    stream.workspace = workspace; /* Set the workspace */
 #endif
 
-   /* Initialize the zlib deflation (i.e. compression) internals with deflateInit2(). 
-    * The parameters are as follows: 
-
-     z_streamp strm - Pointer to a zstream struct 
-     int level      - Compression level. Must be Z_DEFAULT_COMPRESSION, or between 
-                      0 and 9: 1 gives best speed, 9 gives best compression, 0 gives 
-                      no compression. 
-     int method     - Compression method. Only method supported is "Z_DEFLATED". 
-     int windowBits - Base two logarithm of the maximum window size (the size of 
-                      the history buffer). It should be in the range 8..15.
-                      windowBits can also be -8..-15 for raw deflate. In this case,
-                      -windowBits determines the window size. deflate() will then
-                      generate raw deflate data with no zlib header or trailer, and
-                      will not compute an adler32 check value.
-                      Add 16 to windowBits to write a simple gzip header and trailer
-                      around the compressed data instead of a zlib wrapper. The gzip
-                      header will have no file name, no extra data, no comment, no
-                      modification time (set to zero), no header crc, and the
-                      operating system will be set to 255 (unknown). 
-     int memLevel   - Amount of memory allocated for internal compression state. 
-                      1 uses minimum memory but is slow and reduces compression 
-                      ratio; 9 uses maximum memory for optimal speed. Default value 
-                      is 8. 
-     int strategy   - Used to tune the compression algorithm. Use the value 
-                      Z_DEFAULT_STRATEGY for normal data, Z_FILTERED for data 
-                      produced by a filter (or predictor), or Z_HUFFMAN_ONLY to 
-                      force Huffman encoding only (no string match)
-   */
+   /**
+    * Initialize the zlib deflation (i.e. compression) internals with deflateInit2().
+    *
+    * The parameters are as follows:
+    *
+    * z_streamp strm - Pointer to a zstream struct 
+    * int level      - Compression level. Must be Z_DEFAULT_COMPRESSION, or between 0 and 9:
+    *                  1 gives best speed, 9 gives best compression, 0 gives no compression. 
+    *
+    * int method     - Compression method. Only method supported is "Z_DEFLATED". 
+    * int windowBits - Base two logarithm of the maximum window size (the size of 
+    *                  the history buffer). It should be in the range 8..15.
+    *                  windowBits can also be -8..-15 for raw deflate. In this case,
+    *                  -windowBits determines the window size. deflate() will then
+    *                  generate raw deflate data with no zlib header or trailer, and
+    *                  will not compute an adler32 check value.
+    *                  Add 16 to windowBits to write a simple gzip header and trailer
+    *                  around the compressed data instead of a zlib wrapper. The gzip
+    *                  header will have no file name, no extra data, no comment, no
+    *                  modification time (set to zero), no header crc, and the
+    *                  operating system will be set to 255 (unknown). 
+    * int memLevel   - Amount of memory allocated for internal compression state. 
+    *                  1 uses minimum memory but is slow and reduces compression 
+    *                  ratio; 9 uses maximum memory for optimal speed. Default value is 8. 
+    * int strategy   - Used to tune the compression algorithm. Use the value 
+    *                  Z_DEFAULT_STRATEGY for normal data, Z_FILTERED for data 
+    *                  produced by a filter (or predictor), or Z_HUFFMAN_ONLY to 
+    *                  force Huffman encoding only (no string match)
+    */
 
    err = deflateInit2(&stream, Z_DEFAULT_COMPRESSION, Z_DEFLATED, (bheader ? MAX_WBITS+16 : -MAX_WBITS), MAX_MEM_LEVEL, Z_DEFAULT_STRATEGY);
 
@@ -134,8 +139,9 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
    stream.next_in  = (unsigned char*)input;
    stream.avail_in = len;
 
-   /* The zlib documentation states that destination buffer size must be
-    * at least 0.1% larger than avail_in plus 12 bytes.
+   /**
+    * The zlib documentation states that destination buffer size must be
+    * at least 0.1% larger than avail_in plus 12 bytes
     */
 
    do {
@@ -145,20 +151,23 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
 
       stream.next_out = (unsigned char*)result + stream.total_out;
 
-      /* Calculate the amount of remaining free space in the output buffer  
+      /**
+       * Calculate the amount of remaining free space in the output buffer  
        * by subtracting the number of bytes that have been written so far  
-       * from the buffer's total capacity */
+       * from the buffer's total capacity
+       */
 
       stream.avail_out = 0xffff0000;
 
-      /* deflate() compresses as much data as possible, and stops/returns when 
+      /**
+       * deflate() compresses as much data as possible, and stops/returns when 
        * the input buffer becomes empty or the output buffer becomes full. If 
        * deflate() returns Z_OK, it means that there are more bytes left to 
        * compress in the input buffer but the output buffer is full; the output 
        * buffer should be expanded and deflate should be called again (i.e., the 
        * loop should continue to rune). If deflate() returns Z_STREAM_END, the 
        * end of the input stream was reached (i.e.g, all of the data has been 
-       * compressed) and the loop should stop.
+       * compressed) and the loop should stop
        */
 
       err = zlib_deflate(&stream, Z_FINISH);
@@ -222,7 +231,7 @@ uint32_t u_gz_deflate(const char* restrict input, uint32_t len, char* restrict r
 #define ORIG_NAME    0x08 /* bit 3 set: original file name present */
 #define COMMENT      0x10 /* bit 4 set: file comment present */
 #define ENCRYPTED    0x20 /* bit 5 set: file is encrypted */
-#define RESERVED     0xC0 /* bit 6,7:   reserved */
+#define RESERVED     0xC0 /* bit 6,7: reserved */
 
 uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict result)
 {
@@ -286,7 +295,8 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
          return 0;
          }
 
-      /* timestamp:   4
+      /**
+       * timestamp:   4
        * extra flags: 1
        * OS type:     1
        */
@@ -328,10 +338,11 @@ uint32_t u_gz_inflate(const char* restrict input, uint32_t len, char* restrict r
          case Z_OK:
             {
 #        if !defined(ZLIB_VERNUM) || ZLIB_VERNUM < 0x1200
-            /* zlib < 1.2.0 workaround: push a dummy byte at the end of the stream when inflating (see zlib ChangeLog)
-            * The zlib code effectively READ the dummy byte, this imply that the pointer MUST point to a valid data region.
-            * The dummy byte is not always needed, only if inflate return Z_OK instead of Z_STREAM_END
-            */
+            /**
+             * zlib < 1.2.0 workaround: push a dummy byte at the end of the stream when inflating (see zlib ChangeLog)
+             * The zlib code effectively READ the dummy byte, this imply that the pointer MUST point to a valid data region.
+             * The dummy byte is not always needed, only if inflate return Z_OK instead of Z_STREAM_END
+             */
             unsigned char dummy = 0; /* dummy byte */
 
             stream.next_in  = &dummy;

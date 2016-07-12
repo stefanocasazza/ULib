@@ -167,20 +167,14 @@ U_EXPORT void   u__memcpy(      void* restrict dest, const void* restrict src, s
 U_EXPORT char*  u__strncpy(     char* restrict dest, const char* restrict src, size_t n);
 #else
 #  define u__strlen(s,func)                 strlen((s))
-#  define u__strcpy(dest,src)        (void) strcpy( (dest),(src))
-#  define u__memcpy(dest,src,n,func) (void) apex_memcpy( (dest),(src),(n))
+#  define u__strcpy(dest,src)        (void) strcpy((dest),(src))
+#  define u__memcpy(dest,src,n,func) (void) apex_memcpy((dest),(src),(n))
 #  define u__strncpy(dest,src,n)            strncpy((dest),(src),(n))
 #endif
 
-U_EXPORT void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_t n1) __pure;
-
-/* check if string a start with string b */
-
-U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure;
-
-/* check if string a terminate with string b */
-
-U_EXPORT bool u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure;
+U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a start        with   string b */
+U_EXPORT bool   u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a terminate    with   string b */
+U_EXPORT void*      u_find(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string b is contained within string a */
 
 /* find char not quoted */
 
@@ -361,6 +355,7 @@ U_EXPORT void u_switch_to_realtime_priority(void);
  * Trailing    '/.'  are removed
  * Trailing    '/'   are removed
  * Non-leading '../' and trailing '..' are handled by removing portions of the path
+ * --------------------------------------------------------------------------------
  */
 
 U_EXPORT bool u_canonicalize_pathname(char* restrict path);
@@ -371,6 +366,7 @@ U_EXPORT bool u_canonicalize_pathname(char* restrict path);
  * pathfind looks for a a file with name FILENAME and MODE access
  * along colon delimited PATH, and returns the full pathname as a
  * string, or NULL if not found
+ * --------------------------------------------------------------
  */
 
 U_EXPORT bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_len, const char* restrict filename, int mode); /* R_OK | X_OK */
@@ -493,7 +489,8 @@ extern U_EXPORT const unsigned char u_validate_utf8[];
 U_EXPORT bool u_isText(  const unsigned char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_isUTF8(  const unsigned char* restrict s, uint32_t n) __pure;
 U_EXPORT int  u_isUTF16( const unsigned char* restrict s, uint32_t n) __pure;
-U_EXPORT bool u_isBinary(const unsigned char* restrict s, uint32_t n) __pure;
+
+static inline bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }
 
 static inline unsigned long u_strtoul(const char* restrict s, const char* restrict e)
 {

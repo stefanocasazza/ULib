@@ -26,13 +26,11 @@
  * may just act as repository for a functional group. When the component handling client requests receives a message
  * that component tells the USOAPObject to process the request. USOAPObject assumes that all requests are wellformed
  * SOAP messages. On return, the external component gets the SOAP response. This string may contain the result of the
- * method/message or it may contain a Fault.
+ * method/message or it may contain a Fault
  */
 
 class U_EXPORT USOAPObject : public URPCObject {
 public:
-
-   // Costruttori
 
    USOAPObject()
       {

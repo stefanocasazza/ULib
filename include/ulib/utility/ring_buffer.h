@@ -37,8 +37,6 @@ public:
       int pread[FD_SETSIZE];
    } rbuf_data;
 
-   // Costruttori
-
     URingBuffer(rbuf_data* _ptr, uint32_t map_size);
    ~URingBuffer();
 

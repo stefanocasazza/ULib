@@ -470,7 +470,6 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
    bool connection_close = (UClient_Base::isClosed() || responseHeader->isClose());
 
-   // ------------------------------------------------------------
    // General category of response:
    // ------------------------------------------------------------
    // 1xx indicates an informational message only
@@ -711,7 +710,7 @@ next:
 // Redirection may be an iterative process, so it continues until
 // we receive a 200 OK response or the maximum number of redirects is exceeded.
 //
-// We do not process Location headers when accompanying a 200 OK response.
+// We do not process Location headers when accompanying a 200 OK response
 //=============================================================================
 
 void UHttpClient_Base::parseRequest(uint32_t n)

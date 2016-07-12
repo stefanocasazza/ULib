@@ -145,8 +145,10 @@ int pb_read(pb_file* pbf, void* buff, int amt)
 
          U_INTERNAL_TRACE("%d bytes remaining in buffer", pbf->buff_amt)
 
-         /* if the buffer is empty, reset the next header to the front of the
-         buffer so subsequent pushbacks/reads won't have to wrap */
+         /**
+          * if the buffer is empty, reset the next header to the front of the
+          * buffer so subsequent pushbacks/reads won't have to wrap
+          */
 
          if (pbf->buff_amt == 0) pbf->next = pbf->pb_buff;
 

@@ -489,8 +489,6 @@ protected:
    static bool isRequestCacheable() __pure;
 #endif
 
-   // COSTRUTTORI
-
             UClientImage_Base();
    virtual ~UClientImage_Base();
 
@@ -522,8 +520,6 @@ private:
 template <class Socket> class U_EXPORT UClientImage : public UClientImage_Base {
 public:
 
-   // COSTRUTTORI
-
    UClientImage() : UClientImage_Base()
       {
       U_TRACE_REGISTER_OBJECT(0, UClientImage<Socket>, "", 0)
@@ -549,7 +545,7 @@ private:
    UClientImage& operator=(const UClientImage&)            { return *this; }
 };
 
-#ifdef USE_LIBSSL // specializzazione con USSLSocket
+#ifdef USE_LIBSSL
 template <> class U_EXPORT UClientImage<USSLSocket> : public UClientImage_Base {
 public:
 

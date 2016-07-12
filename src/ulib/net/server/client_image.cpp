@@ -102,7 +102,7 @@ void UClientImage_Base::logRequest()
          }
       else
          {
-         if (u_printf_string_max_length < U_CONSTANT_SIZE("GET / HTTP/1.0\r\n\r\n")) u_printf_string_max_length = 128;
+         if (u_printf_string_max_length < (int)U_CONSTANT_SIZE("GET / HTTP/1.0\r\n\r\n")) u_printf_string_max_length = 128;
 
          if (log_request_partial == UEventFd::fd)
             {

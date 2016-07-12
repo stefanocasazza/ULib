@@ -21,8 +21,6 @@ template <class T> class UTree;
 template <> class U_EXPORT UTree<void*> : public UVector<void*> {
 public:
 
-   // Costruttori e distruttore
-
    UTree(const void* __elem = 0, const void* __parent = 0, uint32_t n = 1) : UVector<void*>(n)
       {
       U_TRACE_REGISTER_OBJECT(0, UTree<void*>, "%p,%p,%u", __elem, __parent, n)
@@ -229,8 +227,6 @@ public:
          }
       }
 
-   // Costruttori e distruttore
-
    UTree(const T* __elem = 0, const T* __parent = 0, uint32_t n = 1) : UTree<void*>(__elem, __parent, n)
       {
       U_TRACE_REGISTER_OBJECT(0, UTree<T*>, "%p,%p,%u", __elem, __parent, n)
@@ -374,9 +370,9 @@ public:
       return os;
       }
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const { return UTree<void*>::dump(reset); }
-#  endif
+# endif
 #endif
 
 private:
@@ -387,12 +383,8 @@ private:
 #endif
 };
 
-// specializzazione stringa
-
 template <> class U_EXPORT UTree<UString> : public UTree<UStringRep*> {
 public:
-
-   // Costruttori e distruttore
 
    UTree(uint32_t n = 64) : UTree<UStringRep*>(0, 0, n)
       {

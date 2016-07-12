@@ -1,4 +1,4 @@
-// ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ULib - c library
@@ -9,7 +9,7 @@
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================
+// ============================================================================ */
  
 /*
 #define DEBUG_DEBUG
@@ -252,7 +252,7 @@ void u_trace_init(int bsignal)
       if (env == 0) env = "0 50M 0";
       else
          {
-         if (u__isquote(*env)) ++env; // normalization...
+         if (u__isquote(*env)) ++env; /* normalization... */
 
          if (*env == '-')
             {
@@ -353,9 +353,9 @@ void u_trace_handlerSignal(void)
 
    printInfo();
 
-#  ifdef _MSWINDOWS_
+# ifndef _MSWINDOWS_
    setHandlerSIGUSR2(); /* on-off by signal SIGUSR2 */
-#  endif
+# endif
 #endif
 
    u_trace_signal = 0;

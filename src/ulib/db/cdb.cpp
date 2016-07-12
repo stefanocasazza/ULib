@@ -788,7 +788,6 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpv
                      *pnode = node->next; // lo si toglie dalla lista collisioni...
 
                      /**
-                      * ---------------------------------
                       * NB: it must be do in the function
                       * ---------------------------------
                       * elem = (T*) node->elem;

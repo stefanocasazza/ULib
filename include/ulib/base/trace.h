@@ -1,4 +1,4 @@
-// ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ULib - c library
@@ -9,7 +9,7 @@
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================
+// ============================================================================ */
 
 #ifndef ULIB_BASE_TRACE_H
 #define ULIB_BASE_TRACE_H 1
@@ -18,7 +18,7 @@
 
 /*
  * All programs need some form of logging built in to them, so we can observe what they're doing.
- * This is especially important when things go wrong.
+ * This is especially important when things go wrong
  */
 
 #ifdef __cplusplus

@@ -31,8 +31,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // Costruttori
-
    UXMLAttribute()
       {
       U_TRACE_REGISTER_OBJECT(0, UXMLAttribute, "", 0)

@@ -46,7 +46,7 @@ void UOrmDriverPgSql::handlerError()
                                  UOrmDriver::errname = "???";
 
    /*
-   if (UOrmDriver::errcode < U_NUM_ELEMENTS(error_value_table) &&
+   if (UOrmDriver::errcode < (int)U_NUM_ELEMENTS(error_value_table) &&
        UOrmDriver::errcode == error_value_table[UOrmDriver::errcode].value)
       {
       UOrmDriver::errname = error_value_table[UOrmDriver::errcode].name;

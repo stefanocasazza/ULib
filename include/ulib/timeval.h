@@ -37,16 +37,9 @@ public:
       u_adjtime(&tv_sec, &tv_usec);
       }
 
-   // COSTRUTTORI
-
    UTimeVal()
       {
       U_TRACE_REGISTER_OBJECT(0, UTimeVal, "", 0)
-
-   // U_INTERNAL_DUMP("this         = %p", this)
-   // U_INTERNAL_DUMP("&tv_sec      = %p", &tv_sec)
-   // U_INTERNAL_DUMP("&tv_usec     = %p", &tv_usec)
-   // U_INTERNAL_DUMP("memory._this = %p", memory._this)
 
       U_INTERNAL_ASSERT_EQUALS((void*)this, (void*)&tv_sec)
       }
@@ -96,8 +89,6 @@ public:
 
       return *this;
       }
-
-   // VARIE
 
    bool isZero() const
       {
@@ -422,9 +413,9 @@ public:
    friend U_EXPORT istream& operator>>(istream& is,       UTimeVal& t);
    friend U_EXPORT ostream& operator<<(ostream& os, const UTimeVal& t);
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 };
 

@@ -59,7 +59,6 @@ void UEventTime::operator()(int fd, short event)
 
    int result = handlerTime();
 
-   // ---------------
    // return value:
    // ---------------
    // -1 - normal

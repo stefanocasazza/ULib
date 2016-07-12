@@ -24,7 +24,7 @@ class UCertificate;
 
 /**
  * This class provides all the services the openssl X509_CRL structure supports. A CRL is a list of certificate revoked.
- * This class contains a openssl X509_CRL structure and basically acts as a wrapper to functions that act on that structure.
+ * This class contains a openssl X509_CRL structure and basically acts as a wrapper to functions that act on that structure
  */
 
 class U_EXPORT UCrl {
@@ -84,8 +84,6 @@ public:
 
       if (crl) clear();
       }
-
-   // VARIE
 
    bool isValid() const
       {

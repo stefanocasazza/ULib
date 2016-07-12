@@ -14,7 +14,7 @@
 #ifndef ULIB_BASE_H
 #define ULIB_BASE_H 1
 
-/* Manage file to include */
+/* Manage the header files to include */
 
 #ifdef HAVE_CONFIG_H
 #  include <ulib/internal/config.h>
@@ -222,7 +222,7 @@ extern U_EXPORT const char* u_month_name[12]; /* "January", "February", "March",
 
 U_EXPORT void     u_initRandom(void);
 U_EXPORT bool     u_setStartTime(void);
-U_EXPORT int      u_getMonth(const char* buf) __pure;
+U_EXPORT unsigned u_getMonth(const char* buf) __pure;
 U_EXPORT uint32_t u_strftime1(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt);
 U_EXPORT uint32_t u_strftime2(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t when);
 
@@ -338,7 +338,7 @@ static inline bool u_is_cacheable(int mime_index) { return (u_is_js(mime_index) 
 
 extern U_EXPORT int32_t u_printf_string_max_length;
 
-/* NB: u_printf(), u_vsnprintf() and u_snprintf() conflit with /usr/include/unicode/urename.h */
+/* NB: we use u__printf(), u__snprintf(), u__vsnprintf(), ... cause of conflit with /usr/include/unicode/urename.h */
 
 U_EXPORT void u__printf(int fd,           const char* restrict format, ...);
 U_EXPORT void u_internal_print(bool abrt, const char* restrict format, ...);

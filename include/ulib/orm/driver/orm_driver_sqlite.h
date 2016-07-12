@@ -311,7 +311,7 @@ public:
    bool param_binded;
 };
 
-/*
+/**
  * SQLite is a smart library that implements an embeddable SQL database engine. No need for an external database server
  * an application linked against libsqlite can do it all by itself. Of course there are a few limitations of this approach
  * compared to "real" SQL database servers, mostly for massively parallel high-throughput database applications, but on the
@@ -322,13 +322,11 @@ public:
  *
  * You want to offer the simplest possible installation of your application.
  * You want to support potential users of your application who don't have the skills to administer a database server.
- * You want to let users test-drive your application without the need to fiddle with their production database servers.
+ * You want to let users test-drive your application without the need to fiddle with their production database servers
  */
  
 class U_EXPORT UOrmDriverSqlite : public UOrmDriver {
 public:
-
-   // COSTRUTTORE
 
    UOrmDriverSqlite()
       {

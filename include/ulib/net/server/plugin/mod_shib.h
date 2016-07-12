@@ -239,8 +239,6 @@ public:
 class U_EXPORT UShibPlugIn : public UServerPlugIn {
 public:
 
-   // COSTRUTTORI
-
             UShibPlugIn();
    virtual ~UShibPlugIn();
 

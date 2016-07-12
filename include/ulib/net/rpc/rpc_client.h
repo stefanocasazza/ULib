@@ -50,8 +50,6 @@ public:
 
 protected:
 
-   // COSTRUTTORI
-
    URPCClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
       {
       U_TRACE_REGISTER_OBJECT(0, URPCClient_Base, "%p", _cfg)
@@ -85,8 +83,6 @@ private:
 template <class Socket> class U_EXPORT URPCClient : public URPCClient_Base {
 public:
 
-   // COSTRUTTORI
-
    URPCClient(UFileConfig* _cfg) : URPCClient_Base(_cfg)
       {
       U_TRACE_REGISTER_OBJECT(0, URPCClient, "%p", _cfg)
@@ -113,8 +109,7 @@ private:
 #endif
 };
 
-#ifdef USE_LIBSSL // specializzazione con USSLSocket
-
+#ifdef USE_LIBSSL
 template <> class U_EXPORT URPCClient<USSLSocket> : public URPCClient_Base {
 public:
 
@@ -147,6 +142,5 @@ private:
    URPCClient<USSLSocket>& operator=(const URPCClient<USSLSocket>&)           { return *this; }
 #endif
 };
-
 #endif
 #endif

@@ -22,8 +22,6 @@ public:
    // Check for memory error
    U_MEMORY_TEST
 
-   // COSTRUTTORE
-
    UEchoPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, UEchoPlugIn, "", 0)

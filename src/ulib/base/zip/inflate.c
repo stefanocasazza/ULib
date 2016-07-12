@@ -20,9 +20,9 @@ int init_compression(void)
    (void) memset(&zs, 0, sizeof(z_stream));
 
    /**
-    * Why -MAX_WBITS?  zlib has an undocumented feature, where if the windowbits
+    * Why -MAX_WBITS? zlib has an undocumented feature, where if the windowbits
     * parameter is negative, it omits the zlib header, which seems to kill
-    * any other zip/unzip program.  This caused me SO much pain...
+    * any other zip/unzip program. This caused me SO much pain...
     */
 
    if (zlib_deflateInit2(&zs, Z_DEFAULT_COMPRESSION, Z_DEFLATED, -MAX_WBITS, 9, Z_DEFAULT_STRATEGY) != Z_OK)
@@ -178,7 +178,7 @@ int end_compression(void)
 
    U_INTERNAL_TRACE("end_compression()")
 
-   /* Oddly enough, zlib always returns Z_DATA_ERROR if you specify no zlib header. Go fig. */
+   /* Oddly enough, zlib always returns Z_DATA_ERROR if you specify no zlib header. Go fig */
 
    if ((rtval = zlib_deflateEnd(&zs)) != Z_OK &&
         rtval                         != Z_DATA_ERROR)
@@ -378,7 +378,7 @@ int inflate_buffer(pb_file* pbf, unsigned* inlen, char** out_buff, unsigned* out
 
    U_INTERNAL_TRACE("zs.total_in = %u zs.total_out = %u", zs.total_in, zs.total_out)
 
-   ze->crc = crc32(ze->crc, 0, 0);                    /* initialize crc */
+   ze->crc = crc32(ze->crc, 0, 0); /* initialize crc */
    ze->crc = crc32(ze->crc, ptr, zs.total_out);
 
    U_INTERNAL_TRACE("done inflating - %d bytes left over, CRC is %x", zs.avail_in, ze->crc)

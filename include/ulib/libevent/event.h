@@ -1,16 +1,15 @@
-// ============================================================================
+// =====================================================================================================================
 //
 // = LIBRARY
 //    ULib - c++ library
 //
 // = FILENAME
-//    event.h - wrapper for libevent (A library to execute a function when a
-//                                    specific event occurs on a file descriptor)
+//    event.h - wrapper for libevent (A library to execute a function when a specific event occurs on a file descriptor)
 //
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================
+// =====================================================================================================================
 
 #ifndef ULIB_EVENT_H
 #define ULIB_EVENT_H
@@ -516,8 +515,6 @@ public:
       {
       U_TRACE(1, "UDispatcher::add(%p,%d)", &e, priority)
 
-   // if (U_SYSCALL(event_base_set, "%p,%p", u_ev_base, &e)) U_RETURN(false);
-
       if (priority != DEFAULT_PRIORITY &&
           U_SYSCALL(event_priority_set, "%p,%d", &e, priority))
          {
@@ -542,8 +539,6 @@ public:
    static bool add(UEvent_Base& e, const UTimeVal& to, int priority = DEFAULT_PRIORITY)
       {
       U_TRACE(1, "UDispatcher::add(%p,%p,%d)", &e, &to, priority)
-
-   // if (U_SYSCALL(event_base_set, "%p,%p", u_ev_base, &e)) U_RETURN(false);
 
       if (priority != DEFAULT_PRIORITY &&
           U_SYSCALL(event_priority_set, "%p,%d", &e, priority))

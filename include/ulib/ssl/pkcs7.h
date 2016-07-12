@@ -22,7 +22,7 @@
 /**
  * This class provides services for a PKCS7 structure. (general syntax for data that may have cryptography applied to it,
  * such as digital signatures and digital envelopes). This class contains a openssl PKCS7 structure and basically acts as
- * a wrapper to functions that act on that structure.
+ * a wrapper to functions that act on that structure
  */
 
 class UMimePKCS7;
@@ -51,9 +51,9 @@ private:
 
 public:
    /**
-   Constructs this object takes <i>PKCS7</i> as type, data is the signed data if the content is not present in pkcs7
-   (that is it is detached)
-   */ 
+    * Constructs this object takes <i>PKCS7</i> as type, data is the signed data if the content is not present in pkcs7
+    * (that is it is detached)
+    */ 
 
    UPKCS7(PKCS7* p7 = 0, BIO* data = 0)
       {
@@ -63,12 +63,12 @@ public:
       }
 
    /**
-   * Constructs this object from the a encoded string.
-   * The <i>type</i> specifies the type of encoding the string is in, e.g. DER or PEM.
-
-   * @param encoding a string of bytes
-   * @param type the PKCS7's encoding type
-   */
+    * Constructs this object from the a encoded string.
+    * The <i>type</i> specifies the type of encoding the string is in, e.g. DER or PEM.
+    * 
+    * @param encoding a string of bytes
+    * @param type the PKCS7's encoding type
+    */
 
    static PKCS7* readPKCS7(const UString& x, const char* format = 0);
 
@@ -81,8 +81,8 @@ public:
       }
 
    /**
-   * Deletes this object.
-   */
+    * Deletes this object
+    */
 
    void clear()
       {
@@ -96,8 +96,6 @@ public:
       }
 
    ~UPKCS7();
-
-   // VARIE
 
    bool isValid() const
       {
@@ -144,37 +142,37 @@ public:
    UString getEncoded(const char* format = "PEM") const;
 
    /**
-   * Returns bool value to indicate the correctness of the signed data.
-   * PKCS7_NOVERIFY Verify only the signature, not the certificate chain.
-   * This is probably not what you want, because the signature could be easily forged
-   */
+    * Returns bool value to indicate the correctness of the signed data.
+    * PKCS7_NOVERIFY Verify only the signature, not the certificate chain.
+    * This is probably not what you want, because the signature could be easily forged
+    */
 
    bool verify(int flags = PKCS7_NOVERIFY) const;
 
    /**
-   Retrieves the signer's certificates from p7, it does not check their validity or whether any signatures are valid.
-   The flags parameter have the same meanings as in PKCS7_verify()
-   */
+    * Retrieves the signer's certificates from p7, it does not check their validity or whether any signatures are valid.
+    * The flags parameter have the same meanings as in PKCS7_verify()
+    */
 
    unsigned getSignerCertificates(UVector<UCertificate*>& vec, int flags = 0) const;
 
    /**
-   * Returns the signed content from p7
-   */
+    * Returns the signed content from p7
+    */
 
    UString getContent(bool* valid_content = 0) const;
 
    /**
-   * creates and returns a PKCS#7 signedData structure
-
-   * @param data     is the data to be signed
-   * @param signcert is the certificate to sign with
-   * @param pkey     is the corresponsding private key
-   * @param passwd   is the corresponsding password for the private key
-   * @param certs    is an optional additional set of certificates to include in the PKCS#7 structure
-   *                 (for example any intermediate CAs in the chain)
-   * @param flags    is an optional set of flags (PKCS7_TEXT, PKCS7_NOCERTS, PKCS7_DETACHED, PKCS7_BINARY, ...)
-   */
+    * creates and returns a PKCS#7 signedData structure
+    *
+    * @param data     is the data to be signed
+    * @param signcert is the certificate to sign with
+    * @param pkey     is the corresponsding private key
+    * @param passwd   is the corresponsding password for the private key
+    * @param certs    is an optional additional set of certificates to include in the PKCS#7 structure
+    *                 (for example any intermediate CAs in the chain)
+    * @param flags    is an optional set of flags (PKCS7_TEXT, PKCS7_NOCERTS, PKCS7_DETACHED, PKCS7_BINARY, ...)
+    */
 
    static PKCS7* sign(const UString& data,
                       const UString& signcert,
@@ -183,10 +181,10 @@ public:
                       const UString& certs, int flags = PKCS7_BINARY);
 
    /**
-   * convert PKCS#7 structure to S/MIME format
-
-   * @param pkcs7 is the appropriate PKCS7 structure
-   */
+    * convert PKCS#7 structure to S/MIME format
+    *
+    * @param pkcs7 is the appropriate PKCS7 structure
+    */
 
    static UString writeMIME(PKCS7* pkcs7);
 

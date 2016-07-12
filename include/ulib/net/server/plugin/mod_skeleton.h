@@ -49,8 +49,6 @@
 class U_EXPORT USkeletonPlugIn : public UServerPlugIn {
 public:
 
-   // COSTRUTTORE
-
             USkeletonPlugIn() : UServerPlugIn() {}
    virtual ~USkeletonPlugIn()                   {}
 

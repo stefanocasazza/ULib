@@ -56,8 +56,6 @@ public:
                              standard_output_binary = 4,
                        stdin_standard_output_binary = 5 };
 
-   // Costruttori
-
    URPCObject()
       {
       U_TRACE_REGISTER_OBJECT(0, URPCObject, "", 0)
@@ -156,7 +154,7 @@ protected:
 
    virtual void insertGenericMethod(const UString& n, const UString& ns, UCommand* cmd, int rtype)
       {
-   // U_TRACE(0, "URPCObject::insertGenericMethod(%V,%V,%p,%d)", n.rep, ns.rep, cmd, rtype) // problem with sanitize address
+      U_TRACE(0, "URPCObject::insertGenericMethod(%V,%V,%p,%d)", n.rep, ns.rep, cmd, rtype) // problem with sanitize address
 
       URPCMethod* pmethod;
 

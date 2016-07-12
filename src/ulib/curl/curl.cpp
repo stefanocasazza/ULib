@@ -104,7 +104,7 @@ const char* UCURL::error()
 
    static char buffer[CURL_ERROR_SIZE+32];
 
-   (void) u__snprintf(buffer, sizeof(buffer), "%s (%d, %s)", (result >= 0 && result < U_NUM_ELEMENTS(errlist) ? errlist[result] : ""), result, errorBuffer);
+   (void) u__snprintf(buffer, sizeof(buffer), "%s (%d, %s)", (result >= 0 && result < (int)U_NUM_ELEMENTS(errlist) ? errlist[result] : ""), result, errorBuffer);
 
    U_RETURN(buffer);
 }
@@ -301,14 +301,18 @@ bool UCURL::perform()
  *       message: {"aps":{"alert":"Hi!","sound":"default"}}
  */
 
-bool UCURL::sendHTTP2Push(const char* http2_server, const char* apple_cert, const char* app_bundle_id, const char* token, const UString& message)
+const char* UCURL::apple_cert = "/certificates/samplepush/development.pem"; // the path to the certificate
+const char* UCURL::http2_server = "https://api.development.push.apple.com"; // the Apple server url - "https://api.push.apple.com"
+const char* UCURL::app_bundle_id; // the app bundle id
+
+bool UCURL::sendHTTP2Push(const UString& token, const UString& message)
 {
-   U_TRACE(0, "UCURL::sendHTTP2Push(%S,%S,%S,%S,%V)", http2_server, apple_cert, app_bundle_id, token, message.rep)
+   U_TRACE(0, "UCURL::sendHTTP2Push(%V,%V)", token.rep, message.rep)
 
    char url[1024],
         buf[1024];
 
-   (void) u__snprintf(url, sizeof(url), "%s/3/device/%s", http2_server, token); // url (endpoint)
+   (void) u__snprintf(url, sizeof(url), "%s/3/device/%v", http2_server, token.rep); // url (endpoint)
    (void) u__snprintf(buf, sizeof(buf), "apns-topic: %s", app_bundle_id);
 
    UCURL curl;

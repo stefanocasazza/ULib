@@ -13,12 +13,11 @@
 
 #include <ulib/net/rpc/rpc_client.h>
 
-// -----------------------------------------------------------------------------------------------------------------------
 // Very simple RPC-like layer
-//
+// ----------------------------------------------------------------------------------------------------
 // Requests and responses are build of little packets each containing a U_TOKEN_NM(4) byte ascii token,
-// an 8-byte hex value or length, and optionally data corresponding to the length.
-// -----------------------------------------------------------------------------------------------------------------------
+// an 8-byte hex value or length, and optionally data corresponding to the length
+// ----------------------------------------------------------------------------------------------------
 
 UVector<UString>* URPC::rpc_info;
 

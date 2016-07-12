@@ -34,8 +34,6 @@
 class U_EXPORT USOAPEncoder : public URPCEncoder {
 public:
 
-   // COSTRUTTORI
-
    USOAPEncoder()
       {
       U_TRACE_REGISTER_OBJECT(0, USOAPEncoder, "", 0)

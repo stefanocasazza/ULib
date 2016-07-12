@@ -24,8 +24,6 @@ public:
    // Check for memory error
    U_MEMORY_TEST
 
-   // COSTRUTTORI
-
             UFCGIPlugIn();
    virtual ~UFCGIPlugIn();
 

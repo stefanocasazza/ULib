@@ -20,8 +20,6 @@
 class U_EXPORT URPCGenericMethod : public URPCMethod {
 public:
 
-   // COSTRUTTORI
-
    URPCGenericMethod(const UString& n, const UString& _ns, UCommand* cmd, int rtype) : URPCMethod(n, _ns), response(U_CAPACITY)
       {
       U_TRACE_REGISTER_OBJECT(0, URPCGenericMethod, "%V,%V,%p,%d", n.rep, _ns.rep, cmd, rtype) 
@@ -36,8 +34,6 @@ public:
 
       if (command) delete command;
       }
-
-   // VIRTUAL METHOD
 
    // Transforms the method into something that servers and clients can send. The encoder holds the actual
    // data while the client hands data to be entered in. This makes a whole lot more sense in the samples that

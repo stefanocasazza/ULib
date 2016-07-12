@@ -19,10 +19,10 @@
 #include <expat.h>
 
 /**
-   @class UXMLParser
-
-   @brief UXMLParser is a parser XML based on Expat (Expat is a stream-oriented parser)
-*/
+ * @class UXMLParser 
+ *
+ * @brief UXMLParser is a parser XML based on Expat (Expat is a stream-oriented parser)
+ */
 
 class U_EXPORT UXMLParser {
 public:
@@ -33,8 +33,6 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
 
    UXMLParser()
       {

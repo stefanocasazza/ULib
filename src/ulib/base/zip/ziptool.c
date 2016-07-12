@@ -264,7 +264,8 @@ static int add_file_to_zip(int jfd, int ffd, const char* fname, struct stat* sta
    ze->mod_time = (ub2) (mod_time & 0x0000ffff);
    ze->mod_date = (ub2)((mod_time & 0xffff0000) >> 16);
 
-   /* If a MIME type for a document that makes use of packages is existing, then the package should
+   /**
+    * If a MIME type for a document that makes use of packages is existing, then the package should
     * contain a stream called "mimetype". This stream should be first stream of the package's zip file, it
     * shall not be compressed, and it shall not use an 'extra field' in its header.
     * The purpose is to allow packaged files to be identified through 'magic number' mechanisms, such
@@ -784,7 +785,8 @@ int zip_match(const char* zipfile, const char* files[])
 
       if (eflen) consume(eflen);
       if (csize) consume(csize);
-      /* the header is at the end. In a ZIP file, this means that the data
+      /**
+       * the header is at the end. In a ZIP file, this means that the data
        * happens to be compressed. We have no choice but to inflate the data
       else
          {
@@ -1133,7 +1135,7 @@ unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filename
          contents[n]     = (char*) malloc(csize);
          contents_len[n] = csize;
 
-         ze.crc = crc32(ze.crc, 0, 0);                   /* initialize the crc */
+         ze.crc = crc32(ze.crc, 0, 0); /* initialize the crc */
          ze.crc = crc32(ze.crc, (Bytef*)pbf.next, csize);
 
          u__memcpy(contents[n], pbf.next, csize, __PRETTY_FUNCTION__);

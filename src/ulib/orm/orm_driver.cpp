@@ -134,7 +134,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
    /**
     * I do know that to include code in the middle of a function is hacky and dirty,
     * but this is the best solution that I could figure out. If you have some idea to
-    * clean it up, please, don't hesitate and let me know.
+    * clean it up, please, don't hesitate and let me know
     */
 
 #  include "driver/loader.autoconf.cpp"

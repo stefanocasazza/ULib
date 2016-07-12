@@ -63,8 +63,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORE
-
             UServerPlugIn()        {}
    virtual ~UServerPlugIn() __pure {}
 

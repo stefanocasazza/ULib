@@ -19,8 +19,6 @@
 class U_EXPORT UUDPSocket : public USocket {
 public:
 
-   // COSTRUTTORI
-
    UUDPSocket(bool bSocketIsIPv6 = false) : USocket(bSocketIsIPv6)
       {
       U_TRACE_REGISTER_OBJECT(0, UUDPSocket, "%b", bSocketIsIPv6)

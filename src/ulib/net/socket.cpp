@@ -749,7 +749,7 @@ int USocket::sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, U
  * the maximum number of milliseconds that a blocking @c read() call will
  * wait for data to arrive on the socket.
  *
- * @param timeoutMS the specified timeout value, in milliseconds. A value of zero indicates no timeout, i.e. an infinite wait.
+ * @param timeoutMS the specified timeout value, in milliseconds. A value of zero indicates no timeout, i.e. an infinite wait
  */
 
 bool USocket::setTimeoutRCV(uint32_t timeoutMS)
@@ -1072,50 +1072,50 @@ bool USocket::acceptClient(USocket* pcNewConnection)
 
    U_DUMP("getBufferRCV() = %u getBufferSND() = %u", pcNewConnection->getBufferRCV(), pcNewConnection->getBufferSND())
 
-#  ifdef TCP_CORK
+# ifdef TCP_CORK
    (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_CORK, (void*)&value, tmp);
 
    U_INTERNAL_DUMP("TCP_CORK = %d", value)
-#  endif
+# endif
 
-#  ifdef TCP_DEFER_ACCEPT
+# ifdef TCP_DEFER_ACCEPT
    (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_DEFER_ACCEPT, (void*)&value, tmp);
 
    U_INTERNAL_DUMP("TCP_DEFER_ACCEPT = %d", value)
-#  endif
+# endif
 
-#  ifdef TCP_QUICKACK
+# ifdef TCP_QUICKACK
    (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_QUICKACK, (void*)&value, tmp);
 
    U_INTERNAL_DUMP("TCP_QUICKACK = %d", value)
-#  endif
+# endif
 
-#  ifdef TCP_NODELAY
+# ifdef TCP_NODELAY
    (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_NODELAY, (void*)&value, tmp);
 
    U_INTERNAL_DUMP("TCP_NODELAY = %d", value)
-#  endif
+# endif
 
-#  ifdef TCP_FASTOPEN
+# ifdef TCP_FASTOPEN
    (void) pcNewConnection->getSockOpt(SOL_TCP, TCP_FASTOPEN, (void*)&value, tmp);
 
    U_INTERNAL_DUMP("TCP_FASTOPEN = %d", value)
-#  endif
+# endif
 
-#  ifdef SO_KEEPALIVE
+# ifdef SO_KEEPALIVE
    (void) pcNewConnection->getSockOpt(SOL_SOCKET, SO_KEEPALIVE, (void*)&value, tmp);
 
    U_INTERNAL_DUMP("SO_KEEPALIVE = %d", value)
-#  endif
+# endif
 
-#  ifdef TCP_CONGESTION
+# ifdef TCP_CONGESTION
    char buffer[32];
    uint32_t tmp1 = sizeof(buffer);
 
    (void) pcNewConnection->getSockOpt(IPPROTO_TCP, TCP_CONGESTION, (void*)buffer, tmp1);
 
    U_INTERNAL_DUMP("TCP_CONGESTION = %S", buffer)
-#  endif
+# endif
 #endif
 */
 

@@ -28,8 +28,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORE
-
    UDataStorage()
       {
       U_TRACE_REGISTER_OBJECT(0, UDataStorage, "", 0)
@@ -136,8 +134,6 @@ private:
 
 class U_EXPORT UDataSession : public UDataStorage {
 public:
-
-   // COSTRUTTORE
 
    UDataSession()
       {
@@ -247,9 +243,9 @@ public:
    friend istream& operator>>(istream& is, UDataSession& d) { d.fromStream(is); return is; }
    friend ostream& operator<<(ostream& os, UDataSession& d) {   d.toStream(os); return os; }
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:

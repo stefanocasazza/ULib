@@ -37,7 +37,7 @@
  * the head link, the newest entry, the second-newest entry, etc.
  * Each link is a 4-byte number giving the xor of the positions of the adjacent items in the list.
  * Entries are always inserted immediately after the head and removed at the tail.
- * Each entry contains the following information: struct cache_hash_table_entry + key + data.
+ * Each entry contains the following information: struct cache_hash_table_entry + key + data
  */
 
 #define U_MAX_TTL         365L * U_ONE_DAY_IN_SECOND // 365 gg (1 year)
@@ -53,8 +53,6 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
 
    UCache()
       {
@@ -138,9 +136,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:

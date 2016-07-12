@@ -41,7 +41,6 @@ bool UModProxyService::loadConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UModProxyService::loadConfig(%p)", &cfg)
 
-   // -----------------------------------------------------------------------------------------------------------------------------------
    // proxy - plugin parameters
    // -----------------------------------------------------------------------------------------------------------------------------------
    // ERROR MESSAGE        Allows you to tell clients about what type of error
@@ -207,7 +206,7 @@ __pure UModProxyService* UModProxyService::findService()
 
    // ------------------------------------------------------------------------------
    // The difference between U_HTTP_HOST_.. and U_HTTP_VHOST_.. is that
-   // U_HTTP_HOST_.. can include the «:PORT» text, and U_HTTP_VHOST_.. only the name
+   // U_HTTP_HOST_.. can include the :PORT text, and U_HTTP_VHOST_.. only the name
    // ------------------------------------------------------------------------------
 
    return findService(U_HTTP_HOST_TO_PARAM, ptr, sz);

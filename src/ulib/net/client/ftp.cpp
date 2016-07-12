@@ -377,20 +377,20 @@ bool UFtpClient::setConnection()
 {
    U_TRACE_NO_PARAM(0, "UFtpClient::setConnection()")
 
-   // ------------------------------------------
    // 3. Execute login
-   // ------------------------------------------
+   // -------------------------------------------------------------------------------------------
    // send "USER name"     (expect 331 or 2xx code meaning no password required)
    // send "PASS password" (expect 230 or 2xx code - 332 means needs ACCOUNT - not yet supported)
+   // -------------------------------------------------------------------------------------------
 
    if (login() == false) U_RETURN(false); // login with ftp server failed...
 
-   // ------------------------------------------
    // 4. Set type to binary (or appropriate)
    // ------------------------------------------
    // send "TYPE I"  (expect 200 or 2xx code)
    // send "STRU F"  // note: default
    // send "MODE S"  // note: default
+   // ------------------------------------------
 
    if (setTransferType() == false) U_RETURN(false); // setTransferType() with ftp server failed...
 
@@ -416,9 +416,8 @@ int UFtpClient::download(const UString& path, off_t offset)
 
    if (setConnection() == false) U_RETURN(-1); // login with ftp server failed...
 
-   // ------------------------------------------
    // 5. get file
-   // ------------------------------------------
+   // ---------------------------------------------------------------------------------------------------------
    // send "PASV"           (expect 227 followed by host ip address and port number as 8 bit ASCII numbers)
    // connect to returned address
    // handling restart for file transfer: (size == bytes received previously)
@@ -426,6 +425,7 @@ int UFtpClient::download(const UString& path, off_t offset)
    // send "RETR name"      (expect 150 or 1xx codes - 5xx if doesn't exist)
    //                       (150 code will be followed by ".*( *[0-9]+ *byte" where number indicates file size)
    // close data connection (expect 2xx code - allow error on data connection if all bytes received)
+   // ---------------------------------------------------------------------------------------------------------
 
    int fd = retrieveFile(path, offset);
 

@@ -537,8 +537,6 @@ void UHashMap<void*>::_callForAllEntrySorted(bPFprpv function)
       }
 }
 
-// specializzazione stringa
-
 UString UHashMap<UString>::erase(const UString& _key)
 {
    U_TRACE(0, "UHashMap<UString>::erase(%V)", _key.rep)
@@ -882,7 +880,7 @@ U_EXPORT istream& operator>>(istream& is, UHashMap<UString>& t)
       }
 
    if (c == EOF)       is.setstate(ios::eofbit);
-   // if (t._length == 0) is.setstate(ios::failbit);
+// if (t._length == 0) is.setstate(ios::failbit);
 
    return is;
 }

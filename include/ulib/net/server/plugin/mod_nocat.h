@@ -68,8 +68,6 @@ public:
 
    enum Status { PEER_DENY, PEER_PERMIT };
 
-   // COSTRUTTORI
-
    UModNoCatPeer() : UEventTime(0L,1L), mac(*UString::str_without_mac)
       {
       U_TRACE_REGISTER_OBJECT(0, UModNoCatPeer, "", 0)
@@ -138,8 +136,6 @@ public:
       U_CHECK_MAC       = 0x004,
       U_CHECK_FIREWALL  = 0x010
    };
-
-   // COSTRUTTORI
 
             UNoCatPlugIn();
    virtual ~UNoCatPlugIn();
@@ -217,8 +213,6 @@ protected:
 
    static UModNoCatPeer* peers_delete; // delete list 
    static UModNoCatPeer* peers_preallocate;
-
-   // VARIE
 
    static void getTraffic();
    static void setNewPeer();

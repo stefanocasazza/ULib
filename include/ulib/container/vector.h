@@ -21,7 +21,7 @@
  * As a result, it has support for random-access and provides methods to add and delete elements.
  * It is typically used when an array is required, but the exact number if elements is unknown at compile-time
  *
- * Simple vector template class. Supports pushing at end and random-access deletions. Dynamically sized.
+ * Simple vector template class. Supports pushing at end and random-access deletions. Dynamically sized
  */
 
 class UHTTP;
@@ -70,8 +70,6 @@ public:
 
       UMemoryPool::_free(vec, _capacity, sizeof(void*));
       }
-
-   // Costruttori e distruttore
 
    UVector(uint32_t n = 64U) // create an empty vector with a size estimate
       {
@@ -254,7 +252,7 @@ public:
       U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
-      // The item at the top of the binary heap has the minimum key value.
+      // The item at the top of the binary heap has the minimum key value
 
       return vec[1];
       }
@@ -422,8 +420,6 @@ public:
          _length = 0;
          }
       }
-
-   // Costruttori e distruttore
 
    UVector(uint32_t n = 64U) : UVector<void*>(n)
       {
@@ -694,26 +690,26 @@ public:
 
       // i - insertion point
       // j - parent of i
-      // y - parent's entry in the heap.
+      // y - parent's entry in the heap
 
       T* y;
       uint32_t j;
 
-      // i initially indexes the new entry at the bottom of the heap.
+      // i initially indexes the new entry at the bottom of the heap
 
       uint32_t i = _length;
 
-      // Stop if the insertion point reaches the top of the heap.
+      // Stop if the insertion point reaches the top of the heap
 
       while (i >= 2)
          {
-         // j indexes the parent of i. y is the parent's entry.
+         // j indexes the parent of i. y is the parent's entry
 
          j = i / 2;
          y = (T*) vec[j];
 
          // We have the correct insertion point when the item is >= parent
-         // Otherwise we move the parent down and insertion point up.
+         // Otherwise we move the parent down and insertion point up
 
          if (*((T*)elem) >= *y) break;
 
@@ -722,7 +718,7 @@ public:
          i = j;
          }
 
-      // Insert the new item at the insertion point found.
+      // Insert the new item at the insertion point found
 
       vec[i] = elem;
       }
@@ -903,9 +899,9 @@ public:
       return _os;
       }
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const { return UVector<void*>::dump(reset); }
-#  endif
+# endif
 #endif
 
 private:
@@ -918,12 +914,8 @@ private:
 #endif
 };
 
-// specializzazione stringa
-
 template <> class U_EXPORT UVector<UString> : public UVector<UStringRep*> {
 public:
-
-   // Costruttori e distruttore
 
    UVector(uint32_t n = 64U) : UVector<UStringRep*>(n)
       {
@@ -1151,8 +1143,6 @@ public:
    uint32_t find(     const char* s, uint32_t n) __pure;
    uint32_t findRange(const char* s, uint32_t n, uint32_t start, uint32_t end) __pure;
 
-   uint32_t find(const char* s) { return find(s, u__strlen((char*)s, __PRETTY_FUNCTION__)); }
-
    // Check equality with string at pos
 
    bool isEqual(uint32_t pos, const UString& str, bool ignore_case = false) __pure;
@@ -1220,8 +1210,6 @@ protected:
 private:
    static void mksort(UStringRep** a, int n, int depth);
           bool _isEqual(UVector<UString>& vec, bool ignore_case);
-
-// uint32_t findWithDataOffset(const char* s, uint32_t n, uint32_t offset = 0) __pure;
 
 #ifdef U_COMPILER_DELETE_MEMBERS
    UVector<UString>& operator=(const UVector<UString>&) = delete;

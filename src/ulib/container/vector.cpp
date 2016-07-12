@@ -186,8 +186,6 @@ bool UVector<void*>::check_memory() // check all element
 }
 #endif
 
-// specializzazione stringa
-
 UVector<UString>::UVector(const UString& str, char delim) : UVector<UStringRep*>(64)
 {
    U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%V,%C", str.rep, delim)
@@ -1101,8 +1099,6 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
 
             str.get(is);
 
-         // U_INTERNAL_ASSERT(str) // NB: per file configurazione con elementi posizionali...
-
             v.push(str);
             }
 
@@ -1110,11 +1106,11 @@ U_EXPORT istream& operator>>(istream& is, UVector<UString>& v)
          }
       }
 
-   // -------------------------------------------------
-   // NB: we can load an empty vector (ex. mod_http)...
-   // -------------------------------------------------
-   // if (v._length == 0) is.setstate(ios::failbit);
-   // -------------------------------------------------
+// -------------------------------------------------
+// NB: we can load an empty vector (ex. mod_http)...
+// -------------------------------------------------
+// if (v._length == 0) is.setstate(ios::failbit);
+// -------------------------------------------------
 
    return is;
 }

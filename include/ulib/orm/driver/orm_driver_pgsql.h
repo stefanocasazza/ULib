@@ -391,8 +391,6 @@ public:
 class U_EXPORT UOrmDriverPgSql : public UOrmDriver {
 public:
 
-   // COSTRUTTORE
-
    UOrmDriverPgSql()
       {
       U_TRACE_REGISTER_OBJECT(0, UOrmDriverPgSql, "")

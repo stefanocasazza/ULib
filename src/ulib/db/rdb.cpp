@@ -20,7 +20,7 @@ uint32_t URDB::nerror;
                                                                \
    U_cdb_result_call(pcdb) = 1;                                \
                                                                \
-   /* 1) prima si leggono le entry nella cache... */           \
+   /* 1) first we read the entry in the cache... */            \
                                                                \
    for (uint32_t _offset, i = 0; i < CACHE_HASHTAB_LEN; ++i)   \
       {                                                        \
@@ -37,7 +37,7 @@ uint32_t URDB::nerror;
 
 #define U_FOR_EACH_ENTRY2(pcdb,function2)                                                              \
                                                                                                        \
-   /* 2) ...poi si scansiona il constant database e si cercano le entry NON presenti nella cache... */ \
+   /* 2) ...after we scan the constant database and we search the entry NOT present in the cache... */ \
                                                                                                        \
    if (UFile::st_size) callForEntryNotInCache(pcdb, (vPFpvpc)function2)
 
@@ -55,7 +55,7 @@ U_NO_EXPORT inline void URDB::setNodeLeft()
 
    pnode = &(RDB_node(this)->left);
 
-   // NB: i riferimenti in memoria alla cache dati devono puntare sulla memoria mappata...
+   // NB: the reference at memory in the cache data must point to memory mapped...
 
    U_INTERNAL_DUMP("pnode = %p node = %u", pnode, node)
 
@@ -70,7 +70,7 @@ U_NO_EXPORT inline void URDB::setNodeRight()
 
    pnode = &(RDB_node(this)->right);
 
-   // NB: i riferimenti in memoria alla cache dati devono puntare sulla memoria mappata...
+   // NB: the reference at memory in the cache data must point to memory mapped...
 
    U_INTERNAL_DUMP("pnode = %p node = %u", pnode, node)
 
@@ -229,7 +229,7 @@ U_NO_EXPORT void URDB::htInsert(URDB* prdb)
 {
    U_TRACE(0, "URDB::htInsert(%p)", prdb)
 
-   // NB: i riferimenti in memoria ai dati e alle chiavi devono puntare sul journal mappato in memoria...
+   // NB: the reference at memory in the cache data must point to memory mapped...
 
    U_INTERNAL_DUMP("key  = { %p, %u }", prdb->UCDB::key.dptr,  prdb->UCDB::key.dsize)
    U_INTERNAL_DUMP("data = { %p, %u }", prdb->UCDB::data.dptr, prdb->UCDB::data.dsize)
@@ -239,7 +239,7 @@ U_NO_EXPORT void URDB::htInsert(URDB* prdb)
    if (prdb->UCDB::data.dptr) { U_INTERNAL_ASSERT_RANGE(RDB_ptr(prdb), prdb->UCDB::data.dptr, RDB_allocate(prdb)) }
 #endif
 
-   // NB: i riferimenti in memoria alla cache dati devono puntare sulla memoria mappata...
+   // NB: the reference at memory in the cache data must point to memory mapped...
 
    U_INTERNAL_DUMP("pnode = %p node = %u", prdb->pnode, prdb->node)
 
@@ -339,8 +339,8 @@ U_NO_EXPORT bool URDB::writev(const struct iovec* _iov, int n, uint32_t _size)
       {
       U_MEMCPY(journal_ptr, _iov[i].iov_base, _iov[i].iov_len);
 
-      // NB: Una volta scritti i dati sul journal si cambiano i riferimenti in memoria
-      //     ai dati e alle chiavi in modo che puntino appunto sul journal mappato in memoria...
+      // NB: one time writed the data on journal we change the reference at memory
+      //     at data end keys so they pointing to journal memory mapped...
 
       if (n < 5) // remove(), store()
          {
@@ -421,7 +421,7 @@ bool URDB::logJournal(int op)
    U_RETURN(true);
 }
 
-U_NO_EXPORT void URDB::copy1(URDB* prdb, uint32_t _offset) // entry presenti nella cache...
+U_NO_EXPORT void URDB::copy1(URDB* prdb, uint32_t _offset) // entry present on cache...
 {
    U_TRACE(0, "URDB::copy1(%p,%u)", prdb, _offset)
 
@@ -511,7 +511,7 @@ U_NO_EXPORT void URDB::copy1(URDB* prdb, uint32_t _offset) // entry presenti nel
 
       RDB_off(prdb) = (journal_ptr - prdb->journal.map);
 
-      // NB: i riferimenti in memoria ai dati e alle chiavi devono puntare sul journal mappato in memoria...
+      // NB: the reference at memory in the cache data must point to memory mapped...
 
       htInsert(prdb); // Insertion of new entry in the cache
 
@@ -542,7 +542,7 @@ void URDB::setShared(sem_t* psem, char* spinlock)
 
       // For portable use, a shared memory object should be identified by a name of the form /somename; that is,
       // a null-terminated string of up to NAME_MAX (i.e., 255) characters consisting of an initial slash,
-      // followed by one or more characters, none of which are slashes.
+      // followed by one or more characters, none of which are slashes
 
       UString basename = UFile::getName();
 
@@ -596,17 +596,17 @@ bool URDB::compactionJournal()
 
 #  if defined(_MSWINDOWS_) || defined(__CYGWIN__)
       journal.UFile::munmap(); // for rename()...
-#     ifdef   _MSWINDOWS_
+#    ifdef   _MSWINDOWS_
       rdb.journal.UFile::close();
-#     endif
+#    endif
 #  endif
 
       if (rdb.journal._rename(journal.UFile::path_relativ) == false) U_RETURN(false);
 
 #  if defined(_MSWINDOWS_) || defined(__CYGWIN__)
-#     ifdef   _MSWINDOWS_
+#    ifdef   _MSWINDOWS_
       result = rdb.journal.UFile::open(journal.UFile::path_relativ);
-#     endif
+#    endif
       result = rdb.journal.memmap(PROT_READ | PROT_WRITE);
 #  endif
 
@@ -861,7 +861,7 @@ U_NO_EXPORT void URDB::callForEntryNotInCache(UCDB* pcdb, vPFpvpc function2)
 
          U_INTERNAL_DUMP("key = %.*S khash = %u", UCDB::key.dsize, UCDB::key.dptr, khash)
 
-         if (htLookup(this) == false) // NB: entry NON presenti nella cache...
+         if (htLookup(this) == false) // NB: entry NOT present in the cache...
             {
             function2(pcdb, ptr);
 
@@ -873,7 +873,7 @@ U_NO_EXPORT void URDB::callForEntryNotInCache(UCDB* pcdb, vPFpvpc function2)
       }
 }
 
-// entry presenti nella cache...
+// entry present in the cache...
 
 U_NO_EXPORT void URDB::call1(UCDB* pcdb, uint32_t _offset)
 {
@@ -966,7 +966,7 @@ U_NO_EXPORT void URDB::makeAdd1(UCDB* pcdb, uint32_t _offset) // entry presenti 
       }
 }
 
-U_NO_EXPORT void URDB::print1(UCDB* pcdb, uint32_t _offset) // entry presenti nella cache...
+U_NO_EXPORT void URDB::print1(UCDB* pcdb, uint32_t _offset) // entry present in the cache...
 {
    U_TRACE(0, "URDB::print1(%p,%u)", pcdb, _offset)
 
@@ -1005,7 +1005,7 @@ U_NO_EXPORT void URDB::print1(UCDB* pcdb, uint32_t _offset) // entry presenti ne
       }
 }
 
-U_NO_EXPORT void URDB::getKeys1(UCDB* pcdb, uint32_t _offset) // entry presenti nella cache...
+U_NO_EXPORT void URDB::getKeys1(UCDB* pcdb, uint32_t _offset) // entry present in the cache...
 {
    U_TRACE(0, "URDB::getKeys1(%p,%u)", pcdb, _offset)
 
@@ -1088,9 +1088,9 @@ bool URDB::reorganize()
 
 #     if defined(_MSWINDOWS_) || defined(__CYGWIN__)
          UFile::munmap(); // for rename()...
-#        ifdef   _MSWINDOWS_
+#       ifdef   _MSWINDOWS_
          cdb.UFile::close();
-#        endif
+#       endif
 #     endif
 
          if (cdb._rename(UFile::path_relativ) == false) U_RETURN(false);
@@ -1098,10 +1098,10 @@ bool URDB::reorganize()
          reset();
 
 #     if defined(_MSWINDOWS_) || defined(__CYGWIN__)
-#        ifdef   _MSWINDOWS_
+#       ifdef   _MSWINDOWS_
          result = cdb.UFile::open(UFile::path_relativ);
                   cdb.st_size = pos;
-#        endif
+#       endif
          result = cdb.memmap(); // read only...
 #     endif
 
@@ -1517,7 +1517,7 @@ int URDB::_store(int _flag, bool exist)
       U_RETURN(-3); // -3: there is not enough (virtual) memory available on writing journal
       }
 
-   // NB: i riferimenti in memoria ai dati e alle chiavi devono puntare sul journal mappato in memoria...
+   // NB: the reference at memory in the cache data must point to memory mapped...
 
    htInsert(this); // Insertion of new entry in the cache
 
@@ -1614,7 +1614,7 @@ int URDB::remove()
       goto end;
       }
 
-   // NB: i riferimenti in memoria ai dati e alle chiavi devono puntare sul journal mappato in memoria...
+   // NB: the reference at memory in the cache data must point to memory mapped...
 
    UCDB::data.dptr  = 0;
    UCDB::data.dsize = U_NOT_FOUND;
@@ -1735,7 +1735,7 @@ int URDB::substitute(UCDB::datum* key2, int _flag)
             goto end;
             }
 
-         // NB: i riferimenti in memoria ai dati e alle chiavi devono puntare sul journal mappato in memoria...
+         // NB: the reference at memory in the cache data must point to memory mapped...
 
          htInsert(this); // Insertion of new entry in the cache
 
@@ -1982,8 +1982,8 @@ void URDBObjectHandler<UDataStorage*>::callForAllEntry(iPFprpr function, vPF fun
 
    if (n == 0) return;
 
-   iPFpvpv                           ds_function_to_call_prev = ds_function_to_call;
-   URDBObjectHandler<UDataStorage*>*               pthis_prev = pthis;
+   iPFpvpv             ds_function_to_call_prev = ds_function_to_call;
+   URDBObjectHandler<UDataStorage*>* pthis_prev = pthis;
 
    pthis               = this;
    brecfound           = true;

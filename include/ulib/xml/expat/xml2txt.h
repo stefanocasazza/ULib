@@ -20,8 +20,6 @@
 class U_EXPORT UXml2Txt : public UXMLParser {
 public:
 
-   // COSTRUTTORI
-
             UXml2Txt(const UString& tag_list, bool _tag_to_exclude, bool _tag_output_also);
    virtual ~UXml2Txt();
 

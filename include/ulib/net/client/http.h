@@ -29,7 +29,7 @@
  * A UHttpClient instance can make only one HTTP request (although
  * this one request may involve several message exchanges if HTTP redirection
  * or authorization is involved). However, HTTP 1.1 introduces
- * persistent connections which can make more effective use of TCP/IP.
+ * persistent connections which can make more effective use of TCP/IP
  */
 
 class UMimeHeader;
@@ -139,7 +139,7 @@ public:
    // Redirection may be an iterative process, so it continues until
    // we receive a 200 OK response or the maximum number of redirects is exceeded.
    //
-   // We do not process Location headers when accompanying a 200 OK response.
+   // We do not process Location headers when accompanying a 200 OK response
    //=============================================================================
 
    bool sendRequest();
@@ -208,8 +208,6 @@ protected:
       else                 requestHeader->setHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"), headerValue);
       }
 
-   // COSTRUTTORI
-
     UHttpClient_Base(UFileConfig* _cfg);
    ~UHttpClient_Base()
       {
@@ -242,8 +240,6 @@ private:
 template <class Socket> class U_EXPORT UHttpClient : public UHttpClient_Base {
 public:
 
-   // COSTRUTTORI
-
    UHttpClient(UFileConfig* _cfg) : UHttpClient_Base(_cfg)
       {
       U_TRACE_REGISTER_OBJECT(0, UHttpClient, "%p", _cfg)
@@ -272,8 +268,7 @@ private:
 #endif
 };
 
-#ifdef USE_LIBSSL // specializzazione con USSLSocket
-
+#ifdef USE_LIBSSL
 template <> class U_EXPORT UHttpClient<USSLSocket> : public UHttpClient_Base {
 public:
 
@@ -306,6 +301,5 @@ private:
    UHttpClient<USSLSocket>& operator=(const UHttpClient<USSLSocket>&)            { return *this; }
 #endif
 };
-
 #endif
 #endif

@@ -19,8 +19,6 @@
 class U_EXPORT UTCPSocket : public USocket {
 public:
 
-   // COSTRUTTORI
-
    UTCPSocket(bool bSocketIsIPv6 = false) : USocket(bSocketIsIPv6)
       {
       U_TRACE_REGISTER_OBJECT(0, UTCPSocket, "%b", bSocketIsIPv6)

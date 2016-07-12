@@ -26,6 +26,7 @@
 
 #define USP_JSON_PUTS(json)                     UValue::stringify(*UClientImage_Base::wbuffer, (json))
 #define USP_JSON_REQUEST_PARSE(obj)             JSON_parse(*UClientImage_Base::body, (obj))
+#define USP_JFIND_REQUEST(type,type_len,str)    UValue::jfind(*UClientImage_Base::body,(type)i,(type_len),(str))
 #define USP_JSON_stringify(json,class_name,obj) ((json).toJSON(UJsonTypeHandler<class_name>(obj)), USP_JSON_PUTS(json))
 
 #define USP_XML_PUTS(string) \

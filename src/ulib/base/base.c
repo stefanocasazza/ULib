@@ -316,7 +316,7 @@ void u_init_ulib_hostname(void)
 
 void u_getcwd(void) /* get current working directory */
 {
-   size_t newsize = 256;
+   unsigned newsize = 256;
 
    U_INTERNAL_TRACE("u_getcwd()")
 
@@ -325,7 +325,8 @@ loop:
 
    u_cwd = (char*) malloc(newsize);
 
-   if (getcwd(u_cwd, newsize) == 0 && errno == ERANGE)
+   if (getcwd(u_cwd, newsize) == 0 &&
+       errno == ERANGE)
       {
       newsize += 256;
 
@@ -344,9 +345,9 @@ loop:
    U_INTERNAL_ASSERT_MINOR(u_cwd_len, newsize)
 }
 
-__pure int u_getMonth(const char* buf)
+__pure unsigned u_getMonth(const char* buf)
 {
-   int i;
+   unsigned i;
 
    U_INTERNAL_TRACE("u_getMonth(%s)", buf)
 
@@ -456,7 +457,7 @@ bool u_setStartTime(void)
     * This variable (timezone) contains the difference between UTC and the latest local standard time, in seconds
     * west of UTC. For example, in the U.S. Eastern time zone, the value is 5*60*60. Unlike the tm_gmtoff member
     * of the broken-down time structure, this value is not adjusted for daylight saving, and its sign is reversed.
-    * In GNU programs it is better to use tm_gmtoff, since it contains the correct offset even when it is not the latest one.
+    * In GNU programs it is better to use tm_gmtoff, since it contains the correct offset even when it is not the latest one
     */
 
    (void) localtime_r(&(u_now->tv_sec), &u_strftime_tm);
@@ -466,8 +467,8 @@ bool u_setStartTime(void)
 #endif
 
    /**
-    * The timegm() function converts the broken-down time representation, expressed in Coordinated Universal
-    * Time (UTC) to calendar time
+    * The timegm() function converts the broken-down time representation,
+    * expressed in Coordinated Universal Time (UTC) to calendar time
     */
 
    lnow = timegm(&u_strftime_tm);
@@ -483,7 +484,7 @@ bool u_setStartTime(void)
 
    compilation_date = __DATE__; /* Dec  6 2012 */
 
-   /* (void) memset(&tm, 0, sizeof(struct tm)); */
+/* (void) memset(&tm, 0, sizeof(struct tm)); */
 
    tm.tm_min   = 0;
    tm.tm_hour  = 0;
@@ -514,7 +515,7 @@ bool u_setStartTime(void)
        * determined from the contents of the other fields; if structure members are outside their valid interval, they will
        * be normalized (so that, for example, 40 October is changed into 9 November); tm_isdst is set (regardless of its
        * initial value) to a positive value or to 0, respectively, to indicate whether DST is or is not in effect at the
-       * specified time.  Calling mktime() also sets the external variable tzname with information about the current timezone.
+       * specified time.  Calling mktime() also sets the external variable tzname with information about the current timezone
        */
 
 #  ifndef TM_HAVE_TM_GMTOFF
@@ -719,7 +720,7 @@ uint32_t u_strftime1(char* restrict s, uint32_t maxsize, const char* restrict fo
    };
 
    char ch;                      /* character from format */
-   int i, n, val;                /* handy integer (short term usage) */
+   int n, val;                   /* handy integer (short term usage) */
    uint32_t count = 0;           /* return value accumulator */
    const char* restrict fmark;   /* for remembering a place in format */
 
@@ -770,12 +771,16 @@ cdefault:
       goto *((char*)&&cdefault + dispatch_table[ch-'A']);
 
 case_A: /* %A The full name for the day of the week */
-      for (i = 0; i < day_name_len[u_strftime_tm.tm_wday]; ++i) s[count++] = u_day_name[u_strftime_tm.tm_wday][i];
+
+      (void) u__memcpy(s+count, u_day_name[u_strftime_tm.tm_wday], day_name_len[u_strftime_tm.tm_wday], __PRETTY_FUNCTION__);
+                         count +=                                  day_name_len[u_strftime_tm.tm_wday];
 
       continue;
 
 case_B: /* %B The full name of the month */
-      for (i = 0; i < month_name_len[u_strftime_tm.tm_mon]; ++i) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
+
+      (void) u__memcpy(s+count, u_month_name[u_strftime_tm.tm_mon], month_name_len[u_strftime_tm.tm_mon], __PRETTY_FUNCTION__);
+                         count +=                                   month_name_len[u_strftime_tm.tm_mon];
 
       continue;
 
@@ -839,7 +844,7 @@ case_T: /* %X A string representing the full time of day (hours, minutes, and se
 
    /* if (count >= (maxsize - 8)) return 0; */
 
-      U_NUM2STR64(s+count,':',u_strftime_tm.tm_hour,u_strftime_tm.tm_min,u_strftime_tm.tm_sec);
+      U_NUM2STR64(s+count, ':', u_strftime_tm.tm_hour, u_strftime_tm.tm_min, u_strftime_tm.tm_sec);
 
       count += 8;
 
@@ -887,19 +892,29 @@ case_Z: /* %Z Defined by ANSI C as eliciting the time zone if available */
 
    /* if (count >= (maxsize - n)) return 0; */
 
-      (void) u__strncpy(s+count, tzname[u_daylight], n);
+      (void) u__memcpy(s+count, tzname[u_daylight], n, __PRETTY_FUNCTION__);
 
       count += n;
 
       continue;
 
 case_a: /* %a An abbreviation for the day of the week */
-      for (i = 0; i < 3; ++i) s[count++] = u_day_name[u_strftime_tm.tm_wday][i];
+
+      u_put_unalignedp32(s+count, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
+                                                         u_day_name[u_strftime_tm.tm_wday][1],
+                                                         u_day_name[u_strftime_tm.tm_wday][2],' '));
+
+      count += 3;
 
       continue;
 
 case_b: /* %b An abbreviation for the month name - %h Equivalent to %b (SU) */
-      for (i = 0; i < 3; ++i) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
+
+      u_put_unalignedp32(s+count, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
+                                                         u_month_name[u_strftime_tm.tm_mon][1],
+                                                         u_month_name[u_strftime_tm.tm_mon][2],' '));
+
+      count += 3;
 
       continue;
 
@@ -908,17 +923,21 @@ case_c: /* %c A string representing the complete date and time, in the form Mon 
 
    // if (count >= (maxsize - 24)) return 0;
 
-      for (i = 0; i < 3; ++i) s[count++] = u_day_name[u_strftime_tm.tm_wday][i];
-                              s[count++] = ' ';
-      for (i = 0; i < 3; ++i) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
+      u_put_unalignedp32(s+count, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
+                                                         u_day_name[u_strftime_tm.tm_wday][1],
+                                                         u_day_name[u_strftime_tm.tm_wday][2],' '));
 
-      (void) sprintf(s+count, " %.2d %2.2d:%2.2d:%2.2d %.4d", u_strftime_tm.tm_mday, u_strftime_tm.tm_hour,
-                                                              u_strftime_tm.tm_min,  u_strftime_tm.tm_sec,
-                                                              1900 + u_strftime_tm.tm_year);
+      u_put_unalignedp32(s+count+4, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
+                                                           u_month_name[u_strftime_tm.tm_mon][1],
+                                                           u_month_name[u_strftime_tm.tm_mon][2],' '));
 
-      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 17)
+      (void) sprintf(s+count+8, "%.2d %2.2d:%2.2d:%2.2d %.4d", u_strftime_tm.tm_mday, u_strftime_tm.tm_hour,
+                                                               u_strftime_tm.tm_min,  u_strftime_tm.tm_sec,
+                                                               1900 + u_strftime_tm.tm_year);
 
-      count += 17;
+      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 8+17)
+
+      count += 8+17;
 
       continue;
 
@@ -996,15 +1015,19 @@ case_x: /* %x A string representing the complete date, in a format like Mon Apr 
 
    /* if (count >= (maxsize - 15)) return 0; */
 
-      for (i = 0; i < 3; i++) s[count++] = u_day_name[u_strftime_tm.tm_wday][i];
-                              s[count++] = ' ';
-      for (i = 0; i < 3; i++) s[count++] = u_month_name[u_strftime_tm.tm_mon][i];
+      u_put_unalignedp32(s+count, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
+                                                         u_day_name[u_strftime_tm.tm_wday][1],
+                                                         u_day_name[u_strftime_tm.tm_wday][2],' '));
 
-      (void) sprintf(s+count, " %.2d %.4d", u_strftime_tm.tm_mday, 1900 + u_strftime_tm.tm_year);
+      u_put_unalignedp32(s+count+4, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
+                                                           u_month_name[u_strftime_tm.tm_mon][1],
+                                                           u_month_name[u_strftime_tm.tm_mon][2],' '));
 
-      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 8)
+      (void) sprintf(s+count+8, "%.2d %.4d", u_strftime_tm.tm_mday, 1900 + u_strftime_tm.tm_year);
 
-      count += 8;
+      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 8+7)
+
+      count += 8+7;
 
       continue;
 
@@ -1244,7 +1267,7 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
    if (abrt)
       {
 #  ifdef DEBUG
-      if (u_trace_fd > STDERR_FILENO) /* NB: write error on trace file, check stderr to avoid duplication message on terminal */
+      if (u_trace_fd > STDERR_FILENO) /* NB: write error on trace file, check stderr to avoid duplication of message on terminal */
          {
          struct iovec iov[1] = { { (caddr_t)u_internal_buf, bytes_written } };
 
@@ -1253,16 +1276,15 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
 
       if (u_askForContinue() == false)
 #  endif
-         {
-         u_flag_exit = -2; // abort...
+      {
+      u_flag_exit = -2; // abort...
 
-         u_debug_at_exit();
-         }
+      u_debug_at_exit();
+      }
       }
 }
 
 /**
- * --------------------------------------------------------------------
  * Encode escape sequences into a buffer, the following are recognized:
  * --------------------------------------------------------------------
  *  \a  BEL                 (\007  7  7)
@@ -1866,7 +1888,7 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
                if (sign ||
                    len < 0) /* NB: no precision specified... */
                   {
-                  /* NB: print something that have meaning 'to be continued'... */
+                  /* NB: print something that have the meaning of 'to be continued'... */
 
                   *bp++ = '.';
 
@@ -2553,6 +2575,7 @@ case_w: /* extension: print current working directory */
        * any left-hand padding and prefixing, emit zeroes required by a decimal
        * [diouxX] precision, then print the string proper, then emit zeroes
        * required by any leftover floating precision; finally, if LADJUST, pad with blanks
+       * ---------------------------------------------------------------------------------
        */
 next:
       U_INTERNAL_PRINT("size = %d width = %d prec = %d dprec = %d sign = %c", size, width, prec, dprec, sign)

@@ -21,7 +21,7 @@
  * NB: to force the use of select() uncomment this define
  *
  * #if defined(U_SERVER_CAPTIVE_PORTAL) && defined(HAVE_EPOLL_WAIT)
- * #  undef HAVE_EPOLL_WAIT
+ * #undef HAVE_EPOLL_WAIT
  * #endif
  */
 

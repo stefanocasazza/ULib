@@ -75,9 +75,7 @@ public:
    UString str; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
    UOptions opt;
 
-   // COSTRUTTORI
-
-    UApplication();
+   UApplication();
 
 #ifdef U_COVERITY_FALSE_POSITIVE
    virtual ~UApplication();
@@ -93,7 +91,7 @@ public:
 
       U_DUMP_EXEC(argv, env)
 
-      // se esistono opzioni, queste vengono processate...
+      // if exist options, these are processed...
 
       is_options = (argc > 1);
 

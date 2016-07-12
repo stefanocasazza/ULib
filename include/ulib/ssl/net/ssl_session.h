@@ -29,8 +29,6 @@ class UHttpPlugIn;
 class U_EXPORT USSLSession : public UDataStorage {
 public:
 
-   // COSTRUTTORE
-
    USSLSession()
       {
       U_TRACE_REGISTER_OBJECT(0, USSLSession, "", 0)

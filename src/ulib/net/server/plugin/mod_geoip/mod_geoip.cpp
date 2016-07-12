@@ -246,12 +246,12 @@ int UGeoIPPlugIn::handlerRequest()
       UHTTP::geoip->snprintf_add(
          "GEOIP_REGION=%s\n"        // un code indiquant la région
          "GEOIP_CITY=%s\n",         // la ville
-         "GEOIP_DMA_CODE=%s\n",     // code DMA (Designated Market Area) attribué à une zone où les fréquences (télévision, radio, etc)
-                                    // sont identiques (concerne les Etats Unis, valeur par défaut : 0)
-         "GEOIP_AREA_CODE=%s\n",    // indice téléphonique représentant une zone précise (concerne les Etats Unis, valeur par défaut : 0)
+         "GEOIP_DMA_CODE=%s\n",     // code DMA (Designated Market Area) attribut une zone ou les frequences (television, radio, etc)
+                                    // sont identiques (concerne les Etats Unis, valeur par defaut : 0)
+         "GEOIP_AREA_CODE=%s\n",    // indice telephonique representant une zone precise (concerne les Etats Unis, valeur par defaut : 0)
          "GEOIP_LATITUDE=%f\n",     // la latitude
          "GEOIP_LONGITUDE=%f\n",    // la longitude
-         "GEOIP_POSTAL_CODE=%s\n",  // le code postal (concerne uniquement les Etats Unis, ne sera pas définie pour tout autre pays)
+         "GEOIP_POSTAL_CODE=%s\n",  // le code postal (concerne uniquement les Etats Unis, ne sera pas definie pour tout autre pays)
          gir->region,
          gir->city,
          (bGEOIP_CITY_EDITION_REV1 ? gir->metro_code : 0),

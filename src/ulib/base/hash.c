@@ -28,6 +28,7 @@
  * is designed so that a changing just one bit in input 'i' will potentially affect the every bit in hash(i),
  * and the correlation between succesive hashes is (hopefully) extremely small (if not zero). It also can be
  * used as a quick, dirty, portable and open source random number generator that generates randomness on all 32 bits
+ * -----------------------------------------------------------------------------------------------------------------
  */
 
 __pure uint32_t u_random(uint32_t a)

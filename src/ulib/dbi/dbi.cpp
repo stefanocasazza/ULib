@@ -603,7 +603,7 @@ bool UDBISet::next(UDBIRow& r)
 
 // Fetch a single row from query.
 // If no rows where selected returns false,
-// If exactly one row was fetched, returns true.
+// If exactly one row was fetched, returns true
 
 bool UDBI::single(UDBIRow& r)
 {

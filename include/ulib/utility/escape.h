@@ -19,7 +19,6 @@
 #include <ulib/string.h>
 
 /**
- * ---------------------------------------------------------------------------
  * Encode-Decode escape sequences into a buffer, the following are recognized:
  * ---------------------------------------------------------------------------
  * \a  BEL                 (\007  7  7)

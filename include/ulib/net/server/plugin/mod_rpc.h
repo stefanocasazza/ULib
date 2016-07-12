@@ -24,8 +24,6 @@ public:
    // Check for memory error
    U_MEMORY_TEST
 
-   // COSTRUTTORI
-
    URpcPlugIn()
       {
       U_TRACE_REGISTER_OBJECT(0, URpcPlugIn, "", 0)

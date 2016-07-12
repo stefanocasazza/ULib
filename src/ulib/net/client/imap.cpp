@@ -216,12 +216,14 @@ bool UImapClient::logout()
    U_RETURN(false);
 }
 
-/* (LIST | LSUB) command representation
-typedef struct ListResponse {
-   UString name, hierarchyDelimiter;
-   bool marked, unmarked, noSelect, noInferiors;
-} ListResponse;
-*/
+/**
+ * (LIST | LSUB) command representation
+ *
+ * typedef struct ListResponse {
+ *    UString name, hierarchyDelimiter;
+ *    bool marked, unmarked, noSelect, noInferiors;
+ * } ListResponse;
+ */
 
 bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResponse*>& vec, bool subscribedOnly)
 {
@@ -323,6 +325,7 @@ bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResp
 
 /**
  * STATUS command representation
+ *
  * typedef struct StatusInfo {
  *   long messageCount, recentCount, nextUID, uidValidity, unseenCount;
  *    bool hasMessageCount, hasRecentCount, hasNextUID, hasUIDValidity, hasUnseenCount;
@@ -407,6 +410,7 @@ bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int ite
 
 /**
  * (SELECT | EXAMINE) command representation
+ *
  * typedef struct MailboxInfo {
  *    bool readWrite;
  *    StatusInfo status;
@@ -509,20 +513,21 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
 
    (void) U_SYSCALL(memset, "%p,%d,%u", &retval, 0, sizeof(MailboxInfo));
 
-   /* Example
-   -------------------------------------------------------------------------------
-   U0005 SELECT INBOX\r\n
-   -------------------------------------------------------------------------------
-   * FLAGS (\\Answered \\Flagged \\Draft \\Deleted \\Seen)\r\n
-   * OK [PERMANENTFLAGS (\\Answered \\Flagged \\Draft \\Deleted \\Seen \\*)]  \r\n
-   * 29 EXISTS\r\n
-   * 28 RECENT\r\n
-   * OK [UNSEEN 1]  \r\n
-   * OK [UIDVALIDITY 1148569720]  \r\n
-   * OK [UIDNEXT 5774]  \r\n
-   U0005 OK [READ-WRITE] Completed\r\n
-   -------------------------------------------------------------------------------
-   */
+   /**
+    * Example
+    * -------------------------------------------------------------------------------
+    * U0005 SELECT INBOX\r\n
+    * -------------------------------------------------------------------------------
+    * FLAGS (\\Answered \\Flagged \\Draft \\Deleted \\Seen)\r\n
+    * OK [PERMANENTFLAGS (\\Answered \\Flagged \\Draft \\Deleted \\Seen \\*)]  \r\n
+    * 29 EXISTS\r\n
+    * 28 RECENT\r\n
+    * OK [UNSEEN 1]  \r\n
+    * OK [UIDVALIDITY 1148569720]  \r\n
+    * OK [UIDNEXT 5774]  \r\n
+    * U0005 OK [READ-WRITE] Completed\r\n
+    * -------------------------------------------------------------------------------
+    */
 
    uint32_t n;
    UString line;
@@ -856,17 +861,18 @@ bool UImapClient::expunge(int* _ret)
             {
             setEnd();
 
-            /* Example
-            -------------------------------------------------------------------------------
-            U0005 EXPUNGE\r\n
-            -------------------------------------------------------------------------------
-            * 3 EXPUNGE\r\n
-            * 3 EXPUNGE\r\n
-            * 5 EXPUNGE\r\n
-            * 8 EXPUNGE\r\n
-            U0005 OK EXPUNGE Completed\r\n
-            -------------------------------------------------------------------------------
-            */
+            /**
+             * Example
+             * -------------------------------------------------------------------------------
+             * U0005 EXPUNGE\r\n
+             * -------------------------------------------------------------------------------
+             * 3 EXPUNGE\r\n
+             * 3 EXPUNGE\r\n
+             * 5 EXPUNGE\r\n
+             * 8 EXPUNGE\r\n
+             * U0005 OK EXPUNGE Completed\r\n
+             * -------------------------------------------------------------------------------
+             */
 
             UString line;
             UString x = buffer.substr(0U, (uint32_t)end);
@@ -903,14 +909,15 @@ bool UImapClient::search(int* _ret, const UString& spec, const char* charSet, bo
          {
          setEnd();
 
-         /* Example
-         -------------------------------------------------------------------------------
-         U0005 SEARCH TEXT "string not in mailbox"\r\n
-         -------------------------------------------------------------------------------
-         * SEARCH 2 84 882\r\n
-         U0005 OK SEARCH Completed\r\n
-         -------------------------------------------------------------------------------
-         */
+         /**
+          * Example
+          * -------------------------------------------------------------------------------
+          * U0005 SEARCH TEXT "string not in mailbox"\r\n
+          * -------------------------------------------------------------------------------
+          * SEARCH 2 84 882\r\n
+          * U0005 OK SEARCH Completed\r\n
+          * -------------------------------------------------------------------------------
+          */
 
          U_ASSERT_EQUALS(buffer[0],'*')
 
@@ -944,16 +951,17 @@ bool UImapClient::fetch(UVector<UString>& vec, int start, int _end, const UStrin
          {
          setEnd();
 
-         /* Example
-         -------------------------------------------------------------------------------
-         U0005 FETCH 2:4 (FLAGS BODY[HEADER.FIELDS (DATE FROM)])\r\n
-         -------------------------------------------------------------------------------
-         * 2 FETCH ....
-         * 3 FETCH ....
-         * 4 FETCH ....
-         U0005 OK FETCH Completed\r\n
-         -------------------------------------------------------------------------------
-         */
+         /**
+          * Example
+          * -------------------------------------------------------------------------------
+          * U0005 FETCH 2:4 (FLAGS BODY[HEADER.FIELDS (DATE FROM)])\r\n
+          * -------------------------------------------------------------------------------
+          * 2 FETCH ....
+          * 3 FETCH ....
+          * 4 FETCH ....
+          * U0005 OK FETCH Completed\r\n
+          * -------------------------------------------------------------------------------
+          */
 
          U_ASSERT_EQUALS(buffer[0],'*')
 

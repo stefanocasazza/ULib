@@ -649,7 +649,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                    * USER_NAME      Contains the owner of the file which included it.
                    * DOCUMENT_NAME  The filename (excluding directories) of the document requested by the user.
                    * DOCUMENT_URI   The URL path of the document requested by the user. Note that in the case of
-                   *                nested include files, this is not then URL for the current document.
+                   *                nested include files, this is not then URL for the current document
                    */
 
                   bool blocal = false;

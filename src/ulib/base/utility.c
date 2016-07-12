@@ -107,7 +107,7 @@ void u__strcpy(char* restrict dest, const char* restrict src)
    U_INTERNAL_ASSERT_MAJOR(n, 0)
    U_INTERNAL_ASSERT_POINTER(src)
    U_INTERNAL_ASSERT_POINTER(dest)
-   U_INTERNAL_ASSERT_EQUALS(u_is_overlap(dest,src,n),false)
+   U_INTERNAL_ASSERT_EQUALS(u_is_overlap(dest,src,n), false)
 
    (void) strcpy(dest, src);
 }
@@ -119,7 +119,7 @@ char* u__strncpy(char* restrict dest, const char* restrict src, size_t n)
    U_INTERNAL_ASSERT_MAJOR(n, 0)
    U_INTERNAL_ASSERT_POINTER(src)
    U_INTERNAL_ASSERT_POINTER(dest)
-   U_INTERNAL_ASSERT_EQUALS(u_is_overlap(dest,src,n),false)
+   U_INTERNAL_ASSERT_EQUALS(u_is_overlap(dest,src,n), false)
 
    (void) strncpy(dest, src, n);
 
@@ -305,7 +305,7 @@ void u_init_security(void)
 
    /* sanity check */
 
-   if (leffective_uid != (int) real_uid &&
+   if (leffective_uid != (int)real_uid &&
        leffective_uid != 0)
       {
       U_WARNING("Setuid but not to root (uid=%ld, euid=%d), dropping setuid privileges now", (long) real_uid, leffective_uid);
@@ -1097,10 +1097,7 @@ void u_switch_to_realtime_priority(void)
    U_INTERNAL_PRINT("New RLIMIT_RTPRIO limits: soft=%lld; hard=%lld\n", (long long)rlim_old.rlim_cur, (long long)rlim_old.rlim_max);
    */
 
-   if (sched_setscheduler(u_pid, SCHED_FIFO, &sp) == -1)
-      {
-      U_WARNING("Cannot set posix realtime scheduling policy");
-      }
+   if (sched_setscheduler(u_pid, SCHED_FIFO, &sp) == -1) U_WARNING("Cannot set posix realtime scheduling policy");
 #endif
 }
 
@@ -1113,7 +1110,6 @@ void u_get_memusage(unsigned long* vsz, unsigned long* rss)
    if (fp)
       {
       /**
-       * -----------------------------------------------------------------------------------------------------------------------------
        * The fields, in order, with their proper scanf(3) format specifiers, are:
        * -----------------------------------------------------------------------------------------------------------------------------
        * pid %d          The process ID.
@@ -1294,7 +1290,8 @@ loop: c = *++s;
 
          if (s == 0) break;
          }
-      else if (c == group_delimitor[0] && *(s-1) != '\\')
+      else if (c == group_delimitor[0] &&
+               *(s-1) != '\\')
          {
          U_INTERNAL_PRINT("c = %c level = %d s = %.*s", c, level, 10, s)
 
@@ -1307,7 +1304,8 @@ loop: c = *++s;
 
          ++level;
          }
-      else if (c == group_delimitor[n] && *(s-1) != '\\')
+      else if (c == group_delimitor[n] &&
+               *(s-1) != '\\')
          {
          U_INTERNAL_PRINT("c = %c level = %d s = %.*s", c, level, 10, s)
 
@@ -2144,8 +2142,8 @@ done_number:
 #endif
 
 /**
- * Given a string containing units of information separated by colons, return the next one pointed to by (P_INDEX),
- * or NULL if there are no more. Advance (P_INDEX) to the character after the colon
+ * Given a string containing units of information separated by colons, return the next one pointed to by (p_index),
+ * or NULL if there are no more. Advance (p_index) to the character after the colon
  */
 
 static inline char* extract_colon_unit(char* restrict pzDir, const char* restrict string, uint32_t string_len, uint32_t* restrict p_index)
@@ -2655,7 +2653,7 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
 
       U_INTERNAL_PRINT("c = %c test = %c", c, test)
 
-      if (pattern > end_p) return (-1); /* if (c == EOS) return (RANGE_ERROR); */
+      if (pattern > end_p) return -1; /* if (c == EOS) return (RANGE_ERROR); */
 
       if (c == '/' && (flags & FNM_PATHNAME)) return 0;
 
@@ -2669,11 +2667,15 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
 
          if (c2 == '\\' && !(flags & FNM_NOESCAPE)) c2 = *pattern++;
 
-         if (pattern > end_p) return (-1); /* if (c2 == EOS) return (RANGE_ERROR); */
+         if (pattern > end_p) return -1; /* if (c2 == EOS) return (RANGE_ERROR); */
 
          if (flags & FNM_CASEFOLD) c2 = u__tolower((unsigned char)c2);
 
-         if (c <= test && test <= c2) ok = 1;
+         if (c    <= test &&
+             test <= c2)
+            {
+            ok = 1;
+            }
          }
       else if (c == test)
          {
@@ -2684,7 +2686,7 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
 
    *newp = (char* restrict) pattern;
 
-   return (ok == negate ? 0 : 1);
+   return (ok != negate);
 }
 
 __pure static int kfnmatch(const char* restrict pattern, const char* restrict string, int flags, int nesting)
@@ -2705,7 +2707,7 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
          {
          if ((flags & FNM_LEADING_DIR) && *string == '/') return 0;
 
-         return (string == end_s ? 0 : 1);
+         return (string != end_s);
          }
 
       switch (c)
@@ -2842,11 +2844,11 @@ bool u_fnmatch(const char* restrict string, uint32_t n1, const char* restrict pa
 
    U_INTERNAL_TRACE("u_fnmatch(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), string, n1, n2, pattern, n2, flags)
 
-   U_INTERNAL_ASSERT_MAJOR(n1,0)
-   U_INTERNAL_ASSERT_MAJOR(n2,0)
+   U_INTERNAL_ASSERT_MAJOR(n1, 0)
+   U_INTERNAL_ASSERT_MAJOR(n2, 0)
    U_INTERNAL_ASSERT_POINTER(string)
    U_INTERNAL_ASSERT_POINTER(pattern)
-   U_INTERNAL_ASSERT_EQUALS((flags & ~__FNM_FLAGS),0)
+   U_INTERNAL_ASSERT_EQUALS(flags & ~__FNM_FLAGS, 0)
 
    end_s = string  + n1;
    end_p = pattern + n2;
@@ -3462,9 +3464,12 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 
    if      (u_get_unalignedp16(buf) == U_MULTICHAR_CONSTANT16(0xff,0xfe)) be = 0;
    else if (u_get_unalignedp16(buf) == U_MULTICHAR_CONSTANT16(0xfe,0xff)) be = 1;
-   else return 0;
+   else
+      {
+      return 0;
+      }
 
-   for(i = 2; i + 1 < len; i += 2)
+   for (i = 2; i + 1 < len; i += 2)
       {
       uint32_t c = (be ? buf[i+1] + 256 * buf[i]
                        : buf[i]   + 256 * buf[i+1]);
@@ -3478,8 +3483,6 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 
    return (1 + be);
 }
-
-__pure bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }
 
 /**
  * From RFC 3986

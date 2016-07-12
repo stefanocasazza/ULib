@@ -3372,11 +3372,14 @@ static bool checkLoginValidate(bool all)
 {
    U_TRACE(5, "::checkLoginValidate(%b)", all)
 
-   policy->clear();
-
    U_INTERNAL_DUMP("redirect = %V", redirect->rep)
 
-   U_INTERNAL_ASSERT(*redirect)
+   if (redirect->empty())
+      {
+      U_LOGGER("*** checkLoginValidate(%b) FAILED: redirect empty ***", 0);
+
+      U_RETURN(false);
+      }
 
    uint32_t sz = redirect->size();
 
@@ -3388,6 +3391,8 @@ static bool checkLoginValidate(bool all)
       }
    else
       {
+      policy->clear();
+
       UString str = UDES3::getSignedData(*redirect);
 
       // ========================
@@ -4081,7 +4086,7 @@ static void GET_admin_login_nodog_historical_view_data()
 
    static const char* vpath[] = { "220001", "230001", "220002", "230002", "220003", "230003" };
 
-   for (int i = 0; i < U_NUM_ELEMENTS(vpath); ++i)
+   for (unsigned int i = 0; i < U_NUM_ELEMENTS(vpath); ++i)
       {
       U_MEMCPY(ptr, vpath[i], U_CONSTANT_SIZE("230001"));
 

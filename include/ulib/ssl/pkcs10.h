@@ -64,7 +64,7 @@ public:
       }
 
    /**
-    * Deletes this object.
+    * Deletes this object
     */
 
    void clear()
@@ -85,8 +85,6 @@ public:
       if (request) clear();
       }
 
-   // VARIE
-
    bool isValid() const
       {
       U_TRACE_NO_PARAM(0, "UPKCS10::isValid()")
@@ -95,7 +93,7 @@ public:
       }
 
    /**
-    * Returns <i>subject</i> of this certificateRequest.
+    * Returns <i>subject</i> of this certificateRequest
     */
 
    static UString getSubject(X509_REQ* request);
@@ -103,7 +101,7 @@ public:
    UString getSubject() const { return getSubject(request); }
 
    /**
-    * Returns the <i>versionNumber</i> of this certificateRequest. 
+    * Returns the <i>versionNumber</i> of this certificateRequest
     */
 
    long getVersionNumber() const
@@ -118,7 +116,7 @@ public:
       }
 
    /**
-    * Returns the <i>signature</i> of this certificateRequest.
+    * Returns the <i>signature</i> of this certificateRequest
     */
 
    UString getSignature() const
@@ -134,7 +132,7 @@ public:
       }
 
    /**
-    * Returns <i>signatureAlgorithm</i> of this certificateRequest.
+    * Returns <i>signatureAlgorithm</i> of this certificateRequest
     */ 
 
    UString getSignatureAlgorithm() const
@@ -149,7 +147,7 @@ public:
       }
 
    /**
-    * Returns the part of this certificateRequest that is signed.
+    * Returns the part of this certificateRequest that is signed
     */ 
 
    static UString getSignable(X509_REQ* request);
@@ -157,7 +155,7 @@ public:
    UString getSignable() const { return getSignable(request); }
 
    /**
-    * Returns <i>publicKey</i> of this certificateRequest.
+    * Returns <i>publicKey</i> of this certificateRequest
     */
 
    EVP_PKEY* getSubjectPublicKey() const
@@ -172,7 +170,7 @@ public:
       }
 
    /**
-    * Returns true if the signature of the request verifies.
+    * Returns true if the signature of the request verifies
     */
 
    bool verify(EVP_PKEY* publicKey) const
@@ -188,7 +186,7 @@ public:
 
    /**
     * Returns either the DER or PEM encoding of the CertificateRequest (depending on the value of format)
-    * that can be sent to a CA for signing.
+    * that can be sent to a CA for signing
     */
 
    UString getEncoded(const char* format = "PEM") const;

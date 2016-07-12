@@ -39,7 +39,7 @@
  * Unlike much simpler POP3 protocol, IMAP is a multi-session protocol that supports multiple folders,
  * also somewhat confusingly called mailboxes. While you are connected and authenticated, you will be informed
  * about new incoming messages, and also about messages deleted or marked by other concurrent sessions using the
- * same account. Luckily, you usually only have to care about most of this if you want to.
+ * same account. Luckily, you usually only have to care about most of this if you want to
  */
 
 class U_EXPORT UImapClient : public Socket {
@@ -109,14 +109,14 @@ public:
 
    /**
     * Send 'NOOP' to the server. This is handy if you're just polling
-    * for new messages. Well, it will be when it actually returns something.
+    * for new messages. Well, it will be when it actually returns something
     */
 
    bool noop() { return syncCommand("NOOP"); }
 
    /**
     * Tell the server we want to log out. If this returns true,
-    * you'll have to re-login to do anything else.
+    * you'll have to re-login to do anything else
     */
 
    bool logout();
@@ -145,7 +145,7 @@ public:
     * \Noinferiors
     *   It is not possible for any child levels of hierarchy to exist
     *   under this name; no child levels exist now and none can be
-    *   created in the future.
+    *   created in the future
     */
 
    typedef struct ListResponse { // (LIST | LSUB) command representation
@@ -205,31 +205,31 @@ public:
    /**
     * Select a mailbox. The client has a concept of the 'current' mailbox.
     * Some operations (check, close, expunge, search, fetch, store, copy)
-    * require a mailbox to be selected before they will work.
+    * require a mailbox to be selected before they will work
     */
 
    bool selectMailbox(const UString& name, MailboxInfo& ret);
 
    /**
-    * Get info about a mailbox without selecting it, otherwise identical to @see select.
+    * Get info about a mailbox without selecting it, otherwise identical to @see select
     */
 
    bool examineMailbox(const UString& name, MailboxInfo& ret);
 
    /**
-    * Attempt to create a new mailbox with the given name.
+    * Attempt to create a new mailbox with the given name
     */
 
    bool createMailbox(const UString& name);
 
    /**
-    * Attempt to remove the new mailbox with the given name.
+    * Attempt to remove the new mailbox with the given name
     */
 
    bool removeMailbox(const UString& name);
 
    /**
-    * Attempt to rename the new mailbox with the given name.
+    * Attempt to rename the new mailbox with the given name
     */
 
    bool renameMailbox(const UString& from, const UString& to);
@@ -273,7 +273,7 @@ public:
     * to the authenticated state from the selected state. No untagged
     * EXPUNGE responses are sent.
     * No messages are removed, and no error is given, if the mailbox is
-    * selected by an EXAMINE command or is otherwise selected read-only.
+    * selected by an EXAMINE command or is otherwise selected read-only
     */
 
    bool close() { return (state == SELECTED ? syncCommand("CLOSE") : false); }
@@ -282,7 +282,7 @@ public:
     * Attempt to remove all message from a mailbox. Note that some
     * implementations may do something like move all messages to the
     * 'trash' box, unless of course the currently selected mailbox IS
-    * the trash box.
+    * the trash box
     */
 
    bool expunge(int* ret = 0);
@@ -291,7 +291,7 @@ public:
     * Search for messages. For the format of the spec parameter, @see RFC.
     * You may specify the charset to be used when searching.
     * If you don't specify usingUID, then the returned message numbers
-    * will be indices, not UIDs.
+    * will be indices, not UIDs
     */
 
    bool search(int* ret, const UString& spec, const char* charSet = "", bool usingUID = false);
@@ -300,7 +300,7 @@ public:
     * Retrieve information about message(s) within the range [start ... end].
     * For the format of the spec parameter and the returned value, @see RFC.
     * To operate on only one message, specify end == start.
-    * Specifying usingUID means you're giving UIDs, not indices.
+    * Specifying usingUID means you're giving UIDs, not indices
     */
 
    bool fetch(UVector<UString>& vec, int start, int end, const UString& spec, bool usingUID = false);
@@ -309,7 +309,7 @@ public:
     * Set flags on the message(s) within the range [start ... end].
     * To operate on only one message, specify end == start.
     * You may set, add or remove flags. @see FlagSetStyle.
-    * Specifying usingUID means you're giving UIDs, not indices.
+    * Specifying usingUID means you're giving UIDs, not indices
     */
 
    enum FlagSetStyle {
@@ -323,7 +323,7 @@ public:
    /**
     * Copy message(s) within the range [start ... end] from the currently
     * selected mailbox to that specified in destination.
-    * Specifying usingUID means you're giving UIDs, not indices.
+    * Specifying usingUID means you're giving UIDs, not indices
     */
 
    bool copy(int start, int end, const UString& destination, bool usingUID = false);
@@ -348,7 +348,7 @@ private:
 
    /**
     * Run a command and return the response from the server.
-    * Takes care of prepending the unique string necessary.
+    * Takes care of prepending the unique string necessary
     */
 
    bool syncCommand(const char* format, ...) U_NO_EXPORT;

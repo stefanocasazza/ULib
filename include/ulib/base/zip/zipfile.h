@@ -24,7 +24,6 @@
 #define CEN_COMLEN  32
 #define CEN_OFFSET  42
 
-
 /* macros */
 
 #define PACK_UB4(d, o, v) d[o]   = (ub1) ((v) & 0x000000ff); \

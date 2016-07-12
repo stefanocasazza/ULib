@@ -328,7 +328,7 @@ void ULDAP::setStatus()
 /**
  * Split 'str' into strings separated by commas.
  *
- * Note: res[] points into 'str'.
+ * Note: res[] points into 'str'
  */
 
 U_NO_EXPORT char** ULDAP::split_str(char* str)

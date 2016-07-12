@@ -62,8 +62,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UDynamic()
       {
       U_TRACE_NO_PARAM(0, "UDynamic::UDynamic()")

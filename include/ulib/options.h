@@ -50,8 +50,6 @@ public:
            args,
            report_bugs;
 
-   // COSTRUTTORI
-
     UOptions(uint32_t n);
    ~UOptions();
 

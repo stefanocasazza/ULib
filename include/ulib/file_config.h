@@ -23,8 +23,6 @@ class UClient_Base;
 class U_EXPORT UFileConfig : public UFile {
 public:
 
-   // COSTRUTTORI
-
     UFileConfig();
     UFileConfig(const UString& _data, bool _preprocessing);
 
@@ -131,6 +129,7 @@ public:
    UString getData() const                                    { return  data; }
    void    setData(const UString& _data, bool _preprocessing) { data = _data; preprocessing = _preprocessing; }
 
+   // ========================================================================
    // This implementation of a Configuration reads properties
    // from a legacy Windows initialization (.ini) file.
    //
@@ -144,22 +143,26 @@ public:
    // separated by a period (<section key>.<value key>).
    //
    // Property names are not case sensitive. Leading and trailing whitespace is
-   // removed from both keys and values.
+   // removed from both keys and values
+   // ========================================================================
 
    bool loadINI();
 
+   // ========================================================================
    // This implementation of a Configuration reads properties
    // from a Java-style properties file.
    //
    // The file syntax is implemented as follows.
-   //   - a line starting with a hash '#' or exclamation mark '!' is treated as a comment and ignored
+   //   - a line starting with a hash '#' or exclamation mark '!' is treated as
+   //     a comment and ignored
    //   - every other line denotes a property assignment in the form
    //     <key> = <value> or
    //     <key> : <value>
    //
    // Property names are case sensitive. Leading and trailing whitespace is
    // removed from both keys and values. A property name can neither contain
-   // a colon ':' nor an equal sign '=' character.
+   // a colon ':' nor an equal sign '=' character
+   // ========================================================================
 
           bool loadProperties();
    static bool loadProperties(UHashMap<UString>& table, const char* start, const char* end);

@@ -62,9 +62,7 @@ public:
       endHeader    = item.endHeader;
       startHeader  = item.startHeader;
 
-      // passaggio di consegne...
-
-      header = item.header;
+      header = item.header; // NB: move...
 
       ((UMimeEntity*)&item)->header = 0;
       }
@@ -75,8 +73,6 @@ public:
 
       if (header) delete header;
       }
-
-   // VARIE
 
    bool isEmpty()
       {
@@ -139,6 +135,7 @@ public:
    UString getContentType() const { return content_type; }
    UString getMimeVersion() const { return header->getMimeVersion(); }
 
+   // =============================================================================================================================
    // Content types: "multipart"   / [ "mixed", "alternative", "digest", "parallel", "signed", "encrypted", "report", "form-data" ],
    //                "message"     / [ "rfc822", "disposition-notification" ],
    //                "image"       / [ "jpeg", "gif" ],
@@ -148,6 +145,7 @@ public:
    //                                  "pkcs7-signature", "pkcs7-mime", "ms-tnef", "x-www-form-urlencoded" ]
    //                "text"        / [ "plain" (RFC-1521), "richtext" (RFC-1341), "enriched", "html", "xvcard", "vcal",
    //                                  "rtf", "xml" ],
+   // =============================================================================================================================
 
    bool isMime() { return header->isMime(); }
 
@@ -236,9 +234,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:
@@ -279,8 +277,6 @@ private:
 class U_EXPORT UMimeMessage : public UMimeEntity {
 public:
 
-   // COSTRUTTORI
-
    UMimeMessage(UMimeEntity& item) : UMimeEntity(item), rfc822(UMimeEntity::content)
       {
       U_TRACE_REGISTER_OBJECT(0, UMimeMessage, "%p", &item)
@@ -297,8 +293,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UMimeMessage)
       }
-
-   // VARIE
 
    UMimeEntity& getRFC822() { return rfc822; }
 
@@ -341,8 +335,6 @@ private:
 class U_EXPORT UMimeMultipart : public UMimeEntity {
 public:
 
-   // COSTRUTTORI
-
    UMimeMultipart() : UMimeEntity()
       {
       U_TRACE_REGISTER_OBJECT(0, UMimeMultipart, "", 0)
@@ -376,8 +368,6 @@ public:
 
       clear();
       }
-
-   // VARIE
 
    UString getBoundary() const { return boundary; }
    UString getPreamble() const { return preamble; } 

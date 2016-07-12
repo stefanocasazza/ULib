@@ -717,6 +717,24 @@ void UServices::generateDigest(int alg, unsigned char* data, uint32_t size)
 
    U_INTERNAL_DUMP("u_mdLen = %d", u_mdLen)
 }
+
+UString UServices::createToken(int alg)
+{
+   U_TRACE(1, "UServices::createToken(%d)", alg)
+
+   UString output(40U);
+   uint32_t u = u_get_num_random(0);
+
+   u_dgst_init(alg, 0, 0);
+
+   u_dgst_hash((unsigned char*)&u, sizeof(uint32_t));
+
+   uint32_t bytes_written = u_dgst_finish((unsigned char*)output.data(), 0);
+
+   output.size_adjust(bytes_written);
+
+   U_RETURN_STRING(output);
+}
 #endif // USE_LIBSSL
 
 void UServices::generateKey(unsigned char* pkey, unsigned char* hexdump)

@@ -1,4 +1,4 @@
-// ============================================================================
+/* ===================================================================================
 //
 // = LIBRARY
 //    ULib - c++ library
@@ -9,7 +9,7 @@
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================
+// =================================================================================== */
 
 #ifndef ULIB_DGST_H
 #define ULIB_DGST_H 1
@@ -31,7 +31,7 @@
 #  define EVP_MD_CTX_cleanup(ctx)
 #  define EVP_VerifyInit_ex(a,b,c)
 
-#  define HMAC_CTX_cleanup(ctx)           HMAC_cleanup(ctx)
+#  define HMAC_CTX_cleanup(ctx) HMAC_cleanup(ctx)
 #endif
 
 #define U_MAX_HASH_SIZE       256 /* Max size of any expected hash algorithms (oversized) */
@@ -116,7 +116,8 @@ U_EXPORT int u_dgst_finish(unsigned char* restrict hash, int base64); /* Finish 
 
 U_EXPORT void u_dgst_reset(void); /* Reset the hash */
 
-/* The EVP signature routines are a high level interface to digital signatures
+/**
+ * The EVP signature routines are a high level interface to digital signatures
  */
 
 U_EXPORT void u_dgst_sign_init(  int alg, ENGINE* restrict impl);

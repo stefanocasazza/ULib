@@ -34,8 +34,6 @@ public:
 
    enum Type { SYNC, ASYNC, NOSIGNAL };
 
-   // COSTRUTTORI
-
    UTimer()
       {
       U_TRACE_REGISTER_OBJECT(0, UTimer, "", 0)

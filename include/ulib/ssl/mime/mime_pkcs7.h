@@ -20,8 +20,6 @@
 class U_EXPORT UMimePKCS7 : public UMimeEntity {
 public:
 
-   // COSTRUTTORI
-
    UMimePKCS7(const UString& data);
 
    UMimePKCS7(UMimeEntity& item) : UMimeEntity(item), pkcs7(content, "DER")
@@ -39,8 +37,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UMimePKCS7)
       }
-
-   // VARIE
 
    UPKCS7& getPKCS7() { return pkcs7; }
 
@@ -60,9 +56,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:

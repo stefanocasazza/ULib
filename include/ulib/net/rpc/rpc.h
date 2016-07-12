@@ -17,12 +17,12 @@
 #include <ulib/utility/socket_ext.h>
 #include <ulib/utility/string_ext.h>
 
-// -----------------------------------------------------------------------------------------------------------------------------
+// -------------------------------------------------------------------------------------------------
 // Very simple RPC-like layer
 //
 // Requests and responses are build of little packets each containing a U_TOKEN_NM-byte ascii token,
-// an 8-byte hex value or length, and optionally data corresponding to the length.
-// -----------------------------------------------------------------------------------------------------------------------------
+// an 8-byte hex value or length, and optionally data corresponding to the length
+// -------------------------------------------------------------------------------------------------
 
 class U_EXPORT URPC {
 public:

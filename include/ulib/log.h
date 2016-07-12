@@ -60,12 +60,8 @@ public:
    static pthread_rwlock_t* prwlock;
 #endif
 
-   // COSTRUTTORI
-
     ULog(const UString& path, uint32_t size, const char* dir_log_gz = 0);
    ~ULog();
-
-   // VARIE
 
    void reopen()
       {

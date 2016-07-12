@@ -42,8 +42,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UThread(int _detachstate)
       {
       U_TRACE_REGISTER_OBJECT(0, UThread, "%d", _detachstate)
@@ -352,7 +350,6 @@ protected:
       U_TRACE(0, "UThread::::execHandler(%p)", th)
 
       U_INTERNAL_ASSERT_POINTER(th)
-   // U_INTERNAL_ASSERT_EQUALS(GetCurrentThreadId(), th->tid)
 
       ((UThread*)th)->threadStart();
 
@@ -438,8 +435,6 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
 
     UThreadPool(uint32_t size);
    ~UThreadPool();

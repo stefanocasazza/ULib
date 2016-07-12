@@ -12,7 +12,7 @@ U_EXPORT unsigned zip_extract(const char* zipfile, const char** files, char*** f
 
 /* get content of all files from archive data */
 U_EXPORT unsigned zip_get_content(const char* zipdata, unsigned datalen, char*** filenames,    unsigned** filenames_len,
-                                                                                char*** filecontents, unsigned** filecontents_len);
+                                                                         char*** filecontents, unsigned** filecontents_len);
 
 #ifdef __cplusplus
 }

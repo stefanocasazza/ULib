@@ -24,8 +24,6 @@ public:
    // Check for memory error
    U_MEMORY_TEST
 
-   // COSTRUTTORI
-
             UProxyPlugIn();
    virtual ~UProxyPlugIn();
 

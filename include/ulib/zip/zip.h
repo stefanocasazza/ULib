@@ -31,14 +31,12 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UZIP();
    UZIP(const UString& content);
 
    /**
-   * Deletes this object.
-   */
+    * Deletes this object
+    */
 
    ~UZIP()
       {
@@ -48,8 +46,8 @@ public:
       }
 
    /**
-   * Returns bool value to indicate the correctness of the zip data.
-   */
+    * Returns bool value to indicate the correctness of the zip data
+    */
 
    bool isValid() const
       {
@@ -60,8 +58,6 @@ public:
 
    bool extract(                     const UString* tmpdir = 0, bool bdir = true);
    bool extract(const UString& data, const UString* tmpdir = 0, bool bdir = true);
-
-   // VARIE
 
    void   clear();
    bool   readContent();

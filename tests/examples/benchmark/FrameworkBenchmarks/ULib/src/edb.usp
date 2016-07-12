@@ -9,40 +9,40 @@ static char buffer[128];
 static UElasticSearchClient* es;
 
 #ifndef AS_cpoll_cppsp_DO
-static UValue*	pvalue;
+static UValue* pvalue;
 #endif
 
 #define QLEN U_CONSTANT_SIZE("{\"query\":{\"match\":{\"_id\":\"")
 
 static void usp_fork_edb()
 {
-	U_TRACE(5, "::usp_fork_edb()")
+   U_TRACE(5, "::usp_fork_edb()")
 
-	U_NEW(UElasticSearchClient, es, UElasticSearchClient);
+   U_NEW(UElasticSearchClient, es, UElasticSearchClient);
 
-	if (es->connect() == false)
-		{
-		U_WARNING("usp_fork_edb(): connection disabled or failed");
+   if (es->connect() == false)
+      {
+      U_WARNING("usp_fork_edb(): connection disabled or failed");
 
-		return;
-		}
+      return;
+      }
 
-	u__memcpy(buffer,	"{\"query\":{\"match\":{\"_id\":\"", QLEN, __PRETTY_FUNCTION__);
+   U_MEMCPY(buffer,  "{\"query\":{\"match\":{\"_id\":\"", QLEN);
 
 #ifndef AS_cpoll_cppsp_DO
-	U_NEW(UValue, pvalue, UValue(OBJECT_VALUE));
+   U_NEW(UValue, pvalue, UValue(OBJECT_VALUE));
 #endif
 }
 
 #ifdef DEBUG
 static void usp_end_edb()
 {
-	U_TRACE(5, "::usp_end_edb()")
+   U_TRACE(5, "::usp_end_edb()")
 
-	delete es;
+   delete es;
 
 #ifndef AS_cpoll_cppsp_DO
-	if (pvalue) delete pvalue;
+   if (pvalue) delete pvalue;
 #endif
 }
 #endif

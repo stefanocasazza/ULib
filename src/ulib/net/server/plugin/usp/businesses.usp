@@ -202,22 +202,15 @@ public:
 class HTTP2Push : public UEventTime {
 public:
 
-   UString message;
-   const char* http2_server;
-   const char* apple_cert;
-   const char* app_bundle_id;
-   const char* token;
+   UString message, token;
 
    // COSTRUTTORI
 
-   HTTP2Push() : UEventTime(15L * 60L, 0L), message(U_CAPACITY)
+   HTTP2Push() : UEventTime(15L * 60L, 0L), message(U_STRING_FROM_CONSTANT("{aps:{content-available:1},check:health}"))
       {
       U_TRACE_REGISTER_OBJECT(0, HTTP2Push, "", 0)
 
-      http2_server  = "https://api.development.push.apple.com";
-      apple_cert    = "/certificates/samplepush/development.pem";
-      app_bundle_id = "it.tabasoft.samplepush";
-      token         = "dbdaeae86abcde56rtyww1859fb41d2c7b2cberrttyyy053ec48987847";
+      UCURL::initHTTP2Push("https://api.development.push.apple.com", "/certificates/samplepush/development.pem", "GoGo.Hopscotch");
       }
 
    virtual ~HTTP2Push() U_DECL_FINAL
@@ -237,10 +230,10 @@ public:
 
       // child
 
-      message.snprintf("{\"aps\":{\"alert\":\"Hi!\",\"sound\":\"default\"}}", 0);
+      token.snprintf("dbdaeae86abcde56rtyww1859fb41d2c7b2cberrttyyy053ec48987847", 0);
 
 #  ifdef USE_LIBCURL
-      if (UCURL::sendHTTP2Push(http2_server, apple_cert, app_bundle_id, token, message) == false)
+      if (UCURL::sendHTTP2Push(token, message) == false)
 #  endif
       {
       U_WARNING("UCURL::sendHTTP2Push() failed");

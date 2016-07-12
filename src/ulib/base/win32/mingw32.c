@@ -1394,10 +1394,10 @@ next:
    return result;
 }
 
-/*
-Create a one-way communication channel (__pipe). If successful, two file descriptors are stored in PIPEDES;
-bytes written on PIPEDES[1] can be read from PIPEDES[0]. Returns 0 if successful, -1 if not.
-*/
+/**
+ * Create a one-way communication channel (__pipe). If successful, two file descriptors are stored in PIPEDES;
+ * bytes written on PIPEDES[1] can be read from PIPEDES[0]. Returns 0 if successful, -1 if not
+ */
 
 int pipe(int filedes[2])
 {
@@ -1410,16 +1410,16 @@ int pipe(int filedes[2])
    return ret;
 }
 
-/*
-Wait for a child matching PID to die.
-If PID is greater than 0, match any process whose process ID is PID.
-If PID is (pid_t) -1, match any process.
-If PID is (pid_t)  0, match any process with the same process group as the current process.
-If PID is less than -1, match any process whose process group is the absolute value of PID.
-If the WNOHANG   bit is set in OPTIONS, and that child is not already dead, return (pid_t) 0.
-If the WUNTRACED bit is set in OPTIONS, return status for stopped children; otherwise don't.
-If successful, return PID and store the dead child's status in STAT_LOC. Return (pid_t) -1 for errors
-*/
+/**
+ * Wait for a child matching PID to die.
+ * If PID is greater than 0, match any process whose process ID is PID.
+ * If PID is (pid_t) -1, match any process.
+ * If PID is (pid_t)  0, match any process with the same process group as the current process.
+ * If PID is less than -1, match any process whose process group is the absolute value of PID.
+ * If the WNOHANG   bit is set in OPTIONS, and that child is not already dead, return (pid_t) 0.
+ * If the WUNTRACED bit is set in OPTIONS, return status for stopped children; otherwise don't.
+ * If successful, return PID and store the dead child's status in STAT_LOC. Return (pid_t) -1 for errors
+ */
 
 pid_t waitpid(pid_t pid, int* stat_loc, int options)
 {
@@ -1635,7 +1635,8 @@ static void fdset_sock2fd(fd_set* fileset, fd_set* set)
       }
 }
 
-/* Microsoft Windows does not have a unified IO system, so it doesn't support select() on files, devices, or pipes...
+/**
+ * Microsoft Windows does not have a unified IO system, so it doesn't support select() on files, devices, or pipes...
  * Microsoft provides the Berkeley select() call and an asynchronous select function that sends a WIN32 message when
  * the select condition exists... WSAAsyncSelect()
  */
@@ -1699,12 +1700,12 @@ int select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* tim
 /*            Async timers                  */
 /*------------------------------------------*/
 
-/*
-setitimer() does not exist on native MS Windows, so we emulate in both cases by using multimedia timers.
-We emulate two timers, one for SIGALRM, another for SIGPROF. Minimum timer resolution on Win32 systems varies,
-and is greater than or equal than 1 ms. The resolution is always wrapped not to attempt to get below the system
-defined limit
-*/
+/**
+ * setitimer() does not exist on native MS Windows, so we emulate in both cases by using multimedia timers.
+ * We emulate two timers, one for SIGALRM, another for SIGPROF. Minimum timer resolution on Win32 systems varies,
+ * and is greater than or equal than 1 ms. The resolution is always wrapped not to attempt to get below the system
+ * defined limit
+ */
 
 /* Last itimerval, as set by call to setitimer */
 static struct itimerval itv;
@@ -1892,18 +1893,17 @@ const char* getSysError_w32(unsigned* len)
 {
    static char buffer[1024];
 
-   int i;
-   unsigned lenMsg;
+   unsigned int i, lenMsg;
 /* const char* msg  = "Unknown error"; */
    const char* name = "???";
 
-   DWORD ret;              // Temp space to hold a return value
-   LPTSTR pBuffer;         // Buffer to hold the textual error description
-   HINSTANCE hInst = NULL; // Instance handle for DLL
+   DWORD ret;              /* Temp space to hold a return value */
+   LPTSTR pBuffer;         /* Buffer to hold the textual error description */
+   HINSTANCE hInst = NULL; /* Instance handle for DLL */
 
-   DWORD dwFlags = FORMAT_MESSAGE_ALLOCATE_BUFFER | // The function will allocate space for pBuffer
+   DWORD dwFlags = FORMAT_MESSAGE_ALLOCATE_BUFFER | /* The function will allocate space for pBuffer */
                    FORMAT_MESSAGE_MAX_WIDTH_MASK  |
-                   FORMAT_MESSAGE_IGNORE_INSERTS;   // No inserts
+                   FORMAT_MESSAGE_IGNORE_INSERTS;   /* No inserts */
 
    U_INTERNAL_TRACE("getSysError_w32(%p)", len)
 
@@ -1920,31 +1920,35 @@ const char* getSysError_w32(unsigned* len)
 
    if (HRESULT_FACILITY(errno) == FACILITY_MSMQ)
       {
-      // MSMQ errors only (see winerror.h for facility info)
-      // Load the MSMQ library containing the error message strings
+      /**
+       * MSMQ errors only (see winerror.h for facility info)
+       * Load the MSMQ library containing the error message strings
+       */
 
       hInst = LoadLibrary( TEXT("mqutil.dll") );
       }
    else if (errno >= NERR_BASE &&
             errno <= MAX_NERR)
       {
-      // Could be a network error
-      // Load the library containing network messages
+      /**
+       * Could be a network error
+       * Load the library containing network messages
+       */
 
       hInst = LoadLibrary( TEXT("netmsg.dll") );
       }
 
-   dwFlags |= (hInst == NULL ? FORMAT_MESSAGE_FROM_SYSTEM      // System wide message
-                             : FORMAT_MESSAGE_FROM_HMODULE);   // Message definition is in a module
+   dwFlags |= (hInst == NULL ? FORMAT_MESSAGE_FROM_SYSTEM    /* System wide message */
+                             : FORMAT_MESSAGE_FROM_HMODULE); /* Message definition is in a module */
 
    ret = FormatMessage(
          dwFlags,
-         hInst,                                       // Handle to the DLL
-         errno,                                       // Message identifier
-         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),   // Default language
-         (LPTSTR)&pBuffer,                            // Buffer that will hold the text string
-         256,                                         // Allocate at least this many chars for pBuffer
-         NULL                                         // No insert values
+         hInst,                                       /* Handle to the DLL */
+         errno,                                       /* Message identifier */
+         MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),   /* Default language */
+         (LPTSTR)&pBuffer,                            /* Buffer that will hold the text string */
+         256,                                         /* Allocate at least this many chars for pBuffer */
+         NULL                                         /* No insert values */
         );
 
    if (ret == 0) lenMsg = 0;
@@ -1967,7 +1971,7 @@ const char* getSysError_w32(unsigned* len)
 
    (void) snprintf(buffer, sizeof(buffer), "%s (%d, %.*s)", name, errno, lenMsg, pBuffer);
 
-   // Free the buffer.
+   /* Free the buffer */
 
    LocalFree(pBuffer);
 
@@ -2027,11 +2031,12 @@ int fcntl_w32(int fd, int cmd, void* arg)
 
       if (cmd == F_SETFL)
          {
-         /* Set the socket I/O mode: In this case FIONBIO enables or disables
+         /**
+          * Set the socket I/O mode: In this case FIONBIO enables or disables
           * the blocking mode for the socket based on the numerical value of iMode.
           *
           * If iMode  = 0,     blocking mode is enabled
-          * If iMode != 0, non-blocking mode is enabled.
+          * If iMode != 0, non-blocking mode is enabled
           */
 
          u_long iMode = (mode & O_NONBLOCK ? 1 : 0);
@@ -2043,19 +2048,19 @@ int fcntl_w32(int fd, int cmd, void* arg)
          char outBuffer[32];
          DWORD cbBytesReturned;
 
-         /*
-         int WSAIoctl(
-         in  SOCKET s,                                               // A descriptor identifying a socket
-         in  DWORD dwIoControlCode,                                  // The control code of operation to perform
-         in  LPVOID lpvInBuffer,                                     // A pointer to the input buffer
-         in  DWORD cbInBuffer,                                       // The size, in bytes, of the input buffer
-         out LPVOID lpvOutBuffer,                                    // A pointer to the output buffer
-         in  DWORD cbOutBuffer,                                      // The size, in bytes, of the output buffer
-         out LPDWORD lpcbBytesReturned,                              // A pointer to actual number of bytes of output
-         in  LPWSAOVERLAPPED lpOverlapped,                           // A pointer to a WSAOVERLAPPED structure (ignored for non-overlapped sockets)
-         in  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) // A pointer to the completion routine called when
-                                                                     // the operation has been completed (ignored for non-overlapped sockets)
-         */
+         /**
+          * int WSAIoctl(
+          * in  SOCKET s,                                               // A descriptor identifying a socket
+          * in  DWORD dwIoControlCode,                                  // The control code of operation to perform
+          * in  LPVOID lpvInBuffer,                                     // A pointer to the input buffer
+          * in  DWORD cbInBuffer,                                       // The size, in bytes, of the input buffer
+          * out LPVOID lpvOutBuffer,                                    // A pointer to the output buffer
+          * in  DWORD cbOutBuffer,                                      // The size, in bytes, of the output buffer
+          * out LPDWORD lpcbBytesReturned,                              // A pointer to actual number of bytes of output
+          * in  LPWSAOVERLAPPED lpOverlapped,                           // A pointer to a WSAOVERLAPPED structure (ignored for non-overlapped sockets)
+          * in  LPWSAOVERLAPPED_COMPLETION_ROUTINE lpCompletionRoutine) // A pointer to the completion routine called when
+          *                                                             // the operation has been completed (ignored for non-overlapped sockets)
+          */
 
          res = WSAIoctl(h, cmd, &mode, sizeof(unsigned long), outBuffer, sizeof(outBuffer), &cbBytesReturned, 0, 0);
          }

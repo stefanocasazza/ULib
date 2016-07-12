@@ -53,8 +53,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // Costruttori
-
    UDirWalk(const UString* dir = 0, const char* _filter = 0, uint32_t _filter_len = 0)
       {
       U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%p,%.*S,%u", dir, _filter_len, _filter, _filter_len)

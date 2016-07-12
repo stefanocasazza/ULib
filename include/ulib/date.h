@@ -39,8 +39,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UTimeDate()
       {
       U_TRACE_REGISTER_OBJECT(0, UTimeDate, "", 0)
@@ -122,8 +120,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UTimeDate)
       }
-
-   // ASSEGNAZIONI
 
    void set(const UTimeDate& d)
       {
@@ -430,7 +426,8 @@ public:
       date.setCurrentDate();
       }
 
-   // This can be used for comments and other from of communication to tell the time ago instead of the exact time which might not be correct to some one in another time zone
+   // This can be used for comments and other from of communication to tell the time ago
+   // instead of the exact time which might not be correct to some one in another time zone
 
    UString ago(uint32_t granularity = 0)
       {

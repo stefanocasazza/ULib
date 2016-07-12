@@ -28,8 +28,6 @@
 class U_EXPORT UBison : public UFlexer {
 public:
 
-   // COSTRUTTORI
-
    UBison()
       {
       U_TRACE_REGISTER_OBJECT(0, UBison, "", 0)
@@ -44,8 +42,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UBison)
       }
-
-   // VARIE
 
    bool parse(void* obj = 0)
       {

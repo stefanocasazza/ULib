@@ -86,8 +86,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    enum State {
       CLOSE       = 0x000,
       TIMEOUT     = 0x001,
@@ -292,7 +290,7 @@ public:
    /**
     * This method is called to accept a new pending connection on the server socket.
     * The USocket pointed to by the provided parameter is modified to refer to the
-    * newly connected socket. The remote IP Address and port number are also set.
+    * newly connected socket. The remote IP Address and port number are also set
     */
 
    bool acceptClient(USocket* pcConnection);
@@ -560,7 +558,7 @@ public:
    int recvFrom(void* pBuffer, uint32_t iBufLength, uint32_t uiFlags, UIPAddress& cSourceIP, unsigned int& iSourcePortNumber);
 
    /**
-    * The socket transmits the data to the remote socket.
+    * The socket transmits the data to the remote socket
     */
 
    int sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, UIPAddress& cDestinationIP, unsigned int iDestinationPortNumber);

@@ -99,8 +99,6 @@ public:
       map_size = 0;
       }
 
-   // COSTRUTTORI
-
    UFile()
       {
       U_TRACE_REGISTER_OBJECT(0, UFile, "", 0)
@@ -501,7 +499,7 @@ public:
 
       UString _etag(100U);
 
-      // NB: The only format constraints are that the string be quoted...
+      // NB: The only format constraints are that the string must be quoted...
 
       _etag.snprintf("\"%x-%x-%x\"", st_ino, st_size, st_mtime);
 

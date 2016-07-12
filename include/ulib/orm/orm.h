@@ -36,10 +36,8 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
-    UOrmSession(const char* dbname,  uint32_t len);
-    UOrmSession(const char* backend, uint32_t len, const UString& option)
+   UOrmSession(const char* dbname,  uint32_t len);
+   UOrmSession(const char* backend, uint32_t len, const UString& option)
       {
       U_TRACE_REGISTER_OBJECT(0, UOrmSession, "%.*S,%u,%V", len, backend, len, option.rep)
 

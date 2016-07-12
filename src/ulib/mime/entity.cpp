@@ -312,7 +312,7 @@ U_NO_EXPORT bool UMimeMultipart::findBoundary(uint32_t pos)
              buf[pos] == '-')
             {
             // NOTE: Since we must be fault tolerant for being able to understand messaged that were damaged during
-            // transportation we now accept final boundaries ending with "-" instead of "--".
+            // transportation we now accept final boundaries ending with "-" instead of "--"
 
             ++pos;
 

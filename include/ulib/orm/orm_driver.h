@@ -208,8 +208,6 @@ public:
    // Check for memory error
    U_MEMORY_TEST
 
-   // COSTRUTTORE
-
    UOrmDriver()
       {
       U_TRACE_REGISTER_OBJECT(0, UOrmDriver, "")
@@ -439,7 +437,7 @@ public:
     * a column in a WHERE clause to specify a comparison value. However, they are not permitted for identifiers (such as table or
     * column names), or to specify both operands of a binary operator such as the = equal sign. The latter restriction is necessary
     * because it would be impossible to determine the parameter type. In general, parameters are legal only in Data Manipulation Language
-    * (DML) statements, and not in Data Definition Language (DDL) statements. 
+    * (DML) statements, and not in Data Definition Language (DDL) statements 
     */
 
    virtual USqlStatement* handlerStatementCreation(const char* stmt, uint32_t len)

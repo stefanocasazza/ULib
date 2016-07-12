@@ -264,8 +264,6 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
             ssize_t bytes_read_or_write = va_arg(argp, ssize_t);
             va_end(argp);
 
-            // NB: check se vale la pena di dare l'informazione... (la dimensione di I/O puo' essere significativa)
-
             if (bytes_read_or_write > (ssize_t)(10 * 1024))
                {
                              time_syscall_read_or_write->stop();

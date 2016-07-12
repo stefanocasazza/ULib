@@ -553,8 +553,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UPCRE key;
    UString replacement;
 
@@ -623,8 +621,6 @@ public:
 
    vPFi runDynamicPage;
 
-   // COSTRUTTORI
-
    UServletPage()
       {
       U_TRACE_REGISTER_OBJECT(0, UServletPage, "", 0)
@@ -681,8 +677,6 @@ public:
    void* relocated;
    iPFipvc prog_main;
 
-   // COSTRUTTORI
-
    UCServletPage()
       {
       U_TRACE_REGISTER_OBJECT(0, UCServletPage, "", 0)
@@ -725,8 +719,6 @@ public:
    bPF  runPHP;
    vPF  endPHP;
 
-   // COSTRUTTORI
-
    UPHP()
       {
       U_TRACE_REGISTER_OBJECT(0, UPHP, "", 0)
@@ -768,8 +760,6 @@ public:
    bPF  runRUBY;
    vPF  endRUBY;
 
-   // COSTRUTTORI
-
    URUBY()
       {
       U_TRACE_REGISTER_OBJECT(0, URUBY, "", 0)
@@ -810,8 +800,6 @@ public:
    bPF initPYTHON;
    bPF  runPYTHON;
    vPF  endPYTHON;
-
-   // COSTRUTTORI
 
    UPYTHON()
       {
@@ -860,8 +848,6 @@ public:
    vPFpcstr minify_html;
    vPFstr optimize_gif, optimize_png, optimize_jpg;
 
-   // COSTRUTTORI
-
    UPageSpeed()
       {
       U_TRACE_REGISTER_OBJECT(0, UPageSpeed, "", 0)
@@ -897,8 +883,6 @@ public:
    public:
 
    vPFstr runv8;
-
-   // COSTRUTTORI
 
    UV8JavaScript()
       {
@@ -951,8 +935,6 @@ public:
    int mime_index;          // index file mime type
    int fd;                  // file descriptor
    bool link;               // true => ptr point to another entry
-
-   // COSTRUTTORI
 
     UFileCacheData();
     UFileCacheData(const UFileCacheData& elem);

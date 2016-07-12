@@ -115,8 +115,6 @@ public:
 protected:
    int nResponseCode;
 
-   // Costruttori
-
    URDBClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
       {
       U_TRACE_REGISTER_OBJECT(0, URDBClient_Base, "%p", _cfg)
@@ -151,8 +149,6 @@ private:
 
 template <class Socket> class U_EXPORT URDBClient : public URDBClient_Base {
 public:
-
-   // COSTRUTTORI
 
    URDBClient(UFileConfig* _cfg) : URDBClient_Base(_cfg)
       {

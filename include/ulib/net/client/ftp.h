@@ -46,7 +46,7 @@
  * fact that the FTP @a SIZE command, which reports the size of the remote
  * file, reports the <i>transfer size</i> of the file, which is not necessarily
  * the same as the physical size of the file. The is described in more detail
- * in the documentation for the getFileSize() method.
+ * in the documentation for the getFileSize() method
  */
 
 #define FTP_DATA_CONNECTION_OPEN       125
@@ -177,7 +177,7 @@ public:
     * @returns @c true if successful and @c false if the ssl negotiation failed
     *
     * Notes: The library uses an ssl/tls encryption approach defined in the draft-murray-auth-ftp-ssl
-    *        available at http://www.ford-hutchinson.com/~fh-1-pfh/ftps-ext.html.
+    *        available at http://www.ford-hutchinson.com/~fh-1-pfh/ftps-ext.html
     */
 
    bool negotiateEncryption();

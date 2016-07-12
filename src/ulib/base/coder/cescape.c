@@ -1,4 +1,4 @@
-// ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ULib - c++ library
@@ -9,7 +9,7 @@
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================
+// ============================================================================ */
 
 /*
 #define DEBUG_DEBUG
@@ -52,7 +52,6 @@ uint32_t u_escape_encode(const unsigned char* restrict inptr, uint32_t len, char
 }
 
 /**
- * --------------------------------------------------------------------
  * Decode escape sequences into a buffer, the following are recognized:
  * --------------------------------------------------------------------
  *  \a  BEL                 (\007  7  7)
@@ -215,7 +214,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
                   u_put_unalignedp32(outptr, U_MULTICHAR_CONSTANT32((unsigned char)(0xF0 |  c >> 18),
                                                                     (unsigned char)(0x80 | (c >> 12 & 0x3F)),
                                                                     (unsigned char)(0x80 | (c >>  6 & 0x3F)),
-                                                                    (unsigned char)(0x80 | (c        & 0x3F))));
+                                                                    (unsigned char)(0x80 | (c       & 0x3F))));
 
                   outptr += 4;
                   }

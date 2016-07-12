@@ -60,8 +60,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // Costruttori
-
    UXML2Node(xmlNodePtr node) : impl_(node)
       {
       U_TRACE_REGISTER_OBJECT(0, UXML2Node, "%p", node)
@@ -72,10 +70,11 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UXML2Node)
       }
 
-   /** Get the name of this node.
-   *
-   * @returns The node's name.
-   */
+   /**
+    * Get the name of this node.
+    *
+    * @returns The node's name
+    */
 
    const char* getName() const
       {
@@ -88,10 +87,11 @@ public:
       U_RETURN(result);
       }
 
-   /** Set the name of this node.
-   *
-   * @param name The new name for the node.
-   */
+   /**
+    * Set the name of this node.
+    *
+    * @param name The new name for the node
+    */
 
    void setName(const xmlChar* name)
       {
@@ -127,12 +127,13 @@ public:
       U_SYSCALL_VOID(xmlSetNs, "%p,%S", impl_, ns); // Use it for this element
       }
 
-   /** Set the namespace prefix used by the node.
-   *
-   * If no such namespace prefix has been declared then this method return false.
-   *
-   * @param ns_prefix The namespace prefix.
-   */
+   /**
+    * Set the namespace prefix used by the node.
+    *
+    * If no such namespace prefix has been declared then this method return false.
+    *
+    * @param ns_prefix The namespace prefix
+    */
 
    bool setNameSpace(const xmlChar* ns_prefix = 0)
       {
@@ -150,10 +151,11 @@ public:
       U_RETURN(false);
       }
 
-  /** This adds a namespace declaration to this node which will apply to this node and all children.
+  /**
+   * This adds a namespace declaration to this node which will apply to this node and all children.
    *
    * @param ns_uri    The namespace to associate with the prefix, or to use as the default namespace if no prefix is specified.
-   * @param ns_prefix The namespace prefix. If no prefix is specified then the namespace URI will be the default namespace.
+   * @param ns_prefix The namespace prefix. If no prefix is specified then the namespace URI will be the default namespace
    */
 
    void setNameSpaceDeclaration(const char* ns_uri, const char* ns_prefix = 0)
@@ -175,7 +177,7 @@ public:
 
       // check for impl_ if is actually of type xmlDoc, instead of just xmlNode.
       // This can be an issue when calling this method on a UXML2Node returned by find().
-      // Therefore, a call to impl_->ns would be invalid.
+      // Therefore, a call to impl_->ns would be invalid
 
       const char* result = (impl_->type != XML_DOCUMENT_NODE && impl_->ns && impl_->ns->prefix ? (const char*)impl_->ns->prefix : "");
 
@@ -184,14 +186,15 @@ public:
 
    const xmlChar* getNameSpaceUri();
 
-   /** Checks that the node has a given name and a given namespace href.
-   *
-   * @param cur   the pointer to an XML node
-   * @param name  the name
-   * @param ns    the namespace href
-   *
-   * @returns     true if the node matches or false otherwise.
-   */
+   /**
+    * Checks that the node has a given name and a given namespace href.
+    *
+    * @param cur   the pointer to an XML node
+    * @param name  the name
+    * @param ns    the namespace href
+    *
+    * @returns     true if the node matches or false otherwise
+    */
 
    bool checkNodeName(const xmlChar* name, const xmlChar* ns)
       {
@@ -206,24 +209,27 @@ public:
 
    static bool checkNodeName(xmlNodePtr node, const xmlChar* name, const xmlChar* ns);
 
-   /** Discover at what line number this node occurs in the XML file.
-   *
-   * @returns The line number.
-   */
+   /**
+    * Discover at what line number this node occurs in the XML file.
+    *
+    * @returns The line number
+    */
 
    int getLine() const { return XML_GET_LINE(impl_); }
 
-   /** Get the parent element for this node.
-   *
-   * @returns The parent node
-   */
+   /**
+    * Get the parent element for this node.
+    *
+    * @returns The parent node
+    */
 
    xmlNodePtr getParent() const { return (impl_->parent && impl_->parent->type == XML_ELEMENT_NODE ? impl_->parent : 0); }
 
-   /** Get the next sibling for this node.
-   *
-   * @returns The next sibling
-   */
+   /**
+    * Get the next sibling for this node.
+    *
+    * @returns The next sibling
+    */
 
    static __pure xmlNodePtr getNextSibling(xmlNodePtr node)
       {
@@ -236,28 +242,31 @@ public:
 
    xmlNodePtr getNextSibling() const { return getNextSibling(impl_->next); }
 
-   /** Get the previous sibling for this node.
-   *
-   * @returns The previous sibling
-   */
+   /**
+    * Get the previous sibling for this node.
+    *
+    * @returns The previous sibling
+    */
 
    xmlNodePtr getPreviousSibling() const { return impl_->prev; }
 
-   /** Obtain the vector of child nodes. You may optionally obtain a vector of only the child nodes which have a certain name.
-   *
-   * @param children The vector of child nodes.
-   * @param name     The names of the child nodes to get. If you do not specify a name, then the vector will contain all nodes, regardless of their names.
-   */
+   /**
+    * Obtain the vector of child nodes. You may optionally obtain a vector of only the child nodes which have a certain name.
+    *
+    * @param children The vector of child nodes.
+    * @param name     The names of the child nodes to get. If you do not specify a name, then the vector will contain all nodes, regardless of their names
+    */
 
    uint32_t getChildren(UVector<xmlNodePtr>& children, const xmlChar* name) const;
 
-   /** Add a child element to this node.
-   *
-   * @param name      The new node name
-   * @param ns_prefix The namespace prefix.
-   *
-   * @returns The newly-created element
-   */
+   /**
+    * Add a child element to this node.
+    *
+    * @param name      The new node name
+    * @param ns_prefix The namespace prefix.
+    *
+    * @returns The newly-created element
+    */
 
    xmlNodePtr addChild(const xmlChar* name, const xmlChar* ns_prefix = 0)
       {
@@ -273,14 +282,15 @@ public:
       U_RETURN_POINTER(node,_xmlNode);
       }
 
-   /** Add a child element to this node after the specified existing child node.
-   *
-   * @param previous_sibling  An existing child node.
-   * @param name              The new node name
-   * @param ns_prefix         The namespace prefix. If the prefix has not been declared then this method will throw an exception.
-   *
-   * @returns The newly-created element
-   */
+   /**
+    * Add a child element to this node after the specified existing child node.
+    *
+    * @param previous_sibling  An existing child node.
+    * @param name              The new node name
+    * @param ns_prefix         The namespace prefix. If the prefix has not been declared then this method will throw an exception.
+    *
+    * @returns The newly-created element
+    */
 
    xmlNodePtr addChild(xmlNodePtr previous_sibling, const xmlChar* name, const xmlChar* ns_prefix = 0)
       {
@@ -296,14 +306,15 @@ public:
       U_RETURN_POINTER(node,_xmlNode);
       }
 
-   /** Add a child element to this node before the specified existing child node.
-   *
-   * @param next_sibling An existing child node.
-   * @param name         The new node name
-   * @param ns_prefix    The namespace prefix. If the prefix has not been declared then this method will throw an exception.
-   *
-   * @returns The newly-created element
-   */
+   /**
+    * Add a child element to this node before the specified existing child node.
+    *
+    * @param next_sibling An existing child node.
+    * @param name         The new node name
+    * @param ns_prefix    The namespace prefix. If the prefix has not been declared then this method will throw an exception.
+    *
+    * @returns The newly-created element
+    */
 
    xmlNodePtr addChildBefore(xmlNodePtr next_sibling, const xmlChar* name, const xmlChar* ns_prefix = 0)
       {
@@ -320,9 +331,9 @@ public:
       }
 
    /** Remove the child node.
-   *
-   * @param node The child node to remove. This Node will be deleted and therefore unusable after calling this method.
-   */
+    *
+    * @param node The child node to remove. This Node will be deleted and therefore unusable after calling this method
+    */
 
    static void removeChild(xmlNodePtr node)
       {
@@ -332,8 +343,9 @@ public:
       U_SYSCALL_VOID(xmlFreeNode,   "%p", node);
       }
 
-   /** Search and get the value of an attribute associated to a node
-   */
+   /**
+    * Search and get the value of an attribute associated to a node
+    */
 
    static const char* getProp(xmlNodePtr node, const char* name)
       {
@@ -344,8 +356,9 @@ public:
       U_RETURN(prop);
       }
 
-   /** Get the value of an content associated to a node
-   */
+   /**
+    * Get the value of an content associated to a node
+    */
 
    static xmlChar* getContent(xmlNodePtr node)
       {
@@ -356,20 +369,22 @@ public:
       U_RETURN_POINTER(content, xmlChar);
       }
 
-   /** Import node(s) from another document under this node, without affecting the source node.
-   *
-   * @param node      The node to copy and insert under the current node.
-   * @param recursive Whether to import the child nodes also. Defaults to true.
-   *
-   * @returns The newly-created node.
-   */
+   /**
+    * Import node(s) from another document under this node, without affecting the source node.
+    *
+    * @param node      The node to copy and insert under the current node.
+    * @param recursive Whether to import the child nodes also. Defaults to true.
+    *
+    * @returns The newly-created node
+    */
 
    xmlNodePtr importNode(const xmlNodePtr node, bool recursive = true);
 
-   /** Return the XPath of this node.
-   *
-   * @result The XPath of the node.
-   */
+   /**
+    * Return the XPath of this node.
+    *
+    * @result The XPath of the node
+    */
 
    const char* getPath() const
       {
@@ -382,10 +397,11 @@ public:
       U_RETURN(path);
       }
 
-   /** Find nodes from a XPath expression.
-   *
-   * @param xpath The XPath of the nodes.
-   */
+   /**
+    * Find nodes from a XPath expression.
+    *
+    * @param xpath The XPath of the nodes
+    */
 
    uint32_t find(UVector<xmlNodePtr>& vec, const xmlChar* xpath) const
       {
@@ -401,15 +417,16 @@ public:
       return find_impl(vec, ctxt, xpath);
       }
 
-   /** Find nodes from a XPath expression.
-   *
-   * @param xpath       The XPath of the nodes.
-   * @param namespaces  A vector of namespace prefixes to namespace URIs to be used while finding.
-   */
+   /**
+    * Find nodes from a XPath expression.
+    *
+    * @param xpath       The XPath of the nodes.
+    * @param namespaces  A vector of namespace prefixes to namespace URIs to be used while finding
+    */
 
    uint32_t find(UVector<xmlNodePtr>& vec, const xmlChar* xpath, UVector<UString>& namespaces) const;
 
-   // Access the underlying libxml2 implementation.
+   // Access the underlying libxml2 implementation
 
    xmlNodePtr cobj() { return impl_; }
 
@@ -422,7 +439,7 @@ protected:
 
    static uint32_t find_impl(UVector<xmlNodePtr>& vec, xmlXPathContext* ctxt, const xmlChar* xpath);
 
-   // Create the C instance ready to be added to the parent node.
+   // Create the C instance ready to be added to the parent node
 
    xmlNodePtr createNewChildNode(const xmlChar* name, const xmlChar* ns_prefix = 0);
 

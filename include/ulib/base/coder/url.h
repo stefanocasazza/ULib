@@ -1,4 +1,4 @@
-/** ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ULib - c library
@@ -19,6 +19,8 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Encode-Decode url into a buffer */
 
 U_EXPORT uint32_t u_url_encode(const unsigned char* restrict s, uint32_t n, unsigned char* restrict result);
 U_EXPORT uint32_t u_url_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result);

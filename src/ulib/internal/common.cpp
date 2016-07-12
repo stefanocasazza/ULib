@@ -61,7 +61,7 @@ void ULib_init_openssl()
 
    // OpenSSL makes sure that the PRNG state is unique for each thread. On systems that provide "/dev/urandom",
    // the randomness device is used to seed the PRNG transparently. However, on all other systems, the application
-   // is responsible for seeding the PRNG by calling RAND_add(),
+   // is responsible for seeding the PRNG by calling RAND_add()
 
 # ifdef _MSWINDOWS_
    U_SYSCALL_VOID(srand, "%ld", u_start_time); // seed with time
@@ -191,7 +191,8 @@ void ULib_init()
 
 /**
  * NB: there are to many exceptions...
- * #if defined(_LARGEFILE_SOURCE) && !defined(_MSWINDOWS_) 
+ *
+ * #if defined(_LARGEFILE_SOURCE) && !defined(_MSWINDOWS_)
  * U_INTERNAL_ASSERT_EQUALS(sizeof(off_t), SIZEOF_OFF_T)
  * #endif
  */

@@ -3,7 +3,7 @@
  *
  * Any include of <windows.h> should be through
  * this file, which wraps it in various other handling
- **/
+ */
 
 #ifndef W32_SYSTEM_H
 #define W32_SYSTEM_H 1
@@ -74,6 +74,7 @@ static inline struct tm* localtime_r(const time_t* clock, struct tm* result)
 #include <sys/stat.h>
 
 #ifdef _MSC_VER
+typedef char* caddr_t;
 typedef   signed __int8    int8_t;
 typedef unsigned __int8   uint8_t;
 typedef   signed __int16  int16_t;
@@ -82,8 +83,7 @@ typedef   signed __int32  int32_t;
 typedef unsigned __int32 uint32_t;
 typedef   signed __int64  int64_t;
 typedef unsigned __int64 uint64_t;
-typedef char *caddr_t;
-#  define snprintf  _snprintf
+#  define  snprintf  _snprintf
 #  define vsnprintf _vsnprintf
 #else
 #  include <sys/types.h>
@@ -110,7 +110,7 @@ typedef SOCKET socket_t;
 #ifdef _MSC_VER
 typedef struct timespec {
     time_t tv_sec;
-    long  tv_nsec;
+    long   tv_nsec;
 } timespec_t;
 #endif
 #ifdef __cplusplus

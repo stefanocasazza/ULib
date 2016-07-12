@@ -64,8 +64,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // Costruttori
-
    UXML2Document()
       {
       U_TRACE_REGISTER_OBJECT(0, UXML2Document, "", 0)
@@ -88,9 +86,10 @@ public:
    uint32_t getElement(UString& element, uint32_t pos, const char* tag, uint32_t tag_len);
    UString  getElementData(              uint32_t pos, const char* tag, uint32_t tag_len);
 
-   /** getEncoding()
+   /**
+    * getEncoding()
     *
-    * @return The encoding used in the source from which the document has been loaded.
+    * @return The encoding used in the source from which the document has been loaded
     */
 
    const char* getEncoding() const { return (const char*)impl_->encoding; }
@@ -119,12 +118,13 @@ public:
       U_RETURN_POINTER(dtd,_xmlDtd);
       }
 
-   /** Return the root node.
-   *
-   * This function does _not_ create a default root node if it doesn't exist.
-   *
-   * @return A pointer to the root node if it exists, 0 otherwise.
-   */
+   /**
+    * Return the root node.
+    *
+    * This function does _not_ create a default root node if it doesn't exist.
+    *
+    * @return A pointer to the root node if it exists, 0 otherwise
+    */
 
    xmlNodePtr getRootNode() const
       {
@@ -137,15 +137,16 @@ public:
       U_RETURN_POINTER(root,_xmlNode);
       }
 
-   /** Creates the root node.
-   *
-   * @param name      The node's name.
-   * @param ns_uri    The namespace URI. A namspace declaration will be added to this node, because it could not have been declared before.
-   * @param ns_prefix The namespace prefix to associate with the namespace. If no namespace prefix is specified then the namespace URI will
-   *                  be the default namespace.
-   *
-   * @return A pointer to the new root node
-   */
+   /**
+    * Creates the root node.
+    *
+    * @param name      The node's name.
+    * @param ns_uri    The namespace URI. A namspace declaration will be added to this node, because it could not have been declared before.
+    * @param ns_prefix The namespace prefix to associate with the namespace. If no namespace prefix is specified then the namespace URI will
+    *                  be the default namespace.
+    *
+    * @return A pointer to the new root node
+    */
 
    xmlNodePtr createRootNode(const char* name, const char* ns_uri = 0, const char* ns_prefix = 0)
       {
@@ -164,13 +165,14 @@ public:
       U_RETURN_POINTER(root,_xmlNode);
       }
 
-   /** Creates a root node by importing the node from another document, without affecting the source node.
-   *
-   * @param node      The node to copy and insert as the root node of the document
-   * @param recursive Whether to import the child nodes also. Defaults to true.
-   *
-   * @return A pointer to the new root node
-   */
+   /**
+    * Creates a root node by importing the node from another document, without affecting the source node.
+    *
+    * @param node      The node to copy and insert as the root node of the document
+    * @param recursive Whether to import the child nodes also. Defaults to true.
+    *
+    * @return A pointer to the new root node
+    */
 
    xmlNodePtr createRootNodeByImport(const xmlNodePtr node, bool recursive = true)
       {
@@ -187,12 +189,13 @@ public:
       U_RETURN_POINTER(root,_xmlNode);
       }
 
-   /** Append a new comment node.
-   *
-   * @param content The text. This should be unescaped
-   *
-   * @returns The new comment node.
-   */
+   /**
+    * Append a new comment node.
+    *
+    * @param content The text. This should be unescaped
+    *
+    * @returns The new comment node
+    */
 
    xmlNodePtr addComment(const char* content)
       {
@@ -210,14 +213,15 @@ public:
       U_RETURN_POINTER(node,_xmlNode);
       }
 
-   /** Add an Entity declaration to the document.
-   *
-   * @param name     The name of the entity that will be used in an entity reference.
-   * @param type     The type of entity.
-   * @param publicId The public ID of the subset.
-   * @param systemId The system ID of the subset.
-   * @param content  The value of the Entity. In entity reference substitutions, this is the replacement value.
-   */
+   /**
+    * Add an Entity declaration to the document.
+    *
+    * @param name     The name of the entity that will be used in an entity reference.
+    * @param type     The type of entity.
+    * @param publicId The public ID of the subset.
+    * @param systemId The system ID of the subset.
+    * @param content  The value of the Entity. In entity reference substitutions, this is the replacement value
+    */
 
    xmlEntityPtr setEntityDeclaration(const char* name, xmlEntityType type, const char* publicId, const char* systemId, const char* content)
       {
@@ -233,61 +237,67 @@ public:
       U_RETURN_POINTER(entity,_xmlEntity);
       }
 
-   /** Searches all children of the @parent node having given name and namespace href.
+   /**
+    * Searches all children of the @parent node having given name and namespace href.
     *
     * @param parent  the pointer to XML node.
     * @param name    the name.
     * @param ns      the namespace href (may be NULL).
     *
-    * @return        the pointer to the found node or NULL if an error occurs or node is not found.
+    * @return        the pointer to the found node or NULL if an error occurs or node is not found
     */
 
    xmlNodePtr findNode(const xmlNodePtr parent, const xmlChar* name, const xmlChar* ns);
 
-   /** Searches a direct child of the @parent node having given name and namespace href.
+   /**
+    * Searches a direct child of the @parent node having given name and namespace href.
     *
     * @param parent  the pointer to XML node.
     * @param name    the name.
     * @param ns      the namespace href (may be NULL).
     *
-    * @return        the pointer to the found node or NULL if an error occurs or node is not found.
+    * @return        the pointer to the found node or NULL if an error occurs or node is not found
     */
 
    xmlNodePtr findChild(const xmlNodePtr parent, const xmlChar* name, const xmlChar* ns);
 
-   /** Searches the ancestors axis of the @cur node for a node having given name and namespace href.
+   /**
+    * Searches the ancestors axis of the @cur node for a node having given name and namespace href.
     *
     * @param cur     the pointer to an XML node.
     * @param name    the name.
     * @param ns      the namespace href (may be NULL).
     *
-    * @return        the pointer to the found node or NULL if an error occurs or node is not found.
+    * @return        the pointer to the found node or NULL if an error occurs or node is not found
     */
 
    xmlNodePtr findParent(const xmlNodePtr cur, const xmlChar* name, const xmlChar* ns);
 
-   /** Write the document to a file.
-   *
-   * @param filename
-   * @param encoding  If not provided, UTF-8 is used
-   * @param formatted The output is formatted by inserting whitespaces, which is easier to read for a human,
-   *                  but may insert unwanted significant whitespaces. Use with care !
-   */
+   /**
+    * Write the document to a file.
+    *
+    * @param filename
+    * @param encoding  If not provided, UTF-8 is used
+    * @param formatted The output is formatted by inserting whitespaces, which is easier to read for a human,
+    *                  but may insert unwanted significant whitespaces. Use with care !
+    */
 
    bool writeToFile(const char* filename, const char* encoding = 0, bool formatted = false);
 
-   /** Write the document to the memory.
-   *
-   * @param encoding  If not provided, UTF-8 is used
-   * @param formatted The output is formatted by inserting whitespaces, which is easier to read for a human,
-   *                  but may insert unwanted significant whitespaces. Use with care !
-   *
-   * @return The written document.
-   */
+   /**
+    * Write the document to the memory.
+    *
+    * @param encoding  If not provided, UTF-8 is used
+    * @param formatted The output is formatted by inserting whitespaces, which is easier to read for a human,
+    *                  but may insert unwanted significant whitespaces. Use with care !
+    *
+    * @return The written document
+    */
 
    xmlChar* writeToString(int& length, const char* encoding = 0, bool formatted = false);
 
-   /** Canonical XML implementation (http://www.w3.org/TR/2001/REC-xml-c14n-20010315)
+   /**
+    * Canonical XML implementation (http://www.w3.org/TR/2001/REC-xml-c14n-20010315)
     *
     * Enum xmlC14NMode {
     *    XML_C14N_1_0           = 0 : Origianal C14N 1.0 spec
@@ -320,14 +330,15 @@ protected:
       U_TRACE_REGISTER_OBJECT(0, UXML2Document, "%p", doc)
       }
 
-   /** Retrieve an Entity.
-   *
-   * The entity can be from an external subset or internally declared.
-   *
-   * @param name Then name of the entity to get.
-   *
-   * @returns A pointer to the libxml2 entity structure.
-   */
+   /**
+    * Retrieve an Entity.
+    *
+    * The entity can be from an external subset or internally declared.
+    *
+    * @param name Then name of the entity to get.
+    *
+    * @returns A pointer to the libxml2 entity structure
+    */
 
    xmlEntityPtr getEntity(const char* name)
       {

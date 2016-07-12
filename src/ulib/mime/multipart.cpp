@@ -109,7 +109,6 @@ uint32_t UMimeMultipartMsg::message(UString& body, bool bterminator)
    U_RETURN(content_length);
 }
 
-// -------------------------------------------------------------
 // Determine encoding as follows:
 // -------------------------------------------------------------
 // Default to 7bit.
@@ -160,7 +159,6 @@ __pure inline int UMimeMultipartMsg::encodeAutodetect(const UString& content, co
    U_RETURN(encoding);
 }
 
-// -----------------------------------------------------------------------------------------------------
 // Creating a single MIME section
 // -----------------------------------------------------------------------------------------------------
 // The type option encodes content appropriately, adds the "Content-Type: type" and

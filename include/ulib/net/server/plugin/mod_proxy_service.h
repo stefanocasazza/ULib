@@ -47,12 +47,8 @@ public:
       ERROR_A_X509_NOBASICAUTH  = 10
    };
 
-   // COSTRUTTORI
-
     UModProxyService();
    ~UModProxyService();
-
-   // VARIE
 
    int     getPort() const           { return port; }
    UString getUser() const           { return user; }

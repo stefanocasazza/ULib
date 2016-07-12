@@ -33,8 +33,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UMagic(int flags)
       {
       U_TRACE_REGISTER_OBJECT(0, UMagic, "%d", flags)
@@ -46,16 +44,10 @@ public:
       (void) setFlags(flags);
       }
 
-   /**
-   * Deletes this object
-   */
-
    ~UMagic()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UMagic)
       }
-
-   // VARIE
 
    static void clear()
       {

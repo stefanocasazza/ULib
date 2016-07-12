@@ -112,23 +112,23 @@
 #        define __cold __attribute__((cold))
 #     endif
 #  endif
-   /**
-    * ---------------------------------------------------------
-    * C++0x features supported in GCC:
-    * ---------------------------------------------------------
-    * g++ -E -dM -std=c++98 -x c++ /dev/null > std1 &&
-    * g++ -E -dM -std=c++0x -x c++ /dev/null > std2 &&
-    * diff -u std1 std2 | grep '[+|-]^*#define' && rm std1 std2
-    * ---------------------------------------------------------
-    * Output with 4.8.0:
-    * ---------------------------------------------------------
-    * +#define __GXX_EXPERIMENTAL_CXX0X__ 1
-    * -#define __cplusplus 199711L
-    * +#define __cplusplus 201103L
-    * +#define __GNUC_STDC_INLINE__ 1
-    * -#define __GNUC_GNU_INLINE__ 1
-    * ---------------------------------------------------------
-    */
+/**
+ * ---------------------------------------------------------
+ * C++0x features supported in GCC:
+ * ---------------------------------------------------------
+ * g++ -E -dM -std=c++98 -x c++ /dev/null > std1 &&
+ * g++ -E -dM -std=c++0x -x c++ /dev/null > std2 &&
+ * diff -u std1 std2 | grep '[+|-]^*#define' && rm std1 std2
+ * ---------------------------------------------------------
+ * Output with 4.8.0:
+ * ---------------------------------------------------------
+ * +#define __GXX_EXPERIMENTAL_CXX0X__ 1
+ * -#define __cplusplus 199711L
+ * +#define __cplusplus 201103L
+ * +#define __GNUC_STDC_INLINE__ 1
+ * -#define __GNUC_GNU_INLINE__ 1
+ * ---------------------------------------------------------
+ */
 #  if defined(__GXX_EXPERIMENTAL_CXX0X__) || __cplusplus >= 201103L
 #    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 405
        /* C++11 features supported in GCC 4.5: */

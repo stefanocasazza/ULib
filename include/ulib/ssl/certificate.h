@@ -85,8 +85,6 @@ public:
       if (x509) clear();
       }
 
-   // VARIE
-
    bool isValid() const
       {
       U_TRACE_NO_PARAM(0, "UCertificate::isValid()")
@@ -503,9 +501,9 @@ public:
 #ifdef U_STDCPP_ENABLE
    friend U_EXPORT ostream& operator<<(ostream& os, const UCertificate& c);
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:

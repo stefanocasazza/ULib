@@ -39,8 +39,6 @@ template <class T> class UPlugIn;
 template <> class U_EXPORT UPlugIn<void*> : public UDynamic {
 public:
 
-   // COSTRUTTORI
-
    UPlugIn()
       {
       U_TRACE_NO_PARAM(0, "UPlugIn<void*>::UPlugIn()")
@@ -96,8 +94,6 @@ private:
 
 template <class T> class U_EXPORT UPlugIn<T*> : public UPlugIn<void*> {
 public:
-
-   // COSTRUTTORI
 
    UPlugIn()
       {

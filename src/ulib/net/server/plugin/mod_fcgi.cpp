@@ -38,14 +38,14 @@
  * You can run them in different chroot()s.
  *
  * Running your FastCGI applications doesn't depend on the web server you are running,
- * which allows for easier testing of other web servers.
+ * which allows for easier testing of other web servers
  */
 
 // ---------------------------------------------------------------------------------------------------------------
 // START Fast CGI stuff
 // ---------------------------------------------------------------------------------------------------------------
 
-// Number of bytes in a FCGI_Header. Future versions of the protocol will not reduce this number.
+// Number of bytes in a FCGI_Header. Future versions of the protocol will not reduce this number
 #define FCGI_HEADER_LEN 8
 
 // Value for version component of FCGI_Header
@@ -479,8 +479,7 @@ int UFCGIPlugIn::handlerRequest()
             }
          }
 
-end:
-      connection->clearData();
+end:  connection->clearData();
 
       if (fcgi_keep_conn == false &&
           connection->isConnected())

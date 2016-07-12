@@ -23,8 +23,6 @@
 class U_EXPORT USOAPFault : public URPCFault {
 public:
 
-   // COSTRUTTORI
-
    USOAPFault()
       {
       U_TRACE_REGISTER_OBJECT(0, USOAPFault, "", 0)

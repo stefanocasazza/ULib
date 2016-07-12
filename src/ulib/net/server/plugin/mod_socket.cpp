@@ -50,7 +50,6 @@ int UWebSocketPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UWebSocketPlugIn::handlerConfig(%p)", &cfg)
 
-   // ----------------------------------------------------------------------------------------------
    // Perform registration of web socket method
    // ----------------------------------------------------------------------------------------------
    // COMMAND                          command (alternative to USP websocket) to execute

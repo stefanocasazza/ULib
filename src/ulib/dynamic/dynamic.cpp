@@ -34,7 +34,6 @@ bool UDynamic::load(const char* pathname)
    handle = ::LoadLibrary(pathname);
 #else
    /**
-    * --------------------------------------------------------------------
     * Perform lazy binding
     * --------------------------------------------------------------------
     * Only resolve symbols as the code that references them is executed.

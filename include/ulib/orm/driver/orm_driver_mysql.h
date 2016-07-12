@@ -340,8 +340,6 @@ public:
 class U_EXPORT UOrmDriverMySql : public UOrmDriver {
 public:
 
-   // COSTRUTTORE
-
    UOrmDriverMySql()
       {
       U_TRACE_REGISTER_OBJECT(0, UOrmDriverMySql, "")

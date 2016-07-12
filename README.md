@@ -68,11 +68,11 @@ The current version offers the following features :
        * [DNS rebinding](http://en.wikipedia.org/wiki/DNS_rebinding) prevention by RFC1918 filtering and Host header validation.
        * selective uri support (DOS regex) for [HTTP Strict Transport Security](https://developer.mozilla.org/en/Security/HTTP_Strict_Transport_Security).
    * Immune to [Slow Read DoS attack](http://code.google.com/p/slowhttptest/)
-   * [High SSL server quality score](https://www.ssllabs.com/ssltest/analyze.html?d=wifi-aaa.comune.fi.it)
+   * [High SSL server quality score](https://www.ssllabs.com/ssltest/analyze.html?d=wifi-aaa2.comune.fi.it)
 
 ## Who is Using ULib
 
-It is the main software component of [city of Florence wireless network](http://wifi-aaa.comune.fi.it/login?mac=00%3A00%3A00%3A00%3A00%3A00&ip=172.22.11.124&redirect=http%3A//pasta.dianxinos.com/api/data&gateway=159.213.248.230%3A5280&timeout=0&token=1810300063&ap=05@159.213.248.230)
+It is the main software component of [city of Florence wireless network](http://wifi-aaa2.comune.fi.it/login?mac=00%3A00%3A00%3A00%3A00%3A00&ip=172.22.11.124&redirect=http%3A//pasta.dianxinos.com/api/data&gateway=159.213.248.230%3A5280&timeout=0&token=1810300063&ap=05@159.213.248.230&ts=ts=21467819142)
 
 ## Benchmark
 

@@ -9,38 +9,38 @@ static char buffer[128];
 static UREDISClient_Base* rc;
 
 #ifndef AS_cpoll_cppsp_DO
-static UValue*	pvalue;
+static UValue* pvalue;
 #endif
 
 static void usp_fork_rdb()
 {
-	U_TRACE(5, "::usp_fork_rdb()")
+   U_TRACE(5, "::usp_fork_rdb()")
 
-	U_NEW(UREDISClient<UTCPSocket>, rc, UREDISClient<UTCPSocket>);
+   U_NEW(UREDISClient<UTCPSocket>, rc, UREDISClient<UTCPSocket>);
 
-	if (rc->connect() == false)
-		{
-		U_WARNING("usp_fork_rdb(): %V", rc->UClient_Base::getResponse().rep);
+   if (rc->connect() == false)
+      {
+      U_WARNING("usp_fork_rdb(): %V", rc->UClient_Base::getResponse().rep);
 
-		return;
-		}
+      return;
+      }
 
-	u__memcpy(buffer, "world:", U_CONSTANT_SIZE("world:"), __PRETTY_FUNCTION__);
+   U_MEMCPY(buffer, "world:", U_CONSTANT_SIZE("world:"));
 
 #ifndef AS_cpoll_cppsp_DO
-	U_NEW(UValue, pvalue, UValue(OBJECT_VALUE));
+   U_NEW(UValue, pvalue, UValue(OBJECT_VALUE));
 #endif
 }
 
 #ifdef DEBUG
 static void usp_end_rdb()
 {
-	U_TRACE(5, "::usp_end_rdb()")
+   U_TRACE(5, "::usp_end_rdb()")
 
-	delete rc;
+   delete rc;
 
 #ifndef AS_cpoll_cppsp_DO
-	if (pvalue) delete pvalue;
+   if (pvalue) delete pvalue;
 #endif
 }
 #endif

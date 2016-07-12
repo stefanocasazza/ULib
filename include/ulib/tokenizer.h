@@ -30,8 +30,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UTokenizer(const char* d = 0)
       {
       U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%S", d)
@@ -53,8 +51,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UTokenizer)
       }
-
-   // VARIE
 
    bool atEnd()
       {

@@ -72,7 +72,6 @@ int UStreamPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UStreamPlugIn::handlerConfig(%p)", &cfg)
 
-   // ------------------------------------------------------------------------------------------------------------------------
    // stream - plugin parameters
    // ------------------------------------------------------------------------------------------------------------------------
    // URI_PATH     specifies the local part of the URL path at which you would like the content to appear (Ex. /my/video.mjpeg)

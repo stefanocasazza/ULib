@@ -91,10 +91,9 @@ bool USmtpClient::_connectServer(UFileConfig& cfg, unsigned int port, int timeou
 
    U_ASSERT_EQUALS(cfg.empty(), false)
 
-   // ----------------------------------------------------------------------------------------------------------------------
    // USmtpClient - configuration parameters
    // ----------------------------------------------------------------------------------------------------------------------
-   // SMTP_SERVER       host name or ip address for server
+   // SMTP_SERVER host name or ip address for server
    //
    //       TO_ADDRESS
    //   SENDER_ADDRESS
@@ -249,11 +248,11 @@ bool USmtpClient::sendMessage(bool secure)
 
    if (domainName.empty())
       {
-      /*
-      struct utsname uts;
-      uname(&uts);
-      domainName = uts.nodename;
-      */
+      /**
+       * struct utsname uts;
+       * uname(&uts);
+       * domainName = uts.nodename;
+       */
 
       (void) domainName.assign(U_CONSTANT_TO_PARAM("somemachine.nowhere.org"));
       }

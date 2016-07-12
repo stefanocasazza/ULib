@@ -34,7 +34,7 @@ void URPCObject::loadGenericMethod(UFileConfig* file_method)
 
 void URPCObject::readFileMethod(UFileConfig& file_method)
 {
-// U_TRACE(0, "URPCObject::readFileMethod(%p)", &file_method) // problem with sanitize address
+   U_TRACE(0, "URPCObject::readFileMethod(%p)", &file_method) // problem with sanitize address
 
    UString method_name, method_ns, response_type;
 

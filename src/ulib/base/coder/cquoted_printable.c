@@ -1,4 +1,4 @@
-// ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ULib - c++ library
@@ -9,7 +9,7 @@
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================
+// ============================================================================ */
 
 #include <ulib/base/utility.h>
 #include <ulib/base/coder/quoted_printable.h>
@@ -44,7 +44,7 @@
  * gateways from eating them. If a line ends with = followed by CR-LF, those characters are ignored; this lets you
  * continue ("wrap") a long line. Lines must be no more than 76 characters long, not counting the final CR-LF. Longer
  * lines will be broken when the message is encoded and joined again by decoding.
- * Quoted-printable text was designed to be (mostly) readable by people with non-MIME mail programs. 
+ * Quoted-printable text was designed to be (mostly) readable by people with non-MIME mail programs 
  */
 
 uint32_t u_quoted_printable_encode(const unsigned char* restrict inptr, uint32_t len, unsigned char* restrict out)

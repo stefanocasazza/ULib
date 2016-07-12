@@ -64,8 +64,7 @@ private:
 #endif
 };
 
-#ifdef USE_LIBSSL // specializzazione con USSLSocket
-
+#ifdef USE_LIBSSL
 template <> class U_EXPORT USkeletonClientImage<USSLSocket> : public UClientImage<USSLSocket> {
 public:
 
@@ -107,7 +106,6 @@ private:
    USkeletonClientImage<USSLSocket>& operator=(const USkeletonClientImage<USSLSocket>&)                    { return *this; }
 #endif
 };
-
 #endif
 
 #endif

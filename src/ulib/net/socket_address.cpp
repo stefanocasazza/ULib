@@ -21,7 +21,7 @@
 /* structures used by many IP socket commands. The class allows us to set    */
 /* parts of the structures and retrieve their contents. This class is mainly */
 /* used for convenience and to minimise rewriting of code to support both    */
-/* IPv4 and IPv6.                                                            */
+/* IPv4 and IPv6                                                             */
 /*****************************************************************************/
 
 // ------------------------------------

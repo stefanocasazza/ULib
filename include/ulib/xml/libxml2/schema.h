@@ -59,10 +59,11 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   /** Create a schema from a XML document.
-   *
-   * @param XMLSchema document
-   */
+   /**
+    * Create a schema from a XML document.
+    *
+    * @param XMLSchema document
+    */
 
     UXML2Schema(const UString& xmldoc);
    ~UXML2Schema();
@@ -102,10 +103,11 @@ public:
 
    bool validate(UXML2Document& doc);
 
-   /** Write the schema to a file.
-   *
-   * @param filename
-   */
+   /**
+    * Write the schema to a file.
+    *
+    * @param filename
+    */
 
    void writeToFile(const char* filename);
 
@@ -121,8 +123,9 @@ protected:
    xmlSchemaPtr impl_;
    xmlSchemaValidCtxtPtr ctxt;
 
-   /** Create a schema from the underlying libxml schema element.
-   */
+   /**
+    * Create a schema from the underlying libxml schema element
+    */
 
    UXML2Schema(xmlSchemaPtr schema) : impl_(schema)
       {

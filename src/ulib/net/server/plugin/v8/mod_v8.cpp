@@ -21,6 +21,7 @@ using namespace v8;
 // http://code.google.com/apis/v8/get_started.html#intro
 // ------------------------------------------------------------------------------
 // compiles and executes javascript and returns the script return value as string
+// ------------------------------------------------------------------------------
 
 extern "C" {
 extern U_EXPORT void runv8(UString& x);
@@ -28,19 +29,19 @@ extern U_EXPORT void runv8(UString& x);
 {
    U_TRACE(0, "::runv8(%V)", x.rep)
 
-   // Create a new context.
+   // Create a new context
    static Persistent<Context> context = Context::New();
 
-   // Create a stack-allocated handle scope.
+   // Create a stack-allocated handle scope
    HandleScope handle_scope;
 
-   // Enter the created context for compiling and running the script.
+   // Enter the created context for compiling and running the script
    Context::Scope context_scope(context);
 
-   // Create a string containing the JavaScript source code.
+   // Create a string containing the JavaScript source code
    Handle<String> source = String::New(U_STRING_TO_PARAM(x));
 
-   // Compile the source code.
+   // Compile the source code
    TryCatch tryCatch;
 
    Handle<Script> script = Script::Compile(source);
@@ -66,7 +67,7 @@ extern U_EXPORT void runv8(UString& x);
       return;
       }
 
-   // Dispose the persistent context.
+   // Dispose the persistent context
    // context.Dispose();
 
    // return result as string, must be deallocated in cgo wrapper

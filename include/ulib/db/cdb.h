@@ -41,7 +41,7 @@
  * A record is located as follows. Compute the hash value of the key in the record.
  * The hash value modulo 512 is the number of a hash table.
  * The hash value divided by 512, modulo the length of that table, is a slot number.
- * Probe that slot, the next higher slot, and so on, until you find the record or run into an empty slot.
+ * Probe that slot, the next higher slot, and so on, until you find the record or run into an empty slot
  */
 
 #define CDB_NUM_HASH_TABLE_POINTER 512
@@ -79,8 +79,6 @@ public:
       uint32_t pos;  // starting byte position of the record (0 -> slot empty)
    } cdb_hash_table_slot;
 
-   // COSTRUTTORI
-
    UCDB(int ignore_case)
       {
       U_TRACE_REGISTER_OBJECT(0, UCDB, "%d", ignore_case)
@@ -117,8 +115,6 @@ public:
       }
 
    bool ignoreCase() const  { return ignoreCase(this); }
-
-   // Ricerche
 
    void setKey(UStringRep* _key)                 { key.dptr = (void*) _key->data(); key.dsize = _key->size(); }
    void setKey(const UString&  _key)             { key.dptr = (void*) _key.data();  key.dsize = _key.size(); }
@@ -258,10 +254,10 @@ protected:
    cdb_record_header      hr_buf;
    cdb_hash_table_slot  slot_buf;
 
-   uint32_t loop,              // number of hash slots searched under key
-            nslot,             // initialized in find()
-            khash,             // initialized in find()
-            nrecord,           // initialized in makeStart()
+   uint32_t loop,    // number of hash slots searched under key
+            nslot,   // initialized in find()
+            khash,   // initialized in find()
+            nrecord, // initialized in makeStart()
             offset,
             start_hash_table_slot;
 

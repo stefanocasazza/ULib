@@ -107,8 +107,6 @@ public:
    HpackDynamicTable ddyntbl;
 #endif
 
-   // COSTRUTTORI
-
     Connection();
    ~Connection()
       {

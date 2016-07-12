@@ -32,8 +32,6 @@ public:
 
    enum FaultCode { Sender, Receiver, DataEncodingUnknown, MustUnderstand, VersionMismatch };
 
-   // COSTRUTTORI
-
    URPCFault() : detail(U_CAPACITY)
       {
       U_TRACE_REGISTER_OBJECT(0, URPCFault, "", 0)
@@ -45,8 +43,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, URPCFault)
       }
-
-   // SERVICES
 
    // Gets the general reason why the call failed.
    // Returns a string combining the generic fault and any more specific fault data

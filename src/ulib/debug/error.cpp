@@ -170,7 +170,7 @@ void UError::stackDump()
    // If you're using Linux, the standard C library includes a function called backtrace,
    // which populates an array with frames' return addresses, and another function called
    // backtrace_symbols, which will take the addresses from backtrace and look up the
-   // corresponding function names. These are documented in the GNU C Library manual.
+   // corresponding function names. These are documented in the GNU C Library manual
 
    int trace_size = backtrace(array, 256); /* use -rdynamic flag when compiling */
 
@@ -197,7 +197,6 @@ void UError::stackDump()
 
    char** strings = backtrace_symbols(array, trace_size);
 
-   // -------------------------------------
    // NB: we start the loop from 3 to avoid
    // -------------------------------------
    // UError::stackDump()
@@ -223,7 +222,7 @@ void UError::stackDump()
          }
 
       // The source code below prints line numbers for all local functions.
-      // If a function from another library is called, you might see a couple of ??:0 instead of file names.
+      // If a function from another library is called, you might see a couple of ??:0 instead of file names
 
       if (output_len &&
           buffer[0] != '?')

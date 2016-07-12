@@ -273,8 +273,6 @@ protected:
 
    void loadConfigParam();
 
-   // COSTRUTTORI
-
     UClient_Base(UFileConfig* pcfg);
    ~UClient_Base();
 
@@ -296,8 +294,6 @@ private:
 
 template <class Socket> class U_EXPORT UClient : public UClient_Base {
 public:
-
-   // COSTRUTTORI
 
    UClient(UFileConfig* pcfg) : UClient_Base(pcfg)
       {
@@ -322,8 +318,7 @@ private:
    UClient& operator=(const UClient&)        { return *this; }
 };
 
-#ifdef USE_LIBSSL // specializzazione con USSLSocket
-
+#ifdef USE_LIBSSL
 template <> class U_EXPORT UClient<USSLSocket> : public UClient_Base {
 public:
 
@@ -354,6 +349,5 @@ private:
    UClient<USSLSocket>& operator=(const UClient<USSLSocket>&)        { return *this; }
 #endif
 };
-
 #endif
 #endif

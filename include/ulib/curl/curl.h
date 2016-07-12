@@ -36,22 +36,34 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
     UCURL();
    ~UCURL();
+
+   static const char* apple_cert;    // the path to the certificate
+   static const char* http2_server;  // the Apple server url
+   static const char* app_bundle_id; // the app bundle id
 
    /**
     * @param http2_server  the Apple server url
     * @param apple_cert    the path to the certificate
     * @param app_bundle_id the app bundle id
-    * @param token         the token of the device
-    * @param message       the payload to send (JSON)
     */
 
-   static bool sendHTTP2Push(const char* http2_server, const char* apple_cert, const char* app_bundle_id, const char* token, const UString& message);
+   static void initHTTP2Push(const char* _http2_server = 0, const char* _apple_cert = 0, const char* _app_bundle_id = 0)
+      {
+      U_TRACE(0, "UCURL::initHTTP2Push(%S,%S,%S)", _http2_server, _apple_cert, _app_bundle_id)
 
-   // VARIE
+      if (_http2_server)   http2_server = _http2_server;  
+      if (_apple_cert)       apple_cert = _apple_cert;  
+      if (_app_bundle_id) app_bundle_id = _app_bundle_id;  
+      }
+
+   /**
+    * @param token   the token of the device
+    * @param message the payload to send (JSON)
+    */
+
+   static bool sendHTTP2Push(const UString& token, const UString& message);
 
    UString& getResponse() { return response; }
 
@@ -248,8 +260,8 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(postData)
 
-      setOption(CURLOPT_POSTFIELDSIZE_LARGE, (long)size); /* size of the data to copy from the buffer and send in the request */
-      setOption(CURLOPT_POSTFIELDS, (long)postData); /* send data from the local stack */
+      setOption(CURLOPT_POSTFIELDSIZE_LARGE, (long)size); // size of the data to copy from the buffer and send in the request
+      setOption(CURLOPT_POSTFIELDS, (long)postData);      // send data from the local stack
       setOption(CURLOPT_POST, 1L);
       }
 
@@ -294,7 +306,7 @@ public:
 
       response.setEmpty();
 
-      result = U_SYSCALL(curl_easy_perform, "%p", easyHandle); /* perform, then store the expected code in 'result' */
+      result = U_SYSCALL(curl_easy_perform, "%p", easyHandle); // perform, then store the expected code in 'result'
 
       infoComplete();
 

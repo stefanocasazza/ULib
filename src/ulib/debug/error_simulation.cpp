@@ -25,13 +25,14 @@ char*          USimulationError::file_mem;
 uint32_t       USimulationError::file_size;
 union uuvararg USimulationError::var_arg;
 
-#if defined(HAVE_STRTOF) && !defined(strtof)
-// extern "C" { float strtof(const char* nptr, char** endptr); }
-#endif
-
-#if defined(HAVE_STRTOLD) && !defined(strtold)
-// extern "C" { long double strtold(const char* nptr, char** endptr); }
-#endif
+/**
+ * #if defined(HAVE_STRTOF) && !defined(strtof)
+ * extern "C" { float strtof(const char* nptr, char** endptr); }
+ * #endif
+ * #if defined(HAVE_STRTOLD) && !defined(strtold)
+ * extern "C" { long double strtold(const char* nptr, char** endptr); }
+ * #endif
+ */
 
 void USimulationError::init()
 {
@@ -74,10 +75,14 @@ void USimulationError::init()
          }
       }
 
-   // segnala caratteristiche esecuzione modalita' simulazione errori
-
-   if (fd > 0) U_MESSAGE("SIMERR<%Won%W>: File<%W%s%W>%W", GREEN, YELLOW, CYAN, file, YELLOW, RESET);
-   else        U_MESSAGE("SIMERR<%Woff%W>%W",                RED, YELLOW, RESET);
+   if (fd <= 0)
+      {
+      U_MESSAGE("SIMERR<%Woff%W>%W", RED, YELLOW, RESET);
+      }
+   else
+      {
+      U_MESSAGE("SIMERR<%Won%W>: File<%W%s%W>%W", GREEN, YELLOW, CYAN, file, YELLOW, RESET);
+      }
 }
 
 void* USimulationError::checkForMatch(const char* call_name)

@@ -1,4 +1,4 @@
-// ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ULib - c++ library
@@ -9,7 +9,7 @@
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================
+// ============================================================================ */
 
 /*
 #define DEBUG_DEBUG
@@ -26,8 +26,10 @@
 int u_base64_errors;
 int u_base64_max_columns;
 
-// u_alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
-//                                  base64url substitute 62 and 63 chars with -_ (minus) (underline)
+/**
+ * u_alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
+ *                                  base64url substitute 62 and 63 chars with -_ (minus) (underline)
+ */
 
 uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
 {

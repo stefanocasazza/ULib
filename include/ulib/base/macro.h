@@ -1,4 +1,4 @@
-/** ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ULib - c library
@@ -23,7 +23,7 @@
 /**
  * Manage debug for C library
  *
- * the token preceding the special `##' must be a comma, and there must be white space between that comma and whatever comes immediately before it
+ * NB: the token preceding the special `##' must be a comma, and there must be white space between that comma and whatever comes immediately before it
  */
 
 #ifdef DEBUG_DEBUG
@@ -58,48 +58,49 @@
 #     include <assert.h>
 #     define U_ASSERT_MACRO(assertion,msg,info) assert(assertion);
 #  else
-#     ifdef __cplusplus
+#    ifdef __cplusplus
       extern "C" {
-#     endif
+#    endif
       void __assert(const char* __assertion, const char* __file, int __line, const char* __function);
-#     ifdef __cplusplus
+#    ifdef __cplusplus
       }
-#     endif
-#     define U_ASSERT_MACRO(assertion,msg,info) { if ((int)(assertion) == 0) { __assert(#assertion, __FILE__, __LINE__,__PRETTY_FUNCTION__);  } }
+#    endif
+#    define U_ASSERT_MACRO(assertion,msg,info) { if ((int)(assertion) == 0) { __assert(#assertion, __FILE__, __LINE__,__PRETTY_FUNCTION__);  } }
 #  endif
 #endif
 
 #if defined(DEBUG) || defined(U_TEST)
-#  if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL)
-#     define U_NULL_POINTER (const void*)0x0000ffff
-#  else
+#  if !defined(U_LINUX) || defined(U_SERVER_CAPTIVE_PORTAL)
 #     define U_NULL_POINTER (const void*)0
+#  else
+#     define U_NULL_POINTER (const void*)0x0000ffff
 #  endif
-#  define U_INTERNAL_ASSERT(expr)        { U_ASSERT_MACRO(expr,"ASSERTION FALSE","") }
-#  define U_INTERNAL_ASSERT_MINOR(a,b)   { U_ASSERT_MACRO((a)<(b),"NOT LESS","") }
-#  define U_INTERNAL_ASSERT_MAJOR(a,b)   { U_ASSERT_MACRO((a)>(b),"NOT GREATER","") }
-#  define U_INTERNAL_ASSERT_EQUALS(a,b)  { U_ASSERT_MACRO((a)==(b),"NOT EQUALS","") }
-#  define U_INTERNAL_ASSERT_DIFFERS(a,b) { U_ASSERT_MACRO((a)!=(b),"NOT DIFFERENT","") }
-#  define U_INTERNAL_ASSERT_POINTER(ptr) { U_ASSERT_MACRO((const void*)ptr>U_NULL_POINTER,"~NULL POINTER","") }
-#  define U_INTERNAL_ASSERT_RANGE(a,x,b) { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE","") }
 
-#  define U_INTERNAL_ASSERT_MSG(expr,info) \
-          { U_ASSERT_MACRO(expr,"ASSERTION FALSE",info) }
-#  define U_INTERNAL_ASSERT_MINOR_MSG(a,b,info) \
-          { U_ASSERT_MACRO((a)<(b),"NOT LESS",info) }
-#  define U_INTERNAL_ASSERT_MAJOR_MSG(a,b,info) \
-          { U_ASSERT_MACRO((a)>(b),"NOT GREATER",info) }
-#  define U_INTERNAL_ASSERT_EQUALS_MSG(a,b,info) \
-          { U_ASSERT_MACRO((a)==(b),"NOT EQUALS",info) }
-#  define U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info) \
-          { U_ASSERT_MACRO((a)!=(b),"NOT DIFFERENT",info) }
-#  define U_INTERNAL_ASSERT_POINTER_MSG(ptr,info) \
-          { U_ASSERT_MACRO((const void*)ptr>U_NULL_POINTER,"~NULL POINTER",info) }
-#  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) \
-          { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE",info) }
+#  define U_DEBUG(fmt,args...) { u__printf(STDERR_FILENO, "%W%N%W: %WDEBUG: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET); }
 
-#  define U_DEBUG(fmt,args...) u__printf(STDERR_FILENO, "%W%N%W: %WDEBUG: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET);
+#  define U_INTERNAL_ASSERT(expr)            { U_ASSERT_MACRO(expr,"ASSERTION FALSE","") }
+#  define U_INTERNAL_ASSERT_MSG(expr,info)   { U_ASSERT_MACRO(expr,"ASSERTION FALSE",info) }
+
+#  define U_INTERNAL_ASSERT_MINOR(a,b)          { U_ASSERT_MACRO((a)<(b),"NOT LESS","") }
+#  define U_INTERNAL_ASSERT_MINOR_MSG(a,b,info) { U_ASSERT_MACRO((a)<(b),"NOT LESS",info) }
+
+#  define U_INTERNAL_ASSERT_MAJOR(a,b)          { U_ASSERT_MACRO((a)>(b),"NOT GREATER","") }
+#  define U_INTERNAL_ASSERT_MAJOR_MSG(a,b,info) { U_ASSERT_MACRO((a)>(b),"NOT GREATER",info) }
+
+#  define U_INTERNAL_ASSERT_EQUALS(a,b)          { U_ASSERT_MACRO((a)==(b),"NOT EQUALS","") }
+#  define U_INTERNAL_ASSERT_EQUALS_MSG(a,b,info) { U_ASSERT_MACRO((a)==(b),"NOT EQUALS",info) }
+
+#  define U_INTERNAL_ASSERT_DIFFERS(a,b)          { U_ASSERT_MACRO((a)!=(b),"NOT DIFFERENT","") }
+#  define U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info) { U_ASSERT_MACRO((a)!=(b),"NOT DIFFERENT",info) }
+
+#  define U_INTERNAL_ASSERT_POINTER(ptr)          { U_ASSERT_MACRO((const void*)ptr>U_NULL_POINTER,"~NULL POINTER","") }
+#  define U_INTERNAL_ASSERT_POINTER_MSG(ptr,info) { U_ASSERT_MACRO((const void*)ptr>U_NULL_POINTER,"~NULL POINTER",info) }
+
+#  define U_INTERNAL_ASSERT_RANGE(a,x,b)          { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE","") }
+#  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE",info) }
 #else
+#  define U_DEBUG(fmt,args...) {}
+
 #  define U_INTERNAL_ASSERT(expr)
 #  define U_INTERNAL_ASSERT_MINOR(a,b)
 #  define U_INTERNAL_ASSERT_MAJOR(a,b)
@@ -115,13 +116,14 @@
 #  define U_INTERNAL_ASSERT_DIFFERS_MSG(a,b,info)
 #  define U_INTERNAL_ASSERT_POINTER_MSG(ptr,info)
 #  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info)
-
-#  define U_DEBUG(fmt,args...) {}
 #endif
 
 /* Manage message info */
 
-# define U_ERROR(fmt,args...) \
+#define U_MESSAGE(fmt,args...) \
+{ u__printf(STDERR_FILENO, "%W%N%W: " fmt, BRIGHTCYAN, RESET, ##args); }
+
+#define U_ERROR(fmt,args...) \
 { u_flag_exit = -1; u__printf(STDERR_FILENO, "%W%N%W: %WERROR: %9D (pid %P) " fmt " - Exiting...%W", BRIGHTCYAN, RESET, RED, ##args, RESET); }
 
 #define U_ABORT(fmt,args...) \
@@ -130,15 +132,13 @@
 #define U_WARNING(fmt,args...) \
 { u_flag_exit = 2; u__printf(STDERR_FILENO, "%W%N%W: %WWARNING: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET); }
 
-#define U_MESSAGE(fmt,args...) u__printf(STDERR_FILENO, "%W%N%W: " fmt, BRIGHTCYAN, RESET, ##args)
-
-#define   U_ERROR_SYSCALL(msg)      U_ERROR("%R",msg)
-#define   U_ABORT_SYSCALL(msg)      U_ABORT("%R",msg)
-#define U_WARNING_SYSCALL(msg)    U_WARNING("%R",msg)
+#define   U_ERROR_SYSCALL(msg)   U_ERROR("%R",msg)
+#define   U_ABORT_SYSCALL(msg)   U_ABORT("%R",msg)
+#define U_WARNING_SYSCALL(msg) U_WARNING("%R",msg)
 
 /* Get string costant size from compiler */
 
-#define U_CONSTANT_SIZE(str)     (int)(sizeof(str)-1)
+#define U_CONSTANT_SIZE(str)     (unsigned int)(sizeof(str)-1)
 #define U_CONSTANT_TO_PARAM(str) str,U_CONSTANT_SIZE(str)
 #define U_CONSTANT_TO_TRACE(str)     U_CONSTANT_SIZE(str),str
 
@@ -185,7 +185,7 @@
 #define U_ONE_MONTH_IN_SECOND (31L * U_ONE_DAY_IN_SECOND)
 #define U_ONE_YEAR_IN_SECOND  (12L * U_ONE_MONTH_IN_SECOND)
 
-#define U_NUM_ELEMENTS(array) (int)(sizeof(array) / sizeof(array[0]))
+#define U_NUM_ELEMENTS(array) (unsigned int)(sizeof(array) / sizeof(array[0]))
 
 enum AffermationType {
    U_MAYBE   = 0x0000,
@@ -362,10 +362,11 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 /* Endian order (network byte order is big endian) */
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN /* the host byte order is Least Significant Byte first */
-#  define u_test_bit(n,c) (((c) & (1 << n)) != 0)
 
 #  define u_htonll(x) (((uint64_t)htonl((uint32_t)x))<<32 | htonl((uint32_t)(x>>32)))
 #  define u_ntohll(x) (((uint64_t)ntohl((uint32_t)x))<<32 | ntohl((uint32_t)(x>>32)))
+
+#  define u_test_bit(n,c) (((c) & (1 << n)) != 0)
 
 #  define U_NUM2STR16(ptr,val1)             u_put_unalignedp16((ptr),u_get_unalignedp16(u_ctn2s+((val1)*2)))
 
@@ -395,15 +396,16 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
                                                               ((uint64_t)(g))<<48|\
                                                               ((uint64_t)(h))<<56)
 #else /* the host byte order is Most Significant Byte first */
+
+#  define u_htonll(x) (x)
+#  define u_ntohll(x) (x)
+
 #  define u_test_bit(n,c) ((((c) >> n) & 1) != 0)
 
 #  define u_invert32(n) (((n) >> 24)               | \
                         (((n) >>  8) & 0x0000ff00) | \
                         (((n) <<  8) & 0x00ff0000) | \
                         ( (n) << 24))
-
-#  define u_htonll(x) (x)
-#  define u_ntohll(x) (x)
 
 #  define U_NUM2STR16(ptr,val1)      u_put_unalignedp16((ptr),(uint16_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
                                                                          (uint8_t)(u_ctn2s[((val1)*2)])<<8))
@@ -476,7 +478,7 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 
 /* To print size of class */
 
-#define U_PRINT_SIZEOF(class) printf("%ld sizeof(%s)\n", sizeof(class), #class)
+#define U_PRINT_SIZEOF(class) printf("%u sizeof(%s)\n", sizeof(class), #class)
 
 /* Avoid "unused parameter" warnings */
 

@@ -627,7 +627,6 @@ public:
          if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(updateSendingRate);
          }
 
-      // ---------------
       // return value:
       // ---------------
       // -1 - normal
@@ -678,7 +677,6 @@ public:
 
       delete this;
 
-      // ---------------
       // return value:
       // ---------------
       // -1 - normal
@@ -1362,7 +1360,6 @@ void UServer_Base::loadConfigParam()
 
    U_INTERNAL_ASSERT_POINTER(cfg)
 
-   // --------------------------------------------------------------------------------------------------------------------------------------
    // userver - configuration parameters
    // --------------------------------------------------------------------------------------------------------------------------------------
    // ENABLE_IPV6 flag indicating the use of ipv6

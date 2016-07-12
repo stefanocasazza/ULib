@@ -230,7 +230,7 @@ public:
       insertAfterFind(_key, _elem);
       }
 
-   // dopo avere chiamato find() (non effettuano il lookup)
+   // after called find() (don't make the lookup)
 
    void insertAfterFind(const UString&    _key, const void* _elem) { insertAfterFind(_key.rep, _elem); }
    void insertAfterFind(const UStringRep* _key, const void* _elem);
@@ -422,8 +422,6 @@ private:
 template <class T> class U_EXPORT UHashMap<T*> : public UHashMap<void*> {
 public:
 
-   // Costruttori e distruttore
-
    UHashMap(uint32_t n, bool ignore_case) : UHashMap<void*>(n, ignore_case)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMap<T*>, "%u,%b", n, ignore_case)
@@ -440,8 +438,6 @@ public:
 
       clear();
       }
-
-   // Inserimento e cancellazione elementi dalla tabella
 
    T* erase(const char*       _key) { return (T*) UHashMap<void*>::erase(_key); }
    T* erase(const UString&    _key) { return (T*) UHashMap<void*>::erase(_key.rep); }
@@ -511,9 +507,7 @@ public:
    T* at(const UStringRep* keyr)            { return (T*) UHashMap<void*>::at(keyr); }
    T* at(const char* _key, uint32_t keylen) { return (T*) UHashMap<void*>::at(_key, keylen); }
 
-   // cancellazione tabella
-
-   void clear()
+   void clear() // erase all element
       {
       U_TRACE_NO_PARAM(0+256, "UHashMap<T*>::clear()")
 
@@ -790,9 +784,9 @@ public:
       return _os;
       }
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const { return UHashMap<void*>::dump(reset); }
-#  endif
+# endif
 #endif
 
 private:
@@ -810,12 +804,8 @@ private:
    friend class UNoCatPlugIn;
 };
 
-// specializzazione stringa
-
 template <> class U_EXPORT UHashMap<UString> : public UHashMap<UStringRep*> {
 public:
-
-   // Costruttori e distruttore
 
    UHashMap(uint32_t n, bool ignore_case) : UHashMap<UStringRep*>(n, ignore_case)
       {
@@ -831,8 +821,6 @@ public:
       {
       U_TRACE_UNREGISTER_OBJECT(0, UHashMap<UString>)
       }
-
-   // inserimento e cancellazione elementi dalla tabella
 
    void replaceAfterFind(const UString& str)
       {

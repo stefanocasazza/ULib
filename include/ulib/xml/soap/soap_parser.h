@@ -174,8 +174,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    USOAPParser(UVector<UString>* arg = 0) : URPCParser(arg), tree(0,0,2)
       {
       U_TRACE_REGISTER_OBJECT(0, USOAPParser, "", 0)

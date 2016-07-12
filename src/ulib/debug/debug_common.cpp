@@ -38,7 +38,7 @@
 #  define PACKAGE_NAME ULib
 #  endif
 #  ifndef PACKAGE_STRING
-#  define PACKAGE_STRING "ULib 1.4.1"
+#  define PACKAGE_STRING "ULib 1.4.2"
 #  endif
 #endif
 
@@ -118,7 +118,7 @@ extern "C" void U_EXPORT u_debug_init(void)
 }
 
 // set_memlimit() uses setrlimit() to restrict dynamic memory allocation.
-// The argument to set_memlimit() is the limit in megabytes (a floating-point number).
+// The argument to set_memlimit() is the limit in megabytes (a floating-point number)
 
 void U_EXPORT u_debug_set_memlimit(float size)
 {
@@ -136,18 +136,17 @@ void U_EXPORT u_debug_set_memlimit(float size)
 #ifdef RLIMIT_RSS
    // Resident set size.
    // This affects swapping; processes that are exceeding their
-   // resident set size will be more likely to have physical memory
-   // taken from them.
+   // resident set size will be more likely to have physical memory taken from them
    (void) U_SYSCALL(setrlimit, "%d,%p", RLIMIT_RSS, &r);
 #endif
 
 #ifdef RLIMIT_VMEM
-   // Mapped memory (brk + mmap).
+   // Mapped memory (brk + mmap)
    (void) U_SYSCALL(setrlimit, "%d,%p", RLIMIT_VMEM, &r);
 #endif
 
 #ifdef RLIMIT_AS
-   // Address space limit.
+   // Address space limit
    (void) U_SYSCALL(setrlimit, "%d,%p", RLIMIT_AS, &r);
 #endif
 }
@@ -268,7 +267,7 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
 
    if (flag_trace_active == false)
       {
-      (void) write(STDERR_FILENO, buffer,         iov[1].iov_len);
+      (void) write(STDERR_FILENO, buffer,          iov[1].iov_len);
       (void) write(STDERR_FILENO, iov[2].iov_base, iov[2].iov_len);
       }
    else

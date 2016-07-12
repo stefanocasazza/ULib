@@ -47,8 +47,6 @@ public:
 
    struct tdb_context* context;
 
-   // COSTRUTTORE
-
    UTDB()
       {
       U_TRACE_REGISTER_OBJECT(0, UTDB, "", 0)
@@ -171,7 +169,7 @@ public:
          {
          UString str((const char*)dbuf.dptr, dbuf.dsize);
 
-         str.rep->_capacity = U_TO_FREE; //  U_SYSCALL_VOID(free, "%p", dbuf.dptr);
+         str.rep->_capacity = U_TO_FREE;
 
          U_RETURN_STRING(str);
          }
@@ -223,8 +221,6 @@ public:
 
    UString operator[](UStringRep* _key)    { return at(_key); }
    UString operator[](const UString& _key) { return at(_key); }
-
-   // Ricerche
 
    bool find(const char* _key, uint32_t keylen)
       {

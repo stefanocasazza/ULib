@@ -245,7 +245,6 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
    struct addrinfo hints;
    struct addrinfo* result = 0;
 
-   // -----------------------------------------------------------------
    // setup hints structure
    // -----------------------------------------------------------------
    // struct addrinfo {
@@ -295,7 +294,6 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
    int iError;
    struct hostent* pheDetails;
 
-   // -----------------------------------------------------------------
    // struct hostent {
    //    char*  h_name;      // official name of host
    //    char** h_aliases;   // alias list
@@ -303,7 +301,6 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
    //    int    h_length;    // length of address
    //    char** h_addr_list; // list of addresses
    // };
-   // -----------------------------------------------------------------
 
    IPNAME_TO_HOST(pheDetails, name, (bIPv6 ? AF_INET6 : AF_INET), iError);
 
@@ -382,7 +379,7 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 /* address stored by the class, this need be performed only if the lazy       */
 /* evaluation flag is set. The flag is reset at completion of the method to   */
 /* indicate that the address string has been resolved - the string is         */
-/* generated via a call to inet_ntop().                                       */
+/* generated via a call to inet_ntop()                                        */
 /******************************************************************************/
 
 char* UIPAddress::resolveStrAddress(int iAddressType, const void* src, char* ip)
@@ -425,7 +422,7 @@ void UIPAddress::resolveStrAddress()
 /* instead use the string representation of the ip address as a hostname -  */
 /* calling resolveStrAddress() first to force the evaluation of this        */
 /* string.  Otherwise we set the hostname from the values returned by the   */
-/* function call.                                                           */
+/* function call                                                            */
 /****************************************************************************/
 
 void UIPAddress::resolveHostName()
@@ -558,7 +555,7 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
  * These addresses are characterized as private because they are not globally delegated, meaning they are not allocated
  * to any specific organization, and IP packets addressed by them cannot be transmitted onto the public Internet.
  * Anyone may use these addresses without approval from a regional Internet registry (RIR). If such a private network
- * needs to connect to the Internet, it must use either a network address translator (NAT) gateway, or a proxy server.
+ * needs to connect to the Internet, it must use either a network address translator (NAT) gateway, or a proxy server
  */
 
 __pure bool UIPAddress::isPrivate()
@@ -629,7 +626,7 @@ UString UIPAddress::toString(uint8_t* addr)
    union uuaddr u = { addr };
 
    /* The inet_ntoa() function converts the Internet host address in, given in network byte order, to a string in IPv4 dotted-decimal notation.
-    * The string is returned in a statically allocated buffer, which subsequent calls will overwrite.
+    * The string is returned in a statically allocated buffer, which subsequent calls will overwrite
     */
 
    char* result = inet_ntoa(*(u.paddr));

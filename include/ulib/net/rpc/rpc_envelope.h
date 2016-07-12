@@ -29,8 +29,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // Costruttori
-
    URPCEnvelope()
       {
       U_TRACE_REGISTER_OBJECT(0, URPCEnvelope, "", 0)

@@ -152,7 +152,6 @@ int UModNoCatPeer::handlerTime()
       UNoCatPlugIn::deny(disconnected, false);
       }
 
-   // ---------------
    // return value:
    // ---------------
    // -1 - normal
@@ -172,7 +171,6 @@ int UNoCatPlugIn::handlerTime()
 
    checkSystem();
 
-   // ---------------
    // return value:
    // ---------------
    // -1 - normal
@@ -1087,14 +1085,6 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
       {
       U_SRV_LOG("WARNING: tampered token from peer: IP %v MAC %v", peer->ip.rep, peer->mac.rep);
 
-      /**
-       * --------------------------------------------------------------------------------------------------------------------
-       * NB: tutto il traffico viene rediretto sulla 80 (CAPTIVE PORTAL) e quindi windows update, antivrus, etc...
-       * questo introduce la possibilita' che durante la fase di autorizzazione il token generato per il ticket autorizzativo
-       * non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
-       * ---------------------------------------------------------------------------------------------------------------------
-       */
-
       peer->token = UStringExt::numberToString(u_random(u_now->tv_usec));
 
       goto end;
@@ -1436,12 +1426,6 @@ void UNoCatPlugIn::setNewPeer()
    // NB: request(arp|deny|clear|reset|permit|openlist|initialize) mac ip class(Owner|Member|Public) UserDownloadRate UserUploadRate
 
    setFireWallCommand(peer->fw, *fw_cmd, peer->mac, peer->ip);
-
-   /**
-    * NB: tutto il traffico viene rediretto sulla 80 (CAPTIVE PORTAL) e quindi windows update, antivrus, etc...
-    * questo introduce la possibilita' che durante la fase di autorizzazione il token generato per il ticket autorizzativo
-    * non corrisponda piu' a quello inviato dal portale per l'autorizzazione...
-    */
 
    peer->token = UStringExt::numberToString(u_random(u_now->tv_usec));
 
@@ -1951,7 +1935,6 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UNoCatPlugIn::handlerConfig(%p)", &cfg)
 
-   // -----------------------------------------------------------------------------------------------------------------------------------
    // nocat - plugin parameters
    // -----------------------------------------------------------------------------------------------------------------------------------
    // FW_ENV                environment for shell script to execute
@@ -2421,7 +2404,6 @@ int UNoCatPlugIn::handlerRequest()
 
       peer = 0;
 
-      // -----------------------------------------------------
       // NB: check for request from AUTH, which may be:
       // -----------------------------------------------------
       // 1) /checkFirewall - check firewall and report info
@@ -2658,7 +2640,6 @@ next:       (void) getARPCache();
          goto end;
          }
 
-      // ---------------------------------------------------------------
       // NB: other kind of message (from user), which may be:
       // ---------------------------------------------------------------
       // a) /cpe            - specific request, force redirect via https 

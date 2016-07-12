@@ -23,7 +23,7 @@
 /**
  * @class UFlexer
  *
- * Implementazione of FlexLexer for ULib
+ * Implementation of FlexLexer for ULib
  */
 
 struct U_NO_EXPORT UFlexerReference {
@@ -48,8 +48,6 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
-
-   // COSTRUTTORI
 
    UFlexer() : yyFlexLexer()
       {
@@ -112,8 +110,6 @@ public:
 
       parsed_chars = write_position = 0;
       }
-
-   // VARIE
 
    uint32_t size() const { return data.size(); }
 

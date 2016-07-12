@@ -26,11 +26,11 @@
 #define U_TIME_FOR_ARPING_ASYNC_COMPLETION 15
 
 // -------------------------------------
-// PING (protocollo ICMP)
+// PING (protocol ICMP)
 // -------------------------------------
 // send icmp echo request and wait reply
 // -------------------------------------
-// ARPING (protocollo ARP)
+// ARPING (protocol ARP)
 // -------------------------------------
 // send arp request and wait reply
 // -------------------------------------
@@ -59,12 +59,11 @@ public:
       int32_t ttl;
    } rephdr;
 
-   // COSTRUTTORI
-
             UPing(int _timeoutMS = 3000, bool bSocketIsIPv6 = false);
    virtual ~UPing();
 
-   /** This method is called to test whether a particular host is reachable across an IP network; it is also used to self test the network interface card
+   /**
+    * This method is called to test whether a particular host is reachable across an IP network; it is also used to self test the network interface card
     * of the computer, or as a latency test. It works by sending ICMP echo request packets to the target host and listening for ICMP echo response replies.
     * Note that ICMP (and therefore ping) resides on the Network layer (level 3) of the OSI (Open Systems Interconnection) model. This is the same layer as
     * IP (Internet Protocol). Consequently, ping does not use a port for communication
@@ -85,18 +84,19 @@ public:
       U_RETURN(result);
       }
 
-   /* Two important types of ARP packets are ARP Request packets and ARP Reply packets. In the ARP Request packets, we say who has the mentioned
+   /**
+    * Two important types of ARP packets are ARP Request packets and ARP Reply packets. In the ARP Request packets, we say who has the mentioned
     * MAC address and broadcast this packet. In the ARP Reply packets, owner of thementioned MAC address sets his IP address in the reply packet
     * and sends it only to the questioner.
     *
     * The arping command tests whether a given IP network address is in use on the local network, and can get additional information about the
     * device using that address. The arping command is similar in function to ping, but it operates using Address Resolution Protocol (ARP)
     * instead of Internet Control Message Protocol. Because it uses ARP, arping is only usable on the local network; in some cases the response
-    * will be coming, not from the arpinged host, but rather from an intermediate system that engages in proxy ARP (such as a router).
+    * will be coming, not from the arpinged host, but rather from an intermediate system that engages in proxy ARP (such as a router)
     */
 
 #ifdef HAVE_NETPACKET_PACKET_H
-   // #define U_ARP_WITH_BROADCAST
+// #define U_ARP_WITH_BROADCAST
 
    void initArpPing(const char* device);
 
@@ -135,6 +135,8 @@ protected:
    rephdr* rep;
 
 #ifdef HAVE_NETPACKET_PACKET_H
+   int recvArpPing();
+
    typedef struct arpmsg {
       // Ethernet header
       uint8_t  h_dest[6];     // 00 destination ether addr
@@ -160,11 +162,9 @@ protected:
       struct sockaddr_ll l;
    };
 
-#  ifndef U_ARP_WITH_BROADCAST
+# ifndef U_ARP_WITH_BROADCAST
    union uusockaddr_ll he;
-#  endif
-
-   int recvArpPing();
+# endif
 #endif
 
    void pingAsync(uint32_t nfd, UIPAddress* paddr, const char* device);

@@ -33,39 +33,9 @@
 #endif
 
 /**
- * --------------------------------------------------------------------------------------------------------------------
  * This class implements TCP/IP sockets with the Secure Sockets Layer (SSL v2/v3) and
  * Transport Layer Security (TLS v1) protocols. The OpenSSL library is used in this implementation,
- * see the OpenSSL homepage for more information.
- * --------------------------------------------------------------------------------------------------------------------
- * Quando un'applicazione (client) chiede di aprire una connessione SSL verso un server si attiva il servizio
- * che utilizza i protocolli di handshake e di scambio delle chiavi di cifratura. Lo scopo di questa fase è quello
- * di utilizzare un sistema crittografico asimmetrico per svolgere due funzioni:
- *
- * 1) Effettuare l'autenticazione reciproca del cliente e del server.
- * 2) Scambiare fra cliente e server le chiavi di cifratura da utilizzare nel corso della connessione.
- *    Le chiavi sono due per il cliente e due per il server. Una di esse serve per la cifratura dei dati
- *    e l'altra per il codice di autenticazione (MAC).
- * 
- * Al termine di questa fase inizia la vera e propria connessione durante la quale il messaggio (ovvero i dati
- * inviati da cliente a server e viceversa) viene trattato come segue:
- *
- * a) Il messaggio viene suddiviso in blocchi di lunghezza prefissata.
- * b) Ciascun blocco viene compresso con un algoritmo di compressione.
- * c) A ciascun blocco viene aggiunto il codice MAC che serve a garantire l'autenticità dei dati.
- * d) Il blocco complessivo (dati compressi+MAC) viene cifrato utilizzando un algoritmo simmetrico e l'opportuna chiave.
- * e) In testa al blocco cifrato viene posto lo "header" SSL.
- * f) Il blocco viene inviato al corrispondente utilizzando il protocollo TCP/IP.
- * 
- * Il corrispondente alla ricezione del blocco dovrà efettuare le operazioni contrarie, ovvero:
- *
- * a) Eliminare lo header SSL
- * b) Decifrare il messaggio utilizzando la chiave opportuna
- * c) Verificare che il codice MAC sia quello del corrispondente
- * d) Eliminare il codice MAC
- * e) Decomprimere il blocco risultante
- * f) Riunire i frammenti del messaggio
- * ---------------------------------------------------------------------------------------------------------------------
+ * see the OpenSSL homepage for more information
  */
 
 #define SSL_VERIFY_PEER_STRICT (SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT)
@@ -94,12 +64,8 @@ public:
       Old          = 0x002
    };
 
-   // COSTRUTTORI
-
     USSLSocket(bool bSocketIsIPv6 = false, SSL_CTX* ctx = 0, bool server = false);
    ~USSLSocket();
-
-   // VARIE
 
    bool secureConnection();
    bool acceptSSL(USSLSocket* pcConnection);
@@ -143,7 +109,7 @@ public:
     * (a proper certificate chain exists). The certificate chain length from the CA certificate to the peer certificate
     * can be set in the verify_depth field of the SSL_CTX and SSL structures. (The value in SSL is inherited from SSL_CTX
     * when you create an SSL structure using the SSL_new() API). Setting verify_depth to 1 means that the peer certificate
-    * must be directly signed by the CA certificate. 
+    * must be directly signed by the CA certificate 
     */
 
    void setVerifyDepth(int depth = 1)

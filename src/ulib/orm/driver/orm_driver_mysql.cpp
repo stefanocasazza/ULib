@@ -112,8 +112,8 @@ void UOrmDriverMySql::handlerError()
 
    if (UOrmDriver::errcode >= CR_ERROR_FIRST) UOrmDriver::errcode -= CR_ERROR_FIRST; // 2000
 
-   if (UOrmDriver::errcode >= 0                                &&
-       UOrmDriver::errcode < U_NUM_ELEMENTS(error_value_table) &&
+   if (UOrmDriver::errcode >= 0                                     &&
+       UOrmDriver::errcode < (int)U_NUM_ELEMENTS(error_value_table) &&
        UOrmDriver::errcode == error_value_table[UOrmDriver::errcode].value)
       {
       UOrmDriver::errname = error_value_table[UOrmDriver::errcode].name;
@@ -122,7 +122,7 @@ void UOrmDriverMySql::handlerError()
       {
       UOrmDriver::errname = "???";
 
-      for (int i = 0; i < U_NUM_ELEMENTS(error_value_table); ++i)
+      for (unsigned int i = 0; i < U_NUM_ELEMENTS(error_value_table); ++i)
          {
          if (UOrmDriver::errcode == error_value_table[i].value)
             {

@@ -228,7 +228,7 @@ inline void UPing::cksum(void* hdr, int len)
 // This method is called to test whether a particular host is reachable across an IP network; it is also used to self test the network interface card
 // of the computer, or as a latency test. It works by sending ICMP echo request packets to the target host and listening for ICMP echo response replies.
 // Note that ICMP (and therefore ping) resides on the Network layer (level 3) of the OSI (Open Systems Interconnection) model. This is the same layer as
-// IP (Internet Protocol). Consequently, ping does not use a port for communication.
+// IP (Internet Protocol). Consequently, ping does not use a port for communication
 
 bool UPing::initPing()
 {
@@ -291,9 +291,7 @@ bool UPing::ping(UIPAddress& addr)
 
          if (ret <= 0) U_RETURN(false);
 
-loop: // wait for response
-
-         ret = USocket::recvFrom(buf, sizeof(buf), 0, cResponseIP, iSourcePortNumber);
+loop:    ret = USocket::recvFrom(buf, sizeof(buf), 0, cResponseIP, iSourcePortNumber); // wait for response
 
          if (ret <= 0)
             {
@@ -546,7 +544,7 @@ void UPing::initArpPing(const char* device)
       U_INTERNAL_DUMP("ifr_ifindex = %u", ifr.ifr_ifindex)
 
 #  ifdef U_ARP_WITH_BROADCAST
-      arp.h_proto = htons(ETH_P_ARP);        // protocol type (Ethernet)
+      arp.h_proto = htons(ETH_P_ARP); // protocol type (Ethernet)
 #  else
       (void) U_SYSCALL(memset, "%p,%d,%u", &he, '\0', sizeof(he));
 
@@ -608,7 +606,7 @@ void UPing::initArpPing(const char* device)
    // --------------------------------------------------------------------------------------------
    // Target address - TODO...
    // --------------------------------------------------------------------------------------------
-   //           arp.tHaddr is zero-filled            // target hardware address
+   //          arp.tHaddr is zero-filled            // target hardware address
    // U_MEMCPY(arp.tInaddr, addr.get_in_addr(), 4); // target IP address
    // --------------------------------------------------------------------------------------------
 
@@ -652,7 +650,7 @@ retry:
    // -----------------------------------------------------------------------------------------------------------------------
    // Target address
    // -----------------------------------------------------------------------------------------------------------------------
-   //        arp.tHaddr is zero-filled            // target hardware address
+   //       arp.tHaddr is zero-filled            // target hardware address
    U_MEMCPY(arp.tInaddr, addr.get_in_addr(), 4); // target IP address
    // -----------------------------------------------------------------------------------------------------------------------
 

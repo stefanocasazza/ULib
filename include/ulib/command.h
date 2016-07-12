@@ -39,8 +39,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    void zero()
       {
       envp = 0;
@@ -178,8 +176,6 @@ public:
       argv_exec[nfile] = (char*) pathfile;
       }
 
-   // VARIE
-
    int32_t getNumArgument() const       { return ncmd; }
    int32_t getNumFileArgument() const   { return nfile; }
 
@@ -235,7 +231,7 @@ public:
    static void setTimeout(int seconds) { timeoutMS = (seconds * 1000); }
 
    static int32_t setEnvironment(const UString& env, char**& envp);
-   static void   freeEnvironment(char** _envp, int32_t n) { UMemoryPool::_free(_envp, n + 1, sizeof(char*)); } // NB: considera null terminator...
+   static void   freeEnvironment(char** _envp, int32_t n) { UMemoryPool::_free(_envp, n + 1, sizeof(char*)); } // NB: we consider the null terminator...
 
    // run command
 

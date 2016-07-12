@@ -30,7 +30,7 @@ extern "C" {
 /**
  * @class UDBI
  *
- * @brief This class is a wrapper around the DBI C API library (Database Independent Abstraction Layer).
+ * @brief This class is a wrapper around the DBI C API library (Database Independent Abstraction Layer)
  */
 
 class UDBIRow;
@@ -45,7 +45,7 @@ class UDBISet;
 
 template <typename T> std::pair<T,bool> use(T ref, bool is_null = false) { return std::pair<T,bool>(ref, is_null); }
 
-struct exec {}; // Special type to start statement execution   using operator,() - syntactic sugar
+struct exec {}; // Special type to start statement execution using operator,() - syntactic sugar
 
 typedef struct exec UExecType;
 
@@ -59,12 +59,8 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
     UDBI(const char* driverdir = 0, const char* drivername = "sqlite3"); // ex: "/usr/lib/dbd"
    ~UDBI();
-
-   // VARIE
 
    void close();
    bool reconnect();
@@ -184,9 +180,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 protected:
@@ -253,8 +249,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UDBIRow(dbi_result res_ = 0) : res(res_)
       {
       U_TRACE_REGISTER_OBJECT(0, UDBIRow, "%p", res_)
@@ -274,8 +268,6 @@ public:
          U_SYSCALL_VOID(dbi_result_free, "%p", res);
          }
       }
-
-   // VARIE
 
    dbi_result getResult() { return res; }  // Get underlying libdbi result object. For low level access
 
@@ -492,8 +484,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    UDBISet(dbi_result res_ = 0) : res(res_)
       {
       U_TRACE_REGISTER_OBJECT(0, UDBISet, "%p", res_)
@@ -505,8 +495,6 @@ public:
 
       if (res) clear();
       }
-
-   // VARIE
 
    void clear()
       {

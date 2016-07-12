@@ -14,11 +14,11 @@
 #include <ulib/file.h>
 
 // --------------------------------------------------------------------------------------
-// U_NUM_ENTRY_MEM_BLOCK: numero di blocchi da preallocare per 'type' stack
+// U_NUM_ENTRY_MEM_BLOCK: number of blocks to preallocate for 'type' stack
 
-#define U_NUM_ENTRY_MEM_BLOCK 32 // (per fare i test assegnare a 2)
+#define U_NUM_ENTRY_MEM_BLOCK 32
 
-// U_SIZE_MEM_BLOCK: space da preallocare totale per i vari 'type' stack definiti (~256k bytes)
+// U_SIZE_MEM_BLOCK: total space to preallocate for the various 'type' stack defined (~256k bytes)
 
 #define U_SIZE_MEM_BLOCK (U_STACK_TYPE_0  * U_NUM_ENTRY_MEM_BLOCK + \
                           U_STACK_TYPE_1  * U_NUM_ENTRY_MEM_BLOCK + \
@@ -117,8 +117,6 @@ end:
 }
 */
 
-// struttura e classe che encapsula lo stack dinamico di puntatori a blocchi preallocati per un 'type' dimensione definito
-
 typedef struct ustackmemorypool {
 #ifdef DEBUG
    void* _this;
@@ -189,7 +187,7 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(index, 0)
 
-      // NB: si alloca lo space per numero totale puntatori (blocchi allocati precedentemente + un nuovo insieme di blocchi) relativi a type 'dimensione' stack corrente...
+      // NB: we alloc the space for total number pointer (block allocate previous + a new set of blocks) relativ to type 'dimension' current stack...
 
       uint32_t size = new_space * sizeof(void*);
 
@@ -213,8 +211,6 @@ public:
       U_TRACE(0, "UStackMemoryPool::allocateMemoryBlocks(%u)", n)
 
       U_INTERNAL_ASSERT_MAJOR(n, len)
-
-      // si alloca un nuovo insieme di blocchi relativi a 'type' stack corrente...
 
       uint32_t num_entry = (n - len),
                size      = num_entry * type;
@@ -243,9 +239,6 @@ public:
          char* eblock = pblock + (num_entry * type);
 
          if (space <= new_len) growPointerBlock(space + num_entry); // NB: this call can change len...
-
-         // ...che viene inizializzato suddividendolo in base al type
-         //    'dimensione' e assegnando i valori dei puntatori relativi nel nuovo stack
 
          do {
                                            eblock -= type;
@@ -333,9 +326,6 @@ public:
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
    static void paint(ostream& os); // print info
 #endif
-
-   // NB: inizialmente viene allocato lo spazio per il doppio dei
-   //     puntatori necessari (quelli cioe' che vengono inizializzati)...
 
 #if defined(ENABLE_MEMPOOL)
    static char  mem_block[U_SIZE_MEM_BLOCK];
@@ -773,10 +763,6 @@ void UMemoryPool::writeInfoTo(const char* format, ...)
 
 #if defined(ENABLE_MEMPOOL)
 char UStackMemoryPool::mem_block[U_SIZE_MEM_BLOCK];
-// ----------------------------------------------------------------------------
-// NB: l'inizializzazione seguente dipende strettamente da 'U_NUM_ENTRY_MEM_BLOCK'
-// che normalmente e' uguale a 32, altrimenti (per fare i test si assegna a 2...)
-// si devono commentare nel file "memory_pool.dat" le righe eccessive...
 // ***************************************************************** memory_pool.dat
 // U_SPACE + U_TYPE *   0, U_SPACE + U_TYPE *   1, U_SPACE + U_TYPE *   2,
 // U_SPACE + U_TYPE *   3, U_SPACE + U_TYPE *   4, U_SPACE + U_TYPE *   5,
@@ -784,7 +770,6 @@ char UStackMemoryPool::mem_block[U_SIZE_MEM_BLOCK];
 // .................................................................
 // U_SPACE + U_TYPE * 126, U_SPACE + U_TYPE * 127,
 // ***************************************************************** memory_pool.dat
-// ----------------------------------------------------------------------------
 void* UStackMemoryPool::mem_pointer_block[U_NUM_STACK_TYPE * U_NUM_ENTRY_MEM_BLOCK * 2] = {
 #undef  U_TYPE
 #define U_TYPE U_STACK_TYPE_0

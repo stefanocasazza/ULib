@@ -160,8 +160,6 @@ public:
 
    bool login(const char* user, const char* passwd);
 
-   // Varie
-
    int getSizeMessage(uint32_t n);
    int getUIDL(UVector<UString>& vec);
 

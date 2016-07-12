@@ -372,8 +372,14 @@ void UObjectDB::init(bool flag, bool info)
 
    if (info)
       {
-      if (fd != -1) U_MESSAGE("OBJDUMP<%Won%W>: Level<%W%d%W> MaxSize<%W%d%W>%W",GREEN,YELLOW,CYAN,level_active,YELLOW,CYAN,file_size,YELLOW,RESET);
-      else          U_MESSAGE("OBJDUMP<%Woff%W>%W",RED,YELLOW,RESET);
+      if (fd == -1)
+         {
+         U_MESSAGE("OBJDUMP<%Woff%W>%W",RED,YELLOW,RESET);
+         }
+      else
+         {
+         U_MESSAGE("OBJDUMP<%Won%W>: Level<%W%d%W> MaxSize<%W%d%W>%W",GREEN,YELLOW,CYAN,level_active,YELLOW,CYAN,file_size,YELLOW,RESET);
+         }
       }
 }
 

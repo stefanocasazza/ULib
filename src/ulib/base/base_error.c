@@ -1,4 +1,4 @@
-/** ============================================================================
+/* ============================================================================
 //
 // = LIBRARY
 //    ULib - c library
@@ -49,7 +49,7 @@ void u_printError(void)
 
 /**
  * Maps errno number to an error message string, the contents of which are implementation defined.
- * The returned string is only guaranteed to be valid only until the next call to function.
+ * The returned string is only guaranteed to be valid only until the next call to function
  */
 
 void u_getSysError(uint32_t* restrict len)
@@ -59,7 +59,7 @@ void u_getSysError(uint32_t* restrict len)
     * Note that this table is generally only accessed when it is used at runtime to initialize errno name and
     * message tables that are indexed by errno value.
     * Not all of these errnos will exist on all systems. This table is the only thing that should have to be
-    * updated as new error numbers are introduced. It's sort of ugly, but at least its portable.
+    * updated as new error numbers are introduced. It's sort of ugly, but at least its portable
     */
 
    struct error_info
@@ -476,7 +476,7 @@ void u_getSysError(uint32_t* restrict len)
    U_INTERNAL_TRACE("u_getSysError(%p)", len)
 
    if ((errno > 0) &&
-       (errno < U_NUM_ELEMENTS(error_table))) /* check if in range */
+       (errno < (int)U_NUM_ELEMENTS(error_table))) /* check if in range */
       {
 #  ifdef HAVE_STRERROR
       msg = strerror(errno);
@@ -491,7 +491,7 @@ void u_getSysError(uint32_t* restrict len)
          }
       else
          {
-         int i;
+         unsigned int i;
 
          for (i = 0; i < U_NUM_ELEMENTS(error_table); ++i)
             {
@@ -515,7 +515,7 @@ void u_getSysError(uint32_t* restrict len)
 
 /**
  * Maps an signal number to an signal message string, the contents of which are implementation defined.
- * The returned string is only guaranteed to be valid only until the next call to strsignal.
+ * The returned string is only guaranteed to be valid only until the next call to strsignal
  */
 
 void u_getSysSignal(int signo, uint32_t* restrict len)
@@ -558,7 +558,7 @@ void u_getSysSignal(int signo, uint32_t* restrict len)
 #if defined(SIGTRAP)
    ENTRY(SIGTRAP, "Trace/breakpoint trap"),
 #endif
-   /* Put SIGIOT before SIGABRT, so that if SIGIOT == SIGABRT then SIGABRT overrides SIGIOT. SIGABRT is in ANSI and POSIX.1, and SIGIOT isn't. */
+   /* Put SIGIOT before SIGABRT, so that if SIGIOT == SIGABRT then SIGABRT overrides SIGIOT. SIGABRT is in ANSI and POSIX.1, and SIGIOT isn't */
 #if defined(SIGIOT)
    ENTRY(SIGIOT, "IOT trap"),
 #endif
@@ -692,7 +692,7 @@ void u_getSysSignal(int signo, uint32_t* restrict len)
    U_INTERNAL_TRACE("u_getSysSignal(%d,%p)", signo, len)
 
    if ((signo > 0) &&
-       (signo < U_NUM_ELEMENTS(signal_table))) /* check if in range */
+       (signo < (int)U_NUM_ELEMENTS(signal_table))) /* check if in range */
       {
 #  ifdef HAVE_STRSIGNAL
       msg = strsignal(signo);
@@ -707,7 +707,7 @@ void u_getSysSignal(int signo, uint32_t* restrict len)
          }
       else
          {
-         int i;
+         unsigned int i;
 
          for (i = 0; i < U_NUM_ELEMENTS(signal_table); ++i)
             {
@@ -819,7 +819,7 @@ void u_getExitStatus(int exitno, uint32_t* restrict len)
          }
       else
          {
-         int i;
+         unsigned int i;
 
          for (i = 0; i < U_NUM_ELEMENTS(exit_value_table); ++i)
             {

@@ -53,7 +53,7 @@ public:
       U_RETURN(true);
       }
 
-   // LZO method
+   // COMPRESS method
 
    static bool isCompress(const char* s)       { return (u_get_unalignedp32(s) == U_MULTICHAR_CONSTANT32('\x89','M','N','Z')); } // U_MINIZ_COMPRESS
    static bool isCompress(const UString& s)    { return isCompress(s.data()); }

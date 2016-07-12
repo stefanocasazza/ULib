@@ -44,8 +44,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // COSTRUTTORI
-
    URPCMethod()
       {
       U_TRACE_REGISTER_OBJECT(0, URPCMethod, "", 0)

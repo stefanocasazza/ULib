@@ -31,16 +31,6 @@
 
 /**
  * --------------------------------------------------------------------------------------------------------------------------
- * Come funziona ssh:
- * --------------------------------------------------------------------------------------------------------------------------
- * Ogni host su cui è installato ssh possiede una coppia di chiavi RSA (un algoritmo di crittografia a chiave asimmetrica)
- * lunghe 1024 bit, una pubblica ed una privata. In più, ogni utente che utilizza ssh può opzionalmente generare una propria
- * coppia di chiavi RSA. All'atto della connessione, il server comunica al client due chiavi pubbliche: una fissa di 1024 bit
- * che è la vera e propria chiave dell'host e l'altra di 768 bit che viene rigenerata ogni ora. Il client allora genera una
- * sequenza casuale di 256 bit e la codifica con le chiavi pubbliche del server. Da questo momento in poi la connessione viene
- * crittografata con uno degli algoritmi a chiave simmetrica supportati da ssh (IDEA, DES, 3DES, Arcfour, Blowfish) e si passa
- * alla fase di autenticazione.
- * --------------------------------------------------------------------------------------------------------------------------
  * The SSH protocol was designed for some goals which I resume here:
  * 
  * a) Privacy of data
@@ -73,8 +63,6 @@
 class U_EXPORT USSHSocket : public USocket {
 public:
 
-   // COSTRUTTORI
-
    USSHSocket(bool bSocketIsIPv6 = false) : USocket(bSocketIsIPv6)
       {
       U_TRACE_REGISTER_OBJECT(0, USSHSocket, "%b", bSocketIsIPv6)
@@ -95,8 +83,6 @@ public:
 
       if (buffer) U_SYSCALL_VOID(buffer_free, "%p", buffer);
       }
-
-   // VARIE
 
    void close();
    bool setError();
@@ -137,8 +123,6 @@ public:
 
       U_SYSCALL_VOID(channel_send_eof, "%p", channel);
       }
-
-   // VIRTUAL METHOD
 
    /**
     * This method is called to connect the socket to a server SSH deamon that is specified
