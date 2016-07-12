@@ -210,7 +210,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, HTTP2Push, "", 0)
 
+#  ifdef USE_LIBCURL
       UCURL::initHTTP2Push("https://api.development.push.apple.com", "/certificates/samplepush/development.pem", "GoGo.Hopscotch");
+#  endif
       }
 
    virtual ~HTTP2Push() U_DECL_FINAL

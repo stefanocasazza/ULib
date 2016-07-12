@@ -720,7 +720,7 @@ void UServices::generateDigest(int alg, unsigned char* data, uint32_t size)
 
 UString UServices::createToken(int alg)
 {
-   U_TRACE(1, "UServices::createToken(%d)", alg)
+   U_TRACE(0, "UServices::createToken(%d)", alg)
 
    UString output(40U);
    uint32_t u = u_get_num_random(0);

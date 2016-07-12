@@ -146,6 +146,7 @@ void UTimer::updateTimeToExpire(UEventTime* ptime)
       }
 
    U_ASSERT(invariant())
+   U_INTERNAL_ASSERT_POINTER(item)
 
    U_INTERNAL_DUMP("UEventTime::timeout1 = %#19D (next alarm expire) = %#19D", UEventTime::timeout1.tv_sec, item->next ? item->next->alarm->expire() : 0L)
 
@@ -157,7 +158,9 @@ void UTimer::updateTimeToExpire(UEventTime* ptime)
 
    ptime->updateTimeToExpire();
 
+#ifndef U_COVERITY_FALSE_POSITIVE // Dereference after null check (FORWARD_NULL)
    item->insertEntry();
+#endif
 }
 
 void UTimer::run()
