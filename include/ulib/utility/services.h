@@ -176,6 +176,20 @@ struct U_EXPORT UServices {
    static void generateDigest(int alg, uint32_t keylen, const UString& data,                UString& output, int base64 = 0)
       { generateDigest(alg, keylen, (unsigned char*)U_STRING_TO_PARAM(data), output, base64); }
 
+   static UString generateCode(uint32_t len = 6)
+      {
+      U_TRACE(0, "UServices::generateCode(%u)", len)
+
+      UString code(len);
+      char* ptr = code.data();
+
+      for (uint32_t i = 0; i < len; ++i, ++ptr) *ptr = u_alphabet[u_get_num_random(sizeof(u_alphabet) - 3)];
+
+      code.size_adjust(len);
+
+      U_RETURN_STRING(code);
+      }
+
 #ifdef USE_LIBSSL
    static UString createToken(int alg = U_HASH_SHA256);
 

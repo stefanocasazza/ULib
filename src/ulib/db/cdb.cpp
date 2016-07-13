@@ -953,7 +953,9 @@ U_EXPORT istream& operator>>(istream& is, UCDB& cdb)
 
       ptr += sizeof(UCDB::cdb_record_header);
 
+#  ifndef U_COVERITY_FALSE_POSITIVE /* TAINTED_SCALAR */
       is.read(ptr, klen);
+#  endif
 
       U_INTERNAL_DUMP("key = %.*S", klen, ptr)
 
@@ -962,7 +964,9 @@ U_EXPORT istream& operator>>(istream& is, UCDB& cdb)
 
       ptr += klen;
 
+#  ifndef U_COVERITY_FALSE_POSITIVE /* TAINTED_SCALAR */
       is.read(ptr, dlen);
+#  endif
 
       U_INTERNAL_DUMP("data = %.*S", dlen, ptr)
 

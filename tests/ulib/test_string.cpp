@@ -1933,6 +1933,11 @@ U_EXPORT main (int argc, char* argv[])
    U_ASSERT( UStringExt::compareversion(U_STRING_FROM_CONSTANT("2.1000"), U_STRING_FROM_CONSTANT("3.111")) < 0 )
    U_ASSERT( UStringExt::compareversion(U_STRING_FROM_CONSTANT("3.111"), U_STRING_FROM_CONSTANT("2.1000")) > 0 )
 
+#ifdef USE_LIBSSL
+   z = UServices::createToken();
+#endif
+   z = UServices::generateCode();
+
    /* recursively expand variables if needed
 
 #define ENV_1     \

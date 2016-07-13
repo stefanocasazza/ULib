@@ -436,7 +436,9 @@ U_EXPORT istream& operator>>(istream& is, UCache& cache)
       is >> datalen;
       is.get(); // skip ':'
 
+#  ifndef U_COVERITY_FALSE_POSITIVE /* TAINTED_SCALAR */
       is.read(key, keylen);
+#  endif
 
       U_INTERNAL_DUMP("key = %.*S keylen = %u", keylen, key, keylen)
 
@@ -444,8 +446,7 @@ U_EXPORT istream& operator>>(istream& is, UCache& cache)
 
       ptr = cache.add(key, keylen, datalen, 0);
 
-      // coverity[TAINTED_SCALAR]
-#  ifndef U_COVERITY_FALSE_POSITIVE
+#  ifndef U_COVERITY_FALSE_POSITIVE // coverity[TAINTED_SCALAR]
       U_MEMCPY(ptr, key, keylen);
 #  endif
 
@@ -454,7 +455,9 @@ U_EXPORT istream& operator>>(istream& is, UCache& cache)
 
       ptr += keylen;
 
+#  ifndef U_COVERITY_FALSE_POSITIVE /* TAINTED_SCALAR */
       is.read(ptr, datalen);
+#  endif
 
       U_INTERNAL_DUMP("data = %.*S datalen = %u", datalen, ptr, datalen)
 

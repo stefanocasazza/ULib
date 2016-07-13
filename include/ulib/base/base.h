@@ -239,9 +239,9 @@ extern U_EXPORT char u_hostname[HOST_NAME_MAX+1];
 extern U_EXPORT const int MultiplyDeBruijnBitPosition2[32];
 extern U_EXPORT uint32_t u_hostname_len, u_user_name_len, u_seed_hash;
 
-extern U_EXPORT const unsigned char u_alphabet[];  /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
-extern U_EXPORT const unsigned char u_hex_upper[]; /* "0123456789ABCDEF" */
-extern U_EXPORT const unsigned char u_hex_lower[]; /* "0123456789abcdef" */
+extern U_EXPORT const unsigned char u_alphabet[64];  /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
+extern U_EXPORT const unsigned char u_hex_upper[16]; /* "0123456789ABCDEF" */
+extern U_EXPORT const unsigned char u_hex_lower[16]; /* "0123456789abcdef" */
 
 /* conversion number to string */
 extern U_EXPORT const char u_ctn2s[201];
