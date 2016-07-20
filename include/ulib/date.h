@@ -149,11 +149,9 @@ public:
       return *this;
       }
 
-#ifdef U_COMPILER_RVALUE_REFS
-   UTimeDate& operator=(UTimeDate && d) = default;
-# if (!defined(__GNUC__) || GCC_VERSION_NUM > 50300) // GCC has problems dealing with move constructor, so turn the feature on for 5.3.1 and above, only
+#if defined(U_COMPILER_RVALUE_REFS) && (!defined(__GNUC__) || GCC_VERSION_NUM > 50300) // GCC has problems dealing with move constructor, so turn the feature on for 5.3.1 and above, only
    UTimeDate(UTimeDate && d) = default;
-# endif
+   UTimeDate& operator=(UTimeDate && d) = default;
 #endif
 
    // SERVICES

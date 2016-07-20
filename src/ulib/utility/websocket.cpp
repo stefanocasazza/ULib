@@ -594,7 +594,7 @@ bool UWebSocket::sendData(int type, const unsigned char* buffer, uint32_t buffer
                            { (caddr_t)buffer, payload_length } };
 
    int iBytesWrite = (payload_length
-            ? (pos += payload_length, USocketExt::writev(UServer_Base::csocket, iov, 2,                pos, UServer_Base::timeoutMS))
+            ? (pos += payload_length, USocketExt::writev(UServer_Base::csocket, iov, 2,              pos, UServer_Base::timeoutMS))
             :                         USocketExt::write( UServer_Base::csocket, (const char*)header, pos, UServer_Base::timeoutMS));
 
    if (iBytesWrite == (int)pos) U_RETURN(true);

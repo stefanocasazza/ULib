@@ -996,7 +996,22 @@ public:
 
    static void checkFileForCache();
    static void renewFileDataInCache();
-   static void checkFileInCache(const char* path, uint32_t len);
+
+   static void checkFileInCache(const char* path, uint32_t len)
+      {
+      U_TRACE(0, "UHTTP::checkFileInCache(%.*S,%u)", len, path, len)
+
+      file_data = cache_file->at(path, len);
+
+      if (file_data)
+         {
+         file->st_size  = file_data->size;
+         file->st_mode  = file_data->mode;
+         file->st_mtime = file_data->mtime;
+
+         U_INTERNAL_DUMP("file_data->fd = %d st_size = %I st_mtime = %ld dir() = %b", file_data->fd, file->st_size, file->st_mtime, file->dir())
+         }
+      }
 
    static bool isFileInCache()
       {
@@ -1028,7 +1043,14 @@ public:
    static UString   getBodyCompressFromCache() { return getDataFromCache(2); }
    static UString getHeaderCompressFromCache() { return getDataFromCache(3); };
 
-   static UFileCacheData* getFileInCache(const char* path, uint32_t len);
+   static UFileCacheData* getFileInCache(const char* path, uint32_t len)
+      {
+      U_TRACE(0, "UHTTP::getFileInCache(%.*S,%u)", len, path, len)
+
+      UHTTP::UFileCacheData* ptr_file_data = cache_file->at(path, len);
+
+      U_RETURN_POINTER(ptr_file_data, UHTTP::UFileCacheData);
+      }
 
 private:
    static void    handlerResponse();

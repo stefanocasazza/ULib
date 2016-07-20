@@ -2494,7 +2494,11 @@ void UHTTP2::handlerResponse()
 
       char* ptr0 = ptr + sz0;
 
+#  ifdef U_APEX_ENABLE
       (void) U_SYSCALL(apex_memmove, "%p,%p,%u", ptr0+HTTP2_FRAME_HEADER_SIZE, ptr0, sz1); // void* dest, const void* src, ...
+#  else
+      (void) U_SYSCALL(     memmove, "%p,%p,%u", ptr0+HTTP2_FRAME_HEADER_SIZE, ptr0, sz1); // void* dest, const void* src, ...
+#  endif
 
       *(uint32_t*) ptr0   = htonl(sz1 << 8);
                    ptr0[3] = CONTINUATION;

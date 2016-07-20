@@ -245,11 +245,11 @@ bool UCertificate::verify(STACK_OF(X509)* chain, time_t certsVerificationTime) c
    U_SYSCALL_VOID(  X509_STORE_CTX_init, "%p,%p,%p,%p", csc, UServices::store, x509, chain);
 #endif
 
-   /*
-   certsVerificationTime: the time to use for X509 certificates verification ("not valid before" and
-                          "not valid after" checks); if certsVerificationTime is equal to 0 (default)
-                          then we verify certificates against the system's clock "now"
-   */
+   /**
+    * certsVerificationTime: the time to use for X509 certificates verification ("not valid before" and
+    * "not valid after" checks); if certsVerificationTime is equal to 0 (default)
+    * then we verify certificates against the system's clock "now"
+    */
 
    if (certsVerificationTime > 0) U_SYSCALL_VOID(X509_STORE_CTX_set_time, "%p,%ld,%ld", csc, 0, certsVerificationTime);
 
@@ -262,7 +262,7 @@ bool UCertificate::verify(STACK_OF(X509)* chain, time_t certsVerificationTime) c
 
 /**
  * Retrieves the signer's certificates from this certificate,
- * it does check their validity and whether any signatures are valid.
+ * it does check their validity and whether any signatures are valid
  */
 
 int UCertificate::verifyCallback(int ok, X509_STORE_CTX* ctx)

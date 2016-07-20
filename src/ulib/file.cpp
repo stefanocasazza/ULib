@@ -1350,6 +1350,7 @@ int UFile::setBlocking(int _fd, int flags, bool block)
    U_INTERNAL_ASSERT_DIFFERS(_fd, -1)
 
    /**
+    * ------------------------------------------------------
     * #define O_RDONLY           00
     * #define O_WRONLY           01
     * #define O_RDWR             02
@@ -1376,10 +1377,8 @@ int UFile::setBlocking(int _fd, int flags, bool block)
    bool blocking = isBlocking(_fd, flags); // actual state is blocking...?
 
    // ----------------------------------------------------------------------------------------
-   // determina se le operazioni I/O sul descrittore indicato sono di tipo bloccante o meno...
-   // ----------------------------------------------------------------------------------------
-   // flags & ~O_NONBLOCK: read() e write() bloccanti     (casi normali)
-   // flags |  O_NONBLOCK: read() e write() non bloccanti (casi speciali)
+   // flags & ~O_NONBLOCK: read() and write()     block ( normal case)
+   // flags |  O_NONBLOCK: read() and write() NOT block (special case)
    // ----------------------------------------------------------------------------------------
 
    if (block != blocking)
@@ -1395,7 +1394,7 @@ int UFile::setBlocking(int _fd, int flags, bool block)
    U_RETURN(flags);
 }
 
-// risolve link simbolici e/o riferimenti a "./" and "../"
+// resolv simbolic link and/or reference to "./" and "../"
 
 UString UFile::getRealPath(const char* path, bool brelativ)
 {

@@ -1517,7 +1517,6 @@ __pure bool UHTTP::isMobile()
 }
 
 /**
- * ---------------------------------------------------------------------------------------------------------------------------
  * HTTP message
  * ---------------------------------------------------------------------------------------------------------------------------
  * There are four parts to an HTTP request:
@@ -1663,7 +1662,6 @@ bool UHTTP::scanfHeaderRequest(const char* ptr, uint32_t size)
    U_TRACE(0, "UHTTP::scanfHeaderRequest(%.*S,%u)", size, ptr, size)
 
    /**
-    * -------------------------------------------------------------------
     * Check HTTP request
     * -------------------------------------------------------------------
     * The default is GET for input requests and POST for output requests.
@@ -3793,7 +3791,11 @@ set_uri: U_http_info.uri     = alias->data();
             {
             file->path_relativ_len = U_http_info.uri_len - U_http_host_vlen - 1;
 
+#        ifdef U_APEX_ENABLE
             (void) U_SYSCALL(apex_memmove, "%p,%p,%u", (void*)ptr, ptr + 1 + U_http_host_vlen, file->path_relativ_len);
+#        else
+            (void) U_SYSCALL(     memmove, "%p,%p,%u", (void*)ptr, ptr + 1 + U_http_host_vlen, file->path_relativ_len);
+#        endif
             }
 
          if (checkPath(file->path_relativ_len)) goto manage;
@@ -3881,6 +3883,7 @@ file_in_cache:
        * #define U_ruby   '5' // Ruby   script
        * #define U_perl   '6' // Perl   script
        * #define U_python '7' // Python script
+       * -----------------------------------------------
        */
 
       if (u_is_usp(mime_index))
@@ -4841,7 +4844,7 @@ void UHTTP::clearSessionSSL()
  *    in pair with user login, and sends session id to browser in response as cookie. Browser stores cookie.
  * 3) User visits any page on this domain and browser sends a cookie to server for each request.
  * 4) ULib server checks if cookie has been sent, if such cookie exists in server storage with pair with login. Identifies user, provides access to his private content.
- * 5) Logout button removes the cookie from browser and sid-login pair from server storage. Browser does not send cookies, server does not see it and does not see sid-login pair.
+ * 5) Logout button removes the cookie from browser and sid-login pair from server storage. Browser does not send cookies, server does not see it and does not see sid-login pair
  */
 
 void UHTTP::addSetCookie(const UString& cookie)
@@ -5515,7 +5518,6 @@ uint32_t UHTTP::processForm()
       {
       U_ASSERT(isPOST())
 
-      // -------------------------------------------------------------------------
       // POST
       // -------------------------------------------------------------------------
       // Content-Type: application/x-www-form-urlencoded OR multipart/form-data...
@@ -6333,8 +6335,7 @@ end:
       U_INTERNAL_ASSERT(u_endsWith(pEndHeader, U_http_info.endHeader, U_CONSTANT_TO_PARAM(U_CRLF2)))
 
       U_MEMCPY(ptr1, pEndHeader, U_http_info.endHeader);
-
-      ptr1 += U_http_info.endHeader;
+               ptr1 +=           U_http_info.endHeader;
       }
 
    ext->size_adjust(ptr1);
@@ -7886,31 +7887,6 @@ error:
           file_data = 0;
 }
 
-UHTTP::UFileCacheData* UHTTP::getFileInCache(const char* path, uint32_t len)
-{
-   U_TRACE(0, "UHTTP::getFileInCache(%.*S,%u)", len, path, len)
-
-   UHTTP::UFileCacheData* ptr_file_data = cache_file->at(path, len);
-
-   U_RETURN_POINTER(ptr_file_data, UHTTP::UFileCacheData);
-}
-
-void UHTTP::checkFileInCache(const char* path, uint32_t len)
-{
-   U_TRACE(0, "UHTTP::checkFileInCache(%.*S,%u)", len, path, len)
-
-   file_data = cache_file->at(path, len);
-
-   if (file_data)
-      {
-      file->st_size  = file_data->size;
-      file->st_mode  = file_data->mode;
-      file->st_mtime = file_data->mtime;
-
-      U_INTERNAL_DUMP("file_data->fd = %d st_size = %I st_mtime = %ld dir() = %b", file_data->fd, file->st_size, file->st_mtime, file->dir())
-      }
-}
-
 void UHTTP::renewFileDataInCache()
 {
    U_TRACE(0, "UHTTP::renewFileDataInCache()")
@@ -9154,7 +9130,7 @@ loop:
              * having more resources freed, and you can even specify the delivery of files outside of the web server's document root path.
              * Of course, this is to be done solely in controlled environments. In short, it offers a huge performance gain at absolutely
              * no cost. Note that the X-Sendfile feature also supports X-Accel-Redirect header, a similar feature offered by other web
-             * servers. This is to allow the migration of applications supporting it without having to make major code rewrites.
+             * servers. This is to allow the migration of applications supporting it without having to make major code rewrites
              */
 
                  if (u_get_unalignedp64(ptr+4) == U_MULTICHAR_CONSTANT64('n','d','f','i','l','e',':',' ')) ptr1 = ptr + U_CONSTANT_SIZE("X-Sendfile: ");
@@ -9647,8 +9623,7 @@ typedef struct { uint32_t start, end; } HTTPRange;
  * MAY use that date in an If-Range header. (The server can distinguish between a valid
  * HTTP-date and any form of entity-tag by examining no more than two characters.) The If-Range
  * header SHOULD only be used together with a Range header, and MUST be ignored if the request
- * does not include a Range header, or if the server does not support the sub-range operation. 
- *
+ * does not include a Range header, or if the server does not support the sub-range operation 
  */
 
 U_NO_EXPORT bool UHTTP::checkGetRequestIfRange()
@@ -10034,7 +10009,6 @@ U_NO_EXPORT void UHTTP::processGetRequest()
       goto build_response;
       }
 
-   // --------------------------------------------------------------------
    // NB: check for Flash pseudo-streaming
    // --------------------------------------------------------------------
    // Adobe Flash Player can start playing from any part of a FLV movie

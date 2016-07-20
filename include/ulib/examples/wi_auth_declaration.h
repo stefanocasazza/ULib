@@ -4404,8 +4404,8 @@ static void GET_get_config()
 
             if (_body.empty())
                {
-               const char* lan = "???";
-               uint32_t len = U_CONSTANT_SIZE("???");
+               const char* lan =                 "???";
+                  uint32_t len = U_CONSTANT_SIZE("???");
 
                UHTTP::getFormValue(*ap, U_CONSTANT_TO_PARAM("ap"), 0, 1, end);
 
@@ -4480,7 +4480,7 @@ static void GET_get_config()
 
                      _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("172.<CCC>.<DDD>.0/24"), U_STRING_TO_PARAM(netmask));
 
-                     buffer.snprintf("LOCAL_NETWORK_LABEL \"%.*s\"", U_STRING_TO_TRACE(label));
+                     buffer.snprintf("LOCAL_NETWORK_LABEL \"%v\"", label.rep);
 
                      _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("LOCAL_NETWORK_LABEL ap"), U_STRING_TO_PARAM(buffer));
 
@@ -4488,7 +4488,7 @@ static void GET_get_config()
                         {
                         UString tmp(200U + local.size());
 
-                        tmp.snprintf(local.data(), U_STRING_TO_TRACE(netmask), U_STRING_TO_TRACE(label));
+                        tmp.snprintf(local.data(), netmask.rep, label.rep);
 
                         local = tmp;
                         }

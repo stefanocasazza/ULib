@@ -427,7 +427,7 @@ bool UFileConfig::loadINI()
             _start = ptr;
             }
 
-         // The name of a property is composed of the section key and the value key, separated by a period (<section key>.<value key>).
+         // The name of a property is composed of the section key and the value key, separated by a period (<section key>.<value key>)
 
          len = sectionKey.size();
 

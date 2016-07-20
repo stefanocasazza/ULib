@@ -843,6 +843,8 @@ PREAD_TRUE
 ASSERT_FALSE
 ASSERT_TRUE
 ALLOCA
+APEXMEM_FALSE
+APEXMEM_TRUE
 ULIB
 DEBUG_FALSE
 DEBUG_TRUE
@@ -1017,6 +1019,7 @@ enable_libtool_lock
 enable_stdcpp
 enable_debug
 enable_unaligned
+enable_apexmem
 with_libc
 enable_thread
 enable_pth
@@ -1757,6 +1760,7 @@ Optional Features:
   --enable-stdcpp           compile with stdc++ runtime overhead [default=yes]
   --enable-debug            compile for debugging [default=no]
   --enable-unaligned        compile for target that allows unaligned reads and writes [default=yes]
+  --enable-apexmem          use apex_memmove written by Trevor Herselman in 2014 [default=yes]
   --enable-thread           enable build of thread support [default=yes]
   --enable-pth              always use GNU pth for threading [default=no]
   --enable-examples         enable building of examples [default=yes]
@@ -20120,6 +20124,46 @@ $as_echo "#define HAVE_NO_UNALIGNED_ACCESSES 1" >>confdefs.h
 
 fi
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for apex memcpy/memmove" >&5
+$as_echo_n "checking for apex memcpy/memmove... " >&6; }
+# Check whether --enable-apexmem was given.
+if test "${enable_apexmem+set}" = set; then :
+  enableval=$enable_apexmem;
+fi
+
+
+if test -z "$enable_apexmem"; then
+	enable_apexmem="yes"
+fi
+
+ if false; then
+  APEXMEM_TRUE=
+  APEXMEM_FALSE='#'
+else
+  APEXMEM_TRUE='#'
+  APEXMEM_FALSE=
+fi
+
+
+if test "$enable_apexmem" = "yes"; then
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	 if true; then
+  APEXMEM_TRUE=
+  APEXMEM_FALSE='#'
+else
+  APEXMEM_TRUE='#'
+  APEXMEM_FALSE=
+fi
+
+
+$as_echo "#define U_APEX_ENABLE 1" >>confdefs.h
+
+else
+   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
 ULIB_LIBC="-lc"
 
 
@@ -31954,6 +31998,14 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${DEBUG_TRUE}" && test -z "${DEBUG_FALSE}"; then
   as_fn_error $? "conditional \"DEBUG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${APEXMEM_TRUE}" && test -z "${APEXMEM_FALSE}"; then
+  as_fn_error $? "conditional \"APEXMEM\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${APEXMEM_TRUE}" && test -z "${APEXMEM_FALSE}"; then
+  as_fn_error $? "conditional \"APEXMEM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${ASSERT_TRUE}" && test -z "${ASSERT_FALSE}"; then

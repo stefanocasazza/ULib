@@ -588,7 +588,7 @@ void u_init_ulib(char** restrict argv)
    u_init_ulib_mingw();
 #endif
 
-#if !defined(__MINGW32__) && defined(HAVE_ARCH64)
+#if !defined(__MINGW32__) && defined(HAVE_ARCH64) && defined(U_APEX_ENABLE)
    apex_memmove_dispatcher();
 #endif
 

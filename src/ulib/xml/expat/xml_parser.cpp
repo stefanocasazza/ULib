@@ -19,17 +19,17 @@ void UXMLParser::initParser(bool ns, const char* encoding)
 
    if (m_parser) XML_ParserFree(m_parser);
 
-   /*
-   Constructs a new parser that has namespace processing in effect.
-   If encoding is non-null, it specifies a character encoding to use for the document.
-   This overrides the document encoding declaration. There are four built-in encodings:
-   US-ASCII
-   UTF-8
-   UTF-16
-   ISO-8859-1
-   Namespace expanded element names and attribute names are returned as a concatenation of the namespace URI, sep,
-   and the local part of the name. This means that you should pick a character for sep that can't be part of a legal URI.
-   */
+   /**
+    * Constructs a new parser that has namespace processing in effect.
+    * If encoding is non-null, it specifies a character encoding to use for the document.
+    * This overrides the document encoding declaration. There are four built-in encodings:
+    *   US-ASCII
+    *   UTF-8
+    *   UTF-16
+    *   ISO-8859-1
+    * Namespace expanded element names and attribute names are returned as a concatenation of the namespace URI, sep,
+    * and the local part of the name. This means that you should pick a character for sep that can't be part of a legal URI
+    */
 
    m_parser = (ns ? XML_ParserCreateNS(encoding, '#')
                   : XML_ParserCreate(encoding));

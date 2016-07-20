@@ -102,7 +102,11 @@ You can contact the author at :
 #  endif /* __STDC_VERSION__ */
 #endif
 
-#include <ulib/base/apex/apex_memmove.h>
+#ifdef U_APEX_ENABLE
+#  include <ulib/base/apex/apex_memmove.h>
+#else
+#  define apex_memcpy( dest,src,n) memcpy((dest),(src),(n))
+#endif
 
 /* *************************************
 *  Includes & Memory related functions

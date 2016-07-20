@@ -51,7 +51,7 @@ UString UDES3::getSignedData(const char* ptr, uint32_t len)
       {
       decode(buffer, output);
 
-      (void) output.shrink();
+      if (output) (void) output.shrink();
       }
 
    U_RETURN_STRING(output);

@@ -29,8 +29,15 @@
 #ifndef U_ALL_C
 #  include <ulib/internal/config.h>
 #endif
+
 #include <ulib/base/miniz/miniz.h>
-#include <ulib/base/apex/apex_memmove.h>
+
+#ifdef U_APEX_ENABLE
+#  include <ulib/base/apex/apex_memmove.h>
+#else
+#  define apex_memcpy( dest,src,n) (void) memcpy( (dest),(src),(n))
+#  define apex_memmove(dest,src,n) (void) memmove((dest),(src),(n))
+#endif
 
 typedef unsigned char mz_validate_uint16[sizeof(mz_uint16) == 2 ? 1 : -1];
 typedef unsigned char mz_validate_uint32[sizeof(mz_uint32) == 4 ? 1 : -1];

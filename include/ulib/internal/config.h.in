@@ -787,6 +787,9 @@
 /* enable alias URI support */
 #undef U_ALIAS
 
+/* use apex_memmove written by Trevor Herselman in 2014 */
+#undef U_APEX_ENABLE
+
 /* disable cache request support */
 #undef U_CACHE_REQUEST_DISABLE
 

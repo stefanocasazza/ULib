@@ -1441,6 +1441,9 @@ public:
    char         at(uint32_t pos) const { return rep->at(pos); }
    char operator[](uint32_t pos) const { return rep->operator[](pos); }
 
+// operator const char *() const { return rep->data(); }
+// operator       char *()       { return rep->data(); }
+
    char* _begin()
       {
       U_TRACE_NO_PARAM(0, "UString::_begin()")

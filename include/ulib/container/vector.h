@@ -120,11 +120,9 @@ public:
 
    // ELEMENT ACCESS
 
-   const void* begin()  { return *vec; }
-   const void* end()    { return *(vec + _length); }
    const void* rbegin() { return *(vec + _length - 1); }
    const void* rend()   { return *(vec + 1); }
-   const void* front()  { return begin(); }
+   const void* front()  { return *vec; }
    const void* back()   { return rbegin(); }
 
    const void*& at(uint32_t pos) __pure
@@ -205,7 +203,11 @@ public:
       U_INTERNAL_ASSERT_MINOR(pos, _length)
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
+#  ifdef U_APEX_ENABLE
       if (--_length) (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + pos, vec + pos + 1, (_length - pos) * sizeof(void*));
+#  else
+      if (--_length) (void) U_SYSCALL(     memmove, "%p,%p,%u", vec + pos, vec + pos + 1, (_length - pos) * sizeof(void*));
+#  endif
       }
 
    void erase(uint32_t first, uint32_t _last) // erase [first,last[
@@ -221,7 +223,11 @@ public:
 
       uint32_t new_length = (_length - (_last - first));
 
+#  ifdef U_APEX_ENABLE
       if (new_length) (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + first, vec + _last, (_length - _last) * sizeof(void*));
+#  else
+      if (new_length) (void) U_SYSCALL(     memmove, "%p,%p,%u", vec + first, vec + _last, (_length - _last) * sizeof(void*));
+#  endif
 
       _length = new_length;
       }
@@ -435,8 +441,6 @@ public:
 
    // ELEMENT ACCESS
 
-   T* begin()  { return (T*) UVector<void*>::begin(); }
-   T* end()    { return (T*) UVector<void*>::end(); }
    T* rbegin() { return (T*) UVector<void*>::rbegin(); }
    T* rend()   { return (T*) UVector<void*>::rend(); }
    T* front()  { return (T*) UVector<void*>::front(); }
@@ -914,6 +918,34 @@ private:
 #endif
 };
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+class UVectorStringIter { // this class is to make work Range-based for loop: for ( UString x : UVector<UString> ) loop_statement      
+public:
+   UVectorStringIter(const UVector<UString>* p_vec, uint32_t pos) : _pos(pos), _p_vec(p_vec) {}
+
+   // these three methods form the basis of an iterator for use with a range-based for loop
+   bool operator!=(const UVectorStringIter& other) const { return (_pos != other._pos); }
+
+   // this method must be defined after the definition of UVector<UString> since it needs to use it
+   inline UString operator*() const;
+
+   const UVectorStringIter& operator++()
+      {
+      ++_pos;
+
+      // although not strictly necessary for a range-based for loop
+      // following the normal convention of returning a value from
+      // operator++ is a good idea
+
+      return *this;
+      }
+
+private:
+   uint32_t _pos;
+   const UVector<UString>* _p_vec;
+};
+#endif
+
 template <> class U_EXPORT UVector<UString> : public UVector<UStringRep*> {
 public:
 
@@ -939,10 +971,22 @@ public:
       U_ASSERT(check_memory())
       }
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+# ifdef U_COMPILER_RANGE_FOR
+   explicit UVector<UString>(std::initializer_list<UString>& l) : UVector<UStringRep*>(l.size())
+      {
+      U_TRACE(0, "UVector<UString>::UVector<UString>(%p)", &l)
+
+      for (UString item : l) push_back(item);
+      }
+# endif
+
+    UVectorStringIter begin() const { return UVectorStringIter(this, 0); }
+    UVectorStringIter   end() const { return UVectorStringIter(this, _length); }
+#endif
+
    // ELEMENT ACCESS
 
-   UString begin()  { return UString(UVector<UStringRep*>::begin()); }
-   UString end()    { return UString(UVector<UStringRep*>::end()); }
    UString rbegin() { return UString(UVector<UStringRep*>::rbegin()); }
    UString rend()   { return UString(UVector<UStringRep*>::rend()); }
    UString front()  { return UString(UVector<UStringRep*>::front()); }
@@ -1223,4 +1267,7 @@ private:
    friend class UNoCatPlugIn;
 };
 
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+inline UString UVectorStringIter::operator* () const { return _p_vec->at(_pos); }
+#endif
 #endif

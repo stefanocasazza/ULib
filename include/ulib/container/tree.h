@@ -247,8 +247,6 @@ public:
    UVector<T*>* vector() const                      { return (UVector<T*>*)this; }
    UTree<T*>*   childAt(uint32_t pos) const  __pure { return (UTree<T*>*)((UVector<void*>*)this)->at(pos); }
 
-   T* begin()  { return ((UTree<T*>*)UVector<void*>::begin())->elem(); }
-   T* end()    { return ((UTree<T*>*)UVector<void*>::end())->elem(); }
    T* rbegin() { return ((UTree<T*>*)UVector<void*>::rbegin())->elem(); }
    T* rend()   { return ((UTree<T*>*)UVector<void*>::rend())->elem(); }
    T* front()  { return ((UTree<T*>*)UVector<void*>::front())->elem(); }
@@ -416,8 +414,6 @@ public:
    UVector<UString>* vector() const                       { return (UVector<UString>*)this; }
    UTree<UString>*   childAt(uint32_t pos) const   __pure { return (UTree<UString>*)((UVector<void*>*)this)->at(pos); }
 
-   UString begin()  { return ((UTree<UString>*)UVector<void*>::begin())->elem(); }
-   UString end()    { return ((UTree<UString>*)UVector<void*>::end())->elem(); }
    UString rbegin() { return ((UTree<UString>*)UVector<void*>::rbegin())->elem(); }
    UString rend()   { return ((UTree<UString>*)UVector<void*>::rend())->elem(); }
    UString front()  { return ((UTree<UString>*)UVector<void*>::front())->elem(); }

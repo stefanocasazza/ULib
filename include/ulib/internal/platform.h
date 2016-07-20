@@ -133,7 +133,6 @@
 #    if (__GNUC__ * 100 + __GNUC_MINOR__) >= 405
        /* C++11 features supported in GCC 4.5: */
 #      define U_COMPILER_DECLTYPE
-#      define U_COMPILER_RVALUE_REFS
 #      define U_COMPILER_STATIC_ASSERT
 #      define U_COMPILER_VARIADIC_MACROS
 #      define U_COMPILER_ATOMICS
@@ -153,6 +152,7 @@
        /* C++11 features supported in GCC 4.6: */
 #      define U_COMPILER_CONSTEXPR
 #      define U_COMPILER_NULLPTR
+#      define U_COMPILER_RVALUE_REFS
 #      define U_COMPILER_UNRESTRICTED_UNIONS
 #      define U_COMPILER_RANGE_FOR
 #    endif

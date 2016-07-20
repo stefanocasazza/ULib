@@ -64,15 +64,15 @@ U_NO_EXPORT void UOrmDriver::loadStaticLinkedModules(const char* name)
    UString x(name);
    UOrmDriver* _driver = 0;
 
-#  ifdef U_STATIC_ORM_DRIVER_SQLITE
+# ifdef U_STATIC_ORM_DRIVER_SQLITE
    if (x.equal(U_CONSTANT_TO_PARAM("sqlite"))) { U_NEW(UOrmDriverSqlite, _driver, UOrmDriverSqlite);  goto next; }
-#  endif
-#  ifdef U_STATIC_ORM_DRIVER_MYSQL
+# endif
+# ifdef U_STATIC_ORM_DRIVER_MYSQL
    if (x.equal(U_CONSTANT_TO_PARAM("mysql")))  { U_NEW(UOrmDriverMySql, _driver, UOrmDriverMySql); goto next; }
-#  endif
-#  ifdef U_STATIC_ORM_DRIVER_PGSQL
+# endif
+# ifdef U_STATIC_ORM_DRIVER_PGSQL
    if (x.equal(U_CONSTANT_TO_PARAM("pgsql")))  { U_NEW(UOrmDriverPgSql, _driver, UOrmDriverPgSql); goto next; }
-#  endif
+# endif
 next:
    if (_driver)
       {

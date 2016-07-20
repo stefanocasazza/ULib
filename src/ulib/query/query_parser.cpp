@@ -1,4 +1,4 @@
-// ============================================================================
+// =================================================================================
 //
 // = LIBRARY
 //    ULib - c++ library
@@ -9,7 +9,7 @@
 // = AUTHOR
 //    Stefano Casazza
 //
-// ============================================================================
+// =================================================================================
 
 #include <ulib/query/parser.h>
 
@@ -701,7 +701,7 @@ U_NO_EXPORT UQueryNode* UQueryNode::getRawDNF(UQueryNode* root)
  * 'negatives' set will contain "a" and "c". When the intersection between the two sets is not empty
  * and the only binary operator used in the tree is AND, the tree always evaluates to false (because
  * we have an expression of the form (a&!a)&(whatever)). If the only binary operator is OR, the tree
- * always evaluates to true.
+ * always evaluates to true
  */
 
 void UQueryNode::getTreeVariables(UVector<UString>* positives, UVector<UString>* negatives) const

@@ -17,7 +17,7 @@ pkgconfig_DATA = ULib.pc
 ## base/lzo/minilzo.c
 ## base/mkqsort.c base/rsort.c
 
-SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c base/miniz/miniz.c base/xxhash/xxhash.c base/apex/apex_memmove.c \
+SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c base/miniz/miniz.c base/xxhash/xxhash.c \
 		  base/coder/cbase64.c base/coder/cquoted_printable.c base/coder/curl_coder.c base/coder/cxml_coder.c base/coder/cescape.c base/coder/chexdump.c
 
 SRC_CPP = internal/common.cpp \
@@ -43,6 +43,10 @@ SRC_CPP = internal/common.cpp \
 			 query/query_parser.cpp  event/event_time.cpp \
 			 timeval.cpp timer.cpp notifier.cpp string.cpp file.cpp process.cpp file_config.cpp log.cpp \
 			 options.cpp application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp command.cpp
+
+if APEXMEM
+SRC_C += base/apex/apex_memmove.c
+endif
 
 if LIBTDB
 SRC_CPP += db/tdb.cpp

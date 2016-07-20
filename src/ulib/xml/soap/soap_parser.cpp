@@ -208,7 +208,7 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
 
       // Manage the names and URNs of any and all namespaces found when parsing the message.
       // If duplicate namespace names are used with different URNs, only the last one found
-      // will appear in the set of values.
+      // will appear in the set of values
 
 #  ifdef U_SOAP_NAMESPACE
       if (namespaceName.equal(U_CONSTANT_TO_PARAM("xmlns"))) XMLNStoURN.insert(accessorName, value);

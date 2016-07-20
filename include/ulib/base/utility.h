@@ -51,7 +51,9 @@ typedef uint32_t in_addr_t;
 #  include <sys/sched.h>
 #endif
 
-#include <ulib/base/apex/apex_memmove.h>
+#ifdef U_APEX_ENABLE
+#  include <ulib/base/apex/apex_memmove.h>
+#endif
 
 #ifndef HAVE_CPU_SET_T
 typedef uint64_t cpu_set_t;
@@ -168,8 +170,14 @@ U_EXPORT char*  u__strncpy(     char* restrict dest, const char* restrict src, s
 #else
 #  define u__strlen(s,func)                 strlen((s))
 #  define u__strcpy(dest,src)        (void) strcpy((dest),(src))
-#  define u__memcpy(dest,src,n,func) (void) apex_memcpy((dest),(src),(n))
 #  define u__strncpy(dest,src,n)            strncpy((dest),(src),(n))
+# ifdef U_APEX_ENABLE
+#  define u__memcpy(dest,src,n,func) (void) apex_memcpy((dest),(src),(n))
+# endif
+#endif
+#ifndef U_APEX_ENABLE
+#  define apex_memcpy( dest,src,n) memcpy( (dest),(src),(n))
+#  define apex_memmove(dest,src,n) memmove((dest),(src),(n))
 #endif
 
 U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a start        with   string b */

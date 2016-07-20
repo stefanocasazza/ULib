@@ -29,7 +29,7 @@
  * a random number and both sides store the session information, of the server can encrypt the session information with a
  * secret, local key and send that to the client. The former is called Session IDs and the latter is called Session Tickets.
  * But Session Tickets are transmitted over the wire and so the server's Session Ticket encryption key is capable of decrypting
- * past connections. Most servers will generate a random Session Ticket key at startup unless otherwise configured, but you should check.
+ * past connections. Most servers will generate a random Session Ticket key at startup unless otherwise configured, but you should check
  */
 
 SSL_SESSION* USSLSession::sess;

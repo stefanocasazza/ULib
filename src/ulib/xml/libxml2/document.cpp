@@ -24,7 +24,7 @@ void UXML2Document::init()
 
    binit = true;
 
-   /*
+   /**
     * build an XML tree from a file; we need to add default attributes
     * and resolve all character and entities references: required for c14n!
     */
@@ -33,9 +33,7 @@ void UXML2Document::init()
 
    U_SYSCALL_VOID(xmlSubstituteEntitiesDefault, "%d", 1);
 
-   /*
-    * Do not fetch DTD over network
-    */
+   /* Do not fetch DTD over network */
 
 // xmlExternalEntityLoader defaultEntityLoader = xmlNoNetExternalEntityLoader;
 

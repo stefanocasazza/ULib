@@ -134,7 +134,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
    // When this is done, no disk file is opened. Instead, a new database is created purely
    // in memory. The database ceases to exist as soon as the database connection is closed.
    // Every :memory: database is distinct from every other. So, opening two database connections
-   // each with the filename ":memory:" will create two independent in-memory databases.
+   // each with the filename ":memory:" will create two independent in-memory databases
    // -------------------------------------------------------------------------------------------
 
    const char* fullpath;
@@ -239,13 +239,14 @@ USqlStatement* UOrmDriverSqlite::handlerStatementCreation(const char* stmt, uint
 
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
-   /* If the nByte argument is less than zero, then zSql is read up to the first zero terminator.
+   /**
+    * If the nByte argument is less than zero, then zSql is read up to the first zero terminator.
     * If nByte is non-negative, then it is the maximum number of bytes read from Sql. When nByte
     * is non-negative, the Sql string ends at either the first '\000' or '\u0000' character or
     * the nByte-th byte, whichever comes first. If the caller knows that the supplied string is
     * nul-terminated, then there is a small performance advantage to be gained by passing an nByte
     * parameter that is equal to the number of bytes in the input string including the nul-terminator
-    * bytes as this saves SQLite from having to make a copy of the input string.
+    * bytes as this saves SQLite from having to make a copy of the input string
     */
 
    sqlite3_stmt* pHandle;
@@ -394,14 +395,15 @@ bool USqliteStatement::setBindParam(UOrmDriver* pdrv)
 
          case STRING_VALUE:
             {
-            /* the fourth argument is the number of bytes in the parameter. To be clear: the value is the number of bytes
+            /**
+             * The fourth argument is the number of bytes in the parameter. To be clear: the value is the number of bytes
              * in the value, not the number of characters. If the fourth parameter to sqlite3_bind_text() or sqlite3_bind_text16()
              * is negative, then the length of the string is the number of bytes up to the first zero terminator. If the fourth
              * parameter to sqlite3_bind_blob() is negative, then the behavior is undefined. If a non-negative fourth parameter is
              * provided to sqlite3_bind_text() or sqlite3_bind_text16() then that parameter must be the byte offset where the NUL
              * terminator would occur assuming the string were NUL terminated. If any NUL characters occur at byte offsets less than
              * the value of the fourth parameter then the resulting string value will contain embedded NULs. The result of expressions
-             * involving strings with embedded NULs is undefined.
+             * involving strings with embedded NULs is undefined
              */
 
             pdrv->errcode = (((UOrmDriverSqlite*)pdrv)->encoding_UTF16
@@ -531,10 +533,11 @@ retry:
       {
       if (UOrmDriver::errcode == SQLITE_BUSY) // (5) The database file is locked
          {
-         /* SQLITE_BUSY means that the database engine was unable to acquire the database locks it needs to do its job.
+         /**
+          * SQLITE_BUSY means that the database engine was unable to acquire the database locks it needs to do its job.
           * If the statement is a COMMIT or occurs outside of an explicit transaction, then you can retry the statement.
           * If the statement is not a COMMIT and occurs within an explicit transaction then you should rollback the
-          * transaction before continuing.
+          * transaction before continuing
           */
 
          struct timespec ts = { 0L, 10000000L }; // 10ms
@@ -607,7 +610,7 @@ unsigned long long UOrmDriverSqlite::affected(USqlStatement* pstmt)
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
    // NB: I've checked the source code of sqlite3, and I found the function of sqlite3_changes().
-   //     But the function is only useful when the database is changed (after insert, delete or update).
+   //     But the function is only useful when the database is changed (after insert, delete or update)
 
    if (pstmt &&
        pstmt->num_row_result != U_NOT_FOUND)

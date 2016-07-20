@@ -53,8 +53,6 @@ static void test_memmove_01()
    char c3 = array2[1];
    char c4 = str_lit1[1];
 
-// apex_memmove(array2, str_lit1, 0);
-
    U_ASSERT( array2[0] == c1 )
    U_ASSERT( str_lit1[0] == c2 )
 
@@ -1544,6 +1542,17 @@ U_EXPORT main (int argc, char* argv[])
    U_TRACE(5, "main(%d)", argc)
 
    UString buffer(U_CAPACITY), encoded(U_CAPACITY);
+
+   UString z1 = UStringExt::prepareForEnvironmentVar(U_STRING_FROM_CONSTANT("MasqueradeDevice=eth0 'AuthServiceAddr=http://wifi-aaa2.comune.fi.it' FullPrivateNetwork=172.16.0.0/12 'LocalNetwork=172.16.13.0/24 172.17.13.0/24' 'InternalDevice=br-lan br-wds' 'ExternalDevice=eth0 tun0 tun2'"));
+
+   bool ok = ( z1 == U_STRING_FROM_CONSTANT("MasqueradeDevice=eth0\n"
+                                            "'AuthServiceAddr=http://wifi-aaa2.comune.fi.it'\n"
+                                            "FullPrivateNetwork=172.16.0.0/12\n"
+                                            "'LocalNetwork=172.16.13.0/24 172.17.13.0/24'\n"
+                                            "'InternalDevice=br-lan br-wds'\n"
+                                            "'ExternalDevice=eth0 tun0 tun2'\n") );
+
+   U_INTERNAL_ASSERT( ok )
 
    buffer.setFromNumber64s(-34LL);
 

@@ -328,7 +328,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
       /**
        * The functions PQnparams and PQparamtype can be applied to the PGresult to obtain information about the parameters
        * of the prepared statement, and the functions PQnfields, PQfname, PQftype, etc provide information about the result
-       * columns (if any) of the statement.
+       * columns (if any) of the statement
        */
 
       U_INTERNAL_ASSERT_EQUALS(num_bind_param, (uint32_t)PQnparams(res))

@@ -91,7 +91,7 @@ read:
        * The buffer content is then transferred to the application program through SSL_read(). If you've
        * read only part of the decrypted data, there will still be pending input data on the SSL connection,
        * but it won't show up on the underlying file descriptor via select(). Your code needs to call
-       * SSL_pending() explicitly to see if there is any pending data to be read.
+       * SSL_pending() explicitly to see if there is any pending data to be read
        */
 
       U_DUMP("sk->pending() = %u", ((USSLSocket*)sk)->pending())
@@ -823,7 +823,7 @@ U_NO_EXPORT inline bool USocketExt::parseCommandResponse(char* buffer, int r, in
     *    123 The last line
     * The user-process then simply needs to search for the second occurrence of the same reply code, followed by
     * <SP> (Space), at the beginning of a line, and ignore all intermediary lines. If an intermediary line begins
-    * with a 3-digit number, the Server must pad the front to avoid confusion.
+    * with a 3-digit number, the Server must pad the front to avoid confusion
     */
 
    int complete = 2;

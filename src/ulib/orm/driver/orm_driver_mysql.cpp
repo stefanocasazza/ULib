@@ -523,7 +523,7 @@ void UOrmDriverMySql::execute(USqlStatement* pstmt)
    /**
     * mysql_stmt_execute() executes the prepared query associated with the statement handle.
     * The currently bound parameter marker values are sent to server during this call, and the
-    * server replaces the markers with this newly supplied data.
+    * server replaces the markers with this newly supplied data
     */
 
    if (((UMySqlStatement*)pstmt)->setBindParam(this))
@@ -558,7 +558,7 @@ void UOrmDriverMySql::execute(USqlStatement* pstmt)
        * If a fetched data value is a NULL value, the *is_null value of the corresponding MYSQL_BIND structure contains
        * TRUE (1). Otherwise, the data and its length are returned in the *buffer and *length elements based on the buffer
        * type specified by the application. Each numeric and temporal type has a fixed length. The length of the string types
-       * depends on the length of the actual data value, as indicated by data_length.
+       * depends on the length of the actual data value, as indicated by data_length
        */
 
       UOrmDriver::errcode = U_SYSCALL(mysql_stmt_fetch, "%p", (MYSQL_STMT*)pstmt->pHandle);
@@ -566,7 +566,7 @@ void UOrmDriverMySql::execute(USqlStatement* pstmt)
       /**
        * (CR_COMMANDS_OUT_OF_SYNC - Commands were executed in an improper order) can happen, for example,
        * if you are using mysql_use_result() and try to execute a new query before you have called mysql_free_result().
-       * It can also happen if you try to execute two queries that return data without calling mysql_use_result() or mysql_store_result() in between.
+       * It can also happen if you try to execute two queries that return data without calling mysql_use_result() or mysql_store_result() in between
        */
 
       if (UOrmDriver::errcode &&
@@ -648,7 +648,7 @@ unsigned long long UOrmDriverMySql::last_insert_rowid(USqlStatement* pstmt, cons
    U_INTERNAL_ASSERT_POINTER(UOrmDriver::connection)
 
    // Returns the value generated for an AUTO_INCREMENT column by the prepared INSERT or UPDATE statement.
-   // Use this function after you have executed a prepared INSERT statement on a table which contains an AUTO_INCREMENT field. 
+   // Use this function after you have executed a prepared INSERT statement on a table which contains an AUTO_INCREMENT field 
 
    unsigned long long n = (pstmt ? U_SYSCALL(mysql_stmt_insert_id, "%p", (MYSQL_STMT*)pstmt->pHandle)
                                  : U_SYSCALL(mysql_insert_id,      "%p", (MYSQL*)UOrmDriver::connection));

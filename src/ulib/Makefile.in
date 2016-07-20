@@ -90,80 +90,81 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-@LIBTDB_TRUE@am__append_1 = db/tdb.cpp
-@MONGODB_TRUE@am__append_2 = net/client/mongodb.cpp
-@HTTP2_TRUE@am__append_3 = utility/http2.cpp
-@STDCPP_TRUE@am__append_4 = internal/objectIO.cpp 
-@PTHREAD_TRUE@am__append_5 = thread.cpp
-@DEBUG_TRUE@am__append_6 = base/base_trace.c
-@DEBUG_TRUE@am__append_7 = debug/trace.cpp debug/error_memory.cpp debug/error_simulation.cpp
-@DEBUG_TRUE@@STDCPP_TRUE@am__append_8 = debug/objectDB.cpp
-@GETOPT_LONG_FALSE@am__append_9 = replace/getopt_long.c
-@MREMAP_FALSE@am__append_10 = replace/mremap.c
-@NANOSLEEP_FALSE@am__append_11 = replace/nanosleep.c
-@SENDFILE_FALSE@am__append_12 = replace/sendfile.c
-@STRNDUP_FALSE@am__append_13 = replace/strndup.c
-@SEMAPHORE_FALSE@am__append_14 = replace/sem.c
-@SEMAPHORE_TRUE@@SEM_TIMEDWAIT_FALSE@am__append_15 = replace/sem_timedwait.c
-@STRPTIME_FALSE@am__append_16 = replace/strptime.c
-@MKDTEMP_FALSE@am__append_17 = replace/mkdtemp.c
-@MEMRCHR_FALSE@am__append_18 = replace/memrchr.c
-@GMTIME_R_FALSE@am__append_19 = replace/gmtime.c
-@TIMEGM_FALSE@am__append_20 = replace/timegm.c
-@FNMATCH_FALSE@am__append_21 = replace/fnmatch.c
-@FALLOCATE_FALSE@am__append_22 = replace/fallocate.c
-@FALLOCATE64_FALSE@am__append_23 = replace/fallocate64.c
-@PREAD_FALSE@am__append_24 = replace/pread.c
-@ASSERT_FALSE@am__append_25 = replace/assert.c
-@MEMORY_POOL_TRUE@am__append_26 = internal/memory_pool.cpp
-@SCHED_GETCPU_FALSE@am__append_27 = replace/sched_getcpu.c
-@ZIP_TRUE@am__append_28 = base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c base/zip/ziptool.c
-@ZIP_TRUE@am__append_29 = zip/zip.cpp
-@LIBZ_TRUE@am__append_30 = base/coder/cgzio.c
-@USE_PARSER_TRUE@am__append_31 = flex/flexer.cpp flex/bison.cpp
-@PCRE_TRUE@am__append_32 = pcre/pcre.cpp
-@SSL_TRUE@am__append_33 = base/ssl/cdes3.c base/ssl/dgst.c
-@SSL_TRUE@am__append_34 = ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp net/client/twilio.cpp \
+@APEXMEM_TRUE@am__append_1 = base/apex/apex_memmove.c
+@LIBTDB_TRUE@am__append_2 = db/tdb.cpp
+@MONGODB_TRUE@am__append_3 = net/client/mongodb.cpp
+@HTTP2_TRUE@am__append_4 = utility/http2.cpp
+@STDCPP_TRUE@am__append_5 = internal/objectIO.cpp 
+@PTHREAD_TRUE@am__append_6 = thread.cpp
+@DEBUG_TRUE@am__append_7 = base/base_trace.c
+@DEBUG_TRUE@am__append_8 = debug/trace.cpp debug/error_memory.cpp debug/error_simulation.cpp
+@DEBUG_TRUE@@STDCPP_TRUE@am__append_9 = debug/objectDB.cpp
+@GETOPT_LONG_FALSE@am__append_10 = replace/getopt_long.c
+@MREMAP_FALSE@am__append_11 = replace/mremap.c
+@NANOSLEEP_FALSE@am__append_12 = replace/nanosleep.c
+@SENDFILE_FALSE@am__append_13 = replace/sendfile.c
+@STRNDUP_FALSE@am__append_14 = replace/strndup.c
+@SEMAPHORE_FALSE@am__append_15 = replace/sem.c
+@SEMAPHORE_TRUE@@SEM_TIMEDWAIT_FALSE@am__append_16 = replace/sem_timedwait.c
+@STRPTIME_FALSE@am__append_17 = replace/strptime.c
+@MKDTEMP_FALSE@am__append_18 = replace/mkdtemp.c
+@MEMRCHR_FALSE@am__append_19 = replace/memrchr.c
+@GMTIME_R_FALSE@am__append_20 = replace/gmtime.c
+@TIMEGM_FALSE@am__append_21 = replace/timegm.c
+@FNMATCH_FALSE@am__append_22 = replace/fnmatch.c
+@FALLOCATE_FALSE@am__append_23 = replace/fallocate.c
+@FALLOCATE64_FALSE@am__append_24 = replace/fallocate64.c
+@PREAD_FALSE@am__append_25 = replace/pread.c
+@ASSERT_FALSE@am__append_26 = replace/assert.c
+@MEMORY_POOL_TRUE@am__append_27 = internal/memory_pool.cpp
+@SCHED_GETCPU_FALSE@am__append_28 = replace/sched_getcpu.c
+@ZIP_TRUE@am__append_29 = base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c base/zip/ziptool.c
+@ZIP_TRUE@am__append_30 = zip/zip.cpp
+@LIBZ_TRUE@am__append_31 = base/coder/cgzio.c
+@USE_PARSER_TRUE@am__append_32 = flex/flexer.cpp flex/bison.cpp
+@PCRE_TRUE@am__append_33 = pcre/pcre.cpp
+@SSL_TRUE@am__append_34 = base/ssl/cdes3.c base/ssl/dgst.c
+@SSL_TRUE@am__append_35 = ssl/certificate.cpp ssl/pkcs7.cpp ssl/crl.cpp ssl/pkcs10.cpp net/client/twilio.cpp \
 @SSL_TRUE@		     ssl/mime/mime_pkcs7.cpp ssl/net/sslsocket.cpp ssl/net/ssl_session.cpp utility/des3.cpp
 
-@SSL_TRUE@@SSL_TS_TRUE@am__append_35 = ssl/timestamp.cpp
-@SSH_TRUE@am__append_36 = ssh/net/sshsocket.cpp
-@LDAP_TRUE@am__append_37 = ldap/ldap.cpp
-@CURL_TRUE@am__append_38 = curl/curl.cpp
-@EXPAT_TRUE@am__append_39 = xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
+@SSL_TRUE@@SSL_TS_TRUE@am__append_36 = ssl/timestamp.cpp
+@SSH_TRUE@am__append_37 = ssh/net/sshsocket.cpp
+@LDAP_TRUE@am__append_38 = ldap/ldap.cpp
+@CURL_TRUE@am__append_39 = curl/curl.cpp
+@EXPAT_TRUE@am__append_40 = xml/expat/attribute.cpp xml/expat/element.cpp xml/expat/xml_parser.cpp xml/expat/xml2txt.cpp \
 @EXPAT_TRUE@		     xml/soap/soap_fault.cpp xml/soap/soap_gen_method.cpp xml/soap/soap_parser.cpp xml/soap/soap_encoder.cpp xml/soap/soap_client.cpp
 
-@LIBXML2_TRUE@am__append_40 = xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp
-@MAGIC_TRUE@am__append_41 = magic/magic.cpp
-@DBI_TRUE@am__append_42 = dbi/dbi.cpp
-@LIBEVENT_TRUE@am__append_43 = libevent/event.cpp
-@MINGW_TRUE@am__append_44 = base/win32/mingw32.c
-@MINGW_FALSE@am__append_45 = net/unixsocket.cpp
+@LIBXML2_TRUE@am__append_41 = xml/libxml2/node.cpp xml/libxml2/document.cpp xml/libxml2/schema.cpp
+@MAGIC_TRUE@am__append_42 = magic/magic.cpp
+@DBI_TRUE@am__append_43 = dbi/dbi.cpp
+@LIBEVENT_TRUE@am__append_44 = libevent/event.cpp
+@MINGW_TRUE@am__append_45 = base/win32/mingw32.c
+@MINGW_FALSE@am__append_46 = net/unixsocket.cpp
 
 # Handler static plugin
-@STATIC_HANDLER_RPC_TRUE@am__append_46 = net/server/plugin/mod_rpc.cpp
-@MOD_SHIB_TRUE@@STATIC_HANDLER_SHIB_TRUE@am__append_47 = net/server/plugin/mod_shib/mod_shib.cpp
-@STATIC_HANDLER_STREAM_TRUE@am__append_48 = net/server/plugin/mod_stream.cpp
-@STATIC_HANDLER_NOCAT_TRUE@am__append_49 = net/server/plugin/mod_nocat.cpp
-@STATIC_HANDLER_SOCKET_TRUE@am__append_50 = net/server/plugin/mod_socket.cpp
-@STATIC_HANDLER_SCGI_TRUE@am__append_51 = net/server/plugin/mod_scgi.cpp
-@STATIC_HANDLER_FCGI_TRUE@am__append_52 = net/server/plugin/mod_fcgi.cpp
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__append_53 = net/server/plugin/mod_geoip/mod_geoip.cpp
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__append_54 = net/server/plugin/mod_proxy.cpp
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__append_55 = net/server/plugin/mod_soap.cpp
-@STATIC_HANDLER_SSI_TRUE@am__append_56 = net/server/plugin/mod_ssi.cpp
-@STATIC_HANDLER_TSA_TRUE@am__append_57 = net/server/plugin/mod_tsa.cpp
-@STATIC_HANDLER_HTTP_TRUE@am__append_58 = net/server/plugin/mod_http.cpp
-@STATIC_HANDLER_ECHO_TRUE@am__append_59 = net/server/plugin/mod_echo.cpp
-@STATIC_ORM_DRIVER_SQLITE_TRUE@am__append_60 = orm/driver/orm_driver_sqlite.cpp
-@STATIC_ORM_DRIVER_MYSQL_TRUE@am__append_61 = orm/driver/orm_driver_mysql.cpp
-@STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_62 = orm/driver/orm_driver_pgsql.cpp
+@STATIC_HANDLER_RPC_TRUE@am__append_47 = net/server/plugin/mod_rpc.cpp
+@MOD_SHIB_TRUE@@STATIC_HANDLER_SHIB_TRUE@am__append_48 = net/server/plugin/mod_shib/mod_shib.cpp
+@STATIC_HANDLER_STREAM_TRUE@am__append_49 = net/server/plugin/mod_stream.cpp
+@STATIC_HANDLER_NOCAT_TRUE@am__append_50 = net/server/plugin/mod_nocat.cpp
+@STATIC_HANDLER_SOCKET_TRUE@am__append_51 = net/server/plugin/mod_socket.cpp
+@STATIC_HANDLER_SCGI_TRUE@am__append_52 = net/server/plugin/mod_scgi.cpp
+@STATIC_HANDLER_FCGI_TRUE@am__append_53 = net/server/plugin/mod_fcgi.cpp
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__append_54 = net/server/plugin/mod_geoip/mod_geoip.cpp
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__append_55 = net/server/plugin/mod_proxy.cpp
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__append_56 = net/server/plugin/mod_soap.cpp
+@STATIC_HANDLER_SSI_TRUE@am__append_57 = net/server/plugin/mod_ssi.cpp
+@STATIC_HANDLER_TSA_TRUE@am__append_58 = net/server/plugin/mod_tsa.cpp
+@STATIC_HANDLER_HTTP_TRUE@am__append_59 = net/server/plugin/mod_http.cpp
+@STATIC_HANDLER_ECHO_TRUE@am__append_60 = net/server/plugin/mod_echo.cpp
+@STATIC_ORM_DRIVER_SQLITE_TRUE@am__append_61 = orm/driver/orm_driver_sqlite.cpp
+@STATIC_ORM_DRIVER_MYSQL_TRUE@am__append_62 = orm/driver/orm_driver_mysql.cpp
+@STATIC_ORM_DRIVER_PGSQL_TRUE@am__append_63 = orm/driver/orm_driver_pgsql.cpp
 
 # Handler static http servlet
-@STATIC_ONLY_TRUE@@STATIC_SERVLET_TRUE@am__append_63 = net/server/plugin/usp/loader.autoconf.inc 
+@STATIC_ONLY_TRUE@@STATIC_SERVLET_TRUE@am__append_64 = net/server/plugin/usp/loader.autoconf.inc 
 
 # ---------- Win32 stuff ----------
-@MINGW_TRUE@am__append_64 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
+@MINGW_TRUE@am__append_65 = -export-symbols $(srcdir)/@ULIB@.def -no-undefined -Wl,ULib-win32-res.o
 subdir = src/ulib
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -219,24 +220,24 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 lib@ULIB@_la_LIBADD =
 am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	base/hash.c base/utility.c base/miniz/miniz.c \
-	base/xxhash/xxhash.c base/apex/apex_memmove.c \
-	base/coder/cbase64.c base/coder/cquoted_printable.c \
-	base/coder/curl_coder.c base/coder/cxml_coder.c \
-	base/coder/cescape.c base/coder/chexdump.c base/base_trace.c \
-	replace/getopt_long.c replace/mremap.c replace/nanosleep.c \
-	replace/sendfile.c replace/strndup.c replace/sem.c \
-	replace/sem_timedwait.c replace/strptime.c replace/mkdtemp.c \
-	replace/memrchr.c replace/gmtime.c replace/timegm.c \
-	replace/fnmatch.c replace/fallocate.c replace/fallocate64.c \
-	replace/pread.c replace/assert.c replace/sched_getcpu.c \
-	base/zip/inflate.c base/zip/dostime.c base/zip/pushback.c \
-	base/zip/ziptool.c base/coder/cgzio.c base/ssl/cdes3.c \
-	base/ssl/dgst.c base/win32/mingw32.c internal/common.cpp \
-	ui/dialog.cpp db/cdb.cpp db/rdb.cpp debug/debug_common.cpp \
-	debug/error.cpp dynamic/dynamic.cpp dynamic/plugin.cpp \
-	mime/header.cpp mime/entity.cpp mime/multipart.cpp \
-	container/vector.cpp container/hash_map.cpp container/tree.cpp \
-	utility/interrupt.cpp utility/services.cpp \
+	base/xxhash/xxhash.c base/coder/cbase64.c \
+	base/coder/cquoted_printable.c base/coder/curl_coder.c \
+	base/coder/cxml_coder.c base/coder/cescape.c \
+	base/coder/chexdump.c base/apex/apex_memmove.c \
+	base/base_trace.c replace/getopt_long.c replace/mremap.c \
+	replace/nanosleep.c replace/sendfile.c replace/strndup.c \
+	replace/sem.c replace/sem_timedwait.c replace/strptime.c \
+	replace/mkdtemp.c replace/memrchr.c replace/gmtime.c \
+	replace/timegm.c replace/fnmatch.c replace/fallocate.c \
+	replace/fallocate64.c replace/pread.c replace/assert.c \
+	replace/sched_getcpu.c base/zip/inflate.c base/zip/dostime.c \
+	base/zip/pushback.c base/zip/ziptool.c base/coder/cgzio.c \
+	base/ssl/cdes3.c base/ssl/dgst.c base/win32/mingw32.c \
+	internal/common.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
+	debug/debug_common.cpp debug/error.cpp dynamic/dynamic.cpp \
+	dynamic/plugin.cpp mime/header.cpp mime/entity.cpp \
+	mime/multipart.cpp container/vector.cpp container/hash_map.cpp \
+	container/tree.cpp utility/interrupt.cpp utility/services.cpp \
 	utility/semaphore.cpp utility/base64.cpp utility/lock.cpp \
 	utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp utility/data_session.cpp \
@@ -290,107 +291,108 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	orm/driver/orm_driver_pgsql.cpp \
 	net/server/plugin/usp/loader.autoconf.inc all_c.c all_cpp.cpp
 am__dirstamp = $(am__leading_dot)dirstamp
-@DEBUG_TRUE@am__objects_1 = base/base_trace.lo
-@GETOPT_LONG_FALSE@am__objects_2 = replace/getopt_long.lo
-@MREMAP_FALSE@am__objects_3 = replace/mremap.lo
-@NANOSLEEP_FALSE@am__objects_4 = replace/nanosleep.lo
-@SENDFILE_FALSE@am__objects_5 = replace/sendfile.lo
-@STRNDUP_FALSE@am__objects_6 = replace/strndup.lo
-@SEMAPHORE_FALSE@am__objects_7 = replace/sem.lo
-@SEMAPHORE_TRUE@@SEM_TIMEDWAIT_FALSE@am__objects_8 =  \
+@APEXMEM_TRUE@am__objects_1 = base/apex/apex_memmove.lo
+@DEBUG_TRUE@am__objects_2 = base/base_trace.lo
+@GETOPT_LONG_FALSE@am__objects_3 = replace/getopt_long.lo
+@MREMAP_FALSE@am__objects_4 = replace/mremap.lo
+@NANOSLEEP_FALSE@am__objects_5 = replace/nanosleep.lo
+@SENDFILE_FALSE@am__objects_6 = replace/sendfile.lo
+@STRNDUP_FALSE@am__objects_7 = replace/strndup.lo
+@SEMAPHORE_FALSE@am__objects_8 = replace/sem.lo
+@SEMAPHORE_TRUE@@SEM_TIMEDWAIT_FALSE@am__objects_9 =  \
 @SEMAPHORE_TRUE@@SEM_TIMEDWAIT_FALSE@	replace/sem_timedwait.lo
-@STRPTIME_FALSE@am__objects_9 = replace/strptime.lo
-@MKDTEMP_FALSE@am__objects_10 = replace/mkdtemp.lo
-@MEMRCHR_FALSE@am__objects_11 = replace/memrchr.lo
-@GMTIME_R_FALSE@am__objects_12 = replace/gmtime.lo
-@TIMEGM_FALSE@am__objects_13 = replace/timegm.lo
-@FNMATCH_FALSE@am__objects_14 = replace/fnmatch.lo
-@FALLOCATE_FALSE@am__objects_15 = replace/fallocate.lo
-@FALLOCATE64_FALSE@am__objects_16 = replace/fallocate64.lo
-@PREAD_FALSE@am__objects_17 = replace/pread.lo
-@ASSERT_FALSE@am__objects_18 = replace/assert.lo
-@SCHED_GETCPU_FALSE@am__objects_19 = replace/sched_getcpu.lo
-@ZIP_TRUE@am__objects_20 = base/zip/inflate.lo base/zip/dostime.lo \
+@STRPTIME_FALSE@am__objects_10 = replace/strptime.lo
+@MKDTEMP_FALSE@am__objects_11 = replace/mkdtemp.lo
+@MEMRCHR_FALSE@am__objects_12 = replace/memrchr.lo
+@GMTIME_R_FALSE@am__objects_13 = replace/gmtime.lo
+@TIMEGM_FALSE@am__objects_14 = replace/timegm.lo
+@FNMATCH_FALSE@am__objects_15 = replace/fnmatch.lo
+@FALLOCATE_FALSE@am__objects_16 = replace/fallocate.lo
+@FALLOCATE64_FALSE@am__objects_17 = replace/fallocate64.lo
+@PREAD_FALSE@am__objects_18 = replace/pread.lo
+@ASSERT_FALSE@am__objects_19 = replace/assert.lo
+@SCHED_GETCPU_FALSE@am__objects_20 = replace/sched_getcpu.lo
+@ZIP_TRUE@am__objects_21 = base/zip/inflate.lo base/zip/dostime.lo \
 @ZIP_TRUE@	base/zip/pushback.lo base/zip/ziptool.lo
-@LIBZ_TRUE@am__objects_21 = base/coder/cgzio.lo
-@SSL_TRUE@am__objects_22 = base/ssl/cdes3.lo base/ssl/dgst.lo
-@MINGW_TRUE@am__objects_23 = base/win32/mingw32.lo
-am__objects_24 = base/base.lo base/base_error.lo base/hash.lo \
+@LIBZ_TRUE@am__objects_22 = base/coder/cgzio.lo
+@SSL_TRUE@am__objects_23 = base/ssl/cdes3.lo base/ssl/dgst.lo
+@MINGW_TRUE@am__objects_24 = base/win32/mingw32.lo
+am__objects_25 = base/base.lo base/base_error.lo base/hash.lo \
 	base/utility.lo base/miniz/miniz.lo base/xxhash/xxhash.lo \
-	base/apex/apex_memmove.lo base/coder/cbase64.lo \
-	base/coder/cquoted_printable.lo base/coder/curl_coder.lo \
-	base/coder/cxml_coder.lo base/coder/cescape.lo \
-	base/coder/chexdump.lo $(am__objects_1) $(am__objects_2) \
-	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) $(am__objects_7) $(am__objects_8) \
-	$(am__objects_9) $(am__objects_10) $(am__objects_11) \
-	$(am__objects_12) $(am__objects_13) $(am__objects_14) \
-	$(am__objects_15) $(am__objects_16) $(am__objects_17) \
-	$(am__objects_18) $(am__objects_19) $(am__objects_20) \
-	$(am__objects_21) $(am__objects_22) $(am__objects_23)
-@LIBTDB_TRUE@am__objects_25 = db/tdb.lo
-@MONGODB_TRUE@am__objects_26 = net/client/mongodb.lo
-@HTTP2_TRUE@am__objects_27 = utility/http2.lo
-@STDCPP_TRUE@am__objects_28 = internal/objectIO.lo
-@PTHREAD_TRUE@am__objects_29 = thread.lo
-@DEBUG_TRUE@am__objects_30 = debug/trace.lo debug/error_memory.lo \
+	base/coder/cbase64.lo base/coder/cquoted_printable.lo \
+	base/coder/curl_coder.lo base/coder/cxml_coder.lo \
+	base/coder/cescape.lo base/coder/chexdump.lo $(am__objects_1) \
+	$(am__objects_2) $(am__objects_3) $(am__objects_4) \
+	$(am__objects_5) $(am__objects_6) $(am__objects_7) \
+	$(am__objects_8) $(am__objects_9) $(am__objects_10) \
+	$(am__objects_11) $(am__objects_12) $(am__objects_13) \
+	$(am__objects_14) $(am__objects_15) $(am__objects_16) \
+	$(am__objects_17) $(am__objects_18) $(am__objects_19) \
+	$(am__objects_20) $(am__objects_21) $(am__objects_22) \
+	$(am__objects_23) $(am__objects_24)
+@LIBTDB_TRUE@am__objects_26 = db/tdb.lo
+@MONGODB_TRUE@am__objects_27 = net/client/mongodb.lo
+@HTTP2_TRUE@am__objects_28 = utility/http2.lo
+@STDCPP_TRUE@am__objects_29 = internal/objectIO.lo
+@PTHREAD_TRUE@am__objects_30 = thread.lo
+@DEBUG_TRUE@am__objects_31 = debug/trace.lo debug/error_memory.lo \
 @DEBUG_TRUE@	debug/error_simulation.lo
-@DEBUG_TRUE@@STDCPP_TRUE@am__objects_31 = debug/objectDB.lo
-@MEMORY_POOL_TRUE@am__objects_32 = internal/memory_pool.lo
-@ZIP_TRUE@am__objects_33 = zip/zip.lo
-@USE_PARSER_TRUE@am__objects_34 = flex/flexer.lo flex/bison.lo
-@PCRE_TRUE@am__objects_35 = pcre/pcre.lo
-@SSL_TRUE@am__objects_36 = ssl/certificate.lo ssl/pkcs7.lo ssl/crl.lo \
+@DEBUG_TRUE@@STDCPP_TRUE@am__objects_32 = debug/objectDB.lo
+@MEMORY_POOL_TRUE@am__objects_33 = internal/memory_pool.lo
+@ZIP_TRUE@am__objects_34 = zip/zip.lo
+@USE_PARSER_TRUE@am__objects_35 = flex/flexer.lo flex/bison.lo
+@PCRE_TRUE@am__objects_36 = pcre/pcre.lo
+@SSL_TRUE@am__objects_37 = ssl/certificate.lo ssl/pkcs7.lo ssl/crl.lo \
 @SSL_TRUE@	ssl/pkcs10.lo net/client/twilio.lo \
 @SSL_TRUE@	ssl/mime/mime_pkcs7.lo ssl/net/sslsocket.lo \
 @SSL_TRUE@	ssl/net/ssl_session.lo utility/des3.lo
-@SSL_TRUE@@SSL_TS_TRUE@am__objects_37 = ssl/timestamp.lo
-@SSH_TRUE@am__objects_38 = ssh/net/sshsocket.lo
-@LDAP_TRUE@am__objects_39 = ldap/ldap.lo
-@CURL_TRUE@am__objects_40 = curl/curl.lo
-@EXPAT_TRUE@am__objects_41 = xml/expat/attribute.lo \
+@SSL_TRUE@@SSL_TS_TRUE@am__objects_38 = ssl/timestamp.lo
+@SSH_TRUE@am__objects_39 = ssh/net/sshsocket.lo
+@LDAP_TRUE@am__objects_40 = ldap/ldap.lo
+@CURL_TRUE@am__objects_41 = curl/curl.lo
+@EXPAT_TRUE@am__objects_42 = xml/expat/attribute.lo \
 @EXPAT_TRUE@	xml/expat/element.lo xml/expat/xml_parser.lo \
 @EXPAT_TRUE@	xml/expat/xml2txt.lo xml/soap/soap_fault.lo \
 @EXPAT_TRUE@	xml/soap/soap_gen_method.lo \
 @EXPAT_TRUE@	xml/soap/soap_parser.lo xml/soap/soap_encoder.lo \
 @EXPAT_TRUE@	xml/soap/soap_client.lo
-@LIBXML2_TRUE@am__objects_42 = xml/libxml2/node.lo \
+@LIBXML2_TRUE@am__objects_43 = xml/libxml2/node.lo \
 @LIBXML2_TRUE@	xml/libxml2/document.lo xml/libxml2/schema.lo
-@MAGIC_TRUE@am__objects_43 = magic/magic.lo
-@DBI_TRUE@am__objects_44 = dbi/dbi.lo
-@LIBEVENT_TRUE@am__objects_45 = libevent/event.lo
-@MINGW_FALSE@am__objects_46 = net/unixsocket.lo
-@STATIC_HANDLER_RPC_TRUE@am__objects_47 =  \
+@MAGIC_TRUE@am__objects_44 = magic/magic.lo
+@DBI_TRUE@am__objects_45 = dbi/dbi.lo
+@LIBEVENT_TRUE@am__objects_46 = libevent/event.lo
+@MINGW_FALSE@am__objects_47 = net/unixsocket.lo
+@STATIC_HANDLER_RPC_TRUE@am__objects_48 =  \
 @STATIC_HANDLER_RPC_TRUE@	net/server/plugin/mod_rpc.lo
-@MOD_SHIB_TRUE@@STATIC_HANDLER_SHIB_TRUE@am__objects_48 = net/server/plugin/mod_shib/mod_shib.lo
-@STATIC_HANDLER_STREAM_TRUE@am__objects_49 =  \
+@MOD_SHIB_TRUE@@STATIC_HANDLER_SHIB_TRUE@am__objects_49 = net/server/plugin/mod_shib/mod_shib.lo
+@STATIC_HANDLER_STREAM_TRUE@am__objects_50 =  \
 @STATIC_HANDLER_STREAM_TRUE@	net/server/plugin/mod_stream.lo
-@STATIC_HANDLER_NOCAT_TRUE@am__objects_50 =  \
+@STATIC_HANDLER_NOCAT_TRUE@am__objects_51 =  \
 @STATIC_HANDLER_NOCAT_TRUE@	net/server/plugin/mod_nocat.lo
-@STATIC_HANDLER_SOCKET_TRUE@am__objects_51 =  \
+@STATIC_HANDLER_SOCKET_TRUE@am__objects_52 =  \
 @STATIC_HANDLER_SOCKET_TRUE@	net/server/plugin/mod_socket.lo
-@STATIC_HANDLER_SCGI_TRUE@am__objects_52 =  \
+@STATIC_HANDLER_SCGI_TRUE@am__objects_53 =  \
 @STATIC_HANDLER_SCGI_TRUE@	net/server/plugin/mod_scgi.lo
-@STATIC_HANDLER_FCGI_TRUE@am__objects_53 =  \
+@STATIC_HANDLER_FCGI_TRUE@am__objects_54 =  \
 @STATIC_HANDLER_FCGI_TRUE@	net/server/plugin/mod_fcgi.lo
-@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__objects_54 = net/server/plugin/mod_geoip/mod_geoip.lo
-@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__objects_55 = net/server/plugin/mod_proxy.lo
-@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__objects_56 = net/server/plugin/mod_soap.lo
-@STATIC_HANDLER_SSI_TRUE@am__objects_57 =  \
+@GEOIP_TRUE@@STATIC_HANDLER_GEOIP_TRUE@am__objects_55 = net/server/plugin/mod_geoip/mod_geoip.lo
+@PCRE_TRUE@@STATIC_HANDLER_PROXY_TRUE@am__objects_56 = net/server/plugin/mod_proxy.lo
+@EXPAT_TRUE@@STATIC_HANDLER_SOAP_TRUE@am__objects_57 = net/server/plugin/mod_soap.lo
+@STATIC_HANDLER_SSI_TRUE@am__objects_58 =  \
 @STATIC_HANDLER_SSI_TRUE@	net/server/plugin/mod_ssi.lo
-@STATIC_HANDLER_TSA_TRUE@am__objects_58 =  \
+@STATIC_HANDLER_TSA_TRUE@am__objects_59 =  \
 @STATIC_HANDLER_TSA_TRUE@	net/server/plugin/mod_tsa.lo
-@STATIC_HANDLER_HTTP_TRUE@am__objects_59 =  \
+@STATIC_HANDLER_HTTP_TRUE@am__objects_60 =  \
 @STATIC_HANDLER_HTTP_TRUE@	net/server/plugin/mod_http.lo
-@STATIC_HANDLER_ECHO_TRUE@am__objects_60 =  \
+@STATIC_HANDLER_ECHO_TRUE@am__objects_61 =  \
 @STATIC_HANDLER_ECHO_TRUE@	net/server/plugin/mod_echo.lo
-@STATIC_ORM_DRIVER_SQLITE_TRUE@am__objects_61 = orm/driver/orm_driver_sqlite.lo
-@STATIC_ORM_DRIVER_MYSQL_TRUE@am__objects_62 =  \
+@STATIC_ORM_DRIVER_SQLITE_TRUE@am__objects_62 = orm/driver/orm_driver_sqlite.lo
+@STATIC_ORM_DRIVER_MYSQL_TRUE@am__objects_63 =  \
 @STATIC_ORM_DRIVER_MYSQL_TRUE@	orm/driver/orm_driver_mysql.lo
-@STATIC_ORM_DRIVER_PGSQL_TRUE@am__objects_63 =  \
+@STATIC_ORM_DRIVER_PGSQL_TRUE@am__objects_64 =  \
 @STATIC_ORM_DRIVER_PGSQL_TRUE@	orm/driver/orm_driver_pgsql.lo
-am__objects_64 =
-am__objects_65 = internal/common.lo ui/dialog.lo db/cdb.lo db/rdb.lo \
+am__objects_65 =
+am__objects_66 = internal/common.lo ui/dialog.lo db/cdb.lo db/rdb.lo \
 	debug/debug_common.lo debug/error.lo dynamic/dynamic.lo \
 	dynamic/plugin.lo mime/header.lo mime/entity.lo \
 	mime/multipart.lo container/vector.lo container/hash_map.lo \
@@ -414,22 +416,22 @@ am__objects_65 = internal/common.lo ui/dialog.lo db/cdb.lo db/rdb.lo \
 	query/query_parser.lo event/event_time.lo timeval.lo timer.lo \
 	notifier.lo string.lo file.lo process.lo file_config.lo log.lo \
 	options.lo application.lo cache.lo date.lo url.lo tokenizer.lo \
-	command.lo $(am__objects_25) $(am__objects_26) \
-	$(am__objects_27) $(am__objects_28) $(am__objects_29) \
-	$(am__objects_30) $(am__objects_31) $(am__objects_32) \
-	$(am__objects_33) $(am__objects_34) $(am__objects_35) \
-	$(am__objects_36) $(am__objects_37) $(am__objects_38) \
-	$(am__objects_39) $(am__objects_40) $(am__objects_41) \
-	$(am__objects_42) $(am__objects_43) $(am__objects_44) \
-	$(am__objects_45) $(am__objects_46) $(am__objects_47) \
-	$(am__objects_48) $(am__objects_49) $(am__objects_50) \
-	$(am__objects_51) $(am__objects_52) $(am__objects_53) \
-	$(am__objects_54) $(am__objects_55) $(am__objects_56) \
-	$(am__objects_57) $(am__objects_58) $(am__objects_59) \
-	$(am__objects_60) $(am__objects_61) $(am__objects_62) \
-	$(am__objects_63) $(am__objects_64)
-@FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_24) \
-@FINAL_FALSE@	$(am__objects_65)
+	command.lo $(am__objects_26) $(am__objects_27) \
+	$(am__objects_28) $(am__objects_29) $(am__objects_30) \
+	$(am__objects_31) $(am__objects_32) $(am__objects_33) \
+	$(am__objects_34) $(am__objects_35) $(am__objects_36) \
+	$(am__objects_37) $(am__objects_38) $(am__objects_39) \
+	$(am__objects_40) $(am__objects_41) $(am__objects_42) \
+	$(am__objects_43) $(am__objects_44) $(am__objects_45) \
+	$(am__objects_46) $(am__objects_47) $(am__objects_48) \
+	$(am__objects_49) $(am__objects_50) $(am__objects_51) \
+	$(am__objects_52) $(am__objects_53) $(am__objects_54) \
+	$(am__objects_55) $(am__objects_56) $(am__objects_57) \
+	$(am__objects_58) $(am__objects_59) $(am__objects_60) \
+	$(am__objects_61) $(am__objects_62) $(am__objects_63) \
+	$(am__objects_64) $(am__objects_65)
+@FINAL_FALSE@am_lib@ULIB@_la_OBJECTS = $(am__objects_25) \
+@FINAL_FALSE@	$(am__objects_66)
 @FINAL_TRUE@am_lib@ULIB@_la_OBJECTS = all_c.lo base/xxhash/xxhash.lo \
 @FINAL_TRUE@	all_cpp.lo
 lib@ULIB@_la_OBJECTS = $(am_lib@ULIB@_la_OBJECTS)
@@ -701,18 +703,18 @@ DEFAULT_INCLUDES = -I. -I$(top_builddir)/include
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = ULib.pc
 SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
-	base/miniz/miniz.c base/xxhash/xxhash.c \
-	base/apex/apex_memmove.c base/coder/cbase64.c \
+	base/miniz/miniz.c base/xxhash/xxhash.c base/coder/cbase64.c \
 	base/coder/cquoted_printable.c base/coder/curl_coder.c \
 	base/coder/cxml_coder.c base/coder/cescape.c \
-	base/coder/chexdump.c $(am__append_6) $(am__append_9) \
+	base/coder/chexdump.c $(am__append_1) $(am__append_7) \
 	$(am__append_10) $(am__append_11) $(am__append_12) \
 	$(am__append_13) $(am__append_14) $(am__append_15) \
 	$(am__append_16) $(am__append_17) $(am__append_18) \
 	$(am__append_19) $(am__append_20) $(am__append_21) \
 	$(am__append_22) $(am__append_23) $(am__append_24) \
-	$(am__append_25) $(am__append_27) $(am__append_28) \
-	$(am__append_30) $(am__append_33) $(am__append_44)
+	$(am__append_25) $(am__append_26) $(am__append_28) \
+	$(am__append_29) $(am__append_31) $(am__append_34) \
+	$(am__append_45)
 SRC_CPP = internal/common.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
 	debug/debug_common.cpp debug/error.cpp dynamic/dynamic.cpp \
 	dynamic/plugin.cpp mime/header.cpp mime/entity.cpp \
@@ -739,26 +741,26 @@ SRC_CPP = internal/common.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
 	event/event_time.cpp timeval.cpp timer.cpp notifier.cpp \
 	string.cpp file.cpp process.cpp file_config.cpp log.cpp \
 	options.cpp application.cpp cache.cpp date.cpp url.cpp \
-	tokenizer.cpp command.cpp $(am__append_1) $(am__append_2) \
-	$(am__append_3) $(am__append_4) $(am__append_5) \
-	$(am__append_7) $(am__append_8) $(am__append_26) \
-	$(am__append_29) $(am__append_31) $(am__append_32) \
-	$(am__append_34) $(am__append_35) $(am__append_36) \
-	$(am__append_37) $(am__append_38) $(am__append_39) \
-	$(am__append_40) $(am__append_41) $(am__append_42) \
-	$(am__append_43) $(am__append_45) $(am__append_46) \
-	$(am__append_47) $(am__append_48) $(am__append_49) \
-	$(am__append_50) $(am__append_51) $(am__append_52) \
-	$(am__append_53) $(am__append_54) $(am__append_55) \
-	$(am__append_56) $(am__append_57) $(am__append_58) \
-	$(am__append_59) $(am__append_60) $(am__append_61) \
-	$(am__append_62) $(am__append_63)
+	tokenizer.cpp command.cpp $(am__append_2) $(am__append_3) \
+	$(am__append_4) $(am__append_5) $(am__append_6) \
+	$(am__append_8) $(am__append_9) $(am__append_27) \
+	$(am__append_30) $(am__append_32) $(am__append_33) \
+	$(am__append_35) $(am__append_36) $(am__append_37) \
+	$(am__append_38) $(am__append_39) $(am__append_40) \
+	$(am__append_41) $(am__append_42) $(am__append_43) \
+	$(am__append_44) $(am__append_46) $(am__append_47) \
+	$(am__append_48) $(am__append_49) $(am__append_50) \
+	$(am__append_51) $(am__append_52) $(am__append_53) \
+	$(am__append_54) $(am__append_55) $(am__append_56) \
+	$(am__append_57) $(am__append_58) $(am__append_59) \
+	$(am__append_60) $(am__append_61) $(am__append_62) \
+	$(am__append_63) $(am__append_64)
 
 # Handler static orm driver
 
 #lib@ULIB@_la_CXXFLAGS =
 lib@ULIB@_la_LDFLAGS = @ULIB_LIBS@ -version-info 1:0:0 -release \
-	@ULIB_VERSION@ $(am__append_64)
+	@ULIB_VERSION@ $(am__append_65)
 @FINAL_FALSE@lib@ULIB@_la_SOURCES = $(SRC_C) $(SRC_CPP)
 @FINAL_TRUE@lib@ULIB@_la_SOURCES = all_c.c base/xxhash/xxhash.c all_cpp.cpp
 lib_LTLIBRARIES = lib@ULIB@.la
@@ -864,14 +866,6 @@ base/xxhash/$(DEPDIR)/$(am__dirstamp):
 	@: > base/xxhash/$(DEPDIR)/$(am__dirstamp)
 base/xxhash/xxhash.lo: base/xxhash/$(am__dirstamp) \
 	base/xxhash/$(DEPDIR)/$(am__dirstamp)
-base/apex/$(am__dirstamp):
-	@$(MKDIR_P) base/apex
-	@: > base/apex/$(am__dirstamp)
-base/apex/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) base/apex/$(DEPDIR)
-	@: > base/apex/$(DEPDIR)/$(am__dirstamp)
-base/apex/apex_memmove.lo: base/apex/$(am__dirstamp) \
-	base/apex/$(DEPDIR)/$(am__dirstamp)
 base/coder/$(am__dirstamp):
 	@$(MKDIR_P) base/coder
 	@: > base/coder/$(am__dirstamp)
@@ -890,6 +884,14 @@ base/coder/cescape.lo: base/coder/$(am__dirstamp) \
 	base/coder/$(DEPDIR)/$(am__dirstamp)
 base/coder/chexdump.lo: base/coder/$(am__dirstamp) \
 	base/coder/$(DEPDIR)/$(am__dirstamp)
+base/apex/$(am__dirstamp):
+	@$(MKDIR_P) base/apex
+	@: > base/apex/$(am__dirstamp)
+base/apex/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) base/apex/$(DEPDIR)
+	@: > base/apex/$(DEPDIR)/$(am__dirstamp)
+base/apex/apex_memmove.lo: base/apex/$(am__dirstamp) \
+	base/apex/$(DEPDIR)/$(am__dirstamp)
 base/base_trace.lo: base/$(am__dirstamp) \
 	base/$(DEPDIR)/$(am__dirstamp)
 replace/$(am__dirstamp):

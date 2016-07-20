@@ -120,7 +120,17 @@ public:
    static UString  dirname(const UString& s) { return  dirname(U_STRING_TO_PARAM(s)); }
    static UString basename(const UString& s) { return basename(U_STRING_TO_PARAM(s)); }
 
-   static uint32_t getBaseNameLen(const UString& s) __pure;
+   static uint32_t getBaseNameLen(const UString& s)
+      {
+      U_TRACE(0, "UStringExt::getBaseNameLen(%V)", s.rep)
+
+      uint32_t len = s.size(),
+               pos = s.rfind('/'); // Find last '/'
+
+      if (pos != U_NOT_FOUND) len -= pos + 1;
+
+      U_RETURN(len);
+      }
 
    // check if string s1 start with string s2
 
@@ -308,8 +318,8 @@ public:
    // ----------------------------------------------------------------------------------------
    static int compareversion(const char* a, uint32_t n1, const char* b, uint32_t n2) __pure;
 
-   static int compareversion(const UString& s, const UString& a) __pure;
-   static int compareversion(const UString& s, const char* a, uint32_t n) __pure { return compareversion(U_STRING_TO_PARAM(s), a, n); }
+   static int compareversion(const UString& s, const UString& a)          { return compareversion(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a)); }
+   static int compareversion(const UString& s, const char* a, uint32_t n) { return compareversion(U_STRING_TO_PARAM(s), a, n); }
 
    static int qscompver(const void* p, const void* q)
       {
@@ -320,7 +330,14 @@ public:
 
    // Verifies that the passed string is actually an e-mail address
 
-   static bool isEmailAddress(const UString& s) __pure;
+   static bool isEmailAddress(const UString& s)
+      {
+      U_TRACE(0, "UStringExt::isEmailAddress(%V)", s.rep)
+
+      if (u_validate_email_address(U_STRING_TO_PARAM(s))) U_RETURN(true);
+
+      U_RETURN(false);
+      }
 
    // Gived the name retrieve pointer on value elements from headers "name1:value1\nname2:value2\n"...
 

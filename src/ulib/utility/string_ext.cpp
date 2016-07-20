@@ -1197,18 +1197,6 @@ UString UStringExt::basename(const char* s, uint32_t n)
    U_RETURN_STRING(same);
 }
 
-__pure uint32_t UStringExt::getBaseNameLen(const UString& s)
-{
-   U_TRACE(0, "UStringExt::getBaseNameLen(%V)", s.rep)
-
-   uint32_t len = s.size(),
-            pos = s.rfind('/'); // Find last '/'
-
-   if (pos != U_NOT_FOUND) len -= pos + 1;
-
-   U_RETURN(len);
-}
-
 /**
  * Sort two version numbers, comparing equivalently seperated strings of digits numerically.
  *
@@ -1285,17 +1273,6 @@ __pure int UStringExt::compareversion(const char* a, uint32_t alen, const char* 
 
    /* the version with a suffix remaining is greater */
    U_RETURN(apos2 < alen ? 1 : -1);
-}
-
-__pure int UStringExt::compareversion(const UString& s, const UString& a) { return compareversion(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a)); }
-
-__pure bool UStringExt::isEmailAddress(const UString& s)
-{
-   U_TRACE(0, "UStringExt::isEmailAddress(%V)", s.rep)
-
-   if (u_validate_email_address(U_STRING_TO_PARAM(s))) U_RETURN(true);
-
-   U_RETURN(false);
 }
 
 UString UStringExt::compress(const char* s, uint32_t sz)
@@ -1774,7 +1751,7 @@ static inline bool unextendable(char c)
 }
 
 // return true for any character that must separated from other "extendable"
-// characters by whitespace on the _right_ in order keep tokens separate.
+// characters by whitespace on the _right_ in order keep tokens separate
 
 static inline bool isExtendableOnRight(char c)
 {
@@ -1788,7 +1765,7 @@ static inline bool isExtendableOnRight(char c)
 }
 
 // return true for any character that must separated from other "extendable"
-// characters by whitespace on the _left_ in order keep tokens separate.
+// characters by whitespace on the _left_ in order keep tokens separate
 
 static inline bool isExtendableOnLeft(char c)
 {

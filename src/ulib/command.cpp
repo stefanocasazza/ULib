@@ -43,7 +43,7 @@ void UCommand::freeCommand()
       {
       U_INTERNAL_ASSERT_MAJOR(ncmd, 0)
 
-      // NB: considera che u_splitCommand() parte da 1 e null terminator...
+      // NB: we need to consider that u_splitCommand() start by 1 and null terminator...
 
       UMemoryPool::_free(argv_exec, 1+ncmd+1 + U_ADD_ARGS, sizeof(char*));
 
@@ -114,13 +114,13 @@ void UCommand::setCommand()
 
       U_INTERNAL_DUMP("pathcmd = %S", pathcmd)
 
-      // NB: allocazione e copia lista argomenti
+      // NB: allocation and copy list arguments
 
       uint32_t n = 1+ncmd+1;
 
       argv_exec = (char**) UMemoryPool::_malloc(n + U_ADD_ARGS, sizeof(char*)); // U_ADD_ARGS => space for addArgument()...
 
-      U_MEMCPY(argv_exec, argv, n * sizeof(char*)); // NB: copia anche null terminator...
+      U_MEMCPY(argv_exec, argv, n * sizeof(char*)); // NB: copy also null terminator...
       }
    else
       {
@@ -142,13 +142,13 @@ int32_t UCommand::setEnvironment(const UString& env, char**& _envp)
 
    U_INTERNAL_ASSERT_RANGE(1, _nenv, U_MAX_ARGS)
 
-   // NB: allocazione e copia lista argomenti
+   // NB: allocation and copy list arguments
 
-   uint32_t n = _nenv + 1; // NB: considera anche null terminator...
+   uint32_t n = _nenv + 1; // NB: consider also null terminator...
 
-   _envp = (char**) UMemoryPool::_malloc(n, sizeof(char*)); // NB: considera anche null terminator...
+   _envp = (char**) UMemoryPool::_malloc(n, sizeof(char*)); // NB: consider also null terminator...
 
-   U_MEMCPY(_envp, argp, n * sizeof(char*)); // NB: copia anche null terminator...
+   U_MEMCPY(_envp, argp, n * sizeof(char*)); // NB: copy also null terminator...
 
    U_INTERNAL_DUMP("_envp = %p", _envp)
 
@@ -421,7 +421,7 @@ bool UCommand::setMsgError(const char* cmd, bool only_if_error)
 
    U_INTERNAL_DUMP("pid = %d exit_value = %d status = %d", pid, exit_value, status)
 
-   // NB: il carattere '<' e' riservato per xml...
+   // NB: '<' is reserved for xml...
 
    if (isStarted() == false)
       {

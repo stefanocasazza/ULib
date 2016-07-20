@@ -282,7 +282,7 @@ bool UDialog::inputbox(const char* text, UString& init, const char* title)
 // The --2inputsbox and the --3inputsbox widgets allow for two or three entry fields into the same box. A <label> is setup above each field
 // (see the --center, --left, --right and --fill common options to learn how the labels justification and alignement can be affected); as for
 // the <text> parameter, the <label>s may hold "\n" sequences IOT force text splitting into several lines. The <init> strings cannot be omitted
-// but may perfectly be NULL (empty) strings.
+// but may perfectly be NULL (empty) strings
 
 bool UDialog::inputsbox(int n, const char* text, const char* labels[], UVector<UString>& init, const char* title)
 {

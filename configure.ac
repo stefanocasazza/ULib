@@ -663,6 +663,23 @@ else
 	AC_DEFINE([HAVE_NO_UNALIGNED_ACCESSES], 1, [Define to 1 if the target don't allows unaligned reads and write])
 fi
 
+AC_MSG_CHECKING(for apex memcpy/memmove)
+AC_ARG_ENABLE(apexmem,   [  --enable-apexmem          use apex_memmove written by Trevor Herselman in 2014 [[default=yes]]])
+
+if test -z "$enable_apexmem"; then
+	enable_apexmem="yes"
+fi
+
+AM_CONDITIONAL(APEXMEM, false)
+
+if test "$enable_apexmem" = "yes"; then
+   AC_MSG_RESULT(yes)
+	AM_CONDITIONAL(APEXMEM, true)
+	AC_DEFINE(U_APEX_ENABLE, [1], [use apex_memmove written by Trevor Herselman in 2014])
+else
+   AC_MSG_RESULT(no)
+fi
+
 ULIB_LIBC="-lc"
 
 AC_ARG_WITH(libc,

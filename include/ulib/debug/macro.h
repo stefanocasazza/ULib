@@ -242,7 +242,11 @@ if (envp) \
 #  define U_SYSCALL(name,format,args...)      ::name(args)
 #  define U_SYSCALL_VOID(name,format,args...) ::name(args)
 
+# ifdef U_APEX_ENABLE
 #  define U_MEMCPY(a,b,n) (void) apex_memcpy((void*)(a),(const void*)(b),(n))
+# else
+#  define U_MEMCPY(a,b,n)      (void) memcpy((void*)(a),(const void*)(b),(n))
+# endif
 
 #  define U_RETURN(r)                return (r)
 #  define U_RETURN_STRING(r)         return (r)
