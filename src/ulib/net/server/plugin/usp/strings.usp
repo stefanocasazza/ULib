@@ -6,7 +6,7 @@ UVector<UString> strings;
 <!--#code
 uint32_t remove = U_NOT_FOUND;
 
-if (USP_FORM_VALUE_FROM_NAME("add").empty()) remove = USP_FORM_VALUE_FROM_NAME("remove").strtol();
+if (USP_FORM_VALUE_FROM_NAME("add").empty()) remove = USP_FORM_VALUE_FROM_NAME("remove").strtol(10);
 else                                strings.push_back(USP_FORM_VALUE_FROM_NAME("string"));
 
 if (remove < strings.size()) strings.erase(remove);

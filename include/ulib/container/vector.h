@@ -120,10 +120,8 @@ public:
 
    // ELEMENT ACCESS
 
-   const void* rbegin() { return *(vec + _length - 1); }
-   const void* rend()   { return *(vec + 1); }
-   const void* front()  { return *vec; }
-   const void* back()   { return rbegin(); }
+   const void* front() { return *vec; }
+   const void*  back() { return *(vec + _length - 1); }
 
    const void*& at(uint32_t pos) __pure
       {
@@ -441,10 +439,8 @@ public:
 
    // ELEMENT ACCESS
 
-   T* rbegin() { return (T*) UVector<void*>::rbegin(); }
-   T* rend()   { return (T*) UVector<void*>::rend(); }
-   T* front()  { return (T*) UVector<void*>::front(); }
-   T* back()   { return (T*) UVector<void*>::back(); }
+   T* back()  { return (T*) UVector<void*>::back(); }
+   T* front() { return (T*) UVector<void*>::front(); }
 
    T*& at(uint32_t pos)       __pure { return (T*&) UVector<void*>::at(pos); }
    T*  at(uint32_t pos) const __pure { return (T*)  UVector<void*>::at(pos); }
@@ -987,10 +983,8 @@ public:
 
    // ELEMENT ACCESS
 
-   UString rbegin() { return UString(UVector<UStringRep*>::rbegin()); }
-   UString rend()   { return UString(UVector<UStringRep*>::rend()); }
-   UString front()  { return UString(UVector<UStringRep*>::front()); }
-   UString back()   { return UString(UVector<UStringRep*>::back()); }
+   UString front() { return UString(UVector<UStringRep*>::front()); }
+   UString  back() { return UString(UVector<UStringRep*>::back()); }
 
    UString at(uint32_t pos) const __pure
       {

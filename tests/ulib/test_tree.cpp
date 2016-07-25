@@ -29,7 +29,7 @@ static void check(UTree<UString>& y)
    is >> y;
 
    U_ASSERT( y.front() == U_STRING_FROM_CONSTANT("ROOT_DN") )
-   U_ASSERT( y.rend()  == U_STRING_FROM_CONSTANT("PASSWORD") )
+   U_ASSERT( y[1]      == U_STRING_FROM_CONSTANT("PASSWORD") )
    U_ASSERT( y.back()  == U_STRING_FROM_CONSTANT("MAX_ERROR_FOR_CONNECT") )
 
    U_ASSERT( y[10] == U_STRING_FROM_CONSTANT("TIME_SLEEP_LDAP_ERROR") )

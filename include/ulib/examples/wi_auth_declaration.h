@@ -1396,7 +1396,7 @@ next:
 
          U_INTERNAL_ASSERT(content)
 
-         if (UFileConfig::loadProperties(*table, content.data(), content.end()))
+         if (UFileConfig::loadProperties(*table, content))
             {
             key_time            = "MAX_TIME";
             key_traffic         = "MAX_TRAFFIC";
@@ -1493,8 +1493,8 @@ next:
       login_time    = 0L;
       last_modified = u_now->tv_sec;
 
-        UploadRate  =   user_UploadRate->strtol();
-      DownloadRate  = user_DownloadRate->strtol();
+        UploadRate  =   user_UploadRate->strtol(10);
+      DownloadRate  = user_DownloadRate->strtol(10);
 
       WiAuthAccessPoint* ap_rec = nodog_rec->vec_access_point[index_access_point];
 
@@ -1514,8 +1514,8 @@ next:
 
       loadPolicy(_policy); // NB: time_available e traffic_available sono valorizzati da loadPolicy()...
 
-      uint32_t _time_available_tmp    =    time_available->strtol();
-      uint64_t _traffic_available_tmp = traffic_available->strtoll();
+      uint32_t _time_available_tmp    =    time_available->strtol(10);
+      uint64_t _traffic_available_tmp = traffic_available->strtoll(10);
 
       if (db_user->isRecordFound()                     &&
              _time_available !=    _time_available_tmp &&
@@ -2262,7 +2262,7 @@ static void usp_init_wi_auth()
 
    U_NEW(UHashMap<UString>, table, UHashMap<UString>);
 
-   if (UFileConfig::loadProperties(*table, content.data(), content.end()))
+   if (UFileConfig::loadProperties(*table, content))
       {
       U_NEW(UString, telefono, UString((*table)["TELEFONO"]));
       U_NEW(UString, fmt_auth_cmd, UString((*table)["FMT_AUTH_CMD"]));
@@ -2327,13 +2327,13 @@ static void usp_init_wi_auth()
 
    WiAuthUser::loadPolicy(*policy_daily); // NB: time_available e traffic_available sono valorizzati da loadPolicy()...
 
-      time_available_daily =    time_available->strtol();
-   traffic_available_daily = traffic_available->strtoll();
+      time_available_daily =    time_available->strtol(10);
+   traffic_available_daily = traffic_available->strtoll(10);
 
    WiAuthUser::loadPolicy(*policy_flat); // NB: time_available e traffic_available sono valorizzati da loadPolicy()...
 
-      time_available_flat =    time_available->strtol();
-   traffic_available_flat = traffic_available->strtoll();
+      time_available_flat =    time_available->strtol(10);
+   traffic_available_flat = traffic_available->strtoll(10);
 
    // HTTP client
 
@@ -2673,7 +2673,7 @@ static void get_ap_uptime()
          {
          U_INTERNAL_DUMP("nodog_rec->start = %ld result = %V", nodog_rec->start, result.rep)
 
-         nodog_rec->start = u_now->tv_sec - result.strtol();
+         nodog_rec->start = u_now->tv_sec - result.strtol(10);
 
          (void) db_nodog->putDataStorage();
 
@@ -3103,7 +3103,7 @@ static bool setAccessPoint(bool localization, const UString& hostname, const USt
       else
          {
          *ap_address = address.substr(0U, pos).copy();
-          ap_port    = address.substr(pos+1).strtol();
+          ap_port    = address.substr(pos+1).strtol(10);
          }
 
       if ((ap_address_trust = ap_address->isBase64Url())) *ap_address = UDES3::getSignedData(*ap_address);
@@ -3239,7 +3239,7 @@ static bool checkTimeRequest()
    U_TRACE(5, "::checkTimeRequest()")
 
    long timestamp;
-   bool ko = (*ts && (u_now->tv_sec - (timestamp = ts->strtol())) > (5L * 60L));
+   bool ko = (*ts && (u_now->tv_sec - (timestamp = ts->strtol(10))) > (5L * 60L));
 
    if (ko)
       {
@@ -3408,7 +3408,7 @@ static bool checkLoginValidate(bool all)
 
       ptr3 = ptr2 = (ptr1 = str.data()) + U_CONSTANT_SIZE("uid=");
 
-      for (const char* end = str.end(); ptr3 < end; ++ptr3)
+      for (const char* end = str.pend(); ptr3 < end; ++ptr3)
          {
          if (*ptr3 == '&') break;
          }
@@ -3476,7 +3476,7 @@ static bool getCookie(UString* prealm, UString* pid)
              (pos += U_CONSTANT_SIZE("WCID="), pos < cookie.size()))
             {
             uint32_t pos1   = cookie.findWhiteSpace();
-            const char* ptr = (pos1 == U_NOT_FOUND ? cookie.end() : cookie.c_pointer(pos1));
+            const char* ptr = (pos1 == U_NOT_FOUND ? cookie.pend() : cookie.c_pointer(pos1));
 
             if (ptr[-1] == ';') --ptr;
 
@@ -3796,7 +3796,7 @@ static void GET_calendar()
       if (pyear &&
           param3)
          {
-         date->setYearAndWeek(pyear.strtol(), param3.strtol());
+         date->setYearAndWeek(pyear.strtol(10), param3.strtol(10));
          }
 
       name_month = date->getMonthName();
@@ -3820,7 +3820,7 @@ static void GET_calendar()
       if (pyear &&
           param3)
          {
-         date->set(1, param3.strtol(), pyear.strtol());
+         date->set(1, param3.strtol(10), pyear.strtol(10));
          }
 
       name_month = date->getMonthName();
@@ -3837,7 +3837,7 @@ static void GET_calendar()
       {
       today = date->getJulian();
 
-      if (pyear) date->setYear(pyear.strtol());
+      if (pyear) date->setYear(pyear.strtol(10));
 
       UTimeDate next, prev;
 
@@ -4076,7 +4076,7 @@ static void GET_admin_login_nodog_historical_view_data()
       UHTTP::getFormValue(interval, 3);
       }
 
-   time_t sec = time.strtol();
+   time_t sec = time.strtol(10);
 
    U_INTERNAL_DUMP("U_SRV_BUF2(%u) = %.*S", U_SRV_CNT_USR2, U_SRV_CNT_USR2, U_SRV_BUF2)
 
@@ -4266,9 +4266,9 @@ static void GET_admin_view_using_historical()
             tmp2.rep->unQuote();
             tmp3.rep->unQuote();
 
-            _totale1 += tmp1.strtol();
-            _totale2 += tmp2.strtol();
-            _totale3 += tmp3.strtol();
+            _totale1 += tmp1.strtol(10);
+            _totale2 += tmp2.strtol(10);
+            _totale3 += tmp3.strtol(10);
 
             riga.snprintf(form, tmp0.rep, tmp1.rep, tmp2.rep, tmp3.rep);
 
@@ -4502,7 +4502,7 @@ static void GET_get_config()
                   {
                   UVector<UString> vec(*ip, '.');
 
-                  buffer.snprintf("%u.%v", 16 + vec[2].strtol(), vec[3].rep);
+                  buffer.snprintf("%u.%v", 16 + vec[2].strtol(10), vec[3].rep);
 
                   _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("<CCC>.<DDD>"), U_STRING_TO_PARAM(buffer));
                   }
@@ -5451,7 +5451,7 @@ static void GET_start_ap()
 
       UHTTP::getFormValue(pid, U_CONSTANT_TO_PARAM("pid"), 0, 5, UHTTP::form_name_value->size());
 
-      bool bstart = (pid.strtol() == 0);
+      bool bstart = (pid.strtol(10) == 0);
 
       nodog_rec->setStatus(bstart ? 3 : 0); // startup
 
@@ -6082,7 +6082,7 @@ static void POST_LoginRequest(bool idp)
                     VALIDITY = (*table)["waValidity"]; // waValidity: 0
 
             NOT_AFTER = (VALIDITY == "0" ? U_STRING_FROM_CONSTANT("20371231235959Z")
-                                         : UTimeDate::strftime("%Y%m%d%H%M%SZ", u_now->tv_sec + (VALIDITY.strtol() * U_ONE_DAY_IN_SECOND)));
+                                         : UTimeDate::strftime("%Y%m%d%H%M%SZ", u_now->tv_sec + (VALIDITY.strtol(10) * U_ONE_DAY_IN_SECOND)));
 
             UString input(U_CAPACITY);
 
@@ -6709,8 +6709,8 @@ static void POST_info()
             }
          }
 
-next0:      _traffic =   traffic.strtoll();
-      time_connected = connected.strtol();
+next0:      _traffic =   traffic.strtoll(10);
+      time_connected = connected.strtol(10);
 
       if (bsetNodogReference == false) write_to_log = 0;
       else

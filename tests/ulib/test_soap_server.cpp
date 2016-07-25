@@ -64,8 +64,8 @@ public:
             U_RETURN(false);
             }
 
-         long a = theCall.getArgument(0).strtol(),
-              b = theCall.getArgument(1).strtol();
+         long a = theCall.getArgument(0).strtol(10),
+              b = theCall.getArgument(1).strtol(10);
 
          returnValue = a + b;
 

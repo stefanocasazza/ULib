@@ -78,7 +78,7 @@ while (true)
 #else
    World* pworld;
 
-   U_NEW(World, pworld, World(id, u_strtoul(rnumber.data(), rnumber.end())));
+   U_NEW(World, pworld, World(id, rnumber.strtoul()));
 
    pvworld_query->push_back(pworld);
 #endif

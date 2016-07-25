@@ -366,31 +366,31 @@ bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int ite
             if (retval.hasMessageCount == false &&
                 vec[i].equal(U_CONSTANT_TO_PARAM("MESSAGES")))
                {
-               retval.messageCount    = vec[++i].strtol();
+               retval.messageCount    = vec[++i].strtol(10);
                retval.hasMessageCount = true;
                }
             else if (retval.hasRecentCount == false &&
                      vec[i] == *UString::str_recent)
                {
-               retval.recentCount    = vec[++i].strtol();
+               retval.recentCount    = vec[++i].strtol(10);
                retval.hasRecentCount = true;
                }
             else if (retval.hasNextUID == false &&
                      vec[i] == *UString::str_uidnext)
                {
-               retval.nextUID    = vec[++i].strtol();
+               retval.nextUID    = vec[++i].strtol(10);
                retval.hasNextUID = true;
                }
             else if (retval.hasUIDValidity == false &&
                      vec[i] == *UString::str_uidvalidity)
                {
-               retval.uidValidity    = vec[++i].strtol();
+               retval.uidValidity    = vec[++i].strtol(10);
                retval.hasUIDValidity = true;
                }
             else if (retval.hasUnseenCount == false &&
                      vec[i] == *UString::str_unseen)
                {
-               retval.unseenCount    = vec[++i].strtol();
+               retval.unseenCount    = vec[++i].strtol(10);
                retval.hasUnseenCount = true;
                }
             else
@@ -585,19 +585,19 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
             if (!retval.status.hasUnseenCount &&
                 vec[0] == *UString::str_unseen)
                {
-               retval.status.unseenCount    = vec[1].strtol();
+               retval.status.unseenCount    = vec[1].strtol(10);
                retval.status.hasUnseenCount = true;
                }
             else if (!retval.status.hasNextUID &&
                      vec[0] == *UString::str_uidnext)
                {
-               retval.status.nextUID    = vec[1].strtol();
+               retval.status.nextUID    = vec[1].strtol(10);
                retval.status.hasNextUID = true;
                }
             else if (!retval.status.hasUIDValidity &&
                      vec[0] == *UString::str_uidvalidity)
                {
-               retval.status.uidValidity    = vec[1].strtol();
+               retval.status.uidValidity    = vec[1].strtol(10);
                retval.status.hasUIDValidity = true;
                }
             else
@@ -643,13 +643,13 @@ U_NO_EXPORT void UImapClient::setMailBox(MailboxInfo& retval)
          if (!retval.status.hasMessageCount &&
              vec[1].equal(U_CONSTANT_TO_PARAM("EXISTS")))
             {
-            retval.status.messageCount    = vec[0].strtol();
+            retval.status.messageCount    = vec[0].strtol(10);
             retval.status.hasMessageCount = true;
             }
          else if (!retval.status.hasRecentCount &&
                   vec[1] == *UString::str_recent)
             {
-            retval.status.recentCount    = vec[0].strtol();
+            retval.status.recentCount    = vec[0].strtol(10);
             retval.status.hasRecentCount = true;
             }
          else

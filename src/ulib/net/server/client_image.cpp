@@ -447,14 +447,14 @@ void UClientImage_Base::handlerDelete()
       ULog::log("%s%.6s close connection from %v, %.*s clients still connected", UServer_Base::mod_name[0], bsocket_open ? "Client" : "Server", logbuf->rep, len, buffer);
 
 #  ifdef DEBUG
-      int fd_logbuf = logbuf->strtol();
+      int fd_logbuf = logbuf->strtol(10);
 
       if (UNLIKELY(fd_logbuf != UEventFd::fd))
          {
          U_WARNING("handlerDelete(): "
                    "UEventFd::fd = %d socket->iSockDesc = %d "
                    "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                   "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B logbuf->strtol() = %d",
+                   "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B logbuf->strtol(10) = %d",
                    UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
                    UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask, fd_logbuf);
          }

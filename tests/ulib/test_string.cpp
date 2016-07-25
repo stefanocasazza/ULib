@@ -1063,7 +1063,7 @@ static void test_substr_01()
 }
 #endif
 
-#ifdef TEST_CLASS
+#if defined(TEST_CLASS) && defined(U_STD_STRING)
 // class UString
 // Do a quick sanity check on known problems with element access and
 // ref-counted UStrings. These should all pass, regardless of the
@@ -1078,15 +1078,10 @@ static void test_class_01()
 
    str03 = str01;
 
-#ifdef U_STD_STRING
    typedef std::string::size_type csize_type;
    typedef std::string::iterator siterator;
    typedef std::string::reverse_iterator sriterator;
-   siterator it1 =
-#else
-   char* it1 =
-#endif
-      str01._begin();
+   siterator it1 = str01._begin();
 
    *it1 = 'x';
    U_ASSERT( str01[0] == 'x' )
@@ -1095,12 +1090,7 @@ static void test_class_01()
    str03 = str01; 
    csz01 = str01.size();
 
-#ifdef U_STD_STRING
-   sriterator rit1 =
-#else
-   char* rit1 =
-#endif
-      str01._rbegin();
+   sriterator rit1 = str01._rbegin();
 
    *rit1 = 'z';
    U_ASSERT( str01[csz01 - 1] == 'z' )
@@ -1109,13 +1099,7 @@ static void test_class_01()
    str03 = str01;
    csz01 = str01.size();
 
-/*
-#ifdef U_STD_STRING
-   std::string::reference r1 =
-#else
-   char& r1 =
-#endif
-      str01.at(csz01 - 2);
+   std::string::reference r1 = str01.at(csz01 - 2);
 
    U_ASSERT( str03 == str01 )
    r1 = 'd';
@@ -1125,18 +1109,13 @@ static void test_class_01()
    str03 = str01; 
    csz01 = str01.size();
 
-#ifdef U_STD_STRING
-   std::string::reference r2 =
-#else
-   char& r2 =
-#endif
-      str01[csz01 - 3];
+   std::string::reference r2 = str01[csz01 - 3];
 
    U_ASSERT( str03 == str01 )
    r2 = 'w';
    U_ASSERT( str01[csz01 - 3] == 'w' )
    U_ASSERT( str03[csz01 - 3] == 'b' )
-*/
+
    str03 = str01;
    csz02 = str01.size();
    it1 = str01._end();
@@ -1166,83 +1145,55 @@ static void test_class_02()
    UString str02 = str01;
    UString str05 = str02;
 
-#ifdef U_STD_STRING
    std::string::iterator p = str02.insert(str02.begin(), ' ');
-#else
-   char* p = str02.insert(0, 1, ' ')._begin();
-#endif
 
    UString str03 = str02;
    U_ASSERT( str03 == str02 )
    *p = '!';
 
-#ifdef U_STD_STRING
    U_ASSERT( *str03.c_str() == ' ' )
-#endif
 
-// str03[0] = '@';
+   str03[0] = '@';
    U_ASSERT( str02[0] == '!' )
    U_ASSERT( *p == '!' )
    U_ASSERT( str02 != str05 )
-// U_ASSERT( str02 != str03 )
+   U_ASSERT( str02 != str03 )
 
    UString str10 = str01;
 
-#ifdef U_STD_STRING
    std::string::iterator p2 = str10.insert(str10.begin(), 'a');
-#else
-   char* p2 = str10.insert(0, 1, 'a')._begin();
-#endif
 
    UString str11 = str10;
    *p2 = 'e';
 
-#ifdef U_STD_STRING
    U_ASSERT( str11 != str10 )
-#endif
 
    UString str06 = str01;
    UString str07 = str06;
 
-#ifdef U_STD_STRING
    p = str06.erase(str06.begin());
-#else
-   p = str06.erase()._begin();
-#endif
 
    UString str08 = str06;
    U_ASSERT( str08 == str06 )
    *p = '!';
 
-#ifdef U_STD_STRING
    U_ASSERT( *str08.c_str() == 't' )
-#endif
 
-// str08[0] = '@';
+   str08[0] = '@';
    U_ASSERT( str06[0] == '!' )
    U_ASSERT( *p == '!' )
    U_ASSERT( str06 != str07 )
 
-/*
-#ifdef U_STD_STRING
    U_ASSERT( str06 != str08 )
-#endif
-*/
 
    UString str12 = str01;
 
-#ifdef U_STD_STRING
    p2 = str12.erase(str12.begin(), str12.begin() + str12.size() - 1);
-#else
-   p2 = str12.erase(0, str12.size() - 1)._begin();
-#endif
 
    UString str13 = str12;
    *p2 = 'e';
 
-#ifdef U_STD_STRING
    U_ASSERT( str12 != str13 )
-#endif
 }
 #endif
 
@@ -1789,7 +1740,7 @@ U_EXPORT main (int argc, char* argv[])
 #ifdef TEST_SUBSTR
       test_substr_01();
 #endif
-#ifdef TEST_CLASS
+#if defined(TEST_CLASS) && defined(U_STD_STRING)
       test_class_01();
       test_class_02();
 #endif

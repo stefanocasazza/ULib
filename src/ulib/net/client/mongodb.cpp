@@ -47,6 +47,17 @@ bool UMongoDBClient::connect(const char* phost, unsigned int _port)
    U_RETURN(false);
 }
 
+bool UMongoDBClient::connect(const char* _uri)
+{
+   U_TRACE(0, "UMongoDBClient::connect(%S)", _uri)
+
+   client = (mongoc_client_t*) U_SYSCALL(mongoc_client_new, "%S", _uri);
+
+   if (client) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
 bool UMongoDBClient::selectCollection(const char* db, const char* name_collection)
 {
    U_TRACE(0, "UMongoDBClient::selectCollection(%S,%S)", db, name_collection)

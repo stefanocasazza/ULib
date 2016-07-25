@@ -204,8 +204,6 @@ public:
 
    UString message, token;
 
-   // COSTRUTTORI
-
    HTTP2Push() : UEventTime(15L * 60L, 0L), message(U_STRING_FROM_CONSTANT("{aps:{content-available:1},check:health}"))
       {
       U_TRACE_REGISTER_OBJECT(0, HTTP2Push, "", 0)

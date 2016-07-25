@@ -47,8 +47,6 @@ public:
    UHashMapNode* next;
    uint32_t hash;
 
-   // COSTRUTTORI
-
    UHashMapNode(const UStringRep* _key, const void* _elem, UHashMapNode* _next, uint32_t _hash) : elem(_elem), key(_key), next(_next), hash(_hash)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMapNode, "%V,%p,%p,%u", _key, _elem, _next, _hash)

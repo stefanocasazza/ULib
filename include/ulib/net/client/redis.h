@@ -150,7 +150,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::operator+=(%S)", key)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("INCR"), key, u__strlen(key, __PRETTY_FUNCTION__))) return vitem[0].strtol();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("INCR"), key, u__strlen(key, __PRETTY_FUNCTION__))) return vitem[0].strtol(10);
 
       U_RETURN(-1);
       }
@@ -159,7 +159,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::operator-=(%S)", key)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("DECR"), key, u__strlen(key, __PRETTY_FUNCTION__))) return vitem[0].strtol();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("DECR"), key, u__strlen(key, __PRETTY_FUNCTION__))) return vitem[0].strtol(10);
 
       U_RETURN(-1);
       }
@@ -316,7 +316,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::ttl(%.*S,%u)", keylen, key, keylen)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("TTL"), key, keylen)) return vitem[0].strtol();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("TTL"), key, keylen)) return vitem[0].strtol(10);
 
       U_RETURN(-1);
       }
@@ -325,7 +325,7 @@ public:
       {
       U_TRACE(0, "UREDISClient_Base::pttl(%.*S,%u)", keylen, key, keylen)
 
-      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PTTL"), key, keylen)) return vitem[0].strtol();
+      if (processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PTTL"), key, keylen)) return vitem[0].strtol(10);
 
       U_RETURN(-1);
       }
@@ -462,8 +462,6 @@ private:
 
 template <class Socket> class U_EXPORT UREDISClient : public UREDISClient_Base {
 public:
-
-   // COSTRUTTORI
 
    UREDISClient() : UREDISClient_Base()
       {

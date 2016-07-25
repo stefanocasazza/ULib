@@ -63,6 +63,10 @@ dnl Initial CFLAGS
 AC_MSG_CHECKING(initial CFLAGS)
 AC_MSG_RESULT($CFLAGS)
 
+dnl Initial LIBS
+AC_MSG_CHECKING(initial LIBS)
+AC_MSG_RESULT($LIBS)
+
 m4_include([m4/m4_ax_python_devel.m4])
 
 # Generate a header file with all settings, a config.h file (Automake will add -DHAVE_CONFIG_H)
@@ -103,7 +107,7 @@ case "$host" in
 	*-openbsd*)
 		 local_os_type="openbsd"
 
-		 LIBS="$LIBS -L/usr/local/lib"
+		 LIBS="L/usr/local/lib $LIBS"
 	;;
 
 	*mingw*)
@@ -937,7 +941,6 @@ else
 		 done
 	fi
    AC_CHECK_LIB(numa,numa_max_node)
-   LIBS=""
 	if test "$ac_cv_lib_numa_numa_max_node" = "yes"; then
 		plib="$plib -lnuma"
 	fi
@@ -1411,7 +1414,7 @@ case "$target_os" in
 			ULIB_LIBS="$ULIB_LIBS -ltcc"
 		fi
       AC_CHECK_LIB(GeoIP,GeoIP_id_by_ipnum)
-      LIBS=""
+		LIBS=
 
 		AC_CHECK_TYPE([siginfo_t],			  [AC_DEFINE_UNQUOTED(HAVE_SIGINFO_T, 1, [Define if exist type siginfo_t])],				[],[#include <signal.h>])
 		AC_CHECK_MEMBER([siginfo_t.si_addr],AC_DEFINE_UNQUOTED(HAVE_MEMBER_SI_ADDR,1,[Define if you have si_addr in siginfo_t]),[],[#include <signal.h>])
@@ -1494,13 +1497,12 @@ if test "$use_mongodb" = "yes"; then
 	fi
 
 	AC_LANG([C])
-   save_LIBS="$LIBS"
-   LIBS="$LIBS $MONGODBLIBS"
+   LIBS="$MONGODBLIBS"
 
    AC_CHECK_LIB(mongoc-1.0, mongoc_init, , [AC_MSG_ERROR([Not found libmongoc library])])
    AC_CHECK_LIB(bson-1.0, bson_new, , [AC_MSG_ERROR([Not found libbson library])])
 
-   LIBS="$save_LIBS"
+   LIBS=
 	AC_LANG([C++])
 
 	ULIB_LIBS="$ULIB_LIBS $MONGODBLIBS"
@@ -2524,6 +2526,9 @@ ULIB_LIBS="$ULIB_LIBS $ULIB_LIBC"
 
 if test "$enable_stdcpp" != "yes"; then
 	AC_CHECK_LIB(Systemstubs, printf, [ULIB_LIBS="$ULIB_LIBS -lSystemstubs -lgcc"])
+else if test -n "$ac_cv_env_LIBS_value"; then
+	ULIB_LIBS="$ULIB_LIBS $ac_cv_env_LIBS_value"
+ fi
 fi
 
 if test "x$ac_cv_crc32_intrinsics" = xyes; then
@@ -2534,9 +2539,11 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 	if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 		ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
 #  On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
- 	else if test "$gcc_version" = "5.3.1"; then
+ 	else if test "$gcc_version" = "5.3.1" -o \
+					 "$gcc_version" = "5.4.0"; then
  		gcc_v=`gcc --version | head -n 1`
- 		if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413"; then
+  		if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413" -o \
+ 				  "$gcc_v" = "gcc (Ubuntu 5.4.0-6ubuntu1~16.04.1) 5.4.0 20160609"; then
  			ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
  		fi
  	 fi

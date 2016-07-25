@@ -78,7 +78,7 @@ static void check(UVector<UString>& y)
 
    tmp = y.front();
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("ROOT_DN") )
-   tmp = y.rend();
+   tmp = y.at(1);
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("PASSWORD") )
    tmp = y.back();
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("MAX_ERROR_FOR_CONNECT") )

@@ -152,13 +152,7 @@ int UModNoCatPeer::handlerTime()
       UNoCatPlugIn::deny(disconnected, false);
       }
 
-   // return value:
-   // ---------------
-   // -1 - normal
-   //  0 - monitoring
-   // ---------------
-
-   U_RETURN(-1);
+   U_RETURN(-1); // normal
 }
 
 int UNoCatPlugIn::handlerTime()
@@ -171,17 +165,11 @@ int UNoCatPlugIn::handlerTime()
 
    checkSystem();
 
-   // return value:
-   // ---------------
-   // -1 - normal
-   //  0 - monitoring
-   // ---------------
-
    U_INTERNAL_DUMP("check_expire = %u next_event_time = %u", check_expire, next_event_time)
 
    UTimeVal::setSecond(next_event_time);
 
-   U_RETURN(0);
+   U_RETURN(0); // monitoring
 }
 
 UNoCatPlugIn::UNoCatPlugIn()
@@ -1154,13 +1142,13 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
 
    // check for max time no traffic
 
-   U_peer_max_time_no_traffic = args.at(U_CONSTANT_TO_PARAM("NoTraffic")).strtol();
+   U_peer_max_time_no_traffic = args.at(U_CONSTANT_TO_PARAM("NoTraffic")).strtol(10);
 
    if (U_peer_max_time_no_traffic == 0) U_peer_max_time_no_traffic = (check_expire / 60) * (U_peer_policy_flat ? 3 : 1);
 
    // get time available
 
-   timeout = args.at(U_CONSTANT_TO_PARAM("Timeout")).strtol();
+   timeout = args.at(U_CONSTANT_TO_PARAM("Timeout")).strtol(10);
 
    if (timeout ||
        peer->time_remain == 0)
@@ -1173,7 +1161,7 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
 
    // get traffic available
 
-   traffic = args.at(U_CONSTANT_TO_PARAM("Traffic")).strtoll();
+   traffic = args.at(U_CONSTANT_TO_PARAM("Traffic")).strtoll(10);
 
    if (traffic > 0 ||
        peer->traffic_available == 0)
@@ -1519,7 +1507,7 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
 
    info.snprintf_add("%.*s&logout=", u_url_encode((const unsigned char*)U_STRING_TO_PARAM(peer->user), (unsigned char*)buffer), buffer);
 
-   ptr = (char*) info.end();
+   ptr = (char*) info.pend();
 
    // NB: disconnected 0 => mean NOT logout (only info)
    //                 <0 => disconnected (logout implicito)
@@ -1967,7 +1955,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       tmp = cfg.at(U_CONSTANT_TO_PARAM("NUM_PEERS_PREALLOCATE"));
 
-      num_peers_preallocate = (tmp ? tmp.strtol() : 512);
+      num_peers_preallocate = (tmp ? tmp.strtol(10) : 512);
 
       tmp = cfg.at(U_CONSTANT_TO_PARAM("LOGIN_TIMEOUT"));
 
@@ -2014,7 +2002,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("GatewayPort"), fw_env);
 
-      if (tmp) port = tmp.strtol();
+      if (tmp) port = tmp.strtol(10);
 
       (void) vauth->split(U_STRING_TO_PARAM(*auth_login));
 

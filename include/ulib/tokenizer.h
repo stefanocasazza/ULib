@@ -34,8 +34,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%S", d)
 
-      delim   = d;
       s = end = 0;
+      delim   = d;
       }
 
    UTokenizer(const UString& data, const char* d = 0) : str(data)
@@ -43,7 +43,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%V,%S", data.rep, d)
 
       s     = data.data();
-      end   = data.end();
+      end   = data.pend();
       delim = d;
       }
 

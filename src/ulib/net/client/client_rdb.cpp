@@ -254,14 +254,14 @@ void URDBClient_Base::_callForAllEntry(vPFprpr function, bool sorted)
       U_INTERNAL_ASSERT_EQUALS(nResponseCode, 200)
 
       UCDB::datum _key, _data;
-      const char* ptr  = response.data();
+      const char* ptr = response.data();
 
       while (*ptr == '+')
          {
          UStringRep* key;
          UStringRep* data;
 
-         U_ASSERT(ptr < response.rep->end())
+         U_INTERNAL_ASSERT_MINOR(ptr, response.pend())
 
          ptr = URDB::parseLine(ptr, &_key, &_data);
 

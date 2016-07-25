@@ -174,17 +174,17 @@ long UServer_Base::last_event;
 #     define U_WHICH "select" 
 #  endif
 
-uint32_t    UServer_Base::nread;
-uint32_t    UServer_Base::max_depth;
-uint32_t    UServer_Base::nread_again;
-uint64_t    UServer_Base::stats_bytes;
-uint32_t    UServer_Base::stats_connections;
-uint32_t    UServer_Base::stats_simultaneous;
-uint32_t    UServer_Base::wakeup_for_nothing;
+uint32_t UServer_Base::nread;
+uint32_t UServer_Base::max_depth;
+uint32_t UServer_Base::nread_again;
+uint64_t UServer_Base::stats_bytes;
+uint32_t UServer_Base::stats_connections;
+uint32_t UServer_Base::stats_simultaneous;
+uint32_t UServer_Base::wakeup_for_nothing;
 
 UString UServer_Base::getStats()
 {
-   U_TRACE_NO_PARAM(0, "UTimeStat::getStats()")
+   U_TRACE_NO_PARAM(0, "UServer_Base::getStats()")
 
    UString x(U_CAPACITY);
 
@@ -197,8 +197,6 @@ UString UServer_Base::getStats()
 
 class U_NO_EXPORT UTimeStat : public UEventTime {
 public:
-
-   // COSTRUTTORI
 
    UTimeStat() : UEventTime(U_ONE_HOUR_IN_SECOND, 0L)
       {
@@ -227,14 +225,7 @@ public:
       UServer_Base::stats_connections  =
       UServer_Base::stats_simultaneous = 0;
 
-      // ---------------
-      // return value:
-      // ---------------
-      // -1 - normal
-      //  0 - monitoring
-      // ---------------
-
-      U_RETURN(0);
+      U_RETURN(0); // monitoring
       }
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
@@ -247,10 +238,43 @@ private:
 };
 #endif
 
-class U_NO_EXPORT UTimeoutConnection : public UEventTime {
+class U_NO_EXPORT UDayLight : public UEventTime {
 public:
 
-   // COSTRUTTORI
+   UDayLight() : UEventTime(UTimeDate::getSecondFromDayLight(), 0L)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UDayLight, "", 0)
+      }
+
+   virtual ~UDayLight() U_DECL_FINAL
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UDayLight)
+      }
+
+   // define method VIRTUAL of class UEventTime
+
+   virtual int handlerTime() U_DECL_FINAL
+      {
+      U_TRACE_NO_PARAM(0, "UDayLight::handlerTime()")
+
+      if (u_setStartTime() == false) U_WARNING("System date update failed: %#5D", u_now->tv_sec);
+
+      UTimeVal::setSecond(UTimeDate::getSecondFromDayLight());
+
+      U_RETURN(0); // monitoring
+      }
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
+#endif
+
+private:
+   UDayLight(const UDayLight&) : UEventTime() {}
+   UDayLight& operator=(const UDayLight&)     { return *this; }
+};
+
+class U_NO_EXPORT UTimeoutConnection : public UEventTime {
+public:
 
    UTimeoutConnection() : UEventTime(UServer_Base::timeoutMS / 1000L, 0L)
       {
@@ -409,8 +433,6 @@ private:
 
 class U_NO_EXPORT UBandWidthThrottling : public UEventTime {
 public:
-
-   // COSTRUTTORI
 
    UBandWidthThrottling() : UEventTime(U_THROTTLE_TIME, 0L)
       {
@@ -627,13 +649,7 @@ public:
          if (UNotifier::num_connection > UNotifier::min_connection) UNotifier::callForAllEntryDynamic(updateSendingRate);
          }
 
-      // return value:
-      // ---------------
-      // -1 - normal
-      //  0 - monitoring
-      // ---------------
-
-      U_RETURN(0);
+      U_RETURN(0); // monitoring
       }
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
@@ -652,8 +668,6 @@ private:
 
 class U_NO_EXPORT UClientThrottling : public UEventTime {
 public:
-
-   // COSTRUTTORI
 
    UClientThrottling(UClientImage_Base* _pClientImage, long sec, long micro_sec) : UEventTime(sec, micro_sec)
       {
@@ -675,15 +689,7 @@ public:
 
       UNotifier::resume(pClientImage);
 
-      delete this;
-
-      // return value:
-      // ---------------
-      // -1 - normal
-      //  0 - monitoring
-      // ---------------
-
-      U_RETURN(-1);
+      U_RETURN(-1); // normal
       }
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
@@ -1462,7 +1468,7 @@ void UServer_Base::loadConfigParam()
 
    if (x)
       {
-      preforked_num_kids = x.strtol();
+      preforked_num_kids = x.strtol(10);
 
 #  ifdef U_SERVER_CAPTIVE_PORTAL
       if (x.c_char(0) == '0') monitoring_process = true;
@@ -3448,6 +3454,12 @@ void UServer_Base::runLoop(const char* user)
 #  if !defined(U_LOG_DISABLE) && defined(DEBUG)
       last_event = u_now->tv_sec;
 #  endif
+
+      UEventTime* pdaylight;
+
+      U_NEW(UDayLight, pdaylight, UDayLight);
+
+      UTimer::insert(pdaylight);
       }
 
    while (flag_loop)

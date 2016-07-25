@@ -104,7 +104,7 @@ public:
 
       if (USOAPClient<T>::processRequest(m_add))
          {
-         long result = USOAPClient<T>::getResponse().strtol(); // Get the value of the element inside the response
+         long result = USOAPClient<T>::getResponse().strtol(10); // Get the value of the element inside the response
 
          U_RETURN(result);
          }

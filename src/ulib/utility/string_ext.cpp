@@ -245,7 +245,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
 
          if (len)
             {
-            U_MEMCPY(x.rep->end(), s + start, len);
+            U_MEMCPY(x.pend(), s + start, len);
 
             x.rep->_length += len;
             }
@@ -298,14 +298,14 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
       if (len)
          {
-         U_MEMCPY(x.rep->end(), s + start, len);
+         U_MEMCPY(x.pend(), s + start, len);
 
          x.rep->_length += len;
          }
 
       if (n2)
          {
-         U_MEMCPY(x.rep->end(), b, n2);
+         U_MEMCPY(x.pend(), b, n2);
 
          x.rep->_length += n2;
          }
@@ -329,7 +329,7 @@ UString UStringExt::dos2unix(const UString& s, bool unix2dos)
    UString result(s.size() * 2);
 
    const char* ptr   = s.data();
-   const char* _end  = s.end();
+   const char* _end  = s.pend();
          char* str   = result.data();
          char* start = str;
 
@@ -672,7 +672,7 @@ loop:
       U_INTERNAL_DUMP("quoted = %b", quoted)
 
       s   = environment->c_pointer(++start);
-      end = environment->end();
+      end = environment->pend();
 
       U_INTERNAL_DUMP("end - s = %ld", end - s)
 

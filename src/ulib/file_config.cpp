@@ -71,9 +71,9 @@ bool UFileConfig::processData(bool bload)
               _dir = UStringExt::dirname(pathname);
 
 #  ifdef DEBUG
-#  define DBG_DEF " -DDEBUG "
+#     define DBG_DEF " -DDEBUG "
 #  else
-#  define DBG_DEF
+#     define DBG_DEF
 #  endif
 
       if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/cpp.err");
@@ -131,7 +131,7 @@ bool UFileConfig::processData(bool bload)
    if (data.empty())   U_RETURN(false);
    if (bload == false) U_RETURN(true);
 
-   _end   = data.end();
+   _end   = data.pend();
    _start = data.data();
    _size  = data.size();
 

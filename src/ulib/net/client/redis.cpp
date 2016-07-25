@@ -214,7 +214,7 @@ U_NO_EXPORT void UREDISClient_Base::processResponse()
    U_INTERNAL_ASSERT_EQUALS(err, U_RC_OK)
 
          char* ptr = UClient_Base::response.data();
-   const char* end = UClient_Base::response.end();
+   const char* end = UClient_Base::response.pend();
 
    do {
       ptr = getResponseItem(UClient_Base::response, ptr, vitem, 0);

@@ -4642,7 +4642,7 @@ void UHTTP::setCookie(const UString& param)
 
             // int -- lifetime of the cookie in HOURS -- must (0 -> valid until browser exit)
 
-            n_hours = (++i < n ? vec[i].strtol() : 0);
+            n_hours = (++i < n ? vec[i].strtol(10) : 0);
             expire  = (n_hours ? u_now->tv_sec + (n_hours * 60L * 60L) : 0L);
 
             cookie.snprintf("ulib.s%u=", sid_counter_gen);
@@ -6488,7 +6488,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
 
                      // XXX: Due to a bug in MSIE (version=??), we do not check for authentication timeout...
 
-                     if ((u_now->tv_sec - value.strtol()) > 3600) goto end;
+                     if ((u_now->tv_sec - value.strtol(10)) > 3600) goto end;
 
                      nonce = value;
                      }

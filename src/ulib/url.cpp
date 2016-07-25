@@ -490,7 +490,7 @@ void Url::addQuery(const char* entry, uint32_t entry_len, const char* value, uin
 
       if (e_size < v_size) b_size = v_size;
 
-      if (*url.rbegin() != '?') url.push_back('&');
+      if (url.last_char() != '?') url.push_back('&');
 
       if (u_isUrlEncodeNeeded(entry, e_size) == false) (void) url.append(entry, e_size);
       else

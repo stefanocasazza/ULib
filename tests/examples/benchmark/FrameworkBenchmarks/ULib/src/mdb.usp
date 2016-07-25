@@ -63,7 +63,7 @@ UString result;
 #ifdef AS_cpoll_cppsp_DO
 USP_PRINTF_ADD("{\"id\":%u,\"randomNumber\":%v}", id, result.rep);
 #else
-World world(id, u_strtoul(result.data(), result.end()));
+World world(id, result.strtoul());
 USP_JSON_stringify(*pvalue, World, world);
 pvalue->clear();
 #endif

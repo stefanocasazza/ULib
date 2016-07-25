@@ -970,7 +970,7 @@ UStringRep* UStringRep::substr(const char* t, uint32_t tlen) const
       }
    else
       {
-      U_INTERNAL_ASSERT_RANGE(str, t, end())
+      U_INTERNAL_ASSERT_RANGE(str, t, pend())
 
       U_NEW(UStringRep, r, UStringRep(t, tlen));
 
@@ -1007,10 +1007,10 @@ __pure bool UStringRep::isSubStringOf(UStringRep* rep) const
 
    U_CHECK_MEMORY
 
-   if (this != rep             &&
-       _capacity == 0          && // mode: 0 -> const
-       begin() >= rep->begin() &&
-         end() <= rep->end())
+   if (this != rep           &&
+       _capacity == 0        && // mode: 0 -> const
+       data() >= rep->data() &&
+       pend() <= rep->pend())
       {
 #  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
       U_INTERNAL_ASSERT_EQUALS(parent, rep)
@@ -1555,7 +1555,7 @@ void UString::duplicate() const
       {
       ((UString*)this)->_set(UStringRep::create(0, 100U, 0));
 
-      *(((UString*)this)->UString::rep->begin()) = '\0';
+      *(((UString*)this)->UString::rep->data()) = '\0';
       }
 
    U_INTERNAL_ASSERT(invariant())
@@ -1884,7 +1884,7 @@ long UStringRep::strtol(int base) const
       errno = 0;
 
       char* endptr;
-      long  result = (long) strtoul(str, &endptr, base);
+      long  result = (long) ::strtoul(str, &endptr, base);
 
       U_INTERNAL_DUMP("errno = %d endptr = %p", errno, endptr)
 
@@ -1920,7 +1920,7 @@ int64_t UStringRep::strtoll(int base) const
       if (isNullTerminated() == false && writeable()) *eos = '\0';
 
       char* endptr;
-      int64_t result = (int64_t) strtoull(str, &endptr, base);
+      int64_t result = (int64_t) ::strtoull(str, &endptr, base);
 
       U_INTERNAL_DUMP("errno = %d endptr = %p", errno, endptr)
 

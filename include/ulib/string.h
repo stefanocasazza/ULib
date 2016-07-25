@@ -37,6 +37,7 @@
 #  define U_STRING_TO_TRACE(str)            (str).size(), (str).data()
 #endif
 #define   U_STRING_TO_PARAM(str)            (str).data(), (str).size()
+#define   U_STRING_TO_RANGE(str)            (str).data(), (str).pend()
 
 /**
  * UStringRep: string representation
@@ -47,7 +48,7 @@
  * 1. string really contains length+1 characters; last is set to '\0' for sure on call to c_str()
  * 2. capacity >= length - allocated memory is always capacity+1
  * 3. references has two states:
- *       0:   1 reference
+ *       0: one reference
  *     n>0: n+1 references
  * 4. all fields == 0 is an empty string, given the extra storage beyond-the-end for a null terminator;
  *    thus, the shared empty string representation needs no constructor
@@ -115,7 +116,7 @@ public:
    // --------------------------
    // references has two states:
    // --------------------------
-   //   0:   1 reference
+   //   0: one reference
    // n>0: n+1 references
    // --------------------------
 
@@ -125,7 +126,7 @@ public:
 
       U_CHECK_MEMORY
 
-      if (references == 0) U_RETURN(true); // NB: 0 -> 1 reference
+      if (references == 0) U_RETURN(true); // NB: 0 -> one reference
 
       U_RETURN(false);
       }
@@ -237,15 +238,6 @@ public:
 
    // ELEMENT ACCESS
 
-         char* begin()        { return (char*) str; }
-   const char* begin() const  { return         str; }
-         char* end()          { return (char*)(str + _length); }
-   const char* end() const    { return         str + _length; }
-         char* rbegin()       { return (char*)(str + _length - 1); }
-   const char* rbegin() const { return         str + _length - 1; }
-         char* rend()         { return (char*)(str + 1); }
-   const char* rend() const   { return         str + 1; }
-
    char at(uint32_t pos) const
       {
       U_TRACE(0, "UStringRep::at(%u)", pos)
@@ -282,6 +274,9 @@ public:
    char operator[](uint32_t pos) const { return str[pos]; }
 
    const char* c_pointer(uint32_t pos) const { return (str + pos); }
+
+         char* pend()       { return (char*)(str + _length); }
+   const char* pend() const { return         str + _length; }
 
    // Compare
 
@@ -340,7 +335,6 @@ public:
 
    // Equal
 
-   bool equal(const UStringRep* rep) const { return equal(rep->str, rep->_length); }
    bool equal(const char* s, uint32_t n) const
       {
       U_TRACE(0, "UStringRep::equal(%#.*S,%u)", n, s, n)
@@ -358,9 +352,10 @@ public:
       U_RETURN(false);
       }
 
+   bool equal(const UStringRep* rep) const { return equal(rep->str, rep->_length); }
+
    // Equal with ignore case
 
-   bool equalnocase(const UStringRep* rep) const { return equalnocase(rep->str, rep->_length); }
    bool equalnocase(const char* s, uint32_t n) const
       {
       U_TRACE(0, "UStringRep::equalnocase(%.*S,%u)", n, s, n)
@@ -377,6 +372,8 @@ public:
 
       U_RETURN(false);
       }
+
+   bool equalnocase(const UStringRep* rep) const { return equalnocase(rep->str, rep->_length); }
 
    // Substring
 
@@ -611,18 +608,24 @@ public:
 
    uint32_t findWhiteSpace(uint32_t pos) const __pure;
 
-   bool strtob() const __pure;
 #ifdef HAVE_STRTOF
    float strtof() const;
 #endif
-   double strtod() const;
 #ifdef HAVE_STRTOLD
    long double strtold() const;
 #endif
-   long strtol(int base = 10) const;
 #ifdef HAVE_STRTOULL
-   int64_t strtoll(int base = 10) const;
+   int64_t strtoll(int base) const;
 #endif
+
+   bool   strtob() const __pure;
+   double strtod() const;
+   long   strtol(int base) const;
+
+            long strtol() const   { return u_strtol(  str, str + _length); }
+   unsigned long strtoul() const  { return u_strtoul( str, str + _length); }  
+    int64_t      strtoll() const  { return u_strtoll( str, str + _length); } 
+   uint64_t      strtoull() const { return u_strtoull(str, str + _length); }
 
    uint32_t hash() const
       {
@@ -705,7 +708,7 @@ public:
 
    static UStringRep* create(uint32_t length, uint32_t capacity, const char* ptr); // NB: we don't use new (ctor) because we want an allocation with more space for string data...
 
-   static UStringRep* string_rep_null; // This storage is init'd to 0 by the linker, resulting (carefully) in an empty string with zero(=>1) reference...
+   static UStringRep* string_rep_null; // This storage is init'd to 0 by the linker, resulting (carefully) in an empty string with one(=>0) reference...
 
 #if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
    UStringRep* parent; // manage substring to increment reference of source string
@@ -793,7 +796,7 @@ private:
 #  endif
 
       _length    = __length;
-      _capacity  = __capacity; // [0 const | -1 mmap | -2 to free]...
+      _capacity  = __capacity; // [0 const | -1 mmap | -2 we must call free()]...
       references = 0;
       str        = ptr;
       }
@@ -1433,52 +1436,13 @@ public:
 
    // Element access
 
-   const char* begin()  const { return rep->begin(); }
-   const char* end()    const { return rep->end(); }
-   const char* rbegin() const { return rep->rbegin(); }
-   const char* rend()   const { return rep->rend(); }
-
    char         at(uint32_t pos) const { return rep->at(pos); }
    char operator[](uint32_t pos) const { return rep->operator[](pos); }
 
+   const char* pend() const { return rep->pend(); }
+
 // operator const char *() const { return rep->data(); }
 // operator       char *()       { return rep->data(); }
-
-   char* _begin()
-      {
-      U_TRACE_NO_PARAM(0, "UString::_begin()")
-
-      if (uniq() == false) duplicate();
-
-      return rep->begin();
-      }
-
-   char* _end()
-      {
-      U_TRACE_NO_PARAM(0, "UString::_end()")
-
-      if (uniq() == false) duplicate();
-
-      return rep->end();
-      }
-
-   char* _rbegin()
-      {
-      U_TRACE_NO_PARAM(0, "UString::_rbegin()")
-
-      if (uniq() == false) duplicate();
-
-      return rep->rbegin();
-      }
-
-   char* _rend()
-      {
-      U_TRACE_NO_PARAM(0, "UString::_rend()")
-
-      if (uniq() == false) duplicate();
-
-      return rep->rend();
-      }
 
    // Modifiers
 
@@ -1593,7 +1557,7 @@ public:
 
    void resize(uint32_t n, unsigned char c = '\0');
 
-   // can shrink the space used (capacity)...
+   // it can shrink the space used (capacity)...
 
    bool     shrink();
    UString& erase(uint32_t pos = 0, uint32_t n = U_NOT_FOUND) { return replace(pos, rep->fold(pos, n), "", 0); }
@@ -1992,18 +1956,24 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   bool strtob() const                  { return rep->strtob(); }
 #ifdef HAVE_STRTOF
-   float strtof() const                 { return rep->strtof(); }
+   float strtof() const { return rep->strtof(); }
 #endif
-   double strtod() const                { return rep->strtod(); }
 #ifdef HAVE_STRTOLD
-   long double strtold() const          { return rep->strtold(); }
+   long double strtold() const { return rep->strtold(); }
 #endif
-   long strtol(int base = 10) const     { return rep->strtol(base); }
 #ifdef HAVE_STRTOULL
-   int64_t strtoll(int base = 10) const { return rep->strtoll(base); }
+   int64_t strtoll(int base) const { return rep->strtoll(base); }
 #endif
+
+   bool   strtob() const         { return rep->strtob(); }
+   double strtod() const         { return rep->strtod(); }
+   long   strtol(int base) const { return rep->strtol(base); }
+
+            long strtol() const   { return rep->strtol(); }
+   unsigned long strtoul() const  { return rep->strtoul(); }   
+    int64_t      strtoll() const  { return rep->strtoll(); } 
+   uint64_t      strtoull() const { return rep->strtoull(); }
 
    // UTF8 <--> ISO Latin 1
 

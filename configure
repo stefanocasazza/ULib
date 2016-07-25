@@ -5835,6 +5835,11 @@ $as_echo_n "checking initial CFLAGS... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CFLAGS" >&5
 $as_echo "$CFLAGS" >&6; }
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking initial LIBS" >&5
+$as_echo_n "checking initial LIBS... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $LIBS" >&5
+$as_echo "$LIBS" >&6; }
+
 # ===========================================================================
 #      http://www.gnu.org/software/autoconf-archive/ax_python_devel.html
 # ===========================================================================
@@ -5967,7 +5972,7 @@ case "$host" in
 	*-openbsd*)
 		 local_os_type="openbsd"
 
-		 LIBS="$LIBS -L/usr/local/lib"
+		 LIBS="L/usr/local/lib $LIBS"
 	;;
 
 	*mingw*)
@@ -22595,7 +22600,6 @@ _ACEOF
 
 fi
 
-   LIBS=""
 	if test "$ac_cv_lib_numa_numa_max_node" = "yes"; then
 		plib="$plib -lnuma"
 	fi
@@ -27225,7 +27229,7 @@ _ACEOF
 
 fi
 
-      LIBS=""
+		LIBS=
 
 		ac_fn_cxx_check_type "$LINENO" "siginfo_t" "ac_cv_type_siginfo_t" "#include <signal.h>
 "
@@ -27394,8 +27398,7 @@ ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
-   save_LIBS="$LIBS"
-   LIBS="$LIBS $MONGODBLIBS"
+   LIBS="$MONGODBLIBS"
 
    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for mongoc_init in -lmongoc-1.0" >&5
 $as_echo_n "checking for mongoc_init in -lmongoc-1.0... " >&6; }
@@ -27492,7 +27495,7 @@ else
 fi
 
 
-   LIBS="$save_LIBS"
+   LIBS=
 	ac_ext=cpp
 ac_cpp='$CXXCPP $CPPFLAGS'
 ac_compile='$CXX -c $CXXFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -31208,6 +31211,9 @@ if test "x$ac_cv_lib_Systemstubs_printf" = xyes; then :
   ULIB_LIBS="$ULIB_LIBS -lSystemstubs -lgcc"
 fi
 
+else if test -n "$ac_cv_env_LIBS_value"; then
+	ULIB_LIBS="$ULIB_LIBS $ac_cv_env_LIBS_value"
+ fi
 fi
 
 if test "x$ac_cv_crc32_intrinsics" = xyes; then
@@ -31218,9 +31224,11 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 	if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 		ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
 #  On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
- 	else if test "$gcc_version" = "5.3.1"; then
+ 	else if test "$gcc_version" = "5.3.1" -o \
+					 "$gcc_version" = "5.4.0"; then
  		gcc_v=`gcc --version | head -n 1`
- 		if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413"; then
+  		if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413" -o \
+ 				  "$gcc_v" = "gcc (Ubuntu 5.4.0-6ubuntu1~16.04.1) 5.4.0 20160609"; then
  			ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
  		fi
  	 fi

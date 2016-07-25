@@ -56,8 +56,7 @@ uint32_t id;
 #ifdef AS_cpoll_cppsp_DO
 USP_PRINTF_ADD("{\"id\":%u,\"randomNumber\":%v}", id, rc->vitem[0].rep);
 #else
-UStringRep* rep = rc->vitem[0].rep;
-World world(id, u_strtoul(rep->data(), rep->end()));
+World world(id, rc->vitem[0].strtoul());
 USP_JSON_stringify(*pvalue, World, world);
 pvalue->clear();
 #endif

@@ -82,9 +82,9 @@ static void check2(UFileConfig& y)
    U_ASSERT( y.erase(U_STRING_FROM_CONSTANT("NOT_PRESENT")) == U_STRING_FROM_CONSTANT("60M") )
 
    U_ASSERT( value           == U_STRING_FROM_CONSTANT("60M") )
-   U_ASSERT( value.strtol()  == 60   * 1024   * 1024 )
+   U_ASSERT( value.strtol(10)  == 60   * 1024   * 1024 )
 #ifdef HAVE_STRTOLL
-   U_ASSERT( value.strtoll() == 60LL * 1024LL * 1024LL )
+   U_ASSERT( value.strtoll(10) == 60LL * 1024LL * 1024LL )
 #endif
 #ifdef HAVE_STRTOF
    U_ASSERT( value.strtof()  == 60.0 )

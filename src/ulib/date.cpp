@@ -86,6 +86,26 @@ int UTimeDate::toJulian(int day, int month, int year)
    U_RETURN(_julian);
 }
 
+time_t UTimeDate::getSecondFromDayLight()
+{
+   U_TRACE(0, "UTimeDate::getSecondFromDayLight()")
+
+   time_t t, nhr, now_day_based = (u_now->tv_sec + u_now_adjust) % U_ONE_DAY_IN_SECOND;
+
+   bool hi2 = (now_day_based >= (2 * U_ONE_HOUR_IN_SECOND)),
+        hi3 = (now_day_based >= (3 * U_ONE_HOUR_IN_SECOND));
+
+        if (hi3) nhr = 26;
+   else if (hi2) nhr =  3;
+   else          nhr =  2;
+
+   U_INTERNAL_DUMP("now_day_based = %ld hi2 = %b hi3 = %b nhr = %ld", now_day_based, hi2, hi3, nhr)
+
+   t = (nhr * U_ONE_HOUR_IN_SECOND) - now_day_based + 1;
+
+   U_RETURN(t);
+}
+
 // gcc: call is unlikely and code size would grow
 
 bool UTimeDate::operator!=(UTimeDate& date) { return getJulian() != date.getJulian(); }

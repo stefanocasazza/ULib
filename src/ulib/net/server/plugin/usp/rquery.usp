@@ -85,7 +85,7 @@ while (true)
 
    rep = rc->vitem[i].rep;
 
-   pworld->randomNumber = u_strtoul(rep->data(), rep->end());
+   pworld->randomNumber = rep->strtoul();
 
 #ifdef AS_cpoll_cppsp_DO
    USP_PRINTF("{\"id\":%u,\"randomNumber\":%v}", pworld->id, rep);

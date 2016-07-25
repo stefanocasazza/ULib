@@ -67,8 +67,6 @@ class UServer_Base;
 class U_EXPORT UUnixSocket : public USocket {
 public:
 
-   // COSTRUTTORI
-
    UUnixSocket(bool _flag = false) : USocket(false)
       {
       U_TRACE_REGISTER_OBJECT(0, UUnixSocket, "%b", _flag)

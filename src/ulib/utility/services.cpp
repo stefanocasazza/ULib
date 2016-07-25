@@ -214,7 +214,7 @@ int UServices::askToLDAP(UString* pinput, UHashMap<UString>* ptable, const char*
       if (output &&
           pinput == 0)
          {
-         (void) UFileConfig::loadProperties(*ptable, output.data(), output.end());
+         (void) UFileConfig::loadProperties(*ptable, output);
          }
 
       U_RETURN(1);
@@ -770,7 +770,7 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
       }
    else
       {
-      uint32_t bytes_written = u_dgst_finish((unsigned char*)output.end(), base64);
+      uint32_t bytes_written = u_dgst_finish((unsigned char*)output.pend(), base64);
 
       output.size_adjust(output.size() + bytes_written);
       }

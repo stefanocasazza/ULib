@@ -281,7 +281,7 @@ U_NO_EXPORT void UCommand::execute(bool flag_stdin, bool flag_stdout, bool flag_
       }
 
 #ifdef DEBUG
-   char* _end  = (char*) command.end();
+   char* _end  = (char*) command.pend();
    char* begin =         command.data();
 
    U_INTERNAL_DUMP("begin = %p end = %p argv_exec[1] = %p %S", begin, _end, argv_exec[1], argv_exec[1])
@@ -302,7 +302,7 @@ U_NO_EXPORT void UCommand::execute(bool flag_stdin, bool flag_stdout, bool flag_
        envp != environ &&
        flag_expand == U_NOT_FOUND)
       {
-      _end  = (char*) environment.end();
+      _end  = (char*) environment.pend();
       begin =         environment.data();
 
       U_INTERNAL_DUMP("begin = %p _end = %p envp[0] = %p %S", begin, _end, envp[0], envp[0])

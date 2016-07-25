@@ -49,7 +49,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UFileConfig::reset()")
 
-      _end  = data.end();
+      _end  = data.pend();
       _size = (_end - _start);
       }
 
@@ -75,7 +75,7 @@ public:
 
       UString value = at(key, keylen);
 
-      if (value) default_value = value.strtol();
+      if (value) default_value = value.strtol(10);
 
       U_RETURN(default_value);
       }
@@ -166,6 +166,8 @@ public:
 
           bool loadProperties();
    static bool loadProperties(UHashMap<UString>& table, const char* start, const char* end);
+
+   static bool loadProperties(UHashMap<UString>& table, const UString& content) { return loadProperties(table, U_STRING_TO_RANGE(content)); }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;

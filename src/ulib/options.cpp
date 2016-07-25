@@ -372,8 +372,8 @@ void UOptions::load(const UString& str)
 
             *(long_opt.c_pointer(long_opt.size())) = '\0';
 
-         //         desc, long_opt, default_value,           has_arg, short_opt
-            add(vec[i+4], long_opt,      vec[i+5], vec[i+3].strtol(), short_opt);
+         //         desc, long_opt, default_value,             has_arg, short_opt
+            add(vec[i+4], long_opt,      vec[i+5], vec[i+3].strtol(10), short_opt);
 
             i += 5;
             }

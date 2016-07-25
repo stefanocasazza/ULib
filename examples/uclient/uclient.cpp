@@ -62,7 +62,7 @@ public:
          bstdin     = (opt['s'] == U_STRING_FROM_CONSTANT("1"));
          include    = (opt['i'] == U_STRING_FROM_CONSTANT("1"));
          outpath    =  opt['o'];
-         queue_time =  opt['q'].strtol();
+         queue_time =  opt['q'].strtol(10);
          }
 
       // manage arg operation

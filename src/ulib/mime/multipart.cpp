@@ -127,7 +127,7 @@ __pure inline int UMimeMultipartMsg::encodeAutodetect(const UString& content, co
    bool longline = false;
    Encoding encoding = BIT7;
    unsigned char* ptr  = (unsigned char*) content.data();
-   unsigned char* _end = (unsigned char*) content.rep->end();
+   unsigned char* _end = (unsigned char*) content.pend();
 
    while (ptr < _end)
       {

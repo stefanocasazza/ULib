@@ -413,6 +413,8 @@ public:
       U_RETURN(t);
       }
 
+   static time_t getSecondFromDayLight();
+
    static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %T GMT", struct tm* tm = 0);
 
    void setCurrentDate() // UNIX system time - SecsSince1Jan1970UTC

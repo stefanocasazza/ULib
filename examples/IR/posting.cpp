@@ -429,7 +429,7 @@ U_NO_EXPORT void UPosting::del()
    uint32_t last_offset = POSTING_OFFSET_LAST_DOC_ID;
 #endif
 
-   char* end = posting->rep->end();
+   char* end = (char*) posting->pend();
 
    do {
       U_INTERNAL_DUMP("doc_id          = %lu", POSTING64(ptr,doc_id))
@@ -442,10 +442,7 @@ U_NO_EXPORT void UPosting::del()
       }
    while (ptr < end);
 
-   if (ptr >= end)
-      {
-      U_ERROR("del(): cannot find DocID<%llu> reference for word<%.*s> on index database", cur_doc_id, U_STRING_TO_TRACE(*word));
-      }
+   if (ptr >= end) U_ERROR("del(): cannot find DocID<%llu> reference for word<%.*s> on index database", cur_doc_id, U_STRING_TO_TRACE(*word));
 
    (void) posting->replace(ptr - data, size_entry, 0, '\0');
 
@@ -453,7 +450,7 @@ U_NO_EXPORT void UPosting::del()
 
    data = posting->data();
    ptr  = data + sizeof(uint32_t);
-   end  = posting->rep->end();
+   end  = (char*) posting->pend();
 
    U_INTERNAL_DUMP("posting->size() = %u", posting->size())
 
@@ -476,10 +473,7 @@ U_NO_EXPORT void UPosting::del()
 
    result = writePosting(RDB_REPLACE);
 
-   if (result != 0)
-      {
-      U_ERROR("del(): error<%d> on operation replace reference for word<%.*s> on index database", result, U_STRING_TO_TRACE(*word));
-      }
+   if (result != 0) U_ERROR("del(): error<%d> on operation replace reference for word<%.*s> on index database", result, U_STRING_TO_TRACE(*word));
 }
 
 // ADD WORD
@@ -873,7 +867,7 @@ void UPosting::callForPosting(vPF function)
 
    data      = posting->data();
    ptr       = data + sizeof(uint32_t);
-   char* end = posting->rep->end();
+   char* end = (char*) posting->pend();
 
    do {
       word_freq  = POSTING32(ptr,word_freq);
@@ -1027,7 +1021,7 @@ inline UString UPosting::extractDocID()
 
       data      = r->data();
       ptr       = data + sizeof(uint32_t);
-      char* end = r->end();
+      char* end = r->pend();
 
       do {
          size_entry = POSTING_SIZE(ptr);
@@ -1255,7 +1249,7 @@ U_NO_EXPORT bool UPosting::callForCompositeWord(vPF function)
 
    data = posting->data();
    ptr1 = data + sizeof(uint32_t);
-   end1 = posting->rep->end();
+   end1 = (char*) posting->pend();
 
    do {
       ptr        = ptr1;
