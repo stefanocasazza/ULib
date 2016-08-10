@@ -270,13 +270,7 @@ private:
    static void unlock() {}
 #endif
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UNotifier(const UNotifier&) = delete;
-   UNotifier& operator=(const UNotifier&) = delete;
-#else
-   UNotifier(const UNotifier&)            {}
-   UNotifier& operator=(const UNotifier&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UNotifier)
 
    friend void ULib_init();
 

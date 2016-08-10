@@ -158,13 +158,7 @@ protected:
    static void _endNamespace(void* userData, const XML_Char* prefix) { ((UXMLParser*)userData)->endNamespace(prefix); }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UXMLParser(const UXMLParser&) = delete;
-   UXMLParser& operator=(const UXMLParser&) = delete;
-#else
-   UXMLParser(const UXMLParser&)            {}
-   UXMLParser& operator=(const UXMLParser&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UXMLParser)
 };
 
 #endif

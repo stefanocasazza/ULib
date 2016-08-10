@@ -66,13 +66,7 @@ public:
    virtual int handlerRequest() U_DECL_FINAL;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USkeletonPlugIn(const USkeletonPlugIn&) = delete;
-   USkeletonPlugIn& operator=(const USkeletonPlugIn&) = delete;
-#else
-   USkeletonPlugIn(const USkeletonPlugIn&) : UServerPlugIn() {}
-   USkeletonPlugIn& operator=(const USkeletonPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USkeletonPlugIn)
 };
 
 #endif

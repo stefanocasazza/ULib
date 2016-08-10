@@ -237,13 +237,7 @@ private:
    inline uint32_t hash(const char* key, uint32_t keylen) U_NO_EXPORT;
           void     init(UFile& _x, uint32_t size, bool bexist, bool brdonly) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UCache(const UCache&) = delete;
-   UCache& operator=(const UCache&) = delete;
-#else
-   UCache(const UCache&)            {}
-   UCache& operator=(const UCache&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UCache)
 };
 
 #endif

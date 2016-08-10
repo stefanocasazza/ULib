@@ -133,13 +133,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UXML2Schema(const UXML2Schema&) = delete;
-   UXML2Schema& operator=(const UXML2Schema&) = delete;
-#else
-   UXML2Schema(const UXML2Schema&)            {}
-   UXML2Schema& operator=(const UXML2Schema&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UXML2Schema)
 };
 
 #endif

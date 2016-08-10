@@ -273,12 +273,11 @@ protected:
 
    void loadConfigParam();
 
-    UClient_Base(UFileConfig* pcfg);
+    UClient_Base(UFileConfig* pcfg = 0);
    ~UClient_Base();
 
 private:
-   UClient_Base(const UClient_Base&)            {}
-   UClient_Base& operator=(const UClient_Base&) { return *this; }
+   U_DISALLOW_COPY_AND_ASSIGN(UClient_Base)
 
    friend class USSLSocket;
    friend class UFCGIPlugIn;
@@ -314,8 +313,7 @@ public:
 #endif
 
 private:
-   UClient(const UClient&) : UClient_Base(0) {}
-   UClient& operator=(const UClient&)        { return *this; }
+   U_DISALLOW_COPY_AND_ASSIGN(UClient)
 };
 
 #ifdef USE_LIBSSL
@@ -341,13 +339,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UClient<USSLSocket>(const UClient<USSLSocket>&) = delete;
-   UClient<USSLSocket>& operator=(const UClient<USSLSocket>&) = delete;
-#else
-   UClient<USSLSocket>(const UClient<USSLSocket>&) : UClient_Base(0) {}
-   UClient<USSLSocket>& operator=(const UClient<USSLSocket>&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UClient<USSLSocket>)
 };
 #endif
 #endif

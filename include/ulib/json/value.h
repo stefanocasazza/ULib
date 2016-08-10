@@ -70,13 +70,7 @@ protected:
    void* pval;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-// UJsonTypeHandler_Base(const UJsonTypeHandler_Base&) = delete;
-   UJsonTypeHandler_Base& operator=(const UJsonTypeHandler_Base&) = delete;
-#else
-// UJsonTypeHandler_Base(const UJsonTypeHandler_Base&) {}
-   UJsonTypeHandler_Base& operator=(const UJsonTypeHandler_Base&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UJsonTypeHandler_Base)
 };
 
 #define U_JSON_TYPE_HANDLER(class_name, name_object_member, type_object_member) \
@@ -125,13 +119,7 @@ public:
    void fromJSON(UValue& json);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-// UJsonTypeHandler(const UJsonTypeHandler&) = delete;
-   UJsonTypeHandler& operator=(const UJsonTypeHandler&) = delete;
-#else
-// UJsonTypeHandler(const UJsonTypeHandler&) : UJsonTypeHandler_Base(0) {}
-   UJsonTypeHandler& operator=(const UJsonTypeHandler&)                 { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UJsonTypeHandler)
 };
 
 class U_EXPORT UValue {

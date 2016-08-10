@@ -103,13 +103,7 @@ public:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URPC(const URPC&) = delete;
-   URPC& operator=(const URPC&) = delete;
-#else
-   URPC(const URPC&)            {}
-   URPC& operator=(const URPC&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URPC)
 };
 
 #endif

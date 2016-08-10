@@ -38,13 +38,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UUDPSocket(const UUDPSocket&) = delete;
-   UUDPSocket& operator=(const UUDPSocket&) = delete;
-#else
-   UUDPSocket(const UUDPSocket&) : USocket(false) {}
-   UUDPSocket& operator=(const UUDPSocket&)       { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UUDPSocket)
 };
 
 #endif

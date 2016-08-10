@@ -203,7 +203,7 @@ UVector<UString>::UVector(const UString& str, char delim) : UVector<UStringRep*>
    if (n > 64)
       {
 #  if defined(ENABLE_MEMPOOL) && defined(U_LINUX)
-      UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(sizeof(UStringRep)),  UFile::getSizeAligned(n * sizeof(UStringRep)) / sizeof(UStringRep));
+      UMemoryPool::allocateMemoryBlocks(U_SIZE_TO_STACK_INDEX(sizeof(UStringRep)), UFile::getSizeAligned(n * sizeof(UStringRep)) / sizeof(UStringRep));
 #  endif
 
       UMemoryPool::_free(vec, _capacity, sizeof(void*));

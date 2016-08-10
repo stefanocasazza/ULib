@@ -259,13 +259,7 @@ protected:
    virtual UString encodeMethod(URPCMethod& method, const UString& nsName); // namespace qualified element information
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URPCEncoder(const URPCEncoder&) = delete;
-   URPCEncoder& operator=(const URPCEncoder&) = delete;
-#else
-   URPCEncoder(const URPCEncoder&)            {}
-   URPCEncoder& operator=(const URPCEncoder&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URPCEncoder)
 };
 
 #endif

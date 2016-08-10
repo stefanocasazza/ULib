@@ -28,12 +28,13 @@ int u_base64_max_columns;
 
 /**
  * u_alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
- *                                  base64url substitute 62 and 63 chars with -_ (minus) (underline)
+ *
+ * base64url substitute 62(+) and 63(/) chars with -_ (minus) (underline)
  */
 
 uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
 {
-   uint32_t i;
+   uint32_t i = 0;
    bool columns = false;
    unsigned char* restrict r = result;
    int char_count = 0, bits = 0, cols = 0;
@@ -42,7 +43,7 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
 
    U_INTERNAL_ASSERT_POINTER(input)
 
-   for (i = 0; i < len; ++i)
+   for (; i < len; ++i)
       {
       bits += input[i];
 

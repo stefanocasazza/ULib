@@ -395,13 +395,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UHashMap<void*>(const UHashMap<void*>&) = delete;
-   UHashMap<void*>& operator=(const UHashMap<void*>&) = delete;
-#else
-   UHashMap<void*>(const UHashMap<void*>&)            {}
-   UHashMap<void*>& operator=(const UHashMap<void*>&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UHashMap<void*>)
 
    friend class UCDB;
    friend class UHTTP;
@@ -788,13 +782,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UHashMap<T*>(const UHashMap<T*>&) = delete;
-   UHashMap<T*>& operator=(const UHashMap<T*>&) = delete;
-#else
-   UHashMap<T*>(const UHashMap<T*>&)            {}
-   UHashMap<T*>& operator=(const UHashMap<T*>&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UHashMap<T*>)
 
    friend class UHTTP;
    friend class UValue;
@@ -805,12 +793,12 @@ private:
 template <> class U_EXPORT UHashMap<UString> : public UHashMap<UStringRep*> {
 public:
 
-   UHashMap(uint32_t n, bool ignore_case) : UHashMap<UStringRep*>(n, ignore_case)
+   explicit UHashMap(uint32_t n, bool ignore_case) : UHashMap<UStringRep*>(n, ignore_case)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMap<UString>, "%u,%b", n, ignore_case)
       }
 
-   UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex) : UHashMap<UStringRep*>(n, _set_index)
+   explicit UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex) : UHashMap<UStringRep*>(n, _set_index)
       {
       U_TRACE_REGISTER_OBJECT(0, UHashMap<UString>, "%u,%p", n, _set_index)
       }
@@ -870,13 +858,7 @@ protected:
    uint32_t loadFromData(const char* start, uint32_t size);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UHashMap<UString>(const UHashMap<UString>&) = delete;
-   UHashMap<UString>& operator=(const UHashMap<UString>&) = delete;
-#else
-   UHashMap<UString>(const UHashMap<UString>&) : UHashMap<UStringRep*>() {}
-   UHashMap<UString>& operator=(const UHashMap<UString>&)                { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UHashMap<UString>)
 
    friend class UHTTP;
    friend class UHTTP2;

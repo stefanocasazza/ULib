@@ -228,13 +228,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDBI(const UDBI&) = delete;
-   UDBI& operator=(const UDBI&) = delete;
-#else
-   UDBI(const UDBI&)            {}
-   UDBI& operator=(const UDBI&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UDBI)
 };
 
 // This class represents a single row that is fetched from the DB
@@ -461,13 +455,7 @@ private:
    bool fetch(int pos, UString&   _value); // Fetch \a string value at position \a pos (starting from 1), returns false if the column has null value
    bool fetch(int pos, struct tm& _value); // Fetch \a   time value at position \a pos (starting from 1), returns false if the column has null value
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDBIRow(const UDBIRow&) = delete;
-   UDBIRow& operator=(const UDBIRow&) = delete;
-#else
-   UDBIRow(const UDBIRow&)            {}
-   UDBIRow& operator=(const UDBIRow&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UDBIRow)
 
    friend class UDBISet;
 };
@@ -546,13 +534,7 @@ public:
 private:
    dbi_result res;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDBISet(const UDBISet&) = delete;
-   UDBISet& operator=(const UDBISet&) = delete;
-#else
-   UDBISet(const UDBISet&)            {}
-   UDBISet& operator=(const UDBISet&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UDBISet)
 
    friend class UDBI;
 };
@@ -623,13 +605,7 @@ private:
    UDBI& sql;
    bool commited;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDBITransaction(const UDBITransaction&) = delete;
-   UDBITransaction& operator=(const UDBITransaction&) = delete;
-#else
-   UDBITransaction(const UDBITransaction&); // NB: gcc give error if we try to define the ctor...
-   UDBITransaction& operator=(const UDBITransaction&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UDBITransaction)
 };
 
 // Declare and define the ProcessQueryPolicy

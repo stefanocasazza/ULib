@@ -544,13 +544,7 @@ private:
       }
 #endif
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UMemoryPool(const UMemoryPool&) = delete;
-   UMemoryPool& operator=(const UMemoryPool&) = delete;
-#else
-   UMemoryPool(const UMemoryPool&)            {}
-   UMemoryPool& operator=(const UMemoryPool&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UMemoryPool)
 
    friend class UStringRep;
    friend class UServer_Base;

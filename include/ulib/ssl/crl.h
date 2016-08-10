@@ -256,13 +256,7 @@ protected:
    X509_CRL* crl;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UCrl(const UCrl&) = delete;
-   UCrl& operator=(const UCrl&) = delete;
-#else
-   UCrl(const UCrl&)            {}
-   UCrl& operator=(const UCrl&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UCrl)
 };
 
 #endif

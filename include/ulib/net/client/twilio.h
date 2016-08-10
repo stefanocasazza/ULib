@@ -141,12 +141,6 @@ protected:
    UHttpClient<USSLSocket>* client;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTwilioClient(const UTwilioClient&) = delete;
-   UTwilioClient& operator=(const UTwilioClient&) = delete;
-#else
-   UTwilioClient(const UTwilioClient&)            {}  
-   UTwilioClient& operator=(const UTwilioClient&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UTwilioClient)
 };
 #endif

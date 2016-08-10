@@ -457,11 +457,7 @@ private:
 
    UString replaceVars(const UString& piece) U_NO_EXPORT; /* replace $1 .. $n with the corresponding substring, used by replace() */
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UPCRE& operator=(const UPCRE&) = delete;
-#else
-   UPCRE& operator=(const UPCRE&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UPCRE)
 };
 
 #endif

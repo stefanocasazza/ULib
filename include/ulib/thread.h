@@ -42,7 +42,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   UThread(int _detachstate)
+   UThread(int _detachstate = 0)
       {
       U_TRACE_REGISTER_OBJECT(0, UThread, "%d", _detachstate)
 
@@ -413,15 +413,11 @@ protected:
 #endif
 
 private:
+   U_DISALLOW_ASSIGN(UThread)
+
    friend class UNotifier;
    friend class UThreadPool;
    friend class UServer_Base;
-
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UThread& operator=(const UThread&) = delete;
-#else
-   UThread& operator=(const UThread&) { return *this; }
-#endif
 };
 
 // UThreadPool class manages all the UThreadPool related activities. This includes keeping track of idle threads and snchronizations between all threads.
@@ -494,12 +490,6 @@ protected:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UThreadPool(const UThreadPool&) = delete;
-   UThreadPool& operator=(const UThreadPool&) = delete;
-#else
-   UThreadPool(const UThreadPool&) : UThread(PTHREAD_CREATE_DETACHED) {}
-   UThreadPool& operator=(const UThreadPool&)                         { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UThreadPool)
 };
 #endif

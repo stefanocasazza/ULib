@@ -23,7 +23,6 @@
 #endif
 
 /**
- * --------------------------------------------------------------------------------------------------------------------------------------------------
  * Unix domain sockets are used for stream based connected sessions between processes on the same machine
  * --------------------------------------------------------------------------------------------------------------------------------------------------
  * - UNIX domain sockets use the file system as the address name space. This means you can use UNIX file permissions to control access to communicate
@@ -96,13 +95,7 @@ private:
    static const char* path;
    static union uusockaddr_un addr;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UUnixSocket(const UUnixSocket&) = delete;
-   UUnixSocket& operator=(const UUnixSocket&) = delete;
-#else
-   UUnixSocket(const UUnixSocket&) : USocket(false) {}
-   UUnixSocket& operator=(const UUnixSocket&)       { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UUnixSocket)
 
    friend class USocket;
    friend class UServer_Base;

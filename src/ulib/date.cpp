@@ -86,7 +86,7 @@ int UTimeDate::toJulian(int day, int month, int year)
    U_RETURN(_julian);
 }
 
-time_t UTimeDate::getSecondFromDayLight()
+__pure time_t UTimeDate::getSecondFromDayLight()
 {
    U_TRACE(0, "UTimeDate::getSecondFromDayLight()")
 

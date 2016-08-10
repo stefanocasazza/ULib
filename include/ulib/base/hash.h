@@ -73,13 +73,16 @@ U_EXPORT uint32_t u_crc32(unsigned char* restrict t, uint32_t tlen) __pure;
 
 static inline uint32_t u_hash(unsigned char* restrict t, uint32_t tlen) { return u_crc32(t, tlen); }
 #else
+U_EXPORT uint32_t u_fhash(unsigned char* restrict t, uint32_t tlen) __pure;
+
 # ifndef HAVE_ARCH64
 U_EXPORT uint32_t u_hash(unsigned char* restrict t, uint32_t tlen) __pure;
 # else
 U_EXPORT uint32_t murmurhash3_x86_64(unsigned char* restrict t, uint32_t tlen) __pure;
 
-static inline uint32_t u_hash(    unsigned char* restrict t, uint32_t tlen) { return (uint32_t)XXH64(t, tlen, u_seed_hash); }
 static inline uint32_t u_hash_old(unsigned char* restrict t, uint32_t tlen) { return murmurhash3_x86_64(t, tlen); }
+
+static inline uint32_t u_hash(unsigned char* restrict t, uint32_t tlen) { return (uint32_t)(((XXH64(t,tlen,u_seed_hash) * (1578233944ULL << 32 | 194370989ULL)) + (20591U << 16)) >> 32); }
 # endif
 #endif
 

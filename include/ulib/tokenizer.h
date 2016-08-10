@@ -226,13 +226,7 @@ protected:
    UString str;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTokenizer(const UTokenizer&) = delete;
-   UTokenizer& operator=(const UTokenizer&) = delete;
-#else
-   UTokenizer(const UTokenizer&)            {}
-   UTokenizer& operator=(const UTokenizer&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UTokenizer)
 
    friend class UQueryParser;
 };

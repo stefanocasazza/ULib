@@ -96,13 +96,7 @@ protected:
    FaultCode faultCode;    // Generic reason the call failed
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URPCFault(const URPCFault&) = delete;
-   URPCFault& operator=(const URPCFault&) = delete;
-#else
-   URPCFault(const URPCFault&)            {}
-   URPCFault& operator=(const URPCFault&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URPCFault)
 };
 
 #endif

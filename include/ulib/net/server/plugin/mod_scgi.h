@@ -49,13 +49,7 @@ protected:
    static UClient_Base* connection;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USCGIPlugIn(const USCGIPlugIn&) = delete;
-   USCGIPlugIn& operator=(const USCGIPlugIn&) = delete;
-#else
-   USCGIPlugIn(const USCGIPlugIn&) : UServerPlugIn() {}
-   USCGIPlugIn& operator=(const USCGIPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USCGIPlugIn)
 };
 
 #endif

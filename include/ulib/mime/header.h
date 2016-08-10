@@ -426,13 +426,7 @@ protected:
    UHashMap<UString> table;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UMimeHeader(const UMimeHeader&) = delete;
-   UMimeHeader& operator=(const UMimeHeader&) = delete;
-#else
-   UMimeHeader(const UMimeHeader&)            {}
-   UMimeHeader& operator=(const UMimeHeader&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UMimeHeader)
 
    friend class UHTTP;
    friend class UHTTP2;

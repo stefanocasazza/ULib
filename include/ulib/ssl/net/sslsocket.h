@@ -315,13 +315,7 @@ private:
    static int selectProto(SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in, unsigned int inlen, void* arg) U_NO_EXPORT;
 #endif
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USSLSocket(const USSLSocket&) = delete;
-   USSLSocket& operator=(const USSLSocket&) = delete;
-#else
-   USSLSocket(const USSLSocket&) : USocket(false) {}
-   USSLSocket& operator=(const USSLSocket&)       { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USSLSocket)
 
                       friend class UHTTP;
                       friend class USocket;

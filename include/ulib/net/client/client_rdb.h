@@ -138,13 +138,7 @@ protected:
 private:
    void setStatus() U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URDBClient_Base(const URDBClient_Base&) = delete;
-   URDBClient_Base& operator=(const URDBClient_Base&) = delete;
-#else
-   URDBClient_Base(const URDBClient_Base&) : UClient_Base(0) {}
-   URDBClient_Base& operator=(const URDBClient_Base&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URDBClient_Base)
 };
 
 template <class Socket> class U_EXPORT URDBClient : public URDBClient_Base {
@@ -169,13 +163,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URDBClient(const URDBClient&) = delete;
-   URDBClient& operator=(const URDBClient&) = delete;
-#else
-   URDBClient(const URDBClient&) : URDBClient_Base(0) {}
-   URDBClient& operator=(const URDBClient&)           { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URDBClient)
 };
 
 #endif

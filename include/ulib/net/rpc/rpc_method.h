@@ -122,11 +122,7 @@ protected:
    UString method_name, ns;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URPCMethod& operator=(const URPCMethod&) = delete;
-#else
-   URPCMethod& operator=(const URPCMethod&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(URPCMethod)
 };
 
 #endif

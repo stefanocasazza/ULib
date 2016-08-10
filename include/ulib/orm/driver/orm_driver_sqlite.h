@@ -442,13 +442,7 @@ public:
 protected:
    bool encoding_UTF16;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UOrmDriverSqlite(const UOrmDriverSqlite&) = delete;
-   UOrmDriverSqlite& operator=(const UOrmDriverSqlite&) = delete;
-#else
-   UOrmDriverSqlite(const UOrmDriverSqlite&) : UOrmDriver(UString::getStringNull()) {}
-   UOrmDriverSqlite& operator=(const UOrmDriverSqlite&)                             { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UOrmDriverSqlite)
 
    friend class USqliteStatement;
 };

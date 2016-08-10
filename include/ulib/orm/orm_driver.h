@@ -527,11 +527,7 @@ protected:
 private:
    static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UOrmDriver& operator=(const UOrmDriver&) = delete;
-#else
-   UOrmDriver& operator=(const UOrmDriver&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UOrmDriver)
 
    friend class UOrmSession;
    friend class UServer_Base;

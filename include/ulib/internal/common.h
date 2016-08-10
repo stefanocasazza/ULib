@@ -111,9 +111,9 @@ extern U_EXPORT void  operator delete[](void*);
 #  endif
 #endif
 
+#include <ulib/internal/macro.h>
 #include <ulib/internal/objectIO.h>
 #include <ulib/internal/memory_pool.h>
-#include <ulib/internal/macro.h>
 
 enum StringAllocationType {
    STR_ALLOCATE_SOAP         = 0x00000001,

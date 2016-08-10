@@ -430,13 +430,7 @@ private:
    static void   setup()                                                           U_NO_EXPORT;
    static size_t writeFunction(void* ptr, size_t size, size_t nmemb, void* stream) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UCURL(const UCURL&) = delete;
-   UCURL& operator=(const UCURL&) = delete;
-#else
-   UCURL(const UCURL&)            {}
-   UCURL& operator=(const UCURL&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UCURL)
 };
 
 #endif

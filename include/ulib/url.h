@@ -546,7 +546,7 @@ public:
 #endif
 
 protected:
-   UString url;      // Content string - not first for object dump...
+   UString url;      // content string
    int service_end,  // End position of the service
        user_begin,   // begin position of the user
        user_end,     // end position of the user
@@ -556,10 +556,10 @@ protected:
        path_end,     // end position of the path
        query;        // start position of the last readed query entry
 
-   void findpos(); // scanns the structure of the url and is updating the position attributs of the class
+   void findpos();   // scans the structure of the url and is updating the position attributs of the class
 
 private:
-   bool prepareForQuery() U_NO_EXPORT; // prepeats the string to add a query
+   bool prepareForQuery() U_NO_EXPORT; // prepare the string to add a query
 };
 
 #endif

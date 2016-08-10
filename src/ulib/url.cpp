@@ -308,7 +308,7 @@ UString Url::getQueryBody(UVector<UString>& vec)
    U_INTERNAL_ASSERT_EQUALS(vec.empty(), false)
 
    char buffer[4096];
-   uint32_t sz, encoded_sz, value_sz;
+   uint32_t sz, value_sz;
    UString name, value, query(U_CAPACITY);
 
    for (int32_t i = 0, n = vec.size(); i < n; ++i)
@@ -320,7 +320,7 @@ UString Url::getQueryBody(UVector<UString>& vec)
                            (      sz = query.size()) +
                            (value_sz = value.size()));
 
-      encoded_sz = u_url_encode((const unsigned char*)value.data(), value_sz, (unsigned char*)buffer);
+      uint32_t encoded_sz = u_url_encode((const unsigned char*)value.data(), value_sz, (unsigned char*)buffer);
 
       U_INTERNAL_ASSERT_MINOR(encoded_sz, sizeof(buffer))
 

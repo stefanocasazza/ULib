@@ -93,11 +93,7 @@ protected:
    UVector<UXMLAttribute*> attributeContainer; // Retrieve attributes using attribute name
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UXMLElement& operator=(const UXMLElement&) = delete;
-#else
-   UXMLElement& operator=(const UXMLElement&) { return *this; }
-#endif      
+   U_DISALLOW_ASSIGN(UXMLElement)
 };
 
 #endif

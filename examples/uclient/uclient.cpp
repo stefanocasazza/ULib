@@ -245,7 +245,7 @@ private:
    bool follow_redirects;
 
 #ifndef U_COVERITY_FALSE_POSITIVE
-   U_APPLICATION_PRIVATE
+   U_DISALLOW_COPY_AND_ASSIGN(Application)
 #endif
 };
 

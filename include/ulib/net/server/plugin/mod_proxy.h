@@ -48,13 +48,7 @@ protected:
    static UHttpClient<UTCPSocket>* client_http;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UProxyPlugIn(const UProxyPlugIn&) = delete;
-   UProxyPlugIn& operator=(const UProxyPlugIn&) = delete;
-#else
-   UProxyPlugIn(const UProxyPlugIn&) : UServerPlugIn() {}
-   UProxyPlugIn& operator=(const UProxyPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UProxyPlugIn)
 };
 
 #endif

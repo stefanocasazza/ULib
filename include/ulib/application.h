@@ -32,16 +32,6 @@ int U_EXPORT main(int argc, char* argv[], char* env[]) \
    U_MAIN_END(UApplication::exit_value); \
 }
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-#  define U_APPLICATION_PRIVATE \
-   Application(const Application&) = delete; \
-   Application& operator=(const Application&) = delete;
-#else
-#  define U_APPLICATION_PRIVATE \
-   Application(const Application& a) : UApplication(a) {} \
-   Application& operator=(const Application&)          { return *this; }
-#endif
-
 /*
 #define U_MAIN(_class) \
 int WINAPI WinMain (HINSTANCE hinstance, HINSTANCE hPrevInstance, LPSTR command_line, int cmd_show) \
@@ -152,13 +142,7 @@ protected:
    void usage() { opt.printHelp(0); }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UApplication(const UApplication&) = delete;
-   UApplication& operator=(const UApplication&) = delete;
-#else
-   UApplication(const UApplication&) : opt(0)   {}
-   UApplication& operator=(const UApplication&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UApplication)
 
    friend class Application;
 };

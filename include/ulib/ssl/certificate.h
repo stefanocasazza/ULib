@@ -516,11 +516,7 @@ protected:
 private:
    static UString getRevocationURI(const void* gens) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UCertificate& operator=(const UCertificate&) = delete;
-#else
-   UCertificate& operator=(const UCertificate&) { return *this; }
-#endif      
+   U_DISALLOW_ASSIGN(UCertificate)
 };
 
 #endif

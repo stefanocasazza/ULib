@@ -54,13 +54,7 @@ protected:
    static USOAPParser* soap_parser;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USoapPlugIn(const USoapPlugIn&) = delete;
-   USoapPlugIn& operator=(const USoapPlugIn&) = delete;
-#else
-   USoapPlugIn(const USoapPlugIn&) : UServerPlugIn() {}
-   USoapPlugIn& operator=(const USoapPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USoapPlugIn)
 };
 
 #endif

@@ -133,13 +133,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   Connection(const Connection&) = delete;
-   Connection& operator=(const Connection&) = delete;
-#else
-   Connection(const Connection&)            {}
-   Connection& operator=(const Connection&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(Connection)
    };
 
 protected:
@@ -509,16 +503,10 @@ protected:
    static unsigned char* hpackEncodeHeader(unsigned char* dst, HpackDynamicTable* dyntbl, UString& key, const UString& value, UVector<UString>* pvec = 0);
 
 private:
+   U_DISALLOW_COPY_AND_ASSIGN(UHTTP2)
+
    friend class UHTTP;
    friend class UClientImage_Base;
-
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UHTTP2(const UHTTP2&) = delete;
-   UHTTP2& operator=(const UHTTP2&) = delete;
-#else
-   UHTTP2(const UHTTP2&)            {}
-   UHTTP2& operator=(const UHTTP2&) { return *this; }
-#endif      
 };
 
 #endif

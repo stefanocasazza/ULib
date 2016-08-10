@@ -37,11 +37,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UEventMessage& operator=(const UEventMessage&) = delete;
-#else
-   UEventMessage& operator=(const UEventMessage&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UEventMessage)
 };
 
 #endif

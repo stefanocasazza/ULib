@@ -599,7 +599,7 @@ public:
       }
 
 private:
-   U_APPLICATION_PRIVATE
+   U_DISALLOW_COPY_AND_ASSIGN(Application)
 };
 
 U_MAIN

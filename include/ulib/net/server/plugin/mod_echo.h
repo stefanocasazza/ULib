@@ -44,13 +44,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UEchoPlugIn(const UEchoPlugIn&) = delete;
-   UEchoPlugIn& operator=(const UEchoPlugIn&) = delete;
-#else
-   UEchoPlugIn(const UEchoPlugIn&) : UServerPlugIn() {}
-   UEchoPlugIn& operator=(const UEchoPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UEchoPlugIn)
 };
 
 #endif

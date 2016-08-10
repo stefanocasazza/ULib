@@ -36,13 +36,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTCPSocket(const UTCPSocket&) = delete;
-   UTCPSocket& operator=(const UTCPSocket&) = delete;
-#else
-   UTCPSocket(const UTCPSocket&) : USocket(false) {}
-   UTCPSocket& operator=(const UTCPSocket&)       { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UTCPSocket)
 };
 
 #endif

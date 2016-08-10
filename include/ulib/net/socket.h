@@ -681,13 +681,7 @@ protected:
    void _socket(int iSocketType = 0, int domain = 0, int protocol = 0);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USocket(const USocket&) = delete;
-   USocket& operator=(const USocket&) = delete;
-#else
-   USocket(const USocket&)            {}
-   USocket& operator=(const USocket&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USocket)
 
                       friend class UHTTP;
                       friend class UHTTP2;

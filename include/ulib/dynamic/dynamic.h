@@ -124,13 +124,7 @@ protected:
    static UString* plugin_dir;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDynamic(const UDynamic&) = delete;
-   UDynamic& operator=(const UDynamic&) = delete;
-#else
-   UDynamic(const UDynamic&)            {}
-   UDynamic& operator=(const UDynamic&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UDynamic)
 
    friend class UOrmSession;
    friend class UServer_Base;

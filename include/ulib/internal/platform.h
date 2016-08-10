@@ -267,6 +267,7 @@
 #else
 #  define PATH_SEPARATOR '/'
 #  ifdef __clang__
+#     define U_COMPILER_RANGE_FOR
 #     define U_COMPILER_RVALUE_REFS
 #     define U_COMPILER_DELETE_MEMBERS
 #     define IS_DIR_SEPARATOR(c)  (c) == '/' /* to avoid warning: equality comparison with extraneous parentheses... */

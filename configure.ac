@@ -59,11 +59,15 @@ AC_USE_SYSTEM_EXTENSIONS
 dnl This is a C++ library after all
 AC_LANG([C++])
 
-dnl Initial CFLAGS
+dnl Initial CFLAGS, CXXFLAGS, CPPFLAGS, LDFLAGS, LIBS
 AC_MSG_CHECKING(initial CFLAGS)
 AC_MSG_RESULT($CFLAGS)
-
-dnl Initial LIBS
+AC_MSG_CHECKING(initial CXXFLAGS)
+AC_MSG_RESULT($CXXFLAGS)
+AC_MSG_CHECKING(initial CPPFLAGS)
+AC_MSG_RESULT($CPPFLAGS)
+AC_MSG_CHECKING(initial LDFLAGS)
+AC_MSG_RESULT($LDFLAGS)
 AC_MSG_CHECKING(initial LIBS)
 AC_MSG_RESULT($LIBS)
 
@@ -2531,22 +2535,19 @@ else if test -n "$ac_cv_env_LIBS_value"; then
  fi
 fi
 
-if test "x$ac_cv_crc32_intrinsics" = xyes; then
 ##########################
 # to avoid: hidden symbol `__cpu_indicator_init' in /usr/lib/gcc/x86_64-linux-gnu/4.8/libgcc.a(cpuinfo.o) is referenced by DSO
 ##########################
+if test "x$ac_cv_crc32_intrinsics" = xyes; then
 	# TRAVIS CI
 	if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 		ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
-#  On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
- 	else if test "$gcc_version" = "5.3.1" -o \
-					 "$gcc_version" = "5.4.0"; then
- 		gcc_v=`gcc --version | head -n 1`
-  		if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413" -o \
- 				  "$gcc_v" = "gcc (Ubuntu 5.4.0-6ubuntu1~16.04.1) 5.4.0 20160609"; then
- 			ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
- 		fi
- 	 fi
+ 	else
+		to_match='gcc (Ubuntu 5.*'
+
+		case `gcc --version | head -n 1` in
+			$to_match) ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc" ;; # On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
+		esac
 	fi
 fi
 ##########################

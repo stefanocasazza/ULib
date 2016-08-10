@@ -66,13 +66,7 @@ protected:
    int response_type;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URPCGenericMethod(const URPCGenericMethod& g) = delete;
-   URPCGenericMethod& operator=(const URPCGenericMethod& g) = delete;
-#else
-   URPCGenericMethod(const URPCGenericMethod& g) : URPCMethod() {}
-   URPCGenericMethod& operator=(const URPCGenericMethod& g)     { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URPCGenericMethod)
 };
 
 #endif

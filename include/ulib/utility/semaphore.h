@@ -123,13 +123,7 @@ protected:
 #endif
    
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USemaphore(const USemaphore&) = delete;
-   USemaphore& operator=(const USemaphore&) = delete;
-#else
-   USemaphore(const USemaphore&)            {}
-   USemaphore& operator=(const USemaphore&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USemaphore)
 
    friend class UServer_Base;
 };

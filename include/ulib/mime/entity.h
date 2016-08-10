@@ -262,11 +262,7 @@ protected:
    bool parse(const char* ptr, uint32_t len);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UMimeEntity& operator=(const UMimeEntity&) = delete;
-#else
-   UMimeEntity& operator=(const UMimeEntity&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UMimeEntity)
 
    friend class UHTTP;
    friend class UMimeMultipart;
@@ -321,13 +317,7 @@ protected:
    UMimeEntity rfc822;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UMimeMessage(const UMimeMessage&) = delete;
-   UMimeMessage& operator=(const UMimeMessage&) = delete;
-#else
-   UMimeMessage(const UMimeMessage&) : UMimeEntity() {}
-   UMimeMessage& operator=(const UMimeMessage&)      { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UMimeMessage)
 };
 
 // If the content type is 'multipart' then the body contains one or more body parts
@@ -432,13 +422,7 @@ private:
           bool findBoundary(uint32_t pos) U_NO_EXPORT;
    static bool isOnlyWhiteSpaceOrDashesUntilEndOfLine(const char* current, const char* end) U_NO_EXPORT __pure;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UMimeMultipart(const UMimeMultipart&) = delete;
-   UMimeMultipart& operator=(const UMimeMultipart&) = delete;
-#else
-   UMimeMultipart(const UMimeMultipart&) : UMimeEntity() {}
-   UMimeMultipart& operator=(const UMimeMultipart&)      { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UMimeMultipart)
 
    friend class UHTTP;
 };

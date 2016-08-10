@@ -1438,7 +1438,7 @@ UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
             }
          while ((nlHdr.h->nlmsg_seq != 1) || (nlHdr.h->nlmsg_pid != (uint32_t)u_pid));
 
-         U_INTERNAL_DUMP("msgLen = %u readLen = %u", msgLen, readLen)
+         U_INTERNAL_DUMP("msgLen = %u readLen = %d", msgLen, readLen)
 
          // Parse the response
 

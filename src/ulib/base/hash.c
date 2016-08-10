@@ -320,7 +320,70 @@ __pure uint32_t murmurhash3_x86_32_ignore_case(unsigned char* restrict bp, uint3
    return h1;
 }
 
-#if !defined(USE_HARDWARE_CRC32) && !defined(HAVE_ARCH64)
+#if !defined(USE_HARDWARE_CRC32)
+#  define get16bits(p) u_get_unalignedp16(p)
+
+__pure uint32_t u_fhash(unsigned char* restrict data, uint32_t len)
+{
+   uint32_t tmp, hash = len, rem = len & 3;
+
+   U_INTERNAL_TRACE("u_fhash(%.*s,%u,%d)", U_min(len,128), data, len)
+
+   len >>= 2;
+
+   /* Main loop */
+
+   for (; len > 0; --len)
+      {
+      hash  +=  get16bits(data);
+      tmp    = (get16bits(data+2) << 11) ^ hash;
+      hash   = (hash << 16) ^ tmp;
+      data  += 2 * sizeof(uint16_t);
+      hash  += hash >> 11;
+      }
+
+   /* Handle end cases */
+
+   switch (rem)
+      {
+      case 3:
+         {
+         hash += get16bits(data);
+         hash ^= hash << 16;
+         hash ^= ((signed char)data[sizeof(uint16_t)]) << 18;
+         hash += hash >> 11;
+         }
+      break;
+
+      case 2:
+         {
+         hash += get16bits(data);
+         hash ^= hash << 11;
+         hash += hash >> 17;
+         }
+      break;
+
+      case 1:
+         {
+         hash += (signed char)*data;
+         hash ^= hash << 10;
+         hash += hash >> 1;
+         }
+      }
+
+   /* Force "avalanching" of final 127 bits */
+
+   hash ^= hash <<  3;
+   hash += hash >>  5;
+   hash ^= hash <<  4;
+   hash += hash >> 17;
+   hash ^= hash << 25;
+   hash += hash >>  6;
+
+   return hash;
+}
+
+#if !defined(HAVE_ARCH64)
 __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
 {
    U_INTERNAL_TRACE("u_hash(%.*s,%u,%d)", U_min(len,128), bp, len)
@@ -467,4 +530,5 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
 
    return h1;
 }
+#endif
 #endif

@@ -183,16 +183,10 @@ private:
    bool operator==(const UTimer& t) const { return (*alarm == *t.alarm); }
    bool operator!=(const UTimer& t) const { return !  operator==(t); }
 
+   U_DISALLOW_COPY_AND_ASSIGN(UTimer)
+
    friend class UNotifier;
    friend class UServer_Base;
-
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTimer(const UTimer&) = delete;
-   UTimer& operator=(const UTimer&) = delete;
-#else
-   UTimer(const UTimer&)            {}
-   UTimer& operator=(const UTimer&) { return *this; }
-#endif
 };
 
 #endif

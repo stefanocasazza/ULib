@@ -396,13 +396,7 @@ private:
    inline void readNumberOfByte() U_NO_EXPORT;
    inline bool readPortToConnect() U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UFtpClient(const UFtpClient&) = delete;
-   UFtpClient& operator=(const UFtpClient&) = delete;
-#else
-   UFtpClient(const UFtpClient&) : Socket(false) {}
-   UFtpClient& operator=(const UFtpClient&)      { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UFtpClient)
 };
 
 #endif

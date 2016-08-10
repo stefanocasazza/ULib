@@ -58,13 +58,7 @@ protected:
    static RETSIGTYPE handlerForSigTERM(int signo);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UStreamPlugIn(const UStreamPlugIn&) = delete;
-   UStreamPlugIn& operator=(const UStreamPlugIn&) = delete;
-#else
-   UStreamPlugIn(const UStreamPlugIn&) : UServerPlugIn() {}
-   UStreamPlugIn& operator=(const UStreamPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UStreamPlugIn)
 };
 
 #endif

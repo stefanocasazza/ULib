@@ -53,13 +53,7 @@ protected:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URDBServer(const URDBServer& s) = delete;
-   URDBServer& operator=(const URDBServer&) = delete;
-#else
-   URDBServer(const URDBServer& s) : UServer<UTCPSocket>(0) {}
-   URDBServer& operator=(const URDBServer&)                 { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URDBServer)
 };
 
 #endif

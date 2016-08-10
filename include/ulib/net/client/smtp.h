@@ -140,13 +140,7 @@ private:
    void setStateFromResponse() U_NO_EXPORT;
    bool syncCommand(const char* format, ...) U_NO_EXPORT; // Send a command to the SMTP server and wait for a response
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USmtpClient(const USmtpClient&) = delete;
-   USmtpClient& operator=(const USmtpClient&) = delete;
-#else
-   USmtpClient(const USmtpClient&) : Socket(false) {}
-   USmtpClient& operator=(const USmtpClient&)      { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USmtpClient)
 };
 
 #endif

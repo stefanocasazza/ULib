@@ -53,13 +53,7 @@ protected:
    static void fill_FCGIBeginRequest(u_char type, u_short content_length);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UFCGIPlugIn(const UFCGIPlugIn&) = delete;
-   UFCGIPlugIn& operator=(const UFCGIPlugIn&) = delete;
-#else
-   UFCGIPlugIn(const UFCGIPlugIn&) : UServerPlugIn() {}
-   UFCGIPlugIn& operator=(const UFCGIPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UFCGIPlugIn)
 };
 
 #endif

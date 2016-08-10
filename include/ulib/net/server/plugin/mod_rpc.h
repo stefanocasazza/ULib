@@ -56,13 +56,7 @@ protected:
    static URPCParser* rpc_parser;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URpcPlugIn(const URpcPlugIn&) = delete;
-   URpcPlugIn& operator=(const URpcPlugIn&) = delete;
-#else
-   URpcPlugIn(const URpcPlugIn&) : UServerPlugIn() {}
-   URpcPlugIn& operator=(const URpcPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URpcPlugIn)
 };
 
 #endif

@@ -48,13 +48,7 @@ protected:
    static UCommand* command;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTsaPlugIn(const UTsaPlugIn&) = delete;
-   UTsaPlugIn& operator=(const UTsaPlugIn&) = delete;
-#else
-   UTsaPlugIn(const UTsaPlugIn&) : UServerPlugIn() {}
-   UTsaPlugIn& operator=(const UTsaPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UTsaPlugIn)
 };
 
 #endif

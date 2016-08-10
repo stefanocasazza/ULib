@@ -85,8 +85,7 @@ protected:
    static void* create(const char* name, uint32_t name_len);
 
 private:
-   UPlugIn<void*>(const UPlugIn<void*>&) : UDynamic() {}
-   UPlugIn<void*>& operator=(const UPlugIn<void*>&)   { return *this; }
+   U_DISALLOW_COPY_AND_ASSIGN(UPlugIn<void*>)
 
    friend class UHTTP;
    friend class UServer_Base;
@@ -114,13 +113,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UPlugIn<T*>(const UPlugIn<T*>&) = delete;
-   UPlugIn<T*>& operator=(const UPlugIn<T*>&) = delete;
-#else
-   UPlugIn<T*>(const UPlugIn<T*>&)            {}
-   UPlugIn<T*>& operator=(const UPlugIn<T*>&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UPlugIn<T*>)
 };
 
 #endif

@@ -497,8 +497,7 @@ protected:
 #endif
 
 private:
-   UClientImage_Base(const UClientImage_Base&) : UEventFd() {}
-   UClientImage_Base& operator=(const UClientImage_Base&)   { return *this; }
+   U_DISALLOW_COPY_AND_ASSIGN(UClientImage_Base)
 
                       friend class UHTTP;
                       friend class UHTTP2;
@@ -541,8 +540,7 @@ public:
 #endif
 
 private:
-   UClientImage(const UClientImage&) : UClientImage_Base() {}
-   UClientImage& operator=(const UClientImage&)            { return *this; }
+   U_DISALLOW_COPY_AND_ASSIGN(UClientImage)
 };
 
 #ifdef USE_LIBSSL
@@ -570,13 +568,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UClientImage<USSLSocket>(const UClientImage<USSLSocket>&) = delete;
-   UClientImage<USSLSocket>& operator=(const UClientImage<USSLSocket>&) = delete;
-#else
-   UClientImage<USSLSocket>(const UClientImage<USSLSocket>&) : UClientImage_Base() {}
-   UClientImage<USSLSocket>& operator=(const UClientImage<USSLSocket>&)            { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UClientImage<USSLSocket>)
 };
 #endif
 

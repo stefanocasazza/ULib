@@ -353,13 +353,7 @@ private:
 
    bool syncCommand(const char* format, ...) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UImapClient(const UImapClient&) = delete;
-   UImapClient& operator=(const UImapClient&) = delete;
-#else
-   UImapClient(const UImapClient&) : Socket(false) {}
-   UImapClient& operator=(const UImapClient&)      { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UImapClient)
 };
 
 #endif

@@ -186,13 +186,7 @@ protected:
 private:
    void init() U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UFileConfig(const UFileConfig&) = delete;
-   UFileConfig& operator=(const UFileConfig&) = delete;
-#else
-   UFileConfig(const UFileConfig&) : UFile()  {}
-   UFileConfig& operator=(const UFileConfig&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UFileConfig)
 
    friend class USSIPlugIn;
    friend class UServer_Base;

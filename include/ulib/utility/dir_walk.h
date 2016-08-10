@@ -211,13 +211,7 @@ private:
 
    static int cmp_modify(const void* a, const void* b) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDirWalk(const UDirWalk&) = delete;
-   UDirWalk& operator=(const UDirWalk&) = delete;
-#else
-   UDirWalk(const UDirWalk&)            {}
-   UDirWalk& operator=(const UDirWalk&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UDirWalk)
 
    friend class IR;
    friend class UHTTP;

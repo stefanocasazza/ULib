@@ -91,11 +91,7 @@ protected:
    static UBaseTransform* nodeRead(xmlNodePtr node, int usage);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTransformCtx& operator=(const UTransformCtx&) = delete;
-#else
-   UTransformCtx& operator=(const UTransformCtx&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UTransformCtx)
 
    friend class UDSIGContext;
    friend class UReferenceCtx;
@@ -149,14 +145,8 @@ protected:
    bool processSignatureNode(xmlNodePtr signature, const char*& alg, UString& data);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDSIGContext(const UDSIGContext&) = delete;
-   UDSIGContext& operator=(const UDSIGContext&) = delete;
-#else
-   UDSIGContext(const UDSIGContext&)            {}
-   UDSIGContext& operator=(const UDSIGContext&) { return *this; }
-#endif
-
+   U_DISALLOW_COPY_AND_ASSIGN(UDSIGContext)
+   
    friend class UTransformCtx;
    friend class UReferenceCtx;
 };
@@ -231,12 +221,8 @@ protected:
    bool processNode(xmlNodePtr node);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UReferenceCtx& operator=(const UReferenceCtx&) = delete;
-#else
-   UReferenceCtx& operator=(const UReferenceCtx&) { return *this; }
-#endif
-
+   U_DISALLOW_ASSIGN(UReferenceCtx)
+   
    friend class UDSIGContext;
 };
 

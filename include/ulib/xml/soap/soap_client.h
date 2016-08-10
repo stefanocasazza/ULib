@@ -61,13 +61,7 @@ protected:
    virtual ~USOAPClient_Base();
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USOAPClient_Base(const USOAPClient_Base&) = delete;
-   USOAPClient_Base& operator=(const USOAPClient_Base&) = delete;
-#else
-   USOAPClient_Base(const USOAPClient_Base&) : URPCClient_Base(0) {}
-   USOAPClient_Base& operator=(const USOAPClient_Base&)           { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(USOAPClient_Base)
 };
 
 template <class Socket> class U_EXPORT USOAPClient : public USOAPClient_Base {
@@ -90,13 +84,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USOAPClient(const USOAPClient&) = delete;
-   USOAPClient& operator=(const USOAPClient&) = delete;
-#else
-   USOAPClient(const USOAPClient&) : USOAPClient_Base(0) {}
-   USOAPClient& operator=(const USOAPClient&)            { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(USOAPClient)
 };
 
 #ifdef USE_LIBSSL
@@ -122,13 +110,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USOAPClient<USSLSocket>(const USOAPClient<USSLSocket>&) = delete;
-   USOAPClient<USSLSocket>& operator=(const USOAPClient<USSLSocket>&) = delete;
-#else
-   USOAPClient<USSLSocket>(const USOAPClient<USSLSocket>&) : USOAPClient_Base(0) {}
-   USOAPClient<USSLSocket>& operator=(const USOAPClient<USSLSocket>&)            { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USOAPClient<USSLSocket>)
 };
 #endif
 #endif

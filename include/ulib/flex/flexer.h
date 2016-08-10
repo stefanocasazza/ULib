@@ -151,13 +151,7 @@ protected:
    int parsed_chars, write_position;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UFlexer(const UFlexer&) = delete;
-   UFlexer& operator=(const UFlexer&) = delete;
-#else
-   UFlexer(const UFlexer&) : yyFlexLexer() {}
-   UFlexer& operator=(const UFlexer&)      { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UFlexer)
 };
 
 #endif

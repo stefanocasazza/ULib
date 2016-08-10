@@ -57,13 +57,7 @@ private:
    static void      removeSession(SSL_CTX* ctx, SSL_SESSION* sess);
    static SSL_SESSION* getSession(SSL* ssl, unsigned char* id, int len, int* copy);
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USSLSession(const USSLSession&) = delete;
-   USSLSession& operator=(const USSLSession&) = delete;
-#else
-   USSLSession(const USSLSession&) : UDataStorage() {}
-   USSLSession& operator=(const USSLSession&)       { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USSLSession)
 
    friend class UHTTP;
    friend class UHttpPlugIn;

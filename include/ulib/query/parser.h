@@ -149,11 +149,7 @@ private:
    static UQueryNode* getRawDNF(UQueryNode* root) U_NO_EXPORT;
    static void        swap(UQueryNode*& a, UQueryNode*& b) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UQueryNode& operator=(const UQueryNode& n) = delete;
-#else
-   UQueryNode& operator=(const UQueryNode& n) { return *this; }
-#endif      
+   U_DISALLOW_ASSIGN(UQueryNode)
 
    friend class UQueryParser;
 };
@@ -302,13 +298,7 @@ private:
 
    static void evaluate(UStringRep* word, bool positive) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UQueryParser(const UQueryParser& q) = delete;
-   UQueryParser& operator=(const UQueryParser& q) = delete;
-#else
-   UQueryParser(const UQueryParser& q)            {}
-   UQueryParser& operator=(const UQueryParser& q) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UQueryParser)
 };
 
 #endif

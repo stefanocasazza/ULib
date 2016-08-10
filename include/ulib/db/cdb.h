@@ -79,7 +79,7 @@ public:
       uint32_t pos;  // starting byte position of the record (0 -> slot empty)
    } cdb_hash_table_slot;
 
-   UCDB(int ignore_case)
+   UCDB(int ignore_case = 0)
       {
       U_TRACE_REGISTER_OBJECT(0, UCDB, "%d", ignore_case)
 
@@ -333,13 +333,7 @@ protected:
 private:
    inline bool match(uint32_t pos) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UCDB(const UCDB&) = delete;
-   UCDB& operator=(const UCDB&) = delete;
-#else
-   UCDB(const UCDB&) : UFile()  {}
-   UCDB& operator=(const UCDB&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UCDB)
 
    friend class URDB;
    friend class UHTTP;

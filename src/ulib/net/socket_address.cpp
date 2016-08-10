@@ -198,13 +198,7 @@ protected:
    union uusockaddr addr;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   SocketAddress(const SocketAddress&) = delete;
-   SocketAddress& operator=(const SocketAddress&) = delete;
-#else
-   SocketAddress(const SocketAddress&)            {}
-   SocketAddress& operator=(const SocketAddress&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(SocketAddress)
 
    friend class USocket;
 };

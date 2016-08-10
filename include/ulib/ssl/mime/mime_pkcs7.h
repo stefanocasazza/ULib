@@ -66,13 +66,7 @@ protected:
    bool valid_content;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UMimePKCS7(const UMimePKCS7&) = delete;
-   UMimePKCS7& operator=(const UMimePKCS7&) = delete;
-#else
-   UMimePKCS7(const UMimePKCS7&) : UMimeEntity() {}
-   UMimePKCS7& operator=(const UMimePKCS7&)      { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UMimePKCS7)
 };
 
 #endif

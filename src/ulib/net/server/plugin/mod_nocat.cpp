@@ -167,7 +167,7 @@ int UNoCatPlugIn::handlerTime()
 
    U_INTERNAL_DUMP("check_expire = %u next_event_time = %u", check_expire, next_event_time)
 
-   UTimeVal::setSecond(next_event_time);
+   UEventTime::setTimeToExpire(next_event_time);
 
    U_RETURN(0); // monitoring
 }
@@ -271,9 +271,7 @@ UNoCatPlugIn::~UNoCatPlugIn()
 
    if (peers_delete)
       {
-      UModNoCatPeer* p = peers_delete;
-
-      do { delete[] peers_delete; } while ((peers_delete = p->next));
+      for (UModNoCatPeer* p = peers_delete; p; p = p->next) delete[] p;
       }
 
 #ifdef USE_LIBTDB
@@ -988,7 +986,7 @@ void UNoCatPlugIn::permit(const UString& UserDownloadRate, const UString& UserUp
 
    if (check_expire)
       {
-      peer->UTimeVal::setSecond(peer->time_remain);
+      peer->UEventTime::setTimeToExpire(peer->time_remain);
 
       UTimer::insert(peer);
       }
@@ -1978,7 +1976,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
             }
          }
 
-      if (check_expire) UTimeVal::setSecond(check_expire);
+      if (check_expire) UEventTime::setTimeToExpire(check_expire);
 
       U_INTERNAL_DUMP("check_expire = %u time_available = %u check_type = %B", check_expire, time_available, check_type)
 

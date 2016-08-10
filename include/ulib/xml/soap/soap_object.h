@@ -86,13 +86,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USOAPObject(const USOAPObject&) = delete;
-   USOAPObject& operator=(const USOAPObject&) = delete;
-#else
-   USOAPObject(const USOAPObject&) : URPCObject() {}
-   USOAPObject& operator=(const USOAPObject&)     { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(USOAPObject)
 };
 
 #endif

@@ -259,7 +259,7 @@ public:
 
       if (u_setStartTime() == false) U_WARNING("System date update failed: %#5D", u_now->tv_sec);
 
-      UTimeVal::setSecond(UTimeDate::getSecondFromDayLight());
+      UEventTime::setTimeToExpire(UTimeDate::getSecondFromDayLight());
 
       U_RETURN(0); // monitoring
       }
@@ -422,13 +422,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UThrottling(const UThrottling&) = delete;
-   UThrottling& operator=(const UThrottling&) = delete;
-#else
-   UThrottling(const UThrottling&) : UDataStorage() {}
-   UThrottling& operator=(const UThrottling&)       { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UThrottling)
 };
 
 class U_NO_EXPORT UBandWidthThrottling : public UEventTime {
@@ -657,13 +651,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UBandWidthThrottling(const UBandWidthThrottling&) = delete;
-   UBandWidthThrottling& operator=(const UBandWidthThrottling&) = delete;
-#else
-   UBandWidthThrottling(const UBandWidthThrottling&) : UEventTime() {}
-   UBandWidthThrottling& operator=(const UBandWidthThrottling&)     { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UBandWidthThrottling)
 };
 
 class U_NO_EXPORT UClientThrottling : public UEventTime {
@@ -700,13 +688,7 @@ protected:
    UClientImage_Base* pClientImage;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UClientThrottling(const UClientThrottling&) = delete;
-   UClientThrottling& operator=(const UClientThrottling&) = delete;
-#else
-   UClientThrottling(const UClientThrottling&) : UEventTime() {}
-   UClientThrottling& operator=(const UClientThrottling&)     { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UClientThrottling)
 };
 
 bool                              UServer_Base::throttling_chk;

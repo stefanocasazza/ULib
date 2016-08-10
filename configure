@@ -5834,7 +5834,18 @@ ac_compiler_gnu=$ac_cv_cxx_compiler_gnu
 $as_echo_n "checking initial CFLAGS... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $CFLAGS" >&5
 $as_echo "$CFLAGS" >&6; }
-
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking initial CXXFLAGS" >&5
+$as_echo_n "checking initial CXXFLAGS... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $CXXFLAGS" >&5
+$as_echo "$CXXFLAGS" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking initial CPPFLAGS" >&5
+$as_echo_n "checking initial CPPFLAGS... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $CPPFLAGS" >&5
+$as_echo "$CPPFLAGS" >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking initial LDFLAGS" >&5
+$as_echo_n "checking initial LDFLAGS... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $LDFLAGS" >&5
+$as_echo "$LDFLAGS" >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking initial LIBS" >&5
 $as_echo_n "checking initial LIBS... " >&6; }
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $LIBS" >&5
@@ -31216,22 +31227,19 @@ else if test -n "$ac_cv_env_LIBS_value"; then
  fi
 fi
 
-if test "x$ac_cv_crc32_intrinsics" = xyes; then
 ##########################
 # to avoid: hidden symbol `__cpu_indicator_init' in /usr/lib/gcc/x86_64-linux-gnu/4.8/libgcc.a(cpuinfo.o) is referenced by DSO
 ##########################
+if test "x$ac_cv_crc32_intrinsics" = xyes; then
 	# TRAVIS CI
 	if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 		ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
-#  On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
- 	else if test "$gcc_version" = "5.3.1" -o \
-					 "$gcc_version" = "5.4.0"; then
- 		gcc_v=`gcc --version | head -n 1`
-  		if test "$gcc_v" = "gcc (Ubuntu 5.3.1-14ubuntu2) 5.3.1 20160413" -o \
- 				  "$gcc_v" = "gcc (Ubuntu 5.4.0-6ubuntu1~16.04.1) 5.4.0 20160609"; then
- 			ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
- 		fi
- 	 fi
+ 	else
+		to_match='gcc (Ubuntu 5.*'
+
+		case `gcc --version | head -n 1` in
+			$to_match) ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc" ;; # On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
+		esac
 	fi
 fi
 ##########################

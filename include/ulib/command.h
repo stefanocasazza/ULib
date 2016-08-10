@@ -315,11 +315,7 @@ private:
    static bool postCommand(UString* input, UString* output) U_NO_EXPORT; // NB: (void*)-1 is a special value...
    static void setStdInOutErr(int fd_stdin, bool flag_stdin, bool flag_stdout, int fd_stderr) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UCommand& operator=(const UCommand&) = delete;
-#else
-   UCommand& operator=(const UCommand&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UCommand)
 
    friend class UHTTP;
    friend class UDialog;

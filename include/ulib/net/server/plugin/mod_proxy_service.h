@@ -109,11 +109,7 @@ protected:
    bool request_cert, follow_redirects, response_client, websocket;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UModProxyService& operator=(const UModProxyService&) = delete;
-#else
-   UModProxyService& operator=(const UModProxyService&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UModProxyService)
 
    friend class UHTTP;
 };

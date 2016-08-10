@@ -39,6 +39,9 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
+   // default move assignment operator
+   U_MOVE_ASSIGNMENT(UTimeDate)
+
    UTimeDate()
       {
       U_TRACE_REGISTER_OBJECT(0, UTimeDate, "", 0)
@@ -148,11 +151,6 @@ public:
 
       return *this;
       }
-
-#if defined(U_COMPILER_RVALUE_REFS) && (!defined(__GNUC__) || GCC_VERSION_NUM > 50300) // GCC has problems dealing with move constructor, so turn the feature on for 5.3.1 and above, only
-   UTimeDate(UTimeDate && d) = default;
-   UTimeDate& operator=(UTimeDate && d) = default;
-#endif
 
    // SERVICES
 
@@ -413,7 +411,7 @@ public:
       U_RETURN(t);
       }
 
-   static time_t getSecondFromDayLight();
+   static time_t getSecondFromDayLight() __pure;
 
    static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %T GMT", struct tm* tm = 0);
 

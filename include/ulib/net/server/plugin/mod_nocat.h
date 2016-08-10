@@ -102,11 +102,7 @@ protected:
    int checkPeerInfo(bool btraffic);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UModNoCatPeer& operator=(const UModNoCatPeer&) = delete;
-#else
-   UModNoCatPeer& operator=(const UModNoCatPeer&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UModNoCatPeer)
 
    friend class UNoCatPlugIn;
 };
@@ -331,13 +327,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UNoCatPlugIn(const UNoCatPlugIn&) = delete;
-   UNoCatPlugIn& operator=(const UNoCatPlugIn&) = delete;
-#else
-   UNoCatPlugIn(const UNoCatPlugIn&) : UServerPlugIn(), UEventTime() {}
-   UNoCatPlugIn& operator=(const UNoCatPlugIn&)                      { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UNoCatPlugIn)
 
    friend class UModNoCatPeer;
 };

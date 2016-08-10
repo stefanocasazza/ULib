@@ -392,13 +392,7 @@ private:
    static char** split_str(char* str) U_NO_EXPORT;
 #endif
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   ULDAP(const ULDAP&) = delete;
-   ULDAP& operator=(const ULDAP&) = delete;
-#else
-   ULDAP(const ULDAP&)            {}
-   ULDAP& operator=(const ULDAP&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(ULDAP)
 };
 
 #endif

@@ -147,10 +147,9 @@ plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/6.1.0/include/stdbool.h \
  ../../include/ulib/debug/common.h ../../include/ulib/debug/error.h \
  ../../include/ulib/debug/error_memory.h \
- ../../include/ulib/debug/objectDB.h \
+ ../../include/ulib/debug/objectDB.h ../../include/ulib/internal/macro.h \
  ../../include/ulib/internal/objectIO.h \
- ../../include/ulib/internal/memory_pool.h \
- ../../include/ulib/internal/macro.h /usr/include/dlfcn.h \
+ ../../include/ulib/internal/memory_pool.h /usr/include/dlfcn.h \
  /usr/include/bits/dlfcn.h
 
 /usr/include/stdc-predef.h:
@@ -563,11 +562,11 @@ plugin/product.h:
 
 ../../include/ulib/debug/objectDB.h:
 
+../../include/ulib/internal/macro.h:
+
 ../../include/ulib/internal/objectIO.h:
 
 ../../include/ulib/internal/memory_pool.h:
-
-../../include/ulib/internal/macro.h:
 
 /usr/include/dlfcn.h:
 

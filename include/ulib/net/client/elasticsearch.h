@@ -206,12 +206,6 @@ protected:
    UHttpClient<UTCPSocket>* client;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UElasticSearchClient(const UElasticSearchClient&) = delete;
-   UElasticSearchClient& operator=(const UElasticSearchClient&) = delete;
-#else
-   UElasticSearchClient(const UElasticSearchClient&)            {}   
-   UElasticSearchClient& operator=(const UElasticSearchClient&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UElasticSearchClient)
 };
 #endif

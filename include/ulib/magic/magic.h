@@ -99,13 +99,7 @@ protected:
    static magic_t magic; /* pointer to magic :-) */
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UMagic(const UMagic&) = delete;
-   UMagic& operator=(const UMagic&) = delete;
-#else
-   UMagic(const UMagic&)            {}
-   UMagic& operator=(const UMagic&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UMagic)
 
    friend class UHttpClient_Base;
    friend class UMimeMultipartMsg;

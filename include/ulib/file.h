@@ -1085,11 +1085,7 @@ private:
    uint64_t u_inode;
 #endif
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UFile& operator=(const UFile&) = delete;
-#else
-   UFile& operator=(const UFile&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UFile)
 
    friend void ULib_init();
 

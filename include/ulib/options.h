@@ -50,7 +50,7 @@ public:
            args,
            report_bugs;
 
-    UOptions(uint32_t n);
+    UOptions(uint32_t n = 0);
    ~UOptions();
 
    // SERVICES
@@ -124,13 +124,7 @@ protected:
    void printHelp(vPF func) __attribute__ ((noreturn));
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UOptions(const UOptions&) = delete;
-   UOptions& operator=(const UOptions&) = delete;
-#else
-   UOptions(const UOptions&)            {}
-   UOptions& operator=(const UOptions&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UOptions)
 
    friend class Application;
    friend class UApplication;

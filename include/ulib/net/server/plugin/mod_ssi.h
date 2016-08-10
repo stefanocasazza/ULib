@@ -89,13 +89,7 @@ private:
    static bool    callService(const UString& name, const UString& value) U_NO_EXPORT;
    static UString getPathname(const UString& name, const UString& value, const UString& directory) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USSIPlugIn(const USSIPlugIn&) = delete;
-   USSIPlugIn& operator=(const USSIPlugIn&) = delete;
-#else
-   USSIPlugIn(const USSIPlugIn&) : UServerPlugIn() {}
-   USSIPlugIn& operator=(const USSIPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USSIPlugIn)
 };
 
 #endif

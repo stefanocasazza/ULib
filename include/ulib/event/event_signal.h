@@ -27,13 +27,7 @@ public:
    virtual int handlerSignal() { return -1; }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UEventSignal(const UEventSignal&) = delete;
-   UEventSignal& operator=(const UEventSignal&) = delete;
-#else
-   UEventSignal(const UEventSignal&)            {}
-   UEventSignal& operator=(const UEventSignal&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UEventSignal)
 };
 
 #endif

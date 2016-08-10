@@ -264,13 +264,7 @@ protected:
    ShibTargetConfig* conf;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UShibPlugIn(const UShibPlugIn&) = delete;
-   UShibPlugIn& operator=(const UShibPlugIn&) = delete;
-#else
-   UShibPlugIn(const UShibPlugIn&) : UServerPlugIn() {}
-   UShibPlugIn& operator=(const UShibPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UShibPlugIn)
 };
 
 #endif

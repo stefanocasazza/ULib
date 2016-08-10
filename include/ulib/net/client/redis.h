@@ -451,13 +451,7 @@ private:
 
    static char* getResponseItem(const UString& response, char* ptr, UVector<UString>& vec, uint32_t depth) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UREDISClient_Base(const UREDISClient_Base&) = delete;
-   UREDISClient_Base& operator=(const UREDISClient_Base&) = delete;
-#else
-   UREDISClient_Base(const UREDISClient_Base&) : UClient_Base(0) {}  
-   UREDISClient_Base& operator=(const UREDISClient_Base&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UREDISClient_Base)
 };
 
 template <class Socket> class U_EXPORT UREDISClient : public UREDISClient_Base {
@@ -482,13 +476,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UREDISClient(const UREDISClient&) = delete;
-   UREDISClient& operator=(const UREDISClient&) = delete;
-#else
-   UREDISClient(const UREDISClient&) : UREDISClient_Base() {}
-   UREDISClient& operator=(const UREDISClient&)            { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UREDISClient)
 };
 
 #endif

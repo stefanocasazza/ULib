@@ -63,13 +63,7 @@ protected:
    bool mustUnderstand;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URPCEnvelope(const URPCEnvelope&) = delete;
-   URPCEnvelope& operator=(const URPCEnvelope&) = delete;
-#else
-   URPCEnvelope(const URPCEnvelope&)            {}
-   URPCEnvelope& operator=(const URPCEnvelope&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URPCEnvelope)
 
    friend class URPCParser;
    friend class USOAPParser;

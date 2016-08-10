@@ -147,13 +147,7 @@ protected:
 private:
    static inline int encodeAutodetect(const UString& content, const char* charset) U_NO_EXPORT __pure;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UMimeMultipartMsg(const UMimeMultipartMsg&) = delete;
-   UMimeMultipartMsg& operator=(const UMimeMultipartMsg&) = delete;
-#else
-   UMimeMultipartMsg(const UMimeMultipartMsg&)            {}
-   UMimeMultipartMsg& operator=(const UMimeMultipartMsg&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UMimeMultipartMsg)
 };
 
 #endif

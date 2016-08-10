@@ -448,13 +448,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UOrmDriverMySql(const UOrmDriverMySql&) = delete;
-   UOrmDriverMySql& operator=(const UOrmDriverMySql&) = delete;
-#else
-   UOrmDriverMySql(const UOrmDriverMySql&) : UOrmDriver(UString::getStringNull()) {}
-   UOrmDriverMySql& operator=(const UOrmDriverMySql&)                             { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UOrmDriverMySql)
 
    friend class UMySqlStatement;
 };

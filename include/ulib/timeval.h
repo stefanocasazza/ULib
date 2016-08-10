@@ -16,10 +16,8 @@
 
 #include <ulib/string.h>
 
-class U_EXPORT UTimeVal : public timeval {
+class U_EXPORT UTimeVal : public timeval { // NB: the object can be used as (struct timeval) because UMemoryError is allocated after...
 public:
-
-   // NB: the object can be used as (struct timeval) because UMemoryError is allocated after...
 
    // Check for memory error
    U_MEMORY_TEST
@@ -27,6 +25,9 @@ public:
    // Allocator e Deallocator
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
+
+   // default move assignment operator
+   U_MOVE_ASSIGNMENT(UTimeVal)
 
    void adjust()
       {

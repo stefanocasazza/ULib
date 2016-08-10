@@ -8481,7 +8481,6 @@ bool UHTTP::setEnvironmentForLanguageProcessing(int type, void* env, vPFpvpcpc f
 
    if (getCGIEnvironment(*UClientImage_Base::environment, type) == false) U_RETURN(false);
 
-   char* ptr;
    char** envp  = 0;
    int32_t nenv = UCommand::setEnvironment(*UClientImage_Base::environment, envp);
 
@@ -8489,7 +8488,7 @@ bool UHTTP::setEnvironmentForLanguageProcessing(int type, void* env, vPFpvpcpc f
       {
       U_INTERNAL_DUMP("envp[%d] = %S", i, envp[i])
 
-      ptr = strchr(envp[i], '=');
+      char* ptr = strchr(envp[i], '=');
 
       if (ptr)
          {

@@ -1311,7 +1311,7 @@ int UNotifier::waitForRead(int fd, int timeoutMS)
    UEventTime* ptime;
 
    if (timeoutMS < 0) ptime = 0;
-   else              (ptime = time_obj)->setTimeToExpire(timeoutMS);
+   else              (ptime = time_obj)->setTimeToExpireMS(timeoutMS);
 
    fd_set fdmask;
    FD_ZERO(&fdmask);
@@ -1354,18 +1354,17 @@ int UNotifier::waitForWrite(int fd, int timeoutMS)
       U_RETURN(-1);
       }
 #else
-
 # ifdef _MSWINDOWS_
    if (is_pipe(fd) != INVALID_HANDLE_VALUE) U_RETURN(1);
 # endif
 
    // If both fields of the timeval structure are zero, then select() returns immediately.
-   // (This is useful for polling). If ptmp is NULL (no timeout), select() can block indefinitely...
+   // (This is useful for polling). If ptime is NULL (no timeout), select() can block indefinitely...
 
    UEventTime* ptime;
 
    if (timeoutMS < 0) ptime = 0;
-   else              (ptime = time_obj)->setTimeToExpire(timeoutMS);
+   else              (ptime = time_obj)->setTimeToExpireMS(timeoutMS);
 
    fd_set fdmask;
    FD_ZERO(&fdmask);

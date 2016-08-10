@@ -70,7 +70,7 @@ class URDBClientImage;
 class U_EXPORT URDB : public UCDB {
 public:
 
-   URDB(int _ignore_case) : UCDB(_ignore_case)
+   URDB(int _ignore_case = false) : UCDB(_ignore_case)
       {
       U_TRACE_REGISTER_OBJECT(0, URDB, "%d", _ignore_case)
 
@@ -380,13 +380,7 @@ private:
    static void htInsert(URDB* prdb) U_NO_EXPORT;      // Insert one key/data pair in the cache
    static void htRemoveAlloc(URDB* prdb) U_NO_EXPORT; // remove one node allocated for the hash tree
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URDB(const URDB&) = delete;
-   URDB& operator=(const URDB&) = delete;
-#else
-   URDB(const URDB& r) : UCDB(r) {}
-   URDB& operator=(const URDB&)  { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URDB)
 
    friend class UHTTP;
    friend class URDBServer;
@@ -535,13 +529,7 @@ protected:
    static int callEntryCheck(UStringRep* key, UStringRep* data);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URDBObjectHandler<UDataStorage*>(const URDBObjectHandler<UDataStorage*>&) = delete;
-   URDBObjectHandler<UDataStorage*>& operator=(const URDBObjectHandler<UDataStorage*>&) = delete;
-#else
-   URDBObjectHandler<UDataStorage*>(const URDBObjectHandler<UDataStorage*>&) : URDB(false) {}
-   URDBObjectHandler<UDataStorage*>& operator=(const URDBObjectHandler<UDataStorage*>&)    { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URDBObjectHandler<UDataStorage*>)
 };
 
 template <class T> class U_EXPORT URDBObjectHandler<T*> : public URDBObjectHandler<UDataStorage*> {
@@ -564,13 +552,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URDBObjectHandler<T*>(const URDBObjectHandler<T*>&) = delete;
-   URDBObjectHandler<T*>& operator=(const URDBObjectHandler<T*>&) = delete;
-#else
-   URDBObjectHandler<T*>(const URDBObjectHandler<T*>&) : URDBObjectHandler<UDataStorage*>(UString::getStringNull(),0,0) {}
-   URDBObjectHandler<T*>& operator=(const URDBObjectHandler<T*>&)                                                       { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URDBObjectHandler<T*>)
 };
 
 #endif

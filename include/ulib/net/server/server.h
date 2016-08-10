@@ -609,7 +609,7 @@ protected:
    static void initThrottlingServer();
 #endif
 
-            UServer_Base(UFileConfig* pcfg);
+            UServer_Base(UFileConfig* pcfg = 0);
    virtual ~UServer_Base();
 
 #ifndef U_LOG_DISABLE
@@ -660,6 +660,13 @@ protected:
    static void sendSignalToAllChildren(int signo, sighandler_t handler);
 
 private:
+   static void manageSigHUP() U_NO_EXPORT;
+   static bool clientImageHandlerRead() U_NO_EXPORT;
+   static void logMemUsage(const char* signame) U_NO_EXPORT;
+   static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
+
+   U_DISALLOW_COPY_AND_ASSIGN(UServer_Base)
+
    friend class UHTTP;
    friend class UHTTP2;
    friend class UTimeStat;
@@ -686,19 +693,6 @@ private:
    friend class UClientImage_Base;
    friend class UTimeoutConnection;
    friend class UBandWidthThrottling;
-
-   static void manageSigHUP() U_NO_EXPORT;
-   static bool clientImageHandlerRead() U_NO_EXPORT;
-   static void logMemUsage(const char* signame) U_NO_EXPORT;
-   static void loadStaticLinkedModules(const char* name) U_NO_EXPORT;
-
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UServer_Base(const UServer_Base&) = delete;
-   UServer_Base& operator=(const UServer_Base&) = delete;
-#else
-   UServer_Base(const UServer_Base&) : UEventFd() {}
-   UServer_Base& operator=(const UServer_Base&)   { return *this; }
-#endif
 };
 
 template <class Socket> class U_EXPORT UServer : public UServer_Base {
@@ -706,7 +700,7 @@ public:
 
    typedef UClientImage<Socket> client_type;
 
-   UServer(UFileConfig* pcfg) : UServer_Base(pcfg)
+   UServer(UFileConfig* pcfg = 0) : UServer_Base(pcfg)
       {
       U_TRACE_REGISTER_OBJECT(0, UServer, "%p", pcfg)
 
@@ -760,13 +754,7 @@ protected:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UServer(const UServer&) = delete;
-   UServer& operator=(const UServer&) = delete;
-#else
-   UServer(const UServer&) : UServer_Base(0) {}
-   UServer& operator=(const UServer&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UServer)
 };
 
 #ifdef USE_LIBSSL
@@ -833,13 +821,7 @@ protected:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UServer<USSLSocket>(const UServer<USSLSocket>&) = delete;
-   UServer<USSLSocket>& operator=(const UServer<USSLSocket>&) = delete;
-#else
-   UServer<USSLSocket>(const UServer<USSLSocket>&) : UServer_Base(0) {}
-   UServer<USSLSocket>& operator=(const UServer<USSLSocket>&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UServer<USSLSocket>)
 };
 #endif
 #endif

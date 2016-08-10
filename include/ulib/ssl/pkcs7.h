@@ -199,13 +199,7 @@ protected:
    PKCS7* pkcs7;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UPKCS7(const UPKCS7&) = delete;
-   UPKCS7& operator=(const UPKCS7&) = delete;
-#else
-   UPKCS7(const UPKCS7&)            {}
-   UPKCS7& operator=(const UPKCS7&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UPKCS7)
 
    friend class UMimePKCS7;
 };

@@ -55,13 +55,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USkeletonClientImage(const USkeletonClientImage&) = delete;
-   USkeletonClientImage& operator=(const USkeletonClientImage&) = delete;
-#else
-   USkeletonClientImage(const USkeletonClientImage&) : UClientImage<Socket>(0) {}
-   USkeletonClientImage& operator=(const USkeletonClientImage&)                { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USkeletonClientImage)
 };
 
 #ifdef USE_LIBSSL
@@ -98,13 +92,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USkeletonClientImage<USSLSocket>(const USkeletonClientImage<USSLSocket>&) = delete;
-   USkeletonClientImage<USSLSocket>& operator=(const USkeletonClientImage<USSLSocket>&) = delete;
-#else
-   USkeletonClientImage<USSLSocket>(const USkeletonClientImage<USSLSocket>&) : UClientImage<USSLSocket>(0) {}
-   USkeletonClientImage<USSLSocket>& operator=(const USkeletonClientImage<USSLSocket>&)                    { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USkeletonClientImage<USSLSocket>)
 };
 #endif
 

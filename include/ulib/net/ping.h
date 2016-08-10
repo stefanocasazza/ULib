@@ -177,13 +177,7 @@ protected:
 private:
    static inline void cksum(void* hdr, int len) U_NO_EXPORT; // Checksum (16 bits), calculated with the ICMP part of the packet (the IP header is not used)
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UPing(const UPing&) = delete;
-   UPing& operator=(const UPing&) = delete;
-#else
-   UPing(const UPing&) : USocket(false) {}
-   UPing& operator=(const UPing&)       { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UPing)
 
    friend class UNoCatPlugIn;
 };

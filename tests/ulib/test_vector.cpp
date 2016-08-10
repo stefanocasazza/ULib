@@ -237,6 +237,17 @@ U_EXPORT main (int argc, char* argv[])
    U_TRACE(5,"main(%d)",argc)
 
    UString tmp;
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11) && defined(U_COMPILER_RANGE_FOR)
+   UVector<UString> v { U_STRING_FROM_CONSTANT(" block1 "), U_STRING_FROM_CONSTANT(" block2 "), U_STRING_FROM_CONSTANT(" block3 "), U_STRING_FROM_CONSTANT(" block4 ") };
+
+   for (UString x : v) tmp += x;
+
+   cerr << "Range-For: " << tmp << '\n';
+
+   U_ASSERT( tmp == U_STRING_FROM_CONSTANT(" block1  block2  block3  block4 ") )
+#endif
+
    UVector<UString> v0(U_STRING_FROM_CONSTANT("[\"\" 0 @PIPPO]"));
    uint32_t n = v0.size();
    U_INTERNAL_ASSERT( n == 3 )

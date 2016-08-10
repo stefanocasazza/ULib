@@ -179,13 +179,7 @@ protected:
    bool inputsbox(int n, const char* text, const char* labels[], UVector<UString>& init, const char* title);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDialog(const UDialog&) = delete;
-   UDialog& operator=(const UDialog&) = delete;
-#else
-   UDialog(const UDialog&)            {}
-   UDialog& operator=(const UDialog&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UDialog)
 };
 
 #endif

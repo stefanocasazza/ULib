@@ -163,26 +163,26 @@ protected:
       xtime.tv_usec += tv_usec;
       }
 
-   void updateTimeToExpire()
+   void setTimeToExpire(uint32_t timeout)
       {
-      U_TRACE_NO_PARAM(1, "UEventTime::updateTimeToExpire()")
+      U_TRACE(0, "UEventTime::setTimeToExpire(%u)", timeout)
 
-      U_CHECK_MEMORY
+      UTimeVal::setSecond(timeout);
 
-      xtime.tv_sec  = timeout1.tv_sec  + tv_sec;
-      xtime.tv_usec = timeout1.tv_usec + tv_usec;
+      setTolerance();
 
-      U_INTERNAL_DUMP("now = { %ld %6ld } xtime = { %ld %6ld }", xtime.tv_sec, xtime.tv_usec, xtime.tv_sec + tv_sec, xtime.tv_usec + tv_usec)
+      u_gettimeofday(&timeout1);
 
-      U_ASSERT(checkTolerance())
-      U_ASSERT(checkMilliSecond())
+      updateTimeToExpire();
       }
 
-   void setTimeToExpire(int timeoutMS)
+   void setTimeToExpireMS(int timeoutMS)
       {
-      U_TRACE(0, "UEventTime::setTimeToExpire(%d)", timeoutMS)
+      U_TRACE(0, "UEventTime::setTimeToExpireMS(%d)", timeoutMS)
 
       UTimeVal::setMilliSecond(timeoutMS);
+
+      setTolerance();
 
       u_gettimeofday(&timeout1);
 
@@ -211,6 +211,21 @@ protected:
       U_DEBUG("tolerance = %ld tolerance_calculated = %ld", tolerance, tolerance_calculated)
 
       U_RETURN(false);
+      }
+
+   void updateTimeToExpire()
+      {
+      U_TRACE_NO_PARAM(1, "UEventTime::updateTimeToExpire()")
+
+      U_CHECK_MEMORY
+
+      xtime.tv_sec  = timeout1.tv_sec  + tv_sec;
+      xtime.tv_usec = timeout1.tv_usec + tv_usec;
+
+      U_INTERNAL_DUMP("now = { %ld %6ld } xtime = { %ld %6ld }", xtime.tv_sec, xtime.tv_usec, xtime.tv_sec + tv_sec, xtime.tv_usec + tv_usec)
+
+      U_ASSERT(checkTolerance())
+      U_ASSERT(checkMilliSecond())
       }
 
    static long getMilliSecond(UEventTime* ptimeout)
@@ -286,11 +301,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UEventTime& operator=(const UEventTime&) = delete;
-#else
-   UEventTime& operator=(const UEventTime&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UEventTime)
 
    friend class UTimer;
    friend class UNotifier;

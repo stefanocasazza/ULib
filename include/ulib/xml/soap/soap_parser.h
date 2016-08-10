@@ -302,13 +302,7 @@ private:
    UXMLElement* current;
    UTree<UXMLElement*>* ptree;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USOAPParser(const USOAPParser&) = delete;
-   USOAPParser& operator=(const USOAPParser&) = delete;
-#else
-   USOAPParser(const USOAPParser&) : UXMLParser(), URPCParser(0) {}
-   USOAPParser& operator=(const USOAPParser&)                    { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(USOAPParser)
 };
 
 #endif

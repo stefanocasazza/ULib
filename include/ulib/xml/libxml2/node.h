@@ -444,13 +444,7 @@ protected:
    xmlNodePtr createNewChildNode(const xmlChar* name, const xmlChar* ns_prefix = 0);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UXML2Node(const UXML2Node&) = delete;
-   UXML2Node& operator=(const UXML2Node&) = delete;
-#else
-   UXML2Node(const UXML2Node&)            {}
-   UXML2Node& operator=(const UXML2Node&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UXML2Node)
 };
 
 #endif

@@ -262,13 +262,7 @@ private:
    static int   _print(TDB_CONTEXT* tdb, TDB_DATA key, TDB_DATA dbuf, void* ptr) U_NO_EXPORT;
    static int _getKeys(TDB_CONTEXT* tdb, TDB_DATA key, TDB_DATA dbuf, void* ptr) U_NO_EXPORT;
    
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTDB(const UTDB&) = delete;
-   UTDB& operator=(const UTDB&) = delete;
-#else
-   UTDB(const UTDB&)            {}
-   UTDB& operator=(const UTDB&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UTDB)
 };
 
 #endif

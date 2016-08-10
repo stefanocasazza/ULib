@@ -121,13 +121,7 @@ protected:
    virtual void  fromData(const char* ptr, uint32_t len);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDataStorage(const UDataStorage&) = delete;
-   UDataStorage& operator=(const UDataStorage&) = delete;
-#else
-   UDataStorage(const UDataStorage&)            {}
-   UDataStorage& operator=(const UDataStorage&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UDataStorage)
 
    template <class T> friend class URDBObjectHandler;
 };
@@ -262,13 +256,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDataSession(const UDataSession&) = delete;
-   UDataSession& operator=(const UDataSession&) = delete;
-#else
-   UDataSession(const UDataSession& d) : UDataStorage() {}
-   UDataSession& operator=(const UDataSession&)         { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UDataSession)
 
                       friend class UHTTP;
    template <class T> friend class URDBObjectHandler;

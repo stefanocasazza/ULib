@@ -105,13 +105,7 @@ protected:
 private:
    void assignFilenames() U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UZIP(const UZIP&) = delete;
-   UZIP& operator=(const UZIP&) = delete;
-#else
-   UZIP(const UZIP&)            {}
-   UZIP& operator=(const UZIP&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UZIP)
 };
 
 #endif

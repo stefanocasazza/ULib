@@ -876,7 +876,7 @@ private:
            X509IssuerName, X509SubjectName, X509Certificate, signedProperties, signature_timestamp, unsignedSignatureProperties,
            unsignedSignaturePropertiesC14N, OpenDocumentStart, OpenDocumentEnd;
 
-   U_APPLICATION_PRIVATE
+   U_DISALLOW_COPY_AND_ASSIGN(Application)
 };
 
 U_MAIN

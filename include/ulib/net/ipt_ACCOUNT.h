@@ -67,13 +67,7 @@ protected:
     struct ipt_acc_handle_sockopt* handle;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UIptAccount(const UIptAccount&) = delete;
-   UIptAccount& operator=(const UIptAccount&) = delete;
-#else
-   UIptAccount(const UIptAccount&) : USocket(false) {}
-   UIptAccount& operator=(const UIptAccount&)       { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UIptAccount)
 };
 
 #endif

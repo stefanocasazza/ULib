@@ -128,7 +128,7 @@ private:
    UFileConfig cfg; // NB: we put this here to avoid unnecessary destructor at runtime...
 
 #ifndef U_COVERITY_FALSE_POSITIVE
-   U_APPLICATION_PRIVATE
+   U_DISALLOW_COPY_AND_ASSIGN(Application)
 #endif
 };
 

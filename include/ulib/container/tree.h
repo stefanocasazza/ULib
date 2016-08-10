@@ -196,11 +196,7 @@ protected:
    const void* _parent;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTree<void*>& operator=(const UTree<void*>&) = delete;
-#else
-   UTree<void*>& operator=(const UTree<void*>&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UTree<void*>)
 };
 
 template <class T> class U_EXPORT UTree<T*> : public UTree<void*> {
@@ -372,11 +368,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTree<T*>& operator=(const UTree<T*>&) = delete;
-#else
-   UTree<T*>& operator=(const UTree<T*>&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UTree<T*>)
 };
 
 template <> class U_EXPORT UTree<UString> : public UTree<UStringRep*> {
@@ -474,11 +466,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTree<UString>& operator=(const UTree<UString>&) = delete;
-#else
-   UTree<UString>& operator=(const UTree<UString>&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UTree<UString>)
 };
 
 #endif

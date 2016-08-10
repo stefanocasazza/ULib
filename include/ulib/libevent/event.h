@@ -101,13 +101,7 @@ protected:
    UEvent_Base() {} // NB: This is an concept class, you can't instantiate it
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UEvent_Base(const UEvent_Base&) = delete;
-   UEvent_Base& operator=(const UEvent_Base&) = delete;
-#else
-   UEvent_Base(const UEvent_Base&)            {}
-   UEvent_Base& operator=(const UEvent_Base&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UEvent_Base)
 };
 
 /**
@@ -163,13 +157,7 @@ protected:
    UEvent() {}
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UEvent<F>(const UEvent<F>&) = delete;
-   UEvent<F>& operator=(const UEvent<F>&) = delete;
-#else
-   UEvent<F>(const UEvent<F>&)            {}
-   UEvent<F>& operator=(const UEvent<F>&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UEvent<F>)
 };
 
 /**
@@ -210,13 +198,7 @@ protected:
    UEvent() {}
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UEvent<ccallback_type>(const UEvent<ccallback_type>&) = delete;
-   UEvent<ccallback_type>& operator=(const UEvent<ccallback_type>&) = delete;
-#else
-   UEvent<ccallback_type>(const UEvent<ccallback_type>&) : UEvent_Base() {}
-   UEvent<ccallback_type>& operator=(const UEvent<ccallback_type>&)      { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UEvent<ccallback_type>)
 };
 
 /**
@@ -261,15 +243,8 @@ protected:
    UTimerEv() {}
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTimerEv(const UTimerEv&) = delete;
-   UTimerEv& operator=(const UTimerEv&) = delete;
-#else
-   UTimerEv(const UTimerEv&)            {}
-   UTimerEv& operator=(const UTimerEv&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UTimerEv)
 };
-
 
 /**
  * This is the specialization of UTimerEv for C-style callbacks
@@ -309,13 +284,7 @@ protected:
    UTimerEv() {}
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTimerEv<ccallback_type>(const UTimerEv<ccallback_type>&) = delete;
-   UTimerEv<ccallback_type>& operator=(const UTimerEv<ccallback_type>&) = delete;
-#else
-   UTimerEv<ccallback_type>(const UTimerEv<ccallback_type>&) : UEvent<ccallback_type>() {}
-   UTimerEv<ccallback_type>& operator=(const UTimerEv<ccallback_type>&)                 { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UTimerEv<ccallback_type>)
 };
 
 /**
@@ -369,15 +338,8 @@ protected:
    USignal() {}
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USignal(const USignal&) = delete;
-   USignal& operator=(const USignal&) = delete;
-#else
-   USignal(const USignal&)            {}
-   USignal& operator=(const USignal&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USignal)
 };
-
 
 /**
  * This is the specialization of USignal for C-style callbacks
@@ -426,13 +388,7 @@ protected:
    USignal() {}
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USignal<ccallback_type>(const USignal<ccallback_type>&) = delete;
-   USignal<ccallback_type>& operator=(const USignal<ccallback_type>&) = delete;
-#else
-   USignal<ccallback_type>(const USignal<ccallback_type>&) : UEvent<ccallback_type>() {}
-   USignal<ccallback_type>& operator=(const USignal<ccallback_type>&)                 { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(USignal<ccallback_type>)
 };
 
 typedef UEvent<ccallback_type>   cevent;  // Shortcut to C-style event
@@ -744,13 +700,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UDispatcher(const UDispatcher&) = delete;
-   UDispatcher& operator=(const UDispatcher&) = delete;
-#else
-   UDispatcher(const UDispatcher&)            {}
-   UDispatcher& operator=(const UDispatcher&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UDispatcher)
 };
 
 #endif

@@ -90,13 +90,7 @@ protected:
    TS_RESP* response;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UTimeStamp(const UTimeStamp&) = delete;
-   UTimeStamp& operator=(const UTimeStamp&) = delete;
-#else
-   UTimeStamp(const UTimeStamp&) : UPKCS7(0,0) {}
-   UTimeStamp& operator=(const UTimeStamp&)    { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UTimeStamp)
 };
 
 #endif

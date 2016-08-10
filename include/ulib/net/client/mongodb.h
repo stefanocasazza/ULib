@@ -205,13 +205,7 @@ protected:
    void readFromCursor();
    
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UMongoDBClient(const UMongoDBClient&) = delete;
-   UMongoDBClient& operator=(const UMongoDBClient&) = delete;
-#else
-   UMongoDBClient(const UMongoDBClient&) {}
-   UMongoDBClient& operator=(const UMongoDBClient&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UMongoDBClient)
 };
 
 #endif

@@ -151,13 +151,7 @@ protected:
    void setStatus(int n) { ret = n; setStatus(); }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USSHSocket(const USSHSocket&) = delete;
-   USSHSocket& operator=(const USSHSocket&) = delete;
-#else
-   USSHSocket(const USSHSocket&) : USocket(false) {}
-   USSHSocket& operator=(const USSHSocket&)       { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(USSHSocket)
 };
 
 #endif

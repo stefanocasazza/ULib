@@ -93,13 +93,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UEventFd(const UEventFd&) = delete;
-   UEventFd& operator=(const UEventFd&) = delete;
-#else
-   UEventFd(const UEventFd&)            {}
-   UEventFd& operator=(const UEventFd&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UEventFd)
 };
 
 #endif

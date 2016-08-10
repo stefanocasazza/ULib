@@ -389,11 +389,7 @@ protected:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UVector<void*>& operator=(const UVector<void*>&) = delete;
-#else
-   UVector<void*>& operator=(const UVector<void*>&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UVector<void*>)
 
    friend class UThreadPool;
 
@@ -416,12 +412,8 @@ public:
 
       if (_length)
          {
-         // coverity[RESOURCE_LEAK]
-#     ifndef U_COVERITY_FALSE_POSITIVE
          u_destroy<T>((const T**)vec, _length);
-#     endif
-
-         _length = 0;
+                                      _length = 0;
          }
       }
 
@@ -454,15 +446,9 @@ public:
       {
       U_TRACE(0, "UVector<T*>::replace(%u,%p)", pos, elem)
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_construct<T>(&elem, false);
-#  endif
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_destroy<T>((const T*)vec[pos]);
-#  endif
 
       UVector<void*>::replace(pos, elem);
       }
@@ -473,10 +459,7 @@ public:
       {
       U_TRACE(0, "UVector<T*>::push(%p)", elem)
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_construct<T>(&elem, istream_loading);
-#  endif
 
       UVector<void*>::push(elem);
       }
@@ -509,10 +492,7 @@ public:
       {
       U_TRACE(0, "UVector<T*>::insert(%u,%p)", pos, elem)
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_construct<T>(&elem, false);
-#  endif
 
       UVector<void*>::insert(pos, elem);
       }
@@ -521,10 +501,7 @@ public:
       {
       U_TRACE(0, "UVector<T*>::insert(%u,%u,%p)", pos, n, elem)
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_construct<T>(elem, n);
-#  endif
 
       UVector<void*>::insert(pos, n, elem);
       }
@@ -533,10 +510,7 @@ public:
       {
       U_TRACE(0, "UVector<T*>::erase(%u)", pos)
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_destroy<T>((const T*)vec[pos]);
-#  endif
 
       UVector<void*>::erase(pos);
       }
@@ -545,10 +519,7 @@ public:
       {
       U_TRACE(0, "UVector<T*>::erase(%u,%u)",  first, _last)
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_destroy<T>((const T**)(vec+first), _last - first);
-#  endif
 
       UVector<void*>::erase(first, _last);
       }
@@ -564,15 +535,9 @@ public:
       U_INTERNAL_ASSERT_MAJOR(n, 0)
       U_INTERNAL_ASSERT(_length <= _capacity)
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_construct<T>(elem, n);
-#  endif
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_destroy<T>((const T**)vec, U_min(n, _length));
-#  endif
 
       if (n > _capacity)
          {
@@ -607,10 +572,7 @@ public:
 
       if (nextTail != head)
          {
-         // coverity[RESOURCE_LEAK]
-#     ifndef U_COVERITY_FALSE_POSITIVE
          u_construct<T>(&elem, false);
-#     endif
 
          vec[tail] = elem;
 
@@ -681,10 +643,7 @@ public:
       U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
       U_INTERNAL_ASSERT(_length <= _capacity)
 
-      // coverity[RESOURCE_LEAK]
-#  ifndef U_COVERITY_FALSE_POSITIVE
       u_construct<T>(&elem, false);
-#  endif
 
       if (++_length == _capacity) reserve(_capacity * 2);
 
@@ -861,10 +820,7 @@ public:
             else          v.push(_elem);
             }
 
-         // coverity[RESOURCE_LEAK]
-#     ifndef U_COVERITY_FALSE_POSITIVE
          u_destroy<T>((const T*)_elem);
-#     endif
 
          istream_loading = false;
          }
@@ -905,13 +861,9 @@ public:
 #endif
 
 private:
-   friend class UThreadPool;
+   U_DISALLOW_ASSIGN(UVector<T*>)
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UVector<T*>& operator=(const UVector<T*>&) = delete;
-#else
-   UVector<T*>& operator=(const UVector<T*>&) { return *this; }
-#endif
+   friend class UThreadPool;
 };
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
@@ -945,15 +897,15 @@ private:
 template <> class U_EXPORT UVector<UString> : public UVector<UStringRep*> {
 public:
 
-   UVector(uint32_t n = 64U) : UVector<UStringRep*>(n)
+   explicit UVector(uint32_t n = 64) : UVector<UStringRep*>(n)
       {
       U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%u", n)
       }
 
-   UVector(const UString& str,       char  delim);
-   UVector(const UString& str, const char* delim = 0);
+   explicit UVector(const UString& str,       char  delim);
+   explicit UVector(const UString& str, const char* delim = 0);
 
-   UVector(UVector<UString>& source, uint32_t n) : UVector<UStringRep*>(n)
+   explicit UVector(UVector<UString>& source, uint32_t n) : UVector<UStringRep*>(n)
       {
       U_TRACE_REGISTER_OBJECT(0, UVector<UString>, "%p,%u", &source, n)
 
@@ -968,17 +920,17 @@ public:
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
+    UVectorStringIter begin() const { return UVectorStringIter(this, 0); }
+    UVectorStringIter   end() const { return UVectorStringIter(this, _length); }
+
 # ifdef U_COMPILER_RANGE_FOR
-   explicit UVector<UString>(std::initializer_list<UString>& l) : UVector<UStringRep*>(l.size())
+   explicit UVector(const std::initializer_list<UString>& l) : UVector<UStringRep*>(l.size())
       {
       U_TRACE(0, "UVector<UString>::UVector<UString>(%p)", &l)
 
       for (UString item : l) push_back(item);
       }
 # endif
-
-    UVectorStringIter begin() const { return UVectorStringIter(this, 0); }
-    UVectorStringIter   end() const { return UVectorStringIter(this, _length); }
 #endif
 
    // ELEMENT ACCESS
@@ -1249,11 +1201,7 @@ private:
    static void mksort(UStringRep** a, int n, int depth);
           bool _isEqual(UVector<UString>& vec, bool ignore_case);
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UVector<UString>& operator=(const UVector<UString>&) = delete;
-#else
-   UVector<UString>& operator=(const UVector<UString>&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UVector<UString>)
 
    friend class UHTTP;
    friend class UHttpPlugIn;

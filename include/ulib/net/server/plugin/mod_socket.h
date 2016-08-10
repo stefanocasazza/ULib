@@ -51,13 +51,7 @@ protected:
    static RETSIGTYPE handlerForSigTERM(int signo);
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UWebSocketPlugIn(const UWebSocketPlugIn&) = delete;
-   UWebSocketPlugIn& operator=(const UWebSocketPlugIn&) = delete;
-#else
-   UWebSocketPlugIn(const UWebSocketPlugIn&) : UServerPlugIn() {}
-   UWebSocketPlugIn& operator=(const UWebSocketPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UWebSocketPlugIn)
 };
 
 #endif

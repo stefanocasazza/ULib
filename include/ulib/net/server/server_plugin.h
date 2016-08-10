@@ -129,11 +129,7 @@ public:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UServerPlugIn& operator=(const UServerPlugIn&) = delete;
-#else
-   UServerPlugIn& operator=(const UServerPlugIn&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UServerPlugIn)
 };
 
 #endif

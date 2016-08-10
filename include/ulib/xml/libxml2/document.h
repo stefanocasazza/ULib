@@ -352,13 +352,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UXML2Document(const UXML2Document&) = delete;
-   UXML2Document& operator=(const UXML2Document&) = delete;
-#else
-   UXML2Document(const UXML2Document&)            {}
-   UXML2Document& operator=(const UXML2Document&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UXML2Document)
 
    friend class UDSIGContext;
 };

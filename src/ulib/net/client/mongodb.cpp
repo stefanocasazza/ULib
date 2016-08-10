@@ -77,7 +77,6 @@ void UMongoDBClient::readFromCursor()
 {
    U_TRACE_NO_PARAM(0, "UMongoDBClient::readFromCursor()")
 
-   char* str;
    size_t length;
    const bson_t* doc;
    bson_error_t error;
@@ -86,7 +85,7 @@ void UMongoDBClient::readFromCursor()
 
    while (U_SYSCALL(mongoc_cursor_next, "%p,%p", cursor, &doc))
       {
-      str = U_SYSCALL(bson_as_json, "%p,%p", doc, &length);
+      char* str = U_SYSCALL(bson_as_json, "%p,%p", doc, &length);
 
       UString x((const char*)str, length);
 

@@ -205,13 +205,7 @@ protected:
    X509_REQ* request;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UPKCS10(const UPKCS10&) = delete;
-   UPKCS10& operator=(const UPKCS10&) = delete;
-#else
-   UPKCS10(const UPKCS10&)            {}
-   UPKCS10& operator=(const UPKCS10&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UPKCS10)
 };
 
 #endif

@@ -61,13 +61,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UHttpPlugIn(const UHttpPlugIn&) = delete;
-   UHttpPlugIn& operator=(const UHttpPlugIn&) = delete;
-#else
-   UHttpPlugIn(const UHttpPlugIn&) : UServerPlugIn(), UEventFd() {}
-   UHttpPlugIn& operator=(const UHttpPlugIn&)                    { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UHttpPlugIn)
 };
 
 #endif

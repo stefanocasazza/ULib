@@ -155,13 +155,7 @@ protected:
 private:
    static int decode(const char* name, uint32_t len, bool bfacility) __pure U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   ULog(const ULog&) = delete;
-   ULog& operator=(const ULog&) = delete;
-#else
-   ULog(const ULog&) : UFile()  {}
-   ULog& operator=(const ULog&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(ULog)
 
    friend class UHTTP;
    friend class UHTTP2;

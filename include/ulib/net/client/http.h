@@ -218,13 +218,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UHttpClient_Base(const UHttpClient_Base&) = delete;
-   UHttpClient_Base& operator=(const UHttpClient_Base&) = delete;
-#else
-   UHttpClient_Base(const UHttpClient_Base&) : UClient_Base(0) {}
-   UHttpClient_Base& operator=(const UHttpClient_Base&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UHttpClient_Base)
 
    friend class USSLSocket;
    friend class Application;
@@ -259,13 +253,7 @@ public:
 #endif
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UHttpClient(const UHttpClient&) = delete;
-   UHttpClient& operator=(const UHttpClient&) = delete;
-#else
-   UHttpClient(const UHttpClient&) : UHttpClient_Base(0) {}
-   UHttpClient& operator=(const UHttpClient&)            { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UHttpClient)
 };
 
 #ifdef USE_LIBSSL
@@ -293,13 +281,7 @@ public:
 protected:
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UHttpClient<USSLSocket>(const UHttpClient<USSLSocket>&) = delete;
-   UHttpClient<USSLSocket>& operator=(const UHttpClient<USSLSocket>&) = delete;
-#else
-   UHttpClient<USSLSocket>(const UHttpClient<USSLSocket>&) : UHttpClient_Base(0) {}
-   UHttpClient<USSLSocket>& operator=(const UHttpClient<USSLSocket>&)            { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UHttpClient<USSLSocket>)
 };
 #endif
 #endif

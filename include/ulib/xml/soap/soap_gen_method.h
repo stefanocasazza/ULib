@@ -54,13 +54,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   USOAPGenericMethod(const USOAPGenericMethod& g) = delete;
-   USOAPGenericMethod& operator=(const USOAPGenericMethod& g) = delete;
-#else
-   USOAPGenericMethod(const USOAPGenericMethod& g) : URPCGenericMethod(UString::getStringNull(), UString::getStringNull(), 0, 0) {}
-   USOAPGenericMethod& operator=(const USOAPGenericMethod& g)                                                                    { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(USOAPGenericMethod)
 };
 
 #endif

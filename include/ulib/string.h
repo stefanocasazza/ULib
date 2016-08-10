@@ -847,13 +847,7 @@ private:
       U_RETURN(false);
       }
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UStringRep(const UStringRep&) = delete;
-   UStringRep& operator=(const UStringRep&) = delete;
-#else
-   UStringRep(const UStringRep&) {}
-   UStringRep& operator=(const UStringRep&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UStringRep)
 
    friend class Url;
    friend class UCDB;

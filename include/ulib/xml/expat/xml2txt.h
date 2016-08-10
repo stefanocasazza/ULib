@@ -63,13 +63,7 @@ protected:
    bool tag_match, tag_to_exclude, tag_output_also;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UXml2Txt(const UXml2Txt&) = delete;
-   UXml2Txt& operator=(const UXml2Txt&) = delete;
-#else
-   UXml2Txt(const UXml2Txt&)            : UXMLParser() {}
-   UXml2Txt& operator=(const UXml2Txt&)                { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UXml2Txt)
 };
 
 #endif

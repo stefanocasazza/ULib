@@ -164,13 +164,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URPCObject(const URPCObject&) = delete;
-   URPCObject& operator=(const URPCObject&) = delete;
-#else
-   URPCObject(const URPCObject&)            {}
-   URPCObject& operator=(const URPCObject&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(URPCObject)
 };
 
 #endif

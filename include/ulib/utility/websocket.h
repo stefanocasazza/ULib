@@ -82,13 +82,7 @@ public:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UWebSocket(const UWebSocket&) = delete;
-   UWebSocket& operator=(const UWebSocket&) = delete;
-#else
-   UWebSocket(const UWebSocket&)            {}
-   UWebSocket& operator=(const UWebSocket&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UWebSocket)
 };
 
 #endif

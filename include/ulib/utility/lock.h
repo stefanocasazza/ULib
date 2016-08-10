@@ -143,13 +143,7 @@ protected:
       }
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   ULock(const ULock&) = delete;
-   ULock& operator=(const ULock&) = delete;
-#else
-   ULock(const ULock&)            {}
-   ULock& operator=(const ULock&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(ULock)
 };
 
 #endif

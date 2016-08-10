@@ -512,13 +512,7 @@ public:
 private:
    bool checkExecution(PGresult* res);
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UOrmDriverPgSql(const UOrmDriverPgSql&) = delete;
-   UOrmDriverPgSql& operator=(const UOrmDriverPgSql&) = delete;
-#else
-   UOrmDriverPgSql(const UOrmDriverPgSql&) : UOrmDriver(UString::getStringNull()) {}
-   UOrmDriverPgSql& operator=(const UOrmDriverPgSql&)                             { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UOrmDriverPgSql)
 
    friend class UPgSqlStatement;
 };

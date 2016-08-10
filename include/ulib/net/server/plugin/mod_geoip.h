@@ -63,13 +63,7 @@ protected:
    static bool checkCountryForbidden();
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UGeoIPPlugIn(const UGeoIPPlugIn&) = delete;
-   UGeoIPPlugIn& operator=(const UGeoIPPlugIn&) = delete;
-#else
-   UGeoIPPlugIn(const UGeoIPPlugIn&) : UServerPlugIn() {}
-   UGeoIPPlugIn& operator=(const UGeoIPPlugIn&)        { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UGeoIPPlugIn)
 };
 
 #endif

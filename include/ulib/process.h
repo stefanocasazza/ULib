@@ -150,13 +150,7 @@ protected:
    static void setStdInOutErr(bool fd_stdin, bool fd_stdout, bool fd_stderr) U_NO_EXPORT;
 
 private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UProcess(const UProcess&) = delete;
-   UProcess& operator=(const UProcess&) = delete;
-#else
-   UProcess(const UProcess&)            {}
-   UProcess& operator=(const UProcess&) { return *this; }
-#endif
+   U_DISALLOW_COPY_AND_ASSIGN(UProcess)
 
    friend class UCommand;
    friend class UServer_Base;

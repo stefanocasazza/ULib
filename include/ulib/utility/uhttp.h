@@ -573,11 +573,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   RewriteRule& operator=(const RewriteRule&) = delete;
-#else
-   RewriteRule& operator=(const RewriteRule&) { return *this; }
-#endif      
+   U_DISALLOW_ASSIGN(RewriteRule)
    };
 
    static UVector<RewriteRule*>* vRewriteRule;
@@ -638,13 +634,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UServletPage(const UServletPage&) = delete;
-   UServletPage& operator=(const UServletPage&) = delete;
-#else
-   UServletPage(const UServletPage&) : UDynamic() {}
-   UServletPage& operator=(const UServletPage&)   { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UServletPage)
    };
 
    static bool bcallInitForAllUSP;
@@ -702,13 +692,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UCServletPage(const UCServletPage&) = delete;
-   UCServletPage& operator=(const UCServletPage&) = delete;
-#else
-   UCServletPage(const UCServletPage&)            {}
-   UCServletPage& operator=(const UCServletPage&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UCServletPage)
    };
 
 #ifdef USE_PHP // (wrapper to embed the PHP interpreter)
@@ -738,13 +722,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UPHP(const UPHP&) = delete;
-   UPHP& operator=(const UPHP&) = delete;
-#else
-   UPHP(const UPHP&) : UDynamic() {}
-   UPHP& operator=(const UPHP&)   { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UPHP)
    };
 
    static UPHP* php_embed;
@@ -779,13 +757,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   URUBY(const URUBY&) = delete;
-   URUBY& operator=(const URUBY&) = delete;
-#else
-   URUBY(const URUBY&) : UDynamic() {}
-   URUBY& operator=(const URUBY&)   { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(URUBY)
    };
 
    static URUBY* ruby_embed;
@@ -820,13 +792,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UPYTHON(const UPYTHON&) = delete;
-   UPYTHON& operator=(const UPYTHON&) = delete;
-#else
-   UPYTHON(const UPYTHON&) : UDynamic() {}
-   UPYTHON& operator=(const UPYTHON&)   { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UPYTHON)
    };
 
    static UPYTHON* python_embed;
@@ -866,13 +832,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UPageSpeed(const UPageSpeed&) = delete;
-   UPageSpeed& operator=(const UPageSpeed&) = delete;
-#else
-   UPageSpeed(const UPageSpeed&) : UDynamic() {}
-   UPageSpeed& operator=(const UPageSpeed&)   { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UPageSpeed)
    };
 
    static UPageSpeed* page_speed;
@@ -901,13 +861,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UV8JavaScript(const UV8JavaScript&) = delete;
-   UV8JavaScript& operator=(const UV8JavaScript&) = delete;
-#else
-   UV8JavaScript(const UV8JavaScript&) : UDynamic() {}
-   UV8JavaScript& operator=(const UV8JavaScript&)   { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UV8JavaScript)
    };
 
    static UV8JavaScript* v8_javascript;
@@ -952,11 +906,7 @@ public:
 #endif
 
    private:
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UFileCacheData& operator=(const UFileCacheData&) = delete;
-#else
-   UFileCacheData& operator=(const UFileCacheData&) { return *this; }
-#endif
+   U_DISALLOW_ASSIGN(UFileCacheData)
 
    template <class T> friend void u_construct(const T**,bool);
    };
@@ -1141,13 +1091,7 @@ private:
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
 
-#ifdef U_COMPILER_DELETE_MEMBERS
-   UHTTP(const UHTTP&) = delete;
-   UHTTP& operator=(const UHTTP&) = delete;
-#else
-   UHTTP(const UHTTP&)            {}
-   UHTTP& operator=(const UHTTP&) { return *this; }
-#endif      
+   U_DISALLOW_COPY_AND_ASSIGN(UHTTP)
 
    friend class USSIPlugIn;
    friend class UHttpPlugIn;
