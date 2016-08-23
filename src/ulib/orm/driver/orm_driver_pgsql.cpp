@@ -21,9 +21,6 @@ UOrmDriverPgSql::~UOrmDriverPgSql()
    U_TRACE_UNREGISTER_OBJECT(0, UOrmDriverPgSql)
 }
 
-#undef  ENTRY
-#define ENTRY(name) {name, #name}
-
 void UOrmDriverPgSql::handlerError()
 {
    U_TRACE_NO_PARAM(0, "UOrmDriverPgSql::UOrmDriverPgSql()")

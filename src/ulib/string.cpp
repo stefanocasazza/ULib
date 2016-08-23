@@ -857,6 +857,8 @@ void UStringRep::_release()
 #ifndef ENABLE_MEMPOOL
    U_SYSCALL_VOID(free, "%p", (void*)this);
 #else
+   U_INTERNAL_DUMP("_capacity = %d (_capacity <= U_CAPACITY) = %b", (int32_t)_capacity, (_capacity <= U_CAPACITY))
+
    if (_capacity <= U_CAPACITY)
       {
       if (_capacity == 0) UMemoryPool::push(this, U_SIZE_TO_STACK_INDEX(sizeof(UStringRep))); // NB: no room for data, which mean constant string...
@@ -886,13 +888,8 @@ void UStringRep::_release()
       {
       if (_capacity != U_NOT_FOUND)
          {
-         U_INTERNAL_DUMP("_capacity = %d", (int32_t)_capacity)
-
 #     if defined(USE_LIBTDB) || defined(USE_MONGODB)
-         if (_capacity == U_TO_FREE)
-            {
-            U_SYSCALL_VOID(free, "%p", (void*)str);
-            }
+         if (_capacity == U_TO_FREE) { U_SYSCALL_VOID(free, "%p", (void*)str); }
          else
 #     endif
          UMemoryPool::deallocate((void*)str, _capacity);
@@ -2143,9 +2140,9 @@ void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
    U_INTERNAL_ASSERT_MAJOR(sz, 0)
    U_INTERNAL_ASSERT_EQUALS(rep->_length, 0)
 
-   const char* ptr  = *p;
-   unsigned char c  = *ptr;
-   const char* pend =  ptr + sz;
+   const char* ptr   = *p;
+   unsigned char c   = *ptr;
+   const char* _pend =  ptr + sz;
 
    U_INTERNAL_DUMP("c = %C", c)
 
@@ -2167,7 +2164,7 @@ void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
 
          U_INTERNAL_ASSERT_EQUALS(u__isspace(*ptr), false)
 
-         for (char* path = pathname; ptr < pend; ++path, ++ptr)
+         for (char* path = pathname; ptr < _pend; ++path, ++ptr)
             {
             c = *ptr;
 
@@ -2207,13 +2204,13 @@ void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
 
       if (*ptr == '"') // check if string is quoted...
          {
-         ptr = u_find_char((start = (ptr+1)), pend, '"'); // find char '"' not quoted
+         ptr = u_find_char((start = (ptr+1)), _pend, '"'); // find char '"' not quoted
 
-         if (ptr == pend)
+         if (ptr == _pend)
             {
-            (void) append(ptr, pend - ptr);
+            (void) append(ptr, _pend - ptr);
 
-            *p = pend;
+            *p = _pend;
 
             U_INTERNAL_DUMP("size = %u, str = %V", size(), rep)
 
@@ -2228,7 +2225,7 @@ void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
          }
       else
          {
-         for (start = ptr; ptr < pend; ++ptr)
+         for (start = ptr; ptr < _pend; ++ptr)
             {
             c = *ptr;
 
@@ -2280,7 +2277,7 @@ loop:
 
             U_INTERNAL_DUMP("ptr+1 = %.*S", 20, ptr+1)
 
-            while (ptr < pend)
+            while (ptr < _pend)
                {
                if (u__isspace(ptr[1]) == false) break;
 
@@ -2298,7 +2295,7 @@ loop:
 
    _append(c);
 
-   if (++ptr <= pend)
+   if (++ptr <= _pend)
       {
       c = *ptr;
 

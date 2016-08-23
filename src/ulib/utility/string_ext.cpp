@@ -36,8 +36,6 @@
 #  include <pwd.h>
 #endif
 
-#include <errno.h>
-
 #ifdef USE_LIBSSL
 UString UStringExt::BIOtoString(BIO* bio)
 {

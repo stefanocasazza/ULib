@@ -5176,14 +5176,10 @@ void UHTTP::putDataStorage(uint32_t index, const char* value, uint32_t size)
    putDataStorage();
 }
 
-#ifdef ENTRY
-#undef ENTRY
-#endif
-
 #ifdef DEBUG
-#  define ENTRY(n,plen,msg) n: descr = msg; if (plen) *plen = U_CONSTANT_SIZE(msg); break
+#  define U_HTTP_ENTRY(n,plen,msg) n: descr = msg; if (plen) *plen = U_CONSTANT_SIZE(msg); break
 #else
-#  define ENTRY(n,plen,msg) n: descr = msg;           *plen = U_CONSTANT_SIZE(msg); break
+#  define U_HTTP_ENTRY(n,plen,msg) n: descr = msg;           *plen = U_CONSTANT_SIZE(msg); break
 #endif
 
 const char* UHTTP::getStatusDescription(uint32_t* plen)
@@ -5195,78 +5191,78 @@ const char* UHTTP::getStatusDescription(uint32_t* plen)
    switch (U_http_info.nResponseCode)
       {
       // 1xx indicates an informational message only
-      case ENTRY(HTTP_CONTINUE,           plen, "Continue");
-      case ENTRY(HTTP_SWITCH_PROT,        plen, "Switching Protocol");
-   // case ENTRY(102,                     plen, "HTTP Processing");
+      case U_HTTP_ENTRY(HTTP_CONTINUE,          plen, "Continue");
+      case U_HTTP_ENTRY(HTTP_SWITCH_PROT,       plen, "Switching Protocol");
+   // case U_HTTP_ENTRY(102,                    plen, "HTTP Processing");
 
       // 2xx indicates success of some kind
-      case ENTRY(HTTP_OK,                 plen, "OK");
-      case ENTRY(HTTP_CREATED,            plen, "Created");
-      case ENTRY(HTTP_ACCEPTED,           plen, "Accepted");
-      case ENTRY(HTTP_NOT_AUTHORITATIVE,  plen, "Non-Authoritative Information");
-      case ENTRY(HTTP_NO_CONTENT,         plen, "No Content");
-      case ENTRY(HTTP_RESET,              plen, "Reset Content");
-      case ENTRY(HTTP_PARTIAL,            plen, "Partial Content");
-   // case ENTRY(207,                     plen, "Webdav Multi-status");
+      case U_HTTP_ENTRY(HTTP_OK,                plen, "OK");
+      case U_HTTP_ENTRY(HTTP_CREATED,           plen, "Created");
+      case U_HTTP_ENTRY(HTTP_ACCEPTED,          plen, "Accepted");
+      case U_HTTP_ENTRY(HTTP_NOT_AUTHORITATIVE, plen, "Non-Authoritative Information");
+      case U_HTTP_ENTRY(HTTP_NO_CONTENT,         plen, "No Content");
+      case U_HTTP_ENTRY(HTTP_RESET,              plen, "Reset Content");
+      case U_HTTP_ENTRY(HTTP_PARTIAL,            plen, "Partial Content");
+   // case U_HTTP_ENTRY(207,                     plen, "Webdav Multi-status");
 
       // 3xx Redirection - Further action must be taken in order to complete the request
-      case ENTRY(HTTP_MULT_CHOICE,        plen, "Multiple Choices");
-      case ENTRY(HTTP_MOVED_PERM,         plen, "Moved Permanently");
-      case ENTRY(HTTP_MOVED_TEMP,         plen, "Moved Temporarily");
-   // case ENTRY(HTTP_FOUND,              plen, "Found [Elsewhere]");
-      case ENTRY(HTTP_SEE_OTHER,          plen, "See Other");
-      case ENTRY(HTTP_NOT_MODIFIED,       plen, "Not Modified");
-      case ENTRY(HTTP_USE_PROXY,          plen, "Use Proxy");
-      case ENTRY(HTTP_TEMP_REDIR,         plen, "Temporary Redirect");
+      case U_HTTP_ENTRY(HTTP_MULT_CHOICE,        plen, "Multiple Choices");
+      case U_HTTP_ENTRY(HTTP_MOVED_PERM,         plen, "Moved Permanently");
+      case U_HTTP_ENTRY(HTTP_MOVED_TEMP,         plen, "Moved Temporarily");
+   // case U_HTTP_ENTRY(HTTP_FOUND,              plen, "Found [Elsewhere]");
+      case U_HTTP_ENTRY(HTTP_SEE_OTHER,          plen, "See Other");
+      case U_HTTP_ENTRY(HTTP_NOT_MODIFIED,       plen, "Not Modified");
+      case U_HTTP_ENTRY(HTTP_USE_PROXY,          plen, "Use Proxy");
+      case U_HTTP_ENTRY(HTTP_TEMP_REDIR,         plen, "Temporary Redirect");
 
       // 4xx indicates an error on the client's part
-      case ENTRY(HTTP_BAD_REQUEST,                     plen, "Bad Request");
-      case ENTRY(HTTP_UNAUTHORIZED,                    plen, "Authorization Required");
-      case ENTRY(HTTP_PAYMENT_REQUIRED,                plen, "Payment Required");
-      case ENTRY(HTTP_FORBIDDEN,                       plen, "Forbidden");
-      case ENTRY(HTTP_NOT_FOUND,                       plen, "Not Found");
-      case ENTRY(HTTP_BAD_METHOD,                      plen, "Method Not Allowed");
-      case ENTRY(HTTP_NOT_ACCEPTABLE,                  plen, "Not Acceptable");
-      case ENTRY(HTTP_PROXY_AUTH,                      plen, "Proxy Authentication Required");
-      case ENTRY(HTTP_CLIENT_TIMEOUT,                  plen, "Request Time-out");
-      case ENTRY(HTTP_CONFLICT,                        plen, "Conflict");
-      case ENTRY(HTTP_GONE,                            plen, "Gone");
-      case ENTRY(HTTP_LENGTH_REQUIRED,                 plen, "Length Required");
-      case ENTRY(HTTP_PRECON_FAILED,                   plen, "Precondition Failed");
-      case ENTRY(HTTP_ENTITY_TOO_LARGE,                plen, "Request Entity Too Large");
-      case ENTRY(HTTP_REQ_TOO_LONG,                    plen, "Request-URI Too Long");
-      case ENTRY(HTTP_UNSUPPORTED_TYPE,                plen, "Unsupported Media Type");
-      case ENTRY(HTTP_REQ_RANGE_NOT_OK,                plen, "Requested Range not satisfiable");
-      case ENTRY(HTTP_EXPECTATION_FAILED,              plen, "Expectation Failed");
-      case ENTRY(HTTP_UNPROCESSABLE_ENTITY,            plen, "Unprocessable Entity");
-   // case ENTRY(423,                                  plen, "Locked");
-   // case ENTRY(424,                                  plen, "Failed Dependency");
-   // case ENTRY(425,                                  plen, "No Matching Vhost");
-   // case ENTRY(426,                                  plen, "Upgrade Required");
-      case ENTRY(HTTP_PRECONDITION_REQUIRED,           plen, "Precondition required");
-      case ENTRY(HTTP_TOO_MANY_REQUESTS,               plen, "Too many requests");
-      case ENTRY(HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE, plen, "Request_header_fields_too_large");
-   // case ENTRY(449,                                  plen, "Retry With Appropriate Action");
+      case U_HTTP_ENTRY(HTTP_BAD_REQUEST,                     plen, "Bad Request");
+      case U_HTTP_ENTRY(HTTP_UNAUTHORIZED,                    plen, "Authorization Required");
+      case U_HTTP_ENTRY(HTTP_PAYMENT_REQUIRED,                plen, "Payment Required");
+      case U_HTTP_ENTRY(HTTP_FORBIDDEN,                       plen, "Forbidden");
+      case U_HTTP_ENTRY(HTTP_NOT_FOUND,                       plen, "Not Found");
+      case U_HTTP_ENTRY(HTTP_BAD_METHOD,                      plen, "Method Not Allowed");
+      case U_HTTP_ENTRY(HTTP_NOT_ACCEPTABLE,                  plen, "Not Acceptable");
+      case U_HTTP_ENTRY(HTTP_PROXY_AUTH,                      plen, "Proxy Authentication Required");
+      case U_HTTP_ENTRY(HTTP_CLIENT_TIMEOUT,                  plen, "Request Time-out");
+      case U_HTTP_ENTRY(HTTP_CONFLICT,                        plen, "Conflict");
+      case U_HTTP_ENTRY(HTTP_GONE,                            plen, "Gone");
+      case U_HTTP_ENTRY(HTTP_LENGTH_REQUIRED,                 plen, "Length Required");
+      case U_HTTP_ENTRY(HTTP_PRECON_FAILED,                   plen, "Precondition Failed");
+      case U_HTTP_ENTRY(HTTP_ENTITY_TOO_LARGE,                plen, "Request Entity Too Large");
+      case U_HTTP_ENTRY(HTTP_REQ_TOO_LONG,                    plen, "Request-URI Too Long");
+      case U_HTTP_ENTRY(HTTP_UNSUPPORTED_TYPE,                plen, "Unsupported Media Type");
+      case U_HTTP_ENTRY(HTTP_REQ_RANGE_NOT_OK,                plen, "Requested Range not satisfiable");
+      case U_HTTP_ENTRY(HTTP_EXPECTATION_FAILED,              plen, "Expectation Failed");
+      case U_HTTP_ENTRY(HTTP_UNPROCESSABLE_ENTITY,            plen, "Unprocessable Entity");
+   // case U_HTTP_ENTRY(423,                                  plen, "Locked");
+   // case U_HTTP_ENTRY(424,                                  plen, "Failed Dependency");
+   // case U_HTTP_ENTRY(425,                                  plen, "No Matching Vhost");
+   // case U_HTTP_ENTRY(426,                                  plen, "Upgrade Required");
+      case U_HTTP_ENTRY(HTTP_PRECONDITION_REQUIRED,           plen, "Precondition required");
+      case U_HTTP_ENTRY(HTTP_TOO_MANY_REQUESTS,               plen, "Too many requests");
+      case U_HTTP_ENTRY(HTTP_REQUEST_HEADER_FIELDS_TOO_LARGE, plen, "Request_header_fields_too_large");
+   // case U_HTTP_ENTRY(449,                                  plen, "Retry With Appropriate Action");
 
       // 5xx indicates an error on the server's part
-      case ENTRY(HTTP_INTERNAL_ERROR,                  plen, "Internal Server Error");
-      case ENTRY(HTTP_NOT_IMPLEMENTED,                 plen, "Not Implemented");
-      case ENTRY(HTTP_BAD_GATEWAY,                     plen, "Bad Gateway");
-      case ENTRY(HTTP_UNAVAILABLE,                     plen, "Service Unavailable");
-      case ENTRY(HTTP_GATEWAY_TIMEOUT,                 plen, "Gateway Time-out");
-      case ENTRY(HTTP_VERSION,                         plen, "HTTP Version Not Supported");
-   // case ENTRY(506,                                  plen, "Variant also varies");
-   // case ENTRY(507,                                  plen, "Insufficient Storage");
-   // case ENTRY(510,                                  plen, "Not Extended");
-      case ENTRY(HTTP_NETWORK_AUTHENTICATION_REQUIRED, plen, "Network authentication required");
+      case U_HTTP_ENTRY(HTTP_INTERNAL_ERROR,                  plen, "Internal Server Error");
+      case U_HTTP_ENTRY(HTTP_NOT_IMPLEMENTED,                 plen, "Not Implemented");
+      case U_HTTP_ENTRY(HTTP_BAD_GATEWAY,                     plen, "Bad Gateway");
+      case U_HTTP_ENTRY(HTTP_UNAVAILABLE,                     plen, "Service Unavailable");
+      case U_HTTP_ENTRY(HTTP_GATEWAY_TIMEOUT,                 plen, "Gateway Time-out");
+      case U_HTTP_ENTRY(HTTP_VERSION,                         plen, "HTTP Version Not Supported");
+   // case U_HTTP_ENTRY(506,                                  plen, "Variant also varies");
+   // case U_HTTP_ENTRY(507,                                  plen, "Insufficient Storage");
+   // case U_HTTP_ENTRY(510,                                  plen, "Not Extended");
+      case U_HTTP_ENTRY(HTTP_NETWORK_AUTHENTICATION_REQUIRED, plen, "Network authentication required");
 
-      ENTRY(default, plen, "Code unknown");
+      U_HTTP_ENTRY(default, plen, "Code unknown");
       }
 
    U_RETURN(descr);
 }
 
-#undef ENTRY
+#undef U_HTTP_ENTRY
 
 U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
 {

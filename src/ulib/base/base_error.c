@@ -17,8 +17,6 @@
 
 #include <ulib/base/error.h>
 
-#include <errno.h>
-
 #ifdef HAVE_SYSEXITS_H
 #  include <sysexits.h>
 #else
@@ -71,397 +69,393 @@ void u_getSysError(uint32_t* restrict len)
 #  endif
       };
 
-#ifdef ENTRY
-#undef ENTRY
-#endif
-
 #ifdef HAVE_STRERROR
-#  define ENTRY(name,msg) {name, #name}
+#  define U_ERR_ENTRY(name,msg) {name, #name}
 #else
-#  define ENTRY(name,msg) {name, #name, msg}
+#  define U_ERR_ENTRY(name,msg) {name, #name, msg}
 #endif
 
    static const struct error_info error_table[] = {
 #if defined(EPERM)
-   ENTRY(EPERM, "Not owner"),
+   U_ERR_ENTRY(EPERM, "Not owner"),
 #endif
 #if defined(ENOENT)
-   ENTRY(ENOENT, "No such file or directory"),
+   U_ERR_ENTRY(ENOENT, "No such file or directory"),
 #endif
 #if defined(ESRCH)
-   ENTRY(ESRCH, "No such process"),
+   U_ERR_ENTRY(ESRCH, "No such process"),
 #endif
 #if defined(EINTR)
-   ENTRY(EINTR, "Interrupted system call"),
+   U_ERR_ENTRY(EINTR, "Interrupted system call"),
 #endif
 #if defined(EIO)
-   ENTRY(EIO, "I/O error"),
+   U_ERR_ENTRY(EIO, "I/O error"),
 #endif
 #if defined(ENXIO)
-   ENTRY(ENXIO, "No such device or address"),
+   U_ERR_ENTRY(ENXIO, "No such device or address"),
 #endif
 #if defined(E2BIG)
-   ENTRY(E2BIG, "Argument list too long"),
+   U_ERR_ENTRY(E2BIG, "Argument list too long"),
 #endif
 #if defined(ENOEXEC)
-   ENTRY(ENOEXEC, "Exec format error"),
+   U_ERR_ENTRY(ENOEXEC, "Exec format error"),
 #endif
 #if defined(EBADF)
-   ENTRY(EBADF, "Bad file number"),
+   U_ERR_ENTRY(EBADF, "Bad file number"),
 #endif
 #if defined(ECHILD)
-   ENTRY(ECHILD, "No child processes"),
+   U_ERR_ENTRY(ECHILD, "No child processes"),
 #endif
 #if defined(EWOULDBLOCK)   /* Put before EAGAIN, sometimes aliased */
-   ENTRY(EWOULDBLOCK, "Operation would block"),
+   U_ERR_ENTRY(EWOULDBLOCK, "Operation would block"),
 #endif
 #if defined(EAGAIN)
-   ENTRY(EAGAIN, "No more processes"),
+   U_ERR_ENTRY(EAGAIN, "No more processes"),
 #endif
 #if defined(ENOMEM)
-   ENTRY(ENOMEM, "Cannot allocate memory"),
+   U_ERR_ENTRY(ENOMEM, "Cannot allocate memory"),
 #endif
 #if defined(EACCES)
-   ENTRY(EACCES, "Permission denied"),
+   U_ERR_ENTRY(EACCES, "Permission denied"),
 #endif
 #if defined(EFAULT)
-   ENTRY(EFAULT, "Bad address"),
+   U_ERR_ENTRY(EFAULT, "Bad address"),
 #endif
 #if defined(ENOTBLK)
-   ENTRY(ENOTBLK, "Block device required"),
+   U_ERR_ENTRY(ENOTBLK, "Block device required"),
 #endif
 #if defined(EBUSY)
-   ENTRY(EBUSY, "Device busy"),
+   U_ERR_ENTRY(EBUSY, "Device busy"),
 #endif
 #if defined(EEXIST)
-   ENTRY(EEXIST, "File exists"),
+   U_ERR_ENTRY(EEXIST, "File exists"),
 #endif
 #if defined(EXDEV)
-   ENTRY(EXDEV, "Cross-device link"),
+   U_ERR_ENTRY(EXDEV, "Cross-device link"),
 #endif
 #if defined(ENODEV)
-   ENTRY(ENODEV, "No such device"),
+   U_ERR_ENTRY(ENODEV, "No such device"),
 #endif
 #if defined(ENOTDIR)
-   ENTRY(ENOTDIR, "Not a directory"),
+   U_ERR_ENTRY(ENOTDIR, "Not a directory"),
 #endif
 #if defined(EISDIR)
-   ENTRY(EISDIR, "Is a directory"),
+   U_ERR_ENTRY(EISDIR, "Is a directory"),
 #endif
 #if defined(EINVAL)
-   ENTRY(EINVAL, "Invalid argument"),
+   U_ERR_ENTRY(EINVAL, "Invalid argument"),
 #endif
 #if defined(ENFILE)
-   ENTRY(ENFILE, "File table overflow"),
+   U_ERR_ENTRY(ENFILE, "File table overflow"),
 #endif
 #if defined(EMFILE)
-   ENTRY(EMFILE, "Too many open files"),
+   U_ERR_ENTRY(EMFILE, "Too many open files"),
 #endif
 #if defined(ENOTTY)
-   ENTRY(ENOTTY, "Not a typewriter"),
+   U_ERR_ENTRY(ENOTTY, "Not a typewriter"),
 #endif
 #if defined(ETXTBSY)
-   ENTRY(ETXTBSY, "Text file busy"),
+   U_ERR_ENTRY(ETXTBSY, "Text file busy"),
 #endif
 #if defined(EFBIG)
-   ENTRY(EFBIG, "File too large"),
+   U_ERR_ENTRY(EFBIG, "File too large"),
 #endif
 #if defined(ENOSPC)
-   ENTRY(ENOSPC, "No space left on device"),
+   U_ERR_ENTRY(ENOSPC, "No space left on device"),
 #endif
 #if defined(ESPIPE)
-   ENTRY(ESPIPE, "Illegal seek"),
+   U_ERR_ENTRY(ESPIPE, "Illegal seek"),
 #endif
 #if defined(EROFS)
-   ENTRY(EROFS, "Read-only file system"),
+   U_ERR_ENTRY(EROFS, "Read-only file system"),
 #endif
 #if defined(EMLINK)
-   ENTRY(EMLINK, "Too many links"),
+   U_ERR_ENTRY(EMLINK, "Too many links"),
 #endif
 #if defined(EPIPE)
-   ENTRY(EPIPE, "Broken pipe"),
+   U_ERR_ENTRY(EPIPE, "Broken pipe"),
 #endif
 #if defined(EDOM)
-   ENTRY(EDOM, "Math argument out of domain of func"),
+   U_ERR_ENTRY(EDOM, "Math argument out of domain of func"),
 #endif
 #if defined(ERANGE)
-   ENTRY(ERANGE, "Math result not representable"),
+   U_ERR_ENTRY(ERANGE, "Math result not representable"),
 #endif
 #if defined(ENOMSG)
-   ENTRY(ENOMSG, "No message of desired type"),
+   U_ERR_ENTRY(ENOMSG, "No message of desired type"),
 #endif
 #if defined(EIDRM)
-   ENTRY(EIDRM, "Identifier removed"),
+   U_ERR_ENTRY(EIDRM, "Identifier removed"),
 #endif
 #if defined(ECHRNG)
-   ENTRY(ECHRNG, "Channel number out of range"),
+   U_ERR_ENTRY(ECHRNG, "Channel number out of range"),
 #endif
 #if defined(EL2NSYNC)
-   ENTRY(EL2NSYNC, "Level 2 not synchronized"),
+   U_ERR_ENTRY(EL2NSYNC, "Level 2 not synchronized"),
 #endif
 #if defined(EL3HLT)
-   ENTRY(EL3HLT, "Level 3 halted"),
+   U_ERR_ENTRY(EL3HLT, "Level 3 halted"),
 #endif
 #if defined(EL3RST)
-   ENTRY(EL3RST, "Level 3 reset"),
+   U_ERR_ENTRY(EL3RST, "Level 3 reset"),
 #endif
 #if defined(ELNRNG)
-   ENTRY(ELNRNG, "Link number out of range"),
+   U_ERR_ENTRY(ELNRNG, "Link number out of range"),
 #endif
 #if defined(EUNATCH)
-   ENTRY(EUNATCH, "Protocol driver not attached"),
+   U_ERR_ENTRY(EUNATCH, "Protocol driver not attached"),
 #endif
 #if defined(ENOCSI)
-   ENTRY(ENOCSI, "No CSI structure available"),
+   U_ERR_ENTRY(ENOCSI, "No CSI structure available"),
 #endif
 #if defined(EL2HLT)
-   ENTRY(EL2HLT, "Level 2 halted"),
+   U_ERR_ENTRY(EL2HLT, "Level 2 halted"),
 #endif
 #if defined(EDEADLK)
-   ENTRY(EDEADLK, "Deadlock condition"),
+   U_ERR_ENTRY(EDEADLK, "Deadlock condition"),
 #endif
 #if defined(ENOLCK)
-   ENTRY(ENOLCK, "No record locks available"),
+   U_ERR_ENTRY(ENOLCK, "No record locks available"),
 #endif
 #if defined(EBADE)
-   ENTRY(EBADE, "Invalid exchange"),
+   U_ERR_ENTRY(EBADE, "Invalid exchange"),
 #endif
 #if defined(EBADR)
-   ENTRY(EBADR, "Invalid request descriptor"),
+   U_ERR_ENTRY(EBADR, "Invalid request descriptor"),
 #endif
 #if defined(EXFULL)
-   ENTRY(EXFULL, "Exchange full"),
+   U_ERR_ENTRY(EXFULL, "Exchange full"),
 #endif
 #if defined(ENOANO)
-   ENTRY(ENOANO, "No anode"),
+   U_ERR_ENTRY(ENOANO, "No anode"),
 #endif
 #if defined(EBADRQC)
-   ENTRY(EBADRQC, "Invalid request code"),
+   U_ERR_ENTRY(EBADRQC, "Invalid request code"),
 #endif
 #if defined(EBADSLT)
-   ENTRY(EBADSLT, "Invalid slot"),
+   U_ERR_ENTRY(EBADSLT, "Invalid slot"),
 #endif
 #if defined(EDEADLOCK)
-   ENTRY(EDEADLOCK, "File locking deadlock error"),
+   U_ERR_ENTRY(EDEADLOCK, "File locking deadlock error"),
 #endif
 #if defined(EBFONT)
-   ENTRY(EBFONT, "Bad font file format"),
+   U_ERR_ENTRY(EBFONT, "Bad font file format"),
 #endif
 #if defined(ENOSTR)
-   ENTRY(ENOSTR, "Device not a stream"),
+   U_ERR_ENTRY(ENOSTR, "Device not a stream"),
 #endif
 #if defined(ENODATA)
-   ENTRY(ENODATA, "No data available"),
+   U_ERR_ENTRY(ENODATA, "No data available"),
 #endif
 #if defined(ETIME)
-   ENTRY(ETIME, "Timer expired"),
+   U_ERR_ENTRY(ETIME, "Timer expired"),
 #endif
 #if defined(ENOSR)
-   ENTRY(ENOSR, "Out of streams resources"),
+   U_ERR_ENTRY(ENOSR, "Out of streams resources"),
 #endif
 #if defined(ENONET)
-   ENTRY(ENONET, "Machine is not on the network"),
+   U_ERR_ENTRY(ENONET, "Machine is not on the network"),
 #endif
 #if defined(ENOPKG)
-   ENTRY(ENOPKG, "Package not installed"),
+   U_ERR_ENTRY(ENOPKG, "Package not installed"),
 #endif
 #if defined(EREMOTE)
-   ENTRY(EREMOTE, "Object is remote"),
+   U_ERR_ENTRY(EREMOTE, "Object is remote"),
 #endif
 #if defined(ENOLINK)
-   ENTRY(ENOLINK, "Link has been severed"),
+   U_ERR_ENTRY(ENOLINK, "Link has been severed"),
 #endif
 #if defined(EADV)
-   ENTRY(EADV, "Advertise error"),
+   U_ERR_ENTRY(EADV, "Advertise error"),
 #endif
 #if defined(ESRMNT)
-   ENTRY(ESRMNT, "Srmount error"),
+   U_ERR_ENTRY(ESRMNT, "Srmount error"),
 #endif
 #if defined(ECOMM)
-   ENTRY(ECOMM, "Communication error on send"),
+   U_ERR_ENTRY(ECOMM, "Communication error on send"),
 #endif
 #if defined(EPROTO)
-   ENTRY(EPROTO, "Protocol error"),
+   U_ERR_ENTRY(EPROTO, "Protocol error"),
 #endif
 #if defined(EMULTIHOP)
-   ENTRY(EMULTIHOP, "Multihop attempted"),
+   U_ERR_ENTRY(EMULTIHOP, "Multihop attempted"),
 #endif
 #if defined(EDOTDOT)
-   ENTRY(EDOTDOT, "RFS specific error"),
+   U_ERR_ENTRY(EDOTDOT, "RFS specific error"),
 #endif
 #if defined(EBADMSG)
-   ENTRY(EBADMSG, "Not a data message"),
+   U_ERR_ENTRY(EBADMSG, "Not a data message"),
 #endif
 #if defined(ENAMETOOLONG)
-   ENTRY(ENAMETOOLONG, "File name too long"),
+   U_ERR_ENTRY(ENAMETOOLONG, "File name too long"),
 #endif
 #if defined(EOVERFLOW)
-   ENTRY(EOVERFLOW, "Value too large for defined data type"),
+   U_ERR_ENTRY(EOVERFLOW, "Value too large for defined data type"),
 #endif
 #if defined(ENOTUNIQ)
-   ENTRY(ENOTUNIQ, "Name not unique on network"),
+   U_ERR_ENTRY(ENOTUNIQ, "Name not unique on network"),
 #endif
 #if defined(EBADFD)
-   ENTRY(EBADFD, "File descriptor in bad state"),
+   U_ERR_ENTRY(EBADFD, "File descriptor in bad state"),
 #endif
 #if defined(EREMCHG)
-   ENTRY(EREMCHG, "Remote address changed"),
+   U_ERR_ENTRY(EREMCHG, "Remote address changed"),
 #endif
 #if defined(ELIBACC)
-   ENTRY(ELIBACC, "Cannot access a needed shared library"),
+   U_ERR_ENTRY(ELIBACC, "Cannot access a needed shared library"),
 #endif
 #if defined(ELIBBAD)
-   ENTRY(ELIBBAD, "Accessing a corrupted shared library"),
+   U_ERR_ENTRY(ELIBBAD, "Accessing a corrupted shared library"),
 #endif
 #if defined(ELIBSCN)
-   ENTRY(ELIBSCN, ".lib section in a.out corrupted"),
+   U_ERR_ENTRY(ELIBSCN, ".lib section in a.out corrupted"),
 #endif
 #if defined(ELIBMAX)
-   ENTRY(ELIBMAX, "Attempting to link in too many shared libraries"),
+   U_ERR_ENTRY(ELIBMAX, "Attempting to link in too many shared libraries"),
 #endif
 #if defined(ELIBEXEC)
-   ENTRY(ELIBEXEC, "Cannot exec a shared library directly"),
+   U_ERR_ENTRY(ELIBEXEC, "Cannot exec a shared library directly"),
 #endif
 #if defined(EILSEQ)
-   ENTRY(EILSEQ, "Illegal byte sequence"),
+   U_ERR_ENTRY(EILSEQ, "Illegal byte sequence"),
 #endif
 #if defined(ENOSYS)
-   ENTRY(ENOSYS, "Operation not applicable"),
+   U_ERR_ENTRY(ENOSYS, "Operation not applicable"),
 #endif
 #if defined(ELOOP)
-   ENTRY(ELOOP, "Too many symbolic links encountered"),
+   U_ERR_ENTRY(ELOOP, "Too many symbolic links encountered"),
 #endif
 #if defined(ERESTART)
-   ENTRY(ERESTART, "Interrupted system call should be restarted"),
+   U_ERR_ENTRY(ERESTART, "Interrupted system call should be restarted"),
 #endif
 #if defined(ESTRPIPE)
-   ENTRY(ESTRPIPE, "Streams pipe error"),
+   U_ERR_ENTRY(ESTRPIPE, "Streams pipe error"),
 #endif
 #if defined(ENOTEMPTY)
-   ENTRY(ENOTEMPTY, "Directory not empty"),
+   U_ERR_ENTRY(ENOTEMPTY, "Directory not empty"),
 #endif
 #if defined(EUSERS)
-   ENTRY(EUSERS, "Too many users"),
+   U_ERR_ENTRY(EUSERS, "Too many users"),
 #endif
 #if defined(ENOTSOCK)
-   ENTRY(ENOTSOCK, "Socket operation on non-socket"),
+   U_ERR_ENTRY(ENOTSOCK, "Socket operation on non-socket"),
 #endif
 #if defined(EDESTADDRREQ)
-   ENTRY(EDESTADDRREQ, "Destination address required"),
+   U_ERR_ENTRY(EDESTADDRREQ, "Destination address required"),
 #endif
 #if defined(EMSGSIZE)
-   ENTRY(EMSGSIZE, "Message too long"),
+   U_ERR_ENTRY(EMSGSIZE, "Message too long"),
 #endif
 #if defined(EPROTOTYPE)
-   ENTRY(EPROTOTYPE, "Protocol wrong type for socket"),
+   U_ERR_ENTRY(EPROTOTYPE, "Protocol wrong type for socket"),
 #endif
 #if defined(ENOPROTOOPT)
-   ENTRY(ENOPROTOOPT, "Protocol not available"),
+   U_ERR_ENTRY(ENOPROTOOPT, "Protocol not available"),
 #endif
 #if defined(EPROTONOSUPPORT)
-   ENTRY(EPROTONOSUPPORT, "Protocol not supported"),
+   U_ERR_ENTRY(EPROTONOSUPPORT, "Protocol not supported"),
 #endif
 #if defined(ESOCKTNOSUPPORT)
-   ENTRY(ESOCKTNOSUPPORT, "Socket type not supported"),
+   U_ERR_ENTRY(ESOCKTNOSUPPORT, "Socket type not supported"),
 #endif
 #if defined(EOPNOTSUPP)
-   ENTRY(EOPNOTSUPP, "Operation not supported on transport endpoint"),
+   U_ERR_ENTRY(EOPNOTSUPP, "Operation not supported on transport endpoint"),
 #endif
 #if defined(EPFNOSUPPORT)
-   ENTRY(EPFNOSUPPORT, "Protocol family not supported"),
+   U_ERR_ENTRY(EPFNOSUPPORT, "Protocol family not supported"),
 #endif
 #if defined(EAFNOSUPPORT)
-   ENTRY(EAFNOSUPPORT, "Address family not supported by protocol"),
+   U_ERR_ENTRY(EAFNOSUPPORT, "Address family not supported by protocol"),
 #endif
 #if defined(EADDRINUSE)
-   ENTRY(EADDRINUSE, "Address already in use"),
+   U_ERR_ENTRY(EADDRINUSE, "Address already in use"),
 #endif
 #if defined(EADDRNOTAVAIL)
-   ENTRY(EADDRNOTAVAIL, "Cannot assign requested address"),
+   U_ERR_ENTRY(EADDRNOTAVAIL, "Cannot assign requested address"),
 #endif
 #if defined(ENETDOWN)
-   ENTRY(ENETDOWN, "Network is down"),
+   U_ERR_ENTRY(ENETDOWN, "Network is down"),
 #endif
 #if defined(ENETUNREACH)
-   ENTRY(ENETUNREACH, "Network is unreachable"),
+   U_ERR_ENTRY(ENETUNREACH, "Network is unreachable"),
 #endif
 #if defined(ENETRESET)
-   ENTRY(ENETRESET, "Network dropped connection because of reset"),
+   U_ERR_ENTRY(ENETRESET, "Network dropped connection because of reset"),
 #endif
 #if defined(ECONNABORTED)
-   ENTRY(ECONNABORTED, "Software caused connection abort"),
+   U_ERR_ENTRY(ECONNABORTED, "Software caused connection abort"),
 #endif
 #if defined(ECONNRESET)
-   ENTRY(ECONNRESET, "Connection reset by peer"),
+   U_ERR_ENTRY(ECONNRESET, "Connection reset by peer"),
 #endif
 #if defined(ENOBUFS)
-   ENTRY(ENOBUFS, "No buffer space available"),
+   U_ERR_ENTRY(ENOBUFS, "No buffer space available"),
 #endif
 #if defined(EISCONN)
-   ENTRY(EISCONN, "Transport endpoint is already connected"),
+   U_ERR_ENTRY(EISCONN, "Transport endpoint is already connected"),
 #endif
 #if defined(ENOTCONN)
-   ENTRY(ENOTCONN, "Transport endpoint is not connected"),
+   U_ERR_ENTRY(ENOTCONN, "Transport endpoint is not connected"),
 #endif
 #if defined(ESHUTDOWN)
-   ENTRY(ESHUTDOWN, "Cannot send after transport endpoint shutdown"),
+   U_ERR_ENTRY(ESHUTDOWN, "Cannot send after transport endpoint shutdown"),
 #endif
 #if defined(ETOOMANYREFS)
-   ENTRY(ETOOMANYREFS, "Too many references: cannot splice"),
+   U_ERR_ENTRY(ETOOMANYREFS, "Too many references: cannot splice"),
 #endif
 #if defined(ETIMEDOUT)
-   ENTRY(ETIMEDOUT, "Connection timed out"),
+   U_ERR_ENTRY(ETIMEDOUT, "Connection timed out"),
 #endif
 #if defined(ECONNREFUSED)
-   ENTRY(ECONNREFUSED, "Connection refused"),
+   U_ERR_ENTRY(ECONNREFUSED, "Connection refused"),
 #endif
 #if defined(EHOSTDOWN)
-   ENTRY(EHOSTDOWN, "Host is down"),
+   U_ERR_ENTRY(EHOSTDOWN, "Host is down"),
 #endif
 #if defined(EHOSTUNREACH)
-   ENTRY(EHOSTUNREACH, "No route to host"),
+   U_ERR_ENTRY(EHOSTUNREACH, "No route to host"),
 #endif
 #if defined(EALREADY)
-   ENTRY(EALREADY, "Operation already in progress"),
+   U_ERR_ENTRY(EALREADY, "Operation already in progress"),
 #endif
 #if defined(EINPROGRESS)
-   ENTRY(EINPROGRESS, "Operation now in progress"),
+   U_ERR_ENTRY(EINPROGRESS, "Operation now in progress"),
 #endif
 #if defined(ESTALE)
-   ENTRY(ESTALE, "Stale NFS file handle"),
+   U_ERR_ENTRY(ESTALE, "Stale NFS file handle"),
 #endif
 #if defined(EUCLEAN)
-   ENTRY(EUCLEAN, "Structure needs cleaning"),
+   U_ERR_ENTRY(EUCLEAN, "Structure needs cleaning"),
 #endif
 #if defined(ENOTNAM)
-   ENTRY(ENOTNAM, "Not a XENIX named type file"),
+   U_ERR_ENTRY(ENOTNAM, "Not a XENIX named type file"),
 #endif
 #if defined(ENAVAIL)
-   ENTRY(ENAVAIL, "No XENIX semaphores available"),
+   U_ERR_ENTRY(ENAVAIL, "No XENIX semaphores available"),
 #endif
 #if defined(EISNAM)
-   ENTRY(EISNAM, "Is a named type file"),
+   U_ERR_ENTRY(EISNAM, "Is a named type file"),
 #endif
 #if defined(EREMOTEIO)
-   ENTRY(EREMOTEIO, "Remote I/O error"),
+   U_ERR_ENTRY(EREMOTEIO, "Remote I/O error"),
 #endif
 #if defined(EDQUOT)
-   ENTRY(EDQUOT, "Quota exceeded"),
+   U_ERR_ENTRY(EDQUOT, "Quota exceeded"),
 #endif
 #if defined(ENOMEDIUM)
-   ENTRY(ENOMEDIUM, "No medium found"),
+   U_ERR_ENTRY(ENOMEDIUM, "No medium found"),
 #endif
 #if defined(EMEDIUMTYPE)
-   ENTRY(EMEDIUMTYPE, "Wrong medium type"),
+   U_ERR_ENTRY(EMEDIUMTYPE, "Wrong medium type"),
 #endif
 #if defined(ENMFILE)
-   ENTRY(ENMFILE, "No more files"),
+   U_ERR_ENTRY(ENMFILE, "No more files"),
 #endif
 #if defined(ENOSHARE)
-   ENTRY(ENOSHARE, "No such host or network path"),
+   U_ERR_ENTRY(ENOSHARE, "No such host or network path"),
 #endif
 #if defined(EPROCLIM)
-   ENTRY(EPROCLIM, "Too many processes")
+   U_ERR_ENTRY(EPROCLIM, "Too many processes")
 #endif
 };
 
@@ -535,154 +529,155 @@ void u_getSysSignal(int signo, uint32_t* restrict len)
 #  endif
    };
 
-#undef ENTRY
+#undef U_ERR_ENTRY
+
 #ifdef HAVE_STRSIGNAL
-#  define ENTRY(name,msg) {name, #name}
+#  define U_SIG_ENTRY(name,msg) {name, #name}
 #else
-#  define ENTRY(name,msg) {name, #name, msg}
+#  define U_SIG_ENTRY(name,msg) {name, #name, msg}
 #endif
 
    static const struct signal_info signal_table[] = {
 #if defined(SIGHUP)
-   ENTRY(SIGHUP, "Hangup"),
+   U_SIG_ENTRY(SIGHUP, "Hangup"),
 #endif
 #if defined(SIGINT)
-   ENTRY(SIGINT, "Interrupt"),
+   U_SIG_ENTRY(SIGINT, "Interrupt"),
 #endif
 #if defined(SIGQUIT)
-   ENTRY(SIGQUIT, "Quit"),
+   U_SIG_ENTRY(SIGQUIT, "Quit"),
 #endif
 #if defined(SIGILL)
-   ENTRY(SIGILL, "Illegal instruction"),
+   U_SIG_ENTRY(SIGILL, "Illegal instruction"),
 #endif
 #if defined(SIGTRAP)
-   ENTRY(SIGTRAP, "Trace/breakpoint trap"),
+   U_SIG_ENTRY(SIGTRAP, "Trace/breakpoint trap"),
 #endif
    /* Put SIGIOT before SIGABRT, so that if SIGIOT == SIGABRT then SIGABRT overrides SIGIOT. SIGABRT is in ANSI and POSIX.1, and SIGIOT isn't */
 #if defined(SIGIOT)
-   ENTRY(SIGIOT, "IOT trap"),
+   U_SIG_ENTRY(SIGIOT, "IOT trap"),
 #endif
 #if defined(SIGABRT)
-   ENTRY(SIGABRT, "Aborted"),
+   U_SIG_ENTRY(SIGABRT, "Aborted"),
 #endif
 #if defined(SIGEMT)
-   ENTRY(SIGEMT, "Emulation trap"),
+   U_SIG_ENTRY(SIGEMT, "Emulation trap"),
 #endif
 #if defined(SIGFPE)
-   ENTRY(SIGFPE, "Arithmetic exception"),
+   U_SIG_ENTRY(SIGFPE, "Arithmetic exception"),
 #endif
 #if defined(SIGKILL)
-   ENTRY(SIGKILL, "Killed"),
+   U_SIG_ENTRY(SIGKILL, "Killed"),
 #endif
 #if defined(SIGBUS)
-   ENTRY(SIGBUS, "Bus error"),
+   U_SIG_ENTRY(SIGBUS, "Bus error"),
 #endif
 #if defined(SIGSEGV)
-   ENTRY(SIGSEGV, "Segmentation fault"),
+   U_SIG_ENTRY(SIGSEGV, "Segmentation fault"),
 #endif
 #if defined(SIGSYS)
-   ENTRY(SIGSYS, "Bad system call"),
+   U_SIG_ENTRY(SIGSYS, "Bad system call"),
 #endif
 #if defined(SIGPIPE)
-   ENTRY(SIGPIPE, "Broken pipe"),
+   U_SIG_ENTRY(SIGPIPE, "Broken pipe"),
 #endif
 #if defined(SIGALRM)
-   ENTRY(SIGALRM, "Alarm clock"),
+   U_SIG_ENTRY(SIGALRM, "Alarm clock"),
 #endif
 #if defined(SIGTERM)
-   ENTRY(SIGTERM, "Terminated"),
+   U_SIG_ENTRY(SIGTERM, "Terminated"),
 #endif
 #if defined(SIGUSR1)
-   ENTRY(SIGUSR1, "User defined signal 1"),
+   U_SIG_ENTRY(SIGUSR1, "User defined signal 1"),
 #endif
 #if defined(SIGUSR2)
-   ENTRY(SIGUSR2, "User defined signal 2"),
+   U_SIG_ENTRY(SIGUSR2, "User defined signal 2"),
 #endif
    /* Put SIGCLD before SIGCHLD, so that if SIGCLD == SIGCHLD then SIGCHLD overrides SIGCLD. SIGCHLD is in POXIX.1 */
 #if defined(SIGCLD)
-   ENTRY(SIGCLD, "Child status changed"),
+   U_SIG_ENTRY(SIGCLD, "Child status changed"),
 #endif
 #if defined(SIGCHLD)
-   ENTRY(SIGCHLD, "Child status changed"),
+   U_SIG_ENTRY(SIGCHLD, "Child status changed"),
 #endif
 #if defined(SIGPWR)
-   ENTRY(SIGPWR, "Power fail/restart"),
+   U_SIG_ENTRY(SIGPWR, "Power fail/restart"),
 #endif
 #if defined(SIGWINCH)
-   ENTRY(SIGWINCH, "Window size changed"),
+   U_SIG_ENTRY(SIGWINCH, "Window size changed"),
 #endif
 #if defined(SIGURG)
-   ENTRY(SIGURG, "Urgent I/O condition"),
+   U_SIG_ENTRY(SIGURG, "Urgent I/O condition"),
 #endif
 #if defined(SIGIO)
    /* I/O pending has also been suggested, but is misleading since the signal only happens when the process has asked for it, not everytime I/O is pending */
-   ENTRY(SIGIO, "I/O possible"),
+   U_SIG_ENTRY(SIGIO, "I/O possible"),
 #endif
 #if defined(SIGPOLL)
-   ENTRY(SIGPOLL, "Pollable event occurred"),
+   U_SIG_ENTRY(SIGPOLL, "Pollable event occurred"),
 #endif
 #if defined(SIGSTKFLT)
-   ENTRY(SIGSTKFLT, "Stack fault"),
+   U_SIG_ENTRY(SIGSTKFLT, "Stack fault"),
 #endif
 #if defined(SIGSTOP)
-   ENTRY(SIGSTOP, "Stopped (signal)"),
+   U_SIG_ENTRY(SIGSTOP, "Stopped (signal)"),
 #endif
 #if defined(SIGTSTP)
-   ENTRY(SIGTSTP, "Stopped (user)"),
+   U_SIG_ENTRY(SIGTSTP, "Stopped (user)"),
 #endif
 #if defined(SIGCONT)
-   ENTRY(SIGCONT, "Continued"),
+   U_SIG_ENTRY(SIGCONT, "Continued"),
 #endif
 #if defined(SIGTTIN)
-   ENTRY(SIGTTIN, "Stopped (tty input)"),
+   U_SIG_ENTRY(SIGTTIN, "Stopped (tty input)"),
 #endif
 #if defined(SIGTTOU)
-   ENTRY(SIGTTOU, "Stopped (tty output)"),
+   U_SIG_ENTRY(SIGTTOU, "Stopped (tty output)"),
 #endif
 #if defined(SIGVTALRM)
-   ENTRY(SIGVTALRM, "Virtual timer expired"),
+   U_SIG_ENTRY(SIGVTALRM, "Virtual timer expired"),
 #endif
 #if defined(SIGPROF)
-   ENTRY(SIGPROF, "Profiling timer expired"),
+   U_SIG_ENTRY(SIGPROF, "Profiling timer expired"),
 #endif
 #if defined(SIGXCPU)
-   ENTRY(SIGXCPU, "CPU time limit exceeded"),
+   U_SIG_ENTRY(SIGXCPU, "CPU time limit exceeded"),
 #endif
 #if defined(SIGXFSZ)
-   ENTRY(SIGXFSZ, "File size limit exceeded"),
+   U_SIG_ENTRY(SIGXFSZ, "File size limit exceeded"),
 #endif
 #if defined(SIGWIND)
-   ENTRY(SIGWIND, "SIGWIND"),
+   U_SIG_ENTRY(SIGWIND, "SIGWIND"),
 #endif
 #if defined(SIGPHONE)
-   ENTRY(SIGPHONE, "SIGPHONE"),
+   U_SIG_ENTRY(SIGPHONE, "SIGPHONE"),
 #endif
 #if defined(SIGLOST)
-   ENTRY(SIGLOST, "Resource lost"),
+   U_SIG_ENTRY(SIGLOST, "Resource lost"),
 #endif
 #if defined(SIGWAITING)
-   ENTRY(SIGWAITING, "Process's LWPs are blocked"),
+   U_SIG_ENTRY(SIGWAITING, "Process's LWPs are blocked"),
 #endif
 #if defined(SIGLWP)
-   ENTRY(SIGLWP, "Signal LWP"),
+   U_SIG_ENTRY(SIGLWP, "Signal LWP"),
 #endif
 #if defined(SIGDANGER)
-   ENTRY(SIGDANGER, "Swap space dangerously low"),
+   U_SIG_ENTRY(SIGDANGER, "Swap space dangerously low"),
 #endif
 #if defined(SIGGRANT)
-   ENTRY(SIGGRANT, "Monitor mode granted"),
+   U_SIG_ENTRY(SIGGRANT, "Monitor mode granted"),
 #endif
 #if defined(SIGRETRACT)
-   ENTRY(SIGRETRACT, "Need to relinguish monitor mode"),
+   U_SIG_ENTRY(SIGRETRACT, "Need to relinguish monitor mode"),
 #endif
 #if defined(SIGMSG)
-   ENTRY(SIGMSG, "Monitor mode data available"),
+   U_SIG_ENTRY(SIGMSG, "Monitor mode data available"),
 #endif
 #if defined(SIGSOUND)
-   ENTRY(SIGSOUND, "Sound completed"),
+   U_SIG_ENTRY(SIGSOUND, "Sound completed"),
 #endif
 #if defined(SIGSAK)
-   ENTRY(SIGSAK, "Secure attention")
+   U_SIG_ENTRY(SIGSAK, "Secure attention")
 #endif
 };
 
@@ -729,8 +724,9 @@ void u_getSysSignal(int signo, uint32_t* restrict len)
    *len = snprintf(u_err_buffer, 256, "%s (%d, %s)", name, signo, msg);
 }
 
-#undef  ENTRY
-#define ENTRY(name,msg) {name, #name, msg}
+#undef U_SIG_ENTRY
+
+#define U_EXIT_ENTRY(name,msg) {name, #name, msg}
 
 void u_getExitStatus(int exitno, uint32_t* restrict len)
 {
@@ -744,52 +740,53 @@ void u_getExitStatus(int exitno, uint32_t* restrict len)
 
    static const struct exit_value_info exit_value_table[] = {
 #if defined(EX_USAGE)
-   ENTRY(EX_USAGE, "command line usage error"),
+   U_EXIT_ENTRY(EX_USAGE, "command line usage error"),
 #endif
 #if defined(EX_DATAERR)
-   ENTRY(EX_DATAERR, "data format error"),
+   U_EXIT_ENTRY(EX_DATAERR, "data format error"),
 #endif
 #if defined(EX_NOINPUT)
-   ENTRY(EX_NOINPUT, "cannot open input"),
+   U_EXIT_ENTRY(EX_NOINPUT, "cannot open input"),
 #endif
 #if defined(EX_NOUSER)
-   ENTRY(EX_NOUSER, "addresse unknown"),
+   U_EXIT_ENTRY(EX_NOUSER, "addresse unknown"),
 #endif
 #if defined(EX_NOHOST)
-   ENTRY(EX_NOHOST, "host name unknown"),
+   U_EXIT_ENTRY(EX_NOHOST, "host name unknown"),
 #endif
 #if defined(EX_UNAVAILABLE)
-   ENTRY(EX_UNAVAILABLE, "service unavailable"),
+   U_EXIT_ENTRY(EX_UNAVAILABLE, "service unavailable"),
 #endif
 #if defined(EX_SOFTWARE)
-   ENTRY(EX_SOFTWARE, "internal software error"),
+   U_EXIT_ENTRY(EX_SOFTWARE, "internal software error"),
 #endif
 #if defined(EX_OSERR)
-   ENTRY(EX_OSERR, "system error (e.g., can't fork)"),
+   U_EXIT_ENTRY(EX_OSERR, "system error (e.g., can't fork)"),
 #endif
 #if defined(EX_OSFILE)
-   ENTRY(EX_OSFILE, "critical OS file missing"),
+   U_EXIT_ENTRY(EX_OSFILE, "critical OS file missing"),
 #endif
 #if defined(EX_CANTCREAT)
-   ENTRY(EX_CANTCREAT, "can't create (user) output file"),
+   U_EXIT_ENTRY(EX_CANTCREAT, "can't create (user) output file"),
 #endif
 #if defined(EX_IOERR)
-   ENTRY(EX_IOERR, "input/output error"),
+   U_EXIT_ENTRY(EX_IOERR, "input/output error"),
 #endif
 #if defined(EX_TEMPFAIL)
-   ENTRY(EX_TEMPFAIL, "temp failure; user is invited to retry"),
+   U_EXIT_ENTRY(EX_TEMPFAIL, "temp failure; user is invited to retry"),
 #endif
 #if defined(EX_PROTOCOL)
-   ENTRY(EX_PROTOCOL, "remote error in protocol"),
+   U_EXIT_ENTRY(EX_PROTOCOL, "remote error in protocol"),
 #endif
 #if defined(EX_NOPERM)
-   ENTRY(EX_NOPERM, "permission denied"),
+   U_EXIT_ENTRY(EX_NOPERM, "permission denied"),
 #endif
 #if defined(EX_CONFIG)
-   ENTRY(EX_CONFIG, "configuration error")
+   U_EXIT_ENTRY(EX_CONFIG, "configuration error")
 #endif
 };
-#undef ENTRY
+
+#undef U_EXIT_ENTRY
 
    const char* restrict msg;
    const char* restrict name;

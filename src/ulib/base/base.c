@@ -52,9 +52,6 @@ void u_debug_init(void);
 
 void u_debug_at_exit(void);
 
-#include <time.h>
-#include <errno.h>
-
 #ifdef HAVE_ENDIAN_H
 #  include <endian.h>
 #elif defined(HAVE_SYS_ENDIAN_H)
@@ -76,7 +73,16 @@ void u_debug_at_exit(void);
 #  include <termios.h>
 #endif
 
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86) /* Test for Intel/AMD architecture */
+#  if defined(_MSC_VER)
+#     include <intrin.h> /* __cpuid Visual Studio */
+#  elif defined(__GNUC__) && defined(HAVE_CPUID_H)
+#     include <cpuid.h> /* __get_cpuid GCC / LLVM (Clang) */
+#  endif
+#endif
+
 /* String representation */
+
 struct ustringrep u_empty_string_rep_storage = {
 #ifdef DEBUG
    (void*)U_CHECK_MEMORY_SENTINEL, /* memory_error (_this) */
@@ -94,19 +100,23 @@ struct ustringrep u_empty_string_rep_storage = {
 };
 
 /* Startup */
-bool                 u_is_tty;
-pid_t                u_pid;
-uint32_t             u_pid_str_len;
-uint32_t             u_progname_len;
+
+bool     u_is_tty;
+pid_t    u_pid;
+uint32_t u_pid_str_len;
+uint32_t u_progname_len;
+
       char* restrict u_pid_str;
 const char* restrict u_progpath;
 const char* restrict u_progname;
 
 /* Current working directory */
-char*                u_cwd;
-uint32_t             u_cwd_len;
+
+char*    u_cwd;
+uint32_t u_cwd_len;
 
 /* Location info */
+
 uint32_t             u_num_line;
 const char* restrict u_name_file;
 const char* restrict u_name_function;
@@ -139,32 +149,45 @@ const char* u_day_name[7]    = { "Sunday", "Monday", "Tuesday", "Wednesday", "Th
 const char* u_month_name[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
 /* Services */
-int                  u_errno; /* An errno value */
-int                  u_flag_exit;
-int                  u_flag_test;
-bool                 u_recursion;
-bool                 u_fork_called;
-bool                 u_exec_failed;
-char                 u_user_name[32];
-char                 u_hostname[HOST_NAME_MAX+1];
-int32_t              u_printf_string_max_length;
-uint32_t             u_hostname_len, u_user_name_len, u_seed_hash = 0xdeadbeef;
-const int            MultiplyDeBruijnBitPosition2[32] = { 0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9 };
-const char* restrict u_tmpdir = "/tmp";
-const unsigned char  u_hex_upper[16] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
-const unsigned char  u_hex_lower[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
-const unsigned char  u_alphabet[64]  = { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-                                         'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-                                         '0','1','2','3','4','5','6','7','8','9','+','/' };
 
+int u_errno; /* An errno value */
+int u_flag_exit;
+int u_flag_test;
+bool u_recursion;
+bool u_fork_called;
+bool u_exec_failed;
+uint32_t u_flag_sse; /* detect SSE2, SSSE3, SSE4.2 */
+char u_user_name[32];
+char u_hostname[HOST_NAME_MAX+1];
+int32_t u_printf_string_max_length;
+uint32_t u_hostname_len, u_user_name_len, u_seed_hash = 0xdeadbeef;
+
+const char* restrict u_tmpdir = "/tmp";
 struct uclientimage_info u_clientimage_info;
 
+const unsigned char u_hex_upper[16] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
+const unsigned char u_hex_lower[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
+
+const int MultiplyDeBruijnBitPosition2[32] = { 0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9 };
+
 /* conversion table number to string */
+
 const char u_ctn2s[201] = "0001020304050607080910111213141516171819"
                           "2021222324252627282930313233343536373839"
                           "4041424344454647484950515253545556575859"
                           "6061626364656667686970717273747576777879"
                           "8081828384858687888990919293949596979899";
+
+/* u_b64url substitute chars 62(+) and 63(/) with -_ (minus) (underline) */
+
+const unsigned char  u_b64[64]    = { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+                                      'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+                                      '0','1','2','3','4','5','6','7','8','9',
+                                      '+','/' };
+const unsigned char  u_b64url[64] = { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+                                      'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+                                      '0','1','2','3','4','5','6','7','8','9',
+                                      '-','_' };
 
 /**
  * "FATAL: kernel too old"
@@ -550,10 +573,6 @@ bool u_setStartTime(void)
 
 void u_init_ulib(char** restrict argv)
 {
-#if !defined(_MSWINDOWS_) && defined(DEBUG)
-   const char* restrict pwd;
-#endif
-
    U_INTERNAL_TRACE("u_init_ulib()")
 
    u_setPid();
@@ -567,25 +586,52 @@ void u_init_ulib(char** restrict argv)
 
    U_INTERNAL_ASSERT_MAJOR(u_progname_len, 0)
 
-#ifdef USE_HARDWARE_CRC32
-   __builtin_cpu_init();
-
-   if (__builtin_cpu_supports("sse4.2"))
-      {
-      uint32_t h = 0xABAD1DEA;
-
-#  if __x86_64__
-      h = (uint32_t)__builtin_ia32_crc32di(h, U_MULTICHAR_CONSTANT64('1','2','3','4','5','6','7','8'));
-#  else
-      h =           __builtin_ia32_crc32si(h, U_MULTICHAR_CONSTANT32('/','o','p','t'));
-#  endif
-
-      U_INTERNAL_ERROR(h, "hardware crc32 failed (h = %u). Exiting...", h);
-      }
-#endif
-
 #ifdef _MSWINDOWS_
    u_init_ulib_mingw();
+#endif
+
+#if (defined(_M_X64) || defined(__x86_64__) || defined(__i386) || defined(_M_IX86)) && (defined(_MSC_VER) || (defined(__GNUC__) && defined(HAVE_CPUID_H)))
+   { /*  Compiler and architecture test (Intel/AMD Architecture)! Visual Studio and GCC / LLVM (Clang) */
+# if defined(_MSC_VER)
+   int cpuid[4] = {-1}; /* Visual Studio */
+   __cpuid(cpuid, 1);
+# else
+   unsigned int cpuid[4] = {0,0,0,0}; /* GCC / LLVM (Clang) */
+   __get_cpuid(1, &cpuid[0], &cpuid[1], &cpuid[2], &cpuid[3]);
+# endif
+# ifndef bit_SSE2
+#  define bit_SSE2 (1 << 26) /* Taken from GCC <cpuid.h> ... just more visual & descriptive! */
+# endif
+# ifndef bit_SSSE3
+#  define bit_SSSE3 (1 << 9)
+# endif
+# ifndef bit_SSE4_2
+#  define bit_SSE4_2 (1 << 20)
+# endif
+# if defined(_M_X64) || defined(__x86_64__)  /* 64-bit */
+        if ((cpuid[2] & bit_SSE4_2) != 0) u_flag_sse = 42; /* detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access */
+# else /* 32-bit */
+        if ((cpuid[2] & bit_SSE4_2) != 0) u_flag_sse = 42; /* detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access */
+   else if ((cpuid[2] & bit_SSSE3)  != 0) u_flag_sse =  3; /* detect SSSE3,  available on Core/Core 2 and newer */
+   else if ((cpuid[3] & bit_SSE2)   != 0) u_flag_sse =  2; /* this is for very, very old computers with SSE2 only! eg. old Pentium 4! */
+# endif
+   }
+#endif
+
+#ifdef USE_HARDWARE_CRC32
+   {
+   uint32_t h = 0xABAD1DEA;
+
+   U_INTERNAL_ASSERT_EQUALS(u_flag_sse, 42)
+
+# if __x86_64__
+   h = (uint32_t)__builtin_ia32_crc32di(h, U_MULTICHAR_CONSTANT64('1','2','3','4','5','6','7','8'));
+# else
+   h =           __builtin_ia32_crc32si(h, U_MULTICHAR_CONSTANT32('/','o','p','t'));
+#endif
+
+   U_INTERNAL_ERROR(h, "hardware crc32 failed (h = %u). Exiting...", h);
+   }
 #endif
 
 #if !defined(__MINGW32__) && defined(HAVE_ARCH64) && defined(U_APEX_ENABLE)
@@ -595,13 +641,15 @@ void u_init_ulib(char** restrict argv)
    u_getcwd(); /* get current working directory */
 
 #if !defined(_MSWINDOWS_) && defined(DEBUG)
-   pwd = getenv("PWD"); /* check for bash setting */
+   {
+   const char* restrict pwd = getenv("PWD"); /* check for bash setting */
 
    if (pwd &&
        strncmp(u_cwd, pwd, u_cwd_len) != 0)
       {
       U_WARNING("Current working directory from environment (PWD): %s differ from system getcwd(): %.*s", pwd, u_cwd_len, u_cwd);
       }
+   }
 #endif
 
    u_is_tty = isatty(STDERR_FILENO);
@@ -615,6 +663,8 @@ void u_init_ulib(char** restrict argv)
 #endif
 
    (void) u_setStartTime();
+
+   U_DEBUG("u_flag_sse = %u", u_flag_sse)
 }
 
 /**
@@ -1302,80 +1352,40 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
  * --------------------------------------------------------------------
  */
 
+#define U_CTL_ENTRY(name) {name, U_CONSTANT_SIZE(name)}
+
+uint32_t u_sprintcrtl(char* restrict out, unsigned char c)
+{
+   struct control_info {
+      const char* restrict name;
+      uint32_t len;
+   };
+
+   static const struct control_info control_table[32] = {
+      U_CTL_ENTRY("\\u0000"), U_CTL_ENTRY("\\u0001"), U_CTL_ENTRY("\\u0002"), U_CTL_ENTRY("\\u0003"), U_CTL_ENTRY("\\u0004"), U_CTL_ENTRY("\\u0005"), U_CTL_ENTRY("\\u0006"),
+      U_CTL_ENTRY("\\u0007"), U_CTL_ENTRY("\\b"    ), U_CTL_ENTRY("\\t"    ), U_CTL_ENTRY("\\n"    ), U_CTL_ENTRY("\\u000b"), U_CTL_ENTRY("\\f"    ), U_CTL_ENTRY("\\r"    ),
+      U_CTL_ENTRY("\\u000e"), U_CTL_ENTRY("\\u000f"), U_CTL_ENTRY("\\u0010"), U_CTL_ENTRY("\\u0011"), U_CTL_ENTRY("\\u0012"), U_CTL_ENTRY("\\u0013"), U_CTL_ENTRY("\\u0014"),
+      U_CTL_ENTRY("\\u0015"), U_CTL_ENTRY("\\u0016"), U_CTL_ENTRY("\\u0017"), U_CTL_ENTRY("\\u0018"), U_CTL_ENTRY("\\u0019"), U_CTL_ENTRY("\\u001a"), U_CTL_ENTRY("\\u001b"),
+      U_CTL_ENTRY("\\u001c"), U_CTL_ENTRY("\\u001d"), U_CTL_ENTRY("\\u001e"), U_CTL_ENTRY("\\u001f")
+   };
+
+   U_INTERNAL_TRACE("u_sprintcrtl(%p,%d)", out, c)
+
+   u__memcpy(out, control_table[c].name, control_table[c].len, __PRETTY_FUNCTION__);
+
+   return control_table[c].len;
+}
+
+#undef U_CTL_ENTRY
+
 uint32_t u_sprintc(char* restrict out, unsigned char c)
 {
-   char* restrict cp;
+   U_INTERNAL_TRACE("u_sprintc(%p,%d)", out, c)
 
-   U_INTERNAL_TRACE("u_sprintc(%d)", c)
+   if (c < 32) return u_sprintcrtl(out, c);
 
-   if (c < 32)
-      {
-      *out++ = '\\';
-
-      switch (c)
-         {
-         case '\a': // 0x07
-            {
-            *out = 'a';
-
-            return 2;
-            }
-
-         case '\b': // 0x08
-            {
-            *out = 'b';
-
-            return 2;
-            }
-
-         case '\t': // 0x09
-            {
-            *out = 't';
-
-            return 2;
-            }
-
-         case '\n': // 0x0A
-            {
-            *out = 'n';
-
-            return 2;
-            }
-
-         case '\v': // 0x0B
-            {
-            *out = 'v';
-
-            return 2;
-            }
-
-         case '\f': // 0x0C
-            {
-            *out = 'f';
-
-            return 2;
-            }
-
-         case '\r': // 0x0D
-            {
-            *out = 'r';
-
-            return 2;
-            }
-
-         case '\033': // 0x1B
-            {
-            *out = 'e';
-
-            return 2;
-            }
-
-         default: goto next;
-         }
-      }
-
-   if (c == '"' || // 0x22
-       c == '\\')  // 0x5C
+   if (c == '"' || /* 0x22 */
+       c == '\\')  /* 0x5C */
       {
       *out++ = '\\';
       *out   = c;
@@ -1385,10 +1395,12 @@ uint32_t u_sprintc(char* restrict out, unsigned char c)
 
    if (c > 126)
       {
+      char* restrict cp;
+
       /* \DDD number formed of 1-3 octal digits */
 
       *out++ = '\\';
-next:
+
       cp = out + 3;
 
       do {
@@ -2814,11 +2826,8 @@ void u_exit(void)
       }
 }
 
-#ifdef ENTRY
-#undef ENTRY
-#endif
-#define ENTRY(n,x) U_http_method_list[n].name =                 #x, \
-                   U_http_method_list[n].len  = U_CONSTANT_SIZE(#x)
+#define U_HTTP_ENTRY(n,x) U_http_method_list[n].name =                 #x, \
+                          U_http_method_list[n].len  = U_CONSTANT_SIZE(#x)
 
 void u_init_http_method_list(void)
 {
@@ -2827,41 +2836,41 @@ void u_init_http_method_list(void)
    if (U_http_method_list[0].len == 0)
       {
       /* request methods */
-      ENTRY(0,GET);
-      ENTRY(1,HEAD);
-      ENTRY(2,POST);
-      ENTRY(3,PUT);
-      ENTRY(4,DELETE);
-      ENTRY(5,OPTIONS);
+      U_HTTP_ENTRY(0,GET);
+      U_HTTP_ENTRY(1,HEAD);
+      U_HTTP_ENTRY(2,POST);
+      U_HTTP_ENTRY(3,PUT);
+      U_HTTP_ENTRY(4,DELETE);
+      U_HTTP_ENTRY(5,OPTIONS);
       /* pathological */
-      ENTRY(6,TRACE);
-      ENTRY(7,CONNECT);
+      U_HTTP_ENTRY(6,TRACE);
+      U_HTTP_ENTRY(7,CONNECT);
       /* webdav */
-      ENTRY(8,COPY);
-      ENTRY(9,MOVE);
-      ENTRY(10,LOCK);
-      ENTRY(11,UNLOCK);
-      ENTRY(12,MKCOL);
-      ENTRY(13,SEARCH);
-      ENTRY(14,PROPFIND);
-      ENTRY(15,PROPPATCH);
+      U_HTTP_ENTRY(8,COPY);
+      U_HTTP_ENTRY(9,MOVE);
+      U_HTTP_ENTRY(10,LOCK);
+      U_HTTP_ENTRY(11,UNLOCK);
+      U_HTTP_ENTRY(12,MKCOL);
+      U_HTTP_ENTRY(13,SEARCH);
+      U_HTTP_ENTRY(14,PROPFIND);
+      U_HTTP_ENTRY(15,PROPPATCH);
       /* rfc-5789 */
-      ENTRY(16,PATCH);
-      ENTRY(17,PURGE);
+      U_HTTP_ENTRY(16,PATCH);
+      U_HTTP_ENTRY(17,PURGE);
       /* subversion */
-      ENTRY(18,MERGE);
-      ENTRY(19,REPORT);
-      ENTRY(20,CHECKOUT);
-      ENTRY(21,MKACTIVITY);
+      U_HTTP_ENTRY(18,MERGE);
+      U_HTTP_ENTRY(19,REPORT);
+      U_HTTP_ENTRY(20,CHECKOUT);
+      U_HTTP_ENTRY(21,MKACTIVITY);
       /* upnp */
-      ENTRY(22,NOTIFY);
-      ENTRY(23,MSEARCH);
-      ENTRY(24,SUBSCRIBE);
-      ENTRY(25,UNSUBSCRIBE);
+      U_HTTP_ENTRY(22,NOTIFY);
+      U_HTTP_ENTRY(23,MSEARCH);
+      U_HTTP_ENTRY(24,SUBSCRIBE);
+      U_HTTP_ENTRY(25,UNSUBSCRIBE);
       }
 }
 
-#undef ENTRY
+#undef U_HTTP_ENTRY
 
 /*
 #if defined(U_ALL_C) && !defined(DEBUG)

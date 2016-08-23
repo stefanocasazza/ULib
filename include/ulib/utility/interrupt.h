@@ -16,7 +16,6 @@
 
 #include <ulib/internal/common.h>
 
-#include <errno.h>
 #include <setjmp.h>
 
 #ifndef HAVE_SIGINFO_T

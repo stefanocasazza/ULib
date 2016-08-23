@@ -183,7 +183,7 @@ struct U_EXPORT UServices {
       UString code(len);
       char* ptr = code.data();
 
-      for (uint32_t i = 0; i < len; ++i, ++ptr) *ptr = u_alphabet[u_get_num_random(sizeof(u_alphabet) - 3)];
+      for (uint32_t i = 0; i < len; ++i, ++ptr) *ptr = u_b64[u_get_num_random(sizeof(u_b64) - 3)];
 
       code.size_adjust(len);
 

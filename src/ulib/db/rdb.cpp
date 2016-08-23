@@ -82,10 +82,7 @@ U_NO_EXPORT bool URDB::htLookup(URDB* prdb)
    U_TRACE(0, "URDB::htLookup(%p)", prdb)
 
 #ifdef DEBUG
-   if (prdb->UCDB::key.dsize == 0)
-      {
-      U_ERROR("URDB::htLookup(%p) - key search have size null", prdb);
-      }
+   if (prdb->UCDB::key.dsize == 0) U_ERROR("URDB::htLookup(%p) - key search have size null - db(%.*S,%u recs)", prdb, U_FILE_TO_TRACE(*prdb), RDB_nrecord(prdb));
 #endif
 
    U_INTERNAL_ASSERT_POINTER(prdb->UCDB::key.dptr)
@@ -185,7 +182,7 @@ U_NO_EXPORT void URDB::htAlloc(URDB* prdb)
 #ifdef DEBUG
    if (RDB_capacity(prdb) < sizeof(URDB::cache_node))
       {
-      U_ERROR("URDB::htAlloc() - capacity(%u) < size node(%u)", RDB_capacity(prdb), sizeof(URDB::cache_node));
+      U_ERROR("URDB::htAlloc() - capacity(%u) < size node(%u) - db(%.*S,%u recs)", RDB_capacity(prdb), sizeof(URDB::cache_node), U_FILE_TO_TRACE(*prdb), RDB_nrecord(prdb));
       }
 #endif
 
@@ -210,7 +207,7 @@ U_NO_EXPORT void URDB::htRemoveAlloc(URDB* prdb)
 #ifdef DEBUG
    if (RDB_capacity(prdb) < sizeof(URDB::cache_node))
       {
-      U_ERROR("URDB::htRemoveAlloc() - capacity(%u) < size node(%u)", RDB_capacity(prdb), sizeof(URDB::cache_node));
+      U_ERROR("URDB::htRemoveAlloc() - capacity(%u) < size node(%u) - db(%.*S,%u recs)", RDB_capacity(prdb), sizeof(URDB::cache_node), U_FILE_TO_TRACE(*prdb), RDB_nrecord(prdb));
       }
 #endif
 
@@ -1498,7 +1495,7 @@ int URDB::_store(int _flag, bool exist)
          if (data_new.dptr == u_buffer &&
              data_new.dsize > U_BUFFER_SIZE)
             {
-            U_ERROR("URDB::store(%d) - overflow on data buffer (%u > %u)", _flag, data_new.dsize, U_BUFFER_SIZE);
+            U_ERROR("URDB::store(%d) - overflow on data buffer (%u > %u) - db(%.*S,%u recs)", _flag, data_new.dsize, U_BUFFER_SIZE, U_FILE_TO_TRACE(*this), RDB_nrecord(this));
             }
 #     endif
          }

@@ -84,6 +84,16 @@ char* mkdtemp(char* template_name);
 #  endif
 #endif
 
+#ifndef HAVE_MEMMEM
+#  ifdef __cplusplus
+extern "C" {
+#  endif
+void* memmem(const void* haystack, size_t haystacklen, const void* needle, size_t needlelen);
+#  ifdef __cplusplus
+}
+#  endif
+#endif
+
 #ifndef HAVE_MEMRCHR
 #  ifdef __cplusplus
 extern "C" {

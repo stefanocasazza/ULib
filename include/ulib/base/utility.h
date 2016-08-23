@@ -142,24 +142,23 @@ static inline void u_set_seed_random(uint32_t u, uint32_t v)
    U_INTERNAL_ASSERT_MAJOR(u_m_z, 0)
 }
 
-U_EXPORT int         u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
-U_EXPORT bool        u_isNumber(const char* restrict s, uint32_t n) __pure;
-U_EXPORT void        u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
-U_EXPORT char*       u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
-U_EXPORT bool        u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
-U_EXPORT double      u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
-U_EXPORT uint32_t    u_findEndHeader( const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 or U_LF2 */
-U_EXPORT uint32_t    u_findEndHeader1(const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 */
 U_EXPORT const char* u_get_mimetype(const char* restrict suffix, int* pmime_index);
 
-U_EXPORT char*       u_memoryDump( char* restrict bp, unsigned char* restrict cp, uint32_t n);
-U_EXPORT uint32_t    u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n);
+U_EXPORT double u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
 
-#if defined(HAVE_MEMMEM) && !defined(__USE_GNU)
-U_EXPORT void* memmem(const void* restrict haystack, size_t haystacklen, const void* restrict needle, size_t needlelen);
-#endif
+U_EXPORT char* u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
 
+U_EXPORT char*    u_memoryDump( char* restrict bp, unsigned char* restrict cp, uint32_t n);
+U_EXPORT uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n);
+
+U_EXPORT int  u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
+U_EXPORT bool u_isNumber(const char* restrict s, uint32_t n) __pure;
 U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n);
+U_EXPORT void u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
+U_EXPORT bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
+
+U_EXPORT uint32_t u_findEndHeader( const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 or U_LF2 */
+U_EXPORT uint32_t u_findEndHeader1(const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 */
 
 #ifdef DEBUG
 /* NB: u_strlen() and u_memcpy() conflit with /usr/include/unicode/urename.h */
@@ -180,9 +179,19 @@ U_EXPORT char*  u__strncpy(     char* restrict dest, const char* restrict src, s
 #  define apex_memmove(dest,src,n) memmove((dest),(src),(n))
 #endif
 
-U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a start        with   string b */
-U_EXPORT bool   u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a terminate    with   string b */
-U_EXPORT void*      u_find(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string b is contained within string a */
+static inline void* u_find(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) /* check if string b is contained within string a */
+{
+   U_INTERNAL_TRACE("u_find(%.*s,%u,%.*s,%u)", U_min(n1,128), a, n1, U_min(n2,128), b, n2)
+
+   U_INTERNAL_ASSERT_POINTER(a)
+   U_INTERNAL_ASSERT_POINTER(b)
+   U_INTERNAL_ASSERT_MAJOR(n2, 0)
+
+   return memmem(a, n1, b, n2);
+}
+
+U_EXPORT bool   u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a terminate with string b */
+U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a start     with string b */
 
 /* find char not quoted */
 

@@ -827,9 +827,9 @@ UString UFile::_getContent(bool bsize, bool brdonly, bool bmap)
    U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
 #endif
 
-#  ifdef U_COVERITY_FALSE_POSITIVE
+# ifdef U_COVERITY_FALSE_POSITIVE
    if (fd <= 0) return UString::getStringNull();
-#  endif
+# endif
 
    if (bsize) readSize();
 

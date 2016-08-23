@@ -27,8 +27,6 @@ PROCESS_INFORMATION  UProcess::aProcessInformation;
 #  include <spawn.h>
 #endif
 
-#include <errno.h>
-
 int UProcess::filedes[6];
 
 // services for EXEC

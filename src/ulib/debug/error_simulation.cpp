@@ -18,8 +18,6 @@
 #include <ulib/base/utility.h>
 #include <ulib/debug/error_simulation.h>
 
-#include <errno.h>
-
 bool           USimulationError::flag_init;
 char*          USimulationError::file_mem;
 uint32_t       USimulationError::file_size;

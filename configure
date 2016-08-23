@@ -832,6 +832,8 @@ MEMRCHR_FALSE
 MEMRCHR_TRUE
 PTHREAD_FALSE
 PTHREAD_TRUE
+MEMMEM_FALSE
+MEMMEM_TRUE
 MREMAP_FALSE
 MREMAP_TRUE
 TIMEGM_FALSE
@@ -20797,7 +20799,7 @@ _ACEOF
 
 fi
 
-for ac_header in arpa/inet.h asm/mman.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h \
+for ac_header in arpa/inet.h asm/mman.h cpuid.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h \
 						string.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h sys/timeb.h sys/resource.h syslog.h termios.h unistd.h wchar.h \
 						assert.h byteswap.h endian.h execinfo.h ifaddrs.h mcheck.h ndir.h dirent.h ndir.h string.h netpacket/packet.h sched.h \
 						semaphore.h sysexits.h streambuf.h poll.h net/if_arp.h sys/dir.h sys/endian.h sys/ndir.h sys/inotify.h sys/sendfile.h sys/sched.h \
@@ -22415,6 +22417,14 @@ else
 fi
 
  if false; then
+  MEMMEM_TRUE=
+  MEMMEM_FALSE='#'
+else
+  MEMMEM_TRUE='#'
+  MEMMEM_FALSE=
+fi
+
+ if false; then
   PTHREAD_TRUE=
   PTHREAD_FALSE='#'
 else
@@ -23987,6 +23997,14 @@ $as_echo "#define HAVE_KQUEUE1 1" >>confdefs.h
 
         ;;
     memmem)
+		   if true; then
+  MEMMEM_TRUE=
+  MEMMEM_FALSE='#'
+else
+  MEMMEM_TRUE='#'
+  MEMMEM_FALSE=
+fi
+
 
 $as_echo "#define HAVE_MEMMEM 1" >>confdefs.h
 
@@ -30570,7 +30588,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
 
 		if test "$use_distcc" != "yes"; then
-			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -mtune=native" # NB: distcc don't work with this...
+			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -fuse-linker-plugin -march=native -mtune=native" # NB: distcc don't work with this...
 		fi
 	fi
 
@@ -32044,6 +32062,10 @@ if test -z "${MREMAP_TRUE}" && test -z "${MREMAP_FALSE}"; then
   as_fn_error $? "conditional \"MREMAP\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
+if test -z "${MEMMEM_TRUE}" && test -z "${MEMMEM_FALSE}"; then
+  as_fn_error $? "conditional \"MEMMEM\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
 if test -z "${PTHREAD_TRUE}" && test -z "${PTHREAD_FALSE}"; then
   as_fn_error $? "conditional \"PTHREAD\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
@@ -32126,6 +32148,10 @@ Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${GETOPT_LONG_TRUE}" && test -z "${GETOPT_LONG_FALSE}"; then
   as_fn_error $? "conditional \"GETOPT_LONG\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${MEMMEM_TRUE}" && test -z "${MEMMEM_FALSE}"; then
+  as_fn_error $? "conditional \"MEMMEM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${MEMRCHR_TRUE}" && test -z "${MEMRCHR_FALSE}"; then

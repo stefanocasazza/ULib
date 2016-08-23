@@ -31,8 +31,6 @@
 #  include <ulib/db/tdb.h>
 #endif
 
-#include <errno.h>
-
 U_CREAT_FUNC(server_plugin_nocat, UNoCatPlugIn)
 
 int                        UNoCatPlugIn::fd_stderr;
@@ -1312,11 +1310,10 @@ bool UNoCatPlugIn::setPeerLabel()
          // typedef struct { uint32_t area, leasetime; time_t expiration; } __attribute__((packed)) tdbdata;
 
             UString area(10U);
+            uint32_t id = *(uint32_t*)value.data();
 
-            area.snprintf("%u", *(uint32_t*)value.data()); 
-
-         // area.snprintf("%06x", *(uint32_t*)value.data()); 
-         // UHexDump::encode(value.data(), sizeof(uint32_t), area);
+            if (id == 16777215) (void) area.assign(U_CONSTANT_TO_PARAM("ffffff"));
+            else                       area.snprintf("%u", id);
 
             U_SRV_LOG("get data from DHCP_DATA_FILE - key: %#.*S data: %V", 10, &ks, area.rep);
 

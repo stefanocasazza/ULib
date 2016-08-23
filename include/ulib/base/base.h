@@ -69,6 +69,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <fcntl.h>
+#include <errno.h>
 #include <sys/time.h>
 #include <limits.h>
 
@@ -123,30 +124,30 @@
 extern "C" {
 #endif
 
-typedef int   (*iPF)         (void);
-typedef int   (*iPFpv)       (void*);
-typedef int   (*iPFpvpv)     (      void*,      void*);
-typedef int   (*qcompare)    (const void*,const void*);
-typedef bool  (*bPFi)        (int);
-typedef bool  (*bPF)         (void);
-typedef bool  (*bPFpv)       (void*);
-typedef bool  (*bPFpvpv)     (void*,void*);
-typedef bool  (*bPFpc)       (const char*);
-typedef bool  (*bPFpcu)      (const char*,uint32_t);
-typedef bool  (*bPFpcpc)     (const char*,const char*);
-typedef bool  (*bPFpcpv)     (const char*,const void*);
-typedef bool  (*bPFpcpcpcpc) (const char*,const char*,const char*,const char*);
-typedef void  (*vPF)         (void);
-typedef void  (*vPFi)        (int);
-typedef void  (*vPFpv)       (void*);
-typedef void  (*vPFpc)       (const char*);
-typedef void  (*vPFpvpc)     (void*,char*);
-typedef void  (*vPFpvpv)     (void*,void*);
-typedef void  (*vPFpvu)      (void*,uint32_t);
-typedef void  (*vPFpvpcpc)   (void*,char*,char*);
-typedef void* (*pvPF)        (void);
-typedef void* (*pvPFpv)      (void*);
-typedef void* (*pvPFpvpb)    (void*,bool*);
+typedef int   (*iPF)     (void);
+typedef bool  (*bPF)     (void);
+typedef void  (*vPF)     (void);
+typedef void* (*pvPF)    (void);
+typedef bool  (*bPFi)    (int);
+typedef void  (*vPFi)    (int);
+typedef void  (*vPFpv)   (void*);
+typedef bool  (*bPFpv)   (void*);
+typedef int   (*iPFpv)   (void*);
+typedef bool  (*bPFpc)   (const char*);
+typedef void  (*vPFpc)   (const char*);
+typedef void* (*pvPFpv)  (void*);
+typedef bool  (*bPFpcu)  (const char*,uint32_t);
+typedef void  (*vPFpvu)  (void*,uint32_t);
+typedef int   (*iPFpvpv) (void*,void*);
+typedef bool  (*bPFpvpv) (void*,void*);
+typedef bool  (*bPFpcpc) (const char*,const char*);
+typedef bool  (*bPFpcpv) (const char*,const void*);
+typedef void  (*vPFpvpc) (void*,char*);
+typedef void  (*vPFpvpv) (void*,void*);
+
+typedef int   (*qcompare)  (const void*,const void*);
+typedef void* (*pvPFpvpb)  (void*,bool*);
+typedef void  (*vPFpvpcpc) (void*,char*,char*);
 
 typedef struct U_DATA {
    unsigned char* dptr;
@@ -184,6 +185,7 @@ extern U_EXPORT pid_t u_pid;
 extern U_EXPORT bool u_is_tty;
 extern U_EXPORT uint32_t u_pid_str_len;
 extern U_EXPORT uint32_t u_progname_len;
+
 extern U_EXPORT       char* restrict u_pid_str;
 extern U_EXPORT const char* restrict u_progpath;
 extern U_EXPORT const char* restrict u_progname;
@@ -220,7 +222,6 @@ extern U_EXPORT const char* u_months_it[12]; /* "gen", "feb", "mar", "apr", "mag
 extern U_EXPORT const char* u_day_name[7];    /* "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" */
 extern U_EXPORT const char* u_month_name[12]; /* "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" */
 
-U_EXPORT void     u_initRandom(void);
 U_EXPORT bool     u_setStartTime(void);
 U_EXPORT unsigned u_getMonth(const char* buf) __pure;
 U_EXPORT uint32_t u_strftime1(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt);
@@ -234,14 +235,26 @@ extern U_EXPORT bool u_recursion;
 extern U_EXPORT bool u_fork_called;
 extern U_EXPORT bool u_exec_failed;
 extern U_EXPORT char u_user_name[32];
+extern U_EXPORT uint32_t u_flag_sse; /* detect SSE2, SSSE3, SSE4.2 */
 extern U_EXPORT const char* restrict u_tmpdir;
 extern U_EXPORT char u_hostname[HOST_NAME_MAX+1];
 extern U_EXPORT const int MultiplyDeBruijnBitPosition2[32];
 extern U_EXPORT uint32_t u_hostname_len, u_user_name_len, u_seed_hash;
 
-extern U_EXPORT const unsigned char u_alphabet[64];  /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
+extern U_EXPORT const unsigned char u_b64[64];    /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
+extern U_EXPORT const unsigned char u_b64url[64]; /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" */
+
 extern U_EXPORT const unsigned char u_hex_upper[16]; /* "0123456789ABCDEF" */
 extern U_EXPORT const unsigned char u_hex_lower[16]; /* "0123456789abcdef" */
+
+U_EXPORT void u_setPid(void);
+U_EXPORT void u_initRandom(void);
+U_EXPORT void u_init_ulib_username(void);
+U_EXPORT void u_init_ulib_hostname(void);
+U_EXPORT void u_init_http_method_list(void);
+
+U_EXPORT const char* u_basename(const char* restrict path) __pure;
+U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
 
 /* conversion number to string */
 extern U_EXPORT const char u_ctn2s[201];
@@ -255,14 +268,6 @@ U_EXPORT uint32_t u_num2str64s(char* restrict cp,  int64_t num);
 extern U_EXPORT uint32_t u_num_line;
 extern U_EXPORT const char* restrict u_name_file;
 extern U_EXPORT const char* restrict u_name_function;
-
-U_EXPORT void u_setPid(void);
-U_EXPORT void u_init_ulib_username(void);
-U_EXPORT void u_init_ulib_hostname(void);
-U_EXPORT void u_init_http_method_list(void);
-
-U_EXPORT const char* u_basename(const char* restrict path) __pure;
-U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
 
 /* MIME type identification */
 static inline bool u_is_gz(int mime_index)     { return (mime_index == U_gz); }
@@ -344,6 +349,7 @@ U_EXPORT void u__printf(int fd,           const char* restrict format, ...);
 U_EXPORT void u_internal_print(bool abrt, const char* restrict format, ...);
 
 U_EXPORT uint32_t u_sprintc(   char* restrict buffer, unsigned char c);
+U_EXPORT uint32_t u_sprintcrtl(char* restrict buffer, unsigned char c);
 U_EXPORT uint32_t u__snprintf( char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
 U_EXPORT uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
 

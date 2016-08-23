@@ -782,23 +782,9 @@ uint32_t UValue::emitString(const unsigned char* inptr, uint32_t len, char* out)
 
       U_INTERNAL_DUMP("c = %u", c)
 
-      if (c < 0x1F)
+      if (c <= 0x1F)
          {
-                             *outptr++ = '\\';
-              if (c == '\b') *outptr++ = 'b'; // 0x08
-         else if (c == '\t') *outptr++ = 't'; // 0x09
-         else if (c == '\n') *outptr++ = 'n'; // 0x0A
-         else if (c == '\f') *outptr++ = 'f'; // 0x0C
-         else if (c == '\r') *outptr++ = 'r'; // 0x0D
-
-         else // \u four hex digits (unicode char)
-            {
-            *outptr++ = 'u';
-            *outptr++ = '0';
-            *outptr++ = '0';
-            *outptr++ = u_hex_upper[((c >> 4) & 0x0F)];
-            *outptr++ = u_hex_upper[( c       & 0x0F)];
-            }
+         outptr += u_sprintcrtl(outptr, c);
 
          continue;
          }
@@ -2129,10 +2115,7 @@ const char* UValue::getJReadErrorDescription()
    U_RETURN(descr);
 }
 
-#  ifdef ENTRY
-#  undef ENTRY
-#  endif
-#  define ENTRY(n) n: descr = #n; break
+#  define U_VAL_ENTRY(n) n: descr = #n; break
 
 const char* UValue::getDataTypeDescription(int type)
 {
@@ -2142,37 +2125,39 @@ const char* UValue::getDataTypeDescription(int type)
 
    switch (type)
       {
-      case ENTRY(NULL_VALUE);
-      case ENTRY(BOOLEAN_VALUE);
-      case ENTRY(CHAR_VALUE);
-      case ENTRY(UCHAR_VALUE);
-      case ENTRY(SHORT_VALUE);
-      case ENTRY(USHORT_VALUE);
-      case ENTRY(INT_VALUE);
-      case ENTRY(UINT_VALUE);
-      case ENTRY(LONG_VALUE);
-      case ENTRY(ULONG_VALUE);
-      case ENTRY(LLONG_VALUE);
-      case ENTRY(ULLONG_VALUE);
-      case ENTRY(FLOAT_VALUE);
-      case ENTRY(REAL_VALUE);
-      case ENTRY(LREAL_VALUE);
-      case ENTRY(STRING_VALUE);
-      case ENTRY(ARRAY_VALUE);
-      case ENTRY(OBJECT_VALUE);
-      case ENTRY(NUMBER_VALUE);
-      case ENTRY(U_JR_EOL);
-      case ENTRY(U_JR_COLON);
-      case ENTRY(U_JR_COMMA);
-      case ENTRY(U_JR_EARRAY);
-      case ENTRY(U_JR_QPARAM);
-      case ENTRY(U_JR_EOBJECT);
+      case U_VAL_ENTRY(NULL_VALUE);
+      case U_VAL_ENTRY(BOOLEAN_VALUE);
+      case U_VAL_ENTRY(CHAR_VALUE);
+      case U_VAL_ENTRY(UCHAR_VALUE);
+      case U_VAL_ENTRY(SHORT_VALUE);
+      case U_VAL_ENTRY(USHORT_VALUE);
+      case U_VAL_ENTRY(INT_VALUE);
+      case U_VAL_ENTRY(UINT_VALUE);
+      case U_VAL_ENTRY(LONG_VALUE);
+      case U_VAL_ENTRY(ULONG_VALUE);
+      case U_VAL_ENTRY(LLONG_VALUE);
+      case U_VAL_ENTRY(ULLONG_VALUE);
+      case U_VAL_ENTRY(FLOAT_VALUE);
+      case U_VAL_ENTRY(REAL_VALUE);
+      case U_VAL_ENTRY(LREAL_VALUE);
+      case U_VAL_ENTRY(STRING_VALUE);
+      case U_VAL_ENTRY(ARRAY_VALUE);
+      case U_VAL_ENTRY(OBJECT_VALUE);
+      case U_VAL_ENTRY(NUMBER_VALUE);
+      case U_VAL_ENTRY(U_JR_EOL);
+      case U_VAL_ENTRY(U_JR_COLON);
+      case U_VAL_ENTRY(U_JR_COMMA);
+      case U_VAL_ENTRY(U_JR_EARRAY);
+      case U_VAL_ENTRY(U_JR_QPARAM);
+      case U_VAL_ENTRY(U_JR_EOBJECT);
 
       default: descr = "Data type unknown";
       }
 
    U_RETURN(descr);
 }
+
+#  undef U_VAL_ENTRY
 
 const char* UValue::dump(bool _reset) const
 {

@@ -14,8 +14,6 @@
 #include <ulib/base/utility.h>
 #include <ulib/utility/interrupt.h>
 
-#include <errno.h>
-
 /*
 const char* UInterrupt::ILL_errlist[] = {
    "ILL_ILLOPC",  "illegal opcode",          // ILL_ILLOPC 1

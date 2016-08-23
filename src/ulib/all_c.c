@@ -2,9 +2,9 @@
 
 #define U_ALL_C
 
-#include "base/base.c"
 #include "base/hash.c"
 #include "base/utility.c"
+#include "base/base.c"
 #include "base/base_error.c"
 #include "base/miniz/miniz.c"
 #include "base/coder/cbase64.c"
@@ -13,10 +13,6 @@
 #include "base/coder/curl_coder.c"
 #include "base/coder/cxml_coder.c"
 #include "base/coder/cquoted_printable.c"
-
-#ifdef U_APEX_ENABLE
-#include "base/apex/apex_memmove.c"
-#endif
 
 #ifdef DEBUG
 #  include "base/base_trace.c"
@@ -84,6 +80,10 @@
 #  include "replace/mkdtemp.c"
 #endif
 
+#ifndef HAVE_MEMMEM
+#  include "replace/memmem.c"
+#endif
+
 #ifndef HAVE_MEMRCHR
 #  include "replace/memrchr.c"
 #endif
@@ -110,4 +110,8 @@
 
 #ifndef HAVE_SCHED_GETCPU
 #  include "replace/sched_getcpu.c"
+#endif
+
+#ifdef U_APEX_ENABLE
+#  include "base/apex/apex_memmove.c"
 #endif

@@ -208,7 +208,7 @@ protected:
       else                 requestHeader->setHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"), headerValue);
       }
 
-    UHttpClient_Base(UFileConfig* _cfg);
+    UHttpClient_Base(UFileConfig* _cfg = 0);
    ~UHttpClient_Base()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UHttpClient_Base)

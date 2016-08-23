@@ -1197,38 +1197,6 @@ __pure bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const
    return false;
 }
 
-__pure void* u_find(const char* restrict s, uint32_t n, const char* restrict a, uint32_t n1)
-{
-   U_INTERNAL_TRACE("u_find(%.*s,%u,%.*s,%u)", U_min(n,128), s, n, U_min(n1,128), a, n1)
-
-   U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(a)
-   U_INTERNAL_ASSERT_MAJOR(n1,0)
-
-   if (n)
-      {
-      if (n1 == 1) return (void*) memchr(s, *a, n);
-
-#ifdef HAVE_MEMMEM
-      {
-      void* restrict p = memmem(s, n, a, n1);
-
-      U_INTERNAL_PRINT("memmem() = %p", p)
-
-      return p;
-      }
-#else
-      {
-      uint32_t pos = 0;
-
-      for (; (pos + n1) <= n; ++pos) if (memcmp(s + pos, a, n1) == 0) return (void*)(s+pos);
-      }
-#endif
-      }
-
-   return 0;
-}
-
 /**
  * Search a string for any of a set of characters.
  * Locates the first occurrence in the string s of any of the characters in the string accept
@@ -1242,7 +1210,7 @@ __pure const char* u__strpbrk(const char* restrict s, uint32_t slen, const char*
    U_INTERNAL_TRACE("u__strpbrk(%.*s,%u,%s)", U_min(slen,128), s, slen, _accept)
 
    U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_MAJOR(slen,0)
+   U_INTERNAL_ASSERT_MAJOR(slen, 0)
    U_INTERNAL_ASSERT_POINTER(_accept)
 
    while (s < end)
@@ -3514,89 +3482,89 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
  * };
  */
 
-#define __S  0x00000001 /* character space    ' ' (32 0x20) */
-#define __E  0x00000002 /* character used in printf format  */
-#define __H  0x00000004 /* character          '+' (43 0x2B) */
-#define __V  0x00000008 /* character          ',' (44 0x2C) */
-#define __O  0x00000010 /* character minus    '-' (45 0x2D) */
-#define __N  0x00000020 /* character point    '.' (46 0x2E) */
-#define __G  0x00000040 /* character          ':' (58 0x3A) */
-#define __Q  0x00000080 /* character underbar '_' (95 0x5F) */
-#define __B  0x00000100 /* character tab      \t  (09 0x09) */
-#define __R  0x00000200 /* carriage return or new line (a \r or \n) */
-#define __W  0x00000400 /* WhiteSpace */
-#define __C  0x00000800 /* Control character */
-#define __D  0x00001000 /* Digit */
-#define __L  0x00002000 /* Lowercase */
-#define __I  0x00004000 /* Punctuation */
-#define __U  0x00008000 /* Uppercase */
-#define __Z  0x00010000 /* Octal */
-#define __F  0x00020000 /* character never appears in plain ASCII text */
-#define __T  0x00040000 /* character       appears in plain ASCII text */
-#define __X  0x00080000 /* Hexadecimal */
-#define __A  0x00100000 /* BASE64 encoded: '+' (43 0x2B) | '/' (47 0x2F) | '=' (61 0x3D) */
-#define __M  0x00200000 /* HTTP request/response (COPY, DELETE, GET, HEAD|HTTP, OPTIONS, POST/PUT/PATCH) */
-#define __Y  0x00400000 /* HTTP header (Accept...,Host,Range,Cookie,Referer,X-Real-IP,User-Agent,Connection,Content-...) */
-#define __K  0x00800000 /* string quote:    '"' (34 0x22) | ''' (39 0x27) */
-#define __J  0x01000000 /* HTML special:    '&' (38 0x26) | '<' (60 0x3C) | '>' (62 0x3E) */
-#define __UE 0x02000000 /* TO   URL encode: ' ' (32 0x20) | ... */
-#define __UQ 0x04000000 /* FROM URL query:  '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
-#define __UF 0x08000000 /* filename invalid char: '"' '*' ':' '<' '>' '?' '\' '|' */
-#define __XM 0x10000000 /* char >= (32 0x20) */
+#define U__S  0x00000001 /* character space    ' ' (32 0x20) */
+#define U__E  0x00000002 /* character used in printf format  */
+#define U__H  0x00000004 /* character         '+' (43 0x2B) */
+#define U__V  0x00000008 /* character         ',' (44 0x2C) */
+#define U__O  0x00000010 /* character minus   '-' (45 0x2D) */
+#define U__N  0x00000020 /* character point   '.' (46 0x2E) */
+#define U__G  0x00000040 /* character         ':' (58 0x3A) */
+#define U__Q  0x00000080 /* character underbar '_' (95 0x5F) */
+#define U__B  0x00000100 /* character tab      \t  (09 0x09) */
+#define U__R  0x00000200 /* carriage return or new line (a \r or \n) */
+#define U__W  0x00000400 /* WhiteSpace */
+#define U__C  0x00000800 /* Control character */
+#define U__D  0x00001000 /* Digit */
+#define U__L  0x00002000 /* Lowercase */
+#define U__I  0x00004000 /* Punctuation */
+#define U__U  0x00008000 /* Uppercase */
+#define U__Z  0x00010000 /* Octal */
+#define U__F  0x00020000 /* character never appears in plain ASCII text */
+#define U__T  0x00040000 /* character      appears in plain ASCII text */
+#define U__X  0x00080000 /* Hexadecimal */
+#define U__A  0x00100000 /* BASE64 encoded: '+' (43 0x2B) | '/' (47 0x2F) | '=' (61 0x3D) */
+#define U__M  0x00200000 /* HTTP request/response (COPY, DELETE, GET, HEAD|HTTP, OPTIONS, POST/PUT/PATCH) */
+#define U__Y  0x00400000 /* HTTP header (Accept...,Host,Range,Cookie,Referer,X-Real-IP,User-Agent,Connection,Content-...) */
+#define U__K  0x00800000 /* string quote:    '"' (34 0x22) | ''' (39 0x27) */
+#define U__J  0x01000000 /* HTML special:    '&' (38 0x26) | '<' (60 0x3C) | '>' (62 0x3E) */
+#define U__UE 0x02000000 /* TO   URL encode: ' ' (32 0x20) | ... */
+#define U__UQ 0x04000000 /* FROM URL query:  '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
+#define U__UF 0x08000000 /* filename invalid char: '"' '*' ':' '<' '>' '?' '\' '|' */
+#define U__XM 0x10000000 /* char >= (32 0x20) */
 
-#define LU    (__L | __U)
-#define LX    (__L | __X)
-#define UX    (__U | __X)
-#define ITK   (__I | __T | __K | __UF |             __XM)
-#define LT    (__L | __T |                          __XM)
-#define UT    (__U | __T |                          __XM)
-#define ITF   (__I | __T |                          __XM) 
-#define ITA   (__I | __T | __A |                    __XM)
-#define ITQ   (__I | __T | __Q |                    __XM)
-#define LTE   (__L | __T |             __E |        __XM)
-#define LTY   (__L | __T | __Y |       __E |        __XM)
-#define UXT   (__U | __X | __T |       __E |        __XM)
-#define DT    (__D | __T |             __E |        __XM)
-#define ITN   (__I | __T | __N |       __E |        __XM)
-#define ITO   (__I | __T | __O |       __E |        __XM)
-#define DTZ   (__D | __T | __Z |       __E |        __XM)
-#define UTE   (__U | __T |             __E |        __XM)
-#define UTY   (__U | __T | __Y |       __E |        __XM)
-#define UTM   (__U | __T | __M |       __E |        __XM)
-#define LTM   (__L | __T | __M |       __E |        __XM)
-#define LXT   (__L | __X | __T |       __E |        __XM)
-#define LTMY  (__L | __T | __M | __Y | __E |        __XM)
-#define UTMY  (__U | __T | __M | __Y | __E |        __XM)
-#define UXTM  (__U | __X | __T | __M | __E |        __XM)
-#define UXTY  (__U | __X | __T | __Y | __E |        __XM)
-#define LXTM  (__L | __X | __T | __M | __E |        __XM)
-#define LXTY  (__L | __X | __T | __Y | __E |        __XM)
-#define LXTMY (__L | __X | __T | __M | __E |  __Y | __XM)
-#define UXTMY (__U | __X | __T | __M | __E |  __Y | __XM)
-#define IT    (__I |       __T |       __E | __UF | __XM)
+#define LU    (U__L | U__U)
+#define LX    (U__L | U__X)
+#define UX    (U__U | U__X)
+#define ITK   (U__I | U__T | U__K | U__UF |               U__XM)
+#define LT    (U__L | U__T |                              U__XM)
+#define UT    (U__U | U__T |                              U__XM)
+#define ITF   (U__I | U__T |                              U__XM) 
+#define ITA   (U__I | U__T | U__A |                       U__XM)
+#define ITQ   (U__I | U__T | U__Q |                       U__XM)
+#define LTE   (U__L | U__T |               U__E |         U__XM)
+#define LTY   (U__L | U__T | U__Y |        U__E |         U__XM)
+#define UXT   (U__U | U__X | U__T |        U__E |         U__XM)
+#define DT    (U__D | U__T |               U__E |         U__XM)
+#define ITN   (U__I | U__T | U__N |        U__E |         U__XM)
+#define ITO   (U__I | U__T | U__O |        U__E |         U__XM)
+#define DTZ   (U__D | U__T | U__Z |        U__E |         U__XM)
+#define UTE   (U__U | U__T |               U__E |         U__XM)
+#define UTY   (U__U | U__T | U__Y |        U__E |         U__XM)
+#define UTM   (U__U | U__T | U__M |        U__E |         U__XM)
+#define LTM   (U__L | U__T | U__M |        U__E |         U__XM)
+#define LXT   (U__L | U__X | U__T |        U__E |         U__XM)
+#define LTMY  (U__L | U__T | U__M | U__Y | U__E |         U__XM)
+#define UTMY  (U__U | U__T | U__M | U__Y | U__E |         U__XM)
+#define UXTM  (U__U | U__X | U__T | U__M | U__E |         U__XM)
+#define UXTY  (U__U | U__X | U__T | U__Y | U__E |         U__XM)
+#define LXTM  (U__L | U__X | U__T | U__M | U__E |         U__XM)
+#define LXTY  (U__L | U__X | U__T | U__Y | U__E |         U__XM)
+#define LXTMY (U__L | U__X | U__T | U__M | U__E | U__Y  | U__XM)
+#define UXTMY (U__U | U__X | U__T | U__M | U__E | U__Y  | U__XM)
+#define IT    (U__I |        U__T |        U__E | U__UF | U__XM)
 
-#define FUE   (__F |                    __UE | __XM)
-#define IF    (__I | __F |              __UE)
-#define CF    (__C | __F |              __UE)
-#define CT    (__C | __T |              __UE)
-#define WF    (__W | __F |              __UE)
-#define ITUE  (__I | __T |       __UF | __UE | __XM)
-#define CWT   (__C | __W | __T |        __UE)
-#define CWF   (__C | __W | __F |        __UE)
-#define ITG   (__I | __T | __G | __UF | __UE | __XM)
-#define ITJ   (__I | __T | __J | __UF |        __XM)
-#define CWBT  (__C | __W | __B |  __T | __UE)
-#define CWRT  (__C | __W | __R |  __T | __UE)
-#define ITUQ  (__I | __T |              __UE | __XM)
-#define SWT   (__S | __W | __T |        __UE | __XM | __E)
-#define ITAH  (__I | __T | __A |  __H | __UE | __XM | __E)
-#define ITAU  (__I | __T | __A |        __UE | __XM | __UQ)
-#define ITJU  (__I | __T | __J |        __UE | __XM | __UQ)
-#define ITVF  (__I | __T | __V |               __XM)
-#define ITKF  (__I | __T | __K |               __XM | __E)
+#define FUE   (U__F |                       U__UE | U__XM)
+#define IF    (U__I | U__F |                U__UE)
+#define CF    (U__C | U__F |                U__UE)
+#define CT    (U__C | U__T |                U__UE)
+#define WF    (U__W | U__F |                U__UE)
+#define ITUE  (U__I | U__T |        U__UF | U__UE | U__XM)
+#define CWT   (U__C | U__W | U__T |         U__UE)
+#define CWF   (U__C | U__W | U__F |         U__UE)
+#define ITG   (U__I | U__T | U__G | U__UF | U__UE | U__XM)
+#define ITJ   (U__I | U__T | U__J | U__UF |         U__XM)
+#define CWBT  (U__C | U__W | U__B | U__T  | U__UE)
+#define CWRT  (U__C | U__W | U__R | U__T  | U__UE)
+#define ITUQ  (U__I | U__T |                U__UE | U__XM)
+#define SWT   (U__S | U__W | U__T |         U__UE | U__XM | U__E)
+#define ITAH  (U__I | U__T | U__A | U__H  | U__UE | U__XM | U__E)
+#define ITAU  (U__I | U__T | U__A |         U__UE | U__XM | U__UQ)
+#define ITJU  (U__I | U__T | U__J |         U__UE | U__XM | U__UQ)
+#define ITVF  (U__I | U__T | U__V |                 U__XM)
+#define ITKF  (U__I | U__T | U__K |                 U__XM | U__E)
 
-#define ITUEF  (__I | __T | __UE | __XM)
-#define ITUEFQ (__I | __T | __UE | __XM | __UQ | __E)
+#define ITUEF  (U__I | U__T | U__UE | U__XM)
+#define ITUEFQ (U__I | U__T | U__UE | U__XM | U__UQ | U__E)
 
 const unsigned int u__ct_tab[256] = {
 /*                         BEL  BS    HT    LF        FF    CR                 */
@@ -3640,34 +3608,34 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
  */
 };
 
-#undef __S
-#undef __H
-#undef __V
-#undef __O
-#undef __N
-#undef __G
-#undef __Q
-#undef __B
-#undef __R
-#undef __W
-#undef __C
-#undef __D
-#undef __L
-#undef __I
-#undef __U
-#undef __Z
-#undef __F
-#undef __T
-#undef __X
-#undef __A
-#undef __M
-#undef __Y
-#undef __K
-#undef __J
-#undef __UE
-#undef __UQ
-#undef __UF
-#undef __XM
+#undef U__S
+#undef U__H
+#undef U__V
+#undef U__O
+#undef U__N
+#undef U__G
+#undef U__Q
+#undef U__B
+#undef U__R
+#undef U__W
+#undef U__C
+#undef U__D
+#undef U__L
+#undef U__I
+#undef U__U
+#undef U__Z
+#undef U__F
+#undef U__T
+#undef U__X
+#undef U__A
+#undef U__M
+#undef U__Y
+#undef U__K
+#undef U__J
+#undef U__UE
+#undef U__UQ
+#undef U__UF
+#undef U__XM
 
 #undef CF
 #undef CT

@@ -947,8 +947,8 @@ public:
 #  endif
 
 #  if defined(USE_LIBSSL) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
-#  include <ulib/net/tcpsocket.h>
-#  include <ulib/net/client/client.h>
+#     include <ulib/net/tcpsocket.h>
+#     include <ulib/net/client/client.h>
 
 class UOCSPStapling : public UThread {
 public:
@@ -3338,6 +3338,13 @@ void UServer_Base::runLoop(const char* user)
        * request is sent immediately. This is achieved by setting the TCP_NODELAY option on the socket,
        * which disables the Nagle algorithm.
        *
+       * Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
+       * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
+       * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
+       * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
+       * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
+       * NB: Takes an integer value (seconds)
+       *
        * Another way to prevent delays caused by sending useless packets is to use the TCP_QUICKACK option.
        * This option is different from TCP_DEFER_ACCEPT, as it can be used not only to manage the process of
        * connection establishment, but it can be used also during the normal data transfer process. In addition,
@@ -3347,22 +3354,16 @@ void UServer_Base::runLoop(const char* user)
        * (multiple packets), the TCP_QUICKACK option can be set to 0. The default value of this option is 1 for
        * sockets in the connected state, which will be reset by the kernel to 1 immediately after the first use.
        * (This is a one-time option)
-       *
-       * Linux (along with some other OSs) includes a TCP_DEFER_ACCEPT option in its TCP implementation.
-       * Set on a server-side listening socket, it instructs the kernel not to wait for the final ACK packet
-       * and not to initiate the process until the first packet of real data has arrived. After sending the SYN/ACK,
-       * the server will then wait for a data packet from a client. Now, only three packets will be sent over the
-       * network, and the connection establishment delay will be significantly reduced, which is typical for HTTP.
-       * NB: Takes an integer value (seconds)
        */
 
 #  if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL)
-                                 socket->setTcpFastOpen();
-                                 socket->setTcpDeferAccept();
-      if (bssl == false)         socket->setBufferSND(min_size_for_sendfile);
-      if (set_tcp_keep_alive )   socket->setTcpKeepAlive(); 
+                               socket->setTcpNoDelay();
+                               socket->setTcpFastOpen();
+                               socket->setTcpDeferAccept();
+      if (bssl == false)       socket->setBufferSND(min_size_for_sendfile);
+      if (set_tcp_keep_alive ) socket->setTcpKeepAlive();
 #  endif
-      if (tcp_linger_set > -2)   socket->setTcpLinger(tcp_linger_set);
+      if (tcp_linger_set > -2) socket->setTcpLinger(tcp_linger_set);
       }
 #endif
 

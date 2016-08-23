@@ -23,26 +23,6 @@ static char bytes[] = { 'p', 'i', 'p', 'p', 'o', '\xff',
                         'p', 'i', 'p', 'p', 'o', '\xff' };
 #endif
 
-static int display_char(char* output, int what)
-{
-   switch (what)
-      {
-      case '\a':   return sprintf(output, "\\a");
-      case '\b':   return sprintf(output, "\\b");
-      case '\t':   return sprintf(output, "\\t");
-      case '\n':   return sprintf(output, "\\n");
-      case '\v':   return sprintf(output, "\\v");
-      case '\f':   return sprintf(output, "\\f");
-      case '\r':   return sprintf(output, "\\r");
-      case '\033': return sprintf(output, "\\e");
-      case '\\':   return sprintf(output, "\\\\");
-      case '"':    return sprintf(output, "\\\"");
-      default:
-         if ((what<32) || (what>126)) return sprintf(output, "\\%03o", (unsigned char)what);
-         else                         return sprintf(output,     "%c",                what);
-      }
-}
-
 static int endiantest(void)
 {
    unsigned char _bytes[] = { 0x01, 0x02, 0x03, 0x04 };
@@ -152,24 +132,6 @@ int main(int argc, char* argv[])
    buf[len] = '\0';
    strcpy(buffer, "\"stringa che continua...\"");
    if (strcmp(buf, buffer)) goto failed;
-
-   {
-   int c;
-   char* ptr = buf;
-
-   for (c = 0; c < 256; ++c)
-      {
-      display_char(ptr, c);
-
-      ptr += strlen(ptr);
-      }
-
-   ptr = buffer;
-
-   for (c = 0; c < 256; ++c) ptr += u_sprintc(ptr, c);
-
-   if (strcmp(buf, buffer)) goto failed;
-   }
 
    if (u_rmatch(U_CONSTANT_TO_PARAM("1234567890#Envelope"), U_CONSTANT_TO_PARAM("#Envelope")) == false) goto failed;
 

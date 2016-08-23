@@ -96,6 +96,9 @@
 #  define U_INTERNAL_ASSERT_POINTER(ptr)          { U_ASSERT_MACRO((const void*)ptr>U_NULL_POINTER,"~NULL POINTER","") }
 #  define U_INTERNAL_ASSERT_POINTER_MSG(ptr,info) { U_ASSERT_MACRO((const void*)ptr>U_NULL_POINTER,"~NULL POINTER",info) }
 
+#  define U_INTERNAL_ASSERT_POINTER_ADDR_SPACE(ptr)          { U_ASSERT_MACRO((access((const char*)ptr,F_OK)==0)||(errno!=EFAULT),"INVALID POINTER","") }
+#  define U_INTERNAL_ASSERT_POINTER_ADDR_SPACE_MSG(ptr,info) { U_ASSERT_MACRO((access((const char*)ptr,F_OK)==0)||(errno!=EFAULT),"INVALID POINTER",info) }
+
 #  define U_INTERNAL_ASSERT_RANGE(a,x,b)          { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE","") }
 #  define U_INTERNAL_ASSERT_RANGE_MSG(a,x,b,info) { U_ASSERT_MACRO((x)>=(a)&&(x)<=(b),"VALUE OUT OF RANGE",info) }
 #else
@@ -155,6 +158,8 @@
 #ifndef U_abs
 #define U_abs(x,y) ((x) >= (y) ? (x-y) : (y-x))
 #endif
+
+#define U_ENTRY(name) {name, #name}
 
 #ifndef O_CLOEXEC
 #define O_CLOEXEC 0

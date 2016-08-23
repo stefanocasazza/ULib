@@ -21,8 +21,6 @@
 #include <ulib/debug/trace.h>
 #include <ulib/debug/crono.h>
 
-#include <errno.h>
-
 UCrono* UTrace::time_syscall_read_or_write;
 
 U_NO_EXPORT void UTrace::set(int level)

@@ -2,30 +2,28 @@
 
 #include <ulib/base/apex/apex_memmove.h>
 
-#include <string.h>                 /* memmove, memcpy */
+#include <string.h> /* memmove, memcpy */
 
 #if defined(__MINGW32__) || !defined(HAVE_ARCH64)
 pvPFpvpvs apex_memcpy  = &memcpy;
 pvPFpvpvs apex_memmove = &memmove;
-#else
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)   /* Test for Intel/AMD architecture */
-   #include <emmintrin.h>           /* Intel/AMD SSE intrinsics */
-   #if defined(_MSC_VER)
-      #include <intrin.h>           /* __cpuid     Visual Studio */
-   #elif defined(__GNUC__)
-      #include <cpuid.h>            /* __get_cpuid GCC / LLVM (Clang) */
-   #endif
-#endif
+#elif defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86) /* Test for Intel/AMD architecture */
+/* Intel/AMD SSE intrinsics */
+#  ifdef _MSC_VER
+#     include <nmmintrin.h>
+#  else
+#     include <x86intrin.h>
+#  endif
 
 /* apex_memmove (tiberium, kryptonite and mithril) memcpy/memmove functions written by Trevor Herselman in 2014 */
 
-#if defined(_MSC_VER)
-   #pragma warning( push )
-   #pragma warning( disable : 4146 )   /* warning C4146: unary minus operator applied to unsigned type, result still unsigned */
-   #pragma warning( disable : 4244 )   /* warning C4244: '-=': conversion from '__int64' to 'std::size_t', possible loss of data */
-#endif
+#  if defined(_MSC_VER)
+#  pragma warning( push )
+#  pragma warning( disable : 4146 ) /* warning C4146: unary minus operator applied to unsigned type, result still unsigned */
+#  pragma warning( disable : 4244 ) /* warning C4244: '-=': conversion from '__int64' to 'std::size_t', possible loss of data */
+#  endif
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86)   /* Test for Intel/AMD architecture */
+#  if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86) /* Test for Intel/AMD architecture */
 
 void* APEXCALL apex_tiberium( void *dst, const void *src, size_t size );
 void* APEXCALL apex_tiberium( void *dst, const void *src, size_t size )
@@ -1112,7 +1110,7 @@ void* APEXCALL apex_kryptonite( void *dst, const void *src, size_t size )
    }
 }
 
-#if (!defined(_M_X64) && !defined(__x86_64__))  /* `mithril` is only used in 32-bit code (not necessary for 64-bit) */
+#  if (!defined(_M_X64) && !defined(__x86_64__))   /* `mithril` is only used in 32-bit code (not necessary for 64-bit) */
 
 /**
  * "Mithril" - Written by Trevor Herselman on 4 December 2013 @ 9pm
@@ -1659,59 +1657,60 @@ void* APEXCALL apex_mithril( void *dst, const void *src, size_t size )
    }
 }
 
-#endif   /* end test for 32-bit */
-#endif   /* end test for Intel/AMD (32-bit & 64-bit) */
+#  endif /* end test for 32-bit */
+#  endif /* end test for Intel/AMD (32-bit & 64-bit) */
 
-#if defined(_MSC_VER)
-   #pragma warning( pop )
-#endif
+#  if defined(_MSC_VER)
+#  pragma warning( pop )
+#  endif
 
 void* (APEXCALL *apex_memcpy)( void* dst, const void* src, size_t size);
 void* (APEXCALL *apex_memmove)(void* dst, const void* src, size_t size);
 
 void apex_memmove_dispatcher(void)
 {
-   #if (defined(_M_X64) || defined(__x86_64__) || defined(__i386) || defined(_M_IX86)) && (defined(_MSC_VER) || defined(__GNUC__))  /* Compiler and architecture test (Intel/AMD Architecture)! Visual Studio and GCC / LLVM (Clang) */
-         #ifndef bit_SSE2
-         #define bit_SSE2   (1 << 26)     /* Taken from GCC <cpuid.h> ... just more visual & descriptive! */
-         #endif
-         #ifndef bit_SSSE3
-         #define bit_SSSE3  (1 << 9)
-         #endif
-         #ifndef bit_SSE4_2
-         #define bit_SSE4_2 (1 << 20)
-         #endif
-      #if defined(_MSC_VER)
-         int cpuid[4] = {-1};             /* Visual Studio */
-         __cpuid( cpuid, 1 );
-      #else
-         unsigned int cpuid[4] = {0,0,0,0};  /* GCC / LLVM (Clang) */
-         __get_cpuid(1, &cpuid[0], &cpuid[1], &cpuid[2], &cpuid[3]);
-      #endif
-      #if defined(_M_X64) || defined(__x86_64__)   /* 64-bit */
-         if ( cpuid[2] & bit_SSE4_2 )              /* detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access */
-            apex_memcpy = apex_memmove = &apex_kryptonite;
-         else
-            apex_memcpy = apex_memmove = &apex_tiberium;
-      #else                                        /* 32-bit */
-         if ( cpuid[2] & bit_SSE4_2 )              /* detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access */
-            apex_memcpy = apex_memmove = &apex_kryptonite;
-         else if ( cpuid[2] & bit_SSSE3 )          /* detect SSSE3, available on Core/Core 2 and newer */
-            apex_memcpy = apex_memmove = &apex_tiberium; /* `tiberium` CAN run with the SSE2 instructions alone, however there was something about very old SSE2 (only) computers, some penalty when using `tiberiums` algorithm, so I've restricted `tiberium` to Core/Core 2 based machines on 32-bit by doing this! */
-         else if ( cpuid[3] & bit_SSE2 )
-            apex_memcpy = apex_memmove = &apex_mithril;  /* this is for very, very old computers with SSE2 only! eg. old Pentium 4! There was something about computers WITHOUT SSSE3 (Core microarchitecture) that made `tiberium` a bit slower. So this is for super old (P4) PC's! */
-         else {
-            apex_memcpy = &memcpy;           /* No SSE2 no cry! */
-            apex_memmove = &memmove;
-         }
-      #endif
-   #else                               /* unknown compiler or architecture! eg. __arm__ / __mips__ / __ppc__ / __sparc / __ia64 (Itanium) etc. */
-      #if defined(__x86_64__)
-         apex_memcpy = apex_memmove = &apex_tiberium; /* unknown compiler BUT it declared support for Intel/AMD x64/AMD64 (64-bit), so it should come with the <emmintrin.h> file from Intel! 64-bit x64/AMD64 includes SSE2! This includes `Portland (PGCC/PGCPP)`, `Oracle Solaris Studio` and `Intel compiler (ICC)`! I don't have code for CPUID for these compilers so I don't know how to check for SSE2/SSSE3/SSE4.2 on them! */
-      #else
-         apex_memcpy = &memcpy;        /* unknown compiler or architecture! */
-         apex_memmove = &memmove;
-      #endif
-   #endif
+#if (defined(_M_X64) || defined(__x86_64__) || defined(__i386) || defined(_M_IX86)) && (defined(_MSC_VER) || defined(__GNUC__))  /* Compiler and architecture test (Intel/AMD Architecture)! Visual Studio and GCC / LLVM (Clang) */
+# if defined(_M_X64) || defined(__x86_64__) /* 64-bit */
+   if (u_flag_sse == 42) /* detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access */
+      {
+      apex_memcpy  =
+      apex_memmove = &apex_kryptonite;
+      }
+   else
+      {
+      apex_memcpy  =
+      apex_memmove = &apex_tiberium;
+      }
+# else /* 32-bit */
+   if (u_flag_sse == 42) /* detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access */
+      {
+      apex_memcpy  =
+      apex_memmove = &apex_kryptonite;
+      }
+   else if (u_flag_sse == 3) /* detect SSSE3, available on Core/Core 2 and newer */
+      {
+      apex_memcpy  =
+      apex_memmove = &apex_tiberium; /* `tiberium` CAN run with the SSE2 instructions alone, however there was something about very old SSE2 (only) computers, some penalty when using `tiberiums` algorithm, so I've restricted `tiberium` to Core/Core 2 based machines on 32-bit by doing this! */
+      }
+   else if (u_flag_sse == 2)
+      {
+      apex_memcpy  =
+      apex_memmove = &apex_mithril; /* this is for very, very old computers with SSE2 only! eg. old Pentium 4! There was something about computers WITHOUT SSSE3 (Core microarchitecture) that made `tiberium` a bit slower. So this is for super old (P4) PC's! */
+      }
+   else
+      {
+      apex_memcpy  = &memcpy; /* No SSE2 no cry! */
+      apex_memmove = &memmove;
+      }
+# endif
+#else /* unknown compiler or architecture! eg. __arm__ / __mips__ / __ppc__ / __sparc / __ia64 (Itanium) etc. */
+# if defined(__x86_64__)
+   apex_memcpy  =
+   apex_memmove = &apex_tiberium; /* unknown compiler BUT it declared support for Intel/AMD x64/AMD64 (64-bit), so it should come with the <emmintrin.h> file from Intel! 64-bit x64/AMD64 includes SSE2! This includes `Portland (PGCC/PGCPP)`, `Oracle Solaris Studio` and `Intel compiler (ICC)`! I don't have code for CPUID for these compilers so I don't know how to check for SSE2/SSSE3/SSE4.2 on them! */
+# else
+   apex_memcpy  = &memcpy; /* unknown compiler or architecture! */
+   apex_memmove = &memmove;
+# endif
+#endif
 }
 #endif

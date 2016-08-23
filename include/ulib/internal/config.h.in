@@ -111,6 +111,9 @@
 /* enable cpp preprocessor features */
 #undef HAVE_CPP
 
+/* Define to 1 if you have the <cpuid.h> header file. */
+#undef HAVE_CPUID_H
+
 /* Define if exist type cpu_set_t */
 #undef HAVE_CPU_SET_T
 

@@ -44,10 +44,6 @@ SRC_CPP = internal/common.cpp \
 			 timeval.cpp timer.cpp notifier.cpp string.cpp file.cpp process.cpp file_config.cpp log.cpp \
 			 options.cpp application.cpp cache.cpp date.cpp url.cpp tokenizer.cpp command.cpp
 
-if APEXMEM
-SRC_C += base/apex/apex_memmove.c
-endif
-
 if LIBTDB
 SRC_CPP += db/tdb.cpp
 endif
@@ -112,6 +108,10 @@ if !MKDTEMP
 SRC_C += replace/mkdtemp.c
 endif
 
+if !MEMMEM
+SRC_C += replace/memmem.c
+endif
+
 if !MEMRCHR
 SRC_C += replace/memrchr.c
 endif
@@ -142,6 +142,10 @@ endif
 
 if !ASSERT
 SRC_C += replace/assert.c
+endif
+
+if APEXMEM
+SRC_C += base/apex/apex_memmove.c
 endif
 
 if MEMORY_POOL

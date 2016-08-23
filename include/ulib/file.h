@@ -22,8 +22,6 @@
 #  include <asm/mman.h>
 #endif
 
-#include <errno.h>
-
 // struct stat {
 //    dev_t     st_dev;      /* device */
 //    ino_t     st_ino;      /* inode */

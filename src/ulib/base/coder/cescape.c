@@ -203,9 +203,11 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
                   }
                else if (c <= 0xFFFF) /* U+0800..U+FFFF */
                   {
-                  *outptr++ = (unsigned char)(0xE0 |  c >> 12);
-                  *outptr++ = (unsigned char)(0x80 | (c >> 6 & 0x3F));
-                  *outptr++ = (unsigned char)(0x80 | (c      & 0x3F));
+                  u_put_unalignedp32(outptr, U_MULTICHAR_CONSTANT32((unsigned char)(0xE0 |  c >> 12),
+                                                                    (unsigned char)(0x80 | (c >>  6 & 0x3F)),
+                                                                    (unsigned char)(0x80 | (c       & 0x3F)), 0));
+
+                  outptr += 3;
                   }
                else /* U+10000..U+10FFFF */
                   {

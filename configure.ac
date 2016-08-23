@@ -712,7 +712,7 @@ AC_HEADER_DIRENT
 AC_HEADER_SYS_WAIT
 
 AC_FUNC_ALLOCA
-AC_CHECK_HEADERS([arpa/inet.h asm/mman.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h \
+AC_CHECK_HEADERS([arpa/inet.h asm/mman.h cpuid.h fcntl.h float.h inttypes.h libintl.h limits.h malloc.h netdb.h netinet/in.h stddef.h stdint.h stdlib.h \
 						string.h sys/ioctl.h sys/param.h sys/socket.h sys/time.h sys/timeb.h sys/resource.h syslog.h termios.h unistd.h wchar.h \
 						assert.h byteswap.h endian.h execinfo.h ifaddrs.h mcheck.h ndir.h dirent.h ndir.h string.h netpacket/packet.h sched.h \
 						semaphore.h sysexits.h streambuf.h poll.h net/if_arp.h sys/dir.h sys/endian.h sys/ndir.h sys/inotify.h sys/sendfile.h sys/sched.h \
@@ -909,6 +909,7 @@ AM_CONDITIONAL(PREAD, false)
 AM_CONDITIONAL(DAEMON, false)
 AM_CONDITIONAL(TIMEGM, false)
 AM_CONDITIONAL(MREMAP, false)
+AM_CONDITIONAL(MEMMEM, false)
 AM_CONDITIONAL(PTHREAD, false)
 AM_CONDITIONAL(MEMRCHR, false)
 AM_CONDITIONAL(STRNDUP, false)
@@ -1047,6 +1048,7 @@ for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait ep
         AC_DEFINE(HAVE_KQUEUE1, [1], [has kqueue1])
         ;;
     memmem)
+		  AM_CONDITIONAL(MEMMEM, true)
         AC_DEFINE(HAVE_MEMMEM, [1], [has memmem])
         ;;
     memrchr)
@@ -2329,7 +2331,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
 
 		if test "$use_distcc" != "yes"; then
-			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -mtune=native" # NB: distcc don't work with this...
+			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -fuse-linker-plugin -march=native -mtune=native" # NB: distcc don't work with this...
 		fi
 	fi
 

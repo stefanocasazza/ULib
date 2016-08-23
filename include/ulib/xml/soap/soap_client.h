@@ -45,7 +45,7 @@ public:
 protected:
    USOAPParser* parser;
 
-   USOAPClient_Base(UFileConfig* _cfg) : URPCClient_Base(_cfg)
+   USOAPClient_Base(UFileConfig* _cfg = 0) : URPCClient_Base(_cfg)
       {
       U_TRACE_REGISTER_OBJECT(0, USOAPClient_Base, "%p", _cfg)
 

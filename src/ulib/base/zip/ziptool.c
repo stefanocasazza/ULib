@@ -12,8 +12,6 @@
 #include <ulib/base/zip/pushback.h>
 #include <ulib/base/zip/compress.h>
 
-#include <errno.h>
-
 /* global variables */
 
 static zipentry* ziplist;     /* linked list of entries */

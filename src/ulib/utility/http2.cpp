@@ -2042,7 +2042,7 @@ void UHTTP2::sendGoAway()
    (void) USocketExt::write(UServer_Base::csocket, buffer, sizeof(buffer), UServer_Base::timeoutMS);
 }
 
-int32_t UHTTP2::getIndexStaticTable(const UString& key)
+__pure int32_t UHTTP2::getIndexStaticTable(const UString& key)
 {
    U_TRACE(0, "UHTTP2::getIndexStaticTable(%V)", key.rep)
 
@@ -2856,10 +2856,7 @@ bool UHTTP2::readBodyRequest()
    U_RETURN(true);
 }
 
-#ifdef ENTRY
-#undef ENTRY
-#endif
-#define ENTRY(n) n: descr = #n; break
+#define U_HTTP2_ENTRY(n) n: descr = #n; break
 
 const char* UHTTP2::getFrameErrorCodeDescription(uint32_t error)
 {
@@ -2869,20 +2866,20 @@ const char* UHTTP2::getFrameErrorCodeDescription(uint32_t error)
 
    switch (error)
       {
-      case ENTRY(NO_ERROR);            //  0: The endpoint NOT detected an error
-      case ENTRY(PROTOCOL_ERROR);      //  1: The endpoint detected an unspecific protocol error. This error is for use when a more specific error code is not available
-      case ENTRY(INTERNAL_ERROR);      //  2: The endpoint encountered an unexpected internal error
-      case ENTRY(FLOW_CONTROL_ERROR);  //  3: The endpoint detected that its peer violated the flow-control protocol
-      case ENTRY(SETTINGS_TIMEOUT);    //  4: The endpoint sent a SETTINGS frame but did not receive a response in a timely manner
-      case ENTRY(STREAM_CLOSED);       //  5: The endpoint received a frame after a stream was half-closed
-      case ENTRY(FRAME_SIZE_ERROR);    //  6: The endpoint received a frame with an invalid size
-      case ENTRY(REFUSED_STREAM);      //  7: The endpoint refused the stream prior to performing any application processing
-      case ENTRY(CANCEL);              //  8: Used by the endpoint to indicate that the stream is no longer needed
-      case ENTRY(COMPRESSION_ERROR);   //  9: The endpoint is unable to maintain the header compression context for the connection
-      case ENTRY(CONNECT_ERROR);       // 10: The connection established in response to a CONNECT request (Section 8.3) was reset or abnormally closed
-      case ENTRY(ENHANCE_YOUR_CALM);   // 11: The endpoint detected that its peer is exhibiting a behavior that might be generating excessive load
-      case ENTRY(INADEQUATE_SECURITY); // 12: The underlying transport has properties that do not meet minimum security requirements
-      case ENTRY(HTTP_1_1_REQUIRED);   // 13: The endpoint requires that HTTP/1.1 be used instead of HTTP/2
+      case U_HTTP2_ENTRY(NO_ERROR);          //  0: The endpoint NOT detected an error
+      case U_HTTP2_ENTRY(PROTOCOL_ERROR);    //  1: The endpoint detected an unspecific protocol error. This error is for use when a more specific error code is not available
+      case U_HTTP2_ENTRY(INTERNAL_ERROR);    //  2: The endpoint encountered an unexpected internal error
+      case U_HTTP2_ENTRY(FLOW_CONTROL_ERROR);   //  3: The endpoint detected that its peer violated the flow-control protocol
+      case U_HTTP2_ENTRY(SETTINGS_TIMEOUT);     //  4: The endpoint sent a SETTINGS frame but did not receive a response in a timely manner
+      case U_HTTP2_ENTRY(STREAM_CLOSED);        //  5: The endpoint received a frame after a stream was half-closed
+      case U_HTTP2_ENTRY(FRAME_SIZE_ERROR);     //  6: The endpoint received a frame with an invalid size
+      case U_HTTP2_ENTRY(REFUSED_STREAM);    //  7: The endpoint refused the stream prior to performing any application processing
+      case U_HTTP2_ENTRY(CANCEL);               //  8: Used by the endpoint to indicate that the stream is no longer needed
+      case U_HTTP2_ENTRY(COMPRESSION_ERROR); //  9: The endpoint is unable to maintain the header compression context for the connection
+      case U_HTTP2_ENTRY(CONNECT_ERROR);        // 10: The connection established in response to a CONNECT request (Section 8.3) was reset or abnormally closed
+      case U_HTTP2_ENTRY(ENHANCE_YOUR_CALM); // 11: The endpoint detected that its peer is exhibiting a behavior that might be generating excessive load
+      case U_HTTP2_ENTRY(INADEQUATE_SECURITY); // 12: The underlying transport has properties that do not meet minimum security requirements
+      case U_HTTP2_ENTRY(HTTP_1_1_REQUIRED); // 13: The endpoint requires that HTTP/1.1 be used instead of HTTP/2
 
       default: descr = "Error type unknown";
       }
@@ -2899,16 +2896,16 @@ const char* UHTTP2::getFrameTypeDescription(char type)
 
    switch (type)
       {
-      case ENTRY(DATA);
-      case ENTRY(HEADERS);
-      case ENTRY(PRIORITY);
-      case ENTRY(RST_STREAM);
-      case ENTRY(SETTINGS);
-      case ENTRY(PUSH_PROMISE);
-      case ENTRY(PING);
-      case ENTRY(GOAWAY);
-      case ENTRY(WINDOW_UPDATE);
-      case ENTRY(CONTINUATION);
+      case U_HTTP2_ENTRY(DATA);
+      case U_HTTP2_ENTRY(HEADERS);
+      case U_HTTP2_ENTRY(PRIORITY);
+      case U_HTTP2_ENTRY(RST_STREAM);
+      case U_HTTP2_ENTRY(SETTINGS);
+      case U_HTTP2_ENTRY(PUSH_PROMISE);
+      case U_HTTP2_ENTRY(PING);
+      case U_HTTP2_ENTRY(GOAWAY);
+      case U_HTTP2_ENTRY(WINDOW_UPDATE);
+      case U_HTTP2_ENTRY(CONTINUATION);
 
       default: descr = "Frame type unknown";
       }
@@ -2924,11 +2921,11 @@ const char* UHTTP2::getStreamStatusDescription()
 
    switch (pStream->state)
       {
-      case ENTRY(STREAM_STATE_IDLE);
-      case ENTRY(STREAM_STATE_RESERVED);
-      case ENTRY(STREAM_STATE_OPEN);
-      case ENTRY(STREAM_STATE_HALF_CLOSED);
-      case ENTRY(STREAM_STATE_CLOSED);
+      case U_HTTP2_ENTRY(STREAM_STATE_IDLE);
+      case U_HTTP2_ENTRY(STREAM_STATE_RESERVED);
+      case U_HTTP2_ENTRY(STREAM_STATE_OPEN);
+      case U_HTTP2_ENTRY(STREAM_STATE_HALF_CLOSED);
+      case U_HTTP2_ENTRY(STREAM_STATE_CLOSED);
 
       default: descr = "Stream status unknown";
       }
@@ -2944,15 +2941,17 @@ const char* UHTTP2::getConnectionStatusDescription()
 
    switch (pConnection->state)
       {
-      case ENTRY(CONN_STATE_IDLE);
-      case ENTRY(CONN_STATE_OPEN);
-      case ENTRY(CONN_STATE_IS_CLOSING);
+      case U_HTTP2_ENTRY(CONN_STATE_IDLE);
+      case U_HTTP2_ENTRY(CONN_STATE_OPEN);
+      case U_HTTP2_ENTRY(CONN_STATE_IS_CLOSING);
 
       default: descr = "Connection status unknown";
       }
 
    U_RETURN(descr);
 }
+
+#undef U_HTTP2_ENTRY
 
 #ifdef U_STDCPP_ENABLE
 ostream& operator<<(ostream& _os, const UHTTP2::HpackDynamicTable& v)

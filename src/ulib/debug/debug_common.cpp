@@ -31,8 +31,6 @@
 #  include <ulib/base/replace/sysexits.h>
 #endif
 
-#include <errno.h>
-
 #ifdef DEBUG
 #  ifndef PACKAGE_NAME
 #  define PACKAGE_NAME ULib

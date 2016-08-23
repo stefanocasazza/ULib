@@ -13,45 +13,39 @@ static void check(const UString& dati, const UString& file)
 
    UString buffer1(sz), buffer2(sz);
 
-   /*
-   UBase64::decode(U_STRING_TO_PARAM(dati), buffer1);
-   U_INTERNAL_DUMP("buffer1 = %#.*S", U_STRING_TO_TRACE(buffer1))
-   exit(0);
-   */
+   u_base64_max_columns = U_OPENSSL_BASE64_MAX_COLUMN;
 
-   UBase64::encode(U_STRING_TO_PARAM(dati),    buffer1);
+   UBase64::encode(U_STRING_TO_PARAM(dati), buffer1);
+
+   u_base64_max_columns = 0;
+
    UBase64::decode(U_STRING_TO_PARAM(buffer1), buffer2);
 
-   U_INTERNAL_DUMP("buffer1 = %#.*S", U_STRING_TO_TRACE(buffer1))
-   U_INTERNAL_DUMP("dati    = %#.*S", U_STRING_TO_TRACE(dati))
-   U_INTERNAL_DUMP("buffer2 = %#.*S", U_STRING_TO_TRACE(buffer2))
+   U_ASSERT_EQUALS(dati, buffer2)
+   U_INTERNAL_ASSERT_EQUALS(u_base64_errors, 0)
 
-   /*
-   UFile save_file;
+   UBase64::decodeAll(U_STRING_TO_PARAM(buffer1), buffer2);
 
-   if (save_file.creat("base64.encode"))
-      {
-      save_file.write(buffer1, true);
-      save_file.close();
-      }
+   U_ASSERT_EQUALS(dati, buffer2)
+   U_INTERNAL_ASSERT_EQUALS(u_base64_errors, 0)
 
-   if (save_file.creat("base64.decode"))
-      {
-      save_file.write(buffer2, true);
-      save_file.close();
-      }
-   */
+   UBase64::encodeUrl(U_STRING_TO_PARAM(dati), buffer1);
 
-   U_ASSERT( dati == buffer2 )
+   U_INTERNAL_ASSERT_EQUALS(u_base64_errors, 0)
 
-   UBase64::encodeUrl(U_STRING_TO_PARAM(dati),    buffer1);
    UBase64::decodeUrl(U_STRING_TO_PARAM(buffer1), buffer2);
 
-   U_INTERNAL_DUMP("buffer1 = %#.*S", U_STRING_TO_TRACE(buffer1))
-   U_INTERNAL_DUMP("dati    = %#.*S", U_STRING_TO_TRACE(dati))
-   U_INTERNAL_DUMP("buffer2 = %#.*S", U_STRING_TO_TRACE(buffer2))
+   U_ASSERT_EQUALS(dati, buffer2)
+   U_INTERNAL_ASSERT_EQUALS(u_base64_errors, 0)
 
-   U_ASSERT( dati == buffer2 )
+   UBase64::decodeAll(U_STRING_TO_PARAM(buffer1), buffer2);
+
+   U_INTERNAL_DUMP("buffer1 = %V", buffer1.rep)
+   U_INTERNAL_DUMP("   dati = %V",    dati.rep)
+   U_INTERNAL_DUMP("buffer2 = %V", buffer2.rep)
+
+   U_ASSERT_EQUALS(dati, buffer2)
+   U_INTERNAL_ASSERT_EQUALS(u_base64_errors, 0)
 }
 
 int U_EXPORT main(int argc, char* argv[])

@@ -65,6 +65,8 @@ protected:
    UCommand* command;
    int response_type;
 
+   URPCGenericMethod() : URPCMethod() {}
+
 private:
    U_DISALLOW_COPY_AND_ASSIGN(URPCGenericMethod)
 };

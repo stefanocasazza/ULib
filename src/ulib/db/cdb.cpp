@@ -898,10 +898,7 @@ U_NO_EXPORT void UCDB::checkForAllEntry()
 
          U_INTERNAL_DUMP("key = %.*S khash = %u", key.dsize, key.dptr, khash)
 
-         if (key.dsize == 0)
-            {
-            U_ERROR("UCDB::checkForAllEntry() - null key size - db(%.*S)", U_FILE_TO_TRACE(*this));
-            }
+         if (key.dsize == 0) U_ERROR("UCDB::checkForAllEntry() - null key size - db(%.*S)", U_FILE_TO_TRACE(*this));
          }
 
       slot++;

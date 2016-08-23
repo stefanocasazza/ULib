@@ -26,34 +26,29 @@
 int u_base64_errors;
 int u_base64_max_columns;
 
-/**
- * u_alphabet: "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"
- *
- * base64url substitute 62(+) and 63(/) chars with -_ (minus) (underline)
- */
-
 uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
 {
-   uint32_t i = 0;
+   int cols = 0;
    bool columns = false;
+   uint32_t i = 0, bits;
    unsigned char* restrict r = result;
-   int char_count = 0, bits = 0, cols = 0;
 
    U_INTERNAL_TRACE("u_base64_encode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
    U_INTERNAL_ASSERT_POINTER(input)
 
-   for (; i < len; ++i)
+   if (len > 2)
       {
-      bits += input[i];
-
-      if (++char_count != 3) bits <<= 8;
-      else
+      for (; i < len - 2; i += 3)
          {
-         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_alphabet[ bits >> 18],
-                                                      u_alphabet[(bits >> 12) & 0x3f],
-                                                      u_alphabet[(bits >>  6) & 0x3f],
-                                                      u_alphabet[ bits        & 0x3f]));
+         bits = ((((input[i]    << 8) +
+                    input[i+1]) << 8) +
+                    input[i+2]);
+
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64[ bits >> 18],
+                                                      u_b64[(bits >> 12) & 0x3f],
+                                                      u_b64[(bits >>  6) & 0x3f],
+                                                      u_b64[ bits        & 0x3f]));
 
          r += 4;
 
@@ -71,24 +66,36 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
                }
             }
 
-         bits       = 0;
-         char_count = 0;
          }
       }
 
-   if (char_count != 0)
+   switch (len - i)
       {
-      bits <<= (16 - (8 * char_count));
+      case 0: break;
+      case 1:
+         {
+         bits = ((input[i] << 8) << 8);
 
-      u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(u_alphabet[ bits >> 18],
-                                                   u_alphabet[(bits >> 12) & 0x3f]));
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64[ bits >> 18],
+                                                      u_b64[(bits >> 12) & 0x3f],
+                                                      U_PAD, U_PAD));
 
-      r += 2;
+         r += 4;
+         }
+      break;
 
-      if (char_count == 1) u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(                         U_PAD,U_PAD));
-      else                 u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(u_alphabet[(bits >> 6) & 0x3f],U_PAD));
+      default: /* case 2: */
+         {
+         bits = (((input[i]    << 8) +
+                   input[i+1]) << 8);
 
-      r += 2;
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64[ bits >> 18],
+                                                      u_b64[(bits >> 12) & 0x3f],
+                                                      u_b64[(bits >>  6) & 0x3f],
+                                                      U_PAD));
+
+         r += 4;
+         }
       }
 
    if (columns &&
@@ -96,6 +103,65 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
       {
       if (U_line_terminator_len == 2) *r++ = '\r';
                                       *r++ = '\n';
+      }
+
+   *r = 0;
+
+   return (r - result);
+}
+
+uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
+{
+   uint32_t i = 0, bits;
+   unsigned char* restrict r = result;
+
+   U_INTERNAL_TRACE("u_base64url_encode(%.*s,%u,%p)", U_min(len,128), input, len, result)
+
+   U_INTERNAL_ASSERT_POINTER(input)
+
+   if (len > 2)
+      {
+      for (; i < len - 2; i += 3)
+         {
+         bits = ((((input[i]    << 8) +
+                    input[i+1]) << 8) +
+                    input[i+2]);
+
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64url[ bits >> 18],
+                                                      u_b64url[(bits >> 12) & 0x3f],
+                                                      u_b64url[(bits >>  6) & 0x3f],
+                                                      u_b64url[ bits        & 0x3f]));
+
+         r += 4;
+         }
+      }
+
+   switch (len - i)
+      {
+      case 0: break;
+      case 1:
+         {
+         bits = ((input[i] << 8) << 8);
+
+         u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(u_b64url[ bits >> 18],
+                                                      u_b64url[(bits >> 12) & 0x3f]));
+
+         r += 2;
+         }
+      break;
+
+      default: /* case 2: */
+         {
+         bits = (((input[i]    << 8) +
+                   input[i+1]) << 8);
+
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64url[ bits >> 18],
+                                                      u_b64url[(bits >> 12) & 0x3f],
+                                                      u_b64url[(bits >>  6) & 0x3f],
+                                                      '\0'));
+
+         return (r + 3 - result);
+         }
       }
 
    *r = 0;
@@ -113,7 +179,7 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
    };
 
    /**
-    * for (int i = 0; i < sizeof(u_alphabet); ++i) { member[u_alphabet[i]] = 1; decoder[u_alphabet[i]] = i; }
+    * for (int i = 0; i < sizeof(u_b64); ++i) { member[u_b64[i]] = 1; decoder[u_b64[i]] = i; }
     */
 
    static const unsigned char member[256] = {
@@ -164,12 +230,9 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
       000, 000, 000, 000, 000, 000
    };
 
-   char c;
-   uint32_t input_len, i = 0;
+   uint32_t i = 0;
    int char_count = 0, bits = 0;
-   const    char* restrict ptr = input;
-   unsigned char* restrict r   = result;
-   const    char* restrict end = input + len;
+   unsigned char* restrict r = result;
 
    U_INTERNAL_TRACE("u_base64_decode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
@@ -177,29 +240,9 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
 
    u_base64_errors = 0;
 
-   while (ptr < end)
+   for (; i < len; ++i)
       {
-      c = *ptr;
-
-      if (c == U_PAD    ||
-          u__isspace(c) ||
-          member[(int)c])
-         {
-         ++ptr;
-
-         continue;
-         }
-
-      break;
-      }
-
-   input_len = ptr - input;
-
-   U_INTERNAL_PRINT("input_len = %d *ptr = %d", input_len, *ptr)
-
-   for (; i < input_len; ++i)
-      {
-      c = input[i];
+      char c = input[i];
 
       if (c == U_PAD) break;
 
@@ -226,21 +269,24 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
       if (++char_count != 4) bits <<= 6;
       else
          {
-         *r++ =  bits >> 16;         /* Byte 1 */
-         *r++ = (bits >>  8) & 0xff; /* Byte 2 */
-         *r++ =  bits        & 0xff; /* Byte 3 */
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32( bits >> 16,         /* Byte 1 */
+                                                      (bits >>  8) & 0xff, /* Byte 2 */
+                                                       bits        & 0xff, /* Byte 3 */
+                                                      '\0'));
+
+         r += 3;
 
          bits = char_count = 0;
          }
       }
 
-   if (i == input_len)
+   if (i == len)
       {
       if (char_count)
          {
          ++u_base64_errors;
 
-         U_INTERNAL_PRINT("Decoding incomplete: at least %d bits truncated", (4 - char_count) * 6)
+         U_INTERNAL_PRINT("Decoding incomplete: at least %u bits truncated", (4 - char_count) * 6)
          }
 
       goto next;
@@ -274,85 +320,8 @@ next:
    return (r - result);
 }
 
-uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, unsigned char* restrict result)
-{
-   uint32_t i;
-   bool columns = false;
-   unsigned char* restrict r = result;
-   int char_count = 0, bits = 0, cols = 0;
-
-   static const unsigned char* b64url = (const unsigned char*) "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
-
-   U_INTERNAL_TRACE("u_base64url_encode(%.*s,%u,%p)", U_min(len,128), input, len, result)
-
-   U_INTERNAL_ASSERT_POINTER(input)
-
-   for (i = 0; i < len; ++i)
-      {
-      bits += input[i];
-
-      if (++char_count != 3) bits <<= 8;
-      else
-         {
-         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(b64url[ bits >> 18],
-                                                      b64url[(bits >> 12) & 0x3f],
-                                                      b64url[(bits >>  6) & 0x3f],
-                                                      b64url[ bits        & 0x3f]));
-
-         r += 4;
-
-         if (u_base64_max_columns)
-            {
-            cols += 4;
-
-            if (cols == u_base64_max_columns)
-               {
-               cols    = 0;
-               columns = true;
-
-               if (U_line_terminator_len == 2) *r++ = '\r';
-                                               *r++ = '\n';
-               }
-            }
-
-         bits       = 0;
-         char_count = 0;
-         }
-      }
-
-   if (char_count != 0)
-      {
-      bits <<= (16 - (8 * char_count));
-
-      u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(b64url[ bits >> 18],
-                                                   b64url[(bits >> 12) & 0x3f]));
-
-      r += 2;
-
-      if (char_count == 2) *r++ = b64url[(bits >> 6) & 0x3f];
-      }
-
-   if (columns &&
-       cols > 0)
-      {
-      if (U_line_terminator_len == 2) *r++ = '\r';
-                                      *r++ = '\n';
-      }
-
-   *r = 0;
-
-   return (r - result);
-}
-
 uint32_t u_base64url_decode(const char* restrict input, uint32_t len, unsigned char* restrict result)
 {
-   static const int dispatch_table[] = {
-      0,
-      0,
-      (char*)&&case_2-(char*)&&case_1,
-      (char*)&&case_3-(char*)&&case_1
-   };
-
    static const unsigned char member[256] = {
       000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, /*  15 */
       000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, /*  31 */
@@ -401,12 +370,9 @@ uint32_t u_base64url_decode(const char* restrict input, uint32_t len, unsigned c
      0,   0,   0,   0,   0,   0
    };
 
-   char c;
-   uint32_t input_len, i = 0;
+   uint32_t i = 0;
    int char_count = 0, bits = 0;
-   const    char* restrict ptr = input;
-   unsigned char* restrict r   = result;
-   const    char* restrict end = input + len;
+   unsigned char* restrict r = result;
 
    U_INTERNAL_TRACE("u_base64url_decode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
@@ -414,28 +380,9 @@ uint32_t u_base64url_decode(const char* restrict input, uint32_t len, unsigned c
 
    u_base64_errors = 0;
 
-   while (ptr < end)
+   for (; i < len; ++i)
       {
-      c = *ptr;
-
-      if (u__isspace(c) ||
-          member[(int)c])
-         {
-         ++ptr;
-
-         continue;
-         }
-
-      break;
-      }
-
-   input_len = ptr - input;
-
-   U_INTERNAL_PRINT("input_len = %d *ptr = %d", input_len, *ptr)
-
-   for (; i < input_len; ++i)
-      {
-      c = input[i];
+      char c = input[i];
 
       if (member[(int)c] == 0) continue;
 
@@ -460,37 +407,48 @@ uint32_t u_base64url_decode(const char* restrict input, uint32_t len, unsigned c
       if (++char_count != 4) bits <<= 6;
       else
          {
-         *r++ =  bits >> 16;         /* Byte 1 */
-         *r++ = (bits >>  8) & 0xff; /* Byte 2 */
-         *r++ =  bits        & 0xff; /* Byte 3 */
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32( bits >> 16,         /* Byte 1 */
+                                                      (bits >>  8) & 0xff, /* Byte 2 */
+                                                       bits        & 0xff, /* Byte 3 */
+                                                      '\0'));
+
+         r += 3;
 
          bits = char_count = 0;
          }
       }
 
-   if (char_count == 0) goto next;
+   if (char_count)
+      {
+      static const int dispatch_table[] = {
+         0,
+         0,
+         (char*)&&case_2-(char*)&&case_1,
+         (char*)&&case_3-(char*)&&case_1
+      };
 
-   U_INTERNAL_ASSERT_RANGE(1, char_count, 3)
+      U_INTERNAL_ASSERT_RANGE(1, char_count, 3)
 
-   goto *((char*)&&case_1 + dispatch_table[char_count]);
+      goto *((char*)&&case_1 + dispatch_table[char_count]);
 
 case_1:
-   ++u_base64_errors;
+      ++u_base64_errors;
 
-   U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
+      U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
 
-   goto next;
+      goto next;
 
 case_2:
-   *r++ = bits >> 10;
+      *r++ = bits >> 10;
 
-   goto next;
+      goto next;
 
 case_3:
-   u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16( bits >> 16,
-                                                (bits >>  8) & 0xff));
+      u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16( bits >> 16,
+                                                   (bits >>  8) & 0xff));
 
-   r += 2;
+      r += 2;
+      }
 
 next:
    *r = 0;
@@ -500,13 +458,6 @@ next:
 
 uint32_t u_base64all_decode(const char* restrict input, uint32_t len, unsigned char* restrict result)
 {
-   static const int dispatch_table[] = {
-      0,
-      0,
-      (char*)&&case_2-(char*)&&case_1,
-      (char*)&&case_3-(char*)&&case_1
-   };
-
    static const unsigned char member[256] = {
       000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, /*  15 */
       000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, 000, /*  31 */
@@ -555,12 +506,9 @@ uint32_t u_base64all_decode(const char* restrict input, uint32_t len, unsigned c
      0,   0,   0,   0,   0,   0
    };
 
-   char c;
-   uint32_t input_len, i = 0;
+   uint32_t i = 0;
    int char_count = 0, bits = 0;
-   const    char* restrict ptr = input;
-   unsigned char* restrict r   = result;
-   const    char* restrict end = input + len;
+   unsigned char* restrict r = result;
 
    U_INTERNAL_TRACE("u_base64all_decode(%.*s,%u,%p)", U_min(len,128), input, len, result)
 
@@ -568,33 +516,21 @@ uint32_t u_base64all_decode(const char* restrict input, uint32_t len, unsigned c
 
    u_base64_errors = 0;
 
-   while (ptr < end)
+   for (; i < len; ++i)
       {
-      c = *ptr;
-
-      if (c == U_PAD    ||
-          u__isspace(c) ||
-          member[(int)c])
-         {
-         ++ptr;
-
-         continue;
-         }
-
-      break;
-      }
-
-   input_len = ptr - input;
-
-   U_INTERNAL_PRINT("input_len = %d *ptr = %d", input_len, *ptr)
-
-   for (; i < input_len; ++i)
-      {
-      c = input[i];
+      char c = input[i];
 
       if (c == U_PAD) break;
 
       if (member[(int)c] == 0) continue;
+
+      if (u__isbase64(c) == false &&
+          u__isb64url(c) == false)
+         {
+         U_INTERNAL_PRINT("Decoding error: not base64 encoding", 0)
+
+         return 0;
+         }
 
       bits += decoder[(int)c];
 
@@ -610,35 +546,48 @@ uint32_t u_base64all_decode(const char* restrict input, uint32_t len, unsigned c
       if (++char_count != 4) bits <<= 6;
       else
          {
-         *r++ =  bits >> 16;         /* Byte 1 */
-         *r++ = (bits >>  8) & 0xff; /* Byte 2 */
-         *r++ =  bits        & 0xff; /* Byte 3 */
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32( bits >> 16,         /* Byte 1 */
+                                                      (bits >>  8) & 0xff, /* Byte 2 */
+                                                       bits        & 0xff, /* Byte 3 */
+                                                      '\0'));
+
+         r += 3;
 
          bits = char_count = 0;
          }
       }
 
-   U_INTERNAL_ASSERT_RANGE(1, char_count, 3)
+   if (char_count)
+      {
+      static const int dispatch_table[] = {
+         0,
+         0,
+         (char*)&&case_2-(char*)&&case_1,
+         (char*)&&case_3-(char*)&&case_1
+      };
 
-   goto *((char*)&&case_1 + dispatch_table[char_count]);
+      U_INTERNAL_ASSERT_RANGE(1, char_count, 3)
+
+      goto *((char*)&&case_1 + dispatch_table[char_count]);
 
 case_1:
-   ++u_base64_errors;
+      ++u_base64_errors;
 
-   U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
+      U_INTERNAL_PRINT("Decoding incomplete: at least 2 bits missing", 0)
 
-   goto next;
+      goto next;
 
 case_2:
-   *r++ = bits >> 10;
+      *r++ = bits >> 10;
 
-   goto next;
+      goto next;
 
 case_3:
-   u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16( bits >> 16,
-                                                (bits >>  8) & 0xff));
+      u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16( bits >> 16,
+                                                   (bits >>  8) & 0xff));
 
-   r += 2;
+      r += 2;
+      }
 
 next:
    *r = 0;

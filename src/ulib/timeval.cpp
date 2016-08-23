@@ -14,8 +14,6 @@
 #include <ulib/timeval.h>
 #include <ulib/utility/interrupt.h>
 
-#include <errno.h>
-
 #ifndef HAVE_NANOSLEEP
 extern "C" { int nanosleep (const struct timespec* requested_time,
                                   struct timespec* remaining); }

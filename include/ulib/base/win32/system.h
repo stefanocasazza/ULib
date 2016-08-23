@@ -358,61 +358,66 @@ struct rlimit {
 #ifdef __cplusplus
 extern "C" {
 #endif
-U_EXPORT pid_t          fork(void);
-U_EXPORT pid_t          vfork(void);
-U_EXPORT uid_t          getuid(void);
-U_EXPORT uid_t          geteuid(void);
-U_EXPORT uid_t          getegid(void);
-U_EXPORT pid_t          getppid(void);
-U_EXPORT int            nice(int inc);
-U_EXPORT int            setpgrp(void);
-U_EXPORT int            setuid(uid_t uid);
-U_EXPORT int            setgid(gid_t gid);
-U_EXPORT int            mkstemp(char* name);
-U_EXPORT struct passwd* getpwuid(uid_t uid);
-U_EXPORT int            pipe(int filedes[2]);
-U_EXPORT int            kill(pid_t pid, int sig);
-U_EXPORT int            sigpending(sigset_t* set);
-U_EXPORT struct passwd* getpwnam(const char* name);
-U_EXPORT unsigned int   alarm(unsigned int seconds);
-U_EXPORT int            setpgid(pid_t pid, pid_t pgid);
-U_EXPORT int            sigsuspend(const sigset_t* mask);
-U_EXPORT int            munmap(void* start, size_t length);
-U_EXPORT int            msync(void* start, size_t length, int flags);
-U_EXPORT pid_t          waitpid(pid_t pid, int* status, int options);
-U_EXPORT char*          realpath(const char* path, char* resolved_path);
-U_EXPORT int            inet_aton(const char *cp, struct in_addr *addr);
-U_EXPORT int            setrlimit(int resource, const struct rlimit* rlim);
-U_EXPORT int            socketpair(int d, int type, int protocol, int sv[2]);
-U_EXPORT ssize_t        writev(int fd, const struct iovec* vector, int count);
-U_EXPORT int            sigprocmask(int how, const sigset_t* set, sigset_t* oldset);
-U_EXPORT void*          mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset);
-U_EXPORT int            sigaction(int signum, const struct sigaction* act, struct sigaction* oldact);
-U_EXPORT int            setitimer(int which, const struct itimerval* value, struct itimerval* ovalue);
+U_EXPORT pid_t  fork(void);
+U_EXPORT pid_t vfork(void);
+U_EXPORT uid_t getuid(void);
+U_EXPORT uid_t geteuid(void);
+U_EXPORT uid_t getegid(void);
+U_EXPORT pid_t getppid(void);
 
-/** implemented in MINGW Runtime
+U_EXPORT int nice(int inc);
+U_EXPORT int setpgrp(void);
+U_EXPORT int setuid(uid_t uid);
+U_EXPORT int setgid(gid_t gid);
+U_EXPORT int mkstemp(char* name);
+U_EXPORT int pipe(int filedes[2]);
+U_EXPORT int kill(pid_t pid, int sig);
+U_EXPORT int sigpending(sigset_t* set);
+U_EXPORT int setpgid(pid_t pid, pid_t pgid);
+U_EXPORT int sigsuspend(const sigset_t* mask);
+U_EXPORT int munmap(void* start, size_t length);
+U_EXPORT int msync(void* start, size_t length, int flags);
+U_EXPORT int inet_aton(const char *cp, struct in_addr *addr);
+U_EXPORT int setrlimit(int resource, const struct rlimit* rlim);
+U_EXPORT int socketpair(int d, int type, int protocol, int sv[2]);
+U_EXPORT int sigprocmask(int how, const sigset_t* set, sigset_t* oldset);
+U_EXPORT int sigaction(int signum, const struct sigaction* act, struct sigaction* oldact);
+U_EXPORT int setitimer(int which, const struct itimerval* value, struct itimerval* ovalue);
+
+U_EXPORT struct passwd* getpwuid(uid_t uid);
+U_EXPORT struct passwd* getpwnam(const char* name);
+
+U_EXPORT pid_t waitpid(pid_t pid, int* status, int options);
+U_EXPORT char* realpath(const char* path, char* resolved_path);
+U_EXPORT void* mmap(void* start, size_t length, int prot, int flags, int fd, off_t offset);
+
+U_EXPORT unsigned int alarm(unsigned int seconds);
+U_EXPORT ssize_t writev(int fd, const struct iovec* vector, int count);
+
+/**
+ * implemented in MINGW Runtime
  *
  * U_EXPORT int gettimeofday(struct timeval* tv, void* tz);
  * U_EXPORT int truncate(const char* fname, off_t distance);
  */
 
 #if _WIN32_WINNT < 0x0600
-   U_EXPORT const CHAR* inet_ntop(INT, PVOID, LPSTR, size_t);
+U_EXPORT const CHAR* inet_ntop(INT, PVOID, LPSTR, size_t);
 #endif
 
-U_EXPORT int             raise_w32(int nsig);
-U_EXPORT int            unlink_w32(const char* path);
-U_EXPORT int             fcntl_w32(int fd, int cmd, void* arg);
-U_EXPORT sighandler_t   signal_w32(int nsig, sighandler_t handler);
-U_EXPORT int            rename_w32(const char* oldpath, const char* newpath);
-U_EXPORT int            select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* timeout);
+U_EXPORT int  raise_w32(int nsig);
+U_EXPORT int unlink_w32(const char* path);
+U_EXPORT int  fcntl_w32(int fd, int cmd, void* arg);
+U_EXPORT int rename_w32(const char* oldpath, const char* newpath);
+U_EXPORT int select_w32(int nfds, fd_set* rd, fd_set* wr, fd_set* ex, struct timeval* timeout);
 
-U_EXPORT HANDLE         is_pipe(int fd);
-U_EXPORT void           u_init_ulib_mingw(void);
-U_EXPORT uint64_t       u_get_inode(int fd); /* INODE FOR WINDOWS - It is not stable for files on network drives (NFS) */
-U_EXPORT const char*    getSysError_w32(unsigned* len);
-U_EXPORT int            w32_open_osfhandle(long osfhandle, int flags);
-U_EXPORT char*          u_slashify(const char* src, char slash_from, char slash_to);
+U_EXPORT HANDLE is_pipe(int fd);
+U_EXPORT void u_init_ulib_mingw(void);
+U_EXPORT uint64_t u_get_inode(int fd); /* INODE FOR WINDOWS - It is not stable for files on network drives (NFS) */
+U_EXPORT const char* getSysError_w32(unsigned* len);
+U_EXPORT int w32_open_osfhandle(long osfhandle, int flags);
+U_EXPORT sighandler_t signal_w32(int nsig, sighandler_t handler);
+U_EXPORT char* u_slashify(const char* src, char slash_from, char slash_to);
 
 extern U_EXPORT HANDLE u_hProcess;
 extern U_EXPORT SECURITY_ATTRIBUTES sec_none;
@@ -421,12 +426,13 @@ extern U_EXPORT SECURITY_DESCRIPTOR sec_descr;
 }
 #endif
 
-#define raise(a)            raise_w32(a)
-#define unlink(a)          unlink_w32(a)
-#define signal(a,b)        signal_w32(a,b)
-#define rename(a,b)        rename_w32(a,b)
-#define fcntl(a,b,c)        fcntl_w32(a,b,(void*)(c))
-#define select(a,b,c,d,e)  select_w32(a,b,c,d,e)
+#define raise(a) raise_w32(a)
+#define unlink(a) unlink_w32(a)
+#define signal(a,b) signal_w32(a,b)
+#define rename(a,b) rename_w32(a,b)
+#define fcntl(a,b,c) fcntl_w32(a,b,(void*)(c))
+
+#define select(a,b,c,d,e) select_w32(a,b,c,d,e)
 
 /* Perform a mapping of Win32 error numbers into POSIX errno's */
 

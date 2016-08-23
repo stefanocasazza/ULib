@@ -16,8 +16,6 @@
 
 #include <ulib/string.h>
 
-#include <errno.h>
-
 class UFile;
 class UHTTP;
 class UDialog;

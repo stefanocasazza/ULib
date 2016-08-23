@@ -396,7 +396,7 @@ protected:
     * }
     */
 
-   static int32_t getIndexStaticTable(const UString& key);
+   static int32_t getIndexStaticTable(const UString& key) __pure;
 
    static bool setIndexStaticTable(UHashMap<void*>* table, const char* key, uint32_t length)
       {

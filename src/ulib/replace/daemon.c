@@ -9,7 +9,7 @@
  * This function is for programs wishing to detach themselves from the controlling terminal and run in the background as system daemons
  *
  * Unless the argument nochdir is nonzero, daemon() changes the current working directory to the root ("/").
- * Unless the argument noclose is nonzero, daemon() will redirect standard input, standard output and standard error to /dev/null.
+ * Unless the argument noclose is nonzero, daemon() will redirect standard input, standard output and standard error to /dev/null
  */
 
 extern U_EXPORT int daemon(int nochdir, int noclose);

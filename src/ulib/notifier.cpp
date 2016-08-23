@@ -29,8 +29,6 @@ UEventTime* UNotifier::time_obj;
 struct pollfd UNotifier::fds[1];
 #endif
 
-#include <errno.h>
-
 /**
  * typedef union epoll_data {
  *    void* ptr;

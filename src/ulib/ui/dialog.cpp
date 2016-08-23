@@ -17,8 +17,6 @@
 #include <ulib/container/vector.h>
 #include <ulib/utility/services.h>
 
-#include <errno.h>
-
 #if defined(__NetBSD__) || defined(__UNIKERNEL__) || defined(__OSX__)
 extern char** environ;
 #endif

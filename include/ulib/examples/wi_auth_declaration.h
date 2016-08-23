@@ -3,17 +3,9 @@
 #ifndef U_WI_AUTH_DECLARATION_H
 #define U_WI_AUTH_DECLARATION_H 1
 
-#include <ulib/date.h>
-#include <ulib/utility/services.h>
 #include <ulib/net/server/plugin/mod_ssi.h>
 #include <ulib/net/server/plugin/mod_nocat.h>
 #include <ulib/net/server/plugin/mod_proxy_service.h>
-
-#ifdef USE_LIBSSL
-#  include <ulib/utility/des3.h>
-#  include <ulib/ssl/certificate.h>
-#  include <ulib/ssl/net/sslsocket.h>
-#endif
 
 static UString* ap;
 static UString* ip;
