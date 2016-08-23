@@ -35,6 +35,9 @@
 # ifndef LINUX_VERSION_CODE
 #  error "You need to use at least 2.0 Linux kernel."
 # endif
+#  ifdef U_APEX_ENABLE
+#     include <ulib/base/apex/apex_memmove.h>
+#  endif
 #endif
 
 #ifdef USE_LIBSSL
@@ -256,6 +259,7 @@ U_EXPORT void u_init_http_method_list(void);
 
 U_EXPORT const char* u_basename(const char* restrict path) __pure;
 U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
+U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n);
 
 /* conversion number to string */
 extern U_EXPORT const char u_ctn2s[201];
@@ -353,6 +357,27 @@ U_EXPORT uint32_t u_sprintc(   char* restrict buffer, unsigned char c);
 U_EXPORT uint32_t u_sprintcrtl(char* restrict buffer, unsigned char c);
 U_EXPORT uint32_t u__snprintf( char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
 U_EXPORT uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
+
+#ifdef DEBUG
+/* NB: u_strlen() and u_memcpy() conflit with /usr/include/unicode/urename.h */
+U_EXPORT size_t u__strlen(const char* restrict s,    const char* function);
+U_EXPORT void   u__strcpy(      char* restrict dest, const char* restrict src);
+U_EXPORT void   u__memcpy(      void* restrict dest, const void* restrict src, size_t n, const char* function);
+U_EXPORT char*  u__strncpy(     char* restrict dest, const char* restrict src, size_t n);
+#else
+#  define u__strlen(s,func)                 strlen((s))
+#  define u__strcpy(dest,src)        (void) strcpy((dest),(src))
+#  define u__strncpy(dest,src,n)            strncpy((dest),(src),(n))
+#  ifdef U_APEX_ENABLE
+#     define u__memcpy(dest,src,n,func) (void) apex_memcpy((dest),(src),(n))
+#  else
+#     define u__memcpy(dest,src,n,func) (void)      memcpy((dest),(src),(n))
+#  endif
+#endif
+#ifndef U_APEX_ENABLE
+#  define apex_memcpy( dest,src,n) memcpy( (dest),(src),(n))
+#  define apex_memmove(dest,src,n) memmove((dest),(src),(n))
+#endif
 
 #if (defined(U_LINUX) || defined(_MSWINDOWS_)) && !defined(__suseconds_t_defined)
 typedef long suseconds_t;

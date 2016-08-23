@@ -260,6 +260,82 @@ void u_setPid(void)
    u_pid_str_len = buffer + sizeof(buffer) - u_pid_str;
 }
 
+bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n)
+{
+   U_INTERNAL_TRACE("u_is_overlap(%p,%p,%lu)", dst, src, n)
+
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
+
+        if (src < dst) return ((src + n - 1) >= dst);
+   else if (dst < src) return ((dst + n - 1) >= src);
+
+   /* They start at same place. Since we know neither of them has zero length, they must overlap */
+
+   U_INTERNAL_ASSERT_EQUALS(dst, src)
+
+   return true;
+}
+
+#ifdef DEBUG
+size_t u__strlen(const char* restrict s, const char* called_by_function)
+{
+   U_INTERNAL_TRACE("u__strlen(%s,%s)", s, called_by_function)
+
+   U_INTERNAL_ASSERT_POINTER(called_by_function)
+   U_INTERNAL_ASSERT_POINTER_MSG(s,called_by_function)
+
+   return strlen(s);
+}
+
+void u__strcpy(char* restrict dest, const char* restrict src)
+{
+   size_t n = u__strlen(src, __PRETTY_FUNCTION__);
+
+   U_INTERNAL_TRACE("u__strcpy(%p,%p,%lu)", dest, src, n)
+
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
+   U_INTERNAL_ASSERT_POINTER(src)
+   U_INTERNAL_ASSERT_POINTER(dest)
+   U_INTERNAL_ASSERT_EQUALS(u_is_overlap(dest,src,n), false)
+
+   (void) strcpy(dest, src);
+}
+
+char* u__strncpy(char* restrict dest, const char* restrict src, size_t n)
+{
+   U_INTERNAL_TRACE("u__strncpy(%p,%p,%lu)", dest, src, n)
+
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
+   U_INTERNAL_ASSERT_POINTER(src)
+   U_INTERNAL_ASSERT_POINTER(dest)
+   U_INTERNAL_ASSERT_EQUALS(u_is_overlap(dest,src,n), false)
+
+   (void) strncpy(dest, src, n);
+
+   return dest;
+}
+
+void u__memcpy(void* restrict dst, const void* restrict src, size_t n, const char* called_by_function)
+{
+   U_INTERNAL_TRACE("u__memcpy(%p,%p,%lu,%s)", dst, src, n, called_by_function)
+
+   U_INTERNAL_ASSERT_POINTER(src)
+   U_INTERNAL_ASSERT_POINTER(dst)
+   U_INTERNAL_ASSERT_POINTER(called_by_function)
+
+   if (n == 0) U_WARNING("*** Zero copy in memcpy *** - %s", called_by_function);
+
+   if (u_is_overlap((const char* restrict)dst, (const char* restrict)src, n))
+      {
+      U_WARNING("*** Source and Destination OVERLAP in memcpy *** - %s", called_by_function);
+
+      (void) apex_memmove(dst, src, n);
+      }
+
+   (void) apex_memcpy(dst, src, n);
+}
+#endif
+
 void u_init_ulib_username(void)
 {
    struct passwd* restrict pw;

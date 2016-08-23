@@ -51,10 +51,6 @@ typedef uint32_t in_addr_t;
 #  include <sys/sched.h>
 #endif
 
-#ifdef U_APEX_ENABLE
-#  include <ulib/base/apex/apex_memmove.h>
-#endif
-
 #ifndef HAVE_CPU_SET_T
 typedef uint64_t cpu_set_t;
 #endif
@@ -153,31 +149,11 @@ U_EXPORT uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, u
 
 U_EXPORT int  u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
 U_EXPORT bool u_isNumber(const char* restrict s, uint32_t n) __pure;
-U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n);
 U_EXPORT void u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
 U_EXPORT bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
 
 U_EXPORT uint32_t u_findEndHeader( const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 or U_LF2 */
 U_EXPORT uint32_t u_findEndHeader1(const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 */
-
-#ifdef DEBUG
-/* NB: u_strlen() and u_memcpy() conflit with /usr/include/unicode/urename.h */
-U_EXPORT size_t u__strlen(const char* restrict s,    const char* function);
-U_EXPORT void   u__strcpy(      char* restrict dest, const char* restrict src);
-U_EXPORT void   u__memcpy(      void* restrict dest, const void* restrict src, size_t n, const char* function);
-U_EXPORT char*  u__strncpy(     char* restrict dest, const char* restrict src, size_t n);
-#else
-#  define u__strlen(s,func)                 strlen((s))
-#  define u__strcpy(dest,src)        (void) strcpy((dest),(src))
-#  define u__strncpy(dest,src,n)            strncpy((dest),(src),(n))
-# ifdef U_APEX_ENABLE
-#  define u__memcpy(dest,src,n,func) (void) apex_memcpy((dest),(src),(n))
-# endif
-#endif
-#ifndef U_APEX_ENABLE
-#  define apex_memcpy( dest,src,n) memcpy( (dest),(src),(n))
-#  define apex_memmove(dest,src,n) memmove((dest),(src),(n))
-#endif
 
 static inline void* u_find(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) /* check if string b is contained within string a */
 {
