@@ -675,7 +675,7 @@ AC_MSG_CHECKING(for apex memcpy/memmove)
 AC_ARG_ENABLE(apexmem,   [  --enable-apexmem          use apex_memmove written by Trevor Herselman in 2014 [[default=yes]]])
 
 if test -z "$enable_apexmem"; then
-	enable_apexmem="yes"
+	enable_apexmem="no"
 fi
 
 AM_CONDITIONAL(APEXMEM, false)

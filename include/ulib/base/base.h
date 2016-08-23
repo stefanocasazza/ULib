@@ -145,9 +145,10 @@ typedef bool  (*bPFpcpv) (const char*,const void*);
 typedef void  (*vPFpvpc) (void*,char*);
 typedef void  (*vPFpvpv) (void*,void*);
 
-typedef int   (*qcompare)  (const void*,const void*);
 typedef void* (*pvPFpvpb)  (void*,bool*);
+typedef int   (*qcompare)  (const void*,const void*);
 typedef void  (*vPFpvpcpc) (void*,char*,char*);
+typedef void* (*pvPFpvpvs) (void*,const void*,size_t);
 
 typedef struct U_DATA {
    unsigned char* dptr;

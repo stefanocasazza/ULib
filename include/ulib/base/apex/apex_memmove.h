@@ -6,8 +6,6 @@
 #include <ulib/base/base.h>
 
 #if defined(__MINGW32__) || !defined(HAVE_ARCH64)
-typedef void* (*pvPFpvpvs) (void*,const void*,size_t);
-
 extern U_EXPORT pvPFpvpvs apex_memcpy;
 extern U_EXPORT pvPFpvpvs apex_memmove;
 #else

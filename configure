@@ -20151,7 +20151,7 @@ fi
 
 
 if test -z "$enable_apexmem"; then
-	enable_apexmem="yes"
+	enable_apexmem="no"
 fi
 
  if false; then
