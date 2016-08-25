@@ -88,51 +88,9 @@ __pure uint32_t u_random64(uint64_t ptr)
 }
 #endif
 
-#ifdef USE_HARDWARE_CRC32
-__pure uint32_t u_crc32(unsigned char* restrict bp, uint32_t len)
-{
-   U_INTERNAL_TRACE("u_crc32(%.*s,%u)", U_min(len,128), bp, len)
-
-   uint32_t h1 = 0xABAD1DEA;
-
-# ifdef HAVE_ARCH64
-   while (len >= sizeof(uint64_t))
-      {
-      h1 = __builtin_ia32_crc32di(h1, u_get_unalignedp64(bp));
-
-      bp  += sizeof(uint64_t);
-      len -= sizeof(uint64_t);
-      }
-# endif
-   while (len >= sizeof(uint32_t))
-      {
-      h1 = __builtin_ia32_crc32si(h1, u_get_unalignedp32(bp));
-
-      bp  += sizeof(uint32_t);
-      len -= sizeof(uint32_t);
-      }
-
-   if (len >= sizeof(uint16_t))
-      {
-      h1 = __builtin_ia32_crc32hi(h1, u_get_unalignedp16(bp));
-
-      bp  += sizeof(uint16_t);
-      len -= sizeof(uint16_t);
-      }
-
-   if (len) h1 = __builtin_ia32_crc32qi(h1, *bp);
-
-   U_INTERNAL_PRINT("h1 = %u", h1)
-
-   U_INTERNAL_ASSERT_MAJOR(h1, 0)
-
-   return h1;
-}
-#endif
-
 /* the famous DJB hash function for strings */
 
-__pure uint32_t u_cdb_hash(unsigned char* restrict t, uint32_t tlen, int flags)
+__pure uint32_t u_cdb_hash(const unsigned char* restrict t, uint32_t tlen, int flags)
 {
    uint32_t h;
 
@@ -149,185 +107,12 @@ __pure uint32_t u_cdb_hash(unsigned char* restrict t, uint32_t tlen, int flags)
    return h;
 }
 
-/* MurmurHash3 was written by Austin Appleby */
-
-static inline uint32_t rotl32(uint32_t x, int8_t r) { return (x << r) | (x >> (32 - r)); }
-#if !defined(USE_HARDWARE_CRC32) && defined(HAVE_ARCH64)
-static inline uint64_t rotl64(uint64_t x, int8_t r) { return (x << r) | (x >> (64 - r)); }
-
-static inline uint64_t fmix64(uint64_t k)
+__pure uint32_t u_hash_ignore_case(const unsigned char* restrict data, uint32_t len)
 {
-   k ^= k >> 33;
-   k *= 0xff51afd7ed558ccdULL;
-   k ^= k >> 33;
-   k *= 0xc4ceb9fe1a85ec53ULL;
-   k ^= k >> 33;
-
-   return k;
-}
-
-/* Block read - if your platform needs to do endian-swapping or can only handle aligned reads, do the conversion here */
-
-#define getblock64(p,i) u_get_unalignedp64(p+i)
-
-__pure uint32_t murmurhash3_x86_64(unsigned char* restrict bp, uint32_t len)
-{
-   U_INTERNAL_TRACE("murmurhash3_x86_64(%.*s,%u,%d)", U_min(len,128), bp, len)
-
-   int i;
-   uint64_t h1, h2, k1, k2;
-   const int nblocks = len / 16;
-   const uint64_t c1 = 0x87c37b91114253d5ULL,
-                  c2 = 0x4cf5ad432745937fULL;
-
-   const uint8_t* tail    = (const uint8_t*)(bp + nblocks*16);
-   const uint64_t* blocks = (const uint64_t*)bp;
-
-   h1 = h2 = u_seed_hash; /* seed */
-
-   /* body */
-
-   for (i = 0; i < nblocks; ++i)
-      {
-      k1 = getblock64(blocks,i*2+0);
-      k2 = getblock64(blocks,i*2+1);
-
-      k1 *= c1; k1 = rotl64(k1,31); k1 *= c2; h1 ^= k1;
-      h1 = rotl64(h1,27); h1 += h2; h1 = h1*5+0x52dce729;
-      k2 *= c2; k2 = rotl64(k2,33); k2 *= c1; h2 ^= k2;
-      h2 = rotl64(h2,31); h2 += h1; h2 = h2*5+0x38495ab5;
-      }
-
-   /* tail */
-
-   k1 = k2 = 0;
-
-   switch (len & 15)
-      {
-      case 15: k2 ^= (uint64_t)tail[14] << 48;
-      case 14: k2 ^= (uint64_t)tail[13] << 40;
-      case 13: k2 ^= (uint64_t)tail[12] << 32;
-      case 12: k2 ^= (uint64_t)tail[11] << 24;
-      case 11: k2 ^= (uint64_t)tail[10] << 16;
-      case 10: k2 ^= (uint64_t)tail[ 9] << 8;
-      case  9: k2 ^= (uint64_t)tail[ 8];
-               k2 *= c2; k2 = rotl64(k2,33); k2 *= c1; h2 ^= k2;
-
-      case  8: k1 ^= (uint64_t)tail[ 7] << 56;
-      case  7: k1 ^= (uint64_t)tail[ 6] << 48;
-      case  6: k1 ^= (uint64_t)tail[ 5] << 40;
-      case  5: k1 ^= (uint64_t)tail[ 4] << 32;
-      case  4: k1 ^= (uint64_t)tail[ 3] << 24;
-      case  3: k1 ^= (uint64_t)tail[ 2] << 16;
-      case  2: k1 ^= (uint64_t)tail[ 1] << 8;
-      case  1: k1 ^= (uint64_t)tail[ 0];
-               k1 *= c1; k1 = rotl64(k1,31); k1 *= c2; h1 ^= k1;
-      }
-
-   /* finalization */
-
-   h1 ^= (uint64_t)len;
-   h2 ^= (uint64_t)len;
-   h1 += h2;
-   h2 += h1;
-   h1 = fmix64(h1);
-   h2 = fmix64(h2);
-   h1 += h2;
-   h2 += h1;
-
-   U_INTERNAL_PRINT("h2 = %llu %u", h2, (uint32_t)h2)
-
-   U_INTERNAL_ASSERT_MAJOR(h2, 0)
-
-   return (uint32_t)h2;
-}
-#endif
-
-static inline uint32_t fmix32(uint32_t h)
-{
-   h ^= h >> 16;
-   h *= 0x85ebca6b;
-   h ^= h >> 13;
-   h *= 0xc2b2ae35;
-   h ^= h >> 16;
-
-   return h;
-}
-
-/* Block read - if your platform needs to do endian-swapping or can only handle aligned reads, do the conversion here */
-
-#define getblock32(p,i) u_get_unalignedp32(p+i)
-
-__pure uint32_t murmurhash3_x86_32_ignore_case(unsigned char* restrict bp, uint32_t len)
-{
-   int i;
    union uucflag u;
-   uint32_t h1, k1;
-   const int nblocks = len / 4;
-   const uint32_t c1 = 0xcc9e2d51,
-                  c2 = 0x1b873593;
-
-   const  uint8_t* tail   = (const uint8_t*)(bp + nblocks*4);
-   const uint32_t* blocks = (const uint32_t*)tail;
-
-   U_INTERNAL_TRACE("murmurhash3_x86_32_ignore_case(%.*s,%u)", U_min(len,128), bp, len)
-
-   h1 = u_seed_hash; /* seed */
-
-   /* body */
-
-   i = -nblocks;
-
-   for (; i; ++i)
-      {
-      u.u    = getblock32(blocks,i);
-      u.c[0] = u__tolower(u.c[0]);
-      u.c[1] = u__tolower(u.c[1]);
-      u.c[2] = u__tolower(u.c[2]);
-      u.c[3] = u__tolower(u.c[3]);
-      k1     = u.u;
-
-      k1 *= c1;
-      k1  = rotl32(k1,15);
-      k1 *= c2;
-
-      h1 ^= k1;
-      h1  = rotl32(h1,13);
-      h1  = h1*5+0xe6546b64;
-      }
-
-   /* tail */
-
-   k1 = 0;
-
-   switch (len & 3)
-      {
-      case 3: k1 ^= u__tolower(tail[2]) << 16;
-      case 2: k1 ^= u__tolower(tail[1]) <<  8;
-      case 1: k1 ^= u__tolower(tail[0]);
-              k1 *= c1; k1 = rotl32(k1,15); k1 *= c2; h1 ^= k1;
-      }
-
-   /* finalization */
-
-   h1 ^= len;
-   h1  = fmix32(h1);
-
-   U_INTERNAL_PRINT("h1 = %u", h1)
-
-   U_INTERNAL_ASSERT_MAJOR(h1, 0)
-
-   return h1;
-}
-
-#if !defined(USE_HARDWARE_CRC32)
-#  define get16bits(p) u_get_unalignedp16(p)
-
-__pure uint32_t u_fhash(unsigned char* restrict data, uint32_t len)
-{
    uint32_t tmp, hash = len, rem = len & 3;
 
-   U_INTERNAL_TRACE("u_fhash(%.*s,%u,%d)", U_min(len,128), data, len)
+   U_INTERNAL_TRACE("u_hash_ignore_case(%.*s,%u,%d)", U_min(len,128), data, len)
 
    len >>= 2;
 
@@ -335,8 +120,14 @@ __pure uint32_t u_fhash(unsigned char* restrict data, uint32_t len)
 
    for (; len > 0; --len)
       {
-      hash  +=  get16bits(data);
-      tmp    = (get16bits(data+2) << 11) ^ hash;
+      u.u    = u_get_unalignedp32(data);
+      u.c[0] = u__tolower(u.c[0]);
+      u.c[1] = u__tolower(u.c[1]);
+      u.c[2] = u__tolower(u.c[2]);
+      u.c[3] = u__tolower(u.c[3]);
+
+      hash  +=  u_get_unalignedp16(&u.lo);
+      tmp    = (u_get_unalignedp16(&u.hi) << 11) ^ hash;
       hash   = (hash << 16) ^ tmp;
       data  += 2 * sizeof(uint16_t);
       hash  += hash >> 11;
@@ -348,16 +139,24 @@ __pure uint32_t u_fhash(unsigned char* restrict data, uint32_t len)
       {
       case 3:
          {
-         hash += get16bits(data);
+         u.lo   = u_get_unalignedp16(data);
+         u.c[0] = u__tolower(u.c[0]);
+         u.c[1] = u__tolower(u.c[1]);
+
+         hash += u_get_unalignedp16(&u.lo);
          hash ^= hash << 16;
-         hash ^= ((signed char)data[sizeof(uint16_t)]) << 18;
+         hash ^= ((signed char)u__tolower(data[sizeof(uint16_t)])) << 18;
          hash += hash >> 11;
          }
       break;
 
       case 2:
          {
-         hash += get16bits(data);
+         u.lo   = u_get_unalignedp16(data);
+         u.c[0] = u__tolower(u.c[0]);
+         u.c[1] = u__tolower(u.c[1]);
+
+         hash += u_get_unalignedp16(&u.lo);
          hash ^= hash << 11;
          hash += hash >> 17;
          }
@@ -365,7 +164,7 @@ __pure uint32_t u_fhash(unsigned char* restrict data, uint32_t len)
 
       case 1:
          {
-         hash += (signed char)*data;
+         hash += (signed char)u__tolower(*data);
          hash ^= hash << 10;
          hash += hash >> 1;
          }
@@ -383,15 +182,33 @@ __pure uint32_t u_fhash(unsigned char* restrict data, uint32_t len)
    return hash;
 }
 
-#if !defined(HAVE_ARCH64)
-__pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
+/* MurmurHash3 was written by Austin Appleby
+
+#define getblock32(p,i) u_get_unalignedp32(p+i)
+#define getblock64(p,i) u_get_unalignedp64(p+i)
+
+//#if !defined(USE_HARDWARE_CRC32) && !defined(HAVE_ARCH64)
+static inline uint32_t rotl32(uint32_t x, int8_t r) { return (x << r) | (x >> (32 - r)); }
+
+static inline uint32_t fmix32(uint32_t h)
 {
-   U_INTERNAL_TRACE("u_hash(%.*s,%u,%d)", U_min(len,128), bp, len)
+   h ^= h >> 16;
+   h *= 0x85ebca6b;
+   h ^= h >> 13;
+   h *= 0xc2b2ae35;
+   h ^= h >> 16;
+
+   return h;
+}
+
+__pure uint32_t murmurhash3_x86_32(const unsigned char* restrict bp, uint32_t len)
+{
+   U_INTERNAL_TRACE("murmurhash3_x86_32(%.*s,%u,%d)", U_min(len,128), bp, len)
 
    uint8_t* tail;
    int i, nblocks;
    uint32_t* blocks;
-   uint32_t  c1, c2, k1, h1 = u_seed_hash; /* seed */
+   uint32_t  c1, c2, k1, h1 = u_seed_hash; // seed
 
    if (len > 16)
       {
@@ -408,9 +225,9 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
       tail   = (uint8_t*)(bp + nblocks*16);
       blocks = (uint32_t*)tail;
 
-      h2 = h3 = h4 = h1; /* seed */
+      h2 = h3 = h4 = h1; // seed
 
-      /* body */
+      // body
 
       for (i = -nblocks; i; ++i)
          {
@@ -429,7 +246,7 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
          h4 = rotl32(h4,13); h4 += h1; h4 = h4*5+0x32ac3b17;
          }
 
-      /* tail */
+      // tail
 
       k1 = k2 = k3 = k4 = 0;
 
@@ -459,7 +276,7 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
                   k1 *= c1; k1 = rotl32(k1,15); k1 *= c2; h1 ^= k1;
          }
 
-      /* finalization */
+      // finalization
 
       h1 ^= (uint32_t)len; h2 ^= (uint32_t)len;
       h3 ^= (uint32_t)len; h4 ^= (uint32_t)len;
@@ -490,7 +307,7 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
    tail   = (uint8_t*)(bp + nblocks*4);
    blocks = (uint32_t*)tail;
 
-   /* body */
+   // body
 
    i = -nblocks;
 
@@ -507,7 +324,7 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
       h1  = h1*5+0xe6546b64;
       }
 
-   /* tail */
+   // tail
 
    k1 = 0;
 
@@ -519,7 +336,7 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
               k1 *= c1; k1 = rotl32(k1,15); k1 *= c2; h1 ^= k1;
       }
 
-   /* finalization */
+   // finalization
 
    h1 ^= len;
    h1  = fmix32(h1);
@@ -530,5 +347,92 @@ __pure uint32_t u_hash(unsigned char* restrict bp, uint32_t len)
 
    return h1;
 }
-#endif
-#endif
+//#endif
+
+//#if !defined(USE_HARDWARE_CRC32) && defined(HAVE_ARCH64)
+static inline uint64_t rotl64(uint64_t x, int8_t r) { return (x << r) | (x >> (64 - r)); }
+
+static inline uint64_t fmix64(uint64_t k)
+{
+   k ^= k >> 33;
+   k *= 0xff51afd7ed558ccdULL;
+   k ^= k >> 33;
+   k *= 0xc4ceb9fe1a85ec53ULL;
+   k ^= k >> 33;
+
+   return k;
+}
+
+__pure uint32_t murmurhash3_x86_64(const unsigned char* restrict bp, uint32_t len)
+{
+   U_INTERNAL_TRACE("murmurhash3_x86_64(%.*s,%u,%d)", U_min(len,128), bp, len)
+
+   int i;
+   uint64_t h1, h2, k1, k2;
+   const int nblocks = len / 16;
+   const uint64_t c1 = 0x87c37b91114253d5ULL,
+                  c2 = 0x4cf5ad432745937fULL;
+
+   const uint8_t* tail    = (const uint8_t*)(bp + nblocks*16);
+   const uint64_t* blocks = (const uint64_t*)bp;
+
+   h1 = h2 = u_seed_hash; // seed
+
+   // body
+
+   for (i = 0; i < nblocks; ++i)
+      {
+      k1 = getblock64(blocks,i*2+0);
+      k2 = getblock64(blocks,i*2+1);
+
+      k1 *= c1; k1 = rotl64(k1,31); k1 *= c2; h1 ^= k1;
+      h1 = rotl64(h1,27); h1 += h2; h1 = h1*5+0x52dce729;
+      k2 *= c2; k2 = rotl64(k2,33); k2 *= c1; h2 ^= k2;
+      h2 = rotl64(h2,31); h2 += h1; h2 = h2*5+0x38495ab5;
+      }
+
+   // tail
+
+   k1 = k2 = 0;
+
+   switch (len & 15)
+      {
+      case 15: k2 ^= (uint64_t)tail[14] << 48;
+      case 14: k2 ^= (uint64_t)tail[13] << 40;
+      case 13: k2 ^= (uint64_t)tail[12] << 32;
+      case 12: k2 ^= (uint64_t)tail[11] << 24;
+      case 11: k2 ^= (uint64_t)tail[10] << 16;
+      case 10: k2 ^= (uint64_t)tail[ 9] << 8;
+      case  9: k2 ^= (uint64_t)tail[ 8];
+               k2 *= c2; k2 = rotl64(k2,33); k2 *= c1; h2 ^= k2;
+
+      case  8: k1 ^= (uint64_t)tail[ 7] << 56;
+      case  7: k1 ^= (uint64_t)tail[ 6] << 48;
+      case  6: k1 ^= (uint64_t)tail[ 5] << 40;
+      case  5: k1 ^= (uint64_t)tail[ 4] << 32;
+      case  4: k1 ^= (uint64_t)tail[ 3] << 24;
+      case  3: k1 ^= (uint64_t)tail[ 2] << 16;
+      case  2: k1 ^= (uint64_t)tail[ 1] << 8;
+      case  1: k1 ^= (uint64_t)tail[ 0];
+               k1 *= c1; k1 = rotl64(k1,31); k1 *= c2; h1 ^= k1;
+      }
+
+   // finalization
+
+   h1 ^= (uint64_t)len;
+   h2 ^= (uint64_t)len;
+   h1 += h2;
+   h2 += h1;
+   h1 = fmix64(h1);
+   h2 = fmix64(h2);
+   h1 += h2;
+   h2 += h1;
+
+   U_INTERNAL_PRINT("h2 = %llu %u", h2, (uint32_t)h2)
+
+   U_INTERNAL_ASSERT_MAJOR(h2, 0)
+
+   return (uint32_t)h2;
+}
+//#endif
+*/

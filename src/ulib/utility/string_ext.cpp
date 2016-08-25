@@ -804,10 +804,6 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
 {
    U_TRACE(0, "UStringExt::insertEscape(%.*S,%u,%C)", n, s, n, delimiter)
 
-   U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
-
-   U_INTERNAL_ASSERT_POINTER(memchr(s, delimiter, n))
-
    char* p;
    uint32_t sz, sz1 = 0;
    UString result(n * 2);
@@ -854,10 +850,6 @@ UString UStringExt::insertEscape(const char* s, uint32_t n, char delimiter)
 UString UStringExt::removeEscape(const char* s, uint32_t n)
 {
    U_TRACE(0, "UStringExt::removeEscape(%.*S,%u,%C)", n, s, n)
-
-   U_INTERNAL_ASSERT_MAJOR_MSG(n,0,"elaborazione su stringa vuota: inserire if empty()...")
-
-   U_INTERNAL_ASSERT_POINTER(memchr(s, '\\', n))
 
    char* p;
    UString result(n);

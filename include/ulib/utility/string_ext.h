@@ -214,7 +214,7 @@ public:
    // convert tabs to spaces
 
    static UString expandTab(const char* s, uint32_t n, int tab = 3);
-   static UString expandTab(const UString& s, int tab = 3) { return expandTab(U_STRING_TO_PARAM(s), tab); }
+   static UString expandTab(const UString& s,          int tab = 3) { return expandTab(U_STRING_TO_PARAM(s), tab); }
 
    // expand path (~/... and ~user/... plus $var and $var/...)
 
@@ -223,18 +223,19 @@ public:
 
    // prepare for environment variables (check if some of them need quoting...)
 
-   static UString prepareForEnvironmentVar(const UString& env)          { return prepareForEnvironmentVar(U_STRING_TO_PARAM(env)); }
    static UString prepareForEnvironmentVar(const char* s, uint32_t n);
+
+   static UString prepareForEnvironmentVar(const UString& env) { return prepareForEnvironmentVar(U_STRING_TO_PARAM(env)); }
 
    // expand environment variables
 
-   static UString getEnvironmentVar(const UString& name,       const UString* env) { return getEnvironmentVar(U_STRING_TO_PARAM(name), env); }
    static UString getEnvironmentVar(const char* s, uint32_t n, const UString* env);
+   static UString getEnvironmentVar(const UString& name,       const UString* env) { return getEnvironmentVar(U_STRING_TO_PARAM(name), env); }
 
    // recursively expand environment variables if needed
 
-   static UString expandEnvironmentVar(const UString& s,          const UString* env) { return expandEnvironmentVar(U_STRING_TO_PARAM(s), env); }
    static UString expandEnvironmentVar(const char* s, uint32_t n, const UString* env);
+   static UString expandEnvironmentVar(const UString& s,          const UString* env) { return expandEnvironmentVar(U_STRING_TO_PARAM(s), env); }
 
    // eval expression 
 
@@ -255,58 +256,45 @@ public:
    static UString removeEscape(const char* s, uint32_t n);
    static UString insertEscape(const char* s, uint32_t n, char delimiter = '"');
 
-   static UString removeEscape(const UString& s)
-      {
-      U_TRACE(0, "UStringExt::removeEscape(%V)", s.rep)
-
-      uint32_t sz     = s.size();
-      const char* str = s.data();
-      void* ptr       = (void*) memchr(str, '\\', sz);
-
-      return (ptr ? removeEscape(str, sz) : s);
-      }
-
-   static UString insertEscape(const UString& s, char delimiter = '"')
-      {
-      U_TRACE(0, "UStringExt::insertEscape(%V,%C)", s.rep, delimiter)
-
-      uint32_t sz     = s.size();
-      const char* str = s.data();
-      void* ptr       = (void*) memchr(str, delimiter, sz);
-
-      return (ptr ? insertEscape(str, sz, delimiter) : s);
-      }
+   static UString removeEscape(const UString& s)                       { return removeEscape(U_STRING_TO_PARAM(s)); }
+   static UString insertEscape(const UString& s, char delimiter = '"') { return insertEscape(U_STRING_TO_PARAM(s), delimiter); }
 
    // Returns a string that has whitespace removed from the start and the end (leading and trailing)
 
    static UString trim(const char* s, uint32_t n);
+
    static UString trim(const UString& s) { return trim(U_STRING_TO_PARAM(s)); }
 
    // Returns a string that has any printable character which is not a space or
    // an alphanumeric character removed from the start and the end (leading and trailing)
 
    static UString trimPunctuation(const char* s, uint32_t n);
+
    static UString trimPunctuation(const UString& s) { return trimPunctuation(U_STRING_TO_PARAM(s)); }
 
    // returns a string that has whitespace removed from the start and the end, and
    // which has each sequence of internal whitespace replaced with a single space
 
    static UString simplifyWhiteSpace(const char* s, uint32_t n);
+
    static UString simplifyWhiteSpace(const UString& s) { return simplifyWhiteSpace(U_STRING_TO_PARAM(s)); }
 
    // returns a string that has suppressed all whitespace 
 
    static UString removeWhiteSpace(const char* s, uint32_t n);
+
    static UString removeWhiteSpace(const UString& s) { return removeWhiteSpace(U_STRING_TO_PARAM(s)); }
 
    // returns a string that has suppressed repeated empty lines
 
    static UString removeEmptyLine(const char* s, uint32_t n);
+
    static UString removeEmptyLine(const UString& s) { return removeEmptyLine(U_STRING_TO_PARAM(s)); }
 
    // Minifies CSS/JS by removing comments and whitespaces
 
    static UString minifyCssJs(const char* s, uint32_t n);
+
    static UString minifyCssJs(const UString& s) { return minifyCssJs(U_STRING_TO_PARAM(s)); }
 
    // ----------------------------------------------------------------------------------------

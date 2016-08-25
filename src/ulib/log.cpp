@@ -849,7 +849,7 @@ void ULog::logResponse(const UString& data, const char* name, const char* format
       {
       u_printf_string_max_length = u_findEndHeader1(ptr, sz);
 
-      if (u_printf_string_max_length == -1) u_printf_string_max_length = U_min(sz,2000);
+      if ((uint32_t)u_printf_string_max_length == U_NOT_FOUND) u_printf_string_max_length = U_min(sz,2000);
 
       U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
       }

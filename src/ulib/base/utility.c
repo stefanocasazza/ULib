@@ -572,41 +572,6 @@ char* u_getPathRelativ(const char* restrict path, uint32_t* restrict ptr_path_le
    return (char*)path;
 }
 
-/* find sequence of U_CRLF2 */
-
-__pure uint32_t u_findEndHeader1(const char* restrict str, uint32_t n)
-{
-   const char* restrict p;
-   const char* restrict end = str + n;
-   const char* restrict ptr = str;
-
-   uint32_t pos, endHeader = U_NOT_FOUND;
-
-   U_INTERNAL_TRACE("u_findEndHeader1(%.*s,%u)", U_min(n,128), str, n)
-
-   U_INTERNAL_ASSERT_POINTER(str)
-
-   while (ptr < end)
-      {
-      p = (const char* restrict) memchr(ptr, '\r', end - ptr);
-
-      if (p == 0) break;
-
-      if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
-         {
-         pos = p - str + 4;
-
-         if (pos <= n) endHeader = pos;
-
-         break;
-         }
-
-      ptr = p + 1;
-      }
-
-   return endHeader;
-}
-
 /* find sequence of U_LF2 or U_CRLF2 */
 
 __pure uint32_t u_findEndHeader(const char* restrict str, uint32_t n)

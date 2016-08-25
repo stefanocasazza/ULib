@@ -1551,9 +1551,9 @@ bool UClientImage_Base::writeResponse()
    U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 
 #if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
-   iBytesWrite = USocketExt::writev( socket, iov_vec+idx, iovcnt, ncount, 0);
+   iBytesWrite = USocketExt::writev( socket, iov_vec+idx, iovcnt, ncount, U_ClientImage_pipeline ? U_TIMEOUT_MS : 0);
 #else
-   iBytesWrite = USocketExt::_writev(socket, iov_vec+idx, iovcnt, ncount, 0);
+   iBytesWrite = USocketExt::_writev(socket, iov_vec+idx, iovcnt, ncount, U_ClientImage_pipeline ? U_TIMEOUT_MS : 0);
 #endif
    }
 

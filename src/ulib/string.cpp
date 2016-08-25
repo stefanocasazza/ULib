@@ -1642,29 +1642,6 @@ __pure uint32_t UString::findnocase(const char* s, uint32_t pos, uint32_t s_len,
    U_RETURN(U_NOT_FOUND);
 }
 
-__pure uint32_t UString::find(unsigned char c, uint32_t pos) const
-{
-   U_TRACE(0, "UString::find(%C,%u)", c, pos)
-
-   uint32_t sz  = size(),
-            ret = U_NOT_FOUND;
-
-   const char* str = rep->str;
-
-   if (pos < sz)
-      {
-      uint32_t how_much = (sz - pos);
-
-   // U_INTERNAL_DUMP("how_much = %u", how_much)
-
-      void* p = (void*) memchr(str + pos, c, how_much);
-
-      if (p) ret = (const char*)p - str;
-      }
-
-   U_RETURN(ret);
-}
-
 // rfind() instead of starting at the beginning of the string and searching for the text's first occurence, starts its search at the end and returns the last occurence
 
 __pure uint32_t UString::rfind(unsigned char c, uint32_t pos) const
@@ -1679,11 +1656,9 @@ __pure uint32_t UString::rfind(unsigned char c, uint32_t pos) const
 
       if (xpos > pos) xpos = pos;
 
-      const char* str = rep->str;
-
       for (++xpos; xpos-- > 0; )
          {
-         if (str[xpos] == c) U_RETURN(xpos);
+         if (rep->str[xpos] == c) U_RETURN(xpos);
          }
       }
 
@@ -1700,10 +1675,8 @@ __pure uint32_t UString::rfind(const char* s, uint32_t pos, uint32_t n) const
       {
       pos = U_min(sz - n, pos);
 
-      const char* str = rep->str;
-
       do {
-         if (memcmp(str + pos, s, n) == 0) U_RETURN(pos);
+         if (memcmp(rep->str + pos, s, n) == 0) U_RETURN(pos);
          }
       while (pos-- > 0);
       }
@@ -1720,13 +1693,9 @@ __pure uint32_t UString::find_first_of(const char* s, uint32_t pos, uint32_t n) 
 
    if (n)
       {
-      uint32_t sz = size();
-
-      const char* str = rep->str;
-
-      for (; pos < sz; ++pos)
+      for (; pos < size(); ++pos)
          {
-         if (memchr(s, str[pos], n)) U_RETURN(pos);
+         if (memchr(s, rep->str[pos], n)) U_RETURN(pos);
          }
       }
 
@@ -1743,10 +1712,8 @@ __pure uint32_t UString::find_last_of(const char* s, uint32_t pos, uint32_t n) c
       {
       if (--sz > pos) sz = pos;
 
-      const char* str = rep->str;
-
       do {
-         if (memchr(s, str[sz], n)) U_RETURN(sz);
+         if (memchr(s, rep->str[sz], n)) U_RETURN(sz);
          }
       while (sz-- != 0);
       }
@@ -1765,11 +1732,9 @@ __pure uint32_t UString::find_first_not_of(const char* s, uint32_t pos, uint32_t
       uint32_t sz   = size(),
                xpos = pos;
 
-      const char* str = rep->str;
-
       for (; xpos < sz; ++xpos)
          {
-         if (memchr(s, str[xpos], n) == 0) U_RETURN(xpos);
+         if (memchr(s, rep->str[xpos], n) == 0) U_RETURN(xpos);
          }
       }
 
@@ -1804,10 +1769,8 @@ __pure uint32_t UString::find_last_not_of(const char* s, uint32_t pos, uint32_t 
       {
       if (--sz > pos) sz = pos;
 
-      const char* str = rep->str;
-
       do {
-         if (memchr(s, str[sz], n) == 0) U_RETURN(sz);
+         if (memchr(s, rep->str[sz], n) == 0) U_RETURN(sz);
          }
       while (sz-- != 0);
       }

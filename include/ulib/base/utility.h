@@ -152,9 +152,6 @@ U_EXPORT bool u_isNumber(const char* restrict s, uint32_t n) __pure;
 U_EXPORT void u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
 U_EXPORT bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
 
-U_EXPORT uint32_t u_findEndHeader( const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 or U_LF2 */
-U_EXPORT uint32_t u_findEndHeader1(const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 */
-
 static inline void* u_find(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) /* check if string b is contained within string a */
 {
    U_INTERNAL_TRACE("u_find(%.*s,%u,%.*s,%u)", U_min(n1,128), a, n1, U_min(n2,128), b, n2)
@@ -165,6 +162,21 @@ static inline void* u_find(const char* restrict a, uint32_t n1, const char* rest
 
    return memmem(a, n1, b, n2);
 }
+
+static inline uint32_t u_findEndHeader1(const char* restrict s, uint32_t n) /* find sequence of U_CRLF2 */
+{
+   void* p;
+
+   U_INTERNAL_TRACE("u_findEndHeader1(%.*s,%u)", U_min(n,128), s, n)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+
+   p = memmem(s, n, U_CONSTANT_TO_PARAM(U_CRLF2));
+
+   return (p ? (const char*)p - s + U_CONSTANT_SIZE(U_CRLF2) : U_NOT_FOUND);
+}
+
+U_EXPORT uint32_t u_findEndHeader( const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 or U_LF2 */
 
 U_EXPORT bool   u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a terminate with string b */
 U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a start     with string b */

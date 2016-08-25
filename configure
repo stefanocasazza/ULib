@@ -1762,7 +1762,7 @@ Optional Features:
   --enable-stdcpp           compile with stdc++ runtime overhead [default=yes]
   --enable-debug            compile for debugging [default=no]
   --enable-unaligned        compile for target that allows unaligned reads and writes [default=yes]
-  --enable-apexmem          use apex_memmove written by Trevor Herselman in 2014 [default=yes]
+  --enable-apexmem          use apex_memmove written by Trevor Herselman in 2014 [default=no]
   --enable-thread           enable build of thread support [default=yes]
   --enable-pth              always use GNU pth for threading [default=no]
   --enable-examples         enable building of examples [default=yes]

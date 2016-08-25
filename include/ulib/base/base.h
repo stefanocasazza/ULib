@@ -35,9 +35,9 @@
 # ifndef LINUX_VERSION_CODE
 #  error "You need to use at least 2.0 Linux kernel."
 # endif
-#  ifdef U_APEX_ENABLE
-#     include <ulib/base/apex/apex_memmove.h>
-#  endif
+# ifdef U_APEX_ENABLE
+#  include <ulib/base/apex/apex_memmove.h>
+# endif
 #endif
 
 #ifdef USE_LIBSSL

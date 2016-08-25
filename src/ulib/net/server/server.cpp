@@ -3360,7 +3360,7 @@ void UServer_Base::runLoop(const char* user)
                                socket->setTcpNoDelay();
                                socket->setTcpFastOpen();
                                socket->setTcpDeferAccept();
-      if (bssl == false)       socket->setBufferSND(min_size_for_sendfile);
+      if (bssl == false)       socket->setBufferSND(500 * 1024); // 500k: for major size we assume is better to use sendfile()
       if (set_tcp_keep_alive ) socket->setTcpKeepAlive();
 #  endif
       if (tcp_linger_set > -2) socket->setTcpLinger(tcp_linger_set);

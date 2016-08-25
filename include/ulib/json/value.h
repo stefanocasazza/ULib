@@ -1214,4 +1214,49 @@ public:
       }
 };
 
+#if defined(U_STDCPP_ENABLE)
+#  include <vector>
+template <class T> class U_EXPORT UJsonTypeHandler<std::vector<T> > : public UJsonTypeHandler_Base {
+public:
+   typedef std::vector<T> stdvector;
+
+   explicit UJsonTypeHandler(stdvector& val) : UJsonTypeHandler_Base(&val) {}
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<stdvector>::toJSON(%p)", &json)
+
+      U_ASSERT(json.isArray())
+
+      stdvector* pvec = (stdvector*)pval;
+
+      UValue* child;
+
+      for (uint32_t i = 0, n = pvec->size(); i < n; ++i)
+         {
+         U_NEW(UValue, child, UValue);
+
+         child->toJSON(UJsonTypeHandler<T>(pvec->at(i)));
+
+         UValue::appendNode(&json, child);
+         }
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<stdvector>::fromJSON(%p)", &json)
+
+      U_ASSERT(json.isArray())
+
+      for (UValue* child = json.children.head; child; child = child->next)
+         {
+         T elem;
+
+         child->fromJSON(UJsonTypeHandler<T>(elem));
+
+         ((stdvector*)pval)->push_back(elem);
+         }
+      }
+};
+#endif
 #endif

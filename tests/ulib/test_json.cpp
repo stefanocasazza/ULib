@@ -93,7 +93,8 @@ static void testQuery(const UString& json, const char* cquery, const UString& ex
    int dataType = UValue::jread(json, query, result);
 
    cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "dataType = (%d %S) query = %V result(%u) = %V UValue::jread_elements = %d UValue::jread_error = (%d %S)\n",
-              dataType, UValue::getDataTypeDescription(dataType), query.rep, result.size(), result.rep, UValue::jread_elements, UValue::jread_error, UValue::getJReadErrorDescription()));
+              dataType, UValue::getDataTypeDescription(dataType), query.rep, result.size(), result.rep, UValue::jread_elements, UValue::jread_error,
+              UValue::getJReadErrorDescription()));
 
    U_INTERNAL_ASSERT_EQUALS(result, expected)
 }
@@ -108,6 +109,7 @@ static void testVector()
    UString result, vecJson = U_STRING_FROM_CONSTANT("[\"riga 1\",\"riga 2\",\"riga 3\",\"riga 4\"]");
 
    ok = JSON_parse(vecJson, y);
+
    U_INTERNAL_ASSERT(ok)
 
    ok = (y[0] == U_STRING_FROM_CONSTANT("riga 1"));
@@ -122,6 +124,7 @@ static void testVector()
    y.clear();
 
    ok = JSON_parse(vecJson, y);
+
    U_INTERNAL_ASSERT(ok)
 
    ok = (y[0] == U_STRING_FROM_CONSTANT("riga 1"));
@@ -135,7 +138,7 @@ static void testVector()
 
    result = JSON_stringify(json_vec, y);
 
-   U_ASSERT( result == vecJson )
+   U_ASSERT_EQUALS( result, vecJson )
 }
 
 static void testMap()
@@ -148,6 +151,7 @@ static void testMap()
    UString result, mapJson = U_STRING_FROM_CONSTANT("{\"key1\":\"riga 1\",\"key2\":\"riga 2\",\"key3\":\"riga 3\",\"key4\":\"riga 4\"}");
 
    ok = JSON_parse(mapJson, x);
+
    U_INTERNAL_ASSERT(ok)
 
    ok = (x["key1"] == U_STRING_FROM_CONSTANT("riga 1"));
@@ -162,6 +166,7 @@ static void testMap()
    x.clear();
 
    ok = JSON_parse(mapJson, x);
+
    U_INTERNAL_ASSERT(ok)
 
    ok = (x["key1"] == U_STRING_FROM_CONSTANT("riga 1"));
@@ -175,7 +180,7 @@ static void testMap()
 
    result = JSON_stringify(json_obj, x);
 
-   U_ASSERT( result.size() == mapJson.size() )
+   U_ASSERT_EQUALS( result.size(), mapJson.size() )
 }
 
 static void testObject()
@@ -188,6 +193,7 @@ static void testObject()
    UString result, reqJson = U_STRING_FROM_CONSTANT("{\"token\":\"A619828KAIJ6D3\",\"type\":\"localesData\",\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\"}");
 
    ok = JSON_parse(reqJson, request);
+
    U_INTERNAL_ASSERT(ok)
 
    U_DUMP_OBJECT(request)
@@ -198,6 +204,7 @@ static void testObject()
    U_INTERNAL_ASSERT_EQUALS(request.location, "40.7831 N, 73.9712 W")
 
    ok = JSON_parse(reqJson, request);
+
    U_INTERNAL_ASSERT(ok)
 
    U_DUMP_OBJECT(request)
@@ -209,7 +216,7 @@ static void testObject()
 
    result = JSON_stringify(json_obj, request);
 
-   U_ASSERT( result == reqJson )
+   U_ASSERT_EQUALS( result, reqJson )
 }
 
 int
@@ -218,6 +225,32 @@ U_EXPORT main (int argc, char* argv[])
    U_ULIB_INIT(argv);
 
    U_TRACE(5, "main(%d)", argc)
+
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11) && defined(U_COMPILER_RANGE_FOR)
+   UValue json_vec(ARRAY_VALUE);
+   std::vector<unsigned int> v = {0, 1, 2, 3, 4, 5};
+   UString vecJson = U_STRING_FROM_CONSTANT("[0,1,2,3,4,5]");
+
+   U_ASSERT_EQUALS( JSON_stringify(json_vec, v), vecJson)
+
+   v.clear();
+
+   bool ok = JSON_parse(vecJson, v);
+   U_INTERNAL_ASSERT(ok)
+
+   ok = (v[0] == 0);
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[1] == 1);
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[2] == 2);
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[3] == 3); 
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[4] == 4); 
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[5] == 5); 
+   U_INTERNAL_ASSERT(ok)
+#endif
 
    UValue json;
    UCrono crono;
