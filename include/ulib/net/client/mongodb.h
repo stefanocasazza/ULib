@@ -113,8 +113,9 @@ public:
       }
 
 #ifndef USE_MONGODB
+   bool connect(const char* _uri) { return false; }
+   bool connect(const char* host, unsigned int _port) { return false; }
    bool executeBulk(mongoc_bulk_operation_t* bulk) { return false; }
-   bool connect(const char* host = 0, unsigned int _port = 27017) { return false; }
    bool selectCollection(const char* db, const char* name_collection) { return false; }
    bool update(uint32_t old_value, const char* key, uint32_t new_value) { return false; }
    void updateOneBulk(mongoc_bulk_operation_t* bulk, uint32_t old_value, const char* key, uint32_t new_value) {}
@@ -123,8 +124,6 @@ public:
    const char* dump(bool reset) const { return ""; }
 # endif
 #else
-   bool connect(const char* uri);
-
    bool insert(bson_t* doc);
    bool findOne(const char* json, uint32_t len);
 
@@ -138,7 +137,10 @@ public:
 
    bool update(uint32_t old_value, const char* key, uint32_t new_value);
 
-   bool connect(const char* host = 0, unsigned int _port = 27017); // connect to MongoDB server
+   // connect to MongoDB server
+
+   bool connect(const char* uri);
+   bool connect(const char* host, unsigned int _port);
 
    // BULK
 

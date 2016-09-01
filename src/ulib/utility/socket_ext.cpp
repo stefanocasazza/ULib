@@ -578,7 +578,7 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
 #if defined(USE_LIBSSL) && !defined(_MSWINDOWS_)
    if (sk->isSSLActive())
 #endif
-#if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
+#if defined(USE_LIBSSL) ||  defined(_MSWINDOWS_)
    {
    int sz, byte_written;
 
@@ -712,17 +712,6 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
    U_INTERNAL_DUMP("iov[0].iov_len = %d iov[1].iov_len = %d", iov[0].iov_len, iov[1].iov_len)
 
    U_RETURN(byte_written);
-}
-
-void USocketExt::setRemoteInfo(USocket* sk, UString& logbuf)
-{
-   U_TRACE(0, "USocketExt::setRemoteInfo(%p,%V)", sk, logbuf.rep)
-
-   UString x(100U);
-
-   x.snprintf("%2d '%s:%u'", sk->iSockDesc, sk->cRemoteAddress.pcStrAddress, sk->iRemotePort);
-
-   (void) logbuf.insert(0, x);
 }
 
 // Send a command to a server and wait for a response (single line)

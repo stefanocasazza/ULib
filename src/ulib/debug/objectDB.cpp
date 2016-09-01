@@ -167,7 +167,10 @@ public:
 
       if (node)
          {
-      // U_DEBUG("UHashMapObjectDumpable::insert() - ptr_object = %p base_class = %s derived_class = %s", dumper->ptr_object, node->objDumper->name_class, dumper->name_class);
+         /*
+         U_DEBUG("UHashMapObjectDumpable::insert() - ptr_object = %p base_class = %s derived_class = %s",
+                                 dumper->ptr_object, node->objDumper->name_class, dumper->name_class);
+         */
 
          delete node->objDumper;
          }
@@ -289,6 +292,8 @@ public:
 private:
    UHashMapObjectDumpable* next;
    uint32_t hash;
+
+   U_DISALLOW_COPY_AND_ASSIGN(UHashMapObjectDumpable)
 };
 
 U_NO_EXPORT uint32_t     UHashMapObjectDumpable::num;

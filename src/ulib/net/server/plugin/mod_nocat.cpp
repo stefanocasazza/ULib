@@ -269,7 +269,14 @@ UNoCatPlugIn::~UNoCatPlugIn()
 
    if (peers_delete)
       {
-      for (UModNoCatPeer* p = peers_delete; p; p = p->next) delete[] p;
+      UModNoCatPeer* next;
+
+      for (UModNoCatPeer* p = peers_delete; p; p = next)
+         {
+         next = p->next;
+
+         delete[] p;
+         }
       }
 
 #ifdef USE_LIBTDB

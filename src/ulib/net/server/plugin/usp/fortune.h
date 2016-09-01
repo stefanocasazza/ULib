@@ -74,7 +74,7 @@ public:
 #endif
 
 private:
-	Fortune& operator=(const Fortune&) { return *this; }
+	U_DISALLOW_ASSIGN(Fortune)
 };
 
 // ORM TEMPLATE SPECIALIZATIONS

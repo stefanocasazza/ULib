@@ -225,9 +225,9 @@ public:
       {
       U_TRACE(5, "Application::checkCasella(%p)", elem)
 
-      bool result = (*id == ((CasellaIdCounter*)elem)->cid);
+      if (*id == ((CasellaIdCounter*)elem)->cid) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool casellaUpdate(const UString& key)

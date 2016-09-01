@@ -233,8 +233,7 @@ public:
 #endif
 
 private:
-   UTimeStat(const UTimeStat&) : UEventTime() {}
-   UTimeStat& operator=(const UTimeStat&)     { return *this; }
+   U_DISALLOW_COPY_AND_ASSIGN(UTimeStat)
 };
 #endif
 
@@ -269,8 +268,7 @@ public:
 #endif
 
 private:
-   UDayLight(const UDayLight&) : UEventTime() {}
-   UDayLight& operator=(const UDayLight&)     { return *this; }
+   U_DISALLOW_COPY_AND_ASSIGN(UDayLight)
 };
 
 class U_NO_EXPORT UTimeoutConnection : public UEventTime {
@@ -334,8 +332,7 @@ public:
 #endif
 
 private:
-   UTimeoutConnection(const UTimeoutConnection&) : UEventTime() {}
-   UTimeoutConnection& operator=(const UTimeoutConnection&)     { return *this; }
+   U_DISALLOW_COPY_AND_ASSIGN(UTimeoutConnection)
 };
 
 /**
@@ -880,6 +877,9 @@ public:
 
       while (UServer_Base::flag_loop) UNotifier::waitForEvent();
       }
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UClientThread)
 };
 
 #  ifdef U_LINUX
@@ -943,6 +943,9 @@ public:
             }
          }
       }
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UTimeThread)
 };
 #  endif
 
@@ -1008,6 +1011,9 @@ public:
 
       U_RETURN(true);
       }
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UOCSPStapling)
 };
 
 ULock*   UServer_Base::lock_ocsp_staple;

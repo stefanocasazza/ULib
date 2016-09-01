@@ -77,12 +77,57 @@ public:
 
    // Convert numeric to string
 
-   static UString printSize(off_t n);
-   static UString numberToString(double n);
-   static UString numberToString(uint32_t n);
+   static UString printSize(off_t n)
+      {
+      U_TRACE(0, "UStringExt::printSize(%I)", n)
+
+      UString x(22U);
+
+      u_printSize(x.data(), n);
+
+      x.size_adjust();
+
+      U_RETURN_STRING(x);
+      }
+
+   static UString numberToString(double n)
+      {
+      U_TRACE(0, "UStringExt::numberToString(%f)", n)
+
+      UString x(32U);
+
+      x.snprintf("%f", n);
+
+      U_RETURN_STRING(x);
+      }
+
+   static UString numberToString(uint32_t n)
+      {
+      U_TRACE(0, "UStringExt::numberToString(%u)", n)
+
+      UString x(10U);
+
+      x.setFromNumber32(n);
+
+      U_RETURN_STRING(x);
+      }
+
    static UString numberToString(uint64_t n);
 
-   static UString stringFromNumber(long n);
+   static UString stringFromNumber(long n)
+      {
+      U_TRACE(0, "UStringExt::stringFromNumber(%lld)", n)
+
+      UString x(22U);
+
+#  if SIZEOF_LONG == 4
+      x.setFromNumber32s(n);
+#  else
+      x.setFromNumber64s(n);
+#  endif
+
+      U_RETURN_STRING(x);
+      }
 
    static void appendNumber32(UString& s, uint32_t number)
       {
@@ -98,7 +143,7 @@ public:
       {
       U_TRACE(0, "UStringExt::appendNumber64(%V,%llu)", s.rep, number)
 
-      char buffer[10];
+      char buffer[22];
       char* ptr = buffer;
 
       (void) s.append(buffer, u_num2str64(ptr, number));
@@ -106,8 +151,37 @@ public:
 
    // convert letter to upper or lower case
 
-   static UString tolower(const char* s, uint32_t n);
-   static UString toupper(const char* s, uint32_t n);
+   static UString tolower(const char* s, uint32_t n)
+      {
+      U_TRACE(0, "UStringExt::tolower(%.*S,%u)", n, s, n)
+
+      UString r(n);
+
+            char* ptr =      r.rep->data();
+      const char* end = s + (r.rep->_length = n);
+
+      while (s < end) *ptr++ = u__tolower(*s++);
+
+      *ptr = '\0';
+
+      U_RETURN_STRING(r);
+      }
+
+   static UString toupper(const char* s, uint32_t n)
+      {
+      U_TRACE(0, "UStringExt::toupper(%.*S,%u)", n, s, n)
+
+      UString r(n);
+
+            char* ptr =      r.rep->data();
+      const char* end = s + (r.rep->_length = n);
+
+      while (s < end) *ptr++ = u__toupper(*s++);
+
+      *ptr = '\0';
+
+      U_RETURN_STRING(r);
+      }
 
    static UString tolower(const UString& s) { return tolower(U_STRING_TO_PARAM(s)); }
    static UString toupper(const UString& s) { return toupper(U_STRING_TO_PARAM(s)); }
@@ -207,7 +281,7 @@ public:
    static UString erase(const UString& s, const UString& a)           { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), 0, 0); }
    static UString erase(const UString& s, const char* a, uint32_t n1) { return substitute(U_STRING_TO_PARAM(s), a, n1,                0, 0); }
 
-   // dos2unix '\n' convertor
+   // dos2unix: '\n' <=> '\r\n' convertor
 
    static UString dos2unix(const UString& s, bool unix2dos = false);
 
@@ -237,13 +311,23 @@ public:
    static UString expandEnvironmentVar(const char* s, uint32_t n, const UString* env);
    static UString expandEnvironmentVar(const UString& s,          const UString* env) { return expandEnvironmentVar(U_STRING_TO_PARAM(s), env); }
 
-   // eval expression 
+   static UString getPidProcess()
+      {
+      U_TRACE_NO_PARAM(0, "UStringExt::getPidProcess()")
 
-   static UString getPidProcess();
+      UString value(10U);
+
+      U_MEMCPY(value.data(), u_pid_str, u_pid_str_len);
+
+      value.size_adjust(u_pid_str_len);
+
+      U_RETURN_STRING(value);
+      }
+
    static UString evalExpression(const UString& expr, const UString& environment);
 
    // Within a string we can count number of occurrence of another string by using substr_count function.
-   // This function takes the main string and the search string as inputs and returns number of time search string is found inside the main string.
+   // This function takes the main string and the search string as inputs and returns number of time search string is found inside the main string
 
    static uint32_t substr_count(const char* s, uint32_t n, const char* a, uint32_t n1) __pure;
 
@@ -345,20 +429,38 @@ public:
    // Very simple RPC-like layer
    //
    // Requests and responses are build of little packets each containing a U_TOKEN_NM-byte ascii token,
-   // an 8-byte hex value or length, and optionally data corresponding to the length.
+   // an 8-byte hex value or length, and optionally data corresponding to the length
    // -----------------------------------------------------------------------------------------------------------------------
 
    // built token name (U_TOKEN_NM characters) and value (32-bit int, as 8 hex characters)
 
-   static void buildTokenInt(const char* token, uint32_t value, UString& buffer);
+   static void buildTokenInt(const char* token, uint32_t value, UString& buffer)
+      {
+      U_TRACE(0, "UStringExt::buildTokenInt(%S,%u,%V)", token, value, buffer.rep)
+
+      U_INTERNAL_ASSERT_POINTER(token)
+      U_INTERNAL_ASSERT(u__strlen(token, __PRETTY_FUNCTION__) == U_TOKEN_NM)
+
+      uint32_t start = buffer.size();
+
+      char* ptr = buffer.c_pointer(start);
+
+      U_MEMCPY(ptr, token, U_TOKEN_NM);
+
+      u_int2hex(ptr + U_TOKEN_NM, value);
+
+      buffer.size_adjust(start + U_TOKEN_LN);
+      }
 
    static void buildTokenString(const char* token, const UString& value, UString& buffer)
       {
       U_TRACE(0, "UStringExt::buildTokenString(%S,%V,%p)", token, value.rep, &buffer)
 
-      buildTokenInt(token, value.size(), buffer);
+      uint32_t sz = value.size();
 
-      buffer.append(value);
+      buildTokenInt(token, sz, buffer);
+
+      (void) buffer.append(value.data(), sz);
       }
 
    static void buildTokenVector(const char* token, UVector<UString>& vec, UString& buffer)

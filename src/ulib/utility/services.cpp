@@ -314,19 +314,15 @@ UString UServices::getUUID()
 #ifdef USE_LIBSSL
 #  include <openssl/err.h>
 #  include <openssl/engine.h>
-#  include <ulib/base/ssl/dgst.h>
 #  ifdef DEBUG
 #     include <ulib/ssl/certificate.h>
 #  endif
-
 #  if !defined(HAVE_OPENSSL_97) && !defined(HAVE_OPENSSL_98)
 #     warning "WARNING: I must to disable some function with this version of openssl... be aware"
-
 #     define ENGINE_load_dynamic()            getpid()
 #     define X509_STORE_set_flags(a,b)        getpid()
 #     define ENGINE_load_public_key(a,b,c,d)  getpid()
 #     define ENGINE_load_private_key(a,b,c,d) getpid()
-
 #     ifdef DEBUG
 #        define trace_sysreturn_type(a) trace_sysreturn_type(0)
 #     endif
@@ -703,19 +699,6 @@ bool UServices::verifySignature(int alg, const UString& data, const UString& sig
    if (result == 1) U_RETURN(true);
 
    U_RETURN(false);
-}
-
-void UServices::generateDigest(int alg, unsigned char* data, uint32_t size)
-{
-   U_TRACE(0, "UServices::generateDigest(%d,%.*S,%u)", alg, size, data, size)
-
-   u_dgst_init(alg, 0, 0);
-
-   u_dgst_hash(data, size);
-
-   (void) u_dgst_finish(0, 0);
-
-   U_INTERNAL_DUMP("u_mdLen = %d", u_mdLen)
 }
 
 UString UServices::createToken(int alg)

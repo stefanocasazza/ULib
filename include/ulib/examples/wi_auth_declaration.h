@@ -838,6 +838,27 @@ public:
          }
       }
 
+   void addAccessPoint()
+      {
+      U_TRACE_NO_PARAM(5, "WiAuthNodog::addAccessPoint()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_DUMP("sz = %u ap_label = %V", sz, ap_label->rep)
+
+      U_ASSERT_EQUALS(sz, vec_access_point.size())
+
+      U_ASSERT_EQUALS(ap_label->empty(), false)
+
+      index_access_point = sz++;
+
+      WiAuthAccessPoint* p;
+
+      U_NEW(WiAuthAccessPoint, p, WiAuthAccessPoint(*ap_label));
+
+      vec_access_point.push_back(p);
+      }
+
    bool setRecord(int _port)
       {
       U_TRACE(5, "WiAuthNodog::setRecord(%d)", _port)
@@ -879,11 +900,7 @@ public:
 
             op = RDB_REPLACE;
 
-            index_access_point = sz++;
-
-            U_NEW(WiAuthAccessPoint, p, WiAuthAccessPoint(*ap_label));
-
-            vec_access_point.push_back(p);
+            addAccessPoint();
             }
          }
       else
@@ -904,6 +921,41 @@ public:
          U_NEW(WiAuthAccessPoint, p, WiAuthAccessPoint(*ap_label));
 
          vec_access_point.push_back(p);
+
+         if (db_anagrafica)
+            {
+            /**
+             * 10.8.0.156      172.16.156.0/24 111
+             * 159.213.248.233 172.25.0.0/22   213
+             */
+
+            uint32_t pos = db_anagrafica->find(*ap_address);
+
+            U_INTERNAL_DUMP("pos = %d", pos)
+
+            if (pos != U_NOT_FOUND)
+               {
+               pos += ap_address->size();
+
+               while (u__islterm(db_anagrafica->c_char(pos)) == false) ++pos;
+
+               UTokenizer tok(db_anagrafica->substr(pos));
+
+               while (tok.next(*ip, (bool*)0) &&
+                      ap_address->equal(*ip))
+                  {
+                  UString netmask, label;
+
+                  (void) tok.next(netmask,   (bool*)0);
+                  (void) tok.next(*ap_label, (bool*)0);
+
+                  U_INTERNAL_ASSERT(netmask)
+                  U_INTERNAL_ASSERT(*ap_label)
+
+                  addAccessPoint();
+                  }
+               }
+            }
          }
 
       if (op != -1)

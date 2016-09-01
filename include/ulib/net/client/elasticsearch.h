@@ -77,13 +77,15 @@ public:
       U_RETURN(false);
       }
 
-   bool search(const UString& _index, const UString& type, const UString& query) { return search(U_STRING_TO_PARAM(_index), U_STRING_TO_PARAM(type), U_STRING_TO_PARAM(query)); }
+   bool search(const UString& _index, const UString& type, const UString& query)
+      { return search(U_STRING_TO_PARAM(_index), U_STRING_TO_PARAM(type), U_STRING_TO_PARAM(query)); }
 
    // Index a document with maybe automatic id creation
 
    bool index(const char* _index, uint32_t index_len, const char* type, uint32_t type_len, const char* id, uint32_t id_len, const char* data, uint32_t data_len)
       {
-      U_TRACE(0, "UElasticSearchClient::index(%.*S,%u,%.*S,%u,%.*S,%u,%.*S,%u)", index_len, _index, index_len, type_len, type, type_len, id_len, id, id_len, data_len, data, data_len)
+      U_TRACE(0, "UElasticSearchClient::index(%.*S,%u,%.*S,%u,%.*S,%u,%.*S,%u)", index_len, _index, index_len, type_len, type, type_len,
+                                                                                 id_len, id, id_len, data_len, data, data_len)
 
       U_INTERNAL_ASSERT_POINTER(data)
       U_INTERNAL_ASSERT_POINTER(client)
@@ -124,7 +126,8 @@ public:
 
    bool getDocument(const char* _index, uint32_t index_len, const char* type, uint32_t type_len, const char* key, uint32_t key_len, const char* value, uint32_t value_len)
       {
-      U_TRACE(0, "UElasticSearchClient::getDocument(%.*S,%u,%.*S,%u,%.*S,%u,%.*S,%u)",index_len,_index,index_len,type_len,type,type_len,key_len,key,key_len,value_len,value,value_len)
+      U_TRACE(0, "UElasticSearchClient::getDocument(%.*S,%u,%.*S,%u,%.*S,%u,%.*S,%u)", index_len, _index, index_len, type_len, type, type_len,
+                                                                                       key_len, key, key_len, value_len, value, value_len)
 
       U_INTERNAL_ASSERT_POINTER(client)
 

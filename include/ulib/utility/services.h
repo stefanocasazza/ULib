@@ -20,6 +20,7 @@
 #  include <openssl/pem.h>
 #  include <openssl/engine.h>
 #  include <openssl/x509_vfy.h>
+#  include <ulib/base/ssl/dgst.h>
 typedef int (*verify_cb)(int,X509_STORE_CTX*); /* error callback */
 #  ifndef X509_V_FLAG_CRL_CHECK
 #  define X509_V_FLAG_CRL_CHECK     0x4
@@ -51,9 +52,7 @@ struct U_EXPORT UServices {
     * @param timeoutMS specified the timeout value, in milliseconds. A negative value indicates no timeout, i.e. an infinite wait
     */
 
-   // read while not received almost count data
-
-   static bool read(int fd, UString& buffer, uint32_t count = U_SINGLE_READ, int timeoutMS = -1);
+   static bool read(int fd, UString& buffer, uint32_t count = U_SINGLE_READ, int timeoutMS = -1); // read while not received almost count data
 
    // read while received data
 
@@ -77,9 +76,9 @@ struct U_EXPORT UServices {
       U_RETURN(false);
       }
 
-   static bool matchnocase(const char* s, uint32_t len, const char* mask, uint32_t size)
+   static bool matchNoCase(const char* s, uint32_t len, const char* mask, uint32_t size)
       {
-      U_TRACE(0, "UServices::matchnocase(%.*S,%u,%.*S,%u)", len, s, len, size, mask, size)
+      U_TRACE(0, "UServices::matchNoCase(%.*S,%u,%.*S,%u)", len, s, len, size, mask, size)
 
       U_INTERNAL_DUMP("u_pfn_match = %p u_pfn_flags = %u", u_pfn_match, u_pfn_flags)
 
@@ -91,8 +90,8 @@ struct U_EXPORT UServices {
    static bool match(const UString& s,    const UString& mask)       { return match(U_STRING_TO_PARAM(s),  U_STRING_TO_PARAM(mask)); }
    static bool match(const UStringRep* r, const UString& mask)       { return match(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask)); }
 
-   static bool matchnocase(const UString& s,    const UString& mask) { return matchnocase(U_STRING_TO_PARAM(s),  U_STRING_TO_PARAM(mask)); }
-   static bool matchnocase(const UStringRep* r, const UString& mask) { return matchnocase(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask)); }
+   static bool matchNoCase(const UString& s,    const UString& mask) { return matchNoCase(U_STRING_TO_PARAM(s),  U_STRING_TO_PARAM(mask)); }
+   static bool matchNoCase(const UStringRep* r, const UString& mask) { return matchNoCase(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask)); }
 
    // ------------------------------------------------------------
    // DOS or wildcard regexpr - multiple patterns separated by '|'
@@ -137,17 +136,21 @@ struct U_EXPORT UServices {
       U_RETURN(false);
       }
 
-   static bool dosMatch(const UString& s, const char* mask, uint32_t size, int flags = 0)          { return dosMatch(U_STRING_TO_PARAM(s),              mask, size, flags); }
-   static bool dosMatch(const UString& s, const UString& mask,             int flags = 0)          { return dosMatch(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
+   static bool dosMatch(const UString& s, const char* mask, uint32_t size, int flags = 0) { return dosMatch(U_STRING_TO_PARAM(s),              mask, size, flags); }
+   static bool dosMatch(const UString& s, const UString& mask,             int flags = 0) { return dosMatch(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
 
-   static bool dosMatchExt(const UString& s, const char* mask, uint32_t size, int flags = 0)       { return dosMatchExt(U_STRING_TO_PARAM(s),              mask, size, flags); }
-   static bool dosMatchExt(const UString& s, const UString& mask,             int flags = 0)       { return dosMatchExt(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
+   static bool dosMatchExt(const UString& s, const char* mask, uint32_t size, int flags = 0) { return dosMatchExt(U_STRING_TO_PARAM(s),              mask, size, flags); }
+   static bool dosMatchExt(const UString& s, const UString& mask,             int flags = 0) { return dosMatchExt(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
 
-   static bool dosMatchWithOR(const UString& s, const char* mask, uint32_t size, int flags = 0)    { return dosMatchWithOR(U_STRING_TO_PARAM(s),              mask, size, flags); }
-   static bool dosMatchWithOR(const UString& s, const UString& mask,             int flags = 0)    { return dosMatchWithOR(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
+   static bool dosMatchWithOR(const UString& s, const char* mask, uint32_t size, int flags = 0)
+      { return dosMatchWithOR(U_STRING_TO_PARAM(s), mask, size, flags); }
 
-   static bool dosMatchExtWithOR(const UString& s, const char* mask, uint32_t size, int flags = 0) { return dosMatchExtWithOR(U_STRING_TO_PARAM(s),              mask, size, flags); }
-   static bool dosMatchExtWithOR(const UString& s, const UString& mask,             int flags = 0) { return dosMatchExtWithOR(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
+   static bool dosMatchWithOR(const UString& s, const UString& mask, int flags = 0) { return dosMatchWithOR(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
+
+   static bool dosMatchExtWithOR(const UString& s, const char* mask, uint32_t size, int flags = 0)
+      { return dosMatchExtWithOR(U_STRING_TO_PARAM(s), mask, size, flags); }
+
+   static bool dosMatchExtWithOR(const UString& s, const UString& mask, int flags = 0) { return dosMatchExtWithOR(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(mask), flags); }
 
    static bool fnmatch(const UString& s, const UString& mask, int flags = FNM_PATHNAME | FNM_CASEFOLD)
       {
@@ -193,7 +196,18 @@ struct U_EXPORT UServices {
 #ifdef USE_LIBSSL
    static UString createToken(int alg = U_HASH_SHA256);
 
-   static void generateDigest(int alg, unsigned char* data, uint32_t size);
+   static void generateDigest(int alg, unsigned char* data, uint32_t size)
+      {
+      U_TRACE(0, "UServices::generateDigest(%d,%.*S,%u)", alg, size, data, size)
+
+      u_dgst_init(alg, 0, 0);
+
+      u_dgst_hash(data, size);
+
+      (void) u_dgst_finish(0, 0);
+
+      U_INTERNAL_DUMP("u_mdLen = %d", u_mdLen)
+      }
 
    static void generateDigest(int alg, const UString& data) { generateDigest(alg, (unsigned char*)U_STRING_TO_PARAM(data)); }
 

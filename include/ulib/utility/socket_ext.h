@@ -51,7 +51,17 @@ public:
       U_RETURN_STRING(result);
       }
 
-   static void setRemoteInfo(USocket* sk, UString& logbuf);
+   static void setRemoteInfo(USocket* sk, UString& logbuf)
+      {
+      U_TRACE(0, "USocketExt::setRemoteInfo(%p,%V)", sk, logbuf.rep)
+
+      UString x(100U);
+
+      x.snprintf("%2d '%s:%u'", sk->iSockDesc, sk->cRemoteAddress.pcStrAddress, sk->iRemotePort);
+
+      (void) logbuf.insert(0, x);
+      }
+
    static bool getARPCache(UString& cache, UVector<UString>& vec);
 
    static UString getNetworkDevice(const char* exclude); // eth0
@@ -131,7 +141,6 @@ public:
    // Send a command to a server and wait for a response (check for token line)
 
    static int vsyncCommandToken(USocket* sk, UString& buffer, const char* format, va_list argp);
-   // -----------------------------------------------------------------------------------------------------------------------------
 
 #ifdef USE_C_ARES
    static char* endResolv()
@@ -165,9 +174,7 @@ private:
     * @param time_limit specified the maximum execution time, in seconds. If set to zero, no time limit is imposed
     */
 
-   // read while not received almost count data
-
-   static bool read(USocket* sk, UString& buffer, uint32_t count = U_SINGLE_READ, int timeoutMS = -1, uint32_t time_limit = 0);
+   static bool read(USocket* sk, UString& buffer, uint32_t count = U_SINGLE_READ, int timeoutMS = -1, uint32_t time_limit = 0); // read while not received almost count data
 
    // read while received data
 

@@ -333,6 +333,9 @@ public:
 
    static ustackmemorypool mem_stack[U_NUM_STACK_TYPE]; // 10
 #endif
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UStackMemoryPool)
 };
 
 #ifdef ENABLE_MEMPOOL

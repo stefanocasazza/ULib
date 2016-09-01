@@ -13,6 +13,17 @@
 
 #include <ulib/net/client/mongodb.h>
 
+bool UMongoDBClient::connect(const char* _uri)
+{
+   U_TRACE(0, "UMongoDBClient::connect(%S)", _uri)
+
+   client = (mongoc_client_t*) U_SYSCALL(mongoc_client_new, "%S", _uri);
+
+   if (client) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
 bool UMongoDBClient::connect(const char* phost, unsigned int _port)
 {
    U_TRACE(0, "UMongoDBClient::connect(%S,%u)", phost, _port)
@@ -33,7 +44,7 @@ bool UMongoDBClient::connect(const char* phost, unsigned int _port)
       if (env_mongodb_port) _port = atoi(env_mongodb_port);
       }
 
-   uri.snprintf("mongodb://%v:%u", host.rep, _port);
+   uri.snprintf("mongodb://%v:%u", host.rep, _port ? _port : 27017);
 
    puri = (mongoc_uri_t*) U_SYSCALL(mongoc_uri_new, "%S", uri.data());
 
@@ -43,17 +54,6 @@ bool UMongoDBClient::connect(const char* phost, unsigned int _port)
 
       if (client) U_RETURN(true);
       }
-
-   U_RETURN(false);
-}
-
-bool UMongoDBClient::connect(const char* _uri)
-{
-   U_TRACE(0, "UMongoDBClient::connect(%S)", _uri)
-
-   client = (mongoc_client_t*) U_SYSCALL(mongoc_client_new, "%S", _uri);
-
-   if (client) U_RETURN(true);
 
    U_RETURN(false);
 }
