@@ -56,14 +56,14 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	AC_MSG_RESULT([$enable_zip])
 
 	AC_MSG_CHECKING(if tdb library is wanted)
-   if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
-		wanted=0;
-   else
-		wanted=1;
-   fi
+	wanted=1;
 	if test -z "$with_libtdb" ; then
 		wanted=0;
-		with_libtdb="${CROSS_ENVIRONMENT}/usr";
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			with_libtdb="no";
+		else
+			with_libtdb="${CROSS_ENVIRONMENT}/usr";
+		fi
 	fi
 	AC_ARG_WITH(libtdb,    [  --with-libtdb           use system      tdb library - [[will check /usr /usr/local]] [[default=use if present]]], [
 	if test "$withval" = "no"; then
@@ -103,14 +103,14 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	], [AC_MSG_RESULT(no)])
 
 	AC_MSG_CHECKING(if zopfli library is wanted)
-   if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
-		wanted=0;
-   else
-		wanted=1;
-   fi
+	wanted=1;
 	if test -z "$with_libzopfli" ; then
 		wanted=0;
-		with_libzopfli="${CROSS_ENVIRONMENT}/usr";
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			with_libzopfli="no";
+		else
+			with_libzopfli="${CROSS_ENVIRONMENT}/usr";
+		fi
 	fi
 	AC_ARG_WITH(libzopfli, [  --with-libzopfli        use system   zopfli library - [[will check /usr /usr/local]] [[default=use if present]]], [
 	if test "$withval" = "no"; then

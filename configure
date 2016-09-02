@@ -25679,14 +25679,14 @@ $as_echo "$enable_zip" >&6; }
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if tdb library is wanted" >&5
 $as_echo_n "checking if tdb library is wanted... " >&6; }
-   if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
-		wanted=0;
-   else
-		wanted=1;
-   fi
+	wanted=1;
 	if test -z "$with_libtdb" ; then
 		wanted=0;
-		with_libtdb="${CROSS_ENVIRONMENT}/usr";
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			with_libtdb="no";
+		else
+			with_libtdb="${CROSS_ENVIRONMENT}/usr";
+		fi
 	fi
 
 # Check whether --with-libtdb was given.
@@ -25740,14 +25740,14 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if zopfli library is wanted" >&5
 $as_echo_n "checking if zopfli library is wanted... " >&6; }
-   if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
-		wanted=0;
-   else
-		wanted=1;
-   fi
+	wanted=1;
 	if test -z "$with_libzopfli" ; then
 		wanted=0;
-		with_libzopfli="${CROSS_ENVIRONMENT}/usr";
+		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			with_libzopfli="no";
+		else
+			with_libzopfli="${CROSS_ENVIRONMENT}/usr";
+		fi
 	fi
 
 # Check whether --with-libzopfli was given.

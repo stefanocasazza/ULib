@@ -96,7 +96,7 @@ void UMongoDBClient::readFromCursor()
       vitem.push(x);
       }
 
-   if (U_SYSCALL(mongoc_cursor_error, "%p,%p", cursor, &error)) U_WARNING("mongoc_cursor_error(): %S", error.message);
+   if (U_SYSCALL(mongoc_cursor_error, "%p,%p", cursor, &error)) U_WARNING("mongoc_cursor_error(): %d.%d,%S", error.domain, error.code, error.message);
 
    U_SYSCALL_VOID(mongoc_cursor_destroy, "%p", cursor);
 }
@@ -173,7 +173,7 @@ bool UMongoDBClient::findOne(const char* json, uint32_t len)
       U_RETURN(result);
       }
 
-   U_WARNING("bson_new_from_json(): %S", error.message);
+   U_WARNING("bson_new_from_json(): %d.%d,%S", error.domain, error.code, error.message);
 
    U_RETURN(false);
 }
@@ -189,7 +189,7 @@ bool UMongoDBClient::insert(bson_t* doc)
 
    if (U_SYSCALL(mongoc_collection_insert, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_INSERT_NONE, doc, 0, &error) == 0)
       {
-      U_WARNING("mongoc_collection_insert(): %", error.message);
+      U_WARNING("mongoc_collection_insert(): %d.%d,%S", error.domain, error.code, error.message);
 
       U_RETURN(false);
       }
@@ -208,7 +208,7 @@ bool UMongoDBClient::update(bson_t* query, bson_t* _update)
 
    if (U_SYSCALL(mongoc_collection_update, "%p,%d,%p,%p,%p,%p", collection, MONGOC_UPDATE_NONE, query, _update, 0, &error) == 0)
       {
-      U_WARNING("mongoc_collection_update(): %S", error.message);
+      U_WARNING("mongoc_collection_update(): %d.%d,%S", error.domain, error.code, error.message);
 
       U_RETURN(false);
       }
@@ -264,7 +264,7 @@ bool UMongoDBClient::findAndModify(bson_t* query, bson_t* _update)
       U_RETURN(true);
       }
 
-   U_WARNING("mongoc_collection_find_and_modify(): %S", error.message);
+   U_WARNING("mongoc_collection_find_and_modify(): %d.%d,%S", error.domain, error.code, error.message);
 
    U_RETURN(false);
 }
@@ -321,7 +321,7 @@ bool UMongoDBClient::executeBulk(mongoc_bulk_operation_t* bulk)
 
    if (ok) U_RETURN(true);
 
-   U_WARNING("mongoc_bulk_operation_execute(): %S", error.message);
+   U_WARNING("mongoc_bulk_operation_execute(): %d.%d,%S", error.domain, error.code, error.message);
 
    U_RETURN(false);
 }
