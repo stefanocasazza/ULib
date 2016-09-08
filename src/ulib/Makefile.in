@@ -175,7 +175,9 @@ am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
 	$(top_srcdir)/m4/ac_cxx_old_iostream.m4 \
 	$(top_srcdir)/m4/ac_fallocate.m4 \
 	$(top_srcdir)/m4/ac_try_flag.m4 \
+	$(top_srcdir)/m4/ax_cxx_compile_stdcxx.m4 \
 	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_11.m4 \
+	$(top_srcdir)/m4/ax_cxx_compile_stdcxx_14.m4 \
 	$(top_srcdir)/m4/libtool.m4 $(top_srcdir)/m4/ltoptions.m4 \
 	$(top_srcdir)/m4/ltsugar.m4 $(top_srcdir)/m4/ltversion.m4 \
 	$(top_srcdir)/m4/lt~obsolete.m4 \
@@ -541,6 +543,7 @@ EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GREP = @GREP@
 HAVE_CXX11 = @HAVE_CXX11@
+HAVE_CXX14 = @HAVE_CXX14@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -2080,7 +2083,7 @@ clean-local:
 
 ULib-win32-res.o: ULib.rc
 	$(WINDRES) $< $@
-	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/.libs/all_cpp.o
+	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/base/xxhash/.libs/xxhash.o $(srcdir)/.libs/all_cpp.o
 	$(SED) -i 's/EXPORTS/;/' $(srcdir)/@ULIB@.def
 
 @MINGW_TRUE@install-def-file:

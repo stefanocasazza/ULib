@@ -8,7 +8,7 @@
 %0*x:	`0012'
 %*.*x:	`0012'
 %0*.*x:	`0012'
-bad format:	"%J"
+bad format:	"%K"
 nil pointer (padded):	"(nil)"
 decimal negative:	"-2345"
 octal negative:	"37777773327"
@@ -94,7 +94,7 @@ prefix  6d      6o      6x      6X      6u
 123.456 should be 123.456
 10 should be 10
 0.02 should be 0.02
-0.10000000000000009
+0.10000000000000001
 Test ok.
 sprintf (buf, "%07llo", 040000000000ll) = 40000000000
 printf ("%c", 257) = 

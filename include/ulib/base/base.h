@@ -148,6 +148,9 @@ typedef bool  (*bPFpcpv) (const char*,const void*);
 typedef void  (*vPFpvpc) (void*,char*);
 typedef void  (*vPFpvpv) (void*,void*);
 
+typedef uint32_t (*uPFu32pc) (uint32_t,char*);
+typedef uint32_t (*uPFu64pc) (uint64_t,char*);
+
 typedef void* (*pvPFpvpb)  (void*,bool*);
 typedef int   (*qcompare)  (const void*,const void*);
 typedef void  (*vPFpvpcpc) (void*,char*,char*);
@@ -262,12 +265,41 @@ U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure
 U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n);
 
 /* conversion number to string */
-extern U_EXPORT const char u_ctn2s[201];
+extern U_EXPORT uPFu32pc u_num2str32;
+extern U_EXPORT uPFu64pc u_num2str64;
+extern U_EXPORT const char u_ctn2s[200];
 
-U_EXPORT uint32_t u_num2str32( char* restrict cp, uint32_t num);
-U_EXPORT uint32_t u_num2str32s(char* restrict cp,  int32_t num);
-U_EXPORT uint32_t u_num2str64( char* restrict cp, uint64_t num);
-U_EXPORT uint32_t u_num2str64s(char* restrict cp,  int64_t num);
+static inline uint32_t u_num2str32s(int32_t num, char* restrict cp)
+{
+   uint32_t bsign = (num < 0);
+
+   U_INTERNAL_TRACE("u_num2str32s(%u,%p)", num, cp)
+
+   if (bsign)
+      {
+      num = -num;
+
+      *cp++ = '-';
+      }
+
+   return bsign + u_num2str32(num, cp);
+}
+
+static inline uint32_t u_num2str64s(int64_t num, char* restrict cp)
+{
+   uint32_t bsign = (num < 0LL);
+
+   U_INTERNAL_TRACE("u_num2str64s(%lld,%p)", num, cp)
+
+   if (bsign)
+      {
+      num = -num;
+
+      *cp++ = '-';
+      }
+
+   return bsign + u_num2str64(num, cp);
+}
 
 /* Location info */
 extern U_EXPORT uint32_t u_num_line;

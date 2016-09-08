@@ -2816,8 +2816,8 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    USocket* psocket;
-   char* lclient_address;
-   uint32_t lclient_address_len;
+   char* lclient_address = 0;
+   uint32_t lclient_address_len = 0;
    UClientImage_Base* lClientIndex = pClientImage;
 #endif
    int cround = 0;
@@ -3244,15 +3244,15 @@ uint32_t UServer_Base::setNumConnection(char* ptr)
 
    uint32_t len;
 
-   if (preforked_num_kids <= 0) len = u_num2str32(ptr, UNotifier::num_connection - UNotifier::min_connection - 1);
+   if (preforked_num_kids <= 0) len = u_num2str32(UNotifier::num_connection - UNotifier::min_connection - 1, ptr);
    else
       {
       char* start = ptr;
 
       *ptr  = '(';
-       ptr += 1+u_num2str32(ptr+1, UNotifier::num_connection - UNotifier::min_connection - 1);
+       ptr += 1+u_num2str32(UNotifier::num_connection - UNotifier::min_connection - 1, ptr+1);
       *ptr  = '/';
-       ptr += 1+u_num2str32(ptr+1, U_SRV_TOT_CONNECTION - flag_loop); // NB: check for SIGTERM event...
+       ptr += 1+u_num2str32(U_SRV_TOT_CONNECTION - flag_loop, ptr+1); // NB: check for SIGTERM event...
       *ptr  = ')';
 
       len = ptr-start+1;

@@ -1284,9 +1284,9 @@ long UFile::setSysParam(const char* name, long value, bool force)
             char* ptr = buffer;
 
 #        if SIZEOF_LONG == 4
-            if (pwrite(fd, buffer, u_num2str32s(ptr, value), 0) > 0) old_value = value;
+            if (pwrite(fd, buffer, u_num2str32s(value, ptr), 0) > 0) old_value = value;
 #        else
-            if (pwrite(fd, buffer, u_num2str64s(ptr, value), 0) > 0) old_value = value;
+            if (pwrite(fd, buffer, u_num2str64s(value, ptr), 0) > 0) old_value = value;
 #        endif
             }
          }

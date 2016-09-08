@@ -373,10 +373,10 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 
 #  define u_test_bit(n,c) (((c) & (1 << n)) != 0)
 
-#  define U_NUM2STR16(ptr,val1)             u_put_unalignedp16((ptr),u_get_unalignedp16(u_ctn2s+((val1)*2)))
+#  define U_NUM2STR16( ptr,val1) u_put_unalignedp16((ptr),u_get_unalignedp16(u_ctn2s+((val1)*2)))
 
-#  define U_NUM2STR32(ptr,val1,val2)        u_put_unalignedp32((ptr),u_get_unalignedp16(u_ctn2s+((val1)*2))|\
-                                                                     u_get_unalignedp16(u_ctn2s+((val2)*2))<<16)
+#  define U_NUM2STR32(ptr,val1,val2) u_put_unalignedp32((ptr),u_get_unalignedp16(u_ctn2s+((val1)*2))|\
+                                                              u_get_unalignedp16(u_ctn2s+((val2)*2))<<16)
 
 #  define U_NUM2STR64(ptr,c,val1,val2,val3) u_put_unalignedp64((ptr),u_get_unalignedp16(u_ctn2s+((val1)*2))|\
                                                            (uint64_t)(c)<<16|\
@@ -412,8 +412,8 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
                         (((n) <<  8) & 0x00ff0000) | \
                         ( (n) << 24))
 
-#  define U_NUM2STR16(ptr,val1)      u_put_unalignedp16((ptr),(uint16_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
-                                                                         (uint8_t)(u_ctn2s[((val1)*2)])<<8))
+#  define U_NUM2STR16(ptr,val1)  u_put_unalignedp16((ptr),(uint16_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
+                                                                     (uint8_t)(u_ctn2s[((val1)*2)])<<8))
 
 #  define U_NUM2STR32(ptr,val2,val1) u_put_unalignedp32((ptr),(uint16_t)((uint8_t)(u_ctn2s[((val1)*2)+1])|\
                                                                          (uint8_t)(u_ctn2s[((val1)*2)])<<8)|\

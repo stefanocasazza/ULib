@@ -59,7 +59,9 @@ AC_USE_SYSTEM_EXTENSIONS
 dnl This is a C++ library after all
 AC_LANG([C++])
 
-dnl Initial CFLAGS, CXXFLAGS, CPPFLAGS, LDFLAGS, LIBS
+dnl Initial CXX, CFLAGS, CXXFLAGS, CPPFLAGS, LDFLAGS, LIBS
+AC_MSG_CHECKING(initial CXX)
+AC_MSG_RESULT($CXX)
 AC_MSG_CHECKING(initial CFLAGS)
 AC_MSG_RESULT($CFLAGS)
 AC_MSG_CHECKING(initial CXXFLAGS)
@@ -238,7 +240,7 @@ AC_C_RESTRICT
 AC_C_VOLATILE
 AC_C_INLINE
 
-# clang is mostly GCC-compatible, but its version is much lower, so we have to check for it.
+# clang is mostly GCC-compatible, but its version is much lower, so we have to check for it
 AC_MSG_CHECKING([if compiling with clang])
 
 AC_COMPILE_IFELSE(
@@ -607,10 +609,19 @@ if test -z "$enable_stdcpp"; then
 	enable_stdcpp="yes"
 fi
 
+CXX_save=$CXX
+
 if test "$enable_stdcpp" = "yes"; then
    AC_MSG_RESULT(yes)
 	AM_CONDITIONAL(STDCPP, true)
 	AC_DEFINE(U_STDCPP_ENABLE, [1], [full c++ support and linking model])
+
+	# Be sure to add any -std option to CXXFLAGS before we invoke any AC_COMPILE_IFELSE()
+	# or similar macros. Any such macros that are invoked before we update CXXFLAGS will
+	# not be run with the same options that we use during the real build
+
+	AX_CXX_COMPILE_STDCXX_11([ext], [optional])
+	AX_CXX_COMPILE_STDCXX_14([ext], [optional])
 else
    AC_MSG_RESULT(no)
 	AM_CONDITIONAL(STDCPP, false)
@@ -1286,49 +1297,6 @@ AC_MSG_RESULT($use_distcc)
 # 	AC_SUBST(pkg_cv_LIBNETFILTER_CONNTRACK_LIBS)
 # fi
 # ---------------------------------------------------------------------------------------------------
-
-if test "$enable_stdcpp" = "yes"; then
-	AX_CXX_COMPILE_STDCXX_11([noext], [optional])
-
-	AC_LANG_PUSH(C++)
-
-	# Check that std::chrono::steady_clock is available. In particular,
-	# gcc 4.6 does not have one, but has monotonic_clock which is the old
-	# name existed in the pre-standard draft. If steady_clock is not
-	# available, don't define HAVE_STEADY_CLOCK and replace steady_clock
-	# with monotonic_clock.
-	AC_MSG_CHECKING([whether std::chrono::steady_clock is available])
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-	[[
-	#include <chrono>
-	]],
-	[[
-	auto tp = std::chrono::steady_clock::now();
-	]])],
-		 [AC_DEFINE([HAVE_STEADY_CLOCK], [1],
-						[Define to 1 if you have the `std::chrono::steady_clock`.])
-		  AC_MSG_RESULT([yes])],
-		 [AC_MSG_RESULT([no])])
-
-	# Check that std::future is available.
-	AC_MSG_CHECKING([whether std::future is available])
-	AC_COMPILE_IFELSE([AC_LANG_PROGRAM(
-	[[
-	#include <vector>
-	#include <future>
-	]],
-	[[
-	std::vector<std::future<int>> v;
-	]])],
-		 [AC_DEFINE([HAVE_STD_FUTURE], [1],
-						[Define to 1 if you have the `std::future`.])
-		  have_std_future=yes
-		  AC_MSG_RESULT([yes])],
-		 [have_std_future=no
-		  AC_MSG_RESULT([no])])
-
-	AC_LANG_POP()
-fi
 
 # SECTION 4: checks for libraries
 
@@ -2574,12 +2542,25 @@ AC_SUBST(USP_LIBS)
 AC_SUBST(USP_FLAGS)
 AC_SUBST(USP_LDFLAGS)
 
+if test "x$ax_cv_cxx_compile_cxx11" = xno -a "x$ax_cv_cxx_compile_cxx11__std_gnupp11" = xyes; then
+	CXXFLAGS="-std=gnu++11 $CXXFLAGS"
+fi
+if test "x$ax_cv_cxx_compile_cxx14" = xno -a "x$ax_cv_cxx_compile_cxx14__std_gnupp14" = xyes; then
+	CXXFLAGS="-std=gnu++14 $CXXFLAGS"
+fi
+
+CXX=$CXX_save
+AC_SUBST(CXX)
+AC_SUBST(LDFLAGS)
+AC_SUBST(CXXFLAGS)
+AC_SUBST(CPPFLAGS)
+
 AC_DEFINE_UNQUOTED(CXX_VAR, 		"$CXX", [Compiler])
 AC_DEFINE_UNQUOTED(LIBS_VAR, 		"$ULIB_LIBS", [Libraries])
 AC_DEFINE_UNQUOTED(CFLAGS_VAR,	"$CFLAGS", [C Flags])
 AC_DEFINE_UNQUOTED(LDFLAGS_VAR, 	"$LDFLAGS", [Linker Flags])
-AC_DEFINE_UNQUOTED(CXXFLAGS_VAR, "$CXXFLAGS",[C++ Flags])
-AC_DEFINE_UNQUOTED(CPPFLAGS_VAR, "$CPPFLAGS",[Preprocessor Flags])
+AC_DEFINE_UNQUOTED(CXXFLAGS_VAR, "$CXXFLAGS", [C++ Flags])
+AC_DEFINE_UNQUOTED(CPPFLAGS_VAR, "$CPPFLAGS", [Preprocessor Flags])
 
 AC_DEFINE_UNQUOTED(LD_VAR, 		"$LD", [Linker])
 AC_DEFINE_UNQUOTED(PLATFORM_VAR, "$PLATFORM", [Platform])

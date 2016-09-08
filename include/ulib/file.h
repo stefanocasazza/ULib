@@ -82,9 +82,9 @@ public:
    static void dec_num_file_object(int fd);
    static void chk_num_file_object();
 #else
-#  define      inc_num_file_object(pthis)
-#  define      dec_num_file_object(fd)
-#  define      chk_num_file_object()
+#  define inc_num_file_object(pthis)
+#  define dec_num_file_object(fd)
+#  define chk_num_file_object()
 #endif
 
    void reset()
@@ -142,7 +142,7 @@ public:
       setPath(path, environment);
       }
 
-   bool isRoot()
+   bool isRoot() const
       {
       U_TRACE_NO_PARAM(0, "UFile::isRoot()")
 
@@ -158,7 +158,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isPath()
+   bool isPath() const
       {
       U_TRACE_NO_PARAM(0, "UFile::isPath()")
 
@@ -169,7 +169,7 @@ public:
       U_RETURN(false);
       }
 
-   bool isPath(const char* _pathname, uint32_t len)
+   bool isPath(const char* _pathname, uint32_t len) const
       {
       U_TRACE(0, "UFile::isPath(%.*S,%u)", len, _pathname, len)
 
@@ -181,14 +181,33 @@ public:
       U_RETURN(false);
       }
 
+   bool isSuffixSwap() const // NB: vi tmp...
+      {
+      U_TRACE_NO_PARAM(0, "UFile::isSuffixSwap()")
+
+      U_INTERNAL_ASSERT_POINTER(path_relativ)
+
+      U_INTERNAL_DUMP("path_relativ(%u) = %.*S", path_relativ_len, path_relativ_len, path_relativ)
+
+      const char* suffix = u_getsuffix(path_relativ, path_relativ_len);
+
+      if (suffix &&
+          u_isSuffixSwap(suffix))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
    // NB: the string can be not writable so path_relativ[path_relativ_len] can be != '\0'...
 
-   UString& getPath()                  { return pathname; }
+   UString& getPath() { return pathname; }
    UString  getName() const;
    UString  getDirName() const;
    UString  getSuffix() const;
-   char*    getPathRelativ() const     { return (char*)path_relativ; }
-   int32_t  getPathRelativLen() const  { return        path_relativ_len; }
+   char*    getPathRelativ() const    { return (char*)path_relativ; }
+   int32_t  getPathRelativLen() const { return        path_relativ_len; }
 
    bool isName(const UString& name) const { return name.equal(getName()); }
 

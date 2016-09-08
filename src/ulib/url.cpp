@@ -177,7 +177,7 @@ bool Url::setPort(unsigned int port)
 
       buffer[0] = ':';
 
-      (void) url.replace(host_end, path_begin - host_end, buffer, u_num2str32(buffer+1, port));
+      (void) url.replace(host_end, path_begin - host_end, buffer, u_num2str32(port, buffer+1));
 
       findpos();
 

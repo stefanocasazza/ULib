@@ -138,8 +138,6 @@ static inline void u_set_seed_random(uint32_t u, uint32_t v)
    U_INTERNAL_ASSERT_MAJOR(u_m_z, 0)
 }
 
-U_EXPORT const char* u_get_mimetype(const char* restrict suffix, int* pmime_index);
-
 U_EXPORT double u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units); /* Calculate the transfert rate */
 
 U_EXPORT char* u_getPathRelativ(const char* restrict path, uint32_t* restrict path_len);
@@ -151,6 +149,20 @@ U_EXPORT int  u_getScreenWidth(void) __pure; /* Determine the width of the termi
 U_EXPORT bool u_isNumber(const char* restrict s, uint32_t n) __pure;
 U_EXPORT void u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
 U_EXPORT bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
+
+U_EXPORT const char* u_get_mimetype(const char* restrict suffix, int* pmime_index);
+
+static inline bool u_isSuffixSwap(const char* restrict suffix) // NB: vi tmp...
+{
+   U_INTERNAL_TRACE("u_isSuffixSwap(%s)", suffix)
+
+   U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
+   U_INTERNAL_ASSERT_EQUALS(strchr(suffix, '/'), 0)
+
+   if (u_get_unalignedp32(suffix) == U_MULTICHAR_CONSTANT32('.','s','w','p')) return true;
+
+   return false;
+}
 
 static inline void* u_find(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) /* check if string b is contained within string a */
 {
@@ -532,6 +544,16 @@ static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e
 extern U_EXPORT long    u_strtol( const char* restrict s, const char* restrict e) __pure;
 extern U_EXPORT int64_t u_strtoll(const char* restrict s, const char* restrict e) __pure;
 
+static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
+
+/* ip address type identification */
+
+U_EXPORT bool u_isIPv4Addr(const char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isIPv6Addr(const char* restrict s, uint32_t n) __pure;
+
+static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n)
+                                                                                            : u_isIPv4Addr(p, n)); }
+
 /**
  * Quick and dirty int->hex. The only standard way is to call snprintf (?),
  * which is undesirably slow for such a frequently-called function...
@@ -543,17 +565,8 @@ static inline unsigned int u__hexc2int(unsigned char c) { return u__ct_hex2int[c
 
 static inline void u_int2hex(char* restrict p, uint32_t n) { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = u_hex_upper[((n >> s) & 0x0F)]; }
 
-static inline uint32_t u_hex2int(const char* restrict p, uint32_t len) { uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u__hexc2int(*p++); return n; }
-
-static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
-
-/* ip address type identification */
-
-U_EXPORT bool u_isIPv4Addr(const char* restrict s, uint32_t n) __pure;
-U_EXPORT bool u_isIPv6Addr(const char* restrict s, uint32_t n) __pure;
-
-static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n)
-                                                                                            : u_isIPv4Addr(p, n)); }
+static inline uint32_t u_hex2int(const char* restrict p, uint32_t len)
+{ uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u__hexc2int(*p++); return n; }
 
 #ifdef __cplusplus
 }

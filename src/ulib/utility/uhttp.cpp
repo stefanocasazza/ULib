@@ -455,7 +455,7 @@ next:
       }
 }
 
-#define IN_BUFLEN (1024 * (sizeof(struct inotify_event) + 16))
+#define U_IN_BUFLEN (1024 * (sizeof(struct inotify_event) + 16))
 
 void UHTTP::in_READ()
 {
@@ -464,8 +464,8 @@ void UHTTP::in_READ()
    U_INTERNAL_ASSERT_POINTER(cache_file)
    U_INTERNAL_ASSERT_POINTER(UServer_Base::handler_inotify)
 
-   char buffer[IN_BUFLEN];
-   int length = U_SYSCALL(read, "%d,%p,%u", UServer_Base::handler_inotify->fd, buffer, IN_BUFLEN);  
+   char buffer[U_IN_BUFLEN];
+   int length = U_SYSCALL(read, "%d,%p,%u", UServer_Base::handler_inotify->fd, buffer, U_IN_BUFLEN);  
 
    if (length <= 0)
       {
@@ -553,7 +553,7 @@ void UHTTP::in_READ()
                }
 
             if (*inotify_name != '.' ||
-                u_get_unalignedp32(inotify_name + len - U_CONSTANT_SIZE(".swp")) != U_MULTICHAR_CONSTANT32('.','s','w','p')) // NB: vi tmp...
+                u_isSuffixSwap(inotify_name + len - U_CONSTANT_SIZE(".swp")) == false) // NB: vi tmp...
                {
                if (binotify_path == false) cache_file->callForAllEntry(getInotifyPathDirectory);
 
@@ -1025,7 +1025,6 @@ void UHTTP::init()
 #endif
 
    /**
-    * -------------------------------------------------------------------------------------------------------------------------------------------
     * Set up static environment variables
     * -------------------------------------------------------------------------------------------------------------------------------------------
     * static variable server description:
@@ -1157,10 +1156,6 @@ void UHTTP::init()
    for (uint32_t i = 0, v = vec.size(); i < v; ++i)
       {
       item = vec[i];
-
-#  ifdef DEBUG
-      if (UStringExt::endsWith(item, U_CONSTANT_TO_PARAM(".usp.swp"))) continue;
-#  endif
 
       // NB: we can have duplication (symlink, cache_file_store)
 
@@ -1360,7 +1355,7 @@ void UHTTP::setGlobalAlias(const UString& _alias) // NB: automatic alias for all
 
    if (global_alias)
       {
-      U_WARNING("UHTTP::setGlobalAlias(): global alias not empty: %S", global_alias->rep);
+      U_WARNING("UHTTP::setGlobalAlias(): global alias not empty: %V", global_alias->rep);
 
       delete global_alias;
       }
@@ -2461,7 +2456,9 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
       {
       U_ClientImage_data_missing = true;
 
-      *(char*)(pend = ptr + UClientImage_Base::request->size()) = '\r';
+      pend = ptr + UClientImage_Base::request->size();
+
+      u_put_unalignedp16((void*)pend, U_MULTICHAR_CONSTANT16('\r','\n'));
       }
 
    for (const char* pn = ptr + U_http_info.startHeader; pn < pend; pn += U_CONSTANT_SIZE(U_CRLF))
@@ -2470,9 +2467,9 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
 
       if (u__isheader(*pn) == false)
          {
-         while (*pn != '\r') ++pn;
+         pn = (const char*) memchr(pn, '\r', pend - pn);
 
-         if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
+         if (UNLIKELY(pn == 0)) return; // NB: we can have too much advanced...
          }
       else
          {
@@ -2510,15 +2507,19 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
 
 advance: U_INTERNAL_ASSERT_EQUALS(*pn, ':')
 
-         do { ++pn; } while (u__isblank(*pn));
+         if (LIKELY(u_get_unalignedp16(pn) == U_MULTICHAR_CONSTANT16(':',' '))) pn += 2;
+         else
+            {
+            do { ++pn; } while (u__isblank(*pn));
 
-         if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
+            if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
+            }
 
          pos1 = pn-ptr;
 
-         while (*pn != '\r') ++pn;
+         pn = (const char*) memchr(pn, '\r', pend - pn);
 
-         if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
+         if (UNLIKELY(pn == 0)) return; // NB: we can have too much advanced...
 
          pos2 = pn-ptr;
 
@@ -2684,8 +2685,8 @@ set_connection_upgrade:
                else if (memcmp(p, U_CONSTANT_TO_PARAM("ookie")) == 0)
                   {
                   U_INTERNAL_ASSERT_DIFFERS(p[5], '2') // "Cookie2"
-set_cookie:
-                  U_http_info.cookie     =  ptr+pos1;
+
+set_cookie:       U_http_info.cookie     =  ptr+pos1;
                   U_http_info.cookie_len = pos2-pos1;
 
                   U_INTERNAL_DUMP("Cookie(%u): = %.*S", U_http_info.cookie_len, U_HTTP_COOKIE_TO_TRACE)
@@ -3723,7 +3724,8 @@ set_uri: U_http_info.uri     = alias->data();
 
    U_http_info.nResponseCode = HTTP_OK;
 
-   U_INTERNAL_DUMP("U_http_method_type = %B old_path_len = %u URI = %.*S u_cwd(%u) = %.*S", U_http_method_type, old_path_len, U_HTTP_URI_TO_TRACE, u_cwd_len, u_cwd_len, u_cwd)
+   U_INTERNAL_DUMP("U_http_method_type = %B old_path_len = %u URI = %.*S u_cwd(%u) = %.*S",
+                    U_http_method_type,     old_path_len, U_HTTP_URI_TO_TRACE, u_cwd_len, u_cwd_len, u_cwd)
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 0)
 
@@ -5952,7 +5954,7 @@ void UHTTP::setResponse(const UString& content_type, UString* pbody)
       {
       if (U_http_is_accept_gzip == false) *pbody = UStringExt::gunzip(*pbody);
 
-      ptr += u_num2str32(ptr, pbody->size());
+      ptr += u_num2str32(pbody->size(), ptr);
 
       if (U_http_is_accept_gzip)
          {
@@ -5966,7 +5968,7 @@ void UHTTP::setResponse(const UString& content_type, UString* pbody)
    else
 #endif
    {
-   ptr += u_num2str32(ptr, pbody->size());
+   ptr += u_num2str32(pbody->size(), ptr);
    }
 
    *UClientImage_Base::body = *pbody;
@@ -6316,7 +6318,7 @@ end:
 
    ptr1 += U_CONSTANT_SIZE("Content-Length: ");
 
-   ptr1 += u_num2str32(ptr1, clength);
+   ptr1 += u_num2str32(clength, ptr1);
 
    if (pEndHeader == 0)
       {
@@ -7468,6 +7470,10 @@ void UHTTP::checkFileForCache()
 
    file->setPath(*pathname);
 
+#ifdef DEBUG
+   if (file->isSuffixSwap()) return; // NB: vi tmp...
+#endif
+
    if (file->stat()) // NB: file->stat() get also the size of the file...
       {
       U_INTERNAL_DUMP("nocache_file_mask = %p U_http_is_nocache_file = %b", nocache_file_mask, U_http_is_nocache_file)
@@ -7902,7 +7908,8 @@ void UHTTP::renewFileDataInCache()
 
    pathname->snprintf("%v", key);
 
-   U_DEBUG("renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire))
+   U_DEBUG("renewFileDataInCache() called for file: %V - inotify %s enabled, expired=%b", pathname->rep,
+               UServer_Base::handler_inotify ? "is" : "NOT", (u_now->tv_sec > file_data->expire))
 
    cache_file->eraseAfterFind();
 
@@ -9563,7 +9570,7 @@ bool UHTTP::checkContentLength(uint32_t length, uint32_t pos)
       char bp[12];
 
       uint32_t sz_len1 = end - pos,
-               sz_len2 = u_num2str32(bp, length);
+               sz_len2 = u_num2str32(length, bp);
                          
       U_INTERNAL_DUMP("sz_len1 = %u sz_len2 = %u", sz_len1, sz_len2)
 
@@ -9830,7 +9837,7 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
    ptr += U_CONSTANT_SIZE("Content-Length: ");
 
    UMimeMultipartMsg response(U_CONSTANT_TO_PARAM("byteranges"), UMimeMultipartMsg::NONE,
-                              buffer, U_CONSTANT_SIZE("Content-Length: ") + u_num2str32(ptr, range_size), false);
+                              buffer, U_CONSTANT_SIZE("Content-Length: ") + u_num2str32(range_size, ptr), false);
 
    for (i = 0; i < n; ++i)
       {
@@ -9850,11 +9857,11 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
 
        ptr  += U_CONSTANT_SIZE("Content-Range: bytes");
       *ptr++ = ' ';
-       ptr  += u_num2str32(ptr, start);
+       ptr  += u_num2str32(start, ptr);
       *ptr++ = '-';
-       ptr  += u_num2str32(ptr, _end);
+       ptr  += u_num2str32(_end, ptr);
       *ptr++ = '/';
-       ptr  += u_num2str32(ptr, range_size);
+       ptr  += u_num2str32(range_size, ptr);
 
       response.add(UMimeMultipartMsg::section(data.substr(start, _end - start + 1),
                                               U_CTYPE_HTML, U_CONSTANT_SIZE(U_CTYPE_HTML),

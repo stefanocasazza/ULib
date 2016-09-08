@@ -136,7 +136,7 @@ public:
       char buffer[10];
       char* ptr = buffer;
 
-      (void) s.append(buffer, u_num2str32(ptr, number));
+      (void) s.append(buffer, u_num2str32(number, ptr));
       }
 
    static void appendNumber64(UString& s, uint64_t number)
@@ -146,7 +146,7 @@ public:
       char buffer[22];
       char* ptr = buffer;
 
-      (void) s.append(buffer, u_num2str64(ptr, number));
+      (void) s.append(buffer, u_num2str64(number, ptr));
       }
 
    // convert letter to upper or lower case

@@ -122,11 +122,13 @@ const char* restrict u_name_file;
 const char* restrict u_name_function;
 
 /* Internal buffer */
+
 char*    u_buffer;
 char*    u_err_buffer;
 uint32_t u_buffer_len; /* signal that is busy if != 0 */
 
 /* Time services */
+
 bool   u_daylight;
 void*  u_pthread_time; /* pthread clock */
 time_t u_start_time;
@@ -170,24 +172,234 @@ const unsigned char u_hex_lower[16] = { '0','1','2','3','4','5','6','7','8','9',
 
 const int MultiplyDeBruijnBitPosition2[32] = { 0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9 };
 
-/* conversion table number to string */
-
-const char u_ctn2s[201] = "0001020304050607080910111213141516171819"
-                          "2021222324252627282930313233343536373839"
-                          "4041424344454647484950515253545556575859"
-                          "6061626364656667686970717273747576777879"
-                          "8081828384858687888990919293949596979899";
-
 /* u_b64url substitute chars 62(+) and 63(/) with -_ (minus) (underline) */
 
-const unsigned char  u_b64[64]    = { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-                                      'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-                                      '0','1','2','3','4','5','6','7','8','9',
-                                      '+','/' };
-const unsigned char  u_b64url[64] = { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-                                      'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-                                      '0','1','2','3','4','5','6','7','8','9',
-                                      '-','_' };
+const unsigned char u_b64[64] =    { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+                                     'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+                                     '0','1','2','3','4','5','6','7','8','9',
+                                     '+','/' };
+const unsigned char u_b64url[64] = { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+                                     'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
+                                     '0','1','2','3','4','5','6','7','8','9',
+                                     '-','_' };
+
+/* conversion table number to string */
+
+const char u_ctn2s[200] = {
+ '0','0','0','1','0','2','0','3','0','4','0','5','0','6','0','7','0','8','0','9',
+ '1','0','1','1','1','2','1','3','1','4','1','5','1','6','1','7','1','8','1','9',
+ '2','0','2','1','2','2','2','3','2','4','2','5','2','6','2','7','2','8','2','9',
+ '3','0','3','1','3','2','3','3','3','4','3','5','3','6','3','7','3','8','3','9',
+ '4','0','4','1','4','2','4','3','4','4','4','5','4','6','4','7','4','8','4','9',
+ '5','0','5','1','5','2','5','3','5','4','5','5','5','6','5','7','5','8','5','9',
+ '6','0','6','1','6','2','6','3','6','4','6','5','6','6','6','7','6','8','6','9',
+ '7','0','7','1','7','2','7','3','7','4','7','5','7','6','7','7','7','8','7','9',
+ '8','0','8','1','8','2','8','3','8','4','8','5','8','6','8','7','8','8','8','9',
+ '9','0','9','1','9','2','9','3','9','4','9','5','9','6','9','7','9','8','9','9'
+};
+
+static uint32_t num2str32(uint32_t num, char* restrict cp)
+{
+   char* restrict start = cp;
+   uint32_t a, b, c, d1, d2, d3, d4;
+
+   U_INTERNAL_TRACE("num2str32(%u,%p)", num, cp)
+
+   if (num < 10000)
+      {
+      d1 = (num / 100) << 1;
+      d2 = (num % 100) << 1;
+
+      U_INTERNAL_ASSERT_MINOR(d1, 200)
+      U_INTERNAL_ASSERT_MINOR(d2, 200)
+
+      if (num >= 1000) *cp++ = u_ctn2s[d1];
+      if (num >=  100) *cp++ = u_ctn2s[d1+1];
+      if (num >=   10) *cp++ = u_ctn2s[d2];
+                       *cp++ = u_ctn2s[d2+1];
+
+      return (cp - start);
+      }
+
+   if (num < 100000000) /* num = bbbbcccc */
+      {
+      b  = num / 10000;
+      c  = num % 10000;
+      d1 = (b / 100) << 1;
+      d2 = (b % 100) << 1;
+      d3 = (c / 100);
+      d4 = (c % 100);
+
+      U_INTERNAL_ASSERT_MINOR(d1, 200)
+      U_INTERNAL_ASSERT_MINOR(d2, 200)
+      U_INTERNAL_ASSERT_MINOR(d3, 100)
+      U_INTERNAL_ASSERT_MINOR(d4, 100)
+
+      if (num >= 10000000) *cp++ = u_ctn2s[d1];
+      if (num >=  1000000) *cp++ = u_ctn2s[d1+1];
+      if (num >=   100000) *cp++ = u_ctn2s[d2];
+                           *cp++ = u_ctn2s[d2+1];
+
+      U_NUM2STR16(cp,   d3);
+      U_NUM2STR16(cp+2, d4);
+
+      return (cp + 4 - start);
+      }
+
+   /* num = aabbbbcccc in decimal */
+
+   a = num  / 100000000; /* 1 to 42 */
+       num %= 100000000;
+
+   if (a < 10) *cp++ = '0' + (char)a;
+   else
+      {
+      U_INTERNAL_ASSERT_MINOR(a, 100)
+
+      U_NUM2STR16(cp, a);
+
+      cp += 2;
+      }
+
+   b = num / 10000; /* 0 to 9999 */
+   c = num % 10000; /* 0 to 9999 */
+
+   d1 = (b / 100);
+   d2 = (b % 100);
+
+   d3 = (c / 100);
+   d4 = (c % 100);
+
+   U_INTERNAL_ASSERT_MINOR(d1, 100)
+   U_INTERNAL_ASSERT_MINOR(d2, 100)
+   U_INTERNAL_ASSERT_MINOR(d3, 100)
+   U_INTERNAL_ASSERT_MINOR(d4, 100)
+
+   U_NUM2STR16(cp,   d1);
+   U_NUM2STR16(cp+2, d2);
+   U_NUM2STR16(cp+4, d3);
+   U_NUM2STR16(cp+6, d4);
+
+   return (cp + 8 - start);
+}
+
+static uint32_t num2str64(uint64_t num, char* restrict cp)
+{
+   char* restrict start;
+   uint32_t a, i, j, v0, v1, b0, b1, c0, c1, d1, d2, d3, d4, d5, d6, d7, d8;
+
+   U_INTERNAL_TRACE("num2str64(%llu,%p)", num, cp)
+
+   if (num <= UINT_MAX) return u_num2str32((uint32_t)num, cp);
+
+   start = cp;
+
+   if (num < 10000000000000000)
+      {
+      v0 = (uint32_t)(num / 100000000);
+      v1 = (uint32_t)(num % 100000000);
+
+      b0 = v0 / 10000;
+      c0 = v0 % 10000;
+
+      d1 = (b0 / 100) << 1;
+      d2 = (b0 % 100) << 1;
+
+      d3 = (c0 / 100) << 1;
+      d4 = (c0 % 100) << 1;
+
+      b1 = v1 / 10000;
+      c1 = v1 % 10000;
+
+      d5 = (b1 / 100);
+      d6 = (b1 % 100);
+
+      d7 = (c1 / 100);
+      d8 = (c1 % 100);
+
+      if (num >= 1000000000000000) *cp++ = u_ctn2s[d1];
+      if (num >=  100000000000000) *cp++ = u_ctn2s[d1+1];
+      if (num >=   10000000000000) *cp++ = u_ctn2s[d2];
+      if (num >=    1000000000000) *cp++ = u_ctn2s[d2+1];
+      if (num >=     100000000000) *cp++ = u_ctn2s[d3];
+      if (num >=      10000000000) *cp++ = u_ctn2s[d3+1];
+      if (num >=       1000000000) *cp++ = u_ctn2s[d4];
+      if (num >=        100000000) *cp++ = u_ctn2s[d4+1];
+
+      U_NUM2STR16(cp,   d5);
+      U_NUM2STR16(cp+2, d6);
+      U_NUM2STR16(cp+4, d7);
+      U_NUM2STR16(cp+6, d8);
+
+      return (cp + 8 - start);
+      }
+
+   a = (uint32_t)(num  / 10000000000000000); /* 1 to 1844 */
+                  num %= 10000000000000000;
+
+        if (a <  10) *cp++ = '0' + (char)a;
+   else if (a < 100)
+      {
+      U_NUM2STR16(cp, a);
+
+      cp += 2;
+      }
+   else if (a < 1000)
+      {
+      *cp++ = '0' + (char)(a / 100);
+
+      i = (a % 100);
+
+      U_NUM2STR16(cp, i);
+
+      cp += 2;
+      }
+   else
+      {
+      i = (a / 100);
+      j = (a % 100);
+
+      U_NUM2STR16(cp,   i);
+      U_NUM2STR16(cp+2, j);
+
+      cp += 4;
+      }
+
+   v0 = (uint32_t)(num / 100000000);
+   v1 = (uint32_t)(num % 100000000);
+
+   b0 = v0 / 10000;
+   c0 = v0 % 10000;
+
+   d1 = (b0 / 100);
+   d2 = (b0 % 100);
+
+   d3 = (c0 / 100);
+   d4 = (c0 % 100);
+
+   b1 = v1 / 10000;
+   c1 = v1 % 10000;
+
+   d5 = (b1 / 100);
+   d6 = (b1 % 100);
+
+   d7 = (c1 / 100);
+   d8 = (c1 % 100);
+
+   U_NUM2STR16(cp,    d1);
+   U_NUM2STR16(cp+2,  d2);
+   U_NUM2STR16(cp+4,  d3);
+   U_NUM2STR16(cp+6,  d4);
+   U_NUM2STR16(cp+8,  d5);
+   U_NUM2STR16(cp+10, d6);
+   U_NUM2STR16(cp+12, d7);
+   U_NUM2STR16(cp+14, d8);
+
+   return (cp + 16 - start);
+}
+
+uPFu32pc u_num2str32 = num2str32;
+uPFu64pc u_num2str64 = num2str64;
 
 /**
  * "FATAL: kernel too old"
@@ -1223,122 +1435,6 @@ uint32_t u_strftime2(char* restrict s, uint32_t maxsize, const char* restrict fo
    return u_strftime1(s, maxsize, format);
 }
 
-uint32_t u_num2str32(char* restrict cp, uint32_t num)
-{
-   int32_t i = 0;
-   uint32_t ui32vec[4];
-   char* restrict start = cp;
-
-   U_INTERNAL_TRACE("u_num2str32(%p,%u)", cp, num)
-
-   while (num >= 100U)
-      {
-      ui32vec[i++] = (num  % 100U);
-                      num /= 100U;
-      }
-
-   /* Handle last 1-2 digits */
-
-   if (num < 10U) *cp++ = '0' + num;
-   else
-      {
-      U_NUM2STR16(cp, num);
-
-      cp += 2;
-      }
-
-   while (--i >= 0)
-      {
-      U_NUM2STR16(cp, ui32vec[i]);
-
-      cp += 2;
-      }
-
-   return (cp - start);
-}
-
-uint32_t u_num2str32s(char* restrict cp, int32_t num)
-{
-   uint32_t bsign = (num < 0);
-
-   U_INTERNAL_TRACE("u_num2str32s(%p,%d)", cp, num)
-
-   if (bsign)
-      {
-      num = -num;
-
-      *cp++ = '-';
-      }
-
-   return u_num2str32(cp, num) + bsign;
-}
-
-uint32_t u_num2str64(char* restrict cp, uint64_t num)
-{
-   int32_t i;
-   uint64_t ui64vec[10];
-   char* restrict start;
-
-   U_INTERNAL_TRACE("u_num2str64(%p,%llu)", cp, num)
-
-   /**
-    * To divide 64-bit numbers and to find remainders on the x86 platform gcc and icc call the libc functions
-    * [u]divdi3() and [u]moddi3(), and they call another function in its turn. On FreeBSD it is the qdivrem()
-    * function, its source code is about 170 lines of the code. The glibc counterpart is about 150 lines of code.
-    *
-    * For 32-bit numbers and some divisors gcc and icc use a inlined multiplication and shifts.
-    * For example, unsigned "i32 / 10" is compiled to (i32 * 0xCCCCCCCD) >> 35
-    */
-
-   if (num <= UINT_MAX) return u_num2str32(cp, (uint32_t)num);
-
-   i     = 0;
-   start = cp;
-
-   /* Maximum value an 'unsigned long long int' can hold: 18446744073709551615ULL */
-
-   while (num >= 100ULL)
-      {
-      ui64vec[i++] = (num  % 100ULL);
-                      num /= 100ULL;
-      }
-
-   /* Handle last 1-2 digits */
-
-   if (num < 10ULL) *cp++ = '0' + num;
-   else
-      {
-      U_NUM2STR16(cp, num);
-
-      cp += 2;
-      }
-
-   while (--i >= 0)
-      {
-      U_NUM2STR16(cp, ui64vec[i]);
-
-      cp += 2;
-      }
-
-   return (cp - start);
-}
-
-uint32_t u_num2str64s(char* restrict cp, int64_t num)
-{
-   uint32_t bsign = (num < 0LL);
-
-   U_INTERNAL_TRACE("u_num2str64s(%p,%lld)", cp, num)
-
-   if (num < 0LL)
-      {
-      num = -num;
-
-      *cp++ = '-';
-      }
-
-   return u_num2str64(cp, num) + bsign;
-}
-
 #ifdef DEBUG
 #  include <ulib/base/trace.h>
 
@@ -1438,11 +1534,11 @@ uint32_t u_sprintcrtl(char* restrict out, unsigned char c)
    };
 
    static const struct control_info control_table[32] = {
-      U_CTL_ENTRY("\\u0000"), U_CTL_ENTRY("\\u0001"), U_CTL_ENTRY("\\u0002"), U_CTL_ENTRY("\\u0003"), U_CTL_ENTRY("\\u0004"), U_CTL_ENTRY("\\u0005"), U_CTL_ENTRY("\\u0006"),
-      U_CTL_ENTRY("\\u0007"), U_CTL_ENTRY("\\b"    ), U_CTL_ENTRY("\\t"    ), U_CTL_ENTRY("\\n"    ), U_CTL_ENTRY("\\u000b"), U_CTL_ENTRY("\\f"    ), U_CTL_ENTRY("\\r"    ),
-      U_CTL_ENTRY("\\u000e"), U_CTL_ENTRY("\\u000f"), U_CTL_ENTRY("\\u0010"), U_CTL_ENTRY("\\u0011"), U_CTL_ENTRY("\\u0012"), U_CTL_ENTRY("\\u0013"), U_CTL_ENTRY("\\u0014"),
-      U_CTL_ENTRY("\\u0015"), U_CTL_ENTRY("\\u0016"), U_CTL_ENTRY("\\u0017"), U_CTL_ENTRY("\\u0018"), U_CTL_ENTRY("\\u0019"), U_CTL_ENTRY("\\u001a"), U_CTL_ENTRY("\\u001b"),
-      U_CTL_ENTRY("\\u001c"), U_CTL_ENTRY("\\u001d"), U_CTL_ENTRY("\\u001e"), U_CTL_ENTRY("\\u001f")
+    U_CTL_ENTRY("\\u0000"), U_CTL_ENTRY("\\u0001"), U_CTL_ENTRY("\\u0002"), U_CTL_ENTRY("\\u0003"), U_CTL_ENTRY("\\u0004"), U_CTL_ENTRY("\\u0005"), U_CTL_ENTRY("\\u0006"),
+    U_CTL_ENTRY("\\u0007"), U_CTL_ENTRY("\\b"    ), U_CTL_ENTRY("\\t"    ), U_CTL_ENTRY("\\n"    ), U_CTL_ENTRY("\\u000b"), U_CTL_ENTRY("\\f"    ), U_CTL_ENTRY("\\r"    ),
+    U_CTL_ENTRY("\\u000e"), U_CTL_ENTRY("\\u000f"), U_CTL_ENTRY("\\u0010"), U_CTL_ENTRY("\\u0011"), U_CTL_ENTRY("\\u0012"), U_CTL_ENTRY("\\u0013"), U_CTL_ENTRY("\\u0014"),
+    U_CTL_ENTRY("\\u0015"), U_CTL_ENTRY("\\u0016"), U_CTL_ENTRY("\\u0017"), U_CTL_ENTRY("\\u0018"), U_CTL_ENTRY("\\u0019"), U_CTL_ENTRY("\\u001a"), U_CTL_ENTRY("\\u001b"),
+    U_CTL_ENTRY("\\u001c"), U_CTL_ENTRY("\\u001d"), U_CTL_ENTRY("\\u001e"), U_CTL_ENTRY("\\u001f")
    };
 
    U_INTERNAL_TRACE("u_sprintcrtl(%p,%d)", out, c)
@@ -1641,14 +1737,14 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
       0 /* 'z' */
    };
 
-   int pads;     /* extra padding size */
-   int dpad;     /* extra 0 padding needed for integers */
-   int bpad;     /* extra blank padding needed */
-   int size;     /* size of converted field or string */
-   int width;    /* width from format (%8d), or 0 */
-   int prec;     /* precision from format (%.3d), or -1 */
-   int dprec;    /* a copy of prec if [diouxX], 0 otherwise */
-   int fieldsz;  /* field size expanded by sign, dpad etc */
+   int pads;    /* extra padding size */
+   int dpad;    /* extra 0 padding needed for integers */
+   int bpad;    /* extra blank padding needed */
+   int size;    /* size of converted field or string */
+   int width;   /* width from format (%8d), or 0 */
+   int prec;    /* precision from format (%.3d), or -1 */
+   int dprec;   /* a copy of prec if [diouxX], 0 otherwise */
+   int fieldsz; /* field size expanded by sign, dpad etc */
 
    char sign;                      /* sign prefix (' ', '+', '-', or \0) */
    const char* restrict fmark;     /* for remembering a place in format */
@@ -1765,7 +1861,7 @@ cdefault:
       goto *((char*)&&cdefault + dispatch_table[ch-' ']);
 
 case_space: /* If the space and + flags both appear, the space flag will be ignored */
-      if (!sign) sign = ' ';
+      if (sign == '\0') sign = ' ';
 
       goto rflag;
 
@@ -2006,7 +2102,8 @@ case_ustring_v:
       sign = '\0';
       size = (prec < 0 ? (int) u__strlen((const char*)cp, __PRETTY_FUNCTION__) : prec);
 
-      U_INTERNAL_ERROR(size <= (int)(buffer_size - ret), "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %u cp = %.20s buffer_size = %u format = \"%s\"",
+      U_INTERNAL_ERROR(size <= (int)(buffer_size - ret),
+                       "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %u cp = %.20s buffer_size = %u format = \"%s\"",
                        size, (buffer_size - ret), cp, buffer_size, format_save);
 
       /* if a width from format is specified, the 0 flag for padding will be ignored... */
@@ -2340,46 +2437,54 @@ case_X:
 
       /* leading 0x/X only if non-zero */
 
-      if ((flags & ALT) != 0 &&
-          argument != 0LL)
+      if (argument != 0LL &&
+          (flags & ALT) != 0)
          {
          flags |= HEXPREFIX;
          }
 
       /* uint32_t conversions */
 
-nosign: sign = '\0';
+nosign:
+      sign = '\0';
 
       /* ... diouXx conversions ... if a precision is specified, the 0 flag will be ignored */
 
-number: if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
+number:
+      if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
-      /* The result of converting a zero value with an explicit precision of zero is no characters */
-
-      cp = buf_number + sizeof(buf_number);
-
-      if ((argument != 0LL) ||
-          (prec     != 0))
+      if (prec     == 0 &&
+          argument == 0LL)
          {
-         /* uint32_t mod is hard, and uint32_t mod by a constant is easier than that by a variable; hence this conditional */
-
+         size = 0; /* The result of converting a zero value with an explicit precision of zero is no characters */
+         }
+      else
+         {
          if (base == OCT)
             {
+            cp = buf_number + sizeof(buf_number);
+
             do { *--cp = (argument & 7L) + '0'; } while (argument >>= 3L);
 
             /* handle octal leading 0 */
 
-            if ((flags & ALT) != 0 &&
-                *cp != '0')
+            if (*cp != '0' &&
+                (flags & ALT) != 0)
                {
                *--cp = '0';
                }
+
+            size = (ptrdiff_t)(buf_number + sizeof(buf_number) - cp);
             }
          else if (base == HEX)
             {
             const unsigned char* restrict xdigs = (ch == 'X' ? u_hex_upper : u_hex_lower); /* digits for [xX] conversion */
 
+            cp = buf_number + sizeof(buf_number);
+
             do { *--cp = xdigs[argument & 15L]; } while (argument /= 16L);
+
+            size = (ptrdiff_t)(buf_number + sizeof(buf_number) - cp);
             }
          else
             {
@@ -2387,80 +2492,47 @@ number: if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
 
             if (LIKELY((flags & THOUSANDS_GROUPED) == 0))
                {
-               /**
-                * To divide 64-bit numbers and to find remainders on the x86 platform gcc and icc call the libc functions
-                * [u]divdi3() and [u]moddi3(), and they call another function in its turn. On FreeBSD it is the qdivrem()
-                * function, its source code is about 170 lines of the code. The glibc counterpart is about 150 lines of code.
-                *
-                * For 32-bit numbers and some divisors gcc and icc use a inlined multiplication and shifts:
-                *
-                * For example, unsigned "i32 / 10" is compiled to (i32 * 0xCCCCCCCD) >> 35
-                */
-
-               if (argument <= UINT_MAX)
+               if (dprec ||
+                   (flags & (LADJUST | ZEROPAD)) != 0)
                   {
-                  uint32_t ui32 = (uint32_t) argument;
+                  size = u_num2str64(argument, (char* restrict)(cp = buf_number));
 
-                  while (ui32 >= 100U)
-                     {
-                     cp -= 2;
-
-                     U_NUM2STR16(cp, ui32 % 100U);
-
-                     ui32 /= 100U;
-                     }
-                     
-                  /* Handle last 1-2 digits */
-
-                  if (ui32 < 10U) *--cp = '0' + ui32;
-                  else
-                     {
-                     cp -= 2;
-
-                     U_NUM2STR16(cp, ui32);
-                     }
+                  goto next;
                   }
-               else
+
+               if (sign != '\0')
                   {
-                  while (argument >= 100LL)
-                     {
-                     cp -= 2;
+                  *bp++ = sign;
 
-                     U_NUM2STR16(cp, argument % 100LL);
-
-                     argument /= 100LL;
-                     }
-
-                  /* Handle last 1-2 digits */
-
-                  if (argument < 10LL) *--cp = '0' + argument;
-                  else
-                     {
-                     cp -= 2;
-
-                     U_NUM2STR16(cp, argument);
-                     }
+                  ++ret;
                   }
+
+               len = u_num2str64(argument, bp);
+
+               bp  += len;
+               ret += len;
+
+               continue;
                }
-            else
+
+            n = 1;
+
+            cp = buf_number + sizeof(buf_number);
+
+            while (argument >= 10LL) /* NB: many numbers are 1 digit */
                {
-               n = 1;
-   
-               while (argument >= 10LL) /* NB: many numbers are 1 digit */
-                  {
-                  *--cp = (unsigned char)(argument % 10LL) + '0';
+               *--cp = (unsigned char)(argument % 10LL) + '0';
 
-                  argument /= 10LL;
+               argument /= 10LL;
 
-                  if ((n++ % 3) == 0) *--cp = ',';
-                  }
-
-               *--cp = argument + '0';
+               if ((n++ % 3) == 0) *--cp = ',';
                }
+
+            *--cp = argument + '0';
+
+            size = (ptrdiff_t)(buf_number + sizeof(buf_number) - cp);
             }
          }
-
-      size = (ptrdiff_t)(buf_number + sizeof(buf_number) - cp);
 
       goto next;
 

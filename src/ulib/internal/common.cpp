@@ -19,7 +19,13 @@
 #  include <ulib/event/event_time.h>
 #endif
 
-#ifndef U_STDCPP_ENABLE
+#ifdef U_STDCPP_ENABLE
+#  if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100
+#     include "./itoa.cpp"
+static uint32_t itoa32(uint32_t num, char* restrict cp) { return itoa_fwd(num, cp) - cp; }
+static uint32_t itoa64(uint64_t num, char* restrict cp) { return itoa_fwd(num, cp) - cp; }
+#  endif
+#else
 U_EXPORT bool __cxa_guard_acquire() { return 1; }
 U_EXPORT bool __cxa_guard_release() { return 1; }
 
@@ -81,6 +87,11 @@ void ULib_init_openssl()
 void ULib_init()
 {
    U_TRACE_NO_PARAM(1, "ULib_init()")
+
+#if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100
+   u_num2str32 = itoa32;
+   u_num2str64 = itoa64;
+#endif
 
 #ifdef DEBUG
    static bool init;

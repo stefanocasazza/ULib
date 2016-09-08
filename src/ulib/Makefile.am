@@ -368,7 +368,7 @@ endif
 ##
 ##.libs/lib@ULIB@.so: .libs/lib@ULIB@.a
 ##	$(DLLTOOL) --export-all-symbols -e .libs/exports.o -l .libs/lib@ULIB@.lib -z .libs/lib@ULIB@.def $<
-##	$(CXX_LD) -shared .libs/exports.o .libs/all_c.o .libs/all_cpp.o $< -o $@ @ULIB_LIBS@
+##	$(CXX_LD) -shared .libs/exports.o .libs/all_c.o base/xxhash/.libs/xxhash.o .libs/all_cpp.o $< -o $@ @ULIB_LIBS@
 ##
 ##all: .libs/lib@ULIB@.so
 ##endif
@@ -380,7 +380,7 @@ endif
 
 ULib-win32-res.o: ULib.rc
 	$(WINDRES) $< $@
-	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/.libs/all_cpp.o
+	$(DLLTOOL) -export-all-symbols -z $(srcdir)/@ULIB@.def $(srcdir)/.libs/all_c.o $(srcdir)/base/xxhash/.libs/xxhash.o $(srcdir)/.libs/all_cpp.o
 	$(SED) -i 's/EXPORTS/;/' $(srcdir)/@ULIB@.def
 
 if MINGW

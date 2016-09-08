@@ -1869,7 +1869,7 @@ public:
 
       char* ptr = (char*)rep->str;
 
-      ptr[(rep->_length = u_num2str32(ptr, number))] = '\0';
+      ptr[(rep->_length = u_num2str32(number, ptr))] = '\0';
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1886,7 +1886,7 @@ public:
 
       char* ptr = (char*)rep->str;
 
-      ptr[(rep->_length = u_num2str32s(ptr, number))] = '\0';
+      ptr[(rep->_length = u_num2str32s(number, ptr))] = '\0';
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1907,7 +1907,7 @@ public:
 
       char* ptr = (char*)rep->str;
 
-      ptr[(rep->_length = u_num2str64(ptr, number))] = '\0';
+      ptr[(rep->_length = u_num2str64(number, ptr))] = '\0';
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1924,7 +1924,7 @@ public:
 
       char* ptr = (char*)rep->str;
 
-      ptr[(rep->_length = u_num2str64s(ptr, number))] = '\0';
+      ptr[(rep->_length = u_num2str64s(number, ptr))] = '\0';
 
       U_INTERNAL_ASSERT(invariant())
       }

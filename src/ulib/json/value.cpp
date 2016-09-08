@@ -928,42 +928,42 @@ case_uchar:
    return;
 
 case_short:
-   (void) result.append(buffer, u_num2str32s(buffer, _value.value.short_));
+   (void) result.append(buffer, u_num2str32s(_value.value.short_, buffer));
 
    return;
 
 case_ushort:
-   (void) result.append(buffer, u_num2str32(buffer, _value.value.ushort_));
+   (void) result.append(buffer, u_num2str32(_value.value.ushort_, buffer));
 
    return;
 
 case_int:
-   (void) result.append(buffer, u_num2str32s(buffer, _value.value.int_));
+   (void) result.append(buffer, u_num2str32s(_value.value.int_, buffer));
 
    return;
 
 case_uint:
-   (void) result.append(buffer, u_num2str32s(buffer, _value.value.uint_));
+   (void) result.append(buffer, u_num2str32s(_value.value.uint_, buffer));
 
    return;
 
 case_long:
-   (void) result.append(buffer, u_num2str64s(buffer, _value.value.long_));
+   (void) result.append(buffer, u_num2str64s(_value.value.long_, buffer));
 
    return;
 
 case_ulong:
-   (void) result.append(buffer, u_num2str64s(buffer, _value.value.ulong_));
+   (void) result.append(buffer, u_num2str64s(_value.value.ulong_, buffer));
 
    return;
 
 case_llong:
-   (void) result.append(buffer, u_num2str64s(buffer, _value.value.llong_));
+   (void) result.append(buffer, u_num2str64s(_value.value.llong_, buffer));
 
    return;
 
 case_ullong:
-   (void) result.append(buffer, u_num2str64s(buffer, _value.value.ullong_));
+   (void) result.append(buffer, u_num2str64s(_value.value.ullong_, buffer));
 
    return;
 

@@ -51,7 +51,7 @@ Content-Type: application/json
 <!--#code
 uint32_t id;
 
-(void) rc->get(buffer, 6+u_num2str32(buffer+6, id = u_get_num_random(10000-1)));
+(void) rc->get(buffer, 6+u_num2str32(id = u_get_num_random(10000-1), buffer+6));
 
 #ifdef AS_cpoll_cppsp_DO
 USP_PRINTF_ADD("{\"id\":%u,\"randomNumber\":%v}", id, rc->vitem[0].rep);

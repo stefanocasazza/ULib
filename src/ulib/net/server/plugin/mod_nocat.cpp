@@ -1532,14 +1532,14 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
    U_MEMCPY(ptr,"&connected=", U_CONSTANT_SIZE("&connected="));
             ptr +=             U_CONSTANT_SIZE("&connected=");
 
-   ptr += u_num2str32(ptr, u_now->tv_sec - peer->ctime);
-                                           peer->ctime = u_now->tv_sec;
+   ptr += u_num2str32(u_now->tv_sec - peer->ctime, ptr);
+                                      peer->ctime = u_now->tv_sec;
 
    U_MEMCPY(ptr, "&traffic=", U_CONSTANT_SIZE("&traffic="));
             ptr +=            U_CONSTANT_SIZE("&traffic=");
 
-   ptr += u_num2str32(ptr, peer->ctraffic);
-                           peer->ctraffic = 0;
+   ptr += u_num2str32(peer->ctraffic, ptr);
+                      peer->ctraffic = 0;
 
    info.size_adjust_force(ptr);
 
