@@ -1923,7 +1923,7 @@ float UStringRep::strtof() const
       char* endptr;
       float result = ::strtof(str, &endptr);
 
-      U_INTERNAL_ASSERT_MINOR(endptr, eos)
+      U_INTERNAL_ASSERT(endptr <= eos)
 #  endif
 
       U_INTERNAL_DUMP("errno = %d", errno)
@@ -1951,7 +1951,7 @@ double UStringRep::strtod() const
       char* endptr;
       double result = ::strtod(str, &endptr);
 
-      U_INTERNAL_ASSERT_MINOR(endptr, eos)
+      U_INTERNAL_ASSERT(endptr <= eos)
 #  endif
 
       U_INTERNAL_DUMP("errno = %d", errno)

@@ -45,10 +45,10 @@ void UOrmDriverSqlite::handlerError()
       U_ENTRY(SQLITE_PERM),         /* Access permission denied */
       U_ENTRY(SQLITE_ABORT),        /* Callback routine requested an abort */
       U_ENTRY(SQLITE_BUSY),         /* The database file is locked */
-      U_ENTRY(SQLITE_LOCKED),    /* A table in the database is locked */
+      U_ENTRY(SQLITE_LOCKED),       /* A table in the database is locked */
       U_ENTRY(SQLITE_NOMEM),        /* A malloc() failed */
       U_ENTRY(SQLITE_READONLY),     /* Attempt to write a readonly database */
-      U_ENTRY(SQLITE_INTERRUPT), /* Operation terminated by sqlite3_interrupt()*/
+      U_ENTRY(SQLITE_INTERRUPT),    /* Operation terminated by sqlite3_interrupt()*/
       U_ENTRY(SQLITE_IOERR),        /* Some kind of disk I/O error occurred */
       U_ENTRY(SQLITE_CORRUPT),      /* The database disk image is malformed */
       U_ENTRY(SQLITE_NOTFOUND),     /* Unknown opcode in sqlite3_file_control() */
@@ -56,24 +56,24 @@ void UOrmDriverSqlite::handlerError()
       U_ENTRY(SQLITE_CANTOPEN),     /* Unable to open the database file */
       U_ENTRY(SQLITE_PROTOCOL),     /* Database lock protocol error */
       U_ENTRY(SQLITE_EMPTY),        /* Database is empty */
-      U_ENTRY(SQLITE_SCHEMA),    /* The database schema changed */
-      U_ENTRY(SQLITE_TOOBIG),    /* String or BLOB exceeds size limit */
+      U_ENTRY(SQLITE_SCHEMA),       /* The database schema changed */
+      U_ENTRY(SQLITE_TOOBIG),       /* String or BLOB exceeds size limit */
       U_ENTRY(SQLITE_CONSTRAINT),   /* Abort due to constraint violation */
       U_ENTRY(SQLITE_MISMATCH),     /* Data type mismatch */
-      U_ENTRY(SQLITE_MISUSE),    /* Library used incorrectly */
+      U_ENTRY(SQLITE_MISUSE),       /* Library used incorrectly */
       U_ENTRY(SQLITE_NOLFS),        /* Uses OS features not supported on host */
       U_ENTRY(SQLITE_AUTH),         /* Authorization denied */
-      U_ENTRY(SQLITE_FORMAT),    /* Auxiliary database format error */
+      U_ENTRY(SQLITE_FORMAT),       /* Auxiliary database format error */
       U_ENTRY(SQLITE_RANGE),        /* 2nd parameter to sqlite3_bind out of range */
-      U_ENTRY(SQLITE_NOTADB),    /* File opened that is not a database file */
+      U_ENTRY(SQLITE_NOTADB),       /* File opened that is not a database file */
 #  ifdef SQLITE_NOTICE
-      U_ENTRY(SQLITE_NOTICE),    /* Notifications from sqlite3_log() */
+      U_ENTRY(SQLITE_NOTICE),       /* Notifications from sqlite3_log() */
 #  endif
 #  ifdef SQLITE_WARNING
       U_ENTRY(SQLITE_WARNING),      /* Warnings from sqlite3_log() */
 #  endif
-      U_ENTRY(SQLITE_ROW),       /* sqlite3_step() has another row ready */
-      U_ENTRY(SQLITE_DONE)       /* sqlite3_step() has finished executing */
+      U_ENTRY(SQLITE_ROW),          /* sqlite3_step() has another row ready */
+      U_ENTRY(SQLITE_DONE)          /* sqlite3_step() has finished executing */
    };
 
    if (UOrmDriver::errmsg  == 0) UOrmDriver::errmsg  = U_SYSCALL(sqlite3_errmsg,  "%p", (sqlite3*)UOrmDriver::connection);

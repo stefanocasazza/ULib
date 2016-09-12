@@ -13,7 +13,8 @@ extern U_EXPORT pvPFpvpvs apex_memmove;
  * apex_memmove written by Trevor Herselman in 2014
  *
  * FORCE `CDECL` calling convention on 32-bit builds on our function pointers, because we need it to match the original `std::memmove` definition;
- * in-case the user specified a different default function calling convention! (I specified __fastcall as my default calling convention and got errors! So I needed to add this!)
+ * in-case the user specified a different default function calling convention! (I specified __fastcall as my default calling convention and got errors!
+ * So I needed to add this!)
  */
 
 U_EXPORT void apex_memmove_dispatcher(void);

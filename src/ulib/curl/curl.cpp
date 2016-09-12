@@ -134,7 +134,7 @@ U_NO_EXPORT size_t UCURL::writeFunction(void* ptr, size_t size, size_t nmemb, vo
 
    size_t len = size * nmemb;
 
-   (void) ((UCURL*)obj)->response.reserve(((UCURL*)obj)->response.size() + len);
+   (void) ((UCURL*)obj)->response.reserve(len);
 
    ((UCURL*)obj)->response.append((const char*)ptr, len);
 

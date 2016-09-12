@@ -270,11 +270,23 @@ U_EXPORT main (int argc, char* argv[])
                                                "\"hits\":{\"total\":1,\"max_score\":1.0,\"hits\":[{\"_index\":\"tfb\",\"_type\":\"world\",\"_id\":\"6464\",\"_score\":1.0,"
                                                "\"_source\":{ \"randomNumber\" : 9342 }}]}}"), filename, content, array, result, result1;
 
-   (void) UValue::jread(searchJson, U_STRING_FROM_CONSTANT("{'randomNumber'"), result);
+   (void) UValue::jfind(searchJson, U_CONSTANT_TO_PARAM("randomNumber"), result);
 
    cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "randomNumber = %V\n", result.rep));
 
    result.clear();
+
+   int city;
+   double pricePoint;
+
+   (void) UValue::jfind(U_STRING_FROM_CONSTANT("{ \"pricePoint\" : 2.48333333333333, \"socialWeight\" : 8.75832720587083, \"gender\" : 0, \"lessThan16\" : false }"),
+                        U_CONSTANT_TO_PARAM("pricePoint"), pricePoint);
+
+   U_INTERNAL_ASSERT_EQUALS(pricePoint, 2.48333333333333)
+
+   (void) UValue::jfind(U_STRING_FROM_CONSTANT("{ \"cityKey\" : 0 }"), U_CONSTANT_TO_PARAM("cityKey"), city);
+
+   U_INTERNAL_ASSERT_EQUALS(city, 0)
 
    testMap();
    testVector();

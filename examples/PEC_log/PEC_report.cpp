@@ -1204,7 +1204,7 @@ void PEC_report::loadFiles()
 
    dirwalk.walk();
 
-   u_printSize(buffer, bytes);
+   (void) u_printSize(buffer, bytes);
 
    U_MESSAGE("checked %u file(s) - skipped %u file(s)\n"
              "start processing %u file(s) for %s of data...", nfiles, nskipped, tfile->size(), buffer);

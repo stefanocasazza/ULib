@@ -138,8 +138,6 @@ static void test3(void)
    char buf[200];
    const char* tmp;
 
-   printf("%.17f\n",(1.0/x/10.0+1.0)*x-x);
-
    u__snprintf(buf,sizeof(buf),"%*s%*s%*s",-1,"one",-20,"two",-30,"three");
    result |= strcmp(buf, "onetwo                 three                         ");
    tmp = (result != 0 ? "Test failed!" : "Test ok.");

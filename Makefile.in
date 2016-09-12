@@ -1008,6 +1008,7 @@ cleandist:
 		$(distdir)/tests/ulib/tmp/* \
 		$(distdir)/tests/ulib/private/* \
 		$(distdir)/tests/ulib/CApath/*.*0 \
+		$(distdir)/tests/ulib/ok/json.ok \
 		$(distdir)/tests/ulib/ok/timer.ok \
 		$(distdir)/tests/ulib/ok/socket.ok \
 		$(distdir)/tests/ulib/ok/interrupt.ok \

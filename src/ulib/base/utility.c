@@ -680,24 +680,32 @@ double u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units)
    return rate;
 }
 
-void u_printSize(char* restrict buffer, uint64_t bytes)
+uint32_t u_printSize(char* restrict buffer, uint64_t bytes)
 {
    int units;
    double size;
+   uint32_t len;
 
    U_INTERNAL_TRACE("u_printSize(%p,%llu)", buffer, bytes)
 
    if (bytes == 0)
       {
-      u__strcpy(buffer, "0 Byte");
+      u_put_unalignedp32(buffer,   U_MULTICHAR_CONSTANT32('0',' ','B','y'));
+      u_put_unalignedp16(buffer+4, U_MULTICHAR_CONSTANT16('t','e'));
 
-      return;
+      len = 6;
+      }
+   else
+      {
+      size = u_calcRate(bytes, 1000, &units);
+
+      len = (units ? sprintf(buffer, "%5.2f %s", size, u_short_units[units])
+                   : sprintf(buffer, "%7.0f Bytes", size));
       }
 
-   size = u_calcRate(bytes, 1000, &units);
+   buffer[len] = '\0';
 
-   if (units) (void) sprintf(buffer, "%5.2f %s",    size, u_short_units[units]);
-   else       (void) sprintf(buffer, "%7.0f Bytes", size);
+   return len;
 }
 
 uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, uint32_t n)

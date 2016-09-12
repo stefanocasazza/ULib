@@ -896,11 +896,10 @@ void UValue::stringify(UString& result, UValue& _value)
 
    bool bcomma;
    char* presult;
-   const char* ch;
-   char buffer[32];
    UString* pstring;
-   const char* last_nonzero;
-   uint32_t n, pos, sz, keysz;
+   uint32_t pos, sz, keysz;
+
+   (void) result.reserve(32);
 
    U_INTERNAL_DUMP("dispatch_table[%d] = %p &&case_null = %p", _value.type_, dispatch_table[_value.type_], &&case_null)
 
@@ -928,94 +927,88 @@ case_uchar:
    return;
 
 case_short:
-   (void) result.append(buffer, u_num2str32s(_value.value.short_, buffer));
+   presult = result.c_pointer(sz = result.size());
+
+   result.rep->_length = sz + u_num2str32s(_value.value.short_, presult); 
 
    return;
 
 case_ushort:
-   (void) result.append(buffer, u_num2str32(_value.value.ushort_, buffer));
+   presult = result.c_pointer(sz = result.size());
+
+   result.rep->_length = sz + u_num2str32(_value.value.ushort_, presult); 
 
    return;
 
 case_int:
-   (void) result.append(buffer, u_num2str32s(_value.value.int_, buffer));
+   presult = result.c_pointer(sz = result.size());
+
+   result.rep->_length = sz + u_num2str32s(_value.value.int_, presult); 
 
    return;
 
 case_uint:
-   (void) result.append(buffer, u_num2str32s(_value.value.uint_, buffer));
+   presult = result.c_pointer(sz = result.size());
+
+   result.rep->_length = sz + u_num2str32(_value.value.uint_, presult); 
 
    return;
 
 case_long:
-   (void) result.append(buffer, u_num2str64s(_value.value.long_, buffer));
+   presult = result.c_pointer(sz = result.size());
+
+   result.rep->_length = sz + u_num2str64s(_value.value.long_, presult); 
 
    return;
 
 case_ulong:
-   (void) result.append(buffer, u_num2str64s(_value.value.ulong_, buffer));
+   presult = result.c_pointer(sz = result.size());
+
+   result.rep->_length = sz + u_num2str64(_value.value.ulong_, presult); 
 
    return;
 
 case_llong:
-   (void) result.append(buffer, u_num2str64s(_value.value.llong_, buffer));
+   presult = result.c_pointer(sz = result.size());
+
+   result.rep->_length = sz + u_num2str64s(_value.value.llong_, presult); 
 
    return;
 
 case_ullong:
-   (void) result.append(buffer, u_num2str64s(_value.value.ullong_, buffer));
+   presult = result.c_pointer(sz = result.size());
+
+   result.rep->_length = sz + u_num2str64(_value.value.ullong_, presult); 
 
    return;
 
 case_float:
-   n = u__snprintf(buffer, sizeof(buffer), "%#.6f", _value.value.float_);
+   presult = result.c_pointer(sz = result.size());
 
-   goto next;
+   result.rep->_length = sz + u_dtoa(_value.value.float_, presult); 
+
+   return;
 
 case_double:
-   n = u__snprintf(buffer, sizeof(buffer), "%#.16g", _value.value.real_);
+   presult = result.c_pointer(sz = result.size());
 
-   goto next;
+   result.rep->_length = sz + u_dtoa(_value.value.real_, presult); 
+
+   return;
 
 case_ldouble:
-   n = u__snprintf(buffer, sizeof(buffer), "%#.16g", _value.value.lreal_);
+   presult = result.c_pointer(sz = result.size());
 
-next:
-   ch = buffer + n - 1;
-
-   if (*ch == '0')
-      {
-      while (ch > buffer && *ch == '0') --ch;
-
-      last_nonzero = ch;
-
-      while (ch >= buffer)
-         {
-         char c = *ch;
-
-         if (u__isdigit(c))
-            {
-            --ch;
-
-            continue; 
-            }
-
-         if (c == '.') n = last_nonzero - buffer + 2; // Truncate zeroes to save bytes in output, but keep one
-
-         break;
-         }
-      }
-
-   (void) result.append(buffer, n);
+   result.rep->_length = sz + u_dtoa(_value.value.lreal_, presult); 
 
    return;
 
 case_string:
    pstring = (UString*)_value.value.ptr_;
 
-   (void) result.reserve((sz = result.size()) + (keysz = pstring->size()) * 6);
+   (void) result.reserve((keysz = pstring->size()) * 6);
 
-   presult = result.c_pointer(sz);
+   presult = result.c_pointer(sz = result.size());
 
    result.rep->_length = sz + emitString((const unsigned char*)pstring->data(), keysz, presult);
 
@@ -1044,9 +1037,9 @@ case_object:
       {
       U_INTERNAL_ASSERT_POINTER(member->key)
 
-      (void) result.reserve((sz = result.size()) + (keysz = member->key->size()) * 6);
+      (void) result.reserve((keysz = member->key->size()) * 6);
 
-      presult = result.c_pointer(sz);
+      presult = result.c_pointer(sz = result.size());
 
       if (bcomma == false) bcomma = true;
       else
@@ -2110,54 +2103,52 @@ const char* UValue::getJReadErrorDescription()
       "End of object found"                       // 14
    };
 
-   const char* descr = (jread_error >= 0 && jread_error <= 14 ? errlist[jread_error] : "Unknown jread error");
+   const char* descr = (jread_error >= 0 && (int)U_NUM_ELEMENTS(errlist) ? errlist[jread_error] : "Unknown jread error");
 
    U_RETURN(descr);
 }
-
-#  define U_VAL_ENTRY(n) n: descr = #n; break
 
 const char* UValue::getDataTypeDescription(int type)
 {
    U_TRACE(0, "UValue::getDataTypeDescription(%d)", type)
 
-   const char* descr;
+   struct data_type_info {
+      int value;        // The numeric value
+      const char* name; // The equivalent symbolic value
+   };
 
-   switch (type)
-      {
-      case U_VAL_ENTRY(NULL_VALUE);
-      case U_VAL_ENTRY(BOOLEAN_VALUE);
-      case U_VAL_ENTRY(CHAR_VALUE);
-      case U_VAL_ENTRY(UCHAR_VALUE);
-      case U_VAL_ENTRY(SHORT_VALUE);
-      case U_VAL_ENTRY(USHORT_VALUE);
-      case U_VAL_ENTRY(INT_VALUE);
-      case U_VAL_ENTRY(UINT_VALUE);
-      case U_VAL_ENTRY(LONG_VALUE);
-      case U_VAL_ENTRY(ULONG_VALUE);
-      case U_VAL_ENTRY(LLONG_VALUE);
-      case U_VAL_ENTRY(ULLONG_VALUE);
-      case U_VAL_ENTRY(FLOAT_VALUE);
-      case U_VAL_ENTRY(REAL_VALUE);
-      case U_VAL_ENTRY(LREAL_VALUE);
-      case U_VAL_ENTRY(STRING_VALUE);
-      case U_VAL_ENTRY(ARRAY_VALUE);
-      case U_VAL_ENTRY(OBJECT_VALUE);
-      case U_VAL_ENTRY(NUMBER_VALUE);
-      case U_VAL_ENTRY(U_JR_EOL);
-      case U_VAL_ENTRY(U_JR_COLON);
-      case U_VAL_ENTRY(U_JR_COMMA);
-      case U_VAL_ENTRY(U_JR_EARRAY);
-      case U_VAL_ENTRY(U_JR_QPARAM);
-      case U_VAL_ENTRY(U_JR_EOBJECT);
+   static const struct data_type_info data_type_table[] = {
+      U_ENTRY(NULL_VALUE),
+      U_ENTRY(BOOLEAN_VALUE),
+      U_ENTRY(CHAR_VALUE),
+      U_ENTRY(UCHAR_VALUE),
+      U_ENTRY(SHORT_VALUE),
+      U_ENTRY(USHORT_VALUE),
+      U_ENTRY(INT_VALUE),
+      U_ENTRY(UINT_VALUE),
+      U_ENTRY(LONG_VALUE),
+      U_ENTRY(ULONG_VALUE),
+      U_ENTRY(LLONG_VALUE),
+      U_ENTRY(ULLONG_VALUE),
+      U_ENTRY(FLOAT_VALUE),
+      U_ENTRY(REAL_VALUE),
+      U_ENTRY(LREAL_VALUE),
+      U_ENTRY(STRING_VALUE),
+      U_ENTRY(ARRAY_VALUE),
+      U_ENTRY(OBJECT_VALUE),
+      U_ENTRY(NUMBER_VALUE),
+      U_ENTRY(U_JR_EOL),
+      U_ENTRY(U_JR_COLON),
+      U_ENTRY(U_JR_COMMA),
+      U_ENTRY(U_JR_EARRAY),
+      U_ENTRY(U_JR_QPARAM),
+      U_ENTRY(U_JR_EOBJECT)
+   };
 
-      default: descr = "Data type unknown";
-      }
+   const char* descr = (type >= 0 && type < (int)U_NUM_ELEMENTS(data_type_table) ? data_type_table[type].name : "Data type unknown");
 
    U_RETURN(descr);
 }
-
-#  undef U_VAL_ENTRY
 
 const char* UValue::dump(bool _reset) const
 {

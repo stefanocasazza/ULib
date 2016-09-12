@@ -50,8 +50,8 @@ DIR_CMD="../../examples/userver"
 
 start_prg_background userver_tcp -c inp/webserver.cfg
 
-send_req $NCAT localhost 8080 inp/http/businesses.req businesses 2
-send_req $NCAT localhost 8080 inp/http/businesses.req businesses 2
+send_req $NCAT localhost 8080 inp/http/businesses1.req businesses 2
+send_req $NCAT localhost 8080 inp/http/businesses2.req businesses 2
 
 kill_prg userver_tcp TERM
 

@@ -61,9 +61,9 @@ static inline uint32_t u_xxhash64(const unsigned char* restrict t, uint32_t tlen
 #ifdef USE_HARDWARE_CRC32
 static inline uint32_t u_crc32(const unsigned char* restrict bp, uint32_t len)
 {
-   U_INTERNAL_TRACE("u_crc32(%.*s,%u)", U_min(len,128), bp, len)
-
    uint32_t h1 = 0xABAD1DEA;
+
+   U_INTERNAL_TRACE("u_crc32(%.*s,%u)", U_min(len,128), bp, len)
 
 # ifdef HAVE_ARCH64
    while (len >= sizeof(uint64_t))

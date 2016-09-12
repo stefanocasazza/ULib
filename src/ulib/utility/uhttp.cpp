@@ -3843,7 +3843,6 @@ manage:
 
 #if defined(DEBUG) && !defined(U_STATIC_ONLY)
    if (file_data == 0         &&
-       isGETorHEAD()          &&
        U_http_is_nocache_file &&
        file->getSuffix().empty())
       {
@@ -3862,6 +3861,8 @@ manage:
          manageDataForCache();
 
          U_INTERNAL_ASSERT_POINTER(file_data)
+
+         UClientImage_Base::setRequestInFileCache();
          }
       }
 #endif
@@ -4846,7 +4847,8 @@ void UHTTP::clearSessionSSL()
  *    in pair with user login, and sends session id to browser in response as cookie. Browser stores cookie.
  * 3) User visits any page on this domain and browser sends a cookie to server for each request.
  * 4) ULib server checks if cookie has been sent, if such cookie exists in server storage with pair with login. Identifies user, provides access to his private content.
- * 5) Logout button removes the cookie from browser and sid-login pair from server storage. Browser does not send cookies, server does not see it and does not see sid-login pair
+ * 5) Logout button removes the cookie from browser and sid-login pair from server storage. Browser does not send cookies, server does not see it and does not see
+ *    sid-login pair
  */
 
 void UHTTP::addSetCookie(const UString& cookie)
@@ -5391,7 +5393,7 @@ __pure int UHTTP::getFormFirstNumericValue(int _min, int _max)
 
       U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
 
-      do { ++ptr; } while (*ptr != '=');
+      ptr = (const char*) memchr(ptr, '=', U_http_info.query_len);
 
       if (u__isdigit(*++ptr))
          {
@@ -5516,6 +5518,7 @@ uint32_t UHTTP::processForm()
       {
       U_ASSERT(isPOST())
 
+      // -------------------------------------------------------------------------
       // POST
       // -------------------------------------------------------------------------
       // Content-Type: application/x-www-form-urlencoded OR multipart/form-data...
@@ -5773,7 +5776,10 @@ void UHTTP::handlerResponse()
       {
       U_INTERNAL_DUMP("U_http_method_not_implemented = %b", U_http_method_not_implemented)
 
-      if (U_http_method_not_implemented) (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("Your browser request a method that this server has not implemented"));
+      if (U_http_method_not_implemented)
+         {
+         (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("Your browser request a method that this server has not implemented"));
+         }
       else
          {
          (void) UClientImage_Base::wbuffer->assign(U_CONSTANT_TO_PARAM("Allow: "
@@ -6194,20 +6200,29 @@ void UHTTP::setDynamicResponse()
 
    ptr = ext->data();
 
-#ifdef USE_LIBZ
+#ifndef USE_LIBZ
+   bool bcompress = false;
+#else
    bool bcompress = (U_http_is_accept_gzip &&
                      UClientImage_Base::wbuffer->size() > (U_http_info.endHeader + U_MIN_SIZE_FOR_DEFLATE));
-#else
-   bool bcompress = false;
 #endif
 
    U_INTERNAL_DUMP("bcompress = %b", bcompress)
 
    if (U_http_info.endHeader)
       {
-      U_INTERNAL_ASSERT_MAJOR(clength, U_http_info.endHeader)
+      U_INTERNAL_ASSERT(clength >= U_http_info.endHeader)
 
       clength -= U_http_info.endHeader;
+
+      if (clength == 0) // no response
+         {
+         UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+
+         UClientImage_Base::wbuffer->clear();
+
+         goto no_response;
+         }
 
       pEndHeader = UClientImage_Base::wbuffer->data();
 
@@ -6338,6 +6353,7 @@ end:
 
    ext->size_adjust(ptr1);
 
+no_response:
    handlerResponse();
 }
 
@@ -8903,7 +8919,7 @@ U_NO_EXPORT void UHTTP::setCGIShellScript(UString& command)
          c = (memchr(ptr, '"', sz) ? '\'' : '"');
          }
 
-      (void) command.reserve(command.size() + sz + 4U);
+      (void) command.reserve(sz + 4U);
 
       command.snprintf_add(" %c%.*s%c ", c, sz, ptr, c);
       }
@@ -9440,7 +9456,9 @@ loop:
 
       UClientImage_Base::body->clear();
 
-      (void) set_cookie->append(UClientImage_Base::wbuffer->data(), sz - U_CONSTANT_SIZE(U_CRLF)); // NB: we use the var 'set_cookie' for opportunism within handlerResponse()...
+      // NB: we use the var 'set_cookie' for opportunism within handlerResponse()...
+
+      (void) set_cookie->append(UClientImage_Base::wbuffer->data(), sz - U_CONSTANT_SIZE(U_CRLF));
 
       setResponse();
 

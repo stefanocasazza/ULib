@@ -146,8 +146,8 @@ UString UStringExt::numberToString(uint64_t n)
 {
    U_TRACE(0, "UStringExt::numberToString(%llu)", n)
 
-   unsigned int i;
    UString x(32U);
+   unsigned int i;
    uint64_t u = 1024ULL;
 
    for (i = 0; i < U_CONSTANT_SIZE("bKMGTPEZY"); ++i)
@@ -189,7 +189,7 @@ UString UStringExt::expandTab(const char* s, uint32_t n, int tab)
          {
          len = _end - start;
 
-         (void) x.reserve(x.size() + len + tab);
+         (void) x.reserve(len + tab);
 
          if (len)
             {
@@ -242,7 +242,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
 
       U_INTERNAL_DUMP("start = %u _end = %u len = %u", start, _end, len)
 
-      (void) x.reserve(x.size() + len + n2);
+      (void) x.reserve(len + n2);
 
       if (len)
          {

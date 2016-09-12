@@ -210,9 +210,6 @@ static uint32_t num2str32(uint32_t num, char* restrict cp)
       d1 = (num / 100) << 1;
       d2 = (num % 100) << 1;
 
-      U_INTERNAL_ASSERT_MINOR(d1, 200)
-      U_INTERNAL_ASSERT_MINOR(d2, 200)
-
       if (num >= 1000) *cp++ = u_ctn2s[d1];
       if (num >=  100) *cp++ = u_ctn2s[d1+1];
       if (num >=   10) *cp++ = u_ctn2s[d2];
@@ -229,11 +226,6 @@ static uint32_t num2str32(uint32_t num, char* restrict cp)
       d2 = (b % 100) << 1;
       d3 = (c / 100);
       d4 = (c % 100);
-
-      U_INTERNAL_ASSERT_MINOR(d1, 200)
-      U_INTERNAL_ASSERT_MINOR(d2, 200)
-      U_INTERNAL_ASSERT_MINOR(d3, 100)
-      U_INTERNAL_ASSERT_MINOR(d4, 100)
 
       if (num >= 10000000) *cp++ = u_ctn2s[d1];
       if (num >=  1000000) *cp++ = u_ctn2s[d1+1];
@@ -254,8 +246,6 @@ static uint32_t num2str32(uint32_t num, char* restrict cp)
    if (a < 10) *cp++ = '0' + (char)a;
    else
       {
-      U_INTERNAL_ASSERT_MINOR(a, 100)
-
       U_NUM2STR16(cp, a);
 
       cp += 2;
@@ -269,11 +259,6 @@ static uint32_t num2str32(uint32_t num, char* restrict cp)
 
    d3 = (c / 100);
    d4 = (c % 100);
-
-   U_INTERNAL_ASSERT_MINOR(d1, 100)
-   U_INTERNAL_ASSERT_MINOR(d2, 100)
-   U_INTERNAL_ASSERT_MINOR(d3, 100)
-   U_INTERNAL_ASSERT_MINOR(d4, 100)
 
    U_NUM2STR16(cp,   d1);
    U_NUM2STR16(cp+2, d2);
@@ -398,6 +383,9 @@ static uint32_t num2str64(uint64_t num, char* restrict cp)
    return (cp + 16 - start);
 }
 
+static uint32_t dtoa(double num, char* restrict cp) { return sprintf(cp, "%g", num); }
+
+uPFdpc   u_dbl2str   = dtoa;
 uPFu32pc u_num2str32 = num2str32;
 uPFu64pc u_num2str64 = num2str64;
 
@@ -861,7 +849,7 @@ bool u_setStartTime(void)
 
 void u_init_ulib(char** restrict argv)
 {
-   U_INTERNAL_TRACE("u_init_ulib()")
+   U_INTERNAL_TRACE("u_init_ulib(%p)", argv)
 
    u_setPid();
 
@@ -888,13 +876,13 @@ void u_init_ulib(char** restrict argv)
    __get_cpuid(1, &cpuid[0], &cpuid[1], &cpuid[2], &cpuid[3]);
 # endif
 # ifndef bit_SSE2
-#  define bit_SSE2 (1 << 26) /* Taken from GCC <cpuid.h> ... just more visual & descriptive! */
+# define bit_SSE2 (1 << 26) /* Taken from GCC <cpuid.h> ... just more visual & descriptive! */
 # endif
 # ifndef bit_SSSE3
-#  define bit_SSSE3 (1 << 9)
+# define bit_SSSE3 (1 << 9)
 # endif
 # ifndef bit_SSE4_2
-#  define bit_SSE4_2 (1 << 20)
+# define bit_SSE4_2 (1 << 20)
 # endif
 # if defined(_M_X64) || defined(__x86_64__)  /* 64-bit */
         if ((cpuid[2] & bit_SSE4_2) != 0) u_flag_sse = 42; /* detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access */
@@ -964,7 +952,7 @@ void u_init_ulib(char** restrict argv)
  * the array indeterminate
  */
 
-uint32_t u_strftime1(char* restrict s, uint32_t maxsize, const char* restrict format)
+uint32_t u_strftime1(char* restrict buffer, uint32_t maxsize, const char* restrict format)
 {
    static const int   day_name_len[7]  = { 6, 6, 7, 9, 8, 6, 8 };
    static const int month_name_len[12] = { 7, 8, 5, 5, 3, 4, 4, 6, 9, 7, 8, 8 };
@@ -1059,17 +1047,20 @@ uint32_t u_strftime1(char* restrict s, uint32_t maxsize, const char* restrict fo
       (char*)&&case_z-(char*)&&cdefault /* 'z' */
    };
 
-   char ch;                      /* character from format */
-   int n, val;                   /* handy integer (short term usage) */
-   uint32_t count = 0;           /* return value accumulator */
-   const char* restrict fmark;   /* for remembering a place in format */
+   int n, val;                 /* handy integer (short term usage) */
+   const char* restrict fmark; /* for remembering a place in format */
+
+   char ch;          /* character from format */
+   uint32_t ret = 0; /* return value accumulator */
+
+   char* restrict bp = buffer;
 
    U_INTERNAL_TRACE("u_strftime1(%u,%s)", maxsize, format)
 
    U_INTERNAL_ASSERT_POINTER(format)
    U_INTERNAL_ASSERT_MAJOR(maxsize, 0)
 
-   while (count < maxsize)
+   while (ret < maxsize)
       {
       fmark = format;
 
@@ -1082,7 +1073,11 @@ uint32_t u_strftime1(char* restrict s, uint32_t maxsize, const char* restrict fo
 
       if ((n = (format - fmark)) != 0)
          {
-         while (n--) s[count++] = *fmark++;
+         ret += n;
+
+         u__memcpy(bp, fmark, n, __PRETTY_FUNCTION__);
+
+         bp += n;
          }
 
       if (ch == '\0') break;
@@ -1094,13 +1089,17 @@ uint32_t u_strftime1(char* restrict s, uint32_t maxsize, const char* restrict fo
       if (u__isalpha(ch) == false)
          {
 cdefault:
-         s[count++] = '%'; /* "%%" prints % */
+         *bp++ = '%'; /* "%%" prints % */
+
+         ++ret;
 
          if (ch != '%') /* "%?" prints %?, unless ? is 0: pretend it was %c with argument ch */
             {
             if (ch == '\0') break;
 
-            s[count++] = ch;
+            *bp++ = ch;
+
+            ++ret;
             }
 
          continue;
@@ -1111,314 +1110,336 @@ cdefault:
       goto *((char*)&&cdefault + dispatch_table[ch-'A']);
 
 case_A: /* %A The full name for the day of the week */
+      (void) u__memcpy(bp, u_day_name[u_strftime_tm.tm_wday], day_name_len[u_strftime_tm.tm_wday], __PRETTY_FUNCTION__);
 
-      (void) u__memcpy(s+count, u_day_name[u_strftime_tm.tm_wday], day_name_len[u_strftime_tm.tm_wday], __PRETTY_FUNCTION__);
-                         count +=                                  day_name_len[u_strftime_tm.tm_wday];
+      bp  += day_name_len[u_strftime_tm.tm_wday];
+      ret += day_name_len[u_strftime_tm.tm_wday];
 
       continue;
 
 case_B: /* %B The full name of the month */
+      (void) u__memcpy(bp, u_month_name[u_strftime_tm.tm_mon], month_name_len[u_strftime_tm.tm_mon], __PRETTY_FUNCTION__);
 
-      (void) u__memcpy(s+count, u_month_name[u_strftime_tm.tm_mon], month_name_len[u_strftime_tm.tm_mon], __PRETTY_FUNCTION__);
-                         count +=                                   month_name_len[u_strftime_tm.tm_mon];
+      bp  += month_name_len[u_strftime_tm.tm_mon];
+      ret += month_name_len[u_strftime_tm.tm_mon];
 
       continue;
 
 case_H: /* %H The hour (on a 24-hour clock), formatted with two digits */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
-      U_NUM2STR16(s+count, u_strftime_tm.tm_hour);
+      U_NUM2STR16(bp, u_strftime_tm.tm_hour);
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_I: /* %I The hour (on a 12-hour clock), formatted with two digits */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
       if (u_strftime_tm.tm_hour == 0 ||
           u_strftime_tm.tm_hour == 12)
          {
-         u_put_unalignedp16(s+count, U_MULTICHAR_CONSTANT16('1', '2'));
+         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('1', '2'));
          }
       else
          {
          val = u_strftime_tm.tm_hour % 12;
 
-         u_put_unalignedp16(s+count, U_MULTICHAR_CONSTANT16('0' + (val >= 10 ? (val / 10) : 0),
-                                                            '0' + (val  % 10)));
+         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('0' + (val >= 10 ? (val / 10) : 0),
+                                                       '0' + (val  % 10)));
          }
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_M: /* %M The minute, formatted with two digits */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
-      U_NUM2STR16(s+count, u_strftime_tm.tm_min);
+      U_NUM2STR16(bp, u_strftime_tm.tm_min);
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_S: /* %S The second, formatted with two digits */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
-      U_NUM2STR16(s+count, u_strftime_tm.tm_sec);
+      U_NUM2STR16(bp, u_strftime_tm.tm_sec);
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_T: /* %X A string representing the full time of day (hours, minutes, and seconds), in a format like 13:13:13 - %T The time in 24-hour notation (%H:%M:%S) (SU) */
-      U_INTERNAL_ASSERT(count <= (maxsize-8))
+      U_INTERNAL_ASSERT(ret <= (maxsize-8))
 
-   /* if (count >= (maxsize - 8)) return 0; */
+   /* if (ret >= (maxsize - 8)) return 0; */
 
-      U_NUM2STR64(s+count, ':', u_strftime_tm.tm_hour, u_strftime_tm.tm_min, u_strftime_tm.tm_sec);
+      U_NUM2STR64(bp, ':', u_strftime_tm.tm_hour, u_strftime_tm.tm_min, u_strftime_tm.tm_sec);
 
-      count += 8;
+      bp  += 8;
+      ret += 8;
 
       continue;
 
 case_U: /* %U The week number, formatted with two digits (from 0 to 53; week number 1 is taken as beginning with the first Sunday in a year). See also %W */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
-      U_NUM2STR16(s+count, (u_strftime_tm.tm_yday + 7 - u_strftime_tm.tm_wday) / 7);
+      U_NUM2STR16(bp, (u_strftime_tm.tm_yday + 7 - u_strftime_tm.tm_wday) / 7);
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_W: /* %W Another version of the week number: like %U, but counting week 1 as beginning with the first Monday in a year */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
-      U_NUM2STR16(s+count, (u_strftime_tm.tm_yday + ((8-u_strftime_tm.tm_wday) % 7)) / 7);
+      U_NUM2STR16(bp, (u_strftime_tm.tm_yday + ((8-u_strftime_tm.tm_wday) % 7)) / 7);
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_Y: /* %Y The full year, formatted with four digits to include the century */
-      U_INTERNAL_ASSERT(count <= (maxsize-4))
+      U_INTERNAL_ASSERT(ret <= (maxsize-4))
 
-   /* if (count >= (maxsize - 4)) return 0; */
+   /* if (ret >= (maxsize - 4)) return 0; */
 
-      (void) sprintf(s+count, "%.4d", 1900 + u_strftime_tm.tm_year);
+      (void) sprintf(bp, "%.4d", 1900 + u_strftime_tm.tm_year);
 
-      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 4)
+      U_INTERNAL_ASSERT_EQUALS(strlen(bp), 4)
 
-      count += 4;
+      bp  += 4;
+      ret += 4;
 
       continue;
 
 case_Z: /* %Z Defined by ANSI C as eliciting the time zone if available */
       n = u__strlen(tzname[u_daylight], __PRETTY_FUNCTION__);
 
-      U_INTERNAL_ASSERT(count <= (maxsize-n))
+      U_INTERNAL_ASSERT(ret <= (maxsize-n))
 
-   /* if (count >= (maxsize - n)) return 0; */
+   /* if (ret >= (maxsize - n)) return 0; */
 
-      (void) u__memcpy(s+count, tzname[u_daylight], n, __PRETTY_FUNCTION__);
+      (void) u__memcpy(bp, tzname[u_daylight], n, __PRETTY_FUNCTION__);
 
-      count += n;
+      bp  += n;
+      ret += n;
 
       continue;
 
 case_a: /* %a An abbreviation for the day of the week */
+      u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
+                                                    u_day_name[u_strftime_tm.tm_wday][1],
+                                                    u_day_name[u_strftime_tm.tm_wday][2],' '));
 
-      u_put_unalignedp32(s+count, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
-                                                         u_day_name[u_strftime_tm.tm_wday][1],
-                                                         u_day_name[u_strftime_tm.tm_wday][2],' '));
-
-      count += 3;
+      bp  += 3;
+      ret += 3;
 
       continue;
 
 case_b: /* %b An abbreviation for the month name - %h Equivalent to %b (SU) */
+      u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
+                                                    u_month_name[u_strftime_tm.tm_mon][1],
+                                                    u_month_name[u_strftime_tm.tm_mon][2],' '));
 
-      u_put_unalignedp32(s+count, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
-                                                         u_month_name[u_strftime_tm.tm_mon][1],
-                                                         u_month_name[u_strftime_tm.tm_mon][2],' '));
-
-      count += 3;
+      bp  += 3;
+      ret += 3;
 
       continue;
 
 case_c: /* %c A string representing the complete date and time, in the form Mon Apr 01 13:13:13 1992 */
-      U_INTERNAL_ASSERT(count <= (maxsize-24))
+      U_INTERNAL_ASSERT(ret <= (maxsize-24))
 
-   // if (count >= (maxsize - 24)) return 0;
+   // if (ret >= (maxsize - 24)) return 0;
 
-      u_put_unalignedp32(s+count, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
-                                                         u_day_name[u_strftime_tm.tm_wday][1],
-                                                         u_day_name[u_strftime_tm.tm_wday][2],' '));
+      u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
+                                                    u_day_name[u_strftime_tm.tm_wday][1],
+                                                    u_day_name[u_strftime_tm.tm_wday][2],' '));
 
-      u_put_unalignedp32(s+count+4, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
-                                                           u_month_name[u_strftime_tm.tm_mon][1],
-                                                           u_month_name[u_strftime_tm.tm_mon][2],' '));
+      u_put_unalignedp32(bp+4, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
+                                                      u_month_name[u_strftime_tm.tm_mon][1],
+                                                      u_month_name[u_strftime_tm.tm_mon][2],' '));
 
-      (void) sprintf(s+count+8, "%.2d %2.2d:%2.2d:%2.2d %.4d", u_strftime_tm.tm_mday, u_strftime_tm.tm_hour,
-                                                               u_strftime_tm.tm_min,  u_strftime_tm.tm_sec,
-                                                               1900 + u_strftime_tm.tm_year);
+      (void) sprintf(bp+8, "%.2d %2.2d:%2.2d:%2.2d %.4d", u_strftime_tm.tm_mday, u_strftime_tm.tm_hour,
+                                                          u_strftime_tm.tm_min,  u_strftime_tm.tm_sec,
+                                                          1900 + u_strftime_tm.tm_year);
 
-      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 8+17)
+      U_INTERNAL_ASSERT_EQUALS(strlen(bp), 8+17)
 
-      count += 8+17;
+      bp  += 8+17;
+      ret += 8+17;
 
       continue;
 
 case_d: /* %d The day of the month, formatted with two digits */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
-      U_NUM2STR16(s+count, u_strftime_tm.tm_mday);
+      U_NUM2STR16(bp, u_strftime_tm.tm_mday);
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_e: /* %e Like %d, the day of the month as a decimal number, but a leading zero is replaced by a space */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
       val = (u_strftime_tm.tm_mday >= 10 ? (u_strftime_tm.tm_mday / 10) : 0);
 
-      u_put_unalignedp16(s+count, U_MULTICHAR_CONSTANT16(val ? '0' + val : ' ',
-                                                               '0' + (u_strftime_tm.tm_mday % 10)));
+      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(val ? '0' + val : ' ',
+                                                          '0' + (u_strftime_tm.tm_mday % 10)));
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_j: /* %j The count of days in the year, formatted with three digits (from 1 to 366) */
-      U_INTERNAL_ASSERT(count <= (maxsize-3))
+      U_INTERNAL_ASSERT(ret <= (maxsize-3))
 
-   /* if (count >= (maxsize - 3)) return 0; */
+   /* if (ret >= (maxsize - 3)) return 0; */
 
-      (void) sprintf(s+count, "%.3d", u_strftime_tm.tm_yday+1);
+      (void) sprintf(bp, "%.3d", u_strftime_tm.tm_yday+1);
 
-      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 3)
+      U_INTERNAL_ASSERT_EQUALS(strlen(bp), 3)
 
-      count += 3;
+      bp  += 3;
+      ret += 3;
 
       continue;
 
 case_m: /* %m The month number, formatted with two digits */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
-      U_NUM2STR16(s+count, u_strftime_tm.tm_mon+1);
+      U_NUM2STR16(bp, u_strftime_tm.tm_mon+1);
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_p: /* %p Either AM or PM as appropriate */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
-      u_put_unalignedp16(s+count, U_MULTICHAR_CONSTANT16(u_strftime_tm.tm_hour < 12 ? 'A' : 'P','M'));
+      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(u_strftime_tm.tm_hour < 12 ? 'A' : 'P','M'));
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_w: /* %w A single digit representing the day of the week: Sunday is day 0 */
-      U_INTERNAL_ASSERT(count <= (maxsize-1))
+      U_INTERNAL_ASSERT(ret <= (maxsize-1))
 
-   /* if (count >= (maxsize - 1)) return 0; */
+   /* if (ret >= (maxsize - 1)) return 0; */
 
-      s[count++] = '0' + (u_strftime_tm.tm_wday % 10);
+      *bp++ = '0' + (u_strftime_tm.tm_wday % 10);
+
+      ++ret;
 
       continue;
 
 case_x: /* %x A string representing the complete date, in a format like Mon Apr 01 1992 */
-      U_INTERNAL_ASSERT(count <= (maxsize-15))
+      U_INTERNAL_ASSERT(ret <= (maxsize-15))
 
-   /* if (count >= (maxsize - 15)) return 0; */
+   /* if (ret >= (maxsize - 15)) return 0; */
 
-      u_put_unalignedp32(s+count, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
-                                                         u_day_name[u_strftime_tm.tm_wday][1],
-                                                         u_day_name[u_strftime_tm.tm_wday][2],' '));
+      u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(u_day_name[u_strftime_tm.tm_wday][0],
+                                                    u_day_name[u_strftime_tm.tm_wday][1],
+                                                    u_day_name[u_strftime_tm.tm_wday][2],' '));
 
-      u_put_unalignedp32(s+count+4, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
-                                                           u_month_name[u_strftime_tm.tm_mon][1],
-                                                           u_month_name[u_strftime_tm.tm_mon][2],' '));
+      u_put_unalignedp32(bp+4, U_MULTICHAR_CONSTANT32(u_month_name[u_strftime_tm.tm_mon][0],
+                                                      u_month_name[u_strftime_tm.tm_mon][1],
+                                                      u_month_name[u_strftime_tm.tm_mon][2],' '));
 
-      (void) sprintf(s+count+8, "%.2d %.4d", u_strftime_tm.tm_mday, 1900 + u_strftime_tm.tm_year);
+      (void) sprintf(bp+8, "%.2d %.4d", u_strftime_tm.tm_mday, 1900 + u_strftime_tm.tm_year);
 
-      U_INTERNAL_ASSERT_EQUALS(strlen(s+count), 8+7)
+      U_INTERNAL_ASSERT_EQUALS(strlen(bp), 8+7)
 
-      count += 8+7;
+      bp  += 8+7;
+      ret += 8+7;
 
       continue;
 
 case_y: /* %y The last two digits of the year */
-      U_INTERNAL_ASSERT(count <= (maxsize-2))
+      U_INTERNAL_ASSERT(ret <= (maxsize-2))
 
-   /* if (count >= (maxsize - 2)) return 0; */
+   /* if (ret >= (maxsize - 2)) return 0; */
 
       /**
        * The year could be greater than 100, so we need the value modulo 100.
        * The year could be negative, so we need to correct for a possible negative remainder
        */
 
-      U_NUM2STR16(s+count, ((u_strftime_tm.tm_year % 100) + 100) % 100);
+      U_NUM2STR16(bp, ((u_strftime_tm.tm_year % 100) + 100) % 100);
 
-      count += 2;
+      bp  += 2;
+      ret += 2;
 
       continue;
 
 case_z: /* %z The +hhmm or -hhmm numeric timezone (that is, the hour and minute offset from UTC) */
-      U_INTERNAL_ASSERT(count <= (maxsize-5))
+      U_INTERNAL_ASSERT(ret <= (maxsize-5))
 
-   /* if (count >= (maxsize - 5)) return 0; */
+   /* if (ret >= (maxsize - 5)) return 0; */
 
       val = (u_now_adjust / 3600);
 
       if (val > 0)
          {
-         s[count++] = '+';
+         *bp++ = '+';
 
-         U_NUM2STR16(s+count, val);
+         U_NUM2STR16(bp, val);
          }
       else
          {
-         s[count++] = '-';
+         *bp++ = '-';
 
-         U_NUM2STR16(s+count, -val);
+         U_NUM2STR16(bp, -val);
          }
 
-      U_NUM2STR16(s+count+2, u_now_adjust % 3600);
+      U_NUM2STR16(bp+3, u_now_adjust % 3600);
 
-      count += 4;
+      bp  += 5;
+      ret += 5;
       }
 
-   U_INTERNAL_PRINT("count = %u maxsize = %u", count, maxsize)
+   U_INTERNAL_PRINT("ret = %u maxsize = %u", ret, maxsize)
 
-   if (count < maxsize) s[count] = '\0';
+   if (ret < maxsize) *bp = '\0';
 
-   U_INTERNAL_ASSERT(count <= maxsize)
+   U_INTERNAL_ASSERT(ret <= maxsize)
 
-   return count;
+   return ret;
 }
 
 uint32_t u_strftime2(char* restrict s, uint32_t maxsize, const char* restrict format, time_t t)
@@ -1601,7 +1622,6 @@ static const char* tab_color[] = { U_RESET_STR,
 #endif
 
 /**
- * ----------------------------------------------------------------------------
  * Print with format extension: bBCDHMNOPQrRSUvVYwW
  * ----------------------------------------------------------------------------
  * '%b': print bool ("true" or "false")
@@ -1647,7 +1667,7 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
       (char*)&&case_space-(char*)&&cdefault, /* ' ' */
       0,/* '!' */
       0,/* '"' */
-      (char*)&&case_number-(char*)&&cdefault,/* '#' */
+      (char*)&&case_alt-(char*)&&cdefault,/* '#' */
       0,/* '$' */
       0,/* '%' */
       0,/* '&' */
@@ -1746,29 +1766,36 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
    int dprec;   /* a copy of prec if [diouxX], 0 otherwise */
    int fieldsz; /* field size expanded by sign, dpad etc */
 
-   char sign;                      /* sign prefix (' ', '+', '-', or \0) */
-   const char* restrict fmark;     /* for remembering a place in format */
-   unsigned char buf_number[32];   /* space for %[cdiouxX] */
-   unsigned char* restrict cp = 0; /* handy char pointer (short term usage) */
-
-   uint64_t argument = 0;          /* integer arguments %[diIouxX] */
-   enum { OCT, DEC, HEX } base;    /* base for [diIouxX] conversion */
-
-   int flags; /* flags as above */
+   time_t t;
+   char sign;                   /* sign prefix (' ', '+', '-', or \0) */
+   unsigned char c;
+   uint64_t argument;           /* integer arguments %[diIouxX] */
+   int i, n, remaining;         /* handy integer (short term usage) */
+   struct U_DATA udata;
+   char* restrict pbase;
+   uint32_t len, maxlen;
+   unsigned char buf[32];       /* space for %[cdiouxX] or fmt for float/double */
+   struct ustringrep* pstr;
+   const char* restrict fmark;  /* for remembering a place in format */
+   unsigned char* restrict cp;  /* handy char pointer (short term usage) */
+   enum { OCT, DEC, HEX } base; /* base for [diIouxX] conversion */
+   const char* restrict fmtdate;
 
    /* Flags used during conversion */
 
-#  define LONGINT            0x001 /* long integer */
-#  define LLONGINT           0x002 /* long long integer */
-#  define LONGDBL            0x004 /* long double */
-#  define SHORTINT           0x008 /* short integer */
-#  define ALT                0x010 /* alternate form */
-#  define LADJUST            0x020 /* left adjustment */
-#  define ZEROPAD            0x040 /* zero (as opposed to blank) */
-#  define HEXPREFIX          0x080 /* add 0x or 0X prefix */
-#  define THOUSANDS_GROUPED  0x100 /* For decimal conversion (i,d,u,f,F,g,G) the output is to be grouped with thousands */
+   int flags;
 
-   /* To extend shorts properly, we need both signed and uint32_t argument extraction methods */
+#  define LONGINT           0x001 /* long integer */
+#  define LLONGINT          0x002 /* long long integer */
+#  define LONGDBL           0x004 /* long double */
+#  define SHORTINT          0x008 /* short integer */
+#  define ALT               0x010 /* alternate form */
+#  define LADJUST           0x020 /* left adjustment */
+#  define ZEROPAD           0x040 /* zero (as opposed to blank) */
+#  define HEXPREFIX         0x080 /* add 0x or 0X prefix */
+#  define THOUSANDS_GROUPED 0x100 /* For decimal conversion (i,d,u,f,F,g,G) the output is to be grouped with thousands */
+
+   /* To extend shorts properly, we need both signed and unsigned argument extraction methods */
 
 #  define VA_ARG(type) va_arg(argp, type)
 
@@ -1781,20 +1808,10 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
                   flags & SHORTINT ? (uint64_t)(uint16_t) VA_ARG(int) : \
                                      (uint64_t)           VA_ARG(unsigned int))
 
-   /* Scan the format for conversions (`%' character) */
-
    char ch;          /* character from format */
-   time_t t;
    uint32_t ret = 0; /* return value accumulator */
-   unsigned char c;
-   struct U_DATA udata;
-   char* restrict pbase;
-   struct ustringrep* pstr;
-   const char* restrict ccp;
+
    char* restrict bp = buffer;
-   unsigned char fmt_float[32];
-   const char* restrict fmtdate;
-   int i, n, len, maxlen, remaining; /* handy integer (short term usage) */
 #ifdef DEBUG
    const char* restrict format_save = format;
 #endif
@@ -1806,6 +1823,8 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
    while (true)
       {
       U_INTERNAL_ERROR(ret <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %u buffer_size = %u format = \"%s\"", ret, buffer_size, format_save);
+
+      /* Scan the format for conversions ('%' character) */
 
       fmark = format;
 
@@ -1820,14 +1839,18 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
          {
          ret += n;
 
-         while (n--) *bp++ = *fmark++;
+         u__memcpy(bp, fmark, n, __PRETTY_FUNCTION__);
+
+         bp += n;
          }
 
       if (ch == '\0') break;
 
+      sign  = 0;
       prec  = -1;
-      sign  = '\0';
-      width = flags = dprec = 0;
+      width =
+      flags =
+      dprec = 0;
 
       ++format; /* skip over '%' */
 
@@ -1835,7 +1858,7 @@ rflag:
       ch = *format++;
 
 reswitch:
-      U_INTERNAL_PRINT("prec = %d ch = %c", prec, ch)
+      U_INTERNAL_PRINT("prec = %d sign = %d u__isprintf(%c) = %u", prec, sign, ch, u__isprintf(ch))
 
       if (UNLIKELY(u__isprintf(ch) == false))
          {
@@ -1861,11 +1884,11 @@ cdefault:
       goto *((char*)&&cdefault + dispatch_table[ch-' ']);
 
 case_space: /* If the space and + flags both appear, the space flag will be ignored */
-      if (sign == '\0') sign = ' ';
+      if (sign == 0) sign = ' ';
 
       goto rflag;
 
-case_number: /* field flag characters: # */
+case_alt: /* field flag characters: # */
       flags |= ALT;
 
       goto rflag;
@@ -1892,7 +1915,11 @@ case_plus: /* field flag characters: + */
       goto rflag;
 
 case_period: /* The field precision '.' */
-      if ((ch = *format++) == '*')
+      if ((ch = *format++) != '*')
+         {
+         for (prec = 0; u__isdigit(ch); ch = *format++) prec = (prec*10) + (ch-'0');
+         }
+      else
          {
          prec = VA_ARG(int);
 
@@ -1902,68 +1929,67 @@ case_period: /* The field precision '.' */
 
          if (u__tolower(ch) == 's') goto case_str;
          }
-      else
-         {
-         for (prec = 0; u__isdigit(ch); ch = *format++) prec = (prec*10) + (ch-'0');
-         }
 
       goto reswitch;
 
 case_zero: /* Note that 0 is taken as a flag, not as the beginning of a field width */
-      if (!(flags & LADJUST)) flags |= ZEROPAD; /* '-' disables '0' */
+      if ((flags & LADJUST) == 0) flags |= ZEROPAD; /* '-' disables '0' */
 
       goto rflag;
 
 case_digit: /* field width: [1-9] - An optional decimal digit string (with nonzero first digit) specifying a minimum field width */
-      n = 0;
+      U_INTERNAL_ASSERT_EQUALS(width, 0)
 
       do {
-         n  = n*10 + (ch-'0');
+         width = width * 10 + (ch-'0');
+
          ch = *format++;
          }
       while (u__isdigit(ch));
 
-      width = n;
-
       goto reswitch;
 
 case_float:
-      fmt_float[0] = '%';
-
-      cp = fmt_float + 1;
-
-      if ((flags & ALT)     != 0)           *cp++ = '#';
-      if ((flags & ZEROPAD) != 0)           *cp++ = '0';
-      if ((flags & LADJUST) != 0)           *cp++ = '-';
-      if ((flags & THOUSANDS_GROUPED) != 0) *cp++ = '\'';
-      if (sign != '\0')                     *cp++ = sign;
-
-      *cp++ = '*'; /* width */
-
-      u_put_unalignedp16(cp, U_MULTICHAR_CONSTANT16('.','*')); /* prec */
-
-      cp += 2;
-
-      if (flags & LONGDBL) *cp++ = 'L';
-
-      u_put_unalignedp16(cp, U_MULTICHAR_CONSTANT16(ch,'\0'));
-
-      ++cp;
-
-      if (flags & LONGDBL)
-         {
-         long double ldbl = VA_ARG(long double);
-
-         len = sprintf(bp, (const char* restrict)fmt_float, width, prec, ldbl);
-         }
-      else
+      if (ch == 'g'  &&
+          prec == -1 &&
+          width == 0 &&
+          (flags & (LADJUST | ZEROPAD | THOUSANDS_GROUPED | LONGDBL)) == 0)
          {
          double dbl = VA_ARG(double);
 
-         len = sprintf(bp, (const char* restrict)fmt_float, width, prec, dbl);
+         len = u_dtoa(dbl, bp);
          }
+      else
+         {
+         buf[0] = '%';
 
-      U_INTERNAL_ASSERT_EQUALS(len, (int)strlen(bp))
+         cp = buf + 1;
+
+         if ((flags & ALT)     != 0)           *cp++ = '#';
+         if ((flags & ZEROPAD) != 0)           *cp++ = '0';
+         if ((flags & LADJUST) != 0)           *cp++ = '-';
+         if ((flags & THOUSANDS_GROUPED) != 0) *cp++ = '\'';
+         if (sign)                             *cp++ = sign;
+
+         u_put_unalignedp32(cp, U_MULTICHAR_CONSTANT32('*','.','*','L')); /* width, prec */
+
+         u_put_unalignedp16(cp + ((flags & LONGDBL) == 0 ? 3 : 4), U_MULTICHAR_CONSTANT16(ch,'\0'));
+
+         if ((flags & LONGDBL) != 0)
+            {
+            long double ldbl = VA_ARG(long double);
+
+            len = sprintf(bp, (const char* restrict)buf, width, prec, ldbl);
+            }
+         else
+            {
+            double dbl = VA_ARG(double);
+
+            len = sprintf(bp, (const char* restrict)buf, width, prec, dbl);
+            }
+
+         U_INTERNAL_ASSERT_EQUALS(len, strlen(bp))
+         }
 
       bp  += len;
       ret += len;
@@ -2023,13 +2049,14 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
          maxlen = (u_printf_string_max_length > 0 ? u_printf_string_max_length : 128);
 
          if (prec < 0 || /* NB: no precision specified... */
-             prec > maxlen)
+             prec > (int)maxlen)
             {
             prec = maxlen;
             }
 
+         U_INTERNAL_ASSERT_EQUALS(sign, 0)
+
          n         = 0;
-         sign      = 0;
          pbase     = bp;
          remaining = buffer_size - ret;
 
@@ -2072,15 +2099,14 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
                 remaining <= 60)
                {
                if (sign ||
-                   len < 0) /* NB: no precision specified... */
+                   len == U_NOT_FOUND) /* NB: no precision specified... */
                   {
                   /* NB: print something that have the meaning of 'to be continued'... */
 
-                  *bp++ = '.';
-
                   u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('.','.'));
 
-                  bp += 2;
+                   bp  += 2;
+                  *bp++ = '.';
                   }
 
                break;
@@ -2099,11 +2125,12 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
          }
 
 case_ustring_v:
-      sign = '\0';
-      size = (prec < 0 ? (int) u__strlen((const char*)cp, __PRETTY_FUNCTION__) : prec);
+      U_INTERNAL_ASSERT_EQUALS(sign, 0)
+
+      size = (prec < 0 ? (int)u__strlen((const char*)cp, __PRETTY_FUNCTION__) : prec);
 
       U_INTERNAL_ERROR(size <= (int)(buffer_size - ret),
-                       "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %u cp = %.20s buffer_size = %u format = \"%s\"",
+                       "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %d cp = %.20s buffer_size = %u format = \"%s\"",
                        size, (buffer_size - ret), cp, buffer_size, format_save);
 
       /* if a width from format is specified, the 0 flag for padding will be ignored... */
@@ -2234,9 +2261,19 @@ case_D: /* extension: print date and time in various format */
             bp  += len;
             ret += len;
 
-            len = sprintf(bp, " +%ld days", (long)t / U_ONE_DAY_IN_SECOND);
+            u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(' ','+'));
 
-            U_INTERNAL_ASSERT_EQUALS(len, (int)strlen(bp))
+            bp  += 2;
+            ret += 2;
+
+            len = u_num2str32(t / U_ONE_DAY_IN_SECOND, bp);
+
+            u_put_unalignedp32(bp+len, U_MULTICHAR_CONSTANT32(' ','d','a','y'));
+
+             bp  += 4;
+            *bp++ = 's';
+
+            ret += 5;
             }
          }
       else if (width == 4) /* _millisec */
@@ -2252,7 +2289,7 @@ case_D: /* extension: print date and time in various format */
 
          len = sprintf(bp, "_%03ld", ms);
 
-         U_INTERNAL_ASSERT_EQUALS(len, (int)strlen(bp))
+         U_INTERNAL_ASSERT_EQUALS(len, strlen(bp))
          }
 
       bp  += len;
@@ -2278,7 +2315,6 @@ case_I: /* extension: print off_t */
       goto case_d;
 
 case_J: /* extension: print U_DATA */
-
       udata = VA_ARG(struct U_DATA);
 
       cp   = udata.dptr;
@@ -2326,15 +2362,15 @@ case_Q: /* extension: call exit() or abort() (var-argument is the arg passed to 
       continue;
 
 case_R: /* extension: print msg - u_getSysError() */
-      ccp = VA_ARG(const char* restrict);
+      cp = VA_ARG(unsigned char* restrict);
 
-      U_INTERNAL_PRINT("ccp = %s", ccp)
+      U_INTERNAL_PRINT("cp = %s", cp)
 
-      if (ccp)
+      if (cp)
          {
-         len = u__strlen(ccp, __PRETTY_FUNCTION__);
+         len = u__strlen((const char* restrict)cp, __PRETTY_FUNCTION__);
 
-         u__memcpy(bp, ccp, len, __PRETTY_FUNCTION__);
+         u__memcpy(bp, cp, len, __PRETTY_FUNCTION__);
 
          bp  += len;
          ret += len;
@@ -2342,11 +2378,11 @@ case_R: /* extension: print msg - u_getSysError() */
 
       if ((flags & ALT) == 0)
          {
+         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(' ','-'));
+
+          bp  += 2;
          *bp++ = ' ';
 
-         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('-',' '));
-
-         bp  += 2;
          ret += 3;
          }
 
@@ -2357,18 +2393,18 @@ case_R: /* extension: print msg - u_getSysError() */
          {
          errno = - errno;
 
-         ccp = getSysError_w32((uint32_t*)&len);
+         cp = getSysError_w32((uint32_t*)&len);
 
-         u__memcpy(bp, ccp, len, __PRETTY_FUNCTION__);
+         u__memcpy(bp, cp, len, __PRETTY_FUNCTION__);
 
          bp  += len;
          ret += len;
 
+         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(' ','-'));
+
+          bp  += 2;
          *bp++ = ' ';
 
-         u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('-',' '));
-
-         bp  += 2;
          ret += 3;
 
          MAP_WIN32_ERROR_TO_POSIX
@@ -2402,7 +2438,6 @@ case_U: /* extension: print user name */
       continue;
 
 case_V: /* extension: print ustring */
-
       pstr = VA_ARG(struct ustringrep*);
 
       U_INTERNAL_ASSERT_POINTER(pstr)
@@ -2437,24 +2472,20 @@ case_X:
 
       /* leading 0x/X only if non-zero */
 
-      if (argument != 0LL &&
+      if (argument != 0 &&
           (flags & ALT) != 0)
          {
          flags |= HEXPREFIX;
          }
 
-      /* uint32_t conversions */
-
 nosign:
-      sign = '\0';
+      sign = 0;
 
-      /* ... diouXx conversions ... if a precision is specified, the 0 flag will be ignored */
-
-number:
-      if ((dprec = prec) >= 0) flags &= ~ZEROPAD;
+number: /* uint32_t conversions */
+      if ((dprec = prec) >= 0) flags &= ~ZEROPAD; /* ... diouXx conversions ... if a precision is specified, the 0 flag will be ignored */
 
       if (prec     == 0 &&
-          argument == 0LL)
+          argument == 0)
          {
          size = 0; /* The result of converting a zero value with an explicit precision of zero is no characters */
          }
@@ -2462,9 +2493,9 @@ number:
          {
          if (base == OCT)
             {
-            cp = buf_number + sizeof(buf_number);
+            cp = buf + sizeof(buf);
 
-            do { *--cp = (argument & 7L) + '0'; } while (argument >>= 3L);
+            do { *--cp = (argument & 7) + '0'; } while (argument >>= 3);
 
             /* handle octal leading 0 */
 
@@ -2474,17 +2505,18 @@ number:
                *--cp = '0';
                }
 
-            size = (ptrdiff_t)(buf_number + sizeof(buf_number) - cp);
+            size = (ptrdiff_t)(buf + sizeof(buf) - cp);
             }
          else if (base == HEX)
             {
-            const unsigned char* restrict xdigs = (ch == 'X' ? u_hex_upper : u_hex_lower); /* digits for [xX] conversion */
+            const unsigned char* restrict xdigs = (ch == 'X' ? u_hex_upper
+                                                             : u_hex_lower); /* digits for [xX] conversion */
 
-            cp = buf_number + sizeof(buf_number);
+            cp = buf + sizeof(buf);
 
-            do { *--cp = xdigs[argument & 15L]; } while (argument /= 16L);
+            do { *--cp = xdigs[argument & 15]; } while (argument /= 16);
 
-            size = (ptrdiff_t)(buf_number + sizeof(buf_number) - cp);
+            size = (ptrdiff_t)(buf + sizeof(buf) - cp);
             }
          else
             {
@@ -2495,12 +2527,12 @@ number:
                if (dprec ||
                    (flags & (LADJUST | ZEROPAD)) != 0)
                   {
-                  size = u_num2str64(argument, (char* restrict)(cp = buf_number));
+                  size = u_num2str64(argument, (char* restrict)(cp = buf));
 
                   goto next;
                   }
 
-               if (sign != '\0')
+               if (sign)
                   {
                   *bp++ = sign;
 
@@ -2517,20 +2549,20 @@ number:
 
             n = 1;
 
-            cp = buf_number + sizeof(buf_number);
+            cp = buf + sizeof(buf);
 
-            while (argument >= 10LL) /* NB: many numbers are 1 digit */
+            while (argument >= 10) /* NB: many numbers are 1 digit */
                {
-               *--cp = (unsigned char)(argument % 10LL) + '0';
+               *--cp = (unsigned char)(argument % 10) + '0';
 
-               argument /= 10LL;
+               argument /= 10;
 
                if ((n++ % 3) == 0) *--cp = ',';
                }
 
             *--cp = argument + '0';
 
-            size = (ptrdiff_t)(buf_number + sizeof(buf_number) - cp);
+            size = (ptrdiff_t)(buf + sizeof(buf) - cp);
             }
          }
 
@@ -2569,9 +2601,10 @@ case_b: /* extension: print bool */
       continue;
 
 case_c: /* field conversion specifier */
-      *(cp = buf_number) = VA_ARG(int);
+      *(cp = buf) = VA_ARG(int);
 
-      sign = '\0';
+      U_INTERNAL_ASSERT_EQUALS(sign, 0)
+
       size = 1;
 
       goto next;
@@ -2579,7 +2612,7 @@ case_c: /* field conversion specifier */
 case_d:
       argument = SARG();
 
-      if ((int64_t)argument < 0LL)
+      if ((int64_t)argument < 0)
          {
          sign     = '-';
          argument = -argument;
@@ -2698,7 +2731,6 @@ case_u:
       goto nosign;
 
 case_v: /* extension: print ustring */
-
       pstr = VA_ARG(struct ustringrep*);
 
       U_INTERNAL_ASSERT_POINTER(pstr)
@@ -2773,7 +2805,7 @@ next:
 
       /* prefix */
 
-      if (sign != '\0')
+      if (sign)
          {
          if (bpad) --bp;
          else
@@ -2811,7 +2843,14 @@ next:
 
       /* the string or number proper */
 
-      for (; size; --size) *bp++ = *cp++;
+      if (size)
+         {
+         U_INTERNAL_ASSERT_POINTER(cp)
+
+         u__memcpy(bp, cp, size, __PRETTY_FUNCTION__);
+
+         bp += size;
+         }
 
       /* left-adjusting padding (always blank) */
 

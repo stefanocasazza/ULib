@@ -28,7 +28,7 @@
 
 #ifdef DEBUG_DEBUG
 #  define U_INTERNAL_TRACE(format,args...) u_internal_print(false, format"\n" , ##args);
-#  define U_INTERNAL_PRINT(format,args...) U_INTERNAL_TRACE(format,args)
+#  define U_INTERNAL_PRINT(format,args...) u_internal_print(false, format"\n" , ##args);
 #else
 #  define U_INTERNAL_TRACE(format,args...)
 #  define U_INTERNAL_PRINT(format,args...)

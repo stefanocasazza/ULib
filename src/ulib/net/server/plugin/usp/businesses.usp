@@ -253,11 +253,7 @@ private:
    HTTP2Push& operator=(const HTTP2Push&)     { return *this; }
 };
 
-static UValue* pvalue;
-static Request* prequest;
 static UMongoDBClient* mc;
-static Response* presponse;
-static UVector<Response*>* pvresponse;
 
 static void usp_init_businesses()
 {
@@ -289,11 +285,6 @@ static void usp_fork_businesses()
 
       return;
       }
-
-   U_NEW(Request, prequest, Request);
-   U_NEW(Response, presponse, Response);
-   U_NEW(UValue, pvalue, UValue(ARRAY_VALUE));
-   U_NEW(UVector<Response*>, pvresponse, UVector<Response*>);
 }
 
 #ifdef DEBUG
@@ -302,14 +293,6 @@ static void usp_end_businesses()
    U_TRACE(5, "::usp_end_businesses()")
 
    delete mc;
-
-   if (pvalue)
-      {
-      delete pvalue;
-      delete prequest;
-      delete presponse;
-      delete pvresponse;
-      }
 }
 #endif
 -->
@@ -317,43 +300,18 @@ static void usp_end_businesses()
 Content-Type: application/json
 -->
 <!--#code
-if (USP_JSON_REQUEST_PARSE(*prequest))
+UString type;
+
+if (USP_JFIND_REQUEST("type", type))
    {
-   uint32_t i, n;
-
-   // 1) identify user by TOKEN
-
-   (void) mc->findAll(); // mc->find(prequest->token);
-
-   for (i = 0, n = mc->vitem.size(); i < n; ++i)
+   if (type.equal(U_CONSTANT_TO_PARAM("localesData")))
       {
-      JSON_parse(mc->vitem[i], *presponse);
+      Response response;
 
-      // 2) Filter by RADIUS around LOCATION
-
-      if (true)
-         {
-         Response* nresponse;
-
-         U_NEW(Response, nresponse, Response(*presponse));
-
-         pvresponse->push_back(nresponse);
-         }
+      USP_JSON_OBJ_stringify(Response, response);
       }
-
-   n = pvresponse->size();
-
-   // 3) sort list by ranking algorithm
-
-   pvresponse->sort(Response::cmp_obj);
-
-   // 4) return first 20 businesses
-
-   if (n > 20) pvresponse->erase(20, n);
+   else if (type.equal(U_CONSTANT_TO_PARAM("remoteData")))
+      {
+      }
    }
-
-USP_JSON_stringify(*pvalue, UVector<Response*>, *pvresponse);
-
-pvalue->clear();
-pvresponse->clear();
 -->

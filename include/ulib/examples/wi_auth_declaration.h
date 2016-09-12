@@ -509,6 +509,38 @@ private:
    WiAuthVirtualAccessPoint& operator=(const WiAuthVirtualAccessPoint&) { return *this; }
 };
 
+static uint32_t findAnagrafica(const UString& _ip)
+{
+   U_TRACE(5, "::findAnagrafica(%V)", _ip.rep)
+
+   uint32_t pos = 0;
+
+   /**
+    * 10.8.0.156 172.16.156.0/24 111
+    * 159.213.248.233,172.25.0.0/22,213
+    */
+
+loop:
+   pos = db_anagrafica->find(_ip, pos);
+
+   U_INTERNAL_DUMP("pos = %u", pos)
+
+   if (pos != U_NOT_FOUND)
+      {
+      pos += _ip.size();
+
+      char c = db_anagrafica->c_char(pos);
+
+      if (c != ',' &&
+          u__isspace(c) == false)
+         {
+         goto loop;
+         }
+      }
+
+   U_RETURN(pos);
+}
+      
 class WiAuthNodog : public UDataStorage {
 public:
 
@@ -868,7 +900,7 @@ public:
       U_INTERNAL_ASSERT(*ap_address)
 
       int op = -1;
-      WiAuthAccessPoint* p;
+      uint32_t pos;
 
       if (ap_label->empty()) (void) ap_label->assign(U_CONSTANT_TO_PARAM("ap"));
 
@@ -907,53 +939,51 @@ public:
          {
          if (ap_address_trust == false) U_RETURN(false);
 
+         sz        = 0;
          op        = RDB_INSERT;
          port      = _port;
          status    = 0;
          hostname  = (*ap_hostname ? *ap_hostname : U_STRING_FROM_CONSTANT("hostname_empty"));
-         last_info = since = start = u_now->tv_sec;
-
-         sz                 = 1;
-         index_access_point = 0;
+         start     =
+         since     =
+         last_info = u_now->tv_sec;
 
          vec_access_point.clear();
 
-         U_NEW(WiAuthAccessPoint, p, WiAuthAccessPoint(*ap_label));
-
-         vec_access_point.push_back(p);
-
-         if (db_anagrafica)
+         if (db_anagrafica == 0 ||
+             (pos = findAnagrafica(*ap_address), pos == U_NOT_FOUND))
             {
-            /**
-             * 10.8.0.156      172.16.156.0/24 111
-             * 159.213.248.233 172.25.0.0/22   213
-             */
+            addAccessPoint();
+            }
+         else
+            {
+            bool bcsv = (db_anagrafica->c_char(pos) == ',');
 
-            uint32_t pos = db_anagrafica->find(*ap_address);
+            U_INTERNAL_DUMP("bcsv = %b", bcsv)
 
-            U_INTERNAL_DUMP("pos = %d", pos)
+            UString netmask;
+            UTokenizer tok(db_anagrafica->substr(pos));
 
-            if (pos != U_NOT_FOUND)
+            if (bcsv) tok.setDelimiter(",\n");
+
+            (void) tok.next(netmask,   (bool*)0);
+            (void) tok.next(*ap_label, (bool*)0);
+
+            U_INTERNAL_ASSERT(netmask)
+            U_INTERNAL_ASSERT(*ap_label)
+
+            addAccessPoint();
+
+            while (tok.next(*ip, (bool*)0) &&
+                   ap_address->equal(*ip))
                {
-               pos += ap_address->size();
+               (void) tok.next(netmask,   (bool*)0);
+               (void) tok.next(*ap_label, (bool*)0);
 
-               while (u__islterm(db_anagrafica->c_char(pos)) == false) ++pos;
+               U_INTERNAL_ASSERT(netmask)
+               U_INTERNAL_ASSERT(*ap_label)
 
-               UTokenizer tok(db_anagrafica->substr(pos));
-
-               while (tok.next(*ip, (bool*)0) &&
-                      ap_address->equal(*ip))
-                  {
-                  UString netmask, label;
-
-                  (void) tok.next(netmask,   (bool*)0);
-                  (void) tok.next(*ap_label, (bool*)0);
-
-                  U_INTERNAL_ASSERT(netmask)
-                  U_INTERNAL_ASSERT(*ap_label)
-
-                  addAccessPoint();
-                  }
+               addAccessPoint();
                }
             }
          }
@@ -1179,14 +1209,45 @@ public:
          }
       }
 
+   void writeToLOG(const char* op)
+      {
+      U_TRACE(5, "WiAuthUser::writeToLOG(%S)", op)
+
+      U_INTERNAL_ASSERT_POINTER(op)
+
+      getDone();
+
+      /**
+       * Example
+       * ----------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+       * 2012/08/08 14:56:00 op: PASS_AUTH, uid: 33437934, ap: 00@10.8.1.2, ip: 172.16.1.172, mac: 00:14:a5:6e:9c:cb, time: 233, traffic: 342, policy: DAILY consume: true
+       * ----------------------------------------------------------------------------------------------------------------------------------------------------------------- 
+       */
+
+      U_INTERNAL_ASSERT(_mac)
+      U_INTERNAL_ASSERT(*time_done)
+      U_INTERNAL_ASSERT(*traffic_done)
+
+      ULog::log(file_LOG->getFd(), "op: %s, uid: %v, ap: %v, ip: %v, mac: %v, time: %v, traffic: %v, policy: %v",
+                                    op,     uid->rep, getAP().rep, _ip.rep, _mac.rep, time_done->rep, traffic_done->rep, getPolicy().rep);
+      }
+
    const char* updateCounter(const UString& logout, long time_connected, uint64_t traffic, bool& ask_logout)
       {
       U_TRACE(5, "WiAuthUser::updateCounter(%V,%ld,%llu,%b)", logout.rep, time_connected, traffic, ask_logout)
 
       const char* write_to_log = 0;
 
-         _time_done += time_connected;
-      _traffic_done += traffic;
+      uint32_t    time_done_save =    _time_done;
+      uint64_t traffic_done_save = _traffic_done;
+
+         _time_done = time_connected;
+      _traffic_done = traffic;
+
+      writeToLOG("INFO");
+
+         _time_done +=    time_done_save;
+      _traffic_done += traffic_done_save;
 
       if (consume)
          {
@@ -1575,29 +1636,6 @@ next:
       if (op == RDB_REPLACE) (void) db_user->putDataStorage(   *uid);
       else                   (void) db_user->insertDataStorage(*uid);
       }
-
-   void writeToLOG(const char* op)
-      {
-      U_TRACE(5, "WiAuthUser::writeToLOG(%S)", op)
-
-      U_INTERNAL_ASSERT_POINTER(op)
-
-      getDone();
-
-      /**
-       * Example
-       * ----------------------------------------------------------------------------------------------------------------------------------------------------------------- 
-       * 2012/08/08 14:56:00 op: PASS_AUTH, uid: 33437934, ap: 00@10.8.1.2, ip: 172.16.1.172, mac: 00:14:a5:6e:9c:cb, time: 233, traffic: 342, policy: DAILY consume: true
-       * ----------------------------------------------------------------------------------------------------------------------------------------------------------------- 
-       */
-
-      U_INTERNAL_ASSERT(_mac)
-      U_INTERNAL_ASSERT(*time_done)
-      U_INTERNAL_ASSERT(*traffic_done)
-
-      ULog::log(file_LOG->getFd(), "op: %s, uid: %v, ap: %v, ip: %v, mac: %v, time: %v, traffic: %v, policy: %v",
-                                    op,     uid->rep, getAP().rep, _ip.rep, _mac.rep, time_done->rep, traffic_done->rep, getPolicy().rep);
-      }
 };
 
 static UString getUserName()
@@ -1934,16 +1972,7 @@ static int checkForUserPolicy(UStringRep* key, UStringRep* data)
       {
       *uid = db_user->getKeyID();
 
-      if (user_rec->connected)
-         {
-         uint64_t traffic = user_rec->_traffic_done / (1024ULL * 1024ULL);
-
-         if (traffic)
-            {
-            U_LOGGER("*** checkForUserPolicy() UID(%v) IP(%v) MAC(%v) AP(%v) POLICY(%v) traffic: %llu ***",
-                           uid->rep, user_rec->_ip.rep, user_rec->_mac.rep, user_rec->nodog.rep, user_rec->_policy.rep, traffic);
-            }
-         }
+      if (user_rec->connected) user_rec->writeToLOG("RST_POLICY");
 
       user_rec->_time_done        =
       user_rec->_time_consumed    = 0;
@@ -3291,7 +3320,7 @@ static bool checkTimeRequest()
       }
    else
       {
-      ko = (ts->empty() && db_anagrafica);
+      ko = ts->empty();
 
       if (ko)
          {
@@ -4498,29 +4527,52 @@ static void GET_get_config()
 
                if (db_anagrafica)
                   {
-                  /**
-                   * 10.8.0.156      172.16.156.0/24 111
-                   * 159.213.248.233 172.25.0.0/22   213
-                   */
-
-                  pos = db_anagrafica->find(*ip);
-
-                  U_INTERNAL_DUMP("pos = %d", pos)
+                  pos = findAnagrafica(*ip);
 
                   if (pos != U_NOT_FOUND)
                      {
-                     pos += ip->size();
+                     bool bcsv = (db_anagrafica->c_char(pos) == ',');
 
-                     while (u__isspace(db_anagrafica->c_char(pos)) == false) ++pos;
+                     U_INTERNAL_DUMP("bcsv = %b", bcsv)
 
                      UString netmask, label;
                      UTokenizer tok(db_anagrafica->substr(pos));
+
+                     if (bcsv) tok.setDelimiter(",\n");
 
                      (void) tok.next(netmask, (bool*)0);
                      (void) tok.next(  label, (bool*)0);
 
                      U_INTERNAL_ASSERT(label)
                      U_INTERNAL_ASSERT(netmask)
+
+                     if (bcsv)
+                        {
+                        UString _ip;
+                        UVector<UString> vnetmask, vlabel;
+
+                          vlabel.push(label);
+                        vnetmask.push(netmask);
+
+                        while (tok.next(_ip, (bool*)0) &&
+                               ip->equal(_ip))
+                           {
+                           (void) tok.next(netmask, (bool*)0);
+                           (void) tok.next(  label, (bool*)0);
+
+                           U_INTERNAL_ASSERT(label)
+                           U_INTERNAL_ASSERT(netmask)
+
+                             vlabel.push(label);
+                           vnetmask.push(netmask);
+                           }
+
+                        if (vlabel.size() > 1)
+                           {
+                             label =   vlabel.join(' ');
+                           netmask = vnetmask.join(' ');
+                           }
+                        }
 
                      _body = UStringExt::substitute(_body, U_CONSTANT_TO_PARAM("172.<CCC>.<DDD>.0/24"), U_STRING_TO_PARAM(netmask));
 

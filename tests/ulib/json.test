@@ -16,4 +16,4 @@ unset UMEMPOOL
 start_prg json < inp/json.input
 
 # Test against expected output
-test_output_wc l json
+test_output_diff json

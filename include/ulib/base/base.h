@@ -148,6 +148,7 @@ typedef bool  (*bPFpcpv) (const char*,const void*);
 typedef void  (*vPFpvpc) (void*,char*);
 typedef void  (*vPFpvpv) (void*,void*);
 
+typedef uint32_t (*uPFdpc)   (double,char*);
 typedef uint32_t (*uPFu32pc) (uint32_t,char*);
 typedef uint32_t (*uPFu64pc) (uint64_t,char*);
 
@@ -263,43 +264,6 @@ U_EXPORT void u_init_http_method_list(void);
 U_EXPORT const char* u_basename(const char* restrict path) __pure;
 U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure;
 U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n);
-
-/* conversion number to string */
-extern U_EXPORT uPFu32pc u_num2str32;
-extern U_EXPORT uPFu64pc u_num2str64;
-extern U_EXPORT const char u_ctn2s[200];
-
-static inline uint32_t u_num2str32s(int32_t num, char* restrict cp)
-{
-   uint32_t bsign = (num < 0);
-
-   U_INTERNAL_TRACE("u_num2str32s(%u,%p)", num, cp)
-
-   if (bsign)
-      {
-      num = -num;
-
-      *cp++ = '-';
-      }
-
-   return bsign + u_num2str32(num, cp);
-}
-
-static inline uint32_t u_num2str64s(int64_t num, char* restrict cp)
-{
-   uint32_t bsign = (num < 0LL);
-
-   U_INTERNAL_TRACE("u_num2str64s(%lld,%p)", num, cp)
-
-   if (bsign)
-      {
-      num = -num;
-
-      *cp++ = '-';
-      }
-
-   return bsign + u_num2str64(num, cp);
-}
 
 /* Location info */
 extern U_EXPORT uint32_t u_num_line;
@@ -478,6 +442,69 @@ static inline void u_gettimenow(void)
 }
 #endif
 */
+
+/* conversion number to string */
+extern U_EXPORT uPFdpc   u_dbl2str;
+extern U_EXPORT uPFu32pc u_num2str32;
+extern U_EXPORT uPFu64pc u_num2str64;
+extern U_EXPORT const char u_ctn2s[200];
+
+static inline uint32_t u_num2str32s(int32_t num, char* restrict cp)
+{
+   uint32_t bsign = (num < 0);
+
+   U_INTERNAL_TRACE("u_num2str32s(%u,%p)", num, cp)
+
+   if (bsign)
+      {
+      num = -num;
+
+      *cp++ = '-';
+      }
+
+   return bsign + u_num2str32(num, cp);
+}
+
+static inline uint32_t u_num2str64s(int64_t num, char* restrict cp)
+{
+   uint32_t bsign = (num < 0);
+
+   U_INTERNAL_TRACE("u_num2str64s(%lld,%p)", num, cp)
+
+   if (bsign)
+      {
+      num = -num;
+
+      *cp++ = '-';
+      }
+
+   return bsign + u_num2str64(num, cp);
+}
+
+static inline uint32_t u_dtoa(double num, char* restrict cp)
+{
+   uint32_t bsign;
+
+   U_INTERNAL_TRACE("u_dtoa(%g,%p)", num, cp)
+
+   if (num == 0)
+      {
+      u_put_unalignedp32(cp, U_MULTICHAR_CONSTANT32('0','.','0','\0'));
+
+      return 3;
+      }
+
+   bsign = (num < 0);
+
+   if (bsign)
+      {
+      num = -num;
+
+      *cp++ = '-';
+      }
+
+   return bsign + u_dbl2str(num, cp);
+}
 
 #ifdef __cplusplus
 }

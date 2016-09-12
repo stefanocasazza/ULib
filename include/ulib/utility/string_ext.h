@@ -81,22 +81,9 @@ public:
       {
       U_TRACE(0, "UStringExt::printSize(%I)", n)
 
-      UString x(22U);
-
-      u_printSize(x.data(), n);
-
-      x.size_adjust();
-
-      U_RETURN_STRING(x);
-      }
-
-   static UString numberToString(double n)
-      {
-      U_TRACE(0, "UStringExt::numberToString(%f)", n)
-
       UString x(32U);
 
-      x.snprintf("%f", n);
+      x.rep->_length = u_printSize(x.data(), n);
 
       U_RETURN_STRING(x);
       }
@@ -114,9 +101,21 @@ public:
 
    static UString numberToString(uint64_t n);
 
+   static UString numberToString(double n)
+      {
+      U_TRACE(0, "UStringExt::numberToString(%f)", n)
+
+      UString x(32U);
+      char* ptr = x.data();
+
+      ptr[(x.rep->_length = u_dtoa(n, ptr))] = '\0';
+
+      U_RETURN_STRING(x);
+      }
+
    static UString stringFromNumber(long n)
       {
-      U_TRACE(0, "UStringExt::stringFromNumber(%lld)", n)
+      U_TRACE(0, "UStringExt::stringFromNumber(%ld)", n)
 
       UString x(22U);
 
@@ -133,20 +132,24 @@ public:
       {
       U_TRACE(0, "UStringExt::appendNumber32(%V,%u)", s.rep, number)
 
-      char buffer[10];
-      char* ptr = buffer;
+      uint32_t sz = s.size();
+      char* ptr   = s.c_pointer(sz);
 
-      (void) s.append(buffer, u_num2str32(number, ptr));
+      s.rep->_length = sz + u_num2str32(number, ptr);
+
+      U_INTERNAL_ASSERT(s.invariant())
       }
 
    static void appendNumber64(UString& s, uint64_t number)
       {
       U_TRACE(0, "UStringExt::appendNumber64(%V,%llu)", s.rep, number)
 
-      char buffer[22];
-      char* ptr = buffer;
+      uint32_t sz = s.size();
+      char* ptr   = s.c_pointer(sz);
 
-      (void) s.append(buffer, u_num2str64(number, ptr));
+      s.rep->_length = sz + u_num2str64(number, ptr);
+
+      U_INTERNAL_ASSERT(s.invariant())
       }
 
    // convert letter to upper or lower case

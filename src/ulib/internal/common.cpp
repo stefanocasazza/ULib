@@ -24,7 +24,9 @@
 #     include "./itoa.cpp"
 static uint32_t itoa32(uint32_t num, char* restrict cp) { return itoa_fwd(num, cp) - cp; }
 static uint32_t itoa64(uint64_t num, char* restrict cp) { return itoa_fwd(num, cp) - cp; }
-#  endif
+#  elif (defined(i386) || defined(__amd64) || defined(_M_IX86) || defined(_M_X64)) && !defined(HAVE_OLD_IOSTREAM) && !defined(_MSWINDOWS_) && defined(HAVE_ARCH64)
+#     include "./itoa_sse2.cpp"
+#endif
 #else
 U_EXPORT bool __cxa_guard_acquire() { return 1; }
 U_EXPORT bool __cxa_guard_release() { return 1; }
@@ -33,7 +35,6 @@ U_EXPORT void* operator new(  size_t n)   { return malloc(n); }
 U_EXPORT void* operator new[](size_t n)   { return malloc(n); }
 U_EXPORT void  operator delete(  void* p) { free(p); }
 U_EXPORT void  operator delete[](void* p) { free(p); }
-
 #  ifdef __MINGW32__
 U_EXPORT void  operator delete(  void* p,      unsigned int) { free(p); }
 U_EXPORT void  operator delete[](void* p,      unsigned int) { free(p); }
@@ -70,7 +71,7 @@ void ULib_init_openssl()
    // is responsible for seeding the PRNG by calling RAND_add()
 
 # ifdef _MSWINDOWS_
-   U_SYSCALL_VOID(srand, "%ld", u_start_time); // seed with time
+   U_SYSCALL_VOID(srand, "%ld", u_seed_hash);
 
    while (RAND_status() == 0) // Seed PRNG only if needed
       {
@@ -84,13 +85,29 @@ void ULib_init_openssl()
 }
 #endif
 
+#ifndef HAVE_OLD_IOSTREAM
+#  include <ulib/utility/dtoa_milo.h>
+static uint32_t dtoa_milo(double value, char* buffer) { int length, K; Grisu2(value, buffer, &length, &K); return Prettify(buffer, length, K); }
+#endif
+
 void ULib_init()
 {
    U_TRACE_NO_PARAM(1, "ULib_init()")
 
+   // conversion number to string
+
+#ifndef HAVE_OLD_IOSTREAM
+   u_dbl2str = dtoa_milo; 
+#endif
 #if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100
    u_num2str32 = itoa32;
    u_num2str64 = itoa64;
+#elif (defined(i386) || defined(__amd64) || defined(_M_IX86) || defined(_M_X64)) && !defined(HAVE_OLD_IOSTREAM) && !defined(_MSWINDOWS_) && defined(HAVE_ARCH64)
+   if (u_flag_sse >= 2)
+      {
+      u_num2str32 = utoa32_sse2;
+      u_num2str64 = utoa64_sse2;
+      }
 #endif
 
 #ifdef DEBUG

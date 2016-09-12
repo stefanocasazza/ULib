@@ -1481,9 +1481,10 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
    U_INTERNAL_ASSERT(u_now->tv_sec >= peer->ctime)
 
    char* ptr;
-   uint32_t sz;
    char buffer[64];
    UString info = (*vinfo_data)[U_peer_index_AUTH], str = UStringExt::substitute(peer->mac, ':', U_CONSTANT_TO_PARAM("%3A"));
+
+   uint32_t sz = info.size();
 
    U_INTERNAL_DUMP("U_peer_index_AUTH = %u info = %V peer->ip = %V", U_peer_index_AUTH, info.rep, peer->ip.rep)
 
@@ -1500,7 +1501,7 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
    // /info?Mac=98%3A0c%3A82%3A76%3A3b%3A39&ip=172.16.1.8&gateway=172.16.1.254%3A5280&ap=ap%4010.8.0.1&User=1212&logout=-1&connected=3&traffic=0
    // ------------------------------------------------------------------------------------------------------------------------------------------
 
-   (void) info.reserve((sz = info.size()) + 200U);
+   (void) info.reserve(200U);
 
    info.snprintf_add("%.*sMac=%v&ip=%v&", (sz > 0), "&", str.rep, peer->ip.rep);
 
@@ -1557,9 +1558,10 @@ void UNoCatPlugIn::addPeerRoaming()
    U_INTERNAL_ASSERT(peer->mac)
    U_INTERNAL_ASSERT(peer->user)
 
-   uint32_t sz;
    char buffer[64];
    UString data = (*vroaming_data)[U_peer_index_AUTH], str = UStringExt::substitute(peer->mac, ':', U_CONSTANT_TO_PARAM("%3A"));
+
+   uint32_t sz = data.size();
 
    U_INTERNAL_DUMP("U_peer_index_AUTH = %u data = %V peer->ip = %V", U_peer_index_AUTH, data.rep, peer->ip.rep)
 
@@ -1573,7 +1575,7 @@ void UNoCatPlugIn::addPeerRoaming()
    // /roaming?Mac=98%3A0c%3A82%3A76%3A3b%3A39&ip=172.16.1.8&gateway=172.16.1.254%3A5280&ap=ap%4010.8.0.1&User=1212
    // -------------------------------------------------------------------------------------------------------------
 
-   (void) data.reserve((sz = data.size()) + 200U);
+   (void) data.reserve(200U);
 
    data.snprintf_add("%.*sMac=%v&ip=%v&", (sz > 0), "&", str.rep, peer->ip.rep);
 

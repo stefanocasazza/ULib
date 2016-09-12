@@ -484,11 +484,17 @@ dnl		libssh_version=$(grep LIBSFTP_VERSION $sshdir/include/libssh/sftp.h | cut -
 			echo "${T_MD}libcurl found in $curldir${T_ME}"
 			USE_LIBCURL=yes
 			AC_DEFINE(USE_LIBCURL, 1, [Define if enable libcurL support])
-			libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null | sed -e "s/libcurl //g")
+			if test x_$PKG_CONFIG != x_no; then
+				libcurl_version=$(pkg-config --modversion libcurl)
+			fi
+			if test -z "${libcurl_version}"; then
+				libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null | sed -e "s/libcurl //g")
+			fi
 			if test -z "${libcurl_version}"; then
 				libcurl_version="unknown"
 			fi
-			ULIB_LIBS="-lcurl $ULIB_LIBS";
+			libcurl_linking=$($curldir/bin/curl-config --libs 2>/dev/null)
+			ULIB_LIBS="$libcurl_linking $ULIB_LIBS";
 			if test $curldir != "${CROSS_ENVIRONMENT}/" -a $curldir != "${CROSS_ENVIRONMENT}/usr" -a $curldir != "${CROSS_ENVIRONMENT}/usr/local"; then
 				CPPFLAGS="$CPPFLAGS -I$curldir/include";
 				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";

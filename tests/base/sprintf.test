@@ -9,4 +9,4 @@ start_msg sprintf
 start_prg sprintf
 
 # Test against expected output
-test_output_wc w sprintf
+test_output_diff sprintf

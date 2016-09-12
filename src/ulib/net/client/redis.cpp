@@ -28,7 +28,7 @@ bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
 
       if (env_redis_host == 0)
          {
-         UClient_Base::response.snprintf("connection disabled");
+         (void) UClient_Base::response.replace(U_CONSTANT_TO_PARAM("connection disabled"));
 
          U_RETURN(false);
          }

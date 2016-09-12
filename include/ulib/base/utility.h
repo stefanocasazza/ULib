@@ -147,7 +147,7 @@ U_EXPORT uint32_t u_memory_dump(char* restrict bp, unsigned char* restrict cp, u
 
 U_EXPORT int  u_getScreenWidth(void) __pure; /* Determine the width of the terminal we're running on */
 U_EXPORT bool u_isNumber(const char* restrict s, uint32_t n) __pure;
-U_EXPORT void u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
+U_EXPORT uint32_t u_printSize(char* restrict buffer, uint64_t bytes); /* print size using u_calcRate() */
 U_EXPORT bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len) __pure;
 
 U_EXPORT const char* u_get_mimetype(const char* restrict suffix, int* pmime_index);
@@ -518,9 +518,13 @@ static inline unsigned long u_strtoul(const char* restrict s, const char* restri
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(e)
-   U_INTERNAL_ASSERT(u__isdigit(*s))
 
-   for (c = *s; s != e; c = *++s) val = (c - '0') + (val * 10UL);
+   for (c = *s; s != e; c = *++s)
+      {
+      U_INTERNAL_ASSERT(u__isdigit(*s))
+
+      val = (c - '0') + (val * 10UL);
+      }
 
    return val;
 }
@@ -534,9 +538,13 @@ static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(e)
-   U_INTERNAL_ASSERT(u__isdigit(*s))
 
-   for (c = *s; s != e; c = *++s) val = (c - '0') + (val * 10ULL);
+   for (c = *s; s != e; c = *++s) 
+      {
+      U_INTERNAL_ASSERT(u__isdigit(*s))
+
+      val = (c - '0') + (val * 10ULL);
+      }
 
    return val;
 }
