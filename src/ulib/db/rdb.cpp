@@ -543,7 +543,7 @@ void URDB::setShared(sem_t* psem, char* spinlock)
 
       UString basename = UFile::getName();
 
-      (void) u__snprintf(somename, sizeof(somename), "/%v", basename.rep);
+      (void) u__snprintf(somename, sizeof(somename), U_CONSTANT_TO_PARAM("/%v"), basename.rep);
 
       psem     = (sem_t*) UFile::shm_open(somename, sizeof(sem_t) + 1);
       spinlock = (char*)psem + sizeof(sem_t) + 1;
@@ -2097,7 +2097,7 @@ void URDBObjectHandler<UDataStorage*>::close()
          /*
          UString x = URDB::print();
 
-         (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), O_RDWR | O_TRUNC, "%.*s.end", U_FILE_TO_TRACE(*this));
+         (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("%.*s.end"), U_FILE_TO_TRACE(*this));
          */
 
          (void) URDB::closeReorganize();
@@ -2105,7 +2105,7 @@ void URDBObjectHandler<UDataStorage*>::close()
          /*
          char buffer[1024];
 
-         (void) u__snprintf("/tmp/%.*s.init", U_FILE_TO_TRACE(*this))
+         (void) u__snprintf(U_CONSTANT_TO_PARAM("/tmp/%.*s.init"), U_FILE_TO_TRACE(*this))
 
          (void) UFile::_unlink(buffer);
          */

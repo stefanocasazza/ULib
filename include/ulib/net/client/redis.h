@@ -65,51 +65,6 @@ public:
    bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* p2, uint32_t len2);
    bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* p2, uint32_t len2, const char* p3, uint32_t len3);
 
-   bool processRequest(char recvtype, const char* fmt, ...)
-      {
-      U_TRACE(0, "UREDISClient_Base::processRequest(%C,%S)", recvtype, fmt)
-
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
-
-      bool result;
-      va_list argp;
-      va_start(argp, fmt);
-      result = processRequest(recvtype, u_buffer, u__snprintf(u_buffer, U_BUFFER_SIZE, fmt, argp));
-      va_end(argp);
-
-      U_RETURN(result);
-      }
-
-   bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* fmt, ...)
-      {
-      U_TRACE(0, "UREDISClient_Base::processRequest(%C,%.*S,%u,%S)", recvtype, len1, p1, len1, fmt)
-
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
-
-      bool result;
-      va_list argp;
-      va_start(argp, fmt);
-      result = processRequest(recvtype, p1, len1, u_buffer, u__snprintf(u_buffer, U_BUFFER_SIZE, fmt, argp));
-      va_end(argp);
-
-      U_RETURN(result);
-      }
-
-   bool processRequest(char recvtype, const char* p1, uint32_t len1, const char* p2, uint32_t len2, const char* fmt, ...)
-      {
-      U_TRACE(0, "UREDISClient_Base::processRequest(%C,%.*S,%u,%.*S,%u,%S)", recvtype, len1, p1, len1, len2, p2, len2, fmt)
-
-      U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
-
-      bool result;
-      va_list argp;
-      va_start(argp, fmt);
-      result = processRequest(recvtype, p1, len1, p2, len2, u_buffer, u__snprintf(u_buffer, U_BUFFER_SIZE, fmt, argp));
-      va_end(argp);
-
-      U_RETURN(result);
-      }
-
    // Connect to REDIS server
 
    bool connect(const char* host = 0, unsigned int _port = 6379);
@@ -395,7 +350,7 @@ public:
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
       return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("MIGRATE"), u_buffer,
-                              u__snprintf(u_buffer, U_BUFFER_SIZE, "%s %d %.*s %u %u %s %s", // host port key destination-db timeout [COPY] [REPLACE]
+                              u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%s %d %.*s %u %u %s %s"), // host port key destination-db timeout [COPY] [REPLACE]
                                           host, port, keylen, key, destination_db, timeout_ms, COPY ? "COPY" : "", REPLACE ? "REPLACE" : ""));
       }
 

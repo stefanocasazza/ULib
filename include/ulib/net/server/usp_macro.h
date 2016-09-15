@@ -21,8 +21,8 @@
 #define USP_PUTS_STRING(string)   (void)UClientImage_Base::wbuffer->append((string))
 #define USP_PUTS_CONSTANT(string) (void)UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(string))
 
-#define USP_PRINTF(fmt,args...)     (UClientImage_Base::_buffer->snprintf(fmt , ##args),USP_PUTS_STRING(*UClientImage_Base::_buffer))
-#define USP_PRINTF_ADD(fmt,args...)  UClientImage_Base::wbuffer->snprintf_add(fmt , ##args)
+#define USP_PRINTF(fmt,args...)     (UClientImage_Base::_buffer->snprintf(U_CONSTANT_TO_PARAM(fmt) , ##args),USP_PUTS_STRING(*UClientImage_Base::_buffer))
+#define USP_PRINTF_ADD(fmt,args...)  UClientImage_Base::wbuffer->snprintf_add(U_CONSTANT_TO_PARAM(fmt) , ##args)
 
 #define USP_JSON_PUTS(json)         UValue::stringify(*UClientImage_Base::wbuffer, (json))
 #define USP_JSON_REQUEST_PARSE(obj) JSON_parse(*UClientImage_Base::body, (obj))
@@ -39,7 +39,7 @@
     USP_PUTS_STRING(*UClientImage_Base::_encoded))
 
 #define USP_XML_PRINTF(fmt,args...) \
-   (UClientImage_Base::_buffer->snprintf(fmt , ##args), \
+   (UClientImage_Base::_buffer->snprintf(U_CONSTANT_TO_PARAM(fmt) , ##args), \
     USP_XML_PUTS(*UClientImage_Base::_buffer))
 
 #define USP_FORM_NAME(n)               (UHTTP::getFormValue(*UClientImage_Base::_value,(0+(n*2))),                *UClientImage_Base::_value)

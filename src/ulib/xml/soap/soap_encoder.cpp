@@ -19,7 +19,7 @@ void USOAPEncoder::encodeArgument(const UString& argName, const UString& argType
 
    encodedValue.setBuffer(200U + (argName.size() * 2) + argType.size() + argContent.size());
 
-   encodedValue.snprintf("<%v xsi:type=\"xsd:%v\">%v</%v>", argName.rep, argType.rep, argContent.rep, argName.rep);
+   encodedValue.snprintf(U_CONSTANT_TO_PARAM("<%v xsi:type=\"xsd:%v\">%v</%v>"), argName.rep, argType.rep, argContent.rep, argName.rep);
 
    arg.push(encodedValue);
 }
@@ -45,13 +45,13 @@ UString USOAPEncoder::encodeMethod(URPCMethod& method, const UString& nsName) //
 
    buffer.setBuffer(400U + (nsName.size() * 4) + (methodName.size() * 2) + encodedValue.size() + headerContents.size());
 
-   buffer.snprintf("<?xml version='1.0' ?>"
+   buffer.snprintf(U_CONSTANT_TO_PARAM("<?xml version='1.0' ?>"
                    "<env:Envelope xmlns:env=\"http://www.w3.org/2003/05/soap-envelope\" xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">"
                      "<env:Header>%v</env:Header>"
                         "<env:Body>"
                            "<%v:%v env:encodingStyle=\"http://www.w3.org/2003/05/soap-encoding\" xmlns:%v=\"%v\">%v</%v:%v>"
                         "</env:Body>"
-                   "</env:Envelope>", headerContents.rep, nsName.rep, methodName.rep, nsName.rep, nsName.rep, encodedValue.rep, nsName.rep,
+                   "</env:Envelope>"), headerContents.rep, nsName.rep, methodName.rep, nsName.rep, nsName.rep, encodedValue.rep, nsName.rep,
                    methodName.rep);
 
    U_RETURN_STRING(buffer);

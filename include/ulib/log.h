@@ -54,6 +54,7 @@ public:
    static ULog* pthis;
    static log_date date;
    static const char* prefix;
+   static uint32_t prefix_len;
    static struct iovec iov_vec[5];
    static log_date* ptr_shared_date;
 #if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
@@ -88,8 +89,8 @@ public:
    void closeLog();
    void setShared(log_data* ptr, uint32_t size, bool breference = true);
 
-   void      init(const char* _prefix); // server
-   void setPrefix(const char* _prefix); // client
+   void      init(const char* prefix, uint32_t prefix_len); // server
+   void setPrefix(const char* prefix, uint32_t prefix_len); // client
 
    // manage shared log
 
@@ -106,18 +107,18 @@ public:
 
    // write with prefix
 
-   static void log(const char* format, ...); // (buffer write == 8196)
    static void write(const char* msg, uint32_t len);
+   static void log(const char* format, uint32_t fmt_size, ...);   // (buffer write == 8196)
 
    // write without prefix
 
-   static void log(int _fd, const char* format, ...); // (buffer write == 8196)
+   static void log(int _fd, const char* format, uint32_t fmt_size, ...);   // (buffer write == 8196)
 
    // logger
 
    static int getPriorityForLogger(const char* s) __pure; // decode a symbolic name to a numeric value
 
-   static void logger(const char* ident, int priority, const char* format, ...); // (buffer write == 4096)
+   static void logger(const char* ident, int priority, const char* format, uint32_t fmt_size, ...); // (buffer write == 4096)
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;
@@ -149,8 +150,8 @@ protected:
    static void updateDate1();
    static void updateDate2();
    static void updateDate3();
-   static void logResponse(const UString& data, const char* name,                                                                  const char* format, ...);
-   static void log(const struct iovec* iov,     const char* name, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, ...);
+   static void logResponse(const UString& data, const char* name,                                                                  const char* format, uint32_t fmt_size, ...);
+   static void log(const struct iovec* iov,     const char* name, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, uint32_t fmt_size, ...);
 
 private:
    static int decode(const char* name, uint32_t len, bool bfacility) __pure U_NO_EXPORT;

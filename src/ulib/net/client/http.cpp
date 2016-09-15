@@ -253,13 +253,13 @@ UString UHttpClient_Base::getBasicAuthorizationHeader()
    // encoded in ISO-8859-1 before being Base64-encoded
    // ---------------------------------------------------------------------------------------------------------------------------
 
-   tmp.snprintf("%v:%v", user.rep, password.rep);
+   tmp.snprintf(U_CONSTANT_TO_PARAM("%v:%v"), user.rep, password.rep);
 
    UBase64::encode(tmp, data);
 
    // Authorization: Basic cy5jYXNhenphOnN0ZWZhbm8x
 
-   headerValue.snprintf("Basic %v", data.rep);
+   headerValue.snprintf(U_CONSTANT_TO_PARAM("Basic %v"), data.rep);
 
    U_RETURN_STRING(headerValue);
 }
@@ -413,26 +413,26 @@ bool UHttpClient_Base::createAuthorizationHeader(bool bProxy)
 
       // MD5(user : realm : password)
 
-      a1.snprintf("%v:%v:%v", user.rep, realm.rep, password.rep);
+      a1.snprintf(U_CONSTANT_TO_PARAM("%v:%v:%v"), user.rep, realm.rep, password.rep);
 
       UServices::generateDigest(U_HASH_MD5, 0, a1, ha1, false);
 
       // MD5(method : uri)
 
-      a2.snprintf("%.*s:%v", U_HTTP_METHOD_NUM_TO_TRACE(method_num), UClient_Base::uri.rep);
+      a2.snprintf(U_CONSTANT_TO_PARAM("%.*s:%v"), U_HTTP_METHOD_NUM_TO_TRACE(method_num), UClient_Base::uri.rep);
 
       UServices::generateDigest(U_HASH_MD5, 0, a2, ha2, false);
 
       // MD5(HA1 : nonce : nc : cnonce : qop : HA2)
 
-      a3.snprintf("%v:%v:%08u:%ld:%v:%v", ha1.rep, nonce.rep, ++nc, u_now->tv_sec, qop.rep, ha2.rep);
+      a3.snprintf(U_CONSTANT_TO_PARAM("%v:%v:%08u:%ld:%v:%v"), ha1.rep, nonce.rep, ++nc, u_now->tv_sec, qop.rep, ha2.rep);
 
       UServices::generateDigest(U_HASH_MD5, 0, a3, _response, false);
 
       // Authorization: Digest username="s.casazza", realm="Protected Area", nonce="1222108408", uri="/ok", cnonce="dad0f85801e27b987d6dc59338c7bf99",
       //                       nc=00000001, response="240312fba053f6d687d10c90928f4af2", qop="auth", algorithm="MD5"
 
-      headerValue.snprintf("Digest username=\"%v\", realm=%v, nonce=%v, uri=\"%v\", cnonce=\"%ld\", nc=%08u, response=\"%v\", qop=%v",
+      headerValue.snprintf(U_CONSTANT_TO_PARAM("Digest username=\"%v\", realm=%v, nonce=%v, uri=\"%v\", cnonce=\"%ld\", nc=%08u, response=\"%v\", qop=%v"),
                            user.rep, &realm.rep, nonce.rep, UClient_Base::uri.rep, u_now->tv_sec, nc, _response.rep, qop.rep);
 
       if (algorithm) (void) headerValue.append(U_CONSTANT_TO_PARAM(", algorithm=\"MD5\""));
@@ -599,7 +599,7 @@ bool UHttpClient_Base::putRequestOnQueue() // In general, if sendRequest() faile
 
    char _buffer[U_PATH_MAX];
 
-   (void) u__snprintf(_buffer, sizeof(_buffer), "%v/%v.%4D", UString::str_CLIENT_QUEUE_DIR->rep, UClient_Base::host_port.rep);
+   (void) u__snprintf(_buffer, sizeof(_buffer), U_CONSTANT_TO_PARAM("%v/%v.%4D"), UString::str_CLIENT_QUEUE_DIR->rep, UClient_Base::host_port.rep);
 
    int fd = UFile::creat(_buffer);
 
@@ -672,8 +672,8 @@ next:
          {
          const char* str = (num_attempts < U_MAX_ATTEMPTS ? "success" : "FAILED");
 
-         if (log_fd == -1) ULog::log(        log_msg, str, num_attempts);
-         else              ULog::log(log_fd, log_msg, str, num_attempts);
+         if (log_fd == -1) ULog::log(        log_msg, strlen(log_msg), str, num_attempts);
+         else              ULog::log(log_fd, log_msg, strlen(log_msg), str, num_attempts);
          }
       }
 
@@ -750,14 +750,22 @@ UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, ui
 
    UString tmp(800U + uri_len + (req ? req->size() : 0));
 
-   tmp.snprintf("%.*s %.*s HTTP/1.1\r\n"
-                "Host: %v\r\n"
-#              ifdef USE_LIBZ
-                "Accept-Encoding: gzip\r\n"
-#              endif
-                "User-Agent: " PACKAGE_NAME "/" PACKAGE_VERSION "\r\n"
-                "%s",
-                U_HTTP_METHOD_NUM_TO_TRACE(method_num), uri_len, _uri, host_port.rep, extension);
+#ifdef USE_LIBZ
+#  define U_WRAPREQ \
+      "%.*s %.*s HTTP/1.1\r\n" \
+      "Host: %v\r\n" \
+      "Accept-Encoding: gzip\r\n" \
+      "User-Agent: " PACKAGE_NAME "/" PACKAGE_VERSION "\r\n" \
+      "%s"
+#else
+#  define U_WRAPREQ \
+      "%.*s %.*s HTTP/1.1\r\n" \
+      "Host: %v\r\n" \
+      "User-Agent: " PACKAGE_NAME "/" PACKAGE_VERSION "\r\n" \
+      "%s"
+#endif
+
+   tmp.snprintf(U_CONSTANT_TO_PARAM(U_WRAPREQ), U_HTTP_METHOD_NUM_TO_TRACE(method_num), uri_len, _uri, host_port.rep, extension);
 
    if (req)
       {
@@ -765,9 +773,9 @@ UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, ui
       U_INTERNAL_ASSERT_POINTER(content_type)
       U_INTERNAL_ASSERT_MAJOR(content_type_len, 0)
 
-      tmp.snprintf_add("Content-Type: %.*s\r\n"
+      tmp.snprintf_add(U_CONSTANT_TO_PARAM("Content-Type: %.*s\r\n"
                        "Content-Length: %u\r\n"
-                       "\r\n",
+                       "\r\n"),
                        content_type_len, content_type,
                        req->size());
 
@@ -805,12 +813,12 @@ void UHttpClient_Base::composeRequest(const char* content_type, uint32_t content
 
       (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
 
-      last_request.snprintf("%.*s %v HTTP/1.1\r\n"
+      last_request.snprintf(U_CONSTANT_TO_PARAM("%.*s %v HTTP/1.1\r\n"
                             "Host: %v:%u\r\n"
                             "User-Agent: ULib/1.4.2\r\n"
                             "Content-Length: %d\r\n"
                             "Content-Type: %.*s\r\n"
-                            "\r\n",
+                            "\r\n"),
                             U_HTTP_METHOD_NUM_TO_TRACE(method_num),
                             UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, sz, content_type_len, content_type);
 
@@ -1071,12 +1079,12 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
 
             (void) last_request.reserve(filename_len + UClient_Base::server.size() + 300U);
 
-            last_request.snprintf("PUT %.*s%.*s HTTP/1.1\r\n"
+            last_request.snprintf(U_CONSTANT_TO_PARAM("PUT %.*s%.*s HTTP/1.1\r\n"
                                   "Host: %v:%u\r\n"
                                   "User-Agent: ULib/1.4.2\r\n"
                                   "Content-Length: %u\r\n"
                                   "Content-Type: %s\r\n"
-                                  "\r\n",
+                                  "\r\n"),
                                   nup, "/upload/",
                                   filename_len, filename,
                                   UClient_Base::server.rep, UClient_Base::port,
@@ -1099,10 +1107,10 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
 
             UString _body(filename_len + 300U);
 
-            _body.snprintf("------------------------------b34551106891\r\n"
+            _body.snprintf(U_CONSTANT_TO_PARAM("------------------------------b34551106891\r\n"
                            "Content-Disposition: form-data; name=\"file\"; filename=\"%.*s\"\r\n"
                            "Content-Type: %s\r\n"
-                           "\r\n",
+                           "\r\n"),
                            filename_len, filename,
                            file.getMimeType());
 
@@ -1117,12 +1125,12 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
 
             (void) last_request.reserve(UClient_Base::uri.size() + UClient_Base::server.size() + 300U);
 
-            last_request.snprintf("POST %v HTTP/1.1\r\n"
+            last_request.snprintf(U_CONSTANT_TO_PARAM("POST %v HTTP/1.1\r\n"
                                   "Host: %v:%u\r\n"
                                   "User-Agent: ULib/1.4.2\r\n"
                                   "Content-Length: %u\r\n"
                                   "Content-Type: multipart/form-data; boundary=----------------------------b34551106891\r\n"
-                                  "\r\n",
+                                  "\r\n"),
                                   UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, _body.size() + sz + UClient_Base::iov[5].iov_len);
 
             parseRequest(6);

@@ -167,7 +167,7 @@ UString UStringExt::numberToString(uint64_t n)
       {
       float fsize = (float)((double)n/(u/1024ULL));
 
-      x.snprintf("%.1f%c", fsize, "bKMGTPEZY"[i]);
+      x.snprintf(U_CONSTANT_TO_PARAM("%.1f%c"), fsize, "bKMGTPEZY"[i]);
       }
 
    U_RETURN_STRING(x);

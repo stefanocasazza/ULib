@@ -56,8 +56,8 @@ public:
 
             pFault->getFaultReason() = U_STRING_FROM_CONSTANT("Invalid number of arugments");
 
-            pFault->setDetail("The fault occurred because the add method expected 2 arguments "
-                                  "but received %d arguments", num_arguments);
+            pFault->setDetail(U_CONSTANT_TO_PARAM("The fault occurred because the add method expected 2 arguments "
+                              "but received %d arguments"), num_arguments);
 
             pFault->encode(buffer);
 
@@ -115,8 +115,8 @@ public:
 
             pFault->getFaultReason() = U_STRING_FROM_CONSTANT("Invalid number of arugments");
 
-            pFault->setDetail("The fault occurred because the reverse method expected 1 arguments "
-                                  "but received %d arguments", num_arguments);
+            pFault->setDetail(U_CONSTANT_TO_PARAM("The fault occurred because the reverse method expected 1 arguments "
+                              "but received %d arguments"), num_arguments);
 
             pFault->encode(returnValue);
 

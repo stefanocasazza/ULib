@@ -67,11 +67,11 @@ USP_PUTS_CHAR('[');
 
 while (true)
    {
-   (void) es->sendPOST(U_CONSTANT_TO_PARAM("/tfb/world/_search"), buffer, QLEN+u__snprintf(buffer+QLEN, 128, "%u\"}}}", id = u_get_num_random(10000-1)));
+   (void) es->sendPOST(U_CONSTANT_TO_PARAM("/tfb/world/_search"), buffer, QLEN+u__snprintf(buffer+QLEN, 128, U_CONSTANT_TO_PARAM("%u\"}}}"), id = u_get_num_random(10000-1)));
 
    rnumber.clear();
 
-   (void) UValue::jfind(es->getContent(), U_CONSTANT_TO_PARAM("randomNumber"), rnumber);
+   (void) U_JFIND(es->getContent(), "randomNumber", rnumber);
 
 #ifdef AS_cpoll_cppsp_DO
    USP_PRINTF("{\"id\":%u,\"randomNumber\":%v}", id, rnumber.rep);

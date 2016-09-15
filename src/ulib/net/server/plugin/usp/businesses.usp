@@ -199,6 +199,75 @@ public:
       }
 };
 
+class BusinessCell {
+public:
+   // grey = 0, darkBlue = 1, funBlue = 2, green = 3, orange = 4, red = 5, pink = 6
+
+   UString name, businessID, address, neighborhood;
+   unsigned color, category, grouping, distance;
+   bool filler;
+   int64_t decay;
+
+   BusinessCell(const UString& _name, const UString& _businessID, const UString& _address, const UString& _neighborhood,
+                unsigned _color, unsigned _category, unsigned _distance, unsigned _grouping, bool _filler, int64_t _decay) :
+                name(_name), businessID(_businessID), address(_address), neighborhood(_neighborhood),
+                color(_color), category(_category),  grouping(_grouping), distance(_distance), filler(_filler), decay(_decay)
+      {
+      }
+
+   BusinessCell() {}
+};
+
+template <> class U_EXPORT UJsonTypeHandler<BusinessCell> : public UJsonTypeHandler_Base {
+public:
+   explicit UJsonTypeHandler(BusinessCell& val) : UJsonTypeHandler_Base(&val) {}
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<BusinessCell>::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, name, UString));
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, businessID, UString));
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, address, UString));
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, neighborhood, UString));
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, color, unsigned));
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, category, unsigned));
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, grouping, unsigned));
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, distance, unsigned));
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, filler, bool));
+      json.toJSON(U_JSON_TYPE_HANDLER(BusinessCell, decay, int64_t));
+      }
+};
+
+class ResponseCells {
+public:
+
+   UString type;
+   UVector<BusinessCell*> businesses;
+   unsigned status;
+
+   ResponseCells() : type(U_STRING_FROM_CONSTANT("cells"))
+      {
+      U_TRACE_NO_PARAM(0, "ResponseCells::ResponseCells()")
+
+      status = 0;
+      }
+};
+
+template <> class U_EXPORT UJsonTypeHandler<ResponseCells> : public UJsonTypeHandler_Base {
+public:
+   explicit UJsonTypeHandler(ResponseCells& val) : UJsonTypeHandler_Base(&val) {}
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<ResponseCells>::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_TYPE_HANDLER(ResponseCells, type, UString));
+      json.toJSON(U_JSON_TYPE_HANDLER(ResponseCells, businesses, UVector<BusinessCell*>));
+      json.toJSON(U_JSON_TYPE_HANDLER(ResponseCells, status, unsigned));
+      }
+};
+
 class HTTP2Push : public UEventTime {
 public:
 
@@ -230,7 +299,7 @@ public:
 
       // child
 
-      token.snprintf("dbdaeae86abcde56rtyww1859fb41d2c7b2cberrttyyy053ec48987847", 0);
+      token.snprintf(U_CONSTANT_TO_PARAM("dbdaeae86abcde56rtyww1859fb41d2c7b2cberrttyyy053ec48987847"), 0);
 
 #  ifdef USE_LIBCURL
       if (UCURL::sendHTTP2Push(token, message) == false)
@@ -249,8 +318,7 @@ public:
 #endif
 
 private:
-   HTTP2Push(const HTTP2Push&) : UEventTime() {}
-   HTTP2Push& operator=(const HTTP2Push&)     { return *this; }
+   U_DISALLOW_COPY_AND_ASSIGN(HTTP2Push)
 };
 
 static UMongoDBClient* mc;
@@ -310,8 +378,11 @@ if (USP_JFIND_REQUEST("type", type))
 
       USP_JSON_OBJ_stringify(Response, response);
       }
-   else if (type.equal(U_CONSTANT_TO_PARAM("remoteData")))
+   else if (type.equal(U_CONSTANT_TO_PARAM("cells")))
       {
+      ResponseCells response;
+
+      USP_JSON_OBJ_stringify(ResponseCells, response);
       }
    }
 -->

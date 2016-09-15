@@ -236,22 +236,28 @@ int UGeoIPPlugIn::handlerRequest()
 
    if (country_id)
       {
-      UHTTP::geoip->snprintf_add("GEOIP_COUNTRY_CODE=%s\n"  // code international du pays (suivant la norme ISO 3166)
-                                 "GEOIP_COUNTRY_NAME=%s\n", // nom complet du pays (en anglais)
+      UHTTP::geoip->snprintf_add(U_CONSTANT_TO_PARAM("GEOIP_COUNTRY_CODE=%s\n"  // code international du pays (suivant la norme ISO 3166)
+                                 "GEOIP_COUNTRY_NAME=%s\n"),                    // nom complet du pays (en anglais)
                                  country_code, country_name);
       }
 
    if (gir)
       {
-      UHTTP::geoip->snprintf_add(
-         "GEOIP_REGION=%s\n"        // un code indiquant la région
-         "GEOIP_CITY=%s\n",         // la ville
-         "GEOIP_DMA_CODE=%s\n",     // code DMA (Designated Market Area) attribut une zone ou les frequences (television, radio, etc)
-                                    // sont identiques (concerne les Etats Unis, valeur par defaut : 0)
-         "GEOIP_AREA_CODE=%s\n",    // indice telephonique representant une zone precise (concerne les Etats Unis, valeur par defaut : 0)
-         "GEOIP_LATITUDE=%f\n",     // la latitude
-         "GEOIP_LONGITUDE=%f\n",    // la longitude
-         "GEOIP_POSTAL_CODE=%s\n",  // le code postal (concerne uniquement les Etats Unis, ne sera pas definie pour tout autre pays)
+      // un code indiquant la région
+      // la ville
+      // code DMA (Designated Market Area) attribut une zone ou les frequences (television, radio, etc) sont identiques (concerne les Etats Unis, valeur par defaut : 0)
+      // indice telephonique representant une zone precise (concerne les Etats Unis, valeur par defaut : 0)
+      // la latitude
+      // la longitude
+      // le code postal (concerne uniquement les Etats Unis, ne sera pas definie pour tout autre pays)
+      UHTTP::geoip->snprintf_add(U_CONSTANT_TO_PARAM(
+         "GEOIP_REGION=%s\n"
+         "GEOIP_CITY=%s\n"
+         "GEOIP_DMA_CODE=%s\n"
+         "GEOIP_AREA_CODE=%s\n"
+         "GEOIP_LATITUDE=%f\n"
+         "GEOIP_LONGITUDE=%f\n"
+         "GEOIP_POSTAL_CODE=%s\n"),
          gir->region,
          gir->city,
          (bGEOIP_CITY_EDITION_REV1 ? gir->metro_code : 0),

@@ -283,7 +283,7 @@ UString USocket::getMacAddress(const char* device)
          {
          unsigned char* hwaddr = (unsigned char*)arpreq.arp_ha.sa_data;
 
-         result.snprintf("%02x:%02x:%02x:%02x:%02x:%02x",
+         result.snprintf(U_CONSTANT_TO_PARAM("%02x:%02x:%02x:%02x:%02x:%02x"),
             hwaddr[0] & 0xFF,
             hwaddr[1] & 0xFF,
             hwaddr[2] & 0xFF,
@@ -1167,7 +1167,7 @@ void USocket::setMsgError()
       {
       u_errno = errno = -iState;
 
-      (void) u__snprintf(u_buffer, U_BUFFER_SIZE, "%#R", 0); // NB: the last argument (0) is necessary...
+      (void) u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%#R"), 0); // NB: the last argument (0) is necessary...
       }
 }
 

@@ -14,7 +14,13 @@
 #define UINT64_C2(h, l) ((static_cast<uint64_t>(h) << 32) | static_cast<uint64_t>(l))
 
 struct DiyFp {
-   DiyFp() {}
+   DiyFp() {
+      // coverity[uninit_ctor]
+#  ifdef U_COVERITY_FALSE_POSITIVE
+      f = 0;
+      e = 0;
+#  endif
+   }
 
    DiyFp(uint64_t _f, int _e) : f(_f), e(_e) {}
 

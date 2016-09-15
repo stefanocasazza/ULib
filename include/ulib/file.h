@@ -518,7 +518,7 @@ public:
 
       // NB: The only format constraints are that the string must be quoted...
 
-      _etag.snprintf("\"%x-%x-%x\"", st_ino, st_size, st_mtime);
+      _etag.snprintf(U_CONSTANT_TO_PARAM("\"%x-%x-%x\""), st_ino, st_size, st_mtime);
 
       U_RETURN_STRING(_etag);
       }
@@ -863,6 +863,8 @@ public:
       U_RETURN(result);
       }
 
+   void printf(const char* format, uint32_t fmt_size, ...);
+
    bool write(const char* data,  uint32_t sz, int flags = O_RDWR | O_TRUNC, bool bmkdirs = false);
    bool write(const struct iovec* iov, int n, int flags = O_RDWR | O_TRUNC, bool bmkdirs = false);
    bool write(const UString& data,            int flags = O_RDWR | O_TRUNC, bool bmkdirs = false) { return write(U_STRING_TO_PARAM(data), flags, bmkdirs); }
@@ -871,8 +873,8 @@ public:
    static long    getSysParam(  const char* name);
    static UString getSysContent(const char* name);
 
-   static bool writeToTmp(const char* data,  uint32_t sz, int flags, const char* fmt, ...);
-   static bool writeToTmp(const struct iovec* iov, int n, int flags, const char* fmt, ...);
+   static bool writeToTmp(const char* data,  uint32_t sz, int flags, const char* fmt, uint32_t fmt_size, ...);
+   static bool writeToTmp(const struct iovec* iov, int n, int flags, const char* fmt, uint32_t fmt_size, ...);
 
    static bool writeTo(const UString& path, const char* data,  uint32_t sz, int flags = O_RDWR | O_TRUNC, bool bmkdirs = false);
    static bool writeTo(const UString& path, const struct iovec* iov, int n, int flags = O_RDWR | O_TRUNC, bool bmkdirs = false);

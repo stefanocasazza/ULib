@@ -358,7 +358,7 @@ protected:
 
    // UString tmp(U_CAPACITY);
    // UHexDump::encode(ptr, len, tmp);
-   // (void) UFile::writeToTmp(U_STRING_TO_PARAM(tmp), O_RDWR | O_TRUNC, "%s.hpack.%P", breq ? "request" : "response");
+   // (void) UFile::writeToTmp(U_STRING_TO_PARAM(tmp), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("%s.hpack.%P"), breq ? "request" : "response");
       }
 
    static const char* getStreamStatusDescription();

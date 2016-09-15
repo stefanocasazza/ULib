@@ -1224,7 +1224,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   explicit UString(uint32_t n, const char* format, ...); // ctor with var arg
+   explicit UString(uint32_t n, const char* format, uint32_t fmt_size, ...); // ctor with var arg
 
    explicit UString(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND);
 
@@ -1821,30 +1821,30 @@ public:
    void moveToBeginDataInBuffer(uint32_t n);
    void printKeyValue(const char* key, uint32_t keylen, const char* data, uint32_t datalen);
 
-   void snprintf(const char* format, ...)
+   void snprintf(const char* format, uint32_t fmt_size, ...)
       {
-      U_TRACE(0, "UString::snprintf(%S)", format)
+      U_TRACE(0, "UString::snprintf(%.*S,%u)", fmt_size, format, fmt_size)
 
       U_INTERNAL_ASSERT_POINTER(format)
 
       va_list argp;
-      va_start(argp, format);
+      va_start(argp, fmt_size);
 
-      UString::vsnprintf(format, argp); 
+      UString::vsnprintf(format, fmt_size, argp); 
 
       va_end(argp);
       }
 
-   void snprintf_add(const char* format, ...)
+   void snprintf_add(const char* format, uint32_t fmt_size, ...)
       {
-      U_TRACE(0, "UString::snprintf_add(%S)", format)
+      U_TRACE(0, "UString::snprintf_add(%.*S,%u)", fmt_size, format, fmt_size)
 
       U_INTERNAL_ASSERT_POINTER(format)
 
       va_list argp;
-      va_start(argp, format);
+      va_start(argp, fmt_size);
 
-      UString::vsnprintf_add(format, argp); 
+      UString::vsnprintf_add(format, fmt_size, argp); 
 
       va_end(argp);
       }
@@ -1929,9 +1929,9 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   void vsnprintf(const char* format, va_list argp)
+   void vsnprintf(const char* format, uint32_t fmt_size, va_list argp)
       {
-      U_TRACE(0, "UString::vsnprintf(%S)", format)
+      U_TRACE(0, "UString::vsnprintf(%.*S,%u)", fmt_size, format, fmt_size)
 
 #  ifdef DEBUG
       vsnprintf_check(format);
@@ -1941,16 +1941,16 @@ public:
 
       // NB: +1 because we want space for null-terminator...
 
-      rep->_length = u__vsnprintf(rep->data(), rep->_capacity+1, format, argp); 
+      rep->_length = u__vsnprintf(rep->data(), rep->_capacity+1, format, fmt_size, argp); 
 
       U_INTERNAL_DUMP("ret = %u buffer_size = %u", rep->_length, rep->_capacity+1)
 
       U_INTERNAL_ASSERT(invariant())
       }
 
-   void vsnprintf_add(const char* format, va_list argp)
+   void vsnprintf_add(const char* format, uint32_t fmt_size, va_list argp)
       {
-      U_TRACE(0, "UString::vsnprintf_add(%S)", format)
+      U_TRACE(0, "UString::vsnprintf_add(%.*S,%u)", fmt_size, format, fmt_size)
 
 #  ifdef DEBUG
       vsnprintf_check(format);
@@ -1958,7 +1958,7 @@ public:
 
       // NB: +1 because we want space for null-terminator...
 
-      uint32_t ret = u__vsnprintf(c_pointer(rep->_length), rep->space()+1, format, argp); 
+      uint32_t ret = u__vsnprintf(c_pointer(rep->_length), rep->space()+1, format, fmt_size, argp); 
 
       U_INTERNAL_DUMP("ret = %u buffer_size = %u", ret, rep->space()+1)
 

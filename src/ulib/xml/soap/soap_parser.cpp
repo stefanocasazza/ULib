@@ -123,7 +123,7 @@ UString USOAPParser::processMessage(const UString& msg, URPCObject& object, bool
 
       U_INTERNAL_DUMP("UXMLParser: %V (%d,%d) ", URPCMethod::pFault->getFaultReason().rep, line, coln)
 
-      URPCMethod::pFault->setDetail("The fault occurred near position (line: %d col: %d) within the message", line, coln);
+      URPCMethod::pFault->setDetail(U_CONSTANT_TO_PARAM("The fault occurred near position (line: %d col: %d) within the message"), line, coln);
 
       bContainsFault = true;
       retval         = URPCMethod::encoder->encodeFault(URPCMethod::pFault);

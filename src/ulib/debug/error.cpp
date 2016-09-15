@@ -97,9 +97,9 @@ void UError::stackDump()
    char name[128];
 
 #ifndef U_SERVER_CAPTIVE_PORTAL
-   (void) u__snprintf(name, sizeof(name), "stack.%N.%P", 0);
+   (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("stack.%N.%P"), 0);
 #else
-   (void) u__snprintf(name, sizeof(name), "/tmp/stack.%N.%P", 0);
+   (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("/tmp/stack.%N.%P"), 0);
 #endif
 
    int fd = open(name, O_CREAT | O_WRONLY | O_APPEND | O_BINARY, 0666);
@@ -128,7 +128,7 @@ void UError::stackDump()
          char buf[32];
          int fd_err = open("/tmp/gbd.err", O_CREAT | O_WRONLY, 0666);
 
-         (void) u__snprintf(buf, sizeof(buf), "--pid=%P", 0);
+         (void) u__snprintf(buf, sizeof(buf), U_CONSTANT_TO_PARAM("--pid=%P"), 0);
 
          (void) dup2(fd, STDOUT_FILENO);
 #     ifdef U_COVERITY_FALSE_POSITIVE
@@ -186,7 +186,7 @@ void UError::stackDump()
 
    FILE* f = fdopen(fd, "w");
 
-   (void) fwrite(buffer, u__snprintf(buffer, sizeof(buffer), "%9D: %N (pid %P) === STACK TRACE ===\n", 0), 1, f);
+   (void) fwrite(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%9D: %N (pid %P) === STACK TRACE ===\n"), 0), 1, f);
 
 # ifdef HAVE_DLFCN_H
    Dl_info dlinf;

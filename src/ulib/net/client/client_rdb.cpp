@@ -39,7 +39,7 @@ U_NO_EXPORT void URDBClient_Base::setStatus()
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "(%d, %s)", nResponseCode, descr);
+   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("(%d, %s)"), nResponseCode, descr);
 }
 
 bool URDBClient_Base::readResponse()

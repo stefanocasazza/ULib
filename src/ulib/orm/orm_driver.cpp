@@ -80,7 +80,7 @@ next:
       vdriver_name_static->push_back(x);
 
 #  ifndef U_LOG_DISABLE
-      if (UServer_Base::isLog()) ULog::log("[%s] Link of static driver ok", name);
+      if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("[%s] Link of static driver ok"), name);
 #  endif
       }
 #endif
@@ -151,7 +151,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
          {
          _name.setBuffer(32U);
 
-         _name.snprintf("orm_driver_%v", item.rep);
+         _name.snprintf(U_CONSTANT_TO_PARAM("orm_driver_%v"), item.rep);
 
          _driver = UPlugIn<UOrmDriver*>::create(U_STRING_TO_PARAM(_name));
 
@@ -166,7 +166,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
          vdriver_name_static->push_back(item);
 
 #     ifndef U_LOG_DISABLE
-         if (UServer_Base::isLog()) ULog::log("[%v] Load of driver success", item.rep);
+         if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("[%v] Load of driver success"), item.rep);
 #     endif
          }
       }
@@ -208,7 +208,7 @@ void UOrmDriver::printError(const char* function)
 
    buffer[0] = 0;
 
-   uint32_t len = u__snprintf(buffer, sizeof(buffer), "%V on %V at %S - %s%s(%d, %s)%s%s",
+   uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%V on %V at %S - %s%s(%d, %s)%s%s"),
                               name.rep, dbname.rep, function, errname, ptr1, errcode, errmsg, ptr2, SQLSTATE);
 
    if (UOrmDriver::bexit == false)

@@ -80,10 +80,10 @@ bool UWebSocket::sendAccept()
 
    UServices::generateDigest(U_HASH_SHA1, 0, challenge, U_http_websocket_len + WEBSOCKET_GUID_LEN, accept, true);
 
-   UClientImage_Base::wbuffer->snprintf("HTTP/1.1 101 Switching Protocols\r\n"
+   UClientImage_Base::wbuffer->snprintf(U_CONSTANT_TO_PARAM("HTTP/1.1 101 Switching Protocols\r\n"
                                         "Upgrade: websocket\r\n"
                                         "Connection: Upgrade\r\n"
-                                        "Sec-WebSocket-Accept: %v\r\n\r\n", accept.rep);
+                                        "Sec-WebSocket-Accept: %v\r\n\r\n"), accept.rep);
 
    if (USocketExt::write(UServer_Base::csocket, *UClientImage_Base::wbuffer, UServer_Base::timeoutMS))
       {

@@ -402,7 +402,7 @@ RETSIGTYPE UInterrupt::handlerSegvWithInfo(int signo, siginfo_t* info, void* con
 #  ifdef DEBUG
       u_flag_test = 0;
 
-      UTrace utr(0, "[SIGSEGV] UInterrupt::handlerSegvWithInfo(%d,%p,%p)", signo, info, context);
+      U_TRACE(0, "[SIGSEGV] UInterrupt::handlerSegvWithInfo(%d,%p,%p)", signo, info, context)
 #  endif
 
       getSignalInfo(signo, info);
@@ -474,10 +474,36 @@ void UInterrupt::getSignalInfo(int signo, siginfo_t* info)
 #  endif
 #endif
 
+#ifndef _MSWINDOWS_
+#  ifdef HAVE_MEMBER_SI_ADDR
+#     define U_MSG_FROMKERNEL \
+      "program interrupt by the kernel - %Y%W\n" \
+           "----------------------------------------" \
+           "----------------------------------------------------\n" \
+           " pid: %W%P%W\n" \
+           " address: %W%p - %s (%d, %s)%W\n" \
+           " rss usage: %W%.2f MBytes%W\n" \
+           " address space usage: %W%.2f MBytes%W\n" \
+           "----------------------------------------" \
+           "----------------------------------------------------"
+#  else
+#     define U_MSG_FROMKERNEL \
+      "program interrupt by the kernel - %Y%W\n" \
+           "----------------------------------------" \
+           "----------------------------------------------------\n" \
+           " pid: %W%P%W\n" \
+           " desc: %W %s (%d, %s)%W\n" \
+           " rss usage: %W%.2f MBytes%W\n" \
+           " address space usage: %W%.2f MBytes%W\n" \
+           "----------------------------------------" \
+           "----------------------------------------------------"
+#  endif
+#endif
+
    if (info == 0 ||
        SI_FROMKERNEL(info) == false)
       {
-      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "program interrupt by kill(), sigsend() or raise() - %Y", signo);
+      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("program interrupt by kill(), sigsend() or raise() - %Y"), signo);
       }
 #ifndef _MSWINDOWS_
    else
@@ -488,21 +514,9 @@ void UInterrupt::getSignalInfo(int signo, siginfo_t* info)
 
       u_get_memusage(&vsz, &rss);
 
-      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "program interrupt by the kernel - %Y%W\n"
-           "----------------------------------------"
-           "----------------------------------------------------\n"
-           " pid: %W%P%W\n"
-#        ifdef HAVE_MEMBER_SI_ADDR
-           " address: %W%p - %s (%d, %s)%W\n"
-#        else
-           " desc: %W %s (%d, %s)%W\n"
-#        endif
-           " rss usage: %W%.2f MBytes%W\n"
-           " address space usage: %W%.2f MBytes%W\n"
-           "----------------------------------------"
-           "----------------------------------------------------",
+      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM(U_MSG_FROMKERNEL),
            signo, YELLOW,
-           CYAN, YELLOW,
+            CYAN, YELLOW,
 #        ifdef HAVE_MEMBER_SI_ADDR
            CYAN, info->si_addr, errlist[index], info->si_code, errlist[index+1], YELLOW,
 #        else
@@ -521,7 +535,7 @@ __noreturn RETSIGTYPE UInterrupt::handlerInterruptWithInfo(int signo, siginfo_t*
 #  ifdef DEBUG
       u_flag_test = 0;
 
-      UTrace utr(0, "UInterrupt::handlerInterruptWithInfo(%d,%p,%p)", signo, info, context);
+      U_TRACE(0, "UInterrupt::handlerInterruptWithInfo(%d,%p,%p)", signo, info, context)
 #  endif
 
       getSignalInfo(signo, info);

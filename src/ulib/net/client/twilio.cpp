@@ -20,7 +20,7 @@ bool UTwilioClient::sendRequest(int method, const char* path, uint32_t path_len,
 
    U_INTERNAL_ASSERT_POINTER(client)
 
-   uri.snprintf(TWILIO_API_URL "/" TWILIO_API_VERSION "/Accounts/%.*s/%.*s", U_STRING_TO_TRACE(client->user), path_len, path);
+   uri.snprintf(U_CONSTANT_TO_PARAM(TWILIO_API_URL "/" TWILIO_API_VERSION "/Accounts/%.*s/%.*s"), U_STRING_TO_TRACE(client->user), path_len, path);
 
    if (method == 4) // DELETE
       {

@@ -117,7 +117,7 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
                {
                UString duplicate(rep->size() + 4U + key.size() + 2U);
 
-               duplicate.snprintf("%v%s%v: ", rep, (cr ? U_CRLF : U_LF), key.rep);
+               duplicate.snprintf(U_CONSTANT_TO_PARAM("%v%s%v: "), rep, (cr ? U_CRLF : U_LF), key.rep);
 
                U_INTERNAL_DUMP("duplicate = %V", duplicate.rep)
 
@@ -319,7 +319,7 @@ void UMimeHeader::writeHeaders(UString& buffer)
 
          tmp.setBuffer(key->size() + 2 + value->size() + 2);
 
-         tmp.snprintf("%v: %v\r\n", key, value);
+         tmp.snprintf(U_CONSTANT_TO_PARAM("%v: %v\r\n"), key, value);
 
          buffer += tmp;
          }

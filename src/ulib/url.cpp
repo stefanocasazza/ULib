@@ -38,7 +38,7 @@ void Url::setService(const char* service, uint32_t n)
       {
       char buffer[32];
 
-      (void) url.insert(0, buffer, u__snprintf(buffer, sizeof(buffer), "%.*s://", n, service));
+      (void) url.insert(0, buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%.*s://"), n, service));
       }
 
    findpos();
@@ -70,7 +70,7 @@ bool Url::setUser(const char* user, uint32_t n)
          {
          char buffer[128];
 
-         (void) url.insert(user_begin, buffer, u__snprintf(buffer, sizeof(buffer), "%.*s@", n, user));
+         (void) url.insert(user_begin, buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%.*s@"), n, user));
          }
 
       findpos();
@@ -324,7 +324,7 @@ UString Url::getQueryBody(UVector<UString>& vec)
 
       U_INTERNAL_ASSERT_MINOR(encoded_sz, sizeof(buffer))
 
-      query.snprintf_add("%.*s%v=%.*s", (sz > 0), "&", name.rep, encoded_sz, buffer);
+      query.snprintf_add(U_CONSTANT_TO_PARAM("%.*s%v=%.*s"), (sz > 0), "&", name.rep, encoded_sz, buffer);
       }
 
    U_RETURN_STRING(query);

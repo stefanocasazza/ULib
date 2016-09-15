@@ -80,14 +80,14 @@ bool Action::sendHttpPostRequest(const UString& url, const UString& body, const 
       ok = false;
 
       response.setBuffer(100U);
-      response.snprintf("HTTP response %d",  U_http_info.nResponseCode);
+      response.snprintf(U_CONSTANT_TO_PARAM("HTTP response %d"), U_http_info.nResponseCode);
       }
    else if (ok && strncmp(response.data(), expected, u__strlen(expected, __PRETTY_FUNCTION__)))
       {
       ok = false;
 
       response.setBuffer(100U);
-      response.snprintf("Non esiste una una cartella corrispondente all'UID %s", uid);
+      response.snprintf(U_CONSTANT_TO_PARAM("Non esiste una una cartella corrispondente all'UID %s"), uid);
       }
 
    U_RETURN(ok);
@@ -107,7 +107,7 @@ bool Action::sendEmail()
 
       if (*state)
          {
-         buffer.snprintf("Reply-To: %s+%s+%s", state, event, id);
+         buffer.snprintf(U_CONSTANT_TO_PARAM("Reply-To: %s+%s+%s"), state, event, id);
 
          emailClient.setMessageHeader(buffer);
          }
@@ -129,18 +129,18 @@ bool Action::sendEmail()
       if (tmp) emailBodyForm = tmp;
 
       buffer.setBuffer(emailSubjectForm.size() + 1024U);
-      buffer.snprintf( emailSubjectForm.data(), customer, installation, uid);
+      buffer.snprintf(U_STRING_TO_PARAM(emailSubjectForm), customer, installation, uid);
 
       emailClient.setMessageSubject(buffer);
 
       buffer.setBuffer(emailBodyForm.size() + 1024U);
 
-      if (*state == '\0') buffer.snprintf(emailBodyForm.data(), customer, installation, uid);
+      if (*state == '\0') buffer.snprintf(U_STRING_TO_PARAM(emailBodyForm), customer, installation, uid);
       else
          {
          UMimeMultipartMsg msg;
 
-         buffer.snprintf(emailBodyForm.data(), event, state, action_name, error_message);
+         buffer.snprintf(U_STRING_TO_PARAM(emailBodyForm), event, state, action_name, error_message);
 
          msg.add(UMimeMultipartMsg::section(buffer, 0, 0, UMimeMultipartMsg::AUTO));
          msg.add(UMimeMultipartMsg::section(data,   0, 0, UMimeMultipartMsg::AUTO, "", "",
@@ -160,7 +160,7 @@ bool Action::sendEmail()
 
       response.setBuffer(u_buffer_len + 100U);
 
-      response.snprintf("Email notification to '%.*s' failed: %.*s", U_STRING_TO_TRACE(toAddress), u_buffer_len, u_buffer);
+      response.snprintf(U_CONSTANT_TO_PARAM("Email notification to '%.*s' failed: %.*s"), U_STRING_TO_TRACE(toAddress), u_buffer_len, u_buffer);
 
       u_buffer_len = 0;
       }
@@ -181,12 +181,12 @@ void Action::writeToSTDOUT(bool ok, bool all)
       if (all)
          {
          output.setBuffer(res_tmpl.size() + request.size() + 1024U);
-         output.snprintf( res_tmpl.data(), id,                              customer, installation, U_STRING_TO_TRACE(request), uid);
+         output.snprintf(U_STRING_TO_PARAM(res_tmpl), id, customer, installation, U_STRING_TO_TRACE(request), uid);
          }
       else
          {
-         output.setBuffer(res_tmpl.size() + request.size() +  256U);
-         output.snprintf( res_tmpl.data(), id,                                                      U_STRING_TO_TRACE(request));
+         output.setBuffer(res_tmpl.size() + request.size() + 256U);
+         output.snprintf(U_STRING_TO_PARAM(res_tmpl), id, U_STRING_TO_TRACE(request));
          }
       }
    else
@@ -194,12 +194,12 @@ void Action::writeToSTDOUT(bool ok, bool all)
       if (all)
          {
          output.setBuffer(err_tmpl.size() + request.size() + 1024U + response.size());
-         output.snprintf( err_tmpl.data(), id, U_STRING_TO_TRACE(response), customer, installation, U_STRING_TO_TRACE(request), uid);
+         output.snprintf(U_STRING_TO_PARAM(err_tmpl), id, U_STRING_TO_TRACE(response), customer, installation, U_STRING_TO_TRACE(request), uid);
          }
       else
          {
          output.setBuffer(err_tmpl.size() + request.size() +  256U + response.size());
-         output.snprintf( err_tmpl.data(), id, U_STRING_TO_TRACE(response),                         U_STRING_TO_TRACE(request));
+         output.snprintf(U_STRING_TO_PARAM(err_tmpl), id, U_STRING_TO_TRACE(response), U_STRING_TO_TRACE(request));
          }
       }
 

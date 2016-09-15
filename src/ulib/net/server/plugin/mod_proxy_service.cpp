@@ -250,7 +250,7 @@ bool UModProxyService::setServerAddress(const UString& dir, const char* address,
 
    UString dest(U_CAPACITY);
 
-   dest.snprintf(U_SRV_ADDR_FMT, dir.rep, U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent());
+   dest.snprintf(U_CONSTANT_TO_PARAM(U_SRV_ADDR_FMT), dir.rep, U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent());
 
    if (UFile::writeTo(dest, address, address_len)) U_RETURN(true);
 
@@ -278,7 +278,7 @@ UString UModProxyService::getServer() const
 
       U_INTERNAL_ASSERT(dir)
 
-      pathname.snprintf(U_SRV_ADDR_FMT, dir.rep, U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent());
+      pathname.snprintf(U_CONSTANT_TO_PARAM(U_SRV_ADDR_FMT), dir.rep, U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent());
 
       UString address = UFile::contentOf(pathname);
 
@@ -338,7 +338,7 @@ void UModProxyService::setMsgError(int err)
             {
             UString fmt = (*UHTTP::vmsg_error)[err - UModProxyService::FORBIDDEN - 1];
 
-            UClientImage_Base::wbuffer->snprintf(fmt.c_str());
+            UClientImage_Base::wbuffer->snprintf(U_STRING_TO_PARAM(fmt));
             }
          }
       }

@@ -188,7 +188,7 @@ UString UServer_Base::getStats()
 
    UString x(U_CAPACITY);
 
-   x.snprintf("%4u connections (%5.2f/sec), %3u max simultaneous, %4u %s (%5.2f/sec) - %v/sec", UServer_Base::stats_connections,
+   x.snprintf(U_CONSTANT_TO_PARAM("%4u connections (%5.2f/sec), %3u max simultaneous, %4u %s (%5.2f/sec) - %v/sec"), UServer_Base::stats_connections,
                (float) UServer_Base::stats_connections / U_ONE_HOUR_IN_SECOND, UServer_Base::stats_simultaneous, UNotifier::nwatches, U_WHICH,
                (float) UNotifier::nwatches / U_ONE_HOUR_IN_SECOND, UStringExt::printSize(UServer_Base::stats_bytes).rep);
 
@@ -529,14 +529,14 @@ public:
             {
             if (UServer_Base::throttling_rec->krate > UServer_Base::throttling_rec->max_limit)
                {
-               ULog::log("throttle %V: krate %u %sexceeding limit %u; %u sending", UServer_Base::db_throttling->getKeyID().rep, UServer_Base::throttling_rec->krate,
+               ULog::log(U_CONSTANT_TO_PARAM("throttle %V: krate %u %sexceeding limit %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep, UServer_Base::throttling_rec->krate,
                            (UServer_Base::throttling_rec->krate > UServer_Base::throttling_rec->max_limit * 2  ? "greatly " : ""),
                             UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending);
                }
 
             if (UServer_Base::throttling_rec->krate < UServer_Base::throttling_rec->min_limit)
                {
-               ULog::log("throttle %V: krate %u lower than minimum %u; %u sending", UServer_Base::db_throttling->getKeyID().rep, UServer_Base::throttling_rec->krate,
+               ULog::log(U_CONSTANT_TO_PARAM("throttle %V: krate %u lower than minimum %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep, UServer_Base::throttling_rec->krate,
                             UServer_Base::throttling_rec->min_limit, UServer_Base::throttling_rec->num_sending);
                }
             }
@@ -931,9 +931,9 @@ public:
                   }
                else
                   {
-                  if (UServer_Base::update_date1) (void) u_strftime2(ULog::ptr_shared_date->date1,     17, "%d/%m/%y %T",     u_timeval.tv_sec + u_now_adjust);
-                  if (UServer_Base::update_date2) (void) u_strftime2(ULog::ptr_shared_date->date2,   26-6, "%d/%b/%Y:%T",     u_timeval.tv_sec + u_now_adjust); // %z  don't change...
-                  if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, "%a, %d %b %Y %T", u_timeval.tv_sec);                // GMT can't change...
+                  if (UServer_Base::update_date1) (void) u_strftime2(ULog::ptr_shared_date->date1,     17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"),     u_timeval.tv_sec + u_now_adjust);
+                  if (UServer_Base::update_date2) (void) u_strftime2(ULog::ptr_shared_date->date2,   26-6, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T"),     u_timeval.tv_sec + u_now_adjust);
+                  if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, U_CONSTANT_TO_PARAM("%a, %d %b %Y %T"), u_timeval.tv_sec);
                   }
 
 #           if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
@@ -1630,7 +1630,7 @@ void UServer_Base::loadConfigParam()
       if (old_pid > 0)
          {
 #     ifndef U_LOG_DISABLE
-         if (isLog()) ULog::log("Trying to kill another instance of userver that is running with pid %d", old_pid);
+         if (isLog()) ULog::log(U_CONSTANT_TO_PARAM("Trying to kill another instance of userver that is running with pid %d"), old_pid);
 #     endif
 
          U_INTERNAL_ASSERT_DIFFERS(old_pid, u_pid)
@@ -1664,7 +1664,7 @@ void UServer_Base::loadConfigParam()
 
       U_NEW(ULog, log, ULog(x, cfg->readLong(U_CONSTANT_TO_PARAM("LOG_FILE_SZ"))));
 
-      log->init(U_SERVER_LOG_PREFIX);
+      log->init(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
 
       U_SRV_LOG("Working directory (DOCUMENT_ROOT) changed to %.*S", u_cwd_len, u_cwd);
 
@@ -1771,7 +1771,7 @@ next:
 #endif
 
 #  ifndef U_LOG_DISABLE
-      if (isLog()) ULog::log(fmt, name);
+      if (isLog()) ULog::log(fmt, strlen(fmt), name);
 #  endif
       }
 }
@@ -1830,17 +1830,17 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
       _name.setBuffer(32U);
 
-      _name.snprintf("server_plugin_%v", item.rep);
+      _name.snprintf(U_CONSTANT_TO_PARAM("server_plugin_%v"), item.rep);
 
       _plugin = UPlugIn<UServerPlugIn*>::create(U_STRING_TO_PARAM(_name));
 
 #  ifndef U_LOG_DISABLE
       if (isLog())
          {
-         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), "[%v] ", item.rep);
+         (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), item.rep);
 
-         if (_plugin == 0) ULog::log("%sWARNING: Load phase of plugin %v failed", mod_name[0], item.rep);
-         else              ULog::log("%sLoad phase of plugin %v success",         mod_name[0], item.rep);
+         if (_plugin == 0) ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: Load phase of plugin %v failed"), mod_name[0], item.rep);
+         else              ULog::log(U_CONSTANT_TO_PARAM("%sLoad phase of plugin %v success"),         mod_name[0], item.rep);
 
          mod_name[0][0] = '\0';
          }
@@ -1875,7 +1875,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
             _plugin = vplugin->at(i);
 
 #        ifndef U_LOG_DISABLE
-            if (isLog()) (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), "[%v] ", item.rep);
+            if (isLog()) (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), item.rep);
 #        endif
 
             result = _plugin->handlerConfig(*cfg);
@@ -1889,7 +1889,7 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
                                        ? "%sConfiguration phase of plugin %v success"
                                        : "%sWARNING: Configuration phase of plugin %v failed");
 
-                  ULog::log(fmt, mod_name[0], item.rep);
+                  ULog::log(fmt, strlen(fmt), mod_name[0], item.rep);
                   }
 
                mod_name[0][0] = '\0';
@@ -1954,7 +1954,8 @@ int UServer_Base::pluginsHandler##xxx()                                         
          {                                                                         \
          UString name = vplugin_name->at(i);                                       \
                                                                                    \
-         (void)u__snprintf(mod_name[0],sizeof(mod_name[0]),"[%v] ",name.rep);      \
+         (void) u__snprintf(mod_name[0],sizeof(mod_name[0]),                       \
+                            U_CONSTANT_TO_PARAM("[%v] "),name.rep);                \
                                                                                    \
          result = _plugin->handler##xxx();                                         \
                                                                                    \
@@ -1975,7 +1976,7 @@ int UServer_Base::pluginsHandler##xxx()                                         
                         : "%s"#xxx" phase of plugin %v success");                  \
                }                                                                   \
                                                                                    \
-            if (fmt) ULog::log(fmt, mod_name[0], name.rep);                        \
+            if (fmt) ULog::log(fmt, strlen(fmt), mod_name[0], name.rep);           \
             }                                                                      \
                                                                                    \
          mod_name[0][0] = '\0';                                                    \
@@ -2037,7 +2038,8 @@ int UServer_Base::pluginsHandler##xxx()                                         
          {                                                                         \
          UString name = vplugin_name->at(i);                                       \
                                                                                    \
-         (void)u__snprintf(mod_name[0],sizeof(mod_name[0]),"[%v] ",name.rep);      \
+         (void) u__snprintf(mod_name[0],sizeof(mod_name[0]),                       \
+                            U_CONSTANT_TO_PARAM("[%v] "),name.rep);                \
                                                                                    \
          result = _plugin->handler##xxx();                                         \
                                                                                    \
@@ -2058,7 +2060,7 @@ int UServer_Base::pluginsHandler##xxx()                                         
                         : "%s"#xxx" phase of plugin %v success");                  \
                }                                                                   \
                                                                                    \
-            if (fmt) ULog::log(fmt, mod_name[0], name.rep);                        \
+            if (fmt) ULog::log(fmt, strlen(fmt), mod_name[0], name.rep);           \
             }                                                                      \
                                                                                    \
          mod_name[0][0] = '\0';                                                    \
@@ -2566,9 +2568,9 @@ U_NO_EXPORT void UServer_Base::logMemUsage(const char* signame)
 
    u_get_memusage(&vsz, &rss);
 
-   ULog::log("%s (Interrupt): "
+   ULog::log(U_CONSTANT_TO_PARAM("%s (Interrupt): "
              "address space usage: %.2f MBytes - "
-                       "rss usage: %.2f MBytes", signame,
+                       "rss usage: %.2f MBytes"), signame,
              (double)vsz / (1024.0 * 1024.0),
              (double)rss / (1024.0 * 1024.0));
 #endif
@@ -2723,10 +2725,10 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
          u_get_memusage(&vsz, &rss);
 
          len = u__snprintf(buffer, sizeof(buffer),
-                        "SIGTERM (Interrupt): "
+                        U_CONSTANT_TO_PARAM("SIGTERM (Interrupt): "
                         "address space usage: %.2f MBytes - "
                                   "rss usage: %.2f MBytes\n"
-                        "%v\nmax_nfd_ready = %u max_depth = %u again:read = (%u/%u - %u%%) wakeup_for_nothing = %u bepollet_threshold = (%u/10)\n",
+                        "%v\nmax_nfd_ready = %u max_depth = %u again:read = (%u/%u - %u%%) wakeup_for_nothing = %u bepollet_threshold = (%u/10)\n"),
                         getStats().rep,
                         (double)vsz / (1024.0 * 1024.0),
                         (double)rss / (1024.0 * 1024.0), UNotifier::max_nfd_ready, max_depth,
@@ -2740,7 +2742,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
          U_INTERNAL_ASSERT_MINOR(len, sizeof(buffer))
 
-         (void) UFile::writeToTmp(buffer, len, O_RDWR | O_TRUNC, "%N.memusage.%P", 0);
+         (void) UFile::writeToTmp(buffer, len, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("%N.memusage.%P"), 0);
          }
 #  endif
 
@@ -2944,7 +2946,7 @@ try_accept:
 
          if (u_buffer_len)
             {
-            ULog::log("WARNING: accept new client failed %.*S", u_buffer_len, u_buffer);
+            ULog::log(U_CONSTANT_TO_PARAM("WARNING: accept new client failed %.*S"), u_buffer_len, u_buffer);
 
             u_buffer_len = 0;
             }
@@ -3085,7 +3087,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
                {
                char buffer[128];
 
-               ULog::log("%sChild (pid %d) exited with value %d (%s), down to %u children",
+               ULog::log(U_CONSTANT_TO_PARAM("%sChild (pid %d) exited with value %d (%s), down to %u children"),
                          UServer_Base::mod_name[0], pid, status, UProcess::exitInfo(buffer, status), UNotifier::num_connection - UNotifier::min_connection);
                }
 #        endif
@@ -3094,7 +3096,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
             }
 
 #     ifndef U_LOG_DISABLE
-         if (isLog()) ULog::log("Waiting for connection on port %u", port);
+         if (isLog()) ULog::log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), port);
 #     endif
 
          U_RETURN(U_NOTIFIER_OK);
@@ -3131,10 +3133,10 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
       char buffer[32];
       uint32_t len = setNumConnection(buffer);
 
-      ULog::log("New client connected from %v, %.*s clients currently connected", CLIENT_INDEX->logbuf->rep, len, buffer);
+      ULog::log(U_CONSTANT_TO_PARAM("New client connected from %v, %.*s clients currently connected"), CLIENT_INDEX->logbuf->rep, len, buffer);
 
 #  ifdef U_WELCOME_SUPPORT
-      if (msg_welcome) ULog::log("Sending welcome message to %v", CLIENT_INDEX->logbuf->rep);
+      if (msg_welcome) ULog::log(U_CONSTANT_TO_PARAM("Sending welcome message to %v"), CLIENT_INDEX->logbuf->rep);
 #  endif
       }
 #endif
@@ -3287,12 +3289,12 @@ bool UServer_Base::handlerTimeoutConnection(void* cimg)
          {
          if (called_from_handlerTime)
             {
-            ULog::log("%shandlerTime: client connected didn't send any request in %u secs (timeout), close connection %v",
+            ULog::log(U_CONSTANT_TO_PARAM("%shandlerTime: client connected didn't send any request in %u secs (timeout), close connection %v"),
                         UServer_Base::mod_name[0], ptime->UTimeVal::tv_sec, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
          else
             {
-            ULog::log("%shandlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v",
+            ULog::log(U_CONSTANT_TO_PARAM("%shandlerTimeoutConnection: client connected didn't send any request in %u secs, close connection %v"),
                         UServer_Base::mod_name[0], UNotifier::last_event - ((UClientImage_Base*)cimg)->last_event, ((UClientImage_Base*)cimg)->logbuf->rep);
             }
          }
@@ -3404,7 +3406,7 @@ void UServer_Base::runLoop(const char* user)
       }
 
 #ifndef U_LOG_DISABLE
-   if (isLog()) ULog::log("Waiting for connection on port %u", port);
+   if (isLog()) ULog::log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), port);
 #endif
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
@@ -3594,13 +3596,13 @@ void UServer_Base::run()
                   if (USocket::incoming_cpu != cpu &&
                       USocket::incoming_cpu != -1)
                      {
-                     sz = u__snprintf(buffer, sizeof(buffer), " (EXPECTED CPU %d)", USocket::incoming_cpu);
+                     sz = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(" (EXPECTED CPU %d)"), USocket::incoming_cpu);
                      }
                   else
 #              endif
                   sz = 0;
 
-                  ULog::log("%sNew child started, affinity mask: %x, cpu: %d%.*s",  mod_name[0], CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
+                  ULog::log(U_CONSTANT_TO_PARAM("%sNew child started, affinity mask: %x, cpu: %d%.*s"),  mod_name[0], CPUSET_BITS(&cpuset)[0], cpu, sz, buffer);
                   }
 #           endif
                }
@@ -3698,7 +3700,7 @@ void UServer_Base::run()
             {
             char buffer[128];
 
-            ULog::log("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children", mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
+            ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children"), mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
             }
 #     endif
          }
@@ -3869,7 +3871,7 @@ void UServer_Base::logCommandMsgError(const char* cmd, bool balways)
 #ifndef U_LOG_DISABLE
    if (isLog())
       {
-      if (UCommand::setMsgError(cmd, !balways) || balways) ULog::log("%s%.*s", mod_name[0], u_buffer_len, u_buffer);
+      if (UCommand::setMsgError(cmd, !balways) || balways) ULog::log(U_CONSTANT_TO_PARAM("%s%.*s"), mod_name[0], u_buffer_len, u_buffer);
 
       errno        = 0;
       u_buffer_len = 0;

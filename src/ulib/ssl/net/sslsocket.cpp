@@ -452,7 +452,10 @@ U_NO_EXPORT int USSLSocket::selectProto(SSL* ssl, const unsigned char** out, uns
 #ifdef DEBUG
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   for (unsigned int i = 0; i < inlen; i += in[i]+1) u_buffer_len += u__snprintf(u_buffer+u_buffer_len, U_BUFFER_SIZE-u_buffer_len, "%.*s ", in[i], (const char*)(&in[i+1]));
+   for (unsigned int i = 0; i < inlen; i += in[i]+1)
+      {
+      u_buffer_len += u__snprintf(u_buffer+u_buffer_len, U_BUFFER_SIZE-u_buffer_len, U_CONSTANT_TO_PARAM("%.*s "), in[i], (const char*)(&in[i+1]));
+      }
 
    U_INTERNAL_DUMP("[ALPN] client offers = %.*S", u_buffer_len, u_buffer)
 
@@ -761,7 +764,7 @@ void USSLSocket::setStatus(SSL* _ssl, int _ret, bool _flag)
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "(%d, %s) - %s", _ret, descr, errstr);
+   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("(%d, %s) - %s"), _ret, descr, errstr);
 
    while ((i2 = ERR_get_error()))
       {
@@ -773,7 +776,7 @@ void USSLSocket::setStatus(SSL* _ssl, int _ret, bool _flag)
 
       U_INTERNAL_DUMP("buf = %.*S", sz, buf)
 
-      u_buffer_len += u__snprintf(u_buffer + u_buffer_len, U_BUFFER_SIZE - u_buffer_len, " (%ld, %.*s)", i2, sz, buf);
+      u_buffer_len += u__snprintf(u_buffer + u_buffer_len, U_BUFFER_SIZE - u_buffer_len, U_CONSTANT_TO_PARAM(" (%ld, %.*s)"), i2, sz, buf);
       }
 
    U_INTERNAL_DUMP("status = %.*S", u_buffer_len, u_buffer)

@@ -184,7 +184,7 @@ public:
       {
       U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%f)", argName.rep, argType.rep, value)
 
-      buffer.snprintf("%f", value);
+      buffer.snprintf(U_CONSTANT_TO_PARAM("%f"), value);
 
       encodeArgument(argName, argType, buffer);
       }
@@ -193,7 +193,7 @@ public:
       {
       U_TRACE(0, "URPCEncoder::encodeArgument(%V,%V,%g)", argName.rep, argType.rep, value)
 
-      buffer.snprintf("%g", value);
+      buffer.snprintf(U_CONSTANT_TO_PARAM("%g"), value);
 
       encodeArgument(argName, argType, buffer);
       }

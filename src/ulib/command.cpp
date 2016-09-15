@@ -425,7 +425,7 @@ bool UCommand::setMsgError(const char* cmd, bool only_if_error)
 
    if (isStarted() == false)
       {
-      u_buffer_len = u__snprintf(u_buffer, U_MAX_SIZE_PREALLOCATE, "command %S didn't start %R",  cmd, 0); // NB: the last argument (0) is necessary...
+      u_buffer_len = u__snprintf(u_buffer, U_MAX_SIZE_PREALLOCATE, U_CONSTANT_TO_PARAM("command %S didn't start %R"),  cmd, 0); // NB: the last argument (0) is necessary...
 
       U_RETURN(true);
       }
@@ -433,7 +433,7 @@ bool UCommand::setMsgError(const char* cmd, bool only_if_error)
    if (isTimeout() &&
        timeoutMS > 0)
       {
-      u_buffer_len = u__snprintf(u_buffer, U_MAX_SIZE_PREALLOCATE, "command %S (pid %u) excedeed time (%d secs) for execution", cmd, pid, timeoutMS / 1000);
+      u_buffer_len = u__snprintf(u_buffer, U_MAX_SIZE_PREALLOCATE, U_CONSTANT_TO_PARAM("command %S (pid %u) excedeed time (%d secs) for execution"), cmd, pid, timeoutMS / 1000);
 
       U_RETURN(true);
       }
@@ -442,7 +442,7 @@ bool UCommand::setMsgError(const char* cmd, bool only_if_error)
       {
       char buffer[128];
 
-      u_buffer_len = u__snprintf(u_buffer, U_MAX_SIZE_PREALLOCATE, "command %S started (pid %u) and ended with status: %d (%d, %s)",
+      u_buffer_len = u__snprintf(u_buffer, U_MAX_SIZE_PREALLOCATE, U_CONSTANT_TO_PARAM("command %S started (pid %u) and ended with status: %d (%d, %s)"),
                                                                     cmd, pid, status, exit_value, UProcess::exitInfo(buffer, status));
       }
 
@@ -567,7 +567,7 @@ UCommand* UCommand::loadConfigCommand(UFileConfig* cfg)
          {
          UString buffer(U_CONSTANT_SIZE(U_PATH_SHELL) + 1 + command.size());
 
-         buffer.snprintf("%s %v", U_PATH_SHELL, command.rep);
+         buffer.snprintf(U_CONSTANT_TO_PARAM("%s %v"), U_PATH_SHELL, command.rep);
 
          command = buffer;
          }

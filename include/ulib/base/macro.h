@@ -39,14 +39,14 @@
 #ifdef DEBUG
 #  define U_ASSERT_MACRO(assertion,msg,info) \
       if ((bool)(assertion) == false) { \
-         u__printf(STDERR_FILENO, "%W%N%W: %Q%W%s%W\n" \
+         u__printf(STDERR_FILENO, U_CONSTANT_TO_PARAM("%W%N%W: %Q%W%s%W\n" \
          "-------------------------------------\n" \
          " pid: %W%P%W\n" \
          " file: %W%s%W\n" \
          " line: %W%d%W\n" \
          " function: %W%s%W\n" \
          " assertion: \"(%W%s%W)\" %W%s%W\n" \
-         "-------------------------------------", \
+         "-------------------------------------"), \
          GREEN, YELLOW, -1, CYAN, msg, YELLOW, \
          CYAN, YELLOW, \
          CYAN, __FILE__, YELLOW, \
@@ -76,7 +76,7 @@
 #     define U_NULL_POINTER (const void*)0x0000ffff
 #  endif
 
-#  define U_DEBUG(fmt,args...) { u__printf(STDERR_FILENO, "%W%N%W: %WDEBUG: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET); }
+#  define U_DEBUG(fmt,args...) { u__printf(STDERR_FILENO, U_CONSTANT_TO_PARAM("%W%N%W: %WDEBUG: %9D (pid %P) " fmt "%W"), BRIGHTCYAN, RESET, YELLOW, ##args, RESET); }
 
 #  define U_INTERNAL_ASSERT(expr)            { U_ASSERT_MACRO(expr,"ASSERTION FALSE","") }
 #  define U_INTERNAL_ASSERT_MSG(expr,info)   { U_ASSERT_MACRO(expr,"ASSERTION FALSE",info) }
@@ -124,16 +124,16 @@
 /* Manage message info */
 
 #define U_MESSAGE(fmt,args...) \
-{ u__printf(STDERR_FILENO, "%W%N%W: " fmt, BRIGHTCYAN, RESET, ##args); }
+{ u__printf(STDERR_FILENO, U_CONSTANT_TO_PARAM("%W%N%W: " fmt), BRIGHTCYAN, RESET, ##args); }
 
 #define U_ERROR(fmt,args...) \
-{ u_flag_exit = -1; u__printf(STDERR_FILENO, "%W%N%W: %WERROR: %9D (pid %P) " fmt " - Exiting...%W", BRIGHTCYAN, RESET, RED, ##args, RESET); }
+{ u_flag_exit = -1; u__printf(STDERR_FILENO, U_CONSTANT_TO_PARAM("%W%N%W: %WERROR: %9D (pid %P) " fmt " - Exiting...%W"), BRIGHTCYAN, RESET, RED, ##args, RESET); }
 
 #define U_ABORT(fmt,args...) \
-{ u_flag_exit = -2; u__printf(STDERR_FILENO, "%W%N%W: %WABORT: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, RED, ##args, RESET); }
+{ u_flag_exit = -2; u__printf(STDERR_FILENO, U_CONSTANT_TO_PARAM("%W%N%W: %WABORT: %9D (pid %P) " fmt "%W"), BRIGHTCYAN, RESET, RED, ##args, RESET); }
 
 #define U_WARNING(fmt,args...) \
-{ u_flag_exit = 2; u__printf(STDERR_FILENO, "%W%N%W: %WWARNING: %9D (pid %P) " fmt "%W", BRIGHTCYAN, RESET, YELLOW, ##args, RESET); }
+{ u_flag_exit = 2; u__printf(STDERR_FILENO, U_CONSTANT_TO_PARAM("%W%N%W: %WWARNING: %9D (pid %P) " fmt "%W"), BRIGHTCYAN, RESET, YELLOW, ##args, RESET); }
 
 #define   U_ERROR_SYSCALL(msg)   U_ERROR("%R",msg)
 #define   U_ABORT_SYSCALL(msg)   U_ABORT("%R",msg)

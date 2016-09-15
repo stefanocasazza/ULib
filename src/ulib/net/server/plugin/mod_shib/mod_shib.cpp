@@ -641,7 +641,7 @@ int UShibPlugIn::handlerRequest()
                   {
                   static char buf[1024];
 
-                  (void) snprintf(buf, sizeof(buf), "%s://%s%s/", UShibTarget::protocol, UShibTarget::hostname, UShibTarget::uri);
+                  (void) snprintf(buf, sizeof(buf), U_CONSTANT_TO_PARAM("%s://%s%s/"), UShibTarget::protocol, UShibTarget::hostname, UShibTarget::uri);
 
                   UShibTarget::location = buf;
                   }
@@ -684,7 +684,7 @@ int UShibPlugIn::handlerRequest()
                   name  = UShibTarget::setcookie->at(i);
                   value = UShibTarget::setcookie->at(i+1);
 
-                  UHTTP::ext->snprintf_add("Set-Cookie: %v=%v\r\n", name.rep, value.rep);
+                  UHTTP::ext->snprintf_add(U_CONSTANT_TO_PARAM("Set-Cookie: %v=%v\r\n"), name.rep, value.rep);
                   }
 
                delete UShibTarget::setcookie;

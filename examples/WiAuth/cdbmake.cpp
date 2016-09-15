@@ -72,7 +72,7 @@ public:
                   uint32_t sz1 = pos2-pos1-2,
                            sz2 = sz-pos2-1;
 
-                  buffer.snprintf("+%u,%u:%.*s->%.*s\n", sz1, sz2, sz1, line.c_pointer(pos1+1), sz2, line.c_pointer(pos2+1));
+                  buffer.snprintf(U_CONSTANT_TO_PARAM("+%u,%u:%.*s->%.*s\n"), sz1, sz2, sz1, line.c_pointer(pos1+1), sz2, line.c_pointer(pos2+1));
 
                   U_INTERNAL_DUMP("sz = %u sz1 = %u sz2 = %u pos1 = %u pos2 = %u line = %V buffer = %V", sz, sz1, sz2, pos1, pos2, line.rep, buffer.rep)
 

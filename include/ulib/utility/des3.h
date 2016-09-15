@@ -20,8 +20,8 @@
 
 struct U_EXPORT UDES3 {
 
-   static UString signData(const char* fmt, ...);
    static UString getSignedData(const char* ptr, uint32_t len);
+   static UString signData(const char* fmt, uint32_t fmt_size, ...);
 
    static UString getSignedData(const UString& s) { return getSignedData(U_STRING_TO_PARAM(s)); }
 

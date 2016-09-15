@@ -1145,21 +1145,25 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
                _value->type_       = REAL_VALUE;
                _value->value.real_ = strtod(start, 0);
 
-               U_INTERNAL_DUMP("_value.real_ = %.16g", _value->value.real_)
+               U_INTERNAL_DUMP("_value.real_ = %g", _value->value.real_)
                }
             else if (c == '-')
                {
                _value->type_      = INT_VALUE;
-               _value->value.int_ = strtol(start, 0, 10);
+               _value->value.int_ = u_strtol(start, tok.getPointer());
 
                U_INTERNAL_DUMP("_value.int_ = %d", _value->value.int_)
+
+               U_INTERNAL_ASSERT_EQUALS(_value->value.int_, strtol(start, 0, 10))
                }
             else
                {
                _value->type_       = UINT_VALUE;
-               _value->value.uint_ = strtoul(start, 0, 10);
+               _value->value.uint_ = u_strtoul(start, tok.getPointer());
 
                U_INTERNAL_DUMP("_value.uint_ = %u", _value->value.uint_)
+
+               U_INTERNAL_ASSERT_EQUALS(_value->value.uint_, strtoul(start, 0, 10))
                }
             }
          }
@@ -1772,9 +1776,11 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
                   U_INTERNAL_ASSERT_EQUALS(breal, false)
 
-                  index = strtoul(start, 0, 10);
+                  index = u_strtoul(start, tok2.getPointer());
 
                   U_INTERNAL_DUMP("index = %u", index)
+
+                  U_INTERNAL_ASSERT_EQUALS(index, strtol(start, 0, 10))
                   }
                break;
 
@@ -1920,9 +1926,11 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
             U_INTERNAL_ASSERT_EQUALS(breal, false)
 
-            index = strtoul(start, 0, 10);
+            index = u_strtoul(start, tok2.getPointer());
 
             U_INTERNAL_DUMP("index = %u", index)
+
+            U_INTERNAL_ASSERT_EQUALS(index, strtol(start, 0, 10))
             }
 
          count = 0;

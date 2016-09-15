@@ -73,7 +73,7 @@ while (true)
 
    rnumber.clear();
 
-   (void) UValue::jfind(mc->vitem[0], U_CONSTANT_TO_PARAM("randomNumber"), rnumber);
+   (void) U_JFIND(mc->vitem[0], "randomNumber", rnumber);
 
 #ifdef AS_cpoll_cppsp_DO
    USP_PRINTF("{\"id\":%u,\"randomNumber\":%v}", id, rnumber.rep);

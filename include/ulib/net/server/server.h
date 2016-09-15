@@ -90,8 +90,9 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 #  define   U_SET_MODULE_NAME(name)        { if (UServer_Base::isLog()) { (void) strcpy(UServer_Base::mod_name[1], UServer_Base::mod_name[0]); \
                                                                           (void) strcpy(UServer_Base::mod_name[0], "["#name"] "); } }
 
-#  define U_SRV_LOG(          fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s" fmt,       UServer_Base::mod_name[0] , ##args); }
-#  define U_SRV_LOG_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) ULog::log("%s" fmt " %v", UServer_Base::mod_name[0] , ##args, UServer_Base::pClientImage->logbuf->rep); }
+#  define U_SRV_LOG(          fmt,args...) { if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("%s" fmt),       UServer_Base::mod_name[0] , ##args); }
+#  define U_SRV_LOG_WITH_ADDR(fmt,args...) { if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("%s" fmt " %v"), UServer_Base::mod_name[0] , ##args, \
+                                                                                  UServer_Base::pClientImage->logbuf->rep); }
 #endif
 
 class UHTTP;

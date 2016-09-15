@@ -76,7 +76,7 @@ public:
 
             (void) write(2, buffer,
                 u__snprintf(buffer, sizeof(buffer),
-                            "NOT FOUND: %.*s %.*s %.*s\n",
+                            U_CONSTANT_TO_PARAM("NOT FOUND: %.*s %.*s %.*s\n"),
                             U_STRING_TO_TRACE(ap_name),
                             U_STRING_TO_TRACE(ap_address1),
                             U_STRING_TO_TRACE(ap_address2)));
@@ -91,7 +91,7 @@ public:
 
                (void) write(2, buffer,
                    u__snprintf(buffer, sizeof(buffer),
-                            "ERROR: %.*s %.*s %.*s\n",
+                            U_CONSTANT_TO_PARAM("ERROR: %.*s %.*s %.*s\n"),
                             U_STRING_TO_TRACE(ap_name),
                             U_STRING_TO_TRACE(ap_address1),
                             U_STRING_TO_TRACE(ap_address2)));

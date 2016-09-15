@@ -896,42 +896,42 @@ const char* Messaggio::dump(bool reset) const
 
    char buffer[2048];
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", flag));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), flag));
 
    *UObjectIO::os << '\n'
                   << "vdestinatari_domini                  ";
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", vdestinatari_domini));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), vdestinatari_domini));
 
    *UObjectIO::os << '\n'
                   << "vdestinatari_certificati             ";
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", vdestinatari_certificati));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), vdestinatari_certificati));
 
    *UObjectIO::os << '\n'
                   << "vdestinatari_presa_in_carico         ";
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", vdestinatari_presa_in_carico));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), vdestinatari_presa_in_carico));
 
    *UObjectIO::os << '\n'
                   << "vdestinatari_mancata_consegna        ";
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", vdestinatari_mancata_consegna));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), vdestinatari_mancata_consegna));
 
    *UObjectIO::os << '\n'
                   << "vdestinatari_avvenuta_consegna       ";
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", vdestinatari_avvenuta_consegna));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), vdestinatari_avvenuta_consegna));
 
    *UObjectIO::os << '\n'
                   << "vdestinatari_rilevazione_virus       ";
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", vdestinatari_rilevazione_virus));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), vdestinatari_rilevazione_virus));
 
    *UObjectIO::os << '\n'
                   << "vdestinatari_mancata_consegna_virus  ";
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", vdestinatari_mancata_consegna_virus));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), vdestinatari_mancata_consegna_virus));
 
    *UObjectIO::os << '\n'
                   << "id                (UString           " << (void*)&id           << ")\n"

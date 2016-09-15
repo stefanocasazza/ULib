@@ -252,7 +252,7 @@
                   {
                   subject = UCertificate::getSubject(cert);
 
-                  tmp.snprintf("0x%04X %v", lserial, subject.rep);
+                  tmp.snprintf(U_CONSTANT_TO_PARAM("0x%04X %v"), lserial, subject.rep);
 
                   vec.push(tmp.copy());
                   }

@@ -22,7 +22,7 @@ filepath;
 
    UServices::generateDigest(U_HASH_MD5, 0, (unsigned char*)ptr, size, md5sum, false);
 
-   dump.snprintf("%M", ptr, U_min(size,1024));
+   dump.snprintf(U_CONSTANT_TO_PARAM("%M"), ptr, U_min(size,1024));
 -->
 
     <p>

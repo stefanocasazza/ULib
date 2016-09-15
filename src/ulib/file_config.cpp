@@ -78,7 +78,7 @@ bool UFileConfig::processData(bool bload)
 
       if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/cpp.err");
 
-      command.snprintf("cpp -undef -nostdinc -w -P -C " DBG_DEF "-I%v -", _dir.rep);
+      command.snprintf(U_CONSTANT_TO_PARAM("cpp -undef -nostdinc -w -P -C " DBG_DEF "-I%v -"), _dir.rep);
 
       if (UFile::isOpen())
          {
@@ -89,7 +89,7 @@ bool UFileConfig::processData(bool bload)
 #     ifdef HAVE_MCPP
          if (data.empty())
             {
-            command.snprintf("mcpp -P -C " DBG_DEF "-I%v -", _dir.rep);
+            command.snprintf(U_CONSTANT_TO_PARAM("mcpp -P -C " DBG_DEF "-I%v -"), _dir.rep);
 
             (void) UFile::lseek(U_SEEK_BEGIN, SEEK_SET);
 
@@ -113,7 +113,7 @@ bool UFileConfig::processData(bool bload)
             {
             UCommand _cmd(command);
 
-            command.snprintf("mcpp -P -C " DBG_DEF "-I%v -", _dir.rep);
+            command.snprintf(U_CONSTANT_TO_PARAM("mcpp -P -C " DBG_DEF "-I%v -"), _dir.rep);
 
             (void) _cmd.execute(&data, &output, -1, fd_stderr);
 
@@ -433,8 +433,8 @@ bool UFileConfig::loadINI()
 
          fullKey.setBuffer(len + 1 + key.size());
 
-         if (len == 0) fullKey.snprintf(   "%v",                 key.rep);
-         else          fullKey.snprintf("%v.%v", sectionKey.rep, key.rep);
+         if (len == 0) fullKey.snprintf(U_CONSTANT_TO_PARAM(   "%v"),                 key.rep);
+         else          fullKey.snprintf(U_CONSTANT_TO_PARAM("%v.%v"), sectionKey.rep, key.rep);
 
          (void) fullKey.shrink();
 

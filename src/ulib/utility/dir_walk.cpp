@@ -116,22 +116,6 @@ bool UDirWalk::setDirectory(const UString& dir, const char* _filter, uint32_t _f
    U_RETURN(true);
 }
 
-void UDirWalk::setSuffixFileType(const char* format, ...)
-{
-   U_TRACE(0, "UDirWalk::setSuffixFileType(%S)", format)
-
-   U_INTERNAL_ASSERT_EQUALS(suffix_file_type, 0)
-
-   U_NEW(UString, suffix_file_type, UString(100U));
-
-   va_list argp;
-   va_start(argp, format);
-
-   suffix_file_type->vsnprintf(format, argp);
-
-   va_end(argp);
-}
-
 U_NO_EXPORT void UDirWalk::prepareForCallingRecurse(char* d_name, uint32_t d_namlen, unsigned char d_type)
 {
    U_TRACE(0, "UDirWalk::prepareForCallingRecurse(%.*S,%u,%d)", d_namlen, d_name, d_namlen, d_type)

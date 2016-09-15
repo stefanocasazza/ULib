@@ -157,7 +157,7 @@ public:
          UString hash(100U);
          long hash_code = crl.hashCode();
 
-         hash.snprintf("%08x.r0", hash_code);
+         hash.snprintf(U_CONSTANT_TO_PARAM("%08x.r0"), hash_code);
 
          U_DUMP("hash = %.*S exist = %b", U_STRING_TO_TRACE(hash), UFile::access(hash.data(), R_OK))
 
@@ -180,7 +180,7 @@ public:
       UString hash(100U);
       long hash_code = cert.hashCode();
 
-      hash.snprintf("%08x.0", hash_code);
+      hash.snprintf(U_CONSTANT_TO_PARAM("%08x.0"), hash_code);
 
       bool exist = UFile::access(hash.data(), R_OK);
 

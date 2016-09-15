@@ -26,7 +26,7 @@ int main(int argc, char* argv[])
 
    set_reply_capacity(1024 + GIF_SIZE * 3);
 
-   (void) u__snprintf(get_reply(), get_reply_capacity(), "<img src=\"data:img/gif;base64,%.*s\">", u_base64_encode(gif, GIF_SIZE, encoded), encoded);
+   (void) u__snprintf(get_reply(), get_reply_capacity(), U_CONSTANT_TO_PARAM("<img src=\"data:img/gif;base64,%.*s\">"), u_base64_encode(gif, GIF_SIZE, encoded), encoded);
 
    return 200;
 }

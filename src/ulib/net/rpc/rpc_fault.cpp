@@ -13,14 +13,14 @@
 
 #include <ulib/net/rpc/rpc_fault.h>
 
-void URPCFault::setDetail(const char* format, ...)
+void URPCFault::setDetail(const char* format, uint32_t fmt_size, ...)
 {
-   U_TRACE(0, "URPCFault::setDetail(%S)", format)
+   U_TRACE(0, "URPCFault::setDetail(%.*S,%u)", fmt_size, format, fmt_size)
 
    va_list argp;
-   va_start(argp, format);
+   va_start(argp, fmt_size);
 
-   detail.vsnprintf(format, argp);
+   detail.vsnprintf(format, fmt_size, argp);
 
    va_end(argp);
 }
@@ -75,7 +75,7 @@ void URPCFault::encode(UString& response)
 
    response.setBuffer(100U + code.size() + faultReason.size() + detail.size());
 
-   response.snprintf("%v: %v%s%v", code.rep, faultReason.rep, (detail.empty() ? "" : " - "), detail.rep);
+   response.snprintf(U_CONSTANT_TO_PARAM("%v: %v%s%v"), code.rep, faultReason.rep, (detail.empty() ? "" : " - "), detail.rep);
 }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

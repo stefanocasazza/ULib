@@ -371,8 +371,8 @@ public:
 
    // Print date with format
 
-          UString strftime(const char* fmt);
-   static UString strftime(const char* fmt, time_t t, bool blocale = false);
+          UString strftime(const char* fmt, uint32_t fmt_size);
+   static UString strftime(const char* fmt, uint32_t fmt_size, time_t t, bool blocale = false);
 
    time_t getSecond()
       {

@@ -15,17 +15,20 @@
 #include <ulib/utility/base64.h>
 #include <ulib/utility/string_ext.h>
 
-UString UDES3::signData(const char* fmt, ...)
+UString UDES3::signData(const char* fmt, uint32_t fmt_size, ...)
 {
-   U_TRACE(0, "UDES3::signData(%S)", fmt)
+   U_TRACE(0, "UDES3::signData(%.*S,%u)", fmt_size, fmt, fmt_size)
 
-   UString buffer1(U_CAPACITY), buffer2(U_CAPACITY), signed_data(U_CAPACITY);
+   UString     buffer1(U_CAPACITY),
+               buffer2(U_CAPACITY),
+           signed_data(U_CAPACITY);
+
    const char* ptr = buffer1.data();
 
    va_list argp;
-   va_start(argp, fmt);
+   va_start(argp, fmt_size);
 
-   buffer1.vsnprintf(fmt, argp);
+   buffer1.vsnprintf(fmt, fmt_size, argp);
 
    va_end(argp);
 

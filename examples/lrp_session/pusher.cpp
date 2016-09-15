@@ -100,7 +100,7 @@ public:
          {
          // search device into LDAP
 
-         (void) snprintf(ipfilter, sizeof(ipfilter), "(tnetLrpIpHostNumber=%s)", ip_device);
+         (void) snprintf(ipfilter, sizeof(ipfilter), U_CONSTANT_TO_PARAM("(tnetLrpIpHostNumber=%s)"), ip_device);
 
          n = ldap.search(binddn_device, LDAP_SCOPE_SUBTREE, (char**)device_attr_name, ipfilter);
 
@@ -124,7 +124,7 @@ public:
 
          // load old request file
 
-         name.snprintf("%s/%s", directory.c_str(), file_request);
+         name.snprintf(U_CONSTANT_TO_PARAM("%v/%s"), directory.rep, file_request);
 
          request = UFile::contentOf(name);
 

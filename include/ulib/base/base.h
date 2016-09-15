@@ -232,10 +232,7 @@ extern U_EXPORT const char* u_month_name[12]; /* "January", "February", "March",
 
 U_EXPORT bool     u_setStartTime(void);
 U_EXPORT unsigned u_getMonth(const char* buf) __pure;
-U_EXPORT uint32_t u_strftime1(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt);
-U_EXPORT uint32_t u_strftime2(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, time_t when);
 
-/* Services */
 extern U_EXPORT int u_errno; /* An errno value */
 extern U_EXPORT int u_flag_exit;
 extern U_EXPORT int u_flag_test;
@@ -346,13 +343,13 @@ extern U_EXPORT int32_t u_printf_string_max_length;
 
 /* NB: we use u__printf(), u__snprintf(), u__vsnprintf(), ... cause of conflit with /usr/include/unicode/urename.h */
 
-U_EXPORT void u__printf(int fd,           const char* restrict format, ...);
-U_EXPORT void u_internal_print(bool abrt, const char* restrict format, ...);
+U_EXPORT void u__printf(int fd,           const char* restrict format, uint32_t fmt_size, ...);
+U_EXPORT void u_internal_print(bool abrt, const char* restrict format,                    ...);
 
 U_EXPORT uint32_t u_sprintc(   char* restrict buffer, unsigned char c);
 U_EXPORT uint32_t u_sprintcrtl(char* restrict buffer, unsigned char c);
-U_EXPORT uint32_t u__snprintf( char* restrict buffer, uint32_t buffer_size, const char* restrict format, ...);
-U_EXPORT uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, va_list argp);
+U_EXPORT uint32_t u__snprintf( char* restrict buffer, uint32_t buffer_size, const char* restrict format, uint32_t fmt_size, ...);
+U_EXPORT uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* restrict format, uint32_t fmt_size, va_list argp);
 
 #ifdef DEBUG
 /* NB: u_strlen() and u_memcpy() conflit with /usr/include/unicode/urename.h */
@@ -443,6 +440,22 @@ static inline void u_gettimenow(void)
 #endif
 */
 
+U_EXPORT      uint32_t u_strftime1(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, uint32_t fmt_size);
+static inline uint32_t u_strftime2(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, uint32_t fmt_size, time_t when)
+{
+   U_INTERNAL_TRACE("u_strftime2(%u,%.*s,%u,%ld)", buffer, buffer_size, fmt, fmt_size, when)
+
+   U_INTERNAL_ASSERT_POINTER(fmt)
+   U_INTERNAL_ASSERT_MAJOR(buffer_size, 0)
+
+   (void) memset(&u_strftime_tm, 0, sizeof(struct tm));
+
+   (void) gmtime_r(&when, &u_strftime_tm);
+
+   return u_strftime1(buffer, buffer_size, fmt, fmt_size);
+}
+
+/* Services */
 /* conversion number to string */
 extern U_EXPORT uPFdpc   u_dbl2str;
 extern U_EXPORT uPFu32pc u_num2str32;

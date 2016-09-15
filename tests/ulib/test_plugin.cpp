@@ -47,7 +47,7 @@ static void setAccessPointReference(const char* s, uint32_t n)
       c = *(++s);
       }
 
-   (void) u__snprintf(ap_ref, sizeof(ap_ref), "X%04dRap", certid);
+   (void) u__snprintf(ap_ref, sizeof(ap_ref), U_CONSTANT_TO_PARAM("X%04dRap"), certid);
 
    U_INTERNAL_DUMP("ap_ref = %S", ap_ref)
 }

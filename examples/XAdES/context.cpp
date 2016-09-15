@@ -938,7 +938,7 @@ bool UTransformCtx::setURI(const char* _uri, xmlNodePtr node)
 
       static char buf[128];
 
-      (void) u__snprintf(buf, sizeof(buf), "xpointer(id(\'%s\'))", xptr + 1);
+      (void) u__snprintf(buf, sizeof(buf), U_CONSTANT_TO_PARAM("xpointer(id(\'%s\'))"), xptr + 1);
 
       xptr = buf;
 

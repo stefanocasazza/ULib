@@ -59,7 +59,7 @@ UString UDataSession::setKeyIdDataSession(uint32_t counter)
 
    keyid.setBuffer(100U);
 
-   keyid.snprintf("%.*s_%u_%P_%u", U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent(), counter);
+   keyid.snprintf(U_CONSTANT_TO_PARAM("%.*s_%u_%P_%u"), U_CLIENT_ADDRESS_TO_TRACE, UHTTP::getUserAgent(), counter);
 
    U_RETURN_STRING(keyid);
 }

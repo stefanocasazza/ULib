@@ -434,7 +434,7 @@ char* UFile::shm_open(const char* name, uint32_t length)
 #else
    char shm_buffer_path[MAX_FILENAME_LEN];
 
-   (void) u__snprintf(shm_buffer_path, sizeof(shm_buffer_path), "/tmp%s", name);
+   (void) u__snprintf(shm_buffer_path, sizeof(shm_buffer_path), U_CONSTANT_TO_PARAM("/tmp%s"), name);
 
    _fd = U_SYSCALL(open, "%S,%d,%d", shm_buffer_path, O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
 #endif
@@ -919,6 +919,30 @@ UString UFile::contentOf(const char* _pathname, int flags, bool bstat, const USt
    U_RETURN_STRING(content);
 }
 
+void UFile::printf(const char* format, uint32_t fmt_size, ...)
+{
+   U_TRACE(0, "UFile::printf(%.*S,%u)", fmt_size, format, fmt_size)
+
+   char buffer[8196];
+   uint32_t bytes_to_write;
+
+   va_list argp;
+   va_start(argp, fmt_size);
+
+   bytes_to_write = u__vsnprintf(buffer, sizeof(buffer)-1, format, fmt_size, argp);
+
+   va_end(argp);
+
+   buffer[bytes_to_write++] = '\n';
+
+   ssize_t bytes_written = U_SYSCALL(write, "%d,%p,%u", fd, buffer, bytes_to_write);
+
+   if (bytes_written != (ssize_t)bytes_to_write)
+      {
+      U_WARNING("write data of size %u is %s", bytes_to_write, (bytes_written == -1 ? "failed" : "partial"));
+      }
+}
+
 bool UFile::creatForWrite(int flags, bool bmkdirs)
 {
    U_TRACE(1, "UFile::creatForWrite(%d,%b)", flags, bmkdirs)
@@ -1037,9 +1061,9 @@ bool UFile::writeTo(const UString& path, const struct iovec* iov, int n, int fla
    U_RETURN(result);
 }
 
-bool UFile::writeToTmp(const char* data, uint32_t sz, int flags, const char* format, ...)
+bool UFile::writeToTmp(const char* data, uint32_t sz, int flags, const char* format, uint32_t fmt_size, ...)
 {
-   U_TRACE(0+256, "UFile::writeToTmp(%.*S,%u,%d,%S)", sz, data, sz, flags, format)
+   U_TRACE(0+256, "UFile::writeToTmp(%.*S,%u,%d,%.*S,%u)", sz, data, sz, flags, fmt_size, format, fmt_size)
 
    bool result = false;
 
@@ -1048,9 +1072,9 @@ bool UFile::writeToTmp(const char* data, uint32_t sz, int flags, const char* for
       UString path((unsigned char*)U_CONSTANT_TO_PARAM("/tmp/"), 200U);
 
       va_list argp;
-      va_start(argp, format);
+      va_start(argp, fmt_size);
 
-      path.vsnprintf_add(format, argp);
+      path.vsnprintf_add(format, fmt_size, argp);
 
       va_end(argp);
 
@@ -1060,9 +1084,9 @@ bool UFile::writeToTmp(const char* data, uint32_t sz, int flags, const char* for
    U_RETURN(result);
 }
 
-bool UFile::writeToTmp(const struct iovec* iov, int n, int flags, const char* format, ...)
+bool UFile::writeToTmp(const struct iovec* iov, int n, int flags, const char* format, uint32_t fmt_size, ...)
 {
-   U_TRACE(0+256, "UFile::writeToTmp(%p,%d,%d,%S)", iov, n, flags, format)
+   U_TRACE(0+256, "UFile::writeToTmp(%p,%d,%d,%.*S,%u)", iov, n, flags, fmt_size, format, fmt_size)
 
    bool result = false;
 
@@ -1071,9 +1095,9 @@ bool UFile::writeToTmp(const struct iovec* iov, int n, int flags, const char* fo
       UString path((unsigned char*)U_CONSTANT_TO_PARAM("/tmp/"), 200U);
 
       va_list argp;
-      va_start(argp, format);
+      va_start(argp, fmt_size);
 
-      path.vsnprintf_add(format, argp);
+      path.vsnprintf_add(format, fmt_size, argp);
 
       va_end(argp);
 
@@ -1442,7 +1466,7 @@ int UFile::mkTemp()
 
    // The last six characters of template must be XXXXXX and these are replaced with a string that makes the filename unique
 
-   (void) u__snprintf(_pathname, sizeof(_pathname), "%s/tmpXXXXXX", u_tmpdir);
+   (void) u__snprintf(_pathname, sizeof(_pathname), U_CONSTANT_TO_PARAM("%s/tmpXXXXXX"), u_tmpdir);
 
    mode_t old_mode = U_SYSCALL(umask, "%d", 077);  // Create file with restrictive permissions
 

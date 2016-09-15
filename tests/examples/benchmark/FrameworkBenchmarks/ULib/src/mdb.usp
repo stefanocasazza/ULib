@@ -58,7 +58,7 @@ UString result;
 
 (void) mc->findOne(id = u_get_num_random(10000-1));
 
-(void) UValue::jfind(mc->vitem[0], U_CONSTANT_TO_PARAM("randomNumber"), result);
+(void) U_JFIND(mc->vitem[0], "randomNumber", result);
 
 #ifdef AS_cpoll_cppsp_DO
 USP_PRINTF_ADD("{\"id\":%u,\"randomNumber\":%v}", id, result.rep);

@@ -317,7 +317,7 @@ protected:
 
    bool setConnection();
    void readCommandResponse();
-   bool syncCommand(const char* format, ...); // Send a command to the FTP server and wait for a response
+   bool syncCommand(const char* format, uint32_t fmt_size, ...); // Send a command to the FTP server and wait for a response
 
    bool waitReady(uint32_t timeoutMS);
    int  download(const UString& path, off_t offset);

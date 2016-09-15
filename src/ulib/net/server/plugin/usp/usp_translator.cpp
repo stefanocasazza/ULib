@@ -180,7 +180,7 @@ public:
 
                U_ASSERT(tmp.isQuoted())
 
-               buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%v)\n\t);\n\t", tmp.rep);
+               buffer.snprintf(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append(\n\t\tU_CONSTANT_TO_PARAM(%v)\n\t);\n\t"), tmp.rep);
 
                (void) output.append(buffer);
                }
@@ -259,11 +259,11 @@ public:
 
                   size = (pos == U_NOT_FOUND ? name.size() : pos);
 
-                  buffer.snprintf("\n\tUSP_SESSION_VAR_GET(%u,%.*s);\n\t", i, size, ptr);
+                  buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tUSP_SESSION_VAR_GET(%u,%.*s);\n\t"), i, size, ptr);
 
                   (void) output.append(buffer);
 
-                  output1.snprintf_add("\n\tUSP_SESSION_VAR_PUT(%u,%.*s);\n\t", i, size, ptr);
+                  output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_SESSION_VAR_PUT(%u,%.*s);\n\t"), i, size, ptr);
                   }
                }
             }
@@ -307,11 +307,11 @@ public:
 
                   size = (pos == U_NOT_FOUND ? name.size() : pos);
 
-                  buffer.snprintf("\n\tUSP_STORAGE_VAR_GET(%u,%.*s);\n\t", i, size, ptr);
+                  buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tUSP_STORAGE_VAR_GET(%u,%.*s);\n\t"), i, size, ptr);
 
                   (void) output.append(buffer);
 
-                  output1.snprintf_add("\n\tUSP_STORAGE_VAR_PUT(%u,%.*s);\n\t", i, size, ptr);
+                  output1.snprintf_add(U_CONSTANT_TO_PARAM("\n\tUSP_STORAGE_VAR_PUT(%u,%.*s);\n\t"), i, size, ptr);
                   }
                }
             }
@@ -337,9 +337,13 @@ public:
                pos  = tmp.find('(');
                name = (pos == U_NOT_FOUND ? tmp : tmp.substr(0U, pos));
 
-               buffer.snprintf("\n\tUString %v = USP_FORM_VALUE(%u);\n\t", name.rep, i);
+               buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tUString %v = USP_FORM_VALUE(%u);\n\t"), name.rep, i);
 
-               if (pos != U_NOT_FOUND) buffer.snprintf_add("\n\tif (%v.empty()) %v = U_STRING_FROM_CONSTANT(%.*s);\n\t", name.rep, name.rep, tmp.size() - pos - 2, tmp.c_pointer(pos + 1));  
+               if (pos != U_NOT_FOUND)
+                  {
+                  buffer.snprintf_add(U_CONSTANT_TO_PARAM("\n\tif (%v.empty()) %v = U_STRING_FROM_CONSTANT(%.*s);\n\t"),
+                                      name.rep, name.rep, tmp.size() - pos - 2, tmp.c_pointer(pos + 1));  
+                  }
 
                (void) output.append(buffer);
                }
@@ -352,7 +356,7 @@ public:
 
             (void) buffer.reserve(token.size() + 100U);
 
-            buffer.snprintf("\n\tUStringExt::appendNumber32(*UClientImage_Base::wbuffer, (%v));\n\t", token.rep);
+            buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tUStringExt::appendNumber32(*UClientImage_Base::wbuffer, (%v));\n\t"), token.rep);
 
             (void) output.append(buffer);
             }
@@ -364,7 +368,7 @@ public:
 
             (void) buffer.reserve(token.size() + 100U);
 
-            buffer.snprintf("\n\t(void) UClientImage_Base::wbuffer->append((%v));\n\t", token.rep);
+            buffer.snprintf(U_CONSTANT_TO_PARAM("\n\t(void) UClientImage_Base::wbuffer->append((%v));\n\t"), token.rep);
 
             (void) output.append(buffer);
             }
@@ -374,7 +378,7 @@ public:
 
             token = UStringExt::trim(directive + U_CONSTANT_SIZE("xmlputs"), n);
 
-            buffer.snprintf("\n\tUSP_XML_PUTS((%v));\n\t", token.rep);
+            buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tUSP_XML_PUTS((%v));\n\t"), token.rep);
 
             (void) output.append(buffer);
             }
@@ -403,13 +407,13 @@ public:
 
             if (bfor)
                {
-               buffer.snprintf("\n\tfor (%v; %v; %v) { usp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
-                               "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz); }\n\t", vec[0].rep, vec[1].rep, vec[2].rep, vec[3].rep, vec[4].rep);
+               buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tfor (%v; %v; %v) { usp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
+                               "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz); }\n\t"), vec[0].rep, vec[1].rep, vec[2].rep, vec[3].rep, vec[4].rep);
                }
             else
                {
-               buffer.snprintf("\n\tusp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
-                               "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t", vec[0].rep, vec[1].rep);
+               buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tusp_sz = u__snprintf(usp_buffer, sizeof(usp_buffer), %v, %v);"
+                               "(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t"), vec[0].rep, vec[1].rep);
                }
 
             (void) output.append(buffer);
@@ -424,8 +428,8 @@ public:
 
             (void) buffer.reserve(token.size() + 200U);
 
-            buffer.snprintf("\n\tusp_sz = UObject2String((%v), usp_buffer, sizeof(usp_buffer));"
-                            "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t", token.rep);
+            buffer.snprintf(U_CONSTANT_TO_PARAM("\n\tusp_sz = UObject2String((%v), usp_buffer, sizeof(usp_buffer));"
+                            "\n\t(void) UClientImage_Base::wbuffer->append(usp_buffer, usp_sz);\n\t"), token.rep);
 
             (void) output.append(buffer);
             }
@@ -478,7 +482,7 @@ public:
       ptr  = basename.data();
       size = basename.size() - U_CONSTANT_SIZE(".usp");
 
-      bufname.snprintf("%.*s.cpp", size, ptr);
+      bufname.snprintf(U_CONSTANT_TO_PARAM("%.*s.cpp"), size, ptr);
 
       if (binit == false &&
           (bsession || bstorage))
@@ -487,7 +491,7 @@ public:
 
          (void) buffer.reserve(500U);
 
-         buffer.snprintf(USP_SESSION_INIT,
+         buffer.snprintf(U_CONSTANT_TO_PARAM(USP_SESSION_INIT),
                          size, ptr,
                          size, ptr,
                          (bsession ? "\n\tif (UHTTP::data_session == 0)   U_NEW(UDataSession, UHTTP::data_storage, UDataSession);\n\t" : ""),
@@ -527,9 +531,9 @@ public:
 
          UString tmp(encoded.size() + 200U);
 
-         tmp.snprintf("\n\t\tU_INTERNAL_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
+         tmp.snprintf(U_CONSTANT_TO_PARAM("\n\t\tU_INTERNAL_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
                       "\n\t\tU_http_info.endHeader = %u;"
-                      "\n\t\t(void) UClientImage_Base::wbuffer->insert(0, \n\tU_CONSTANT_TO_PARAM(%v));\n", n, encoded.rep);
+                      "\n\t\t(void) UClientImage_Base::wbuffer->insert(0, \n\tU_CONSTANT_TO_PARAM(%v));\n"), n, encoded.rep);
 
          (void) x.append(tmp);
          }
@@ -545,9 +549,9 @@ public:
       const char* ptr7      = "";
       const char* ptr8      = (bcomment ? "\n\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
 
-      if (binit)   (void) u__snprintf(ptr1, 100, "\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n\t", size, ptr);
-      if (bsighup) (void) u__snprintf(ptr4, 100, "\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n\t", size, ptr);
-      if (bfork)   (void) u__snprintf(ptr5, 100, "\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n\t", size, ptr);
+      if (binit)   (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n\t"), size, ptr);
+      if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n\t"), size, ptr);
+      if (bfork)   (void) u__snprintf(ptr5, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_FORK) { usp_fork_%.*s(); return; }\n\t"), size, ptr);
 
       if (bend)
          {
@@ -555,7 +559,7 @@ public:
          if (bpreprocessing_failed) bend = false;
          else
 #     endif
-         (void) u__snprintf(ptr3, 100, "\n\t\tif (param == U_DPAGE_DESTROY) { usp_end_%.*s(); return; }\n\t", size, ptr);
+         (void) u__snprintf(ptr3, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_DESTROY) { usp_end_%.*s(); return; }\n\t"), size, ptr);
          }
 
       if (binit   == false ||
@@ -571,7 +575,7 @@ public:
 
       UString result(1024U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output.size() + output1.size() + xoutput.size());
 
-      result.snprintf(USP_TEMPLATE,
+      result.snprintf(U_CONSTANT_TO_PARAM(USP_TEMPLATE),
                       size, ptr,
                       size, ptr,
                       size, ptr,

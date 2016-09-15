@@ -30,7 +30,7 @@ public:
       // ---------------
 
 #  if defined(U_STDCPP_ENABLE)
-      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "MyAlarm1::handlerTime() u_now = %1D expire = %#1D\n", UEventTime::expire()));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("MyAlarm1::handlerTime() u_now = %1D expire = %#1D\n"), UEventTime::expire()));
 #  endif
 
       U_RETURN(-1);
@@ -67,7 +67,7 @@ public:
       // ---------------
 
 #  if defined(U_STDCPP_ENABLE)
-      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "MyAlarm2::handlerTime() u_now = %1D expire = %#1D\n", UEventTime::expire()));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("MyAlarm2::handlerTime() u_now = %1D expire = %#1D\n"), UEventTime::expire()));
 #  endif
 
       U_RETURN(0);

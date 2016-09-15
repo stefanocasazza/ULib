@@ -20,7 +20,7 @@
 #endif
 
 #ifdef U_STDCPP_ENABLE
-#  if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100
+#  if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
 #     include "./itoa.cpp"
 static uint32_t itoa32(uint32_t num, char* restrict cp) { return itoa_fwd(num, cp) - cp; }
 static uint32_t itoa64(uint64_t num, char* restrict cp) { return itoa_fwd(num, cp) - cp; }
@@ -99,7 +99,7 @@ void ULib_init()
 #ifndef HAVE_OLD_IOSTREAM
    u_dbl2str = dtoa_milo; 
 #endif
-#if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100
+#if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
    u_num2str32 = itoa32;
    u_num2str64 = itoa64;
 #elif (defined(i386) || defined(__amd64) || defined(_M_IX86) || defined(_M_X64)) && !defined(HAVE_OLD_IOSTREAM) && !defined(_MSWINDOWS_) && defined(HAVE_ARCH64)

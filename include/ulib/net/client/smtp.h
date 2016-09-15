@@ -138,7 +138,7 @@ protected:
 
 private:
    void setStateFromResponse() U_NO_EXPORT;
-   bool syncCommand(const char* format, ...) U_NO_EXPORT; // Send a command to the SMTP server and wait for a response
+   bool syncCommand(const char* format, uint32_t fmt_size, ...) U_NO_EXPORT; // Send a command to the SMTP server and wait for a response
 
    U_DISALLOW_COPY_AND_ASSIGN(USmtpClient)
 };

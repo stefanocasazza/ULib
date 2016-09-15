@@ -118,7 +118,7 @@ void UClientImage_Base::logRequest()
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d U_ClientImage_pipeline = %b", u_printf_string_max_length, U_ClientImage_pipeline)
 
-   ULog::log("%sreceived request (%u bytes) %.*s%.*s%#.*S from %v",
+   ULog::log(U_CONSTANT_TO_PARAM("%sreceived request (%u bytes) %.*s%.*s%#.*S from %v"),
                UServer_Base::mod_name[0], sz,
                (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0), "[pipeline] ",
                str_partial_len, str_partial,
@@ -253,8 +253,8 @@ void UClientImage_Base::saveRequestResponse()
       }
 #endif
 
-   if (*rbuffer)                  (void) UFile::writeToTmp(U_STRING_TO_PARAM(*rbuffer), O_RDWR | O_TRUNC, "request.%P",  0);
-   if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4,                  O_RDWR | O_TRUNC, "response.%P", 0);
+   if (*rbuffer)                  (void) UFile::writeToTmp(U_STRING_TO_PARAM(*rbuffer), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("request.%P"),  0);
+   if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4,                  O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("response.%P"), 0);
 }
 #endif
 
@@ -444,7 +444,8 @@ void UClientImage_Base::handlerDelete()
       char buffer[32];
       uint32_t len = UServer_Base::setNumConnection(buffer);
 
-      ULog::log("%s%.6s close connection from %v, %.*s clients still connected", UServer_Base::mod_name[0], bsocket_open ? "Client" : "Server", logbuf->rep, len, buffer);
+      ULog::log(U_CONSTANT_TO_PARAM("%s%.6s close connection from %v, %.*s clients still connected"),
+                  UServer_Base::mod_name[0], bsocket_open ? "Client" : "Server", logbuf->rep, len, buffer);
 
 #  ifdef DEBUG
       int fd_logbuf = logbuf->strtol(10);
@@ -492,7 +493,7 @@ void UClientImage_Base::handlerDelete()
       {
       logbuf->setEmpty();
 
-      if (UNotifier::num_connection == UNotifier::min_connection) ULog::log("Waiting for connection on port %u", UServer_Base::port);
+      if (UNotifier::num_connection == UNotifier::min_connection) ULog::log(U_CONSTANT_TO_PARAM("Waiting for connection on port %u"), UServer_Base::port);
       }
 #endif
 
@@ -739,8 +740,8 @@ void UClientImage_Base::endRequest()
       U_MEMCPY(ptr1, "\" run in ", U_CONSTANT_SIZE("\" run in "));
                ptr1 +=             U_CONSTANT_SIZE("\" run in ");
 
-      if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), "%ld ms", time_run);
-      else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1),  "%g ms", chronometer->getTimeElapsed());
+      if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM("%ld ms"), time_run);
+      else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM( "%g ms"), chronometer->getTimeElapsed());
 
 #  ifndef U_SERVER_CAPTIVE_PORTAL
       if (UServer_Base::csocket->isOpen())
@@ -761,7 +762,7 @@ void UClientImage_Base::endRequest()
 
          U_INTERNAL_DUMP("USocket::incoming_cpu = %d USocket::bincoming_cpu = %b sched cpu = %d socket cpu = %d", USocket::incoming_cpu, USocket::bincoming_cpu, cpu, scpu)
 
-         if (len) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), ", CPU: %d sched(%d) socket(%d)%.*s", USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
+         if (len) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM(", CPU: %d sched(%d) socket(%d)%.*s"), USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
          }
 #  endif
 
@@ -1534,7 +1535,7 @@ bool UClientImage_Base::writeResponse()
 #  endif
 
 #  ifndef U_LOG_DISABLE
-      if (logbuf) ULog::log(iov_vec+idx, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, " to %v", logbuf->rep);
+      if (logbuf) ULog::log(iov_vec+idx, UServer_Base::mod_name[0], "response", ncount, "[pipeline] ", msg_len, U_CONSTANT_TO_PARAM(" to %v"), logbuf->rep);
 #  endif
       }
 

@@ -191,14 +191,14 @@ void DocumentClassifier::printLabel(UTree<UCertificate*>* pnode)
 
    UString issuer = cert->getIssuerForLDAP();
 
-   inner.snprintf("<certificate issuer=\"%.*s\" serial=\"%d\" filename=\"%s\">\n",
+   inner.snprintf(U_CONSTANT_TO_PARAM("<certificate issuer=\"%.*s\" serial=\"%d\" filename=\"%s\">\n"),
                   U_STRING_TO_TRACE(issuer), cert->getSerialNumber(), u_basename(filename.data()));
 
    buffer += inner;
 
    if (crl_exist)
       {
-      inner.snprintf("<crl filename=\"%s\"/>\n", u_basename(crl.data()));
+      inner.snprintf(U_CONSTANT_TO_PARAM("<crl filename=\"%s\"/>\n"), u_basename(crl.data()));
 
       buffer += inner;
       }
@@ -470,7 +470,7 @@ void DocumentClassifier::parse()
          UString namefile;
          uint32_t count = zip.getFilesCount();
 
-         description.snprintf(" - %d parts", count);
+         description.snprintf(U_CONSTANT_TO_PARAM(" - %d parts"), count);
 
          addElement(Element::ZIP, description);
 
@@ -478,7 +478,7 @@ void DocumentClassifier::parse()
             {
             namefile = zip.getFilenameAt(i);
 
-            description.snprintf(" %d: Filename='%.*s'", i+1, U_STRING_TO_TRACE(namefile));
+            description.snprintf(U_CONSTANT_TO_PARAM(" %d: Filename='%.*s'"), i+1, U_STRING_TO_TRACE(namefile));
 
             addElement(Element::PART, description);
 
@@ -527,22 +527,21 @@ UString DocumentClassifier::manageDescription(UMimeEntity* uMimeEntity, uint32_t
    UString number(10U),
            stype = uMimeEntity->shortContentType();
 
-   if (i) number.snprintf(" %d", i);
+   if (i) number.snprintf(U_CONSTANT_TO_PARAM(" %u"), i);
 
    if (uMimeEntity->isBodyMessage())
       {
       filename.clear();
 
-      description.snprintf("%.*s: Content-type='%.*s' - BODY MESSAGE",  U_STRING_TO_TRACE(number),
-                                                                        U_STRING_TO_TRACE(stype));
+      description.snprintf(U_CONSTANT_TO_PARAM("%.*s: Content-type='%.*s' - BODY MESSAGE"),
+                           U_STRING_TO_TRACE(number), U_STRING_TO_TRACE(stype));
       }
    else
       {
       filename = uMimeEntity->getFileName();
 
-      description.snprintf("%.*s: Content-type='%.*s' - Filename='%.*s'", U_STRING_TO_TRACE(number),
-                                                                          U_STRING_TO_TRACE(stype),
-                                                                          U_STRING_TO_TRACE(filename));
+      description.snprintf(U_CONSTANT_TO_PARAM("%.*s: Content-type='%.*s' - Filename='%.*s'"),
+                           U_STRING_TO_TRACE(number), U_STRING_TO_TRACE(stype), U_STRING_TO_TRACE(filename));
       }
 
    U_RETURN_STRING(stype);
@@ -584,7 +583,7 @@ void DocumentClassifier::parseMime(UMimeEntity& entity)
       UMimeMultipart tmp(entity);
       uint32_t i = 0, bodyPartCount = tmp.getNumBodyPart();
 
-      description.snprintf(" - %d parts", bodyPartCount);
+      description.snprintf(U_CONSTANT_TO_PARAM(" - %u parts"), bodyPartCount);
 
       addElement(Element::MULTIPART, description);
 
@@ -650,7 +649,7 @@ void DocumentClassifier::print(const UString& prefix, UTree<Element*>* pnode)
 
       for (uint32_t i = 0; i < numChild; ++i)
          {
-         innerPrefix.snprintf("%.*s.%d", U_STRING_TO_TRACE(prefix), i + 1);
+         innerPrefix.snprintf(U_CONSTANT_TO_PARAM("%.*s.%u"), U_STRING_TO_TRACE(prefix), i + 1);
 
          print(innerPrefix, pnode->childAt(i));
          }

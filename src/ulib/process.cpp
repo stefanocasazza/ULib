@@ -643,18 +643,18 @@ char* UProcess::exitInfo(char* buffer, int _status)
 
    if (WIFEXITED(_status))
       {
-      n = u__snprintf(buffer, 128, "Exit %d", WEXITSTATUS(_status));
+      n = u__snprintf(buffer, 128, U_CONSTANT_TO_PARAM("Exit %d"), WEXITSTATUS(_status));
       }
    else if (WIFSIGNALED(_status))
       {
 #  ifndef WCOREDUMP
 #  define WCOREDUMP(status) ((status) & 0200) // settimo bit
 #  endif
-      n = u__snprintf(buffer, 128, "Signal %Y%s", WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
+      n = u__snprintf(buffer, 128, U_CONSTANT_TO_PARAM("Signal %Y%s"), WTERMSIG(_status), (WCOREDUMP(_status) ? " - core dumped" : ""));
       }
    else if (WIFSTOPPED(_status))
       {
-      n = u__snprintf(buffer, 128, "Signal %Y", WSTOPSIG(_status));
+      n = u__snprintf(buffer, 128, U_CONSTANT_TO_PARAM("Signal %Y"), WSTOPSIG(_status));
       }
 #  ifdef __clang__
 #  undef WIFCONTINUED // to avoid warning: equality comparison with extraneous parentheses...

@@ -203,7 +203,7 @@ void OtpAuthToken::stringify(UString& field)
 
    U_STR_RESERVE(tmp1, 1000);
 
-   len = snprintf((char*)tmp1.data(), tmp1.capacity(), "TID=%.*s;UID=%.*s;SID=%.*s;TS=%.*s;CF=%.*s",
+   len = u__snprintf((char*)tmp1.data(), tmp1.capacity(), U_CONSTANT_TO_PARAM("TID=%.*s;UID=%.*s;SID=%.*s;TS=%.*s;CF=%.*s"),
                   tid.size(), tid.data(),
                   uid.size(), uid.data(),
                   sid.size(), sid.data(),

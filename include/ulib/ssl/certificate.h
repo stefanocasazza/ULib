@@ -475,7 +475,7 @@ public:
 
       UString issuer = getIssuer(a, true);
 
-      buffer.snprintf(fmt, issuer.rep, getSerialNumber(a));
+      buffer.snprintf(fmt, strlen(fmt), issuer.rep, getSerialNumber(a));
       }
 
    void setForLog(UString& buffer, const char* fmt = " (\"%v\",\"%ld\")") const { setForLog(x509, buffer, fmt); }

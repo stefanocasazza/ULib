@@ -222,9 +222,9 @@ void UTimeDate::fromUTC(const char* str, const char* format)
       }
 }
 
-UString UTimeDate::strftime(const char* fmt)
+UString UTimeDate::strftime(const char* fmt, uint32_t fmt_size)
 {
-   U_TRACE(1, "UTimeDate::strftime(%S)", fmt)
+   U_TRACE(1, "UTimeDate::strftime(%.*S,%u)", fmt_size, fmt, fmt_size)
 
    UString result(100U);
 
@@ -234,18 +234,18 @@ UString UTimeDate::strftime(const char* fmt)
    u_strftime_tm.tm_mon  = _month - 1;
    u_strftime_tm.tm_year = _year  - 1900;
 
-   result.rep->_length = u_strftime1(result.data(), result.capacity(), fmt);
+   result.rep->_length = u_strftime1(result.data(), result.capacity(), fmt, fmt_size);
 
    U_RETURN_STRING(result);
 }
 
-UString UTimeDate::strftime(const char* fmt, time_t t, bool blocale)
+UString UTimeDate::strftime(const char* fmt, uint32_t fmt_size, time_t t, bool blocale)
 {
-   U_TRACE(0, "UTimeDate::strftime(%S,%ld,%b)", fmt, t, blocale)
+   U_TRACE(0, "UTimeDate::strftime(%.*S,%u,%ld,%b)", fmt_size, fmt, fmt_size, t, blocale)
 
    UString res(100U);
 
-   res.rep->_length = u_strftime2(res.data(), res.capacity(), fmt, t + (blocale ? u_now_adjust : 0));
+   res.rep->_length = u_strftime2(res.data(), res.capacity(), fmt, fmt_size, t + (blocale ? u_now_adjust : 0));
 
 #ifdef DEBUG
    char dbg[4096];
@@ -468,7 +468,7 @@ UString UTimeDate::_ago(time_t tm, uint32_t granularity)
          }
       }
 
-   result.snprintf("%lu %s%s", no, periods[j], no != 1 ? "s " : " ");
+   result.snprintf(U_CONSTANT_TO_PARAM("%lu %s%s"), no, periods[j], no != 1 ? "s " : " ");
 
    if (granularity > 0 &&
        j >= 1          &&

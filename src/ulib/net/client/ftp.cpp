@@ -71,7 +71,7 @@ void UFtpClient::setStatus()
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "(%d, %s)", response, descr);
+   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("(%d, %s)"), response, descr);
 }
 
 bool UFtpClient::waitReady(uint32_t timeoutMS)
@@ -89,14 +89,14 @@ bool UFtpClient::waitReady(uint32_t timeoutMS)
 
 // Send a command to the FTP server and wait for a response
 
-bool UFtpClient::syncCommand(const char* format, ...)
+bool UFtpClient::syncCommand(const char* format, uint32_t fmt_size, ...)
 {
-   U_TRACE(0, "UFtpClient::syncCommand(%S)", format)
+   U_TRACE(0, "UFtpClient::syncCommand(%.*S,%u)", fmt_size, format, fmt_size)
 
    va_list argp;
-   va_start(argp, format);
+   va_start(argp, fmt_size);
 
-   response = USocketExt::vsyncCommandML(this, format, argp);
+   response = USocketExt::vsyncCommandML(this, format, fmt_size, argp);
 
    va_end(argp);
 
@@ -127,7 +127,7 @@ bool UFtpClient::negotiateEncryption()
 #ifdef USE_LIBSSL
    U_ASSERT(Socket::isSSL())
 
-   if (syncCommand("AUTH TLS") &&
+   if (syncCommand(U_CONSTANT_TO_PARAM("AUTH TLS")) &&
        response == 234         &&
        ((USSLSocket*)this)->secureConnection())
       {
@@ -145,8 +145,8 @@ bool UFtpClient::setDataEncryption(bool secure)
 #ifdef USE_LIBSSL
    U_ASSERT(Socket::isSSL())
 
-   if (syncCommand("PBSZ 0")                        && response == FTP_COMMAND_OK &&
-       syncCommand("PROT %c", (secure ? 'P' : 'C')) && response == FTP_COMMAND_OK)
+   if (syncCommand(U_CONSTANT_TO_PARAM("PBSZ 0"))                        && response == FTP_COMMAND_OK &&
+       syncCommand(U_CONSTANT_TO_PARAM("PROT %c"), (secure ? 'P' : 'C')) && response == FTP_COMMAND_OK)
       {
       pasv.setSSLActive(true);
 
@@ -161,8 +161,8 @@ bool UFtpClient::login(const char* user, const char* passwd)
 {
    U_TRACE(0, "UFtpClient::login(%S,%S)", user, passwd)
 
-                                      (void) syncCommand("USER %s", user);
-   if (response == FTP_NEED_PASSWORD) (void) syncCommand("PASS %s", passwd);
+                                      (void) syncCommand(U_CONSTANT_TO_PARAM("USER %s"), user);
+   if (response == FTP_NEED_PASSWORD) (void) syncCommand(U_CONSTANT_TO_PARAM("PASS %s"), passwd);
 
    if (response == FTP_USER_LOGGED_IN) U_RETURN(true);
 
@@ -261,7 +261,7 @@ bool UFtpClient::createPassiveDataConnection()
 {
    U_TRACE_NO_PARAM(0, "UFtpClient::createPassiveDataConnection()")
 
-   (void) syncCommand("PASV"); // Enter Passive mode
+   (void) syncCommand(U_CONSTANT_TO_PARAM("PASV")); // Enter Passive mode
 
    if (response == FTP_ENTERING_PASSIVE_MODE &&
        readPortToConnect())
@@ -284,7 +284,7 @@ int UFtpClient::retrieveFile(const UString& path, off_t offset)
       {
       if (offset == 0 || restart(offset))
          {
-         (void) syncCommand("RETR %v", path.rep);
+         (void) syncCommand(U_CONSTANT_TO_PARAM("RETR %v"), path.rep);
 
          if (response == FTP_OPENING_DATA_CONNECTION ||
              response == FTP_DATA_CONNECTION_OPEN)
@@ -311,7 +311,7 @@ bool UFtpClient::setTransferType(TransferType type)
 {
    U_TRACE(0, "UFtpClient::setTransferType(%d)", type)
 
-   if (syncCommand("TYPE %c", (type == Binary ? 'I' : 'A')))
+   if (syncCommand(U_CONSTANT_TO_PARAM("TYPE %c"), (type == Binary ? 'I' : 'A')))
       {
       bool result = (response == FTP_COMMAND_OK);
 
@@ -325,7 +325,7 @@ bool UFtpClient::changeWorkingDirectory(const UString& path)
 {
    U_TRACE(0, "UFtpClient::changeWorkingDirectory(%V)", path.rep)
 
-   if (syncCommand("CWD %v", path.rep)) // Change working directory
+   if (syncCommand(U_CONSTANT_TO_PARAM("CWD %v"), path.rep)) // Change working directory
       {
       // RFC 959 states that the correct response to CDUP is 200 - command_ok
       // But also states that it should respond with the same codes as
@@ -344,7 +344,7 @@ size_t UFtpClient::getFileSize(const UString& path)
 {
    U_TRACE(0, "UFtpClient::getFileSize(%V)", path.rep)
 
-   if (syncCommand("SIZE %v", path.rep) &&
+   if (syncCommand(U_CONSTANT_TO_PARAM("SIZE %v"), path.rep) &&
        response == FTP_FILE_STATUS)
       {
       // skip over the response code
@@ -361,7 +361,7 @@ bool UFtpClient::restart(off_t offset)
 {
    U_TRACE(0, "UFtpClient::restart(%I)", offset)
 
-   if (syncCommand("REST %I", offset))
+   if (syncCommand(U_CONSTANT_TO_PARAM("REST %I"), offset))
       {
       bool result = (response == FTP_FILE_ACTION_PENDING);
 

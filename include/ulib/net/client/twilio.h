@@ -95,7 +95,7 @@ public:
 
       UString buffer(U_CAPACITY);
 
-      buffer.snprintf("To %.*s\nFrom %.*s\nUrl %.*s", to_len, to, from_len, from, url_len, url);
+      buffer.snprintf(U_CONSTANT_TO_PARAM("To %.*s\nFrom %.*s\nUrl %.*s"), to_len, to, from_len, from, url_len, url);
 
       return sendRequest(2, U_CONSTANT_TO_PARAM("Calls"), buffer); 
       }
@@ -121,7 +121,7 @@ public:
 
       UString buffer(U_CAPACITY);
 
-      buffer.snprintf("To %.*s\nFrom %.*s\nBody %.*s", to_len, to, from_len, from, body_len, body);
+      buffer.snprintf(U_CONSTANT_TO_PARAM("To %.*s\nFrom %.*s\nBody %.*s"), to_len, to, from_len, from, body_len, body);
 
       return sendRequest(2, U_CONSTANT_TO_PARAM("SMS/Messages"), buffer); 
       }

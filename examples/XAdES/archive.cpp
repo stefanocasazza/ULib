@@ -316,7 +316,7 @@ public:
 
       UString archiveTimeStamp(U_CAPACITY), token = getTimeStampToken(to_digest, archive_timestamp);
 
-      archiveTimeStamp.snprintf(U_XADES_ARCHIVE_TIMESTAMP_TEMPLATE, U_STRING_TO_TRACE(token));
+      archiveTimeStamp.snprintf(U_CONSTANT_TO_PARAM(U_XADES_ARCHIVE_TIMESTAMP_TEMPLATE), U_STRING_TO_TRACE(token));
 
       UString _output = UStringExt::substitute(content,
                              U_CONSTANT_TO_PARAM("        </xades:UnsignedSignatureProperties>"),

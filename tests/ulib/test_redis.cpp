@@ -22,13 +22,13 @@ int main(int argc, char *argv[])
 
       U_INTERNAL_ASSERT(ok)
       
-      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "TIME = %O\n", U_OBJECT_TO_TRACE(rc.vitem)));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("TIME = %O\n"), U_OBJECT_TO_TRACE(rc.vitem)));
 
       ok = rc.echo(U_CONSTANT_TO_PARAM("puppamelo"));
 
       U_INTERNAL_ASSERT(ok)
       
-      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "ECHO = %V\n", rc.vitem[0].rep));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("ECHO = %V\n"), rc.vitem[0].rep));
 
       ok = rc.ping();
 
@@ -53,19 +53,19 @@ int main(int argc, char *argv[])
 
       U_INTERNAL_ASSERT(ok)
 
-      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "MYKEY  = %V\n", rc.vitem[0].rep));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("MYKEY  = %V\n"), rc.vitem[0].rep));
 
       ok = rc[U_STRING_FROM_CONSTANT("MYKEY1")];
 
       U_INTERNAL_ASSERT(ok)
 
-      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "MYKEY1 = %V\n", rc.vitem[0].rep));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("MYKEY1 = %V\n"), rc.vitem[0].rep));
 
       ok = rc[U_STRING_FROM_CONSTANT("MYKEY2")];
 
       U_INTERNAL_ASSERT(ok)
 
-      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "MYKEY2 = %V\n", rc.vitem[0].rep));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("MYKEY2 = %V\n"), rc.vitem[0].rep));
 
       ok = rc.sadd(U_CONSTANT_TO_PARAM("MY_SET"), U_CONSTANT_TO_PARAM("123 14"));
 

@@ -14,7 +14,7 @@ static struct iovec iov[] = { { 0, 0 }, { (caddr_t)"\n", 1 } };
 
 #define  puts(s)   (iov[0].iov_base = (caddr_t)s, iov[0].iov_len = strlen(s), writev(STDOUT_FILENO,iov,2))
 #define fputs(s,o)          write(STDOUT_FILENO,s,strlen(s))
-#define printf(fmt,args...) write(STDOUT_FILENO,ubuffer,u__snprintf(ubuffer,sizeof(ubuffer),fmt,args))
+#define printf(fmt,args...) write(STDOUT_FILENO,ubuffer,u__snprintf(ubuffer,sizeof(ubuffer),fmt,strlen(fmt) , ##args))
 
 #include <float.h>
 #include <limits.h>
@@ -123,27 +123,26 @@ static void test2(void)
 {
    char buf[50];
    char buf2[1024];
-   size_t n = u__snprintf(buf, sizeof (buf), "%30s", "foo");
+   size_t n = u__snprintf(buf, sizeof (buf), U_CONSTANT_TO_PARAM("%30s"), "foo");
 
    printf("snprintf (\"%%30s\", \"foo\") == %d, \"%.*s\"\n", n, n, buf);
 
-   n = u__snprintf(buf2, sizeof(buf2) - 10, "%.999u", 10);
+   n = u__snprintf(buf2, sizeof(buf2) - 10, U_CONSTANT_TO_PARAM("%.999u"), 10);
 
    printf("snprintf (\"%%.999u\", 10) = %d\n", n);
 }
 
 static void test3(void)
 {
-   double x=1.0;
    char buf[200];
    const char* tmp;
 
-   u__snprintf(buf,sizeof(buf),"%*s%*s%*s",-1,"one",-20,"two",-30,"three");
+   u__snprintf(buf,sizeof(buf),U_CONSTANT_TO_PARAM("%*s%*s%*s"),-1,"one",-20,"two",-30,"three");
    result |= strcmp(buf, "onetwo                 three                         ");
    tmp = (result != 0 ? "Test failed!" : "Test ok.");
    puts (tmp);
 
-   u__snprintf(buf,sizeof(buf), "%07llo", 040000000000ll);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%07llo"), 040000000000ll);
    printf("sprintf (buf, \"%%07llo\", 040000000000ll) = %s", buf);
 
    if (strcmp(buf, "40000000000") != 0)
@@ -163,7 +162,7 @@ static void test4(void)
    char buf[20];
 
    memset (bytes, '\xff', sizeof bytes);
-   u__snprintf(buf,sizeof(buf), "foo%hn\n", &bytes[3]);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("foo%hn\n"), &bytes[3]);
 
    if (bytes[0] != '\xff' || bytes[1] != '\xff' || bytes[2] != '\xff' ||
        bytes[5] != '\xff' || bytes[6] != '\xff')
@@ -181,15 +180,19 @@ static void test4(void)
 */
 }
 
-int main(int argc, char *argv[])
+int main(int argc, char* argv[])
 {
    static char shortstr[] = "Hi, Z.";
    static char longstr[] = "Good morning, Doctor Chandra.  This is Hal.  \
    I am ready for my first lesson today.";
 
+   u_init_ulib(argv);
+
+   U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
+
    /*
    char buffer[11];
-   uint32_t written = u__snprintf(buffer, 10, "%ld", 3821975508); // u_now->tv_sec
+   uint32_t written = u__snprintf(buffer, 10, U_CONSTANT_TO_PARAM("%ld"), 3821975508); // u_now->tv_sec
 
    U_INTERNAL_ASSERT_EQUALS(written, 10)
    U_INTERNAL_ASSERT_EQUALS(strncmp(buffer, "3821975508", 10), 0)
@@ -296,17 +299,17 @@ static void rfg1(void)
 {
    char buf[100];
 
-   u__snprintf(buf,sizeof(buf), "%5.s", "xyz");
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%5.s"), "xyz");
    if (strcmp (buf, "     ") != 0) printf ("got: '%s', expected: '%s'\n", buf, "     ");
-   u__snprintf(buf,sizeof(buf), "%5.f", 33.3);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%5.f"), 33.3);
    if (strcmp (buf, "   33") != 0) printf ("got: '%s', expected: '%s'\n", buf, "   33");
-// u__snprintf(buf,sizeof(buf), "%8.e", 33.3e7);
+// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%8.e"), 33.3e7);
 // if (strcmp (buf, "   3e+08") != 0) printf ("got: '%s', expected: '%s'\n", buf, "   3e+08");
-// u__snprintf(buf,sizeof(buf), "%8.E", 33.3e7);
+// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%8.E"), 33.3e7);
 // if (strcmp (buf, "   3E+08") != 0) printf ("got: '%s', expected: '%s'\n", buf, "   3E+08");
-// u__snprintf(buf,sizeof(buf), "%.g", 33.3);
+// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.g"), 33.3);
 // if (strcmp (buf, "3e+01") != 0) printf ("got: '%s', expected: '%s'\n", buf, "3e+01");
-// u__snprintf(buf,sizeof(buf), "%.G", 33.3);
+// u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.G"), 33.3);
 // if (strcmp (buf, "3E+01") != 0) printf ("got: '%s', expected: '%s'\n", buf, "3E+01");
 }
 
@@ -316,31 +319,31 @@ static void rfg2(void)
    char buf[100];
 
    prec = 0;
-   u__snprintf(buf,sizeof(buf), "%.*g", prec, 3.3);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.*g"), prec, 3.3);
    if (strcmp (buf, "3") != 0)
       printf ("got: '%s', expected: '%s'\n", buf, "3");
    prec = 0;
-   u__snprintf(buf,sizeof(buf), "%.*G", prec, 3.3);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%.*G"), prec, 3.3);
    if (strcmp (buf, "3") != 0)
       printf ("got: '%s', expected: '%s'\n", buf, "3");
    prec = 0;
-   u__snprintf(buf,sizeof(buf), "%7.*G", prec, 3.33);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%7.*G"), prec, 3.33);
    if (strcmp (buf, "      3") != 0)
       printf ("got: '%s', expected: '%s'\n", buf, "      3");
    prec = 3;
-   u__snprintf(buf,sizeof(buf), "%04.*o", prec, 33);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%04.*o"), prec, 33);
    if (strcmp (buf, " 041") != 0)
       printf ("got: '%s', expected: '%s'\n", buf, " 041");
    prec = 7;
-   u__snprintf(buf,sizeof(buf), "%09.*u", prec, 33);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%09.*u"), prec, 33);
    if (strcmp (buf, "  0000033") != 0)
       printf ("got: '%s', expected: '%s'\n", buf, "  0000033");
    prec = 3;
-   u__snprintf(buf,sizeof(buf), "%04.*x", prec, 33);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%04.*x"), prec, 33);
    if (strcmp (buf, " 021") != 0)
       printf ("got: '%s', expected: '%s'\n", buf, " 021");
    prec = 3;
-   u__snprintf(buf,sizeof(buf), "%04.*X", prec, 33);
+   u__snprintf(buf,sizeof(buf), U_CONSTANT_TO_PARAM("%04.*X"), prec, 33);
    if (strcmp (buf, " 021") != 0)
       printf ("got: '%s', expected: '%s'\n", buf, " 021");
 }

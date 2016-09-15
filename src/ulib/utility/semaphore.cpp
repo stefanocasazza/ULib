@@ -36,7 +36,7 @@ void USemaphore::init(sem_t* ptr, int resource)
    U_INTERNAL_ASSERT_EQUALS(psem, 0)
 
 #if defined(__MACOSX__) || defined(__APPLE__)
-   (void) u__snprintf(name, sizeof(name), "/sem%X", ptr);
+   (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("/sem%X"), ptr);
 
    psem = (sem_t*) U_SYSCALL(sem_open, "%S,%d,%d,%u", name, O_CREAT, 0644, 1);
 

@@ -5,7 +5,7 @@
    UProcess proc;
    UString name(U_CAPACITY), tmp(U_CAPACITY);
 
-   tmp.snprintf("%s/%s.log", directory.c_str(), log_name);
+   tmp.snprintf(U_CONSTANT_TO_PARAM("%v/%s.log"), directory.rep, log_name);
 
    ULog::fmt = "%P|%4D|%s  %N\n";
 

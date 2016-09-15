@@ -123,7 +123,7 @@ bool UZIP::extract(const UString* _tmpdir, bool bdir)
       {
       static uint32_t index;
 
-      tmpdir.snprintf("/tmp/UZIP_TMP_%P_%u", index++);
+      tmpdir.snprintf(U_CONSTANT_TO_PARAM("/tmp/UZIP_TMP_%P_%u"), index++);
       }
 
    const char* dir = tmpdir.c_str();
@@ -267,7 +267,7 @@ UString UZIP::getFileContentAt(int index)
 
       UString filename = zippartname->at(index), buffer(U_CAPACITY);
 
-      buffer.snprintf("%v/%v", tmpdir.rep, filename.rep);
+      buffer.snprintf(U_CONSTANT_TO_PARAM("%v/%v"), tmpdir.rep, filename.rep);
 
       dati = (file->setPath(buffer), file->getContent(true, true));
       }

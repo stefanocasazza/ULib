@@ -238,7 +238,7 @@ void Window::ActivateTooltips()
 
       (void) write(2, buffer,
           u__snprintf(buffer, sizeof(buffer),
-                     "Warning: call to CreateWindowEx failed when initializing tooltips. Error = %8.8x\n", GetLastError()));
+                      U_CONSTANT_TO_PARAM("Warning: call to CreateWindowEx failed when initializing tooltips. Error = %8.8x\n"), GetLastError()));
 
       return;
       }

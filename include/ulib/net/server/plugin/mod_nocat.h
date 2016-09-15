@@ -307,7 +307,7 @@ protected:
               auth_service = auth->getService(),
               url(200U + auth_host.size() + auth_service.size() + service_len);
 
-      url.snprintf("%v://%v%.*s", auth_service.rep, auth_host.rep, service_len, service);
+      url.snprintf(U_CONSTANT_TO_PARAM("%v://%v%.*s"), auth_service.rep, auth_host.rep, service_len, service);
 
       U_RETURN_STRING(url);
       }
@@ -320,7 +320,7 @@ protected:
 
       UString command(100U);
 
-      command.snprintf("/bin/sh %v deny %v %v Member 0 0", script.rep, mac.rep, ip.rep);
+      command.snprintf(U_CONSTANT_TO_PARAM("/bin/sh %v deny %v %v Member 0 0"), script.rep, mac.rep, ip.rep);
 
       cmd.set(command, (char**)0);
       cmd.setEnvironment(fw_env);

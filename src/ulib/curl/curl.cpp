@@ -104,7 +104,7 @@ const char* UCURL::error()
 
    static char buffer[CURL_ERROR_SIZE+32];
 
-   (void) u__snprintf(buffer, sizeof(buffer), "%s (%d, %s)", (result >= 0 && result < (int)U_NUM_ELEMENTS(errlist) ? errlist[result] : ""), result, errorBuffer);
+   (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%s (%d, %s)"), (result >= 0 && result < (int)U_NUM_ELEMENTS(errlist) ? errlist[result] : ""), result, errorBuffer);
 
    U_RETURN(buffer);
 }
@@ -312,8 +312,8 @@ bool UCURL::sendHTTP2Push(const UString& token, const UString& message)
    char url[1024],
         buf[1024];
 
-   (void) u__snprintf(url, sizeof(url), "%s/3/device/%v", http2_server, token.rep); // url (endpoint)
-   (void) u__snprintf(buf, sizeof(buf), "apns-topic: %s", app_bundle_id);
+   (void) u__snprintf(url, sizeof(url), U_CONSTANT_TO_PARAM("%s/3/device/%v"), http2_server, token.rep); // url (endpoint)
+   (void) u__snprintf(buf, sizeof(buf), U_CONSTANT_TO_PARAM("apns-topic: %s"), app_bundle_id);
 
    UCURL curl;
 

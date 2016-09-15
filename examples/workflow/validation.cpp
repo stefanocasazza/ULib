@@ -59,7 +59,7 @@ public:
 
       UString body(10U + u__strlen(uid, __PRETTY_FUNCTION__));
 
-      body.snprintf("query=%s", uid);
+      body.snprintf(U_CONSTANT_TO_PARAM("query=%s"), uid);
 
       bool ok = Action::sendHttpPostRequest(url, body, "application/x-www-form-urlencoded", "1\n");
 

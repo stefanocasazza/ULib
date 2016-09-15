@@ -88,7 +88,7 @@ bool UDBI::setDirectory(const char* directory)
 
    char buffer[U_PATH_MAX];
 
-   (void) snprintf(buffer, U_PATH_MAX, "%s_dbdir", backend);
+   (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%s_dbdir"), backend);
 
    if (U_SYSCALL(dbi_conn_set_option, "%p,%S,%S", conn, buffer, directory) == 0) U_RETURN(true);
 
@@ -322,7 +322,7 @@ void UDBI::bind(struct tm& v, bool is_null)
 
       u_strftime_tm = v;
 
-      (void) escaped_query.append(buffer, u_strftime1(buffer, sizeof(buffer), "'%Y-%m-%d %T'"));
+      (void) escaped_query.append(buffer, u_strftime1(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("'%Y-%m-%d %T'")));
       }
 
    ready_for_input = false;

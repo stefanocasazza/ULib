@@ -103,7 +103,7 @@ public:
             {
             static char url[1024];
 
-            (void) snprintf(url, sizeof(url), "ldap://%s%s", LDAP_host.c_str(), rule);
+            (void) u__snprintf(url, sizeof(url), U_CONSTANT_TO_PARAM("ldap://%v%s"), LDAP_host.rep, rule);
 
             rule = url;
             }
@@ -156,7 +156,7 @@ public:
 
          ip_mask = policy_entry.getCStr(POLICY_ATTR_IPMASK_POS, i);
 
-         (void) snprintf(ipmask, sizeof(ipmask), "(tnetLrpIpHostNumber=%s*)", ip_mask);
+         (void) u__snprintf(ipmask, sizeof(ipmask), U_CONSTANT_TO_PARAM("(tnetLrpIpHostNumber=%s*)"), ip_mask);
 
          j = ldap.search(binddn_device, LDAP_SCOPE_SUBTREE, (char**)device_attr_name, ipmask);
 
@@ -175,12 +175,12 @@ public:
 
          // build request
 
-         static const char* request_tmpl = \
          // "<?xml version=\"1.0\" encoding=\"UTF-8\"?><!DOCTYPE REQUEST SYSTEM \"lrp_request.dtd\">"
-            "<REQUEST sid=\"sid1\" version=\"1\"><IMPORT-POLICYLABEL  name=\"%s\">%s</IMPORT-POLICYLABEL></REQUEST>"
-            "<REQUEST sid=\"sid2\" version=\"1\"><EXECUTE-POLICYLABEL name=\"%s\" command=\"%s\"/></REQUEST>";
 
-         request_size = u__snprintf(request_buffer, sizeof(request_buffer), request_tmpl, policy, ptr, policy, operation);
+         request_size = u__snprintf(request_buffer, sizeof(request_buffer),
+                                    U_CONSTANT_TO_PARAM("<REQUEST sid=\"sid1\" version=\"1\"><IMPORT-POLICYLABEL  name=\"%s\">%s</IMPORT-POLICYLABEL></REQUEST>"
+                                    "<REQUEST sid=\"sid2\" version=\"1\"><EXECUTE-POLICYLABEL name=\"%s\" command=\"%s\"/></REQUEST>"),
+                                    policy, ptr, policy, operation);
 
          request = UString(request_buffer, request_size);
 

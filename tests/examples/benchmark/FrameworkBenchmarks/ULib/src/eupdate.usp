@@ -76,8 +76,8 @@ USP_PUTS_CHAR('[');
 
 while (true)
    {
-   len1 = u__snprintf(pbuffer1, 100, "%u/_update", id = u_get_num_random(10000-1));
-   len2 = u__snprintf(pbuffer2, 100, "%u\"}}",   rnum = u_get_num_random(10000-1));
+   len1 = u__snprintf(pbuffer1, 100, U_CONSTANT_TO_PARAM("%u/_update"), id = u_get_num_random(10000-1));
+   len2 = u__snprintf(pbuffer2, 100, U_CONSTANT_TO_PARAM("%u\"}}"),   rnum = u_get_num_random(10000-1));
 
    (void) es->sendPOST(buffer1, len1+ULEN, buffer2, len2+QLEN);
 

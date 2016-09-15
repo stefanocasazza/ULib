@@ -986,7 +986,7 @@ const char* UIPAddress::dump(bool reset) const
 
    char buffer[128];
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%S", pcStrAddress));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%S"), pcStrAddress));
 
    *UObjectIO::os << '\n'
                   << "iAddressType         " << iAddressType

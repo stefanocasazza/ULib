@@ -17,8 +17,8 @@
 #include <ulib/string.h>
 
 /**
-  @class URPCFault
-*/
+ * @class URPCFault
+ */
 
 class U_EXPORT URPCFault {
 public:
@@ -61,12 +61,12 @@ public:
 
       U_INTERNAL_ASSERT_MAJOR(u_buffer_len, 0)
 
-      detail.snprintf("%.*s", u_buffer_len, u_buffer);
+      detail.snprintf(U_CONSTANT_TO_PARAM("%.*s"), u_buffer_len, u_buffer);
 
       u_buffer_len = 0;
       }
 
-   void setDetail(const char* format, ...);
+   void setDetail(const char* format, uint32_t fmt_size, ...);
 
    UString& getDetail()      { return detail; }
    UString& getFaultReason() { return faultReason; }

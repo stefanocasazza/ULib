@@ -146,8 +146,8 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
       U_INTERNAL_DUMP("sz = %u", sz)
 
-      if (sz) sz = u__snprintf(buffer,    sizeof(buffer),    "%v/", dbdir.rep);
-            (void) u__snprintf(buffer+sz, sizeof(buffer)-sz, "%v.db", pdrv->dbname.rep);
+      if (sz) sz = u__snprintf(buffer,    sizeof(buffer),    U_CONSTANT_TO_PARAM("%v/"), dbdir.rep);
+            (void) u__snprintf(buffer+sz, sizeof(buffer)-sz, U_CONSTANT_TO_PARAM("%v.db"), pdrv->dbname.rep);
 
       fullpath = buffer;
       }

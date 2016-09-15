@@ -64,22 +64,22 @@ U_EXPORT main(int argc, char* argv[])
 
    for (k = 1; k <= 20; ++k)
       {
-      directory.snprintf("%s/D%02d/", argv[2], k);
+      directory.snprintf(U_CONSTANT_TO_PARAM("%s/D%02d/"), argv[2], k);
 
       UFile::_mkdir(directory.c_str(), PERM_DIRECTORY);
 
       // coverity[TAINTED_SCALAR]
       for (i = 1; i <= num; ++i)
          {
-         filename.snprintf("D%02d_studente_%d", k, i);
-          content.snprintf(studente, k, i, filename.c_str(), i, i);
+         filename.snprintf(U_CONSTANT_TO_PARAM("D%02d_studente_%d"), k, i);
+          content.snprintf(studente, strlen(studente), k, i, filename.c_str(), i, i);
 
          UFile::writeTo(directory + filename + suffix, content);
 
          for (j = 0; j < 19; ++j)
             {
-            filename.snprintf("D%02d_studente_%d_op_%d", k, i, j);
-             content.snprintf(studente_d_op_d, operations[j], k, i, filename.c_str(), i, i);
+            filename.snprintf(U_CONSTANT_TO_PARAM("D%02d_studente_%d_op_%d"), k, i, j);
+             content.snprintf(studente_d_op_d, strlen(studente_d_op_d), operations[j], k, i, filename.c_str(), i, i);
 
             UFile::writeTo(directory + filename + suffix, content);
             }

@@ -153,7 +153,7 @@ bool UDynamic::load(const char* _name, uint32_t _name_len)
 
    char buffer[U_PATH_MAX];
 
-   (void) u__snprintf(buffer, sizeof(buffer), U_FMT_LIBPATH, U_PATH_CONV(plugin_dir->data()), _name_len, _name);
+   (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(U_FMT_LIBPATH), U_PATH_CONV(plugin_dir->data()), _name_len, _name);
 
    bool result = load(buffer);
 

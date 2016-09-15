@@ -175,7 +175,7 @@ loop: if (upload)
 
          to_sleep.setSecond(to_sleep.getSecond() * 10L);
 
-         mask.snprintf("%v.*", client->UClient_Base::host_port.rep);
+         mask.snprintf(U_CONSTANT_TO_PARAM("%v.*"), client->UClient_Base::host_port.rep);
 
          U_MESSAGE("Monitoring directory %V every %u sec - file mask: %V", UString::str_CLIENT_QUEUE_DIR->rep, to_sleep.getSecond(), mask.rep);
 
@@ -210,7 +210,7 @@ loop: if (upload)
 
                   location.setBuffer(U_CAPACITY);
 
-                  location.snprintf("http://%.*s", pos, name.data());
+                  location.snprintf(U_CONSTANT_TO_PARAM("http://%.*s"), pos, name.data());
 
                   (void) location.shrink();
 

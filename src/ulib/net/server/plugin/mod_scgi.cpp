@@ -172,7 +172,7 @@ int USCGIPlugIn::handlerRequest()
 
       UString request(10U + n);
 
-      request.snprintf("%u:%v,", environment.size(), environment.rep);
+      request.snprintf(U_CONSTANT_TO_PARAM("%u:%v,"), environment.size(), environment.rep);
 
       (void) request.append(*UClientImage_Base::body);
 

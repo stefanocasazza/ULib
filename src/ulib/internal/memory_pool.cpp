@@ -655,9 +655,9 @@ void UStackMemoryPool::paint(ostream& os) // paint info
 
       (void) snprintf(buffer, sizeof(buffer),
                       "stack[%u]: type = %4u len = %5u space = %5u allocateMemoryBlocks = %2u depth = %5u max_depth = %5u pop_cnt = %9u push_cnt = %9u\n",
-                        stack_index,
-                        pstack->type, pstack->len, pstack->space, pstack->num_call_allocateMemoryBlocks,
-                        pstack->depth, pstack->max_depth, pstack->pop_cnt, pstack->push_cnt);
+                      stack_index,
+                      pstack->type, pstack->len, pstack->space, pstack->num_call_allocateMemoryBlocks,
+                      pstack->depth, pstack->max_depth, pstack->pop_cnt, pstack->push_cnt);
 
       os << buffer;
       }
@@ -665,11 +665,11 @@ void UStackMemoryPool::paint(ostream& os) // paint info
    /*
    (void) snprintf(buffer, sizeof(buffer),
 #     ifdef HAVE_ARCH64
-          "\n        8   24   32   56  128  256  512  1024 2048 4096\n"
+          U_CONSTANT_TO_PARAM("\n        8   24   32   56  128  256  512  1024 2048 4096\n"
 #     else
-          "\n        4   16   36   48  128  256  512  1024 2048 4096\n"
+          U_CONSTANT_TO_PARAM("\n        4   16   36   48  128  256  512  1024 2048 4096\n"
 #     endif
-          "       %s   %s   %s   %s   %s   %s   %s   %s   %s   %s\n",
+          "       %s   %s   %s   %s   %s   %s   %s   %s   %s   %s\n"),
           (mem_stack[0].space == max_space ? "--" : "  "),
           (mem_stack[1].space == max_space ? "--" : "  "),
           (mem_stack[2].space == max_space ? "--" : "  "),
@@ -685,7 +685,7 @@ void UStackMemoryPool::paint(ostream& os) // paint info
 
    for (int32_t i = max_space-1; i >= 0; --i)
       {
-      (void) snprintf(buffer, sizeof(buffer), "%5u %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c\n", i+1,
+      (void) snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%5u %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c %c%s%c\n"), i+1,
           (mem_stack[0].space >  (uint32_t)i ?  '|' :  ' '),
           (mem_stack[0].space == (uint32_t)i ? "--" : (mem_stack[0].len > (uint32_t)i ? "xx" : "  ")),
           (mem_stack[0].space >  (uint32_t)i ?  '|' :  ' '),
@@ -721,13 +721,13 @@ void UStackMemoryPool::paint(ostream& os) // paint info
       }
 
    (void) snprintf(buffer, sizeof(buffer),
-          "       --   --   --   --   --   --   --   --   --   --\n"
+          U_CONSTANT_TO_PARAM("       --   --   --   --   --   --   --   --   --   --\n"
 #     ifdef HAVE_ARCH64
           "        8   24   32   56  128  256  512  1024 2048 4096"
 #     else
           "        4   16   36   48  128  256  512  1024 2048 4096\n"
 #     endif
-          "\n");
+          "\n"));
 
    os << buffer << endl;
    */
@@ -741,17 +741,17 @@ void UMemoryPool::printInfo(ostream& os)
    UStackMemoryPool::paint(os);
 }
 
-void UMemoryPool::writeInfoTo(const char* format, ...)
+void UMemoryPool::writeInfoTo(const char* format, uint32_t fmt_size, ...)
 {
-   U_TRACE(0+256, "UMemoryPool::writeInfoTo(%S)", format)
+   U_TRACE(0+256, "UMemoryPool::writeInfoTo(%.*S,%u)", fmt_size, format, fmt_size)
 
 # if defined(ENABLE_MEMPOOL) && !defined(_MSWINDOWS_)
    char name[256];
 
    va_list argp;
-   va_start(argp, format);
+   va_start(argp, fmt_size);
 
-   (void) u__vsnprintf(name, sizeof(name), format, argp);
+   (void) u__vsnprintf(name, sizeof(name), format, fmt_size, argp);
 
    va_end(argp);
 

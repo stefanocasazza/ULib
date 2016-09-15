@@ -44,7 +44,7 @@ bool UMongoDBClient::connect(const char* phost, unsigned int _port)
       if (env_mongodb_port) _port = atoi(env_mongodb_port);
       }
 
-   uri.snprintf("mongodb://%v:%u", host.rep, _port ? _port : 27017);
+   uri.snprintf(U_CONSTANT_TO_PARAM("mongodb://%v:%u"), host.rep, _port ? _port : 27017);
 
    puri = (mongoc_uri_t*) U_SYSCALL(mongoc_uri_new, "%S", uri.data());
 

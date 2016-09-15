@@ -716,13 +716,13 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
 
 // Send a command to a server and wait for a response (single line)
 
-int USocketExt::vsyncCommand(USocket* sk, char* buffer, uint32_t buffer_size, const char* format, va_list argp)
+int USocketExt::vsyncCommand(USocket* sk, char* buffer, uint32_t buffer_size, const char* format, uint32_t fmt_size, va_list argp)
 {
-   U_TRACE(0, "USocketExt::vsyncCommand(%p,%p,%u,%S)", sk, buffer, buffer_size, format)
+   U_TRACE(0, "USocketExt::vsyncCommand(%p,%p,%u,%.*S,%u)", sk, buffer, buffer_size, fmt_size, format, fmt_size)
 
    U_INTERNAL_ASSERT(sk->isOpen())
 
-   uint32_t buffer_len = u__vsnprintf(buffer, buffer_size-2, format, argp);
+   uint32_t buffer_len = u__vsnprintf(buffer, buffer_size-2, format, fmt_size, argp);
 
    buffer[buffer_len++] = '\r';
    buffer[buffer_len++] = '\n';
@@ -735,13 +735,13 @@ int USocketExt::vsyncCommand(USocket* sk, char* buffer, uint32_t buffer_size, co
 
 // Send a command to a server and wait for a response (multi line)
 
-int USocketExt::vsyncCommandML(USocket* sk, char* buffer, uint32_t buffer_size, const char* format, va_list argp)
+int USocketExt::vsyncCommandML(USocket* sk, char* buffer, uint32_t buffer_size, const char* format, uint32_t fmt_size, va_list argp)
 {
-   U_TRACE(0, "USocketExt::vsyncCommandML(%p,%p,%u,%S)", sk, buffer, buffer_size, format)
+   U_TRACE(0, "USocketExt::vsyncCommandML(%p,%p,%u,%.*S,%u)", sk, buffer, buffer_size, fmt_size, format, fmt_size)
 
    U_INTERNAL_ASSERT(sk->isOpen())
 
-   uint32_t buffer_len = u__vsnprintf(buffer, buffer_size-2, format, argp);
+   uint32_t buffer_len = u__vsnprintf(buffer, buffer_size-2, format, fmt_size, argp);
 
    buffer[buffer_len++] = '\r';
    buffer[buffer_len++] = '\n';
@@ -754,9 +754,9 @@ int USocketExt::vsyncCommandML(USocket* sk, char* buffer, uint32_t buffer_size, 
 
 // Send a command to a server and wait for a response (check for token line)
 
-int USocketExt::vsyncCommandToken(USocket* sk, UString& buffer, const char* format, va_list argp)
+int USocketExt::vsyncCommandToken(USocket* sk, UString& buffer, const char* format, uint32_t fmt_size, va_list argp)
 {
-   U_TRACE(1, "USocketExt::vsyncCommandToken(%p,%V,%S)", sk, buffer.rep, format)
+   U_TRACE(1, "USocketExt::vsyncCommandToken(%p,%V,%.*S,%u)", sk, buffer.rep, fmt_size, format, fmt_size)
 
    U_INTERNAL_ASSERT(sk->isOpen())
    U_INTERNAL_ASSERT_EQUALS((bool)buffer, false)
@@ -764,7 +764,7 @@ int USocketExt::vsyncCommandToken(USocket* sk, UString& buffer, const char* form
    static uint32_t cmd_count;
 
    char token[32];
-   uint32_t token_len = u__snprintf(token, sizeof(token), "U%04u ", cmd_count++);
+   uint32_t token_len = u__snprintf(token, sizeof(token), U_CONSTANT_TO_PARAM("U%04u "), cmd_count++);
 
    U_INTERNAL_DUMP("token = %.*S", token_len, token)
 
@@ -772,7 +772,7 @@ int USocketExt::vsyncCommandToken(USocket* sk, UString& buffer, const char* form
 
    U_MEMCPY(p, token, token_len);
 
-   uint32_t buffer_len = token_len + u__vsnprintf(p+token_len, buffer.capacity(), format, argp);
+   uint32_t buffer_len = token_len + u__vsnprintf(p+token_len, buffer.capacity(), format, fmt_size, argp);
 
    p[buffer_len++] = '\r';
    p[buffer_len++] = '\n';
@@ -1148,7 +1148,7 @@ UString USocketExt::getMacAddress(int fd, const char* device)
       {
       char* hwaddr = ifr.ifr_hwaddr.sa_data;
 
-      result.snprintf("%02x:%02x:%02x:%02x:%02x:%02x",
+      result.snprintf(U_CONSTANT_TO_PARAM("%02x:%02x:%02x:%02x:%02x:%02x"),
                       hwaddr[0] & 0xFF,
                       hwaddr[1] & 0xFF,
                       hwaddr[2] & 0xFF,
@@ -1229,10 +1229,11 @@ UString USocketExt::getNetworkAddress(int fd, const char* device)
                  netmask.psaIP4Addr.sin_addr.s_addr;
 
       /*
-      result.snprintf("%d.%d.%d.%d", (network       & 0xFF),
-                                     (network >>  8 & 0xFF),
-                                     (network >> 16 & 0xFF),
-                                     (network >> 24 & 0xFF));
+      result.snprintf(U_CONSTANT_TO_PARAM("%d.%d.%d.%d"),
+                      (network       & 0xFF),
+                      (network >>  8 & 0xFF),
+                      (network >> 16 & 0xFF),
+                      (network >> 24 & 0xFF));
       */
 
       (void) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", AF_INET, &network, result.data(), INET_ADDRSTRLEN);
@@ -1519,7 +1520,7 @@ UString USocketExt::getGatewayAddress(const char* network, uint32_t network_len)
 
             dst = U_SYSCALL(inet_ntoa, "%u", dstAddr);
 
-            if (u__snprintf(dstMask, sizeof(dstMask), "%s/%u", dst, rtMsg->rtm_dst_len) == network_len &&
+            if (u__snprintf(dstMask, sizeof(dstMask), U_CONSTANT_TO_PARAM("%s/%u"), dst, rtMsg->rtm_dst_len) == network_len &&
                     strncmp(dstMask, network, network_len) == 0)
                {
                if (gateWay.s_addr)

@@ -283,7 +283,7 @@ void u_trace_init(int bsignal)
          {
          char name[128];
 
-         (void) u__snprintf(name, 128, "trace.%N.%P", 0);
+         (void) u__snprintf(name, 128, U_CONSTANT_TO_PARAM("trace.%N.%P"), 0);
 
          /* NB: O_RDWR is needed for mmap(MAP_SHARED)... */
 
@@ -393,7 +393,7 @@ void u_trace_check_init(void)
       {
       char name[128];
 
-      (void) u__snprintf(name, 128, "trace.%N.%P", 0);
+      (void) u__snprintf(name, 128, U_CONSTANT_TO_PARAM("trace.%N.%P"), 0);
 
       (void) rename("trace..", name);
       }
@@ -405,17 +405,17 @@ void u_trace_check_init(void)
    printInfo();
 }
 
-void u_trace_dump(const char* restrict format, ...)
+void u_trace_dump(const char* restrict format, uint32_t fmt_size, ...)
 {
-   U_INTERNAL_TRACE("u_trace_dump(%s)", format)
+   U_INTERNAL_TRACE("u_trace_dump(%.*s,%u)", fmt_size, format, fmt_size)
 
    char buffer[8192];
    uint32_t buffer_len;
 
    va_list argp;
-   va_start(argp, format);
+   va_start(argp, fmt_size);
 
-   buffer_len = u__vsnprintf(buffer, sizeof(buffer), format, argp);
+   buffer_len = u__vsnprintf(buffer, sizeof(buffer), format, fmt_size, argp);
 
    va_end(argp);
 

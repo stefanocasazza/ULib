@@ -208,7 +208,7 @@ public:
          {
          UString tmp = UStringExt::basename(PEC_report::file->getPath());
 
-         rdbname->snprintf("%s/%.*s", u_tmpdir, U_STRING_TO_TRACE(tmp));
+         rdbname->snprintf(U_CONSTANT_TO_PARAM("%s/%.*s"), u_tmpdir, U_STRING_TO_TRACE(tmp));
 
          U_INTERNAL_DUMP("rdbname = %.*S", U_STRING_TO_TRACE(*rdbname))
          }
@@ -219,7 +219,7 @@ public:
 #     ifdef U_DB_MANAGE
          UString tmp = UStringExt::basename(PEC_report::file->getPath());
 
-         rdbname->snprintf_add("#%.*s.cdb", U_STRING_TO_TRACE(tmp));
+         rdbname->snprintf_add(U_CONSTANT_TO_PARAM("#%.*s.cdb"), U_STRING_TO_TRACE(tmp));
 
          U_INTERNAL_DUMP("rdbname = %.*S", U_STRING_TO_TRACE(*rdbname))
 
@@ -243,7 +243,7 @@ public:
 
          if (rdb == 0)
             {
-            rdbname->snprintf("%s/PEC_report_anomalie1.%4D.cdb", u_tmpdir);
+            rdbname->snprintf(U_CONSTANT_TO_PARAM("%s/PEC_report_anomalie1.%4D.cdb"), u_tmpdir);
 
             U_INTERNAL_DUMP("rdbname = %.*S", U_STRING_TO_TRACE(*rdbname))
       

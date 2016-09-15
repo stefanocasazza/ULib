@@ -58,7 +58,7 @@ U_NO_EXPORT void UPop3Client::setStatus()
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "%s - (%d, %s)", descr1, response, descr2);
+   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%s - (%d, %s)"), descr1, response, descr2);
 }
 
 bool UPop3Client::_connectServer(const UString& server, unsigned int port, int timeoutMS)
@@ -95,9 +95,9 @@ bool UPop3Client::_connectServer(const UString& server, unsigned int port, int t
 
 // Send a command to the POP3 server and wait for a response eventually with eod or size fixed...
 
-U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
+U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, uint32_t fmt_size, ...)
 {
-   U_TRACE(0, "UPop3Client::syncCommand(%d,%S)", eod, format)
+   U_TRACE(0, "UPop3Client::syncCommand(%d,%.*S,%u)", eod, fmt_size, format, fmt_size)
 
 #ifdef DEBUG
    setStatus();
@@ -110,9 +110,9 @@ U_NO_EXPORT bool UPop3Client::syncCommand(int eod, const char* format, ...)
 #endif
 
    va_list argp;
-   va_start(argp, format);
+   va_start(argp, fmt_size);
 
-   buffer.rep->_length = end = USocketExt::vsyncCommand(this, buffer.data(), buffer.capacity(), format, argp);
+   buffer.rep->_length = end = USocketExt::vsyncCommand(this, buffer.data(), buffer.capacity(), format, fmt_size, argp);
 
    va_end(argp);
 
@@ -252,7 +252,7 @@ bool UPop3Client::startTLS()
    U_ASSERT(Socket::isSSL())
 
         if (state != AUTHORIZATION) response = BAD_STATE;
-   else if (syncCommand(-1, "STLS"))
+   else if (syncCommand(-1, U_CONSTANT_TO_PARAM("STLS")))
       {
       if (((USSLSocket*)this)->secureConnection()) U_RETURN(true);
 
@@ -281,8 +281,8 @@ bool UPop3Client::login(const char* user, const char* passwd)
    if (state != AUTHORIZATION) response = BAD_STATE;
    else
       {
-      if (syncCommand(-1, "USER %s", user) &&
-          syncCommand(-1, "PASS %s", passwd))
+      if (syncCommand(-1, U_CONSTANT_TO_PARAM("USER %s"), user) &&
+          syncCommand(-1, U_CONSTANT_TO_PARAM("PASS %s"), passwd))
          {
          state = TRANSACTION;
 
@@ -299,7 +299,7 @@ int UPop3Client::getCapabilities(UVector<UString>& vec)
 {
    U_TRACE(0, "UPop3Client::getCapabilities(%p)", &vec)
 
-   if (syncCommand(0, "CAPA"))
+   if (syncCommand(0, U_CONSTANT_TO_PARAM("CAPA")))
       {
       (void) capa.replace(0, capa.size(), buffer, pos, end - pos);
 
@@ -321,7 +321,7 @@ int UPop3Client::getUIDL(UVector<UString>& vec)
       {
       response = BAD_STATE;
       }
-   else if (syncCommand(0, "UIDL"))
+   else if (syncCommand(0, U_CONSTANT_TO_PARAM("UIDL")))
       {
       UString r;
       const char* p;
@@ -368,8 +368,8 @@ int UPop3Client::getSizeMessage(uint32_t n)
 
    if (state == TRANSACTION)
       {
-      if ((n ? syncCommand(-1, "LIST %u", n) :
-               syncCommand(-1, "STAT")))
+      if ((n ? syncCommand(-1, U_CONSTANT_TO_PARAM("LIST %u"), n) :
+               syncCommand(-1, U_CONSTANT_TO_PARAM("STAT"))))
          {
          char* ptr = buffer.c_pointer(sizeof(U_POP3_OK));
 
@@ -399,7 +399,7 @@ UString UPop3Client::getHeader(uint32_t n)
 
    if (state == TRANSACTION)
       {
-      if (syncCommand(0, "TOP %u 0", n))
+      if (syncCommand(0, U_CONSTANT_TO_PARAM("TOP %u 0"), n))
          {
          UString result((void*)buffer.c_pointer(pos), end - pos);
 
@@ -426,7 +426,7 @@ UString UPop3Client::getMessage(uint32_t n)
       {
       (void) buffer.reserve(size_msg);
 
-      if (syncCommand(size_msg, "RETR %u", n))
+      if (syncCommand(size_msg, U_CONSTANT_TO_PARAM("RETR %u"), n))
          {
          UString result((void*)buffer.c_pointer(pos), size_msg);
 
@@ -445,7 +445,7 @@ bool UPop3Client::deleteMessage(uint32_t n)
 
    if (state == TRANSACTION)
       {
-      if (syncCommand(-1, "DELE %u", n)) U_RETURN(true);
+      if (syncCommand(-1, U_CONSTANT_TO_PARAM("DELE %u"), n)) U_RETURN(true);
 
       response = NO_SUCH_MESSAGE;
       }
@@ -471,8 +471,8 @@ int UPop3Client::getAllHeader(UVector<UString>& vec)
       int vpos[8192], vend[8192];
       UString req(U_max(U_CAPACITY, 11U * num_msg));
 
-                                req.snprintf(    "TOP  1 0\r\n");
-      for (; i <= num_msg; ++i) req.snprintf_add("TOP %d 0\r\n", i);
+                                req.snprintf(    U_CONSTANT_TO_PARAM("TOP  1 0\r\n"));
+      for (; i <= num_msg; ++i) req.snprintf_add(U_CONSTANT_TO_PARAM("TOP %d 0\r\n"), i);
 
       (void) req.shrink();
 
@@ -510,8 +510,8 @@ int UPop3Client::getAllMessage(UVector<UString>& vec)
       int vpos[8192], vend[8192];
       UString req(U_max(U_CAPACITY, 10U * num_msg));
 
-                                req.snprintf(    "RETR  1\r\n");
-      for (; i <= num_msg; ++i) req.snprintf_add("RETR %d\r\n", i);
+                                req.snprintf(    U_CONSTANT_TO_PARAM("RETR  1\r\n"));
+      for (; i <= num_msg; ++i) req.snprintf_add(U_CONSTANT_TO_PARAM("RETR %d\r\n"), i);
 
       (void) req.shrink();
 
@@ -549,8 +549,8 @@ bool UPop3Client::deleteAllMessage()
       UString req(U_max(U_CAPACITY, 10U * num_msg));
       uint32_t size = num_msg * (sizeof(U_POP3_OK) + sizeof(" message deleted"));
 
-                                req.snprintf(    "DELE  1\r\n");
-      for (; i <= num_msg; ++i) req.snprintf_add("DELE %d\r\n", i);
+                                req.snprintf(    U_CONSTANT_TO_PARAM("DELE  1\r\n"));
+      for (; i <= num_msg; ++i) req.snprintf_add(U_CONSTANT_TO_PARAM("DELE %d\r\n"), i);
 
       (void) req.shrink();
 
@@ -566,7 +566,7 @@ bool UPop3Client::reset()
 {
    U_TRACE_NO_PARAM(0, "UPop3Client::reset()")
 
-   if (syncCommand(-1, "RSET"))
+   if (syncCommand(-1, U_CONSTANT_TO_PARAM("RSET")))
       {
       U_RETURN(true);
       }
@@ -580,7 +580,7 @@ bool UPop3Client::quit()
 {
    U_TRACE_NO_PARAM(0, "UPop3Client::quit()")
 
-   if (syncCommand(-1, "QUIT"))
+   if (syncCommand(-1, U_CONSTANT_TO_PARAM("QUIT")))
       {
       state = UPDATE;
 

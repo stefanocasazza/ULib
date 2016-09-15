@@ -68,7 +68,7 @@ public:
       U_INTERNAL_ASSERT_POINTER(client)
       U_INTERNAL_ASSERT_MAJOR(query_len, 0)
 
-      uri.snprintf("/%.*s/%.*s/_search", index_len, _index, type_len, type);
+      uri.snprintf(U_CONSTANT_TO_PARAM("/%.*s/%.*s/_search"), index_len, _index, type_len, type);
 
       // send POST(2) request to server and get response
 
@@ -91,7 +91,7 @@ public:
       U_INTERNAL_ASSERT_POINTER(client)
       U_INTERNAL_ASSERT_MAJOR(data_len, 0)
 
-      uri.snprintf("/%.*s/%.*s/%.*s", index_len, _index, type_len, type, id_len, id);
+      uri.snprintf(U_CONSTANT_TO_PARAM("/%.*s/%.*s/%.*s"), index_len, _index, type_len, type, id_len, id);
 
       // send PUT(3) request to server and get response
 
@@ -111,7 +111,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(client)
 
-      uri.snprintf("/%.*s/%.*s/%.*s", index_len, _index, type_len, type, id_len, id);
+      uri.snprintf(U_CONSTANT_TO_PARAM("/%.*s/%.*s/%.*s"), index_len, _index, type_len, type, id_len, id);
 
       // send GET(0) request to server and get response
 
@@ -131,11 +131,11 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(client)
 
-      uri.snprintf("/%.*s/%.*s/_search", index_len, _index, type_len, type);
+      uri.snprintf(U_CONSTANT_TO_PARAM("/%.*s/%.*s/_search"), index_len, _index, type_len, type);
 
       UString query(100U + key_len + value_len);
 
-      query.snprintf("{\"query\":{\"match\":{\"%.*s\":\"%.*s\"}}}", key_len, key, value_len, value);
+      query.snprintf(U_CONSTANT_TO_PARAM("{\"query\":{\"match\":{\"%.*s\":\"%.*s\"}}}"), key_len, key, value_len, value);
 
       return sendPOST(uri, query);
       }
@@ -151,11 +151,11 @@ public:
       U_TRACE(0, "UElasticSearchClient::update(%.*S,%u,%.*S,%u,%.*S,%u,%.*S,%u,%.*S,%u)",
                index_len, _index, index_len, type_len, type, type_len, id_len, id, id_len, key_len, key, key_len, value_len, value, value_len)
 
-      uri.snprintf("/%.*s/%.*s/%.*s/_update", index_len, _index, type_len, type, id_len, id);
+      uri.snprintf(U_CONSTANT_TO_PARAM("/%.*s/%.*s/%.*s/_update"), index_len, _index, type_len, type, id_len, id);
 
       UString data(100U + key_len + value_len);
 
-      data.snprintf("{\"doc\":{\"%.*s\":\"%.*s\"}}", key_len, key, value_len, value);
+      data.snprintf(U_CONSTANT_TO_PARAM("{\"doc\":{\"%.*s\":\"%.*s\"}}"), key_len, key, value_len, value);
 
       return sendPOST(uri, data);
       }
@@ -171,7 +171,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(client)
 
-      uri.snprintf("/%.*s/%.*s/%.*s", index_len, _index, type_len, type, id_len, id);
+      uri.snprintf(U_CONSTANT_TO_PARAM("/%.*s/%.*s/%.*s"), index_len, _index, type_len, type, id_len, id);
 
       // send DELETE(4) request to server and get response
 

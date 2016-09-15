@@ -24,9 +24,9 @@ static ULog* ulog;
 class Application : public UApplication {
 public:
 
-#define LOG_MSG0(msg)            if (ulog) ulog->log("%.*s",U_CONSTANT_TO_TRACE(msg))
-#define LOG_MSGb(msg)            if (ulog) ulog->log(msg" %.*s",U_STRING_TO_TRACE(buffer))
-#define LOG_MSGB(format,args...) if (ulog) ulog->log(format" %.*s",args,U_STRING_TO_TRACE(buffer))
+#define LOG_MSG0(msg)            if (ulog) ulog->log(U_CONSTANT_TO_PARAM("%.*s"),U_CONSTANT_TO_TRACE(msg))
+#define LOG_MSGb(msg)            if (ulog) ulog->log(U_CONSTANT_TO_PARAM(msg" %.*s"),U_STRING_TO_TRACE(buffer))
+#define LOG_MSGB(format,args...) if (ulog) ulog->log(U_CONSTANT_TO_PARAM(format" %.*s"),args,U_STRING_TO_TRACE(buffer))
 
    void get_welcome()
       {
@@ -146,7 +146,7 @@ public:
 
          U_NEW(ULog, ulog, ULog(log_file, 1024 * 1024));
 
-         ulog->setPrefix(U_SERVER_LOG_PREFIX);
+         ulog->setPrefix(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
 
          // manage max string length for log request and response
 

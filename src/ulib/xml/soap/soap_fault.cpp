@@ -21,7 +21,7 @@ void USOAPFault::encode(UString& response)
 
    response.setBuffer(1000U + code.size() + faultReason.size() + detail.size());
 
-   response.snprintf("<?xml version='1.0' ?>"
+   response.snprintf(U_CONSTANT_TO_PARAM("<?xml version='1.0' ?>"
                      "<soap:Envelope xmlns:soap=\"http://www.w3.org/2003/05/soap-envelope\">"
                         "<soap:Body>"
                            "<soap:Fault>"
@@ -34,6 +34,6 @@ void USOAPFault::encode(UString& response)
                               "<soap:Detail>%v</soap:Detail>"
                            "</soap:Fault>"
                         "</soap:Body>"
-                     "</soap:Envelope>",
+                     "</soap:Envelope>"),
                      code.rep, faultReason.rep, detail.rep);
 }

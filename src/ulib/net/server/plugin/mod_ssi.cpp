@@ -82,9 +82,7 @@ void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
    va_list argp;
    va_start(argp, fmt);
 
-   (void) u__snprintf(format, sizeof(format), U_CTYPE_HTML "\r\nRefresh: 0; url=%s\r\n", fmt);
-
-   buffer.vsnprintf(format, argp);
+   buffer.vsnprintf(format, u__snprintf(format, sizeof(format), U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\nRefresh: 0; url=%s\r\n"), fmt), argp);
 
    va_end(argp);
 
@@ -152,7 +150,7 @@ void USSIPlugIn::setAlternativeInclude(const char* title_txt, const UString& out
 
    UString buffer(U_CAPACITY);
 
-   buffer.snprintf("'TITLE_TXT=%s'\n", title_txt);
+   buffer.snprintf(U_CONSTANT_TO_PARAM("'TITLE_TXT=%s'\n"), title_txt);
 
    (void) UClientImage_Base::environment->append(buffer);
 
@@ -173,7 +171,7 @@ void USSIPlugIn::setAlternativeInclude(const UString& tmpl, uint32_t estimated_s
    va_list argp;
    va_start(argp, body_style);
 
-   alternative_include->vsnprintf(tmpl.data(), argp);
+   alternative_include->vsnprintf(U_STRING_TO_PARAM(tmpl), argp);
 
    va_end(argp);
 
@@ -181,9 +179,9 @@ void USSIPlugIn::setAlternativeInclude(const UString& tmpl, uint32_t estimated_s
 
    UString buffer(U_CAPACITY);
 
-                   buffer.snprintf(    "'TITLE_TXT=%s'\n", title_txt);
-   if (ssi_head)   buffer.snprintf_add("'SSI_HEAD=%s'\n",  ssi_head);
-   if (body_style) buffer.snprintf_add("BODY_STYLE=%s\n",  body_style);
+                   buffer.snprintf(    U_CONSTANT_TO_PARAM("'TITLE_TXT=%s'\n"), title_txt);
+   if (ssi_head)   buffer.snprintf_add(U_CONSTANT_TO_PARAM("'SSI_HEAD=%s'\n"),  ssi_head);
+   if (body_style) buffer.snprintf_add(U_CONSTANT_TO_PARAM("BODY_STYLE=%s\n"),  body_style);
 
    (void) UClientImage_Base::environment->append(buffer);
 
@@ -192,16 +190,16 @@ void USSIPlugIn::setAlternativeInclude(const UString& tmpl, uint32_t estimated_s
    UClientImage_Base::wbuffer->setBuffer(U_CAPACITY); // NB: to avoid append on output...
 }
 
-void USSIPlugIn::setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, ...)
+void USSIPlugIn::setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, uint32_t fmt_size, ...)
 {
-   U_TRACE(0, "USSIPlugIn::setMessagePageWithVar(%V,%S,%S)", tmpl.rep, title_txt, fmt)
+   U_TRACE(0, "USSIPlugIn::setMessagePageWithVar(%V,%S,%.*S,%u)", tmpl.rep, title_txt, fmt_size, fmt, fmt_size)
 
    char format[4096];
 
    va_list argp;
-   va_start(argp, fmt);
+   va_start(argp, fmt_size);
 
-   (void) u__vsnprintf(format, sizeof(format), fmt, argp);
+   (void) u__vsnprintf(format, sizeof(format), fmt, fmt_size, argp);
 
    va_end(argp);
 
@@ -659,11 +657,11 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                      {
                      U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-                     x = UTimeDate::strftime(timefmt->data(), u_now->tv_sec, blocal);
+                     x = UTimeDate::strftime(U_STRING_TO_PARAM(*timefmt), u_now->tv_sec, blocal);
                      }
                   else
                      {
-                          if (value.equal(U_CONSTANT_TO_PARAM("LAST_MODIFIED"))) x = UTimeDate::strftime(timefmt->data(), last_modified);
+                          if (value.equal(U_CONSTANT_TO_PARAM("LAST_MODIFIED"))) x = UTimeDate::strftime(U_STRING_TO_PARAM(*timefmt), last_modified);
                      else if (value.equal(U_CONSTANT_TO_PARAM("USER_NAME")))     (void) x.assign(u_user_name, u_user_name_len);
                      else if (value.equal(U_CONSTANT_TO_PARAM("DOCUMENT_URI")))  (void) x.assign(U_HTTP_URI_TO_PARAM);
                      else if (value.equal(U_CONSTANT_TO_PARAM("DOCUMENT_NAME"))) x = *docname;
@@ -743,7 +741,7 @@ U_NO_EXPORT UString USSIPlugIn::processSSIRequest(const UString& content, int in
                }
             else
                {
-               (void) output.append(UTimeDate::strftime(timefmt->data(), UHTTP::file->st_mtime)); // SSI_FLASTMOD
+               (void) output.append(UTimeDate::strftime(U_STRING_TO_PARAM(*timefmt), UHTTP::file->st_mtime)); // SSI_FLASTMOD
                }
             }
          break;
@@ -957,7 +955,7 @@ int USSIPlugIn::handlerConfig(UFileConfig& cfg)
 
          const char* home = U_SYSCALL(getenv, "%S", "HOME");
 
-         if (home) environment->snprintf_add("HOME=%s\n", home);
+         if (home) environment->snprintf_add(U_CONSTANT_TO_PARAM("HOME=%s\n"), home);
 
          U_ASSERT_EQUALS(environment->isBinary(), false)
          }

@@ -45,7 +45,7 @@ void USmtpClient::setStatus()
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "(%d, %s)", response, descr);
+   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("(%d, %s)"), response, descr);
 }
 
 bool USmtpClient::_connectServer(const UString& server, unsigned int port, int timeoutMS)
@@ -60,7 +60,7 @@ bool USmtpClient::_connectServer(const UString& server, unsigned int port, int t
 
       // NB: the last argument (0) is necessary...
 
-      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "Sorry, couldn't connect to server '%v:%u'%R", server.rep, port, 0);
+      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("Sorry, couldn't connect to server '%v:%u'%R"), server.rep, port, 0);
       }
    else
       {
@@ -113,7 +113,7 @@ bool USmtpClient::_connectServer(UFileConfig& cfg, unsigned int port, int timeou
 
          UString tmp(10U + replyToAddress.size());
 
-         tmp.snprintf("Reply-To: %v", replyToAddress.rep);
+         tmp.snprintf(U_CONSTANT_TO_PARAM("Reply-To: %v"), replyToAddress.rep);
 
          setMessageHeader(tmp);
          }
@@ -204,14 +204,14 @@ U_NO_EXPORT void USmtpClient::setStateFromResponse()
 
 // Send a command to the SMTP server and wait for a response
 
-U_NO_EXPORT bool USmtpClient::syncCommand(const char* format, ...)
+U_NO_EXPORT bool USmtpClient::syncCommand(const char* format, uint32_t fmt_size, ...)
 {
-   U_TRACE(0, "USmtpClient::syncCommand(%S)", format)
+   U_TRACE(0, "USmtpClient::syncCommand(%.*S,%u)", fmt_size, format, fmt_size)
 
    va_list argp;
-   va_start(argp, format);
+   va_start(argp, fmt_size);
 
-   response = USocketExt::vsyncCommandML(this, format, argp);
+   response = USocketExt::vsyncCommandML(this, format, fmt_size, argp);
 
    va_end(argp);
 
@@ -227,7 +227,7 @@ bool USmtpClient::startTLS()
 #ifdef USE_LIBSSL
    U_ASSERT(Socket::isSSL())
 
-   if (syncCommand("STARTTLS") &&
+   if (syncCommand(U_CONSTANT_TO_PARAM("STARTTLS")) &&
        response == GREET       &&
        ((USSLSocket*)this)->secureConnection())
       {
@@ -257,10 +257,10 @@ bool USmtpClient::sendMessage(bool secure)
       (void) domainName.assign(U_CONSTANT_TO_PARAM("somemachine.nowhere.org"));
       }
 
-   if (secure == false) (void) syncCommand("helo %v", domainName.rep);
+   if (secure == false) (void) syncCommand(U_CONSTANT_TO_PARAM("helo %v"), domainName.rep);
    else
       {
-      (void) syncCommand("ehlo %v", domainName.rep);
+      (void) syncCommand(U_CONSTANT_TO_PARAM("ehlo %v"), domainName.rep);
 
       if (response != SUCCESSFUL                ||
           strstr(u_buffer, "250-STARTTLS") == 0 ||
@@ -269,7 +269,7 @@ bool USmtpClient::sendMessage(bool secure)
          U_RETURN(false);
          }
 
-      (void) syncCommand("ehlo %v", domainName.rep);
+      (void) syncCommand(U_CONSTANT_TO_PARAM("ehlo %v"), domainName.rep);
       }
 
    if (response != SUCCESSFUL) U_RETURN(false);
@@ -280,7 +280,7 @@ bool USmtpClient::sendMessage(bool secure)
 
    U_ASSERT(UStringExt::isEmailAddress(senderAddress))
 
-   (void) syncCommand("mail from: %v", senderAddress.rep);
+   (void) syncCommand(U_CONSTANT_TO_PARAM("mail from: %v"), senderAddress.rep);
 
    if (response != SUCCESSFUL) U_RETURN(false);
 
@@ -290,13 +290,13 @@ bool USmtpClient::sendMessage(bool secure)
 
    U_ASSERT(UStringExt::isEmailAddress(rcptoAddress))
 
-   (void) syncCommand("rcpt to: %v", rcptoAddress.rep);
+   (void) syncCommand(U_CONSTANT_TO_PARAM("rcpt to: %v"), rcptoAddress.rep);
 
    if (response != SUCCESSFUL) U_RETURN(false);
 
    U_INTERNAL_ASSERT_EQUALS(state,SENTTO)
 
-   (void) syncCommand("data", 0);
+   (void) syncCommand(U_CONSTANT_TO_PARAM("data"), 0);
 
    if (response != READYDATA) U_RETURN(false);
 
@@ -314,11 +314,11 @@ bool USmtpClient::sendMessage(bool secure)
 
    UString msg(rcptoAddress.size() + messageSubject.size() + messageHeader.size() + messageBody.size() + 32U);
 
-   msg.snprintf("To: %v\r\n"
+   msg.snprintf(U_CONSTANT_TO_PARAM("To: %v\r\n"
                 "Subject: %v\r\n"
                 "%v\r\n"
                 "%v\r\n"
-                ".\r\n", rcptoAddress.rep, messageSubject.rep, messageHeader.rep, messageBody.rep);
+                ".\r\n"), rcptoAddress.rep, messageSubject.rep, messageHeader.rep, messageBody.rep);
 
    response = (USocketExt::write(this, msg, U_TIMEOUT_MS) ? USocketExt::readMultilineReply(this) : -1);
 
@@ -328,7 +328,7 @@ bool USmtpClient::sendMessage(bool secure)
 
    U_INTERNAL_ASSERT_EQUALS(state,FINISHED)
 
-   (void) syncCommand("quit", 0);
+   (void) syncCommand(U_CONSTANT_TO_PARAM("quit"), 0);
 
    if (response != GOODBYE) U_RETURN(false);
 

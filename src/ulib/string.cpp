@@ -835,7 +835,7 @@ void UStringRep::_release()
       {
       char buffer[4096];
 
-      uint32_t len = u__snprintf(buffer, sizeof(buffer), "DEAD OF SOURCE STRING WITH CHILD ALIVE: child(%u) source(%u) = %V", child, _length, this);
+      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("DEAD OF SOURCE STRING WITH CHILD ALIVE: child(%u) source(%u) = %V"), child, _length, this);
 
       if (check_dead_of_source_string_with_child_alive)
          {
@@ -1194,18 +1194,18 @@ UString::UString(ustringrep* r)
    U_INTERNAL_ASSERT(invariant())
 }
 
-UString::UString(uint32_t sz, const char* format, ...) // ctor with var arg
+UString::UString(uint32_t sz, const char* format, uint32_t fmt_size, ...) // ctor with var arg
 {
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%S", sz, format)
+   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%.*S,%u", sz, fmt_size, format, fmt_size)
 
    U_INTERNAL_ASSERT_POINTER(format)
 
    va_list argp;
-   va_start(argp, format);
+   va_start(argp, fmt_size);
 
    rep = UStringRep::create(0U, sz, 0);
 
-   UString::vsnprintf(format, argp); 
+   UString::vsnprintf(format, fmt_size, argp); 
 
    va_end(argp);
 }
@@ -2078,7 +2078,7 @@ void UString::printKeyValue(const char* key, uint32_t keylen, const char* _data,
 
    char* ptr = (char*)rep->str + rep->_length;
 
-   ptr += u__snprintf(ptr, 40, "+%u,%u:", keylen, datalen);
+   ptr += u__snprintf(ptr, 40, U_CONSTANT_TO_PARAM("+%u,%u:"), keylen, datalen);
 
    U_MEMCPY(ptr, key, keylen);
             ptr +=    keylen;
@@ -2639,7 +2639,7 @@ const char* UStringRep::dump(bool reset) const
 
    char buffer[1024];
 
-   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), "%V", this));
+   UObjectIO::os->write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%V"), this));
 
    if (reset)
       {

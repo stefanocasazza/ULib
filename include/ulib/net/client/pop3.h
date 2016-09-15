@@ -197,7 +197,7 @@ protected:
 private:
    void setStatus() U_NO_EXPORT;
 
-   bool syncCommand(int eod, const char* format, ...) U_NO_EXPORT;
+   bool syncCommand(int eod, const char* format, uint32_t fmt_size, ...) U_NO_EXPORT;
    bool syncCommandML(const UString& req, int* vpos, int* vend) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UPop3Client)

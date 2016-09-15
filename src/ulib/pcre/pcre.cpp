@@ -291,7 +291,7 @@ U_NO_EXPORT void UPCRE::setStatus(int num)
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "(%d, %s)", num, descr);
+   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("(%d, %s)"), num, descr);
 }
 
 /* compile the expression */
@@ -653,7 +653,7 @@ U_NO_EXPORT UString UPCRE::replaceVars(const UString& piece)
 
       subsplit.clear();
 
-      cstr.snprintf("(\\${?%v}?)", first.rep);
+      cstr.snprintf(U_CONSTANT_TO_PARAM("(\\${?%v}?)"), first.rep);
 
       subsplit.set(cstr, PCRE_FOR_REPLACE);
 
@@ -710,7 +710,7 @@ uint32_t UPCRE::getTag(UVector<UString>& vec, const UString& xml, const char* at
       {
       UString cstr(U_CAPACITY);
 
-      cstr.snprintf("(<(%s)[^>]*%s\\s*=\\s*([\\'\\\"])%s\\\\2[^>]*>(.*?)<\\/\\\\1>)", tag, attr, value);
+      cstr.snprintf(U_CONSTANT_TO_PARAM("(<(%s)[^>]*%s\\s*=\\s*([\\'\\\"])%s\\\\2[^>]*>(.*?)<\\/\\\\1>)"), tag, attr, value);
 
       (void) cstr.shrink();
 

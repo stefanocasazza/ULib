@@ -95,7 +95,7 @@ public:
       char buffer[4096];
       const char* attr_name[] = { username.c_str(), password.c_str(), 0 };
 
-      (void) snprintf(buffer, sizeof(buffer), "%s=%s,%.*s", subject_attr.c_str(), buf, U_STRING_TO_TRACE(LDAP_searchbase));
+      (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%v=%s,%.*s"), subject_attr.rep, buf, U_STRING_TO_TRACE(LDAP_searchbase));
 
       n = ldap.search(buffer, LDAP_SCOPE_BASE, (char**)attr_name);
 

@@ -214,7 +214,7 @@ public:
       {
       U_TRACE(5, "Application::printHTMLElement()")
 
-      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_HTML_ELEMENT_TEMPLATE, icon, filename, old_prefix, old_buffer_len, old_buffer);
+      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(U_HTML_ELEMENT_TEMPLATE), icon, filename, old_prefix, old_buffer_len, old_buffer);
 
       std::cout.write(buffer, len);
 
@@ -247,10 +247,10 @@ public:
 
       char branch[10], folder[10];
 
-      (void) u__snprintf(branch, sizeof(branch), "branch%02u", num_tag),
-      (void) u__snprintf(folder, sizeof(folder), "folder%02u", num_tag++);
+      (void) u__snprintf(branch, sizeof(branch), U_CONSTANT_TO_PARAM("branch%02u"), num_tag),
+      (void) u__snprintf(folder, sizeof(folder), U_CONSTANT_TO_PARAM("folder%02u"), num_tag++);
 
-      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_HTML_FOLDER_TEMPLATE, branch, folder, folder, folder, old_buffer_len, old_buffer, branch);
+      uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM(U_HTML_FOLDER_TEMPLATE), branch, folder, folder, folder, old_buffer_len, old_buffer, branch);
 
       std::cout.write(buffer, len);
       }
@@ -274,7 +274,7 @@ public:
       if (treeview ||
           extract_tag)
          {
-         nt = u__snprintf(tag, sizeof(tag), " tag%03u \"", num_tag++);
+         nt = u__snprintf(tag, sizeof(tag), U_CONSTANT_TO_PARAM(" tag%03u \""), num_tag++);
 
          if (extract_tag &&
              strncmp(extract_tag, tag + sizeof("tag"), 3) == 0)
@@ -370,7 +370,7 @@ public:
          if (treeview)
             {
             char depth[10];
-            uint32_t nd = u__snprintf(depth, sizeof(depth), "\" on %u", num_tab);
+            uint32_t nd = u__snprintf(depth, sizeof(depth), U_CONSTANT_TO_PARAM("\" on %u"), num_tab);
 
             (void) output->append(tag, nt);
             (void) output->append(u_buffer_ptr, u_buffer_len);
@@ -440,7 +440,7 @@ public:
       va_list argp;
       va_start(argp, format);
 
-      u_buffer_len = u__vsnprintf((u_buffer_ptr = u_buffer), U_BUFFER_SIZE, format, argp);
+      u_buffer_len = u__vsnprintf((u_buffer_ptr = u_buffer), U_BUFFER_SIZE, format, strlen(format), argp);
 
       va_end(argp);
 
@@ -454,18 +454,18 @@ public:
       UString x(20U), description(U_CAPACITY);
 
       if (i == 0) (void) x.assign("MIME");
-      else               x.snprintf("Part %d", i);
+      else               x.snprintf(U_CONSTANT_TO_PARAM("Part %d"), i);
 
       *stype = uMimeEntity->shortContentType();
 
-      description.snprintf("%.*s: Content-type='%.*s'", U_STRING_TO_TRACE(x), U_STRING_TO_TRACE(*stype));
+      description.snprintf(U_CONSTANT_TO_PARAM("%.*s: Content-type='%.*s'"), U_STRING_TO_TRACE(x), U_STRING_TO_TRACE(*stype));
 
       if (uMimeEntity->isBodyMessage()) (void) description.append(U_CONSTANT_TO_PARAM(" - BODY MESSAGE"));
       else
          {
          *pfile = uMimeEntity->getFileName();
 
-         if (*pfile) description.snprintf_add(" - Filename='%.*s'", U_STRING_TO_TRACE(*pfile));
+         if (*pfile) description.snprintf_add(U_CONSTANT_TO_PARAM(" - Filename='%.*s'"), U_STRING_TO_TRACE(*pfile));
          }
 
       print(description);

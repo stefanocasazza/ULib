@@ -1523,10 +1523,10 @@ U_EXPORT main (int argc, char* argv[])
    UXMLEscape::encode(U_CONSTANT_TO_PARAM("<script>alert(\\\"This should not be displayed in a browser alert box.\\\");<\\/script>"), encoded);
 
    buffer.snprintf(
-      "<tr>"
+      U_CONSTANT_TO_PARAM("<tr>"
       "<td>%u</td>"
       "<td>%v</td>"
-      "</tr>",
+      "</tr>"),
       11, encoded.rep);
 
    U_ASSERT_EQUALS( buffer, U_STRING_FROM_CONSTANT("<tr><td>11</td><td>&lt;script&gt;alert(&quot;This should not be displayed in a browser alert box.&quot;);&lt;/script&gt;</td></tr>") )
@@ -1857,7 +1857,7 @@ U_EXPORT main (int argc, char* argv[])
    u_cwd_len = U_CONSTANT_SIZE("/mnt/storage/stefano/ulib/nodebug/64/gentoo/ULib-1.0.5/tests/examples"); // 69
 
    z.setBuffer(u_cwd_len + U_CONSTANT_SIZE( "/www.sito1.com/cgi-bin/redirect.sh")); // 34
-   z.snprintf("%w%.*s", U_CONSTANT_TO_TRACE("/www.sito1.com/cgi-bin/redirect.sh")); // 69 + 34 = 103 => (128 - (1 + sizeof(ustringrep)))
+   z.snprintf(U_CONSTANT_TO_PARAM("%w%.*s"), U_CONSTANT_TO_TRACE("/www.sito1.com/cgi-bin/redirect.sh")); // 69 + 34 = 103 => (128 - (1 + sizeof(ustringrep)))
 
    U_ASSERT_DIFFERS( z.size(), u_cwd_len )
    U_ASSERT( z == U_STRING_FROM_CONSTANT("/mnt/storage/stefano/ulib/nodebug/64/gentoo/ULib-1.0.5/tests/examples/www.sito1.com/cgi-bin/redirect.sh") )
@@ -1990,11 +1990,11 @@ U_EXPORT main (int argc, char* argv[])
    y = z;
 
    z.setBuffer(100);
-   z.snprintf("%s", "pippo pluto paperino");
+   z.snprintf(U_CONSTANT_TO_PARAM("%s"), "pippo pluto paperino");
 
    U_ASSERT( U_STRING_FROM_CONSTANT("pippo pluto paperino") == z )
 
-   z.snprintf("%s", "!!!.,;'?pippo.,;'?!!!");
+   z.snprintf(U_CONSTANT_TO_PARAM("%s"), "!!!.,;'?pippo.,;'?!!!");
    z = UStringExt::trimPunctuation(z);
 
    U_ASSERT( U_STRING_FROM_CONSTANT("pippo") == z )
@@ -2177,7 +2177,7 @@ U_EXPORT main (int argc, char* argv[])
 
    z = UStringExt::minifyCssJs(z);
 
-   (void) UFile::writeToTmp(U_STRING_TO_PARAM(z), O_RDWR | O_TRUNC, "livevalidation_standalone.compressed.js", 0);
+   (void) UFile::writeToTmp(U_STRING_TO_PARAM(z), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("livevalidation_standalone.compressed.js"), 0);
 
    U_ASSERT( z == y )
 */

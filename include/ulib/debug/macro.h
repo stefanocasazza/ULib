@@ -75,32 +75,32 @@
 #  define U_CHECK_MEMORY           U_CHECK_MEMORY_OBJECT(this)
 
 // Manage info on execution of program
-#  define U_TRACE(level,args...)       UTrace utr(level , ##args);
-#  define U_TRACE_NO_PARAM(level,name) UTrace utr(level, sizeof(name)-1, name);
+#  define U_TRACE(level,fmt,args...)   UTrace utr(level,fmt,U_CONSTANT_SIZE(fmt) , ##args);
+#  define U_TRACE_NO_PARAM(level,name) UTrace utr(level,U_CONSTANT_TO_TRACE(name));
 
 // NB: U_DUMP, U_SYSCALL() and U_RETURN() depend on presence of U_TRACE()
 
-#  define U_INTERNAL_DUMP(args...) { if (utr.active[0])                  u_trace_dump(args); }
-#  define          U_DUMP(args...) { if (utr.active[0]) { utr.suspend(); u_trace_dump(args); utr.resume(); } }
+#  define U_INTERNAL_DUMP(fmt,args...) { if (utr.active[0])                  u_trace_dump(fmt,U_CONSTANT_SIZE(fmt) , ##args); }
+#  define          U_DUMP(fmt,args...) { if (utr.active[0]) { utr.suspend(); u_trace_dump(fmt,U_CONSTANT_SIZE(fmt) , ##args); utr.resume(); } }
 
-#  define U_SYSCALL_NO_PARAM(name) (utr.trace_syscall("::"#name"()",0), \
+#  define U_SYSCALL_NO_PARAM(name) (utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"()"),0), \
                                     utr.trace_sysreturn_type(::name()))
 
-#  define U_SYSCALL_VOID_NO_PARAM(name) { utr.trace_syscall("::"#name"()",0); \
-                                          name(); utr.trace_sysreturn(false,0); }
+#  define U_SYSCALL_VOID_NO_PARAM(name) { utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"()"),0); \
+                                          name(); utr.trace_sysreturn(false,0,0); }
 
-#  define U_SYSCALL(name,format,args...) (utr.suspend(), utr.trace_syscall("::"#name"(" format ")" , ##args), \
+#  define U_SYSCALL(name,format,args...) (utr.suspend(), utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args), \
                                           utr.resume(),  utr.trace_sysreturn_type(::name(args)))
 
-#  define U_SYSCALL_VOID(name,format,args...) { utr.suspend();               utr.trace_syscall("::"#name"(" format ")" , ##args); \
-                                                utr.resume();  ::name(args); utr.trace_sysreturn(false,0); }
+#  define U_SYSCALL_VOID(name,format,args...) { utr.suspend();               utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args); \
+                                                utr.resume();  ::name(args); utr.trace_sysreturn(false,0,0); }
 
 #  define U_RETURN(r)                                                 return (utr.trace_return_type((r)))
-#  define U_RETURN_STRING(str) {U_INTERNAL_ASSERT((str).invariant()); return (utr.trace_return("%V",(str).rep),(str));}
-#  define U_RETURN_OBJECT(obj)                                        return (utr.trace_return("%O",U_OBJECT_TO_TRACE((obj))),(obj))
+#  define U_RETURN_STRING(str) {U_INTERNAL_ASSERT((str).invariant()); return (utr.trace_return(U_CONSTANT_TO_PARAM("%V"),(str).rep),(str));}
+#  define U_RETURN_OBJECT(obj)                                        return (utr.trace_return(U_CONSTANT_TO_PARAM("%O"),U_OBJECT_TO_TRACE((obj))),(obj))
 #  define U_RETURN_POINTER(ptr,type)                                  return ((type*)utr.trace_return_type((void*)(ptr)))
 
-#  define U_MEMCPY(a,b,n) U_SYSCALL_VOID(u__memcpy, "%p,%p,%u,%S",(void*)(a),(const void*)(b),(n),__PRETTY_FUNCTION__)
+#  define U_MEMCPY(a,b,n) U_SYSCALL_VOID(u__memcpy,"%p,%p,%u,%S",(void*)(a),(const void*)(b),(n),__PRETTY_FUNCTION__)
 
 // Dump argument for exec()
 
@@ -156,20 +156,20 @@ if (envp) \
 #  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...) if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
                                                                   UObjectDB::flag_new_object =  false; \
                                                               U_REGISTER_OBJECT_PTR(level,CLASS,this,&(this->memory._this)) \
-                                                              UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
+                                                              UTrace utr(level, U_CONSTANT_TO_PARAM(#CLASS"::"#CLASS"(" format ")") , ##args);
 
 #  define U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS,format,args...) \
                                                               if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
                                                                   UObjectDB::flag_new_object =  false; \
                                                               U_REGISTER_OBJECT_PTR(level,CLASS,this,0) \
-                                                              UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
+                                                              UTrace utr(level, U_CONSTANT_TO_PARAM(#CLASS"::"#CLASS"(" format ")") , ##args);
 
 #  define U_UNREGISTER_OBJECT(level,ptr) \
             if (UObjectDB::fd > 0 && \
                 (level) >= UObjectDB::level_active) { \
                 UObjectDB::unregisterObject(ptr); }
 
-#  define U_TRACE_UNREGISTER_OBJECT(level,CLASS) U_UNREGISTER_OBJECT(level,this); UTrace utr(level, #CLASS"::~"#CLASS"()");
+#  define U_TRACE_UNREGISTER_OBJECT(level,CLASS) U_UNREGISTER_OBJECT(level,this); UTrace utr(level,U_CONSTANT_TO_TRACE(#CLASS"::~"#CLASS"()"));
 
 // Manage location info for object allocation
 
@@ -186,27 +186,27 @@ if (envp) \
                                                 U_NEW(CLASS,obj,args), \
                                                 UObjectDB::flag_ulib_object = false)
 
-#  define U_DUMP_OBJECT(obj) { u_trace_dump(#obj" = %S", (obj).dump(true)); }
-#  define U_DUMP_CONTAINER(obj) { if (utr.active[0]) u_trace_dump(#obj" = %O", U_OBJECT_TO_TRACE((obj))); }
+#  define U_DUMP_OBJECT(obj) { u_trace_dump(U_CONSTANT_TO_PARAM(#obj" = %S"), (obj).dump(true)); }
+#  define U_DUMP_CONTAINER(obj) { if (utr.active[0]) u_trace_dump(U_CONSTANT_TO_PARAM(#obj" = %O"), U_OBJECT_TO_TRACE((obj))); }
 
 #  define U_DUMP_OBJECT_TO_TMP(obj,fname) \
             { char _buffer[2 * 1024 * 1024]; \
                uint32_t _n = UObject2String((obj), _buffer, sizeof(_buffer)); \
                U_INTERNAL_ASSERT_MINOR(_n, sizeof(_buffer)) \
-               (void) UFile::writeToTmp(_buffer, _n, O_RDWR | O_TRUNC, #fname".%P", 0); }
+               (void) UFile::writeToTmp(_buffer, _n, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM(#fname".%P"), 0); }
 
 #  define U_DUMP_OBJECT_WITH_CHECK(msg,check_object) \
             if (UObjectDB::fd > 0) { \
                char _buffer[4096]; \
                uint32_t _n = UObjectDB::dumpObject(_buffer, sizeof(_buffer), (check_object)); \
-               if (utr.active[0]) u_trace_dump(msg " = \n%.*s\n", U_min(_n,4000), _buffer); }
+               if (utr.active[0]) u_trace_dump(U_CONSTANT_TO_PARAM(msg " = \n%.*s\n"), U_min(_n,4000), _buffer); }
 
 # else /* U_STDCPP_ENABLE */
 #  define U_UNREGISTER_OBJECT(level,ptr)
 #  define U_REGISTER_OBJECT_PTR(level,CLASS,p,pmemory)
-#  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...)                      UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
-#  define U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS,format,args...) UTrace utr(level, #CLASS"::"#CLASS"(" format ")" , ##args);
-#  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)                                   UTrace utr(level, #CLASS"::~"#CLASS"()");
+#  define U_TRACE_REGISTER_OBJECT(level,CLASS,format,args...)                      UTrace utr(level,U_CONSTANT_TO_PARAM(#CLASS"::"#CLASS"(" format ")") , ##args);
+#  define U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS,format,args...) UTrace utr(level,U_CONSTANT_TO_PARAM(#CLASS"::"#CLASS"(" format ")") , ##args);
+#  define U_TRACE_UNREGISTER_OBJECT(level,CLASS)                                   UTrace utr(level,U_CONSTANT_TO_TRACE(#CLASS"::~"#CLASS"()"));
 
 # ifdef ENABLE_MEMPOOL
 #  define U_NEW(CLASS,obj,args...) (UMemoryPool::obj_class = #CLASS, \

@@ -49,7 +49,7 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
 
    (void) tmpdir.reserve(100U);
 
-   tmpdir.snprintf("%s/%s", u_tmpdir, u_basename(pathname));
+   tmpdir.snprintf(U_CONSTANT_TO_PARAM("%s/%s"), u_tmpdir, u_basename(pathname));
 
    if (zip.extract(document, &tmpdir, false))
       {
@@ -121,7 +121,7 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
 
                ZipContent.replace(index, content1);
 
-               docout.snprintf("%.*s/[Content_Types].xml", U_STRING_TO_TRACE(tmpdir));
+               docout.snprintf(U_CONSTANT_TO_PARAM("%.*s/[Content_Types].xml"), U_STRING_TO_TRACE(tmpdir));
 
                (void) UFile::writeTo(docout, content1);
                }
@@ -143,7 +143,7 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
 
                ZipContent.replace(index, content2);
 
-               docout.snprintf("%.*s/_rels/.rels", U_STRING_TO_TRACE(tmpdir));
+               docout.snprintf(U_CONSTANT_TO_PARAM("%.*s/_rels/.rels"), U_STRING_TO_TRACE(tmpdir));
 
                (void) UFile::writeTo(docout, content2);
                }
@@ -168,7 +168,7 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
             vdocument.push(content);
             }
 
-         docout.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(MSname));
+         docout.snprintf(U_CONSTANT_TO_PARAM("%.*s/%.*s"), U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(MSname));
 
          U_RETURN(true);
          }
@@ -190,15 +190,15 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
 
                (void) content1.erase(U_STRING_RFIND(content1, "</manifest:manifest>"));
 
-               content.snprintf("<manifest:file-entry manifest:media-type=\"\" manifest:full-path=\"META-INF/\"/>"
+               content.snprintf(U_CONSTANT_TO_PARAM("<manifest:file-entry manifest:media-type=\"\" manifest:full-path=\"META-INF/\"/>"
                                 "<manifest:file-entry manifest:media-type=\"\" manifest:full-path=\"%.*s\"/>"
-                                "</manifest:manifest>", U_STRING_TO_TRACE(OOname));
+                                "</manifest:manifest>"), U_STRING_TO_TRACE(OOname));
 
                (void) content1.append(content);
 
                ZipContent.replace(index, content1);
 
-               docout.snprintf("%.*s/META-INF/manifest.xml", U_STRING_TO_TRACE(tmpdir));
+               docout.snprintf(U_CONSTANT_TO_PARAM("%.*s/META-INF/manifest.xml"), U_STRING_TO_TRACE(tmpdir));
 
                (void) UFile::writeTo(docout, content1);
                }
@@ -222,7 +222,7 @@ bool UXAdESUtility::checkDocument(const UString& document, const char* pathname,
             vdocument.push(content);
             }
 
-         docout.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(OOname));
+         docout.snprintf(U_CONSTANT_TO_PARAM("%.*s/%.*s"), U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(OOname));
 
          U_RETURN(true);
          }
@@ -290,7 +290,7 @@ void UXAdESUtility::outputDocument(const UString& firma)
 
             pcontent = MSSignatureStructure[i+1];
 
-            tpath.snprintf("%.*s/%.*s", U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(namefile));
+            tpath.snprintf(U_CONSTANT_TO_PARAM("%.*s/%.*s"), U_STRING_TO_TRACE(tmpdir), U_STRING_TO_TRACE(namefile));
 
             (void) UFile::writeTo(tpath, UFile::contentOf(pcontent), false, true);
 

@@ -58,7 +58,7 @@ public:
                             title_txt, message); // NB: vararg...
       }
 
-   static void setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, ...);
+   static void setMessagePageWithVar(const UString& tmpl, const char* title_txt, const char* fmt, uint32_t fmt_size, ...);
 
    static void setBadRequest();
    static void setAlternativeResponse();

@@ -178,7 +178,7 @@ public:
 
       UString x(40U);
 
-      x.snprintf("%#5D", creation);
+      x.snprintf(U_CONSTANT_TO_PARAM("%#5D"), creation);
 
       U_RETURN_STRING(x);
       }
@@ -189,7 +189,7 @@ public:
 
       UString x(40U);
 
-      x.snprintf("%#5D", last_access);
+      x.snprintf(U_CONSTANT_TO_PARAM("%#5D"), last_access);
 
       U_RETURN_STRING(x);
       }

@@ -49,7 +49,7 @@ U_NO_EXPORT void UImapClient::setStatus()
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "%s - (%d, %s)", descr1, response, descr2);
+   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%s - (%d, %s)"), descr1, response, descr2);
 }
 
 bool UImapClient::_connectServer(const UString& server, unsigned int port, int timeoutMS)
@@ -85,9 +85,9 @@ bool UImapClient::_connectServer(const UString& server, unsigned int port, int t
 
 // Send a command to the IMAP server and wait for a response...
 
-U_NO_EXPORT bool UImapClient::syncCommand(const char* format, ...)
+U_NO_EXPORT bool UImapClient::syncCommand(const char* format, uint32_t fmt_size, ...)
 {
-   U_TRACE(0, "UImapClient::syncCommand(%S)", format)
+   U_TRACE(0, "UImapClient::syncCommand(%.*S,%u)", fmt_size, format, fmt_size)
 
 #ifdef DEBUG
    setStatus();
@@ -100,9 +100,9 @@ U_NO_EXPORT bool UImapClient::syncCommand(const char* format, ...)
    buffer.setEmpty();
 
    va_list argp;
-   va_start(argp, format);
+   va_start(argp, fmt_size);
 
-   end = USocketExt::vsyncCommandToken(this, buffer, format, argp);
+   end = USocketExt::vsyncCommandToken(this, buffer, format, fmt_size, argp);
 
    va_end(argp);
 
@@ -122,8 +122,8 @@ bool UImapClient::startTLS()
 #ifdef USE_LIBSSL
    U_ASSERT(Socket::isSSL())
 
-   if (state == NOT_AUTHENTICATED &&
-       syncCommand("STARTTLS")    &&
+   if (state == NOT_AUTHENTICATED                   &&
+       syncCommand(U_CONSTANT_TO_PARAM("STARTTLS")) &&
        ((USSLSocket*)this)->secureConnection())
       {
       U_RETURN(true);
@@ -141,7 +141,7 @@ bool UImapClient::login(const char* user, const char* passwd)
 
    if (state == NOT_AUTHENTICATED)
       {
-      if (syncCommand("LOGIN %s %s", user, passwd))
+      if (syncCommand(U_CONSTANT_TO_PARAM("LOGIN %s %s"), user, passwd))
          {
          state = AUTHENTICATED;
 
@@ -180,7 +180,7 @@ int UImapClient::getCapabilities(UVector<UString>& vec)
 {
    U_TRACE(0, "UImapClient::getCapabilities(%p)", &vec)
 
-   if (syncCommand("CAPABILITY"))
+   if (syncCommand(U_CONSTANT_TO_PARAM("CAPABILITY")))
       {
       setEnd();
 
@@ -206,7 +206,7 @@ bool UImapClient::logout()
 {
    U_TRACE_NO_PARAM(0, "UImapClient::logout()")
 
-   if (syncCommand("LOGOUT"))
+   if (syncCommand(U_CONSTANT_TO_PARAM("LOGOUT")))
       {
       state = LOGOUT;
 
@@ -231,7 +231,7 @@ bool UImapClient::list(const UString& ref, const UString& wild, UVector<ListResp
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("%s \"%v\" %v", (subscribedOnly ? "LSUB" : "LIST"), ref.rep, wild.rep))
+      if (syncCommand(U_CONSTANT_TO_PARAM("%s \"%v\" %v"), (subscribedOnly ? "LSUB" : "LIST"), ref.rep, wild.rep))
          {
          setEnd();
 
@@ -338,7 +338,7 @@ bool UImapClient::status(const UString& mailboxName, StatusInfo& retval, int ite
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("STATUS %v (%s %s %s %s %s)",
+      if (syncCommand(U_CONSTANT_TO_PARAM("STATUS %v (%s %s %s %s %s)"),
                mailboxName.rep,
                (items & MESSAGE_COUNT  ? "MESSAGES"    : ""),
                (items & RECENT_COUNT   ? "RECENT"      : ""),
@@ -684,7 +684,7 @@ bool UImapClient::selectMailbox(const UString& name, MailboxInfo& retval)
          U_RETURN(true);
          }
 
-      if (syncCommand("SELECT %v", name.rep))
+      if (syncCommand(U_CONSTANT_TO_PARAM("SELECT %v"), name.rep))
          {
          setMailBox(retval);
 
@@ -708,7 +708,7 @@ bool UImapClient::examineMailbox(const UString& name, MailboxInfo& retval)
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("EXAMINE %v", name.rep))
+      if (syncCommand(U_CONSTANT_TO_PARAM("EXAMINE %v"), name.rep))
          {
          setMailBox(retval);
 
@@ -729,7 +729,7 @@ bool UImapClient::createMailbox(const UString& name)
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("CREATE %v", name.rep))
+      if (syncCommand(U_CONSTANT_TO_PARAM("CREATE %v"), name.rep))
          {
          U_RETURN(true);
          }
@@ -749,7 +749,7 @@ bool UImapClient::removeMailbox(const UString& name)
    U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED &&
-       syncCommand("DELETE %v", name.rep))
+       syncCommand(U_CONSTANT_TO_PARAM("DELETE %v"), name.rep))
       {
       U_RETURN(true);
       }
@@ -769,7 +769,7 @@ bool UImapClient::renameMailbox(const UString& from, const UString& to)
    U_INTERNAL_ASSERT(from)
 
    if (state >= AUTHENTICATED &&
-       syncCommand("RENAME %v %v", from.rep, to.rep))
+       syncCommand(U_CONSTANT_TO_PARAM("RENAME %v %v"), from.rep, to.rep))
       {
       U_RETURN(true);
       }
@@ -788,7 +788,7 @@ bool UImapClient::subscribeMailbox(const UString& name)
    U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED &&
-       syncCommand("SUBSCRIBE %v", name.rep))
+       syncCommand(U_CONSTANT_TO_PARAM("SUBSCRIBE %v"), name.rep))
       {
       U_RETURN(true);
       }
@@ -807,7 +807,7 @@ bool UImapClient::unsubscribeMailbox(const UString& name)
    U_INTERNAL_ASSERT(name)
 
    if (state >= AUTHENTICATED &&
-       syncCommand("UNSUBSCRIBE %v", name.rep))
+       syncCommand(U_CONSTANT_TO_PARAM("UNSUBSCRIBE %v"), name.rep))
       {
       U_RETURN(true);
       }
@@ -827,7 +827,7 @@ bool UImapClient::appendMessage(const UString& mailboxName, const UString& messa
 
    if (state >= AUTHENTICATED)
       {
-      if (syncCommand("APPEND %v %s%s%s%s%s%s%s%s %s\r\n%v",
+      if (syncCommand(U_CONSTANT_TO_PARAM("APPEND %v %s%s%s%s%s%s%s%s %s\r\n%v"),
                mailboxName.rep,
                (_flags            ? "("           : ""),
                (_flags & SEEN     ? "\\Seen"      : ""),
@@ -855,7 +855,7 @@ bool UImapClient::expunge(int* _ret)
 
    if (state == SELECTED)
       {
-      if (syncCommand("EXPUNGE"))
+      if (syncCommand(U_CONSTANT_TO_PARAM("EXPUNGE")))
          {
          if (_ret)
             {
@@ -905,7 +905,7 @@ bool UImapClient::search(int* _ret, const UString& spec, const char* charSet, bo
 
    if (state == SELECTED)
       {
-      if (syncCommand("%s SEARCH %s %v", (usingUID ? "UID" : ""), charSet, spec.rep))
+      if (syncCommand(U_CONSTANT_TO_PARAM("%s SEARCH %s %v"), (usingUID ? "UID" : ""), charSet, spec.rep))
          {
          setEnd();
 
@@ -947,7 +947,7 @@ bool UImapClient::fetch(UVector<UString>& vec, int start, int _end, const UStrin
 
    if (state == SELECTED)
       {
-      if (syncCommand("%s FETCH %d:%d %v", (usingUID ? "UID" : ""), start, _end, spec.rep))
+      if (syncCommand(U_CONSTANT_TO_PARAM("%s FETCH %d:%d %v"), (usingUID ? "UID" : ""), start, _end, spec.rep))
          {
          setEnd();
 
@@ -1003,7 +1003,7 @@ bool UImapClient::setFlags(int start, int _end, int style, int _flags, bool usin
 
    if (state == SELECTED)
       {
-      if (syncCommand("%s STORE %d:%d %sFLAGS.SILENT (%s%s%s%s%s%s)",
+      if (syncCommand(U_CONSTANT_TO_PARAM("%s STORE %d:%d %sFLAGS.SILENT (%s%s%s%s%s%s)"),
                (usingUID ? "UID" : ""),
                start, _end,
                (style & ADD       ? "+"           :
@@ -1031,7 +1031,7 @@ bool UImapClient::copy(int start, int _end, const UString& to, bool usingUID)
    U_INTERNAL_ASSERT(to)
 
    if (state == SELECTED &&
-       syncCommand("%s COPY %d:%d %v", (usingUID ? "UID" : ""), start, _end, to.rep))
+       syncCommand(U_CONSTANT_TO_PARAM("%s COPY %d:%d %v"), (usingUID ? "UID" : ""), start, _end, to.rep))
       {
       U_RETURN(true);
       }

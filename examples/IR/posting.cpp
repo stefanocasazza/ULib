@@ -1380,8 +1380,8 @@ start:
 
       if (buffer->space() < SIZE_ENTRY) buffer->reserve(buffer->capacity() * 2);
 
-                                               buffer->snprintf_add("(%llX,%u,%u", cur_doc_id, word_freq, u_get_unalignedp32(vpos));
-      for (uint32_t i = 1; i < word_freq; ++i) buffer->snprintf_add(",%u", u_get_unalignedp32(vpos+i));
+                                               buffer->snprintf_add(U_CONSTANT_TO_PARAM("(%llX,%u,%u"), cur_doc_id, word_freq, u_get_unalignedp32(vpos));
+      for (uint32_t i = 1; i < word_freq; ++i) buffer->snprintf_add(U_CONSTANT_TO_PARAM(",%u"), u_get_unalignedp32(vpos+i));
                                         (void) buffer->append(U_CONSTANT_TO_PARAM(")"));
       }
    else
@@ -1422,7 +1422,7 @@ U_NO_EXPORT int UPosting::printDocName(UStringRep* doc_id, UStringRep* doc_name)
 #ifdef U_STDCPP_ENABLE
    char _buffer[20];
 
-   os->write(_buffer, u__snprintf(_buffer, sizeof(_buffer), "%llX ", *((uint64_t*)(doc_id->data()))));
+   os->write(_buffer, u__snprintf(_buffer, sizeof(_buffer), U_CONSTANT_TO_PARAM("%llX "), *((uint64_t*)(doc_id->data()))));
 
    doc_name->write(*os);
 

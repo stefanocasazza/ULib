@@ -516,7 +516,7 @@ public:
 #  else
    static void printInfo(std::ostream& os);
 #  endif
-   static void writeInfoTo(const char* format, ...);
+   static void writeInfoTo(const char* format, uint32_t fmt_size, ...);
 # endif
 #endif
 
@@ -568,7 +568,7 @@ template <class T> bool u_check_memory_vector(T* _vec, uint32_t n)
 #endif
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
-#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...) UMemoryPool::writeInfoTo(fmt,args)
+#  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...) UMemoryPool::writeInfoTo(U_CONSTANT_TO_PARAM(fmt) , ##args)
 #else
 #  define U_WRITE_MEM_POOL_INFO_TO(fmt,args...)
 #endif

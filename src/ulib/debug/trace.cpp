@@ -60,9 +60,9 @@ UTrace::UTrace(int level, uint32_t len, const char* name)
       }
 }
 
-UTrace::UTrace(int level, const char* format, ...)
+UTrace::UTrace(int level, const char* format, uint32_t fmt_size, ...)
 {
-   U_INTERNAL_TRACE("UTrace::UTrace(%d,%s)", level, format)
+   U_INTERNAL_TRACE("UTrace::UTrace(%d,%.*s,%u)", level, fmt_size, format, fmt_size)
 
    U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_trace), 1017)
 
@@ -74,9 +74,9 @@ UTrace::UTrace(int level, const char* format, ...)
    if (active[0])
       {
       va_list argp;
-      va_start(argp, format);
+      va_start(argp, fmt_size);
 
-      buffer_trace_len = u__vsnprintf(buffer_trace, sizeof(buffer_trace), format, argp);
+      buffer_trace_len = u__vsnprintf(buffer_trace, sizeof(buffer_trace), format, fmt_size, argp);
 
       va_end(argp);
 
@@ -110,9 +110,9 @@ UTrace::~UTrace()
 //     After that 'buffer_trace' is printed in the destructor of object (see above)...
 // ------------------------------------------------------------------------------------------------------------------------
 
-void UTrace::trace_return(const char* format, ...)
+void UTrace::trace_return(const char* format, uint32_t fmt_size, ...)
 {
-   U_INTERNAL_TRACE("UTrace::trace_return(%s)", format)
+   U_INTERNAL_TRACE("UTrace::trace_return(%.*s,%u)", fmt_size, format, fmt_size)
 
    U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_trace), 1017)
 
@@ -127,9 +127,9 @@ void UTrace::trace_return(const char* format, ...)
       buffer_trace_len += 3;
 
       va_list argp;
-      va_start(argp, format);
+      va_start(argp, fmt_size);
 
-      buffer_trace_len += u__vsnprintf(ptr, sizeof(buffer_trace) - buffer_trace_len, format, argp);
+      buffer_trace_len += u__vsnprintf(ptr, sizeof(buffer_trace) - buffer_trace_len, format, fmt_size, argp);
 
       va_end(argp);
 
@@ -137,14 +137,14 @@ void UTrace::trace_return(const char* format, ...)
       }
 }
  
-void UTrace::trace_syscall(const char* format, ...)
+void UTrace::trace_syscall(const char* format, uint32_t fmt_size, ...)
 {
-   U_INTERNAL_TRACE("UTrace::trace_syscall(%s)", format)
+   U_INTERNAL_TRACE("UTrace::trace_syscall(%.*s,%u)", fmt_size, format, fmt_size)
 
    va_list argp;
-   va_start(argp, format);
+   va_start(argp, fmt_size);
 
-   buffer_syscall_len = u__vsnprintf(buffer_syscall, sizeof(buffer_trace), format, argp);
+   buffer_syscall_len = u__vsnprintf(buffer_syscall, sizeof(buffer_trace), format, fmt_size, argp);
 
    va_end(argp);
 
@@ -171,9 +171,9 @@ void UTrace::trace_syscall(const char* format, ...)
    errno = u_errno = 0;
 }
 
-void UTrace::trace_sysreturn(bool error, const char* format, ...)
+void UTrace::trace_sysreturn(bool error, const char* format, uint32_t fmt_size, ...)
 {
-   U_INTERNAL_TRACE("UTrace::trace_sysreturn(%d,%s)", error, format)
+   U_INTERNAL_TRACE("UTrace::trace_sysreturn(%d,%.*s,%u)", error, fmt_size, format, fmt_size)
 
    U_INTERNAL_ASSERT_EQUALS(sizeof(buffer_syscall), 1017)
 
@@ -184,7 +184,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
        format[1] == 'd') // int (BOOL for mingw)
       {
       va_list argp;
-      va_start(argp, format);
+      va_start(argp, fmt_size);
 
       error = (va_arg(argp, int)                 == 0 &&
                strstr(buffer_syscall, "::fcntl") == 0);
@@ -217,9 +217,9 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
          U_INTERNAL_ASSERT_MAJOR(sizeof(buffer_syscall) - buffer_syscall_len, 16)
 
          va_list argp;
-         va_start(argp, format);
+         va_start(argp, fmt_size);
 
-         buffer_syscall_len += u__vsnprintf(ptr, sizeof(buffer_syscall) - buffer_syscall_len, format, argp);
+         buffer_syscall_len += u__vsnprintf(ptr, sizeof(buffer_syscall) - buffer_syscall_len, format, fmt_size, argp);
 
          va_end(argp);
 
@@ -231,7 +231,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                {
                char msg_sys_error[sizeof(buffer_syscall)];
 
-               buffer_syscall_len += u__snprintf(msg_sys_error, sizeof(buffer_syscall), "%R", 0); // NB: the last argument (0) is necessary...
+               buffer_syscall_len += u__snprintf(msg_sys_error, sizeof(buffer_syscall), U_CONSTANT_TO_PARAM("%R"), 0); // NB: the last argument (0) is necessary...
 
                U_INTERNAL_ASSERT_MINOR(buffer_syscall_len, sizeof(buffer_syscall))
 
@@ -258,8 +258,10 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
              flag_syscall_read_or_write[0])
             {
             va_list argp;
-            va_start(argp, format);
+            va_start(argp, fmt_size);
+
             ssize_t bytes_read_or_write = va_arg(argp, ssize_t);
+
             va_end(argp);
 
             if (bytes_read_or_write > (ssize_t)(10 * 1024))
@@ -273,7 +275,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, ...)
                   char msg[sizeof(buffer_syscall)];
                   double rate = u_calcRate(bytes_read_or_write, dltime, &units);
 
-                  buffer_syscall_len += u__snprintf(msg, sizeof(buffer_syscall), " (%.2f %s/s)", rate, u_short_units[units]);
+                  buffer_syscall_len += u__snprintf(msg, sizeof(buffer_syscall), U_CONSTANT_TO_PARAM(" (%.2f %s/s)"), rate, u_short_units[units]);
 
                   U_INTERNAL_ASSERT_MINOR(buffer_syscall_len, sizeof(buffer_syscall))
 

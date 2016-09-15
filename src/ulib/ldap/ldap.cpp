@@ -320,7 +320,7 @@ void ULDAP::setStatus()
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "%s (%d, %s)", (result >= 0 && result < 97 ? errlist[result] : ""), result, descr);
+   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("%s (%d, %s)"), (result >= 0 && result < 97 ? errlist[result] : ""), result, descr);
 }
 
 #if defined(_MSWINDOWS_) && defined(HAVE_WINLDAP_H)
@@ -531,7 +531,7 @@ next:
 #  endif
          }
 
-      U_INTERNAL_DUMP("ldap_url_parse() failed - %.*s", u__snprintf(buffer, sizeof(buffer), "(%d, %s) - %s", result, descr, errstr), buffer)
+      U_INTERNAL_DUMP("ldap_url_parse() failed - %.*s", u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("(%d, %s) - %s"), result, descr, errstr), buffer)
 #  endif
 
       U_RETURN(false);

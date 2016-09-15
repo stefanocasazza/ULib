@@ -33,7 +33,7 @@
          U_ERROR("usp_init() of servlet ir_web failed");
          }
    
-      footer->snprintf("ver. %s, with %u documents and %u words.", ULIB_VERSION, cdb_names->size(), cdb_words->size());
+      footer->snprintf(U_CONSTANT_TO_PARAM("ver. %s, with %u documents and %u words."), ULIB_VERSION, cdb_names->size(), cdb_words->size());
    
       U_NEW(IRDataSession, UHTTP::data_session, IRDataSession);
    
@@ -188,8 +188,8 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
                filename = IR_SESSION.vec[i]->filename;
                basename = UStringExt::basename(filename);
    
-               pathname1.snprintf(  "/doc/%.*s", U_STRING_TO_TRACE(filename));
-               pathname2.snprintf("%w/doc/%.*s", U_STRING_TO_TRACE(filename));
+               pathname1.snprintf(U_CONSTANT_TO_PARAM(  "/doc/%.*s"), U_STRING_TO_TRACE(filename));
+               pathname2.snprintf(U_CONSTANT_TO_PARAM("%w/doc/%.*s"), U_STRING_TO_TRACE(filename));
    
                doc = UFile::contentOf(pathname2);
    

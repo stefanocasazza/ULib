@@ -38,7 +38,7 @@ public:
 
       UString body(arch_tmpl.size() + request_decoded.size() + (u__strlen(uid, __PRETTY_FUNCTION__) * 3) + 100U);
 
-      body.snprintf(arch_tmpl.data(), uid, uid, uid, U_STRING_TO_TRACE(request_decoded));
+      body.snprintf(U_STRING_TO_PARAM(arch_tmpl), uid, uid, uid, U_STRING_TO_TRACE(request_decoded));
 
       bool ok = Action::sendHttpPostRequest(url, body, "multipart/form-data; boundary=4MYWPDUi9kH5-ipE_f6CiZXFFn4SaQQOj", "OK") && Action::sendEmail();
 

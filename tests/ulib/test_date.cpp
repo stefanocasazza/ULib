@@ -12,7 +12,7 @@ U_EXPORT main (int argc, char* argv[])
 
    UTimeDate date0(28,12,14);
 
-   cout << date0.strftime("%d/%m/%Y") << ' '
+   cout << date0.strftime(U_CONSTANT_TO_PARAM("%d/%m/%Y")) << ' '
         << date0.ago(7U) << '\n';
 
    u_now->tv_sec = time(0);
@@ -66,13 +66,13 @@ U_EXPORT main (int argc, char* argv[])
 
    UTimeDate data7(29, 2, 2004);
 
-   UString x = data7.strftime("%Y-%m-%d");
+   UString x = data7.strftime(U_CONSTANT_TO_PARAM("%Y-%m-%d"));
 
    U_ASSERT( x == U_STRING_FROM_CONSTANT("2004-02-29") )
 
    U_ASSERT( UTimeDate("14/09/1752").getJulian() == 2361222 )
 
-   cout << "Date: " << data6.strftime("%d/%m/%y") << '\n';
+   cout << "Date: " << data6.strftime(U_CONSTANT_TO_PARAM("%d/%m/%y")) << '\n';
 
    while (cin >> data6) cout << data6 << '\n';
 
@@ -88,9 +88,9 @@ U_EXPORT main (int argc, char* argv[])
 
    ULog::log_date log_date;
 
-   (void) u_strftime2(log_date.date1, 17,                         "%d/%m/%y %T",                                              u_now->tv_sec + u_now_adjust);
-   (void) u_strftime2(log_date.date2, 26,                         "%d/%b/%Y:%T %z",                                           u_now->tv_sec + u_now_adjust);
-   (void) u_strftime2(log_date.date3, 6+29+2+12+2+17+2, "Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n", u_now->tv_sec);
+   (void) u_strftime2(log_date.date1, 17,               U_CONSTANT_TO_PARAM("%d/%m/%y %T"),                                                        u_now->tv_sec + u_now_adjust);
+   (void) u_strftime2(log_date.date2, 26,               U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"),                                                     u_now->tv_sec + u_now_adjust);
+   (void) u_strftime2(log_date.date3, 6+29+2+12+2+17+2, U_CONSTANT_TO_PARAM("Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n"), u_now->tv_sec);
 
    U_INTERNAL_DUMP("date1 = %.17S date2 = %.26S date3+6 = %.29S", log_date.date1, log_date.date2, log_date.date3+6)
 
@@ -108,9 +108,11 @@ U_EXPORT main (int argc, char* argv[])
       data2.setMondayPrevWeek();
       data3.setMondayNextWeek();
 
-      U_DUMP("setMondayPrevWeek() = %V data = %V setMondayNextWeek() = %V", data2.strftime("%d/%m/%y").rep, data1.strftime("%d/%m/%y").rep, data3.strftime("%d/%m/%y").rep)
+      U_DUMP("setMondayPrevWeek() = %V data = %V setMondayNextWeek() = %V", data2.strftime(U_CONSTANT_TO_PARAM("%d/%m/%y")).rep,
+                                                                            data1.strftime(U_CONSTANT_TO_PARAM("%d/%m/%y")).rep,
+                                                                            data3.strftime(U_CONSTANT_TO_PARAM("%d/%m/%y")).rep)
 
-      cout << data1.strftime("%d/%m/%y") << ' '
+      cout << data1.strftime(U_CONSTANT_TO_PARAM("%d/%m/%y")) << ' '
            << data1.ago()                << ' '
            << data1.ago(7U)              << '\n';
       }

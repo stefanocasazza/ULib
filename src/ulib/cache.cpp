@@ -358,7 +358,7 @@ UString UCache::getContent(const char* key, uint32_t keylen)
    struct stat st;
    char buffer[U_PATH_MAX];
 
-   (void) u__snprintf(buffer, sizeof(buffer), "%v/%.*s", dir_template.rep, keylen, key);
+   (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%v/%.*s"), dir_template.rep, keylen, key);
 
    if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0 &&
        st.st_mtime >= dir_template_mtime)

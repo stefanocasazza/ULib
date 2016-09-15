@@ -136,8 +136,6 @@ public:
       call_if_directory = bcall_if_directory;
       }
 
-   static void setSuffixFileType(const char* format, ...);
-
    static void setSuffixFileType(const char* str, uint32_t len)
       {
       U_TRACE(0, "UDirWalk::setSuffixFileType(%.*S,%u)", len, str, len)

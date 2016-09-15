@@ -288,7 +288,7 @@ public:
    static void setDynamicResponse();
    static void setResponse(const UString& content_type, UString* pbody);
    static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
-   static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t len);
+   static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool flag);
 
    static void setResponse()
       {
@@ -307,7 +307,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setNotFound()")
 
-      setErrorResponse(*UString::str_ctype_html, HTTP_NOT_FOUND, "Your requested URL %.*S was not found on this server", 0);
+      setErrorResponse(*UString::str_ctype_html, HTTP_NOT_FOUND, U_CONSTANT_TO_PARAM("Your requested URL %.*S was not found on this server"), false);
       }
 
    static void setBadMethod()
@@ -316,7 +316,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, HTTP_BAD_METHOD)
 
-      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_METHOD, "The requested method is not allowed for the URL %.*S", 0);
+      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_METHOD, U_CONSTANT_TO_PARAM("The requested method is not allowed for the URL %.*S"), false);
       }
 
    static void setBadRequest()
@@ -325,7 +325,7 @@ public:
 
       UClientImage_Base::resetPipelineAndSetCloseConnection();
 
-      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_REQUEST, "Your requested URL %.*S was a request that this server could not understand", 0);
+      setErrorResponse(*UString::str_ctype_html, HTTP_BAD_REQUEST, U_CONSTANT_TO_PARAM("Your requested URL %.*S was a request that this server could not understand"), false);
       }
 
    static void setForbidden()
@@ -334,7 +334,7 @@ public:
 
       UClientImage_Base::setRequestForbidden();
 
-      setErrorResponse(*UString::str_ctype_html, HTTP_FORBIDDEN, "You don't have permission to access %.*S on this server", 0);
+      setErrorResponse(*UString::str_ctype_html, HTTP_FORBIDDEN, U_CONSTANT_TO_PARAM("You don't have permission to access %.*S on this server"), false);
       }
 
    static void setUnAuthorized();
@@ -348,7 +348,7 @@ public:
                                            "and was unable to complete your request. Please contact the server "
                                            "administrator, and inform them of the time the error occurred, and "
                                            "anything you might have done that may have caused the error. More "
-                                           "information about this error may be available in the server error log"));
+                                           "information about this error may be available in the server error log"), true);
       }
 
    static void setServiceUnavailable()
@@ -357,7 +357,7 @@ public:
 
       setErrorResponse(*UString::str_ctype_html, HTTP_UNAVAILABLE,
                        U_CONSTANT_TO_PARAM("Sorry, the service you requested is not available at this moment. "
-                                           "Please contact the server administrator and inform them about this"));
+                                           "Please contact the server administrator and inform them about this"), true);
       }
 
 #ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
@@ -512,8 +512,8 @@ public:
 
       U_INTERNAL_DUMP("num_page_cur = %u", num_page_cur)
 
-      if (num_page == num_page_cur) x.snprintf("<span class=\"pnow\">%u</span>",             num_page);
-      else                          x.snprintf("<a href=\"?page=%u\" class=\"pnum\">%u</a>", num_page, num_page);
+      if (num_page == num_page_cur) x.snprintf(U_CONSTANT_TO_PARAM("<span class=\"pnow\">%u</span>"),             num_page);
+      else                          x.snprintf(U_CONSTANT_TO_PARAM("<a href=\"?page=%u\" class=\"pnum\">%u</a>"), num_page, num_page);
 
       (void) link.append(x);
              link.push_back(' ');

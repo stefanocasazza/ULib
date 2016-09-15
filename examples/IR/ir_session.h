@@ -54,7 +54,7 @@ public:
 
       (void) buffer_data.reserve(U_CAPACITY);
 
-      buffer_data.snprintf("%ld %u \"%.*s\" \"%.*s\" [", creation, for_page, U_STRING_TO_TRACE(timerun), U_STRING_TO_TRACE(query));
+      buffer_data.snprintf(U_CONSTANT_TO_PARAM("%ld %u \"%.*s\" \"%.*s\" ["), creation, for_page, U_STRING_TO_TRACE(timerun), U_STRING_TO_TRACE(query));
 
       sz = vec.size();
 

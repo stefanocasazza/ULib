@@ -195,7 +195,7 @@ int UServices::askToLDAP(UString* pinput, UHashMap<UString>* ptable, const char*
 
    UString output, buffer(U_CAPACITY);
 
-   buffer.vsnprintf(fmt, argp);
+   buffer.vsnprintf(fmt, strlen(fmt), argp);
 
    UCommand cmd(buffer);
 
@@ -356,7 +356,7 @@ UString UServices::getFileName(long hash, bool crl)
       {
       UString buffer(U_CAPACITY);
 
-      buffer.snprintf("%v/%08x.%s", CApath->rep, hash, (crl ? "r0" : "0"));
+      buffer.snprintf(U_CONSTANT_TO_PARAM("%v/%08x.%s"), CApath->rep, hash, (crl ? "r0" : "0"));
 
       (void) buffer.shrink();
 
@@ -426,7 +426,7 @@ void UServices::setVerifyStatus(long result)
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, "(%ld, %s) - %s", result, descr, X509_verify_cert_error_string(result));
+   u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("(%ld, %s) - %s"), result, descr, X509_verify_cert_error_string(result));
 }
 
 int UServices::X509Callback(int ok, X509_STORE_CTX* ctx)
@@ -771,7 +771,7 @@ UString UServices::generateToken(const UString& data, time_t expire)
 
    UString token(data.size() + U_TOKEN_SIZE);
 
-   token.snprintf("%v&%010ld&", data.rep, expire); // NB: expire time must be of size 10...
+   token.snprintf(U_CONSTANT_TO_PARAM("%v&%010ld&"), data.rep, expire); // NB: expire time must be of size 10...
 
    U_INTERNAL_DUMP("token = %V", token.rep)
 

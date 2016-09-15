@@ -243,7 +243,7 @@ void UOrmDriverPgSql::handlerStatementRemove(USqlStatement* pstmt)
 
    char query[32];
 
-   (void) u__snprintf(query, sizeof(query), "DEALLOCATE %.12s", ((UPgSqlStatement*)pstmt)->stmtName);
+   (void) u__snprintf(query, sizeof(query), U_CONSTANT_TO_PARAM("DEALLOCATE %.12s"), ((UPgSqlStatement*)pstmt)->stmtName);
 
    (void) handlerQuery(query, 0);
    */

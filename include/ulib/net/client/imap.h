@@ -112,7 +112,7 @@ public:
     * for new messages. Well, it will be when it actually returns something
     */
 
-   bool noop() { return syncCommand("NOOP"); }
+   bool noop() { return syncCommand(U_CONSTANT_TO_PARAM("NOOP")); }
 
    /**
     * Tell the server we want to log out. If this returns true,
@@ -265,7 +265,7 @@ public:
     * @see RFC
     */
 
-   bool check() { return (state == SELECTED ? syncCommand("CHECK") : false); }
+   bool check() { return (state == SELECTED ? syncCommand(U_CONSTANT_TO_PARAM("CHECK")) : false); }
 
    /**
     * The CLOSE command permanently removes all messages that have the
@@ -276,7 +276,7 @@ public:
     * selected by an EXAMINE command or is otherwise selected read-only
     */
 
-   bool close() { return (state == SELECTED ? syncCommand("CLOSE") : false); }
+   bool close() { return (state == SELECTED ? syncCommand(U_CONSTANT_TO_PARAM("CLOSE")) : false); }
 
    /**
     * Attempt to remove all message from a mailbox. Note that some
@@ -351,7 +351,7 @@ private:
     * Takes care of prepending the unique string necessary
     */
 
-   bool syncCommand(const char* format, ...) U_NO_EXPORT;
+   bool syncCommand(const char* format, uint32_t fmt_size, ...) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UImapClient)
 };

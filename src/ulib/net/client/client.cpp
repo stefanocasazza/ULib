@@ -245,7 +245,7 @@ void UClient_Base::loadConfigParam()
 
          u_atexit(&ULog::close); // register function of close at exit()...
 
-         log->setPrefix(U_SERVER_LOG_PREFIX);
+         log->setPrefix(U_CONSTANT_TO_PARAM(U_SERVER_LOG_PREFIX));
          }
       }
 
@@ -296,9 +296,9 @@ bool UClient_Base::connect()
 
    if (socket->connectServer(server, port, timeoutMS)) U_RETURN(true);
 
-   response.snprintf("Sorry, couldn't connect to server %v%R", host_port.rep, 0); // NB: the last argument (0) is necessary...
+   response.snprintf(U_CONSTANT_TO_PARAM("Sorry, couldn't connect to server %v%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
 
-   if (log) ULog::log("%s%v", log_shared_with_server ? UServer_Base::mod_name[0] : "", response.rep);
+   if (log) ULog::log(U_CONSTANT_TO_PARAM("%s%v"), log_shared_with_server ? UServer_Base::mod_name[0] : "", response.rep);
 
    U_RETURN(false);
 }
@@ -321,7 +321,7 @@ bool UClient_Base::connectServer(const UString& _url)
 
       char _buffer[U_PATH_MAX];
 
-      (void) u__snprintf(_buffer, sizeof(_buffer), "%v/%v.%4D", queue_dir->rep, host_port.rep); // 4D => _millisec
+      (void) u__snprintf(_buffer, sizeof(_buffer), U_CONSTANT_TO_PARAM("%v/%v.%4D"), queue_dir->rep, host_port.rep); // 4D => _millisec
 
       queue_fd = UFile::creat(_buffer, O_RDWR | O_EXCL, PERM_FILE);
 
@@ -454,7 +454,7 @@ resend:
 
          if (++counter <= 2) goto resend;
 
-         if (log) ULog::log("%serror on sending data to %V%R", name, host_port.rep, 0); // NB: the last argument (0) is necessary...
+         if (log) ULog::log(U_CONSTANT_TO_PARAM("%serror on sending data to %V%R"), name, host_port.rep, 0); // NB: the last argument (0) is necessary...
 
          goto end;
          }
@@ -474,8 +474,8 @@ resend:
 
          if (log)
             {
-            ULog::log(iov,                                 name, "request", ncount, "", 0, " to %v", host_port.rep);
-            ULog::log("%serror on reading data from %V%R", name,                                     host_port.rep, 0); // 0 is necessary
+            ULog::log(iov,                                                      name, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"), host_port.rep);
+            ULog::log(U_CONSTANT_TO_PARAM("%serror on reading data from %V%R"), name,                                                          host_port.rep, 0); // 0 is necessary
             }
 
          goto end;
@@ -483,8 +483,8 @@ resend:
 
       if (log)
          {
-                       ULog::log(iov,              name, "request", ncount, "", 0, " to %v",   host_port.rep);
-         if (response) ULog::logResponse(response, name,                           " from %v", host_port.rep);
+                       ULog::log(iov,              name, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"),   host_port.rep);
+         if (response) ULog::logResponse(response, name,                           U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
          }
 
       reset();
@@ -515,7 +515,7 @@ bool UClient_Base::readResponse(uint32_t count)
       if (log &&
           response)
          {
-         ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %V", host_port.rep);
+         ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
          }
 
       U_RETURN(true);
@@ -554,7 +554,7 @@ bool UClient_Base::readHTTPResponse()
             if (log &&
                 response)
                {
-               ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), " from %V", host_port.rep);
+               ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
                }
 
             U_RETURN(true);

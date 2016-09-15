@@ -106,7 +106,7 @@ public:
 
       total_length     = initial + to_download;
       initial_length   = initial;
-      size_legible_len = u__snprintf(size_legible, sizeof(size_legible), "%lu", total_length);
+      size_legible_len = u__snprintf(size_legible, sizeof(size_legible), U_CONSTANT_TO_PARAM("%lu"), total_length);
 
       screen_width = u_getScreenWidth();
 
@@ -129,7 +129,7 @@ public:
 
       U_INTERNAL_ASSERT(size <= total_length)
 
-      size_legible_len = u__snprintf(size_legible, sizeof(size_legible), "%lu", size);
+      size_legible_len = u__snprintf(size_legible, sizeof(size_legible), U_CONSTANT_TO_PARAM("%lu"), size);
 
       unsigned dlbytes_size  = 1 + U_max(size_legible_len, 13),
                progress_size = screen_width - (4 + 2 + dlbytes_size + 11 + 13);

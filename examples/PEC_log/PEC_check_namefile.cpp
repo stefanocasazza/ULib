@@ -54,10 +54,10 @@ public:
       if (PEC_report::failed) return;
 
       UString l(100U),
-              s = inizio->strftime("%Y-%m-%d"),
-              e =   fine->strftime("%Y-%m-%d");
+              s = inizio->strftime(U_CONSTANT_TO_PARAM("%Y-%m-%d")),
+              e =   fine->strftime(U_CONSTANT_TO_PARAM("%Y-%m-%d"));
 
-      l.snprintf("PEC%c-%s#%s.lnk", PEC_report::cnt[0], s.data(), e.data());
+      l.snprintf(U_CONSTANT_TO_PARAM("PEC%c-%s#%s.lnk"), PEC_report::cnt[0], s.data(), e.data());
 
       U_INTERNAL_DUMP("l = %.*S", U_STRING_TO_TRACE(l))
 

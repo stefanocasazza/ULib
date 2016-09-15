@@ -92,7 +92,7 @@ static void testQuery(const UString& json, const char* cquery, const UString& ex
    UString result, query(cquery);
    int dataType = UValue::jread(json, query, result);
 
-   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "dataType = (%d %S) query = %V result(%u) = %V UValue::jread_elements = %d UValue::jread_error = (%d %S)\n",
+   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("dataType = (%d %S) query = %V result(%u) = %V UValue::jread_elements = %d UValue::jread_error = (%d %S)\n"),
               dataType, UValue::getDataTypeDescription(dataType), query.rep, result.size(), result.rep, UValue::jread_elements, UValue::jread_error,
               UValue::getJReadErrorDescription()));
 
@@ -270,21 +270,20 @@ U_EXPORT main (int argc, char* argv[])
                                                "\"hits\":{\"total\":1,\"max_score\":1.0,\"hits\":[{\"_index\":\"tfb\",\"_type\":\"world\",\"_id\":\"6464\",\"_score\":1.0,"
                                                "\"_source\":{ \"randomNumber\" : 9342 }}]}}"), filename, content, array, result, result1;
 
-   (void) UValue::jfind(searchJson, U_CONSTANT_TO_PARAM("randomNumber"), result);
+   (void) U_JFIND(searchJson, "randomNumber", result);
 
-   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "randomNumber = %V\n", result.rep));
+   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("randomNumber = %V\n"), result.rep));
 
    result.clear();
 
    int city;
    double pricePoint;
 
-   (void) UValue::jfind(U_STRING_FROM_CONSTANT("{ \"pricePoint\" : 2.48333333333333, \"socialWeight\" : 8.75832720587083, \"gender\" : 0, \"lessThan16\" : false }"),
-                        U_CONSTANT_TO_PARAM("pricePoint"), pricePoint);
+   (void) U_JFIND(U_STRING_FROM_CONSTANT("{ \"pricePoint\" : 2.48333333333333, \"socialWeight\" : 8.75832720587083, \"gender\" : 0, \"lessThan16\" : false }"), "pricePoint", pricePoint);
 
    U_INTERNAL_ASSERT_EQUALS(pricePoint, 2.48333333333333)
 
-   (void) UValue::jfind(U_STRING_FROM_CONSTANT("{ \"cityKey\" : 0 }"), U_CONSTANT_TO_PARAM("cityKey"), city);
+   (void) U_JFIND(U_STRING_FROM_CONSTANT("{ \"cityKey\" : 0 }"), "cityKey", city);
 
    U_INTERNAL_ASSERT_EQUALS(city, 0)
 
@@ -338,7 +337,7 @@ U_EXPORT main (int argc, char* argv[])
 
    (void) UValue::jread(exampleJson, U_STRING_FROM_CONSTANT("{'anArray'"), array);
 
-   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "\n\"anArray\": = %V\n", array.rep));
+   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\n\"anArray\": = %V\n"), array.rep));
 
    // do queries within "anArray"...
 
@@ -350,7 +349,7 @@ U_EXPORT main (int argc, char* argv[])
 
       (void) UValue::jread(array, U_STRING_FROM_CONSTANT("[*"), result, &i); 
 
-      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "anArray[%d] = %V\n", i, result.rep));
+      cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("anArray[%d] = %V\n"), i, result.rep));
       }
 
    // example using a parameter array
@@ -359,7 +358,7 @@ U_EXPORT main (int argc, char* argv[])
 
    (void) UValue::jread(array, U_STRING_FROM_CONSTANT("[*{*"), result, params);
 
-   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "\nanArray[%d] objectKey[%d] = %V\n\n", params[0], params[1], result.rep));
+   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\nanArray[%d] objectKey[%d] = %V\n\n"), params[0], params[1], result.rep));
 
    // identify the whole JSON element
 
@@ -381,12 +380,12 @@ U_EXPORT main (int argc, char* argv[])
 
       (void) UValue::jread(array, U_STRING_FROM_CONSTANT("[*{'Users'"), result, &i);
 
-   // cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "array[%d] \"Users\": = %V\n", i, result.rep));
+   // cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("array[%d] \"Users\": = %V\n"), i, result.rep));
       }
 
    crono.stop();
 
-   cerr.write(buffer, u__snprintf(buffer, sizeof(buffer), "\n# Time Consumed with ACCESS EACH ARRAY BY INDEXING = %4ld ms\n", crono.getTimeElapsed()));
+   cerr.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("\n# Time Consumed with ACCESS EACH ARRAY BY INDEXING = %4ld ms\n"), crono.getTimeElapsed()));
 
    // now using jreadArrayStep()...
 
@@ -406,10 +405,10 @@ U_EXPORT main (int argc, char* argv[])
 
       (void) UValue::jread(result1, U_STRING_FROM_CONSTANT("{'Users'"), result);
 
-   // cout.write(buffer, u__snprintf(buffer, sizeof(buffer), "array[%d] \"Users\": = %V\n", i, result.rep));
+   // cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("array[%d] \"Users\": = %V\n"), i, result.rep));
       }
 
    crono.stop();
 
-   cerr.write(buffer, u__snprintf(buffer, sizeof(buffer),   "# Time Consumed with              jreadArrayStep() = %4ld ms\n", crono.getTimeElapsed()));
+   cerr.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("# Time Consumed with              jreadArrayStep() = %4ld ms\n"), crono.getTimeElapsed()));
 }

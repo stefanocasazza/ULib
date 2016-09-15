@@ -41,9 +41,9 @@ U_EXPORT void u_trace_init(int bsignal);
 U_EXPORT void u_trace_handlerSignal(void);
 U_EXPORT void u_trace_check_if_interrupt(void); /* check for context manage signal event - interrupt */
 U_EXPORT int  u_trace_check_if_active(int level);
-U_EXPORT void u_trace_dump(const char* restrict format, ...);
 U_EXPORT void u_trace_write(const char* restrict t, uint32_t tlen);
 U_EXPORT void u_trace_writev(const struct iovec* restrict iov, int n);
+U_EXPORT void u_trace_dump(const char* restrict format, uint32_t fmt_size, ...);
 
 #ifdef __cplusplus
 }

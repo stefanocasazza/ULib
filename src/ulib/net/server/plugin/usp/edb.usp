@@ -54,9 +54,9 @@ Content-Type: application/json
 uint32_t id;
 UString result;
 
-(void) es->sendPOST(U_CONSTANT_TO_PARAM("/tfb/world/_search"), buffer, u__snprintf(buffer+QLEN, 128, "%u\"}}}", id = u_get_num_random(10000-1))+QLEN);
+(void) es->sendPOST(U_CONSTANT_TO_PARAM("/tfb/world/_search"), buffer, u__snprintf(buffer+QLEN, 128, U_CONSTANT_TO_PARAM("%u\"}}}"), id = u_get_num_random(10000-1))+QLEN);
 
-(void) UValue::jfind(es->getContent(), U_CONSTANT_TO_PARAM("randomNumber"), result);
+(void) U_JFIND(es->getContent(), "randomNumber", result);
 
 #ifdef AS_cpoll_cppsp_DO
 USP_PRINTF_ADD("{\"id\":%u,\"randomNumber\":%v}", id, result.rep);

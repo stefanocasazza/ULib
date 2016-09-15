@@ -43,7 +43,7 @@ void UOrmSession::loadDriver(const char* backend, uint32_t len, const UString& o
       {
       UString name(32U);
 
-      name.snprintf("orm_driver_%.*s", len, backend);
+      name.snprintf(U_CONSTANT_TO_PARAM("orm_driver_%.*s"), len, backend);
 
       if (*UOrmDriver::driver_dir) UDynamic::setPluginDirectory(*UOrmDriver::driver_dir);
 
@@ -86,7 +86,7 @@ UOrmSession::UOrmSession(const char* dbname, uint32_t len)
 
       UString option(200U);
 
-      option.snprintf(UOrmDriver::env_option, len, dbname);
+      option.snprintf(UOrmDriver::env_option, strlen(UOrmDriver::env_option), len, dbname);
 
       loadDriver(UOrmDriver::env_driver, UOrmDriver::env_driver_len, option);
       }
@@ -532,7 +532,7 @@ void UOrmStatement::bindParam(struct tm& v)
    buffer[0]     = 0;
    u_strftime_tm = v;
 
-   uint32_t n = u_strftime1(buffer, sizeof(buffer), "%Y-%m-%d %T");
+   uint32_t n = u_strftime1(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%Y-%m-%d %T"));
 
    pdrv->bindParam(pstmt, buffer, n, false, -1);
 #endif

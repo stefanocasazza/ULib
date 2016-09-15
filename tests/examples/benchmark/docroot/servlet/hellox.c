@@ -15,7 +15,7 @@ int main(int argc, char* argv[])
 
    (void) u_xml_encode(argv[1], strlen(argv[1]), encoded);
 
-   (void) u__snprintf(reply, get_reply_capacity(), "<h1>Hello %s</h1>", encoded);
+   (void) u__snprintf(reply, get_reply_capacity(), U_CONSTANT_TO_PARAM("<h1>Hello %s</h1>"), encoded);
 
    return 200;
 }
