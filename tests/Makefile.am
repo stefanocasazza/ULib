@@ -12,7 +12,7 @@ SUBDIRS1 += debug
 endif
 SUBDIRS = $(SUBDIRS1) ulib
 if ENABLE_EXAMPLES
-SUBDIRS += examples contrib
+SUBDIRS += examples
 endif
 
 DIST_SUBDIRS = base debug ulib examples contrib

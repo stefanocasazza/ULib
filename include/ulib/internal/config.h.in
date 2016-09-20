@@ -687,7 +687,7 @@
 /* Define if we have support for crc32 intrinsics */
 #undef USE_HARDWARE_CRC32
 
-/* Define if enable libcurL support */
+/* Define if enable libcurl support */
 #undef USE_LIBCURL
 
 /* Define if enable libdbi support */

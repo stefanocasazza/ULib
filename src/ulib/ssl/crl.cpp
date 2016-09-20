@@ -131,7 +131,12 @@ unsigned UCrl::getRevokedSerials(X509_CRL* _crl, long* revoked, unsigned sz)
       {
       if (i >= sz) break;
 
-      revoked[i++] = ASN1_INTEGER_get(rev->serialNumber);
+      revoked[i++] =
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L
+      ASN1_INTEGER_get(rev->serialNumber);
+#  else
+      (long) X509_REVOKED_get0_serialNumber(rev);
+#  endif
       }
 
       X509_REVOKED_free(rev);
@@ -223,7 +228,7 @@ time_t UCrl::getIssueTime(X509_CRL* _crl)
 
    U_INTERNAL_ASSERT_POINTER(_crl)
 
-   ASN1_UTCTIME* utctime = X509_CRL_get_lastUpdate(_crl);
+   const ASN1_UTCTIME* utctime = X509_CRL_get_lastUpdate(_crl);
 
    time_t result = UTimeDate::getSecondFromTime((const char*)utctime->data, true, "%2u%2u%2u%2u%2u%2uZ"); // 100212124550Z
 

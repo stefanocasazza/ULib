@@ -21,7 +21,6 @@ static void check(const UString& dati_crl, const UString& dati_ca)
         << c.getVersionNumber()              << "\n"
         << c.getLastUpdate()                 << "\n"
    //   << c.getRevokedSerials(revoked, 10)  << "\n"
-   //   << c.getSignature()                  << "\n"
         << c.getNextUpdate();
 
    UString encoded = c.getEncoded("PEM");

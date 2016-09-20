@@ -16,16 +16,28 @@
 #include <ulib/base/coder/base64.h>
 #include <ulib/base/coder/hexdump.h>
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#  ifndef OPENSSL_NO_SHA0
+#     define OPENSSL_NO_SHA0
+#  endif
+#endif
+
 UHashType              u_hashType;                 /* What type of hash is this? */
 EVP_PKEY* restrict     u_pkey;                     /* private key to sign the digest */
-EVP_MD_CTX             u_mdctx;                    /* Context for digest */
 const EVP_MD* restrict u_md;                       /* Digest instance */
 unsigned char          u_mdValue[U_MAX_HASH_SIZE]; /* Final output */
 int                    u_mdLen;                    /* Length of digest */
 
-HMAC_CTX             u_hctx;                       /* Context for HMAC */
-const char* restrict u_hmac_key;                   /* The loaded key */
-uint32_t             u_hmac_keylen;                /* The loaded key length */
+const char* restrict   u_hmac_key;    /* The loaded key */
+uint32_t               u_hmac_keylen; /* The loaded key length */
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+HMAC_CTX    u_hctx;  /* Context for HMAC */
+EVP_MD_CTX  u_mdctx; /* Context for digest */
+#else
+HMAC_CTX*   u_hctx;  /* Context for HMAC */
+EVP_MD_CTX* u_mdctx; /* Context for digest */
+#endif
 
 __pure int u_dgst_get_algoritm(const char* restrict alg)
 {
@@ -113,37 +125,30 @@ void u_dgst_init(int alg, const char* restrict _key, uint32_t keylen)
       u_hmac_key    = _key;
       u_hmac_keylen = keylen;
 
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L
       HMAC_CTX_cleanup(&u_hctx);
       HMAC_CTX_init(&u_hctx);
+
       HMAC_Init_ex(&u_hctx, _key, keylen, u_md, 0);
+#  else
+      if  (u_hctx) (void) HMAC_CTX_reset(u_hctx);
+      else u_hctx = HMAC_CTX_new();
+
+      HMAC_Init_ex(u_hctx, _key, keylen, u_md, 0);
+#  endif
       }
    else
       {
-             EVP_MD_CTX_cleanup(&u_mdctx);
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L
+      EVP_MD_CTX_cleanup(&u_mdctx);
+
       (void) EVP_DigestInit(&u_mdctx, u_md);
-      }
-}
+#  else
+      if  (u_mdctx) EVP_MD_CTX_reset(u_mdctx);
+      else u_mdctx = EVP_MD_CTX_new();
 
-void u_dgst_reset(void) /* Reset the hash */
-{
-   U_INTERNAL_TRACE("u_dgst_reset()")
-
-   U_INTERNAL_PRINT("alg = %d", u_hashType)
-
-   U_INTERNAL_ASSERT_POINTER(u_md)
-
-   if (u_hmac_keylen)
-      {
-      HMAC_CTX_cleanup(&u_hctx);
-
-      HMAC_CTX_init(&u_hctx);
-
-      HMAC_Init_ex(&u_hctx, u_hmac_key, u_hmac_keylen, u_md, 0);
-      }
-   else
-      {
-             EVP_MD_CTX_cleanup(&u_mdctx);
-      (void) EVP_DigestInit(&u_mdctx, u_md);
+      (void) EVP_DigestInit_ex(u_mdctx, u_md, 0);
+#  endif
       }
 }
 
@@ -156,7 +161,7 @@ static int u_finish(unsigned char* restrict ptr, int base64)
 
    if (base64 ==  0) return u_hexdump_encode(u_mdValue, u_mdLen, ptr);
    if (base64 ==  1) return u_base64_encode( u_mdValue, u_mdLen, ptr);
-   if (base64 == -1)        u__memcpy(ptr,   u_mdValue, u_mdLen, __PRETTY_FUNCTION__);
+   if (base64 == -1)          u__memcpy(ptr, u_mdValue, u_mdLen, __PRETTY_FUNCTION__);
 
    return u_mdLen;
 }
@@ -169,11 +174,19 @@ int u_dgst_finish(unsigned char* restrict hash, int base64) /* Finish and get ha
 
    if (u_hmac_keylen)
       {
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L
       HMAC_Final(&u_hctx, u_mdValue, (unsigned int*)&u_mdLen);
+#  else
+      HMAC_Final( u_hctx, u_mdValue, (unsigned int*)&u_mdLen);
+#  endif
       }
    else
       {
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L
       (void) EVP_DigestFinal(&u_mdctx, u_mdValue, (unsigned int*)&u_mdLen);
+#  else
+      (void) EVP_DigestFinal( u_mdctx, u_mdValue, (unsigned int*)&u_mdLen);
+#  endif
       }
 
    if (hash) return u_finish(hash, base64);
@@ -189,16 +202,17 @@ void u_dgst_sign_init(int alg, ENGINE* impl)
 
    u_dgst_algoritm(alg);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
    EVP_MD_CTX_cleanup(&u_mdctx);
-
    EVP_MD_CTX_init(&u_mdctx);
 
-   /**
-    * sets up signing context ctx to use digest type from ENGINE impl.
-    * u_mdctx must be initialized with EVP_MD_CTX_init() before calling this function
-    */
-
    EVP_SignInit_ex(&u_mdctx, u_md, impl);
+#else
+   if  (u_mdctx) EVP_MD_CTX_reset(u_mdctx);
+   else u_mdctx = EVP_MD_CTX_new();
+
+   (void) EVP_DigestInit_ex(u_mdctx, u_md, impl);
+#endif
 }
 
 void u_dgst_verify_init(int alg, ENGINE* restrict impl)
@@ -207,16 +221,17 @@ void u_dgst_verify_init(int alg, ENGINE* restrict impl)
 
    u_dgst_algoritm(alg);
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
    EVP_MD_CTX_cleanup(&u_mdctx);
-
    EVP_MD_CTX_init(&u_mdctx);
 
-   /**
-    * sets up signing context ctx to use digest type from ENGINE impl.
-    * u_mdctx must be initialized with EVP_MD_CTX_init() before calling this function
-    */
-
    EVP_VerifyInit_ex(&u_mdctx, u_md, impl);
+#else
+   if  (u_mdctx) EVP_MD_CTX_reset(u_mdctx);
+   else u_mdctx = EVP_MD_CTX_new();
+
+   (void) EVP_DigestInit_ex(u_mdctx, u_md, impl);
+#endif
 }
 
 int u_dgst_sign_finish(unsigned char* restrict sig, int base64) /* Finish and get signature */
@@ -225,7 +240,11 @@ int u_dgst_sign_finish(unsigned char* restrict sig, int base64) /* Finish and ge
 
    U_INTERNAL_ASSERT_POINTER(u_pkey)
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
    (void) EVP_SignFinal(&u_mdctx, u_mdValue, (unsigned int*)&u_mdLen, u_pkey);
+#else
+   (void) EVP_SignFinal( u_mdctx, u_mdValue, (unsigned int*)&u_mdLen, u_pkey);
+#endif
 
    if (sig) return u_finish(sig, base64);
 
@@ -238,5 +257,9 @@ int u_dgst_verify_finish(unsigned char* restrict sigbuf, uint32_t siglen)
 
    U_INTERNAL_ASSERT_POINTER(u_pkey)
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
    return EVP_VerifyFinal(&u_mdctx, sigbuf, siglen, u_pkey);
+#else
+   return EVP_VerifyFinal( u_mdctx, sigbuf, siglen, u_pkey);
+#endif
 }

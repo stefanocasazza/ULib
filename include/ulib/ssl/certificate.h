@@ -19,6 +19,11 @@
 
 #include <openssl/x509.h>
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#  define X509_get_notBefore X509_getm_notBefore
+#  define X509_get_notAfter  X509_getm_notAfter
+#endif
+
 template <class T> class UVector;
 template <class T> class UHashMap;
 
@@ -253,49 +258,6 @@ public:
    long hashCode() { return hashCode(x509); }
 
    /**
-    * Returns the <i>signature</i> of this certificate
-    */
-
-   static UString getSignature(X509* a)
-      {
-      U_TRACE(0, "UCertificate::getSignature(%p)", a)
-
-      U_INTERNAL_ASSERT_POINTER(a)
-
-      UString signature( (const char*) a->signature->data,
-                                       a->signature->length );
-
-      U_RETURN_STRING(signature);
-      }
-
-   UString getSignature() const { return getSignature(x509); }
-
-   /**
-    * Returns <i>signatureAlgorithm</i> of this certificate
-    */ 
-
-   static UString getSignatureAlgorithm(X509* a)
-      {
-      U_TRACE(0, "UCertificate::getSignatureAlgorithm(%p)", a)
-
-      U_INTERNAL_ASSERT_POINTER(a)
-
-      UString signature_algorithm( OBJ_nid2sn( OBJ_obj2nid(a->sig_alg->algorithm) ) );
-
-      U_RETURN_STRING(signature_algorithm);
-      }
-
-   UString getSignatureAlgorithm() const { return getSignatureAlgorithm(x509); }
-
-   /**
-    * Returns the part of this certificate that is signed
-    */ 
-
-   static UString getSignable(X509* x509);
-
-   UString getSignable() const { return getSignable(x509); }
-
-   /**
     * Returns <i>publicKey</i> of this certificate
     */
 
@@ -442,13 +404,6 @@ public:
     */
 
    UString getExponent() const;
-
-   /**
-    * Gets X509v3 extensions as array of X509Ext objects
-    */
-
-   int getExtensions(UHashMap<UString>& table) const;
-
 
    /**
     * parse cert's \c authorityInfoAccess extension and find all the

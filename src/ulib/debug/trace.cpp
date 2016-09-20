@@ -150,6 +150,7 @@ void UTrace::trace_syscall(const char* format, uint32_t fmt_size, ...)
 
    U_INTERNAL_PRINT("buffer_syscall=%s", buffer_syscall)
 
+   /*
    if (active[0])
       {
       flag_syscall_read_or_write[0] = (strncmp(format, U_CONSTANT_TO_PARAM("::read("))  == 0 ||
@@ -164,6 +165,7 @@ void UTrace::trace_syscall(const char* format, uint32_t fmt_size, ...)
          time_syscall_read_or_write->start();
          }
       }
+   */
 
 #ifdef _MSWINDOWS_
    SetLastError(0);
@@ -254,6 +256,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, uint32_t fmt_size, 
 
       if (active[0])
          {
+         /*
          if (error == false &&
              flag_syscall_read_or_write[0])
             {
@@ -283,6 +286,7 @@ void UTrace::trace_sysreturn(bool error, const char* format, uint32_t fmt_size, 
                   }
                }
             }
+         */
 
          struct iovec iov[3] = { { (caddr_t)u_trace_tab,    u_trace_num_tab },
                                  { (caddr_t)buffer_syscall, buffer_syscall_len },

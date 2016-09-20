@@ -31,7 +31,7 @@ static void usp_fork_equery()
    U_MEMCPY(buffer,  "{\"query\":{\"match\":{\"_id\":\"", QLEN);
 
 #ifndef AS_cpoll_cppsp_DO
-   U_NEW(UValue, pvalue, UValue(ARRAY_VALUE));
+   U_NEW(UValue, pvalue, UValue);
    U_NEW(UVector<World*>, pvworld_query, UVector<World*>(500));
 #endif
 }

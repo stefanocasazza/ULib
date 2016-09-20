@@ -164,9 +164,9 @@ UString* UHTTP::uri_strict_transport_security_mask;
 char         UHTTP::iov_buffer[20];
 struct iovec UHTTP::iov_vec[10];
 #  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
-uint32_t UHTTP::agent_offset;
-uint32_t UHTTP::request_offset;
-uint32_t UHTTP::referer_offset;
+uint32_t     UHTTP::agent_offset;
+uint32_t     UHTTP::request_offset;
+uint32_t     UHTTP::referer_offset;
 #  endif
 #endif
 
@@ -1569,7 +1569,7 @@ __pure bool UHTTP::isValidMethod(const char* ptr)
       {
       // RFC 2616 4.1 "servers SHOULD ignore any empty line(s) received where a Request-Line is expected"
 
-      if (u__isspace(*ptr)) while (u__isspace((*++ptr))) {}
+      if (UNLIKELY(u__isspace(*ptr))) while (u__isspace((*++ptr))) {}
 
       // GET
       // HEAD
@@ -2171,7 +2171,6 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
             char* out;
       const char* inp;
       const char* end;
-      uint32_t count;
 
       /**
        * If a server wants to start sending a response before knowing its total length (like with long script output),
@@ -2207,7 +2206,7 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
 
       U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
 
-      count = pbuffer->find(U_CRLF2, U_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
+      uint32_t count = pbuffer->find(U_CRLF2, U_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
 
       if (count == U_NOT_FOUND) count = USocketExt::readWhileNotToken(sk, *pbuffer, U_CONSTANT_TO_PARAM(U_CRLF2), U_SSL_TIMEOUT_MS);
 
@@ -2232,9 +2231,13 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
       do {
          // Decode the hexadecimal chunk size into an understandable number
 
-         uint32_t chunkSize = strtol(inp, 0, 16);
+         U_INTERNAL_DUMP("inp = %.20S", inp)
+
+         uint32_t chunkSize = strtol(inp, (char**)&inp, 16);
 
          // The last chunk is followed by zero or more trailers, followed by a blank line
+
+         U_INTERNAL_DUMP("chunkSize = %u", chunkSize)
 
          if (chunkSize == 0)
             {
@@ -2247,13 +2250,22 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
             U_RETURN(false);
             }
 
-         U_INTERNAL_ASSERT(u__isxdigit(*inp))
+         U_INTERNAL_DUMP("inp = %.20S", inp)
 
-         while (*inp++ != '\n') {} // discard the rest of the line
+         if (*++inp != '\n')
+            {
+            // discard the rest of the line
+
+            inp = (const char*) U_SYSCALL(memchr, "%p,%C,%p", inp, '\n', pbuffer->remain(inp));
+
+            if (UNLIKELY(inp == 0)) U_RETURN(false);
+            }
+
+         ++inp;
 
          U_MEMCPY(out, inp, chunkSize);
 
-         inp += chunkSize + 2;
+         inp += chunkSize + U_CONSTANT_SIZE(U_CRLF);
          out += chunkSize;
          }
       while (inp <= end);
@@ -2411,6 +2423,257 @@ bool UHTTP::readBodyResponse(USocket* sk, UString* pbuffer, UString& body)
    U_RETURN(false);
 }
 
+void UHTTP::setHostname(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setHostname(%.*S,%u)", len, ptr, len)
+
+   // The difference between HTTP_HOST and U_HTTP_VHOST is that HTTP_HOST can include the «:PORT» text, and U_HTTP_VHOST only the name
+
+   U_http_info.host = ptr;
+   U_http_host_len  =
+   U_http_host_vlen = len;
+
+   U_INTERNAL_DUMP("U_http_host_len = %u U_HTTP_HOST = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
+
+   // hostname[:port]
+
+   for (const char* endptr = ptr+len; ptr < endptr; ++ptr)
+      {
+      if (*ptr == ':')
+         {
+         U_http_host_vlen = ptr-U_http_info.host;
+
+         break;
+         }
+      }
+
+   U_INTERNAL_DUMP("U_http_host_vlen = %u U_HTTP_VHOST = %.*S", U_http_host_vlen, U_HTTP_VHOST_TO_TRACE)
+}
+
+U_NO_EXPORT inline void UHTTP::setRange(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setRange(%.*S,%u)", len, ptr, len)
+
+   U_http_range_len  = len;
+   U_http_info.range = ptr;
+
+   U_INTERNAL_DUMP("Range = %.*S", U_HTTP_RANGE_TO_TRACE)
+}
+
+U_NO_EXPORT inline void UHTTP::setCookie(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setCookie(%.*S,%u)", len, ptr, len)
+
+   U_http_info.cookie     = ptr;
+   U_http_info.cookie_len = len;
+
+   U_INTERNAL_DUMP("Cookie(%u): = %.*S", U_http_info.cookie_len, U_HTTP_COOKIE_TO_TRACE)
+}
+
+U_NO_EXPORT inline void UHTTP::setAccept(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setAccept(%.*S,%u)", len, ptr, len)
+
+   U_http_info.accept = ptr;
+   U_http_accept_len  = len;
+
+   U_INTERNAL_DUMP("Accept: = %.*S", U_HTTP_ACCEPT_TO_TRACE)
+}
+
+U_NO_EXPORT inline void UHTTP::setReferer(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setReferer(%.*S,%u)", len, ptr, len)
+
+   U_http_info.referer     = ptr;
+   U_http_info.referer_len = len;
+
+   U_INTERNAL_DUMP("Referer(%u): = %.*S", U_http_info.referer_len, U_HTTP_REFERER_TO_TRACE)
+}
+
+U_NO_EXPORT inline void UHTTP::setUpgrade(const char* ptr)
+{
+   U_TRACE(0, "UHTTP::setUpgrade(%p)", ptr)
+
+   if (u_get_unalignedp16(ptr) != U_MULTICHAR_CONSTANT16('h','2') &&
+           u__strncasecmp(ptr, U_CONSTANT_TO_PARAM("websocket")) == 0)
+      {
+      U_http_flag |= HTTP_IS_REQUEST_NOSTAT;
+
+      U_INTERNAL_DUMP("U_http_websocket_len = %u U_http_is_request_nostat = %b", U_http_websocket_len, U_http_is_request_nostat)
+      }
+}
+
+U_NO_EXPORT inline void UHTTP::setUserAgent(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setUserAgent(%.*S,%u)", len, ptr, len)
+
+   U_http_info.user_agent     = ptr;
+   U_http_info.user_agent_len = len;
+
+   U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+}
+
+U_NO_EXPORT inline void UHTTP::setConnection(const char* ptr)
+{
+   U_TRACE(0, "UHTTP::setConnection(%p)", ptr)
+
+   char c = u__toupper(*ptr);
+
+   if (c == 'C')
+      {
+      if (u__strncasecmp(ptr+1, U_CONSTANT_TO_PARAM("lose")) == 0) UClientImage_Base::setCloseConnection();
+      }
+   else if (c == 'K')
+      {
+      if (u__strncasecmp(ptr+1, U_CONSTANT_TO_PARAM("eep-alive")) == 0)
+         {
+         U_http_flag |= HTTP_IS_KEEP_ALIVE;
+
+         U_INTERNAL_DUMP("U_http_keep_alive = %b", U_http_keep_alive)
+         }
+      }
+   /*
+   else if (c == 'U')
+      {
+      if (u__strncasecmp(ptr+1, U_CONSTANT_TO_PARAM("pgrade")) == 0) {}
+      }
+   */
+}
+
+U_NO_EXPORT inline void UHTTP::setContentType(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setContentType(%.*S,%u)", len, ptr, len)
+
+   U_http_content_type_len  = len;
+   U_http_info.content_type = ptr;
+
+   U_INTERNAL_DUMP("Content-Type(%u): = %.*S", U_http_content_type_len, U_HTTP_CTYPE_TO_TRACE)
+}
+
+U_NO_EXPORT inline void UHTTP::setContentLength(const char* ptr1, const char* ptr2)
+{
+   U_TRACE(0, "UHTTP::setContentLength(%p,%p)", ptr1, ptr2)
+
+   U_http_info.clength = u_strtoul(ptr1, ptr2);
+
+   U_INTERNAL_DUMP("Content-Length: = %.*S U_http_info.clength = %u", ptr2-ptr1, ptr1, U_http_info.clength)
+
+   U_INTERNAL_ASSERT_EQUALS(U_http_info.clength, (uint32_t)strtoul(ptr1, 0, 10))
+}
+
+U_NO_EXPORT inline void UHTTP::setAcceptEncoding(const char* ptr)
+{
+   U_TRACE(0, "UHTTP::setAcceptEncoding(%p)", ptr)
+
+   ptr = (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('g','z','i','p')
+               ?                     ptr
+               : (const char*)u_find(ptr, 30, U_CONSTANT_TO_PARAM("gzip")));
+
+   if (                   ptr &&
+       u_get_unalignedp32(ptr) != U_MULTICHAR_CONSTANT32(';','q','=','0'))
+      {
+      U_http_flag |= HTTP_IS_ACCEPT_GZIP;
+
+      U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
+      }
+}
+
+U_NO_EXPORT inline void UHTTP::setAcceptLanguage(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setAcceptLanguage(%.*S,%u)", len, ptr, len)
+
+   U_http_accept_language_len  = len;
+   U_http_info.accept_language = ptr;
+
+   U_INTERNAL_DUMP("Accept-Language: = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
+}
+
+U_NO_EXPORT inline void UHTTP::setIfModSince(const char* ptr)
+{
+   U_TRACE(0, "UHTTP::setIfModSince(%p)", ptr)
+
+   U_http_info.if_modified_since = UTimeDate::getSecondFromTime(ptr, true);
+
+   U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
+}
+
+U_NO_EXPORT void UHTTP::checkIPClient()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::checkIPClient()")
+
+   U_INTERNAL_ASSERT_MAJOR(U_http_ip_client_len, 0)
+
+   uint32_t n = 0;
+
+   do {
+      if (u__islitem(U_http_info.ip_client[n])) break;
+      }
+   while (++n < (uint32_t)U_http_ip_client_len);
+
+   U_INTERNAL_DUMP("ip_client = %.*S", n, U_http_info.ip_client)
+
+   if (u_isIPAddr(UClientImage_Base::bIPv6, U_http_info.ip_client, n))
+      {
+      U_INTERNAL_ASSERT_MINOR(n, U_INET_ADDRSTRLEN)
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::client_address, UServer_Base::csocket->cRemoteAddress.pcStrAddress)
+
+      U_MEMCPY(UServer_Base::client_address, U_http_info.ip_client, n);
+
+      UServer_Base::client_address[(UServer_Base::client_address_len = n)] = '\0';
+
+      U_INTERNAL_DUMP("UServer_Base::client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
+      }
+}
+
+U_NO_EXPORT inline void UHTTP::setXRealIP(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setXRealIP(%.*S,%u)", len, ptr, len)
+
+   U_http_ip_client_len  = len;
+   U_http_info.ip_client = ptr;
+
+   U_INTERNAL_DUMP("X-Real-IP: = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
+
+   checkIPClient();
+}
+
+U_NO_EXPORT inline void UHTTP::setXForwardedFor(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setXForwardedFor(%.*S,%u)", len, ptr, len)
+
+   U_http_ip_client_len  = len;
+   U_http_info.ip_client = ptr;
+
+   U_INTERNAL_DUMP("X-Forwarded-For: = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
+
+   checkIPClient();
+}
+
+U_NO_EXPORT inline void UHTTP::setXHttpForwardedFor(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::setXHttpForwardedFor(%.*S,%u)", len, ptr, len)
+
+   U_http_ip_client_len  = len;
+   U_http_info.ip_client = ptr;
+
+   U_INTERNAL_DUMP("X-Http-X-Forwarded-For: = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
+
+   checkIPClient();
+}
+
+#define SET_POINTER_CHECK_REQUEST_FOR_HEADER                                       \
+   if (LIKELY(u_get_unalignedp16(pn) == U_MULTICHAR_CONSTANT16(':',' '))) pn += 2; \
+   else                                                                            \
+      {                                                                            \
+      do { ++pn; } while (u__isblank(*pn));                                        \
+                                                                                   \
+      if (UNLIKELY(pn >= pend)) return;                                            \
+      }                                                                            \
+                                                                                   \
+   pn = (const char*) memchr((ptr1 = pn), '\r', pend - pn);                        \
+                                                                                   \
+   if (UNLIKELY(pn == 0)) return;
+
 U_NO_EXPORT void UHTTP::checkRequestForHeader()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::checkRequestForHeader()")
@@ -2420,7 +2683,7 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
    U_INTERNAL_ASSERT_DIFFERS(U_http_method_type, 0)
    U_INTERNAL_ASSERT_MAJOR(U_http_info.endHeader, 0)
-   U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, 2)
+   U_INTERNAL_ASSERT_EQUALS(U_line_terminator_len, U_CONSTANT_SIZE(U_CRLF))
 
    // --------------------------------
    // check in header request for:
@@ -2463,456 +2726,463 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
 
    for (const char* pn = ptr + U_http_info.startHeader; pn < pend; pn += U_CONSTANT_SIZE(U_CRLF))
       {
-      U_INTERNAL_DUMP("u__isheader(%C) = %b pn = %.20S", *pn, u__isheader(*pn), pn)
+      const char* p;
+      const char* p1;
+      unsigned char c;
+      const char* ptr1;
+      uint32_t remain = pend - pn;
+
+      U_INTERNAL_DUMP("u__isheader(%C) = %b pn(%u) = %.*S", *pn, u__isheader(*pn), remain, remain, pn)
 
       if (u__isheader(*pn) == false)
          {
-         pn = (const char*) memchr(pn, '\r', pend - pn);
+         pn = (const char*) memchr(pn, '\r', remain);
 
          if (UNLIKELY(pn == 0)) return; // NB: we can have too much advanced...
+
+         goto next;
          }
+
+      p = pn;
+
+      if (pn[4] == ':') // "Host:"
+         {
+         pn += 4;
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('H','o','s','t'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setHostname(ptr1, pn-ptr1);
+
+            goto next;
+            }
+         }
+      else if (pn[5] == ':') // "Range:"
+         {
+         pn += 5;
+
+         if (u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('R','a','n','g') &&
+             u_get_unalignedp32(p+7) == U_MULTICHAR_CONSTANT32('b','y','t','e'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setRange(ptr1+U_CONSTANT_SIZE("bytes="), pn-ptr1-U_CONSTANT_SIZE("bytes="));
+
+            goto next;
+            }
+         }
+      else if (pn[6] == ':') // "Cookie|Accept:"
+         {
+         pn += 6;
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('C','o','o','k'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setCookie(ptr1, pn-ptr1);
+
+            goto next;
+            }
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('A','c','c','e'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setAccept(ptr1, pn-ptr1);
+
+            goto next;
+            }
+         }
+      else if (pn[7] == ':') // "Referer|Upgrade|Cookie2:"
+         {
+         pn += 7;
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('R','e','f','e'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setReferer(ptr1, pn-ptr1);
+
+            goto next;
+            }
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('U','p','g','r') ||
+             u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('u','p','g','r'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            U_INTERNAL_DUMP("Upgrade: = %.*S", pn-ptr1, ptr1)
+
+            setUpgrade(ptr1);
+
+            goto next;
+            }
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('C','o','o','k'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            U_INTERNAL_DUMP("Cookie2: = %.*S", pn-ptr1, ptr1)
+
+            goto next;
+            }
+         }
+#  ifndef U_LOG_DISABLE
+      else if (pn[9] == ':') // "X-Real-IP:"
+         {
+         pn += 9;
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('X','-','R','e'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setXRealIP(ptr1, pn-ptr1);
+
+            goto next;
+            }
+         }
+#  endif
+      else if (pn[10] == ':') // "Connection|User-Agent:"
+         {
+         pn += 10;
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('U','s','e','r'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setUserAgent(ptr1, pn-ptr1);
+
+            goto next;
+            }
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('C','o','n','n'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setConnection(ptr1);
+
+            goto next;
+            }
+         }
+      else if (pn[12] == ':') // "Content-Type:"
+         {
+         pn += 12;
+
+         if (u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('C','o','n','t') &&
+             u_get_unalignedp32(p+7) == U_MULTICHAR_CONSTANT32('-','T','y','p'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setContentType(ptr1, pn-ptr1);
+
+            goto next;
+            }
+         }
+      else if (pn[14] == ':') // "Content-Length:|HTTP2-Settings:"
+         {
+         pn += 14;
+
+         if (u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('C','o','n','t') &&
+             u_get_unalignedp32(p+7) == U_MULTICHAR_CONSTANT32('-','L','e','n'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setContentLength(ptr1, pn);
+
+            goto next;
+            }
+
+         // HTTP2-Settings
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('H','T','T','P') ||
+             u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('h','t','t','p'))
+            {
+            p1 = p+4;
+
+            if (u_get_unalignedp64(p1) == U_MULTICHAR_CONSTANT64('2','-','S','e','t','t','i','n') ||
+                u_get_unalignedp64(p1) == U_MULTICHAR_CONSTANT64('2','-','s','e','t','t','i','n'))
+               {
+               SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+               U_INTERNAL_DUMP("HTTP2-Settings: = %.*S", pn-ptr1, ptr1)
+
+#           ifndef U_HTTP2_DISABLE
+               U_http2_settings_len     = pn-ptr1;
+               UHTTP2::upgrade_settings =    ptr1;
+
+               U_http_version             = '2';
+               U_ClientImage_data_missing = true;
+#           endif
+
+               goto next;
+               }
+            }
+         }
+      else if (pn[15] == ':') // "Accept-Encoding/Language|X-Forwarded-For:"
+         {
+         pn += 15;
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('A','c','c','e'))
+            {
+            p1 = p+6;
+
+            if (u_get_unalignedp32(p1) == U_MULTICHAR_CONSTANT32('-','E','n','c'))
+               {
+               SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+               U_INTERNAL_DUMP("Accept-Encoding: = %.*S", pn-ptr1, ptr1)
+
+#           ifdef USE_LIBZ
+               setAcceptEncoding(ptr1);
+#           endif
+
+               goto next;
+               }
+
+            if (u_get_unalignedp32(p1) == U_MULTICHAR_CONSTANT32('-','L','a','n'))
+               {
+               SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+               setAcceptLanguage(ptr1, pn-ptr1);
+
+               goto next;
+               }
+            }
+
+#     ifndef U_LOG_DISABLE
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('X','-','F','o'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setXForwardedFor(ptr1, pn-ptr1);
+
+            goto next;
+            }
+#     endif
+         }
+      else if (pn[17] == ':') // "If-Modified-Since|Sec-WebSocket-Key:"
+         {
+         pn += 17;
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('I','f','-','M'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setIfModSince(ptr1);
+
+            goto next;
+            }
+
+         if (u_get_unalignedp64(p)   == U_MULTICHAR_CONSTANT64('S','e','c','-','W','e','b','S') &&
+             u_get_unalignedp64(p+8) == U_MULTICHAR_CONSTANT64('o','c','k','e','t','-','K','e'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            U_http_websocket_len         = pn-ptr1;
+            UWebSocket::upgrade_settings =    ptr1;
+
+            U_INTERNAL_DUMP("Sec-WebSocket-Key: = %.*S", U_http_websocket_len, UWebSocket::upgrade_settings)
+
+            goto next;
+            }
+         }
+#  ifndef U_LOG_DISABLE
+      else if (pn[22] == ':') // "X-Http-X-Forwarded-For:"
+         {
+         pn += 22;
+
+         if (u_get_unalignedp32(p) == U_MULTICHAR_CONSTANT32('X','-','H','t'))
+            {
+            SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+            setXHttpForwardedFor(ptr1, pn-ptr1);
+
+            goto next;
+            }
+         }
+#  endif
       else
          {
-         const char* p;
-         const char* p1;
-         uint32_t pos1, pos2;
-         unsigned char c = *(p = pn), c1;
-
-              if (pn[ 4] == ':') pn +=  4; // "Host:"
-         else if (pn[ 5] == ':') pn +=  5; // "Range:"
-         else if (pn[ 6] == ':') pn +=  6; // "Cookie|Accept:"
-         else if (pn[ 7] == ':') pn +=  7; // "Referer|Upgrade:"
-#     ifndef U_LOG_DISABLE
-         else if (pn[ 9] == ':') pn +=  9; // "X-Real-IP:"
-#     endif
-         else if (pn[10] == ':') pn += 10; // "Connection|User-Agent:"
-         else if (pn[12] == ':') pn += 12; // "Content-Type:"
-         else if (pn[14] == ':') pn += 14; // "Content-Length:|HTTP2-Settings:"
-#     if !defined(U_LOG_DISABLE) || defined(USE_LIBZ)
-         else if (pn[15] == ':') pn += 15; // "Accept-Encoding/Language|X-Forwarded-For:"
-#     endif
-         else if (pn[17] == ':') pn += 17; // "If-Modified-Since|Sec-WebSocket-Key:"
-         else
-            {
-            do { ++pn; } while (u__isename(*pn) == false);
-
-            if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
-
-            if (UNLIKELY(u_get_unalignedp16(pn) == U_MULTICHAR_CONSTANT16('\r','\n'))) goto next;
-
-            goto advance;
-            }
-
-         if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
-
-advance: U_INTERNAL_ASSERT_EQUALS(*pn, ':')
-
-         if (LIKELY(u_get_unalignedp16(pn) == U_MULTICHAR_CONSTANT16(':',' '))) pn += 2;
-         else
-            {
-            do { ++pn; } while (u__isblank(*pn));
-
-            if (UNLIKELY(pn >= pend)) return; // NB: we can have too much advanced...
-            }
-
-         pos1 = pn-ptr;
-
-         pn = (const char*) memchr(pn, '\r', pend - pn);
+         pn = (const char*) memchr(pn, ':', remain);
 
          if (UNLIKELY(pn == 0)) return; // NB: we can have too much advanced...
-
-         pos2 = pn-ptr;
-
-         U_INTERNAL_DUMP("pos1 = %.20S", ptr+pos1)
-         U_INTERNAL_DUMP("pos2 = %.20S", ptr+pos2)
-
-         switch (u_get_unalignedp32(p))
-            {
-            case U_MULTICHAR_CONSTANT32('R','a','n','g'):
-               {
-               if (u_get_unalignedp32(ptr+pos1) == U_MULTICHAR_CONSTANT32('b','y','t','e')) goto set_range;
-               }
-            break;
-            case U_MULTICHAR_CONSTANT32('S','e','c','-'): // Sec-WebSocket-Key
-               {
-               if (u_get_unalignedp32(p+4)  == U_MULTICHAR_CONSTANT32('W','e','b','S') &&
-                   u_get_unalignedp32(p+8)  == U_MULTICHAR_CONSTANT32('o','c','k','e') &&
-                   u_get_unalignedp32(p+12) == U_MULTICHAR_CONSTANT32('t','-','K','e'))
-                  {
-                  U_http_websocket_len         = pos2-pos1;
-                  UWebSocket::upgrade_settings =  ptr+pos1;
-
-                  U_INTERNAL_DUMP("Sec-WebSocket-Key: = %.*S", U_http_websocket_len, UWebSocket::upgrade_settings)
-
-                  goto next;
-                  }
-               }
-            break;
-#        ifndef U_HTTP2_DISABLE
-            case U_MULTICHAR_CONSTANT32('H','T','T','P'):
-            case U_MULTICHAR_CONSTANT32('h','t','t','p'):
-               {
-               // HTTP2-Settings
-
-               if (u_get_unalignedp64(p+4) == U_MULTICHAR_CONSTANT64('2','-','S','e','t','t','i','n') ||
-                   u_get_unalignedp64(p+4) == U_MULTICHAR_CONSTANT64('2','-','s','e','t','t','i','n'))
-                  {
-                  U_http2_settings_len     = pos2-pos1;
-                  UHTTP2::upgrade_settings =  ptr+pos1;
-
-                  U_INTERNAL_DUMP("HTTP2-Settings: = %.*S", U_http2_settings_len, UHTTP2::upgrade_settings)
-
-                  U_http_version             = '2';
-                  U_ClientImage_data_missing = true;
-
-                  goto next;
-                  }
-               }
-            break;
-#        endif
-            case U_MULTICHAR_CONSTANT32('C','o','n','t'):
-               {
-               if (u_get_unalignedp32(p+7) == U_MULTICHAR_CONSTANT32('-','T','y','p')) goto set_content_type;
-               if (u_get_unalignedp32(p+7) == U_MULTICHAR_CONSTANT32('-','L','e','n')) goto set_content_length;
-               }
-            break;
-            case U_MULTICHAR_CONSTANT32('C','o','n','n'):
-               {
-               if (u_get_unalignedp32(ptr+pos1) == U_MULTICHAR_CONSTANT32('c','l','o','s'))
-                  {
-                  UClientImage_Base::setCloseConnection();
-
-                  goto next;
-                  }
-
-               if (u_get_unalignedp32(ptr+pos1) == U_MULTICHAR_CONSTANT32('k','e','e','p') ||
-                   u_get_unalignedp32(ptr+pos1) == U_MULTICHAR_CONSTANT32('K','e','e','p'))
-                  {
-                  goto set_connection_kalive;
-                  }
-
-               /*
-               if (u_get_unalignedp32(ptr+pos1) == U_MULTICHAR_CONSTANT32('u','p','g','r') ||
-                   u_get_unalignedp32(ptr+pos1) == U_MULTICHAR_CONSTANT32('U','p','g','r'))
-                  {
-                  goto set_connection_upgrade;
-                  }
-               */
-               }
-            break;
-#        ifdef USE_LIBZ
-            case U_MULTICHAR_CONSTANT32('A','c','c','e'):
-               {
-               if (u_get_unalignedp32(p+6) == U_MULTICHAR_CONSTANT32('-','E','n','c')) goto set_accept_encoding;
-               if (u_get_unalignedp32(p+6) == U_MULTICHAR_CONSTANT32('-','L','a','n')) goto set_accept_language;
-
-               goto set_accept;
-               }
-         // break; // it is intentional...
-#        endif
-            case U_MULTICHAR_CONSTANT32('C','o','o','k'): goto set_cookie;
-            case U_MULTICHAR_CONSTANT32('H','o','s','t'): goto set_hostname;
-            case U_MULTICHAR_CONSTANT32('U','s','e','r'): goto set_user_agent;
-            case U_MULTICHAR_CONSTANT32('u','p','g','r'):
-            case U_MULTICHAR_CONSTANT32('U','p','g','r'): goto set_upgrade;
-            case U_MULTICHAR_CONSTANT32('I','f','-','M'): goto set_if_mod_since;
-#        ifndef U_LOG_DISABLE
-            case U_MULTICHAR_CONSTANT32('R','e','f','e'): goto set_referer;
-            case U_MULTICHAR_CONSTANT32('X','-','F','o'): goto set_x_forwarded_for;
-            case U_MULTICHAR_CONSTANT32('X','-','R','e'): goto set_x_real_ip;
-            case U_MULTICHAR_CONSTANT32('X','-','H','t'): goto set_x_http_forward_for;
-#        endif
-            }
-
-         ++p;
-
-         switch (u__toupper(c))
-            {
-            case 'C':
-               {
-               if (memcmp(p, U_CONSTANT_TO_PARAM("ontent-")) == 0)
-                  {
-                  p1 = p+8;
-                  c1 = u__toupper(*(p1-1));
-
-                  if (c1 == 'T' &&
-                      memcmp(p1, U_CONSTANT_TO_PARAM("ype")) == 0)
-                     {
-set_content_type:    U_http_content_type_len  = pos2-pos1;
-                     U_http_info.content_type =  ptr+pos1;
-
-                     U_INTERNAL_DUMP("Content-Type(%u): = %.*S", U_http_content_type_len, U_HTTP_CTYPE_TO_TRACE)
-                     }
-                  else if (c1 == 'L' &&
-                           memcmp(p1, U_CONSTANT_TO_PARAM("ength")) == 0)
-                     {
-set_content_length:  U_http_info.clength = (uint32_t) strtoul(ptr+pos1, 0, 10);
-
-                     U_INTERNAL_DUMP("Content-Length: = %.*S U_http_info.clength = %u", 10, ptr+pos1, U_http_info.clength)
-                     }
-                  }
-               else if (memcmp(p, U_CONSTANT_TO_PARAM("onnection")) == 0)
-                  {
-                  p1 = ptr+pos1;
-
-                  U_INTERNAL_DUMP("Connection: = %.*S", pos2-pos1, p1)
-
-                  c1 = u__toupper(*p1);
-
-                  if (c1 == 'C')
-                     {
-                     if (u__strncasecmp(p1+1, U_CONSTANT_TO_PARAM("lose")) == 0) UClientImage_Base::setCloseConnection();
-                     }
-                  else if (c1 == 'K')
-                     {
-                     if (u__strncasecmp(p1+1, U_CONSTANT_TO_PARAM("eep-alive")) == 0)
-                        {
-set_connection_kalive:  U_http_flag |= HTTP_IS_KEEP_ALIVE;
-
-                        U_INTERNAL_DUMP("U_http_keep_alive = %b", U_http_keep_alive)
-                        }
-                     }
-                  /*
-                  else if (c1 == 'U')
-                     {
-                     if (u__strncasecmp(p1+1, U_CONSTANT_TO_PARAM("pgrade")) == 0)
-                        {
-set_connection_upgrade: 
-                        }
-                     }
-                  */
-                  }
-               else if (memcmp(p, U_CONSTANT_TO_PARAM("ookie")) == 0)
-                  {
-                  U_INTERNAL_ASSERT_DIFFERS(p[5], '2') // "Cookie2"
-
-set_cookie:       U_http_info.cookie     =  ptr+pos1;
-                  U_http_info.cookie_len = pos2-pos1;
-
-                  U_INTERNAL_DUMP("Cookie(%u): = %.*S", U_http_info.cookie_len, U_HTTP_COOKIE_TO_TRACE)
-                  }
-               }
-            break;
-
-#        ifdef USE_LIBZ
-            case 'A':
-               {
-               if (memcmp(p, U_CONSTANT_TO_PARAM("ccept")) == 0)
-                  {
-                  if (p[5] == '-')
-                     {
-                     p1 = p+7;
-                     c1 = u__toupper(*(p1-1));
-
-                     if (c1 == 'E' &&
-                         memcmp(p1, U_CONSTANT_TO_PARAM("ncoding")) == 0)
-                        {
-set_accept_encoding:    p1 = ptr+pos1;
-
-                        U_INTERNAL_DUMP("Accept-Encoding: = %.*S", pos2-pos1, p1)
-
-                        const char* p2 = (u_get_unalignedp32(p1) == U_MULTICHAR_CONSTANT32('g','z','i','p')
-                                       ?                     p1
-                                       : (const char*)u_find(p1, 30, U_CONSTANT_TO_PARAM("gzip")));
-
-                        if (                   p2 &&
-                            u_get_unalignedp32(p2) != U_MULTICHAR_CONSTANT32(';','q','=','0'))
-                           {
-                           U_http_flag |= HTTP_IS_ACCEPT_GZIP;
-
-                           U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
-                           }
-                        }
-                     else if (c1 == 'L' &&
-                              memcmp(p1, U_CONSTANT_TO_PARAM("anguage")) == 0)
-                        {
-set_accept_language:    U_http_accept_language_len  = pos2-pos1;
-                        U_http_info.accept_language =  ptr+pos1;
-
-                        U_INTERNAL_DUMP("Accept-Language: = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
-                        }
-                     }
-                  else
-                     {
-set_accept:          U_http_info.accept =  ptr+pos1;
-                     U_http_accept_len  = pos2-pos1;
-
-                     U_INTERNAL_DUMP("Accept: = %.*S", U_HTTP_ACCEPT_TO_TRACE)
-                     }
-                  }
-               }
-            break;
-#        endif
-
-            case 'H':
-               {
-               if (memcmp(p, U_CONSTANT_TO_PARAM("ost")) == 0 ||
-                   (u__toupper(p[0]) == 'O'                   &&
-                    u__toupper(p[1]) == 'S'                   &&
-                    u__toupper(p[2]) == 'T'))
-                  {
-set_hostname:     setHostname(ptr+pos1, pos2-pos1);
-                  }
-               }
-            break;
-
-            case 'U':
-               {
-               if (u__toupper(p[4]) == 'A'                                            &&
-                   u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('s','e','r','-') &&
-                   u_get_unalignedp32(p+5) == U_MULTICHAR_CONSTANT32('g','e','n','t'))
-                  {
-set_user_agent:   U_http_info.user_agent     =  ptr+pos1;
-                  U_http_info.user_agent_len = pos2-pos1;
-
-                  U_INTERNAL_DUMP("User-Agent: = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
-                  }
-               else if (memcmp(p, U_CONSTANT_TO_PARAM("pgrade")) == 0)
-                  {
-set_upgrade:      p1 = ptr+pos1;
-
-                  U_INTERNAL_DUMP("Upgrade: = %.*S", pos2-pos1, p1)
-
-                  if (u_get_unalignedp16(p1) != U_MULTICHAR_CONSTANT16('h','2') &&
-                          u__strncasecmp(p1, U_CONSTANT_TO_PARAM("websocket")) == 0)
-                     {
-                     U_http_flag |= HTTP_IS_REQUEST_NOSTAT;
-
-                     U_INTERNAL_DUMP("U_http_websocket_len = %u U_http_is_request_nostat = %b", U_http_websocket_len, U_http_is_request_nostat)
-                     }
-                  }
-               }
-            break;
-
-            case 'I': // If-Modified-Since
-               {
-               if (u__toupper(p[2])  == 'M'                                                            &&
-                   u__toupper(p[11]) == 'S'                                                            &&
-                   u_get_unalignedp16(p)    == U_MULTICHAR_CONSTANT16('f','-')                         &&
-                   u_get_unalignedp64(p+3)  == U_MULTICHAR_CONSTANT64('o','d','i','f','i','e','d','-') &&
-                   u_get_unalignedp32(p+12) == U_MULTICHAR_CONSTANT32('i','n','c','e'))
-                  {
-set_if_mod_since: U_http_info.if_modified_since = UTimeDate::getSecondFromTime(ptr+pos1, true);
-
-                  U_INTERNAL_DUMP("If-Modified-Since = %u", U_http_info.if_modified_since)
-                  }
-               }
-            break;
-
-            case 'R':
-               {
-               if (u_get_unalignedp32(p)          == U_MULTICHAR_CONSTANT32('a','n','g','e') &&
-                   u_get_unalignedp32(ptr+pos1)   == U_MULTICHAR_CONSTANT32('b','y','t','e') &&
-                   u_get_unalignedp16(ptr+pos1+4) == U_MULTICHAR_CONSTANT16('s','='))
-                  {
-set_range:        U_http_info.range =  ptr+pos1+U_CONSTANT_SIZE("bytes=");
-                  U_http_range_len  = pos2-pos1-U_CONSTANT_SIZE("bytes=");
-
-                  U_INTERNAL_DUMP("Range = %.*S", U_HTTP_RANGE_TO_TRACE)
-                  }
-#           ifndef U_LOG_DISABLE
-               if (u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('e','f','e','r') &&
-                   u_get_unalignedp16(p+4) == U_MULTICHAR_CONSTANT16('e','r'))
-                  {
-set_referer:      U_http_info.referer     =  ptr+pos1;
-                  U_http_info.referer_len = pos2-pos1;
-
-                  U_INTERNAL_DUMP("Referer(%u): = %.*S", U_http_info.referer_len, U_HTTP_REFERER_TO_TRACE)
-                  }
-#           endif
-               }
-            break;
-
-#        ifndef U_LOG_DISABLE
-            case 'X':
-               {
-               if (p[0] == '-')
-                  {
-                  c1 = u__toupper(p[1]);
-
-                  // TODO: check of CLIENT-IP, WEBPROXY-REMOTE-ADDR, FORWARDED...
-
-                  if (c1 == 'F') // "X-Forwarded-For"
-                     {
-                     if (u__toupper(p[11]) == 'F'                            &&
-                         memcmp(p+2,  U_CONSTANT_TO_PARAM("orwarded-")) == 0 &&
-                         u_get_unalignedp16(p+12) == U_MULTICHAR_CONSTANT16('o','r'))
-                        {
-set_x_forwarded_for:    U_http_info.ip_client =  ptr+pos1;
-                        U_http_ip_client_len  = pos2-pos1;
-
-                        U_INTERNAL_DUMP("X-Forwarded-For: = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
-                        }
-                     }
-                  else if (c1 == 'R') // "X-Real-IP"
-                     {
-                     if (u__toupper(p[6]) == 'I' &&
-                         u__toupper(p[7]) == 'P' &&
-                         u_get_unalignedp32(p+2) == U_MULTICHAR_CONSTANT32('e','a','l','-'))
-                        {
-set_x_real_ip:          U_http_info.ip_client =  ptr+pos1;
-                        U_http_ip_client_len  = pos2-pos1;
-
-                        U_INTERNAL_DUMP("X-Real-IP: = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
-                        }
-                     }
-                  else if (c1 == 'H') // "X-Http-X-Forwarded-For"
-                     {
-                     if (u__toupper(p[2])  == 'T'                            &&
-                         u__toupper(p[3])  == 'T'                            &&
-                         u__toupper(p[4])  == 'P'                            &&
-                         u__toupper(p[18]) == 'F'                            &&
-                         memcmp(p+9,  U_CONSTANT_TO_PARAM("orwarded-")) == 0 &&
-                         u_get_unalignedp16(p+19) == U_MULTICHAR_CONSTANT16('o','r'))
-                        {
-set_x_http_forward_for: U_http_info.ip_client =  ptr+pos1;
-                        U_http_ip_client_len  = pos2-pos1;
-
-                        U_INTERNAL_DUMP("X-Http-X-Forwarded-For: = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
-                        }
-                     }
-
-                  if (U_http_ip_client_len)
-                     {
-                     uint32_t n = 0;
-
-                     p1 = U_http_info.ip_client;
-
-                     do {
-                        if (u__islitem(p1[n])) break;
-                        }
-                     while (++n < (uint32_t)U_http_ip_client_len);
-
-                     U_INTERNAL_DUMP("ip_client = %.*S", n, U_http_info.ip_client)
-
-                     if (u_isIPAddr(UClientImage_Base::bIPv6, U_http_info.ip_client, n))
-                        {
-                        U_INTERNAL_ASSERT_MINOR(n, U_INET_ADDRSTRLEN)
-                        U_INTERNAL_ASSERT_EQUALS(UServer_Base::client_address, UServer_Base::csocket->cRemoteAddress.pcStrAddress)
-
-                        U_MEMCPY(UServer_Base::client_address, U_http_info.ip_client, n);
-
-                        UServer_Base::client_address[(UServer_Base::client_address_len = n)] = '\0';
-
-                        U_INTERNAL_DUMP("UServer_Base::client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
-                        }
-                     }
-                  }
-               }
-            break;
-#        endif
-            }
          }
 
-next:
-      U_INTERNAL_DUMP("char (after cr/newline) = %C U_http_version = %C U_ClientImage_data_missing = %b", pn[2], U_http_version, U_ClientImage_data_missing)
+      SET_POINTER_CHECK_REQUEST_FOR_HEADER
+
+      switch (u__toupper(*p++))
+         {
+         case 'C':
+            {
+            if (memcmp(p, U_CONSTANT_TO_PARAM("ontent-")) == 0)
+               {
+               p1 = p+8;
+               c  = u__toupper(*(p1-1));
+
+               if (c == 'T' &&
+                   memcmp(p1, U_CONSTANT_TO_PARAM("ype")) == 0)
+                  {
+                  setContentType(ptr1, pn-ptr1);
+                  }
+               else if (c == 'L' &&
+                        memcmp(p1, U_CONSTANT_TO_PARAM("ength")) == 0)
+                  {
+                  setContentLength(ptr1, pn);
+                  }
+               }
+            else if (memcmp(p, U_CONSTANT_TO_PARAM("onnection")) == 0)
+               {
+               setConnection(ptr1);
+               }
+            else if (memcmp(p, U_CONSTANT_TO_PARAM("ookie")) == 0)
+               {
+               U_INTERNAL_ASSERT_DIFFERS(p[5], '2') // "Cookie2"
+
+               setCookie(ptr1, pn-ptr1);
+               }
+            }
+         break;
+
+         case 'A':
+            {
+            if (memcmp(p, U_CONSTANT_TO_PARAM("ccept")) == 0)
+               {
+               if (p[5] == '-')
+                  {
+                  p1 = p+7;
+                  c  = u__toupper(*(p1-1));
+
+                  if (c == 'E' &&
+                      memcmp(p1, U_CONSTANT_TO_PARAM("ncoding")) == 0)
+                     {
+                     U_INTERNAL_DUMP("Accept-Encoding: = %.*S", pn-ptr1, ptr1)
+
+                     setAcceptEncoding(ptr1);
+                     }
+                  else if (c == 'L' &&
+                           memcmp(ptr1, U_CONSTANT_TO_PARAM("anguage")) == 0)
+                     {
+                     setAcceptLanguage(ptr1, pn-ptr1);
+                     }
+                  }
+               else
+                  {
+                  setAccept(ptr1, pn-ptr1);
+                  }
+               }
+            }
+         break;
+
+         case 'H':
+            {
+            if (memcmp(p, U_CONSTANT_TO_PARAM("ost")) == 0 ||
+                (u__toupper(p[0]) == 'O'                   &&
+                 u__toupper(p[1]) == 'S'                   &&
+                 u__toupper(p[2]) == 'T'))
+               {
+               setHostname(ptr1, pn-ptr1);
+               }
+            }
+         break;
+
+         case 'U':
+            {
+            if (u__toupper(p[4]) == 'A'                                            &&
+                u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('s','e','r','-') &&
+                u_get_unalignedp32(p+5) == U_MULTICHAR_CONSTANT32('g','e','n','t'))
+               {
+               setUserAgent(ptr1, pn-ptr1);
+               }
+            else if (memcmp(p, U_CONSTANT_TO_PARAM("pgrade")) == 0)
+               {
+               U_INTERNAL_DUMP("Upgrade: = %.*S", pn-ptr1, ptr1)
+
+               setUpgrade(ptr1);
+               }
+            }
+         break;
+
+         case 'I': // If-Modified-Since
+            {
+            if (u__toupper(p[2])  == 'M'                                                            &&
+                u__toupper(p[11]) == 'S'                                                            &&
+                u_get_unalignedp16(p)    == U_MULTICHAR_CONSTANT16('f','-')                         &&
+                u_get_unalignedp64(p+3)  == U_MULTICHAR_CONSTANT64('o','d','i','f','i','e','d','-') &&
+                u_get_unalignedp32(p+12) == U_MULTICHAR_CONSTANT32('i','n','c','e'))
+               {
+               setIfModSince(ptr1);
+               }
+            }
+         break;
+
+         case 'R':
+            {
+            if (u_get_unalignedp32(p)      == U_MULTICHAR_CONSTANT32('a','n','g','e') &&
+                u_get_unalignedp32(ptr1)   == U_MULTICHAR_CONSTANT32('b','y','t','e') &&
+                u_get_unalignedp16(ptr1+4) == U_MULTICHAR_CONSTANT16('s','='))
+               {
+               setRange(ptr1+U_CONSTANT_SIZE("bytes="), pn-ptr1-U_CONSTANT_SIZE("bytes="));
+               }
+            else if (u_get_unalignedp32(p)   == U_MULTICHAR_CONSTANT32('e','f','e','r') &&
+                     u_get_unalignedp16(p+4) == U_MULTICHAR_CONSTANT16('e','r'))
+               {
+               setReferer(ptr1, pn-ptr1);
+               }
+            }
+         break;
+
+#     ifndef U_LOG_DISABLE
+         case 'X':
+            {
+            if (p[0] == '-')
+               {
+               c = u__toupper(p[1]);
+
+               // TODO: check of CLIENT-IP, WEBPROXY-REMOTE-ADDR, FORWARDED...
+
+               if (c == 'F') // "X-Forwarded-For"
+                  {
+                  if (u__toupper(p[11]) == 'F'                            &&
+                      memcmp(p+2,  U_CONSTANT_TO_PARAM("orwarded-")) == 0 &&
+                      u_get_unalignedp16(p+12) == U_MULTICHAR_CONSTANT16('o','r'))
+                     {
+                     setXForwardedFor(ptr1, pn-ptr1);
+                     }
+                  }
+               else if (c == 'R') // "X-Real-IP"
+                  {
+                  if (u__toupper(p[6]) == 'I' &&
+                      u__toupper(p[7]) == 'P' &&
+                      u_get_unalignedp32(p+2) == U_MULTICHAR_CONSTANT32('e','a','l','-'))
+                     {
+                     setXRealIP(ptr1, pn-ptr1);
+                     }
+                  }
+               else if (c == 'H') // "X-Http-X-Forwarded-For"
+                  {
+                  if (u__toupper(p[2])  == 'T'                            &&
+                      u__toupper(p[3])  == 'T'                            &&
+                      u__toupper(p[4])  == 'P'                            &&
+                      u__toupper(p[18]) == 'F'                            &&
+                      memcmp(p+9,  U_CONSTANT_TO_PARAM("orwarded-")) == 0 &&
+                      u_get_unalignedp16(p+19) == U_MULTICHAR_CONSTANT16('o','r'))
+                     {
+                     setXHttpForwardedFor(ptr1, pn-ptr1);
+                     }
+                  }
+               }
+            }
+         break;
+#     endif
+         }
+
+next: U_INTERNAL_DUMP("char (after cr/newline) = %C U_http_version = %C U_ClientImage_data_missing = %b", pn[2], U_http_version, U_ClientImage_data_missing)
 
       if (U_http_info.endHeader == 0 &&
           u_get_unalignedp32(pn) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n'))
          {
-         uint32_t pos = pn-ptr;
-
-         U_http_info.endHeader = pos + U_CONSTANT_SIZE(U_CRLF2); // NB: U_http_info.endHeader includes also the blank line...
+         U_http_info.endHeader = pn-ptr + U_CONSTANT_SIZE(U_CRLF2); // NB: U_http_info.endHeader includes also the blank line...
 
          U_INTERNAL_DUMP("endHeader(%u) = %.20S", U_http_info.endHeader, ptr+U_http_info.endHeader)
 
@@ -4806,9 +5076,15 @@ void UHTTP::initSessionSSL()
        * be explicitly freed with SSL_SESSION_free(3)
        */
 
-      U_SYSCALL_VOID(SSL_CTX_sess_set_new_cb,    "%p,%p", USSLSocket::sctx, USSLSession::newSession);
-      U_SYSCALL_VOID(SSL_CTX_sess_set_get_cb,    "%p,%p", USSLSocket::sctx, USSLSession::getSession);
-      U_SYSCALL_VOID(SSL_CTX_sess_set_remove_cb, "%p,%p", USSLSocket::sctx, USSLSession::removeSession);
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+typedef SSL_SESSION* (*psPFpspcipi) (SSL*,      unsigned char*,int,int*);
+#else
+typedef SSL_SESSION* (*psPFpspcipi) (SSL*,const unsigned char*,int,int*);
+#endif
+
+      U_SYSCALL_VOID(SSL_CTX_sess_set_new_cb,    "%p,%p", USSLSocket::sctx,              USSLSession::newSession);
+      U_SYSCALL_VOID(SSL_CTX_sess_set_get_cb,    "%p,%p", USSLSocket::sctx, (psPFpspcipi)USSLSession::getSession);
+      U_SYSCALL_VOID(SSL_CTX_sess_set_remove_cb, "%p,%p", USSLSocket::sctx,              USSLSession::removeSession);
 
       // NB: All currently supported protocols have the same default timeout value of 300 seconds
       // ----------------------------------------------------------------------------------------

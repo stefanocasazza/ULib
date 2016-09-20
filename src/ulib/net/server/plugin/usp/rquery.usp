@@ -29,7 +29,7 @@ static void usp_fork_rquery()
    U_NEW(UVector<World*>, pvworld_query, UVector<World*>(500));
 
 #ifndef AS_cpoll_cppsp_DO
-   U_NEW(UValue, pvalue, UValue(ARRAY_VALUE));
+   U_NEW(UValue, pvalue, UValue);
 #endif
 }
 

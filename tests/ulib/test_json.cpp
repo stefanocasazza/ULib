@@ -104,8 +104,8 @@ static void testVector()
    U_TRACE(5, "testVector()")
 
    bool ok;
+   UValue json_vec;
    UVector<UString> y;
-   UValue json_vec(ARRAY_VALUE);
    UString result, vecJson = U_STRING_FROM_CONSTANT("[\"riga 1\",\"riga 2\",\"riga 3\",\"riga 4\"]");
 
    ok = JSON_parse(vecJson, y);
@@ -146,8 +146,8 @@ static void testMap()
    U_TRACE(5, "testMap()")
 
    bool ok;
+   UValue json_obj;
    UHashMap<UString> x;
-   UValue json_obj(OBJECT_VALUE);
    UString result, mapJson = U_STRING_FROM_CONSTANT("{\"key1\":\"riga 1\",\"key2\":\"riga 2\",\"key3\":\"riga 3\",\"key4\":\"riga 4\"}");
 
    ok = JSON_parse(mapJson, x);
@@ -189,7 +189,7 @@ static void testObject()
 
    bool ok;
    Request request;
-   UValue json_obj(OBJECT_VALUE);
+   UValue json_obj;
    UString result, reqJson = U_STRING_FROM_CONSTANT("{\"token\":\"A619828KAIJ6D3\",\"type\":\"localesData\",\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\"}");
 
    ok = JSON_parse(reqJson, request);
@@ -227,7 +227,7 @@ U_EXPORT main (int argc, char* argv[])
    U_TRACE(5, "main(%d)", argc)
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11) && defined(U_COMPILER_RANGE_FOR)
-   UValue json_vec(ARRAY_VALUE);
+   UValue json_vec;
    std::vector<unsigned int> v = {0, 1, 2, 3, 4, 5};
    UString vecJson = U_STRING_FROM_CONSTANT("[0,1,2,3,4,5]");
 

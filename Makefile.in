@@ -90,7 +90,7 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @PLUGIN_TRUE@am__append_1 = src/ulib/net/server/plugin src/ulib/orm/driver
-@ENABLE_EXAMPLES_TRUE@am__append_2 = examples contrib
+@ENABLE_EXAMPLES_TRUE@am__append_2 = examples
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -449,7 +449,7 @@ EXTRA_DIST = cdb configure.help TODO LICENSE* README* *.spec* \
 MAINTAINERCLEANFILES = configure aclocal.m4 libtool Makefile.in Makefile INSTALL
 moduledir = @ULIB_MODULEDIR@
 SUBDIRS = include src/ulib $(am__append_1) $(am__append_2) tests
-DIST_SUBDIRS = include src/ulib src/ulib/net/server/plugin src/ulib/orm/driver m4 doc contrib examples tests
+DIST_SUBDIRS = include src/ulib src/ulib/net/server/plugin src/ulib/orm/driver m4 doc examples tests contrib
 aclocaldir = $(datadir)/aclocal
 aclocal_DATA = ULib.m4
 all: all-recursive

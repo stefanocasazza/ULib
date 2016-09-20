@@ -26,12 +26,9 @@ static void check(const UString& dati_cert, const UString& dati_ca)
         << c.getVersionNumber()     << '\n'           
         << c.getSerialNumber()      << '\n' 
         << c.hashCode()             << '\n' 
-        << c.getSignatureAlgorithm()<< '\n' 
         << c.getNotBefore()         << '\n' 
         << c.getNotAfter()          << '\n' 
         << c.checkValidity()        << '\n'
-   //   << c.getSignature()         << '\n' 
-   //   << c.getSignable()          << '\n' 
         << vec1                     << '\n'
         << vec2                     << '\n';
 

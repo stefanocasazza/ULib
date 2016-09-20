@@ -239,32 +239,7 @@ public:
       *upload_dir = dir;
       }
 
-   static void setHostname(const char* ptr, uint32_t len)
-      {
-      U_TRACE(0, "UHTTP::setHostname(%.*S,%u)", len, ptr, len)
-
-      // The difference between HTTP_HOST and U_HTTP_VHOST is that HTTP_HOST can include the «:PORT» text, and U_HTTP_VHOST only the name
-
-      U_http_host_len  =
-      U_http_host_vlen = len;
-      U_http_info.host = ptr;
-
-      U_INTERNAL_DUMP("U_http_host_len = %u U_HTTP_HOST = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
-
-      // hostname[:port]
-
-      for (const char* endptr = ptr+len; ptr < endptr; ++ptr)
-         {
-         if (*ptr == ':')
-            {
-            U_http_host_vlen = ptr-U_http_info.host;
-
-            break;
-            }
-         }
-
-      U_INTERNAL_DUMP("U_http_host_vlen = %u U_HTTP_VHOST = %.*S", U_http_host_vlen, U_HTTP_VHOST_TO_TRACE)
-      }
+   static void setHostname(const char* ptr, uint32_t len);
 
    static const char* getStatusDescription(uint32_t* plen = 0);
 
@@ -1065,6 +1040,7 @@ private:
 
    static void checkPath() U_NO_EXPORT;
    static bool callService() U_NO_EXPORT;
+   static void checkIPClient() U_NO_EXPORT;
    static bool runDynamicPage() U_NO_EXPORT;
    static bool readBodyRequest() U_NO_EXPORT;
    static bool processFileCache() U_NO_EXPORT;
@@ -1090,6 +1066,23 @@ private:
    static bool checkDataSession(const UString& token, time_t expire) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
+
+   static inline void setUpgrade(const char* ptr) U_NO_EXPORT;
+   static inline void setIfModSince(const char* ptr) U_NO_EXPORT;
+   static inline void setConnection(const char* ptr) U_NO_EXPORT;
+   static inline void setAcceptEncoding(const char* ptr) U_NO_EXPORT;
+   static inline void setContentLength(const char* ptr1, const char* ptr2) U_NO_EXPORT;
+
+   static inline void setRange(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setCookie(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setUserAgent(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setAccept(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setReferer(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setXRealIP(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setContentType(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setAcceptLanguage(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setXForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
+   static inline void setXHttpForwardedFor(const char* ptr, uint32_t len) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UHTTP)
 

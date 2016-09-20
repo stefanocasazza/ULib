@@ -39,7 +39,7 @@ check_for_netcat
 CAPATH="../ulib/CA/CApath"
 CACERT="../ulib/CA/username.crt"
 USER_KEY="../ulib/CA/username.key"
-LCMD="$OPENSSL s_client -no_ssl2 -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -verify 0 -connect"
+LCMD="$OPENSSL s_client -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -connect"
 LCMD1="$LCMD localhost:4443"
 
 # function : start_test

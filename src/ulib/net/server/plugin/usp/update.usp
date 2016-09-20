@@ -41,7 +41,7 @@ static void usp_fork_update()
       pstmt2->use( pworld_update->randomNumber, pworld_update->id);
 
 #  ifndef AS_cpoll_cppsp_DO
-      U_NEW(UValue, pvalue, UValue(ARRAY_VALUE));
+      U_NEW(UValue, pvalue, UValue);
       U_NEW(UVector<World*>, pvworld_update, UVector<World*>(500));
 #  endif
       }

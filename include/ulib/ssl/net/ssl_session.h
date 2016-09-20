@@ -53,8 +53,9 @@ public:
 private:
    static SSL_SESSION* sess;
 
-   static int          newSession(SSL* ssl,     SSL_SESSION* sess);
-   static void      removeSession(SSL_CTX* ctx, SSL_SESSION* sess);
+   static int     newSession(SSL* ssl,     SSL_SESSION* sess);
+   static void removeSession(SSL_CTX* ctx, SSL_SESSION* sess);
+
    static SSL_SESSION* getSession(SSL* ssl, unsigned char* id, int len, int* copy);
 
    U_DISALLOW_COPY_AND_ASSIGN(USSLSession)

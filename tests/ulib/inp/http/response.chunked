@@ -17,9 +17,11 @@ Cache-control:no-cache
 <HTML>
  <HEAD><TITLE>chunked</TITLE></HEAD>
 
-27
+27; ignore-stuff-here
  <BODY><H1>chunked</H1></BODY>
 </HTML>
 
 0
+some-footer: some-value
+another-footer: another-value
 

@@ -380,7 +380,12 @@ if (USP_JFIND_REQUEST("type", type))
       }
    else if (type.equal(U_CONSTANT_TO_PARAM("cells")))
       {
+      BusinessCell* pcell;
       ResponseCells response;
+
+      U_NEW(BusinessCell, pcell, BusinessCell);
+
+      response.businesses.push_back(pcell);
 
       USP_JSON_OBJ_stringify(ResponseCells, response);
       }

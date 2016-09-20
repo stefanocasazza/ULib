@@ -35,6 +35,7 @@ SERVER_KEY="CA/server.key"
 SERVER_CERT="CA/server.crt"
 #fi
 
+#STRACE=$TRUSS
 start_prg_background ssl_server "$SERVER_CERT" "$SERVER_KEY" "caciucco" "$CACERT" "$CAPATH" 1 ../../src/ulib/net/server/plugin/.libs echo
 
 $SLEEP

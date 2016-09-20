@@ -13,12 +13,9 @@ static void check(UString& dati, const char* file)
 
    UPKCS10 c(dati);
 
-   cout << c                        << "\n"
-        << c.getSubject()           << "\n"
-        << c.getVersionNumber()     << "\n"           
-   //   << c.getSignature()         << "\n" 
-   //   << c.getSignable()          << "\n" 
-        << c.getSignatureAlgorithm();
+   cout << c                    << "\n"
+        << c.getSubject()       << "\n"
+        << c.getVersionNumber() << "\n";
 
    UString encoded = c.getEncoded("PEM");
 

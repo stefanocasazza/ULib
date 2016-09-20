@@ -188,7 +188,7 @@ using namespace std;
 // Init library
 
 U_EXPORT void ULib_init();
-#ifdef USE_LIBSSL
+#if defined(USE_LIBSSL) && OPENSSL_VERSION_NUMBER < 0x10100000L
 U_EXPORT void ULib_init_openssl();
 #endif
 

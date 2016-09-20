@@ -43,7 +43,7 @@ define Package/nodog/conffiles
 endef
 
 NODOG_OPTIONS:= --disable-examples \
-					 --with-ssl --with-libz \
+					 --with-ssl --with-libz --with-libtdb \
 					 --without-expat --without-magic --without-pcre \
 					 --disable-static --disable-new-ldflags --disable-zip --disable-LFS \
 					 --enable-log --enable-captive-portal --enable-static-server-plugin="nocat http" \

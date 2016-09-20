@@ -1006,8 +1006,6 @@ public:
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
 
-      U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
-
       json.type_ = STRING_VALUE;
 
       U_INTERNAL_DUMP("pval(%p) = %V", pval, pval)
@@ -1040,8 +1038,6 @@ public:
       U_TRACE(0, "UJsonTypeHandler<UString>::toJSON(%p)", &json)
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
-
-      U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
 
       json.type_ = STRING_VALUE;
 
@@ -1082,8 +1078,6 @@ public:
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
 
-      U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
-
       json.type_ = ARRAY_VALUE;
 
       uvector* pvec = (uvector*)pval;
@@ -1107,8 +1101,6 @@ public:
       U_TRACE(0, "UJsonTypeHandler<uvector>::fromJSON(%p)", &json)
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
-
-      U_ASSERT(json.isArrayOrObject())
 
       for (UValue* child = json.children.head; child; child = child->next)
          {
@@ -1137,8 +1129,6 @@ public:
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
 
-      U_ASSERT(json.isArrayOrObject())
-
       for (UValue* child = json.children.head; child; child = child->next)
          {
          UString elem;
@@ -1161,8 +1151,6 @@ public:
       U_TRACE(0, "UJsonTypeHandler<uhashmap>::toJSON(%p)", &json)
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
-
-      U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
 
       json.type_ = OBJECT_VALUE;
 
@@ -1201,8 +1189,6 @@ public:
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
 
-      U_ASSERT(json.isObject())
-
       uhashmap* pmap = (uhashmap*)pval;
 
       for (UValue* child = json.children.head; child; child = child->next)
@@ -1236,8 +1222,6 @@ public:
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
 
-      U_ASSERT(json.isObject())
-
       uhashmap* pmap = (uhashmap*)pval;
 
       for (UValue* child = json.children.head; child; child = child->next)
@@ -1269,8 +1253,6 @@ public:
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
 
-      U_INTERNAL_ASSERT_EQUALS(json.type_, NULL_VALUE)
-
       json.type_ = ARRAY_VALUE;
 
       stdvector* pvec = (stdvector*)pval;
@@ -1292,8 +1274,6 @@ public:
       U_TRACE(0, "UJsonTypeHandler<stdvector>::fromJSON(%p)", &json)
 
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
-
-      U_ASSERT(json.isArrayOrObject())
 
       for (UValue* child = json.children.head; child; child = child->next)
          {

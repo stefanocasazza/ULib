@@ -540,7 +540,9 @@ ENGINE* UServices::loadEngine(const char* id, unsigned int flags)
 {
    U_TRACE(1, "UServices::loadEngine(%S,%u)", id, flags)
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
    U_SYSCALL_VOID_NO_PARAM(ENGINE_load_dynamic);
+#endif
 
    ENGINE* e = (ENGINE*) U_SYSCALL(ENGINE_by_id, "%S", id);
 
@@ -553,7 +555,7 @@ ENGINE* UServices::loadEngine(const char* id, unsigned int flags)
       e = 0;
       }
 
-   U_RETURN_POINTER(e,ENGINE);
+   U_RETURN_POINTER(e, ENGINE);
 }
 
 void UServices::releaseEngine(ENGINE* e, bool bkey)

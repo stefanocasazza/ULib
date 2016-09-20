@@ -27,6 +27,10 @@
 
 #include <openssl/pem.h>
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#  define ASN1_STRING_data ASN1_STRING_get0_data
+#endif
+
 bool                    UCertificate::verify_result;
 X509_STORE_CTX*         UCertificate::csc;
 UVector<UCertificate*>* UCertificate::vcert;
@@ -174,27 +178,6 @@ bool UCertificate::isSameIssuerAndSubject() const
    U_RETURN(false);
 }
 
-UString UCertificate::getSignable(X509* _x509)
-{
-   U_TRACE(1, "UCertificate::getSignable(%p)", _x509)
-
-   U_INTERNAL_ASSERT_POINTER(_x509)
-
-   unsigned len = U_SYSCALL(i2d_X509_CINF, "%p,%p", _x509->cert_info, 0);
-
-   UString signable(len);
-
-   unsigned char* data = (unsigned char*) signable.data();
-
-   (void) U_SYSCALL(i2d_X509_CINF, "%p,%p", _x509->cert_info, &data);
-
-// len = u__strlen(data, __PRETTY_FUNCTION__);
-
-   signable.size_adjust(len);
-
-   U_RETURN_STRING(signable);
-}
-
 UString UCertificate::checkForSerialNumber(long number)
 {
    U_TRACE(1, "UCertificate::checkForSerialNumber(%ld)", number)
@@ -313,48 +296,6 @@ unsigned UCertificate::getSignerCertificates(UVector<UCertificate*>& vec, STACK_
    unsigned result = vec.size() - l;
 
    U_RETURN(result);
-}
-
-// Gets X509v3 extensions as array of X509Ext objects
-
-int UCertificate::getExtensions(UHashMap<UString>& table) const
-{
-   U_TRACE(1, "UCertificate::getExtensions(%p)", &table)
-
-   U_INTERNAL_ASSERT_POINTER(x509)
-
-   int count = U_SYSCALL(X509_get_ext_count, "%p", x509);
-
-   if (count > 0)
-      {
-      UString key, str;
-      char buffer[4096];
-
-      BIO* out = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
-
-      for (int i = 0; i < count; ++i)
-         {
-         X509_EXTENSION* ext = X509_get_ext(x509, i); /* NO DUP - don't free! */
-
-         U_INTERNAL_ASSERT_POINTER(ext)
-
-         key.assign(OBJ_nid2ln(OBJ_obj2nid(ext->object)));
-
-         if (!X509V3_EXT_print(out, ext, 0, 0)) M_ASN1_OCTET_STRING_print(out, ext->value);
-
-         int len = BIO_read(out, buffer, sizeof(buffer));
-
-         (void) str.replace(buffer, len);
-
-         U_INTERNAL_DUMP("ext[%d] = <%V,%V>", i, key.rep, str.rep)
-
-         table.insert(key, str);
-         }
-
-      (void) U_SYSCALL(BIO_free, "%p", out);
-      }
-
-   U_RETURN(count);
 }
 
 U_NO_EXPORT UString UCertificate::getRevocationURI(const void* gens)
@@ -636,12 +577,22 @@ UString UCertificate::getModulus() const
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
+   UString result;
+   const BIGNUM* bn;
    char buffer[4096];
 
    EVP_PKEY* pkey = getSubjectPublicKey();
 
-   BIGNUM* bn  = (pkey->type == EVP_PKEY_RSA ? pkey->pkey.rsa->n
-                                             : pkey->pkey.dsa->pub_key); // EVP_PKEY_DSA
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   bn = (pkey->type == EVP_PKEY_RSA ? pkey->pkey.rsa->n
+                                    : pkey->pkey.dsa->pub_key); // EVP_PKEY_DSA
+#else
+   RSA* rsa = EVP_PKEY_get1_RSA(pkey);
+
+   RSA_get0_key(rsa, &bn, 0, 0);
+
+   RSA_free(rsa);
+#endif
 
    int len = U_SYSCALL(BN_bn2bin, "%p,%p", bn, (unsigned char*)buffer);
 
@@ -651,12 +602,12 @@ UString UCertificate::getModulus() const
 
       UBase64::encode(buffer, len, x);
 
-      U_SYSCALL_VOID(EVP_PKEY_free, "%p", pkey);
-
-      U_RETURN_STRING(x);
+      result = x;
       }
 
-   return UString::getStringNull();
+   U_SYSCALL_VOID(EVP_PKEY_free, "%p", pkey);
+
+   U_RETURN_STRING(result);
 }
 
 UString UCertificate::getExponent() const
@@ -665,12 +616,22 @@ UString UCertificate::getExponent() const
 
    U_INTERNAL_ASSERT_POINTER(x509)
 
+   UString result;
    char buffer[16];
+   const BIGNUM* bn;
 
    EVP_PKEY* pkey = getSubjectPublicKey();
 
-   BIGNUM* bn  = (pkey->type == EVP_PKEY_RSA ? pkey->pkey.rsa->e
-                                             : pkey->pkey.dsa->pub_key); // EVP_PKEY_DSA
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   bn = (pkey->type == EVP_PKEY_RSA ? pkey->pkey.rsa->e
+                                    : pkey->pkey.dsa->pub_key); // EVP_PKEY_DSA
+#else
+   RSA* rsa = EVP_PKEY_get1_RSA(pkey);
+
+   RSA_get0_key(rsa, 0, &bn, 0);
+
+   RSA_free(rsa);
+#endif
 
    int len = U_SYSCALL(BN_bn2bin, "%p,%p", bn, (unsigned char*)buffer);
 
@@ -680,12 +641,12 @@ UString UCertificate::getExponent() const
 
       UBase64::encode(buffer, len, x);
 
-      U_SYSCALL_VOID(EVP_PKEY_free, "%p", pkey);
-
-      U_RETURN_STRING(x);
+      result = x;
       }
 
-   return UString::getStringNull();
+   U_SYSCALL_VOID(EVP_PKEY_free, "%p", pkey);
+
+   U_RETURN_STRING(result);
 }
 
 UString UCertificate::getFileName(long hash, bool crl, bool* exist)

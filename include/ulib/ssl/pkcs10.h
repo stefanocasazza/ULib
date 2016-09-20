@@ -116,45 +116,6 @@ public:
       }
 
    /**
-    * Returns the <i>signature</i> of this certificateRequest
-    */
-
-   UString getSignature() const
-      {
-      U_TRACE_NO_PARAM(0, "UPKCS10::getSignature()")
-
-      U_INTERNAL_ASSERT_POINTER(request)
-
-      UString signature( (const char*) request->signature->data,
-                                       request->signature->length );
-
-      U_RETURN_STRING(signature);
-      }
-
-   /**
-    * Returns <i>signatureAlgorithm</i> of this certificateRequest
-    */ 
-
-   UString getSignatureAlgorithm() const
-      {
-      U_TRACE_NO_PARAM(0, "UPKCS10::getSignatureAlgorithm()")
-
-      U_INTERNAL_ASSERT_POINTER(request)
-
-      UString signature_algorithm( OBJ_nid2sn( OBJ_obj2nid(request->sig_alg->algorithm) ) );
-
-      U_RETURN_STRING(signature_algorithm);
-      }
-
-   /**
-    * Returns the part of this certificateRequest that is signed
-    */ 
-
-   static UString getSignable(X509_REQ* request);
-
-   UString getSignable() const { return getSignable(request); }
-
-   /**
     * Returns <i>publicKey</i> of this certificateRequest
     */
 

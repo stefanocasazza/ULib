@@ -75,27 +75,6 @@ UString UPKCS10::getSubject(X509_REQ* _request)
    U_RETURN_STRING(subject);
 }
 
-UString UPKCS10::getSignable(X509_REQ* _request)
-{
-   U_TRACE(1, "UPKCS10::getSignable(%p)", _request)
-
-   U_INTERNAL_ASSERT_POINTER(_request)
-
-   unsigned len = U_SYSCALL(i2d_X509_REQ_INFO, "%p,%p", _request->req_info, 0);
-
-   UString signable(len);
-
-   unsigned char* data = (unsigned char*) signable.data();
-
-   (void) U_SYSCALL(i2d_X509_REQ_INFO, "%p,%p", _request->req_info, &data);
-
-   // len = u__strlen(data, __PRETTY_FUNCTION__);
-
-   signable.size_adjust(len);
-
-   U_RETURN_STRING(signable);
-}
-
 UString UPKCS10::getEncoded(const char* format) const
 {
    U_TRACE(0, "UPKCS10::getEncoded(%S)", format)

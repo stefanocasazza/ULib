@@ -16,11 +16,11 @@ if PLUGIN
 SUBDIRS += src/ulib/net/server/plugin src/ulib/orm/driver
 endif
 if ENABLE_EXAMPLES
-SUBDIRS += examples contrib
+SUBDIRS += examples
 endif
 SUBDIRS += tests
 
-DIST_SUBDIRS = include src/ulib src/ulib/net/server/plugin src/ulib/orm/driver m4 doc contrib examples tests
+DIST_SUBDIRS = include src/ulib src/ulib/net/server/plugin src/ulib/orm/driver m4 doc examples tests contrib
 
 ## bin_SCRIPTS = ulib-config
 

@@ -44,7 +44,7 @@ U_EXPORT void  operator delete[](void* p, long unsigned int) { free(p); }
 #  endif
 #endif
 
-#ifdef USE_LIBSSL
+#if defined(USE_LIBSSL) && OPENSSL_VERSION_NUMBER < 0x10100000L
 #  include <openssl/ssl.h>
 #  include <openssl/rand.h>
 #  include <openssl/conf.h>
@@ -227,7 +227,7 @@ void ULib_init()
 
    UString::str_allocate(0);
 
-#ifdef USE_LIBSSL
+#if defined(USE_LIBSSL) && OPENSSL_VERSION_NUMBER < 0x10100000L
    ULib_init_openssl();
 #endif
 

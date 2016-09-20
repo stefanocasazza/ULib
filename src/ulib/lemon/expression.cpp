@@ -484,7 +484,6 @@ static void yy_destructor(
   YYCODETYPE yymajor,     /* Type code for object to destroy */
   YYMINORTYPE *yypminor   /* The object to be destroyed */
 ){
-  expressionParserARG_FETCH;
   switch( yymajor ){
     /* Here is inserted the actions which take place when a
     ** terminal or non-terminal is destroyed.  This can happen
@@ -599,7 +598,7 @@ int expressionParserStackPeak(void *p){
 ** Find the appropriate action for a parser given the terminal
 ** look-ahead token iLookAhead.
 */
-static int yy_find_shift_action(
+__pure static int yy_find_shift_action(
   yyParser *pParser,        /* The parser */
   YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
@@ -665,7 +664,7 @@ static int yy_find_shift_action(
 ** Find the appropriate action for a parser given the non-terminal
 ** look-ahead token iLookAhead.
 */
-static int yy_find_reduce_action(
+__pure static int yy_find_reduce_action(
   int stateno,              /* Current state number */
   YYCODETYPE iLookAhead     /* The look-ahead token */
 ){
@@ -1459,7 +1458,6 @@ static void yy_reduce(
         break;
 /********** End reduce actions ************************************************/
   };
-  assert( yyruleno>=0 && yyruleno<sizeof(yyRuleInfo)/sizeof(yyRuleInfo[0]) );
   yygoto = yyRuleInfo[yyruleno].lhs;
   yysize = yyRuleInfo[yyruleno].nrhs;
   yypParser->yyidx -= yysize;

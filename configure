@@ -1056,16 +1056,16 @@ with_parser
 with_distcc
 with_libz
 enable_zip
-with_libtdb
 with_libzopfli
 with_magic
 with_ssl
 with_pcre
 with_expat
 with_libuuid
+with_curl
+with_libtdb
 with_libares
 with_ssh
-with_curl
 with_ldap
 with_dbi
 with_libevent
@@ -1817,16 +1817,16 @@ Optional Packages:
   --with-parser           use parser generator bison/yacc
   --with-distcc           using distcc we must avoid to use some gcc flags (-mtune=native,-flto,...)
   --with-libz             use system     LIBZ library - [will check /usr /usr/local] [default=use if present]
-  --with-libtdb           use system      tdb library - [will check /usr /usr/local] [default=use if present]
   --with-libzopfli        use system   zopfli library - [will check /usr /usr/local] [default=use if present]
   --with-magic            use system libmagic library - [will check /usr /usr/local] [default=use if present]
   --with-ssl              use system      SSL library - [will check /usr /usr/local] [default=use if present]
   --with-pcre             use system     PCRE library - [will check /usr /usr/local] [default=use if present]
   --with-expat            use system    EXPAT library - [will check /usr /usr/local] [default=use if present]
-  --with-libuuid          use system  libuuid library - [will check /usr /usr/local]
+  --with-libuuid          use system  libuuid library - [will check /usr /usr/local] [default=use if present]
+  --with-curl             use system     cURL library - [will check /usr /usr/local]
+  --with-libtdb           use system      tdb library - [will check /usr /usr/local]
   --with-libares          use system   c-ares library - [will check /usr /usr/local]
   --with-ssh              use system      SSH library - [will check /usr /usr/local]
-  --with-curl             use system     cURL library - [will check /usr /usr/local]
   --with-ldap             use system openLDAP library - [will check /usr /usr/local]
   --with-dbi              use system      DBI library - [will check /usr /usr/local]
   --with-libevent         use system libevent library - [will check /usr /usr/local]
@@ -26974,7 +26974,11 @@ $as_echo_n "checking if LIBZ library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_libz" ; then
 		wanted=0;
-		with_libz="${CROSS_ENVIRONMENT}/usr";
+		if test -n "$CROSS_ENVIRONMENT" ; then
+			with_libz="no";
+		else
+			with_libz="${CROSS_ENVIRONMENT}/usr";
+		fi
 	fi
 
 # Check whether --with-libz was given.
@@ -27028,86 +27032,27 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable build of ZIP support" >&5
 $as_echo_n "checking if you want to enable build of ZIP support... " >&6; }
+	if test x_$found_libz = x_yes; then
+		if test -z "$enable_zip" -o x_$enable_zip != x_no; then
+			enable_zip="yes"
+		fi
+	else
+		enable_zip="no"
+	fi
 	# Check whether --enable-zip was given.
 if test "${enable_zip+set}" = set; then :
   enableval=$enable_zip;
 fi
 
-	if test "$enable_zip" != "no" -a x_$found_libz = x_yes; then
-		enable_zip="yes"
-	else
-		enable_zip="no"
-	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_zip" >&5
 $as_echo "$enable_zip" >&6; }
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if tdb library is wanted" >&5
-$as_echo_n "checking if tdb library is wanted... " >&6; }
-	wanted=1;
-	if test -z "$with_libtdb" ; then
-		wanted=0;
-		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
-			with_libtdb="no";
-		else
-			with_libtdb="${CROSS_ENVIRONMENT}/usr";
-		fi
-	fi
-
-# Check whether --with-libtdb was given.
-if test "${with_libtdb+set}" = set; then :
-  withval=$with_libtdb;
-	if test "$withval" = "no"; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
-			libtdbdir="$dir"
-			if test -f "$dir/include/tdb.h"; then
-				found_libtdb="yes";
-				break;
-			fi
-		done
-		if test x_$found_libtdb != x_yes; then
-			msg="Cannot find libtdb library";
-			if test $wanted = 1; then
-				as_fn_error $? "$msg" "$LINENO" 5
-			else
-				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $msg" >&5
-$as_echo "$msg" >&6; }
-			fi
-		else
-			echo "${T_MD}libtdb found in $libtdbdir${T_ME}"
-			USE_LIBTDB=yes
-
-$as_echo "#define USE_LIBTDB 1" >>confdefs.h
-
-			libtdb_version=$(ls $libtdbdir/lib*/libtdb.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
-			if test -z "${libtdb_version}"; then
-				libtdb_version="unknown"
-			fi
-         ULIB_LIBS="$ULIB_LIBS -ltdb";
-			if test $libtdbdir != "${CROSS_ENVIRONMENT}/" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr/local"; then
-				CPPFLAGS="$CPPFLAGS -I$libtdbdir/include"
-				LDFLAGS="$LDFLAGS -L$libtdbdir/lib -Wl,-R$libtdbdir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$libtdbdir/lib";
-			fi
-		fi
-	fi
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if zopfli library is wanted" >&5
 $as_echo_n "checking if zopfli library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_libzopfli" ; then
 		wanted=0;
-		if test "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
 			with_libzopfli="no";
 		else
 			with_libzopfli="${CROSS_ENVIRONMENT}/usr";
@@ -27168,7 +27113,11 @@ $as_echo_n "checking if MAGIC library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_magic" ; then
 		wanted=0;
-		with_magic="${CROSS_ENVIRONMENT}/usr";
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			with_magic="no";
+		else
+			with_magic="${CROSS_ENVIRONMENT}/usr";
+		fi
 	fi
 
 # Check whether --with-magic was given.
@@ -27224,7 +27173,11 @@ $as_echo_n "checking if SSL library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_ssl" ; then
 		wanted=0;
-		with_ssl="${CROSS_ENVIRONMENT}/usr";
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			with_ssl="no";
+		else
+			with_ssl="${CROSS_ENVIRONMENT}/usr";
+		fi
 	fi
 
 # Check whether --with-ssl was given.
@@ -27272,8 +27225,8 @@ $as_echo "#define USE_LIBSSL 1" >>confdefs.h
 $as_echo "#define HAVE_SSL_TS 1" >>confdefs.h
 
 				fi
-				if test x_$PKG_CONFIG != x_no; then
-					ssl_version=$(pkg-config --modversion openssl)
+				if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+					ssl_version=$(pkg-config --modversion openssl 2>/dev/null)
 				fi
 				if test -z "$OPENSSL_LINK"; then
 					ULIB_LIBS="-lssl -lcrypto $ULIB_LIBS";
@@ -27303,7 +27256,11 @@ $as_echo_n "checking if PCRE library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_pcre" ; then
 		wanted=0;
-		with_pcre="${CROSS_ENVIRONMENT}/usr";
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			with_pcre="no";
+		else
+			with_pcre="${CROSS_ENVIRONMENT}/usr";
+		fi
 	fi
 
 # Check whether --with-pcre was given.
@@ -27359,7 +27316,11 @@ $as_echo_n "checking if EXPAT library for XML parsing is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_expat" ; then
 		wanted=0;
-		with_expat="${CROSS_ENVIRONMENT}/usr";
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			with_expat="no";
+		else
+			with_expat="${CROSS_ENVIRONMENT}/usr";
+		fi
 	fi
 
 # Check whether --with-expat was given.
@@ -27415,6 +27376,15 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if libuuid library is wanted" >&5
 $as_echo_n "checking if libuuid library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_libuuid" ; then
+		wanted=0;
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+			with_libuuid="no";
+		else
+			with_libuuid="${CROSS_ENVIRONMENT}/usr";
+		fi
+	fi
 
 # Check whether --with-libuuid was given.
 if test "${with_libuuid+set}" = set; then :
@@ -27445,8 +27415,8 @@ $as_echo "$msg" >&6; }
 
 $as_echo "#define USE_LIBUUID 1" >>confdefs.h
 
-			if test x_$PKG_CONFIG != x_no; then
-				libuuid_version=$(pkg-config --modversion ext2fs)
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libuuid_version=$(pkg-config --modversion ext2fs 2>/dev/null)
 			fi
 			if test -z "${libuuid_version}"; then
 				libuuid_version="unknown"
@@ -27466,13 +27436,126 @@ $as_echo "no" >&6; }
 fi
 
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if cURL library is wanted" >&5
+$as_echo_n "checking if cURL library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_curl" ; then
+		wanted=0;
+		with_curl="no";
+	fi
+
+# Check whether --with-curl was given.
+if test "${with_curl+set}" = set; then :
+  withval=$with_curl; if test "$withval" = "no"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			curldir="$dir";
+			if test -f "$dir/include/curl/curl.h"; then
+				found_curl="yes";
+				break;
+			fi
+		done
+		if test x_$found_curl != x_yes; then
+			as_fn_error $? "Cannot find cURL library" "$LINENO" 5
+		else
+			echo "${T_MD}libcurl found in $curldir${T_ME}"
+			USE_LIBCURL=yes
+
+$as_echo "#define USE_LIBCURL 1" >>confdefs.h
+
+			libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null | sed -e "s/libcurl //g")
+			if test -z "${libcurl_version}" -a x_$PKG_CONFIG != x_no; then
+				libcurl_version=$(pkg-config --modversion libcurl 2>/dev/null)
+			fi
+			if test -z "${libcurl_version}"; then
+				libcurl_version="unknown"
+			fi
+			libcurl_linking=$($curldir/bin/curl-config --libs 2>/dev/null)
+			if test -z "${libcurl_linking}"; then
+				libcurl_linking="-lcurl"
+			fi
+			ULIB_LIBS="$libcurl_linking $ULIB_LIBS";
+			if test $curldir != "${CROSS_ENVIRONMENT}/" -a $curldir != "${CROSS_ENVIRONMENT}/usr" -a $curldir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$curldir/include";
+				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$curldir/lib";
+			fi
+		fi
+	fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if tdb library is wanted" >&5
+$as_echo_n "checking if tdb library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_libtdb" ; then
+		wanted=0;
+		with_libtdb="no";
+	fi
+
+# Check whether --with-libtdb was given.
+if test "${with_libtdb+set}" = set; then :
+  withval=$with_libtdb;
+	if test "$withval" = "no"; then
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	else
+		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
+			libtdbdir="$dir"
+			if test -f "$dir/include/tdb.h"; then
+				found_libtdb="yes";
+				break;
+			fi
+		done
+		if test x_$found_libtdb != x_yes; then
+			msg="Cannot find libtdb library";
+			if test $wanted = 1; then
+				as_fn_error $? "$msg" "$LINENO" 5
+			else
+				{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $msg" >&5
+$as_echo "$msg" >&6; }
+			fi
+		else
+			echo "${T_MD}libtdb found in $libtdbdir${T_ME}"
+			USE_LIBTDB=yes
+
+$as_echo "#define USE_LIBTDB 1" >>confdefs.h
+
+			libtdb_version=$(ls $libtdbdir/lib*/libtdb.so.*.* 2>/dev/null | head -n 1 | awk -F'.so.' '{n=2; print $n}' 2>/dev/null)
+			if test -z "${libtdb_version}"; then
+				libtdb_version="unknown"
+			fi
+         ULIB_LIBS="$ULIB_LIBS -ltdb";
+			if test $libtdbdir != "${CROSS_ENVIRONMENT}/" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr" -a $libtdbdir != "${CROSS_ENVIRONMENT}/usr/local"; then
+				CPPFLAGS="$CPPFLAGS -I$libtdbdir/include"
+				LDFLAGS="$LDFLAGS -L$libtdbdir/lib -Wl,-R$libtdbdir/lib";
+				PRG_LDFLAGS="$PRG_LDFLAGS -L$libtdbdir/lib";
+			fi
+		fi
+	fi
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if c-ares library for DNS resolution is wanted" >&5
 $as_echo_n "checking if c-ares library for DNS resolution is wanted... " >&6; }
-	if test -n "$with_libares" ; then
-		wanted=1;
-	else
+	wanted=1;
+	if test -z "$with_libares" ; then
 		wanted=0;
-		with_libares="${CROSS_ENVIRONMENT}/usr";
+		with_libares="no";
 	fi
 
 # Check whether --with-libares was given.
@@ -27505,8 +27588,8 @@ $as_echo "$msg" >&6; }
 
 $as_echo "#define USE_C_ARES 1" >>confdefs.h
 
-			if test x_$PKG_CONFIG != x_no; then
-				cares_version=$(pkg-config --modversion libcares)
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				cares_version=$(pkg-config --modversion libcares 2>/dev/null)
 			fi
 			if test -z "${cares_version}"; then
 				cares_version="unknown"
@@ -27528,6 +27611,11 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if SSH library is wanted" >&5
 $as_echo_n "checking if SSH library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_ssh" ; then
+		wanted=0;
+		with_ssh="no";
+	fi
 
 # Check whether --with-ssh was given.
 if test "${with_ssh+set}" = set; then :
@@ -27571,59 +27659,13 @@ $as_echo "no" >&6; }
 fi
 
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if cURL library is wanted" >&5
-$as_echo_n "checking if cURL library is wanted... " >&6; }
-
-# Check whether --with-curl was given.
-if test "${with_curl+set}" = set; then :
-  withval=$with_curl; if test "$withval" = "no"; then
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	else
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-		for dir in $withval ${CROSS_ENVIRONMENT}/ ${CROSS_ENVIRONMENT}/usr ${CROSS_ENVIRONMENT}/usr/local; do
-			curldir="$dir";
-			if test -f "$dir/include/curl/curl.h"; then
-				found_curl="yes";
-				break;
-			fi
-		done
-		if test x_$found_curl != x_yes; then
-			as_fn_error $? "Cannot find cURL library" "$LINENO" 5
-		else
-			echo "${T_MD}libcurl found in $curldir${T_ME}"
-			USE_LIBCURL=yes
-
-$as_echo "#define USE_LIBCURL 1" >>confdefs.h
-
-			if test x_$PKG_CONFIG != x_no; then
-				libcurl_version=$(pkg-config --modversion libcurl)
-			fi
-			if test -z "${libcurl_version}"; then
-				libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null | sed -e "s/libcurl //g")
-			fi
-			if test -z "${libcurl_version}"; then
-				libcurl_version="unknown"
-			fi
-			libcurl_linking=$($curldir/bin/curl-config --libs 2>/dev/null)
-			ULIB_LIBS="$libcurl_linking $ULIB_LIBS";
-			if test $curldir != "${CROSS_ENVIRONMENT}/" -a $curldir != "${CROSS_ENVIRONMENT}/usr" -a $curldir != "${CROSS_ENVIRONMENT}/usr/local"; then
-				CPPFLAGS="$CPPFLAGS -I$curldir/include";
-				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";
-				PRG_LDFLAGS="$PRG_LDFLAGS -L$curldir/lib";
-			fi
-		fi
-	fi
-
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-
-
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if LDAP library is wanted" >&5
 $as_echo_n "checking if LDAP library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_ldap" ; then
+		wanted=0;
+		with_ldap="no";
+	fi
 
 # Check whether --with-ldap was given.
 if test "${with_ldap+set}" = set; then :
@@ -27690,6 +27732,11 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if DBI library is wanted" >&5
 $as_echo_n "checking if DBI library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_dbi" ; then
+		wanted=0;
+		with_dbi="no";
+	fi
 
 # Check whether --with-dbi was given.
 if test "${with_dbi+set}" = set; then :
@@ -27740,6 +27787,11 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if libevent library is wanted" >&5
 $as_echo_n "checking if libevent library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_libevent" ; then
+		wanted=0;
+		with_libevent="no";
+	fi
 
 # Check whether --with-libevent was given.
 if test "${with_libevent+set}" = set; then :
@@ -27785,6 +27837,11 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if libxml2 library is wanted" >&5
 $as_echo_n "checking if libxml2 library is wanted... " >&6; }
+	wanted=1;
+	if test -z "$with_libxml2" ; then
+		wanted=0;
+		with_libxml2="no";
+	fi
 
 # Check whether --with-libxml2 was given.
 if test "${with_libxml2+set}" = set; then :
@@ -27809,8 +27866,8 @@ $as_echo "yes" >&6; }
 
 $as_echo "#define USE_LIBXML2 1" >>confdefs.h
 
-			if test x_$PKG_CONFIG != x_no; then
-				libxml2_version=$(pkg-config --modversion libxml-2.0)
+			if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				libxml2_version=$(pkg-config --modversion libxml-2.0 2>/dev/null)
 			fi
 			if test -z "${libxml2_version}"; then
 				libxml2_version="unknown"
@@ -27834,6 +27891,11 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to use page-speed SDK" >&5
 $as_echo_n "checking if you want to use page-speed SDK... " >&6; }
+	wanted=1;
+	if test -z "$with_page_speed" ; then
+		wanted=0;
+		with_page_speed="no";
+	fi
 
 # Check whether --with-page-speed was given.
 if test "${with_page_speed+set}" = set; then :
@@ -27872,6 +27934,11 @@ fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to use V8 JavaScript Engine" >&5
 $as_echo_n "checking if you want to use V8 JavaScript Engine... " >&6; }
+	wanted=1;
+	if test -z "$with_v8-javascript" ; then
+		wanted=0;
+		with_v8-javascript="no";
+	fi
 
 # Check whether --with-v8-javascript was given.
 if test "${with_v8_javascript+set}" = set; then :

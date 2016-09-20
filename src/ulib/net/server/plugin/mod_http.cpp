@@ -471,12 +471,14 @@ int UHttpPlugIn::handlerInit()
       {
       U_INTERNAL_DUMP("OPENSSL_VERSION_NUMBER = %ld", OPENSSL_VERSION_NUMBER)
 
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L
       if (U_SYSCALL_NO_PARAM(SSLeay) < OPENSSL_VERSION_NUMBER)
          {
          U_ERROR("SSL: this version of mod_http was compiled against a newer library (%s, "
                  "version currently loaded is %s) - may result in undefined or erroneous behavior",
                  OPENSSL_VERSION_TEXT, SSLeay_version(SSLEAY_VERSION));
          }
+#  endif
 
 /**
  * #ifdef OPENSSL_FIPS

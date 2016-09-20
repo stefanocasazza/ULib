@@ -30,8 +30,7 @@
 
 #define USP_JSON_stringify(json,class_name,obj) ((json).toJSON(UJsonTypeHandler<class_name>(obj)), USP_JSON_PUTS(json))
 
-#define USP_JSON_OBJ_stringify(class_name,obj)   {UValue _jtmp(OBJECT_VALUE); _jtmp.toJSON(UJsonTypeHandler<class_name>(obj)); USP_JSON_PUTS(_jtmp);}
-#define USP_JSON_ARRAY_stringify(class_name,obj) {UValue _jtmp( ARRAY_VALUE); _jtmp.toJSON(UJsonTypeHandler<class_name>(obj)); USP_JSON_PUTS(_jtmp);}
+#define USP_JSON_OBJ_stringify(class_name,obj) {UValue _jtmp; _jtmp.toJSON(UJsonTypeHandler<class_name>(obj)); USP_JSON_PUTS(_jtmp);}
 
 #define USP_XML_PUTS(string) \
    ((void)UClientImage_Base::_encoded->reserve((string).size() * 4), \

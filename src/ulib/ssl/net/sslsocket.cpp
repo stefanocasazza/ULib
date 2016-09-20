@@ -86,7 +86,13 @@ USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool bserver) : USocke
       U_INTERNAL_ASSERT_POINTER(ctx)
       }
 
-   ctx->references++; // We don't want our destructor to delete ctx if still in use...
+   // We don't want our destructor to delete ctx if still in use...
+
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
+   ctx->references++;
+#else
+   SSL_CTX_up_ref(ctx);
+#endif
 
    ssl = 0;
    ret = renegotiations = 0;
@@ -127,7 +133,9 @@ void USSLSocket::info_callback(const SSL* ssl, int where, int ret)
       {
       U_INTERNAL_DUMP("SSL_CB_HANDSHAKE_DONE")
 
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L
       if (ssl->s3) ssl->s3->flags |= SSL3_FLAGS_NO_RENEGOTIATE_CIPHERS;
+#  endif
       }
 }
 
@@ -492,7 +500,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
    // These are the bit DH parameters from "Assigned Number for SKIP Protocols"
    // See there for how they were generated: http://www.skip-vpn.org/spec/numbers.html
 
-#if OPENSSL_VERSION_NUMBER >= 0x10002000L
+#if OPENSSL_VERSION_NUMBER >= 0x10002000L && OPENSSL_VERSION_NUMBER < 0x10100000L
    SSL_CTX_set_ecdh_auto(ctx, 1);
 #else
    if (useDHFile(dh_file) == false) U_RETURN(false);
@@ -898,7 +906,9 @@ bool USSLSocket::askForClientCertificate()
       U_RETURN(false);
       }
 
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
    ssl->state = SSL_ST_ACCEPT;
+#endif
 
    ret = U_SYSCALL(SSL_do_handshake, "%p", ssl);
 
@@ -1235,7 +1245,9 @@ bool USSLSocket::setDataForStapling()
 
       if (U_SYSCALL(X509_check_issued, "%p,%p", staple.issuer, staple.cert) == X509_V_OK)
          {
+#     if OPENSSL_VERSION_NUMBER < 0x10100000L
          CRYPTO_add(&(staple.issuer->references), 1, CRYPTO_LOCK_X509);
+#     endif
 
          goto next;
          }

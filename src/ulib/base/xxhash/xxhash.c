@@ -378,8 +378,27 @@ FORCE_INLINE U32 XXH32_endian_align(const void* input, size_t len, U32 seed, XXH
     return h32;
 }
 
+#ifdef __GNUC__
+#  define GCC_VERSION_NUM (__GNUC__       * 10000 + \
+                           __GNUC_MINOR__ *   100 + \
+                           __GNUC_PATCHLEVEL__)
+#  if GCC_VERSION_NUM > 29600 && GCC_VERSION_NUM != 30303 /* Test for GCC == 3.3.3 (SuSE Linux) */
+#    if defined(LINUX) || defined(__LINUX__) || defined(__linux__) || defined(__linux)
+#     define U_LINUX
+#    elif defined(_MSC_VER) || defined(WIN32) || defined(_WIN32)
+#     define _MSWINDOWS_
+#    endif
+#    if defined(U_LINUX) || defined(_MSWINDOWS_)
+#     define __pure __attribute__((pure))
+#    endif
+#  else
+#     define __pure
+#  endif
+#else
+#  define __pure
+#endif /* __GNUC__ */
 
-XXH_PUBLIC_API unsigned int XXH32 (const void* input, size_t len, unsigned int seed)
+XXH_PUBLIC_API __pure unsigned int XXH32 (const void* input, size_t len, unsigned int seed)
 {
 #if 0
     /* Simple version, good for code maintenance, but unfortunately slow for small inputs */
@@ -519,7 +538,7 @@ FORCE_INLINE U64 XXH64_endian_align(const void* input, size_t len, U64 seed, XXH
 }
 
 
-XXH_PUBLIC_API unsigned long long XXH64 (const void* input, size_t len, unsigned long long seed)
+XXH_PUBLIC_API __pure unsigned long long XXH64 (const void* input, size_t len, unsigned long long seed)
 {
 #if 0
     /* Simple version, good for code maintenance, but unfortunately slow for small inputs */
@@ -771,7 +790,7 @@ FORCE_INLINE U32 XXH32_digest_endian (const XXH32_state_t* state, XXH_endianess 
 }
 
 
-XXH_PUBLIC_API unsigned int XXH32_digest (const XXH32_state_t* state_in)
+XXH_PUBLIC_API __pure unsigned int XXH32_digest (const XXH32_state_t* state_in)
 {
     XXH_endianess endian_detected = (XXH_endianess)XXH_CPU_LITTLE_ENDIAN;
 
@@ -966,7 +985,7 @@ FORCE_INLINE U64 XXH64_digest_endian (const XXH64_state_t* state, XXH_endianess 
 }
 
 
-XXH_PUBLIC_API unsigned long long XXH64_digest (const XXH64_state_t* state_in)
+XXH_PUBLIC_API __pure unsigned long long XXH64_digest (const XXH64_state_t* state_in)
 {
     XXH_endianess endian_detected = (XXH_endianess)XXH_CPU_LITTLE_ENDIAN;
 
@@ -1001,12 +1020,12 @@ XXH_PUBLIC_API void XXH64_canonicalFromHash(XXH64_canonical_t* dst, XXH64_hash_t
     (void) memcpy(dst, &hash, sizeof(*dst));
 }
 
-XXH_PUBLIC_API XXH32_hash_t XXH32_hashFromCanonical(const XXH32_canonical_t* src)
+XXH_PUBLIC_API __pure XXH32_hash_t XXH32_hashFromCanonical(const XXH32_canonical_t* src)
 {
     return XXH_readBE32(src);
 }
 
-XXH_PUBLIC_API XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src)
+XXH_PUBLIC_API __pure XXH64_hash_t XXH64_hashFromCanonical(const XXH64_canonical_t* src)
 {
     return XXH_readBE64(src);
 }

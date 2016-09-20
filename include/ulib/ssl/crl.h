@@ -20,6 +20,11 @@
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 
+#if OPENSSL_VERSION_NUMBER >= 0x10100000L
+#  define X509_CRL_get_lastUpdate X509_CRL_get0_lastUpdate
+#  define X509_CRL_get_nextUpdate X509_CRL_get0_nextUpdate
+#endif
+
 class UCertificate;
 
 /**
@@ -155,22 +160,6 @@ public:
       }
 
    /**
-    * Returns the <i>signature</i> of this CRL
-    */
-
-   UString getSignature() const
-      {
-      U_TRACE_NO_PARAM(0, "UCrl::getSignature()")
-
-      U_INTERNAL_ASSERT_POINTER(crl)
-
-      UString signature( (const char*) crl->signature->data,
-                                       crl->signature->length );
-
-      U_RETURN_STRING(signature);
-      }
-
-   /**
     * Returns the last update of this CRL
     */
 
@@ -180,7 +169,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(crl)
 
-      ASN1_UTCTIME* utctime = X509_CRL_get_lastUpdate(crl);
+      const ASN1_UTCTIME* utctime = X509_CRL_get_lastUpdate(crl);
 
       U_RETURN((const char*)utctime->data);
       }
@@ -198,7 +187,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(crl)
 
-      ASN1_UTCTIME* utctime = X509_CRL_get_nextUpdate(crl);
+      const ASN1_UTCTIME* utctime = X509_CRL_get_nextUpdate(crl);
 
       U_RETURN((const char*)utctime->data);
       }

@@ -42,7 +42,7 @@ extern "C" {
 
 // ------------------- zlib-style API's
 
-mz_ulong mz_adler32(mz_ulong adler, const unsigned char *ptr, size_t buf_len)
+__pure mz_ulong mz_adler32(mz_ulong adler, const unsigned char *ptr, size_t buf_len)
 {
     mz_uint32 i, s1 = (mz_uint32)(adler & 0xffff), s2 = (mz_uint32)(adler >> 16);
     size_t block_len = buf_len % 5552;
@@ -92,7 +92,7 @@ mz_ulong mz_adler32(mz_ulong adler, const unsigned char *ptr, size_t buf_len)
    }
 #else
 // Faster, but larger CPU cache footprint.
-mz_ulong mz_crc32(mz_ulong crc, const mz_uint8 *ptr, size_t buf_len)
+__pure mz_ulong mz_crc32(mz_ulong crc, const mz_uint8 *ptr, size_t buf_len)
 {
     static const mz_uint32 s_crc_table[256] =
         {
@@ -557,7 +557,7 @@ int mz_uncompress(unsigned char *pDest, mz_ulong *pDest_len, const unsigned char
     return mz_inflateEnd(&stream);
 }
 
-const char *mz_error(int err)
+__pure const char *mz_error(int err)
 {
     static struct
     {
@@ -2565,12 +2565,12 @@ tdefl_status tdefl_init(tdefl_compressor *d, tdefl_put_buf_func_ptr pPut_buf_fun
     return TDEFL_STATUS_OKAY;
 }
 
-tdefl_status tdefl_get_prev_return_status(tdefl_compressor *d)
+__pure tdefl_status tdefl_get_prev_return_status(tdefl_compressor *d)
 {
     return d->m_prev_return_status;
 }
 
-mz_uint32 tdefl_get_adler32(tdefl_compressor *d)
+__pure mz_uint32 tdefl_get_adler32(tdefl_compressor *d)
 {
     return d->m_adler32;
 }
