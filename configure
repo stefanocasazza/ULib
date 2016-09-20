@@ -27225,7 +27225,8 @@ $as_echo "#define USE_LIBSSL 1" >>confdefs.h
 $as_echo "#define HAVE_SSL_TS 1" >>confdefs.h
 
 				fi
-				if test -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				ssl_version=$($ssldir/bin/openssl version 2>/dev/null)
+				if test -z "${ssl_version}"-a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
 					ssl_version=$(pkg-config --modversion openssl 2>/dev/null)
 				fi
 				if test -z "$OPENSSL_LINK"; then
@@ -27468,7 +27469,7 @@ $as_echo "yes" >&6; }
 $as_echo "#define USE_LIBCURL 1" >>confdefs.h
 
 			libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null | sed -e "s/libcurl //g")
-			if test -z "${libcurl_version}" -a x_$PKG_CONFIG != x_no; then
+			if test -z "${libcurl_version}" -a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
 				libcurl_version=$(pkg-config --modversion libcurl 2>/dev/null)
 			fi
 			if test -z "${libcurl_version}"; then

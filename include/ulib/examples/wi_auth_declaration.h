@@ -94,6 +94,7 @@ static UCache* policy_cache;
 
 static UPing* sockp;
 static UFile* file_LOG;
+static UFile* file_INFO;
 static UFile* file_WARNING;
 static UFile* file_RECOVERY;
 static UFile* file_UTILIZZO;
@@ -1209,9 +1210,9 @@ public:
          }
       }
 
-   void writeToLOG(const char* op)
+   void writeTo(int fd, const char* op)
       {
-      U_TRACE(5, "WiAuthUser::writeToLOG(%S)", op)
+      U_TRACE(5, "WiAuthUser::writeTo(%d,%S)", fd, op)
 
       U_INTERNAL_ASSERT_POINTER(op)
 
@@ -1228,9 +1229,11 @@ public:
       U_INTERNAL_ASSERT(*time_done)
       U_INTERNAL_ASSERT(*traffic_done)
 
-      ULog::log(file_LOG->getFd(), U_CONSTANT_TO_PARAM("op: %s, uid: %v, ap: %v, ip: %v, mac: %v, time: %v, traffic: %v, policy: %v"),
-                op, uid->rep, getAP().rep, _ip.rep, _mac.rep, time_done->rep, traffic_done->rep, getPolicy().rep);
+      ULog::log(fd, U_CONSTANT_TO_PARAM("op: %s, uid: %v, ap: %v, ip: %v, mac: %v, time: %v, traffic: %v, policy: %v"),
+                                         op, uid->rep, getAP().rep, _ip.rep, _mac.rep, time_done->rep, traffic_done->rep, getPolicy().rep);
       }
+
+   void writeToLOG(const char* op) { writeTo(file_LOG->getFd(), op); }
 
    const char* updateCounter(const UString& logout, long time_connected, uint64_t traffic, bool& ask_logout)
       {
@@ -1244,7 +1247,7 @@ public:
          _time_done = time_connected;
       _traffic_done = traffic;
 
-      writeToLOG("INFO");
+      writeTo(file_INFO->getFd(), "INFO");
 
          _time_done +=    time_done_save;
       _traffic_done += traffic_done_save;
@@ -1953,7 +1956,7 @@ static int quitUserConnected(UStringRep* key, UStringRep* data)
 
       (void) db_user->putDataStorage(*uid);
 
-      user_rec->writeToLOG("QUIT");
+      if (user_rec->setNodogReference()) user_rec->writeToLOG("QUIT");
       }
 
    U_RETURN(1);
@@ -1972,7 +1975,11 @@ static int checkForUserPolicy(UStringRep* key, UStringRep* data)
       {
       *uid = db_user->getKeyID();
 
-      if (user_rec->connected) user_rec->writeToLOG("RST_POLICY");
+      if (user_rec->connected &&
+          user_rec->setNodogReference())
+         {
+         user_rec->writeToLOG("RST_POLICY");
+         }
 
       user_rec->_time_done        =
       user_rec->_time_consumed    = 0;
@@ -2444,6 +2451,7 @@ static void usp_init_wi_auth()
 
    UString dir = UStringExt::dirname(file_LOG->getPath());
 
+   U_NEW(UFile, file_INFO,     UFile(dir + U_STRING_FROM_CONSTANT("/wifi-info")));
    U_NEW(UFile, file_WARNING,  UFile(dir + U_STRING_FROM_CONSTANT("/wifi-warning")));
    U_NEW(UFile, file_RECOVERY, UFile(dir + U_STRING_FROM_CONSTANT("/wifi-recovery")));
    U_NEW(UFile, file_UTILIZZO, UFile(dir + U_STRING_FROM_CONSTANT("/wifi-utilizzo")));
@@ -2452,6 +2460,7 @@ static void usp_init_wi_auth()
    UServer_Base::update_date1 = true;
 
    (void) UServer_Base::addLog(file_LOG);
+   (void) UServer_Base::addLog(file_INFO);
    (void) UServer_Base::addLog(file_WARNING);
    (void) UServer_Base::addLog(file_RECOVERY, O_APPEND | O_RDWR);
    (void) UServer_Base::addLog(file_UTILIZZO, O_APPEND | O_RDWR);
@@ -5576,9 +5585,9 @@ static void GET_stato_utente()
       if (result.empty() ||
           U_IS_HTTP_ERROR(U_http_info.nResponseCode))
          {
-         user_rec->writeToLOG("QUIT");
-
          user_rec->setConnected(false);
+
+         user_rec->writeToLOG("QUIT");
 
          U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
 
@@ -5600,9 +5609,9 @@ error:
 
    if (user_rec->connected == false)
       {
-      user_rec->writeToLOG("RESYNC");
-
       user_rec->setConnected(true);
+
+      user_rec->writeToLOG("RESYNC");
 
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
 
@@ -7410,7 +7419,7 @@ static int checkStatusUserOnNodog(UStringRep* key, UStringRep* data)
 
          (void) db_user->putDataStorage(*uid);
 
-         user_rec->writeToLOG(status_nodog_and_user_resync ? "RESYNC" : "QUIT");
+         if (user_rec->setNodogReference()) user_rec->writeToLOG(status_nodog_and_user_resync ? "RESYNC" : "QUIT");
          }
       }
 

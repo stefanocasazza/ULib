@@ -2226,7 +2226,7 @@ case_D: /* extension: print date and time in various format */
        * with flag '10' => format: %d/%b/%Y:%T %z
        */
 
-      len =
+      bp +=
           (width ==  0 ? u_strftime2(bp, 36, U_CONSTANT_TO_PARAM("%d/%m/%y"), t)            :
            width <=  2 ? u_strftime2(bp, 36, U_CONSTANT_TO_PARAM("%T"), t)                  :
            width ==  3 ? u_strftime2(bp, 36, U_CONSTANT_TO_PARAM("%d/%m/%Y %T"), t)         :
@@ -2243,18 +2243,15 @@ case_D: /* extension: print date and time in various format */
          if ((flags & ALT) != 0 &&
              t > U_ONE_DAY_IN_SECOND)
             {
-            bp += len;
-
             u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(' ','+'));
 
-            bp += 2;
+            bp += 2 + u_num2str32(t / U_ONE_DAY_IN_SECOND, bp+2);
 
-            len = u_num2str32(t / U_ONE_DAY_IN_SECOND, bp);
+            u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(' ','d','a','y'));
 
-            u_put_unalignedp32(bp+len, U_MULTICHAR_CONSTANT32(' ','d','a','y'));
+            bp[4] = 's';
 
-             bp  += 4;
-            *bp++ = 's';
+            bp += 5;
             }
          }
       else if (width == 4) /* _millisec */
@@ -2265,14 +2262,8 @@ case_D: /* extension: print date and time in various format */
          if (old_ms >= ms) ms = (old_ms >= 999 ? 0 : old_ms+1);
              old_ms  = ms;
 
-         bp += len;
-
-         len = sprintf(bp, "_%03ld", ms);
-
-         U_INTERNAL_ASSERT_EQUALS(len, strlen(bp))
+         bp += sprintf(bp, "_%03ld", ms);
          }
-
-      bp += len;
 
       continue;
 
