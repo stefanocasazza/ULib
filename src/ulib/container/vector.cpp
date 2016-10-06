@@ -11,7 +11,6 @@
 //
 // ============================================================================
 
-#include <ulib/container/vector.h>
 #include <ulib/utility/string_ext.h>
 
 #if defined(ENABLE_MEMPOOL) && defined(U_LINUX)
@@ -858,7 +857,7 @@ static inline void vecswap2(UStringRep** a, UStringRep** b, int n)
 
 #define swap2(a,b) { t = *(a); *(a) = *(b); *(b) = t; }
 
-static UStringRep** med3func(UStringRep** a, UStringRep** b, UStringRep** c, int depth)
+static inline UStringRep** med3func(UStringRep** a, UStringRep** b, UStringRep** c, int depth)
 {
    U_TRACE(0, "med3func(%p,%p,%p,%d)", a, b, c, depth)
 

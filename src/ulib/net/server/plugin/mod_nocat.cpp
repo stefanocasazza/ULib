@@ -182,7 +182,7 @@ UNoCatPlugIn::UNoCatPlugIn()
    U_NEW(UString, fw_env, UString);
    U_NEW(UString, extdev, UString);
    U_NEW(UString, intdev, UString);
-   U_NEW(UString, mempool, UString(UFile::contentOf("/etc/nodog.mempool")));
+   U_NEW(UString, mempool, UString(UFile::contentOf(U_STRING_FROM_CONSTANT("/etc/nodog.mempool"))));
    U_NEW(UString, hostname, UString);
    U_NEW(UString, localnet, UString);
    U_NEW(UString, location, UString(U_CAPACITY));
@@ -2397,14 +2397,15 @@ int UNoCatPlugIn::handlerRequest()
       peer = 0;
 
       // NB: check for request from AUTH, which may be:
-      // -----------------------------------------------------
-      // 1) /checkFirewall - check firewall and report info
-      // 2) /check         - check system and report info
-      // 3) /uptime        - report uptime info 
-      // 4) /users         - report list ip of peers permitted
-      // 5) /status        - report status user
-      // 6) /logout        - logout specific user
-      // -----------------------------------------------------
+      // -------------------------------------------------------------
+      // 1) /checkFirewall  - check firewall and report info
+      // 2) /check          - check system and report info
+      // 3) /uptime         - report uptime info 
+      // 4) /users          - report list ip of peers permitted
+      // 5) /status         - report status user
+      // 6) /logout         - logout specific user
+      // 7) /checkForUsersF - check users ffffff and report change
+      // -------------------------------------------------------------
 
       U_INTERNAL_DUMP("vauth_ip = %p vauth_ip = %S", vauth_ip, UObject2String(*vauth_ip))
 
@@ -2564,6 +2565,38 @@ next:       (void) getARPCache();
                notifyAuthOfUsersInfo(index_AUTH);
                }
             }
+#     ifdef USE_LIBTDB
+         else if (U_HTTP_URI_STREQ("/checkForUsersF") &&
+                  U_http_info.query_len)
+            {
+            status_content->setBuffer(U_CAPACITY);
+
+            if (pdata)
+               {
+               UVector<UString> vusersF;
+
+               for (uint32_t i = 0, n = vusersF.split(U_HTTP_QUERY_TO_PARAM, ','); i < n; ++i)
+                  {
+                  peer = (*peers)[vusersF[i]]; // ip address
+
+                  if (peer)
+                     {
+                     (void) setPeerLabel();
+
+                     if (peer->label.equal(U_CONSTANT_TO_PARAM("ffffff")) == false)
+                        {
+                        (void) status_content->append(peer->user);
+                        (void) status_content->append(0, ',');
+                        (void) status_content->append(peer->label);
+                        (void) status_content->append(0, ',');
+                        }
+                     }
+                  }
+               }
+
+            setHTTPResponse(*status_content, U_txt);
+            }
+#     endif
          else
             {
             UHTTP::setBadRequest();

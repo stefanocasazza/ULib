@@ -5632,7 +5632,7 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
          if (size &&
              basename.equal(U_CONSTANT_TO_PARAM("README.txt")))
             {
-            readme_txt = UFile::contentOf("README.txt");
+            readme_txt = UFile::contentOf(U_STRING_FROM_CONSTANT("README.txt"));
             }
 
          (void) buffer.append(entry);

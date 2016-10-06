@@ -14,7 +14,6 @@
 #ifndef ULIB_DSIG_TRANSFORM_H
 #define ULIB_DSIG_TRANSFORM_H 1
 
-#include <ulib/container/vector.h>
 #include <ulib/xml/libxml2/document.h>
 
 #include "xpath.h"

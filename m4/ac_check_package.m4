@@ -195,7 +195,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			if test "$found_cyassl" = "yes"; then
 				echo "${T_MD}CYASSL found in $ssldir${T_ME}";
 				ssl_version=$(grep VERSION $ssldir/include/cyassl/openssl/opensslv.h 2>/dev/null | cut -d' ' -f3 | tr -d '\r\n');
-				ULIB_LIBS="$ULIB_LIBS -lcyassl";
+				ULIB_LIBS="-lcyassl $ULIB_LIBS";
 			else
 				echo "${T_MD}libssl found in $ssldir${T_ME}";
 				if test -f "$ssldir/include/openssl/ts.h"; then
@@ -203,8 +203,11 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 					AC_DEFINE(HAVE_SSL_TS, 1, [Define if we have time stamp support in openssl])
 				fi
 				ssl_version=$($ssldir/bin/openssl version 2>/dev/null)
-				if test -z "${ssl_version}"-a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+				if test -z "${ssl_version}" -a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
 					ssl_version=$(pkg-config --modversion openssl 2>/dev/null)
+				fi
+				if test -z "${ssl_version}"; then
+					ssl_version=$(grep OPENSSL_VERSION_TEXT $ssldir/include/openssl/opensslv.h 2>/dev/null | grep -v fips | head -1 | cut -d'"' -f2);
 				fi
 				if test -z "$OPENSSL_LINK"; then
 					ULIB_LIBS="-lssl -lcrypto $ULIB_LIBS";

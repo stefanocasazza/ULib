@@ -27,7 +27,7 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      UString content = UFile::contentOf(argv[optind]);
+      UString content = UFile::contentOf(UString(argv[optind]));
 
       if (content)
          {

@@ -165,8 +165,13 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool bserver, long options)
        * but to only allow newer protocols like SSLv3 or TLSv1
        */
 
+#  if OPENSSL_VERSION_NUMBER < 0x10100000L
       if (bserver) method = (SSL_METHOD*)SSLv23_server_method();
       else         method = (SSL_METHOD*)SSLv23_client_method();
+#  else
+      if (bserver) method = (SSL_METHOD*)TLS_server_method();
+      else         method = (SSL_METHOD*)TLS_client_method();
+#  endif
       }
 
    SSL_CTX* ctx = (SSL_CTX*) U_SYSCALL(SSL_CTX_new, "%p", method);
@@ -518,7 +523,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
       if (result == 0) U_RETURN(false);
 
 #  if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-      staple.cert = UCertificate::readX509(UFile::contentOf(cert_file), "PEM");
+      staple.cert = UCertificate::readX509(UFile::contentOf(UString(cert_file)), "PEM");
 
       U_INTERNAL_DUMP("staple.cert = %p", staple.cert)
 #  endif
@@ -564,7 +569,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
       if (result == 0) U_RETURN(false);
 
 #  if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-      staple.pkey = UServices::loadKey(UFile::contentOf(private_key_file), "PEM", true, passwd, 0);
+      staple.pkey = UServices::loadKey(UFile::contentOf(UString(private_key_file)), "PEM", true, passwd, 0);
 
       U_INTERNAL_DUMP("staple.pkey = %p", staple.pkey)
 #  endif

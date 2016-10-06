@@ -1,7 +1,6 @@
 // test_cdb.cpp
 
 #include <ulib/db/cdb.h>
-#include <ulib/container/vector.h>
 
 static int print(UStringRep* key, UStringRep* data)
 {

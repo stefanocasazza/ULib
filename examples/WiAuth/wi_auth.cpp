@@ -52,6 +52,7 @@ extern U_EXPORT void runDynamicPage_wi_auth(int param);
       GET_ENTRY(admin_view_using),
       GET_ENTRY(admin_view_using_historical),
       GET_ENTRY(calendar),
+      GET_ENTRY(check_for_usersF),
       GET_ENTRY(error_ap),
       GET_ENTRY(fake_login_validate),
       GET_ENTRY(gen_activation),

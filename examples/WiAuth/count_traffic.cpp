@@ -29,7 +29,7 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      UString content = UFile::contentOf(argv[optind]);
+      UString content = UFile::contentOf(UString(argv[optind]));
 
       // ........
       // 10.10.25.2 - - [21/May/2012:16:29:41 +0200] "GET /unirel_logo.gif HTTP/1.1" 200 3414 "http://www.unirel.com/" "Mozilla/5.0 (X11; Linux x86_64)"

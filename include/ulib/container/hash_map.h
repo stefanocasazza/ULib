@@ -14,7 +14,9 @@
 #ifndef ULIB_HASH_MAP_H
 #define ULIB_HASH_MAP_H 1
 
-#include <ulib/container/construct.h>
+#include <ulib/container/vector.h>
+
+typedef UVector<UString> UVectorUString;
 
 typedef bool     (*bPFprpv)  (UStringRep*,void*);
 typedef uint32_t (*uPFpcu)   (const char*,uint32_t);
@@ -29,8 +31,8 @@ class UFileConfig;
 class UNoCatPlugIn;
 class UCertificate;
 
-template <class T> class UVector;
 template <class T> class UJsonTypeHandler;
+template <class T> class URDBObjectHandler;
 
 class U_NO_EXPORT UHashMapNode {
 public:
@@ -225,7 +227,7 @@ public:
 
       lookup(_key);
 
-      insertAfterFind(_key, _elem);
+      insertAfterFind(_key.rep, _elem);
       }
 
    // after called find() (don't make the lookup)
@@ -261,8 +263,6 @@ public:
    UHashMapNode* next(UHashMapNode* node);
 
    // call function for all entry
-
-   void getKeys(UVector<UString>& vec);
 
    void callForAllEntry(bPFprpv function);
    void callForAllEntrySorted(bPFprpv function)
@@ -365,6 +365,8 @@ protected:
 
       return at(pkey);
       }
+
+   void getKeys(UVector<UString>& vec);
 
    void lookup(const UString&    keyr) { return lookup(keyr.rep); }
    void lookup(const UStringRep* keyr);
@@ -484,13 +486,22 @@ public:
 
    // sets a field, overwriting any existing value
 
+   void insert(const UStringRep* _key, const T* _elem)
+      {
+      U_TRACE(0, "UHashMap<T*>::insert(%V,%p)", _key, _elem)
+
+      UHashMap<void*>::lookup(_key);
+
+      insertAfterFind(_key, _elem);
+      }
+
    void insert(const UString& _key, const T* _elem)
       {
       U_TRACE(0, "UHashMap<T*>::insert(%V,%p)", _key.rep, _elem)
 
       UHashMap<void*>::lookup(_key);
 
-      insertAfterFind(_key, _elem);
+      insertAfterFind(_key.rep, _elem);
       }
 
    // find a elem in the array with <key>
@@ -714,7 +725,7 @@ public:
             is >> *(T*)_elem;
 
             if (is.bad()) is.clear();
-            else          t.insert(key, _elem);
+            else          t.insert(key.rep, _elem);
             }
          while (c != EOF);
 
@@ -815,11 +826,18 @@ public:
       UHashMap<UStringRep*>::replaceAfterFind(str.rep);
       }
 
+   void insert(const UStringRep* _key, const UStringRep* _elem)
+      {
+      U_TRACE(0, "UHashMap<UString>::insert(%V,%V)", _key, _elem)
+
+      UHashMap<UStringRep*>::insert(_key, _elem);
+      }
+
    void insert(const UString& _key, const UString& str)
       {
       U_TRACE(0, "UHashMap<UString>::insert(%V,%V)", _key.rep, str.rep)
 
-      UHashMap<UStringRep*>::insert(_key, str.rep);
+      UHashMap<UStringRep*>::insert(_key.rep, str.rep);
       }
 
    UString erase(const UString& key);
@@ -865,6 +883,36 @@ private:
    friend class UFileConfig;
    friend class UMimeHeader;
    friend class UNoCatPlugIn;
+
+   template <class T> friend class URDBObjectHandler;
+};
+
+template <> class U_EXPORT UHashMap<UVectorUString> : public UHashMap<UVectorUString*> {
+public:
+
+   explicit UHashMap(uint32_t n, bool ignore_case) : UHashMap<UVectorUString*>(n, ignore_case)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UHashMap<UVectorUString>, "%u,%b", n, ignore_case)
+      }
+
+   explicit UHashMap(uint32_t n = 53, bPFptpcu _set_index = setIndex) : UHashMap<UVectorUString*>(n, _set_index)
+      {
+      U_TRACE_REGISTER_OBJECT(0, UHashMap<UVectorUString>, "%u,%p", n, _set_index)
+      }
+
+   ~UHashMap()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, UHashMap<UVectorUString>)
+      }
+
+   bool empty();
+
+   void erase(const UString& _key, uint32_t pos); // remove element at pos
+
+   void push(const UString& _key, const UString& str);
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(UHashMap<UVectorUString>)
 };
 
 #endif

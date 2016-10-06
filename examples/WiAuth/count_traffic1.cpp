@@ -43,7 +43,7 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      UString content = UFile::contentOf(argv[optind]);
+      UString content = UFile::contentOf(UString(argv[optind]));
 
       // ........
       // 2013/09/15 03:49:58 op: MAC_AUTH_all, uid: 60:fa:cd:7d:14:06,

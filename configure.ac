@@ -2298,7 +2298,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		## ----------------------------------------------------------------------------------------------------------------------------------
 		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
 
-		if test "$use_distcc" != "yes"; then
+		if test "$use_distcc" != "yes" -a "$cross_compiling" != "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -fuse-linker-plugin -march=native -mtune=native" # NB: distcc don't work with this...
 		fi
 	fi

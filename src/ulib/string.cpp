@@ -14,7 +14,6 @@
 #include <ulib/file.h>
 #include <ulib/utility/escape.h>
 #include <ulib/internal/chttp.h>
-#include <ulib/container/vector.h>
 #include <ulib/container/hash_map.h>
 
 struct ustring    { ustringrep* rep; };

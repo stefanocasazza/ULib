@@ -786,7 +786,7 @@ public:
       x = U_KEY_HANDLE;
 #  else
       e = 0;
-      x = UFile::contentOf(U_KEY_HANDLE);
+      x = UFile::contentOf(UString(U_KEY_HANDLE));
 
       if (x.empty() ||
           (u_pkey = UServices::loadKey(x, 0, true, 0, e)) == 0)

@@ -278,6 +278,7 @@ U_EXPORT main (int argc, char* argv[])
 
    int city;
    double pricePoint;
+   UString workingString, query(U_STRING_FROM_CONSTANT("{ \"colorShifts\" : { \"H67\" : -1 }, \"name\" : \"Mr. Taka Ramen\", \"category\" : 39, \"grouping\" : 0, \"bumpUp\" : false, \"businessID\" : \"B5401\", \"foundationColor\" : 3, \"coordinates\" : [ -73.9888983, 40.7212405 ] }"));
 
    (void) U_JFIND(U_STRING_FROM_CONSTANT("{ \"pricePoint\" : 2.48333333333333, \"socialWeight\" : 8.75832720587083, \"gender\" : 0, \"lessThan16\" : false }"), "pricePoint", pricePoint);
 
@@ -286,6 +287,16 @@ U_EXPORT main (int argc, char* argv[])
    (void) U_JFIND(U_STRING_FROM_CONSTANT("{ \"cityKey\" : 0 }"), "cityKey", city);
 
    U_INTERNAL_ASSERT_EQUALS(city, 0)
+
+   (void) UValue::jread(query, U_STRING_FROM_CONSTANT("{'coordinates' [0"), workingString);
+
+   U_INTERNAL_ASSERT_EQUALS(workingString, "-73.9888983")
+
+   workingString.clear();
+
+   (void) U_JFIND(query, "coordinates", workingString);
+
+   U_INTERNAL_ASSERT_EQUALS(workingString, "[ -73.9888983, 40.7212405 ]")
 
    testMap();
    testVector();
@@ -364,7 +375,7 @@ U_EXPORT main (int argc, char* argv[])
 
    result.clear();
 
-   array = UFile::contentOf("inp/TESTJSON.json");
+   array = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/TESTJSON.json"));
 
    (void) UValue::jread(array, UString::getStringNull(), result);
 

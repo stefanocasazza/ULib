@@ -13,7 +13,6 @@
 
 #include <ulib/file.h>
 #include <ulib/tokenizer.h>
-#include <ulib/container/vector.h>
 #include <ulib/utility/services.h>
 #include <ulib/utility/dir_walk.h>
 #include <ulib/utility/string_ext.h>
@@ -889,30 +888,17 @@ UString UFile::getContent(bool brdonly, bool bstat, bool bmap)
    U_RETURN_STRING(fileContent);
 }
 
-UString UFile::contentOf(const UString& _pathname, int flags, bool bstat)
+UString UFile::contentOf(const UString& _pathname, int flags, bool bstat, const UString* environment)
 {
-   U_TRACE(0, "UFile::contentOf(%V,%d,%b)", _pathname.rep, flags, bstat)
+   U_TRACE(0, "UFile::contentOf(%V,%d,%b,%p)", _pathname.rep, flags, bstat, environment)
+
+   U_INTERNAL_ASSERT(_pathname)
 
    UFile file;
    UString content;
 
    file.reset();
-
-   if (file.open(_pathname, flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat);
-
-   U_RETURN_STRING(content);
-}
-
-UString UFile::contentOf(const char* _pathname, int flags, bool bstat, const UString* environment)
-{
-   U_TRACE(0, "UFile::contentOf(%S,%d,%b,%p)", _pathname, flags, bstat, environment)
-
-   UFile file;
-   UString path(_pathname), content;
-
-   file.reset();
-
-   file.setPath(path, environment);
+   file.setPath(_pathname, environment);
 
    if (file.open(flags)) content = file.getContent((((flags & O_RDWR) | (flags & O_WRONLY)) == 0), bstat);
 

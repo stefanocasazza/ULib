@@ -380,8 +380,8 @@ public:
             {
             case 1: // Firma dati: XAdES-BES
                {
-               UString x    = UFile::contentOf(U_X509),
-                       data = UFile::contentOf(U_DATA_URI);
+               UString x    = UFile::contentOf(UString(U_X509)),
+                       data = UFile::contentOf(UString(U_DATA_URI));
 
                result = client->creatBES(data, U_DATA_URI, x, U_KEY_HANDLE, U_DIGEST_ALGORITHM,
                                          U_SIGNING_TIME, U_CLAIMED_ROLE, U_PRODUCTION_PLACE_CITY,
@@ -392,8 +392,8 @@ public:
 
             case 2: // Firma dati: XAdES-C
                {
-               UString x    = UFile::contentOf(U_X509),
-                       data = UFile::contentOf(U_DATA_URI);
+               UString x    = UFile::contentOf(UString(U_X509)),
+                       data = UFile::contentOf(UString(U_DATA_URI));
 
                result = client->creatC(data, U_DATA_URI, x, U_KEY_HANDLE, U_DIGEST_ALGORITHM,
                                        U_SIGNING_TIME, U_CLAIMED_ROLE, U_PRODUCTION_PLACE_CITY,
@@ -405,7 +405,7 @@ public:
 
             case 3: // Archiviazione XAdES-C: XAdES-L
                {
-               UString data = UFile::contentOf(U_DATA_URI);
+               UString data = UFile::contentOf(UString(U_DATA_URI));
 
                result = client->creatL(data, U_ARCHIVE_TIMESTAMP, U_SCHEMA);
                }

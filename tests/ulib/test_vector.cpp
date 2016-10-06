@@ -258,7 +258,7 @@ U_EXPORT main (int argc, char* argv[])
    tmp = v0[2];
    U_ASSERT( tmp == U_STRING_FROM_CONSTANT("@PIPPO") )
 
-   UString content = UFile::contentOf("inp/wifi-utilizzo");
+   UString content = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/wifi-utilizzo"));
    UVector<UString> vec1(content, '\n'), vec2(4);
 
    n = vec1.size();
@@ -292,7 +292,7 @@ U_EXPORT main (int argc, char* argv[])
 
    vec2.clear();
 
-   tmp = UFile::contentOf(argv[1]);
+   tmp = UFile::contentOf(UString(argv[1]));
    UVector<UString> y(tmp);
    y.sort(false);
 

@@ -2,8 +2,6 @@
 
 #include <ulib/db/rdb.h>
 #include <ulib/base/utility.h>
-#include <ulib/container/vector.h>
-#include <ulib/container/hash_map.h>
 #include <ulib/utility/string_ext.h>
 
 #include "posting.h"

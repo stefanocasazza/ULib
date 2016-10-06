@@ -15,7 +15,6 @@
 #include <ulib/utility/base64.h>
 #include <ulib/ssl/certificate.h>
 #include <ulib/utility/services.h>
-#include <ulib/container/vector.h>
 #include <ulib/utility/string_ext.h>
 
 #include <openssl/pem.h>

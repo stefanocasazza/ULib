@@ -8,7 +8,6 @@
 #include <ulib/tokenizer.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/services.h>
-#include <ulib/container/vector.h>
 
 #include "posting.h"
 

@@ -440,12 +440,11 @@ static inline bool u__is2urlenc(unsigned char c) { return ((u_cttab(c) & 0x02000
 static inline bool u__isurlqry( unsigned char c) { return ((u_cttab(c) & 0x04000000) != 0); } /* __UQ URL: char FROM query '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
 
 static inline bool u__isprintf(unsigned char c)  { return ((u_cttab(c) & 0x00000002) != 0); } /*  __E                                  */
+static inline bool u__issign(  unsigned char c)  { return ((u_cttab(c) & 0x00000014) != 0); } /* (__H | __O)                           */
 static inline bool u__isipv4(  unsigned char c)  { return ((u_cttab(c) & 0x00001020) != 0); } /* (__N | __D)                           */
-static inline bool u__isreal(  unsigned char c)  { return ((u_cttab(c) & 0x00000024) != 0); } /* (__H | __N)                           */
 static inline bool u__isblank( unsigned char c)  { return ((u_cttab(c) & 0x00000101) != 0); } /* (__S | __B)                           */
 static inline bool u__isalpha( unsigned char c)  { return ((u_cttab(c) & 0x0000A000) != 0); } /* (__L | __U)                           */
 static inline bool u__isxdigit(unsigned char c)  { return ((u_cttab(c) & 0x00081000) != 0); } /* (__X | __D)                           */
-static inline bool u__isnumber(unsigned char c)  { return ((u_cttab(c) & 0x00001010) != 0); } /* (__O | __D)                           */
 static inline bool u__isename( unsigned char c)  { return ((u_cttab(c) & 0x00000240) != 0); } /* (__G | __R)                           */
 static inline bool u__isalnum( unsigned char c)  { return ((u_cttab(c) & 0x0000B000) != 0); } /* (__L | __U | __D)                     */
 static inline bool u__islitem( unsigned char c)  { return ((u_cttab(c) & 0x00000109) != 0); } /* (__S | __V | __B)                     */
@@ -459,6 +458,7 @@ static inline bool u__isbase64(unsigned char c)  { return ((u_cttab(c) & 0x0010B
 static inline bool u__isb64url(unsigned char c)  { return ((u_cttab(c) & 0x0000B090) != 0); } /* (      __L | __U | __D | __O | __Q)   */
 
 static inline bool u__isvalidchar(   unsigned char c) { return ((u_cttab(c) & 0x10000000) != 0); } /* __XM */
+static inline bool u__isnumberchar(  unsigned char c) { return ((u_cttab(c) & 0x00001034) != 0); } /*  __H | __O | __N | __D */
 static inline bool u__isxmlvalidchar(unsigned char c) { return ((u_cttab(c) & 0x10000300) != 0); } /* __XM | __B | __R */
 static inline bool u__isfnameinvalid(unsigned char c) { return ((u_cttab(c) & 0x08000000) != 0); } /* __UF */
 
@@ -511,7 +511,9 @@ static inline bool u_isBinary(const unsigned char* restrict s, uint32_t n) { ret
 
 static inline unsigned long u_strtoul(const char* restrict s, const char* restrict e)
 {
-   char c;
+   /* handle up to 10 digits */
+
+   uint32_t len = e-s;
    unsigned long val = 0UL;
 
    U_INTERNAL_TRACE("u_strtoul(%p,%p)", s, e)
@@ -519,12 +521,21 @@ static inline unsigned long u_strtoul(const char* restrict s, const char* restri
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(e)
 
-   for (c = *s; s != e; c = *++s)
+   switch (len)
       {
-      U_INTERNAL_ASSERT(u__isdigit(*s))
-
-      val = (c - '0') + (val * 10UL);
+      case 10: val += (s[len-10] - '0') * 1000000000UL;
+      case  9: val += (s[len- 9] - '0') * 100000000UL;
+      case  8: val += (s[len- 8] - '0') * 10000000UL;
+      case  7: val += (s[len- 7] - '0') * 1000000UL;
+      case  6: val += (s[len- 6] - '0') * 100000UL;
+      case  5: val += (s[len- 5] - '0') * 10000UL;
+      case  4: val += (s[len- 4] - '0') * 1000UL;
+      case  3: val += (s[len- 3] - '0') * 100UL;
+      case  2: val += (s[len- 2] - '0') * 10UL;
+      case  1: val += (s[len- 1] - '0');
       }
+
+   U_INTERNAL_PRINT("val = %lu", val)
 
    return val;
 }
@@ -539,11 +550,11 @@ static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(e)
 
-   for (c = *s; s != e; c = *++s) 
+   for (c = *s; s != e; c = *++s)
       {
-      U_INTERNAL_ASSERT(u__isdigit(*s))
+      U_INTERNAL_ASSERT(u__isdigit(c))
 
-      val = (c - '0') + (val * 10ULL);
+      val = (c - '0') + (val << 1) + (val << 3); // (val * 10ULL)
       }
 
    return val;
@@ -551,6 +562,7 @@ static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e
 
 extern U_EXPORT long    u_strtol( const char* restrict s, const char* restrict e) __pure;
 extern U_EXPORT int64_t u_strtoll(const char* restrict s, const char* restrict e) __pure;
+extern U_EXPORT double  u_strtod( const char* restrict s, const char* restrict e, int point_pos) __pure;
 
 static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
 

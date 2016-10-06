@@ -97,7 +97,7 @@ static void check2(UFileConfig& y)
 
 static bool print(UStringRep* key, void* value)
 {
-   U_TRACE(5, "print(%.*S,%p)", U_STRING_TO_TRACE(*key), value)
+   U_TRACE(5, "print(%V,%p)", key, value)
 
    cout << '\n';
    cout.write(key->data(), key->size());
@@ -109,7 +109,7 @@ static bool print(UStringRep* key, void* value)
 
 static bool cancella(UStringRep* key, void* value)
 {
-   U_TRACE(5, "cancella(%.*S,%p)", U_STRING_TO_TRACE(*key), value)
+   U_TRACE(5, "cancella(%V,%p)", key, value)
 
    static int cnt;
 

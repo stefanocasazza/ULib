@@ -11,7 +11,6 @@
 //
 // ============================================================================
 
-#include <ulib/container/vector.h>
 #include <ulib/container/hash_map.h>
 
 bool        UHashMap<void*>::istream_loading;
@@ -196,7 +195,7 @@ void UHashMap<void*>::replaceKey(const UString& _key)
 
    lookup(_key);
 
-   U_INTERNAL_ASSERT_EQUALS(node,0)
+   U_INTERNAL_ASSERT_EQUALS(node, 0)
 
    pnode->hash = hash;
    pnode->next = table[index];
@@ -668,7 +667,9 @@ bool UHashMap<void*>::find(const char* _key, uint32_t keylen)
 
    lookup(pkey);
 
-   U_RETURN(node != 0);
+   if (node != 0) U_RETURN(true);
+
+   U_RETURN(false);  
 }
 
 uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
@@ -797,6 +798,59 @@ uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
    sz = ptr - _start;
 
    U_RETURN(sz);
+}
+
+bool UHashMap<UVectorUString>::empty()
+{
+   U_TRACE_NO_PARAM(0, "UHashMap<UVectorUString>::empty()")
+
+   if (_length)
+      {
+      if (first())
+         {
+         do {
+            UVector<UString>* _elem = elem();
+
+            if (_elem->empty() == false) U_RETURN(false);
+            }
+         while (next());
+         }
+      }
+
+   U_RETURN(true);
+}
+
+void UHashMap<UVectorUString>::push(const UString& _key, const UString& str)
+{
+   U_TRACE(0, "UHashMap<UVectorUString>::push(%V,%V)", _key.rep, str.rep)
+
+   UVector<UString>* _elem;
+
+   UHashMap<void*>::lookup(_key);
+
+   if (node) _elem = (UVector<UString>*) node->elem;
+   else
+      {
+      U_NEW(UVector<UString>, _elem, UVector<UString>);
+
+      UHashMap<UVectorUString*>::insertAfterFind(_key, _elem);
+      }
+
+   _elem->push(str);
+}
+
+void UHashMap<UVectorUString>::erase(const UString& _key, uint32_t pos)
+{
+   U_TRACE(0, "UHashMap<UVectorUString>::erase(%V,%u)", _key.rep, pos)
+
+   UHashMap<void*>::lookup(_key);
+
+   if (node)
+      {
+      UVector<UString>* _elem = (UVector<UString>*) node->elem;
+
+      _elem->erase(pos);
+      }
 }
 
 // STREAMS

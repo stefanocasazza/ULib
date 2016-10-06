@@ -13,7 +13,6 @@
 
 #include <ulib/file.h>
 #include <ulib/notifier.h>
-#include <ulib/container/vector.h>
 #include <ulib/utility/interrupt.h>
 #include <ulib/net/server/server.h>
 

@@ -631,7 +631,7 @@ public:
       {
       U_TRACE(5, "Application::loadDocument()")
 
-      *content = UFile::contentOf(filename);
+      *content = UFile::contentOf(UString(filename));
 
       if (content->empty())
          {

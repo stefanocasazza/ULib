@@ -13,7 +13,6 @@
 
 #include <ulib/db/cdb.h>
 #include <ulib/utility/services.h>
-#include <ulib/container/vector.h>
 
 void UCDB::init_internal(int ignore_case)
 {

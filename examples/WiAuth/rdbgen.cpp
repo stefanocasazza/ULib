@@ -97,7 +97,7 @@ public:
                {
                UString key(argv[optind]), value(argv[++optind]);
 
-               if (value.equal(U_CONSTANT_TO_PARAM(U_DIR_OUTPUT U_FILE_OUTPUT))) value = UStringExt::trim(UFile::contentOf(U_DIR_OUTPUT U_FILE_OUTPUT));
+               if (value.equal(U_CONSTANT_TO_PARAM(U_DIR_OUTPUT U_FILE_OUTPUT))) value = UStringExt::trim(UFile::contentOf(UString(U_DIR_OUTPUT U_FILE_OUTPUT)));
 
                UApplication::exit_value = x.store(key, value, RDB_REPLACE);
                }

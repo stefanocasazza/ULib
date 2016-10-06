@@ -3,7 +3,6 @@
 #include <ulib/file_config.h>
 #include <ulib/net/tcpsocket.h>
 #include <ulib/utility/services.h>
-#include <ulib/container/vector.h>
 #include <ulib/net/server/server.h>
 
 #undef  PACKAGE

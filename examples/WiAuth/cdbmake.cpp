@@ -1,7 +1,6 @@
 // cdbmake.cpp
 
 #include <ulib/db/cdb.h>
-#include <ulib/container/vector.h>
 #include <ulib/utility/string_ext.h>
 
 #undef  PACKAGE
@@ -28,7 +27,7 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      UString records = UFile::contentOf(argv[optind]);
+      UString records = UFile::contentOf(UString(argv[optind]));
 
 #  ifdef U_STDCPP_ENABLE
       if (records)

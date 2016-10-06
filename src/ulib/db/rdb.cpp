@@ -1832,6 +1832,7 @@ bool URDBObjectHandler<UDataStorage*>::getDataStorage()
    U_RETURN(false);
 }
 
+bool     URDBObjectHandler<UDataStorage*>::bsetEntry;
 char*    URDBObjectHandler<UDataStorage*>::data_buffer;
 uint32_t URDBObjectHandler<UDataStorage*>::data_len;
 iPFpvpv  URDBObjectHandler<UDataStorage*>::ds_function_to_call;
@@ -1929,7 +1930,6 @@ void URDBObjectHandler<UDataStorage*>::setEntry(UStringRep* _key, UStringRep* _d
    // NB: in this way now we have the direct reference to mmap memory for the data record and the key...
 
                 recval._assign(_data);
-
    pDataStorage->keyid._assign(_key);
 
    pDataStorage->fromData(U_STRING_TO_PARAM(recval));
@@ -1947,6 +1947,15 @@ int URDBObjectHandler<UDataStorage*>::callEntryCheck(UStringRep* _key, UStringRe
 
    if (pthis->UCDB::filter_function_to_call(_key, _data))
       {
+      if (bsetEntry)
+         {
+         pthis->setEntry(_key, _data);
+
+         (void) ds_function_to_call(_key, _data);
+
+         U_RETURN(1);
+         }
+
       int result = ds_function_to_call(_key, _data);
 
       if (result == 4) // NB: call function later after set record value from db with setEntry()...
@@ -1957,9 +1966,9 @@ int URDBObjectHandler<UDataStorage*>::callEntryCheck(UStringRep* _key, UStringRe
 
          if (result == 3) // NB: call function later without lock on db...
             {
-            result = 1;
-
             pthis->UCDB::addEntryToVector();
+
+            U_RETURN(1);
             }
          }
 
@@ -2014,8 +2023,8 @@ void URDBObjectHandler<UDataStorage*>::callForAllEntry(iPFprpr function, vPF fun
 
          if (n > 1)
             {
-            if (compare_obj != (qcompare)-1) vkey.UVector<void*>::sort(compare_obj);
-            else                             vkey.sort(UCDB::ignoreCase());
+            if (compare_obj == (qcompare)-1) vkey.sort(UCDB::ignoreCase());
+            else                             vkey.UVector<void*>::sort(compare_obj);
             }
 
          lock();
@@ -2052,20 +2061,23 @@ void URDBObjectHandler<UDataStorage*>::callForAllEntry(iPFprpr function, vPF fun
          unlock();
          }
 
-      for (i = 0, n = vec.size(); i < (int)n; i += 2)
+      if ((n = vec.size()))
          {
-         UStringRep* _key = vec.UVector<UStringRep*>::at(i);
-         UStringRep*_data = vec.UVector<UStringRep*>::at(i+1);
-
-         pthis->setEntry(_key, _data);
-
-         int result = ds_function_to_call((void*)-1, (void*)function_no_lock);
-
-         if (result == 2) // remove
+         for (i = 0; i < (int)n; i += 2)
             {
-            UCDB::setKey(_key);
+            UStringRep*  _key = vec.UVector<UStringRep*>::at(i);
+            UStringRep* _data = vec.UVector<UStringRep*>::at(i+1);
 
-            (void) URDB::remove();
+            pthis->setEntry(_key, _data);
+
+            int result = ds_function_to_call((void*)-1, (void*)function_no_lock);
+
+            if (result == 2) // remove
+               {
+               UCDB::setKey(_key);
+
+               (void) URDB::remove();
+               }
             }
          }
       }
@@ -2096,7 +2108,6 @@ void URDBObjectHandler<UDataStorage*>::close()
          {
          /*
          UString x = URDB::print();
-
          (void) UFile::writeToTmp(U_STRING_TO_PARAM(x), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("%.*s.end"), U_FILE_TO_TRACE(*this));
          */
 
@@ -2104,9 +2115,7 @@ void URDBObjectHandler<UDataStorage*>::close()
 
          /*
          char buffer[1024];
-
          (void) u__snprintf(U_CONSTANT_TO_PARAM("/tmp/%.*s.init"), U_FILE_TO_TRACE(*this))
-
          (void) UFile::_unlink(buffer);
          */
          }

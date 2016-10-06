@@ -14,7 +14,6 @@
 #ifndef ULIB_VALUE_H
 #define ULIB_VALUE_H 1
 
-#include <ulib/container/vector.h>
 #include <ulib/container/hash_map.h>
 
 #define U_JFIND(json,str,result) UValue::jfind(json,str,U_CONSTANT_SIZE(str),result)

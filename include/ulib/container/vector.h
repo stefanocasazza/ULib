@@ -121,7 +121,7 @@ public:
    // ELEMENT ACCESS
 
    const void* front() { return *vec; }
-   const void*  back() { return *(vec + _length - 1); }
+   const void*  back() { return *(vec + _length -1); }
 
    const void*& at(uint32_t pos) __pure
       {
@@ -202,9 +202,9 @@ public:
       U_INTERNAL_ASSERT_RANGE(1,_length,_capacity)
 
 #  ifdef U_APEX_ENABLE
-      if (--_length) (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + pos, vec + pos + 1, (_length - pos) * sizeof(void*));
+      if (--_length) (void) U_SYSCALL(apex_memmove, "%p,%p,%u", vec + pos, vec + pos +1, (_length - pos) * sizeof(void*));
 #  else
-      if (--_length) (void) U_SYSCALL(     memmove, "%p,%p,%u", vec + pos, vec + pos + 1, (_length - pos) * sizeof(void*));
+      if (--_length) (void) U_SYSCALL(     memmove, "%p,%p,%u", vec + pos, vec + pos +1, (_length - pos) * sizeof(void*));
 #  endif
       }
 

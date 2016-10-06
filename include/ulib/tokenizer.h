@@ -179,12 +179,28 @@ public:
       return str.substr(start, s - start);
       }
 
-   UString getTokenQueryParser();
-   int     getTokenId(UString* ptoken);
-   bool    tokenSeen(const UString* x);
+   void skipNumber()
+      {
+      U_TRACE_NO_PARAM(0, "UTokenizer::skipNumber()")
 
-   bool skipNumber(bool& isReal);
+      for (; s < end; ++s)
+         {
+         char c = *s;
+
+         if (u__isnumberchar(c) == false &&
+             u__toupper(c) != 'E') // scientific notation (Ex: 1.45e-10)
+            {
+            break;
+            }
+         }
+      }
+
+   int  getTypeNumber();
+   int  getTokenId(UString* ptoken);
+   bool tokenSeen(const UString* x);
    bool skipToken(const char* token, uint32_t sz);
+
+   UString getTokenQueryParser();
 
    static const char* group;
    static bool group_skip, avoid_punctuation;

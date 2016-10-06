@@ -510,6 +510,11 @@ public:
 
    void callForAllEntry(iPFprpr function, vPF function_no_lock = 0, qcompare compare_obj = 0);
 
+   void callForAllEntryWithSetEntry(vPFprpr function, vPF function_no_lock = 0, qcompare compare_obj = 0)
+      { bsetEntry = true; callForAllEntry((iPFprpr)function, function_no_lock, compare_obj); bsetEntry = false; }
+
+   void callForAllEntryWithVector(iPFprpr function, vPF function_no_lock = (vPF)-1, qcompare compare_obj = 0) { callForAllEntry(function, function_no_lock, compare_obj); }
+
 #ifdef DEBUG
    const char* dump(bool _reset) const;
 #endif
@@ -518,6 +523,7 @@ public:
    UDataStorage* pDataStorage;
    bool brecfound;
 protected:
+   static bool bsetEntry;
    static char* data_buffer;
    static uint32_t data_len;
    static iPFpvpv ds_function_to_call;

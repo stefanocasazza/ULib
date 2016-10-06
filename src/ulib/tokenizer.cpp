@@ -282,30 +282,62 @@ bool UTokenizer::skipToken(const char* token, uint32_t sz)
    U_RETURN(false);
 }
 
-bool UTokenizer::skipNumber(bool& isReal)
+int UTokenizer::getTypeNumber()
 {
-   U_TRACE(0, "UTokenizer::skipNumber(%p)", &isReal)
+   U_TRACE_NO_PARAM(0, "UTokenizer::getTypeNumber()")
 
-   isReal = false;
+   U_INTERNAL_ASSERT_EQUALS(u__issign(*s), false)
+   U_INTERNAL_ASSERT(u__issign(*(s-1)) || u__isdigit(*(s-1)))
 
-   for (char c; s < end; ++s)
+   int type_num = u__isdigit(*(s-1));
+
+   for (const char* start = s; s < end; ++s)
       {
-      c = *s;
+      char c = *s;
 
-      if (u__isnumber(c)) continue;
+      U_INTERNAL_DUMP("c = %C type_num = %d", c, type_num)
 
-      if (u__isreal(c) ||
-          u__toupper(c) == 'E')
+      if (u__isdigit(c))
          {
-         isReal = true;
+         if (type_num == 0) type_num = 1;
 
          continue;
          }
 
-      U_RETURN(true);
+      if (u__issign(c))
+         {
+         if (type_num == INT_MIN) continue;
+
+         U_RETURN(0);
+         }
+
+      if (c == '.' &&
+          type_num <= 1)
+         {
+         int pos = (s-start);
+
+         if (pos == 0) type_num = INT_MIN+1;
+         else
+            {
+            if (u__isdigit(*(start-1))) ++pos;
+
+            type_num = -pos;
+            }
+
+         continue;
+         }
+
+      if (u__toupper(c) == 'E') // scientific notation (Ex: 1.45e-10)
+         {
+         type_num = INT_MIN;
+
+         continue;
+         }
+
+      break;
       }
 
-   U_RETURN(false);
+   U_RETURN(type_num);
 }
 
 UString UTokenizer::getTokenQueryParser()

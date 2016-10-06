@@ -49,7 +49,8 @@
 class URDB;
 class UHTTP;
 
-typedef int (*iPFprpr)(UStringRep*, UStringRep*);
+typedef int  (*iPFprpr) (UStringRep*, UStringRep*);
+typedef void (*vPFprpr) (UStringRep*, UStringRep*);
 
 #define U_cdb_ignore_case(obj)         (obj)->UCDB::flag[0]
 #define U_cdb_shared(obj)              (obj)->UCDB::flag[1]

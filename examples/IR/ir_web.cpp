@@ -188,8 +188,8 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
                filename = IR_SESSION.vec[i]->filename;
                basename = UStringExt::basename(filename);
    
-               pathname1.snprintf(U_CONSTANT_TO_PARAM(  "/doc/%.*s"), U_STRING_TO_TRACE(filename));
-               pathname2.snprintf(U_CONSTANT_TO_PARAM("%w/doc/%.*s"), U_STRING_TO_TRACE(filename));
+               pathname1.snprintf(U_CONSTANT_TO_PARAM(  "/doc/%v"), filename.rep);
+               pathname2.snprintf(U_CONSTANT_TO_PARAM("%w/doc/%v"), filename.rep);
    
                doc = UFile::contentOf(pathname2);
    

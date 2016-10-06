@@ -28,8 +28,8 @@ public:
       UApplication::run(argc, argv, env);
 
       UString riga;
-      UString content1 = UFile::contentOf(argv[optind++]),
-              content2 = UFile::contentOf(argv[optind]);
+      UString content1 = UFile::contentOf(UString(argv[optind++])),
+              content2 = UFile::contentOf(UString(argv[optind]));
 
       UVector<UString> vec_entry(10),
                        vec_ap_name(content1), // '\n'),

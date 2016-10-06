@@ -1303,6 +1303,20 @@ public:
       return *this;
       }
 
+   // swap
+
+   void swap(UString& str)
+      {
+      U_TRACE(0, "UString::swap(%p)", &str)
+
+      UStringRep* tmp = rep;
+
+          rep = str.rep;
+      str.rep = tmp;
+      }
+
+   void swap(UString& lhs, UString& rhs) { lhs.swap(rhs); }
+
 #ifdef U_COMPILER_RVALUE_REFS
    UString& operator=(UString && str)
       {
@@ -1320,8 +1334,7 @@ public:
 
           rep = str.rep;
       str.rep = UStringRep::string_rep_null;
-
-      UStringRep::string_rep_null->hold();
+                UStringRep::string_rep_null->hold();
 
       U_INTERNAL_DUMP("rep = %p", rep)
 
@@ -1373,20 +1386,6 @@ public:
    UString& replace(const char* s, uint32_t n)                    { return replace(0U, size(), s, n); }
    UString& replace(uint32_t pos, uint32_t n, const char* s)      { return replace(pos,     n, s, u__strlen(s, __PRETTY_FUNCTION__)); }
    UString& replace(uint32_t pos, uint32_t n, const UString& str) { return replace(pos,     n, U_STRING_TO_PARAM(str)); }
-
-   // swap
-
-   void swap(UString& str)
-      {
-      U_TRACE(0, "UString::swap(%p)", &str)
-
-      UStringRep* tmp = rep;
-
-          rep = str.rep;
-      str.rep = tmp;
-      }
-
-   void swap(UString& lhs, UString& rhs) { lhs.swap(rhs); }
 
    // Assignment - NB: assign() DOES NOT WARRANT PROPERTIES OF STRING, replace() YES...
 

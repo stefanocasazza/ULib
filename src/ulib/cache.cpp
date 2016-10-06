@@ -356,14 +356,14 @@ UString UCache::getContent(const char* key, uint32_t keylen)
 
 #ifdef DEBUG
    struct stat st;
-   char buffer[U_PATH_MAX];
+   UString buffer(U_PATH_MAX);
 
-   (void) u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%v/%.*s"), dir_template.rep, keylen, key);
+   buffer.snprintf(U_CONSTANT_TO_PARAM("%v/%.*s"), dir_template.rep, keylen, key);
 
-   if (U_SYSCALL(stat, "%S,%p", buffer, &st) == 0 &&
+   if (U_SYSCALL(stat, "%S,%p", buffer.data(), &st) == 0 &&
        st.st_mtime >= dir_template_mtime)
       {
-      return UFile::contentOf(buffer); 
+      return UFile::contentOf(buffer);
       }
 #endif
 

@@ -132,15 +132,7 @@ public:
    // PATH
 
    void setRoot();
-   void setPath(const UString& path,   const UString* environment = 0);
-   void setPath(const char* _pathname, const UString* environment = 0)
-      {
-      U_TRACE(0, "UFile::setPath(%S,%p)", _pathname, environment)
-
-      UString path(_pathname);
-
-      setPath(path, environment);
-      }
+   void setPath(const UString& path, const UString* environment = 0);
 
    bool isRoot() const
       {
@@ -768,8 +760,7 @@ public:
    UString  getContent(                   bool brdonly = true,  bool bstat = false, bool bmap = false);
    UString _getContent(bool bsize = true, bool brdonly = false,                     bool bmap = false);
 
-   static UString contentOf(const UString& _pathname, int flags = O_RDONLY, bool bstat = false);
-   static UString contentOf(const char*    _pathname, int flags = O_RDONLY, bool bstat = false, const UString* environment = 0);
+   static UString contentOf(const UString& _pathname, int flags = O_RDONLY, bool bstat = false, const UString* environment = 0);
 
    static char* mmap(uint32_t* plength, int _fd = -1, int prot = PROT_READ | PROT_WRITE, int flags = MAP_SHARED | MAP_ANONYMOUS, uint32_t offset = 0);
 

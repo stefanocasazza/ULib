@@ -38,7 +38,7 @@ public:
 
       UXml2Txt converter(tag_list, excluded, false);
 
-      if (converter.parse(UFile::contentOf(argv[optind])) == false)
+      if (converter.parse(UFile::contentOf(UString(argv[optind]))) == false)
          {
          UApplication::exit_value = 1;
 

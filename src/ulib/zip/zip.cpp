@@ -213,7 +213,7 @@ UString UZIP::archive(const char** add_to_filenames)
          {
          U_INTERNAL_ASSERT_EQUALS(zip_match("tmp.zip", names), 1)
 
-         result = UFile::contentOf("tmp.zip");
+         result = UFile::contentOf(U_STRING_FROM_CONSTANT("tmp.zip"));
          }
 
       (void) UFile::chdir(0, true);

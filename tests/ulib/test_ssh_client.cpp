@@ -21,8 +21,7 @@ U_EXPORT main (int argc, char* argv[])
 
    if (x.connectServer(hostname, 22))
       {
-      UString filename(argv[5]);
-      UString dati = UFile::contentOf(filename);
+      UString dati = UFile::contentOf(UString(argv[5]));
 
       const char* str = dati.data();
       uint32_t size   = dati.size();

@@ -2121,7 +2121,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( y == U_STRING_FROM_CONSTANT("10.30.1.0/24 10.1.0.1/16") )
 
-   z = UStringExt::prepareForEnvironmentVar(UFile::contentOf("inp/environment.conf"));
+   z = UStringExt::prepareForEnvironmentVar(UFile::contentOf(U_STRING_FROM_CONSTANT("inp/environment.conf")));
 
    y = U_STRING_FROM_CONSTANT("DIR_WEB=$HOME/www\n"
                           "DIR_POLICY=$HOME/policy\n"
@@ -2173,7 +2173,7 @@ U_EXPORT main (int argc, char* argv[])
    U_ASSERT( z == y )
 
 /*
-   y = z = UFile::contentOf("inp/livevalidation_standalone.compressed.js");
+   y = z = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/livevalidation_standalone.compressed.js"));
 
    z = UStringExt::minifyCssJs(z);
 

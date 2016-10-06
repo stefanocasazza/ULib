@@ -1088,7 +1088,6 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
 
    bool result;
 
-   const char* start = tok.getPointer();
          char      c = tok.next();
 
    switch (c)
@@ -1124,6 +1123,8 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
          }
       break;
 
+      case '+':
+      case '-':
       case '0':
       case '1':
       case '2':
@@ -1134,18 +1135,23 @@ U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
       case '7':
       case '8':
       case '9':
-      case '-':
          {
-         bool breal;
+         const char* start = tok.getPointer()-1;
 
-         if ((result = tok.skipNumber(breal)))
+         int type_num = tok.getTypeNumber();
+
+         if ((result = (type_num != 0)))
             {
-            if (breal)
+            if (type_num < 0)
                {
                _value->type_       = REAL_VALUE;
-               _value->value.real_ = strtod(start, 0);
+               _value->value.real_ = (type_num == INT_MIN // scientific notation (Ex: 1.45e10)
+                                          ?   strtod(start, 0)
+                                          : u_strtod(start, tok.getPointer(), type_num));
 
                U_INTERNAL_DUMP("_value.real_ = %g", _value->value.real_)
+
+               U_INTERNAL_ASSERT_EQUALS(_value->value.real_, strtod(start, 0))
                }
             else if (c == '-')
                {
@@ -1429,6 +1435,8 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
       case '\0':                                                    U_RETURN(   NULL_VALUE);
       case  't': (void) tok.skipToken(U_CONSTANT_TO_PARAM("rue"));  U_RETURN(BOOLEAN_VALUE);
       case  'f': (void) tok.skipToken(U_CONSTANT_TO_PARAM("alse")); U_RETURN(BOOLEAN_VALUE);
+      case  '+':
+      case  '-':
       case  '0':
       case  '1':
       case  '2':
@@ -1439,11 +1447,8 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
       case  '7':
       case  '8':
       case  '9':
-      case  '-':
          {
-         bool breal;
-
-         (void) tok.skipNumber(breal);
+         tok.skipNumber();
 
          U_RETURN(NUMBER_VALUE);
          }
@@ -1684,7 +1689,6 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
    U_ASSERT(result.empty())
 
-   bool breal;
    const char* start;
    uint32_t count, index;
    UString jElement, qElement; // qElement = query 'key'
@@ -1727,8 +1731,8 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
          }
       break;
 
-      case NULL_VALUE:    // null
-      case NUMBER_VALUE:  // number (may be -ve) int or float
+      case    NULL_VALUE: // null
+      case  NUMBER_VALUE: // number (may be -ve) int or float
       case BOOLEAN_VALUE: // true or false
          {
          const char* ptr =  start = tok1.getPointer();
@@ -1772,9 +1776,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
                   {
                   start = tok2.getPointer();
 
-                  (void) tok2.skipNumber(breal);
-
-                  U_INTERNAL_ASSERT_EQUALS(breal, false)
+                  tok2.skipNumber();
 
                   index = u_strtoul(start, tok2.getPointer());
 
@@ -1831,11 +1833,17 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
             if (qElement == jElement)
                {
+               int ret;
+
                // found object key
 
                ++tok1;
 
-               return jread(tok1.substr(), tok2.substr(), result, queryParams);
+               ret = jread(tok1.substr(), tok2.substr(), result, queryParams);
+
+               U_INTERNAL_DUMP("result = %V", result.rep)
+
+               U_RETURN(ret);
                }
 
             // no key match... skip this value
@@ -1922,9 +1930,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
             {
             // get array index   
 
-            (void) tok2.skipNumber(breal);
-
-            U_INTERNAL_ASSERT_EQUALS(breal, false)
+            tok2.skipNumber();
 
             index = u_strtoul(start, tok2.getPointer());
 
@@ -1939,9 +1945,15 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
             {
             if (count == index)
                {
+               int ret;
+
                ++tok1;
 
-               return jread(tok1.substr(), tok2.substr(), result, queryParams); // return value at index
+               ret = jread(tok1.substr(), tok2.substr(), result, queryParams); // return value at index
+
+               U_INTERNAL_DUMP("result = %V", result.rep)
+
+               U_RETURN(ret);
                }
 
             // not this index... skip this value

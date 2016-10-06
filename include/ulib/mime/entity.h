@@ -15,7 +15,6 @@
 #define U_MIME_ENTITY_H 1
 
 #include <ulib/mime/header.h>
-#include <ulib/container/vector.h>
 
 /**
  * UMimeEntity -- class representing a MIME entity

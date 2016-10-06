@@ -95,7 +95,7 @@ U_EXPORT main (int argc, char* argv[])
       {
       y.clear();
 
-      dati = UFile::contentOf(argv[1]);
+      dati = UFile::contentOf(UString(argv[1]));
 
       t.setData(dati);
       t.setGroup(U_CONSTANT_TO_PARAM("<%%>"));
