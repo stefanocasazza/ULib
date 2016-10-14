@@ -20,9 +20,8 @@ pkgconfig_DATA = ULib.pc
 SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c base/miniz/miniz.c base/xxhash/xxhash.c \
 		  base/coder/cbase64.c base/coder/cquoted_printable.c base/coder/curl_coder.c base/coder/cxml_coder.c base/coder/cescape.c base/coder/chexdump.c
 
-SRC_CPP = internal/common.cpp \
+SRC_CPP = internal/common.cpp internal/error.cpp \
 			 ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
-			 debug/debug_common.cpp debug/error.cpp \
 			 dynamic/dynamic.cpp dynamic/plugin.cpp \
 			 mime/header.cpp mime/entity.cpp mime/multipart.cpp \
 			 container/vector.cpp container/hash_map.cpp container/tree.cpp \
@@ -66,7 +65,7 @@ endif
 
 if DEBUG
 SRC_C   += base/base_trace.c
-SRC_CPP += debug/trace.cpp debug/error_memory.cpp debug/error_simulation.cpp
+SRC_CPP += debug/debug_common.cpp debug/trace.cpp debug/error_memory.cpp debug/error_simulation.cpp
 if STDCPP
 SRC_CPP += debug/objectDB.cpp
 endif

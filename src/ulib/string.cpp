@@ -12,6 +12,7 @@
 // ============================================================================
 
 #include <ulib/file.h>
+#include <ulib/tokenizer.h>
 #include <ulib/utility/escape.h>
 #include <ulib/internal/chttp.h>
 #include <ulib/container/hash_map.h>
@@ -1078,7 +1079,7 @@ __pure int UStringRep::compare(const UStringRep* rep, uint32_t depth) const
 
    if (r == 0)
 next:
-      r = (_length - rep->_length);
+   r = (_length - rep->_length);
 
    U_RETURN(r);
 }
@@ -1830,79 +1831,154 @@ __pure bool UStringRep::strtob() const
    U_RETURN(false);
 }
 
-long UStringRep::strtol(int base) const
+#define U_MANAGE_CHECK_FOR_SUFFIX \
+   if (check_for_suffix) \
+      { \
+      suffix = *(endptr-1); \
+                        \
+      if (suffix != 'M' && \
+          suffix != 'G' && \
+          u__toupper(suffix) != 'K') \
+         { \
+         suffix = 0; \
+         } \
+      else \
+         { \
+         --endptr; \
+                   \
+         U_INTERNAL_ASSERT(u__isdigit(*(endptr-1))) \
+         } \
+      }
+
+__pure long UStringRep::strtol(bool check_for_suffix) const
 {
-   U_TRACE(0, "UStringRep::strtol(%d)", base)
+   U_TRACE(0, "UString::strtol(%b)", check_for_suffix)
 
    if (_length)
       {
-      char* eos = (char*)str + _length;
+      char suffix        = 0;
+      const char* s      = str;
+      const char* endptr = str + _length;
 
-      if (isNullTerminated() == false && writeable()) *eos = '\0';
+      while (u__isspace(*s)) ++s;
 
-      errno = 0;
+      U_MANAGE_CHECK_FOR_SUFFIX
 
-      char* endptr;
-      long  result = (long) ::strtoul(str, &endptr, base);
+      long value = u_strtol(s, endptr);
 
-      U_INTERNAL_DUMP("errno = %d endptr = %p", errno, endptr)
+      U_INTERNAL_DUMP("value = %ld", value)
 
-      U_INTERNAL_ASSERT_POINTER(endptr)
+      U_INTERNAL_ASSERT_EQUALS(value, ::strtol(str, 0, 10))
 
-      if (endptr < eos)
+      if (suffix)
          {
-         U_NUMBER_SUFFIX(result, *endptr);
-         }
-      else if (endptr > eos)
-         {
-         U_INTERNAL_ASSERT_EQUALS(base, 10)
-         U_INTERNAL_ASSERT(u_isDigit(str, _length))
-
-         result = u_strtol(str, eos);
+         U_NUMBER_SUFFIX(value, suffix);
          }
 
-      U_RETURN(result);
+      U_RETURN(value);
       }
 
-   U_RETURN(0L);
+   U_RETURN(0);
 }
 
-#ifdef HAVE_STRTOULL
-int64_t UStringRep::strtoll(int base) const
+__pure unsigned long UStringRep::strtoul(bool check_for_suffix) const
 {
-   U_TRACE(0, "UStringRep::strtoll(%d)", base)
+   U_TRACE(0, "UString::strtoul(%b)", check_for_suffix)
 
    if (_length)
       {
-      char* eos = (char*)str + _length;
+      char suffix        = 0;
+      const char* s      = str;
+      const char* endptr = str + _length;
 
-      if (isNullTerminated() == false && writeable()) *eos = '\0';
+      while (u__isspace(*s)) ++s;
 
-      char* endptr;
-      int64_t result = (int64_t) ::strtoull(str, &endptr, base);
+      U_MANAGE_CHECK_FOR_SUFFIX
 
-      U_INTERNAL_DUMP("errno = %d endptr = %p", errno, endptr)
+      unsigned long value = u_strtoul(s, endptr);
 
-      U_INTERNAL_ASSERT_POINTER(endptr)
+      U_INTERNAL_DUMP("value = %lu", value)
 
-      if (endptr < eos)
+      U_INTERNAL_ASSERT_EQUALS(value, ::strtoul(str, 0, 10))
+
+      if (suffix)
          {
-         U_NUMBER_SUFFIX(result, *endptr);
-         }
-      else if (endptr > eos)
-         {
-         U_INTERNAL_ASSERT_EQUALS(base, 10)
-         U_INTERNAL_ASSERT(u_isDigit(str, _length))
-
-         result = u_strtoll(str, eos);
+         U_NUMBER_SUFFIX(value, suffix);
          }
 
-      U_RETURN(result);
+      U_RETURN(value);
       }
 
-   U_RETURN(0LL);
+   U_RETURN(0);
 }
-#endif
+
+__pure int64_t UStringRep::strtoll(bool check_for_suffix) const
+{
+   U_TRACE(0, "UString::strtoll(%b)", check_for_suffix)
+
+   if (_length)
+      {
+      char suffix        = 0;
+      const char* s      = str;
+      const char* endptr = str + _length;
+
+      while (u__isspace(*s)) ++s;
+
+      U_MANAGE_CHECK_FOR_SUFFIX
+
+      int64_t value = u_strtoll(s, endptr);
+
+      U_INTERNAL_DUMP("value = %lld", value)
+
+#  ifdef HAVE_STRTOULL
+      U_INTERNAL_ASSERT_EQUALS(value, ::strtoll(str, 0, 10))
+#  endif
+
+      if (suffix)
+         {
+         U_NUMBER_SUFFIX(value, suffix);
+         }
+
+      U_RETURN(value);
+      }
+
+   U_RETURN(0);
+}
+
+__pure uint64_t UStringRep::strtoull(bool check_for_suffix) const
+{
+   U_TRACE(0, "UString::strtoull(%b)", check_for_suffix)
+
+   if (_length)
+      {
+      char suffix        = 0;
+      const char* s      = str;
+      const char* endptr = str + _length;
+
+      while (u__isspace(*s)) ++s;
+
+      U_MANAGE_CHECK_FOR_SUFFIX
+
+      uint64_t value = u_strtoull(s, endptr);
+
+      U_INTERNAL_DUMP("value = %llu", value)
+
+#  ifdef HAVE_STRTOULL
+      U_INTERNAL_ASSERT_EQUALS(value, ::strtoull(str, 0, 10))
+#  endif
+
+      if (suffix)
+         {
+         U_NUMBER_SUFFIX(value, suffix);
+         }
+
+      U_RETURN(value);
+      }
+
+   U_RETURN(0);
+}
+
+#undef U_MANAGE_CHECK_FOR_SUFFIX
 
 #ifdef HAVE_STRTOF
 // extern "C" { float strtof(const char* nptr, char** endptr); }
@@ -1933,33 +2009,6 @@ float UStringRep::strtof() const
    U_RETURN(0);
 }
 #endif
-
-double UStringRep::strtod() const
-{
-   U_TRACE_NO_PARAM(0, "UStringRep::strtod()")
-
-   if (_length)
-      {
-      char* eos = (char*)str + _length;
-
-      if (isNullTerminated() == false && writeable()) *eos = '\0';
-
-#  ifndef DEBUG
-      double result = ::strtod(str, 0);
-#  else
-      char* endptr;
-      double result = ::strtod(str, &endptr);
-
-      U_INTERNAL_ASSERT(endptr <= eos)
-#  endif
-
-      U_INTERNAL_DUMP("errno = %d", errno)
-
-      U_RETURN(result);
-      }
-
-   U_RETURN(0);
-}
 
 #ifdef HAVE_STRTOLD
 // extern "C" { long double strtold(const char* nptr, char** endptr); }
@@ -2065,6 +2114,83 @@ UStringRep* UStringRep::toUTF8(const unsigned char* s, uint32_t n)
    U_INTERNAL_ASSERT(r->invariant())
 
    U_RETURN_POINTER(r, UStringRep);
+}
+
+double UString::strtod() const
+{
+   U_TRACE_NO_PARAM(0, "UString::strtod()")
+
+   if (rep->_length)
+      {
+      UTokenizer t(*this);
+
+      t.skipSpaces();
+
+      const char* start = t.getPointer();
+
+      char c = t.next();
+
+      switch (c)
+         {
+         case '+':
+         case '-':
+         case '0':
+         case '1':
+         case '2':
+         case '3':
+         case '4':
+         case '5':
+         case '6':
+         case '7':
+         case '8':
+         case '9':
+            {
+            int type_num = t.getTypeNumber();
+
+            if (type_num != 0)
+               {
+               if (type_num < 0)
+                  {
+                  double real = (type_num == INT_MIN // scientific notation (Ex: 1.45e10)
+                                 ? ::strtod(start, 0)
+                                 : u_strtod(start, t.getPointer(), type_num));
+
+                  U_INTERNAL_DUMP("real = %g", real)
+
+                  U_INTERNAL_ASSERT_EQUALS(real, ::strtod(start, 0))
+
+                  U_RETURN(real);
+                  }
+
+               if (c == '-')
+                  {
+                  int64_t value = u_strtoll(start, t.getPointer());
+
+                  U_INTERNAL_DUMP("value = %lld", value)
+
+#              ifdef HAVE_STRTOULL
+                  U_INTERNAL_ASSERT_EQUALS(value, ::strtoll(start, 0, 10))
+#              endif
+
+                  U_RETURN(value);
+                  }
+
+               uint64_t value = u_strtoull(start, t.getPointer());
+
+               U_INTERNAL_DUMP("value. = %llu", value)
+
+#           ifdef HAVE_STRTOULL
+               U_INTERNAL_ASSERT_EQUALS(value, ::strtoull(start, 0, 10))
+#           endif
+
+               U_RETURN(value);
+               }
+            }
+         break;
+         }
+      }
+
+   U_RETURN(0);
 }
 
 void UString::printKeyValue(const char* key, uint32_t keylen, const char* _data, uint32_t datalen)

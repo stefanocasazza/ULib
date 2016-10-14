@@ -1921,22 +1921,32 @@ bool UHTTP::scanfHeaderResponse(const char* ptr, uint32_t size)
 
       U_INTERNAL_ASSERT(u__isblank(*ptr))
 
-      U_http_info.nResponseCode = strtol(ptr+1, (char**)&ptr, 10);
+      const char* ptr1 = ++ptr;
+
+      U_INTERNAL_ASSERT(u__isdigit(*ptr1))
+
+      while (u__isdigit(*ptr1)) ++ptr1;
+
+      U_INTERNAL_ASSERT(u__isblank(*ptr1))
+
+      U_http_info.nResponseCode = u_strtoul(ptr, ptr1);
 
       U_INTERNAL_DUMP("U_http_version = %C U_http_info.nResponseCode = %d", U_http_version, U_http_info.nResponseCode)
 
+      U_INTERNAL_ASSERT_EQUALS(U_http_info.nResponseCode, ::strtol(ptr, 0, 10))
+
       if (U_IS_HTTP_VALID_RESPONSE(U_http_info.nResponseCode))
          {
-         while (u__islterm(*++ptr) == false) {}
+         while (u__islterm(*ptr1) == false) { ++ptr1; }
 
-         if (ptr <= (start+size-U_CONSTANT_SIZE(U_CRLF)) &&
-             u_get_unalignedp16(ptr) == U_MULTICHAR_CONSTANT16('\r','\n'))
+         if (ptr1 <= (start+size-U_CONSTANT_SIZE(U_CRLF)) &&
+             u_get_unalignedp16(ptr1) == U_MULTICHAR_CONSTANT16('\r','\n'))
             {
             U_line_terminator_len = U_CONSTANT_SIZE(U_CRLF);
 
-            U_http_info.startHeader = ptr - start;
+            U_http_info.startHeader = ptr1 - start;
 
-            U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S", U_http_info.startHeader, ptr)
+            U_INTERNAL_DUMP("U_http_info.startHeader(%u) = %.20S", U_http_info.startHeader, ptr1)
 
             U_RETURN(true);
             }
@@ -2233,7 +2243,7 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
 
          U_INTERNAL_DUMP("inp = %.20S", inp)
 
-         uint32_t chunkSize = strtol(inp, (char**)&inp, 16);
+         uint32_t chunkSize = ::strtol(inp, (char**)&inp, 16);
 
          // The last chunk is followed by zero or more trailers, followed by a blank line
 
@@ -3491,7 +3501,7 @@ U_NO_EXPORT bool UHTTP::callService()
 
    if (U_http_is_nocache_file == false)
       {
-      manageDataForCache();
+      manageDataForCache(UStringExt::basename(file->getPath()));
 
       if (file_data)
          {
@@ -4130,7 +4140,7 @@ manage:
 
          file->setPath(*pathname);
 
-         manageDataForCache();
+         manageDataForCache(UStringExt::basename(file->getPath()));
 
          U_INTERNAL_ASSERT_POINTER(file_data)
 
@@ -4917,7 +4927,7 @@ void UHTTP::setCookie(const UString& param)
 
             // int -- lifetime of the cookie in HOURS -- must (0 -> valid until browser exit)
 
-            n_hours = (++i < n ? vec[i].strtol(10) : 0);
+            n_hours = (++i < n ? vec[i].strtoul() : 0);
             expire  = (n_hours ? u_now->tv_sec + (n_hours * 60L * 60L) : 0L);
 
             cookie.snprintf(U_CONSTANT_TO_PARAM("ulib.s%u="), sid_counter_gen);
@@ -5231,7 +5241,7 @@ bool UHTTP::getCookie(UString* cookie)
       if (u_get_unalignedp32(start)   == U_MULTICHAR_CONSTANT32('u','l','i','b') &&
           u_get_unalignedp16(start+4) == U_MULTICHAR_CONSTANT16('.','s'))
          {
-         sid_counter_cur = strtol(start + U_CONSTANT_SIZE("ulib.s"), &ptr, 10);
+         sid_counter_cur = ::strtol(start + U_CONSTANT_SIZE("ulib.s"), &ptr, 10);
 
          U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
 
@@ -5264,7 +5274,7 @@ bool UHTTP::getCookie(UString* cookie)
 
                if (token.compare(0U, UServer_Base::client_address_len, UServer_Base::client_address, UServer_Base::client_address_len) == 0) // IP
                   {
-                  agent = strtol(token.c_pointer(UServer_Base::client_address_len+1), &ptr, 10);
+                  agent = ::strtol(token.c_pointer(UServer_Base::client_address_len+1), &ptr, 10);
 
                   U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
 
@@ -5277,7 +5287,7 @@ bool UHTTP::getCookie(UString* cookie)
                         {
                         do { ++ptr; } while (*ptr != '_');
 
-                        check = (sid_counter_cur == (uint32_t)strtol(ptr+1, 0, 10)); // COUNTER
+                        check = (sid_counter_cur == (uint32_t) ::strtol(ptr+1, 0, 10)); // COUNTER
                         }
                      }
                   }
@@ -6784,7 +6794,7 @@ U_NO_EXPORT bool UHTTP::processAuthorization()
 
                      // XXX: Due to a bug in MSIE (version=??), we do not check for authentication timeout...
 
-                     if ((u_now->tv_sec - value.strtol(10)) > 3600) goto end;
+                     if ((u_now->tv_sec - value.strtoul()) > 3600) goto end;
 
                      nonce = value;
                      }
@@ -7773,8 +7783,14 @@ void UHTTP::checkFileForCache()
 
    file->setPath(*pathname);
 
+   UString file_name = UStringExt::basename(file->getPath());
+
 #ifdef DEBUG
-   if (file->isSuffixSwap()) return; // NB: vi tmp...
+   if (file->isSuffixSwap() || // NB: vi tmp...
+       UServices::dosMatchWithOR(file_name, U_CONSTANT_TO_PARAM("stack.userver_*|mempool.userver_*|trace.userver_*|*usp_translator*"), 0))
+      {
+      return;
+      }
 #endif
 
    if (file->stat()) // NB: file->stat() get also the size of the file...
@@ -7783,20 +7799,19 @@ void UHTTP::checkFileForCache()
 
       if (U_http_is_nocache_file ||
           (nocache_file_mask     &&
-           UServices::dosMatchWithOR(UStringExt::basename(file->getPath()), U_STRING_TO_PARAM(*nocache_file_mask), 0)))
+           UServices::dosMatchWithOR(file_name, U_STRING_TO_PARAM(*nocache_file_mask), 0)))
          {
          return;
          }
 
-      manageDataForCache();
+      manageDataForCache(file_name);
       }
 }
 
-U_NO_EXPORT void UHTTP::manageDataForCache()
+U_NO_EXPORT void UHTTP::manageDataForCache(const UString& file_name)
 {
-   U_TRACE_NO_PARAM(1, "UHTTP::manageDataForCache()")
+   U_TRACE(1, "UHTTP::manageDataForCache(%V)", file_name.rep)
 
-   UString file_name;
    uint32_t suffix_len;
    const char* suffix_ptr;
 
@@ -7809,7 +7824,7 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
    if (pathname->equal(U_FILE_TO_PARAM(*file)) == false) // NB: can happen with inotify...
       {
-      U_DEBUG("UHTTP::manageDataForCache() pathname(%u) = %.*S file(%u) = %.*S", pathname->size(), pathname->rep, file->getPathRelativLen(), U_FILE_TO_TRACE(*file))
+      U_DEBUG("UHTTP::manageDataForCache(%V) pathname(%u) = %.*S file(%u) = %.*S", file_name.rep, pathname->size(), pathname->rep, file->getPathRelativLen(), U_FILE_TO_TRACE(*file))
       }
 #endif
 
@@ -7919,8 +7934,6 @@ U_NO_EXPORT void UHTTP::manageDataForCache()
 
       goto end;
       }
-
-   file_name = UStringExt::basename(file->getPath());
 
    if (cache_file_mask &&
        UServices::dosMatchWithOR(file_name, U_STRING_TO_PARAM(*cache_file_mask), 0))
@@ -8558,7 +8571,7 @@ nocontent:
             {
             U_DEBUG("Found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT")
 
-            manageDataForCache();
+            manageDataForCache(UStringExt::basename(file->getPath()));
 
             U_INTERNAL_ASSERT_POINTER(file_data)
             }
@@ -9498,7 +9511,7 @@ loop:
                {
                ptr1 = ptr + U_CONSTANT_SIZE("Status: ");
 
-               U_http_info.nResponseCode = strtol(ptr1, 0, 10);
+               U_http_info.nResponseCode = ::strtol(ptr1, 0, 10);
 
                U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
 
@@ -9686,7 +9699,7 @@ loop:
                {
                ptr += U_CONSTANT_SIZE("ent-Length: ");
 
-               U_INTERNAL_DUMP("Content-Length: = %ld", strtol(ptr, 0, 10))
+               U_INTERNAL_DUMP("Content-Length: = %ld", ::strtol(ptr, 0, 10))
 
                ptr1 = (const char*) memchr(ptr, '\n', endptr - ptr);
 
@@ -9974,15 +9987,20 @@ U_NO_EXPORT __pure int UHTTP::sortRange(const void* a, const void* b)
 {
    U_TRACE(0, "UHTTP::sortRange(%p,%p)", a, b)
 
-   HTTPRange* ra = *(HTTPRange**)a;
-   HTTPRange* rb = *(HTTPRange**)b;
+#ifdef U_STDCPP_ENABLE
+   /**
+    * The comparison function must follow a strict-weak-ordering
+    *
+    * 1) For all x, it is not the case that x < x (irreflexivity)
+    * 2) For all x, y, if x < y then it is not the case that y < x (asymmetry)
+    * 3) For all x, y, and z, if x < y and y < z then x < z (transitivity)
+    * 4) For all x, y, and z, if x is incomparable with y, and y is incomparable with z, then x is incomparable with z (transitivity of incomparability)
+    */
 
-   U_INTERNAL_DUMP("ra->start = %u ra->end = %u", ra->start, ra->end)
-   U_INTERNAL_DUMP("rb->start = %u rb->end = %u", rb->start, rb->end)
-
-   uint32_t diff = ra->start - rb->start;
-
-   U_RETURN(diff);
+   return (((int)(((HTTPRange*)a)->start) - (int)(((HTTPRange*)b)->start)) < 0);
+#else
+   return (int)(*(HTTPRange**)a)->start - (int)(*(HTTPRange**)b)->start;
+#endif
 }
 
 U_NO_EXPORT void UHTTP::setResponseForRange(uint32_t _start, uint32_t _end, uint32_t _header)
@@ -10034,18 +10052,18 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
 
       if (*spec == '-')
          {
-         cur_start = strtol(spec, &pend, 10) + range_size;
+         cur_start = ::strtol(spec, &pend, 10) + range_size;
          cur_end   = range_size - 1;
          }
       else
          {
-         cur_start = strtol(spec, &pend, 10);
+         cur_start = ::strtol(spec, &pend, 10);
 
          if (*pend == '-') ++pend;
 
          U_INTERNAL_DUMP("item.remain(pend) = %u", item.remain(pend))
 
-         cur_end = (item.remain(pend) ? strtol(pend, &pend, 10) : range_size - 1);
+         cur_end = (item.remain(pend) ? ::strtol(pend, &pend, 10) : range_size - 1);
          }
 
       U_INTERNAL_DUMP("cur_start = %u cur_end = %u", cur_start, cur_end)

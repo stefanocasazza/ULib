@@ -1058,10 +1058,12 @@ with_libz
 enable_zip
 with_libzopfli
 with_magic
+enable_ssl_staticlib_deps
 with_ssl
 with_pcre
 with_expat
 with_libuuid
+enable_curl_staticlib_deps
 with_curl
 with_libtdb
 with_libares
@@ -1792,6 +1794,8 @@ Optional Features:
   --enable-HSTS             enable HTTP Strict Transport Security support [default=no]
   --enable-HPS              enable HTML Pagination Support [default=no]
   --enable-zip              enable build of ZIP support - require libz [default: use if present libz]
+  --enable-ssl-staticlib-deps  link with dependencies of OpenSSL's static libraries. Must be specified in addition to --with-ssl [default=no]
+  --enable-curl-staticlib-deps link with dependencies of    cURL's static libraries. Must be specified in addition to --with-curl [default=no]
   --enable-mysql-threadsafe use threadsafe version of libmysqlclient
   --enable-static-server-plugin=MODULES
                           rpc shib stream socket scgi fcgi geoip proxy soap
@@ -27180,6 +27184,16 @@ $as_echo_n "checking if SSL library is wanted... " >&6; }
 		fi
 	fi
 
+   # Check whether --enable-ssl-staticlib-deps was given.
+if test "${enable_ssl_staticlib_deps+set}" = set; then :
+  enableval=$enable_ssl_staticlib_deps;
+fi
+
+   if test -z "$enable_ssl_staticlib_deps"; then
+      enable_ssl_staticlib_deps="no"
+   fi
+
+
 # Check whether --with-ssl was given.
 if test "${with_ssl+set}" = set; then :
   withval=$with_ssl; if test "$withval" = "no"; then
@@ -27226,16 +27240,16 @@ $as_echo "#define HAVE_SSL_TS 1" >>confdefs.h
 
 				fi
 				ssl_version=$($ssldir/bin/openssl version 2>/dev/null)
-				if test -z "${ssl_version}" -a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
-					ssl_version=$(pkg-config --modversion openssl 2>/dev/null)
-				fi
 				if test -z "${ssl_version}"; then
 					ssl_version=$(grep OPENSSL_VERSION_TEXT $ssldir/include/openssl/opensslv.h 2>/dev/null | grep -v fips | head -1 | cut -d'"' -f2);
 				fi
-				if test -z "$OPENSSL_LINK"; then
-					ULIB_LIBS="-lssl -lcrypto $ULIB_LIBS";
-				else
+				if test -z "${ssl_version}" -a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+					ssl_version=$(pkg-config --modversion openssl 2>/dev/null)
+				fi
+				if test "$enable_ssl_staticlib_deps" != "yes"; then
 					ULIB_LIBS="-lssl -lcrypto $OPENSSL_LINK $ULIB_LIBS";
+				else
+					ULIB_LIBS="$ssldir/lib/libssl.a $ssldir/lib/libcrypto.a $OPENSSL_LINK $ULIB_LIBS";
 				fi
 			fi
 			if test -z "${ssl_version}"; then
@@ -27448,6 +27462,16 @@ $as_echo_n "checking if cURL library is wanted... " >&6; }
 		with_curl="no";
 	fi
 
+   # Check whether --enable-curl-staticlib-deps was given.
+if test "${enable_curl_staticlib_deps+set}" = set; then :
+  enableval=$enable_curl_staticlib_deps;
+fi
+
+   if test -z "$enable_curl_staticlib_deps"; then
+      enable_curl_staticlib_deps="no"
+   fi
+
+
 # Check whether --with-curl was given.
 if test "${with_curl+set}" = set; then :
   withval=$with_curl; if test "$withval" = "no"; then
@@ -27471,20 +27495,25 @@ $as_echo "yes" >&6; }
 
 $as_echo "#define USE_LIBCURL 1" >>confdefs.h
 
-			libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null | sed -e "s/libcurl //g")
+			libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null)
 			if test -z "${libcurl_version}" -a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
 				libcurl_version=$(pkg-config --modversion libcurl 2>/dev/null)
 			fi
 			if test -z "${libcurl_version}"; then
 				libcurl_version="unknown"
 			fi
-			libcurl_linking=$($curldir/bin/curl-config --libs 2>/dev/null)
+			if test "$enable_curl_staticlib_deps" = "yes"; then
+				libcurl_linking="$curldir/lib/libcurl.a -lz"
+			else
+				libcurl_linking=$($curldir/bin/curl-config --libs 2>/dev/null)
+			fi
 			if test -z "${libcurl_linking}"; then
 				libcurl_linking="-lcurl"
 			fi
 			ULIB_LIBS="$libcurl_linking $ULIB_LIBS";
 			if test $curldir != "${CROSS_ENVIRONMENT}/" -a $curldir != "${CROSS_ENVIRONMENT}/usr" -a $curldir != "${CROSS_ENVIRONMENT}/usr/local"; then
-				CPPFLAGS="$CPPFLAGS -I$curldir/include";
+				libcurl_cflags=$($curldir/bin/curl-config --cflags 2>/dev/null)
+				CPPFLAGS="$CPPFLAGS $libcurl_cflags";
 				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$curldir/lib";
 			fi

@@ -275,7 +275,7 @@ void UClient_Base::loadConfigParam()
 
    if (value)
       {
-      timeoutMS = value.strtol(10);
+      timeoutMS = value.strtoul();
 
       if (timeoutMS) timeoutMS *= 1000;
       else           timeoutMS  = -1;

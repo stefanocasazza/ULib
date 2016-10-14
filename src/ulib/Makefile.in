@@ -96,7 +96,7 @@ target_triplet = @target@
 @STDCPP_TRUE@am__append_4 = internal/objectIO.cpp 
 @PTHREAD_TRUE@am__append_5 = thread.cpp
 @DEBUG_TRUE@am__append_6 = base/base_trace.c
-@DEBUG_TRUE@am__append_7 = debug/trace.cpp debug/error_memory.cpp debug/error_simulation.cpp
+@DEBUG_TRUE@am__append_7 = debug/debug_common.cpp debug/trace.cpp debug/error_memory.cpp debug/error_simulation.cpp
 @DEBUG_TRUE@@STDCPP_TRUE@am__append_8 = debug/objectDB.cpp
 @GETOPT_LONG_FALSE@am__append_9 = replace/getopt_long.c
 @MREMAP_FALSE@am__append_10 = replace/mremap.c
@@ -236,11 +236,11 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	replace/sched_getcpu.c base/zip/inflate.c base/zip/dostime.c \
 	base/zip/pushback.c base/zip/ziptool.c base/coder/cgzio.c \
 	base/ssl/cdes3.c base/ssl/dgst.c base/win32/mingw32.c \
-	internal/common.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
-	debug/debug_common.cpp debug/error.cpp dynamic/dynamic.cpp \
-	dynamic/plugin.cpp mime/header.cpp mime/entity.cpp \
-	mime/multipart.cpp container/vector.cpp container/hash_map.cpp \
-	container/tree.cpp utility/interrupt.cpp utility/services.cpp \
+	internal/common.cpp internal/error.cpp ui/dialog.cpp \
+	db/cdb.cpp db/rdb.cpp dynamic/dynamic.cpp dynamic/plugin.cpp \
+	mime/header.cpp mime/entity.cpp mime/multipart.cpp \
+	container/vector.cpp container/hash_map.cpp container/tree.cpp \
+	utility/interrupt.cpp utility/services.cpp \
 	utility/semaphore.cpp utility/base64.cpp utility/lock.cpp \
 	utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp utility/data_session.cpp \
@@ -264,7 +264,7 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	options.cpp application.cpp cache.cpp date.cpp url.cpp \
 	tokenizer.cpp command.cpp db/tdb.cpp net/client/mongodb.cpp \
 	utility/http2.cpp internal/objectIO.cpp thread.cpp \
-	debug/trace.cpp debug/error_memory.cpp \
+	debug/debug_common.cpp debug/trace.cpp debug/error_memory.cpp \
 	debug/error_simulation.cpp debug/objectDB.cpp \
 	internal/memory_pool.cpp zip/zip.cpp flex/flexer.cpp \
 	flex/bison.cpp pcre/pcre.cpp ssl/certificate.cpp ssl/pkcs7.cpp \
@@ -339,8 +339,8 @@ am__objects_26 = base/base.lo base/base_error.lo base/hash.lo \
 @HTTP2_TRUE@am__objects_29 = utility/http2.lo
 @STDCPP_TRUE@am__objects_30 = internal/objectIO.lo
 @PTHREAD_TRUE@am__objects_31 = thread.lo
-@DEBUG_TRUE@am__objects_32 = debug/trace.lo debug/error_memory.lo \
-@DEBUG_TRUE@	debug/error_simulation.lo
+@DEBUG_TRUE@am__objects_32 = debug/debug_common.lo debug/trace.lo \
+@DEBUG_TRUE@	debug/error_memory.lo debug/error_simulation.lo
 @DEBUG_TRUE@@STDCPP_TRUE@am__objects_33 = debug/objectDB.lo
 @MEMORY_POOL_TRUE@am__objects_34 = internal/memory_pool.lo
 @ZIP_TRUE@am__objects_35 = zip/zip.lo
@@ -396,17 +396,17 @@ am__objects_26 = base/base.lo base/base_error.lo base/hash.lo \
 @STATIC_ORM_DRIVER_PGSQL_TRUE@am__objects_65 =  \
 @STATIC_ORM_DRIVER_PGSQL_TRUE@	orm/driver/orm_driver_pgsql.lo
 am__objects_66 =
-am__objects_67 = internal/common.lo ui/dialog.lo db/cdb.lo db/rdb.lo \
-	debug/debug_common.lo debug/error.lo dynamic/dynamic.lo \
-	dynamic/plugin.lo mime/header.lo mime/entity.lo \
-	mime/multipart.lo container/vector.lo container/hash_map.lo \
-	container/tree.lo utility/interrupt.lo utility/services.lo \
-	utility/semaphore.lo utility/base64.lo utility/lock.lo \
-	utility/string_ext.lo utility/socket_ext.lo utility/uhttp.lo \
-	utility/data_session.lo utility/ring_buffer.lo \
-	utility/websocket.lo utility/dir_walk.lo lemon/expression.lo \
-	orm/orm.lo orm/orm_driver.lo net/ipaddress.lo net/socket.lo \
-	net/ping.lo net/server/server.lo net/server/client_image.lo \
+am__objects_67 = internal/common.lo internal/error.lo ui/dialog.lo \
+	db/cdb.lo db/rdb.lo dynamic/dynamic.lo dynamic/plugin.lo \
+	mime/header.lo mime/entity.lo mime/multipart.lo \
+	container/vector.lo container/hash_map.lo container/tree.lo \
+	utility/interrupt.lo utility/services.lo utility/semaphore.lo \
+	utility/base64.lo utility/lock.lo utility/string_ext.lo \
+	utility/socket_ext.lo utility/uhttp.lo utility/data_session.lo \
+	utility/ring_buffer.lo utility/websocket.lo \
+	utility/dir_walk.lo lemon/expression.lo orm/orm.lo \
+	orm/orm_driver.lo net/ipaddress.lo net/socket.lo net/ping.lo \
+	net/server/server.lo net/server/client_image.lo \
 	net/client/client_rdb.lo net/server/client_image_rdb.lo \
 	net/server/server_rdb.lo \
 	net/server/plugin/mod_proxy_service.lo net/rpc/rpc.lo \
@@ -720,11 +720,11 @@ SRC_C = base/base.c base/base_error.c base/hash.c base/utility.c \
 	$(am__append_25) $(am__append_26) $(am__append_27) \
 	$(am__append_29) $(am__append_30) $(am__append_32) \
 	$(am__append_35) $(am__append_46)
-SRC_CPP = internal/common.cpp ui/dialog.cpp db/cdb.cpp db/rdb.cpp \
-	debug/debug_common.cpp debug/error.cpp dynamic/dynamic.cpp \
-	dynamic/plugin.cpp mime/header.cpp mime/entity.cpp \
-	mime/multipart.cpp container/vector.cpp container/hash_map.cpp \
-	container/tree.cpp utility/interrupt.cpp utility/services.cpp \
+SRC_CPP = internal/common.cpp internal/error.cpp ui/dialog.cpp \
+	db/cdb.cpp db/rdb.cpp dynamic/dynamic.cpp dynamic/plugin.cpp \
+	mime/header.cpp mime/entity.cpp mime/multipart.cpp \
+	container/vector.cpp container/hash_map.cpp container/tree.cpp \
+	utility/interrupt.cpp utility/services.cpp \
 	utility/semaphore.cpp utility/base64.cpp utility/lock.cpp \
 	utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp utility/data_session.cpp \
@@ -985,6 +985,8 @@ internal/$(DEPDIR)/$(am__dirstamp):
 	@: > internal/$(DEPDIR)/$(am__dirstamp)
 internal/common.lo: internal/$(am__dirstamp) \
 	internal/$(DEPDIR)/$(am__dirstamp)
+internal/error.lo: internal/$(am__dirstamp) \
+	internal/$(DEPDIR)/$(am__dirstamp)
 ui/$(am__dirstamp):
 	@$(MKDIR_P) ui
 	@: > ui/$(am__dirstamp)
@@ -1000,15 +1002,6 @@ db/$(DEPDIR)/$(am__dirstamp):
 	@: > db/$(DEPDIR)/$(am__dirstamp)
 db/cdb.lo: db/$(am__dirstamp) db/$(DEPDIR)/$(am__dirstamp)
 db/rdb.lo: db/$(am__dirstamp) db/$(DEPDIR)/$(am__dirstamp)
-debug/$(am__dirstamp):
-	@$(MKDIR_P) debug
-	@: > debug/$(am__dirstamp)
-debug/$(DEPDIR)/$(am__dirstamp):
-	@$(MKDIR_P) debug/$(DEPDIR)
-	@: > debug/$(DEPDIR)/$(am__dirstamp)
-debug/debug_common.lo: debug/$(am__dirstamp) \
-	debug/$(DEPDIR)/$(am__dirstamp)
-debug/error.lo: debug/$(am__dirstamp) debug/$(DEPDIR)/$(am__dirstamp)
 dynamic/$(am__dirstamp):
 	@$(MKDIR_P) dynamic
 	@: > dynamic/$(am__dirstamp)
@@ -1197,6 +1190,14 @@ utility/http2.lo: utility/$(am__dirstamp) \
 	utility/$(DEPDIR)/$(am__dirstamp)
 internal/objectIO.lo: internal/$(am__dirstamp) \
 	internal/$(DEPDIR)/$(am__dirstamp)
+debug/$(am__dirstamp):
+	@$(MKDIR_P) debug
+	@: > debug/$(am__dirstamp)
+debug/$(DEPDIR)/$(am__dirstamp):
+	@$(MKDIR_P) debug/$(DEPDIR)
+	@: > debug/$(DEPDIR)/$(am__dirstamp)
+debug/debug_common.lo: debug/$(am__dirstamp) \
+	debug/$(DEPDIR)/$(am__dirstamp)
 debug/trace.lo: debug/$(am__dirstamp) debug/$(DEPDIR)/$(am__dirstamp)
 debug/error_memory.lo: debug/$(am__dirstamp) \
 	debug/$(DEPDIR)/$(am__dirstamp)
@@ -1551,7 +1552,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@db/$(DEPDIR)/tdb.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@dbi/$(DEPDIR)/dbi.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@debug/$(DEPDIR)/debug_common.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@debug/$(DEPDIR)/error.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@debug/$(DEPDIR)/error_memory.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@debug/$(DEPDIR)/error_simulation.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@debug/$(DEPDIR)/objectDB.Plo@am__quote@
@@ -1562,6 +1562,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@flex/$(DEPDIR)/bison.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@flex/$(DEPDIR)/flexer.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@internal/$(DEPDIR)/common.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@internal/$(DEPDIR)/error.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@internal/$(DEPDIR)/memory_pool.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@internal/$(DEPDIR)/objectIO.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@json/$(DEPDIR)/value.Plo@am__quote@

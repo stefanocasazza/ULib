@@ -15,10 +15,9 @@
 #define ULIB_DEBUG_COMMON_H 1
 
 #include <ulib/internal/common.h>
+#include <ulib/internal/error.h>
 
 #ifdef DEBUG
-#  include <ulib/debug/error.h>
-
 U_EXPORT void  u_debug_exit(int exit_value);
 U_EXPORT pid_t u_debug_fork( pid_t pid, int trace_active);
 U_EXPORT pid_t u_debug_vfork(pid_t pid, int trace_active);

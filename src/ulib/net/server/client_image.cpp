@@ -13,7 +13,7 @@
 
 #include <ulib/net/server/server.h>
 #include <ulib/utility/websocket.h>
-#include <ulib/debug/error.h>
+#include <ulib/internal/error.h>
 
 #ifdef HAVE_SCHED_GETCPU
 #  include <sched.h>
@@ -448,14 +448,14 @@ void UClientImage_Base::handlerDelete()
                   UServer_Base::mod_name[0], bsocket_open ? "Client" : "Server", logbuf->rep, len, buffer);
 
 #  ifdef DEBUG
-      int fd_logbuf = logbuf->strtol(10);
+      int fd_logbuf = ::strtoul(logbuf->data(), 0, 10);
 
       if (UNLIKELY(fd_logbuf != UEventFd::fd))
          {
          U_WARNING("handlerDelete(): "
                    "UEventFd::fd = %d socket->iSockDesc = %d "
                    "UNotifier::num_connection = %d UNotifier::min_connection = %d "
-                   "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B logbuf->strtol(10) = %d",
+                   "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B fd_logbuf = %u",
                    UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
                    UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask, fd_logbuf);
          }

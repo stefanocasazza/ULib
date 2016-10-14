@@ -1145,13 +1145,13 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
 
    // check for max time no traffic
 
-   U_peer_max_time_no_traffic = args.at(U_CONSTANT_TO_PARAM("NoTraffic")).strtol(10);
+   U_peer_max_time_no_traffic = args.at(U_CONSTANT_TO_PARAM("NoTraffic")).strtoul();
 
    if (U_peer_max_time_no_traffic == 0) U_peer_max_time_no_traffic = (check_expire / 60) * (U_peer_policy_flat ? 3 : 1);
 
    // get time available
 
-   timeout = args.at(U_CONSTANT_TO_PARAM("Timeout")).strtol(10);
+   timeout = args.at(U_CONSTANT_TO_PARAM("Timeout")).strtoul();
 
    if (timeout ||
        peer->time_remain == 0)
@@ -1164,7 +1164,7 @@ bool UNoCatPlugIn::checkAuthMessage(const UString& msg)
 
    // get traffic available
 
-   traffic = args.at(U_CONSTANT_TO_PARAM("Traffic")).strtoll(10);
+   traffic = args.at(U_CONSTANT_TO_PARAM("Traffic")).strtoull();
 
    if (traffic > 0 ||
        peer->traffic_available == 0)
@@ -1959,7 +1959,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       tmp = cfg.at(U_CONSTANT_TO_PARAM("NUM_PEERS_PREALLOCATE"));
 
-      num_peers_preallocate = (tmp ? tmp.strtol(10) : 512);
+      num_peers_preallocate = (tmp ? tmp.strtoul() : 512);
 
       tmp = cfg.at(U_CONSTANT_TO_PARAM("LOGIN_TIMEOUT"));
 
@@ -1967,8 +1967,8 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          {
          char* ptr;
 
-                               time_available = strtol(tmp.data(), &ptr, 10);
-         if (ptr[0] == ':') traffic_available = strtoll(ptr+1,        0, 10);
+                               time_available = ::strtol(tmp.data(), &ptr, 10);
+         if (ptr[0] == ':') traffic_available = ::strtoll(ptr+1,         0, 10);
 
          if (   time_available > U_ONE_DAY_IN_SECOND) time_available = U_ONE_DAY_IN_SECOND;
          if (traffic_available == 0)               traffic_available = 4ULL * 1024ULL * 1024ULL * 1024ULL; // 4G
@@ -2006,7 +2006,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       tmp = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("GatewayPort"), fw_env);
 
-      if (tmp) port = tmp.strtol(10);
+      if (tmp) port = tmp.strtoul();
 
       (void) vauth->split(U_STRING_TO_PARAM(*auth_login));
 

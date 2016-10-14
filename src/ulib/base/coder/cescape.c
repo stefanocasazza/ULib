@@ -67,17 +67,19 @@ uint32_t u_escape_encode(const unsigned char* restrict inptr, uint32_t len, char
  *  \^C  C = any letter (Control code)
  *  \xDD number formed of 1-2 hex   digits
  *  \DDD number formed of 1-3 octal digits
- * ---------------------------------------------------------------------------
+ * --------------------------------------------------------------------
  */
 
-uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char* restrict out)
+uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char* restrict out, char* bjson)
 {
    int c;
    char* p;
+   const    char* restrict ptr;
+   const    char* restrict end;
    const    char* restrict inend  = inptr + len;
    unsigned char* restrict outptr = out;
 
-   U_INTERNAL_TRACE("u_escape_decode(%.*s,%u,%p)", U_min(len,128), inptr, len, out)
+   U_INTERNAL_TRACE("u_escape_decode(%.*s,%u,%p,%p)", U_min(len,128), inptr, len, out, bjson)
 
    U_INTERNAL_ASSERT_POINTER(out)
    U_INTERNAL_ASSERT_POINTER(inptr)
@@ -97,6 +99,19 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
 
          U_INTERNAL_ASSERT_MAJOR(len, 0)
 
+         if (bjson)
+            {
+            for (ptr = inptr, end = inptr+len; ptr < end; ++ptr)
+               {
+               if (u__isvalidchar(*ptr) == false)
+                  {
+                  *bjson = *ptr;
+
+                  goto end;
+                  }
+               }
+            }
+
          u__memcpy(outptr, inptr, len, __PRETTY_FUNCTION__);
 
          outptr += len;
@@ -111,23 +126,129 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
 
       switch (c)
          {
-         case 'a': c = '\a';   break;
-         case 'b': c = '\b';   break;
-         case 't': c = '\t';   break;
-         case 'n': c = '\n';   break;
+         case 'b': c = '\b'; break;
+         case 'f': c = '\f'; break;
+         case 'n': c = '\n'; break;
+         case 'r': c = '\r'; break;
+         case 't': c = '\t'; break;
+         /*
          case 'v': c = '\v';   break;
-         case 'f': c = '\f';   break;
-         case 'r': c = '\r';   break;
+         case 'a': c = '\a';   break;
          case 'e': c = '\033'; break;
+         */
 
-         /* check control code */
-
-         case '^': c = u__toupper(*inptr++) - '@'; break;
-
-         /* check hexadecimal escape sequence */
-
-         case 'x':
+         case 'u': /* \u four hex digits (unicode char) */
             {
+            U_INTERNAL_ASSERT(u__isxdigit(inptr[0]))
+            U_INTERNAL_ASSERT(u__isxdigit(inptr[1]))
+            U_INTERNAL_ASSERT(u__isxdigit(inptr[2]))
+            U_INTERNAL_ASSERT(u__isxdigit(inptr[3]))
+
+            if (inptr[0] == '0' &&
+                inptr[1] == '0')
+               {
+               c = ((u__hexc2int(inptr[2]) & 0x0F) << 4) |
+                    (u__hexc2int(inptr[3]) & 0x0F);
+
+               U_INTERNAL_PRINT("c = %u", c)
+
+               if (c <= 0x7F)
+                  {
+                  /* U+0000..U+007F */
+
+                  inptr += 4;
+
+                  break;
+                  }
+
+               goto next;
+               }
+
+            c = u_hex2int(inptr, 4);
+
+            U_INTERNAL_PRINT("c = %u", c)
+
+            U_INTERNAL_ASSERT(c > 0x7F) /* U+0000..U+007F */
+
+            if (c >= 0xD800      &&
+                c <= 0xDFFF      &&
+                inptr[4] == '\\' &&
+                inptr[5] == 'u')
+               {
+               /* Handle UTF-16 surrogate pair */
+
+               int lc = u_hex2int(inptr+6, 4);
+
+               U_INTERNAL_PRINT("lc = %u", lc)
+
+               if (lc >= 0xDC00 &&
+                   lc <= 0xDFFF)
+                  {
+                  inptr += 6;
+
+                  c = 0x10000 + (((c & 0x3FF) << 10) | (lc & 0x3FF));
+                  }
+               }
+
+            U_INTERNAL_PRINT("c = %u", c)
+
+            U_INTERNAL_ASSERT(c > 0x7F) /* U+0000..U+007F */
+
+next:       inptr += 4;
+
+            if (c <= 0x7FF) /* U+0080..U+07FF */
+               {
+               u_put_unalignedp16(outptr, U_MULTICHAR_CONSTANT16((unsigned char)(0xC0 |  c >> 6),
+                                                                 (unsigned char)(0x80 | (c & 0x3F))));
+
+               outptr += 2;
+               }
+            else if (c <= 0xFFFF) /* U+0800..U+FFFF */
+               {
+               u_put_unalignedp32(outptr, U_MULTICHAR_CONSTANT32((unsigned char)(0xE0 |  c >> 12),
+                                                                 (unsigned char)(0x80 | (c >>  6 & 0x3F)),
+                                                                 (unsigned char)(0x80 | (c       & 0x3F)), 0));
+
+               outptr += 3;
+               }
+            else /* U+10000..U+10FFFF */
+               {
+               U_INTERNAL_ASSERT(c <= 0x10FFFF)
+
+               u_put_unalignedp32(outptr, U_MULTICHAR_CONSTANT32((unsigned char)(0xF0 |  c >> 18),
+                                                                 (unsigned char)(0x80 | (c >> 12 & 0x3F)),
+                                                                 (unsigned char)(0x80 | (c >>  6 & 0x3F)),
+                                                                 (unsigned char)(0x80 | (c       & 0x3F))));
+
+               outptr += 4;
+               }
+
+            continue;
+            }
+         break;
+
+         case '^': /* check control code */
+            {
+            if (bjson)
+               {
+               *bjson = c;
+
+               goto end;
+               }
+
+            c = u__toupper(*inptr++) - '@';
+            }
+         break;
+
+         case 'x': /* check hexadecimal escape sequence */
+            {
+            if (bjson)
+               {
+               *bjson = c;
+
+               goto end;
+               }
+
             if (u__isxdigit(*inptr))
                {
                                         c =            u__hexc2int(*inptr++);
@@ -138,9 +259,22 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
 
          /* check octal escape sequence */
 
-         case '0': case '1': case '2': case '3':
-         case '4': case '5': case '6': case '7':
+         case '0':
+         case '1':
+         case '2':
+         case '3':
+         case '4':
+         case '5':
+         case '6':
+         case '7':
             {
+            if (bjson)
+               {
+               *bjson = c;
+
+               goto end;
+               }
+
             c -= '0';
 
             if (u__isoctal(*inptr))
@@ -151,87 +285,15 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
             }
          break;
 
-         /* \u four hex digits (unicode char) */
-
-         case 'u':
+         default:
             {
-            U_INTERNAL_ASSERT(u__isxdigit(inptr[0]))
-            U_INTERNAL_ASSERT(u__isxdigit(inptr[1]))
-            U_INTERNAL_ASSERT(u__isxdigit(inptr[2]))
-            U_INTERNAL_ASSERT(u__isxdigit(inptr[3]))
-
-            if (inptr[0] != '0' ||
-                inptr[1] != '0')
+            if (bjson &&
+                c <= ' ')
                {
-               c = u_hex2int(inptr, 4);
-                             inptr += 4;
+               *bjson = c;
 
-               U_INTERNAL_PRINT("c = %d", c)
-
-               U_INTERNAL_ASSERT(c > 0x7F) /* U+0000..U+007F */
-
-               if (c >= 0xD800      &&
-                   c <= 0xDFFF      &&
-                   inptr[0] == '\\' &&
-                   inptr[1] == 'u')
-                  {
-                  /* Handle UTF-16 surrogate pair */
-
-                  int lc = u_hex2int(inptr+2, 4);
-
-                  U_INTERNAL_PRINT("lc = %d", lc)
-
-                  if (lc >= 0xDC00 &&
-                      lc <= 0xDFFF)
-                     {
-                     inptr += 6;
-
-                     c = 0x10000 + (((c & 0x3FF) << 10) | (lc & 0x3FF));
-                     }
-                  }
-
-               U_INTERNAL_PRINT("c = %d", c)
-
-               U_INTERNAL_ASSERT(c > 0x7F) /* U+0000..U+007F */
-
-               if (c <= 0x7FF) /* U+0080..U+07FF */
-                  {
-                  u_put_unalignedp16(outptr, U_MULTICHAR_CONSTANT16((unsigned char)(0xC0 |  c >> 6),
-                                                                    (unsigned char)(0x80 | (c & 0x3F))));
-
-                  outptr += 2;
-                  }
-               else if (c <= 0xFFFF) /* U+0800..U+FFFF */
-                  {
-                  u_put_unalignedp32(outptr, U_MULTICHAR_CONSTANT32((unsigned char)(0xE0 |  c >> 12),
-                                                                    (unsigned char)(0x80 | (c >>  6 & 0x3F)),
-                                                                    (unsigned char)(0x80 | (c       & 0x3F)), 0));
-
-                  outptr += 3;
-                  }
-               else /* U+10000..U+10FFFF */
-                  {
-                  U_INTERNAL_ASSERT(c <= 0x10FFFF)
-
-                  u_put_unalignedp32(outptr, U_MULTICHAR_CONSTANT32((unsigned char)(0xF0 |  c >> 18),
-                                                                    (unsigned char)(0x80 | (c >> 12 & 0x3F)),
-                                                                    (unsigned char)(0x80 | (c >>  6 & 0x3F)),
-                                                                    (unsigned char)(0x80 | (c       & 0x3F))));
-
-                  outptr += 4;
-                  }
-
-               continue;
+               goto end;
                }
-
-            c = ((u__hexc2int(inptr[2]) & 0x0F) << 4) |
-                 (u__hexc2int(inptr[3]) & 0x0F);
-
-            U_INTERNAL_ASSERT(c <= 0x7F) /* U+0000..U+007F */
-
-            U_INTERNAL_PRINT("c = %d", c)
-
-            inptr += 4;
             }
          break;
          }
@@ -239,6 +301,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
       *outptr++ = (unsigned char)c;
       }
 
+end:
    *outptr = 0;
 
    return (outptr - out);

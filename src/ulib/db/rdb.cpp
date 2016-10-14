@@ -1279,8 +1279,8 @@ void URDB::callForAllEntrySorted(iPFprpr function, qcompare compare_obj)
 
       if (n > 1)
          {
-         if (compare_obj) vkey.UVector<void*>::sort(compare_obj);
-         else             vkey.sort(UCDB::ignoreCase());
+         if (compare_obj == 0) vkey.sort(UCDB::ignoreCase());
+         else                  vkey.UVector<void*>::sort(compare_obj);
          }
 
       lock();

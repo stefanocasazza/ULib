@@ -154,34 +154,21 @@ __pure double u_strtod(const char* restrict s, const char* restrict e, int point
 
 // while (u__isspace(*s)) ++s;
 
-   if (*s == '-')
+        if (*s == '+') ++s;
+   else if (*s == '-')
       {
       ++s;
 
       sign = -1;
       }
-   else
-      {
-      if (*s == '+' ||
-          *s == '0')
-         {
-         ++s;
-         }
-      }
 
    p = s;
 
-   if (point_pos == INT_MIN+1) integerPart = 0;
-   else
-      {
-      s += -point_pos;
-
-      integerPart = u_strtoul(p, s);
-      }
+   integerPart = u_strtoull(p, (point_pos != (INT_MIN+1) ? (s += -point_pos) : ++s));
 
    U_INTERNAL_ASSERT_EQUALS(*s, '.')
 
-   fractionPart = u_strtoul(++s, e);
+   fractionPart = u_strtoull(++s, e);
 
    U_INTERNAL_PRINT("integerPart = %llu fractionPart = %llu pow10[%u] = %g", integerPart, fractionPart, e-s, pow10[e-s])
 
@@ -1305,29 +1292,31 @@ __pure bool u_isNumber(const char* restrict s, uint32_t n)
 
 __pure const char* u_find_char(const char* restrict s, const char* restrict end, char c)
 {
+   uint32_t i;
+
    U_INTERNAL_TRACE("u_find_char(%.*s,%p,%d)", U_min(end-s,128), s, end, c)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(end)
    U_INTERNAL_ASSERT_EQUALS(s[-1],c)
 
-   while (true)
-      {
-      s = (const char* restrict) memchr(s, c, end - s);
+loop:
+   s = (const char* restrict) memchr(s, c, end - s);
 
-      if (s == 0) s = end;
-      else
+   if (s == 0) s = end;
+   else
+      {
+      if (*(s-1) == '\\')
          {
-         if (*(s-1) == '\\' &&
-             *(s-2) != '\\')
+         for (i = 2; (*(s-i) == '\\'); ++i) {}
+
+         if ((i & 1) == 0)
             {
             ++s;
 
-            continue;
+            goto loop;
             }
          }
-
-      break;
       }
 
    return s;
@@ -3457,6 +3446,7 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define U__UQ 0x04000000 /* FROM URL query:  '&' (38 0x26) | '=' (61 0x3D) | '#' (35 0x23) */
 #define U__UF 0x08000000 /* filename invalid char: '"' '*' ':' '<' '>' '?' '\' '|' */
 #define U__XM 0x10000000 /* char >= (32 0x20) */
+#define U__XE 0x20000000 /* char '}' | ']' */
 
 #define LU    (U__L | U__U)
 #define LX    (U__L | U__X)
@@ -3510,6 +3500,7 @@ __pure int u_isUTF16(const unsigned char* restrict buf, uint32_t len)
 #define ITKF  (U__I | U__T | U__K |                 U__XM | U__E)
 
 #define ITUEF  (U__I | U__T | U__UE | U__XM)
+#define ITUEFX (U__I | U__T | U__UE | U__XM | U__XE)
 #define ITUEFQ (U__I | U__T | U__UE | U__XM | U__UQ | U__E)
 
 const unsigned int u__ct_tab[256] = {
@@ -3519,17 +3510,17 @@ CF, CF, CF, CF, CF, CF, CF, CT, CT, CWBT, CWRT, CWF, CWT, CWRT, CF, CF,/* 0x00 *
 CF, CF, CF, CF, CF, CF, CF, CF, CF,   CF,   CF,  CT,  CF,  CF,  CF, CF,/* 0x10 */
 
 /* ' ' '!' '"'  '#'   '$'  '%'  '&' '\'' '('  ')' '*' '+'   ','  '-'   '.'  '/'         */
-  SWT, ITF,ITK,ITUEFQ,ITF,ITUQ,ITJU,ITKF,ITF,ITF, IT,ITAH,ITVF, ITO,  ITN, ITA, /* 0x20 */
+  SWT, ITF,ITK,ITUEFQ,ITF,ITUQ,ITJU,ITKF,ITF,ITF, IT,ITAH,ITVF, ITO,  ITN, ITA,  /* 0x20 */
 /* '0' '1' '2'  '3'   '4'  '5'  '6' '7'  '8'  '9' ':' ';'   '<'  '='   '>'  '?'         */
-  DTZ, DTZ,DTZ, DTZ, DTZ,  DTZ,DTZ, DTZ, DT,  DT,ITG,ITUEF,ITJ, ITAU, ITJ,ITUE, /* 0x30 */
+  DTZ, DTZ,DTZ, DTZ, DTZ,  DTZ,DTZ, DTZ, DT,  DT,ITG,ITUEF,ITJ, ITAU, ITJ,ITUE,  /* 0x30 */
 /* '@' 'A' 'B'  'C'   'D'  'E'  'F' 'G'  'H'  'I' 'J' 'K'   'L'  'M'   'N'  'O'         */
-  ITF,UXTY,UXT,UXTMY,UXTM, UXT,UXT, UTM,UTMY, UTY,UTE,UT,  UTE, UTE,  UTE, UTM, /* 0x40 */
+  ITF,UXTY,UXT,UXTMY,UXTM, UXT,UXT, UTM,UTMY, UTY,UTE,UT,  UTE, UTE,  UTE, UTM,  /* 0x40 */
 /* 'P' 'Q' 'R'  'S'   'T'  'U'  'V' 'W'  'X'  'Y' 'Z' '['   '\'  ']'   '^'  '_'         */
-  UTM,UTE,UTY, UTY,  UTE, UTY, UTE,UTE, UTY, UTE, UT,ITUEF,ITUE,ITUEF,ITUEF,ITQ,/* 0x50 */
+  UTM,UTE,UTY, UTY,  UTE, UTY, UTE,UTE, UTY, UTE, UT,ITUEF,ITUE,ITUEFX,ITUEF,ITQ,/* 0x50 */
 /* '`' 'a' 'b'  'c'   'd'  'e'  'f' 'g'  'h'  'i' 'j' 'k'   'l'  'm'   'n'  'o'         */
-ITUEF,LXTY,LXT,LXTMY,LXTM,LXT, LXT,LTM,LTMY, LTY,LTE, LT,  LTE,  LT,  LTE, LTM, /* 0x60 */
+ITUEF,LXTY,LXT,LXTMY,LXTM,LXT, LXT,LTM,LTMY, LTY,LTE, LT,  LTE,  LT,  LTE, LTM,  /* 0x60 */
 /* 'p' 'q' 'r'  's'   't'  'u'  'v' 'w'  'x'  'y' 'z' '{'   '|'  '}'   '~'              */
-  LTM,LTE,LTY, LTY,   LT, LTY, LTE,LTE, LTY,  LT, LT,ITUEF,ITUE,ITUEF,ITF, CF,  /* 0x70 */
+  LTM,LTE,LTY, LTY,   LT, LTY, LTE,LTE, LTY,  LT, LT,ITUEF,ITUE,ITUEFX,ITF, CF,  /* 0x70 */
 
 FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0x80 */
 FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, /* 0x90 */
@@ -3582,6 +3573,7 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef U__UQ
 #undef U__UF
 #undef U__XM
+#undef U__XE
 
 #undef CF
 #undef CT
@@ -3630,6 +3622,7 @@ FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE, FUE  
 #undef ITJU
 #undef ITUQ
 #undef ITUEF
+#undef ITUEFX
 #undef ITUEFQ
 #undef LXTMY
 #undef UXTMY

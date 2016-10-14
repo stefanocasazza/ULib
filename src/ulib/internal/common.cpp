@@ -94,6 +94,10 @@ void ULib_init()
 {
    U_TRACE_NO_PARAM(1, "ULib_init()")
 
+   U_INTERNAL_ASSERT_EQUALS(u_ulib_init, false)
+
+   u_ulib_init = true;
+
    // conversion number to string
 
 #ifndef HAVE_OLD_IOSTREAM
@@ -111,12 +115,6 @@ void ULib_init()
 #endif
 
 #ifdef DEBUG
-   static bool init;
-
-   U_INTERNAL_ASSERT_EQUALS(init, false)
-
-   init = true;
-
    UMemoryPool::obj_class = "";
    UMemoryPool::func_call = __PRETTY_FUNCTION__;
 #endif

@@ -21,7 +21,6 @@ extern "C" {
 #endif
 
 /**
- * ---------------------------------------------------------------------------
  * Encode-Decode escape sequences into a buffer, the following are recognized:
  * ---------------------------------------------------------------------------
  * \a  BEL                    (\007  7  7)
@@ -41,7 +40,7 @@ extern "C" {
  */
 
 U_EXPORT uint32_t u_escape_encode(const unsigned char* restrict s, uint32_t n,          char* restrict result, uint32_t max_length);
-U_EXPORT uint32_t u_escape_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result);
+U_EXPORT uint32_t u_escape_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result, char* bjson);
 
 #ifdef __cplusplus
 }

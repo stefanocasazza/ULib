@@ -165,6 +165,12 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			with_ssl="${CROSS_ENVIRONMENT}/usr";
 		fi
 	fi
+
+   AC_ARG_ENABLE(ssl-staticlib-deps, [  --enable-ssl-staticlib-deps  link with dependencies of OpenSSL's static libraries. Must be specified in addition to --with-ssl [[default=no]]])
+   if test -z "$enable_ssl_staticlib_deps"; then
+      enable_ssl_staticlib_deps="no"
+   fi
+
 	AC_ARG_WITH(ssl, [  --with-ssl              use system      SSL library - [[will check /usr /usr/local]] [[default=use if present]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
@@ -203,16 +209,16 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 					AC_DEFINE(HAVE_SSL_TS, 1, [Define if we have time stamp support in openssl])
 				fi
 				ssl_version=$($ssldir/bin/openssl version 2>/dev/null)
-				if test -z "${ssl_version}" -a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
-					ssl_version=$(pkg-config --modversion openssl 2>/dev/null)
-				fi
 				if test -z "${ssl_version}"; then
 					ssl_version=$(grep OPENSSL_VERSION_TEXT $ssldir/include/openssl/opensslv.h 2>/dev/null | grep -v fips | head -1 | cut -d'"' -f2);
 				fi
-				if test -z "$OPENSSL_LINK"; then
-					ULIB_LIBS="-lssl -lcrypto $ULIB_LIBS";
-				else
+				if test -z "${ssl_version}" -a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
+					ssl_version=$(pkg-config --modversion openssl 2>/dev/null)
+				fi
+				if test "$enable_ssl_staticlib_deps" != "yes"; then
 					ULIB_LIBS="-lssl -lcrypto $OPENSSL_LINK $ULIB_LIBS";
+				else
+					ULIB_LIBS="$ssldir/lib/libssl.a $ssldir/lib/libcrypto.a $OPENSSL_LINK $ULIB_LIBS";
 				fi
 			fi
 			if test -z "${ssl_version}"; then
@@ -379,6 +385,12 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 		wanted=0;
 		with_curl="no";
 	fi
+
+   AC_ARG_ENABLE(curl-staticlib-deps, [  --enable-curl-staticlib-deps link with dependencies of    cURL's static libraries. Must be specified in addition to --with-curl [[default=no]]])
+   if test -z "$enable_curl_staticlib_deps"; then
+      enable_curl_staticlib_deps="no"
+   fi
+
 	AC_ARG_WITH(curl, [  --with-curl             use system     cURL library - [[will check /usr /usr/local]]],
 	[if test "$withval" = "no"; then
 		AC_MSG_RESULT(no)
@@ -397,20 +409,25 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 			echo "${T_MD}libcurl found in $curldir${T_ME}"
 			USE_LIBCURL=yes
 			AC_DEFINE(USE_LIBCURL, 1, [Define if enable libcurl support])
-			libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null | sed -e "s/libcurl //g")
+			libcurl_version=$($curldir/bin/curl-config --version 2>/dev/null)
 			if test -z "${libcurl_version}" -a -z "$CROSS_ENVIRONMENT" -a x_$PKG_CONFIG != x_no; then
 				libcurl_version=$(pkg-config --modversion libcurl 2>/dev/null)
 			fi
 			if test -z "${libcurl_version}"; then
 				libcurl_version="unknown"
 			fi
-			libcurl_linking=$($curldir/bin/curl-config --libs 2>/dev/null)
+			if test "$enable_curl_staticlib_deps" = "yes"; then
+				libcurl_linking="$curldir/lib/libcurl.a -lz"
+			else
+				libcurl_linking=$($curldir/bin/curl-config --libs 2>/dev/null)
+			fi
 			if test -z "${libcurl_linking}"; then
 				libcurl_linking="-lcurl"
 			fi
 			ULIB_LIBS="$libcurl_linking $ULIB_LIBS";
 			if test $curldir != "${CROSS_ENVIRONMENT}/" -a $curldir != "${CROSS_ENVIRONMENT}/usr" -a $curldir != "${CROSS_ENVIRONMENT}/usr/local"; then
-				CPPFLAGS="$CPPFLAGS -I$curldir/include";
+				libcurl_cflags=$($curldir/bin/curl-config --cflags 2>/dev/null)
+				CPPFLAGS="$CPPFLAGS $libcurl_cflags";
 				LDFLAGS="$LDFLAGS -L$curldir/lib -Wl,-R$curldir/lib";
 				PRG_LDFLAGS="$PRG_LDFLAGS -L$curldir/lib";
 			fi

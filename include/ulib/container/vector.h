@@ -16,6 +16,10 @@
 
 #include <ulib/container/construct.h>
 
+#ifdef U_STDCPP_ENABLE
+#  include <algorithm>
+#endif
+
 /**
  * A vector is a sequence of elements that are stored contiguously in memory and can change in size.
  * As a result, it has support for random-access and provides methods to add and delete elements.
@@ -301,15 +305,39 @@ public:
 
    // EXTENSION
 
-   void sort(qcompare compare_obj)
+   static int qscomp(const void* p, const void* q)
+      {
+      U_TRACE(0, "UVector<void*>::qscomp(%p,%p)", p, q)
+
+#  ifdef U_STDCPP_ENABLE
+      /**
+       * The comparison function must follow a strict-weak-ordering
+       *
+       * 1) For all x, it is not the case that x < x (irreflexivity)
+       * 2) For all x, y, if x < y then it is not the case that y < x (asymmetry)
+       * 3) For all x, y, and z, if x < y and y < z then x < z (transitivity)
+       * 4) For all x, y, and z, if x is incomparable with y, and y is incomparable with z, then x is incomparable with z (transitivity of incomparability)
+       */
+
+      return (((UStringRep*)p)->comparenocase((UStringRep*)q) < 0);
+#  else
+      return (*(UStringRep**)p)->comparenocase(*(UStringRep**)q);
+#  endif
+      }
+
+   void sort(qcompare compare_obj = qscomp)
       {
       U_TRACE(0+256, "UVector<void*>::sort(%p)", compare_obj)
 
       U_INTERNAL_DUMP("_length = %u", _length)
 
-      U_INTERNAL_ASSERT_RANGE(2,_length,_capacity)
+   // U_INTERNAL_ASSERT_RANGE(2,_length,_capacity)
 
+#  ifdef U_STDCPP_ENABLE
+      std::sort(vec, vec+_length, compare_obj);
+#  else
       U_SYSCALL_VOID(qsort, "%p,%u,%d,%p", (void*)vec, _length, sizeof(void*), compare_obj);
+#  endif
       }
 
    void move(UVector<void*>& source); // add to end and reset source
@@ -947,7 +975,20 @@ public:
       U_RETURN_STRING(result);
       }
 
-   UString operator[](uint32_t pos) const;
+   UString operator[](uint32_t pos) const
+      {
+      U_TRACE(0, "UVector<UString>::operator[](%u)", pos)
+
+#  ifdef DEBUG
+      if (pos >= _length)
+         {
+         U_ERROR("Array access out of bounds - UVector<UString>::at(pos:%u >= _length:%u) _capacity = %u elem(0) = %V elem(%u) = %V",
+                  pos, _length, _capacity, vec[0], _length-1, (_length ? vec[_length-1] : UStringRep::string_rep_null));
+         }
+#  endif
+
+      return at(pos);
+      }
 
    char* c_pointer(uint32_t pos)
       {
@@ -1152,14 +1193,17 @@ public:
       return _isEqual(_vec, ignore_case); 
       }
 
-   static int qscomp(const void* p, const void* q)
+   void sort(bool ignore_case = false)
       {
-      U_TRACE(0, "UVector<UString>::qscomp(%p,%p)", p, q)
+      U_TRACE(0, "UVector<UString>::sort(%b)", ignore_case)
 
-      return (*(UStringRep**)p)->comparenocase(*(UStringRep**)q);
+      U_INTERNAL_DUMP("_length = %u", _length)
+
+   // U_INTERNAL_ASSERT_RANGE(2,_length,_capacity)
+
+      if (ignore_case == false) mksort((UStringRep**)vec, _length, 0);
+      else                      UVector<void*>::sort();
       }
-
-   void sort(bool ignore_case = false);
 
    void move(UVector<UString>& source) { UVector<void*>::move(source); } // add to end and reset source
 

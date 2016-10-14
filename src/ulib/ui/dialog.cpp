@@ -251,7 +251,7 @@ bool UDialog::menu(const char* text, UVector<UString>& list, UString& choice, in
    if (run(title, "--single-quoted --menu \"%s\" %d %d %d", text, height, width, list_height) &&
        output)
       {
-      choice = list[output.strtol(10) -1].copy();
+      choice = list[output.strtoul() -1].copy();
 
       U_RETURN(true);
       }

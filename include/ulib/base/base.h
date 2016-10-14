@@ -20,6 +20,7 @@
 #  include <ulib/internal/config.h>
 #  include <ulib/base/replace/replace.h>
 #else
+#  define restrict __restrict
 #  include <ulib/internal/platform.h>
 #  ifndef U_LIBEXECDIR
 #  define U_LIBEXECDIR "/usr/libexec/ulib"
@@ -190,9 +191,9 @@ extern U_EXPORT uint32_t u_buffer_len; /* assert that u_buffer is busy if u_buff
 
 /* Startup */
 extern U_EXPORT pid_t u_pid;
-extern U_EXPORT bool u_is_tty;
 extern U_EXPORT uint32_t u_pid_str_len;
 extern U_EXPORT uint32_t u_progname_len;
+extern U_EXPORT bool u_is_tty, u_ulib_init;
 
 extern U_EXPORT       char* restrict u_pid_str;
 extern U_EXPORT const char* restrict u_progpath;
@@ -344,7 +345,7 @@ extern U_EXPORT int32_t u_printf_string_max_length;
 /* NB: we use u__printf(), u__snprintf(), u__vsnprintf(), ... cause of conflit with /usr/include/unicode/urename.h */
 
 U_EXPORT void u__printf(int fd,           const char* restrict format, uint32_t fmt_size, ...);
-U_EXPORT void u_internal_print(bool abrt, const char* restrict format,                    ...);
+U_EXPORT void u_internal_print(bool abrt, const char* restrict format,                    ...) PRINTF_ATTRIBUTE(2,3);
 
 U_EXPORT uint32_t u_sprintc(   char* restrict buffer, unsigned char c);
 U_EXPORT uint32_t u_sprintcrtl(char* restrict buffer, unsigned char c);

@@ -183,7 +183,9 @@ RETSIGTYPE UInterrupt::handlerInterrupt(int signo)
    if (signo == SIGBUS || //  7
        signo == SIGSEGV)  // 11 
       {
+#  ifdef DEBUG
       u_debug_at_exit(); 
+#  endif
       }
 
 // U_EXIT(-1);

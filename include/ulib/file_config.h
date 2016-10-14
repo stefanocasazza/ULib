@@ -75,7 +75,7 @@ public:
 
       UString value = at(key, keylen);
 
-      if (value) default_value = value.strtol(10);
+      if (value) default_value = value.strtol(true);
 
       U_RETURN(default_value);
       }

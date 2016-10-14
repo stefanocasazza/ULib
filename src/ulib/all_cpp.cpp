@@ -6,6 +6,7 @@
 
 #ifdef DEBUG
 #  include "debug/trace.cpp"
+#  include "debug/debug_common.cpp"
 #  include "debug/error_memory.cpp"
 #  include "debug/error_simulation.cpp"
 #endif
@@ -17,8 +18,7 @@
 #  endif
 #endif
 
-#include "debug/error.cpp"
-#include "debug/debug_common.cpp"
+#include "internal/error.cpp"
 #include "internal/memory_pool.cpp"
 
 #include "command.cpp"

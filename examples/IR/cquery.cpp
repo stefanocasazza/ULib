@@ -67,9 +67,17 @@ __pure int WeightWord::compareObj(const void* obj1, const void* obj2)
 {
    U_TRACE(5, "WeightWord::compareObj(%p,%p)", obj1, obj2)
 
-   int cmp = ((*(const WeightWord**)obj1)->word_freq < (*(const WeightWord**)obj2)->word_freq ?  1 :
-              (*(const WeightWord**)obj1)->word_freq > (*(const WeightWord**)obj2)->word_freq ? -1 :
-              (*(const WeightWord**)obj1)->filename.compare((*(const WeightWord**)obj2)->filename));
+   int cmp;
+
+#ifdef U_STDCPP_ENABLE
+   cmp = (((const WeightWord*)obj1)->word_freq < ((const WeightWord*)obj2)->word_freq ? 1 :
+          ((const WeightWord*)obj1)->word_freq > ((const WeightWord*)obj2)->word_freq ? 0 :
+          ((const WeightWord*)obj1)->filename.compare(((const WeightWord*)obj2)->filename) < 0);
+#else
+   cmp = ((*(const WeightWord**)obj1)->word_freq < (*(const WeightWord**)obj2)->word_freq ?  1 :
+          (*(const WeightWord**)obj1)->word_freq > (*(const WeightWord**)obj2)->word_freq ? -1 :
+          (*(const WeightWord**)obj1)->filename.compare((*(const WeightWord**)obj2)->filename));
+#endif
 
    return cmp;
 }

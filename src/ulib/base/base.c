@@ -40,6 +40,7 @@
       }
 
 void u_debug_init(void);
+void u_debug_at_exit(void);
 #else
 #  define U_INTERNAL_ERROR(assertion,format,args...)
 /*
@@ -49,8 +50,6 @@ void u_debug_init(void);
 #  define U_INTERNAL_PRINT(format,args...) U_INTERNAL_TRACE(format,args)
 */
 #endif
-
-void u_debug_at_exit(void);
 
 #ifdef HAVE_ENDIAN_H
 #  include <endian.h>
@@ -102,6 +101,7 @@ struct ustringrep u_empty_string_rep_storage = {
 /* Startup */
 
 bool     u_is_tty;
+bool     u_ulib_init;
 pid_t    u_pid;
 uint32_t u_pid_str_len;
 uint32_t u_progname_len;
@@ -1066,7 +1066,7 @@ uint32_t u_strftime1(char* restrict buffer, uint32_t maxsize, const char* restri
    U_INTERNAL_ASSERT_MAJOR(fmt_size, 0)
 
    do {
-      U_INTERNAL_ERROR((bp-buffer) <= maxsize, "BUFFER OVERFLOW at u_strftime1() ret = %u maxsize = %u format = \"%.*s\"", (bp-buffer), maxsize, format_size_save, format);
+      U_INTERNAL_ERROR((bp-buffer) <= maxsize, "BUFFER OVERFLOW at u_strftime1() ret = %lu maxsize = %u format = \"%.*s\"", (bp-buffer), maxsize, format_size_save, format);
 
       /* Scan the format for conversions ('%' character) */
 
@@ -1433,7 +1433,7 @@ case_z: /* %z The +hhmm or -hhmm numeric timezone (that is, the hour and minute 
 
    if (ret < maxsize) *bp = '\0';
 
-   U_INTERNAL_ERROR(ret <= maxsize, "BUFFER OVERFLOW at u_strftime1() ret = %u maxsize = %u format = \"%s\"", ret, maxsize, format_size_save, format);
+   U_INTERNAL_ERROR(ret <= maxsize, "BUFFER OVERFLOW at u_strftime1() ret = %u maxsize = %u format = \"%.*s\"", ret, maxsize, format_size_save, format);
 
    return ret;
 }
@@ -1506,7 +1506,9 @@ void u_internal_print(bool abrt, const char* restrict format, ...)
       {
       u_flag_exit = -2; // abort...
 
+#  ifdef DEBUG
       u_debug_at_exit();
+#  endif
       }
       }
 }
@@ -1537,11 +1539,11 @@ uint32_t u_sprintcrtl(char* restrict out, unsigned char c)
    };
 
    static const struct control_info control_table[32] = {
-    U_CTL_ENTRY("\\u0000"), U_CTL_ENTRY("\\u0001"), U_CTL_ENTRY("\\u0002"), U_CTL_ENTRY("\\u0003"), U_CTL_ENTRY("\\u0004"), U_CTL_ENTRY("\\u0005"), U_CTL_ENTRY("\\u0006"),
-    U_CTL_ENTRY("\\u0007"), U_CTL_ENTRY("\\b"    ), U_CTL_ENTRY("\\t"    ), U_CTL_ENTRY("\\n"    ), U_CTL_ENTRY("\\u000b"), U_CTL_ENTRY("\\f"    ), U_CTL_ENTRY("\\r"    ),
-    U_CTL_ENTRY("\\u000e"), U_CTL_ENTRY("\\u000f"), U_CTL_ENTRY("\\u0010"), U_CTL_ENTRY("\\u0011"), U_CTL_ENTRY("\\u0012"), U_CTL_ENTRY("\\u0013"), U_CTL_ENTRY("\\u0014"),
-    U_CTL_ENTRY("\\u0015"), U_CTL_ENTRY("\\u0016"), U_CTL_ENTRY("\\u0017"), U_CTL_ENTRY("\\u0018"), U_CTL_ENTRY("\\u0019"), U_CTL_ENTRY("\\u001a"), U_CTL_ENTRY("\\u001b"),
-    U_CTL_ENTRY("\\u001c"), U_CTL_ENTRY("\\u001d"), U_CTL_ENTRY("\\u001e"), U_CTL_ENTRY("\\u001f")
+    U_CTL_ENTRY("\\000"), U_CTL_ENTRY("\\001"), U_CTL_ENTRY("\\002"), U_CTL_ENTRY("\\003"), U_CTL_ENTRY("\\004"), U_CTL_ENTRY("\\005"), U_CTL_ENTRY("\\006"),
+    U_CTL_ENTRY("\\007"), U_CTL_ENTRY("\\b"  ), U_CTL_ENTRY("\\t"  ), U_CTL_ENTRY("\\n"  ), U_CTL_ENTRY("\\013"), U_CTL_ENTRY("\\f"  ), U_CTL_ENTRY("\\r"  ),
+    U_CTL_ENTRY("\\016"), U_CTL_ENTRY("\\017"), U_CTL_ENTRY("\\020"), U_CTL_ENTRY("\\021"), U_CTL_ENTRY("\\022"), U_CTL_ENTRY("\\023"), U_CTL_ENTRY("\\024"),
+    U_CTL_ENTRY("\\025"), U_CTL_ENTRY("\\026"), U_CTL_ENTRY("\\027"), U_CTL_ENTRY("\\030"), U_CTL_ENTRY("\\031"), U_CTL_ENTRY("\\032"), U_CTL_ENTRY("\\033"),
+    U_CTL_ENTRY("\\034"), U_CTL_ENTRY("\\035"), U_CTL_ENTRY("\\036"), U_CTL_ENTRY("\\037")
    };
 
    U_INTERNAL_TRACE("u_sprintcrtl(%p,%d)", out, c)
@@ -1804,7 +1806,7 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
    U_INTERNAL_ASSERT_MAJOR(fmt_size, 0)
 
    do {
-      U_INTERNAL_ERROR((bp-buffer) <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %u buffer_size = %u format = \"%.*s\"", (bp-buffer), buffer_size, format_size_save, format);
+      U_INTERNAL_ERROR((bp-buffer) <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %lu buffer_size = %u format = \"%.*s\"", (bp-buffer), buffer_size, format_size_save, format);
 
       /* Scan the format for conversions ('%' character) */
 
@@ -2122,7 +2124,7 @@ case_ustring_v:
       size = (prec < 0 ? (int)u__strlen((const char*)cp, __PRETTY_FUNCTION__) : prec);
 
       U_INTERNAL_ERROR(size <= (int)(buffer_size - (bp-buffer)),
-                       "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %d cp = %.20s buffer_size = %u format = \"%.*s\"",
+                       "WE ARE GOING TO OVERFLOW BUFFER at u__vsnprintf() size = %u remaining = %ld cp = %.20s buffer_size = %u format = \"%.*s\"",
                        size, (buffer_size - (bp-buffer)), cp, buffer_size, format_size_save, format);
 
       /* if a width from format is specified, the 0 flag for padding will be ignored... */
@@ -2884,9 +2886,9 @@ void u__printf(int fd, const char* format, uint32_t fmt_size, ...)
 
          if (u_askForContinue()) return;
          }
-#  endif
 
       u_debug_at_exit();
+#  endif
 
       exit(u_flag_exit);
       }

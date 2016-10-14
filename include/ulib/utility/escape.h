@@ -55,18 +55,18 @@ struct U_EXPORT UEscape {
 
    static void encode(const UString& s, UString& buffer) { encode(U_STRING_TO_PARAM(s), buffer); }
 
-   static void decode(const char* s, uint32_t n, UString& buffer)
+   static void decode(const char* s, uint32_t n, UString& buffer, char* bjson = 0)
       {
-      U_TRACE(0, "UEscape::decode(%.*S,%u,%p)", n, s, n, &buffer)
+      U_TRACE(0, "UEscape::decode(%.*S,%u,%V,%p)", n, s, n, buffer.rep, bjson)
 
       U_ASSERT(buffer.uniq())
 
-      buffer.rep->_length = u_escape_decode(s, n, (unsigned char*)buffer.data());
+      buffer.rep->_length = u_escape_decode(s, n, (unsigned char*)buffer.data(), bjson);
 
       U_INTERNAL_DUMP("buffer(%u) = %#V", buffer.size(), buffer.rep)
       }
 
-   static void decode(const UString& s, UString& buffer) { decode(U_STRING_TO_PARAM(s), buffer); }
+   static void decode(const UString& s, UString& buffer) { decode(U_STRING_TO_PARAM(s), buffer, 0); }
 };
 
 #endif

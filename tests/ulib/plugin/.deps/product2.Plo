@@ -42,7 +42,7 @@ plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  /usr/include/bits/stdlib-bsearch.h /usr/include/bits/stdlib-float.h \
  /usr/include/ctype.h ../../include/ulib/base/replace/replace.h \
  /usr/src/linux/include/generated/uapi/linux/version.h \
- /usr/include/openssl/opensslv.h /usr/include/string.h \
+ /opt/openssl/include/openssl/opensslv.h /usr/include/string.h \
  /usr/include/fcntl.h /usr/include/bits/fcntl.h \
  /usr/include/bits/fcntl-linux.h /usr/include/errno.h \
  /usr/include/bits/errno.h /usr/include/linux/errno.h \
@@ -144,7 +144,7 @@ plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  /usr/include/dirent.h /usr/include/bits/dirent.h /usr/include/fnmatch.h \
  ../../include/ulib/debug/error_simulation.h /usr/include/tdb.h \
  /usr/lib/gcc/x86_64-pc-linux-gnu/6.2.0/include/stdbool.h \
- ../../include/ulib/debug/common.h ../../include/ulib/debug/error.h \
+ ../../include/ulib/debug/common.h ../../include/ulib/internal/error.h \
  ../../include/ulib/debug/error_memory.h \
  ../../include/ulib/debug/objectDB.h ../../include/ulib/internal/macro.h \
  ../../include/ulib/internal/objectIO.h \
@@ -313,7 +313,7 @@ plugin/product.h:
 
 /usr/src/linux/include/generated/uapi/linux/version.h:
 
-/usr/include/openssl/opensslv.h:
+/opt/openssl/include/openssl/opensslv.h:
 
 /usr/include/string.h:
 
@@ -553,7 +553,7 @@ plugin/product.h:
 
 ../../include/ulib/debug/common.h:
 
-../../include/ulib/debug/error.h:
+../../include/ulib/internal/error.h:
 
 ../../include/ulib/debug/error_memory.h:
 

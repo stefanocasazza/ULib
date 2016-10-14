@@ -693,10 +693,12 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
 
    void* pParser = expressionParserAlloc(malloc);
 
-#ifdef U_TEST
-   (void) fprintf(stderr, "start parsing expr: %V\n", expr.rep);
+#ifdef U_DEBUG
+   /*
+   (void) fprintf(stderr, "start parsing expr: \"%.*s\"\n", U_STRING_TO_TRACE(expr));
 
     expressionParserTrace(stderr, (char*)"parser: ");
+   */
 #endif
 
    while ((token_id = t.getTokenId(&token)) > 0)
@@ -725,10 +727,12 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
 
    expressionParserFree(pParser, free);
 
-#if defined(U_TEST) && !defined(U_SUBSTR_INC_REF)
-   (void) fprintf(stderr, "ended parsing expr: %V\n", expr.rep);
+#if defined(U_DEBUG) && !defined(U_SUBSTR_INC_REF)
+   /*
+   (void) fprintf(stderr, "ended parsing expr: \"%.*s\"\n", U_STRING_TO_TRACE(expr));
 
    U_INTERNAL_DUMP("token.rep->parent->child = %d", token.rep->parent->child)
+   */
 #endif
 
    U_RETURN_STRING(result);

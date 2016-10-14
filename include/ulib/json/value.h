@@ -14,6 +14,7 @@
 #ifndef ULIB_VALUE_H
 #define ULIB_VALUE_H 1
 
+#include <ulib/tokenizer.h>
 #include <ulib/container/hash_map.h>
 
 #define U_JFIND(json,str,result) UValue::jfind(json,str,U_CONSTANT_SIZE(str),result)
@@ -307,22 +308,6 @@ public:
       U_RETURN(false);
       }
 
-   bool isIntegral() const
-      {
-      U_TRACE_NO_PARAM(0, "UValue::isIntegral()")
-
-      U_INTERNAL_DUMP("type_ = %d", type_)
-
-      if (type_ ==     INT_VALUE ||
-          type_ ==    UINT_VALUE ||
-          type_ == BOOLEAN_VALUE)
-         {
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
-
    bool isDouble() const
       {
       U_TRACE_NO_PARAM(0, "UValue::isDouble()")
@@ -340,10 +325,8 @@ public:
 
       U_INTERNAL_DUMP("type_ = %d", type_)
 
-      if (type_ ==     INT_VALUE ||
-          type_ ==    UINT_VALUE ||
-          type_ == BOOLEAN_VALUE ||
-          type_ ==    REAL_VALUE)
+      if (type_ >= SHORT_VALUE &&
+          type_ <= LREAL_VALUE)
          {
          U_RETURN(true);
          }
@@ -420,9 +403,22 @@ public:
    UValue& operator[](const UString& _key)    const { return *at(U_STRING_TO_PARAM(_key)); }
    UValue& operator[](const UStringRep* _key) const { return *at(U_STRING_TO_PARAM(*_key)); }
 
-   bool isMemberExist(const char* _key, uint32_t key_len) const { return (at(_key, key_len)            != 0); }
-   bool isMemberExist(const UString& _key) const                { return (at(U_STRING_TO_PARAM(_key))  != 0); }
-   bool isMemberExist(const UStringRep* _key) const             { return (at(U_STRING_TO_PARAM(*_key)) != 0); }
+   bool isMemberExist(const char* _key, uint32_t key_len) const { return (at(_key, key_len) != 0); }
+
+   bool isMemberExist(const UString& _key) const    { return (at(U_STRING_TO_PARAM(_key))  != 0); }
+   bool isMemberExist(const UStringRep* _key) const { return (at(U_STRING_TO_PARAM(*_key)) != 0); }
+
+   bool   getBool() const   { return value.bool_; }
+   double getDouble() const { return value.real_; }
+
+            int getInt() const  { return value.int_; }
+   unsigned int getUInt() const { return value.uint_; }
+
+            long getLong() const  { return value.long_; }
+   unsigned long getULong() const { return value.ulong_; }
+
+            long long getLLong() const  { return value.llong_; }
+   unsigned long long getULLong() const { return value.ullong_; }
 
    UString& getString() const { return *(UString*)value.ptr_; }
 
@@ -444,7 +440,32 @@ public:
     * \return \c true if the document was successfully parsed, \c false if an error occurred
     */
 
-   bool parse(const UString& document);
+   bool parse(const UString& document)
+      {
+      U_TRACE(0, "UValue::parse(%V)", document.rep)
+
+      UTokenizer tok(document);
+
+      ptok = &tok;
+
+      if (readValue())
+         {
+         U_INTERNAL_DUMP("type_ = %u", type_)
+
+         U_ASSERT(invariant())
+
+         tok.skipSpaces();
+
+         if (tok.atEnd())
+            {
+            size = document.size();
+
+            U_RETURN(true);
+            }
+         }
+
+      U_RETURN(false);
+      }
 
    /**
     * \brief Outputs a UValue in <a HREF="http://www.json.org">JSON</a> format without formatting (not human friendly).
@@ -453,15 +474,38 @@ public:
     * but may be usefull to support feature such as RPC where bandwith is limited
     */
 
-   UString output()
+   UString output() const
       {
       U_TRACE_NO_PARAM(0, "UValue::output()")
 
-      UString result(U_CAPACITY);
+      UString result(size ? size+100U : U_CAPACITY);
 
-      UValue::stringify(result, *this);
+      pstringify = result.data(); // buffer to stringify json
+
+      stringify();
+
+      result.size_adjust(pstringify);
 
       U_RETURN_STRING(result);
+      }
+
+   static void stringify(UString& result, const UValue& json)
+      {
+      U_TRACE(0, "UValue::stringify(%V,%p)", result.rep, &json)
+
+      U_INTERNAL_DUMP("json.type_ = %u", json.type_)
+
+      U_INTERNAL_ASSERT_RANGE(0,json.type_,OBJECT_VALUE)
+
+      (void) result.reserve(json.size+100U);
+
+      pstringify = result.pend(); // buffer to stringify json
+
+      json.stringify();
+
+      result.size_adjust(pstringify);
+
+      U_INTERNAL_DUMP("result(%u) = %V", result.size(), result.rep)
       }
 
    template <typename T> void toJSON(UJsonTypeHandler<T> t)
@@ -493,7 +537,7 @@ public:
 
       member.toJSON(*child);
 
-      appendNode(this, child);
+      appendNode(child);
       }
 
    template <typename T> void fromJSON(UJsonTypeHandler<T> t)
@@ -524,8 +568,6 @@ public:
 
       member.fromJSON(json);
       }
-
-   static void stringify(UString& result, UValue& value);
 
    // =======================================================================================================================
    // An in-place JSON element reader (@see http://www.codeproject.com/Articles/885389/jRead-an-in-place-JSON-element-reader)
@@ -561,7 +603,7 @@ public:
 
       if (jfind(json, query, query_len, x))
          {
-         result = x.strtol();
+         result = u_strtol(x.data(), x.pend());
 
          U_RETURN(true);
          }
@@ -569,7 +611,6 @@ public:
       U_RETURN(false);
       }
 
-#ifdef HAVE_STRTOULL
    static bool jfind(const UString& json, const char* query, uint32_t query_len, int64_t& result)
       {
       U_TRACE(0, "UValue::jfind(%V,%.*S,%u,%p)", json.rep, query_len, query, query_len, &result)
@@ -578,7 +619,7 @@ public:
 
       if (jfind(json, query, query_len, x))
          {
-         result = x.strtoll();
+         result = u_strtoll(x.data(), x.pend());
 
          U_RETURN(true);
          }
@@ -587,7 +628,6 @@ public:
       }
 
    static bool jfind(const UString& json, const UString& query, int64_t& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
-#endif
 
    static bool jfind(const UString& json, const char* query, uint32_t query_len, double& result)
       {
@@ -624,8 +664,8 @@ public:
    static const char* getJReadErrorDescription();
    static const char* getDataTypeDescription(int type);
 #else
-   static const char* getJReadErrorDescription()       { return ""; }
-   static const char* getDataTypeDescription(int type) { return ""; }
+   static const char* getJReadErrorDescription()  { return ""; }
+   static const char* getDataTypeDescription(int) { return ""; }
 #endif
 
 protected:
@@ -639,11 +679,16 @@ protected:
    struct { UValue* head; UValue* tail; } children;
 
    union anyvalue value;
+   uint32_t size;
    int type_;
 
-   void reset();
+   static UTokenizer* ptok;
+   static char* pstringify; // buffer to stringify json
 
-   static void appendNode(UValue* parent, UValue* child);
+   void reset();
+   bool readValue();
+   void stringify() const;
+   void appendNode(UValue* child);
 
 private:
    static int jread_skip(UTokenizer& tok) U_NO_EXPORT;
@@ -653,7 +698,6 @@ private:
    static UString jread_object(UTokenizer& tok) U_NO_EXPORT;
    static UString jread_object(UTokenizer& tok, uint32_t keyIndex) U_NO_EXPORT;
 
-   static bool readValue(UTokenizer& tok, UValue* value) U_NO_EXPORT;
    static uint32_t emitString(const unsigned char* ptr, uint32_t sz, char* presult) U_NO_EXPORT;
 
    template <class T> friend class UVector;
@@ -692,7 +736,7 @@ template <class T> inline UString JSON_stringify(UValue& json, T& obj)
 
 template <> class U_EXPORT UJsonTypeHandler<null> : public UJsonTypeHandler_Base {
 public:
-   explicit UJsonTypeHandler(null& val) : UJsonTypeHandler_Base(0) {}
+   explicit UJsonTypeHandler(null&) : UJsonTypeHandler_Base(0) {}
 
    void toJSON(UValue& json)
       {
@@ -705,6 +749,8 @@ public:
    void fromJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<null>::fromJSON(%p)", &json)
+
+      U_VAR_UNUSED(json)
       }
 };
 
@@ -1016,13 +1062,13 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<UStringRep>::fromJSON(%p)", &json)
 
+      U_VAR_UNUSED(json)
+
       U_INTERNAL_DUMP("json.type_ = %d", json.type_)
 
       U_ASSERT(json.isString())
 
-      UStringRep* rep = json.getString().rep;
-
-      U_INTERNAL_DUMP("pval(%p) = %p rep(%p) = %V", pval, pval, rep, rep)
+      U_INTERNAL_DUMP("pval(%p) = %p rep(%p) = %V", pval, pval, json.getString().rep, json.getString().rep)
 
       U_ERROR("UJsonTypeHandler<UStringRep>::fromJSON(): sorry, we cannot use UStringRep type from JSON type handler...");
       }
@@ -1091,7 +1137,7 @@ public:
 
          child->toJSON(UJsonTypeHandler<T>(*(T*)(*ptr)));
 
-         UValue::appendNode(&json, child);
+         json.appendNode(child);
          }
       }
 
@@ -1175,7 +1221,7 @@ public:
 
                child->toJSON(UJsonTypeHandler<T>(*(T*)node->elem)); // *child << *((T*)node->elem);
 
-               UValue::appendNode(&json, child);
+               json.appendNode(child);
                }
             while ((node = next));
             }
@@ -1264,7 +1310,7 @@ public:
 
          child->toJSON(UJsonTypeHandler<T>(pvec->at(i)));
 
-         UValue::appendNode(&json, child);
+         json.appendNode(child);
          }
       }
 

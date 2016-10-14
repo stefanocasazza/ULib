@@ -12,7 +12,7 @@
 // ============================================================================
 
 #include <ulib/debug/common.h>
-#include <ulib/debug/error.h>
+#include <ulib/internal/error.h>
 
 #ifdef USE_LIBSSL
 #  include <openssl/err.h>
@@ -38,7 +38,6 @@
 #  ifndef PACKAGE_STRING
 #  define PACKAGE_STRING "ULib 1.4.2"
 #  endif
-#endif
 
 extern "C" void U_EXPORT u_debug_at_exit(void)
 {
@@ -73,15 +72,13 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
          (void) system(command);
          }
 
-#  ifdef DEBUG
-#    ifdef U_STDCPP_ENABLE
+#  ifdef U_STDCPP_ENABLE
       UObjectDB::close();
-#    endif
+#  endif
 
       u_trace_close();
 
       U_WRITE_MEM_POOL_INFO_TO("mempool.%N.%P", 0);
-#  endif
 
       U_INTERNAL_PRINT("u_flag_exit = %d", u_flag_exit)
 
@@ -89,7 +86,6 @@ extern "C" void U_EXPORT u_debug_at_exit(void)
       }
 }
 
-#ifdef DEBUG
 static void print_info(void)
 {
    // print program mode and info for ULib...
@@ -125,15 +121,14 @@ void U_EXPORT u_debug_set_memlimit(float size)
    struct rlimit r;
    r.rlim_cur = (rlim_t)(size * 1048576);
 
-   // Heap size, seems to be common.
+   // Heap size, seems to be common
    (void) U_SYSCALL(setrlimit, "%d,%p", RLIMIT_DATA, &r);
 
    // Size of stack segment
    (void) U_SYSCALL(setrlimit, "%d,%p", RLIMIT_STACK, &r);
 
 #ifdef RLIMIT_RSS
-   // Resident set size.
-   // This affects swapping; processes that are exceeding their
+   // Resident set size. This affects swapping; processes that are exceeding their
    // resident set size will be more likely to have physical memory taken from them
    (void) U_SYSCALL(setrlimit, "%d,%p", RLIMIT_RSS, &r);
 #endif

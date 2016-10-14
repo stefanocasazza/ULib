@@ -160,11 +160,11 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
       U_RETURN_POINTER(0, UOrmDriver);
       }
 
-   int timeout = pdrv->getOptionValue(*UString::str_timeout).strtol(10); // generic timeout is specified in seconds
+   int timeout = pdrv->getOptionValue(*UString::str_timeout).strtoul(); // generic timeout is specified in seconds
 
    (void) U_SYSCALL(mysql_options, "%p", (MYSQL*)pdrv->connection, MYSQL_OPT_CONNECT_TIMEOUT, (const char*)&timeout);
 
-   int port = pdrv->getOptionValue(*UString::str_port).strtol(10);
+   int port = pdrv->getOptionValue(*UString::str_port).strtoul();
 
    if (port <= 0 || port > 65535) port = 3306; // if no port was specified, use MySQL's default port to let things run gracefully
 

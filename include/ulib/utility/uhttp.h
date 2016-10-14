@@ -1044,7 +1044,6 @@ private:
    static bool processFileCache() U_NO_EXPORT;
    static bool readHeaderRequest() U_NO_EXPORT;
    static void processGetRequest() U_NO_EXPORT;
-   static void manageDataForCache() U_NO_EXPORT;
    static bool processAuthorization() U_NO_EXPORT;
    static bool checkPath(uint32_t len) U_NO_EXPORT;
    static void checkRequestForHeader() U_NO_EXPORT;
@@ -1055,6 +1054,7 @@ private:
    static void removeDataSession(const UString& token) U_NO_EXPORT;
    static bool checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
+   static void manageDataForCache(const UString& file_name) U_NO_EXPORT;
    static bool checkIfUSPLink(UStringRep* key, void* value) U_NO_EXPORT;
    static int  checkGetRequestForRange(const UString& data) U_NO_EXPORT;
    static int  sortRange(const void* a, const void* b) __pure U_NO_EXPORT;

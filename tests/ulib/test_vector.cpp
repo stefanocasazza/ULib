@@ -196,7 +196,13 @@ static void print(UVector<UString>& y)
 
 static int compareObj(const void* obj1, const void* obj2)
 {
+   U_TRACE(0, "::compareObj(%p,%p)", obj1, obj2)
+
+#ifdef U_STDCPP_ENABLE
+   return (((UStringRep*)obj1)->compare((const UStringRep*)obj2) < 0);
+#else
    return (*(UStringRep**)obj1)->compare(*(const UStringRep**)obj2);
+#endif
 }
 
 static void check_contains()
@@ -294,7 +300,7 @@ U_EXPORT main (int argc, char* argv[])
 
    tmp = UFile::contentOf(UString(argv[1]));
    UVector<UString> y(tmp);
-   y.sort(false);
+   y.sort();
 
    uint32_t i = y.findSorted(U_STRING_FROM_CONSTANT("NULL"));
    U_INTERNAL_ASSERT( i == U_NOT_FOUND )

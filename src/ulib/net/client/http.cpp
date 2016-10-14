@@ -869,7 +869,7 @@ bool UHttpClient_Base::sendRequestEngine()
          {
          U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", U_http_info.nResponseCode)
 
-         U_http_info.clength = responseHeader->getHeader(U_CONSTANT_TO_PARAM("Content-Length")).strtol(10);
+         U_http_info.clength = responseHeader->getHeader(U_CONSTANT_TO_PARAM("Content-Length")).strtoul();
 
          U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
 

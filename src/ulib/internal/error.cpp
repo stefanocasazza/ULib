@@ -12,7 +12,7 @@
 // ============================================================================
 
 #include <ulib/utility/interrupt.h>
-#include <ulib/debug/error.h>
+#include <ulib/internal/error.h>
 
 #ifndef _MSWINDOWS_
 #  include <sys/wait.h>
@@ -197,6 +197,7 @@ void UError::stackDump()
 
    char** strings = backtrace_symbols(array, trace_size);
 
+   // -------------------------------------
    // NB: we start the loop from 3 to avoid
    // -------------------------------------
    // UError::stackDump()

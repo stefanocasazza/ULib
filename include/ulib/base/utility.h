@@ -51,7 +51,7 @@ typedef uint32_t in_addr_t;
 #  include <sys/sched.h>
 #endif
 
-#ifndef HAVE_CPU_SET_T
+#if defined(HAVE_CONFIG_H) && !defined(HAVE_CPU_SET_T)
 typedef uint64_t cpu_set_t;
 #endif
 
@@ -432,6 +432,7 @@ static inline bool u__istext( unsigned char c)   { return ((u_cttab(c) & 0x00020
                                                                       /* 0x00100000              __A BASE64 encoded: '+' | '/' (47 0x2F) | '=' (61 0x3D) */
                                                                       /* 0x08000000              __UF filename invalid char: ":<>*?\| */
                                                                       /* 0x10000000              __XM char >= (32 0x20) */
+                                                                      /* 0x20000000              __XE char '}' | ']' */
 static inline bool u__ismethod( unsigned char c) { return ((u_cttab(c) & 0x00200000) != 0); } /* __M HTTP (COPY,DELETE,GET,HEAD|HTTP,OPTIONS,POST/PUT/PATCH) */
 static inline bool u__isheader( unsigned char c) { return ((u_cttab(c) & 0x00400000) != 0); } /* __Y HTTP header (Host,Range,...) */
 static inline bool u__isquote(  unsigned char c) { return ((u_cttab(c) & 0x00800000) != 0); } /* __K string quote: '"' (34 0x22) | ''' (39 0x27) */
@@ -457,10 +458,11 @@ static inline bool u__ishname( unsigned char c)  { return ((u_cttab(c) & 0x0000B
 static inline bool u__isbase64(unsigned char c)  { return ((u_cttab(c) & 0x0010B000) != 0); } /* (__A | __L | __U | __D)               */
 static inline bool u__isb64url(unsigned char c)  { return ((u_cttab(c) & 0x0000B090) != 0); } /* (      __L | __U | __D | __O | __Q)   */
 
-static inline bool u__isvalidchar(   unsigned char c) { return ((u_cttab(c) & 0x10000000) != 0); } /* __XM */
+static inline bool u__isfnameinvalid(unsigned char c) { return ((u_cttab(c) & 0x08000000) != 0); } /* __UF                   */
+static inline bool u__isvalidchar(   unsigned char c) { return ((u_cttab(c) & 0x10000000) != 0); } /* __XM                   */
+static inline bool u__isxmlvalidchar(unsigned char c) { return ((u_cttab(c) & 0x10000300) != 0); } /* __XM | __B | __R       */
+static inline bool u__isendtoken(    unsigned char c) { return ((u_cttab(c) & 0x20000009) != 0); } /* __XE | __V | __S       */
 static inline bool u__isnumberchar(  unsigned char c) { return ((u_cttab(c) & 0x00001034) != 0); } /*  __H | __O | __N | __D */
-static inline bool u__isxmlvalidchar(unsigned char c) { return ((u_cttab(c) & 0x10000300) != 0); } /* __XM | __B | __R */
-static inline bool u__isfnameinvalid(unsigned char c) { return ((u_cttab(c) & 0x08000000) != 0); } /* __UF */
 
 /* buffer type identification - Assumed an ISO-1 character set */
 
@@ -542,20 +544,39 @@ static inline unsigned long u_strtoul(const char* restrict s, const char* restri
 
 static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e)
 {
-   char c;
-   uint64_t val = 0ULL;
+   uint32_t len = e-s;
+   uint64_t val = 0UL;
 
-   U_INTERNAL_TRACE("u_strtoull(%p,%p)", s, e)
+   U_INTERNAL_TRACE("u_strtoul(%p,%p)", s, e)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(e)
 
-   for (c = *s; s != e; c = *++s)
+   switch (len)
       {
-      U_INTERNAL_ASSERT(u__isdigit(c))
-
-      val = (c - '0') + (val << 1) + (val << 3); // (val * 10ULL)
+      case 20: val += (s[len-20] - '0') * 10000000000000000000ULL;
+      case 19: val += (s[len-19] - '0') * 1000000000000000000ULL;
+      case 18: val += (s[len-18] - '0') * 100000000000000000ULL;
+      case 17: val += (s[len-17] - '0') * 10000000000000000ULL;
+      case 16: val += (s[len-16] - '0') * 1000000000000000ULL;
+      case 15: val += (s[len-15] - '0') * 100000000000000ULL;
+      case 14: val += (s[len-14] - '0') * 10000000000000ULL;
+      case 13: val += (s[len-13] - '0') * 1000000000000ULL;
+      case 12: val += (s[len-12] - '0') * 100000000000ULL;
+      case 11: val += (s[len-11] - '0') * 10000000000ULL;
+      case 10: val += (s[len-10] - '0') * 1000000000ULL;
+      case  9: val += (s[len- 9] - '0') * 100000000ULL;
+      case  8: val += (s[len- 8] - '0') * 10000000ULL;
+      case  7: val += (s[len- 7] - '0') * 1000000ULL;
+      case  6: val += (s[len- 6] - '0') * 100000ULL;
+      case  5: val += (s[len- 5] - '0') * 10000ULL;
+      case  4: val += (s[len- 4] - '0') * 1000ULL;
+      case  3: val += (s[len- 3] - '0') * 100ULL;
+      case  2: val += (s[len- 2] - '0') * 10ULL;
+      case  1: val += (s[len- 1] - '0');
       }
+
+   U_INTERNAL_PRINT("val = %llu", val)
 
    return val;
 }

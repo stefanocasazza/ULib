@@ -11,7 +11,6 @@
 //
 // ============================================================================
 
-#include <ulib/tokenizer.h>
 #include <ulib/json/value.h>
 #include <ulib/utility/escape.h>
 
@@ -38,6 +37,9 @@
  *  NUMBER_VALUE = 18  // generic number value (may be -ve) int or float
 } ValueType;
 */
+
+char*       UValue::pstringify;
+UTokenizer* UValue::ptok;
 
 UValue::UValue(const UString& _key, const UString& value_)
 {
@@ -74,6 +76,8 @@ void UValue::reset()
 
    children.head =
    children.tail = 0;
+
+   size = 0;
 
    U_INTERNAL_DUMP("this = %p", this)
 }
@@ -247,7 +251,7 @@ void UValue::set(const UValue& v)
 
          U_NEW(UValue, _child, UValue(*child));
 
-         appendNode(this, _child);
+         appendNode(_child);
          }
       }
 
@@ -568,7 +572,7 @@ case_ldouble:  U_RETURN(value.lreal_);
 case_string:
 case_array:
 case_object:
-   U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to signed integer...")
+   U_INTERNAL_ASSERT_MSG(false, "Type is not convertible to double number...")
 
    U_RETURN(0.0);
 }
@@ -782,9 +786,23 @@ uint32_t UValue::emitString(const unsigned char* inptr, uint32_t len, char* out)
 
       U_INTERNAL_DUMP("c = %u", c)
 
-      if (c <= 0x1F)
+      if (c < 0x1F)
          {
-         outptr += u_sprintcrtl(outptr, c);
+                             *outptr++ = '\\';
+              if (c == '\b') *outptr++ = 'b'; // 0x08
+         else if (c == '\t') *outptr++ = 't'; // 0x09
+         else if (c == '\n') *outptr++ = 'n'; // 0x0A
+         else if (c == '\f') *outptr++ = 'f'; // 0x0C
+         else if (c == '\r') *outptr++ = 'r'; // 0x0D
+
+         else // \u four hex digits (unicode char)
+            {
+            *outptr++ = 'u';
+            *outptr++ = '0';
+            *outptr++ = '0';
+            *outptr++ = u_hex_upper[((c >> 4) & 0x0F)];
+            *outptr++ = u_hex_upper[( c       & 0x0F)];
+            }
 
          continue;
          }
@@ -865,13 +883,13 @@ uint32_t UValue::emitString(const unsigned char* inptr, uint32_t len, char* out)
    U_RETURN(outptr - out);
 }
 
-void UValue::stringify(UString& result, UValue& _value)
+void UValue::stringify() const
 {
-   U_TRACE(0, "UValue::stringify(%V,%p)", result.rep, &_value)
+   U_TRACE(0, "UValue::stringify()")
 
-   U_INTERNAL_DUMP("_value.type_ = %u", _value.type_)
+   U_INTERNAL_DUMP("type_ = %u", type_)
 
-   U_INTERNAL_ASSERT_RANGE(0,_value.type_,OBJECT_VALUE)
+   U_INTERNAL_ASSERT_RANGE(0,type_,OBJECT_VALUE)
 
    static const int dispatch_table[] = {
       0,
@@ -895,438 +913,516 @@ void UValue::stringify(UString& result, UValue& _value)
    };
 
    bool bcomma;
-   char* presult;
-   UString* pstring;
-   uint32_t pos, sz, keysz;
+   UValue* element;
 
-   (void) result.reserve(32);
+   U_DUMP("dispatch_table[%d %S] = %p &&case_null = %p", type_, getDataTypeDescription(type_), dispatch_table[type_], &&case_null)
 
-   U_INTERNAL_DUMP("dispatch_table[%d] = %p &&case_null = %p", _value.type_, dispatch_table[_value.type_], &&case_null)
-
-   goto *((char*)&&case_null + dispatch_table[_value.type_]);
+   goto *((char*)&&case_null + dispatch_table[type_]);
 
 case_null:
-   (void) result.append(U_CONSTANT_TO_PARAM("null"));
+   u_put_unalignedp32(pstringify, U_MULTICHAR_CONSTANT32('n','u','l','l'));
+
+   pstringify += U_CONSTANT_SIZE("null");
 
    return;
 
 case_bool:
-   _value.value.bool_ ? (void) result.append(U_CONSTANT_TO_PARAM("true"))
-                      : (void) result.append(U_CONSTANT_TO_PARAM("false"));
+   if (value.bool_)
+      {
+      u_put_unalignedp32(pstringify, U_MULTICHAR_CONSTANT32('t','r','u','e'));
+
+      pstringify += U_CONSTANT_SIZE("true");
+      }
+   else
+      {
+      u_put_unalignedp32(pstringify, U_MULTICHAR_CONSTANT32('f','a','l','s'));
+
+      pstringify[4] = 'e';
+      pstringify   += U_CONSTANT_SIZE("false");
+      }
 
    return;
 
 case_char:
-   (void) result.push_back(_value.value.char_);
+   *pstringify++ = value.char_;
 
    return;
 
 case_uchar:
-   (void) result.push_back(_value.value.uchar_);
+   *pstringify++ = value.uchar_;
 
    return;
 
 case_short:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_num2str32s(_value.value.short_, presult); 
+   pstringify += u_num2str32s(value.short_, pstringify); 
 
    return;
 
 case_ushort:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_num2str32(_value.value.ushort_, presult); 
+   pstringify += u_num2str32(value.ushort_, pstringify); 
 
    return;
 
 case_int:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_num2str32s(_value.value.int_, presult); 
+   pstringify += u_num2str32s(value.int_, pstringify); 
 
    return;
 
 case_uint:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_num2str32(_value.value.uint_, presult); 
+   pstringify += u_num2str32(value.uint_, pstringify); 
 
    return;
 
 case_long:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_num2str64s(_value.value.long_, presult); 
+   pstringify += u_num2str64s(value.long_, pstringify); 
 
    return;
 
 case_ulong:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_num2str64(_value.value.ulong_, presult); 
+   pstringify += u_num2str64(value.ulong_, pstringify); 
 
    return;
 
 case_llong:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_num2str64s(_value.value.llong_, presult); 
+   pstringify += u_num2str64s(value.llong_, pstringify); 
 
    return;
 
 case_ullong:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_num2str64(_value.value.ullong_, presult); 
+   pstringify += u_num2str64(value.ullong_, pstringify); 
 
    return;
 
 case_float:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_dtoa(_value.value.float_, presult); 
+   pstringify += u_dtoa(value.float_, pstringify); 
 
    return;
 
 case_double:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_dtoa(_value.value.real_, presult); 
+   pstringify += u_dtoa(value.real_, pstringify); 
 
    return;
 
 case_ldouble:
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + u_dtoa(_value.value.lreal_, presult); 
+   pstringify += u_dtoa(value.lreal_, pstringify); 
 
    return;
 
 case_string:
-   pstring = (UString*)_value.value.ptr_;
-
-   (void) result.reserve((keysz = pstring->size()) * 6);
-
-   presult = result.c_pointer(sz = result.size());
-
-   result.rep->_length = sz + emitString((const unsigned char*)pstring->data(), keysz, presult);
+   pstringify += emitString((const unsigned char*)((UString*)value.ptr_)->data(), ((UString*)value.ptr_)->size(), pstringify);
 
    return;
 
 case_array:
-   result.push_back('[');
+   *pstringify++ = '[';
 
-   for (UValue* element = _value.children.head; element; element = element->next)
+   U_INTERNAL_DUMP("children.head = %p children.tail = %p", children.head, children.tail)
+
+   element = children.head;
+
+   while (element)
       {
-      stringify(result, *element);
+      element->stringify();
 
-      if (element->next) result.push_back(',');
+      if ((element = element->next)) *pstringify++ = ',';
       }
 
-   result.push_back(']');
+   *pstringify++ = ']';
 
    return;
 
 case_object:
    bcomma = false;
 
-   result.push_back('{');
+   *pstringify++ = '{';
 
-   for (UValue* member = _value.children.head; member; member = member->next)
+   for (UValue* member = children.head; member; member = member->next)
       {
       U_INTERNAL_ASSERT_POINTER(member->key)
 
-      (void) result.reserve((keysz = member->key->size()) * 6);
+      if (bcomma) *pstringify++ = ',';
+      else        bcomma = true;
 
-      presult = result.c_pointer(sz = result.size());
+      pstringify += emitString((const unsigned char*)U_STRING_TO_PARAM(*(member->key)), pstringify);
 
-      if (bcomma == false) bcomma = true;
-      else
-         {
-         ++sz;
+      *pstringify++ = ':';
 
-         *presult++ = ',';
-         }
-
-      pos = emitString((const unsigned char*)member->key->data(), keysz, presult);
-
-      presult[pos] = ':';
-
-      result.rep->_length = sz + pos + 1;
-
-      stringify(result, *member);
+      member->stringify();
       }
 
-   result.push_back('}');
+   *pstringify++ = '}';
 }
 
-void UValue::appendNode(UValue* parent, UValue* child)
+void UValue::appendNode(UValue* child)
 {
-   U_TRACE(0, "UValue::appendNode(%p,%p)", parent, child)
+   U_TRACE(0, "UValue::appendNode(%p)", child)
 
-   U_INTERNAL_DUMP("child->parent = %p parent->children.head = %p parent->children.tail = %p",
-                    child->parent,     parent->children.head,     parent->children.tail)
+   U_INTERNAL_DUMP("child->parent = %p children.head = %p children.tail = %p",
+                    child->parent,     children.head,     children.tail)
 
-   child->parent = parent;
-   child->prev   = parent->children.tail;
+   child->parent = this;
+   child->prev   = children.tail;
    child->next   = 0;
 
-   if (parent->children.tail) parent->children.tail->next = child;
-   else                       parent->children.head       = child;
-                              parent->children.tail       = child;
+   if (children.tail) children.tail->next = child;
+   else               children.head       = child;
+                      children.tail       = child;
 
-   U_INTERNAL_DUMP("child->parent = %p parent->children.head = %p parent->children.tail = %p",
-                    child->parent,     parent->children.head,     parent->children.tail)
+   U_INTERNAL_DUMP("child->parent = %p children.head = %p children.tail = %p",
+                    child->parent,     children.head,     children.tail)
 }
 
-U_NO_EXPORT bool UValue::readValue(UTokenizer& tok, UValue* _value)
+bool UValue::readValue()
 {
-   U_TRACE(0, "UValue::readValue(%p,%p)", &tok, _value)
+   U_TRACE(0, "UValue::readValue()")
 
-   tok.skipSpaces();
+   static const int dispatch_table[] = {
+      0,/* '!' */
+      (int)((char*)&&case_dquote-(char*)&&cdefault),/* '"' */
+      0,/* '#' */
+      0,/* '$' */
+      0,/* '%' */
+      0,/* '&' */
+      0,/* '\'' */
+      0,/* '(' */
+      0,/* ')' */
+      0,/* '*' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '+' */
+      0,/* ',' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '-' */
+      0,/* '.' */
+      0,/* '/' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '0' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '1' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '2' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '3' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '4' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '5' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '6' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '7' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '8' */
+      (int)((char*)&&case_number-(char*)&&cdefault),/* '9' */
+      0,/* ':' */
+      0,/* ';' */
+      0,/* '<' */
+      0,/* '=' */
+      0,/* '>' */
+      0,/* '?' */
+      0,/* '@' */
+      0,/* 'A' */
+      0,/* 'B' */
+      0,/* 'C' */
+      0,/* 'D' */
+      0,/* 'E' */
+      0,/* 'F' */
+      0,/* 'G' */
+      0,/* 'H' */
+      0,/* 'I' */
+      0,/* 'J' */
+      0,/* 'K' */
+      0,/* 'L' */
+      0,/* 'M' */
+      0,/* 'N' */
+      0,/* 'O' */
+      0,/* 'P' */
+      0,/* 'Q' */
+      0,/* 'R' */
+      0,/* 'S' */
+      0,/* 'T' */
+      0,/* 'U' */
+      0,/* 'V' */
+      0,/* 'W' */
+      0,/* 'X' */
+      0,/* 'Y' */
+      0,/* 'Z' */
+      (int)((char*)&&case_vector-(char*)&&cdefault),/* '[' */
+      0,/* '\' */
+      0,/* ']' */
+      0,/* '^' */
+      0,/* '_' */
+      0,/* '`' */
+      0,/* 'a' */
+      0,/* 'b' */
+      0,/* 'c' */
+      0,/* 'd' */
+      0,/* 'e' */
+      (int)((char*)&&case_false-(char*)&&cdefault),/* 'f' */
+      0,/* 'g' */
+      0,/* 'h' */
+      0,/* 'i' */
+      0,/* 'j' */
+      0,/* 'k' */
+      0,/* 'l' */
+      0,/* 'm' */
+      (int)((char*)&&case_null-(char*)&&cdefault),/* 'n' */
+      0,/* 'o' */
+      0,/* 'p' */
+      0,/* 'q' */
+      0,/* 'r' */
+      0,/* 's' */
+      (int)((char*)&&case_true-(char*)&&cdefault),/* 't' */
+      0,/* 'u' */
+      0,/* 'v' */
+      0,/* 'w' */
+      0,/* 'x' */
+      0,/* 'y' */
+      0,/* 'z' */
+      (int)((char*)&&case_object-(char*)&&cdefault),/* '{' */
+      0,/* '|' */
+      0,/* '}' */
+      0/* '~' */
+   };
 
-   bool result;
+   ptok->skipSpaces();
 
-         char      c = tok.next();
-
-   switch (c)
+   if (ptok->atEnd())
       {
-      case '\0':
-         {
-         result              = true;
-         _value->type_       = NULL_VALUE;
-         _value->value.real_ = 0.0;
-         }
-      break;
+      type_       = NULL_VALUE;
+      value.real_ = 0.0;
 
-      case 'n':
-         {
-         _value->type_       = NULL_VALUE;
-         _value->value.real_ = 0.0;
-
-         result = tok.skipToken(U_CONSTANT_TO_PARAM("ull"));
-         }
-      break;
-
-      case 't':
-      case 'f':
-         {
-         result = (c == 't' ? tok.skipToken(U_CONSTANT_TO_PARAM("rue"))
-                            : tok.skipToken(U_CONSTANT_TO_PARAM("alse")));
-
-         if (result)
-            {
-            _value->type_       = BOOLEAN_VALUE;
-            _value->value.bool_ = (c == 't');
-            }
-         }
-      break;
-
-      case '+':
-      case '-':
-      case '0':
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-      case '5':
-      case '6':
-      case '7':
-      case '8':
-      case '9':
-         {
-         const char* start = tok.getPointer()-1;
-
-         int type_num = tok.getTypeNumber();
-
-         if ((result = (type_num != 0)))
-            {
-            if (type_num < 0)
-               {
-               _value->type_       = REAL_VALUE;
-               _value->value.real_ = (type_num == INT_MIN // scientific notation (Ex: 1.45e10)
-                                          ?   strtod(start, 0)
-                                          : u_strtod(start, tok.getPointer(), type_num));
-
-               U_INTERNAL_DUMP("_value.real_ = %g", _value->value.real_)
-
-               U_INTERNAL_ASSERT_EQUALS(_value->value.real_, strtod(start, 0))
-               }
-            else if (c == '-')
-               {
-               _value->type_      = INT_VALUE;
-               _value->value.int_ = u_strtol(start, tok.getPointer());
-
-               U_INTERNAL_DUMP("_value.int_ = %d", _value->value.int_)
-
-               U_INTERNAL_ASSERT_EQUALS(_value->value.int_, strtol(start, 0, 10))
-               }
-            else
-               {
-               _value->type_       = UINT_VALUE;
-               _value->value.uint_ = u_strtoul(start, tok.getPointer());
-
-               U_INTERNAL_DUMP("_value.uint_ = %u", _value->value.uint_)
-
-               U_INTERNAL_ASSERT_EQUALS(_value->value.uint_, strtoul(start, 0, 10))
-               }
-            }
-         }
-      break;
-
-      case '"':
-         {
-         const char* ptr  = tok.getPointer();
-         const char* _end = tok.getEnd();
-         const char* last = u_find_char(ptr, _end, '"');
-         uint32_t sz      = (last < _end ? last - ptr : 0);
-
-         U_INTERNAL_DUMP("sz = %u", sz)
-
-         _value->type_ = STRING_VALUE;
-
-         if (sz)
-            {
-            U_NEW(UString, _value->value.ptr_, UString(sz));
-
-            UEscape::decode(ptr, sz, _value->getString());
-
-            result = (_value->getString().empty() == false);
-            }
-         else
-            {
-            U_NEW(UString, _value->value.ptr_, UString); // NB: omit the () when invoking the default constructor...
-
-            result = true;
-            }
-
-         if (last < _end) tok.setPointer(last+1);
-
-         U_INTERNAL_DUMP("_value.ptr_ = %V", _value->getString().rep)
-         }
-      break;
-
-      case '[':
-         {
-         _value->type_ = ARRAY_VALUE;
-
-         while (true)
-            {
-            tok.skipSpaces();
-
-            c = tok.next();
-
-            if (c == ']' ||
-                c == '\0')
-               {
-               break;
-               }
-
-            if (c != ',') tok.back();
-
-            UValue* child;
-
-            U_NEW(UValue, child, UValue);
-
-            if (readValue(tok, child) == false)
-               {
-               delete child;
-
-               U_RETURN(false);
-               }
-
-            appendNode(_value, child);
-            }
-
-         result = true;
-         }
-      break;
-
-      case '{':
-         {
-         UValue name;
-
-         _value->type_ = OBJECT_VALUE;
-
-         while (true)
-            {
-            tok.skipSpaces();
-
-            c = tok.next();
-
-            if (c == '}' ||
-                c == '\0')
-               {
-               break;
-               }
-
-            if (c != ',') tok.back();
-
-            if (readValue(tok, &name) == false) U_RETURN(false);
-
-            tok.skipSpaces();
-
-            if (tok.next()      != ':' ||
-                name.isString() == false)
-               {
-               U_RETURN(false);
-               }
-
-            UValue* child;
-
-            U_NEW(UValue, child, UValue);
-
-            if (readValue(tok, child) == false)
-               {
-               delete child;
-
-               U_RETURN(false);
-               }
-
-            U_INTERNAL_ASSERT_EQUALS(name.type_, STRING_VALUE)
-
-            child->key = (UString*)name.value.ptr_;
-
-            appendNode(_value, child);
-
-            name.type_ = NULL_VALUE;
-            }
-
-         result = true;
-
-         U_INTERNAL_ASSERT_EQUALS(name.type_, NULL_VALUE)
-         }
-      break;
-
-      default: result = false; break;
+      U_RETURN(false);
       }
 
-   U_RETURN(result);
-}
+   uint32_t sz;
+   int type_num;
+   UValue* child;
+   const char* end;
+   const char* last;
+   const char* start = ptok->getPointer();
 
-bool UValue::parse(const UString& document)
-{
-   U_TRACE(0, "UValue::parse(%V)", document.rep)
+   char c = ptok->next();
 
-   UTokenizer tok(document);
+   U_INTERNAL_DUMP("c = %d dispatch_table[%d] = %p &&cdefault = %p", c, c-'!', dispatch_table[c-'!'], &&cdefault)
 
-   tok.skipSpaces();
+   goto *((char*)&&cdefault + dispatch_table[c-'!']);
 
-   char c = tok.current();
+cdefault:
+   U_RETURN(false);
 
-   if ((c == '['   ||
-        c == '{' ) && 
-       readValue(tok, this))
+case_dquote:
+    end = ptok->getEnd();
+   last = u_find_char(++start, end, '"');
+     sz = (last < end ? last - start : 0);
+
+   type_ = STRING_VALUE;
+
+   U_INTERNAL_DUMP("sz = %u", sz)
+
+   if (sz)
       {
-      U_ASSERT(invariant())
+      char bjson = 0;
+
+      U_NEW(UString, value.ptr_, UString(sz));
+
+      UEscape::decode(start, sz, *(UString*)value.ptr_, &bjson);
+
+      U_INTERNAL_DUMP("bjson = %u", bjson)
+
+      if (bjson) U_RETURN(false);
+
+      sz = ((UString*)value.ptr_)->size();
+      }
+   else
+      {
+      sz = 1;
+
+      U_NEW(UString, value.ptr_, UString); // NB: omit the () when invoking the default constructor...
+      }
+
+   U_INTERNAL_DUMP("value.ptr_ = %V", ((UString*)value.ptr_)->rep)
+
+   if (last < end) ptok->setPointer(last+1);
+
+   if (sz) U_RETURN(true);
+
+   U_RETURN(false);
+
+   /**
+    * The JSON spec says that a number shall follow this precise pattern (spaces and quotes added for readability):
+    *
+    * '-'? (0 | [1-9][0-9]*) ('.' [0-9]+)? ([Ee] [+-]? [0-9]+)?
+    *
+    * However, some JSON parsers are more liberal. For instance, PHP accepts '.5' and '1.'. JSON.parse accepts '+3'
+    */
+case_number:
+   type_num = ptok->getTypeNumber();
+
+   if (type_num != 0)
+      {
+      if (type_num < 0)
+         {
+         type_       = REAL_VALUE;
+         value.real_ = (type_num == INT_MIN // scientific notation (Ex: 1.45e10)
+                                    ?   strtod(start, 0)
+                                    : u_strtod(start, ptok->getPointer(), type_num));
+
+         U_INTERNAL_DUMP("value.real_ = %g", value.real_)
+
+         U_INTERNAL_ASSERT_EQUALS(value.real_, strtod(start, 0))
+         }
+      else if (c == '-')
+         {
+         type_        = LLONG_VALUE;
+         value.llong_ = u_strtoll(start, ptok->getPointer());
+
+         U_INTERNAL_DUMP("value.llong_ = %lld", value.llong_)
+
+#     ifdef HAVE_STRTOULL
+         U_INTERNAL_ASSERT_EQUALS(value.llong_, ::strtoll(start, 0, 10))
+#     endif
+         }
+      else
+         {
+         value.ullong_ = u_strtoull(start, ptok->getPointer());
+
+         U_INTERNAL_DUMP("value.ullong_ = %llu", value.ullong_)
+
+#     ifdef HAVE_STRTOULL
+         U_INTERNAL_ASSERT_EQUALS(value.ullong_, ::strtoull(start, 0, 10))
+#     endif
+
+         if (*start == '0' && // NB: numbers cannot have leading zeroes...
+             value.ullong_)
+            {
+            U_RETURN(false);
+            }
+
+         type_ = ULLONG_VALUE;
+         }
 
       U_RETURN(true);
       }
 
-   U_INTERNAL_DUMP("type_ = %u", type_)
+   U_RETURN(false);
+
+case_vector:
+   type_ = ARRAY_VALUE;
+
+   while (true)
+      {
+      ptok->skipSpaces();
+
+      if (ptok->atEnd()) break;
+
+      c = ptok->next();
+
+      if (c == ']') U_RETURN(true);
+
+      if (c != ',') ptok->back();
+      else
+         {
+         U_INTERNAL_DUMP("children.head = %p children.tail = %p", children.head, children.tail)
+
+         if (children.head == 0) U_RETURN(false);
+         }
+
+      U_NEW(UValue, child, UValue);
+
+      if (child->readValue() == false)
+         {
+         delete child;
+
+         U_RETURN(false);
+         }
+
+      U_INTERNAL_DUMP("child->type_ = %u", child->type_)
+
+      appendNode(child);
+      }
 
    U_RETURN(false);
+
+case_false:
+      if (u_get_unalignedp32(ptok->getPointer()) == U_MULTICHAR_CONSTANT32('a','l','s','e'))
+         {
+         type_       = BOOLEAN_VALUE;
+         value.bool_ = false;
+
+         ptok->setPointer(start+U_CONSTANT_SIZE("false"));
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+
+case_null:
+      if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('n','u','l','l'))
+         {
+         type_       = NULL_VALUE;
+         value.real_ = 0.0;
+
+         ptok->setPointer(start+U_CONSTANT_SIZE("null"));
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+
+case_true:
+      if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('t','r','u','e'))
+         {
+         type_       = BOOLEAN_VALUE;
+         value.bool_ = true;
+
+         ptok->setPointer(start+U_CONSTANT_SIZE("true"));
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+
+case_object:
+      {
+      UValue name;
+      UValue* pvalue;
+
+      type_ = OBJECT_VALUE;
+
+      while (true)
+         {
+         ptok->skipSpaces();
+
+         if (ptok->atEnd()) break;
+
+         c = ptok->next();
+
+         if (c == '}') U_RETURN(true);
+
+         if (c != ',') ptok->back();
+
+         if (name.readValue() == false ||
+             name.isString()  == false)
+            {
+            U_RETURN(false);
+            }
+
+         if ((ptok->skipSpaces(),
+              ptok->atEnd() ||
+              ptok->next() != ':'))
+            {
+            U_RETURN(false);
+            }
+
+         U_NEW(UValue, pvalue, UValue);
+
+         if (pvalue->readValue() == false)
+            {
+            delete pvalue;
+
+            U_RETURN(false);
+            }
+
+         U_INTERNAL_DUMP("pvalue->type_ = %u", pvalue->type_)
+
+         pvalue->key = (UString*)name.value.ptr_;
+
+         name.type_ = NULL_VALUE;
+
+         appendNode(pvalue);
+         }
+
+      U_RETURN(false);
+      }
 }
 
 // =======================================================================================================================
@@ -1392,32 +1488,40 @@ U_NO_EXPORT int UValue::jreadFindToken(UTokenizer& tok)
 
    tok.skipSpaces();
 
+   if (tok.atEnd()) U_RETURN(U_JR_EOL);
+
    switch (tok.current())
       {
-      case  '0':
-      case  '1':
-      case  '2':
-      case  '3':
-      case  '4':
-      case  '5':
-      case  '6':
-      case  '7':
-      case  '8':
-      case  '9':
-      case  '-': U_RETURN(NUMBER_VALUE);
-      case  't':
-      case  'f': U_RETURN(BOOLEAN_VALUE);
-      case  'n': U_RETURN(NULL_VALUE);
-      case  '[': U_RETURN(ARRAY_VALUE);
-      case  '{': U_RETURN(OBJECT_VALUE);
-      case  '}': U_RETURN(U_JR_EOBJECT);
-      case  ']': U_RETURN(U_JR_EARRAY);
-      case  ':': U_RETURN(U_JR_COLON);
-      case  ',': U_RETURN(U_JR_COMMA);
-      case  '*': U_RETURN(U_JR_QPARAM);
-      case  '"':
+      case '+':
+      case '-':
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9': U_RETURN(NUMBER_VALUE);
+
+      case 't':
+      case 'f': U_RETURN(BOOLEAN_VALUE);
+
+      case 'n': U_RETURN(NULL_VALUE);
+
+      case '[': U_RETURN(ARRAY_VALUE);
+      case ']': U_RETURN(U_JR_EARRAY);
+
+      case '{': U_RETURN(OBJECT_VALUE);
+      case '}': U_RETURN(U_JR_EOBJECT);
+
+      case '"':
       case '\'': U_RETURN(STRING_VALUE);
-      case '\0': U_RETURN(U_JR_EOL);
+
+      case ':': U_RETURN(U_JR_COLON);
+      case ',': U_RETURN(U_JR_COMMA);
+      case '*': U_RETURN(U_JR_QPARAM);
       }
 
    U_RETURN(-1);
@@ -1429,24 +1533,26 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
 
    tok.skipSpaces();
 
+   if (tok.atEnd()) U_RETURN(NULL_VALUE);
+
    switch (tok.next())
       {
-      case  'n': (void) tok.skipToken(U_CONSTANT_TO_PARAM("ull"));
-      case '\0':                                                    U_RETURN(   NULL_VALUE);
-      case  't': (void) tok.skipToken(U_CONSTANT_TO_PARAM("rue"));  U_RETURN(BOOLEAN_VALUE);
-      case  'f': (void) tok.skipToken(U_CONSTANT_TO_PARAM("alse")); U_RETURN(BOOLEAN_VALUE);
-      case  '+':
-      case  '-':
-      case  '0':
-      case  '1':
-      case  '2':
-      case  '3':
-      case  '4':
-      case  '5':
-      case  '6':
-      case  '7':
-      case  '8':
-      case  '9':
+      case 'n': (void) tok.skipToken(U_CONSTANT_TO_PARAM("ull"));  U_RETURN(   NULL_VALUE);
+      case 't': (void) tok.skipToken(U_CONSTANT_TO_PARAM("rue"));  U_RETURN(BOOLEAN_VALUE);
+      case 'f': (void) tok.skipToken(U_CONSTANT_TO_PARAM("alse")); U_RETURN(BOOLEAN_VALUE);
+
+      case '+':
+      case '-':
+      case '0':
+      case '1':
+      case '2':
+      case '3':
+      case '4':
+      case '5':
+      case '6':
+      case '7':
+      case '8':
+      case '9':
          {
          tok.skipNumber();
 
@@ -1474,14 +1580,11 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
             {
             tok.skipSpaces();
 
+            if (tok.atEnd()) break;
+
             char c = tok.next();
 
-            if (c == ']' ||
-                c == '\0')
-               {
-               break;
-               }
-
+            if (c == ']') break;
             if (c != ',') tok.back();
 
             if (jread_skip(tok) == -1) U_RETURN(-1);
@@ -1496,14 +1599,11 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
             {
             tok.skipSpaces();
 
+            if (tok.atEnd()) break;
+
             char c = tok.next();
 
-            if (c == '}' ||
-                c == '\0')
-               {
-               break;
-               }
-
+            if (c == '}') break;
             if (c != ',') tok.back();
 
             int dataType = jread_skip(tok);
@@ -1512,7 +1612,8 @@ U_NO_EXPORT int UValue::jread_skip(UTokenizer& tok)
 
             tok.skipSpaces();
 
-            if (tok.next() != ':' ||
+            if (tok.atEnd()       || 
+                tok.next() != ':' ||
                 dataType != STRING_VALUE)
                {
                U_RETURN(-1);
@@ -1738,10 +1839,8 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
          const char* ptr =  start = tok1.getPointer();
                char    c = *start;
 
-         while ((c  > ' ') && // any ctrl char incl '\0'
-                (c != ',') &&
-                (c != '}') &&
-                (c != ']'))
+         while (u__isvalidchar(c) &&
+                u__isendtoken(c) == false)
             {
             c = *++ptr;
             }
@@ -1782,7 +1881,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
                   U_INTERNAL_DUMP("index = %u", index)
 
-                  U_INTERNAL_ASSERT_EQUALS(index, strtol(start, 0, 10))
+                  U_INTERNAL_ASSERT_EQUALS(index, ::strtol(start, 0, 10))
                   }
                break;
 
@@ -1831,15 +1930,15 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
             // compare object keys
 
-            if (qElement == jElement)
-               {
-               int ret;
+            U_INTERNAL_DUMP("jElement = %V qElement = %V", jElement.rep, qElement.rep)
 
+            if (jElement == qElement)
+               {
                // found object key
 
                ++tok1;
 
-               ret = jread(tok1.substr(), tok2.substr(), result, queryParams);
+               int ret = jread(tok1.substr(), tok2.substr(), result, queryParams);
 
                U_INTERNAL_DUMP("result = %V", result.rep)
 
@@ -1936,7 +2035,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
             U_INTERNAL_DUMP("index = %u", index)
 
-            U_INTERNAL_ASSERT_EQUALS(index, strtol(start, 0, 10))
+            U_INTERNAL_ASSERT_EQUALS(index, ::strtol(start, 0, 10))
             }
 
          count = 0;

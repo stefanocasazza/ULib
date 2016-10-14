@@ -100,10 +100,9 @@ U_INTERNAL_DUMP("U_HTTP_CTYPE = %.*S", U_HTTP_CTYPE_TO_TRACE)
 
 if (U_HTTP_CTYPE_STREQ("application/jsonrequest"))
    {
-   UValue json;
    Request request;
 
-   if (USP_JSON_REQUEST_PARSE(request)) USP_JSON_stringify(json, Request, request);
+   if (USP_JSON_REQUEST_PARSE(request)) USP_JSON_OBJ_stringify(Request, request)
    else                                 USP_PUTS_CONSTANT("{}");
    }
 -->

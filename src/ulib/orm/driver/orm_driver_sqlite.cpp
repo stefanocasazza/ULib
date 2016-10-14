@@ -187,7 +187,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
    // Calling this routine with an argument less than or equal to zero turns off all busy handlers
 
-   (void) U_SYSCALL(sqlite3_busy_timeout, "%p,%d", (sqlite3*)pdrv->connection, x ? x.strtol(10) : 8); // 8ms
+   (void) U_SYSCALL(sqlite3_busy_timeout, "%p,%d", (sqlite3*)pdrv->connection, x ? x.strtoul() : 8); // 8ms
 
    (void) U_SYSCALL(sqlite3_exec, "%p,%S,%p,%p,%p", (sqlite3*)pdrv->connection, "PRAGMA journal_mode=OFF", 0, 0, 0);
    (void) U_SYSCALL(sqlite3_exec, "%p,%S,%p,%p,%p", (sqlite3*)pdrv->connection, "PRAGMA mmap_size=44040192", 0, 0, 0);

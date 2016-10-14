@@ -21,14 +21,6 @@ uint32_t    UTokenizer::group_len;
 uint32_t    UTokenizer::group_len_div_2;
 const char* UTokenizer::group;
 
-void UTokenizer::setData(const UString& data)
-{
-   U_TRACE(0, "UTokenizer::setData(%V)", data.rep)
-
-   str = data;
-   end = (s = data.data()) + data.size();
-}
-
 bool UTokenizer::next(UString& token, bPFi func)
 {
    U_TRACE(0, "UTokenizer::next(%p,%p)", &token, func)
@@ -37,9 +29,7 @@ bool UTokenizer::next(UString& token, bPFi func)
 
    while (s < end)
       {  
-      // skip char with function
-
-      if (func(*s))
+      if (func(*s)) // skip char with function
          {
          ++s;
 
@@ -72,9 +62,7 @@ bool UTokenizer::next(UString& token, char c)
 
    while (s < end)
       {  
-      // skip char delimiter
-
-      if (*s == c)
+      if (*s == c) // skip char delimiter
          {
          ++s;
 
@@ -108,9 +96,7 @@ bool UTokenizer::extend(UString& token, char c)
 
    while (s < end)
       {  
-      // skip char delimiter
-
-      if (*s == c)
+      if (*s == c) // skip char delimiter
          {
          ++s;
 
@@ -145,8 +131,7 @@ bool UTokenizer::next(UString& token, bool* bgroup)
 
    while (s < end)
       {
-loop:
-      if (delim)
+loop: if (delim)
          {
          s = u_delimit_token(s, &p, end, delim, 0);
 
@@ -213,8 +198,7 @@ loop:
 
       s = u_delimit_token(s, &p, end, 0, 0);
 
-tok:
-      n = s - p;
+tok:  n = s - p;
 
       if (avoid_punctuation)
          {
@@ -267,21 +251,6 @@ bool UTokenizer::tokenSeen(const UString* x)
    U_RETURN(false);
 }
 
-bool UTokenizer::skipToken(const char* token, uint32_t sz)
-{
-   U_TRACE(0, "UTokenizer::skipToken(%.*S,%u)", sz, token, sz)
-
-   if (str.distance(s) >= sz &&
-       memcmp(s, token, sz) == 0)
-      {
-      s += sz;
-
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
 int UTokenizer::getTypeNumber()
 {
    U_TRACE_NO_PARAM(0, "UTokenizer::getTypeNumber()")
@@ -301,22 +270,26 @@ int UTokenizer::getTypeNumber()
          {
          if (type_num == 0) type_num = 1;
 
-         continue;
+         while (u__isdigit(*++s)) {}
+
+         if (s >= end)
+            {
+            s = end;
+
+            U_RETURN(type_num);
+            }
+
+         c = *s;
          }
 
-      if (u__issign(c))
-         {
-         if (type_num == INT_MIN) continue;
-
-         U_RETURN(0);
-         }
+      U_INTERNAL_DUMP("c = %C type_num = %d", c, type_num)
 
       if (c == '.' &&
           type_num <= 1)
          {
          int pos = (s-start);
 
-         if (pos == 0) type_num = INT_MIN+1;
+         if (pos == 0) type_num = INT_MIN+1; // -2147483647
          else
             {
             if (u__isdigit(*(start-1))) ++pos;
@@ -324,15 +297,43 @@ int UTokenizer::getTypeNumber()
             type_num = -pos;
             }
 
-         continue;
+         while (u__isdigit(*++s)) {}
+
+         if (s >= end)
+            {
+            s = end;
+
+            U_RETURN(type_num);
+            }
+
+         c = *s;
          }
+
+      U_INTERNAL_DUMP("c = %C type_num = %d", c, type_num)
 
       if (u__toupper(c) == 'E') // scientific notation (Ex: 1.45e-10)
          {
-         type_num = INT_MIN;
+      // int pos = (s-start);
 
-         continue;
+         U_INTERNAL_DUMP("pos = %u s = %.4S", (s-start), s)
+
+         c = *++s;
+
+         if (u__issign(c)) c = *++s;
+
+         if (u__isdigit(c))
+            {
+            while (u__isdigit(*++s)) {}
+
+            if (s >= end) s = end;
+
+            U_RETURN(INT_MIN); // -2147483648
+            }
+
+         U_RETURN(0);
          }
+
+      U_INTERNAL_DUMP("c = %C type_num = %d", c, type_num)
 
       break;
       }
@@ -382,6 +383,35 @@ UString UTokenizer::getTokenQueryParser()
  * contains:    ^
  * ends_with:   =~
  * starts_with: ~=
+ *
+ * TOKEN ID:
+ *
+ * #define U_TK_ERROR       -1
+ * #define U_TK_AND          1
+ * #define U_TK_OR           2
+ * #define U_TK_EQ           3
+ * #define U_TK_NE           4
+ * #define U_TK_GT           5
+ * #define U_TK_GE           6
+ * #define U_TK_LT           7
+ * #define U_TK_LE           8
+ * #define U_TK_STARTS_WITH  9
+ * #define U_TK_ENDS_WITH   10
+ * #define U_TK_IS_PRESENT  11
+ * #define U_TK_CONTAINS    12
+ * #define U_TK_PLUS        13
+ * #define U_TK_MINUS       14
+ * #define U_TK_MULT        15
+ * #define U_TK_DIV         16
+ * #define U_TK_MOD         17
+ * #define U_TK_NOT         18
+ * #define U_TK_FN_CALL     19
+ * #define U_TK_LPAREN      20
+ * #define U_TK_RPAREN      21
+ * #define U_TK_VALUE       22
+ * #define U_TK_COMMA       23
+ * #define U_TK_NAME        24
+ * #define U_TK_PID         25
  */
 
 int UTokenizer::getTokenId(UString* ptoken)
@@ -458,7 +488,7 @@ int UTokenizer::getTokenId(UString* ptoken)
       0,/* 'c' */
       0,/* 'd' */
       0,/* 'e' */
-      (int)((char*)&&case_bool-(char*)&&cvalue),/* 'f' */
+      (int)((char*)&&case_false-(char*)&&cvalue),/* 'f' */
       0,/* 'g' */
       0,/* 'h' */
       0,/* 'i' */
@@ -472,7 +502,7 @@ int UTokenizer::getTokenId(UString* ptoken)
       0,/* 'q' */
       0,/* 'r' */
       0,/* 's' */
-      (int)((char*)&&case_bool-(char*)&&cvalue),/* 't' */
+      (int)((char*)&&case_true-(char*)&&cvalue),/* 't' */
       0,/* 'u' */
       0,/* 'v' */
       0,/* 'w' */
@@ -599,13 +629,18 @@ case_equal: tid = (*s == '=' ? (++s, U_TK_EQ)          : U_TK_EQ);    p2 = s; go
 case_major: tid = (*s == '=' ? (++s, U_TK_GE)          : U_TK_GT);    p2 = s; goto end; /* '>' */
 case_xor:   tid = (*s == '=' ? (++s, U_TK_STARTS_WITH) : U_TK_ERROR); p2 = s; goto end; /* '^' */
 
-case_bool: /* 'f' 't' */
-   if (c == 't' ? skipToken(U_CONSTANT_TO_PARAM("rue"))
-                : skipToken(U_CONSTANT_TO_PARAM("alse")))
+case_false:
+   if (skipToken(U_CONSTANT_TO_PARAM("alse"))) goto case_bool_ok;
+
+   goto cvalue;
+
+case_true:
+   if (skipToken(U_CONSTANT_TO_PARAM("rue")))
       {
+case_bool_ok:
       tid = U_TK_VALUE;
 
-      if (c == 't') p2 = s;
+      p2 = s;
 
       goto end;
       }
@@ -639,12 +674,9 @@ end:
       {
       sz = (p2 -p1);
 
-      if (sz)
-         {
-         *ptoken = str.substr(p1, sz);
+      if (sz) *ptoken = str.substr(p1, sz);
 
-         U_INTERNAL_DUMP("token = %V", ptoken->rep)
-         }
+      U_INTERNAL_DUMP("token = %V", ptoken->rep)
       }
 
    U_RETURN(tid);

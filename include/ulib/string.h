@@ -275,8 +275,7 @@ public:
 
    const char* c_pointer(uint32_t pos) const { return (str + pos); }
 
-         char* pend()       { return (char*)(str + _length); }
-   const char* pend() const { return         str + _length; }
+   char* pend() const { return (char*)(str + _length); }
 
    // Compare
 
@@ -612,20 +611,16 @@ public:
    float strtof() const;
 #endif
 #ifdef HAVE_STRTOLD
-   long double strtold() const;
-#endif
-#ifdef HAVE_STRTOULL
-   int64_t strtoll(int base) const;
+   long double strtold() const; // long double
 #endif
 
-   bool   strtob() const __pure;
-   double strtod() const;
-   long   strtol(int base) const;
+   bool strtob() const __pure;
 
-            long strtol() const   { return u_strtol(  str, str + _length); }
-   unsigned long strtoul() const  { return u_strtoul( str, str + _length); }  
-    int64_t      strtoll() const  { return u_strtoll( str, str + _length); } 
-   uint64_t      strtoull() const { return u_strtoull(str, str + _length); }
+    int64_t strtoll( bool check_for_suffix = false) const __pure;
+   uint64_t strtoull(bool check_for_suffix = false) const __pure;
+
+            long strtol( bool check_for_suffix = false) const __pure;
+   unsigned long strtoul(bool check_for_suffix = false) const __pure;
 
    uint32_t hash() const
       {
@@ -1432,7 +1427,7 @@ public:
    char         at(uint32_t pos) const { return rep->at(pos); }
    char operator[](uint32_t pos) const { return rep->operator[](pos); }
 
-   const char* pend() const { return rep->pend(); }
+   char* pend() const { return rep->pend(); }
 
 // operator const char *() const { return rep->data(); }
 // operator       char *()       { return rep->data(); }
@@ -1969,21 +1964,18 @@ public:
 #ifdef HAVE_STRTOF
    float strtof() const { return rep->strtof(); }
 #endif
+        double strtod() const;
 #ifdef HAVE_STRTOLD
-   long double strtold() const { return rep->strtold(); }
-#endif
-#ifdef HAVE_STRTOULL
-   int64_t strtoll(int base) const { return rep->strtoll(base); }
+   long double strtold() const { return rep->strtold(); } // long double
 #endif
 
-   bool   strtob() const         { return rep->strtob(); }
-   double strtod() const         { return rep->strtod(); }
-   long   strtol(int base) const { return rep->strtol(base); }
+   bool strtob() const  { return rep->strtob(); }
 
-            long strtol() const   { return rep->strtol(); }
-   unsigned long strtoul() const  { return rep->strtoul(); }   
-    int64_t      strtoll() const  { return rep->strtoll(); } 
-   uint64_t      strtoull() const { return rep->strtoull(); }
+    int64_t strtoll( bool check_for_suffix = false) const { return rep->strtoll(check_for_suffix); } 
+   uint64_t strtoull(bool check_for_suffix = false) const { return rep->strtoull(check_for_suffix); }
+
+            long strtol( bool check_for_suffix = false) const  { return rep->strtol(check_for_suffix); }
+   unsigned long strtoul(bool check_for_suffix = false) const  { return rep->strtoul(check_for_suffix); }   
 
    // UTF8 <--> ISO Latin 1
 

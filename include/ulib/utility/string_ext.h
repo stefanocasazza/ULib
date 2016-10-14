@@ -400,7 +400,11 @@ public:
       {
       U_TRACE(0, "UStringExt::qscompver(%p,%p)", p, q)
 
+#  ifndef U_STDCPP_ENABLE
       return compareversion(U_STRING_TO_PARAM(**(UStringRep**)p), U_STRING_TO_PARAM(**(UStringRep**)q));
+#  else
+      return (compareversion(U_STRING_TO_PARAM(*(UStringRep*)p), U_STRING_TO_PARAM(*(UStringRep*)q)) < 0);
+#  endif
       }
 
    // Verifies that the passed string is actually an e-mail address

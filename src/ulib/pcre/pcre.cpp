@@ -641,7 +641,7 @@ U_NO_EXPORT UString UPCRE::replaceVars(const UString& piece)
 
       first = dollar->resultset->at(0);
 
-      uint32_t iBracketIndex = first.strtol(10);
+      uint32_t iBracketIndex = first.strtoul();
 
       // NB: we need this check...
 

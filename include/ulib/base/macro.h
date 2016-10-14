@@ -460,13 +460,12 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 
 /* Manage number suffix */
 
-#define U_NUMBER_SUFFIX(number,suffix) \
+#define U_NUMBER_SUFFIX(num,suffix) \
    switch (suffix) { \
-      case 'G': number <<= 10; \
-      case 'M': number <<= 10; \
+      case 'G': num <<= 10; \
+      case 'M': num <<= 10; \
       case 'K': \
-      case 'k': number <<= 10; \
-      break; }
+      case 'k': num <<= 10; }
 #endif
 
 /* Optimization if it is enough a resolution of one second */

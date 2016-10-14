@@ -453,33 +453,6 @@ bool UVector<UString>::_isEqual(UVector<UString>& _vec, bool ignore_case)
    U_RETURN(false);
 }
 
-void UVector<UString>::sort(bool ignore_case)
-{
-   U_TRACE(0, "UVector<UString>::sort(%b)", ignore_case)
-
-   U_INTERNAL_DUMP("_length = %u", _length)
-
-   U_INTERNAL_ASSERT_RANGE(2,_length,_capacity)
-
-   if (ignore_case) UVector<void*>::sort(UVector<UString>::qscomp);
-   else             mksort((UStringRep**)vec, _length, 0);
-}
-
-UString UVector<UString>::operator[](uint32_t pos) const
-{
-   U_TRACE(0, "UVector<UString>::operator[](%u)", pos)
-
-#ifdef DEBUG
-   if (pos >= _length)
-      {
-      U_ERROR("Array access out of bounds - UVector<UString>::at(pos:%u >= _length:%u) _capacity = %u elem(0) = %V elem(%u) = %V",
-               pos, _length, _capacity, vec[0], _length-1, (_length ? vec[_length-1] : UStringRep::string_rep_null));
-      }
-#endif
-
-   return at(pos);
-}
-
 UString UVector<UString>::join(char c)
 {
    U_TRACE(0, "UVector<UString>::join(%C)", c)

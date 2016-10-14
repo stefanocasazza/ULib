@@ -4,7 +4,7 @@
 
 ## PEC_report.test -- Test PEC_report feature
 
-#UTRACE="5 50M 0"
+#UTRACE="0 50M -1"
 #UOBJDUMP="0 100k 10"
 #USIMERR="error.sim"
 #VALGRIND=valgrind

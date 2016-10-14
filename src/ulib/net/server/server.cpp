@@ -752,8 +752,8 @@ void UServer_Base::initThrottlingServer()
             pattern = vec[i];
              number = vec[i+1];
 
-                                                                                      throttling_rec->max_limit = strtol(number.data(), &ptr, 10);
-            if (ptr[0] == '-') throttling_rec->min_limit = throttling_rec->max_limit, throttling_rec->max_limit = strtol(        ptr+1,    0, 10);
+                                                                                      throttling_rec->max_limit = ::strtol(number.data(), &ptr, 10);
+            if (ptr[0] == '-') throttling_rec->min_limit = throttling_rec->max_limit, throttling_rec->max_limit = ::strtol(         ptr+1,    0, 10);
 
             (void) db_throttling->insertDataStorage(pattern, RDB_INSERT);
             }
@@ -1456,7 +1456,7 @@ void UServer_Base::loadConfigParam()
 
    if (x)
       {
-      preforked_num_kids = x.strtol(10);
+      preforked_num_kids = x.strtol();
 
 #  ifdef U_SERVER_CAPTIVE_PORTAL
       if (x.c_char(0) == '0') monitoring_process = true;
