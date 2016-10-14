@@ -135,7 +135,7 @@ __pure int64_t u_strtoll(const char* restrict s, const char* restrict e)
    return (neg ? -val : val);
 }
 
-__pure double u_strtod(const char* restrict s, const char* restrict e, int point_pos)
+__pure double u_strtod(const char* restrict s, const char* restrict e, int pos)
 {
    static const double pow10[] = {
       1e+0,
@@ -146,11 +146,10 @@ __pure double u_strtod(const char* restrict s, const char* restrict e, int point
    const char* restrict p; 
    uint64_t integerPart, fractionPart;
 
-   U_INTERNAL_TRACE("u_strtod(%p,%p,%d)", s, e, -point_pos)
+   U_INTERNAL_TRACE("u_strtod(%p,%p,%d)", s, e, pos)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(e)
-   U_INTERNAL_ASSERT_MINOR(point_pos, 0)
 
 // while (u__isspace(*s)) ++s;
 
@@ -164,7 +163,7 @@ __pure double u_strtod(const char* restrict s, const char* restrict e, int point
 
    p = s;
 
-   integerPart = u_strtoull(p, (point_pos != (INT_MIN+1) ? (s += -point_pos) : ++s));
+   integerPart = u_strtoull(p, (s += ((unsigned char*)&pos)[1]));
 
    U_INTERNAL_ASSERT_EQUALS(*s, '.')
 

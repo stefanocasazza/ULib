@@ -260,9 +260,10 @@ int UTokenizer::getTypeNumber()
 
    int type_num = u__isdigit(*(s-1));
 
-   for (const char* start = s; s < end; ++s)
+   if (s < end)
       {
-      char c = *s;
+      const char* start = s;
+            char      c = *s;
 
       U_INTERNAL_DUMP("c = %C type_num = %d", c, type_num)
 
@@ -289,13 +290,13 @@ int UTokenizer::getTypeNumber()
          {
          int pos = (s-start);
 
-         if (pos == 0) type_num = INT_MIN+1; // -2147483647
-         else
-            {
-            if (u__isdigit(*(start-1))) ++pos;
+         U_INTERNAL_DUMP("pos = %u s = %.4S", (s-start), s)
 
-            type_num = -pos;
-            }
+         unsigned char* ptr = (unsigned char*)&type_num;
+
+         ptr[0] = (unsigned char)'-';
+         ptr[1] = (pos == 0 ? 1     : (unsigned char)(u__isdigit(*(start-1))
+                            ? pos+1 : pos));
 
          while (u__isdigit(*++s)) {}
 
@@ -307,19 +308,30 @@ int UTokenizer::getTypeNumber()
             }
 
          c = *s;
-         }
 
-      U_INTERNAL_DUMP("c = %C type_num = %d", c, type_num)
+         U_INTERNAL_DUMP("c = %C type_num = [%u:%u:%u:%u]", c, ptr[0], ptr[1], ptr[2], ptr[3])
+         }
 
       if (u__toupper(c) == 'E') // scientific notation (Ex: 1.45e-10)
          {
-      // int pos = (s-start);
+         int pos = (s-start);
 
          U_INTERNAL_DUMP("pos = %u s = %.4S", (s-start), s)
 
+         unsigned char* ptr = (unsigned char*)&type_num;
+
+         ptr[0] = (unsigned char)'-';
+         ptr[2] = (pos == 0 ? 1     : (unsigned char)(u__isdigit(*(start-1))
+                            ? pos+1 : pos));
+
          c = *++s;
 
-         if (u__issign(c)) c = *++s;
+         if (u__issign(c))
+            {
+            ptr[3] = (unsigned char)c;
+
+            c = *++s;
+            }
 
          if (u__isdigit(c))
             {
@@ -327,15 +339,13 @@ int UTokenizer::getTypeNumber()
 
             if (s >= end) s = end;
 
-            U_RETURN(INT_MIN); // -2147483648
+            U_INTERNAL_DUMP("type_num = [%u:%u:%u:%u]", ptr[0], ptr[1], ptr[2], ptr[3])
+
+            U_RETURN(type_num);
             }
 
          U_RETURN(0);
          }
-
-      U_INTERNAL_DUMP("c = %C type_num = %d", c, type_num)
-
-      break;
       }
 
    U_RETURN(type_num);

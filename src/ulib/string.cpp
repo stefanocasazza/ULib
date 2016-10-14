@@ -2149,11 +2149,13 @@ double UString::strtod() const
 
             if (type_num != 0)
                {
-               if (type_num < 0)
+               unsigned char* ptr = (unsigned char*)&type_num;
+
+               if (ptr[0] == '-')
                   {
-                  double real = (type_num == INT_MIN // scientific notation (Ex: 1.45e10)
-                                 ? ::strtod(start, 0)
-                                 : u_strtod(start, t.getPointer(), type_num));
+                  double real = (ptr[2] != 0 // scientific notation (Ex: 1.45e10)
+                                    ? ::strtod(start, 0)
+                                    : u_strtod(start, t.getPointer(), type_num));
 
                   U_INTERNAL_DUMP("real = %g", real)
 

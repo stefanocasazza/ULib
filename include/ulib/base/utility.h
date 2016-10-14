@@ -523,6 +523,7 @@ static inline unsigned long u_strtoul(const char* restrict s, const char* restri
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(e)
 
+#ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues  (MISSING_BREAK) */
    switch (len)
       {
       case 10: val += (s[len-10] - '0') * 1000000000UL;
@@ -536,6 +537,7 @@ static inline unsigned long u_strtoul(const char* restrict s, const char* restri
       case  2: val += (s[len- 2] - '0') * 10UL;
       case  1: val += (s[len- 1] - '0');
       }
+#endif
 
    U_INTERNAL_PRINT("val = %lu", val)
 
@@ -552,6 +554,7 @@ static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_POINTER(e)
 
+#ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues  (MISSING_BREAK) */
    switch (len)
       {
       case 20: val += (s[len-20] - '0') * 10000000000000000000ULL;
@@ -575,6 +578,7 @@ static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e
       case  2: val += (s[len- 2] - '0') * 10ULL;
       case  1: val += (s[len- 1] - '0');
       }
+#endif
 
    U_INTERNAL_PRINT("val = %llu", val)
 
@@ -583,7 +587,7 @@ static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e
 
 extern U_EXPORT long    u_strtol( const char* restrict s, const char* restrict e) __pure;
 extern U_EXPORT int64_t u_strtoll(const char* restrict s, const char* restrict e) __pure;
-extern U_EXPORT double  u_strtod( const char* restrict s, const char* restrict e, int point_pos) __pure;
+extern U_EXPORT double  u_strtod( const char* restrict s, const char* restrict e, int pos) __pure;
 
 static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
 

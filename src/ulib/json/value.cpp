@@ -41,15 +41,16 @@
 char*       UValue::pstringify;
 UTokenizer* UValue::ptok;
 
-UValue::UValue(const UString& _key, const UString& value_)
+UValue::UValue(const UString& _key, const UString& _value)
 {
-   U_TRACE_REGISTER_OBJECT(0, UValue, "%V,%V", _key.rep, value_.rep)
+   U_TRACE_REGISTER_OBJECT(0, UValue, "%V,%V", _key.rep, _value.rep)
 
    parent     =
    prev       =
    next       = 0;
    key        = 0;
    value.ptr_ = 0;
+   size       = _key.size() + _value.size() + U_CONSTANT_SIZE("{\"\": \"\"}");
    type_      = OBJECT_VALUE;
 
    UValue* child;
@@ -60,7 +61,7 @@ UValue::UValue(const UString& _key, const UString& value_)
    children.tail = child;
 
    U_NEW(UString, child->key,        UString(_key));
-   U_NEW(UString, child->value.ptr_, UString(value_));
+   U_NEW(UString, child->value.ptr_, UString(_value));
 
    U_INTERNAL_DUMP("this = %p", this)
 }
@@ -1249,12 +1250,14 @@ case_number:
 
    if (type_num != 0)
       {
-      if (type_num < 0)
+      unsigned char* ptr = (unsigned char*)&type_num;
+
+      if (ptr[0] == '-')
          {
          type_       = REAL_VALUE;
-         value.real_ = (type_num == INT_MIN // scientific notation (Ex: 1.45e10)
-                                    ?   strtod(start, 0)
-                                    : u_strtod(start, ptok->getPointer(), type_num));
+         value.real_ = (ptr[2] != 0 // scientific notation (Ex: 1.45e10)
+                           ?   strtod(start, 0)
+                           : u_strtod(start, ptok->getPointer(), type_num));
 
          U_INTERNAL_DUMP("value.real_ = %g", value.real_)
 
