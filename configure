@@ -23293,7 +23293,7 @@ if test "${enable_thread+set}" = set; then :
   enableval=$enable_thread;
 fi
 
-if test -z "$enable_thread"; then
+if test -z "$enable_thread" -a "$enable_shared" = "yes"; then
 	enable_thread="yes"
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_thread" >&5
@@ -25284,7 +25284,7 @@ fi
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 lrintl memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     as_ac_var=`$as_echo "ac_cv_func_$func" | $as_tr_sh`
 ac_fn_cxx_check_func "$LINENO" "$func" "$as_ac_var"
@@ -25568,6 +25568,11 @@ $as_echo "#define HAVE_KQUEUE 1" >>confdefs.h
     kqueue1)
 
 $as_echo "#define HAVE_KQUEUE1 1" >>confdefs.h
+
+        ;;
+    lrintl)
+
+$as_echo "#define HAVE_LRINTL 1" >>confdefs.h
 
         ;;
     memmem)
@@ -26012,7 +26017,7 @@ if test "${enable_examples+set}" = set; then :
 fi
 
 
-if test -z "$enable_examples"; then
+if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
 	enable_examples="yes"
 	ulib_examples="enabled"
 fi
@@ -26978,7 +26983,7 @@ $as_echo_n "checking if LIBZ library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_libz" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" ; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_libz="no";
 		else
 			with_libz="${CROSS_ENVIRONMENT}/usr";
@@ -27037,7 +27042,7 @@ fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable build of ZIP support" >&5
 $as_echo_n "checking if you want to enable build of ZIP support... " >&6; }
 	if test x_$found_libz = x_yes; then
-		if test -z "$enable_zip" -o x_$enable_zip != x_no; then
+		if test -z "$enable_zip" -o "x_$enable_zip" != "x_no"; then
 			enable_zip="yes"
 		fi
 	else
@@ -27056,7 +27061,7 @@ $as_echo_n "checking if zopfli library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_libzopfli" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
 			with_libzopfli="no";
 		else
 			with_libzopfli="${CROSS_ENVIRONMENT}/usr";
@@ -27117,7 +27122,7 @@ $as_echo_n "checking if MAGIC library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_magic" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_magic="no";
 		else
 			with_magic="${CROSS_ENVIRONMENT}/usr";
@@ -27177,7 +27182,7 @@ $as_echo_n "checking if SSL library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_ssl" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_ssl="no";
 		else
 			with_ssl="${CROSS_ENVIRONMENT}/usr";
@@ -27274,7 +27279,7 @@ $as_echo_n "checking if PCRE library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_pcre" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_pcre="no";
 		else
 			with_pcre="${CROSS_ENVIRONMENT}/usr";
@@ -27334,7 +27339,7 @@ $as_echo_n "checking if EXPAT library for XML parsing is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_expat" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_expat="no";
 		else
 			with_expat="${CROSS_ENVIRONMENT}/usr";
@@ -27397,7 +27402,7 @@ $as_echo_n "checking if libuuid library is wanted... " >&6; }
 	wanted=1;
 	if test -z "$with_libuuid" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_libuuid="no";
 		else
 			with_libuuid="${CROSS_ENVIRONMENT}/usr";
@@ -32050,7 +32055,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 									   -Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
 									   -Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
 		CXX_MAYBE_FLAGS_MODERN="-Wterminate -Wlto-type-mismatch -Wsubobject-linkage -Wplacement-new -Woverride-init-side-effects \
-										-Wvirtual-inheritance -Wnamespaces" # -Wtemplates -Wmultiple-inheritance
+										-Wvirtual-inheritance -Wnamespaces" # -Wnamespaces -Wtemplates -Wmultiple-inheritance
 		;;
 	esac
 
@@ -35771,7 +35776,6 @@ $as_echo X"$file" |
     cat <<_LT_EOF >> "$cfgfile"
 #! $SHELL
 # Generated automatically by $as_me ($PACKAGE) $VERSION
-# Libtool was configured on host `(hostname || uname -n) 2>/dev/null | sed 1q`:
 # NOTE: Changes made to this file will be lost: look at ltmain.sh.
 
 # Provide generalized library-building support services.

@@ -45,10 +45,10 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
                     input[i+1]) << 8) +
                     input[i+2]);
 
-         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64[ bits >> 18],
-                                                      u_b64[(bits >> 12) & 0x3f],
-                                                      u_b64[(bits >>  6) & 0x3f],
-                                                      u_b64[ bits        & 0x3f]));
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[ bits >> 18],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[(bits >> 12) & 0x3f],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[(bits >>  6) & 0x3f],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[ bits        & 0x3f]));
 
          r += 4;
 
@@ -62,7 +62,8 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
                columns = true;
 
                if (U_line_terminator_len == 2) *r++ = '\r';
-                                               *r++ = '\n';
+
+               *r++ = '\n';
                }
             }
 
@@ -76,8 +77,8 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
          {
          bits = ((input[i] << 8) << 8);
 
-         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64[ bits >> 18],
-                                                      u_b64[(bits >> 12) & 0x3f],
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[ bits >> 18],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[(bits >> 12) & 0x3f],
                                                       U_PAD, U_PAD));
 
          r += 4;
@@ -89,9 +90,9 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
          bits = (((input[i]    << 8) +
                    input[i+1]) << 8);
 
-         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64[ bits >> 18],
-                                                      u_b64[(bits >> 12) & 0x3f],
-                                                      u_b64[(bits >>  6) & 0x3f],
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[ bits >> 18],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[(bits >> 12) & 0x3f],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[(bits >>  6) & 0x3f],
                                                       U_PAD));
 
          r += 4;
@@ -102,7 +103,8 @@ uint32_t u_base64_encode(const unsigned char* restrict input, uint32_t len, unsi
        cols > 0)
       {
       if (U_line_terminator_len == 2) *r++ = '\r';
-                                      *r++ = '\n';
+
+      *r++ = '\n';
       }
 
    *r = 0;
@@ -127,10 +129,10 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
                     input[i+1]) << 8) +
                     input[i+2]);
 
-         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64url[ bits >> 18],
-                                                      u_b64url[(bits >> 12) & 0x3f],
-                                                      u_b64url[(bits >>  6) & 0x3f],
-                                                      u_b64url[ bits        & 0x3f]));
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[ bits >> 18],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[(bits >> 12) & 0x3f],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[(bits >>  6) & 0x3f],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[ bits        & 0x3f]));
 
          r += 4;
          }
@@ -143,8 +145,8 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
          {
          bits = ((input[i] << 8) << 8);
 
-         u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(u_b64url[ bits >> 18],
-                                                      u_b64url[(bits >> 12) & 0x3f]));
+         u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[ bits >> 18],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[(bits >> 12) & 0x3f]));
 
          r += 2;
          }
@@ -155,9 +157,9 @@ uint32_t u_base64url_encode(const unsigned char* restrict input, uint32_t len, u
          bits = (((input[i]    << 8) +
                    input[i+1]) << 8);
 
-         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32(u_b64url[ bits >> 18],
-                                                      u_b64url[(bits >> 12) & 0x3f],
-                                                      u_b64url[(bits >>  6) & 0x3f],
+         u_put_unalignedp32(r, U_MULTICHAR_CONSTANT32("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[ bits >> 18],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[(bits >> 12) & 0x3f],
+                                                      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_"[(bits >>  6) & 0x3f],
                                                       '\0'));
 
          return (r + 3 - result);
@@ -179,7 +181,11 @@ uint32_t u_base64_decode(const char* restrict input, uint32_t len, unsigned char
    };
 
    /**
-    * for (int i = 0; i < sizeof(u_b64); ++i) { member[u_b64[i]] = 1; decoder[u_b64[i]] = i; }
+    * for (int i = 0; i < sizeof("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"); ++i)
+    *    {
+    *     member["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = 1;
+    *    decoder["ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[i]] = i;
+    *    }
     */
 
    static const unsigned char member[256] = {

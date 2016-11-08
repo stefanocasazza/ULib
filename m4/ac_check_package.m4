@@ -7,7 +7,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	wanted=1;
 	if test -z "$with_libz" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" ; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_libz="no";
 		else
 			with_libz="${CROSS_ENVIRONMENT}/usr";
@@ -52,7 +52,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 
 	AC_MSG_CHECKING(if you want to enable build of ZIP support)
 	if test x_$found_libz = x_yes; then
-		if test -z "$enable_zip" -o x_$enable_zip != x_no; then
+		if test -z "$enable_zip" -o "x_$enable_zip" != "x_no"; then
 			enable_zip="yes"
 		fi
 	else
@@ -65,7 +65,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	wanted=1;
 	if test -z "$with_libzopfli" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO" -o "$enable_shared" = "no"; then
 			with_libzopfli="no";
 		else
 			with_libzopfli="${CROSS_ENVIRONMENT}/usr";
@@ -112,7 +112,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	wanted=1;
 	if test -z "$with_magic" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_magic="no";
 		else
 			with_magic="${CROSS_ENVIRONMENT}/usr";
@@ -159,7 +159,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	wanted=1;
 	if test -z "$with_ssl" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_ssl="no";
 		else
 			with_ssl="${CROSS_ENVIRONMENT}/usr";
@@ -237,7 +237,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	wanted=1;
 	if test -z "$with_pcre" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_pcre="no";
 		else
 			with_pcre="${CROSS_ENVIRONMENT}/usr";
@@ -284,7 +284,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	wanted=1;
 	if test -z "$with_expat" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_expat="no";
 		else
 			with_expat="${CROSS_ENVIRONMENT}/usr";
@@ -334,7 +334,7 @@ AC_DEFUN([AC_CHECK_PACKAGE],[
 	wanted=1;
 	if test -z "$with_libuuid" ; then
 		wanted=0;
-		if test -n "$CROSS_ENVIRONMENT" -o "$USP_FLAGS" = "-DAS_cpoll_cppsp_DO"; then
+		if test -n "$CROSS_ENVIRONMENT" -o "$enable_shared" = "no"; then
 			with_libuuid="no";
 		else
 			with_libuuid="${CROSS_ENVIRONMENT}/usr";

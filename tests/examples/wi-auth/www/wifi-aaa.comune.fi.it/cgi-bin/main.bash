@@ -727,7 +727,7 @@ login_with_problem() {
 
 sign_data() {
 
-	SIGNED_DATA=`echo -n -E "$1" | openssl des3 -pass pass:vivalatopa -a -e | tr -d '\n'`
+	SIGNED_DATA=`echo -n -E "$1" | openssl des3 -pass pass:puppamelo -a -e | tr -d '\n'`
 }
 
 ask_nodog_to_logout_user() {

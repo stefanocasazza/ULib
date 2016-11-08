@@ -166,7 +166,9 @@ bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
 
          uint32_t sz = host_port.size();
 
-         host_port.size_adjust(sz + u_num2str32(_port, host_port.c_pointer(sz)));
+         char* ptr = host_port.c_pointer(sz);
+
+         host_port.size_adjust(sz + u_num2str32(_port, ptr) - ptr);
          }
 
       U_INTERNAL_DUMP("host_port = %V", host_port.rep)

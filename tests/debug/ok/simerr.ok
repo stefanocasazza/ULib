@@ -1,19 +1,19 @@
 [tid 0]<--
-[tid 1710]-->
+[tid 24349]-->
 {Call   main(2)
 	{Call   routine1(2,3)
 	}Return routine1(2,3) = 6
 	c = 6
-	::signal(4,0x401800) = (nil)
+	::signal(4,0x4018f0) = (nil)
 	{Call   manage_sigpipe(4)
-		::open("/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp"...,2,438) = -1 - ENOENT (2, No such file or directory)
+		::open("/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp...",2,438) = -1 - ENOENT (2, No such file or directory)
 		::open("tmp/prova",66,438) = 5
 	}Return manage_sigpipe(4)
 	::raise(4) = 0
 	result raise() = 0
 	test_stat() = 0
 	test_stat() = 0
-	test_stat() = 0
+	test_stat() = -1
 	test_stat() = 0
 	test_stat() = 0
 	::malloc(1000) = (nil) - ENOMEM (12, Cannot allocate memory)

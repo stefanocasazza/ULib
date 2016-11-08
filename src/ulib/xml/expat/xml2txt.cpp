@@ -41,7 +41,7 @@ void UXml2Txt::startElement(const XML_Char* name, const XML_Char** attrs)
    if (taglist.empty()) tag_match = true;
    else
       {
-      tag_pos   = taglist.find(UString(name));
+      tag_pos   = taglist.find(UString(name, u__strlen(name, __PRETTY_FUNCTION__)));
       tag_match = (tag_pos != U_NOT_FOUND);
       }
 

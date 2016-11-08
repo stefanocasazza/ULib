@@ -196,7 +196,7 @@ public:
    void insert(uint32_t pos,             const void* elem); // add           elem before pos
    void insert(uint32_t pos, uint32_t n, const void* elem); // add n copy of elem before pos
 
-   void erase(uint32_t pos) // remove element at pos
+   void erase(uint32_t pos)
       {
       U_TRACE(1, "UVector<void*>::erase(%u)", pos)
 
@@ -232,6 +232,17 @@ public:
 #  endif
 
       _length = new_length;
+      }
+
+   const void* remove(uint32_t pos)
+      {
+      U_TRACE(0, "UVector<void*>::remove(%u)", pos)
+
+      const void* elem = vec[pos];
+
+      erase(pos);
+
+      return elem;
       }
 
    void swap(uint32_t from, uint32_t to)
@@ -500,7 +511,7 @@ public:
 
       T* elem = (T*) UVector<void*>::last();
 
-      U_RETURN_POINTER(elem,T);
+      U_RETURN_POINTER(elem, T);
       }
 
    T* pop() // remove last element
@@ -509,7 +520,7 @@ public:
 
       T* elem = (T*) UVector<void*>::pop();
 
-      U_RETURN_POINTER(elem,T);
+      U_RETURN_POINTER(elem, T);
       }
 
    T* pop_front() { return pop(); } // remove last element
@@ -534,7 +545,7 @@ public:
       UVector<void*>::insert(pos, n, elem);
       }
 
-   void erase(uint32_t pos) // remove element at pos
+   void erase(uint32_t pos)
       {
       U_TRACE(0, "UVector<T*>::erase(%u)", pos)
 
@@ -550,6 +561,13 @@ public:
       u_destroy<T>((const T**)(vec+first), _last - first);
 
       UVector<void*>::erase(first, _last);
+      }
+
+   T* remove(uint32_t pos)
+      {
+      U_TRACE(0, "UVector<T*>::remove(%u)", pos)
+
+      return (T*) UVector<void*>::remove(pos);
       }
 
    // ASSIGNMENTS
@@ -897,7 +915,7 @@ private:
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
 class UVectorStringIter { // this class is to make work Range-based for loop: for ( UString x : UVector<UString> ) loop_statement      
 public:
-   UVectorStringIter(const UVector<UString>* p_vec, uint32_t pos) : _pos(pos), _p_vec(p_vec) {}
+   explicit UVectorStringIter(const UVector<UString>* p_vec, uint32_t pos) : _pos(pos), _p_vec(p_vec) {}
 
    // these three methods form the basis of an iterator for use with a range-based for loop
    bool operator!=(const UVectorStringIter& other) const { return (_pos != other._pos); }

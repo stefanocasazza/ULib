@@ -210,6 +210,7 @@ public:
    void* operator[](const UStringRep* _key) { return at(_key); }
 
    const void* elem() const      { return node->elem; }
+   const UString getKey() const  { return UString(node->key); }
    const UStringRep* key() const { return node->key; }
 
    template <typename T> T* get(const UString& _key)
@@ -399,6 +400,7 @@ protected:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UHashMap<void*>)
 
+   friend class ULib;
    friend class UCDB;
    friend class UHTTP;
    friend class UHTTP2;
@@ -407,8 +409,6 @@ private:
    friend class WeightWord;
    friend class UFileConfig;
    friend class UCertificate;
-
-   friend void ULib_init();
 
    template <class T> friend class UJsonTypeHandler;
 };

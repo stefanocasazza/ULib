@@ -73,7 +73,7 @@ bool UDialog::run(const char* title, const char* format, ...)
    va_list argp;
    va_start(argp, format);
 
-   tmp.vsnprintf(format, strlen(format), argp);
+   tmp.vsnprintf(format, u__strlen(format, __PRETTY_FUNCTION__), argp);
 
    va_end(argp);
 

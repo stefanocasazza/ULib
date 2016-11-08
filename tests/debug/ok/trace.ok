@@ -3,6 +3,6 @@
 {Call   routine1(2,3)
 }Return routine1(2,3) = 6
 {Call   manage_sigpipe(4)
-	::open("/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp"...,2,438) = -1 - ENOENT (2, No such file or directory)
+	::open("/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp/tmp...",2,438) = -1 - ENOENT (2, No such file or directory)
 	::open("tmp/prova",66,438) = 5
 }Return manage_sigpipe(4)

@@ -26,8 +26,9 @@ char     u_trace_tab[256]; /* 256 max indent */
 uint32_t u_trace_num_tab;
 
 static int level_active;
-static uint32_t file_size, old_tid;
+static uint32_t file_size;
 #ifdef ENABLE_THREAD
+static uint32_t old_tid;
 # ifdef _MSWINDOWS_
 static CRITICAL_SECTION mutex;
 # else
@@ -54,13 +55,11 @@ static void printInfo(void)
 
    if (u_trace_fd == -1)
       {
-      U_MESSAGE("TRACE<%Woff%W>%W",
-                  RED, YELLOW,
-                  RESET);
+      U_MESSAGE("TRACE%W<%Woff%W>%W", YELLOW, RED, YELLOW, RESET);
       }
    else
       {
-      U_MESSAGE("TRACE<%Won%W>: Level<%W%d%W> MaxSize<%W%d%W> Test<%W%d%W>%W",
+      U_MESSAGE("TRACE%W<%Won%W>: Level<%W%d%W> MaxSize<%W%d%W> Test<%W%d%W>%W", YELLOW,
                   GREEN,              YELLOW,
                   CYAN, level_active, YELLOW,
                   CYAN, file_size,    YELLOW,

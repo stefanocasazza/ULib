@@ -55,26 +55,83 @@
 #  endif
 #endif
 
-/* Match */
-int        u_pfn_flags;
-bPFpcupcud u_pfn_match;
+__pure unsigned long u_strtoul(const char* restrict s, const char* restrict e)
+{
+   /* handle up to 10 digits */
 
-/* Services */
-int u_num_cpu = -1;
-const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
+   uint32_t len = e-s;
+   unsigned long val = 0UL;
 
-/**
- * Random number generator
- *
- * these values are not magical, just the default values Marsaglia used. Any pair of unsigned integers should be fine
- */ 
-uint32_t u_m_w = 521288629,
-         u_m_z = 362436069;
+   U_INTERNAL_TRACE("u_strtoul(%p,%p)", s, e)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(e)
+
+#ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues (MISSING_BREAK) */
+   switch (len)
+      {
+      case 10: val += (s[len-10] - '0') * 1000000000UL;
+      case  9: val += (s[len- 9] - '0') * 100000000UL;
+      case  8: val += (s[len- 8] - '0') * 10000000UL;
+      case  7: val += (s[len- 7] - '0') * 1000000UL;
+      case  6: val += (s[len- 6] - '0') * 100000UL;
+      case  5: val += (s[len- 5] - '0') * 10000UL;
+      case  4: val += (s[len- 4] - '0') * 1000UL;
+      case  3: val += (s[len- 3] - '0') * 100UL;
+      case  2: val += (s[len- 2] - '0') * 10UL;
+      case  1: val += (s[len- 1] - '0');
+      }
+#endif
+
+   U_INTERNAL_PRINT("val = %lu", val)
+
+   return val;
+}
+
+__pure uint64_t u_strtoull(const char* restrict s, const char* restrict e)
+{
+   uint32_t len = e-s;
+   uint64_t val = 0UL;
+
+   U_INTERNAL_TRACE("u_strtoul(%p,%p)", s, e)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(e)
+
+#ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues (MISSING_BREAK) */
+   switch (len)
+      {
+      case 20: val += (s[len-20] - '0') * 10000000000000000000ULL;
+      case 19: val += (s[len-19] - '0') * 1000000000000000000ULL;
+      case 18: val += (s[len-18] - '0') * 100000000000000000ULL;
+      case 17: val += (s[len-17] - '0') * 10000000000000000ULL;
+      case 16: val += (s[len-16] - '0') * 1000000000000000ULL;
+      case 15: val += (s[len-15] - '0') * 100000000000000ULL;
+      case 14: val += (s[len-14] - '0') * 10000000000000ULL;
+      case 13: val += (s[len-13] - '0') * 1000000000000ULL;
+      case 12: val += (s[len-12] - '0') * 100000000000ULL;
+      case 11: val += (s[len-11] - '0') * 10000000000ULL;
+      case 10: val += (s[len-10] - '0') * 1000000000ULL;
+      case  9: val += (s[len- 9] - '0') * 100000000ULL;
+      case  8: val += (s[len- 8] - '0') * 10000000ULL;
+      case  7: val += (s[len- 7] - '0') * 1000000ULL;
+      case  6: val += (s[len- 6] - '0') * 100000ULL;
+      case  5: val += (s[len- 5] - '0') * 10000ULL;
+      case  4: val += (s[len- 4] - '0') * 1000ULL;
+      case  3: val += (s[len- 3] - '0') * 100ULL;
+      case  2: val += (s[len- 2] - '0') * 10ULL;
+      case  1: val += (s[len- 1] - '0');
+      }
+#endif
+
+   U_INTERNAL_PRINT("val = %llu", val)
+
+   return val;
+}
 
 __pure long u_strtol(const char* restrict s, const char* restrict e)
 {
-   long val;
-   bool neg = false;
+   int sign = 1;
 
    U_INTERNAL_TRACE("u_strtol(%p,%p)", s, e)
 
@@ -87,7 +144,7 @@ __pure long u_strtol(const char* restrict s, const char* restrict e)
       {
       ++s;
 
-      neg = true;
+      sign = -1;
       }
    else
       {
@@ -98,15 +155,12 @@ __pure long u_strtol(const char* restrict s, const char* restrict e)
          }
       }
 
-   val = u_strtoul(s, e);
-
-   return (neg ? -val : val);
+   return (sign * u_strtoul(s, e));
 }
 
 __pure int64_t u_strtoll(const char* restrict s, const char* restrict e)
 {
-   int64_t val;
-   bool neg = false;
+   int sign = 1;
 
    U_INTERNAL_TRACE("u_strtoll(%p,%p)", s, e)
 
@@ -119,7 +173,7 @@ __pure int64_t u_strtoll(const char* restrict s, const char* restrict e)
       {
       ++s;
 
-      neg = true;
+      sign = -1;
       }
    else
       {
@@ -130,48 +184,7 @@ __pure int64_t u_strtoll(const char* restrict s, const char* restrict e)
          }
       }
 
-   val = u_strtoull(s, e);
-
-   return (neg ? -val : val);
-}
-
-__pure double u_strtod(const char* restrict s, const char* restrict e, int pos)
-{
-   static const double pow10[] = {
-      1e+0,
-      1e+1, 1e+2, 1e+3, 1e+4, 1e+5, 1e+6, 1e+7, 1e+8, 1e+9, 1e+10, 1e+11, 1e+12, 1e+13, 1e+14, 1e+15, 1e+16, 1e+17
-   };
-
-   int sign = 1;
-   const char* restrict p; 
-   uint64_t integerPart, fractionPart;
-
-   U_INTERNAL_TRACE("u_strtod(%p,%p,%d)", s, e, pos)
-
-   U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(e)
-
-// while (u__isspace(*s)) ++s;
-
-        if (*s == '+') ++s;
-   else if (*s == '-')
-      {
-      ++s;
-
-      sign = -1;
-      }
-
-   p = s;
-
-   integerPart = u_strtoull(p, (s += ((unsigned char*)&pos)[1]));
-
-   U_INTERNAL_ASSERT_EQUALS(*s, '.')
-
-   fractionPart = u_strtoull(++s, e);
-
-   U_INTERNAL_PRINT("integerPart = %llu fractionPart = %llu pow10[%u] = %g", integerPart, fractionPart, e-s, pow10[e-s])
-
-   return sign * ((double)integerPart + ((double)fractionPart / pow10[e-s]));
+   return (sign * u_strtoull(s, e));
 }
 
 /* To avoid libc locale overhead */
@@ -794,8 +807,8 @@ iteration:
             {
             c = *cp++;
 
-            u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(u_hex_lower[((c >> 4) & 0x0F)],
-                                                          u_hex_lower[( c       & 0x0F)]));
+            u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16("0123456789abcdef"[((c >> 4) & 0x0F)],
+                                                          "0123456789abcdef"[( c       & 0x0F)]));
 
             bp += 2;
 
@@ -813,9 +826,11 @@ iteration:
          *bp++ = (j == 7 ? ':' : ' ');
          }
 
-                               *bp++ = '|';
+      *bp++ = '|';
+
       for (j = 0; j < 16; ++j) *bp++ = text[j];
-                               *bp++ = '\n';
+
+      *bp++ = '\n';
       }
 
    if (remain &&
@@ -1831,32 +1846,28 @@ __pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* rest
    return ((flags & FNM_INVERT) != 0);
 }
 
-/**
- * Match STRING against the pattern MASK and multiple patterns separated by '|', returning true if it matches, false if not, inversion if flags contain FNM_INVERT
- */
-
-bool u_match_with_OR(const char* restrict s, uint32_t n1, const char* restrict mask, uint32_t n2, int flags)
+__pure bool u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
    const char* restrict p_or;
-   const char* restrict end = mask + n2;
+   const char* restrict end = pattern + n2;
 
-   U_INTERNAL_TRACE("u_match_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, mask, n2, flags)
+   U_INTERNAL_TRACE("u_match_with_OR(%p,%.*s,%u,%.*s,%u,%d)", pfn_match, U_min(n1,128), s, n1, n2, pattern, n2, flags)
 
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(n1, 0)
    U_INTERNAL_ASSERT_MAJOR(n2, 0)
-   U_INTERNAL_ASSERT_POINTER(mask)
+   U_INTERNAL_ASSERT_POINTER(pattern)
 
    while (true)
       {
-      p_or = (const char* restrict) memchr(mask, '|', n2);
+      p_or = (const char* restrict) memchr(pattern, '|', n2);
 
-      if (p_or == 0) return u_pfn_match(s, n1, mask, n2, flags);
+      if (p_or == 0) return pfn_match(s, n1, pattern, n2, flags);
 
-      if (u_pfn_match(s, n1, mask, (p_or - mask), (flags & ~FNM_INVERT))) return ((flags & FNM_INVERT) == 0);
+      if (pfn_match(s, n1, pattern, (p_or - pattern), (flags & ~FNM_INVERT))) return ((flags & FNM_INVERT) == 0);
 
-      mask = p_or + 1;
-      n2   = end - mask;
+      pattern = p_or + 1;
+         n2   = end - pattern;
       }
 }
 
@@ -4862,7 +4873,7 @@ const char* u_get_mimetype(const char* restrict suffix, int* pmime_index)
                }
             }
 
-         return U_CTYPE_TEXT;
+         return U_CTYPE_TEXT_WITH_CHARSET;
          }
       }
 

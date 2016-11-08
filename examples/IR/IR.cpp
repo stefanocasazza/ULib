@@ -76,8 +76,6 @@ void IR::setBadWords()
       {
       U_NEW(UString, bad_words, UString(cfg_bad_words)); 
 
-      u_setPfnMatch(U_DOSMATCH_WITH_OR, UPosting::ignore_case);
-
       cfg_bad_words_ext = cfg[U_STRING_FROM_CONSTANT("BAD_WORDS_EXT")];
 
       if (cfg_bad_words_ext) suffix_bad_words = new UVector<UString>(cfg_bad_words_ext);
@@ -135,7 +133,7 @@ void IR::parse()
    while (t->next(*UPosting::word, (bool*)0))
       {
       if (bad_words_active &&
-          UServices::match(*UPosting::word, *bad_words))
+          UServices::dosMatchWithOR(*UPosting::word, *bad_words, UPosting::ignore_case))
          {
          continue;
          }

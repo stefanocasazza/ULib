@@ -20,7 +20,7 @@
 
 vPF UError::callerDataDump;
 
-#ifdef HAVE_EXECINFO_H
+#if defined(HAVE_EXECINFO_H) && !defined(U_STATIC_ONLY)
 #  include <execinfo.h>
 #  ifndef __GXX_ABI_VERSION
 #  define __GXX_ABI_VERSION 100
@@ -110,16 +110,20 @@ void UError::stackDump()
    // does not append a null byte to buf. It will truncate the contents (to a length of bufsiz characters),
    // in case the buffer is too small to hold all of the contents
 
+#if (defined(U_GDB_STACK_DUMP_ENABLE) && !defined(_MSWINDOWS_)) || \
+    (defined(HAVE_EXECINFO_H) && !defined(U_STATIC_ONLY) && defined(U_LINUX) && defined(HAVE_DLFCN_H))
    char name_buf[1024];
+        name_buf[0] = '\0';
+#endif
 
 #if defined(U_GDB_STACK_DUMP_ENABLE) && !defined(_MSWINDOWS_)
    int n = readlink("/proc/self/exe", name_buf, sizeof(name_buf) - 1);
 
+   name_buf[n] = '\0';
+
    if (n > 0)
       {
       struct timespec req = { 2, 0 };
-
-      name_buf[n] = 0;
 
       pid_t pid = fork();
 
@@ -159,11 +163,9 @@ void UError::stackDump()
          return;
          }
       }
-#else
-   name_buf[0] = 0;
 #endif
 
-#ifdef HAVE_EXECINFO_H
+#if defined(HAVE_EXECINFO_H) && !defined(U_STATIC_ONLY)
    void* array[256];
    (void) memset(array, 0, sizeof(void*) * 256);
 
@@ -209,7 +211,7 @@ void UError::stackDump()
       {
       (void) fprintf(f, "#%d %s\n", i-2, strings[i]);
 
-#   ifdef HAVE_DLFCN_H
+#  ifdef HAVE_DLFCN_H
       uint32_t output_len;
 
       if (dladdr(array[i], &dlinf)          == 0 ||

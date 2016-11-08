@@ -188,7 +188,7 @@ public:
                   U_NEW(UString, row, UString);
                   U_NEW(UVector<UString>, vec, UVector<UString>);
                   U_NEW(UCommand, xsltproc, UCommand);
-                  U_NEW(UString, xsltproc_cmd, UString("xsltproc -"));
+                  U_NEW(UString, xsltproc_cmd, UString(U_CONSTANT_TO_PARAM("xsltproc -")));
                   U_NEW(UString, xsltproc_out, UString(U_CAPACITY));
 
                   xsltproc->set(*xsltproc_cmd, (char**)0);
@@ -631,7 +631,7 @@ public:
       {
       U_TRACE(5, "Application::loadDocument()")
 
-      *content = UFile::contentOf(UString(filename));
+      *content = UFile::contentOf(UString(filename, strlen(filename)));
 
       if (content->empty())
          {

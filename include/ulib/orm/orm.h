@@ -126,7 +126,7 @@ private:
 };
 
 #define U_ORM_TYPE_HANDLER(class_name, name_object_member, type_object_member) \
-               UOrmTypeHandler<type_object_member>(((class_name*)pval)->name_object_member)
+                           UOrmTypeHandler<type_object_member>(((class_name*)pval)->name_object_member)
 
 /**
  * Converts Rows to a Type and the other way around. Provide template specializations to support your own complex types.

@@ -195,7 +195,7 @@ UString UCertificate::checkForSerialNumber(long number)
 
    U_SYSCALL_VOID(ASN1_INTEGER_free, "%p", a);
 
-   UString serial((void*)itmp);
+   UString serial((void*)itmp, u__strlen(itmp, __PRETTY_FUNCTION__));
 
    U_SYSCALL_VOID(OPENSSL_free, "%p", itmp);
 

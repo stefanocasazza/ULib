@@ -35,87 +35,13 @@
 #ifdef DEBUG
 const char* UMemoryPool::obj_class;
 const char* UMemoryPool::func_call;
-#  ifdef U_STDCPP_ENABLE
-#     include <fstream>
-#  endif
+#ifdef U_STDCPP_ENABLE
+#  include <fstream>
+#endif
 #endif
 
 const uint32_t UMemoryPool::U_STACK_INDEX_TO_SIZE[U_NUM_STACK_TYPE] = { U_STACK_TYPE_0, U_STACK_TYPE_1, U_STACK_TYPE_2, U_STACK_TYPE_3, U_STACK_TYPE_4,
                                                                         U_STACK_TYPE_5, U_STACK_TYPE_6, U_STACK_TYPE_7, U_STACK_TYPE_8, U_MAX_SIZE_PREALLOCATE };
-
-/*
-uint32_t UMemoryPool::stackIndexToSize(uint32_t sz)
-{
-   U_TRACE(0, "UMemoryPool::stackIndexToSize(%u)", sz)
-
-   U_INTERNAL_ASSERT_RANGE(1,sz,U_MAX_SIZE_PREALLOCATE)
-
-   static const uint32_t stack_type[U_NUM_STACK_TYPE] = // 10
-      { U_STACK_TYPE_0,  U_STACK_TYPE_1, U_STACK_TYPE_2,
-        U_STACK_TYPE_3,  U_STACK_TYPE_4, U_STACK_TYPE_5,
-        U_STACK_TYPE_6,  U_STACK_TYPE_7, U_STACK_TYPE_8,
-        U_STACK_TYPE_9 };
-
-   uint32_t key;
-    int32_t probe, low = -1, high = U_NUM_STACK_TYPE; // 10
-
-   while ((high - low) > 1)
-      {
-      probe = (low + high) >> 1;
-      key   = stack_type[probe];
-
-      U_INTERNAL_DUMP("low = %d high = %d probe = %d key = %u", low, high, probe, key)
-
-      if (key > sz) high = probe;
-      else           low = probe;
-      }
-
-   if (low == -1 || (key = stack_type[low], sz > key)) ++low;
-
-   U_INTERNAL_ASSERT(sz <= stack_type[low])
-
-   U_RETURN(low);
-
-   if (sz <= U_STACK_TYPE_0) U_RETURN(0);
-   if (sz <= U_STACK_TYPE_1) U_RETURN(1);
-   if (sz <= U_STACK_TYPE_2) U_RETURN(2);
-   if (sz <= U_STACK_TYPE_3) U_RETURN(3);
-   if (sz <= U_STACK_TYPE_4) U_RETURN(4);
-   if (sz <= U_STACK_TYPE_5) U_RETURN(5);
-   if (sz <= U_STACK_TYPE_6) U_RETURN(6);
-   if (sz <= U_STACK_TYPE_7) U_RETURN(7);
-   if (sz <= U_STACK_TYPE_8) U_RETURN(8);
-                             U_RETURN(9);
-
-   static uint32_t last_sz, last_stack_type;
-
-   if (sz != last_sz)
-      {
-      if (sz <= U_STACK_TYPE_0) { last_stack_type = 0; goto end; }
-      if (sz <= U_STACK_TYPE_1) { last_stack_type = 1; goto end; }
-      if (sz <= U_STACK_TYPE_2) { last_stack_type = 2; goto end; }
-      if (sz <= U_STACK_TYPE_3) { last_stack_type = 3; goto end; }
-      if (sz <= U_STACK_TYPE_4) { last_stack_type = 4; goto end; }
-      if (sz <= U_STACK_TYPE_5) { last_stack_type = 5; goto end; }
-      if (sz <= U_STACK_TYPE_6) { last_stack_type = 6; goto end; }
-      if (sz <= U_STACK_TYPE_7) { last_stack_type = 7; goto end; }
-      if (sz <= U_STACK_TYPE_8) { last_stack_type = 8; goto end; }
-                                  last_stack_type = 9;
-      }
-
-#ifdef DEBUG
-   static uint32_t num_call, cache_miss;
-
-                      ++num_call;
-   if (sz != last_sz) ++cache_miss;
-
-   U_INTERNAL_DUMP("num_call = %u cache_miss = %u", num_call, cache_miss)
-#endif
-
-end:
-   U_RETURN(last_stack_type);
-}
-*/
 
 typedef struct ustackmemorypool {
 #ifdef DEBUG
@@ -259,41 +185,27 @@ public:
 
    void* pop()
       {
-   // U_TRACE_NO_PARAM(0, "UStackMemoryPool::pop()") // problem with sanitize address
-
-   // U_INTERNAL_DUMP("index = %u type = %u len = %u space = %u depth = %u max_depth = %u pop_cnt = %u push_cnt = %u num_call_allocateMemoryBlocks = %u",
-   //                  index,     type,     len,     space,     depth,     max_depth,     pop_cnt,     push_cnt,     num_call_allocateMemoryBlocks)
-
       U_INTERNAL_ASSERT_MINOR(index, U_NUM_STACK_TYPE) // 10
 
       if (len == 0) allocateMemoryBlocks(space);
 
       void** pblock = pointer_block + --len;
 
-#  if defined(DEBUG)
+      void* ptr = (index == 0 ? (void*)pblock : *pblock);
+
+#  ifdef DEBUG
+      U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)), 0) // memory aligned
+
       if (++depth > max_depth) max_depth = depth;
 
       ++pop_cnt;
 #  endif
 
-   // U_INTERNAL_DUMP("index = %u type = %u len = %u space = %u depth = %u max_depth = %u pop_cnt = %u push_cnt = %u num_call_allocateMemoryBlocks = %u",
-   //                  index,     type,     len,     space,     depth,     max_depth,     pop_cnt,     push_cnt,     num_call_allocateMemoryBlocks)
-
-      void* ptr = (index == 0 ? (void*)pblock : *pblock);
-
-      U_INTERNAL_ASSERT_EQUALS(((long)ptr & (sizeof(long)-1)), 0) // memory aligned
-
-   // U_RETURN(ptr);
-        return ptr;
+      return ptr;
       }
 
    void push(void* ptr)
       {
-   // U_TRACE(0, "UStackMemoryPool::push(%p)", ptr) // problem with sanitize address
-
-   // U_INTERNAL_DUMP("index = %u type = %u len = %u space = %u depth = %u max_depth = %u pop_cnt = %u push_cnt = %u num_call_allocateMemoryBlocks = %u",
-   //                  index,     type,     len,     space,     depth,     max_depth,     pop_cnt,     push_cnt,     num_call_allocateMemoryBlocks)
-
       U_INTERNAL_ASSERT_MAJOR(index, 0)
       U_INTERNAL_ASSERT_MINOR(index, U_NUM_STACK_TYPE) // 10
       U_INTERNAL_ASSERT_EQUALS(index, U_SIZE_TO_STACK_INDEX(type))
@@ -306,21 +218,17 @@ public:
       if (ptr < &mem_block[0] ||
           ptr > &mem_block[U_SIZE_MEM_BLOCK])
          {
-      // (void) U_SYSCALL(memset, "%p,%d,%u", (void*)ptr, 0, type); // NB: in debug mode the memory area is zeroed to enhance showing bugs...
-         (void)           memset(             (void*)ptr, 0, type); // NB: in debug mode the memory area is zeroed to enhance showing bugs...
+         (void) memset((void*)ptr, 0, type); // NB: in debug mode the memory area is zeroed to enhance showing bugs...
          }
 #  endif
 
       pointer_block[len++] = (void*)ptr;
 
-#  if defined(DEBUG)
+#  ifdef DEBUG
       if (depth) --depth;
 
       ++push_cnt;
 #  endif
-
-   // U_INTERNAL_DUMP("index = %u type = %u len = %u space = %u depth = %u max_depth = %u pop_cnt = %u push_cnt = %u num_call_allocateMemoryBlocks = %u",
-   //                  index,     type,     len,     space,     depth,     max_depth,     pop_cnt,     push_cnt,     num_call_allocateMemoryBlocks)
       }
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
@@ -535,7 +443,7 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
 
    U_INTERNAL_DUMP("length = %u", length)
 
-#if !defined(ENABLE_MEMPOOL)
+#ifndef ENABLE_MEMPOOL
 # ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_RANGE(4, length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
 # endif

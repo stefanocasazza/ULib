@@ -219,7 +219,7 @@ public:
 
       if (argv[optind] == 0) U_ERROR("arg <file_template_test> not specified");
 
-      template_file.load(UString(argv[optind]));
+      template_file.load(UString(argv[optind], strlen(argv[optind])));
 
       // maybe manage logging...
 

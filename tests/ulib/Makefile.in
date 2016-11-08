@@ -220,13 +220,13 @@ am__EXEEXT_19 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_multipart$(EXEEXT) test_command$(EXEEXT) \
 	test_dialog$(EXEEXT) test_rdb_server$(EXEEXT) \
 	test_json$(EXEEXT) test_server$(EXEEXT) test_redis$(EXEEXT) \
-	test_elasticsearch$(EXEEXT) test_twilio$(EXEEXT) \
-	$(am__EXEEXT_1) $(am__EXEEXT_2) $(am__EXEEXT_3) \
-	$(am__EXEEXT_4) $(am__EXEEXT_5) $(am__EXEEXT_6) \
-	$(am__EXEEXT_7) $(am__EXEEXT_8) $(am__EXEEXT_9) \
-	$(am__EXEEXT_10) $(am__EXEEXT_11) $(am__EXEEXT_12) \
-	$(am__EXEEXT_13) $(am__EXEEXT_14) $(am__EXEEXT_15) \
-	$(am__EXEEXT_16) $(am__EXEEXT_17) $(am__EXEEXT_18)
+	test_elasticsearch$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
+	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
+	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
+	$(am__EXEEXT_9) $(am__EXEEXT_10) $(am__EXEEXT_11) \
+	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14) \
+	$(am__EXEEXT_15) $(am__EXEEXT_16) $(am__EXEEXT_17) \
+	$(am__EXEEXT_18)
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -525,11 +525,6 @@ am_test_tree_OBJECTS = test_tree.$(OBJEXT)
 test_tree_OBJECTS = $(am_test_tree_OBJECTS)
 test_tree_LDADD = $(LDADD)
 test_tree_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
-am__test_twilio_SOURCES_DIST = test_twilio.cpp
-@SSL_TRUE@am_test_twilio_OBJECTS = test_twilio.$(OBJEXT)
-test_twilio_OBJECTS = $(am_test_twilio_OBJECTS)
-test_twilio_LDADD = $(LDADD)
-test_twilio_DEPENDENCIES = $(top_builddir)/src/ulib/lib@ULIB@.la
 am__test_unixsocket_client_SOURCES_DIST = test_unixsocket_client.cpp
 @LINUX_TRUE@am_test_unixsocket_client_OBJECTS =  \
 @LINUX_TRUE@	test_unixsocket_client.$(OBJEXT)
@@ -624,7 +619,7 @@ SOURCES = $(product1_la_SOURCES) $(product2_la_SOURCES) \
 	$(test_thread_SOURCES) $(test_timer_SOURCES) \
 	$(test_timestamp_SOURCES) $(test_timeval_SOURCES) \
 	$(test_tokenizer_SOURCES) $(test_tree_SOURCES) \
-	$(test_twilio_SOURCES) $(test_unixsocket_client_SOURCES) \
+	$(test_unixsocket_client_SOURCES) \
 	$(test_unixsocket_server_SOURCES) $(test_url_SOURCES) \
 	$(test_vector_SOURCES) $(test_zip_SOURCES)
 DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
@@ -663,7 +658,7 @@ DIST_SOURCES = $(am__product1_la_SOURCES_DIST) \
 	$(am__test_tdb_SOURCES_DIST) $(am__test_thread_SOURCES_DIST) \
 	$(test_timer_SOURCES) $(am__test_timestamp_SOURCES_DIST) \
 	$(test_timeval_SOURCES) $(test_tokenizer_SOURCES) \
-	$(test_tree_SOURCES) $(am__test_twilio_SOURCES_DIST) \
+	$(test_tree_SOURCES) \
 	$(am__test_unixsocket_client_SOURCES_DIST) \
 	$(am__test_unixsocket_server_SOURCES_DIST) \
 	$(am__test_url_SOURCES_DIST) $(test_vector_SOURCES) \
@@ -1102,7 +1097,7 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_imap test_ftp test_http test_rdb_client test_tokenizer \
 	test_query_parser test_multipart test_command test_dialog \
 	test_rdb_server test_json test_server test_redis \
-	test_elasticsearch test_twilio $(am__append_1) $(am__append_2) \
+	test_elasticsearch $(am__append_1) $(am__append_2) \
 	$(am__append_4) $(am__append_6) $(am__append_8) \
 	$(am__append_10) $(am__append_12) $(am__append_14) \
 	$(am__append_16) $(am__append_18) $(am__append_20) \
@@ -1175,7 +1170,6 @@ test_elasticsearch_SOURCES = test_elasticsearch.cpp
 @SSL_TRUE@test_ssl_server_SOURCES = test_ssl_server.cpp
 @SSL_TRUE@test_https_SOURCES = test_https.cpp
 @SSL_TRUE@test_url_SOURCES = test_url.cpp
-@SSL_TRUE@test_twilio_SOURCES = test_twilio.cpp
 @SSL_TRUE@@SSL_TS_TRUE@test_timestamp_SOURCES = test_timestamp.cpp
 @SSH_TRUE@test_ssh_client_SOURCES = test_ssh_client.cpp
 @LDAP_TRUE@test_ldap_SOURCES = test_ldap.cpp
@@ -1538,10 +1532,6 @@ test_tree$(EXEEXT): $(test_tree_OBJECTS) $(test_tree_DEPENDENCIES) $(EXTRA_test_
 	@rm -f test_tree$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_tree_OBJECTS) $(test_tree_LDADD) $(LIBS)
 
-test_twilio$(EXEEXT): $(test_twilio_OBJECTS) $(test_twilio_DEPENDENCIES) $(EXTRA_test_twilio_DEPENDENCIES) 
-	@rm -f test_twilio$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(test_twilio_OBJECTS) $(test_twilio_LDADD) $(LIBS)
-
 test_unixsocket_client$(EXEEXT): $(test_unixsocket_client_OBJECTS) $(test_unixsocket_client_DEPENDENCIES) $(EXTRA_test_unixsocket_client_DEPENDENCIES) 
 	@rm -f test_unixsocket_client$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(test_unixsocket_client_OBJECTS) $(test_unixsocket_client_LDADD) $(LIBS)
@@ -1636,7 +1626,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_timeval.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_tokenizer.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_tree.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_twilio.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_unixsocket_client.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_unixsocket_server.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/test_url.Po@am__quote@

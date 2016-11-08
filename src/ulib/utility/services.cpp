@@ -195,7 +195,7 @@ int UServices::askToLDAP(UString* pinput, UHashMap<UString>* ptable, const char*
 
    UString output, buffer(U_CAPACITY);
 
-   buffer.vsnprintf(fmt, strlen(fmt), argp);
+   buffer.vsnprintf(fmt, u__strlen(fmt, __PRETTY_FUNCTION__), argp);
 
    UCommand cmd(buffer);
 
@@ -271,8 +271,8 @@ UString UServices::getUUID()
             time_hi_and_version = htons((ossp_time >> 48) & 0x00000fff);
 
 #define U_APPEND_HEX(value, offset) \
-   *id++ = u_hex_upper[(((char*)&value)[offset] >> 4) & 0x0F]; \
-   *id++ = u_hex_upper[(((char*)&value)[offset]     ) & 0x0F];
+   *id++ = "0123456789ABCDEF"[(((char*)&value)[offset] >> 4) & 0x0F]; \
+   *id++ = "0123456789ABCDEF"[(((char*)&value)[offset]     ) & 0x0F];
 
    U_APPEND_HEX(time_low, 0);
    U_APPEND_HEX(time_low, 1);

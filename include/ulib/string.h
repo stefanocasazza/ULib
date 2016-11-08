@@ -628,7 +628,7 @@ public:
 
       U_CHECK_MEMORY
 
-      uint32_t result = u_hash((unsigned char*)str, _length);
+      uint32_t result = u_hash((const unsigned char*)str, _length);
 
       U_INTERNAL_ASSERT_MAJOR(result, 0)
 
@@ -641,7 +641,7 @@ public:
 
       U_CHECK_MEMORY
 
-      uint32_t result = u_hash_ignore_case((unsigned char*)str, _length);
+      uint32_t result = u_hash_ignore_case((const unsigned char*)str, _length);
 
       U_INTERNAL_ASSERT_MAJOR(result, 0)
 
@@ -654,7 +654,7 @@ public:
 
    // if the string is quoted...
 
-   bool isQuoted(unsigned char c) const
+   bool isQuoted(const unsigned char c) const
       {
       U_TRACE(0, "UStringRep::isQuoted(%C)", c)
 
@@ -845,6 +845,7 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(UStringRep)
 
    friend class Url;
+   friend class ULib;
    friend class UCDB;
    friend class URDB;
    friend class UTDB;
@@ -873,7 +874,6 @@ private:
    friend class UQuotedPrintable;
    friend class UClientImage_Base;
 
-   friend void   ULib_init();
    friend struct UObjectIO;
 
    template <class T> friend class UVector;
@@ -973,9 +973,7 @@ public:
    // ORM SQLITE
    static const UString* str_sqlite_name;
    static const UString* str_dbdir;
-#ifdef U_HTTP2_DISABLE
-   static ustringrep stringrep_storage[71];
-#else
+#ifndef U_HTTP2_DISABLE
    static const UString* str_authority;
    static const UString* str_method;
    static const UString* str_method_get;
@@ -1041,8 +1039,6 @@ public:
    static const UString* str_via;
    static const UString* str_www_authenticate;
    static const UString* str_ULib;
-
-   static ustringrep stringrep_storage[136];
 #endif
 
    static void str_allocate(int which);
@@ -1059,21 +1055,20 @@ public:
 protected:
    static UString* string_null;
 
-                      friend void ULib_init();
-
-                      friend class UFile;
-                      friend class UHTTP2;
-                      friend class UValue;
-                      friend class UStringExt;
-                      friend class UClientImage_Base;
-                      friend class UREDISClient_Base;
+   friend class ULib;
+   friend class UFile;
+   friend class UHTTP2;
+   friend class UValue;
+   friend class UStringExt;
+   friend class UClientImage_Base;
+   friend class UREDISClient_Base;
 
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
 
    explicit UString(UStringRep** pr) : rep(*pr) // NB: for toUTF8() and fromUTF8()...
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", pr)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V", *pr)
       }
 
    explicit UString(uint32_t len, uint32_t sz, char* ptr); // NB: for UStringExt::deflate()...
@@ -1113,7 +1108,7 @@ public:
 protected:
    void _set(UStringRep* r) // in 'memory reference' distinction is made between set, copy, e assign...
       {
-      U_TRACE(0, "UString::_set(%p)", r)
+      U_TRACE(0, "UString::_set(%V)", r)
 
       U_INTERNAL_ASSERT_DIFFERS(rep,r)
 
@@ -1125,7 +1120,7 @@ protected:
 
    void _copy(UStringRep* r)
       {
-      U_TRACE(0, "UString::_copy(%p)", r)
+      U_TRACE(0, "UString::_copy(%V)", r)
 
       rep = r;  // bind copy to self
       rep->hold();
@@ -1136,7 +1131,7 @@ protected:
 public:
    void _assign(UStringRep* r)
       {
-      U_TRACE(0, "UString::_assign(%p)", r)
+      U_TRACE(0, "UString::_assign(%V)", r)
 
       // NB: it works also in the case of (rep == r)...
 
@@ -1158,18 +1153,30 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   explicit UString(UStringRep* r) : rep(r)
+   explicit UString(const UStringRep* r) : rep((UStringRep*)r)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", r)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V", r)
 
       rep->hold();
 
       U_INTERNAL_ASSERT(invariant())
       }
 
-   explicit UString(ustringrep* r);
+   explicit UString(ustringrep* r)
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", r)
 
-   explicit UString(const char* t);
+#  ifdef DEBUG
+      r->_this = (void*)U_CHECK_MEMORY_SENTINEL;
+#  endif
+
+      uustringrep u = { r };
+
+      _copy(u.p2);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
    explicit UString(const char* t, uint32_t tlen)
       {
       U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%.*S,%u", tlen, t, tlen)
@@ -1193,17 +1200,14 @@ public:
 
    explicit UString(uint32_t n, unsigned char c);
 
-   // Copy from string
-
-   explicit UString(const void* t)
+   explicit UString(const char* t)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%S", (char*)t)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%S", t)
 
-      U_INTERNAL_ASSERT_POINTER(t)
+      uint32_t len = (t ? u__strlen(t, __PRETTY_FUNCTION__) : 0);
 
-      uint32_t tlen = u__strlen((char*)t, __PRETTY_FUNCTION__);
-
-      rep = UStringRep::create(tlen, tlen, (const char*)t);
+      if (len) U_NEW(UStringRep, rep, UStringRep(t, len));
+      else     _copy(UStringRep::string_rep_null);
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1227,7 +1231,7 @@ public:
 
    explicit UString(const UStringRep* _rep, const char* t, uint32_t tlen)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%p,%u", _rep, t, tlen)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V,%p,%u", _rep, t, tlen)
 
       rep = _rep->substr(t, tlen);
 
@@ -1236,7 +1240,7 @@ public:
 
    explicit UString(const UStringRep* _rep, uint32_t pos, uint32_t n = U_NOT_FOUND)
       {
-      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%u,%u", _rep, pos, n)
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%V,%u,%u", _rep, pos, n)
 
       rep = _rep->substr(pos, _rep->fold(pos, n));
 
@@ -1632,7 +1636,7 @@ public:
    uint32_t findnocase(const char* s,      uint32_t pos, uint32_t s_len, uint32_t how_much = U_NOT_FOUND) const __pure;
    uint32_t findnocase(const UString& str, uint32_t pos = 0,             uint32_t how_much = U_NOT_FOUND) const { return findnocase(str.data(), pos, str.size(), how_much); }
 
-   uint32_t findWhiteSpace(uint32_t pos = 0) const { return rep->findWhiteSpace(pos); }
+   uint32_t findWhiteSpace(uint32_t pos = 0) const __pure { return rep->findWhiteSpace(pos); }
 
    // Compare
 
@@ -1863,7 +1867,7 @@ public:
 
       char* ptr = (char*)rep->str;
 
-      ptr[(rep->_length = u_num2str32(number, ptr))] = '\0';
+      ptr[(rep->_length = u_num2str32(number, ptr) - ptr)] = '\0';
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1880,7 +1884,7 @@ public:
 
       char* ptr = (char*)rep->str;
 
-      ptr[(rep->_length = u_num2str32s(number, ptr))] = '\0';
+      ptr[(rep->_length = u_num2str32s(number, ptr) - ptr)] = '\0';
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1901,7 +1905,7 @@ public:
 
       char* ptr = (char*)rep->str;
 
-      ptr[(rep->_length = u_num2str64(number, ptr))] = '\0';
+      ptr[(rep->_length = u_num2str64(number, ptr) - ptr)] = '\0';
 
       U_INTERNAL_ASSERT(invariant())
       }
@@ -1918,7 +1922,7 @@ public:
 
       char* ptr = (char*)rep->str;
 
-      ptr[(rep->_length = u_num2str64s(number, ptr))] = '\0';
+      ptr[(rep->_length = u_num2str64s(number, ptr) - ptr)] = '\0';
 
       U_INTERNAL_ASSERT(invariant())
       }

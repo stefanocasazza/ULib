@@ -57,7 +57,7 @@ int U_EXPORT main(int argc, char* argv[])
          {
          U_ASSERT(timed_out->isNumeric())
 
-         if (timed_out->asBool()) cout << "Search timed out" << std::endl;
+         if (timed_out->getBool()) cout << "Search timed out" << std::endl;
          else
             {
             hits = json.at(U_CONSTANT_TO_PARAM("hits"));
@@ -70,7 +70,7 @@ int U_EXPORT main(int argc, char* argv[])
             U_INTERNAL_ASSERT_POINTER(total)
             U_ASSERT(total->isNumeric())
 
-            cout << "We found " << total->asUInt() << std::endl;
+            cout << "We found " << total->getUInt() << std::endl;
             }
          }
 
@@ -120,7 +120,7 @@ int U_EXPORT main(int argc, char* argv[])
          {
          U_ASSERT(timed_out->isNumeric())
 
-         if (timed_out->asBool()) cout << "Search timed out" << std::endl;
+         if (timed_out->getBool()) cout << "Search timed out" << std::endl;
          else
             {
             hits = json.at(U_CONSTANT_TO_PARAM("hits"));
@@ -133,7 +133,7 @@ int U_EXPORT main(int argc, char* argv[])
             U_INTERNAL_ASSERT_POINTER(total)
             U_ASSERT(total->isNumeric())
 
-            cout << "We found " << total->asUInt() << std::endl;
+            cout << "We found " << total->getUInt() << std::endl;
             }
          }
 

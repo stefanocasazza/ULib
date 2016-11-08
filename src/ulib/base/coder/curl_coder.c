@@ -141,8 +141,8 @@ uint32_t u_url_encode(const unsigned char* restrict input, uint32_t len, unsigne
             {
             *r++ = '%';
 
-            u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16(u_hex_upper[(ch >> 4) & 0x0F],
-                                                         u_hex_upper[ ch       & 0x0F]));
+            u_put_unalignedp16(r, U_MULTICHAR_CONSTANT16("0123456789ABCDEF"[(ch >> 4) & 0x0F],
+                                                         "0123456789ABCDEF"[ ch      & 0x0F]));
 
             r += 2;
             }

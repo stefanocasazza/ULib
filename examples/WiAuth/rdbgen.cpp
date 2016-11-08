@@ -43,7 +43,9 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      UString path_of_db_file(argv[optind++]); 
+      const char* p = argv[optind++]; 
+
+      UString path_of_db_file(p, strlen(p)); 
 
       if (path_of_db_file.empty()) U_ERROR("missing <path_of_db_file> argument");
 
@@ -95,9 +97,18 @@ public:
 
             case 3: // store
                {
-               UString key(argv[optind]), value(argv[++optind]);
+               UString key(argv[optind]);
 
-               if (value.equal(U_CONSTANT_TO_PARAM(U_DIR_OUTPUT U_FILE_OUTPUT))) value = UStringExt::trim(UFile::contentOf(UString(U_DIR_OUTPUT U_FILE_OUTPUT)));
+               p = argv[optind++]; 
+
+               UString value(p, strlen(p));
+
+               if (value.equal(U_CONSTANT_TO_PARAM(U_DIR_OUTPUT U_FILE_OUTPUT)))
+                  {
+                  p = U_DIR_OUTPUT U_FILE_OUTPUT;
+
+                  value = UStringExt::trim(UFile::contentOf(UString(p, strlen(p))));
+                  }
 
                UApplication::exit_value = x.store(key, value, RDB_REPLACE);
                }

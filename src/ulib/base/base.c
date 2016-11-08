@@ -80,22 +80,47 @@ void u_debug_at_exit(void);
 #  endif
 #endif
 
-/* String representation */
+int u_num_cpu = -1;
+uint32_t u_m_w = 521288629;
+uint32_t u_m_z = 362436069;
+uint32_t u_seed_hash = 0xdeadbeef;
+struct timeval* u_now = &u_timeval;
+const char* restrict u_tmpdir = "/tmp";
+const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
+const char* u_day_name[7]    = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
+const char* u_month_name[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
-struct ustringrep u_empty_string_rep_storage = {
-#ifdef DEBUG
-   (void*)U_CHECK_MEMORY_SENTINEL, /* memory_error (_this) */
-#endif
-#if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   0, /* parent - substring increment reference of source string */
-#  ifdef DEBUG
-   0, /* child  - substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'... */
-#  endif
-#endif
-   0, /* _length */
-   0, /* _capacity */
-   0, /* references */
-  ""  /* str - NB: we need an address (see c_str() or isNullTerminated()) and must be null terminated... */
+/* conversion table number to string */
+
+const char* u_ctn2s = "00010203040506070809"
+                      "10111213141516171819"
+                      "20212223242526272829"
+                      "30313233343536373839"
+                      "40414243444546474849"
+                      "50515253545556575859"
+                      "60616263646566676869"
+                      "70717273747576777879"
+                      "80818283848586878889"
+                      "90919293949596979899";
+
+const double u_pow10[309] = { // 1e-0...1e308: 309 * 8 bytes = 2472 bytes
+  1,
+  1e+1,  1e+2,  1e+3,  1e+4,  1e+5,  1e+6,  1e+7,  1e+8,  1e+9,  1e+10, 1e+11, 1e+12, 1e+13, 1e+14, 1e+15, 1e+16, 1e+17, 1e+18, 1e+19, 1e+20,
+  1e+21, 1e+22, 1e+23, 1e+24, 1e+25, 1e+26, 1e+27, 1e+28, 1e+29, 1e+30, 1e+31, 1e+32, 1e+33, 1e+34, 1e+35, 1e+36, 1e+37, 1e+38, 1e+39, 1e+40,
+  1e+41, 1e+42, 1e+43, 1e+44, 1e+45, 1e+46, 1e+47, 1e+48, 1e+49, 1e+50, 1e+51, 1e+52, 1e+53, 1e+54, 1e+55, 1e+56, 1e+57, 1e+58, 1e+59, 1e+60,
+  1e+61, 1e+62, 1e+63, 1e+64, 1e+65, 1e+66, 1e+67, 1e+68, 1e+69, 1e+70, 1e+71, 1e+72, 1e+73, 1e+74, 1e+75, 1e+76, 1e+77, 1e+78, 1e+79, 1e+80,
+  1e+81, 1e+82, 1e+83, 1e+84, 1e+85, 1e+86, 1e+87, 1e+88, 1e+89, 1e+90, 1e+91, 1e+92, 1e+93, 1e+94, 1e+95, 1e+96, 1e+97, 1e+98, 1e+99, 1e+100,
+  1e+101,1e+102,1e+103,1e+104,1e+105,1e+106,1e+107,1e+108,1e+109,1e+110,1e+111,1e+112,1e+113,1e+114,1e+115,1e+116,1e+117,1e+118,1e+119,1e+120,
+  1e+121,1e+122,1e+123,1e+124,1e+125,1e+126,1e+127,1e+128,1e+129,1e+130,1e+131,1e+132,1e+133,1e+134,1e+135,1e+136,1e+137,1e+138,1e+139,1e+140,
+  1e+141,1e+142,1e+143,1e+144,1e+145,1e+146,1e+147,1e+148,1e+149,1e+150,1e+151,1e+152,1e+153,1e+154,1e+155,1e+156,1e+157,1e+158,1e+159,1e+160,
+  1e+161,1e+162,1e+163,1e+164,1e+165,1e+166,1e+167,1e+168,1e+169,1e+170,1e+171,1e+172,1e+173,1e+174,1e+175,1e+176,1e+177,1e+178,1e+179,1e+180,
+  1e+181,1e+182,1e+183,1e+184,1e+185,1e+186,1e+187,1e+188,1e+189,1e+190,1e+191,1e+192,1e+193,1e+194,1e+195,1e+196,1e+197,1e+198,1e+199,1e+200,
+  1e+201,1e+202,1e+203,1e+204,1e+205,1e+206,1e+207,1e+208,1e+209,1e+210,1e+211,1e+212,1e+213,1e+214,1e+215,1e+216,1e+217,1e+218,1e+219,1e+220,
+  1e+221,1e+222,1e+223,1e+224,1e+225,1e+226,1e+227,1e+228,1e+229,1e+230,1e+231,1e+232,1e+233,1e+234,1e+235,1e+236,1e+237,1e+238,1e+239,1e+240,
+  1e+241,1e+242,1e+243,1e+244,1e+245,1e+246,1e+247,1e+248,1e+249,1e+250,1e+251,1e+252,1e+253,1e+254,1e+255,1e+256,1e+257,1e+258,1e+259,1e+260,
+  1e+261,1e+262,1e+263,1e+264,1e+265,1e+266,1e+267,1e+268,1e+269,1e+270,1e+271,1e+272,1e+273,1e+274,1e+275,1e+276,1e+277,1e+278,1e+279,1e+280,
+  1e+281,1e+282,1e+283,1e+284,1e+285,1e+286,1e+287,1e+288,1e+289,1e+290,1e+291,1e+292,1e+293,1e+294,1e+295,1e+296,1e+297,1e+298,1e+299,1e+300,
+  1e+301,1e+302,1e+303,1e+304,1e+305,1e+306,1e+307,1e+308
 };
 
 /* Startup */
@@ -136,19 +161,12 @@ int    u_now_adjust;   /* GMT based time */
 struct tm u_strftime_tm;
 
 struct timeval u_timeval;
-struct timeval* u_now = &u_timeval;
 
 /*
 #ifdef HAVE_CLOCK_GETTIME
 struct timeval u_start_clock;
 #endif
 */
-
-const char* u_months[12]     = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
-const char* u_months_it[12]  = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
-
-const char* u_day_name[7]    = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
-const char* u_month_name[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
 /* Services */
 
@@ -162,45 +180,11 @@ uint32_t u_flag_sse; /* detect SSE2, SSSE3, SSE4.2 */
 char u_user_name[32];
 char u_hostname[HOST_NAME_MAX+1];
 int32_t u_printf_string_max_length;
-uint32_t u_hostname_len, u_user_name_len, u_seed_hash = 0xdeadbeef;
-
-const char* restrict u_tmpdir = "/tmp";
+uint32_t u_hostname_len, u_user_name_len;
 struct uclientimage_info u_clientimage_info;
 
-const unsigned char u_hex_upper[16] = { '0','1','2','3','4','5','6','7','8','9','A','B','C','D','E','F' };
-const unsigned char u_hex_lower[16] = { '0','1','2','3','4','5','6','7','8','9','a','b','c','d','e','f' };
-
-const int MultiplyDeBruijnBitPosition2[32] = { 0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9 };
-
-/* u_b64url substitute chars 62(+) and 63(/) with -_ (minus) (underline) */
-
-const unsigned char u_b64[64] =    { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-                                     'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-                                     '0','1','2','3','4','5','6','7','8','9',
-                                     '+','/' };
-const unsigned char u_b64url[64] = { 'A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
-                                     'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z',
-                                     '0','1','2','3','4','5','6','7','8','9',
-                                     '-','_' };
-
-/* conversion table number to string */
-
-const char u_ctn2s[200] = {
- '0','0','0','1','0','2','0','3','0','4','0','5','0','6','0','7','0','8','0','9',
- '1','0','1','1','1','2','1','3','1','4','1','5','1','6','1','7','1','8','1','9',
- '2','0','2','1','2','2','2','3','2','4','2','5','2','6','2','7','2','8','2','9',
- '3','0','3','1','3','2','3','3','3','4','3','5','3','6','3','7','3','8','3','9',
- '4','0','4','1','4','2','4','3','4','4','4','5','4','6','4','7','4','8','4','9',
- '5','0','5','1','5','2','5','3','5','4','5','5','5','6','5','7','5','8','5','9',
- '6','0','6','1','6','2','6','3','6','4','6','5','6','6','6','7','6','8','6','9',
- '7','0','7','1','7','2','7','3','7','4','7','5','7','6','7','7','7','8','7','9',
- '8','0','8','1','8','2','8','3','8','4','8','5','8','6','8','7','8','8','8','9',
- '9','0','9','1','9','2','9','3','9','4','9','5','9','6','9','7','9','8','9','9'
-};
-
-static uint32_t num2str32(uint32_t num, char* restrict cp)
+static char* num2str32(uint32_t num, char* restrict cp)
 {
-   char* restrict start = cp;
    uint32_t a, b, c, d1, d2, d3, d4;
 
    U_INTERNAL_TRACE("num2str32(%u,%p)", num, cp)
@@ -213,9 +197,10 @@ static uint32_t num2str32(uint32_t num, char* restrict cp)
       if (num >= 1000) *cp++ = u_ctn2s[d1];
       if (num >=  100) *cp++ = u_ctn2s[d1+1];
       if (num >=   10) *cp++ = u_ctn2s[d2];
-                       *cp++ = u_ctn2s[d2+1];
 
-      return (cp - start);
+      *cp++ = u_ctn2s[d2+1];
+
+      return cp;
       }
 
    if (num < 100000000) /* num = bbbbcccc */
@@ -230,12 +215,13 @@ static uint32_t num2str32(uint32_t num, char* restrict cp)
       if (num >= 10000000) *cp++ = u_ctn2s[d1];
       if (num >=  1000000) *cp++ = u_ctn2s[d1+1];
       if (num >=   100000) *cp++ = u_ctn2s[d2];
-                           *cp++ = u_ctn2s[d2+1];
+
+      *cp++ = u_ctn2s[d2+1];
 
       U_NUM2STR16(cp,   d3);
       U_NUM2STR16(cp+2, d4);
 
-      return (cp + 4 - start);
+      return (cp + 4);
       }
 
    /* num = aabbbbcccc in decimal */
@@ -265,19 +251,16 @@ static uint32_t num2str32(uint32_t num, char* restrict cp)
    U_NUM2STR16(cp+4, d3);
    U_NUM2STR16(cp+6, d4);
 
-   return (cp + 8 - start);
+   return (cp + 8);
 }
 
-static uint32_t num2str64(uint64_t num, char* restrict cp)
+static char* num2str64(uint64_t num, char* restrict cp)
 {
-   char* restrict start;
    uint32_t a, i, j, v0, v1, b0, b1, c0, c1, d1, d2, d3, d4, d5, d6, d7, d8;
 
    U_INTERNAL_TRACE("num2str64(%llu,%p)", num, cp)
 
    if (num <= UINT_MAX) return u_num2str32((uint32_t)num, cp);
-
-   start = cp;
 
    if (num < 10000000000000000)
       {
@@ -316,7 +299,7 @@ static uint32_t num2str64(uint64_t num, char* restrict cp)
       U_NUM2STR16(cp+4, d7);
       U_NUM2STR16(cp+6, d8);
 
-      return (cp + 8 - start);
+      return (cp + 8);
       }
 
    a = (uint32_t)(num  / 10000000000000000); /* 1 to 1844 */
@@ -380,14 +363,14 @@ static uint32_t num2str64(uint64_t num, char* restrict cp)
    U_NUM2STR16(cp+12, d7);
    U_NUM2STR16(cp+14, d8);
 
-   return (cp + 16 - start);
+   return (cp + 16);
 }
 
-static uint32_t dtoa(double num, char* restrict cp) { return sprintf(cp, "%g", num); }
+static char* dtoa(double num, char* restrict cp) { return cp + sprintf(cp, "%g", num); }
 
-uPFdpc   u_dbl2str   = dtoa;
-uPFu32pc u_num2str32 = num2str32;
-uPFu64pc u_num2str64 = num2str64;
+pcPFdpc   u_dbl2str  = dtoa;
+pcPFu32pc u_num2str32 = num2str32;
+pcPFu64pc u_num2str64 = num2str64;
 
 /**
  * "FATAL: kernel too old"
@@ -646,6 +629,9 @@ loop:
    U_INTERNAL_ASSERT_MINOR(u_cwd_len, newsize)
 }
 
+static const char* u_months[12]    = { "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" };
+static const char* u_months_it[12] = { "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" };
+
 __pure unsigned u_getMonth(const char* buf)
 {
    unsigned i;
@@ -853,6 +839,21 @@ void u_init_ulib(char** restrict argv)
 
    u_setPid();
 
+#if defined(U_STATIC_ONLY)
+   if (argv == 0)
+      {
+      u_progpath     =
+      u_progname     =                 "ULib";
+      u_progname_len = U_CONSTANT_SIZE("ULib");
+
+      if (u_now == 0)
+         {
+         u_now = &u_timeval;
+         }
+      }
+   else
+#endif
+   {
    u_progpath = *argv;
    u_progname = u_basename(u_progpath);
 
@@ -861,6 +862,11 @@ void u_init_ulib(char** restrict argv)
    u_progname_len = u__strlen(u_progname, __PRETTY_FUNCTION__);
 
    U_INTERNAL_ASSERT_MAJOR(u_progname_len, 0)
+   }
+
+   U_INTERNAL_ASSERT_EQUALS(u_ulib_init, false)
+
+   u_ulib_init = true;
 
 #ifdef _MSWINDOWS_
    u_init_ulib_mingw();
@@ -1959,7 +1965,7 @@ case_float:
          {
          double dbl = VA_ARG(double);
 
-         len = u_dtoa(dbl, bp);
+         len = u_dtoa(dbl, bp) - bp;
          }
       else
          {
@@ -2075,8 +2081,8 @@ empty:      u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16('"','"'));
 
             if (sign)
                {
-               u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(u_hex_lower[(c >> 4) & 0x0F],
-                                                             u_hex_lower[(c     ) & 0x0F]));
+               u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16("0123456789abcdef"[(c >> 4) & 0x0F],
+                                                             "0123456789abcdef"[(c     ) & 0x0F]));
 
                bp        += 2;
                remaining -= 2;
@@ -2247,7 +2253,7 @@ case_D: /* extension: print date and time in various format */
             {
             u_put_unalignedp16(bp, U_MULTICHAR_CONSTANT16(' ','+'));
 
-            bp += 2 + u_num2str32(t / U_ONE_DAY_IN_SECOND, bp+2);
+            bp = u_num2str32(t / U_ONE_DAY_IN_SECOND, bp+2);
 
             u_put_unalignedp32(bp, U_MULTICHAR_CONSTANT32(' ','d','a','y'));
 
@@ -2468,8 +2474,8 @@ number: /* uint32_t conversions */
             }
          else if (base == HEX)
             {
-            const unsigned char* restrict xdigs = (ch == 'X' ? u_hex_upper
-                                                             : u_hex_lower); /* digits for [xX] conversion */
+            const unsigned char* restrict xdigs = (const unsigned char* restrict)(ch == 'X' ? "0123456789ABCDEF"
+                                                                                            : "0123456789abcdef"); /* digits for [xX] conversion */
 
             cp = buf + sizeof(buf);
 
@@ -2489,16 +2495,14 @@ number: /* uint32_t conversions */
                    dprec > 0 ||
                    (flags & (LADJUST | ZEROPAD)) != 0)
                   {
-                  size = u_num2str64(argument, (char* restrict)(cp = buf));
+                  size = u_num2str64(argument, (char* restrict)(cp = buf)) - (char* restrict)buf;
 
                   goto next;
                   }
 
                if (sign) *bp++ = sign;
 
-               len = u_num2str64(argument, bp);
-
-               bp += len;
+               bp = u_num2str64(argument, bp);
 
                continue;
                }

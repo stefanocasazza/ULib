@@ -16,8 +16,14 @@
 
 #include <ulib/options.h>
 
+#define U_PRINT_MEM_USAGE
+
 #ifdef DEBUG
 #define U_MAIN_END(value) return value
+#  ifdef U_STDCPP_ENABLE
+#     undef  U_PRINT_MEM_USAGE
+#     define U_PRINT_MEM_USAGE UApplication::printMemUsage();
+#  endif
 #else
 #define U_MAIN_END(value) ::exit(value)
 #endif
@@ -29,6 +35,7 @@ int U_EXPORT main(int argc, char* argv[], char* env[]) \
    U_TRACE(5, "::main(%d,%p,%p)", argc, argv, env) \
    Application application; \
    application.run(argc, argv, env); \
+   U_PRINT_MEM_USAGE \
    U_MAIN_END(UApplication::exit_value); \
 }
 
@@ -133,6 +140,8 @@ public:
       }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   static void printMemUsage();
+
    const char* dump(bool reset) const;
 #endif
 

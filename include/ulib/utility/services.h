@@ -63,36 +63,6 @@ struct U_EXPORT UServices {
       while (UServices::read(fd, buffer, U_SINGLE_READ, -1)) {}
       }
 
-   // generic MatchType { U_FNMATCH, U_DOSMATCH, U_DOSMATCH_EXT, U_DOSMATCH_WITH_OR, U_DOSMATCH_EXT_WITH_OR }
-
-   static bool match(const char* s, uint32_t len, const char* mask, uint32_t size)
-      {
-      U_TRACE(0, "UServices::match(%.*S,%u,%.*S,%u)", len, s, len, size, mask, size)
-
-      U_INTERNAL_DUMP("u_pfn_match = %p u_pfn_flags = %u", u_pfn_match, u_pfn_flags)
-
-      if (u_pfn_match(s, len, mask, size, u_pfn_flags)) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
-   static bool matchNoCase(const char* s, uint32_t len, const char* mask, uint32_t size)
-      {
-      U_TRACE(0, "UServices::matchNoCase(%.*S,%u,%.*S,%u)", len, s, len, size, mask, size)
-
-      U_INTERNAL_DUMP("u_pfn_match = %p u_pfn_flags = %u", u_pfn_match, u_pfn_flags)
-
-      if (u_pfn_match(s, len, mask, size, u_pfn_flags | FNM_CASEFOLD)) U_RETURN(true);
-
-      U_RETURN(false);
-      }
-
-   static bool match(const UString& s,    const UString& mask)       { return match(U_STRING_TO_PARAM(s),  U_STRING_TO_PARAM(mask)); }
-   static bool match(const UStringRep* r, const UString& mask)       { return match(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask)); }
-
-   static bool matchNoCase(const UString& s,    const UString& mask) { return matchNoCase(U_STRING_TO_PARAM(s),  U_STRING_TO_PARAM(mask)); }
-   static bool matchNoCase(const UStringRep* r, const UString& mask) { return matchNoCase(U_STRING_TO_PARAM(*r), U_STRING_TO_PARAM(mask)); }
-
    // ------------------------------------------------------------
    // DOS or wildcard regexpr - multiple patterns separated by '|'
    // ------------------------------------------------------------
@@ -186,7 +156,7 @@ struct U_EXPORT UServices {
       UString code(len);
       char* ptr = code.data();
 
-      for (uint32_t i = 0; i < len; ++i, ++ptr) *ptr = u_b64[u_get_num_random(sizeof(u_b64) - 3)];
+      for (uint32_t i = 0; i < len; ++i, ++ptr) *ptr = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[u_get_num_random(64 - 3)];
 
       code.size_adjust(len);
 

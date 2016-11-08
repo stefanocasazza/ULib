@@ -46,7 +46,7 @@ public:
 private:
    static char* pbuffer;
 
-   friend void ULib_init();
+   friend class ULib;
 };
 
 #endif

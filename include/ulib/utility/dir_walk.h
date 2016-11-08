@@ -23,13 +23,14 @@
  *       For each found entry in the tree, it calls foundFile()
  */
 
-                   class IR;
-                   class UFile;
-                   class UHTTP;
+class IR;
+class UFile;
+class UHTTP;
+class PEC_report;
+
 template <class T> class UTree;
 template <class T> class UVector;
 template <class T> class UHashMap;
-                   class PEC_report;
 
 class U_EXPORT UDirWalk {
 public:
@@ -53,25 +54,25 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   UDirWalk(const UString* dir = 0, const char* _filter = 0, uint32_t _filter_len = 0)
+   UDirWalk(const UString* dir = 0, const char* _filter = 0, uint32_t _filter_len = 0, int _filter_flags = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%p,%.*S,%u", dir, _filter_len, _filter, _filter_len)
+      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%p,%.*S,%u,%d", dir, _filter_len, _filter, _filter_len, _filter_flags)
 
-      ctor(dir, _filter, _filter_len);
+      ctor(dir, _filter, _filter_len, _filter_flags);
       }
 
-   UDirWalk(const UString* dir, const UString& _filter)
+   UDirWalk(const UString* dir, const UString& _filter, int _filter_flags = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%V,%V", dir->rep, _filter.rep)
+      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%V,%V,%d", dir->rep, _filter.rep, _filter_flags)
 
-      ctor(dir, U_STRING_TO_PARAM(_filter));
+      ctor(dir, U_STRING_TO_PARAM(_filter), _filter_flags);
       }
 
-   UDirWalk(const UString& dir, const char* _filter = 0, uint32_t _filter_len = 0)
+   UDirWalk(const UString& dir, const char* _filter = 0, uint32_t _filter_len = 0, int _filter_flags = 0)
       {
-      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%V,%.*S,%u", dir.rep, _filter_len, _filter, _filter_len)
+      U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%V,%.*S,%u,%d", dir.rep, _filter_len, _filter, _filter_len, _filter_flags)
 
-      ctor(&dir, _filter, _filter_len);
+      ctor(&dir, _filter, _filter_len, _filter_flags);
       }
 
    virtual ~UDirWalk()
@@ -145,18 +146,21 @@ public:
       U_NEW(UString, suffix_file_type, UString(str, len));
       }
 
-   static void setFilter(const char* _filter, uint32_t _filter_len)
+   static void setFilter(const char* _filter, uint32_t _filter_len, int _filter_flags = 0)
       {
-      U_TRACE(0, "UDirWalk::setFilter(%.*S,%u)", _filter_len, _filter, _filter_len)
+      U_TRACE(0, "UDirWalk::setFilter(%.*S,%u,%d)", _filter_len, _filter, _filter_len, _filter_flags)
 
-                      filter     = _filter;
+      filter       = _filter;
+      filter_flags = _filter_flags;
+
       bfollowlinks = (filter_len = _filter_len);
       }
 
-   static void setFilter(const UString& _filter) { setFilter(U_STRING_TO_PARAM(_filter)); }
+   static void setFilter(const UString& _filter, int _filter_flags = 0) { setFilter(U_STRING_TO_PARAM(_filter), _filter_flags); }
 
-   static bool setDirectory(const UString& dir, const char* f = 0, uint32_t flen = 0);
-   static void setDirectory(const UString& dir, const UString& _filter) { setDirectory(dir, U_STRING_TO_PARAM(_filter)); }
+   static bool setDirectory(const UString& dir, const char* f = 0, uint32_t flen = 0, int _filter_flags = 0);
+
+   static void setDirectory(const UString& dir, const UString& _filter, int _filter_flags = 0) { setDirectory(dir, U_STRING_TO_PARAM(_filter), _filter_flags); }
 
    // DEBUG
 
@@ -171,6 +175,7 @@ protected:
    char pathname[4000];
 
    static UDirWalk* pthis;
+   static int filter_flags;
    static qcompare sort_by;
    static const char* filter;
    static UTree<UString>* ptree;
@@ -181,7 +186,7 @@ protected:
    static UHashMap<UFile*>* cache_file_for_compare;
    static bool tree_root, call_if_directory, bfollowlinks, brecurse; // recurse subdirectories?
 
-   void ctor(const UString* dir, const char* filter, uint32_t filter_len);
+   void ctor(const UString* dir, const char* filter, uint32_t filter_len, int _filter_flags = 0);
 
    // foundFile() is called whenever another file or directory is
    // found that meets the criteria in effect for the object. This

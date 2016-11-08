@@ -67,7 +67,7 @@ UMimeMultipartMsg::UMimeMultipartMsg(const char* type, uint32_t type_len, Encodi
    u_put_unalignedp32(ptr, U_MULTICHAR_CONSTANT32('-','-','=','_'));
                       ptr += 4;
 
-   boundary_len = (ptr + u_num2str64(UServices::getUniqUID(), ptr) - boundary);
+   boundary_len = (u_num2str64(UServices::getUniqUID(), ptr) - boundary);
 
    UString buffer(U_CAPACITY);
 

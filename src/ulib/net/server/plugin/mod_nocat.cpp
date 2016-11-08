@@ -1533,14 +1533,14 @@ void UNoCatPlugIn::addPeerInfo(int disconnected)
    U_MEMCPY(ptr,"&connected=", U_CONSTANT_SIZE("&connected="));
             ptr +=             U_CONSTANT_SIZE("&connected=");
 
-   ptr += u_num2str32(u_now->tv_sec - peer->ctime, ptr);
-                                      peer->ctime = u_now->tv_sec;
+   ptr = u_num2str32(u_now->tv_sec - peer->ctime, ptr);
+                                     peer->ctime = u_now->tv_sec;
 
    U_MEMCPY(ptr, "&traffic=", U_CONSTANT_SIZE("&traffic="));
             ptr +=            U_CONSTANT_SIZE("&traffic=");
 
-   ptr += u_num2str32(peer->ctraffic, ptr);
-                      peer->ctraffic = 0;
+   ptr = u_num2str32(peer->ctraffic, ptr);
+                     peer->ctraffic = 0;
 
    info.size_adjust_force(ptr);
 
@@ -2140,7 +2140,9 @@ int UNoCatPlugIn::handlerInit()
 
    if (cClientSocket.connectServer(auth_ip, 1001))
       {
-      ip = UString(cClientSocket.getLocalInfo());
+      const char* p = cClientSocket.getLocalInfo();
+
+      ip = UString(p, u__strlen(p, __PRETTY_FUNCTION__));
 
       if (ip != *UServer_Base::IP_address)
          {

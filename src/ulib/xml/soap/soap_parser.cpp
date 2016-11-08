@@ -139,7 +139,7 @@ void USOAPParser::startElement(const XML_Char* name, const XML_Char** attrs)
    U_DUMP_ATTRS(attrs)
 
    UXMLAttribute* attribute;
-   UString str((void*)name), namespaceName, accessorName, value;
+   UString str((void*)name, u__strlen(name, __PRETTY_FUNCTION__)), namespaceName, accessorName, value;
 
    UXMLElement::splitNamespaceAndName(str, namespaceName, accessorName);
 

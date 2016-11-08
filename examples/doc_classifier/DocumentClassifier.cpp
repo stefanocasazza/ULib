@@ -255,7 +255,7 @@ DocumentClassifier::DocumentClassifier(const char* pathfile) : description(4000U
    U_TRACE(5, "DocumentClassifier::DocumentClassifier(%S)", pathfile)
 
    binary  = false;
-   content = UFile::contentOf(UString(pathfile));
+   content = UFile::contentOf(UString(pathfile, strlen(pathfile)));
 
    if (content.empty())
       {

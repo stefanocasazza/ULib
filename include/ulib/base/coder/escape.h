@@ -40,7 +40,7 @@ extern "C" {
  */
 
 U_EXPORT uint32_t u_escape_encode(const unsigned char* restrict s, uint32_t n,          char* restrict result, uint32_t max_length);
-U_EXPORT uint32_t u_escape_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result, char* bjson);
+U_EXPORT uint32_t u_escape_decode(const          char* restrict s, uint32_t n, unsigned char* restrict result);
 
 #ifdef __cplusplus
 }

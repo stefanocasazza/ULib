@@ -108,7 +108,7 @@ public:
       UString x(32U);
       char* ptr = x.data();
 
-      ptr[(x.rep->_length = u_dtoa(n, ptr))] = '\0';
+      ptr[(x.rep->_length = (u_dtoa(n, ptr) - ptr))] = '\0';
 
       U_RETURN_STRING(x);
       }
@@ -135,7 +135,7 @@ public:
       uint32_t sz = s.size();
       char* ptr   = s.c_pointer(sz);
 
-      s.rep->_length = sz + u_num2str32(number, ptr);
+      s.rep->_length = sz + u_num2str32(number, ptr) - ptr;
 
       U_INTERNAL_ASSERT(s.invariant())
       }
@@ -147,7 +147,7 @@ public:
       uint32_t sz = s.size();
       char* ptr   = s.c_pointer(sz);
 
-      s.rep->_length = sz + u_num2str64(number, ptr);
+      s.rep->_length = sz + u_num2str64(number, ptr) - ptr;
 
       U_INTERNAL_ASSERT(s.invariant())
       }

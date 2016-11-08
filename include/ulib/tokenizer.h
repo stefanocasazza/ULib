@@ -16,6 +16,7 @@
 
 #include <ulib/string.h>
 
+class UValue;
 class UQueryParser;
 
 template <class T> class UVector;
@@ -109,7 +110,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTokenizer::getEnd()")
 
-      U_RETURN(end);
+      return end;
       }
 
    void setDistance(uint32_t pos)
@@ -238,7 +239,6 @@ public:
          }
       }
 
-   int  getTypeNumber();
    int  getTokenId(UString* ptoken);
    bool tokenSeen(const UString* x);
 

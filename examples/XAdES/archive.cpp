@@ -26,8 +26,8 @@
 
 #include <ulib/application.h>
 
-#define U_ARCHIVE_TIMESTAMP (const char*)(num_args >= 0  ? argv[optind+0]  : 0)
-#define U_SCHEMA            (const char*)(num_args >= 1  ? argv[optind+1]  : 0)
+#define U_ARCHIVE_TIMESTAMP (const char*)(num_args >= 0 ? argv[optind+0] : 0)
+#define U_SCHEMA            (const char*)(num_args >= 1 ? argv[optind+1] : 0)
 
 // ArchiveTimeStamp
 

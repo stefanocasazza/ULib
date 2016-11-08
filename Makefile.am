@@ -5,7 +5,7 @@ ACLOCAL_AMFLAGS = -I m4
 
 EXTRA_DIST = cdb configure.help TODO LICENSE* README* *.spec* \
 	 			 ULib.m4 rpm.sh rpmpkgreq.lst rpmpkgreq.lst.suse openwrt \
-	 			 doc/Doxyfile doc/readme.txt shtool *.awk .travis.yml autogen.sh
+	 			 doc/Doxyfile doc/readme.txt shtool *.awk .travis.yml autogen.sh nativejson-benchmark
 
 MAINTAINERCLEANFILES = configure aclocal.m4 libtool Makefile.in Makefile INSTALL
 
@@ -141,6 +141,7 @@ cleandist:
 		$(distdir)/tests/examples/docroot/uploads \
 		$(distdir)/tests/examples/docroot/vuoto.txt \
 		$(distdir)/tests/examples/docroot/www.sito1.com \
+		$(distdir)/tests/examples/ok/client_server.ok \
 		$(distdir)/tests/examples/ok/web_server_multiclient.ok \
 		$(distdir)/tests/examples/benchmark/userver_tcp.pid \
 		$(distdir)/tests/examples/benchmark/docroot/servlet/*.so \

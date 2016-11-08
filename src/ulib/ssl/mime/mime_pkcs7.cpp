@@ -17,7 +17,7 @@ UMimePKCS7::UMimePKCS7(const UString& _data)
 {
    U_TRACE_REGISTER_OBJECT(0, UMimePKCS7, "%V", _data.rep)
 
-   // OpenSSL_add_all_algorithms(); // called in ULib_init()
+   // OpenSSL_add_all_algorithms(); // called in ULib::init()
 
    BIO* indata; // indata is the signed data if the content is not present in pkcs7 (that is it is detached)
 

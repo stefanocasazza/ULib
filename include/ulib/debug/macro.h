@@ -132,7 +132,7 @@ if (envp) \
 #  define U_VFORK() u_debug_vfork(::vfork(), utr.active[0])
 #endif
 
-#  define U_EXIT(exit_value)  { if (utr.active[0]) u_debug_exit(exit_value); ::exit(exit_value); }
+#  define U_EXIT(exit_value) { if (utr.active[0]) u_debug_exit(exit_value); ::exit(exit_value); }
 #  define U_EXEC(pathname, argv, envp) u_debug_exec(pathname, argv, envp, utr.active[0])
 
 // Dump fd_set

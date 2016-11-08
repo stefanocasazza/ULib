@@ -400,7 +400,7 @@ bool UHashMap<void*>::next()
 
    U_INTERNAL_DUMP("index = %u node = %p next = %p", index, node, node->next)
 
-   if ((node = node->next)) U_RETURN_POINTER(node, UHashMapNode);
+   if ((node = node->next)) U_RETURN(true);
 
    for (++index; index < _capacity; ++index)
       {

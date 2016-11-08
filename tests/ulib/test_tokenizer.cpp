@@ -2,33 +2,7 @@
 
 #include <ulib/file.h>
 #include <ulib/tokenizer.h>
-
-static void checkRealNumber(UTokenizer& t)
-{
-   U_TRACE(5, "::checkRealNumber(%p)", &t)
-
-   t.skipSpaces();
-
-   const char* start = t.getPointer();
-
-   (void) t.next();
-
-   int type_num = t.getTypeNumber();
-
-   if (type_num != 0)
-      {
-      if (type_num < 0)
-         {
-         double real_ = (type_num == INT_MIN // scientific notation (Ex: 1.45e10)
-                           ?   strtod(start, 0)
-                           : u_strtod(start, t.getPointer(), type_num));
-
-         U_INTERNAL_DUMP("real_ = %g", real_)
-
-         U_INTERNAL_ASSERT_EQUALS(real_, strtod(start, 0))
-         }
-      }
-}
+#include <ulib/json/value.h>
 
 int
 U_EXPORT main (int argc, char* argv[])
@@ -37,10 +11,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
 
-   UTokenizer t(U_STRING_FROM_CONSTANT("-73.99548457138242"));
-
-   checkRealNumber(t);
-
+   UTokenizer t;
    UString dati, y, z = U_STRING_FROM_CONSTANT("mnt mirror home stefano spool cross");
 
    t.setData(z);

@@ -28,7 +28,8 @@ public:
       UApplication::run(argc, argv, env);
 
       UString riga;
-      UString content1 = UFile::contentOf(UString(argv[optind++])),
+      const char* p = argv[optind++];
+      UString content1 = UFile::contentOf(UString(p, strlen(p))),
               content2 = UFile::contentOf(UString(argv[optind]));
 
       UVector<UString> vec_entry(10),

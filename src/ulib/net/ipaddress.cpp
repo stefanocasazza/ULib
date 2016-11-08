@@ -631,7 +631,7 @@ UString UIPAddress::toString(uint8_t* addr)
 
    char* result = inet_ntoa(*(u.paddr));
 
-   UString x((void*)result);
+   UString x((void*)result, u__strlen(result, __PRETTY_FUNCTION__));
 
    U_RETURN_STRING(x);
 }

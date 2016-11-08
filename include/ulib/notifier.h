@@ -272,12 +272,12 @@ private:
 
    U_DISALLOW_COPY_AND_ASSIGN(UNotifier)
 
-   friend void ULib_init();
-
+   friend class ULib;
    friend class USocket;
    friend class UTimeStat;
    friend class USocketExt;
    friend class UHttpPlugIn;
+   friend class UApplication;
    friend class UServer_Base;
    friend class UClientImage_Base;
    friend class UClientThrottling;

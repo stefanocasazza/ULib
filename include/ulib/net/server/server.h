@@ -98,6 +98,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 class UHTTP;
 class UHTTP2;
 class UCommand;
+class UDayLight;
 class UTimeStat;
 class USSLSocket;
 class USSIPlugIn;
@@ -565,6 +566,7 @@ protected:
    static UVector<UString>*        vplugin_name;
    static UVector<UString>*        vplugin_name_static;
    static UVector<UServerPlugIn*>* vplugin;
+   static UVector<UServerPlugIn*>* vplugin_static;
 
    static void init();
    static void loadConfigParam();
@@ -658,6 +660,7 @@ protected:
    static RETSIGTYPE handlerForSigCHLD( int signo);
    static RETSIGTYPE handlerForSigWINCH(int signo);
 
+   static void manageChangeOfSystemTime();
    static void sendSignalToAllChildren(int signo, sighandler_t handler);
 
 private:
@@ -670,6 +673,7 @@ private:
 
    friend class UHTTP;
    friend class UHTTP2;
+   friend class UDayLight;
    friend class UTimeStat;
    friend class USSLSocket;
    friend class USSIPlugIn;
@@ -681,6 +685,7 @@ private:
    friend class USCGIPlugIn;
    friend class UFCGIPlugIn;
    friend class UThrottling;
+   friend class UApplication;
    friend class UProxyPlugIn;
    friend class UNoCatPlugIn;
    friend class UGeoIPPlugIn;

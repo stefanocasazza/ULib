@@ -487,4 +487,4 @@ TIMEOUT() {
    fi
 }
 
-# grep -v 'Not a GIF file' err/* | grep --colour -i -E -e 'ERROR|ABORT|ASSERT|SIGSEGV|OVERLAP|genericRead|handler|epoll_ctl|aligned'
+# grep -v 'Not a GIF file' err/* | grep -v 'mongoc: Failed to initialize OpenSSL' | grep --colour -i -E -e 'ERROR|ABORT|ASSERT|SIGSEGV|OVERLAP|genericRead|handler|epoll_ctl|aligned'

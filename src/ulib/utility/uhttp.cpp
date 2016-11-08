@@ -1108,17 +1108,11 @@ void UHTTP::init()
    else
       {
       if (cache_avoid_mask == 0) UDirWalk::setDirectory(*UString::str_point);
-      else
-         {
-         u_pfn_flags |= FNM_INVERT;
-
-         UDirWalk::setDirectory(*UString::str_point, *cache_avoid_mask);
-         }
+      else                       UDirWalk::setDirectory(*UString::str_point, *cache_avoid_mask, FNM_INVERT);
 
       UDirWalk::setFollowLinks(true);
-      UDirWalk::setSuffixFileType(U_CONSTANT_TO_PARAM("usp|c|cgi|template|" U_LIB_SUFFIX));
-
       UDirWalk::setRecurseSubDirs(true, true);
+      UDirWalk::setSuffixFileType(U_CONSTANT_TO_PARAM("usp|c|cgi|template|" U_LIB_SUFFIX));
 
       n = dirwalk.walk(vec);
 
@@ -4457,6 +4451,13 @@ int UHTTP::processRequest()
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
+   if (isPOST())
+      {
+      setBadRequest();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
+
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
    ext->setBuffer(U_CAPACITY);
@@ -6249,7 +6250,7 @@ void UHTTP::setResponse(const UString& content_type, UString* pbody)
       {
       if (U_http_is_accept_gzip == false) *pbody = UStringExt::gunzip(*pbody);
 
-      ptr += u_num2str32(pbody->size(), ptr);
+      ptr = u_num2str32(pbody->size(), ptr);
 
       if (U_http_is_accept_gzip)
          {
@@ -6263,7 +6264,7 @@ void UHTTP::setResponse(const UString& content_type, UString* pbody)
    else
 #endif
    {
-   ptr += u_num2str32(pbody->size(), ptr);
+   ptr = u_num2str32(pbody->size(), ptr);
    }
 
    *UClientImage_Base::body = *pbody;
@@ -6613,7 +6614,7 @@ end:
                             ptr1[20] = '8';
          u_put_unalignedp16(ptr1+21, U_MULTICHAR_CONSTANT16('\r','\n'));
 
-         sz += U_CONSTANT_SIZE("Content-Type: " U_CTYPE_TEXT "\r\n");
+         sz += U_CONSTANT_SIZE("Content-Type: " U_CTYPE_TEXT_WITH_CHARSET "\r\n");
 #     endif
          }
       }
@@ -6623,9 +6624,7 @@ end:
    u_put_unalignedp64(ptr1,   U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
    u_put_unalignedp64(ptr1+8, U_MULTICHAR_CONSTANT64('L','e','n','g','t','h',':',' '));
 
-   ptr1 += U_CONSTANT_SIZE("Content-Length: ");
-
-   ptr1 += u_num2str32(clength, ptr1);
+   ptr1 = u_num2str32(clength, ptr1 + U_CONSTANT_SIZE("Content-Length: "));
 
    if (pEndHeader == 0)
       {
@@ -9891,7 +9890,7 @@ bool UHTTP::checkContentLength(uint32_t length, uint32_t pos)
       char bp[12];
 
       uint32_t sz_len1 = end - pos,
-               sz_len2 = u_num2str32(length, bp);
+               sz_len2 = u_num2str32(length, bp) - bp;
                          
       U_INTERNAL_DUMP("sz_len1 = %u sz_len2 = %u", sz_len1, sz_len2)
 
@@ -10163,7 +10162,7 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
    ptr += U_CONSTANT_SIZE("Content-Length: ");
 
    UMimeMultipartMsg response(U_CONSTANT_TO_PARAM("byteranges"), UMimeMultipartMsg::NONE,
-                              buffer, U_CONSTANT_SIZE("Content-Length: ") + u_num2str32(range_size, ptr), false);
+                              buffer, U_CONSTANT_SIZE("Content-Length: ") + u_num2str32(range_size, ptr) - ptr, false);
 
    for (i = 0; i < n; ++i)
       {
@@ -10181,13 +10180,13 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
       u_put_unalignedp64(ptr+8,  U_MULTICHAR_CONSTANT64('R','a','n','g','e',':',' ','b'));
       u_put_unalignedp32(ptr+16, U_MULTICHAR_CONSTANT32('y','t','e','s'));
 
-       ptr  += U_CONSTANT_SIZE("Content-Range: bytes");
-      *ptr++ = ' ';
-       ptr  += u_num2str32(start, ptr);
-      *ptr++ = '-';
-       ptr  += u_num2str32(_end, ptr);
-      *ptr++ = '/';
-       ptr  += u_num2str32(range_size, ptr);
+       ptr += U_CONSTANT_SIZE("Content-Range: bytes");
+      *ptr  = ' ';
+       ptr  = u_num2str32(start, ptr+1);
+      *ptr  = '-';
+       ptr  = u_num2str32(_end, ptr+1);
+      *ptr  = '/';
+       ptr  = u_num2str32(range_size, ptr+1);
 
       response.add(UMimeMultipartMsg::section(data.substr(start, _end - start + 1),
                                               U_CTYPE_HTML, U_CONSTANT_SIZE(U_CTYPE_HTML),

@@ -2032,6 +2032,31 @@ public:
       U_RETURN(true);
       }
 
+   static const char* getWriteToLog(const UString& logout)
+      {
+      U_TRACE(5, "WiAuthUser::getWriteToLog(%V)", logout.rep)
+
+      U_ASSERT_EQUALS(logout.size(), 2)
+
+      const char* write_to_log = 0;
+
+      switch (logout.c_char(1) - '0')
+         {
+         case U_LOGOUT_NO_TRAFFIC:           write_to_log = "EXIT_NO_TRAFFIC";           break; // 1
+         case U_LOGOUT_NO_ARP_CACHE:         write_to_log = "EXIT_NO_ARP_CACHE";         break; // 2
+         case U_LOGOUT_NO_ARP_REPLY:         write_to_log = "EXIT_NO_ARP_REPLY";         break; // 3 
+         case U_LOGOUT_NO_MORE_TIME:         write_to_log = "EXIT_NO_MORE_TIME";         break; // 4
+         case U_LOGOUT_NO_MORE_TRAFFIC:      write_to_log = "EXIT_NO_MORE_TRAFFIC";      break; // 5
+         case U_LOGOUT_CHECK_FIREWALL:       write_to_log = "EXIT_CHECK_FIREWALL";       break; // 6
+         case U_LOGOUT_REQUEST_FROM_AUTH:    write_to_log = "EXIT_REQUEST_FROM_AUTH";    break; // 7
+         case U_LOGOUT_DIFFERENT_MAC_FOR_IP: write_to_log = "EXIT_DIFFERENT_MAC_FOR_IP"; break; // 8
+
+         default: U_ERROR("Unexpected value for logout: %S", logout.rep);
+         }
+
+      return write_to_log;
+      }
+
    const char* updateCounter(const UString& logout, long time_connected, uint64_t traffic, bool& ask_logout)
       {
       U_TRACE(5, "WiAuthUser::updateCounter(%V,%ld,%llu,%b)", logout.rep, time_connected, traffic, ask_logout)
@@ -2100,21 +2125,7 @@ public:
          {
          connected = brenew;
 
-         U_ASSERT_EQUALS(logout.size(), 2)
-
-         switch (logout.c_char(1) - '0')
-            {
-            case U_LOGOUT_NO_TRAFFIC:           write_to_log = "EXIT_NO_TRAFFIC";           break;
-            case U_LOGOUT_NO_ARP_CACHE:         write_to_log = "EXIT_NO_ARP_CACHE";         break;
-            case U_LOGOUT_NO_ARP_REPLY:         write_to_log = "EXIT_NO_ARP_REPLY";         break;
-            case U_LOGOUT_NO_MORE_TIME:         write_to_log = "EXIT_NO_MORE_TIME";         break;
-            case U_LOGOUT_NO_MORE_TRAFFIC:      write_to_log = "EXIT_NO_MORE_TRAFFIC";      break;
-            case U_LOGOUT_CHECK_FIREWALL:       write_to_log = "EXIT_CHECK_FIREWALL";       break;
-            case U_LOGOUT_REQUEST_FROM_AUTH:    write_to_log = "EXIT_REQUEST_FROM_AUTH";    break;
-            case U_LOGOUT_DIFFERENT_MAC_FOR_IP: write_to_log = "EXIT_DIFFERENT_MAC_FOR_IP"; break;
-
-            default: U_ERROR("Unexpected value for logout: %S", logout.rep);
-            }
+         write_to_log = getWriteToLog(logout);
 
          U_INTERNAL_DUMP("_auth_domain = %V", _auth_domain.rep)
 
@@ -4975,7 +4986,7 @@ static void GET_admin_login_nodog_historical_view_data()
 
       if (UFile::access(U_SRV_BUF2, R_OK))
          {
-         UString body = UFile::contentOf(UString(U_SRV_BUF2));
+         UString body = UFile::contentOf(UString(U_SRV_BUF2, U_SRV_CNT_USR2));
 
          USSIPlugIn::setAlternativeResponse(body);
 
@@ -7163,13 +7174,7 @@ static void POST_info()
                goto next;
                }
 
-            if (bsetNodogReference)
-               {
-               U_ASSERT_EQUALS(logout.size(), 2)
-               U_INTERNAL_ASSERT_EQUALS(logout.c_char(1) - '0', U_LOGOUT_REQUEST_FROM_AUTH)
-
-               user_rec->writeToLOG("EXIT_REQUEST_FROM_AUTH");
-               }
+            if (bsetNodogReference) user_rec->writeToLOG(WiAuthUser::getWriteToLog(logout));
             }
 
          continue;

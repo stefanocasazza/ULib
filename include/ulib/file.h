@@ -234,7 +234,7 @@ public:
       {
       U_TRACE(0, "UFile::open(%S,%d)", _pathname, flags)
 
-      UString path(_pathname);
+      UString path(_pathname, u__strlen(_pathname, __PRETTY_FUNCTION__));
 
       setPath(path);
 
@@ -1097,8 +1097,7 @@ private:
 
    U_DISALLOW_ASSIGN(UFile)
 
-   friend void ULib_init();
-
+   friend class ULib;
    friend class URDB;
    friend class UHTTP;
    friend class UString;

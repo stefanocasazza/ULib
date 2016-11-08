@@ -460,16 +460,6 @@ int main(int argc, char* argv[])
 
    check_match5(u_fnmatch);
 
-#define ESCAPE_SEQUENCE \
-"[\\b\\n\\t\\r\\v\\f\\e][\\0\\001\\002\\003\\004\\005\\006\\007\\x08\\x09\\x0a\\x0b\\x0c\\x0d\\x0e\\x0f][\\x0A\\x0B\\x0C\\x0D\\x0E\\x0F]"
-
-#define decode_ESCAPE_SEQUENCE \
-"[\b\n\t\rv\fe][\000\001\002\003\004\005\006\a\b\t\n\v\f\r\016\017][\n\v\f\r\016\017]"
-
-   U_INTERNAL_ASSERT( u_escape_decode(U_CONSTANT_TO_PARAM(ESCAPE_SEQUENCE), (unsigned char* restrict)buffer, 0) == U_CONSTANT_SIZE(decode_ESCAPE_SEQUENCE) )
-
-   U_INTERNAL_ASSERT( memcmp(buffer, U_CONSTANT_TO_PARAM(decode_ESCAPE_SEQUENCE)) == 0 )
-
    qsort(vec, 13, sizeof(const char*), compare_str);
 
 // U_INTERNAL_ASSERT( strcmp(vec[0],  "libpng-1.0.3.tar.gz") == 0 )

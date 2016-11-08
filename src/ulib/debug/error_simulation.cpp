@@ -75,11 +75,11 @@ void USimulationError::init()
 
    if (fd <= 0)
       {
-      U_MESSAGE("SIMERR<%Woff%W>%W", RED, YELLOW, RESET);
+      U_MESSAGE("SIMERR%W<%Woff%W>%W", YELLOW, RED, YELLOW, RESET);
       }
    else
       {
-      U_MESSAGE("SIMERR<%Won%W>: File<%W%s%W>%W", GREEN, YELLOW, CYAN, file, YELLOW, RESET);
+      U_MESSAGE("SIMERR%W<%Won%W>: File<%W%s%W>%W", YELLOW, GREEN, YELLOW, CYAN, file, YELLOW, RESET);
       }
 }
 

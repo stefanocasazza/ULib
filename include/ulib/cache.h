@@ -169,6 +169,15 @@ protected:
    time_t  dir_template_mtime;
 #endif
 
+   uint32_t hash(const char* key, uint32_t keylen)
+      {
+      U_TRACE(0, "UCache::hash(%.*S,%u)", keylen, key, keylen)
+
+      uint32_t keyhash = u_cdb_hash((unsigned char*)key, keylen, -1) * sizeof(uint32_t) % info->hsize;
+
+      U_RETURN(keyhash);
+      }
+
    uint32_t getLink(uint32_t pos) const
       {
       U_TRACE(0, "UCache::getLink(%u)", pos)
@@ -234,8 +243,7 @@ protected:
    char* add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t ttl);
 
 private:
-   inline uint32_t hash(const char* key, uint32_t keylen) U_NO_EXPORT;
-          void     init(UFile& _x, uint32_t size, bool bexist, bool brdonly) U_NO_EXPORT;
+   void init(UFile& _x, uint32_t size, bool bexist, bool brdonly) U_NO_EXPORT;
 
    U_DISALLOW_COPY_AND_ASSIGN(UCache)
 };

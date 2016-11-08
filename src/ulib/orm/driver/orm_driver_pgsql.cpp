@@ -395,9 +395,9 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
             {
             switch (param->type)
                {
-               case INT2OID: ptr[u_num2str32s(    *(short*)param->buffer, ptr)] = '\0'; break;
-               case INT4OID: ptr[u_num2str32s(      *(int*)param->buffer, ptr)] = '\0'; break;
-               case INT8OID: ptr[u_num2str64s(*(long long*)param->buffer, ptr)] = '\0'; break;
+               case INT2OID: ptr[u_num2str32s(    *(short*)param->buffer, ptr)-ptr] = '\0'; break;
+               case INT4OID: ptr[u_num2str32s(      *(int*)param->buffer, ptr)-ptr] = '\0'; break;
+               case INT8OID: ptr[u_num2str64s(*(long long*)param->buffer, ptr)-ptr] = '\0'; break;
                }
             }
 

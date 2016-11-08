@@ -1,11 +1,11 @@
 [tid 0]<--
-[tid 23352]-->
+[tid 20262]-->
 {Call   main(1)
-	Prima = "io_sono_la_classe_Prima"
-	Seconda = "io_sono_la_classe_Seconda"
+	a = "io_sono_la_classe_Prima"
+	b = "io_sono_la_classe_Seconda"
 	Prima = "io_sono_la_classe_Prima" Seconda = "io_sono_la_classe_Seconda"
 	{Call   Prima::operator<<()
-		this = "io_sono_la_classe_Prima"
+		l = "io_sono_la_classe_Prima"
 	}Return Prima::operator<<()
 	{Call   Seconda::operator<<()
 		a1 = "io_sono_la_classe_Prima"

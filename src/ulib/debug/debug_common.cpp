@@ -90,7 +90,11 @@ static void print_info(void)
 {
    // print program mode and info for ULib...
 
-   U_MESSAGE("DEBUG MODE (pid %W%P%W) - " PACKAGE_STRING " " PLATFORM_VAR " (" __DATE__ ")%W", CYAN, YELLOW, RESET);
+   U_MESSAGE("DEBUG MODE%W (pid %W%P%W) - " PACKAGE_STRING " " PLATFORM_VAR " (" __DATE__ ")%W", YELLOW, BRIGHTCYAN, YELLOW, RESET);
+
+   char* memusage = getenv("UMEMUSAGE");
+
+   U_MESSAGE("UMEMUSAGE%W<%W%s%W>%W", YELLOW, (memusage ? GREEN : RED), (memusage ? "on" : "off"), YELLOW, RESET);
 }
 
 extern "C" void U_EXPORT u_debug_init(void)

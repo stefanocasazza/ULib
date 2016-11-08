@@ -81,7 +81,7 @@ http {
 }
 nocat {
 	 FW_CMD firewall/nodog.fw
-	 DECRYPT_KEY vivalatopa
+	 DECRYPT_KEY puppamelo
 	 CHECK_EXPIRE_INTERVAL 300
     CHECK_TYPE_DEF
 	 FW_ENV_DEF

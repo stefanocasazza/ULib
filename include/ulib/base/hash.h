@@ -58,7 +58,9 @@ static inline uint32_t u_xxhash32(const unsigned char* restrict t, uint32_t tlen
 static inline uint32_t u_xxhash64(const unsigned char* restrict t, uint32_t tlen)
    { return (uint32_t)(((XXH64(t, tlen, u_seed_hash) * (1578233944ULL << 32 | 194370989ULL)) + (20591ULL << 16)) >> 32); }
 
-#ifdef USE_HARDWARE_CRC32
+#ifndef USE_HARDWARE_CRC32
+static inline uint32_t u_hash(const unsigned char* restrict t, uint32_t tlen) { return XXH32(t, tlen, u_seed_hash); }
+#else
 static inline uint32_t u_crc32(const unsigned char* restrict bp, uint32_t len)
 {
    uint32_t h1 = 0xABAD1DEA;
@@ -100,10 +102,6 @@ static inline uint32_t u_crc32(const unsigned char* restrict bp, uint32_t len)
 }
 
 static inline uint32_t u_hash(const unsigned char* restrict t, uint32_t tlen) { return u_crc32(t, tlen); }
-#elif defined(HAVE_ARCH64)
-static inline uint32_t u_hash(const unsigned char* restrict t, uint32_t tlen) { return u_xxhash64(t, tlen); }
-# else
-static inline uint32_t u_hash(const unsigned char* restrict t, uint32_t tlen) { return u_xxhash32(t, tlen); }
 #endif
 
 U_EXPORT uint32_t u_hash_ignore_case(const unsigned char* restrict t, uint32_t tlen) __pure;

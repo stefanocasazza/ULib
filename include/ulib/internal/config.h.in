@@ -257,6 +257,9 @@
    file. */
 #undef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
 
+/* has lrintl */
+#undef HAVE_LRINTL
+
 /* have lstat */
 #undef HAVE_LSTAT
 

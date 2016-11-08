@@ -827,7 +827,7 @@ PTHREAD_FLAGS=""
 
 AC_MSG_CHECKING(if you want to enable build of thread support)
 AC_ARG_ENABLE(thread, [  --enable-thread           enable build of thread support [[default=yes]]])
-if test -z "$enable_thread"; then
+if test -z "$enable_thread" -a "$enable_shared" = "yes"; then
 	enable_thread="yes"
 fi
 AC_MSG_RESULT([$enable_thread])
@@ -977,7 +977,7 @@ AC_FUNC_CLOSEDIR_VOID
 rlib=""
 posix4_lib=""
 
-for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
+for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait epoll_ctl_batch fallocate fallocate64 fnmatch getaddrinfo getnameinfo getopt_long getpriority inet_ntop kqueue kqueue1 lrintl memmem memrchr mkdtemp mremap pipe2 posix_spawn pread sched_getcpu sched_getaffinity sem_init sem_getvalue sem_timedwait sendfile sendfile64 strndup strptime strsignal strtof strtold strtoull gmtime_r timegm nanosleep strerror shm_open; do
     found="no"
     AC_CHECK_FUNC($func,[
         found=$func
@@ -1057,6 +1057,9 @@ for func in accept4 atexit clock_gettime daemon dup3 epoll_create1 epoll_wait ep
         ;;
     kqueue1)
         AC_DEFINE(HAVE_KQUEUE1, [1], [has kqueue1])
+        ;;
+    lrintl)
+        AC_DEFINE(HAVE_LRINTL, [1], [has lrintl])
         ;;
     memmem)
 		  AM_CONDITIONAL(MEMMEM, true)
@@ -1221,7 +1224,7 @@ fi
 AC_MSG_CHECKING(if you want to enable build of examples)
 AC_ARG_ENABLE(examples,[  --enable-examples         enable building of examples [[default=yes]]])
 
-if test -z "$enable_examples"; then
+if test -z "$enable_examples" -a "$enable_shared" = "yes"; then
 	enable_examples="yes"
 	ulib_examples="enabled"
 fi
@@ -2283,7 +2286,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 									   -Wlogical-op -Wduplicated-cond -Wtautological-compare -Wswitch-bool -Wshift-negative-value \
 									   -Wshift-overflow -Wshift-overflow=2 -Wnull-dereference -Wnonnull"
 		CXX_MAYBE_FLAGS_MODERN="-Wterminate -Wlto-type-mismatch -Wsubobject-linkage -Wplacement-new -Woverride-init-side-effects \
-										-Wvirtual-inheritance -Wnamespaces" # -Wtemplates -Wmultiple-inheritance
+										-Wvirtual-inheritance -Wnamespaces" # -Wnamespaces -Wtemplates -Wmultiple-inheritance
 		;;
 	esac
 

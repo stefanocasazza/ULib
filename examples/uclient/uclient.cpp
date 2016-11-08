@@ -51,6 +51,7 @@ public:
 
       // manage options
 
+      const char* p;
       time_t queue_time = 0;
       UString outpath, result, req(U_CAPACITY);
       bool ok = false, include = false, bstdin = false;
@@ -67,7 +68,9 @@ public:
 
       // manage arg operation
 
-      UString url(argv[optind++]);
+      p = argv[optind++];
+
+      UString url(p, strlen(p));
 
       // manage file configuration
 

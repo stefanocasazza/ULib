@@ -12,21 +12,12 @@
 // ============================================================================
 
 #include <ulib/file.h>
-#include <ulib/tokenizer.h>
+#include <ulib/json/value.h>
 #include <ulib/utility/escape.h>
 #include <ulib/internal/chttp.h>
-#include <ulib/container/hash_map.h>
 
-struct ustring    { ustringrep* rep; };
-union uustring    { ustring*    p1; UString*    p2; };
-union uustringrep { ustringrep* p1; UStringRep* p2; };
-
-static ustring     empty_string_storage = { &u_empty_string_rep_storage };
-static uustringrep uustringrepnull      = { &u_empty_string_rep_storage };
-static uustring    uustringnull         = {   &empty_string_storage };
-
-UString*    UString::string_null        = uustringnull.p2;
-UStringRep* UStringRep::string_rep_null = uustringrepnull.p2;
+UString*    UString::string_null        = ULib::uustringnull.p2;
+UStringRep* UStringRep::string_rep_null = ULib::uustringrepnull.p2;
 
 // OPTMIZE APPEND (BUFFERED)
 char* UString::appbuf;
@@ -182,10 +173,12 @@ const UString* UString::str_vary;
 const UString* UString::str_via;
 const UString* UString::str_www_authenticate;
 const UString* UString::str_ULib;
+#endif
 
-ustringrep UString::stringrep_storage[136] = {
+#ifdef U_HTTP2_DISABLE
+static ustringrep stringrep_storage[71] = {
 #else
-ustringrep UString::stringrep_storage[71] = {
+static ustringrep stringrep_storage[136] = {
 #endif
    { U_STRINGREP_FROM_CONSTANT("host") },
    { U_STRINGREP_FROM_CONSTANT("chunked") },
@@ -234,7 +227,7 @@ ustringrep UString::stringrep_storage[71] = {
    // HTTP
    { U_STRINGREP_FROM_CONSTANT("index.html") },
    { U_STRINGREP_FROM_CONSTANT("application/timestamp-reply\r\n") },
-   { U_STRINGREP_FROM_CONSTANT(U_CTYPE_TEXT U_CRLF) },
+   { U_STRINGREP_FROM_CONSTANT(U_CTYPE_TEXT_WITH_CHARSET U_CRLF) },
    { U_STRINGREP_FROM_CONSTANT(U_CTYPE_HTML U_CRLF) },
    { U_STRINGREP_FROM_CONSTANT("application/soap+xml; charset=\"utf-8\"\r\n") },
    { U_STRINGREP_FROM_CONSTANT("Origin") },
@@ -786,6 +779,8 @@ bool UString::shrink()
    U_RETURN(false);
 }
 
+static const int MultiplyDeBruijnBitPosition2[32] = { 0, 1, 28, 2, 29, 14, 24, 3, 30, 22, 20, 15, 25, 17, 4, 8, 31, 27, 13, 23, 21, 19, 16, 7, 26, 12, 18, 6, 11, 5, 10, 9 };
+
 void UStringRep::_release()
 {
    U_TRACE_NO_PARAM(0, "UStringRep::_release()")
@@ -1153,18 +1148,6 @@ __pure bool UStringRep::findEndHeader(uint32_t pos) const
    U_RETURN(false);
 }
 
-UString::UString(const char* t)
-{
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%S", t)
-
-   uint32_t len = (t ? u__strlen(t, __PRETTY_FUNCTION__) : 0);
-
-   if (len) U_NEW(UStringRep, rep, UStringRep(t, len));
-   else     _copy(UStringRep::string_rep_null);
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
 UString::UString(const UString& str, uint32_t pos, uint32_t n)
 {
    U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p,%u,%u", &str, pos, n)
@@ -1175,21 +1158,6 @@ UString::UString(const UString& str, uint32_t pos, uint32_t n)
 
    if (sz) rep = UStringRep::create(sz, sz, str.rep->str + pos);
    else    _copy(UStringRep::string_rep_null);
-
-   U_INTERNAL_ASSERT(invariant())
-}
-
-UString::UString(ustringrep* r)
-{
-   U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%p", r)
-
-#ifdef DEBUG
-   r->_this = (void*)U_CHECK_MEMORY_SENTINEL;
-#endif
-
-   uustringrep u = { r };
-
-   _copy(u.p2);
 
    U_INTERNAL_ASSERT(invariant())
 }
@@ -1832,7 +1800,8 @@ __pure bool UStringRep::strtob() const
 }
 
 #define U_MANAGE_CHECK_FOR_SUFFIX \
-   if (check_for_suffix) \
+   if (check_for_suffix == false) while (u__isdigit(*(endptr-1)) == false) --endptr; \
+   else \
       { \
       suffix = *(endptr-1); \
                         \
@@ -1866,9 +1835,16 @@ __pure long UStringRep::strtol(bool check_for_suffix) const
 
       long value = u_strtol(s, endptr);
 
-      U_INTERNAL_DUMP("value = %ld", value)
+#  ifdef DEBUG
+      {
+      long tmp = ::strtol(s, 0, 10);
 
-      U_INTERNAL_ASSERT_EQUALS(value, ::strtol(str, 0, 10))
+      if (value != tmp)
+         {
+         U_WARNING("value(%V) = %ld differs from ::strtol() = %ld", this, value, tmp);
+         }
+      }
+#  endif
 
       if (suffix)
          {
@@ -1897,9 +1873,16 @@ __pure unsigned long UStringRep::strtoul(bool check_for_suffix) const
 
       unsigned long value = u_strtoul(s, endptr);
 
-      U_INTERNAL_DUMP("value = %lu", value)
+#  ifdef DEBUG
+      {
+      unsigned long tmp = ::strtoul(s, 0, 10);
 
-      U_INTERNAL_ASSERT_EQUALS(value, ::strtoul(str, 0, 10))
+      if (value != tmp)
+         {
+         U_WARNING("value(%V) = %lu differs from ::strtoul() = %lu", this, value, tmp);
+         }
+      }
+#  endif
 
       if (suffix)
          {
@@ -1928,10 +1911,15 @@ __pure int64_t UStringRep::strtoll(bool check_for_suffix) const
 
       int64_t value = u_strtoll(s, endptr);
 
-      U_INTERNAL_DUMP("value = %lld", value)
+#  if defined(DEBUG) && defined(HAVE_STRTOULL)
+      {
+      int64_t tmp = ::strtoll(s, 0, 10);
 
-#  ifdef HAVE_STRTOULL
-      U_INTERNAL_ASSERT_EQUALS(value, ::strtoll(str, 0, 10))
+      if (value != tmp)
+         {
+         U_WARNING("value(%V) = %lld differs from ::strtol() = %lld", this, value, tmp);
+         }
+      }
 #  endif
 
       if (suffix)
@@ -1961,10 +1949,15 @@ __pure uint64_t UStringRep::strtoull(bool check_for_suffix) const
 
       uint64_t value = u_strtoull(s, endptr);
 
-      U_INTERNAL_DUMP("value = %llu", value)
+#  if defined(DEBUG) && defined(HAVE_STRTOULL)
+      {
+      uint64_t tmp = ::strtoull(s, 0, 10);
 
-#  ifdef HAVE_STRTOULL
-      U_INTERNAL_ASSERT_EQUALS(value, ::strtoull(str, 0, 10))
+      if (value != tmp)
+         {
+         U_WARNING("value(%V) = %llu differs from ::strtol() = %llu", this, value, tmp);
+         }
+      }
 #  endif
 
       if (suffix)
@@ -2120,77 +2113,9 @@ double UString::strtod() const
 {
    U_TRACE_NO_PARAM(0, "UString::strtod()")
 
-   if (rep->_length)
-      {
-      UTokenizer t(*this);
+   UValue json;
 
-      t.skipSpaces();
-
-      const char* start = t.getPointer();
-
-      char c = t.next();
-
-      switch (c)
-         {
-         case '+':
-         case '-':
-         case '0':
-         case '1':
-         case '2':
-         case '3':
-         case '4':
-         case '5':
-         case '6':
-         case '7':
-         case '8':
-         case '9':
-            {
-            int type_num = t.getTypeNumber();
-
-            if (type_num != 0)
-               {
-               unsigned char* ptr = (unsigned char*)&type_num;
-
-               if (ptr[0] == '-')
-                  {
-                  double real = (ptr[2] != 0 // scientific notation (Ex: 1.45e10)
-                                    ? ::strtod(start, 0)
-                                    : u_strtod(start, t.getPointer(), type_num));
-
-                  U_INTERNAL_DUMP("real = %g", real)
-
-                  U_INTERNAL_ASSERT_EQUALS(real, ::strtod(start, 0))
-
-                  U_RETURN(real);
-                  }
-
-               if (c == '-')
-                  {
-                  int64_t value = u_strtoll(start, t.getPointer());
-
-                  U_INTERNAL_DUMP("value = %lld", value)
-
-#              ifdef HAVE_STRTOULL
-                  U_INTERNAL_ASSERT_EQUALS(value, ::strtoll(start, 0, 10))
-#              endif
-
-                  U_RETURN(value);
-                  }
-
-               uint64_t value = u_strtoull(start, t.getPointer());
-
-               U_INTERNAL_DUMP("value. = %llu", value)
-
-#           ifdef HAVE_STRTOULL
-               U_INTERNAL_ASSERT_EQUALS(value, ::strtoull(start, 0, 10))
-#           endif
-
-               U_RETURN(value);
-               }
-            }
-         break;
-         }
-      }
+   if (json.parse(*this)) return json.getDouble();
 
    U_RETURN(0);
 }

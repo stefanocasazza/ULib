@@ -97,7 +97,7 @@ public:
 
       if (argv[1] == 0) U_ERROR("Filename not specified");
 
-      UString filename(argv[1]);
+      UString filename(argv[1], strlen(argv[1]));
 
       UString usp = UFile::contentOf(filename);
 
@@ -507,7 +507,8 @@ public:
       if (http_header.empty())
          {
          if (is_html) (void) x.append(U_CONSTANT_TO_PARAM("\n\tUHTTP::mime_index = U_html;\n\t"));
-                      (void) x.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
+
+         (void) x.append(U_CONSTANT_TO_PARAM("\n\tU_http_info.endHeader = 0;\n"));
          }
       else
          {

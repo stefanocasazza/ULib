@@ -12,6 +12,8 @@
 // ============================================================================
  
 #include <ulib/file.h>
+#include <ulib/json/value.h>
+#include <ulib/application.h>
 #include <ulib/utility/interrupt.h>
 
 #ifndef HAVE_POLL_H
@@ -20,13 +22,9 @@
 #endif
 
 #ifdef U_STDCPP_ENABLE
-#  if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
-#     include "./itoa.cpp"
-static uint32_t itoa32(uint32_t num, char* restrict cp) { return itoa_fwd(num, cp) - cp; }
-static uint32_t itoa64(uint64_t num, char* restrict cp) { return itoa_fwd(num, cp) - cp; }
-#  elif (defined(i386) || defined(__amd64) || defined(_M_IX86) || defined(_M_X64)) && !defined(HAVE_OLD_IOSTREAM) && !defined(_MSWINDOWS_) && defined(HAVE_ARCH64)
-#     include "./itoa_sse2.cpp"
-#endif
+# if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
+#  include "./itoa.h"
+# endif
 #else
 U_EXPORT bool __cxa_guard_acquire() { return 1; }
 U_EXPORT bool __cxa_guard_release() { return 1; }
@@ -35,88 +33,76 @@ U_EXPORT void* operator new(  size_t n)   { return malloc(n); }
 U_EXPORT void* operator new[](size_t n)   { return malloc(n); }
 U_EXPORT void  operator delete(  void* p) { free(p); }
 U_EXPORT void  operator delete[](void* p) { free(p); }
-#  ifdef __MINGW32__
+# ifdef __MINGW32__
 U_EXPORT void  operator delete(  void* p,      unsigned int) { free(p); }
 U_EXPORT void  operator delete[](void* p,      unsigned int) { free(p); }
-#  else
+# else
 U_EXPORT void  operator delete(  void* p, long unsigned int) { free(p); }
 U_EXPORT void  operator delete[](void* p, long unsigned int) { free(p); }
-#  endif
+# endif
 #endif
 
 #if defined(USE_LIBSSL) && OPENSSL_VERSION_NUMBER < 0x10100000L
 #  include <openssl/ssl.h>
 #  include <openssl/rand.h>
 #  include <openssl/conf.h>
-
-void ULib_init_openssl()
-{
-   U_TRACE_NO_PARAM(1, "ULib_init_openssl()")
-
-   // A typical TLS/SSL application will start with the library initialization,
-   // will provide readable error messages and will seed the PRNG (Pseudo Random Number Generator).
-   // The environment variable OPENSSL_CONFIG can be set to specify the location of the configuration file
-
-   U_SYSCALL_VOID_NO_PARAM(SSL_load_error_strings);
-   U_SYSCALL_VOID_NO_PARAM(SSL_library_init);
-
-# ifdef HAVE_OPENSSL_97
-   U_SYSCALL_VOID(OPENSSL_config, "%S", 0);
-# endif
-   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_ciphers);
-   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_digests);
-
-   // OpenSSL makes sure that the PRNG state is unique for each thread. On systems that provide "/dev/urandom",
-   // the randomness device is used to seed the PRNG transparently. However, on all other systems, the application
-   // is responsible for seeding the PRNG by calling RAND_add()
-
-# ifdef _MSWINDOWS_
-   U_SYSCALL_VOID(srand, "%ld", u_seed_hash);
-
-   while (RAND_status() == 0) // Seed PRNG only if needed
-      {
-      // PRNG may need lots of seed data
-
-      int tmp = U_SYSCALL_NO_PARAM(rand);
-
-      RAND_seed(&tmp, sizeof(int));
-      }
-# endif
-}
 #endif
 
 #ifndef HAVE_OLD_IOSTREAM
-#  include <ulib/utility/dtoa_milo.h>
-static uint32_t dtoa_milo(double value, char* buffer) { int length, K; Grisu2(value, buffer, &length, &K); return Prettify(buffer, length, K); }
+#  include "./dtoa.h"
 #endif
 
-void ULib_init()
+static struct ustringrep u_empty_string_rep_storage = {
+# ifdef DEBUG
+   (void*)U_CHECK_MEMORY_SENTINEL, /* memory_error (_this) */
+# endif
+# if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
+   0, /* parent - substring increment reference of source string */
+#  ifdef DEBUG
+   0, /* child  - substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'... */
+#  endif
+# endif
+   0, /* _length */
+   0, /* _capacity */
+   0, /* references */
+  ""  /* str - NB: we need an address (see c_str() or isNullTerminated()) and must be null terminated... */
+};
+
+static struct ustring u_empty_string_storage = { &u_empty_string_rep_storage };
+
+uustring    ULib::uustringnull    = { &u_empty_string_storage };
+uustringrep ULib::uustringrepnull = { &u_empty_string_rep_storage };
+
+void ULib::init(const char* mempool, char** argv)
 {
-   U_TRACE_NO_PARAM(1, "ULib_init()")
+   u_init_ulib(argv);
 
-   U_INTERNAL_ASSERT_EQUALS(u_ulib_init, false)
+   U_TRACE(1, "ULib::init(%S,%p)", mempool, argv)
 
-   u_ulib_init = true;
-
-   // conversion number to string
+   // conversion number => string
 
 #ifndef HAVE_OLD_IOSTREAM
-   u_dbl2str = dtoa_milo; 
+   u_dbl2str = dtoa_rapidjson; 
 #endif
-#if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
-   u_num2str32 = itoa32;
-   u_num2str64 = itoa64;
-#elif (defined(i386) || defined(__amd64) || defined(_M_IX86) || defined(_M_X64)) && !defined(HAVE_OLD_IOSTREAM) && !defined(_MSWINDOWS_) && defined(HAVE_ARCH64)
-   if (u_flag_sse >= 2)
-      {
-      u_num2str32 = utoa32_sse2;
-      u_num2str64 = utoa64_sse2;
-      }
-#endif
-
 #ifdef DEBUG
+   char buffer[32];
+
    UMemoryPool::obj_class = "";
    UMemoryPool::func_call = __PRETTY_FUNCTION__;
+
+   U_INTERNAL_ASSERT_EQUALS(u_num2str64(1234567890, buffer)-buffer, 10)
+   U_INTERNAL_ASSERT_EQUALS(memcmp(buffer, "1234567890", 10), 0)
+
+   U_INTERNAL_ASSERT_EQUALS(u_dbl2str(1234567890, buffer)-buffer, 12)
+   U_INTERNAL_ASSERT_EQUALS(memcmp(buffer, "1234567890.0", 12), 0)
+#endif
+
+#if defined(HAVE_CXX14) && GCC_VERSION_NUM > 60100 && defined(HAVE_ARCH64)
+   u_num2str32 = itoa_fwd;
+   u_num2str64 = itoa_fwd;
+
+   U_INTERNAL_ASSERT_EQUALS(u_num2str64(1234567890, buffer)-buffer, 10)
+   U_INTERNAL_ASSERT_EQUALS(memcmp(buffer, "1234567890", 10), 0)
 #endif
 
    // setting from u_init_ulib(char** argv)
@@ -126,7 +112,7 @@ void ULib_init()
    // allocation from memory pool
 
 #if defined(ENABLE_MEMPOOL) // check if we want some preallocation for memory pool
-   char* ptr = U_SYSCALL(getenv, "%S", "UMEMPOOL"); // start from 1... (Ex: 768,768,0,1536,2085,0,0,0,121)
+   const char* ptr = (mempool ? (UValue::jsonParseFlags = 2, mempool) : U_SYSCALL(getenv, "%S", "UMEMPOOL")); // start from 1... (Ex: 768,768,0,1536,2085,0,0,0,121)
 
    // coverity[tainted_scalar]
    if (           ptr &&
@@ -140,7 +126,7 @@ void ULib_init()
    ptr      = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
    u_buffer = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE));
 
-   if (ptr < u_buffer) u_buffer = ptr;
+   if (ptr < u_buffer) u_buffer = (char*)ptr;
 
    u_err_buffer = (char*) UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(256));
 
@@ -209,29 +195,71 @@ void ULib_init()
 
    U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), sizeof(ustringrep))
 
+#if defined(U_STATIC_ONLY)
+   if (UStringRep::string_rep_null == 0)
+      {
+      UString::string_null        = uustringnull.p2;
+      UStringRep::string_rep_null = uustringrepnull.p2;
+      }
+#endif
+
+   UString::str_allocate(0);
+
    U_INTERNAL_DUMP("u_is_tty = %b UStringRep::string_rep_null = %p UString::string_null = %p", u_is_tty, UStringRep::string_rep_null, UString::string_null)
 
    U_INTERNAL_DUMP("sizeof(off_t) = %u SIZEOF_OFF_T = %u", sizeof(off_t), SIZEOF_OFF_T)
 
-   U_INTERNAL_DUMP("u_dosmatch = %p u_dosmatch_with_OR = %p u_pfn_match = %p u_pfn_flags = %u", u_dosmatch, u_dosmatch_with_OR, u_pfn_match, u_pfn_flags)
-
-/**
- * NB: there are to many exceptions...
- *
- * #if defined(_LARGEFILE_SOURCE) && !defined(_MSWINDOWS_)
- * U_INTERNAL_ASSERT_EQUALS(sizeof(off_t), SIZEOF_OFF_T)
- * #endif
- */
-
-   UString::str_allocate(0);
+   /**
+   * NB: there are to many exceptions...
+   *
+   * #if defined(_LARGEFILE_SOURCE) && !defined(_MSWINDOWS_)
+   * U_INTERNAL_ASSERT_EQUALS(sizeof(off_t), SIZEOF_OFF_T)
+   * #endif
+   */
 
 #if defined(USE_LIBSSL) && OPENSSL_VERSION_NUMBER < 0x10100000L
-   ULib_init_openssl();
+   // A typical TLS/SSL application will start with the library initialization,
+   // will provide readable error messages and will seed the PRNG (Pseudo Random Number Generator).
+   // The environment variable OPENSSL_CONFIG can be set to specify the location of the configuration file
+
+   U_SYSCALL_VOID_NO_PARAM(SSL_load_error_strings);
+   U_SYSCALL_VOID_NO_PARAM(SSL_library_init);
+
+# ifdef HAVE_OPENSSL_97
+   U_SYSCALL_VOID(OPENSSL_config, "%S", 0);
+# endif
+   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_ciphers);
+   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_digests);
+
+   // OpenSSL makes sure that the PRNG state is unique for each thread. On systems that provide "/dev/urandom",
+   // the randomness device is used to seed the PRNG transparently. However, on all other systems, the application
+   // is responsible for seeding the PRNG by calling RAND_add()
+
+# ifdef _MSWINDOWS_
+   U_SYSCALL_VOID(srand, "%ld", u_seed_hash);
+
+   while (RAND_status() == 0) // Seed PRNG only if needed
+      {
+      // PRNG may need lots of seed data
+
+      int tmp = U_SYSCALL_NO_PARAM(rand);
+
+      RAND_seed(&tmp, sizeof(int));
+      }
+# endif
 #endif
 
 #ifndef HAVE_POLL_H
    U_INTERNAL_ASSERT_EQUALS(UNotifier::time_obj, 0)
 
    U_NEW_ULIB_OBJECT(UEventTime, UNotifier::time_obj, UEventTime);
+#endif
+}
+
+void ULib::end()
+{
+   
+#if defined(U_STDCPP_ENABLE) && defined(DEBUG)
+   UApplication::printMemUsage();
 #endif
 }

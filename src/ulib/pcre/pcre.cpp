@@ -425,7 +425,9 @@ bool UPCRE::search(const char* stuff, uint32_t stuff_len, int offset, int option
 
       for (i = 1; i < num; ++i)
          {
-         UString str(stringlist[i]);
+         const char* p = stringlist[i];
+
+         UString str(p, u__strlen(p, __PRETTY_FUNCTION__));
 
          resultset->push_back(str);
 

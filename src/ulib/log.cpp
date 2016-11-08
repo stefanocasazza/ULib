@@ -286,7 +286,7 @@ void ULog::updateDate1()
     * 012345678901234567890123456789
     */
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (u_pthread_time)
       {
       (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
@@ -358,7 +358,7 @@ void ULog::updateDate2()
     * 012345678901234567890123456789
     */
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (u_pthread_time)
       {
       (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);
@@ -431,7 +431,7 @@ void ULog::updateDate3()
     * 0123456789012345678901234567890123456789
     */
 
-#if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (u_pthread_time)
       {
       (void) U_SYSCALL(pthread_rwlock_rdlock, "%p", prwlock);

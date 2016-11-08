@@ -118,6 +118,9 @@ int U_EXPORT main (int argc, char* argv[])
 
    UFileConfig y;
 
+   y.load(U_STRING_FROM_CONSTANT("inp/nodog.conf"));
+   y.destroy();
+
    y.table.setIndexFunction(setIndex);
 
    y.table.allocate(MAX_HASH_VALUE+1);

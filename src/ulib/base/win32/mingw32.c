@@ -338,10 +338,9 @@ int mkstemp(char* tmpl)
 
          for (iChr = 0; iChr < 6; ++iChr)
             {
-            /* 528.5 = RAND_MAX / u_b64 */
-
             int iRnd  = rand() / 528.5;
-            *(pChr++) = u_b64[iRnd > 0 ? iRnd - 1 : 0];
+
+            *(pChr++) = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/"[iRnd > 0 ? iRnd - 1 : 0];
             }
          }
       else

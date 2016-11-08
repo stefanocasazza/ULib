@@ -127,7 +127,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("SELECT"), u_buffer, u_num2str32(index, u_buffer));
+      return processRequest(U_RC_INLINE, U_CONSTANT_TO_PARAM("SELECT"), u_buffer, u_num2str32(index, u_buffer) - u_buffer);
       }
 
    bool auth(const char* _password, uint32_t _password_len) // Authenticate to the server
@@ -298,7 +298,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("MOVE"), key, keylen, u_buffer, u_num2str32(destination_db, u_buffer));
+      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("MOVE"), key, keylen, u_buffer, u_num2str32(destination_db, u_buffer) - u_buffer);
       }
 
    bool expire(const char* key, uint32_t keylen, uint32_t sec) // Set a key's time to live in seconds
@@ -307,7 +307,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIRE"), key, keylen, u_buffer, u_num2str32(sec, u_buffer));
+      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIRE"), key, keylen, u_buffer, u_num2str32(sec, u_buffer) - u_buffer);
       }
 
    bool pexpire(const char* key, uint32_t keylen, uint32_t millisec) // Set a key's time to live in milliseconds
@@ -316,7 +316,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIRE"), key, keylen, u_buffer, u_num2str32(millisec, u_buffer));
+      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIRE"), key, keylen, u_buffer, u_num2str32(millisec, u_buffer) - u_buffer);
       }
 
    bool expireat(const char* key, uint32_t keylen, time_t timestamp) // Set the expiration for a key as a UNIX timestamp (seconds since January 1, 1970)
@@ -326,9 +326,9 @@ public:
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
 #  if SIZEOF_TIME_T == 8
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer));
+      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer);
 #  else
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str32(timestamp, u_buffer));
+      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("EXPIREAT"), key, keylen, u_buffer, u_num2str32(timestamp, u_buffer) - u_buffer);
 #  endif
       }
 
@@ -338,7 +338,7 @@ public:
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer));
+      return processRequest(U_RC_INT, U_CONSTANT_TO_PARAM("PEXPIREAT"), key, keylen, u_buffer, u_num2str64(timestamp, u_buffer) - u_buffer);
       }
 
    // Atomically transfer a key from a Redis instance to another one

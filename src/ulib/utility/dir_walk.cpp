@@ -51,6 +51,7 @@
 
 vPF               UDirWalk::call_if_up;
 vPF               UDirWalk::call_internal;
+int               UDirWalk::filter_flags;
 bool              UDirWalk::brecurse;     // recurse subdirectories ?
 bool              UDirWalk::bfollowlinks; // recurse subdirectories when are symbolic link ?
 bool              UDirWalk::tree_root;
@@ -65,9 +66,9 @@ UTree<UString>*   UDirWalk::ptree;
 UVector<UString>* UDirWalk::pvector;
 UHashMap<UFile*>* UDirWalk::cache_file_for_compare;
 
-void UDirWalk::ctor(const UString* dir, const char* _filter, uint32_t _filter_len)
+void UDirWalk::ctor(const UString* dir, const char* _filter, uint32_t _filter_len, int _filter_flags)
 {
-   U_TRACE(0, "UDirWalk::ctor(%p,%.*S,%u)", dir, _filter_len, _filter, _filter_len)
+   U_TRACE(0, "UDirWalk::ctor(%p,%.*S,%u,%d)", dir, _filter_len, _filter, _filter_len, _filter_flags)
 
    max               = 128U * 1024U;
    depth             = -1; // starting recursion depth
@@ -80,19 +81,19 @@ void UDirWalk::ctor(const UString* dir, const char* _filter, uint32_t _filter_le
    brecurse          =
    is_directory      = false;
 
-   if (dir) (void) setDirectory(*dir, _filter, _filter_len);
+   if (dir) (void) setDirectory(*dir, _filter, _filter_len, _filter_flags);
    else
       {
       pathname[0]             = '.';
       pathname[(pathlen = 1)] = '\0';
 
-      setFilter(_filter, _filter_len);
+      setFilter(_filter, _filter_len, _filter_flags);
       }
 }
 
-bool UDirWalk::setDirectory(const UString& dir, const char* _filter, uint32_t _filter_len)
+bool UDirWalk::setDirectory(const UString& dir, const char* _filter, uint32_t _filter_len, int _filter_flags)
 {
-   U_TRACE(0, "UDirWalk::setDirectory(%V,%.*S,%u)", dir.rep, _filter_len, _filter, _filter_len)
+   U_TRACE(0, "UDirWalk::setDirectory(%V,%.*S,%u,%d)", dir.rep, _filter_len, _filter, _filter_len, _filter_flags)
 
    pthis->pathlen = dir.size();
 
@@ -111,7 +112,7 @@ bool UDirWalk::setDirectory(const UString& dir, const char* _filter, uint32_t _f
       U_RETURN(false);
       }
 
-   setFilter(_filter, _filter_len);
+   setFilter(_filter, _filter_len, _filter_flags);
 
    U_RETURN(true);
 }
@@ -171,7 +172,7 @@ U_NO_EXPORT bool UDirWalk::isFile()
           
          U_INTERNAL_DUMP("suffix(%u) = %.*S", len, len, ptr)
 
-         if (UServices::dosMatchWithOR(ptr, len, U_STRING_TO_PARAM(*suffix_file_type), 0)) U_RETURN(true);
+         if (UServices::dosMatchWithOR(ptr, len, U_STRING_TO_PARAM(*suffix_file_type))) U_RETURN(true);
          }
       }
 
@@ -271,13 +272,13 @@ found_file:
          {
          uint32_t d_namlen = NAMLEN(dp);
 
-         U_INTERNAL_DUMP("d_namlen = %u d_name = %.*s filter(%u) = %.*S sort_by = %p",
-                          d_namlen,     d_namlen, dp->d_name, filter_len, filter_len, filter, sort_by)
+         U_INTERNAL_DUMP("d_namlen = %u d_name = %.*s filter(%u) = %.*S filter_flags = %d sort_by = %p",
+                          d_namlen,     d_namlen, dp->d_name, filter_len, filter_len, filter, filter_flags, sort_by)
 
          if (U_ISDOTS(dp->d_name)) continue;
 
          if (filter_len == 0 ||
-             UServices::dosMatchWithOR(dp->d_name, d_namlen, filter, filter_len, u_pfn_flags))
+             UServices::dosMatchWithOR(dp->d_name, d_namlen, filter, filter_len, filter_flags))
             {
             if (sort_by == 0) prepareForCallingRecurse(dp->d_name, d_namlen, U_DT_TYPE);
             else
@@ -587,6 +588,7 @@ const char* UDirWalk::dump(bool reset) const
                   << "call_if_up                " << (void*)call_if_up       << '\n'
                   << "filter_len                " << filter_len              << '\n'
                   << "bfollowlinks              " << bfollowlinks            << '\n'
+                  << "filter_flags              " << filter_flags            << '\n'
                   << "is_directory              " << is_directory            << '\n'
                   << "call_if_directory         " << call_if_directory       << '\n'
                   << "suffix_file_type (UString " << (void*)suffix_file_type << ')';

@@ -74,7 +74,7 @@ void ULDAPEntry::set(char* attribute, char** values, int index_entry)
          {
          U_INTERNAL_DUMP("ULDAPEntry(%d): %S", k, attr_name[j])
 
-         U_NEW(UString, attr_val[k], UString((void*)values[0]));
+         U_NEW(UString, attr_val[k], UString((void*)values[0], u__strlen(values[0], __PRETTY_FUNCTION__)));
 
          for (j = 1; values[j]; ++j)
             {
@@ -377,7 +377,7 @@ bool ULDAP::init(const char* url)
     * Defined in RFC4516 section 2
     */
 
-   Url _url(url, strlen(url));
+   Url _url(url, u__strlen(url, __PRETTY_FUNCTION__));
 
    ludpp = (LDAPURLDesc*) calloc(1, sizeof(LDAPURLDesc));
 

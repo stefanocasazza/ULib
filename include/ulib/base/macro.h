@@ -230,8 +230,9 @@ enum AffermationType {
 #define U_perl   '6' /* Perl script */
 #define U_python '7' /* Python script */
 
-#define U_CTYPE_HTML "text/html; charset=UTF-8"
-#define U_CTYPE_TEXT "text/plain; charset=UTF-8"
+#define U_CTYPE_TEXT              "text/plain"
+#define U_CTYPE_HTML              "text/html; charset=UTF-8"
+#define U_CTYPE_TEXT_WITH_CHARSET "text/plain; charset=UTF-8"
 
 /**
  * Enumeration of Hash (Digest) types

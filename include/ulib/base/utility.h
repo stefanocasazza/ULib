@@ -45,6 +45,18 @@ typedef uint32_t in_addr_t;
 #  include <fnmatch.h>
 #endif
 
+#ifndef FNM_CASEFOLD
+#define FNM_CASEFOLD (1 <<  4) /* compare without regard to case */
+#endif
+#define FNM_INVERT   (1 << 28) /* invert the result */
+
+#ifndef FNM_LEADING_DIR
+#define FNM_LEADING_DIR FNM_PERIOD
+#endif
+#ifndef FNM_IGNORECASE
+#define FNM_IGNORECASE FNM_CASEFOLD
+#endif
+
 #ifdef HAVE_SCHED_H
 #  include <sched.h>
 #elif defined(HAVE_SYS_SCHED_H)
@@ -115,14 +127,9 @@ U_EXPORT void u_need_group(bool necessary);
 
 /* Services */
 
-extern U_EXPORT int         u_num_cpu;
-extern U_EXPORT const char* u_short_units[]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
-
-extern U_EXPORT uint32_t u_gettid(void);
+U_EXPORT uint32_t u_gettid(void);
 
 /* Random number generator */ 
-
-extern U_EXPORT uint32_t u_m_w, u_m_z;
 
 U_EXPORT double   u_get_uniform(void);
 U_EXPORT uint32_t u_get_num_random(uint32_t range);
@@ -267,69 +274,26 @@ U_EXPORT const char* u_strpend(const char* restrict s, uint32_t slen,
 
 typedef bool (*bPFpcupcud)(const char*, uint32_t, const char*, uint32_t, int);
 
-extern U_EXPORT int        u_pfn_flags;
-extern U_EXPORT bPFpcupcud u_pfn_match;
-
 U_EXPORT bool u_fnmatch(     const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
 U_EXPORT bool u_dosmatch(    const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
 U_EXPORT bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
 
 /* multiple patterns separated by '|' */
 
-U_EXPORT bool u_match_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags);
+U_EXPORT bool u_match_with_OR(bPFpcupcud pfn_match, const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags) __pure;
 
 static inline bool u_dosmatch_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
    U_INTERNAL_TRACE("u_dosmatch_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, pattern, n2, flags)
 
-   bool result;
-   bPFpcupcud save = u_pfn_match;
-                     u_pfn_match = u_dosmatch;
-
-        result = u_match_with_OR(s, n1, pattern, n2, flags);
-   u_pfn_match = save;
-
-   return result;
+   return u_match_with_OR(u_dosmatch, s, n1, pattern, n2, flags);
 }
 
 static inline bool u_dosmatch_ext_with_OR(const char* restrict s, uint32_t n1, const char* restrict pattern, uint32_t n2, int flags)
 {
    U_INTERNAL_TRACE("u_dosmatch_ext_with_OR(%.*s,%u,%.*s,%u,%d)", U_min(n1,128), s, n1, n2, pattern, n2, flags)
 
-   bool result;
-   bPFpcupcud save = u_pfn_match;
-                     u_pfn_match = u_dosmatch_ext;
-
-        result = u_match_with_OR(s, n1, pattern, n2, flags);
-   u_pfn_match = save;
-
-   return result;
-}
-
-#ifndef FNM_CASEFOLD
-#define FNM_CASEFOLD (1 <<  4) /* compare without regard to case */
-#endif
-#define FNM_INVERT   (1 << 28) /* invert the result */
-
-#ifndef FNM_LEADING_DIR
-#define FNM_LEADING_DIR FNM_PERIOD
-#endif
-#ifndef FNM_IGNORECASE
-#define FNM_IGNORECASE FNM_CASEFOLD
-#endif
-
-enum MatchType { U_FNMATCH, U_DOSMATCH, U_DOSMATCH_EXT, U_DOSMATCH_WITH_OR, U_DOSMATCH_EXT_WITH_OR };
-
-static inline void u_setPfnMatch(int match_type, int flags)
-{
-   U_INTERNAL_TRACE("u_setPfnMatch(%d,%d)", match_type, flags)
-
-   u_pfn_flags = flags;
-   u_pfn_match = (match_type == U_FNMATCH          ? u_fnmatch          :
-                  match_type == U_DOSMATCH         ? u_dosmatch         :
-                  match_type == U_DOSMATCH_EXT     ? u_dosmatch_ext     :
-                  match_type == U_DOSMATCH_WITH_OR ? u_dosmatch_with_OR :
-                                                     u_dosmatch_ext_with_OR);
+   return u_match_with_OR(u_dosmatch_ext, s, n1, pattern, n2, flags);
 }
 
 /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
@@ -511,83 +475,10 @@ U_EXPORT int  u_isUTF16( const unsigned char* restrict s, uint32_t n) __pure;
 
 static inline bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }
 
-static inline unsigned long u_strtoul(const char* restrict s, const char* restrict e)
-{
-   /* handle up to 10 digits */
-
-   uint32_t len = e-s;
-   unsigned long val = 0UL;
-
-   U_INTERNAL_TRACE("u_strtoul(%p,%p)", s, e)
-
-   U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(e)
-
-#ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues  (MISSING_BREAK) */
-   switch (len)
-      {
-      case 10: val += (s[len-10] - '0') * 1000000000UL;
-      case  9: val += (s[len- 9] - '0') * 100000000UL;
-      case  8: val += (s[len- 8] - '0') * 10000000UL;
-      case  7: val += (s[len- 7] - '0') * 1000000UL;
-      case  6: val += (s[len- 6] - '0') * 100000UL;
-      case  5: val += (s[len- 5] - '0') * 10000UL;
-      case  4: val += (s[len- 4] - '0') * 1000UL;
-      case  3: val += (s[len- 3] - '0') * 100UL;
-      case  2: val += (s[len- 2] - '0') * 10UL;
-      case  1: val += (s[len- 1] - '0');
-      }
-#endif
-
-   U_INTERNAL_PRINT("val = %lu", val)
-
-   return val;
-}
-
-static inline uint64_t u_strtoull(const char* restrict s, const char* restrict e)
-{
-   uint32_t len = e-s;
-   uint64_t val = 0UL;
-
-   U_INTERNAL_TRACE("u_strtoul(%p,%p)", s, e)
-
-   U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_POINTER(e)
-
-#ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues  (MISSING_BREAK) */
-   switch (len)
-      {
-      case 20: val += (s[len-20] - '0') * 10000000000000000000ULL;
-      case 19: val += (s[len-19] - '0') * 1000000000000000000ULL;
-      case 18: val += (s[len-18] - '0') * 100000000000000000ULL;
-      case 17: val += (s[len-17] - '0') * 10000000000000000ULL;
-      case 16: val += (s[len-16] - '0') * 1000000000000000ULL;
-      case 15: val += (s[len-15] - '0') * 100000000000000ULL;
-      case 14: val += (s[len-14] - '0') * 10000000000000ULL;
-      case 13: val += (s[len-13] - '0') * 1000000000000ULL;
-      case 12: val += (s[len-12] - '0') * 100000000000ULL;
-      case 11: val += (s[len-11] - '0') * 10000000000ULL;
-      case 10: val += (s[len-10] - '0') * 1000000000ULL;
-      case  9: val += (s[len- 9] - '0') * 100000000ULL;
-      case  8: val += (s[len- 8] - '0') * 10000000ULL;
-      case  7: val += (s[len- 7] - '0') * 1000000ULL;
-      case  6: val += (s[len- 6] - '0') * 100000ULL;
-      case  5: val += (s[len- 5] - '0') * 10000ULL;
-      case  4: val += (s[len- 4] - '0') * 1000ULL;
-      case  3: val += (s[len- 3] - '0') * 100ULL;
-      case  2: val += (s[len- 2] - '0') * 10ULL;
-      case  1: val += (s[len- 1] - '0');
-      }
-#endif
-
-   U_INTERNAL_PRINT("val = %llu", val)
-
-   return val;
-}
-
-extern U_EXPORT long    u_strtol( const char* restrict s, const char* restrict e) __pure;
-extern U_EXPORT int64_t u_strtoll(const char* restrict s, const char* restrict e) __pure;
-extern U_EXPORT double  u_strtod( const char* restrict s, const char* restrict e, int pos) __pure;
+U_EXPORT unsigned long u_strtoul( const char* restrict s, const char* restrict e) __pure;
+U_EXPORT uint64_t      u_strtoull(const char* restrict s, const char* restrict e) __pure;
+U_EXPORT long          u_strtol(  const char* restrict s, const char* restrict e) __pure;
+U_EXPORT int64_t       u_strtoll( const char* restrict s, const char* restrict e) __pure;
 
 static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
 
@@ -608,7 +499,7 @@ extern U_EXPORT const unsigned char u__ct_hex2int[112];
 
 static inline unsigned int u__hexc2int(unsigned char c) { return u__ct_hex2int[c]; }
 
-static inline void u_int2hex(char* restrict p, uint32_t n) { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = u_hex_upper[((n >> s) & 0x0F)]; }
+static inline void u_int2hex(char* restrict p, uint32_t n) { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = "0123456789ABCDEF"[((n >> s) & 0x0F)]; }
 
 static inline uint32_t u_hex2int(const char* restrict p, uint32_t len)
 { uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u__hexc2int(*p++); return n; }

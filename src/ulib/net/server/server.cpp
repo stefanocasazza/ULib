@@ -146,6 +146,7 @@ UClientImage_Base*                UServer_Base::vClientImage;
 UClientImage_Base*                UServer_Base::pClientImage;
 UClientImage_Base*                UServer_Base::eClientImage;
 UVector<UServerPlugIn*>*          UServer_Base::vplugin;
+UVector<UServerPlugIn*>*          UServer_Base::vplugin_static;
 UServer_Base::shared_data*        UServer_Base::ptr_shared_data;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
@@ -256,7 +257,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UDayLight::handlerTime()")
 
-      if (u_setStartTime() == false) U_WARNING("System date update failed: %#5D", u_now->tv_sec);
+      UServer_Base::manageChangeOfSystemTime();
 
       UEventTime::setTimeToExpire(UTimeDate::getSecondFromDayLight());
 
@@ -1098,6 +1099,7 @@ UServer_Base::~UServer_Base()
 
    U_INTERNAL_ASSERT_POINTER(socket)
    U_INTERNAL_ASSERT_POINTER(vplugin)
+   U_INTERNAL_ASSERT_POINTER(vplugin_static)
 
 #ifdef ENABLE_THREAD
 # if !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
@@ -1218,6 +1220,34 @@ UServer_Base::~UServer_Base()
          UDynamic::clear();
         UNotifier::clear();
    UPlugIn<void*>::clear();
+}
+
+void UServer_Base::manageChangeOfSystemTime()
+{
+   U_TRACE_NO_PARAM(0, "UServer_Base::manageChangeOfSystemTime()")
+
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
+   int u_now_adjust_old = u_now_adjust; // GMT based time
+#endif
+
+   if (u_setStartTime() == false)
+      {
+      U_WARNING("System date update failed: %#5D", u_now->tv_sec);
+      }
+#if defined(U_LINUX) && defined(ENABLE_THREAD)
+   else
+      {
+      if (u_now_adjust_old != u_now_adjust)
+         {
+         if (u_pthread_time) (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
+
+         (void) u_strftime2(ULog::ptr_shared_date->date1, 17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"),    u_now->tv_sec + u_now_adjust);
+         (void) u_strftime2(ULog::ptr_shared_date->date2, 26, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"), u_now->tv_sec + u_now_adjust);
+
+         if (u_pthread_time) (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
+         }
+      }
+#endif
 }
 
 void UServer_Base::closeLog()
@@ -1702,7 +1732,7 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
    U_INTERNAL_ASSERT_POINTER(vplugin_name)
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
 
-   UString x(name);
+   UString x(name, u__strlen(name, __PRETTY_FUNCTION__));
 
    if (vplugin_name->find(x) != U_NOT_FOUND) // NB: we load only the plugin that we want from configuration (PLUGIN var)...
       {
@@ -1761,8 +1791,9 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 next:
       if (_plugin)
          {
-         vplugin->push_back(_plugin);
          vplugin_name_static->push_back(x);
+
+         vplugin_static->push_back(_plugin);
 
 #     ifndef U_LOG_DISABLE
          fmt = "Link phase of static plugin %s success";
@@ -1792,10 +1823,11 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
       UDynamic::setPluginDirectory(plugin_dir);
       }
 
-   U_NEW(UVector<UServerPlugIn*>, vplugin, UVector<UServerPlugIn*>(10U));
-
    U_NEW(UVector<UString>, vplugin_name,        UVector<UString>(10U));
    U_NEW(UVector<UString>, vplugin_name_static, UVector<UString>(20U));
+
+   U_NEW(UVector<UServerPlugIn*>, vplugin,        UVector<UServerPlugIn*>(10U));
+   U_NEW(UVector<UServerPlugIn*>, vplugin_static, UVector<UServerPlugIn*>(10U));
 
    uint32_t i;
    UString item, _name;
@@ -1826,7 +1858,16 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
 
       U_INTERNAL_DUMP("i = %u pos = %u item = %V", i, pos, item.rep)
 
-      if (pos != U_NOT_FOUND) continue;
+      if (pos != U_NOT_FOUND)
+         {
+         vplugin_name_static->erase(pos);
+
+         _plugin = vplugin_static->remove(pos);
+
+         vplugin->push(_plugin);
+
+         continue;
+         }
 
       _name.setBuffer(32U);
 
@@ -1846,17 +1887,13 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
          }
 #  endif
 
-      if (_plugin)
-         {
-         vplugin->insert(i, _plugin);
-         vplugin_name_static->insert(i, item);
-         }
+      if (_plugin) vplugin->push(_plugin);
       }
 
    U_INTERNAL_ASSERT_MAJOR(vplugin_size, 0)
    U_INTERNAL_ASSERT_EQUALS(vplugin->size(), vplugin_size)
-   U_INTERNAL_ASSERT_EQUALS(vplugin_name->size(), vplugin_name_static->size())
 
+   delete vplugin_static;
    delete vplugin_name_static;
 
    if (cfg)
@@ -2186,7 +2223,9 @@ void UServer_Base::init()
          {
          socket->setLocal(cClientSocket.cLocalAddress);
 
-         UString ip = UString(socket->getLocalInfo());
+         const char* p = socket->getLocalInfo();
+
+         UString ip(p, u__strlen(p, __PRETTY_FUNCTION__));
 
               if ( IP_address->empty()) *IP_address = ip;
          else if (*IP_address != ip)
@@ -2587,7 +2626,7 @@ RETSIGTYPE UServer_Base::handlerForSigWINCH(int signo)
       return;
       }
 
-   if (u_setStartTime() == false) U_WARNING("System date update failed: %#5D", u_now->tv_sec);
+   manageChangeOfSystemTime();
 }
 
 void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
@@ -2613,7 +2652,7 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
    if (signo != SIGWINCH) pthis->handlerSignal(signo); // manage signal before we send it to the preforked pool of children...
    else
       {
-      if (u_setStartTime() == false) U_WARNING("System date update failed: %#5D", u_now->tv_sec);
+      manageChangeOfSystemTime();
       }
 
    UProcess::kill(0, signo); // signo is sent to every process in the process group of the calling process...
@@ -2713,37 +2752,6 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
       (void) UDispatcher::exit(0);
 #  elif !defined(USE_RUBY)
       UInterrupt::erase(SIGTERM); // async signal
-#  endif
-
-#  if defined(U_STDCPP_ENABLE) && defined(DEBUG)
-      if (U_SYSCALL(getenv, "%S", "UMEMUSAGE"))
-         {
-         uint32_t len;
-         char buffer[4096];
-         unsigned long vsz, rss;
-
-         u_get_memusage(&vsz, &rss);
-
-         len = u__snprintf(buffer, sizeof(buffer),
-                        U_CONSTANT_TO_PARAM("SIGTERM (Interrupt): "
-                        "address space usage: %.2f MBytes - "
-                                  "rss usage: %.2f MBytes\n"
-                        "%v\nmax_nfd_ready = %u max_depth = %u again:read = (%u/%u - %u%%) wakeup_for_nothing = %u bepollet_threshold = (%u/10)\n"),
-                        getStats().rep,
-                        (double)vsz / (1024.0 * 1024.0),
-                        (double)rss / (1024.0 * 1024.0), UNotifier::max_nfd_ready, max_depth,
-                        nread_again, nread, (nread_again * 100) / nread, wakeup_for_nothing, UNotifier::bepollet_threshold);
-
-         ostrstream os(buffer + len, sizeof(buffer) - len);
-
-         UMemoryPool::printInfo(os);
-
-         len += os.pcount();
-
-         U_INTERNAL_ASSERT_MINOR(len, sizeof(buffer))
-
-         (void) UFile::writeToTmp(buffer, len, O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("%N.memusage.%P"), 0);
-         }
 #  endif
 
       if (preforked_num_kids)
@@ -3246,16 +3254,16 @@ uint32_t UServer_Base::setNumConnection(char* ptr)
 
    uint32_t len;
 
-   if (preforked_num_kids <= 0) len = u_num2str32(UNotifier::num_connection - UNotifier::min_connection - 1, ptr);
+   if (preforked_num_kids <= 0) len = u_num2str32(UNotifier::num_connection - UNotifier::min_connection - 1, ptr) - ptr;
    else
       {
       char* start = ptr;
 
-      *ptr  = '(';
-       ptr += 1+u_num2str32(UNotifier::num_connection - UNotifier::min_connection - 1, ptr+1);
-      *ptr  = '/';
-       ptr += 1+u_num2str32(U_SRV_TOT_CONNECTION - flag_loop, ptr+1); // NB: check for SIGTERM event...
-      *ptr  = ')';
+      *ptr = '(';
+       ptr = u_num2str32(UNotifier::num_connection - UNotifier::min_connection - 1, ptr+1);
+      *ptr = '/';
+       ptr = u_num2str32(U_SRV_TOT_CONNECTION - flag_loop, ptr+1); // NB: check for SIGTERM event...
+      *ptr = ')';
 
       len = ptr-start+1;
       }

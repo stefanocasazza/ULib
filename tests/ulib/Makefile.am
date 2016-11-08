@@ -17,7 +17,8 @@ PRG = test_timeval test_timer test_notifier test_string \
 		test_vector test_options test_application test_tree test_compress test_cache test_date \
 		test_services test_base64 test_header test_entity \
 		test_ipaddress test_socket test_smtp test_pop3 test_imap test_ftp test_http test_rdb_client \
-		test_tokenizer test_query_parser test_multipart test_command test_dialog test_rdb_server test_json test_server test_redis test_elasticsearch test_twilio
+		test_tokenizer test_query_parser test_multipart test_command test_dialog test_rdb_server test_json test_server test_redis test_elasticsearch
+##		test_twilio
 
 TST = timeval.test timer.test notifier.test string.test \
 		file.test cdb.test rdb.test file_config.test log.test \
@@ -125,7 +126,7 @@ test_ssl_client_SOURCES = test_ssl_client.cpp
 test_ssl_server_SOURCES = test_ssl_server.cpp
 test_https_SOURCES = test_https.cpp
 test_url_SOURCES = test_url.cpp
-test_twilio_SOURCES = test_twilio.cpp
+##test_twilio_SOURCES = test_twilio.cpp
 if SSL_TS
 PRG += test_timestamp
 TST += timestamp.test

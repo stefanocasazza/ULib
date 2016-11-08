@@ -94,11 +94,11 @@ public:
 
       // manage config file
 
-      if (argv[optind] == NULL) U_ERROR("arg <file_config> not specified");
+      if (argv[optind] == 0) U_ERROR("arg <file_config> not specified");
 
       // load config file (section SERVER and section REQUEST_AND_RESPONSE)
 
-      UString pathname(argv[optind]);
+      UString pathname(argv[optind], strlen(argv[optind]));
 
       cfg.load(pathname);
 

@@ -13,7 +13,6 @@
 
 #include <ulib/tokenizer.h>
 #include <ulib/utility/services.h>
-#include <ulib/container/vector.h>
 
 bool        UTokenizer::group_skip;
 bool        UTokenizer::avoid_punctuation;
@@ -249,106 +248,6 @@ bool UTokenizer::tokenSeen(const UString* x)
       }
 
    U_RETURN(false);
-}
-
-int UTokenizer::getTypeNumber()
-{
-   U_TRACE_NO_PARAM(0, "UTokenizer::getTypeNumber()")
-
-   U_INTERNAL_ASSERT_EQUALS(u__issign(*s), false)
-   U_INTERNAL_ASSERT(u__issign(*(s-1)) || u__isdigit(*(s-1)))
-
-   int type_num = u__isdigit(*(s-1));
-
-   if (s < end)
-      {
-      const char* start = s;
-            char      c = *s;
-
-      U_INTERNAL_DUMP("c = %C type_num = %d", c, type_num)
-
-      if (u__isdigit(c))
-         {
-         if (type_num == 0) type_num = 1;
-
-         while (u__isdigit(*++s)) {}
-
-         if (s >= end)
-            {
-            s = end;
-
-            U_RETURN(type_num);
-            }
-
-         c = *s;
-         }
-
-      U_INTERNAL_DUMP("c = %C type_num = %d", c, type_num)
-
-      if (c == '.' &&
-          type_num <= 1)
-         {
-         int pos = (s-start);
-
-         U_INTERNAL_DUMP("pos = %u s = %.4S", (s-start), s)
-
-         unsigned char* ptr = (unsigned char*)&type_num;
-
-         ptr[0] = (unsigned char)'-';
-         ptr[1] = (pos == 0 ? 1     : (unsigned char)(u__isdigit(*(start-1))
-                            ? pos+1 : pos));
-
-         while (u__isdigit(*++s)) {}
-
-         if (s >= end)
-            {
-            s = end;
-
-            U_RETURN(type_num);
-            }
-
-         c = *s;
-
-         U_INTERNAL_DUMP("c = %C type_num = [%u:%u:%u:%u]", c, ptr[0], ptr[1], ptr[2], ptr[3])
-         }
-
-      if (u__toupper(c) == 'E') // scientific notation (Ex: 1.45e-10)
-         {
-         int pos = (s-start);
-
-         U_INTERNAL_DUMP("pos = %u s = %.4S", (s-start), s)
-
-         unsigned char* ptr = (unsigned char*)&type_num;
-
-         ptr[0] = (unsigned char)'-';
-         ptr[2] = (pos == 0 ? 1     : (unsigned char)(u__isdigit(*(start-1))
-                            ? pos+1 : pos));
-
-         c = *++s;
-
-         if (u__issign(c))
-            {
-            ptr[3] = (unsigned char)c;
-
-            c = *++s;
-            }
-
-         if (u__isdigit(c))
-            {
-            while (u__isdigit(*++s)) {}
-
-            if (s >= end) s = end;
-
-            U_INTERNAL_DUMP("type_num = [%u:%u:%u:%u]", ptr[0], ptr[1], ptr[2], ptr[3])
-
-            U_RETURN(type_num);
-            }
-
-         U_RETURN(0);
-         }
-      }
-
-   U_RETURN(type_num);
 }
 
 UString UTokenizer::getTokenQueryParser()

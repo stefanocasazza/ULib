@@ -523,7 +523,9 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
       if (result == 0) U_RETURN(false);
 
 #  if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-      staple.cert = UCertificate::readX509(UFile::contentOf(UString(cert_file)), "PEM");
+      UString str(cert_file, u__strlen(cert_file, __PRETTY_FUNCTION__));
+
+      staple.cert = UCertificate::readX509(UFile::contentOf(str), "PEM");
 
       U_INTERNAL_DUMP("staple.cert = %p", staple.cert)
 #  endif
@@ -569,7 +571,9 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
       if (result == 0) U_RETURN(false);
 
 #  if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-      staple.pkey = UServices::loadKey(UFile::contentOf(UString(private_key_file)), "PEM", true, passwd, 0);
+      UString str(private_key_file, u__strlen(private_key_file, __PRETTY_FUNCTION__));
+
+      staple.pkey = UServices::loadKey(UFile::contentOf(str), "PEM", true, passwd, 0);
 
       U_INTERNAL_DUMP("staple.pkey = %p", staple.pkey)
 #  endif

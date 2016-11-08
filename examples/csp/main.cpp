@@ -80,7 +80,8 @@
 
          if (method)
             {
-            if (argv[  optind])   ca = UString(argv[optind]);
+            ca = UString(argv[optind]);
+
             if (argv[++optind]) days =    atoi(argv[optind]);
             if (argv[++optind])  cnf = UString(argv[optind]);
             }
@@ -141,7 +142,8 @@
 
          if (method)
             {
-            if (argv[  optind])     ca = UString(argv[optind]);
+            ca = UString(argv[optind]);
+
             if (argv[++optind])   pkcs = UString(argv[optind]);
             if (argv[++optind]) policy = UString(argv[optind]);
             }
@@ -181,8 +183,9 @@
 
          if (method)
             {
-            if (argv[  optind])       ca = UString(argv[optind]);
-            if (argv[++optind]) compress =    atoi(argv[optind]);
+            ca = UString(argv[optind]);
+
+            if (argv[++optind]) compress = atoi(argv[optind]);
             }
          else
             {
@@ -208,7 +211,8 @@
 
          if (method)
             {
-            if (argv[  optind])    ca  = UString(argv[optind]);
+            ca = UString(argv[optind]);
+
             if (argv[++optind]) serial = UCertificate::checkForSerialNumber(argv[optind]);
             }
          else
@@ -291,10 +295,7 @@
          // --------------------------------------------------------------------------------
          // int ns__CSP_ZERO_CERTS(const char* ca, char** response);
 
-         if (method)
-            {
-            if (argv[optind]) ca = UString(argv[optind]);
-            }
+         if (method) ca = UString(argv[optind]);
 
          if (ca.empty()) U_ERROR("missing CA name");
 
@@ -309,10 +310,7 @@
          // parameter: <CA name>
          // --------------------------------------------------------------------------------
 
-         if (method)
-            {
-            if (argv[optind]) ca = UString(argv[optind]);
-            }
+         if (method) ca = UString(argv[optind]);
 
          if (ca.empty()) U_ERROR("missing CA name");
 
@@ -327,10 +325,7 @@
          // parameter: <CA name>
          // --------------------------------------------------------------------------------
 
-         if (method)
-            {
-            if (argv[optind]) ca = UString(argv[optind]);
-            }
+         if (method) ca = UString(argv[optind]);
 
          if (ca.empty()) U_ERROR("missing CA name");
 
@@ -345,10 +340,7 @@
          // parameter: <CA name>
          // --------------------------------------------------------------------------------
 
-         if (method)
-            {
-            if (argv[optind]) ca = UString(argv[optind]);
-            }
+         if (method) ca = UString(argv[optind]);
 
          if (ca.empty()) U_ERROR("missing CA name");
 

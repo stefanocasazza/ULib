@@ -162,15 +162,6 @@ bool UCache::open(const UString& path, const UString& dir, const UString* enviro
    U_RETURN(false);
 }
 
-inline uint32_t UCache::hash(const char* key, uint32_t keylen)
-{
-   U_TRACE(0, "UCache::hash(%.*S,%u)", keylen, key, keylen)
-
-   uint32_t keyhash = u_cdb_hash((unsigned char*)key, keylen, -1) * sizeof(uint32_t) % info->hsize;
-
-   U_RETURN(keyhash);
-}
-
 char* UCache::add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t _ttl)
 {
    U_TRACE(0, "UCache::add(%.*S,%u,%u,%u)", keylen, key, keylen, datalen, _ttl)

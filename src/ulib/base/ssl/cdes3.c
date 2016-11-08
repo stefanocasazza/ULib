@@ -77,7 +77,7 @@ void u_des3_init(void)
 {
    U_INTERNAL_TRACE("u_des3_init()")
 
-/* OpenSSL_add_all_algorithms(); // called in ULib_init() */
+/* OpenSSL_add_all_algorithms(); // called in ULib::init() */
 
    md     = EVP_md5();
    cipher = EVP_des_ede3_cbc(); /* EVP_get_cipherbyname("SN_des_ede3_cbc"); // des3 */

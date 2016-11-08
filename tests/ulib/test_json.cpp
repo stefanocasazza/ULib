@@ -89,7 +89,7 @@ static void testQuery(const UString& json, const char* cquery, const UString& ex
    U_TRACE(5, "testQuery(%V,%S,%V)", json.rep, cquery, expected.rep)
 
    char buffer[4096];
-   UString result, query(cquery);
+   UString result, query(cquery, strlen(cquery));
    int dataType = UValue::jread(json, query, result);
 
    cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("dataType = (%d %S) query = %V result(%u) = %V UValue::jread_elements = %d UValue::jread_error = (%d %S)\n"),
@@ -103,12 +103,11 @@ static void testVector()
 {
    U_TRACE(5, "testVector()")
 
-   bool ok;
    UValue json_vec;
    UVector<UString> y;
    UString result, vecJson = U_STRING_FROM_CONSTANT("[\"riga 1\",\"riga 2\",\"riga 3\",\"riga 4\"]");
 
-   ok = JSON_parse(vecJson, y);
+   bool ok = JSON_parse(vecJson, y);
 
    U_INTERNAL_ASSERT(ok)
 
@@ -145,13 +144,12 @@ static void testMap()
 {
    U_TRACE(5, "testMap()")
 
-   bool ok;
    UValue json_obj;
    UHashMap<UString> x;
+   UVector<UString> members;
    UString result, mapJson = U_STRING_FROM_CONSTANT("{\"key1\":\"riga 1\",\"key2\":\"riga 2\",\"key3\":\"riga 3\",\"key4\":\"riga 4\"}");
 
-   ok = JSON_parse(mapJson, x);
-
+   bool ok = JSON_parse(mapJson, x);
    U_INTERNAL_ASSERT(ok)
 
    ok = (x["key1"] == U_STRING_FROM_CONSTANT("riga 1"));
@@ -180,19 +178,27 @@ static void testMap()
 
    result = JSON_stringify(json_obj, x);
 
-   U_ASSERT_EQUALS( result.size(), mapJson.size() )
+   U_ASSERT_EQUALS(result.size(), mapJson.size())
+
+   uint32_t n = json_obj.getMemberNames(members);
+   U_INTERNAL_ASSERT(n == 4)
+
+   const char* str = UObject2String(members);
+   U_INTERNAL_DUMP("UObject2String(members) = %S", str)
+
+   ok = json_obj.isMemberExist(U_CONSTANT_TO_PARAM("key4"));
+   U_INTERNAL_ASSERT(ok)
 }
 
 static void testObject()
 {
    U_TRACE(5, "testObject()")
 
-   bool ok;
-   Request request;
    UValue json_obj;
+   Request request;
    UString result, reqJson = U_STRING_FROM_CONSTANT("{\"token\":\"A619828KAIJ6D3\",\"type\":\"localesData\",\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\"}");
 
-   ok = JSON_parse(reqJson, request);
+   bool ok = JSON_parse(reqJson, request);
 
    U_INTERNAL_ASSERT(ok)
 
@@ -226,22 +232,95 @@ U_EXPORT main (int argc, char* argv[])
 
    U_TRACE(5, "main(%d)", argc)
  
-   bool ok;
    UValue json;
    UCrono crono;
    char buffer[4096];
    uint32_t i, n, params[2] = { 2, 1 };
-   UString result(U_CAPACITY), result1, content, filename, array;
+   UString result(U_CAPACITY), result1, filename, content, array;
+
+   UValue::jsonParseFlags = 2;
 
    /*
-   content = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/json/fail25.json"));
+   content = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/json/pass01.json")); // canada.json citm_catalog.json inp/json/pass01.json
 
    if (json.parse(content)) cout << json.output() << '\n';
 
    json.clear();
 
-   U_INTERNAL_ASSERT(false)
+   return -1;
    */
+
+   content = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/json/prova.json"));
+
+   bool ok = json.parse(content);
+
+   U_INTERNAL_ASSERT(ok)
+
+   result1 = json.prettify();
+   
+   U_INTERNAL_ASSERT_EQUALS(content, result1)
+
+   json.clear();
+
+   UValue::stringify(result, UValue(U_STRING_FROM_CONSTANT("message"), U_STRING_FROM_CONSTANT("Hello, World!")));
+
+   cout << result << '\n';
+
+   ok = json.parse(U_STRING_FROM_CONSTANT("[\"Hello\\nWorld\"]"));
+
+   U_INTERNAL_ASSERT(ok)
+
+   cout << json.at(0)->getString() << '\n';
+
+   json.clear();
+
+   ok = json.parse(U_STRING_FROM_CONSTANT("[\"Hello\\u0000World\"]"));
+
+   U_INTERNAL_ASSERT(ok)
+
+   cout << json.at(0)->getString() << '\n';
+
+   json.clear();
+
+   ok = json.parse(U_STRING_FROM_CONSTANT("[\"\\\"\\\\/\\b\\f\\n\\r\\t\"]")); // expect: `""\/^H^L ^M "` (length: 8)
+
+   U_INTERNAL_ASSERT(ok)
+
+   cout << json.at(0)->getString() << '\n';
+
+   json.clear();
+
+   ok = json.parse(U_STRING_FROM_CONSTANT("[\"\\u0024\"]")); // "\x24" // Dollar sign U+0024
+
+   U_INTERNAL_ASSERT(ok)
+
+   cout << json.at(0)->getString() << '\n';
+
+   json.clear();
+
+   ok = json.parse(U_STRING_FROM_CONSTANT("[\"\\u00A2\"]")); // "\xC2\xA2" Cents sign U+00A2
+
+   U_INTERNAL_ASSERT(ok)
+
+   cout << json.at(0)->getString() << '\n';
+
+   json.clear();
+
+   ok = json.parse(U_STRING_FROM_CONSTANT("[\"\\u20AC\"]")); // "\xE2\x82\xAC" Euro sign U+20AC
+
+   U_INTERNAL_ASSERT(ok)
+
+   cout << json.at(0)->getString() << '\n';
+
+   json.clear();
+
+   ok = json.parse(U_STRING_FROM_CONSTANT("[\"\\uD834\\uDD1E\"]")); // "\xF0\x9D\x84\x9E" G clef sign U+1D11E 
+
+   U_INTERNAL_ASSERT(ok)
+
+   cout << json.at(0)->getString() << '\n';
+
+   json.clear();
 
    // locate "anArray"...
 
@@ -318,7 +397,7 @@ U_EXPORT main (int argc, char* argv[])
       {
       result1.clear();
 
-      if (UValue::jreadArrayStep(array, result1) != OBJECT_VALUE)
+      if (UValue::jreadArrayStep(array, result1) != UValue::OBJECT_VALUE)
          {
          U_ERROR("Array element wasn't an object! i = %d UValue::jread_pos = %u", i, UValue::jread_pos);
          }
@@ -334,45 +413,6 @@ U_EXPORT main (int argc, char* argv[])
 
    cerr.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("# Time Consumed with              jreadArrayStep() = %4ld ms\n"), crono.getTimeElapsed()));
 
-   result1.clear();
-
-   while (cin >> filename)
-      {
-      content = UFile::contentOf(filename);
-
-      if (json.parse(content)) cout << json.output() << '\n';
-
-      json.clear();
-      }
-
-   cout << '\n';
-
-#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11) && defined(U_COMPILER_RANGE_FOR)
-   UValue json_vec;
-   std::vector<unsigned int> v = {0, 1, 2, 3, 4, 5};
-   UString vecJson = U_STRING_FROM_CONSTANT("[0,1,2,3,4,5]");
-
-   U_ASSERT_EQUALS(JSON_stringify(json_vec, v), vecJson)
-
-   v.clear();
-
-   ok = JSON_parse(vecJson, v);
-   U_INTERNAL_ASSERT(ok)
-
-   ok = (v[0] == 0);
-   U_INTERNAL_ASSERT(ok)
-   ok = (v[1] == 1);
-   U_INTERNAL_ASSERT(ok)
-   ok = (v[2] == 2);
-   U_INTERNAL_ASSERT(ok)
-   ok = (v[3] == 3); 
-   U_INTERNAL_ASSERT(ok)
-   ok = (v[4] == 4); 
-   U_INTERNAL_ASSERT(ok)
-   ok = (v[5] == 5); 
-   U_INTERNAL_ASSERT(ok)
-#endif
-
    UString searchJson = U_STRING_FROM_CONSTANT("{\"took\":1,\"timed_out\":false,\"_shards\":{\"total\":1,\"successful\":1,\"failed\":0},"
                                                "\"hits\":{\"total\":1,\"max_score\":1.0,\"hits\":[{\"_index\":\"tfb\",\"_type\":\"world\",\"_id\":\"6464\",\"_score\":1.0,"
                                                "\"_source\":{ \"randomNumber\" : 9342 }}]}}");
@@ -385,7 +425,8 @@ U_EXPORT main (int argc, char* argv[])
 
    int city;
    double pricePoint;
-   UString workingString, query(U_STRING_FROM_CONSTANT("{ \"colorShifts\" : { \"H67\" : -1 }, \"name\" : \"Mr. Taka Ramen\", \"category\" : 39, \"grouping\" : 0, \"bumpUp\" : false, \"businessID\" : \"B5401\", \"foundationColor\" : 3, \"coordinates\" : [ -73.9888983, 40.7212405 ] }"));
+   UString workingString, query(U_STRING_FROM_CONSTANT("{ \"colorShifts\" : { \"H67\" : -1 }, \"name\" : \"Mr. Taka Ramen\", \"category\" : 39, \"grouping\" : 0,"
+                                                       " \"bumpUp\" : false, \"businessID\" : \"B5401\", \"foundationColor\" : 3, \"coordinates\" : [ -73.9888983, 40.7212405 ] }"));
 
    (void) U_JFIND(U_STRING_FROM_CONSTANT("{ \"pricePoint\" : 2.48333333333333, \"socialWeight\" : 8.75832720587083, \"gender\" : 0, \"lessThan16\" : false }"), "pricePoint", pricePoint);
 
@@ -405,12 +446,7 @@ U_EXPORT main (int argc, char* argv[])
 
    U_INTERNAL_ASSERT_EQUALS(workingString, "[ -73.9888983, 40.7212405 ]")
 
-   testMap();
-   testVector();
-   testObject();
-
    testQuery( U_STRING_FROM_CONSTANT("{ \"_id\" : 3457, \"id\" : 3457, \"randomNumber\" : 8427 }"), "{'randomNumber'", U_STRING_FROM_CONSTANT("8427") );
-
    testQuery( exampleJson, "", exampleJson );
    testQuery( exampleJson, "[1", U_STRING_FROM_CONSTANT("") );
    testQuery( exampleJson, "{'astring'", U_STRING_FROM_CONSTANT("This is a string") );
@@ -433,5 +469,44 @@ U_EXPORT main (int argc, char* argv[])
    testQuery( exampleJson, "{'anObject' {1", U_STRING_FROM_CONSTANT("two") );
    testQuery( exampleJson, "{999", U_STRING_FROM_CONSTANT("") );
 
-   result.clear();
+#if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11) && defined(U_COMPILER_RANGE_FOR)
+   UValue json_vec;
+   std::vector<unsigned int> v = {0, 1, 2, 3, 4, 5};
+   UString vecJson = U_STRING_FROM_CONSTANT("[0,1,2,3,4,5]");
+
+   result1 = JSON_stringify(json_vec, v);
+
+   U_ASSERT_EQUALS(result1, vecJson)
+
+   v.clear();
+
+   ok = JSON_parse(vecJson, v);
+   U_INTERNAL_ASSERT(ok)
+
+   ok = (v[0] == 0);
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[1] == 1);
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[2] == 2);
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[3] == 3);
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[4] == 4);
+   U_INTERNAL_ASSERT(ok)
+   ok = (v[5] == 5);
+   U_INTERNAL_ASSERT(ok)
+#endif
+
+   testMap();
+   testVector();
+   testObject();
+
+   while (cin >> filename)
+      {
+      content = UFile::contentOf(filename);
+
+      if (json.parse(content)) cout << json.output() << '\n';
+
+      json.clear();
+      }
 }

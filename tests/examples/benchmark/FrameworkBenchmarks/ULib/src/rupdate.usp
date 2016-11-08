@@ -5,7 +5,7 @@ TechEmpower Web Framework Benchmarks
 <!--#declaration
 #include "world.h"
 
-static char buffer[128];
+static char buffer[8192];
 static UREDISClient_Base* rc;
 static UVector<World*>* pvworld;
 
@@ -71,7 +71,7 @@ for (i = 0; i < num_queries; ++i)
 
    u_put_unalignedp64(pbuffer, U_MULTICHAR_CONSTANT64(' ','w','o','r','l','d',':','\0'));
 
-   pbuffer += 7+u_num2str32(pworld->id = u_get_num_random(10000-1), pbuffer+7);
+   pbuffer = u_num2str32(pworld->id = u_get_num_random(10000-1), pbuffer+7);
    }
 
 (void) rc->mget(buffer, pbuffer-buffer);
@@ -85,9 +85,9 @@ while (true)
 
    u_put_unalignedp64(pbuffer, U_MULTICHAR_CONSTANT64(' ','w','o','r','l','d',':','\0'));
 
-   pbuffer += 7+u_num2str32(pworld->id, pbuffer+7);
-  *pbuffer  = ' ';
-   pbuffer += 1+u_num2str32(pworld->randomNumber = u_get_num_random(10000-1), pbuffer+1);
+   pbuffer = u_num2str32(pworld->id, pbuffer+7);
+  *pbuffer = ' ';
+   pbuffer = u_num2str32(pworld->randomNumber = u_get_num_random(10000-1), pbuffer+1);
 
 #ifdef AS_cpoll_cppsp_DO
    USP_PRINTF("{\"id\":%u,\"randomNumber\":%u}", pworld->id, pworld->randomNumber);

@@ -84,8 +84,8 @@ uint32_t u_quoted_printable_encode(const unsigned char* restrict inptr, uint32_t
             if (ws)
                {
                *outptr++ = '=';
-               *outptr++ = u_hex_upper[(ws >> 4) & 0xf];
-               *outptr++ = u_hex_upper[ ws       & 0xf];
+               *outptr++ = "0123456789ABCDEF"[(ws >> 4) & 0xf];
+               *outptr++ = "0123456789ABCDEF"[ ws       & 0xf];
 
                ws = '\0';
                }
@@ -111,8 +111,8 @@ uint32_t u_quoted_printable_encode(const unsigned char* restrict inptr, uint32_t
                 ch == '=')
                {
                *outptr++ = '=';
-               *outptr++ = u_hex_upper[(ch >> 4) & 0xf];
-               *outptr++ = u_hex_upper[ ch       & 0xf];
+               *outptr++ = "0123456789ABCDEF"[(ch >> 4) & 0xf];
+               *outptr++ = "0123456789ABCDEF"[ ch       & 0xf];
 
                n += 3;
                }

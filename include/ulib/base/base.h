@@ -149,9 +149,9 @@ typedef bool  (*bPFpcpv) (const char*,const void*);
 typedef void  (*vPFpvpc) (void*,char*);
 typedef void  (*vPFpvpv) (void*,void*);
 
-typedef uint32_t (*uPFdpc)   (double,char*);
-typedef uint32_t (*uPFu32pc) (uint32_t,char*);
-typedef uint32_t (*uPFu64pc) (uint64_t,char*);
+typedef char* (*pcPFdpc)   (double,char*);
+typedef char* (*pcPFu32pc) (uint32_t,char*);
+typedef char* (*pcPFu64pc) (uint64_t,char*);
 
 typedef void* (*pvPFpvpb)  (void*,bool*);
 typedef int   (*qcompare)  (const void*,const void*);
@@ -167,6 +167,8 @@ typedef struct U_DATA {
  * #define U_SUBSTR_INC_REF // NB: be aware that in this way we don't capture the event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'...
  */
 
+/* String representation */
+
 typedef struct ustringrep {
 #ifdef DEBUG
    const void* _this;
@@ -181,15 +183,16 @@ typedef struct ustringrep {
    const char* str;
 } ustringrep;
 
-/* String representation */
-extern U_EXPORT struct ustringrep u_empty_string_rep_storage;
+typedef struct ustring { struct ustringrep* rep; } ustring;
 
 /* Internal buffer */
+
 extern U_EXPORT char* u_buffer;
 extern U_EXPORT char* u_err_buffer;
 extern U_EXPORT uint32_t u_buffer_len; /* assert that u_buffer is busy if u_buffer_len != 0 */
 
 /* Startup */
+
 extern U_EXPORT pid_t u_pid;
 extern U_EXPORT uint32_t u_pid_str_len;
 extern U_EXPORT uint32_t u_progname_len;
@@ -202,6 +205,7 @@ extern U_EXPORT const char* restrict u_progname;
 U_EXPORT void u_init_ulib(char** restrict argv);
 
 /* At Exit */
+
 extern U_EXPORT vPF u_fns[32];
 extern U_EXPORT int u_fns_index;
 
@@ -210,12 +214,14 @@ U_EXPORT void u_atexit(vPF function);
 U_EXPORT void u_unatexit(vPF function);
 
 /* Current working directory */
+
 extern U_EXPORT char* u_cwd;
 extern U_EXPORT uint32_t u_cwd_len;
 
 U_EXPORT void u_getcwd(void);
 
 /* Time services */
+
 extern U_EXPORT bool u_daylight;
 extern U_EXPORT int u_now_adjust;   /* GMT based time */
 extern U_EXPORT time_t u_start_time;
@@ -224,17 +230,16 @@ extern U_EXPORT void* u_pthread_time; /* pthread clock */
 extern U_EXPORT struct timeval* u_now;
 extern U_EXPORT struct tm u_strftime_tm;
 extern U_EXPORT struct timeval u_timeval;
-
-extern U_EXPORT const char* u_months[12];    /* "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec" */
-extern U_EXPORT const char* u_months_it[12]; /* "gen", "feb", "mar", "apr", "mag", "giu", "lug", "ago", "set", "ott", "nov", "dic" */
-
 extern U_EXPORT const char* u_day_name[7];    /* "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" */
 extern U_EXPORT const char* u_month_name[12]; /* "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" */
 
 U_EXPORT bool     u_setStartTime(void);
 U_EXPORT unsigned u_getMonth(const char* buf) __pure;
 
+/* Services */
+
 extern U_EXPORT int u_errno; /* An errno value */
+extern U_EXPORT int u_num_cpu;
 extern U_EXPORT int u_flag_exit;
 extern U_EXPORT int u_flag_test;
 extern U_EXPORT bool u_recursion;
@@ -242,16 +247,11 @@ extern U_EXPORT bool u_fork_called;
 extern U_EXPORT bool u_exec_failed;
 extern U_EXPORT char u_user_name[32];
 extern U_EXPORT uint32_t u_flag_sse; /* detect SSE2, SSSE3, SSE4.2 */
+extern U_EXPORT uint32_t u_m_w, u_m_z;
+extern U_EXPORT const char* u_short_units[6]; /* { "B", "KB", "MB", "GB", "TB", 0 } */
 extern U_EXPORT const char* restrict u_tmpdir;
 extern U_EXPORT char u_hostname[HOST_NAME_MAX+1];
-extern U_EXPORT const int MultiplyDeBruijnBitPosition2[32];
 extern U_EXPORT uint32_t u_hostname_len, u_user_name_len, u_seed_hash;
-
-extern U_EXPORT const unsigned char u_b64[64];    /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/" */
-extern U_EXPORT const unsigned char u_b64url[64]; /* "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_" */
-
-extern U_EXPORT const unsigned char u_hex_upper[16]; /* "0123456789ABCDEF" */
-extern U_EXPORT const unsigned char u_hex_lower[16]; /* "0123456789abcdef" */
 
 U_EXPORT void u_setPid(void);
 U_EXPORT void u_initRandom(void);
@@ -264,11 +264,13 @@ U_EXPORT const char* u_getsuffix(const char* restrict path, uint32_t len) __pure
 U_EXPORT bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n);
 
 /* Location info */
+
 extern U_EXPORT uint32_t u_num_line;
 extern U_EXPORT const char* restrict u_name_file;
 extern U_EXPORT const char* restrict u_name_function;
 
 /* MIME type identification */
+
 static inline bool u_is_gz(int mime_index)     { return (mime_index == U_gz); }
 static inline bool u_is_js(int mime_index)     { return (mime_index == U_js); }
 static inline bool u_is_css(int mime_index)    { return (mime_index == U_css); }
@@ -444,7 +446,7 @@ static inline void u_gettimenow(void)
 U_EXPORT      uint32_t u_strftime1(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, uint32_t fmt_size);
 static inline uint32_t u_strftime2(char* restrict buffer, uint32_t buffer_size, const char* restrict fmt, uint32_t fmt_size, time_t when)
 {
-   U_INTERNAL_TRACE("u_strftime2(%u,%.*s,%u,%ld)", buffer, buffer_size, fmt, fmt_size, when)
+   U_INTERNAL_TRACE("u_strftime2(%.*s,%u,%.*s,%u,%ld)", buffer_size, buffer, buffer_size, fmt_size, fmt, fmt_size, when)
 
    U_INTERNAL_ASSERT_POINTER(fmt)
    U_INTERNAL_ASSERT_MAJOR(buffer_size, 0)
@@ -456,68 +458,55 @@ static inline uint32_t u_strftime2(char* restrict buffer, uint32_t buffer_size, 
    return u_strftime1(buffer, buffer_size, fmt, fmt_size);
 }
 
-/* Services */
 /* conversion number to string */
-extern U_EXPORT uPFdpc   u_dbl2str;
-extern U_EXPORT uPFu32pc u_num2str32;
-extern U_EXPORT uPFu64pc u_num2str64;
-extern U_EXPORT const char u_ctn2s[200];
 
-static inline uint32_t u_num2str32s(int32_t num, char* restrict cp)
+extern U_EXPORT const char*  u_ctn2s;
+extern U_EXPORT const double u_pow10[309]; /* 1e-0...1e308: 309 * 8 bytes = 2472 bytes */
+
+extern U_EXPORT pcPFdpc   u_dbl2str;
+extern U_EXPORT pcPFu32pc u_num2str32;
+extern U_EXPORT pcPFu64pc u_num2str64;
+
+static inline char* u_num2str32s(int32_t num, char* restrict cp)
 {
-   uint32_t bsign = (num < 0);
-
    U_INTERNAL_TRACE("u_num2str32s(%u,%p)", num, cp)
 
-   if (bsign)
+   if (num < 0)
       {
       num = -num;
 
       *cp++ = '-';
       }
 
-   return bsign + u_num2str32(num, cp);
+   return u_num2str32(num, cp);
 }
 
-static inline uint32_t u_num2str64s(int64_t num, char* restrict cp)
+static inline char* u_num2str64s(int64_t num, char* restrict cp)
 {
-   uint32_t bsign = (num < 0);
-
    U_INTERNAL_TRACE("u_num2str64s(%lld,%p)", num, cp)
 
-   if (bsign)
+   if (num < 0)
       {
       num = -num;
 
       *cp++ = '-';
       }
 
-   return bsign + u_num2str64(num, cp);
+   return u_num2str64(num, cp);
 }
 
-static inline uint32_t u_dtoa(double num, char* restrict cp)
+static inline char* u_dtoa(double num, char* restrict cp)
 {
-   uint32_t bsign;
-
    U_INTERNAL_TRACE("u_dtoa(%g,%p)", num, cp)
 
-   if (num == 0)
-      {
-      u_put_unalignedp32(cp, U_MULTICHAR_CONSTANT32('0','.','0','\0'));
-
-      return 3;
-      }
-
-   bsign = (num < 0);
-
-   if (bsign)
+   if (num < 0)
       {
       num = -num;
 
       *cp++ = '-';
       }
 
-   return bsign + u_dbl2str(num, cp);
+   return u_dbl2str(num, cp);
 }
 
 #ifdef __cplusplus

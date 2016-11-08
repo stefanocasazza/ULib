@@ -32,14 +32,14 @@ void UTransformCtx::registerDefault()
 
    U_INTERNAL_ASSERT_POINTER(enabledTransforms)
 
-   enabledTransforms->push(UString(UTranformBase64::_name));               // "base64"
-   enabledTransforms->push(UString(UTranformBase64::_href));
+   enabledTransforms->push(UString(UTranformBase64::_name, strlen(UTranformBase64::_name)));               // "base64"
+   enabledTransforms->push(UString(UTranformBase64::_href, strlen(UTranformBase64::_href)));
 
-   enabledTransforms->push(UString(UTranformInclC14N::_name));             // "c14n"
-   enabledTransforms->push(UString(UTranformInclC14N::_href));
+   enabledTransforms->push(UString(UTranformInclC14N::_name, strlen(UTranformInclC14N::_name)));             // "c14n"
+   enabledTransforms->push(UString(UTranformInclC14N::_href, strlen(UTranformInclC14N::_href)));
 
-   enabledTransforms->push(UString(UTranformXPointer::_name));             // "xpointer"
-   enabledTransforms->push(UString(UTranformXPointer::_href));
+   enabledTransforms->push(UString(UTranformXPointer::_name, strlen(UTranformXPointer::_name)));             // "xpointer"
+   enabledTransforms->push(UString(UTranformXPointer::_href, strlen(UTranformXPointer::_href)));
 
    /*
    enabledTransforms->push(UString(UTranformEnveloped::_name));            // "enveloped-signature"
@@ -53,20 +53,20 @@ void UTransformCtx::registerDefault()
    enabledTransforms->push(UString(UTranformXslt::_name));                 // "xslt"
    */
 
-   enabledTransforms->push(UString(UTranformSha1::_name));                 // "sha1"
-   enabledTransforms->push(UString(UTranformSha1::_href));  
+   enabledTransforms->push(UString(UTranformSha1::_name, strlen(UTranformSha1::_name)));                 // "sha1"
+   enabledTransforms->push(UString(UTranformSha1::_href, strlen(UTranformSha1::_href)));  
 
-   enabledTransforms->push(UString(UTranformSha256::_name));               // "sha256"
-   enabledTransforms->push(UString(UTranformSha256::_href));  
+   enabledTransforms->push(UString(UTranformSha256::_name, strlen(UTranformSha256::_name)));               // "sha256"
+   enabledTransforms->push(UString(UTranformSha256::_href, strlen(UTranformSha256::_href)));  
 
-   enabledTransforms->push(UString(UTranformRsaMd5::_name));               // "rsa-md5"
-   enabledTransforms->push(UString(UTranformRsaMd5::_href));
+   enabledTransforms->push(UString(UTranformRsaMd5::_name, strlen(UTranformRsaMd5::_name)));               // "rsa-md5"
+   enabledTransforms->push(UString(UTranformRsaMd5::_href, strlen(UTranformRsaMd5::_href)));
 
-   enabledTransforms->push(UString(UTranformRsaSha1::_name));              // "rsa-sha1"
-   enabledTransforms->push(UString(UTranformRsaSha1::_href));
+   enabledTransforms->push(UString(UTranformRsaSha1::_name, strlen(UTranformRsaSha1::_name)));              // "rsa-sha1"
+   enabledTransforms->push(UString(UTranformRsaSha1::_href, strlen(UTranformRsaSha1::_href)));
 
-   enabledTransforms->push(UString(UTranformRsaSha256::_name));            // "rsa-sha256"
-   enabledTransforms->push(UString(UTranformRsaSha256::_href));
+   enabledTransforms->push(UString(UTranformRsaSha256::_name, strlen(UTranformRsaSha256::_name)));            // "rsa-sha256"
+   enabledTransforms->push(UString(UTranformRsaSha256::_href, strlen(UTranformRsaSha256::_href)));
 
    /*
    enabledTransforms->push(UString(UTranform::_name));                     // "aes128-cbc"

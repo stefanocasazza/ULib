@@ -17,6 +17,25 @@
 #include <ulib/dynamic/plugin.h>
 #include <ulib/container/vector.h>
 
+typedef enum ParamType {
+      NULL_VALUE =  0, // null value
+   BOOLEAN_VALUE =  1, // bool value
+      CHAR_VALUE =  2, //   signed char value
+     UCHAR_VALUE =  3, // unsigned char value
+     SHORT_VALUE =  4, //   signed short integer value
+    USHORT_VALUE =  5, // unsigned short integer value
+       INT_VALUE =  6, //   signed integer value
+      UINT_VALUE =  7, // unsigned integer value
+      LONG_VALUE =  8, //   signed long value
+     ULONG_VALUE =  9, // unsigned long value
+     LLONG_VALUE = 10, //   signed long long value
+    ULLONG_VALUE = 11, // unsigned long long value
+     FLOAT_VALUE = 12, // float value
+      REAL_VALUE = 13, // double value
+     LREAL_VALUE = 14, // long double value
+    STRING_VALUE = 15, // UTF-8 string value
+} ParamType;
+
 class U_EXPORT USqlStatementBindParam {
 public:
 
@@ -461,21 +480,21 @@ public:
 
    // CREATE BIND PARAM
 
-   virtual USqlStatementBindParam* creatSqlStatementBindParam()                         { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(int* v)                   { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(bool* v)                  { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(char* v)                  { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(long* v)                  { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(short* v)                 { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(float* v)                 { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(double* v)                { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(long long* v)             { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(long double* v)           { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  int* v)         { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  char* v)        { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  long* v)        { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned  short* v)       { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v)    { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam()                      { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(int* v)                { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(bool* v)               { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(char* v)               { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long* v)               { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(short* v)              { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(float* v)              { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(double* v)             { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long long* v)          { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long double* v)        { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned int* v)       { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned char* v)      { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long* v)      { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned short* v)     { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v) { return 0; }
 
    virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind);
 
@@ -488,9 +507,9 @@ public:
    virtual USqlStatementBindResult* creatSqlStatementBindResult(short* v)              { return 0; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(float* v)              { return 0; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)             { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& str)       { return 0; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)          { return 0; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)        { return 0; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& str)       { return 0; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned char* v)      { return 0; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned short* v)     { return 0; }
    virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned int* v)       { return 0; }
@@ -556,8 +575,8 @@ template <> void UOrmDriver::bindResult<long>(USqlStatement* pstmt, long& v);
 template <> void UOrmDriver::bindResult<short>(USqlStatement* pstmt, short& v);
 template <> void UOrmDriver::bindResult<float>(USqlStatement* pstmt, float& v);
 template <> void UOrmDriver::bindResult<double>(USqlStatement* pstmt, double& v);
-template <> void UOrmDriver::bindResult<UStringRep>(USqlStatement* pstmt, UStringRep& v);
 template <> void UOrmDriver::bindResult<long long>(USqlStatement* pstmt, long long& v);
+template <> void UOrmDriver::bindResult<UStringRep>(USqlStatement* pstmt, UStringRep& v);
 template <> void UOrmDriver::bindResult<long double>(USqlStatement* pstmt, long double& v);
 template <> void UOrmDriver::bindResult<unsigned int>(USqlStatement* pstmt, unsigned int& v);
 template <> void UOrmDriver::bindResult<unsigned char>(USqlStatement* pstmt, unsigned char& v);
