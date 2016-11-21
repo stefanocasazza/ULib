@@ -35,81 +35,61 @@ UValue::~UValue()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UValue)
 
-   static const int dispatch_table[] = {
-      0,/* 0 */
-      0,/* 1 */
-      0,/* 2 */
-      0,/* 3 */
-      0,/* 4 */
-      (int)((char*)&&case_string-(char*)&&case_double),
-      (int)((char*)&&case_utf-(char*)&&case_double),
-      (int)((char*)&&case_array-(char*)&&case_double),
-      (int)((char*)&&case_object-(char*)&&case_double),
-      0,/* 9 */
-   };
-
-   int type = getTag();
-
-   U_DUMP("dispatch_table[(%d,%S)] = %p", type, getDataTypeDescription(type), dispatch_table[type])
-
-   goto *((char*)&&case_double + dispatch_table[type]);
-
-case_double:
-   return;
-
-case_string:
-case_utf:
-   {
-   UStringRep* rep = (UStringRep*)getPayload();
-
-   U_INTERNAL_DUMP("rep(%p) = %V", rep, rep)
-
-   rep->release();
-
-   return;
-   }
-
-case_array:
-   {
-   UValue* element = toNode();
-
-   while (element)
+   switch (getTag())
       {
-      U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+      case STRING_VALUE:
+      case    UTF_VALUE:
+         {
+         UStringRep* rep = (UStringRep*)getPayload();
 
-      next = element->next;
+         U_INTERNAL_DUMP("rep(%p) = %V", rep, rep)
 
-      delete element;
+         rep->release();
+         }
+      break;
 
-      element = next;
+      case ARRAY_VALUE:
+         {
+         UValue* element = toNode();
+
+         while (element)
+            {
+            U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+
+            next = element->next;
+
+            delete element;
+
+            element = next;
+            }
+         }
+      break;
+
+      case OBJECT_VALUE:
+         {
+         UValue* element = toNode();
+
+         while (element)
+            {
+            U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+
+            U_ASSERT(isStringOrUTF(element->pkey.ival))
+
+            UStringRep* rep = (UStringRep*)getPayload(element->pkey.ival);
+
+            U_INTERNAL_DUMP("element->pkey(%p) = %V", rep, rep)
+
+            rep->release();
+
+            next = element->next;
+
+            delete element;
+
+            element = next;
+            }
+         }
+      break;
       }
-
-   return;
-   }
-
-case_object:
-   {
-   UValue* element = toNode();
-
-   while (element)
-      {
-      U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
-
-      U_ASSERT(isStringOrUTF(element->pkey.ival))
-
-      UStringRep* rep = (UStringRep*)getPayload(element->pkey.ival);
-
-      U_INTERNAL_DUMP("element->pkey(%p) = %V", rep, rep)
-
-      rep->release();
-
-      next = element->next;
-
-      delete element;
-
-      element = next;
-      }
-   }
 }
 
 void UValue::clear()
@@ -285,6 +265,8 @@ UString UValue::getString(uint64_t value)
    U_ASSERT(isStringOrUTF(value))
 
    UStringRep* rep = (UStringRep*)getPayload(value);
+
+   U_INTERNAL_ASSERT_POINTER(rep)
 
    int type = getTag(value);
 
@@ -820,7 +802,7 @@ bool UValue::parse(const UString& document)
       {
 loop: while (u__isspace(*s)) ++s;
 
-      if (s > end) goto cdefault;
+      if (s > end) break;
 
       start = s++;
 
@@ -841,7 +823,7 @@ case_dquote:
 dquote:
       // U_INTERNAL_DUMP("c = %C", *s)
 
-      if (u__isvalidchar((c = *s)) == false) goto cdefault;
+      if (u__isvalidchar((c = *s)) == false) break;
 
       if (c == '"') goto dquote_assign;
 
@@ -882,7 +864,7 @@ dquote:
             }
          }
 
-      if (++s >= end) goto cdefault;
+      if (++s >= end) break;
 
       goto dquote;
 
@@ -916,7 +898,7 @@ dquote_assign:
       goto next;
 
 case_plus:
-      if (u__isdigit(*s) == false) goto cdefault;
+      if (u__isdigit(*s) == false) break;
 
       ++start;
 
@@ -929,7 +911,7 @@ case_comma:
           separator ||
           sd[pos].keys)
          {
-         goto cdefault;
+         break;
          }
 
       comma     =
@@ -938,7 +920,7 @@ case_comma:
       continue;
 
 case_minus:
-      if (u__isdigit((c = *s)) == false) goto cdefault;
+      if (u__isdigit((c = *s)) == false) break;
 
       ++start;
 
@@ -954,7 +936,7 @@ case_minus:
       goto case_number;
 
 case_point:
-      if (u__isdigit(*s) == false) goto cdefault;
+      if (u__isdigit(*s) == false) break;
 
       goto case_number;
 
@@ -966,14 +948,14 @@ case_slash:
       if (c != '/' &&
           c != '*')
          {
-         goto cdefault;
+         break;
          }
 
       if (c == '/') // skip line comment
          {
          while (*++s != '\n') {}
 
-         if (++s > end) goto cdefault;
+         if (++s > end) break;
 
          goto loop;
          }
@@ -1003,7 +985,7 @@ zero:    if (c == '.') goto case_number;
          goto next;
          }
 
-      goto cdefault; // NB: json numbers cannot have leading zeroes...
+      break; // NB: json numbers cannot have leading zeroes...
 
 case_number:
       gexponent = 0;
@@ -1124,7 +1106,7 @@ case_number:
          {
 exp:     if (u__issign((c = *++s))) ++s;
 
-         if (u__isdigit(*s) == false) goto cdefault;
+         if (u__isdigit(*s) == false) break;
 
          p = s;
 
@@ -1261,7 +1243,7 @@ case_colon:
           colon == false ||
           sd[pos].keys == 0)
          {
-         goto cdefault;
+         break;
          }
 
       colon     = false;
@@ -1301,7 +1283,7 @@ case_evector:
           pos == -1 ||
           sd[pos].tags)
          {
-         goto cdefault;
+         break;
          }
 
       o.ival = listToValue(ARRAY_VALUE, sd[pos--].tails);
@@ -1318,7 +1300,7 @@ case_false:
          goto next;
          }
 
-      goto cdefault; 
+      break;   
 
 case_null:
       if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('n','u','l','l'))
@@ -1330,7 +1312,7 @@ case_null:
          goto next;
          }
 
-      goto cdefault;
+      break;
 
 case_true:
       if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('t','r','u','e'))
@@ -1342,7 +1324,7 @@ case_true:
          goto next;
          }
 
-      goto cdefault;
+      break;
 
 case_sobject:
       U_INTERNAL_DUMP("sobject: comma = %b pos = %d colon = %b separator = %b", comma, pos, colon, separator)
@@ -1377,7 +1359,7 @@ case_eobject:
           sd[pos].keys ||
           sd[pos].tags == false)
          {
-         goto cdefault;
+         break;
          }
 
       o.ival = listToValue(OBJECT_VALUE, sd[pos--].tails);
@@ -1409,7 +1391,7 @@ next: U_INTERNAL_DUMP("next: comma = %b pos = %d colon = %b separator = %b s = %
       if (sd[pos].tags == false) sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
       else
          {
-         if (colon) goto cdefault;
+         if (colon) break;
 
          if (sd[pos].keys == 0)
             {
@@ -1422,10 +1404,10 @@ next: U_INTERNAL_DUMP("next: comma = %b pos = %d colon = %b separator = %b s = %
 
          sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
 
-         if (isStringOrUTF(sd[pos].keys) == false) goto cdefault;
+         if (isStringOrUTF(sd[pos].keys) == false) break;
 
          sd[pos].tails->pkey.ival = sd[pos].keys;
-                                 sd[pos].keys = 0;
+                                    sd[pos].keys = 0;
          }
       }
 

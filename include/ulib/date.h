@@ -89,6 +89,28 @@ public:
       julian = toJulian(_day, _month, _year);
       }
 
+   // set the current object by month
+
+   void setMonth(int month)
+      {
+      U_TRACE(0, "UTimeDate::setMonth(%d)", month)
+
+      U_INTERNAL_ASSERT_RANGE(1, month, 12)
+
+      julian = toJulian(_day, (_month = month), _year);
+      }
+
+   // set the current object by day
+
+   void setDay(int day)
+      {
+      U_TRACE(0, "UTimeDate::setDay(%d)", day)
+
+      U_INTERNAL_ASSERT_RANGE(1, day, 31)
+
+      julian = toJulian((_day = day), _month, _year);
+      }
+
    void set(int day, int month, int year)
       {
       U_TRACE(0, "UTimeDate::set(%d,%d,%d)", day, month, year)

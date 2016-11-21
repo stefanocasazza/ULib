@@ -482,14 +482,6 @@ U_EXPORT int64_t       u_strtoll( const char* restrict s, const char* restrict e
 
 static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
 
-/* ip address type identification */
-
-U_EXPORT bool u_isIPv4Addr(const char* restrict s, uint32_t n) __pure;
-U_EXPORT bool u_isIPv6Addr(const char* restrict s, uint32_t n) __pure;
-
-static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n)
-                                                                                            : u_isIPv4Addr(p, n)); }
-
 /**
  * Quick and dirty int->hex. The only standard way is to call snprintf (?),
  * which is undesirably slow for such a frequently-called function...
@@ -501,8 +493,15 @@ static inline unsigned int u__hexc2int(unsigned char c) { return u__ct_hex2int[c
 
 static inline void u_int2hex(char* restrict p, uint32_t n) { int s; for (s = 28; s >= 0; s -= 4, ++p) *p = "0123456789ABCDEF"[((n >> s) & 0x0F)]; }
 
-static inline uint32_t u_hex2int(const char* restrict p, uint32_t len)
-{ uint32_t n = 0; const char* eos = p + len; while (p < eos) n = (n << 4) | u__hexc2int(*p++); return n; }
+U_EXPORT unsigned long u_hex2int(const char* restrict s, const char* restrict e) __pure;
+
+/* ip address type identification */
+
+U_EXPORT bool u_isIPv4Addr(const char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isIPv6Addr(const char* restrict s, uint32_t n) __pure;
+
+static inline bool u_isIPAddr(bool IPv6, const char* restrict p, uint32_t n) { return (IPv6 ? u_isIPv6Addr(p, n)
+                                                                                            : u_isIPv4Addr(p, n)); }
 
 #ifdef __cplusplus
 }

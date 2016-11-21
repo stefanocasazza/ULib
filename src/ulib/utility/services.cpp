@@ -15,13 +15,8 @@
 #include <ulib/command.h>
 #include <ulib/file_config.h>
 #include <ulib/utility/base64.h>
-#include <ulib/utility/hexdump.h>
 #include <ulib/utility/services.h>
 #include <ulib/net/server/server.h>
-
-#ifdef USE_LIBUUID
-#  include <uuid/uuid.h>
-#endif
 
 unsigned char UServices::key[16];
 
@@ -721,22 +716,6 @@ UString UServices::createToken(int alg)
    U_RETURN_STRING(output);
 }
 #endif // USE_LIBSSL
-
-void UServices::generateKey(unsigned char* pkey, unsigned char* hexdump)
-{
-   U_TRACE(1, "UServices::generateKey(%p,%p)", pkey, hexdump)
-
-   if (pkey == 0) pkey = key;
-
-#ifdef USE_LIBUUID
-   U_SYSCALL_VOID(uuid_generate, "%p", pkey);
-#else
-   *(uint64_t*) pkey                     = getUniqUID();
-   *(uint64_t*)(pkey + sizeof(uint64_t)) = getUniqUID();
-#endif
-
-   if (hexdump) (void) u_hexdump_encode(pkey, 16, hexdump);
-}
 
 void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, uint32_t size, UString& output, int base64)
 {

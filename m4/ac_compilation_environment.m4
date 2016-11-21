@@ -4,6 +4,8 @@ dnl AC_COMPILATION_ENVIRONMENT
 
 AC_DEFUN([AC_COMPILATION_ENVIRONMENT],[
 	AC_DEFINE_UNQUOTED(GCC_VERSION, "${gcc_version}", [GNU C/C++ Compiler version])
+	gcc_version_ext=`gcc --version | head -n 1`
+	AC_DEFINE_UNQUOTED(GCC_VERSION_EXT, "${gcc_version_ext}", [GNU C/C++ Compiler version extented])
 	ld_version=`${LD} -V 2>/dev/null | head -n1 2>/dev/null`
 	if test -z "$ld_version"; then
 		ld_version=`${LD} -v -V 2>/dev/null | head -n1 2>/dev/null`

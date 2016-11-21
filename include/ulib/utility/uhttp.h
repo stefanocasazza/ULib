@@ -404,7 +404,7 @@ public:
    static UString* set_cookie_option;
    static UString* cgi_cookie_option;
 
-   static bool    getCookie(      UString* cookie);
+   static bool    getCookie(      UString* cookie, UString* data);
    static void addSetCookie(const UString& cookie);
 
    // -----------------------------------------------------------------------------------------------------------------------------------
@@ -432,6 +432,7 @@ public:
    static void  initSession();
    static void clearSession();
    static void removeDataSession();
+
    static void setSessionCookie(UString* param = 0);
 
    static bool getDataStorage();
@@ -464,6 +465,17 @@ public:
       U_INTERNAL_ASSERT_POINTER(data_session)
 
       U_RETURN_STRING(data_session->keyid);
+      }
+
+   static UString getKeyIdDataSession(const UString& data)
+      {
+      U_TRACE(0, "UHTTP::getKeyIdDataSession(%V)", data.rep)
+
+      U_INTERNAL_ASSERT_POINTER(data_session)
+
+      UString keyid = data_session->setKeyIdDataSession(++sid_counter_gen, data);
+
+      U_RETURN_STRING(keyid);
       }
 
    // HTML Pagination
@@ -1061,9 +1073,9 @@ private:
    static bool addHTTPVariables(UStringRep* key, void* value) U_NO_EXPORT;
    static bool splitCGIOutput(const char*& ptr1, const char* ptr2) U_NO_EXPORT;
    static void putDataInCache(const UString& fmt, UString& content) U_NO_EXPORT;
-   static bool checkDataSession(const UString& token, time_t expire) U_NO_EXPORT;
    static bool readDataChunked(USocket* sk, UString* pbuffer, UString& body) U_NO_EXPORT;
    static void setResponseForRange(uint32_t start, uint32_t end, uint32_t header) U_NO_EXPORT;
+   static bool checkDataSession(const UString& token, time_t expire, UString* data) U_NO_EXPORT;
 
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;
    static inline void setIfModSince(const char* ptr) U_NO_EXPORT;

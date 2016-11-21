@@ -55,6 +55,45 @@
 #  endif
 #endif
 
+__pure unsigned long u_hex2int(const char* restrict s, const char* restrict e)
+{
+   /* handle up to 16 digits */
+
+   uint32_t len = e-s;
+   unsigned long val = 0UL;
+
+   U_INTERNAL_TRACE("u_hex2int(%p,%p)", s, e)
+
+   U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_POINTER(e)
+
+#ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues (MISSING_BREAK) */
+   switch (len)
+      {
+      case 16: val = (val << 4) | u__hexc2int(s[len-16]);
+      case 15: val = (val << 4) | u__hexc2int(s[len-15]);
+      case 14: val = (val << 4) | u__hexc2int(s[len-14]);
+      case 13: val = (val << 4) | u__hexc2int(s[len-13]);
+      case 12: val = (val << 4) | u__hexc2int(s[len-12]);
+      case 11: val = (val << 4) | u__hexc2int(s[len-11]);
+      case 10: val = (val << 4) | u__hexc2int(s[len-10]);
+      case  9: val = (val << 4) | u__hexc2int(s[len- 9]);
+      case  8: val = (val << 4) | u__hexc2int(s[len- 8]);
+      case  7: val = (val << 4) | u__hexc2int(s[len- 7]);
+      case  6: val = (val << 4) | u__hexc2int(s[len- 6]);
+      case  5: val = (val << 4) | u__hexc2int(s[len- 5]);
+      case  4: val = (val << 4) | u__hexc2int(s[len- 4]);
+      case  3: val = (val << 4) | u__hexc2int(s[len- 3]);
+      case  2: val = (val << 4) | u__hexc2int(s[len- 2]);
+      case  1: val = (val << 4) | u__hexc2int(s[len- 1]);
+      }
+#endif
+
+   U_INTERNAL_PRINT("val = %lu", val)
+
+   return val;
+}
+
 __pure unsigned long u_strtoul(const char* restrict s, const char* restrict e)
 {
    /* handle up to 10 digits */

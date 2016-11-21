@@ -816,7 +816,7 @@ private:
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
    template <class T> friend class UJsonTypeHandler;
-   template <class T> friend UString JSON_stringify(UValue&, T&);
+   template <class T> friend void JSON_stringify(UString&, UValue&, T&);
 };
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
@@ -951,9 +951,9 @@ template <class T> inline bool JSON_parse(const UString& str, T& obj)
    U_RETURN(false);
 }
 
-template <class T> inline UString JSON_stringify(UValue& json, T& obj)
+template <class T> inline void JSON_stringify(UString& result, UValue& json, T& obj)
 {
-   U_TRACE(0, "JSON_stringify(%p,%p)", &json, &obj)
+   U_TRACE(0, "JSON_stringify(%V,%p,%p)", result.rep, &json, &obj)
 
    UValue::pnode = 0;
 
@@ -961,7 +961,7 @@ template <class T> inline UString JSON_stringify(UValue& json, T& obj)
 
    if (UValue::pnode) json.value.ival = UValue::getJsonValue(UValue::OBJECT_VALUE, UValue::phead);
 
-   return json.output();
+   UValue::stringify(result, json);
 }
 
 // TEMPLATE SPECIALIZATIONS

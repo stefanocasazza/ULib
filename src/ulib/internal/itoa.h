@@ -41,8 +41,7 @@ template<typename I> char* itoa_rev (I i,char *buffer);
 #include <cstring>      // memcpy
 #include <type_traits>
 
-extern const char*  u_ctn2s;
-extern const double u_pow10[309];
+extern const char* u_ctn2s;
 
 namespace dec_ {
 
@@ -53,13 +52,12 @@ namespace dec_ {
 
  // extern const std::array<char,200> digits;
     static inline uint16_t const& dd(uint8_t u) {
-		 return reinterpret_cast<uint16_t const*>(u_ctn2s)[u];
- //    return reinterpret_cast<uint16_t const*>(digits.data())[u];
+		return reinterpret_cast<uint16_t const*>(u_ctn2s)[u];
+	// return reinterpret_cast<uint16_t const*>(digits.data())[u];
     }
 
     template<typename T> static constexpr T pow10(size_t x) {
-		return (T)u_pow10[x];
- //	return x ? 10*pow10<T>(x-1) : 1;
+		return x ? 10*pow10<T>(x-1) : 1;
     }
 
     // Division by a power of 10 is implemented using a multiplicative inverse.
@@ -238,7 +236,7 @@ namespace dec_ {
             // Use a conditional expression to be portable,
             // a good optimizing compiler generates an arithmetic right shift
             // and avoids the conditional branch.
-         // U<N> mask = i < 0 ? ~U<N>(0) : 0;
+				U<N> mask = i < 0 ? ~U<N>(0) : 0;
             // Now get the absolute value of "i" and cast to unsigned type U<N>.
             // Cannot use std::abs() because the result is undefined
             // in 2's complement systems for the most-negative value.
@@ -250,19 +248,17 @@ namespace dec_ {
             // This yields the absolute value with the desired type without
             // using a conditional branch and without invoking undefined or
             // implementation defined behavior:
-         // U<N> u = ((2 * U<N>(i)) & ~mask) - U<N>(i);
+				U<N> u = ((2 * U<N>(i)) & ~mask) - U<N>(i);
             // Unconditionally store a minus sign when producing digits
             // in a forward direction and increment the pointer only if
             // the value is in fact negative.
             // This avoids a conditional branch and is safe because we will
             // always produce at least one digit and it will overwrite the
             // minus sign when the value is not negative.
-				/*
             if (D == Fwd) { *p = '-'; p += (mask&1); }
             p = convert<D>::template itoa(p,u);
             if (D == Rev && mask) *--p = '-';
-				*/
-            return convert<D>::template itoa(p,U<N>(i));
+            return p;
         }
     };
 }

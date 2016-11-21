@@ -32895,6 +32895,12 @@ cat >>confdefs.h <<_ACEOF
 #define GCC_VERSION "${gcc_version}"
 _ACEOF
 
+	gcc_version_ext=`gcc --version | head -n 1`
+
+cat >>confdefs.h <<_ACEOF
+#define GCC_VERSION_EXT "${gcc_version_ext}"
+_ACEOF
+
 	ld_version=`${LD} -V 2>/dev/null | head -n1 2>/dev/null`
 	if test -z "$ld_version"; then
 		ld_version=`${LD} -v -V 2>/dev/null | head -n1 2>/dev/null`

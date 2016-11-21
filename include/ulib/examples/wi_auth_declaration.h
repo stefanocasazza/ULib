@@ -111,11 +111,11 @@ static UHashMap<UVectorUString>* table1;
 
 static int today;
 static UTimeDate* date;
-static UString* yearName;
+static UString*  yearName;
 static UString* monthName;
-static UString* weekName;
+static UString*  weekName;
 
-static uint32_t time_available_daily, time_available_flat;
+static uint32_t    time_available_daily,   time_available_flat;
 static uint64_t traffic_available_daily, traffic_available_flat;
 
 static bool     user_exist, brenew, isIP, isMAC, ap_address_trust, db_user_filter_tavarnelle, admin_status_nodog_and_user_as_csv, status_nodog_and_user_resync;
@@ -1633,26 +1633,177 @@ static void sendRedirect()
    else                                                                                         USSIPlugIn::setAlternativeRedirect("http://www.google.com", 0);
 }
 
-static void setCookie(const char* hexdump)
+static void setCookie1()
 {
-   U_TRACE(5, "::setCookie(%p)", hexdump)
+   U_TRACE(5, "::setCookie1()")
 
-   U_INTERNAL_ASSERT(UServer_Base::bssl)
+   U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
+
+   UString param(200U);
+
+   // -----------------------------------------------------------------------------------------------------------------------------------
+   // param: "[ data expire path domain secure HttpOnly ]"
+   // -----------------------------------------------------------------------------------------------------------------------------------
+   // string -- key_id or data to put in cookie    -- must
+   // int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
+   // string -- path where the cookie can be used  -- opt
+   // string -- domain which can read the cookie   -- opt
+   // bool   -- secure mode                        -- opt
+   // bool   -- only allow HTTP usage              -- opt
+   // -----------------------------------------------------------------------------------------------------------------------------------
+   // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+   // -----------------------------------------------------------------------------------------------------------------------------------
+
+   param.snprintf(U_CONSTANT_TO_PARAM("[ %v %u /login %v ]"), UHTTP::getKeyIdDataSession(*mac).rep, 24 * 30, virtual_name->rep);
+
+   UHTTP::setCookie(param);
+}
+
+static void setCookie2(const char* hexdump)
+{
+   U_TRACE(5, "::setCookie2(%S)", hexdump)
 
    UString cookie(200U);
 
-   long expire = u_now->tv_sec + (hexdump ? 30L : -1L) * U_ONE_DAY_IN_SECOND;
+   if (hexdump == 0) cookie.snprintf(U_CONSTANT_TO_PARAM("WCID=; expires=%#8D"), u_now->tv_sec - U_ONE_DAY_IN_SECOND);
+   else
+      {
+      cookie.snprintf(U_CONSTANT_TO_PARAM("WCID=%s; expires=%#8D"), hexdump, u_now->tv_sec + 30L * U_ONE_DAY_IN_SECOND);
 
-   cookie.snprintf(U_CONSTANT_TO_PARAM("WCID=%s; expires=%#8D"), (hexdump ? hexdump : ""), expire);
+      UHTTP::set_cookie_option->snprintf(U_CONSTANT_TO_PARAM("; path=/login_request; domain=%v; secure"), virtual_name->rep);
+      }
 
    UHTTP::addSetCookie(cookie);
+}
+
+static int askToLDAP(UString* pinput, const char* title_txt, const char* message, const char* fmt, ...)
+{
+   U_TRACE(5, "::askToLDAP(%p,%S,%S,%S)",  pinput, title_txt, message, fmt)
+
+   /*
+   ldapsearch -LLL -b ou=cards,o=unwired-portal -x -D cn=admin,o=unwired-portal -w programmer -H ldap://127.0.0.1 waLogin=3386453924
+   ---------------------------------------------------------------------------------------------------------------------------------
+   dn: waCid=6bc07bf3-a09f-4815-8029-db68f32f4189,ou=cards,o=unwired-portal
+   objectClass: top
+   objectClass: waCard
+   waCid: 6bc07bf3-a09f-4815-8029-db68f32f4189
+   waPin: 3386453924
+   waCardId: db68f32f4189
+   waLogin: 3386453924
+   waPassword: {MD5}ciwjVccK0u68vqupEXFukQ==
+   waRevoked: FALSE
+   waValidity: 0
+   waPolicy: DAILY
+   waTime: 7200
+   waTraffic: 314572800
+   ---------------------------------------------------------------------------------------------------------------------------------
+   */
+
+   va_list argp;
+   va_start(argp, fmt);
+
+   int result = UServices::askToLDAP(pinput, table, fmt, argp);
+
+   va_end(argp);
+
+   if (result <= 0)
+      {
+      if (result == -1) // Can't contact LDAP server (-1)
+         {
+         U_LOGGER("*** LDAP NON DISPONIBILE (anomalia 008) ***", 0);
+
+         title_txt = "Servizio LDAP non disponibile";
+         message   = "Servizio LDAP non disponibile (anomalia 008)";
+         }
+
+      if (title_txt && message) USSIPlugIn::setMessagePage(*message_page_template, title_txt, message);
+      }
+
+   U_RETURN(result);
+}
+
+static bool getCookie(UString* prealm, UString* pid)
+{
+   U_TRACE(5, "::getCookie(%p,%p)", prealm, pid)
+
+   UString cookie;
+
+   if (UServer_Base::bssl == false)
+      {
+      cookie = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("ULIB_SESSION"), UClientImage_Base::environment);
+
+      if (cookie &&
+          cookie == *mac)
+         {
+         *auth_domain = *cookie_auth + "MAC";
+
+         U_RETURN(true);
+         }
+      }
+   else
+      {
+      cookie = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_COOKIE"), UClientImage_Base::environment);
+
+      if (cookie)
+         {
+         uint32_t pos = U_STRING_FIND(cookie, 0, "WCID=");
+
+         if ( pos != U_NOT_FOUND &&
+             (pos += U_CONSTANT_SIZE("WCID="), pos < cookie.size()))
+            {
+            uint32_t pos1   = cookie.findWhiteSpace();
+            const char* ptr = (pos1 == U_NOT_FOUND ? cookie.pend() : cookie.c_pointer(pos1));
+
+            if (ptr[-1] == ';') --ptr;
+
+            UString value = cookie.substr(pos, ptr - cookie.c_pointer(pos));
+
+            if (pid) *pid = value.copy();
+
+            if (askToLDAP(0, 0, 0, "ldapsearch -LLL -b %v %v (&(objectClass=waSession)(&(waCookieId=%v)))", wiauth_session_basedn->rep, ldap_session_param->rep, value.rep) != 1)
+               {
+               setCookie2(0);
+
+               U_RETURN(false);
+               }
+
+            value = (*table)["waFederatedUserId"]; // Ex: 3343793489@all
+
+            if (value)
+               {
+               pos = value.find('@');
+
+               if (pos == U_NOT_FOUND) *uid = value;
+               else
+                  {
+                  UString x;
+
+                  *uid = value.substr(0U, pos).copy();
+                  x    = value.substr(pos + 1).copy();
+
+                  if (prealm &&
+                      prealm->equal(x) == false)
+                     {
+                  // U_LOGGER("*** COOKIE REALM DIFFER(%v=>%v) - UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***", prealm->rep, x.rep, uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
+
+                     *prealm = UStringExt::trim(x);
+                     }
+                  }
+
+               U_RETURN(true);
+               }
+            }
+         }
+      }
+
+   U_RETURN(false);
 }
 
 static void loginWithProblem()
 {
    U_TRACE_NO_PARAM(5, "::loginWithProblem()")
 
-   if (UServer_Base::bssl) setCookie(0);
+   if (UServer_Base::bssl) setCookie2(0);
 
    if (*uid)
       {
@@ -1903,7 +2054,7 @@ public:
 
       label->clear();
 
-      U_INTERNAL_DUMP("user_rec->nodog = %V user_rec->_index_access_point = %u", user_rec->nodog, user_rec->_index_access_point)
+      U_INTERNAL_DUMP("user_rec->nodog = %V user_rec->_index_access_point = %u", user_rec->nodog.rep, user_rec->_index_access_point)
 
       u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE,
                                  U_CONSTANT_TO_PARAM("%u %v"), user_rec->_index_access_point, user_rec->nodog.rep);
@@ -3035,7 +3186,7 @@ next:
 
       if (vuid->empty() == false)
          {
-         UString result = nodog_rec->sendRequestToNodog(U_CONSTANT_TO_PARAM("checkForUsersF?%v"), vuid->join(','));
+         UString result = nodog_rec->sendRequestToNodog(U_CONSTANT_TO_PARAM("checkForUsersF?%v"), vuid->join(',').rep);
 
          if (result &&
              U_IS_HTTP_ERROR(U_http_info.nResponseCode) == false)
@@ -3533,11 +3684,11 @@ static void usp_init_wi_auth()
 
    (void) UIPAllow::parseMask(x, *vallow_IP_request);
 
-   UHTTP::set_cookie_option->snprintf(U_CONSTANT_TO_PARAM("; path=/login_request; domain=%v; secure"), virtual_name->rep);
-
    // RECORD - DB
 
    U_NEW(WiAuthDataStorage, data_rec, WiAuthDataStorage);
+
+   if (UHTTP::data_session == 0) U_NEW(UDataSession, UHTTP::data_session, UDataSession);
 
    if (UHTTP::db_session == 0) UHTTP::initSession();
 
@@ -3583,6 +3734,8 @@ static void usp_init_wi_auth()
    if (content) U_NEW(UString, db_anagrafica, UString(content));
 
    U_INTERNAL_ASSERT_POINTER(db_anagrafica)
+
+   (void) memcpy(UServices::key, U_CONSTANT_TO_PARAM("1234567890123456")); // for ULib session cookies... 
 }
 
 static void usp_sighup_wi_auth()
@@ -3768,52 +3921,6 @@ static bool checkIfUserConnected()
       }
 
    U_RETURN(false);
-}
-
-static int askToLDAP(UString* pinput, const char* title_txt, const char* message, const char* fmt, ...)
-{
-   U_TRACE(5, "::askToLDAP(%p,%S,%S,%S)",  pinput, title_txt, message, fmt)
-
-   /*
-   ldapsearch -LLL -b ou=cards,o=unwired-portal -x -D cn=admin,o=unwired-portal -w programmer -H ldap://127.0.0.1 waLogin=3386453924
-   ---------------------------------------------------------------------------------------------------------------------------------
-   dn: waCid=6bc07bf3-a09f-4815-8029-db68f32f4189,ou=cards,o=unwired-portal
-   objectClass: top
-   objectClass: waCard
-   waCid: 6bc07bf3-a09f-4815-8029-db68f32f4189
-   waPin: 3386453924
-   waCardId: db68f32f4189
-   waLogin: 3386453924
-   waPassword: {MD5}ciwjVccK0u68vqupEXFukQ==
-   waRevoked: FALSE
-   waValidity: 0
-   waPolicy: DAILY
-   waTime: 7200
-   waTraffic: 314572800
-   ---------------------------------------------------------------------------------------------------------------------------------
-   */
-
-   va_list argp;
-   va_start(argp, fmt);
-
-   int result = UServices::askToLDAP(pinput, table, fmt, argp);
-
-   va_end(argp);
-
-   if (result <= 0)
-      {
-      if (result == -1) // Can't contact LDAP server (-1)
-         {
-         U_LOGGER("*** LDAP NON DISPONIBILE (anomalia 008) ***", 0);
-
-         title_txt = "Servizio LDAP non disponibile";
-         message   = "Servizio LDAP non disponibile (anomalia 008)";
-         }
-
-      if (title_txt && message) USSIPlugIn::setMessagePage(*message_page_template, title_txt, message);
-      }
-
-   U_RETURN(result);
 }
 
 static bool runAuthCmd(const char* password, const char* prealm)
@@ -4346,69 +4453,6 @@ static bool checkLoginValidate(bool all)
    U_RETURN(true);
 }
 
-static bool getCookie(UString* prealm, UString* pid)
-{
-   U_TRACE(5, "::getCookie(%p,%p)", prealm, pid)
-
-   if (UServer_Base::bssl)
-      {
-      UString cookie = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_COOKIE"), UClientImage_Base::environment);
-
-      if (cookie)
-         {
-         uint32_t pos = U_STRING_FIND(cookie, 0, "WCID=");
-
-         if ( pos != U_NOT_FOUND &&
-             (pos += U_CONSTANT_SIZE("WCID="), pos < cookie.size()))
-            {
-            uint32_t pos1   = cookie.findWhiteSpace();
-            const char* ptr = (pos1 == U_NOT_FOUND ? cookie.pend() : cookie.c_pointer(pos1));
-
-            if (ptr[-1] == ';') --ptr;
-
-            UString value = cookie.substr(pos, ptr - cookie.c_pointer(pos));
-
-            if (pid) *pid = value.copy();
-
-            if (askToLDAP(0, 0, 0, "ldapsearch -LLL -b %v %v (&(objectClass=waSession)(&(waCookieId=%v)))", wiauth_session_basedn->rep, ldap_session_param->rep, value.rep) != 1)
-               {
-               setCookie(0);
-
-               U_RETURN(false);
-               }
-
-            value = (*table)["waFederatedUserId"]; // Ex: 3343793489@all
-
-            if (value)
-               {
-               pos = value.find('@');
-
-               if (pos == U_NOT_FOUND) *uid = value;
-               else
-                  {
-                  UString x;
-
-                  *uid = value.substr(0U, pos).copy();
-                  x    = value.substr(pos + 1).copy();
-
-                  if (prealm &&
-                      prealm->equal(x) == false)
-                     {
-                  // U_LOGGER("*** COOKIE REALM DIFFER(%v=>%v) - UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***", prealm->rep, x.rep, uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
-
-                     *prealm = UStringExt::trim(x);
-                     }
-                  }
-
-               U_RETURN(true);
-               }
-            }
-         }
-      }
-
-   U_RETURN(false);
-}
-
 static void sendLoginValidate()
 {
    U_TRACE_NO_PARAM(5, "::sendLoginValidate()")
@@ -4618,14 +4662,16 @@ static void GET_admin_login_nodog()
       }
 }
 
-static UString printMonth(int month)
+static UString printMonth(int month, int year)
 {
-   U_TRACE(5, "::printMonth(%d)", month)
+   U_TRACE(5, "::printMonth(%d,%d)", month, year)
 
    char buffer[4096];
-   bool btoday, bmonth;
    UTimeDate curr = *date;
    UString result(U_CAPACITY);
+   bool btoday = false, bmonth = false, byear = (curr.getYear() == year);
+
+   U_INTERNAL_DUMP("byear = %b", byear)
 
    curr.setMondayPrevMonth(month);
 
@@ -4633,10 +4679,13 @@ static UString printMonth(int month)
 
    for (int i = 0; i < 42; ++curr)
       {
-      bmonth = (curr.getMonth()  == month);
-      btoday = (curr.getJulian() == today);
+      if (byear)
+         {
+         bmonth = (curr.getMonth()  == month);
+         btoday = (curr.getJulian() == today);
 
-      U_INTERNAL_DUMP("bmonth = %b btoday = %b", bmonth, btoday)
+         U_INTERNAL_DUMP("bmonth = %b btoday = %b", bmonth, btoday)
+         }
 
       if ((i % 7) == 0) (void) result.append(U_CONSTANT_TO_PARAM("<tr>\n"));
 
@@ -4798,20 +4847,42 @@ static void GET_calendar()
     "</h1>"),
    nextURL.rep);
 
+   if (db_user_filter_tavarnelle)
+      {
+      U_MEMCPY(U_SRV_BUF1,                      "tavarnelle.shtml?admin_login_nodog_historical_view_data=0&",
+               U_SRV_CNT_USR1 = U_CONSTANT_SIZE("tavarnelle.shtml?admin_login_nodog_historical_view_data=0&"));
+
+      U_MEMCPY(U_SRV_BUF2,                      "/var/log/wi-auth-status-access/tavarnelle/20160101230001Z.html",
+               U_SRV_CNT_USR2 = U_CONSTANT_SIZE("/var/log/wi-auth-status-access/tavarnelle/20160101230001Z.html"));
+      }
+   else
+      {
+      U_MEMCPY(U_SRV_BUF1,                      "admin_login_nodog_historical_view_data?",
+               U_SRV_CNT_USR1 = U_CONSTANT_SIZE("admin_login_nodog_historical_view_data?"));
+
+      U_MEMCPY(U_SRV_BUF2,                      "/var/log/wi-auth-status-access/20160101230001Z.html",
+               U_SRV_CNT_USR2 = U_CONSTANT_SIZE("/var/log/wi-auth-status-access/20160101230001Z.html"));
+      }
+
+   U_SRV_BUF1[U_SRV_CNT_USR1] =
+   U_SRV_BUF2[U_SRV_CNT_USR2] = '\0';
+
+   U_INTERNAL_DUMP("U_SRV_BUF1(%u) = %.*S U_SRV_BUF2(%u) = %.*S", U_SRV_CNT_USR1, U_SRV_CNT_USR1, U_SRV_BUF1, U_SRV_CNT_USR2, U_SRV_CNT_USR2, U_SRV_BUF2)
+
    UString buffer(U_CAPACITY);
 
    if (byear)
       {
       (void) output->append(U_CONSTANT_TO_PARAM("<ul>\n"));
 
-      i = 1;
+      date->setMonth((i = 1));
 
       while (true)
          {
          buffer.snprintf(U_CONSTANT_TO_PARAM("<li><h2><a href=\"?type=month&year=%u&month=%u\">%s</a></h2>"), year, i, u_month_name[i-1]);
 
          (void) output->append(buffer);
-         (void) output->append(printMonth(i));
+         (void) output->append(printMonth(i, year));
          (void) output->append(U_CONSTANT_TO_PARAM("</li>"));
 
          if (++i > 12) break;
@@ -4824,7 +4895,7 @@ static void GET_calendar()
       }
    else if (bmonth)
       {
-      (void) output->append(printMonth(month));
+      (void) output->append(printMonth(month, year));
       }
    else
       {
@@ -4915,29 +4986,9 @@ static void GET_admin_login_nodog_historical()
    if (UServer_Base::bssl == false) USSIPlugIn::setBadRequest();
    else
       {
-      if (db_user_filter_tavarnelle)
-         {
-         U_MEMCPY(U_SRV_BUF1,                      "tavarnelle.shtml?admin_login_nodog_historical_view_data=0&",
-                  U_SRV_CNT_USR1 = U_CONSTANT_SIZE("tavarnelle.shtml?admin_login_nodog_historical_view_data=0&"));
+      date->setCurrentDate();
 
-         U_MEMCPY(U_SRV_BUF2,                      "/var/log/wi-auth-status-access/tavarnelle/20160101230001Z.html",
-                  U_SRV_CNT_USR2 = U_CONSTANT_SIZE("/var/log/wi-auth-status-access/tavarnelle/20160101230001Z.html"));
-         }
-      else
-         {
-         U_MEMCPY(U_SRV_BUF1,                      "admin_login_nodog_historical_view_data?",
-                  U_SRV_CNT_USR1 = U_CONSTANT_SIZE("admin_login_nodog_historical_view_data?"));
-
-         U_MEMCPY(U_SRV_BUF2,                      "/var/log/wi-auth-status-access/20160101230001Z.html",
-                  U_SRV_CNT_USR2 = U_CONSTANT_SIZE("/var/log/wi-auth-status-access/20160101230001Z.html"));
-         }
-
-      U_SRV_BUF1[U_SRV_CNT_USR1] =
-      U_SRV_BUF2[U_SRV_CNT_USR2] = '\0';
-
-      U_INTERNAL_DUMP("U_SRV_BUF1(%u) = %.*S U_SRV_BUF2(%u) = %.*S", U_SRV_CNT_USR1, U_SRV_CNT_USR1, U_SRV_BUF1, U_SRV_CNT_USR2, U_SRV_CNT_USR2, U_SRV_BUF2)
-
-      USSIPlugIn::setAlternativeRedirect("calendar?type=year&year=2016", virtual_name->rep);
+      USSIPlugIn::setAlternativeRedirect("calendar?type=year&year=%u", date->getYear());
       }
 }
 
@@ -5503,12 +5554,16 @@ static void GET_login() // MAIN PAGE (se il portatile non mostra la login page c
       {
       if (checkTimeRequest() == false) return;
 
-      if (WiAuthNodog::checkMAC())
+      auth_domain->clear();
+
+      if (WiAuthNodog::checkMAC() ||
+          getCookie(0, 0))
          {
-         *uid         = *mac;
-         *auth_domain = *mac_auth;
+         *uid = *mac;
 
          login_validate = true;
+
+         if (auth_domain->empty()) *auth_domain = *mac_auth;
          }
 #  ifdef USE_LIBSSL
       else if (UServer_Base::bssl)
@@ -5772,6 +5827,8 @@ static void GET_login_request_by_MAC()
       user_UploadRate->replace('0');
       user_DownloadRate->replace('0');
 
+   // if (*uid == *mac) setCookie1();
+
       sendLoginValidate(); // NB: in questo modo l'utente ripassa dal firewall e NoDog lo rimanda da noi (login_validate) con i dati rinnovati...
       }
 }
@@ -5822,55 +5879,48 @@ static void GET_login_validate()
 
    brenew = false;
    UVector<UString> vec;
-   UString x, signed_data(500U + U_http_info.query_len);
 
-   if (checkIfUserConnected() &&
-       isIP == false)
+   if (checkIfUserConnected())
       {
-      // Check if change of connection context for user id (RENEW: mobility between access point)...
-
-      if (*ip         != user_rec->_ip  ||
-          *mac        != user_rec->_mac ||
-          *ap_address != user_rec->nodog)
+      if (isIP == false)
          {
-         if (user_rec->_auth_domain == *account_auth)
+         // Check if change of connection context for user id (RENEW: mobility between access point)...
+
+         if (*ip         != user_rec->_ip  ||
+             *mac        != user_rec->_mac ||
+             *ap_address != user_rec->nodog)
             {
-            USSIPlugIn::setMessagePage(*message_page_template, "Account busy", "Hai usato una credenziale che non e' disponibile in questo momento!");
+            if (user_rec->_auth_domain == *account_auth)
+               {
+               USSIPlugIn::setMessagePage(*message_page_template, "Account busy", "Hai usato una credenziale che non e' disponibile in questo momento!");
 
-            return;
+               return;
+               }
+
+            brenew = true;
+
+            user_rec->setLabelAP();
+
+            U_LOGGER("*** RENEW: UID(%v) IP(%v=>%v) MAC(%v=>%v) ADDRESS(%v@%v=>%v@%v) AUTH_DOMAIN(%v) ***", uid->rep,
+                        user_rec->_ip.rep, ip->rep,
+                        user_rec->_mac.rep, mac->rep,
+                        label->rep, user_rec->nodog.rep, ap_label->rep, ap_address->rep,
+                        user_rec->_auth_domain.rep);
+
+            vec.push_back(user_rec->nodog);
+            vec.push_back(user_rec->_ip);
+            vec.push_back(user_rec->_mac);
             }
-
-         brenew = true;
-
-         user_rec->setLabelAP();
-
-/**
-14:48:06 op: MAC_AUTH_all, uid: ec:9b:f3:7d:31:bb, ap: 120@10.8.0.129:5280/uffPVExElettorale-r29587_picoM2, ip: 172.16.129.86, mac: ec:9b:f3:7d:31:bb, time: 204, traffic: 20, policy: FLAT
-14:48:06 op: LOGIN,        uid: ec:9b:f3:7d:31:bb, ap: 120@10.8.0.129:5280/uffPVExElettorale-r29587_picoM2, ip: 172.16.129.86, mac: ec:9b:f3:7d:31:bb, time: 204, traffic: 20, policy: FLAT
-
-15:03:20 /login_validate: *** RENEW: UID(ec:9b:f3:7d:31:bb) IP(172.16.129.86=>172.23.10.42) MAC(ec:9b:f3:7d:31:bb=>ec:9b:f3:7d:31:bb) ADDRESS(120@10.8.0.129=>303@151.11.47.3) AUTH_DOMAIN(MAC_AUTH_all) ***
-
-15:03:20 op: RENEW_MAC_AUTH_all, uid: ec:9b:f3:7d:31:bb, ap: 303@151.11.47.3:5280/cascineConc-x86_64, ip: 172.23.10.42, mac: ec:9b:f3:7d:31:bb, time: 217, traffic: 22, policy: FLAT
-15:03:20 op: LOGIN,              uid: ec:9b:f3:7d:31:bb, ap: 303@151.11.47.3:5280/cascineConc-x86_64, ip: 172.23.10.42, mac: ec:9b:f3:7d:31:bb, time: 219, traffic: 22, policy: FLAT
-
-15:03:20 /info: *** INFO DIFFERENCE: UID(ec:9b:f3:7d:31:bb) IP(172.16.129.86=>172.23.10.42) MAC(ec:9b:f3:7d:31:bb=>ec:9b:f3:7d:31:bb) AP(120@10.8.0.129=>303@151.11.47.3) AUTH_DOMAIN(MAC_AUTH_all) LOGOUT(-7) ***
-
-15:03:20 op: EXIT_REQUEST_FROM_AUTH, uid: ec:9b:f3:7d:31:bb, ap: 120@10.8.0.129:5280/uffPVExElettorale-r29587_picoM2, ip: 172.16.129.86, mac: ec:9b:f3:7d:31:bb, time: 219, traffic: 22, policy: FLAT
-*/
-
-         U_LOGGER("*** RENEW: UID(%v) IP(%v=>%v) MAC(%v=>%v) ADDRESS(%v@%v=>%v@%v) AUTH_DOMAIN(%v) ***", uid->rep,
-                     user_rec->_ip.rep, ip->rep,
-                     user_rec->_mac.rep, mac->rep,
-                     label->rep, user_rec->nodog.rep, ap_label->rep, ap_address->rep,
-                     user_rec->_auth_domain.rep);
-
-         vec.push_back(user_rec->nodog);
-         vec.push_back(user_rec->_ip);
-         vec.push_back(user_rec->_mac);
          }
       }
 
+   WiAuthVirtualAccessPoint::setIndexAccessPoint();
+
+   if (index_access_point == U_NOT_FOUND) index_access_point = 0; 
+
    user_rec->setRecord();
+
+   UString x, signed_data(500U + U_http_info.query_len);
 
    if (user_rec->consume == false)
       {
@@ -6873,7 +6923,7 @@ static void POST_LoginRequest(bool idp)
          {
          UString uid_save = *uid;
 
-         if (getCookie(0,0) == false ||
+         if (getCookie(0, 0) == false ||
              *uid != uid_save)
             {
             UString input(U_CAPACITY);
@@ -6887,7 +6937,7 @@ static void POST_LoginRequest(bool idp)
                            "waFederatedUserId: %v@%v\n"), // Ex: 3343793489@all
                            hexdump, hexdump, uid->rep, realm->rep);
 
-            if (askToLDAP(&input, "Errore", "LDAP error", "ldapadd -c %v", ldap_session_param->rep) == 1) setCookie((const char*)hexdump);
+            if (askToLDAP(&input, "Errore", "LDAP error", "ldapadd -c %v", ldap_session_param->rep) == 1) setCookie2((const char*)hexdump);
             }
 
          *uid = uid_save;
@@ -6916,7 +6966,7 @@ static void POST_login_request()
       bool bpopup;
       UVector<UString> vec;
       uint32_t end = UHTTP::processForm();
-      UString buffer(U_CAPACITY), uid_cookie = (uid->clear(), (void)getCookie(0,0), *uid);
+      UString buffer(U_CAPACITY), uid_cookie = (uid->clear(), (void)getCookie(0, 0), *uid);
 
       // ----------------------------
       // $1 -> uid
@@ -6977,7 +7027,7 @@ static void POST_login_request()
 
          UHTTP::getFormValue(delete_cookie, U_CONSTANT_TO_PARAM("PersistentCookie"));
 
-         if (delete_cookie.equal(U_CONSTANT_TO_PARAM("yes"))) setCookie(0);
+         if (delete_cookie.equal(U_CONSTANT_TO_PARAM("yes"))) setCookie2(0);
          }
 
       user_rec->getCounter();

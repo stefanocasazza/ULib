@@ -494,7 +494,7 @@ public:
          buffer.snprintf(U_CONSTANT_TO_PARAM(USP_SESSION_INIT),
                          size, ptr,
                          size, ptr,
-                         (bsession ? "\n\tif (UHTTP::data_session == 0)   U_NEW(UDataSession, UHTTP::data_storage, UDataSession);\n\t" : ""),
+                         (bsession ? "\n\tif (UHTTP::data_session == 0)   U_NEW(UDataSession, UHTTP::data_session, UDataSession);\n\t" : ""),
                          (bstorage ? "\n\tif (UHTTP::data_storage == 0) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)); }\n\t" : ""));
 
          (void) declaration.append(buffer);

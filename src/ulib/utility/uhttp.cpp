@@ -26,7 +26,6 @@
 #include <ulib/utility/dir_walk.h>
 #include <ulib/utility/websocket.h>
 #include <ulib/utility/socket_ext.h>
-#include <ulib/utility/data_session.h>
 #include <ulib/net/server/plugin/mod_proxy.h>
 #include <ulib/net/server/plugin/mod_proxy_service.h>
 
@@ -1205,7 +1204,7 @@ void UHTTP::init()
       U_SRV_LOG("File data users permission: ../.htdigest loaded");
       }
 
-   UServices::generateKey(); // for ULib facility request TODO session cookies... 
+   UServices::generateKey(UServices::key, 0); // for ULib facility request TODO session cookies... 
 
    if (htdigest ||
        htpasswd)
@@ -2174,6 +2173,7 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
       {
             char* out;
       const char* inp;
+      const char* ptr;
       const char* end;
 
       /**
@@ -2210,7 +2210,7 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
 
       U_INTERNAL_ASSERT_DIFFERS(U_http_info.endHeader, 0)
 
-      uint32_t count = pbuffer->find(U_CRLF2, U_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
+      uint32_t chunkSize, count = pbuffer->find(U_CRLF2, U_http_info.endHeader, U_CONSTANT_SIZE(U_CRLF2));
 
       if (count == U_NOT_FOUND) count = USocketExt::readWhileNotToken(sk, *pbuffer, U_CONSTANT_TO_PARAM(U_CRLF2), U_SSL_TIMEOUT_MS);
 
@@ -2237,11 +2237,19 @@ U_NO_EXPORT bool UHTTP::readDataChunked(USocket* sk, UString* pbuffer, UString& 
 
          U_INTERNAL_DUMP("inp = %.20S", inp)
 
-         uint32_t chunkSize = ::strtol(inp, (char**)&inp, 16);
+         while (u__isspace(*inp)) { ++inp; }
 
-         // The last chunk is followed by zero or more trailers, followed by a blank line
+         if (inp > end) chunkSize = 0;
+         else
+            {
+            for (ptr = inp; u__isxdigit(*inp); ++inp) {}
+
+            chunkSize = u_hex2int(ptr, inp);
+            }
 
          U_INTERNAL_DUMP("chunkSize = %u", chunkSize)
+
+         // The last chunk is followed by zero or more trailers, followed by a blank line
 
          if (chunkSize == 0)
             {
@@ -5180,7 +5188,7 @@ void UHTTP::removeDataSession()
 
    if (data_session->isDataSession() ||
        (U_http_info.cookie_len       &&
-        getCookie(0)))
+        getCookie(0, 0)))
       {
       data_session->clear();
 
@@ -5216,17 +5224,18 @@ void UHTTP::setSessionCookie(UString* param)
       }
 }
 
-bool UHTTP::getCookie(UString* cookie)
+bool UHTTP::getCookie(UString* cookie, UString* data)
 {
-   U_TRACE(0, "UHTTP::getCookie(%p)", cookie)
+   U_TRACE(0, "UHTTP::getCookie(%p,%p)", cookie, data)
 
    U_INTERNAL_ASSERT_MAJOR(U_http_info.cookie_len, 0)
 
-   char* ptr;
    time_t expire;
-   uint32_t len, agent;
+   uint32_t agent;
+   const char* ptr;
+   const char* end;
    bool check, result = false;
-   UString cookies(U_http_info.cookie, U_http_info.cookie_len), item, value, token;
+   UString cookies(U_http_info.cookie, U_http_info.cookie_len), item, token;
    UVector<UString> cookie_list; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
 
    for (uint32_t i = 0, n = cookie_list.split(cookies, ';'); i < n; ++i)
@@ -5237,58 +5246,92 @@ bool UHTTP::getCookie(UString* cookie)
 
       U_INTERNAL_DUMP("cookie[%u] = %V", i, item.rep)
 
-      const char* start = item.data();
+      ptr = item.data();
 
-      if (u_get_unalignedp32(start)   == U_MULTICHAR_CONSTANT32('u','l','i','b') &&
-          u_get_unalignedp16(start+4) == U_MULTICHAR_CONSTANT16('.','s'))
+      if (u_get_unalignedp32(ptr)   == U_MULTICHAR_CONSTANT32('u','l','i','b') &&
+          u_get_unalignedp16(ptr+4) == U_MULTICHAR_CONSTANT16('.','s'))
          {
-         sid_counter_cur = ::strtol(start + U_CONSTANT_SIZE("ulib.s"), &ptr, 10);
+         ptr += U_CONSTANT_SIZE("ulib.s");
 
-         U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
+         for (end = ptr; u__isdigit(*end); ++end) {}
 
-         U_INTERNAL_ASSERT_EQUALS(ptr[0], '=')
+         U_INTERNAL_ASSERT_EQUALS(*end, '=')
 
-         len = item.size() - (++ptr - start);
+         sid_counter_cur = u_strtoul(ptr, end++);
 
-         (void) value.assign(ptr, len);
+         U_INTERNAL_DUMP("sid_counter_cur = %u", sid_counter_cur)
+
+         /**
+          * XSRF (cross-site request forgery) is a problem that can be solved by using Crumbs. Crumbs is a large alphanumeric string you pass between each on your site, and it is
+          * a timestamp + a HMAC-MD5 encoded result of your IP address and browser user agent and a pre-defined key known only to the web server. So, the application checks the crumb
+          * value on every page, and the crumb value has a specific expiration time and also is based on IP and browser, so it is difficult to forge. If the crumb value is wrong,
+          * then it just prevents the user from viewing that page...
+          */
 
          check = false;
 
-         /**
-          * XSRF (cross-site request forgery) is a problem that can be solved by using Crumbs.
-          * Crumbs is a large alphanumeric string you pass between each on your site, and it is
-          * a timestamp + a HMAC-MD5 encoded result of your IP address and browser user agent and a
-          * pre-defined key known only to the web server. So, the application checks the crumb
-          * value on every page, and the crumb value has a specific expiration time and also is
-          * based on IP and browser, so it is difficult to forge. If the crumb value is wrong,
-          * then it just prevents the user from viewing that page
-          */
-
          token.setBuffer(100U);
 
-         if (UServices::getTokenData(token, value, expire))
+         if (UServices::getTokenData(token, item.substr(end, item.remain(end)), expire))
             {
-            if (token.first_char() == '$') check = true; // session shared... (ex. chat)
+            U_INTERNAL_DUMP("token = %V", token.rep)
+
+            ptr = token.data();
+
+            U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
+
+            if (ptr[0] == '$') check = true; // session shared... (ex. chat)
             else
                {
-               // HTTP Session Hijacking mitigation: <IP>_<USER-AGENT>_<PID_COUNTER>
+               // HTTP Session Hijacking mitigation: <IP>_<USER-AGENT>_<PID>_<COUNTER>
 
-               if (token.compare(0U, UServer_Base::client_address_len, UServer_Base::client_address, UServer_Base::client_address_len) == 0) // IP
+               U_INTERNAL_DUMP("ptr(%u) = %.*S", UServer_Base::client_address_len, UServer_Base::client_address_len, ptr)
+
+               if (memcmp(ptr, UServer_Base::client_address, UServer_Base::client_address_len) == 0) // IP
                   {
-                  agent = ::strtol(token.c_pointer(UServer_Base::client_address_len+1), &ptr, 10);
+                  ptr += UServer_Base::client_address_len+1;
 
-                  U_INTERNAL_DUMP("ptr[0] = %C", ptr[0])
+                  U_INTERNAL_ASSERT(u__isdigit(ptr[0]))
 
-                  U_INTERNAL_ASSERT_EQUALS(ptr[0], '_')
+                  for (end = ptr; u__isdigit(*end); ++end) {}
+
+                  U_INTERNAL_ASSERT_EQUALS(*end, '_')
+
+                  agent = u_strtoul(ptr, end);
+
+                  U_INTERNAL_DUMP("agent = %u", agent)
 
                   if (agent == getUserAgent()) // USER-AGENT
                      {
-                     if (UServer_Base::preforked_num_kids ||
-                         memcmp(ptr+1, u_pid_str, u_pid_str_len) == 0) // PID
-                        {
-                        do { ++ptr; } while (*ptr != '_');
+                     ptr = end + 1;
 
-                        check = (sid_counter_cur == (uint32_t) ::strtol(ptr+1, 0, 10)); // COUNTER
+                     U_INTERNAL_DUMP("ptr(%u) = %.*S", u_pid_str_len, u_pid_str_len, ptr)
+
+                     U_INTERNAL_ASSERT(u__isdigit(ptr[0]))
+
+                     if (UServer_Base::preforked_num_kids ||
+                         memcmp(ptr, u_pid_str, u_pid_str_len) == 0) // PID
+                        {
+                        ptr += u_pid_str_len+1;
+
+                        U_INTERNAL_ASSERT(u__isdigit(ptr[0]))
+
+                        for (end = ptr; u__isdigit(*end); ++end) {}
+
+                        U_INTERNAL_DUMP("sid_counter_cur = %u u_strtoul(ptr, end) = %u", sid_counter_cur, u_strtoul(ptr, end))
+
+                        check = (sid_counter_cur == u_strtoul(ptr, end)); // COUNTER
+
+                        if (data  &&
+                            check &&
+                            *end == ':')
+                           {
+                           ++end;
+
+                           (void) data->replace(end, token.remain(end));
+
+                           U_INTERNAL_DUMP("data = %V", data->rep)
+                           }
                         }
                      }
                   }
@@ -5302,7 +5345,7 @@ bool UHTTP::getCookie(UString* cookie)
             continue;
             }
 
-         if (checkDataSession(token, expire)) result = true;
+         if (checkDataSession(token, expire, data)) result = true;
          }
       else if (cookie)
          {
@@ -5314,9 +5357,9 @@ bool UHTTP::getCookie(UString* cookie)
    U_RETURN(result);
 }
 
-U_NO_EXPORT bool UHTTP::checkDataSession(const UString& token, time_t expire)
+U_NO_EXPORT bool UHTTP::checkDataSession(const UString& token, time_t expire, UString* data)
 {
-   U_TRACE(0, "UHTTP::checkDataSession(%V,%ld)", token.rep, expire)
+   U_TRACE(0, "UHTTP::checkDataSession(%V,%ld,%p)", token.rep, expire, data)
 
    U_INTERNAL_ASSERT(token)
    U_INTERNAL_ASSERT_POINTER(db_session)
@@ -5326,18 +5369,21 @@ U_NO_EXPORT bool UHTTP::checkDataSession(const UString& token, time_t expire)
 
    if (data_session->isDataSession()) goto remove;
 
-   data_session->keyid = token;
-
-   db_session->setPointerToDataStorage(data_session);
-
-   if (db_session->getDataStorage() &&
-       expire == 0                  && // 0 -> valid until browser exit
-       data_session->isDataSessionExpired())
+   if (data == 0 ||
+       data->empty())
       {
-remove:
-      removeDataSession();
+      data_session->keyid = token;
 
-      U_RETURN(false);
+      db_session->setPointerToDataStorage(data_session);
+
+      if (db_session->getDataStorage() &&
+          expire == 0                  && // 0 -> valid until browser exit
+          data_session->isDataSessionExpired())
+         {
+remove:  removeDataSession();
+
+         U_RETURN(false);
+         }
       }
 
    U_SRV_LOG("Found session ulib.s%u", sid_counter_cur);
@@ -5385,7 +5431,7 @@ bool UHTTP::getDataSession()
 
    if (data_session->isDataSession() ||
        (U_http_info.cookie_len       &&
-        getCookie(0)))
+        getCookie(0, 0)))
       {
       U_RETURN(true);
       }
@@ -8990,12 +9036,12 @@ bool UHTTP::getCGIEnvironment(UString& environment, int type)
 
    if (U_http_info.cookie_len)
       {
-      UString cookie;
+      UString cookie, data;
 
-      if (getCookie(&cookie))
+      if (getCookie(&cookie, &data))
          {
          (void) buffer.append(U_CONSTANT_TO_PARAM("'ULIB_SESSION="));
-         (void) buffer.append(data_session->keyid);
+         (void) buffer.append(data.empty() ? data_session->keyid : data);
          (void) buffer.append(U_CONSTANT_TO_PARAM("'\n"));
          }
 
@@ -9508,9 +9554,15 @@ loop:
 
             if (u_get_unalignedp32(ptr+4) == U_MULTICHAR_CONSTANT32('u','s',':',' '))
                {
+               const char* start;
+
                ptr1 = ptr + U_CONSTANT_SIZE("Status: ");
 
-               U_http_info.nResponseCode = ::strtol(ptr1, 0, 10);
+               U_INTERNAL_ASSERT(u__isdigit(ptr1[0]))
+
+               for (start = ptr1; u__isdigit(*ptr1); ++ptr1) {}
+
+               U_http_info.nResponseCode = u_strtoul(start, ptr1);
 
                U_INTERNAL_DUMP("U_http_info.nResponseCode = %d", U_http_info.nResponseCode)
 
@@ -9914,7 +9966,7 @@ bool UHTTP::checkContentLength(uint32_t length, uint32_t pos)
    U_RETURN(false);
 }
 
-typedef struct { uint32_t start, end; } HTTPRange;
+typedef struct { long start, end; } HTTPRange;
 
 /**
  * The Range: header is used with a GET request.
@@ -9996,9 +10048,9 @@ U_NO_EXPORT __pure int UHTTP::sortRange(const void* a, const void* b)
     * 4) For all x, y, and z, if x is incomparable with y, and y is incomparable with z, then x is incomparable with z (transitivity of incomparability)
     */
 
-   return (((int)(((HTTPRange*)a)->start) - (int)(((HTTPRange*)b)->start)) < 0);
+   return ((((HTTPRange*)a)->start - ((HTTPRange*)b)->start) < 0);
 #else
-   return (int)(*(HTTPRange**)a)->start - (int)(*(HTTPRange**)b)->start;
+   return (*(HTTPRange**)a)->start - (*(HTTPRange**)b)->start;
 #endif
 }
 
@@ -10035,10 +10087,11 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
    U_INTERNAL_ASSERT_MAJOR(U_http_range_len, 0)
 
    char* pend;
+   uint32_t i, n;
    HTTPRange* cur;
+   long cur_start, cur_end;
    UVector<HTTPRange*> array;
    UVector<UString> range_list;
-   uint32_t i, n, cur_start, cur_end;
    UString range(U_http_info.range, U_http_range_len), item;
 
    for (i = 0, n = range_list.split(U_http_info.range, U_http_range_len, ','); i < n; ++i)
@@ -10065,13 +10118,13 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
          cur_end = (item.remain(pend) ? ::strtol(pend, &pend, 10) : range_size - 1);
          }
 
-      U_INTERNAL_DUMP("cur_start = %u cur_end = %u", cur_start, cur_end)
+      U_INTERNAL_DUMP("cur_start = %ld cur_end = %ld", cur_start, cur_end)
 
       if (cur_end >= range_size) cur_end = range_size - 1;
 
       if (cur_start <= cur_end)
          {
-         U_INTERNAL_ASSERT_RANGE(cur_start,cur_end,range_size-1)
+         U_INTERNAL_ASSERT_RANGE(cur_start, cur_end, range_size-1)
 
          cur = new HTTPRange;
 

@@ -143,7 +143,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
                goto next;
                }
 
-            c = u_hex2int(inptr, 4);
+            c = u_hex2int(inptr, inptr+4);
 
             U_INTERNAL_PRINT("case_u(1): c = %u", c)
 
@@ -156,7 +156,7 @@ uint32_t u_escape_decode(const char* restrict inptr, uint32_t len, unsigned char
                {
                /* Handle UTF-16 surrogate pair */
 
-               uint32_t lc = u_hex2int(inptr+6, 4);
+               uint32_t lc = u_hex2int(inptr+6, inptr+6+4);
 
                U_INTERNAL_PRINT("lc = %u", lc)
 

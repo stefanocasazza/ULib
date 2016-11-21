@@ -218,6 +218,7 @@ public:
       }
 
    UString setKeyIdDataSession(uint32_t counter);
+   UString setKeyIdDataSession(uint32_t counter, const UString& data);
 
    // define method VIRTUAL of class UDataStorage
 

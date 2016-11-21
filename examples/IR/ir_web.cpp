@@ -33,7 +33,7 @@
          U_ERROR("usp_init() of servlet ir_web failed");
          }
    
-      footer->snprintf(U_CONSTANT_TO_PARAM("ver. %s, with %u documents and %u words."), ULIB_VERSION, cdb_names->size(), cdb_words->size());
+      footer->snprintf(U_CONSTANT_TO_PARAM("ver. %.*s, with %u documents and %u words."), U_CONSTANT_TO_TRACE(ULIB_VERSION), cdb_names->size(), cdb_words->size());
    
       U_NEW(IRDataSession, UHTTP::data_session, IRDataSession);
    
@@ -169,9 +169,9 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
    
          USP_PRINTF("<div id=\"estresult\" class=\"estresult\">\n"
                     "  <div class=\"resinfo\">\n"
-                    "  Results of <strong>%u</strong> - <strong>%u</strong> of about <strong>%u</strong> for <strong>%s</strong> (%.*s sec.)\n"
+                    "  Results of <strong>%u</strong> - <strong>%u</strong> of about <strong>%u</strong> for <strong>%v</strong> (%v sec.)\n"
                     "  </div>\n",
-                    UHTTP::num_page_start, UHTTP::num_page_end, UHTTP::num_item_tot, IR_SESSION.query.data(), U_STRING_TO_TRACE(IR_SESSION.timerun));
+                    UHTTP::num_page_start, UHTTP::num_page_end, UHTTP::num_item_tot, IR_SESSION.query.rep, IR_SESSION.timerun.rep);
    
          if (UHTTP::num_item_tot == 0) {
    
@@ -196,15 +196,15 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
                UXMLEscape::encode(doc, snippet_doc);
    
                USP_PRINTF("<dl class=\"doc\"\n"
-                          "  <dt><a href=\"%s\" class=\"doc_title\">%.*s</a></dt>\n"
-                          "  <dd class=\"doc_text\">%s <code class=\"delim\">...</code></dd>\n"
-                          "  <dd class=\"doc_navi\"><span class=\"doc_link\">file://%s</span></dd>\n"
+                          "  <dt><a href=\"%v\" class=\"doc_title\">%v</a></dt>\n"
+                          "  <dd class=\"doc_text\">%v <code class=\"delim\">...</code></dd>\n"
+                          "  <dd class=\"doc_navi\"><span class=\"doc_link\">file://%v</span></dd>\n"
                           "</dl>\n",
-                          pathname1.data(), U_STRING_TO_TRACE(basename), snippet_doc.data(), pathname2.data());
+                          pathname1.rep, basename.rep, snippet_doc.rep, pathname2.rep);
                }
             }
    
-         USP_PRINTF("<div class=\"paging\">%.*s</div></div>\n", U_STRING_TO_TRACE(link_paginazione));
+         USP_PRINTF("<div class=\"paging\">%v</div></div>\n", link_paginazione.rep);
          }
    }
    

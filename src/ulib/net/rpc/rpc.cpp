@@ -32,7 +32,9 @@ uint32_t URPC::readTokenInt(USocket* s, const char* token, UString& buffer, uint
    if (((buffer.size() >= (rstart + U_TOKEN_LN)) || USocketExt::read(s, buffer, U_TOKEN_LN)) &&
        (token == 0 || memcmp(buffer.c_pointer(rstart), token, U_TOKEN_NM) == 0))
       {
-      value = u_hex2int(buffer.c_pointer(rstart + U_TOKEN_NM), 8);
+      const char* ptr = buffer.c_pointer(rstart + U_TOKEN_NM);
+
+      value = u_hex2int(ptr, ptr+8);
 
       rstart += U_TOKEN_LN;
 

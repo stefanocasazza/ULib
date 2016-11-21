@@ -437,11 +437,11 @@ int main(int argc, char* argv[])
 
    u_int2hex(buf8, 123456789);
    U_INTERNAL_ASSERT_EQUALS( memcmp(buf8, U_CONSTANT_TO_PARAM("075BCD15")), 0 )
-   U_INTERNAL_ASSERT( u_hex2int(buf8, 8) == 123456789 )
+   U_INTERNAL_ASSERT( u_hex2int(buf8, buf8+8) == 123456789 )
 
    u_int2hex(buf8,  23456789);
    U_INTERNAL_ASSERT_EQUALS( memcmp(buf8, U_CONSTANT_TO_PARAM("0165EC15")), 0 )
-   U_INTERNAL_ASSERT( u_hex2int(buf8, 8) == 23456789 )
+   U_INTERNAL_ASSERT( u_hex2int(buf8, buf8+8) == 23456789 )
 
    check_match1(u_fnmatch);
    check_match1(u_dosmatch);

@@ -3463,8 +3463,6 @@ void UServer_Base::runLoop(const char* user)
 
    while (flag_loop)
       {
-      U_INTERNAL_ASSERT_EQUALS(UInterrupt::event_signal_pending, 0)
-
       U_INTERNAL_DUMP("handler_other = %p handler_inotify = %p UNotifier::num_connection = %u UNotifier::min_connection = %u",
                        handler_other,     handler_inotify,     UNotifier::num_connection,     UNotifier::min_connection)
 

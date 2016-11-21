@@ -65,6 +65,9 @@
 /* GNU C/C++ Compiler version */
 #undef GCC_VERSION
 
+/* GNU C/C++ Compiler version extented */
+#undef GCC_VERSION_EXT
+
 /* has accept4 */
 #undef HAVE_ACCEPT4
 

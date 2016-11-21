@@ -135,7 +135,7 @@ static void testVector()
    ok = (y[3] == U_STRING_FROM_CONSTANT("riga 4"));
    U_INTERNAL_ASSERT(ok)
 
-   result = JSON_stringify(json_vec, y);
+   JSON_stringify(result, json_vec, y);
 
    U_ASSERT_EQUALS( result, vecJson )
 }
@@ -176,7 +176,7 @@ static void testMap()
    ok = (x["key4"] == U_STRING_FROM_CONSTANT("riga 4"));
    U_INTERNAL_ASSERT(ok)
 
-   result = JSON_stringify(json_obj, x);
+   JSON_stringify(result, json_obj, x);
 
    U_ASSERT_EQUALS(result.size(), mapJson.size())
 
@@ -220,7 +220,7 @@ static void testObject()
    U_INTERNAL_ASSERT_EQUALS(request.radius,   "near")
    U_INTERNAL_ASSERT_EQUALS(request.location, "40.7831 N, 73.9712 W")
 
-   result = JSON_stringify(json_obj, request);
+   JSON_stringify(result, json_obj, request);
 
    U_ASSERT_EQUALS( result, reqJson )
 }
@@ -474,7 +474,9 @@ U_EXPORT main (int argc, char* argv[])
    std::vector<unsigned int> v = {0, 1, 2, 3, 4, 5};
    UString vecJson = U_STRING_FROM_CONSTANT("[0,1,2,3,4,5]");
 
-   result1 = JSON_stringify(json_vec, v);
+   result1.clear();
+
+   JSON_stringify(result1, json_vec, v);
 
    U_ASSERT_EQUALS(result1, vecJson)
 

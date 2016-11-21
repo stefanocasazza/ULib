@@ -15,6 +15,11 @@
 #define ULIB_SERVICES_H 1
 
 #include <ulib/string.h>
+#include <ulib/utility/hexdump.h>
+
+#ifdef USE_LIBUUID
+#  include <uuid/uuid.h>
+#endif
 
 #ifdef USE_LIBSSL
 #  include <openssl/pem.h>
@@ -134,7 +139,22 @@ struct U_EXPORT UServices {
    // manage session cookies and hashing password...
 
    static unsigned char key[16];
-   static void generateKey(unsigned char* pkey = 0, unsigned char* hexdump = 0);
+
+   static void generateKey(unsigned char* pkey, unsigned char* hexdump)
+      {
+      U_TRACE(1, "UServices::generateKey(%p,%p)", pkey, hexdump)
+
+      U_INTERNAL_ASSERT_POINTER(pkey)
+
+#  ifdef USE_LIBUUID
+      U_SYSCALL_VOID(uuid_generate, "%p", pkey);
+#  else
+      *(uint64_t*) pkey                     = getUniqUID();
+      *(uint64_t*)(pkey + sizeof(uint64_t)) = getUniqUID();
+#  endif
+
+      if (hexdump) (void) u_hexdump_encode(pkey, 16, hexdump);
+      }
 
    static UString generateToken(const UString& data, time_t expire);
    static bool    getTokenData(       UString& data, const UString& value, time_t& expire);
