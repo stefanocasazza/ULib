@@ -165,6 +165,29 @@ private:
    U_DISALLOW_COPY_AND_ASSIGN(ULib)
 };
 
+extern U_EXPORT const double u_pow10[309]; /* 1e-0...1e308: 309 * 8 bytes = 2472 bytes */
+
+#ifndef HAVE_CXX11
+static inline           uint16_t u_dd(uint8_t i) { return U_MULTICHAR_CONSTANT16(u_ctn2s[i], u_ctn2s[i+1]); }
+#else
+static inline constexpr uint16_t u_dd(uint8_t i)
+{
+   return U_MULTICHAR_CONSTANT16('0' + ((i%2)     ? ((i/2)%10)     : ((i/2)/10)),
+                                 '0' + (((i+1)%2) ? (((i+1)/2)%10) : (((i+1)/2)/10)));
+}
+
+static_assert( u_dd(0) == U_MULTICHAR_CONSTANT16('0','0'), "should be U_MULTICHAR_CONSTANT16('0','0')" );
+static_assert( u_dd(1) == U_MULTICHAR_CONSTANT16('0','0'), "should be U_MULTICHAR_CONSTANT16('0','0')" );
+static_assert( u_dd(2) == U_MULTICHAR_CONSTANT16('0','1'), "should be U_MULTICHAR_CONSTANT16('0','1')" );
+static_assert( u_dd(3) == U_MULTICHAR_CONSTANT16('1','0'), "should be U_MULTICHAR_CONSTANT16('1','0')" );
+static_assert( u_dd(4) == U_MULTICHAR_CONSTANT16('0','2'), "should be U_MULTICHAR_CONSTANT16('0','2')" );
+
+template<typename T> static constexpr T pow10(size_t x) { return x ? 10*pow10<T>(x-1) : 1; }
+
+static_assert( pow10<double>(29)   == 1e+29,                   "should be 1e+29" ); // NB: fail for exponent >= 30
+static_assert( pow10<uint64_t>(19) == 10000000000000000000ULL, "should be 1e+19" );
+#endif
+
 // Init library
 
 #define U_ULIB_INIT(argv) U_SET_LOCATION_INFO, ULib::init(0, argv)

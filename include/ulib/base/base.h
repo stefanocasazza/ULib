@@ -460,8 +460,7 @@ static inline uint32_t u_strftime2(char* restrict buffer, uint32_t buffer_size, 
 
 /* conversion number to string */
 
-extern U_EXPORT const char*  u_ctn2s;
-extern U_EXPORT const double u_pow10[309]; /* 1e-0...1e308: 309 * 8 bytes = 2472 bytes */
+extern U_EXPORT const char* u_ctn2s;
 
 extern U_EXPORT pcPFdpc   u_dbl2str;
 extern U_EXPORT pcPFu32pc u_num2str32;

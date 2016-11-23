@@ -103,9 +103,10 @@ void UOrmDriverMySql::handlerError()
       U_ENTRY(CR_AUTH_PLUGIN_CANNOT_LOAD)
    };
 
-   if (UOrmDriver::errmsg == 0) UOrmDriver::errmsg   = U_SYSCALL(mysql_error,    "%p", (MYSQL*)UOrmDriver::connection);
-                                UOrmDriver::errcode  = U_SYSCALL(mysql_errno,    "%p", (MYSQL*)UOrmDriver::connection);
-                                UOrmDriver::SQLSTATE = U_SYSCALL(mysql_sqlstate, "%p", (MYSQL*)UOrmDriver::connection);
+   UOrmDriver::errcode  = U_SYSCALL(mysql_errno,    "%p", (MYSQL*)UOrmDriver::connection);
+   UOrmDriver::SQLSTATE = U_SYSCALL(mysql_sqlstate, "%p", (MYSQL*)UOrmDriver::connection);
+
+   if (UOrmDriver::errmsg == 0) UOrmDriver::errmsg = U_SYSCALL(mysql_error, "%p", (MYSQL*)UOrmDriver::connection);
 
    if (UOrmDriver::errcode >= CR_ERROR_FIRST) UOrmDriver::errcode -= CR_ERROR_FIRST; // 2000
 

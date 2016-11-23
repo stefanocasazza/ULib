@@ -224,8 +224,8 @@ public:
 
       U_INTERNAL_ASSERT(u_now->tv_sec % U_ONE_HOUR_IN_SECOND)
 
-      U_NUM2STR16(ptr, (u_now->tv_sec / 60) % 60);
-      U_NUM2STR16(ptr+3,u_now->tv_sec       % 60);
+      u_put_unalignedp16(ptr,   u_dd((u_now->tv_sec / 60) % 60));
+      u_put_unalignedp16(ptr+3, u_dd( u_now->tv_sec       % 60));
       }
 
    // The daysTo() function returns the number of days between two date

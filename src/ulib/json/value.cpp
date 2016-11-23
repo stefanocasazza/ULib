@@ -1209,8 +1209,8 @@ mreal:
 
       U_INTERNAL_ASSERT_MINOR(significandDigit, 17)
 
-      if (gexponent > 0) val = (double)integerPart * u_pow10[ gexponent];
-      else               val = (double)integerPart / u_pow10[-gexponent];
+      val = (gexponent > 0 ? (double)integerPart * u_pow10[ gexponent]
+                           : (double)integerPart / u_pow10[-gexponent]);
 
 mreal1:
 #  ifdef DEBUG

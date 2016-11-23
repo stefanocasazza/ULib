@@ -1,8 +1,8 @@
-#dist: trusty
+dist: trusty
 language: cpp
 compiler:
   - gcc
-  - clang
+# - clang
 #before_install:
 # - sudo pip install cpp-coveralls
 #install:

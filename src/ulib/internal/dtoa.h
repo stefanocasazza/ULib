@@ -27,9 +27,6 @@
 
 #define UINT64_C2(h, l) ((static_cast<uint64_t>(h) << 32) | static_cast<uint64_t>(l))
 
-extern const char*  u_ctn2s;
-extern const double u_pow10[309];
-
 struct DiyFp {
     DiyFp() : f(), e() {}
 
@@ -337,7 +334,11 @@ inline void DigitGen(const DiyFp& W, const DiyFp& Mp, uint64_t delta, char* buff
         uint64_t tmp = (static_cast<uint64_t>(p1) << -one.e) + p2;
         if (tmp <= delta) {
             *K += kappa;
-            GrisuRound(buffer, *len, delta, tmp, static_cast<uint64_t>(u_pow10[kappa]) << -one.e, wp_w.f);
+#			ifdef HAVE_CXX11
+            GrisuRound(buffer, *len, delta, tmp, pow10<uint64_t>(kappa)   << -one.e, wp_w.f);
+#			else
+            GrisuRound(buffer, *len, delta, tmp, (uint64_t)u_pow10[kappa] << -one.e, wp_w.f);
+#			endif
             return;
         }
     }
@@ -354,92 +355,17 @@ inline void DigitGen(const DiyFp& W, const DiyFp& Mp, uint64_t delta, char* buff
         if (p2 < delta) {
             *K += kappa;
             int index = -static_cast<int>(kappa);
-            GrisuRound(buffer, *len, delta, p2, one.f, wp_w.f * (index < 9 ? (const uint32_t)u_pow10[-static_cast<int>(kappa)] : 0));
+#			ifdef HAVE_CXX11
+            GrisuRound(buffer, *len, delta, p2, one.f, wp_w.f * (index < 9 ? pow10<uint64_t>(index)   : 0));
+#			else
+            GrisuRound(buffer, *len, delta, p2, one.f, wp_w.f * (index < 9 ? (uint64_t)u_pow10[index] : 0));
+#			endif
             return;
         }
     }
 }
 
-inline void Grisu2(double value, char* buffer, int* length, int* K) {
-    const DiyFp v(value);
-    DiyFp w_m, w_p;
-    v.NormalizedBoundaries(&w_m, &w_p);
-
-    const DiyFp c_mk = GetCachedPower(w_p.e, K);
-    const DiyFp W = v.Normalize() * c_mk;
-    DiyFp Wp = w_p * c_mk;
-    DiyFp Wm = w_m * c_mk;
-    Wm.f++;
-    Wp.f--;
-    DigitGen(W, Wp, Wp.f - Wm.f, buffer, length, K);
-}
-
-inline char* WriteExponent(int K, char* buffer) {
-    if (K < 0) {
-        *buffer++ = '-';
-        K = -K;
-    }
-
-    if (K >= 100) {
-        *buffer++ = static_cast<char>('0' + static_cast<char>(K / 100));
-        K %= 100;
-        const char* d = u_ctn2s + K * 2;
-        *buffer++ = d[0];
-        *buffer++ = d[1];
-    }
-    else if (K >= 10) {
-        const char* d = u_ctn2s + K * 2;
-        *buffer++ = d[0];
-        *buffer++ = d[1];
-    }
-    else
-        *buffer++ = static_cast<char>('0' + static_cast<char>(K));
-
-    return buffer;
-}
-
-inline char* Prettify(char* buffer, int length, int k) {
-    const int kk = length + k;  // 10^(kk-1) <= v < 10^kk
-
-    if (0 <= k && kk <= 21) {
-        // 1234e7 -> 12340000000
-        for (int i = length; i < kk; i++)
-            buffer[i] = '0';
-        buffer[kk] = '.';
-        buffer[kk + 1] = '0';
-        return &buffer[kk + 2];
-    }
-    else if (0 < kk && kk <= 21) {
-        // 1234e-2 -> 12.34
-        memmove(&buffer[kk + 1], &buffer[kk], static_cast<size_t>(length - kk));
-        buffer[kk] = '.';
-        return &buffer[length + 1];
-    }
-    else if (-6 < kk && kk <= 0) {
-        // 1234e-6 -> 0.001234
-        const int offset = 2 - kk;
-        memmove(&buffer[offset], &buffer[0], static_cast<size_t>(length));
-        buffer[0] = '0';
-        buffer[1] = '.';
-        for (int i = 2; i < offset; i++)
-            buffer[i] = '0';
-        return &buffer[length + offset];
-    }
-    else if (length == 1) {
-        // 1e30
-        buffer[1] = 'e';
-        return WriteExponent(kk - 1, &buffer[2]);
-    }
-    else {
-        // 1234e30 -> 1.234e33
-        memmove(&buffer[2], &buffer[1], static_cast<size_t>(length - 1));
-        buffer[1] = '.';
-        buffer[length + 1] = 'e';
-        return WriteExponent(kk - 1, &buffer[0 + length + 2]);
-    }
-}
-
-inline char* dtoa_rapidjson(double value, char* buffer)
+static char* dtoa_rapidjson(double value, char* buffer)
 {
 	Double d(value);
 
@@ -449,19 +375,122 @@ inline char* dtoa_rapidjson(double value, char* buffer)
 			{
 			u_put_unalignedp32(buffer, U_MULTICHAR_CONSTANT32('-','0','.','0'));
 
-			return &buffer[4];
+			return buffer+4;
 			}
 
 		u_put_unalignedp32(buffer, U_MULTICHAR_CONSTANT32('0','.','0','\0'));
 
-		return &buffer[3];
+		return buffer+3;
 		}
 
-	int length, K;
+	int length, k;
+	const DiyFp v(value);
+			DiyFp w_m, w_p;
 
-	Grisu2(value, buffer, &length, &K);
+	v.NormalizedBoundaries(&w_m, &w_p);
 
-	return Prettify(buffer, length, K);
+	const DiyFp c_mk = GetCachedPower(w_p.e, &k);
+	const DiyFp W	  = v.Normalize() * c_mk;
+			DiyFp Wp	  = w_p * c_mk;
+			DiyFp Wm	  = w_m * c_mk;
+
+	Wm.f++;
+	Wp.f--;
+
+	DigitGen(W, Wp, Wp.f - Wm.f, buffer, &length, &k);
+
+	int kk = length + k;  // 10^(kk-1) <= v < 10^kk
+
+	if (0  <= k &&
+		 kk <= 21)
+		{
+		// 1234e7 -> 12340000000
+
+		memset(buffer+length, '0', k);
+
+		buffer += kk;
+
+		u_put_unalignedp16(buffer, U_MULTICHAR_CONSTANT16('.','0'));
+
+		return buffer+2;
+		}
+
+	if (0  <  kk &&
+		 kk <= 21)
+		{
+		// 1234e-2 -> 12.34
+
+		char* ptr = buffer+kk;
+
+		memmove(ptr+1, ptr, static_cast<size_t>(length - kk));
+
+		*ptr = '.';
+
+		return buffer+length+1;
+		}
+
+	if (-6 < kk &&
+		 kk <= 0)
+		{
+		// 1234e-6 -> 0.001234
+
+		const int offset = 2 - kk;
+
+		memmove(buffer+offset, buffer, static_cast<size_t>(length));
+
+		u_put_unalignedp16(buffer, U_MULTICHAR_CONSTANT16('0','.'));
+
+		memset(buffer+2, '0', -kk);
+
+		return buffer+length+offset;
+		}
+
+	if (length == 1)
+		{
+		// 1e30
+
+		buffer[1] = 'e';
+
+		buffer += 2;
+
+		goto exp;
+		}
+
+	// 1234e30 -> 1.234e33
+
+	memmove(buffer+2, buffer+1, static_cast<size_t>(length - 1));
+
+	buffer[1]		  = '.';
+	buffer[length+1] = 'e';
+
+	buffer += length+2;
+
+exp:
+	if (--kk < 0)
+		{
+		kk = -kk;
+
+		*buffer++ = '-';
+		}
+
+	if (kk >= 100)
+		{
+		*buffer++ = '0' + (kk  / 100);
+								 kk %= 100;
+
+		goto next;
+		}
+
+	if (kk >= 10)
+		{
+next:	u_put_unalignedp16(buffer, u_dd(kk * 2));
+
+		return buffer + 2;
+		}
+
+	*buffer++ = '0' + kk;
+
+	return buffer;
 }
 
 #endif

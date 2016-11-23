@@ -2256,7 +2256,7 @@ void UHTTP2::handlerResponse()
             default: // use literal header field without indexing - indexed name
                {
                u_put_unalignedp32(ptr+HTTP2_FRAME_HEADER_SIZE, U_MULTICHAR_CONSTANT32(0x08,0x03,0x30+(U_http_info.nResponseCode / 100),'\0'));
-                      U_NUM2STR16(ptr+HTTP2_FRAME_HEADER_SIZE+3,                                      U_http_info.nResponseCode % 100);
+               u_put_unalignedp16(ptr+HTTP2_FRAME_HEADER_SIZE+3, u_dd(U_http_info.nResponseCode % 100));
 
                 sz += 4;
                dst += 4;

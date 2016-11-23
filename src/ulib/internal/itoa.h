@@ -56,9 +56,11 @@ namespace dec_ {
 	// return reinterpret_cast<uint16_t const*>(digits.data())[u];
     }
 
+	 /*
     template<typename T> static constexpr T pow10(size_t x) {
 		return x ? 10*pow10<T>(x-1) : 1;
     }
+	 */
 
     // Division by a power of 10 is implemented using a multiplicative inverse.
     // This strength reduction is also done by optimizing compilers, but

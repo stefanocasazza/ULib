@@ -2612,7 +2612,7 @@ next:
       else                   (void) db_user->insertDataStorage(*uid);
       }
 
-   static const char* getPointerToConnection(UStringRep* data)
+   static const char* getPointerToConnection(UStringRep* data) __pure
       {
       U_TRACE(5, "WiAuthUser::getPointerToConnection(%p)", data)
 
@@ -2630,7 +2630,7 @@ next:
       return ptr;
       }
 
-   static bool isConnected(UStringRep* data)
+   static bool isConnected(UStringRep* data) __pure
       {
       U_TRACE(5, "WiAuthUser::isConnected(%p)", data)
 
@@ -7463,7 +7463,7 @@ static void GET_admin_status_nodog_and_user_as_csv()
 
 // TAVARNELLE
 
-int WiAuthNodog::dbNodogFilter(UStringRep* key, UStringRep* data)
+__pure int WiAuthNodog::dbNodogFilter(UStringRep* key, UStringRep* data)
 {
    U_TRACE(5, "WiAuthNodog::dbNodogFilter(%p,%p)", key, data)
 
