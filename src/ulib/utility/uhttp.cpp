@@ -5164,21 +5164,6 @@ void UHTTP::addSetCookie(const UString& cookie)
    U_INTERNAL_DUMP("set_cookie = %V", set_cookie->rep)
 }
 
-U_NO_EXPORT void UHTTP::removeDataSession(const UString& token)
-{
-   U_TRACE(0, "UHTTP::removeDataSession(%V)", token.rep)
-
-   U_INTERNAL_ASSERT(token)
-
-   UString cookie(100U);
-
-   cookie.snprintf(U_CONSTANT_TO_PARAM("ulib.s%u=; expires=%#8D"), sid_counter_cur, u_now->tv_sec - U_ONE_DAY_IN_SECOND);
-
-   addSetCookie(cookie);
-
-   U_SRV_LOG("Delete session ulib.s%u keyid=%V", sid_counter_cur, token.rep);
-}
-
 void UHTTP::removeDataSession()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::removeDataSession()")
@@ -5192,7 +5177,9 @@ void UHTTP::removeDataSession()
       {
       data_session->clear();
 
-      removeDataSession(data_session->keyid);
+      removeCookieSession();
+
+      U_SRV_LOG("Delete session ulib.s%u keyid=%V", sid_counter_cur, data_session->keyid.rep);
 
 #  ifdef U_LOG_DISABLE
             (void) db_session->remove(data_session->keyid);
@@ -5340,7 +5327,9 @@ bool UHTTP::getCookie(UString* cookie, UString* data)
 
          if (check == false)
             {
-            removeDataSession(token);
+            removeCookieSession();
+
+            U_SRV_LOG("Delete session ulib.s%u keyid=%V", sid_counter_cur, token.rep);
 
             continue;
             }
@@ -10061,7 +10050,7 @@ U_NO_EXPORT void UHTTP::setResponseForRange(uint32_t _start, uint32_t _end, uint
    // Single range
 
    U_INTERNAL_ASSERT(_start <= _end)
-   U_INTERNAL_ASSERT_RANGE(_start,_end,range_size-1)
+   U_INTERNAL_ASSERT_RANGE(_start, _end, range_size-1)
 
    UString tmp(100U);
 
@@ -10120,7 +10109,7 @@ U_NO_EXPORT int UHTTP::checkGetRequestForRange(const UString& data)
 
       U_INTERNAL_DUMP("cur_start = %ld cur_end = %ld", cur_start, cur_end)
 
-      if (cur_end >= range_size) cur_end = range_size - 1;
+      if (cur_end >= (long)range_size) cur_end = range_size - 1;
 
       if (cur_start <= cur_end)
          {

@@ -2299,7 +2299,9 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		##			 compiling a program using computed gotos, a GCC extension, you may get better runtime performance if you disable the global
 		##			 common subexpression elimination pass by adding -fno-gcse to the command line
 		## ----------------------------------------------------------------------------------------------------------------------------------
-		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -Ofast" ## -ffunction-sections -fdata-sections
+		## -ffunction-sections -fdata-sections
+		## ----------------------------------------------------------------------------------------------------------------------------------
+		MAYBE_FLAGS="$MAYBE_FLAGS -fno-stack-protector -fno-stack-protector-all -ffast-math -ftree-vectorize -fno-crossjumping -fno-gcse -fpartial-inlining -Ofast"
 
 		if test "$use_distcc" != "yes" -a "$cross_compiling" != "yes"; then
 			MAYBE_FLAGS="$MAYBE_FLAGS -flto -ffat-lto-objects -fuse-linker-plugin -march=native -mtune=native" # NB: distcc don't work with this...

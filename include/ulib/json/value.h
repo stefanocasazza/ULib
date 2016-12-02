@@ -1128,8 +1128,8 @@ public:
 
       long l = *(long*)pval;
 
-      int type = (l > UINT_MAX || l < INT_MAX ? UValue::REAL_VALUE :
-                  l > 0                       ? UValue::UINT_VALUE : UValue::INT_VALUE);
+      int type = (l > (long)UINT_MAX || l < (long)INT_MAX ? UValue::REAL_VALUE :
+                  l > 0                                   ? UValue::UINT_VALUE : UValue::INT_VALUE);
 
       json.value.ival = UValue::getJsonValue(type, (void*)(l & 0x00000000FFFFFFFFULL));
       }

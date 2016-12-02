@@ -201,6 +201,38 @@ public:
 
    // EXT
 
+   bool skipToken();
+   bool skipToken(const char* token, uint32_t sz)
+      {
+      U_TRACE(0, "UTokenizer::skipToken(%.*S,%u)", sz, token, sz)
+
+      if ((uint32_t)str.remain(s) >= sz &&
+          memcmp(s, token, sz) == 0)
+         {
+         s += sz;
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   void skipNumber()
+      {
+      U_TRACE_NO_PARAM(0, "UTokenizer::skipNumber()")
+
+      for (; s < end; ++s)
+         {
+         char c = *s;
+
+         if (u__isnumberchar(c) == false &&
+             u__toupper(c) != 'E') // scientific notation (Ex: 1.45e-10)
+            {
+            break;
+            }
+         }
+      }
+
    UString substr() const
       {
       U_TRACE_NO_PARAM(0, "UTokenizer::substr()")
@@ -223,41 +255,10 @@ public:
       U_RETURN_STRING(result);
       }
 
-   void skipNumber()
-      {
-      U_TRACE_NO_PARAM(0, "UTokenizer::skipNumber()")
-
-      for (; s < end; ++s)
-         {
-         char c = *s;
-
-         if (u__isnumberchar(c) == false &&
-             u__toupper(c) != 'E') // scientific notation (Ex: 1.45e-10)
-            {
-            break;
-            }
-         }
-      }
+   UString getTokenQueryParser();
 
    int  getTokenId(UString* ptoken);
    bool tokenSeen(const UString* x);
-
-   UString getTokenQueryParser();
-
-   bool skipToken(const char* token, uint32_t sz)
-      {
-      U_TRACE(0, "UTokenizer::skipToken(%.*S,%u)", sz, token, sz)
-
-      if ((uint32_t)str.remain(s) >= sz &&
-          memcmp(s, token, sz) == 0)
-         {
-         s += sz;
-
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
 
    static const char* group;
    static bool group_skip, avoid_punctuation;

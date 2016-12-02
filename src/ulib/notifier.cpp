@@ -272,13 +272,14 @@ next:
    kqevents  = (struct kevent*) UMemoryPool::_malloc(max_connection, sizeof(struct kevent), true);
    kqrevents = (struct kevent*) UMemoryPool::_malloc(max_connection, sizeof(struct kevent), true);
 
-   // Check for Mac OS X kqueue bug. If kqueue works, then kevent will succeed, and it will stick an error in events[0]. If kqueue is broken, then kevent will fail
+   // Check for Mac OS X kqueue bug. If kqueue works, then kevent will succeed, and it will stick an error in events[0].
+   // If kqueue is broken, then kevent will fail (This detects an old bug in Mac OS X 10.4, fixed in 10.5)
 
    EV_SET(kqevents, -1, EVFILT_READ, EV_ADD, 0, 0, 0);
 
    if (U_SYSCALL(kevent, "%d,%p,%d,%p,%d,%p", kq, kqevents, 1, kqrevents, max_connection, 0) != 1 ||
        kqrevents[0].ident != -1                                                                   ||
-       kqrevents[0].flags != EV_ERROR)
+       (kqrevents[0].flags & EV_ERROR) != 0)
       {
       U_ERROR("Detected broken kevent()...");
       }

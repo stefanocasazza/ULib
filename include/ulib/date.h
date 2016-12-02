@@ -224,8 +224,8 @@ public:
 
       U_INTERNAL_ASSERT(u_now->tv_sec % U_ONE_HOUR_IN_SECOND)
 
-      u_put_unalignedp16(ptr,   u_dd((u_now->tv_sec / 60) % 60));
-      u_put_unalignedp16(ptr+3, u_dd( u_now->tv_sec       % 60));
+      U_NUM2STR16(ptr, (u_now->tv_sec / 60) % 60);
+      U_NUM2STR16(ptr+3,u_now->tv_sec       % 60);
       }
 
    // The daysTo() function returns the number of days between two date
@@ -315,11 +315,11 @@ public:
       U_RETURN(week_number);
       }
 
-   int getDayOfWeek()
+   uint32_t getDayOfWeek()
       {
       U_TRACE_NO_PARAM(0, "UTimeDate::getDayOfWeek()")
 
-      int day_of_week = (getJulian() + 1) % 7; // gives the value 0 for Sunday ... 6 for Saturday
+      uint32_t day_of_week = (getJulian() + 1) % 7; // gives the value 0 for Sunday ... 6 for Saturday: [Sun,Sat]([0,6])
 
       U_RETURN(day_of_week);
       }
@@ -358,17 +358,17 @@ public:
       addDays(day_of_week ? 8-day_of_week : 1);
       }
 
-   void setDayOfWeek(int day_of_week)
+   void setDayOfWeek(uint32_t day_of_week)
       {
-      U_TRACE_NO_PARAM(0, "UTimeDate::setDayOfWeek()")
+      U_TRACE(0, "UTimeDate::setDayOfWeek(%u)", day_of_week)
 
-      int diff = day_of_week - getDayOfWeek();
+      U_INTERNAL_ASSERT(day_of_week <= 6)
 
-      U_INTERNAL_DUMP("diff = %d", diff)
+      uint32_t diff = weekday_difference(day_of_week, getDayOfWeek());
 
       if (diff) addDays(diff);
 
-      U_ASSERT_EQUALS(day_of_week, getDayOfWeek())
+      U_ASSERT_EQUALS(getDayOfWeek(), day_of_week)
       }
 
    void setYearAndWeek(int year, int week)
@@ -388,7 +388,13 @@ public:
 
       fromJulian(julian = toJulian(1, month, _year));
 
-      setDayOfWeek(1);
+      int diff = 1 - getDayOfWeek();
+
+      U_INTERNAL_DUMP("diff = %d", diff)
+
+      if (diff) addDays(diff);
+
+      U_ASSERT_EQUALS(getDayOfWeek(), 1)
       }
 
    // Print date with format
@@ -579,5 +585,35 @@ protected:
           void fromJulian(int julian);
    static int    toJulian(int day, int month, int year);
    static UString _ago(time_t tm, uint32_t granularity);
+
+   static uint32_t weekday_difference(uint32_t x, uint32_t y) // Returns the number of days from the weekday y to the weekday x
+      {
+      U_TRACE(0, "UTimeDate::weekday_difference(%u,%u)", x, y)
+
+      U_INTERNAL_ASSERT(x <= 6)
+      U_INTERNAL_ASSERT(y <= 6)
+
+      x -= y;
+
+      U_RETURN(x <= 6 ? x : x + 7); // The result is always in the range [0, 6]
+      }
+
+   static uint32_t next_weekday(uint32_t x)
+      {
+      U_TRACE(0, "UTimeDate::next_weekday(%u)", x)
+
+      U_INTERNAL_ASSERT(x <= 6)
+
+      U_RETURN(x < 6 ? x+1 : 0);
+      }
+
+   static uint32_t prev_weekday(uint32_t x)
+      {
+      U_TRACE(0, "UTimeDate::prev_weekday(%u)", x)
+
+      U_INTERNAL_ASSERT(x <= 6)
+
+      U_RETURN(x > 0 ? x-1 : 6);
+      }
 };
 #endif

@@ -169,7 +169,8 @@ loop: if (delim)
 
             goto tok;
             }
-         else if (group_skip)
+
+         if (group_skip)
             {
             // -------------------------------------------------------------------
             // examples:
@@ -204,9 +205,8 @@ tok:  n = s - p;
          while (u__ispunct(*p))
             {
             --n;
-            ++p;
 
-            if (p == s) goto loop;
+            if (++p == s) goto loop;
             }
 
          while (u__ispunct(p[n-1]))
@@ -218,6 +218,108 @@ tok:  n = s - p;
          }
 
       token = str.substr(p, n);
+
+      s += shift;
+
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
+}
+
+bool UTokenizer::skipToken()
+{
+   U_TRACE_NO_PARAM(0, "UTokenizer::skipToken()")
+
+   const char* p  = s;
+   uint32_t shift = 1, n;
+
+   while (s < end)
+      {
+loop: if (delim)
+         {
+         s = u_delimit_token(s, &p, end, delim, 0);
+
+         if (p) goto tok;
+
+         U_RETURN(false);
+         }
+
+      s = u_skip(s, end, 0, 0);
+
+      if (s == end) break;
+
+      if (group)
+         {
+         if (memcmp(s, group, group_len_div_2) == 0)
+            {
+            p = s + group_len_div_2 - 1;
+            s = u_strpend(p, end - p, group, group_len, '\0');
+
+            ++p;
+
+            if (s == 0) s = end;
+
+            U_INTERNAL_DUMP("p = %.*S s = %.*S", s - p, p, end - s, s)
+
+            if (group_skip)
+               {
+               s += group_len_div_2;
+
+               continue;
+               }
+
+            shift = group_len_div_2;
+
+            goto tok;
+            }
+
+         if (group_skip)
+            {
+            // -------------------------------------------------------------------
+            // examples:
+            // -------------------------------------------------------------------
+            // <date>03/11/2005 10:17:46</date>
+            // <description>description_556adfbc-0107-5000-ede4-d208</description>
+            // -------------------------------------------------------------------
+
+            s = u_delimit_token(s, &p, end, 0, 0);
+
+            if (s < end)
+               {
+               const char* x = (char*) memchr(p, group[0], s - p);
+
+               if (x && (memcmp(x, group, group_len_div_2) == 0))
+                  {
+                  s     = x;
+                  shift = 0;
+                  }
+               }
+
+            goto tok;
+            }
+         }
+
+      s = u_delimit_token(s, &p, end, 0, 0);
+
+tok:  n = s - p;
+
+      if (avoid_punctuation)
+         {
+         while (u__ispunct(*p))
+            {
+            --n;
+
+            if (++p == s) goto loop;
+            }
+
+         while (u__ispunct(p[n-1]))
+            {
+            --n;
+
+            if (n == 0) goto loop;
+            }
+         }
 
       s += shift;
 

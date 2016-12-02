@@ -406,7 +406,9 @@ static char* dtoa_rapidjson(double value, char* buffer)
 		{
 		// 1234e7 -> 12340000000
 
+#	ifndef U_COVERITY_FALSE_POSITIVE
 		memset(buffer+length, '0', k);
+#	endif
 
 		buffer += kk;
 
@@ -440,7 +442,9 @@ static char* dtoa_rapidjson(double value, char* buffer)
 
 		u_put_unalignedp16(buffer, U_MULTICHAR_CONSTANT16('0','.'));
 
+#	ifndef U_COVERITY_FALSE_POSITIVE
 		memset(buffer+2, '0', -kk);
+#	endif
 
 		return buffer+length+offset;
 		}

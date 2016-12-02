@@ -1331,6 +1331,11 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UString::UString(move)")
 
+      // Move the value (including the allocated memory) from the first object to the second one, and leave the first one empty.
+      // It will not need the value anyway, because the only operation that will be executed on it is the destruction. We must
+      // leave it in the state where destructor can be safely called without causing any problems such as releasing the resources
+      // that were stolen and now owned by another object
+
           rep = str.rep;
       str.rep = UStringRep::string_rep_null;
                 UStringRep::string_rep_null->hold();

@@ -433,6 +433,17 @@ public:
    static void clearSession();
    static void removeDataSession();
 
+   static void removeCookieSession()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::removeCookieSession()")
+
+      UString cookie(100U);
+
+      cookie.snprintf(U_CONSTANT_TO_PARAM("ulib.s%u=; expires=%#8D"), sid_counter_cur, u_now->tv_sec - U_ONE_DAY_IN_SECOND);
+
+      addSetCookie(cookie);
+      }
+
    static void setSessionCookie(UString* param = 0);
 
    static bool getDataStorage();
@@ -1063,7 +1074,6 @@ private:
    static bool checkGetRequestIfModified() U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static bool checkIfSourceHasChangedAndCompileUSP() U_NO_EXPORT;
-   static void removeDataSession(const UString& token) U_NO_EXPORT;
    static bool checkIfUSP(UStringRep* key, void* value) U_NO_EXPORT;
    static bool compileUSP(const char* path, uint32_t len) U_NO_EXPORT;
    static void manageDataForCache(const UString& file_name) U_NO_EXPORT;
