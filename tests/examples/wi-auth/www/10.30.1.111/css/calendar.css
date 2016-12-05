@@ -1,0 +1,198 @@
+* {
+  margin: 0;
+  padding: 0;  
+}
+
+html {
+	-webkit-font-smoothing: antialiased;
+  overflow-y: scroll;
+}
+
+body {
+  font-family: Helvetica, Arial, sans-serif;
+  background: #eee;
+  color: #222;
+  margin: 50px;
+}
+
+li {
+  list-style: none;
+}
+
+a {
+  color: red;
+  text-decoration: none;
+}
+
+h1 {
+  text-align: center;
+  margin-bottom: 50px;
+}
+h1 a {
+  color: inherit;
+  border-bottom: 1px solid red;
+  padding-bottom: 1px;
+}
+h1 a:hover {
+  color: red;
+}
+h1 a.arrow {
+  color: red;
+  border-bottom: none;
+}
+
+header {
+  margin: -50px -50px 50px;
+  background: #222;
+  text-align: center;
+  box-shadow: rgba(0,0,0, .1) 0px 2px 10px;
+}
+header nav li {
+  display: inline-block;
+  margin: 10px -3px 10px 0;
+}
+header nav li:first-child a {
+  border-top-left-radius: 3px;
+  border-bottom-left-radius: 3px;
+}
+header nav li:last-child a {
+  border-top-right-radius: 3px;
+  border-bottom-right-radius: 3px;
+}
+header nav li a {
+  display: block;
+  color: #fff;
+  background: #444;
+  font-weight: bold;
+  font-size: 14px;
+  padding: 5px 20px;
+}
+header nav li a.active {
+  background: #666;
+}
+
+table {
+  border-spacing: 0;
+  background: #fff;
+  width: 100%;
+}
+
+.year ul {
+  margin-right: -2%;
+  overflow: hidden;
+}
+.year li {
+  float: left;
+  width: 23%;
+  margin-bottom: 2%;
+  margin-right: 2%;
+  box-shadow: rgba(0,0,0, .05) 0px 2px 5px;
+}
+.year li h2 {
+  background: red;
+  color: #fff;
+  border: 1px solid red;
+  padding: 10px;
+  text-align: center;
+  font-weight: normal;
+  font-size: 18px;
+  box-shadow: rgba(255,255,255, .06) 0px 1px 0px inset;
+}
+.year li h2 a {
+  color: inherit;
+}
+.year li table {
+  height: 200px;
+  border-left: 1px solid #e6e6e6;
+}
+.year li th,
+.year li td { 
+  vertical-align: middle;
+  text-align: center;
+  border-bottom: 1px solid #e6e6e6;
+  border-right: 1px solid #e6e6e6;
+  width: 14.2%;
+  box-shadow: rgba(255,255,255, .06) 0px 1px 0px inset;
+}
+.year li td a { 
+  color: #222;
+}
+.year li th {
+  font-size: 12px;
+  font-weight: normal;
+  border-bottom: 1px solid red;
+  color: red;
+}
+.year li td strong {
+  color: red;
+}
+.year li td.inactive,
+.year li td.inactive a {
+  background: #fff;
+  color: rgba(0,0,0, .2);
+}
+
+.month table {
+  box-shadow: rgba(0,0,0, .05) 0px 2px 5px;
+  table-layout: fixed;
+}
+.month th,
+.month td { 
+  vertical-align: middle;
+  text-align: center;
+  border-bottom: 1px solid #e6e6e6;
+  border-right: 1px solid #e6e6e6;
+  box-shadow: rgba(255,255,255, .06) 0px 1px 0px inset;
+}
+.month th {
+  font-size: 12px;
+  font-weight: normal;
+  border-bottom: 1px solid red;
+  color: red;
+  padding: 10px 0;
+}
+.month td {
+  height: 120px;
+}
+.month td a {
+  color: #222;
+}
+.month td strong {
+  color: red;
+}
+.month td.inactive,
+.month td.inactive a {
+  background: #fff;
+  color: rgba(0,0,0, .2);
+}
+.month td.inactive strong {
+  background: #fff;
+  color: rgba(0,0,0, .2);
+}
+
+.week table {
+  box-shadow: rgba(0,0,0, .05) 0px 2px 5px;
+  table-layout: fixed;
+}
+.week th,
+.week td { 
+  vertical-align: middle;
+  text-align: center;
+  border-bottom: 1px solid #e6e6e6;
+  border-right: 1px solid #e6e6e6;
+  box-shadow: rgba(255,255,255, .06) 0px 1px 0px inset;
+}
+.week th {
+  font-size: 12px;
+  font-weight: normal;
+  border-bottom: 1px solid red;
+  color: red;
+  padding: 10px 0;
+}
+.week li {
+  border-bottom: 1px solid #e6e6e6;
+  padding: 10px 0;
+}
+.week li a {
+  color: #222;
+}

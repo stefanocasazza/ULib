@@ -7,7 +7,7 @@
 
 #ifndef FW_ENV_VALUE
 #ifndef LOCAL_NETWORK_DEF
-#define LOCAL_NETWORK_DEF LocalNetwork=172.16.<DDD>.0/24
+#define LOCAL_NETWORK_DEF 'LocalNetwork=172.<CCC>.<DDD>.0/24'
 #endif
 #ifndef INTERNAL_DEVICE_DEF
 #define INTERNAL_DEVICE_DEF InternalDevice=<LAN>
@@ -22,14 +22,14 @@
 #define FW_CONF_DEF
 #endif
 #define FW_ENV_VALUE \
-	MasqueradeDevice=eth0 \
-	'AuthServiceAddr=http://wifi-aaa.comune.fi.it' \
-	FullPrivateNetwork=172.16.0.0/12 \
-	FW_CONF_DEF \
-	LOCAL_NETWORK_DEF \
-	INTERNAL_DEVICE_DEF \
-	EXTERNAL_DEVICE_DEF \
-	ALLOWED_WEB_HOST_DEF
+   MasqueradeDevice=eth0 \
+   'AuthServiceAddr=http://wifi-aaa.comune.fi.it' \
+   FullPrivateNetwork=172.16.0.0/12 \
+   FW_CONF_DEF \
+   LOCAL_NETWORK_DEF \
+   INTERNAL_DEVICE_DEF \
+   EXTERNAL_DEVICE_DEF \
+   ALLOWED_WEB_HOST_DEF
 #endif
 
 #define FW_ENV_DEF FW_ENV XQUOTE(FW_ENV_VALUE)
@@ -47,8 +47,14 @@
 #ifndef TCP_LINGER_DEF
 #define TCP_LINGER_DEF TCP_LINGER_SET -1
 #endif
+#ifndef LISTEN_BACKLOG_DEF
+#define LISTEN_BACKLOG_DEF LISTEN_BACKLOG 128
+#endif
 #ifndef NUM_PEERS_PREALLOCATE_DEF
 #define NUM_PEERS_PREALLOCATE_DEF NUM_PEERS_PREALLOCATE 512 
+#endif
+#ifndef CHECK_EXPIRE_INTERVAL_DEF
+#define CHECK_EXPIRE_INTERVAL_DEF CHECK_EXPIRE_INTERVAL 300
 #endif
 
 #ifndef COMMENT1
@@ -57,41 +63,45 @@
 #ifndef COMMENT2
 #define COMMENT2
 #endif
+#ifndef COMMENT3
+#define COMMENT3 #
+#endif
 
 userver {
-	 IP_ADDRESS <AAA.BBB.CCC.DDD> 
-	 DOCUMENT_ROOT /usr/lib/nodog
-	 PID_FILE /tmp/nodog.pid
+    IP_ADDRESS <AAA.BBB.CCC.DDD> 
+    DOCUMENT_ROOT /usr/lib/nodog/www
+    PID_FILE /tmp/nodog.pid
 COMMENT1 LOG_FILE /tmp/nodog.log
-COMMENT2 LOG_FILE_SZ 1M
-	 LOG_MSG_SIZE -1
-	 PLUGIN "nocat http"
-	 REQ_TIMEOUT 5
-	 CGI_TIMEOUT 60
-	 TCP_LINGER_DEF
-	 PREFORK_CHILD_DEF
+COMMENT2 LOG_FILE_SZ 5M
+    LOG_MSG_SIZE -1
+    PLUGIN "nocat http"
+    REQ_TIMEOUT 5
+    CGI_TIMEOUT 60
+    TCP_LINGER_DEF
+    PREFORK_CHILD_DEF
     LISTEN_BACKLOG_DEF
 }
 http {
-	 TELNET_ENABLE yes
-	 CACHE_FILE_MASK _off_
-#	 CACHE_FILE_STORE webif.gz
-	 LIMIT_REQUEST_BODY 100K
-	 REQUEST_READ_TIMEOUT 5
+    TELNET_ENABLE yes
+    CACHE_FILE_MASK _off_
+#   CACHE_FILE_STORE webif.gz
+    LIMIT_REQUEST_BODY 100K
+    REQUEST_READ_TIMEOUT 5
 }
 nocat {
-	 FW_CMD firewall/nodog.fw
-	 DECRYPT_KEY puppamelo
-	 CHECK_EXPIRE_INTERVAL 300
+    FW_CMD ../firewall/nodog.fw
+    DECRYPT_KEY vivalatopa
+    CHECK_EXPIRE_INTERVAL_DEF
     CHECK_TYPE_DEF
-	 FW_ENV_DEF
-	 LOCAL_NETWORK_LABEL_DEF
-	 NUM_PEERS_PREALLOCATE_DEF
+    FW_ENV_DEF
+    LOCAL_NETWORK_LABEL_DEF
+    NUM_PEERS_PREALLOCATE_DEF
+COMMENT3 DHCP_DATA_FILE /tmp/kea-leases.tdb
 }
 proxy {
    Service_GOOGLE_MAP {
-	METHOD_NAME GET
-	HOST   *.googleapis.com|*.googlecode.com|maps.google.com|maps.gstatic.com|csi.gstatic.com
-	SERVER $<
+   METHOD_NAME GET
+   HOST   *.googleapis.com|*.googlecode.com|maps.google.com|maps.gstatic.com|csi.gstatic.com
+   SERVER $<
    }
 }

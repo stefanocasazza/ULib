@@ -486,6 +486,28 @@ do_cmd() {
 	if [ "$REQUEST_METHOD" = "GET" ]; then
 
 		case "$REQUEST_URI" in
+			/tavarnelle.shtml) 
+
+				local network=tavarnelle
+				. /srv/tools/work/${network}.env
+
+				case "$QUERY_STRING" in
+					admin_current_status_ap) 
+						local title="rete $NETWORK_NAME, situazione corrente access point"
+						TITLE_TXT="$TITLE_DEFAULT: $title"
+						SSI_HEAD="<link type=\"text/css\" href=\"css/monitoring.css\" rel=\"stylesheet\">"
+						SSI_BODY="<h1>$title</h1>\n<pre>\n`/srv/tools/work/status.sh $network`\n</pre>"
+					;;
+					admin_continuing_status_ap) 
+						local title="rete $NETWORK_NAME, monitoraggio continuativo access point"
+						TITLE_TXT="$TITLE_DEFAULT: $title"
+						SSI_HEAD="<meta http-equiv=\"refresh\" content=\"$INTERVAL\">
+<link type=\"text/css\" href=\"css/monitoring.css\" rel=\"stylesheet\">"
+						SSI_BODY="<h1>$title</h1><p>interval: $INTERVAL seconds</p>\n<pre>\n`/srv/tools/work/status.sh $network`\n</pre>"
+					;;
+				esac
+         ;;
+			
 			/admin_printlog)										 printlog										;;
 			/admin_view_statistics_login)						 view_statistics_login "$@"				;;
 			/admin_historical_statistics_login)				 historical_statistics_login				;;
@@ -538,7 +560,6 @@ do_cmd() {
 					print_page "`date`" "`cat $TMPFILE.out`"
 				fi
 			;;
-
 			*) print_page ;;
 		esac
 
@@ -561,6 +582,7 @@ do_cmd() {
 
 	write_SSI
 }
+
 #-----------------------------------
 # END FUNCTION
 #-----------------------------------

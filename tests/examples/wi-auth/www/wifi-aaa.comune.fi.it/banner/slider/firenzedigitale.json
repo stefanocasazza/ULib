@@ -1,0 +1,278 @@
+
+{
+"count":"30",
+
+"rows":
+	[
+		{
+		"Titolo": "ATAF 2.0",
+		"URL": "app.comune.fi.it/app/a0031.html",
+		"Posizionamento": "01.10",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "true",
+		"Parole_chiave": "viaggi trasporti",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/ataf/icon175x175.png"
+		},
+		{
+		"Titolo": "Alert System",
+		"URL": "app.comune.fi.it/app/a0021.html",
+		"Posizionamento": "01.25",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/images/app/alertSystem/logo_alertSystem_icon350x350.jpeg"
+		},
+		{
+		"Titolo": "Careggi Smart Hospital",
+		"URL": "app.comune.fi.it/app/a0019.html",
+		"Posizionamento": "01.50",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/careggiSmartHospital/logo_smartHospitalCareggi.png"
+		},
+		{
+		"Titolo": "Cascine",
+		"URL": "app.comune.fi.it/app/a0029.html",
+		"Posizionamento": "01.60",
+		"App_del_Comune": "true",
+		"App_in_Wifi": "true",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/cascine/app_icon.png"
+		},
+		{
+		"Titolo": "Electra Project",
+		"URL": "app.comune.fi.it/app/a0027.html",
+		"Posizionamento": "01.75",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/electra/logoElectra.png"
+		},
+		{
+		"Titolo": "EnviroFI",
+		"URL": "app.comune.fi.it/app/a0007.html",
+		"Posizionamento": "02.00",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/envirofi/EnviroFI_256x256.png"
+		},
+		{
+		"Titolo": "Firenze Mia",
+		"URL": "app.comune.fi.it/app/a0004.html",
+		"Posizionamento": "03.00",
+		"App_del_Comune": "true",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/firenzeMia/app_icon.png"
+		},
+		{
+		"Titolo": "Firenze Parcheggi",
+		"URL": "app.comune.fi.it/app/a0028.html",
+		"Posizionamento": "03.50",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/firenzeParcheggi/app_icon.png"
+		},
+		{
+		"Titolo": "Firenze The Walking City",
+		"URL": "app.comune.fi.it/app/a0001.html",
+		"Posizionamento": "04.00",
+		"App_del_Comune": "true",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/walking_city/app_icon.png"
+		},
+		{
+		"Titolo": "Firenze card",
+		"URL": "app.comune.fi.it/app/a0008.html",
+		"Posizionamento": "05.00",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "true",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/firenzecard/firenzecard.png_494293542.png"
+		},
+		{
+		"Titolo": "Firenze Turismo",
+		"URL": "app.comune.fi.it/app/a0016.html",
+		"Posizionamento": "05.50",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "true",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/firenzeTurismo/firenzeTurismo_logo.jpg"
+		},
+		{
+		"Titolo": "FirenzeUp!",
+		"URL": "app.comune.fi.it/app/a0006.html",
+		"Posizionamento": "06.00",
+		"App_del_Comune": "true",
+		"App_in_Wifi": "true",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/firenzeUp/1024-rounded.png"
+		},
+		{
+		"Titolo": "Florence Around Me",
+		"URL": "app.comune.fi.it/app/a0009.html",
+		"Posizionamento": "07.00",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/florence_around_me/Florence_around_me.png"
+		},
+		{
+		"Titolo": "Florence bike",
+		"URL": "app.comune.fi.it/app/a0010.html",
+		"Posizionamento": "08.00",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/florence_bike/Florence_bike.jpg"
+		},
+		{
+		"Titolo": "Florence Delice",
+		"URL": "app.comune.fi.it/app/a0015.html",
+		"Posizionamento": "08.50",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/florenceDelice/logo_florelence_delice.jpg"
+		},
+		{
+		"Titolo": "Florence Heritage",
+		"URL": "app.comune.fi.it/app/a0005.html",
+		"Posizionamento": "09.00",
+		"App_del_Comune": "true",
+		"App_in_Wifi": "true",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/florenceHeritage/iTunesArtwork.png"
+		},
+		{
+		"Titolo": "Florence Survival Guide",
+		"URL": "app.comune.fi.it/app/a0018.html",
+		"Posizionamento": "09.50",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/florenceSurvival/florenceSurvival_logo.png"
+		},
+		{
+		"Titolo": "Florence Tube",
+		"URL": "app.comune.fi.it/app/a0024.html",
+		"Posizionamento": "09.60",
+		"App_del_Comune": "true",
+		"App_in_Wifi": "true",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/florence_tube/logo_florence_tube.png"
+		},
+		{
+		"Titolo": "Game In Florence",
+		"URL": "app.comune.fi.it/app/a0022.html",
+		"Posizionamento": "9.75",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/GiocoaFirenze/logo_gioco_a_firenze.png"
+		},
+		{
+		"Titolo": "GEOmobi",
+		"URL": "app.comune.fi.it/app/a0013.html",
+		"Posizionamento": "10.00",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "mobilità, strade, lavori, app, ztl, parcheggi, lavaggio, tempo reale, info",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/GEOmobi/GEOmobi.png"
+		},
+		{
+		"Titolo": "Giocamensa di Uga",
+		"URL": "app.comune.fi.it/app/a0023.html",
+		"Posizionamento": "10.15",
+		"App_del_Comune": "true",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/uga/logo_uga.png"
+		},
+		{
+		"Titolo": "GoGoFirenze",
+		"URL": "app.comune.fi.it/app/a0026.html",
+		"Posizionamento": "10.20",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/GoGoFirenze/GoGoFirenze-logoicon.png"
+		},
+		{
+		"Titolo": "Infosoc Firenze ",
+		"URL": "app.comune.fi.it/app/a0020.html",
+		"Posizionamento": "10.45",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/InfosocFirenze/logo_256_bianco.png"
+		},
+		{
+		"Titolo": "imobi.fi.it",
+		"URL": "app.comune.fi.it/app/a0017.html",
+		"Posizionamento": "10.50",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "true",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/imobi/imobi_logo.png"
+		},
+		{
+		"Titolo": "iPhev",
+		"URL": "app.comune.fi.it/app/a0011.html",
+		"Posizionamento": "11.00",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/iPhev/iPhev.JPG"
+		},
+		{
+		"Titolo": "Firenze dove, cosa. Km4City",
+		"URL": "app.comune.fi.it/app/a0025.html",
+		"Posizionamento": "11.05",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "true",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/km4city/km4city_logo.png"
+		},
+		{
+		"Titolo": "Qurami",
+		"URL": "app.comune.fi.it/app/a0014.html",
+		"Posizionamento": "11.10",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/qurami/banner-firenze.png"
+		},
+		{
+		"Titolo": "ScuolaMobile",
+		"URL": "app.comune.fi.it/app/a0002.html",
+		"Posizionamento": "12.00",
+		"App_del_Comune": "true",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "scuola, app, mobile, mensa, refezione, scolastica",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/scuolaMobile/icona_512.png_1730546028.png"
+		},
+		{
+		"Titolo": "Siamo sicure!",
+		"URL": "app.comune.fi.it/app/a0012.html",
+		"Posizionamento": "13.00",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/siamo_sicure/Siamo_sicure.png"
+		},
+		{
+		"Titolo": "Tap&Park",
+		"URL": "app.comune.fi.it/app/a0030.html",
+		"Posizionamento": "14.00",
+		"App_del_Comune": "false",
+		"App_in_Wifi": "false",
+		"Parole_chiave": "",
+		"Logo": "app.comune.fi.it/export/sites/app/images/app/tap_park/app_icon.png"
+		}
+	]
+}

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-SERVER="ldap://10.30.1.131"
+SERVER="ldap://localhost"
 ROOTDN="cn=admin,o=sessions"
 ROOTPW="programmer"
 BASEDN="o=sessions"

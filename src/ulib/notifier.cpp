@@ -279,7 +279,7 @@ next:
 
    if (U_SYSCALL(kevent, "%d,%p,%d,%p,%d,%p", kq, kqevents, 1, kqrevents, max_connection, 0) != 1 ||
        kqrevents[0].ident != -1                                                                   ||
-       (kqrevents[0].flags & EV_ERROR) != 0)
+       (kqrevents[0].flags & EV_ERROR) == 0)
       {
       U_ERROR("Detected broken kevent()...");
       }

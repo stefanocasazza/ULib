@@ -1,0 +1,38 @@
+@media all  
+{
+
+
+div#topBanner a div.descrizione_luogo {
+	clear: both;
+	padding: 100px 100px 100px 100px;
+	width: 30%;
+ 	margin-left: auto; 
+	margin-right: auto; 
+	text-align:center;
+	color: #fbff00;
+  background-image: url(http://wifi-aaa2.comune.fi.it/banner/immagini/BOTTONE_Hotspot_600px.png);
+	background-repeat: no-repeat;
+	background-position: center;
+	font-size: 1.4em;
+  font-family: Tahoma, Geneva, sans-serif;
+
+
+  text-decoration:none;
+  float: none;
+	
+}
+
+
+a div.descrizione_luogo div.test_no_underline {
+	color: #fbff00;
+	text-decoration:none;
+}
+a:hover div.descrizione_luogo div.test_no_underline {
+	color: #fbff00;
+	text-decoration:none;
+}
+.testo_no_underline {
+ text-decoration:none;
+}
+}
+

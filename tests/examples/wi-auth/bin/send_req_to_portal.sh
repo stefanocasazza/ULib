@@ -32,7 +32,7 @@ do_cmd() {
 #	eval $CLIENT_HTTP "http://auth.t-unwired.com/$2" >$TMPFILE 2>/dev/null
 
 #	if [ $? -eq 0 ]; then
- 		rm -f $TMPFILE
+#		rm -f $TMPFILE
 #	fi
 
 	logger -p $LOCAL_SYSLOG_SELECTOR "$PORTAL_NAME: $1 END"

@@ -1,0 +1,102 @@
+#bottomBanner {
+	float: left;
+	width: 100%;
+}
+
+div#bottomBanner {
+	position: relative;
+}
+
+#topBanner > img {
+	width: 70%;
+}
+
+#titolo-slider {
+	margin: 0 30px; 
+	padding: 20px 0; 
+	background-color: #f7f7f7;
+	border-top-left-radius: 25px;
+	border-top-right-radius: 25px;
+}
+
+#titolo-slider img {
+	width: 11em;
+}
+
+#menubox #menulogo {
+	height: 3em;
+	height: 2em;
+}
+
+#container {
+	margin-top: 0;
+	float: left;
+	width: 100%;
+}
+
+.slick-slider {
+      margin: 0 30px; 
+      background-color: #f7f7f7;
+      border-bottom-left-radius: 25px;
+      border-bottom-right-radius: 25px;
+}
+
+.slick-slide .box-img {
+	margin: 10px 40px 25px;
+}
+
+.slick-slide img {
+      width: 35vw;
+}
+
+a {
+        color: white;
+}
+
+.box {
+    /*background: #fff none repeat scroll 0 0;*/
+    border-radius: 6px;
+    box-shadow: 0 3px 0 0 rgba(0, 0, 0, 0.05);
+}
+
+.box.feature .inner {
+    padding: 1.1em;
+}
+
+.box.feature {
+    padding: 0;
+}
+
+.box.feature .image {
+    margin: 0;
+    padding: 1.1em 1.1em 0;
+    position: relative;
+}
+
+/*.image.fit {
+    display: block;
+    width: 100%;
+}*/
+
+.image {
+    display: inline-block;
+    outline: 0 none;
+}
+
+header h2, header h3 {
+    margin: 0 0 0.25em;
+}
+
+h2 {
+    font-size: 1.0em;
+    line-height: 1em;
+    margin: 0 0 1.1em;
+    color: black;
+}
+#disclamer {
+	font-size: 60%;	
+}
+
+.slick-dots li {
+	margin: 0;
+}

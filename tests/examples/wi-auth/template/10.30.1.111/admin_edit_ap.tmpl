@@ -24,42 +24,35 @@
           </tr>
         </table><br />
 
-        <form method="post" name="form" action="%.*s">
+        <form method="post" name="form" action="%v">
           <table width="100%%" class="racss_formtable">
             <tr>
               <td class="racss_label">Label: *</td>
-
-              <td class="racss_field"><input type="text" id="ap_label" name="ap_label" value="%v" %s /></td>
+              <td class="racss_field"><input type="text" id="ap_label" name="ap_label" value="%v" readonly /></td>
             </tr>
             <tr>
               <td class="racss_label">IP address: *</td>
-
-              <td class="racss_field"><input type="text" id="ap_address" name="ap_address" value="%v" %s /></td>
+              <td class="racss_field"><input type="text" id="ap_address" name="ap_address" value="%v" readonly /></td>
             </tr>
             <tr>
               <td class="racss_label">Hostname: *</td>
-
-              <td class="racss_field"><input type="text" id="ap_hostname" name="ap_hostname" value="%v" %s /></td>
+              <td class="racss_field"><input type="text" id="ap_hostname" name="ap_hostname" value="%v" readonly /></td>
             </tr>
             <tr>
               <td class="racss_label">MAC authorized:</td>
-
               <td class="racss_field"><input type="text" id="ap_mac_mask" name="ap_mac_mask" value="%v" /></td>
             </tr>
             <tr>
               <td class="racss_label">Group account:</td>
-
               <td class="racss_field"><input type="text" id="ap_group_account" name="ap_group_account" value="%v" /></td>
             </tr>
             <tr>
-              <td class="racss_label">REBOOT:</td> 
-
-              <td class="racss_field"><input type="checkbox" id="ap_up" name="ap_up"></td>
+              <td class="racss_label">REBOOT (by webif):</td>
+              <td class="racss_field"><input type="checkbox" id="ap_up" name="ap_up" /></td>
             </tr>
             <tr>
               <td class="racss_label">Consume:</td>
-
-              <td class="racss_field"><input type="checkbox" id="ap_consume" name="ap_consume" %s></td>
+              <td class="racss_field"><input type="checkbox" id="ap_consume" name="ap_consume" disabled="disabled" %s /></td>
             </tr>
           </table>
           <hr />

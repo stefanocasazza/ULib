@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="it" lang="it">
+<head>
+  <meta http-equiv="Cache Control" content="max-age=0, no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="Sat, 1 Jan 2000 00:00:00 GMT" />
+  <link rel="stylesheet" type="text/css" href="css/layoutv1.css" />
+  <!--#exec servlet=$VIRTUAL_HOST/servlet/wi_auth -->
+  <!--#if expr="$HTTP_RESPONSE_CODE == 0" -->
+    <!--#set cgi=$VIRTUAL_HOST/cgi-bin/main.bash -->
+  <!--#endif -->
+  <title><!--#echo var=$TITLE_TXT --></title>
+  <!--#echo var=$SSI_HEAD -->
+</head>
+<body <!--#echo var=$BODY_STYLE -->>
+  <div id="page-wrap">
+    <div id="inside">
+      <div id="header">
+        <table class="centered" width="784" border="0">
+          <tr><td><img src="images/logo_fiwifi-n.png" style="width:60%"></td></tr>
+        </table>
+      </div>
+      <div id="left-sidebar-no-dimension"></div>
+      <!--#include direct=$SSI_FILE_BODY -->
+    </div>
+    <div style="clear: both;"></div>
+  </div>
+  <hr><address>ULib Server</address>
+</body>
+</html>
