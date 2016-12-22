@@ -1,0 +1,47 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+
+. "$(dirname "$0")"/common.sh
+
+# Error: assert (empty name inserted in the table)
+
+mk_hex <<EOF
+4803 3330 3258 0770 7269 7661 7465 611d | H.302X.privatea.
+4d6f 6e2c 2032 3120 4f63 7420 3230 3133 | Mon, 21 Oct 2013
+2032 303a 3133 3a32 3120 474d 547e 1768 |  20:13:21 GMT~.h
+7474 7073 3a2f 2f77 7777 2e65 7861 6d70 | ttps://www.examp
+6c65 2e63 6f6d 4803 3330 37c1 c0bf 88c1 | le.comH.307.....
+611d 4d6f 6e2c 2032 3120 4f63 7420 3230 | a.Mon, 21 Oct 20
+3133 2032 303a 3133 3a32 3220 474d 54c0 | 13 20:13:22 GMT.
+5a04 677a 6970 7738 666f 6f3d 4153 444a | Z.gzipw8foo=ASDJ
+4b48 514b 425a 584f 5157 454f 5049 5541 | KHQKBZXOQWEOPIUA
+5851 5745 4f49 553b 206d 6178 2d61 6765 | XQWEOIU; max-age
+3d33 3630 303b 2076 6572 7369 6f6e 3d31 | =3600; version=1
+EOF
+
+hpack_decode ./hdecode
+
+# Error: timeout (infinite loop in the Huffman decoder)
+
+mk_hex <<'EOF'
+00ff 2d68 7474 0000 007f fe95 ff00 0000 | ..-htt..........
+6f72 6976 5d74 6561 8009 0000 d7ff ce4c | oriv]tea.......L
+524f 05ff ff05 3031 0400 6561 8000 0000 | RO....01..ea....
+3132 2f3a 3199 5832 5807 3231 414f 7a8b | 12/:1.X2X.21AOz.
+0f32 306d 727f ffff ff65 a184 0000 0031 | .20mr....e.....1
+205f 4db9 6e31 6893 744d 546e 3168 9374 |  _M.n1h.tMTn1h.t
+136f 5700 0000 646b 0019 0400 e8fe 4e00 | .oW...dk......N.
+6f57 5353 924a 6b00 1904 00e8 fe4e 5149 | oWSS.Jk......NQI
+0400 5526 5800 007f ff95 9595 959d 7fff | ..U&X...........
+ffff 9574 6561 8009 0095 b995 9595 9595 | ...tea..........
+6180 0000 9999 9999 9999 7f99 9999 9999 | a...............
+9999 9999 9999 9999 9595 959a 7a61 8000 | ............za..
+0099 9999 9999 997f 9999 9999 9999 9926 | ...............&
+ffff 0000 3649 5540 7f20 6178 0000 1867 | ....6IU@. ax...g
+4633 3630 103b 2076 6090 7369 6f6e 3d31 | F360.; v`.sion=1
+EOF
+
+hpack_decode ./hdecode --expect-error CHR

@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 5.1.  Integer Representation
+#
+#    [...]
+#
+#    This integer representation allows for values of indefinite size.  It
+#    is also possible for an encoder to send a large number of zero
+#    values, which can waste octets and could be used to overflow integer
+#    values.  Integer encodings that exceed implementation limits -- in
+#    value or octet length -- MUST be treated as decoding errors.
+#    Different limits can be set for each of the different uses of
+#    integers, based on implementation constraints.
+
+. "$(dirname "$0")"/common.sh
+
+mk_msg </dev/null
+mk_tbl </dev/null
+
+_ ----------------
+_ Buffer overflows
+_ ----------------
+
+mk_bin <<EOF
+11111111 | The rest of the integer is missing...
+EOF
+
+tst_decode --expect-error BUF
+
+mk_bin <<EOF
+00000000 | Try to read two integers with only one available
+EOF
+
+tst_decode --expect-error BUF
+
+_ -----------------
+_ Integer overflows
+_ -----------------
+
+mk_bin <<EOF
+11111111 | Use an indexed field
+10000001 | to make a 7+ integer
+11111111 | overflow with the
+00000011 | value UINT16_MAX + 1
+EOF
+
+tst_decode --expect-error INT
+
+mk_bin <<EOF
+01111111 | Use a dynamic field
+11000001 | to make a 6+ integer
+11111111 | overflow with the
+00000011 | value UINT16_MAX + 1
+EOF
+
+tst_decode --expect-error INT
+
+mk_bin <<EOF
+00111111 | Use a table update
+11100001 | to make a 5+ integer
+11111111 | overflow with the
+00000011 | value UINT16_MAX + 1
+EOF
+
+tst_decode --expect-error INT
+
+mk_bin <<EOF
+00001111 | Use a literal field
+11110001 | to make a 4+ integer
+11111111 | overflow with the
+00000011 | value UINT16_MAX + 1
+EOF
+
+tst_decode --expect-error INT
+
+_ -------
+_ Fuzzing
+_ -------
+
+mk_bin <<EOF
+00111111 | Use a table update
+10000000 | to make a 5+ integer
+10000000 | stupidly packed with
+10000000 | way more bytes than
+10000000 | needed to encode its
+10000000 | rather small value.
+10000000 | For cashpack it will
+00000000 | fail decoding.
+EOF
+
+HDECODE=hdecode # XXX: nghttp2 accepts this
+tst_decode --expect-error INT --table-size 1024

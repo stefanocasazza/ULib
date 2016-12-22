@@ -1,0 +1,456 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 4.3.  Header Compression and Decompression
+#
+#    [...]
+#
+#    A receiving endpoint reassembles the header block by concatenating
+#    its fragments and then decompresses the block to reconstruct the
+#    header list.
+#
+#    A complete header block consists of either:
+#
+#    o  a single HEADERS or PUSH_PROMISE frame, with the END_HEADERS flag
+#       set, or
+#
+#    o  a HEADERS or PUSH_PROMISE frame with the END_HEADERS flag cleared
+#       and one or more CONTINUATION frames, where the last CONTINUATION
+#       frame has the END_HEADERS flag set.
+#
+#    [...]
+
+. "$(dirname "$0")"/common.sh
+
+_ ---------------------------------------
+_ Decode partial blocks at field boundary
+_ ---------------------------------------
+
+mk_hex <<EOF
+# RFC 7541 Appendix C.5.1.  First Response
+# first half
+4803 3330 3258 0770 7269 7661 7465 611d | H.302X.privatea.
+4d6f 6e2c 2032 3120 4f63 7420 3230 3133 | Mon, 21 Oct 2013
+2032 303a 3133 3a32 3120 474d 54        |  20:13:21 GMT
+
+# second half
+                                6e 1768 |              n.h
+7474 7073 3a2f 2f77 7777 2e65 7861 6d70 | ttps://www.examp
+6c65 2e63 6f6d                          | le.com
+EOF
+
+mk_msg <<EOF
+:status: 302
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:21 GMT
+location: https://www.example.com
+EOF
+
+mk_tbl </dev/null
+
+tst_decode --decoding-spec p45, --table-size 32
+
+_ -------------------------------------
+_ Break inside an indexed field integer
+_ -------------------------------------
+
+mk_hex <<EOF
+# indexed field 257 (invalid index)
+ff81 8000
+EOF
+
+HDECODE=hdecode # XXX: nghttp2 1.7.1 fails this test and those below
+
+tst_decode --expect-error IDX
+
+tst_decode --decoding-spec p1, --expect-error IDX
+tst_decode --decoding-spec p2, --expect-error IDX
+tst_decode --decoding-spec p3, --expect-error IDX
+tst_decode --decoding-spec p1,p1, --expect-error IDX
+tst_decode --decoding-spec p1,p2, --expect-error IDX
+tst_decode --decoding-spec p2,p1, --expect-error IDX
+tst_decode --decoding-spec p1,p1,p1, --expect-error IDX
+
+_ -----------------------------------
+_ Break inside a table update integer
+_ -----------------------------------
+
+mk_hex <<EOF
+# table update of 256
+3fe1 01                                 | ?..
+
+# RFC 7541 Appendix C.2.2.  Literal Header Field without Indexing
+040c 2f73 616d 706c 652f 7061 7468      | ../sample/path
+EOF
+
+mk_msg <<EOF
+:path: /sample/path
+EOF
+
+tst_decode
+
+tst_decode --decoding-spec p1,
+tst_decode --decoding-spec p2,
+tst_decode --decoding-spec p1,p1,
+
+_ -------------------------
+_ Break inside a field name
+_ -------------------------
+
+mk_hex <<EOF
+# literal field "long-name-...
+007f 0b6c 6f6e 672d 6e61 6d65 2d        | ...long-name-
+
+# ...333333"
+$(mk_chars 3 %256s)
+
+# : "value"
+0576 616c 7565                          | .value
+EOF
+
+mk_msg <<EOF
+long-name-$(mk_chars 3 %128s): value
+EOF
+
+tst_decode
+
+tst_decode --decoding-spec p2,    # break inside the length
+tst_decode --decoding-spec p1,    # break before the length
+tst_decode --decoding-spec p1,p1, # break before and inside the length
+
+tst_decode --decoding-spec p3,    # break before the string
+tst_decode --decoding-spec p100,  # break inside the string
+
+_ --------------------------
+_ Break inside a field value
+_ --------------------------
+
+mk_hex <<EOF
+# literal field "name: long-value-...
+0004 6e61 6d65 7f0c 6c6f 6e67 2d76 616c | ..name..long-val
+7565 2d                                 | ue-
+
+# ...333333"
+$(mk_chars 3 %256s)
+EOF
+
+mk_msg <<EOF
+name: long-value-$(mk_chars 3 %128s)
+EOF
+
+tst_decode
+
+tst_decode --decoding-spec p7,    # break inside the length
+tst_decode --decoding-spec p6,    # break before the length
+tst_decode --decoding-spec p6,p1, # break before and inside the length
+
+tst_decode --decoding-spec p8,    # break before the string
+tst_decode --decoding-spec p100,  # break inside the string
+
+_ -----------------------------
+_ Break inside a Huffman string
+_ -----------------------------
+
+mk_hex <<EOF
+# literal field "zero: ...
+0004 7a65 726f d0                       | ..zero.
+
+# ...000000"
+$(mk_chars 0 %160s)
+EOF
+
+mk_msg <<EOF
+zero: $(mk_chars 0 %128s)
+EOF
+
+tst_decode
+
+tst_decode --decoding-spec p7,  # break before the string
+tst_decode --decoding-spec p50, # break inside the string
+
+_ ---------------------------
+_ Brute force block splitting
+_ ---------------------------
+
+mk_hex <<'EOF'
+# RFC 7541 Appendix C.3.1.  First Request
+8286 8441 0f77 7777 2e65 7861 6d70 6c65 | ...A.www.example
+2e63 6f6d                               | .com
+
+# RFC 7541 Appendix C.3.2.  Second Request
+8286 84be 5808 6e6f 2d63 6163 6865      | ....X.no-cache
+
+# RFC 7541 Appendix C.3.3.  Third Request
+8287 85bf 400a 6375 7374 6f6d 2d6b 6579 | ....@.custom-key
+0c63 7573 746f 6d2d 7661 6c75 65        | .custom-value
+
+# RFC 7541 Appendix C.4.1.  First Request
+8286 8441 8cf1 e3c2 e5f2 3a6b a0ab 90f4 | ...A......:k....
+ff                                      | .
+
+# RFC 7541 Appendix C.4.2.  Second Request
+8286 84be 5886 a8eb 1064 9cbf           | ....X....d..
+
+# RFC 7541 Appendix C.4.3.  Third Request
+8287 85bf 4088 25a8 49e9 5ba9 7d7f 8925 | ....@.%.I.[.}..%
+a849 e95b b8e8 b4bf                     | .I.[....
+
+# RFC 7541 Appendix C.5.1.  First Response
+4803 3330 3258 0770 7269 7661 7465 611d | H.302X.privatea.
+4d6f 6e2c 2032 3120 4f63 7420 3230 3133 | Mon, 21 Oct 2013
+2032 303a 3133 3a32 3120 474d 546e 1768 |  20:13:21 GMTn.h
+7474 7073 3a2f 2f77 7777 2e65 7861 6d70 | ttps://www.examp
+6c65 2e63 6f6d                          | le.com
+
+# RFC 7541 Appendix C.5.2.  Second Response
+4803 3330 37c1 c0bf                     | H.307...
+
+# RFC 7541 Appendix C.5.3.  Third Response
+88c1 611d 4d6f 6e2c 2032 3120 4f63 7420 | ..a.Mon, 21 Oct
+3230 3133 2032 303a 3133 3a32 3220 474d | 2013 20:13:22 GM
+54c0 5a04 677a 6970 7738 666f 6f3d 4153 | T.Z.gzipw8foo=AS
+444a 4b48 514b 425a 584f 5157 454f 5049 | DJKHQKBZXOQWEOPI
+5541 5851 5745 4f49 553b 206d 6178 2d61 | UAXQWEOIU; max-a
+6765 3d33 3630 303b 2076 6572 7369 6f6e | ge=3600; version
+3d31                                    | =1
+
+# RFC 7541 Appendix C.6.1.  First Response
+4882 6402 5885 aec3 771a 4b61 96d0 7abe | H.d.X...w.Ka..z.
+9410 54d4 44a8 2005 9504 0b81 66e0 82a6 | ..T.D. .....f...
+2d1b ff6e 919d 29ad 1718 63c7 8f0b 97c8 | -..n..)...c.....
+e9ae 82ae 43d3                          | ....C.
+
+# RFC 7541 Appendix C.6.2.  Second Response
+4883 640e ffc1 c0bf                     | H.d.....
+
+# RFC 7541 Appendix C.6.3.  Third Response
+88c1 6196 d07a be94 1054 d444 a820 0595 | ..a..z...T.D. ..
+040b 8166 e084 a62d 1bff c05a 839b d9ab | ...f...-...Z....
+77ad 94e7 821d d7f2 e6c7 b335 dfdf cd5b | w..........5...[
+3960 d5af 2708 7f36 72c1 ab27 0fb5 291f | 9`..'..6r..'..).
+9587 3160 65c0 03ed 4ee5 b106 3d50 07   | ..1`e...N...=P.
+EOF
+
+mk_msg <<EOF
+# RFC 7541 Appendix C.3.1.  First Request
+:method: GET
+:scheme: http
+:path: /
+:authority: www.example.com
+
+# RFC 7541 Appendix C.3.2.  Second Request
+:method: GET
+:scheme: http
+:path: /
+:authority: www.example.com
+cache-control: no-cache
+
+# RFC 7541 Appendix C.3.3.  Third Request
+:method: GET
+:scheme: https
+:path: /index.html
+:authority: www.example.com
+custom-key: custom-value
+
+# RFC 7541 Appendix C.4.1.  First Request
+:method: GET
+:scheme: http
+:path: /
+:authority: www.example.com
+
+# RFC 7541 Appendix C.4.2.  Second Request
+:method: GET
+:scheme: http
+:path: /
+:authority: www.example.com
+cache-control: no-cache
+
+# RFC 7541 Appendix C.4.3.  Third Request
+:method: GET
+:scheme: https
+:path: /index.html
+:authority: www.example.com
+custom-key: custom-value
+
+# RFC 7541 Appendix C.5.1.  First Response
+:status: 302
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:21 GMT
+location: https://www.example.com
+
+# RFC 7541 Appendix C.5.2.  Second Response
+:status: 307
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:21 GMT
+location: https://www.example.com
+
+# RFC 7541 Appendix C.5.3.  Third Response
+:status: 200
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:22 GMT
+location: https://www.example.com
+content-encoding: gzip
+set-cookie: foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1
+
+# RFC 7541 Appendix C.6.1.  First Response
+:status: 302
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:21 GMT
+location: https://www.example.com
+
+# RFC 7541 Appendix C.6.2.  Second Response
+:status: 307
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:21 GMT
+location: https://www.example.com
+
+# RFC 7541 Appendix C.6.3.  Third Response
+:status: 200
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:22 GMT
+location: https://www.example.com
+content-encoding: gzip
+set-cookie: foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1
+EOF
+
+mk_tbl <<EOF
+# RFC 7541 Appendix C.6.3.  Third Response
+[  1] (s =  98) set-cookie: foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1
+[  2] (s =  52) content-encoding: gzip
+[  3] (s =  65) date: Mon, 21 Oct 2013 20:13:22 GMT
+      Table size: 215
+EOF
+
+mk_enc <<EOF
+# RFC 7541 Appendix C.3.1.  First Request
+indexed 2
+indexed 6
+indexed 4
+dynamic idx 1 str www.example.com
+send
+
+# RFC 7541 Appendix C.3.2.  Second Request
+indexed 2
+indexed 6
+indexed 4
+indexed 62
+dynamic idx 24 str no-cache
+send
+
+# RFC 7541 Appendix C.3.3.  Third Request
+indexed 2
+indexed 7
+indexed 5
+indexed 63
+dynamic str custom-key str custom-value
+send
+
+# RFC 7541 Appendix C.4.1.  First Request
+indexed 2
+indexed 6
+indexed 4
+dynamic idx 1 huf www.example.com
+send
+
+# RFC 7541 Appendix C.4.2.  Second Request
+indexed 2
+indexed 6
+indexed 4
+indexed 62
+dynamic idx 24 huf no-cache
+send
+
+# RFC 7541 Appendix C.4.3.  Third Request
+indexed 2
+indexed 7
+indexed 5
+indexed 63
+dynamic huf custom-key huf custom-value
+send
+
+# RFC 7541 Appendix C.5.1.  First Response
+dynamic idx 8 str 302
+dynamic idx 24 str private
+dynamic idx 33 str Mon, 21 Oct 2013 20:13:21 GMT
+dynamic idx 46 str https://www.example.com
+send
+
+# RFC 7541 Appendix C.5.2.  Second Response
+dynamic idx 8 str 307
+indexed 65
+indexed 64
+indexed 63
+send
+
+# RFC 7541 Appendix C.5.3.  Third Response
+indexed 8
+indexed 65
+dynamic idx 33 str Mon, 21 Oct 2013 20:13:22 GMT
+indexed 64
+dynamic idx 26 str gzip
+dynamic idx 55 str foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1
+send
+
+# RFC 7541 Appendix C.6.1.  First Response
+dynamic idx 8 huf 302
+dynamic idx 24 huf private
+dynamic idx 33 huf Mon, 21 Oct 2013 20:13:21 GMT
+dynamic idx 46 huf https://www.example.com
+send
+
+# RFC 7541 Appendix C.6.2.  Second Response
+dynamic idx 8 huf 307
+indexed 65
+indexed 64
+indexed 63
+send
+
+# RFC 7541 Appendix C.6.3.  Third Response
+indexed 8
+indexed 65
+dynamic idx 33 huf Mon, 21 Oct 2013 20:13:22 GMT
+indexed 64
+dynamic idx 26 huf gzip
+dynamic idx 55 huf foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1
+EOF
+
+tst_encode --table-size 256
+tst_decode --table-size 256
+
+decode_partial_block() {
+	tst_decode --decoding-spec p$1, --table-size 256
+}
+
+c="$(wc -c <"$TEST_TMP/bin")"
+
+repeat "$c" decode_partial_block
+
+_ ----------------------------------
+_ Brute force broken block splitting
+_ ----------------------------------
+
+mk_hex <<EOF
+# RFC 7541 Appendix C.5.1.  First Response (first part)
+4803 3330 3258 0770 7269 7661 7465 611d | H.302X.privatea.
+4d6f 6e2c 2032 3120 4f63 7420 3230 3133 | Mon, 21 Oct 2013
+2032 303a 3133 3a32 3120 474d 54        |  20:13:21 GMT
+
+# Spurious table update in the middle
+34                                      | 4
+
+# RFC 7541 Appendix C.5.1.  First Response (second part)
+                                6e 1768 |              n.h
+7474 7073 3a2f 2f77 7777 2e65 7861 6d70 | ttps://www.examp
+6c65 2e63 6f6d                          | le.com
+EOF
+
+decode_partial_broken_block() {
+	tst_decode --decoding-spec p$1, --expect-error UPD
+}
+
+c="$(wc -c <"$TEST_TMP/bin")"
+
+repeat "$c" decode_partial_broken_block

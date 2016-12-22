@@ -421,9 +421,9 @@ void ULog::updateDate2()
    U_INTERNAL_DUMP("date.date2 = %.26S", date.date2)
 }
 
-void ULog::updateDate3()
+void ULog::updateDate3(char* ptr_date)
 {
-   U_TRACE_NO_PARAM(1, "ULog::updateDate3()")
+   U_TRACE(1, "ULog::updateDate3(%p)", ptr_date)
 
    /**
     * Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\n
@@ -442,12 +442,18 @@ void ULog::updateDate3()
 
          U_INTERNAL_DUMP("tv_sec_old_3 = %lu u_now->tv_sec = %lu", tv_sec_old_3, tv_sec)
 
+         /*
+         U_INTERNAL_ASSERT_DIFFERS(u_get_unalignedp64(            date.date3+6+U_CONSTANT_SIZE("Wed, 20 Jun 2012 ")),
+                                   u_get_unalignedp64(ptr_shared_date->date3+6+U_CONSTANT_SIZE("Wed, 20 Jun 2012 ")))
+         */
+
          if ((tv_sec - tv_sec_old_3) != 1 ||
              (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
             {
             tv_sec_old_3 = tv_sec;
 
-            U_MEMCPY(date.date3+6, ptr_shared_date->date3+6, 29-4);
+                          U_MEMCPY(date.date3+6, ptr_shared_date->date3+6, 29-4);
+            if (ptr_date) U_MEMCPY(  ptr_date+6, ptr_shared_date->date3+6, 29-4);
             }
          else
             {
@@ -455,6 +461,12 @@ void ULog::updateDate3()
 
             u_put_unalignedp16(date.date3+26,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[26],ptr_shared_date->date3[27]));
             u_put_unalignedp16(date.date3+26+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[29],ptr_shared_date->date3[30]));
+
+            if (ptr_date)
+               {
+               u_put_unalignedp16(ptr_date+26,  U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[26],ptr_shared_date->date3[27]));
+               u_put_unalignedp16(ptr_date+26+3,U_MULTICHAR_CONSTANT16(ptr_shared_date->date3[29],ptr_shared_date->date3[30]));
+               }
             }
 
          U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_3)
@@ -479,12 +491,15 @@ void ULog::updateDate3()
           (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
          {
          (void) u_strftime2(date.date3+6, 29-4, U_CONSTANT_TO_PARAM("%a, %d %b %Y %T"), (tv_sec_old_3 = tv_sec)); // GMT can't change...
+
+         if (ptr_date) U_MEMCPY(ptr_date+6, date.date3+6, 29-4);
          }
       else
          {
          ++tv_sec_old_3;
 
-         UTimeDate::updateTime(date.date3+26);
+                       UTimeDate::updateTime(date.date3+26);
+         if (ptr_date) UTimeDate::updateTime(  ptr_date+26);
          }
 
       U_INTERNAL_ASSERT_EQUALS(tv_sec, tv_sec_old_3)
@@ -492,6 +507,10 @@ void ULog::updateDate3()
    }
 
    U_INTERNAL_DUMP("date.date3+6 = %.29S", date.date3+6)
+
+#ifdef DEBUG
+   if (ptr_date) U_INTERNAL_DUMP("ptr_date+6 = %.29S", ptr_date+6)
+#endif
 }
 
 void ULog::setShared(log_data* ptr, uint32_t _size, bool breference)

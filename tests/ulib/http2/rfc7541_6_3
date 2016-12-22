@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 6.3.  Dynamic Table Size Update
+#
+#    [...]
+#
+#    The new maximum size MUST be lower than or equal to the limit
+#    determined by the protocol using HPACK.  A value that exceeds this
+#    limit MUST be treated as a decoding error.  In HTTP/2, this limit is
+#    the last value of the SETTINGS_HEADER_TABLE_SIZE parameter (see
+#    Section 6.5.2 of [HTTP2]) received from the decoder and acknowledged
+#    by the encoder (see Section 6.5.3 of [HTTP2]).
+#
+#    [...]
+
+. "$(dirname "$0")"/common.sh
+
+_ ----------------
+_ Update too large
+_ ----------------
+
+mk_hex <<EOF
+# Update the table limit to 150
+# 001 11111 -> 001 (table update) and 31 (5-bit prefix)
+# 0 1110111 -> 0 (end of int) and 119
+3f77
+EOF
+
+tst_decode --expect-error LEN --table-size 100

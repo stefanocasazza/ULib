@@ -14,7 +14,7 @@ UTRACE_SIGNAL="0 30M 0"
 #EXEC_ON_EXIT="/utility/stack_dump.sh"
 #WINELOADER=wine
 #MALLOC_CHECK_=3
-#VALGRIND=valgrind
+#VALGRIND="valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --errors-for-leak-kinds=all --track-fds=yes --error-exitcode=99 --log-file=memcheck-%p.log"
 TZ='CET-1CEST,M3.5.0/2,M10.5.0/3'
 MUDFLAP_OPTIONS="-ignore-reads -backtrace=8"
 

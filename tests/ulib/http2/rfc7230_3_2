@@ -1,0 +1,87 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 3.2.  Header Fields
+#
+#    Each header field consists of a case-insensitive field name followed
+#    by a colon (":"), optional leading whitespace, the field value, and
+#    optional trailing whitespace.
+#
+#      header-field   = field-name ":" OWS field-value OWS
+#
+#      field-name     = token
+#      field-value    = *( field-content / obs-fold )
+#      field-content  = field-vchar [ 1*( SP / HTAB ) field-vchar ]
+#      field-vchar    = VCHAR / obs-text
+#
+#      obs-fold       = CRLF 1*( SP / HTAB )
+#                     ; obsolete line folding
+#                     ; see Section 3.2.4
+#
+#    [...]
+
+. "$(dirname "$0")"/common.sh
+
+tst_invalid_char() {
+	printf '%s\n' "$1" | mk_enc
+	tst_encode --expect-error CHR
+}
+
+mk_tbl </dev/null
+
+_ -----------------------------------
+_ Invalid characters for a field name
+_ -----------------------------------
+
+tst_invalid_char "literal str name: str value"
+tst_invalid_char "literal str näme str value"
+
+_ --------------------------------------------
+_ Invalid control characters for a field value
+_ --------------------------------------------
+
+tst_invalid_char "literal str name str value"
+tst_invalid_char "literal str name str value"
+
+_ --------------------------------------------------
+_ Horizontal tabulation is a valid control character
+_ --------------------------------------------------
+
+mk_hex <<EOF
+0004 6e61 6d65 0c74 6162 6265 6409 7661 | ..name.tabbed.va
+6c75 65                                 | lue
+EOF
+
+mk_msg <<EOF
+name: tabbed	value
+EOF
+
+mk_enc <<EOF
+literal str name str tabbed	value
+EOF
+
+tst_decode
+tst_encode
+
+_ --------------------------------------------
+_ Tolerate obsolete characters in field values
+_ --------------------------------------------
+
+mk_hex <<EOF
+0004 6e61 6d65 15c3 b662 73c3 b26c c3aa | ..name...bs..l..
+74e1 babd 2076 c3a5 6cc3 ba65           | t... v..l..e
+EOF
+
+mk_msg <<EOF
+name: öbsòlêtẽ vålúe
+EOF
+
+mk_enc <<EOF
+literal str name str öbsòlêtẽ vålúe
+EOF
+
+tst_decode
+tst_encode

@@ -1,0 +1,114 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 5.2.  String Literal Representation
+#
+#    [...]
+#
+#    Upon decoding, an incomplete code at the end of the encoded data is
+#    to be considered as padding and discarded.  A padding strictly longer
+#    than 7 bits MUST be treated as a decoding error.  A padding not
+#    corresponding to the most significant bits of the code for the EOS
+#    symbol MUST be treated as a decoding error.  A Huffman-encoded string
+#    literal containing the EOS symbol MUST be treated as a decoding
+#    error.
+
+. "$(dirname "$0")"/common.sh
+
+mk_msg </dev/null
+mk_tbl </dev/null
+
+_ ----------------------------------------------------------
+_ Empty Huffman string with all combinations of spurious EOS
+_ ----------------------------------------------------------
+
+mk_bin <<EOF
+00000000 | Literal field without indexing
+10000001 | Huffman string of 1 octet
+11111111 | 8 bits of EOS
+EOF
+
+tst_decode --expect-error HUF
+
+mk_bin <<EOF
+00000000 | Literal field without indexing
+10000010 | Huffman string of 2 octets
+11111111 | 16 bits of EOS
+11111111 |
+EOF
+
+tst_decode --expect-error HUF
+
+mk_bin <<EOF
+00000000 | Literal field without indexing
+10000011 | Huffman string of 3 octets
+11111111 | 24 bits of EOS
+11111111 |
+11111111 |
+EOF
+
+tst_decode --expect-error HUF
+
+mk_bin <<EOF
+00000000 | Literal field without indexing
+10000100 | Huffman string of 4 octets
+11111111 | 30 bits of EOS
+11111111 |
+11111111 |
+11111100 |
+EOF
+
+tst_decode --expect-error HUF
+
+mk_bin <<EOF
+00000000 | Literal field without indexing
+10000100 | Huffman string of 4 octets
+11111111 | 31 bits of EOS
+11111111 |
+11111111 |
+11111110 |
+EOF
+
+tst_decode --expect-error HUF
+
+mk_bin <<EOF
+00000000 | Literal field without indexing
+10000100 | Huffman string of 4 octets
+11111111 | 32 bits of EOS
+11111111 |
+11111111 |
+11111111 |
+EOF
+
+tst_decode --expect-error HUF
+
+_ -----------------------------------------
+_ Padding not corresponding to a proper EOS
+_ -----------------------------------------
+
+mk_bin <<EOF
+00000000 | Literal field without indexing
+10000001 | Huffman string of 1 octet
+00000110 | '0' followed by broken '110' EOS
+EOF
+
+tst_decode --expect-error HUF
+
+_ -----------------------------------
+_ String containing the EOS character
+_ -----------------------------------
+
+mk_bin <<EOF
+00000000 | Literal field without indexing
+10000101 | Huffman string of 5 octet
+11111111 | 30 bits of EOS
+11111111 |
+11111111 |
+11111100 | Followed by 10 zeros
+00000000 |
+EOF
+
+tst_decode --expect-error HUF

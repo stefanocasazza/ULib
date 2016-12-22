@@ -2693,7 +2693,7 @@ AC_CONFIG_FILES([
 	examples/lcsp/lcsp.spec examples/lcsp/lcsp_rpc.spec examples/csp/cspclient.spec examples/csp/cspclient_rpc.spec examples/rsign/rsignclient.spec
 	examples/rsign/rsignclient_rpc.spec examples/userver/web_server.spec examples/userver/wagsmserver.spec examples/workflow/workflow.spec 
 	examples/PEC_log/PEC_log.spec examples/userver/tsaserver.spec examples/userver/cspserver.spec examples/userver/rsignserver.spec examples/doc_parse/doc_parse.spec
-	tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/examples/Makefile tests/contrib/Makefile])
+	tests/Makefile tests/base/Makefile tests/debug/Makefile tests/ulib/Makefile tests/ulib/http2/Makefile tests/examples/Makefile tests/contrib/Makefile])
 
 #	examples/parser/Makefile \
 #	src/ulib/base/Makefile src/ulib/debug/Makefile \

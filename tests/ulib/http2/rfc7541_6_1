@@ -1,0 +1,29 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 6.1.  Indexed Header Field Representation
+#
+#    [...]
+#
+#    The index value of 0 is not used.  It MUST be treated as a decoding
+#    error if found in an indexed header field representation.
+
+. "$(dirname "$0")"/common.sh
+
+_ ----------
+_ Null index
+_ ----------
+
+mk_hex <<EOF
+80
+EOF
+
+mk_enc <<EOF
+indexed 0
+EOF
+
+tst_decode --expect-error IDX
+tst_encode --expect-error IDX

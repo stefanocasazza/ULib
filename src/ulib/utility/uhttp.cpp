@@ -68,6 +68,7 @@ int         UHTTP::mime_index;
 int         UHTTP::cgi_timeout;
 bool        UHTTP::bcallInitForAllUSP;
 bool        UHTTP::digest_authentication;
+bool        UHTTP::skip_check_cookie_ip_address;
 bool        UHTTP::enable_caching_by_proxy_servers;
 char        UHTTP::response_buffer[64];
 URDB*       UHTTP::db_not_found;
@@ -2562,15 +2563,22 @@ U_NO_EXPORT inline void UHTTP::setContentType(const char* ptr, uint32_t len)
    U_INTERNAL_DUMP("Content-Type(%u): = %.*S", U_http_content_type_len, U_HTTP_CTYPE_TO_TRACE)
 }
 
-U_NO_EXPORT inline void UHTTP::setContentLength(const char* ptr1, const char* ptr2)
+U_NO_EXPORT inline void UHTTP::setContentLength(const char* p1, const char* p2)
 {
-   U_TRACE(0, "UHTTP::setContentLength(%p,%p)", ptr1, ptr2)
+   U_TRACE(0, "UHTTP::setContentLength(%p,%p)", p1, p2)
 
-   U_http_info.clength = u_strtoul(ptr1, ptr2);
+   const char*    ptr = p1;
+   const char* endptr = p2;
 
-   U_INTERNAL_DUMP("Content-Length: = %.*S U_http_info.clength = %u", ptr2-ptr1, ptr1, U_http_info.clength)
+   while (u__isspace(*ptr)) ++ptr;
 
-   U_INTERNAL_ASSERT_EQUALS(U_http_info.clength, (uint32_t)strtoul(ptr1, 0, 10))
+   while (u__isdigit(*(endptr-1)) == false) --endptr;
+
+   U_http_info.clength = u_strtoul(ptr, endptr);
+
+   U_INTERNAL_DUMP("Content-Length: = %.*S U_http_info.clength = %u", p2-p1, p1, U_http_info.clength)
+
+   U_INTERNAL_ASSERT_EQUALS(U_http_info.clength, (uint32_t)strtoul(p1, 0, 10))
 }
 
 U_NO_EXPORT inline void UHTTP::setAcceptEncoding(const char* ptr)
@@ -3049,9 +3057,7 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
                }
             else if (memcmp(p, U_CONSTANT_TO_PARAM("ookie")) == 0)
                {
-               U_INTERNAL_ASSERT_DIFFERS(p[5], '2') // "Cookie2"
-
-               setCookie(ptr1, pn-ptr1);
+               if (p[5] != '2') setCookie(ptr1, pn-ptr1); // "Cookie2"
                }
             }
          break;
@@ -3892,6 +3898,15 @@ int UHTTP::manageRequest()
       goto set_uri;
       }
 
+   if (U_http_info.uri_len == 0)
+      {
+      setBadRequest();
+
+      U_SRV_LOG("WARNING: unrecognized uri in request", U_HTTP_VHOST_TO_TRACE);
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+      }
+
    // manage virtual host
 
    if (virtual_host &&
@@ -4363,8 +4378,6 @@ int UHTTP::processRequest()
 
          if (memcmp(ptr, U_CONSTANT_TO_PARAM("/upload")) == 0)
             {
-            U_INTERNAL_ASSERT(*upload_dir)
-
             /**
              * The PUT method, though not as widely used as the POST method is perhaps the more efficient way of uploading files to a server.
              * This is because in a POST upload the files need to be combined together into a multipart message and this message has to be
@@ -4388,7 +4401,19 @@ int UHTTP::processRequest()
                UString dest(U_CAPACITY),
                        basename = UStringExt::basename(ptr, sz);
 
-               dest.snprintf(U_CONSTANT_TO_PARAM("%v/%v"), upload_dir->rep, basename.rep);
+               if (U_http_info.query_len &&
+                   memcmp(U_http_info.query, U_CONSTANT_TO_PARAM("dir=")) == 0)
+                  {
+                  U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
+
+                  dest.snprintf(U_CONSTANT_TO_PARAM("%.*s/%v"), U_http_info.query_len-U_CONSTANT_SIZE("dir="), U_http_info.query+U_CONSTANT_SIZE("dir="), basename.rep);
+                  }
+               else
+                  {
+                  U_INTERNAL_ASSERT(*upload_dir)
+
+                  dest.snprintf(U_CONSTANT_TO_PARAM("%v/%v"), upload_dir->rep, basename.rep);
+                  }
 
                if (UFile::writeTo(dest, *UClientImage_Base::body)) UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
                else                                                U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
@@ -5179,7 +5204,7 @@ void UHTTP::removeDataSession()
 
       removeCookieSession();
 
-      U_SRV_LOG("Delete session ulib.s%u keyid=%V", sid_counter_cur, data_session->keyid.rep);
+      U_SRV_LOG("Delete session ulib.s%u: %V", sid_counter_cur, data_session->keyid.rep);
 
 #  ifdef U_LOG_DISABLE
             (void) db_session->remove(data_session->keyid);
@@ -5274,7 +5299,8 @@ bool UHTTP::getCookie(UString* cookie, UString* data)
 
                U_INTERNAL_DUMP("ptr(%u) = %.*S", UServer_Base::client_address_len, UServer_Base::client_address_len, ptr)
 
-               if (memcmp(ptr, UServer_Base::client_address, UServer_Base::client_address_len) == 0) // IP
+               if (skip_check_cookie_ip_address ||
+                   memcmp(ptr, UServer_Base::client_address, UServer_Base::client_address_len) == 0) // IP
                   {
                   ptr += UServer_Base::client_address_len+1;
 
@@ -5290,35 +5316,46 @@ bool UHTTP::getCookie(UString* cookie, UString* data)
 
                   if (agent == getUserAgent()) // USER-AGENT
                      {
-                     ptr = end + 1;
+                     // PID
+
+                     ptr = end+1;
 
                      U_INTERNAL_DUMP("ptr(%u) = %.*S", u_pid_str_len, u_pid_str_len, ptr)
 
                      U_INTERNAL_ASSERT(u__isdigit(ptr[0]))
 
-                     if (UServer_Base::preforked_num_kids ||
-                         memcmp(ptr, u_pid_str, u_pid_str_len) == 0) // PID
+                     if (UServer_Base::preforked_num_kids) // skip
                         {
+                        while (u__isdigit(*++ptr)) {}
+
+                        U_INTERNAL_ASSERT_EQUALS(ptr[0], '_')
+
+                        ++ptr;
+                        }
+                     else
+                        {
+                        if (memcmp(ptr, u_pid_str, u_pid_str_len)) goto remove;
+
                         ptr += u_pid_str_len+1;
+                        }
 
-                        U_INTERNAL_ASSERT(u__isdigit(ptr[0]))
+                     U_INTERNAL_ASSERT(u__isdigit(ptr[0]))
 
-                        for (end = ptr; u__isdigit(*end); ++end) {}
+                     for (end = ptr; u__isdigit(*end); ++end) {}
 
-                        U_INTERNAL_DUMP("sid_counter_cur = %u u_strtoul(ptr, end) = %u", sid_counter_cur, u_strtoul(ptr, end))
+                     U_INTERNAL_DUMP("sid_counter_cur = %u u_strtoul(ptr, end) = %u", sid_counter_cur, u_strtoul(ptr, end))
 
-                        check = (sid_counter_cur == u_strtoul(ptr, end)); // COUNTER
+                     check = (sid_counter_cur == u_strtoul(ptr, end)); // COUNTER
 
-                        if (data  &&
-                            check &&
-                            *end == ':')
-                           {
-                           ++end;
+                     if (data  &&
+                         check &&
+                         *end == ':')
+                        {
+                        ++end;
 
-                           (void) data->replace(end, token.remain(end));
+                        (void) data->replace(end, token.remain(end));
 
-                           U_INTERNAL_DUMP("data = %V", data->rep)
-                           }
+                        U_INTERNAL_DUMP("data = %V", data->rep)
                         }
                      }
                   }
@@ -5327,9 +5364,9 @@ bool UHTTP::getCookie(UString* cookie, UString* data)
 
          if (check == false)
             {
-            removeCookieSession();
+remove:     removeCookieSession();
 
-            U_SRV_LOG("Delete session ulib.s%u keyid=%V", sid_counter_cur, token.rep);
+            U_SRV_LOG("Delete session ulib.s%u: %V", sid_counter_cur, token.rep);
 
             continue;
             }
@@ -5375,7 +5412,7 @@ remove:  removeDataSession();
          }
       }
 
-   U_SRV_LOG("Found session ulib.s%u", sid_counter_cur);
+   U_SRV_LOG("Found session ulib.s%u: %V", sid_counter_cur, token.rep);
 
    U_RETURN(true);
 }
@@ -5519,15 +5556,15 @@ const char* UHTTP::getStatusDescription(uint32_t* plen)
    switch (U_http_info.nResponseCode)
       {
       // 1xx indicates an informational message only
-      case U_HTTP_ENTRY(HTTP_CONTINUE,          plen, "Continue");
-      case U_HTTP_ENTRY(HTTP_SWITCH_PROT,       plen, "Switching Protocol");
-   // case U_HTTP_ENTRY(102,                    plen, "HTTP Processing");
+      case U_HTTP_ENTRY(HTTP_CONTINUE,           plen, "Continue");
+      case U_HTTP_ENTRY(HTTP_SWITCH_PROT,        plen, "Switching Protocol");
+   // case U_HTTP_ENTRY(102,                     plen, "HTTP Processing");
 
       // 2xx indicates success of some kind
-      case U_HTTP_ENTRY(HTTP_OK,                plen, "OK");
-      case U_HTTP_ENTRY(HTTP_CREATED,           plen, "Created");
-      case U_HTTP_ENTRY(HTTP_ACCEPTED,          plen, "Accepted");
-      case U_HTTP_ENTRY(HTTP_NOT_AUTHORITATIVE, plen, "Non-Authoritative Information");
+      case U_HTTP_ENTRY(HTTP_OK,                 plen, "OK");
+      case U_HTTP_ENTRY(HTTP_CREATED,            plen, "Created");
+      case U_HTTP_ENTRY(HTTP_ACCEPTED,           plen, "Accepted");
+      case U_HTTP_ENTRY(HTTP_NOT_AUTHORITATIVE,  plen, "Non-Authoritative Information");
       case U_HTTP_ENTRY(HTTP_NO_CONTENT,         plen, "No Content");
       case U_HTTP_ENTRY(HTTP_RESET,              plen, "Reset Content");
       case U_HTTP_ENTRY(HTTP_PARTIAL,            plen, "Partial Content");
@@ -6083,14 +6120,7 @@ void UHTTP::handlerResponse()
    UClientImage_Base::setRequestProcessed();
 
 #ifndef U_HTTP2_DISABLE
-   if (U_http_version == '2')
-      {
-      UHTTP2::handlerResponse();
-
-#  ifdef DEBUG
-      UHTTP2::decodeHeadersResponse();
-#  endif
-      }
+   if (U_http_version == '2') UHTTP2::handlerResponse();
    else
 #endif
    {
@@ -7821,7 +7851,7 @@ void UHTTP::checkFileForCache()
 
 #ifdef DEBUG
    if (file->isSuffixSwap() || // NB: vi tmp...
-       UServices::dosMatchWithOR(file_name, U_CONSTANT_TO_PARAM("stack.userver_*|mempool.userver_*|trace.userver_*|*usp_translator*"), 0))
+       UServices::dosMatchExtWithOR(file_name, U_CONSTANT_TO_PARAM("stack.*.[0-9]*|mempool.*.[0-9]*|trace.*.[0-9]*|*usp_translator*"), 0))
       {
       return;
       }
@@ -8860,7 +8890,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int type)
 {
    U_TRACE(0, "UHTTP::getCGIEnvironment(%V,%d)", environment.rep, type)
 
-   UString buffer(2000U + u_cwd_len + U_http_info.endHeader + U_http_info.query_len);
+   UString buffer(2000U + u_cwd_len + U_http_info.endHeader + U_http_info.uri_len + U_http_info.query_len);
 
    // The portion of the request URL that follows the ?, if any. May be empty, but is always required!
 
@@ -9153,7 +9183,8 @@ bool UHTTP::getCGIEnvironment(UString& environment, int type)
            if ((type & U_CGI)   != 0) (void) buffer.append(U_CONSTANT_TO_PARAM("GATEWAY_INTERFACE=CGI/1.1\n"));
       else if ((type & U_WSCGI) != 0) (void) buffer.append(U_CONSTANT_TO_PARAM("SCGI=1\n"));
 
-      buffer.snprintf_add(U_CONSTANT_TO_PARAM("SERVER_PROTOCOL=HTTP/1.%c\n"), U_http_version ? U_http_version : '0');
+      if (U_http_version == '2') (void) buffer.append(U_CONSTANT_TO_PARAM("SERVER_PROTOCOL=HTTP/2\n"));
+      else                              buffer.snprintf_add(U_CONSTANT_TO_PARAM("SERVER_PROTOCOL=HTTP/1.%c\n"), U_http_version ? U_http_version : '0');
 
       (void) buffer.append(*UServer_Base::senvironment);
 

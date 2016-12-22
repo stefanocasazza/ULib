@@ -186,6 +186,8 @@ template<typename T> static constexpr T pow10(size_t x) { return x ? 10*pow10<T>
 
 static_assert( pow10<double>(29)   == 1e+29,                   "should be 1e+29" ); // NB: fail for exponent >= 30
 static_assert( pow10<uint64_t>(19) == 10000000000000000000ULL, "should be 1e+19" );
+
+static_assert( U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE) == 9, "should be 9" );
 #endif
 
 // Init library

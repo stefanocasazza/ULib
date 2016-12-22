@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 2.3.2.  Dynamic Table
+#
+#    The dynamic table consists of a list of header fields maintained in
+#    first-in, first-out order.  The first and newest entry in a dynamic
+#    table is at the lowest index, and the oldest entry of a dynamic table
+#    is at the highest index.
+#
+#    The dynamic table is initially empty.  Entries are added as each
+#    header block is decompressed.
+#
+#    The dynamic table can contain duplicate entries (i.e., entries with
+#    the same name and same value).  Therefore, duplicate entries MUST NOT
+#    be treated as an error by a decoder.
+#
+#    The encoder decides how to update the dynamic table and as such can
+#    control how much memory is used by the dynamic table.  To limit the
+#    memory requirements of the decoder, the dynamic table size is
+#    strictly bounded (see Section 4.2).
+#
+#    The decoder updates the dynamic table during the processing of a list
+#    of header field representations (see Section 3.2).
+
+. "$(dirname "$0")"/common.sh
+
+_ --------------------------------------
+_ Duplicate entries in the dynamic table
+_ --------------------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# dynamic field "name: value" (again)
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+EOF
+
+mk_msg <<EOF
+# first message
+name: value
+
+# same message
+name: value
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  41) name: value
+[  2] (s =  41) name: value
+      Table size:  82
+EOF
+
+mk_enc <<EOF
+dynamic str name str value
+send
+
+dynamic str name str value
+EOF
+
+tst_decode
+tst_encode

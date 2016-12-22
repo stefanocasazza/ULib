@@ -181,7 +181,7 @@ public:
 
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
-   static bool enable_caching_by_proxy_servers;
+   static bool enable_caching_by_proxy_servers, skip_check_cookie_ip_address;
    static uint32_t limit_request_body, request_read_timeout, range_start, range_size, response_code;
 
    static int  handlerREAD();
@@ -238,6 +238,8 @@ public:
       }
 
    static void setHostname(const char* ptr, uint32_t len);
+
+   static void setHostname(const UString& name) { setHostname(U_STRING_TO_PARAM(name)); }
 
    static const char* getStatusDescription(uint32_t* plen = 0);
 

@@ -1,0 +1,120 @@
+#!/bin/sh
+#
+# Copyright (c) 2016 Dridi Boukelmoune
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+# XXX: Encoding tests to consider rewriting if still relevant:
+# - Table update doesn't fit
+# - Table update exceeds boundaries (>16bit)
+# - Table size update not at the begining of an HPACK block
+# - No more than two updates can occur in a block
+# - Update too large
+
+. "$(dirname "$0")"/common.sh
+
+mk_hex </dev/null
+mk_msg </dev/null
+mk_tbl </dev/null
+
+_ ----------
+_ Null index
+_ ----------
+
+mk_enc <<EOF
+indexed 0
+EOF
+
+tst_encode --expect-error IDX
+
+_ ---------------
+_ Index too large
+_ ---------------
+
+mk_enc <<EOF
+indexed 99999
+EOF
+
+tst_encode --expect-error IDX
+
+_ -------------------
+_ Wrong dynamic field
+_ -------------------
+
+mk_enc <<EOF
+dynamic idx 0 str value
+EOF
+
+tst_encode --expect-error IDX
+
+_ -------------------------
+_ Wrong never-indexed field
+_ -------------------------
+
+mk_enc <<EOF
+never idx 99999 str value
+EOF
+
+tst_encode --expect-error IDX
+
+_ -------------------------------------
+_ A dynamic field too big for the table
+_ -------------------------------------
+
+mk_hex <<EOF
+5409 6c6f 6361 6c68 6f73 74             | T.localhost
+EOF
+
+mk_msg <<EOF
+access-control-allow-origin: localhost
+EOF
+
+mk_enc <<EOF
+dynamic idx 20 str localhost
+EOF
+
+tst_encode --table-size 42
+
+_ ---------------------------------
+_ Partial encoding of a header list
+_ ---------------------------------
+
+
+mk_hex <<EOF
+0004 6e61 6d65 0576 616c 7565 0005 6f74 | ..name.value..ot
+6865 7205 6669 656c 64                  | her.field
+EOF
+
+mk_msg <<EOF
+name: value
+other: field
+EOF
+
+mk_enc <<EOF
+literal str name str value
+push
+literal str other str field
+send
+EOF
+
+tst_encode

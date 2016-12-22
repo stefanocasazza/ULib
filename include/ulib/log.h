@@ -149,7 +149,7 @@ protected:
    static void initDate();
    static void updateDate1();
    static void updateDate2();
-   static void updateDate3();
+   static void updateDate3(char* ptr_date);
    static void logResponse(const UString& data, const char* name,                                                                  const char* format, uint32_t fmt_size, ...);
    static void log(const struct iovec* iov,     const char* name, const char* type, int ncount, const char* msg, uint32_t msg_len, const char* format, uint32_t fmt_size, ...);
 

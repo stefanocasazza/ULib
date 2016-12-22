@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# Copyright (c) 2016 Dridi Boukelmoune
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+. "$(dirname "$0")"/common.sh
+
+mk_hex <<'EOF'
+# Appendix C.6.1.  First Response
+4882 6402 5885 aec3 771a 4b61 96d0 7abe | H.d.X...w.Ka..z.
+9410 54d4 44a8 2005 9504 0b81 66e0 82a6 | ..T.D. .....f...
+2d1b ff6e 919d 29ad 1718 63c7 8f0b 97c8 | -..n..)...c.....
+e9ae 82ae 43d3                          | ....C.
+
+# Appendix C.6.2.  Second Response
+4883 640e ffc1 c0bf                     | H.d.....
+
+# Appendix C.6.3.  Third Response
+88c1 6196 d07a be94 1054 d444 a820 0595 | ..a..z...T.D. ..
+040b 8166 e084 a62d 1bff c05a 839b d9ab | ...f...-...Z....
+77ad 94e7 821d d7f2 e6c7 b335 dfdf cd5b | w..........5...[
+3960 d5af 2708 7f36 72c1 ab27 0fb5 291f | 9`..'..6r..'..).
+9587 3160 65c0 03ed 4ee5 b106 3d50 07   | ..1`e...N...=P.
+EOF
+
+mk_msg <<EOF
+# Appendix C.6.1.  First Response
+:status: 302
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:21 GMT
+location: https://www.example.com
+
+# Appendix C.6.2.  Second Response
+:status: 307
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:21 GMT
+location: https://www.example.com
+
+# Appendix C.6.3.  Third Response
+:status: 200
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:22 GMT
+location: https://www.example.com
+content-encoding: gzip
+set-cookie: foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  98) set-cookie: foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1
+[  2] (s =  52) content-encoding: gzip
+[  3] (s =  65) date: Mon, 21 Oct 2013 20:13:22 GMT
+      Table size: 215
+EOF
+
+mk_enc <<EOF
+# Appendix C.6.1.  First Response
+dynamic idx 8 huf 302
+dynamic idx 24 huf private
+dynamic idx 33 huf Mon, 21 Oct 2013 20:13:21 GMT
+dynamic idx 46 huf https://www.example.com
+send
+
+# Appendix C.6.2.  Second Response
+dynamic idx 8 huf 307
+indexed 65
+indexed 64
+indexed 63
+send
+
+# Appendix C.6.3.  Third Response
+indexed 8
+indexed 65
+dynamic idx 33 huf Mon, 21 Oct 2013 20:13:22 GMT
+indexed 64
+dynamic idx 26 huf gzip
+dynamic idx 55 huf foo=ASDJKHQKBZXOQWEOPIUAXQWEOIU; max-age=3600; version=1
+EOF
+
+tst_decode --decoding-spec d54,d8, --table-size 256
+tst_encode --table-size 256

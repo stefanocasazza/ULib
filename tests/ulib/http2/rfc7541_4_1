@@ -1,0 +1,68 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 4.1.  Calculating Table Size
+#
+#    The size of the dynamic table is the sum of the size of its entries.
+#
+#    The size of an entry is the sum of its name's length in octets (as
+#    defined in Section 5.2), its value's length in octets, and 32.
+#
+#    The size of an entry is calculated using the length of its name and
+#    value without any Huffman encoding applied.
+
+. "$(dirname "$0")"/common.sh
+
+_ ----------------
+_ Size of an entry
+_ ----------------
+
+# Let's do some high-level arithmetics here:
+#
+# - overhead: 32 octets
+# - field name: user-agent (10 octets)
+# - field value: software with dissociative identity disorder (44 octets)
+# - total: 86 octets
+
+mk_hex <<EOF
+400a 7573 6572 2d61 6765 6e74 2c73 6f66 | @.user-agent,sof
+7477 6172 6520 7769 7468 2064 6973 736f | tware with disso
+6369 6174 6976 6520 6964 656e 7469 7479 | ciative identity
+2064 6973 6f72 6465 72                  |  disorder
+EOF
+
+mk_msg <<EOF
+user-agent: software with dissociative identity disorder
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  86) user-agent: software with dissociative identity disorder
+      Table size:  86
+EOF
+
+mk_enc <<EOF
+dynamic str user-agent str software with dissociative identity disorder
+EOF
+
+tst_decode
+tst_encode
+
+_ ----------------------------------
+_ Size of an entry - Huffman encoded
+_ ----------------------------------
+
+mk_hex <<EOF
+4087 b505 b161 cc5a 939f 41e5 4f81 d855 | @....a.Z..A.O..U
+3c19 33a9 2190 8390 c349 bb95 4348 5a92 | <.3.!....I..CHZ.
+64fa 5243 20f6 485b 3f                  | d.RC .H[?
+EOF
+
+mk_enc <<EOF
+dynamic huf user-agent huf software with dissociative identity disorder
+EOF
+
+tst_decode
+tst_encode

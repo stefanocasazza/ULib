@@ -1,0 +1,54 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 4.3.  Entry Eviction When Dynamic Table Size Changes
+#
+#    Whenever the maximum size for the dynamic table is reduced, entries
+#    are evicted from the end of the dynamic table until the size of the
+#    dynamic table is less than or equal to the maximum size.
+
+. "$(dirname "$0")"/common.sh
+
+_ --------------------------------------
+_ Downsizing the dynamic table may evict
+_ --------------------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# dynamic field "name: update"
+4004 6e61 6d65 0675 7064 6174 65        | @.name.update
+
+# table update to 42 octets
+3f0b                                    | ?.
+
+# literal field "other: field"
+0005 6f74 6865 7205 6669 656c 64        | ..other.field
+EOF
+
+mk_msg <<EOF
+name: value
+name: update
+other: field
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  42) name: update
+      Table size:  42
+EOF
+
+mk_enc <<EOF
+dynamic str name str value
+dynamic str name str update
+send
+
+resize 42
+literal str other str field
+EOF
+
+tst_decode --decoding-spec d25,r42,
+tst_encode

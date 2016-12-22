@@ -6,16 +6,18 @@ EXTRA_DIST = .colors .function reset.color make_test.sh
 
 MAINTAINERCLEANFILES = Makefile.in
 
-SUBDIRS1 = base
+SUBDIRS = base ulib
 if DEBUG
-SUBDIRS1 += debug
+SUBDIRS += debug
+if HTTP2
+SUBDIRS += ulib/http2
 endif
-SUBDIRS = $(SUBDIRS1) ulib
+endif
 if ENABLE_EXAMPLES
 SUBDIRS += examples
 endif
 
-DIST_SUBDIRS = base debug ulib examples contrib
+DIST_SUBDIRS = base debug ulib ulib/http2 examples contrib
 
 test:
 	@for i in $(SUBDIRS); do cd $(abs_top_builddir)/tests/$$i; $(MAKE) $(AM_MAKEFLAGS) test; done 

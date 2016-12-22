@@ -89,7 +89,8 @@ build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
 @DEBUG_TRUE@am__append_1 = debug
-@ENABLE_EXAMPLES_TRUE@am__append_2 = examples
+@DEBUG_TRUE@@HTTP2_TRUE@am__append_2 = ulib/http2
+@ENABLE_EXAMPLES_TRUE@am__append_3 = examples
 subdir = tests
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_check_package.m4 \
@@ -389,9 +390,8 @@ top_srcdir = @top_srcdir@
 AUTOMAKE_OPTIONS = no-dependencies
 EXTRA_DIST = .colors .function reset.color make_test.sh
 MAINTAINERCLEANFILES = Makefile.in
-SUBDIRS1 = base $(am__append_1)
-SUBDIRS = $(SUBDIRS1) ulib $(am__append_2)
-DIST_SUBDIRS = base debug ulib examples contrib
+SUBDIRS = base ulib $(am__append_1) $(am__append_2) $(am__append_3)
+DIST_SUBDIRS = base debug ulib ulib/http2 examples contrib
 all: all-recursive
 
 .SUFFIXES:

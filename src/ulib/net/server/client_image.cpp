@@ -1531,7 +1531,7 @@ bool UClientImage_Base::writeResponse()
 #  else
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::date.date3)
 
-      ULog::updateDate3();
+      ULog::updateDate3(0);
 #  endif
 
 #  ifndef U_LOG_DISABLE

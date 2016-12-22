@@ -22,11 +22,11 @@
 #define U_MINIZ_COMPRESS "\x89MNZ" // "\211MNZ" "\x89\x4d\x4e\x5a"
 
 #define U_PATH_MAX (1024U - (1 + sizeof(ustringrep)))
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
 // NB: the value must be a stack type boundary, see UStringRep::checkIfMReserve()...
-// -------------------------------------------------------------------------------------------------------------------
-#define U_CAPACITY (U_MAX_SIZE_PREALLOCATE - (1 + sizeof(ustringrep))) // UStringRep::max_size(U_MAX_SIZE_PREALLOCATE)
-// -------------------------------------------------------------------------------------------------------------------
+// ---------------------------------------------------------------------------------
+#define U_CAPACITY (U_MAX_SIZE_PREALLOCATE - (1 + sizeof(ustringrep)))
+// ---------------------------------------------------------------------------------
 #define U_STRING_MAX_SIZE (((U_NOT_FOUND-sizeof(ustringrep))/sizeof(char))-4096)
 
 // default move assignment operator

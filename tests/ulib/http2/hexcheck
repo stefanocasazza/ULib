@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+# Copyright (c) 2016 Dridi Boukelmoune
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+# Check that hexdumps from RFC 7541 Appendix C can be used as-is in the test
+# suite by performing back-and-forth decoding and encoding of one of the HPACK
+# messages.
+
+. "$(dirname "$0")"/common.sh
+
+cmd_check cut sed xxd
+
+rfcdmp="$TEST_TMP/rfcdmp"
+hexdmp="$TEST_TMP/hexdmp"
+
+cat >"$rfcdmp" <<EOF
+88c1 611d 4d6f 6e2c 2032 3120 4f63 7420 | ..a.Mon, 21 Oct
+3230 3133 2032 303a 3133 3a32 3220 474d | 2013 20:13:22 GM
+54c0 5a04 677a 6970 7738 666f 6f3d 4153 | T.Z.gzipw8foo=AS
+444a 4b48 514b 425a 584f 5157 454f 5049 | DJKHQKBZXOQWEOPI
+5541 5851 5745 4f49 553b 206d 6178 2d61 | UAXQWEOIU; max-a
+6765 3d33 3630 303b 2076 6572 7369 6f6e | ge=3600; version
+3d31                                    | =1
+EOF
+
+"$TEST_DIR/hex_decode" <"$rfcdmp" |
+"$TEST_DIR/hex_encode" >"$hexdmp"
+
+diff -u "$rfcdmp" "$hexdmp" >&2

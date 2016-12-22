@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 2.3.3.  Index Address Space
+#
+#    The static table and the dynamic table are combined into a single
+#    index address space.
+#
+#    Indices between 1 and the length of the static table (inclusive)
+#    refer to elements in the static table (see Section 2.3.1).
+#
+#    Indices strictly greater than the length of the static table refer to
+#    elements in the dynamic table (see Section 2.3.2).  The length of the
+#    static table is subtracted to find the index into the dynamic table.
+#
+#    Indices strictly greater than the sum of the lengths of both tables
+#    MUST be treated as a decoding error.
+#
+#    For a static table size of s and a dynamic table size of k, the
+#    following diagram shows the entire valid index address space.
+#
+#            <----------  Index Address Space ---------->
+#            <-- Static  Table -->  <-- Dynamic Table -->
+#            +---+-----------+---+  +---+-----------+---+
+#            | 1 |    ...    | s |  |s+1|    ...    |s+k|
+#            +---+-----------+---+  +---+-----------+---+
+#                                   ^                   |
+#                                   |                   V
+#                            Insertion Point      Dropping Point
+#
+#                        Figure 1: Index Address Space
+
+. "$(dirname "$0")"/common.sh
+
+_ -------------------------------------
+_ Indices strictly greater than the sum
+_ -------------------------------------
+
+mk_bin <<EOF
+11000010 | Indexed field 66
+EOF
+
+mk_enc <<EOF
+indexed 66
+EOF
+
+tst_decode --expect-error IDX
+tst_encode --expect-error IDX
+
+_ ----------------------------------------------------
+_ Indices strictly greater than the sum - indexed name
+_ ----------------------------------------------------
+
+mk_bin <<EOF
+01111110 | Dynamic field with indexed name 62
+EOF
+
+mk_enc <<EOF
+dynamic idx 62 str unused-value
+EOF
+
+tst_decode --expect-error IDX
+tst_encode --expect-error IDX

@@ -1,0 +1,373 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 4.2.  Maximum Table Size
+#
+#    Protocols that use HPACK determine the maximum size that the encoder
+#    is permitted to use for the dynamic table.  In HTTP/2, this value is
+#    determined by the SETTINGS_HEADER_TABLE_SIZE setting (see
+#    Section 6.5.2 of [HTTP2]).
+#
+#    An encoder can choose to use less capacity than this maximum size
+#    (see Section 6.3), but the chosen size MUST stay lower than or equal
+#    to the maximum set by the protocol.
+#
+#    A change in the maximum size of the dynamic table is signaled via a
+#    dynamic table size update (see Section 6.3).  This dynamic table size
+#    update MUST occur at the beginning of the first header block
+#    following the change to the dynamic table size.  In HTTP/2, this
+#    follows a settings acknowledgment (see Section 6.5.3 of [HTTP2]).
+#
+#    Multiple updates to the maximum table size can occur between the
+#    transmission of two header blocks.  In the case that this size is
+#    changed more than once in this interval, the smallest maximum table
+#    size that occurs in that interval MUST be signaled in a dynamic table
+#    size update.  The final maximum size is always signaled, resulting in
+#    at most two dynamic table size updates.  This ensures that the
+#    decoder is able to perform eviction based on reductions in dynamic
+#    table size (see Section 4.3).
+#
+#    This mechanism can be used to completely clear entries from the
+#    dynamic table by setting a maximum size of 0, which can subsequently
+#    be restored.
+
+. "$(dirname "$0")"/common.sh
+
+_ ---------------------------------------
+_ Encoder can choose to use less capacity
+_ ---------------------------------------
+
+mk_hex <<EOF
+# update table size to 0
+20
+
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+EOF
+
+mk_msg <<EOF
+name: value
+EOF
+
+mk_tbl </dev/null
+
+mk_enc <<EOF
+update 0
+dynamic str name str value
+EOF
+
+tst_decode
+tst_encode
+
+_ ----------------------------
+_ Resize followed by an update
+_ ----------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# table update to 20
+34                                      | 4
+
+# literal field "name: value"
+0004 6e61 6d65 0576 616c 7565           | ..name.value
+EOF
+
+mk_msg <<EOF
+name: value
+name: value
+EOF
+
+mk_tbl </dev/null
+
+mk_enc <<EOF
+dynamic str name str value
+send
+
+resize 20
+
+# cashpack automatically sends the update
+literal str name str value
+EOF
+
+tst_decode --decoding-spec d12,r20,
+tst_encode
+
+_ -----------------------------------------------------
+_ Table resized multiple times between two HPACK blocks
+_ -----------------------------------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# table update to 0
+20                                      |  
+
+# table update back to 4096
+3fe1 1f                                 | ?..
+
+# literal field "name: value"
+0004 6e61 6d65 0576 616c 7565           | ..name.value
+EOF
+
+mk_enc <<EOF
+dynamic str name str value
+send
+
+resize 0
+resize 4096
+
+# cashpack automatically sends both updates
+literal str name str value
+EOF
+
+tst_decode --decoding-spec d12,r0,r4096,
+tst_encode
+
+_ ----------------------------------------------------------
+_ Table resized more than two times between two HPACK blocks
+_ ----------------------------------------------------------
+
+mk_enc <<EOF
+dynamic str name str value
+send
+
+# the first resize will be ignored leading to the same
+# HPACK blocks as the previous test case
+resize 20
+resize 0
+resize 4096
+
+# cashpack automatically sends the two relevant updates
+literal str name str value
+EOF
+
+tst_decode --decoding-spec d12,r20,r0,r4096,
+tst_encode
+
+_ ---------------------------------------------------------
+_ Use less capacity for the last update of multiple resizes
+_ ---------------------------------------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# table update to 0
+20                                      |  
+
+# table update to only 2048
+3fe1 08                                 | ?..
+
+# literal field "name: value"
+0004 6e61 6d65 0576 616c 7565           | ..name.value
+EOF
+
+tst_decode --decoding-spec d12,r0,r4096,
+# XXX: not testable yet for encoding
+
+_ ---------------------------
+_ Missing update after resize
+_ ---------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# literal field "name: value"
+0004 6e61 6d65 0576 616c 7565           | ..name.value
+EOF
+
+tst_decode --decoding-spec d12,r0, --expect-error RSZ
+
+_ ------------------------------------
+_ Omit the minimum of multiple resizes
+_ ------------------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# table update to 4096
+3fe1 1f                                 | ?..
+EOF
+
+tst_decode --decoding-spec d12,r0,r4096, --expect-error UPD
+
+_ -------------------------------------
+_ Update too big after multiple resizes
+_ -------------------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# table update to 0
+20                                      |  
+
+# table update over 9000
+3f8a 46                                 | ?.F
+EOF
+
+tst_decode --decoding-spec d12,r0,r4096, --expect-error UPD
+
+_ -------------------------------------------------------
+_ Table size update not at the begining of an HPACK block
+_ -------------------------------------------------------
+
+mk_msg </dev/null
+mk_tbl </dev/null
+
+mk_bin <<EOF
+10000100 | pick ":path: /" from the 4th static entry
+00111111 | 001 (table update) and 31 (5-bit prefix)
+01110111 | 0 (end of int) and 119 (total: 150)
+EOF
+
+tst_decode --expect-error UPD
+
+_ ---------------------------------------------
+_ No more than two updates can occur in a block
+_ ---------------------------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# table update to 0
+20                                      |  
+
+# table update back to 4096
+3fe1 1f                                 | ?..
+
+# table update to 20
+34                                      | 4
+EOF
+
+HDECODE=hdecode # XXX: nghttp2 1.7.1 fails this test
+tst_decode --decoding-spec d12,r0,r4096, --expect-error UPD
+
+_ ----------------------------------
+_ Set a limit above the maximum size
+_ ----------------------------------
+
+mk_hex <<EOF
+# no update received
+4004 6e61 6d65 0576 616c 7565 4005 6f74 | @.name.value@.ot
+6865 7205 6669 656c 64                  | her.field
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  42) other: field
+      Table size:  42
+EOF
+
+mk_enc <<EOF
+update 4096
+dynamic str name str value
+dynamic str other str field
+EOF
+
+tst_encode --table-size 42
+
+# the same test with the limit set during allocation
+mk_enc <<EOF
+dynamic str name str value
+dynamic str other str field
+EOF
+
+tst_encode --table-limit 4096 --table-size 42
+
+_ ---------------------------------------
+_ Resize above the limit after it was set
+_ ---------------------------------------
+
+mk_hex <<EOF
+# no update, yet
+4004 6e61 6d65 0576 616c 7565 4005 6f74 | @.name.value@.ot
+6865 7205 6669 656c 64                  | her.field
+
+# table update to 0
+20
+
+# table update to 4096
+3fe1 1f
+
+4004 6e61 6d65 0576 616c 7565 4005 6f74 | @.name.value@.ot
+6865 7205 6669 656c 64                  | her.field
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  42) other: field
+[  2] (s =  41) name: value
+      Table size:  83
+EOF
+
+mk_enc <<EOF
+update 4096
+dynamic str name str value
+dynamic str other str field
+send
+
+resize 0
+resize 8192
+dynamic str name str value
+dynamic str other str field
+EOF
+
+tst_encode
+
+# the same test with the limit set during allocation
+mk_enc <<EOF
+dynamic str name str value
+dynamic str other str field
+send
+
+resize 0
+resize 8192
+dynamic str name str value
+dynamic str other str field
+EOF
+
+tst_encode --table-limit 4096
+
+_ ----------------------
+_ Resize below the limit
+_ ----------------------
+
+mk_hex <<EOF
+# table update to 4096
+3fe1 1f
+
+4004 6e61 6d65 0576 616c 7565 4005 6f74 | @.name.value@.ot
+6865 7205 6669 656c 64                  | her.field
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  42) other: field
+[  2] (s =  41) name: value
+      Table size:  83
+EOF
+
+mk_enc <<EOF
+update 8192
+resize 4096
+dynamic str name str value
+dynamic str other str field
+EOF
+
+tst_encode --table-size 42
+
+# the same test with the limit set during allocation
+mk_enc <<EOF
+resize 4096
+dynamic str name str value
+dynamic str other str field
+EOF
+
+tst_encode --table-limit 8192 --table-size 42

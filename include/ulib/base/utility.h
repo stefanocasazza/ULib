@@ -410,15 +410,15 @@ static inline bool u__isipv4(  unsigned char c)  { return ((u_cttab(c) & 0x00001
 static inline bool u__isblank( unsigned char c)  { return ((u_cttab(c) & 0x00000101) != 0); } /* (__S | __B)                           */
 static inline bool u__isalpha( unsigned char c)  { return ((u_cttab(c) & 0x0000A000) != 0); } /* (__L | __U)                           */
 static inline bool u__isxdigit(unsigned char c)  { return ((u_cttab(c) & 0x00081000) != 0); } /* (__X | __D)                           */
-static inline bool u__isename( unsigned char c)  { return ((u_cttab(c) & 0x00000240) != 0); } /* (__G | __R)                           */
 static inline bool u__isalnum( unsigned char c)  { return ((u_cttab(c) & 0x0000B000) != 0); } /* (__L | __U | __D)                     */
 static inline bool u__islitem( unsigned char c)  { return ((u_cttab(c) & 0x00000109) != 0); } /* (__S | __V | __B)                     */
 static inline bool u__ispecial(unsigned char c)  { return ((u_cttab(c) & 0x00000034) != 0); } /* (__H | __O | __N)                     */
-static inline bool u__isname(  unsigned char c)  { return ((u_cttab(c) & 0x0000B080) != 0); } /* (__Q | __L | __U | __D)               */
 static inline bool u__isipv6(  unsigned char c)  { return ((u_cttab(c) & 0x00081060) != 0); } /* (__N | __G | __X | __D)               */
 static inline bool u__isgraph( unsigned char c)  { return ((u_cttab(c) & 0x0000F000) != 0); } /* (__L | __U | __D | __I)               */
 static inline bool u__isprint( unsigned char c)  { return ((u_cttab(c) & 0x0000F001) != 0); } /* (__S | __L | __U | __D | __I)         */
-static inline bool u__ishname( unsigned char c)  { return ((u_cttab(c) & 0x0000B0B0) != 0); } /* (__O | __N | __Q | __L | __U | __D)   */
+static inline bool u__isname(  unsigned char c)  { return ((u_cttab(c) & 0x0000B080) != 0); } /* (__Q | __L | __U | __D)               */
+static inline bool u__isename( unsigned char c)  { return ((u_cttab(c) & 0x000030B0) != 0); } /* (__O | __N | __Q | __L | __D)         */
+static inline bool u__ishname( unsigned char c)  { return ((u_cttab(c) & 0x0000B0B0) != 0); } /* (__O | __N | __Q | __L | __D | __U)   */
 static inline bool u__isbase64(unsigned char c)  { return ((u_cttab(c) & 0x0010B000) != 0); } /* (__A | __L | __U | __D)               */
 static inline bool u__isb64url(unsigned char c)  { return ((u_cttab(c) & 0x0000B090) != 0); } /* (      __L | __U | __D | __O | __Q)   */
 

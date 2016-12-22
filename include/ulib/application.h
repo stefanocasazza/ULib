@@ -69,7 +69,7 @@ public:
    static int exit_value;
    static uint32_t num_args;
 
-   UString str; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
+   UString _str; // NB: must be here to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
    UOptions opt;
 
    UApplication();
@@ -123,9 +123,9 @@ public:
 #        define U_OPTIONS_3 ""
 #        endif
 
-         str = UString(U_CONSTANT_TO_PARAM(U_OPTIONS U_OPTIONS_1 U_OPTIONS_2 U_OPTIONS_3));
+         _str = UString(U_CONSTANT_TO_PARAM(U_OPTIONS U_OPTIONS_1 U_OPTIONS_2 U_OPTIONS_3));
 
-         if (str) opt.load(str);
+         if (_str) opt.load(_str);
 #     endif
 
          num_args = opt.getopt(argc, argv, &optind);

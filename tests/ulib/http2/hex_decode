@@ -1,0 +1,10 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+
+# Decode a hexdump from the test suite and output the raw binary
+sed '/^$/d; /^#/d' |
+cut -d '|' -f 1 |
+xxd -r -p

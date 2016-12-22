@@ -1,0 +1,161 @@
+#!/bin/sh
+#
+# Written by Dridi Boukelmoune <dridi.boukelmoune@gmail.com>
+#
+# This file is in the public domain.
+#
+# 4.4.  Entry Eviction When Adding New Entries
+#
+#    Before a new entry is added to the dynamic table, entries are evicted
+#    from the end of the dynamic table until the size of the dynamic table
+#    is less than or equal to (maximum size - new entry size) or until the
+#    table is empty.
+#
+#    If the size of the new entry is less than or equal to the maximum
+#    size, that entry is added to the table.  It is not an error to
+#    attempt to add an entry that is larger than the maximum size; an
+#    attempt to add an entry larger than the maximum size causes the table
+#    to be emptied of all existing entries and results in an empty table.
+#
+#    A new entry can reference the name of an entry in the dynamic table
+#    that will be evicted when adding this new entry into the dynamic
+#    table.  Implementations are cautioned to avoid deleting the
+#    referenced name if the referenced entry is evicted from the dynamic
+#    table prior to inserting the new entry.
+
+. "$(dirname "$0")"/common.sh
+
+_ ------------------------
+_ Insert in an empty table
+_ ------------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+EOF
+
+mk_msg <<EOF
+name: value
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  41) name: value
+      Table size:  41
+EOF
+
+mk_enc <<EOF
+dynamic str name str value
+EOF
+
+tst_decode
+tst_encode
+
+_ -------------------
+_ Insertion may evict
+_ -------------------
+
+mk_hex <<EOF
+# dynamic field "name: value"
+4004 6e61 6d65 0576 616c 7565           | @.name.value
+
+# dynamic field "name: update"
+4004 6e61 6d65 0675 7064 6174 65        | @.name.update
+EOF
+
+mk_msg <<EOF
+name: value
+name: update
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  42) name: update
+      Table size:  42
+EOF
+
+mk_enc <<EOF
+dynamic str name str value
+dynamic str name str update
+EOF
+
+tst_decode --table-size 42
+tst_encode --table-size 42
+
+_ ---------------------------------
+_ Insertion too large for the table
+_ ---------------------------------
+
+mk_hex <<EOF
+4004 6e61 6d65 0e76 616c 7565 2d74 6f6f | @.name.value-too
+2d6c 6f6e 67                            | -long
+EOF
+
+mk_msg <<EOF
+name: value-too-long
+EOF
+
+mk_tbl </dev/null
+
+mk_enc <<EOF
+dynamic str name str value-too-long
+EOF
+
+tst_decode --table-size 42
+tst_encode --table-size 42
+
+_ ----------------------------------------
+_ Use the indexed name of an evicted field
+_ ----------------------------------------
+
+mk_hex <<EOF
+4004 6e61 6d65 0576 616c 7565 7e06 7570 | @.name.value~.up
+6461 7465                               | date
+EOF
+
+mk_msg <<EOF
+name: value
+name: update
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  42) name: update
+      Table size:  42
+EOF
+
+mk_enc <<EOF
+dynamic str name str value
+dynamic idx 62 str update
+EOF
+
+tst_decode --table-size 42
+tst_encode --table-size 42
+
+_ -------------------------------------------------------------
+_ Use the indexed name of an evicted field in a non-empty table
+_ -------------------------------------------------------------
+
+mk_hex <<EOF
+4004 6e61 6d65 0576 616c 7565 4005 6f74 | @.name.value@.ot
+6865 7205 656e 7472 797f 0006 7570 6461 | her.entry...upda
+7465                                    | te
+EOF
+
+mk_msg <<EOF
+name: value
+other: entry
+name: update
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  42) name: update
+[  2] (s =  42) other: entry
+      Table size:  84
+EOF
+
+mk_enc <<EOF
+dynamic str name str value
+dynamic str other str entry
+dynamic idx 63 str update
+EOF
+
+tst_decode --table-size 84
+tst_encode --table-size 84

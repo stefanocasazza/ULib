@@ -1,0 +1,96 @@
+#!/bin/sh
+#
+# Copyright (c) 2016 Dridi Boukelmoune
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+. "$(dirname "$0")"/common.sh
+
+mk_hex <<EOF
+# Appendix C.3.1.  First Request
+8286 8441 0f77 7777 2e65 7861 6d70 6c65 | ...A.www.example
+2e63 6f6d                               | .com
+
+# Appendix C.3.2.  Second Request
+8286 84be 5808 6e6f 2d63 6163 6865      | ....X.no-cache
+
+# Appendix C.3.3.  Third Request
+8287 85bf 400a 6375 7374 6f6d 2d6b 6579 | ....@.custom-key
+0c63 7573 746f 6d2d 7661 6c75 65        | .custom-value
+EOF
+
+mk_msg <<EOF
+# Appendix C.3.1.  First Request
+:method: GET
+:scheme: http
+:path: /
+:authority: www.example.com
+
+# Appendix C.3.2.  Second Request
+:method: GET
+:scheme: http
+:path: /
+:authority: www.example.com
+cache-control: no-cache
+
+# Appendix C.3.3.  Third Request
+:method: GET
+:scheme: https
+:path: /index.html
+:authority: www.example.com
+custom-key: custom-value
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  54) custom-key: custom-value
+[  2] (s =  53) cache-control: no-cache
+[  3] (s =  57) :authority: www.example.com
+      Table size: 164
+EOF
+
+mk_enc <<EOF
+# Appendix C.3.1.  First Request
+indexed 2
+indexed 6
+indexed 4
+dynamic idx 1 str www.example.com
+send
+
+# Appendix C.3.2.  Second Request
+indexed 2
+indexed 6
+indexed 4
+indexed 62
+dynamic idx 24 str no-cache
+send
+
+# Appendix C.3.3.  Third Request
+indexed 2
+indexed 7
+indexed 5
+indexed 63
+dynamic str custom-key str custom-value
+EOF
+
+tst_decode --decoding-spec d20,d14,
+tst_encode

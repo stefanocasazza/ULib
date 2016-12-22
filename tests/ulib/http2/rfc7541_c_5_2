@@ -1,0 +1,79 @@
+#!/bin/sh
+#
+# Copyright (c) 2016 Dridi Boukelmoune
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+. "$(dirname "$0")"/common.sh
+
+mk_hex <<EOF
+# Appendix C.5.1.  First Response
+4803 3330 3258 0770 7269 7661 7465 611d | H.302X.privatea.
+4d6f 6e2c 2032 3120 4f63 7420 3230 3133 | Mon, 21 Oct 2013
+2032 303a 3133 3a32 3120 474d 546e 1768 |  20:13:21 GMTn.h
+7474 7073 3a2f 2f77 7777 2e65 7861 6d70 | ttps://www.examp
+6c65 2e63 6f6d                          | le.com
+
+# Appendix C.5.2.  Second Response
+4803 3330 37c1 c0bf                     | H.307...
+EOF
+
+mk_msg <<EOF
+# Appendix C.5.1.  First Response
+:status: 302
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:21 GMT
+location: https://www.example.com
+
+# Appendix C.5.2.  Second Response
+:status: 307
+cache-control: private
+date: Mon, 21 Oct 2013 20:13:21 GMT
+location: https://www.example.com
+EOF
+
+mk_tbl <<EOF
+[  1] (s =  42) :status: 307
+[  2] (s =  63) location: https://www.example.com
+[  3] (s =  65) date: Mon, 21 Oct 2013 20:13:21 GMT
+[  4] (s =  52) cache-control: private
+      Table size: 222
+EOF
+
+mk_enc <<EOF
+# Appendix C.5.1.  First Response
+dynamic idx 8 str 302
+dynamic idx 24 str private
+dynamic idx 33 str Mon, 21 Oct 2013 20:13:21 GMT
+dynamic idx 46 str https://www.example.com
+send
+
+# Appendix C.5.2.  Second Response
+dynamic idx 8 str 307
+indexed 65
+indexed 64
+indexed 63
+EOF
+
+tst_decode --decoding-spec d70, --table-size 256
+tst_encode --table-size 256

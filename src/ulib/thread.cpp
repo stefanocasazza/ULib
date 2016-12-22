@@ -46,31 +46,32 @@ void UThread::close()
 
    U_INTERNAL_DUMP("tid = %p first = %p next = %p", _tid, first, next)
 
-   U_INTERNAL_ASSERT_POINTER(first)
-
-   UThread* obj;
-   UThread** ptr = &first;
-
-   while ((obj = *ptr))
+   if (first)
       {
-      U_INTERNAL_ASSERT_POINTER(obj)
+      UThread* obj;
+      UThread** ptr = &first;
 
-#  ifdef _MSWINDOWS_
-      if (tid == obj->tid)
-#  else
-      if (pthread_equal(tid, obj->tid))
-#  endif
+      while ((obj = *ptr))
          {
-         U_INTERNAL_ASSERT_EQUALS(this, obj)
-         U_INTERNAL_ASSERT_EQUALS(next, obj->next)
+         U_INTERNAL_ASSERT_POINTER(obj)
 
-         *ptr = next;
-                next = 0;
+#     ifdef _MSWINDOWS_
+         if (tid == obj->tid)
+#     else
+         if (pthread_equal(tid, obj->tid))
+#     endif
+            {
+            U_INTERNAL_ASSERT_EQUALS(this, obj)
+            U_INTERNAL_ASSERT_EQUALS(next, obj->next)
 
-         break;
+            *ptr = next;
+                   next = 0;
+
+            break;
+            }
+
+         ptr = &(*ptr)->next;
          }
-
-      ptr = &(*ptr)->next;
       }
 
    if (_tid)

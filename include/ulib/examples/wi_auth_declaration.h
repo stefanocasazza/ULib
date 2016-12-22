@@ -930,7 +930,7 @@ public:
             {
             WiAuthAccessPoint* ap_rec = nodog_rec->vec_access_point[index_access_point];
 
-         // ap_rec->noconsume          = (bconsume == false);
+            ap_rec->noconsume          = (bconsume == false);
             ap_rec->mac_mask           = mac_mask;
             ap_rec->group_account_mask = group_account_mask;
 
@@ -1223,7 +1223,7 @@ loop: pos = db_anagrafica->find(*ap_address, pos);
             {
             *ap_label = vlabel[i];
 
-            addAccessPoint(vconsume[i].equal(U_CONSTANT_TO_PARAM("off")));
+            addAccessPoint(vconsume.empty() ? false : vconsume[i].equal(U_CONSTANT_TO_PARAM("off")));
             }
          }
 
@@ -1382,7 +1382,8 @@ another:       ap_rec = nodog_rec->vec_access_point[index_access_point];
                {
 another:       ap_rec = nodog_rec->vec_access_point[index_access_point];
 
-               if (ap_rec->noconsume != vconsume[i].equal(U_CONSTANT_TO_PARAM("off")))
+               if (vconsume.empty() == false &&
+                   ap_rec->noconsume != vconsume[i].equal(U_CONSTANT_TO_PARAM("off")))
                   {
                   ap_rec->noconsume = !ap_rec->noconsume;
 
@@ -1828,7 +1829,7 @@ static void setCookie1()
 
    param.snprintf(U_CONSTANT_TO_PARAM("[ %v %u / %v ]"), UHTTP::getKeyIdDataSession(*mac).rep, 24 * 30, virtual_name->rep);
 
-   UHTTP::setCookie(param);
+// UHTTP::setCookie(param);
 }
 
 static void setCookie2(const char* hexdump)
@@ -1900,17 +1901,14 @@ static bool getCookie1()
 
    U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
 
-   if (WiAuthNodog::checkMAC())
+   UString cookie = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("ULIB_SESSION"), UClientImage_Base::environment);
+
+   if (cookie &&
+       cookie == *mac)
       {
-      UString cookie = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("ULIB_SESSION"), UClientImage_Base::environment);
+      *auth_domain = *cookie_auth + "MAC";
 
-      if (cookie &&
-          cookie == *mac)
-         {
-         *auth_domain = *cookie_auth + "MAC";
-
-         U_RETURN(true);
-         }
+      U_RETURN(true);
       }
 
    U_RETURN(false);
@@ -3339,7 +3337,7 @@ next:
       WiAuthAccessPoint* ap_rec;
       UVector<UString>* _vuid = (UVector<UString>*)data;
 
-      ap_address->_assign(key);
+      (void) ap_address->replace(U_STRING_TO_PARAM(*key));
 
       for (uint32_t i = 0, n = _vuid->size(); i < n; ++i)
          {
@@ -3365,7 +3363,8 @@ next:
 
       if (vuid->empty() == false)
          {
-         UString result = nodog_rec->sendRequestToNodog(U_CONSTANT_TO_PARAM("checkForUsersF?%v"), vuid->join(',').rep);
+         UString    tmp = vuid->join(','),
+                 result = nodog_rec->sendRequestToNodog(U_CONSTANT_TO_PARAM("checkForUsersF?%v"), tmp.rep);
 
          if (result &&
              U_IS_HTTP_ERROR(U_http_info.nResponseCode) == false)
@@ -3916,6 +3915,8 @@ static void usp_init_wi_auth()
    U_INTERNAL_ASSERT_POINTER(db_anagrafica)
 
    (void) memcpy(UServices::key, U_CONSTANT_TO_PARAM("1234567890123456")); // for ULib session cookies... 
+
+   UHTTP::skip_check_cookie_ip_address = true;
 }
 
 static void usp_sighup_wi_auth()
@@ -5725,7 +5726,8 @@ static void GET_login() // MAIN PAGE (se il portatile non mostra la login page c
 
       auth_domain->clear();
 
-      if (getCookie1())
+      if (WiAuthNodog::checkMAC() ||
+          getCookie1())
          {
          *uid = *mac;
 

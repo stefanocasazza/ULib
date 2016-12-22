@@ -63,7 +63,7 @@ userver {
 #ORM_DRIVER_DIR ../../../../../src/ulib/orm/driver/.libs
 }
 http {
-#ALIAS "[ / /index.php ]"
+ALIAS "[ / /index.php ]"
 #VIRTUAL_HOST yes
 #ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 3M

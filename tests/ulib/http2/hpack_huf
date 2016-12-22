@@ -1,0 +1,83 @@
+#!/bin/sh
+#
+# Copyright (c) 2016 Dridi Boukelmoune
+# All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR AND CONTRIBUTORS ``AS IS'' AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL AUTHOR OR CONTRIBUTORS BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+
+. "$(dirname "$0")"/common.sh
+
+mk_msg </dev/null
+mk_tbl </dev/null
+
+_ -----------------
+_ Invalid character
+_ -----------------
+
+mk_bin <<EOF
+00000000 | Literal field without indexing
+10000010 | Huffman string of 2 octets
+11111111 | The null character (13 bits)
+11000111 | Followed by '111' EOS
+EOF
+
+tst_decode --expect-error CHR
+
+_ ----------------------------------------------------
+_ Parse a Huffman string longer than the decode buffer
+_ ----------------------------------------------------
+
+# Because the most common character is conveniently '0' it can be used to
+# represent both itself and its Huffman hexdump. Because the Huffman code
+# is a 5-bit string of zeros, this test picks a big multiple of both 5 and
+# 8 larger than 256: 1280. A Huffman string of 1280 5-bit characters will
+# require 800 octets, so we put 1600 zeroes in the hexdump.
+#
+# In order to keep it contained, we use a literal header field with an
+# indexed name:
+#
+# - 01     -> literal field with name index 1 (:authority)
+# - ffa105 -> Huffman string of length 800
+
+mk_chars 0 "01 ffa105 %1600s"           | mk_hex
+mk_chars 0 ":authority: %1280s\n"       | mk_msg
+mk_chars 0 "literal idx 1 huf %1280s\n" | mk_enc
+
+tst_decode
+tst_encode
+
+_ ----------------------------------------------------
+_ Decode a long Huffman string with invalid characters
+_ ----------------------------------------------------
+
+# To make matters simpler, we can use the horizontal tabulation that takes 24
+# bits or 3 octets once coded. It's easy enough to embed and is illegal in a
+# header field name.
+#
+# - 00     -> literal field without indexing
+# - ffa405 -> Huffman string of length 803
+# - ffffea -> Huffman coding for a tabulation
+
+mk_chars 0 "00 ffa405 ffffea %1600s" | mk_hex
+mk_msg </dev/null
+
+tst_decode --expect-error CHR
