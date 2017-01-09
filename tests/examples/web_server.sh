@@ -35,17 +35,32 @@ start_test() {
 #start_test
 #/usr/bin/spawn-fcgi -p 8080 -f /usr/bin/php-cgi -C 5 -P /var/run/spawn-fcgi.pid
 
+# =================================================================
+# HTTP/2
+# =================================================================
+# ./h2a -c server.crt -k server.key -p 8000 -H 127.0.0.1 -P 443
+#
+# Once h2a starts, you can access http://localhost:8000 from the
+# HTTP client such as Firefox and you will be able to check the
+# HTTP/2 traffic
+#
+# ./web_server.sh
+#
+# /opt/go/bin/h2a    -p 80 -H 127.0.0.1 -P 8080 -d -D >& h2a.out &
+# /opt/go/bin/h2spec -p 80										>& h2spec.out
+# =================================================================
+
 cat <<EOF >inp/webserver.cfg
 userver {
  PORT 8080
  RUN_AS_USER nobody
 #MIN_SIZE_FOR_SENDFILE 2k
  LOG_FILE web_server.log
- LOG_FILE_SZ 1M
+ LOG_FILE_SZ 10M
 #LOG_FILE_SZ 20k
  LOG_MSG_SIZE -1
  PID_FILE /var/run/userver_tcp.pid
- PREFORK_CHILD 2
+ PREFORK_CHILD 0
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
@@ -63,7 +78,7 @@ userver {
 #ORM_DRIVER_DIR ../../../../../src/ulib/orm/driver/.libs
 }
 http {
-ALIAS "[ / /index.php ]"
+ALIAS "[ / /100.html ]"
 #VIRTUAL_HOST yes
 #ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 3M

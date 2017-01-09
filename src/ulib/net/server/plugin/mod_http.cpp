@@ -573,6 +573,17 @@ int UHttpPlugIn::handlerRun() // NB: we use this method instead of handlerInit()
 
    UHTTP::bcallInitForAllUSP = true;
 
+   UHTTP::UServletPage* usp = UHTTP::getUSP(U_CONSTANT_TO_PARAM("/modupload"));
+
+   if (usp)
+      {
+      U_INTERNAL_DUMP("modupload->runDynamicPage = %p", usp->runDynamicPage)
+
+      U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
+
+      UHTTP::on_upload = usp->runDynamicPage;
+      }
+      
    if (UHTTP::upload_dir->empty()) (void) UHTTP::upload_dir->assign(U_CONSTANT_TO_PARAM("uploads"));
 
    U_RESET_MODULE_NAME;

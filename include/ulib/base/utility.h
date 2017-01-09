@@ -339,7 +339,7 @@ U_EXPORT void u_switch_to_realtime_priority(void);
  * --------------------------------------------------------------------------------
  */
 
-U_EXPORT bool u_canonicalize_pathname(char* restrict path);
+U_EXPORT uint32_t u_canonicalize_pathname(char* restrict path, uint32_t sz);
 
 /**
  * find a FILE MODE along PATH

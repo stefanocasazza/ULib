@@ -37,6 +37,7 @@
 
 class UFile;
 class ULock;
+class UHTTP2;
 class UEventFd;
 class UCommand;
 class UPageSpeed;
@@ -186,6 +187,7 @@ public:
 
    static int  handlerREAD();
    static bool readRequest();
+   static void setPathName();
    static bool handlerCache();
    static int  manageRequest();
    static int  processRequest();
@@ -204,7 +206,12 @@ public:
    static bool isValidRequestExt(const char* ptr, uint32_t size) __pure;
    static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
 
-   static void      setPathName();
+   static void setHostname(const char* ptr, uint32_t len);
+
+   static void setHostname(const UString& name) { setHostname(U_STRING_TO_PARAM(name)); }
+
+   static const char* getStatusDescription(uint32_t* plen = 0);
+
    static void checkForPathName()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::checkForPathName()")
@@ -228,20 +235,45 @@ public:
       U_RETURN(agent);
       }
 
+   static bool checkDirectoryForDocumentRoot(const char* ptr, uint32_t len)
+      {
+      U_TRACE(0, "UHTTP::checkDirectoryForDocumentRoot(%.*S,%u)", len, ptr, len)
+
+      U_INTERNAL_DUMP("document_root(%3u) = %V", UServer_Base::document_root_size, UServer_Base::document_root->rep)
+
+      U_INTERNAL_ASSERT_POINTER(UServer_Base::document_root_ptr)
+
+      if (len < UServer_Base::document_root_size         ||
+            ptr[UServer_Base::document_root_size] != '/' ||
+          memcmp(ptr, UServer_Base::document_root_ptr, UServer_Base::document_root_size) != 0)
+         {
+         U_RETURN(false);
+         }
+
+      U_RETURN(true);
+      }
+
+   // UPLOAD
+
+   static vPFi on_upload;
+
    static void setUploadDir(const UString& dir)
       {
       U_TRACE(0, "UHTTP::setUploadDir(%V)", dir.rep)
 
+      U_INTERNAL_ASSERT(dir)
       U_INTERNAL_ASSERT_POINTER(upload_dir)
 
-      *upload_dir = dir;
+      UString result = checkDirectoryForUpload(dir);
+
+      if (result) *upload_dir = result;
       }
 
-   static void setHostname(const char* ptr, uint32_t len);
+   static void writeUploadData(const char* ptr, uint32_t len);
 
-   static void setHostname(const UString& name) { setHostname(U_STRING_TO_PARAM(name)); }
+   static UString checkDirectoryForUpload(const char* ptr, uint32_t len);
 
-   static const char* getStatusDescription(uint32_t* plen = 0);
+   static UString checkDirectoryForUpload(const UString& dir) { return checkDirectoryForUpload(U_STRING_TO_PARAM(dir)); }
 
    static const char* getHeaderValuePtr(                        const char* name, uint32_t name_len, bool nocase) __pure;
    static const char* getHeaderValuePtr(const UString& request, const char* name, uint32_t name_len, bool nocase) __pure;
@@ -1001,9 +1033,6 @@ public:
       }
 
 private:
-   static void    handlerResponse();
-   static UString getHTMLDirectoryList() U_NO_EXPORT;
-
    static void setMimeIndex()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setMimeIndex()")
@@ -1032,6 +1061,10 @@ private:
 
       return ctype;
       }
+
+   static void handlerResponse();
+
+   static UString getHTMLDirectoryList() U_NO_EXPORT;
 
 #ifdef DEBUG
    static bool cache_file_check_memory();
@@ -1108,6 +1141,7 @@ private:
 
    U_DISALLOW_COPY_AND_ASSIGN(UHTTP)
 
+   friend class UHTTP2;
    friend class USSIPlugIn;
    friend class UHttpPlugIn;
 };

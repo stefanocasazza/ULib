@@ -32,6 +32,16 @@ public:
       U_TRACE_UNREGISTER_OBJECT(5, Request)
       }
 
+   void clear()
+      {
+      U_TRACE_NO_PARAM(5, "Request::clear()")
+
+        token.clear();
+         type.clear();
+        radius.clear();
+      location.clear();
+      }
+
 #ifdef DEBUG
    const char* dump(bool breset) const
       {
@@ -101,7 +111,7 @@ static void testQuery(const UString& json, const char* cquery, const UString& ex
 
 static void testVector()
 {
-   U_TRACE(5, "testVector()")
+   U_TRACE_NO_PARAM(5, "testVector()")
 
    UValue json_vec;
    UVector<UString> y;
@@ -142,7 +152,7 @@ static void testVector()
 
 static void testMap()
 {
-   U_TRACE(5, "testMap()")
+   U_TRACE_NO_PARAM(5, "testMap()")
 
    UValue json_obj;
    UHashMap<UString> x;
@@ -192,7 +202,7 @@ static void testMap()
 
 static void testObject()
 {
-   U_TRACE(5, "testObject()")
+   U_TRACE_NO_PARAM(5, "testObject()")
 
    UValue json_obj;
    Request request;
@@ -223,6 +233,25 @@ static void testObject()
    JSON_stringify(result, json_obj, request);
 
    U_ASSERT_EQUALS( result, reqJson )
+
+   request.clear();
+
+   ok = JSON_parse((reqJson = U_STRING_FROM_CONSTANT("{\"type\":\"localesData\",\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\"}")), request);
+
+   U_INTERNAL_ASSERT(ok)
+
+   U_DUMP_OBJECT(request)
+
+   U_INTERNAL_ASSERT_EQUALS(request.token,    "")
+   U_INTERNAL_ASSERT_EQUALS(request.type,     "localesData")
+   U_INTERNAL_ASSERT_EQUALS(request.radius,   "near")
+   U_INTERNAL_ASSERT_EQUALS(request.location, "40.7831 N, 73.9712 W")
+
+   result.clear();
+
+   JSON_stringify(result, json_obj, request);
+
+   U_ASSERT_EQUALS( result, "{\"token\":\"\",\"type\":\"localesData\",\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\"}" )
 }
 
 int
@@ -249,6 +278,8 @@ U_EXPORT main (int argc, char* argv[])
 
    return -1;
    */
+
+   testObject();
 
    content = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/json/prova.json"));
 
@@ -501,7 +532,6 @@ U_EXPORT main (int argc, char* argv[])
 
    testMap();
    testVector();
-   testObject();
 
    while (cin >> filename)
       {

@@ -960,9 +960,9 @@ unsigned zip_extract(const char* zipfile, const char** files, char*** filenames,
 
          if (f_fd < 0)
             {
-            U_ERROR("Error extracting ZIP archive - filename: %s", filename);
+            U_WARNING("Error extracting ZIP archive - filename: %s", filename);
 
-         // return 0;
+            return 0;
             }
          }
 

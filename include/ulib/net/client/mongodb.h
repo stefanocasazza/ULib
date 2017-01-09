@@ -125,6 +125,7 @@ public:
 # endif
 #else
    bool insert(bson_t* doc);
+   bool remove(bson_t* selector);
    bool findOne(const char* json, uint32_t len);
 
    bool find(bson_t* query, bson_t* projection = 0,            mongoc_query_flags_t flags = MONGOC_QUERY_NONE, mongoc_read_prefs_t* read_prefs = 0);

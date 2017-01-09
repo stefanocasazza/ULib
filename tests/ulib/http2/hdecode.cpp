@@ -91,7 +91,7 @@ public:
 
          if (*pspec != '\0') pspec = strchr(pspec, ',') + 1;
 
-         if (resize) UHTTP2::setHpackInputDynTblCapacity(len);
+         if (resize) UHTTP2::setHpackDynTblCapacity(idyntbl, len);
          else
             {
             UHTTP2::nerror      =
@@ -188,7 +188,13 @@ public:
 
          UString tmp = opt['t'];
 
-         if (tmp) UHTTP2::settings.header_table_size = tmp.strtoul();
+         if (tmp)
+            {
+            UHTTP2::pConnection->idyntbl.hpack_capacity     =
+            UHTTP2::pConnection->idyntbl.hpack_max_capacity =
+            UHTTP2::pConnection->odyntbl.hpack_capacity     =
+            UHTTP2::pConnection->odyntbl.hpack_max_capacity = tmp.strtoul();
+            }
 
          tmp = opt['e'];
 
@@ -208,9 +214,7 @@ public:
             }
          }
 
-next: UHTTP2::openStream();
-
-      TST_decode(content, spec, exp);
+next: TST_decode(content, spec, exp);
 
       U_INTERNAL_DUMP("UHTTP2::hpack_errno = %d exp = %d", UHTTP2::hpack_errno, exp)
 

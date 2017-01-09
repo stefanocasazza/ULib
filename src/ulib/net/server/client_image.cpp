@@ -476,12 +476,7 @@ void UClientImage_Base::handlerDelete()
 #ifndef U_HTTP2_DISABLE
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
-   if (U_http_version == '2')
-      {
-      UHTTP2::reset(this - UServer_Base::vClientImage, bsocket_open);
-
-      bsocket_open = socket->isOpen();
-      }
+   if (U_http_version == '2') UHTTP2::reset(this);
 #endif
 
    if (bsocket_open) socket->close();
@@ -694,6 +689,12 @@ void UClientImage_Base::endRequest()
 
    U_http_method_type = 0; // NB: this mark the end of http request processing...
 
+#ifndef U_HTTP2_DISABLE
+   U_INTERNAL_DUMP("U_http_info.uri_len = %u", U_http_info.uri_len)
+
+   if (U_http_info.uri_len == 0) return;
+#endif
+
 #if defined(DEBUG) && !defined(U_LOG_DISABLE)
    if (UServer_Base::isLog())
       {
@@ -731,7 +732,7 @@ void UClientImage_Base::endRequest()
          {
          U_INTERNAL_DUMP("sz = %u", sz)
 
-         if (sz > (sizeof(buffer1)-32)) sz = sizeof(buffer1)-32;
+         if (sz > (sizeof(buffer1)-64)) sz = sizeof(buffer1)-64;
 
          U_MEMCPY(ptr1, ptr, sz);
                   ptr1 +=    sz;
@@ -1150,7 +1151,7 @@ dmiss:
 
          if (UNLIKELY((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0)) goto error;
 
-         goto processing;
+         goto http2_processing;
          }
 #  endif
 
@@ -1189,7 +1190,7 @@ dmiss:
 
    size_request = U_ClientImage_request = 0;
 
-   if (body->isNull() == false) body->clear();
+   body->clear();
 
    U_INTERNAL_DUMP("wbuffer(%u) = %V", wbuffer->size(), wbuffer->rep)
 
@@ -1211,9 +1212,12 @@ dmiss:
 
       U_ClientImage_state = UHTTP2::handlerRequest();
 
+      U_INTERNAL_DUMP("socket->isClosed() = %b U_http_info.nResponseCode = %u U_ClientImage_close = %b U_ClientImage_state = %d %B",
+                       socket->isClosed(),     U_http_info.nResponseCode,     U_ClientImage_close,     U_ClientImage_state, U_ClientImage_state)
+
       if (UNLIKELY((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0)) goto error;
 
-      goto processing;
+      goto http2_processing;
       }
 #endif
 
@@ -1338,7 +1342,7 @@ check:
       }
 
 #ifndef U_HTTP2_DISABLE
-processing:
+http2_processing:
 #endif
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u request->size() = %u",
                     U_ClientImage_pipeline,     size_request,     request->size())
@@ -1420,7 +1424,7 @@ write:
          }
       }
 
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b", U_ClientImage_pipeline)
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b (U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) = %u", U_ClientImage_pipeline, U_ClientImage_state & U_PLUGIN_HANDLER_ERROR)
 
    if (LIKELY((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) == 0))
       {
@@ -1428,6 +1432,12 @@ write:
          {
                   endRequest();
          (void) startRequest();
+
+#     ifndef U_HTTP2_DISABLE
+         U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+         U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
+#     endif
 
          goto pipeline;
          }
@@ -1736,6 +1746,13 @@ void UClientImage_Base::resetPipeline()
                     U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_request_is_cached,     U_ClientImage_close)
 
    U_INTERNAL_ASSERT(U_ClientImage_pipeline)
+
+#ifndef U_HTTP2_DISABLE
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+   if (U_http_version != '2')
+#endif
+   {
    U_INTERNAL_ASSERT(request->same(*rbuffer) == false)
 
    U_ClientImage_pipeline = false;
@@ -1744,6 +1761,7 @@ void UClientImage_Base::resetPipeline()
    if (U_ClientImage_request_is_cached == false)
 #endif
    size_request = 0; // NB: we don't want to process further the read buffer...
+   }
 }
 
 void UClientImage_Base::prepareForSendfile()

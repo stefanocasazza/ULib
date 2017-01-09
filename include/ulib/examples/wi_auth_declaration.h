@@ -1810,26 +1810,27 @@ static void setCookie1()
 {
    U_TRACE_NO_PARAM(5, "::setCookie1()")
 
-   U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
+   if (UServer_Base::bssl == false)
+      {
+      UString param(200U);
 
-   UString param(200U);
+      // -----------------------------------------------------------------------------------------------------------------------------------
+      // param: "[ data expire path domain secure HttpOnly ]"
+      // -----------------------------------------------------------------------------------------------------------------------------------
+      // string -- key_id or data to put in cookie    -- must
+      // int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
+      // string -- path where the cookie can be used  -- opt
+      // string -- domain which can read the cookie   -- opt
+      // bool   -- secure mode                        -- opt
+      // bool   -- only allow HTTP usage              -- opt
+      // -----------------------------------------------------------------------------------------------------------------------------------
+      // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
+      // -----------------------------------------------------------------------------------------------------------------------------------
 
-   // -----------------------------------------------------------------------------------------------------------------------------------
-   // param: "[ data expire path domain secure HttpOnly ]"
-   // -----------------------------------------------------------------------------------------------------------------------------------
-   // string -- key_id or data to put in cookie    -- must
-   // int    -- lifetime of the cookie in HOURS    -- must (0 -> valid until browser exit)
-   // string -- path where the cookie can be used  -- opt
-   // string -- domain which can read the cookie   -- opt
-   // bool   -- secure mode                        -- opt
-   // bool   -- only allow HTTP usage              -- opt
-   // -----------------------------------------------------------------------------------------------------------------------------------
-   // RET: Set-Cookie: ulib.s<counter>=data&expire&HMAC-MD5(data&expire); expires=expire(GMT); path=path; domain=domain; secure; HttpOnly
-   // -----------------------------------------------------------------------------------------------------------------------------------
+      param.snprintf(U_CONSTANT_TO_PARAM("[ %v %u / %v ]"), UHTTP::getKeyIdDataSession(*mac).rep, 24 * 30, virtual_name->rep);
 
-   param.snprintf(U_CONSTANT_TO_PARAM("[ %v %u / %v ]"), UHTTP::getKeyIdDataSession(*mac).rep, 24 * 30, virtual_name->rep);
-
-// UHTTP::setCookie(param);
+   // UHTTP::setCookie(param);
+      }
 }
 
 static void setCookie2(const char* hexdump)
@@ -1899,16 +1900,17 @@ static bool getCookie1()
 {
    U_TRACE_NO_PARAM(5, "::getCookie1()")
 
-   U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
-
-   UString cookie = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("ULIB_SESSION"), UClientImage_Base::environment);
-
-   if (cookie &&
-       cookie == *mac)
+   if (UServer_Base::bssl == false)
       {
-      *auth_domain = *cookie_auth + "MAC";
+      UString cookie = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("ULIB_SESSION"), UClientImage_Base::environment);
 
-      U_RETURN(true);
+      if (cookie &&
+          cookie == *mac)
+         {
+         *auth_domain = *cookie_auth + "MAC";
+
+         U_RETURN(true);
+         }
       }
 
    U_RETURN(false);
@@ -1918,57 +1920,58 @@ static bool getCookie2(UString* prealm, UString* pid)
 {
    U_TRACE(5, "::getCookie2(%p,%p)", prealm, pid)
 
-   U_INTERNAL_ASSERT(UServer_Base::bssl)
-
-   UString cookie = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_COOKIE"), UClientImage_Base::environment);
-
-   if (cookie)
+   if (UServer_Base::bssl)
       {
-      uint32_t pos = U_STRING_FIND(cookie, 0, "WCID=");
+      UString cookie = UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HTTP_COOKIE"), UClientImage_Base::environment);
 
-      if ( pos != U_NOT_FOUND &&
-          (pos += U_CONSTANT_SIZE("WCID="), pos < cookie.size()))
+      if (cookie)
          {
-         uint32_t pos1   = cookie.findWhiteSpace();
-         const char* ptr = (pos1 == U_NOT_FOUND ? cookie.pend() : cookie.c_pointer(pos1));
+         uint32_t pos = U_STRING_FIND(cookie, 0, "WCID=");
 
-         if (ptr[-1] == ';') --ptr;
-
-         UString value = cookie.substr(pos, ptr - cookie.c_pointer(pos));
-
-         if (pid) *pid = value.copy();
-
-         if (askToLDAP(0, 0, 0, "ldapsearch -LLL -b %v %v (&(objectClass=waSession)(&(waCookieId=%v)))", wiauth_session_basedn->rep, ldap_session_param->rep, value.rep) != 1)
+         if ( pos != U_NOT_FOUND &&
+             (pos += U_CONSTANT_SIZE("WCID="), pos < cookie.size()))
             {
-            setCookie2(0);
+            uint32_t pos1   = cookie.findWhiteSpace();
+            const char* ptr = (pos1 == U_NOT_FOUND ? cookie.pend() : cookie.c_pointer(pos1));
 
-            U_RETURN(false);
-            }
+            if (ptr[-1] == ';') --ptr;
 
-         value = (*table)["waFederatedUserId"]; // Ex: 3343793489@all
+            UString value = cookie.substr(pos, ptr - cookie.c_pointer(pos));
 
-         if (value)
-            {
-            pos = value.find('@');
+            if (pid) *pid = value.copy();
 
-            if (pos == U_NOT_FOUND) *uid = value;
-            else
+            if (askToLDAP(0, 0, 0, "ldapsearch -LLL -b %v %v (&(objectClass=waSession)(&(waCookieId=%v)))", wiauth_session_basedn->rep, ldap_session_param->rep, value.rep) != 1)
                {
-               UString x;
+               setCookie2(0);
 
-               *uid = value.substr(0U, pos).copy();
-               x    = value.substr(pos + 1).copy();
-
-               if (prealm &&
-                   prealm->equal(x) == false)
-                  {
-               // U_LOGGER("*** COOKIE REALM DIFFER(%v=>%v) - UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***", prealm->rep, x.rep, uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
-
-                  *prealm = UStringExt::trim(x);
-                  }
+               U_RETURN(false);
                }
 
-            U_RETURN(true);
+            value = (*table)["waFederatedUserId"]; // Ex: 3343793489@all
+
+            if (value)
+               {
+               pos = value.find('@');
+
+               if (pos == U_NOT_FOUND) *uid = value;
+               else
+                  {
+                  UString x;
+
+                  *uid = value.substr(0U, pos).copy();
+                  x    = value.substr(pos + 1).copy();
+
+                  if (prealm &&
+                      prealm->equal(x) == false)
+                     {
+                  // U_LOGGER("*** COOKIE REALM DIFFER(%v=>%v) - UID(%v) IP(%v) MAC(%v) AP(%v@%v) ***", prealm->rep, x.rep, uid->rep, ip->rep, mac->rep, ap_label->rep, ap_address->rep);
+
+                     *prealm = UStringExt::trim(x);
+                     }
+                  }
+
+               U_RETURN(true);
+               }
             }
          }
       }
@@ -3696,8 +3699,6 @@ static void usp_init_wi_auth()
    U_NEW(UString, dir_reg, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("DIR_REG"), environment)));
    U_NEW(UString, title_default, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("TITLE_DEFAULT"), environment)));
    U_NEW(UString, historical_log_dir, UString(UStringExt::getEnvironmentVar(U_CONSTANT_TO_PARAM("HISTORICAL_LOG_DIR"), environment)));
-
-   UHTTP::setUploadDir(*historical_log_dir);
 
    dir_server_address->snprintf(U_CONSTANT_TO_PARAM("%v/client"), dir_root.rep);
 

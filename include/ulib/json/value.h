@@ -352,6 +352,8 @@ public:
    UValue* at(uint32_t pos) const __pure;
    UValue* at(const char* key, uint32_t key_len) const __pure;
 
+   UValue* at(const UString& key) const { return at(U_STRING_TO_PARAM(key)); }
+
    UValue& operator[](uint32_t pos)        const   { return *at(pos); }
    UValue& operator[](const UString& key)  const   { return *at(U_STRING_TO_PARAM(key)); }
    UValue& operator[](const UStringRep* key) const { return *at(U_STRING_TO_PARAM(*key)); }
@@ -479,9 +481,10 @@ public:
       {
       U_TRACE(0, "UValue::fromJSON<T>(%V,%p)", name.rep, &member)
 
-      UValue& json = operator[](name);
+      UValue* json = at(name);
 
-      member.fromJSON(json);
+      if (json) member.fromJSON(*json);
+      else      member.clear();
       }
 
    // =======================================================================================================================
@@ -926,6 +929,8 @@ public:
 
    // SERVICES
 
+   void clear();
+
    void   toJSON(UValue& json);
    void fromJSON(UValue& json);
 
@@ -989,6 +994,13 @@ template <> class U_EXPORT UJsonTypeHandler<bool> : public UJsonTypeHandler_Base
 public:
    explicit UJsonTypeHandler(bool& val) : UJsonTypeHandler_Base(&val) {}
 
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<bool>::clear()")
+
+      *(bool*)pval = false;
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<bool>::toJSON(%p)", &json)
@@ -1007,6 +1019,13 @@ public:
 template <> class U_EXPORT UJsonTypeHandler<char> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(char& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<char>::clear()")
+
+      *(char*)pval = 0;
+      }
 
    void toJSON(UValue& json)
       {
@@ -1027,6 +1046,13 @@ template <> class U_EXPORT UJsonTypeHandler<unsigned char> : public UJsonTypeHan
 public:
    explicit UJsonTypeHandler(unsigned char& val) : UJsonTypeHandler_Base(&val) {}
 
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned char>::clear()")
+
+      *(unsigned char*)pval = 0;
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned char>::toJSON(%p)", &json)
@@ -1045,6 +1071,13 @@ public:
 template <> class U_EXPORT UJsonTypeHandler<short> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(short& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<short>::clear()")
+
+      *(short*)pval = 0;
+      }
 
    void toJSON(UValue& json)
       {
@@ -1065,6 +1098,13 @@ template <> class U_EXPORT UJsonTypeHandler<unsigned short> : public UJsonTypeHa
 public:
    explicit UJsonTypeHandler(unsigned short& val) : UJsonTypeHandler_Base(&val) {}
 
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned short>::clear()")
+
+      *(unsigned short*)pval = 0;
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned short>::toJSON(%p)", &json)
@@ -1083,6 +1123,13 @@ public:
 template <> class U_EXPORT UJsonTypeHandler<int> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(int& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<int>::clear()")
+
+      *(int*)pval = 0;
+      }
 
    void toJSON(UValue& json)
       {
@@ -1103,6 +1150,13 @@ template <> class U_EXPORT UJsonTypeHandler<unsigned int> : public UJsonTypeHand
 public:
    explicit UJsonTypeHandler(unsigned int& val) : UJsonTypeHandler_Base(&val) {}
 
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned int>::clear()")
+
+      *(unsigned int*)pval = 0;
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned int>::toJSON(%p)", &json)
@@ -1121,6 +1175,13 @@ public:
 template <> class U_EXPORT UJsonTypeHandler<long> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(long& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<long>::clear()")
+
+      *(long*)pval = 0;
+      }
 
    void toJSON(UValue& json)
       {
@@ -1146,6 +1207,13 @@ template <> class U_EXPORT UJsonTypeHandler<unsigned long> : public UJsonTypeHan
 public:
    explicit UJsonTypeHandler(unsigned long& val) : UJsonTypeHandler_Base(&val) {}
 
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned long>::clear()")
+
+      *(unsigned long*)pval = 0;
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned long>::toJSON(%p)", &json)
@@ -1166,6 +1234,13 @@ public:
 template <> class U_EXPORT UJsonTypeHandler<long long> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(long long& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<long long>::clear()")
+
+      *(long long*)pval = 0;
+      }
 
    void toJSON(UValue& json)
       {
@@ -1191,6 +1266,13 @@ template <> class U_EXPORT UJsonTypeHandler<unsigned long long> : public UJsonTy
 public:
    explicit UJsonTypeHandler(unsigned long long& val) : UJsonTypeHandler_Base(&val) {}
 
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned long long>::clear()")
+
+      *(unsigned long long*)pval = 0;
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned long long>::toJSON(%p)", &json)
@@ -1212,6 +1294,13 @@ template <> class U_EXPORT UJsonTypeHandler<float> : public UJsonTypeHandler_Bas
 public:
    explicit UJsonTypeHandler(float& val) : UJsonTypeHandler_Base(&val) {}
 
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<float>::clear()")
+
+      *(float*)pval = 0;
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<float>::toJSON(%p)", &json)
@@ -1231,6 +1320,13 @@ template <> class U_EXPORT UJsonTypeHandler<double> : public UJsonTypeHandler_Ba
 public:
    explicit UJsonTypeHandler(double& val) : UJsonTypeHandler_Base(&val) {}
 
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<double>::clear()")
+
+      *(double*)pval = 0;
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<double>::toJSON(%p)", &json)
@@ -1249,6 +1345,13 @@ public:
 template <> class U_EXPORT UJsonTypeHandler<long double> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(long double& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<long double>::clear()")
+
+      *(long double*)pval = 0;
+      }
 
    void toJSON(UValue& json)
       {
@@ -1272,6 +1375,13 @@ public:
 template <> class U_EXPORT UJsonTypeHandler<UStringRep> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(UStringRep& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<UStringRep>::clear()")
+
+      U_ERROR("UJsonTypeHandler<UStringRep>::fromJSON(): sorry, we cannot use UStringRep type from JSON type handler...");
+      }
 
    void toJSON(UValue& json)
       {
@@ -1297,6 +1407,15 @@ public:
 template <> class U_EXPORT UJsonTypeHandler<UString> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(UString& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<UString>::clear()")
+
+      U_INTERNAL_DUMP("pval(%p) = %V", pval, ((UString*)pval)->rep, ((UString*)pval)->rep)
+
+      ((UString*)pval)->clear();
+      }
 
    void toJSON(UValue& json)
       {
@@ -1328,6 +1447,13 @@ public:
    typedef UVector<T*> uvector;
 
    explicit UJsonTypeHandler(uvector& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<uvector>::clear()")
+
+      ((uvector*)pval)->clear();
+      }
 
    void toJSON(UValue& json)
       {
@@ -1381,6 +1507,13 @@ public:
 
    explicit UJsonTypeHandler(UVector<UString>& val) : UJsonTypeHandler<uvectorbase>(*((uvector*)&val)) {}
 
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<UVector<UString>>::clear()")
+
+      ((UVector<UString>*)pval)->clear();
+      }
+
    void toJSON(UValue& json) { ((UJsonTypeHandler<uvectorbase>*)this)->toJSON(json); }
 
    void fromJSON(UValue& json)
@@ -1409,6 +1542,13 @@ public:
    typedef UHashMap<T*> uhashmap;
 
    explicit UJsonTypeHandler(uhashmap& map) : UJsonTypeHandler_Base(&map) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<uhashmap>::clear()")
+
+      ((uhashmap*)pval)->clear();
+      }
 
    void toJSON(UValue& json)
       {
@@ -1499,6 +1639,13 @@ public:
    typedef std::vector<T> stdvector;
 
    explicit UJsonTypeHandler(stdvector& val) : UJsonTypeHandler_Base(&val) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<stdvector>::clear()")
+
+      // TODO
+      }
 
    void toJSON(UValue& json)
       {

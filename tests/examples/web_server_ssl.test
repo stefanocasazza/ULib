@@ -208,11 +208,11 @@ pkill userver_ssl 2>/dev/null
 #creat_config 1 
 #start_test
 # webserver_ssl2
-creat_config 2 
-start_test
+ creat_config 2 
+ start_test
 # webserver_sslN
-creat_config N 2 
-start_test
+ creat_config N 2 
+ start_test
 
 diff inp/xml2txt/operazione.xml uploads/operazione.xml
 RESULT=$?

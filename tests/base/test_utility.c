@@ -303,6 +303,34 @@ int main(int argc, char* argv[])
 
    U_INTERNAL_TRACE("main(%d,%p)", argc, argv)
 
+   (void) strcpy(path, "../../pippo");
+
+   ok = u_canonicalize_pathname(path, strlen(path)) == U_CONSTANT_SIZE( "../../pippo");
+
+   U_INTERNAL_ASSERT( ok )
+   U_INTERNAL_ASSERT_EQUALS( memcmp(path, U_CONSTANT_TO_PARAM("../../pippo")), 0 )
+
+   (void) strcpy(path, "../../pippo/./../pluto");
+
+   ok = u_canonicalize_pathname(path, strlen(path)) == U_CONSTANT_SIZE( "../../pluto");
+
+   U_INTERNAL_ASSERT( ok )
+   U_INTERNAL_ASSERT_EQUALS( memcmp(path, U_CONSTANT_TO_PARAM("../../pluto")), 0 )
+
+   (void) strcpy(path, "././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././../../../../../../../../");
+
+   ok = u_canonicalize_pathname(path, strlen(path)) == U_CONSTANT_SIZE("../../../../../../../..");
+
+   U_INTERNAL_ASSERT( ok )
+   U_INTERNAL_ASSERT_EQUALS( memcmp(path, U_CONSTANT_TO_PARAM("../../../../../../../..")), 0 )
+
+   (void) strcpy(path, "/usr/src/ULib-1.4.2/tests/examples/benchmark/docroot././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././././../../../../../../../../");
+
+   ok = u_canonicalize_pathname(path, strlen(path)) == U_CONSTANT_SIZE("/");
+
+   U_INTERNAL_ASSERT( ok )
+   U_INTERNAL_ASSERT_EQUALS( memcmp(path, U_CONSTANT_TO_PARAM("/")), 0 )
+
    U_INTERNAL_ASSERT( u__isdigit('1') )
    U_INTERNAL_ASSERT( u__ispunct('.') )
    U_INTERNAL_ASSERT( u__isprint('1') )
@@ -507,18 +535,6 @@ int main(int argc, char* argv[])
    U_VAR_UNUSED(path_rel)
 
    U_INTERNAL_ASSERT_EQUALS( memcmp(path_rel, U_CONSTANT_TO_PARAM("usr/local/src/pippo.txt")), 0 )
-
-   (void) strcpy(path, "../../pippo");
-
-   u_canonicalize_pathname(path);
-
-   U_INTERNAL_ASSERT_EQUALS( memcmp(path, U_CONSTANT_TO_PARAM("../../pippo")), 0 )
-
-   (void) strcpy(path, "../../pippo/./../pluto");
-
-   u_canonicalize_pathname(path);
-
-   U_INTERNAL_ASSERT_EQUALS( memcmp(path, U_CONSTANT_TO_PARAM("../../pluto")), 0 )
 
    U_VAR_UNUSED(sargv)
    U_VAR_UNUSED(buffer)

@@ -101,6 +101,35 @@ void UMongoDBClient::readFromCursor()
    U_SYSCALL_VOID(mongoc_cursor_destroy, "%p", cursor);
 }
 
+bool UMongoDBClient::remove(bson_t* selector)
+{
+   U_TRACE(0, "UMongoDBClient::remove(%p)", selector)
+
+   /**
+    * Parameters
+    *
+    * collection     A mongoc_collection_t
+    * flags          A mongoc_remove_flags_t
+    * selector       A bson_t containing the query to match documents.
+    * write_concern  A mongoc_write_concern_t or NULL.
+    * error          An optional location for a bson_error_t or NULL.
+    */
+
+   U_INTERNAL_ASSERT_POINTER(client)
+   U_INTERNAL_ASSERT_POINTER(collection)
+
+   bson_error_t error;
+
+   if (U_SYSCALL(mongoc_collection_remove, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_REMOVE_NONE, selector, 0, &error) == 0)
+      {
+      U_WARNING("mongoc_collection_remove(): %d.%d,%S", error.domain, error.code, error.message);
+
+      U_RETURN(false);
+      }
+
+   U_RETURN(true);
+}
+
 bool UMongoDBClient::find(bson_t* query, bson_t* projection, mongoc_query_flags_t flags, mongoc_read_prefs_t* read_prefs)
 {
    U_TRACE(0, "UMongoDBClient::find(%p,%p,%d,%p)", query, projection, flags, read_prefs)

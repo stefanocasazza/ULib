@@ -212,9 +212,14 @@ check1:  if (vtoken[1].equal(U_CONSTANT_TO_PARAM("idx")) == false)
 
             dst = UHTTP2::hpackEncodeInt(dst, 0, prefix_max, pattern);
 
-            UHTTP2::bname = true;
+            if (UHTTP2::isHeaderName((name = vtoken[2])) == false)
+               {
+               UHTTP2::hpack_errno = -7; // A invalid header name or value character was coded
 
-            dst = UHTTP2::hpackEncodeString(dst, (name = vtoken[2]), vtoken[1].equal(U_CONSTANT_TO_PARAM("huf")));
+               return;
+               }
+
+            dst = UHTTP2::hpackEncodeString(dst, name, vtoken[1].equal(U_CONSTANT_TO_PARAM("huf")));
 
             if (UHTTP2::isHpackError()) return;
 
@@ -323,9 +328,9 @@ idx_err:    UHTTP2::hpack_errno = -4; // The decoded or specified index is out o
       /*
       unsigned char buf[32];
 
-      U_ENCODE_INT_DUMP(28,(1<<4)-1,0x00, U_MULTICHAR_CONSTANT16(0x0f,0x28))
+      U_ENCODE_INT_DUMP( 8,(1<<7)-1,0x80, U_MULTICHAR_CONSTANT16(0x88,0x00))
+      U_ENCODE_INT_DUMP( 8,(1<<4)-1,0x00, U_MULTICHAR_CONSTANT16(0x08,0x00))
       U_ENCODE_INT_DUMP(62,(1<<6)-1,0x40, U_MULTICHAR_CONSTANT16(0x7e,0x00))
-      U_ENCODE_INT_DUMP(62,(1<<7)-1,0x80, U_MULTICHAR_CONSTANT16(0xbe,0x00))
       U_ENCODE_INT_DUMP(54,(1<<6)-1,0x40, U_MULTICHAR_CONSTANT16(0x76,0x00))
 
       return;
@@ -351,7 +356,13 @@ idx_err:    UHTTP2::hpack_errno = -4; // The decoded or specified index is out o
          {
          UString tmp = opt['t'];
 
-         if (tmp) UHTTP2::settings.header_table_size = tmp.strtoul();
+         if (tmp)
+            {
+            UHTTP2::pConnection->idyntbl.hpack_capacity     =
+            UHTTP2::pConnection->idyntbl.hpack_max_capacity =
+            UHTTP2::pConnection->odyntbl.hpack_capacity     =
+            UHTTP2::pConnection->odyntbl.hpack_max_capacity = tmp.strtoul();
+            }
 
          tmp = opt['e'];
 
@@ -371,9 +382,7 @@ idx_err:    UHTTP2::hpack_errno = -4; // The decoded or specified index is out o
             }
          }
 
-next: UHTTP2::openStream();
-
-      TST_encode(x);
+next: TST_encode(x);
 
       U_INTERNAL_DUMP("UHTTP2::hpack_errno = %d exp = %d", UHTTP2::hpack_errno, exp)
 

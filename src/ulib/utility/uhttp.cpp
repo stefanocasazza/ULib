@@ -71,6 +71,7 @@ bool        UHTTP::digest_authentication;
 bool        UHTTP::skip_check_cookie_ip_address;
 bool        UHTTP::enable_caching_by_proxy_servers;
 char        UHTTP::response_buffer[64];
+vPFi        UHTTP::on_upload;
 URDB*       UHTTP::db_not_found;
 UFile*      UHTTP::file;
 UString*    UHTTP::ext;
@@ -1802,6 +1803,8 @@ next:
 
          U_INTERNAL_DUMP("URI = %.*S", U_HTTP_URI_TO_TRACE)
 
+         U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 0)
+
          if (UNLIKELY(u__isblank(*++ptr))) while (u__isblank(*++ptr)); // RFC 2616 19.3 "[servers] SHOULD accept any amount of SP or HT characters between [Request-Line] fields"
 
          if (u_get_unalignedp64(ptr-1) == U_MULTICHAR_CONSTANT64(' ','H','T','T','P','/','1','.'))
@@ -1889,7 +1892,6 @@ error:         U_SRV_LOG("WARNING: invalid character %C in URI %.*S", c, ptr - U
       }
 
    // NB: there are case of requests fragmented (maybe because of VPN tunnel)
-   //
    // for example something like: GET /info?Mac=00%3A40%3A63%3Afb%3A42%3A1c&ip=172.16.93.235&gateway=172.16.93.254%3A5280&ap=ap%4010.8.0.9
 
 end:
@@ -2314,9 +2316,9 @@ U_NO_EXPORT bool UHTTP::readBodyRequest()
 
       // NB: check for 'Expect: 100-continue' (as curl does)...
 
-      if (body_byte_read == 0 &&
+      if (body_byte_read == 0                                                                                                                                   &&
           UClientImage_Base::request->find("Expect: 100-continue", U_http_info.startHeader,
-                           U_CONSTANT_SIZE("Expect: 100-continue"), U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader) != U_NOT_FOUND &&
+                           U_CONSTANT_SIZE("Expect: 100-continue"),  U_http_info.endHeader - U_CONSTANT_SIZE(U_CRLF2) - U_http_info.startHeader) != U_NOT_FOUND &&
           USocketExt::write(UServer_Base::csocket, U_CONSTANT_TO_PARAM("HTTP/1.1 100 Continue\r\n\r\n"), UServer_Base::timeoutMS) == false)
          {
          U_INTERNAL_ASSERT_EQUALS(U_http_version, '1')
@@ -2370,17 +2372,14 @@ parallelization: // parent
 
       if (U_http_data_chunked) U_RETURN(false);
 
-      // wait for other data (max 256k)...
+      // NB: wait for other data (max 256k) to complete the read of the request...
 
-      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, 256 * 1024, UServer_Base::timeoutMS, request_read_timeout) == false)
+      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::request, 256 * 1024, U_SSL_TIMEOUT_MS, request_read_timeout) == false)
          {
-         if (UServer_Base::csocket->isTimeout())
+         if (UServer_Base::csocket->isTimeout() &&
+             UServer_Base::startParallelization())
             {
-            UClientImage_Base::setCloseConnection();
-
-            U_http_info.nResponseCode = HTTP_CLIENT_TIMEOUT;
-
-            setResponse();
+            goto parallelization; // parent
             }
 
          U_RETURN(false);
@@ -3299,6 +3298,8 @@ err:     setInternalError();
       char run_dynamic_page[128];
       UString file_name = UStringExt::basename(file->getPath());
 
+      U_INTERNAL_ASSERT(file_name)
+
       (void) u__snprintf(run_dynamic_page, sizeof(run_dynamic_page), U_CONSTANT_TO_PARAM("runDynamicPage_%.*s"), file_name.size() - sz, file_name.data());
 
       usp_page->runDynamicPage = (vPFi)(*usp_page)[run_dynamic_page];
@@ -3509,7 +3510,11 @@ U_NO_EXPORT bool UHTTP::callService()
 
    if (U_http_is_nocache_file == false)
       {
-      manageDataForCache(UStringExt::basename(file->getPath()));
+      UString basename = UStringExt::basename(file->getPath());
+
+      U_INTERNAL_ASSERT(basename)
+
+      manageDataForCache(basename);
 
       if (file_data)
          {
@@ -3898,15 +3903,6 @@ int UHTTP::manageRequest()
       goto set_uri;
       }
 
-   if (U_http_info.uri_len == 0)
-      {
-      setBadRequest();
-
-      U_SRV_LOG("WARNING: unrecognized uri in request", U_HTTP_VHOST_TO_TRACE);
-
-      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-      }
-
    // manage virtual host
 
    if (virtual_host &&
@@ -4048,12 +4044,17 @@ set_uri: U_http_info.uri     = alias->data();
    setPathName();
 
 #ifndef U_SERVER_CAPTIVE_PORTAL
-   if (nocache_file_mask &&
-       UServices::dosMatchWithOR(UStringExt::basename(U_HTTP_URI_TO_PARAM), U_STRING_TO_PARAM(*nocache_file_mask), 0))
+   if (nocache_file_mask)
       {
-      U_http_flag |= HTTP_IS_NOCACHE_FILE | HTTP_IS_REQUEST_NOSTAT;
+      UString basename = UStringExt::basename(U_HTTP_URI_TO_PARAM);
 
-      U_INTERNAL_DUMP("U_http_is_nocache_file = %b U_http_is_request_nostat = %b", U_http_is_nocache_file, U_http_is_request_nostat)
+      if (basename &&
+          UServices::dosMatchWithOR(basename, U_STRING_TO_PARAM(*nocache_file_mask), 0))
+         {
+         U_http_flag |= HTTP_IS_NOCACHE_FILE | HTTP_IS_REQUEST_NOSTAT;
+
+         U_INTERNAL_DUMP("U_http_is_nocache_file = %b U_http_is_request_nostat = %b", U_http_is_nocache_file, U_http_is_request_nostat)
+         }
       }
 #endif
 
@@ -4157,11 +4158,16 @@ manage:
 
          file->setPath(*pathname);
 
-         manageDataForCache(UStringExt::basename(file->getPath()));
+         UString basename = UStringExt::basename(file->getPath());
 
-         U_INTERNAL_ASSERT_POINTER(file_data)
+         U_INTERNAL_ASSERT(basename)
 
-         UClientImage_Base::setRequestInFileCache();
+         if (basename)
+            {
+            manageDataForCache(basename);
+
+            UClientImage_Base::setRequestInFileCache();
+            }
          }
       }
 #endif
@@ -4228,6 +4234,12 @@ file_in_cache:
                (void) runCGI(true);
 
                UClientImage_Base::environment->setEmpty();
+
+#           ifndef U_HTTP2_DISABLE
+               U_INTERNAL_DUMP("U_ClientImage_state = %d %B", U_ClientImage_state, U_ClientImage_state)
+
+               if (U_ClientImage_state == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+#           endif
 
                U_RETURN(U_PLUGIN_HANDLER_FINISHED);
                }
@@ -4358,9 +4370,74 @@ end:
       }
 #endif
 
-   if (UClientImage_Base::isRequestFileCacheProcessed()) handlerResponse();
+   if (UClientImage_Base::isRequestFileCacheProcessed())
+      {
+      handlerResponse();
+
+#  ifndef U_HTTP2_DISABLE
+      U_INTERNAL_DUMP("U_ClientImage_state = %d %B", U_ClientImage_state, U_ClientImage_state)
+
+      if (U_ClientImage_state == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+#  endif
+      }
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+}
+
+UString UHTTP::checkDirectoryForUpload(const char* ptr, uint32_t len)
+{
+   U_TRACE(0, "UHTTP::checkDirectoryForUpload(%.*S,%u)", len, ptr, len)
+
+   UString result;
+
+   if (len < U_PATH_MAX &&
+       u_get_unalignedp16(ptr) == U_MULTICHAR_CONSTANT16('u','p'))
+      {
+      U_INTERNAL_ASSERT_MAJOR(len, 0)
+
+      char buffer[U_PATH_MAX+1];
+
+      buffer[0] = '/';
+
+      U_MEMCPY(buffer+1, ptr, len);
+
+      uint32_t len1 = u_canonicalize_pathname(buffer, ++len);
+
+      if (memcmp(buffer, U_CONSTANT_TO_PARAM("/up")) == 0)
+         {
+         if (len1 == len) (void) result.assign( buffer+1, len1-1);
+         else             (void) result.replace(buffer+1, len1-1);
+         }
+      }
+
+   U_RETURN_STRING(result);
+}
+
+void UHTTP::writeUploadData(const char* ptr, uint32_t sz)
+{
+   U_TRACE(0, "UHTTP::writeUploadData(%.*S,%u)", sz, ptr, sz)
+
+   UString dir, dest(U_CAPACITY), basename = UStringExt::basename(ptr, sz);
+
+   U_INTERNAL_ASSERT(basename)
+
+   if (U_http_info.query_len == 0                             ||
+       memcmp(U_http_info.query, U_CONSTANT_TO_PARAM("dir=")) ||
+       (dir = checkDirectoryForUpload(U_http_info.query+U_CONSTANT_SIZE("dir="), U_http_info.query_len-U_CONSTANT_SIZE("dir="))).empty())
+      {
+      U_INTERNAL_DUMP("upload_dir = %V", upload_dir->rep)
+
+      U_INTERNAL_ASSERT(*upload_dir)
+
+      dir = *upload_dir;
+      }
+
+   U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp16(dir.data()), U_MULTICHAR_CONSTANT16('u','p'))
+
+   dest.snprintf(U_CONSTANT_TO_PARAM("%v/%v"), dir.rep, basename.rep);
+
+   if (UFile::writeTo(dest, *UClientImage_Base::body)) UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+   else                                                U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
 }
 
 int UHTTP::processRequest()
@@ -4394,33 +4471,14 @@ int UHTTP::processRequest()
              * enclosed with the request
              */
 
-            U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+            U_INTERNAL_DUMP("on_upload = %p", on_upload)
 
-            if (*UClientImage_Base::body)
+            if (on_upload) on_upload(0);
+            else
                {
-               UString dest(U_CAPACITY),
-                       basename = UStringExt::basename(ptr, sz);
+               U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
 
-               if (U_http_info.query_len &&
-                   memcmp(U_http_info.query, U_CONSTANT_TO_PARAM("dir=")) == 0)
-                  {
-                  U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
-
-                  dest.snprintf(U_CONSTANT_TO_PARAM("%.*s/%v"), U_http_info.query_len-U_CONSTANT_SIZE("dir="), U_http_info.query+U_CONSTANT_SIZE("dir="), basename.rep);
-                  }
-               else
-                  {
-                  U_INTERNAL_ASSERT(*upload_dir)
-
-                  dest.snprintf(U_CONSTANT_TO_PARAM("%v/%v"), upload_dir->rep, basename.rep);
-                  }
-
-               if (UFile::writeTo(dest, *UClientImage_Base::body)) UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
-               else                                                U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
-
-               handlerResponse();
-
-               U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+               if (*UClientImage_Base::body) writeUploadData(ptr, sz);
                }
 
             // ---------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4430,7 +4488,7 @@ int UHTTP::processRequest()
             //
             // An example request:
             //
-            // PUT http://1234.cloud.vimeo.com/upload
+            // PUT /upload/video.mp4
             // Host: 1.2.3.4:8080
             // Content-Length: 0
             // Content-Range: bytes */*
@@ -4448,7 +4506,7 @@ int UHTTP::processRequest()
             // As shown before our uploaded file was 339108 total bytes in size but our "Content-Range: bytes */*" verification call
             // returned a value of 1000. To resume, we would send the following headers with the binary data of our file starting at byte 1001:
             //
-            // PUT http://1234.cloud.vimeo.com/upload/video.mp4
+            // PUT /upload/video.mp4
             // Host: 1.2.3.4:8080
             // Content-Length: 338108
             // Content-Type: video/mp4
@@ -4457,6 +4515,10 @@ int UHTTP::processRequest()
             //
             // If all goes well, you will receive a 200 status code. A 400 code means the Content-Range header did not resume from the last byte on the server
             // ---------------------------------------------------------------------------------------------------------------------------------------------------
+
+            handlerResponse();
+
+            U_RETURN(U_PLUGIN_HANDLER_FINISHED);
             }
          }
 
@@ -4789,6 +4851,12 @@ void UHTTP::setEndRequestProcessing()
 #ifndef U_LOG_DISABLE
    if (UServer_Base::apache_like_log)
       {
+#  ifndef U_HTTP2_DISABLE
+      U_INTERNAL_DUMP("U_http_info.uri_len = %u", U_http_info.uri_len)
+
+      if (U_http_info.uri_len == 0) return;
+#  endif
+
       U_INTERNAL_DUMP("iov_vec[0].iov_len = %u", iov_vec[0].iov_len)
 
       if (iov_vec[0].iov_len == 0) prepareApacheLikeLog(); 
@@ -5691,6 +5759,8 @@ U_NO_EXPORT UString UHTTP::getHTMLDirectoryList()
 
       size     = UStringExt::printSize(file_data->size);
       basename = UStringExt::basename(item);
+
+      U_INTERNAL_ASSERT(basename)
 
       entry.snprintf(U_CONSTANT_TO_PARAM(
          "<tr>"
@@ -7849,6 +7919,8 @@ void UHTTP::checkFileForCache()
 
    UString file_name = UStringExt::basename(file->getPath());
 
+   U_INTERNAL_ASSERT(file_name)
+
 #ifdef DEBUG
    if (file->isSuffixSwap() || // NB: vi tmp...
        UServices::dosMatchExtWithOR(file_name, U_CONSTANT_TO_PARAM("stack.*.[0-9]*|mempool.*.[0-9]*|trace.*.[0-9]*|*usp_translator*"), 0))
@@ -8443,24 +8515,14 @@ U_NO_EXPORT void UHTTP::checkPath()
    U_TRACE_NO_PARAM(0, "UHTTP::checkPath()")
 
    U_INTERNAL_DUMP("     pathname(%3u) = %V", pathname->size(), pathname->rep)
-   U_INTERNAL_DUMP("document_root(%3u) = %V", UServer_Base::document_root_size, UServer_Base::document_root->rep)
 
    U_INTERNAL_ASSERT(pathname->isNullTerminated())
-   U_INTERNAL_ASSERT_POINTER(UServer_Base::document_root_ptr)
 
    uint32_t len    = pathname->size();
    const char* ptr = pathname->data();
+   uint32_t len1   = u_canonicalize_pathname((char*)ptr, len);
 
-   if (u_canonicalize_pathname((char*)ptr))
-      {
-      len = u__strlen(ptr, __PRETTY_FUNCTION__);
-
-      pathname->size_adjust_force(len); // NB: pathname can be referenced by file obj...
-      }
-
-   if (len < UServer_Base::document_root_size         ||
-         ptr[UServer_Base::document_root_size] != '/' ||
-       memcmp(ptr, UServer_Base::document_root_ptr, UServer_Base::document_root_size) != 0)
+   if (checkDirectoryForDocumentRoot(ptr, len1) == false)
       {
 #  ifndef U_SERVER_CAPTIVE_PORTAL
       setForbidden();
@@ -8468,6 +8530,8 @@ U_NO_EXPORT void UHTTP::checkPath()
 
       return;
       }
+
+   if (len1 != len) pathname->rep->_length = len = len1; // NB: pathname can be referenced by file obj...
 
 #ifdef USE_RUBY
    if (ruby_on_rails == false)
@@ -8506,8 +8570,8 @@ U_NO_EXPORT void UHTTP::checkPath()
 
       // we don't wont to process this kind of request (usually aliased)...
 
-      ptr = file->getPathRelativ();
       len = file->getPathRelativLen();
+      ptr = file->getPathRelativ();
 
       if (len >= U_PATH_MAX               ||
           u_isFileName(ptr, len) == false ||
@@ -8635,7 +8699,11 @@ nocontent:
             {
             U_DEBUG("Found file not in cache: %V - inotify %s enabled", pathname->rep, UServer_Base::handler_inotify ? "is" : "NOT")
 
-            manageDataForCache(UStringExt::basename(file->getPath()));
+            UString basename = UStringExt::basename(file->getPath());
+
+            U_INTERNAL_ASSERT(basename)
+
+            manageDataForCache(basename);
 
             U_INTERNAL_ASSERT_POINTER(file_data)
             }
@@ -9302,7 +9370,9 @@ bool UHTTP::manageSendfile(const char* ptr, uint32_t len)
    if (ptr[0] == '/') pathname->snprintf(U_CONSTANT_TO_PARAM(   "%.*s"), len, ptr);
    else               pathname->snprintf(U_CONSTANT_TO_PARAM("%w/%.*s"), len, ptr);
 
-   if (u_canonicalize_pathname(pathname->data())) pathname->size_adjust_force(); // NB: pathname is referenced...
+   uint32_t len1 = u_canonicalize_pathname(pathname->data(), (len = pathname->size()));
+
+   if (len1 != len) pathname->rep->_length = len1; // NB: pathname is referenced...
 
    file->setPath(*pathname);
 

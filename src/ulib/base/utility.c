@@ -2220,7 +2220,7 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
       if (path) path_len = u__strlen(path, __PRETTY_FUNCTION__);
       else
          {
-         path     = U_PATH_DEFAULT;
+         path     =                 U_PATH_DEFAULT;
          path_len = U_CONSTANT_SIZE(U_PATH_DEFAULT);
          }
 
@@ -2251,7 +2251,7 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
          {
          /* We can, so normalize the name and return it below */
 
-         (void) u_canonicalize_pathname(result);
+         (void) u_canonicalize_pathname(result, strlen(result));
 
          return true;
          }
@@ -2269,127 +2269,150 @@ bool u_pathfind(char* restrict result, const char* restrict path, uint32_t path_
  * Non-leading '../' and trailing '..' are handled by removing portions of the path
  */
 
-bool u_canonicalize_pathname(char* restrict path)
+uint32_t u_canonicalize_pathname(char* restrict path, uint32_t sz)
 {
-   int len;
+   char c;
+   bool bflag;
+   uint32_t len;
    char* restrict p;
    char* restrict s;
    char* restrict src;
    char* restrict dst;
-   bool is_modified = false;
-   char* restrict lpath = path;
+   char* restrict end = path+sz;
 
-   U_INTERNAL_TRACE("u_canonicalize_pathname(%s)", path)
+   U_INTERNAL_TRACE("u_canonicalize_pathname(%.*s,%u)", U_min(sz,128), path, sz)
 
-#ifdef _MSWINDOWS_
-   if (u__isalpha(path[0]) &&
-                  path[1] == ':')
-      {
-      lpath += 2; /* Skip over the disk name in MSDOS pathnames */
-      }
-#endif
-
-   /* Collapse multiple slashes */
-
-   for (p = lpath; *p; ++p)
-      {
-      if (u_get_unalignedp16(p) == U_MULTICHAR_CONSTANT16('/','/'))
-         {
-         s = p+1;
-
-         while (*(++s) == '/') {}
-
-         is_modified = true;
-
-         for (src = s, dst = p+1; (*dst = *src); ++src, ++dst) {} /* u__strcpy(p + 1, s); */
-
-         U_INTERNAL_PRINT("path = %s", path)
-         }
-      }
-
-   /* Collapse "/./" -> "/" */
-
-   p = lpath;
-
-   while (*p)
-      {
-      if (p[0] == '/' &&
-          u_get_unalignedp16(p+1) == U_MULTICHAR_CONSTANT16('.','/'))
-         {
-         is_modified = true;
-
-         for (src = p+2, dst = p; (*dst = *src); ++src, ++dst) {} /* u__strcpy(p, p + 2); */
-
-         U_INTERNAL_PRINT("path = %s", path)
-         }
-      else
-         {
-         ++p;
-         }
-      }
-
-   /* Remove trailing slashes */
-
-   p = lpath + u__strlen(lpath, __PRETTY_FUNCTION__) - 1;
-
-   if ( p > lpath &&
-       *p == '/')
-      {
-      is_modified = true;
-
-      do { *p-- = '\0'; } while (p > lpath && *p == '/');
-      }
+   U_INTERNAL_ASSERT_MAJOR(sz, 1)
+   U_INTERNAL_ASSERT_EQUALS(*end, '\0')
 
    /* Remove leading "./" */
 
-   if (u_get_unalignedp16(lpath) == U_MULTICHAR_CONSTANT16('.','/'))
+   if (u_get_unalignedp16(path) == U_MULTICHAR_CONSTANT16('.','/'))
       {
-      if (lpath[2] == 0)
+      for (p = path+2; p < end; p += 2)
          {
-         lpath[1] = 0;
-
-         return true;
+         if (u_get_unalignedp16(p) != U_MULTICHAR_CONSTANT16('.','/')) break;
          }
 
-      is_modified = true;
+       len = p-path;
+       sz -= len;
+      end -= len;
 
-      for (src = lpath+2, dst = lpath; (*dst = *src); ++src, ++dst) {} /* u__strcpy(lpath, lpath + 2); */
-
-      U_INTERNAL_PRINT("path = %s", path)
-      }
-
-   /* Remove trailing "/" or "/." */
-
-   len = u__strlen(lpath, __PRETTY_FUNCTION__);
-
-   if (len < 2) goto end;
-
-   if (lpath[len-1] == '/')
-      {
-      lpath[len-1] = 0;
-
-      is_modified = true;
-      }
-   else
-      {
-      if (u_get_unalignedp16(lpath+len-2) == U_MULTICHAR_CONSTANT16('/','.'))
+      if (sz <= 2)
          {
-         if (len == 2)
-            {
-            lpath[1] = 0;
+end:     path[1] = '\0';
 
-            return true;
+         return 1;
+         }
+
+      for (dst = path, src = p; (*dst = *src); ++src, ++dst) {}
+
+      U_INTERNAL_PRINT("Remove leading \"./\": sz = %u path(%u) = %s", sz, strlen(path), path)
+
+      U_INTERNAL_ASSERT_EQUALS(*end, '\0')
+      }
+
+   /* Remove trailing "/." */
+
+   if (u_get_unalignedp16(end-2) == U_MULTICHAR_CONSTANT16('/','.'))
+      {
+      for (p = end-2; p > path; p -= 2)
+         {
+         if (u_get_unalignedp16(p) != U_MULTICHAR_CONSTANT16('/','.')) break;
+         }
+
+      sz -= end-p;
+
+      if (sz <= 2) goto end;
+
+      (end = p)[0] = '\0';
+
+      U_INTERNAL_PRINT("Remove trailing \"/.\": sz = %u path(%u) = %s", sz, strlen(path), path)
+      }
+
+   /* Remove trailing "/" */
+
+   if (end[-1] == '/')
+      {
+      for (p = end-2; p > path; --p)
+         {
+         if (*p != '/') break;
+         }
+
+      sz -= end - ++p;
+
+      if (sz <= 2) goto end;
+
+      (end = p)[0] = '\0';
+
+      U_INTERNAL_PRINT("Remove trailing \"/\": sz = %u path(%u) = %s", sz, strlen(path), path)
+      }
+
+   /* Collapse multiple slashes */
+
+   bflag = false;
+
+   for (p = path; p < end; ++p)
+      {
+      c = *p;
+
+           if (c == '.') bflag = true;
+      else if (c == '/')
+         {
+         if (u_get_unalignedp16(p) == U_MULTICHAR_CONSTANT16('/','/'))
+            {
+            s = ++p;
+
+            while (*++s == '/') {}
+
+            for (dst = p, src = s; (*dst = *src); ++src, ++dst) {}
+
+            sz -= s-p;
+
+            if (sz <= 2) goto end;
+
+            continue;
+            }
+         }
+      }
+
+   U_INTERNAL_PRINT("Collapse multiple slashes: sz = %u path(%u) = %s", sz, strlen(path), path)
+
+   if (bflag == false) return sz;
+
+   /* Collapse "/./" -> "/" */
+
+   end = (p = path) + sz;
+
+   while (p < end)
+      {
+      if (memcmp(p, U_CONSTANT_TO_PARAM("/./")) != 0) ++p;
+      else
+         {
+         s = p+3;
+
+loop:    if ((sz -= 2) <= 2) goto end;
+
+         end -= 2;
+
+         if (u_get_unalignedp16(s) == U_MULTICHAR_CONSTANT16('.','/'))
+            {
+            s += 2;
+
+            goto loop;
             }
 
-         is_modified = true;
-
-         lpath[len-2] = 0;
+         for (dst = p+1, src = s; (*dst = *src); ++src, ++dst) {}
          }
       }
+
+   U_INTERNAL_ASSERT_EQUALS(*end, '\0')
+
+   U_INTERNAL_PRINT("Collapse \"/./\" -> \"/\": sz = %u path(%u) = %s", sz, strlen(path), path)
 
    /* Collapse "/.." with the previous part of path */
 
-   p = lpath;
+   p = path;
 
    while (p[0] &&
           p[1] &&
@@ -2399,7 +2422,7 @@ bool u_canonicalize_pathname(char* restrict path)
            p[1] != '.'  ||
            p[2] != '.') ||
           (p[3] != '/'  &&
-           p[3] != 0))
+           p[3] != '\0'))
          {
          ++p;
 
@@ -2410,14 +2433,18 @@ bool u_canonicalize_pathname(char* restrict path)
 
       s = p-1;
 
-      while (s >= lpath && *s != '/') --s;
+      while ( s >= path &&
+             *s != '/')
+         {
+         --s;
+         }
 
       ++s;
 
       /* If the previous token is "..", we cannot collapse it */
 
-      if (u_get_unalignedp16(s) == U_MULTICHAR_CONSTANT16('.','.') &&
-          (s + 2) == p)
+      if ((s+2) == p &&
+          u_get_unalignedp16(s) == U_MULTICHAR_CONSTANT16('.','.'))
          {
          p += 3;
 
@@ -2429,44 +2456,50 @@ bool u_canonicalize_pathname(char* restrict path)
          /*      "/../foo" -> "/foo" */
          /* "token/../foo" ->  "foo" */
 
-         is_modified = true;
+         p += 4;
 
-         for (src = p+4, dst = s + (s == lpath && *s == '/'); (*dst = *src); ++src, ++dst) {} /* u__strcpy(s + (s == lpath && *s == '/'), p + 4); */
+         bflag = (s == path && *s == '/');
 
-         U_INTERNAL_PRINT("path = %s", path)
+         for (dst = s+bflag, src = p; (*dst = *src); ++src, ++dst) {}
 
-         p = s - (s > lpath);
+         sz -= p-(s+bflag);
+
+         U_INTERNAL_PRINT("sz = %u path(%u) = %s", sz, strlen(path), path)
+
+         if (sz <= 2) goto end;
+
+         p = s - (s > path);
 
          continue;
          }
 
       /* trailing ".." */
 
-      is_modified = true;
-
-      if (s == lpath)
+      if (s == path)
          {
          /* "token/.." -> "." */
 
-         if (lpath[0] != '/') lpath[0] = '.';
+         if (path[0] != '/') path[0] = '.';
 
-         lpath[1] = 0;
+         return 1;
          }
-      else
-         {
-         /* "foo/token/.." -> "foo" */
 
-         if (s == (lpath + 1)) s[ 0] = '\0';
-         else                  s[-1] = '\0';
-         }
+      /* "foo/token/.." -> "foo" */
+
+      if (s != (path+1)) --s;
+
+      *s = '\0';
+
+      U_INTERNAL_PRINT("sz = %u s - path = %u", sz, s - path)
+
+      sz = (s - path);
 
       break;
       }
 
-end:
-   U_INTERNAL_PRINT("path = %s", path)
+   U_INTERNAL_PRINT("sz = %u path(%u) = %s", sz, strlen(path), path)
 
-   return is_modified;
+   return sz;
 }
 
 /* Prepare command for call to exec() */
@@ -2481,8 +2514,8 @@ int u_splitCommand(char* restrict s, uint32_t n, char** restrict argv, char* res
    U_INTERNAL_TRACE("u_splitCommand(%.*s,%u,%p,%p,%u)", U_min(n,128), s, n, argv, pathbuf, pathbuf_size)
 
    U_INTERNAL_ASSERT_POINTER(s)
-   U_INTERNAL_ASSERT_MAJOR(n,0)
-   U_INTERNAL_ASSERT_MAJOR(pathbuf_size,0)
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
+   U_INTERNAL_ASSERT_MAJOR(pathbuf_size, 0)
 
    /* check if command have path separator */
 

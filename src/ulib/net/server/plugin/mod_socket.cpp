@@ -82,7 +82,7 @@ int UWebSocketPlugIn::handlerRun()
 
    if (usp)
       {
-      U_INTERNAL_DUMP("usp->runDynamicPage = %p", usp->runDynamicPage)
+      U_INTERNAL_DUMP("modsocket->runDynamicPage = %p", usp->runDynamicPage)
 
       U_INTERNAL_ASSERT_POINTER(usp->runDynamicPage)
 

@@ -165,16 +165,10 @@ char* realpath(const char* name, char* resolved_path)
       return NULL;
       }
 
-   if (name[0] == '\0')
-      {
-      errno = ENOENT;
-
-      return NULL;
-      }
-
    /* Make sure we can access it in the way we want */
 
-   if (access(u_slashify(name, '/', '\\'), F_OK))
+   if (*name == '\0' ||
+       access(u_slashify(name, '/', '\\'), F_OK))
       {
       errno = ENOENT;
 
@@ -184,11 +178,19 @@ char* realpath(const char* name, char* resolved_path)
    if (strncmp(name, U_CONSTANT_TO_PARAM(".")) == 0) (void) u__strncpy(resolved_path, u_cwd, u_cwd_len);
    else
       {
+      char* restrict path = resolved_path;
+
       /* We can, so normalize the name and return it below */
 
       (void) u__strcpy(resolved_path, name);
 
-      (void) u_canonicalize_pathname(resolved_path);
+      if (u__isalpha(path[0]) &&
+                     path[1] == ':')
+         {
+         path += 2; /* Skip over the disk name in MSDOS pathnames */
+         }
+
+      (void) u_canonicalize_pathname(path, strlen(path));
       }
 
    return resolved_path;
