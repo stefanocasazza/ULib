@@ -122,7 +122,7 @@ if (envp) \
 // Dump attributes
 
 #  define U_DUMP_ATTRS(attrs)   { uint32_t _i; for (_i = 0; attrs[_i]; ++_i) { U_INTERNAL_DUMP("attrs[%2u] = %S", _i, attrs[_i]) } }
-#  define U_DUMP_IOVEC(iov,cnt) {      int _i; for (_i = 0;  _i < cnt; ++_i) { U_INTERNAL_DUMP("iov[%2u] = %.*S", _i, iov[_i].iov_len, iov[_i].iov_base) } }
+#  define U_DUMP_IOVEC(iov,cnt) {      int _i; for (_i = 0;  _i < cnt; ++_i) { U_INTERNAL_DUMP("iov[%2u](%u) = %.*S", _i, iov[_i].iov_len, iov[_i].iov_len, iov[_i].iov_base) } }
 
 #ifdef _MSWINDOWS_
 #  define U_FORK()  -1

@@ -19,6 +19,7 @@
 #include <ulib/utility/hexdump.h>
 
 #define HTTP2_FRAME_HEADER_SIZE               9 // The number of bytes of the frame header
+#define HTTP2_DEFAULT_WINDOW_SIZE         65535 
 #define HTTP2_HEADER_TABLE_OFFSET            62
 #define HTTP2_HEADER_TABLE_ENTRY_SIZE_OFFSET 32
 
@@ -80,7 +81,9 @@ public:
 
    struct Stream {
       uint32_t id,
-               state;
+               state,
+               clength;
+      UString headers, body;
    };
 
    class Connection {
@@ -100,7 +103,7 @@ public:
    UHashMap<UString> itable;           // headers request
    HpackDynamicTable idyntbl, odyntbl; // hpack dynamic table (request, response)
    // streams
-   uint32_t max_processed_stream_id;
+   uint32_t stream_idx, max_processed_stream_id;
    Stream streams[100];
 #ifdef DEBUG
    UHashMap<UString> dtable;
@@ -111,6 +114,18 @@ public:
    ~Connection()
       {
       U_TRACE_UNREGISTER_OBJECT(0, Connection)
+      }
+
+   void reset()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP2::Connection::reset()")
+
+      inp_window              =
+      out_window              = HTTP2_DEFAULT_WINDOW_SIZE;
+      state                   = CONN_STATE_IDLE; 
+      peer_settings           = settings;
+      stream_idx              =
+      max_processed_stream_id = 0;
       }
 
    // SERVICES
@@ -151,9 +166,8 @@ protected:
    };
 
    enum WaitFor {
-      WAIT_DATA          = 0x01,
-      WAIT_CONTINUATION  = 0x02,
-      WAIT_WINDOW_UPDATE = 0x04
+      WAIT_CONTINUATION  = 0x01,
+      WAIT_WINDOW_UPDATE = 0x02
    };
 
    enum FrameFlagsId {
@@ -232,9 +246,12 @@ protected:
    };
 
    static Stream* pStream;
+   static UString* wbuffer;
    static FrameHeader frame;
    static Settings settings;
    static uint32_t wait_for;
+   static Stream* pStreamEnd;
+   static Stream* pStreamStart;
    static int nerror, hpack_errno;
    static Connection* vConnection;
    static Connection* pConnection;
@@ -258,8 +275,28 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UHTTP2::dtor()")
 
+      delete   wbuffer;
       delete[] vConnection;
       }
+
+   static void sendPing();
+   static void readFrame();
+   static void setStream();
+   static void manageData();
+   static void sendGoAway();
+   static bool initRequest();
+   static void sendContinue();
+   static void decodeHeaders();
+   static void manageHeaders();
+   static void writeResponse();
+   static void handlerRequest();
+   static void handlerResponse();
+   static void sendResetStream();
+   static void sendWindowUpdate();
+
+   static void reset(UClientImage_Base* pclient);
+   static void updateSetting(unsigned char* ptr, uint32_t len);
+   static void writeData(struct iovec* iov, bool bdata, bool flag, bool bnghttp2);
 
    static void readPriority(unsigned char* ptr)
       {
@@ -341,7 +378,36 @@ protected:
       U_RETURN(true); // NB: ignore case...
       }
 
+   static void writev(struct iovec* iov, int iovcnt, uint32_t count)
+      {
+      U_TRACE(0, "UHTTP2::writev(%p,%d,%u)", iov, iovcnt, count)
+
+      U_DUMP_IOVEC(iov,iovcnt)
+      
+#  if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
+      (void) USocketExt::writev( UServer_Base::csocket, iov, iovcnt, count, 0);
+#  else
+      (void) USocketExt::_writev(UServer_Base::csocket, iov, iovcnt, count, 0);
+#  endif
+      }
+
    // HPACK (HTTP headers compression)
+
+   static bool isHpackError()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP2::isHpackError()")
+
+      U_INTERNAL_DUMP("hpack_errno = %d", hpack_errno)
+
+      if (hpack_errno)
+         {
+         nerror = COMPRESSION_ERROR;
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    static void clearHpackDynTbl(     HpackDynamicTable* dyntbl);
    static void   addHpackDynTblEntry(HpackDynamicTable* dyntbl, const UString& name, const UString& value);
@@ -484,25 +550,6 @@ protected:
       U_RETURN_POINTER(dst, unsigned char);
       }
 
-   static void sendPing();
-   static void readFrame();
-   static void setStream();
-   static void manageData();
-   static void sendGoAway();
-   static bool initRequest();
-   static void sendContinue();
-   static void manageHeaders();
-   static int  handlerRequest();
-   static void handlerResponse();
-   static bool readBodyRequest();
-   static void sendResetStream();
-   static void sendStreamError();
-   static void checkContentLength();
-
-   static void reset(UClientImage_Base* pclient);
-   static void updateSetting(unsigned char* ptr, uint32_t len);
-   static const char* getFrameErrorCodeDescription(uint32_t error);
-
    // Header field grammar validation (RFC 7230 Section 3.2)
 
    static bool isHeaderName( const char* s, uint32_t n) __pure;
@@ -511,40 +558,13 @@ protected:
    static bool isHeaderName( const UString& s) { return isHeaderName( U_STRING_TO_PARAM(s)); }
    static bool isHeaderValue(const UString& s) { return isHeaderValue(U_STRING_TO_PARAM(s)); } 
 
+   static    const char* getFrameErrorCodeDescription(uint32_t error);
    static unsigned char* hpackEncodeHeader(unsigned char* dst, const UString& key, const UString& value);
 
-   static void decodeHeaders(                                                      unsigned char* ptr, unsigned char* endptr);
    static void decodeHeaders(UHashMap<UString>* itable, HpackDynamicTable* dyntbl, unsigned char* ptr, unsigned char* endptr);
 
    static unsigned char* hpackEncodeString(unsigned char* dst, const char* src, uint32_t len, bool bhuffman);
    static unsigned char* hpackEncodeString(unsigned char* dst, const UString& value,          bool bhuffman) { return hpackEncodeString(dst, U_STRING_TO_PARAM(value), bhuffman); }
-
-   static void writev(struct iovec* iov, int iovcnt, uint32_t count)
-      {
-      U_TRACE(0, "UHTTP2::writev(%p,%d,%u)", iov, iovcnt, count)
-
-#  if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
-      (void) USocketExt::writev( UServer_Base::csocket, iov, iovcnt, count, 0);
-#  else
-      (void) USocketExt::_writev(UServer_Base::csocket, iov, iovcnt, count, 0);
-#  endif
-      }
-
-   static bool isHpackError()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP2::isHpackError()")
-
-      U_INTERNAL_DUMP("hpack_errno = %d", hpack_errno)
-
-      if (hpack_errno)
-         {
-         nerror = COMPRESSION_ERROR;
-
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
-      }
 
 #ifdef DEBUG
    typedef struct { const char* str; int value; const char* desc; } HpackError;
@@ -674,6 +694,9 @@ protected:
     * U_ASSERT(findHeader(53)) // UString::str_server
     * U_ASSERT(findHeader(32)) // UString::str_date
     * U_ASSERT(findHeader(27)) // UString::str_content_length
+    *
+    * pConnection->dtable.clear();
+    * clearHpackDynTbl(&(pConnection->ddyntbl));
     * }
     */
 #endif

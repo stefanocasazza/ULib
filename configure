@@ -1099,6 +1099,7 @@ with_python_embedded
 enable_static_server_plugin
 enable_static_orm_driver
 enable_static_servlet
+enable_libgcc
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1804,6 +1805,7 @@ Optional Features:
                           sqlite mysql pgsql
   --enable-static-servlet=NAMES
                           wi_auth ...
+  --enable-libgcc         use libgcc when linking
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -3457,12 +3459,12 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 # Scary shtool stuff... borowed from pth-1.0
 if test ".`echo dummy $@ | grep help`" = .; then
-    ac_shtool="$srcdir/shtool"
-    PLATFORM=`$ac_shtool platform`
-    T_MD="`$ac_shtool echo -n -e %B 2>/dev/null`"
-    T_ME="`$ac_shtool echo -n -e %b 2>/dev/null`"
-    echo "Platform: ${T_MD}${PLATFORM}${T_ME}"
-    echo "Configuring ${T_MD}ULib${T_ME} (C++ Library)"
+  ac_shtool="$srcdir/shtool"
+  PLATFORM=`$ac_shtool platform`
+  T_MD="`$ac_shtool echo -n -e %B 2>/dev/null`"
+  T_ME="`$ac_shtool echo -n -e %b 2>/dev/null`"
+  echo "Platform: ${T_MD}${PLATFORM}${T_ME}"
+  echo "Configuring ${T_MD}ULib${T_ME} (C++ Library)"
 fi
 
 
@@ -30513,7 +30515,6 @@ cat >>confdefs.h <<_ACEOF
 _ACEOF
 
 
-
 # SECTION 7: Checks for structures
 
 
@@ -31985,6 +31986,27 @@ CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 
 if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATINGSYSTEM" = xlinux; then
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use libgcc" >&5
+$as_echo_n "checking whether to use libgcc... " >&6; }
+	# Check whether --enable-libgcc was given.
+if test "${enable_libgcc+set}" = set; then :
+  enableval=$enable_libgcc;  case "$enableval" in
+		  yes)
+			 LIBS="-lgcc $LIBS"
+			 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+			 ;;
+		  *) { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+			 ;;
+		  esac
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+
+
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: " >&5
 $as_echo "" >&6; }
@@ -32744,6 +32766,29 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 			$to_match) ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc" ;; # On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
 		esac
 	fi
+fi
+
+if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to use libgcc" >&5
+$as_echo_n "checking whether to use libgcc... " >&6; }
+	# Check whether --enable-libgcc was given.
+if test "${enable_libgcc+set}" = set; then :
+  enableval=$enable_libgcc;  case "$enableval" in
+		  yes)
+			 ULIB_LIBS="$ULIB_LIBS -lgcc"
+			 { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+			 ;;
+		  *) { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+			 ;;
+		  esac
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+fi
+
 fi
 ##########################
 

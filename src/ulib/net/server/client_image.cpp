@@ -82,13 +82,8 @@ void UClientImage_Base::logRequest()
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
-#ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-   if (U_http_version != '2')
-#endif
-   {
-   if (u_printf_string_max_length == -1)
+   if (u_printf_string_max_length == -1 &&
+       u_isPrintable(ptr, sz, true))
       {
       u_printf_string_max_length = u_findEndHeader1(ptr, sz);
 
@@ -114,7 +109,6 @@ void UClientImage_Base::logRequest()
 
       U_INTERNAL_ASSERT_MAJOR(u_printf_string_max_length, 0)
       }
-   }
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d U_ClientImage_pipeline = %b", u_printf_string_max_length, U_ClientImage_pipeline)
 
@@ -336,7 +330,7 @@ __pure bool UClientImage_Base::isAllowed(UVector<UIPAllow*>& vallow_IP)
    U_RETURN(false);
 }
 
-#ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
 __pure bool UClientImage_Base::isRequestCacheable()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestCacheable()")
@@ -405,8 +399,11 @@ void UClientImage_Base::setSendfile(int _sfd, uint32_t _start, uint32_t _count)
 {
    U_TRACE(0, "UClientImage_Base::setSendfile(%d,%u,%u)", _sfd, _start, _count)
 
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
    U_INTERNAL_ASSERT_MAJOR(_count, 0)
    U_INTERNAL_ASSERT_DIFFERS(_sfd, -1)
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
    UServer_Base::pClientImage->start = _start;
    UServer_Base::pClientImage->count = _count;
@@ -592,7 +589,7 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
 #ifdef U_ALIAS
    if (*request_uri)
       {
-#  ifndef U_CACHE_REQUEST_DISABLE
+#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_request_is_cached, false)
 #  endif
 
@@ -613,7 +610,7 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
    return ptr;
 }
 
-#ifdef U_CACHE_REQUEST_DISABLE
+#if defined(U_CACHE_REQUEST_DISABLE) && !defined(U_HTTP2_DISABLE)
 #  define U_IOV_TO_SAVE  sizeof(struct iovec)
 #else
 #  define U_IOV_TO_SAVE (sizeof(struct iovec) * 4)
@@ -637,7 +634,7 @@ bool UClientImage_Base::startRequest()
 #  ifdef USE_LIBSSL
       if (UServer_Base::bssl) U_RETURN(false);
 #  endif
-#  ifndef U_CACHE_REQUEST_DISABLE
+#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
       if (U_ClientImage_request_is_cached) U_RETURN(false);
 #  endif
 
@@ -701,7 +698,7 @@ void UClientImage_Base::endRequest()
       uint32_t sz = 0;
       const char* ptr;
 
-#  ifndef U_CACHE_REQUEST_DISABLE
+#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
       if (U_ClientImage_request_is_cached)
          {
          U_INTERNAL_ASSERT_RANGE(1,uri_offset,64)
@@ -948,7 +945,7 @@ void UClientImage_Base::prepareForRead()
       UEventFd::fd = socket->iSockDesc;
       }
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    UServer_Base::initThrottlingClient();
 #endif
 }
@@ -1125,7 +1122,9 @@ pipeline:
    if (U_ClientImage_data_missing)
       {
 dmiss:
-      U_INTERNAL_DUMP("U_ClientImage_parallelization = %d", U_ClientImage_parallelization)
+      U_INTERNAL_DUMP("U_ClientImage_parallelization = %d U_http_version = %C", U_ClientImage_parallelization, U_http_version)
+
+      U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
       if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD)
          {
@@ -1142,19 +1141,6 @@ dmiss:
 
       U_ClientImage_data_missing = false;
 
-#  ifndef U_HTTP2_DISABLE
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-      if (U_http_version == '2')
-         {
-         U_ClientImage_state = UHTTP2::handlerRequest();
-
-         if (UNLIKELY((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0)) goto error;
-
-         goto http2_processing;
-         }
-#  endif
-
       U_INTERNAL_ASSERT_EQUALS(data_pending, 0)
 
       U_NEW(UString, data_pending, UString((void*)U_STRING_TO_PARAM(*request)));
@@ -1167,7 +1153,7 @@ dmiss:
       U_RETURN(U_NOTIFIER_OK);
       }
 
-#ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
    if (U_ClientImage_request_is_cached)
       {
       sz = checkRequestToCache();
@@ -1196,31 +1182,6 @@ dmiss:
 
    wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
 
-#ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-   if (U_http_version == '2')
-      {
-      U_ASSERT_EQUALS(request->isPrintable(), false)
-
-#  if defined(DEBUG) && !defined(U_LOG_DISABLE)
-      U_http_info.uri_len = 0;
-#    ifdef U_ALIAS
-      request_uri->clear();
-#    endif
-#  endif
-
-      U_ClientImage_state = UHTTP2::handlerRequest();
-
-      U_INTERNAL_DUMP("socket->isClosed() = %b U_http_info.nResponseCode = %u U_ClientImage_close = %b U_ClientImage_state = %d %B",
-                       socket->isClosed(),     U_http_info.nResponseCode,     U_ClientImage_close,     U_ClientImage_state, U_ClientImage_state)
-
-      if (UNLIKELY((U_ClientImage_state & U_PLUGIN_HANDLER_ERROR) != 0)) goto error;
-
-      goto http2_processing;
-      }
-#endif
-
    U_ClientImage_state = callerHandlerRead();
 
    U_INTERNAL_DUMP("socket->isClosed() = %b U_http_info.nResponseCode = %u U_ClientImage_close = %b U_ClientImage_state = %d %B",
@@ -1240,14 +1201,14 @@ dmiss:
 
    if (U_ClientImage_data_missing) goto dmiss;
 
-   if (LIKELY(size_request))
+   if (size_request)
       {
 #  if !defined(U_LOG_DISABLE) && !defined(U_COVERITY_FALSE_POSITIVE)
       U_INTERNAL_DUMP("log_request_partial = %u UEventFd::fd = %d", log_request_partial, UEventFd::fd)
 
       if (log_request_partial == UEventFd::fd) logRequest();
 #  endif
-#  ifndef U_CACHE_REQUEST_DISABLE
+#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
 next:
 #  endif
       sz = rbuffer->size();
@@ -1341,9 +1302,6 @@ check:
          }
       }
 
-#ifndef U_HTTP2_DISABLE
-http2_processing:
-#endif
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u request->size() = %u",
                     U_ClientImage_pipeline,     size_request,     request->size())
 
@@ -1433,12 +1391,6 @@ write:
                   endRequest();
          (void) startRequest();
 
-#     ifndef U_HTTP2_DISABLE
-         U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-         U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
-#     endif
-
          goto pipeline;
          }
       }
@@ -1453,7 +1405,7 @@ error:
 
    endRequest();
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    if (uri) UServer_Base::clearThrottling();
 #endif
 
@@ -1496,6 +1448,7 @@ bool UClientImage_Base::writeResponse()
 
    U_INTERNAL_ASSERT(*wbuffer)
    U_INTERNAL_ASSERT(socket->isOpen())
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
    int iBytesWrite;
@@ -1568,7 +1521,7 @@ bool UClientImage_Base::writeResponse()
 #endif
    }
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    if (iBytesWrite > 0) bytes_sent += iBytesWrite;
 #endif
 #ifdef DEBUG
@@ -1661,7 +1614,7 @@ loop:
    iBytesWrite = USocketExt::_writev(socket, piov, iovcnt, ncount, U_TIMEOUT_MS);
 #endif
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    if (iBytesWrite > 0) bytes_sent += iBytesWrite;
 #endif
 #ifdef DEBUG
@@ -1746,22 +1699,16 @@ void UClientImage_Base::resetPipeline()
                     U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_request_is_cached,     U_ClientImage_close)
 
    U_INTERNAL_ASSERT(U_ClientImage_pipeline)
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
-#ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-   if (U_http_version != '2')
-#endif
-   {
    U_INTERNAL_ASSERT(request->same(*rbuffer) == false)
 
    U_ClientImage_pipeline = false;
 
-#ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
    if (U_ClientImage_request_is_cached == false)
 #endif
    size_request = 0; // NB: we don't want to process further the read buffer...
-   }
 }
 
 void UClientImage_Base::prepareForSendfile()
@@ -1770,6 +1717,7 @@ void UClientImage_Base::prepareForSendfile()
 
    U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT_DIFFERS(sfd, -1)
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
    if (U_ClientImage_close)
       {
@@ -1789,6 +1737,8 @@ void UClientImage_Base::prepareForSendfile()
 int UClientImage_Base::handlerResponse()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerResponse()")
+
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
    if (writeResponse()) U_RETURN(U_NOTIFIER_OK);
 
@@ -1841,6 +1791,8 @@ int UClientImage_Base::handlerWrite()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::handlerWrite()")
 
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
+
 #if !defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG)
    if (UNLIKELY(count == 0))
       {
@@ -1865,7 +1817,7 @@ int UClientImage_Base::handlerWrite()
 
    U_INTERNAL_DUMP("bwrite = %b", bwrite)
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    if (UServer_Base::checkThrottlingBeforeSend(bwrite) == false) U_RETURN(U_NOTIFIER_OK);
 #endif
 
@@ -1876,7 +1828,7 @@ write:
    offset      = start;
    iBytesWrite = USocketExt::sendfile(socket, sfd, &offset, count, 0);
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    if (iBytesWrite > 0) bytes_sent += iBytesWrite;
 #endif
 #ifdef DEBUG

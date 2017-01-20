@@ -1314,7 +1314,7 @@ public:
       str.rep = tmp;
       }
 
-   void swap(UString& lhs, UString& rhs) { lhs.swap(rhs); }
+   static void swap(UString& lhs, UString& rhs) { lhs.swap(rhs); }
 
 #ifdef U_COMPILER_RVALUE_REFS
    UString& operator=(UString && str)

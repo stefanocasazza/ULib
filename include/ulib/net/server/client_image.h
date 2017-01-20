@@ -277,7 +277,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestNoCache()")
 
-#  ifndef U_CACHE_REQUEST_DISABLE
+#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
       U_ClientImage_request |= NO_CACHE;
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
@@ -381,7 +381,7 @@ public:
 
 protected:
    USocket* socket;
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    UString uri;
    uint64_t bytes_sent;
    uint32_t min_limit, max_limit, started_at;
@@ -485,7 +485,7 @@ protected:
    static bool isValidRequest(   const char* ptr, uint32_t sz) { return true; }
    static bool isValidRequestExt(const char* ptr, uint32_t sz) { return true; }
 
-#ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
    static bool isRequestCacheable() __pure;
 #endif
 

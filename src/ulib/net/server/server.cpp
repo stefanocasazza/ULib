@@ -355,7 +355,7 @@ private:
  * the server returns a special code
  */
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
 #  define U_THROTTLE_TIME 2 // Time between updates of the throttle table's rolling averages
 
 class U_NO_EXPORT UThrottling : public UDataStorage {
@@ -1152,7 +1152,7 @@ UServer_Base::~UServer_Base()
 
    if (host) delete host;
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    if (throttling_rec)  delete throttling_rec;
    if (throttling_mask) delete throttling_mask;
 #endif
@@ -2442,7 +2442,7 @@ void UServer_Base::init()
 
    UTimer::insert(pstat);
 #endif
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    if (db_throttling)
       {
       // set up the throttles timer
@@ -2539,7 +2539,7 @@ void UServer_Base::init()
       U_ERROR("System date not updated");
       }
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    if (throttling_mask) initThrottlingServer();
 #endif
 

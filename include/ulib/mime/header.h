@@ -283,8 +283,8 @@ public:
       }
 
    /**
-    * ===================================================================================================================
     * Content types:
+    *
     *   "text"        / [ "plain" (RFC-1521), "richtext" (RFC-1341), "enriched", "html", "xvcard", "vcal", "rtf", "xml" ],
     *   "audio"       / [ "basic" ],
     *   "video"       / [ "mpeg" ],
@@ -293,7 +293,6 @@ public:
     *   "multipart"   / [ "mixed", "alternative", "digest", "parallel", "signed", "encrypted", "report", "form-data" ],
     *   "application" / [ "postscript", "octet-stream", "pgp-signature", "pgp-encrypted", "pgp-clearsigned",
     *                     "pkcs7-signature", "pkcs7-mime", "ms-tnef", "x-www-form-urlencoded" ]
-    * ===================================================================================================================
     */
 
    UString getContentType()

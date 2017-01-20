@@ -219,6 +219,8 @@ UHttpClient_Base::UHttpClient_Base(UFileConfig* _cfg) : UClient_Base(_cfg)
 
    U_NEW(UMimeHeader,  requestHeader, UMimeHeader);
    U_NEW(UMimeHeader, responseHeader, UMimeHeader);
+
+   responseHeader->setIgnoreCase(true);
 }
 
 void UHttpClient_Base::reset()

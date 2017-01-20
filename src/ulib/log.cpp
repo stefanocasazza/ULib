@@ -762,6 +762,7 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
    U_TRACE(0, "ULog::log(%p,%S,%S,%d,%.*S,%u,%.*S,%u)", iov, name, type, ncount, msg_len, msg, msg_len, fmt_size, format, fmt_size)
 
    U_INTERNAL_ASSERT_MAJOR(ncount, 0)
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
    char buffer1[2000], buffer2[8192];
    const char* ptr = (const char*)iov[2].iov_base;
@@ -771,10 +772,6 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d iov[0].len = %d iov[1].len = %d iov[2].len = %d iov[3].len = %d",
                     u_printf_string_max_length,     iov[0].iov_len, iov[1].iov_len, iov[2].iov_len, iov[3].iov_len)
 
-#ifndef U_HTTP2_DISABLE
-   if (U_http_version != '2')
-#endif
-   {
    if (u_printf_string_max_length == -1)
       {
       uint32_t endHeader = (sz ? u_findEndHeader1(ptr, sz) : U_NOT_FOUND);
@@ -788,7 +785,6 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
 
       U_INTERNAL_ASSERT(u_printf_string_max_length <= (int)sz_header)
       }
-   }
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d sz1 = %u", u_printf_string_max_length, sz1)
 

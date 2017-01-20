@@ -598,7 +598,7 @@ protected:
    static UString getStats();
 #endif
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    static bool         throttling_chk;
    static UString*     throttling_mask;
    static UThrottling* throttling_rec;

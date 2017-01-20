@@ -96,6 +96,10 @@ bool UCache::open(const UString& path, const UString& dir, const UString* enviro
 #  ifdef DEBUG
       dir_template       = _y.getPath();
       dir_template_mtime = _y.st_mtime;
+
+      U_INTERNAL_DUMP("dir_template = %V", dir_template.rep)
+
+      U_INTERNAL_ASSERT(dir_template)
 #  endif
 
       bool exist = true;
@@ -346,15 +350,20 @@ UString UCache::getContent(const char* key, uint32_t keylen)
    U_TRACE(0, "UCache::getContent(%.*S,%u)", keylen, key, keylen)
 
 #ifdef DEBUG
-   struct stat st;
-   UString buffer(U_PATH_MAX);
+   U_INTERNAL_DUMP("dir_template = %V", dir_template.rep)
 
-   buffer.snprintf(U_CONSTANT_TO_PARAM("%v/%.*s"), dir_template.rep, keylen, key);
-
-   if (U_SYSCALL(stat, "%S,%p", buffer.data(), &st) == 0 &&
-       st.st_mtime >= dir_template_mtime)
+   if (dir_template)
       {
-      return UFile::contentOf(buffer);
+      struct stat st;
+      UString buffer(U_PATH_MAX);
+
+      buffer.snprintf(U_CONSTANT_TO_PARAM("%v/%.*s"), dir_template.rep, keylen, key);
+
+      if (U_SYSCALL(stat, "%S,%p", buffer.data(), &st) == 0 &&
+          st.st_mtime >= dir_template_mtime)
+         {
+         return UFile::contentOf(buffer);
+         }
       }
 #endif
 

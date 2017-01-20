@@ -1,4 +1,4 @@
-# configure.in -- Process this file with autoconf to produce configure
+# configure.ac -- Process this file with autoconf to produce configure
 #
 # An autoconf script to automatically configure ULib.
 #
@@ -37,12 +37,12 @@ AC_MSG_RESULT(${T_MD}$1:${T_ME})
 
 # Scary shtool stuff... borowed from pth-1.0
 if test ".`echo dummy $@ | grep help`" = .; then
-    ac_shtool="$srcdir/shtool"
-    PLATFORM=`$ac_shtool platform`
-    T_MD="`$ac_shtool echo -n -e %B 2>/dev/null`"
-    T_ME="`$ac_shtool echo -n -e %b 2>/dev/null`"
-    echo "Platform: ${T_MD}${PLATFORM}${T_ME}"
-    echo "Configuring ${T_MD}ULib${T_ME} (C++ Library)"
+  ac_shtool="$srcdir/shtool"
+  PLATFORM=`$ac_shtool platform`
+  T_MD="`$ac_shtool echo -n -e %B 2>/dev/null`"
+  T_ME="`$ac_shtool echo -n -e %b 2>/dev/null`"
+  echo "Platform: ${T_MD}${PLATFORM}${T_ME}"
+  echo "Configuring ${T_MD}ULib${T_ME} (C++ Library)"
 fi
 
 TWOCAN_CONF_MSG(Initial phase)
@@ -1813,7 +1813,6 @@ AC_CHECK_TYPES([ptrdiff_t])
 
 AC_DEFINE_UNQUOTED([RETSIGTYPE],[void],[Define as the return type of signal handlers (`int' or `void').])
 
-
 # SECTION 7: Checks for structures
 
 TWOCAN_CONF_MSG(Checking for structures)
@@ -2245,6 +2244,20 @@ CXXFLAGS="$CXXFLAGS -fno-exceptions -fno-rtti"
 
 if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATINGSYSTEM" = xlinux; then
 
+	AC_MSG_CHECKING([whether to use libgcc])
+	AC_ARG_ENABLE(libgcc,
+	AC_HELP_STRING([--enable-libgcc],[use libgcc when linking]),
+		[ case "$enableval" in
+		  yes)
+			 LIBS="-lgcc $LIBS"
+			 AC_MSG_RESULT(yes)
+			 ;;
+		  *) AC_MSG_RESULT(no)
+			 ;;
+		  esac ],
+			 AC_MSG_RESULT(no)
+		)
+
 	TWOCAN_CONF_MSG(Checking for gcc compiler flags)
 
 	AC_CC_TRY_FLAG
@@ -2524,6 +2537,22 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 			$to_match) ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc" ;; # On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
 		esac
 	fi
+fi
+
+if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
+	AC_MSG_CHECKING([whether to use libgcc])
+	AC_ARG_ENABLE(libgcc,
+	AC_HELP_STRING([--enable-libgcc],[use libgcc when linking]),
+		[ case "$enableval" in
+		  yes)
+			 ULIB_LIBS="$ULIB_LIBS -lgcc"
+			 AC_MSG_RESULT(yes)
+			 ;;
+		  *) AC_MSG_RESULT(no)
+			 ;;
+		  esac ],
+			 AC_MSG_RESULT(no)
+		)
 fi
 ##########################
 

@@ -235,6 +235,22 @@ public:
       U_RETURN(agent);
       }
 
+   static bool isSizeForSendfile(uint32_t sz)
+      {
+      U_TRACE(0, "UHTTP::isSizeForSendfile(%u)", sz)
+
+      U_INTERNAL_DUMP("U_http_version = %C UServer_Base::min_size_for_sendfile = %u", U_http_version, UServer_Base::min_size_for_sendfile)
+
+#  ifndef U_HTTP2_DISABLE
+      if (U_http_version != '2')
+#  endif
+      {
+      if (sz >= UServer_Base::min_size_for_sendfile) U_RETURN(true);
+      }
+
+      U_RETURN(false);
+      }
+
    static bool checkDirectoryForDocumentRoot(const char* ptr, uint32_t len)
       {
       U_TRACE(0, "UHTTP::checkDirectoryForDocumentRoot(%.*S,%u)", len, ptr, len)

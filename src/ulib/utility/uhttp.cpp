@@ -1697,9 +1697,7 @@ bool UHTTP::scanfHeaderRequest(const char* ptr, uint32_t size)
          {
          U_http_version = '2';
 
-         UClientImage_Base::size_request = U_CONSTANT_SIZE(HTTP2_CONNECTION_PREFACE);
-
-         goto end;
+         U_RETURN(false);
          }
 #  endif
 
@@ -1762,7 +1760,11 @@ bool UHTTP::scanfHeaderRequest(const char* ptr, uint32_t size)
       case U_MULTICHAR_CONSTANT32('S','U','B','S'): U_http_method_type = HTTP_SUBSCRIBE;   ptr += 10; U_http_method_num = 24; break;
       case U_MULTICHAR_CONSTANT32('U','N','S','U'): U_http_method_type = HTTP_UNSUBSCRIBE; ptr += 12; U_http_method_num = 25; break;
 
-      default: U_RETURN(false);
+      default:
+#  ifndef U_HTTP2_DISABLE
+      if (ptr[3] <= UHTTP2::CONTINUATION) U_http_version = '2';
+#  endif
+      U_RETURN(false);
       }
 
 next:
@@ -1966,7 +1968,14 @@ U_NO_EXPORT bool UHTTP::readHeaderRequest()
         u_get_unalignedp32(ptr+sz-4) != U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')))
       {
       if (u_isPrintable(ptr, sz, true)) U_ClientImage_data_missing = true;
-      else                              UClientImage_Base::abortive_close();
+      else
+         {
+#     ifndef U_HTTP2_DISABLE
+         if (ptr[3] <= UHTTP2::CONTINUATION) U_http_version = '2';
+         else
+#     endif
+         UClientImage_Base::abortive_close();
+         }
 
       U_RETURN(false);
       }
@@ -2136,6 +2145,8 @@ __pure const char* UHTTP::getHeaderValuePtr(const UString& request, const char* 
 __pure const char* UHTTP::getHeaderValuePtr(const char* name, uint32_t name_len, bool nocase)
 {
    U_TRACE(0, "UHTTP::getHeaderValuePtr(%.*S,%u,%b)", name_len, name, name_len, nocase)
+
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
 #ifndef U_HTTP2_DISABLE
    if (U_http_version == '2')
@@ -2927,11 +2938,10 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
                U_INTERNAL_DUMP("HTTP2-Settings: = %.*S", pn-ptr1, ptr1)
 
 #           ifndef U_HTTP2_DISABLE
-               U_http2_settings_len     = pn-ptr1;
-               UHTTP2::upgrade_settings =    ptr1;
+               U_http_version       = '2';
+               U_http2_settings_len = pn-ptr1;
 
-               U_http_version             = '2';
-               U_ClientImage_data_missing = true;
+               UHTTP2::upgrade_settings = ptr1;
 #           endif
 
                goto next;
@@ -3205,9 +3215,6 @@ next: U_INTERNAL_DUMP("char (after cr/newline) = %C U_http_version = %C U_Client
 
          U_INTERNAL_ASSERT(U_ClientImage_data_missing)
 
-#     ifndef U_HTTP2_DISABLE
-         if (U_http_version != '2')
-#     endif
          U_ClientImage_data_missing = false;
 
          return;
@@ -3732,9 +3739,8 @@ int UHTTP::handlerREAD()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::handlerREAD()")
 
-   U_INTERNAL_DUMP("UClientImage_Base::request(%u) = %V U_http_version = %C", UClientImage_Base::request->size(), UClientImage_Base::request->rep, U_http_version)
+   U_INTERNAL_DUMP("UClientImage_Base::request(%u) = %V", UClientImage_Base::request->size(), UClientImage_Base::request->rep)
 
-   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
 
    // ------------------------------
@@ -3747,6 +3753,17 @@ int UHTTP::handlerREAD()
 
    if (readHeaderRequest() == false)
       {
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+#  ifndef U_HTTP2_DISABLE
+      if (U_http_version == '2')
+         {
+         UHTTP2::handlerRequest();
+
+         U_RETURN(U_ClientImage_state);
+         }
+#  endif
+
       if (U_ClientImage_data_missing) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 
       if (UNLIKELY(UServer_Base::csocket->isClosed())) U_RETURN(U_PLUGIN_HANDLER_ERROR);
@@ -3796,10 +3813,21 @@ int UHTTP::handlerREAD()
       {
       checkRequestForHeader();
 
+      U_INTERNAL_DUMP("U_http_version = %C U_http_method_type = %u", U_http_version, U_http_method_type)
+
+#  ifndef U_HTTP2_DISABLE
+      if (U_http_version == '2')
+         {
+         UHTTP2::handlerRequest();
+
+         U_RETURN(U_ClientImage_state);
+         }
+#  endif
+
       if (U_ClientImage_data_missing) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
-   U_INTERNAL_DUMP("U_http_host_len = %u U_HTTP_HOST = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
+   U_INTERNAL_DUMP("U_HTTP_HOST(%u) = %.*S", U_http_host_len, U_HTTP_HOST_TO_TRACE)
 
    if (U_http_host_len == 0)
       {
@@ -3854,23 +3882,19 @@ int UHTTP::manageRequest()
       {
       U_http_flag |= HTTP_IS_NOCACHE_FILE | HTTP_IS_REQUEST_NOSTAT;
 
-      U_INTERNAL_DUMP("U_http_is_nocache_file = %b U_http_is_request_nostat = %b", U_http_is_nocache_file, U_http_is_request_nostat)
+      U_INTERNAL_DUMP("U_http_is_nocache_file = %b U_http_is_request_nostat = %b U_http_version = %C", U_http_is_nocache_file, U_http_is_request_nostat, U_http_version)
 
-#  ifndef U_SERVER_CAPTIVE_PORTAL
+#  if !defined(U_SERVER_CAPTIVE_PORTAL)
+#   if !defined(U_HTTP2_DISABLE)
+      if (U_http_version != '2')
+#   endif
+      {
       if (U_http_info.clength ||
           isPOSTorPUTorPATCH())
          {
-         bool result_read_body;
-
-#     ifndef U_HTTP2_DISABLE
-         if (U_http_version == '2') result_read_body = UHTTP2::readBodyRequest();
-         else
-#     endif
-         result_read_body = readBodyRequest();
-
          U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
 
-         if (result_read_body == false)
+         if (readBodyRequest() == false)
             {
             U_INTERNAL_DUMP("UServer_Base::csocket->isClosed() = %b UClientImage_Base::wbuffer(%u) = %V",
                              UServer_Base::csocket->isClosed(),     UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
@@ -3882,11 +3906,9 @@ int UHTTP::manageRequest()
             U_RETURN(U_PLUGIN_HANDLER_FINISHED);
             }
 
-#     ifndef U_HTTP2_DISABLE
-         if (U_http_version != '2')
-#     endif
          UClientImage_Base::size_request += U_http_info.clength;
          }
+      }
 #  endif
       }
 
@@ -4007,7 +4029,7 @@ set_uri: U_http_info.uri     = alias->data();
 
    // ...process the HTTP message
 
-#ifdef U_THROTTLING_SUPPORT
+#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
    if (isGETorHEAD() &&
        UServer_Base::checkThrottling() == false)
       {
@@ -4235,12 +4257,6 @@ file_in_cache:
 
                UClientImage_Base::environment->setEmpty();
 
-#           ifndef U_HTTP2_DISABLE
-               U_INTERNAL_DUMP("U_ClientImage_state = %d %B", U_ClientImage_state, U_ClientImage_state)
-
-               if (U_ClientImage_state == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-#           endif
-
                U_RETURN(U_PLUGIN_HANDLER_FINISHED);
                }
 
@@ -4370,16 +4386,7 @@ end:
       }
 #endif
 
-   if (UClientImage_Base::isRequestFileCacheProcessed())
-      {
-      handlerResponse();
-
-#  ifndef U_HTTP2_DISABLE
-      U_INTERNAL_DUMP("U_ClientImage_state = %d %B", U_ClientImage_state, U_ClientImage_state)
-
-      if (U_ClientImage_state == U_PLUGIN_HANDLER_ERROR) U_RETURN(U_PLUGIN_HANDLER_ERROR);
-#  endif
-      }
+   if (UClientImage_Base::isRequestFileCacheProcessed()) handlerResponse();
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
@@ -4553,7 +4560,9 @@ int UHTTP::processRequest()
       U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 
+#ifdef U_HTTP2_DISABLE
    U_INTERNAL_ASSERT(*UClientImage_Base::request)
+#endif
 
    ext->setBuffer(U_CAPACITY);
 
@@ -4873,7 +4882,7 @@ void UHTTP::setEndRequestProcessing()
                                              : u__snprintf(iov_buffer, sizeof(iov_buffer), U_CONSTANT_TO_PARAM("\" %u %u \""), U_http_info.nResponseCode, body_len));
          }
 
-#    ifndef U_CACHE_REQUEST_DISABLE
+#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
       if (iov_vec[4].iov_len != 1 &&
           U_ClientImage_request_is_cached == false)
          {
@@ -4910,7 +4919,7 @@ void UHTTP::setEndRequestProcessing()
    U_INTERNAL_DUMP("U_ClientImage_request = %b U_http_info.nResponseCode = %d U_ClientImage_request_is_cached = %b U_http_info.startHeader = %u",
                     U_ClientImage_request,     U_http_info.nResponseCode,     U_ClientImage_request_is_cached,     U_http_info.startHeader)
 
-#ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
    if (isGETorHEAD()                           &&
        UClientImage_Base::isRequestCacheable() &&
        U_IS_HTTP_SUCCESS(U_http_info.nResponseCode))
@@ -6189,8 +6198,15 @@ void UHTTP::handlerResponse()
 
    UClientImage_Base::setRequestProcessed();
 
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
 #ifndef U_HTTP2_DISABLE
-   if (U_http_version == '2') UHTTP2::handlerResponse();
+   if (U_http_version == '2')
+      {
+      UClientImage_Base::wbuffer->clear();
+
+      UHTTP2::handlerResponse();
+      }
    else
 #endif
    {
@@ -7614,8 +7630,6 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
 #endif
 
 next1:
-   U_INTERNAL_DUMP("UServer_Base::min_size_for_sendfile = %u", UServer_Base::min_size_for_sendfile)
-
         if (file_data->size >= UServer_Base::min_size_for_sendfile) motivation = " (size exceeded)";  // NB: for major size we assume is better to use sendfile()
    else if (file_data->size <= U_MIN_SIZE_FOR_DEFLATE)              motivation = " (size too small)";
 #ifdef USE_LIBZ
@@ -8464,9 +8478,7 @@ U_NO_EXPORT bool UHTTP::processFileCache()
       U_http_info.nResponseCode = HTTP_PARTIAL;
       }
 
-   U_INTERNAL_DUMP("sz = %u UServer_Base::min_size_for_sendfile = %u", sz, UServer_Base::min_size_for_sendfile)
-
-   if (sz < UServer_Base::min_size_for_sendfile)
+   if (isSizeForSendfile(sz) == false)
       {
       UClientImage_Base::setRequestFileCacheProcessed();
 
@@ -8474,6 +8486,8 @@ U_NO_EXPORT bool UHTTP::processFileCache()
 
       U_RETURN(true);
       }
+
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
    U_http_flag |= HTTP_IS_SENDFILE;
 
@@ -8880,6 +8894,8 @@ U_NO_EXPORT bool UHTTP::addHTTPVariables(UStringRep* key, void* value)
 
 // if (u_isBinary((const unsigned char*)value_ptr, value_sz) == false)
       {
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
 #  ifndef U_HTTP2_DISABLE
       /**
        * +-------+-----------------------------+---------------+
@@ -9198,6 +9214,8 @@ bool UHTTP::getCGIEnvironment(UString& environment, int type)
          if (requestHeader.empty()) prequestHeader = 0;
          }
       }
+
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
 #ifndef U_HTTP2_DISABLE
    if (U_http_version == '2')
@@ -10433,12 +10451,13 @@ U_NO_EXPORT void UHTTP::processGetRequest()
 
    if (U_http_sendfile)
       {
+      U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
       U_INTERNAL_ASSERT(range_size >= UServer_Base::min_size_for_sendfile)
 
       goto sendfile;
       }
 
-   if (file->memmap(PROT_READ, &mmap) == false) goto error;
+   if (file->memmap(PROT_READ, &mmap) == false) goto err;
 
    if (file_data == file_not_in_cache_data)
       {
@@ -10479,6 +10498,7 @@ U_NO_EXPORT void UHTTP::processGetRequest()
       goto build_response;
       }
 
+   // --------------------------------------------------------------------
    // NB: check for Flash pseudo-streaming
    // --------------------------------------------------------------------
    // Adobe Flash Player can start playing from any part of a FLV movie
@@ -10510,6 +10530,15 @@ U_NO_EXPORT void UHTTP::processGetRequest()
 
          handlerResponse();
 
+         U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+#     ifndef U_HTTP2_DISABLE
+         if (U_http_version == '2')
+            {
+            // TODO...
+            }
+         else
+#     endif
          (void) UClientImage_Base::wbuffer->append(U_CONSTANT_TO_PARAM(U_FLV_HEAD));
 
          goto next;
@@ -10520,13 +10549,13 @@ build_response:
    handlerResponse();
 
 next:
-   U_INTERNAL_DUMP("range_start = %u range_size = %u UServer_Base::min_size_for_sendfile = %u", range_start, range_size, UServer_Base::min_size_for_sendfile)
+   U_INTERNAL_DUMP("range_start = %u range_size = %u", range_start, range_size)
 
    U_ASSERT(UClientImage_Base::body->empty())
 
-   // NB: we check if we need to send the body with sendfile()...
+   // NB: we check if we can send the body with sendfile()...
 
-   if (range_size >= UServer_Base::min_size_for_sendfile)
+   if (isSizeForSendfile(range_size))
       {
       U_http_flag |= HTTP_IS_SENDFILE;
 
@@ -10541,8 +10570,7 @@ sendfile:
    if (U_http_info.nResponseCode == HTTP_PARTIAL &&
        file->memmap(PROT_READ, &mmap, range_start, range_size) == false)
       {
-error:
-      setServiceUnavailable();
+err:  setServiceUnavailable();
 
       return;
       }
@@ -10592,7 +10620,7 @@ void UHTTP::prepareApacheLikeLog()
    const char* request;
    uint32_t request_len;
 
-#ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
      agent_offset =
    request_offset =
    referer_offset = 0;
@@ -10625,6 +10653,8 @@ void UHTTP::prepareApacheLikeLog()
       }
    else
       {
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
 #  ifndef U_HTTP2_DISABLE
       if (U_http_version == '2')
          {
@@ -10665,7 +10695,7 @@ void UHTTP::prepareApacheLikeLog()
       iov_vec[4].iov_base = (caddr_t) request;
       iov_vec[4].iov_len  = U_min(1000, request_len);
 
-#  ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
       request_offset = request - prequest;
 
       U_INTERNAL_DUMP("request_offset = %u", request_offset)
@@ -10679,7 +10709,7 @@ next:
       iov_vec[6].iov_base = (caddr_t) U_http_info.referer;
       iov_vec[6].iov_len  = U_min(1000, U_http_info.referer_len);
 
-#  ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
       if (U_http_info.referer > prequest)
          {
          referer_offset = U_http_info.referer - prequest;
@@ -10695,7 +10725,7 @@ next:
       iov_vec[8].iov_base = (caddr_t) U_http_info.user_agent;
       iov_vec[8].iov_len  = U_min(1000, U_http_info.user_agent_len);
 
-#  ifndef U_CACHE_REQUEST_DISABLE
+#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
       if (U_http_info.user_agent > prequest)
          {
          agent_offset = U_http_info.user_agent - prequest;
@@ -10755,7 +10785,7 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
 
             U_INTERNAL_DUMP("d.ptr = %p d.mime_index(%d) = %C d.size = %u", d.ptr, d.mime_index, d.mime_index, d.size)
 
-            if (d.size >= UServer_Base::min_size_for_sendfile)
+            if (UHTTP::isSizeForSendfile(d.size))
                {
                // NB: we can't use sendfile() for this...
 

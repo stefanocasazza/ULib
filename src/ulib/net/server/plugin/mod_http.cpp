@@ -389,7 +389,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          }
 #   endif
 
-#  ifdef U_THROTTLING_SUPPORT
+#  if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
       x = cfg.at(U_CONSTANT_TO_PARAM("BANDWIDTH_THROTTLING_MASK"));
 
       if (x)

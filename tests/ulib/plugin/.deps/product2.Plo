@@ -41,8 +41,9 @@ plugin/product2.lo: plugin/product2.cpp /usr/include/stdc-predef.h \
  /usr/include/bits/waitstatus.h /usr/include/alloca.h \
  /usr/include/bits/stdlib-bsearch.h /usr/include/bits/stdlib-float.h \
  /usr/include/ctype.h ../../include/ulib/base/replace/replace.h \
- /usr/include/linux/version.h /usr/include/openssl/opensslv.h \
- /usr/include/string.h /usr/include/fcntl.h /usr/include/bits/fcntl.h \
+ /usr/src/linux/include/generated/uapi/linux/version.h \
+ /usr/include/openssl/opensslv.h /usr/include/string.h \
+ /usr/include/fcntl.h /usr/include/bits/fcntl.h \
  /usr/include/bits/fcntl-linux.h /usr/include/errno.h \
  /usr/include/bits/errno.h /usr/include/linux/errno.h \
  /usr/include/asm/errno.h /usr/include/asm-generic/errno.h \
@@ -310,7 +311,7 @@ plugin/product.h:
 
 ../../include/ulib/base/replace/replace.h:
 
-/usr/include/linux/version.h:
+/usr/src/linux/include/generated/uapi/linux/version.h:
 
 /usr/include/openssl/opensslv.h:
 
