@@ -92,7 +92,7 @@ public:
       {
       U_TRACE(0, "UStringExt::numberToString(%u)", n)
 
-      UString x(10U);
+      UString x(22U);
 
       x.setFromNumber32(n);
 
@@ -318,7 +318,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UStringExt::getPidProcess()")
 
-      UString value(10U);
+      UString value(22U);
 
       U_MEMCPY(value.data(), u_pid_str, u_pid_str_len);
 

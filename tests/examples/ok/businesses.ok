@@ -1,13 +1,21 @@
 HTTP/1.1 200 OK
-Date: Sat, 10 Sep 2016 16:16:24 GMT
+Date: Sun, 29 Jan 2017 14:54:34 GMT
 Server: ULib
 Connection: close
 Content-Length: 56
 Content-Type: application/json
 
 {"name":"","rating":"","address":"","phone":"","url":""}HTTP/1.1 200 OK
-Date: Sat, 10 Sep 2016 16:16:24 GMT
+Date: Sun, 29 Jan 2017 14:54:34 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
+HTTP/1.1 200 OK
+Date: Sun, 29 Jan 2017 14:54:34 GMT
+Server: ULib
+Connection: close
+Content-Length: 87
+Content-Type: application/json
+
+{"type":"startup","token":"","fbPermissions":["public_profile","user_friends","email"]}

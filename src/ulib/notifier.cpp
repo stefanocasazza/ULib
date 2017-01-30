@@ -130,6 +130,7 @@ fd_set         UNotifier::fd_set_read;
 fd_set         UNotifier::fd_set_write;
 # endif
 bool           UNotifier::bread;
+bool           UNotifier::flag_sigterm;
 
 U_NO_EXPORT void UNotifier::notifyHandlerEvent()
 {
@@ -1243,7 +1244,8 @@ loop:
    if (ret >  0) U_RETURN(ret);
    if (ret == 0)
       {
-      u_errno = errno == EAGAIN;
+        errno =
+      u_errno = EAGAIN;
 
       U_RETURN(0);
       }
@@ -1252,7 +1254,9 @@ loop:
       {
       UInterrupt::checkForEventSignalPending();
 
-      goto loop;
+      U_INTERNAL_DUMP("flag_sigterm = %b", flag_sigterm)
+
+      if (flag_sigterm == false) goto loop;
       }
 
    U_RETURN(-1);
@@ -1418,7 +1422,9 @@ loop:
          {
          UInterrupt::checkForEventSignalPending();
 
-         goto loop;
+         U_INTERNAL_DUMP("flag_sigterm = %b", flag_sigterm)
+
+         if (flag_sigterm == false) goto loop;
          }
       }
 

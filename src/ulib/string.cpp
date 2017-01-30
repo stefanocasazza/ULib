@@ -2355,26 +2355,7 @@ void UStringRep::write(ostream& os) const
 {
    U_TRACE(0, "UStringRep::write(%p)", &os)
 
-   bool need_quote = (_length == 0);
-
-   if (need_quote == false)
-      {
-      for (const unsigned char* s = (const unsigned char*)str, *_end = s + _length; s < _end; ++s)
-         {
-         unsigned char c = *s;
-
-         if (c == '"'  ||
-             c == '\\' ||
-             u__isspace(c))
-            {
-            need_quote = true;
-
-            break;
-            }
-         }
-      }
-
-   if (need_quote == false) os.write(str, _length);
+   if (needQuote() == false) os.write(str, _length);
    else
       {
       os.put('"');

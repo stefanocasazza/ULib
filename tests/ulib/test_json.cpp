@@ -13,18 +13,13 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   UString token, type, radius, location;
+   UHashMap<UString> table;
+   UString radius, location;
+   UVector<UString> fbPermissions;
 
    Request()
       {
       U_TRACE_REGISTER_OBJECT(5, Request, "")
-      }
-
-   Request(const Request& r) : token(r.token), type(r.type), radius(r.radius), location(r.location)
-      {
-      U_TRACE_REGISTER_OBJECT(5, Request, "%p", &r)
-
-      U_MEMORY_TEST_COPY(r)
       }
 
    ~Request()
@@ -36,19 +31,39 @@ public:
       {
       U_TRACE_NO_PARAM(5, "Request::clear()")
 
-        token.clear();
-         type.clear();
-        radius.clear();
+      table.clear();
+      radius.clear();
       location.clear();
+      fbPermissions.clear();
+      }
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(5, "Request::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_METHOD_HANDLER(table,         UHashMap<UString>));
+      json.toJSON(U_JSON_METHOD_HANDLER(radius,        UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(location,      UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(fbPermissions, UVector<UString>));
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(5, "Request::fromJSON(%p)", &json)
+
+      json.fromJSON(U_JSON_METHOD_HANDLER(table,         UHashMap<UString>));
+      json.fromJSON(U_JSON_METHOD_HANDLER(radius,        UString));
+      json.fromJSON(U_JSON_METHOD_HANDLER(location,      UString));
+      json.fromJSON(U_JSON_METHOD_HANDLER(fbPermissions, UVector<UString>));
       }
 
 #ifdef DEBUG
    const char* dump(bool breset) const
       {
-      *UObjectIO::os << "token    (UString " << (void*)&token    << ")\n"
-                     << "type     (UString " << (void*)&type     << ")\n"
-                     << "radius   (UString " << (void*)&radius   << ")\n"
-                     << "location (UString " << (void*)&location << ')';
+      *UObjectIO::os << "table         (UHashMap " << (void*)&table        << ")\n"
+                     << "radius        (UString " << (void*)&radius        << ")\n"
+                     << "location      (UString " << (void*)&location      << ")\n"
+                     << "fbPermissions (UVector " << (void*)&fbPermissions << ')';
 
       if (breset)
          {
@@ -65,31 +80,141 @@ private:
    Request& operator=(const Request&) { return *this; }
 };
 
-// JSON TEMPLATE SPECIALIZATIONS
-
-template <> class U_EXPORT UJsonTypeHandler<Request> : public UJsonTypeHandler_Base {
+class Response {
 public:
-   explicit UJsonTypeHandler(Request& val) : UJsonTypeHandler_Base(&val) {}
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   UVector<UString> fbPermissions;
+   UString type, token;
+   UHashMap<UString> table;
+   
+   Response(): type(U_STRING_FROM_CONSTANT("startup"))
+      {
+      U_TRACE_REGISTER_OBJECT(5, Response, "")
+      }
+
+   ~Response()
+      {
+      U_TRACE_UNREGISTER_OBJECT(5, Response)
+      }
+
+   void clear()
+      {
+      U_TRACE_NO_PARAM(5, "Response::clear()")
+
+      fbPermissions.clear();
+      type.clear();
+      token.clear();
+      table.clear();
+      }
 
    void toJSON(UValue& json)
       {
-      U_TRACE(0, "UJsonTypeHandler<Request>::toJSON(%p)", &json)
+      U_TRACE(5, "Response::toJSON(%p)", &json)
 
-      json.toJSON(U_JSON_TYPE_HANDLER(Request, token,    UString));
-      json.toJSON(U_JSON_TYPE_HANDLER(Request, type,     UString));
-      json.toJSON(U_JSON_TYPE_HANDLER(Request, radius,   UString));
-      json.toJSON(U_JSON_TYPE_HANDLER(Request, location, UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(fbPermissions, UVector<UString>));
+      json.toJSON(U_JSON_METHOD_HANDLER(type,          UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(token,         UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(table,         UHashMap<UString>));
       }
 
    void fromJSON(UValue& json)
       {
-      U_TRACE(0, "UJsonTypeHandler<Request>::fromJSON(%p)", &json)
+      U_TRACE(5, "Response::fromJSON(%p)", &json)
 
-      json.fromJSON(U_JSON_TYPE_HANDLER(Request, token,    UString));
-      json.fromJSON(U_JSON_TYPE_HANDLER(Request, type,     UString));
-      json.fromJSON(U_JSON_TYPE_HANDLER(Request, radius,   UString));
-      json.fromJSON(U_JSON_TYPE_HANDLER(Request, location, UString));
+      json.fromJSON(U_JSON_METHOD_HANDLER(fbPermissions, UVector<UString>));
+      json.fromJSON(U_JSON_METHOD_HANDLER(type,          UString));
+      json.fromJSON(U_JSON_METHOD_HANDLER(token,         UString));
+      json.fromJSON(U_JSON_METHOD_HANDLER(table,         UHashMap<UString>));
       }
+
+#ifdef DEBUG
+   const char* dump(bool breset) const
+      {
+      *UObjectIO::os << "fbPermissions (UVector " << (void*)&fbPermissions << ")\n"
+                     << "type          (UString " << (void*)&type          << ")\n"
+                     << "token         (UString " << (void*)&token         << ")\n"
+                     << "table         (UHashMap " << (void*)&table        << ')';
+
+      if (breset)
+         {
+         UObjectIO::output();
+
+         return UObjectIO::buffer_output;
+         }
+
+      return 0;
+      }
+#endif
+};
+
+class Multiple {
+public:
+   // Check for memory error
+   U_MEMORY_TEST
+
+   // Allocator e Deallocator
+   U_MEMORY_ALLOCATOR
+   U_MEMORY_DEALLOCATOR
+
+   Request request;
+   Response response;
+
+   Multiple()
+      {
+      U_TRACE_REGISTER_OBJECT(5, Multiple, "")
+      }
+
+   ~Multiple()
+      {
+      U_TRACE_UNREGISTER_OBJECT(5, Multiple)
+      }
+
+   void clear()
+      {
+      U_TRACE_NO_PARAM(5, "Multiple::clear()")
+
+      request.clear();
+      response.clear();
+      }
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(5, "Multiple::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_METHOD_HANDLER(request,  Request));
+      json.toJSON(U_JSON_METHOD_HANDLER(response, Response));
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(5, "Multiple::fromJSON(%p)", &json)
+
+      json.fromJSON(U_JSON_METHOD_HANDLER(request,  Request));
+      json.fromJSON(U_JSON_METHOD_HANDLER(response, Response));
+      }
+
+#ifdef DEBUG
+   const char* dump(bool breset) const
+      {
+      *UObjectIO::os << "request  (Request "  << (void*)&request  << ")\n"
+                     << "response (Response " << (void*)&response << ')';
+
+      if (breset)
+         {
+         UObjectIO::output();
+
+         return UObjectIO::buffer_output;
+         }
+
+      return 0;
+      }
+#endif
 };
 
 // Do a query and print the results
@@ -200,58 +325,137 @@ static void testMap()
    U_INTERNAL_ASSERT(ok)
 }
 
-static void testObject()
+static void testRequest()
 {
-   U_TRACE_NO_PARAM(5, "testObject()")
+   U_TRACE_NO_PARAM(5, "testRequest()")
 
    UValue json_obj;
    Request request;
-   UString result, reqJson = U_STRING_FROM_CONSTANT("{\"token\":\"A619828KAIJ6D3\",\"type\":\"localesData\",\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\"}");
+   const char* dump;
+   UString result, reqJson = U_STRING_FROM_CONSTANT("{\"table\":{\"type\":\"localesData\",\"token\":\"A619828KAIJ6D3\"},\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\",\"fbPermissions\":[\"public_profile\",\"user_friends\",\"email\"]}");
 
    bool ok = JSON_parse(reqJson, request);
 
    U_INTERNAL_ASSERT(ok)
 
-   U_DUMP_OBJECT(request)
-
-   U_INTERNAL_ASSERT_EQUALS(request.token,    "A619828KAIJ6D3")
-   U_INTERNAL_ASSERT_EQUALS(request.type,     "localesData")
    U_INTERNAL_ASSERT_EQUALS(request.radius,   "near")
    U_INTERNAL_ASSERT_EQUALS(request.location, "40.7831 N, 73.9712 W")
 
-   ok = JSON_parse(reqJson, request);
+   dump = UObject2String<UHashMap<UString> >(request.table);
+
+   U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
+
+   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]");
 
    U_INTERNAL_ASSERT(ok)
 
-   U_DUMP_OBJECT(request)
+   dump = UObject2String<UVector<UString> >(request.fbPermissions);
 
-   U_INTERNAL_ASSERT_EQUALS(request.token,    "A619828KAIJ6D3")
-   U_INTERNAL_ASSERT_EQUALS(request.type,     "localesData")
-   U_INTERNAL_ASSERT_EQUALS(request.radius,   "near")
-   U_INTERNAL_ASSERT_EQUALS(request.location, "40.7831 N, 73.9712 W")
+   U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
+
+   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "( public_profile user_friends email )");
+
+   U_INTERNAL_ASSERT(ok)
 
    JSON_stringify(result, json_obj, request);
 
    U_ASSERT_EQUALS( result, reqJson )
+}
 
-   request.clear();
+static void testResponse()
+{
+   U_TRACE_NO_PARAM(5, "testResponse()")
 
-   ok = JSON_parse((reqJson = U_STRING_FROM_CONSTANT("{\"type\":\"localesData\",\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\"}")), request);
+   UValue json_obj;
+   const char* dump;
+   Response response;
+   UString result, reqJson = U_STRING_FROM_CONSTANT("{\"fbPermissions\":[\"public_profile\",\"user_friends\",\"email\"],\"type\":\"startup\",\"token\":\"\",\"table\":{\"type\":\"localesData\",\"token\":\"A619828KAIJ6D3\"}}");
+
+   bool ok = JSON_parse(reqJson, response);
 
    U_INTERNAL_ASSERT(ok)
 
-   U_DUMP_OBJECT(request)
+   U_INTERNAL_ASSERT_EQUALS(response.token, "")
+   U_INTERNAL_ASSERT_EQUALS(response.type,  "startup")
 
-   U_INTERNAL_ASSERT_EQUALS(request.token,    "")
-   U_INTERNAL_ASSERT_EQUALS(request.type,     "localesData")
-   U_INTERNAL_ASSERT_EQUALS(request.radius,   "near")
-   U_INTERNAL_ASSERT_EQUALS(request.location, "40.7831 N, 73.9712 W")
+   dump = UObject2String<UVector<UString> >(response.fbPermissions);
 
-   result.clear();
+   U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
 
-   JSON_stringify(result, json_obj, request);
+   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "( public_profile user_friends email )");
 
-   U_ASSERT_EQUALS( result, "{\"token\":\"\",\"type\":\"localesData\",\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\"}" )
+   U_INTERNAL_ASSERT(ok)
+
+   dump = UObject2String<UHashMap<UString> >(response.table);
+
+   U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
+
+   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]");
+
+   U_INTERNAL_ASSERT(ok)
+
+   JSON_stringify(result, json_obj, response);
+
+   U_ASSERT_EQUALS( result, reqJson )
+}
+
+static void testMultiple()
+{
+   U_TRACE_NO_PARAM(5, "testMultiple()")
+
+   UValue json_obj;
+   const char* dump;
+   Multiple multiple;
+   UString result, reqJson = U_STRING_FROM_CONSTANT("{"
+   "\"request\":{\"table\":{\"type\":\"localesData\",\"token\":\"A619828KAIJ6D3\"},\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\",\"fbPermissions\":[\"public_profile\",\"user_friends\",\"email\"]},"
+   "\"response\":{\"fbPermissions\":[\"public_profile\",\"user_friends\",\"email\"],\"type\":\"startup\",\"token\":\"\",\"table\":{\"type\":\"localesData\",\"token\":\"A619828KAIJ6D3\"}}"
+   "}");
+
+   bool ok = JSON_parse(reqJson, multiple);
+
+   U_INTERNAL_ASSERT(ok)
+
+   U_INTERNAL_ASSERT_EQUALS(multiple.request.radius,   "near")
+   U_INTERNAL_ASSERT_EQUALS(multiple.request.location, "40.7831 N, 73.9712 W")
+
+   dump = UObject2String<UHashMap<UString> >(multiple.request.table);
+
+   U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
+
+   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]");
+
+   U_INTERNAL_ASSERT(ok)
+
+   dump = UObject2String<UVector<UString> >(multiple.request.fbPermissions);
+
+   U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
+
+   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "( public_profile user_friends email )");
+
+   U_INTERNAL_ASSERT(ok)
+
+   U_INTERNAL_ASSERT_EQUALS(multiple.response.token, "")
+   U_INTERNAL_ASSERT_EQUALS(multiple.response.type,  "startup")
+
+   dump = UObject2String<UVector<UString> >(multiple.response.fbPermissions);
+
+   U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
+
+   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "( public_profile user_friends email )");
+
+   U_INTERNAL_ASSERT(ok)
+
+   dump = UObject2String<UHashMap<UString> >(multiple.response.table);
+
+   U_INTERNAL_DUMP("dump(%u) = %.*S)", UObjectIO::buffer_output_len, UObjectIO::buffer_output_len, dump)
+
+   ok = U_STREQ(dump, UObjectIO::buffer_output_len, "[\ntype\tlocalesData\ntoken\tA619828KAIJ6D3\n]");
+
+   U_INTERNAL_ASSERT(ok)
+
+   JSON_stringify(result, json_obj, multiple);
+
+   U_ASSERT_EQUALS( result, reqJson )
 }
 
 int
@@ -279,7 +483,11 @@ U_EXPORT main (int argc, char* argv[])
    return -1;
    */
 
-   testObject();
+   testMap();
+   testVector();
+   testRequest();
+   testResponse();
+   testMultiple();
 
    content = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/json/prova.json"));
 
@@ -529,9 +737,6 @@ U_EXPORT main (int argc, char* argv[])
    ok = (v[5] == 5);
    U_INTERNAL_ASSERT(ok)
 #endif
-
-   testMap();
-   testVector();
 
    while (cin >> filename)
       {

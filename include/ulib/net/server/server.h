@@ -560,7 +560,7 @@ protected:
    static UServer_Base* pthis;
    static UString* cenvironment;
    static UString* senvironment;
-   static bool flag_sigterm, monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive, called_from_handlerTime;
+   static bool monitoring_process, set_realtime_priority, public_address, binsert, set_tcp_keep_alive, called_from_handlerTime;
 
    static uint32_t                 vplugin_size;
    static UVector<UString>*        vplugin_name;

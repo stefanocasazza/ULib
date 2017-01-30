@@ -2738,7 +2738,7 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
 
    const char* pend;
    const char* ptr = UClientImage_Base::request->data();
-   
+
    if (U_http_info.endHeader)
       {
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
@@ -2941,7 +2941,7 @@ U_NO_EXPORT void UHTTP::checkRequestForHeader()
                U_http_version       = '2';
                U_http2_settings_len = pn-ptr1;
 
-               UHTTP2::upgrade_settings = ptr1;
+               UBase64::decodeUrl(ptr1, U_http2_settings_len, *UClientImage_Base::wbuffer);
 #           endif
 
                goto next;
@@ -3863,7 +3863,9 @@ int UHTTP::handlerREAD()
    UClientImage_Base::size_request = (U_http_info.endHeader ? U_http_info.endHeader
                                                             : U_http_info.startHeader + U_CONSTANT_SIZE(U_CRLF2));
 
-   return manageRequest();
+   U_ClientImage_state = manageRequest();
+
+   U_RETURN(U_ClientImage_state);
 }
 
 int UHTTP::manageRequest()
@@ -4367,6 +4369,8 @@ need_to_be_processed:
        UWebSocket::sendAccept() == false)
       {
       setBadRequest();
+
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 #endif
 
@@ -4387,6 +4391,26 @@ end:
 #endif
 
    if (UClientImage_Base::isRequestFileCacheProcessed()) handlerResponse();
+
+#ifndef U_HTTP2_DISABLE
+   U_INTERNAL_DUMP("UClientImage_Base::size_request = %u", UClientImage_Base::size_request)
+
+   if (UClientImage_Base::size_request == 0)
+      {
+      U_INTERNAL_DUMP("U_ClientImage_state = %u %B", U_ClientImage_state, U_ClientImage_state)
+
+      U_INTERNAL_ASSERT(UServer_Base::csocket->isOpen())
+      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_state, U_PLUGIN_HANDLER_ERROR)
+
+      if (UClientImage_Base::isRequestNeedProcessing())
+         {
+         U_ClientImage_state = UClientImage_Base::callerHandlerRequest();
+
+         if (UServer_Base::csocket->isClosed()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+         }
+      }
+#endif
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
@@ -6201,12 +6225,7 @@ void UHTTP::handlerResponse()
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
 #ifndef U_HTTP2_DISABLE
-   if (U_http_version == '2')
-      {
-      UClientImage_Base::wbuffer->clear();
-
-      UHTTP2::handlerResponse();
-      }
+   if (U_http_version == '2') UHTTP2::handlerResponse();
    else
 #endif
    {
@@ -6215,6 +6234,8 @@ void UHTTP::handlerResponse()
    if (U_http_info.nResponseCode == HTTP_NOT_IMPLEMENTED ||
        U_http_info.nResponseCode == HTTP_OPTIONS_RESPONSE)
       {
+      UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
+
       U_INTERNAL_DUMP("U_http_method_not_implemented = %b", U_http_method_not_implemented)
 
       if (U_http_method_not_implemented)
@@ -6279,7 +6300,8 @@ void UHTTP::handlerResponse()
 
    UClientImage_Base::wbuffer->setBuffer(200U + sz1 + sz2);
 
-   base = ptr = UClientImage_Base::wbuffer->data();
+    ptr =
+   base = UClientImage_Base::wbuffer->data();
 
    if (sz1)
       {

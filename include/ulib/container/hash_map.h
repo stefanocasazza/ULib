@@ -849,6 +849,8 @@ public:
       UHashMap<UStringRep*>::insertAfterFind(_key, str.rep);
       }
 
+   uint32_t getSpaceToDump() const;
+
    // OPERATOR
 
    bool operator==(const UHashMap<UString>& v) __pure;

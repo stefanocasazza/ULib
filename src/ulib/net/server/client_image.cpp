@@ -473,7 +473,7 @@ void UClientImage_Base::handlerDelete()
 #ifndef U_HTTP2_DISABLE
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
-   if (U_http_version == '2') UHTTP2::reset(this);
+   if (U_http_version == '2') UHTTP2::handlerDelete(this);
 #endif
 
    if (bsocket_open) socket->close();
@@ -857,9 +857,6 @@ next2:
          if (U_http_info.user_agent_len)  U_http_info.user_agent      += diff;
          if (U_http_accept_language_len)  U_http_info.accept_language += diff;
 
-#     ifndef U_HTTP2_DISABLE
-         if (U_http2_settings_len)     UHTTP2::upgrade_settings += diff;
-#     endif
          if (U_http_websocket_len) UWebSocket::upgrade_settings += diff;
 
          U_INTERNAL_DUMP("host            = %.*S", U_HTTP_HOST_TO_TRACE)

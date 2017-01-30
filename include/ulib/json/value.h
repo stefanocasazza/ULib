@@ -64,7 +64,6 @@ class UValueIter;
 
 class U_EXPORT UValue {
 public:
-
    // Check for memory error
    U_MEMORY_TEST
 
@@ -83,13 +82,13 @@ public:
       REAL_VALUE = 0, // double value
        INT_VALUE = 1, //   signed integer value
       UINT_VALUE = 2, // unsigned integer value
-      TRUE_VALUE = 3, // bool value
-     FALSE_VALUE = 4, // bool value
+      TRUE_VALUE = 3, //   bool value
+     FALSE_VALUE = 4, //   bool value
     STRING_VALUE = 5, // string value
        UTF_VALUE = 6, // string value (need to be emitted)
      ARRAY_VALUE = 7, //  array value (ordered list)
     OBJECT_VALUE = 8, // object value (collection of name/value pairs)
-      NULL_VALUE = 9  //    null value
+      NULL_VALUE = 9  //   null value
    } ValueType;
 
    static int jsonParseFlags;
@@ -239,6 +238,15 @@ public:
       U_RETURN(type);
       }
 
+   bool empty() const
+      {
+      U_TRACE_NO_PARAM(0, "UValue::empty()")
+
+      if (value.ival == 0ULL) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
    bool isNull() const
       {
       U_TRACE_NO_PARAM(0+256, "UValue::isNull()")
@@ -326,26 +334,25 @@ public:
       U_RETURN(false);
       }
 
-   bool isArrayOrObject() const { return isArrayOrObject(value.ival); }
-
-   bool isStringUTF() const   { return isStringUTF(value.ival); }
-   bool isStringOrUTF() const { return isStringOrUTF(value.ival); }
-
    union jval getKey() const   { return  pkey; }
    union jval getValue() const { return value; }
 
             int getInt() const  { return value.sint; }
    unsigned int getUInt() const { return value.uint; }
 
+   UString getString() { return getString(value.ival); }
+
+   int    getTag() const    { return getTag(value.ival); }
    bool   getBool() const   { return (getTag() == TRUE_VALUE); }
    double getDouble() const { return value.real; }
 
-          int getTag() const   { return getTag(value.ival); }
-   long long getNumber() const { return (isDouble() ? llrint(value.real) : (long long)(long)getPayload()); } 
-
-   UString getString() { return getString(value.ival); }
+   bool isStringUTF() const     { return isStringUTF(value.ival); }
+   bool isStringOrUTF() const   { return isStringOrUTF(value.ival); }
+   bool isArrayOrObject() const { return isArrayOrObject(value.ival); }
 
    static uint32_t getStringSize(const union jval value) { return getString(value.ival).size(); }
+
+   long long getNumber() const { return (isDouble() ? llrint(value.real) : (long long)(long)getPayload()); } 
 
    // manage values in array or object
 
@@ -354,8 +361,8 @@ public:
 
    UValue* at(const UString& key) const { return at(U_STRING_TO_PARAM(key)); }
 
-   UValue& operator[](uint32_t pos)        const   { return *at(pos); }
-   UValue& operator[](const UString& key)  const   { return *at(U_STRING_TO_PARAM(key)); }
+   UValue& operator[](uint32_t pos) const          { return *at(pos); }
+   UValue& operator[](const UString& key) const    { return *at(U_STRING_TO_PARAM(key)); }
    UValue& operator[](const UStringRep* key) const { return *at(U_STRING_TO_PARAM(*key)); }
 
    bool isMemberExist(const UString& key) const    { return (at(U_STRING_TO_PARAM(key))  != 0); }
@@ -436,54 +443,36 @@ public:
       U_INTERNAL_DUMP("result(%u) = %V", result.size(), result.rep)
       }
 
-   template <typename T> void toJSON(UJsonTypeHandler<T> t)
-      {
-      U_TRACE(0, "UValue::toJSON<T>(%p)", &t)
-
-      t.toJSON(*this);
-      }
-
-   template <typename T> static void toJSON1(UJsonTypeHandler<T> member)
-      {
-      U_TRACE(0, "UValue::toJSON1<T>(%p)", &member)
-
-      UValue* node;
-
-      U_NEW(UValue, node, UValue((UValue*)0));
-
-      member.toJSON(*node);
-
-      if (pnode) pnode->next = node;
-      else             phead = node;
-
-      pnode = node;
-      }
-
-   template <typename T> static void toJSON(const UString& name, UJsonTypeHandler<T> member)
+   template <typename T> void toJSON(const UString& name, UJsonTypeHandler<T> member)
       {
       U_TRACE(0, "UValue::toJSON<T>(%V,%p)", name.rep, &member)
 
-      toJSON1<T>(member);
+      addJSON<T>(name, member);
 
-      name.hold();
+      U_INTERNAL_DUMP("pnode = %p", pnode)
 
-      pnode->pkey.ival = getJsonValue(STRING_VALUE, name.rep);
-      }
+      if (pnode->toNode() == 0)
+         {
+         int tag = pnode->getTag();
 
-   template <typename T> void fromJSON(UJsonTypeHandler<T> t)
-      {
-      U_TRACE(0, "UValue::fromJSON<T>(%p)", &t)
+         if (tag ==  ARRAY_VALUE ||
+             tag == OBJECT_VALUE)
+            {
+            U_INTERNAL_DUMP("pnode->next = %p", pnode->next)
 
-      t.fromJSON(*this);
+            pnode->value.ival = UValue::getJsonValue(tag, pnode->next);
+                                                          pnode->next = 0;
+            }
+         }
       }
 
    template <typename T> void fromJSON(const UString& name, UJsonTypeHandler<T> member)
       {
       U_TRACE(0, "UValue::fromJSON<T>(%V,%p)", name.rep, &member)
 
-      UValue* json = at(name);
+      UValue* node = at(name);
 
-      if (json) member.fromJSON(*json);
+      if (node) member.fromJSON(*node);
       else      member.clear();
       }
 
@@ -589,7 +578,6 @@ protected:
    union jval pkey, // only if binded to an object
               value;
 
-   static UValue* phead;
    static UValue* pnode;
    static uint32_t size;
    static char* pstringify; // buffer to stringify json
@@ -682,18 +670,23 @@ protected:
          }
       }
 
-   void stringify() const;
-   void  prettify(uint32_t indent) const;
+   void setTag(int tag)
+      {
+      U_TRACE(0, "UValue::setTag(%d)", tag)
 
-   uint64_t getPayload() const { return getPayload(value.ival); }
+      value.ival = getJsonValue(tag, (void*)getPayload());
+      }
+
+   void stringify() const;
+   void prettify(uint32_t indent) const;
 
    UValue* toNode() const { return toNode(value.ival); }
+
+   uint64_t getPayload() const { return getPayload(value.ival); }
 
    static UValue* toNode(uint64_t val)
       {
       U_TRACE(0, "UValue::toNode(0x%x)", val)
-
-      U_ASSERT(isArrayOrObject(val))
 
       UValue* ptr = (UValue*)getPayload(val);
 
@@ -804,6 +797,37 @@ protected:
 
    static UString getString(uint64_t value);
 
+   template <typename T> void addJSON(UJsonTypeHandler<T> member)
+      {
+      U_TRACE(0, "UValue::addJSON<T>(%p)", &member)
+
+      UValue* node;
+
+      U_NEW(UValue, node, UValue((UValue*)0));
+
+      U_INTERNAL_DUMP("pnode = %p", pnode)
+
+      if (pnode) pnode->next = node;
+      else
+         {
+         value.ival = UValue::getJsonValue(isArray() ? UValue::ARRAY_VALUE : UValue::OBJECT_VALUE, node);
+         }
+
+      member.toJSON(*(pnode = node));
+                      pnode = node;
+      }
+
+   template <typename T> void addJSON(const UString& name, UJsonTypeHandler<T> member)
+      {
+      U_TRACE(0, "UValue::addJSON<T>(%V,%p)", name.rep, &member)
+
+      name.hold();
+
+      addJSON<T>(member);
+
+      pnode->pkey.ival = getJsonValue(STRING_VALUE, name.rep);
+      }
+
 private:
    static int jread_skip(UTokenizer& tok) U_NO_EXPORT;
    static int jreadFindToken(UTokenizer& tok) U_NO_EXPORT;
@@ -885,6 +909,9 @@ private:
    U_DISALLOW_ASSIGN(UJsonTypeHandler_Base)
 };
 
+#define U_JSON_METHOD_HANDLER(name_object_member, type_object_member) \
+                              U_STRING_FROM_CONSTANT(#name_object_member), UJsonTypeHandler<type_object_member>(name_object_member)
+
 #define U_JSON_TYPE_HANDLER(class_name, name_object_member, type_object_member) \
                             U_STRING_FROM_CONSTANT(#name_object_member), UJsonTypeHandler<type_object_member>(((class_name*)pval)->name_object_member)
 
@@ -895,9 +922,9 @@ private:
  *
  *   class Person {
  *   public:
+ *      int age;
  *      UString  lastName;
  *      UString firstName;
- *      int     age;
  *   };
  *
  * The UJsonTypeHandler must provide a custom toJSON and fromJSON method:
@@ -908,18 +935,41 @@ private:
  *
  *      void toJSON(UValue& json)
  *       {
- *         json.toJSON(U_JSON_TYPE_HANDLER(Person,  lastName, UString));
- *         json.toJSON(U_JSON_TYPE_HANDLER(Person, firstName, UString));
- *         json.toJSON(U_JSON_TYPE_HANDLER(Person, age,       int));
+ *       json.toJSON(U_JSON_TYPE_HANDLER(Person, age,       int));
+ *       json.toJSON(U_JSON_TYPE_HANDLER(Person,  lastName, UString));
+ *       json.toJSON(U_JSON_TYPE_HANDLER(Person, firstName, UString));
  *       }
  *
  *      void fromJSON(UValue& json)
  *       {
- *         json.fromJSON(U_JSON_TYPE_HANDLER(Person,  lastName, UString));
- *         json.fromJSON(U_JSON_TYPE_HANDLER(Person, firstName, UString));
- *         json.fromJSON(U_JSON_TYPE_HANDLER(Person, age,       int));
+ *       json.fromJSON(U_JSON_TYPE_HANDLER(Person, age,       int));
+ *       json.fromJSON(U_JSON_TYPE_HANDLER(Person,  lastName, UString));
+ *       json.fromJSON(U_JSON_TYPE_HANDLER(Person, firstName, UString));
  *       }
  *   };
+ *
+ * or in alternative add this methods to the (simplified) class:
+ *
+ * void Person::clear()
+ *    {
+ *    age = 0;
+ *     lastName.clear();
+ *    firstName.clear();
+ *    }
+ *
+ * void Person::toJSON(UValue& json)
+ *    {
+ *    json.toJSON(U_JSON_METHOD_HANDLER(age,       int));
+ *    json.toJSON(U_JSON_METHOD_HANDLER( lastName, UString));
+ *    json.toJSON(U_JSON_METHOD_HANDLER(firstName, UString));
+ *    }
+ *
+ * void Person::fromJSON(UValue& json)
+ *    {
+ *    json.fromJSON(U_JSON_METHOD_HANDLER(age,       int));
+ *    json.fromJSON(U_JSON_METHOD_HANDLER( lastName, UString));
+ *    json.fromJSON(U_JSON_METHOD_HANDLER(firstName, UString));
+ *    }
  */
 
 template <class T> class U_EXPORT UJsonTypeHandler : public UJsonTypeHandler_Base {
@@ -929,10 +979,28 @@ public:
 
    // SERVICES
 
-   void clear();
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<T>::clear()")
 
-   void   toJSON(UValue& json);
-   void fromJSON(UValue& json);
+      ((T*)pval)->clear(); // method alternative
+      }
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<T>::toJSON(%p)", &json)
+
+      json.setTag(UValue::OBJECT_VALUE);
+
+      ((T*)pval)->toJSON(json); // method alternative
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<T>::fromJSON(%p)", &json)
+
+      ((T*)pval)->fromJSON(json); // method alternative
+      }
 
 private:
    U_DISALLOW_ASSIGN(UJsonTypeHandler)
@@ -940,7 +1008,7 @@ private:
 
 // manage object <=> JSON representation
 
-template <class T> inline bool JSON_parse(const UString& str, T& obj)
+template <class T> bool JSON_parse(const UString& str, T& obj)
 {
    U_TRACE(0, "JSON_parse(%p,%p)", &str, &obj)
 
@@ -948,7 +1016,7 @@ template <class T> inline bool JSON_parse(const UString& str, T& obj)
 
    if (json.parse(str))
       {
-      json.fromJSON(UJsonTypeHandler<T>(obj));
+      UJsonTypeHandler<T>(obj).fromJSON(json);
 
       U_RETURN(true);
       }
@@ -956,15 +1024,15 @@ template <class T> inline bool JSON_parse(const UString& str, T& obj)
    U_RETURN(false);
 }
 
-template <class T> inline void JSON_stringify(UString& result, UValue& json, T& obj)
+template <class T> void JSON_stringify(UString& result, UValue& json, T& obj)
 {
    U_TRACE(0, "JSON_stringify(%V,%p,%p)", result.rep, &json, &obj)
 
+   U_ASSERT(json.empty())
+
    UValue::pnode = 0;
 
-   json.toJSON(UJsonTypeHandler<T>(obj));
-
-   if (UValue::pnode) json.value.ival = UValue::getJsonValue(UValue::OBJECT_VALUE, UValue::phead);
+   UJsonTypeHandler<T>(obj).toJSON(json);
 
    UValue::stringify(result, json);
 }
@@ -974,6 +1042,11 @@ template <class T> inline void JSON_stringify(UString& result, UValue& json, T& 
 template <> class U_EXPORT UJsonTypeHandler<null> : public UJsonTypeHandler_Base {
 public:
    explicit UJsonTypeHandler(null&) : UJsonTypeHandler_Base(0) {}
+
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<null>::clear()")
+      }
 
    void toJSON(UValue& json)
       {
@@ -1459,7 +1532,8 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<uvector>::toJSON(%p)", &json)
 
-      UValue::phead = 0;
+      json.setTag(UValue::ARRAY_VALUE);
+
       uvector* pvec = (uvector*)pval;
 
       if (pvec->_length)
@@ -1467,20 +1541,15 @@ public:
          const void** ptr = pvec->vec;
          const void** end = pvec->vec + pvec->_length;
 
-         for (; ptr < end; ++ptr)
-            {
-            UValue::toJSON1<T>(UJsonTypeHandler<T>(*(T*)(*ptr)));
-            }
+         do { json.addJSON<T>(UJsonTypeHandler<T>(*(T*)(*ptr))); } while (++ptr < end);
          }
-
-      json.value.ival = UValue::getJsonValue(UValue::ARRAY_VALUE, UValue::phead);
-
-      UValue::pnode = 0;
       }
 
    void fromJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<uvector>::fromJSON(%p)", &json)
+
+      U_ASSERT(((uvector*)pval)->empty())
 
       UValue* element = json.toNode();
 
@@ -1514,25 +1583,47 @@ public:
       ((UVector<UString>*)pval)->clear();
       }
 
-   void toJSON(UValue& json) { ((UJsonTypeHandler<uvectorbase>*)this)->toJSON(json); }
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UVector<UString>>::toJSON(%p)", &json)
+
+      json.setTag(UValue::ARRAY_VALUE);
+
+      uvectorbase* pvec = (uvectorbase*)pval;
+
+      if (pvec->_length)
+         {
+         const void** ptr = pvec->vec;
+         const void** end = pvec->vec + pvec->_length;
+
+         do {
+            UString item((const UStringRep*)(*ptr));
+
+            json.addJSON<UString>(UJsonTypeHandler<UString>(item));
+            }
+         while (++ptr < end);
+         }
+      }
 
    void fromJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<UVector<UString>>::fromJSON(%p)", &json)
 
-      UValue* element = json.toNode();
+      U_ASSERT(((UVector<UString>*)pval)->empty())
 
-      while (element)
+      UValue* pelement = json.toNode();
+
+      while (pelement)
          {
          UString item;
 
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), UValue::getDataTypeDescription(element->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%d,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
-         element->fromJSON(UJsonTypeHandler<UString>(item));
+         UJsonTypeHandler<UString>(item).fromJSON(*pelement);
 
          ((UVector<UString>*)pval)->push_back(item);
 
-         element = element->next;
+         pelement = pelement->next;
          }
       }
 };
@@ -1554,45 +1645,46 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<uhashmap>::toJSON(%p)", &json)
 
-      UValue::phead = 0;
+      json.setTag(UValue::OBJECT_VALUE);
+
       uhashmap* pmap = (uhashmap*)pval;
 
       if (pmap->first())
          {
          do {
-            UValue::toJSON<T>(pmap->getKey(), UJsonTypeHandler<T>(*(pmap->elem())));
+            json.addJSON<T>(pmap->getKey(), UJsonTypeHandler<T>(*(pmap->elem())));
             }
          while (pmap->next());
          }
-
-      json.value.ival = UValue::getJsonValue(UValue::OBJECT_VALUE, UValue::phead);
       }
 
    void fromJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<uhashmap>::fromJSON(%p)", &json)
 
-      UValue* element = json.toNode();
+      U_ASSERT(((uhashmap*)pval)->empty())
 
-      while (element)
+      UValue* pelement = json.toNode();
+
+      while (pelement)
          {
          T* pitem;
 
          U_NEW(T, pitem, T);
 
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), UValue::getDataTypeDescription(element->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%d,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
-         element->fromJSON(UJsonTypeHandler<T>(*pitem));
+         UJsonTypeHandler<T>(*pitem).fromJSON(*pelement);
 
-         UStringRep* rep = (UStringRep*)UValue::getPayload(element->pkey.ival);
+         UStringRep* rep = (UStringRep*)UValue::getPayload(pelement->pkey.ival);
 
-         U_INTERNAL_DUMP("element->pkey(%p) = %V", rep, rep)
+         U_INTERNAL_DUMP("pelement->pkey(%p) = %V", rep, rep)
 
          ((uhashmap*)pval)->lookup(rep);
 
          ((uhashmap*)pval)->insertAfterFind(rep, pitem);
 
-         element = element->next;
+         pelement = pelement->next;
          }
       }
 };
@@ -1603,31 +1695,57 @@ public:
 
    explicit UJsonTypeHandler(UHashMap<UString>& val) : UJsonTypeHandler<uhashmapbase>(*((uhashmap*)&val)) {}
 
-   void toJSON(UValue& json) { ((UJsonTypeHandler<uhashmapbase>*)this)->toJSON(json); }
+   void clear()
+      {
+      U_TRACE(0, "UJsonTypeHandler<UHashMap<UString>>::clear()")
+
+      ((UHashMap<UString>*)pval)->clear();
+      }
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UHashMap<UString>>::toJSON(%p)", &json)
+
+      json.setTag(UValue::OBJECT_VALUE);
+
+      UHashMap<UString>* pmap = (UHashMap<UString>*)pval;
+
+      if (pmap->first())
+         {
+         do {
+            UString item((const UStringRep*)pmap->elem());
+
+            json.addJSON<UString>(pmap->getKey(), UJsonTypeHandler<UString>(item));
+            }
+         while (pmap->next());
+         }
+      }
 
    void fromJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<UHashMap<UString>>::fromJSON(%p)", &json)
 
-      UValue* element = json.toNode();
+      U_ASSERT(((UHashMap<UString>*)pval)->empty())
 
-      while (element)
+      UValue* pelement = json.toNode();
+
+      while (pelement)
          {
          UString item;
 
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), UValue::getDataTypeDescription(element->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%d,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
-         element->fromJSON(UJsonTypeHandler<UString>(item));
+         UJsonTypeHandler<UString>(item).fromJSON(*pelement);
 
-         UStringRep* rep = (UStringRep*)UValue::getPayload(element->pkey.ival);
+         UStringRep* rep = (UStringRep*)UValue::getPayload(pelement->pkey.ival);
 
-         U_INTERNAL_DUMP("element->pkey(%p) = %V", rep, rep)
+         U_INTERNAL_DUMP("pelement->pkey(%p) = %V", rep, rep)
 
-         ((uhashmap*)pval)->lookup(rep);
+         ((UHashMap<UString>*)pval)->lookup(rep);
 
-         ((uhashmap*)pval)->insertAfterFind(rep, item.rep);
+         ((uhashmapbase*)pval)->insertAfterFind(rep, item.rep);
 
-         element = element->next;
+         pelement = pelement->next;
          }
       }
 };
@@ -1651,36 +1769,32 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<stdvector>::toJSON(%p)", &json)
 
-      UValue::phead = 0;
+      json.setTag(UValue::ARRAY_VALUE);
+
       stdvector* pvec = (stdvector*)pval;
 
-      for (uint32_t i = 0, n = pvec->size(); i < n; ++i)
-         {
-         UValue::toJSON1<T>(UJsonTypeHandler<T>(pvec->at(i)));
-         }
-
-      json.value.ival = UValue::getJsonValue(UValue::ARRAY_VALUE, UValue::phead);
-
-      UValue::pnode = 0;
+      for (uint32_t i = 0, n = pvec->size(); i < n; ++i) json.addJSON<T>(UJsonTypeHandler<T>(pvec->at(i)));
       }
 
    void fromJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<stdvector>::fromJSON(%p)", &json)
 
-      UValue* element = json.toNode();
+   // U_ASSERT(((stdvector*)pval)->empty())
 
-      while (element)
+      UValue* pelement = json.toNode();
+
+      while (pelement)
          {
          T item;
 
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), UValue::getDataTypeDescription(element->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%d,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
-         element->fromJSON(UJsonTypeHandler<T>(item));
+         UJsonTypeHandler<T>(item).fromJSON(*pelement);
 
          ((stdvector*)pval)->push_back(item);
 
-         element = element->next;
+         pelement = pelement->next;
          }
       }
 };

@@ -17,7 +17,6 @@
 
 int      UValue::jsonParseFlags;
 char*    UValue::pstringify;
-UValue*  UValue::phead;
 UValue*  UValue::pnode;
 uint32_t UValue::size;
 #ifdef DEBUG
@@ -117,6 +116,8 @@ void UValue::clear()
 
 case_double:
    value.ival = 0ULL;
+
+   U_ASSERT(empty())
 
    return;
 
@@ -821,7 +822,7 @@ case_dquote:
          }
 
 dquote:
-      // U_INTERNAL_DUMP("c = %C", *s)
+   // U_INTERNAL_DUMP("c = %C", *s)
 
       if (u__isvalidchar((c = *s)) == false) break;
 

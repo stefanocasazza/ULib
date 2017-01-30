@@ -684,6 +684,40 @@ public:
       _length -= 2;
       }
 
+   bool needQuote() const
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::needQuote()")
+
+      U_CHECK_MEMORY
+
+      if (_length == 0) U_RETURN(true);
+
+      for (const unsigned char* s = (const unsigned char*)str, *_end = s + _length; s < _end; ++s)
+         {
+         unsigned char c = *s;
+
+         if (c == '"'  ||
+             c == '\\' ||
+             u__isspace(c))
+            {
+            U_RETURN(true);
+            }
+         }
+
+      U_RETURN(false);
+      }
+
+   uint32_t getSpaceToDump() const
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::getSpaceToDump()")
+
+      U_CHECK_MEMORY
+
+      if (needQuote() == false) U_RETURN(_length);
+
+      U_RETURN(_length + U_CONSTANT_SIZE(""));
+      }
+
    static uint32_t fold(uint32_t pos, uint32_t off, uint32_t sz)
       {
       U_TRACE(0, "UStringRep::fold(%u,%u,%u)", pos, off, sz)
@@ -1765,6 +1799,10 @@ public:
 
    void unQuote();
 
+   bool needQuote() const { return rep->needQuote(); }
+
+   uint32_t getSpaceToDump() const { return rep->getSpaceToDump(); }
+
    // set uniq
 
    void duplicate() const;
@@ -1865,7 +1903,7 @@ public:
       U_TRACE(0, "UString::setFromNumber32(%u)", number)
 
 #  ifdef DEBUG
-      vsnprintf_check("4294967295");
+      vsnprintf_check("1234567890");
 
       U_ASSERT(uniq())
 #  endif
@@ -1882,7 +1920,7 @@ public:
       U_TRACE(0, "UString::setFromNumber32s(%d)", number)
 
 #  ifdef DEBUG
-      vsnprintf_check("4294967295");
+      vsnprintf_check("1234567890");
 
       U_ASSERT(uniq())
 #  endif

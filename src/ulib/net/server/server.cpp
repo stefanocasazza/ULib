@@ -89,7 +89,6 @@ bool          UServer_Base::bssl;
 bool          UServer_Base::bipc;
 bool          UServer_Base::binsert;
 bool          UServer_Base::flag_loop;
-bool          UServer_Base::flag_sigterm;
 bool          UServer_Base::public_address;
 bool          UServer_Base::monitoring_process;
 bool          UServer_Base::set_tcp_keep_alive;
@@ -2729,8 +2728,9 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 {
    U_TRACE(0, "[SIGTERM] UServer_Base::handlerForSigTERM(%d)", signo)
 
-   flag_loop    = false;
-   flag_sigterm = true;
+   flag_loop = false;
+
+   UNotifier::flag_sigterm = true;
 
    U_INTERNAL_ASSERT_POINTER(proc)
 
@@ -2763,10 +2763,9 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 #       endif
 #     endif
 
-#     ifndef U_LOG_DISABLE
+#  ifndef U_LOG_DISABLE
          if (isLog()) logMemUsage("SIGTERM");
-#     endif
-
+#  endif
          U_EXIT(0);
          }
       }
@@ -3728,7 +3727,7 @@ stop:
 
 #ifndef U_LOG_DISABLE
    if (isLog() &&
-       flag_sigterm)
+       UNotifier::flag_sigterm)
       {
       logMemUsage("SIGTERM");
       }

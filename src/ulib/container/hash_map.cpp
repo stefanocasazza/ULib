@@ -779,16 +779,16 @@ uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
          str.setFromData(&ptr, _end - ptr, terminator);
          }
 
-      if (str.empty())
-         {
-         U_WARNING("UHashMap<UString>::loadFromData() has found a key(%u) = %V without value", _key.size(), _key.rep);
-         }
-      else
+      if (str)
          {
          U_INTERNAL_ASSERT(str.isNullTerminated())
 
          insert(_key, str);
+
+         continue;
          }
+
+      U_WARNING("UHashMap<UString>::loadFromData() has found a key(%u) = %V without value", _key.size(), _key.rep);
       }
 
    U_INTERNAL_DUMP("ptr - _start = %lu", ptr - _start)
@@ -798,6 +798,55 @@ uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
    sz = ptr - _start;
 
    U_RETURN(sz);
+}
+
+uint32_t UHashMap<UString>::getSpaceToDump() const
+{
+   U_TRACE_NO_PARAM(0, "UHashMap<UString>::getSpaceToDump()")
+
+   U_CHECK_MEMORY
+
+   U_INTERNAL_DUMP("_length = %u", _length)
+
+   uint32_t space = U_CONSTANT_SIZE("[\n]");
+
+   if (_length)
+      {
+      uint32_t sz;
+      UHashMapNode* pnode;
+      UHashMapNode* pnext;
+
+      for (uint32_t _index = 0; _index < _capacity; ++_index)
+         {
+         pnode = table[_index];
+
+         if (pnode == 0) continue;
+
+loop:    U_INTERNAL_ASSERT_POINTER(pnode)
+
+         sz = pnode->key->size();
+
+         U_INTERNAL_DUMP("pnode->key(%u) = %p %V", sz, pnode->key, pnode->key)
+
+         U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+         space += sz + 1 + ((UStringRep*)pnode->elem)->getSpaceToDump() + 1;
+
+         if (pnode->next)
+            {
+            pnext = pnode->next;
+
+            U_INTERNAL_ASSERT_POINTER(pnext)
+            U_INTERNAL_ASSERT_DIFFERS(pnode, pnext)
+
+            pnode = pnext;
+
+            goto loop;
+            }
+         }
+      }
+
+   U_RETURN(space);
 }
 
 bool UHashMap<UVectorUString>::empty()

@@ -228,7 +228,7 @@ UString UStringExt::substitute(const char* s, uint32_t n, const char* a, uint32_
    void* p;
    uint32_t start = 0, len, capacity = (n / n1);
 
-   if (capacity == 0)                     capacity  = 10U;
+   if (capacity == 0)                     capacity  = 22U;
    if (n2)                                capacity *= n2;
    if (capacity > (256U * 1024U * 1024U)) capacity  = (256U * 1024U * 1024U); // worst case... 
 

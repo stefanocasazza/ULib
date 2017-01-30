@@ -1,0 +1,7 @@
+POST /servlet/businesses HTTP/1.1
+Host: localhost:8080
+Connection: Keep-Alive
+Content-Type: application/jsonrequest
+Content-Length: 29 
+
+{"type":"startup","authed":0}

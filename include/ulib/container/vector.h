@@ -1242,6 +1242,21 @@ public:
    bool     contains(UVector<UString>& vec, bool ignore_case = false);
    bool  isContained(const UString& str,    bool ignore_case = false) { return (contains(str, ignore_case) != U_NOT_FOUND); }
 
+   uint32_t getSpaceToDump() const
+      {
+      U_TRACE_NO_PARAM(0, "UVector<UString>::getSpaceToDump()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_DUMP("_length = %u", _length)
+
+      uint32_t space = U_CONSTANT_SIZE("( )");
+
+      for (uint32_t i = 0; i < _length; ++i) space += at(i).getSpaceToDump() + 1;
+
+      U_RETURN(space);
+      }
+
    // OPERATOR
 
    bool operator==(const UVector<UString>& v) const __pure;

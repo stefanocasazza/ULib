@@ -1316,7 +1316,7 @@ bool UNoCatPlugIn::setPeerLabel()
             {
          // typedef struct { uint32_t area, leasetime; time_t expiration; } __attribute__((packed)) tdbdata;
 
-            UString area(10U);
+            UString area(32U);
             uint32_t id = *(uint32_t*)value.data();
 
             if (id == 16777215) (void) area.assign(U_CONSTANT_TO_PARAM("ffffff"));

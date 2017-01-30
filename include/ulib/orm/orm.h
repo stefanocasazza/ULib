@@ -135,9 +135,9 @@ private:
  *
  * class Person {
  * public:
- *    UString _lastName;
- *    UString _firstName;
- *    int     _age;
+ *    int     age;
+ *    UString  lastName;
+ *    UString firstName;
  * };
  *
  * The UOrmTypeHandler must provide a custom bindParam and bindResult method:
@@ -147,22 +147,22 @@ private:
  *    explicit UOrmTypeHandler(Person& val) : UOrmTypeHandler_Base(&val)
  *
  *    void bindParam(UOrmStatement* stmt)
- *    {
+ *       {
  *       // the table is defined as Person (LastName VARCHAR(30), FirstName VARCHAR, Age INTEGER(3))
  *
- *       stmt->bindParam(U_ORM_TYPE_HANDLER(Person, _lastName,  UString));
- *       stmt->bindParam(U_ORM_TYPE_HANDLER(Person, _firstName, UString));
- *       stmt->bindParam(U_ORM_TYPE_HANDLER(Person, _age,       int));
- *    }
+ *       stmt->bindParam(U_ORM_TYPE_HANDLER(Person, age,       int));
+ *       stmt->bindParam(U_ORM_TYPE_HANDLER(Person,  lastName, UString));
+ *       stmt->bindParam(U_ORM_TYPE_HANDLER(Person, firstName, UString));
+ *       }
  * 
  *    void bindResult(UOrmStatement* stmt)
- *    {
+ *       {
  *       // the table is defined as Person (LastName VARCHAR(30), FirstName VARCHAR, Age INTEGER(3))
  *
- *       stmt->bindResult(U_ORM_TYPE_HANDLER(Person, _lastName,  UString));
- *       stmt->bindResult(U_ORM_TYPE_HANDLER(Person, _firstName, UString));
- *       stmt->bindResult(U_ORM_TYPE_HANDLER(Person, _age,       int));
- *    }
+ *       stmt->bindResult(U_ORM_TYPE_HANDLER(Person, age,       int));
+ *       stmt->bindResult(U_ORM_TYPE_HANDLER(Person,  lastName, UString));
+ *       stmt->bindResult(U_ORM_TYPE_HANDLER(Person, firstName, UString));
+ *       }
  * };
  */
 

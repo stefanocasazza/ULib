@@ -16,7 +16,7 @@
 
 // Design by contract - if (expr == false) then stop
 
-#ifdef DEBUG                             // NB: we need to save the status on the stack because of thread (ex. time resolution optimation) 
+#ifdef DEBUG                             // NB: we need to save the status on the stack because of thread (ex. time resolution optimizatio) 
 #  define U_ASSERT(expr)                 { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT(expr);                 u_trace_suspend = _s; }
 #  define U_ASSERT_MINOR(a,b)            { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_MINOR(a,b);            u_trace_suspend = _s; }
 #  define U_ASSERT_MAJOR(a,b)            { int _s = u_trace_suspend; u_trace_suspend = 1; U_INTERNAL_ASSERT_MAJOR(a,b);            u_trace_suspend = _s; }
@@ -186,8 +186,8 @@ if (envp) \
                                                 U_NEW(CLASS,obj,args), \
                                                 UObjectDB::flag_ulib_object = false)
 
-#  define U_DUMP_OBJECT(obj) { u_trace_dump(U_CONSTANT_TO_PARAM(#obj" = %S"), (obj).dump(true)); }
-#  define U_DUMP_CONTAINER(obj) { if (utr.active[0]) u_trace_dump(U_CONSTANT_TO_PARAM(#obj" = %O"), U_OBJECT_TO_TRACE((obj))); }
+#  define U_DUMP_OBJECT(obj)    { if (utr.active[0])                                                    u_trace_dump(U_CONSTANT_TO_PARAM(#obj" = %S"), U_OBJECT_TO_TRACE((obj))); }
+#  define U_DUMP_CONTAINER(obj) { if (utr.active[0] && (obj).getSpaceToDump() < U_MAX_SIZE_PREALLOCATE) u_trace_dump(U_CONSTANT_TO_PARAM(#obj" = %O"), U_OBJECT_TO_TRACE((obj))); }
 
 #  define U_DUMP_OBJECT_TO_TMP(obj,fname) \
             { char _buffer[2 * 1024 * 1024]; \

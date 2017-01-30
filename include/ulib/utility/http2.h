@@ -21,6 +21,7 @@
 #define HTTP2_FRAME_HEADER_SIZE               9 // The number of bytes of the frame header
 #define HTTP2_DEFAULT_WINDOW_SIZE         65535 
 #define HTTP2_HEADER_TABLE_OFFSET            62
+#define HTTP2_MAX_CONCURRENT_STREAMS        128
 #define HTTP2_HEADER_TABLE_ENTRY_SIZE_OFFSET 32
 
 #define HTTP2_CONNECTION_PREFACE "PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n" // (24 bytes)
@@ -80,10 +81,8 @@ public:
    };
 
    struct Stream {
-      uint32_t id,
-               state,
-               clength;
       UString headers, body;
+      uint32_t id, state, clength;
    };
 
    class Connection {
@@ -103,8 +102,8 @@ public:
    UHashMap<UString> itable;           // headers request
    HpackDynamicTable idyntbl, odyntbl; // hpack dynamic table (request, response)
    // streams
-   uint32_t stream_idx, max_processed_stream_id;
-   Stream streams[100];
+   uint32_t max_processed_stream_id;
+   Stream streams[HTTP2_MAX_CONCURRENT_STREAMS];
 #ifdef DEBUG
    UHashMap<UString> dtable;
    HpackDynamicTable ddyntbl;
@@ -122,9 +121,7 @@ public:
 
       inp_window              =
       out_window              = HTTP2_DEFAULT_WINDOW_SIZE;
-      state                   = CONN_STATE_IDLE; 
       peer_settings           = settings;
-      stream_idx              =
       max_processed_stream_id = 0;
       }
 
@@ -165,11 +162,6 @@ protected:
       CONTINUATION  = 0x09
    };
 
-   enum WaitFor {
-      WAIT_CONTINUATION  = 0x01,
-      WAIT_WINDOW_UPDATE = 0x02
-   };
-
    enum FrameFlagsId {
       FLAG_NONE        = 0x00,
       FLAG_ACK         = 0x01, // 1
@@ -194,8 +186,7 @@ protected:
       ENHANCE_YOUR_CALM   = 0x0b,
       INADEQUATE_SECURITY = 0x0c,
       HTTP_1_1_REQUIRED   = 0x0d,
-      ERROR_NOCLOSE       = 0xfe,
-      ERROR_INCOMPLETE    = 0xff
+      ERROR_INCOMPLETE    = 0x0e
    };
 
    enum HuffDecodeFlag {
@@ -246,20 +237,17 @@ protected:
    };
 
    static Stream* pStream;
-   static UString* wbuffer;
    static FrameHeader frame;
-   static Settings settings;
-   static uint32_t wait_for;
    static Stream* pStreamEnd;
-   static Stream* pStreamStart;
    static int nerror, hpack_errno;
    static Connection* vConnection;
    static Connection* pConnection;
-   static const char* upgrade_settings;
-   static bool bcontinue100, bsetting_ack, bsetting_send;
+   static const Settings settings;
+   static uint32_t wait_for_continuation;
+   static bool bcontinue100, bsetting_ack, bsetting_send, bnghttp2;
 
-   static bool     priority_exclusive;
    static uint8_t  priority_weight;     // 0 if not set
+   static bool     priority_exclusive;
    static uint32_t priority_dependency; // 0 if not set
 
    static const HuffSym    huff_sym_table[];
@@ -275,7 +263,6 @@ protected:
       {
       U_TRACE_NO_PARAM(0, "UHTTP2::dtor()")
 
-      delete   wbuffer;
       delete[] vConnection;
       }
 
@@ -285,18 +272,55 @@ protected:
    static void manageData();
    static void sendGoAway();
    static bool initRequest();
-   static void sendContinue();
+   static void writeResponse();
    static void decodeHeaders();
    static void manageHeaders();
-   static void writeResponse();
    static void handlerRequest();
    static void handlerResponse();
    static void sendResetStream();
    static void sendWindowUpdate();
 
-   static void reset(UClientImage_Base* pclient);
+   static void handlerDelete(UClientImage_Base* pclient);
    static void updateSetting(unsigned char* ptr, uint32_t len);
-   static void writeData(struct iovec* iov, bool bdata, bool flag, bool bnghttp2);
+   static void writeData(struct iovec* iov, bool bdata, bool flag);
+
+   static void resetDataRead()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP2::resetDataRead()")
+
+      UClientImage_Base::rstart = 0;
+
+      UClientImage_Base::rbuffer->setEmptyForce();
+      }
+
+   static void clear()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP2::clear()")
+
+      for (pStream = pConnection->streams; pStream <= pStreamEnd; ++pStream)
+         {
+         pStream->body.clear();
+         pStream->headers.clear();
+
+         pStream->id      =
+         pStream->state   =
+         pStream->clength = 0;
+         }
+
+#  ifdef DEBUG
+      for (pStreamEnd = (pConnection->streams+HTTP2_MAX_CONCURRENT_STREAMS); pStream < pStreamEnd; ++pStream)
+         {
+      // U_INTERNAL_DUMP("pStream index = %u", pStream - pConnection->streams)
+
+         U_ASSERT(pStream->body.empty())
+         U_ASSERT(pStream->headers.empty())
+
+         U_INTERNAL_ASSERT_EQUALS(pStream->id, 0)
+         U_INTERNAL_ASSERT_EQUALS(pStream->clength, 0)
+         U_INTERNAL_ASSERT_EQUALS(pStream->state, STREAM_STATE_IDLE)
+         }
+#  endif
+      }
 
    static void readPriority(unsigned char* ptr)
       {
@@ -313,15 +337,6 @@ protected:
                        priority_weight,     priority_exclusive,     priority_dependency,     frame.stream_id)
 
       if (priority_dependency == frame.stream_id) nerror = PROTOCOL_ERROR;
-      }
-
-   static void resetDataRead()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP2::resetDataRead()")
-
-      UClientImage_Base::rstart = 0;
-
-      UClientImage_Base::rbuffer->setEmptyForce();
       }
 
    static void setEncoding(const UString& x)
@@ -363,6 +378,19 @@ protected:
 
    static void updateSetting(const UString& data) { updateSetting((unsigned char*)U_STRING_TO_PARAM(data)); }
 
+   static void writev(struct iovec* iov, int iovcnt, uint32_t count)
+      {
+      U_TRACE(0, "UHTTP2::writev(%p,%d,%u)", iov, iovcnt, count)
+
+      U_DUMP_IOVEC(iov,iovcnt)
+
+#  if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
+      (void) USocketExt::writev( UServer_Base::csocket, iov, iovcnt, count, 0);
+#  else
+      (void) USocketExt::_writev(UServer_Base::csocket, iov, iovcnt, count, 0);
+#  endif
+      }
+
    static bool setIndexStaticTable(UHashMap<void*>* table, const char* key, uint32_t length)
       {
       U_TRACE(0, "UHTTP2::setIndexStaticTable(%p,%.*S,%u)", table, length, key, length)
@@ -376,19 +404,6 @@ protected:
       table->index = table->hash % table->_capacity;
 
       U_RETURN(true); // NB: ignore case...
-      }
-
-   static void writev(struct iovec* iov, int iovcnt, uint32_t count)
-      {
-      U_TRACE(0, "UHTTP2::writev(%p,%d,%u)", iov, iovcnt, count)
-
-      U_DUMP_IOVEC(iov,iovcnt)
-      
-#  if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
-      (void) USocketExt::writev( UServer_Base::csocket, iov, iovcnt, count, 0);
-#  else
-      (void) USocketExt::_writev(UServer_Base::csocket, iov, iovcnt, count, 0);
-#  endif
       }
 
    // HPACK (HTTP headers compression)

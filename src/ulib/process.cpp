@@ -468,7 +468,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
 
    pid_t pid;
 
-#  ifdef HAVE_POSIX_SPAWN
+# ifdef HAVE_POSIX_SPAWN
    posix_spawn_file_actions_t action;
 
    (void) U_SYSCALL(posix_spawn_file_actions_init, "%p", &action);
@@ -512,7 +512,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
    (void) U_SYSCALL(posix_spawn, "%p,%S,%p,%p,%p,%p", &pid, pathname, &action, 0, argv, envp);
 
    (void) U_SYSCALL(posix_spawn_file_actions_destroy, "%p", &action);
-#  else
+# else
    pid = U_VFORK();
 
    if (pid == 0) // child
@@ -525,7 +525,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
    // parent
 
    if (u_exec_failed) U_RETURN(-1);
-#  endif
+# endif
 
    U_RETURN(pid);
    }
