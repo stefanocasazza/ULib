@@ -1,0 +1,8 @@
+title: ULib
+description: C++ application development framework, to help developers create and deploy applications very fast and more simple
+google_analytics: UA-60470323-1
+show_downloads: true
+theme: jekyll-theme-cayman
+
+gems:
+  - jekyll-mentions
