@@ -3761,23 +3761,38 @@ static void usp_init_wi_auth()
    U_NEW(UHashMap<UString>, table,  UHashMap<UString>);
    U_NEW(UHashMap<UString>, table1, UHashMap<UVectorUString>);
 
+   U_NEW(UString, telefono,         UString);
+   U_NEW(UString, fmt_auth_cmd,     UString);
+   U_NEW(UString, redirect_default, UString);
+
+   U_NEW(UString, url_banner_ap,     UString);
+   U_NEW(UString, url_banner_comune, UString);
+
+   U_NEW(UString,          help_url, UString);
+   U_NEW(UString,         login_url, UString);
+   U_NEW(UString,        wallet_url, UString);
+   U_NEW(UString,      password_url, UString);
+   U_NEW(UString, registrazione_url, UString);
+
+   U_NEW(UString, des3_key, UString);
+
    if (UFileConfig::loadProperties(*table, content))
       {
-      U_NEW(UString, telefono,         UString((*table)["TELEFONO"]));
-      U_NEW(UString, fmt_auth_cmd,     UString((*table)["FMT_AUTH_CMD"]));
-      U_NEW(UString, redirect_default, UString((*table)["REDIRECT_DEFAULT"]));
+      *telefono         = (*table)["TELEFONO"];
+      *fmt_auth_cmd     = (*table)["FMT_AUTH_CMD"];
+      *redirect_default = (*table)["REDIRECT_DEFAULT"];
 
-      U_NEW(UString, url_banner_ap,     UString(UStringExt::expandPath((*table)["URL_BANNER_AP"],     environment)));
-      U_NEW(UString, url_banner_comune, UString(UStringExt::expandPath((*table)["URL_BANNER_COMUNE"], environment)));
+      *url_banner_ap     = UStringExt::expandPath((*table)["URL_BANNER_AP"],     environment);
+      *url_banner_comune = UStringExt::expandPath((*table)["URL_BANNER_COMUNE"], environment);
 
-      U_NEW(UString,          help_url, UString(UStringExt::expandEnvironmentVar((*table)["HELP_URL"],          environment)));
-      U_NEW(UString,         login_url, UString(UStringExt::expandEnvironmentVar((*table)["LOGIN_URL"],         environment)));
-      U_NEW(UString,        wallet_url, UString(UStringExt::expandEnvironmentVar((*table)["WALLET_URL"],        environment)));
-      U_NEW(UString,      password_url, UString(UStringExt::expandEnvironmentVar((*table)["PASSWORD_URL"],      environment)));
-      U_NEW(UString, registrazione_url, UString(UStringExt::expandEnvironmentVar((*table)["REGISTRAZIONE_URL"], environment)));
+               *help_url = UStringExt::expandEnvironmentVar((*table)["HELP_URL"],          environment);
+              *login_url = UStringExt::expandEnvironmentVar((*table)["LOGIN_URL"],         environment);
+             *wallet_url = UStringExt::expandEnvironmentVar((*table)["WALLET_URL"],        environment);
+           *password_url = UStringExt::expandEnvironmentVar((*table)["PASSWORD_URL"],      environment);
+      *registrazione_url = UStringExt::expandEnvironmentVar((*table)["REGISTRAZIONE_URL"], environment);
 
 #  ifdef USE_LIBSSL
-      U_NEW(UString, des3_key, UString((*table)["DES3_KEY"]));
+      *des3_key = (*table)["DES3_KEY"];
 
       UDES3::setPassword(des3_key->c_str());
 #  endif
@@ -5719,49 +5734,53 @@ static void GET_login() // MAIN PAGE (se il portatile non mostra la login page c
    // GET /login?mac=00%3A14%3AA5%3A6E%3A9C%3ACB&ip=192.168.226.2&redirect=http%3A%2F%2Fgoogle&gateway=192.168.226.1%3A5280&timeout=0&token=x&ap=lab2
    // -----------------------------------------------------------------------------------------------------------------------------------------------
 
+   if (checkLoginRequest(0, 14, 2, true, false) == false)
+      {
+      checkForRedirect();
+
+      return;
+      }
+
+   if (checkTimeRequest() == false) return;
+
+   auth_domain->clear();
+
    bool login_validate = false;
 
-   if (checkLoginRequest(0, 14, 2, true, false))
+   if (WiAuthNodog::checkMAC() ||
+       getCookie1())
       {
-      if (checkTimeRequest() == false) return;
+      *uid = *mac;
 
-      auth_domain->clear();
+      login_validate = true;
 
-      if (WiAuthNodog::checkMAC() ||
-          getCookie1())
+      if (auth_domain->empty()) *auth_domain = *mac_auth;
+      }
+#ifdef USE_LIBSSL
+   else if (UServer_Base::bssl)
+      {
+      X509* x509 = ((USSLSocket*)UServer_Base::csocket)->getPeerCertificate();
+
+      if (x509)
          {
-         *uid = *mac;
+         long serial    = UCertificate::getSerialNumber(x509);
+         UString issuer = UCertificate::getIssuer(x509);
 
-         login_validate = true;
-
-         if (auth_domain->empty()) *auth_domain = *mac_auth;
-         }
-#  ifdef USE_LIBSSL
-      else if (UServer_Base::bssl)
-         {
-         X509* x509 = ((USSLSocket*)UServer_Base::csocket)->getPeerCertificate();
-
-         if (x509)
+         if (askToLDAP(0,0,0,"ldapsearch -LLL -b %v %v (&(objectClass=waUser)(&(waIssuer=%v)(waSerial=%ld)(waActive=TRUE)))",
+                              wiauth_user_basedn->rep, ldap_user_param->rep, issuer.rep, serial) == 1)
             {
-            long serial    = UCertificate::getSerialNumber(x509);
-            UString issuer = UCertificate::getIssuer(x509);
+            *uid = (*table)["waUid"];
 
-            if (askToLDAP(0,0,0,"ldapsearch -LLL -b %v %v (&(objectClass=waUser)(&(waIssuer=%v)(waSerial=%ld)(waActive=TRUE)))",
-                                 wiauth_user_basedn->rep, ldap_user_param->rep, issuer.rep, serial) == 1)
-               {
-               *uid = (*table)["waUid"];
+            table->clear();
 
-               table->clear();
+            *policy      = *policy_flat;
+            *auth_domain = *cert_auth;
 
-               *policy      = *policy_flat;
-               *auth_domain = *cert_auth;
-
-               login_validate = true;
-               }
+            login_validate = true;
             }
          }
-#  endif
       }
+#endif
 
    if (*redirect)
       {

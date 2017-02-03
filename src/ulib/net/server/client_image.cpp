@@ -22,7 +22,7 @@
 #  include <ulib/utility/http2.h>
 #endif
 
-#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
 #  define U_NUM_CLIENT_THRESHOLD 128
 #endif
 
@@ -616,11 +616,11 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
 #  define U_IOV_TO_SAVE (sizeof(struct iovec) * 4)
 #endif
 
-bool UClientImage_Base::startRequest()
+void UClientImage_Base::startRequest()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::startRequest()")
 
-#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
    long time_elapsed = chronometer->restart();
 
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_elapsed = %ld time_run = %ld U_ClientImage_request_is_cached = %b csfd = %d",
@@ -648,27 +648,40 @@ bool UClientImage_Base::startRequest()
             {
             U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
 
+            U_ClientImage_advise_for_parallelization = 1;
+
             if (U_ClientImage_request_is_cached == false)
                {
-               U_ClientImage_advise_for_parallelization = true;
+               U_ClientImage_advise_for_parallelization = 2;
 
                UClientImage_Base::setRequestToCache();
                }
 
-            U_RETURN(true);
+            return;
             }
          }
       }
 #endif
 
-   U_RETURN(false);
+#if defined(DEBUG) && !defined(U_LOG_DISABLE)
+   if (UServer_Base::isLog())
+      {
+#if !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || !defined(U_HTTP2_DISABLE)
+      (void) chronometer->restart();
+#  endif
+      }
+#endif
 }
 
 void UClientImage_Base::endRequest()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::endRequest()")
 
-#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+   callerHandlerEndRequest();
+
+   U_http_method_type = 0; // NB: this mark the end of http request processing...
+
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
    time_run = chronometer->stop();
 
 # ifdef DEBUG
@@ -682,15 +695,13 @@ void UClientImage_Base::endRequest()
 # endif
 #endif
 
-   callerHandlerEndRequest();
-
-   U_http_method_type = 0; // NB: this mark the end of http request processing...
-
 #ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_http_info.uri_len = %u", U_http_info.uri_len)
+   U_INTERNAL_DUMP("U_http_version = %C U_http_info.uri_len = %u", U_http_version, U_http_info.uri_len)
 
-   if (U_http_info.uri_len == 0) return;
+   if (U_http_info.uri_len)
 #endif
+   {
+   U_MEMCPY(iov_vec, iov_sav, U_IOV_TO_SAVE);
 
 #if defined(DEBUG) && !defined(U_LOG_DISABLE)
    if (UServer_Base::isLog())
@@ -738,6 +749,10 @@ void UClientImage_Base::endRequest()
       U_MEMCPY(ptr1, "\" run in ", U_CONSTANT_SIZE("\" run in "));
                ptr1 +=             U_CONSTANT_SIZE("\" run in ");
 
+#if !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || !defined(U_HTTP2_DISABLE)
+      time_run = chronometer->stop();
+#  endif
+
       if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM("%ld ms"), time_run);
       else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM( "%g ms"), chronometer->getTimeElapsed());
 
@@ -769,12 +784,13 @@ void UClientImage_Base::endRequest()
       ULog::write(buffer1, ptr1-buffer1);
       }
 #endif
+   }
 
 #ifdef U_ALIAS
+   U_INTERNAL_DUMP("request_uri(%u) = %V", request_uri->size(), request_uri->rep)
+
    request_uri->clear();
 #endif
-
-   U_MEMCPY(iov_vec, iov_sav, U_IOV_TO_SAVE);
 }
 
 void UClientImage_Base::manageReadBufferResize(uint32_t n)
@@ -900,7 +916,7 @@ void UClientImage_Base::prepareForRead()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::prepareForRead()")
 
-   U_clientimage_flag.u = 0; // NB: U_ClientImage_parallelization is reset by this...
+   u_clientimage_info.flag.u = 0; // NB: U_ClientImage_parallelization is reset by this...
 
 #ifdef U_CLASSIC_SUPPORT
    if (UServer_Base::isClassic())
@@ -969,8 +985,8 @@ bool UClientImage_Base::genericRead()
 
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
-#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-   bool advise_for_parallelization = startRequest();
+#if (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
+   startRequest();
 #endif
 
    request->clear(); // reset buffer before read
@@ -1016,8 +1032,8 @@ bool UClientImage_Base::genericRead()
              data_pending = 0;
       }
 
-#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-   if (advise_for_parallelization)
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
+   if (U_ClientImage_advise_for_parallelization)
       {
       if (checkRequestToCache() == 2 &&
           UServer_Base::startParallelization(U_NUM_CLIENT_THRESHOLD))
@@ -1029,7 +1045,7 @@ bool UClientImage_Base::genericRead()
          U_RETURN(false);
          }
 
-      if (U_ClientImage_advise_for_parallelization) U_ClientImage_request_is_cached = false;
+      if (U_ClientImage_advise_for_parallelization == 2) U_ClientImage_request_is_cached = false;
       }
 #endif
 
@@ -1385,8 +1401,10 @@ write:
       {
       if (U_ClientImage_pipeline)
          {
-                  endRequest();
-         (void) startRequest();
+           endRequest();
+#     if (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
+         startRequest();
+#     endif
 
          goto pipeline;
          }

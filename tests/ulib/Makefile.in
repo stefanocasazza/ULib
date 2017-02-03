@@ -213,20 +213,20 @@ am__EXEEXT_19 = test_timeval$(EXEEXT) test_timer$(EXEEXT) \
 	test_compress$(EXEEXT) test_cache$(EXEEXT) test_date$(EXEEXT) \
 	test_services$(EXEEXT) test_base64$(EXEEXT) \
 	test_header$(EXEEXT) test_entity$(EXEEXT) \
-	test_ipaddress$(EXEEXT) test_socket$(EXEEXT) \
-	test_smtp$(EXEEXT) test_pop3$(EXEEXT) test_imap$(EXEEXT) \
-	test_ftp$(EXEEXT) test_http$(EXEEXT) test_rdb_client$(EXEEXT) \
+	test_ipaddress$(EXEEXT) test_socket$(EXEEXT) test_ftp$(EXEEXT) \
+	test_http$(EXEEXT) test_rdb_client$(EXEEXT) \
 	test_tokenizer$(EXEEXT) test_query_parser$(EXEEXT) \
 	test_multipart$(EXEEXT) test_command$(EXEEXT) \
 	test_dialog$(EXEEXT) test_rdb_server$(EXEEXT) \
 	test_json$(EXEEXT) test_server$(EXEEXT) test_redis$(EXEEXT) \
-	test_elasticsearch$(EXEEXT) $(am__EXEEXT_1) $(am__EXEEXT_2) \
-	$(am__EXEEXT_3) $(am__EXEEXT_4) $(am__EXEEXT_5) \
-	$(am__EXEEXT_6) $(am__EXEEXT_7) $(am__EXEEXT_8) \
-	$(am__EXEEXT_9) $(am__EXEEXT_10) $(am__EXEEXT_11) \
-	$(am__EXEEXT_12) $(am__EXEEXT_13) $(am__EXEEXT_14) \
-	$(am__EXEEXT_15) $(am__EXEEXT_16) $(am__EXEEXT_17) \
-	$(am__EXEEXT_18)
+	test_elasticsearch$(EXEEXT) test_smtp$(EXEEXT) \
+	test_pop3$(EXEEXT) test_imap$(EXEEXT) $(am__EXEEXT_1) \
+	$(am__EXEEXT_2) $(am__EXEEXT_3) $(am__EXEEXT_4) \
+	$(am__EXEEXT_5) $(am__EXEEXT_6) $(am__EXEEXT_7) \
+	$(am__EXEEXT_8) $(am__EXEEXT_9) $(am__EXEEXT_10) \
+	$(am__EXEEXT_11) $(am__EXEEXT_12) $(am__EXEEXT_13) \
+	$(am__EXEEXT_14) $(am__EXEEXT_15) $(am__EXEEXT_16) \
+	$(am__EXEEXT_17) $(am__EXEEXT_18)
 am_test_application_OBJECTS = test_application.$(OBJEXT)
 test_application_OBJECTS = $(am_test_application_OBJECTS)
 test_application_LDADD = $(LDADD)
@@ -1093,11 +1093,11 @@ PRG = test_timeval test_timer test_notifier test_string test_file \
 	test_cdb test_rdb test_file_config test_log test_vector \
 	test_options test_application test_tree test_compress \
 	test_cache test_date test_services test_base64 test_header \
-	test_entity test_ipaddress test_socket test_smtp test_pop3 \
-	test_imap test_ftp test_http test_rdb_client test_tokenizer \
-	test_query_parser test_multipart test_command test_dialog \
-	test_rdb_server test_json test_server test_redis \
-	test_elasticsearch $(am__append_1) $(am__append_2) \
+	test_entity test_ipaddress test_socket test_ftp test_http \
+	test_rdb_client test_tokenizer test_query_parser \
+	test_multipart test_command test_dialog test_rdb_server \
+	test_json test_server test_redis test_elasticsearch test_smtp \
+	test_pop3 test_imap $(am__append_1) $(am__append_2) \
 	$(am__append_4) $(am__append_6) $(am__append_8) \
 	$(am__append_10) $(am__append_12) $(am__append_14) \
 	$(am__append_16) $(am__append_18) $(am__append_20) \
@@ -1108,21 +1108,21 @@ TST = timeval.test timer.test notifier.test string.test file.test \
 	cdb.test rdb.test file_config.test log.test vector.test \
 	options.test application.test tree.test compress.test \
 	cache.test date.test services.test base64.test header.test \
-	entity.test ipaddress.test socket.test smtp.test pop3.test \
-	imap.test ftp.test http.test tokenizer.test query_parser.test \
-	multipart.test rdb_client_server.test command.test json.test \
-	server.test server_rpc.test $(am__append_3) $(am__append_5) \
+	entity.test ipaddress.test socket.test ftp.test http.test \
+	tokenizer.test query_parser.test multipart.test \
+	rdb_client_server.test command.test json.test server.test \
+	server_rpc.test $(am__append_3) $(am__append_5) \
 	$(am__append_7) $(am__append_9) $(am__append_11) \
 	$(am__append_13) $(am__append_15) $(am__append_17) \
 	$(am__append_19) $(am__append_21) $(am__append_23) \
 	$(am__append_25) $(am__append_27) $(am__append_29) \
 	$(am__append_31) $(am__append_33) $(am__append_37)
-test_ipaddress_SOURCES = test_ipaddress.cpp
-test_socket_SOURCES = test_socket.cpp
-test_ftp_SOURCES = test_ftp.cpp
 test_smtp_SOURCES = test_smtp.cpp
 test_pop3_SOURCES = test_pop3.cpp
 test_imap_SOURCES = test_imap.cpp
+test_ipaddress_SOURCES = test_ipaddress.cpp
+test_socket_SOURCES = test_socket.cpp
+test_ftp_SOURCES = test_ftp.cpp
 test_http_SOURCES = test_http.cpp
 test_timeval_SOURCES = test_timeval.cpp
 test_timer_SOURCES = test_timer.cpp

@@ -800,9 +800,9 @@ uint32_t UHashMap<UString>::loadFromData(const char* ptr, uint32_t sz)
    U_RETURN(sz);
 }
 
-uint32_t UHashMap<UString>::getSpaceToDump() const
+__pure uint32_t UHashMap<UString>::getSpaceToDump() const
 {
-   U_TRACE_NO_PARAM(0, "UHashMap<UString>::getSpaceToDump()")
+   U_TRACE_NO_PARAM(0+256, "UHashMap<UString>::getSpaceToDump()")
 
    U_CHECK_MEMORY
 

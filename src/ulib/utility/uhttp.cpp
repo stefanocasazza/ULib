@@ -164,7 +164,7 @@ UString* UHTTP::uri_strict_transport_security_mask;
 #ifndef U_LOG_DISABLE
 char         UHTTP::iov_buffer[20];
 struct iovec UHTTP::iov_vec[10];
-#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
+#  if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
 uint32_t     UHTTP::agent_offset;
 uint32_t     UHTTP::request_offset;
 uint32_t     UHTTP::referer_offset;
@@ -1825,7 +1825,7 @@ next:
 
                U_INTERNAL_DUMP("U_line_terminator_len = %u U_http_info.startHeader(%u) = %.20S", U_line_terminator_len, U_http_info.startHeader, ptr)
 
-#           if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
+#           if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
                UClientImage_Base::uri_offset = U_http_info.uri - start; 
 
                U_INTERNAL_DUMP("UClientImage_Base::uri_offset = %u", UClientImage_Base::uri_offset)
@@ -3582,7 +3582,7 @@ bool UHTTP::handlerCache()
 
    U_INTERNAL_ASSERT(U_ClientImage_request_is_cached)
 
-#if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
+#if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
    const char* ptr = UClientImage_Base::request->data();
 
    switch (u_get_unalignedp32(ptr))
@@ -3594,9 +3594,9 @@ bool UHTTP::handlerCache()
 
       default:
          {
-         U_INTERNAL_DUMP("U_ClientImage_advise_for_parallelization = %b", U_ClientImage_advise_for_parallelization)
+         U_INTERNAL_DUMP("U_ClientImage_advise_for_parallelization = %u", U_ClientImage_advise_for_parallelization)
 
-         if (U_ClientImage_advise_for_parallelization == false) U_RETURN(false);
+         if (U_ClientImage_advise_for_parallelization != 2) U_RETURN(false);
          }
       }
 
@@ -3692,10 +3692,10 @@ next2:
       {
       U_RETURN(false);
       }
-#  endif
+# endif
 
-# ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-   if (U_ClientImage_advise_for_parallelization) U_RETURN(true);
+# if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
+   if (U_ClientImage_advise_for_parallelization == 2) U_RETURN(true);
 # endif
 
    if (UClientImage_Base::csfd > 0)
@@ -3992,6 +3992,8 @@ int UHTTP::manageRequest()
 
    // manage global alias
 
+   U_INTERNAL_DUMP("global_alias = %b UClientImage_Base::request_uri(%u) = %V", global_alias, UClientImage_Base::request_uri->size(), UClientImage_Base::request_uri->rep)
+
    if (global_alias                            &&
        UClientImage_Base::request_uri->empty() &&
        u_getsuffix(U_HTTP_URI_TO_PARAM) == 0)
@@ -4003,7 +4005,7 @@ int UHTTP::manageRequest()
 
    if (*alias)
       {
-      U_INTERNAL_ASSERT_EQUALS(alias->first_char(), '/')
+      U_ASSERT_EQUALS(alias->first_char(), '/')
 
       if (U_http_info.uri[0] != '/') alias->clear(); // reset alias
       else
@@ -7103,7 +7105,7 @@ __pure bool UHTTP::isSOAPRequest()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::isSOAPRequest()")
 
-   // NB: soap is NOT a static page, so to avoid stat() syscall we use alias mechanism...
+   // NB: /soap is NOT a static page, so to avoid stat() syscall we use alias mechanism...
 
    U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
 
@@ -7124,7 +7126,7 @@ __pure bool UHTTP::isTSARequest()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::isTSARequest()")
 
-   // NB: tsa is NOT a static page, so to avoid stat() syscall we use alias mechanism...
+   // NB: /tsa is NOT a static page, so to avoid stat() syscall we use alias mechanism...
 
    U_INTERNAL_DUMP("U_http_is_request_nostat = %b", U_http_is_request_nostat)
 
@@ -8908,58 +8910,52 @@ U_NO_EXPORT bool UHTTP::addHTTPVariables(UStringRep* key, void* value)
 
    U_INTERNAL_ASSERT_POINTER(value)
    U_INTERNAL_ASSERT_POINTER(string_HTTP_Variables)
+// U_INTERNAL_ASSERT_EQUALS(((UStringRep*)value)->isBinary(0), false)
 
+#ifndef U_HTTP2_DISABLE
+   /**
+    * +-------+-----------------------------+---------------+
+    * | 1     | :authority                  |               |
+    * | 2     | :method                     | GET           |
+    * | 3     | :method                     | POST          |
+    * | 4     | :path                       | /             |
+    * | 5     | :path                       | /index.html   |
+    * | 6     | :scheme                     | http          |
+    * | 7     | :scheme                     | https         |
+    * | 8     | :status                     | 200           |
+    * | 9     | :status                     | 204           |
+    * | 10    | :status                     | 206           |
+    * | 11    | :status                     | 304           |
+    * | 12    | :status                     | 400           |
+    * | 13    | :status                     | 404           |
+    * | 14    | :status                     | 500           |
+    * | ...   | ...                         | ...           |
+    * +-------+-----------------------------+---------------+
+    */
+
+   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+   if (U_http_version != '2'                    ||
+       (key != UString::str_cookie->rep         &&
+        key != UString::str_accept->rep         &&
+        key != UString::str_referer->rep        &&
+        key != UString::str_content_type->rep   &&
+        key != UString::str_content_length->rep &&
+        key != UString::str_accept_language->rep))
+#endif
+   {
    uint32_t      key_sz  =                  key->size(),
                value_sz  = ((UStringRep*)value)->size();
    const char*   key_ptr = ((UStringRep*)  key)->data();
    const char* value_ptr = ((UStringRep*)value)->data();
 
-// if (u_isBinary((const unsigned char*)value_ptr, value_sz) == false)
-      {
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+   UString buffer(20U + key_sz + value_sz),
+           str = UStringExt::substitute(UStringExt::toupper(key_ptr, key_sz), '-', '_');
 
-#  ifndef U_HTTP2_DISABLE
-      /**
-       * +-------+-----------------------------+---------------+
-       * | 1     | :authority                  |               |
-       * | 2     | :method                     | GET           |
-       * | 3     | :method                     | POST          |
-       * | 4     | :path                       | /             |
-       * | 5     | :path                       | /index.html   |
-       * | 6     | :scheme                     | http          |
-       * | 7     | :scheme                     | https         |
-       * | 8     | :status                     | 200           |
-       * | 9     | :status                     | 204           |
-       * | 10    | :status                     | 206           |
-       * | 11    | :status                     | 304           |
-       * | 12    | :status                     | 400           |
-       * | 13    | :status                     | 404           |
-       * | 14    | :status                     | 500           |
-       * | ...   | ...                         | ...           |
-       * +-------+-----------------------------+---------------+
-       */
+   buffer.snprintf(U_CONSTANT_TO_PARAM("'HTTP_%.*s=%.*s'\n"), key_sz, str.data(), value_sz, value_ptr);
 
-      if (U_http_version == '2'                       &&
-          (*key_ptr == ':'                            ||
-           U_STREQ(key_ptr, key_sz, "cookie")         ||
-           U_STREQ(key_ptr, key_sz, "accept")         ||
-           U_STREQ(key_ptr, key_sz, "referer")        ||
-           U_STREQ(key_ptr, key_sz, "user-agent")     ||
-           U_STREQ(key_ptr, key_sz, "content-type")   ||
-           U_STREQ(key_ptr, key_sz, "content-length") ||
-           U_STREQ(key_ptr, key_sz, "accept-language")))
-         {
-         U_RETURN(true);
-         }
-#  endif
-
-      UString buffer(20U + key_sz + value_sz),
-              str = UStringExt::substitute(UStringExt::toupper(key_ptr, key_sz), '-', '_');
-
-      buffer.snprintf(U_CONSTANT_TO_PARAM("'HTTP_%.*s=%.*s'\n"), key_sz, str.data(), value_sz, value_ptr);
-
-      (void) string_HTTP_Variables->append(buffer);
-      }
+   (void) string_HTTP_Variables->append(buffer);
+   }
 
    U_RETURN(true);
 }

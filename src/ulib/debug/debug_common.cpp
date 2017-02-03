@@ -94,7 +94,7 @@ static void print_info(void)
 
    char* memusage = getenv("UMEMUSAGE");
 
-   U_MESSAGE("UMEMUSAGE%W<%W%s%W>%W", YELLOW, (memusage ? GREEN : RED), (memusage ? "on" : "off"), YELLOW, RESET);
+   U_MESSAGE("MEMUSAGE%W<%W%s%W>%W", YELLOW, (memusage ? GREEN : RED), (memusage ? "on" : "off"), YELLOW, RESET);
 }
 
 extern "C" void U_EXPORT u_debug_init(void)
@@ -269,13 +269,13 @@ __noreturn void U_EXPORT u_debug_exec(const char* pathname, char* const argv[], 
       (void) write(STDERR_FILENO, buffer,          iov[1].iov_len);
       (void) write(STDERR_FILENO, iov[2].iov_base, iov[2].iov_len);
 
-      for (i = 0; argv[i]; ++i) (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("argv[%2u] = %p %S"), i, argv[i], argv[i]));
-                                (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("argv[%2u] = %p %S"), i, argv[i], argv[i]));
+      for (i = 0; argv[i]; ++i) (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("argv[%2u] = %p %S\n"), i, argv[i], argv[i]));
+                                (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("argv[%2u] = %p %S\n"), i, argv[i], argv[i]));
 
       if (envp)
          {
-         for (i = 0; envp[i]; ++i) (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("envp[%2u] = %p %S"), i, envp[i], envp[i]));
-                                   (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("envp[%2u] = %p %S"), i, envp[i], envp[i]));
+         for (i = 0; envp[i]; ++i) (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("envp[%2u] = %p %S\n"), i, envp[i], envp[i]));
+                                   (void) write(STDERR_FILENO, buffer,  u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("envp[%2u] = %p %S\n"), i, envp[i], envp[i]));
          }
       }
    else

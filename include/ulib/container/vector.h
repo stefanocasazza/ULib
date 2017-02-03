@@ -1244,7 +1244,7 @@ public:
 
    uint32_t getSpaceToDump() const
       {
-      U_TRACE_NO_PARAM(0, "UVector<UString>::getSpaceToDump()")
+      U_TRACE_NO_PARAM(0+256, "UVector<UString>::getSpaceToDump()")
 
       U_CHECK_MEMORY
 

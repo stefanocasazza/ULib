@@ -104,6 +104,7 @@ public:
    // streams
    uint32_t max_processed_stream_id;
    Stream streams[HTTP2_MAX_CONCURRENT_STREAMS];
+   bool bnghttp2;
 #ifdef DEBUG
    UHashMap<UString> dtable;
    HpackDynamicTable ddyntbl;
@@ -244,7 +245,7 @@ protected:
    static Connection* pConnection;
    static const Settings settings;
    static uint32_t wait_for_continuation;
-   static bool bcontinue100, bsetting_ack, bsetting_send, bnghttp2;
+   static bool bcontinue100, bsetting_ack, bsetting_send;
 
    static uint8_t  priority_weight;     // 0 if not set
    static bool     priority_exclusive;
@@ -280,6 +281,7 @@ protected:
    static void sendResetStream();
    static void sendWindowUpdate();
 
+   static bool eraseHeaders(UStringRep* key, void* elem);
    static void handlerDelete(UClientImage_Base* pclient);
    static void updateSetting(unsigned char* ptr, uint32_t len);
    static void writeData(struct iovec* iov, bool bdata, bool flag);

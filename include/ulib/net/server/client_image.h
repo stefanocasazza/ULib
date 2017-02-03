@@ -288,7 +288,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestToCache()")
 
-#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
+#  if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
       U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 2)
       U_INTERNAL_ASSERT_MAJOR(UClientImage_Base::size_request, 0)
       U_INTERNAL_ASSERT_RANGE(1,UClientImage_Base::uri_offset,64)
@@ -310,7 +310,7 @@ public:
 
       U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
 
-#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
+#  if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
       U_INTERNAL_ASSERT(U_ClientImage_request_is_cached)
 
       uint32_t    sz  = request->size();
@@ -468,7 +468,7 @@ protected:
    static uint32_t ncount, nrequest, resto, uri_offset;
 
    static void   endRequest();
-   static bool startRequest();
+   static void startRequest();
 
    static void resetReadBuffer();
    static void resetWriteBuffer();

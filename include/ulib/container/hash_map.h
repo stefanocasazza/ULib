@@ -849,7 +849,7 @@ public:
       UHashMap<UStringRep*>::insertAfterFind(_key, str.rep);
       }
 
-   uint32_t getSpaceToDump() const;
+   uint32_t getSpaceToDump() const __pure;
 
    // OPERATOR
 

@@ -16,7 +16,6 @@
 
 int                           UHTTP2::nerror;
 int                           UHTTP2::hpack_errno;
-bool                          UHTTP2::bnghttp2;
 bool                          UHTTP2::bcontinue100;
 bool                          UHTTP2::bsetting_ack;
 bool                          UHTTP2::bsetting_send;
@@ -112,7 +111,8 @@ UHTTP2::Connection::Connection() : itable(53, setIndexStaticTable)
 
    reset();
 
-   state = CONN_STATE_IDLE; 
+   state    = CONN_STATE_IDLE; 
+   bnghttp2 = false;
 
    (void) memset(&idyntbl, 0, sizeof(HpackDynamicTable));
    (void) memset(&odyntbl, 0, sizeof(HpackDynamicTable));
@@ -1669,6 +1669,24 @@ insert_table:
                      dyntbl->num_entries, dyntbl->entry_capacity, dyntbl->entry_start_index, dyntbl->hpack_size, dyntbl->hpack_capacity, dyntbl->hpack_max_capacity)
 }
 
+bool UHTTP2::eraseHeaders(UStringRep* key, void* elem) // callWithDeleteForAllEntry()...
+{
+   U_TRACE(0, "UHTTP2::eraseHeaders(%V,%p)", key, elem)
+
+   if (key == UString::str_path->rep       ||
+       key == UString::str_method->rep     ||
+       key == UString::str_authority->rep  ||
+       key == UString::str_user_agent->rep ||
+       key == UString::str_accept_encoding->rep)
+      {
+      U_RETURN(false);
+      }
+
+   U_INTERNAL_DUMP("key = %p", key)
+
+   U_RETURN(true);
+}
+
 void UHTTP2::decodeHeaders()
 {
    U_TRACE(0, "UHTTP2::decodeHeaders()")
@@ -1677,38 +1695,21 @@ void UHTTP2::decodeHeaders()
 
    UHashMap<UString>* table = &(pConnection->itable);
 
-   U_ASSERT(table->empty())
    U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
    U_INTERNAL_ASSERT_EQUALS(U_http_info.uri_len, 0)
    U_INTERNAL_ASSERT_MAJOR(pStream->state, STREAM_STATE_OPEN)
+
+   U_DUMP_CONTAINER(*table);
+
+   table->callWithDeleteForAllEntry(eraseHeaders);
+
+   U_DUMP_CONTAINER(*table);
 
    decodeHeaders(table, &(pConnection->idyntbl), (unsigned char*)pStream->headers.data(), (unsigned char*)pStream->headers.pend());
 
    if (nerror == NO_ERROR)
       {
       U_DUMP_CONTAINER(*table);
-
-      U_INTERNAL_DUMP("Host            = %.*S", U_HTTP_HOST_TO_TRACE)
-      U_INTERNAL_DUMP("Range           = %.*S", U_HTTP_RANGE_TO_TRACE)
-      U_INTERNAL_DUMP("Accept          = %.*S", U_HTTP_ACCEPT_TO_TRACE)
-      U_INTERNAL_DUMP("Cookie          = %.*S", U_HTTP_COOKIE_TO_TRACE)
-      U_INTERNAL_DUMP("Referer         = %.*S", U_HTTP_REFERER_TO_TRACE)
-      U_INTERNAL_DUMP("User-Agent      = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
-      U_INTERNAL_DUMP("Content-Type    = %.*S", U_HTTP_CTYPE_TO_TRACE)
-      U_INTERNAL_DUMP("Accept-Language = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
-
-      U_INTERNAL_DUMP("U_http_is_accept_gzip = %b", U_http_is_accept_gzip)
-
-      if (U_http_is_accept_gzip == false)
-         {
-         table->hash = hash_static_table[15]; // accept-encoding
-
-         UString value = table->at(UString::str_accept_encoding->rep);
-
-         U_INTERNAL_DUMP("value = %V", value.rep)
-
-         if (value) setEncoding(value);
-         }
 
       U_INTERNAL_DUMP("URI(%u) = %.*S", U_http_info.uri_len, U_HTTP_URI_TO_TRACE)
 
@@ -1723,7 +1724,56 @@ void UHTTP2::decodeHeaders()
          if (value) setURI(value);
          }
 
-      U_INTERNAL_DUMP("U_http_method_type = %B U_http_method_num = %d", U_http_method_type, U_http_method_num)
+      U_INTERNAL_DUMP("U_http_is_accept_gzip = %b U_http_method_type = %B U_http_method_num = %d U_http_host_len = %u U_HTTP_HOST = %.*S U_http_host_vlen = %u U_HTTP_VHOST = %.*S",
+                       U_http_is_accept_gzip,     U_http_method_type,     U_http_method_num,     U_http_host_len,  U_HTTP_HOST_TO_TRACE, U_http_host_vlen,     U_HTTP_VHOST_TO_TRACE)
+
+      if (U_http_host_len == 0)
+         {
+         table->hash = hash_static_table[0]; // authority
+
+         UString value = table->at(UString::str_authority->rep);
+
+         U_INTERNAL_DUMP("value = %V", value.rep)
+
+         U_INTERNAL_ASSERT(value)
+
+         UHTTP::setHostname(value);
+         }
+
+      if (U_http_info.user_agent_len == 0)
+         {
+         table->hash = hash_static_table[57]; // authority
+
+         UString value = table->at(UString::str_user_agent->rep);
+
+         U_INTERNAL_DUMP("value = %V", value.rep)
+
+         if (value)
+            {
+            U_http_info.user_agent     = value.data();
+            U_http_info.user_agent_len = value.size();
+            }
+         }
+
+      if (U_http_is_accept_gzip == false)
+         {
+         table->hash = hash_static_table[15]; // accept-encoding
+
+         UString value = table->at(UString::str_accept_encoding->rep);
+
+         U_INTERNAL_DUMP("value = %V", value.rep)
+
+         if (value) setEncoding(value);
+         }
+
+      U_INTERNAL_DUMP("Host            = %.*S", U_HTTP_HOST_TO_TRACE)
+      U_INTERNAL_DUMP("Range           = %.*S", U_HTTP_RANGE_TO_TRACE)
+      U_INTERNAL_DUMP("Accept          = %.*S", U_HTTP_ACCEPT_TO_TRACE)
+      U_INTERNAL_DUMP("Cookie          = %.*S", U_HTTP_COOKIE_TO_TRACE)
+      U_INTERNAL_DUMP("Referer         = %.*S", U_HTTP_REFERER_TO_TRACE)
+      U_INTERNAL_DUMP("User-Agent      = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+      U_INTERNAL_DUMP("Content-Type    = %.*S", U_HTTP_CTYPE_TO_TRACE)
+      U_INTERNAL_DUMP("Accept-Language = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
       }
 }
 
@@ -2622,7 +2672,7 @@ void UHTTP2::writeData(struct iovec* iov, bool bdata, bool flag)
 
    iov[3].iov_len = max_frame_size;
 
-   if (bnghttp2)
+   if (pConnection->bnghttp2)
       {
       if (bdata) writev(iov,   4, HTTP2_FRAME_HEADER_SIZE+sz1+HTTP2_FRAME_HEADER_SIZE+max_frame_size);
       else       writev(iov+2, 2,                             HTTP2_FRAME_HEADER_SIZE+max_frame_size);
@@ -2737,7 +2787,7 @@ void UHTTP2::writeResponse()
             (ntohl(*(uint32_t*) ptr1) & 0x00ffffff) >> 8,
              ntohl(*(uint32_t*)(ptr1+5)) & 0x7fffffff, ptr1[3], getFrameTypeDescription(ptr1[3]), ptr1[4], (ntohl(*(uint32_t*)ptr1) & 0x00ffffff) >> 8, ptr0)
 
-   U_SRV_LOG_WITH_ADDR("send response (%s,id:%u,bytes:%u) %#.*S to", bnghttp2 ? "nghttp2" : "HTTP2", pStream->id, sz0+body_sz, sz0, ptr0);
+   U_SRV_LOG_WITH_ADDR("send response (%s,id:%u,bytes:%u) %#.*S to", pConnection->bnghttp2 ? "nghttp2" : "HTTP2", pStream->id, sz0+body_sz, sz0, ptr0);
 
    if (body_sz == 0)
       {
@@ -2876,8 +2926,6 @@ bool UHTTP2::initRequest()
 
    U_DUMP("pConnection->state = (%u, %s) pConnection->max_processed_stream_id = %u", pConnection->state, getConnectionStatusDescription(), pConnection->max_processed_stream_id)
 
-   pConnection->itable.clear(); // NB: we can't clear it before because UClientImage_Base::getRequestUri() depend on it...
-
    pStream    =
    pStreamEnd = pConnection->streams;
 
@@ -2897,7 +2945,10 @@ bool UHTTP2::initRequest()
       pConnection->reset();
       }
 
-   pConnection->state = CONN_STATE_OPEN;
+   pConnection->itable.clear(); // NB: we can't clear it before because UClientImage_Base::getRequestUri() depend on it...
+
+   pConnection->state    = CONN_STATE_OPEN;
+   pConnection->bnghttp2 = false;
 
    U_RETURN(false);
 }
@@ -2909,15 +2960,12 @@ void UHTTP2::handlerRequest()
    uint32_t sz;
    const char* ptr;
 
-   bnghttp2      =
-   bsetting_ack  =
-   bsetting_send = false;
-
    nerror                =
    hpack_errno           =
    wait_for_continuation = 0;
 
-   if (initRequest() == false)
+   if ((bsetting_ack =
+        bsetting_send = initRequest()) == false)
       {
       if (U_http2_settings_len)
          {
@@ -3079,11 +3127,11 @@ process_request:
          if (pStream == pConnection->streams &&
              U_HTTP_USER_AGENT_MEMEQ("nghttp2"))
             {
-            bnghttp2 = true; // NB: to avoid GOAWAY frame with error (6, FRAME_SIZE_ERROR) in writeResponse()...
+            pConnection->bnghttp2 = true; // NB: to avoid GOAWAY frame with error (6, FRAME_SIZE_ERROR) in writeResponse()...
             }
 
 #     ifndef U_LOG_DISABLE
-         if (sz) U_SRV_LOG_WITH_ADDR("received request (%s,id:%u,bytes:%u) %#.*S from", bnghttp2 ? "nghttp2" : "HTTP2", pStream->id, sz, sz, pStream->headers.data());
+         if (sz) U_SRV_LOG_WITH_ADDR("received request (%s,id:%u,bytes:%u) %#.*S from", pConnection->bnghttp2 ? "nghttp2" : "HTTP2", pStream->id, sz, sz, pStream->headers.data());
 #     endif
 
          U_INTERNAL_DUMP("pStream->clength = %u UHTTP::limit_request_body = %u", pStream->clength, UHTTP::limit_request_body)
@@ -3156,23 +3204,16 @@ process_request:
 
             U_INTERNAL_ASSERT_MAJOR(sz, 0)
 
-            // ------------------------------
-            // U_http_info.uri
-            // ....
-            // U_http_info.nResponseCode
-            // ....
-            // ------------------------------
-            U_HTTP_INFO_RESET(0);
+            UClientImage_Base::endRequest();
+
+            UHTTP::startRequest();
 
             U_http_version = '2';
-
-            pConnection->itable.clear();
 
             goto loop;
             }
          }
 
-      UClientImage_Base::body->clear();
       UClientImage_Base::wbuffer->clear();
 
 #  ifdef DEBUG

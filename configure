@@ -36621,4 +36621,5 @@ fi
 echo
 echo "You are now ready to build ULib"
 echo "Enter the following command: ${T_MD}make && make install${T_ME}"
+echo "After on some environment you must run also the following command: ${T_MD}sudo ldconfig${T_ME}"
 echo "***"

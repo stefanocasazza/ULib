@@ -1551,21 +1551,21 @@ public:
 
       U_ASSERT(((uvector*)pval)->empty())
 
-      UValue* element = json.toNode();
+      UValue* pelement = json.toNode();
 
-      while (element)
+      while (pelement)
          {
          T* pitem;
 
          U_NEW(T, pitem, T);
 
-         U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), UValue::getDataTypeDescription(element->getTag()))
+         U_DUMP("pelement = %p pelement->next = %p pelement->type = (%d,%S)", pelement, pelement->next, pelement->getTag(), UValue::getDataTypeDescription(pelement->getTag()))
 
-         element->fromJSON(UJsonTypeHandler<T>(*pitem));
+         UJsonTypeHandler<T>(*pitem).fromJSON(*pelement);
 
-         ((uvector*)pval)->push_back(pitem);
+         ((UVector<void*>*)pval)->push_back(pitem);
 
-         element = element->next;
+         pelement = pelement->next;
          }
       }
 };

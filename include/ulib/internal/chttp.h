@@ -203,7 +203,6 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_PARALLELIZATION_PARENT 2
 
 #define U_http_info        u_clientimage_info.http_info
-#define U_clientimage_flag u_clientimage_info.flag
 #define U_http_method_list u_clientimage_info.http_method_list
 #define U_http_method_type u_clientimage_info.http_info.method_type
 

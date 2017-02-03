@@ -972,17 +972,29 @@ void UNoCatPlugIn::deny(int disconnected, bool bcheck_expire)
    if (bcheck_expire) UTimer::erase(peer);
 }
 
-void UNoCatPlugIn::permit(const UString& UserDownloadRate, const UString& UserUploadRate)
+void UNoCatPlugIn::permit(UString& UserDownloadRate, UString& UserUploadRate)
 {
-   U_TRACE(0, "UNoCatPlugIn::permit(%S,%S)", &UserDownloadRate, &UserUploadRate)
+   U_TRACE(0, "UNoCatPlugIn::permit(%V,%V)", UserDownloadRate.rep, UserUploadRate.rep)
 
    U_INTERNAL_ASSERT_POINTER(peer)
    U_INTERNAL_ASSERT_EQUALS(U_peer_status, UModNoCatPeer::PEER_DENY)
 
-   if (UserDownloadRate) peer->fw.setArgument(7, UserDownloadRate.c_str());
-   if (UserUploadRate)   peer->fw.setArgument(8, UserUploadRate.c_str());
+   if (UserDownloadRate)
+      {
+      if (UserDownloadRate.strtol() == 0)                         UserDownloadRate.clear();
+      else                                peer->fw.setArgument(7, UserDownloadRate.c_str());
+      }
+
+   if (UserUploadRate)
+      {
+      if (UserUploadRate.strtol() == 0)                         UserUploadRate.clear();
+      else                              peer->fw.setArgument(8, UserUploadRate.c_str());
+      }
 
    executeCommand(UModNoCatPeer::PEER_PERMIT);
+
+   if (UserDownloadRate) peer->fw.setArgument(7, "0");
+   if (UserUploadRate)   peer->fw.setArgument(8, "0");
 
    ++total_connections;
 

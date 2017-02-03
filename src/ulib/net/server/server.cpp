@@ -3810,28 +3810,6 @@ __noreturn void UServer_Base::endNewChild()
    U_EXIT(0);
 }
 
-__pure bool UServer_Base::isParallelizationGoingToStart(uint32_t nclient)
-{
-   U_TRACE(0, "UServer_Base::isParallelizationGoingToStart(%u)", nclient)
-
-   U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
-                    U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
-
-#ifndef U_SERVER_CAPTIVE_PORTAL
-   if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD &&
-       (UNotifier::num_connection - UNotifier::min_connection) > nclient)
-      {
-      U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
-
-      U_RETURN(true);
-      }
-#endif
-
-   U_RETURN(false);
-}
-
 bool UServer_Base::startParallelization(uint32_t nclient)
 {
    U_TRACE(0, "UServer_Base::startParallelization(%u)", nclient)

@@ -477,7 +477,34 @@ public:
    static pid_t startNewChild();
 
    static bool startParallelization(            uint32_t nclient = 1); // it can creates a copy of itself, return true if parent...
-   static bool    isParallelizationGoingToStart(uint32_t nclient = 1) __pure;
+   static bool    isParallelizationGoingToStart(uint32_t nclient = 1)
+      {
+      U_TRACE(0, "UServer_Base::isParallelizationGoingToStart(%u)", nclient)
+
+      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
+                       U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
+
+#  ifndef U_SERVER_CAPTIVE_PORTAL
+#    ifndef U_HTTP2_DISABLE
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+      if (U_http_version != '2')
+#    endif
+      {
+      if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD &&
+          (UNotifier::num_connection - UNotifier::min_connection) > nclient)
+         {
+         U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
+
+         U_RETURN(true);
+         }
+      }
+#  endif
+
+      U_RETURN(false);
+      }
 
    // manage log server...
 

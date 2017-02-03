@@ -164,15 +164,21 @@ public:
 
    Request request;
    Response response;
+   UVector<Request*> vrequests;
+   Response* presponse;
 
    Multiple()
       {
       U_TRACE_REGISTER_OBJECT(5, Multiple, "")
+
+      U_NEW(Response, presponse, Response);
       }
 
    ~Multiple()
       {
       U_TRACE_UNREGISTER_OBJECT(5, Multiple)
+
+      delete presponse;
       }
 
    void clear()
@@ -181,29 +187,36 @@ public:
 
       request.clear();
       response.clear();
+      vrequests.clear();
       }
 
    void toJSON(UValue& json)
       {
       U_TRACE(5, "Multiple::toJSON(%p)", &json)
 
-      json.toJSON(U_JSON_METHOD_HANDLER(request,  Request));
-      json.toJSON(U_JSON_METHOD_HANDLER(response, Response));
+      json.toJSON(U_JSON_METHOD_HANDLER(request,   Request));
+      json.toJSON(U_JSON_METHOD_HANDLER(response,  Response));
+      json.toJSON(U_JSON_METHOD_HANDLER(vrequests, UVector<Request*>));
+      json.toJSON(U_JSON_METHOD_HANDLER(presponse, Response));
       }
 
    void fromJSON(UValue& json)
       {
       U_TRACE(5, "Multiple::fromJSON(%p)", &json)
 
-      json.fromJSON(U_JSON_METHOD_HANDLER(request,  Request));
-      json.fromJSON(U_JSON_METHOD_HANDLER(response, Response));
+      json.fromJSON(U_JSON_METHOD_HANDLER(request,   Request));
+      json.fromJSON(U_JSON_METHOD_HANDLER(response,  Response));
+      json.fromJSON(U_JSON_METHOD_HANDLER(vrequests, UVector<Request*>));
+      json.fromJSON(U_JSON_METHOD_HANDLER(presponse, Response));
       }
 
 #ifdef DEBUG
    const char* dump(bool breset) const
       {
-      *UObjectIO::os << "request  (Request "  << (void*)&request  << ")\n"
-                     << "response (Response " << (void*)&response << ')';
+      *UObjectIO::os << "presponse           " << (void*)presponse  << ")\n"
+                     << "request   (Request  " << (void*)&request   << ")\n"
+                     << "response  (Response " << (void*)&response  << ")\n"
+                     << "vrequests (UVector  " << (void*)&vrequests << ')';
 
       if (breset)
          {
@@ -408,7 +421,9 @@ static void testMultiple()
    Multiple multiple;
    UString result, reqJson = U_STRING_FROM_CONSTANT("{"
    "\"request\":{\"table\":{\"type\":\"localesData\",\"token\":\"A619828KAIJ6D3\"},\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\",\"fbPermissions\":[\"public_profile\",\"user_friends\",\"email\"]},"
-   "\"response\":{\"fbPermissions\":[\"public_profile\",\"user_friends\",\"email\"],\"type\":\"startup\",\"token\":\"\",\"table\":{\"type\":\"localesData\",\"token\":\"A619828KAIJ6D3\"}}"
+   "\"response\":{\"fbPermissions\":[\"public_profile\",\"user_friends\",\"email\"],\"type\":\"startup\",\"token\":\"\",\"table\":{\"type\":\"localesData\",\"token\":\"A619828KAIJ6D3\"}},"
+   "\"vrequests\":[],"
+   "\"presponse\":{\"fbPermissions\":[],\"type\":\"\",\"token\":\"\",\"table\":{}}"
    "}");
 
    bool ok = JSON_parse(reqJson, multiple);

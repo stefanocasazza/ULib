@@ -269,6 +269,25 @@ public:
       U_RETURN(true);
       }
 
+   static void startRequest()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::startRequest()")
+
+#  if (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
+      UClientImage_Base::startRequest();
+#  endif
+
+      // ------------------------------
+      // U_http_info.uri
+      // ....
+      // U_http_info.nResponseCode
+      // ....
+      // ------------------------------
+      U_HTTP_INFO_RESET(0);
+
+      u_clientimage_info.flag.u = 0;
+      }
+
    // UPLOAD
 
    static vPFi on_upload;
@@ -639,7 +658,7 @@ public:
 #ifndef U_LOG_DISABLE
    static char iov_buffer[20];
    static struct iovec iov_vec[10];
-# if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) 
+# if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
    static uint32_t request_offset, referer_offset, agent_offset;
 # endif
 
