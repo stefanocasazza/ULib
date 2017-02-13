@@ -178,6 +178,7 @@ public:
    static URDB* db_not_found;
    static UModProxyService* service;
    static UVector<UString>* vmsg_error;
+   static UHashMap<UString>* prequestHeader;
    static UVector<UModProxyService*>* vservice;
 
    static char response_buffer[64];
@@ -206,11 +207,68 @@ public:
    static bool isValidRequestExt(const char* ptr, uint32_t size) __pure;
    static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
 
+#ifndef U_HTTP2_DISABLE
+   static bool copyHeaders(UStringRep* key, void* elem)
+      {
+      U_TRACE(0, "UHTTP::copyHeaders(%V,%p)", key, elem)
+
+      U_INTERNAL_ASSERT_POINTER(prequestHeader)
+      U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
+
+      /**
+       * +-------+-----------------------------+---------------+
+       * | 1     | :authority                  |               |
+       * | 2     | :method                     | GET           |
+       * | 3     | :method                     | POST          |
+       * | 4     | :path                       | /             |
+       * | 5     | :path                       | /index.html   |
+       * | 6     | :scheme                     | http          |
+       * | 7     | :scheme                     | https         |
+       * | 8     | :status                     | 200           |
+       * | 9     | :status                     | 204           |
+       * | 10    | :status                     | 206           |
+       * | 11    | :status                     | 304           |
+       * | 12    | :status                     | 400           |
+       * | 13    | :status                     | 404           |
+       * | 14    | :status                     | 500           |
+       * | ...   | ...                         | ...           |
+       * +-------+-----------------------------+---------------+
+       */
+
+      if (key != UString::str_path->rep           &&
+          key != UString::str_cookie->rep         &&
+          key != UString::str_accept->rep         &&
+          key != UString::str_method->rep         &&
+          key != UString::str_referer->rep        &&
+          key != UString::str_authority->rep      &&
+          key != UString::str_user_agent->rep     &&
+          key != UString::str_content_type->rep   &&
+          key != UString::str_content_length->rep &&
+          key != UString::str_accept_language->rep)
+         {
+         prequestHeader->insert(key, (const UStringRep*)elem);
+         }
+
+      U_INTERNAL_DUMP("key = %p", key)
+
+      U_RETURN(true);
+      }
+#  endif
+
    static void setHostname(const char* ptr, uint32_t len);
 
    static void setHostname(const UString& name) { setHostname(U_STRING_TO_PARAM(name)); }
 
    static const char* getStatusDescription(uint32_t* plen = 0);
+
+   static uint32_t getUserAgent()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::getUserAgent()")
+
+      uint32_t agent = (U_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, -1) : 0);
+
+      U_RETURN(agent);
+      }
 
    static void checkForPathName()
       {
@@ -224,15 +282,6 @@ public:
 
          U_INTERNAL_DUMP("file = %.*S", U_FILE_TO_TRACE(*file))
          }
-      }
-
-   static uint32_t getUserAgent()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP::getUserAgent()")
-
-      uint32_t agent = (U_http_info.user_agent_len ? u_cdb_hash((unsigned char*)U_HTTP_USER_AGENT_TO_PARAM, -1) : 0);
-
-      U_RETURN(agent);
       }
 
    static bool isSizeForSendfile(uint32_t sz)
@@ -249,6 +298,20 @@ public:
       }
 
       U_RETURN(false);
+      }
+
+   static void addHTTPVariables(UString& buffer)
+      {
+      U_TRACE(0, "UHTTP::addHTTPVariables(%V)", buffer.rep)
+
+      U_INTERNAL_ASSERT_POINTER(prequestHeader)
+      U_INTERNAL_ASSERT_EQUALS(prequestHeader->empty(), false)
+
+      prequestHeader->callForAllEntry(addHTTPVariables);
+
+      (void) buffer.append(*string_HTTP_Variables);
+
+      string_HTTP_Variables->clear();
       }
 
    static bool checkDirectoryForDocumentRoot(const char* ptr, uint32_t len)
@@ -593,6 +656,7 @@ public:
       char        dir[503];
    } ucgi;
 
+   static bool bnph;
    static UCommand* pcmd;
    static UString* geoip;
    static UString* fcgi_uri_mask;
@@ -1041,9 +1105,9 @@ public:
 
    static uint32_t old_path_len;
 
-   static void checkFileInCache1(const char* path, uint32_t len)
+   static void checkFileInCacheOld(const char* path, uint32_t len)
       {
-      U_TRACE(0, "UHTTP::checkFileInCache1(%.*S,%u)", len, path, len)
+      U_TRACE(0, "UHTTP::checkFileInCacheOld(%.*S,%u)", len, path, len)
 
       U_INTERNAL_DUMP("old_path_len = %u", old_path_len)
 
@@ -1129,8 +1193,8 @@ private:
    static void loadStaticLinkedServlet(const char* name, uint32_t len, vPFi runDynamicPage) U_NO_EXPORT;
 #endif      
 
-   static void checkPath() U_NO_EXPORT;
    static bool callService() U_NO_EXPORT;
+   static void checkPathName() U_NO_EXPORT;
    static void checkIPClient() U_NO_EXPORT;
    static bool runDynamicPage() U_NO_EXPORT;
    static bool readBodyRequest() U_NO_EXPORT;
@@ -1138,9 +1202,9 @@ private:
    static bool readHeaderRequest() U_NO_EXPORT;
    static void processGetRequest() U_NO_EXPORT;
    static bool processAuthorization() U_NO_EXPORT;
-   static bool checkPath(uint32_t len) U_NO_EXPORT;
    static void checkRequestForHeader() U_NO_EXPORT;
    static bool checkGetRequestIfRange() U_NO_EXPORT;
+   static bool checkPathName(uint32_t len) U_NO_EXPORT;
    static bool checkGetRequestIfModified() U_NO_EXPORT;
    static void setCGIShellScript(UString& command) U_NO_EXPORT;
    static bool checkIfSourceHasChangedAndCompileUSP() U_NO_EXPORT;

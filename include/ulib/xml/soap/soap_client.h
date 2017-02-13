@@ -31,7 +31,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "USOAPClient_Base::sendRequest()")
 
-      if (UClient_Base::sendRequest()) U_RETURN(true);
+      if (UClient_Base::sendRequest(false)) U_RETURN(true);
 
       U_RETURN(false);
       }

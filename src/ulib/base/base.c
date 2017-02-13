@@ -108,10 +108,10 @@ const char* u_ctn2s = "00010203040506070809"
 bool     u_is_tty;
 bool     u_ulib_init;
 pid_t    u_pid;
+char     u_pid_str[10];
 uint32_t u_pid_str_len;
 uint32_t u_progname_len;
 
-      char* restrict u_pid_str;
 const char* restrict u_progpath;
 const char* restrict u_progname;
 
@@ -394,33 +394,6 @@ __pure const char* u_getsuffix(const char* restrict path, uint32_t len)
    ptr = (const char*) memrchr(path, '.', len);
 
    return (ptr && memrchr(ptr+1, '/', len - (ptr+1 - path)) == 0 ? ptr : 0);
-}
-
-void u_setPid(void)
-{
-   static char buffer[10];
-
-   pid_t pid_copy;
-
-   U_INTERNAL_TRACE("u_setPid()")
-
-   u_pid     = getpid();
-   u_pid_str = buffer + sizeof(buffer);
-
-   pid_copy = u_pid;
-
-   while (pid_copy >= 10)
-      {
-      *--u_pid_str = (pid_copy % 10) + '0';
-
-      pid_copy /= 10;
-      }
-
-   U_INTERNAL_ASSERT_MINOR(pid_copy, 10)
-
-   *--u_pid_str = pid_copy + '0';
-
-   u_pid_str_len = buffer + sizeof(buffer) - u_pid_str;
 }
 
 bool u_is_overlap(const char* restrict dst, const char* restrict src, size_t n)
@@ -819,30 +792,27 @@ void u_init_ulib(char** restrict argv)
 
    u_setPid();
 
-#if defined(U_STATIC_ONLY)
    if (argv == 0)
       {
       u_progpath     =
       u_progname     =                 "ULib";
       u_progname_len = U_CONSTANT_SIZE("ULib");
 
-      if (u_now == 0)
-         {
-         u_now = &u_timeval;
-         }
+#  if defined(U_STATIC_ONLY)
+      if (u_now == 0) u_now = &u_timeval;
+#  endif
       }
    else
-#endif
-   {
-   u_progpath = *argv;
-   u_progname = u_basename(u_progpath);
+      {
+      u_progpath = *argv;
+      u_progname = u_basename(u_progpath);
 
-   U_INTERNAL_ASSERT_POINTER(u_progname)
+      U_INTERNAL_ASSERT_POINTER(u_progname)
 
-   u_progname_len = u__strlen(u_progname, __PRETTY_FUNCTION__);
+      u_progname_len = u__strlen(u_progname, __PRETTY_FUNCTION__);
 
-   U_INTERNAL_ASSERT_MAJOR(u_progname_len, 0)
-   }
+      U_INTERNAL_ASSERT_MAJOR(u_progname_len, 0)
+      }
 
    U_INTERNAL_ASSERT_EQUALS(u_ulib_init, false)
 

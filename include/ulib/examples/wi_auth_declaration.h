@@ -3826,6 +3826,7 @@ static void usp_init_wi_auth()
    U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(0));
 
    client->setFollowRedirects(true, false);
+   client->getResponseHeader()->setIgnoreCase(false);
 
    // NB: REBOOT access point tramite webif...
 

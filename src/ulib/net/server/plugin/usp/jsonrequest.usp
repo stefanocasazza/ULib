@@ -42,6 +42,36 @@ public:
       U_TRACE_UNREGISTER_OBJECT(5, Request)
       }
 
+   void clear()
+      {
+      U_TRACE_NO_PARAM(0, "Request::clear()")
+
+      user.clear();
+       t.clear();
+
+      forecast = zip = 0;
+      }
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "Request::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_METHOD_HANDLER(user,     UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(t,        UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(forecast, uint32_t));
+      json.toJSON(U_JSON_METHOD_HANDLER(zip,      uint32_t));
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "Request::fromJSON(%p)", &json)
+
+      json.fromJSON(U_JSON_METHOD_HANDLER(user,     UString));
+      json.fromJSON(U_JSON_METHOD_HANDLER(t,        UString));
+      json.fromJSON(U_JSON_METHOD_HANDLER(forecast, uint32_t));
+      json.fromJSON(U_JSON_METHOD_HANDLER(zip,      uint32_t));
+      }
+
 #ifdef DEBUG
    const char* dump(bool breset) const
       {
@@ -63,33 +93,6 @@ public:
 
 private:
    Request& operator=(const Request&) { return *this; }
-};
-
-// JSON TEMPLATE SPECIALIZATIONS
-
-template <> class U_EXPORT UJsonTypeHandler<Request> : public UJsonTypeHandler_Base {
-public:
-   explicit UJsonTypeHandler(Request& val) : UJsonTypeHandler_Base(&val) {}
-
-   void toJSON(UValue& json)
-      {
-      U_TRACE(0, "UJsonTypeHandler<Request>::toJSON(%p)", &json)
-
-      json.toJSON(U_JSON_TYPE_HANDLER(Request, user,     UString));
-      json.toJSON(U_JSON_TYPE_HANDLER(Request, t,        UString));
-      json.toJSON(U_JSON_TYPE_HANDLER(Request, forecast, uint32_t));
-      json.toJSON(U_JSON_TYPE_HANDLER(Request, zip,      uint32_t));
-      }
-
-   void fromJSON(UValue& json)
-      {
-      U_TRACE(0, "UJsonTypeHandler<Request>::fromJSON(%p)", &json)
-
-      json.fromJSON(U_JSON_TYPE_HANDLER(Request, user,      UString));
-      json.fromJSON(U_JSON_TYPE_HANDLER(Request, t,         UString));
-      json.fromJSON(U_JSON_TYPE_HANDLER(Request, forecast,  uint32_t));
-      json.fromJSON(U_JSON_TYPE_HANDLER(Request, zip,       uint32_t));
-      }
 };
 -->
 <!--#header

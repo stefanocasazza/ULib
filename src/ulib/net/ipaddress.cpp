@@ -521,7 +521,7 @@ void UIPAddress::convertToAddressFamily(int iNewAddressFamily)
 
    if (iAddressType != iNewAddressFamily)
       {
-      if  (iNewAddressFamily == AF_INET:)
+      if (iNewAddressFamily == AF_INET)
          {
          if (IN6_IS_ADDR_V4MAPPED(&(pcAddress.s))) setAddress(pcAddress.p + 12, sizeof(in_addr));
          }

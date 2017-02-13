@@ -194,11 +194,11 @@ extern U_EXPORT uint32_t u_buffer_len; /* assert that u_buffer is busy if u_buff
 /* Startup */
 
 extern U_EXPORT pid_t u_pid;
+extern U_EXPORT char     u_pid_str[10];
 extern U_EXPORT uint32_t u_pid_str_len;
 extern U_EXPORT uint32_t u_progname_len;
 extern U_EXPORT bool u_is_tty, u_ulib_init;
 
-extern U_EXPORT       char* restrict u_pid_str;
 extern U_EXPORT const char* restrict u_progpath;
 extern U_EXPORT const char* restrict u_progname;
 
@@ -253,7 +253,6 @@ extern U_EXPORT const char* restrict u_tmpdir;
 extern U_EXPORT char u_hostname[HOST_NAME_MAX+1];
 extern U_EXPORT uint32_t u_hostname_len, u_user_name_len, u_seed_hash;
 
-U_EXPORT void u_setPid(void);
 U_EXPORT void u_initRandom(void);
 U_EXPORT void u_init_ulib_username(void);
 U_EXPORT void u_init_ulib_hostname(void);

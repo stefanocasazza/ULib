@@ -11,7 +11,7 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
 					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
- UTRACE="0 50M 0"
+ UTRACE="0 20M 0"
 #UTRACE_SIGNAL="0 50M -1"
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
@@ -60,7 +60,7 @@ userver {
 #LOG_FILE_SZ 20k
  LOG_MSG_SIZE -1
  PID_FILE /var/run/userver_tcp.pid
- PREFORK_CHILD 0
+#PREFORK_CHILD 0
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
@@ -80,7 +80,7 @@ userver {
 http {
 ALIAS "[ / /100.html ]"
 #VIRTUAL_HOST yes
-#ENABLE_INOTIFY yes
+ ENABLE_INOTIFY yes
  LIMIT_REQUEST_BODY 3M
  REQUEST_READ_TIMEOUT 30
 #DIGEST_AUTHENTICATION yes

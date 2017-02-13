@@ -684,17 +684,15 @@ public:
       _length -= 2;
       }
 
-   bool needQuote() const
+   static bool needQuote(const char* s, uint32_t n)
       {
-      U_TRACE_NO_PARAM(0, "UStringRep::needQuote()")
+      U_TRACE(0, "UStringRep::needQuote(%S,%u)", s, n)
 
-      U_CHECK_MEMORY
+      U_INTERNAL_ASSERT_MAJOR(n, 0)
 
-      if (_length == 0) U_RETURN(true);
-
-      for (const unsigned char* s = (const unsigned char*)str, *_end = s + _length; s < _end; ++s)
+      for (const char* _end = s + n; s < _end; ++s)
          {
-         unsigned char c = *s;
+         char c = *s;
 
          if (c == '"'  ||
              c == '\\' ||
@@ -707,6 +705,17 @@ public:
       U_RETURN(false);
       }
 
+   bool needQuote() const
+      {
+      U_TRACE_NO_PARAM(0, "UStringRep::needQuote()")
+
+      U_CHECK_MEMORY
+
+      if (_length == 0) U_RETURN(true);
+
+      return needQuote(str, _length);
+      }
+
    uint32_t getSpaceToDump() const
       {
       U_TRACE_NO_PARAM(0, "UStringRep::getSpaceToDump()")
@@ -715,7 +724,9 @@ public:
 
       if (needQuote() == false) U_RETURN(_length);
 
-      U_RETURN(_length + U_CONSTANT_SIZE(""));
+      uint32_t sz = _length + U_CONSTANT_SIZE("");
+
+      U_RETURN(sz);
       }
 
    static uint32_t fold(uint32_t pos, uint32_t off, uint32_t sz)
@@ -1257,9 +1268,25 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   explicit UString(uint32_t n, const char* format, uint32_t fmt_size, ...); // ctor with var arg
-
    explicit UString(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND);
+
+   explicit UString(uint32_t sz, const char* format, uint32_t fmt_size, ...) // ctor with var arg
+      {
+      U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%.*S,%u", sz, fmt_size, format, fmt_size)
+
+      U_INTERNAL_ASSERT_POINTER(format)
+
+      va_list argp;
+      va_start(argp, fmt_size);
+
+      rep = UStringRep::create(0U, sz, 0);
+
+      rep->_length = u__vsnprintf(rep->data(), rep->_capacity+1, format, fmt_size, argp);
+
+      va_end(argp);
+
+      U_INTERNAL_ASSERT(invariant())
+      }
 
    // SUBSTRING
 

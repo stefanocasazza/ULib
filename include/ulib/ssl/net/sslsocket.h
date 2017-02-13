@@ -25,6 +25,13 @@
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 
+#if OPENSSL_VERSION_NUMBER   >= 0x10002000L
+#  define U_USE_NPN  1
+#  define U_USE_ALPN 1
+#elif OPENSSL_VERSION_NUMBER >= 0x10001000L
+#  define U_USE_NPN  1
+#endif
+
 #if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
 #  include <openssl/ocsp.h>
 #  ifndef U_OCSP_MAX_RESPONSE_SIZE
@@ -70,13 +77,13 @@ public:
    bool secureConnection();
    bool acceptSSL(USSLSocket* pcConnection);
 
+   static long getOptions(const UVector<UString>& vec);
+
    const char* getProtocolList()       { return (ciphersuite_model == 1 ? "TLSv1.2,TLSv1.1" :
                                                  ciphersuite_model == 2 ? "TLSv1.2,TLSv1.1,TLSv1.0,SSLv3" : "TLSv1.2,TLSv1.1,TLSv1.0"); }
 
    const char* getConfigurationModel() { return (ciphersuite_model == 1 ? "Modern" :
                                                  ciphersuite_model == 2 ? "Old"    : "Intermediate"); }
-
-   static long getOptions(const UVector<UString>& vec);
 
    /**
     * Load Diffie-Hellman parameters from file. These are used to generate a DH key exchange.
@@ -301,18 +308,27 @@ protected:
 #endif
 
 private:
-   static int nextProto(SSL* ssl, const unsigned char** data, unsigned int* len, void* arg)
+#ifndef U_HTTP2_DISABLE
+# ifdef U_USE_NPN
+   static int nextProto(SSL* ssl, const unsigned char** data, unsigned int* len, void* arg) U_NO_EXPORT; // NPN selection callback
+# endif
+
+# ifdef U_USE_ALPN
+   static int selectProto(SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in, unsigned int inlen, void* arg) U_NO_EXPORT; // ALPN selection callback
+# endif
+
+   void setupProtocolNegotiationMethods()
       {
-      U_TRACE(0, "USSLSocket::nextProto(%p,%p,%p,%p)", ssl, data, len, arg)
+      U_TRACE_NO_PARAM(0, "USSLSocket::setupProtocolNegotiationMethods()")
 
-      *data = (unsigned char*)arg;
-      *len  = U_CONSTANT_SIZE("\x2h2\x5h2-16\x5h2-14");
+#  ifdef U_USE_NPN
+      U_SYSCALL_VOID(SSL_CTX_set_next_protos_advertised_cb, "%p,%p,%p", ctx, nextProto, (void*)"\x2h2\x5h2-16\x5h2-14"); // NPN selection callback
+#  endif
 
-      U_RETURN(SSL_TLSEXT_ERR_OK);
+#  if U_USE_ALPN
+      U_SYSCALL_VOID(SSL_CTX_set_alpn_select_cb, "%p,%p,%p", ctx, selectProto, 0); // ALPN selection callback
+#  endif
       }
-
-#if OPENSSL_VERSION_NUMBER >= 0x10002000L
-   static int selectProto(SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in, unsigned int inlen, void* arg) U_NO_EXPORT;
 #endif
 
    U_DISALLOW_COPY_AND_ASSIGN(USSLSocket)

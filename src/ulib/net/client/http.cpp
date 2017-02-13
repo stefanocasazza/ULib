@@ -297,7 +297,7 @@ bool UHttpClient_Base::createAuthorizationHeader(bool bProxy)
 
    if (authResponse.empty())
       {
-      U_DUMP("%.*S header missing from HTTP response: %d", keylen, key, U_http_info.nResponseCode)
+      U_INTERNAL_DUMP("%.*S header missing from HTTP response: %d", keylen, key, U_http_info.nResponseCode)
 
       U_RETURN(false);
       }
@@ -672,10 +672,11 @@ loop:
 next:
       if (log_msg)
          {
+         uint32_t sz = strlen(log_msg);
          const char* str = (num_attempts < U_MAX_ATTEMPTS ? "success" : "FAILED");
 
-         if (log_fd == -1) ULog::log(        log_msg, strlen(log_msg), str, num_attempts);
-         else              ULog::log(log_fd, log_msg, strlen(log_msg), str, num_attempts);
+         if (log_fd == -1) ULog::log(        log_msg, sz, str, num_attempts);
+         else              ULog::log(log_fd, log_msg, sz, str, num_attempts);
          }
       }
 
@@ -692,7 +693,7 @@ next:
    U_RETURN(0);
 }
 
-//=============================================================================
+//================================================================================
 // Send the http request to the remote host.
 //
 // The request is made up of a request line followed by request header fields. Ex:
@@ -705,7 +706,7 @@ next:
 // fields followed by the requested data.
 //
 // Note: HTTP Redirection
-// ----------------------
+// ----------------------------------------------------------------------------
 // By default we will follow HTTP redirects. These are communicated
 // to us by a 3xx HTTP response code and the presence of a "Location" header
 // field. A 3xx response code without a Location header is an error.
@@ -713,9 +714,9 @@ next:
 // we receive a 200 OK response or the maximum number of redirects is exceeded.
 //
 // We do not process Location headers when accompanying a 200 OK response
-//=============================================================================
+//================================================================================
 
-void UHttpClient_Base::parseRequest(uint32_t n)
+bool UHttpClient_Base::parseRequest(uint32_t n)
 {
    U_TRACE(0, "UHttpClient_Base::parseRequest(%u)", n)
 
@@ -723,20 +724,27 @@ void UHttpClient_Base::parseRequest(uint32_t n)
 
    U_INTERNAL_ASSERT(last_request)
 
-   uint32_t startHeader = last_request.find(U_CRLF, 0, 2) + 2;
+   uint32_t sz = last_request.size(), 
+            startHeader = last_request.find(U_CRLF, 0, 2) + 2;
 
-   U_ASSERT_RANGE(11, startHeader, last_request.size())
+   if (startHeader <= sz &&
+       startHeader >= U_CONSTANT_SIZE("GET / HTTP/1.0\r\n"))
+      {
+      UClient_Base::iovcnt = n;
 
-   const char* ptr = last_request.data();
+      const char* ptr = last_request.data();
 
-   UClient_Base::iovcnt = n;
+      UClient_Base::iov[0].iov_base = (caddr_t)ptr;
+      UClient_Base::iov[0].iov_len  = startHeader;
+      UClient_Base::iov[1].iov_base = 0;
+      UClient_Base::iov[1].iov_len  = 0;
+      UClient_Base::iov[2].iov_base = (caddr_t)ptr + startHeader;
+      UClient_Base::iov[2].iov_len  =           sz - startHeader;
 
-   UClient_Base::iov[0].iov_base = (caddr_t)ptr;
-   UClient_Base::iov[0].iov_len  = startHeader;
-   UClient_Base::iov[1].iov_base = 0;
-   UClient_Base::iov[1].iov_len  = 0;
-   UClient_Base::iov[2].iov_base = (caddr_t)ptr        + startHeader;
-   UClient_Base::iov[2].iov_len  = last_request.size() - startHeader;
+      U_RETURN(true);
+      }
+
+   U_RETURN(false);
 }
 
 UString UHttpClient_Base::wrapRequest(UString* req, const UString& host_port, uint32_t method_num, const char* _uri,
@@ -795,11 +803,11 @@ void UHttpClient_Base::composeRequest(const char* content_type, uint32_t content
 
    U_INTERNAL_DUMP("method_num = %u", method_num)
 
-   if (method_num == 0) // GET
+   if (method_num <= 1) // GET/HEAD
       {
       last_request = wrapRequest(0, UClient_Base::host_port, method_num, U_STRING_TO_PARAM(UClient_Base::uri), "\r\n");
 
-      parseRequest(3);
+      (void) parseRequest(3);
       }
    else
       {
@@ -817,14 +825,14 @@ void UHttpClient_Base::composeRequest(const char* content_type, uint32_t content
 
       last_request.snprintf(U_CONSTANT_TO_PARAM("%.*s %v HTTP/1.1\r\n"
                             "Host: %v:%u\r\n"
-                            "User-Agent: ULib/1.4.2\r\n"
+                            "User-Agent: ULib/" ULIB_VERSION "\r\n"
                             "Content-Length: %d\r\n"
                             "Content-Type: %.*s\r\n"
                             "\r\n"),
                             U_HTTP_METHOD_NUM_TO_TRACE(method_num),
                             UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, sz, content_type_len, content_type);
 
-      parseRequest(4);
+      (void) parseRequest(4);
       }
 }
 
@@ -869,7 +877,7 @@ bool UHttpClient_Base::sendRequestEngine()
       if (result == -2) U_RETURN(true); // pass HTTP_UNAUTHORISED response to the HTTP client...
       if (result ==  2)                 // no redirection, read body...
          {
-         U_DUMP("SERVER RETURNED HTTP RESPONSE: %d", U_http_info.nResponseCode)
+         U_INTERNAL_DUMP("SERVER RETURNED HTTP RESPONSE: %d", U_http_info.nResponseCode)
 
          U_http_info.clength = responseHeader->getHeader(U_CONSTANT_TO_PARAM("Content-Length")).strtoul();
 
@@ -966,28 +974,29 @@ bool UHttpClient_Base::sendRequest(const UString& req)
 
    last_request = req;
 
-   parseRequest();
-
-   bool result = false;
-   char http_method_num_save = U_http_method_num;
-                               U_http_method_num = 0;
-
-   if (UHTTP::scanfHeaderRequest((const char*)UClient_Base::iov[0].iov_base, UClient_Base::iov[0].iov_len))
+   if (parseRequest(3))
       {
-      U_INTERNAL_DUMP("U_http_method_type = %B", U_http_method_type)
+      bool result = false;
+      char http_method_num_save = U_http_method_num;
+                                  U_http_method_num = 0;
 
-      U_INTERNAL_ASSERT(UHTTP::isGETorPOST())
+      if (UHTTP::scanfHeaderRequest((const char*)UClient_Base::iov[0].iov_base, UClient_Base::iov[0].iov_len))
+         {
+         U_INTERNAL_DUMP("U_http_method_type = %B U_http_method_num = %u", U_http_method_type, U_http_method_num)
 
-      method_num = (U_http_method_type == HTTP_GET ? 0 : 2); // GET|POST
+         method_num = U_http_method_num;
 
-      (void) UClient_Base::uri.assign(U_HTTP_URI_QUERY_TO_PARAM);
+         (void) UClient_Base::uri.assign(U_HTTP_URI_QUERY_TO_PARAM);
 
-      if (sendRequest()) result = true;
+         if (sendRequest()) result = true;
+         }
+
+      U_http_method_num = http_method_num_save;
+
+      U_RETURN(result);
       }
 
-   U_http_method_num = http_method_num_save;
-
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 bool UHttpClient_Base::sendRequest(int method, const char* content_type, uint32_t content_type_len, const char* data, uint32_t data_len, const char* _uri, uint32_t uri_len)
@@ -1083,7 +1092,7 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
 
             last_request.snprintf(U_CONSTANT_TO_PARAM("PUT %.*s%.*s HTTP/1.1\r\n"
                                   "Host: %v:%u\r\n"
-                                  "User-Agent: ULib/1.4.2\r\n"
+                                  "User-Agent: ULib/" ULIB_VERSION "\r\n"
                                   "Content-Length: %u\r\n"
                                   "Content-Type: %s\r\n"
                                   "\r\n"),
@@ -1095,7 +1104,7 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
             UClient_Base::iov[3].iov_base = (caddr_t)content.data();
             UClient_Base::iov[3].iov_len  = sz;
 
-            parseRequest(4);
+            (void) parseRequest(4);
             }
          else
             {
@@ -1129,13 +1138,13 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
 
             last_request.snprintf(U_CONSTANT_TO_PARAM("POST %v HTTP/1.1\r\n"
                                   "Host: %v:%u\r\n"
-                                  "User-Agent: ULib/1.4.2\r\n"
+                                  "User-Agent: ULib/" ULIB_VERSION "\r\n"
                                   "Content-Length: %u\r\n"
                                   "Content-Type: multipart/form-data; boundary=----------------------------b34551106891\r\n"
                                   "\r\n"),
                                   UClient_Base::uri.rep, UClient_Base::server.rep, UClient_Base::port, _body.size() + sz + UClient_Base::iov[5].iov_len);
 
-            parseRequest(6);
+            (void) parseRequest(6);
             }
 
          // send upload request to server and get response

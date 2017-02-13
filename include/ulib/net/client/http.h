@@ -184,7 +184,7 @@ protected:
    static struct uhttpinfo u_http_info_save;
 
    bool sendRequestEngine();
-   void parseRequest(uint32_t n = 3);
+   bool parseRequest(uint32_t n);
    void composeRequest(const char* content_type = 0, uint32_t content_type_len = 0);
    int  sendRequestAsync(const UString& url, bool bqueue, const char* log_msg, int log_fd);
    bool sendRequest(int method, const char* content_type, uint32_t content_type_len, const char* data, uint32_t data_len, const char* uri, uint32_t uri_len);

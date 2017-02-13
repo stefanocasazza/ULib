@@ -1488,14 +1488,22 @@ void U_EXPORT check_mmap(uint32_t map_size)
 //#define U_USE_STRTOD // Parse number in full precision (but slower)
 
 int
-U_EXPORT main (int argc, char* argv[])
+U_EXPORT main(int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
 
    U_TRACE(5, "main(%d)", argc)
 
    UCrono crono;
-   UString x(100U), y, z, z1;
+   UString x(100U), y = U_STRING_FROM_CONSTANT("0.0000001"), z, z1, value = U_STRING_FROM_CONSTANT("0.0");
+
+   UString new_value(U_CAPACITY, U_CONSTANT_TO_PARAM("%.*s; %v"), U_STRING_TO_TRACE(y), value.rep);
+
+   value = new_value;
+
+   U_INTERNAL_DUMP("value(%u): = %.*S", value.size(), U_STRING_TO_TRACE(value))
+
+   U_ASSERT( value == U_STRING_FROM_CONSTANT("0.0000001; 0.0") )
 
    U_ASSERT( U_STRING_FROM_CONSTANT("0.0").strtod() == 0.0 )
    U_ASSERT( U_STRING_FROM_CONSTANT("1.0").strtod() == 1.0 )

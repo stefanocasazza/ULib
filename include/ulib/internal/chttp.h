@@ -222,18 +222,19 @@ extern U_EXPORT uclientimage_info u_clientimage_info;
 #define U_http_host_vlen               u_clientimage_info.http_info.flag[ 3]
 #define U_http_range_len               u_clientimage_info.http_info.flag[ 4]
 #define U_http_accept_len              u_clientimage_info.http_info.flag[ 5]
-#define U_http_websocket_len           u_clientimage_info.http_info.flag[ 6]
-#define U_http2_settings_len           u_clientimage_info.http_info.flag[ 7]
-#define U_http_ip_client_len           u_clientimage_info.http_info.flag[ 8]
-#define U_http_content_type_len        u_clientimage_info.http_info.flag[ 9]
-#define U_http_accept_language_len     u_clientimage_info.http_info.flag[10]
-#define U_http_len_user1               u_clientimage_info.http_info.flag[12]
-#define U_http_len_user2               u_clientimage_info.http_info.flag[13]
-#define U_http_len_user3               u_clientimage_info.http_info.flag[14]
-#define U_http_len_user4               u_clientimage_info.http_info.flag[15]
+#define U_http_uri_offset              u_clientimage_info.http_info.flag[ 6]
+#define U_http_websocket_len           u_clientimage_info.http_info.flag[ 7]
+#define U_http2_settings_len           u_clientimage_info.http_info.flag[ 8]
+#define U_http_ip_client_len           u_clientimage_info.http_info.flag[ 9]
+#define U_http_content_type_len        u_clientimage_info.http_info.flag[10]
+#define U_http_accept_language_len     u_clientimage_info.http_info.flag[11]
 
-#define U_http_flag                    u_clientimage_info.http_info.flag[11]
-#define U_http_flag_save               UHttpClient_Base::u_http_info_save.flag[11]
+#define U_http_flag                    u_clientimage_info.http_info.flag[12]
+#define U_http_flag_save               UHttpClient_Base::u_http_info_save.flag[12]
+
+#define U_http_len_user1               u_clientimage_info.http_info.flag[13]
+#define U_http_len_user2               u_clientimage_info.http_info.flag[14]
+#define U_http_len_user3               u_clientimage_info.http_info.flag[15]
 
 enum HttpRequestType {
    HTTP_IS_SENDFILE            = 0x0001,

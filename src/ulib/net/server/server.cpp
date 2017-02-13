@@ -2797,20 +2797,24 @@ U_NO_EXPORT bool UServer_Base::clientImageHandlerRead()
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
 #  define CSOCKET psocket
-#  define CLIENT_INDEX lClientIndex
+#  define CLIENT_IMAGE lClientIndex
 #  define CLIENT_ADDRESS lclient_address
 #  define CLIENT_ADDRESS_LEN lclient_address_len
 #  define CLIENT_IMAGE_HANDLER_READ (pClientImage = lClientIndex, csocket = psocket, \
                                      client_address = lclient_address, client_address_len = lclient_address_len, clientImageHandlerRead())
 #else
 #  define CSOCKET csocket
-#  define CLIENT_INDEX pClientImage
+#  define CLIENT_IMAGE pClientImage
 #  define CLIENT_ADDRESS client_address
 #  define CLIENT_ADDRESS_LEN client_address_len
 #  define CLIENT_IMAGE_HANDLER_READ clientImageHandlerRead()
 #endif
 
-int UServer_Base::handlerRead() // This method is called to accept a new connection on the server socket (listening)
+// This method is called to accept a new connection on the server socket (listening).
+// Let all the process race to call accept() on the socket; since the latter is
+// non-blocking, that will effectively act as load balancing
+
+int UServer_Base::handlerRead()
 {
    U_TRACE_NO_PARAM(1, "UServer_Base::handlerRead()")
 
@@ -2836,18 +2840,18 @@ int UServer_Base::handlerRead() // This method is called to accept a new connect
 #endif
 
 loop:
-   U_INTERNAL_ASSERT_MINOR(CLIENT_INDEX, eClientImage)
+   U_INTERNAL_ASSERT_MINOR(CLIENT_IMAGE, eClientImage)
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
-   CSOCKET = CLIENT_INDEX->socket;
+   CSOCKET = CLIENT_IMAGE->socket;
 
    U_INTERNAL_DUMP("----------------------------------------", 0)
-   U_INTERNAL_DUMP("vClientImage[%d].last_event        = %#3D",  (CLIENT_INDEX - vClientImage), CLIENT_INDEX->last_event)
-   U_INTERNAL_DUMP("vClientImage[%u].sfd               = %d",    (CLIENT_INDEX - vClientImage), CLIENT_INDEX->sfd)
-   U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd      = %d",    (CLIENT_INDEX - vClientImage), CLIENT_INDEX->UEventFd::fd)
-   U_INTERNAL_DUMP("vClientImage[%u].socket            = %p",    (CLIENT_INDEX - vClientImage), CSOCKET)
-   U_INTERNAL_DUMP("vClientImage[%d].socket->flags     = %d %B", (CLIENT_INDEX - vClientImage), CSOCKET->flags, CSOCKET->flags)
-   U_INTERNAL_DUMP("vClientImage[%d].socket->iSockDesc = %d",    (CLIENT_INDEX - vClientImage), CSOCKET->iSockDesc)
+   U_INTERNAL_DUMP("vClientImage[%d].last_event        = %#3D",  (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->last_event)
+   U_INTERNAL_DUMP("vClientImage[%u].sfd               = %d",    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->sfd)
+   U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd      = %d",    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->UEventFd::fd)
+   U_INTERNAL_DUMP("vClientImage[%u].socket            = %p",    (CLIENT_IMAGE - vClientImage), CSOCKET)
+   U_INTERNAL_DUMP("vClientImage[%d].socket->flags     = %d %B", (CLIENT_IMAGE - vClientImage), CSOCKET->flags, CSOCKET->flags)
+   U_INTERNAL_DUMP("vClientImage[%d].socket->iSockDesc = %d",    (CLIENT_IMAGE - vClientImage), CSOCKET->iSockDesc)
    U_INTERNAL_DUMP("----------------------------------------", 0)
 
    if (CSOCKET->isOpen()) // busy
@@ -2879,15 +2883,15 @@ loop:
          {
          U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-         if ((u_now->tv_sec - CLIENT_INDEX->last_event) >= ptime->UTimeVal::tv_sec)
+         if ((u_now->tv_sec - CLIENT_IMAGE->last_event) >= ptime->UTimeVal::tv_sec)
             {
 #        if !defined(U_LOG_DISABLE) || (!defined(USE_LIBEVENT) && defined(HAVE_EPOLL_WAIT) && defined(DEBUG))
             called_from_handlerTime = false;
 #        endif
 
-            if (handlerTimeoutConnection(CLIENT_INDEX))
+            if (handlerTimeoutConnection(CLIENT_IMAGE))
                {
-               UNotifier::handlerDelete((UEventFd*)CLIENT_INDEX);
+               UNotifier::handlerDelete((UEventFd*)CLIENT_IMAGE);
 
                goto try_accept;
                }
@@ -2895,11 +2899,11 @@ loop:
          }
 
 try_next:
-      if (++CLIENT_INDEX >= eClientImage)
+      if (++CLIENT_IMAGE >= eClientImage)
          {
          U_INTERNAL_ASSERT_POINTER(vClientImage)
 
-         CLIENT_INDEX = vClientImage;
+         CLIENT_IMAGE = vClientImage;
 
          if (cround >= 2)
             {
@@ -3130,20 +3134,20 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    if (isLog())
       {
 #  ifdef USE_LIBSSL
-      if (bssl) CLIENT_INDEX->logCertificate();
+      if (bssl) CLIENT_IMAGE->logCertificate();
 #  endif
 
-      USocketExt::setRemoteInfo(CSOCKET, *CLIENT_INDEX->logbuf);
+      USocketExt::setRemoteInfo(CSOCKET, *CLIENT_IMAGE->logbuf);
 
-      U_INTERNAL_ASSERT(CLIENT_INDEX->logbuf->isNullTerminated())
+      U_INTERNAL_ASSERT(CLIENT_IMAGE->logbuf->isNullTerminated())
 
       char buffer[32];
       uint32_t len = setNumConnection(buffer);
 
-      ULog::log(U_CONSTANT_TO_PARAM("New client connected from %v, %.*s clients currently connected"), CLIENT_INDEX->logbuf->rep, len, buffer);
+      ULog::log(U_CONSTANT_TO_PARAM("New client connected from %v, %.*s clients currently connected"), CLIENT_IMAGE->logbuf->rep, len, buffer);
 
 #  ifdef U_WELCOME_SUPPORT
-      if (msg_welcome) ULog::log(U_CONSTANT_TO_PARAM("Sending welcome message to %v"), CLIENT_INDEX->logbuf->rep);
+      if (msg_welcome) ULog::log(U_CONSTANT_TO_PARAM("Sending welcome message to %v"), CLIENT_IMAGE->logbuf->rep);
 #  endif
       }
 #endif
@@ -3154,7 +3158,7 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
       {
       CSOCKET->abortive_close();
 
-      CLIENT_INDEX->UClientImage_Base::handlerDelete();
+      CLIENT_IMAGE->UClientImage_Base::handlerDelete();
 
       goto next;
       }
@@ -3192,12 +3196,12 @@ retry:   pid = UProcess::waitpid(-1, &status, WNOHANG); // NB: to avoid too much
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD)
 
 #if defined(HAVE_EPOLL_CTL_BATCH) && !defined(USE_LIBEVENT)
-   UNotifier::batch((UEventFd*)CLIENT_INDEX);
+   UNotifier::batch((UEventFd*)CLIENT_IMAGE);
 #else
-   UNotifier::insert((UEventFd*)CLIENT_INDEX);
+   UNotifier::insert((UEventFd*)CLIENT_IMAGE);
 #endif
 
-   if (++CLIENT_INDEX >= eClientImage) CLIENT_INDEX = vClientImage;
+   if (++CLIENT_IMAGE >= eClientImage) CLIENT_IMAGE = vClientImage;
 
 next:
 #ifdef USE_LIBEVENT
@@ -3217,7 +3221,7 @@ next:
       {
       cround = 2;
 
-      CLIENT_INDEX = vClientImage;
+      CLIENT_IMAGE = vClientImage;
 
       U_DEBUG("It has passed the client threshold(%u): preallocation(%u) num_connection(%u)",
                   num_client_threshold, UNotifier::max_connection, UNotifier::num_connection - UNotifier::min_connection)
@@ -3231,7 +3235,7 @@ end:
    UNotifier::insertBatch();
 #endif
 
-   nClientIndex = CLIENT_INDEX - vClientImage;
+   nClientIndex = CLIENT_IMAGE - vClientImage;
 
    U_INTERNAL_DUMP("nClientIndex = %u", nClientIndex)
 
@@ -3241,7 +3245,7 @@ end:
 }
 
 #undef CSOCKET
-#undef CLIENT_INDEX
+#undef CLIENT_IMAGE
 #undef CLIENT_ADDRESS
 #undef CLIENT_ADDRESS_LEN
 #undef CLIENT_IMAGE_HANDLER_READ
@@ -3251,17 +3255,29 @@ uint32_t UServer_Base::setNumConnection(char* ptr)
 {
    U_TRACE(0, "UServer_Base::setNumConnection(%p)", ptr)
 
-   uint32_t len;
+   uint32_t len, sz = UNotifier::num_connection - UNotifier::min_connection - 1;
 
-   if (preforked_num_kids <= 0) len = u_num2str32(UNotifier::num_connection - UNotifier::min_connection - 1, ptr) - ptr;
+   if (preforked_num_kids <= 0) len = u_num2str32(sz, ptr) - ptr;
    else
       {
       char* start = ptr;
 
       *ptr = '(';
-       ptr = u_num2str32(UNotifier::num_connection - UNotifier::min_connection - 1, ptr+1);
+       ptr = u_num2str32(sz, ptr+1);
       *ptr = '/';
-       ptr = u_num2str32(U_SRV_TOT_CONNECTION - flag_loop, ptr+1); // NB: check for SIGTERM event...
+
+      len = U_SRV_TOT_CONNECTION;
+
+      U_INTERNAL_DUMP("len = %d", len)
+
+           if ((int32_t)len < 0) U_SRV_TOT_CONNECTION = len = 0;
+      else if (len >= 1 &&
+               flag_loop) // NB: check for SIGTERM event...
+         {
+         --len;
+         }
+
+       ptr = u_num2str32(len, ptr+1);
       *ptr = ')';
 
       len = ptr-start+1;
@@ -3814,6 +3830,10 @@ bool UServer_Base::startParallelization(uint32_t nclient)
 {
    U_TRACE(0, "UServer_Base::startParallelization(%u)", nclient)
 
+#if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
+   if (preforked_num_kids != -1)
+#endif
+   {
    if (isParallelizationGoingToStart(nclient))
       {
       pid_t pid = startNewChild();
@@ -3841,6 +3861,7 @@ bool UServer_Base::startParallelization(uint32_t nclient)
          U_ASSERT(isParallelizationChild())
          }
       }
+   }
 
    U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
 

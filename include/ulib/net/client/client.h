@@ -133,6 +133,26 @@ public:
       url.clear();
       }
 
+   void prepareRequest(const char* req, uint32_t len)
+      {
+      U_TRACE(0, "UClient_Base::prepareRequest(%.*S,%u)", len, req, len)
+
+      iovcnt = 1;
+
+      iov[0].iov_base = (caddr_t)req;
+      iov[0].iov_len  =          len;
+
+      (void) U_SYSCALL(memset, "%p,%d,%u", iov+1, 0, sizeof(struct iovec) * 5);
+
+      U_INTERNAL_ASSERT_EQUALS(iov[1].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(iov[2].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(iov[3].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(iov[4].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(iov[5].iov_len, 0)
+      }
+
+   void prepareRequest(const UString& req) { request = req; prepareRequest(U_STRING_TO_PARAM(req)); }
+
    // LOG 
 
    static void closeLog();
@@ -190,18 +210,9 @@ public:
 
    // Transmit token name (4 characters) and value (32-bit int, as 8 hex characters)
 
-   bool sendTokenInt(const char* token, uint32_t value)
-      { buffer.setEmpty(); return URPC::sendTokenInt(socket, token, value, buffer); }
-
-   // Write a token, and then the string data
-
-   bool sendTokenString(const char* token, const UString& data)
-      { buffer.setEmpty(); return URPC::sendTokenString(socket, token, data, buffer); }
-
-   // Transmit an vector of string
-
-   bool sendTokenVector(const char* token, UVector<UString>& vec)
-      { buffer.setEmpty(); return URPC::sendTokenVector(socket, token, vec, buffer); }
+   bool sendTokenInt(   const char* token, uint32_t value)        { buffer.setEmpty(); return URPC::sendTokenInt(   socket, token, value, buffer); }
+   bool sendTokenString(const char* token, const UString& data)   { buffer.setEmpty(); return URPC::sendTokenString(socket, token,  data, buffer); } // Write token, then the string data
+   bool sendTokenVector(const char* token, UVector<UString>& vec) { buffer.setEmpty(); return URPC::sendTokenVector(socket, token,   vec, buffer); } // Transmit an vector of string
 
    // DEBUG
 
@@ -237,27 +248,7 @@ protected:
 
    bool readHTTPResponse();
 
-   void prepareRequest(const char* req, uint32_t len)
-      {
-      U_TRACE(0, "UClient_Base::prepareRequest(%.*S,%u)", len, req, len)
-
-      iovcnt = 1;
-
-      iov[0].iov_base = (caddr_t)req;
-      iov[0].iov_len  =          len;
-
-      (void) U_SYSCALL(memset, "%p,%d,%u", iov+1, 0, sizeof(struct iovec) * 5);
-
-      U_INTERNAL_ASSERT_EQUALS(iov[1].iov_len, 0)
-      U_INTERNAL_ASSERT_EQUALS(iov[2].iov_len, 0)
-      U_INTERNAL_ASSERT_EQUALS(iov[3].iov_len, 0)
-      U_INTERNAL_ASSERT_EQUALS(iov[4].iov_len, 0)
-      U_INTERNAL_ASSERT_EQUALS(iov[5].iov_len, 0)
-      }
-
-   void prepareRequest(const UString& req) { request = req; prepareRequest(U_STRING_TO_PARAM(req)); }
-
-   bool sendRequest(bool bread_response = false);
+   bool sendRequest(bool bread_response);
    bool sendRequestAndReadResponse() { return sendRequest(true); }
 
 #ifdef USE_LIBSSL

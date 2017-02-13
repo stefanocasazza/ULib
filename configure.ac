@@ -254,6 +254,11 @@ not clang
 AC_MSG_RESULT([$GCC_IS_CLANG])
 #AC_SUBST(GCC_IS_CLANG)
 
+AM_CONDITIONAL(CLANG, false)
+if test "$GCC_IS_CLANG" = "yes"; then
+AM_CONDITIONAL(CLANG, true)
+fi
+
 ULIB_LIBS=
 MODULE_LIBTOOL_OPTIONS="-shared -export-dynamic -avoid-version"
 
@@ -2709,7 +2714,7 @@ See include/ulib/internal/config.h for further configuration information
 
 AC_CONFIG_FILES([
 	Makefile rpm.sh ULib.spec m4/Makefile doc/Makefile include/Makefile contrib/Makefile
-	include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile
+	include/ulib/Makefile contrib/HCSP/Makefile contrib/RSIGN/Makefile contrib/signer/Makefile fuzz/Makefile
 	src/ulib/Makefile src/ulib/ULib.rc src/ulib/ULib.pc src/ulib/orm/driver/Makefile src/ulib/net/server/plugin/Makefile
 	src/ulib/net/server/plugin/v8/Makefile src/ulib/net/server/plugin/php/Makefile src/ulib/net/server/plugin/usp/Makefile
 	src/ulib/net/server/plugin/ruby/Makefile src/ulib/net/server/plugin/mod_shib/Makefile src/ulib/net/server/plugin/mod_geoip/Makefile

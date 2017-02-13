@@ -252,7 +252,7 @@ long USSLSocket::getOptions(const UVector<UString>& vec)
    { U_CONSTANT_TO_PARAM("SESSION_RESUMPTION_ON_RENEGOTIATION"), SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION, 0 },
 #endif
 #ifdef SSL_OP_NO_COMPRESSION
-   { U_CONSTANT_TO_PARAM("COMPRESSION"), SSL_OP_NO_COMPRESSION, 0 },
+   { U_CONSTANT_TO_PARAM("COMPRESSION"), SSL_OP_NO_COMPRESSION, 0 }, // disable tls compression to avoid "CRIME" attacks (see http://en.wikipedia.org/wiki/CRIME)
 #endif
 #ifdef SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
    { U_CONSTANT_TO_PARAM("ALLOW_UNSAFE_LEGACY_RENEGOTIATION"), SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION, 1 },
@@ -457,8 +457,21 @@ bool USSLSocket::useDHFile(const char* dh_file)
    U_RETURN(true);
 }
 
-#if OPENSSL_VERSION_NUMBER >= 0x10002000L
-U_NO_EXPORT int USSLSocket::selectProto(SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in, unsigned int inlen, void* arg)
+#ifndef U_HTTP2_DISABLE
+#ifdef U_USE_NPN
+U_NO_EXPORT int USSLSocket::nextProto(SSL* ssl, const unsigned char** data, unsigned int* len, void* arg) // NPN selection callback
+{
+   U_TRACE(0, "USSLSocket::nextProto(%p,%p,%p,%p)", ssl, data, len, arg)
+
+   *data = (unsigned char*)arg;
+    *len = U_CONSTANT_SIZE("\x2h2\x5h2-16\x5h2-14");
+
+   U_RETURN(SSL_TLSEXT_ERR_OK);
+}
+#endif
+
+#ifdef U_USE_ALPN
+U_NO_EXPORT int USSLSocket::selectProto(SSL* ssl, const unsigned char** out, unsigned char* outlen, const unsigned char* in, unsigned int inlen, void* arg) // ALPN selection callback
 {
    U_TRACE(0, "USSLSocket::selectProto(%p,%p,%p,%.*S,%u,%p)", ssl, out, outlen, inlen, in, inlen, arg)
 
@@ -493,6 +506,7 @@ U_NO_EXPORT int USSLSocket::selectProto(SSL* ssl, const unsigned char** out, uns
 
    U_RETURN(SSL_TLSEXT_ERR_NOACK);
 }
+#endif
 #endif
 
 bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const char* private_key_file,
@@ -682,10 +696,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
    (void) U_SYSCALL(SSL_CTX_set_cipher_list, "%p,%S", ctx, ciphersuite);
 
 #ifndef U_HTTP2_DISABLE
-   U_SYSCALL_VOID(SSL_CTX_set_next_protos_advertised_cb, "%p,%p,%p", ctx, nextProto, (unsigned char*)"\x2h2\x5h2-16\x5h2-14");
-# if OPENSSL_VERSION_NUMBER >= 0x10002000L
-   U_SYSCALL_VOID(SSL_CTX_set_alpn_select_cb, "%p,%p,%p", ctx, selectProto, 0); // ALPN selection callback
-# endif
+   setupProtocolNegotiationMethods();
 #endif
 
    U_RETURN(true);

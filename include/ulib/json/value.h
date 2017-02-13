@@ -981,7 +981,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<T>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<T>::clear()")
 
       ((T*)pval)->clear(); // method alternative
       }
@@ -1045,7 +1045,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<null>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<null>::clear()")
       }
 
    void toJSON(UValue& json)
@@ -1069,7 +1069,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<bool>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<bool>::clear()")
 
       *(bool*)pval = false;
       }
@@ -1095,7 +1095,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<char>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<char>::clear()")
 
       *(char*)pval = 0;
       }
@@ -1121,7 +1121,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<unsigned char>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned char>::clear()")
 
       *(unsigned char*)pval = 0;
       }
@@ -1147,7 +1147,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<short>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<short>::clear()")
 
       *(short*)pval = 0;
       }
@@ -1173,7 +1173,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<unsigned short>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned short>::clear()")
 
       *(unsigned short*)pval = 0;
       }
@@ -1199,7 +1199,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<int>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<int>::clear()")
 
       *(int*)pval = 0;
       }
@@ -1225,7 +1225,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<unsigned int>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned int>::clear()")
 
       *(unsigned int*)pval = 0;
       }
@@ -1251,7 +1251,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<long>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long>::clear()")
 
       *(long*)pval = 0;
       }
@@ -1282,7 +1282,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<unsigned long>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned long>::clear()")
 
       *(unsigned long*)pval = 0;
       }
@@ -1310,7 +1310,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<long long>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long long>::clear()")
 
       *(long long*)pval = 0;
       }
@@ -1341,7 +1341,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<unsigned long long>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<unsigned long long>::clear()")
 
       *(unsigned long long*)pval = 0;
       }
@@ -1369,7 +1369,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<float>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<float>::clear()")
 
       *(float*)pval = 0;
       }
@@ -1395,7 +1395,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<double>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<double>::clear()")
 
       *(double*)pval = 0;
       }
@@ -1421,7 +1421,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<long double>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long double>::clear()")
 
       *(long double*)pval = 0;
       }
@@ -1451,7 +1451,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<UStringRep>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<UStringRep>::clear()")
 
       U_ERROR("UJsonTypeHandler<UStringRep>::fromJSON(): sorry, we cannot use UStringRep type from JSON type handler...");
       }
@@ -1483,7 +1483,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<UString>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<UString>::clear()")
 
       U_INTERNAL_DUMP("pval(%p) = %V", pval, ((UString*)pval)->rep, ((UString*)pval)->rep)
 
@@ -1523,7 +1523,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<uvector>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<uvector>::clear()")
 
       ((uvector*)pval)->clear();
       }
@@ -1541,7 +1541,9 @@ public:
          const void** ptr = pvec->vec;
          const void** end = pvec->vec + pvec->_length;
 
+#     ifndef HAVE_OLD_IOSTREAM
          do { json.addJSON<T>(UJsonTypeHandler<T>(*(T*)(*ptr))); } while (++ptr < end);
+#     endif
          }
       }
 
@@ -1578,7 +1580,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<UVector<UString>>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<UVector<UString>>::clear()")
 
       ((UVector<UString>*)pval)->clear();
       }
@@ -1636,7 +1638,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<uhashmap>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<uhashmap>::clear()")
 
       ((uhashmap*)pval)->clear();
       }
@@ -1652,7 +1654,9 @@ public:
       if (pmap->first())
          {
          do {
+#        ifndef HAVE_OLD_IOSTREAM
             json.addJSON<T>(pmap->getKey(), UJsonTypeHandler<T>(*(pmap->elem())));
+#        endif
             }
          while (pmap->next());
          }
@@ -1697,7 +1701,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<UHashMap<UString>>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<UHashMap<UString>>::clear()")
 
       ((UHashMap<UString>*)pval)->clear();
       }
@@ -1760,7 +1764,7 @@ public:
 
    void clear()
       {
-      U_TRACE(0, "UJsonTypeHandler<stdvector>::clear()")
+      U_TRACE_NO_PARAM(0, "UJsonTypeHandler<stdvector>::clear()")
 
       // TODO
       }
@@ -1773,7 +1777,9 @@ public:
 
       stdvector* pvec = (stdvector*)pval;
 
+#  ifndef HAVE_OLD_IOSTREAM
       for (uint32_t i = 0, n = pvec->size(); i < n; ++i) json.addJSON<T>(UJsonTypeHandler<T>(pvec->at(i)));
+#  endif
       }
 
    void fromJSON(UValue& json)

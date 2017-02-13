@@ -42,7 +42,7 @@ Parameters {
 
 #  CA_PATH     ../ulib/CA/CApath
 #  CA_FILE     ../ulib/CA/cacert.pem
-#  PASSWORD    caciucco
+#  PASSWORD    puppamelo
 #  KEY_FILE    ../ulib/CA/username.key
 #  CERT_FILE   ../ulib/CA/username.crt
 

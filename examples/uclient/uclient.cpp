@@ -32,8 +32,7 @@ public:
       {
       U_TRACE(5, "Application::Application()")
 
-      client           = 0;
-      follow_redirects = false;
+      client = 0;
       }
 
    ~Application()
@@ -105,13 +104,8 @@ public:
 
       client = new UHttpClient<USSLSocket>(&cfg);
 
-      user             = cfg.at(U_CONSTANT_TO_PARAM("USER"));
-      password         = cfg.at(U_CONSTANT_TO_PARAM("PASSWORD_AUTH"));
-      follow_redirects = cfg.readBoolean(U_CONSTANT_TO_PARAM("FOLLOW_REDIRECTS"));
-
-      client->setFollowRedirects(follow_redirects);
-      client->getResponseHeader()->setIgnoreCase(true);
-      client->setRequestPasswordAuthentication(user, password);
+      client->setFollowRedirects(cfg.readBoolean(U_CONSTANT_TO_PARAM("FOLLOW_REDIRECTS")));
+      client->setRequestPasswordAuthentication(cfg.at(U_CONSTANT_TO_PARAM("USER")), cfg.at(U_CONSTANT_TO_PARAM("PASSWORD_AUTH")));
 
       UApplication::exit_value = 1;
 
@@ -242,10 +236,9 @@ loop: if (upload)
       }
 
 private:
-   UHttpClient<USSLSocket>* client;
    UFileConfig cfg;
-   UString cfg_str, upload, user, password;
-   bool follow_redirects;
+   UString cfg_str, upload;
+   UHttpClient<USSLSocket>* client;
 
 #ifndef U_COVERITY_FALSE_POSITIVE
    U_DISALLOW_COPY_AND_ASSIGN(Application)

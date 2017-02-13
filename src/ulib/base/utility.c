@@ -264,7 +264,7 @@ __pure int u__strncasecmp(const char* restrict s1, const char* restrict s2, size
 uint32_t u_gettid(void)
 {
 #ifndef ENABLE_THREAD
-   return U_NOT_FOUND;
+   return getpid();
 #else
    uint32_t tid =
 # ifdef _MSWINDOWS_

@@ -44,7 +44,6 @@ uint32_t      UClientImage_Base::resto;
 uint32_t      UClientImage_Base::rstart;
 uint32_t      UClientImage_Base::ncount;
 uint32_t      UClientImage_Base::nrequest;
-uint32_t      UClientImage_Base::uri_offset;
 uint32_t      UClientImage_Base::size_request;
 UString*      UClientImage_Base::body;
 UString*      UClientImage_Base::rbuffer;
@@ -239,16 +238,13 @@ void UClientImage_Base::saveRequestResponse()
 # if defined(U_STDCPP_ENABLE) && !defined(U_HTTP2_DISABLE)
    U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
 
-   if (U_http_version == '2')
-      {
-      U_DUMP_OBJECT_TO_TMP(UHTTP2::pConnection->itable, request)
-
-      return;
-      }
+   if (U_http_version == '2') U_DUMP_OBJECT_TO_TMP(UHTTP2::pConnection->itable, request)
+   else
 #endif
-
+   {
    if (*rbuffer)                  (void) UFile::writeToTmp(U_STRING_TO_PARAM(*rbuffer), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("request.%P"),  0);
    if (U_http_info.nResponseCode) (void) UFile::writeToTmp(iov_sav, 4,                  O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("response.%P"), 0);
+   }
 }
 #endif
 
@@ -440,9 +436,9 @@ void UClientImage_Base::handlerDelete()
 
       char buffer[32];
       uint32_t len = UServer_Base::setNumConnection(buffer);
+      const char* agent = (bsocket_open == false || UServer_Base::isParallelizationParent() ? "Server" : "Client");
 
-      ULog::log(U_CONSTANT_TO_PARAM("%s%.6s close connection from %v, %.*s clients still connected"),
-                  UServer_Base::mod_name[0], bsocket_open ? "Client" : "Server", logbuf->rep, len, buffer);
+      ULog::log(U_CONSTANT_TO_PARAM("%s%.6s close connection from %v, %.*s clients still connected"), UServer_Base::mod_name[0], agent, logbuf->rep, len, buffer);
 
 #  ifdef DEBUG
       int fd_logbuf = ::strtoul(logbuf->data(), 0, 10);
@@ -471,9 +467,14 @@ void UClientImage_Base::handlerDelete()
 #endif
 
 #ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+   U_INTERNAL_DUMP("U_ClientImage_http = %C U_http_version = %C", U_ClientImage_http(this), U_http_version)
 
-   if (U_http_version == '2') UHTTP2::handlerDelete(this);
+   if (U_ClientImage_http(this) == '2')
+      {
+      UHTTP2::handlerDelete(this);
+
+      if (socket->isTimeout()) bsocket_open = false;
+      }
 #endif
 
    if (bsocket_open) socket->close();
@@ -570,7 +571,7 @@ int UClientImage_Base::handlerTimeout()
 
       if (UNotifier::waitForRead(socket->iSockDesc, 0) == 1) U_RETURN(U_NOTIFIER_OK);
 
-      socket->iState = USocket::TIMEOUT;
+      socket->iState |= USocket::TIMEOUT;
 
       U_RETURN(U_NOTIFIER_DELETE);
       }
@@ -632,10 +633,10 @@ void UClientImage_Base::startRequest()
       time_between_request = time_elapsed;
 
 #  ifdef USE_LIBSSL
-      if (UServer_Base::bssl) U_RETURN(false);
+      if (UServer_Base::bssl) return;
 #  endif
 #  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
-      if (U_ClientImage_request_is_cached) U_RETURN(false);
+      if (U_ClientImage_request_is_cached) return;
 #  endif
 
       if ((time_run - time_between_request) > 10L)
@@ -681,110 +682,115 @@ void UClientImage_Base::endRequest()
 
    U_http_method_type = 0; // NB: this mark the end of http request processing...
 
-#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
-   time_run = chronometer->stop();
-
-# ifdef DEBUG
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_between_request = %ld time_run = %ld U_ClientImage_request_is_cached = %b",
-                    U_ClientImage_pipeline,     time_between_request,      time_run,      U_ClientImage_request_is_cached)
-
-   if ((time_run - time_between_request) > 10L)
+   if (UServer_Base::isParallelizationParent() == false)
       {
-      U_DEBUG("UClientImage_Base::endRequest(): time_between_request(%ld) < time_run(%ld) - request = %V", time_between_request, time_run, request->rep)
-      }
-# endif
-#endif
-
-#ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_http_version = %C U_http_info.uri_len = %u", U_http_version, U_http_info.uri_len)
-
-   if (U_http_info.uri_len)
-#endif
-   {
-   U_MEMCPY(iov_vec, iov_sav, U_IOV_TO_SAVE);
-
-#if defined(DEBUG) && !defined(U_LOG_DISABLE)
-   if (UServer_Base::isLog())
-      {
-      uint32_t sz = 0;
-      const char* ptr;
-
-#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
-      if (U_ClientImage_request_is_cached)
-         {
-         U_INTERNAL_ASSERT_RANGE(1,uri_offset,64)
-
-         ptr = cbuffer; // request->c_pointer(uri_offset);
-
-#     ifdef U_ALIAS
-         sz = U_http_info.startHeader;
-#     else
-         sz = U_http_info.uri_len;
-#     endif
-         }
-      else
-#  endif
-      {
-      ptr = getRequestUri(sz);
-      }
-
-      // NB: URI requested can be URL encoded (ex: vuoto%2Etxt) so we cannot use snprintf()...
-
-      char buffer1[256];
-      char* ptr1 = buffer1;
-
-      U_MEMCPY(ptr1, "request \"", U_CONSTANT_SIZE("request \""));
-               ptr1 +=             U_CONSTANT_SIZE("request \"");
-
-      if (sz)
-         {
-         U_INTERNAL_DUMP("sz = %u", sz)
-
-         if (sz > (sizeof(buffer1)-64)) sz = sizeof(buffer1)-64;
-
-         U_MEMCPY(ptr1, ptr, sz);
-                  ptr1 +=    sz;
-         }
-
-      U_MEMCPY(ptr1, "\" run in ", U_CONSTANT_SIZE("\" run in "));
-               ptr1 +=             U_CONSTANT_SIZE("\" run in ");
-
-#if !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || !defined(U_HTTP2_DISABLE)
+#  if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
       time_run = chronometer->stop();
+
+#   ifdef DEBUG
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_between_request = %ld time_run = %ld U_ClientImage_request_is_cached = %b",
+                       U_ClientImage_pipeline,     time_between_request,      time_run,      U_ClientImage_request_is_cached)
+
+      if ((time_run - time_between_request) > 10L)
+         {
+         U_DEBUG("UClientImage_Base::endRequest(): time_between_request(%ld) < time_run(%ld) - request = %V", time_between_request, time_run, request->rep)
+         }
+#   endif
 #  endif
 
-      if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM("%ld ms"), time_run);
-      else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM( "%g ms"), chronometer->getTimeElapsed());
+#  ifndef U_HTTP2_DISABLE
+      U_INTERNAL_DUMP("U_http_version = %C U_http_info.uri_len = %u", U_http_version, U_http_info.uri_len)
 
-#  ifndef U_SERVER_CAPTIVE_PORTAL
-      if (UServer_Base::csocket->isOpen())
+      if (U_http_info.uri_len)
+#  endif
+      {
+      U_MEMCPY(iov_vec, iov_sav, U_IOV_TO_SAVE);
+
+#  if defined(DEBUG) && !defined(U_LOG_DISABLE)
+      if (UServer_Base::isLog())
          {
-         uint32_t len = 0;
-         int cpu = U_SYSCALL_NO_PARAM(sched_getcpu), scpu = -1;
+         uint32_t sz = 0;
+         const char* ptr;
 
-#     ifdef SO_INCOMING_CPU
-         if (USocket::bincoming_cpu)
+#     if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+         if (U_ClientImage_request_is_cached)
             {
-            len = sizeof(socklen_t);
+            U_INTERNAL_DUMP("U_http_uri_offset = %u", U_http_uri_offset)
 
-            (void) UServer_Base::csocket->getSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&scpu, len);
+            U_INTERNAL_ASSERT_RANGE(1,U_http_uri_offset,254)
 
-            len = (USocket::incoming_cpu == scpu ? 0 : U_CONSTANT_SIZE(" [DIFFER]"));
+            ptr = cbuffer; // request->c_pointer(U_http_uri_offset);
+
+#        ifdef U_ALIAS
+            sz = U_http_info.startHeader;
+#        else
+            sz = U_http_info.uri_len;
+#        endif
+            }
+         else
+#     endif
+         {
+         ptr = getRequestUri(sz);
+         }
+
+         // NB: URI requested can be URL encoded (ex: vuoto%2Etxt) so we cannot use snprintf()...
+
+         char buffer1[256];
+         char* ptr1 = buffer1;
+
+         U_MEMCPY(ptr1, "request \"", U_CONSTANT_SIZE("request \""));
+                  ptr1 +=             U_CONSTANT_SIZE("request \"");
+
+         if (sz)
+            {
+            U_INTERNAL_DUMP("sz = %u", sz)
+
+            if (sz > (sizeof(buffer1)-64)) sz = sizeof(buffer1)-64;
+
+            U_MEMCPY(ptr1, ptr, sz);
+                     ptr1 +=    sz;
+            }
+
+         U_MEMCPY(ptr1, "\" run in ", U_CONSTANT_SIZE("\" run in "));
+                  ptr1 +=             U_CONSTANT_SIZE("\" run in ");
+
+#     if !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || !defined(U_HTTP2_DISABLE)
+         time_run = chronometer->stop();
+#     endif
+
+         if (time_run > 0L) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM("%ld ms"), time_run);
+         else               ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM( "%g ms"), chronometer->getTimeElapsed());
+
+#     ifndef U_SERVER_CAPTIVE_PORTAL
+         if (UServer_Base::csocket->isOpen())
+            {
+            uint32_t len = 0;
+            int cpu = U_SYSCALL_NO_PARAM(sched_getcpu), scpu = -1;
+
+#        ifdef SO_INCOMING_CPU
+            if (USocket::bincoming_cpu)
+               {
+               len = sizeof(socklen_t);
+
+               (void) UServer_Base::csocket->getSockOpt(SOL_SOCKET, SO_INCOMING_CPU, (void*)&scpu, len);
+
+               len = (USocket::incoming_cpu == scpu ? 0 : U_CONSTANT_SIZE(" [DIFFER]"));
+               }
+#        endif
+
+            U_INTERNAL_DUMP("USocket::incoming_cpu = %d USocket::bincoming_cpu = %b sched cpu = %d socket cpu = %d", USocket::incoming_cpu, USocket::bincoming_cpu, cpu, scpu)
+
+            if (len) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM(", CPU: %d sched(%d) socket(%d)%.*s"), USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
             }
 #     endif
 
-         U_INTERNAL_DUMP("USocket::incoming_cpu = %d USocket::bincoming_cpu = %b sched cpu = %d socket cpu = %d", USocket::incoming_cpu, USocket::bincoming_cpu, cpu, scpu)
+         U_INTERNAL_ASSERT_MINOR((ptrdiff_t)(ptr1-buffer1), (ptrdiff_t)sizeof(buffer1))
 
-         if (len) ptr1 += u__snprintf(ptr1, sizeof(buffer1)-(ptr1-buffer1), U_CONSTANT_TO_PARAM(", CPU: %d sched(%d) socket(%d)%.*s"), USocket::incoming_cpu, cpu, scpu, len, " [DIFFER]");
+         ULog::write(buffer1, ptr1-buffer1);
          }
 #  endif
-
-      U_INTERNAL_ASSERT_MINOR((ptrdiff_t)(ptr1-buffer1), (ptrdiff_t)sizeof(buffer1))
-
-      ULog::write(buffer1, ptr1-buffer1);
       }
-#endif
-   }
+      }
 
 #ifdef U_ALIAS
    U_INTERNAL_DUMP("request_uri(%u) = %V", request_uri->size(), request_uri->rep)
@@ -797,98 +803,85 @@ void UClientImage_Base::manageReadBufferResize(uint32_t n)
 {
    U_TRACE(0, "UClientImage_Base::manageReadBufferResize(%u)", n)
 
-   U_DUMP("U_ClientImage_pipeline = %b size_request = %u rbuffer->size() = %u rbuffer->capacity() = %u request->size() = %u rstart = %u",
-           U_ClientImage_pipeline,     size_request,     rbuffer->size(),     rbuffer->capacity(),     request->size(),     rstart)
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u rbuffer->size() = %u rbuffer->capacity() = %u request->size() = %u rstart = %u",
+                    U_ClientImage_pipeline,     size_request,     rbuffer->size(),     rbuffer->capacity(),     request->size(),     rstart)
 
-#ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
 
-   if (U_http_version == '2')
-      {
-      if (rstart)
-         {
-         rbuffer->moveToBeginDataInBuffer(rstart);
-                                          rstart = 0;
-         }
-
-      UString::_reserve(*rbuffer, n);
-
-      return;
-      }
-#endif
-
-   ptrdiff_t diff;
-   const char* ptr;
+   ptrdiff_t diff = 0;
 
    request->clear();
 
    if (U_ClientImage_pipeline)
       {
-      U_INTERNAL_ASSERT_MAJOR(rstart, 0)
-
       U_ClientImage_pipeline = false;
 
-      if (rbuffer->capacity() <= n) goto next1;
-
-      rbuffer->moveToBeginDataInBuffer(rstart);
-
-      if (U_http_method_type)
-         {
-         diff = -(ptrdiff_t)rstart;
-
-         goto next2;
-         }
+      U_INTERNAL_ASSERT_MAJOR(rstart, 0)
       }
-   else
+
+   diff = -(ptrdiff_t)rstart;
+
+   if (diff)
       {
-      U_INTERNAL_ASSERT_MAJOR(n, 0)
-next1:
-      ptr = rbuffer->data();
+      rbuffer->moveToBeginDataInBuffer(rstart);
+                                       rstart = 0;
+      }
+
+   if (rbuffer->space() < n)
+      {
+      const char* ptr = rbuffer->data();
 
       UString::_reserve(*rbuffer, n);
 
-      if (U_http_method_type)
-         {
-         diff = rbuffer->data() - ptr;
-next2:
-         U_INTERNAL_DUMP("diff = %d", diff)
+      diff += rbuffer->data() - ptr;
+      }
 
-         U_INTERNAL_ASSERT_POINTER(U_http_info.uri)
+#ifndef U_HTTP2_DISABLE
+   U_INTERNAL_DUMP("U_ClientImage_http = %C U_http_version = %C", U_ClientImage_http(UServer_Base::pClientImage), U_http_version)
 
-                                    U_http_info.uri    += diff;
-         if (U_http_info.query_len) U_http_info.query  += diff;
+   if (U_ClientImage_http(UServer_Base::pClientImage) != '2')
+#endif
+   {
+   if (U_http_method_type)
+      {
+      U_INTERNAL_DUMP("diff = %d", diff)
 
-         U_INTERNAL_DUMP("uri             = %.*S", U_HTTP_URI_TO_TRACE)
-         U_INTERNAL_DUMP("query           = %.*S", U_HTTP_QUERY_TO_TRACE)
+      U_INTERNAL_ASSERT_POINTER(U_http_info.uri)
 
-         U_INTERNAL_ASSERT_DIFFERS(U_http_info.uri[0], 0)
+                                 U_http_info.uri    += diff;
+      if (U_http_info.query_len) U_http_info.query  += diff;
 
-         if (U_http_host_len)             U_http_info.host            += diff;
-         if (U_http_range_len)            U_http_info.range           += diff;
-         if (U_http_accept_len)           U_http_info.accept          += diff;
-         if (U_http_ip_client_len)        U_http_info.ip_client       += diff;
-         if (U_http_info.cookie_len)      U_http_info.cookie          += diff;
-         if (U_http_info.referer_len)     U_http_info.referer         += diff;
-         if (U_http_content_type_len)     U_http_info.content_type    += diff;
-         if (U_http_info.user_agent_len)  U_http_info.user_agent      += diff;
-         if (U_http_accept_language_len)  U_http_info.accept_language += diff;
+      U_INTERNAL_DUMP("uri             = %.*S", U_HTTP_URI_TO_TRACE)
+      U_INTERNAL_DUMP("query           = %.*S", U_HTTP_QUERY_TO_TRACE)
 
-         if (U_http_websocket_len) UWebSocket::upgrade_settings += diff;
+      U_INTERNAL_ASSERT_DIFFERS(U_http_info.uri[0], 0)
 
-         U_INTERNAL_DUMP("host            = %.*S", U_HTTP_HOST_TO_TRACE)
-         U_INTERNAL_DUMP("vhost           = %.*S", U_HTTP_VHOST_TO_TRACE)
-         U_INTERNAL_DUMP("range           = %.*S", U_HTTP_RANGE_TO_TRACE)
-         U_INTERNAL_DUMP("ctype           = %.*S", U_HTTP_CTYPE_TO_TRACE)
-         U_INTERNAL_DUMP("cookie          = %.*S", U_HTTP_COOKIE_TO_TRACE)
-         U_INTERNAL_DUMP("accept          = %.*S", U_HTTP_ACCEPT_TO_TRACE)
-         U_INTERNAL_DUMP("referer         = %.*S", U_HTTP_REFERER_TO_TRACE)
-         U_INTERNAL_DUMP("ip_client       = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
-         U_INTERNAL_DUMP("user_agent      = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
-         U_INTERNAL_DUMP("accept_language = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
-         }
+      if (U_http_host_len)             U_http_info.host            += diff;
+      if (U_http_range_len)            U_http_info.range           += diff;
+      if (U_http_accept_len)           U_http_info.accept          += diff;
+      if (U_http_ip_client_len)        U_http_info.ip_client       += diff;
+      if (U_http_info.cookie_len)      U_http_info.cookie          += diff;
+      if (U_http_info.referer_len)     U_http_info.referer         += diff;
+      if (U_http_content_type_len)     U_http_info.content_type    += diff;
+      if (U_http_info.user_agent_len)  U_http_info.user_agent      += diff;
+      if (U_http_accept_language_len)  U_http_info.accept_language += diff;
+
+      if (U_http_websocket_len) UWebSocket::upgrade_settings += diff;
+
+      U_INTERNAL_DUMP("host            = %.*S", U_HTTP_HOST_TO_TRACE)
+      U_INTERNAL_DUMP("vhost           = %.*S", U_HTTP_VHOST_TO_TRACE)
+      U_INTERNAL_DUMP("range           = %.*S", U_HTTP_RANGE_TO_TRACE)
+      U_INTERNAL_DUMP("ctype           = %.*S", U_HTTP_CTYPE_TO_TRACE)
+      U_INTERNAL_DUMP("cookie          = %.*S", U_HTTP_COOKIE_TO_TRACE)
+      U_INTERNAL_DUMP("accept          = %.*S", U_HTTP_ACCEPT_TO_TRACE)
+      U_INTERNAL_DUMP("referer         = %.*S", U_HTTP_REFERER_TO_TRACE)
+      U_INTERNAL_DUMP("ip_client       = %.*S", U_HTTP_IP_CLIENT_TO_TRACE)
+      U_INTERNAL_DUMP("user_agent      = %.*S", U_HTTP_USER_AGENT_TO_TRACE)
+      U_INTERNAL_DUMP("accept_language = %.*S", U_HTTP_ACCEPT_LANGUAGE_TO_TRACE)
       }
 
    *request = *rbuffer;
+   }
 
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_data_missing = %b", U_ClientImage_pipeline, U_ClientImage_data_missing)
 }
@@ -988,6 +981,8 @@ bool UClientImage_Base::genericRead()
 #if (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
    startRequest();
 #endif
+
+   rstart = 0;
 
    request->clear(); // reset buffer before read
 
@@ -1091,8 +1086,6 @@ start:
 #endif
 
    U_INTERNAL_ASSERT(socket->isOpen())
-
-   rstart = 0;
 
 loop:
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u rstart = %u rbuffer(%u) = %V",
@@ -1760,8 +1753,8 @@ int UClientImage_Base::handlerResponse()
    if (socket->isOpen())
       {
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::bssl, false)
-      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
       U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
+      U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_CHILD) // NB: we must not have pending write...
 
 #  ifndef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
       resetPipelineAndSetCloseConnection();

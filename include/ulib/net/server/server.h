@@ -248,7 +248,7 @@ public:
    static int pluginsHandlerREAD();
    static int pluginsHandlerRequest();
    // ---------------------------------
-   // SigHUP hook
+   // SIGHUP hook
    // ---------------------------------
    static int pluginsHandlerSigHUP();
    // ---------------------------------
@@ -445,21 +445,12 @@ public:
 
    static void removeZombies();
 
-   // PARALLELIZATION
+   // PARALLELIZATION (dedicated process for long-running task)
 
    static uint32_t num_client_for_parallelization, num_client_threshold;
 
-   static bool isParallelizationChild()
-      {
-      U_TRACE_NO_PARAM(0, "UServer_Base::isParallelizationChild()")
-
-      U_INTERNAL_DUMP("U_ClientImage_parallelization = %d proc->child() = %b",
-                       U_ClientImage_parallelization,     proc->child())
-
-      if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) U_RETURN(true);
-
-      U_RETURN(false);
-      }
+   static void    endNewChild() __noreturn;
+   static pid_t startNewChild();
 
    static bool isParallelizationParent()
       {
@@ -473,38 +464,19 @@ public:
       U_RETURN(false);
       }
 
-   static void    endNewChild() __noreturn;
-   static pid_t startNewChild();
-
-   static bool startParallelization(            uint32_t nclient = 1); // it can creates a copy of itself, return true if parent...
-   static bool    isParallelizationGoingToStart(uint32_t nclient = 1)
+   static bool isParallelizationChild()
       {
-      U_TRACE(0, "UServer_Base::isParallelizationGoingToStart(%u)", nclient)
+      U_TRACE_NO_PARAM(0, "UServer_Base::isParallelizationChild()")
 
-      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+      U_INTERNAL_DUMP("U_ClientImage_parallelization = %d proc->child() = %b",
+                       U_ClientImage_parallelization,     proc->child())
 
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
-                       U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
-
-#  ifndef U_SERVER_CAPTIVE_PORTAL
-#    ifndef U_HTTP2_DISABLE
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
-      if (U_http_version != '2')
-#    endif
-      {
-      if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD &&
-          (UNotifier::num_connection - UNotifier::min_connection) > nclient)
-         {
-         U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
-
-         U_RETURN(true);
-         }
-      }
-#  endif
+      if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) U_RETURN(true);
 
       U_RETURN(false);
       }
+
+   static bool startParallelization(uint32_t nclient = 1); // it can creates a copy of itself, return true if parent...
 
    // manage log server...
 
@@ -680,6 +652,28 @@ protected:
       U_INTERNAL_ASSERT_POINTER(pthis)
 
       pthis->preallocate();
+      }
+
+   static bool isParallelizationGoingToStart(uint32_t nclient)
+      {
+      U_TRACE(0, "UServer_Base::isParallelizationGoingToStart(%u)", nclient)
+
+      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d UNotifier::num_connection - UNotifier::min_connection = %d",
+                       U_ClientImage_pipeline,     U_ClientImage_parallelization,     UNotifier::num_connection - UNotifier::min_connection)
+
+#  ifndef U_SERVER_CAPTIVE_PORTAL
+      if (U_ClientImage_parallelization != U_PARALLELIZATION_CHILD &&
+          (UNotifier::num_connection - UNotifier::min_connection) >= nclient)
+         {
+         U_INTERNAL_DUMP("U_ClientImage_close = %b", U_ClientImage_close)
+
+         U_RETURN(true);
+         }
+#  endif
+
+      U_RETURN(false);
       }
 
    static RETSIGTYPE handlerForSigHUP(  int signo);

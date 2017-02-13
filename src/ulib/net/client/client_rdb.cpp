@@ -80,7 +80,7 @@ bool URDBClient_Base::processRequest(const char* token)
 
    UClient_Base::prepareRequest(req);
 
-   if (sendRequest() &&
+   if (sendRequest(false) &&
        readResponse())
       {
       U_RETURN(true);

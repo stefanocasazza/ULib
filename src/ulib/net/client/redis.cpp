@@ -90,7 +90,7 @@ U_NO_EXPORT bool UREDISClient_Base::processRequest(char recvtype)
 {
    U_TRACE(0, "UREDISClient_Base::processRequest(%C)", recvtype)
 
-   if (UClient_Base::sendRequest() &&
+   if (UClient_Base::sendRequest(false) &&
        (vitem.clear(), UClient_Base::response.setBuffer(U_CAPACITY), UClient_Base::readResponse(U_SINGLE_READ)))
       {
       char prefix = UClient_Base::response[0];

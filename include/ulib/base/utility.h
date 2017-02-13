@@ -129,6 +129,13 @@ U_EXPORT void u_need_group(bool necessary);
 
 U_EXPORT uint32_t u_gettid(void);
 
+static inline void u_setPid(void)
+{
+   U_INTERNAL_TRACE("u_setPid()")
+
+   u_pid_str_len = u_num2str32(u_pid = u_gettid(), u_pid_str) - u_pid_str;
+}
+
 /* Random number generator */ 
 
 U_EXPORT double   u_get_uniform(void);

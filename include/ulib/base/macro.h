@@ -326,6 +326,9 @@ union uucflag64 {
 #  define u_put_unalignedp16(ptr,val) (*(uint16_t*)(ptr) = (val))
 #  define u_put_unalignedp32(ptr,val) (*(uint32_t*)(ptr) = (val))
 #  define u_put_unalignedp64(ptr,val) (*(uint64_t*)(ptr) = (val))
+
+#  define u_parse_unalignedp16(p) ntohs(*(uint16_t*)(p))
+#  define u_parse_unalignedp32(p) ntohl(*(uint32_t*)(p))
 #else
 struct u_una_u16 { uint16_t x __attribute__((packed)); };
 struct u_una_u32 { uint32_t x __attribute__((packed)); };
@@ -337,6 +340,9 @@ static inline uint64_t u_get_unalignedp64(const void* p)               { const s
 static inline void     u_put_unalignedp16(      void* p, uint16_t val) {       struct u_una_u16 *ptr = (      struct u_una_u16*)p;        ptr->x = val; } 
 static inline void     u_put_unalignedp32(      void* p, uint32_t val) {       struct u_una_u32 *ptr = (      struct u_una_u32*)p;        ptr->x = val; }
 static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       struct u_una_u64 *ptr = (      struct u_una_u64*)p;        ptr->x = val; }
+
+#  define u_parse_unalignedp16(p) (          (p)[0]<< 8|(p)[1])
+#  define u_parse_unalignedp32(p) ((uint32_t)(p)[0]<<24|(p)[1]<<16|(ptr)[2]<< 8|(ptr)[3])
 #endif
 
 /**

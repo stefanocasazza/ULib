@@ -281,10 +281,20 @@ protected:
    static void sendResetStream();
    static void sendWindowUpdate();
 
-   static bool eraseHeaders(UStringRep* key, void* elem);
    static void handlerDelete(UClientImage_Base* pclient);
    static void updateSetting(unsigned char* ptr, uint32_t len);
    static void writeData(struct iovec* iov, bool bdata, bool flag);
+
+   static void startRequest()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP2::startRequest()")
+
+      UClientImage_Base::endRequest();
+
+      UHTTP::startRequest();
+
+      U_http_version = '2';
+      }
 
    static void resetDataRead()
       {
@@ -328,12 +338,12 @@ protected:
       {
       U_TRACE(0, "UHTTP2::readPriority(%p)", ptr)
 
-      priority_weight = ptr[4];
+      priority_weight = ptr[4]+1;
 
-      uint32_t u4 = ntohl(*(uint32_t*)ptr);
+      uint32_t u4 = u_parse_unalignedp32(ptr);
 
-      priority_exclusive  = (u4 >> 31) != 0;
-      priority_dependency =  u4 & 0x7fffffff;
+      priority_exclusive  = u4 >> 31;
+      priority_dependency = u4 & 0x7fffffff;
 
       U_INTERNAL_DUMP("priority_weight = %u priority_exclusive = %b priority_dependency = %u frame.stream_id = %u",
                        priority_weight,     priority_exclusive,     priority_dependency,     frame.stream_id)
@@ -380,17 +390,60 @@ protected:
 
    static void updateSetting(const UString& data) { updateSetting((unsigned char*)U_STRING_TO_PARAM(data)); }
 
-   static void writev(struct iovec* iov, int iovcnt, uint32_t count)
+   static bool writev(struct iovec* iov, int iovcnt, uint32_t count)
       {
       U_TRACE(0, "UHTTP2::writev(%p,%d,%u)", iov, iovcnt, count)
 
       U_DUMP_IOVEC(iov,iovcnt)
 
+      int iBytesWrite =
 #  if defined(USE_LIBSSL) || defined(_MSWINDOWS_)
-      (void) USocketExt::writev( UServer_Base::csocket, iov, iovcnt, count, 0);
+      USocketExt::writev( UServer_Base::csocket, iov, iovcnt, count, 0);
 #  else
-      (void) USocketExt::_writev(UServer_Base::csocket, iov, iovcnt, count, 0);
+      USocketExt::_writev(UServer_Base::csocket, iov, iovcnt, count, 0);
 #  endif
+
+      if (iBytesWrite == (int)count) U_RETURN(true);
+
+      nerror = CONNECT_ERROR;
+
+      U_RETURN(false);
+      }
+
+   static void checkStreamState()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP2::checkStreamState()")
+
+      if (pStream->state < STREAM_STATE_HALF_CLOSED)
+         {
+         if ((frame.flags & FLAG_END_STREAM) != 0) pStream->state = STREAM_STATE_HALF_CLOSED;
+         else
+            {
+            if (frame.type == HEADERS) nerror = PROTOCOL_ERROR;
+            }
+         }
+      else
+         {
+         if (frame.type != WINDOW_UPDATE) nerror = STREAM_CLOSED;
+         }
+      }
+
+   static bool eraseHeaders(UStringRep* key, void* elem) // callWithDeleteForAllEntry()...
+      {
+      U_TRACE(0, "UHTTP2::eraseHeaders(%V,%p)", key, elem)
+
+      if (key == UString::str_path->rep       ||
+          key == UString::str_method->rep     ||
+          key == UString::str_authority->rep  ||
+          key == UString::str_user_agent->rep ||
+          key == UString::str_accept_encoding->rep)
+         {
+         U_RETURN(false);
+         }
+
+      U_INTERNAL_DUMP("key = %p", key)
+
+      U_RETURN(true);
       }
 
    static bool setIndexStaticTable(UHashMap<void*>* table, const char* key, uint32_t length)
@@ -654,21 +707,6 @@ protected:
 # endif
 
    /**
-    * We save the Header Block Fragment of the frame to inspect it with inflatehd (https://github.com/tatsuhiro-t/nghttp2)
-    *
-    * ./inflatehd < inflatehd.json => { "cases": [ { "wire": "8285" } ] }
-    *
-    * static void saveHpackData(const char* ptr, uint32_t len, bool breq)
-    * {
-    * U_TRACE(0+256, "UHTTP2::saveHpackData(%.*S,%u,%b)", len, ptr, len, breq)
-    *
-    * UString tmp(U_CAPACITY);
-    *
-    * UHexDump::encode(ptr, len, tmp);
-    *
-    * (void) UFile::writeToTmp(U_STRING_TO_PARAM(tmp), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("%s.hpack.%P"), breq ? "request" : "response");
-    * }
-    *
     * static void eraseHeader(uint32_t index)
     * {
     * U_TRACE(0, "UHTTP2::eraseHeader(%u)", index)
@@ -680,18 +718,6 @@ protected:
     * table->lookup(hpack_static_table[index].name->rep);
     *
     * if (table->node) table->eraseAfterFind();
-    * }
-    *
-    * static void setFrameLengthAndType(char* ptr, uint32_t length, FrameTypesId type)
-    * {
-    * U_TRACE(0, "UHTTP2::setFrameLengthAndType(%p,%u,%d)", ptr, length, type)
-    *
-    * U_INTERNAL_ASSERT(type <= CONTINUATION)
-    *
-    * *(uint32_t*)ptr    = htonl(length & 0x00ffffff) >> 8;
-    *             ptr[3] = type;
-    *
-    * U_INTERNAL_DUMP("length = %#.4S", ptr) // "\000\000\004\003" (big endian: 0x11223344)
     * }
     *
     * static void decodeHeadersResponse(unsigned char* ptr, uint32_t length)
@@ -714,6 +740,21 @@ protected:
     *
     * pConnection->dtable.clear();
     * clearHpackDynTbl(&(pConnection->ddyntbl));
+    * }
+    *
+    * We save the Header Block Fragment of the frame to inspect it with inflatehd (https://github.com/tatsuhiro-t/nghttp2)
+    *
+    * ./inflatehd < inflatehd.json => { "cases": [ { "wire": "8285" } ] }
+    *
+    * static void saveHpackData(const char* ptr, uint32_t len, bool breq)
+    * {
+    * U_TRACE(0+256, "UHTTP2::saveHpackData(%.*S,%u,%b)", len, ptr, len, breq)
+    *
+    * UString tmp(U_CAPACITY);
+    *
+    * UHexDump::encode(ptr, len, tmp);
+    *
+    * (void) UFile::writeToTmp(U_STRING_TO_PARAM(tmp), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("%s.hpack.%P"), breq ? "request" : "response");
     * }
     */
 #endif

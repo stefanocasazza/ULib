@@ -298,7 +298,7 @@ public:
 
    void toJSON(UValue& json)
       {
-      U_TRACE(0, "UJsonTypeHandler<ResponseCells>::toJSON(%p)", &json)
+      U_TRACE(0, "ResponseCells::toJSON(%p)", &json)
 
       json.toJSON(U_JSON_METHOD_HANDLER(type, UString));
       json.toJSON(U_JSON_METHOD_HANDLER(businesses, UVector<BusinessCell*>));

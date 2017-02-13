@@ -34,7 +34,7 @@ public:
       
       UClient_Base::prepareRequest(URPCMethod::encoder->encodeMethodCall(method, name));
 
-      if (UClient_Base::sendRequest()            &&
+      if (UClient_Base::sendRequest(false)       &&
           readResponse(socket, buffer, response) &&
           buffer.equal(U_CONSTANT_TO_PARAM("DONE")))
          {

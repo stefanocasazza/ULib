@@ -44,8 +44,9 @@ class UBandWidthThrottling;
 
 template <class T> class UServer;
 
-#define U_ClientImage_idle(obj)   (obj)->UClientImage_Base::flag.c[0]
-#define U_ClientImage_pclose(obj) (obj)->UClientImage_Base::flag.c[1]
+#define U_ClientImage_http(obj)   (obj)->UClientImage_Base::flag.c[0]
+#define U_ClientImage_idle(obj)   (obj)->UClientImage_Base::flag.c[1]
+#define U_ClientImage_pclose(obj) (obj)->UClientImage_Base::flag.c[2]
 
 #define U_ClientImage_request_is_cached UClientImage_Base::cbuffer[0]
 
@@ -288,19 +289,21 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestToCache()")
 
-#  if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
-      U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 2)
-      U_INTERNAL_ASSERT_MAJOR(UClientImage_Base::size_request, 0)
-      U_INTERNAL_ASSERT_RANGE(1,UClientImage_Base::uri_offset,64)
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u U_http_uri_offset = %u", U_ClientImage_pipeline, size_request, U_http_uri_offset)
 
-      U_http_info.startHeader -= UClientImage_Base::uri_offset + U_CONSTANT_SIZE(" HTTP/1.1\r\n");
+#  if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
+      U_INTERNAL_ASSERT_MAJOR(size_request, 0)
+      U_INTERNAL_ASSERT_RANGE(1,U_http_uri_offset,254)
+      U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 2)
+
+      U_http_info.startHeader -= U_http_uri_offset + U_CONSTANT_SIZE(" HTTP/1.1\r\n");
 
       U_INTERNAL_ASSERT(U_http_info.startHeader <= sizeof(cbuffer))
 
-      U_MEMCPY(UClientImage_Base::cbuffer, UClientImage_Base::request->c_pointer(UClientImage_Base::uri_offset), U_http_info.startHeader);
+      U_MEMCPY(cbuffer, request->c_pointer(U_http_uri_offset), U_http_info.startHeader);
 
-      U_INTERNAL_DUMP("request(%u) = %V", UClientImage_Base::request->size(), UClientImage_Base::request->rep)
-      U_INTERNAL_DUMP("UClientImage_Base::cbuffer(%u) = %.*S", U_http_info.startHeader, U_http_info.startHeader, UClientImage_Base::cbuffer)
+      U_INTERNAL_DUMP("request(%u) = %V", request->size(), request->rep)
+      U_INTERNAL_DUMP("cbuffer(%u) = %.*S", U_http_info.startHeader, U_http_info.startHeader, cbuffer)
 #  endif
       }
 
@@ -318,17 +321,16 @@ public:
 
       U_INTERNAL_DUMP("cbuffer(%u) = %.*S", U_http_info.startHeader, U_http_info.startHeader, cbuffer)
       U_INTERNAL_DUMP("request(%u) = %.*S", sz, sz, ptr)
-
-      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u uri_offset = %u", U_ClientImage_pipeline, size_request, uri_offset)
+      U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u U_http_uri_offset = %u", U_ClientImage_pipeline, size_request, U_http_uri_offset)
 
       U_INTERNAL_ASSERT_MAJOR(size_request, 0)
-      U_INTERNAL_ASSERT_RANGE(1,uri_offset,64)
+      U_INTERNAL_ASSERT_RANGE(1,U_http_uri_offset,254)
       U_INTERNAL_ASSERT_MAJOR(U_http_info.uri_len, 0)
       U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 0)
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
 
-      if (u__isblank((ptr+uri_offset)[U_http_info.startHeader]) &&
-          memcmp(ptr+uri_offset, cbuffer, U_http_info.startHeader) == 0)
+      if (u__isblank((ptr+U_http_uri_offset)[U_http_info.startHeader]) &&
+          memcmp(ptr+U_http_uri_offset, cbuffer, U_http_info.startHeader) == 0)
          {
          if (size_request > sz &&
              (callerIsValidMethod( ptr)     == false ||
@@ -425,7 +427,7 @@ protected:
       U_RETURN(U_NOTIFIER_OK);
       }
 
-   int handlerResponse();
+   int  handlerResponse();
    void prepareForSendfile();
 
    void setPendingSendfile()
@@ -464,8 +466,8 @@ protected:
    static struct iovec* piov;
    static int csfd, idx, iovcnt;
    static UTimeVal* chronometer;
+   static uint32_t ncount, nrequest, resto;
    static long time_between_request, time_run;
-   static uint32_t ncount, nrequest, resto, uri_offset;
 
    static void   endRequest();
    static void startRequest();
