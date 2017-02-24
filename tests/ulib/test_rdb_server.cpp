@@ -4,7 +4,7 @@
 #include <ulib/file_config.h>
 #include <ulib/net/server/server_rdb.h>
 
-int U_EXPORT main(int argc, char* argv[])
+int U_EXPORT main(int argc, char* argv[], char* env[])
 {
    U_ULIB_INIT(argv);
 

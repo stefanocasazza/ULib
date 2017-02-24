@@ -3,7 +3,7 @@
 #include <ulib/net/tcpsocket.h>
 #include <ulib/net/client/redis.h>
 
-int main(int argc, char *argv[])
+int main(int argc, char *argv[], char* env[])
 {
    U_ULIB_INIT(argv);
 

@@ -81,20 +81,6 @@ public:
    virtual int  handlerTimeout() U_DECL_FINAL;
    virtual void handlerDelete() U_DECL_FINAL;
 
-   static void setNoHeaderForResponse()
-      {
-      U_TRACE_NO_PARAM(0, "UClientImage_Base::setNoHeaderForResponse()")
-
-      iov_vec[1].iov_len = 0;
-      }
-
-   static void setHeaderForResponse(uint32_t len)
-      {
-      U_TRACE(0, "UClientImage_Base::setHeaderForResponse(%u)", len)
-
-      iov_vec[1].iov_len = len;
-      }
-
    static void init();
    static void clear();
 
@@ -104,6 +90,29 @@ public:
    static const char* getRequestUri(uint32_t& len);
 
    static bool isAllowed(UVector<UIPAllow*>& vallow_IP) __pure; // Check whether the ip address client ought to be allowed
+
+   static void setHeaderForResponse(uint32_t len)
+      {
+      U_TRACE(0, "UClientImage_Base::setHeaderForResponse(%u)", len)
+
+      iov_vec[1].iov_len = len;
+      }
+
+   static void setNoHeaderForResponse()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::setNoHeaderForResponse()")
+
+      iov_vec[1].iov_len = 0;
+      }
+
+   static bool isNoHeaderForResponse()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage_Base::isNoHeaderForResponse()")
+
+      if (UNLIKELY(iov_vec[1].iov_len == 0)) U_RETURN(true);
+
+      U_RETURN(false);
+      }
 
    // manage if other data already available... (pipelining)
 

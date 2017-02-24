@@ -485,7 +485,7 @@ public:
       U_SYSCALL_VOID(free, "%p", ptr);
       }
 
-   static void _free(void* ptr, uint32_t num, uint32_t type_size = 1)
+   static void _free(void* ptr, uint32_t num, uint32_t type_size = sizeof(char))
       {
       U_TRACE(1, "UMemoryPool::_free(%p,%u,%u)", ptr, num, type_size)
 
@@ -500,8 +500,8 @@ public:
       }
 #endif
 
-   static void* _malloc(uint32_t   num, uint32_t type_size = 1, bool bzero = false);
-   static void* _malloc(uint32_t* pnum, uint32_t type_size = 1, bool bzero = false);
+   static void* _malloc(uint32_t   num, uint32_t type_size = sizeof(char), bool bzero = false);
+   static void* _malloc(uint32_t* pnum, uint32_t type_size = sizeof(char), bool bzero = false);
 
 #ifdef DEBUG
    static const char* obj_class;

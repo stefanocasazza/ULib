@@ -112,7 +112,7 @@ static void parse(const UString& dati, const UString& file)
    printf("%.*s parsed as %s \n", U_STRING_TO_TRACE(file), type);
 }
 
-int U_EXPORT main(int argc, char* argv[])
+int U_EXPORT main(int argc, char* argv[], char* env[])
 {
    U_ULIB_INIT(argv);
 

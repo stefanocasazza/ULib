@@ -90,6 +90,7 @@ DIR_CMD="../../examples/userver"
 # set -x
 
 pkill userver_tcp 2>/dev/null
+pkill userver_ssl 2>/dev/null
 
 #STRACE=$TRUSS
 start_prg_background userver_ssl -c inp/webserver.cfg

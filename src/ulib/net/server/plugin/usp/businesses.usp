@@ -408,58 +408,63 @@ static void usp_end_businesses()
 <!--#header
 Content-Type: application/json
 -->
-<!--#code
+<!--#vcode // validation code
 UString type;
 
-if (USP_JFIND_REQUEST("type", type))
+if (USP_JFIND_REQUEST("type", type) == false)
    {
-   if (type.equal(U_CONSTANT_TO_PARAM("localesData")))
+   UHTTP::setBadRequest();
+
+   return;
+   }
+-->
+<!--#lcode // load balance code
+if (type.equal(U_CONSTANT_TO_PARAM("localesData")))
+   {
+   Response response;
+
+   USP_JSON_OBJ_stringify(Response, response);
+   }
+else if (type.equal(U_CONSTANT_TO_PARAM("cells")))
+   {
+   BusinessCell* pcell;
+   ResponseCells response;
+
+   U_NEW(BusinessCell, pcell, BusinessCell);
+
+   response.businesses.push_back(pcell);
+
+   USP_JSON_OBJ_stringify(ResponseCells, response);
+   }
+else if (type.equal(U_CONSTANT_TO_PARAM("startup")))
+   {
+   RequestStartup request;
+
+   if (USP_JSON_REQUEST_PARSE(request))
       {
-      Response response;
+      ResponseStartup response;
 
-      USP_JSON_OBJ_stringify(Response, response);
-      }
-   else if (type.equal(U_CONSTANT_TO_PARAM("cells")))
-      {
-      BusinessCell* pcell;
-      ResponseCells response;
-
-      U_NEW(BusinessCell, pcell, BusinessCell);
-
-      response.businesses.push_back(pcell);
-
-      USP_JSON_OBJ_stringify(ResponseCells, response);
-      }
-   else if (type.equal(U_CONSTANT_TO_PARAM("startup")))
-      {
-      RequestStartup request;
-
-      if (USP_JSON_REQUEST_PARSE(request))
+      if (request.authed)
          {
-         ResponseStartup response;
-
-         if (request.authed)
-            {
-            }
-
-         UString workingString;
-
-         if (UValue::jread(mongoResults[0], U_STRING_FROM_CONSTANT("{'fbPermissions'"), workingString))
-            {
-            for (uint32_t i = 0, n = UValue::jread_elements; i < n; ++i)
-               {
-               UString workingString2;
-
-               (void) UValue::jread(workingString, U_STRING_FROM_CONSTANT("[*"), workingString2, &i);
-
-               U_INTERNAL_DUMP("pushing = %V", workingString2.rep);
-
-               response.fbPermissions.push_back(workingString2);
-               }
-            }
-
-         USP_JSON_OBJ_stringify(ResponseStartup, response);
          }
+
+      UString workingString;
+
+      if (UValue::jread(mongoResults[0], U_STRING_FROM_CONSTANT("{'fbPermissions'"), workingString))
+         {
+         for (uint32_t i = 0, n = UValue::jread_elements; i < n; ++i)
+            {
+            UString workingString2;
+
+            (void) UValue::jread(workingString, U_STRING_FROM_CONSTANT("[*"), workingString2, &i);
+
+            U_INTERNAL_DUMP("pushing = %V", workingString2.rep);
+
+            response.fbPermissions.push_back(workingString2);
+            }
+         }
+
+      USP_JSON_OBJ_stringify(ResponseStartup, response);
       }
    }
 -->

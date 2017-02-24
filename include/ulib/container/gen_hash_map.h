@@ -16,6 +16,8 @@
 
 #include <ulib/internal/common.h>
 
+class UNotifier;
+
 /**
  * Functor used by UGenericHashMap class to generate a hashcode for an object of type T. It must be specialized for your own class
  */
@@ -105,31 +107,6 @@ public:
    ~UGenericHashMap()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UGenericHashMap)
-      }
-
-   // Allocate and deallocate methods
-
-   void allocate(uint32_t n = 53)
-      {
-      U_TRACE(0, "UGenericHashMap<K,I>::allocate(%u)", n)
-
-      U_CHECK_MEMORY
-
-      table     = (UGenericHashMapNode**) UMemoryPool::_malloc(&n, sizeof(UGenericHashMapNode*), true);
-      _capacity = n;
-      }
-
-   void deallocate()
-      {
-      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::deallocate()")
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
-
-      UMemoryPool::_free(table, _capacity, sizeof(UGenericHashMapNode*));
-
-      _capacity = 0;
       }
 
    // Size and capacity
@@ -504,6 +481,33 @@ public:
       }
 #endif
 
+protected:
+   // allocate and deallocate methods
+
+   void allocate(uint32_t n = 53)
+      {
+      U_TRACE(0, "UGenericHashMap<K,I>::allocate(%u)", n)
+
+      U_CHECK_MEMORY
+
+      table     = (UGenericHashMapNode**) UMemoryPool::_malloc(&n, sizeof(UGenericHashMapNode*), true);
+      _capacity = n;
+      }
+
+   void deallocate()
+      {
+      U_TRACE_NO_PARAM(0, "UGenericHashMap<K,I>::deallocate()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
+
+      UMemoryPool::_free(table, _capacity, sizeof(UGenericHashMapNode*));
+
+      _capacity = 0;
+      }
+
+
 private:
 #ifdef U_COMPILER_DELETE_MEMBERS
                                                             UGenericHashMap(const UGenericHashMap&) = delete;
@@ -516,6 +520,8 @@ private:
    template<typename A, typename B, typename C, typename D> UGenericHashMap(const UGenericHashMap<A,B,C,D>&)            {}
    template<typename A, typename B, typename C, typename D> UGenericHashMap& operator=(const UGenericHashMap<A,B,C,D>&) { return *this; }
 #endif
+
+   friend class UNotifier;
 };
 
 // Functor used by UGenericHashMap class to generate a hashcode for an object of type <int>

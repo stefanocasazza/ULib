@@ -61,6 +61,7 @@ class UHTTP2;
 class UNotifier;
 class USocketExt;
 class UFtpClient;
+class UTimeThread;
 class UClient_Base;
 class UServer_Base;
 class SocketAddress;
@@ -687,6 +688,7 @@ private:
                       friend class UNotifier;
                       friend class USocketExt;
                       friend class UFtpClient;
+                      friend class UTimeThread;
                       friend class UClient_Base;
                       friend class UServer_Base;
                       friend class UStreamPlugIn;

@@ -18,6 +18,10 @@
 #include <ulib/utility/uhttp.h>
 #include <ulib/utility/hexdump.h>
 
+#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#  include <ulib/net/client/http.h>
+#endif
+
 #define HTTP2_FRAME_HEADER_SIZE               9 // The number of bytes of the frame header
 #define HTTP2_DEFAULT_WINDOW_SIZE         65535 
 #define HTTP2_HEADER_TABLE_OFFSET            62
@@ -65,11 +69,11 @@ public:
    };
 
    struct HpackHeaderTableEntry {
-      const UString* name;
-      const UString* value;
+      UStringRep* name;
+      UStringRep* value;
    };
 
-   struct HpackDynamicTable {
+   struct HpackDynamicTable { // (Last In First Out) 
       uint32_t num_entries,
                entry_capacity,
                entry_start_index;
@@ -148,6 +152,10 @@ public:
    private:
    U_DISALLOW_COPY_AND_ASSIGN(Connection)
    };
+
+#ifdef DEBUG
+   static void testHpackDynTbl();
+#endif
 
 protected:
    enum FrameTypesId {
@@ -281,9 +289,9 @@ protected:
    static void sendResetStream();
    static void sendWindowUpdate();
 
-   static void handlerDelete(UClientImage_Base* pclient);
    static void updateSetting(unsigned char* ptr, uint32_t len);
    static void writeData(struct iovec* iov, bool bdata, bool flag);
+   static void handlerDelete(UClientImage_Base* pclient, bool& bsocket_open);
 
    static void startRequest()
       {
@@ -327,9 +335,7 @@ protected:
          U_ASSERT(pStream->body.empty())
          U_ASSERT(pStream->headers.empty())
 
-         U_INTERNAL_ASSERT_EQUALS(pStream->id, 0)
          U_INTERNAL_ASSERT_EQUALS(pStream->clength, 0)
-         U_INTERNAL_ASSERT_EQUALS(pStream->state, STREAM_STATE_IDLE)
          }
 #  endif
       }
@@ -424,13 +430,37 @@ protected:
          }
       else
          {
-         if (frame.type != WINDOW_UPDATE) nerror = STREAM_CLOSED;
+         if (frame.type != RST_STREAM &&
+             frame.type != WINDOW_UPDATE)
+            {
+            nerror = STREAM_CLOSED;
+            }
          }
       }
 
-   static bool eraseHeaders(UStringRep* key, void* elem) // callWithDeleteForAllEntry()...
+   /**
+    * +-------+-----------------------------+---------------+
+    * | 1     | :authority                  |               |
+    * | 2     | :method                     | GET           |
+    * | 3     | :method                     | POST          |
+    * | 4     | :path                       | /             |
+    * | 5     | :path                       | /index.html   |
+    * | 6     | :scheme                     | http          |
+    * | 7     | :scheme                     | https         |
+    * | 8     | :status                     | 200           |
+    * | 9     | :status                     | 204           |
+    * | 10    | :status                     | 206           |
+    * | 11    | :status                     | 304           |
+    * | 12    | :status                     | 400           |
+    * | 13    | :status                     | 404           |
+    * | 14    | :status                     | 500           |
+    * | ...   | ...                         | ...           |
+    * +-------+-----------------------------+---------------+
+    */
+
+   static bool isHeaderToErase(UStringRep* key)
       {
-      U_TRACE(0, "UHTTP2::eraseHeaders(%V,%p)", key, elem)
+      U_TRACE(0, "UHTTP2::isHeaderToErase(%V)", key)
 
       if (key == UString::str_path->rep       ||
           key == UString::str_method->rep     ||
@@ -441,10 +471,79 @@ protected:
          U_RETURN(false);
          }
 
-      U_INTERNAL_DUMP("key = %p", key)
+      U_RETURN(true);
+      }
+
+   static bool isHeaderToCopy(UStringRep* key)
+      {
+      U_TRACE(0, "UHTTP2::isHeaderToCopy(%V)", key)
+
+      if (isHeaderToErase(key) == false           &&
+          key != UString::str_cookie->rep         &&
+          key != UString::str_accept->rep         &&
+          key != UString::str_referer->rep        &&
+          key != UString::str_content_type->rep   &&
+          key != UString::str_content_length->rep &&
+          key != UString::str_accept_language->rep)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+      
+   static bool eraseHeaders(UStringRep* key, void* elem) // callWithDeleteForAllEntry()...
+      {
+      U_TRACE(0, "UHTTP2::eraseHeaders(%V,%p)", key, elem)
+
+      if (isHeaderToErase(key)) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool copyHeaders(UStringRep* key, void* elem)
+      {
+      U_TRACE(0, "UHTTP2::copyHeaders(%V,%p)", key, elem)
+
+      if (isHeaderToCopy(key)) UClientImage_Base::request->snprintf_add(U_CONSTANT_TO_PARAM("%v: %v\r\n"), key, (const UStringRep*)elem);
 
       U_RETURN(true);
       }
+
+   // HTTP/1.1 conversion
+
+#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+   static void wrapRequest();
+
+   static void wrapResponse()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP2::wrapResponse()")
+
+      U_INTERNAL_DUMP("U_http_info.nResponseCode = %u U_http_info.clength = %u U_http_version = %C", U_http_info.nResponseCode, U_http_info.clength, U_http_version)
+
+      U_http_version = '2';
+
+      UHTTP::ext->setBuffer(U_CAPACITY);
+
+      UHTTP::client_http->getResponseHeader()->table.callForAllEntry(wrapHeaders);
+
+      handlerResponse();
+      }
+
+   static bool wrapHeaders(UStringRep* key, void* elem)
+      {
+      U_TRACE(0, "UHTTP2::wrapHeaders(%V,%p)", key, elem)
+
+      if (key->equal(U_CONSTANT_TO_PARAM("Date"))   == false &&
+          key->equal(U_CONSTANT_TO_PARAM("Server")) == false)
+         {
+         if (key->equal(U_CONSTANT_TO_PARAM("Set-Cookie"))) UHTTP::set_cookie->_assign(key);
+         else                                               UHTTP::ext->snprintf_add(U_CONSTANT_TO_PARAM("%v: %v\r\n"), key, (const UStringRep*)elem);
+         }
+
+      U_RETURN(true);
+      }
+#endif
 
    static bool setIndexStaticTable(UHashMap<void*>* table, const char* key, uint32_t length)
       {
@@ -479,42 +578,6 @@ protected:
       U_RETURN(false);
       }
 
-   static void clearHpackDynTbl(     HpackDynamicTable* dyntbl);
-   static void   addHpackDynTblEntry(HpackDynamicTable* dyntbl, const UString& name, const UString& value);
-
-   static HpackHeaderTableEntry* getHpackDynTblEntry(const HpackDynamicTable* dyntbl, uint32_t index)
-      {
-      U_TRACE(0, "UHTTP2::getHpackDynTblEntry(%p,%u)", dyntbl, index)
-
-      U_INTERNAL_DUMP("dyntbl->entry_start_index = %u dyntbl->entry_capacity = %u", dyntbl->entry_start_index, dyntbl->entry_capacity)
-
-      uint32_t entry_index = (dyntbl->entry_start_index + index) % dyntbl->entry_capacity;
-
-      HpackHeaderTableEntry* entry = dyntbl->entries + entry_index;
-
-      U_INTERNAL_ASSERT_POINTER(entry->name)
-
-      U_INTERNAL_DUMP("entry->name = %V entry->value = %V", entry->name->rep, entry->value->rep)
-
-      U_RETURN_POINTER(entry, HpackHeaderTableEntry);
-      }
-
-   static void evictHpackDynTblEntry(HpackDynamicTable* dyntbl, HpackHeaderTableEntry* entry)
-      {
-      U_TRACE(0, "UHTTP2::evictHpackDynTblEntry(%p,%p)", dyntbl, entry)
-
-      U_INTERNAL_ASSERT_MAJOR(dyntbl->num_entries, 0)
-
-      dyntbl->num_entries--;
-
-      dyntbl->hpack_size -= entry->name->size() + entry->value->size() + HTTP2_HEADER_TABLE_ENTRY_SIZE_OFFSET;
-
-      delete entry->name;
-      delete entry->value;
-      }
-
-   static void evictHpackDynTblEntry(HpackDynamicTable* dyntbl) { evictHpackDynTblEntry(dyntbl, getHpackDynTblEntry(dyntbl, dyntbl->num_entries-1)); }
-
    static void setHpackDynTblCapacity(HpackDynamicTable* dyntbl, uint32_t value)
       {
       U_TRACE(0, "UHTTP2::setHpackDynTblCapacity(%p,%u)", dyntbl, value)
@@ -527,10 +590,10 @@ protected:
 
       // adjust the size
 
-      while (dyntbl->num_entries != 0 &&
+      while (dyntbl->num_entries > 0 &&
              dyntbl->hpack_size > dyntbl->hpack_capacity)
          {
-         evictHpackDynTblEntry(dyntbl);
+         evictHpackDynTblFirstEntry(dyntbl);
          }
       }
 
@@ -569,6 +632,67 @@ protected:
 
       U_RETURN_POINTER(dst, unsigned char);
       }
+
+   static HpackHeaderTableEntry* getHpackDynTblEntry(HpackDynamicTable* dyntbl, uint32_t index)
+      {
+      U_TRACE(0, "UHTTP2::getHpackDynTblEntry(%p,%u)", dyntbl, index)
+
+      U_INTERNAL_DUMP("dyntbl->entry_start_index = %u dyntbl->entry_capacity = %u dyntbl->num_entries = %u", dyntbl->entry_start_index, dyntbl->entry_capacity, dyntbl->num_entries)
+
+      U_INTERNAL_ASSERT_MAJOR(dyntbl->num_entries, 0)
+      U_INTERNAL_ASSERT_MINOR(index, dyntbl->num_entries)
+
+      HpackHeaderTableEntry* entry = dyntbl->entries + ((dyntbl->entry_start_index+index) % dyntbl->entry_capacity);
+
+      U_INTERNAL_ASSERT_POINTER(entry->name)
+      U_INTERNAL_ASSERT_POINTER(entry->value)
+
+      U_INTERNAL_DUMP("entry->name = %V entry->value = %V", entry->name, entry->value)
+
+      U_RETURN_POINTER(entry, HpackHeaderTableEntry);
+      }
+
+   static void evictHpackDynTblEntry(HpackDynamicTable* dyntbl, HpackHeaderTableEntry* entry)
+      {
+      U_TRACE(0, "UHTTP2::evictHpackDynTblEntry(%p,%p)", dyntbl, entry)
+
+      dyntbl->num_entries--;
+
+      dyntbl->hpack_size -= entry->name->size() + entry->value->size() + HTTP2_HEADER_TABLE_ENTRY_SIZE_OFFSET;
+
+      U_INTERNAL_ASSERT_POINTER(entry->name)
+      U_INTERNAL_ASSERT_POINTER(entry->value)
+
+      // NB: we decreases the reference string...
+
+      U_INTERNAL_DUMP("entry->name = %V entry->value = %V", entry->name, entry->value)
+
+      entry->name->release();
+      entry->value->release();
+
+      entry->name  =
+      entry->value = 0;
+      }
+
+   static void evictHpackDynTblFirstEntry(HpackDynamicTable* dyntbl)
+      {
+      U_TRACE(0, "UHTTP2::evictHpackDynTblFirstEntry(%p)", dyntbl)
+
+      evictHpackDynTblEntry(dyntbl, getHpackDynTblEntry(dyntbl, dyntbl->num_entries-1));
+      }
+
+   static void evictHpackDynTblLastEntry(HpackDynamicTable* dyntbl)
+      {
+      U_TRACE(0, "UHTTP2::evictHpackDynTblLastEntry(%p)", dyntbl)
+
+      evictHpackDynTblEntry(dyntbl, getHpackDynTblEntry(dyntbl, 0));
+
+      dyntbl->entry_start_index = (dyntbl->entry_start_index+1+dyntbl->entry_capacity) % dyntbl->entry_capacity;
+      }
+
+   static void clearHpackDynTbl(     HpackDynamicTable* dyntbl);
+   static void   addHpackDynTblEntry(HpackDynamicTable* dyntbl, const UString& name, const UString& value);
+   static void evictHpackDynTblEntry(HpackDynamicTable* dyntbl, HpackHeaderTableEntry* entry, uint32_t index);
 
    static void addHpackOutputDynTblEntry(const UString& name, const UString& value) { addHpackDynTblEntry(&(pConnection->odyntbl), name, value); }
 
@@ -679,7 +803,7 @@ protected:
 
       table->hash = hash_static_table[index];
 
-      table->lookup(hpack_static_table[index].name->rep);
+      table->lookup(hpack_static_table[index].name);
 
       if (table->node) U_RETURN(true);
 
@@ -690,13 +814,13 @@ protected:
    static const char* getConnectionStatusDescription();
    static const char* getFrameTypeDescription(char type);
 
-   static void printHpackDynamicTable(const HpackDynamicTable* dyntbl, ostream& os);
+   static void printHpackDynamicTable(HpackDynamicTable* dyntbl, ostream& os);
 
    static void printHpackInputDynTable()  { printHpackDynamicTable(&(pConnection->idyntbl), cout); }
    static void printHpackOutputDynTable() { printHpackDynamicTable(&(pConnection->odyntbl), cout); }
 
 # ifdef U_STDCPP_ENABLE
-   friend ostream& operator<<(ostream& os, const HpackDynamicTable& v)
+   friend ostream& operator<<(ostream& os, HpackDynamicTable& v)
       {
       U_TRACE(0+256, "HpackDynamicTable::operator<<(%p,%p)", &os, &v)
 
@@ -715,7 +839,7 @@ protected:
     *
     * table->hash = hash_static_table[index];
     *
-    * table->lookup(hpack_static_table[index].name->rep);
+    * table->lookup(hpack_static_table[index].name);
     *
     * if (table->node) table->eraseAfterFind();
     * }

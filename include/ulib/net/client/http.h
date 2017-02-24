@@ -32,6 +32,7 @@
  * persistent connections which can make more effective use of TCP/IP
  */
 
+class UHTTP;
 class UMimeHeader;
 class Application;
 class WiAuthNodog;
@@ -220,6 +221,7 @@ protected:
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UHttpClient_Base)
 
+   friend class UHTTP;
    friend class USSLSocket;
    friend class Application;
    friend class WiAuthNodog;

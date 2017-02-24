@@ -2170,6 +2170,10 @@ bool UValue::jfind(const UString& json, const char* query, uint32_t query_len, U
 
             U_INTERNAL_ASSERT(u__isquote(*end))
             }
+         else if (u__isquote(*end)) 
+            {
+            U_RETURN(false);
+            }
 
          (void) result.assign(start, end-start);
 

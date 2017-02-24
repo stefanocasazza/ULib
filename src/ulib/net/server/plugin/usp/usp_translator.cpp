@@ -63,11 +63,10 @@
 "%s" \
 "%s" \
 "%s" \
-"%s" \
 "\t\t}\n" \
 "\t\n" \
 "%v" \
-"%s" \
+"%v" \
 "\t\n" \
 "%v" \
 "%v" \
@@ -124,9 +123,8 @@ public:
 
       const char* ptr;
       uint32_t i, n, size;
-      UString token, declaration, http_header(U_CAPACITY), buffer(U_CAPACITY), bufname(100U), output(U_CAPACITY), output1(U_CAPACITY), xoutput(U_CAPACITY);
-      bool bgroup, binit = false, bend = false, bsighup = false, bfork = false, bcomment = false, bvar = false, bform = false, test_if_html = false, is_html = false,
-           bsession = false, bstorage = false, bparallelization = false;
+      UString token, declaration, http_header(U_CAPACITY), buffer(U_CAPACITY), bufname(100U), vcode(U_CAPACITY), output(U_CAPACITY), output1(U_CAPACITY), output2(U_CAPACITY);
+      bool bgroup, binit = false, bend = false, bsighup = false, bfork = false, bcomment = false, bvar = false, test_if_html = false, is_html = false, bsession = false, bstorage = false;
 
       // Anything that is not enclosed in <!-- ... --> tags is assumed to be HTML
 
@@ -196,9 +194,30 @@ public:
 
          U_INTERNAL_DUMP("directive(10) = %.*S", 10, directive)
 
+         /**
+          * token list:
+          *
+          * <!--# --> (comment)
+          * <!--#declaration -->
+          * <!--#session -->
+          * <!--#storage -->
+          * <!--#args -->
+          * <!--#header -->
+          * <!--#vcode -->
+          * <!--#pcode -->
+          * <!--#lcode -->
+          * <!--#number -->
+          * <!--#cout -->
+          * <!--#puts -->
+          * <!--#xmlputs -->
+          * <!--#print -->
+          * <!--#printfor -->
+          */
+
          if (strncmp(directive, U_CONSTANT_TO_PARAM("declaration")) == 0)
             {
-            U_ASSERT(declaration.empty()) // NB: <!--#declaration ... --> must be at the beginning...
+            U_ASSERT(vcode.empty())
+            U_ASSERT(declaration.empty()) // NB: <!--#declaration ... --> must be at the beginning and uniq...
 
             n = token.size() - U_CONSTANT_SIZE("declaration") - 2;
 
@@ -211,16 +230,10 @@ public:
 
             declaration = UStringExt::substitute(declaration, '\n', U_CONSTANT_TO_PARAM("\n\t"));
             }
-         else if (strncmp(directive, U_CONSTANT_TO_PARAM("header")) == 0)
-            {
-            U_ASSERT(http_header.empty())
-
-            n = token.size() - U_CONSTANT_SIZE("header") - 2;
-
-            http_header = UStringExt::trim(directive + U_CONSTANT_SIZE("header"), n);
-            }
          else if (strncmp(directive, U_CONSTANT_TO_PARAM("session")) == 0)
             {
+            U_ASSERT(vcode.empty())
+
             bsession = true;
 
             n = token.size() - U_CONSTANT_SIZE("session") - 2;
@@ -269,6 +282,8 @@ public:
             }
          else if (strncmp(directive, U_CONSTANT_TO_PARAM("storage")) == 0)
             {
+            U_ASSERT(vcode.empty())
+
             bstorage = true;
 
             n = token.size() - U_CONSTANT_SIZE("storage") - 2;
@@ -317,11 +332,13 @@ public:
             }
          else if (strncmp(directive, U_CONSTANT_TO_PARAM("args")) == 0)
             {
-            bform = true;
+            U_ASSERT(vcode.empty())
 
             n = token.size() - U_CONSTANT_SIZE("args") - 2;
 
             token = UStringExt::trim(directive + U_CONSTANT_SIZE("args"), n);
+
+            (void) output.append(U_CONSTANT_TO_PARAM("\t\n\t\tif (UHTTP::isGETorPOST()) (void) UHTTP::processForm();\n"));
 
             UString tmp, name;
             UVector<UString> vec(token, "\t\n;");
@@ -347,6 +364,64 @@ public:
 
                (void) output.append(buffer);
                }
+            }
+         else if (strncmp(directive, U_CONSTANT_TO_PARAM("header")) == 0)
+            {
+            U_ASSERT(vcode.empty())
+            U_ASSERT(http_header.empty())
+
+            n = token.size() - U_CONSTANT_SIZE("header") - 2;
+
+            http_header = UStringExt::trim(directive + U_CONSTANT_SIZE("header"), n);
+            }
+         else if (strncmp(directive, U_CONSTANT_TO_PARAM("code")) == 0) // generic code
+            {
+            n = token.size() - U_CONSTANT_SIZE("code") - 2;
+
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("code"), n);
+
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
+            (void) output.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
+            }
+         else if (strncmp(directive, U_CONSTANT_TO_PARAM("vcode")) == 0) // validation code
+            {
+            U_ASSERT(vcode.empty()) // NB: <!--#vcode ... --> must be before other code and uniq...
+
+            n = token.size() - U_CONSTANT_SIZE("vcode") - 2;
+
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("vcode"), n);
+
+            (void) vcode.append(U_CONSTANT_TO_PARAM("\n\t"));
+            (void) vcode.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
+            (void) vcode.append(U_CONSTANT_TO_PARAM("\n\t\n"));
+            }
+         else if (strncmp(directive, U_CONSTANT_TO_PARAM("pcode")) == 0) // parallelization code (long running task)
+            {
+            n = token.size() - U_CONSTANT_SIZE("pcode") - 2;
+
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("pcode"), n);
+
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
+            (void) output.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
+
+            (void) vcode.append(U_CONSTANT_TO_PARAM("\tif (UServer_Base::startParallelization()) { U_http_info.nResponseCode = HTTP_CONTINUE; return; }\n\t\n"));
+            }
+         else if (strncmp(directive, U_CONSTANT_TO_PARAM("lcode")) == 0) // load balance code
+            {
+            n = token.size() - U_CONSTANT_SIZE("lcode") - 2;
+
+            token = UStringExt::trim(directive + U_CONSTANT_SIZE("lcode"), n);
+
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
+            (void) output.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
+            (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
+
+            (void) vcode.append(U_CONSTANT_TO_PARAM("\tif (UServer_Base::startParallelization()) { U_http_info.nResponseCode = HTTP_CONTINUE; return; }\n\t\n"));
+#        ifdef USE_LOAD_BALANCE
+            (void) vcode.append(U_CONSTANT_TO_PARAM("\tif (UHTTP::manageRequestOnRemoteServer()) return;\n\t\n"));
+#        endif
             }
          else if (strncmp(directive, U_CONSTANT_TO_PARAM("number")) == 0)
             {
@@ -433,42 +508,6 @@ public:
 
             (void) output.append(buffer);
             }
-         else
-            {
-            n = 0;
-
-            if (strncmp(directive, U_CONSTANT_TO_PARAM("pcode")) == 0)
-               {
-               bparallelization = true;
-
-               n = token.size() - U_CONSTANT_SIZE("pcode") - 2;
-
-               token = UStringExt::trim(directive + U_CONSTANT_SIZE("pcode"), n);
-               }
-            else if (strncmp(directive, U_CONSTANT_TO_PARAM("code")) == 0)
-               {
-               n = token.size() - U_CONSTANT_SIZE("code") - 2;
-
-               token = UStringExt::trim(directive + U_CONSTANT_SIZE("code"), n);
-               }
-            else if (strncmp(directive, U_CONSTANT_TO_PARAM("xcode")) == 0)
-               {
-               bvar = true;
-
-               token = UStringExt::trim(directive + U_CONSTANT_SIZE("xcode"), token.size() - U_CONSTANT_SIZE("xcode") - 2);
-
-               (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t"));
-               (void) xoutput.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
-               (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t\n"));
-               }
-
-            if (n)
-               {
-               (void) output.append(U_CONSTANT_TO_PARAM("\n\t"));
-               (void) output.append(UStringExt::substitute(token, '\n', U_CONSTANT_TO_PARAM("\n\t")));
-               (void) output.append(U_CONSTANT_TO_PARAM("\n\t\n"));
-               }
-            }
 
          // no trailing \n...
 
@@ -514,7 +553,7 @@ public:
          {
          // NB: we use insert because the possibility of UHTTP::callService() (see chat.usp)...
 
-         if (U_STRING_FIND(http_header, 0, "Content-Type") != U_NOT_FOUND) (void) xoutput.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_content_type_len = 1;\n\t"));
+         if (U_STRING_FIND(http_header, 0, "Content-Type") != U_NOT_FOUND) (void) output2.append(U_CONSTANT_TO_PARAM("\n\t\tU_http_content_type_len = 1;\n\t"));
 
          UString header = UStringExt::dos2unix(http_header, true);
 
@@ -532,9 +571,9 @@ public:
 
          UString tmp(encoded.size() + 200U);
 
-         tmp.snprintf(U_CONSTANT_TO_PARAM("\n\t\tU_INTERNAL_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
-                      "\n\t\tU_http_info.endHeader = %u;"
-                      "\n\t\t(void) UClientImage_Base::wbuffer->insert(0, \n\tU_CONSTANT_TO_PARAM(%v));\n"), n, encoded.rep);
+         tmp.snprintf(U_CONSTANT_TO_PARAM("\n\tU_INTERNAL_ASSERT_EQUALS(UClientImage_Base::wbuffer->findEndHeader(),false)"
+                      "\n\tU_http_info.endHeader = %u;"
+                      "\n\t(void) UClientImage_Base::wbuffer->insert(0, U_CONSTANT_TO_PARAM(%v));\n\t\n"), n, encoded.rep);
 
          (void) x.append(tmp);
          }
@@ -547,8 +586,7 @@ public:
             char  ptr4[100] = { '\0' };
             char  ptr5[100] = { '\0' };
       const char* ptr6      = "";
-      const char* ptr7      = "";
-      const char* ptr8      = (bcomment ? "\n\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
+      const char* ptr7      = (bcomment ? "\n\tUClientImage_Base::setRequestNoCache();\n\t\n" : "");
 
       if (binit)   (void) u__snprintf(ptr1, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_INIT) { usp_init_%.*s(); return; }\n\t"), size, ptr);
       if (bsighup) (void) u__snprintf(ptr4, 100, U_CONSTANT_TO_PARAM("\n\t\tif (param == U_DPAGE_SIGHUP) { usp_sighup_%.*s(); return; }\n\t"), size, ptr);
@@ -572,9 +610,7 @@ public:
                        : "\n\t\tif (param >= U_DPAGE_FORK) return;\n");
          }
 
-      if (bparallelization) ptr7 = "\t\n\t\tif (UServer_Base::startParallelization(UServer_Base::num_client_for_parallelization)) return;\n\t\n";
-
-      UString result(1024U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output.size() + output1.size() + xoutput.size());
+      UString result(1024U + sizeof(USP_TEMPLATE) + declaration.size() + http_header.size() + output.size() + output1.size() + output2.size());
 
       result.snprintf(U_CONSTANT_TO_PARAM(USP_TEMPLATE),
                       size, ptr,
@@ -585,20 +621,20 @@ public:
                       size, ptr,
                       size, ptr,
                       bvar ? "\n\tuint32_t usp_sz = 0;"
-                             "\n\tchar usp_buffer[10 * 4096];\n" : "",
+                             "\n\tchar usp_buffer[10 * 4096];\n"
+                           : "",
                       ptr1,
                       ptr2,
                       ptr3,
                       ptr4,
                       ptr5,
                       ptr6,
-                      ptr7,
+                      vcode.rep,
                       http_header.rep,
-                      bform ? "\t\n\t\tif (UHTTP::isGETorPOST()) (void) UHTTP::processForm();\n" : "",
                       output.rep,
                       output1.rep,
-                      xoutput.rep,
-                      ptr8);
+                      output2.rep,
+                      ptr7);
 
       (void) UFile::writeTo(bufname, UStringExt::removeEmptyLine(result));
       }

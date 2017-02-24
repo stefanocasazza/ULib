@@ -320,4 +320,15 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 		AC_DEFINE(U_HTML_PAGINATION_SUPPORT, 1, [enable HTML pagination support])
 	fi
 	AC_MSG_RESULT([$enable_HPS])
+
+	AC_MSG_CHECKING(if you want to enable load balance support between physical server via udp brodcast)
+	AC_ARG_ENABLE(load-balance,
+				[  --enable-load-balance     enable load balance support between physical server via udp brodcast [[default=no]]])
+	if test -z "$enable_load_balance"; then
+		enable_load_balance="no"
+	fi
+	if test "$enable_load_balance" = "yes"; then
+		AC_DEFINE(USE_LOAD_BALANCE, 1, [enable load balance support between physical server via udp brodcast])
+	fi
+	AC_MSG_RESULT([$enable_load_balance])
 ])

@@ -82,6 +82,7 @@
 #include "utility/uhttp.cpp"
 #include "utility/base64.cpp"
 #include "utility/dir_walk.cpp"
+#include "utility/bit_array.cpp"
 #include "utility/interrupt.cpp"
 #include "utility/services.cpp"
 #include "utility/semaphore.cpp"

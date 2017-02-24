@@ -21,6 +21,7 @@ start_prg_background server ../../src/ulib/net/server/plugin/.libs rpc server_rp
 $SLEEP
 
 check_for_netcat
+$SLEEP
 send_req $NCAT localhost 8080 inp/rpc_request server_rpc 3
 
 $SLEEP

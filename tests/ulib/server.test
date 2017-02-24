@@ -6,7 +6,7 @@
 
 start_msg server
 
-#UTRACE="0 50M 0"
+#UTRACE="0 20M 0"
 #UTRACE_SIGNAL="0 10M 0"
 #UOBJDUMP="0 50M 1000"
 #USIMERR="error.sim"
@@ -30,6 +30,7 @@ $SLEEP
 #$TRUSS socat -u open:inp/http/form_enctype.http tcp4-connect:127.0.0.1:8080 >out/server.out 2>/tmp/trace.out
 
 check_for_netcat
+$SLEEP
 send_req $NCAT localhost 8080 inp/http/form_enctype.http server 3
 
 $SLEEP

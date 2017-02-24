@@ -50,31 +50,6 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // allocate and deallocate methods
-
-   void allocate(uint32_t n)
-      {
-      U_TRACE(0, "UVector<void*>::allocate(%u)", n)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_MINOR(n, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
-
-      vec       = (const void**) UMemoryPool::_malloc(&n, sizeof(void*));
-      _capacity = n;
-      }
-
-   void deallocate()
-      {
-      U_TRACE_NO_PARAM(0, "UVector<void*>::deallocate()")
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_RANGE(1, _capacity, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
-
-      UMemoryPool::_free(vec, _capacity, sizeof(void*));
-      }
-
    UVector(uint32_t n = 64U) // create an empty vector with a size estimate
       {
       U_TRACE_REGISTER_OBJECT(0, UVector<void*>, "%u", n)
@@ -426,6 +401,31 @@ protected:
    volatile uint32_t tail; //  input index
    volatile uint32_t head; // output index
 #endif
+
+   // allocate and deallocate methods
+
+   void allocate(uint32_t n)
+      {
+      U_TRACE(0, "UVector<void*>::allocate(%u)", n)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MINOR(n, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
+
+      vec       = (const void**) UMemoryPool::_malloc(&n, sizeof(void*));
+      _capacity = n;
+      }
+
+   void deallocate()
+      {
+      U_TRACE_NO_PARAM(0, "UVector<void*>::deallocate()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_RANGE(1, _capacity, ((0xfffffff / sizeof(void*)) - sizeof(UVector<void*>)))
+
+      UMemoryPool::_free(vec, _capacity, sizeof(void*));
+      }
 
 private:
    U_DISALLOW_ASSIGN(UVector<void*>)

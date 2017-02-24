@@ -293,7 +293,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "USqliteStatement::reset()")
 
-      U_ASSERT_EQUALS(num_bind_param,  vparam.size())
+      U_ASSERT_EQUALS(num_bind_param,   vparam.size())
       U_ASSERT_EQUALS(num_bind_result, vresult.size())
 
       param_binded = false;

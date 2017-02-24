@@ -280,9 +280,15 @@ public:
       char buffer4[512];
       char buffer5[512];
       char buffer6[512];
-      char buffer7[512];
+      char buffer7[439];
    // ---------------------------------
-      sig_atomic_t cnt_connection;
+      uint8_t flag_sigterm;
+   // ---------------------------------
+      uint8_t   my_load;
+      uint8_t  min_load_remote;
+      uint32_t min_load_remote_ip;
+   // ---------------------------------
+      sig_atomic_t tot_connection;
       sig_atomic_t cnt_parallelization;
    // ---------------------------------
       sem_t lock_user1;
@@ -332,7 +338,11 @@ public:
 #define U_SRV_CNT_USR7              UServer_Base::ptr_shared_data->cnt_usr7
 #define U_SRV_CNT_USR8              UServer_Base::ptr_shared_data->cnt_usr8
 #define U_SRV_CNT_USR9              UServer_Base::ptr_shared_data->cnt_usr9
-#define U_SRV_TOT_CONNECTION        UServer_Base::ptr_shared_data->cnt_connection
+#define U_SRV_MY_LOAD               UServer_Base::ptr_shared_data->my_load
+#define U_SRV_FLAG_SIGTERM          UServer_Base::ptr_shared_data->flag_sigterm
+#define U_SRV_MIN_LOAD_REMOTE       UServer_Base::ptr_shared_data->min_load_remote
+#define U_SRV_MIN_LOAD_REMOTE_IP    UServer_Base::ptr_shared_data->min_load_remote_ip
+#define U_SRV_TOT_CONNECTION        UServer_Base::ptr_shared_data->tot_connection
 #define U_SRV_CNT_PARALLELIZATION   UServer_Base::ptr_shared_data->cnt_parallelization
 #define U_SRV_LOCK_USER1          &(UServer_Base::ptr_shared_data->lock_user1)
 #define U_SRV_LOCK_USER2          &(UServer_Base::ptr_shared_data->lock_user2)
@@ -356,6 +366,10 @@ public:
    static uint32_t shared_data_add, map_size;
    static bool update_date, update_date1, update_date2, update_date3;
 
+#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+   static uint8_t loadavg_threshold;
+#endif
+
    static void setLockUser1()
       {
       U_TRACE_NO_PARAM(0, "UServer_Base::setLockUser1()")
@@ -364,7 +378,7 @@ public:
 
       U_NEW(ULock, lock_user1, ULock);
 
-      lock_user1->init(&(ptr_shared_data->lock_user1), ptr_shared_data->spinlock_user1);
+      lock_user1->init(U_SRV_LOCK_USER1, U_SRV_SPINLOCK_USER1);
       }
 
    static void setLockUser2()
@@ -375,7 +389,7 @@ public:
 
       U_NEW(ULock, lock_user2, ULock);
 
-      lock_user2->init(&(ptr_shared_data->lock_user2), ptr_shared_data->spinlock_user2);
+      lock_user2->init(U_SRV_LOCK_USER2, U_SRV_SPINLOCK_USER2);
       }
 
    // NB: two step shared memory acquisition - first we get the offset, after the pointer...

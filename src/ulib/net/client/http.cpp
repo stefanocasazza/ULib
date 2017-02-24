@@ -472,7 +472,8 @@ int UHttpClient_Base::checkResponse(int& redirectCount)
 
    bool connection_close = (UClient_Base::isClosed() || responseHeader->isClose());
 
-   // General category of response:
+   // ------------------------------------------------------------
+   // general category of HTTP/1.x response:
    // ------------------------------------------------------------
    // 1xx indicates an informational message only
    // 2xx indicates success of some kind
@@ -873,9 +874,9 @@ bool UHttpClient_Base::sendRequestEngine()
                      ? checkResponse(redirectCount)
                      : -1);
 
-      if (result ==  1) continue;       // redirection, use the same socket connection...
-      if (result == -2) U_RETURN(true); // pass HTTP_UNAUTHORISED response to the HTTP client...
-      if (result ==  2)                 // no redirection, read body...
+      if (result ==  1) continue;       // redirection, we use the same socket connection...
+      if (result == -2) U_RETURN(true); // we must pass HTTP_UNAUTHORISED response to the HTTP client...
+      if (result ==  2)                 // no redirection, we must read body...
          {
          U_INTERNAL_DUMP("SERVER RETURNED HTTP RESPONSE: %d", U_http_info.nResponseCode)
 

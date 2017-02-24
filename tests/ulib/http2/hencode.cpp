@@ -273,7 +273,9 @@ idx_err:    UHTTP2::hpack_errno = -4; // The decoded or specified index is out o
 
                entry = UHTTP2::getHpackDynTblEntry(dyntbl, index);
 
-               name = *(entry->name);
+               if (entry == 0) return;
+
+               name._assign(entry->name);
 
                UHTTP2::evictHpackDynTblEntry(dyntbl, entry);
 
@@ -305,7 +307,7 @@ idx_err:    UHTTP2::hpack_errno = -4; // The decoded or specified index is out o
 
             entry = UHTTP2::hpack_static_table + idx-1;
 
-            name = *(entry->name);
+            name._assign(entry->name);
 
             U_INTERNAL_DUMP("name = %V value = %V", name.rep, value.rep)
 

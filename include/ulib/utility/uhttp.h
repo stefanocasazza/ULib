@@ -47,6 +47,7 @@ class USSLSession;
 class UMimeMultipart;
 class UModProxyService;
 
+template <class T> class UHttpClient;
 template <class T> class URDBObjectHandler;
 
 class U_EXPORT UHTTP {
@@ -208,52 +209,14 @@ public:
    static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
 
 #ifndef U_HTTP2_DISABLE
-   static bool copyHeaders(UStringRep* key, void* elem)
-      {
-      U_TRACE(0, "UHTTP::copyHeaders(%V,%p)", key, elem)
+   static bool copyHeaders(UStringRep* key, void* elem);
+#endif
 
-      U_INTERNAL_ASSERT_POINTER(prequestHeader)
-      U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
+#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+   static UHttpClient<USSLSocket>* client_http;
 
-      /**
-       * +-------+-----------------------------+---------------+
-       * | 1     | :authority                  |               |
-       * | 2     | :method                     | GET           |
-       * | 3     | :method                     | POST          |
-       * | 4     | :path                       | /             |
-       * | 5     | :path                       | /index.html   |
-       * | 6     | :scheme                     | http          |
-       * | 7     | :scheme                     | https         |
-       * | 8     | :status                     | 200           |
-       * | 9     | :status                     | 204           |
-       * | 10    | :status                     | 206           |
-       * | 11    | :status                     | 304           |
-       * | 12    | :status                     | 400           |
-       * | 13    | :status                     | 404           |
-       * | 14    | :status                     | 500           |
-       * | ...   | ...                         | ...           |
-       * +-------+-----------------------------+---------------+
-       */
-
-      if (key != UString::str_path->rep           &&
-          key != UString::str_cookie->rep         &&
-          key != UString::str_accept->rep         &&
-          key != UString::str_method->rep         &&
-          key != UString::str_referer->rep        &&
-          key != UString::str_authority->rep      &&
-          key != UString::str_user_agent->rep     &&
-          key != UString::str_content_type->rep   &&
-          key != UString::str_content_length->rep &&
-          key != UString::str_accept_language->rep)
-         {
-         prequestHeader->insert(key, (const UStringRep*)elem);
-         }
-
-      U_INTERNAL_DUMP("key = %p", key)
-
-      U_RETURN(true);
-      }
-#  endif
+   static bool manageRequestOnRemoteServer();
+#endif
 
    static void setHostname(const char* ptr, uint32_t len);
 

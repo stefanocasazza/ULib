@@ -469,12 +469,7 @@ void UClientImage_Base::handlerDelete()
 #ifndef U_HTTP2_DISABLE
    U_INTERNAL_DUMP("U_ClientImage_http = %C U_http_version = %C", U_ClientImage_http(this), U_http_version)
 
-   if (U_ClientImage_http(this) == '2')
-      {
-      UHTTP2::handlerDelete(this);
-
-      if (socket->isTimeout()) bsocket_open = false;
-      }
+   if (U_ClientImage_http(this) == '2') UHTTP2::handlerDelete(this, bsocket_open);
 #endif
 
    if (bsocket_open) socket->close();
@@ -560,7 +555,10 @@ int UClientImage_Base::handlerTimeout()
       U_RETURN(U_NOTIFIER_OK);
       }
 
-   U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
+   if (socket->iSockDesc != UEventFd::fd)
+      {
+      U_WARNING("handlerTimeout(): UEventFd::fd = %d socket->iSockDesc = %d", UEventFd::fd,  socket->iSockDesc);
+      }
 #endif
 
    U_INTERNAL_DUMP("U_ClientImage_idle(this) = %d %B", U_ClientImage_idle(this), U_ClientImage_idle(this))
@@ -1471,7 +1469,7 @@ bool UClientImage_Base::writeResponse()
 
    ncount = sz1 + sz2;
 
-   if (UNLIKELY(iov_vec[1].iov_len == 0))
+   if (isNoHeaderForResponse())
       {
       U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
 

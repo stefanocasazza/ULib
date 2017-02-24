@@ -34,6 +34,7 @@ enum LogoutType {
 };
 
 class UDirWalk;
+class UBitArray;
 class UIptAccount;
 class UNoCatPlugIn;
 
@@ -194,9 +195,10 @@ protected:
    static void* pdata;
    static UCommand* fw;
    static UPing** sockp;
-   static fd_set addrmask;
-   static fd_set* paddrmask;
    static UIptAccount* ipt;
+   static UBitArray* pmask;
+   static fd_set   addrmask;
+   static fd_set* paddrmask;
    static UDirWalk* dirwalk;
    static UModNoCatPeer* peer;
    static bool flag_check_system;
@@ -274,9 +276,18 @@ protected:
 
       U_INTERNAL_DUMP("check_type = %B nfds = %u paddrmask = %p", check_type, nfds, paddrmask)
 
-      bool result = (((check_type & U_CHECK_ARP_PING) != 0) && nfds && paddrmask == 0);
+      if (nfds           &&
+          paddrmask == 0 &&
+          ((check_type & U_CHECK_ARP_PING) != 0))
+         {
+         U_DEBUG("Pending arping in process (%u), waiting for completion...", nfds);
 
-      U_RETURN(result);
+         U_SRV_LOG("Pending arping in process (%u), waiting for completion...", nfds);
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
       }
 
    static void executeCommand(int type)

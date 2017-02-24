@@ -364,8 +364,9 @@ void UMemoryPool::_free(void* ptr, uint32_t num, uint32_t type_size)
 
    U_INTERNAL_ASSERT_POINTER(ptr)
    U_INTERNAL_ASSERT_MAJOR(num, 0)
+   U_INTERNAL_ASSERT_MAJOR(type_size, 0)
 
-   uint32_t length = (num * type_size);
+   uint32_t length = (num * type_size); // in bytes
 
    U_INTERNAL_DUMP("length = %u", length)
 
@@ -437,9 +438,10 @@ void* UMemoryPool::_malloc(uint32_t num, uint32_t type_size, bool bzero)
    U_TRACE(0, "UMemoryPool::_malloc(%u,%u,%b)", num, type_size, bzero)
 
    U_INTERNAL_ASSERT_MAJOR(num, 0)
+   U_INTERNAL_ASSERT_MAJOR(type_size, 0)
 
    void* ptr;
-   uint32_t length = (num * type_size);
+   uint32_t length = (num * type_size); // in bytes
 
    U_INTERNAL_DUMP("length = %u", length)
 
@@ -474,9 +476,10 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
    U_TRACE(1, "UMemoryPool::_malloc(%p,%u,%b)", pnum, type_size, bzero)
 
    U_INTERNAL_ASSERT_POINTER(pnum)
+   U_INTERNAL_ASSERT_MAJOR(type_size, 0)
 
    void* ptr;
-   uint32_t length = (*pnum * type_size);
+   uint32_t length = (*pnum * type_size); // in bytes
 
    U_INTERNAL_DUMP("length = %u", length)
 
@@ -484,6 +487,8 @@ void* UMemoryPool::_malloc(uint32_t* pnum, uint32_t type_size, bool bzero)
 # ifndef HAVE_ARCH64
    U_INTERNAL_ASSERT_MINOR(length, 1U * 1024U * 1024U * 1024U) // NB: over 1G is very suspect on 32bit...
 # endif
+   if (length == 0) length = type_size;
+
    ptr = U_SYSCALL(malloc, "%u", length);
 #else
    if (length > U_MAX_SIZE_PREALLOCATE) ptr = UFile::mmap(&length, -1, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, 0);

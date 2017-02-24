@@ -738,6 +738,9 @@
 /* Define if enable libzopfli support */
 #undef USE_LIBZOPFLI
 
+/* enable load balance support between physical server via udp brodcast */
+#undef USE_LOAD_BALANCE
+
 /* Define if enable mongodb support */
 #undef USE_MONGODB
 

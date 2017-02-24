@@ -5,7 +5,7 @@
 #include <ulib/json/value.h>
 
 int
-U_EXPORT main (int argc, char* argv[])
+U_EXPORT main (int argc, char* argv[], char* env[])
 {
    U_ULIB_INIT(argv);
 

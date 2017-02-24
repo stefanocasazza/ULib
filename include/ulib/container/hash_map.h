@@ -25,6 +25,7 @@ typedef bool     (*bPFptpcu) (UHashMap<void*>*,const char*,uint32_t);
 class UCDB;
 class UHTTP;
 class UHTTP2;
+class UDirWalk;
 class WeightWord;
 class UMimeHeader;
 class UFileConfig;
@@ -115,22 +116,6 @@ public:
 
       if (_capacity) _deallocate();
       }
-
-   // allocate and deallocate methods
-
-   void deallocate()
-      {
-      U_TRACE_NO_PARAM(0, "UHashMap<void*>::deallocate()")
-
-      if (_capacity)
-         {
-         _deallocate();
-
-         _capacity = 0;
-         }
-      }
-
-   void allocate(uint32_t n);
 
    // size and capacity
 
@@ -252,7 +237,8 @@ public:
 
    // make room for a total of n element
 
-   void reserve(uint32_t n);
+   void reserve( uint32_t n);
+   void allocate(uint32_t n);
 
    // Traverse the hash table for all entry
 
@@ -304,6 +290,8 @@ protected:
    bool check_memory() const; // check all element
 #endif
 
+   // allocate and deallocate methods
+
    void _allocate(uint32_t n)
       {
       U_TRACE(0, "UHashMap<void*>::_allocate(%u)", n)
@@ -323,6 +311,18 @@ protected:
       U_INTERNAL_ASSERT_MAJOR(_capacity, 1)
 
       UMemoryPool::_free(table, _capacity, sizeof(UHashMapNode*));
+      }
+
+   void deallocate()
+      {
+      U_TRACE_NO_PARAM(0, "UHashMap<void*>::deallocate()")
+
+      if (_capacity)
+         {
+         _deallocate();
+
+         _capacity = 0;
+         }
       }
 
    void init(uint32_t n)
@@ -406,6 +406,7 @@ private:
    friend class UHTTP2;
    friend class UValue;
    friend class UString;
+   friend class UDirWalk;
    friend class WeightWord;
    friend class UFileConfig;
    friend class UCertificate;

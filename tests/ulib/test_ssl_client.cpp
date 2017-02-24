@@ -5,7 +5,7 @@
 static const char* getArg(const char* param) { return (param && *param ? param : 0); }
 
 int
-U_EXPORT main (int argc, char* argv[])
+U_EXPORT main (int argc, char* argv[], char* env[])
 {
    U_ULIB_INIT(argv);
 

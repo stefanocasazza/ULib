@@ -23,6 +23,7 @@
 #include <ulib/utility/services.h>
 #include <ulib/utility/dir_walk.h>
 #include <ulib/net/server/server.h>
+#include <ulib/utility/bit_array.h>
 #include <ulib/utility/string_ext.h>
 #include <ulib/net/server/client_image.h>
 #include <ulib/net/server/plugin/mod_nocat.h>
@@ -40,9 +41,9 @@ bool                       UNoCatPlugIn::flag_check_system;
 long                       UNoCatPlugIn::last_request_check;
 long                       UNoCatPlugIn::last_request_firewall;
 void*                      UNoCatPlugIn::pdata;
-UPing**                    UNoCatPlugIn::sockp;
 fd_set                     UNoCatPlugIn::addrmask;
 fd_set*                    UNoCatPlugIn::paddrmask;
+UPing**                    UNoCatPlugIn::sockp;
 uint32_t                   UNoCatPlugIn::nfds;
 uint32_t                   UNoCatPlugIn::num_radio;
 uint32_t                   UNoCatPlugIn::check_expire;
@@ -71,6 +72,7 @@ UString*                   UNoCatPlugIn::IP_address_trust;
 UString*                   UNoCatPlugIn::peer_present_in_arp_cache;
 UCommand*                  UNoCatPlugIn::fw;
 UDirWalk*                  UNoCatPlugIn::dirwalk;
+UBitArray*                 UNoCatPlugIn::pmask;
 UIptAccount*               UNoCatPlugIn::ipt;
 UModNoCatPeer*             UNoCatPlugIn::peer;
 UModNoCatPeer*             UNoCatPlugIn::peers_delete;
@@ -175,6 +177,7 @@ UNoCatPlugIn::UNoCatPlugIn()
    U_TRACE_REGISTER_OBJECT(0, UNoCatPlugIn, "")
 
    U_NEW(UCommand, fw, UCommand);
+   U_NEW(UBitArray, pmask, UBitArray(4096));
 
    U_NEW(UString, label, UString);
    U_NEW(UString, input, UString(U_CAPACITY));
@@ -217,6 +220,7 @@ UNoCatPlugIn::~UNoCatPlugIn()
    delete fw;
    delete label;
    delete input;
+   delete pmask;
    delete fw_cmd;
    delete fw_env;
    delete extdev;
@@ -793,6 +797,7 @@ void UNoCatPlugIn::checkSystem()
 {
    U_TRACE_NO_PARAM(1, "UNoCatPlugIn::checkSystem()")
 
+   bool bset;
    uint32_t i, n;
    long check_interval;
 
@@ -830,8 +835,6 @@ void UNoCatPlugIn::checkSystem()
 
    if (isPingAsyncPending())
       {
-      U_SRV_LOG("Pending arping in process (%u), waiting for completion...", nfds);
-
       paddrmask = UPing::checkForPingAsyncCompletion(nfds);
 
       if (paddrmask) goto result;
@@ -842,6 +845,8 @@ void UNoCatPlugIn::checkSystem()
       }
 
    for (nfds = i = 0; i < num_radio; ++i) vaddr[i]->clear();
+
+   pmask->clearAll();
 
    FD_ZERO(&addrmask);
 
@@ -876,11 +881,19 @@ void UNoCatPlugIn::checkSystem()
 result:
       U_INTERNAL_ASSERT_MAJOR(nfds, 0)
 
+#  ifdef DEBUG
+      if (nfds < FD_SETSIZE) U_ASSERT_EQUALS(pmask->count(), 0)
+      else                   U_ASSERT_EQUALS(pmask->count(), nfds-FD_SETSIZE+1)
+#  endif
+
       for (i = 0; i < nfds; ++i)
          {
          if (getPeer(i))
             {
-            if (FD_ISSET(i, paddrmask)) addPeerInfo(0);
+            bset = (nfds < FD_SETSIZE ? FD_ISSET(i, paddrmask)
+                                      : pmask->isSet(i-FD_SETSIZE));
+
+            if (bset) addPeerInfo(0);
             else
                {
 #           ifdef HAVE_NETPACKET_PACKET_H
@@ -1725,7 +1738,8 @@ bool UNoCatPlugIn::checkPeerInfo(UStringRep* key, void* value)
 
       if (index_device != U_NOT_FOUND)
          {
-         FD_SET(nfds, &addrmask);
+         if (nfds < FD_SETSIZE) FD_SET(nfds, &addrmask);
+         else                   pmask->set(nfds-FD_SETSIZE);
 
          ++nfds;
 
@@ -1748,7 +1762,7 @@ __pure bool UNoCatPlugIn::getPeer(uint32_t n)
 {
    U_TRACE(0, "UNoCatPlugIn::getPeer(%u)", n)
 
-   U_INTERNAL_ASSERT_MAJOR(nfds,0)
+   U_INTERNAL_ASSERT_MAJOR(nfds, 0)
 
    int32_t index = -1;
 

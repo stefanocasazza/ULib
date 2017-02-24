@@ -303,37 +303,16 @@ static inline bool u_dosmatch_ext_with_OR(const char* restrict s, uint32_t n1, c
    return u_match_with_OR(u_dosmatch_ext, s, n1, pattern, n2, flags);
 }
 
-/* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
+U_EXPORT uint8_t  u_get_loadavg(void); /* Get the load average of the system (over last 1 minute) */
+U_EXPORT uint32_t u_get_uptime(void); /* Get the uptime of the system (seconds) */
 
-U_EXPORT bool u_runAsUser(const char* restrict user, bool change_dir);
-
-/* Verifies that the passed string is actually an e-mail address */
-
-U_EXPORT bool u_validate_email_address(const char* restrict address, uint32_t address_len) __pure;
-
-/* Perform 'natural order' comparisons of strings. */
-
-U_EXPORT int u_strnatcmp(char const* restrict a, char const* restrict b) __pure;
-
-/* Get address space and rss (resident set size) usage */
-
-U_EXPORT void u_get_memusage(unsigned long* vsz, unsigned long* rss);
-
-/* Get the uptime of the system (seconds) */
-
-U_EXPORT uint32_t u_get_uptime(void);
-
-/* Get the number of the processors including offline CPUs */
-
-U_EXPORT int u_get_num_cpu(void);
-
-/* Pin the process to a particular core */
-
-U_EXPORT void u_bind2cpu(cpu_set_t* cpuset, int n);
-
-/* Set the process to maximum priority that can be used with the scheduling algorithm */
-
-U_EXPORT void u_switch_to_realtime_priority(void);
+U_EXPORT int  u_get_num_cpu(void); /* Get the number of the processors including offline CPUs */
+U_EXPORT int  u_strnatcmp(char const* restrict a, char const* restrict b) __pure; /* Perform 'natural order' comparisons of strings. */
+U_EXPORT void u_switch_to_realtime_priority(void); /* Set the process to maximum priority that can be used with the scheduling algorithm */
+U_EXPORT void u_bind2cpu(cpu_set_t* cpuset, int n); /* Pin the process to a particular core */
+U_EXPORT void u_get_memusage(unsigned long* vsz, unsigned long* rss); /* Get address space and rss (resident set size) usage */
+U_EXPORT bool u_runAsUser(const char* restrict user, bool change_dir); /* Change the current working directory to the `user` user's home dir, and downgrade security to that user account */
+U_EXPORT bool u_validate_email_address(const char* restrict address, uint32_t address_len) __pure; /* Verifies that the passed string is actually an e-mail address */
 
 /**
  * Canonicalize PATH, and build a new path. The new path differs from PATH in that:

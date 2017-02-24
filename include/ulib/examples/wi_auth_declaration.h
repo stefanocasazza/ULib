@@ -5661,6 +5661,7 @@ static void GET_get_users_info()
       {
       if (UServer_Base::startParallelization()) return; // parent
 
+      // ------------------------------------------------
       // child
       // ------------------------------------------------
       // $1 -> ap (without localization => '@')
@@ -5670,8 +5671,8 @@ static void GET_get_users_info()
       if (setAccessPoint(false, false))
          {
          UTimeVal to_sleep(U_TIME_FOR_ARPING_ASYNC_COMPLETION + 2);
-loop:
-         (void) nodog_rec->sendRequestToNodog(U_CONSTANT_TO_PARAM("check"), 0);
+
+loop:    (void) nodog_rec->sendRequestToNodog(U_CONSTANT_TO_PARAM("check"), 0);
 
          if (U_http_info.nResponseCode == HTTP_NO_CONTENT)
             {

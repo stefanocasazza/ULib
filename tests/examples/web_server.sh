@@ -11,8 +11,8 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
 					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
- UTRACE="0 20M 0"
-#UTRACE_SIGNAL="0 50M -1"
+ UTRACE="0 20M -1"
+ UTRACE_SIGNAL="0 20M -1"
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
 export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL

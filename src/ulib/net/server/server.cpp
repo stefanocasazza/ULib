@@ -152,6 +152,9 @@ UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 #ifdef U_WELCOME_SUPPORT
 UString* UServer_Base::msg_welcome;
 #endif
+#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+unsigned char UServer_Base::loadavg_threshold = 45; // => 4.5
+#endif
 #ifdef U_ACL_SUPPORT
 UString*            UServer_Base::allow_IP;
 UVector<UIPAllow*>* UServer_Base::vallow_IP;
@@ -892,6 +895,45 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTimeThread::run()")
 
+#  if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+      UString ifname;
+      uusockaddr addr;
+      UUDPSocket udp_sock(UClientImage_Base::bIPv6);
+
+      if (UServer_Base::bipc == false)
+         {
+         (void) memset(&addr, 0, sizeof(addr));
+
+         addr.psaIP4Addr.sin_family      = PF_INET;
+         addr.psaIP4Addr.sin_port        = htons(UServer_Base::port);
+         addr.psaIP4Addr.sin_addr.s_addr = htonl(INADDR_ANY);
+
+         ifname = UServer_Base::getNetworkDevice(0);
+
+         if (ifname.empty() ||
+             UIPAddress::setBroadcastAddress(addr, ifname) == false)
+            {
+            U_WARNING("Can't get broadcast address on interface %V", ifname.rep);
+            }
+         else
+            {
+            udp_sock._socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+            udp_sock.setNonBlocking(); // setting socket to nonblocking
+
+            if (udp_sock.setSockOpt(SOL_SOCKET, SO_REUSEADDR, (const int[]){ 1 }) == false) U_ERROR_SYSCALL("Can't enable SO_REUSEADDR on udp socket");
+            if (udp_sock.setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR_SYSCALL("Can't enable SO_BROADCAST on udp socket");
+
+            if (U_SYSCALL(bind, "%d,%p,%d", udp_sock.getFd(), (sockaddr*)&(addr.psaGeneric), sizeof(addr))) U_ERROR_SYSCALL("Can't bind on udp socket");
+
+            udp_sock.setLocal();
+
+            U_SRV_LOG("Load balance activated (by udp socket): loadavg_threshold = %u brodacast address = (%v:%v)",
+                        UServer_Base::loadavg_threshold, ifname.rep, UIPAddress::toString(addr.psaIP4Addr.sin_addr.s_addr).rep);
+            }
+         }
+#  endif
+
       struct timespec ts;
       u_timeval.tv_sec = u_now->tv_sec;
 
@@ -940,6 +982,53 @@ public:
                (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
 #           endif
                }
+
+#        if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+            if (ifname &&
+                UServer_Base::bipc == false)
+               {
+               U_SRV_MY_LOAD = u_get_loadavg();
+
+               U_INTERNAL_DUMP("U_SRV_MY_LOAD = %u", U_SRV_MY_LOAD)
+
+               int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", udp_sock.getFd(), &U_SRV_MY_LOAD, sizeof(char), MSG_DONTROUTE, (sockaddr*)&(addr.psaGeneric), sizeof(addr));
+
+               if (iBytesTransferred == sizeof(char))
+                  {
+                  UIPAddress cIPSource;
+                  unsigned int iPortSource;
+                  unsigned char datagram[65535];
+
+                  uint8_t min_loadavg_remote = 255;
+                  uint32_t min_loadavg_remote_ip = 0;
+
+                  while ((iBytesTransferred = udp_sock.recvFrom(datagram, sizeof(datagram), 0, cIPSource, iPortSource)) > 0)
+                     {
+                     U_DUMP("Received datagram from (%S,%u): (%u,%.*S)", cIPSource.getAddressString(), iPortSource, iBytesTransferred, iBytesTransferred, datagram)
+
+                     if (cIPSource == UServer_Base::socket->cLocalAddress) continue;
+
+                     if (iBytesTransferred == 1)
+                        {
+                        U_INTERNAL_ASSERT_EQUALS(UServer_Base::port, iPortSource)
+
+                        if (datagram[0] < min_loadavg_remote)
+                           {
+                           min_loadavg_remote = datagram[0];
+
+                           u_put_unalignedp32(&min_loadavg_remote_ip, cIPSource.get_addr());
+                           }
+                        }
+                     }
+
+                  U_SRV_MIN_LOAD_REMOTE = min_loadavg_remote;
+
+                  u_put_unalignedp32(&U_SRV_MIN_LOAD_REMOTE_IP, min_loadavg_remote_ip);
+
+                  U_DUMP("U_SRV_MIN_LOAD_REMOTE = %u U_SRV_MIN_LOAD_REMOTE_IP = %s", U_SRV_MIN_LOAD_REMOTE, UIPAddress::getAddressString(U_SRV_MIN_LOAD_REMOTE_IP))
+                  }
+               }
+#        endif
             }
          }
       }
@@ -1061,6 +1150,8 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
       {
       U_WARNING("System date not updated: %#5D", u_now->tv_sec);
       }
+
+   U_DEBUG("sizeof(shared_data) = %u", sizeof(shared_data));
 
    /**
     * TMPDIR is the canonical Unix environment variable which points to user scratch space. Most Unix utilities will honor the setting of this
@@ -1676,10 +1767,7 @@ void UServer_Base::loadConfigParam()
 
    // DOCUMENT_ROOT: The directory out of which we will serve your documents
 
-   if (setDocumentRoot(cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false)
-      {
-      U_ERROR("Setting DOCUMENT ROOT %V failed", document_root->rep);
-      }
+   if (setDocumentRoot(cfg->at(U_CONSTANT_TO_PARAM("DOCUMENT_ROOT"))) == false) U_ERROR("Setting DOCUMENT ROOT %V failed", document_root->rep);
 
 #ifndef U_LOG_DISABLE
    x = cfg->at(U_CONSTANT_TO_PARAM("LOG_FILE"));
@@ -2229,22 +2317,28 @@ void UServer_Base::init()
               if ( IP_address->empty()) *IP_address = ip;
          else if (*IP_address != ip)
             {
-            U_SRV_LOG("WARNING: SERVER IP ADDRESS from configuration : %V differ from system interface: %V", IP_address->rep, ip.rep);
+            U_SRV_LOG("WARNING: SERVER IP ADDRESS from configuration (%V) differ from system interface (%V)", IP_address->rep, ip.rep);
             }
          }
 
-      struct in_addr ia;
-
-      if (inet_aton(IP_address->c_str(), &ia) == 0)
+      if (IP_address->empty())
          {
-         U_WARNING("IP_ADDRESS conversion fail, we try using localhost");
+         (void) IP_address->assign(U_CONSTANT_TO_PARAM("127.0.0.1"));
 
-         (void) inet_aton("localhost", &ia);
+         socket->cLocalAddress.setLocalHost(UClientImage_Base::bIPv6);
+
+         U_WARNING("IP_ADDRESS from system interface fail, we try using localhost");
          }
+      else
+         {
+         struct in_addr ia;
 
-      socket->setAddress(&ia);
+         if (inet_aton(IP_address->c_str(), &ia) == 0) U_ERROR("IP_ADDRESS conversion fail: %V", IP_address->rep);
 
-      public_address = (socket->cLocalAddress.isPrivate() == false);
+         socket->setAddress(&ia);
+
+         public_address = (socket->cLocalAddress.isPrivate() == false);
+         }
 
       U_SRV_LOG("SERVER IP ADDRESS registered as: %v (%s)", IP_address->rep, (public_address ? "public" : "private"));
 
@@ -2352,8 +2446,8 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-#  if defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
-      bool bpthread_time = true; 
+#  if (defined(U_LOG_DISABLE) && !defined(USE_LIBZ)) || (defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_))
+      bool bpthread_time = true;
 #  else
       bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
 #  endif
@@ -2730,6 +2824,7 @@ RETSIGTYPE UServer_Base::handlerForSigTERM(int signo)
 
    flag_loop = false;
 
+   U_SRV_FLAG_SIGTERM      =
    UNotifier::flag_sigterm = true;
 
    U_INTERNAL_ASSERT_POINTER(proc)
@@ -3736,6 +3831,8 @@ stop:
 
    if (status >= U_FAILED_SOME)
       {
+      to_sleep.nanosleep();
+
       UProcess::kill(0, SIGKILL); // SIGKILL is sent to every process in the process group of the calling process...
 
       (void) proc->waitAll(2);
@@ -3752,6 +3849,8 @@ stop:
    if (proc->parent() ||
        preforked_num_kids <= 0)
       {
+      to_sleep.nanosleep();
+
       closeLog();
       }
 
@@ -3791,11 +3890,11 @@ pid_t UServer_Base::startNewChild()
 #  ifdef U_LOG_DISABLE
             (void) UProcess::removeZombies();
 #  else
-      uint32_t n = UProcess::removeZombies();
+      uint32_t n = UProcess::removeZombies(),
+               u_srv_cnt_parallelization = U_SRV_CNT_PARALLELIZATION+1;
+                                           U_SRV_CNT_PARALLELIZATION = u_srv_cnt_parallelization;
 
-      U_SRV_CNT_PARALLELIZATION++;
-
-      U_SRV_LOG("Started new child (pid %d) for parallelization (%d) - removed %u zombies", pid, U_SRV_CNT_PARALLELIZATION, n);
+      U_SRV_LOG("Started new child (pid %d) for parallelization (%d) - removed %u zombies", pid, u_srv_cnt_parallelization, n);
 #  endif
 
       U_RETURN(pid); // parent
@@ -3810,17 +3909,14 @@ __noreturn void UServer_Base::endNewChild()
 {
    U_TRACE_NO_PARAM(0, "UServer_Base::endNewChild()")
 
-#ifdef DEBUG
-   UInterrupt::setHandlerForSignal(SIGHUP,  (sighandler_t)SIG_IGN);
-   UInterrupt::setHandlerForSignal(SIGTERM, (sighandler_t)SIG_IGN);
-#endif
-
 #ifndef U_LOG_DISABLE
-   if (LIKELY(U_SRV_CNT_PARALLELIZATION)) U_SRV_CNT_PARALLELIZATION--;
+   uint32_t u_srv_cnt_parallelization = U_SRV_CNT_PARALLELIZATION;
 
-   U_INTERNAL_DUMP("cnt_parallelization = %d", U_SRV_CNT_PARALLELIZATION)
+   if (LIKELY(u_srv_cnt_parallelization)) U_SRV_CNT_PARALLELIZATION = --u_srv_cnt_parallelization;
 
-   U_SRV_LOG("child for parallelization ended (%d)", U_SRV_CNT_PARALLELIZATION);
+   U_INTERNAL_DUMP("cnt_parallelization = %u U_SRV_FLAG_SIGTERM = %b", u_srv_cnt_parallelization, U_SRV_FLAG_SIGTERM)
+
+   if (U_SRV_FLAG_SIGTERM == false) U_SRV_LOG("child for parallelization ended (%u)", u_srv_cnt_parallelization);
 #endif
 
    U_EXIT(0);

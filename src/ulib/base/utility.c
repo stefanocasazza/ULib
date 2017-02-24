@@ -1089,6 +1089,7 @@ void u_switch_to_realtime_priority(void)
 
 void u_get_memusage(unsigned long* vsz, unsigned long* rss)
 {
+#ifndef _MSWINDOWS_
    FILE* fp = fopen("/proc/self/stat", "r");
 
    U_INTERNAL_TRACE("u_get_memusage(%p,%p)", vsz, rss)
@@ -1134,10 +1135,12 @@ void u_get_memusage(unsigned long* vsz, unsigned long* rss)
 
       *rss *= PAGESIZE;
       }
+#endif
 }
 
 uint32_t u_get_uptime(void)
 {
+#ifndef _MSWINDOWS_
    FILE* fp = fopen("/proc/uptime", "r");
 
    U_INTERNAL_TRACE("u_get_uptime()")
@@ -1152,8 +1155,41 @@ uint32_t u_get_uptime(void)
 
       return sec;
       }
+#endif
 
    return 0;
+}
+
+uint8_t u_get_loadavg(void)
+{
+   /**
+    * /proc/loadavg (ex: 0.19 1.37 0.97 1/263 26041)
+    *
+    * The first three fields in this file are load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D)
+    * averaged over 1, 5, and 15 minutes. They are the same as the load average numbers given by uptime(1) and other programs. The fourth field consists
+    * of two numbers separated by a slash (/). The first of these is the number of currently runnable kernel scheduling entities (processes, threads).
+    * The value after the slash is the number of kernel scheduling entities that currently exist on the system. The fifth field is the PID of the process
+    * that was most recently created on the system
+    */
+
+#ifndef _MSWINDOWS_
+   FILE* fp = fopen("/proc/loadavg", "r");
+
+   U_INTERNAL_TRACE("u_get_loadavg()")
+
+   if (fp)
+      {
+      char buffer[8];
+
+      (void) fscanf(fp, "%s", buffer);
+
+      (void) fclose(fp);
+
+      if (buffer[1] == '.') return (((buffer[0]-'0') * 10) + (buffer[2]-'0') + (buffer[3] > '5')); // 0.19 => 2, 4.56 => 46, ...
+      }
+#endif
+
+   return 255;
 }
 
 __pure bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)

@@ -245,9 +245,10 @@ am__lib@ULIB@_la_SOURCES_DIST = base/base.c base/base_error.c \
 	utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp utility/data_session.cpp \
 	utility/ring_buffer.cpp utility/websocket.cpp \
-	utility/dir_walk.cpp lemon/expression.cpp orm/orm.cpp \
-	orm/orm_driver.cpp net/ipaddress.cpp net/socket.cpp \
-	net/ping.cpp net/server/server.cpp net/server/client_image.cpp \
+	utility/dir_walk.cpp utility/bit_array.cpp \
+	lemon/expression.cpp orm/orm.cpp orm/orm_driver.cpp \
+	net/ipaddress.cpp net/socket.cpp net/ping.cpp \
+	net/server/server.cpp net/server/client_image.cpp \
 	net/client/client_rdb.cpp net/server/client_image_rdb.cpp \
 	net/server/server_rdb.cpp \
 	net/server/plugin/mod_proxy_service.cpp net/rpc/rpc.cpp \
@@ -404,9 +405,9 @@ am__objects_67 = internal/common.lo internal/error.lo ui/dialog.lo \
 	utility/base64.lo utility/lock.lo utility/string_ext.lo \
 	utility/socket_ext.lo utility/uhttp.lo utility/data_session.lo \
 	utility/ring_buffer.lo utility/websocket.lo \
-	utility/dir_walk.lo lemon/expression.lo orm/orm.lo \
-	orm/orm_driver.lo net/ipaddress.lo net/socket.lo net/ping.lo \
-	net/server/server.lo net/server/client_image.lo \
+	utility/dir_walk.lo utility/bit_array.lo lemon/expression.lo \
+	orm/orm.lo orm/orm_driver.lo net/ipaddress.lo net/socket.lo \
+	net/ping.lo net/server/server.lo net/server/client_image.lo \
 	net/client/client_rdb.lo net/server/client_image_rdb.lo \
 	net/server/server_rdb.lo \
 	net/server/plugin/mod_proxy_service.lo net/rpc/rpc.lo \
@@ -729,9 +730,10 @@ SRC_CPP = internal/common.cpp internal/error.cpp ui/dialog.cpp \
 	utility/string_ext.cpp utility/socket_ext.cpp \
 	utility/uhttp.cpp utility/data_session.cpp \
 	utility/ring_buffer.cpp utility/websocket.cpp \
-	utility/dir_walk.cpp lemon/expression.cpp orm/orm.cpp \
-	orm/orm_driver.cpp net/ipaddress.cpp net/socket.cpp \
-	net/ping.cpp net/server/server.cpp net/server/client_image.cpp \
+	utility/dir_walk.cpp utility/bit_array.cpp \
+	lemon/expression.cpp orm/orm.cpp orm/orm_driver.cpp \
+	net/ipaddress.cpp net/socket.cpp net/ping.cpp \
+	net/server/server.cpp net/server/client_image.cpp \
 	net/client/client_rdb.cpp net/server/client_image_rdb.cpp \
 	net/server/server_rdb.cpp \
 	net/server/plugin/mod_proxy_service.cpp net/rpc/rpc.cpp \
@@ -1062,6 +1064,8 @@ utility/ring_buffer.lo: utility/$(am__dirstamp) \
 utility/websocket.lo: utility/$(am__dirstamp) \
 	utility/$(DEPDIR)/$(am__dirstamp)
 utility/dir_walk.lo: utility/$(am__dirstamp) \
+	utility/$(DEPDIR)/$(am__dirstamp)
+utility/bit_array.lo: utility/$(am__dirstamp) \
 	utility/$(DEPDIR)/$(am__dirstamp)
 lemon/$(am__dirstamp):
 	@$(MKDIR_P) lemon
@@ -1654,6 +1658,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@ssl/net/$(DEPDIR)/sslsocket.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@ui/$(DEPDIR)/dialog.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/base64.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/bit_array.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/data_session.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/des3.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@utility/$(DEPDIR)/dir_walk.Plo@am__quote@

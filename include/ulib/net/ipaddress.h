@@ -276,12 +276,26 @@ public:
       return *(u.addr);
       }
 
+   uint32_t get_addr() const { return pcAddress.i; }
+
    // Returns a string of the hostname of the represented IP Address
 
    UString& getHostName() { resolveHostName(); return strHostName; }
 
    // Returns a constant string pointer to the string
    // representation of the IP Address suitable for visual presentation
+
+   static const char* getAddressString(uint32_t addr)
+      {
+      union uuaddr {
+         in_addr  addr;
+         uint32_t generic;
+      };
+
+      union uuaddr tmp; tmp.generic = addr; return inet_ntoa(tmp.addr);
+      }
+
+   static bool setBroadcastAddress(uusockaddr& addr, const UString& ifname);
 
    const char* getAddressString() { if (U_ipaddress_StrAddressUnresolved(this)) resolveStrAddress(); return pcStrAddress; }
 
@@ -352,7 +366,7 @@ protected:
 
    void setAddress(const char* pcNewAddress, int iNewAddressLength);
 
-private:
+   private:
    friend class UHTTP;
    friend class USocket;
    friend class USocketExt;

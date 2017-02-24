@@ -108,8 +108,8 @@ void USocket::_socket(int iSocketType, int domain, int protocol)
 
    if (domain == 0)
       {
-       domain = ((U_socket_Type(this) & SK_UNIX) != 0 ? AF_UNIX  :
-                  U_socket_IPv6(this)                 ? AF_INET6 : AF_INET);
+      domain = ((U_socket_Type(this) & SK_UNIX) != 0 ? AF_UNIX  :
+                 U_socket_IPv6(this)                 ? AF_INET6 : AF_INET);
       }
    else if (domain == AF_UNIX) U_socket_Type(this) |= SK_UNIX; // AF_UNIX == 1
 
@@ -206,8 +206,6 @@ void USocket::setLocal()
    U_TRACE_NO_PARAM(1, "USocket::setLocal()")
 
    U_CHECK_MEMORY
-
-   U_INTERNAL_ASSERT(isOpen())
 
    SocketAddress tmp;
 
@@ -721,7 +719,7 @@ int USocket::sendTo(void* pPayload, uint32_t iPayloadLength, uint32_t uiFlags, U
    cDestination.setIPAddress(cDestinationIP);
    cDestination.setPortNumber(iDestinationPortNumber);
 
-   loop:
+loop:
    iBytesWrite = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", getFd(), CAST(pPayload), iPayloadLength, uiFlags, (sockaddr*)cDestination, cDestination.sizeOf());
 
    if (iBytesWrite > 0)

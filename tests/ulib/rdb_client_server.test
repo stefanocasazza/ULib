@@ -28,6 +28,7 @@ fi
 
 #STRACE=$TRUSS
 start_cmd_background "./test_rdb_server$SUFFIX inp/rdb_server.cf $ARG1 <inp/cdb.input >>out/rdb_client.out 2>>err/rdb_server.err"
+$SLEEP
 start_prg rdb_client localhost
 
 if [ "$TERM" = "msys"   ] || \

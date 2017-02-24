@@ -1054,6 +1054,7 @@ enable_ACL
 enable_RFC1918
 enable_HSTS
 enable_HPS
+enable_load_balance
 with_parser
 with_distcc
 with_libz
@@ -1796,6 +1797,7 @@ Optional Features:
   --enable-RFC1918          enable RFC1918 filtering support [default=no]
   --enable-HSTS             enable HTTP Strict Transport Security support [default=no]
   --enable-HPS              enable HTML Pagination Support [default=no]
+  --enable-load-balance     enable load balance support between physical server via udp brodcast [default=no]
   --enable-zip              enable build of ZIP support - require libz [default: use if present libz]
   --enable-ssl-staticlib-deps  link with dependencies of OpenSSL's static libraries. Must be specified in addition to --with-ssl [default=no]
   --enable-curl-staticlib-deps link with dependencies of    cURL's static libraries. Must be specified in addition to --with-curl [default=no]
@@ -26593,6 +26595,24 @@ $as_echo "#define U_HTML_PAGINATION_SUPPORT 1" >>confdefs.h
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_HPS" >&5
 $as_echo "$enable_HPS" >&6; }
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable load balance support between physical server via udp brodcast" >&5
+$as_echo_n "checking if you want to enable load balance support between physical server via udp brodcast... " >&6; }
+	# Check whether --enable-load-balance was given.
+if test "${enable_load_balance+set}" = set; then :
+  enableval=$enable_load_balance;
+fi
+
+	if test -z "$enable_load_balance"; then
+		enable_load_balance="no"
+	fi
+	if test "$enable_load_balance" = "yes"; then
+
+$as_echo "#define USE_LOAD_BALANCE 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_load_balance" >&5
+$as_echo "$enable_load_balance" >&6; }
+
 
 # SECTION 3: check for programs
 
@@ -36605,14 +36625,14 @@ if test -n "$AWK"; then
   cd ../../..
 fi
 
-# Verify the integrity of the current configuration
-
 echo
 echo "***"
 
-CPPFLAGS="-DHAVE_CONFIG_H -I${srcdir}/include $CPPFLAGS"
+# Verify the integrity of the current configuration
+if test "$cross_compiling" != "yes"; then
+	CPPFLAGS="-DHAVE_CONFIG_H -I${srcdir}/include $CPPFLAGS"
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if generated configuration is usable" >&5
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if generated configuration is usable" >&5
 $as_echo_n "checking if generated configuration is usable... " >&6; }
 if ${ac_cv_configuration_is_usable+:} false; then :
   $as_echo_n "(cached) " >&6
@@ -36641,11 +36661,12 @@ fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_configuration_is_usable" >&5
 $as_echo "$ac_cv_configuration_is_usable" >&6; }
 
-if test "$ac_cv_configuration_is_usable" = "no" ; then
-	# It appears that ulib/internal/common.cpp not compiled. If it didn't compile then there would be no chance that the rest would compile.
-	as_fn_error $? "The generated configuration appears to be unusable.
-	Please verify that your system path and environment variables are correct." "$LINENO" 5
-	exit 1
+	if test "$ac_cv_configuration_is_usable" = "no" ; then
+		# It appears that ulib/internal/common.cpp not compiled. If it didn't compile then there would be no chance that the rest would compile.
+		as_fn_error $? "The generated configuration appears to be unusable.
+		Please verify that your system path and environment variables are correct." "$LINENO" 5
+		exit 1
+	fi
 fi
 
 echo

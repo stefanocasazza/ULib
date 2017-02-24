@@ -110,7 +110,7 @@ static bool cancella(UStringRep* key, void* value)
    U_RETURN(false);
 }
 
-int U_EXPORT main (int argc, char* argv[])
+int U_EXPORT main (int argc, char* argv[], char* env[])
 {
    U_ULIB_INIT(argv);
 

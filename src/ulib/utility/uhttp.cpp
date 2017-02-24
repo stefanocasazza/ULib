@@ -23,6 +23,7 @@
 #include <ulib/utility/escape.h>
 #include <ulib/utility/base64.h>
 #include <ulib/base/coder/url.h>
+#include <ulib/net/client/http.h>
 #include <ulib/utility/dir_walk.h>
 #include <ulib/utility/websocket.h>
 #include <ulib/utility/socket_ext.h>
@@ -48,6 +49,9 @@
 #endif
 #ifndef _MSWINDOWS_
 #  include <sys/resource.h>
+#  ifdef USE_LOAD_BALANCE
+#     include <ulib/net/client/http.h>
+#  endif
 #endif
 
 #ifdef U_HTTP_INOTIFY_SUPPORT
@@ -159,6 +163,9 @@ UString*                          UHTTP::uri_request_cert_mask;
 USSLSession*                      UHTTP::data_session_ssl;
 UVector<UIPAllow*>*               UHTTP::vallow_IP;
 URDBObjectHandler<UDataStorage*>* UHTTP::db_session_ssl;
+#endif
+#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+UHttpClient<USSLSocket>* UHTTP::client_http;
 #endif
 #ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
 UString* UHTTP::uri_strict_transport_security_mask;
@@ -1027,6 +1034,13 @@ void UHTTP::init()
    if (msg) { U_SRV_LOG("%s", msg); }
 #endif
 
+#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+   U_NEW(UHttpClient<USSLSocket>, client_http, UHttpClient<USSLSocket>((UFileConfig*)0));
+
+   client_http->getResponseHeader()->setIgnoreCase(false);
+   client_http->UClient_Base::setActive(UServer_Base::bssl);
+#endif
+
    /**
     * Set up static environment variables
     * -------------------------------------------------------------------------------------------------------------------------------------------
@@ -1443,6 +1457,9 @@ void UHTTP::dtor()
 #  endif
 #  ifdef USE_LIBV8
       if (v8_javascript) delete v8_javascript;
+#  endif
+#  if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+      if (client_http) delete client_http;
 #  endif
 
       // CACHE DOCUMENT ROOT FILE SYSTEM
@@ -4247,7 +4264,18 @@ file_in_cache:
 
          usp_page->runDynamicPage(0);
 
-         if (U_ClientImage_parallelization != U_PARALLELIZATION_PARENT) setDynamicResponse();
+         U_DUMP("U_http_info.nResponseCode = %u U_ClientImage_parallelization = %d UClientImage_Base::isNoHeaderForResponse() = %b",
+                 U_http_info.nResponseCode,     U_ClientImage_parallelization,     UClientImage_Base::isNoHeaderForResponse())
+
+         if (U_http_info.nResponseCode == HTTP_OK)
+            {
+            U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
+
+#        if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+            if (UClientImage_Base::isNoHeaderForResponse() == false)
+#        endif
+            setDynamicResponse();
+            }
 
          U_RESET_MODULE_NAME;
 
@@ -4433,6 +4461,65 @@ end:
 
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
+
+//#define TEST_ON_LOCALHOST
+
+#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+bool UHTTP::manageRequestOnRemoteServer()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::manageRequestOnRemoteServer()")
+
+   U_DUMP("UServer_Base::loadavg_threshold = %u U_SRV_MY_LOAD = %u U_SRV_MIN_LOAD_REMOTE = %u U_SRV_MIN_LOAD_REMOTE_IP = %s",
+           UServer_Base::loadavg_threshold,     U_SRV_MY_LOAD,     U_SRV_MIN_LOAD_REMOTE, UIPAddress::getAddressString(U_SRV_MIN_LOAD_REMOTE_IP))
+
+   U_INTERNAL_ASSERT_POINTER(client_http)
+
+#ifdef TEST_ON_LOCALHOST
+   if (u_get_unalignedp32(&U_SRV_MIN_LOAD_REMOTE_IP) == U_MULTICHAR_CONSTANT32(127,0,0,1)) U_RETURN(false);
+       u_put_unalignedp32(&U_SRV_MIN_LOAD_REMOTE_IP,    U_MULTICHAR_CONSTANT32(127,0,0,1));
+#else
+   if (U_SRV_MY_LOAD        >= UServer_Base::loadavg_threshold &&
+       U_SRV_MIN_LOAD_REMOTE < UServer_Base::loadavg_threshold)
+#endif
+      {
+      // before connect to remote server check if it has changed...
+
+      if (client_http->setHostPort(UIPAddress::toString(U_SRV_MIN_LOAD_REMOTE_IP), UServer_Base::port) &&
+          client_http->UClient_Base::isConnected())
+         {
+         client_http->UClient_Base::close();
+         }
+
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+#  ifndef U_HTTP2_DISABLE
+      bool bhttp2;
+      if ((bhttp2 = (U_http_version == '2'))) UHTTP2::wrapRequest();
+#  endif
+
+      client_http->prepareRequest(*UClientImage_Base::request, *UClientImage_Base::body);
+
+      // connect to remote server, send request and get response
+
+      if (client_http->sendRequestEngine())
+         {
+         UClientImage_Base::setNoHeaderForResponse();
+
+         *UClientImage_Base::wbuffer = client_http->getResponse();
+
+#     ifndef U_HTTP2_DISABLE
+         if (bhttp2) UHTTP2::wrapResponse();
+#     endif
+
+         client_http->reset(); // reset reference to request...
+
+         U_RETURN(true);
+         }
+      }
+
+   U_RETURN(false);
+}
+#endif
 
 UString UHTTP::checkDirectoryForUpload(const char* ptr, uint32_t len)
 {
@@ -8986,6 +9073,20 @@ bool UHTTP::setEnvironmentForLanguageProcessing(int type, void* env, vPFpvpcpc f
 
    U_RETURN(true);
 }
+
+#ifndef U_HTTP2_DISABLE
+bool UHTTP::copyHeaders(UStringRep* key, void* elem)
+{
+   U_TRACE(0, "UHTTP::copyHeaders(%V,%p)", key, elem)
+
+   U_INTERNAL_ASSERT_POINTER(prequestHeader)
+   U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
+
+   if (UHTTP2::isHeaderToCopy(key)) prequestHeader->insert(key, (const UStringRep*)elem);
+
+   U_RETURN(true);
+}
+#endif
 
 bool UHTTP::getCGIEnvironment(UString& environment, int type)
 {

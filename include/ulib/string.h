@@ -896,6 +896,7 @@ private:
    friend class UTDB;
    friend class UDES3;
    friend class UHTTP;
+   friend class UHTTP2;
    friend class UCache;
    friend class UValue;
    friend class UString;
@@ -1155,7 +1156,8 @@ protected:
       {
       U_TRACE(0, "UString::_set(%V)", r)
 
-      U_INTERNAL_ASSERT_DIFFERS(rep,r)
+      U_INTERNAL_ASSERT_POINTER(r)
+      U_INTERNAL_ASSERT_DIFFERS(rep, r)
 
       rep->release(); // 1. release existing resource
       rep = r;        // 2. bind copy to self
@@ -1167,6 +1169,8 @@ protected:
       {
       U_TRACE(0, "UString::_copy(%V)", r)
 
+      U_INTERNAL_ASSERT_POINTER(r)
+
       rep = r;  // bind copy to self
       rep->hold();
 
@@ -1177,6 +1181,8 @@ public:
    void _assign(UStringRep* r)
       {
       U_TRACE(0, "UString::_assign(%V)", r)
+
+      U_INTERNAL_ASSERT_POINTER(r)
 
       // NB: it works also in the case of (rep == r)...
 

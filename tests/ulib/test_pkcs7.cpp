@@ -236,7 +236,7 @@ static void check(const UString& dati)
 "# that require network functionality will fail.\n" \
 "127.0.0.1     localhost.localdomain localhost"
 
-int U_EXPORT main(int argc, char* argv[])
+int U_EXPORT main(int argc, char* argv[], char* env[])
 {
    U_ULIB_INIT(argv);
 

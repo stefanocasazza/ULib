@@ -1,21 +1,36 @@
 HTTP/1.1 200 OK
-Date: Sun, 29 Jan 2017 14:54:34 GMT
+Date: Sun, 19 Feb 2017 16:40:41 GMT
 Server: ULib
 Connection: close
 Content-Length: 56
 Content-Type: application/json
 
 {"name":"","rating":"","address":"","phone":"","url":""}HTTP/1.1 200 OK
-Date: Sun, 29 Jan 2017 14:54:34 GMT
+Date: Sun, 19 Feb 2017 16:40:41 GMT
 Server: ULib
 Connection: close
 Content-Length: 0
 
 HTTP/1.1 200 OK
-Date: Sun, 29 Jan 2017 14:54:34 GMT
+Date: Sun, 19 Feb 2017 16:40:41 GMT
 Server: ULib
 Connection: close
 Content-Length: 87
 Content-Type: application/json
 
-{"type":"startup","token":"","fbPermissions":["public_profile","user_friends","email"]}
+{"type":"startup","token":"","fbPermissions":["public_profile","user_friends","email"]}HTTP/1.1 400 Bad Request
+Date: Sun, 19 Feb 2017 16:40:41 GMT
+Server: ULib
+Connection: close
+Content-Type: text/html; charset=UTF-8
+Content-Length: 263
+
+<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html><head>
+<title>400 Bad Request</title>
+</head><body>
+<h1>Bad Request</h1>
+<p>Your browser sent a request that this server could not understand</p>
+<hr>
+<address>ULib Server</address>
+</body></html>

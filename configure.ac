@@ -2744,24 +2744,25 @@ if test -n "$AWK"; then
   cd ../../..
 fi
 
-# Verify the integrity of the current configuration
-
 echo
 echo "***"
 
-CPPFLAGS="-DHAVE_CONFIG_H -I${srcdir}/include $CPPFLAGS"
+# Verify the integrity of the current configuration
+if test "$cross_compiling" != "yes"; then
+	CPPFLAGS="-DHAVE_CONFIG_H -I${srcdir}/include $CPPFLAGS"
 
-AC_CACHE_CHECK([if generated configuration is usable], ac_cv_configuration_is_usable,
+	AC_CACHE_CHECK([if generated configuration is usable], ac_cv_configuration_is_usable,
 [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #include "src/ulib/internal/common.cpp"
 ]], [[int a = 0; a += 1;]])],[ac_cv_configuration_is_usable="yes"],[ac_cv_configuration_is_usable="no"])
 ])
 
-if test "$ac_cv_configuration_is_usable" = "no" ; then
-	# It appears that ulib/internal/common.cpp not compiled. If it didn't compile then there would be no chance that the rest would compile.
-	AC_MSG_ERROR([The generated configuration appears to be unusable.
-	Please verify that your system path and environment variables are correct.])
-	exit 1
+	if test "$ac_cv_configuration_is_usable" = "no" ; then
+		# It appears that ulib/internal/common.cpp not compiled. If it didn't compile then there would be no chance that the rest would compile.
+		AC_MSG_ERROR([The generated configuration appears to be unusable.
+		Please verify that your system path and environment variables are correct.])
+		exit 1
+	fi
 fi
 
 echo
