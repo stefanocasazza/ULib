@@ -6,38 +6,30 @@
 
 start_msg server
 
+rm -rf err/server.err \
+		 trace.*server*.[0-9]* object.*server*.[0-9]* stack.*server*.[0-9]*
+
 #UTRACE="0 20M 0"
 #UTRACE_SIGNAL="0 10M 0"
 #UOBJDUMP="0 50M 1000"
 #USIMERR="error.sim"
  export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
 
-if [ "$TERM" != "cygwin" ]; then
-	DIR=../../src/ulib/net/server/plugin/.libs
-	test -d $DIR &&
-		( cd $DIR;
-		  ln -sf ../v8/.libs/server_plugin_v8.so;
-		  ln -sf ../php/.libs/server_plugin_php.so;
-		  ln -sf ../ruby/.libs/server_plugin_ruby.so;
-		  ln -sf ../page_speed/.libs/server_plugin_pagespeed.so )
-fi
+prepare_usp
+
+check_for_netcat
 
 #VALGRIND=valgrind # --gen-suppressions=all
 #STRACE=$TRUSS
 start_prg_background server ../../src/ulib/net/server/plugin/.libs '"echo http"' # '"soap http"'
-$SLEEP
+
+wait_server_ready localhost 8080
 
 #$TRUSS socat -u open:inp/http/form_enctype.http tcp4-connect:127.0.0.1:8080 >out/server.out 2>/tmp/trace.out
 
-check_for_netcat
-$SLEEP
-send_req $NCAT localhost 8080 inp/http/form_enctype.http server 3
+send_req $NCAT localhost 8080 inp/http/form_enctype.http server 3 kill
 
-$SLEEP
-
-kill_prg test_server TERM
-$SLEEP
-pkill -9 test_server 2>/dev/null
+kill_server test_server
 
 rm -rf /tmp/form*
 

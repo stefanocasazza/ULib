@@ -91,7 +91,7 @@ void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
 
    UClientImage_Base::setCloseConnection();
 
-   UHTTP::setResponse(buffer, 0);
+   UHTTP::setResponse(true, buffer, 0);
 }
 
 void USSIPlugIn::setBadRequest()
@@ -134,7 +134,7 @@ void USSIPlugIn::setAlternativeResponse(UString& _body)
       {
       U_http_info.nResponseCode = HTTP_OK;
 
-      UHTTP::setResponse(*(u_is_know(UHTTP::mime_index) ? UString::str_ctype_txt : UString::str_ctype_html), &_body);
+      UHTTP::setResponse(true, *(u_is_know(UHTTP::mime_index) ? UString::str_ctype_txt : UString::str_ctype_html), &_body);
       }
 }
 

@@ -24,7 +24,10 @@
 /* IPv4 and IPv6                                                             */
 /*****************************************************************************/
 
-// ------------------------------------
+// struct in_addr {
+//    uint32_t s_addr; /* address in network byte order */
+// };
+//
 // struct sockaddr {
 //    u_short sa_family;
 //    char    sa_data[14];
@@ -44,11 +47,6 @@
 //    struct in6_addr sin6_addr;       /* IPv6 address */
 //    uint32_t        sin6_scope_id;   /* IPv6 scope-id */
 // };
-//
-// struct in_addr {
-//    u_long s_addr;
-// };
-// ------------------------------------
 
 class U_NO_EXPORT SocketAddress {
 public:
@@ -84,12 +82,12 @@ public:
       (void)bIPv6;
 #  endif
          {
-         addr.psaIP4Addr.sin_addr.s_addr = htonl(INADDR_ANY);
          addr.psaIP4Addr.sin_family      = AF_INET;
+         addr.psaIP4Addr.sin_addr.s_addr = htonl(INADDR_ANY);
          }
       }
 
-   // Sets the Address part of the sockaddr structure. First we set the family
+   // Sets the dddress part of the sockaddr structure. First we set the family
    // type based on the family type of the provided IP Address. We then make a
    // binary copy of the address stored in cAddr to the appropriate field in the
    // sockaddr structure
@@ -109,7 +107,7 @@ public:
          }
 #  endif
 
-      U_MEMCPY(&(addr.psaIP4Addr.sin_addr),  cAddr.get_in_addr(), cAddr.getInAddrLength());
+      U_MEMCPY(&(addr.psaIP4Addr.sin_addr), cAddr.get_in_addr(), cAddr.getInAddrLength());
       }
 
    // Sets the port number part of the sockaddr structure. Based on the value
@@ -127,10 +125,10 @@ public:
          }
 #  endif
 
-      addr.psaIP4Addr.sin_port  = htons(iPortNumber);
+      addr.psaIP4Addr.sin_port = htons(iPortNumber);
       }
 
-   // Returns the Address stored in the sockaddr structure. Based on the family
+   // Returns the address stored in the sockaddr structure. Based on the family
    // type value, we set the IPAddress parameter equal to either the sin6_addr
    // or sin_addr fields. If the family type is not set, we assume it is IPv4
 
@@ -208,7 +206,7 @@ public:
 #  endif
 
       U_MEMCPY(&(addr.psaIP4Addr.sin_addr),
-               &((struct sockaddr_in*)result->ai_addr)->sin_addr,   sizeof(in_addr));
+               &((struct sockaddr_in*)result->ai_addr)->sin_addr, sizeof(in_addr));
       }
 #endif
 
@@ -220,5 +218,4 @@ private:
 
    friend class USocket;
 };
-
 #endif

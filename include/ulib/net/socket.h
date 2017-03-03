@@ -102,14 +102,20 @@ public:
       SK_SSL_ACTIVE = 0x010
    };
 
-            USocket(bool bSocketIsIPv6 = false);
-   virtual ~USocket();
+   USocket(bool bSocketIsIPv6 = false);
+
+   virtual ~USocket()
+      {
+      U_TRACE_UNREGISTER_OBJECT(0, USocket)
+
+      if (isOpen()) _close_socket();
+      }
 
    int getFd() const
 #ifdef _MSWINDOWS_
-      { return fh; }
+   { return fh; }
 #else
-      { return iSockDesc; }
+   { return iSockDesc; }
 #endif
 
    bool isOpen() const      { return (iSockDesc != -1); }
@@ -284,7 +290,7 @@ public:
     */
 
    void reusePort(int flags);
-   bool setServer(unsigned int port, UString* localAddress = 0);
+   bool setServer(unsigned int port, void* localAddress = 0);
 
    /**
     * This method is called to accept a new pending connection on the server socket.
@@ -300,10 +306,27 @@ public:
 
    void setLocal();
 
-   UString getMacAddress(const char* device);
+   UIPAddress& localIPAddress() __pure
+      {
+      U_TRACE_NO_PARAM(0, "USocket::localIPAddress()")
 
-   UIPAddress&  localIPAddress()  __pure;
-   unsigned int localPortNumber() __pure;
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT(isLocalSet())
+
+      return cLocalAddress;
+      }
+
+   unsigned int localPortNumber() __pure
+      {
+      U_TRACE_NO_PARAM(0, "USocket::localPortNumber()")
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT(isLocalSet())
+
+      U_RETURN(iLocalPort);
+      }
 
    const char* getLocalInfo()
       {
@@ -341,6 +364,8 @@ public:
 
       return cRemoteAddress;
       }
+
+   UString getMacAddress(const char* device = "eth0");
 
    /**
     * This method manage the buffer of the socket connection
@@ -405,12 +430,18 @@ public:
       U_RETURN(false);
       }
 
-   void          close();
+   void close()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::close()")
+
+      close_socket();
+
+      iState = CLOSE;
+      }
+
    void abortive_close() /* Abort connection */
       {
       U_TRACE_NO_PARAM(0, "USocket::abortive_close()")
-
-      U_INTERNAL_ASSERT(isOpen())
 
       setTcpLingerOff();
 
@@ -546,8 +577,27 @@ public:
     * @param timeoutMS the specified timeout value, in milliseconds. A zero value indicates no timeout, i.e. an infinite wait
     */
 
-   bool setTimeoutRCV(uint32_t timeoutMS = U_TIMEOUT_MS);
-   bool setTimeoutSND(uint32_t timeoutMS = U_TIMEOUT_MS);
+   bool setTimeoutRCV(uint32_t timeoutMS = U_TIMEOUT_MS)
+      {
+      U_TRACE(0, "USocket::setTimeoutRCV(%u)", timeoutMS)
+
+#  ifdef SO_RCVTIMEO
+      if (setTimeout(SO_RCVTIMEO, U_TIMEOUT_MS)) U_RETURN(true);
+#  endif
+
+      U_RETURN(false);
+      }
+
+   bool setTimeoutSND(uint32_t timeoutMS = U_TIMEOUT_MS)
+      {
+      U_TRACE(0, "USocket::setTimeoutSND(%u)", timeoutMS)
+
+#  ifdef SO_SNDTIMEO
+      if (setTimeout(SO_SNDTIMEO, U_TIMEOUT_MS)) U_RETURN(true);
+#  endif
+
+      U_RETURN(false);
+      }
 
    /**
     * The recvfrom() function is called with the proper parameters, params is placed for obtaining
@@ -645,8 +695,6 @@ protected:
    bool connect();
    void setRemote();
    void setMsgError();
-   void setReusePort();
-   void setReuseAddress();
    void setAddress(void* address);
    void setLocal(const UIPAddress& addr);
    bool setHostName(const UString& pcNewHostName);
@@ -660,15 +708,67 @@ protected:
       (void) U_SYSCALL(fcntl, "%d,%d,%d", iSockDesc, F_SETFL, (flags = _flags));
       }
 
-#ifdef closesocket
-#undef closesocket
-#endif
+   bool setTimeout(int type, uint32_t timeoutMS)
+      {
+      U_TRACE(1, "USocket::setTimeout(%d,%u)", type, timeoutMS)
 
-   void  closesocket();
-   void _closesocket();
+      U_INTERNAL_ASSERT(timeoutMS >= 200) // NB: minor of 200ms is very strange...
+
+#  ifdef _MSWINDOWS_
+      if (setSockOpt(SOL_SOCKET, type, (const char*)&timeoutMS)) U_RETURN(true);
+#  else
+      struct timeval timer = { timeoutMS / 1000, (timeoutMS % 1000) * 1000 }; // convert the timeout value (in milliseconds) into a timeval struct
+
+      U_INTERNAL_DUMP("timer = { %ld %ld }", timer.tv_sec, timer.tv_usec)
+
+      if (setSockOpt(SOL_SOCKET, type, &timer, sizeof(timer))) U_RETURN(true);
+#  endif
+
+      U_RETURN(false);
+      }
+
+   void setReuseAddress()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::setReuseAddress()")
+
+      /**
+       * SO_REUSEADDR allows your server to bind to an address which is in a TIME_WAIT state.
+       * It does not allow more than one server to bind to the same address. It was mentioned
+       * that use of this flag can create a security risk because another server can bind to a
+       * the same port, by binding to a specific address as opposed to INADDR_ANY
+       */
+
+      (void) setSockOpt(SOL_SOCKET, SO_REUSEADDR, (const int[]){ 1 }); 
+      }
+
+   void setReusePort()
+      {
+      U_TRACE_NO_PARAM(0, "USocket::setReusePort()")
+
+      U_ASSERT_EQUALS(isUDP(), false)
+      U_ASSERT_EQUALS(isIPC(), false)
+
+      /**
+       * As with TCP, SO_REUSEPORT allows multiple UDP sockets to be bound to the same port. This facility could, for example,
+       * be useful in a DNS server operating over UDP. With SO_REUSEPORT, each thread could use recv() on its own socket to
+       * accept datagrams arriving on the port. The traditional approach is that all threads would compete to perform recv()
+       * calls on a single shared socket. This can lead to unbalanced loads across the threads. By contrast, SO_REUSEPORT
+       * distributes datagrams evenly across all of the receiving threads
+       */
+
+#  if defined(U_LINUX) && !defined(U_SERVER_CAPTIVE_PORTAL) // && LINUX_VERSION_CODE >= KERNEL_VERSION(3,9,0)
+#   ifndef SO_REUSEPORT
+#   define SO_REUSEPORT 15
+#   endif
+      breuseport = setSockOpt(SOL_SOCKET, SO_REUSEPORT, (const int[]){ 1 });
+#  endif
+      }
+
+   void  close_socket();
+   void _close_socket();
 
    static SocketAddress* cLocal;
-   static bool tcp_reuseport, bincoming_cpu;
+   static bool breuseport, bincoming_cpu;
    static int iBackLog, incoming_cpu, accept4_flags; // If flags is 0, then accept4() is the same as accept()
 
    /**

@@ -23,7 +23,12 @@ static void usp_fork_db()
       {
       U_NEW(UOrmStatement, pstmt_db, UOrmStatement(*psql_db, U_CONSTANT_TO_PARAM("SELECT randomNumber FROM World WHERE id = ?")));
 
-      if (pstmt_db == 0) U_WARNING("usp_fork_db(): we cound't connect to db");
+      if (pstmt_db == 0)
+         {
+         U_WARNING("usp_fork_db(): we cound't connect to db");
+
+         return;
+         }
 
       U_NEW(World, pworld_db, World);
 
@@ -41,10 +46,11 @@ static void usp_end_db()
 {
    U_TRACE(5, "::usp_end_db()")
 
+   delete psql_db;
+
    if (pstmt_db)
       {
       delete  pstmt_db;
-      delete   psql_db;
       delete pworld_db;
 
 #  ifndef AS_cpoll_cppsp_DO

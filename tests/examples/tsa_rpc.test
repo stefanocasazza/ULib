@@ -51,10 +51,11 @@ EOF
 
 DIR_CMD="../../examples/userver"
 
-start_prg_background userver_ssl -c inp/webserver.cfg
-$SLEEP
-
 rm -f TSA/response/rpc*
+
+start_prg_background userver_ssl -c inp/webserver.cfg
+
+wait_server_ready localhost 443
 
 TIMEOUT 4 $LCMD <TSA/request/rpc.req.bin >TSA/response/rpc.res 2>>err/userver_ssl.err
 tail -c +13 TSA/response/rpc.res > TSA/response/rpc.tsr
@@ -67,8 +68,7 @@ rm -f TSA/response/rpc*
 TIMEOUT 4 $LCMD <TSA/request/rpc.req.b64 >TSA/response/rpc.res 2>>err/userver_ssl.err
 tail -c +13 TSA/response/rpc.res > TSA/response/rpc.tsr
 
-$SLEEP
-kill_prg userver_ssl TERM
+kill_server userver_ssl
 
 mv err/userver_ssl.err err/tsa_rpc.err
 

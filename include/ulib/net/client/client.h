@@ -98,7 +98,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(socket)
 
-      if (isOpen()) socket->_closesocket();
+      if (isOpen()) socket->_close_socket();
       }
 
    bool shutdown(int how = SHUT_WR)

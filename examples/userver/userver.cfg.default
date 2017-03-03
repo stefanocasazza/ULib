@@ -5,7 +5,7 @@
 # ----------------------------------------------------------------------------------------------------------------------------------------
 # userver - configuration parameters
 # ----------------------------------------------------------------------------------------------------------------------------------------
-# ENABLE_IPV6        flag to indicate use of ipv6
+# ENABLE_IPV6        flag to indicate the possible use of ipv6
 # SERVER             host name or ip address for the listening socket
 # PORT               port number             for the listening socket
 # SOCKET_NAME        file name               for the listening socket
@@ -20,27 +20,27 @@
 # SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
 #
 # CLIENT_THRESHOLD           min number of clients to active polling
-# CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization 
+# CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization (dedicated process)
 #
-# PID_FILE      write pid on file indicated
+# PID_FILE      write pid on indicated file
 # WELCOME_MSG   message of welcome to send initially to client
 # RUN_AS_USER   downgrade privileges to that user account
 # DOCUMENT_ROOT The directory out of which you will serve your documents
 #
-# LOG_FILE      locations for file log
-# LOG_FILE_SZ   memory size for file log
-# LOG_MSG_SIZE  limit length of print network message to LOG_MSG_SIZE chars (default 128)
+# LOG_FILE        locations for file log
+# LOG_FILE_SZ   memory size for file log (to use memory mapping and automatic rotate)
+# LOG_MSG_SIZE  limit length of print network message to LOG_MSG_SIZE chars (default 128) (for HTTP -1 indicate to print the header)
 #
 # PLUGIN        list of plugins to load, a flexible way to add specific functionality to the server
-# PLUGIN_DIR    directory where there are plugins to load
+# PLUGIN_DIR    directory where there are the plugins to load
 #
 # ORM_DRIVER     list of ORM drivers to load, a flexible way to add specific functionality to the ORM
-# ORM_DRIVER_DIR directory where there are ORM drivers to load
+# ORM_DRIVER_DIR directory where there are the ORM drivers to load
 #
 # REQ_TIMEOUT    timeout for request from client
-# TCP_KEEP_ALIVE Specifies to active the TCP keepalive implementation in the linux kernel
-# TCP_LINGER_SET Specifies how the TCP initiated the close
-# MAX_KEEP_ALIVE Specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session. (Value <= 0 will disable Keep-Alive)
+# TCP_KEEP_ALIVE specifies to active the TCP keepalive implementation in the linux kernel
+# TCP_LINGER_SET specifies how the TCP initiated the close
+# MAX_KEEP_ALIVE specifies the maximum number of requests that can be served through a Keep-Alive (Persistent) session. (Value <= 0 will disable Keep-Alive)
 #
 # DH_FILE       [Diffie-Hellman Key Agreement protocol](http://www.rsa.com/rsalabs/node.asp?id=2248) cmd: openssl dhparam -out dh.pem 1024
 # CERT_FILE     certificate of server
@@ -49,74 +49,75 @@
 # CA_FILE       locations of trusted CA certificates used in the verification
 # CA_PATH       locations of trusted CA certificates used in the verification
 # VERIFY_MODE   mode of verification (SSL_VERIFY_NONE=0, SSL_VERIFY_PEER=1, SSL_VERIFY_FAIL_IF_NO_PEER_CERT=2, SSL_VERIFY_CLIENT_ONCE=4)
-# CIPHER_SUITE  cipher suite model (Intermediate=0, Modern=1, Old=2)
+# CIPHER_SUITE  [cipher suite model (Intermediate=0, Modern=1, Old=2)](https://wiki.mozilla.org/Security/Server_Side_TLS)
 #
 # ----------------------------------------------------------------------------------------------------------------------------------------
 # how to verify peer certificates. The possible values of this setting are:
 #
 # SSL_VERIFY_NONE                 - do not verify anything
-# SSL_VERIFY_PEER                 - verify the peer certificate, if one is presented
-# SSL_VERIFY_FAIL_IF_NO_PEER_CERT - require a peer certificate, fail if one is not presented
+# SSL_VERIFY_PEER                 - verify the peer certificate,      if one is     presented
+# SSL_VERIFY_FAIL_IF_NO_PEER_CERT -  require a peer certificate, fail if one is not presented
 #
-# SSL/TLS servers will usually set VERIFY_MODE to SSL_VERIFY_NONE.
-# SSL/TLS clients will usually set VERIFY_MODE to SSL_VERIFY_FAIL_IF_NO_PEER_CERT.
+# SSL/TLS servers will usually set VERIFY_MODE to SSL_VERIFY_NONE
+# SSL/TLS clients will usually set VERIFY_MODE to SSL_VERIFY_FAIL_IF_NO_PEER_CERT
 # ----------------------------------------------------------------------------------------------------------------------------------------
 # PREFORK_CHILD number of child server processes created at startup: -1 - thread approach (experimental)
 #                                                                     0 - serialize, no forking
 #                                                                     1 - classic, forking after accept client
 #                                                                    >1 - pool of process serialize plus monitoring process
-#                                                         (not defined) - the number of CPU in the system
+#
+# if PREFORK_CHILD is not defined is as case (>1) with num process the number of CPU in the system
 # ----------------------------------------------------------------------------------------------------------------------------------------
 
 userver {
 
-# ENABLE_IPV6        no
-# SERVER             localhost
-# PORT               80
-# SOCKET_NAME        tmp/socket
-# IP_ADDRESS         10.30.1.131
-# ALLOWED_IP         127.0.0.1,10.30.0.0/16
+# ENABLE_IPV6 no
+# SERVER      www.example.org
+# PORT        8080
+# SOCKET_NAME tmp/socket
+# IP_ADDRESS  10.30.1.131
+# ALLOWED_IP  127.0.0.1,10.30.0.0/16
  
-# ENABLE_RFC1918_FILTER yes
 # ALLOWED_IP_PRIVATE    127.0.0.1,10.30.0.0/16
+# ENABLE_RFC1918_FILTER yes
 
   LISTEN_BACKLOG        1024
   SET_REALTIME_PRIORITY yes
 
-# PID_FILE       /var/run/userver.pid
-# WELCOME_MSG    "220 david.unirel.intranet ULib WEB server (Version 1.1.0) ready.\n"
-# RUN_AS_USER    apache
-  DOCUMENT_ROOT  /var/www/localhost/htdocs
+# PID_FILE      /var/run/userver.pid
+# WELCOME_MSG   "220 david.unirel.intranet ULib WEB server (Version 1.1.0) ready.\n"
+# RUN_AS_USER   apache
+  DOCUMENT_ROOT /var/www/localhost/htdocs
 
-# LOG_FILE       /var/log/userver.log
-# LOG_FILE_SZ    1M
-# LOG_MSG_SIZE   -1
+# LOG_FILE     /var/log/userver.log
+# LOG_FILE_SZ  1M
+# LOG_MSG_SIZE -1
 
-# PLUGIN         "tsa    http"
-# PLUGIN         "rpc    http"
-# PLUGIN         "soap   http"
-# PLUGIN         "fcgi   http"
-# PLUGIN         "scgi   http"
-# PLUGIN         "proxy  http"
-# PLUGIN         "geoip  http"
-# PLUGIN         "stream http"
-# PLUGIN         "socket http"
+# PLUGIN "tsa    http"
+# PLUGIN "rpc    http"
+# PLUGIN "soap   http"
+# PLUGIN "fcgi   http"
+# PLUGIN "scgi   http"
+# PLUGIN "proxy  http"
+# PLUGIN "geoip  http"
+# PLUGIN "stream http"
+# PLUGIN "socket http"
 
-# PLUGIN_DIR     /usr/local/libexec/ulib
+# PLUGIN_DIR /usr/local/libexec/ulib
 
   REQ_TIMEOUT 5
 
 # MAX_KEEP_ALIVE 1000
 
-# DH_FILE        ../ulib/CA/param.dh
-# CERT_FILE      ../ulib/CA/server.crt
-#  KEY_FILE      ../ulib/CA/server.key
-# PASSWORD       stefano
-# CA_PATH        ../ulib/CA/CApath
-# CA_FILE        ../ulib/CA/cacert.pem
-# VERIFY_MODE    1
+# DH_FILE     ../ulib/CA/param.dh
+# CERT_FILE   ../ulib/CA/server.crt
+#  KEY_FILE   ../ulib/CA/server.key
+# PASSWORD    stefano
+# CA_PATH     ../ulib/CA/CApath
+# CA_FILE     ../ulib/CA/cacert.pem
+# VERIFY_MODE 1
 
-# PREFORK_CHILD  3
+# PREFORK_CHILD 3
 }
 
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
@@ -126,30 +127,30 @@ userver {
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # http - plugin parameters
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
-# ALIAS                      vector of URI redirection (request -> alias)
-# REWRITE_RULE_NF            vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
-# USP_AUTOMATIC_ALIASING     USP page that is recognized automatically as alias of all uri request without suffix
+# ALIAS                  vector of URI redirection (request -> alias)
+# REWRITE_RULE_NF        vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
+# USP_AUTOMATIC_ALIASING usp page that is recognized automatically as alias of all uri request without suffix
 #
-# MAINTENANCE_MODE           to switch the site to a maintenance page only
+# MAINTENANCE_MODE to switch the site to a maintenance page only
 # 
-# APACHE_LIKE_LOG            file to write NCSA extended/combined log format: "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
-# LOG_FILE_SZ                memory size for file apache like log
+# APACHE_LIKE_LOG  file to write NCSA extended/combined log format: "%h %l %u %t \"%r\" %>s %b \"%{Referer}i\" \"%{User-agent}i\""
+# LOG_FILE_SZ      memory size for file apache like log (to use memory mapping and automatic rotate)
 #
-# ENABLE_INOTIFY             enable automatic update of cached document root image with inotify
-# CACHE_FILE_MASK            mask (DOS regexp) of pathfile that content      be cached in memory
-# CACHE_AVOID_MASK           mask (DOS regexp) of pathfile that presence NOT be cached in memory 
-# NOCACHE_FILE_MASK          mask (DOS regexp) of pathfile that content  NOT be cached in memory
-# CACHE_FILE_STORE           pathfile of memory cache stored on filesystem
+# ENABLE_INOTIFY    enable automatic update of cached document root image with inotify
+# CACHE_FILE_MASK   mask (DOS regexp) of pathfile that content      be cached in memory
+# CACHE_AVOID_MASK  mask (DOS regexp) of pathfile that presence NOT be cached in memory 
+# NOCACHE_FILE_MASK mask (DOS regexp) of pathfile that content  NOT be cached in memory
+# CACHE_FILE_STORE  pathfile of memory cache filesystem stored on a single file (may be compressed)
 #
 # CGI_TIMEOUT                timeout for cgi execution
 # VIRTUAL_HOST               flag to activate practice of maintaining more than one server on one machine, as differentiated by their apparent hostname 
 # DIGEST_AUTHENTICATION      flag authentication method (yes = digest, no = basic)
 #
-# URI_PROTECTED_MASK         mask (DOS regexp) of URI protected from prying eyes
+# URI_PROTECTED_MASK         mask (DOS regexp) of URI protected from prying eyes (that needs authentication)
 # URI_PROTECTED_ALLOWED_IP   list of comma separated client address for IP-based access control (IPADDR[/MASK]) for URI_PROTECTED_MASK
 #
 # SESSION_COOKIE_OPTION           eventual params for session cookie (lifetime, path, domain, secure, HttpOnly)   
-# ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive)
+# ENABLE_CACHING_BY_PROXY_SERVERS enable caching by proxy servers (add Cache control: public directive on header response)
 #
 # URI_REQUEST_CERT_MASK                      mask (DOS regexp) of URI where client must comunicate a certificate in the SSL connection
 # BANDWIDTH_THROTTLING_MASK                  lets you set maximum byte rates on URLs or URL groups (*.jpg|*.gif 50)
@@ -157,23 +158,23 @@ userver {
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 # This directive gives greater control over abnormal client request behavior, which may be useful for avoiding some forms of denial-of-service attacks
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
-# LIMIT_REQUEST_BODY         restricts the total size of the HTTP request body sent from the client
-# REQUEST_READ_TIMEOUT       set timeout for receiving requests
+# LIMIT_REQUEST_BODY   restricts the permitted total size of a HTTP request body sent from the client
+# REQUEST_READ_TIMEOUT set timeout for receiving a complete request from a client
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 #
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # PHP
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# MOUNT_POINT        mount point application (to adjust var SCRIPT_NAME)
+# MOUNT_POINT mount point application (to adjust var SCRIPT_NAME)
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # RUBY
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# RUBY_LIBDIR			directory to add to the ruby libdir search path
+# RUBY_LIBDIR directory to add to the ruby libdir search path
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # PYTHON
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# PY_PROJECT_APP		full python name of WSGI entry point expected in form <module>.<app>
-# PY_PROJECT_ROOT		python module search root; relative to workdir
+# PY_PROJECT_APP	   full python name of WSGI entry point expected in form <module>.<app>
+# PY_PROJECT_ROOT	   python module search root; relative to workdir
 # PY_VIRTUALENV_PATH
 # ----------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -182,26 +183,26 @@ http {
 # Allows you to tell clients about documents that used to exist in your server's namespace, but do not anymore.
 # The client will make a request for the document at its new location
  
-#  ALIAS "[ \
-#         /login /RA/cgi-bin/login.sh \
-#         /admin /RA/admin/cgi-bin/card-generation.sh \
-#         ]"
+# ALIAS "[ \
+#        /login /RA/cgi-bin/login.sh \
+#        /admin /RA/admin/cgi-bin/card-generation.sh \
+#        ]"
 
 # vector of URI rewrite rule applied after checks that files do not exist (regex1 -> uri1 ...)
 
-#  REWRITE_RULE_NF "[ \
-#                   ^/.*\.[A-Za-z0-9]+.*?$ $0 \
-#                   ^/(.*?)(\?|$)(.*) /sapphire/main.php?url=$1&$3 \
-#                   ]"
+# REWRITE_RULE_NF "[ \
+#                  ^/.*\.[A-Za-z0-9]+.*?$ $0 \
+#                  ^/(.*?)(\?|$)(.*) /sapphire/main.php?url=$1&$3 \
+#                  ]"
 
-# USP_AUTOMATIC_ALIASING servlet/example 
+# USP_AUTOMATIC_ALIASING servlet/example
 
 # MAINTENANCE_MODE /ErrorDocument/down.html
  
-# APACHE_LIKE_LOG  /var/log/httpd/access_log
-# LOG_FILE_SZ      1M
+# APACHE_LIKE_LOG /var/log/httpd/access_log
+# LOG_FILE_SZ     1M
  
-# ENABLE_INOTIFY  yes
+# ENABLE_INOTIFY yes
 
 # CGI_TIMEOUT 60
 
@@ -210,29 +211,29 @@ http {
 # DIGEST_AUTHENTICATION           yes
 # ENABLE_CACHING_BY_PROXY_SERVERS yes
 
-# URI_PROTECTED_MASK        /RA/admin/cgi-bin/*
-# URI_PROTECTED_ALLOWED_IP  127.0.0.1,10.30.0.0/16
+# URI_PROTECTED_MASK       /RA/admin/cgi-bin/*
+# URI_PROTECTED_ALLOWED_IP 127.0.0.1,10.30.0.0/16
 
 # URI_REQUEST_CERT_MASK                      /wi-auth/cgi-bin/cpe.sh
 # URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK /admin/*
 
-# SESSION_COOKIE_OPTION  "[\"\" 24 / www.example.com yes yes]"
+# SESSION_COOKIE_OPTION "[\"\" 24 / www.example.com yes yes]"
 # ---------------------------------------------------------------------------
 # This directive gives greater control over abnormal client request behavior,
 # which may be useful for avoiding some forms of denial-of-service attacks
 # ---------------------------------------------------------------------------
-# LIMIT_REQUEST_BODY    100K
-# REQUEST_READ_TIMEOUT  30 
+# LIMIT_REQUEST_BODY   100K
+# REQUEST_READ_TIMEOUT 30 
 # ---------------------------------------------------------------------------
 }
 
 # ------------------------------------------------------------------------------------------------------
 # ssi - plugin parameters
 # ------------------------------------------------------------------------------------------------------
-# ENVIRONMENT              path of file configuration environment for SSI
+# ENVIRONMENT path of file configuration environment for SSI
 #
-# SSI_AUTOMATIC_ALIASING   special SSI HTML file that is recognized automatically as alias of all
-#                          uri request without suffix (generally cause navigation directory not working)
+# SSI_AUTOMATIC_ALIASING special SSI HTML file (.shtml) that is recognized automatically as alias of all
+#                        uri request without suffix (generally cause navigation of directory not working)
 # ------------------------------------------------------------------------------------------------------
 
 # ssi {
@@ -245,88 +246,88 @@ http {
 # -----------------------------------------------------------------------------------------------
 # fcgi - plugin parameters
 # -----------------------------------------------------------------------------------------------
-# FCGI_URI_MASK  mask (DOS regexp) of uri type that send request via FCGI (*.php)
+# FCGI_URI_MASK mask (DOS regexp) of uri type that send request via FCGI (*.php)
 #
-# SOCKET_NAME    name file for the listening socket
+# SOCKET_NAME name file for the listening socket
 #
-# SERVER         host name or ip address for server
-# PORT           port number for the server
+# SERVER host name or ip address for server
+# PORT   port number for the server
 #
 # RES_TIMEOUT    timeout for response from server FCGI
 # FCGI_KEEP_CONN If not zero, the server FCGI does not close the connection after
 #                responding to request; the plugin retains responsibility for the connection
 #
-# LOG_FILE       location for file log (use server log if same value)
+# LOG_FILE location for file log (use server log if same value)
 # -----------------------------------------------------------------------------------------------
 #
 # fcgi {
 #
 # FCGI_URI_MASK *.php
 #
-# SOCKET_NAME   tmp/fcgi.socket
+# SOCKET_NAME tmp/fcgi.socket
 #
-# SERVER        127.0.0.1
-# PORT          8080
+# SERVER 127.0.0.1
+# PORT   8080
 #
 # RES_TIMEOUT    20
 # FCGI_KEEP_CONN yes
 #
-# LOG_FILE      /var/log/userver.log
+# LOG_FILE /var/log/userver.log
 # }
 
 # -----------------------------------------------------------------------------------------------
 # scgi - plugin parameters
 # -----------------------------------------------------------------------------------------------
-# SCGI_URI_MASK  mask (DOS regexp) of uri type that send request via SCGI (*.py)
+# SCGI_URI_MASK mask (DOS regexp) of uri type that send request via SCGI (*.py)
 #
-# SOCKET_NAME    name file for the listening socket
+# SOCKET_NAME name file for the listening socket
 #
-# SERVER         host name or ip address for server
-# PORT           port number for the server
+# SERVER host name or ip address for server
+# PORT   port number for the server
 #
 # RES_TIMEOUT    timeout for response from server SCGI
 # SCGI_KEEP_CONN If not zero, the server SCGI does not close the connection after
 #                responding to request; the plugin retains responsibility for the connection
 #
-# LOG_FILE       location for file log (use server log if same value)
+# LOG_FILE location for file log (use server log if same value)
 # -----------------------------------------------------------------------------------------------
 #
 # scgi {
 #
 # SCGI_URI_MASK *.py
 #
-# SOCKET_NAME   tmp/scgi.socket
+# SOCKET_NAME tmp/scgi.socket
 #
-# SERVER        127.0.0.1
-# PORT          8080
+# SERVER 127.0.0.1
+# PORT   8080
 #
 # RES_TIMEOUT    20
 # SCGI_KEEP_CONN yes
 #
-# LOG_FILE      /var/log/userver.log
+# LOG_FILE /var/log/userver.log
 # }
 
 # -----------------------------------------------------------------------------------------------
 # tsa - plugin parameters
 # -----------------------------------------------------------------------------------------------
-# COMMAND     command to execute
+# COMMAND                     command to execute
 # ENVIRONMENT environment for command to execute
 # -----------------------------------------------------------------------------------------------
 
 # tsa {
 
-   # ENV[HOME]         = Base directory for op
-   # ENV[OPENSSL]      = Openssl path
-   # ENV[OPENSSL_CNF]  = Openssl configuration
-   # ENV[ENGINE]       = Openssl Engine to use
-   # ENV[PASSWORD]     = Password for key decryption
-   # ENV[TSA_CACERT]   = TSA CA chain certificate
-   # ENV[TSA_CERT]     = TSA certificate
-   # ENV[TSA_KEY]      = TSA private key
-   # ENV[FILE_LOG]     = Log file for command
-   # ENV[MSG_LOG]      = Log separator
-   # ENV[TMPDIR]       = Temporary directory
-   # ENV[DEBUG]        = Enable debugging
+   # ENV[HOME]        = Base directory for op
+   # ENV[OPENSSL]     = Openssl path
+   # ENV[OPENSSL_CNF] = Openssl configuration
+   # ENV[ENGINE]      = Openssl Engine to use
+   # ENV[PASSWORD]    = Password for key decryption
+   # ENV[TSA_CACERT]  = TSA CA chain certificate
+   # ENV[TSA_CERT]    = TSA certificate
+   # ENV[TSA_KEY]     = TSA private key
+   # ENV[FILE_LOG]    = Log file for command
+   # ENV[MSG_LOG]     = Log separator
+   # ENV[TMPDIR]      = Temporary directory
+   # ENV[DEBUG]       = Enable debugging
 
 #  ENVIRONMENT  "HOME=TSA \
 #                OPENSSL=bin/openssl \
@@ -340,14 +341,14 @@ http {
    # ARGV[3] = SEC
    # ARGV[3] = POLICY
 
-#  COMMAND  TSA/TSA_command/tsa_REPLY_BIN.sh
+#  COMMAND TSA/TSA_command/tsa_REPLY_BIN.sh
 # }
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # stream - plugin parameters
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# COMMAND                      command to execute
-# ENVIRONMENT  environment for command to execute
+# COMMAND                     command to execute
+# ENVIRONMENT environment for command to execute
 #
 # URI_PATH     specifies the local part of the URL path at which you would like the content to appear (Ex. /my/video.ogv)
 # METADATA     specifies the needs to have setup headers prepended for each codec stream (Ex. /my/audio.ogg)
@@ -359,17 +360,18 @@ http {
 #  ENVIRONMENT "UTRACE=0 5M 0"
 #  COMMAND my_stream.sh
 
-#  URI_PATH      /my/stream
-#  METADATA      /tmp/metadata
-#  CONTENT_TYPE  text/plain
-#  CONTENT_TYPE  "multipart/x-mixed-replace; boundary=++++++++"
+#  URI_PATH  /my/stream
+#  METADATA  /tmp/metadata
+#
+#  CONTENT_TYPE text/plain
+#  CONTENT_TYPE "multipart/x-mixed-replace; boundary=++++++++"
 # }
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # socket - plugin parameters
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# COMMAND                           command (alternative to USP websocket) to execute
-# ENVIRONMENT       environment for command (alternative to USP websocket) to execute
+# COMMAND                     command (alternative to USP websocket) to execute
+# ENVIRONMENT environment for command (alternative to USP websocket) to execute
 #
 # MAX_MESSAGE_SIZE Maximum size (in bytes) of a message to accept; default is approximately 4GB
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -385,25 +387,26 @@ http {
 # ------------------------------------------------------------------------------------------------------
 # rpc - plugin parameters
 # ------------------------------------------------------------------------------------------------------
-# METHOD_NAME    name of method
-# COMMAND        command to execute
-# ENVIRONMENT    environment for command to execute
-# RESPONSE_TYPE  input/output type of the command (      success_or_failure     |
-#                                                  stdin_success_or_failure     |
-#                                                        standard_output        |
-#                                                  stdin_standard_output        |
-#                                                        standard_output_binary |
-#                                                  stdin_standard_output_binary )
+# METHOD_NAME   name of method
+# COMMAND       command to execute
+# ENVIRONMENT   environment for command to execute
+# RESPONSE_TYPE input/output type of the command (      success_or_failure     |
+#                                                 stdin_success_or_failure     |
+#                                                       standard_output        |
+#                                                 stdin_standard_output        |
+#                                                       standard_output_binary |
+#                                                 stdin_standard_output_binary )
 # ------------------------------------------------------------------------------------------------------
 
 # rpc  {
 
+   # ------------------------------------------------------------------------------------------------------
    # SOAP or RPC services
    # ------------------------------------------------------------------------------------------------------
-   # ENV[HOME]      = Base directory for op
-   # ENV[FILE_LOG]  = Log file for command
-   # ENV[MSG_LOG]   = Log separator
-   # ENV[DEBUG]     = Enable debugging
+   # ENV[HOME]     = Base directory for op
+   # ENV[FILE_LOG] = Log file for command
+   # ENV[MSG_LOG]  = Log separator
+   # ENV[DEBUG]    = Enable debugging
    # ------------------------------------------------------------------------------------------------------
 
 #  Method_01 {
@@ -434,25 +437,26 @@ http {
 # ------------------------------------------------------------------------------------------------------
 # soap - plugin parameters
 # ------------------------------------------------------------------------------------------------------
-# METHOD_NAME    name of method
-# COMMAND        command to execute
-# ENVIRONMENT    environment for command to execute
-# RESPONSE_TYPE  input/output type of the command (      success_or_failure     |
-#                                                  stdin_success_or_failure     |
-#                                                        standard_output        |
-#                                                  stdin_standard_output        |
-#                                                        standard_output_binary |
-#                                                  stdin_standard_output_binary )
+# METHOD_NAME   name of method
+# COMMAND       command to execute
+# ENVIRONMENT   environment for command to execute
+# RESPONSE_TYPE input/output type of the command (      success_or_failure     |
+#                                                 stdin_success_or_failure     |
+#                                                       standard_output        |
+#                                                 stdin_standard_output        |
+#                                                       standard_output_binary |
+#                                                 stdin_standard_output_binary )
 # ------------------------------------------------------------------------------------------------------
 
 # soap {
 
+   # ------------------------------------------------------------------------------------------------------
    # SOAP or RPC services
    # ------------------------------------------------------------------------------------------------------
-   # ENV[HOME]      = Base directory for op
-   # ENV[FILE_LOG]  = Log file for command
-   # ENV[MSG_LOG]   = Log separator
-   # ENV[DEBUG]     = Enable debugging
+   # ENV[HOME]     = Base directory for op
+   # ENV[FILE_LOG] = Log file for command
+   # ENV[MSG_LOG]  = Log separator
+   # ENV[DEBUG]    = Enable debugging
    # ------------------------------------------------------------------------------------------------------
 
 #  Method_01 {
@@ -483,27 +487,28 @@ http {
 # ---------------------------------------------------------------------------------------------------------------------------------
 # proxy - plugin parameters
 # ---------------------------------------------------------------------------------------------------------------------------------
-# ERROR MESSAGE      Allows you to tell clients about what type of error occurred
+# ERROR MESSAGE Allows you to tell clients about what type of error occurred
 #
-# URI                uri trigger
-# HOST               name host client
-# METHOD_NAME        mask name of what type of HTTP method is permitted (GET|POST|...)
+# URI         uri trigger
+# HOST        name host client
+# METHOD_NAME mask name of what type of HTTP method is permitted (GET|POST|...)
+#
 # CLIENT_CERTIFICATE yes if client must comunicate a certificate in the SSL connection
 # REMOTE_ADDRESS_IP  list of comma separated client address for IP-based control (IPADDR[/MASK]) for routing-like policy
 # WEBSOCKET          yes if the proxy act as a Reverse Proxy Web Sockets
 #
 #
-# COMMAND            command to execute
-# ENVIRONMENT        environment for command to execute
-# RESPONSE_TYPE      output type of the command (yes = response for client, no = request to server)
+# COMMAND                       command to execute
+# ENVIRONMENT   environment for command to execute
+# RESPONSE_TYPE output type of the command (yes = response for client, no = request to server)
 #
-# PORT               port of server for connection
-# SERVER             name of server for connection
+# PORT    port of server for connection
+# SERVER  name of server for connection
 #
-# FOLLOW_REDIRECTS   yes if     manage to automatically follow redirects from server
-# USER                   if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: user
-# PASSWORD               if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: password
-# REPLACE_RESPONSE       if NOT manage to follow redirects, vector of substitution string
+# FOLLOW_REDIRECTS yes if     manage to automatically follow redirects from server
+# USER                 if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: user
+# PASSWORD             if     manage to follow redirects, in response to a HTTP_UNAUTHORISED response from the HTTP server: password
+# REPLACE_RESPONSE     if NOT manage to follow redirects, vector of substitution string
 # ---------------------------------------------------------------------------------------------------------------------------------
 
 # proxy {
@@ -533,46 +538,61 @@ http {
    #               ]
 
    # Service_WAYF {
-   #  URI         ^/(WAYF/?|SWITCHaai/images/.*\.gif$)
-   #  HOST        localhost:444
+	#
+   #  URI  ^/(WAYF/?|SWITCHaai/images/.*\.gif$)
+   #  HOST localhost:444
+	#
    #  METHOD_NAME GET|POST
+	#
+   #  PORT   80
+   #  SERVER localhost
+	#
    #  CLIENT_CERTIFICATE yes
-   #  PORT     80
-   #  SERVER   localhost
+	#
    #  la redirect chiede di nuovo al proxy (444)...!!!
    #  FOLLOW_REDIRECTS  no
    # }
    #
    # Service_IDP {
-   #  URI         ^/shibboleth-idp/SSO
-   #  HOST        localhost:444
+	#
+   #  URI ^/shibboleth-idp/SSO
+   #  HOST localhost:444
+	#
    #  METHOD_NAME GET
-   #  PORT     80
-   #  SERVER   laptop
+	#
+   #  PORT   80
+   #  SERVER laptop
+	#
    #  FOLLOW_REDIRECTS yes
+	#
    #  In response to a HTTP_UNAUTHORISED response from the HTTP server,
    #  obtain a user and password for the scheme/realm returned from the HTTP server
+	#
    #  USER     user01
    #  PASSWORD stefano1
    # }
    #
    # Service_webmail {
+	#
+   #  URI  /webmail
+   #  HOST localhost
+	#
+   #  METHOD_NAME GET|POST
+	#
+   #  PORT   80
+   #  SERVER ca.eraclito.unirel.test
+	#
    #  only if NOT manage to follow redirects
    #  REPLACE_RESPONSE [
    #                   "^Location: http:" "Location: https:"
    #                   ]
-   #  URI         /webmail
-   #  HOST        localhost
-   #  METHOD_NAME GET|POST
-   #  PORT     80
-   #  SERVER   ca.eraclito.unirel.test
    # }
 # }
 
 # ------------------------------------------------------------------------------------------------------------------------------------------
 # geoip - plugin parameters
 # ------------------------------------------------------------------------------------------------------------------------------------------
-# COUNTRY_FORBIDDEN_MASK  mask (DOS regexp) of GEOIP country code that give forbidden access
+# COUNTRY_FORBIDDEN_MASK mask (DOS regexp) of GEOIP country code that give forbidden access
 # ------------------------------------------------------------------------------------------------------------------------------------------
 
 # geoip {
@@ -588,10 +608,10 @@ http {
 # DECRYPT_KEY           DES3 password stuff
 # ALLOWED_MEMBERS       file with list of allowed MAC/IP pairs or NETWORKS (default: /etc/nodog.allowed)
 # LOCAL_NETWORK_LABEL   access point localization tag to be used from portal
-# LOGIN_TIMEOUT         Number of seconds after a client last login/renewal to terminate their connection
+# LOGIN_TIMEOUT         number of seconds after a client last login/renewal to terminate their connection
 # CHECK_TYPE            mode of verification (U_CHECK_NONE=0, U_CHECK_ARP_CACHE=1, U_CHECK_ARP_PING=2, U_CHECK_TRAFFIC=4)
-# CHECK_EXPIRE_INTERVAL Number of seconds to check if some client has terminate their connection
-# NUM_PEERS_PREALLOCATE Size of memory block to preallocate for table of users
+# CHECK_EXPIRE_INTERVAL number of seconds to check if some client has terminate their connection
+# NUM_PEERS_PREALLOCATE size of memory block to preallocate for table of users
 # -----------------------------------------------------------------------------------------------------------------------
 
 # nocat {

@@ -74,6 +74,8 @@ UOrmSession::UOrmSession(const char* dbname, uint32_t len)
    pdrv = 0;
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
+   U_INTERNAL_DUMP("UOrmDriver::env_driver_len = %u", UOrmDriver::env_driver_len)
+
    if (UOrmDriver::env_driver_len == 0 &&
        UOrmDriver::loadDriver() == false)
       {
@@ -93,6 +95,22 @@ UOrmSession::UOrmSession(const char* dbname, uint32_t len)
 #endif
 }
 
+UOrmSession::~UOrmSession()
+{
+   U_TRACE_UNREGISTER_OBJECT(0, UOrmSession)
+
+#if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
+   U_INTERNAL_DUMP("pdrv = %p", pdrv)
+
+   if (pdrv)
+      {
+      pdrv->handlerDisConnect();
+
+      if (UOrmDriver::vdriver->find(pdrv) == U_NOT_FOUND) delete pdrv;
+      }
+#endif
+}
+
 __pure bool UOrmSession::isReady() const
 {
    U_TRACE_NO_PARAM(0, "UOrmSession::isReady()")
@@ -104,20 +122,6 @@ __pure bool UOrmSession::isReady() const
       }
 
    U_RETURN(false);
-}
-
-__pure UOrmSession::~UOrmSession()
-{
-   U_TRACE_UNREGISTER_OBJECT(0, UOrmSession)
-
-#if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   if (pdrv)
-      {
-      pdrv->handlerDisConnect();
-
-      if (UOrmDriver::vdriver->find(pdrv) == U_NOT_FOUND) delete pdrv;
-      }
-#endif
 }
 
 bool UOrmSession::connect(const UString& option)
@@ -199,12 +203,14 @@ UOrmStatement::UOrmStatement(UOrmSession& session, const char* stmt, uint32_t le
 #endif
 }
 
-__pure UOrmStatement::~UOrmStatement()
+UOrmStatement::~UOrmStatement()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UOrmStatement)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    U_INTERNAL_ASSERT_POINTER(pdrv)
+
+   U_INTERNAL_DUMP("pstmt = %p", pstmt)
 
    if (pstmt) pdrv->remove(pstmt);
 #endif

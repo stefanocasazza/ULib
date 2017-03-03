@@ -265,7 +265,7 @@ protected:
    SSL_CTX* ctx;
    int ret, renegotiations, ciphersuite_model;
 
-   void closesocket();
+   void close_socket();
 
    static SSL_CTX* cctx; // client
    static SSL_CTX* sctx; // server

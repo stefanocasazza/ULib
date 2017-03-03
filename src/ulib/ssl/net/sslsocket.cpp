@@ -1009,20 +1009,16 @@ loop:
    U_SYSCALL_VOID(SSL_free, "%p", ssl);
                                   ssl = 0;
 
-   pcNewConnection->USocket::_closesocket();
+   pcNewConnection->USocket::_close_socket();
 
    U_INTERNAL_DUMP("pcNewConnection->ret = %d", pcNewConnection->ret)
 
    U_RETURN(false);
 }
 
-#ifdef closesocket
-#undef closesocket
-#endif
-
-void USSLSocket::closesocket()
+void USSLSocket::close_socket()
 {
-   U_TRACE_NO_PARAM(1, "USSLSocket::closesocket()")
+   U_TRACE_NO_PARAM(1, "USSLSocket::close_socket()")
 
    if (ssl)
       {

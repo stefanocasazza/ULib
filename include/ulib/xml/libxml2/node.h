@@ -231,7 +231,7 @@ public:
     * @returns The next sibling
     */
 
-   static __pure xmlNodePtr getNextSibling(xmlNodePtr node)
+   static xmlNodePtr getNextSibling(xmlNodePtr node) __pure
       {
       U_TRACE(0, "UXML2Node::getNextSibling(%p)", node)
 

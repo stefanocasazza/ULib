@@ -8,10 +8,10 @@
 
 start_msg web_server
 
-(cd benchmark; rm -f db; creat_link FrameworkBenchmarks/ULib/db  db; sync)
-(cd ..;        rm -f db; creat_link examples/benchmark/db		  db; sync)
-								 creat_link				benchmark/db		  db
-								 creat_link				benchmark/libraries libraries
+(cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db  db; sync)
+(cd ..;        rm -rf db; creat_link examples/benchmark/db		   db; sync)
+								  creat_link			 benchmark/db		   db
+								  creat_link			 benchmark/libraries libraries
 
 DOC_ROOT=docroot
 
@@ -20,6 +20,8 @@ rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/soap.res /tmp/*.
       out/userver_tcp.out err/userver_tcp.err web_server.err \
 					 trace.*userver_*.[0-9]*			  object.*userver_*.[0-9]*				 stack.*userver_*.[0-9]*			  mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
+
+#chmod 666 /proc/sys/net/ipv4/tcp_fin_timeout /proc/sys/net/core/somaxconn /proc/sys/net/ipv4/tcp_max_syn_backlog
 
 #UTRACE="0 50M 0"
 #UTRACE_SIGNAL="0 50M 0"
@@ -47,57 +49,35 @@ mkdir -p		   uploads
 $CHOWN nobody: uploads docroot 2>/dev/null
 chmod 777      uploads
 
-$CURL -s -F 'file=@vuoto.txt'											 -F "name=prova" http://$1/cgi-bin/uploader.sh    >>out/web_server.out 2>>err/web_server.err
-$CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$1/cgi-bin/uploader.sh    >>out/web_server.out 2>>err/web_server.err
-$CURL -s -T web_server.test                                                  http://$1/upload/web_server.test >>out/web_server.out 2>>err/web_server.err
+$CURL -m 3 -s -F 'file=@vuoto.txt'											-F "name=prova" http://$1/cgi-bin/uploader.sh     >>out/web_server.out 2>>err/web_server.err
+$CURL -m 3 -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" http://$1/cgi-bin/uploader.sh     >>out/web_server.out 2>>err/web_server.err
+$CURL -m 3 -s -T web_server.test                                                  http://$1/uploads/web_server.test >>out/web_server.out 2>>err/web_server.err
 
 if [ $? -ne 0 ]; then
-   kill_prg userver_tcp TERM
+	kill_server userver_tcp
 	exit 1
 fi
-}
-
-# function : kill_server
-kill_server() {
-
-kill_prg userver_tcp TERM
-$SLEEP
-pkill -9    userver_tcp 2>/dev/null
-pkill -9 lt-userver_tcp 2>/dev/null
 }
 
 # function : start_test
 start_test() {
 
-#chmod 666 /proc/sys/net/ipv4/tcp_fin_timeout /proc/sys/net/core/somaxconn /proc/sys/net/ipv4/tcp_max_syn_backlog
-
-$SLEEP
-
 #STRACE=$TRUSS
-#MALLOC_CHECK_=3
-#VALGRIND="valgrind"
-#MUDFLAP_OPTIONS="-ignore-reads -backtrace=8"
- start_prg_background userver_tcp -c inp/webserver.cfg
+start_prg_background userver_tcp -c inp/webserver.cfg
 
-for i in 1 2 3 4 5; do
-	$NC -c localhost 8080 </dev/null 2>/dev/null
-	if [ $? -eq 0 ]; then
-		break
-	fi
-done
+wait_server_ready localhost 8080
 
 #LS=tst_90
 #LS=`ls inp/http/and`
 #mkdir -p /tmp/web_server
 #for i in $LS; do
-# $NC -w 10 localhost 8080 <inp/http/and/$i >/tmp/web_server/$i
+# $NCAT -c -w 10 localhost 8080 <inp/http/and/$i >/tmp/web_server/$i
 #done
 
 #./sendbytes.pl
-#ncat -4 test 80				 < inp/http/request.8197
-#$NC -w 10 test			 80 < inp/request.14215 >>out/web_server.out
-#$NC -w 10 10.10.100.115 80 < inp/http/all4.inp	>>out/web_server.out
-#$CURL http://$1/browserconfig.xml					>>out/web_server.out 2>>err/web_server.err
+#$NCAT -c -w 10 test			   80 < inp/request.14215 >>out/web_server.out
+#$NCAT -c -w 10 10.10.100.115 80 < inp/http/all4.inp >>out/web_server.out
+#$CURL -m 10 http://$1/browserconfig.xml				  >>out/web_server.out 2>>err/web_server.err
 #send_req $NCAT test 80 inp/request.14215 web_server 2
 #exit 0
 #return
@@ -105,23 +85,21 @@ done
 LS=`ls inp/http/close`
 for i in $LS; do
 	send_req $1 $2 8080 inp/http/close/$i web_server 2
-#	if [ $? -ne 0 ]; then
-#		kill_server
-#		exit 1
-#  fi
 done
 
-for i in all.inp all0.inp all01.inp all1.inp all2.inp plaintext.inp post.inp; do
-	send_req $1 $2 8080 inp/http/$i web_server 4
-#	if [ $? -ne 0 ]; then
-#		kill_server
-#		exit 1
-#	fi
+send_req $1 $2 8080 inp/http/all.inp web_server 3
+
+for i in all0.inp all01.inp all1.inp all2.inp; do
+	send_req $1 $2 8080 inp/http/$i web_server 3 kill
+done
+
+for i in plaintext.inp post.inp; do
+	send_req $1 $2 8080 inp/http/$i web_server 3
 done
 
 upload_test $2:8080
 
-kill_server
+kill_server userver_tcp
 }
 
 # function : creat_config
@@ -177,22 +155,24 @@ fi
 
 mkdir -p $DOC_ROOT/benchmark/docroot $DOC_ROOT/www.sito1.com/benchmark/docroot
 
-creat_link ../ok												$DOC_ROOT/ok
-creat_link ../tmp												$DOC_ROOT/tmp
-creat_link ../uploads										$DOC_ROOT/uploads
-creat_link ../../../benchmark/docroot/servlet		$DOC_ROOT/benchmark/docroot/servlet
-creat_link ../../inp											$DOC_ROOT/www.sito1.com/inp
-creat_link ../../tmp											$DOC_ROOT/www.sito1.com/tmp
-creat_link ../SSI												$DOC_ROOT/www.sito1.com/SSI
-creat_link ../cgi-bin										$DOC_ROOT/www.sito1.com/cgi-bin
-creat_link ../../uploads									$DOC_ROOT/www.sito1.com/uploads
-creat_link ../../../../benchmark/docroot/servlet	$DOC_ROOT/www.sito1.com/benchmark/docroot/servlet
+creat_link ../ok											 $DOC_ROOT/ok
+creat_link ../tmp											 $DOC_ROOT/tmp
+creat_link ../uploads									 $DOC_ROOT/uploads
+creat_link ../../../benchmark/docroot/servlet	 $DOC_ROOT/benchmark/docroot/servlet
+creat_link ../../inp										 $DOC_ROOT/www.sito1.com/inp
+creat_link ../../tmp										 $DOC_ROOT/www.sito1.com/tmp
+creat_link ../SSI											 $DOC_ROOT/www.sito1.com/SSI
+creat_link ../cgi-bin									 $DOC_ROOT/www.sito1.com/cgi-bin
+creat_link ../../uploads								 $DOC_ROOT/www.sito1.com/uploads
+creat_link ../../../../benchmark/docroot/servlet $DOC_ROOT/www.sito1.com/benchmark/docroot/servlet
 
 touch vuoto.txt $DOC_ROOT/vuoto.txt $DOC_ROOT/www.sito1.com/vuoto.txt
 cat << EOF >tmp/c
 c
 c
 EOF
+
+pkill userver_tcp 2>/dev/null
 
 #cp $DOC_ROOT/../.htpasswd $DOC_ROOT/../tmp.htpasswd
 
@@ -217,7 +197,7 @@ export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
  creat_config V 2
  start_test $NCAT www.sito1.com
 
-kill_server
+kill_server userver_tcp
 
 # -----------------------------------------------------------------------------------
 # for GDB

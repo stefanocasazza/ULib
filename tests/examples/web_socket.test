@@ -38,15 +38,15 @@ EOF
 
 DIR_CMD="../../examples/userver"
 
+check_for_netcat
+
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c inp/webserver.cfg
+
+wait_server_ready localhost 8787
+
+send_req $NCAT localhost 8787 inp/http/websocket.req web_socket 3 kill
 $SLEEP
-
-check_for_netcat
-send_req $NCAT localhost 8787 inp/http/websocket.req web_socket 6
-
-$SLEEP
-
 kill_prg userver_tcp TERM
 
 mv err/userver_tcp.err err/web_socket.err

@@ -76,9 +76,9 @@ public:
       unsigned char status_code_buffer[2] = { (unsigned char)((status_code >> 8) & 0xFF),
                                               (unsigned char)( status_code       & 0xFF) };
 
-      bool result = sendData(MESSAGE_TYPE_CLOSE, status_code_buffer, sizeof(status_code_buffer));
+      if (sendData(MESSAGE_TYPE_CLOSE, status_code_buffer, sizeof(status_code_buffer))) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
 private:

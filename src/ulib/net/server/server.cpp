@@ -896,40 +896,37 @@ public:
       U_TRACE_NO_PARAM(0, "UTimeThread::run()")
 
 #  if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
-      UString ifname;
       uusockaddr addr;
+      int fd_sock = -1;
+      uint32_t laddr = 0;
       UUDPSocket udp_sock(UClientImage_Base::bIPv6);
 
       if (UServer_Base::bipc == false)
          {
-         (void) memset(&addr, 0, sizeof(addr));
+         UString ifname = UServer_Base::getNetworkDevice(0);
 
-         addr.psaIP4Addr.sin_family      = PF_INET;
-         addr.psaIP4Addr.sin_port        = htons(UServer_Base::port);
-         addr.psaIP4Addr.sin_addr.s_addr = htonl(INADDR_ANY);
-
-         ifname = UServer_Base::getNetworkDevice(0);
-
-         if (ifname.empty() ||
-             UIPAddress::setBroadcastAddress(addr, ifname) == false)
+         if (ifname)
             {
-            U_WARNING("Can't get broadcast address on interface %V", ifname.rep);
-            }
-         else
-            {
-            udp_sock._socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+            (void) memset(&addr, 0, sizeof(addr));
 
-            udp_sock.setNonBlocking(); // setting socket to nonblocking
+            addr.psaIP4Addr.sin_family      = PF_INET;
+            addr.psaIP4Addr.sin_addr.s_addr = htonl(INADDR_ANY);
 
-            if (udp_sock.setSockOpt(SOL_SOCKET, SO_REUSEADDR, (const int[]){ 1 }) == false) U_ERROR_SYSCALL("Can't enable SO_REUSEADDR on udp socket");
-            if (udp_sock.setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR_SYSCALL("Can't enable SO_BROADCAST on udp socket");
+            if (udp_sock.setServer(UServer_Base::port, &addr) == false) U_ERROR("Can't bind on udp socket");
 
-            if (U_SYSCALL(bind, "%d,%p,%d", udp_sock.getFd(), (sockaddr*)&(addr.psaGeneric), sizeof(addr))) U_ERROR_SYSCALL("Can't bind on udp socket");
+            if (UIPAddress::setBroadcastAddress(addr, ifname) == false) U_ERROR("Can't get broadcast address on interface %V", ifname.rep);
 
-            udp_sock.setLocal();
+            if (udp_sock.setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR("Can't enable SO_BROADCAST on udp socket");
 
-            U_SRV_LOG("Load balance activated (by udp socket): loadavg_threshold = %u brodacast address = (%v:%v)",
-                        UServer_Base::loadavg_threshold, ifname.rep, UIPAddress::toString(addr.psaIP4Addr.sin_addr.s_addr).rep);
+            udp_sock.setNonBlocking();
+
+            laddr   = UServer_Base::socket->cLocalAddress.get_addr();
+            fd_sock = udp_sock.getFd();
+
+            U_DUMP("laddr = %V", UIPAddress::toString(laddr).rep)
+
+            U_SRV_LOG("Load balance activated (by udp socket: %u): loadavg_threshold = %u brodacast address = (%v:%v)",
+                        fd_sock, UServer_Base::loadavg_threshold, ifname.rep, UIPAddress::toString(addr.psaIP4Addr.sin_addr.s_addr).rep);
             }
          }
 #  endif
@@ -984,43 +981,46 @@ public:
                }
 
 #        if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
-            if (ifname &&
-                UServer_Base::bipc == false)
+            if (fd_sock > 0)
                {
-               U_SRV_MY_LOAD = u_get_loadavg();
+               uint8_t my_loadavg = u_get_loadavg();
 
-               U_INTERNAL_DUMP("U_SRV_MY_LOAD = %u", U_SRV_MY_LOAD)
+               U_INTERNAL_DUMP("U_SRV_MY_LOAD = %u", my_loadavg)
 
-               int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", udp_sock.getFd(), &U_SRV_MY_LOAD, sizeof(char), MSG_DONTROUTE, (sockaddr*)&(addr.psaGeneric), sizeof(addr));
+               int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", fd_sock, &my_loadavg, sizeof(char), MSG_DONTROUTE, (sockaddr*)&(addr.psaGeneric), sizeof(addr));
 
                if (iBytesTransferred == sizeof(char))
                   {
-                  UIPAddress cIPSource;
-                  unsigned int iPortSource;
-                  unsigned char datagram[65535];
+                  uusockaddr saddr;
+                  unsigned char datagram[4096];
+                  socklen_t slDummy = sizeof(addr);
 
-                  uint8_t min_loadavg_remote = 255;
+                  uint8_t  min_loadavg_remote    = 255;
                   uint32_t min_loadavg_remote_ip = 0;
 
-                  while ((iBytesTransferred = udp_sock.recvFrom(datagram, sizeof(datagram), 0, cIPSource, iPortSource)) > 0)
+                  while ((iBytesTransferred = U_SYSCALL(recvfrom, "%d,%p,%u,%u,%p,%p", fd_sock, datagram, sizeof(datagram), MSG_DONTWAIT, (sockaddr*)&(saddr.psaGeneric), &slDummy)) > 0)
                      {
-                     U_DUMP("Received datagram from (%S,%u): (%u,%.*S)", cIPSource.getAddressString(), iPortSource, iBytesTransferred, iBytesTransferred, datagram)
-
-                     if (cIPSource == UServer_Base::socket->cLocalAddress) continue;
+                     U_DUMP("Received datagram from (%S:%u) = (%u,%#.*S)",
+                              UIPAddress::toString(saddr.psaIP4Addr.sin_addr.s_addr).rep, ntohs(saddr.psaIP4Addr.sin_port), iBytesTransferred, iBytesTransferred, datagram)
 
                      if (iBytesTransferred == 1)
                         {
-                        U_INTERNAL_ASSERT_EQUALS(UServer_Base::port, iPortSource)
+                        if (saddr.psaIP4Addr.sin_addr.s_addr == laddr &&
+                            ntohs(saddr.psaIP4Addr.sin_port) == UServer_Base::port)
+                           {
+                           continue;
+                           }
 
                         if (datagram[0] < min_loadavg_remote)
                            {
                            min_loadavg_remote = datagram[0];
 
-                           u_put_unalignedp32(&min_loadavg_remote_ip, cIPSource.get_addr());
+                           u_put_unalignedp32(&min_loadavg_remote_ip, addr.psaIP4Addr.sin_addr.s_addr);
                            }
                         }
                      }
 
+                  U_SRV_MY_LOAD         =  my_loadavg;
                   U_SRV_MIN_LOAD_REMOTE = min_loadavg_remote;
 
                   u_put_unalignedp32(&U_SRV_MIN_LOAD_REMOTE_IP, min_loadavg_remote_ip);
@@ -2263,7 +2263,7 @@ void UServer_Base::init()
       U_ERROR("Run as server with local address '%v:%u' failed", x.rep, port);
       }
 
-   U_SRV_LOG("TCP SO_REUSEPORT status is: %susing", (USocket::tcp_reuseport ? "" : "NOT "));
+   U_SRV_LOG("TCP SO_REUSEPORT status is: %susing", (USocket::breuseport ? "" : "NOT "));
 
    // get name host
 
@@ -2929,6 +2929,9 @@ int UServer_Base::handlerRead()
    UClientImage_Base* lClientIndex = pClientImage;
 #endif
    int cround = 0;
+#ifndef U_LOG_DISABLE
+   uint32_t u_srv_tot_connection;
+#endif
 #ifdef DEBUG
    CLIENT_ADDRESS_LEN = 0;
    uint32_t numc, nothing = 0;
@@ -3142,9 +3145,10 @@ try_accept:
 #endif
 
 #ifndef U_LOG_DISABLE
-   U_SRV_TOT_CONNECTION++;
+   u_srv_tot_connection = U_SRV_TOT_CONNECTION+1;
+                          U_SRV_TOT_CONNECTION = u_srv_tot_connection;
 
-   U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", U_SRV_TOT_CONNECTION)
+   U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", u_srv_tot_connection)
 #endif
 
    ++UNotifier::num_connection;

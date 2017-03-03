@@ -212,9 +212,17 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 
    U_INTERNAL_ASSERT_EQUALS(u_isIPAddr(bIPv6, U_STRING_TO_PARAM(strHostName)), false)
 
-   if (strHostName.equal(pcNewHostName) &&
+   if (strHostName                      &&
+       strHostName.equal(pcNewHostName) &&
        U_ipaddress_HostNameUnresolved(this) == false)
       {
+      U_RETURN(true);
+      }
+
+   if (pcNewHostName.equal(U_CONSTANT_TO_PARAM("localhost")))
+      {
+      setLocalHost(bIPv6);
+
       U_RETURN(true);
       }
 
@@ -732,7 +740,6 @@ bool UIPAllow::parseMask(const UString& _spec)
 
 #  if __BYTE_ORDER == __LITTLE_ENDIAN
       // -------------------------------------------------------------------
-      //
       // -------------------------------------------------------------------
 #  else
       // -------------------------------------------------------------------

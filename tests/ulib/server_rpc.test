@@ -10,23 +10,25 @@ rm -rf err/server_rpc.err \
 		 trace.*server*.[0-9]* object.*server*.[0-9]* stack.*server*.[0-9]*
 
 #UTRACE="0 50M 0"
+#UTRACE_SIGNAL="0 10M 0"
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
+ export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
 
 mv err/server.err err/server_old.err
 
-#STRACE=$TRUSS
-start_prg_background server ../../src/ulib/net/server/plugin/.libs rpc server_rpc.cfg
-$SLEEP
+prepare_usp
 
 check_for_netcat
-$SLEEP
-send_req $NCAT localhost 8080 inp/rpc_request server_rpc 3
 
-$SLEEP
+#STRACE=$TRUSS
+start_prg_background server ../../src/ulib/net/server/plugin/.libs rpc server_rpc.cfg
 
-kill_prg test_server TERM
+wait_server_ready localhost 8080
+
+send_req $NCAT localhost 8080 inp/rpc_request server_rpc 3 kill
+
+kill_server test_server
 
 mv err/server.err		 err/server_rpc.err
 mv err/server_old.err err/server.err

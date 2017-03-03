@@ -476,8 +476,8 @@ public:
    T*& at(uint32_t pos)       __pure { return (T*&) UVector<void*>::at(pos); }
    T*  at(uint32_t pos) const __pure { return (T*)  UVector<void*>::at(pos); }
 
-   __pure T*& operator[](uint32_t pos)       { return at(pos); }
-          T*  operator[](uint32_t pos) const { return at(pos); }
+   T*& operator[](uint32_t pos) __pure { return at(pos); }
+   T*  operator[](uint32_t pos) const  { return at(pos); }
 
    uint32_t find(void* elem) { return UVector<void*>::find(elem); }
 

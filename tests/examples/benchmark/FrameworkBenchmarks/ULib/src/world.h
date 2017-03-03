@@ -55,7 +55,7 @@ public:
 #endif
 
 private:
-   World& operator=(const World&) { return *this; }
+	U_DISALLOW_ASSIGN(World)
 };
 
 // ORM TEMPLATE SPECIALIZATIONS

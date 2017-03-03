@@ -8,10 +8,10 @@
 
 start_msg web_server_ssl
 
-(cd benchmark; rm -f db; creat_link FrameworkBenchmarks/ULib/db  db; sync)
-(cd ..;        rm -f db; creat_link examples/benchmark/db		  db; sync)
-                         creat_link				benchmark/db        db
-								 creat_link				benchmark/libraries libraries
+(cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db db; sync)
+(cd ..;        rm -rf db; creat_link examples/benchmark/db		  db; sync)
+                          creat_link			 benchmark/db       db
+								  creat_link			 benchmark/libraries libraries
 
 DOC_ROOT=docroot
 
@@ -22,9 +22,10 @@ rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/*.memusage.* /tm
       $DOC_ROOT/trace.*userver_ssl*.[0-9]* $DOC_ROOT/object.*userver_ssl*.[0-9]* $DOC_ROOT/stack.*userver_ssl*.[0-9]* $DOC_ROOT/mempool.*userver_ssl*.[0-9]*
 
 #UTRACE="0 110M 0"
+#UTRACE_SIGNAL="0 50M 0"
 #UOBJDUMP="0 10M 500"
 #USIMERR="error.sim"
- export UTRACE UOBJDUMP USIMERR
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
 
 if [ "$TERM" = "msys" ]; then
    export TMPDIR="c:/tmp"
@@ -36,91 +37,64 @@ compile_usp
 
 check_for_netcat
 
+mkdir -p	/var/log/httpd 2>/dev/null
+
+# function : upload_test
+upload_test() {
+
+rm    -rf      uploads
+mkdir -p		   uploads
+$CHOWN nobody: uploads docroot 2>/dev/null
+chmod 777      uploads
+
+$CURL -m 5 -s -k -F 'file=@vuoto.txt'											-F "name=prova" https://$1/cgi-bin/uploader.sh     >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+$CURL -m 5 -s -k -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" https://$1/cgi-bin/uploader.sh     >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+$CURL -m 5 -s -k -T web_server.test                                                  https://$1/uploads/web_server.test >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+
+if [ $? -ne 0 ]; then
+	kill_server userver_ssl
+	exit 1
+fi
+}
+
+# function : start_test
+start_test() {
+
+#STRACE=$TRUSS
+start_prg_background userver_ssl -c inp/webserver.cfg 
+
+wait_server_ready localhost 4443
+
 CAPATH="../ulib/CA/CApath"
 CACERT="../ulib/CA/username.crt"
 USER_KEY="../ulib/CA/username.key"
 LCMD="$OPENSSL s_client -quiet -cert $CACERT -key $USER_KEY -pass pass:caciucco -CApath $CAPATH -connect"
 LCMD1="$LCMD localhost:4443"
 
-# function : start_test
-start_test() {
-
-$SLEEP
-
-#STRACE=$TRUSS
- start_prg_background userver_ssl -c inp/webserver.cfg 
-
-for i in 1 2 3 4 5; do
-	$NC -c localhost 4443 </dev/null 2>/dev/null
-	if [ $? -eq 0 ]; then
-		break
-	fi
-	$SLEEP
-done
-
 #LS=tst_90
 #LS=`ls inp/http/and`
 #mkdir -p /tmp/web_server
-#for i in $LS
-#do
-#TIMEOUT 10 $LCMD1 <inp/http/and/$i >/tmp/web_server/$i
+#for i in $LS; do
+# TIMEOUT 5 $LCMD1 <inp/http/and/$i >/tmp/web_server/$i
 #done
 
-#TIMEOUT 10 $LCMD 10.30.1.111:4443 <inp/http/all6.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+#TIMEOUT 5 $LCMD 10.30.1.111:4443 <inp/http/all6.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 #exit 0
-#TIMEOUT 10 $LCMD1					  <inp/http/all5.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+#TIMEOUT 5 $LCMD1					    <inp/http/all5.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 #return
 
 LS=`ls inp/http/close`
 for i in $LS; do
-	TIMEOUT 10 $LCMD1 <inp/http/close/$i >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-   EXIT_VALUE=$?
-   if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
-     kill_prg userver_ssl TERM
-  	  exit 1
-   fi
+	TIMEOUT 2 $LCMD1 <inp/http/close/$i >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 done
 
- TIMEOUT 10 $LCMD1 <inp/http/all.inp  >>out/web_server_ssl.out 2>>err/web_server_ssl.err
- EXIT_VALUE=$?
- if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
-   kill_prg userver_ssl TERM
-	exit 1
- fi
- TIMEOUT 10 $LCMD1 <inp/http/all1.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
- EXIT_VALUE=$?
- if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
-   kill_prg userver_ssl TERM
-	exit 1
- fi
- TIMEOUT 10  $LCMD1 <inp/http/post.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
- EXIT_VALUE=$?
- if [ $EXIT_VALUE -ne 0 ] && [ $EXIT_VALUE -ne 124 ]; then
-   kill_prg userver_ssl TERM
-	exit 1
- fi
+ TIMEOUT 5 $LCMD1 <inp/http/all.inp  >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ TIMEOUT 5 $LCMD1 <inp/http/all1.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
+ TIMEOUT 5 $LCMD1 <inp/http/post.inp >>out/web_server_ssl.out 2>>err/web_server_ssl.err
 
-# test upload
+upload_test $2:4443
 
-rm    -rf      uploads
-mkdir -p		   uploads
-$CHOWN nobody: uploads 2>/dev/null
-chmod 777      uploads
-
-TIMEOUT 10 $CURL -s -F 'file=@vuoto.txt'                                -F "name=prova" -k https://localhost:4443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-TIMEOUT 10 $CURL -s -F 'file=@inp/xml2txt/operazione.xml;type=text/xml' -F "name=prova" -k https://localhost:4443/cgi-bin/uploader.sh >>out/web_server_ssl.out 2>>err/web_server_ssl.err
-
- kill_prg userver_ssl TERM
- if [ $? -ne 0 ]; then
-	for i in 1 2 3 4 5; do
-		pgrep userver_ssl >/dev/null 2>/dev/null
-		if [ $? -ne 0 ]; then
-			return
-		fi
-		$SLEEP
-	done
-	exit 1
- fi
+kill_server userver_ssl
 }
 
 # function : creat_config
@@ -202,20 +176,25 @@ pkill userver_ssl 2>/dev/null
 
 # webserver_ssl0
  creat_config 0 
- start_test
-#exit 0
+ start_test $NCAT localhost
 # webserver_ssl1 - openssl s_client close the connection in pipeline...
 #creat_config 1 
 #start_test
 # webserver_ssl2
  creat_config 2 
- start_test
+ start_test $NCAT localhost
 # webserver_sslN
  creat_config N 2 
- start_test
+ start_test $NCAT localhost
+
+kill_server userver_ssl
 
 diff inp/xml2txt/operazione.xml uploads/operazione.xml
 RESULT=$?
+if [ "$RESULT" = "0" ]; then
+	diff web_server.test uploads/web_server.test
+	RESULT=$?
+fi
 
 mv err/userver_ssl.err err/web_server_ssl.err
 

@@ -94,7 +94,7 @@ int UTsaPlugIn::handlerRequest()
          {
          U_http_info.nResponseCode = HTTP_OK;
 
-         UHTTP::setResponse(*UString::str_ctype_tsa, &body);
+         UHTTP::setResponse(true, *UString::str_ctype_tsa, &body);
          }
       else
          {

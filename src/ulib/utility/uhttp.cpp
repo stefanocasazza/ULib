@@ -3953,8 +3953,9 @@ int UHTTP::manageRequest()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::manageRequest()")
 
-   U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
+   U_INTERNAL_DUMP("U_ClientImage_request = %d %B ext = %V", U_ClientImage_request, U_ClientImage_request, ext->rep)
 
+   U_ASSERT(ext->empty())
    U_ASSERT(UClientImage_Base::isRequestNotFound())
 
    // manage alias uri
@@ -4359,25 +4360,32 @@ file_exist_and_need_to_be_processed: // NB: if we can't service the content of f
       if (UClientImage_Base::isRequestAlreadyProcessed()) U_RETURN(U_PLUGIN_HANDLER_FINISHED); // => 5)
 
 need_to_be_processed:
+      U_INTERNAL_DUMP("ext = %V", ext->rep)
 
-#  ifdef U_HTTP_STRICT_TRANSPORT_SECURITY // check if the uri requested use HTTP Strict Transport Security to force client to use secure connections only
+      // check if the uri requested use HTTP Strict Transport Security to force client to use secure connections only
+
+#  ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
       if (isUriRequestStrictTransportSecurity())
          {
+         ext->clear();
+
          // NB: we are in cleartext at the moment, prevent further execution and output
 
-         uint32_t redirect_sz;
-         char redirect_url[32 * 1024];
+         UString redirect_url(U_CAPACITY);
+
+         redirect_url.snprintf(U_CONSTANT_TO_PARAM("%s:/%v"), U_http_websocket_len ? "wss" : "https", UServer_Base::getIPAddress().rep);
+
+         if (global_alias) (void) redirect_url.append(*global_alias);
+         else              (void) redirect_url.append(U_HTTP_URI_QUERY_TO_PARAM);    
 
          // The Strict-Transport-Security header is ignored by the browser when your site is accessed using HTTP;
          // this is because an attacker may intercept HTTP connections and inject the header or remove it.
          // When your site is accessed over HTTPS with no certificate errors, the browser knows your site is HTTPS
          // capable and will honor the Strict-Transport-Security header
 
-         setRedirectResponse(NO_BODY, (const char*)redirect_url,
-                             (redirect_sz = u__snprintf(redirect_url, sizeof(redirect_url), U_CONSTANT_TO_PARAM("%s:/%v%.*s"), U_http_websocket_len ? "wss" : "https",
-                                                        UServer_Base::getIPAddress().rep, U_HTTP_URI_QUERY_TO_TRACE)));
+         setRedirectResponse(NO_BODY, U_STRING_TO_PARAM(redirect_url));
 
-         U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %.*S", redirect_sz, redirect_url);
+         U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %V", redirect_url.rep);
 
          U_RETURN(U_PLUGIN_HANDLER_FINISHED);
          }
@@ -6487,9 +6495,9 @@ void UHTTP::handlerResponse()
    U_INTERNAL_DUMP("UClientImage_Base::body(%u) = %V",     UClientImage_Base::body->size(),    UClientImage_Base::body->rep)
 }
 
-void UHTTP::setResponse(const UString& content_type, UString* pbody)
+void UHTTP::setResponse(bool btype, const UString& content_type, UString* pbody)
 {
-   U_TRACE(0, "UHTTP::setResponse(%V,%p)", content_type.rep, pbody)
+   U_TRACE(0, "UHTTP::setResponse(%b,%V,%p)", btype, content_type.rep, pbody)
 
    U_INTERNAL_ASSERT_POINTER(UClientImage_Base::body)
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
@@ -6502,11 +6510,16 @@ void UHTTP::setResponse(const UString& content_type, UString* pbody)
    char* ptr   = start;
    uint32_t sz = content_type.size();
 
-   u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
-   u_put_unalignedp32(ptr+8,  U_MULTICHAR_CONSTANT32('T','y','p','e'));
-   u_put_unalignedp16(ptr+12, U_MULTICHAR_CONSTANT16(':',' '));
+   U_INTERNAL_ASSERT_RANGE(1,sz,U_CAPACITY)
 
-   ptr += U_CONSTANT_SIZE("Content-Type: ");
+   if (btype)
+      {
+      u_put_unalignedp64(ptr,    U_MULTICHAR_CONSTANT64('C','o','n','t','e','n','t','-'));
+      u_put_unalignedp32(ptr+8,  U_MULTICHAR_CONSTANT32('T','y','p','e'));
+      u_put_unalignedp16(ptr+12, U_MULTICHAR_CONSTANT16(':',' '));
+
+      ptr += U_CONSTANT_SIZE("Content-Type: ");
+      }
 
    U_MEMCPY(ptr, content_type.data(), sz);
 
@@ -6577,7 +6590,7 @@ end:
  * The requested resource resides temporarily under a different URL. Since the redirection may be altered on occasion,
  * the client should continue to use the Request-URI for future requests. The URL must be given by the Location field
  * in the response. Unless it was a HEAD request, the Entity-Body of the response should contain a short note with a
- * hyperlink to the new URI(s).
+ * hyperlink to the new URI(s)
  * ------------------------------------------------------------------------------------------------------------------
  *
  * HTTP/1.1
@@ -6588,7 +6601,7 @@ end:
  * the client SHOULD continue to use the Request-URI for future requests. This response is only cacheable if indicated
  * by a Cache-Control or Expires header field. The temporary URI SHOULD be given by the Location field in the response.
  * Unless the request method was HEAD, the entity of the response SHOULD contain a short hypertext note with a hyperlink
- * to the new URI(s).
+ * to the new URI(s)
  *
  * 307 Temporary Redirect
  *
@@ -6597,7 +6610,7 @@ end:
  * a Cache-Control or Expires header field. The temporary URI SHOULD be given by the Location field in the response. Unless
  * the request method was HEAD, the entity of the response SHOULD contain a short hypertext note with a hyperlink to the new
  * URI(s), since many pre-HTTP/1.1 user agents do not understand the 307 status. Therefore, the note SHOULD contain the
- * information necessary for a user to repeat the original request on the new URI.
+ * information necessary for a user to repeat the original request on the new URI
  * ------------------------------------------------------------------------------------------------------------------
  *
  * http://sebastians-pamphlets.com/the-anatomy-of-http-redirects-301-302-307/
@@ -6617,7 +6630,7 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
 
    UString tmp(100U + len_location);
 
-   tmp.snprintf(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\n%s%.*s\r\n"),
+   tmp.snprintf(U_CONSTANT_TO_PARAM("%s%.*s\r\n"),
                      ((mode & REFRESH)                         != 0 ||
                       (mode & NETWORK_AUTHENTICATION_REQUIRED) != 0
                            ? "Refresh: 1; url="
@@ -6635,7 +6648,7 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
 #  endif
       }
 
-   if ((mode & NO_BODY) != 0) setResponse(tmp, 0);
+   if ((mode & NO_BODY) != 0) setResponse(false, tmp, 0);
    else
       {
       char msg[4096];
@@ -6650,15 +6663,18 @@ void UHTTP::setRedirectResponse(int mode, const char* ptr_location, uint32_t len
          len = u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("The document has moved <a href=\"%.*s\">here</a>"), len_location, ptr_location);
          }
 
-      UString body(500U + len_location);
       const char* status = getStatusDescription(&sz);
+      UString body(500U + len_location), content_type(U_CAPACITY);
 
       body.snprintf(U_CONSTANT_TO_PARAM(U_STR_FMR_BODY),
                     U_http_info.nResponseCode, sz, status,
                                                sz, status,
                     len, msg);
 
-      setResponse(tmp, &body);
+      (void) content_type.assign(U_CONSTANT_TO_PARAM(U_CTYPE_HTML "\r\n"));
+      (void) content_type.append(tmp);
+
+      setResponse(true, content_type, &body);
       }
 }
 
@@ -6722,7 +6738,7 @@ void UHTTP::setErrorResponse(const UString& content_type, int code, const char* 
          }
       }
 
-   setResponse(content_type, &body);
+   setResponse(true, content_type, &body);
 }
 
 void UHTTP::setUnAuthorized()

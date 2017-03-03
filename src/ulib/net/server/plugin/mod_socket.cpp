@@ -178,10 +178,9 @@ handle_data:
 
       // Send server-side closing handshake
 
-      if (UServer_Base::csocket->isOpen())
+      if (UServer_Base::csocket->isOpen() &&
+          UWebSocket::sendClose())
          {
-         (void) UWebSocket::sendClose();
-
          UClientImage_Base::close();
          }
 

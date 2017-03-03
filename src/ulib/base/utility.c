@@ -947,7 +947,7 @@ int u_get_num_cpu(void)
       u_num_cpu = sysconf(_SC_NPROCESSORS_ONLN);
 #  elif defined(_SC_NPROCESSORS_CONF)
       u_num_cpu = sysconf(_SC_NPROCESSORS_CONF);
-#  else
+#  elif defined(U_LINUX)
       FILE* fp = fopen("/sys/devices/system/cpu/present", "r");
 
       if (fp)
@@ -1089,16 +1089,29 @@ void u_switch_to_realtime_priority(void)
 
 void u_get_memusage(unsigned long* vsz, unsigned long* rss)
 {
-#ifndef _MSWINDOWS_
-   FILE* fp = fopen("/proc/self/stat", "r");
+#ifdef U_LINUX
+   static int fd_stat;
+
+   char* p;
+   char* field[256];
+   char buffer[4096];
+   ssize_t bytes_read;
 
    U_INTERNAL_TRACE("u_get_memusage(%p,%p)", vsz, rss)
 
-   if (fp)
+   if (fd_stat == 0) fd_stat = open("/proc/self/stat", O_RDONLY);
+
+   U_INTERNAL_ASSERT_DIFFERS(fd_stat, -1)
+
+   bytes_read = pread(fd_stat, buffer, sizeof(buffer), 0);
+
+   if (bytes_read > 0)
       {
+      U_INTERNAL_ASSERT_RANGE(1,bytes_read,(int)sizeof(buffer))
+
       /**
        * The fields, in order, with their proper scanf(3) format specifiers, are:
-       * -----------------------------------------------------------------------------------------------------------------------------
+       *
        * pid %d          The process ID.
        * comm %s         The filename of the executable, in parentheses.  This is visible whether or not the executable is swapped out.
        * state %c        R is running, S is sleeping, D is waiting, Z is zombie, T is traced or stopped (on a signal), and W is paging.
@@ -1121,26 +1134,32 @@ void u_get_memusage(unsigned long* vsz, unsigned long* rss)
        * num_threads %ld Number of threads in this process.
        * itrealvalue %ld The time in jiffies before the next SIGALRM is sent to the process due to an interval timer.
        * starttime %llu  The time in jiffies the process started after system boot.
-       * -----------------------------------------------------------------------------------------------------------------------------
-       * vsize %lu Virtual memory size in bytes.
-       * rss %ld   Resident Set Size: number of pages the process has in real memory.
-       *           This is just the pages which count toward text, data, or stack space.
-       *           This does not include pages which have not been demand-loaded in, or which are swapped out
-       * -----------------------------------------------------------------------------------------------------------------------------
+       *
+       * (22) vsize %lu Virtual memory size in bytes.
+       * (23)   rss %ld Resident Set Size: number of pages the process has in real memory.
+       *                This is just the pages which count toward text, data, or stack space.
+       *                This does not include pages which have not been demand-loaded in, or which are swapped out
+       * Ex:
+       * 1890 (cat) R 1052 1890 1052 34819 1890 4194304 79  0  0  0  0  0  0  0 20  0  1  0 731066 4530176 187
+       *    0     1 2    3    4    5     6    7       8  9 10 11 12 13 14 15 16 17 18 19 20     21      22  23
+       * 18446744073709551615 94751693697024 94751693749876 140733378884480 0 0 0 0 0 0 0 0 0 17 3 0 0 0 0 0
+       * 94751695849896 94751695851712 94751700852736 140733378890964 140733378890984 140733378890984 140733378895855 0
        */
 
-      (void) fscanf(fp, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %lu %lu", vsz, rss);
+      (void) u_split(buffer, bytes_read, field, 0);
 
-      (void) fclose(fp);
+         p = field[22];
+      *vsz = u_strtoul(p, p+u__strlen(p,__PRETTY_FUNCTION__));
 
-      *rss *= PAGESIZE;
+         p = field[23];
+      *rss = u_strtoul(p, p+u__strlen(p,__PRETTY_FUNCTION__)) * PAGESIZE;
       }
 #endif
 }
 
 uint32_t u_get_uptime(void)
 {
-#ifndef _MSWINDOWS_
+#ifdef U_LINUX
    FILE* fp = fopen("/proc/uptime", "r");
 
    U_INTERNAL_TRACE("u_get_uptime()")
@@ -1172,20 +1191,27 @@ uint8_t u_get_loadavg(void)
     * that was most recently created on the system
     */
 
-#ifndef _MSWINDOWS_
-   FILE* fp = fopen("/proc/loadavg", "r");
+#ifdef U_LINUX
+   static int fd_loadavg;
+
+   char buffer[8];
+   ssize_t bytes_read;
 
    U_INTERNAL_TRACE("u_get_loadavg()")
 
-   if (fp)
+   if (fd_loadavg == 0) fd_loadavg = open("/proc/loadavg", O_RDONLY);
+
+   U_INTERNAL_ASSERT_DIFFERS(fd_loadavg, -1)
+
+   bytes_read = pread(fd_loadavg, buffer, sizeof(buffer), 0);
+
+   if (bytes_read > 0)
       {
-      char buffer[8];
+      U_INTERNAL_ASSERT_RANGE(1,bytes_read,(int)sizeof(buffer))
 
-      (void) fscanf(fp, "%s", buffer);
-
-      (void) fclose(fp);
-
+#  ifndef U_COVERITY_FALSE_POSITIVE
       if (buffer[1] == '.') return (((buffer[0]-'0') * 10) + (buffer[2]-'0') + (buffer[3] > '5')); // 0.19 => 2, 4.56 => 46, ...
+#  endif
       }
 #endif
 
@@ -1559,7 +1585,7 @@ uint32_t u_split(char* restrict s, uint32_t n, char** restrict argv, const char*
 
          *s++ = '\0';
 
-         U_INTERNAL_PRINT("u_split() = %s", p)
+         U_INTERNAL_PRINT("u_split(%u) = %s", argv-ptr-1, p)
          }
       }
 
@@ -2189,7 +2215,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
 
       result_len = u__strlen(result, __PRETTY_FUNCTION__);
 
-      if (result[result_len - 1] != PATH_SEPARATOR)
+      if (result[result_len-1] != PATH_SEPARATOR)
          {
          result[result_len++] = PATH_SEPARATOR;
          result[result_len]   = '\0';
@@ -2204,7 +2230,7 @@ static inline void make_absolute(char* restrict result, const char* restrict dot
       result_len = 2;
       }
 
-   u__strcpy(result + result_len, string);
+   u__strcpy(result+result_len, string);
 }
 
 /**

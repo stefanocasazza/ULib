@@ -95,6 +95,12 @@ void UTimer::insert(UEventTime* a)
    (item->alarm = a)->setTimeToExpire();
 
    item->insertEntry();
+
+#ifdef DEBUG
+   item = first;
+
+   for (uint32_t i = 0; item; ++i, item = item->next) U_INTERNAL_DUMP("item[%u] = %p", i, item)
+#endif
 }
 
 void UTimer::callHandlerTimeout()
@@ -254,6 +260,9 @@ void UTimer::clear()
 
    U_INTERNAL_DUMP("mode = %d first = %p pool = %p", mode, first, pool)
 
+   UTimer* next;
+   UTimer* item;
+
    if (mode != NOSIGNAL)
       {
       UInterrupt::timerval.it_value.tv_sec  =
@@ -264,24 +273,36 @@ void UTimer::clear()
 
    if (first)
       {
-      for (UTimer* item = first; item; item = item->next)
-         {
+      next = first;
+             first = 0;
+
+      do {
+         item = next;
+                next = item->next;
+
+         U_INTERNAL_DUMP("item->alarm = %p next = %p", item->alarm, next)
+
          delete item->alarm;
          delete item;
          }
-
-      first = 0;
+      while (next);
       }
 
    if (pool)
       {
-      for (UTimer* item = pool; item; item = item->next)
-         {
+      next = pool;
+             pool = 0;
+
+      do {
+         item = next;
+                next = item->next;
+
+         U_INTERNAL_DUMP("item->alarm = %p next = %p", item->alarm, next)
+
          delete item->alarm;
          delete item;
          }
-
-      pool = 0;
+      while (next);
       }
 }
 

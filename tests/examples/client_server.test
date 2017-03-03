@@ -43,14 +43,14 @@ EOF
 
 DIR_CMD="../../examples/simple_client_server"
 
-pkill -9 test_
+start_prg_background server inp/server.cf
 
-start_prg_background server											  inp/server.cf
-start_prg 				client --log client.log --max_length 256 inp/client.cf
+wait_server_ready localhost 10001
+
+start_prg client --log client.log --max_length 256 inp/client.cf
 $SLEEP
-kill_prg server TERM
+kill_proc $PID
 $SLEEP
-$SYNC
 cat client.log server.log > out/client_server.out
 
 # Test against expected output

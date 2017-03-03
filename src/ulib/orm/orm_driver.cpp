@@ -110,6 +110,8 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
    U_TRACE(0, "UOrmDriver::loadDriver(%V,%V)", dir.rep, driver_list.rep)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
+   U_INTERNAL_DUMP("vdriver = %p", vdriver)
+
    if (vdriver) U_RETURN(true);
 
    if (dir) setDriverDirectory(dir);

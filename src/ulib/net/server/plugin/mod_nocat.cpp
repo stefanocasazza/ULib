@@ -883,7 +883,10 @@ result:
 
 #  ifdef DEBUG
       if (nfds < FD_SETSIZE) U_ASSERT_EQUALS(pmask->count(), 0)
-      else                   U_ASSERT_EQUALS(pmask->count(), nfds-FD_SETSIZE+1)
+      else
+         {
+         U_DEBUG("pmask->count() = %u nfds = %u", pmask->count(), nfds);
+         }
 #  endif
 
       for (i = 0; i < nfds; ++i)

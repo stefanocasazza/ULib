@@ -458,9 +458,10 @@ void UClientImage_Base::handlerDelete()
       }
 #endif
 
-   U_SRV_TOT_CONNECTION--;
+   uint32_t u_srv_tot_connection = U_SRV_TOT_CONNECTION-1;
+                                   U_SRV_TOT_CONNECTION = u_srv_tot_connection;
 
-   U_INTERNAL_DUMP("tot_connection = %d", U_SRV_TOT_CONNECTION)
+   U_INTERNAL_DUMP("U_SRV_TOT_CONNECTION = %u", u_srv_tot_connection)
 
 #ifdef U_CLASSIC_SUPPORT
    if (UServer_Base::isClassic()) U_EXIT(0);
@@ -1095,6 +1096,8 @@ loop:
 pipeline:
       sz = rbuffer->size();
 
+      U_INTERNAL_DUMP("size_request = %u sz = %u rstart = %u", size_request, sz, rstart)
+
       U_ASSERT_MINOR(rstart, sz)
       U_INTERNAL_ASSERT_MAJOR(rstart, 0)
       U_INTERNAL_ASSERT_EQUALS(request->same(*rbuffer), false)
@@ -1108,8 +1111,6 @@ pipeline:
 
          U_INTERNAL_DUMP("U_ClientImage_close = %b U_ClientImage_state = %d %B",
                           U_ClientImage_close,     U_ClientImage_state, U_ClientImage_state)
-
-         U_INTERNAL_ASSERT_EQUALS(U_ClientImage_pipeline, false)
 
          if (callerIsValidRequestExt(request->data(), sz) == false) U_ClientImage_data_missing = true; // partial valid (not complete)
          }
@@ -1125,7 +1126,7 @@ pipeline:
 
    if (U_ClientImage_data_missing)
       {
-dmiss:
+data_missing:
       U_INTERNAL_DUMP("U_ClientImage_parallelization = %d U_http_version = %C", U_ClientImage_parallelization, U_http_version)
 
       U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
@@ -1139,13 +1140,13 @@ dmiss:
 
             goto death;
             }
-
-         goto loop;
          }
 
       U_ClientImage_data_missing = false;
 
       U_INTERNAL_ASSERT_EQUALS(data_pending, 0)
+
+      if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) goto loop;
 
       U_NEW(UString, data_pending, UString((void*)U_STRING_TO_PARAM(*request)));
 
@@ -1164,7 +1165,7 @@ dmiss:
 
       if (sz)
          {
-         if (sz == 1) goto dmiss; // partial valid (not complete)
+         if (sz == 1) goto data_missing; // partial valid (not complete)
 
          U_INTERNAL_ASSERT_EQUALS(sz, 2)
 
@@ -1178,7 +1179,8 @@ dmiss:
       }
 #endif
 
-   size_request = U_ClientImage_request = 0;
+            size_request =
+   U_ClientImage_request = 0;
 
    body->clear();
 
@@ -1198,12 +1200,25 @@ dmiss:
       goto error;
       }
 
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_data_missing = %b size_request = %u rstart = %u",
-                    U_ClientImage_pipeline,     U_ClientImage_data_missing,     size_request,     rstart)
-
    U_INTERNAL_ASSERT(socket->isOpen())
 
-   if (U_ClientImage_data_missing) goto dmiss;
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b U_ClientImage_parallelization = %d U_ClientImage_data_missing = %b",
+                    U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_data_missing)
+
+   if (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT)
+      {
+      U_ASSERT(wbuffer->empty())
+      U_ASSERT_EQUALS(isRequestNeedProcessing(), false)
+      U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
+
+      endRequest();
+
+      U_RETURN(U_NOTIFIER_DELETE);
+      }
+
+   if (U_ClientImage_data_missing) goto data_missing;
+
+   U_INTERNAL_DUMP("size_request = %u", size_request)
 
    if (size_request)
       {
@@ -1217,79 +1232,7 @@ next:
 #  endif
       sz = rbuffer->size();
 
-      if (U_ClientImage_pipeline == false)
-         {
-         const char* ptr1 = rbuffer->c_pointer(size_request);
-
-         // NB: we check if we have a pipeline...
-
-         if (size_request < sz &&
-             callerIsValidMethod(ptr1))
-            {
-            U_INTERNAL_DUMP("U_http_info.nResponseCode = %u U_ClientImage_close = %b U_ClientImage_state = %d %B",
-                             U_http_info.nResponseCode,     U_ClientImage_close,     U_ClientImage_state, U_ClientImage_state)
-
-            U_ClientImage_pipeline = true;
-
-#        ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
-                 resto = (sz % size_request);
-            uint32_t n = (sz / size_request);
-
-            U_INTERNAL_DUMP("n = %u resto = %u size_request = %u", n, resto, size_request)
-
-            if (n > 1                                    &&
-                *wbuffer                                 &&
-                callerIsValidRequest(ptr1, size_request) &&
-                (resto == 0 || callerIsValidMethod(rbuffer->c_pointer(sz-resto))))
-               {
-               U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
-
-               const char* ptr = rbuffer->data();
-               const char* end = ptr + sz;
-
-               while (true)
-                  {
-                  if (memcmp(ptr, ptr1, size_request) != 0) break;
-
-                  ptr1 += size_request;
-
-                  if (ptr1 >= end)
-                     {
-                     nrequest = n;
-
-                     goto check;
-                     }
-
-                  ptr += size_request;
-                  }
-
-               U_INTERNAL_ASSERT_MINOR(ptr1, end)
-
-               nrequest = (rbuffer->distance(ptr1) / size_request);
-
-               if (nrequest == 1) nrequest = 0;
-check:
-               U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
-
-               U_INTERNAL_ASSERT(nrequest <= n)
-               U_INTERNAL_ASSERT_DIFFERS(nrequest, 1)
-
-               if (resto ||
-                   nrequest != n)
-                  {
-                  *request = rbuffer->substr((rstart = (nrequest * size_request)));
-                  }
-
-               U_INTERNAL_DUMP("request(%u) = %V", request->size(), request->rep)
-
-               goto write;
-               }
-#        endif
-
-            *request = rbuffer->substr(0U, (rstart = size_request));
-            }
-         }
-      else
+      if (U_ClientImage_pipeline)
          {
          uint32_t new_rstart = rstart + size_request;
 
@@ -1304,10 +1247,83 @@ check:
                                        rstart = new_rstart;
             }
          }
+      else if (size_request < sz) // we check if we have a pipeline...
+         {
+         const char* ptr1 = rbuffer->c_pointer(size_request);
+
+         if (UNLIKELY(u__isspace(*ptr1))) while (u__isspace(*++ptr1)) {}
+
+         if (ptr1 < rbuffer->pend())
+            {
+            U_ClientImage_pipeline = true;
+
+#        ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
+            U_INTERNAL_DUMP("U_http_info.nResponseCode = %u U_ClientImage_close = %b U_ClientImage_state = %d %B",
+                             U_http_info.nResponseCode,     U_ClientImage_close,     U_ClientImage_state, U_ClientImage_state)
+
+            if (callerIsValidMethod(ptr1))
+               {
+                    resto = (sz % size_request);
+               uint32_t n = (sz / size_request);
+
+               U_INTERNAL_DUMP("n = %u resto = %u size_request = %u", n, resto, size_request)
+
+               if (n > 1                                    &&
+                   *wbuffer                                 &&
+                   callerIsValidRequest(ptr1, size_request) &&
+                   (resto == 0 || callerIsValidMethod(rbuffer->c_pointer(sz-resto))))
+                  {
+                  U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
+
+                  const char* ptr = rbuffer->data();
+                  const char* end = ptr + sz;
+
+                  while (true)
+                     {
+                     if (memcmp(ptr, ptr1, size_request) != 0) break;
+
+                     ptr1 += size_request;
+
+                     if (ptr1 >= end)
+                        {
+                        nrequest = n;
+
+                        goto check;
+                        }
+
+                     ptr += size_request;
+                     }
+
+                  U_INTERNAL_ASSERT_MINOR(ptr1, end)
+
+                  nrequest = (rbuffer->distance(ptr1) / size_request);
+
+                  if (nrequest == 1) nrequest = 0;
+
+check:            U_INTERNAL_DUMP("nrequest = %u resto = %u", nrequest, resto)
+
+                  U_INTERNAL_ASSERT(nrequest <= n)
+                  U_INTERNAL_ASSERT_DIFFERS(nrequest, 1)
+
+                  if (resto ||
+                      nrequest != n)
+                     {
+                     *request = rbuffer->substr((rstart = (nrequest * size_request)));
+                     }
+
+                  U_INTERNAL_DUMP("request(%u) = %V", request->size(), request->rep)
+
+                  goto write;
+                  }
+               }
+#        endif
+            }
+
+         *request = rbuffer->substr(0U, (rstart = size_request));
+         }
       }
 
-   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u request->size() = %u",
-                    U_ClientImage_pipeline,     size_request,     request->size())
+   U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u request->size() = %u", U_ClientImage_pipeline, size_request, request->size())
 
    if (isRequestNeedProcessing())
       {
@@ -1358,7 +1374,7 @@ write:
 
                endRequest();
 
-               goto dmiss;
+               goto data_missing;
                }
 
             if (U_ClientImage_pipeline &&
@@ -1705,8 +1721,6 @@ void UClientImage_Base::resetPipeline()
                     U_ClientImage_pipeline,     U_ClientImage_parallelization,     U_ClientImage_request_is_cached,     U_ClientImage_close)
 
    U_INTERNAL_ASSERT(U_ClientImage_pipeline)
-   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
-
    U_INTERNAL_ASSERT(request->same(*rbuffer) == false)
 
    U_ClientImage_pipeline = false;

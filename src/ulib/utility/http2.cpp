@@ -3416,8 +3416,6 @@ process_request:
                u_write_unalignedp32(ptr+5,pStream->id);
 
                if (USocketExt::write(UServer_Base::csocket, buffer, sizeof(buffer), 0) != sizeof(buffer)) goto err;
-
-               goto read_request; // wait for DATA frames
                }
 
             if (pStream->clength != pStream->body.size())

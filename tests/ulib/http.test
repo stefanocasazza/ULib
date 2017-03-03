@@ -13,16 +13,20 @@ start_msg http
 
 check_for_netcat
 
- NC_CMD1="$NC -l -w 6 $NC_ARG_LISTEN_PORT 9080"
-#NC_CMD2="$NC -l -w 6 $NC_ARG_LISTEN_PORT 9081"
+rm -f out/request.http
 
-$NC_CMD1 < inp/http/response.chunked > out/request.http &
+ncat_listen localhost 9080 inp/http/response.chunked out/request.http
 $SLEEP
+#netstat -tlp >>/tmp/netcat.err
+#STRACE="$TRUSS"
 start_prg http http://localhost:9080
+kill_netcat
 
-#$NC_CMD2 < inp/http/response.auth >> out/request.http &
+#ncat_listen localhost 9080 inp/http/response.auth out/request.http
 #$SLEEP
+#netstat -tlp >>/tmp/netcat.err
 #start_prg http http://localhost:9081
+#kill_netcat
 
 # Test against expected output
 test_output_diff http

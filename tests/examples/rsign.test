@@ -74,15 +74,6 @@ soap {
 }
 EOF
 
-DIR_CMD="../../examples/userver"
-
-$SLEEP
-start_prg_background userver_ssl -c inp/webserver.cfg 
-
-## ./RSIGN/RSIGN/request/run.sh > out/rsignclient.out
-
-INKEY=../ulib/CA/username.key
-
 cat <<EOF >inp/webclient.cfg
 uclient {
  PORT 443
@@ -97,14 +88,21 @@ uclient {
 }
 EOF
 
+DIR_CMD="../../examples/userver"
+
+start_prg_background userver_ssl -c inp/webserver.cfg 
+
+## ./RSIGN/RSIGN/request/run.sh > out/rsignclient.out
+
+wait_server_ready localhost 443
+
+INKEY=../ulib/CA/username.key
+
 DIR_CMD="../../examples/rsign"
 
-$SLEEP
-$SLEEP
 start_prg rsignclient -c inp/webclient.cfg -k $INKEY < inp/digest
  
-$SLEEP
-kill_prg userver_ssl TERM
+kill_server userver_ssl
 
 mv err/userver_ssl.err err/rsignserver.err
 

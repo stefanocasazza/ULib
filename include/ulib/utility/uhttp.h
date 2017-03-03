@@ -354,7 +354,7 @@ public:
    };
 
    static void setDynamicResponse();
-   static void setResponse(const UString& content_type, UString* pbody);
+   static void setResponse(bool btype, const UString& content_type, UString* pbody);
    static void setRedirectResponse(int mode, const char* ptr_location, uint32_t len_location);
    static void setErrorResponse(const UString& content_type, int code, const char* fmt, uint32_t fmt_size, bool flag);
 

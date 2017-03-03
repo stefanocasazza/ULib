@@ -88,18 +88,17 @@ EOF
 
 DIR_CMD="../../examples/userver"
 
-$SLEEP
-start_prg_background userver_ssl -c inp/webserver.cfg
-$SLEEP
-
 rm -f TSA/response/response*
+
+start_prg_background userver_ssl -c inp/webserver.cfg
+
+wait_server_ready localhost 443
 
 TIMEOUT 6 $LCMD <TSA/request/soap.req >TSA/response/soap.res 2>>err/userver_ssl.err
  tail -c +471 TSA/response/soap.res | cut -d'<' -f1 | $WINELOADER ../base/crypto_base64$SUFFIX -d > TSA/response/soap.tsr
 #tail -c +471 TSA/response/soap.res																					  > TSA/response/soap.tsr
 
-$SLEEP
-kill_prg userver_ssl TERM
+kill_server userver_ssl
 
 mv err/userver_ssl.err err/tsa_ssoap.err
 

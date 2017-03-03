@@ -19,7 +19,6 @@ rm -rf $DOC_ROOT/*log \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
-# ----------------------------------------------------------------
 # usage: openssl s_client args
 # ----------------------------------------------------------------
 # -host host    - use -connect instead
@@ -87,16 +86,12 @@ EOF
 
 DIR_CMD="../../examples/userver"
 
-# set -x
-
-pkill userver_tcp 2>/dev/null
-pkill userver_ssl 2>/dev/null
+rm -f TSA/response/response*
 
 #STRACE=$TRUSS
 start_prg_background userver_ssl -c inp/webserver.cfg
-$SLEEP
 
-rm -f TSA/response/response*
+wait_server_ready localhost 443
 
 #../../tmp/openssl/ssl/misc/tsget -h https://localhost:443/tsa -C TSA/request/cacert.pem TSA/request/tsq.req
 TIMEOUT 5 $LCMD <TSA/request/http.req >TSA/response/response 2>>err/userver_ssl.err
@@ -113,8 +108,7 @@ TIMEOUT 5 $LCMD <TSA/request/http.req >TSA/response/response 2>>err/tsa_https.er
 
 tail -c +155 TSA/response/response > TSA/response/response.tsr
 
-$SLEEP
-kill_prg userver_ssl TERM
+kill_server userver_ssl
 
 mv err/userver_ssl.err err/tsa_https.err
 

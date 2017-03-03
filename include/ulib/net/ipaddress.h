@@ -260,14 +260,14 @@ public:
    // Returns a (void*) to the address represented by UIPAddress.
    // This must be cast to (in_addr*) or to (in6_addr*) for use
 
-   void* get_in_addr() const { return (void*) (pcAddress.p + (iAddressType == AF_INET6 ? 12 : 0)); }
+   void* get_in_addr() const { return (void*)(pcAddress.p + (iAddressType == AF_INET6 ? 12 : 0)); }
 
    // Returns the address represented by UIPAddress
 
    in_addr_t getInAddr() const
       {
       union uuaddr {
-         void*      generic;
+         void* generic;
          in_addr_t* addr;
       };
 
@@ -288,7 +288,7 @@ public:
    static const char* getAddressString(uint32_t addr)
       {
       union uuaddr {
-         in_addr  addr;
+         in_addr addr;
          uint32_t generic;
       };
 
@@ -366,7 +366,7 @@ protected:
 
    void setAddress(const char* pcNewAddress, int iNewAddressLength);
 
-   private:
+private:
    friend class UHTTP;
    friend class USocket;
    friend class USocketExt;

@@ -44,7 +44,7 @@ public:
       loadDriver(backend, len, option);
       }
 
-   ~UOrmSession() __pure;
+   ~UOrmSession();
 
    // will be typecast into conn-specific type
 
@@ -204,7 +204,7 @@ public:
    // a column in a WHERE clause to specify a comparison value.
 
     UOrmStatement(UOrmSession& session, const char* query, uint32_t query_len);
-   ~UOrmStatement() __pure;
+   ~UOrmStatement();
 
    // Execute the statement
 
