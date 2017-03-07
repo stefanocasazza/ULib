@@ -521,7 +521,7 @@ public:
 #endif
 
 private:
-#if defined(ENABLE_MEMPOOL) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#ifdef ENABLE_MEMPOOL
    static void deallocate(void* ptr, uint32_t length);
 #else
    static void deallocate(void* ptr, uint32_t length)

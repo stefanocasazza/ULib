@@ -23,7 +23,7 @@
 #  include <ws2tcpip.h>
 #else
 #  include <ulib/net/unixsocket.h>
-#  ifndef __clang__
+#  ifdef U_LINUX
 U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #  endif
 #endif

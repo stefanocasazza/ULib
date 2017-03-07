@@ -102,21 +102,6 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_CRPWS])
 
-	AC_MSG_CHECKING(if you want to enable server check time between request for parallelization)
-	AC_ARG_ENABLE(check-time,
-				[  --enable-check-time       enable server check time between request for parallelization [[default=no]]])
-	if test -z "$enable_check_time"; then
-		if test "$enable_debug" = "yes"; then
-			enable_check_time="yes"
-		else
-			enable_check_time="no"
-		fi
-	fi
-	if test "$enable_check_time" = "yes"; then
-		AC_DEFINE(U_SERVER_CHECK_TIME_BETWEEN_REQUEST, 1, [enable server check time between request for parallelization])
-	fi
-	AC_MSG_RESULT([$enable_check_time])
-
 	AC_MSG_CHECKING(if you want to enable server captive portal mode)
 	AC_ARG_ENABLE(captive-portal,
 				[  --enable-captive-portal   enable server captive portal mode [[default=no]]])
@@ -224,6 +209,21 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 		AC_DEFINE(U_HTTP2_DISABLE, 1, [disable HTTP/2 support])
 	fi
 	AC_MSG_RESULT([$enable_http2])
+
+	AC_MSG_CHECKING(if you want to enable server check time between request for parallelization)
+	AC_ARG_ENABLE(check-time,
+				[  --enable-check-time       enable server check time between request for parallelization [[default=no]]])
+	if test -z "$enable_check_time"; then
+		if test "$enable_debug" = "yes" -a "$enable_http2" != "yes"; then
+			enable_check_time="yes"
+		else
+			enable_check_time="no"
+		fi
+	fi
+	if test "$enable_check_time" = "yes"; then
+		AC_DEFINE(U_SERVER_CHECK_TIME_BETWEEN_REQUEST, 1, [enable server check time between request for parallelization])
+	fi
+	AC_MSG_RESULT([$enable_check_time])
 
 	AC_MSG_CHECKING(if you want to enable server classic model support)
 	AC_ARG_ENABLE(classic,

@@ -1037,7 +1037,6 @@ enable_gcc_optimized
 enable_final
 enable_new_ldflags
 enable_CRPWS
-enable_check_time
 enable_captive_portal
 enable_thread_approach
 enable_HIS
@@ -1046,6 +1045,7 @@ enable_GSDS
 enable_HCRS
 enable_HPRS
 enable_http2
+enable_check_time
 enable_classic
 enable_throttling
 enable_alias
@@ -1780,7 +1780,6 @@ Optional Features:
   --enable-final            build size optimized apps (needs more amounts of memory) [default=yes]
   --enable-new-ldflags      enable the new linker flags (enable-new-dtags,as-needed,...) [default=yes]
   --enable-CRPWS            enable Client Response Partial Write Support [default=no]
-  --enable-check-time       enable server check time between request for parallelization [default=no]
   --enable-captive-portal   enable server captive portal mode [default=no]
   --enable-thread-approach  enable server thread approach support [default=no]
   --enable-HIS              enable HTTP Inotify Support [default=no]
@@ -1789,6 +1788,7 @@ Optional Features:
   --enable-HCRS             enable Cache Request Support [default=no]
   --enable-HPRS             enable Homogeneous Pipeline Request Support [default=no]
   --enable-http2            enable HTTP/2 support [default=no]
+  --enable-check-time       enable server check time between request for parallelization [default=no]
   --enable-classic          enable server classic model support [default=no]
   --enable-throttling       enable server bandwidth throttling support [default=no]
   --enable-alias            enable alias URI support [default=yes]
@@ -26257,28 +26257,6 @@ $as_echo "#define U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT 1" >>confdefs.h
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_CRPWS" >&5
 $as_echo "$enable_CRPWS" >&6; }
 
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable server check time between request for parallelization" >&5
-$as_echo_n "checking if you want to enable server check time between request for parallelization... " >&6; }
-	# Check whether --enable-check-time was given.
-if test "${enable_check_time+set}" = set; then :
-  enableval=$enable_check_time;
-fi
-
-	if test -z "$enable_check_time"; then
-		if test "$enable_debug" = "yes"; then
-			enable_check_time="yes"
-		else
-			enable_check_time="no"
-		fi
-	fi
-	if test "$enable_check_time" = "yes"; then
-
-$as_echo "#define U_SERVER_CHECK_TIME_BETWEEN_REQUEST 1" >>confdefs.h
-
-	fi
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_check_time" >&5
-$as_echo "$enable_check_time" >&6; }
-
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable server captive portal mode" >&5
 $as_echo_n "checking if you want to enable server captive portal mode... " >&6; }
 	# Check whether --enable-captive-portal was given.
@@ -26442,6 +26420,28 @@ $as_echo "#define U_HTTP2_DISABLE 1" >>confdefs.h
 	fi
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_http2" >&5
 $as_echo "$enable_http2" >&6; }
+
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable server check time between request for parallelization" >&5
+$as_echo_n "checking if you want to enable server check time between request for parallelization... " >&6; }
+	# Check whether --enable-check-time was given.
+if test "${enable_check_time+set}" = set; then :
+  enableval=$enable_check_time;
+fi
+
+	if test -z "$enable_check_time"; then
+		if test "$enable_debug" = "yes" -a "$enable_http2" != "yes"; then
+			enable_check_time="yes"
+		else
+			enable_check_time="no"
+		fi
+	fi
+	if test "$enable_check_time" = "yes"; then
+
+$as_echo "#define U_SERVER_CHECK_TIME_BETWEEN_REQUEST 1" >>confdefs.h
+
+	fi
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $enable_check_time" >&5
+$as_echo "$enable_check_time" >&6; }
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if you want to enable server classic model support" >&5
 $as_echo_n "checking if you want to enable server classic model support... " >&6; }

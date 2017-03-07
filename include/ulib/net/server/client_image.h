@@ -287,7 +287,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientImage_Base::setRequestNoCache()")
 
-#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#  ifndef U_CACHE_REQUEST_DISABLE
       U_ClientImage_request |= NO_CACHE;
 
       U_INTERNAL_DUMP("U_ClientImage_request = %d %B", U_ClientImage_request, U_ClientImage_request)
@@ -300,7 +300,7 @@ public:
 
       U_INTERNAL_DUMP("U_ClientImage_pipeline = %b size_request = %u U_http_uri_offset = %u", U_ClientImage_pipeline, size_request, U_http_uri_offset)
 
-#  if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
+#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
       U_INTERNAL_ASSERT_MAJOR(size_request, 0)
       U_INTERNAL_ASSERT_RANGE(1,U_http_uri_offset,254)
       U_INTERNAL_ASSERT_MAJOR(U_http_info.startHeader, 2)
@@ -322,7 +322,7 @@ public:
 
       U_INTERNAL_DUMP("U_ClientImage_request_is_cached = %b", U_ClientImage_request_is_cached)
 
-#  if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
+#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
       U_INTERNAL_ASSERT(U_ClientImage_request_is_cached)
 
       uint32_t    sz  = request->size();
@@ -392,7 +392,7 @@ public:
 
 protected:
    USocket* socket;
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    UString uri;
    uint64_t bytes_sent;
    uint32_t min_limit, max_limit, started_at;
@@ -496,7 +496,7 @@ protected:
    static bool isValidRequest(   const char* ptr, uint32_t sz) { return true; }
    static bool isValidRequestExt(const char* ptr, uint32_t sz) { return true; }
 
-#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#ifndef U_CACHE_REQUEST_DISABLE
    static bool isRequestCacheable() __pure;
 #endif
 

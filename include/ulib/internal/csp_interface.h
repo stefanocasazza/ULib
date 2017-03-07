@@ -6,6 +6,7 @@
 typedef _Bool bool;
 #endif
 
+#define U_CSP_INTERFACE
 #include <ulib/base/base.h>
 #include <ulib/internal/chttp.h>
 

@@ -22,7 +22,7 @@
 #  include <ulib/utility/http2.h>
 #endif
 
-#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
+#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
 #  define U_NUM_CLIENT_THRESHOLD 128
 #endif
 
@@ -326,7 +326,7 @@ __pure bool UClientImage_Base::isAllowed(UVector<UIPAllow*>& vallow_IP)
    U_RETURN(false);
 }
 
-#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#ifndef U_CACHE_REQUEST_DISABLE
 __pure bool UClientImage_Base::isRequestCacheable()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::isRequestCacheable()")
@@ -589,7 +589,7 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
 #ifdef U_ALIAS
    if (*request_uri)
       {
-#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#  ifndef U_CACHE_REQUEST_DISABLE
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_request_is_cached, false)
 #  endif
 
@@ -610,7 +610,7 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
    return ptr;
 }
 
-#if defined(U_CACHE_REQUEST_DISABLE) && !defined(U_HTTP2_DISABLE)
+#ifdef U_CACHE_REQUEST_DISABLE
 #  define U_IOV_TO_SAVE  sizeof(struct iovec)
 #else
 #  define U_IOV_TO_SAVE (sizeof(struct iovec) * 4)
@@ -620,7 +620,7 @@ void UClientImage_Base::startRequest()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::startRequest()")
 
-#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
+#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    long time_elapsed = chronometer->restart();
 
    U_INTERNAL_DUMP("U_ClientImage_pipeline = %b time_elapsed = %ld time_run = %ld U_ClientImage_request_is_cached = %b csfd = %d",
@@ -634,7 +634,7 @@ void UClientImage_Base::startRequest()
 #  ifdef USE_LIBSSL
       if (UServer_Base::bssl) return;
 #  endif
-#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#  ifndef U_CACHE_REQUEST_DISABLE
       if (U_ClientImage_request_is_cached) return;
 #  endif
 
@@ -666,7 +666,7 @@ void UClientImage_Base::startRequest()
 #if defined(DEBUG) && !defined(U_LOG_DISABLE)
    if (UServer_Base::isLog())
       {
-#if !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || !defined(U_HTTP2_DISABLE)
+#  ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
       (void) chronometer->restart();
 #  endif
       }
@@ -683,7 +683,7 @@ void UClientImage_Base::endRequest()
 
    if (UServer_Base::isParallelizationParent() == false)
       {
-#  if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
+#  ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
       time_run = chronometer->stop();
 
 #   ifdef DEBUG
@@ -711,7 +711,7 @@ void UClientImage_Base::endRequest()
          uint32_t sz = 0;
          const char* ptr;
 
-#     if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#     ifndef U_CACHE_REQUEST_DISABLE
          if (U_ClientImage_request_is_cached)
             {
             U_INTERNAL_DUMP("U_http_uri_offset = %u", U_http_uri_offset)
@@ -753,7 +753,7 @@ void UClientImage_Base::endRequest()
          U_MEMCPY(ptr1, "\" run in ", U_CONSTANT_SIZE("\" run in "));
                   ptr1 +=             U_CONSTANT_SIZE("\" run in ");
 
-#     if !defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || !defined(U_HTTP2_DISABLE)
+#     ifndef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
          time_run = chronometer->stop();
 #     endif
 
@@ -950,7 +950,7 @@ void UClientImage_Base::prepareForRead()
       UEventFd::fd = socket->iSockDesc;
       }
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    UServer_Base::initThrottlingClient();
 #endif
 }
@@ -977,7 +977,7 @@ bool UClientImage_Base::genericRead()
 
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
-#if (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
    startRequest();
 #endif
 
@@ -1026,7 +1026,7 @@ bool UClientImage_Base::genericRead()
              data_pending = 0;
       }
 
-#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
+#ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    if (U_ClientImage_advise_for_parallelization)
       {
       if (checkRequestToCache() == 2 &&
@@ -1158,7 +1158,7 @@ data_missing:
       U_RETURN(U_NOTIFIER_OK);
       }
 
-#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#ifndef U_CACHE_REQUEST_DISABLE
    if (U_ClientImage_request_is_cached)
       {
       sz = checkRequestToCache();
@@ -1227,7 +1227,7 @@ data_missing:
 
       if (log_request_partial == UEventFd::fd) logRequest();
 #  endif
-#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#  ifndef U_CACHE_REQUEST_DISABLE
 next:
 #  endif
       sz = rbuffer->size();
@@ -1409,7 +1409,7 @@ write:
       if (U_ClientImage_pipeline)
          {
            endRequest();
-#     if (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
+#     if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
          startRequest();
 #     endif
 
@@ -1427,7 +1427,7 @@ error:
 
    endRequest();
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    if (uri) UServer_Base::clearThrottling();
 #endif
 
@@ -1543,7 +1543,7 @@ bool UClientImage_Base::writeResponse()
 #endif
    }
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    if (iBytesWrite > 0) bytes_sent += iBytesWrite;
 #endif
 #ifdef DEBUG
@@ -1636,7 +1636,7 @@ loop:
    iBytesWrite = USocketExt::_writev(socket, piov, iovcnt, ncount, U_TIMEOUT_MS);
 #endif
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    if (iBytesWrite > 0) bytes_sent += iBytesWrite;
 #endif
 #ifdef DEBUG
@@ -1725,7 +1725,7 @@ void UClientImage_Base::resetPipeline()
 
    U_ClientImage_pipeline = false;
 
-#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#ifndef U_CACHE_REQUEST_DISABLE
    if (U_ClientImage_request_is_cached == false)
 #endif
    size_request = 0; // NB: we don't want to process further the read buffer...
@@ -1837,7 +1837,7 @@ int UClientImage_Base::handlerWrite()
 
    U_INTERNAL_DUMP("bwrite = %b", bwrite)
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    if (UServer_Base::checkThrottlingBeforeSend(bwrite) == false) U_RETURN(U_NOTIFIER_OK);
 #endif
 
@@ -1848,7 +1848,7 @@ write:
    offset      = start;
    iBytesWrite = USocketExt::sendfile(socket, sfd, &offset, count, 0);
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    if (iBytesWrite > 0) bytes_sent += iBytesWrite;
 #endif
 #ifdef DEBUG

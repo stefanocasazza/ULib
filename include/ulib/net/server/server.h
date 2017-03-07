@@ -366,7 +366,7 @@ public:
    static uint32_t shared_data_add, map_size;
    static bool update_date, update_date1, update_date2, update_date3;
 
-#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#ifdef USE_LOAD_BALANCE
    static uint8_t loadavg_threshold;
 #endif
 
@@ -611,7 +611,7 @@ protected:
    static UString getStats();
 #endif
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    static bool         throttling_chk;
    static UString*     throttling_mask;
    static UThrottling* throttling_rec;

@@ -18,7 +18,7 @@
 #include <ulib/utility/uhttp.h>
 #include <ulib/utility/hexdump.h>
 
-#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#ifdef USE_LOAD_BALANCE
 #  include <ulib/net/client/http.h>
 #endif
 
@@ -279,7 +279,6 @@ protected:
    static void readFrame();
    static void setStream();
    static void manageData();
-   static void sendGoAway();
    static bool initRequest();
    static void writeResponse();
    static void decodeHeaders();
@@ -288,6 +287,7 @@ protected:
    static void handlerResponse();
    static void sendResetStream();
    static void sendWindowUpdate();
+   static void sendGoAway(USocket* psocket);
 
    static void updateSetting(unsigned char* ptr, uint32_t len);
    static void writeData(struct iovec* iov, bool bdata, bool flag);
@@ -315,7 +315,7 @@ protected:
 
    static void clear()
       {
-      U_TRACE_NO_PARAM(0, "UHTTP2::clear()")
+      U_TRACE_NO_PARAM(0+256, "UHTTP2::clear()")
 
       for (pStream = pConnection->streams; pStream <= pStreamEnd; ++pStream)
          {
@@ -510,39 +510,12 @@ protected:
       U_RETURN(true);
       }
 
-   // HTTP/1.1 conversion
+   static void downgradeRequest(); // HTTP2 => HTTP1
 
-#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#ifdef USE_LOAD_BALANCE
+   static bool bproxy;
+
    static void wrapRequest();
-
-   static void wrapResponse()
-      {
-      U_TRACE_NO_PARAM(0, "UHTTP2::wrapResponse()")
-
-      U_INTERNAL_DUMP("U_http_info.nResponseCode = %u U_http_info.clength = %u U_http_version = %C", U_http_info.nResponseCode, U_http_info.clength, U_http_version)
-
-      U_http_version = '2';
-
-      UHTTP::ext->setBuffer(U_CAPACITY);
-
-      UHTTP::client_http->getResponseHeader()->table.callForAllEntry(wrapHeaders);
-
-      handlerResponse();
-      }
-
-   static bool wrapHeaders(UStringRep* key, void* elem)
-      {
-      U_TRACE(0, "UHTTP2::wrapHeaders(%V,%p)", key, elem)
-
-      if (key->equal(U_CONSTANT_TO_PARAM("Date"))   == false &&
-          key->equal(U_CONSTANT_TO_PARAM("Server")) == false)
-         {
-         if (key->equal(U_CONSTANT_TO_PARAM("Set-Cookie"))) UHTTP::set_cookie->_assign(key);
-         else                                               UHTTP::ext->snprintf_add(U_CONSTANT_TO_PARAM("%v: %v\r\n"), key, (const UStringRep*)elem);
-         }
-
-      U_RETURN(true);
-      }
 #endif
 
    static bool setIndexStaticTable(UHashMap<void*>* table, const char* key, uint32_t length)
@@ -570,6 +543,27 @@ protected:
 
       if (hpack_errno)
          {
+         nerror = COMPRESSION_ERROR;
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
+   static bool isHpackError(int32_t index)
+      {
+      U_TRACE(0, "UHTTP2::isHpackError(%d)", index)
+
+      U_INTERNAL_DUMP("index = %d hpack_errno = %d", index, hpack_errno)
+
+      if (index == -1 ||
+          hpack_errno)
+         {
+#     ifdef DEBUG
+         if (hpack_errno == 0) hpack_errno = -2; // The decoding buffer ends before the decoded HPACK block
+#     endif
+
          nerror = COMPRESSION_ERROR;
 
          U_RETURN(true);
@@ -774,25 +768,6 @@ protected:
       U_INTERNAL_DUMP("hpack_errno = %d hpack_error[%d] = %S", hpack_errno, -hpack_errno-2, hpack_error[-hpack_errno-2].desc)
 
       return hpack_error[-hpack_errno-2].desc;
-      }
-
-   static bool isHpackError(int32_t index)
-      {
-      U_TRACE(0, "UHTTP2::isHpackError(%d)", index)
-
-      U_INTERNAL_DUMP("index = %d hpack_errno = %d", index, hpack_errno)
-
-      if (index == -1 ||
-          hpack_errno)
-         {
-         if (hpack_errno == 0) hpack_errno = -2; // The decoding buffer ends before the decoded HPACK block
-
-         nerror = COMPRESSION_ERROR;
-
-         U_RETURN(true);
-         }
-
-      U_RETURN(false);
       }
 
    static bool findHeader(uint32_t index)

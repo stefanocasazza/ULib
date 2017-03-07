@@ -29,8 +29,6 @@ rm -rf $DOC_ROOT/*log /tmp/request.* /tmp/response.* \
                 trace.*userver_*.[0-9]*           object.*userver_*.[0-9]*           stack.*userver_*.[0-9]*           mempool.*userver_*.[0-9]* \
       $DOC_ROOT/trace.*userver_*.[0-9]* $DOC_ROOT/object.*userver_*.[0-9]* $DOC_ROOT/stack.*userver_*.[0-9]* $DOC_ROOT/mempool.*userver_*.[0-9]*
 
-check_for_netcat
-
 cat <<EOF >inp/webserver.cfg
 userver {
  PORT 8080
@@ -44,21 +42,28 @@ http {
 }
 EOF
 
+check_for_netcat
+
 export MONGODB_HOST=localhost
 
 DIR_CMD="../../examples/userver"
 
 start_prg_background userver_tcp -c inp/webserver.cfg
 
- send_req $NCAT localhost 8080 inp/http/businesses1.req businesses 2
- send_req $NCAT localhost 8080 inp/http/businesses2.req businesses 2
- send_req $NCAT localhost 8080 inp/http/businesses3.req businesses 2
- send_req $NCAT localhost 8080 inp/http/businesses4.req businesses 2
+wait_server_ready localhost 8080
+
+ send_req $NCAT localhost 8080 inp/http/businesses1.req businesses 2 kill
+ send_req $NCAT localhost 8080 inp/http/businesses2.req businesses 2 kill
+ send_req $NCAT localhost 8080 inp/http/businesses3.req businesses 2 kill
+ send_req $NCAT localhost 8080 inp/http/businesses4.req businesses 2 kill
 
 #JSON_REQ=`tail -1 inp/http/businesses1.req`
+#/opt/go/bin/h2a -p 80 -H localhost -P 8080 -d -D
+#ncat -4 localhost 80 < load_balance_response.31878
+#curl -v --http2-prior-knowledge http://localhost/servlet/businesses -d "$JSON_REQ" http://localhost/businesses >out/businesses.out
 #curl -v --http2-prior-knowledge http://localhost:8080/servlet/businesses -d "$JSON_REQ" http://localhost/businesses >out/businesses.out
 
-kill_prg userver_tcp TERM
+kill_server userver_tcp
 
 mv err/userver_tcp.err err/businesses.err
 

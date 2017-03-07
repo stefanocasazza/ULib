@@ -653,24 +653,20 @@ int UHttpClient_Base::sendRequestAsync(const UString& _url, bool bqueue, const c
       UClient_Base::adjustTimeOut();
 
       UTimeVal to_sleep(10);
-loop:
-      if (UClient_Base::isOpen() == false) UClient_Base::socket->_socket();
 
-      if ((UClient_Base::isConnected() ||
-           UClient_Base::connect())    &&
-          sendRequestEngine())
-         {
-         goto next;
-         }
+loop: if (UClient_Base::isOpen() == false) UClient_Base::socket->_socket();
 
-      if (++num_attempts < U_MAX_ATTEMPTS)
+      if (((UClient_Base::isConnected() == false  &&
+            UClient_Base::connect()     == false) ||
+           sendRequestEngine() == false)          &&
+          ++num_attempts < U_MAX_ATTEMPTS)
          {
          to_sleep.nanosleep();
 
          goto loop;
          }
 
-next:
+#  ifndef U_LOG_DISABLE
       if (log_msg)
          {
          uint32_t sz = strlen(log_msg);
@@ -679,6 +675,7 @@ next:
          if (log_fd == -1) ULog::log(        log_msg, sz, str, num_attempts);
          else              ULog::log(log_fd, log_msg, sz, str, num_attempts);
          }
+#  endif
       }
 
    // QUEUE MODE
@@ -841,6 +838,7 @@ bool UHttpClient_Base::sendRequestEngine()
 {
    U_TRACE_NO_PARAM(0, "UHttpClient_Base::sendRequestEngine()")
 
+   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
    U_INTERNAL_ASSERT_RANGE(1,UClient_Base::iovcnt,6)
 
    UString headers;
@@ -866,8 +864,6 @@ bool UHttpClient_Base::sendRequestEngine()
 
                  body.clear();
       responseHeader->clear();
-
-      UClient_Base::response.setEmpty();
 
       result = (UClient_Base::sendRequestAndReadResponse() &&
                 responseHeader->readHeader(UClient_Base::socket, UClient_Base::response) // read the HTTP response header

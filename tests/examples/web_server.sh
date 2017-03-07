@@ -36,7 +36,7 @@ start_test() {
 #/usr/bin/spawn-fcgi -p 8080 -f /usr/bin/php-cgi -C 5 -P /var/run/spawn-fcgi.pid
 
 # =================================================================
-# HTTP/2
+# HTTP2
 # =================================================================
 # ./h2a -c server.crt -k server.key -p 8000 -H 127.0.0.1 -P 443
 #
@@ -86,6 +86,7 @@ ALIAS "[ / /100.html ]"
 #DIGEST_AUTHENTICATION yes
 #CACHE_FILE_STORE nocat/webif.gz
 #CACHE_FILE_MASK inp/http/data/file1|*.flv|*.svgz
+#URI_REQUEST_STRICT_TRANSPORT_SECURITY_MASK *
 }
 EOF
 
@@ -100,24 +101,25 @@ compile_usp
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c inp/webserver.cfg
-												# RA/RA.cfg
-												# deployment.properties
+											 # RA/RA.cfg
+											 # deployment.properties
+
+wait_server_ready localhost 8080
 
 # HTTP pseudo-streaming for FLV video
 
-#curl -I -s -D -			'http://10.30.1.131/test.flv'					 -o /dev/null
-#curl -I -s -D -			'http://10.30.1.131/test.flv'					 -o /tmp/test.flv
-#curl    -s -v -r0-499	'http://10.30.1.131/test.flv'					 -o /tmp/test.flv
-#curl    -s -D				'http://10.30.1.131/test.flv?start=669000' -o /tmp/test.flv
+#curl -I -s -D -			'http://localhost:8080/test.flv'					 -o /dev/null
+#curl -I -s -D -			'http://localhost:8080/test.flv'					 -o /tmp/test.flv
+#curl    -s -v -r0-499	'http://localhost:8080/test.flv'					 -o /tmp/test.flv
+#curl    -s -D				'http://localhost:8080/test.flv?start=669000' -o /tmp/test.flv
 
 #sleep 6
-#kill_prg userver_tcp TERM
+#kill_server userver_tcp
 
 mv err/userver_tcp.err err/web_server.err
 
 echo "PID = `cat /var/run/userver_tcp.pid`"
 
-# check_for_netcat
-# $NCAT 10.30.1.131 80 <inp/http/get_geoip.req >>out/web_server.out
-
-#openssl s_client -debug -cert ../ulib/CA/username.crt -key ../ulib/CA/username.key -pass pass:caciucco -CApath ../ulib/CA/CApath -verify 0 -connect 10.30.1.131:80
+#check_for_netcat
+#send_req localhost 8080 inp/http/get_geoip.req web_server 3
+#openssl s_client -debug -cert ../ulib/CA/username.crt -key ../ulib/CA/username.key -pass pass:caciucco -CApath ../ulib/CA/CApath -verify 0 -connect localhost:8080

@@ -154,31 +154,6 @@ public:
 
    void prepareRequest(const UString& req) { request = req; prepareRequest(U_STRING_TO_PARAM(req)); }
 
-   void prepareRequest(const UString& header, const UString& body)
-      {
-      U_TRACE(0, "UClient_Base::prepareRequest(%V,%V)", header.rep, body.rep)
-
-      if (body.empty()) prepareRequest(header);
-      else
-         {
-         request = header;
-
-         iovcnt = 2;
-
-         iov[0].iov_base = (caddr_t)header.data();
-         iov[0].iov_len  =          header.size();
-         iov[1].iov_base = (caddr_t)  body.data();
-         iov[1].iov_len  =            body.size();
-
-         (void) U_SYSCALL(memset, "%p,%d,%u", iov+2, 0, sizeof(struct iovec) * 4);
-
-         U_INTERNAL_ASSERT_EQUALS(iov[2].iov_len, 0)
-         U_INTERNAL_ASSERT_EQUALS(iov[3].iov_len, 0)
-         U_INTERNAL_ASSERT_EQUALS(iov[4].iov_len, 0)
-         U_INTERNAL_ASSERT_EQUALS(iov[5].iov_len, 0)
-         }
-      }
-
    // LOG 
 
    static void closeLog();
@@ -272,9 +247,11 @@ protected:
    static UFileConfig* cfg;
    static bool log_shared_with_server, bIPv6;
 
+   void loadConfigParam();
    bool readHTTPResponse();
-
    bool sendRequest(bool bread_response);
+   bool sendRequestAndReadResponse(const UString& header, const UString& body);
+
    bool sendRequestAndReadResponse() { return sendRequest(true); }
 
 #ifdef USE_LIBSSL
@@ -287,8 +264,6 @@ protected:
       ((USSLSocket*)socket)->setSSLActive(_flag);
       }
 #endif
-
-   void loadConfigParam();
 
     UClient_Base(UFileConfig* pcfg = 0);
    ~UClient_Base();

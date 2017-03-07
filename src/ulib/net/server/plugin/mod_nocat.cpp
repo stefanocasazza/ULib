@@ -885,7 +885,9 @@ result:
       if (nfds < FD_SETSIZE) U_ASSERT_EQUALS(pmask->count(), 0)
       else
          {
-         U_DEBUG("pmask->count() = %u nfds = %u", pmask->count(), nfds);
+         U_DEBUG("pmask->count() = %u nfds = %u FD_SETSIZE = %u", pmask->count(), nfds, FD_SETSIZE);
+
+         U_ASSERT_EQUALS(nfds-FD_SETSIZE, pmask->count())
          }
 #  endif
 
@@ -893,8 +895,8 @@ result:
          {
          if (getPeer(i))
             {
-            bset = (nfds < FD_SETSIZE ? FD_ISSET(i, paddrmask)
-                                      : pmask->isSet(i-FD_SETSIZE));
+            bset = (i < FD_SETSIZE ? FD_ISSET(i, paddrmask)
+                                   : pmask->isSet(i-FD_SETSIZE));
 
             if (bset) addPeerInfo(0);
             else

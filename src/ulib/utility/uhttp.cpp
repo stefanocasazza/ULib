@@ -23,8 +23,8 @@
 #include <ulib/utility/escape.h>
 #include <ulib/utility/base64.h>
 #include <ulib/base/coder/url.h>
-#include <ulib/net/client/http.h>
 #include <ulib/utility/dir_walk.h>
+#include <ulib/net/client/client.h>
 #include <ulib/utility/websocket.h>
 #include <ulib/utility/socket_ext.h>
 #include <ulib/net/server/plugin/mod_proxy.h>
@@ -47,11 +47,11 @@
 #ifdef HAVE_LIBTCC
 #  include <libtcc.h>
 #endif
+#ifdef USE_LOAD_BALANCE
+#  include <ulib/net/client/http.h>
+#endif
 #ifndef _MSWINDOWS_
 #  include <sys/resource.h>
-#  ifdef USE_LOAD_BALANCE
-#     include <ulib/net/client/http.h>
-#  endif
 #endif
 
 #ifdef U_HTTP_INOTIFY_SUPPORT
@@ -164,8 +164,8 @@ USSLSession*                      UHTTP::data_session_ssl;
 UVector<UIPAllow*>*               UHTTP::vallow_IP;
 URDBObjectHandler<UDataStorage*>* UHTTP::db_session_ssl;
 #endif
-#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
-UHttpClient<USSLSocket>* UHTTP::client_http;
+#ifdef USE_LOAD_BALANCE
+UClient<USSLSocket>* UHTTP::client_http;
 #endif
 #ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
 UString* UHTTP::uri_strict_transport_security_mask;
@@ -173,7 +173,7 @@ UString* UHTTP::uri_strict_transport_security_mask;
 #ifndef U_LOG_DISABLE
 char         UHTTP::iov_buffer[20];
 struct iovec UHTTP::iov_vec[10];
-#  if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
+#  if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
 uint32_t  UHTTP::agent_offset;
 uint32_t  UHTTP::request_offset;
 uint32_t  UHTTP::referer_offset;
@@ -350,7 +350,7 @@ UHTTP::UFileCacheData::~UFileCacheData()
 
    if (array) delete array;
 
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    if (wd != -1                      &&
        UServer_Base::handler_inotify &&
        UServer_Base::isChild() == false)
@@ -365,7 +365,7 @@ UHTTP::UFileCacheData::~UFileCacheData()
 
 // INOTIFY FOR CACHE FILE SYSTEM
 
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
 int                    UHTTP::inotify_wd;
 char*                  UHTTP::inotify_name;
 uint32_t               UHTTP::inotify_len;
@@ -1034,11 +1034,16 @@ void UHTTP::init()
    if (msg) { U_SRV_LOG("%s", msg); }
 #endif
 
-#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
-   U_NEW(UHttpClient<USSLSocket>, client_http, UHttpClient<USSLSocket>((UFileConfig*)0));
+#ifdef USE_LOAD_BALANCE
+   U_NEW(UClient<USSLSocket>, client_http, UClient<USSLSocket>((UFileConfig*)0));
 
-   client_http->getResponseHeader()->setIgnoreCase(false);
-   client_http->UClient_Base::setActive(UServer_Base::bssl);
+# ifndef U_LOG_DISABLE
+   if (UServer_Base::isLog()) client_http->setLogShared();
+# endif
+
+   // TODO: we can check if there is a userver_tcp for response (HTTP Strict Transport Security management)...
+
+   client_http->setActive(UServer_Base::bssl);
 #endif
 
    /**
@@ -1383,7 +1388,7 @@ void UHTTP::dtor()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::dtor()")
 
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    if (UServer_Base::handler_inotify && // inotify: Inode based directory notification...
        UServer_Base::handler_inotify->fd != -1)
       {
@@ -1458,7 +1463,7 @@ void UHTTP::dtor()
 #  ifdef USE_LIBV8
       if (v8_javascript) delete v8_javascript;
 #  endif
-#  if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#  ifdef USE_LOAD_BALANCE
       if (client_http) delete client_http;
 #  endif
 
@@ -3618,7 +3623,7 @@ bool UHTTP::handlerCache()
 
    U_INTERNAL_ASSERT(U_ClientImage_request_is_cached)
 
-#if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
+#if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
    const char* ptr = UClientImage_Base::request->data();
 
    switch (u_get_unalignedp32(ptr))
@@ -3730,7 +3735,7 @@ next2:
       }
 # endif
 
-# if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)
+# ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    if (U_ClientImage_advise_for_parallelization == 2) U_RETURN(true);
 # endif
 
@@ -3770,6 +3775,62 @@ next2:
 
    U_RETURN(false);
 }
+
+#if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
+bool UHTTP::isValidation()
+{
+   U_TRACE_NO_PARAM(0, "UHTTP::isValidation()")
+
+#ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
+   if (isUriRequestStrictTransportSecurity()) // check if the uri requested use HTTP Strict Transport Security to force client to use secure connections only
+      {
+      UString redirect_url(U_CAPACITY);
+
+      // NB: we are in cleartext at the moment, prevent further execution and output
+
+      redirect_url.snprintf(U_CONSTANT_TO_PARAM("%s:/%v"), U_http_websocket_len ? "wss" : "https", UServer_Base::getIPAddress().rep);
+
+      if (global_alias) (void) redirect_url.append(*global_alias);
+      else              (void) redirect_url.append(U_HTTP_URI_QUERY_TO_PARAM);    
+
+      // The Strict-Transport-Security header is ignored by the browser when your site is accessed using HTTP;
+      // this is because an attacker may intercept HTTP connections and inject the header or remove it.
+      // When your site is accessed over HTTPS with no certificate errors, the browser knows your site is HTTPS
+      // capable and will honor the Strict-Transport-Security header
+
+      U_INTERNAL_DUMP("ext = %V", ext->rep)
+
+      ext->clear();
+
+      setRedirectResponse(NO_BODY, U_STRING_TO_PARAM(redirect_url));
+
+      U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %V", redirect_url.rep);
+
+      U_RETURN(false);
+      }
+#endif
+
+#ifdef USE_LIBSSL
+   if (isUriRequestNeedCertificate() && // check if the uri requested need a certificate
+       UServer_Base::pClientImage->askForClientCertificate() == false)
+      {
+      U_SRV_LOG("URI_REQUEST_CERT: request denied by mandatory certificate from client");
+
+      setForbidden();
+
+      U_RETURN(false);
+      }
+
+   if (isUriRequestProtected() && // check if the uri requested is protected
+       checkUriProtected() == false)
+      {
+      U_RETURN(false);
+      }
+#endif
+
+   U_RETURN(true);
+}
+#endif
 
 int UHTTP::handlerREAD()
 {
@@ -3912,7 +3973,17 @@ int UHTTP::handlerREAD()
    UClientImage_Base::size_request = (U_http_info.endHeader ? U_http_info.endHeader
                                                             : U_http_info.startHeader + U_CONSTANT_SIZE(U_CRLF2));
 
-   U_INTERNAL_DUMP("U_http_info.clength = %u", U_http_info.clength)
+   U_INTERNAL_DUMP("UClientImage_Base::size_request = %u U_http_info.clength = %u", UClientImage_Base::size_request, U_http_info.clength)
+
+   /* NB: readBodyRequest() depend on UClientImage_Base::request
+    *
+    * if (UClientImage_Base::size_request < UClientImage_Base::request->size())
+    * {
+    * *UClientImage_Base::request = UClientImage_Base::rbuffer->substr(UClientImage_Base::rstart, UClientImage_Base::size_request);
+    *
+    * U_INTERNAL_DUMP("UClientImage_Base::request(%u) = %V", UClientImage_Base::request->size(), UClientImage_Base::request->rep)
+    * }
+    */
 
    if (isGETorHEAD() == false)
       {
@@ -3943,6 +4014,8 @@ int UHTTP::handlerREAD()
          }
 #  endif
       }
+
+   U_INTERNAL_DUMP("UClientImage_Base::size_request = %u", UClientImage_Base::size_request)
 
    U_ClientImage_state = manageRequest();
 
@@ -4077,7 +4150,7 @@ set_uri: U_http_info.uri     = alias->data();
 
    // process the HTTP message
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    if (isGETorHEAD() &&
        UServer_Base::checkThrottling() == false)
       {
@@ -4230,6 +4303,10 @@ manage:
        UClientImage_Base::isRequestInFileCache()) // => 3)
       {
 file_in_cache:
+#  if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
+      if (isValidation() == false) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
+#  endif
+
       mime_index = file_data->mime_index;
 
       U_INTERNAL_DUMP("mime_index(%d) = %C u_is_ssi() = %b", mime_index, mime_index, u_is_ssi(mime_index))
@@ -4272,7 +4349,7 @@ file_in_cache:
             {
             U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
-#        if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#        ifdef USE_LOAD_BALANCE
             if (UClientImage_Base::isNoHeaderForResponse() == false)
 #        endif
             setDynamicResponse();
@@ -4348,68 +4425,18 @@ file_exist_and_need_to_be_processed: // NB: if we can't service the content of f
          }
 
 #  if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
-      goto need_to_be_processed;
-#  else
-      goto end;
+      if (isValidation() == false) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 #  endif
+
+      goto end;
       }
 
 #if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
-   if (UClientImage_Base::isRequestNotFound() == false) // => 4)
+   if ( UClientImage_Base::isRequestNotFound() == false && // => 4)
+       (UClientImage_Base::isRequestAlreadyProcessed()  || // => 5)
+        isValidation() == false))
       {
-      if (UClientImage_Base::isRequestAlreadyProcessed()) U_RETURN(U_PLUGIN_HANDLER_FINISHED); // => 5)
-
-need_to_be_processed:
-      U_INTERNAL_DUMP("ext = %V", ext->rep)
-
-      // check if the uri requested use HTTP Strict Transport Security to force client to use secure connections only
-
-#  ifdef U_HTTP_STRICT_TRANSPORT_SECURITY
-      if (isUriRequestStrictTransportSecurity())
-         {
-         ext->clear();
-
-         // NB: we are in cleartext at the moment, prevent further execution and output
-
-         UString redirect_url(U_CAPACITY);
-
-         redirect_url.snprintf(U_CONSTANT_TO_PARAM("%s:/%v"), U_http_websocket_len ? "wss" : "https", UServer_Base::getIPAddress().rep);
-
-         if (global_alias) (void) redirect_url.append(*global_alias);
-         else              (void) redirect_url.append(U_HTTP_URI_QUERY_TO_PARAM);    
-
-         // The Strict-Transport-Security header is ignored by the browser when your site is accessed using HTTP;
-         // this is because an attacker may intercept HTTP connections and inject the header or remove it.
-         // When your site is accessed over HTTPS with no certificate errors, the browser knows your site is HTTPS
-         // capable and will honor the Strict-Transport-Security header
-
-         setRedirectResponse(NO_BODY, U_STRING_TO_PARAM(redirect_url));
-
-         U_SRV_LOG("URI_STRICT_TRANSPORT_SECURITY: request redirected to %V", redirect_url.rep);
-
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-         }
-#  endif
-
-#  ifdef USE_LIBSSL
-      if (isUriRequestNeedCertificate() && // check if the uri requested need a certificate
-          UServer_Base::pClientImage->askForClientCertificate() == false)
-         {
-         U_SRV_LOG("URI_REQUEST_CERT: request denied by mandatory certificate from client");
-
-         setForbidden();
-
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-         }
-
-      if (isUriRequestProtected() && // check if the uri requested is protected
-          checkUriProtected() == false)
-         {
-         U_RETURN(U_PLUGIN_HANDLER_FINISHED);
-         }
-#  else
-      ;
-#  endif
+      U_RETURN(U_PLUGIN_HANDLER_FINISHED);
       }
 #endif
 
@@ -4425,9 +4452,7 @@ need_to_be_processed:
       }
 #endif
 
-#if !defined(U_HTTP_STRICT_TRANSPORT_SECURITY) && !defined(USE_LIBSSL)
 end:
-#endif
 #ifdef DEBUG
    if (file_data                                 &&
        UClientImage_Base::isRequestInFileCache() &&
@@ -4444,12 +4469,8 @@ end:
    if (UClientImage_Base::isRequestFileCacheProcessed()) handlerResponse();
 
 #ifndef U_HTTP2_DISABLE
-   U_INTERNAL_DUMP("UClientImage_Base::size_request = %u", UClientImage_Base::size_request)
-
    if (UClientImage_Base::size_request == 0)
       {
-      U_INTERNAL_DUMP("U_ClientImage_state = %u %B", U_ClientImage_state, U_ClientImage_state)
-
       U_INTERNAL_ASSERT_EQUALS(U_http_version, '2')
       U_INTERNAL_ASSERT(UServer_Base::csocket->isOpen())
       U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
@@ -4470,9 +4491,9 @@ end:
    U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 }
 
-//#define TEST_ON_LOCALHOST
+//#define TEST_LOAD_BALANCE_ON_LOCALHOST
 
-#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#ifdef USE_LOAD_BALANCE
 bool UHTTP::manageRequestOnRemoteServer()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::manageRequestOnRemoteServer()")
@@ -4482,7 +4503,7 @@ bool UHTTP::manageRequestOnRemoteServer()
 
    U_INTERNAL_ASSERT_POINTER(client_http)
 
-#ifdef TEST_ON_LOCALHOST
+#ifdef TEST_LOAD_BALANCE_ON_LOCALHOST
    if (u_get_unalignedp32(&U_SRV_MIN_LOAD_REMOTE_IP) == U_MULTICHAR_CONSTANT32(127,0,0,1)) U_RETURN(false);
        u_put_unalignedp32(&U_SRV_MIN_LOAD_REMOTE_IP,    U_MULTICHAR_CONSTANT32(127,0,0,1));
 #else
@@ -4493,33 +4514,22 @@ bool UHTTP::manageRequestOnRemoteServer()
       // before connect to remote server check if it has changed...
 
       if (client_http->setHostPort(UIPAddress::toString(U_SRV_MIN_LOAD_REMOTE_IP), UServer_Base::port) &&
-          client_http->UClient_Base::isConnected())
+          client_http->isConnected())
          {
-         client_http->UClient_Base::close();
+         client_http->close();
          }
 
-      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
-
 #  ifndef U_HTTP2_DISABLE
-      bool bhttp2;
-      if ((bhttp2 = (U_http_version == '2'))) UHTTP2::wrapRequest();
+      if (U_http_version == '2') UHTTP2::wrapRequest();
 #  endif
-
-      client_http->prepareRequest(*UClientImage_Base::request, *UClientImage_Base::body);
 
       // connect to remote server, send request and get response
 
-      if (client_http->sendRequestEngine())
+      if (client_http->sendRequestAndReadResponse(*UClientImage_Base::request, *UClientImage_Base::body))
          {
          UClientImage_Base::setNoHeaderForResponse();
 
          *UClientImage_Base::wbuffer = client_http->getResponse();
-
-#     ifndef U_HTTP2_DISABLE
-         if (bhttp2) UHTTP2::wrapResponse();
-#     endif
-
-         client_http->reset(); // reset reference to request...
 
          U_RETURN(true);
          }
@@ -5020,7 +5030,7 @@ void UHTTP::setEndRequestProcessing()
                                              : u__snprintf(iov_buffer, sizeof(iov_buffer), U_CONSTANT_TO_PARAM("\" %u %u \""), U_http_info.nResponseCode, body_len));
          }
 
-#  if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#  ifndef U_CACHE_REQUEST_DISABLE
       if (iov_vec[4].iov_len != 1 &&
           U_ClientImage_request_is_cached == false)
          {
@@ -5057,7 +5067,7 @@ void UHTTP::setEndRequestProcessing()
    U_INTERNAL_DUMP("U_ClientImage_request = %b U_http_info.nResponseCode = %d U_ClientImage_request_is_cached = %b U_http_info.startHeader = %u",
                     U_ClientImage_request,     U_http_info.nResponseCode,     U_ClientImage_request_is_cached,     U_http_info.startHeader)
 
-#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#ifndef U_CACHE_REQUEST_DISABLE
    if (isGETorHEAD()                           &&
        UClientImage_Base::isRequestCacheable() &&
        U_IS_HTTP_SUCCESS(U_http_info.nResponseCode))
@@ -8798,7 +8808,7 @@ nocontent:
          }
 #  endif
 
-#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
       bool bstat = false;
 
       if (db_not_found)
@@ -10767,7 +10777,7 @@ void UHTTP::prepareApacheLikeLog()
    const char* request;
    uint32_t request_len;
 
-#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#ifndef U_CACHE_REQUEST_DISABLE
      agent_offset =
    request_offset =
    referer_offset = 0;
@@ -10842,7 +10852,7 @@ void UHTTP::prepareApacheLikeLog()
       iov_vec[4].iov_base = (caddr_t) request;
       iov_vec[4].iov_len  = U_min(1000, request_len);
 
-#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#  ifndef U_CACHE_REQUEST_DISABLE
       request_offset = request - prequest;
 
       U_INTERNAL_DUMP("request_offset = %u", request_offset)
@@ -10856,7 +10866,7 @@ next:
       iov_vec[6].iov_base = (caddr_t) U_http_info.referer;
       iov_vec[6].iov_len  = U_min(1000, U_http_info.referer_len);
 
-#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#  ifndef U_CACHE_REQUEST_DISABLE
       if (U_http_info.referer > prequest)
          {
          referer_offset = U_http_info.referer - prequest;
@@ -10872,7 +10882,7 @@ next:
       iov_vec[8].iov_base = (caddr_t) U_http_info.user_agent;
       iov_vec[8].iov_len  = U_min(1000, U_http_info.user_agent_len);
 
-#if !defined(U_CACHE_REQUEST_DISABLE) && defined(U_HTTP2_DISABLE)
+#  ifndef U_CACHE_REQUEST_DISABLE
       if (U_http_info.user_agent > prequest)
          {
          agent_offset = U_http_info.user_agent - prequest;

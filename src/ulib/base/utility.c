@@ -453,15 +453,15 @@ cap_list[] = {
    };
 */
 
-# ifdef DEBUG
-   cap_value_t minimal_cap_values[] = { CAP_SETUID, CAP_SETGID, CAP_SETPCAP, CAP_SYS_PTRACE };
-# else
+# ifndef DEBUG
    cap_value_t minimal_cap_values[] = { CAP_SETUID, CAP_SETGID, CAP_SETPCAP };
+# else
+   cap_value_t minimal_cap_values[] = { CAP_SETUID, CAP_SETGID, CAP_SETPCAP, CAP_SYS_PTRACE };
 # endif
 
    cap_t caps = cap_init();
 
-   if (caps == 0) U_ERROR("cap_init() failed");
+   if (caps == 0) U_ERROR_SYSCALL("cap_init() failed");
 
    (void) cap_clear(caps);
 
@@ -469,16 +469,16 @@ cap_list[] = {
    (void) cap_set_flag(caps, CAP_PERMITTED,   3, minimal_cap_values, CAP_SET);
    (void) cap_set_flag(caps, CAP_INHERITABLE, 3, minimal_cap_values, CAP_SET);
 
-   if (cap_set_proc(caps) < 0) U_ERROR("cap_set_proc() failed");
+   if (cap_set_proc(caps) < 0) U_ERROR_SYSCALL("cap_set_proc() failed");
 
    (void) cap_free(caps);
 
-   if (prctl(U_PR_SET_KEEPCAPS, 1, 0, 0, 0) < 0) U_ERROR("prctl() failed");
+   if (prctl(U_PR_SET_KEEPCAPS, 1, 0, 0, 0) < 0) U_ERROR_SYSCALL("prctl() failed");
 # endif
 
    U_INTERNAL_TRACE("u_never_need_root()")
 
-   U_INTERNAL_PRINT("(_euid_=%d, uid=%d)", effective_uid, real_uid)
+   U_INTERNAL_PRINT("_euid_ = %d, uid = %d", effective_uid, real_uid)
 
    if (real_uid == (uid_t)(-1)) U_ERROR("u_init_security() not called");
 
@@ -487,7 +487,7 @@ cap_list[] = {
    if (geteuid() != real_uid ||
        getuid()  != real_uid)
       {
-      U_ERROR("Did not drop root privilege");
+      U_ERROR_SYSCALL("Did not drop root privilege");
       }
 
    effective_uid = real_uid;
@@ -523,7 +523,7 @@ void u_dont_need_group(void)
    U_INTERNAL_TRACE("u_dont_need_group()")
 
 #ifndef _MSWINDOWS_
-   U_INTERNAL_PRINT("(egid_=%d, gid=%d)", effective_gid, real_gid)
+   U_INTERNAL_PRINT("egid_ = %d, gid = %d", effective_gid, real_gid)
 
    if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called");
 
@@ -532,7 +532,7 @@ void u_dont_need_group(void)
     if (setegid(real_gid) == -1 ||
         getegid() != real_gid)
       {
-      U_ERROR("Did not drop group privilege");
+      U_ERROR_SYSCALL("Did not drop group privilege");
       }
 #endif
 }
@@ -544,7 +544,7 @@ void u_never_need_group(void)
    U_INTERNAL_TRACE("u_never_need_group()")
 
 #ifndef _MSWINDOWS_
-   U_INTERNAL_PRINT("(egid_=%d, gid=%d)", effective_gid, real_gid)
+   U_INTERNAL_PRINT("egid_ = %d, gid = %d", effective_gid, real_gid)
 
    if (real_gid == (gid_t)(-1)) U_ERROR("u_init_security() not called");
 
@@ -553,7 +553,7 @@ void u_never_need_group(void)
    if (getegid() != real_gid ||
        getgid()  != real_gid)
       {
-      U_ERROR("Did not drop group privilege");
+      U_ERROR_SYSCALL("Did not drop group privilege");
       }
 
     effective_gid = real_gid;
@@ -743,8 +743,8 @@ __pure int u_getScreenWidth(void)
 
 /**
  * Calculate the download rate and trim it as appropriate for the speed. Appropriate means that
- * if rate is greater than 1K/s, kilobytes are used, and if rate is greater than 1MB/s, megabytes are used.
- * UNITS is zero for B/s, one for KB/s, two for MB/s, and three for GB/s
+ * if rate is greater than 1K/s, kilobytes are used, and if rate is greater than 1MB/s, megabytes
+ * are used. UNITS is zero for B/s, one for KB/s, two for MB/s, and three for GB/s
  */
 
 double u_calcRate(uint64_t bytes, uint32_t msecs, int* restrict units)
@@ -970,7 +970,7 @@ int u_get_num_cpu(void)
 
             /**
              * Parses a comma-separated list of numbers and ranges
-             * of numbers,with optional ':%u' strides modifying ranges.
+             * of numbers, with optional ':%u' strides modifying ranges.
              *
              * Some examples of input lists and their equivalent simple list:
              *
@@ -1023,7 +1023,7 @@ int u_get_num_cpu(void)
 
          (void) fclose(fp);
          }
-#endif
+#  endif
       }
 
    return u_num_cpu;
@@ -1089,7 +1089,7 @@ void u_switch_to_realtime_priority(void)
 
 void u_get_memusage(unsigned long* vsz, unsigned long* rss)
 {
-#ifdef U_LINUX
+#if defined(U_LINUX) && !defined(U_COVERITY_FALSE_POSITIVE)
    static int fd_stat;
 
    char* p;
@@ -1157,6 +1157,43 @@ void u_get_memusage(unsigned long* vsz, unsigned long* rss)
 #endif
 }
 
+uint8_t u_get_loadavg(void)
+{
+   /**
+    * /proc/loadavg (ex: 0.19 1.37 0.97 1/263 26041)
+    *
+    * The first three fields in this file are load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D)
+    * averaged over 1, 5, and 15 minutes. They are the same as the load average numbers given by uptime(1) and other programs. The fourth field consists
+    * of two numbers separated by a slash (/). The first of these is the number of currently runnable kernel scheduling entities (processes, threads).
+    * The value after the slash is the number of kernel scheduling entities that currently exist on the system. The fifth field is the PID of the process
+    * that was most recently created on the system
+    */
+
+#if defined(U_LINUX) && !defined(U_COVERITY_FALSE_POSITIVE)
+   static int fd_loadavg;
+
+   char buffer[8];
+   ssize_t bytes_read;
+
+   U_INTERNAL_TRACE("u_get_loadavg()")
+
+   if (fd_loadavg == 0) fd_loadavg = open("/proc/loadavg", O_RDONLY);
+
+   U_INTERNAL_ASSERT_DIFFERS(fd_loadavg, -1)
+
+   bytes_read = pread(fd_loadavg, buffer, sizeof(buffer), 0);
+
+   if (bytes_read > 0)
+      {
+      U_INTERNAL_ASSERT_RANGE(1,bytes_read,(int)sizeof(buffer))
+
+      if (buffer[1] == '.') return (((buffer[0]-'0') * 10) + (buffer[2]-'0') + (buffer[3] > '5')); // 0.19 => 2, 4.56 => 46, ...
+      }
+#endif
+
+   return 255;
+}
+
 uint32_t u_get_uptime(void)
 {
 #ifdef U_LINUX
@@ -1177,45 +1214,6 @@ uint32_t u_get_uptime(void)
 #endif
 
    return 0;
-}
-
-uint8_t u_get_loadavg(void)
-{
-   /**
-    * /proc/loadavg (ex: 0.19 1.37 0.97 1/263 26041)
-    *
-    * The first three fields in this file are load average figures giving the number of jobs in the run queue (state R) or waiting for disk I/O (state D)
-    * averaged over 1, 5, and 15 minutes. They are the same as the load average numbers given by uptime(1) and other programs. The fourth field consists
-    * of two numbers separated by a slash (/). The first of these is the number of currently runnable kernel scheduling entities (processes, threads).
-    * The value after the slash is the number of kernel scheduling entities that currently exist on the system. The fifth field is the PID of the process
-    * that was most recently created on the system
-    */
-
-#ifdef U_LINUX
-   static int fd_loadavg;
-
-   char buffer[8];
-   ssize_t bytes_read;
-
-   U_INTERNAL_TRACE("u_get_loadavg()")
-
-   if (fd_loadavg == 0) fd_loadavg = open("/proc/loadavg", O_RDONLY);
-
-   U_INTERNAL_ASSERT_DIFFERS(fd_loadavg, -1)
-
-   bytes_read = pread(fd_loadavg, buffer, sizeof(buffer), 0);
-
-   if (bytes_read > 0)
-      {
-      U_INTERNAL_ASSERT_RANGE(1,bytes_read,(int)sizeof(buffer))
-
-#  ifndef U_COVERITY_FALSE_POSITIVE
-      if (buffer[1] == '.') return (((buffer[0]-'0') * 10) + (buffer[2]-'0') + (buffer[3] > '5')); // 0.19 => 2, 4.56 => 46, ...
-#  endif
-      }
-#endif
-
-   return 255;
 }
 
 __pure bool u_rmatch(const char* restrict haystack, uint32_t haystack_len, const char* restrict needle, uint32_t needle_len)
@@ -1276,8 +1274,7 @@ __pure const char* u__strpbrk(const char* restrict s, uint32_t slen, const char*
 
 /* Search a string for a terminator of a group of delimitator {} [] () <%%>...*/
 
-__pure const char* u_strpend(const char* restrict s, uint32_t slen,
-                             const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment)
+__pure const char* u_strpend(const char* restrict s, uint32_t slen, const char* restrict group_delimitor, uint32_t group_delimitor_len, char skip_line_comment)
 {
    char c;
    int level = 1;
@@ -1341,7 +1338,7 @@ loop: c = *++s;
    return 0;
 }
 
-/* check if string a start with string b */
+/* check if string 'a' start with string 'b' */
 
 __pure bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2)
 {
@@ -1403,7 +1400,7 @@ __pure bool u_isNumber(const char* restrict s, uint32_t n)
    return (s == end);
 }
 
-/* find first char not quoted */
+/* find the first char not quoted */
 
 __pure const char* u_find_char(const char* restrict s, const char* restrict end, char c)
 {
@@ -1620,7 +1617,7 @@ __pure bool u_dosmatch(const char* restrict s, uint32_t n1, const char* restrict
    U_INTERNAL_ASSERT_MAJOR(n2, 0)
    U_INTERNAL_ASSERT_POINTER(mask)
 
-   if (flags & FNM_IGNORECASE)
+   if ((flags & FNM_IGNORECASE) != 0)
       {
       while (s < end_s)
          {
@@ -1847,7 +1844,7 @@ __pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* rest
                           end = t;
                         }
 
-                     if (flags & FNM_IGNORECASE)
+                     if ((flags & FNM_IGNORECASE) != 0)
                         {
                         start = u__tolower((unsigned char)start);
                           end = u__tolower((unsigned char)end);
@@ -1998,7 +1995,7 @@ __pure bool u_validate_email_address(const char* restrict address, uint32_t addr
       U_INTERNAL_PRINT("c = %c", *c)
 
       if (*c == '\"' &&
-          (c == address || *(c - 1) == '.' || *(c - 1) == '\"'))
+          (c == address || *(c-1) == '.' || *(c-1) == '\"'))
          {
          while (++c < end)
             {
@@ -2025,12 +2022,15 @@ __pure bool u_validate_email_address(const char* restrict address, uint32_t addr
       if (*c == '@') break;
 
       if (*c <= ' ' ||
-          *c >= 127) return false;
+          *c >= 127)
+         {
+         return false;
+         }
 
       if (strchr(RFC822_SPECIALS, *c)) return false;
       }
 
-   if (c == address || *(c - 1) == '.') return false;
+   if (c == address || *(c-1) == '.') return false;
 
    /* next we validate the domain portion (name@domain) */
 
@@ -2043,13 +2043,16 @@ __pure bool u_validate_email_address(const char* restrict address, uint32_t addr
 
       if (*c == '.')
          {
-         if (c == domain || *(c - 1) == '.') return false;
+         if (c == domain || *(c-1) == '.') return false;
 
          ++count;
          }
 
       if (*c <= ' ' ||
-          *c >= 127) return false;
+          *c >= 127)
+         {
+         return false;
+         }
 
       if (strchr(RFC822_SPECIALS, *c)) return false;
       }
@@ -2696,13 +2699,13 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
    do {
       char c2;
 
-      if (c == '\\' && !(flags & FNM_NOESCAPE)) c = *pattern++;
+      if (c == '\\' && (flags & FNM_NOESCAPE) == 0) c = *pattern++;
 
       U_INTERNAL_PRINT("c = %c test = %c", c, test)
 
       if (pattern > end_p) return -1; /* if (c == EOS) return (RANGE_ERROR); */
 
-      if (c == '/' && (flags & FNM_PATHNAME)) return 0;
+      if (c == '/' && (flags & FNM_PATHNAME) != 0) return 0;
 
       if (flags & FNM_CASEFOLD) c = u__tolower((unsigned char)c);
 
@@ -2712,11 +2715,11 @@ static inline int rangematch(const char* restrict pattern, char test, int flags,
          {
          pattern += 2;
 
-         if (c2 == '\\' && !(flags & FNM_NOESCAPE)) c2 = *pattern++;
+         if (c2 == '\\' && (flags & FNM_NOESCAPE) == 0) c2 = *pattern++;
 
          if (pattern > end_p) return -1; /* if (c2 == EOS) return (RANGE_ERROR); */
 
-         if (flags & FNM_CASEFOLD) c2 = u__tolower((unsigned char)c2);
+         if ((flags & FNM_CASEFOLD) != 0) c2 = u__tolower((unsigned char)c2);
 
          if (c    <= test &&
              test <= c2)
@@ -2752,7 +2755,7 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
 
       if (pattern > end_p)
          {
-         if ((flags & FNM_LEADING_DIR) && *string == '/') return 0;
+         if ((flags & FNM_LEADING_DIR) != 0 && *string == '/') return 0;
 
          return (string != end_s);
          }
@@ -2763,10 +2766,10 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
             {
             if (string == end_s) return 1;
 
-            if (*string == '/' && (flags & FNM_PATHNAME)) return 1;
+            if (*string == '/' && (flags & FNM_PATHNAME) != 0) return 1;
 
-            if (*string == '.' && (flags & FNM_PERIOD) &&
-                (string == stringstart || ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+            if (*string == '.' && (flags & FNM_PERIOD) != 0 &&
+                (string == stringstart || ((flags & FNM_PATHNAME) != 0 && *(string - 1) == '/')))
                {
                return 1;
                }
@@ -2783,8 +2786,8 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
 
             while (c == '*') c = *++pattern;
 
-            if (*string == '.' && (flags & FNM_PERIOD) &&
-                (string == stringstart || ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+            if (*string == '.' && (flags & FNM_PERIOD) != 0 &&
+                (string == stringstart || ((flags & FNM_PATHNAME) != 0 && *(string - 1) == '/')))
                {
                return 1;
                }
@@ -2793,12 +2796,12 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
 
             if (pattern == end_p) /* if (c == EOS) */
                {
-               if (flags & FNM_PATHNAME) return ((flags & FNM_LEADING_DIR) || memchr(string, '/', end_s - string) == 0 ? 0 : 1);
+               if ((flags & FNM_PATHNAME) != 0) return ((flags & FNM_LEADING_DIR) != 0 || memchr(string, '/', end_s - string) == 0 ? 0 : 1);
 
                return 0;
                }
 
-            if (c == '/' && flags & FNM_PATHNAME)
+            if (c == '/' && (flags & FNM_PATHNAME) != 0)
                {
                if ((string = (const char* restrict)memchr(string, '/', end_s - string)) == 0) return 1;
 
@@ -2813,7 +2816,7 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
 
                if (!kfnmatch(pattern, string, flags & ~FNM_PERIOD, nesting + 1)) return 0;
 
-               if (test == '/' && flags & FNM_PATHNAME) break;
+               if (test == '/' && (flags & FNM_PATHNAME) != 0) break;
 
                ++string;
                }
@@ -2825,10 +2828,10 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
             {
             if (string == end_s) return 1;
 
-            if (*string == '/' && (flags & FNM_PATHNAME)) return 1;
+            if (*string == '/' && (flags & FNM_PATHNAME) != 0) return 1;
 
-            if (*string == '.' && (flags & FNM_PERIOD) &&
-                (string == stringstart || ((flags & FNM_PATHNAME) && *(string - 1) == '/')))
+            if (*string == '.' && (flags & FNM_PERIOD) != 0 &&
+                (string == stringstart || ((flags & FNM_PATHNAME) != 0 && *(string - 1) == '/')))
                {
                return 1;
                }
@@ -2846,7 +2849,7 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
 
          case '\\':
             {
-            if (!(flags & FNM_NOESCAPE))
+            if ((flags & FNM_NOESCAPE) == 0)
                {
                c = *pattern++;
 
@@ -2866,7 +2869,7 @@ __pure static int kfnmatch(const char* restrict pattern, const char* restrict st
 norm:       if (c == *string)
                {
                }
-            else if ((flags & FNM_CASEFOLD) && (u__tolower((unsigned char)c) == u__tolower((unsigned char)*string)))
+            else if ((flags & FNM_CASEFOLD) != 0 && (u__tolower((unsigned char)c) == u__tolower((unsigned char)*string)))
                {
                }
             else

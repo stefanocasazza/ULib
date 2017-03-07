@@ -16,7 +16,7 @@
 #include <ulib/utility/interrupt.h>
 #include <ulib/utility/semaphore.h>
 
-#if defined(U_LINUX) && !defined(__clang__)
+#ifdef U_LINUX
 U_DUMP_KERNEL_VERSION(LINUX_VERSION_CODE)
 #endif
 

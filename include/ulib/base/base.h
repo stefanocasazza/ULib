@@ -67,6 +67,36 @@
 /*typedef pthread_cond_t   __gthread_cond_t;*/
 /*typedef struct timespec  __gthread_time_t;*/
 #  endif
+#  define U_DO_PRAGMA(x)
+#  define U_DUMP_KERNEL_VERSION(x)
+#elif defined(U_CSP_INTERFACE)
+#  define U_DO_PRAGMA(x)
+#  define U_DUMP_KERNEL_VERSION(x)
+#else
+#  define U_DO_PRAGMA(x) _Pragma (#x)
+#  define U_DUMP_KERNEL_VERSION(x) U_DO_PRAGMA(message (#x " = " U_STRINGIFY(x)))
+#endif
+
+/* Checks define */
+#if defined(USE_LOAD_BALANCE) && defined(_MSWINDOWS_)
+#     undef USE_LOAD_BALANCE
+U_DO_PRAGMA(message (Sorry_I_was_compiled_on_Windows_so_I_cannot_use_load_balance))
+#endif
+#if defined(U_THROTTLING_SUPPORT) && !defined(U_HTTP2_DISABLE)
+#     undef U_THROTTLING_SUPPORT
+U_DO_PRAGMA(message (Sorry_I_was_compiled_with_http2_enabled_so_I_cannot_support_bandwidth_throttling))
+#endif
+#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && !defined(U_HTTP2_DISABLE)
+#     undef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
+U_DO_PRAGMA(message (Sorry_I_was_compiled_with_http2_enabled_so_I_cannot_support_check_time_between_request))
+#endif
+#if !defined(U_CACHE_REQUEST_DISABLE) && !defined(U_HTTP2_DISABLE)
+#     define U_CACHE_REQUEST_DISABLE
+U_DO_PRAGMA(message (Sorry_I_was_compiled_with_http2_enabled_so_I_cannot_support_cache_request))
+#endif
+#if defined(U_HTTP_INOTIFY_SUPPORT) && defined(U_SERVER_CAPTIVE_PORTAL)
+#     undef U_HTTP_INOTIFY_SUPPORT
+U_DO_PRAGMA(message (Sorry_I_was_compiled_with_server_captive_portal_mode_enabled_so_I_cannot_support_http_inotify))
 #endif
 
 #include <stddef.h>
@@ -86,12 +116,6 @@
 #endif
 #ifndef KERNEL_VERSION
 #define KERNEL_VERSION(a,b,c) (((a) << 16) + ((b) << 8) + (c))
-#endif
-#ifdef __clang__
-#  define U_DUMP_KERNEL_VERSION(x)
-#else
-#  define U_DO_PRAGMA(x) _Pragma (#x)
-#  define U_DUMP_KERNEL_VERSION(x) U_DO_PRAGMA(message (#x " = " U_STRINGIFY(x)))
 #endif
 
 #ifdef USE_LIBZ /* check for crc32 */

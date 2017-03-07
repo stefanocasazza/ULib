@@ -1,25 +1,22 @@
 HTTP/1.1 200 OK
-Date: Sun, 19 Feb 2017 16:40:41 GMT
+Date: Sun, 05 Mar 2017 16:39:37 GMT
 Server: ULib
-Connection: close
 Content-Length: 56
 Content-Type: application/json
 
 {"name":"","rating":"","address":"","phone":"","url":""}HTTP/1.1 200 OK
-Date: Sun, 19 Feb 2017 16:40:41 GMT
+Date: Sun, 05 Mar 2017 16:40:08 GMT
 Server: ULib
-Connection: close
 Content-Length: 0
 
 HTTP/1.1 200 OK
-Date: Sun, 19 Feb 2017 16:40:41 GMT
+Date: Sun, 05 Mar 2017 16:40:39 GMT
 Server: ULib
-Connection: close
 Content-Length: 87
 Content-Type: application/json
 
 {"type":"startup","token":"","fbPermissions":["public_profile","user_friends","email"]}HTTP/1.1 400 Bad Request
-Date: Sun, 19 Feb 2017 16:40:41 GMT
+Date: Sun, 05 Mar 2017 16:41:09 GMT
 Server: ULib
 Connection: close
 Content-Type: text/html; charset=UTF-8

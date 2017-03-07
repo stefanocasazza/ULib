@@ -762,7 +762,6 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
    U_TRACE(0, "ULog::log(%p,%S,%S,%d,%.*S,%u,%.*S,%u)", iov, name, type, ncount, msg_len, msg, msg_len, fmt_size, format, fmt_size)
 
    U_INTERNAL_ASSERT_MAJOR(ncount, 0)
-   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
 
    char buffer1[2000], buffer2[8192];
    const char* ptr = (const char*)iov[2].iov_base;
@@ -837,7 +836,7 @@ void ULog::log(const struct iovec* iov, const char* name, const char* type, int 
       ptr = buffer1;
       }
 
-   len = u__snprintf(buffer2, sizeof(buffer2), U_CONSTANT_TO_PARAM("%ssend %s (%u bytes) %.*s%.*S"), name, type, ncount, msg_len, msg, sz, ptr);
+   len = u__snprintf(buffer2, sizeof(buffer2), U_CONSTANT_TO_PARAM("%ssend %s (%u bytes) %.*s%#.*S"), name, type, ncount, msg_len, msg, sz, ptr);
 
    va_list argp;
    va_start(argp, fmt_size);
@@ -874,7 +873,7 @@ void ULog::logResponse(const UString& data, const char* name, const char* format
 
    U_INTERNAL_DUMP("u_printf_string_max_length = %d", u_printf_string_max_length)
 
-   len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%sreceived response (%u bytes) %.*S"), name, sz, sz, ptr);
+   len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%sreceived response (%u bytes) %#.*S"), name, sz, sz, ptr);
 
    va_list argp;
    va_start(argp, fmt_size);

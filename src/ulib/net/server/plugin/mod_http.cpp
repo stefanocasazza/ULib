@@ -38,7 +38,7 @@ int UHttpPlugIn::handlerRead()
 {
    U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerRead()")
    
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    U_INTERNAL_ASSERT_POINTER(UHTTP::cache_file)
 
    UHTTP::in_READ();
@@ -279,7 +279,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
 
       // INOTIFY
 
-#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#  if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
       if (cfg.readBoolean(U_CONSTANT_TO_PARAM("ENABLE_INOTIFY")))
          {
          UServer_Base::handler_inotify = this;
@@ -389,7 +389,7 @@ int UHttpPlugIn::handlerConfig(UFileConfig& cfg)
          }
 #   endif
 
-#  if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#  ifdef U_THROTTLING_SUPPORT
       x = cfg.at(U_CONSTANT_TO_PARAM("BANDWIDTH_THROTTLING_MASK"));
 
       if (x)
@@ -595,7 +595,7 @@ int UHttpPlugIn::handlerFork()
 {
    U_TRACE_NO_PARAM(0, "UHttpPlugIn::handlerFork()")
 
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    UHTTP::initInotify();
 #endif
 

@@ -47,7 +47,7 @@ class USSLSession;
 class UMimeMultipart;
 class UModProxyService;
 
-template <class T> class UHttpClient;
+template <class T> class UClient;
 template <class T> class URDBObjectHandler;
 
 class U_EXPORT UHTTP {
@@ -209,11 +209,39 @@ public:
    static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
 
 #ifndef U_HTTP2_DISABLE
-   static bool copyHeaders(UStringRep* key, void* elem);
+   static bool    copyHeaders(UStringRep* key, void* elem);
+   static bool upgradeHeaders(UStringRep* key, void* elem)
+      {
+      U_TRACE(0, "UHTTP::upgradeHeaders(%V,%p)", key, elem)
+
+      if (key->equal(U_CONSTANT_TO_PARAM("Date"))   == false &&
+          key->equal(U_CONSTANT_TO_PARAM("Server")) == false)
+         {
+         if (key->equal(U_CONSTANT_TO_PARAM("Set-Cookie"))) set_cookie->_assign(key);
+         else                                               ext->snprintf_add(U_CONSTANT_TO_PARAM("%v: %v\r\n"), key, (const UStringRep*)elem);
+         }
+
+      U_RETURN(true);
+      }
+
+   static void upgradeResponse(UHashMap<UString>* ptable)
+      {
+      U_TRACE(0, "UHTTP::upgradeResponse(%p)", ptable)
+
+      U_INTERNAL_DUMP("U_http_info.nResponseCode = %u U_http_info.clength = %u U_http_version = %C", U_http_info.nResponseCode, U_http_info.clength, U_http_version)
+
+      ext->setBuffer(U_CAPACITY);
+
+      ptable->callForAllEntry(upgradeHeaders);
+
+      U_http_version = '2';
+
+      handlerResponse();
+      }
 #endif
 
-#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
-   static UHttpClient<USSLSocket>* client_http;
+#ifdef USE_LOAD_BALANCE
+   static UClient<USSLSocket>* client_http;
 
    static bool manageRequestOnRemoteServer();
 #endif
@@ -299,7 +327,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::startRequest()")
 
-#  if (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE)) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
+#  if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
       UClientImage_Base::startRequest();
 #  endif
 
@@ -447,6 +475,10 @@ public:
 
    static bool checkUriProtected();
    static bool isUriRequestProtected() __pure;
+#endif
+
+#if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
+   static bool isValidation();
 #endif
 
 #ifdef U_ALIAS
@@ -685,7 +717,7 @@ public:
 #ifndef U_LOG_DISABLE
    static char iov_buffer[20];
    static struct iovec iov_vec[10];
-# if !defined(U_CACHE_REQUEST_DISABLE) || (defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && defined(U_HTTP2_DISABLE))
+# if !defined(U_CACHE_REQUEST_DISABLE) || defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST)
    static uint32_t request_offset, referer_offset, agent_offset;
 # endif
 
@@ -1137,7 +1169,7 @@ private:
    static void processRewriteRule() U_NO_EXPORT;
 #endif
 
-#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT) && !defined(U_SERVER_CAPTIVE_PORTAL)
+#if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    static int             inotify_wd;
    static char*           inotify_name;
    static uint32_t        inotify_len;

@@ -55,6 +55,7 @@ void UClient_Base::closeLog()
 {
    U_TRACE_NO_PARAM(0, "UClient_Base::closeLog()")
 
+#ifndef U_LOG_DISABLE
    if (log &&
        log_shared_with_server == false)
       {
@@ -63,6 +64,7 @@ void UClient_Base::closeLog()
 
       log = 0;
       }
+#endif
 }
 
 UClient_Base::~UClient_Base()
@@ -71,6 +73,7 @@ UClient_Base::~UClient_Base()
 
    U_INTERNAL_ASSERT_POINTER(socket)
 
+#ifndef U_LOG_DISABLE
    if (log &&
        log_shared_with_server == false)
       {
@@ -78,6 +81,7 @@ UClient_Base::~UClient_Base()
 
       delete log;
       }
+#endif
 
    delete socket;
 
@@ -185,8 +189,10 @@ void UClient_Base::setLogShared()
 
    U_INTERNAL_ASSERT_POINTER(UServer_Base::log)
 
+#ifndef U_LOG_DISABLE
    log                    = UServer_Base::log;
    log_shared_with_server = true;
+#endif
 }
 
 void UClient_Base::loadConfigParam()
@@ -301,7 +307,9 @@ bool UClient_Base::connect()
 
    response.snprintf(U_CONSTANT_TO_PARAM("Sorry, couldn't connect to server %v%R"), host_port.rep, 0); // NB: the last argument (0) is necessary...
 
+#ifndef U_LOG_DISABLE
    if (log) ULog::log(U_CONSTANT_TO_PARAM("%s%v"), log_shared_with_server ? UServer_Base::mod_name[0] : "", response.rep);
+#endif
 
    U_RETURN(false);
 }
@@ -449,6 +457,10 @@ bool UClient_Base::sendRequest(bool bread_response)
 resend:
    if (connect())
       {
+#  ifndef U_LOG_DISABLE
+      if (log) ULog::log(iov, name, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"), host_port.rep);
+#  endif
+
       ok = (USocketExt::writev(socket, iov, iovcnt, ncount, timeoutMS, 1) == ncount);
 
       if (ok == false)
@@ -457,7 +469,9 @@ resend:
 
          if (++counter <= 2) goto resend;
 
+#     ifndef U_LOG_DISABLE
          if (log) ULog::log(U_CONSTANT_TO_PARAM("%serror on sending data to %V%R"), name, host_port.rep, 0); // NB: the last argument (0) is necessary...
+#     endif
 
          goto end;
          }
@@ -470,25 +484,27 @@ resend:
              (log_shared_with_server == false || // check for SIGTERM event...
               UServer_Base::flag_loop))
             {
+#        ifndef U_LOG_DISABLE
             if (log) errno = 0;
+#        endif
 
             goto resend;
             }
 
-         if (log)
-            {
-            ULog::log(iov,                                                      name, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"), host_port.rep);
-            ULog::log(U_CONSTANT_TO_PARAM("%serror on reading data from %V%R"), name,                                                          host_port.rep, 0); // 0 is necessary
-            }
+#     ifndef U_LOG_DISABLE
+         if (log) ULog::log(U_CONSTANT_TO_PARAM("%serror on reading data from %V%R"), name, host_port.rep, 0); // NB: the last argument (0) is necessary...
+#     endif
 
          goto end;
          }
 
-      if (log)
+#  ifndef U_LOG_DISABLE
+      if (log &&
+          response)
          {
-                       ULog::log(iov,              name, "request", ncount, "", 0, U_CONSTANT_TO_PARAM(" to %v"),   host_port.rep);
-         if (response) ULog::logResponse(response, name,                           U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
+         ULog::logResponse(response, name,   U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
          }
+#  endif
 
       reset();
       }
@@ -505,6 +521,39 @@ end:
    U_RETURN(false);
 }
 
+bool UClient_Base::sendRequestAndReadResponse(const UString& header, const UString& body)
+{
+   U_TRACE(0, "UClient_Base::sendRequestAndReadResponse(%V,%V)", header.rep, body.rep)
+
+   if (body.empty() ||
+       body.isSubStringOf(header))
+      {
+      UClient_Base::prepareRequest(header);
+      }
+   else
+      {
+      UClient_Base::request = header;
+
+      UClient_Base::iovcnt = 2;
+
+      UClient_Base::iov[0].iov_base = (caddr_t)header.data();
+      UClient_Base::iov[0].iov_len  =          header.size();
+      UClient_Base::iov[1].iov_base = (caddr_t)  body.data();
+      UClient_Base::iov[1].iov_len  =            body.size();
+
+      (void) U_SYSCALL(memset, "%p,%d,%u", UClient_Base::iov+2, 0, sizeof(struct iovec) * 4);
+
+      U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[2].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[3].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[4].iov_len, 0)
+      U_INTERNAL_ASSERT_EQUALS(UClient_Base::iov[5].iov_len, 0)
+      }
+
+   if (UClient_Base::sendRequest(true)) U_RETURN(true);
+
+   U_RETURN(false);
+}
+
 // read data response
 
 bool UClient_Base::readResponse(uint32_t count)
@@ -515,11 +564,13 @@ bool UClient_Base::readResponse(uint32_t count)
 
    if (USocketExt::read(socket, response, count, timeoutMS))
       {
+#  ifndef U_LOG_DISABLE
       if (log &&
           response)
          {
          ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
          }
+#  endif
 
       U_RETURN(true);
       }
@@ -554,11 +605,13 @@ bool UClient_Base::readHTTPResponse()
 
          if (UHTTP::readBodyResponse(socket, &buffer, response))
             {
+#        ifndef U_LOG_DISABLE
             if (log &&
                 response)
                {
                ULog::logResponse(response, (log_shared_with_server ? UServer_Base::mod_name[0] : ""), U_CONSTANT_TO_PARAM(" from %V"), host_port.rep);
                }
+#        endif
 
             U_RETURN(true);
             }

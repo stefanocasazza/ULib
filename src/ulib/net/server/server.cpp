@@ -152,7 +152,7 @@ UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 #ifdef U_WELCOME_SUPPORT
 UString* UServer_Base::msg_welcome;
 #endif
-#if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#ifdef USE_LOAD_BALANCE
 unsigned char UServer_Base::loadavg_threshold = 45; // => 4.5
 #endif
 #ifdef U_ACL_SUPPORT
@@ -166,9 +166,6 @@ UVector<UIPAllow*>* UServer_Base::vallow_IP_prv;
 #endif
 
 #ifdef DEBUG
-#  ifndef U_LOG_DISABLE
-long UServer_Base::last_event;
-#  endif
 #  ifdef USE_LIBEVENT
 #     define U_WHICH "libevent" 
 #  elif defined(HAVE_EPOLL_WAIT)
@@ -176,7 +173,9 @@ long UServer_Base::last_event;
 #  else
 #     define U_WHICH "select" 
 #  endif
-
+#  ifndef U_LOG_DISABLE
+long     UServer_Base::last_event;
+#  endif
 uint32_t UServer_Base::nread;
 uint32_t UServer_Base::max_depth;
 uint32_t UServer_Base::nread_again;
@@ -357,7 +356,7 @@ private:
  * the server returns a special code
  */
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
 #  define U_THROTTLE_TIME 2 // Time between updates of the throttle table's rolling averages
 
 class U_NO_EXPORT UThrottling : public UDataStorage {
@@ -895,7 +894,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTimeThread::run()")
 
-#  if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#  ifdef USE_LOAD_BALANCE
       uusockaddr addr;
       int fd_sock = -1;
       uint32_t laddr = 0;
@@ -980,7 +979,7 @@ public:
 #           endif
                }
 
-#        if defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_)
+#        ifdef USE_LOAD_BALANCE
             if (fd_sock > 0)
                {
                uint8_t my_loadavg = u_get_loadavg();
@@ -1242,7 +1241,7 @@ UServer_Base::~UServer_Base()
 
    if (host) delete host;
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    if (throttling_rec)  delete throttling_rec;
    if (throttling_mask) delete throttling_mask;
 #endif
@@ -1474,6 +1473,7 @@ void UServer_Base::loadConfigParam()
 
    U_INTERNAL_ASSERT_POINTER(cfg)
 
+   // --------------------------------------------------------------------------------------------------------------------------------------
    // userver - configuration parameters
    // --------------------------------------------------------------------------------------------------------------------------------------
    // ENABLE_IPV6 flag indicating the use of ipv6
@@ -2445,12 +2445,10 @@ void UServer_Base::init()
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
-#  if (defined(U_LOG_DISABLE) && !defined(USE_LIBZ)) || (defined(USE_LOAD_BALANCE) && !defined(_MSWINDOWS_))
-      bool bpthread_time = true;
-#  else
-      bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
-#  endif
+#if defined(USE_LOAD_BALANCE) || (defined(U_LOG_DISABLE) && !defined(USE_LIBZ))
+   bool bpthread_time = true;
+#elif defined(U_LINUX) && defined(ENABLE_THREAD)
+   bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
 #else
    bool bpthread_time = false; 
 #endif
@@ -2535,7 +2533,7 @@ void UServer_Base::init()
 
    UTimer::insert(pstat);
 #endif
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    if (db_throttling)
       {
       // set up the throttles timer
@@ -2632,7 +2630,7 @@ void UServer_Base::init()
       U_ERROR("System date not updated");
       }
 
-#if defined(U_THROTTLING_SUPPORT) && defined(U_HTTP2_DISABLE)
+#ifdef U_THROTTLING_SUPPORT
    if (throttling_mask) initThrottlingServer();
 #endif
 
