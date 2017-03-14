@@ -20,7 +20,35 @@
 #  include <ulib/internal/config.h>
 #  include <ulib/base/replace/replace.h>
 #else
-#  define restrict __restrict
+/* Minimal environment configuration */
+#  define HAVE_CXX11 1
+#  define HAVE_CXX14 1
+#  define ENABLE_LFS 1
+#  define HAVE_ARCH64 1
+#  define DISABLE_ZIP 1
+#  define HAVE_DLFCN_H 1
+#  define DISABLE_IPV6 1
+#  define HAVE_DIRENT_H 1
+#  define U_LOG_DISABLE 1
+#  define RETSIGTYPE void
+#  define ENABLE_MEMPOOL 1
+#  define HAVE_SIGINFO_T 1
+#  define U_STDCPP_ENABLE 1
+#  define U_HTTP2_DISABLE 1
+#  define HAVE_SYS_IOCTL_H 1
+#  define PACKAGE_NAME "ULib"
+#  define HAVE_NETINET_IN_H 1
+#  define ULIB_VERSION "1.4.2"
+#  define USE_HARDWARE_CRC32 1
+#  define HAVE_SYS_SENDFILE_H 1
+#  define PACKAGE_VERSION "1.4.2"
+#  define HAVE_NETPACKET_PACKET_H 1
+#  define FNM_PATHNAME (1 << 0) /* No wildcard can ever match '/' */
+#  define FNM_NOESCAPE (1 << 1) /* Backslashes don't quote special chars */
+#  define FNM_PERIOD   (1 << 2) /* Leading '.' is matched only explicitly */
+#  define U_CACHE_REQUEST_DISABLE 1
+#  define U_PIPELINE_HOMOGENEOUS_DISABLE 1
+#  define restrict
 #  include <ulib/internal/platform.h>
 #  ifndef U_LIBEXECDIR
 #  define U_LIBEXECDIR "/usr/libexec/ulib"

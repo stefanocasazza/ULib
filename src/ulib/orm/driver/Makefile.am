@@ -6,6 +6,9 @@ MAINTAINERCLEANFILES = Makefile.in
 
 DEFAULT_INCLUDES = -I. -I$(top_srcdir)/include
 
+## workaround for gcc version 4.9.3 (Gentoo Hardened 4.9.3 p1.1, pie-0.6.2)
+DEFS = @STD_GNU11@ @DEFS@ 
+
 ulib_la = $(top_builddir)/src/ulib/lib@ULIB@.la
 
 moduledir = @ULIB_MODULEDIR@

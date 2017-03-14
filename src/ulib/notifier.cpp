@@ -954,7 +954,7 @@ void UNotifier::modify(UEventFd* item)
 
 void UNotifier::handlerDelete(int fd, int mask)
 {
-   U_TRACE(0, "UNotifier::handlerDelete(%d,%d)", fd, mask)
+   U_TRACE(0, "UNotifier::handlerDelete(%d,%B)", fd, mask)
 
    U_INTERNAL_ASSERT_MAJOR(fd, 0)
 

@@ -185,7 +185,7 @@ public:
    static char response_buffer[64];
    static int mime_index, cgi_timeout; // the time-out value in seconds for output cgi process
    static bool enable_caching_by_proxy_servers, skip_check_cookie_ip_address;
-   static uint32_t limit_request_body, request_read_timeout, range_start, range_size, response_code;
+   static uint32_t limit_request_body, request_read_timeout, range_start, range_size;
 
    static int  handlerREAD();
    static bool readRequest();
@@ -327,9 +327,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UHTTP::startRequest()")
 
-#  if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
       UClientImage_Base::startRequest();
-#  endif
 
       // ------------------------------
       // U_http_info.uri
@@ -1127,6 +1125,8 @@ public:
       }
 
 private:
+   static uint32_t old_response_code;
+
    static void setMimeIndex()
       {
       U_TRACE_NO_PARAM(0, "UHTTP::setMimeIndex()")

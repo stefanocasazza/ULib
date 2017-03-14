@@ -2540,6 +2540,7 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 
 		case `gcc --version | head -n 1` in
 			$to_match) ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc" ;; # On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
+				
 		esac
 	fi
 fi
@@ -2581,12 +2582,25 @@ AC_SUBST(USP_LIBS)
 AC_SUBST(USP_FLAGS)
 AC_SUBST(USP_LDFLAGS)
 
+STD_GNU11=
 if test "x$ax_cv_cxx_compile_cxx11" = xno -a "x$ax_cv_cxx_compile_cxx11__std_gnupp11" = xyes; then
 	CXXFLAGS="-std=gnu++11 $CXXFLAGS"
+
+	AC_MSG_CHECKING(for workaround to enable on Sabayon)
+	to_match='gcc (Gentoo Hardened 4.9.3*'
+	case `gcc --version | head -n 1` in
+		$to_match)
+			STD_GNU11="-std=gnu++11"
+
+			AC_MSG_RESULT(enabled)
+		;;
+		*)	AC_MSG_RESULT(no) ;;
+	esac
 fi
 if test "x$ax_cv_cxx_compile_cxx14" = xno -a "x$ax_cv_cxx_compile_cxx14__std_gnupp14" = xyes; then
 	CXXFLAGS="-std=gnu++14 $CXXFLAGS"
 fi
+AC_SUBST(STD_GNU11)
 
 CXX=$CXX_save
 AC_SUBST(CXX)

@@ -28,7 +28,7 @@
 
 #ifdef _MSWINDOWS_
 #  include <ws2tcpip.h>
-#elif defined(HAVE_NETPACKET_PACKET_H) && !defined(U_ALL_CPP)
+#elif defined(HAVE_NETPACKET_PACKET_H) && (!defined(HAVE_CONFIG_H) || !defined(U_ALL_CPP))
 #  include <net/if.h>
 #endif
 

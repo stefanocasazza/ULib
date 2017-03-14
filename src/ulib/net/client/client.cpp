@@ -51,22 +51,6 @@ UClient_Base::UClient_Base(UFileConfig* pcfg) : response(U_CAPACITY), buffer(U_C
       }
 }
 
-void UClient_Base::closeLog()
-{
-   U_TRACE_NO_PARAM(0, "UClient_Base::closeLog()")
-
-#ifndef U_LOG_DISABLE
-   if (log &&
-       log_shared_with_server == false)
-      {
-      u_unatexit(&ULog::close); // unregister function of close at exit()...
-                  ULog::close();
-
-      log = 0;
-      }
-#endif
-}
-
 UClient_Base::~UClient_Base()
 {
    U_TRACE_UNREGISTER_OBJECT(0, UClient_Base)
@@ -123,14 +107,6 @@ void UClient_Base::setSSLContext()
 }
 #endif
 
-void UClient_Base::clearData()
-{
-   U_TRACE_NO_PARAM(0, "UClient_Base::clearData()")
-
-     buffer.setEmpty();
-   response.setEmpty();
-}
-
 bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
 {
    U_TRACE(0, "UClient_Base::setHostPort(%V,%u)", host.rep, _port)
@@ -181,18 +157,6 @@ bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
       }
 
    U_RETURN(false);
-}
-
-void UClient_Base::setLogShared()
-{
-   U_TRACE_NO_PARAM(0, "UClient_Base::setLogShared()")
-
-   U_INTERNAL_ASSERT_POINTER(UServer_Base::log)
-
-#ifndef U_LOG_DISABLE
-   log                    = UServer_Base::log;
-   log_shared_with_server = true;
-#endif
 }
 
 void UClient_Base::loadConfigParam()

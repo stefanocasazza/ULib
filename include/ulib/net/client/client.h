@@ -156,8 +156,41 @@ public:
 
    // LOG 
 
-   static void closeLog();
-   static void setLogShared();
+   static void closeLog()
+      {
+      U_TRACE_NO_PARAM(0, "UClient_Base::closeLog()")
+
+#  ifndef U_LOG_DISABLE
+      if (log &&
+          log_shared_with_server == false)
+         {
+         u_unatexit(&ULog::close); // unregister function of close at exit()...
+                     ULog::close();
+
+         log = 0;
+         }
+#  endif
+      }
+
+   void clearData()
+      {
+      U_TRACE_NO_PARAM(0, "UClient_Base::clearData()")
+
+        buffer.setEmpty();
+      response.setEmpty();
+      }
+
+   static void setLogShared()
+      {
+      U_TRACE_NO_PARAM(0, "UClient_Base::setLogShared()")
+
+      U_INTERNAL_ASSERT_POINTER(UServer_Base::log)
+
+#  ifndef U_LOG_DISABLE
+      log                    = UServer_Base::log;
+      log_shared_with_server = true;
+#  endif
+      }
 
    static bool isLogSharedWithServer()
       {
@@ -176,7 +209,6 @@ public:
    unsigned int getPort() const         { return port; }
 
    bool connect();
-   void clearData();
    bool remoteIPAddress(UIPAddress& addr);
    bool readResponse(uint32_t count = U_SINGLE_READ);
    bool setHostPort(const UString& host, unsigned int port);

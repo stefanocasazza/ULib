@@ -838,7 +838,6 @@ bool UHttpClient_Base::sendRequestEngine()
 {
    U_TRACE_NO_PARAM(0, "UHttpClient_Base::sendRequestEngine()")
 
-   U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
    U_INTERNAL_ASSERT_RANGE(1,UClient_Base::iovcnt,6)
 
    UString headers;

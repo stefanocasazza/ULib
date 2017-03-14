@@ -104,7 +104,7 @@ UString*    UHTTP::string_HTTP_Variables;
 uint32_t    UHTTP::range_size;
 uint32_t    UHTTP::range_start;
 uint32_t    UHTTP::old_path_len;
-uint32_t    UHTTP::response_code;
+uint32_t    UHTTP::old_response_code;
 uint32_t    UHTTP::sid_counter_gen;
 uint32_t    UHTTP::sid_counter_cur;
 uint32_t    UHTTP::usp_page_key_len;
@@ -1323,7 +1323,7 @@ void UHTTP::init()
 
    U_http_info.nResponseCode = 0;
 
-   U_INTERNAL_ASSERT_EQUALS(response_code, HTTP_OK)
+   U_INTERNAL_ASSERT_EQUALS(old_response_code, HTTP_OK)
 
    U_MEMCPY(response_buffer, UClientImage_Base::iov_vec[0].iov_base, UClientImage_Base::iov_vec[0].iov_len);
 
@@ -6199,9 +6199,11 @@ void UHTTP::setStatusDescription()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::setStatusDescription()")
 
-   if (response_code != U_http_info.nResponseCode)
+   U_INTERNAL_DUMP("old_response_code = %u U_http_info.nResponseCode = %u", old_response_code, U_http_info.nResponseCode)
+
+   if (old_response_code != U_http_info.nResponseCode)
       {
-      switch ((response_code = U_http_info.nResponseCode))
+      switch ((old_response_code = U_http_info.nResponseCode))
          {
          // 1xx indicates an informational message only
          case HTTP_SWITCH_PROT:
@@ -6317,7 +6319,7 @@ void UHTTP::setStatusDescription()
             const char* status = getStatusDescription(&sz);
 
             UClientImage_Base::iov_vec[0].iov_base = response_buffer;
-            UClientImage_Base::iov_vec[0].iov_len  = 9+u__snprintf(response_buffer+9, sizeof(response_buffer)-9, U_CONSTANT_TO_PARAM("%u %.*s\r\n"), response_code, sz, status);
+            UClientImage_Base::iov_vec[0].iov_len  = 9+u__snprintf(response_buffer+9, sizeof(response_buffer)-9, U_CONSTANT_TO_PARAM("%u %.*s\r\n"), old_response_code, sz, status);
             }
          }
       }
@@ -6739,7 +6741,7 @@ void UHTTP::setErrorResponse(const UString& content_type, int code, const char* 
          char buffer[4096];
 
          uint32_t len = u__snprintf(buffer, sizeof(buffer), fmt, fmt_size,
-                                    u_xml_encode((const unsigned char*)U_http_info.uri, U_min(100, U_HTTP_URI_QUERY_LEN), (unsigned char*)output), output);
+                                    u_xml_encode((const unsigned char*)U_http_info.uri, U_min(100, U_http_info.uri_len), (unsigned char*)output), output);
 
          body.snprintf(U_CONSTANT_TO_PARAM(U_STR_FMR_BODY),
                        code, sz, status,

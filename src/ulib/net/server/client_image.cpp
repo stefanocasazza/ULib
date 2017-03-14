@@ -611,14 +611,18 @@ const char* UClientImage_Base::getRequestUri(uint32_t& sz)
 }
 
 #ifdef U_CACHE_REQUEST_DISABLE
-#  define U_IOV_TO_SAVE  sizeof(struct iovec)
+#  define U_IOV_TO_SAVE     sizeof(struct iovec)
+#  define U_IOV_TO_SAVE_CNT 1
 #else
-#  define U_IOV_TO_SAVE (sizeof(struct iovec) * 4)
+#  define U_IOV_TO_SAVE     (sizeof(struct iovec) * 4)
+#  define U_IOV_TO_SAVE_CNT 4 
 #endif
 
 void UClientImage_Base::startRequest()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::startRequest()")
+
+   iov_sav[0].iov_len = 0;
 
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
    long time_elapsed = chronometer->restart();
@@ -703,7 +707,12 @@ void UClientImage_Base::endRequest()
       if (U_http_info.uri_len)
 #  endif
       {
-      U_MEMCPY(iov_vec, iov_sav, U_IOV_TO_SAVE);
+      if (iov_sav[0].iov_len)
+         {
+         U_DUMP_IOVEC(iov_sav,U_IOV_TO_SAVE_CNT)
+
+         U_MEMCPY(iov_vec, iov_sav, U_IOV_TO_SAVE);
+         }
 
 #  if defined(DEBUG) && !defined(U_LOG_DISABLE)
       if (UServer_Base::isLog())
@@ -977,9 +986,7 @@ bool UClientImage_Base::genericRead()
 
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
 
-#if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
    startRequest();
-#endif
 
    rstart = 0;
 
@@ -1392,6 +1399,7 @@ write:
          // NB: we are managing a sendfile() request...
 
          U_INTERNAL_ASSERT_EQUALS(nrequest, 0)
+         U_INTERNAL_ASSERT_DIFFERS(U_http_version, '2')
          U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
 
          if (writeResponse() == false ||
@@ -1409,9 +1417,7 @@ write:
       if (U_ClientImage_pipeline)
          {
            endRequest();
-#     if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) || (defined(DEBUG) && !defined(U_LOG_DISABLE))
          startRequest();
-#     endif
 
          goto pipeline;
          }
@@ -1509,6 +1515,8 @@ bool UClientImage_Base::writeResponse()
                 iov_vec[1].iov_len;
 
       U_MEMCPY(iov_sav, iov_vec, U_IOV_TO_SAVE);
+
+      U_INTERNAL_ASSERT_MAJOR(iov_sav[0].iov_len, 0)
 
 #  if defined(U_LINUX) && defined(ENABLE_THREAD) && defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
       U_INTERNAL_ASSERT_POINTER(u_pthread_time)
@@ -1695,9 +1703,7 @@ void UClientImage_Base::close()
 
    setRequestProcessed();
 
-   U_ClientImage_close = true;
-
-   if (U_ClientImage_pipeline) resetPipeline();
+   resetPipelineAndSetCloseConnection();
 }
 
 void UClientImage_Base::abortive_close()

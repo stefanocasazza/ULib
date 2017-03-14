@@ -3159,11 +3159,11 @@ void UHTTP2::handlerDelete(UClientImage_Base* pclient, bool& bsocket_open)
    if (bsocket_open &&
        pclient->socket->isTimeout())
       {
+      bsocket_open = false;
+
       nerror = NO_ERROR;
 
       sendGoAway(pclient->socket);
-
-      bsocket_open = false;
       }
 }
 
@@ -3729,7 +3729,14 @@ void UHTTP2::sendGoAway(USocket* psocket)
 
    pConnection->state = CONN_STATE_IS_CLOSING;
 
-   if (USocketExt::write(psocket, buffer, sizeof(buffer), 0) == sizeof(buffer)) UClientImage_Base::close();
+   if (USocketExt::write(psocket, buffer, sizeof(buffer), 0) == sizeof(buffer))
+      {
+      psocket->close();
+
+      UClientImage_Base::setRequestProcessed();
+
+      UClientImage_Base::resetPipelineAndSetCloseConnection();
+      }
 }
 
 void UHTTP2::sendResetStream()
