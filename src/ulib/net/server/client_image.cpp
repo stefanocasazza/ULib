@@ -1535,6 +1535,8 @@ bool UClientImage_Base::writeResponse()
 #ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
    if (nrequest)
       {
+      U_INTERNAL_ASSERT_MAJOR(nrequest, 1)
+
       ncount *= nrequest;
 
       iBytesWrite = USocketExt::writev(socket, iov_vec+idx, iovcnt, ncount, 0, nrequest);

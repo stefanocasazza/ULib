@@ -681,11 +681,17 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
    int byte_written = _writev(sk, iov, iovcnt, count, timeoutMS);
 #endif
 
-        if (cloop == 1) U_MEMCPY(iov, _iov, sz);
+   if (cloop == 1) // NB: it is used only by net/client/client.cpp:428
+      {
+      U_MEMCPY(iov, _iov, sz);
+
+      goto end;
+      }
+
 #ifndef U_PIPELINE_HOMOGENEOUS_DISABLE
-   else if (cloop > 1                 &&
-            byte_written < (int)count &&
-            byte_written > 0)
+   if (cloop > 1                 &&
+       byte_written < (int)count &&
+       byte_written > 0)
       {
       U_INTERNAL_ASSERT(sk->isOpen())
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
@@ -708,6 +714,7 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
       }
 #endif
 
+end:
    U_INTERNAL_DUMP("iov[0].iov_len = %d iov[1].iov_len = %d", iov[0].iov_len, iov[1].iov_len)
 
    U_RETURN(byte_written);

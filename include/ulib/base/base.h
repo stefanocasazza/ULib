@@ -108,23 +108,23 @@
 /* Checks define */
 #if defined(USE_LOAD_BALANCE) && defined(_MSWINDOWS_)
 #     undef USE_LOAD_BALANCE
-U_DO_PRAGMA(message (Sorry_I_was_compiled_on_Windows_so_I_cannot_use_load_balance))
+U_DO_PRAGMA(message ("Sorry I was compiled on Windows so I cannot use load balance"))
 #endif
 #if defined(U_THROTTLING_SUPPORT) && !defined(U_HTTP2_DISABLE)
 #     undef U_THROTTLING_SUPPORT
-U_DO_PRAGMA(message (Sorry_I_was_compiled_with_http2_enabled_so_I_cannot_support_bandwidth_throttling))
+U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot support bandwidth throttling"))
 #endif
 #if defined(U_SERVER_CHECK_TIME_BETWEEN_REQUEST) && !defined(U_HTTP2_DISABLE)
 #     undef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
-U_DO_PRAGMA(message (Sorry_I_was_compiled_with_http2_enabled_so_I_cannot_support_check_time_between_request))
+U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot support check time between request"))
 #endif
 #if !defined(U_CACHE_REQUEST_DISABLE) && !defined(U_HTTP2_DISABLE)
 #     define U_CACHE_REQUEST_DISABLE
-U_DO_PRAGMA(message (Sorry_I_was_compiled_with_http2_enabled_so_I_cannot_support_cache_request))
+U_DO_PRAGMA(message ("Sorry I was compiled with http2 enabled so I cannot support cache request"))
 #endif
 #if defined(U_HTTP_INOTIFY_SUPPORT) && defined(U_SERVER_CAPTIVE_PORTAL)
 #     undef U_HTTP_INOTIFY_SUPPORT
-U_DO_PRAGMA(message (Sorry_I_was_compiled_with_server_captive_portal_mode_enabled_so_I_cannot_support_http_inotify))
+U_DO_PRAGMA(message ("Sorry I was compiled with server captive portal mode enabled so I cannot support http inotify"))
 #endif
 
 #include <stddef.h>

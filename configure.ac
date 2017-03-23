@@ -2431,9 +2431,12 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 		# (This requires that ar, ranlib and nm have been compiled with plugin support)
 
 		if test "$cross_compiling" != "yes"; then
-			AR=gcc-ar
-			NM=gcc-nm
-			RANLIB=gcc-ranlib
+			AC_PATH_PROG(GCC_AR, gcc-ar, no)
+			if test "$GCC_AR" != "no"; then
+				AR=gcc-ar
+				NM=gcc-nm
+				RANLIB=gcc-ranlib
+			fi
 		fi
 		;;
 	esac

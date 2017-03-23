@@ -284,6 +284,7 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+GCC_AR = @GCC_AR@
 GREP = @GREP@
 HAVE_CXX11 = @HAVE_CXX11@
 HAVE_CXX14 = @HAVE_CXX14@
@@ -979,6 +980,9 @@ doc: $(top_builddir)/doc/Doxyfile
 
 todo:
 	@grep --color=tty --exclude="Makefile*" --exclude-dir=.git -nrEI "/[*] TODO|/[*] FIXME|// TODO|// FIXME" .
+
+cppcheck:
+	cppcheck . --enable=all --force 2>&1 | sed 's/^/warning: /g' 1>&2;
 
 coverage:
 	@lcov --output-file coverage.info --directory . --capture

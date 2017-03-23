@@ -214,18 +214,20 @@ echo 16384 > /proc/sys/net/core/somaxconn
 
 start_prg_background userver_tcp -c benchmark/FrameworkBenchmarks/fbenchmark.cfg
 
+wait_server_ready localhost 8080
+
 #run command on another computer
 #ab -n 100000 -c10 http://stefano/servlet/benchmarking?name=stefano
 #ab -n 100000 -c10 https://stefano/servlet/benchmarking?name=stefano
 
+echo "PID = `cat benchmark/FrameworkBenchmarks/ULib/userver_tcp.pid`"
+
 #$SLEEP
-#pkill userver_tcp userver_ssl
+#kill_server userver_tcp
 
  mv err/userver_tcp.err err/FrameworkBenchmarks.err
 #mv err/userver_ssl.err err/benchmarking.err
 
-echo "PID = `cat benchmark/FrameworkBenchmarks/ULib/userver_tcp.pid`"
+#grep -v 'EAGAIN\|EPIPE\|ENOTCONN\|ECONNRESET' err/benchmarking.err 
 
-# grep -v 'EAGAIN\|EPIPE\|ENOTCONN\|ECONNRESET' err/benchmarking.err 
-
-# gprof -b ../../examples/userver/userver_tcp gmon.out >profile.out 2>/dev/null
+#gprof -b ../../examples/userver/userver_tcp gmon.out >profile.out 2>/dev/null

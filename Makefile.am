@@ -42,6 +42,9 @@ doc: $(top_builddir)/doc/Doxyfile
 todo:
 	@grep --color=tty --exclude="Makefile*" --exclude-dir=.git -nrEI "/[*] TODO|/[*] FIXME|// TODO|// FIXME" .
 
+cppcheck:
+	cppcheck . --enable=all --force 2>&1 | sed 's/^/warning: /g' 1>&2;
+
 coverage:
 	@lcov --output-file coverage.info --directory . --capture
 	@lcov --output-file coverage.info --remove coverage.info '/usr/*' 'src/ulib/expression.*'

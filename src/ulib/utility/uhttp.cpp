@@ -6411,10 +6411,9 @@ void UHTTP::handlerResponse()
          // A server implements an HSTS policy by supplying a header over an HTTPS connection (HSTS headers over HTTP are ignored)
 
 #     if defined(USE_LIBSSL) && defined(U_HTTP_STRICT_TRANSPORT_SECURITY)
-         if (uri_strict_transport_security_mask == (void*)1L)
+         if (UServer_Base::bssl &&
+             uri_strict_transport_security_mask == (void*)1L)
             {
-            U_INTERNAL_ASSERT(UServer_Base::bssl)
-
             ptr2 =                 "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n";
              sz2 = U_CONSTANT_SIZE("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\nContent-Length: 0\r\n\r\n");
             }
@@ -7435,6 +7434,8 @@ __pure bool UHTTP::isUriRequestStrictTransportSecurity()
       if (UServer_Base::bssl == false)
 #  endif
       {
+      if (uri_strict_transport_security_mask == (void*)1L) U_RETURN(true);
+
       uint32_t sz;
       const char* ptr = UClientImage_Base::getRequestUri(sz);
 
@@ -7672,10 +7673,9 @@ UString UHTTP::getHeaderMimeType(const char* content, uint32_t size, const char*
    // A server implements an HSTS policy by supplying a header over an HTTPS connection (HSTS headers over HTTP are ignored)
 
 #if defined(USE_LIBSSL) && defined(U_HTTP_STRICT_TRANSPORT_SECURITY)
-   if (uri_strict_transport_security_mask == (void*)1L)
+   if (UServer_Base::bssl &&
+       uri_strict_transport_security_mask == (void*)1L)
       {
-      U_INTERNAL_ASSERT(UServer_Base::bssl)
-
       (void) header.append(U_CONSTANT_TO_PARAM("Strict-Transport-Security: max-age=31536000; includeSubDomains; preload\r\n"));
       }
 #endif

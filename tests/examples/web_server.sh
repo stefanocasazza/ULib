@@ -106,6 +106,8 @@ start_prg_background userver_tcp -c inp/webserver.cfg
 
 wait_server_ready localhost 8080
 
+echo "PID = `cat /var/run/userver_tcp.pid`"
+
 # HTTP pseudo-streaming for FLV video
 
 #curl -I -s -D -			'http://localhost:8080/test.flv'					 -o /dev/null
@@ -117,8 +119,6 @@ wait_server_ready localhost 8080
 #kill_server userver_tcp
 
 mv err/userver_tcp.err err/web_server.err
-
-echo "PID = `cat /var/run/userver_tcp.pid`"
 
 #check_for_netcat
 #send_req localhost 8080 inp/http/get_geoip.req web_server 3
