@@ -319,7 +319,7 @@ public:
 
    // U_INTERNAL_ASSERT_RANGE(2,_length,_capacity)
 
-#  ifdef U_STDCPP_ENABLE
+#  if defined(U_STDCPP_ENABLE) && (!defined(__clang__) || CLANG_VERSION_NUM != 30700)
       std::sort(vec, vec+_length, compare_obj);
 #  else
       U_SYSCALL_VOID(qsort, "%p,%u,%d,%p", (void*)vec, _length, sizeof(void*), compare_obj);
