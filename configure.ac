@@ -2540,10 +2540,8 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 		ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc"
  	else
 		to_match='gcc (Ubuntu 5.*'
-
 		case `gcc --version | head -n 1` in
 			$to_match) ULIB_LIBS="$ULIB_LIBS -lgcc_s -lgcc" ;; # On Ubuntu 16.04 bug: [#65612](https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65612)
-				
 		esac
 	fi
 fi
@@ -2753,7 +2751,7 @@ AC_CONFIG_FILES([
 AC_OUTPUT
 
 if test -n "$AWK"; then
-  $AWK -f configure_log.awk config.log							> include/ulib/internal/config1.h
+  $AWK -f configure_log.awk config.log							  > include/ulib/internal/config1.h
   $AWK -f configure_h.awk   include/ulib/internal/config.h > include/ulib/internal/config2.h
   cd include/ulib/internal
   cat   config2.h config1.h >> config.h
@@ -2762,7 +2760,6 @@ if test -n "$AWK"; then
 fi
 
 echo
-echo "***"
 
 # Verify the integrity of the current configuration
 if test "$cross_compiling" != "yes"; then
@@ -2776,8 +2773,12 @@ if test "$cross_compiling" != "yes"; then
 
 	if test "$ac_cv_configuration_is_usable" = "no" ; then
 		# It appears that ulib/internal/common.cpp not compiled. If it didn't compile then there would be no chance that the rest would compile.
-		AC_MSG_ERROR([The generated configuration appears to be unusable.
-		Please verify that your system path and environment variables are correct.])
+		TWOCAN_CONF_MSG(The generated configuration appears to be unusable. Please verify that your system path and environment variables are correct)
+		echo "***********************************************************************************************************************************"
+		NLINE=`grep -n 'checking if generated configuration is usable' config.log | cut -d':' -f1`
+		CFGLOG=`tail -n +$NLINE config.log`
+		echo "${CFGLOG}"
+		echo "***********************************************************************************************************************************"
 		exit 1
 	fi
 fi
@@ -2786,4 +2787,3 @@ echo
 echo "You are now ready to build ULib"
 echo "Enter the following command: ${T_MD}make && make install${T_ME}"
 echo "After on some environment you must run also the following command: ${T_MD}sudo ldconfig${T_ME}"
-echo "***"
