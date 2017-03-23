@@ -97,6 +97,8 @@
 #  endif
 #  define U_DO_PRAGMA(x)
 #  define U_DUMP_KERNEL_VERSION(x)
+#  define CLANG_VERSION_NUM (__clang_major__  * 10000 + \
+                             __clang_minor__  *   100)
 #elif defined(U_CSP_INTERFACE)
 #  define U_DO_PRAGMA(x)
 #  define U_DUMP_KERNEL_VERSION(x)

@@ -16,7 +16,7 @@
 
 #include <ulib/container/construct.h>
 
-#ifdef U_STDCPP_ENABLE
+#if defined(U_STDCPP_ENABLE) && (!defined(__clang__) || CLANG_VERSION_NUM != 30700)
 #  include <algorithm>
 #endif
 
