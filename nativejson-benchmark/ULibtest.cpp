@@ -12,7 +12,9 @@
  * #include <ULib/src/ulib/all_cpp.cpp>
  */
 
-#include <ULib/src/ulib/all_cpp.cpp>
+#define HAVE_CONFIG_H
+#include <ulib/json/value.h>
+#undef HAVE_CONFIG_H
 
 static ULib ulib("167193,0,0,0,-30,-31,-30,-31,0");
 

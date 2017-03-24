@@ -9120,7 +9120,7 @@ bool UHTTP::getCGIEnvironment(UString& environment, int type)
 {
    U_TRACE(0, "UHTTP::getCGIEnvironment(%V,%d)", environment.rep, type)
 
-   UString buffer(2000U + u_cwd_len + U_http_info.endHeader + U_http_info.uri_len + U_http_info.query_len);
+   UString buffer(2000U + u_cwd_len + U_http_info.endHeader + (U_http_info.uri_len + U_http_info.query_len) * 2); // NB: REQUEST_URI + SCRIPT_NAME...
 
    // The portion of the request URL that follows the ?, if any. May be empty, but is always required!
 
