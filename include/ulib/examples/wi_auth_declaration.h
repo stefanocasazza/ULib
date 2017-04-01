@@ -1169,15 +1169,14 @@ loop: pos = db_anagrafica->find(*ap_address, pos);
          {
          if (findLabel() == false)
             {
-            if (binsert == false ||
-                ap_address_trust == false)
+            if (ap_address_trust == false) U_RETURN(false);
+
+            if (binsert)
                {
-               U_RETURN(false);
+               op = RDB_REPLACE;
+
+               addAccessPoint(getNoConsumeFromAnagrafica());
                }
-
-            op = RDB_REPLACE;
-
-            addAccessPoint(getNoConsumeFromAnagrafica());
             }
 
               if ( ap_hostname->empty()) *ap_hostname = hostname;

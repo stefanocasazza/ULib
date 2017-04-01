@@ -9151,6 +9151,8 @@ bool UHTTP::getCGIEnvironment(UString& environment, int type)
          sz  = UClientImage_Base::request_uri->size();
          ptr = UClientImage_Base::request_uri->data();
 
+         (void) buffer.reserve(2000U + sz * 2);
+
          if (U_http_info.query_len &&
              (type & U_SHELL) == 0)
             {

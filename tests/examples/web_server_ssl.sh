@@ -59,6 +59,8 @@ DIR_CMD="../../examples/userver"
 #STRACE=$TRUSS
 start_prg_background userver_ssl -c inp/webserver.cfg 
 
+wait_server_ready localhost 443
+
 #$SLEEP
 #kill_prg userver_ssl TERM
 

@@ -1322,19 +1322,20 @@ void UServer_Base::manageChangeOfSystemTime()
    if (u_setStartTime() == false)
       {
       U_WARNING("System date update failed: %#5D", u_now->tv_sec);
+
+      return;
       }
+
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   else
+   if (u_now_adjust_old != u_now_adjust &&
+       update_date)
       {
-      if (u_now_adjust_old != u_now_adjust)
-         {
-         if (u_pthread_time) (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
+      if (u_pthread_time) (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
 
-         (void) u_strftime2(ULog::ptr_shared_date->date1, 17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"),    u_now->tv_sec + u_now_adjust);
-         (void) u_strftime2(ULog::ptr_shared_date->date2, 26, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"), u_now->tv_sec + u_now_adjust);
+      (void) u_strftime2(ULog::ptr_shared_date->date1, 17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"),    u_now->tv_sec + u_now_adjust);
+      (void) u_strftime2(ULog::ptr_shared_date->date2, 26, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"), u_now->tv_sec + u_now_adjust);
 
-         if (u_pthread_time) (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
-         }
+      if (u_pthread_time) (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
       }
 #endif
 }

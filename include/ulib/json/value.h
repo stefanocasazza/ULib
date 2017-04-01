@@ -518,6 +518,22 @@ public:
       U_RETURN(false);
       }
 
+   static bool jfind(const UString& json, const char* query, uint32_t query_len, unsigned int& result)
+      {
+      U_TRACE(0, "UValue::jfind(%V,%.*S,%u,%p)", json.rep, query_len, query, query_len, &result)
+
+      UString x;
+
+      if (jfind(json, query, query_len, x))
+         {
+         result = u_strtoul(x.data(), x.pend());
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
    static bool jfind(const UString& json, const char* query, uint32_t query_len, int64_t& result)
       {
       U_TRACE(0, "UValue::jfind(%V,%.*S,%u,%p)", json.rep, query_len, query, query_len, &result)
@@ -534,7 +550,21 @@ public:
       U_RETURN(false);
       }
 
-   static bool jfind(const UString& json, const UString& query, int64_t& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
+   static bool jfind(const UString& json, const char* query, uint32_t query_len, uint64_t& result)
+      {
+      U_TRACE(0, "UValue::jfind(%V,%.*S,%u,%p)", json.rep, query_len, query, query_len, &result)
+
+      UString x;
+
+      if (jfind(json, query, query_len, x))
+         {
+         result = u_strtoull(x.data(), x.pend());
+
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
    static bool jfind(const UString& json, const char* query, uint32_t query_len, double& result)
       {
@@ -552,10 +582,13 @@ public:
       U_RETURN(false);
       }
 
-   static bool jfind(const UString& json, const UString& query, UString& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
-   static bool jfind(const UString& json, const UString& query,    bool& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
-   static bool jfind(const UString& json, const UString& query,     int& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
-   static bool jfind(const UString& json, const UString& query,  double& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
+   static bool jfind(const UString& json, const UString& query,      UString& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
+   static bool jfind(const UString& json, const UString& query,         bool& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
+   static bool jfind(const UString& json, const UString& query,          int& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
+   static bool jfind(const UString& json, const UString& query, unsigned int& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
+   static bool jfind(const UString& json, const UString& query,      int64_t& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
+   static bool jfind(const UString& json, const UString& query,     uint64_t& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
+   static bool jfind(const UString& json, const UString& query,       double& result) { return jfind(json, U_STRING_TO_PARAM(query), result); }
 
    // reads one value from an array
 
