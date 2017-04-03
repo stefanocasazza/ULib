@@ -116,81 +116,88 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
 
    if (dir) setDriverDirectory(dir);
 
-   if (driver_dir) UDynamic::setPluginDirectory(*driver_dir);
-
-   UString::str_allocate(STR_ALLOCATE_ORM);
-
-   U_NEW(UVector<UOrmDriver*>, vdriver, UVector<UOrmDriver*>(10U));
-
-   U_NEW(UVector<UString>, vdriver_name,        UVector<UString>(10U));
-   U_NEW(UVector<UString>, vdriver_name_static, UVector<UString>(20U));
-
-   uint32_t i, n;
-   UOrmDriver* _driver;
-   UString item, _name;
-
-   // NB: we don't want to use substr() because of dependency from config var ORM_DRIVER...
-
-   if (driver_list) vdriver_size = vdriver_name->split(U_STRING_TO_PARAM(driver_list));
-
-   /**
-    * I do know that to include code in the middle of a function is hacky and dirty,
-    * but this is the best solution that I could figure out. If you have some idea to
-    * clean it up, please, don't hesitate and let me know
-    */
-
-#  include "driver/loader.autoconf.cpp"
-
-   for (i = 0; i < vdriver_size; ++i)
+   if (driver_list)
       {
-      item = vdriver_name->at(i);
+      UString::str_allocate(STR_ALLOCATE_ORM);
 
-      uint32_t pos = vdriver_name_static->find(item);
+      U_NEW(UVector<UOrmDriver*>, vdriver, UVector<UOrmDriver*>(10U));
 
-      U_INTERNAL_DUMP("i = %u pos = %u item = %V", i, pos, item.rep)
+      U_NEW(UVector<UString>, vdriver_name,        UVector<UString>(10U));
+      U_NEW(UVector<UString>, vdriver_name_static, UVector<UString>(20U));
 
-      if (pos == U_NOT_FOUND)
+      if (driver_dir) UDynamic::setPluginDirectory(*driver_dir);
+
+      uint32_t i, n;
+      UOrmDriver* _driver;
+      UString item, _name;
+
+      // NB: we don't want to use substr() because of dependency from config var ORM_DRIVER...
+
+      vdriver_size = vdriver_name->split(U_STRING_TO_PARAM(driver_list));
+
+      /**
+       * I do know that to include code in the middle of a function is hacky and dirty,
+       * but this is the best solution that I could figure out. If you have some idea to
+       * clean it up, please, don't hesitate and let me know
+       */
+
+#     include "driver/loader.autoconf.cpp"
+
+      for (i = 0; i < vdriver_size; ++i)
          {
-         _name.setBuffer(32U);
+         item = vdriver_name->at(i);
 
-         _name.snprintf(U_CONSTANT_TO_PARAM("orm_driver_%v"), item.rep);
+         uint32_t pos = vdriver_name_static->find(item);
 
-         _driver = UPlugIn<UOrmDriver*>::create(U_STRING_TO_PARAM(_name));
+         U_INTERNAL_DUMP("i = %u pos = %u item = %V", i, pos, item.rep)
 
-         if (_driver == 0)
+         if (pos == U_NOT_FOUND)
             {
-            U_SRV_LOG("WARNING: load of driver %v failed", item.rep);
+            _name.setBuffer(32U);
 
-            continue;
+            _name.snprintf(U_CONSTANT_TO_PARAM("orm_driver_%v"), item.rep);
+
+            _driver = UPlugIn<UOrmDriver*>::create(U_STRING_TO_PARAM(_name));
+
+            if (_driver == 0)
+               {
+               U_SRV_LOG("WARNING: load of driver %v failed", item.rep);
+
+               continue;
+               }
+
+            vdriver->push_back(_driver);
+            vdriver_name_static->push_back(item);
+
+#        ifndef U_LOG_DISABLE
+            if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("[%v] Load of driver success"), item.rep);
+#        endif
             }
-
-         vdriver->push_back(_driver);
-         vdriver_name_static->push_back(item);
-
-#     ifndef U_LOG_DISABLE
-         if (UServer_Base::isLog()) ULog::log(U_CONSTANT_TO_PARAM("[%v] Load of driver success"), item.rep);
-#     endif
          }
+
+      if (vdriver_size &&
+          vdriver->empty())
+         {
+         U_RETURN(false);
+         }
+
+      vdriver_name->clear();
+
+      for (i = 0, n = vdriver_name_static->size(); i < n; ++i)
+         {
+         item = vdriver_name_static->at(i);
+
+         vdriver_name->push_back(item);
+         }
+
+      delete vdriver_name_static;
+
+      env_driver = (const char*) U_SYSCALL(getenv, "%S", "ORM_DRIVER");
+      env_option = (const char*) U_SYSCALL(getenv, "%S", "ORM_OPTION");
+
+      if (env_driver) env_driver_len = u__strlen(env_driver, __PRETTY_FUNCTION__);
+#  endif
       }
-
-   if (vdriver_size && vdriver->empty()) U_RETURN(false);
-
-   vdriver_name->clear();
-
-   for (i = 0, n = vdriver_name_static->size(); i < n; ++i)
-      {
-      item = vdriver_name_static->at(i);
-
-      vdriver_name->push_back(item);
-      }
-
-   delete vdriver_name_static;
-
-   env_driver = (const char*) U_SYSCALL(getenv, "%S", "ORM_DRIVER");
-   env_option = (const char*) U_SYSCALL(getenv, "%S", "ORM_OPTION");
-
-   if (env_driver) env_driver_len = u__strlen(env_driver, __PRETTY_FUNCTION__);
-#endif
 
    U_RETURN(true);
 }

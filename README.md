@@ -93,3 +93,5 @@ ULib is normally built and installed as a set of shared object libraries and hea
 Comments and suggestions are welcome.
 
 	stefano casazza <stefano.casazza@gmail.com>
+
+Please, excuse me for my bad english, it's not my natural language, if some parts of this page seems wrong to you, feel free to suggest me better ones.

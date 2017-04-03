@@ -1,0 +1,289 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg' 
+	xmlns:xlink='http://www.w3.org/1999/xlink'
+	width='100%' height='100%' 
+	viewBox='0 0 600 300'
+	preserveAspectRatio='none'
+	onload='init(evt)'
+>
+<g id='graph'>
+	<rect id='bg' x1='0' y1='0' width='600' height='300' fill='white' />
+
+	<text id='graph_in_lbl'  x='50' y='15' fill='#435370' text-anchor='end'>In</text>
+	<text id='graph_out_lbl' x='50' y='35' fill='#8092B3' text-anchor='end'>Out</text>
+
+	<text id='graph_in_txt'  x='54' y='15' fill='#435370'>--</text>
+	<text id='graph_out_txt' x='54' y='35' fill='#8092B3'>--</text>
+
+	<text id='switch_unit'  x='200' y='15' fill='#435370' cursor='pointer'>Switch to bytes/s</text>
+	<text id='switch_scale' x='200' y='35' fill='#435370' cursor='pointer'>Autoscale (follow)</text>
+
+	<text id='error'           x='300' y='125' text-anchor='middle' visibility='hidden' fill='blue'>Cannot get data about interface</text>
+	<text id='collect_initial' x='300' y='125' text-anchor='middle' visibility='hidden' fill='gray'>Collecting initial data, please wait...</text>
+
+	<path id='grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225' stroke='gray' stroke-opacity='0.5' />
+	<text id='grid_txt3' x='600' y='223' fill='gray' text-anchor='end'>--</text>
+	<text id='grid_txt2' x='600' y='148' fill='gray' text-anchor='end'>--</text>
+	<text id='grid_txt1' x='600' y='73' fill='gray' text-anchor='end'>--</text>
+
+	<path id='graph_out' d='' fill='none' stroke='#8092B3' stroke-width='2' stroke-opacity='0.8' />
+	<path id='graph_in'  d='' fill='none' stroke='#435370' stroke-width='2' stroke-opacity='0.8' />
+
+	<line id='axis_x' x1='2' y1='299' x2='600' y2='299' stroke='black' />
+	<line id='axis_y' x1='1' y1='300' x2='1' y2='0' stroke='black' />
+</g>
+<script type="text/ecmascript">
+<![CDATA[
+if (typeof getURL == 'undefined') {
+	getURL = function(url, callback) {
+		if (!url) throw 'No URL for getURL';
+
+		try {
+			if (typeof callback.operationComplete == 'function') {
+				callback = callback.operationComplete;
+			}
+		} catch (e) {}
+
+		if (typeof callback != 'function') {
+			throw 'No callback function for getURL';
+		}
+
+		var http_request = null;
+		if (typeof XMLHttpRequest != 'undefined') {
+			http_request = new XMLHttpRequest();
+		} else if (typeof ActiveXObject != 'undefined') {
+			try {
+				http_request = new ActiveXObject('Msxml2.XMLHTTP');
+			} catch (e) {
+				try {
+					http_request = new ActiveXObject('Microsoft.XMLHTTP');
+				} catch (e) {}
+			}
+		}
+		if (!http_request) {
+			throw 'Both getURL and XMLHttpRequest are undefined';
+		}
+
+		http_request.onreadystatechange = function() {
+			if (http_request.readyState == 4) {
+				callback( 
+					{
+						success : true,
+						content : http_request.responseText,
+						contentType : http_request.getResponseHeader("Content-Type") 
+					}
+				);
+			}
+		}
+		http_request.open('GET', url, true);
+		http_request.send(null);
+	}
+}
+
+var SVGDoc = null;
+var last_ifin = 0;
+var last_ifout = 0;
+var last_ugmt = 0;
+var max = 0;
+var plot_in = new Array();
+var plot_out = new Array();
+
+var max_num_points = 120;  // maximum number of plot data points
+var step = 600 / max_num_points ;
+var unit = 'bits';
+var scale_type = 'follow';
+
+var fetch_url='';
+
+function init(evt) {	
+	/* hacked in fix for all browsers by spectra 
+	 * he says is 'ugly', and someone may want to redo the 'right' way */	 
+	fetch_url=location.search.split('?');
+	fetch_url='/graph/cgi-bin/if.cgi?' + fetch_url[fetch_url.length-1];		
+	/* end hacked in fix */
+	SVGDoc = evt.target.ownerDocument;
+	SVGDoc.getElementById("switch_unit").addEventListener("mousedown", switch_unit, false);
+	SVGDoc.getElementById("switch_scale").addEventListener("mousedown", switch_scale, false);
+
+	fetch_data();
+	setInterval('fetch_data()', 1000);
+}
+
+function switch_unit(event) {
+	SVGDoc.getElementById('switch_unit').firstChild.data = 'Switch to ' + unit + '/s';
+	unit = (unit == 'bits') ? 'bytes' : 'bits';
+}
+
+function switch_scale(event) {
+	scale_type = (scale_type == 'up') ? 'follow' : 'up';
+	SVGDoc.getElementById('switch_scale').firstChild.data = 'AutoScale (' + scale_type + ')';
+}
+
+function fetch_data() {
+	if (fetch_url) {
+		getURL(fetch_url, plot_data);
+	} else {
+		handle_error();
+	}
+}
+
+function plot_data(obj) {
+	if (!obj.success) return handle_error();  // getURL failed to get data
+
+	// parse incoming data
+	// (format: "date" output, newline, proper line of /proc/net/dev)
+	var data=obj.content.split("\n");
+	var dateStr=data[0];
+	//fake timezone cause the real value might confuse JS
+	dateStr=dateStr.replace(/ [A-Z]+ /, ' GMT '); 
+	var ugmt=(Date.parse(dateStr))/1000;
+
+	data=data[1].split(/\s+|:/);
+	while (data[0]!=parseInt(data[0])) {
+		data.shift();
+		
+		if (0==data.length) return;
+	}
+	var ifin=parseInt(data[0]);
+	var ifout=parseInt(data[8]);
+	
+	if (!isNumber(ifin) || !isNumber(ifout)) {
+		return handle_error();
+	}
+
+	var diff_ugmt  = ugmt - last_ugmt;
+	var diff_ifin  = ifin - last_ifin;
+	var diff_ifout = ifout - last_ifout;
+
+	if (diff_ugmt == 0) diff_ugmt = 1;  // avoid division by zero
+
+	last_ugmt = ugmt;
+	last_ifin = ifin;
+	last_ifout = ifout;
+	
+	switch (plot_in.length) {
+	case 0:
+		SVGDoc.getElementById("collect_initial").setAttributeNS(null, 'visibility', 'visible');
+		plot_in[0] = diff_ifin / diff_ugmt;
+		plot_out[0] = diff_ifout / diff_ugmt;
+		return;
+	case 1:
+		SVGDoc.getElementById("collect_initial").setAttributeNS(null, 'visibility', 'hidden');
+		break;
+	case max_num_points:
+		// shift plot to left if the maximum number of plot points has been reached
+		var i = 0;
+		while (i < max_num_points) {
+			plot_in[i] = plot_in[i+1];
+			plot_out[i] = plot_out[++i];
+		}
+		plot_in.length--;
+		plot_out.length--;
+	}
+
+	plot_in[plot_in.length] = diff_ifin / diff_ugmt;
+	plot_out[plot_out.length]= diff_ifout / diff_ugmt;
+	var index_plot = plot_in.length - 1;
+
+	SVGDoc.getElementById('graph_in_txt').firstChild.data = formatSpeed(plot_in[index_plot], unit);
+	SVGDoc.getElementById('graph_out_txt').firstChild.data = formatSpeed(plot_out[index_plot], unit);
+
+	// determine peak for sensible scaling
+	if (scale_type == 'up') {
+		if (plot_in[index_plot] > max) max = plot_in[index_plot];
+		if (plot_out[index_plot] > max) max = plot_out[index_plot];
+	} else if (scale_type == 'follow') {
+		i = 0;
+		max = 0;
+		while (i < plot_in.length) {
+			if (plot_in[i] > max) max = plot_in[i];
+			if (plot_out[i] > max) max = plot_out[i];
+			i++;
+		}
+	}
+
+	var rmax=makeRoundMax(max);
+
+	var scale = 298 / rmax;
+
+	// change labels accordingly
+	SVGDoc.getElementById('grid_txt1').firstChild.data = formatSpeed(3*rmax/4, unit);
+	SVGDoc.getElementById('grid_txt2').firstChild.data = formatSpeed(2*rmax/4, unit);
+	SVGDoc.getElementById('grid_txt3').firstChild.data = formatSpeed(rmax/4, unit);
+
+	var path_in = "M 0 " + (298 - (plot_in[0] * scale));
+	var path_out = "M 0 " + (298 - (plot_out[0] * scale));
+	for (i = 1; i < plot_in.length; i++) {
+		var x = step * i;
+		var y_in = 298 - (plot_in[i] * scale);
+		var y_out = 298 - (plot_out[i] * scale);
+		path_in += " L" + x + " " + y_in;
+		path_out += " L" + x + " " + y_out;
+	}
+
+	SVGDoc.getElementById('error').setAttributeNS(null, 'visibility', 'hidden');
+	SVGDoc.getElementById('graph_in').setAttributeNS(null, 'd', path_in);
+	SVGDoc.getElementById('graph_out').setAttributeNS(null, 'd', path_out);
+}
+
+function makeRoundMax(max) {
+	if (unit == 'bits') {
+		rmax = 1250;
+		i = 0;
+		while (max > rmax) {
+			//dump(i+'\n');
+			i++;
+			if (i && (i % 4 == 0)) {
+				rmax *= 1.25;
+			} else {
+				rmax *= 2;
+			}
+		}
+	} else {
+		rmax = 1024;
+		i = 0;
+		while (max > rmax) {
+			i++;
+			if (i && (i % 4 == 0)) {
+				rmax *= 1.25;
+			} else {
+				rmax *= 2;
+			}
+			
+			if (i == 8) rmax *= 1.024;
+		}
+	}
+	return rmax;
+}
+
+function handle_error() {
+	SVGDoc.getElementById("error").setAttributeNS(null, 'visibility', 'visible');
+}
+
+function isNumber(a) {
+	return typeof a == 'number' && isFinite(a);
+}
+
+function formatSpeed(speed, unit) {
+	if (unit == 'bits') return formatSpeedBits(speed);
+	if (unit == 'bytes') return formatSpeedBytes(speed);
+}
+
+function formatSpeedBits(speed) {
+	// format speed in bits/sec, input: bytes/sec
+	if (speed < 125000) return Math.round(speed / 125) + " Kbps";
+	if (speed < 125000000) return Math.round(speed / 1250)/100 + " Mbps";
+	// else
+	return Math.round(speed / 1250000)/100 + " Gbps";  // wow!
+}
+
+function formatSpeedBytes(speed) {
+	// format speed in bytes/sec, input:  bytes/sec
+	if (speed < 1048576) return Math.round(speed / 10.24)/100 + " KB/s";
+	if (speed < 1073741824) return Math.round(speed / 10485.76)/100 + " MB/s";
+	// else
+	return Math.round(speed / 10737418.24)/100 + " GB/s";  // wow!
+}
+]]>
+</script>
+</svg>

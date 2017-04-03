@@ -136,6 +136,15 @@ static inline void u_setPid(void)
    u_pid_str_len = u_num2str32(u_pid = u_gettid(), u_pid_str) - u_pid_str;
 }
 
+static inline uint8_t u_loadavg(const char* buffer)
+{
+   U_INTERNAL_TRACE("u_loadavg(%s)", buffer)
+
+   U_INTERNAL_ASSERT_EQUALS(buffer[1], '.')
+
+   return (((buffer[0]-'0') * 10) + (buffer[2]-'0') + (buffer[3] > '5')); // 0.19 => 2, 4.56 => 46, ...
+}
+
 /* Random number generator */ 
 
 U_EXPORT double   u_get_uniform(void);
@@ -455,9 +464,9 @@ enum TextType {
 
 extern U_EXPORT const unsigned char u_validate_utf8[];
 
-U_EXPORT bool u_isText(  const unsigned char* restrict s, uint32_t n) __pure;
-U_EXPORT bool u_isUTF8(  const unsigned char* restrict s, uint32_t n) __pure;
-U_EXPORT int  u_isUTF16( const unsigned char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isText( const unsigned char* restrict s, uint32_t n) __pure;
+U_EXPORT bool u_isUTF8( const unsigned char* restrict s, uint32_t n) __pure;
+U_EXPORT int  u_isUTF16(const unsigned char* restrict s, uint32_t n) __pure;
 
 static inline bool u_isBinary(const unsigned char* restrict s, uint32_t n) { return ((u_isText(s,n) || u_isUTF8(s,n) || u_isUTF16(s,n)) == false); }
 

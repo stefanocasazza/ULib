@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xml:space='preserve' xmlns='http://www.w3.org/2000/svg' 
+	xmlns:xlink='http://www.w3.org/1999/xlink'
+	width='100%' height='100%' 
+	viewBox='0 0 600 300'
+	preserveAspectRatio='none'
+	onload='init(evt)'
+>
+<g id='graph'>
+	<rect id='bg' x1='0' y1='0' width='600' height='300' fill='white' />
+
+	<text id='graph_lbl'  x='50' y='15' fill='#435370' text-anchor='end'>CPU</text>
+	<text id='graph_txt'  x='54' y='15' fill='#435370'>--</text>
+
+	<text id='error' x='300' y='125' text-anchor='middle' visibility='hidden' fill='blue'>Cannot get data about CPU</text>
+	<text id='collect_initial' x='300' y='125' text-anchor='middle' visibility='hidden' fill='gray'>Collecting initial data, please wait...</text>
+
+	<path id='grid' d='M 2 75 L 600 75 M 2 150 L 600 150 M 2 225 L 600 225' stroke='gray' stroke-opacity='0.5' />
+	<text id='grid_txt3' x='600' y='223' fill='gray' text-anchor='end'>25%</text>
+	<text id='grid_txt2' x='600' y='148' fill='gray' text-anchor='end'>50%</text>
+	<text id='grid_txt1' x='600' y='73' fill='gray' text-anchor='end'>75%</text>
+
+	<path id='graph_cpu'  d='' fill='none' stroke='#435370' stroke-width='2' stroke-opacity='0.8' />
+
+	<line id='axis_x' x1='1' y1='299' x2='600' y2='299' stroke='black' />
+	<line id='axis_y' x1='1' y1='299.5' x2='1' y2='0' stroke='black' />
+</g>
+<script type="text/ecmascript">
+<![CDATA[
+if (typeof getURL == 'undefined') {
+  getURL = function(url, callback) {
+    if (!url)
+      throw 'No URL for getURL';
+
+    try {
+      if (typeof callback.operationComplete == 'function')
+        callback = callback.operationComplete;
+    } catch (e) {}
+    if (typeof callback != 'function')
+      throw 'No callback function for getURL';
+
+    var http_request = null;
+    if (typeof XMLHttpRequest != 'undefined') {
+      http_request = new XMLHttpRequest();
+    }
+    else if (typeof ActiveXObject != 'undefined') {
+      try {
+        http_request = new ActiveXObject('Msxml2.XMLHTTP');
+      } catch (e) {
+        try {
+          http_request = new ActiveXObject('Microsoft.XMLHTTP');
+        } catch (e) {}
+      }
+    }
+    if (!http_request)
+      throw 'Both getURL and XMLHttpRequest are undefined';
+
+    http_request.onreadystatechange = function() {
+      if (http_request.readyState == 4) {
+        callback( { success : true,
+                    content : http_request.responseText,
+                    contentType : http_request.getResponseHeader("Content-Type") } );
+      }
+    }
+    http_request.open('GET', url, true);
+    http_request.send(null);
+  }
+}
+
+var SVGDoc = null;
+var last_cpu_total = 0;
+var last_cpu_idle = 0;
+var cpu_data = new Array();
+
+var max_num_points = 120;  // maximum number of plot data points
+var step = 600 / max_num_points;  // plot X division size
+
+var fetch_url='/graph/cgi-bin/cpu.cgi';
+
+function init(evt) {
+	SVGDoc = evt.target.ownerDocument;
+	fetch_data();
+	setInterval('fetch_data()', 1000);
+}
+
+function fetch_data() {
+	if (fetch_url) {
+		getURL(fetch_url, plot_cpu_data);
+	} else {
+		handle_error();
+	}
+}
+
+function plot_cpu_data(obj) {
+	if (!obj.success || ''==obj.content) {
+		return handle_error();  // getURL failed to get current CPU load data
+	}
+
+	try {
+		var data=obj.content.split("\n");
+		var ugmt=(Date.parse(data[0]))/1000;
+		data=data[1].split(/\s+/);
+		var tot=parseInt(data[1])+parseInt(data[2])+parseInt(data[3])+parseInt(data[4]);
+		var idle=parseInt(data[4]);
+	} catch (e) {
+		return;
+	}
+
+	var cpu=0;
+	if (tot==last_cpu_total) {
+		cpu=100;
+	} else {
+		cpu=100*(idle-last_cpu_idle)/(tot-last_cpu_total);
+	}
+	cpu=100-cpu;
+
+	last_cpu_idle=idle;
+	last_cpu_total=tot;
+
+	if (!isNumber(cpu)) return handle_error();
+
+	switch (cpu_data.length) {
+	case 0:
+		SVGDoc.getElementById('collect_initial').setAttributeNS(null, 'visibility', 'visible');
+		cpu_data[0] = cpu;
+		fetch_data;
+		return;
+	case 1:
+		SVGDoc.getElementById('collect_initial').setAttributeNS(null, 'visibility', 'hidden');
+		break;
+	case max_num_points:
+		// shift plot to left if the maximum number of plot points has been reached
+		var i = 0;
+		while (i < max_num_points) {
+			cpu_data[i] = cpu_data[++i];
+		}
+		--cpu_data.length;
+	}
+
+	cpu_data[cpu_data.length] = cpu;
+
+	var path_data = "M 2 " + (298 - cpu_data[0]);
+	for (var i = 1; i < cpu_data.length; ++i) {
+		var x = step * i;
+		var y_cpu = 298 - 2.975*cpu_data[i];
+		path_data += " L" + x + " " + y_cpu;
+	}
+   
+	SVGDoc.getElementById('error').setAttributeNS(null, 'visibility', 'hidden');
+	SVGDoc.getElementById('graph_cpu').setAttributeNS(null, 'd', path_data);
+	SVGDoc.getElementById('graph_txt').firstChild.data = Math.round(cpu*10)/10 + '%';
+}
+
+function handle_error() {
+  SVGDoc.getElementById("error").setAttributeNS(null, 'visibility', 'visible');
+  fetch_data();
+}
+
+function isNumber(a) {
+  return typeof a == 'number' && isFinite(a);
+}
+]]>
+</script>
+</svg>

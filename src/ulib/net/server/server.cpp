@@ -153,6 +153,7 @@ UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 UString* UServer_Base::msg_welcome;
 #endif
 #ifdef USE_LOAD_BALANCE
+UString*      UServer_Base::ifname;
 unsigned char UServer_Base::loadavg_threshold = 45; // => 4.5
 #endif
 #ifdef U_ACL_SUPPORT
@@ -531,14 +532,16 @@ public:
             {
             if (UServer_Base::throttling_rec->krate > UServer_Base::throttling_rec->max_limit)
                {
-               ULog::log(U_CONSTANT_TO_PARAM("throttle %V: krate %u %sexceeding limit %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep, UServer_Base::throttling_rec->krate,
+               ULog::log(U_CONSTANT_TO_PARAM("throttle %V: krate %u %sexceeding limit %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep,
+                            UServer_Base::throttling_rec->krate,
                            (UServer_Base::throttling_rec->krate > UServer_Base::throttling_rec->max_limit * 2  ? "greatly " : ""),
                             UServer_Base::throttling_rec->max_limit, UServer_Base::throttling_rec->num_sending);
                }
 
             if (UServer_Base::throttling_rec->krate < UServer_Base::throttling_rec->min_limit)
                {
-               ULog::log(U_CONSTANT_TO_PARAM("throttle %V: krate %u lower than minimum %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep, UServer_Base::throttling_rec->krate,
+               ULog::log(U_CONSTANT_TO_PARAM("throttle %V: krate %u lower than minimum %u; %u sending"), UServer_Base::db_throttling->getKeyID().rep,
+                            UServer_Base::throttling_rec->krate,
                             UServer_Base::throttling_rec->min_limit, UServer_Base::throttling_rec->num_sending);
                }
             }
@@ -755,7 +758,7 @@ void UServer_Base::initThrottlingServer()
              number = vec[i+1];
 
                                                                                       throttling_rec->max_limit = ::strtol(number.data(), &ptr, 10);
-            if (ptr[0] == '-') throttling_rec->min_limit = throttling_rec->max_limit, throttling_rec->max_limit = ::strtol(         ptr+1,    0, 10);
+            if (ptr[0] == '-') throttling_rec->min_limit = throttling_rec->max_limit, throttling_rec->max_limit = ::strtol(        ptr+1,    0, 10);
 
             (void) db_throttling->insertDataStorage(pattern, RDB_INSERT);
             }
@@ -902,9 +905,9 @@ public:
 
       if (UServer_Base::bipc == false)
          {
-         UString ifname = UServer_Base::getNetworkDevice(0);
+         if (UServer_Base::ifname == 0) U_NEW(UString, UServer_Base::ifname, UString(UServer_Base::getNetworkDevice(0)));
 
-         if (ifname)
+         if (*UServer_Base::ifname)
             {
             (void) memset(&addr, 0, sizeof(addr));
 
@@ -913,7 +916,7 @@ public:
 
             if (udp_sock.setServer(UServer_Base::port, &addr) == false) U_ERROR("Can't bind on udp socket");
 
-            if (UIPAddress::setBroadcastAddress(addr, ifname) == false) U_ERROR("Can't get broadcast address on interface %V", ifname.rep);
+            if (UIPAddress::setBroadcastAddress(addr, *UServer_Base::ifname) == false) U_ERROR("Can't get broadcast address on interface %V", UServer_Base::ifname->rep);
 
             if (udp_sock.setSockOpt(SOL_SOCKET, SO_BROADCAST, (const int[]){ 1 }) == false) U_ERROR("Can't enable SO_BROADCAST on udp socket");
 
@@ -925,7 +928,7 @@ public:
             U_DUMP("laddr = %V", UIPAddress::toString(laddr).rep)
 
             U_SRV_LOG("Load balance activated (by udp socket: %u): loadavg_threshold = %u brodacast address = (%v:%v)",
-                        fd_sock, UServer_Base::loadavg_threshold, ifname.rep, UIPAddress::toString(addr.psaIP4Addr.sin_addr.s_addr).rep);
+                        fd_sock, UServer_Base::loadavg_threshold, UServer_Base::ifname->rep, UIPAddress::toString(addr.psaIP4Addr.sin_addr.s_addr).rep);
             }
          }
 #  endif
@@ -1241,6 +1244,10 @@ UServer_Base::~UServer_Base()
 
    if (host) delete host;
 
+#ifdef USE_LOAD_BALANCE
+   if (ifname) delete ifname;
+#endif
+
 #ifdef U_THROTTLING_SUPPORT
    if (throttling_rec)  delete throttling_rec;
    if (throttling_mask) delete throttling_mask;
@@ -1493,6 +1500,9 @@ void UServer_Base::loadConfigParam()
    //
    // CLIENT_THRESHOLD           min number of clients to active polling
    // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization
+   //
+   // LOAD_BALANCE_DEVICE_NETWORK    network interface name of cluster of physical server
+   // LOAD_BALANCE_LOADAVG_THRESHOLD system load threshold to proxies the request on other userver on the network cluster ([0-9].[0-9])
    //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
@@ -1790,19 +1800,32 @@ void UServer_Base::loadConfigParam()
       }
 #endif
 
+   // LOAD BALANCE
+
+#ifdef USE_LOAD_BALANCE
+   x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_DEVICE_NETWORK"));
+
+   if (x)
+      {
+      U_INTERNAL_ASSERT_EQUALS(ifname, 0)
+
+      U_NEW(UString, ifname, UString(x));
+      }
+
+   x = cfg->at(U_CONSTANT_TO_PARAM("LOAD_BALANCE_LOADAVG_THRESHOLD"));
+
+   if (x) loadavg_threshold = u_loadavg(x.data()); // 0.19 => 2, 4.56 => 46, ...
+
+   U_INTERNAL_DUMP("loadavg_threshold = %u", loadavg_threshold)
+#endif
+
+   // load ORM driver modules...
+
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    UString orm_driver_dir  = cfg->at(U_CONSTANT_TO_PARAM("ORM_DRIVER_DIR")),
            orm_driver_list = cfg->at(U_CONSTANT_TO_PARAM("ORM_DRIVER"));
 
-   if (orm_driver_dir) UOrmDriver::setDriverDirectory(orm_driver_dir);
-
-   // load ORM driver modules...
-
-   if (orm_driver_list &&
-       UOrmDriver::loadDriver(orm_driver_list) == false)
-      {
-      U_ERROR("ORM drivers load failed");
-      }
+   if (UOrmDriver::loadDriver(orm_driver_dir, orm_driver_list) == false) U_ERROR("ORM drivers load failed");
 #endif
 
    // load plugin modules and call server-wide hooks handlerConfig()...
@@ -1876,8 +1899,7 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
 #  ifdef U_STATIC_HANDLER_HTTP
       if (x.equal(U_CONSTANT_TO_PARAM("http")))   { U_NEW(UHttpPlugIn, _plugin, UHttpPlugIn); goto next; }
 #  endif
-next:
-      if (_plugin)
+next: if (_plugin)
          {
          vplugin_name_static->push_back(x);
 

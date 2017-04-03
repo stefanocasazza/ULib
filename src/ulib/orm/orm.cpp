@@ -45,6 +45,8 @@ void UOrmSession::loadDriver(const char* backend, uint32_t len, const UString& o
 
       name.snprintf(U_CONSTANT_TO_PARAM("orm_driver_%.*s"), len, backend);
 
+      U_INTERNAL_ASSERT_POINTER(UOrmDriver::driver_dir)
+
       if (*UOrmDriver::driver_dir) UDynamic::setPluginDirectory(*UOrmDriver::driver_dir);
 
       pdrv = UPlugIn<UOrmDriver*>::create(U_STRING_TO_PARAM(name));

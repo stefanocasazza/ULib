@@ -156,6 +156,9 @@ public:
    // CLIENT_THRESHOLD           min number of clients to active polling
    // CLIENT_FOR_PARALLELIZATION min number of clients to active parallelization 
    //
+   // LOAD_BALANCE_DEVICE_NETWORK    network interface name of cluster of physical server
+   // LOAD_BALANCE_LOADAVG_THRESHOLD system load threshold to proxies the request on other userver on the network cluster ([0-9].[0-9])
+   //
    // PID_FILE      write pid on file indicated
    // WELCOME_MSG   message of welcome to send initially to client
    // RUN_AS_USER   downgrade the privileges to that of user account
@@ -367,6 +370,7 @@ public:
    static bool update_date, update_date1, update_date2, update_date3;
 
 #ifdef USE_LOAD_BALANCE
+   static UString* ifname;
    static uint8_t loadavg_threshold;
 #endif
 

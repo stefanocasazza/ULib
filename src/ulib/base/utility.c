@@ -1187,7 +1187,7 @@ uint8_t u_get_loadavg(void)
       {
       U_INTERNAL_ASSERT_RANGE(1,bytes_read,(int)sizeof(buffer))
 
-      if (buffer[1] == '.') return (((buffer[0]-'0') * 10) + (buffer[2]-'0') + (buffer[3] > '5')); // 0.19 => 2, 4.56 => 46, ...
+      if (buffer[1] == '.') return u_loadavg(buffer); // 0.19 => 2, 4.56 => 46, ...
       }
 #endif
 

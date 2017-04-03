@@ -60,6 +60,8 @@ userver {
 #LOG_FILE_SZ 20k
  LOG_MSG_SIZE -1
  PID_FILE /var/run/userver_tcp.pid
+#LOAD_BALANCE_DEVICE_NETWORK enp0s20u1
+#LOAD_BALANCE_LOADAVG_THRESHOLD 4.0
 #PREFORK_CHILD 0
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
@@ -106,6 +108,7 @@ start_prg_background userver_tcp -c inp/webserver.cfg
 
 wait_server_ready localhost 8080
 
+sync
 echo "PID = `cat /var/run/userver_tcp.pid`"
 
 # HTTP pseudo-streaming for FLV video
