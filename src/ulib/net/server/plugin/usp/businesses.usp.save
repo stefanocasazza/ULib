@@ -1,0 +1,470 @@
+<!--#
+prototype for Victor Stewart
+-->
+<!--#declaration
+
+/**
+ * {
+ * "token": "A619828KAIJ6D3",
+ * "type": "localesData",
+ * "radius": "near",
+ * "location": "40.7831 N, 73.9712 W"
+ * }
+ */
+
+class Request {
+public:
+	// Check for memory error
+	U_MEMORY_TEST
+
+	// Allocator e Deallocator
+	U_MEMORY_ALLOCATOR
+	U_MEMORY_DEALLOCATOR
+
+	UString token, type, radius, location;
+
+	Request()
+		{
+		U_TRACE_REGISTER_OBJECT(5, Request, "")
+		}
+
+	Request(const Request& r) : token(r.token), type(r.type), radius(r.radius), location(r.location)
+		{
+		U_TRACE_REGISTER_OBJECT(5, Request, "%p", &r)
+
+		U_MEMORY_TEST_COPY(r)
+		}
+
+	~Request()
+		{
+		U_TRACE_UNREGISTER_OBJECT(5, Request)
+		}
+
+	void clear()
+		{
+		U_TRACE_NO_PARAM(5, "Request::clear()")
+
+		   token.clear();
+		    type.clear();
+		  radius.clear();
+		location.clear();
+		}
+
+	void fromJSON(UValue& json)
+		{
+		U_TRACE(5, "Request::fromJSON(%p)", &json)
+
+		json.fromJSON(U_JSON_METHOD_HANDLER(token,	 UString));
+		json.fromJSON(U_JSON_METHOD_HANDLER(type,	    UString));
+		json.fromJSON(U_JSON_METHOD_HANDLER(radius,   UString));
+		json.fromJSON(U_JSON_METHOD_HANDLER(location, UString));
+		}
+
+#ifdef DEBUG
+	const char* dump(bool breset) const
+		{
+		*UObjectIO::os << "token    (UString " << (void*)&token	  << ")\n"
+							<< "type     (UString " << (void*)&type     << ")\n"
+							<< "radius   (UString " << (void*)&radius   << ")\n"
+							<< "location (UString " << (void*)&location << ')';
+
+		if (breset)
+			{
+			UObjectIO::output();
+
+			return UObjectIO::buffer_output;
+			}
+
+		return 0;
+		}
+#endif
+
+private:
+	Request& operator=(const Request&) { return *this; }
+};
+
+/**
+ * [
+ * { "name": "Business 1"
+ *   "rating": "Red"
+ *   "address": "123 park lane, New York, NY, USA 10028"
+ *   "phone": "12126465788"
+ *   "url": "www.business1.com" } ,
+ *
+ * ....
+ *
+ * { "name": "Business 20"
+ *   "rating": "Yellow"
+ *   "address": "837 mott street, New York, NY, USA 10019"
+ *   "phone": "12124829384"
+ *   "url": "www.business2.com" }
+ * ]
+ */
+
+class Response {
+public:
+	// Check for memory error
+	U_MEMORY_TEST
+
+	// Allocator e Deallocator
+	U_MEMORY_ALLOCATOR
+	U_MEMORY_DEALLOCATOR
+
+	UString name, rating, address, phone, url;
+
+	Response()
+		{
+		U_TRACE_REGISTER_OBJECT(5, Response, "")
+		}
+
+	Response(const Response& r) : name(r.name), rating(r.rating), address(r.address), phone(r.phone), url(r.url)
+		{
+		U_TRACE_REGISTER_OBJECT(5, Response, "%p", &r)
+
+		U_MEMORY_TEST_COPY(r)
+		}
+
+	~Response()
+		{
+		U_TRACE_UNREGISTER_OBJECT(5, Response)
+		}
+
+	void clear()
+		{
+		U_TRACE_NO_PARAM(5, "Response::clear()")
+
+			name.clear();
+		 rating.clear();
+		address.clear();
+		  phone.clear();
+			 url.clear();
+		}
+
+   void toJSON(UValue& json)
+		{
+		U_TRACE(5, "Response::toJSON(%p)", &json)
+
+		json.toJSON(U_JSON_METHOD_HANDLER(name,	 UString));
+		json.toJSON(U_JSON_METHOD_HANDLER(rating,	 UString));
+		json.toJSON(U_JSON_METHOD_HANDLER(address, UString));
+		json.toJSON(U_JSON_METHOD_HANDLER(phone,	 UString));
+		json.toJSON(U_JSON_METHOD_HANDLER(url,		 UString));
+		}
+
+	// SERVICES
+
+	bool operator<(const Response& other) const { return cmp_obj(&name, &other.name); }
+
+	static int cmp_obj(const void* a, const void* b)
+		{
+		U_TRACE(5, "Response::cmp_obj(%p,%p)", a, b)
+
+		return (*(const Response**)a)->name.compare((*(const Response**)b)->name);
+		}
+
+#ifdef DEBUG
+	const char* dump(bool breset) const
+		{
+		*UObjectIO::os << "url     (UString " << (void*)&url	   << ")\n"
+							<< "name    (UString " << (void*)&name	   << ")\n"
+							<< "phone   (UString " << (void*)&phone   << ")\n"
+							<< "rating  (UString " << (void*)&rating  << ")\n"
+							<< "address (UString " << (void*)&address << ')';
+
+		if (breset)
+			{
+			UObjectIO::output();
+
+			return UObjectIO::buffer_output;
+			}
+
+		return 0;
+		}
+#endif
+
+private:
+	Response& operator=(const Response&) { return *this; }
+};
+
+class RequestStartup {
+public:
+ 
+   UString type, version, deviceID, osVersion, deviceModel;
+   bool authed;
+
+   RequestStartup() : type(U_STRING_FROM_CONSTANT("startup")) {}
+
+	void clear()
+		{
+		U_TRACE_NO_PARAM(5, "RequestStartup::clear()")
+
+		type.clear();
+		version.clear();
+		deviceID.clear();
+		osVersion.clear();
+		deviceModel.clear();
+
+		authed = false;
+		}
+
+   void fromJSON(UValue& json)
+		{
+		U_TRACE(5, "RequestStartup::toJSON(%p)", &json)
+
+		json.fromJSON(U_JSON_METHOD_HANDLER(type,		    UString));
+		json.fromJSON(U_JSON_METHOD_HANDLER(version,	    UString));
+		json.fromJSON(U_JSON_METHOD_HANDLER(deviceID,	 UString));
+		json.fromJSON(U_JSON_METHOD_HANDLER(osVersion,	 UString));
+		json.fromJSON(U_JSON_METHOD_HANDLER(deviceModel, UString));
+		json.fromJSON(U_JSON_METHOD_HANDLER(authed,		 bool));
+		}
+};
+
+class ResponseStartup {
+public:
+
+   UString type, token;
+   UVector<UString> fbPermissions;
+   
+   ResponseStartup(): type(U_STRING_FROM_CONSTANT("startup")) {}
+
+	void clear()
+		{
+		U_TRACE_NO_PARAM(5, "ResponseStartup::clear()")
+
+		type.clear();
+		token.clear();
+		fbPermissions.clear();
+		}
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "ResponseStartup::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_METHOD_HANDLER(type,			 UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(token,			 UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(fbPermissions, UVector<UString>));
+      }
+};
+
+class BusinessCell {
+public:
+	// grey = 0, darkBlue = 1, funBlue = 2, green = 3, orange = 4, red = 5, pink = 6
+
+	UString name, businessID, address, neighborhood;
+	unsigned color, category, grouping, distance;
+	bool filler;
+	int64_t decay;
+
+	BusinessCell(const UString& _name, const UString& _businessID, const UString& _address, const UString& _neighborhood,
+					 unsigned _color, unsigned _category, unsigned _distance, unsigned _grouping, bool _filler, int64_t _decay) :
+					 name(_name), businessID(_businessID), address(_address), neighborhood(_neighborhood),
+					 color(_color), category(_category),  grouping(_grouping), distance(_distance), filler(_filler), decay(_decay)
+		{
+		}
+
+	BusinessCell() {}
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "BusinessCell::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_METHOD_HANDLER(name, UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(businessID, UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(address, UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(neighborhood, UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(color, unsigned));
+      json.toJSON(U_JSON_METHOD_HANDLER(category, unsigned));
+      json.toJSON(U_JSON_METHOD_HANDLER(grouping, unsigned));
+      json.toJSON(U_JSON_METHOD_HANDLER(distance, unsigned));
+      json.toJSON(U_JSON_METHOD_HANDLER(filler, bool));
+      json.toJSON(U_JSON_METHOD_HANDLER(decay, int64_t));
+      }
+};
+
+class ResponseCells {
+public:
+
+   UString type;
+   UVector<BusinessCell*> businesses;
+   unsigned status;
+
+   ResponseCells() : type(U_STRING_FROM_CONSTANT("cells"))
+		{
+		U_TRACE_NO_PARAM(0, "ResponseCells::ResponseCells()")
+
+		status = 0;
+		}
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "ResponseCells::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_METHOD_HANDLER(type, UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(businesses, UVector<BusinessCell*>));
+      json.toJSON(U_JSON_METHOD_HANDLER(status, unsigned));
+      }
+};
+
+class HTTP2Push : public UEventTime {
+public:
+
+	UString message, token;
+
+	HTTP2Push() : UEventTime(15L * 60L, 0L), message(U_STRING_FROM_CONSTANT("{aps:{content-available:1},check:health}")), token(U_CAPACITY)
+		{
+		U_TRACE_REGISTER_OBJECT(0, HTTP2Push, "", 0)
+
+#	ifdef USE_LIBCURL
+		UCURL::initHTTP2Push("https://api.development.push.apple.com", "/certificates/samplepush/development.pem", "GoGo.Hopscotch");
+#	endif
+		}
+
+	virtual ~HTTP2Push() U_DECL_FINAL
+		{
+		U_TRACE_UNREGISTER_OBJECT(0, HTTP2Push)
+		}
+
+	// define method VIRTUAL of class UEventTime
+
+	virtual int handlerTime() U_DECL_FINAL
+		{
+		U_TRACE_NO_PARAM(0, "HTTP2Push::handlerTime()")
+
+		pid_t pid = UServer_Base::startNewChild();
+
+		if (pid > 0) U_RETURN(0); // parent
+
+		// child
+
+		token.snprintf(U_CONSTANT_TO_PARAM("dbdaeae86abcde56rtyww1859fb41d2c7b2cberrttyyy053ec48987847"), 0);
+
+#	ifdef USE_LIBCURL
+		if (UCURL::sendHTTP2Push(token, message) == false)
+#	endif
+		{
+		U_WARNING("UCURL::sendHTTP2Push() failed");
+		}
+
+		if (pid == 0) UServer_Base::endNewChild();
+
+		U_RETURN(0);
+		}
+
+#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
+	const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
+#endif
+
+private:
+   U_DISALLOW_COPY_AND_ASSIGN(HTTP2Push)
+};
+
+static UMongoDBClient* mc;
+static UVector<UString> mongoResults;
+
+static void usp_init_businesses()
+{
+	U_TRACE(5, "::usp_init_businesses()")
+
+	UEventTime*	push;
+
+	U_NEW(HTTP2Push, push, HTTP2Push);
+
+	UTimer::insert(push);
+
+	mongoResults.push(U_STRING_FROM_CONSTANT("{ \"fbPermissions\" : [ \"public_profile\", \"user_friends\", \"email\" ] }"));
+}
+
+static void usp_fork_businesses()
+{
+	U_TRACE(5, "::usp_fork_businesses()")
+
+	U_NEW(UMongoDBClient, mc, UMongoDBClient);
+
+	if (mc->connect(0,0) == false)
+		{
+		U_WARNING("usp_fork_businesses(): connection failed");
+
+		return;
+		}
+
+	if (mc->selectCollection("database", "businesses") == false)
+		{
+		U_WARNING("usp_fork_businesses(): selectCollection() failed");
+
+		return;
+		}
+}
+
+#ifdef DEBUG
+static void usp_end_businesses()
+{
+	U_TRACE(5, "::usp_end_businesses()")
+
+	delete mc;
+}
+#endif
+-->
+<!--#header
+Content-Type: application/json
+-->
+<!--#vcode // validation code
+UString type;
+
+if (USP_JFIND_REQUEST("type", type) == false)
+	{
+	UHTTP::setBadRequest();
+
+	return;
+	}
+-->
+<!--#lcode // load balance code
+if (type.equal(U_CONSTANT_TO_PARAM("localesData")))
+	{
+	Response response;
+
+	USP_JSON_OBJ_stringify(Response, response);
+	}
+else if (type.equal(U_CONSTANT_TO_PARAM("cells")))
+	{
+	BusinessCell* pcell;
+	ResponseCells response;
+
+	U_NEW(BusinessCell, pcell, BusinessCell);
+
+	response.businesses.push_back(pcell);
+
+	USP_JSON_OBJ_stringify(ResponseCells, response);
+	}
+else if (type.equal(U_CONSTANT_TO_PARAM("startup")))
+	{
+	RequestStartup request;
+
+	if (USP_JSON_REQUEST_PARSE(request))
+		{
+		ResponseStartup response;
+
+		if (request.authed)
+			{
+			}
+
+		UString workingString;
+
+		if (UValue::jread(mongoResults[0], U_STRING_FROM_CONSTANT("{'fbPermissions'"), workingString))
+			{
+			for (uint32_t i = 0, n = UValue::jread_elements; i < n; ++i)
+				{
+				UString workingString2;
+
+				(void) UValue::jread(workingString, U_STRING_FROM_CONSTANT("[*"), workingString2, &i);
+
+				U_INTERNAL_DUMP("pushing = %V", workingString2.rep);
+
+				response.fbPermissions.push_back(workingString2);
+				}
+			}
+
+		USP_JSON_OBJ_stringify(ResponseStartup, response);
+		}
+	}
+-->

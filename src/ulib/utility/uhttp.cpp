@@ -6199,9 +6199,11 @@ void UHTTP::setStatusDescription()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::setStatusDescription()")
 
-   U_INTERNAL_DUMP("old_response_code = %u U_http_info.nResponseCode = %u", old_response_code, U_http_info.nResponseCode)
+   U_INTERNAL_DUMP("old_response_code = %u U_http_info.nResponseCode = %u UClientImage_Base::iov_vec[0] = %.*S", old_response_code,
+                        U_http_info.nResponseCode, UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base)
 
-   if (old_response_code != U_http_info.nResponseCode)
+   if (old_response_code != U_http_info.nResponseCode ||
+       UClientImage_Base::iov_vec[0].iov_len == 0)
       {
       switch ((old_response_code = U_http_info.nResponseCode))
          {
@@ -6324,9 +6326,9 @@ void UHTTP::setStatusDescription()
          }
       }
 
-   U_INTERNAL_ASSERT_MAJOR(UClientImage_Base::iov_vec[0].iov_len, 0)
-
    U_INTERNAL_DUMP("UClientImage_Base::iov_vec[0] = %.*S", UClientImage_Base::iov_vec[0].iov_len, UClientImage_Base::iov_vec[0].iov_base)
+
+   U_INTERNAL_ASSERT_MAJOR(UClientImage_Base::iov_vec[0].iov_len, 0)
 }
 
 void UHTTP::handlerResponse()
@@ -6787,7 +6789,6 @@ void UHTTP::setDynamicResponse()
 
    U_INTERNAL_DUMP("UClientImage_Base::wbuffer(%u) = %V", UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
-   U_INTERNAL_ASSERT(*UClientImage_Base::wbuffer)
    U_INTERNAL_ASSERT_MAJOR(U_http_info.nResponseCode, 0)
 
    int ratio;
@@ -6836,6 +6837,8 @@ void UHTTP::setDynamicResponse()
       if (bcompress == false)
          {
          *UClientImage_Base::body = *UClientImage_Base::wbuffer; 
+
+         if (clength == 0) goto no_response;
 
          goto end;
          }

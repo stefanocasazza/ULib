@@ -196,8 +196,8 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
       env_option = (const char*) U_SYSCALL(getenv, "%S", "ORM_OPTION");
 
       if (env_driver) env_driver_len = u__strlen(env_driver, __PRETTY_FUNCTION__);
-#  endif
       }
+#  endif
 
    U_RETURN(true);
 }
