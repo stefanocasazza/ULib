@@ -112,6 +112,9 @@ userver {
 
 # MAX_KEEP_ALIVE 1000
 
+# LOAD_BALANCE_DEVICE_NETWORK    eth1
+# LOAD_BALANCE_LOADAVG_THRESHOLD 4.5
+
 # DH_FILE     ../ulib/CA/param.dh
 # CERT_FILE   ../ulib/CA/server.crt
 #  KEY_FILE   ../ulib/CA/server.key

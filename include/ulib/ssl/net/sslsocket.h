@@ -249,8 +249,9 @@ public:
    } stapling;
 
    static stapling staple;
-   static bool doStapling();
+   static bool ocsp_use_nonce;
 
+   static bool doStapling();
    static void cleanupStapling();
    static bool setDataForStapling();
    static void certificate_status_callback(SSL* _ssl, void* data);

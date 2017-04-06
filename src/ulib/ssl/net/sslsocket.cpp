@@ -31,11 +31,12 @@
 #define SSL_ERROR_WANT_ACCEPT SSL_ERROR_WANT_READ
 #endif
 
-int         USSLSocket::session_cache_index;
-SSL_CTX*    USSLSocket::cctx; // client
-SSL_CTX*    USSLSocket::sctx; // server
+int      USSLSocket::session_cache_index;
+SSL_CTX* USSLSocket::cctx; // client
+SSL_CTX* USSLSocket::sctx; // server
 
 #if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
+bool                 USSLSocket::ocsp_use_nonce;
 USSLSocket::stapling USSLSocket::staple;
 #endif
 
@@ -1346,7 +1347,9 @@ next: // extract OCSP responder URL from certificate
 
             (void) U_SYSCALL(OCSP_request_add0_id, "%p,%p", staple.req, staple.id);
 
-            (void) U_SYSCALL(OCSP_request_add1_nonce, "%p,%p,%d", staple.req, 0, -1);
+            U_INTERNAL_DUMP("ocsp_use_nonce = %b", ocsp_use_nonce)
+
+            if (ocsp_use_nonce) (void) U_SYSCALL(OCSP_request_add1_nonce, "%p,%p,%d", staple.req, 0, -1);
 
             // sign the request
 
@@ -1475,26 +1478,45 @@ bool USSLSocket::doStapling()
 
          basic = (OCSP_BASICRESP*) U_SYSCALL(OCSP_response_get1_basic, "%p", resp);
 
-         result = (basic && U_SYSCALL(OCSP_check_nonce, "%p,%p", staple.req, basic) > 0);
+         if (ocsp_use_nonce &&
+             U_SYSCALL(OCSP_check_nonce, "%p,%p", staple.req, basic) != 1)
+            {
+            result = false;
 
-         if (result == false) goto end;
+            U_DEBUG("ocsp: response has wrong nonce value");
+
+            goto end;
+            }
 
          // verify signature
 
          result = (U_SYSCALL(OCSP_basic_verify, "%p,%p,%p,%lu", basic, 0, UServices::store, staple.verify ? OCSP_TRUSTOTHER : OCSP_NOVERIFY) == 1);
 
-         if (result == false) goto end;
+         if (result == false)
+            {
+            U_DEBUG("ocsp: couldn't verify OCSP basic response");
+
+            goto end;
+            }
 
          result = (U_SYSCALL(OCSP_resp_find_status, "%p,%p,%p,%lu", basic, staple.id, &status, 0, 0, &thisupdate, &nextupdate) == 1);
+
+         if (result == false)
+            {
+            U_DEBUG("ocsp: no Status found");
+
+            goto end;
+            }
 
          nextupdate_str = UStringExt::ASN1TimetoString(nextupdate);
 
          U_INTERNAL_DUMP("OCSP_resp_find_status() - %d: %s This update: %s Next update: %v", status,
                           OCSP_cert_status_str(status), UStringExt::ASN1TimetoString(thisupdate).data(), nextupdate_str.rep)
 
-         if (result == false ||
-             status != V_OCSP_CERTSTATUS_GOOD)
+         if (status != V_OCSP_CERTSTATUS_GOOD)
             {
+            result = false;
+
             goto end;
             }
 

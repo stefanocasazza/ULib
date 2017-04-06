@@ -80,7 +80,12 @@ public:
       //
       // LISTEN_BACKLOG             max number of ready to be delivered connections to accept()
       // SET_REALTIME_PRIORITY      flag indicating that the preforked processes will be scheduled under the real-time policies SCHED_FIFO
+      //
+      // CLIENT_THRESHOLD           min number of clients to active polling
       // CLIENT_FOR_PARALLELIZATION minum number of clients to active parallelization 
+      //
+      // LOAD_BALANCE_DEVICE_NETWORK    network interface name of cluster of physical server
+      // LOAD_BALANCE_LOADAVG_THRESHOLD system load threshold to proxies the request on other userver on the network cluster ([0-9].[0-9])
       //
       // PID_FILE       write main process pid on file indicated
       // WELCOME_MSG    message of welcome to send initially to client connected
