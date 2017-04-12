@@ -86,7 +86,7 @@ const double u_pow10[309] = { // 1e-0...1e308: 309 * 8 bytes = 2472 bytes
   1e+301,1e+302,1e+303,1e+304,1e+305,1e+306,1e+307,1e+308
 };
 
-#if defined(USE_LIBSSL) && OPENSSL_VERSION_NUMBER < 0x10100000L
+#if defined(USE_LIBSSL)
 #  include <openssl/ssl.h>
 #  include <openssl/rand.h>
 #  include <openssl/conf.h>
@@ -252,8 +252,6 @@ void ULib::init(const char* mempool, char** argv)
 
    U_INTERNAL_DUMP("u_is_tty = %b UStringRep::string_rep_null = %p UString::string_null = %p", u_is_tty, UStringRep::string_rep_null, UString::string_null)
 
-   U_INTERNAL_DUMP("sizeof(off_t) = %u SIZEOF_OFF_T = %u", sizeof(off_t), SIZEOF_OFF_T)
-
    /**
    * NB: there are to many exceptions...
    *
@@ -262,19 +260,23 @@ void ULib::init(const char* mempool, char** argv)
    * #endif
    */
 
-#if defined(USE_LIBSSL) && OPENSSL_VERSION_NUMBER < 0x10100000L
+   U_INTERNAL_DUMP("sizeof(off_t) = %u SIZEOF_OFF_T = %u", sizeof(off_t), SIZEOF_OFF_T)
+
    // A typical TLS/SSL application will start with the library initialization,
    // will provide readable error messages and will seed the PRNG (Pseudo Random Number Generator).
    // The environment variable OPENSSL_CONFIG can be set to specify the location of the configuration file
 
-   U_SYSCALL_VOID_NO_PARAM(SSL_load_error_strings);
-   U_SYSCALL_VOID_NO_PARAM(SSL_library_init);
-
-# ifdef HAVE_OPENSSL_97
+#if defined(USE_LIBSSL)
+# if OPENSSL_VERSION_NUMBER >= 0x10100003L
+   (void) U_SYSCALL(OPENSSL_init_ssl, "%llu,%S", OPENSSL_INIT_LOAD_CONFIG, 0);
+# else
+#  ifdef HAVE_OPENSSL_97
    U_SYSCALL_VOID(OPENSSL_config, "%S", 0);
+#  endif
+   U_SYSCALL_VOID_NO_PARAM(SSL_library_init);
+   U_SYSCALL_VOID_NO_PARAM(SSL_load_error_strings);
+   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_algorithms);
 # endif
-   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_ciphers);
-   U_SYSCALL_VOID_NO_PARAM(OpenSSL_add_all_digests);
 
    // OpenSSL makes sure that the PRNG state is unique for each thread. On systems that provide "/dev/urandom",
    // the randomness device is used to seed the PRNG transparently. However, on all other systems, the application
@@ -291,6 +293,13 @@ void ULib::init(const char* mempool, char** argv)
 
       RAND_seed(&tmp, sizeof(int));
       }
+# endif
+# if OPENSSL_VERSION_NUMBER >= 0x0090800fL && !defined(SSL_OP_NO_COMPRESSION) // Disable gzip compression in OpenSSL prior to 1.0.0 version, this saves about 522K per connection
+    STACK_OF(SSL_COMP)* ssl_comp_methods = SSL_COMP_get_compression_methods();
+
+    int n = sk_SSL_COMP_num(ssl_comp_methods);
+
+    while (n--) (void) sk_SSL_COMP_pop(ssl_comp_methods);
 # endif
 #endif
 

@@ -1054,25 +1054,19 @@ public:
       U_TRACE_NO_PARAM(0, "UOCSPStapling::run()")
 
       struct timespec ts;
-      bool result = false;
+
+      ts.tv_sec  = 5L;
+      ts.tv_nsec = 0L;
 
       U_SRV_LOG("SSL: OCSP Stapling thread activated (tid %u)", u_gettid());
 
-      errno = 0;
-      ts.tv_nsec = 0L;
-
       while (UServer_Base::flag_loop)
          {
-         if (errno != EINTR)
-            {
-            result = USSLSocket::doStapling();
-
-            U_SRV_LOG("SSL: OCSP request for stapling to %V has %s", USSLSocket::staple.url->rep, (result ? "success" : "FAILED"));
-            }
-
-         ts.tv_sec = (result ? U_min(USSLSocket::staple.valid - u_now->tv_sec, 3600L) : 300L);
+         errno = 0;
 
          (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+
+         ts.tv_sec = (errno != EINTR ? USSLSocket::doStapling() : 30L);
          }
       }
 
@@ -1085,12 +1079,6 @@ public:
       USSLSocket::staple.data = UServer_Base::getPointerToDataShare(USSLSocket::staple.data);
 
       UServer_Base::setLockOCSPStaple();
-
-      U_INTERNAL_ASSERT_EQUALS(USSLSocket::staple.client, 0)
-
-      U_NEW(UClient<UTCPSocket>, USSLSocket::staple.client, UClient<UTCPSocket>(0));
-
-      (void) USSLSocket::staple.client->setUrl(*USSLSocket::staple.url);
 
       U_INTERNAL_ASSERT_EQUALS(UServer_Base::pthread_ocsp, 0)
 

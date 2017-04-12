@@ -7,6 +7,7 @@
 .deps/crypto_qp.Po
 .deps/crypto_base64.Po
 .deps/crypto_base64url.Po
+.deps/crypto_base64escape.Po
 .deps/crypto_des3.Po
 .deps/crypto_dgst.Po
 .deps/crypto_url.Po

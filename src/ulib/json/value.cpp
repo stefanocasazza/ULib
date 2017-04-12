@@ -16,6 +16,7 @@
 #include <ulib/utility/escape.h>
 
 int      UValue::jsonParseFlags;
+bool     UValue::bobject;
 char*    UValue::pstringify;
 UValue*  UValue::pnode;
 uint32_t UValue::size;

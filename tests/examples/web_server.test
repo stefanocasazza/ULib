@@ -23,7 +23,7 @@ rm -f db/session.ssl* /tmp/ssl_session.txt /tmp/byterange* /tmp/soap.res /tmp/*.
 
 #chmod 666 /proc/sys/net/ipv4/tcp_fin_timeout /proc/sys/net/core/somaxconn /proc/sys/net/ipv4/tcp_max_syn_backlog
 
- UTRACE="0 50M 0"
+#UTRACE="0 50M 0"
 #UTRACE_SIGNAL="0 50M 0"
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"

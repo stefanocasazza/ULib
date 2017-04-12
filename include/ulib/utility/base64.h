@@ -64,6 +64,22 @@ struct U_EXPORT UBase64 {
       }
 
    static void decodeAll(const UString& s, UString& buffer) { decodeAll(U_STRING_TO_PARAM(s), buffer); }
+
+   static void encodeEscape(const char* s, uint32_t n, UString& buffer);
+   static void encodeEscape(const UString& s,          UString& buffer) { encodeEscape(U_STRING_TO_PARAM(s), buffer); }
+
+   static void decodeEscape(const char* s, uint32_t n, UString& buffer)
+      {
+      U_TRACE(0, "UBase64::decodeEscape(%.*S,%u,%p)", n, s, n, &buffer)
+
+      U_ASSERT(buffer.uniq())
+
+      buffer.rep->_length = u_base64escape_decode(s, n, (unsigned char*)buffer.data());
+
+      U_INTERNAL_DUMP("u_base64_errors = %u buffer(%u) = %#V", u_base64_errors, buffer.size(), buffer.rep)
+      }
+
+   static void decodeEscape(const UString& s, UString& buffer) { decodeEscape(U_STRING_TO_PARAM(s), buffer); }
 };
 
 #endif

@@ -253,9 +253,9 @@ public:
 
    // DEBUG
 
-#  ifdef DEBUG
+# ifdef DEBUG
    const char* dump(bool reset) const;
-#  endif
+# endif
 #endif
 
 private:

@@ -581,7 +581,7 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
    {
    int sz, byte_written;
 
-   if (count <= U_CAPACITY)
+   if (count <= U_CAPACITY) // OpenSSL has no SSL_writev() so we copy several bufs into our 4K buffer before the SSL_write() call to decrease a SSL overhead
       {
       U_INTERNAL_ASSERT_MINOR(iovcnt, 255)
 

@@ -60,10 +60,10 @@ public:
 #ifdef DEBUG
    const char* dump(bool breset) const
       {
-      *UObjectIO::os << "table         (UHashMap " << (void*)&table        << ")\n"
-                     << "radius        (UString " << (void*)&radius        << ")\n"
-                     << "location      (UString " << (void*)&location      << ")\n"
-                     << "fbPermissions (UVector " << (void*)&fbPermissions << ')';
+      *UObjectIO::os << "table         (UHashMap " << (void*)&table         << ")\n"
+                     << "radius        (UString "  << (void*)&radius        << ")\n"
+                     << "location      (UString "  << (void*)&location      << ")\n"
+                     << "fbPermissions (UVector "  << (void*)&fbPermissions << ')';
 
       if (breset)
          {
@@ -153,6 +153,60 @@ public:
 #endif
 };
 
+
+class Organization {
+public:
+
+   UString name, index;
+
+   Organization() {}
+   Organization(const UString& _name, const UString& _index) : name(_name), index(_index) {}
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "Organization::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_METHOD_HANDLER(name,  UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(index, UString));
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "Organization::fromJSON(%p)", &json)
+
+      json.fromJSON(U_JSON_METHOD_HANDLER(name,  UString));
+      json.fromJSON(U_JSON_METHOD_HANDLER(index, UString));
+      }
+};
+
+class ResponseSearch {
+public:
+
+   UString type;
+   unsigned key;
+   UVector<Organization*> organizations;
+
+   ResponseSearch() : type(U_STRING_FROM_CONSTANT("search")) {}
+
+   void toJSON(UValue& json)
+      {
+      U_TRACE(0, "ResponseSearch::toJSON(%p)", &json)
+
+      json.toJSON(U_JSON_METHOD_HANDLER(type, UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(key, unsigned));
+      json.toJSON(U_JSON_METHOD_HANDLER(organizations, UVector<Organization*>));
+      }
+
+   void fromJSON(UValue& json)
+      {
+      U_TRACE(0, "ResponseSearch::fromJSON(%p)", &json)
+
+      json.fromJSON(U_JSON_METHOD_HANDLER(type, UString));
+      json.fromJSON(U_JSON_METHOD_HANDLER(key, unsigned));
+      json.fromJSON(U_JSON_METHOD_HANDLER(organizations, UVector<Organization*>));
+      }
+};
+
 class Multiple {
 public:
    // Check for memory error
@@ -162,22 +216,23 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
+   UVector<Organization*> organizations;
+   UVector<Request*> vrequests;
+
+   // if a member of the class is an object you need to put it
+   // at the end and use the U_JSON_METHOD_HANDLER_OBJECT() macro
+
    Request request;
    Response response;
-   UVector<Request*> vrequests;
    Response* presponse;
 
    Multiple()
       {
-      U_TRACE_REGISTER_OBJECT(5, Multiple, "")
-
       U_NEW(Response, presponse, Response);
       }
 
    ~Multiple()
       {
-      U_TRACE_UNREGISTER_OBJECT(5, Multiple)
-
       delete presponse;
       }
 
@@ -185,49 +240,40 @@ public:
       {
       U_TRACE_NO_PARAM(5, "Multiple::clear()")
 
+      organizations.clear();
+      vrequests.clear();
+
       request.clear();
       response.clear();
-      vrequests.clear();
+
+      presponse = 0;
       }
 
    void toJSON(UValue& json)
       {
       U_TRACE(5, "Multiple::toJSON(%p)", &json)
 
-      json.toJSON(U_JSON_METHOD_HANDLER(request,   Request));
-      json.toJSON(U_JSON_METHOD_HANDLER(response,  Response));
+      json.toJSON(U_JSON_METHOD_HANDLER(organizations, UVector<Organization*>));
       json.toJSON(U_JSON_METHOD_HANDLER(vrequests, UVector<Request*>));
-      json.toJSON(U_JSON_METHOD_HANDLER(presponse, Response));
+
+      // if a member of the class is an object you need to put it
+      // at the end and use the U_JSON_METHOD_HANDLER_OBJECT() macro
+
+      json.toJSON(U_JSON_METHOD_HANDLER_OBJECT(request,  Request));
+      json.toJSON(U_JSON_METHOD_HANDLER_OBJECT(response, Response));
+      json.toJSON(U_JSON_METHOD_HANDLER_OBJECT(presponse, Response));
       }
 
    void fromJSON(UValue& json)
       {
       U_TRACE(5, "Multiple::fromJSON(%p)", &json)
 
+      json.fromJSON(U_JSON_METHOD_HANDLER(organizations, UVector<Organization*>));
+      json.fromJSON(U_JSON_METHOD_HANDLER(vrequests, UVector<Request*>));
       json.fromJSON(U_JSON_METHOD_HANDLER(request,   Request));
       json.fromJSON(U_JSON_METHOD_HANDLER(response,  Response));
-      json.fromJSON(U_JSON_METHOD_HANDLER(vrequests, UVector<Request*>));
       json.fromJSON(U_JSON_METHOD_HANDLER(presponse, Response));
       }
-
-#ifdef DEBUG
-   const char* dump(bool breset) const
-      {
-      *UObjectIO::os << "presponse           " << (void*)presponse  << ")\n"
-                     << "request   (Request  " << (void*)&request   << ")\n"
-                     << "response  (Response " << (void*)&response  << ")\n"
-                     << "vrequests (UVector  " << (void*)&vrequests << ')';
-
-      if (breset)
-         {
-         UObjectIO::output();
-
-         return UObjectIO::buffer_output;
-         }
-
-      return 0;
-      }
-#endif
 };
 
 // Do a query and print the results
@@ -240,7 +286,8 @@ static void testQuery(const UString& json, const char* cquery, const UString& ex
    UString result, query(cquery, strlen(cquery));
    int dataType = UValue::jread(json, query, result);
 
-   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("dataType = (%d %S) query = %V result(%u) = %V UValue::jread_elements = %d UValue::jread_error = (%d %S)\n"),
+   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("dataType = (%d %S) query = %V result(%u) = %V UValue::jread_elements = %d "
+                                                                              "UValue::jread_error = (%d %S)\n"),
               dataType, UValue::getDataTypeDescription(dataType), query.rep, result.size(), result.rep, UValue::jread_elements, UValue::jread_error,
               UValue::getJReadErrorDescription()));
 
@@ -412,6 +459,30 @@ static void testResponse()
    U_ASSERT_EQUALS( result, reqJson )
 }
 
+static void testResponseSearch()
+{
+   U_TRACE_NO_PARAM(5, "testResponseSearch()")
+
+   UValue json_obj;
+   ResponseSearch response;
+   UString result, reqJson = U_STRING_FROM_CONSTANT("{\"type\":\"localesData\",\"key\":0,\"organizations\":[{\"name\":\"Temple University\",\"index\":\"S119\"},{\"name\":\"Tennessee State University\",\"index\":\"S266\"},{\"name\":\"Tennessee Technological University\",\"index\":\"S224\"},{\"name\":\"Texas A&M University--College Station\",\"index\":\"S75\"},{\"name\":\"Texas A&M University--Commerce\",\"index\":\"S267\"}]}");
+
+   bool ok = JSON_parse(reqJson, response);
+
+   U_INTERNAL_ASSERT(ok)
+
+   U_INTERNAL_ASSERT_EQUALS(response.key, 0)
+   U_ASSERT_EQUALS(response.type, "localesData")
+   U_ASSERT_EQUALS(response.organizations[0]->name,  "Temple University")
+   U_ASSERT_EQUALS(response.organizations[0]->index, "S119")
+   U_ASSERT_EQUALS(response.organizations[4]->name,  "Texas A&M University--Commerce")
+   U_ASSERT_EQUALS(response.organizations[4]->index, "S267")
+
+   JSON_stringify(result, json_obj, response);
+
+   U_ASSERT_EQUALS( result, reqJson )
+}
+
 static void testMultiple()
 {
    U_TRACE_NO_PARAM(5, "testMultiple()")
@@ -420,9 +491,10 @@ static void testMultiple()
    const char* dump;
    Multiple multiple;
    UString result, reqJson = U_STRING_FROM_CONSTANT("{"
+   "\"organizations\":[{\"name\":\"Temple University\",\"index\":\"S119\"},{\"name\":\"Tennessee State University\",\"index\":\"S266\"},{\"name\":\"Tennessee Technological University\",\"index\":\"S224\"},{\"name\":\"Texas A&M University--College Station\",\"index\":\"S75\"},{\"name\":\"Texas A&M University--Commerce\",\"index\":\"S267\"}],"
+   "\"vrequests\":[],"
    "\"request\":{\"table\":{\"type\":\"localesData\",\"token\":\"A619828KAIJ6D3\"},\"radius\":\"near\",\"location\":\"40.7831 N, 73.9712 W\",\"fbPermissions\":[\"public_profile\",\"user_friends\",\"email\"]},"
    "\"response\":{\"fbPermissions\":[\"public_profile\",\"user_friends\",\"email\"],\"type\":\"startup\",\"token\":\"\",\"table\":{\"type\":\"localesData\",\"token\":\"A619828KAIJ6D3\"}},"
-   "\"vrequests\":[],"
    "\"presponse\":{\"fbPermissions\":[],\"type\":\"\",\"token\":\"\",\"table\":{}}"
    "}");
 
@@ -502,6 +574,8 @@ U_EXPORT main (int argc, char* argv[], char* env[])
    testVector();
    testRequest();
    testResponse();
+   testResponseSearch();
+
    testMultiple();
 
    content = UFile::contentOf(U_STRING_FROM_CONSTANT("inp/json/prova.json"));

@@ -2776,7 +2776,6 @@ next:       (void) getARPCache();
             goto set_redirection_url;
             }
 
-
 #     ifndef U_LOG_DISABLE
          if (UServer_Base::isLog())
             {

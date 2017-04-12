@@ -334,6 +334,21 @@ public:
 
    // Equal
 
+   bool equal(char c) const
+      {
+      U_TRACE(0, "UStringRep::equal(%C)", c)
+
+      U_CHECK_MEMORY
+
+      if (*str == c &&
+          _length == 1)
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
    bool equal(const char* s, uint32_t n) const
       {
       U_TRACE(0, "UStringRep::equal(%#.*S,%u)", n, s, n)
@@ -1748,6 +1763,7 @@ public:
 
    // Equal
 
+   bool equal(char c) const                    { return rep->equal(c); } 
    bool equal(const char* s) const             { return rep->equal(s, u__strlen(s, __PRETTY_FUNCTION__)); }
    bool equal(const char* s, uint32_t n) const { return rep->equal(s, n); }
    bool equal(UStringRep* _rep) const          { return same(_rep) || rep->equal(_rep); }

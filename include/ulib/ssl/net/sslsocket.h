@@ -56,8 +56,8 @@ class UClient_Base;
 class UServer_Base;
 class UClientImage_Base;
 
-template <class T> class UClient;
 template <class T> class UServer;
+template <class T> class UHttpClient;
 template <class T> class UClientImage;
 
 class U_EXPORT USSLSocket : public USocket {
@@ -236,24 +236,26 @@ public:
 #if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    typedef struct stapling {
       void* data;
-      char* path;
-      long valid;
       X509* cert;
       X509* issuer;
       UString* url;
       EVP_PKEY* pkey;
-      int len, verify;
       OCSP_CERTID* id;
+      UString* request;
       OCSP_REQUEST* req;
-      UClient<UTCPSocket>* client;
+      STACK_OF(X509)* chain;
+      UHttpClient<UTCPSocket>* client;
+      long valid;
+      int len, verify;
    } stapling;
 
+   static bool ocsp_nonce;
    static stapling staple;
-   static bool ocsp_use_nonce;
 
-   static bool doStapling();
-   static void cleanupStapling();
+   static uint32_t     doStapling();
+   static void    cleanupStapling();
    static bool setDataForStapling();
+
    static void certificate_status_callback(SSL* _ssl, void* data);
 #endif
 

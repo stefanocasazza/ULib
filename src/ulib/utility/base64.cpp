@@ -44,3 +44,19 @@ void UBase64::encodeUrl(const char* s, uint32_t n, UString& buffer)
 
    buffer.rep->_length = u_base64url_encode((const unsigned char*)s, n, (unsigned char*)buffer.data());
 }
+
+void UBase64::encodeEscape(const char* s, uint32_t n, UString& buffer)
+{
+   U_TRACE(0, "UBase64::encodeEscape(%.*S,%u,%V)", n, s, n, buffer.rep)
+
+#ifdef DEBUG
+   uint32_t length = ((n + 2) / 3) * 4;
+
+   U_INTERNAL_DUMP("buffer.capacity() = %u length = %u", buffer.capacity(), length)
+
+   U_ASSERT(buffer.uniq())
+   U_ASSERT(buffer.capacity() >= length + 1)
+#endif
+
+   buffer.rep->_length = u_base64escape_encode((const unsigned char*)s, n, (unsigned char*)buffer.data());
+}

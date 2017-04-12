@@ -2145,7 +2145,16 @@ void UString::setFromData(const char** p, uint32_t sz, unsigned char delim)
 
    U_INTERNAL_DUMP("c = %C", c)
 
-   U_INTERNAL_ASSERT_EQUALS(u__isspace(c), false)
+   if (u__isspace(c))
+      {
+      // skip white space
+
+      while (u__isspace(*++ptr)) {}
+
+      U_INTERNAL_ASSERT_MINOR(ptr, _pend)
+
+      c = *ptr;
+      }
 
    if (c == '@' &&
        UVector<void*>::istream_loading == false)

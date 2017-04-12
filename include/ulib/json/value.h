@@ -443,27 +443,17 @@ public:
       U_INTERNAL_DUMP("result(%u) = %V", result.size(), result.rep)
       }
 
-   template <typename T> void toJSON(const UString& name, UJsonTypeHandler<T> member)
+   template <typename T> void toJSON(const UString& name, UJsonTypeHandler<T> member, bool flag = false)
       {
-      U_TRACE(0, "UValue::toJSON<T>(%V,%p)", name.rep, &member)
+      U_TRACE(0, "UValue::toJSON<T>(%V,%p,%b)", name.rep, &member, flag)
+
+      U_INTERNAL_DUMP("bobject = %b", bobject)
+
+      if (bobject == false) bobject = flag;
 
       addJSON<T>(name, member);
 
-      U_INTERNAL_DUMP("pnode = %p", pnode)
-
-      if (pnode->toNode() == 0)
-         {
-         int tag = pnode->getTag();
-
-         if (tag ==  ARRAY_VALUE ||
-             tag == OBJECT_VALUE)
-            {
-            U_INTERNAL_DUMP("pnode->next = %p", pnode->next)
-
-            pnode->value.ival = UValue::getJsonValue(tag, pnode->next);
-                                                          pnode->next = 0;
-            }
-         }
+      checkNode(false);
       }
 
    template <typename T> void fromJSON(const UString& name, UJsonTypeHandler<T> member)
@@ -611,6 +601,7 @@ protected:
    union jval pkey, // only if binded to an object
               value;
 
+   static bool bobject;
    static UValue* pnode;
    static uint32_t size;
    static char* pstringify; // buffer to stringify json
@@ -707,11 +698,32 @@ protected:
       {
       U_TRACE(0, "UValue::setTag(%d)", tag)
 
+   // U_ASSERT_EQUALS(isArrayOrObject(), false)
+
       value.ival = getJsonValue(tag, (void*)getPayload());
       }
 
    void stringify() const;
    void prettify(uint32_t indent) const;
+
+   static void checkNode(bool flag)
+      {
+      U_TRACE(0, "UValue::checkNode(%b)", flag)
+
+      if (pnode->toNode()) return;
+
+      int pnode_tag = pnode->getTag();
+
+      if (flag == false              &&
+          (pnode_tag ==  ARRAY_VALUE ||
+           pnode_tag == OBJECT_VALUE))
+         {
+         U_INTERNAL_DUMP("pnode->next = %p", pnode->next)
+
+         pnode->value.ival = getJsonValue(pnode_tag, pnode->next);
+                                                     pnode->next = 0;
+         }
+      }
 
    UValue* toNode() const { return toNode(value.ival); }
 
@@ -840,10 +852,19 @@ protected:
 
       U_INTERNAL_DUMP("pnode = %p", pnode)
 
-      if (pnode) pnode->next = node;
+      if (pnode)
+         {
+         pnode->next = node;
+
+         U_INTERNAL_DUMP("bobject = %b", bobject)
+
+         checkNode(bobject);
+         }
       else
          {
-         value.ival = UValue::getJsonValue(isArray() ? UValue::ARRAY_VALUE : UValue::OBJECT_VALUE, node);
+         U_ASSERT(isArrayOrObject())
+
+         value.ival = UValue::getJsonValue(getTag(), node);
          }
 
       member.toJSON(*(pnode = node));
@@ -945,8 +966,8 @@ private:
 #define U_JSON_METHOD_HANDLER(name_object_member, type_object_member) \
                               U_STRING_FROM_CONSTANT(#name_object_member), UJsonTypeHandler<type_object_member>(name_object_member)
 
-#define U_JSON_TYPE_HANDLER(class_name, name_object_member, type_object_member) \
-                            U_STRING_FROM_CONSTANT(#name_object_member), UJsonTypeHandler<type_object_member>(((class_name*)pval)->name_object_member)
+#define U_JSON_METHOD_HANDLER_OBJECT(name_object_member, type_object_member) \
+                              U_STRING_FROM_CONSTANT(#name_object_member), UJsonTypeHandler<type_object_member>(name_object_member), true
 
 /**
  * Provide template specializations to support your own complex types
@@ -958,34 +979,20 @@ private:
  *      int age;
  *      UString  lastName;
  *      UString firstName;
+ *
+ *    // if a member of the class is an object you need to put it
+ *    // at the end and use the U_JSON_METHOD_HANDLER_OBJECT() macro
+ *
+ *      Person* person;
  *   };
  *
- * The UJsonTypeHandler must provide a custom toJSON and fromJSON method:
- *
- *   template <> class UJsonTypeHandler<Person> : public UJsonTypeHandler_Base {
- *   public:
- *      explicit UJsonTypeHandler(Person& val) : UJsonTypeHandler_Base(&val)
- *
- *      void toJSON(UValue& json)
- *       {
- *       json.toJSON(U_JSON_TYPE_HANDLER(Person, age,       int));
- *       json.toJSON(U_JSON_TYPE_HANDLER(Person,  lastName, UString));
- *       json.toJSON(U_JSON_TYPE_HANDLER(Person, firstName, UString));
- *       }
- *
- *      void fromJSON(UValue& json)
- *       {
- *       json.fromJSON(U_JSON_TYPE_HANDLER(Person, age,       int));
- *       json.fromJSON(U_JSON_TYPE_HANDLER(Person,  lastName, UString));
- *       json.fromJSON(U_JSON_TYPE_HANDLER(Person, firstName, UString));
- *       }
- *   };
- *
- * or in alternative add this methods to the (simplified) class:
+ * add this methods to the (simplified) class:
  *
  * void Person::clear()
  *    {
- *    age = 0;
+ *    age    = 0;
+ *    person = 0;
+ *
  *     lastName.clear();
  *    firstName.clear();
  *    }
@@ -995,6 +1002,11 @@ private:
  *    json.toJSON(U_JSON_METHOD_HANDLER(age,       int));
  *    json.toJSON(U_JSON_METHOD_HANDLER( lastName, UString));
  *    json.toJSON(U_JSON_METHOD_HANDLER(firstName, UString));
+ *
+ *    // if a member of the class is an object you need to put it
+ *    // at the end and use the U_JSON_METHOD_HANDLER_OBJECT() macro
+ *
+ *    json.toJSON(U_JSON_METHOD_HANDLER_OBJECT(person, Person));
  *    }
  *
  * void Person::fromJSON(UValue& json)
@@ -1002,7 +1014,9 @@ private:
  *    json.fromJSON(U_JSON_METHOD_HANDLER(age,       int));
  *    json.fromJSON(U_JSON_METHOD_HANDLER( lastName, UString));
  *    json.fromJSON(U_JSON_METHOD_HANDLER(firstName, UString));
+ *    json.fromJSON(U_JSON_METHOD_HANDLER(person,    Person));
  *    }
+ *
  */
 
 template <class T> class U_EXPORT UJsonTypeHandler : public UJsonTypeHandler_Base {
@@ -1063,7 +1077,8 @@ template <class T> void JSON_stringify(UString& result, UValue& json, T& obj)
 
    U_ASSERT(json.empty())
 
-   UValue::pnode = 0;
+   UValue::pnode   = 0;
+   UValue::bobject = false;
 
    UJsonTypeHandler<T>(obj).toJSON(json);
 

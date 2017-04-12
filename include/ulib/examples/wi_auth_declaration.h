@@ -5427,6 +5427,10 @@ static void GET_check_for_usersF()
    if (ip_server->equal(U_CLIENT_ADDRESS_TO_PARAM) == false) USSIPlugIn::setBadRequest();
    else
       {
+      /* NEED TO BE TESTED MORE !!!
+
+      userver_tcp: ERROR: 10/04/17 12:31:28 (pid 1328) Array access out of bounds - UVector<UString>::at(pos:1 >= _length:1) _capacity = 1 elem(0) = "e8:50:8b:5b:b8:e729748:43:7c:ad:0f:5c297bc:44:34:40:10:5d29994:e9:6a:c4:7d:5330618:f6:43:b9:7a:c42992c:33:61:10:d6:a1297" elem(0) = "e8:50:8b:5b:b8:e729748:43:7c:ad:0f:5c297bc:44:34:40:10:5d29994:e9:6a:c4:7d:5330618:f6:43:b9:7a:c42992c:33:61:10:d6:a1297" - Exiting...
+
       db_nodog->callForAllEntryWithSetEntry(WiAuthNodog::checkAccessPointFromAnagrafica);
 
       U_ASSERT(  vuid->empty())
@@ -5440,6 +5444,7 @@ static void GET_check_for_usersF()
 
          table1->clear();
          }
+      */
 
       USSIPlugIn::setAlternativeResponse();
       }

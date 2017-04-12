@@ -11,9 +11,11 @@
 //
 // ============================================================================
 
+#include <ulib/net/tcpsocket.h>
+#include <ulib/utility/base64.h>
+#include <ulib/net/client/http.h>
 #include <ulib/utility/services.h>
 #include <ulib/ssl/net/sslsocket.h>
-#include <ulib/net/client/client.h>
 #include <ulib/net/server/server.h>
 
 #ifdef _MSWINDOWS_
@@ -36,7 +38,7 @@ SSL_CTX* USSLSocket::cctx; // client
 SSL_CTX* USSLSocket::sctx; // server
 
 #if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-bool                 USSLSocket::ocsp_use_nonce;
+bool                 USSLSocket::ocsp_nonce;
 USSLSocket::stapling USSLSocket::staple;
 #endif
 
@@ -586,9 +588,7 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
       if (result == 0) U_RETURN(false);
 
 #  if !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
-      UString str(private_key_file, u__strlen(private_key_file, __PRETTY_FUNCTION__));
-
-      staple.pkey = UServices::loadKey(UFile::contentOf(str), "PEM", true, passwd, 0);
+   // staple.pkey = UServices::loadKey(UFile::contentOf(UString(private_key_file, u__strlen(private_key_file, __PRETTY_FUNCTION__))), "PEM", true, passwd, 0);
 
       U_INTERNAL_DUMP("staple.pkey = %p", staple.pkey)
 #  endif
@@ -1244,27 +1244,39 @@ bool USSLSocket::setDataForStapling()
    if (staple.cert == 0) U_RETURN(false);
 
    char* s;
+   X509* issuer;
    bool result = false;
-   STACK_OF(X509)* chain;
    X509_STORE_CTX* store_ctx;
    STACK_OF(OPENSSL_STRING)* aia;
 
-#if OPENSSL_VERSION_NUMBER >= 0x10001000L
-   SSL_CTX_get_extra_chain_certs(sctx, &chain);
-#else
-   chain = sctx->extra_certs;
+#ifdef SSL_CTRL_SELECT_CURRENT_CERT
+   /* OpenSSL 1.0.2+ */
+   SSL_CTX_select_current_cert(sctx, staple.cert);
 #endif
 
-   int n = U_SYSCALL(sk_X509_num, "%p", chain);
+#ifdef SSL_CTRL_GET_EXTRA_CHAIN_CERTS
+   /* OpenSSL 1.0.1+ */
+   SSL_CTX_get_extra_chain_certs(sctx, &staple.chain);
+#else
+   staple.chain = sctx->extra_certs;
+#endif
+
+   U_INTERNAL_DUMP("staple.chain = %p", staple.chain)
+
+   int n = U_SYSCALL(sk_X509_num, "%p", staple.chain);
+
+   U_DEBUG("SSL get issuer: %d extra certs", n);
 
    for (int i = 0; i < n; ++i)
       {
-      staple.issuer = sk_X509_value(chain, i);
+      issuer = sk_X509_value(staple.chain, i);
 
-      if (U_SYSCALL(X509_check_issued, "%p,%p", staple.issuer, staple.cert) == X509_V_OK)
+      if (U_SYSCALL(X509_check_issued, "%p,%p", issuer, staple.cert) == X509_V_OK)
          {
-#     if OPENSSL_VERSION_NUMBER < 0x10100000L
-         CRYPTO_add(&(staple.issuer->references), 1, CRYPTO_LOCK_X509);
+#     if OPENSSL_VERSION_NUMBER >= 0x10100001L
+         X509_up_ref(issuer);
+#     else
+         CRYPTO_add(&issuer->references, 1, CRYPTO_LOCK_X509);
 #     endif
 
          goto next;
@@ -1277,13 +1289,9 @@ bool USSLSocket::setDataForStapling()
 
    if (store_ctx == 0) U_RETURN(false);
 
-#ifdef HAVE_OPENSSL_97
-   (void) U_SYSCALL(X509_STORE_CTX_init, "%p,%p,%p,%p", store_ctx, UServices::store, 0, 0);
-#else
-   U_SYSCALL_VOID(  X509_STORE_CTX_init, "%p,%p,%p,%p", store_ctx, UServices::store, 0, 0);
-#endif
+   if (U_SYSCALL(X509_STORE_CTX_init, "%p,%p,%p,%p", store_ctx, UServices::store, 0, 0) == 0) U_RETURN(false);
 
-   n = U_SYSCALL(X509_STORE_CTX_get1_issuer, "%p,%p,%p", &staple.issuer, store_ctx, staple.cert);
+   n = U_SYSCALL(X509_STORE_CTX_get1_issuer, "%p,%p,%p", &issuer, store_ctx, staple.cert);
 
    U_SYSCALL_VOID(X509_STORE_CTX_free, "%p", store_ctx);
 
@@ -1302,7 +1310,12 @@ bool USSLSocket::setDataForStapling()
       U_RETURN(false);
       }
 
-next: // extract OCSP responder URL from certificate
+next:
+   staple.issuer = issuer;
+
+   U_DEBUG("SSL get issuer: found %p in extra certs", issuer);
+
+   // extract OCSP responder URL from certificate
 
    aia = (STACK_OF(OPENSSL_STRING)*) U_SYSCALL(X509_get1_ocsp, "%p", staple.cert);
 
@@ -1322,101 +1335,107 @@ next: // extract OCSP responder URL from certificate
 
       if (u_isURL(s, len))
          {
-         int ssl = 0;
-         char* host = 0;
-         char* port = 0;
-
          U_INTERNAL_ASSERT_EQUALS(memcmp(s,"http://",7), 0)
 
-         s[len] = 0;
+         staple.id = (OCSP_CERTID*) U_SYSCALL(OCSP_cert_to_id, "%p,%p,%p", 0, staple.cert, staple.issuer);
 
-         if (U_SYSCALL(OCSP_parse_url, "%S,%p,%p,%p,%p", s, &host, &port, &staple.path, &ssl))
-            {
-            U_INTERNAL_ASSERT_POINTER(port)
-            U_INTERNAL_ASSERT_POINTER(host)
-            U_INTERNAL_ASSERT_EQUALS(ssl, 0)
+         if (staple.id == 0) U_RETURN(false);
 
-            U_SYSCALL_VOID(OPENSSL_free, "%p", port);
-            U_SYSCALL_VOID(OPENSSL_free, "%p", host);
+         staple.req = OCSP_REQUEST_new();
 
-            staple.req = OCSP_REQUEST_new();
+         if (U_SYSCALL(OCSP_request_add0_id, "%p,%p", staple.req, staple.id) == 0) U_RETURN(false);
 
-            staple.id = (OCSP_CERTID*) U_SYSCALL(OCSP_cert_to_id, "%p,%p,%p", 0, staple.cert, staple.issuer);
+         if (ocsp_nonce) (void) U_SYSCALL(OCSP_request_add1_nonce, "%p,%p,%d", staple.req, 0, -1);
 
-            U_NEW(UString, staple.url, UString((void*)s, len));
+         if (staple.pkey) (void) U_SYSCALL(OCSP_request_sign, "%p,%p,%p,%p,%p,%ld", staple.req, staple.cert, staple.pkey, EVP_sha1(), 0, 0); // sign the request
 
-            (void) U_SYSCALL(OCSP_request_add0_id, "%p,%p", staple.req, staple.id);
+         SSL_CTX_set_tlsext_status_cb(sctx, USSLSocket::certificate_status_callback);
 
-            U_INTERNAL_DUMP("ocsp_use_nonce = %b", ocsp_use_nonce)
+         result = true;
 
-            if (ocsp_use_nonce) (void) U_SYSCALL(OCSP_request_add1_nonce, "%p,%p,%d", staple.req, 0, -1);
+         U_INTERNAL_ASSERT_EQUALS(staple.url, 0)
+         U_INTERNAL_ASSERT_EQUALS(staple.client, 0)
+         U_INTERNAL_ASSERT_EQUALS(staple.request, 0)
 
-            // sign the request
+         U_NEW(UString, staple.url,     UString((void*)s, len));
+         U_NEW(UString, staple.request, UString(U_CAPACITY));
 
-            if (staple.pkey) (void) U_SYSCALL(OCSP_request_sign, "%p,%p,%p,%p,%p,%ld", staple.req, staple.cert, staple.pkey, EVP_sha1(), 0, 0);
+         U_NEW(UHttpClient<UTCPSocket>, staple.client, UHttpClient<UTCPSocket>(0));
 
-            SSL_CTX_set_tlsext_status_cb(sctx, USSLSocket::certificate_status_callback);
+#     ifndef U_LOG_DISABLE
+         if (UServer_Base::isLog()) staple.client->setLogShared();
+#     endif
 
-            result = true;
-            }
+         unsigned char* p = (unsigned char*) staple.request->data();
+
+         staple.request->size_adjust(i2d_OCSP_REQUEST(staple.req, &p));
+
+#     ifdef DEBUG
+         (void) UFile::writeToTmp(U_STRING_TO_PARAM(*(staple.request)), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("ocsp.request.%P"), 0);
+#     endif
+
+         /*
+         UString buffer(U_CAPACITY);
+
+         UString path = staple.client->getUrlPath(),
+                 host = staple.client->getUrlHost();
+
+         UBase64::encodeEscape(*(staple->request), buffer);
+
+         if (path.equal('/')) staple.request->snprintf(U_CONSTANT_TO_PARAM("GET /%v HTTP/1.0\r\nHost: %v\r\n\r\n"),             buffer.rep, host.rep);
+         else                 staple.request->snprintf(U_CONSTANT_TO_PARAM("GET %v/%v HTTP/1.0\r\nHost: %v\r\n\r\n"), path.rep, buffer.rep, host.rep);
+
+         (void) staple.client->setUrl( *(staple.url));
+                staple.client->prepareRequest(*(staple.request));
+         */
          }
       }
 
    U_SYSCALL_VOID(X509_email_free, "%p", aia);
 
-   if (staple.cert)
-      {
-      U_SYSCALL_VOID(X509_free,"%p", staple.cert);
-                                     staple.cert = 0;
-      }
-
-   if (staple.issuer)
-      {
-      U_SYSCALL_VOID(X509_free, "%p", staple.issuer);
-                                      staple.issuer = 0;
-      }
-
-   if (staple.pkey)
-      {
-      U_SYSCALL_VOID(EVP_PKEY_free, "%p", staple.pkey);
-                                          staple.pkey = 0;
-      }
-
    U_RETURN(result);
 }
 
-bool USSLSocket::doStapling()
+uint32_t USSLSocket::doStapling()
 {
    U_TRACE_NO_PARAM(1, "USSLSocket::doStapling()")
 
    U_INTERNAL_ASSERT_POINTER(sctx)
-   U_INTERNAL_ASSERT_POINTER(staple.id)
-   U_INTERNAL_ASSERT_POINTER(staple.req)
-   U_INTERNAL_ASSERT_POINTER(staple.path)
    U_INTERNAL_ASSERT_POINTER(staple.client)
 
    bool result = false;
-   OCSP_RESPONSE* resp = 0;
+   OCSP_RESPONSE* ocsp = 0;
    OCSP_BASICRESP* basic = 0;
 
-   if (staple.client->connect())
+   // send the request and get a response
+
+   if (staple.client->sendPost(*(staple.url), *(staple.request), U_CONSTANT_TO_PARAM("application/ocsp-request")))
       {
-      unsigned char* p;
+      /*
       BIO* conn = (BIO*) U_SYSCALL(BIO_new_fd, "%d,%d", staple.client->getFd(), BIO_NOCLOSE);
 
-      // send the request and get a response
-
-      resp = (OCSP_RESPONSE*) U_SYSCALL(OCSP_sendreq_bio, "%p,%S,%p", conn, staple.path, staple.req);
+      ocsp = (OCSP_RESPONSE*) U_SYSCALL(OCSP_sendreq_bio, "%p,%S,%p", conn, staple.path, staple.req);
 
       U_SYSCALL_VOID(BIO_free_all, "%p", conn);
+      */
 
-      if (resp)
+      UString response = staple.client->getContent();
+
+      size_t len = response.size();
+#  if OPENSSL_VERSION_NUMBER >= 0x0090707fL
+      const
+#  endif
+      unsigned char* p = (const unsigned char*) response.data();
+
+      ocsp = d2i_OCSP_RESPONSE(0, &p, len);
+
+      if (ocsp)
          {
          UString nextupdate_str;
          ASN1_GENERALIZEDTIME* thisupdate;
          ASN1_GENERALIZEDTIME* nextupdate;
 
-         int status, rc = U_SYSCALL(OCSP_response_status, "%p", resp);
+         int status, rc = U_SYSCALL(OCSP_response_status, "%p", ocsp);
 
          result = (rc == OCSP_RESPONSE_STATUS_SUCCESSFUL);
 
@@ -1476,21 +1495,26 @@ bool USSLSocket::doStapling()
 
          // verify the response
 
-         basic = (OCSP_BASICRESP*) U_SYSCALL(OCSP_response_get1_basic, "%p", resp);
+         basic = (OCSP_BASICRESP*) U_SYSCALL(OCSP_response_get1_basic, "%p", ocsp);
 
-         if (ocsp_use_nonce &&
-             U_SYSCALL(OCSP_check_nonce, "%p,%p", staple.req, basic) != 1)
+         if (basic == 0)
             {
             result = false;
 
-            U_DEBUG("ocsp: response has wrong nonce value");
+            goto end;
+            }
+  
+         if (ocsp_nonce &&
+             U_SYSCALL(OCSP_check_nonce, "%p,%p", staple.req, basic) <= 0)
+            {
+            result = false;
+
+            U_DEBUG("ocsp: check nonce failed");
 
             goto end;
             }
 
-         // verify signature
-
-         result = (U_SYSCALL(OCSP_basic_verify, "%p,%p,%p,%lu", basic, 0, UServices::store, staple.verify ? OCSP_TRUSTOTHER : OCSP_NOVERIFY) == 1);
+         result = (U_SYSCALL(OCSP_basic_verify, "%p,%p,%p,%lu", basic, staple.chain, UServices::store, staple.verify ? OCSP_TRUSTOTHER : OCSP_NOVERIFY) == 1);
 
          if (result == false)
             {
@@ -1499,19 +1523,23 @@ bool USSLSocket::doStapling()
             goto end;
             }
 
-         result = (U_SYSCALL(OCSP_resp_find_status, "%p,%p,%p,%lu", basic, staple.id, &status, 0, 0, &thisupdate, &nextupdate) == 1);
+         result = (U_SYSCALL(OCSP_resp_find_status, "%p,%p,%p,%p,%p,%p,%p", basic, staple.id, &status, 0, 0, &thisupdate, &nextupdate) == 1);
 
          if (result == false)
             {
-            U_DEBUG("ocsp: no Status found");
+            U_DEBUG("ocsp: no status found");
+
+#        ifdef DEBUG
+            (void) UFile::writeToTmp(U_STRING_TO_PARAM(response), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("ocsp.response.%P"), 0);
+#        endif
 
             goto end;
             }
 
          nextupdate_str = UStringExt::ASN1TimetoString(nextupdate);
 
-         U_INTERNAL_DUMP("OCSP_resp_find_status() - %d: %s This update: %s Next update: %v", status,
-                          OCSP_cert_status_str(status), UStringExt::ASN1TimetoString(thisupdate).data(), nextupdate_str.rep)
+         U_DEBUG("ocsp: OCSP_resp_find_status() - %d: %s This update: %V Next update: %V", status,
+                  OCSP_cert_status_str(status), UStringExt::ASN1TimetoString(thisupdate).rep, nextupdate_str.rep)
 
          if (status != V_OCSP_CERTSTATUS_GOOD)
             {
@@ -1522,7 +1550,7 @@ bool USSLSocket::doStapling()
 
          // check if the response is valid for at least six minutes
 
-         result = (U_SYSCALL(OCSP_check_validity, "%p,%p,%p,%lu", thisupdate, nextupdate, 360, -1) == 1);
+         result = (U_SYSCALL(OCSP_check_validity, "%p,%p,%ld,%ld", thisupdate, nextupdate, 300, -1) == 1);
 
          if (result == false) goto end;
 
@@ -1536,7 +1564,7 @@ bool USSLSocket::doStapling()
          UServer_Base::lock_ocsp_staple->lock();
 #     endif
 
-         staple.len = i2d_OCSP_RESPONSE(resp, &p);
+         staple.len = i2d_OCSP_RESPONSE(ocsp, (unsigned char**)&p);
 
 #     if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
          UServer_Base::lock_ocsp_staple->unlock();
@@ -1549,12 +1577,25 @@ bool USSLSocket::doStapling()
       }
 
 end:
-   if (resp)  OCSP_RESPONSE_free(resp);
+   if (ocsp)  OCSP_RESPONSE_free(ocsp);
    if (basic) OCSP_BASICRESP_free(basic);
 
    if (staple.client->isOpen()) staple.client->close();
 
-   U_RETURN(result);
+   if (result)
+      {
+      U_DEBUG("SSL: OCSP request for stapling to %V has succes", staple.url->rep);
+
+      uint32_t tv_sec = U_min(staple.valid - u_now->tv_sec, 3600);
+
+      U_RETURN(tv_sec);
+      }
+
+   ERR_print_errors_fp(stderr);
+
+   U_DEBUG("SSL: OCSP request for stapling to %V has FAILED", staple.url->rep);
+
+   U_RETURN(30);
 }
 
 void USSLSocket::certificate_status_callback(SSL* _ssl, void* data)
@@ -1594,22 +1635,19 @@ void USSLSocket::cleanupStapling()
 {
    U_TRACE_NO_PARAM(1, "USSLSocket::cleanupStapling()")
 
-   if (staple.id)  OCSP_CERTID_free(staple.id);
-// if (staple.req) OCSP_REQUEST_free(staple.req);
+   if (staple.url)     delete staple.url;
+   if (staple.client)  delete staple.client;
+   if (staple.request) delete staple.request;
 
-   if (staple.url)    delete staple.url;
-   if (staple.client) delete staple.client;
-
-   if (staple.cert)   U_SYSCALL_VOID(X509_free,     "%p", staple.cert);
-   if (staple.issuer) U_SYSCALL_VOID(X509_free,     "%p", staple.issuer);
-   if (staple.path)   U_SYSCALL_VOID(OPENSSL_free,  "%p", staple.path);
-   if (staple.pkey)   U_SYSCALL_VOID(EVP_PKEY_free, "%p", staple.pkey);
+   if (staple.cert)   U_SYSCALL_VOID(X509_free,         "%p", staple.cert);
+   if (staple.issuer) U_SYSCALL_VOID(X509_free,         "%p", staple.issuer);
+   if (staple.pkey)   U_SYSCALL_VOID(EVP_PKEY_free,     "%p", staple.pkey);
+   if (staple.id)     U_SYSCALL_VOID(OCSP_CERTID_free,  "%p", staple.id);
+   if (staple.req)    U_SYSCALL_VOID(OCSP_REQUEST_free, "%p", staple.req);
 
    staple.id     = 0;
    staple.req    = 0;
-   staple.url    = 0;
    staple.cert   = 0;
-   staple.path   = 0;
    staple.pkey   = 0;
    staple.issuer = 0;
    staple.client = 0;

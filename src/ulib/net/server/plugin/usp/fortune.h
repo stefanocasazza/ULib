@@ -69,6 +69,24 @@ public:
 #	endif
 		}
 
+	// JSON
+
+	void toJSON(UValue& json)
+		{
+		U_TRACE(0, "Fortune::toJSON(%p)", &json)
+
+		json.toJSON(U_JSON_METHOD_HANDLER(id,		 unsigned int));
+		json.toJSON(U_JSON_METHOD_HANDLER(message, UString));
+		}
+
+	void fromJSON(UValue& json)
+		{
+		U_TRACE(0, "Fortune::fromJSON(%p)", &json)
+
+		json.fromJSON(U_JSON_METHOD_HANDLER(id,		unsigned int));
+		json.fromJSON(U_JSON_METHOD_HANDLER(message, UString));
+		}
+
 #ifdef DEBUG
 	const char* dump(bool breset) const
 		{
@@ -112,28 +130,4 @@ public:
 		stmt->bindResult(U_ORM_TYPE_HANDLER(Fortune, message, UString));
 		}
 };
-
-// JSON TEMPLATE SPECIALIZATIONS
-
-template <> class U_EXPORT UJsonTypeHandler<Fortune> : public UJsonTypeHandler_Base {
-public:
-	explicit UJsonTypeHandler(Fortune& val) : UJsonTypeHandler_Base(&val) {}
-
-	void toJSON(UValue& json)
-		{
-		U_TRACE(0, "UJsonTypeHandler<Fortune>::toJSON(%p)", &json)
-
-		json.toJSON(U_JSON_TYPE_HANDLER(Fortune, id,		  unsigned int));
-		json.toJSON(U_JSON_TYPE_HANDLER(Fortune, message, UString));
-		}
-
-	void fromJSON(UValue& json)
-		{
-		U_TRACE(0, "UJsonTypeHandler<Fortune>::fromJSON(%p)", &json)
-
-		json.fromJSON(U_JSON_TYPE_HANDLER(Fortune, id,		 unsigned int));
-		json.fromJSON(U_JSON_TYPE_HANDLER(Fortune, message, UString));
-		}
-};
-
 #endif

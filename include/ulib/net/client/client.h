@@ -199,7 +199,10 @@ public:
       U_RETURN(log_shared_with_server);
       }
 
-   UString getUrl() const      { return url.get(); }
+   UString getUrl() const { return url.get(); }
+   UString getUrlPath()   { return url.getPath(); }
+   UString getUrlHost()   { return url.getHost(); }
+
    UString getServer() const   { return server; }
    UString getBuffer() const   { return buffer; }
    UString getResponse() const { return response; }
