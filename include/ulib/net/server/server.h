@@ -283,7 +283,7 @@ public:
       char buffer4[512];
       char buffer5[512];
       char buffer6[512];
-      char buffer7[439];
+      char buffer7[431];
    // ---------------------------------
       uint8_t flag_sigterm;
    // ---------------------------------
@@ -310,8 +310,10 @@ public:
       sem_t    lock_ssl_session;
       char spinlock_ssl_session[1];
 #    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
-      sem_t    lock_ocsp_staple;
-      char spinlock_ocsp_staple[1];
+      uint32_t   len_ocsp_staple;
+      uint32_t valid_ocsp_staple;
+      sem_t     lock_ocsp_staple;
+      char  spinlock_ocsp_staple[1];
 #    endif
 #  endif
    // ------------------------------------------------------------------------------
@@ -343,6 +345,8 @@ public:
 #define U_SRV_CNT_USR9              UServer_Base::ptr_shared_data->cnt_usr9
 #define U_SRV_MY_LOAD               UServer_Base::ptr_shared_data->my_load
 #define U_SRV_FLAG_SIGTERM          UServer_Base::ptr_shared_data->flag_sigterm
+#define U_SRV_LEN_OCSP_STAPLE       UServer_Base::ptr_shared_data->len_ocsp_staple
+#define U_SRV_VALID_OCSP_STAPLE     UServer_Base::ptr_shared_data->valid_ocsp_staple
 #define U_SRV_MIN_LOAD_REMOTE       UServer_Base::ptr_shared_data->min_load_remote
 #define U_SRV_MIN_LOAD_REMOTE_IP    UServer_Base::ptr_shared_data->min_load_remote_ip
 #define U_SRV_TOT_CONNECTION        UServer_Base::ptr_shared_data->tot_connection

@@ -245,8 +245,6 @@ public:
       OCSP_REQUEST* req;
       STACK_OF(X509)* chain;
       UHttpClient<UTCPSocket>* client;
-      long valid;
-      int len, verify;
    } stapling;
 
    static bool ocsp_nonce;
@@ -256,7 +254,7 @@ public:
    static void    cleanupStapling();
    static bool setDataForStapling();
 
-   static void certificate_status_callback(SSL* _ssl, void* data);
+   static int OCSP_resp_callback(SSL* _ssl, void* data);
 #endif
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)

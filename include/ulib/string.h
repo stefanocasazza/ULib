@@ -370,6 +370,21 @@ public:
 
    // Equal with ignore case
 
+   bool equalnocase(char c) const
+      {
+      U_TRACE(0, "UStringRep::equalnocase(%C)", c)
+
+      U_CHECK_MEMORY
+
+      if (_length == 1 &&
+          u__tolower(*str) == u__tolower(c))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
+
    bool equalnocase(const char* s, uint32_t n) const
       {
       U_TRACE(0, "UStringRep::equalnocase(%.*S,%u)", n, s, n)
@@ -1771,6 +1786,7 @@ public:
 
    // Equal with ignore case
 
+   bool equalnocase(char c) const                    { return rep->equalnocase(c); }
    bool equalnocase(const char* s) const             { return rep->equalnocase(s, u__strlen(s, __PRETTY_FUNCTION__)); }
    bool equalnocase(const char* s, uint32_t n) const { return rep->equalnocase(s, n); }
    bool equalnocase(UStringRep* _rep) const          { return same(_rep) || rep->equalnocase(_rep); }

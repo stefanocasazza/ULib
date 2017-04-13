@@ -490,14 +490,16 @@ int UHttpPlugIn::handlerInit()
  * #endif
  */
 
-   // Configure TLS extensions support
-
-#  if !defined(OPENSSL_NO_TLSEXT) && defined(SSL_set_tlsext_host_name)
-      if (SSL_CTX_set_tlsext_servername_callback(USSLSocket::sctx, USSLSocket::callback_ServerNameIndication) == false) // Server name indication (SNI)
-         {
-         U_WARNING("SSL: Unable to initialize TLS servername extension callback");
-         }
-#  endif
+/**
+ * Configure TLS extensions support
+ *
+ * #if !defined(OPENSSL_NO_TLSEXT) && defined(SSL_set_tlsext_host_name)
+ * if (SSL_CTX_set_tlsext_servername_callback(USSLSocket::sctx, USSLSocket::callback_ServerNameIndication) == false) // Server name indication (SNI)
+ *    {
+ *    U_WARNING("SSL: Unable to initialize TLS servername extension callback");
+ *    }
+ * #endif
+ */
 
       U_SRV_LOG("SSL: server use configuration model: %s, protocol list: %s",
                   ((USSLSocket*)UServer_Base::socket)->getConfigurationModel(), ((USSLSocket*)UServer_Base::socket)->getProtocolList());

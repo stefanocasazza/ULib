@@ -1349,7 +1349,7 @@ next:
 
          if (staple.pkey) (void) U_SYSCALL(OCSP_request_sign, "%p,%p,%p,%p,%p,%ld", staple.req, staple.cert, staple.pkey, EVP_sha1(), 0, 0); // sign the request
 
-         SSL_CTX_set_tlsext_status_cb(sctx, USSLSocket::certificate_status_callback);
+         SSL_CTX_set_tlsext_status_cb(sctx, USSLSocket::OCSP_resp_callback);
 
          result = true;
 
@@ -1370,11 +1370,11 @@ next:
 
          staple.request->size_adjust(i2d_OCSP_REQUEST(staple.req, &p));
 
+         /*
 #     ifdef DEBUG
          (void) UFile::writeToTmp(U_STRING_TO_PARAM(*(staple.request)), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("ocsp.request.%P"), 0);
 #     endif
 
-         /*
          UString buffer(U_CAPACITY);
 
          UString path = staple.client->getUrlPath(),
@@ -1404,6 +1404,7 @@ uint32_t USSLSocket::doStapling()
    U_INTERNAL_ASSERT_POINTER(staple.client)
 
    bool result = false;
+   uint32_t tv_sec = 30;
    OCSP_RESPONSE* ocsp = 0;
    OCSP_BASICRESP* basic = 0;
 
@@ -1514,7 +1515,7 @@ uint32_t USSLSocket::doStapling()
             goto end;
             }
 
-         result = (U_SYSCALL(OCSP_basic_verify, "%p,%p,%p,%lu", basic, staple.chain, UServices::store, staple.verify ? OCSP_TRUSTOTHER : OCSP_NOVERIFY) == 1);
+         result = (U_SYSCALL(OCSP_basic_verify, "%p,%p,%p,%lu", basic, staple.chain, UServices::store, OCSP_NOVERIFY) == 1);
 
          if (result == false)
             {
@@ -1530,16 +1531,13 @@ uint32_t USSLSocket::doStapling()
             U_DEBUG("ocsp: no status found");
 
 #        ifdef DEBUG
-            (void) UFile::writeToTmp(U_STRING_TO_PARAM(response), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("ocsp.response.%P"), 0);
+         // (void) UFile::writeToTmp(U_STRING_TO_PARAM(response), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("ocsp.response.%P"), 0);
 #        endif
 
             goto end;
             }
 
          nextupdate_str = UStringExt::ASN1TimetoString(nextupdate);
-
-         U_DEBUG("ocsp: OCSP_resp_find_status() - %d: %s This update: %V Next update: %V", status,
-                  OCSP_cert_status_str(status), UStringExt::ASN1TimetoString(thisupdate).rep, nextupdate_str.rep)
 
          if (status != V_OCSP_CERTSTATUS_GOOD)
             {
@@ -1554,25 +1552,27 @@ uint32_t USSLSocket::doStapling()
 
          if (result == false) goto end;
 
-         staple.valid = u_now->tv_sec + UTimeDate::getSecondFromTime(nextupdate_str.data(), true);
-
-         U_INTERNAL_DUMP("staple.valid = %ld now = %ld", staple.valid, u_now->tv_sec)
-
-         p = (unsigned char*) staple.data;
-
 #     if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
          UServer_Base::lock_ocsp_staple->lock();
 #     endif
 
-         staple.len = i2d_OCSP_RESPONSE(ocsp, (unsigned char**)&p);
+         U_INTERNAL_ASSERT_POINTER(staple.data)
+
+         p = (const unsigned char*) staple.data;
+
+         U_SRV_LEN_OCSP_STAPLE = i2d_OCSP_RESPONSE(ocsp, (unsigned char**)&p);
+
+         U_SRV_VALID_OCSP_STAPLE = UTimeDate::getSecondFromTime(nextupdate_str.data(), true);
 
 #     if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
          UServer_Base::lock_ocsp_staple->unlock();
 #     endif
 
-         U_INTERNAL_DUMP("staple.data(%d) = %p %#.*S", staple.len, staple.data, staple.len, staple.data)
+         U_DEBUG("ocsp: OCSP_resp_find_status() - %d: %s This update: %V Next update: %V now = %#19D U_SRV_VALID_OCSP_STAPLE = %#19D staple.data(%d) = %p %#.*S",
+                  status, OCSP_cert_status_str(status), UStringExt::ASN1TimetoString(thisupdate).rep, nextupdate_str.rep, u_now->tv_sec,
+                  U_SRV_VALID_OCSP_STAPLE, U_SRV_LEN_OCSP_STAPLE, staple.data, U_SRV_LEN_OCSP_STAPLE, staple.data)
 
-         U_INTERNAL_ASSERT_MINOR(staple.len, U_OCSP_MAX_RESPONSE_SIZE)
+         U_INTERNAL_ASSERT_MINOR(U_SRV_LEN_OCSP_STAPLE, U_OCSP_MAX_RESPONSE_SIZE)
          }
       }
 
@@ -1582,36 +1582,42 @@ end:
 
    if (staple.client->isOpen()) staple.client->close();
 
-   if (result)
+   if (result == false)
+      {
+      ERR_print_errors_fp(stderr);
+
+      U_DEBUG("SSL: OCSP request for stapling to %V has FAILED", staple.url->rep);
+      }
+   else
       {
       U_DEBUG("SSL: OCSP request for stapling to %V has succes", staple.url->rep);
 
-      uint32_t tv_sec = U_min(staple.valid - u_now->tv_sec, 3600);
-
-      U_RETURN(tv_sec);
+      tv_sec = U_min(U_SRV_VALID_OCSP_STAPLE - u_now->tv_sec - 30, 3600);
       }
 
-   ERR_print_errors_fp(stderr);
-
-   U_DEBUG("SSL: OCSP request for stapling to %V has FAILED", staple.url->rep);
-
-   U_RETURN(30);
+   U_RETURN(tv_sec);
 }
 
-void USSLSocket::certificate_status_callback(SSL* _ssl, void* data)
+/**
+ * Certificate Status callback. This is called when a client includes a certificate status request extension.
+ * Check for cached responses in session cache. If valid send back to client. If absent or no longer valid query responder and update cache
+ */
+
+int USSLSocket::OCSP_resp_callback(SSL* _ssl, void* data)
 {
-   U_TRACE(0, "USSLSocket::certificate_status_callback(%p,%p)", _ssl, data)
+   U_TRACE(0, "USSLSocket::OCSP_resp_callback(%p,%p)", _ssl, data)
 
    U_INTERNAL_ASSERT_POINTER(sctx)
 
-   U_INTERNAL_DUMP("staple.data(%d) = %p %#.*S", staple.len, staple.data, staple.len, staple.data)
+   U_DEBUG("ocsp: OCSP_resp_callback(%p) - U_SRV_VALID_OCSP_STAPLE = %#19D now = %#19D", _ssl, U_SRV_VALID_OCSP_STAPLE, u_now->tv_sec)
 
-   if (staple.len &&
-       staple.valid < u_now->tv_sec)
+   if (U_SRV_LEN_OCSP_STAPLE  &&
+       U_SRV_VALID_OCSP_STAPLE >= u_now->tv_sec)
       {
+      long result;
       unsigned char* p;
 
-      U_INTERNAL_ASSERT_MINOR(staple.len, U_OCSP_MAX_RESPONSE_SIZE)
+      U_INTERNAL_ASSERT_MINOR(U_SRV_LEN_OCSP_STAPLE, U_OCSP_MAX_RESPONSE_SIZE)
 
 #  if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
       UServer_Base::lock_ocsp_staple->lock();
@@ -1619,16 +1625,27 @@ void USSLSocket::certificate_status_callback(SSL* _ssl, void* data)
 
       // we have to copy ocsp response as OpenSSL will free it by itself
 
-      p = (unsigned char*) OPENSSL_malloc(staple.len);
+      p = (unsigned char*) OPENSSL_malloc(U_SRV_LEN_OCSP_STAPLE);
 
-      U_MEMCPY(p, staple.data, staple.len);
+      U_MEMCPY(p, staple.data, U_SRV_LEN_OCSP_STAPLE);
+
+      result = SSL_set_tlsext_status_ocsp_resp(_ssl, p, U_SRV_LEN_OCSP_STAPLE);
 
 #  if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
       UServer_Base::lock_ocsp_staple->unlock();
 #  endif
 
-      SSL_set_tlsext_status_ocsp_resp(_ssl, p, staple.len);
+      U_DEBUG("ocsp: OCSP_resp_callback() - SSL_set_tlsext_status_ocsp_resp(%p,%#.*S,%d) = %ld", _ssl, U_SRV_LEN_OCSP_STAPLE, p, U_SRV_LEN_OCSP_STAPLE, result)
+
+      /**
+       * The callback when used on the server side should return with either SSL_TLSEXT_ERR_OK (meaning that the OCSP response that has been set should be returned),
+       * SSL_TLSEXT_ERR_NOACK (meaning that an OCSP response should not be returned) or SSL_TLSEXT_ERR_ALERT_FATAL (meaning that a fatal error has occurred)
+       */
+
+      U_RETURN(SSL_TLSEXT_ERR_OK);
       }
+
+   U_RETURN(SSL_TLSEXT_ERR_NOACK);
 }
 
 void USSLSocket::cleanupStapling()
@@ -1640,9 +1657,9 @@ void USSLSocket::cleanupStapling()
    if (staple.request) delete staple.request;
 
    if (staple.cert)   U_SYSCALL_VOID(X509_free,         "%p", staple.cert);
-   if (staple.issuer) U_SYSCALL_VOID(X509_free,         "%p", staple.issuer);
    if (staple.pkey)   U_SYSCALL_VOID(EVP_PKEY_free,     "%p", staple.pkey);
-   if (staple.id)     U_SYSCALL_VOID(OCSP_CERTID_free,  "%p", staple.id);
+   if (staple.issuer) U_SYSCALL_VOID(X509_free,         "%p", staple.issuer);
+// if (staple.id)     U_SYSCALL_VOID(OCSP_CERTID_free,  "%p", staple.id);
    if (staple.req)    U_SYSCALL_VOID(OCSP_REQUEST_free, "%p", staple.req);
 
    staple.id     = 0;

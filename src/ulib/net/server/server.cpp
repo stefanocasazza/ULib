@@ -1055,7 +1055,7 @@ public:
 
       struct timespec ts;
 
-      ts.tv_sec  = 5L;
+      ts.tv_sec  =
       ts.tv_nsec = 0L;
 
       U_SRV_LOG("SSL: OCSP Stapling thread activated (tid %u)", u_gettid());
@@ -1085,6 +1085,8 @@ public:
       U_NEW_ULIB_OBJECT(UOCSPStapling, UServer_Base::pthread_ocsp, UOCSPStapling);
 
       U_INTERNAL_DUMP("UServer_Base::pthread_ocsp = %p", UServer_Base::pthread_ocsp)
+
+      // NB: we must run before fork...
 
       UServer_Base::pthread_ocsp->start(0);
 
