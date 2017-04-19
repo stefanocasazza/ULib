@@ -1609,12 +1609,11 @@ int USSLSocket::OCSP_resp_callback(SSL* _ssl, void* data)
 
    U_INTERNAL_ASSERT_POINTER(sctx)
 
-   U_DEBUG("ocsp: OCSP_resp_callback(%p) - U_SRV_VALID_OCSP_STAPLE = %#19D now = %#19D", _ssl, U_SRV_VALID_OCSP_STAPLE, u_now->tv_sec)
+// U_DEBUG("ocsp: OCSP_resp_callback(%p) - U_SRV_VALID_OCSP_STAPLE = %#19D now = %#19D", _ssl, U_SRV_VALID_OCSP_STAPLE, u_now->tv_sec)
 
    if (U_SRV_LEN_OCSP_STAPLE  &&
        U_SRV_VALID_OCSP_STAPLE >= u_now->tv_sec)
       {
-      long result;
       unsigned char* p;
 
       U_INTERNAL_ASSERT_MINOR(U_SRV_LEN_OCSP_STAPLE, U_OCSP_MAX_RESPONSE_SIZE)
@@ -1629,13 +1628,13 @@ int USSLSocket::OCSP_resp_callback(SSL* _ssl, void* data)
 
       U_MEMCPY(p, staple.data, U_SRV_LEN_OCSP_STAPLE);
 
-      result = SSL_set_tlsext_status_ocsp_resp(_ssl, p, U_SRV_LEN_OCSP_STAPLE);
+      (void) SSL_set_tlsext_status_ocsp_resp(_ssl, p, U_SRV_LEN_OCSP_STAPLE);
 
 #  if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
       UServer_Base::lock_ocsp_staple->unlock();
 #  endif
 
-      U_DEBUG("ocsp: OCSP_resp_callback() - SSL_set_tlsext_status_ocsp_resp(%p,%#.*S,%d) = %ld", _ssl, U_SRV_LEN_OCSP_STAPLE, p, U_SRV_LEN_OCSP_STAPLE, result)
+//    U_DEBUG("ocsp: OCSP_resp_callback() - SSL_set_tlsext_status_ocsp_resp(%p,%#.*S,%d) = %ld", _ssl, U_SRV_LEN_OCSP_STAPLE, p, U_SRV_LEN_OCSP_STAPLE, result)
 
       /**
        * The callback when used on the server side should return with either SSL_TLSEXT_ERR_OK (meaning that the OCSP response that has been set should be returned),

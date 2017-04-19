@@ -108,7 +108,7 @@ public:
    // streams
    uint32_t max_processed_stream_id;
    Stream streams[HTTP2_MAX_CONCURRENT_STREAMS];
-   bool bnghttp2;
+   const char* bug_client;
 #ifdef DEBUG
    UHashMap<UString> dtable;
    HpackDynamicTable ddyntbl;

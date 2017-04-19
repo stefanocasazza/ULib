@@ -133,8 +133,8 @@ UHTTP2::Connection::Connection() : itable(53, setIndexStaticTable)
 
    reset();
 
-   state    = CONN_STATE_IDLE; 
-   bnghttp2 = false;
+   state      = CONN_STATE_IDLE; 
+   bug_client = 0;
 
    (void) memset(&idyntbl, 0, sizeof(HpackDynamicTable));
    (void) memset(&odyntbl, 0, sizeof(HpackDynamicTable));
@@ -2794,10 +2794,10 @@ void UHTTP2::writeData(struct iovec* iov, bool bdata, bool flag)
 
    iov[3].iov_len = max_frame_size;
 
-   if (pConnection->bnghttp2)
+   if (pConnection->bug_client)
       {
       if (bdata) (void) writev(iov,   4, HTTP2_FRAME_HEADER_SIZE+sz1+HTTP2_FRAME_HEADER_SIZE+max_frame_size);
-      else       (void) writev(iov+2, 2,                            HTTP2_FRAME_HEADER_SIZE+max_frame_size);
+      else       (void) writev(iov+2, 2,                             HTTP2_FRAME_HEADER_SIZE+max_frame_size);
 
       U_INTERNAL_DUMP("nerror = %u", nerror)
 
@@ -2913,7 +2913,7 @@ void UHTTP2::writeResponse()
 
    u_write_unalignedp32(ptr1+5,pStream->id);
 
-   U_SRV_LOG_WITH_ADDR("send response (%s,id:%u,bytes:%u) %#.*S to", pConnection->bnghttp2 ? "nghttp2" : "HTTP2",
+   U_SRV_LOG_WITH_ADDR("send response (%s,id:%u,bytes:%u) %#.*S to", pConnection->bug_client ? pConnection->bug_client : "HTTP2",
                            pStream->id, sz0+HTTP2_FRAME_HEADER_SIZE+(body_sz ? body_sz+HTTP2_FRAME_HEADER_SIZE : 0), sz0, ptr0);
 
    if (body_sz == 0)
@@ -3208,8 +3208,8 @@ bool UHTTP2::initRequest()
 
    pConnection->itable.clear(); // NB: we can't clear it before because UClientImage_Base::getRequestUri() depend on it...
 
-   pConnection->state    = CONN_STATE_OPEN;
-   pConnection->bnghttp2 = false;
+   pConnection->state      = CONN_STATE_OPEN;
+   pConnection->bug_client = 0;
 
    U_RETURN(false);
 }
@@ -3433,13 +3433,23 @@ loop: U_DUMP("pStream->id = %d pStream->state = (%u, %s) pStream->headers(%u) = 
 
 process_request:
          if (pStream == pConnection->streams &&
-             U_HTTP_USER_AGENT_MEMEQ("nghttp2"))
+             u_clientimage_info.http_info.user_agent_len)
             {
-            pConnection->bnghttp2 = true; // NB: to avoid GOAWAY frame with error (6, FRAME_SIZE_ERROR) in writeResponse()...
+            // NB: to avoid GOAWAY frame with error (6, FRAME_SIZE_ERROR) in writeResponse()...
+
+            if (u_get_unalignedp32(u_clientimage_info.http_info.user_agent) == U_MULTICHAR_CONSTANT32('S','p','o','t'))
+               {
+               pConnection->bug_client = "Spot"; // "Spot/1.0 (iPhone; iOS 10.3.1; Scale/3.00)"
+               }
+            else if (u_get_unalignedp32(u_clientimage_info.http_info.user_agent) == U_MULTICHAR_CONSTANT32('n','g','h','t'))
+               {
+               pConnection->bug_client = "nghttp2";
+               }
             }
 
 #     ifndef U_LOG_DISABLE
-         if (sz) U_SRV_LOG_WITH_ADDR("received request (%s,id:%u,bytes:%u) %#.*S from", pConnection->bnghttp2 ? "nghttp2" : "HTTP2", pStream->id, sz, sz, pStream->headers.data());
+         if (sz) U_SRV_LOG_WITH_ADDR("received request (%s,id:%u,bytes:%u) %#.*S from", pConnection->bug_client ? pConnection->bug_client : "HTTP2",
+                                                                                        pStream->id, sz, sz, pStream->headers.data());
 #     endif
 
          U_INTERNAL_DUMP("pStream->clength = %u UHTTP::limit_request_body = %u", pStream->clength, UHTTP::limit_request_body)
@@ -3447,7 +3457,7 @@ process_request:
          if (pStream->clength > UHTTP::limit_request_body)
             {
             U_http_info.nResponseCode = HTTP_ENTITY_TOO_LARGE;
-
+u_clientimage_info.http_info.user_agent
             UHTTP::setResponse();
             }
          else
