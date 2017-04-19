@@ -2768,7 +2768,7 @@ void UHTTP2::handlerResponse()
 
 void UHTTP2::writeData(struct iovec* iov, bool bdata, bool flag)
 {
-   U_TRACE(0, "UHTTP2::writeData(%p,%b,%b,%b)", iov, bdata, flag)
+   U_TRACE(0, "UHTTP2::writeData(%p,%b,%b)", iov, bdata, flag)
 
    char* ptr               = (char*)iov[3].iov_base;
    char* ptr2              = (char*)iov[2].iov_base;
@@ -2782,8 +2782,8 @@ void UHTTP2::writeData(struct iovec* iov, bool bdata, bool flag)
 
       ptr2[4] = flag;
 
-      if (bdata) (void) writev(iov,  4, HTTP2_FRAME_HEADER_SIZE+sz1+HTTP2_FRAME_HEADER_SIZE+sz2);
-      else       (void) writev(iov+2, 2,                            HTTP2_FRAME_HEADER_SIZE+sz2);
+      if (bdata) (void) writev(iov,   4, HTTP2_FRAME_HEADER_SIZE+sz1+HTTP2_FRAME_HEADER_SIZE+sz2);
+      else       (void) writev(iov+2, 2,                             HTTP2_FRAME_HEADER_SIZE+sz2);
 
       return;
       }
@@ -2805,7 +2805,7 @@ void UHTTP2::writeData(struct iovec* iov, bool bdata, bool flag)
 
 loop1:
       iov[3].iov_base = (ptr += max_frame_size);
-                         sz2 -= max_frame_size;
+      iov[3].iov_len  = (sz2 -= max_frame_size);
 
       U_INTERNAL_DUMP("pConnection->peer_settings.max_frame_size = %u sz2 = %u", max_frame_size, sz2)
 
@@ -2819,8 +2819,6 @@ loop1:
       u_http2_write_len_and_type(ptr2,sz2,DATA);
 
       ptr2[4] = flag;
-
-      iov[3].iov_len = sz2;
 
       (void) writev(iov+2, 2, HTTP2_FRAME_HEADER_SIZE+sz2);
 
