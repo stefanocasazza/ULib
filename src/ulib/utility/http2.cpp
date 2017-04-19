@@ -3457,7 +3457,7 @@ process_request:
          if (pStream->clength > UHTTP::limit_request_body)
             {
             U_http_info.nResponseCode = HTTP_ENTITY_TOO_LARGE;
-u_clientimage_info.http_info.user_agent
+
             UHTTP::setResponse();
             }
          else
