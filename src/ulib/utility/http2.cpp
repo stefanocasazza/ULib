@@ -2804,13 +2804,20 @@ void UHTTP2::writeData(struct iovec* iov, bool bdata, bool flag)
       if (nerror != NO_ERROR) return;
 
 loop1:
+      iov[2].iov_len  = HTTP2_FRAME_HEADER_SIZE;
       iov[3].iov_base = (ptr += max_frame_size);
-      iov[3].iov_len  = (sz2 -= max_frame_size);
+                         sz2 -= max_frame_size;
 
       U_INTERNAL_DUMP("pConnection->peer_settings.max_frame_size = %u sz2 = %u", max_frame_size, sz2)
 
       if (sz2 > max_frame_size)
          {
+         u_http2_write_len_and_type(ptr2,max_frame_size,DATA);
+
+         ptr2[4] = 0;
+
+         iov[3].iov_len = max_frame_size;
+
          if (writev(iov+2, 2, HTTP2_FRAME_HEADER_SIZE+max_frame_size) == false) return;
 
          goto loop1;
@@ -2819,6 +2826,8 @@ loop1:
       u_http2_write_len_and_type(ptr2,sz2,DATA);
 
       ptr2[4] = flag;
+
+      iov[3].iov_len = sz2;
 
       (void) writev(iov+2, 2, HTTP2_FRAME_HEADER_SIZE+sz2);
 
@@ -2978,6 +2987,7 @@ loop:
       U_INTERNAL_ASSERT_MAJOR(pConnection->out_window, 0)
       U_INTERNAL_ASSERT_EQUALS(pStreamEnd, pStreamEndOld)
 
+      iov_vec[2].iov_len  = HTTP2_FRAME_HEADER_SIZE;
       iov_vec[3].iov_base = ptr;
 
       if (body_sz > (uint32_t)pConnection->out_window)
