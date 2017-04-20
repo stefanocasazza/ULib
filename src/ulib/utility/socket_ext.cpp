@@ -579,54 +579,29 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
 #endif
 #if defined(USE_LIBSSL) ||  defined(_MSWINDOWS_)
    {
+   // OpenSSL has no SSL_writev() so we copy several bufs into our buffer before the SSL_write() call to decrease a SSL overhead
+
+   U_INTERNAL_ASSERT_MINOR(iovcnt, 255)
+
    int sz, byte_written;
+   UString buffer(count);
+   struct iovec _iov[256];
 
-   if (count <= U_CAPACITY) // OpenSSL has no SSL_writev() so we copy several bufs into our 4K buffer before the SSL_write() call to decrease a SSL overhead
+   for (int i = 0; i < iovcnt; ++i)
       {
-      U_INTERNAL_ASSERT_MINOR(iovcnt, 255)
-
-      struct iovec _iov[256];
-      UString buffer(U_CAPACITY);
-
-      for (int i = 0; i < iovcnt; ++i)
-         {
-         if ((sz = _iov[i].iov_len = iov[i].iov_len))
-            {
-            (void) buffer.append((const char*)(_iov[i].iov_base = iov[i].iov_base), sz);
-            }
-         }
-
-      U_INTERNAL_ASSERT_EQUALS(count, buffer.size())
-
-      _iov[iovcnt].iov_len  = count;
-      _iov[iovcnt].iov_base = buffer.data();
-
-      byte_written = _writev(sk, _iov+iovcnt, 1, count, timeoutMS);
-
-      if (byte_written < (int)count)
-         {
-         if (byte_written) iov_resize(iov, iovcnt, byte_written);
-         }
+      if ((sz = _iov[i].iov_len = iov[i].iov_len)) (void) buffer.append((const char*)(_iov[i].iov_base = iov[i].iov_base), sz);
       }
-   else
+
+   U_INTERNAL_ASSERT_EQUALS(count, buffer.size())
+
+   _iov[iovcnt].iov_len  = count;
+   _iov[iovcnt].iov_base = buffer.data();
+
+   byte_written = _writev(sk, _iov+iovcnt, 1, count, timeoutMS);
+
+   if (byte_written < (int)count)
       {
-      ssize_t value;
-
-      byte_written = 0;
-
-      for (int i = 0; i < iovcnt; ++i)
-         {
-         if ((sz = iov[i].iov_len))
-            {
-            value = _writev(sk, iov+i, 1, sz, timeoutMS);
-
-            byte_written += value;
-
-            if (value < sz) break;
-
-            iov[i].iov_len = 0;
-            }
-         }
+      if (byte_written) iov_resize(iov, iovcnt, byte_written);
       }
 
    U_RETURN(byte_written);

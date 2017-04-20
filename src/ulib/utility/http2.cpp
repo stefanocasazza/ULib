@@ -2287,6 +2287,7 @@ window_update:
       if (frame.type == GOAWAY)
          {
          error = u_parse_unalignedp32(frame.payload+4);
+
          descr = getFrameErrorCodeDescription(error);
 
          U_DEBUG("Received GOAWAY frame with error (%u, %s)", error, descr)
@@ -3076,7 +3077,7 @@ void UHTTP2::wrapRequest()
    uint32_t sz0     = pStream->headers.size(),
             body_sz = UClientImage_Base::body->size();
 
-   U_DUMP("pStream->id = %d pStream->state = (%u, %s) pStream->headers(%u) = %V pStream->clength = %u pStream->body(%u) = %V",
+   U_DUMP("pStream->id = %u pStream->state = (%u, %s) pStream->headers(%u) = %V pStream->clength = %u pStream->body(%u) = %V",
            pStream->id, pStream->state, getStreamStatusDescription(), sz0, pStream->headers.rep, pStream->clength, body_sz, pStream->body.rep)
 
    U_INTERNAL_ASSERT_MAJOR(sz0, 0)
@@ -3201,9 +3202,16 @@ bool UHTTP2::initRequest()
       {
       if (pConnection->state == CONN_STATE_OPEN)
          {
-         U_DUMP("pStream->state = (%u, %s)", pStream->state, getStreamStatusDescription())
-
          U_INTERNAL_ASSERT_EQUALS(U_ClientImage_http(UServer_Base::pClientImage), '2')
+
+         do {
+            U_INTERNAL_DUMP("pStreamEnd->id = %u pStreamEnd->state = %u", pStreamEnd->id, pStreamEnd->state)
+
+            if (pStreamEnd->id == pConnection->max_processed_stream_id) U_RETURN(true);
+            }
+         while (++pStreamEnd < (pStream+HTTP2_MAX_CONCURRENT_STREAMS));
+
+         pStreamEnd = pConnection->streams;
 
          U_RETURN(true);
          }
@@ -3426,7 +3434,7 @@ read_request:
 
       pStream = pConnection->streams;
 
-loop: U_DUMP("pStream->id = %d pStream->state = (%u, %s) pStream->headers(%u) = %V pStream->clength = %u pStream->body(%u) = %V",
+loop: U_DUMP("pStream->id = %u pStream->state = (%u, %s) pStream->headers(%u) = %V pStream->clength = %u pStream->body(%u) = %V",
               pStream->id, pStream->state, getStreamStatusDescription(), sz, pStream->headers.rep, pStream->clength, pStream->body.size(), pStream->body.rep)
 
       if (pStream->state <= STREAM_STATE_OPEN) goto read_request;
@@ -3562,7 +3570,7 @@ process_request:
 #  ifdef DEBUG
       for (pStream = pConnection->streams; pStream <= pStreamEnd; ++pStream)
          {
-         U_DUMP("pStream->id = %d pStream->state = (%u, %s) pStream->headers = %V pStream->clength = %u pStream->body(%u) = %V",
+         U_DUMP("pStream->id = %u pStream->state = (%u, %s) pStream->headers = %V pStream->clength = %u pStream->body(%u) = %V",
                  pStream->id, pStream->state, getStreamStatusDescription(), pStream->headers.rep, pStream->clength,  pStream->body.size(), pStream->body.rep)
          }
 #  endif
