@@ -2044,14 +2044,16 @@ manage_headers:
 
    if (frame.stream_id > pConnection->max_processed_stream_id)
       {
-      if (++pStream >= (pConnection->streams+HTTP2_MAX_CONCURRENT_STREAMS))
+      // Ex: frame.stream_id = 5 pConnection->max_processed_stream_id = 3 pStream->id = 1 pStream->state = (2, STREAM_STATE_HALF_CLOSED)
+
+      if ((pStream = ++pStreamEnd) >= (pConnection->streams+HTTP2_MAX_CONCURRENT_STREAMS))
          {
+         pStream = --pStreamEnd;
+
          nerror = REFUSED_STREAM;
 
          return;
          }
-
-      ++pStreamEnd;
 
       goto manage_headers;
       }
@@ -2290,9 +2292,12 @@ window_update:
 
          descr = getFrameErrorCodeDescription(error);
 
-         U_DEBUG("Received GOAWAY frame with error (%u, %s)", error, descr)
+         if (error)
+            {
+            U_DEBUG("Received GOAWAY frame with error (%u, %s)", error, descr)
 
-         U_SRV_LOG("received GOAWAY frame with error (%u, %s)", error, descr);
+            U_SRV_LOG("received GOAWAY frame with error (%u, %s)", error, descr);
+            }
 
          U_INTERNAL_DUMP("GOAWAY: Last-Stream-ID = %u", u_http2_parse_sid(frame.payload))
 
@@ -3383,9 +3388,6 @@ read_request:
 
       if (sz == 0)
          {
-         U_INTERNAL_ASSERT_EQUALS(pStream,    pConnection->streams)
-         U_INTERNAL_ASSERT_EQUALS(pStreamEnd, pConnection->streams)
-
          if (U_http2_settings_len)
             {
             // NB: not OPTION upgrade...

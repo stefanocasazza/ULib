@@ -106,9 +106,9 @@ public:
    UHashMap<UString> itable;           // headers request
    HpackDynamicTable idyntbl, odyntbl; // hpack dynamic table (request, response)
    // streams
-   uint32_t max_processed_stream_id;
    Stream streams[HTTP2_MAX_CONCURRENT_STREAMS];
    const char* bug_client;
+   uint32_t max_processed_stream_id;
 #ifdef DEBUG
    UHashMap<UString> dtable;
    HpackDynamicTable ddyntbl;
