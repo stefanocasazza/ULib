@@ -774,6 +774,15 @@ U_EXPORT main (int argc, char* argv[], char* env[])
 
    U_INTERNAL_ASSERT_EQUALS(workingString, "[ -73.9888983, 40.7212405 ]")
 
+   workingString.clear();
+   result1.clear();
+
+   (void) U_JFIND(U_STRING_FROM_CONSTANT("{\"saltedHash\":\"f66113b5ed33f961219c\",\"osVersion\":\"10.3.1\",\"socials\":[{\"name\":\"victor]},\"t\":\"createAccount\"}"), "t", result1);
+
+   U_INTERNAL_ASSERT_EQUALS(result1, "createAccount")
+
+   result1.clear();
+
    testQuery( U_STRING_FROM_CONSTANT("{ \"_id\" : 3457, \"id\" : 3457, \"randomNumber\" : 8427 }"), "{'randomNumber'", U_STRING_FROM_CONSTANT("8427") );
    testQuery( exampleJson, "", exampleJson );
    testQuery( exampleJson, "[1", U_STRING_FROM_CONSTANT("") );

@@ -211,10 +211,25 @@ static inline uint32_t u_findEndHeader1(const char* restrict s, uint32_t n) /* f
    return (p ? (const char*)p - s + U_CONSTANT_SIZE(U_CRLF2) : U_NOT_FOUND);
 }
 
-U_EXPORT uint32_t u_findEndHeader( const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 or U_LF2 */
+U_EXPORT uint32_t u_findEndHeader(const char* restrict s, uint32_t n) __pure; /* find sequence of U_CRLF2 or U_LF2 */
 
 U_EXPORT bool   u_endsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a terminate with string b */
 U_EXPORT bool u_startsWith(const char* restrict a, uint32_t n1, const char* restrict b, uint32_t n2) __pure; /* check if string a start     with string b */
+
+/* check if the string is quoted... */
+
+static inline bool u_is_quoted(const char* restrict s, uint32_t n)
+{
+   U_INTERNAL_TRACE("u_is_quoted(%.*s,%u)", U_min(n,128), s, n)
+
+   if (s[0]   == '"' &&
+       s[n-1] == '"')
+      {
+      return true;
+      }
+
+   return false;
+}
 
 /* find char not quoted */
 

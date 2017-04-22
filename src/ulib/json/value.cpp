@@ -2133,15 +2133,25 @@ bool UValue::jfind(const UString& json, const char* query, uint32_t query_len, U
 
    U_ASSERT(result.empty())
 
-   uint32_t pos = json.find(query, 0, query_len);
+   uint32_t pos;
+
+   if (u_is_quoted(query, query_len)) pos = json.find(query, 0, query_len);
+   else
+      {
+      uint32_t len = query_len;
+
+      UString quoted((query_len += 2));
+
+      quoted.snprintf(U_CONSTANT_TO_PARAM("\"%.*s\""), len, query);
+
+      pos = json.find(quoted);
+      }
 
    U_INTERNAL_DUMP("pos = %d", pos)
 
    if (pos != U_NOT_FOUND)
       {
       pos += query_len;
-
-      if (u__isquote(json.c_char(pos))) ++pos;
 
       UTokenizer tok(json.substr(pos));
 
