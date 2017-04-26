@@ -128,29 +128,10 @@ public:
       U_RETURN_STRING(x);
       }
 
-   static void appendNumber32(UString& s, uint32_t number)
-      {
-      U_TRACE(0, "UStringExt::appendNumber32(%V,%u)", s.rep, number)
-
-      uint32_t sz = s.size();
-      char* ptr   = s.c_pointer(sz);
-
-      s.rep->_length = sz + u_num2str32(number, ptr) - ptr;
-
-      U_INTERNAL_ASSERT(s.invariant())
-      }
-
-   static void appendNumber64(UString& s, uint64_t number)
-      {
-      U_TRACE(0, "UStringExt::appendNumber64(%V,%llu)", s.rep, number)
-
-      uint32_t sz = s.size();
-      char* ptr   = s.c_pointer(sz);
-
-      s.rep->_length = sz + u_num2str64(number, ptr) - ptr;
-
-      U_INTERNAL_ASSERT(s.invariant())
-      }
+   static void appendNumber32( UString& s, uint32_t number) { s.appendNumber32( number); }
+   static void appendNumber32s(UString& s,  int32_t number) { s.appendNumber32s(number); }
+   static void appendNumber64( UString& s, uint64_t number) { s.appendNumber64( number); }
+   static void appendNumber64s(UString& s,  int64_t number) { s.appendNumber64s(number); }
 
    // convert letter to upper or lower case
 

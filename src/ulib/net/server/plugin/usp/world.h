@@ -39,9 +39,9 @@ public:
 
 	// JSON
 
-	void toJSON(UValue& json)
+	void toJSON(UString& json)
 		{
-		U_TRACE(0, "World::toJSON(%p)", &json)
+		U_TRACE(0, "World::toJSON(%V)", json.rep)
 
 		json.toJSON(U_JSON_METHOD_HANDLER(id,				unsigned int));
 		json.toJSON(U_JSON_METHOD_HANDLER(randomNumber,	unsigned int));

@@ -271,6 +271,17 @@ public:
       U_RETURN(str[_length - 1]);
       }
 
+   void setLastChar(char c)
+      {
+      U_TRACE(0, "UStringRep::setLastChar(%C)", c)
+
+      U_CHECK_MEMORY
+
+      U_INTERNAL_ASSERT_MAJOR(_length, 0)
+
+      ((char*)str)[_length - 1] = c;
+      }
+
    char operator[](uint32_t pos) const { return str[pos]; }
 
    const char* c_pointer(uint32_t pos) const { return (str + pos); }
@@ -1835,6 +1846,8 @@ public:
    char  last_char() const { return rep->last_char(); }
    char first_char() const { return rep->first_char(); }
 
+   void setLastChar(char c) { rep->setLastChar(c); }
+
    char  c_char(uint32_t pos) const    { return rep->at(pos); }
    char* c_pointer(uint32_t pos) const { return (char*)rep->c_pointer(pos); }
 
@@ -2035,6 +2048,93 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
+   void appendNumber32(uint32_t number)
+      {
+      U_TRACE(0, "UString::appendNumber32(%u)", number)
+
+      (void) reserve(12U);
+
+      uint32_t sz = size();
+      char* ptr   = c_pointer(sz);
+
+      rep->_length = sz + u_num2str32(number, ptr) - ptr;
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   void appendNumber32s(int32_t number)
+      {
+      U_TRACE(0, "UString::appendNumber32s(%d)", number)
+
+      (void) reserve(12U);
+
+      uint32_t sz = size();
+      char* ptr   = c_pointer(sz);
+
+      rep->_length = sz + u_num2str32s(number, ptr) - ptr;
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   void appendNumber64(uint64_t number)
+      {
+      U_TRACE(0, "UString::appendNumber64(%llu)", number)
+
+      (void) reserve(22U);
+
+      uint32_t sz = size();
+      char* ptr   = c_pointer(sz);
+
+      rep->_length = sz + u_num2str64(number, ptr) - ptr;
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   void appendNumber64s(int64_t number)
+      {
+      U_TRACE(0, "UString::appendNumber64s(%lld)", number)
+
+      (void) reserve(22U);
+
+      uint32_t sz = size();
+      char* ptr   = c_pointer(sz);
+
+      rep->_length = sz + u_num2str64s(number, ptr) - ptr;
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   void appendNumberDouble(double number)
+      {
+      U_TRACE(0, "UString::appendNumberDouble(%g)", number)
+
+      (void) reserve(32U);
+
+      uint32_t sz = size();
+      char* ptr   = c_pointer(sz);
+
+      rep->_length = sz + u_dtoa(number, ptr) - ptr;
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   void appendDataQuoted(const char* t, uint32_t tlen)
+      {
+      U_TRACE(0, "UString::appendDataQuoted(%.*S,%u)", tlen, t, tlen)
+
+      U_INTERNAL_ASSERT_EQUALS(u_is_quoted(t, tlen), false)
+
+      char* ptr = __append(U_CONSTANT_SIZE("\"\"") + tlen);
+
+      *ptr++ = '"';
+
+      if (tlen) U_MEMCPY(ptr, t, tlen);
+
+      ptr[tlen] = '"';
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
    void vsnprintf(const char* format, uint32_t fmt_size, va_list argp)
       {
       U_TRACE(0, "UString::vsnprintf(%.*S,%u)", fmt_size, format, fmt_size)
@@ -2115,6 +2215,38 @@ public:
       UString isolat1(&rep);
 
       U_RETURN_STRING(isolat1);
+      }
+
+   template <typename T> void toJSON(const char* name, uint32_t sz, UJsonTypeHandler<T> member)
+      {
+      U_TRACE(0, "UValue::toJSON<T>(%.*S,%u,%p)", sz, name, sz, &member)
+
+      U_INTERNAL_ASSERT(u_is_quoted(name, sz))
+
+      (void) append(name, sz);
+
+      push_back(':');
+
+      member.toJSON(*this);
+
+      push_back(',');
+
+      U_INTERNAL_ASSERT(invariant())
+      }
+
+   template <typename T> void toJSON(const UString& name, UJsonTypeHandler<T> member)
+      {
+      U_TRACE(0, "UValue::toJSON<T>(%V,%p)", name.rep, &member)
+
+      appendDataQuoted(U_STRING_TO_PARAM(name));
+
+      push_back(':');
+
+      member.toJSON(*this);
+
+      push_back(',');
+
+      U_INTERNAL_ASSERT(invariant())
       }
 
    // -----------------------------------------------------------------------------------------------------------------------

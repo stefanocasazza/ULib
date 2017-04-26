@@ -309,7 +309,7 @@ public:
 #  ifdef USE_LIBSSL
       sem_t    lock_ssl_session;
       char spinlock_ssl_session[1];
-#    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
+#    if defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
       uint32_t   len_ocsp_staple;
       uint32_t valid_ocsp_staple;
       sem_t     lock_ocsp_staple;
@@ -534,7 +534,7 @@ public:
    static UString getNetworkDevice( const char* exclude) { return USocketExt::getNetworkDevice(exclude); }
    static UString getNetworkAddress(const char* device)  { return USocketExt::getNetworkAddress(socket->getFd(), device); }
 
-#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB) && !defined(_MSWINDOWS_)
+#if defined(USE_LIBSSL) && defined(ENABLE_THREAD) && !defined(OPENSSL_NO_OCSP) && defined(SSL_CTRL_SET_TLSEXT_STATUS_REQ_CB)
    static UThread* pthread_ocsp;
    static ULock* lock_ocsp_staple;
 

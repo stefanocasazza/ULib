@@ -16,7 +16,6 @@
 #include <ulib/utility/escape.h>
 
 int      UValue::jsonParseFlags;
-bool     UValue::bobject;
 char*    UValue::pstringify;
 UValue*  UValue::pnode;
 uint32_t UValue::size;
@@ -470,13 +469,18 @@ case_array:
 
    UValue* element = toNode();
 
-   while (element)
+   if (element)
       {
-      U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+l1:   U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
       element->stringify();
 
-      if ((element = element->next)) *pstringify++ = ',';
+      if ((element = element->next))
+         {
+         *pstringify++ = ',';
+
+         goto l1;
+         }
       }
 
    *pstringify++ = ']';
@@ -490,9 +494,9 @@ case_object:
 
    UValue* element = toNode();
 
-   while (element)
+   if (element)
       {
-      U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
+l2:   U_DUMP("element = %p element->next = %p element->type = (%d,%S)", element, element->next, element->getTag(), getDataTypeDescription(element->getTag()))
 
       element->emitKey();
 
@@ -500,7 +504,12 @@ case_object:
 
       element->stringify();
 
-      if ((element = element->next)) *pstringify++ = ',';
+      if ((element = element->next))
+         {
+         *pstringify++ = ',';
+
+         goto l2;
+         }
       }
 
    *pstringify++ = '}';

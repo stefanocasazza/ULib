@@ -140,9 +140,9 @@ public:
           url.clear();
       }
 
-   void toJSON(UValue& json)
+   void toJSON(UString& json)
       {
-      U_TRACE(5, "Response::toJSON(%p)", &json)
+      U_TRACE(5, "Response::toJSON(%V)", json.rep)
 
       json.toJSON(U_JSON_METHOD_HANDLER(name,    UString));
       json.toJSON(U_JSON_METHOD_HANDLER(rating,  UString));
@@ -209,7 +209,7 @@ public:
 
    void fromJSON(UValue& json)
       {
-      U_TRACE(5, "RequestStartup::toJSON(%p)", &json)
+      U_TRACE(5, "RequestStartup::fromJSON(%p)", &json)
 
       json.fromJSON(U_JSON_METHOD_HANDLER(type,        UString));
       json.fromJSON(U_JSON_METHOD_HANDLER(version,     UString));
@@ -237,9 +237,9 @@ public:
       fbPermissions.clear();
       }
 
-   void toJSON(UValue& json)
+   void toJSON(UString& json)
       {
-      U_TRACE(0, "ResponseStartup::toJSON(%p)", &json)
+      U_TRACE(5, "ResponseStartup::toJSON(%V)", json.rep)
 
       json.toJSON(U_JSON_METHOD_HANDLER(type,          UString));
       json.toJSON(U_JSON_METHOD_HANDLER(token,         UString));
@@ -265,9 +265,9 @@ public:
 
    BusinessCell() {}
 
-   void toJSON(UValue& json)
+   void toJSON(UString& json)
       {
-      U_TRACE(0, "BusinessCell::toJSON(%p)", &json)
+      U_TRACE(5, "BusinessCell::toJSON(%V)", json.rep)
 
       json.toJSON(U_JSON_METHOD_HANDLER(name, UString));
       json.toJSON(U_JSON_METHOD_HANDLER(businessID, UString));
@@ -296,9 +296,9 @@ public:
       status = 0;
       }
 
-   void toJSON(UValue& json)
+   void toJSON(UString& json)
       {
-      U_TRACE(0, "ResponseCells::toJSON(%p)", &json)
+      U_TRACE(5, "ResponseCells::toJSON(%V)", json.rep)
 
       json.toJSON(U_JSON_METHOD_HANDLER(type, UString));
       json.toJSON(U_JSON_METHOD_HANDLER(businesses, UVector<BusinessCell*>));
@@ -423,7 +423,7 @@ if (type.equal(U_CONSTANT_TO_PARAM("localesData")))
    {
    Response response;
 
-   USP_JSON_OBJ_stringify(Response, response);
+   USP_OBJ_JSON_stringify(response);
    }
 else if (type.equal(U_CONSTANT_TO_PARAM("cells")))
    {
@@ -434,7 +434,7 @@ else if (type.equal(U_CONSTANT_TO_PARAM("cells")))
 
    response.businesses.push_back(pcell);
 
-   USP_JSON_OBJ_stringify(ResponseCells, response);
+   USP_OBJ_JSON_stringify(response);
    }
 else if (type.equal(U_CONSTANT_TO_PARAM("startup")))
    {
@@ -464,7 +464,7 @@ else if (type.equal(U_CONSTANT_TO_PARAM("startup")))
             }
          }
 
-      USP_JSON_OBJ_stringify(ResponseStartup, response);
+      USP_OBJ_JSON_stringify(response);
       }
    }
 -->

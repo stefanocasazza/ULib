@@ -4556,7 +4556,9 @@ UString UHTTP::checkDirectoryForUpload(const char* ptr, uint32_t len)
 
       U_MEMCPY(buffer+1, ptr, len);
 
-      uint32_t len1 = u_canonicalize_pathname(buffer, ++len);
+      buffer[++len] = '\0';
+
+      uint32_t len1 = u_canonicalize_pathname(buffer, len);
 
       if (memcmp(buffer, U_CONSTANT_TO_PARAM("/up")) == 0)
          {

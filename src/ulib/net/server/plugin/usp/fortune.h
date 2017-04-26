@@ -71,9 +71,9 @@ public:
 
 	// JSON
 
-	void toJSON(UValue& json)
+	void toJSON(UString& json)
 		{
-		U_TRACE(0, "Fortune::toJSON(%p)", &json)
+		U_TRACE(0, "Fortune::toJSON(%V)", json.rep)
 
 		json.toJSON(U_JSON_METHOD_HANDLER(id,		 unsigned int));
 		json.toJSON(U_JSON_METHOD_HANDLER(message, UString));

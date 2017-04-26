@@ -52,6 +52,16 @@ public:
       forecast = zip = 0;
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "Request::toJSON(%V)", json.rep)
+
+      json.toJSON(U_JSON_METHOD_HANDLER(user,     UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(t,        UString));
+      json.toJSON(U_JSON_METHOD_HANDLER(forecast, uint32_t));
+      json.toJSON(U_JSON_METHOD_HANDLER(zip,      uint32_t));
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "Request::toJSON(%p)", &json)
@@ -105,7 +115,7 @@ if (U_HTTP_CTYPE_STREQ("application/jsonrequest"))
    {
    Request request;
 
-   if (USP_JSON_REQUEST_PARSE(request)) USP_JSON_OBJ_stringify(Request, request)
+   if (USP_JSON_REQUEST_PARSE(request)) USP_OBJ_JSON_stringify(request);
    else                                 USP_PUTS_CONSTANT("{}");
    }
 -->

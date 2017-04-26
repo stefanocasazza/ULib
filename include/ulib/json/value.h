@@ -392,8 +392,8 @@ public:
    /**
     * \brief Outputs a UValue in <a HREF="http://www.json.org">JSON</a> format without formatting (not human friendly).
     *
-    * The JSON document is written in a single line. It is not intended for 'human' consumption,
-    * but may be usefull to support feature such as RPC where bandwith is limited
+    * The JSON document is written in a single line. It is not intended for 'human'
+    * consumption, but may be usefull to support feature such as RPC where bandwith is limited
     */
 
    UString output() const
@@ -443,24 +443,34 @@ public:
       U_INTERNAL_DUMP("result(%u) = %V", result.size(), result.rep)
       }
 
-   template <typename T> void toJSON(const UString& name, UJsonTypeHandler<T> member, bool flag = false)
+   template <typename T> void toJSON(const char* name, uint32_t sz, UJsonTypeHandler<T> member) // it has a limited capacity to manage complex types
       {
-      U_TRACE(0, "UValue::toJSON<T>(%V,%p,%b)", name.rep, &member, flag)
+      U_TRACE(0, "UValue::toJSON<T>(%.*S,%u,%p)", sz, name, sz, &member)
 
-      U_INTERNAL_DUMP("bobject = %b", bobject)
+      UString str(name+1, sz-2);
 
-      if (bobject == false) bobject = flag;
+      addJSON<T>(str, member);
 
-      addJSON<T>(name, member);
+      if (pnode->toNode() == 0)
+         {
+         int pnode_tag = pnode->getTag();
 
-      checkNode(false);
+         if (pnode_tag ==  ARRAY_VALUE ||
+             pnode_tag == OBJECT_VALUE)
+            {
+            U_INTERNAL_DUMP("pnode->next = %p", pnode->next)
+
+            pnode->value.ival = getJsonValue(pnode_tag, pnode->next);
+                                                        pnode->next = 0;
+            }
+         }
       }
 
-   template <typename T> void fromJSON(const UString& name, UJsonTypeHandler<T> member)
+   template <typename T> void fromJSON(const char* name, uint32_t sz, UJsonTypeHandler<T> member)
       {
-      U_TRACE(0, "UValue::fromJSON<T>(%V,%p)", name.rep, &member)
+      U_TRACE(0, "UValue::fromJSON<T>(%.*S,%u,%p)", sz, name, sz, &member)
 
-      UValue* node = at(name);
+      UValue* node = at(name+1, sz-2);
 
       if (node) member.fromJSON(*node);
       else      member.clear();
@@ -601,7 +611,6 @@ protected:
    union jval pkey, // only if binded to an object
               value;
 
-   static bool bobject;
    static UValue* pnode;
    static uint32_t size;
    static char* pstringify; // buffer to stringify json
@@ -705,25 +714,6 @@ protected:
 
    void stringify() const;
    void prettify(uint32_t indent) const;
-
-   static void checkNode(bool flag)
-      {
-      U_TRACE(0, "UValue::checkNode(%b)", flag)
-
-      if (pnode->toNode()) return;
-
-      int pnode_tag = pnode->getTag();
-
-      if (flag == false              &&
-          (pnode_tag ==  ARRAY_VALUE ||
-           pnode_tag == OBJECT_VALUE))
-         {
-         U_INTERNAL_DUMP("pnode->next = %p", pnode->next)
-
-         pnode->value.ival = getJsonValue(pnode_tag, pnode->next);
-                                                     pnode->next = 0;
-         }
-      }
 
    UValue* toNode() const { return toNode(value.ival); }
 
@@ -854,11 +844,9 @@ protected:
 
       if (pnode)
          {
+         U_INTERNAL_DUMP("pnode->next = %p", pnode->next)
+
          pnode->next = node;
-
-         U_INTERNAL_DUMP("bobject = %b", bobject)
-
-         checkNode(bobject);
          }
       else
          {
@@ -914,9 +902,8 @@ public:
       {
       _p = _p->next;
 
-      // although not strictly necessary for a range-based for loop
-      // following the normal convention of returning a value from
-      // operator++ is a good idea
+      // although not strictly necessary for a range-based for loop following
+      // the normal convention of returning a value from operator++ is a good idea
 
       return *this;
       }
@@ -964,10 +951,7 @@ private:
 };
 
 #define U_JSON_METHOD_HANDLER(name_object_member, type_object_member) \
-                              U_STRING_FROM_CONSTANT(#name_object_member), UJsonTypeHandler<type_object_member>(name_object_member)
-
-#define U_JSON_METHOD_HANDLER_OBJECT(name_object_member, type_object_member) \
-                              U_STRING_FROM_CONSTANT(#name_object_member), UJsonTypeHandler<type_object_member>(name_object_member), true
+                        "\"" #name_object_member "\"", sizeof(#name_object_member)+1, UJsonTypeHandler<type_object_member>(name_object_member)
 
 /**
  * Provide template specializations to support your own complex types
@@ -979,22 +963,23 @@ private:
  *      int age;
  *      UString  lastName;
  *      UString firstName;
- *
- *    // if a member of the class is an object you need to put it
- *    // at the end and use the U_JSON_METHOD_HANDLER_OBJECT() macro
- *
- *      Person* person;
  *   };
  *
  * add this methods to the (simplified) class:
  *
  * void Person::clear()
  *    {
- *    age    = 0;
- *    person = 0;
+ *    age = 0;
  *
  *     lastName.clear();
  *    firstName.clear();
+ *    }
+ *
+ * void Person::toJSON(UString& json)
+ *    {
+ *    json.toJSON(U_JSON_METHOD_HANDLER(age,       int));
+ *    json.toJSON(U_JSON_METHOD_HANDLER( lastName, UString));
+ *    json.toJSON(U_JSON_METHOD_HANDLER(firstName, UString));
  *    }
  *
  * void Person::toJSON(UValue& json)
@@ -1002,11 +987,6 @@ private:
  *    json.toJSON(U_JSON_METHOD_HANDLER(age,       int));
  *    json.toJSON(U_JSON_METHOD_HANDLER( lastName, UString));
  *    json.toJSON(U_JSON_METHOD_HANDLER(firstName, UString));
- *
- *    // if a member of the class is an object you need to put it
- *    // at the end and use the U_JSON_METHOD_HANDLER_OBJECT() macro
- *
- *    json.toJSON(U_JSON_METHOD_HANDLER_OBJECT(person, Person));
  *    }
  *
  * void Person::fromJSON(UValue& json)
@@ -1014,9 +994,7 @@ private:
  *    json.fromJSON(U_JSON_METHOD_HANDLER(age,       int));
  *    json.fromJSON(U_JSON_METHOD_HANDLER( lastName, UString));
  *    json.fromJSON(U_JSON_METHOD_HANDLER(firstName, UString));
- *    json.fromJSON(U_JSON_METHOD_HANDLER(person,    Person));
  *    }
- *
  */
 
 template <class T> class U_EXPORT UJsonTypeHandler : public UJsonTypeHandler_Base {
@@ -1030,23 +1008,36 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<T>::clear()")
 
-      ((T*)pval)->clear(); // method alternative
+      ((T*)pval)->clear();
       }
 
-   void toJSON(UValue& json)
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<T>::toJSON(%V)", json.rep)
+
+      json.push_back('{');
+
+      ((T*)pval)->toJSON(json);
+
+      json.setLastChar('}');
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
+   void toJSON(UValue& json) // it has a limited capacity to manage complex types
       {
       U_TRACE(0, "UJsonTypeHandler<T>::toJSON(%p)", &json)
 
       json.setTag(UValue::OBJECT_VALUE);
 
-      ((T*)pval)->toJSON(json); // method alternative
+      ((T*)pval)->toJSON(json);
       }
 
    void fromJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<T>::fromJSON(%p)", &json)
 
-      ((T*)pval)->fromJSON(json); // method alternative
+      ((T*)pval)->fromJSON(json);
       }
 
 private:
@@ -1071,18 +1062,26 @@ template <class T> bool JSON_parse(const UString& str, T& obj)
    U_RETURN(false);
 }
 
-template <class T> void JSON_stringify(UString& result, UValue& json, T& obj)
+template <class T> void JSON_OBJ_stringify(UString& str, T& obj)
 {
-   U_TRACE(0, "JSON_stringify(%V,%p,%p)", result.rep, &json, &obj)
+   U_TRACE(0, "JSON_OBJ_stringify(%V,%p)", str.rep, &obj)
+
+   UJsonTypeHandler<T>(obj).toJSON(str);
+
+   U_INTERNAL_DUMP("str(%u) = %V", str.size(), str.rep)
+}
+
+template <class T> void JSON_stringify(UString& str, UValue& json, T& obj)
+{
+   U_TRACE(0, "JSON_stringify(%V,%p,%p)", str.rep, &json, &obj)
 
    U_ASSERT(json.empty())
 
-   UValue::pnode   = 0;
-   UValue::bobject = false;
+   UValue::pnode = 0;
 
    UJsonTypeHandler<T>(obj).toJSON(json);
 
-   UValue::stringify(result, json);
+   UValue::stringify(str, json);
 }
 
 // TEMPLATE SPECIALIZATIONS
@@ -1094,6 +1093,15 @@ public:
    void clear()
       {
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<null>::clear()")
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<null>::toJSON(%V)", json.rep)
+
+      (void) json.append(U_CONSTANT_TO_PARAM("null"));
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1122,6 +1130,15 @@ public:
       *(bool*)pval = false;
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<bool>::toJSON(%V)", json.rep)
+
+      (void) json.append(*(*(bool*)pval ? UString::str_true : UString::str_false));
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<bool>::toJSON(%p)", &json)
@@ -1146,6 +1163,15 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<char>::clear()")
 
       *(char*)pval = 0;
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<char>::toJSON(%V)", json.rep)
+
+      (void) json.append(1U, *(char*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1174,6 +1200,15 @@ public:
       *(unsigned char*)pval = 0;
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned char>::toJSON(%V)", json.rep)
+
+      (void) json.append(1U, *(unsigned char*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned char>::toJSON(%p)", &json)
@@ -1198,6 +1233,15 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<short>::clear()")
 
       *(short*)pval = 0;
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<short>::toJSON(%V)", json.rep)
+
+      json.appendNumber32s(*(short*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1226,6 +1270,15 @@ public:
       *(unsigned short*)pval = 0;
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned short>::toJSON(%V)", json.rep)
+
+      json.appendNumber32(*(unsigned short*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned short>::toJSON(%p)", &json)
@@ -1250,6 +1303,15 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<int>::clear()")
 
       *(int*)pval = 0;
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<int>::toJSON(%V)", json.rep)
+
+      json.appendNumber32s(*(int*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1278,6 +1340,15 @@ public:
       *(unsigned int*)pval = 0;
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned int>::toJSON(%V)", json.rep)
+
+      json.appendNumber32(*(unsigned int*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned int>::toJSON(%p)", &json)
@@ -1302,6 +1373,19 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long>::clear()")
 
       *(long*)pval = 0;
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<long>::toJSON(%V)", json.rep)
+
+#  if SIZEOF_LONG == 4
+      json.appendNumber32s(*(long*)pval);
+#  else
+      json.appendNumber64s(*(long*)pval);
+#  endif
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1335,6 +1419,19 @@ public:
       *(unsigned long*)pval = 0;
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned long>::toJSON(%V)", json.rep)
+
+#  if SIZEOF_LONG == 4
+      json.appendNumber32(*(unsigned long*)pval);
+#  else
+      json.appendNumber64(*(unsigned long*)pval);
+#  endif
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned long>::toJSON(%p)", &json)
@@ -1361,6 +1458,15 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long long>::clear()")
 
       *(long long*)pval = 0;
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<long long>::toJSON(%V)", json.rep)
+
+      json.appendNumber64s(*(long long*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1394,6 +1500,15 @@ public:
       *(unsigned long long*)pval = 0;
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<unsigned long long>::toJSON(%V)", json.rep)
+
+      json.appendNumber64(*(unsigned long long*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned long long>::toJSON(%p)", &json)
@@ -1422,6 +1537,15 @@ public:
       *(float*)pval = 0;
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<float>::toJSON(%V)", json.rep)
+
+      json.appendNumberDouble(*(float*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<float>::toJSON(%p)", &json)
@@ -1448,6 +1572,15 @@ public:
       *(double*)pval = 0;
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<double>::toJSON(%V)", json.rep)
+
+      json.appendNumberDouble(*(double*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<double>::toJSON(%p)", &json)
@@ -1472,6 +1605,15 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<long double>::clear()")
 
       *(long double*)pval = 0;
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<long double>::toJSON(%V)", json.rep)
+
+      json.appendNumberDouble(*(long double*)pval);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1502,6 +1644,15 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<UStringRep>::clear()")
 
       U_ERROR("UJsonTypeHandler<UStringRep>::fromJSON(): sorry, we cannot use UStringRep type from JSON type handler...");
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UStringRep>::toJSON(%V)", json.rep)
+
+      json.appendDataQuoted(U_STRING_TO_PARAM(*(UStringRep*)pval));
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1536,6 +1687,15 @@ public:
       U_INTERNAL_DUMP("pval(%p) = %V", pval, ((UString*)pval)->rep, ((UString*)pval)->rep)
 
       ((UString*)pval)->clear();
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UString>::toJSON(%V)", json.rep)
+
+      json.appendDataQuoted(U_STRING_TO_PARAM(*(UString*)pval));
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1574,6 +1734,35 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<uvector>::clear()")
 
       ((uvector*)pval)->clear();
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<uvector>::toJSON(%V)", json.rep)
+
+      uvector* pvec = (uvector*)pval;
+
+      if (pvec->_length == 0) (void) json.append(U_CONSTANT_TO_PARAM("[]"));
+      else
+         {
+         json.push_back('[');
+
+         const void** ptr = pvec->vec;
+         const void** end = pvec->vec + pvec->_length;
+
+         while (true)
+            {
+            UJsonTypeHandler<T>(*(T*)(*ptr)).toJSON(json);
+
+            if (++ptr >= end) break;
+
+            json.push_back(',');
+            }
+
+         json.push_back(']');
+         }
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1633,6 +1822,35 @@ public:
       ((UVector<UString>*)pval)->clear();
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UVector<UString>>::toJSON(%V)", json.rep)
+
+      uvectorbase* pvec = (uvectorbase*)pval;
+
+      if (pvec->_length == 0) (void) json.append(U_CONSTANT_TO_PARAM("[]"));
+      else
+         {
+         json.push_back('[');
+
+         const void** ptr = pvec->vec;
+         const void** end = pvec->vec + pvec->_length;
+
+         while (true)
+            {
+            json.appendDataQuoted(U_STRING_TO_PARAM(*(UStringRep*)(*ptr)));
+
+            if (++ptr >= end) break;
+
+            json.push_back(',');
+            }
+
+         json.push_back(']');
+         }
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<UVector<UString>>::toJSON(%p)", &json)
@@ -1689,6 +1907,28 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<uhashmap>::clear()")
 
       ((uhashmap*)pval)->clear();
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<uhashmap>::toJSON(%V)", json.rep)
+
+      uhashmap* pmap = (uhashmap*)pval;
+
+      if (pmap->first() == 0) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
+      else
+         {
+         json.push_back('{');
+
+         do {
+            json.toJSON<T>(pmap->getKey(), UJsonTypeHandler<T>(*(pmap->elem())));
+            }
+         while (pmap->next());
+
+         json.setLastChar('}');
+         }
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)
@@ -1754,6 +1994,28 @@ public:
       ((UHashMap<UString>*)pval)->clear();
       }
 
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<UHashMap<UString>>::toJSON(%V)", json.rep)
+
+      UHashMap<UString>* pmap = (UHashMap<UString>*)pval;
+
+      if (pmap->first() == 0) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
+      else
+         {
+         json.push_back('{');
+
+         do {
+            json.toJSON<UStringRep>(pmap->getKey(), UJsonTypeHandler<UStringRep>(*(UStringRep*)(pmap->elem())));
+            }
+         while (pmap->next());
+
+         json.setLastChar('}');
+         }
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
+      }
+
    void toJSON(UValue& json)
       {
       U_TRACE(0, "UJsonTypeHandler<UHashMap<UString>>::toJSON(%p)", &json)
@@ -1815,6 +2077,17 @@ public:
       U_TRACE_NO_PARAM(0, "UJsonTypeHandler<stdvector>::clear()")
 
       // TODO
+      }
+
+   void toJSON(UString& json)
+      {
+      U_TRACE(0, "UJsonTypeHandler<stdvector>::toJSON(%V)", json.rep)
+
+      stdvector* pvec = (stdvector*)pval;
+
+      for (uint32_t i = 0, n = pvec->size(); i < n; ++i) UJsonTypeHandler<T>(pvec->at(i)).toJSON(json);
+
+      U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
 
    void toJSON(UValue& json)

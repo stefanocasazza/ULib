@@ -7,10 +7,6 @@ TechEmpower Web Framework Benchmarks
 
 static UMongoDBClient* mc;
 
-#ifndef AS_cpoll_cppsp_DO
-static UValue* pvalue;
-#endif
-
 static void usp_fork_mdb()
 {
    U_TRACE(5, "::usp_fork_mdb()")
@@ -30,10 +26,6 @@ static void usp_fork_mdb()
 
       return;
       }
-
-#ifndef AS_cpoll_cppsp_DO
-   U_NEW(UValue, pvalue, UValue);
-#endif
 }
 
 #ifdef DEBUG
@@ -42,10 +34,6 @@ static void usp_end_mdb()
    U_TRACE(5, "::usp_end_mdb()")
 
    delete mc;
-
-#ifndef AS_cpoll_cppsp_DO
-   if (pvalue) delete pvalue;
-#endif
 }
 #endif
 -->
@@ -64,7 +52,6 @@ UString result;
 USP_PRINTF_ADD("{\"id\":%u,\"randomNumber\":%v}", id, result.rep);
 #else
 World world(id, result.strtoul());
-USP_JSON_stringify(*pvalue, World, world);
-pvalue->clear();
+USP_OBJ_JSON_stringify(world);
 #endif
 -->
