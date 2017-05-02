@@ -382,7 +382,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UServer_Base::setLockUser1()")
 
-      U_INTERNAL_ASSERT_EQUALS(lock_user1, 0)
+      U_INTERNAL_ASSERT_EQUALS(lock_user1, U_NULLPTR)
 
       U_NEW(ULock, lock_user1, ULock);
 
@@ -393,7 +393,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UServer_Base::setLockUser2()")
 
-      U_INTERNAL_ASSERT_EQUALS(lock_user2, 0)
+      U_INTERNAL_ASSERT_EQUALS(lock_user2, U_NULLPTR)
 
       U_NEW(ULock, lock_user2, ULock);
 
@@ -514,7 +514,7 @@ public:
    static void  closeLog();
    static void reopenLog();
 
-   static bool isLog()      { return (log != 0); }
+   static bool isLog()      { return (log != U_NULLPTR); }
    static bool isOtherLog() { return (vlog->empty() == false); }
 
    static bool addLog(UFile* log, int flags = O_APPEND | O_WRONLY);
@@ -542,7 +542,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UServer_Base::setLockOCSPStaple()")
 
-      U_INTERNAL_ASSERT_EQUALS(lock_ocsp_staple, 0)
+      U_INTERNAL_ASSERT_EQUALS(lock_ocsp_staple, U_NULLPTR)
 
       U_NEW(ULock, lock_ocsp_staple, ULock);
 
@@ -633,7 +633,7 @@ protected:
    static void initThrottlingServer();
 #endif
 
-            UServer_Base(UFileConfig* pcfg = 0);
+            UServer_Base(UFileConfig* pcfg = U_NULLPTR);
    virtual ~UServer_Base();
 
 #ifndef U_LOG_DISABLE
@@ -824,7 +824,7 @@ public:
          }
 #  endif
 
-      U_NEW(USSLSocket, socket, USSLSocket(UClientImage_Base::bIPv6, 0, true));
+      U_NEW(USSLSocket, socket, USSLSocket(UClientImage_Base::bIPv6, U_NULLPTR, true));
       }
 
    virtual ~UServer()

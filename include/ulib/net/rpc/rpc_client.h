@@ -50,7 +50,7 @@ public:
 
 protected:
 
-   URPCClient_Base(UFileConfig* _cfg = 0) : UClient_Base(_cfg)
+   URPCClient_Base(UFileConfig* _cfg = U_NULLPTR) : UClient_Base(_cfg)
       {
       U_TRACE_REGISTER_OBJECT(0, URPCClient_Base, "%p", _cfg)
 

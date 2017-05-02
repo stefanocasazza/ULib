@@ -90,7 +90,7 @@ void UOrmDriver::setDriverDirectory(const UString& dir)
 {
    U_TRACE(0, "UOrmDriver::setDriverDirectory(%V)", dir.rep)
 
-   U_INTERNAL_ASSERT_EQUALS(driver_dir, 0)
+   U_INTERNAL_ASSERT_EQUALS(driver_dir, U_NULLPTR)
 
    U_NEW(UString, driver_dir, UString);
 
@@ -159,7 +159,7 @@ bool UOrmDriver::loadDriver(const UString& dir, const UString& driver_list)
 
             _driver = UPlugIn<UOrmDriver*>::create(U_STRING_TO_PARAM(_name));
 
-            if (_driver == 0)
+            if (_driver == U_NULLPTR)
                {
                U_SRV_LOG("WARNING: load of driver %v failed", item.rep);
 
@@ -208,23 +208,18 @@ void UOrmDriver::printError(const char* function)
 
    handlerError();
 
-   const char* ptr1 = (errname  == 0 ? (errname = "")
-                                     : " ");
-   const char* ptr2 = (SQLSTATE == 0 ? (SQLSTATE = "")
-                                     : " - SQLSTATE: ");
+   const char* ptr1 = (errname  == U_NULLPTR ? (errname  = "") : " ");
+   const char* ptr2 = (SQLSTATE == U_NULLPTR ? (SQLSTATE = "") : " - SQLSTATE: ");
 
    char buffer[4096];
-
-   buffer[0] = 0;
-
    uint32_t len = u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("%V on %V at %S - %s%s(%d, %s)%s%s"),
                               name.rep, dbname.rep, function, errname, ptr1, errcode, errmsg, ptr2, SQLSTATE);
 
    if (UOrmDriver::bexit == false)
       {
-      errmsg   = errname = 0;
+      errmsg   = errname = U_NULLPTR;
       errcode  = 0;
-      SQLSTATE = 0;
+      SQLSTATE = U_NULLPTR;
 
       U_WARNING("ORM: %.*s", len, buffer);
 
@@ -319,7 +314,7 @@ USqlStatementBindParam::USqlStatementBindParam(const char* s, int n, bool bstati
    if (bstatic)
       {
       buffer = (void*)s;
-      pstr   = 0;
+      pstr   = U_NULLPTR;
       }
    else
       {
@@ -348,7 +343,7 @@ USqlStatementBindParam* UOrmDriver::creatSqlStatementBindParam(USqlStatement* ps
 
          param->buffer = param->pstr->data();
 
-         U_RETURN_POINTER(0, USqlStatementBindParam);
+         U_RETURN_POINTER(U_NULLPTR, USqlStatementBindParam);
          }
 
       bstatic = false;
@@ -650,7 +645,7 @@ const char* USqlStatementBindParam::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* USqlStatementBindResult::dump(bool _reset) const
@@ -669,7 +664,7 @@ const char* USqlStatementBindResult::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* USqlStatement::dump(bool _reset) const
@@ -689,7 +684,7 @@ const char* USqlStatement::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UOrmDriver::dump(bool _reset) const
@@ -709,6 +704,6 @@ const char* UOrmDriver::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

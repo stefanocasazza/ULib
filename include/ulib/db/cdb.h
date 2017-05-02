@@ -203,7 +203,7 @@ public:
    void  resetFilterToFunctionToCall()                 { filter_function_to_call = functionCall; }
    void    setFilterToFunctionToCall(iPFprpr function) { filter_function_to_call = function; }
 
-   uint32_t getValuesWithKeyNask(UVector<UString>& vec_values, const UString& mask_key, uint32_t* size = 0);
+   uint32_t getValuesWithKeyNask(UVector<UString>& vec_values, const UString& mask_key, uint32_t* size = U_NULLPTR);
 
    // Save memory hash table as Constant DataBase
 
@@ -217,8 +217,8 @@ public:
       U_RETURN(size);
       }
 
-          bool writeTo(                     UHashMap<void*>* t, uint32_t tbl_space, pvPFpvpb f = 0) { return UCDB::writeTo(*this, t, tbl_space, f); }
-   static bool writeTo(const UString& path, UHashMap<void*>* t, uint32_t tbl_space, pvPFpvpb f = 0) { return UCDB(path, t->ignoreCase()).writeTo(t, tbl_space, f); }
+          bool writeTo(                     UHashMap<void*>* t, uint32_t tbl_space, pvPFpvpb f = U_NULLPTR) { return UCDB::writeTo(*this, t, tbl_space, f); }
+   static bool writeTo(const UString& path, UHashMap<void*>* t, uint32_t tbl_space, pvPFpvpb f = U_NULLPTR) { return UCDB(path, t->ignoreCase()).writeTo(t, tbl_space, f); }
 
    // STREAM
 
@@ -301,7 +301,7 @@ protected:
 
    // Save memory hash table as Constant DataBase
 
-   static bool writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpvpb f = 0);
+   static bool writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpvpb f = U_NULLPTR);
 
    // FOR RDB
 

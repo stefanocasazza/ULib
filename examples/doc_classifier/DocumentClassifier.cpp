@@ -29,9 +29,9 @@ void DocumentClassifier::addCertificate(UCertificate* cert)
 
    cert->duplicate();
 
-   if (vtcert == 0) U_NEW(UVector<TreeCertificate*>, vtcert, UVector<TreeCertificate*>);
+   if (vtcert == U_NULLPTR) U_NEW(UVector<TreeCertificate*>, vtcert, UVector<TreeCertificate*>);
 
-   if (ca == 0)
+   if (ca == U_NULLPTR)
       {
       UCertificate* ca_root;
       unsigned num_tree = vtcert->size();
@@ -96,14 +96,14 @@ int DocumentClassifier::verifyCallback(int ok, X509_STORE_CTX* ctx) // callback
 
    U_NEW(UCertificate, cert, UCertificate(UServices::verify_current_cert));
 
-   ok = cert->verify(0, certsVerificationTime);
+   ok = cert->verify(U_NULLPTR, certsVerificationTime);
 
    if (ok) addCertificate(cert);
    else
       {
       verify_result = false;
 
-      if (label_ko == 0) U_NEW(UString, label_ko, UString(4000U));
+      if (label_ko == U_NULLPTR) U_NEW(UString, label_ko, UString(4000U));
 
       // TO DO
 
@@ -360,7 +360,7 @@ void DocumentClassifier::classifyEntry(void* e, void* pnode)
 
          child->setParent(parent);
 
-         if (parent == 0) ptree = child;
+         if (parent == U_NULLPTR) ptree = child;
          else
             {
             parent->replace(0, child);
@@ -765,7 +765,7 @@ const char* Element::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 #endif

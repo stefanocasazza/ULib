@@ -33,7 +33,7 @@ void USemaphore::init(sem_t* ptr, int resource)
 {
    U_TRACE(1, "USemaphore::init(%p,%d)", ptr, resource)
 
-   U_INTERNAL_ASSERT_EQUALS(psem, 0)
+   U_INTERNAL_ASSERT_EQUALS(psem, U_NULLPTR)
 
 #if defined(__MACOSX__) || defined(__APPLE__)
    (void) u__snprintf(name, sizeof(name), U_CONSTANT_TO_PARAM("/sem%X"), ptr);
@@ -261,6 +261,6 @@ const char* USemaphore::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

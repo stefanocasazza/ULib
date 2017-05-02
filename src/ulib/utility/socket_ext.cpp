@@ -1274,9 +1274,9 @@ void USocketExt::waitResolv()
 
       if (nfds <= 0) break;
 
-      tvp = (struct timeval*) U_SYSCALL(ares_timeout, "%p,%p,%p", (ares_channel)resolv_channel, 0, &tv);
+      tvp = (struct timeval*) U_SYSCALL(ares_timeout, "%p,%p,%p", (ares_channel)resolv_channel, U_NULLPTR, &tv);
 
-      (void) U_SYSCALL(select, "%d,%p,%p,%p,%p", nfds, &read_fds, &write_fds, 0, tvp);
+      (void) U_SYSCALL(select, "%d,%p,%p,%p,%p", nfds, &read_fds, &write_fds, U_NULLPTR, tvp);
 
       U_SYSCALL_VOID(ares_process, "%p,%p,%p", (ares_channel)resolv_channel, &read_fds, &write_fds);
 
@@ -1288,7 +1288,7 @@ void USocketExt::startResolv(const char* name, int family)
 {
    U_TRACE(1, "USocketExt::startResolv(%S,%d)", name, family)
 
-   if (resolv_channel == 0)
+   if (resolv_channel == U_NULLPTR)
       {
       int status = U_SYSCALL(ares_library_init, "%d", ARES_LIB_INIT_ALL);
 
@@ -1310,7 +1310,7 @@ void USocketExt::startResolv(const char* name, int family)
 
    resolv_status = ARES_ENODATA;
 
-   U_SYSCALL_VOID(ares_gethostbyname, "%p,%S,%d,%p,%p", (ares_channel)resolv_channel, name, family, &USocketExt::callbackResolv, 0);
+   U_SYSCALL_VOID(ares_gethostbyname, "%p,%S,%d,%p,%p", (ares_channel)resolv_channel, name, family, &USocketExt::callbackResolv, U_NULLPTR);
 }
 #endif
 

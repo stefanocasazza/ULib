@@ -76,7 +76,7 @@ public:
       char path[U_PATH_MAX + 1];
       int status, _exit_value, n;
 
-      argv_exec[0] = argv_exec[1] = 0;
+      argv_exec[0] = argv_exec[1] = U_NULLPTR;
 
       UString id_key      = U_STRING_FROM_CONSTANT("ID"), id,
               env_key     = U_STRING_FROM_CONSTANT("ENVIRON"), env,
@@ -107,10 +107,10 @@ public:
 
                env = template_file[env_key];
 
-               if (env.empty()) envp = 0;
+               if (env.empty()) envp = U_NULLPTR;
                else
                   {
-                  n = u_split(U_STRING_TO_PARAM(env), envp_exec, 0);
+                  n = u_split(U_STRING_TO_PARAM(env), envp_exec, U_NULLPTR);
 
                   U_INTERNAL_ASSERT_RANGE(1,n,127)
 
@@ -206,7 +206,7 @@ public:
             pid = 0;
             }
          }
-      while (template_file.loadSection(0,0));
+      while (template_file.loadSection(U_NULLPTR,0));
       }
 
    void run(int argc, char* argv[], char* env[])
@@ -217,7 +217,7 @@ public:
 
       // manage template test file
 
-      if (argv[optind] == 0) U_ERROR("arg <file_template_test> not specified");
+      if (argv[optind] == U_NULLPTR) U_ERROR("arg <file_template_test> not specified");
 
       template_file.load(UString(argv[optind], strlen(argv[optind])));
 
@@ -225,7 +225,7 @@ public:
 
       UString log_file = opt['l'];
 
-      ulog = 0;
+      ulog = U_NULLPTR;
 
       if (log_file) U_NEW(ULog, ulog, ULog(log_file, 1024 * 1024));
 

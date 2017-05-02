@@ -189,7 +189,7 @@ char* UCache::add(const char* key, uint32_t keylen, uint32_t datalen, uint32_t _
             {
             U_ERROR("Cache exhausted");
 
-            U_RETURN((char*)0);
+            U_RETURN((char*)U_NULLPTR);
             }
 
          info->unused = info->writer;
@@ -535,7 +535,7 @@ const char* UCache::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

@@ -145,9 +145,9 @@ UCURL::UCURL() : response(U_CAPACITY)
 {
    U_TRACE_REGISTER_OBJECT(0, UCURL, "")
 
-   headerlist = 0;
-   formPost   = 0;
-   formLast   = 0;
+   headerlist = U_NULLPTR;
+   formPost   = U_NULLPTR;
+   formLast   = U_NULLPTR;
    result     = 0;
    added      = false;
 
@@ -218,15 +218,15 @@ void UCURL::infoComplete()
       {
       U_SYSCALL_VOID(curl_slist_free_all, "%p", headerlist); /* free the list again */
 
-      headerlist = 0;
+      headerlist = U_NULLPTR;
       }
 
    if (formPost)
       {
       U_SYSCALL_VOID(curl_formfree, "%p", formPost);
 
-      formPost = 0;
-      formLast = 0;
+      formPost = U_NULLPTR;
+      formLast = U_NULLPTR;
       }
 
    if (added) removeHandle();
@@ -263,7 +263,7 @@ bool UCURL::perform()
       {
       CURLMsg* pendingMsg = (CURLMsg*) U_SYSCALL(curl_multi_info_read, "%p,%p", multiHandle, &msgs_in_queue);
 
-      if (pendingMsg == 0) break;
+      if (pendingMsg == U_NULLPTR) break;
 
       // search into list
 
@@ -355,6 +355,6 @@ const char* UCURL::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

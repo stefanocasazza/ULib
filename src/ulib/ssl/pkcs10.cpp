@@ -23,9 +23,9 @@ X509_REQ* UPKCS10::readPKCS10(const UString& x, const char* format)
 
    BIO* in;
    UString tmp        = x;
-   X509_REQ* _request = 0;
+   X509_REQ* _request = U_NULLPTR;
 
-   if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
+   if (format == U_NULLPTR) format = (x.isBinary() ? "DER" : "PEM");
 
    if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 &&
        strncmp(x.data(), U_CONSTANT_TO_PARAM("-----BEGIN CERTIFICATE REQUEST-----")) != 0)
@@ -46,8 +46,8 @@ X509_REQ* UPKCS10::readPKCS10(const UString& x, const char* format)
 
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   _request = (X509_REQ*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_X509_REQ, "%p,%p,%p,%p", in, 0, 0, 0)
-                                                                            : U_SYSCALL(d2i_X509_REQ_bio,      "%p,%p",       in, 0));
+   _request = (X509_REQ*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_X509_REQ, "%p,%p,%p,%p", in, U_NULLPTR, U_NULLPTR, U_NULLPTR)
+                                                                            : U_SYSCALL(d2i_X509_REQ_bio,      "%p,%p",       in, U_NULLPTR));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
@@ -61,7 +61,7 @@ UString UPKCS10::getSubject(X509_REQ* _request)
    U_INTERNAL_ASSERT_POINTER(_request)
 
    X509_NAME* name = X509_REQ_get_subject_name(_request);
-   unsigned len    = U_SYSCALL(i2d_X509_NAME, "%p,%p", name, 0);
+   unsigned len    = U_SYSCALL(i2d_X509_NAME, "%p,%p", name, U_NULLPTR);
 
    UString subject(len);
    char* ptr = subject.data();
@@ -83,7 +83,7 @@ UString UPKCS10::getEncoded(const char* format) const
 
    if (strncmp(format, U_CONSTANT_TO_PARAM("DER")) == 0)
       {
-      unsigned len = U_SYSCALL(i2d_X509_REQ, "%p,%p", request, 0);
+      unsigned len = U_SYSCALL(i2d_X509_REQ, "%p,%p", request, U_NULLPTR);
 
       UString encoding(len);
 
@@ -95,7 +95,8 @@ UString UPKCS10::getEncoded(const char* format) const
 
       U_RETURN_STRING(encoding);
       }
-   else if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0)
+
+   if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0)
       {
       BIO* bio = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 
@@ -145,7 +146,7 @@ const char* UPKCS10::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

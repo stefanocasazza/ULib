@@ -54,7 +54,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   UDirWalk(const UString* dir = 0, const char* _filter = 0, uint32_t _filter_len = 0, int _filter_flags = 0)
+   UDirWalk(const UString* dir = U_NULLPTR, const char* _filter = U_NULLPTR, uint32_t _filter_len = 0, int _filter_flags = 0)
       {
       U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%p,%.*S,%u,%d", dir, _filter_len, _filter, _filter_len, _filter_flags)
 
@@ -68,7 +68,7 @@ public:
       ctor(dir, U_STRING_TO_PARAM(_filter), _filter_flags);
       }
 
-   UDirWalk(const UString& dir, const char* _filter = 0, uint32_t _filter_len = 0, int _filter_flags = 0)
+   UDirWalk(const UString& dir, const char* _filter = U_NULLPTR, uint32_t _filter_len = 0, int _filter_flags = 0)
       {
       U_TRACE_REGISTER_OBJECT(0, UDirWalk, "%V,%.*S,%u,%d", dir.rep, _filter_len, _filter, _filter_len, _filter_flags)
 
@@ -82,7 +82,7 @@ public:
       if (suffix_file_type)
          {
          delete suffix_file_type;
-                suffix_file_type = 0;
+                suffix_file_type = U_NULLPTR;
          }
       }
 
@@ -90,7 +90,7 @@ public:
 
    void     walk();
    uint32_t walk(UTree<UString>& tree);
-   uint32_t walk(UVector<UString>& vec, qcompare compare_obj = 0);
+   uint32_t walk(UVector<UString>& vec, qcompare compare_obj = U_NULLPTR);
 
    // SERVICES
 
@@ -141,7 +141,7 @@ public:
       {
       U_TRACE(0, "UDirWalk::setSuffixFileType(%.*S,%u)", len, str, len)
 
-      U_INTERNAL_ASSERT_EQUALS(suffix_file_type, 0)
+      U_INTERNAL_ASSERT_EQUALS(suffix_file_type, U_NULLPTR)
 
       U_NEW(UString, suffix_file_type, UString(str, len));
       }
@@ -158,7 +158,7 @@ public:
 
    static void setFilter(const UString& _filter, int _filter_flags = 0) { setFilter(U_STRING_TO_PARAM(_filter), _filter_flags); }
 
-   static bool setDirectory(const UString& dir, const char* f = 0, uint32_t flen = 0, int _filter_flags = 0);
+   static bool setDirectory(const UString& dir, const char* f = U_NULLPTR, uint32_t flen = 0, int _filter_flags = 0);
 
    static void setDirectory(const UString& dir, const UString& _filter, int _filter_flags = 0) { setDirectory(dir, U_STRING_TO_PARAM(_filter), _filter_flags); }
 

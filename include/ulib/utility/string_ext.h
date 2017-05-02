@@ -34,7 +34,7 @@ public:
 #endif
 
 #ifdef USE_LIBEXPAT // to strip out the HTML tags
-   static UString stripTags(const UString& html, UString* list_tags_allowed = 0);
+   static UString stripTags(const UString& html, UString* list_tags_allowed = U_NULLPTR);
 #endif
 
    static bool isDelimited(const UString& s, const char* delimiter = "()")
@@ -261,9 +261,9 @@ public:
 
    // ERASE
 
-   static UString erase(const UString& s, char a)                     { return substitute(U_STRING_TO_PARAM(s), &a, 1,                0, 0); } 
-   static UString erase(const UString& s, const UString& a)           { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), 0, 0); }
-   static UString erase(const UString& s, const char* a, uint32_t n1) { return substitute(U_STRING_TO_PARAM(s), a, n1,                0, 0); }
+   static UString erase(const UString& s, char a)                     { return substitute(U_STRING_TO_PARAM(s), &a, 1,                U_NULLPTR, 0); } 
+   static UString erase(const UString& s, const UString& a)           { return substitute(U_STRING_TO_PARAM(s), U_STRING_TO_PARAM(a), U_NULLPTR, 0); }
+   static UString erase(const UString& s, const char* a, uint32_t n1) { return substitute(U_STRING_TO_PARAM(s), a, n1,                U_NULLPTR, 0); }
 
    // dos2unix: '\n' <=> '\r\n' convertor
 

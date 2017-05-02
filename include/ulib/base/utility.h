@@ -180,7 +180,7 @@ static inline bool u_isSuffixSwap(const char* restrict suffix) // NB: vi tmp...
    U_INTERNAL_TRACE("u_isSuffixSwap(%s)", suffix)
 
    U_INTERNAL_ASSERT_EQUALS(suffix[0], '.')
-   U_INTERNAL_ASSERT_EQUALS(strchr(suffix, '/'), 0)
+   U_INTERNAL_ASSERT_EQUALS(strchr(suffix, '/'), U_NULLPTR)
 
    if (u_get_unalignedp32(suffix) == U_MULTICHAR_CONSTANT32('.','s','w','p')) return true;
 

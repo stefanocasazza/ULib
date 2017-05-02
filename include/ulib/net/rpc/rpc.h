@@ -35,7 +35,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "URPC::allocate()")
 
-      U_INTERNAL_ASSERT_EQUALS(rpc_info,0)
+      U_INTERNAL_ASSERT_EQUALS(rpc_info, U_NULLPTR)
 
       U_NEW(UVector<UString>, rpc_info, UVector<UString>);
       }

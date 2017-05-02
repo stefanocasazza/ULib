@@ -481,10 +481,10 @@ static inline void     u_put_unalignedp64(      void* p, uint64_t val) {       s
 #  if defined(U_LOG_DISABLE) && !defined(USE_LIBZ)
 #     define U_gettimeofday
 #  else
-#     define U_gettimeofday { if (u_pthread_time == 0) u_now->tv_sec = time(0); }
+#     define U_gettimeofday { if (u_pthread_time == U_NULLPTR) u_now->tv_sec = time(U_NULLPTR); }
 #  endif
 #else
-#  define U_gettimeofday u_now->tv_sec = time(0);
+#  define U_gettimeofday u_now->tv_sec = time(U_NULLPTR);
 #endif
 
 /* To print size of class */

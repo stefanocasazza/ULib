@@ -74,10 +74,10 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, URDB, "%d", _ignore_case)
 
-      pnode = 0;
+      pnode = U_NULLPTR;
        node = 0;
 
-      key1.dptr  = 0;
+      key1.dptr  = U_NULLPTR;
       key1.dsize = 0;
       }
 
@@ -85,10 +85,10 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, URDB, "%V,%d", pathdb.rep, _ignore_case)
 
-      pnode = 0;
+      pnode = U_NULLPTR;
        node = 0;
 
-      key1.dptr  = 0;
+      key1.dptr  = U_NULLPTR;
       key1.dsize = 0;
       }
 
@@ -251,9 +251,9 @@ public:
 
    void getKeys(UVector<UString>& vec);
 
-   void callForAllEntry(      iPFprpr function, UVector<UString>* v  = 0);
+   void callForAllEntry(      iPFprpr function, UVector<UString>* v  = U_NULLPTR);
    void callForAllEntryDelete(iPFprpr function);
-   void callForAllEntrySorted(iPFprpr function, qcompare compare_obj = 0);
+   void callForAllEntrySorted(iPFprpr function, qcompare compare_obj = U_NULLPTR);
 
    // PRINT
 
@@ -508,12 +508,12 @@ public:
 
    // Call function for all entry
 
-   void callForAllEntry(iPFprpr function, vPF function_no_lock = 0, qcompare compare_obj = 0);
+   void callForAllEntry(iPFprpr function, vPF function_no_lock = U_NULLPTR, qcompare compare_obj = U_NULLPTR);
 
-   void callForAllEntryWithSetEntry(vPFprpr function, vPF function_no_lock = 0, qcompare compare_obj = 0)
+   void callForAllEntryWithSetEntry(vPFprpr function, vPF function_no_lock = U_NULLPTR, qcompare compare_obj = U_NULLPTR)
       { bsetEntry = true; callForAllEntry((iPFprpr)function, function_no_lock, compare_obj); bsetEntry = false; }
 
-   void callForAllEntryWithVector(iPFprpr function, vPF function_no_lock = (vPF)-1, qcompare compare_obj = 0) { callForAllEntry(function, function_no_lock, compare_obj); }
+   void callForAllEntryWithVector(iPFprpr function, vPF function_no_lock = (vPF)-1, qcompare compare_obj = U_NULLPTR) { callForAllEntry(function, function_no_lock, compare_obj); }
 
 #ifdef DEBUG
    const char* dump(bool _reset) const;

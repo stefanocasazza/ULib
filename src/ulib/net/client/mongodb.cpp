@@ -35,7 +35,7 @@ bool UMongoDBClient::connect(const char* phost, unsigned int _port)
       {
       const char* env_mongodb_host = (const char*) U_SYSCALL(getenv, "%S", "MONGODB_HOST");
 
-      if (env_mongodb_host == 0) U_RETURN(false);
+      if (env_mongodb_host == U_NULLPTR) U_RETURN(false);
 
       (void) host.assign(env_mongodb_host, u__strlen(env_mongodb_host, __PRETTY_FUNCTION__));
 
@@ -120,7 +120,7 @@ bool UMongoDBClient::remove(bson_t* selector)
 
    bson_error_t error;
 
-   if (U_SYSCALL(mongoc_collection_remove, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_REMOVE_NONE, selector, 0, &error) == 0)
+   if (U_SYSCALL(mongoc_collection_remove, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_REMOVE_NONE, selector, U_NULLPTR, &error) == 0)
       {
       U_WARNING("mongoc_collection_remove(): %d.%d,%S", error.domain, error.code, error.message);
 
@@ -195,7 +195,7 @@ bool UMongoDBClient::findOne(const char* json, uint32_t len)
 
    if (bson)
       {
-      bool result = find(bson, 0);
+      bool result = find(bson, U_NULLPTR);
 
       U_SYSCALL_VOID(bson_destroy, "%p", bson);
 
@@ -216,7 +216,7 @@ bool UMongoDBClient::insert(bson_t* doc)
 
    bson_error_t error;
 
-   if (U_SYSCALL(mongoc_collection_insert, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_INSERT_NONE, doc, 0, &error) == 0)
+   if (U_SYSCALL(mongoc_collection_insert, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, MONGOC_INSERT_NONE, doc, U_NULLPTR, &error) == 0)
       {
       U_WARNING("mongoc_collection_insert(): %d.%d,%S", error.domain, error.code, error.message);
 
@@ -235,7 +235,7 @@ bool UMongoDBClient::update(bson_t* query, bson_t* _update)
 
    bson_error_t error;
 
-   if (U_SYSCALL(mongoc_collection_update, "%p,%d,%p,%p,%p,%p", collection, MONGOC_UPDATE_NONE, query, _update, 0, &error) == 0)
+   if (U_SYSCALL(mongoc_collection_update, "%p,%d,%p,%p,%p,%p", collection, MONGOC_UPDATE_NONE, query, _update, U_NULLPTR, &error) == 0)
       {
       U_WARNING("mongoc_collection_update(): %d.%d,%S", error.domain, error.code, error.message);
 
@@ -275,7 +275,7 @@ bool UMongoDBClient::findAndModify(bson_t* query, bson_t* _update)
    bson_t reply;
    bson_error_t error;
 
-   if (U_SYSCALL(mongoc_collection_find_and_modify, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, query, 0, _update, 0, false, false, true, &reply, &error))
+   if (U_SYSCALL(mongoc_collection_find_and_modify, "%p,%p,%p,%p,%p,%b,%b,%b,%p,%p", collection, query, U_NULLPTR, _update, U_NULLPTR, false, false, true, &reply, &error))
       {
       UString x;
       size_t length;
@@ -373,6 +373,6 @@ const char* UMongoDBClient::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

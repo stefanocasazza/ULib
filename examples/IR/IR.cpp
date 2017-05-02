@@ -64,7 +64,7 @@ void IR::setBadWords()
 {
    U_TRACE(5, "IR::setBadWords()")
 
-   if (t == 0) t = new UTokenizer;
+   if (t == U_NULLPTR) t = new UTokenizer;
 
    cfg_skip_tag_xml = cfg[U_STRING_FROM_CONSTANT("SKIP_TAG_XML")];
 
@@ -124,13 +124,13 @@ void IR::parse()
 
    t->setAvoidPunctuation(true);
 
-   bool bad_words_active = bad_words &&
-                           (suffix_bad_words == 0 ||
+   bool bad_words_active = bad_words                      &&
+                           (suffix_bad_words == U_NULLPTR ||
                             suffix_bad_words->find(suffix) != U_NOT_FOUND);
 
    if (suffix_skip_tag_xml) t->setSkipTagXML(suffix_skip_tag_xml->find(suffix) != U_NOT_FOUND);
 
-   while (t->next(*UPosting::word, (bool*)0))
+   while (t->next(*UPosting::word, (bool*)U_NULLPTR))
       {
       if (bad_words_active &&
           UServices::dosMatchWithOR(*UPosting::word, *bad_words, UPosting::ignore_case))
@@ -187,7 +187,7 @@ void IR::loadFiles()
 
    if (operation == 3) (void) write(1, U_CONSTANT_TO_PARAM("OK")); // check
 
-   (void) UFile::chdir(0, true);
+   (void) UFile::chdir(U_NULLPTR, true);
 }
 
 void IR::loadFilters()

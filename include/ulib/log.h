@@ -61,7 +61,7 @@ public:
    static pthread_rwlock_t* prwlock;
 #endif
 
-    ULog(const UString& path, uint32_t size, const char* dir_log_gz = 0);
+    ULog(const UString& path, uint32_t size, const char* dir_log_gz = U_NULLPTR);
    ~ULog();
 
    void reopen()

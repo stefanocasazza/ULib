@@ -302,6 +302,8 @@ protected:
       UHTTP::startRequest();
 
       U_http_version = '2';
+
+      UClientImage_Base::prepareForCallToHandlerRead();
       }
 
    static void resetDataRead()

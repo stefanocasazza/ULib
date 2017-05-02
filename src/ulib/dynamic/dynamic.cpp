@@ -28,7 +28,7 @@ bool UDynamic::load(const char* pathname)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_EQUALS(handle, 0)
+   U_INTERNAL_ASSERT_EQUALS(handle, U_NULLPTR)
 
 #ifdef _MSWINDOWS_
    handle = ::LoadLibrary(pathname);
@@ -46,7 +46,7 @@ bool UDynamic::load(const char* pathname)
    handle = U_SYSCALL(dlopen, "%S,%d", pathname, RTLD_LAZY); // RTLD_NOW
 #endif
 
-   if (handle == 0)
+   if (handle == U_NULLPTR)
       {
 #  if defined(_MSWINDOWS_)
       err = "load failed";
@@ -80,7 +80,7 @@ void* UDynamic::operator[](const char* _sym)
    addr = U_SYSCALL(dlsym, "%p,%S", handle, _sym);
 #endif
 
-   if (addr == 0)
+   if (addr == U_NULLPTR)
       {
 #  if defined(_MSWINDOWS_)
       err = "symbol missing";
@@ -108,9 +108,9 @@ void UDynamic::close()
    (void) U_SYSCALL(dlclose, "%p", handle);
 #endif
 
-   err    = 0;
-   addr   = 0;
-   handle = 0;
+   err    = U_NULLPTR;
+   addr   = U_NULLPTR;
+   handle = U_NULLPTR;
 }
 
 void UDynamic::setPluginDirectory(const UString& dir)
@@ -119,7 +119,7 @@ void UDynamic::setPluginDirectory(const UString& dir)
 
    U_INTERNAL_ASSERT(dir.isNullTerminated())
 
-   if (plugin_dir == 0) U_NEW(UString, plugin_dir, UString(dir));
+   if (plugin_dir == U_NULLPTR) U_NEW(UString, plugin_dir, UString(dir));
    else
       {
       U_INTERNAL_DUMP("plugin_dir = %V", plugin_dir->rep)
@@ -135,7 +135,7 @@ void UDynamic::clear()
    if (plugin_dir)
       {
       delete plugin_dir;
-             plugin_dir = 0;
+             plugin_dir = U_NULLPTR;
       }
 }
 
@@ -145,9 +145,9 @@ bool UDynamic::load(const char* _name, uint32_t _name_len)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_EQUALS(handle, 0)
+   U_INTERNAL_ASSERT_EQUALS(handle, U_NULLPTR)
 
-   if (plugin_dir == 0) U_NEW(UString, plugin_dir, UString(U_STRING_FROM_CONSTANT(U_LIBEXECDIR)));
+   if (plugin_dir == U_NULLPTR) U_NEW(UString, plugin_dir, UString(U_STRING_FROM_CONSTANT(U_LIBEXECDIR)));
 
    U_INTERNAL_ASSERT(plugin_dir->isNullTerminated())
 
@@ -176,6 +176,6 @@ const char* UDynamic::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

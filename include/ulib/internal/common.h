@@ -56,12 +56,6 @@ extern U_EXPORT void  operator delete[](void*);
 
 // C++11 keywords and expressions
 
-#ifdef U_COMPILER_NULLPTR
-# define U_NULLPTR nullptr
-#else
-# define U_NULLPTR 0
-#endif
-
 #ifdef U_COMPILER_DEFAULT_MEMBERS
 #  define U_DECL_EQ_DEFAULT = default
 #else
@@ -149,7 +143,7 @@ union uustringrep { ustringrep* p1; UStringRep* p2; };
 
 class U_EXPORT ULib {
 public:
-    ULib(const char* mempool) { init(mempool, 0); }
+    ULib(const char* mempool) { init(mempool, U_NULLPTR); }
    ~ULib()                    {  end(); }
 
    static void end();
@@ -192,6 +186,6 @@ static_assert( U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE) == 9, "should be 9"
 
 // Init library
 
-#define U_ULIB_INIT(argv) U_SET_LOCATION_INFO, ULib::init(0, argv)
+#define U_ULIB_INIT(argv) U_SET_LOCATION_INFO, ULib::init(U_NULLPTR, argv)
 
 #endif

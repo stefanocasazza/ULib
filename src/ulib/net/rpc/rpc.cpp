@@ -30,7 +30,7 @@ uint32_t URPC::readTokenInt(USocket* s, const char* token, UString& buffer, uint
    uint32_t value = 0;
 
    if (((buffer.size() >= (rstart + U_TOKEN_LN)) || USocketExt::read(s, buffer, U_TOKEN_LN)) &&
-       (token == 0 || memcmp(buffer.c_pointer(rstart), token, U_TOKEN_NM) == 0))
+       (token == U_NULLPTR || memcmp(buffer.c_pointer(rstart), token, U_TOKEN_NM) == 0))
       {
       const char* ptr = buffer.c_pointer(rstart + U_TOKEN_NM);
 
@@ -98,7 +98,7 @@ bool URPC::readRequest(USocket* s)
 {
    U_TRACE(0, "URPC::readRequest(%p)", s)
 
-   UClientImage_Base::size_request = readTokenVector(s, 0, *UClientImage_Base::rbuffer, *rpc_info);
+   UClientImage_Base::size_request = readTokenVector(s, U_NULLPTR, *UClientImage_Base::rbuffer, *rpc_info);
 
    if (UClientImage_Base::size_request) U_RETURN(true);
 

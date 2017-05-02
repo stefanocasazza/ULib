@@ -106,7 +106,7 @@ void UOrmDriverMySql::handlerError()
    UOrmDriver::errcode  = U_SYSCALL(mysql_errno,    "%p", (MYSQL*)UOrmDriver::connection);
    UOrmDriver::SQLSTATE = U_SYSCALL(mysql_sqlstate, "%p", (MYSQL*)UOrmDriver::connection);
 
-   if (UOrmDriver::errmsg == 0) UOrmDriver::errmsg = U_SYSCALL(mysql_error, "%p", (MYSQL*)UOrmDriver::connection);
+   if (UOrmDriver::errmsg == U_NULLPTR) UOrmDriver::errmsg = U_SYSCALL(mysql_error, "%p", (MYSQL*)UOrmDriver::connection);
 
    if (UOrmDriver::errcode >= CR_ERROR_FIRST) UOrmDriver::errcode -= CR_ERROR_FIRST; // 2000
 
@@ -138,19 +138,22 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 
    UOrmDriver* pdrv;
 
-   if (UOrmDriver::connection == 0) pdrv = this;
-   else U_NEW(UOrmDriverMySql, pdrv, UOrmDriverMySql(*UString::str_mysql_name));
+   if (UOrmDriver::connection == U_NULLPTR) pdrv = this;
+   else
+      {
+      U_NEW(UOrmDriverMySql, pdrv, UOrmDriverMySql(*UString::str_mysql_name));
+      }
 
    if (pdrv->setOption(option) == false)
       {
       if (UOrmDriver::connection) delete pdrv;
 
-      U_RETURN_POINTER(0, UOrmDriver);
+      U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
 
    pdrv->connection = U_SYSCALL(mysql_init, "%p", (MYSQL*)pdrv->connection);
 
-   if (pdrv->connection == 0)
+   if (pdrv->connection == U_NULLPTR)
       {
       pdrv->errmsg = "ran out of memory";
 
@@ -158,7 +161,7 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 
       if (UOrmDriver::connection) delete pdrv;
 
-      U_RETURN_POINTER(0, UOrmDriver);
+      U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
 
    int timeout = pdrv->getOptionValue(*UString::str_timeout).strtoul(); // generic timeout is specified in seconds
@@ -199,13 +202,13 @@ UOrmDriver* UOrmDriverMySql::handlerConnect(const UString& option)
 
    U_INTERNAL_ASSERT(pdrv->dbname.isNullTerminated())
 
-   if (U_SYSCALL(mysql_real_connect,"%p,%S,%S,%S,%S,%u,%S,%lu",(MYSQL*)pdrv->connection,host.data(),user.data(),password.data(),pdrv->dbname.data(),(unsigned int)port,0,0L) == 0)
+   if (U_SYSCALL(mysql_real_connect,"%p,%S,%S,%S,%S,%u,%S,%lu",(MYSQL*)pdrv->connection,host.data(),user.data(),password.data(),pdrv->dbname.data(),(unsigned int)port,U_NULLPTR,0L) == U_NULLPTR)
       {
       pdrv->printError(__PRETTY_FUNCTION__);
 
       if (UOrmDriver::connection) delete pdrv;
 
-      U_RETURN_POINTER(0, UOrmDriver);
+      U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
 
    /**
@@ -233,7 +236,7 @@ void UOrmDriverMySql::handlerDisConnect()
 
    U_SYSCALL_VOID(mysql_close, "%p", (MYSQL*)UOrmDriver::connection);
 
-   UOrmDriver::connection = 0;
+   UOrmDriver::connection = U_NULLPTR;
 }
 
 bool UOrmDriverMySql::handlerQuery(const char* query, uint32_t query_len)
@@ -262,13 +265,13 @@ USqlStatement* UOrmDriverMySql::handlerStatementCreation(const char* stmt, uint3
 
    MYSQL_STMT* pHandle = (MYSQL_STMT*) U_SYSCALL(mysql_stmt_init, "%p", (MYSQL*)UOrmDriver::connection);
 
-   if (pHandle == 0)
+   if (pHandle == U_NULLPTR)
       {
       UOrmDriver::errmsg = "ran out of memory";
 
       UOrmDriver::printError(__PRETTY_FUNCTION__);
 
-      U_RETURN_POINTER(0, USqlStatement);
+      U_RETURN_POINTER(U_NULLPTR, USqlStatement);
       }
 
    UOrmDriver::errcode = U_SYSCALL(mysql_stmt_prepare, "%p,%S,%u", pHandle, stmt, len);
@@ -281,7 +284,7 @@ USqlStatement* UOrmDriverMySql::handlerStatementCreation(const char* stmt, uint3
 
       (void) U_SYSCALL(mysql_stmt_close, "%p", pHandle);
 
-      U_RETURN_POINTER(0, USqlStatement);
+      U_RETURN_POINTER(U_NULLPTR, USqlStatement);
       }
 
    uint32_t num_bind_param  = U_SYSCALL(mysql_stmt_param_count, "%p", pHandle),
@@ -306,13 +309,13 @@ void UMySqlStatement::reset()
    if (mysql_vparam)
       {
       UMemoryPool::_free(mysql_vparam, num_bind_param, sizeof(MYSQL_BIND));
-                         mysql_vparam = 0;
+                         mysql_vparam = U_NULLPTR;
       }
 
    if (mysql_vresult)
       {
       UMemoryPool::_free(mysql_vresult, num_bind_result, sizeof(MYSQL_BIND));
-                         mysql_vresult = 0;
+                         mysql_vresult = U_NULLPTR;
       }
 }
 
@@ -353,7 +356,7 @@ bool UMySqlStatement::setBindParam(UOrmDriver* pdrv)
    U_ASSERT_EQUALS(num_bind_param, vparam.size())
 
    if (num_bind_param &&
-       mysql_vparam == 0)
+       mysql_vparam == U_NULLPTR)
       {
       USqlStatementBindParam* param;
 
@@ -409,7 +412,7 @@ USqlStatementBindParam* UOrmDriverMySql::creatSqlStatementBindParam(USqlStatemen
 
    if (UOrmDriver::errcode) UOrmDriver::printError(__PRETTY_FUNCTION__);
 
-   U_RETURN_POINTER(0, USqlStatementBindParam);
+   U_RETURN_POINTER(U_NULLPTR, USqlStatementBindParam);
 }
 
 void UMySqlStatement::setStringBindedAsResult()
@@ -475,7 +478,7 @@ bool UMySqlStatement::setBindResult(UOrmDriver* pdrv)
 #  endif
       }
 
-   if (mysql_vresult == 0)
+   if (mysql_vresult == U_NULLPTR)
       {
       USqlStatementBindResult* result;
 
@@ -685,7 +688,7 @@ const char* UMySqlStatement::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UOrmDriverMySql::dump(bool _reset) const
@@ -701,6 +704,6 @@ const char* UOrmDriverMySql::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

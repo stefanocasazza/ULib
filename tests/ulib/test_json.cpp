@@ -768,73 +768,6 @@ public:
       }
 };
 
-// Do a query and print the results
-
-static void testQuery(const UString& json, const char* cquery, const UString& expected)
-{
-   U_TRACE(5, "testQuery(%V,%S,%V)", json.rep, cquery, expected.rep)
-
-   char buffer[4096];
-   UString result, query(cquery, strlen(cquery));
-   int dataType = UValue::jread(json, query, result);
-
-   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("dataType = (%d %S) query = %V result(%u) = %V UValue::jread_elements = %d "
-                                                                              "UValue::jread_error = (%d %S)\n"),
-              dataType, UValue::getDataTypeDescription(dataType), query.rep, result.size(), result.rep, UValue::jread_elements, UValue::jread_error,
-              UValue::getJReadErrorDescription()));
-
-   U_INTERNAL_ASSERT_EQUALS(result, expected)
-}
-
-static void testVector()
-{
-   U_TRACE_NO_PARAM(5, "testVector()")
-
-   UValue json_vec;
-   UVector<UString> y;
-   UString result, vecJson = U_STRING_FROM_CONSTANT("[\"riga 1\",\"riga 2\",\"riga 3\",\"riga 4\"]");
-
-   bool ok = JSON_parse(vecJson, y);
-
-   U_INTERNAL_ASSERT(ok)
-
-   ok = (y[0] == U_STRING_FROM_CONSTANT("riga 1"));
-   U_INTERNAL_ASSERT(ok)
-   ok = (y[1] == U_STRING_FROM_CONSTANT("riga 2"));
-   U_INTERNAL_ASSERT(ok)
-   ok = (y[2] == U_STRING_FROM_CONSTANT("riga 3"));
-   U_INTERNAL_ASSERT(ok)
-   ok = (y[3] == U_STRING_FROM_CONSTANT("riga 4"));
-   U_INTERNAL_ASSERT(ok)
-
-   y.clear();
-
-   ok = JSON_parse(vecJson, y);
-
-   U_INTERNAL_ASSERT(ok)
-
-   ok = (y[0] == U_STRING_FROM_CONSTANT("riga 1"));
-   U_INTERNAL_ASSERT(ok)
-   ok = (y[1] == U_STRING_FROM_CONSTANT("riga 2"));
-   U_INTERNAL_ASSERT(ok)
-   ok = (y[2] == U_STRING_FROM_CONSTANT("riga 3"));
-   U_INTERNAL_ASSERT(ok)
-   ok = (y[3] == U_STRING_FROM_CONSTANT("riga 4"));
-   U_INTERNAL_ASSERT(ok)
-
-   JSON_stringify(result, json_vec, y);
-
-   U_ASSERT_EQUALS( result, vecJson )
-
-   result.clear();
-
-   JSON_OBJ_stringify(result, y);
-
-// (void) UFile::writeToTmp(U_STRING_TO_PARAM(result), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("test_json.%P"), 0);
-
-   U_ASSERT_EQUALS( result, vecJson )
-}
-
 static void testMap()
 {
    U_TRACE_NO_PARAM(5, "testMap()")
@@ -888,9 +821,54 @@ static void testMap()
 
    JSON_OBJ_stringify(result, x);
 
-// (void) UFile::writeToTmp(U_STRING_TO_PARAM(result), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("test_json.%P"), 0);
-
    U_ASSERT_EQUALS( result.size(), mapJson.size() )
+}
+
+static void testVector()
+{
+   U_TRACE_NO_PARAM(5, "testVector()")
+
+   UValue json_vec;
+   UVector<UString> y;
+   UString result, vecJson = U_STRING_FROM_CONSTANT("[\"riga 1\",\"riga 2\",\"riga 3\",\"riga 4\"]");
+
+   bool ok = JSON_parse(vecJson, y);
+
+   U_INTERNAL_ASSERT(ok)
+
+   ok = (y[0] == U_STRING_FROM_CONSTANT("riga 1"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[1] == U_STRING_FROM_CONSTANT("riga 2"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[2] == U_STRING_FROM_CONSTANT("riga 3"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[3] == U_STRING_FROM_CONSTANT("riga 4"));
+   U_INTERNAL_ASSERT(ok)
+
+   y.clear();
+
+   ok = JSON_parse(vecJson, y);
+
+   U_INTERNAL_ASSERT(ok)
+
+   ok = (y[0] == U_STRING_FROM_CONSTANT("riga 1"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[1] == U_STRING_FROM_CONSTANT("riga 2"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[2] == U_STRING_FROM_CONSTANT("riga 3"));
+   U_INTERNAL_ASSERT(ok)
+   ok = (y[3] == U_STRING_FROM_CONSTANT("riga 4"));
+   U_INTERNAL_ASSERT(ok)
+
+   JSON_stringify(result, json_vec, y);
+
+   U_ASSERT_EQUALS( result, vecJson )
+
+   result.clear();
+
+   JSON_OBJ_stringify(result, y);
+
+   U_ASSERT_EQUALS( result, vecJson )
 }
 
 static void testRequest()
@@ -977,9 +955,39 @@ static void testResponse()
 
    JSON_OBJ_stringify(result, response);
 
-// (void) UFile::writeToTmp(U_STRING_TO_PARAM(result), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("test_json.%P"), 0);
-
    U_ASSERT_EQUALS( result, reqJson )
+}
+
+static void testResponseLogin()
+{
+   U_TRACE_NO_PARAM(5, "testResponseLogin()")
+
+   UValue json_obj;
+   ResponseLogin response;
+   UString result, reqJson = U_STRING_FROM_CONSTANT("{\"spotCount\":0,\"type\":\"login\",\"token\":\"HRq0Mgft49bF3YJaKXQCCYzZ4oRDXX5KF\",\"name\":\"victor stewart\",\"pic\":\"GRSDTbv6tqxf6P2kuVNykBsFvbZXIjsFR\",\"directory\":\"NZ45XLdN87rZJogran0y3dJl30lyw2OrQ\",\"actives\":[],\"nows\":[],\"freeFileNames\":[\"9cvxHmjzuQzzCaw2LMTvjmyMeRXM8mzXY\",\"vLivrQb9dqcRyiRa1LENgBnsSpEbFsOcN\",\"uELEMyIieNW86ruETPaISDBlnn5UOFTZr\",\"pSqtl0fITijC8BbGKvJTaSrqhgNBRDeJX\",\"sreDFtqY9a3aRU0y4PrnX4VLTJvNJUjh6\",\"1MKsg9wknND12SHLuM3NbXcO2hSxRhck8\",\"akItwhgG2JVXhUldOuSgBzrhQydIcBRRq\",\"rHc9fVz5HEN5e95834P6Ilo1ofMCjc6Vj\",\"SaMsYKXnlOWeTgm6DzcLV65R1xR0z9LSX\",\"6s982IQXEFaUbO72lDDK8wPLwrlqis9xJ\",\"5olzq3XV83bqz8ok46S2MbxvSqtjJqCYU\",\"sXTcsMH7GHVYyKNMu73UQ5Fc8weFCp4gR\",\"uHelSUm5NiHK0fP1dXMapquV3psOUd4fJ\",\"YuvfBVXQkRNQTpMLnOHKRiRM2tgQw3hv4\",\"6jQwoPPWePoHD50ZFpeuJ5OMfqYF7rog5\",\"ejh0xTPHref00GZii3YxR2Mnl1CDscS8R\",\"RDrqVKyNZkJWPhlddEOjPJYn6MHsSvyC6\",\"HxzQBW22dClawug9in1UfIEbo7IT7sb8m\",\"YRuzG4PxzMM5tlSwhZPqZ86ZBQIXlvRvQ\",\"0kxMSVcLfRjePzp14t45yTjcUlP0dlFWV\",\"RYF17ULTOh0l4NLazP9UGYewqLIWJcMk3\"],\"links\":[],\"users\":[],\"messages\":[],\"events\":[],\"socials\":[{\"name\":\"10209763296542423\",\"token\":\"EAAE2qPrDodIBAIRiZA9mP3pUpc8sQfZBtMxajCq7OL7wxHHWB8bmjs6SWj2vHJ5vC2qCL02cPkUlk2Y3WBr3kOE7WS6EL1dUwLZBnm3HZBQzTPlGogLzNZCsqAPaiZCJhLjGdVvQMNzoPYNpios6u4aFLdciq2DYV7c0806ki7ghJjOB8ApzKJof4R070wXfiePW4iZAARXe6YbW8kyrtOJFbcZBN08M4DoZD\",\"key\":3,\"dateTime\":149292654}],\"work\":{\"index\":\"\",\"name\":\"\"},\"college\":{\"index\":\"\",\"name\":\"\"}}");
+
+   bool ok = JSON_parse(reqJson, response);
+
+   U_INTERNAL_ASSERT(ok)
+
+   U_ASSERT(response.links.empty())
+   U_ASSERT(response.users.empty())
+   U_ASSERT(response.messages.empty())
+   U_ASSERT(response.events.empty())
+   U_ASSERT(response.work.name.empty())
+   U_ASSERT_EQUALS(response.type, "login")
+   U_ASSERT(response.college.name.empty())
+   U_ASSERT_EQUALS(response.socials[0]->key, 3)
+
+// JSON_stringify(result, json_obj, response);
+// (void) UFile::writeToTmp(U_STRING_TO_PARAM(result), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("test_json.%P"), 0);
+// U_ASSERT_EQUALS( result, reqJson )
+
+   result.clear();
+
+   JSON_OBJ_stringify(result, response);
+
+   U_ASSERT_EQUALS( result.size(), reqJson.size() )
 }
 
 static void testResponseSearch()
@@ -1011,39 +1019,6 @@ static void testResponseSearch()
    JSON_OBJ_stringify(result, response);
 
    U_ASSERT_EQUALS( result, reqJson )
-}
-
-static void testResponseLogin()
-{
-   U_TRACE_NO_PARAM(5, "testResponseLogin()")
-
-   UValue json_obj;
-   ResponseLogin response;
-   UString result, reqJson = U_STRING_FROM_CONSTANT("{\"spotCount\":0,\"type\":\"login\",\"token\":\"HRq0Mgft49bF3YJaKXQCCYzZ4oRDXX5KF\",\"name\":\"victor stewart\",\"pic\":\"GRSDTbv6tqxf6P2kuVNykBsFvbZXIjsFR\",\"directory\":\"NZ45XLdN87rZJogran0y3dJl30lyw2OrQ\",\"actives\":[],\"nows\":[],\"freeFileNames\":[\"9cvxHmjzuQzzCaw2LMTvjmyMeRXM8mzXY\",\"vLivrQb9dqcRyiRa1LENgBnsSpEbFsOcN\",\"uELEMyIieNW86ruETPaISDBlnn5UOFTZr\",\"pSqtl0fITijC8BbGKvJTaSrqhgNBRDeJX\",\"sreDFtqY9a3aRU0y4PrnX4VLTJvNJUjh6\",\"1MKsg9wknND12SHLuM3NbXcO2hSxRhck8\",\"akItwhgG2JVXhUldOuSgBzrhQydIcBRRq\",\"rHc9fVz5HEN5e95834P6Ilo1ofMCjc6Vj\",\"SaMsYKXnlOWeTgm6DzcLV65R1xR0z9LSX\",\"6s982IQXEFaUbO72lDDK8wPLwrlqis9xJ\",\"5olzq3XV83bqz8ok46S2MbxvSqtjJqCYU\",\"sXTcsMH7GHVYyKNMu73UQ5Fc8weFCp4gR\",\"uHelSUm5NiHK0fP1dXMapquV3psOUd4fJ\",\"YuvfBVXQkRNQTpMLnOHKRiRM2tgQw3hv4\",\"6jQwoPPWePoHD50ZFpeuJ5OMfqYF7rog5\",\"ejh0xTPHref00GZii3YxR2Mnl1CDscS8R\",\"RDrqVKyNZkJWPhlddEOjPJYn6MHsSvyC6\",\"HxzQBW22dClawug9in1UfIEbo7IT7sb8m\",\"YRuzG4PxzMM5tlSwhZPqZ86ZBQIXlvRvQ\",\"0kxMSVcLfRjePzp14t45yTjcUlP0dlFWV\",\"RYF17ULTOh0l4NLazP9UGYewqLIWJcMk3\"],\"links\":[],\"users\":[],\"messages\":[],\"events\":[],\"socials\":[{\"name\":\"10209763296542423\",\"token\":\"EAAE2qPrDodIBAIRiZA9mP3pUpc8sQfZBtMxajCq7OL7wxHHWB8bmjs6SWj2vHJ5vC2qCL02cPkUlk2Y3WBr3kOE7WS6EL1dUwLZBnm3HZBQzTPlGogLzNZCsqAPaiZCJhLjGdVvQMNzoPYNpios6u4aFLdciq2DYV7c0806ki7ghJjOB8ApzKJof4R070wXfiePW4iZAARXe6YbW8kyrtOJFbcZBN08M4DoZD\",\"key\":3,\"dateTime\":149292654}],\"work\":{\"index\":\"\",\"name\":\"\"},\"college\":{\"index\":\"\",\"name\":\"\"}}");
-
-   bool ok = JSON_parse(reqJson, response);
-
-   U_INTERNAL_ASSERT(ok)
-
-   U_ASSERT(response.links.empty())
-   U_ASSERT(response.users.empty())
-   U_ASSERT(response.messages.empty())
-   U_ASSERT(response.events.empty())
-   U_ASSERT(response.work.name.empty())
-   U_ASSERT_EQUALS(response.type, "login")
-   U_ASSERT(response.college.name.empty())
-   U_ASSERT_EQUALS(response.socials[0]->key, 3)
-
-// JSON_stringify(result, json_obj, response);
-// U_ASSERT_EQUALS( result, reqJson )
-
-   result.clear();
-
-   JSON_OBJ_stringify(result, response);
-
-// (void) UFile::writeToTmp(U_STRING_TO_PARAM(result), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("test_json.%P"), 0);
-
-   U_ASSERT_EQUALS( result.size(), reqJson.size() )
 }
 
 static void testMultiple()
@@ -1113,6 +1088,24 @@ static void testMultiple()
    JSON_OBJ_stringify(result, multiple);
 
    U_ASSERT_EQUALS( result, reqJson )
+}
+
+// Do a query and print the results
+
+static void testQuery(const UString& json, const char* cquery, const UString& expected)
+{
+   U_TRACE(5, "testQuery(%V,%S,%V)", json.rep, cquery, expected.rep)
+
+   char buffer[4096];
+   UString result, query(cquery, strlen(cquery));
+   int dataType = UValue::jread(json, query, result);
+
+   cout.write(buffer, u__snprintf(buffer, sizeof(buffer), U_CONSTANT_TO_PARAM("dataType = (%d %S) query = %V result(%u) = %V UValue::jread_elements = %d "
+                                                                              "UValue::jread_error = (%d %S)\n"),
+              dataType, UValue::getDataTypeDescription(dataType), query.rep, result.size(), result.rep, UValue::jread_elements, UValue::jread_error,
+              UValue::getJReadErrorDescription()));
+
+   U_INTERNAL_ASSERT_EQUALS(result, expected)
 }
 
 int
@@ -1389,6 +1382,14 @@ U_EXPORT main (int argc, char* argv[], char* env[])
    JSON_stringify(result1, json_vec, v);
 
    U_ASSERT_EQUALS(result1, vecJson)
+
+   result1.clear();
+
+   JSON_OBJ_stringify(result1, v);
+
+// (void) UFile::writeToTmp(U_STRING_TO_PARAM(result1), O_RDWR | O_TRUNC, U_CONSTANT_TO_PARAM("test_json.%P"), 0);
+
+   U_ASSERT_EQUALS( result1, vecJson )
 
    v.clear();
 

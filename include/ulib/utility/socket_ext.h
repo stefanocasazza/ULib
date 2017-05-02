@@ -149,7 +149,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(resolv_channel)
 
-      return (resolv_status == 0 ? resolv_hostname : 0);
+      return (resolv_status == 0 ? resolv_hostname : U_NULLPTR);
       }
 
    static void  waitResolv();

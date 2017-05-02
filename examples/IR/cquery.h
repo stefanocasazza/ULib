@@ -118,7 +118,7 @@ public:
 
    // SERVICES
 
-   void run(const char* ptr, uint32_t len, UVector<WeightWord*>* vec = 0);
+   void run(const char* ptr, uint32_t len, UVector<WeightWord*>* vec = U_NULLPTR);
 
    static void        clear();
    static const char* checkQuoting(char* argv[], uint32_t& len); // NB: may be there are some difficult with quoting (MINGW)...

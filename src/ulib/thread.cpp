@@ -65,7 +65,7 @@ void UThread::close()
             U_INTERNAL_ASSERT_EQUALS(next, obj->next)
 
             *ptr = next;
-                   next = 0;
+                   next = U_NULLPTR;
 
             break;
             }
@@ -95,7 +95,7 @@ void UThread::close()
       (void) U_SYSCALL(pthread_cancel, "%p", _tid);
 #   endif
 
-      if (detachstate == PTHREAD_CREATE_JOINABLE) (void) U_SYSCALL(pthread_join, "%p,%p", _tid, 0);
+      if (detachstate == PTHREAD_CREATE_JOINABLE) (void) U_SYSCALL(pthread_join, "%p,%p", _tid, U_NULLPTR);
 #   ifdef HAVE_PTHREAD_YIELD
       else
          {
@@ -200,7 +200,7 @@ void UThread::sigInstall(int signo)
 #endif
    sa.sa_handler = sigHandler;
 
-   (void) U_SYSCALL(sigaction, "%d,%p,%p", signo,  &sa, 0);
+   (void) U_SYSCALL(sigaction, "%d,%p,%p", signo,  &sa, U_NULLPTR);
 }
 
 void UThread::manageSignal(int signo)
@@ -269,7 +269,7 @@ void UThread::maskSignal()
    (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGALRM);
 #endif
 
-   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, &mask, 0);
+   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, &mask, U_NULLPTR);
 
 #ifndef HAVE_PTHREAD_SUSPEND
 # ifdef sigemptyset
@@ -286,7 +286,7 @@ void UThread::maskSignal()
    (void) U_SYSCALL(sigaddset, "%p,%d", &mask, U_SIGCONT);
 # endif
 
-   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
+   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, U_NULLPTR);
 
    sigInstall(U_SIGSTOP);
    sigInstall(U_SIGCONT);
@@ -431,7 +431,7 @@ bool UThread::start(uint32_t timeoutMS)
 
          ts.tv_nsec *= (long)timeoutMS;
 
-         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR);
          }
 
       U_RETURN(true);
@@ -554,7 +554,7 @@ void UThread::sleep(time_t timeoutMS)
 #else
    U_INTERNAL_DUMP("Call   nanosleep(%2D)")
 
-   (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+   (void) U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR);
 
    U_INTERNAL_DUMP("Return nanosleep(%2D)")
 #endif
@@ -728,7 +728,7 @@ const char* UThread::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UThreadPool::dump(bool reset) const
@@ -744,6 +744,6 @@ const char* UThreadPool::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

@@ -318,8 +318,8 @@ typedef struct yyParser yyParser;
 
 #ifndef NDEBUG
 #include <stdio.h>
-static FILE *yyTraceFILE = 0;
-static char *yyTracePrompt = 0;
+static FILE *yyTraceFILE = U_NULLPTR;
+static char *yyTracePrompt = U_NULLPTR;
 #endif /* NDEBUG */
 
 #ifndef NDEBUG
@@ -343,8 +343,8 @@ static char *yyTracePrompt = 0;
 void expressionParserTrace(FILE *TraceFILE, char *zTracePrompt){
   yyTraceFILE = TraceFILE;
   yyTracePrompt = zTracePrompt;
-  if( yyTraceFILE==0 ) yyTracePrompt = 0;
-  else if( yyTracePrompt==0 ) yyTraceFILE = 0;
+  if( yyTraceFILE==U_NULLPTR ) yyTracePrompt = U_NULLPTR;
+  else if( yyTracePrompt==U_NULLPTR ) yyTraceFILE = U_NULLPTR;
 }
 #endif /* NDEBUG */
 
@@ -575,7 +575,7 @@ void expressionParserFree(
 ){
   yyParser *pParser = (yyParser*)p;
 #ifndef YYPARSEFREENEVERNULL
-  if( pParser==0 ) return;
+  if( pParser==U_NULLPTR ) return;
 #endif
   while( pParser->yyidx>=0 ) yy_pop_parser_stack(pParser);
 #if YYSTACKDEPTH<=0
@@ -1371,7 +1371,7 @@ static void yy_reduce(
    lPFv addr = (lPFv) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, yymsp[-2].minor.yy0->c_str());
 #endif
 
-   if (addr == 0) U_NEW(UString, yygotominor.yy3, UString);
+   if (addr == U_NULLPTR) U_NEW(UString, yygotominor.yy3, UString);
    else
       {
       lo = (*addr)();
@@ -1402,7 +1402,7 @@ static void yy_reduce(
    lPFll addr = (lPFll) U_SYSCALL(dlsym, "%p,%S", RTLD_DEFAULT, yymsp[-3].minor.yy0->c_str());
 #endif
 
-   if (addr == 0) U_NEW(UString, yygotominor.yy3, UString);
+   if (addr == U_NULLPTR) U_NEW(UString, yygotominor.yy3, UString);
    else
       {
       lo0 = (*yymsp[-1].minor.yy49)[0].strtol();

@@ -101,7 +101,7 @@ static struct ustringrep u_empty_string_rep_storage = {
    (void*)U_CHECK_MEMORY_SENTINEL, /* memory_error (_this) */
 # endif
 # if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-   0, /* parent - substring increment reference of source string */
+   U_NULLPTR, /* parent - substring increment reference of source string */
 #  ifdef DEBUG
    0, /* child  - substring capture event 'DEAD OF SOURCE STRING WITH CHILD ALIVE'... */
 #  endif
@@ -195,7 +195,7 @@ void ULib::init(const char* mempool, char** argv)
 
 #if defined(DEBUG) && defined(U_STDCPP_ENABLE)
 # ifdef DEBUG
-   UMemoryPool::obj_class = UMemoryPool::func_call = 0;
+   UMemoryPool::obj_class = UMemoryPool::func_call = U_NULLPTR;
 # endif
    UObjectIO::init((char*)UMemoryPool::pop(U_SIZE_TO_STACK_INDEX(U_MAX_SIZE_PREALLOCATE)), U_MAX_SIZE_PREALLOCATE);
 #endif

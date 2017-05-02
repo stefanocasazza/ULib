@@ -642,7 +642,7 @@ int UHttpClient_Base::sendRequestAsync(const UString& _url, bool bqueue, const c
 
    int num_attempts = 1;
 
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, 0)
+   U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, U_NULLPTR)
 
    if (UClient_Base::connectServer(_url))
       {
@@ -734,7 +734,7 @@ bool UHttpClient_Base::parseRequest(uint32_t n)
 
       UClient_Base::iov[0].iov_base = (caddr_t)ptr;
       UClient_Base::iov[0].iov_len  = startHeader;
-      UClient_Base::iov[1].iov_base = 0;
+      UClient_Base::iov[1].iov_base = U_NULLPTR;
       UClient_Base::iov[1].iov_len  = 0;
       UClient_Base::iov[2].iov_base = (caddr_t)ptr + startHeader;
       UClient_Base::iov[2].iov_len  =           sz - startHeader;
@@ -803,7 +803,7 @@ void UHttpClient_Base::composeRequest(const char* content_type, uint32_t content
 
    if (method_num <= 1) // GET/HEAD
       {
-      last_request = wrapRequest(0, UClient_Base::host_port, method_num, U_STRING_TO_PARAM(UClient_Base::uri), "\r\n");
+      last_request = wrapRequest(U_NULLPTR, UClient_Base::host_port, method_num, U_STRING_TO_PARAM(UClient_Base::uri), "\r\n");
 
       (void) parseRequest(3);
       }
@@ -1033,7 +1033,7 @@ bool UHttpClient_Base::sendPost(const UString& _url, const UString& _body, const
 
    // send POST(2) request to server and get response
 
-   if (sendRequest(2, content_type, content_type_len, U_STRING_TO_PARAM(_body), 0, 0)) U_RETURN(true);
+   if (sendRequest(2, content_type, content_type_len, U_STRING_TO_PARAM(_body), U_NULLPTR, 0)) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -1054,7 +1054,7 @@ bool UHttpClient_Base::upload(const UString& _url, UFile& file, const char* file
          U_INTERNAL_ASSERT(UClient_Base::uri)
 
 #     ifdef USE_LIBMAGIC
-         if (UMagic::magic == 0) (void) UMagic::init();
+         if (UMagic::magic == U_NULLPTR) (void) UMagic::init();
 #     endif
 
          /**
@@ -1178,6 +1178,6 @@ const char* UHttpClient_Base::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

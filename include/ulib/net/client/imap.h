@@ -285,7 +285,7 @@ public:
     * the trash box
     */
 
-   bool expunge(int* ret = 0);
+   bool expunge(int* ret = U_NULLPTR);
 
    /**
     * Search for messages. For the format of the spec parameter, @see RFC.

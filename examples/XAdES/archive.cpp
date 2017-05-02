@@ -26,8 +26,8 @@
 
 #include <ulib/application.h>
 
-#define U_ARCHIVE_TIMESTAMP (const char*)(num_args >= 0 ? argv[optind+0] : 0)
-#define U_SCHEMA            (const char*)(num_args >= 1 ? argv[optind+1] : 0)
+#define U_ARCHIVE_TIMESTAMP (const char*)(num_args >= 0 ? argv[optind+0] : U_NULLPTR)
+#define U_SCHEMA            (const char*)(num_args >= 1 ? argv[optind+1] : U_NULLPTR)
 
 // ArchiveTimeStamp
 
@@ -135,14 +135,14 @@ public:
 
       // manage arguments...
 
-      archive_timestamp = ( U_ARCHIVE_TIMESTAMP == 0 ||
+      archive_timestamp = ( U_ARCHIVE_TIMESTAMP == U_NULLPTR ||
                            *U_ARCHIVE_TIMESTAMP == '\0'
                               ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.ArchiveTimeStamp")]
                               : UString(U_ARCHIVE_TIMESTAMP));
 
       if (archive_timestamp.empty()) U_ERROR("error on archive timestamp: empty");
 
-      schema = ( U_SCHEMA == 0 ||
+      schema = ( U_SCHEMA == U_NULLPTR ||
                 *U_SCHEMA == '\0'
                   ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.Schema")]
                   : UString(U_SCHEMA));

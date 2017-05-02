@@ -23,8 +23,8 @@ void URPCObject::loadGenericMethod(UFileConfig* file_method)
 {
    U_TRACE(0, "URPCObject::loadGenericMethod(%p)", file_method)
 
-   U_INTERNAL_ASSERT_EQUALS(dispatcher, 0)
-   U_INTERNAL_ASSERT_EQUALS(URPCMethod::encoder, 0)
+   U_INTERNAL_ASSERT_EQUALS(dispatcher, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(URPCMethod::encoder, U_NULLPTR)
 
    U_NEW(URPCObject, dispatcher, URPCObject);
    U_NEW(URPCEncoder, URPCMethod::encoder, URPCEncoder);
@@ -38,7 +38,7 @@ void URPCObject::readFileMethod(UFileConfig& file_method)
 
    UString method_name, method_ns, response_type;
 
-   while (file_method.loadSection(0,0))
+   while (file_method.loadSection(U_NULLPTR, 0))
       {
       method_ns     = file_method.at(U_CONSTANT_TO_PARAM("NAMESPACE"));
       method_name   = file_method.at(U_CONSTANT_TO_PARAM("METHOD_NAME"));
@@ -79,7 +79,7 @@ URPCMethod* URPCObject::find(const UString& methodName)
       if (methodName == method->getMethodName()) U_RETURN_POINTER(method, URPCMethod);
       }
 
-   U_RETURN_POINTER(0, URPCMethod);
+   U_RETURN_POINTER(U_NULLPTR, URPCMethod);
 }
 
 UString URPCObject::processMessage(URPCEnvelope& envelope, bool& bContainsFault)
@@ -94,7 +94,7 @@ UString URPCObject::processMessage(URPCEnvelope& envelope, bool& bContainsFault)
 
    URPCMethod* method = find(envelope.getMethodName());
 
-   if (method == 0)
+   if (method == U_NULLPTR)
       {
       // Return object not found error. This would be a Client fault
 
@@ -136,6 +136,6 @@ const char* URPCObject::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

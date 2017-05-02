@@ -33,7 +33,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, URPCEnvelope, "", 0)
 
-      arg            = 0;
+      arg            = U_NULLPTR;
       mustUnderstand = false;
       }
 

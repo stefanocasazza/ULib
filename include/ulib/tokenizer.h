@@ -31,16 +31,16 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   UTokenizer(const char* d = 0)
+   UTokenizer(const char* d = U_NULLPTR)
       {
       U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%S", d)
 
           s =
-        end = 0;
+        end = U_NULLPTR;
       delim = d;
       }
 
-   UTokenizer(const UString& data, const char* d = 0) : str(data)
+   UTokenizer(const UString& data, const char* d = U_NULLPTR) : str(data)
       {
       U_TRACE_REGISTER_OBJECT(0, UTokenizer, "%V,%S", data.rep, d)
 
@@ -279,7 +279,7 @@ public:
       U_TRACE(0, "UTokenizer::setSkipTagXML(%b)", flag)
 
       if (flag) setGroup(U_CONSTANT_TO_PARAM("<>"), true);
-      else      setGroup(0,                      0, false);
+      else      setGroup(U_NULLPTR,              0, false);
       }
 
    static void setAvoidPunctuation(bool flag)

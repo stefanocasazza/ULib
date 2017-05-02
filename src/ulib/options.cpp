@@ -164,8 +164,8 @@
 #endif
 
 struct option UOptions::long_options[128] = {
-   { "help",    0, 0, 'h' },
-   { "version", 0, 0, 'V' }
+   { "help",    0, U_NULLPTR, 'h' },
+   { "version", 0, U_NULLPTR, 'V' }
 };
 
 UOptions::UOptions(uint32_t n)
@@ -313,7 +313,7 @@ void UOptions::load(const UString& str)
       {
       char* idx = (char*) memchr("orpv", vec[i].at(0), 4);
 
-      if (idx == 0) continue;
+      if (idx == U_NULLPTR) continue;
 
       switch (*idx)
          {
@@ -548,7 +548,7 @@ uint32_t UOptions::getopt(int argc, char** argv, int* poptind)
       {
       ptr_long_options->name    = item[i].long_opt->data(); // null terminated
       ptr_long_options->has_arg = item[i].has_arg;
-      ptr_long_options->flag    = 0;
+      ptr_long_options->flag    = U_NULLPTR;
       ptr_long_options->val     = item[i].short_opt;
 
       if (ptr_long_options->val)
@@ -848,7 +848,7 @@ PYTHON language support: yes ( 2.7 )
 
          // Print help and exit
 
-         case 'h': printHelp(0); break;
+         case 'h': printHelp(U_NULLPTR); break;
 
          default: // option
             {
@@ -871,14 +871,14 @@ PYTHON language support: yes ( 2.7 )
 
             if (long_options[longindex].has_arg == 0)
                {
-               U_INTERNAL_ASSERT_EQUALS(optarg,0)
+               U_INTERNAL_ASSERT_EQUALS(optarg, U_NULLPTR)
 
                static char buffer[] = { '1', '\0' };
 
                optarg = buffer;
                }
 
-            if (optarg == 0)
+            if (optarg == U_NULLPTR)
                {
                U_INTERNAL_ASSERT_EQUALS(long_options[longindex].has_arg,2)
 
@@ -936,6 +936,6 @@ const char* UOptions::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

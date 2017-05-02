@@ -250,7 +250,7 @@ public:
 
    static void setHostname(const UString& name) { setHostname(U_STRING_TO_PARAM(name)); }
 
-   static const char* getStatusDescription(uint32_t* plen = 0);
+   static const char* getStatusDescription(uint32_t* plen = U_NULLPTR);
 
    static uint32_t getUserAgent()
       {
@@ -569,7 +569,7 @@ public:
       addSetCookie(cookie);
       }
 
-   static void setSessionCookie(UString* param = 0);
+   static void setSessionCookie(UString* param = U_NULLPTR);
 
    static bool getDataStorage();
    static bool getDataSession();
@@ -661,7 +661,7 @@ public:
    static bool runCGI(bool set_environment);
    static bool getCGIEnvironment(UString& environment, int type);
    static bool processCGIOutput(bool cgi_sh_script, bool bheaders);
-   static bool processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi = 0);
+   static bool processCGIRequest(UCommand* cmd, UHTTP::ucgi* cgi = U_NULLPTR);
    static bool setEnvironmentForLanguageProcessing(int type, void* env, vPFpvpcpc func);
 
 #if defined(U_ALIAS) && defined(USE_LIBPCRE) // REWRITE RULE
@@ -743,7 +743,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UServletPage, "", 0)
 
-      runDynamicPage = 0;
+      runDynamicPage = U_NULLPTR;
       }
 
    ~UServletPage()
@@ -794,8 +794,8 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UCServletPage, "", 0)
 
       size      = 0;
-      relocated = 0;
-      prog_main = 0;
+      relocated = U_NULLPTR;
+      prog_main = U_NULLPTR;
       }
 
    ~UCServletPage()
@@ -830,8 +830,8 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UPHP, "", 0)
 
       initPHP =
-       runPHP = 0;
-       endPHP = 0;
+       runPHP = U_NULLPTR;
+       endPHP = U_NULLPTR;
       }
 
    ~UPHP()
@@ -865,8 +865,8 @@ public:
       U_TRACE_REGISTER_OBJECT(0, URUBY, "", 0)
 
       initRUBY =
-       runRUBY = 0;
-       endRUBY = 0;
+       runRUBY = U_NULLPTR;
+       endRUBY = U_NULLPTR;
       }
 
    ~URUBY()
@@ -900,8 +900,8 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UPYTHON, "", 0)
 
       initPYTHON =
-       runPYTHON = 0;
-       endPYTHON = 0;
+       runPYTHON = U_NULLPTR;
+       endPYTHON = U_NULLPTR;
       }
 
    ~UPYTHON()
@@ -970,7 +970,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UV8JavaScript, "", 0)
 
-      runv8 = 0;
+      runv8 = U_NULLPTR;
       }
 
    ~UV8JavaScript()
@@ -1049,7 +1049,7 @@ public:
 
       U_INTERNAL_DUMP("file_data->array = %p", file_data->array)
 
-      if (file_data->array != 0) U_RETURN(true);
+      if (file_data->array != U_NULLPTR) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -1251,7 +1251,7 @@ template <> inline void u_destroy(const UHTTP::UFileCacheData* elem)
    if (UHashMap<void*>::istream_loading)
       {
       ((UHTTP::UFileCacheData*)elem)->ptr   =
-      ((UHTTP::UFileCacheData*)elem)->array = 0;
+      ((UHTTP::UFileCacheData*)elem)->array = U_NULLPTR;
       }
 
    delete elem;

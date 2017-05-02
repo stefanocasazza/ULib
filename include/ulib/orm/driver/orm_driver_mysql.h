@@ -315,7 +315,7 @@ public:
 class U_EXPORT UMySqlStatement : public USqlStatement {
 public:
 
-            UMySqlStatement(MYSQL_STMT* ptr, uint32_t nbind, uint32_t nresult) : USqlStatement(ptr, nbind, nresult) { string_type = 0; mysql_vparam = mysql_vresult = 0; }
+            UMySqlStatement(MYSQL_STMT* ptr, uint32_t nbind, uint32_t nresult) : USqlStatement(ptr, nbind, nresult) { string_type = 0; mysql_vparam = mysql_vresult = U_NULLPTR; }
    virtual ~UMySqlStatement()                                                                                       { reset(); }
 
    // SERVICES

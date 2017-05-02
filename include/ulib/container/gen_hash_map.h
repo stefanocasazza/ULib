@@ -98,8 +98,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UGenericHashMap, "", 0)
 
-      node  = 0;
-      table = 0;
+      node  = U_NULLPTR;
+      table = U_NULLPTR;
 
       _length = _capacity = index = hash = 0;
       }
@@ -142,7 +142,7 @@ public:
 
       lookup(_key);
 
-      if (node != 0) U_RETURN(true);
+      if (node != U_NULLPTR) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -174,7 +174,7 @@ public:
 
       U_INTERNAL_DUMP("node = %p", node)
 
-      UGenericHashMapNode* prev = 0;
+      UGenericHashMapNode* prev = U_NULLPTR;
 
       for (UGenericHashMapNode* pnode = table[index]; pnode; pnode = pnode->next)
          {
@@ -224,7 +224,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_EQUALS(node, 0)
+      U_INTERNAL_ASSERT_EQUALS(node, U_NULLPTR)
 
       /**
        * list self-organizing (move-to-front), we place before
@@ -359,7 +359,7 @@ public:
             if (min > width) min = width;
 #        endif
 
-            table[index] = 0;
+            table[index] = U_NULLPTR;
             }
          }
 
@@ -386,7 +386,7 @@ public:
             }
          }
 
-      U_RETURN_POINTER(0, UGenericHashMapNode);
+      U_RETURN_POINTER(U_NULLPTR, UGenericHashMapNode);
       }
 
    bool next()
@@ -430,7 +430,7 @@ public:
             }
          }
 
-      U_RETURN_POINTER(0, UGenericHashMapNode);
+      U_RETURN_POINTER(U_NULLPTR, UGenericHashMapNode);
       }
 
    // Call function for all entry
@@ -477,7 +477,7 @@ public:
          return UObjectIO::buffer_output;
          }
 
-      return 0;
+      return U_NULLPTR;
       }
 #endif
 
@@ -500,7 +500,7 @@ protected:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_MAJOR(_capacity,0)
+      U_INTERNAL_ASSERT_MAJOR(_capacity, 0)
 
       UMemoryPool::_free(table, _capacity, sizeof(UGenericHashMapNode*));
 

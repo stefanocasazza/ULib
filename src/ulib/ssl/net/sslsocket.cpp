@@ -75,13 +75,13 @@ USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool bserver) : USocke
       {
       if (bserver)
          {
-         if (sctx == 0) sctx = getServerContext();
+         if (sctx == U_NULLPTR) sctx = getServerContext();
 
          ctx = sctx;
          }
       else
          {
-         if (cctx == 0) cctx = getClientContext();
+         if (cctx == U_NULLPTR) cctx = getClientContext();
 
          ctx = cctx;
          }
@@ -97,7 +97,7 @@ USSLSocket::USSLSocket(bool bSocketIsIPv6, SSL_CTX* _ctx, bool bserver) : USocke
    SSL_CTX_up_ref(ctx);
 #endif
 
-   ssl = 0;
+   ssl = U_NULLPTR;
    ret = renegotiations = 0;
 
    U_socket_Type(this) |= USocket::SK_SSL;
@@ -146,7 +146,7 @@ SSL_CTX* USSLSocket::getContext(SSL_METHOD* method, bool bserver, long options)
 {
    U_TRACE(0, "USSLSocket::getContext(%p,%b,%ld)", method, bserver, options)
 
-   if (method == 0)
+   if (method == U_NULLPTR)
       {
       /**
        * Counter-intuitively, the OpenSSL folks have TLSv1_client_method() negotiate only TLSv1.0, and SSLv23_client_method()
@@ -352,16 +352,16 @@ bool USSLSocket::useDHFile(const char* dh_file)
     * the RSA private key
     */
 
-   DH* dh = 0;
+   DH* dh = U_NULLPTR;
 
    if ( dh_file &&
        *dh_file)
       {
       FILE* paramfile = (FILE*) U_SYSCALL(fopen, "%S,%S", dh_file, "r");
 
-      if (paramfile == 0) U_RETURN(false);
+      if (paramfile == U_NULLPTR) U_RETURN(false);
 
-      dh = (DH*) U_SYSCALL(PEM_read_DHparams, "%p,%p,%p,%p", paramfile, 0, 0, 0);
+      dh = (DH*) U_SYSCALL(PEM_read_DHparams, "%p,%p,%p,%p", paramfile, U_NULLPTR, U_NULLPTR, U_NULLPTR);
 
       (void) U_SYSCALL(fclose, "%p", paramfile);
       }
@@ -440,7 +440,7 @@ bool USSLSocket::useDHFile(const char* dh_file)
 #  endif
       }
 
-   if (dh == 0) U_RETURN(false);
+   if (dh == U_NULLPTR) U_RETURN(false);
 
    /*
 #ifdef DEBUG
@@ -594,8 +594,8 @@ bool USSLSocket::setContext(const char* dh_file, const char* cert_file, const ch
 #  endif
       }
 
-   if (CAfile && *CAfile == '\0') CAfile = 0;
-   if (CApath && *CApath == '\0') CApath = 0;
+   if (CAfile && *CAfile == '\0') CAfile = U_NULLPTR;
+   if (CApath && *CApath == '\0') CApath = U_NULLPTR;
 
    if (CAfile ||
        CApath)
@@ -900,7 +900,7 @@ bool USSLSocket::askForClientCertificate()
     * object that it is called on
     */
 
-   U_SYSCALL_VOID(SSL_set_verify, "%p,%d,%p", ssl, SSL_VERIFY_PEER_STRICT, 0); // | SSL_VERIFY_CLIENT_ONCE
+   U_SYSCALL_VOID(SSL_set_verify, "%p,%d,%p", ssl, SSL_VERIFY_PEER_STRICT, U_NULLPTR); // | SSL_VERIFY_CLIENT_ONCE
 
    // Stop the client from just resuming the un-authenticated session
 
@@ -955,7 +955,7 @@ bool USSLSocket::acceptSSL(USSLSocket* pcNewConnection)
 
    U_DUMP("fd = %d isBlocking() = %b", fd, pcNewConnection->isBlocking())
 
-   U_INTERNAL_ASSERT_EQUALS(ssl, 0)
+   U_INTERNAL_ASSERT_EQUALS(ssl, U_NULLPTR)
 
    ssl = (SSL*) U_SYSCALL(SSL_new, "%p", ctx);
 
@@ -982,7 +982,7 @@ loop:
       pcNewConnection->iState         = CONNECT;
       pcNewConnection->renegotiations = 0;
 
-      ssl = 0;
+      ssl = U_NULLPTR;
 
       U_RETURN(true);
       }
@@ -1008,7 +1008,7 @@ loop:
    errno = -pcNewConnection->iState;
 
    U_SYSCALL_VOID(SSL_free, "%p", ssl);
-                                  ssl = 0;
+                                  ssl = U_NULLPTR;
 
    pcNewConnection->USocket::_close_socket();
 
@@ -1048,7 +1048,7 @@ loop: ret = U_SYSCALL(SSL_shutdown, "%p", ssl); // Send SSL shutdown signal to p
          }
 
       U_SYSCALL_VOID(SSL_free, "%p", ssl);
-                                     ssl = 0;                
+                                     ssl = U_NULLPTR;
       }
 
    USocket::setSSLActive(false);
@@ -1197,7 +1197,7 @@ int USSLSocket::callback_ServerNameIndication(SSL* _ssl, int* alert, void* data)
 
    const char* servername = (const char*) U_SYSCALL(SSL_get_servername, "%p,%d", _ssl, TLSEXT_NAMETYPE_host_name);
 
-   if (servername == 0)
+   if (servername == U_NULLPTR)
       {
    // U_DEBUG("SSL: server name not provided via TLS extension");
 
@@ -1241,7 +1241,7 @@ bool USSLSocket::setDataForStapling()
 
    U_INTERNAL_ASSERT_POINTER(sctx)
 
-   if (staple.cert == 0) U_RETURN(false);
+   if (staple.cert == U_NULLPTR) U_RETURN(false);
 
    char* s;
    X509* issuer;
@@ -1287,9 +1287,9 @@ bool USSLSocket::setDataForStapling()
 
    store_ctx = (X509_STORE_CTX*) U_SYSCALL_NO_PARAM(X509_STORE_CTX_new); // create an X509 store context
 
-   if (store_ctx == 0) U_RETURN(false);
+   if (store_ctx == U_NULLPTR) U_RETURN(false);
 
-   if (U_SYSCALL(X509_STORE_CTX_init, "%p,%p,%p,%p", store_ctx, UServices::store, 0, 0) == 0) U_RETURN(false);
+   if (U_SYSCALL(X509_STORE_CTX_init, "%p,%p,%p,%p", store_ctx, UServices::store, U_NULLPTR, U_NULLPTR) == 0) U_RETURN(false);
 
    n = U_SYSCALL(X509_STORE_CTX_get1_issuer, "%p,%p,%p", &issuer, store_ctx, staple.cert);
 
@@ -1319,7 +1319,7 @@ next:
 
    aia = (STACK_OF(OPENSSL_STRING)*) U_SYSCALL(X509_get1_ocsp, "%p", staple.cert);
 
-   if (aia == 0) U_RETURN(false);
+   if (aia == U_NULLPTR) U_RETURN(false);
 
 #if OPENSSL_VERSION_NUMBER >= 0x10000000L
    s = sk_OPENSSL_STRING_value(aia, 0);
@@ -1337,30 +1337,30 @@ next:
          {
          U_INTERNAL_ASSERT_EQUALS(memcmp(s,"http://",7), 0)
 
-         staple.id = (OCSP_CERTID*) U_SYSCALL(OCSP_cert_to_id, "%p,%p,%p", 0, staple.cert, staple.issuer);
+         staple.id = (OCSP_CERTID*) U_SYSCALL(OCSP_cert_to_id, "%p,%p,%p", U_NULLPTR, staple.cert, staple.issuer);
 
-         if (staple.id == 0) U_RETURN(false);
+         if (staple.id == U_NULLPTR) U_RETURN(false);
 
          staple.req = OCSP_REQUEST_new();
 
-         if (U_SYSCALL(OCSP_request_add0_id, "%p,%p", staple.req, staple.id) == 0) U_RETURN(false);
+         if (U_SYSCALL(OCSP_request_add0_id, "%p,%p", staple.req, staple.id) == U_NULLPTR) U_RETURN(false);
 
-         if (ocsp_nonce) (void) U_SYSCALL(OCSP_request_add1_nonce, "%p,%p,%d", staple.req, 0, -1);
+         if (ocsp_nonce) (void) U_SYSCALL(OCSP_request_add1_nonce, "%p,%p,%d", staple.req, U_NULLPTR, -1);
 
-         if (staple.pkey) (void) U_SYSCALL(OCSP_request_sign, "%p,%p,%p,%p,%p,%ld", staple.req, staple.cert, staple.pkey, EVP_sha1(), 0, 0); // sign the request
+         if (staple.pkey) (void) U_SYSCALL(OCSP_request_sign, "%p,%p,%p,%p,%p,%ld", staple.req, staple.cert, staple.pkey, EVP_sha1(), U_NULLPTR, 0); // sign the request
 
          SSL_CTX_set_tlsext_status_cb(sctx, USSLSocket::OCSP_resp_callback);
 
          result = true;
 
-         U_INTERNAL_ASSERT_EQUALS(staple.url, 0)
-         U_INTERNAL_ASSERT_EQUALS(staple.client, 0)
-         U_INTERNAL_ASSERT_EQUALS(staple.request, 0)
+         U_INTERNAL_ASSERT_EQUALS(staple.url, U_NULLPTR)
+         U_INTERNAL_ASSERT_EQUALS(staple.client, U_NULLPTR)
+         U_INTERNAL_ASSERT_EQUALS(staple.request, U_NULLPTR)
 
          U_NEW(UString, staple.url,     UString((void*)s, len));
          U_NEW(UString, staple.request, UString(U_CAPACITY));
 
-         U_NEW(UHttpClient<UTCPSocket>, staple.client, UHttpClient<UTCPSocket>(0));
+         U_NEW(UHttpClient<UTCPSocket>, staple.client, UHttpClient<UTCPSocket>(U_NULLPTR));
 
 #     ifndef U_LOG_DISABLE
          if (UServer_Base::isLog()) staple.client->setLogShared();
@@ -1405,8 +1405,8 @@ uint32_t USSLSocket::doStapling()
 
    bool result = false;
    uint32_t tv_sec = 30;
-   OCSP_RESPONSE* ocsp = 0;
-   OCSP_BASICRESP* basic = 0;
+   OCSP_RESPONSE* ocsp = U_NULLPTR;
+   OCSP_BASICRESP* basic = U_NULLPTR;
 
    // send the request and get a response
 
@@ -1428,7 +1428,7 @@ uint32_t USSLSocket::doStapling()
 #  endif
       unsigned char* p = (const unsigned char*) response.data();
 
-      ocsp = d2i_OCSP_RESPONSE(0, &p, len);
+      ocsp = d2i_OCSP_RESPONSE(U_NULLPTR, &p, len);
 
       if (ocsp)
          {
@@ -1441,8 +1441,8 @@ uint32_t USSLSocket::doStapling()
          result = (rc == OCSP_RESPONSE_STATUS_SUCCESSFUL);
 
 #     ifdef DEBUG
-         const char* descr  = 0;
-         const char* errstr = 0;
+         const char* descr  = U_NULLPTR;
+         const char* errstr = U_NULLPTR;
 
          switch (rc)
             {
@@ -1498,7 +1498,7 @@ uint32_t USSLSocket::doStapling()
 
          basic = (OCSP_BASICRESP*) U_SYSCALL(OCSP_response_get1_basic, "%p", ocsp);
 
-         if (basic == 0)
+         if (basic == U_NULLPTR)
             {
             result = false;
 
@@ -1524,7 +1524,7 @@ uint32_t USSLSocket::doStapling()
             goto end;
             }
 
-         result = (U_SYSCALL(OCSP_resp_find_status, "%p,%p,%p,%p,%p,%p,%p", basic, staple.id, &status, 0, 0, &thisupdate, &nextupdate) == 1);
+         result = (U_SYSCALL(OCSP_resp_find_status, "%p,%p,%p,%p,%p,%p,%p", basic, staple.id, &status, U_NULLPTR, U_NULLPTR, &thisupdate, &nextupdate) == 1);
 
          if (result == false)
             {
@@ -1661,12 +1661,12 @@ void USSLSocket::cleanupStapling()
 // if (staple.id)     U_SYSCALL_VOID(OCSP_CERTID_free,  "%p", staple.id);
    if (staple.req)    U_SYSCALL_VOID(OCSP_REQUEST_free, "%p", staple.req);
 
-   staple.id     = 0;
-   staple.req    = 0;
-   staple.cert   = 0;
-   staple.pkey   = 0;
-   staple.issuer = 0;
-   staple.client = 0;
+   staple.id     = U_NULLPTR;
+   staple.req    = U_NULLPTR;
+   staple.cert   = U_NULLPTR;
+   staple.pkey   = U_NULLPTR;
+   staple.issuer = U_NULLPTR;
+   staple.client = U_NULLPTR;
 }
 #endif
 
@@ -1691,6 +1691,6 @@ const char* USSLSocket::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

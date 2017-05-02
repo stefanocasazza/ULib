@@ -24,22 +24,22 @@ TS_RESP* UTimeStamp::readTimeStampResponse(const UString& x)
 
    BIO* in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(x));
 
-   TS_RESP* _response = (TS_RESP*) U_SYSCALL(d2i_TS_RESP_bio, "%p,%p", in, 0);
+   TS_RESP* _response = (TS_RESP*) U_SYSCALL(d2i_TS_RESP_bio, "%p,%p", in, U_NULLPTR);
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
    U_RETURN_POINTER(_response,TS_RESP);
 }
 
-UTimeStamp::UTimeStamp(UString& request, const UString& TSA) : UPKCS7(0,0)
+UTimeStamp::UTimeStamp(UString& request, const UString& TSA) : UPKCS7(U_NULLPTR, U_NULLPTR)
 {
    U_TRACE_REGISTER_OBJECT(0, UTimeStamp, "%V,%V", request.rep, TSA.rep)
 
-   UHttpClient<USSLSocket> client(0);
+   UHttpClient<USSLSocket> client(U_NULLPTR);
 
    response = (client.sendPost(TSA, request, U_CONSTANT_TO_PARAM("application/timestamp-query"))
                      ? readTimeStampResponse(client.getContent())
-                     : 0);
+                     : U_NULLPTR);
 
    if (response) pkcs7 = (PKCS7*) TS_RESP_get_token(response);
 }
@@ -66,7 +66,7 @@ bool UTimeStamp::isTimeStampResponse(const UString& content)
 
    BIO* in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(content));
 
-   TS_RESP* _response = (TS_RESP*) U_SYSCALL(d2i_TS_RESP_bio, "%p,%p", in, 0);
+   TS_RESP* _response = (TS_RESP*) U_SYSCALL(d2i_TS_RESP_bio, "%p,%p", in, U_NULLPTR);
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
@@ -115,7 +115,7 @@ UString UTimeStamp::createQuery(int alg, const UString& content, const char* pol
 
    // Setting policy if requested
 
-   ASN1_OBJECT* policy_obj = 0;
+   ASN1_OBJECT* policy_obj = U_NULLPTR;
 
    if (policy)
       {
@@ -130,7 +130,7 @@ UString UTimeStamp::createQuery(int alg, const UString& content, const char* pol
       {
       static ASN1_INTEGER* nonce;
 
-      if (nonce == 0)
+      if (nonce == U_NULLPTR)
          {
          static unsigned char buffer[8]; // Length of the nonce of the request in bits (must be a multiple of 8)
 
@@ -177,7 +177,7 @@ UString UTimeStamp::getTimeStampToken(int alg, const UString& data, const UStrin
 
    U_INTERNAL_ASSERT(url)
 
-   UString token, request = createQuery(alg, data, 0, false, false);
+   UString token, request = createQuery(alg, data, U_NULLPTR, false, false);
 
    UTimeStamp ts(request, url);
 
@@ -203,6 +203,6 @@ const char* UTimeStamp::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

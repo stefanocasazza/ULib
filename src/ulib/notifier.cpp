@@ -286,12 +286,12 @@ next:
       }
 #endif
 
-   if (lo_map_fd == 0)
+   if (lo_map_fd == U_NULLPTR)
       {
       createMapFd();
 
 #ifdef HAVE_EPOLL_WAIT
-      U_INTERNAL_ASSERT_EQUALS(events, 0)
+      U_INTERNAL_ASSERT_EQUALS(events, U_NULLPTR)
 
        events =
       pevents = (struct epoll_event*) UMemoryPool::_malloc(max_connection+1, sizeof(struct epoll_event), true);
@@ -668,7 +668,7 @@ loop:
    waitForEvent(ptimeout = UTimer::getTimeout());
 
    if (nfd_ready == 0 &&
-       ptimeout  != 0)
+       ptimeout  != U_NULLPTR)
       {
       U_INTERNAL_ASSERT_EQUALS(UTimer::first->alarm, ptimeout)
 
@@ -687,9 +687,9 @@ void UNotifier::createMapFd()
 {
    U_TRACE_NO_PARAM(0, "UNotifier::createMapFd()")
 
-   U_INTERNAL_ASSERT_EQUALS(lo_map_fd, 0)
-   U_INTERNAL_ASSERT_EQUALS(hi_map_fd, 0)
    U_INTERNAL_ASSERT_MAJOR(max_connection, 0)
+   U_INTERNAL_ASSERT_EQUALS(lo_map_fd, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(hi_map_fd, U_NULLPTR)
 
    lo_map_fd_len = 20+max_connection;
    lo_map_fd     = (UEventFd**) UMemoryPool::_malloc(&lo_map_fd_len, sizeof(UEventFd*), true);
@@ -716,7 +716,7 @@ bool UNotifier::isHandler(int fd)
       U_INTERNAL_ASSERT_POINTER(lo_map_fd)
       U_INTERNAL_ASSERT_POINTER(hi_map_fd)
 
-      if (fd < (int32_t)lo_map_fd_len) result = (lo_map_fd[fd] != 0);
+      if (fd < (int32_t)lo_map_fd_len) result = (lo_map_fd[fd] != U_NULLPTR);
       else
          {
          lock();
@@ -958,7 +958,7 @@ void UNotifier::handlerDelete(int fd, int mask)
 
    U_INTERNAL_ASSERT_MAJOR(fd, 0)
 
-   if (fd < (int32_t)lo_map_fd_len) lo_map_fd[fd] = 0;
+   if (fd < (int32_t)lo_map_fd_len) lo_map_fd[fd] = U_NULLPTR;
    else
       {
       lock();
@@ -1072,7 +1072,7 @@ void UNotifier::clear()
 
    U_INTERNAL_DUMP("lo_map_fd = %p", lo_map_fd)
 
-   if (lo_map_fd == 0) return;
+   if (lo_map_fd == U_NULLPTR) return;
 
    U_INTERNAL_ASSERT_POINTER(hi_map_fd)
    U_INTERNAL_ASSERT_MAJOR(max_connection, 0)
@@ -1517,6 +1517,6 @@ const char* UNotifier::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

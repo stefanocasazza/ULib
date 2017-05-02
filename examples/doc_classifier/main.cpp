@@ -39,7 +39,7 @@ public:
 
       // EXTENSION
 
-      (void) UServices::setupOpenSSLStore(0, str_CApath.c_str());
+      (void) UServices::setupOpenSSLStore(U_NULLPTR, str_CApath.c_str());
 
       // NORMAL
 

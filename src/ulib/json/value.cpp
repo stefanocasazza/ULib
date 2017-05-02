@@ -197,7 +197,7 @@ __pure UValue* UValue::at(uint32_t pos) const
          }
       }
 
-   U_RETURN_POINTER(0, UValue);
+   U_RETURN_POINTER(U_NULLPTR, UValue);
 }
 
 __pure UValue* UValue::at(const char* key, uint32_t key_len) const
@@ -224,7 +224,7 @@ __pure UValue* UValue::at(const char* key, uint32_t key_len) const
          }
       }
 
-   U_RETURN_POINTER(0, UValue);
+   U_RETURN_POINTER(U_NULLPTR, UValue);
 }
 
 uint32_t UValue::getMemberNames(UVector<UString>& members) const
@@ -991,7 +991,7 @@ case_zero:
          {
 zero:    if (c == '.') goto case_number;
 
-         o.ival = getJsonValue(UINT_VALUE, 0);
+         o.ival = getJsonValue(UINT_VALUE, U_NULLPTR);
 
          goto next;
          }
@@ -1130,7 +1130,7 @@ exp:     if (u__issign((c = *++s))) ++s;
          U_INTERNAL_DUMP("exponent = %u significandDigit = %u", exponent, significandDigit)
 
          // Use fast path for string-to-double conversion if possible
-         // see http://www.exploringbinary.com/fast-path-decimal-to-floating-point-conversion/
+         // @see http://www.exploringbinary.com/fast-path-decimal-to-floating-point-conversion/
 
          if (c == '-')
             {
@@ -1181,7 +1181,7 @@ noreal:
 
          U_INTERNAL_DUMP("value(%.*S) = %u", s-start, start, (uint32_t)integerPart)
 
-         U_INTERNAL_ASSERT_EQUALS((uint32_t)integerPart, ::strtoul(start, 0, 10))
+         U_INTERNAL_ASSERT_EQUALS((uint32_t)integerPart, ::strtoul(start, U_NULLPTR, 10))
          }
       else
          {
@@ -1198,7 +1198,7 @@ noreal:
 
          U_INTERNAL_DUMP("value(%.*S) = %d", s-(start-1), start-1, -(int32_t)integerPart)
 
-         U_INTERNAL_ASSERT_EQUALS(-(int32_t)integerPart, ::strtol(start-1, 0, 10))
+         U_INTERNAL_ASSERT_EQUALS(-(int32_t)integerPart, ::strtol(start-1, U_NULLPTR, 10))
          }
 
       goto next;
@@ -1229,7 +1229,7 @@ mreal1:
 
       if (minus) --start;
 
-      tmp = ::strtod(start, 0);
+      tmp = ::strtod(start, U_NULLPTR);
 #  endif
 
       o.real = minus ? (minus = false, -val) : val;
@@ -1272,7 +1272,7 @@ case_svector:
          U_INTERNAL_ASSERT_MINOR(pos, U_JSON_PARSE_STACK_SIZE)
 
          sd[pos].keys  = 0;
-         sd[pos].tails = 0;
+         sd[pos].tails = U_NULLPTR;
          sd[pos].tags  = false;
 
          comma     = false;
@@ -1283,7 +1283,7 @@ case_svector:
 
       ++s;
 
-      o.ival = listToValue(ARRAY_VALUE, 0);
+      o.ival = listToValue(ARRAY_VALUE, U_NULLPTR);
 
       goto next;
 
@@ -1304,7 +1304,7 @@ case_evector:
 case_false:
       if (u_get_unalignedp32(s) == U_MULTICHAR_CONSTANT32('a','l','s','e'))
          {
-         o.ival = getJsonValue(FALSE_VALUE, 0);
+         o.ival = getJsonValue(FALSE_VALUE, U_NULLPTR);
 
          s = start+U_CONSTANT_SIZE("false");
 
@@ -1316,7 +1316,7 @@ case_false:
 case_null:
       if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('n','u','l','l'))
          {
-         o.ival = getJsonValue(NULL_VALUE, 0);
+         o.ival = getJsonValue(NULL_VALUE, U_NULLPTR);
 
          s = start+U_CONSTANT_SIZE("null");
 
@@ -1328,7 +1328,7 @@ case_null:
 case_true:
       if (u_get_unalignedp32(start) == U_MULTICHAR_CONSTANT32('t','r','u','e'))
          {
-         o.ival = getJsonValue(TRUE_VALUE, 0);
+         o.ival = getJsonValue(TRUE_VALUE, U_NULLPTR);
 
          s = start+U_CONSTANT_SIZE("true");
 
@@ -1347,7 +1347,7 @@ case_sobject:
          U_INTERNAL_ASSERT_MINOR(pos, U_JSON_PARSE_STACK_SIZE)
 
          sd[pos].keys  = 0;
-         sd[pos].tails = 0;
+         sd[pos].tails = U_NULLPTR;
          sd[pos].tags  = true;
 
          comma     = false;
@@ -1358,12 +1358,12 @@ case_sobject:
 
       ++s;
 
-      o.ival = listToValue(OBJECT_VALUE, 0);
+      o.ival = listToValue(OBJECT_VALUE, U_NULLPTR);
 
       goto next;
 
 case_eobject:
-      U_INTERNAL_DUMP("eobject: comma = %b colon = %b separator = %b sd[%d].tags = %b sd[%d].tails = %p separator = %b", comma, colon, separator, pos, sd[pos].tags, pos, sd[pos].tails)
+      U_INTERNAL_DUMP("eobject: comma = %b colon = %b separator = %b sd[%d].tags = %b sd[%d].tails = %p", comma, colon, separator, pos, sd[pos].tags, pos, sd[pos].tails)
 
       if (comma        ||
           pos == -1    ||
@@ -1906,7 +1906,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
                   U_INTERNAL_DUMP("index = %u", index)
 
-                  U_INTERNAL_ASSERT_EQUALS(index, ::strtol(start, 0, 10))
+                  U_INTERNAL_ASSERT_EQUALS(index, ::strtol(start, U_NULLPTR, 10))
                   }
                break;
 
@@ -2060,7 +2060,7 @@ int UValue::jread(const UString& json, const UString& query, UString& result, ui
 
             U_INTERNAL_DUMP("index = %u", index)
 
-            U_INTERNAL_ASSERT_EQUALS(index, ::strtol(start, 0, 10))
+            U_INTERNAL_ASSERT_EQUALS(index, ::strtol(start, U_NULLPTR, 10))
             }
 
          count = 0;
@@ -2314,7 +2314,7 @@ const char* UValue::dump(bool _reset) const
       }
 #endif
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UJsonTypeHandler_Base::dump(bool _reset) const
@@ -2330,7 +2330,6 @@ const char* UJsonTypeHandler_Base::dump(bool _reset) const
       }
 #endif
 
-   return 0;
+   return U_NULLPTR;
 }
-
 #endif

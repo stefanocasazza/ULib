@@ -63,7 +63,7 @@ public:
 
    // This routine returns the rowid of the most recent successful INSERT into the database
 
-   unsigned long long last_insert_rowid(const char* sequence = 0);
+   unsigned long long last_insert_rowid(const char* sequence = U_NULLPTR);
 
    // STREAM
 
@@ -217,7 +217,7 @@ public:
 
    // This routine returns the rowid of the most recent successful INSERT into the database
 
-   unsigned long long last_insert_rowid(const char* sequence = 0);
+   unsigned long long last_insert_rowid(const char* sequence = U_NULLPTR);
 
    // Get number of columns in the row
 
@@ -499,7 +499,7 @@ inline void UOrmStatement::into(T1& r1, T2& r2, T3& r3, T4& r4, T5& r5, T6& r6, 
 
 template <> class U_EXPORT UOrmTypeHandler<null> : public UOrmTypeHandler_Base {
 public:
-   explicit UOrmTypeHandler(null& val) : UOrmTypeHandler_Base(0) {}
+   explicit UOrmTypeHandler(null& val) : UOrmTypeHandler_Base(U_NULLPTR) {}
 
    void bindParam(UOrmStatement* stmt)
       {

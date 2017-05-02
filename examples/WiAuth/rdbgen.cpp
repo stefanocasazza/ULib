@@ -58,7 +58,7 @@ public:
 
       const char* method = argv[optind++];
 
-      if (method == 0) U_ERROR("<number_of_command> argument is missing");
+      if (method == U_NULLPTR) U_ERROR("<number_of_command> argument is missing");
 
       if (u__isdigit(*method) == false) U_ERROR("<number_of_command> argument is not numeric");
 
@@ -66,7 +66,7 @@ public:
 
       if (x.open(10 * 1024 * 1024, false, op == 6, true)) // bool open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool breference)
          {
-         if (method[1] == 's') x.setShared(0,0); // POSIX shared memory object (interprocess - can be used by unrelated processes)
+         if (method[1] == 's') x.setShared(U_NULLPTR,U_NULLPTR); // POSIX shared memory object (interprocess - can be used by unrelated processes)
          else                  x.resetReference();
 
          switch (op)

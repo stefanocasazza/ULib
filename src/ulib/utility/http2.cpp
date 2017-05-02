@@ -134,7 +134,7 @@ UHTTP2::Connection::Connection() : itable(53, setIndexStaticTable)
    reset();
 
    state      = CONN_STATE_IDLE; 
-   bug_client = 0;
+   bug_client = U_NULLPTR;
 
    (void) memset(&idyntbl, 0, sizeof(HpackDynamicTable));
    (void) memset(&odyntbl, 0, sizeof(HpackDynamicTable));
@@ -776,8 +776,8 @@ void UHTTP2::addHpackDynTblEntry(HpackDynamicTable* dyntbl, const UString& name,
 
    HpackHeaderTableEntry* entry = dyntbl->entries + dyntbl->entry_start_index;
 
-   U_INTERNAL_ASSERT_EQUALS(entry->name, 0)
-   U_INTERNAL_ASSERT_EQUALS(entry->value, 0)
+   U_INTERNAL_ASSERT_EQUALS(entry->name, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(entry->value, U_NULLPTR)
 
    // NB: we increases the reference string...
 
@@ -2840,6 +2840,8 @@ loop1:
       return;
       }
 
+   U_DEBUG("UHTTP2::writeData(%p,%b,%b) - User-Agent: = %.*S", iov, bdata, flag, U_HTTP_USER_AGENT_TO_TRACE)
+
    uint32_t iovcnt, count;
    struct iovec iov_vec[1024];
 
@@ -3818,7 +3820,7 @@ void UHTTP2::clearHpackDynTbl(HpackDynamicTable* dyntbl)
          entry->value->release();
 
          entry->name  =
-         entry->value = 0;
+         entry->value = U_NULLPTR;
 
          if (++index == dyntbl->entry_capacity) index = 0;
 
@@ -4015,6 +4017,6 @@ U_EXPORT const char* UHTTP2::Connection::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

@@ -135,7 +135,7 @@ public:
     * @param ns_prefix The namespace prefix
     */
 
-   bool setNameSpace(const xmlChar* ns_prefix = 0)
+   bool setNameSpace(const xmlChar* ns_prefix = U_NULLPTR)
       {
       U_TRACE(1, "UXML2Node::setNameSpace(%S)", ns_prefix)
 
@@ -158,7 +158,7 @@ public:
    * @param ns_prefix The namespace prefix. If no prefix is specified then the namespace URI will be the default namespace
    */
 
-   void setNameSpaceDeclaration(const char* ns_uri, const char* ns_prefix = 0)
+   void setNameSpaceDeclaration(const char* ns_uri, const char* ns_prefix = U_NULLPTR)
       {
       U_TRACE(1, "UXML2Node::setNameSpaceDeclaration(%S,%S)", ns_uri, ns_prefix)
 
@@ -202,9 +202,9 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 
-      bool result = (xmlStrEqual(impl_->name, name) && xmlStrEqual(getNameSpaceUri(), ns));
+      if (xmlStrEqual(impl_->name, name) && xmlStrEqual(getNameSpaceUri(), ns)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    static bool checkNodeName(xmlNodePtr node, const xmlChar* name, const xmlChar* ns);
@@ -223,7 +223,7 @@ public:
     * @returns The parent node
     */
 
-   xmlNodePtr getParent() const { return (impl_->parent && impl_->parent->type == XML_ELEMENT_NODE ? impl_->parent : 0); }
+   xmlNodePtr getParent() const { return (impl_->parent && impl_->parent->type == XML_ELEMENT_NODE ? impl_->parent : U_NULLPTR); }
 
    /**
     * Get the next sibling for this node.
@@ -268,13 +268,13 @@ public:
     * @returns The newly-created element
     */
 
-   xmlNodePtr addChild(const xmlChar* name, const xmlChar* ns_prefix = 0)
+   xmlNodePtr addChild(const xmlChar* name, const xmlChar* ns_prefix = U_NULLPTR)
       {
       U_TRACE(1, "UXML2Node::addChild(%S,%S)", name, ns_prefix)
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 
-      xmlNodePtr node  = 0;
+      xmlNodePtr node  = U_NULLPTR;
       xmlNodePtr child = createNewChildNode(name, ns_prefix);
 
       if (child) node = (xmlNodePtr) U_SYSCALL(xmlAddChild, "%p,%p", impl_, child);
@@ -292,13 +292,13 @@ public:
     * @returns The newly-created element
     */
 
-   xmlNodePtr addChild(xmlNodePtr previous_sibling, const xmlChar* name, const xmlChar* ns_prefix = 0)
+   xmlNodePtr addChild(xmlNodePtr previous_sibling, const xmlChar* name, const xmlChar* ns_prefix = U_NULLPTR)
       {
       U_TRACE(1, "UXML2Node::addChild(%p,%S,%S)", previous_sibling, name, ns_prefix)
 
       U_INTERNAL_ASSERT_POINTER(previous_sibling)
 
-      xmlNodePtr node  = 0;
+      xmlNodePtr node  = U_NULLPTR;
       xmlNodePtr child = createNewChildNode(name, ns_prefix);
 
       if (child) node = (xmlNodePtr) U_SYSCALL(xmlAddNextSibling, "%p,%p", previous_sibling, child);
@@ -316,13 +316,13 @@ public:
     * @returns The newly-created element
     */
 
-   xmlNodePtr addChildBefore(xmlNodePtr next_sibling, const xmlChar* name, const xmlChar* ns_prefix = 0)
+   xmlNodePtr addChildBefore(xmlNodePtr next_sibling, const xmlChar* name, const xmlChar* ns_prefix = U_NULLPTR)
       {
       U_TRACE(1, "UXML2Node::addChildBefore(%p,%S,%S)", next_sibling, name, ns_prefix)
 
       U_INTERNAL_ASSERT_POINTER(next_sibling)
 
-      xmlNodePtr node  = 0;
+      xmlNodePtr node  = U_NULLPTR;
       xmlNodePtr child = createNewChildNode(name, ns_prefix);
 
       if (child) node = (xmlNodePtr) U_SYSCALL(xmlAddPrevSibling, "%p,%p", next_sibling, child);
@@ -441,7 +441,7 @@ protected:
 
    // Create the C instance ready to be added to the parent node
 
-   xmlNodePtr createNewChildNode(const xmlChar* name, const xmlChar* ns_prefix = 0);
+   xmlNodePtr createNewChildNode(const xmlChar* name, const xmlChar* ns_prefix = U_NULLPTR);
 
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UXML2Node)

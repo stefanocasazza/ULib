@@ -36,7 +36,7 @@ HttpField* HttpHeader::add(HttpField* field, unsigned index)
          }
       else
          {
-         U_RETURN_POINTER(0, HttpField);
+         U_RETURN_POINTER(U_NULLPTR, HttpField);
          }
       }
    else
@@ -66,7 +66,7 @@ __pure HttpField* HttpHeader::find(const UString& name, unsigned index)
          }
       }
 
-   U_RETURN_POINTER(0, HttpField);
+   U_RETURN_POINTER(U_NULLPTR, HttpField);
 }
 
 HttpField* HttpHeader::del(const UString& name, unsigned index)
@@ -92,7 +92,7 @@ HttpField* HttpHeader::del(const UString& name, unsigned index)
          }
       }
 
-   U_RETURN_POINTER(0, HttpField);
+   U_RETURN_POINTER(U_NULLPTR, HttpField);
 }
 
 HttpField* HttpHeader::del(HttpField* field)
@@ -111,7 +111,7 @@ HttpField* HttpHeader::del(HttpField* field)
          }
       }
 
-   U_RETURN_POINTER(0, HttpField);
+   U_RETURN_POINTER(U_NULLPTR, HttpField);
 }
 
 void HttpHeader::stringify(UString& field)
@@ -164,6 +164,6 @@ const char* HttpHeader::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

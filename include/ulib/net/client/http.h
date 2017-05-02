@@ -166,7 +166,7 @@ public:
    UString getSetCookie() const   { return setcookie; }
    UString getLastRequest() const { return last_request; }
 
-   bool upload(const UString& url, UFile& file, const char* filename = 0, uint32_t filename_len = 0, int method = 2); // 2 => POST
+   bool upload(const UString& url, UFile& file, const char* filename = U_NULLPTR, uint32_t filename_len = 0, int method = 2); // 2 => POST
 
    // DEBUG
 
@@ -186,14 +186,14 @@ protected:
 
    bool sendRequestEngine();
    bool parseRequest(uint32_t n);
-   void composeRequest(const char* content_type = 0, uint32_t content_type_len = 0);
    int  sendRequestAsync(const UString& url, bool bqueue, const char* log_msg, int log_fd);
+   void composeRequest(const char* content_type = U_NULLPTR, uint32_t content_type_len = 0);
    bool sendRequest(int method, const char* content_type, uint32_t content_type_len, const char* data, uint32_t data_len, const char* uri, uint32_t uri_len);
 
    // Add the MIME-type headers to the request for HTTP server
 
    static UString wrapRequest(UString* req, const UString& host_port, uint32_t method_num,
-                              const char* uri, uint32_t uri_len, const char* extension, const char* content_type = 0, uint32_t content_type_len = 0);
+                              const char* uri, uint32_t uri_len, const char* extension, const char* content_type = U_NULLPTR, uint32_t content_type_len = 0);
 
    // In response to a HTTP_UNAUTHORISED response from the HTTP server, this function will attempt to generate an Authentication header to satisfy the server
 
@@ -209,7 +209,7 @@ protected:
       else                 requestHeader->setHeader(U_CONSTANT_TO_PARAM("Proxy-Authorization"), headerValue);
       }
 
-    UHttpClient_Base(UFileConfig* _cfg = 0);
+    UHttpClient_Base(UFileConfig* _cfg = U_NULLPTR);
    ~UHttpClient_Base()
       {
       U_TRACE_UNREGISTER_OBJECT(0, UHttpClient_Base)

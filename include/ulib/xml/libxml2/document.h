@@ -105,7 +105,7 @@ public:
       U_RETURN_POINTER(dtd,_xmlDtd);
       }
 
-   xmlDtdPtr setInternalSubset(const char* name, const char* external_id = 0, const char* system_id = 0)
+   xmlDtdPtr setInternalSubset(const char* name, const char* external_id = U_NULLPTR, const char* system_id = U_NULLPTR)
       {
       U_TRACE(1, "UXML2Document::setInternalSubset(%S,%S,%S)", name, external_id, system_id)
 
@@ -148,13 +148,13 @@ public:
     * @return A pointer to the new root node
     */
 
-   xmlNodePtr createRootNode(const char* name, const char* ns_uri = 0, const char* ns_prefix = 0)
+   xmlNodePtr createRootNode(const char* name, const char* ns_uri = U_NULLPTR, const char* ns_prefix = U_NULLPTR)
       {
       U_TRACE(1, "UXML2Document::setInternalSubset(%S,%S,%S)", name, ns_uri, ns_prefix)
 
       U_INTERNAL_ASSERT_POINTER(impl_)
 
-      xmlNodePtr node = (xmlNodePtr) U_SYSCALL(xmlNewDocNode, "%p,%p,%S,%S", impl_, 0, (const xmlChar*)name, 0);
+      xmlNodePtr node = (xmlNodePtr) U_SYSCALL(xmlNewDocNode, "%p,%p,%S,%S", impl_, U_NULLPTR, (const xmlChar*)name, U_NULLPTR);
 
       U_SYSCALL_VOID(xmlDocSetRootElement, "%p,%p", impl_, node);
 
@@ -282,7 +282,7 @@ public:
     *                  but may insert unwanted significant whitespaces. Use with care !
     */
 
-   bool writeToFile(const char* filename, const char* encoding = 0, bool formatted = false);
+   bool writeToFile(const char* filename, const char* encoding = U_NULLPTR, bool formatted = false);
 
    /**
     * Write the document to the memory.
@@ -294,7 +294,7 @@ public:
     * @return The written document
     */
 
-   xmlChar* writeToString(int& length, const char* encoding = 0, bool formatted = false);
+   xmlChar* writeToString(int& length, const char* encoding = U_NULLPTR, bool formatted = false);
 
    /**
     * Canonical XML implementation (http://www.w3.org/TR/2001/REC-xml-c14n-20010315)
@@ -306,8 +306,8 @@ public:
     * }
     */
 
-          UString xmlC14N(                     int mode = 2, int with_comments = 0, unsigned char** inclusive_namespaces = 0);
-   static UString xmlC14N(const UString& data, int mode = 2, int with_comments = 0, unsigned char** inclusive_namespaces = 0);
+          UString xmlC14N(                     int mode = 2, int with_comments = 0, unsigned char** inclusive_namespaces = U_NULLPTR);
+   static UString xmlC14N(const UString& data, int mode = 2, int with_comments = 0, unsigned char** inclusive_namespaces = U_NULLPTR);
 
    // Access the underlying libxml2 implementation.
 

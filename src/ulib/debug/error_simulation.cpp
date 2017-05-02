@@ -63,7 +63,7 @@ void USimulationError::init()
 
             if (file_size)
                {
-               file_mem = (char*) mmap(0, file_size, PROT_READ, MAP_SHARED, fd, 0);
+               file_mem = (char*) mmap(U_NULLPTR, file_size, PROT_READ, MAP_SHARED, fd, 0);
 
                if (file_mem == MAP_FAILED) file_size = 0;
                }
@@ -202,5 +202,5 @@ void* USimulationError::checkForMatch(const char* call_name)
          }
       }
 
-   return 0;
+   return U_NULLPTR;
 }

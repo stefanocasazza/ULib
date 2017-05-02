@@ -29,7 +29,7 @@ public:
          {
          bool bnew = false;
 
-         if (Messaggio::msg == 0)
+         if (Messaggio::msg == U_NULLPTR)
             {
             bnew = true;
 
@@ -39,7 +39,7 @@ public:
             {
             bnew = true;
 
-            if (Messaggio::msg->isAnomalia()) reportAnomalie(0, Messaggio::msg);
+            if (Messaggio::msg->isAnomalia()) reportAnomalie(U_NULLPTR, Messaggio::msg);
 
             delete Messaggio::msg;
 
@@ -65,7 +65,7 @@ public:
       {
       U_TRACE(5, "Application::end()")
 
-      if (Messaggio::msg && Messaggio::msg->isAnomalia()) reportAnomalie(0, Messaggio::msg);
+      if (Messaggio::msg && Messaggio::msg->isAnomalia()) reportAnomalie(U_NULLPTR, Messaggio::msg);
 
       PEC_report_anomalie::end();
       }

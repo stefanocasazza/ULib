@@ -57,8 +57,8 @@ public:
       {
       U_TRACE(0, "USOAPObject::loadGenericMethod(%p)", file_method)
 
-      U_INTERNAL_ASSERT_EQUALS(dispatcher,0)
-      U_INTERNAL_ASSERT_EQUALS(URPCMethod::encoder,0)
+      U_INTERNAL_ASSERT_EQUALS(dispatcher, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(URPCMethod::encoder, U_NULLPTR)
 
       U_NEW(USOAPObject, dispatcher, USOAPObject);
       U_NEW(USOAPEncoder, URPCMethod::encoder, USOAPEncoder);

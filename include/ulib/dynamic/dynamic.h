@@ -67,8 +67,8 @@ public:
       U_TRACE_NO_PARAM(0, "UDynamic::UDynamic()")
 
       err    = "none";
-      addr   = 0;
-      handle = 0;
+      addr   = U_NULLPTR;
+      handle = U_NULLPTR;
       }
 
    ~UDynamic()

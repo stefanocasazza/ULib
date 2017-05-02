@@ -56,7 +56,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UModNoCatPeer::init()")
 
-      next = 0;
+      next = U_NULLPTR;
 
       ctime        = connected = expire = u_now->tv_sec;
       ctraffic     = time_no_traffic    = time_remain = logout = 0L;
@@ -267,7 +267,7 @@ protected:
       {
       U_TRACE(0, "UNoCatPlugIn::sendMsgToAllPortal(%V)", msg.rep)
 
-      for (uint32_t i = 0, n = vauth_url->size(); i < n; ++i) sendMsgToPortal(i, msg, 0);
+      for (uint32_t i = 0, n = vauth_url->size(); i < n; ++i) sendMsgToPortal(i, msg, U_NULLPTR);
       }
 
    static bool isPingAsyncPending()
@@ -276,8 +276,8 @@ protected:
 
       U_INTERNAL_DUMP("check_type = %B nfds = %u paddrmask = %p", check_type, nfds, paddrmask)
 
-      if (nfds           &&
-          paddrmask == 0 &&
+      if (nfds                   &&
+          paddrmask == U_NULLPTR &&
           ((check_type & U_CHECK_ARP_PING) != 0))
          {
          U_DEBUG("Pending arping in process (%u), waiting for completion...", nfds);
@@ -298,7 +298,7 @@ protected:
 
       peer->fw.setArgument(3, (type == UModNoCatPeer::PEER_PERMIT ? "permit" : "deny"));
 
-      (void) peer->fw.executeAndWait(0, -1, fd_stderr);
+      (void) peer->fw.executeAndWait(U_NULLPTR, -1, fd_stderr);
 
 #  ifndef U_LOG_DISABLE
       UServer_Base::logCommandMsgError(peer->fw.getCommand(), false);
@@ -331,7 +331,7 @@ protected:
 
       command.snprintf(U_CONSTANT_TO_PARAM("/bin/sh %v deny %v %v Member 0 0"), script.rep, mac.rep, ip.rep);
 
-      cmd.set(command, (char**)0);
+      cmd.set(command, (char**)U_NULLPTR);
       cmd.setEnvironment(fw_env);
       }
 

@@ -251,7 +251,7 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 #ifdef HAVE_GETADDRINFO
    int gai_err;
    struct addrinfo hints;
-   struct addrinfo* result = 0;
+   struct addrinfo* result = U_NULLPTR;
 
    // -----------------------------------------------------------------
    // setup hints structure
@@ -276,7 +276,7 @@ bool UIPAddress::setHostName(const UString& pcNewHostName, bool bIPv6)
 
    // get our address
 
-   gai_err = U_SYSCALL(getaddrinfo, "%S,%p,%p,%p", name, 0, &hints, &result);
+   gai_err = U_SYSCALL(getaddrinfo, "%S,%p,%p,%p", name, U_NULLPTR, &hints, &result);
 
    if (gai_err != 0)
       {
@@ -395,7 +395,7 @@ char* UIPAddress::resolveStrAddress(int iAddressType, const void* src, char* ip)
 {
    U_TRACE(1, "UIPAddress::resolveStrAddress(%d,%p,%p)", iAddressType, src, ip)
 
-   char* result = 0;
+   char* result = U_NULLPTR;
 
 #ifdef HAVE_INET_NTOP
    result = (char*) U_SYSCALL(inet_ntop, "%d,%p,%p,%u", iAddressType, (void*)src, ip, U_INET_ADDRSTRLEN);
@@ -448,7 +448,7 @@ void UIPAddress::resolveHostName()
 
       sockadd.setIPAddress(*this);
 
-      int gai_err = U_SYSCALL(getnameinfo, "%p,%d,%p,%d,%p,%d,%d", (const sockaddr*)sockadd, sockadd.sizeOf(), hbuf, sizeof(hbuf), 0, 0, 0);
+      int gai_err = U_SYSCALL(getnameinfo, "%p,%d,%p,%d,%p,%d,%d", (const sockaddr*)sockadd, sockadd.sizeOf(), hbuf, sizeof(hbuf), U_NULLPTR, 0, 0);
 
       if (gai_err)
          {
@@ -480,7 +480,7 @@ void UIPAddress::resolveHostName()
 
       IPADDR_TO_HOST(pheDetails, pcAddress.p, iAddressLength, iAddressType);
 
-      if (pheDetails == 0)
+      if (pheDetails == U_NULLPTR)
          {
          if (U_ipaddress_StrAddressUnresolved(this)) resolveStrAddress();
 
@@ -886,7 +886,7 @@ bool UIPAddress::setBroadcastAddress(uusockaddr& addr, const UString& ifname)
       {
       for (struct ifaddrs* ifa = ifaddr; ifa; ifa = ifa->ifa_next)
          {
-         if (ifa->ifa_addr == 0) continue;
+         if (ifa->ifa_addr == U_NULLPTR) continue;
 
          int family = ifa->ifa_addr->sa_family;
 
@@ -907,7 +907,7 @@ bool UIPAddress::setBroadcastAddress(uusockaddr& addr, const UString& ifname)
 
 #        if defined(DEBUG) && defined(HAVE_GETNAMEINFO)
             char host[NI_MAXHOST];
-            int gai_err = U_SYSCALL(getnameinfo, "%p,%d,%p,%d,%p,%d,%d", ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, 0, 0, NI_NUMERICHOST);
+            int gai_err = U_SYSCALL(getnameinfo, "%p,%d,%p,%d,%p,%d,%d", ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, U_NULLPTR, 0, NI_NUMERICHOST);
 
             if (gai_err)
                {
@@ -955,7 +955,7 @@ bool UIPAllow::getNetworkInterface(UVector<UIPAllow*>& vipallow)
 
       for (struct ifaddrs* ifa = ifaddr; ifa; ifa = ifa->ifa_next)
          {
-         if (ifa->ifa_addr == 0) continue;
+         if (ifa->ifa_addr == U_NULLPTR) continue;
 
          int family = ifa->ifa_addr->sa_family;
 
@@ -970,7 +970,7 @@ bool UIPAllow::getNetworkInterface(UVector<UIPAllow*>& vipallow)
              u_get_unalignedp16(ifa->ifa_name) != U_MULTICHAR_CONSTANT16('l','o')) // Name of interface
             {
             char host[NI_MAXHOST];
-            int gai_err = U_SYSCALL(getnameinfo, "%p,%d,%p,%d,%p,%d,%d", ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, 0, 0, NI_NUMERICHOST);
+            int gai_err = U_SYSCALL(getnameinfo, "%p,%d,%p,%d,%p,%d,%d", ifa->ifa_addr, sizeof(struct sockaddr_in), host, NI_MAXHOST, U_NULLPTR, 0, NI_NUMERICHOST);
 
             if (gai_err)
                {
@@ -1034,7 +1034,7 @@ const char* UIPAllow::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UIPAddress::dump(bool reset) const
@@ -1060,6 +1060,6 @@ const char* UIPAddress::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

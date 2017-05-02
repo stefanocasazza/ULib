@@ -67,7 +67,7 @@ public:
 
    // Connect to REDIS server
 
-   bool connect(const char* host = 0, unsigned int _port = 6379);
+   bool connect(const char* host = U_NULLPTR, unsigned int _port = 6379);
 
    // STRING (@see http://redis.io/commands#string)
 
@@ -393,7 +393,7 @@ public:
 protected:
    int err;
 
-   UREDISClient_Base() : UClient_Base(0)
+   UREDISClient_Base() : UClient_Base(U_NULLPTR)
       {
       U_TRACE_REGISTER_OBJECT(0, UREDISClient_Base, "", 0)
 

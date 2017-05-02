@@ -64,11 +64,11 @@ UIptAccount::UIptAccount(bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
    U_TRACE_REGISTER_OBJECT(0, UIptAccount, "%b", bSocketIsIPv6)
 
    pos       = 0;
-   error_str = 0;
+   error_str = U_NULLPTR;
 #ifndef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
-   data      = 0;
+   data      = U_NULLPTR;
    data_size = 0;
-   handle    = 0;
+   handle    = U_NULLPTR;
 #else
    handle = U_MALLOC_TYPE(struct ipt_acc_handle_sockopt);
 
@@ -197,7 +197,7 @@ struct ipt_acc_handle_ip* UIptAccount::getNextEntry()
 
    // Empty or no more items left to return ?
 
-   if (!handle->itemcount || pos >= handle->itemcount) U_RETURN_POINTER(0, struct ipt_acc_handle_ip);
+   if (!handle->itemcount || pos >= handle->itemcount) U_RETURN_POINTER(U_NULLPTR, struct ipt_acc_handle_ip);
 
    // Get next entry
 
@@ -234,7 +234,7 @@ bool UIptAccount::freeAllHandles()
    U_TRACE_NO_PARAM(0, "UIptAccount::freeAllHandles()")
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
-   if (USocket::setSockOpt(IPPROTO_IP, IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL, 0, 0)) U_RETURN(true);
+   if (USocket::setSockOpt(IPPROTO_IP, IPT_SO_SET_ACCOUNT_HANDLE_FREE_ALL, U_NULLPTR, 0)) U_RETURN(true);
 
    error_str = "Can't free all kernel handles";
 #endif
@@ -262,10 +262,10 @@ const char* UIptAccount::getNextName()
 {
    U_TRACE_NO_PARAM(0, "UIptAccount::getNextName()")
 
-   const char* rtn = 0;
+   const char* rtn = U_NULLPTR;
 
 #ifdef HAVE_LINUX_NETFILTER_IPV4_IPT_ACCOUNT_H
-   if (((char*)data)[pos] == '\0') U_RETURN((const char*)0);
+   if (((char*)data)[pos] == '\0') U_RETURN((const char*)U_NULLPTR);
 
    rtn = (const char*)data + pos;
 
@@ -295,6 +295,6 @@ const char* UIptAccount::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

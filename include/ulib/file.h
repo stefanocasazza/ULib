@@ -103,14 +103,14 @@ public:
 
       fd           = -1;
       map          = (char*)MAP_FAILED;
-      path_relativ = 0;
+      path_relativ = U_NULLPTR;
 
       path_relativ_len = map_size = 0;
 
       inc_num_file_object(this);
       }
 
-   UFile(const UString& path, const UString* environment = 0) : pathname(path) 
+   UFile(const UString& path, const UString* environment = U_NULLPTR) : pathname(path) 
       {
       U_TRACE_REGISTER_OBJECT(0, UFile, "%V,%p", path.rep, environment)
 
@@ -132,7 +132,7 @@ public:
    // PATH
 
    void setRoot();
-   void setPath(const UString& path, const UString* environment = 0);
+   void setPath(const UString& path, const UString* environment = U_NULLPTR);
 
    bool isRoot() const
       {
@@ -755,12 +755,12 @@ public:
       U_RETURN((char*)result);
       }
 
-   bool memmap(int prot = PROT_READ, UString* str = 0, uint32_t offset = 0, uint32_t length = 0);
+   bool memmap(int prot = PROT_READ, UString* str = U_NULLPTR, uint32_t offset = 0, uint32_t length = 0);
 
    UString  getContent(                   bool brdonly = true,  bool bstat = false, bool bmap = false);
    UString _getContent(bool bsize = true, bool brdonly = false,                     bool bmap = false);
 
-   static UString contentOf(const UString& _pathname, int flags = O_RDONLY, bool bstat = false, const UString* environment = 0);
+   static UString contentOf(const UString& _pathname, int flags = O_RDONLY, bool bstat = false, const UString* environment = U_NULLPTR);
 
    static char* mmap(uint32_t* plength, int _fd = -1, int prot = PROT_READ | PROT_WRITE, int flags = MAP_SHARED | MAP_ANONYMOUS, uint32_t offset = 0);
 
@@ -769,7 +769,7 @@ public:
 
    // MIME TYPE
 
-   const char* getMimeType(const char* suffix = 0, int* pmime_index = 0);
+   const char* getMimeType(const char* suffix = U_NULLPTR, int* pmime_index = U_NULLPTR);
 
    // PREAD - PWRITE
 
@@ -1081,7 +1081,7 @@ protected:
 
    void substitute(UFile& file);
    bool creatForWrite(int flags, bool bmkdirs);
-   void setPathRelativ(const UString* environment = 0);
+   void setPathRelativ(const UString* environment = U_NULLPTR);
    void setPath(const UFile& file, char* buffer_path, const char* suffix, uint32_t len);
 
    static void ftw_tree_up();

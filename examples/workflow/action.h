@@ -12,7 +12,7 @@
 class Action : public UApplication {
 public:
 
-    Action() : client_http(0), data(U_CAPACITY)
+    Action() : client_http(U_NULLPTR), data(U_CAPACITY)
       {
       U_TRACE(5, "Action::Action()")
 

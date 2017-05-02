@@ -331,7 +331,7 @@ protected:
 
       U_INTERNAL_DUMP("this = %p", this)
 
-      node = 0;
+      node = U_NULLPTR;
 
       _allocate(n);
 
@@ -350,7 +350,7 @@ protected:
 
       if (node) U_RETURN((void*)node->elem);
 
-      U_RETURN((void*)0);
+      U_RETURN((void*)U_NULLPTR);
       }
 
    void* at(const char* _key, uint32_t keylen)
@@ -461,7 +461,7 @@ public:
 
       u_construct<T>(&_elem, istream_loading);
 
-      if (node == 0) UHashMap<void*>::insertAfterFind(_key, _elem);
+      if (node == U_NULLPTR) UHashMap<void*>::insertAfterFind(_key, _elem);
       else
          {
          u_destroy<T>((const T*)node->elem);
@@ -543,7 +543,7 @@ public:
                   }
                while ((_node = _next));
 
-               *ptr = 0;
+               *ptr = U_NULLPTR;
                }
             }
 
@@ -620,7 +620,7 @@ public:
                {
                _node = *ptr1;
 
-               U_INTERNAL_ASSERT_EQUALS(*ptr, 0)
+               U_INTERNAL_ASSERT_EQUALS(*ptr, U_NULLPTR)
 
                do {
                   U_NEW(UHashMapNode, *ptr, UHashMapNode(_node, *ptr)); // we place it in the list collisions

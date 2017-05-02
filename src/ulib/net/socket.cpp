@@ -425,7 +425,7 @@ bool USocket::setServer(unsigned int port, void* localAddress)
 
    U_INTERNAL_DUMP("cLocal = %p", cLocal)
 
-   U_INTERNAL_ASSERT_EQUALS(cLocal, 0)
+   U_INTERNAL_ASSERT_EQUALS(cLocal, U_NULLPTR)
 
    cLocal = new SocketAddress;
 
@@ -1228,6 +1228,6 @@ const char* USocket::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

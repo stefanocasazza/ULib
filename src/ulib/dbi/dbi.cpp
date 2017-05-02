@@ -18,7 +18,7 @@ UDBI::UDBI(const char* driverdir, const char* drivername)
 {
    U_TRACE_REGISTER_OBJECT(0, UDBI, "%S,%S", driverdir, drivername)
 
-   query_in     = 0;
+   query_in     = U_NULLPTR;
    query_in_len = 0;
 
    complete = ready_for_input = false;
@@ -70,7 +70,7 @@ void UDBI::close()
       {
       U_SYSCALL_VOID(dbi_conn_close, "%p", conn);
 
-      conn = 0;
+      conn = U_NULLPTR;
       }
 }
 
@@ -105,11 +105,11 @@ bool UDBI::connect(const char* dbName, const char* hostName, const char* usernam
 
    U_INTERNAL_ASSERT_POINTER(conn)
 
-   if (                  U_SYSCALL(dbi_conn_set_option, "%p,%S,%S", conn, "dbname",   dbName)   == 0  &&
-       (hostName == 0 || U_SYSCALL(dbi_conn_set_option, "%p,%S,%S", conn, "host",     hostName) == 0) &&
-       (username == 0 || U_SYSCALL(dbi_conn_set_option, "%p,%S,%S", conn, "username", username) == 0) &&
-       (password == 0 || U_SYSCALL(dbi_conn_set_option, "%p,%S,%S", conn, "password", password) == 0) &&
-                         U_SYSCALL(dbi_conn_connect,    "%p",       conn)                       == 0)
+   if (                          U_SYSCALL(dbi_conn_set_option, "%p,%S,%S", conn, "dbname",    dbName)   == 0  &&
+       (hostName == U_NULLPTR || U_SYSCALL(dbi_conn_set_option, "%p,%S,%S", conn, "host",   hostName) == 0) &&
+       (username == U_NULLPTR || U_SYSCALL(dbi_conn_set_option, "%p,%S,%S", conn, "username", username)  == 0) &&
+       (password == U_NULLPTR || U_SYSCALL(dbi_conn_set_option, "%p,%S,%S", conn, "password", password)  == 0) &&
+                                 U_SYSCALL(dbi_conn_connect,     "%p",       conn)                       == 0)
       {
       U_RETURN(true);
       }
@@ -627,7 +627,7 @@ bool UDBI::single(UDBIRow& r)
       if (rset.rows() == 1 &&
           rset.next(r))
          {
-         rset.res = 0;
+         rset.res = U_NULLPTR;
 
          U_RETURN(true);
          }
@@ -688,7 +688,7 @@ const char* UDBI::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UDBIRow::dump(bool _reset) const
@@ -704,7 +704,7 @@ const char* UDBIRow::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UDBISet::dump(bool _reset) const
@@ -718,7 +718,7 @@ const char* UDBISet::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UDBITransaction::dump(bool _reset) const
@@ -732,6 +732,6 @@ const char* UDBITransaction::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

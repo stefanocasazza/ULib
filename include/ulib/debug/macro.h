@@ -87,13 +87,13 @@
                                     utr.trace_sysreturn_type(::name()))
 
 #  define U_SYSCALL_VOID_NO_PARAM(name) { utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"()"),0); \
-                                          name(); utr.trace_sysreturn(false,0,0); }
+                                          name(); utr.trace_sysreturn(false,U_NULLPTR,0); }
 
 #  define U_SYSCALL(name,format,args...) (utr.suspend(), utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args), \
                                           utr.resume(),  utr.trace_sysreturn_type(::name(args)))
 
 #  define U_SYSCALL_VOID(name,format,args...) { utr.suspend();               utr.trace_syscall(U_CONSTANT_TO_PARAM("::"#name"(" format ")") , ##args); \
-                                                utr.resume();  ::name(args); utr.trace_sysreturn(false,0,0); }
+                                                utr.resume();  ::name(args); utr.trace_sysreturn(false,U_NULLPTR,0); }
 
 #  define U_RETURN(r)                                                 return (utr.trace_return_type((r)))
 #  define U_RETURN_STRING(str) {U_INTERNAL_ASSERT((str).invariant()); return (utr.trace_return(U_CONSTANT_TO_PARAM("%V"),(str).rep),(str));}
@@ -161,7 +161,7 @@ if (envp) \
 #  define U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(level,CLASS,format,args...) \
                                                               if (UObjectDB::flag_new_object == false) U_SET_LOCATION_INFO; \
                                                                   UObjectDB::flag_new_object =  false; \
-                                                              U_REGISTER_OBJECT_PTR(level,CLASS,this,0) \
+                                                              U_REGISTER_OBJECT_PTR(level,CLASS,this,U_NULLPTR) \
                                                               UTrace utr(level, U_CONSTANT_TO_PARAM(#CLASS"::"#CLASS"(" format ")") , ##args);
 
 #  define U_UNREGISTER_OBJECT(level,ptr) \
@@ -177,7 +177,7 @@ if (envp) \
 #  define U_NEW(CLASS,obj,args...) (UMemoryPool::obj_class = #CLASS, \
                                     UMemoryPool::func_call = __PRETTY_FUNCTION__, \
                                     U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, (obj) = new args, \
-                                    UMemoryPool::obj_class = UMemoryPool::func_call = 0)
+                                    UMemoryPool::obj_class = UMemoryPool::func_call = U_NULLPTR)
 # else
 #  define U_NEW(CLASS,obj,args...) (U_SET_LOCATION_INFO, UObjectDB::flag_new_object = true, (obj) = new args)
 # endif
@@ -212,7 +212,7 @@ if (envp) \
 #  define U_NEW(CLASS,obj,args...) (UMemoryPool::obj_class = #CLASS, \
                                     UMemoryPool::func_call = __PRETTY_FUNCTION__, \
                                     U_SET_LOCATION_INFO, (obj) = new args, \
-                                    UMemoryPool::obj_class = UMemoryPool::func_call = 0)
+                                    UMemoryPool::obj_class = UMemoryPool::func_call = U_NULLPTR)
 # else
 #  define U_NEW(CLASS,obj,args...) (U_SET_LOCATION_INFO, (obj) = new args)
 # endif

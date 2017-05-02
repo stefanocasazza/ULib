@@ -123,7 +123,7 @@ const char* UDataStorage::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UDataSession::dump(bool reset) const
@@ -142,7 +142,7 @@ const char* UDataSession::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

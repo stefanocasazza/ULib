@@ -105,11 +105,11 @@ int UStreamPlugIn::handlerInit()
 
    static int fd_stderr;
 
-   if (command == 0) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+   if (command == U_NULLPTR) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
    if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/UStreamPlugIn.err");
 
-   bool result = command->execute(0, (UString*)-1, -1, fd_stderr);
+   bool result = command->execute(U_NULLPTR, (UString*)-1, -1, fd_stderr);
 
 #ifndef U_LOG_DISABLE
    UServer_Base::logCommandMsgError(command->getCommand(), true);
@@ -118,7 +118,7 @@ int UStreamPlugIn::handlerInit()
    if (result == false)
       {
       delete command;
-             command = 0;
+             command = U_NULLPTR;
 
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
       }
@@ -188,7 +188,7 @@ int UStreamPlugIn::handlerRequest()
 
    U_http_info.nResponseCode = HTTP_OK;
 
-   UHTTP::setResponse(true, *content_type, 0);
+   UHTTP::setResponse(true, *content_type, U_NULLPTR);
 
    UClientImage_Base::setCloseConnection();
 
@@ -245,6 +245,6 @@ const char* UStreamPlugIn::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

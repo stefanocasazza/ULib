@@ -55,7 +55,7 @@ struct U_EXPORT UInterrupt {
 
       act.sa_handler = function;
 
-      (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, &act, 0);
+      (void) U_SYSCALL(sigaction, "%d,%p,%p", signo, &act, U_NULLPTR);
       }
 
    static void setNoZombies()
@@ -65,7 +65,7 @@ struct U_EXPORT UInterrupt {
       act.sa_flags   = SA_NOCLDWAIT;
       act.sa_handler = (sighandler_t)SIG_DFL;
 
-      (void) U_SYSCALL(sigaction, "%d,%p,%p", SIGCHLD, &act, 0);
+      (void) U_SYSCALL(sigaction, "%d,%p,%p", SIGCHLD, &act, U_NULLPTR);
 
       act.sa_flags = 0;
       }
@@ -109,7 +109,7 @@ struct U_EXPORT UInterrupt {
 
    static void getSignalInfo(int signo, siginfo_t* info);
 
-   static RETSIGTYPE handlerSegv(int signo) { handlerSegvWithInfo(signo, 0, 0); } 
+   static RETSIGTYPE handlerSegv(int signo) { handlerSegvWithInfo(signo, U_NULLPTR, U_NULLPTR); } 
 
    static RETSIGTYPE handlerSegvWithInfo(     int signo, siginfo_t* info, void*);
    static RETSIGTYPE handlerInterruptWithInfo(int signo, siginfo_t* info, void*) __noreturn;

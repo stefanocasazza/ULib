@@ -49,7 +49,7 @@ public:
     * @param app_bundle_id the app bundle id
     */
 
-   static void initHTTP2Push(const char* _http2_server = 0, const char* _apple_cert = 0, const char* _app_bundle_id = 0)
+   static void initHTTP2Push(const char* _http2_server = U_NULLPTR, const char* _apple_cert = U_NULLPTR, const char* _app_bundle_id = U_NULLPTR)
       {
       U_TRACE(0, "UCURL::initHTTP2Push(%S,%S,%S)", _http2_server, _apple_cert, _app_bundle_id)
 
@@ -178,7 +178,7 @@ public:
       {
       U_TRACE(0, "UCURL::setProgressFunction(%p,%p)", func, data)
 
-      if (func == 0) setOption(CURLOPT_NOPROGRESS, 1L);
+      if (func == U_NULLPTR) setOption(CURLOPT_NOPROGRESS, 1L);
       else
          {
          setOption(CURLOPT_PROGRESSFUNCTION, (long)func);

@@ -43,9 +43,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UPlugIn<void*>::UPlugIn()")
 
-      obj      = 0;
-      next     = 0;
-      name     = 0;
+      obj      = U_NULLPTR;
+      next     = U_NULLPTR;
+      name     = U_NULLPTR;
       name_len = 0;
       }
 
@@ -60,7 +60,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UPlugIn<void*>::empty()")
 
-      if (first == 0) U_RETURN(true);
+      if (first == U_NULLPTR) U_RETURN(true);
 
       U_RETURN(false);
       }

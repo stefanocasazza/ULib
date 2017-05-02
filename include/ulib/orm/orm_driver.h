@@ -50,8 +50,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, USqlStatementBindParam, "", 0)
 
-      buffer = 0;
-      pstr   = 0;
+      buffer = U_NULLPTR;
+      pstr   = U_NULLPTR;
       length = 0;
       type   = 0;
 
@@ -63,7 +63,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, USqlStatementBindParam, "%p", v)
 
       buffer = v;
-      pstr   = 0;
+      pstr   = U_NULLPTR;
       length = 0;
       type   = 0;
 
@@ -107,7 +107,7 @@ public:
       U_TRACE_REGISTER_OBJECT(0, USqlStatementBindResult, "%p", v)
 
       buffer = v;
-      pstr   = 0;
+      pstr   = U_NULLPTR;
       length = 0;
       type   = 0;
 
@@ -231,20 +231,20 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UOrmDriver, "")
 
-      errmsg     = errname = 0;
+      errmsg     = errname = U_NULLPTR;
       errcode    = 0;
-      SQLSTATE   = 0;
-      connection = 0;
+      SQLSTATE   = U_NULLPTR;
+      connection = U_NULLPTR;
       }
 
    UOrmDriver(const UString& name_drv) : name(name_drv)
       {
       U_TRACE_REGISTER_OBJECT(0, UOrmDriver, "%V", name.rep)
 
-      errmsg     = errname = 0;
+      errmsg     = errname = U_NULLPTR;
       errcode    = 0;
-      SQLSTATE   = 0;
-      connection = 0;
+      SQLSTATE   = U_NULLPTR;
+      connection = U_NULLPTR;
       }
 
    virtual ~UOrmDriver();
@@ -406,7 +406,7 @@ public:
       {
       U_TRACE(0, "UOrmDriver::handlerConnect(%V)", option.rep)
 
-      U_RETURN_POINTER(0, UOrmDriver);
+      U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       } 
 
    virtual void handlerDisConnect()
@@ -463,7 +463,7 @@ public:
       {
       U_TRACE(0, "UOrmDriver::handlerStatementCreation(%.*S,%u)", len, stmt, len)
 
-      U_RETURN_POINTER(0, USqlStatement);
+      U_RETURN_POINTER(U_NULLPTR, USqlStatement);
       }
 
    virtual void handlerStatementReset(USqlStatement* pstmt)
@@ -480,41 +480,41 @@ public:
 
    // CREATE BIND PARAM
 
-   virtual USqlStatementBindParam* creatSqlStatementBindParam()                      { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(int* v)                { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(bool* v)               { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(char* v)               { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(long* v)               { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(short* v)              { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(float* v)              { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(double* v)             { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(long long* v)          { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(long double* v)        { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned int* v)       { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned char* v)      { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long* v)      { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned short* v)     { return 0; }
-   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v) { return 0; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam()                      { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(int* v)                { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(bool* v)               { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(char* v)               { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long* v)               { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(short* v)              { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(float* v)              { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(double* v)             { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long long* v)          { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(long double* v)        { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned int* v)       { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned char* v)      { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long* v)      { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned short* v)     { return U_NULLPTR; }
+   virtual USqlStatementBindParam* creatSqlStatementBindParam(unsigned long long* v) { return U_NULLPTR; }
 
    virtual USqlStatementBindParam* creatSqlStatementBindParam(USqlStatement* pstmt, const char* s, int n, bool bstatic, int rebind);
 
    // CREATE BIND RESULT
 
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(int* v)                { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(bool* v)               { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(char* v)               { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(long* v)               { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(short* v)              { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(float* v)              { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)             { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)          { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)        { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& str)       { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned char* v)      { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned short* v)     { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned int* v)       { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long* v)      { return 0; }
-   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long long* v) { return 0; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(int* v)                { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(bool* v)               { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(char* v)               { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(long* v)               { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(short* v)              { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(float* v)              { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(double* v)             { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(long long* v)          { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(long double* v)        { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(UStringRep& str)       { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned char* v)      { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned short* v)     { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned int* v)       { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long* v)      { return U_NULLPTR; }
+   virtual USqlStatementBindResult* creatSqlStatementBindResult(unsigned long long* v) { return U_NULLPTR; }
 
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const;

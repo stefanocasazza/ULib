@@ -3,7 +3,7 @@
    X509* cert;
    X509_CRL* crl;
    bool ok, is_revoked;
-   UDialog x(0, 23, 50); // height of 23 characters and width of 50 characters
+   UDialog x(U_NULLPTR, 23, 50); // height of 23 characters and width of 50 characters
    UVector<UString> vec;
    STACK_OF(X509)* certs;
    unsigned j, num_revoked = 0;
@@ -30,9 +30,9 @@
                                      "Emit crl",
                                      "Get crl",
                                      "Get CA certificate",
-                                     "Revoke certificate", 0 };
+                                     "Revoke certificate", U_NULLPTR };
 
-      static const char* tags[]  = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", 0 };
+      static const char* tags[]  = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", U_NULLPTR };
 
       op = x.menu("Choose the operation you want:", tags, items, 0, "MENU BOX");
 
@@ -74,9 +74,11 @@
       {
       case 1: // CA creation
          {
+         // --------------------------------------------------------------------------------
          // parameters: <CA name> <days> [openssl.cnf]
          // --------------------------------------------------------------------------------
          // int ns__CSP_CA(const char* dir, unsigned days, const char* cnf, char** response);
+         // --------------------------------------------------------------------------------
 
          if (method)
             {
@@ -89,12 +91,12 @@
             {
             x.setSize(10, 70); // height of 10 characters and width of 70 characters
 
-            static const char* labels[] = { "name CA:", "certificate validity period (number of days):", 0 };
+            static const char* labels[] = { "name CA:", "certificate validity period (number of days):", U_NULLPTR };
 
             vec.push(ca);
             vec.push(U_STRING_FROM_CONSTANT("365"));
 
-            if (x.inputsbox2("CA creation", labels, vec, 0) == false) goto end;
+            if (x.inputsbox2("CA creation", labels, vec, U_NULLPTR) == false) goto end;
 
             ca   = vec[0];
             days = vec[1].strtol();

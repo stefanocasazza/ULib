@@ -49,19 +49,19 @@ ULog::log_date*   ULog::ptr_shared_date;
 pthread_rwlock_t* ULog::prwlock;
 #endif
 
-ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(path, 0)
+ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(path, U_NULLPTR)
 {
    U_TRACE_REGISTER_OBJECT(0, ULog, "%V,%u,%S", path.rep, _size, dir_log_gz)
 
-   lock         = 0;
-   ptr_log_data = 0;
+   lock         = U_NULLPTR;
+   ptr_log_data = U_NULLPTR;
    log_file_sz  =
    log_gzip_sz  = 0;
 
    U_Log_start_stop_msg(this) = false;
 
 #ifdef USE_LIBZ
-     buf_path_compress = 0;
+     buf_path_compress = U_NULLPTR;
    index_path_compress = 0;
 #endif
 
@@ -156,7 +156,7 @@ ULog::ULog(const UString& path, uint32_t _size, const char* dir_log_gz) : UFile(
 
    char* ptr = buf_path_compress->data();
 
-   if (dir_log_gz == 0)
+   if (dir_log_gz == U_NULLPTR)
       {
 #  ifndef U_COVERITY_FALSE_POSITIVE // Uninitialized pointer read (UNINIT)
       (void) UFile::setPathFromFile(*this, ptr, suffix, len_suffix);
@@ -248,7 +248,7 @@ void ULog::init(const char* _prefix, uint32_t _prefix_len)
 {
    U_TRACE(0, "ULog::init(%.*S,%u)", _prefix_len, _prefix, _prefix_len)
 
-   U_INTERNAL_ASSERT_EQUALS(pthis, 0)
+   U_INTERNAL_ASSERT_EQUALS(pthis, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(U_Log_syslog(this), false)
 
    pthis                      = this;
@@ -263,7 +263,7 @@ void ULog::setPrefix(const char* _prefix, uint32_t _prefix_len)
 {
    U_TRACE(0, "ULog::setPrefix(%.*S,%u)", _prefix_len, _prefix, _prefix_len)
 
-   U_INTERNAL_ASSERT_EQUALS(pthis, 0)
+   U_INTERNAL_ASSERT_EQUALS(pthis, U_NULLPTR)
 
    pthis = this;
 
@@ -320,7 +320,7 @@ void ULog::updateDate1()
    else
 #endif
    {
-   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
+   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
    u_gettimenow();
 
@@ -392,7 +392,7 @@ void ULog::updateDate2()
    else
 #endif
    {
-   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
+   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
    u_gettimenow();
 
@@ -477,7 +477,7 @@ void ULog::updateDate3(char* ptr_date)
    else
 #endif
    {
-   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
+   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
    u_gettimenow();
 
@@ -894,7 +894,7 @@ void ULog::logger(const char* ident, int priority, const char* format, uint32_t 
 #ifndef _MSWINDOWS_
    U_INTERNAL_ASSERT(U_Log_syslog(pthis))
 
-   if (format == 0)
+   if (format == U_NULLPTR)
       {
       U_SYSCALL_VOID(openlog, "%S,%d,%d", ident, 0, 0);
 
@@ -1013,7 +1013,7 @@ void ULog::close()
 
       pthis->closeLog();
 
-      pthis = 0;
+      pthis = U_NULLPTR;
       }
 }
 
@@ -1068,6 +1068,6 @@ const char* ULog::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

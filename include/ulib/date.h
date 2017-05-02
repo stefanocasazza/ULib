@@ -441,7 +441,7 @@ public:
 
    static time_t getSecondFromDayLight() __pure;
 
-   static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %T GMT", struct tm* tm = 0);
+   static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %T GMT", struct tm* tm = U_NULLPTR);
 
    void setCurrentDate() // UNIX system time - SecsSince1Jan1970UTC
       {

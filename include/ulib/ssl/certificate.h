@@ -46,7 +46,7 @@ public:
     * Constructs this object takes <i>X509</i> as type
     */ 
 
-   UCertificate(X509* px509 = 0) : x509(px509)
+   UCertificate(X509* px509 = U_NULLPTR) : x509(px509)
       {
       U_TRACE_REGISTER_OBJECT(0, UCertificate, "%p", px509)
       }
@@ -59,9 +59,9 @@ public:
     * @param type the Certificate's encoding type
     */
 
-   static X509* readX509(const UString& x, const char* format = 0);
+   static X509* readX509(const UString& x, const char* format = U_NULLPTR);
 
-   UCertificate(const UString& x, const char* format = 0)
+   UCertificate(const UString& x, const char* format = U_NULLPTR)
       {
       U_TRACE_REGISTER_OBJECT(0, UCertificate, "%V,%S", x.rep, format)
 
@@ -80,7 +80,7 @@ public:
 
       U_SYSCALL_VOID(X509_free, "%p", x509);
 
-      x509 = 0;
+      x509 = U_NULLPTR;
       }
 
    ~UCertificate()
@@ -94,7 +94,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UCertificate::isValid()")
 
-      U_RETURN(x509 != 0);
+      if (x509) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    bool isSelfSigned() const { return isIssued(*this); }
@@ -110,13 +112,15 @@ public:
       if (px509) x509 = X509_dup(px509);
       }
 
-   bool set(const UString& x, const char* format = 0)
+   bool set(const UString& x, const char* format = U_NULLPTR)
       {
       U_TRACE(0, "UCertificate::set(%V,%S)", x.rep, format)
 
       set(readX509(x, format));
 
-      U_RETURN(x509 != 0);
+      if (x509) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    /**
@@ -136,7 +140,7 @@ public:
     * Returns the file name from CApath
     */
 
-   static UString getFileName(long hash, bool crl = false, bool* exist = 0);
+   static UString getFileName(long hash, bool crl = false, bool* exist = U_NULLPTR);
 
    static UString getFileName(X509* _x509)
       {
@@ -146,7 +150,7 @@ public:
 
       long hash = U_SYSCALL(X509_subject_name_hash, "%p", _x509);
 
-      return getFileName(hash, false, 0);
+      return getFileName(hash, false, U_NULLPTR);
       }
 
    UString getFileName() const { return getFileName(x509); }
@@ -241,7 +245,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(str)
 
-      return checkForSerialNumber(strtol(str, 0, 0));
+      return checkForSerialNumber(strtol(str, U_NULLPTR, 0));
       }
 
    static long hashCode(X509* a)
@@ -287,9 +291,9 @@ public:
 
       EVP_PKEY* publicKey = (EVP_PKEY*) U_SYSCALL(X509_get_pubkey, "%p", a);
 
-      bool result = (U_SYSCALL(EVP_PKEY_cmp, "%p,%p", publicKey, privateKey) == 1);
+      if (U_SYSCALL(EVP_PKEY_cmp, "%p,%p", publicKey, privateKey) == 1) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool matchPrivateKey(EVP_PKEY* privateKey) const { return matchPrivateKey(x509, privateKey); }
@@ -335,9 +339,9 @@ public:
 
       U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-      bool result = checkValidity(u_now->tv_sec);
+      if (checkValidity(u_now->tv_sec)) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    /**
@@ -353,10 +357,13 @@ public:
        * Not After : Jan 25 11:54:00 2006 GMT
        */
 
-      bool result = (time >= UTimeDate::getSecondFromTime(getNotBefore(), true, "%s %2d %2d:%2d:%2d %4d GMT") &&
-                     time <= UTimeDate::getSecondFromTime(getNotAfter(),  true, "%s %2d %2d:%2d:%2d %4d GMT"));
+      if (time >= UTimeDate::getSecondFromTime(getNotBefore(), true, "%s %2d %2d:%2d:%2d %4d GMT") &&
+          time <= UTimeDate::getSecondFromTime(getNotAfter(),  true, "%s %2d %2d:%2d:%2d %4d GMT"))
+         {
+         U_RETURN(true);
+         }
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    /**
@@ -376,7 +383,7 @@ public:
 
    static X509_STORE_CTX* csc;
 
-   bool verify(STACK_OF(X509)* chain = 0, time_t certsVerificationTime = 0) const;
+   bool verify(STACK_OF(X509)* chain = U_NULLPTR, time_t certsVerificationTime = 0) const;
 
    /**
     * Retrieves the signer's certificates from this certificate,
@@ -441,9 +448,9 @@ public:
       {
       U_TRACE(0, "UCertificate::isEqual(%p,%p)", a, b)
 
-      int rc = U_SYSCALL(X509_cmp, "%p,%p", a, b);
+      if (U_SYSCALL(X509_cmp, "%p,%p", a, b) == 0) U_RETURN(true);
 
-      U_RETURN(rc == 0);
+      U_RETURN(false);
       }
 
    bool operator==(const UCertificate& c) const { return  isEqual(x509, c.x509); }

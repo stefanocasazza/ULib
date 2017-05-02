@@ -40,12 +40,12 @@ bool UGeoIPPlugIn::setCountryCode()
 {
    U_TRACE_NO_PARAM(1, "UGeoIPPlugIn::setCountryCode()")
 
-   gir = 0;
-   region = 0;
-   domain_name = 0;
+   gir = U_NULLPTR;
+   region = U_NULLPTR;
+   domain_name = U_NULLPTR;
    netspeed = country_id = 0;
    bGEOIP_CITY_EDITION_REV1 = false;
-   country_code = country_name = org = 0;
+   country_code = country_name = org = U_NULLPTR;
 
    ipnum = U_SYSCALL(_GeoIP_lookupaddress, "%s", UServer_Base::client_address);
 
@@ -187,7 +187,7 @@ int UGeoIPPlugIn::handlerInit()
          {
          gi[i] = (GeoIP*) U_SYSCALL(GeoIP_open_type, "%d,%d", i, GEOIP_STANDARD);
 
-         if (gi[i] == 0)
+         if (gi[i] == U_NULLPTR)
             {
             U_SRV_LOG("WARNING: %s not available, skipping...", GeoIPDBDescription[i]);
             }
@@ -286,6 +286,6 @@ const char* UGeoIPPlugIn::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

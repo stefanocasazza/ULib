@@ -35,7 +35,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-    URPCParser(UVector<UString>* arg = 0);
+    URPCParser(UVector<UString>* arg = U_NULLPTR);
 
    ~URPCParser()
       {

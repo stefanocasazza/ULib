@@ -46,7 +46,7 @@ public:
       {
       U_TRACE(0, "USSIPlugIn::setMessagePage(%V,%S)", tmpl.rep, message)
 
-      setAlternativeInclude(tmpl, 1024, false, "Service not available", 0, 0,
+      setAlternativeInclude(tmpl, 1024, false, "Service not available", U_NULLPTR, U_NULLPTR,
                             message); // NB: vararg...
       }
 
@@ -54,7 +54,7 @@ public:
       {
       U_TRACE(0, "USSIPlugIn::setMessagePage(%V,%S,%S)", tmpl.rep, title_txt, message)
 
-      setAlternativeInclude(tmpl, 1024, false, title_txt, 0, 0,
+      setAlternativeInclude(tmpl, 1024, false, title_txt, U_NULLPTR, U_NULLPTR,
                             title_txt, message); // NB: vararg...
       }
 

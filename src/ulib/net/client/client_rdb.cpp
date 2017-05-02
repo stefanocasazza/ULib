@@ -52,7 +52,7 @@ bool URDBClient_Base::readResponse()
 
    if (ok)
       {
-      nResponseCode = strtol(buffer.data(), 0, 10);
+      nResponseCode = strtol(buffer.data(), U_NULLPTR, 10);
 
 #  ifdef DEBUG
       setStatus();
@@ -296,6 +296,6 @@ const char* URDBClient_Base::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

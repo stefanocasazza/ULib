@@ -34,9 +34,9 @@ PKCS7* UPKCS7::readPKCS7(const UString& x, const char* format)
 
    BIO* in;
    UString tmp   = x;
-   PKCS7* _pkcs7 = 0;
+   PKCS7* _pkcs7 = U_NULLPTR;
 
-   if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
+   if (format == U_NULLPTR) format = (x.isBinary() ? "DER" : "PEM");
 
    if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 &&
        strncmp(x.data(), U_CONSTANT_TO_PARAM("-----BEGIN PKCS7-----")) != 0)
@@ -57,8 +57,8 @@ PKCS7* UPKCS7::readPKCS7(const UString& x, const char* format)
 
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   _pkcs7 = (PKCS7*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_PKCS7, "%p,%p,%p,%p", in, 0, 0, 0)
-                                                                       : U_SYSCALL(d2i_PKCS7_bio,      "%p,%p",       in, 0));
+   _pkcs7 = (PKCS7*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_PKCS7, "%p,%p,%p,%p", in, U_NULLPTR, U_NULLPTR, U_NULLPTR)
+                                                                       : U_SYSCALL(d2i_PKCS7_bio,      "%p,%p",       in, U_NULLPTR));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
@@ -76,8 +76,7 @@ UString UPKCS7::getContent(bool* valid_content) const
 #define NULL 0
 #endif
 
-   U_INTERNAL_DUMP("type = %p PKCS7_type_is_signed() = %d PKCS7_get_detached() = %d",
-                     OBJ_obj2nid(pkcs7->type), PKCS7_type_is_signed(pkcs7), PKCS7_get_detached(pkcs7))
+   U_INTERNAL_DUMP("type = %p PKCS7_type_is_signed() = %d PKCS7_get_detached() = %d", OBJ_obj2nid(pkcs7->type), PKCS7_type_is_signed(pkcs7), PKCS7_get_detached(pkcs7))
 
 #if defined(DEBUG) && !defined(_MSWINDOWS_)
    // dump signatures on data
@@ -129,7 +128,7 @@ UString UPKCS7::getEncoded(const char* format) const
    if (strncmp(format, U_CONSTANT_TO_PARAM("DER"))    == 0 ||
        strncmp(format, U_CONSTANT_TO_PARAM("BASE64")) == 0)
       {
-      unsigned len = U_SYSCALL(i2d_PKCS7, "%p,%p", pkcs7, 0);
+      unsigned len = U_SYSCALL(i2d_PKCS7, "%p,%p", pkcs7, U_NULLPTR);
 
       UString encoding(len);
 
@@ -170,8 +169,8 @@ bool UPKCS7::verify(int flags) const
 
    U_INTERNAL_ASSERT_POINTER(pkcs7)
 
-   BIO* out              = 0;
-   STACK_OF(X509)* other = 0;
+   BIO* out              = U_NULLPTR;
+   STACK_OF(X509)* other = U_NULLPTR;
 
    /**
     * PKCS7_verify() verifies a PKCS#7 signedData structure. pkcs7 is the PKCS7 structure to verify.
@@ -219,7 +218,7 @@ unsigned UPKCS7::getSignerCertificates(UVector<UCertificate*>& vec, int flags) c
 
    U_INTERNAL_ASSERT_POINTER(pkcs7)
 
-   STACK_OF(X509)* signers = (STACK_OF(X509)*) U_SYSCALL(PKCS7_get0_signers, "%p,%p,%d", pkcs7, 0, flags);
+   STACK_OF(X509)* signers = (STACK_OF(X509)*) U_SYSCALL(PKCS7_get0_signers, "%p,%p,%d", pkcs7, U_NULLPTR, flags);
 
    if (signers)
       {
@@ -268,7 +267,7 @@ PKCS7* UPKCS7::sign(const UString& data, const UString& signcert, const UString&
 
    STACK_OF(X509)* other = UCertificate::loadCerts(certs);
 
-   EVP_PKEY* key = UServices::loadKey(pkey, "PEM", true, passwd.data(), 0);
+   EVP_PKEY* key = UServices::loadKey(pkey, "PEM", true, passwd.data(), U_NULLPTR);
 
    BIO* in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(data));
 
@@ -295,7 +294,7 @@ UString UPKCS7::writeMIME(PKCS7* _pkcs7)
 
    BIO* out = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 
-   if (U_SYSCALL(SMIME_write_PKCS7, "%p,%p,%p,%d", out, _pkcs7, 0, 0))
+   if (U_SYSCALL(SMIME_write_PKCS7, "%p,%p,%p,%d", out, _pkcs7, U_NULLPTR, 0))
       {
       result = UStringExt::BIOtoString(out);
       }
@@ -322,6 +321,6 @@ const char* UPKCS7::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

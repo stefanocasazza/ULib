@@ -46,7 +46,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UThread, "%d", _detachstate)
 
-      next         = 0;
+      next         = U_NULLPTR;
       detachstate  = _detachstate;
       cancel       = 0;
       id           = 0;
@@ -291,7 +291,7 @@ public:
 #     endif
          }
 
-      U_RETURN_POINTER(0, UThread);
+      U_RETURN_POINTER(U_NULLPTR, UThread);
       }
 
    static bool isCurrentThread(pthread_t _tid)
@@ -405,7 +405,7 @@ protected:
 
       (void) U_SYSCALL(pthread_attr_getdetachstate, "%p,%p", pattr, &state);
 
-      if (state != PTHREAD_CREATE_DETACHED) (void) U_SYSCALL(pthread_join, "%p,%p", _tid, 0);
+      if (state != PTHREAD_CREATE_DETACHED) (void) U_SYSCALL(pthread_join, "%p,%p", _tid, U_NULLPTR);
 #   ifdef HAVE_PTHREAD_YIELD
       else (void) U_SYSCALL_NO_PARAM(pthread_yield);
 #   endif

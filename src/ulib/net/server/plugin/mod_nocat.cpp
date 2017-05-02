@@ -206,7 +206,7 @@ UNoCatPlugIn::UNoCatPlugIn()
    U_NEW(UVector<UString>, vInternalDevice, UVector<UString>(64U));
    U_NEW(UVector<UString>, vLocalNetworkLabel, UVector<UString>(64U));
    U_NEW(UVector<UIPAllow*>, vLocalNetworkMask, UVector<UIPAllow*>);
-   U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(0));
+   U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(U_NULLPTR));
 
    client->UClient_Base::setTimeOut(UServer_Base::timeoutMS);
 
@@ -306,7 +306,7 @@ bool UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
    const char* status;
    time_t how_much_connected;
    UString buffer(U_CAPACITY);
-   int disconnected = peer->checkPeerInfo(key == 0);
+   int disconnected = peer->checkPeerInfo(key == U_NULLPTR);
 
    if (disconnected) deny(disconnected, check_expire);
 
@@ -396,9 +396,9 @@ void UNoCatPlugIn::setStatusContent(const UString& ap_label)
 
    status_content->setBuffer(U_CAPACITY);
 
-   label_to_match = (ap_label.empty() ? 0 : (UString*)&ap_label);
+   label_to_match = (ap_label.empty() ? U_NULLPTR : (UString*)&ap_label);
 
-   if (peer) getPeerStatus(0, peer);
+   if (peer) getPeerStatus(U_NULLPTR, peer);
    else
       {
       getTraffic();
@@ -517,11 +517,11 @@ void UNoCatPlugIn::uploadFileToPortal(UFile& file)
 
       UClient_Base::queue_dir = UString::str_CLIENT_QUEUE_DIR;
 
-      result = client->upload(getUrlForSendMsgToPortal(0, 0, 0), file, U_STRING_TO_PARAM(filename), 3);
+      result = client->upload(getUrlForSendMsgToPortal(0, U_NULLPTR, 0), file, U_STRING_TO_PARAM(filename), 3);
 
       U_SRV_LOG("%s to queue log file: %.*S", (result ? "success" : "FAILED"), U_FILE_TO_TRACE(file));
 
-      UClient_Base::queue_dir = 0;
+      UClient_Base::queue_dir = U_NULLPTR;
       }
 
    if (result) (void) file._unlink();
@@ -534,7 +534,7 @@ void UNoCatPlugIn::sendMsgToPortal(uint32_t index_AUTH, const UString& msg, UStr
 #ifndef U_LOG_DISABLE
    const char* result = "FAILED";
 #endif
-   bool bqueue = false, we_need_response = (poutput != 0);
+   bool bqueue = false, we_need_response = (poutput != U_NULLPTR);
 
    UString url = getUrlForSendMsgToPortal(index_AUTH, U_STRING_TO_PARAM(msg));
 
@@ -584,7 +584,7 @@ end:
       U_SRV_LOG("queue message %s to AUTH(%u): %V", result, index_AUTH, msg.rep);
       }
 
-   UClient_Base::queue_dir = 0;
+   UClient_Base::queue_dir = U_NULLPTR;
 
    client->reset(); // NB: url is referenced by UClient::url...
 }
@@ -652,7 +652,7 @@ uint32_t UNoCatPlugIn::checkFirewall(UString& output)
 loop:
    output.setEmpty();
 
-   ok = fw->execute(0, &output, -1, fd_stderr);
+   ok = fw->execute(U_NULLPTR, &output, -1, fd_stderr);
 
 #ifndef U_LOG_DISABLE
    UServer_Base::logCommandMsgError(fw->getCommand(), false);
@@ -766,7 +766,7 @@ bool UNoCatPlugIn::checkFirewall()
 
             setFireWallCommand(_fw, *fw_cmd, mac, ip);
 
-            (void) _fw.executeAndWait(0, -1, fd_stderr);
+            (void) _fw.executeAndWait(U_NULLPTR, -1, fd_stderr);
 
 #        ifndef U_LOG_DISABLE
             UServer_Base::logCommandMsgError(_fw.getCommand(), false);
@@ -831,7 +831,7 @@ void UNoCatPlugIn::checkSystem()
       goto end;
       }
 
-   U_INTERNAL_ASSERT_EQUALS(paddrmask, 0)
+   U_INTERNAL_ASSERT_EQUALS(paddrmask, U_NULLPTR)
 
    if (isPingAsyncPending())
       {
@@ -914,7 +914,7 @@ result:
          }
 
       nfds      = 0;
-      paddrmask = 0;
+      paddrmask = U_NULLPTR;
       }
 
    for (i = 0, n = vauth_url->size(); i < n; ++i)
@@ -1253,7 +1253,7 @@ void UNoCatPlugIn::creatNewPeer()
 
    U_INTERNAL_DUMP("peer = %p peers_delete = %p idx_peers_preallocate = %u num_peers_preallocate = %u", peer, peers_delete, idx_peers_preallocate, num_peers_preallocate)
 
-   U_INTERNAL_ASSERT_EQUALS(peer, 0)
+   U_INTERNAL_ASSERT_EQUALS(peer, U_NULLPTR)
    U_INTERNAL_ASSERT_POINTER(peers_preallocate)
 
    if ((idx_peers_preallocate+1) < num_peers_preallocate) peer = &(peers_preallocate[idx_peers_preallocate++]);
@@ -1263,7 +1263,7 @@ void UNoCatPlugIn::creatNewPeer()
 
       msg.snprintf(U_CONSTANT_TO_PARAM("/error_ap?ap=%v@%v&public=%v%%3A%u&msg=%u"), label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, num_peers_preallocate);
 
-      sendMsgToPortal(0, msg, 0);
+      sendMsgToPortal(0, msg, U_NULLPTR);
 
       UInterrupt::setHandlerForSegv(preallocatePeers, preallocatePeersFault);
 
@@ -1279,7 +1279,7 @@ bool UNoCatPlugIn::creatNewPeer(uint32_t index_AUTH)
 {
    U_TRACE(0, "UNoCatPlugIn::creatNewPeer(%u)", index_AUTH)
 
-   U_INTERNAL_ASSERT_EQUALS(peer, 0)
+   U_INTERNAL_ASSERT_EQUALS(peer, U_NULLPTR)
 
    uint32_t index_network = UIPAllow::find(UServer_Base::client_address, *vLocalNetworkMask);
 
@@ -1796,13 +1796,13 @@ void UNoCatPlugIn::sendData(uint32_t index_AUTH, const UString& data, const char
    U_TRACE(0, "UNoCatPlugIn::sendData(%u,%V,%.*S,%u)", index_AUTH, data.rep, service_len, service, service_len)
 
    U_INTERNAL_ASSERT(data)
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, 0)
+   U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, U_NULLPTR)
 
    // NB: we can't try to send immediately the info data on users to portal because the worst we have a hole
    //     of 10 seconds and the portal can have need to ask us something (to logout some user, the list of peer permitted, ...)
 
    char buffer[4096];
-   const char* log_msg = 0;
+   const char* log_msg = U_NULLPTR;
    uint32_t sz = data.size();
    UString body = data, url = getUrlForSendMsgToPortal(index_AUTH, service, service_len);
 
@@ -1908,7 +1908,7 @@ bool UNoCatPlugIn::getPeerFromMAC(const UString& mac)
       while (peers->next());
       }
 
-   peer = 0;
+   peer = U_NULLPTR;
 
    U_RETURN(false);
 }
@@ -1958,6 +1958,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 {
    U_TRACE(0, "UNoCatPlugIn::handlerConfig(%p)", &cfg)
 
+   // -----------------------------------------------------------------------------------------------------------------------------------
    // nocat - plugin parameters
    // -----------------------------------------------------------------------------------------------------------------------------------
    // FW_ENV                environment for shell script to execute
@@ -1998,8 +1999,8 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
          {
          char* ptr;
 
-                               time_available = ::strtol(tmp.data(), &ptr, 10);
-         if (ptr[0] == ':') traffic_available = ::strtoll(ptr+1,         0, 10);
+                               time_available = ::strtol(tmp.data(),  &ptr, 10);
+         if (ptr[0] == ':') traffic_available = ::strtoll(ptr+1, U_NULLPTR, 10);
 
          if (   time_available > U_ONE_DAY_IN_SECOND) time_available = U_ONE_DAY_IN_SECOND;
          if (traffic_available == 0)               traffic_available = 4ULL * 1024ULL * 1024ULL * 1024ULL; // 4G
@@ -2043,7 +2044,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
 
       if (extdev->empty())
          {
-         *extdev = UServer_Base::getNetworkDevice(0);
+         *extdev = UServer_Base::getNetworkDevice(U_NULLPTR);
 
          if (extdev->empty()) U_ERROR("No ExternalDevice detected");
 
@@ -2103,7 +2104,7 @@ int UNoCatPlugIn::handlerConfig(UFileConfig& cfg)
             U_SRV_LOG("WARNING: fail to open DHCP_DATA_FILE %V", tmp.rep);
 
             delete (UTDB*)pdata;
-                          pdata = 0;
+                          pdata = U_NULLPTR;
             }
          }
 #  endif
@@ -2187,7 +2188,7 @@ int UNoCatPlugIn::handlerInit()
 
    fw_env->snprintf_add(U_CONSTANT_TO_PARAM("'AuthServiceIP=%v'\n"), auth_ip.rep);
 
-   U_INTERNAL_ASSERT_EQUALS(UPing::addrmask, 0)
+   U_INTERNAL_ASSERT_EQUALS(UPing::addrmask, U_NULLPTR)
 
    UPing::addrmask = (fd_set*) UServer_Base::getOffsetToDataShare(sizeof(fd_set) + sizeof(uint32_t));
 
@@ -2209,7 +2210,7 @@ int UNoCatPlugIn::handlerInit()
 
    command.snprintf(U_CONSTANT_TO_PARAM("/bin/sh %v initialize allowed_web_hosts"), fw_cmd->rep);
 
-   fw->set(command, (char**)0);
+   fw->set(command, (char**)U_NULLPTR);
    fw->setEnvironment(fw_env);
 
    if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/server_plugin_nocat.err");
@@ -2236,7 +2237,7 @@ int UNoCatPlugIn::handlerInit()
    U_NEW(UString, status_content, UString(U_CAPACITY));
    U_NEW(UVector<UString>, openlist, UVector<UString>);
 
-   U_INTERNAL_ASSERT_EQUALS(peers_preallocate, 0)
+   U_INTERNAL_ASSERT_EQUALS(peers_preallocate, U_NULLPTR)
 
    UInterrupt::setHandlerForSegv(preallocatePeers, preallocatePeersFault);
 
@@ -2264,9 +2265,9 @@ bool UNoCatPlugIn::preallocatePeersFault()
                            "address+space+usage%%3A%2f+MBytes+-+"
                                      "rss+usage%%3A%2f+MBytes"), label->rep, hostname->rep, IP_address_trust->rep, UServer_Base::port, _vsz, _rss);
 
-   sendMsgToPortal(0, msg, 0);
+   sendMsgToPortal(0, msg, U_NULLPTR);
 
-   U_INTERNAL_ASSERT_EQUALS(peers_preallocate, 0)
+   U_INTERNAL_ASSERT_EQUALS(peers_preallocate, U_NULLPTR)
 
    if (num_peers_preallocate > 512)
       {
@@ -2318,7 +2319,7 @@ int UNoCatPlugIn::handlerFork()
 
    // send start to portal
 
-   U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, 0)
+   U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, U_NULLPTR)
 
    UString msg(300U), output(U_CAPACITY), allowed_web_hosts(U_CAPACITY);
 
@@ -2338,7 +2339,7 @@ int UNoCatPlugIn::handlerFork()
 
    fw->setArgument(4, allowed_web_hosts.c_str());
 
-   (void) fw->executeAndWait(0, -1, fd_stderr);
+   (void) fw->executeAndWait(U_NULLPTR, -1, fd_stderr);
 
 #ifndef U_LOG_DISABLE
    UServer_Base::logCommandMsgError(fw->getCommand(), false);
@@ -2403,7 +2404,7 @@ int UNoCatPlugIn::handlerFork()
          }
       }
 
-   U_INTERNAL_ASSERT_EQUALS(dirwalk, 0)
+   U_INTERNAL_ASSERT_EQUALS(dirwalk, U_NULLPTR)
 
 #if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
    if (UServer_Base::isLog()) U_NEW(UDirWalk, dirwalk, UDirWalk(ULog::getDirLogGz(), U_CONSTANT_TO_PARAM("*.gz")));
@@ -2427,8 +2428,9 @@ int UNoCatPlugIn::handlerRequest()
 
       U_INTERNAL_DUMP("host = %V UServer_Base::client_address = %.*S", host.rep, U_CLIENT_ADDRESS_TO_TRACE)
 
-      peer = 0;
+      peer = U_NULLPTR;
 
+      // -------------------------------------------------------------
       // NB: check for request from AUTH, which may be:
       // -------------------------------------------------------------
       // 1) /checkFirewall  - check firewall and report info
@@ -2495,7 +2497,7 @@ int UNoCatPlugIn::handlerRequest()
 
                U_INTERNAL_DUMP("peer = %p", peer)
 
-               if (peer == 0)
+               if (peer == U_NULLPTR)
                   {
                   UHTTP::setBadRequest();
 
@@ -2556,7 +2558,7 @@ int UNoCatPlugIn::handlerRequest()
 
             peer = (*peers)[peer_ip];
 
-            if (peer == 0)
+            if (peer == U_NULLPTR)
                {
                uint32_t pos = data.find_first_of('&', 3);
 
@@ -2787,7 +2789,7 @@ next:       (void) getARPCache();
             }
 #     endif
 
-         if (peer == 0 ||
+         if (peer == U_NULLPTR ||
              checkAuthMessage(data) == false)
             {
             goto set_redirection_url;
@@ -2913,7 +2915,7 @@ const char* UModNoCatPeer::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UNoCatPlugIn::dump(bool _reset) const
@@ -2963,6 +2965,6 @@ const char* UNoCatPlugIn::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

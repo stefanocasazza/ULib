@@ -32158,7 +32158,7 @@ $as_echo "$ulib_cc_flag" >&6; }
 	else
 		## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
 		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
-		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat" # -Wzero-as-null-pointer-constant"
+		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wzero-as-null-pointer-constant" # -Wzero-as-null-pointer-constant"
 	fi
 
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for gcc supported flags" >&5

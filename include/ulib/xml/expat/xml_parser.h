@@ -38,7 +38,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UXMLParser, "", 0)
 
-      m_parser = 0;
+      m_parser = U_NULLPTR;
       }
 
    virtual ~UXMLParser()
@@ -51,13 +51,13 @@ public:
 
          XML_ParserFree(m_parser);
 
-         m_parser = 0;
+         m_parser = U_NULLPTR;
          }
       }
 
    // SERVICES
 
-   void initParser(bool ns = true, const char* charset = 0);
+   void initParser(bool ns = true, const char* charset = U_NULLPTR);
 
    bool parse(const UString& data)
       {
@@ -65,9 +65,9 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(m_parser)
 
-      bool result = (XML_Parse(m_parser, U_STRING_TO_PARAM(data), 1) != 0);
+      if (XML_Parse(m_parser, U_STRING_TO_PARAM(data), 1) != 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    const char* getErrorMessage()
@@ -107,9 +107,9 @@ protected:
 
       U_INTERNAL_ASSERT_POINTER(m_parser)
 
-      bool result = (XML_ParseBuffer(m_parser, size, (size == 0)) != 0);
+      if (XML_ParseBuffer(m_parser, size, (size == 0)) != 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // VIRTUAL METHOD

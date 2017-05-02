@@ -32,7 +32,7 @@ UClient_Base::UClient_Base(UFileConfig* pcfg) : response(U_CAPACITY), buffer(U_C
       u_init_ulib_username();
       }
 
-   socket    = 0;
+   socket    = U_NULLPTR;
    port      = verify_mode = iovcnt = 0;
    timeoutMS = U_TIMEOUT_MS;
 
@@ -40,7 +40,7 @@ UClient_Base::UClient_Base(UFileConfig* pcfg) : response(U_CAPACITY), buffer(U_C
 
    if (pcfg)
       {
-      if (cfg == 0)
+      if (cfg == U_NULLPTR)
          {
          cfg = pcfg;
 
@@ -83,7 +83,7 @@ void UClient_Base::setSSLContext()
 {
    U_TRACE_NO_PARAM(0, "UClient_Base::setSSLContext()")
 
-   U_NEW(USSLSocket, socket, USSLSocket(bIPv6, 0, false));
+   U_NEW(USSLSocket, socket, USSLSocket(bIPv6, U_NULLPTR, false));
 
    U_ASSERT(((USSLSocket*)socket)->isSSL())
 
@@ -97,8 +97,8 @@ void UClient_Base::setSSLContext()
    U_INTERNAL_ASSERT( password.isNullTerminated())
    U_INTERNAL_ASSERT(cert_file.isNullTerminated())
 
-   if (((USSLSocket*)socket)->setContext(0, cert_file.data(), key_file.data(), password.data(),
-                                              ca_file.data(),  ca_path.data(),    verify_mode) == false)
+   if (((USSLSocket*)socket)->setContext(U_NULLPTR, cert_file.data(), key_file.data(), password.data(),
+                                                      ca_file.data(),  ca_path.data(),  verify_mode) == false)
       {
       U_ERROR("SSL: client setContext() failed");
       }
@@ -132,9 +132,9 @@ bool UClient_Base::setHostPort(const UString& host, unsigned int _port)
           _port != 80)
          {
 #     ifdef USE_LIBSSL
-         if (_port == 443  &&
-             url.isHTTPS() &&
-             (socket == 0  ||
+         if (_port == 443         &&
+             url.isHTTPS()        &&
+             (socket == U_NULLPTR ||
               socket->isSSLActive()))
             {
             U_INTERNAL_DUMP("host_port = %V", host_port.rep)
@@ -222,7 +222,7 @@ void UClient_Base::loadConfigParam()
          }
       }
 
-   if (log == 0              &&
+   if (log == U_NULLPTR      &&
        UServer_Base::isLog() &&
        isLogSharedWithServer() == false)
       {
@@ -333,7 +333,7 @@ bool UClient_Base::setUrl(const char* str, uint32_t len)
 
    // we check we've been passed an absolute URL
 
-   if (u_isUrlScheme(str, len) == 0)
+   if (u_isUrlScheme(str, len) == U_NULLPTR)
       {
       U_INTERNAL_DUMP("uri = %V", uri.rep)
 
@@ -354,7 +354,7 @@ bool UClient_Base::setUrl(const char* str, uint32_t len)
             {
             p = (char*) memchr(src, '/', _end - src);
 
-            if (p == 0) break;
+            if (p == U_NULLPTR) break;
 
             uint32_t sz = p - src + 1;
 
@@ -616,6 +616,6 @@ const char* UClient_Base::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

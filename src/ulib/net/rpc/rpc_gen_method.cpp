@@ -32,7 +32,7 @@ bool URPCGenericMethod::execute(URPCEnvelope& theCall)
 
    U_INTERNAL_DUMP("old_ncmd = %u num_arguments = %u", old_ncmd, num_arguments)
 
-   if (URPCObject::isStdInput(response_type) == false) pinput = 0;
+   if (URPCObject::isStdInput(response_type) == false) pinput = U_NULLPTR;
    else
       {
       U_INTERNAL_ASSERT_MAJOR(num_arguments, 0)
@@ -108,6 +108,6 @@ const char* URPCGenericMethod::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

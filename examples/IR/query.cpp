@@ -20,7 +20,7 @@ public:
       {
       U_TRACE(5, "Application::Application()")
 
-      query = 0;
+      query = U_NULLPTR;
       }
 
    ~Application()
@@ -30,7 +30,7 @@ public:
       if (query)
          {
          delete posting;
-                posting = 0;
+                posting = U_NULLPTR;
 
          delete query;
          }
@@ -48,7 +48,7 @@ public:
 
       U_INTERNAL_DUMP("optind = %d", optind)
 
-      if (ptr == 0) U_ERROR("<query> not specified");
+      if (ptr == U_NULLPTR) U_ERROR("<query> not specified");
 
       UString::str_allocate(STR_ALLOCATE_QUERY_PARSER);
 
@@ -60,7 +60,7 @@ public:
 
          ptr = Query::checkQuoting(argv, len);
 
-         query->run(ptr, len, 0);
+         query->run(ptr, len, U_NULLPTR);
 
          WeightWord::dumpObjects();
 

@@ -54,8 +54,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, USemaphore, "", 0)
 
-      next = 0;
-      psem = 0;
+      next = U_NULLPTR;
+      psem = U_NULLPTR;
       }
 
    /**
@@ -65,7 +65,7 @@ public:
     * @param resource specify initial resource count or 1 default
     */
 
-   void init(sem_t* ptr = 0, int resource = 1);
+   void init(sem_t* ptr = U_NULLPTR, int resource = 1);
 
    /**
     * Destroying a semaphore also removes any system resources associated with it. If a semaphore has threads currently

@@ -167,7 +167,7 @@ public:
          u_unatexit(&ULog::close); // unregister function of close at exit()...
                      ULog::close();
 
-         log = 0;
+         log = U_NULLPTR;
          }
 #  endif
       }
@@ -300,7 +300,7 @@ protected:
       }
 #endif
 
-    UClient_Base(UFileConfig* pcfg = 0);
+    UClient_Base(UFileConfig* pcfg = U_NULLPTR);
    ~UClient_Base();
 
 private:

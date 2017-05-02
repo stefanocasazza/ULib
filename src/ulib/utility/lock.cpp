@@ -40,7 +40,7 @@ void ULock::destroy()
    if (psem)
       {
       delete psem;
-             psem = 0;
+             psem = U_NULLPTR;
       }
 }
 
@@ -127,6 +127,6 @@ const char* ULock::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

@@ -26,7 +26,7 @@ bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
       {
       const char* env_redis_host = (const char*) U_SYSCALL(getenv, "%S", "REDIS_HOST");
 
-      if (env_redis_host == 0)
+      if (env_redis_host == U_NULLPTR)
          {
          (void) UClient_Base::response.replace(U_CONSTANT_TO_PARAM("connection disabled"));
 
@@ -339,6 +339,6 @@ const char* UREDISClient_Base::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

@@ -77,7 +77,7 @@ public:
 
       if ((*bdelete = msg->isOld()))
          {
-         if (msg->isAnomalia()) PEC_report_anomalie::reportAnomalie(0, msg);
+         if (msg->isAnomalia()) PEC_report_anomalie::reportAnomalie(U_NULLPTR, msg);
 
          UStringRep* rep;
 
@@ -88,7 +88,7 @@ public:
          U_RETURN_POINTER(rep,UStringRep);
          }
 
-      U_RETURN_POINTER(0,UStringRep);
+      U_RETURN_POINTER(U_NULLPTR,UStringRep);
       }
 
    static void findKeyOnDatabase(const UStringRep* key, Messaggio* msg)
@@ -133,7 +133,7 @@ public:
 
       if (msg->isOld())
          {
-         if (msg->isAnomalia()) PEC_report_anomalie::reportAnomalie(0, msg);
+         if (msg->isAnomalia()) PEC_report_anomalie::reportAnomalie(U_NULLPTR, msg);
 
          // insert to database...
 
@@ -172,7 +172,7 @@ public:
 
       Messaggio* msg = (Messaggio*)elem;
 
-      if (msg->isAnomalia()) PEC_report_anomalie::reportAnomalie(0, msg);
+      if (msg->isAnomalia()) PEC_report_anomalie::reportAnomalie(U_NULLPTR, msg);
 
       // check if the key already existed in database...
 
@@ -241,7 +241,7 @@ public:
 
          U_MESSAGE("table maximum size reached <%u>: discharging table started...", table->size());
 
-         if (rdb == 0)
+         if (rdb == U_NULLPTR)
             {
             rdbname->snprintf(U_CONSTANT_TO_PARAM("%s/PEC_report_anomalie1.%4D.cdb"), u_tmpdir);
 

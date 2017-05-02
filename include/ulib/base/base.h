@@ -178,6 +178,14 @@ U_DO_PRAGMA(message ("Sorry I was compiled with server captive portal mode enabl
 
 #define U_BUFFER_SIZE 8192
 
+/* C++11 keywords and expressions */
+
+#ifdef U_COMPILER_NULLPTR
+# define U_NULLPTR nullptr
+#else
+# define U_NULLPTR 0
+#endif
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -459,14 +467,14 @@ static inline void u_gettimenow(void)
 {
    U_INTERNAL_TRACE("u_gettimenow()")
 
-   (void) gettimeofday(u_now, 0);
+   (void) gettimeofday(u_now, U_NULLPTR);
 }
 
 static inline void u_gettimeofday(struct timeval* tv)
 {
    U_INTERNAL_TRACE("u_gettimeofday(%p)", tv)
 
-   (void) gettimeofday(tv, 0);
+   (void) gettimeofday(tv, U_NULLPTR);
 }
 
 /**

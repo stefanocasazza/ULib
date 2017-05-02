@@ -23,7 +23,7 @@ UMimeEntity::UMimeEntity() : content(U_CAPACITY)
 {
    U_TRACE_REGISTER_OBJECT(0, UMimeEntity, "")
 
-   header       = 0;
+   header       = U_NULLPTR;
    startHeader  = endHeader = 0;
    parse_result = false;
 }
@@ -551,7 +551,7 @@ const char* UMimeEntity::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UMimeMessage::dump(bool reset) const
@@ -570,7 +570,7 @@ const char* UMimeMessage::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UMimeMultipart::dump(bool _reset) const
@@ -592,7 +592,7 @@ const char* UMimeMultipart::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

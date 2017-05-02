@@ -21,7 +21,7 @@ URPCParser::URPCParser(UVector<UString>* arg)
 {
    U_TRACE_REGISTER_OBJECT(0, URPCParser, "%p", arg)
 
-   if (arg == 0)
+   if (arg == U_NULLPTR)
       {
       URPC::allocate();
 
@@ -44,7 +44,7 @@ void URPCParser::clearData()
    if (URPCMethod::pFault)
       {
       delete URPCMethod::pFault;
-             URPCMethod::pFault = 0;
+             URPCMethod::pFault = U_NULLPTR;
       }
 }
 
@@ -79,6 +79,6 @@ const char* URPCParser::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

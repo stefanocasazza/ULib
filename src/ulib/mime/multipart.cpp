@@ -192,7 +192,7 @@ UString UMimeMultipartMsg::section(const UString& content,
 #  ifdef USE_LIBMAGIC
       charset = "";
 
-      if (UMagic::magic == 0) (void) UMagic::init();
+      if (UMagic::magic == U_NULLPTR) (void) UMagic::init();
 
       UString value = UMagic::getType(content);
 
@@ -204,7 +204,7 @@ UString UMimeMultipartMsg::section(const UString& content,
 #  endif
       }
 
-   U_INTERNAL_ASSERT_EQUALS(strstr(type,"multipart"),0)
+   U_INTERNAL_ASSERT_EQUALS(strstr(type,"multipart"), U_NULLPTR)
 
    uint32_t length = content.size();
 
@@ -293,7 +293,7 @@ const char* UMimeMultipartMsg::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

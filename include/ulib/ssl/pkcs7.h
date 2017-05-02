@@ -55,7 +55,7 @@ public:
     * (that is it is detached)
     */ 
 
-   UPKCS7(PKCS7* p7 = 0, BIO* data = 0)
+   UPKCS7(PKCS7* p7 = U_NULLPTR, BIO* data = U_NULLPTR)
       {
       U_TRACE_REGISTER_OBJECT(0, UPKCS7, "%p,%p", p7, data)
 
@@ -70,13 +70,13 @@ public:
     * @param type the PKCS7's encoding type
     */
 
-   static PKCS7* readPKCS7(const UString& x, const char* format = 0);
+   static PKCS7* readPKCS7(const UString& x, const char* format = U_NULLPTR);
 
-   UPKCS7(const UString& x, const char* format = 0)
+   UPKCS7(const UString& x, const char* format = U_NULLPTR)
       {
       U_TRACE_REGISTER_OBJECT(0, UPKCS7, "%V,%S", x.rep, format)
 
-      indata = 0;
+      indata = U_NULLPTR;
       pkcs7  = readPKCS7(x, format);
       }
 
@@ -92,7 +92,7 @@ public:
 
       U_SYSCALL_VOID(PKCS7_free, "%p", pkcs7);
 
-      pkcs7 = 0;
+      pkcs7 = U_NULLPTR;
       }
 
    ~UPKCS7();
@@ -101,7 +101,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UPKCS7::isValid()")
 
-      U_RETURN(pkcs7 != 0);
+      if (pkcs7 != U_NULLPTR) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    PKCS7* getPKCS7() const { return pkcs7; }
@@ -110,9 +112,10 @@ public:
       {
       U_TRACE_NO_PARAM(1, "UPKCS7::isDetached()")
 
-      bool result = (U_SYSCALL(PKCS7_ctrl, "%p,%d,%ld,%s", pkcs7, PKCS7_OP_GET_DETACHED_SIGNATURE, 0, 0) != 0);
+      if (U_SYSCALL(PKCS7_ctrl, "%p,%d,%ld,%s", pkcs7, PKCS7_OP_GET_DETACHED_SIGNATURE, 0, U_NULLPTR) != 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
+
       }
 
    /* if it isn't a signed-only message */
@@ -121,18 +124,18 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UPKCS7::isMessageEncrypted()")
 
-      bool result = (PKCS7_type_is_enveloped(pkcs7) != 0);
+      if (PKCS7_type_is_enveloped(pkcs7) != 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    bool isMessageSignedAndEncrypted() const
       {
       U_TRACE_NO_PARAM(0, "UPKCS7::isMessageSignedAndEncrypted()")
 
-      bool result = (PKCS7_type_is_signedAndEnveloped(pkcs7) != 0);
+      if (PKCS7_type_is_signedAndEnveloped(pkcs7) != 0) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    /**
@@ -160,7 +163,7 @@ public:
     * Returns the signed content from p7
     */
 
-   UString getContent(bool* valid_content = 0) const;
+   UString getContent(bool* valid_content = U_NULLPTR) const;
 
    /**
     * creates and returns a PKCS#7 signedData structure

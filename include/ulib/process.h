@@ -90,13 +90,13 @@ public:
       uint32_t n = 0;
 
 #  ifndef _MSWINDOWS_
-      while (U_SYSCALL(waitpid, "%d,%p,%d", -1, 0, WNOHANG) > 0) ++n;
+      while (U_SYSCALL(waitpid, "%d,%p,%d", -1, U_NULLPTR, WNOHANG) > 0) ++n;
 #  endif
 
       U_RETURN(n);
       }
 
-   static int waitpid(pid_t pid = -1, int* status = 0, int options = WNOHANG);
+   static int waitpid(pid_t pid = -1, int* status = U_NULLPTR, int options = WNOHANG);
 
    // STATUS CHILD
 

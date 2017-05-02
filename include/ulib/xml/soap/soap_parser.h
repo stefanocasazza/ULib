@@ -174,7 +174,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   USOAPParser(UVector<UString>* arg = 0) : URPCParser(arg), tree(0,0,2)
+   USOAPParser(UVector<UString>* arg = U_NULLPTR) : URPCParser(arg), tree(U_NULLPTR,U_NULLPTR,2)
       {
       U_TRACE_REGISTER_OBJECT(0, USOAPParser, "", 0)
 
@@ -184,7 +184,7 @@ public:
 
       zero();
 
-      ptree = 0;
+      ptree = U_NULLPTR;
       }
 
    void clearData()
@@ -213,15 +213,15 @@ public:
       {
       U_TRACE_NO_PARAM(0, "USOAPParser::zero()")
 
-      body                    = 0;
-      header                  = 0;
-      method                  = 0;
-      current                 = 0;
+      body                    = U_NULLPTR;
+      header                  = U_NULLPTR;
+      method                  = U_NULLPTR;
+      current                 = U_NULLPTR;
       flag_state              = 0;
       envelope.mustUnderstand = false;
       }
 
-   void initParser(const char* charset = 0)
+   void initParser(const char* charset = U_NULLPTR)
       {
       U_TRACE(0, "USOAPParser::initParser(%S)", charset)
 

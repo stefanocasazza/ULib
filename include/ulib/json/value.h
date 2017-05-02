@@ -131,7 +131,7 @@ public:
 
       UValue* node;
 
-      U_NEW(UValue, node, UValue((UValue*)0));
+      U_NEW(UValue, node, UValue((UValue*)U_NULLPTR));
 
       value.ival = getJsonValue(OBJECT_VALUE, node);
 
@@ -365,10 +365,10 @@ public:
    UValue& operator[](const UString& key) const    { return *at(U_STRING_TO_PARAM(key)); }
    UValue& operator[](const UStringRep* key) const { return *at(U_STRING_TO_PARAM(*key)); }
 
-   bool isMemberExist(const UString& key) const    { return (at(U_STRING_TO_PARAM(key))  != 0); }
-   bool isMemberExist(const UStringRep* key) const { return (at(U_STRING_TO_PARAM(*key)) != 0); }
+   bool isMemberExist(const UString& key) const    { return (at(U_STRING_TO_PARAM(key))  != U_NULLPTR); }
+   bool isMemberExist(const UStringRep* key) const { return (at(U_STRING_TO_PARAM(*key)) != U_NULLPTR); }
 
-   bool isMemberExist(const char* key, uint32_t key_len) const { return (at(key, key_len) != 0); }
+   bool isMemberExist(const char* key, uint32_t key_len) const { return (at(key, key_len) != U_NULLPTR); }
 
    /**
     * \brief Return a list of the member names.
@@ -451,7 +451,7 @@ public:
 
       addJSON<T>(str, member);
 
-      if (pnode->toNode() == 0)
+      if (pnode->toNode() == U_NULLPTR)
          {
          int pnode_tag = pnode->getTag();
 
@@ -461,7 +461,7 @@ public:
             U_INTERNAL_DUMP("pnode->next = %p", pnode->next)
 
             pnode->value.ival = getJsonValue(pnode_tag, pnode->next);
-                                                        pnode->next = 0;
+                                                        pnode->next = U_NULLPTR;
             }
          }
       }
@@ -483,7 +483,7 @@ public:
    static int      jread_error;
    static uint32_t jread_elements, jread_pos;
 
-   static int  jread(const UString& json, const UString& query,                  UString& result, uint32_t* queryParams = 0);
+   static int  jread(const UString& json, const UString& query,                  UString& result, uint32_t* queryParams = U_NULLPTR);
    static bool jfind(const UString& json, const char* query, uint32_t query_len, UString& result);
 
    static bool jfind(const UString& json, const char* query, uint32_t query_len, bool& result)
@@ -792,12 +792,12 @@ protected:
       if (tail)
          {
          UValue* head = tail->next;
-                        tail->next = 0;
+                        tail->next = U_NULLPTR;
 
          return getJsonValue(tag, head);
          }
 
-      return getJsonValue(tag, 0);
+      return getJsonValue(tag, U_NULLPTR);
       }
 
    static UValue* insertAfter(UValue* tail, uint64_t value)
@@ -838,7 +838,7 @@ protected:
 
       UValue* node;
 
-      U_NEW(UValue, node, UValue((UValue*)0));
+      U_NEW(UValue, node, UValue((UValue*)U_NULLPTR));
 
       U_INTERNAL_DUMP("pnode = %p", pnode)
 
@@ -885,7 +885,7 @@ private:
    template <class T> friend class UVector;
    template <class T> friend class UHashMap;
    template <class T> friend class UJsonTypeHandler;
-   template <class T> friend void JSON_stringify(UString&, UValue&, T&);
+   template <class T> friend void OBJ_to_JSON(T&, UValue&);
 };
 
 #if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
@@ -912,7 +912,7 @@ private:
    const UValue* _p;
 };
 
-inline UValueIter end(  const union UValue::jval)   { return UValueIter(0); }
+inline UValueIter end(  const union UValue::jval)   { return UValueIter(U_NULLPTR); }
 inline UValueIter begin(const union UValue::jval v) { return UValueIter(UValue::toNode(v.ival)); }
 #endif
 
@@ -1071,15 +1071,22 @@ template <class T> void JSON_OBJ_stringify(UString& str, T& obj)
    U_INTERNAL_DUMP("str(%u) = %V", str.size(), str.rep)
 }
 
+template <class T> void OBJ_to_JSON(T& obj, UValue& json)
+{
+   U_TRACE(0, "OBJ_to_JSON(%p,%p)", &obj, &json)
+
+   U_ASSERT(json.empty())
+
+   UValue::pnode = U_NULLPTR;
+
+   UJsonTypeHandler<T>(obj).toJSON(json);
+}
+
 template <class T> void JSON_stringify(UString& str, UValue& json, T& obj)
 {
    U_TRACE(0, "JSON_stringify(%V,%p,%p)", str.rep, &json, &obj)
 
-   U_ASSERT(json.empty())
-
-   UValue::pnode = 0;
-
-   UJsonTypeHandler<T>(obj).toJSON(json);
+   OBJ_to_JSON(obj, json);
 
    UValue::stringify(str, json);
 }
@@ -1088,7 +1095,7 @@ template <class T> void JSON_stringify(UString& str, UValue& json, T& obj)
 
 template <> class U_EXPORT UJsonTypeHandler<null> : public UJsonTypeHandler_Base {
 public:
-   explicit UJsonTypeHandler(null&) : UJsonTypeHandler_Base(0) {}
+   explicit UJsonTypeHandler(null&) : UJsonTypeHandler_Base(U_NULLPTR) {}
 
    void clear()
       {
@@ -1108,7 +1115,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<null>::toJSON(%p)", &json)
 
-      json.value.ival = UValue::getJsonValue(UValue::NULL_VALUE, 0);
+      json.value.ival = UValue::getJsonValue(UValue::NULL_VALUE, U_NULLPTR);
       }
 
    void fromJSON(UValue& json)
@@ -1143,7 +1150,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<bool>::toJSON(%p)", &json)
 
-      json.value.ival = UValue::getJsonValue(*(bool*)pval ? UValue::TRUE_VALUE : UValue::FALSE_VALUE, 0);
+      json.value.ival = UValue::getJsonValue(*(bool*)pval ? UValue::TRUE_VALUE : UValue::FALSE_VALUE, U_NULLPTR);
       }
 
    void fromJSON(UValue& json)
@@ -1169,7 +1176,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<char>::toJSON(%V)", json.rep)
 
-      (void) json.append(1U, *(char*)pval);
+      json.push_back(*(char*)pval);
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -1204,7 +1211,7 @@ public:
       {
       U_TRACE(0, "UJsonTypeHandler<unsigned char>::toJSON(%V)", json.rep)
 
-      (void) json.append(1U, *(unsigned char*)pval);
+      json.push_back(*(unsigned char*)pval);
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -1742,11 +1749,10 @@ public:
 
       uvector* pvec = (uvector*)pval;
 
-      if (pvec->_length == 0) (void) json.append(U_CONSTANT_TO_PARAM("[]"));
-      else
-         {
-         json.push_back('[');
+      json.push_back('[');
 
+      if (pvec->_length)
+         {
          const void** ptr = pvec->vec;
          const void** end = pvec->vec + pvec->_length;
 
@@ -1758,9 +1764,9 @@ public:
 
             json.push_back(',');
             }
-
-         json.push_back(']');
          }
+
+      json.push_back(']');
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -1828,11 +1834,10 @@ public:
 
       uvectorbase* pvec = (uvectorbase*)pval;
 
-      if (pvec->_length == 0) (void) json.append(U_CONSTANT_TO_PARAM("[]"));
-      else
-         {
-         json.push_back('[');
+      json.push_back('[');
 
+      if (pvec->_length)
+         {
          const void** ptr = pvec->vec;
          const void** end = pvec->vec + pvec->_length;
 
@@ -1844,9 +1849,9 @@ public:
 
             json.push_back(',');
             }
-
-         json.push_back(']');
          }
+
+      json.push_back(']');
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }
@@ -2000,7 +2005,7 @@ public:
 
       UHashMap<UString>* pmap = (UHashMap<UString>*)pval;
 
-      if (pmap->first() == 0) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
+      if (pmap->first() == U_NULLPTR) (void) json.append(U_CONSTANT_TO_PARAM("{}"));
       else
          {
          json.push_back('{');
@@ -2084,8 +2089,20 @@ public:
       U_TRACE(0, "UJsonTypeHandler<stdvector>::toJSON(%V)", json.rep)
 
       stdvector* pvec = (stdvector*)pval;
+      uint32_t i = 0, n = pvec->size();
 
-      for (uint32_t i = 0, n = pvec->size(); i < n; ++i) UJsonTypeHandler<T>(pvec->at(i)).toJSON(json);
+      json.push_back('[');
+
+      while (true)
+         {
+         UJsonTypeHandler<T>(pvec->at(i)).toJSON(json);
+
+         if (++i >= n) break;
+
+         json.push_back(',');
+         }
+
+      json.push_back(']');
 
       U_INTERNAL_DUMP("json(%u) = %V", json.size(), json.rep)
       }

@@ -56,7 +56,7 @@ bool USOAPClient_Base::processRequest(URPCMethod& method)
    if (sendRequest() &&
        readResponse())
       {
-      if (parser == 0) U_NEW(USOAPParser, parser, USOAPParser);
+      if (parser == U_NULLPTR) U_NEW(USOAPParser, parser, USOAPParser);
 
       if (parser->parse(UClient_Base::response))
          {
@@ -92,6 +92,6 @@ const char* USOAPClient_Base::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

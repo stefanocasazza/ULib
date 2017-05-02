@@ -321,7 +321,7 @@ public:
       {
       U_TRACE(5, "Application::Application()")
 
-      client = 0;
+      client = U_NULLPTR;
       }
 
    ~Application()
@@ -348,7 +348,7 @@ public:
 
       const char* method = argv[optind++];
 
-      if (method == 0) usage();
+      if (method == U_NULLPTR) usage();
 
       int op = atoi(method), num_args = (argc - optind);
 

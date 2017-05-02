@@ -91,7 +91,7 @@ public:
       {
       U_TRACE(5, "Application::Application()")
 
-      client = 0;
+      client = U_NULLPTR;
       }
 
    ~Application()

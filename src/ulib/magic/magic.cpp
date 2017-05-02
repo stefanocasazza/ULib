@@ -19,11 +19,11 @@ bool UMagic::init(int flags)
 {
    U_TRACE(1, "UMagic::init(%d)", flags)
 
-   U_INTERNAL_ASSERT_EQUALS(magic, 0)
+   U_INTERNAL_ASSERT_EQUALS(magic, U_NULLPTR)
 
    magic = (magic_t) U_SYSCALL(magic_open, "%d", flags);
 
-   bool ok = (magic && U_SYSCALL(magic_load, "%p", magic, 0) != -1);
+   bool ok = (magic && U_SYSCALL(magic_load, "%p,%S", magic, U_NULLPTR) != -1);
 
    U_DUMP("ok = %b status = %.*S", ok, 512, getError())
 
@@ -59,6 +59,6 @@ const char* UMagic::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

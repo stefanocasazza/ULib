@@ -59,11 +59,11 @@
  */
 
 #ifdef DEBUG
-#  define U_STRINGREP_FROM_CONSTANT(c_str) (void*)U_CHECK_MEMORY_SENTINEL, 0, 0, U_CONSTANT_SIZE(c_str), 0, 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(c_str) (void*)U_CHECK_MEMORY_SENTINEL, U_NULLPTR, 0, U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #elif defined(U_SUBSTR_INC_REF)
-#  define U_STRINGREP_FROM_CONSTANT(c_str)                                 0,    U_CONSTANT_SIZE(c_str), 0, 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(c_str)                                 U_NULLPTR,    U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #else
-#  define U_STRINGREP_FROM_CONSTANT(c_str)                                       U_CONSTANT_SIZE(c_str), 0, 0, c_str
+#  define U_STRINGREP_FROM_CONSTANT(c_str)                                               U_CONSTANT_SIZE(c_str), 0, 0, c_str
 #endif
 
 class Url;
@@ -870,7 +870,7 @@ private:
       U_INTERNAL_ASSERT_POINTER(ptr)
 
 #  if defined(U_SUBSTR_INC_REF) || defined(DEBUG)
-      parent = 0;
+      parent = U_NULLPTR;
 #    ifdef DEBUG
       child  = 0;
 #    endif
@@ -1285,12 +1285,10 @@ public:
       {
       U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u", n)
 
-      rep = UStringRep::create(0U, n, 0);
+      rep = UStringRep::create(0U, n, U_NULLPTR);
 
       U_INTERNAL_ASSERT(invariant())
       }
-
-   explicit UString(uint32_t n, unsigned char c);
 
    explicit UString(const char* t)
       {
@@ -1315,7 +1313,7 @@ public:
       U_INTERNAL_ASSERT(invariant())
       }
 
-   explicit UString(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND);
+   explicit UString(uint32_t n, unsigned char c);
 
    explicit UString(uint32_t sz, const char* format, uint32_t fmt_size, ...) // ctor with var arg
       {
@@ -1326,7 +1324,7 @@ public:
       va_list argp;
       va_start(argp, fmt_size);
 
-      rep = UStringRep::create(0U, sz, 0);
+      rep = UStringRep::create(0U, sz, U_NULLPTR);
 
       rep->_length = u__vsnprintf(rep->data(), rep->_capacity+1, format, fmt_size, argp);
 
@@ -1334,6 +1332,8 @@ public:
 
       U_INTERNAL_ASSERT(invariant())
       }
+
+   explicit UString(const UString& str, uint32_t pos, uint32_t n = U_NOT_FOUND);
 
    // SUBSTRING
 
@@ -1875,8 +1875,7 @@ public:
 
    // ...unquote it
 
-   void unQuote();
-
+   void   unQuote();
    bool needQuote() const { return rep->needQuote(); }
 
    uint32_t getSpaceToDump() const { return rep->getSpaceToDump(); }
@@ -2145,9 +2144,7 @@ public:
       U_ASSERT(uniq())
 #  endif
 
-      // NB: +1 because we want space for null-terminator...
-
-      rep->_length = u__vsnprintf(rep->data(), rep->_capacity+1, format, fmt_size, argp); 
+      rep->_length = u__vsnprintf(rep->data(), rep->_capacity+1, format, fmt_size, argp); // NB: +1 because we want space for null-terminator...
 
       U_INTERNAL_DUMP("ret = %u buffer_size = %u", rep->_length, rep->_capacity+1)
 
@@ -2162,9 +2159,7 @@ public:
       vsnprintf_check(format);
 #  endif
 
-      // NB: +1 because we want space for null-terminator...
-
-      uint32_t ret = u__vsnprintf(c_pointer(rep->_length), rep->space()+1, format, fmt_size, argp); 
+      uint32_t ret = u__vsnprintf(c_pointer(rep->_length), rep->space()+1, format, fmt_size, argp); // NB: +1 because we want space for null-terminator...
 
       U_INTERNAL_DUMP("ret = %u buffer_size = %u", ret, rep->space()+1)
 
@@ -2176,17 +2171,17 @@ public:
 #ifdef HAVE_STRTOF
    float strtof() const { return rep->strtof(); }
 #endif
-        double strtod() const;
 #ifdef HAVE_STRTOLD
-   long double strtold() const { return rep->strtold(); } // long double
+   long double strtold() const { return rep->strtold(); }
 #endif
 
-   bool strtob() const  { return rep->strtob(); }
+     bool strtob() const { return rep->strtob(); }
+   double strtod() const;
 
-    int64_t strtoll( bool check_for_suffix = false) const { return rep->strtoll(check_for_suffix); } 
+    int64_t strtoll( bool check_for_suffix = false) const { return rep->strtoll( check_for_suffix); } 
    uint64_t strtoull(bool check_for_suffix = false) const { return rep->strtoull(check_for_suffix); }
 
-            long strtol( bool check_for_suffix = false) const  { return rep->strtol(check_for_suffix); }
+            long strtol( bool check_for_suffix = false) const  { return rep->strtol( check_for_suffix); }
    unsigned long strtoul(bool check_for_suffix = false) const  { return rep->strtoul(check_for_suffix); }   
 
    // UTF8 <--> ISO Latin 1
@@ -2219,7 +2214,7 @@ public:
 
    template <typename T> void toJSON(const char* name, uint32_t sz, UJsonTypeHandler<T> member)
       {
-      U_TRACE(0, "UValue::toJSON<T>(%.*S,%u,%p)", sz, name, sz, &member)
+      U_TRACE(0, "UString::toJSON<T>(%.*S,%u,%p)", sz, name, sz, &member)
 
       U_INTERNAL_ASSERT(u_is_quoted(name, sz))
 
@@ -2236,7 +2231,7 @@ public:
 
    template <typename T> void toJSON(const UString& name, UJsonTypeHandler<T> member)
       {
-      U_TRACE(0, "UValue::toJSON<T>(%V,%p)", name.rep, &member)
+      U_TRACE(0, "UString::toJSON<T>(%V,%p)", name.rep, &member)
 
       appendDataQuoted(U_STRING_TO_PARAM(name));
 

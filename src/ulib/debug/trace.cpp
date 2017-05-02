@@ -99,7 +99,7 @@ UTrace::~UTrace()
 
       u_trace_writev(iov + skip, 4 - skip);
 
-      if (u_trace_mask_level == this) u_trace_mask_level = 0;
+      if (u_trace_mask_level == this) u_trace_mask_level = U_NULLPTR;
       }
 
    if (u_trace_signal) u_trace_handlerSignal();
@@ -242,12 +242,12 @@ void UTrace::trace_sysreturn(bool error, const char* format, uint32_t fmt_size, 
                u_errno = errno;
                }
 
-            if (errno != EAGAIN                            &&
-                errno != EINPROGRESS                       &&
+            if (errno != EAGAIN      &&
+                errno != EINPROGRESS &&
 #           ifdef USE_LIBPCRE
-                strstr(buffer_syscall, "::pcre_exec") == 0 &&
+                strstr(buffer_syscall, "::pcre_exec") == U_NULLPTR &&
 #           endif
-                strstr(buffer_syscall, "::getenv")    == 0)
+                strstr(buffer_syscall, "::getenv")    == U_NULLPTR)
                {
                U_WARNING("%s", buffer_syscall);
                }

@@ -45,9 +45,9 @@ public:
       U_TRACE_REGISTER_OBJECT(0, UMongoDBClient, "", 0)
 
 #  ifdef USE_MONGODB
-      puri = 0;
-      client = 0;
-      collection = 0;
+      puri = U_NULLPTR;
+      client = U_NULLPTR;
+      collection = U_NULLPTR;
 
       U_SYSCALL_VOID_NO_PARAM(mongoc_init);
 #  endif
@@ -84,7 +84,7 @@ public:
 
       BSON_APPEND_INT32(query, "_id", value);
 
-      bool result = find(query, 0);
+      bool result = find(query, U_NULLPTR);
 
       U_SYSCALL_VOID(bson_destroy, "%p", query);
 
@@ -104,7 +104,7 @@ public:
 
       bson_t* query = (bson_t*) U_SYSCALL_NO_PARAM(bson_new);  
 
-      bool result = find(query, 0);
+      bool result = find(query, U_NULLPTR);
 
       U_SYSCALL_VOID(bson_destroy, "%p", query);
 
@@ -128,8 +128,8 @@ public:
    bool remove(bson_t* selector);
    bool findOne(const char* json, uint32_t len);
 
-   bool find(bson_t* query, bson_t* projection = 0,            mongoc_query_flags_t flags = MONGOC_QUERY_NONE, mongoc_read_prefs_t* read_prefs = 0);
-   bool findAggregation(bson_t* pipeline, bson_t* options = 0, mongoc_query_flags_t flags = MONGOC_QUERY_NONE, mongoc_read_prefs_t* read_prefs = 0); // Execute an 'aggregation' query
+   bool find(bson_t* query, bson_t* projection = U_NULLPTR,            mongoc_query_flags_t flags = MONGOC_QUERY_NONE, mongoc_read_prefs_t* read_prefs = U_NULLPTR);
+   bool findAggregation(bson_t* pipeline, bson_t* options = U_NULLPTR, mongoc_query_flags_t flags = MONGOC_QUERY_NONE, mongoc_read_prefs_t* read_prefs = U_NULLPTR); // Execute an 'aggregation' query
 
    bool        update(bson_t* query, bson_t* update);
    bool findAndModify(bson_t* query, bson_t* update);
@@ -148,7 +148,7 @@ public:
    bool   executeBulk(mongoc_bulk_operation_t* bulk);
    void updateOneBulk(mongoc_bulk_operation_t* bulk, uint32_t old_value, const char* key, uint32_t new_value);
 
-   mongoc_bulk_operation_t* createBulk(bool ordered, const mongoc_write_concern_t* write_concern = 0)
+   mongoc_bulk_operation_t* createBulk(bool ordered, const mongoc_write_concern_t* write_concern = U_NULLPTR)
       {
       U_TRACE(0, "UMongoDBClient::createBulk(%b,%p)", ordered, write_concern)
 

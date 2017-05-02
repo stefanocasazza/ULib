@@ -108,16 +108,16 @@ public:
    U_MANAGE_SYSRETURN_VALUE(unsigned long long, "%llu", ret == 0ULL)
    U_MANAGE_SYSRETURN_VALUE(float,              "%f",   ret == 0.0)
    U_MANAGE_SYSRETURN_VALUE(double,             "%g",   ret == 0.0)
-   U_MANAGE_SYSRETURN_VALUE(pvoid_t,            "%p",   ret == 0 ||
+   U_MANAGE_SYSRETURN_VALUE(pvoid_t,            "%p",   ret == U_NULLPTR ||
                                                         ret == (void*)-1)
-   U_MANAGE_SYSRETURN_VALUE(pcvoid_t,           "%p",   ret == 0 ||
+   U_MANAGE_SYSRETURN_VALUE(pcvoid_t,           "%p",   ret == U_NULLPTR ||
                                                         ret == (const void*)-1)
-   U_MANAGE_SYSRETURN_VALUE(pchar_t,            "%S",   ret == 0)
-   U_MANAGE_SYSRETURN_VALUE(pcchar_t,           "%S",   ret == 0)
-   U_MANAGE_SYSRETURN_VALUE(puchar_t,           "%S",   ret == 0)
-   U_MANAGE_SYSRETURN_VALUE(pcuchar_t,          "%S",   ret == 0)
-   U_MANAGE_SYSRETURN_VALUE(pdir_t,             "%p",   ret == 0)
-   U_MANAGE_SYSRETURN_VALUE(pfile_t,            "%p",   ret == 0)
+   U_MANAGE_SYSRETURN_VALUE(pchar_t,            "%S",   ret == U_NULLPTR)
+   U_MANAGE_SYSRETURN_VALUE(pcchar_t,           "%S",   ret == U_NULLPTR)
+   U_MANAGE_SYSRETURN_VALUE(puchar_t,           "%S",   ret == U_NULLPTR)
+   U_MANAGE_SYSRETURN_VALUE(pcuchar_t,          "%S",   ret == U_NULLPTR)
+   U_MANAGE_SYSRETURN_VALUE(pdir_t,             "%p",   ret == U_NULLPTR)
+   U_MANAGE_SYSRETURN_VALUE(pfile_t,            "%p",   ret == U_NULLPTR)
    U_MANAGE_SYSRETURN_VALUE(sighandler_t,       "%p",   ret == (sighandler_t)SIG_ERR)
 #ifdef USE_LIBTDB
    U_MANAGE_SYSRETURN_VALUE(tdbdata_t,          "%J",   false)

@@ -64,7 +64,7 @@ void UPlugIn<void*>::clear()
    if (first)
       {
       delete first;
-             first = 0;
+             first = U_NULLPTR;
       }
 }
 
@@ -77,7 +77,7 @@ __pure UPlugIn<void*>* UPlugIn<void*>::getObjWrapper(void* _obj)
       if (item->obj == _obj) U_RETURN_POINTER(item, UPlugIn<void*>);
       }
 
-   U_RETURN_POINTER(0, UPlugIn<void*>);
+   U_RETURN_POINTER(U_NULLPTR, UPlugIn<void*>);
 }
 
 // DEBUG
@@ -104,6 +104,6 @@ const char* UPlugIn<void*>::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

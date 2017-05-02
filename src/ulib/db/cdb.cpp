@@ -21,14 +21,14 @@ void UCDB::init_internal(int ignore_case)
    (void) U_SYSCALL(memset, "%p,%d,%d",  &key, 0, sizeof(datum));
    (void) U_SYSCALL(memset, "%p,%d,%d", &data, 0, sizeof(datum));
 
-   hr   = 0;
-   slot = 0;
-   hp   = 0;
+   hr   = U_NULLPTR;
+   slot = U_NULLPTR;
+   hp   = U_NULLPTR;
 
-   pattern                 = 0;
-   pbuffer                 = 0;
-   ptr_vector              = 0;
-   function_to_call        = 0;
+   pattern                 = U_NULLPTR;
+   pbuffer                 = U_NULLPTR;
+   ptr_vector              = U_NULLPTR;
+   function_to_call        = U_NULLPTR;
    filter_function_to_call = functionCall;
 
    // when mmap not available we use this storage...
@@ -50,7 +50,9 @@ void UCDB::init_internal(int ignore_case)
 
    U_cdb_ignore_case(this) = ignore_case;
 
-   flag[1] = flag[2] = flag[3] = 0;
+   flag[1] =
+   flag[2] =
+   flag[3] = 0;
 }
 
 bool UCDB::open(bool brdonly)
@@ -70,7 +72,7 @@ bool UCDB::open(bool brdonly)
 
          if (UFile::map == MAP_FAILED)
             {
-            data.dptr = 0;
+            data.dptr = U_NULLPTR;
 
             hp   =   &hp_buf;
             hr   =   &hr_buf;
@@ -456,14 +458,14 @@ void UCDB::callForAllEntrySorted(iPFprpr function)
          }
       }
 
-   function_to_call = 0;
+   function_to_call = U_NULLPTR;
 }
 
 void UCDB::callForAllEntryWithPattern(iPFprpr function, UString* _pattern)
 {
    U_TRACE(1, "UCDB::callForAllEntryWithPattern(%p,%p)", function, _pattern)
 
-   U_INTERNAL_ASSERT_MAJOR(UFile::st_size,0)
+   U_INTERNAL_ASSERT_MAJOR(UFile::st_size, 0)
    U_INTERNAL_ASSERT_DIFFERS(UFile::map, MAP_FAILED)
 
    char* ptr  = start();
@@ -474,7 +476,7 @@ void UCDB::callForAllEntryWithPattern(iPFprpr function, UString* _pattern)
    U_INTERNAL_ASSERT_MINOR(ptr,_end)
 
    char* tmp;
-   char* pattern_data = 0;
+   char* pattern_data = U_NULLPTR;
    uint32_t klen, dlen, pattern_size = 0;
 
    if (_pattern)
@@ -486,7 +488,7 @@ void UCDB::callForAllEntryWithPattern(iPFprpr function, UString* _pattern)
 
       pattern = (char*) u_find(tmp, _end - tmp, pattern_data, pattern_size);
 
-      if (pattern == 0) goto fine;
+      if (pattern == U_NULLPTR) goto fine;
       }
 
    function_to_call = function;
@@ -517,7 +519,7 @@ void UCDB::callForAllEntryWithPattern(iPFprpr function, UString* _pattern)
 
          pattern = (char*) u_find(ptr, _end - ptr, pattern_data, pattern_size);
 
-         if (pattern == 0) break;
+         if (pattern == U_NULLPTR) break;
 
          U_INTERNAL_ASSERT_MINOR(pattern, _end)
          }
@@ -529,7 +531,7 @@ end_loop:
 fine:
    U_INTERNAL_ASSERT(tmp <= _end)
 
-   function_to_call = 0;
+   function_to_call = U_NULLPTR;
 }
 
 void UCDB::call1()
@@ -620,8 +622,8 @@ void UCDB::getKeys2(UCDB* pcdb, char* src)
 
    U_NEW(UStringRep, skey, UStringRep(src, klen));
 
-   if (pcdb->filter_function_to_call(skey, 0) == 0) skey->release();
-   else                                             pcdb->ptr_vector->UVector<void*>::push(skey);
+   if (pcdb->filter_function_to_call(skey, U_NULLPTR) == 0) skey->release();
+   else                                                     pcdb->ptr_vector->UVector<void*>::push(skey);
 }
 
 void UCDB::print2(UCDB* pcdb, char* src)
@@ -775,7 +777,7 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpv
             pnode = tbl + index;
 
             do {
-               if (func == 0) value = (UStringRep*) node->elem;
+               if (func == U_NULLPTR) value = (UStringRep*) node->elem;
                else
                   {
                   value = (UStringRep*) func((void*)node->elem, &bdelete);
@@ -839,8 +841,11 @@ bool UCDB::writeTo(UCDB& cdb, UHashMap<void*>* table, uint32_t tbl_space, pvPFpv
 
                // check if asked to delete node of the table...
 
-               if (func    == 0 ||
-                   bdelete == false) pnode = &(*pnode)->next;
+               if (func == U_NULLPTR ||
+                   bdelete == false)
+                  {
+                  pnode = &(*pnode)->next;
+                  }
                }
             while ((node = *pnode));
             }
@@ -1027,7 +1032,7 @@ const char* UCDB::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

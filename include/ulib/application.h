@@ -148,7 +148,7 @@ public:
 protected:
    static bool is_options;
 
-   void usage() { opt.printHelp(0); }
+   void usage() { opt.printHelp(U_NULLPTR); }
 
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UApplication)

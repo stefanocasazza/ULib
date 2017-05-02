@@ -25,7 +25,7 @@ void USmtpClient::setStatus()
 
    switch (response)
       {
-      case CONNREFUSED:                   descr = 0;                                   break; //   1
+      case CONNREFUSED:                   descr = U_NULLPTR;                           break; //   1
       case GREET:                         descr = "greeting from server";              break; // 200
       case GOODBYE:                       descr = "server acknolages quit";            break; // 221
       case SUCCESSFUL:                    descr = "command successful";                break; // 250
@@ -262,8 +262,8 @@ bool USmtpClient::sendMessage(bool secure)
       {
       (void) syncCommand(U_CONSTANT_TO_PARAM("ehlo %v"), domainName.rep);
 
-      if (response != SUCCESSFUL                ||
-          strstr(u_buffer, "250-STARTTLS") == 0 ||
+      if (response != SUCCESSFUL                        ||
+          strstr(u_buffer, "250-STARTTLS") == U_NULLPTR ||
           startTLS() == false)
          {
          U_RETURN(false);
@@ -309,7 +309,7 @@ bool USmtpClient::sendMessage(bool secure)
       {
       U_line_terminator_len = 2;
 
-      messageBody = UMimeMultipartMsg::section(messageBody, 0, 0, UMimeMultipartMsg::AUTO, "", "", U_CONSTANT_TO_PARAM("MIME-Version: 1.0"));
+      messageBody = UMimeMultipartMsg::section(messageBody, U_NULLPTR, 0, UMimeMultipartMsg::AUTO, "", "", U_CONSTANT_TO_PARAM("MIME-Version: 1.0"));
       }
 
    UString msg(rcptoAddress.size() + messageSubject.size() + messageHeader.size() + messageBody.size() + 32U);
@@ -359,6 +359,6 @@ const char* USmtpClient::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

@@ -181,7 +181,7 @@ public:
 
                static int fd_stderr;
 
-               if (xsltproc_cmd == 0)
+               if (xsltproc_cmd == U_NULLPTR)
                   {
                   if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/xsltproc.err");
 
@@ -191,7 +191,7 @@ public:
                   U_NEW(UString, xsltproc_cmd, UString(U_CONSTANT_TO_PARAM("xsltproc -")));
                   U_NEW(UString, xsltproc_out, UString(U_CAPACITY));
 
-                  xsltproc->set(*xsltproc_cmd, (char**)0);
+                  xsltproc->set(*xsltproc_cmd, (char**)U_NULLPTR);
                   }
 
                if (xsltproc->getCommand()) (void) xsltproc->execute(content, xsltproc_out, -1, fd_stderr);
@@ -707,7 +707,7 @@ public:
 
       filename = argv[optind];
 
-      if (filename == 0) U_ERROR("document not specified");
+      if (filename == U_NULLPTR) U_ERROR("document not specified");
 
       U_INTERNAL_DUMP("htmlview = %b treeview = %b inner_p7 = %b", htmlview, treeview, inner_p7)
 
@@ -718,7 +718,7 @@ public:
          {
          if (treeview)
             {
-            U_NEW(UDialog, dialog, UDialog(0, 24, 80));
+            U_NEW(UDialog, dialog, UDialog(U_NULLPTR, 24, 80));
 
             if (UDialog::isXdialog() == false) U_ERROR("I don't find Xdialog");
 
@@ -773,7 +773,7 @@ public:
             dialog->setArgument(*output);
             dialog->setOptions(U_STRING_FROM_CONSTANT("--icon ./logo.png"));
 
-            if (dialog->tree(filename, 0, 0, 0, 0, 0, 0, "TBote Viewer") != -1)
+            if (dialog->tree(filename, U_NULLPTR, U_NULLPTR, U_NULLPTR, U_NULLPTR, U_NULLPTR, 0, "TBote Viewer") != -1)
                {
                dialog->setSize(10, 70);
 

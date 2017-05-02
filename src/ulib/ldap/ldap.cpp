@@ -20,7 +20,7 @@ ULDAPEntry::ULDAPEntry(int num_names, const char** names, int num_entry)
 {
    U_TRACE_REGISTER_OBJECT(0, ULDAPEntry, "%d,%p,%d", num_names, names, num_entry)
 
-   U_INTERNAL_ASSERT_EQUALS(names[num_names], 0)
+   U_INTERNAL_ASSERT_EQUALS(names[num_names], U_NULLPTR)
 
    U_DUMP_ATTRS(names)
 
@@ -180,7 +180,7 @@ void ULDAP::clear()
       U_SYSCALL_VOID(free, "%p", ludpp);
 #  endif
 
-      ludpp = 0;
+      ludpp = U_NULLPTR;
       }
 
    if (ld)
@@ -188,11 +188,11 @@ void ULDAP::clear()
       if (searchResult)
          {
          U_SYSCALL(ldap_msgfree, "%p", searchResult);
-                                       searchResult = 0;
+                                       searchResult = U_NULLPTR;
          }
 
       U_SYSCALL(ldap_unbind_s, "%p", ld);
-                                     ld = 0;
+                                     ld = U_NULLPTR;
 
 #  if defined(HAVE_LDAP_SSL_H) && defined(HAS_NOVELL_LDAPSDK)
       if (isSecure) U_SYSCALL_NO_PARAM(ldapssl_client_deinit);
@@ -315,7 +315,7 @@ void ULDAP::setStatus()
     * identify the error code
     */
 #if defined(HAVE_LDAP_SSL_H) && !defined(_MSWINDOWS_) && !defined(HAVE_WINLDAP_H)
-   if (descr == 0) descr = (char*)ldapssl_err2string(result);
+   if (descr == U_NULLPTR) descr = (char*)ldapssl_err2string(result);
 #endif
 
    U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
@@ -623,10 +623,10 @@ void ULDAP::get(ULDAPEntry& e)
    char** values;
    char* attribute;
    LDAPMessage* entry;
-   BerElement* ber = 0;
+   BerElement* ber = U_NULLPTR;
 
    char* _attribute;
-   struct berval** bvs = 0;
+   struct berval** bvs = U_NULLPTR;
 
    for (entry = ldap_first_entry(ld, searchResult); entry;
         entry = ldap_next_entry( ld, entry), ++i)
@@ -699,7 +699,7 @@ const char* ULDAPEntry::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* ULDAP::dump(bool reset) const
@@ -718,6 +718,6 @@ const char* ULDAP::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

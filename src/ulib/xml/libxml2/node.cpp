@@ -23,15 +23,15 @@ const xmlChar* UXML2Node::getNameSpaceUri()
    // This can be an issue when calling this method on a UXML2Node returned by find().
    // Therefore, a call to impl_->ns would be invalid
 
-   const xmlChar* result = (impl_->type != XML_DOCUMENT_NODE && impl_->ns && impl_->ns->href ? impl_->ns->href : 0);
+   const xmlChar* result = (impl_->type != XML_DOCUMENT_NODE && impl_->ns && impl_->ns->href ? impl_->ns->href : U_NULLPTR);
 
    // do we have a namespace in the node ?
 
-   if (result == 0)
+   if (result == U_NULLPTR)
       {
       // search for default namespace
 
-      xmlNsPtr ns = getNamespace(0);
+      xmlNsPtr ns = getNamespace(U_NULLPTR);
 
       if (ns) result = ns->href;
       }
@@ -60,7 +60,7 @@ xmlNodePtr UXML2Node::importNode(const xmlNodePtr node, bool recursive)
          {
          U_SYSCALL_VOID(xmlFreeNode, "%p", imported_node);
 
-         imported_node = 0;
+         imported_node = U_NULLPTR;
          }
       }
 
@@ -95,12 +95,12 @@ uint32_t UXML2Node::getChildren(UVector<xmlNodePtr>& children, const xmlChar* na
 
    xmlNodePtr child = impl_->children;
 
-   if (child == 0) U_RETURN(0);
+   if (child == U_NULLPTR) U_RETURN(0);
 
    uint32_t n = children.size();
 
    do {
-      if ((name == 0 || strcmp((const char*)name, (const char*)child->name) == 0)) children.push_back(child);
+      if ((name == U_NULLPTR || strcmp((const char*)name, (const char*)child->name) == 0)) children.push_back(child);
       }
    while ((child = child->next));
 
@@ -114,7 +114,7 @@ xmlNodePtr UXML2Node::createNewChildNode(const xmlChar* name, const xmlChar* ns_
    U_INTERNAL_ASSERT_POINTER(impl_)
    U_ASSERT_DIFFERS(impl_->type, XML_ELEMENT_NODE)
 
-   xmlNsPtr ns = 0;
+   xmlNsPtr ns = U_NULLPTR;
 
    // Ignore the namespace if none was specified
 
@@ -140,7 +140,7 @@ uint32_t UXML2Node::find_impl(UVector<xmlNodePtr>& vec, xmlXPathContext* ctxt, c
    uint32_t n = vec.size();
    xmlXPathObjectPtr result = (xmlXPathObjectPtr) U_SYSCALL(xmlXPathEval, "%S,%p", xpath, ctxt);
 
-   if (result       == 0)             goto ctx;
+   if (result       == U_NULLPTR)     goto ctx;
    if (result->type != XPATH_NODESET) goto path;
 
    nodeset = result->nodesetval;
@@ -191,6 +191,6 @@ const char* UXML2Node::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

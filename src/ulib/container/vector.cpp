@@ -676,7 +676,7 @@ uint32_t UVector<UString>::split(const UString& str, char delim)
       p = s;
       s = (const char*) memchr(s, delim, _end - s);
 
-      if (s == 0) s = _end;
+      if (s == U_NULLPTR) s = _end;
 
       r = str.rep->substr(p, s - p);
 
@@ -727,7 +727,7 @@ uint32_t UVector<UString>::split(const char* s, uint32_t len, char delim)
       p = s;
       s = (const char*) memchr(s, delim, _end - s);
 
-      if (s == 0) s = _end;
+      if (s == U_NULLPTR) s = _end;
 
       len = s++ - p;
       r   = UStringRep::create(len, len, p);
@@ -1116,7 +1116,7 @@ const char* UVector<void*>::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

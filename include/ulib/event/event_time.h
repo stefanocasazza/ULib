@@ -232,7 +232,7 @@ protected:
       {
       U_TRACE(0, "UEventTime::getMilliSecond(%p)", ptimeout)
 
-      if (ptimeout == 0) U_RETURN(-1);
+      if (ptimeout == U_NULLPTR) U_RETURN(-1);
 
       long ms = ((ptimeout->xtime.tv_sec  - timeout1.tv_sec)  * 1000L) +
                 ((ptimeout->xtime.tv_usec - timeout1.tv_usec) / 1000L);
@@ -244,7 +244,7 @@ protected:
       {
       U_TRACE(0, "UEventTime::getTimeVal(%p)", ptimeout)
 
-      if (ptimeout == 0) U_RETURN_POINTER(0, struct timeval);
+      if (ptimeout == U_NULLPTR) U_RETURN_POINTER(U_NULLPTR, struct timeval);
 
       /**
        * struct timeval {
@@ -283,7 +283,7 @@ protected:
       {
       U_TRACE(0, "UEventTime::getTimeSpec(%p)", ptimeout)
 
-      if (ptimeout == 0) U_RETURN_POINTER(0, struct timespec);
+      if (ptimeout == U_NULLPTR) U_RETURN_POINTER(U_NULLPTR, struct timespec);
 
       /**
        * struct timespec {

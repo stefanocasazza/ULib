@@ -335,24 +335,24 @@ void UString::str_allocate(int which)
 
    if (which == 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_host, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_chunked, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_without_mac, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_localhost, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_http, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_msg_rfc, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_txt_plain, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_address, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_CLIENT_QUEUE_DIR, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_point, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_true, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_false, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_response, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_zero, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_nostat, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_tsa, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_soap, 0)
-      U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_host, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_chunked, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_without_mac, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_localhost, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_http, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_msg_rfc, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_txt_plain, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_address, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_CLIENT_QUEUE_DIR, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_point, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_true, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_false, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_response, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_zero, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_nostat, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_tsa, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_soap, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(UHashMap<void*>::pkey, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UString, str_host,             UString(stringrep_storage+0));
       U_NEW_ULIB_OBJECT(UString, str_chunked,          UString(stringrep_storage+1));
@@ -383,20 +383,20 @@ void UString::str_allocate(int which)
       }
    else if ((which & STR_ALLOCATE_SOAP) != 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_ns, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_boolean, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_byte, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_unsignedByte, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_short, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_unsignedShort, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_int, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_unsignedInt, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_long, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_unsignedLong, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_float, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_double, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_string, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_base64Binary, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_ns, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_boolean, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_byte, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_unsignedByte, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_short, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_unsignedShort, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_int, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_unsignedInt, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_long, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_unsignedLong, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_float, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_double, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_string, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_base64Binary, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UString, str_ns,            UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+0));
       U_NEW_ULIB_OBJECT(UString, str_boolean,       UString(stringrep_storage+STR_ALLOCATE_INDEX_SOAP+1));
@@ -415,10 +415,10 @@ void UString::str_allocate(int which)
       }
    else if ((which & STR_ALLOCATE_IMAP) != 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_recent, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_unseen, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_uidnext, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_uidvalidity, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_recent, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_unseen, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_uidnext, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_uidvalidity, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UString, str_recent,      UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+0));
       U_NEW_ULIB_OBJECT(UString, str_unseen,      UString(stringrep_storage+STR_ALLOCATE_INDEX_IMAP+1));
@@ -427,32 +427,32 @@ void UString::str_allocate(int which)
       }
    else if ((which & STR_ALLOCATE_SSI) != 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_cgi, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_var, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_cgi, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_var, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UString, str_cgi, UString(stringrep_storage+STR_ALLOCATE_INDEX_SSI+0));
       U_NEW_ULIB_OBJECT(UString, str_var, UString(stringrep_storage+STR_ALLOCATE_INDEX_SSI+1));
       }
    else if ((which & STR_ALLOCATE_NOCAT) != 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_without_label, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_allowed_members_default, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_without_label, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_allowed_members_default, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UString, str_without_label,           UString(stringrep_storage+STR_ALLOCATE_INDEX_NOCAT+0));
       U_NEW_ULIB_OBJECT(UString, str_allowed_members_default, UString(stringrep_storage+STR_ALLOCATE_INDEX_NOCAT+1));
       }
    else if ((which & STR_ALLOCATE_HTTP) != 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_indexhtml, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_ctype_tsa, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_ctype_txt, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_ctype_html, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_ctype_soap, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_origin, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_ulib_header, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_storage_keyid, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_websocket_key, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_websocket_prot, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_indexhtml, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_ctype_tsa, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_ctype_txt, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_ctype_html, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_ctype_soap, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_origin, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_ulib_header, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_storage_keyid, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_websocket_key, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_websocket_prot, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UString, str_indexhtml,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+0));
       U_NEW_ULIB_OBJECT(UString, str_ctype_tsa,      UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP+1));
@@ -467,11 +467,11 @@ void UString::str_allocate(int which)
       }
    else if ((which & STR_ALLOCATE_QUERY_PARSER) != 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_p1, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_p2, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_or, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_and, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_not, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_p1, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_p2, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_or, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_and, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_not, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UString, str_p1,  UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+0));
       U_NEW_ULIB_OBJECT(UString, str_p2,  UString(stringrep_storage+STR_ALLOCATE_INDEX_QUERY_PARSER+1));
@@ -481,21 +481,21 @@ void UString::str_allocate(int which)
       }
    else if ((which & STR_ALLOCATE_ORM) != 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_port, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_root, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_UTF8, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_UTF16, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_dbname, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_timeout, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_compress, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_character_set, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_sqlite_name, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_dbdir, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_memory, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_mysql_name, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_secure_auth, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_auto_reconnect, 0)
-      U_INTERNAL_ASSERT_EQUALS(str_pgsql_name, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_port, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_root, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_UTF8, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_UTF16, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_dbname, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_timeout, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_compress, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_character_set, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_sqlite_name, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_dbdir, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_memory, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_mysql_name, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_secure_auth, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_auto_reconnect, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(str_pgsql_name, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UString, str_port,           UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+0));
       U_NEW_ULIB_OBJECT(UString, str_root,           UString(stringrep_storage+STR_ALLOCATE_INDEX_ORM+1));
@@ -516,7 +516,7 @@ void UString::str_allocate(int which)
 #ifndef U_HTTP2_DISABLE
    else if ((which & STR_ALLOCATE_HTTP2) != 0)
       {
-      U_INTERNAL_ASSERT_EQUALS(str_authority, 0)
+      U_INTERNAL_ASSERT_EQUALS(str_authority, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(U_NUM_ELEMENTS(stringrep_storage), 136)
 
       U_NEW_ULIB_OBJECT(UString, str_authority,                   UString(stringrep_storage+STR_ALLOCATE_INDEX_HTTP2+0));
@@ -678,7 +678,7 @@ UStringRep* UStringRep::create(uint32_t length, uint32_t need, const char* ptr)
       _ptr = (char*)(r + 1);
 
 #  ifdef DEBUG
-      UMemoryPool::obj_class = UMemoryPool::func_call = 0;
+      UMemoryPool::obj_class = UMemoryPool::func_call = U_NULLPTR;
 #  endif
       }
 #endif
@@ -1184,7 +1184,7 @@ UString::UString(uint32_t n, unsigned char c)
 {
    U_TRACE_REGISTER_OBJECT_WITHOUT_CHECK_MEMORY(0, UString, "%u,%C", n, c)
 
-   rep = UStringRep::create(n, n, 0);
+   rep = UStringRep::create(n, n, U_NULLPTR);
 
    (void) memset((void*)rep->str, c, n);
 
@@ -1268,7 +1268,7 @@ void UString::setBuffer(uint32_t n)
       {
       if (n < U_CAPACITY) n = U_CAPACITY;
 
-      _set(UStringRep::create(0U, n, 0));
+      _set(UStringRep::create(0U, n, U_NULLPTR));
       }
 
    U_INTERNAL_ASSERT(invariant())
@@ -1372,7 +1372,7 @@ char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
       {
       _assign(UStringRep::string_rep_null);
 
-      return 0;
+      return U_NULLPTR;
       }
 
    int32_t how_much = sz - pos - sz1;
@@ -1395,7 +1395,7 @@ char* UString::__replace(uint32_t pos, uint32_t n1, uint32_t n2)
 
       if (__capacity < n) __capacity = n;
 
-      UStringRep* r = UStringRep::create(n, __capacity, 0);
+      UStringRep* r = UStringRep::create(n, __capacity, U_NULLPTR);
 
       if (pos)      U_MEMCPY((void*)r->str,            str, pos);
       if (how_much) U_MEMCPY((char*)r->str + pos + n2, src, how_much);
@@ -1502,7 +1502,7 @@ void UString::duplicate() const
    if (sz) ((UString*)this)->_set(UStringRep::create(sz, sz, rep->str));
    else
       {
-      ((UString*)this)->_set(UStringRep::create(0, 100U, 0));
+      ((UString*)this)->_set(UStringRep::create(0, 100U, U_NULLPTR));
 
       *(((UString*)this)->UString::rep->data()) = '\0';
       }
@@ -1686,7 +1686,7 @@ __pure uint32_t UString::find_first_not_of(const char* s, uint32_t pos, uint32_t
 
       for (; xpos < sz; ++xpos)
          {
-         if (memchr(s, rep->str[xpos], n) == 0) U_RETURN(xpos);
+         if (memchr(s, rep->str[xpos], n) == U_NULLPTR) U_RETURN(xpos);
          }
       }
 
@@ -1722,7 +1722,7 @@ __pure uint32_t UString::find_last_not_of(const char* s, uint32_t pos, uint32_t 
       if (--sz > pos) sz = pos;
 
       do {
-         if (memchr(s, rep->str[sz], n) == 0) U_RETURN(sz);
+         if (memchr(s, rep->str[sz], n) == U_NULLPTR) U_RETURN(sz);
          }
       while (sz-- != 0);
       }
@@ -1821,7 +1821,7 @@ __pure long UStringRep::strtol(bool check_for_suffix) const
 
 #  ifdef DEBUG
       {
-      long tmp = ::strtol(s, 0, 10);
+      long tmp = ::strtol(s, U_NULLPTR, 10);
 
       if (value != tmp)
          {
@@ -1859,7 +1859,7 @@ __pure unsigned long UStringRep::strtoul(bool check_for_suffix) const
 
 #  ifdef DEBUG
       {
-      unsigned long tmp = ::strtoul(s, 0, 10);
+      unsigned long tmp = ::strtoul(s, U_NULLPTR, 10);
 
       if (value != tmp)
          {
@@ -1897,7 +1897,7 @@ __pure int64_t UStringRep::strtoll(bool check_for_suffix) const
 
 #  if defined(DEBUG) && defined(HAVE_STRTOULL)
       {
-      int64_t tmp = ::strtoll(s, 0, 10);
+      int64_t tmp = ::strtoll(s, U_NULLPTR, 10);
 
       if (value != tmp)
          {
@@ -1935,7 +1935,7 @@ __pure uint64_t UStringRep::strtoull(bool check_for_suffix) const
 
 #  if defined(DEBUG) && defined(HAVE_STRTOULL)
       {
-      uint64_t tmp = ::strtoull(s, 0, 10);
+      uint64_t tmp = ::strtoull(s, U_NULLPTR, 10);
 
       if (value != tmp)
          {
@@ -2027,7 +2027,7 @@ UStringRep* UStringRep::fromUTF8(const unsigned char* s, uint32_t n)
    U_INTERNAL_ASSERT_MAJOR(n, 0)
 
    int c, c1, c2;
-   UStringRep* r = UStringRep::create(n, n, 0);
+   UStringRep* r = UStringRep::create(n, n, U_NULLPTR);
 
    char* p                   = (char*)r->str;
    const unsigned char* _end = s + n;
@@ -2066,7 +2066,7 @@ UStringRep* UStringRep::toUTF8(const unsigned char* s, uint32_t n)
    U_INTERNAL_ASSERT_POINTER(s)
    U_INTERNAL_ASSERT_MAJOR(n, 0)
 
-   UStringRep* r = UStringRep::create(n, n * 2, 0);
+   UStringRep* r = UStringRep::create(n, n * 2, U_NULLPTR);
 
    char* p                   = (char*)r->str;
    const unsigned char* _end = s + n;
@@ -2361,7 +2361,7 @@ void UStringRep::write(ostream& os) const
          {
          p = (char*) memchr(s, '"', _end - s);
 
-         if (p == 0)
+         if (p == U_NULLPTR)
             {
             os.write(s, _end - s);
 
@@ -2407,7 +2407,7 @@ U_EXPORT istream& operator>>(istream& in, UString& str)
          if (str)
             {
             if (str.uniq()) str.setEmpty();
-            else            str._set(UStringRep::create(0U, U_CAPACITY, 0)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
+            else            str._set(UStringRep::create(0U, U_CAPACITY, U_NULLPTR)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
             }
 
          streamsize w = in.width();
@@ -2460,7 +2460,7 @@ istream& UString::getline(istream& in, unsigned char delim)
       if (size())
          {
          if (uniq()) setEmpty();
-         else        _set(UStringRep::create(0U, U_CAPACITY, 0)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
+         else        _set(UStringRep::create(0U, U_CAPACITY, U_NULLPTR)); // NB: we need this because we use the same object for all input stream of vector (see vector.h:830)...
          }
 
       streambuf* sb = in.rdbuf();
@@ -2675,7 +2675,7 @@ const char* UStringRep::dump(bool reset) const
       }
 #endif
 
-   return 0;
+   return U_NULLPTR;
 }
 
 bool UStringRep::invariant() const
@@ -2717,7 +2717,7 @@ bool UStringRep::invariant() const
 
 bool UString::invariant() const
 {
-   if (rep == 0)
+   if (rep == U_NULLPTR)
       {
       U_WARNING("Error on string: (rep = null pointer)");
 
@@ -2772,6 +2772,6 @@ const char* UString::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

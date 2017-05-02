@@ -23,7 +23,7 @@ UNodeSet::UNodeSet(xmlDocPtr _doc, xmlNodeSetPtr _nodes, int _type)
    doc         = _doc;
    nodes       = _nodes;
    type        = _type;
-   children    = 0;
+   children    = U_NULLPTR;
    next        = prev = this;
    destroyDoc  = false;
 }
@@ -48,7 +48,7 @@ void UNodeSet::destroy(UNodeSet* nset)
          }
       else
          {
-         nset = 0;
+         nset = U_NULLPTR;
          }
 
       if (tmp->nodes) U_SYSCALL_VOID(xmlXPathFreeNodeSet, "%p", tmp->nodes);
@@ -70,7 +70,7 @@ UXPathData::UXPathData(int data_type, int _nodeSetType, const char* _expr)
 {
    U_TRACE_REGISTER_OBJECT(0, UXPathData, "%d,%d,%S", data_type, _nodeSetType, _expr)
 
-   ctx         = 0;
+   ctx         = U_NULLPTR;
    expr        = _expr;
    type        = data_type;
    nodeSetOp   = UNodeSet::INTERSECTION;
@@ -82,11 +82,11 @@ UXPathData::UXPathData(int data_type, int _nodeSetType, const char* _expr)
       {
       case XPATH:
       case XPATH2:
-         ctx = (xmlXPathContextPtr) U_SYSCALL(xmlXPathNewContext, "%p", 0);            /* we'll set doc in the context later */
+         ctx = (xmlXPathContextPtr) U_SYSCALL(xmlXPathNewContext, "%p", U_NULLPTR); /* we'll set doc in the context later */
       break;
 
       case XPOINTER:
-         ctx = (xmlXPathContextPtr) U_SYSCALL(xmlXPtrNewContext, "%p,%p,%p", 0, 0, 0); /* we'll set doc in the context later */
+         ctx = (xmlXPathContextPtr) U_SYSCALL(xmlXPtrNewContext, "%p,%p,%p", U_NULLPTR, U_NULLPTR, U_NULLPTR); /* we'll set doc in the context later */
       break;
       }
 }
@@ -113,7 +113,7 @@ bool UXPathData::registerNamespaces(xmlNodePtr node)
          /* check that we have no other namespace with same prefix already */
 
          if (ns->prefix &&
-             (U_SYSCALL(xmlXPathNsLookup, "%p,%S", ctx, ns->prefix) == 0))
+             (U_SYSCALL(xmlXPathNsLookup, "%p,%S", ctx, ns->prefix) == U_NULLPTR))
             {
             if (U_SYSCALL(xmlXPathRegisterNs, "%p,%S,%S", ctx, ns->prefix, ns->href)) U_RETURN(false);
             }
@@ -142,7 +142,7 @@ const char* UNodeSet::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UXPathData::dump(bool reset) const
@@ -160,7 +160,7 @@ const char* UXPathData::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 #endif

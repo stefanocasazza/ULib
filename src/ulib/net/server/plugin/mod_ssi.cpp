@@ -91,7 +91,7 @@ void USSIPlugIn::setAlternativeRedirect(const char* fmt, ...)
 
    UClientImage_Base::setCloseConnection();
 
-   UHTTP::setResponse(true, buffer, 0);
+   UHTTP::setResponse(true, buffer, U_NULLPTR);
 }
 
 void USSIPlugIn::setBadRequest()
@@ -258,7 +258,7 @@ U_NO_EXPORT bool USSIPlugIn::callService(const UString& name, const UString& val
 
       if (fd_stderr == 0) fd_stderr = UServices::getDevNull("/tmp/SSI.err");
 
-      *UClientImage_Base::wbuffer = UCommand::outputCommand(value, 0, -1, fd_stderr);
+      *UClientImage_Base::wbuffer = UCommand::outputCommand(value, U_NULLPTR, -1, fd_stderr);
 
       U_RETURN(true);
       }
@@ -976,9 +976,9 @@ int USSIPlugIn::handlerInit()
 {
    U_TRACE_NO_PARAM(0, "USSIPlugIn::handlerInit()")
 
-   U_INTERNAL_ASSERT_EQUALS(body, 0)
-   U_INTERNAL_ASSERT_EQUALS(header, 0)
-   U_INTERNAL_ASSERT_EQUALS(alternative_include, 0)
+   U_INTERNAL_ASSERT_EQUALS(body, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(header, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(alternative_include, U_NULLPTR)
 
    U_NEW(UString, body,  UString);
    U_NEW(UString, header, UString);
@@ -1094,7 +1094,7 @@ int USSIPlugIn::handlerRequest()
                {
                UHTTP::mime_index = U_unknow;
 
-               (void) UHTTP::ext->append(UHTTP::getHeaderMimeType(0, size, U_CTYPE_HTML));
+               (void) UHTTP::ext->append(UHTTP::getHeaderMimeType(U_NULLPTR, size, U_CTYPE_HTML));
                }
 
             U_http_info.nResponseCode = HTTP_OK;
@@ -1159,6 +1159,6 @@ const char* USSIPlugIn::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

@@ -51,7 +51,7 @@ void UOrmSession::loadDriver(const char* backend, uint32_t len, const UString& o
 
       pdrv = UPlugIn<UOrmDriver*>::create(U_STRING_TO_PARAM(name));
 
-      if (pdrv == 0) goto err;
+      if (pdrv == U_NULLPTR) goto err;
 
       UString _name(backend, len);
 
@@ -61,8 +61,8 @@ void UOrmSession::loadDriver(const char* backend, uint32_t len, const UString& o
 
    U_INTERNAL_ASSERT_POINTER(pdrv)
 
-   if ((pdrv->connection == 0 ||
-        pdrv->opt != option)  &&
+   if ((pdrv->connection == U_NULLPTR ||
+        pdrv->opt != option)          &&
        connect(option) == false)
       {
 err:  loadDriverFail(backend, len);
@@ -73,7 +73,7 @@ UOrmSession::UOrmSession(const char* dbname, uint32_t len)
 {
    U_TRACE_REGISTER_OBJECT(0, UOrmSession, "%.*S,%u", len, dbname, len)
 
-   pdrv = 0;
+   pdrv = U_NULLPTR;
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
    U_INTERNAL_DUMP("UOrmDriver::env_driver_len = %u", UOrmDriver::env_driver_len)
@@ -86,7 +86,7 @@ UOrmSession::UOrmSession(const char* dbname, uint32_t len)
 
    if (UOrmDriver::env_driver_len)
       {
-      if (UOrmDriver::env_option == 0) U_ERROR("The environment var ORM_OPTION is empty");
+      if (UOrmDriver::env_option == U_NULLPTR) U_ERROR("The environment var ORM_OPTION is empty");
 
       UString option(200U);
 
@@ -117,7 +117,7 @@ __pure bool UOrmSession::isReady() const
 {
    U_TRACE_NO_PARAM(0, "UOrmSession::isReady()")
 
-   if (pdrv != 0 &&
+   if (pdrv != U_NULLPTR &&
        UOrmDriver::env_driver_len)
       {
       U_RETURN(true);
@@ -170,7 +170,7 @@ unsigned long long UOrmSession::affected()
 
    U_INTERNAL_ASSERT_POINTER(pdrv)
 
-   unsigned long long result = pdrv->affected(0);
+   unsigned long long result = pdrv->affected(U_NULLPTR);
 
    U_RETURN(result);
 }
@@ -183,7 +183,7 @@ unsigned long long UOrmSession::last_insert_rowid(const char* sequence)
 
    U_INTERNAL_ASSERT_POINTER(pdrv)
 
-   unsigned long long result = pdrv->last_insert_rowid(0, sequence);
+   unsigned long long result = pdrv->last_insert_rowid(U_NULLPTR, sequence);
 
    U_RETURN(result);
 }
@@ -200,8 +200,8 @@ UOrmStatement::UOrmStatement(UOrmSession& session, const char* stmt, uint32_t le
         if (pdrv) pstmt = pdrv->handlerStatementCreation(stmt, len);
    else if (UOrmDriver::env_driver_len) UOrmSession::loadDriverFail(UOrmDriver::env_driver, UOrmDriver::env_driver_len);
 #else
-   pdrv  = 0;
-   pstmt = 0;
+   pdrv  = U_NULLPTR;
+   pstmt = U_NULLPTR;
 #endif
 }
 
@@ -280,9 +280,9 @@ bool UOrmStatement::nextRow()
    U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
 
-   bool result = pdrv->nextRow(pstmt);
+   if (pdrv->nextRow(pstmt)) U_RETURN(true);
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 // Resets a prepared statement on client and server to state after creation
@@ -762,7 +762,7 @@ const char* UOrmSession::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UOrmStatement::dump(bool _reset) const
@@ -777,7 +777,7 @@ const char* UOrmStatement::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UOrmTypeHandler_Base::dump(bool _reset) const
@@ -791,6 +791,6 @@ const char* UOrmTypeHandler_Base::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

@@ -144,7 +144,7 @@ UPing::UPing(int _timeoutMS, bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
 {
    U_TRACE_REGISTER_OBJECT(0, UPing, "%d,%b", _timeoutMS, bSocketIsIPv6)
 
-   rep       = 0;
+   rep       = U_NULLPTR;
    timeoutMS = _timeoutMS;
 
    (void) memset(&req, 0, sizeof(reqhdr));
@@ -152,8 +152,8 @@ UPing::UPing(int _timeoutMS, bool bSocketIsIPv6) : USocket(bSocketIsIPv6)
    (void) memset(&arp, 0, sizeof(arpmsg));
 #endif
 
-   if (proc     == 0) U_NEW(UProcess, proc, UProcess);
-   if (addrmask == 0)
+   if (proc     == U_NULLPTR) U_NEW(UProcess, proc, UProcess);
+   if (addrmask == U_NULLPTR)
       {
       map_size = sizeof(fd_set) + sizeof(uint32_t);
       addrmask = (fd_set*) UFile::mmap(&map_size);
@@ -167,14 +167,14 @@ UPing::~UPing()
    if (proc)
       {
       delete proc;
-             proc= 0;
+             proc = U_NULLPTR;
       }
 
    if (addrmask &&
        map_size)
       {
       UFile::munmap(addrmask, map_size);
-                    addrmask = 0;
+                    addrmask = U_NULLPTR;
       }
 }
 
@@ -371,7 +371,7 @@ fd_set* UPing::checkForPingAsyncCompletion(uint32_t nfds)
 
       // check if pending...
 
-      if (SHM_counter < nfds) U_RETURN_POINTER(0, fd_set);
+      if (SHM_counter < nfds) U_RETURN_POINTER(U_NULLPTR, fd_set);
       }
 
    return pingAsyncCompletion();
@@ -780,6 +780,6 @@ const char* UPing::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

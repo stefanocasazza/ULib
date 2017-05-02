@@ -91,9 +91,9 @@ public:
 
    // method VIRTUAL to define
 
-   virtual int         usage() { return 0; } // the allowed transforms usages
-   virtual const char* name()  { return 0; } // the transform's name
-   virtual const char* href()  { return 0; } // the transform's identification string (href)
+   virtual int         usage() { return 0; }         // the allowed transforms usages
+   virtual const char* name()  { return U_NULLPTR; } // the transform's name
+   virtual const char* href()  { return U_NULLPTR; } // the transform's identification string (href)
 
    virtual bool readNode(xmlNodePtr node) { return true; } // the XML node read method
 

@@ -38,8 +38,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UTimer, "", 0)
 
-      next  = 0;
-      alarm = 0;
+      next  = U_NULLPTR;
+      alarm = U_NULLPTR;
       }
 
    ~UTimer()
@@ -53,7 +53,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTimer::empty()")
 
-      if (first == 0) U_RETURN(true);
+      if (first == U_NULLPTR) U_RETURN(true);
 
       U_RETURN(false);
       }
@@ -114,7 +114,7 @@ public:
          U_RETURN_POINTER(a, UEventTime);
          }
 
-      U_RETURN_POINTER(0, UEventTime);
+      U_RETURN_POINTER(U_NULLPTR, UEventTime);
       }
 
    static bool isHandler(UEventTime* palarm)

@@ -718,7 +718,7 @@ void UServer_Base::initThrottlingServer()
    U_TRACE_NO_PARAM(0, "UServer_Base::initThrottlingServer()")
 
    U_INTERNAL_ASSERT(*throttling_mask)
-   U_INTERNAL_ASSERT_EQUALS(db_throttling, 0)
+   U_INTERNAL_ASSERT_EQUALS(db_throttling, U_NULLPTR)
 
    if (bssl == false) // NB: we can't use throttling with SSL...
       {
@@ -740,7 +740,7 @@ void UServer_Base::initThrottlingServer()
       if (result == false)
          {
          delete db_throttling;
-                db_throttling = 0;
+                db_throttling = U_NULLPTR;
          }
       else
          {
@@ -757,8 +757,8 @@ void UServer_Base::initThrottlingServer()
             pattern = vec[i];
              number = vec[i+1];
 
-                                                                                      throttling_rec->max_limit = ::strtol(number.data(), &ptr, 10);
-            if (ptr[0] == '-') throttling_rec->min_limit = throttling_rec->max_limit, throttling_rec->max_limit = ::strtol(        ptr+1,    0, 10);
+                                                                                      throttling_rec->max_limit = ::strtol(number.data(),      &ptr, 10);
+            if (ptr[0] == '-') throttling_rec->min_limit = throttling_rec->max_limit, throttling_rec->max_limit = ::strtol(        ptr+1, U_NULLPTR, 10);
 
             (void) db_throttling->insertDataStorage(pattern, RDB_INSERT);
             }
@@ -878,7 +878,7 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UClientThread::run()")
 
-      U_INTERNAL_ASSERT_EQUALS(UServer_Base::ptime, 0)
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::ptime, U_NULLPTR)
 
       while (UServer_Base::flag_loop) UNotifier::waitForEvent();
       }
@@ -905,7 +905,7 @@ public:
 
       if (UServer_Base::bipc == false)
          {
-         if (UServer_Base::ifname == 0) U_NEW(UString, UServer_Base::ifname, UString(UServer_Base::getNetworkDevice(0)));
+         if (UServer_Base::ifname == U_NULLPTR) U_NEW(UString, UServer_Base::ifname, UString(UServer_Base::getNetworkDevice(U_NULLPTR)));
 
          if (*UServer_Base::ifname)
             {
@@ -943,7 +943,7 @@ public:
          ts.tv_sec  = 1L;
          ts.tv_nsec = 0L;
 
-         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR);
 
 #     if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
          if (UServer_Base::log)                         UServer_Base::log->checkForLogRotateDataToWrite();
@@ -1064,7 +1064,7 @@ public:
          {
          errno = 0;
 
-         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR);
 
          ts.tv_sec = (errno != EINTR ? USSLSocket::doStapling() : 30L);
          }
@@ -1080,7 +1080,7 @@ public:
 
       UServer_Base::setLockOCSPStaple();
 
-      U_INTERNAL_ASSERT_EQUALS(UServer_Base::pthread_ocsp, 0)
+      U_INTERNAL_ASSERT_EQUALS(UServer_Base::pthread_ocsp, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UOCSPStapling, UServer_Base::pthread_ocsp, UOCSPStapling);
 
@@ -1110,9 +1110,9 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
 {
    U_TRACE_REGISTER_OBJECT(0, UServer_Base, "%p", pcfg)
 
-   U_INTERNAL_ASSERT_EQUALS(pthis, 0)
-   U_INTERNAL_ASSERT_EQUALS(cenvironment, 0)
-   U_INTERNAL_ASSERT_EQUALS(senvironment, 0)
+   U_INTERNAL_ASSERT_EQUALS(pthis, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(cenvironment, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(senvironment, U_NULLPTR)
 
    port  = 80;
    pthis = this;
@@ -1159,7 +1159,7 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
 
    if (pcfg)
       {
-      U_INTERNAL_ASSERT_EQUALS(cfg, 0)
+      U_INTERNAL_ASSERT_EQUALS(cfg, U_NULLPTR)
 
       cfg = pcfg;
 
@@ -1351,7 +1351,7 @@ void UServer_Base::closeLog()
       delete log;
 #  endif
 
-      log = 0;
+      log = U_NULLPTR;
       }
 
    if (apache_like_log &&
@@ -1363,7 +1363,7 @@ void UServer_Base::closeLog()
       delete apache_like_log;
 #  endif
 
-      apache_like_log = 0;
+      apache_like_log = U_NULLPTR;
       }
 #endif
 
@@ -1384,7 +1384,7 @@ void UServer_Base::closeLog()
       delete vlog;
 #  endif
 
-      vlog = 0;
+      vlog = U_NULLPTR;
       }
 }
 
@@ -1403,7 +1403,7 @@ void UServer_Base::setMsgWelcome(const UString& msg)
    else
       {
       delete msg_welcome;
-             msg_welcome = 0;
+             msg_welcome = U_NULLPTR;
       }
 }
 #endif
@@ -1430,7 +1430,7 @@ bool UServer_Base::setDocumentRoot(const UString& dir)
       if (c == '~' ||
           c == '$')
          {
-         *document_root = UStringExt::expandPath(*document_root, 0);
+         *document_root = UStringExt::expandPath(*document_root, U_NULLPTR);
 
          document_root_ptr = document_root->data();
 
@@ -1665,10 +1665,10 @@ void UServer_Base::loadConfigParam()
       if (UIPAllow::parseMask(*allow_IP, *vallow_IP) == 0)
          {
          delete allow_IP;
-                allow_IP = 0;
+                allow_IP = U_NULLPTR;
 
          delete vallow_IP;
-                vallow_IP = 0;
+                vallow_IP = U_NULLPTR;
          }
       }
 #endif
@@ -1684,10 +1684,10 @@ void UServer_Base::loadConfigParam()
       if (UIPAllow::parseMask(*allow_IP_prv, *vallow_IP_prv) == 0)
          {
          delete allow_IP_prv;
-                allow_IP_prv = 0;
+                allow_IP_prv = U_NULLPTR;
 
          delete vallow_IP_prv;
-                vallow_IP_prv = 0;
+                vallow_IP_prv = U_NULLPTR;
          }
       }
 
@@ -1729,7 +1729,7 @@ void UServer_Base::loadConfigParam()
             (void) U_SYSCALL(putenv, "%S", buffer);
 
 #        ifdef DEBUG
-            UMemoryPool::obj_class = UMemoryPool::func_call = 0;
+            UMemoryPool::obj_class = UMemoryPool::func_call = U_NULLPTR;
 #        endif
             }
          }
@@ -1797,7 +1797,7 @@ void UServer_Base::loadConfigParam()
 
    if (x)
       {
-      U_INTERNAL_ASSERT_EQUALS(ifname, 0)
+      U_INTERNAL_ASSERT_EQUALS(ifname, U_NULLPTR)
 
       U_NEW(UString, ifname, UString(x));
       }
@@ -1846,7 +1846,7 @@ U_NO_EXPORT void UServer_Base::loadStaticLinkedModules(const char* name)
     defined(U_STATIC_HANDLER_FCGI)   || defined(U_STATIC_HANDLER_GEOIP)  || defined(U_STATIC_HANDLER_PROXY) || \
     defined(U_STATIC_HANDLER_SOAP)   || defined(U_STATIC_HANDLER_SSI)    || defined(U_STATIC_HANDLER_TSA)   || \
     defined(U_STATIC_HANDLER_NOCAT)  || defined(U_STATIC_HANDLER_HTTP)
-      const UServerPlugIn* _plugin = 0;
+      const UServerPlugIn* _plugin = U_NULLPTR;
 #  ifdef U_STATIC_HANDLER_RPC
       if (x.equal(U_CONSTANT_TO_PARAM("rpc")))    { U_NEW(URpcPlugIn, _plugin, URpcPlugIn);  goto next; }
 #  endif
@@ -1980,8 +1980,8 @@ int UServer_Base::loadPlugins(UString& plugin_dir, const UString& plugin_list)
          {
          (void) u__snprintf(mod_name[0], sizeof(mod_name[0]), U_CONSTANT_TO_PARAM("[%v] "), item.rep);
 
-         if (_plugin == 0) ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: Load phase of plugin %v failed"), mod_name[0], item.rep);
-         else              ULog::log(U_CONSTANT_TO_PARAM("%sLoad phase of plugin %v success"),         mod_name[0], item.rep);
+         if (_plugin == U_NULLPTR) ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: Load phase of plugin %v failed"), mod_name[0], item.rep);
+         else                      ULog::log(U_CONSTANT_TO_PARAM("%sLoad phase of plugin %v success"),         mod_name[0], item.rep);
 
          mod_name[0][0] = '\0';
          }
@@ -2102,14 +2102,14 @@ int UServer_Base::pluginsHandler##xxx()                                         
             if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                            \
                {                                                                   \
                fmt = ((result & U_PLUGIN_HANDLER_FINISHED) != 0                    \
-                  ? 0                                                              \
+                  ? U_NULLPTR                                                      \
                   : "%sWARNING: "#xxx" phase of plugin %v failed");                \
                }                                                                   \
             else                                                                   \
                {                                                                   \
                fmt = (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT || \
                       (result & U_PLUGIN_HANDLER_PROCESSED) == 0                   \
-                        ? 0                                                        \
+                        ? U_NULLPTR                                                \
                         : "%s"#xxx" phase of plugin %v success");                  \
                }                                                                   \
                                                                                    \
@@ -2186,14 +2186,14 @@ int UServer_Base::pluginsHandler##xxx()                                         
             if ((result & U_PLUGIN_HANDLER_ERROR) != 0)                            \
                {                                                                   \
                fmt = ((result & U_PLUGIN_HANDLER_FINISHED) != 0                    \
-                  ? 0                                                              \
+                  ? U_NULLPTR                                                      \
                   : "%sWARNING: "#xxx" phase of plugin %v failed");                \
                }                                                                   \
             else                                                                   \
                {                                                                   \
                fmt = (U_ClientImage_parallelization == U_PARALLELIZATION_PARENT || \
                       (result & U_PLUGIN_HANDLER_PROCESSED) == 0                   \
-                        ? 0                                                        \
+                        ? U_NULLPTR                                                \
                         : "%s"#xxx" phase of plugin %v success");                  \
                }                                                                   \
                                                                                    \
@@ -2264,7 +2264,7 @@ void UServer_Base::init()
 #  else
       if (*name_sock) UUnixSocket::setPath(name_sock->data());
 
-      if (UUnixSocket::path == 0) U_ERROR("UNIX domain socket is not bound to a file system pathname");
+      if (UUnixSocket::path == U_NULLPTR) U_ERROR("UNIX domain socket is not bound to a file system pathname");
 #  endif
       }
    }
@@ -2418,7 +2418,7 @@ void UServer_Base::init()
 
    USocket::accept4_flags = SOCK_CLOEXEC | SOCK_NONBLOCK;
 
-   U_INTERNAL_ASSERT_EQUALS(proc, 0)
+   U_INTERNAL_ASSERT_EQUALS(proc, U_NULLPTR)
 
    U_NEW(UProcess, proc, UProcess);
 
@@ -2450,7 +2450,7 @@ void UServer_Base::init()
 
    U_INTERNAL_DUMP("shared_data_add = %u", shared_data_add)
 
-   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data, 0)
+   U_INTERNAL_ASSERT_EQUALS(ptr_shared_data, U_NULLPTR)
 
    map_size        = sizeof(shared_data) + shared_data_add;
    ptr_shared_data = (shared_data*) UFile::mmap(&map_size);
@@ -2477,7 +2477,7 @@ void UServer_Base::init()
    if (bpthread_time)
       {
       U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-      U_INTERNAL_ASSERT_EQUALS(ULog::ptr_shared_date, 0)
+      U_INTERNAL_ASSERT_EQUALS(ULog::ptr_shared_date, U_NULLPTR)
 
       *(u_now = &(ptr_shared_data->now_shared)) = u_timeval;
 
@@ -2503,7 +2503,7 @@ void UServer_Base::init()
    (void) U_SYSCALL(sigaddset, "%p,%d", &mask, SIGTERM);
 # endif
 
-   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, &mask, 0);
+   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_BLOCK, &mask, U_NULLPTR);
 #endif
 
    flag_loop = true; // NB: UTimeThread loop depend on this setting...
@@ -2511,8 +2511,8 @@ void UServer_Base::init()
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (bpthread_time)
       {
-      U_INTERNAL_ASSERT_EQUALS(ULog::prwlock, 0)
-      U_INTERNAL_ASSERT_EQUALS(u_pthread_time, 0)
+      U_INTERNAL_ASSERT_EQUALS(ULog::prwlock, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UTimeThread, u_pthread_time, UTimeThread);
 
@@ -2935,8 +2935,8 @@ int UServer_Base::handlerRead()
 
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    USocket* psocket;
-   char* lclient_address = 0;
    uint32_t lclient_address_len = 0;
+   char* lclient_address = U_NULLPTR;
    UClientImage_Base* lClientIndex = pClientImage;
 #endif
    int cround = 0;
@@ -3132,7 +3132,7 @@ try_accept:
    if (public_address                         &&
        enable_rfc1918_filter                  &&
        CSOCKET->remoteIPAddress().isPrivate() &&
-       (vallow_IP_prv == 0 ||
+       (vallow_IP_prv == U_NULLPTR ||
         UIPAllow::isAllowed(CSOCKET->remoteIPAddress().getInAddr(), *vallow_IP_prv) == false))
       {
       CSOCKET->abortive_close();
@@ -3545,7 +3545,7 @@ void UServer_Base::runLoop(const char* user)
 #if defined(ENABLE_THREAD) && !defined(USE_LIBEVENT) && defined(U_SERVER_THREAD_APPROACH_SUPPORT)
    if (preforked_num_kids == -1)
       {
-      U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, 0)
+      U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, U_NULLPTR)
 
       U_NEW(UClientThread, UNotifier::pthread, UClientThread);
 
@@ -3562,13 +3562,13 @@ void UServer_Base::runLoop(const char* user)
 #  ifdef DEBUG
    else
       {
-      U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, 0)
+      U_INTERNAL_ASSERT_EQUALS(UNotifier::pthread, U_NULLPTR)
       }
 #  endif
 #endif
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
+   (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, U_NULLPTR);
 #endif
 
    if (ptime)
@@ -3638,7 +3638,7 @@ void UServer_Base::run()
    int status;
    bool baffinity = false;
    UTimeVal to_sleep(0L, 500L * 1000L);
-   const char* user = (as_user->empty() ? 0 : as_user->data());
+   const char* user = (as_user->empty() ? U_NULLPTR : as_user->data());
 
    UHttpClient_Base::server_context_flag = true;
 
@@ -3794,7 +3794,7 @@ void UServer_Base::run()
       // wait for any children to exit, and then start some more
 
 #  if defined(U_LINUX) && defined(ENABLE_THREAD)
-      (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, 0);
+      (void) U_SYSCALL(pthread_sigmask, "%d,%p,%p", SIG_UNBLOCK, &mask, U_NULLPTR);
 #  endif
 
       u_dont_need_root();
@@ -4034,6 +4034,6 @@ const char* UServer_Base::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

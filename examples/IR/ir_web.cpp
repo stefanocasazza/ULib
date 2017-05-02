@@ -16,10 +16,10 @@
    {
       U_TRACE(5, "::usp_init_ir_web()")
    
-      U_INTERNAL_ASSERT_EQUALS(ir,0)
-      U_INTERNAL_ASSERT_EQUALS(query,0)
-      U_INTERNAL_ASSERT_EQUALS(crono,0)
-      U_INTERNAL_ASSERT_EQUALS(footer,0)
+      U_INTERNAL_ASSERT_EQUALS(ir, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(query, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(crono, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(footer, U_NULLPTR)
    
       U_NEW(IR, ir, IR);
       U_NEW(Query, query, Query);
@@ -129,7 +129,7 @@ extern U_EXPORT void runDynamicPage_ir_web(int param);
          WeightWord::sortObjects();
          }
    
-      WeightWord::vec     = 0;
+      WeightWord::vec     = U_NULLPTR;
       IR_SESSION.timerun  = UStringExt::numberToString(crono->getTimeElapsedInSecond());
       UHTTP::num_page_cur = 1;
       }

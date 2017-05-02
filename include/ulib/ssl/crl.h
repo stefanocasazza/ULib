@@ -46,7 +46,7 @@ public:
     * Constructs this object takes <i>X509_CRL</i> as type
     */
 
-   UCrl(X509_CRL* _crl = 0) : crl(_crl)
+   UCrl(X509_CRL* _crl = U_NULLPTR) : crl(_crl)
       {
       U_TRACE_REGISTER_OBJECT(0, UCrl, "%p", _crl)
       }
@@ -59,9 +59,9 @@ public:
     * @param type the CRL's encoding type
     */
 
-   static X509_CRL* readCRL(const UString& x, const char* format = 0);
+   static X509_CRL* readCRL(const UString& x, const char* format = U_NULLPTR);
 
-   UCrl(const UString& x, const char* format = 0)
+   UCrl(const UString& x, const char* format = U_NULLPTR)
       {
       U_TRACE_REGISTER_OBJECT(0, UCrl, "%V,%S", x.rep, format)
 
@@ -80,7 +80,7 @@ public:
 
       U_SYSCALL_VOID(X509_CRL_free, "%p", crl);
 
-      crl = 0;
+      crl = U_NULLPTR;
       }
 
    ~UCrl()
@@ -94,7 +94,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UCrl::isValid()")
 
-      U_RETURN(crl != 0);
+      if (crl != U_NULLPTR) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    void set(X509_CRL* pcrl)
@@ -106,13 +108,13 @@ public:
       if (pcrl) crl = X509_CRL_dup(pcrl);
       }
 
-   bool set(const UString& x, const char* format = 0)
+   bool set(const UString& x, const char* format = U_NULLPTR)
       {
       U_TRACE(0, "UCrl::set(%V,%S)", x.rep, format)
 
       set(readCRL(x, format));
 
-      U_RETURN(crl != 0);
+      return isValid();
       }
 
    X509_CRL* getCrl() const { return crl; }
@@ -134,7 +136,7 @@ public:
       }
 
    static long getNumber(X509_CRL* crl);
-          long getNumber() const          { return getNumber(crl); }
+          long getNumber() const { return getNumber(crl); }
 
    /**
     * Returns the file name from CApath
@@ -222,8 +224,10 @@ public:
       U_TRACE(0, "UCrl::isEqual(%p,%p)", a, b)
 
       int rc = U_SYSCALL(X509_CRL_cmp, "%p,%p", a, b);
+ 
+      if (rc == 0) U_RETURN(true);
 
-      U_RETURN(rc == 0);
+      U_RETURN(false);
       }
 
    bool operator==(const UCrl& c) const { return  isEqual(crl, c.crl); }

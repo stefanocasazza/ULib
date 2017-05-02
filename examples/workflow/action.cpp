@@ -142,8 +142,8 @@ bool Action::sendEmail()
 
          buffer.snprintf(U_STRING_TO_PARAM(emailBodyForm), event, state, action_name, error_message);
 
-         msg.add(UMimeMultipartMsg::section(buffer, 0, 0, UMimeMultipartMsg::AUTO));
-         msg.add(UMimeMultipartMsg::section(data,   0, 0, UMimeMultipartMsg::AUTO, "", "",
+         msg.add(UMimeMultipartMsg::section(buffer, U_NULLPTR, 0, UMimeMultipartMsg::AUTO));
+         msg.add(UMimeMultipartMsg::section(data,   U_NULLPTR, 0, UMimeMultipartMsg::AUTO, "", "",
                                                     U_CONSTANT_TO_PARAM("Content-Disposition: attachment; filename=\"workflow-message.xml\"")));
 
          (void) msg.message(buffer);

@@ -59,7 +59,7 @@ static uint32_t execute_addr2line(char* buffer, uint32_t buffer_size, const char
 
       (void) snprintf(buf, sizeof(buf), "%p", addr);
 
-      (void) execlp("addr2line", "addr2line", buf, "-f", "-C", "-e", image, (char*)0);
+      (void) execlp("addr2line", "addr2line", buf, "-f", "-C", "-e", image, U_NULLPTR);
 
       abort();
       }
@@ -82,7 +82,7 @@ loop:
 
    (void) close(pipefd[0]);
 
-   (void) waitpid(pid, 0, 0);
+   (void) waitpid(pid, U_NULLPTR, 0);
 
    return output_len;
 }
@@ -140,20 +140,20 @@ void UError::stackDump()
 #     endif
          (void) dup2(fd_err, STDERR_FILENO);
 
-         (void) execlp("gdb", "gdb", "--nx", "--batch", "-ex", "thread apply all bt full", buf, name_buf, (char*)0); // thread apply all bt full 20
+         (void) execlp("gdb", "gdb", "--nx", "--batch", "-ex", "thread apply all bt full", buf, name_buf, U_NULLPTR); // thread apply all bt full 20
 
          abort();
          }
 
-      (void) nanosleep(&req, 0);
+      (void) nanosleep(&req, U_NULLPTR);
 
-      if (waitpid(pid, 0, WNOHANG) < 0)
+      if (waitpid(pid, U_NULLPTR, WNOHANG) < 0)
          {
          (void) kill(u_pid, SIGCONT);
 
-         (void) nanosleep(&req, 0);
+         (void) nanosleep(&req, U_NULLPTR);
 
-         if (waitpid(pid, 0, WNOHANG) < 0) (void) kill(pid, SIGKILL);
+         if (waitpid(pid, U_NULLPTR, WNOHANG) < 0) (void) kill(pid, SIGKILL);
          }
 
       if (lseek(fd, U_SEEK_BEGIN, SEEK_END) > 650)

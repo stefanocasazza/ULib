@@ -48,9 +48,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UTransformCtx, "")
 
-      uri         = 0;
+      uri         = U_NULLPTR;
       status      = 0;
-      xptrExpr    = 0;
+      xptrExpr    = U_NULLPTR;
       enabledUris = TYPE_ANY;
       }
 
@@ -192,9 +192,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UReferenceCtx, "%d", org)
 
-      id     = 0;
-      uri    = 0;
-      type   = 0;
+      id     = U_NULLPTR;
+      uri    = U_NULLPTR;
+      type   = U_NULLPTR;
       status = UNKNOWN;
       origin = org;
       }

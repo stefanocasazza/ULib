@@ -26,7 +26,7 @@ UXml2Txt::UXml2Txt(const UString& tag_list, bool _tag_to_exclude, bool _tag_outp
    tag_to_exclude  = (taglist.empty() == false ? _tag_to_exclude : false);
    tag_output_also = _tag_output_also;
 
-   UXMLParser::initParser(false, 0);
+   UXMLParser::initParser(false, U_NULLPTR);
 }
 
 UXml2Txt::~UXml2Txt()
@@ -129,6 +129,6 @@ const char* UXml2Txt::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

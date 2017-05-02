@@ -32,7 +32,7 @@ public:
       {
       U_TRACE(5, "Application::Application()")
 
-      client = 0;
+      client = U_NULLPTR;
       }
 
    ~Application()
@@ -151,7 +151,7 @@ loop: if (upload)
 
       if (queue_time)
          {
-         U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, 0)
+         U_INTERNAL_ASSERT_EQUALS(UClient_Base::queue_dir, U_NULLPTR)
 
          UTimeVal to_sleep(queue_time / 10L);
 

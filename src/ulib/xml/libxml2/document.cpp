@@ -76,9 +76,9 @@ UXML2Document::UXML2Document(const UString& _data) : data(_data)
    }
    */
 
-   impl_ = (xmlDocPtr) U_SYSCALL(xmlReadMemory, "%p,%d,%S,%S,%d", U_STRING_TO_PARAM(_data), 0, 0, XML_PARSE_COMPACT);
+   impl_ = (xmlDocPtr) U_SYSCALL(xmlReadMemory, "%p,%d,%S,%S,%d", U_STRING_TO_PARAM(_data), U_NULLPTR, U_NULLPTR, XML_PARSE_COMPACT);
 
-   if (impl_ == NULL)
+   if (impl_ == U_NULLPTR)
       {
       U_ERROR("Unable to parse xml document");
       }
@@ -87,7 +87,7 @@ UXML2Document::UXML2Document(const UString& _data) : data(_data)
     * Check the document is of the right kind
     */
 
-   if (getRootNode() == NULL) U_ERROR("Empty xml document");
+   if (getRootNode() == U_NULLPTR) U_ERROR("Empty xml document");
 }
 
 uint32_t UXML2Document::getElement(UString& element, uint32_t pos, const char* tag, uint32_t tag_len)
@@ -189,7 +189,7 @@ xmlNodePtr UXML2Document::findNode(const xmlNodePtr parent, const xmlChar* name,
       cur = cur->next;
       }
 
-   U_RETURN_POINTER(0, xmlNode);
+   U_RETURN_POINTER(U_NULLPTR, xmlNode);
 }
 
 xmlNodePtr UXML2Document::findChild(const xmlNodePtr parent, const xmlChar* name, const xmlChar* ns)
@@ -212,7 +212,7 @@ xmlNodePtr UXML2Document::findChild(const xmlNodePtr parent, const xmlChar* name
       cur = cur->next;
       }
 
-   U_RETURN_POINTER(0, xmlNode);
+   U_RETURN_POINTER(U_NULLPTR, xmlNode);
 }
 
 xmlNodePtr UXML2Document::findParent(const xmlNodePtr cur, const xmlChar* name, const xmlChar* ns)
@@ -237,7 +237,7 @@ xmlNodePtr UXML2Document::findParent(const xmlNodePtr cur, const xmlChar* name, 
       if (ret) U_RETURN_POINTER(ret, xmlNode);
       }
 
-   U_RETURN_POINTER(0, xmlNode);
+   U_RETURN_POINTER(U_NULLPTR, xmlNode);
 }
 
 bool UXML2Document::writeToFile(const char* filename, const char* encoding, bool formatted)
@@ -282,7 +282,7 @@ xmlChar* UXML2Document::writeToString(int& length, const char* encoding, bool fo
       oldKeepBlanksDefault = U_SYSCALL(xmlKeepBlanksDefault, "%d", 1);
       }
 
-   xmlChar* buffer = 0;
+   xmlChar* buffer = U_NULLPTR;
 
    U_SYSCALL_VOID(xmlDocDumpFormatMemoryEnc, "%p,%p,%p,%S,%d", impl_, &buffer, &length, encoding, formatted);
 
@@ -316,11 +316,11 @@ UString UXML2Document::xmlC14N(int mode, int with_comments, unsigned char** incl
 
    xmlChar* result = NULL;
 
-   int ret = U_SYSCALL(xmlC14NDocDumpMemory, "%p,%p,%d,%p,%d,%p", impl_, NULL, mode, inclusive_namespaces, with_comments, &result);
+   int ret = U_SYSCALL(xmlC14NDocDumpMemory, "%p,%p,%d,%p,%d,%p", impl_, U_NULLPTR, mode, inclusive_namespaces, with_comments, &result);
 
    if (ret < 0) U_WARNING("Failed to canonicalize buffer data (%d)", ret);
 
-   if (result != NULL)
+   if (result != U_NULLPTR)
       {
       (void) output.replace((const char*)result);
 
@@ -351,7 +351,7 @@ char* UXML2Document::convString(const char* string, const char* in_charset, cons
    U_INTERNAL_ASSERT_POINTER( in_charset)
    U_INTERNAL_ASSERT_POINTER(out_charset)
 
-   char* ret = 0;
+   char* ret = U_NULLPTR;
 
    xmlCharEncodingHandlerPtr in  = U_SYSCALL(xmlFindCharEncodingHandler, "%S",  in_charset);
    xmlCharEncodingHandlerPtr out = U_SYSCALL(xmlFindCharEncodingHandler, "%S", out_charset);
@@ -397,6 +397,6 @@ const char* UXML2Document::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

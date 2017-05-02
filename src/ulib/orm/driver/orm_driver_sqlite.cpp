@@ -76,8 +76,8 @@ void UOrmDriverSqlite::handlerError()
       U_ENTRY(SQLITE_DONE)          /* sqlite3_step() has finished executing */
    };
 
-   if (UOrmDriver::errmsg  == 0) UOrmDriver::errmsg  = U_SYSCALL(sqlite3_errmsg,  "%p", (sqlite3*)UOrmDriver::connection);
-   if (UOrmDriver::errcode == 0) UOrmDriver::errcode = U_SYSCALL(sqlite3_errcode, "%p", (sqlite3*)UOrmDriver::connection);
+   if (UOrmDriver::errmsg  == U_NULLPTR) UOrmDriver::errmsg  = U_SYSCALL(sqlite3_errmsg,  "%p", (sqlite3*)UOrmDriver::connection);
+   if (UOrmDriver::errcode == 0)         UOrmDriver::errcode = U_SYSCALL(sqlite3_errcode, "%p", (sqlite3*)UOrmDriver::connection);
 
    if (UOrmDriver::errcode >= 0                                     &&
        UOrmDriver::errcode < (int)U_NUM_ELEMENTS(error_value_table) &&
@@ -109,14 +109,17 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
    UOrmDriver* pdrv;
 
-   if (UOrmDriver::connection == 0) pdrv = this;
-   else U_NEW(UOrmDriverSqlite, pdrv, UOrmDriverSqlite(*UString::str_sqlite_name));
+   if (UOrmDriver::connection == U_NULLPTR) pdrv = this;
+   else
+      {
+      U_NEW(UOrmDriverSqlite, pdrv, UOrmDriverSqlite(*UString::str_sqlite_name));
+      }
 
    if (pdrv->setOption(option) == false)
       {
       if (UOrmDriver::connection) delete pdrv;
 
-      U_RETURN_POINTER(0, UOrmDriver);
+      U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
 
    // -------------------------------------------------------------------------------------------
@@ -178,7 +181,7 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
       if (UOrmDriver::connection) delete pdrv;
 
-      U_RETURN_POINTER(0, UOrmDriver);
+      U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
 
    // set options
@@ -189,9 +192,9 @@ UOrmDriver* UOrmDriverSqlite::handlerConnect(const UString& option)
 
    (void) U_SYSCALL(sqlite3_busy_timeout, "%p,%d", (sqlite3*)pdrv->connection, x ? x.strtoul() : 8); // 8ms
 
-   (void) U_SYSCALL(sqlite3_exec, "%p,%S,%p,%p,%p", (sqlite3*)pdrv->connection, "PRAGMA journal_mode=OFF", 0, 0, 0);
-   (void) U_SYSCALL(sqlite3_exec, "%p,%S,%p,%p,%p", (sqlite3*)pdrv->connection, "PRAGMA mmap_size=44040192", 0, 0, 0);
-   (void) U_SYSCALL(sqlite3_exec, "%p,%S,%p,%p,%p", (sqlite3*)pdrv->connection, "PRAGMA locking_mode=EXCLUSIVE", 0, 0, 0);
+   (void) U_SYSCALL(sqlite3_exec, "%p,%S,%p,%p,%p", (sqlite3*)pdrv->connection, "PRAGMA journal_mode=OFF", U_NULLPTR, U_NULLPTR, U_NULLPTR);
+   (void) U_SYSCALL(sqlite3_exec, "%p,%S,%p,%p,%p", (sqlite3*)pdrv->connection, "PRAGMA mmap_size=44040192", U_NULLPTR, U_NULLPTR, U_NULLPTR);
+   (void) U_SYSCALL(sqlite3_exec, "%p,%S,%p,%p,%p", (sqlite3*)pdrv->connection, "PRAGMA locking_mode=EXCLUSIVE", U_NULLPTR, U_NULLPTR, U_NULLPTR);
 
    U_RETURN_POINTER(pdrv, UOrmDriver);
 }
@@ -204,7 +207,7 @@ void UOrmDriverSqlite::handlerDisConnect()
 
    (void) U_SYSCALL(sqlite3_close, "%p", (sqlite3*)UOrmDriver::connection);
 
-   UOrmDriver::connection = 0;
+   UOrmDriver::connection = U_NULLPTR;
 }
 
 bool UOrmDriverSqlite::handlerQuery(const char* query, uint32_t query_len)
@@ -216,9 +219,9 @@ bool UOrmDriverSqlite::handlerQuery(const char* query, uint32_t query_len)
    UOrmDriver::errcode = U_SYSCALL(sqlite3_exec, "%p,%S,%p,%p,%p",
                                        (sqlite3*)UOrmDriver::connection, // An open database
                                        query,                            // SQL to be evaluated
-                                       0,                                // Callback function
-                                       0,                                // 1st argument to callback
-                                       0);                               // Error msg written here
+                                       U_NULLPTR,                        // Callback function
+                                       U_NULLPTR,                        // 1st argument to callback
+                                       U_NULLPTR);                       // Error msg written here
 
    if (UOrmDriver::errcode)
       {
@@ -253,19 +256,19 @@ USqlStatement* UOrmDriverSqlite::handlerStatementCreation(const char* stmt, uint
                                                      stmt,                    // SQL statement, UTF-16 encoded
                                                      len+1,                   // Maximum length of Sql in bytes
                                                      &pHandle,                // OUT: Statement handle
-                                                     0)                       // OUT: Pointer to unused portion of Sql
+                                                     U_NULLPTR)               // OUT: Pointer to unused portion of Sql
                                          : U_SYSCALL(sqlite3_prepare_v2, "%p,%S,%p,%p,%p",
                                                      (sqlite3*)UOrmDriver::connection, // An open database
                                                      stmt,                    // SQL statement, UTF-8 encoded
                                                      len+1,                   // Maximum length of Sql in bytes
                                                      &pHandle,                // OUT: Statement handle
-                                                     0));                     // OUT: Pointer to unused portion of Sql
+                                                     U_NULLPTR));             // OUT: Pointer to unused portion of Sql
 
    if (UOrmDriver::errcode)
       {
       UOrmDriver::printError(__PRETTY_FUNCTION__);
 
-      U_RETURN_POINTER(0, USqlStatement);
+      U_RETURN_POINTER(U_NULLPTR, USqlStatement);
       }
 
    uint32_t num_bind_param  = U_SYSCALL(sqlite3_bind_parameter_count, "%p", pHandle),
@@ -437,7 +440,7 @@ USqlStatementBindParam* UOrmDriverSqlite::creatSqlStatementBindParam(USqlStateme
 
    (void) UOrmDriver::creatSqlStatementBindParam(pstmt, s, n, bstatic, rebind);
 
-   U_RETURN_POINTER(0, USqlStatementBindParam);
+   U_RETURN_POINTER(U_NULLPTR, USqlStatementBindParam);
 }
 
 bool USqliteStatement::setBindResult(UOrmDriver* pdrv)
@@ -541,7 +544,7 @@ retry:
 
          while (numberOfRetries++ < 3)
             {
-            (void) U_SYSCALL(nanosleep, "%p,%p", &ts, 0);
+            (void) U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR);
 
             goto retry;
             }
@@ -664,7 +667,7 @@ const char* USqliteStatement::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UOrmDriverSqlite::dump(bool _reset) const
@@ -681,6 +684,6 @@ const char* UOrmDriverSqlite::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

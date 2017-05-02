@@ -62,7 +62,7 @@ U_NO_EXPORT void UTimer::insertEntry()
       {
       // The list is empty
 
-      next  = 0;
+      next  = U_NULLPTR;
       first = this;
       }
 
@@ -79,7 +79,7 @@ void UTimer::insert(UEventTime* a)
 
    UTimer* item;
 
-   if (pool == 0 ||
+   if (pool == U_NULLPTR ||
        mode != NOSIGNAL)
       {
       U_NEW(UTimer, item, UTimer);
@@ -226,7 +226,7 @@ void UTimer::setTimer()
    U_INTERNAL_ASSERT(UInterrupt::timerval.it_value.tv_sec  >= 0 &&
                      UInterrupt::timerval.it_value.tv_usec >= 0)
 
-   (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &UInterrupt::timerval, 0);
+   (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &UInterrupt::timerval, U_NULLPTR);
 }
 
 void UTimer::erase(UEventTime* palarm)
@@ -268,13 +268,13 @@ void UTimer::clear()
       UInterrupt::timerval.it_value.tv_sec  =
       UInterrupt::timerval.it_value.tv_usec = 0L;
 
-      (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &UInterrupt::timerval, 0);
+      (void) U_SYSCALL(setitimer, "%d,%p,%p", ITIMER_REAL, &UInterrupt::timerval, U_NULLPTR);
       }
 
    if (first)
       {
       next = first;
-             first = 0;
+             first = U_NULLPTR;
 
       do {
          item = next;
@@ -291,7 +291,7 @@ void UTimer::clear()
    if (pool)
       {
       next = pool;
-             pool = 0;
+             pool = U_NULLPTR;
 
       do {
          item = next;
@@ -393,7 +393,7 @@ const char* UTimer::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

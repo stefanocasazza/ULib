@@ -892,8 +892,8 @@ bool PEC_report::readContent()
 
    // loop for all lines in file
 
-   const char* ptr = 0;
-   const char* prev = 0;
+   const char* ptr = U_NULLPTR;
+   const char* prev = U_NULLPTR;
    bool ok = false, dicembre = false;
 
    // depends on content...
@@ -912,7 +912,7 @@ bool PEC_report::readContent()
 
    // time[8] = '\0';
 
-      if (prev == 0 ||
+      if (prev == U_NULLPTR ||
           memcmp(ptr, prev, U_LINEDATA) != 0)
          {
          prev = ptr;
@@ -1022,7 +1022,9 @@ bool PEC_report::readContent()
          }
       }
 
-   U_RETURN(ptr != 0);
+   if (ptr != U_NULLPTR) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 bool PEC_report::processFile(UStringRep* key, void* elem)
@@ -1214,7 +1216,7 @@ void PEC_report::loadFiles()
    if (bytes &&
        tfile->empty() == false) tfile->callForAllEntrySorted(PEC_report::processFile);
 
-   (void) UFile::chdir(0, true);
+   (void) UFile::chdir(U_NULLPTR, true);
 }
 
 void PEC_report::manageOptions()

@@ -64,7 +64,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UTwilioClient, "%V,%V", sid.rep, token.rep)
 
-      U_NEW(UHttpClient<USSLSocket>, client, UHttpClient<USSLSocket>(0));
+      U_NEW(UHttpClient<USSLSocket>, client, UHttpClient<USSLSocket>(U_NULLPTR));
 
       client->setRequestPasswordAuthentication(sid, token);
       }

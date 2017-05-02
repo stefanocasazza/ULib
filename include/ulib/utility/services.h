@@ -190,11 +190,11 @@ struct U_EXPORT UServices {
       {
       U_TRACE(0, "UServices::generateDigest(%d,%.*S,%u)", alg, size, data, size)
 
-      u_dgst_init(alg, 0, 0);
+      u_dgst_init(alg, U_NULLPTR, 0);
 
       u_dgst_hash(data, size);
 
-      (void) u_dgst_finish(0, 0);
+      (void) u_dgst_finish(U_NULLPTR, 0);
 
       U_INTERNAL_DUMP("u_mdLen = %d", u_mdLen)
       }
@@ -246,8 +246,8 @@ struct U_EXPORT UServices {
    static int X509Callback(int ok, X509_STORE_CTX* ctx);
    static UString getFileName(long hash, bool crl = false);
    static ENGINE* loadEngine(const char* id, unsigned int flags);
-   static bool setupOpenSSLStore(const char* CAfile = 0, const char* CApath = 0, int store_flags = U_STORE_FLAGS);
-   static EVP_PKEY* loadKey(const UString& x, const char* format, bool _private = true, const char* password = 0, ENGINE* e = 0);
+   static bool setupOpenSSLStore(const char* CAfile = U_NULLPTR, const char* CApath = U_NULLPTR, int store_flags = U_STORE_FLAGS);
+   static EVP_PKEY* loadKey(const UString& x, const char* format, bool _private = true, const char* password = U_NULLPTR, ENGINE* e = U_NULLPTR);
 
    /**
     * data   is the data to be signed
@@ -255,8 +255,8 @@ struct U_EXPORT UServices {
     * passwd is the corresponsding password for the private key
     */
 
-   static bool    verifySignature(  int alg, const UString& data, const UString& signature, const UString& pkey,                                    ENGINE* e = 0);
-   static UString getSignatureValue(int alg, const UString& data,                           const UString& pkey, const UString& passwd, int base64, ENGINE* e = 0);
+   static bool    verifySignature(  int alg, const UString& data, const UString& signature, const UString& pkey,                                    ENGINE* e = U_NULLPTR);
+   static UString getSignatureValue(int alg, const UString& data,                           const UString& pkey, const UString& passwd, int base64, ENGINE* e = U_NULLPTR);
 #endif
 };
 

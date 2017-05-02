@@ -94,7 +94,7 @@ public:
 
       UApplication::run(argc, argv, env);
 
-      if (argv[1] == 0) U_ERROR("Filename not specified");
+      if (argv[1] == U_NULLPTR) U_ERROR("Filename not specified");
 
       UString filename(argv[1], strlen(argv[1]));
 

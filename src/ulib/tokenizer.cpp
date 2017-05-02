@@ -73,7 +73,7 @@ bool UTokenizer::next(UString& token, char c)
       p = s;
       s = (const char*) memchr(s, c, end - s);
 
-      if (s == 0) s = end;
+      if (s == U_NULLPTR) s = end;
 
       token = substr(p);
 
@@ -107,7 +107,7 @@ bool UTokenizer::extend(UString& token, char c)
       p = token.data();
       s = (const char*) memchr(s, c, end - s);
 
-      if (s == 0) s = end;
+      if (s == U_NULLPTR) s = end;
 
       token = substr(p);
 
@@ -139,7 +139,7 @@ loop: if (delim)
          U_RETURN(false);
          }
 
-      s = u_skip(s, end, 0, 0);
+      s = u_skip(s, end, U_NULLPTR, 0);
 
       if (s == end) break;
 
@@ -152,7 +152,7 @@ loop: if (delim)
 
             ++p;
 
-            if (s == 0) s = end;
+            if (s == U_NULLPTR) s = end;
 
             U_INTERNAL_DUMP("p = %.*S s = %.*S", s - p, p, end - s, s)
 
@@ -179,7 +179,7 @@ loop: if (delim)
             // <description>description_556adfbc-0107-5000-ede4-d208</description>
             // -------------------------------------------------------------------
 
-            s = u_delimit_token(s, &p, end, 0, 0);
+            s = u_delimit_token(s, &p, end, U_NULLPTR, 0);
 
             if (s < end)
                {
@@ -196,7 +196,7 @@ loop: if (delim)
             }
          }
 
-      s = u_delimit_token(s, &p, end, 0, 0);
+      s = u_delimit_token(s, &p, end, U_NULLPTR, 0);
 
 tok:  n = s - p;
 
@@ -245,7 +245,7 @@ loop: if (delim)
          U_RETURN(false);
          }
 
-      s = u_skip(s, end, 0, 0);
+      s = u_skip(s, end, U_NULLPTR, 0);
 
       if (s == end) break;
 
@@ -258,7 +258,7 @@ loop: if (delim)
 
             ++p;
 
-            if (s == 0) s = end;
+            if (s == U_NULLPTR) s = end;
 
             U_INTERNAL_DUMP("p = %.*S s = %.*S", s - p, p, end - s, s)
 
@@ -283,7 +283,7 @@ loop: if (delim)
             // <description>description_556adfbc-0107-5000-ede4-d208</description>
             // -------------------------------------------------------------------
 
-            s = u_delimit_token(s, &p, end, 0, 0);
+            s = u_delimit_token(s, &p, end, U_NULLPTR, 0);
 
             if (s < end)
                {
@@ -300,7 +300,7 @@ loop: if (delim)
             }
          }
 
-      s = u_delimit_token(s, &p, end, 0, 0);
+      s = u_delimit_token(s, &p, end, U_NULLPTR, 0);
 
 tok:  n = s - p;
 
@@ -720,6 +720,6 @@ const char* UTokenizer::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

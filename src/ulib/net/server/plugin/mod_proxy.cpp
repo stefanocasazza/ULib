@@ -57,7 +57,7 @@ int UProxyPlugIn::handlerInit()
 {
    U_TRACE_NO_PARAM(0, "UProxyPlugIn::handlerInit()")
 
-   if (UHTTP::vservice == 0 ||
+   if (UHTTP::vservice == U_NULLPTR ||
        UHTTP::vservice->empty())
       {
       U_RETURN(U_PLUGIN_HANDLER_ERROR);
@@ -68,7 +68,7 @@ int UProxyPlugIn::handlerInit()
 #endif
 */
 
-   U_NEW(UHttpClient<UTCPSocket>, client_http, UHttpClient<UTCPSocket>((UFileConfig*)0));
+   U_NEW(UHttpClient<UTCPSocket>, client_http, UHttpClient<UTCPSocket>((UFileConfig*)U_NULLPTR));
 
    U_RETURN(U_PLUGIN_HANDLER_PROCESSED | U_PLUGIN_HANDLER_GO_ON);
 }
@@ -248,6 +248,6 @@ const char* UProxyPlugIn::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

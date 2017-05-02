@@ -37,18 +37,18 @@
 
 #include <ulib/application.h>
 
-#define U_DATA_URI                           (const char*)(num_args >= 0  ? argv[optind+0]  : 0)
-#define U_X509                               (const char*)(num_args >= 1  ? argv[optind+1]  : 0)
-#define U_KEY_HANDLE                         (const char*)(num_args >= 2  ? argv[optind+2]  : 0)
-#define U_DIGEST_ALGORITHM                   (const char*)(num_args >= 3  ? argv[optind+3]  : 0)
-#define U_SIGNING_TIME                       (const char*)(num_args >= 4  ? argv[optind+4]  : 0)
-#define U_CLAIMED_ROLE                       (const char*)(num_args >= 5  ? argv[optind+5]  : 0)
-#define U_PRODUCTION_PLACE_CITY              (const char*)(num_args >= 6  ? argv[optind+6]  : 0)
-#define U_PRODUCTION_PLACE_STATE_OR_PROVINCE (const char*)(num_args >= 7  ? argv[optind+7]  : 0)
-#define U_PRODUCTION_PLACE_POSTAL_CODE       (const char*)(num_args >= 8  ? argv[optind+8]  : 0)
-#define U_PRODUCTION_PLACE_COUNTRY_NAME      (const char*)(num_args >= 9  ? argv[optind+9]  : 0)
-#define U_CA_STORE                           (const char*)(num_args >= 10 ? argv[optind+10] : 0)
-#define U_SIGNATURE_TIMESTAMP                (const char*)(num_args >= 11 ? argv[optind+11] : 0)
+#define U_DATA_URI                           (const char*)(num_args >= 0  ? argv[optind+0]  : U_NULLPTR)
+#define U_X509                               (const char*)(num_args >= 1  ? argv[optind+1]  : U_NULLPTR)
+#define U_KEY_HANDLE                         (const char*)(num_args >= 2  ? argv[optind+2]  : U_NULLPTR)
+#define U_DIGEST_ALGORITHM                   (const char*)(num_args >= 3  ? argv[optind+3]  : U_NULLPTR)
+#define U_SIGNING_TIME                       (const char*)(num_args >= 4  ? argv[optind+4]  : U_NULLPTR)
+#define U_CLAIMED_ROLE                       (const char*)(num_args >= 5  ? argv[optind+5]  : U_NULLPTR)
+#define U_PRODUCTION_PLACE_CITY              (const char*)(num_args >= 6  ? argv[optind+6]  : U_NULLPTR)
+#define U_PRODUCTION_PLACE_STATE_OR_PROVINCE (const char*)(num_args >= 7  ? argv[optind+7]  : U_NULLPTR)
+#define U_PRODUCTION_PLACE_POSTAL_CODE       (const char*)(num_args >= 8  ? argv[optind+8]  : U_NULLPTR)
+#define U_PRODUCTION_PLACE_COUNTRY_NAME      (const char*)(num_args >= 9  ? argv[optind+9]  : U_NULLPTR)
+#define U_CA_STORE                           (const char*)(num_args >= 10 ? argv[optind+10] : U_NULLPTR)
+#define U_SIGNATURE_TIMESTAMP                (const char*)(num_args >= 11 ? argv[optind+11] : U_NULLPTR)
 
 #define U_XMLDSIG_DIGESTMETHOD_TEMPLATE \
 "<ds:DigestMethod Algorithm=\"http://www.w3.org/2001/04/xmlenc#%.*s\"></ds:DigestMethod>\r\n"
@@ -652,7 +652,7 @@ public:
 
       U_INTERNAL_DUMP("U_CA_STORE = %S", U_CA_STORE)
 
-      xades_c = (U_CA_STORE != 0);
+      xades_c = (U_CA_STORE != U_NULLPTR);
 
       digest_algorithm = getOptionValue(U_DIGEST_ALGORITHM, "DigestAlgorithm");
 
@@ -677,12 +677,12 @@ public:
          signature_timestamp = getOptionValue(U_SIGNATURE_TIMESTAMP, "SignatureTimeStamp");
 
          if (str_CApath.empty() ||
-             UServices::setupOpenSSLStore(0, str_CApath.c_str()) == false)
+             UServices::setupOpenSSLStore(U_NULLPTR, str_CApath.c_str()) == false)
             {
             U_ERROR("error on setting CA Store: %S", str_CApath.data());
             }
 
-         num_ca = cert.getSignerCertificates(vec_ca, 0, 0);
+         num_ca = cert.getSignerCertificates(vec_ca, U_NULLPTR, 0);
 
          if (UCertificate::verify_result == false)
             {
@@ -785,11 +785,11 @@ public:
       e = UServices::loadEngine("HCSP", ENGINE_METHOD_RSA);
       x = U_KEY_HANDLE;
 #  else
-      e = 0;
+      e = U_NULLPTR;
       x = UFile::contentOf(UString(U_KEY_HANDLE));
 
       if (x.empty() ||
-          (u_pkey = UServices::loadKey(x, 0, true, 0, e)) == 0)
+          (u_pkey = UServices::loadKey(x, U_NULLPTR, true, U_NULLPTR, e)) == U_NULLPTR)
          {
          U_ERROR("I can't load the private key: %S", U_KEY_HANDLE);
          }

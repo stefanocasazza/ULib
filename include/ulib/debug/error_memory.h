@@ -25,7 +25,7 @@ public:
    // CONSTRUCTOR
 
     UMemoryError() {                                                                    _this = (void*)U_CHECK_MEMORY_SENTINEL; }
-   ~UMemoryError() { U_ASSERT_MACRO(invariant(), "ERROR ON MEMORY", getErrorType(this)) _this = 0; }
+   ~UMemoryError() { U_ASSERT_MACRO(invariant(), "ERROR ON MEMORY", getErrorType(this)) _this = U_NULLPTR; }
 
    // ASSIGNMENT
 

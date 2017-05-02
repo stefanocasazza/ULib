@@ -290,7 +290,7 @@ public:
     */
 
    void reusePort(int flags);
-   bool setServer(unsigned int port, void* localAddress = 0);
+   bool setServer(unsigned int port, void* localAddress = U_NULLPTR);
 
    /**
     * This method is called to accept a new pending connection on the server socket.

@@ -35,7 +35,7 @@ public:
       {
       U_TRACE(5, "Application::Application()")
 
-      server = 0;
+      server = U_NULLPTR;
       }
 
    ~Application()

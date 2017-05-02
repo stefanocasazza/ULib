@@ -63,7 +63,7 @@ public:
 
       header = item.header; // NB: move...
 
-      ((UMimeEntity*)&item)->header = 0;
+      ((UMimeEntity*)&item)->header = U_NULLPTR;
       }
 
    ~UMimeEntity()
@@ -328,9 +328,9 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UMimeMultipart, "", 0)
 
-      buf = bbuf = 0;
-      isFinal = false;
+      buf = bbuf = U_NULLPTR;
       blen = boundaryStart = boundaryEnd = endPos = 0;
+      isFinal = false;
       }
 
    UMimeMultipart(UMimeEntity& item) : UMimeEntity(item)

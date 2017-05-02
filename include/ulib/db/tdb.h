@@ -51,7 +51,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UTDB, "", 0)
 
-      context = 0;
+      context = U_NULLPTR;
       }
 
    ~UTDB()
@@ -109,7 +109,7 @@ public:
       U_INTERNAL_ASSERT_POINTER(context)
 
       (void) U_SYSCALL(tdb_close, "%p", context);
-                                        context = 0;
+                                        context = U_NULLPTR;
       }
 
    // Store an element in the database

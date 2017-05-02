@@ -56,8 +56,8 @@ public:
       U_RETURN(valid);
       }
 
-   bool extract(                     const UString* tmpdir = 0, bool bdir = true);
-   bool extract(const UString& data, const UString* tmpdir = 0, bool bdir = true);
+   bool extract(                     const UString* tmpdir = U_NULLPTR, bool bdir = true);
+   bool extract(const UString& data, const UString* tmpdir = U_NULLPTR, bool bdir = true);
 
    void   clear();
    bool   readContent();

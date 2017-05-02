@@ -882,7 +882,7 @@ bool UImapClient::expunge(int* _ret)
                {
                U_ASSERT_EQUALS(line[0],'*')
 
-               *_ret++ = ::strtol(line.c_pointer(2), 0, 10);
+               *_ret++ = ::strtol(line.c_pointer(2), U_NULLPTR, 10);
                }
             }
 
@@ -927,7 +927,7 @@ bool UImapClient::search(int* _ret, const UString& spec, const char* charSet, bo
 
          while (tok.next(word, ' '))
             {
-            *_ret++ = ::strtol(word.data(), 0, 10);
+            *_ret++ = ::strtol(word.data(), U_NULLPTR, 10);
             }
 
          U_RETURN(true);
@@ -1061,6 +1061,6 @@ const char* UImapClient::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

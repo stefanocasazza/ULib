@@ -165,7 +165,7 @@ bool UFileConfig::processData(bool bload)
          }
       }
 
-   if (loadSection(0, 0)) U_RETURN(true);
+   if (loadSection(U_NULLPTR, 0)) U_RETURN(true);
 
    U_RETURN(false);
 }
@@ -207,7 +207,7 @@ bool UFileConfig::searchForObjectStream(const char* section, uint32_t len)
 retry:
    while (_start < _end)
       {
-      _start = u_skip(_start, _end, 0, '#');
+      _start = u_skip(_start, _end, U_NULLPTR, '#');
 
       if (_start == _end) break;
 
@@ -242,7 +242,7 @@ retry:
 
          U_INTERNAL_DUMP("_end = %p", _end)
 
-         if (_end == 0) break;
+         if (_end == U_NULLPTR) break;
 
          _size = (_end - ++_start); // NB: we advance one char (to call u_skip() after...)
 
@@ -298,7 +298,7 @@ bool UFileConfig::loadVector(UVector<UString>& vec, const char* name)
 
    U_CHECK_MEMORY
 
-   _start = u_skip(_start, _end, 0, '#');
+   _start = u_skip(_start, _end, U_NULLPTR, '#');
 
    if (_start == _end) U_RETURN(false);
 
@@ -369,7 +369,7 @@ bool UFileConfig::loadINI()
 
    while (_start < _end)
       {
-      _start = u_skip(_start, _end, 0, ';');
+      _start = u_skip(_start, _end, U_NULLPTR, ';');
 
       if (_start == _end) break;
 
@@ -383,7 +383,7 @@ bool UFileConfig::loadINI()
 
          ptr = u__strpbrk(_start, _end - _start, "]\n");
 
-         if (ptr == 0)
+         if (ptr == U_NULLPTR)
             {
             _start = _end;
 
@@ -398,7 +398,7 @@ bool UFileConfig::loadINI()
          {
          ptr = u__strpbrk(_start, _end - _start, "=\n");
 
-         if (ptr == 0)
+         if (ptr == U_NULLPTR)
             {
             _start = _end;
 
@@ -415,7 +415,7 @@ bool UFileConfig::loadINI()
 
             ptr = (const char*) memchr(_start, '\n', _end - _start);
 
-            if (ptr == 0)
+            if (ptr == U_NULLPTR)
                {
                _start = _end;
 
@@ -487,7 +487,7 @@ bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, c
 
          _start = (const char*) memchr(_start, '\n', _end - _start);
 
-         if (_start == 0) _start = _end;
+         if (_start == U_NULLPTR) _start = _end;
 
          continue;
          }
@@ -500,7 +500,7 @@ bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, c
 
       ptr = u__strpbrk(_start, _end - _start, "=:\r\n");
 
-      if (ptr == 0) break;
+      if (ptr == U_NULLPTR) break;
 
       key = UStringExt::trim(_start, ptr - _start);
 
@@ -515,7 +515,7 @@ bool UFileConfig::loadProperties(UHashMap<UString>& table, const char* _start, c
 
          ptr = (const char*) memchr(_start, '\n', _end - _start);
 
-         if (ptr == 0) break;
+         if (ptr == U_NULLPTR) break;
 
          value = UStringExt::trim(_start, ptr - _start);
 
@@ -586,6 +586,6 @@ const char* UFileConfig::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

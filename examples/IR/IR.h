@@ -101,7 +101,7 @@ public:
 
       // register changes to constant database (CDB)
 
-      if (reset) (void) UFile::chdir(0, true);
+      if (reset) (void) UFile::chdir(U_NULLPTR, true);
 
       ((URDB*)cdb_names)->closeReorganize();
       ((URDB*)cdb_words)->closeReorganize();

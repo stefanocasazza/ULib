@@ -361,7 +361,7 @@ typedef unsigned long timeout_t; /* Typedef for millisecond timer values */
 #  define U_MAP_ANON           MAP_ANONYMOUS
 #  define MAP_HUGETLB          0
 #  define U_MAP_ANON_HUGE      0
-#  define U_MAP_ANON_HUGE_ADDR (void*)(0x0UL)
+#  define U_MAP_ANON_HUGE_ADDR (void*)U_NULLPTR
 #else
 #  ifdef MAP_UNINITIALIZED /* (since Linux 2.6.33) */
 #     define U_MAP_ANON (MAP_ANONYMOUS | MAP_UNINITIALIZED)
@@ -376,7 +376,7 @@ typedef unsigned long timeout_t; /* Typedef for millisecond timer values */
 #     define U_MAP_ANON_HUGE_ADDR (void*)(0x8000000000000000UL)
 #  else
 #     define U_MAP_ANON_HUGE      MAP_HUGETLB 
-#     define U_MAP_ANON_HUGE_ADDR (void*)(0x0UL)
+#     define U_MAP_ANON_HUGE_ADDR (void*)U_NULLPTR
 #  endif
 #endif
 

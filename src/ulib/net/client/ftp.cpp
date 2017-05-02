@@ -349,7 +349,7 @@ size_t UFtpClient::getFileSize(const UString& path)
       {
       // skip over the response code
 
-      size_t size = strtoul(u_buffer + 4, 0, 10);
+      size_t size = strtoul(u_buffer + 4, U_NULLPTR, 10);
 
       U_RETURN(size);
       }
@@ -450,6 +450,6 @@ const char* UFtpClient::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

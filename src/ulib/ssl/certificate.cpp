@@ -39,10 +39,10 @@ X509* UCertificate::readX509(const UString& x, const char* format)
    U_TRACE(1, "UCertificate::readX509(%V,%S)", x.rep, format)
 
    BIO* in;
-   X509* _x509 = 0;
+   X509* _x509 = U_NULLPTR;
    UString tmp = x;
 
-   if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
+   if (format == U_NULLPTR) format = (x.isBinary() ? "DER" : "PEM");
 
    if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 &&
        strncmp(x.data(), U_CONSTANT_TO_PARAM("-----BEGIN CERTIFICATE-----")) != 0)
@@ -63,8 +63,8 @@ X509* UCertificate::readX509(const UString& x, const char* format)
 
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   _x509 = (X509*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_X509, "%p,%p,%p,%p", in, 0, 0, 0)
-                                                                     : U_SYSCALL(d2i_X509_bio,      "%p,%p",       in, 0));
+   _x509 = (X509*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_X509, "%p,%p,%p,%p", in, U_NULLPTR, U_NULLPTR, U_NULLPTR)
+                                                                     : U_SYSCALL(d2i_X509_bio,      "%p,%p",       in, U_NULLPTR));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
@@ -119,7 +119,7 @@ UString UCertificate::getName(X509_NAME* n, bool bldap)
       return UString::getStringNull();
       }
 
-   unsigned len = U_SYSCALL(i2d_X509_NAME, "%p,%p", n, 0);
+   unsigned len = U_SYSCALL(i2d_X509_NAME, "%p,%p", n, U_NULLPTR);
 
    UString name(len);
    char* ptr = name.data();
@@ -145,7 +145,7 @@ bool UCertificate::isIssued(const UCertificate& ca) const
       {
       EVP_PKEY* pkey = ca.getSubjectPublicKey();
 
-      if (pkey == 0) ok = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
+      if (pkey == U_NULLPTR) ok = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
       else
          {
          // signature verification
@@ -187,7 +187,7 @@ UString UCertificate::checkForSerialNumber(long number)
 
    (void) U_SYSCALL(ASN1_INTEGER_set, "%p,%ld", a, number);
 
-   BIGNUM* bn = (BIGNUM*) U_SYSCALL(ASN1_INTEGER_to_BN, "%p,%p", a, 0);
+   BIGNUM* bn = (BIGNUM*) U_SYSCALL(ASN1_INTEGER_to_BN, "%p,%p", a, U_NULLPTR);
 
    char* itmp = (char*) U_SYSCALL(BN_bn2hex, "%p", bn);
 
@@ -208,7 +208,7 @@ bool UCertificate::verify(STACK_OF(X509)* chain, time_t certsVerificationTime) c
 
    U_INTERNAL_ASSERT_POINTER(UServices::store)
 
-   if (csc == 0) csc = (X509_STORE_CTX*) U_SYSCALL_NO_PARAM(X509_STORE_CTX_new); // create an X509 store context
+   if (csc == U_NULLPTR) csc = (X509_STORE_CTX*) U_SYSCALL_NO_PARAM(X509_STORE_CTX_new); // create an X509 store context
 
    U_INTERNAL_ASSERT_POINTER(csc)
    U_INTERNAL_ASSERT_POINTER(x509)
@@ -397,7 +397,7 @@ uint32_t UCertificate::getRevocationURL(UVector<UString>& vec) const
 
    // CRLDistributionPoints ::= SEQUENCE OF DistributionPoint
 
-   STACK_OF(DIST_POINT)* crld = (STACK_OF(DIST_POINT)*) U_SYSCALL(X509_get_ext_d2i, "%p,%d,%p,%p", x509, NID_crl_distribution_points, 0, 0);
+   STACK_OF(DIST_POINT)* crld = (STACK_OF(DIST_POINT)*) U_SYSCALL(X509_get_ext_d2i, "%p,%d,%p,%p", x509, NID_crl_distribution_points, U_NULLPTR, U_NULLPTR);
 
    for (int i = 0, j = sk_DIST_POINT_num(crld); i < j; ++i)
       {
@@ -494,7 +494,7 @@ uint32_t UCertificate::getCAIssuers(UVector<UString>& vec) const
 
    // try to extract an AuthorityInfoAccessSyntax extension from x509
 
-   AUTHORITY_INFO_ACCESS* aia = (AUTHORITY_INFO_ACCESS*) U_SYSCALL(X509_get_ext_d2i, "%p,%d,%p,%p", x509, NID_info_access, 0, 0);
+   AUTHORITY_INFO_ACCESS* aia = (AUTHORITY_INFO_ACCESS*) U_SYSCALL(X509_get_ext_d2i, "%p,%d,%p,%p", x509, NID_info_access, U_NULLPTR, U_NULLPTR);
 
    // AuthorityInfoAccessSyntax ::= SEQUENCE OF AccessDescription
 
@@ -535,7 +535,7 @@ UString UCertificate::getEncoded(const char* format) const
    if (strncmp(format, U_CONSTANT_TO_PARAM("DER"))    == 0 ||
        strncmp(format, U_CONSTANT_TO_PARAM("BASE64")) == 0)
       {
-      unsigned len = U_SYSCALL(i2d_X509, "%p,%p", x509, 0);
+      unsigned len = U_SYSCALL(i2d_X509, "%p,%p", x509, U_NULLPTR);
 
       UString encoding(len);
 
@@ -679,7 +679,7 @@ STACK_OF(X509)* UCertificate::loadCerts(const UString& x)
 
    STACK_OF(X509)* othercerts = sk_X509_new_null();
 
-   STACK_OF(X509_INFO)* allcerts = (STACK_OF(X509_INFO)*) U_SYSCALL(PEM_X509_INFO_read_bio, "%p,%p,%p,%p", certs, 0, 0, 0);
+   STACK_OF(X509_INFO)* allcerts = (STACK_OF(X509_INFO)*) U_SYSCALL(PEM_X509_INFO_read_bio, "%p,%p,%p,%p", certs, U_NULLPTR, U_NULLPTR, U_NULLPTR);
 
    int n = U_SYSCALL(sk_X509_INFO_num, "%p", allcerts);
 
@@ -691,7 +691,7 @@ STACK_OF(X509)* UCertificate::loadCerts(const UString& x)
          {
          sk_X509_push(othercerts, xi->x509);
 
-         xi->x509 = 0;
+         xi->x509 = U_NULLPTR;
          }
       }
 
@@ -751,7 +751,7 @@ const char* UCertificate::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

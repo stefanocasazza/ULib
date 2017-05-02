@@ -69,7 +69,7 @@ void USSLSession::fromData(const char* ptr, uint32_t len)
    const unsigned char* p = (const unsigned char*)ptr;
 #endif
 
-   sess = (SSL_SESSION*) U_SYSCALL(d2i_SSL_SESSION, "%p,%p,%ld", 0, &p, (long)len);
+   sess = (SSL_SESSION*) U_SYSCALL(d2i_SSL_SESSION, "%p,%p,%ld", U_NULLPTR, &p, (long)len);
 }
 
 int USSLSession::newSession(SSL* ssl, SSL_SESSION* _sess)
@@ -101,7 +101,7 @@ SSL_SESSION* USSLSession::getSession(SSL* ssl, unsigned char* id, int len, int* 
 {
    U_TRACE(0, "USSLSession::getSession(%p,%.*S,%d,%p)", ssl, len, id, len, copy)
 
-   sess  = 0;
+   sess  = U_NULLPTR;
    *copy = 0;
 
    UHTTP::db_session_ssl->getDataStorage((const char*)id, (uint32_t)len);

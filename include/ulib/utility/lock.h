@@ -30,8 +30,8 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, ULock, "")
 
-      plock  = 0;
-      psem   = 0;
+      plock  = U_NULLPTR;
+      psem   = U_NULLPTR;
       locked = 0;
       }
 
@@ -49,7 +49,7 @@ public:
    bool     lock(time_t timeout);
 
    void destroy();
-   void init(sem_t* ptr_lock, char* ptr_spinlock = 0);
+   void init(sem_t* ptr_lock, char* ptr_spinlock = U_NULLPTR);
 
    void lock()
       {

@@ -60,9 +60,9 @@ public:
 
       fd = -1;
 
-      x     = 0;
+      x     = U_NULLPTR;
       ttl   = 0;
-      info  = 0;
+      info  = U_NULLPTR;
       start = 0;
 
 #  ifdef DEBUG
@@ -74,8 +74,8 @@ public:
 
    // OPEN/CREAT a cache file
 
-   bool open(const UString& path, uint32_t size,               const UString* environment = 0);
-   bool open(const UString& path, const UString& dir_template, const UString* environment = 0, bool brdonly = false);
+   bool open(const UString& path, uint32_t size,               const UString* environment = U_NULLPTR);
+   bool open(const UString& path, const UString& dir_template, const UString* environment = U_NULLPTR, bool brdonly = false);
 
    // OPERATION
 
@@ -100,7 +100,7 @@ public:
 
    UString getContent(const UString& key) { return getContent(U_STRING_TO_PARAM(key)); }
 
-   void loadContentOf(const UString& directory, const char* filter = 0, uint32_t filter_len = 0);
+   void loadContentOf(const UString& directory, const char* filter = U_NULLPTR, uint32_t filter_len = 0);
 
    // operator []
 

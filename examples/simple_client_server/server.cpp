@@ -83,7 +83,7 @@ public:
       {
       U_TRACE(5, "Application::Application()")
 
-      server = 0;
+      server = U_NULLPTR;
       }
 
    ~Application()
@@ -102,7 +102,7 @@ public:
 
       // manage config file
 
-      if (argv[optind] == 0) U_ERROR("argument 'file_config' not specified");
+      if (argv[optind] == U_NULLPTR) U_ERROR("argument 'file_config' not specified");
 
       cfg.UFile::setPath(UString(argv[optind]));
 

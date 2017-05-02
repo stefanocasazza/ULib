@@ -533,7 +533,7 @@ void URDB::setShared(sem_t* psem, char* spinlock)
 
    U_CHECK_MEMORY
 
-   if (psem == 0)
+   if (psem == U_NULLPTR)
       {
       char somename[256];
 
@@ -651,7 +651,7 @@ bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool brefer
 
    (void) UCDB::open(cdb_brdonly);
 
-   journal.setPath(*(const UFile*)this, 0, U_CONSTANT_TO_PARAM(".jnl"));
+   journal.setPath(*(const UFile*)this, U_NULLPTR, U_CONSTANT_TO_PARAM(".jnl"));
 
    int            flags  = O_RDWR;
    if (btruncate) flags |= O_TRUNC; // NB: we can have only the journal (HTTP session, SSL session, ...)
@@ -672,7 +672,7 @@ bool URDB::open(uint32_t log_size, bool btruncate, bool cdb_brdonly, bool brefer
          if (journal_sz_new < 32 * 1024 * 1024) journal_sz_new = 32 * 1024 * 1024; // oversize mmap for optimize resizeJournal() with ftruncate()
 #     endif
 
-         if (journal.memmap(PROT_READ | PROT_WRITE, 0, 0, journal_sz_new))
+         if (journal.memmap(PROT_READ | PROT_WRITE, U_NULLPTR, 0, journal_sz_new))
             {
             if (RDB_off(this) == 0) RDB_off(this) = sizeof(URDB::cache_struct);
 
@@ -1021,8 +1021,8 @@ U_NO_EXPORT void URDB::getKeys1(UCDB* pcdb, uint32_t _offset) // entry present i
 
       U_NEW(UStringRep, skey, UStringRep((const char*)((ptrdiff_t)journal.map+(ptrdiff_t)RDB_cache_node(n,key.dptr)), RDB_cache_node(n,key.dsize)));
 
-      if (UCDB::filter_function_to_call(skey, 0) == 0) skey->release();
-      else                                             pcdb->UCDB::ptr_vector->UVector<void*>::push(skey);
+      if (UCDB::filter_function_to_call(skey, U_NULLPTR) == 0) skey->release();
+      else                                                     pcdb->UCDB::ptr_vector->UVector<void*>::push(skey);
       }
    else if (RDB_cache_node(n,data.dsize) != U_NOT_FOUND)
       {
@@ -1158,7 +1158,7 @@ char* URDB::parseLine(const char* ptr, UCDB::datum* _key, UCDB::datum* _data)
       { 
       // special case: deleted key
 
-      _data->dptr = 0;
+      _data->dptr = U_NULLPTR;
       }
    else
       {
@@ -1279,8 +1279,8 @@ void URDB::callForAllEntrySorted(iPFprpr function, qcompare compare_obj)
 
       if (n > 1)
          {
-         if (compare_obj == 0) vkey.sort(UCDB::ignoreCase());
-         else                  vkey.UVector<void*>::sort(compare_obj);
+         if (compare_obj == U_NULLPTR) vkey.sort(UCDB::ignoreCase());
+         else                          vkey.UVector<void*>::sort(compare_obj);
          }
 
       lock();
@@ -1304,7 +1304,7 @@ void URDB::callForAllEntrySorted(iPFprpr function, qcompare compare_obj)
             }
          }
 
-      UCDB::setFunctionToCall(0);
+      UCDB::setFunctionToCall(U_NULLPTR);
 
       unlock();
       }
@@ -1613,7 +1613,7 @@ int URDB::remove()
 
    // NB: the reference at memory in the cache data must point to memory mapped...
 
-   UCDB::data.dptr  = 0;
+   UCDB::data.dptr  = U_NULLPTR;
    UCDB::data.dsize = U_NOT_FOUND;
 
    htInsert(this); // Insertion or update of new entry of the cache
@@ -1739,7 +1739,7 @@ int URDB::substitute(UCDB::datum* key2, int _flag)
          // remove of old entry
 
          UCDB::key        = key1;
-         UCDB::data.dptr  = 0;
+         UCDB::data.dptr  = U_NULLPTR;
          UCDB::data.dsize = U_NOT_FOUND;
 
                    pnode = pnode1;
@@ -1962,7 +1962,7 @@ int URDBObjectHandler<UDataStorage*>::callEntryCheck(UStringRep* _key, UStringRe
          {
          pthis->setEntry(_key, _data);
 
-         result = ds_function_to_call(0, 0);
+         result = ds_function_to_call(U_NULLPTR, U_NULLPTR);
 
          if (result == 3) // NB: call function later without lock on db...
             {
@@ -1995,17 +1995,17 @@ void URDBObjectHandler<UDataStorage*>::callForAllEntry(iPFprpr function, vPF fun
    brecfound           = true;
    ds_function_to_call = (iPFpvpv)function;
 
-   if (compare_obj      == 0 &&
-       function_no_lock == 0)
+   if (compare_obj      == U_NULLPTR &&
+       function_no_lock == U_NULLPTR)
       {
-      URDB::callForAllEntry(callEntryCheck, 0);
+      URDB::callForAllEntry(callEntryCheck, U_NULLPTR);
       }
    else
       {
       int i;
       UVector<UString> vec(n);
 
-      if (compare_obj == 0)
+      if (compare_obj == U_NULLPTR)
          {
          U_INTERNAL_ASSERT_POINTER(function_no_lock)
 
@@ -2014,7 +2014,7 @@ void URDBObjectHandler<UDataStorage*>::callForAllEntry(iPFprpr function, vPF fun
       else
          {
          UVector<UString> vkey(n);
-         UVector<UString>* pvec_prev = 0;
+         UVector<UString>* pvec_prev = U_NULLPTR;
          iPFprpr function_prev = UCDB::getFunctionToCall();
 
          getKeys(vkey);
@@ -2158,7 +2158,7 @@ const char* URDB::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* URDBObjectHandler<UDataStorage*>::dump(bool _reset) const
@@ -2178,7 +2178,7 @@ const char* URDBObjectHandler<UDataStorage*>::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

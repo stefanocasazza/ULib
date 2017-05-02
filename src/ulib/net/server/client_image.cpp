@@ -125,9 +125,9 @@ UClientImage_Base::UClientImage_Base()
 {
    U_TRACE_REGISTER_OBJECT(0, UClientImage_Base, "")
 
-   socket       = 0;
-   logbuf       = 0;
-   data_pending = 0;
+   socket       = U_NULLPTR;
+   logbuf       = U_NULLPTR;
+   data_pending = U_NULLPTR;
 
    if (UServer_Base::isLog()) U_NEW(UString, logbuf, UString(200U));
 
@@ -138,7 +138,7 @@ UClientImage_Base::UClientImage_Base()
 
    // NB: array are not pointers (virtual table can shift the address of 'this')...
 
-   if (UServer_Base::pClientImage == 0)
+   if (UServer_Base::pClientImage == U_NULLPTR)
       {
       UServer_Base::pClientImage = this;
       UServer_Base::eClientImage = this + UNotifier::max_connection;
@@ -252,14 +252,14 @@ void UClientImage_Base::init()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::init()")
 
-   U_INTERNAL_ASSERT_EQUALS(body, 0)
-   U_INTERNAL_ASSERT_EQUALS(_value, 0)
-   U_INTERNAL_ASSERT_EQUALS(rbuffer, 0)
-   U_INTERNAL_ASSERT_EQUALS(wbuffer, 0)
-   U_INTERNAL_ASSERT_EQUALS(request, 0)
-   U_INTERNAL_ASSERT_EQUALS(_buffer, 0)
-   U_INTERNAL_ASSERT_EQUALS(_encoded, 0)
-   U_INTERNAL_ASSERT_EQUALS(request_uri, 0)
+   U_INTERNAL_ASSERT_EQUALS(body, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(_value, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(rbuffer, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(wbuffer, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(request, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(_buffer, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(_encoded, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(request_uri, U_NULLPTR)
 
    U_NEW(UString, body, UString);
    U_NEW(UString, rbuffer, UString(8192));
@@ -378,7 +378,7 @@ bool UClientImage_Base::askForClientCertificate()
 #ifdef USE_LIBSSL
    U_ASSERT(((USSLSocket*)socket)->isSSL())
 
-   if (((USSLSocket*)socket)->getPeerCertificate() == 0)
+   if (((USSLSocket*)socket)->getPeerCertificate() == U_NULLPTR)
       {
       U_SRV_LOG_WITH_ADDR("Ask for a client certificate to");
 
@@ -441,7 +441,7 @@ void UClientImage_Base::handlerDelete()
       ULog::log(U_CONSTANT_TO_PARAM("%s%.6s close connection from %v, %.*s clients still connected"), UServer_Base::mod_name[0], agent, logbuf->rep, len, buffer);
 
 #  ifdef DEBUG
-      int fd_logbuf = ::strtoul(logbuf->data(), 0, 10);
+      int fd_logbuf = ::strtoul(logbuf->data(), U_NULLPTR, 10);
 
       if (UNLIKELY(fd_logbuf != UEventFd::fd))
          {
@@ -489,7 +489,7 @@ void UClientImage_Base::handlerDelete()
    if (data_pending)
       {
       delete data_pending;
-             data_pending = 0;
+             data_pending = U_NULLPTR;
       }
    else if (isPendingSendfile())
       {
@@ -520,7 +520,7 @@ void UClientImage_Base::handlerDelete()
 
    UEventFd::fd = -1;
 
-   U_INTERNAL_ASSERT_EQUALS(data_pending, 0)
+   U_INTERNAL_ASSERT_EQUALS(data_pending, U_NULLPTR)
    U_INTERNAL_ASSERT_EQUALS(UEventFd::op_mask, EPOLLIN | EPOLLRDHUP | EPOLLET)
 #ifdef HAVE_ACCEPT4
    U_INTERNAL_ASSERT_EQUALS(((USocket::accept4_flags & SOCK_CLOEXEC)  != 0),((socket->flags & O_CLOEXEC)  != 0))
@@ -534,7 +534,7 @@ void UClientImage_Base::handlerDelete()
 
       UDispatcher::del(pevent);
                 delete pevent;
-                       pevent = 0;
+                       pevent = U_NULLPTR;
       }
 #endif
 }
@@ -997,7 +997,7 @@ bool UClientImage_Base::genericRead()
    // NB: rbuffer string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
 
    if (rbuffer->uniq()) rbuffer->rep->_length = 0; 
-   else                 rbuffer->_set(UStringRep::create(0U, U_CAPACITY, 0));
+   else                 rbuffer->_set(UStringRep::create(0U, U_CAPACITY, U_NULLPTR));
 
    if (data_pending)
       {
@@ -1030,7 +1030,7 @@ bool UClientImage_Base::genericRead()
          }
 
       delete data_pending;
-             data_pending = 0;
+             data_pending = U_NULLPTR;
       }
 
 #ifdef U_SERVER_CHECK_TIME_BETWEEN_REQUEST
@@ -1151,7 +1151,7 @@ data_missing:
 
       U_ClientImage_data_missing = false;
 
-      U_INTERNAL_ASSERT_EQUALS(data_pending, 0)
+      U_INTERNAL_ASSERT_EQUALS(data_pending, U_NULLPTR)
 
       if (U_ClientImage_parallelization == U_PARALLELIZATION_CHILD) goto loop;
 
@@ -1189,11 +1189,7 @@ data_missing:
             size_request =
    U_ClientImage_request = 0;
 
-   body->clear();
-
-   U_INTERNAL_DUMP("wbuffer(%u) = %V", wbuffer->size(), wbuffer->rep)
-
-   wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
+   prepareForCallToHandlerRead();
 
    U_ClientImage_state = callerHandlerRead();
 
@@ -1524,7 +1520,7 @@ bool UClientImage_Base::writeResponse()
 #  else
       U_INTERNAL_ASSERT_EQUALS(iov_vec[1].iov_base, ULog::date.date3)
 
-      ULog::updateDate3(0);
+      ULog::updateDate3(U_NULLPTR);
 #  endif
 
 #  ifndef U_LOG_DISABLE
@@ -1965,6 +1961,6 @@ const char* UClientImage_Base::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

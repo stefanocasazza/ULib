@@ -39,7 +39,7 @@ public:
 
    UString output;
 
-   UDialog(const char* _backtitle = 0, int _height = 0, int _width = 0)
+   UDialog(const char* _backtitle = U_NULLPTR, int _height = 0, int _width = 0)
          : output(U_CAPACITY), backtitle(_backtitle), command(U_CAPACITY), argument(U_CAPACITY)
       {
       U_TRACE_REGISTER_OBJECT(0, UDialog, "%S,%d,%d", _backtitle, _height, _width)
@@ -47,7 +47,7 @@ public:
       width  = _width;
       height = _height;
 
-      if (path_dialog == 0) initialize();
+      if (path_dialog == U_NULLPTR) initialize();
       }
 
    ~UDialog()
@@ -91,52 +91,52 @@ public:
 
    // A password box is similar to an input box, except that the text the user enters is not displayed
 
-   bool passwordbox(const char* text, UString& init, const char* title = 0);
+   bool passwordbox(const char* text, UString& init, const char* title = U_NULLPTR);
 
    // Display a list of items as a series of checkboxes.
    // The array selected defines default values (any objects which appear in the list are checked)
 
-   void checklist(const char* text, const char* tags[], const char* items[], bool selected[], int list_height = 0, const char* title = 0);
+   void checklist(const char* text, const char* tags[], const char* items[], bool selected[], int list_height = 0, const char* title = U_NULLPTR);
 
    // Display a list of items as a series of radioboxes. The param select defines default values.
    // Will return the numerical index of item selected
 
    int radiolist(const char* text, const char* tags[],
-                 const char* items[], int select = 0, int list_height = 0, const char* title = 0);
+                 const char* items[], int select = 0, int list_height = 0, const char* title = U_NULLPTR);
 
    // Display a yesno box prompting user with a question. Returns true if the user selects yes or false otherwise
 
-   bool yesno(const char* text, const char* title = 0) { return run(title, "--yesno \"%s\" %d %d", text, height, width); }
+   bool yesno(const char* text, const char* title = U_NULLPTR) { return run(title, "--yesno \"%s\" %d %d", text, height, width); }
 
    // Display a simple message box on the screen
 
-   void msgbox(const char* text, const char* title = 0) { (void) run(title, "--msgbox \"%s\" %d %d", text, height, width); }
+   void msgbox(const char* text, const char* title = U_NULLPTR) { (void) run(title, "--msgbox \"%s\" %d %d", text, height, width); }
 
    // An info box is basically a message box. However, in this  case, dialog will exit immediately after displaying
    // the message to the user. The screen is not cleared when dialog exits, so that the message will remain on the screen
 
-   void infobox(const char* text, const char* title = 0) { (void) run(title, "--infobox \"%s\" %d %d", text, height, width); }
+   void infobox(const char* text, const char* title = U_NULLPTR) { (void) run(title, "--infobox \"%s\" %d %d", text, height, width); }
 
    // Display a given file in a textbox
 
-   void textbox(const char* file, const char* title = 0) { (void) run((title ? title : file), "--textbox \"%s\" %d %d", file, height, width); }
+   void textbox(const char* file, const char* title = U_NULLPTR) { (void) run((title ? title : file), "--textbox \"%s\" %d %d", file, height, width); }
 
    // file selector dialog
 
-   bool fselect(UString& filepath, const char* title = 0);
+   bool fselect(UString& filepath, const char* title = U_NULLPTR);
 
    // Display text from a file in a dialog box, as in a "tail -f" command
 
-   void tailbox(const char* file, const char* title = 0) { (void) run(title, "--tailbox \"%s\" %d %d", file, height, width); }
+   void tailbox(const char* file, const char* title = U_NULLPTR) { (void) run(title, "--tailbox \"%s\" %d %d", file, height, width); }
 
    // Display a menu from a list of items. Will return the numerical index of item selected
 
-   int  menu(const char* text, const char* tags[], const char* items[], int list_height = 0, const char* title = 0);
-   bool menu(const char* text, UVector<UString>& list, UString& choice, int list_height = 0, const char* title = 0);
+   int  menu(const char* text, const char* tags[], const char* items[], int list_height = 0, const char* title = U_NULLPTR);
+   bool menu(const char* text, UVector<UString>& list, UString& choice, int list_height = 0, const char* title = U_NULLPTR);
 
    // Display a input box with a text prompt given an initial string
 
-   bool inputbox(const char* text, UString& init, const char* title = 0);
+   bool inputbox(const char* text, UString& init, const char* title = U_NULLPTR);
 
    // ---------------------------------------------------------------------------------------------
    // NB: specific for Xdialog
@@ -147,18 +147,18 @@ public:
    // the <text> parameter, the <label>s may hold "\n" sequences IOT force text splitting into several lines. The <init> strings cannot be omitted
    // but may perfectly be NULL (empty) strings
 
-   bool inputsbox2(const char* text, const char* labels[], UVector<UString>& init, const char* title = 0) { return inputsbox(2,text,labels,init,title); }
-   bool inputsbox3(const char* text, const char* labels[], UVector<UString>& init, const char* title = 0) { return inputsbox(3,text,labels,init,title); }
+   bool inputsbox2(const char* text, const char* labels[], UVector<UString>& init, const char* title = U_NULLPTR) { return inputsbox(2,text,labels,init,title); }
+   bool inputsbox3(const char* text, const char* labels[], UVector<UString>& init, const char* title = U_NULLPTR) { return inputsbox(3,text,labels,init,title); }
 
    // The combobox displays a <text> together with an entry field to which a pull-down list of <items> is attached,
    // returns the entry field contents once the OK button is pressed
 
-   bool combobox(const char* text, UVector<UString>& list, UString& choice, const char* title = 0);
+   bool combobox(const char* text, UVector<UString>& list, UString& choice, const char* title = U_NULLPTR);
 
    // Display a tree box on the screen
 
-   int tree(const char* text, const char* items[], uint32_t items_depth[], const char* item_tags[] = 0,
-            const char* items_status[] = 0, const char* items_help[] = 0, int list_height = 0, const char* title = 0);
+   int tree(const char* text, const char* items[], uint32_t items_depth[], const char* item_tags[] = U_NULLPTR,
+            const char* items_status[] = U_NULLPTR, const char* items_help[] = U_NULLPTR, int list_height = 0, const char* title = U_NULLPTR);
 
    // ---------------------------------------------------------------------------------------------
 

@@ -39,7 +39,7 @@ UApplication::~UApplication()
    if (UServices::CApath) 
       {
       delete UServices::CApath;
-             UServices::CApath = 0;
+             UServices::CApath = U_NULLPTR;
       }
 #  endif
 #endif
@@ -98,6 +98,6 @@ const char* UApplication::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

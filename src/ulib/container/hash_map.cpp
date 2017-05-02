@@ -98,7 +98,7 @@ void* UHashMap<void*>::erase(const UStringRep* _key)
       U_RETURN((void*)_elem);
       }
 
-   U_RETURN((void*)0);
+   U_RETURN((void*)U_NULLPTR);
 }
 
 void UHashMap<void*>::insertAfterFind(const UStringRep* _key, const void* _elem)
@@ -107,8 +107,8 @@ void UHashMap<void*>::insertAfterFind(const UStringRep* _key, const void* _elem)
 
    U_CHECK_MEMORY
 
-   U_INTERNAL_ASSERT_EQUALS(node, 0)
    U_INTERNAL_ASSERT_DIFFERS(_key, pkey)
+   U_INTERNAL_ASSERT_EQUALS(node, U_NULLPTR)
 
    U_INTERNAL_DUMP("index = %u", index)
 
@@ -134,7 +134,7 @@ void UHashMap<void*>::_eraseAfterFind()
 
    U_INTERNAL_DUMP("node = %p", node)
 
-   UHashMapNode* prev = 0;
+   UHashMapNode* prev = U_NULLPTR;
 
    for (UHashMapNode* pnode = table[index]; pnode; pnode = pnode->next)
       {
@@ -195,7 +195,7 @@ void UHashMap<void*>::replaceKey(const UString& _key)
 
    lookup(_key);
 
-   U_INTERNAL_ASSERT_EQUALS(node, 0)
+   U_INTERNAL_ASSERT_EQUALS(node, U_NULLPTR)
 
    pnode->hash = hash;
    pnode->next = table[index];
@@ -329,7 +329,7 @@ bool UHashMap<void*>::check_memory() const // check all element
          {
          pnode = table[_index];
 
-         if (pnode == 0) continue;
+         if (pnode == U_NULLPTR) continue;
 
          ++sum;
          width = 0;
@@ -391,7 +391,7 @@ UHashMapNode* UHashMap<void*>::first()
          }
       }
 
-   U_RETURN_POINTER(0, UHashMapNode);
+   U_RETURN_POINTER(U_NULLPTR, UHashMapNode);
 }
 
 bool UHashMap<void*>::next()
@@ -433,7 +433,7 @@ UHashMapNode* UHashMap<void*>::next(UHashMapNode* _node)
          }
       }
 
-   U_RETURN_POINTER(0, UHashMapNode);
+   U_RETURN_POINTER(U_NULLPTR, UHashMapNode);
 }
 
 void UHashMap<void*>::callForAllEntry(bPFprpv function)
@@ -586,7 +586,7 @@ __pure bool UHashMap<UString>::operator==(const UHashMap<UString>& t)
 
                UHashMap<void*>::lookup((UStringRep*)_node->key);
             
-               if (node == 0 ||
+               if (node == U_NULLPTR ||
                    ((UStringRep*)_node->elem)->equal(elem()) == false)
                   {
                   U_RETURN(false);
@@ -667,7 +667,7 @@ bool UHashMap<void*>::find(const char* _key, uint32_t keylen)
 
    lookup(pkey);
 
-   if (node != 0) U_RETURN(true);
+   if (node != U_NULLPTR) U_RETURN(true);
 
    U_RETURN(false);  
 }
@@ -820,7 +820,7 @@ __pure uint32_t UHashMap<UString>::getSpaceToDump() const
          {
          pnode = table[_index];
 
-         if (pnode == 0) continue;
+         if (pnode == U_NULLPTR) continue;
 
 loop:    U_INTERNAL_ASSERT_POINTER(pnode)
 
@@ -1005,7 +1005,7 @@ const char* UHashMapNode::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UHashMap<void*>::dump(bool reset) const
@@ -1024,7 +1024,7 @@ const char* UHashMap<void*>::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

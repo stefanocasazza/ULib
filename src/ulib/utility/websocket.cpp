@@ -53,8 +53,8 @@ UString*    UWebSocket::rbuffer;
 uint32_t    UWebSocket::max_message_size;
 const char* UWebSocket::upgrade_settings;
 
-UWebSocket::WebSocketFrameData UWebSocket::control_frame = { 0, 0, 1, 8, 0 };
-UWebSocket::WebSocketFrameData UWebSocket::message_frame = { 0, 0, 1, 0, 0 };
+UWebSocket::WebSocketFrameData UWebSocket::control_frame = { U_NULLPTR, 0, 1, 8, 0 };
+UWebSocket::WebSocketFrameData UWebSocket::message_frame = { U_NULLPTR, 0, 1, 0, 0 };
 
 bool UWebSocket::sendAccept()
 {
@@ -511,7 +511,7 @@ loop:
                      U_RETURN(status_code = STATUS_CODE_OK);
                      }
 
-                  frame->application_data        = 0;
+                  frame->application_data        = U_NULLPTR;
                          application_data_offset = 0;
                   }
 

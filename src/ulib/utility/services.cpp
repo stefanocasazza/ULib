@@ -202,12 +202,12 @@ int UServices::askToLDAP(UString* pinput, UHashMap<UString>* ptable, const char*
    UServer_Base::logCommandMsgError(cmd.getCommand(), false);
 #endif
 
-   if (pinput == 0) ptable->clear();
+   if (pinput == U_NULLPTR) ptable->clear();
 
    if (result)
       {
       if (output &&
-          pinput == 0)
+          pinput == U_NULLPTR)
          {
          (void) UFileConfig::loadProperties(*ptable, output);
          }
@@ -337,7 +337,7 @@ void UServices::setCApath(const char* _CApath)
 
    U_INTERNAL_ASSERT(_CApath && *_CApath)
 
-   if (CApath == 0) U_NEW_ULIB_OBJECT(UString, CApath, UString);
+   if (CApath == U_NULLPTR) U_NEW_ULIB_OBJECT(UString, CApath, UString);
 
    *CApath = UFile::getRealPath(_CApath);
 }
@@ -384,7 +384,7 @@ void UServices::setVerifyStatus(long result)
 {
    U_TRACE(0, "UServices::setVerifyStatus(%ld)", result)
 
-   const char* descr = 0;
+   const char* descr = U_NULLPTR;
 
    switch (result)
       {
@@ -547,7 +547,7 @@ ENGINE* UServices::loadEngine(const char* id, unsigned int flags)
       {
       (void) U_SYSCALL(ENGINE_free, "%p", e);
 
-      e = 0;
+      e = U_NULLPTR;
       }
 
    U_RETURN_POINTER(e, ENGINE);
@@ -567,7 +567,7 @@ void UServices::releaseEngine(ENGINE* e, bool bkey)
       {
       U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
 
-      u_pkey = 0;
+      u_pkey = U_NULLPTR;
       }
 }
 
@@ -577,20 +577,20 @@ EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private
 
    BIO* in;
    UString tmp = x;
-   EVP_PKEY* pkey = 0;
+   EVP_PKEY* pkey = U_NULLPTR;
 
    if (e)
       {
       const char* filename = x.c_str();
    // PW_CB_DATA cb_data   = { password, filename };
 
-      pkey = (EVP_PKEY*) (_private ? U_SYSCALL(ENGINE_load_private_key, "%p,%S,%p,%p", e, filename, 0, 0)   // &cb_data
-                                   : U_SYSCALL(ENGINE_load_public_key,  "%p,%S,%p,%p", e, filename, 0, 0)); // &cb_data
+      pkey = (EVP_PKEY*) (_private ? U_SYSCALL(ENGINE_load_private_key, "%p,%S,%p,%p", e, filename, U_NULLPTR, U_NULLPTR)   // &cb_data
+                                   : U_SYSCALL(ENGINE_load_public_key,  "%p,%S,%p,%p", e, filename, U_NULLPTR, U_NULLPTR)); // &cb_data
 
       goto done;
       }
 
-   if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
+   if (format == U_NULLPTR) format = (x.isBinary() ? "DER" : "PEM");
 
    if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 &&
        strncmp(x.data(), U_CONSTANT_TO_PARAM("-----BEGIN RSA PRIVATE KEY-----")) != 0)
@@ -612,10 +612,10 @@ EVP_PKEY* UServices::loadKey(const UString& x, const char* format, bool _private
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
    pkey = (EVP_PKEY*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0
-                        ? (_private ? U_SYSCALL(PEM_read_bio_PrivateKey, "%p,%p,%p,%p", in, 0, (password ? passwd_cb : 0), (void*)password)
-                                    : U_SYSCALL(PEM_read_bio_PUBKEY,     "%p,%p,%p,%p", in, 0, (password ? passwd_cb : 0), (void*)password))
-                        : (_private ? U_SYSCALL(d2i_PrivateKey_bio,      "%p,%p",       in, 0)
-                                    : U_SYSCALL(d2i_PUBKEY_bio,          "%p,%p",       in, 0)));
+                        ? (_private ? U_SYSCALL(PEM_read_bio_PrivateKey, "%p,%p,%p,%p", in, U_NULLPTR, (password ? passwd_cb : U_NULLPTR), (void*)password)
+                                    : U_SYSCALL(PEM_read_bio_PUBKEY,     "%p,%p,%p,%p", in, U_NULLPTR, (password ? passwd_cb : U_NULLPTR), (void*)password))
+                        : (_private ? U_SYSCALL(d2i_PrivateKey_bio,      "%p,%p",       in, U_NULLPTR)
+                                    : U_SYSCALL(d2i_PUBKEY_bio,          "%p,%p",       in, U_NULLPTR)));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
@@ -633,13 +633,13 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
 {
    U_TRACE(0,"UServices::getSignatureValue(%d,%V,%V,%V,%d,%p)", alg, data.rep, pkey.rep, passwd.rep, base64, e)
 
-   u_dgst_sign_init(alg, 0);
+   u_dgst_sign_init(alg, U_NULLPTR);
 
    u_dgst_sign_hash((unsigned char*)U_STRING_TO_PARAM(data));
 
    if (pkey)
       {
-      u_pkey = loadKey(pkey, 0, true, passwd.c_str(), e);
+      u_pkey = loadKey(pkey, U_NULLPTR, true, passwd.c_str(), e);
 
       U_INTERNAL_ASSERT_POINTER(u_pkey)
       }
@@ -648,7 +648,7 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
 
    if (base64 == -2)
       {
-      if (u_dgst_sign_finish(0, 0) > 0) output.setConstant((const char*)u_mdValue, u_mdLen);
+      if (u_dgst_sign_finish(U_NULLPTR, 0) > 0) output.setConstant((const char*)u_mdValue, u_mdLen);
       }
    else
       {
@@ -662,7 +662,7 @@ UString UServices::getSignatureValue(int alg, const UString& data, const UString
       {
       U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
 
-      u_pkey = 0;
+      u_pkey = U_NULLPTR;
       }
 
    U_RETURN_STRING(output);
@@ -678,7 +678,7 @@ bool UServices::verifySignature(int alg, const UString& data, const UString& sig
 
    if (pkey)
       {
-      u_pkey = loadKey(pkey, 0, false, 0, e);
+      u_pkey = loadKey(pkey, U_NULLPTR, false, U_NULLPTR, e);
 
       U_INTERNAL_ASSERT_POINTER(u_pkey)
       }
@@ -690,7 +690,7 @@ bool UServices::verifySignature(int alg, const UString& data, const UString& sig
       {
       U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
 
-      u_pkey = 0;
+      u_pkey = U_NULLPTR;
       }
 
    if (result == 1) U_RETURN(true);
@@ -705,7 +705,7 @@ UString UServices::createToken(int alg)
    UString output(80U);
    uint32_t u = u_get_num_random(0);
 
-   u_dgst_init(alg, 0, 0);
+   u_dgst_init(alg, U_NULLPTR, 0);
 
    u_dgst_hash((unsigned char*)&u, sizeof(uint32_t));
 
@@ -728,7 +728,7 @@ void UServices::generateDigest(int alg, uint32_t keylen, unsigned char* data, ui
 
    if (base64 == -2)
       {
-      (void) u_dgst_finish(0, 0);
+      (void) u_dgst_finish(U_NULLPTR, 0);
 
       output.setConstant((const char*)u_mdValue, u_mdLen);
       }

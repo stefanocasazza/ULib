@@ -59,19 +59,19 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-    UDBI(const char* driverdir = 0, const char* drivername = "sqlite3"); // ex: "/usr/lib/dbd"
+    UDBI(const char* driverdir = U_NULLPTR, const char* drivername = "sqlite3"); // ex: "/usr/lib/dbd"
    ~UDBI();
 
    void close();
    bool reconnect();
    bool setDirectory(const char* directory = "./");
-   bool connect(const char* dbName, const char* hostName = 0, const char* username = 0, const char* password = 0);
+   bool connect(const char* dbName, const char* hostName = U_NULLPTR, const char* username = U_NULLPTR, const char* password = U_NULLPTR);
 
    dbi_conn getConnection() { return conn; } // Get low level libdbi connection object
 
    // Get last inserted rowid for sequence \a seq. Some DB require sequence name (postgresql) for other seq is just ignored (mysql, sqlite)
 
-   unsigned long long rowid(char const* seq = 0);
+   unsigned long long rowid(char const* seq = U_NULLPTR);
 
    // ERROR
 
@@ -243,11 +243,11 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   UDBIRow(dbi_result res_ = 0) : res(res_)
+   UDBIRow(dbi_result res_ = U_NULLPTR) : res(res_)
       {
       U_TRACE_REGISTER_OBJECT(0, UDBIRow, "%p", res_)
 
-      owner   = (res_ != 0);
+      owner   = (res_ != U_NULLPTR);
       current = 0;
       }
 
@@ -267,9 +267,9 @@ public:
 
    // Check if this row has some data or not
 
-   bool isEmpty() const  { return (res == 0); }
+   bool isEmpty() const  { return (res == U_NULLPTR); }
 
-   operator bool() const { return (res != 0); }
+   operator bool() const { return (res != U_NULLPTR); }
 
    // Check if the column at position \a idx has NULL value, first column index is 1
 
@@ -472,7 +472,7 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   UDBISet(dbi_result res_ = 0) : res(res_)
+   UDBISet(dbi_result res_ = U_NULLPTR) : res(res_)
       {
       U_TRACE_REGISTER_OBJECT(0, UDBISet, "%p", res_)
       }
@@ -491,16 +491,16 @@ public:
       U_INTERNAL_ASSERT_POINTER_MSG(res, "DBI: no result assigned")
 
       U_SYSCALL_VOID(dbi_result_free, "%p", res);
-                                            res = 0;
+                                            res = U_NULLPTR;
       }
 
    dbi_result getResult() { return res; }  // Get underlying libdbi result object. For low level access
 
    // Check if this set has some data or not
 
-   bool isEmpty() const  { return (res == 0); }
+   bool isEmpty() const  { return (res == U_NULLPTR); }
 
-   operator bool() const { return (res != 0); }
+   operator bool() const { return (res != U_NULLPTR); }
 
    // Get number of rows in the returned result
 

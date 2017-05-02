@@ -181,7 +181,7 @@ public:
 
       U_INTERNAL_ASSERT_POINTER(UString::str_not);
 
-      tree = 0;
+      tree = U_NULLPTR;
       }
 
    ~UQueryParser()

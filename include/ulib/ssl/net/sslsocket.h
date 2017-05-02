@@ -71,7 +71,7 @@ public:
       Old          = 0x002
    };
 
-    USSLSocket(bool bSocketIsIPv6 = false, SSL_CTX* ctx = 0, bool server = false);
+    USSLSocket(bool bSocketIsIPv6 = false, SSL_CTX* ctx = U_NULLPTR, bool server = false);
    ~USSLSocket();
 
    bool secureConnection();
@@ -91,7 +91,7 @@ public:
     * Should be called before accept() or connect() if used. Returns true on success
     */
 
-   bool useDHFile(const char* dh_file = 0);
+   bool useDHFile(const char* dh_file = U_NULLPTR);
 
    /**
     * Load a certificate. A socket used on the server side needs to have a certificate (but a temporary RSA session
@@ -177,7 +177,7 @@ public:
       {
       U_TRACE_NO_PARAM(1, "USSLSocket::getPeerCertificate()")
 
-      X509* peer = (X509*) (ssl ? U_SYSCALL(SSL_get_peer_certificate, "%p", ssl) : 0);
+      X509* peer = (X509*) (ssl ? U_SYSCALL(SSL_get_peer_certificate, "%p", ssl) : U_NULLPTR);
 
       U_RETURN_POINTER(peer, X509);
       }
@@ -294,8 +294,8 @@ protected:
       }
 #endif
 
-   static SSL_CTX* getClientContext() { return getContext(0, false, 0); }
-   static SSL_CTX* getServerContext() { return getContext(0, true,  0); }
+   static SSL_CTX* getClientContext() { return getContext(U_NULLPTR, false, 0); }
+   static SSL_CTX* getServerContext() { return getContext(U_NULLPTR, true,  0); }
 
    static SSL_CTX* getContext(SSL_METHOD* method, bool server, long options);
 

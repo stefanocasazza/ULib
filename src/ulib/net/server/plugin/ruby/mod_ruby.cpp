@@ -64,11 +64,11 @@ static VALUE URUBY_io_new(VALUE _class)
 {
    U_TRACE(0, "URUBY_io_new(%llu)", _class)
 
-   VALUE self = Data_Wrap_Struct(_class, 0, 0, 0);
+   VALUE self = Data_Wrap_Struct(_class, U_NULLPTR, U_NULLPTR, U_NULLPTR);
 
    U_INTERNAL_DUMP("self = %llu", self)
 
-   U_SYSCALL_VOID(rb_obj_call_init, "%llu,%d,%p", self, 0, 0);
+   U_SYSCALL_VOID(rb_obj_call_init, "%llu,%d,%p", self, 0, U_NULLPTR);
 
    U_RETURN(self);
 }
@@ -99,7 +99,7 @@ static VALUE URUBY_io_read(VALUE obj, VALUE args)
       {
       if (post_readline_pos >= post_readline_watermark)
          {
-         post_readline_pos = post_readline_watermark = 0; // all the readline buffer has been consumed
+         post_readline_pos = post_readline_watermark = U_NULLPTR; // all the readline buffer has been consumed
 
          U_RETURN(Qnil);
          }
@@ -114,7 +114,7 @@ static VALUE URUBY_io_read(VALUE obj, VALUE args)
       VALUE result = (RARRAY_LEN(args) > 1 ? rb_str_cat(RARRAY_PTR(args)[1], post_readline_pos, post_readline_watermark - post_readline_pos)
                                            : rb_str_new(                     post_readline_pos, post_readline_watermark - post_readline_pos));
 
-      post_readline_pos = post_readline_watermark = 0; // all the readline buffer has been consumed
+      post_readline_pos = post_readline_watermark = U_NULLPTR; // all the readline buffer has been consumed
 
       U_RETURN(result);
       }
@@ -130,7 +130,7 @@ static VALUE URUBY_io_gets(VALUE obj, VALUE args)
 
    if (post_readline_pos >= post_readline_watermark)
       {
-      post_readline_pos = post_readline_watermark = 0; // all the readline buffer has been consumed
+      post_readline_pos = post_readline_watermark = U_NULLPTR; // all the readline buffer has been consumed
 
       U_RETURN(Qnil);
       }
@@ -156,7 +156,7 @@ static VALUE URUBY_io_gets(VALUE obj, VALUE args)
 
    result = rb_str_new(post_readline_pos, post_readline_watermark - post_readline_pos);
 
-   post_readline_pos = post_readline_watermark = 0; // all the readline buffer has been consumed
+   post_readline_pos = post_readline_watermark = U_NULLPTR; // all the readline buffer has been consumed
 
    U_RETURN(result);
 }
@@ -355,8 +355,8 @@ extern U_EXPORT bool initRUBY();
 
    dollar_zero = rb_str_new2("userver");
 
-   rb_define_hooked_variable("$0",            &dollar_zero, 0, (void(*)(ANYARGS))URUBY_rack_hack_dollar_zero);
-   rb_define_hooked_variable("$PROGRAM_NAME", &dollar_zero, 0, (void(*)(ANYARGS))URUBY_rack_hack_dollar_zero);
+   rb_define_hooked_variable("$0",            &dollar_zero, U_NULLPTR, (void(*)(ANYARGS))URUBY_rack_hack_dollar_zero);
+   rb_define_hooked_variable("$PROGRAM_NAME", &dollar_zero, U_NULLPTR, (void(*)(ANYARGS))URUBY_rack_hack_dollar_zero);
 
    if (UHTTP::ruby_on_rails)
       {
@@ -505,7 +505,7 @@ extern U_EXPORT bool runRUBY();
 
       // get the status code
 
-      U_http_info.nResponseCode = strtol(RSTRING_PTR(status), 0, 10);
+      U_http_info.nResponseCode = ::strtol(RSTRING_PTR(status), U_NULLPTR, 10);
 
       U_DUMP("HTTP status = (%d %S)", U_http_info.nResponseCode, UHTTP::getStatusDescription())
 
@@ -532,7 +532,7 @@ extern U_EXPORT bool runRUBY();
          if (rb_respond_to(headers, rb_intern("each")))
             {
 #     if RUBY_VERSION >= 19
-            result = rb_block_call(headers, rb_intern("each"), 0, 0, (VALUE(*)(ANYARGS))URUBY_send_header, headers);
+            result = rb_block_call(headers, rb_intern("each"), 0, U_NULLPTR, (VALUE(*)(ANYARGS))URUBY_send_header, headers);
 #     else
             result = rb_iterate(rb_each, headers, URUBY_send_header, headers);
 #     endif
@@ -545,7 +545,7 @@ extern U_EXPORT bool runRUBY();
          if (rb_respond_to(body, rb_intern("each")))
             {
 #        if RUBY_VERSION >= 19
-            result = rb_block_call(body, rb_intern("each"), 0, 0, (VALUE(*)(ANYARGS))URUBY_send_body, 0);
+            result = rb_block_call(body, rb_intern("each"), 0, U_NULLPTR, (VALUE(*)(ANYARGS))URUBY_send_body, 0);
 #        else
             result = rb_iterate(rb_each, body, URUBY_send_body, 0);
 #        endif
@@ -562,7 +562,7 @@ extern U_EXPORT bool runRUBY();
       {
       void* node = U_SYSCALL(rb_load_file, "%S", UHTTP::file->getPathRelativ()); // Loads the given file into the interpreter
 
-      if (node == 0)
+      if (node == U_NULLPTR)
          {
          esito = false;
 

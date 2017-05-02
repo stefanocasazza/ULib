@@ -26,7 +26,7 @@
 
 #include <ulib/application.h>
 
-#define U_SCHEMA               (const char*)(num_args >= 0 ? argv[optind+0] : 0)
+#define U_SCHEMA               (const char*)(num_args >= 0 ? argv[optind+0] : U_NULLPTR)
 #define U_TAG_SIGNED_INFO      "ds:SignedInfo"
 #define U_TAG_X509_CERTIFICATE "ds:X509Certificate"
 
@@ -113,7 +113,7 @@ public:
 
       // manage arguments...
 
-      schema = ( U_SCHEMA == 0 ||
+      schema = ( U_SCHEMA == U_NULLPTR ||
                 *U_SCHEMA == '\0'
                   ? cfg[U_STRING_FROM_CONSTANT("XAdES-L.Schema")]
                   : UString(U_SCHEMA));
@@ -165,7 +165,7 @@ public:
 
          UDSIGContext dsigCtx;
          UString data, signature;
-         const char* digest_algorithm = 0;
+         const char* digest_algorithm = U_NULLPTR;
 
          if (dsigCtx.verify(document, digest_algorithm, data, signature))
             {
@@ -189,7 +189,7 @@ public:
 
                   U_SYSCALL_VOID(X509_free, "%p", x509);
 
-                  if (UServices::verifySignature(alg, data, signature, UString::getStringNull(), 0))
+                  if (UServices::verifySignature(alg, data, signature, UString::getStringNull(), U_NULLPTR))
                      {
                      UApplication::exit_value = 0;
 
@@ -202,7 +202,7 @@ public:
                      }
 
                   U_SYSCALL_VOID(EVP_PKEY_free, "%p", u_pkey);
-                                                      u_pkey = 0;
+                                                      u_pkey = U_NULLPTR;
                   }
                }
             }

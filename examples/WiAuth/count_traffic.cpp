@@ -97,7 +97,7 @@ public:
 
                if (*ptr != '0')
                   {
-                  traffic1 = strtoll(ptr, 0, 10);
+                  traffic1 = strtoll(ptr, U_NULLPTR, 10);
 
                   /*
                   traffic2 = request.substr(ptr, n).strtoll();

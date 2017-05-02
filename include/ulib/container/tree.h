@@ -21,7 +21,7 @@ template <class T> class UTree;
 template <> class U_EXPORT UTree<void*> : public UVector<void*> {
 public:
 
-   UTree(const void* __elem = 0, const void* __parent = 0, uint32_t n = 1) : UVector<void*>(n)
+   UTree(const void* __elem = U_NULLPTR, const void* __parent = U_NULLPTR, uint32_t n = 1) : UVector<void*>(n)
       {
       U_TRACE_REGISTER_OBJECT(0, UTree<void*>, "%p,%p,%u", __elem, __parent, n)
 
@@ -48,21 +48,21 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTree<void*>::null()")
 
-      U_RETURN(_elem == 0);
+      U_RETURN(_elem == U_NULLPTR);
       }
 
    bool root() const
       {
       U_TRACE_NO_PARAM(0, "UTree<void*>::root()")
 
-      U_RETURN(_parent == 0);
+      U_RETURN(_parent == U_NULLPTR);
       }
 
    bool empty() const
       {
       U_TRACE_NO_PARAM(0, "UTree<void*>::empty()")
 
-      U_RETURN(_elem == 0 && _length == 0);
+      U_RETURN(_elem == U_NULLPTR && _length == 0);
       }
 
    uint32_t numChild() const
@@ -81,7 +81,7 @@ public:
       uint32_t result = 0;
       const UTree<void*>* p = this;
 
-      while (p->parent() != 0)
+      while (p->parent() != U_NULLPTR)
          {
          ++result;
 
@@ -99,7 +99,7 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_EQUALS(_parent, 0)
+      U_INTERNAL_ASSERT_EQUALS(_parent, U_NULLPTR)
 
       _elem = __elem;
       }
@@ -132,8 +132,8 @@ public:
       {
       U_TRACE(0, "UTree<void*>::push_back(%p)", __elem)
 
-      if (_parent == 0 &&
-          _elem   == 0)
+      if (_parent == U_NULLPTR &&
+          _elem   == U_NULLPTR)
          {
          _elem = __elem;
 
@@ -210,7 +210,7 @@ public:
          {
          u_destroy<T>((const T*)_elem);
 
-         _elem = 0;
+         _elem = U_NULLPTR;
          }
 
       if (UVector<void*>::empty() == false)
@@ -223,7 +223,7 @@ public:
          }
       }
 
-   UTree(const T* __elem = 0, const T* __parent = 0, uint32_t n = 1) : UTree<void*>(__elem, __parent, n)
+   UTree(const T* __elem = U_NULLPTR, const T* __parent = U_NULLPTR, uint32_t n = 1) : UTree<void*>(__elem, __parent, n)
       {
       U_TRACE_REGISTER_OBJECT(0, UTree<T*>, "%p,%p,%u", __elem, __parent, n)
       }
@@ -276,8 +276,8 @@ public:
       {
       U_TRACE(0, "UTree<T*>::push_back(%p)", __elem)
 
-      if (_parent == 0 &&
-          _elem   == 0)
+      if (_parent == U_NULLPTR &&
+          _elem   == U_NULLPTR)
          {
          setRoot(__elem);
 
@@ -374,7 +374,7 @@ private:
 template <> class U_EXPORT UTree<UString> : public UTree<UStringRep*> {
 public:
 
-   UTree(uint32_t n = 64) : UTree<UStringRep*>(0, 0, n)
+   UTree(uint32_t n = 64) : UTree<UStringRep*>(U_NULLPTR, U_NULLPTR, n)
       {
       U_TRACE_REGISTER_OBJECT(0, UTree<UString>, "%u", n)
       }
@@ -400,9 +400,9 @@ public:
       return UString::getStringNull();
       }
 
-   UTree<UString>*   parent() const                       { return (UTree<UString>*)_parent; }
-   UVector<UString>* vector() const                       { return (UVector<UString>*)this; }
-   UTree<UString>*   childAt(uint32_t pos) const   __pure { return (UTree<UString>*)((UVector<void*>*)this)->at(pos); }
+   UTree<UString>*   parent() const                     { return (UTree<UString>*)_parent; }
+   UVector<UString>* vector() const                     { return (UVector<UString>*)this; }
+   UTree<UString>*   childAt(uint32_t pos) const __pure { return (UTree<UString>*)((UVector<void*>*)this)->at(pos); }
 
    UString  back();
    UString front() { return ((UTree<UString>*)UVector<void*>::front())->elem(); }

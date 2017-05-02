@@ -50,7 +50,9 @@ public:
       {
       cnt       = 0;
       num_line  = 0;
-      name_file = name_function = 0;
+
+      name_file     =
+      name_function = U_NULLPTR;
       }
 
    virtual ~UObjectDumpable() {}

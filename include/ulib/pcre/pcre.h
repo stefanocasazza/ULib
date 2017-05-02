@@ -446,9 +446,9 @@ protected:
    static UPCRE* url_mask;
    static UPCRE* username_mask;
 
-   void clean();                                  /*   clean the obj */
-   void clear();                                  /*   clear the obj */
-   void compile(const unsigned char* tables = 0); /* compile the pattern */
+   void clean(); /* clean the obj */
+   void clear(); /* clear the obj */
+   void compile(const unsigned char* tables = U_NULLPTR); /* compile the pattern */
 
 private:
    void zero(uint32_t flags) U_NO_EXPORT; /* init pointers and counters */

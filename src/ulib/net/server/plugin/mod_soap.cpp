@@ -60,7 +60,7 @@ int USoapPlugIn::handlerInit()
 #  ifndef U_ALIAS
       U_SRV_LOG("WARNING: Sorry, I can't run soap plugin because alias URI support is missing, please recompile ULib...");
 #  else
-      if (UHTTP::valias == 0) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U));
+      if (UHTTP::valias == U_NULLPTR) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U));
 
       UHTTP::valias->push_back(*UString::str_soap);
       UHTTP::valias->push_back(*UString::str_nostat);
@@ -80,7 +80,7 @@ int USoapPlugIn::handlerRequest()
 
    if (UHTTP::isSOAPRequest())
       {
-      if (soap_parser == 0) UHTTP::setInternalError();
+      if (soap_parser == U_NULLPTR) UHTTP::setInternalError();
       else
          {
          // process the SOAP message -- should be the contents of the message from "<SOAP:" to the end of the string
@@ -121,6 +121,6 @@ const char* USoapPlugIn::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

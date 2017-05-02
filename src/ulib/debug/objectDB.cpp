@@ -27,13 +27,13 @@ U_EXPORT bool UObjectDB::flag_new_object;
 U_EXPORT bool UObjectDB::flag_ulib_object;
 
 U_NO_EXPORT iovec UObjectDB::liov[8] = {
-   { 0, 0 },
+   { U_NULLPTR, 0 },
    { (caddr_t) UObjectDB::buffer1, 0 },
    { (caddr_t) UObjectDB::buffer2, 0 },
-   { 0, 0 },
+   { U_NULLPTR, 0 },
    { (caddr_t) UObjectDB::buffer3, 0 },
    { (caddr_t) U_CONSTANT_TO_PARAM(U_LF2) },
-   { 0, 0 },
+   { U_NULLPTR, 0 },
    { (caddr_t) "\n---------------------------------------"
                "-----------------------------------------\n", 82 }
 };
@@ -61,9 +61,9 @@ public:
       {
       U_INTERNAL_TRACE("UHashMapObjectDumpable::UHashMapObjectDumpable()")
 
-      objDumper = 0;
+      objDumper = U_NULLPTR;
 
-      next = 0;
+      next = U_NULLPTR;
       hash = 0;
       }
 
@@ -202,9 +202,9 @@ public:
 
       lookup(ptr_object);
 
-      if (node == 0) return false;
+      if (node == U_NULLPTR) return false;
 
-      UHashMapObjectDumpable* prev = 0;
+      UHashMapObjectDumpable* prev = U_NULLPTR;
 
       for (UHashMapObjectDumpable* pnode = table[index]; pnode; pnode = pnode->next)
          {
@@ -348,11 +348,11 @@ void UObjectDB::init(bool flag, bool info)
                {
                /* NB: PROT_READ avoid some strange SIGSEGV... */
 
-               file_mem = (char*) mmap(0, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
+               file_mem = (char*) mmap(U_NULLPTR, file_size, PROT_READ | PROT_WRITE, MAP_SHARED, fd, 0);
 
                if (file_mem == MAP_FAILED)
                   {
-                  file_mem  = 0;
+                  file_mem  = U_NULLPTR;
                   file_size = 0;
 
                   (void) ftruncate(fd, file_size);

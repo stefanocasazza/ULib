@@ -37,7 +37,7 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UMagic, "%d", flags)
 
-      if (magic == 0) (void) init();
+      if (magic == U_NULLPTR) (void) init();
 
       U_INTERNAL_ASSERT_POINTER(magic)
 
@@ -57,7 +57,7 @@ public:
          {
          U_SYSCALL_VOID(magic_close, "%p", magic);
 
-         magic = 0;
+         magic = U_NULLPTR;
          }
       }
 

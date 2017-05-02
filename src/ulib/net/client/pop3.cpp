@@ -340,8 +340,8 @@ int UPop3Client::getUIDL(UVector<UString>& vec)
             continue;
             }
 
-         s = u_delimit_token(s, &p, _end, 0, 0); // n-esimo
-         s = u_delimit_token(s, &p, _end, 0, 0); // uidl
+         s = u_delimit_token(s, &p, _end, U_NULLPTR, 0); // n-esimo
+         s = u_delimit_token(s, &p, _end, U_NULLPTR, 0); // uidl
 
          r = UString((void*)p, s - p);
 
@@ -556,7 +556,7 @@ bool UPop3Client::deleteAllMessage()
 
       (void) buffer.reserve(size);
 
-      if (syncCommandML(req, 0, 0)) U_RETURN(true);
+      if (syncCommandML(req, U_NULLPTR, U_NULLPTR)) U_RETURN(true);
       }
 
    U_RETURN(false); 
@@ -611,6 +611,6 @@ const char* UPop3Client::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

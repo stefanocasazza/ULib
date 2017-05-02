@@ -43,7 +43,7 @@ public:
       U_TRACE_UNREGISTER_OBJECT(0, UBison)
       }
 
-   bool parse(void* obj = 0)
+   bool parse(void* obj = U_NULLPTR)
       {
       U_TRACE(0, "UBison::parse(%p)", obj)
 
@@ -51,7 +51,7 @@ public:
 
    // yydebug = 1;
 
-      if (obj == 0) obj = this;
+      if (obj == U_NULLPTR) obj = this;
 
       if (yyparse(obj) == 0)
          {
@@ -63,7 +63,7 @@ public:
       U_RETURN(false);
       }
 
-   bool parse(const UString& _data, void* obj = 0)
+   bool parse(const UString& _data, void* obj = U_NULLPTR)
       {
       U_TRACE(0, "UBison::parse(%V,%p)", _data.rep, obj)
 

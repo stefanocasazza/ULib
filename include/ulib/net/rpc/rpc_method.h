@@ -68,9 +68,9 @@ public:
       {
       U_TRACE_NO_PARAM(0, "URPCMethod::hasFailed()")
 
-      bool result = (pFault != 0);
+      if (pFault != U_NULLPTR) U_RETURN(true);
 
-      U_RETURN(result);
+      U_RETURN(false);
       }
 
    // VIRTUAL METHOD

@@ -273,7 +273,7 @@ time_t UTimeDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, 
 {
    U_TRACE(1, "UTimeDate::getSecondFromTime(%S,%b,%S,%p)", str, gmt, fmt, tm)
 
-   if (tm == 0)
+   if (tm == U_NULLPTR)
       {
       static struct tm tm_;
 
@@ -536,7 +536,7 @@ const char* UTimeDate::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

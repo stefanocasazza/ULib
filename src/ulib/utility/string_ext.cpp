@@ -395,7 +395,7 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
          {
          s = (const char* restrict) memchr(s, delimiter, _end - s + 1);
 
-         if (s == 0) goto end;
+         if (s == U_NULLPTR) goto end;
 
          continue;
          }
@@ -403,7 +403,7 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
       p = s;
       s = (const char* restrict) memchr(s, '=', _end - s + 1);
 
-      if (s == 0) goto end;
+      if (s == U_NULLPTR) goto end;
 
       U_INTERNAL_DUMP("name = %.*S", s - p, p)
 
@@ -414,7 +414,7 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
          {
          s = (const char* restrict) memchr(s, '\'', _end - s + 1);
 
-         if (s == 0) goto end;
+         if (s == U_NULLPTR) goto end;
 
          len = (++s - p);
 
@@ -424,7 +424,7 @@ UString UStringExt::prepareForEnvironmentVar(const char* s, uint32_t n)
          {
          s = (const char* restrict) memchr(s, delimiter, _end - s + 1);
 
-         if (s == 0) s = _end;
+         if (s == U_NULLPTR) s = _end;
 
          ptr = s;
 
@@ -491,8 +491,8 @@ UString UStringExt::expandEnvironmentVar(const char* s, uint32_t n, const UStrin
 
    char* new_ptr;
    const char* p;
-   const char* var_ptr = 0;
    UString value, result(n+500U);
+   const char* var_ptr = U_NULLPTR;
    uint32_t var_size, new_size = 0;
 
    while ((p = (const char*) memchr(s, '$', n)))
@@ -723,7 +723,7 @@ UString UStringExt::evalExpression(const UString& expr, const UString& environme
       if (result.empty()) break;
       }
 
-   expressionParser(pParser, 0, 0, &result);
+   expressionParser(pParser, 0, U_NULLPTR, &result);
 
    expressionParserFree(pParser, free);
 
@@ -1042,7 +1042,7 @@ __pure uint32_t UStringExt::substr_count(const char* s, uint32_t n, const char* 
       {
       ptr = (const char*) u_find(ptr, end - ptr, a, n1);
 
-      if (ptr == 0) U_RETURN(num);
+      if (ptr == U_NULLPTR) U_RETURN(num);
 
       ++num;
 
@@ -1070,7 +1070,7 @@ UString UStringExt::dirname(const char* path, uint32_t n)
       if (runp != path) last_slash = (const char*) memrchr(path, '/', runp - path);
       }
 
-   if (last_slash == 0)
+   if (last_slash == U_NULLPTR)
       {
       // This assignment is ill-designed but the XPG specs require to
       // return a string containing "." in any case no directory part is
@@ -1303,7 +1303,7 @@ UString UStringExt::deflate(const char* s, uint32_t len, int type) // .gz compre
          {
          size_t outsize = 0;
          ZopfliOptions options;
-         unsigned char* out = 0;
+         unsigned char* out = U_NULLPTR;
 
          U_SYSCALL_VOID(ZopfliInitOptions, "%p", &options);
 
@@ -1396,7 +1396,7 @@ __pure const char* UStringExt::getValueFromName(const UString& buffer, uint32_t 
 
    U_INTERNAL_ASSERT(buffer)
    U_INTERNAL_ASSERT_MAJOR(len, 0)
-   U_ASSERT_EQUALS(memchr(name, ':', name_len), 0)
+   U_ASSERT_EQUALS(memchr(name, ':', name_len), U_NULLPTR)
 
    const char* ptr_header_value;
    uint32_t header_line, end = pos + len;
@@ -1413,7 +1413,7 @@ loop:
          if (header_line != U_NOT_FOUND) goto next;
          }
 
-      U_RETURN((const char*)0);
+      U_RETURN((const char*)U_NULLPTR);
       }
 
 next:

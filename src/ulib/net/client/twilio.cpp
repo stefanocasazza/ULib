@@ -26,7 +26,7 @@ bool UTwilioClient::sendRequest(int method, const char* path, uint32_t path_len,
       {
       // send DELETE(4) request to server and get response
 
-      if (client->sendRequest(4, 0, 0, 0, 0, U_STRING_TO_PARAM(uri))) U_RETURN(true);
+      if (client->sendRequest(4, U_NULLPTR, 0, U_NULLPTR, 0, U_STRING_TO_PARAM(uri))) U_RETURN(true);
       }
    else if (method == 3) // PUT
       {
@@ -34,7 +34,7 @@ bool UTwilioClient::sendRequest(int method, const char* path, uint32_t path_len,
 
       // upload file to server and get response
 
-      if (client->upload(uri, file, 0, 0, 3)) U_RETURN(true);
+      if (client->upload(uri, file, U_NULLPTR, 0, 3)) U_RETURN(true);
       }
    else
       {
@@ -52,7 +52,7 @@ bool UTwilioClient::sendRequest(int method, const char* path, uint32_t path_len,
 
                // send GET(0) request to server and get response
 
-               if (client->sendRequest(0, 0, 0, 0, 0, U_STRING_TO_PARAM(x))) U_RETURN(true);
+               if (client->sendRequest(0, U_NULLPTR, 0, U_NULLPTR, 0, U_STRING_TO_PARAM(x))) U_RETURN(true);
                }
             }
          else if (method == 2) // POST
@@ -84,6 +84,6 @@ const char* UTwilioClient::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

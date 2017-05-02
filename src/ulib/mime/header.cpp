@@ -55,7 +55,7 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
 
       U_INTERNAL_DUMP("ptr = %.80S", ptr)
 
-      if (ptr == 0) ptr = _end; // we have reached the MIME headers end without line empty...
+      if (ptr == U_NULLPTR) ptr = _end; // we have reached the MIME headers end without line empty...
       else
          {
          len = (ptr - prev);
@@ -88,7 +88,7 @@ uint32_t UMimeHeader::parse(const char* ptr, uint32_t len)
          {
          pkv = (const char*) memchr(prev, ':', _end - prev);
 
-         if (pkv == 0   ||
+         if (pkv == U_NULLPTR ||
              pkv >= ptr ||
              pkv == prev)
             {
@@ -405,7 +405,7 @@ const char* UMimeHeader::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

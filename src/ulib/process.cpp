@@ -509,7 +509,7 @@ pid_t UProcess::execute(const char* pathname, char* argv[], char* envp[], bool f
       if (filedes[4] > STDERR_FILENO) (void) U_SYSCALL(posix_spawn_file_actions_addclose, "%p,%d", &action, filedes[4]);
       }
 
-   (void) U_SYSCALL(posix_spawn, "%p,%S,%p,%p,%p,%p", &pid, pathname, &action, 0, argv, envp);
+   (void) U_SYSCALL(posix_spawn, "%p,%S,%p,%p,%p,%p", &pid, pathname, &action, U_NULLPTR, argv, envp);
 
    (void) U_SYSCALL(posix_spawn_file_actions_destroy, "%p", &action);
 # else
@@ -690,6 +690,6 @@ const char* UProcess::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

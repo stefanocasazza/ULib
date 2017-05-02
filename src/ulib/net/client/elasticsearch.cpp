@@ -26,7 +26,7 @@ bool UElasticSearchClient::connect(const char* phost, unsigned int _port)
       {
       const char* env_elasticsearch_host = (const char*) U_SYSCALL(getenv, "%S", "ELASTICSEARCH_HOST");
 
-      if (env_elasticsearch_host == 0) U_RETURN(false);
+      if (env_elasticsearch_host == U_NULLPTR) U_RETURN(false);
 
       (void) host.assign(env_elasticsearch_host, u__strlen(env_elasticsearch_host, __PRETTY_FUNCTION__));
 
@@ -35,7 +35,7 @@ bool UElasticSearchClient::connect(const char* phost, unsigned int _port)
       if (env_elasticsearch_port) _port = atoi(env_elasticsearch_port);
       }
 
-   if (client == 0) U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(0));
+   if (client == U_NULLPTR) U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(U_NULLPTR));
 
    if (client->setHostPort(host, _port) &&
        client->connect())
@@ -61,6 +61,6 @@ const char* UElasticSearchClient::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

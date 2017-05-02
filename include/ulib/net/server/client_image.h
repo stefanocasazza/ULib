@@ -436,6 +436,17 @@ protected:
       U_RETURN(U_NOTIFIER_OK);
       }
 
+   static void prepareForCallToHandlerRead()
+      {
+      U_TRACE_NO_PARAM(0, "UClientImage::prepareForCallToHandlerRead()")
+
+      body->clear();
+
+      U_INTERNAL_DUMP("wbuffer(%u) = %V", wbuffer->size(), wbuffer->rep)
+
+      wbuffer->setBuffer(U_CAPACITY); // NB: this string can be referenced more than one (often if U_SUBSTR_INC_REF is defined)...
+      }
+
    int  handlerResponse();
    void prepareForSendfile();
 

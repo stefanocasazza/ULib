@@ -26,7 +26,7 @@
 
 #include <ulib/application.h>
 
-#define U_ZIPPONE (const char*)(num_args >= 0  ? argv[optind+0]  : 0)
+#define U_ZIPPONE (const char*)(num_args >= 0 ? argv[optind+0] : U_NULLPTR)
 
 // --------------------------------------------------------------
 // http://www.cnipa.gov.it/site/_files/LISTACER_20100907.zip.p7m
@@ -43,7 +43,7 @@
 class Application : public UApplication {
 public:
 
-   Application() : client(0)
+   Application() : client(U_NULLPTR)
       {
       U_TRACE(5, "Application::Application()")
 
@@ -259,7 +259,7 @@ public:
 
       // manage arguments...
 
-      uri = ( U_ZIPPONE == 0 ||
+      uri = ( U_ZIPPONE == U_NULLPTR ||
              *U_ZIPPONE == '\0'
                ? cfg[U_STRING_FROM_CONSTANT("XAdES-C.UriPublicListCerticate")]
                : UString(U_ZIPPONE));
@@ -329,7 +329,7 @@ public:
             }
          }
 
-      (void) UFile::chdir(0, true);
+      (void) UFile::chdir(U_NULLPTR, true);
       }
 
 private:

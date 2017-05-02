@@ -319,7 +319,7 @@ void UFile::setPath(const UFile& file, char* buffer_path, const char* suffix, ui
 
    path_relativ_len = file.path_relativ_len + len;
 
-   if (buffer_path == 0)
+   if (buffer_path == U_NULLPTR)
       {
       pathname.setBuffer(path_relativ_len);
       pathname.size_adjust(path_relativ_len);
@@ -345,7 +345,7 @@ UString UFile::getName() const
 
    uint32_t pos;
    UString result;
-   const char* base = 0;
+   const char* base = U_NULLPTR;
    ptrdiff_t name_len = path_relativ_len;
 
    for (const char* ptr = path_relativ, *end = path_relativ + path_relativ_len; ptr < end; ++ptr) if (*ptr == '/') base = ptr + 1;
@@ -442,14 +442,14 @@ char* UFile::shm_open(const char* name, uint32_t length)
       {
       (void) U_SYSCALL(ftruncate, "%d,%u", _fd, length); // set the size of the shared memory object
 
-      char* _ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, 0);
+      char* _ptr = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, length, PROT_READ | PROT_WRITE, MAP_SHARED, _fd, 0);
 
       (void) U_SYSCALL(close, "%d", _fd);
 
       return _ptr;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 // unlink POSIX shared memory object
@@ -487,7 +487,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
          U_DEBUG("We are going to allocate (%u GB - %u bytes) MAP_HUGE_1GB - nfree = %u flags = %B", length / U_1G, length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB)
 
-         char* ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB, -1, 0);
+         char* ptr = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_1GB, -1, 0);
 
          if (ptr != (char*)MAP_FAILED)
             {
@@ -504,7 +504,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
       U_DEBUG("We are going to allocate (%u MB - %u bytes) MAP_HUGE_2MB - nfree = %u flags = %B", length / (1024U*1024U), length, nfree, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB)
 
-      char* ptr = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB, -1, 0);
+      char* ptr = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_MAP_ANON_HUGE_ADDR, length, PROT_READ | PROT_WRITE, flags | U_MAP_ANON_HUGE | MAP_HUGE_2MB, -1, 0);
 
       if (ptr != (char*)MAP_FAILED)
          {
@@ -537,7 +537,7 @@ char* UFile::mmap_anon_huge(uint32_t* plength, int flags)
 
    U_DEBUG("We are going to allocate (%u KB - %u bytes) - nfree = %u flags = %B", *plength / 1024U, *plength, nfree, flags)
 
-   return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, PROT_READ | PROT_WRITE, flags, -1, 0);
+   return (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, *plength, PROT_READ | PROT_WRITE, flags,  -1, 0);
 }
 
 char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offset)
@@ -552,7 +552,7 @@ char* UFile::mmap(uint32_t* plength, int _fd, int prot, int flags, uint32_t offs
 # endif
    if (_fd != -1)
 #endif
-   return (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, prot, flags, _fd, offset);
+   return (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, *plength, prot, flags, _fd, offset);
 
    U_INTERNAL_ASSERT_EQUALS(prot, PROT_READ | PROT_WRITE)
 
@@ -584,7 +584,7 @@ try_from_file_system:
          U_DEBUG("We are going to allocate from file system (%u KB - %u bytes)", *plength / 1024, *plength)
 
          _ptr = (fallocate(fd, *plength)
-                     ? (char*)U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, *plength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, fd, 0)
+                     ? (char*)U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, *plength, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_NORESERVE, fd, 0)
                      : (char*)MAP_FAILED);
 
          close(fd);
@@ -613,7 +613,7 @@ try_from_file_system:
 #else
    U_INTERNAL_DUMP("plength = %u nfree = %u pfree = %p", *plength, nfree, pfree)
 
-   if (pfree == 0)
+   if (pfree == U_NULLPTR)
       {
 #  ifdef DEBUG
       unsigned long vsz, rss;
@@ -632,13 +632,13 @@ try_from_file_system:
 #  ifdef U_MEMALLOC_WITH_HUGE_PAGE
       pfree = mmap_anon_huge(&nfree, MAP_PRIVATE | U_MAP_ANON);
 #  else
-      pfree = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, nfree, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, -1, 0);
+      pfree = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, nfree, PROT_READ | PROT_WRITE, MAP_PRIVATE | U_MAP_ANON, -1, 0);
 #  endif
 
       if (pfree == (char*)MAP_FAILED)
          {
          nfree = 0;
-         pfree = 0;
+         pfree = U_NULLPTR;
          }
       }
 
@@ -690,7 +690,7 @@ try_from_file_system:
    if (nfree > rlimit_memfree) pfree += *plength;
    else
       {
-      pfree     = 0;
+      pfree     = U_NULLPTR;
       *plength += nfree;
       }
 
@@ -750,7 +750,7 @@ bool UFile::memmap(int prot, UString* str, uint32_t offset, uint32_t length)
    if (prot == PROT_READ) flags |= MAP_POPULATE;
 #endif
 
-   map = (char*) U_SYSCALL(mmap, "%d,%u,%d,%d,%d,%u", 0, length, prot, flags, fd, offset);
+   map = (char*) U_SYSCALL(mmap, "%p,%u,%d,%d,%d,%I", U_NULLPTR, length, prot, flags, fd, offset);
 
    if (map != (char*)MAP_FAILED)
       {
@@ -996,7 +996,7 @@ bool UFile::write(const char* data, uint32_t sz, int flags, bool bmkdirs)
             }
 
          if (sz &&
-             memmap(PROT_READ | PROT_WRITE, 0, offset, st_size))
+             memmap(PROT_READ | PROT_WRITE, U_NULLPTR, offset, st_size))
             {
             U_MEMCPY(map + offset, data, sz);
 
@@ -1258,7 +1258,7 @@ long UFile::getSysParam(const char* name)
 
          buffer[bytes_read] = '\0';
 
-         value = strtol(buffer, 0, 10);
+         value = strtol(buffer, U_NULLPTR, 10);
          }
 
       close(fd);
@@ -1286,7 +1286,7 @@ long UFile::setSysParam(const char* name, long value, bool force)
 
          buffer[bytes_read] = '\0';
 
-         old_value = strtol(buffer, 0, 10);
+         old_value = strtol(buffer, U_NULLPTR, 10);
 
          if (force ||
              old_value < value)
@@ -1679,7 +1679,7 @@ UString UFile::getSuffix() const
    if (ptr)
       {
       U_INTERNAL_ASSERT_EQUALS(ptr[0], '.')
-      U_INTERNAL_ASSERT_EQUALS(strchr(ptr, '/'), 0)
+      U_INTERNAL_ASSERT_EQUALS(strchr(ptr, '/'), U_NULLPTR)
 
       (void) suffix.assign(ptr+1, (path_relativ + path_relativ_len) - (1 + ptr)); // 1 => '.'
       }
@@ -1702,7 +1702,7 @@ const char* UFile::getMimeType(const char* suffix, int* pmime_index)
 
       U_INTERNAL_DUMP("suffix = %.*S", suffix ? (path_relativ_len-(suffix-path_relativ)-1) : 0, suffix+1)
 
-      content_type = (suffix ? u_get_mimetype(suffix+1, pmime_index) : 0);
+      content_type = (suffix ? u_get_mimetype(suffix+1, pmime_index) : U_NULLPTR);
       }
 
 #ifdef DEBUG
@@ -1722,12 +1722,12 @@ const char* UFile::getMimeType(const char* suffix, int* pmime_index)
       }
 #endif
 
-   if (content_type == 0)
+   if (content_type == U_NULLPTR)
       {
 #  ifdef USE_LIBMAGIC
       if (map != (char*)MAP_FAILED) content_type = UMagic::getType(map, map_size).data();
 
-      if (content_type == 0)
+      if (content_type == U_NULLPTR)
 #  endif
           content_type = "application/octet-stream";
       }
@@ -1763,6 +1763,6 @@ const char* UFile::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

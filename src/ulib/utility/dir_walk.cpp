@@ -73,10 +73,10 @@ void UDirWalk::ctor(const UString* dir, const char* _filter, uint32_t _filter_le
    max               = 128U * 1024U;
    depth             = -1; // starting recursion depth
    pthis             = this;
-   sort_by           = 0;
-   call_if_up        = 0;
-   call_internal     = 0;
-   suffix_file_type  = 0;
+   sort_by           = U_NULLPTR;
+   call_if_up        = U_NULLPTR;
+   call_internal     = U_NULLPTR;
+   suffix_file_type  = U_NULLPTR;
    call_if_directory =
    brecurse          =
    is_directory      = false;
@@ -164,7 +164,7 @@ U_NO_EXPORT bool UDirWalk::isFile()
 
    if (ptr++)
       {
-      if (u_get_mimetype(ptr, 0)) U_RETURN(true);
+      if (u_get_mimetype(ptr, U_NULLPTR)) U_RETURN(true);
 
       if (suffix_file_type)
          {
@@ -185,7 +185,7 @@ void UDirWalk::recurse()
 
    U_INTERNAL_ASSERT_EQUALS(pthis, this)
 
-   DIR* dirp = 0;
+   DIR* dirp = U_NULLPTR;
 
    ++depth; // if this has been called, then we're one level lower
 
@@ -211,7 +211,7 @@ found_file:
       dirp = (DIR*) U_SYSCALL(opendir, "%S", U_PATH_CONV(pathname));
       }
 
-   is_directory = (dirp != 0);
+   is_directory = (dirp != U_NULLPTR);
 
    if (is_directory == false ||
        call_if_directory)
@@ -280,7 +280,7 @@ found_file:
          if (filter_len == 0 ||
              UServices::dosMatchWithOR(dp->d_name, d_namlen, filter, filter_len, filter_flags))
             {
-            if (sort_by == 0) prepareForCallingRecurse(dp->d_name, d_namlen, U_DT_TYPE);
+            if (sort_by == U_NULLPTR) prepareForCallingRecurse(dp->d_name, d_namlen, U_DT_TYPE);
             else
                {
                // NB: check if we must do reallocation...
@@ -452,7 +452,7 @@ U_NO_EXPORT int UDirWalk::cmp_modify(const void* a, const void* b)
 
    UFile* ra = (*cache_file_for_compare)[*(UStringRep**)a];
 
-   if (ra == 0)
+   if (ra == U_NULLPTR)
       {
       UString key(*(UStringRep**)a);
 
@@ -465,7 +465,7 @@ U_NO_EXPORT int UDirWalk::cmp_modify(const void* a, const void* b)
 
    UFile* rb = (*cache_file_for_compare)[*(UStringRep**)b];
 
-   if (rb == 0)
+   if (rb == U_NULLPTR)
       {
       UString key(*(UStringRep**)b);
 
@@ -504,7 +504,7 @@ uint32_t UDirWalk::walk(UVector<UString>& vec, qcompare compare_obj)
       if (compare_obj == U_ALPHABETIC_SORT) vec.sort();
       else
          {
-         if (cache_file_for_compare == 0) U_NEW(UHashMap<UFile*>, cache_file_for_compare, UHashMap<UFile*>);
+         if (cache_file_for_compare == U_NULLPTR) U_NEW(UHashMap<UFile*>, cache_file_for_compare, UHashMap<UFile*>);
 
          uint32_t sz       = n + (15 * (n / 100)) + 32,
                   capacity = cache_file_for_compare->capacity();
@@ -600,6 +600,6 @@ const char* UDirWalk::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

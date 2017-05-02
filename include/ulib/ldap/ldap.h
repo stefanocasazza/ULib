@@ -126,12 +126,12 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, ULDAP, "", 0)
 
-      ld           = 0;
-      ludpp        = 0;
+      ld           = U_NULLPTR;
+      ludpp        = U_NULLPTR;
       result       = 52;
       pTimeOut     = &timeOut;
       isSecure     = false;
-      searchResult = 0;
+      searchResult = U_NULLPTR;
       }
 
    ~ULDAP()
@@ -197,11 +197,11 @@ public:
       {
       U_TRACE(1, "ULDAP::init(%S,%d)", host, port)
 
-      U_INTERNAL_ASSERT_EQUALS(ld,0)
+      U_INTERNAL_ASSERT_EQUALS(ld, U_NULLPTR)
 
       ld = (LDAP*) U_SYSCALL(ldap_init, "%S,%d", (char*)host, port);
 
-      if (ld == 0)
+      if (ld == U_NULLPTR)
          {
          result = 52;
 
@@ -219,11 +219,13 @@ public:
 
       U_CHECK_MEMORY
 
-      U_INTERNAL_ASSERT_EQUALS(ld,0)
+      U_INTERNAL_ASSERT_EQUALS(ld, U_NULLPTR)
 
       ld = (LDAP*) U_SYSCALL(ldap_open, "%S,%d", (char*)host, port);
 
-      U_RETURN(ld != 0);
+      if (ld != U_NULLPTR) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    bool add(const char* dn, LDAPMod* ldapmods[])
@@ -236,7 +238,9 @@ public:
 
       result = U_SYSCALL(ldap_add_s, "%p,%S,%p", ld, (char*)dn, ldapmods);
 
-      U_RETURN(result == LDAP_SUCCESS);
+      if (result == LDAP_SUCCESS) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    bool modify(const char* dn, LDAPMod* ldapmods[])
@@ -249,7 +253,9 @@ public:
 
       result = U_SYSCALL(ldap_modify_s, "%p,%S,%p", ld, (char*)dn, ldapmods);
 
-      U_RETURN(result == LDAP_SUCCESS);
+      if (result == LDAP_SUCCESS) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    bool remove(const char* dn)
@@ -262,7 +268,9 @@ public:
 
       result = U_SYSCALL(ldap_delete_s, "%p,%S", ld, (char*)dn);
 
-      U_RETURN(result == LDAP_SUCCESS);
+      if (result == LDAP_SUCCESS) U_RETURN(true);
+
+      U_RETURN(false);
       }
 
    void setTimeOut(struct timeval* timeout)
@@ -273,7 +281,7 @@ public:
 #  define LDAP_OPT_NETWORK_TIMEOUT LDAP_OPT_TIMELIMIT
 #endif
 
-      (void) U_SYSCALL(ldap_set_option, "%p,%d,%d", 0, LDAP_OPT_NETWORK_TIMEOUT, (LDAP_TIMEVAL*)(pTimeOut = timeout));
+      (void) U_SYSCALL(ldap_set_option, "%p,%d,%d", U_NULLPTR, LDAP_OPT_NETWORK_TIMEOUT, (LDAP_TIMEVAL*)(pTimeOut = timeout));
       }
 
    // ---------------------
@@ -284,7 +292,7 @@ public:
    // LDAP_SCOPE_SUBTREE  2
    // ---------------------
 
-   int search(const char* dn, int scope = LDAP_SCOPE_BASE, char* attrs[] = 0, const char* filter = LDAP_FILTER_ALL)
+   int search(const char* dn, int scope = LDAP_SCOPE_BASE, char* attrs[] = U_NULLPTR, const char* filter = LDAP_FILTER_ALL)
       {
       U_TRACE(1, "ULDAP::search(%S,%d,%p,%S)", dn, scope, attrs, filter)
 
@@ -329,7 +337,9 @@ public:
                            pTimeOut,       /* search timeout */
                            &searchResult); /* returned results */
 
-      U_RETURN(result == LDAP_SUCCESS);
+      if (result == LDAP_SUCCESS) U_RETURN(true);
+
+      U_RETURN(false);
       }
 #endif
 

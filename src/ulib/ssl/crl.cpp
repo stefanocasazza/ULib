@@ -25,9 +25,9 @@ X509_CRL* UCrl::readCRL(const UString& x, const char* format)
 
    BIO* in;
    UString tmp    = x;
-   X509_CRL* _crl = 0;
+   X509_CRL* _crl = U_NULLPTR;
 
-   if (format == 0) format = (x.isBinary() ? "DER" : "PEM");
+   if (format == U_NULLPTR) format = (x.isBinary() ? "DER" : "PEM");
 
    if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 &&
        strncmp(x.data(), U_CONSTANT_TO_PARAM("-----BEGIN X509 CRL-----")) != 0)
@@ -48,8 +48,8 @@ X509_CRL* UCrl::readCRL(const UString& x, const char* format)
 
    in = (BIO*) U_SYSCALL(BIO_new_mem_buf, "%p,%d", U_STRING_TO_PARAM(tmp));
 
-   _crl = (X509_CRL*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_X509_CRL, "%p,%p,%p,%p", in, 0, 0, 0)
-                                                                        : U_SYSCALL(d2i_X509_CRL_bio,      "%p,%p",       in, 0));
+   _crl = (X509_CRL*) (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0 ? U_SYSCALL(PEM_read_bio_X509_CRL, "%p,%p,%p,%p", in, U_NULLPTR, U_NULLPTR, U_NULLPTR)
+                                                                        : U_SYSCALL(d2i_X509_CRL_bio,      "%p,%p",       in, U_NULLPTR));
 
    (void) U_SYSCALL(BIO_free, "%p", in);
 
@@ -74,7 +74,7 @@ bool UCrl::isUpToDate() const
    U_INTERNAL_ASSERT_POINTER(crl)
 
    int ok = X509_V_OK,
-       i  = X509_cmp_time(X509_CRL_get_lastUpdate(crl), 0);
+       i  = X509_cmp_time(X509_CRL_get_lastUpdate(crl), U_NULLPTR);
 
    if      (i == 0) ok = X509_V_ERR_ERROR_IN_CRL_LAST_UPDATE_FIELD;
    else if (i  > 0) ok = X509_V_ERR_CRL_NOT_YET_VALID;
@@ -82,7 +82,7 @@ bool UCrl::isUpToDate() const
       {
       if (X509_CRL_get_nextUpdate(crl))
          {
-         i = X509_cmp_time(X509_CRL_get_nextUpdate(crl), 0);
+         i = X509_cmp_time(X509_CRL_get_nextUpdate(crl), U_NULLPTR);
 
          if (i < 0) ok = X509_V_ERR_CRL_HAS_EXPIRED;
          }
@@ -90,7 +90,9 @@ bool UCrl::isUpToDate() const
 
    U_INTERNAL_DUMP("ok = %d", ok)
 
-   U_RETURN(ok == X509_V_OK);
+   if (ok == X509_V_OK) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 bool UCrl::isIssued(UCertificate& ca) const
@@ -102,7 +104,7 @@ bool UCrl::isIssued(UCertificate& ca) const
    int ok         = X509_V_OK;
    EVP_PKEY* pkey = ca.getSubjectPublicKey();
 
-   if (pkey == 0) ok = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
+   if (pkey == U_NULLPTR) ok = X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY;
    else
       {
       /* Verify CRL signature */
@@ -114,7 +116,9 @@ bool UCrl::isIssued(UCertificate& ca) const
 
    U_INTERNAL_DUMP("ok = %d", ok)
 
-   U_RETURN(ok ==  X509_V_OK);
+   if (ok == X509_V_OK) U_RETURN(true);
+
+   U_RETURN(false);
 }
 
 unsigned UCrl::getRevokedSerials(X509_CRL* _crl, long* revoked, unsigned sz)
@@ -127,7 +131,7 @@ unsigned UCrl::getRevokedSerials(X509_CRL* _crl, long* revoked, unsigned sz)
    X509_REVOKED* rev;
    STACK_OF(X509_REVOKED)* stackRevoked = sk_X509_REVOKED_dup(X509_CRL_get_REVOKED(_crl));
 
-   while ((rev = sk_X509_REVOKED_pop(stackRevoked)) != 0)
+   while ((rev = sk_X509_REVOKED_pop(stackRevoked)) != U_NULLPTR)
       {
       if (i >= sz) break;
 
@@ -167,7 +171,7 @@ UString UCrl::getEncoded(const char* format) const
    if (strncmp(format, U_CONSTANT_TO_PARAM("DER"))    == 0 ||
        strncmp(format, U_CONSTANT_TO_PARAM("BASE64")) == 0)
       {
-      unsigned len = U_SYSCALL(i2d_X509_CRL, "%p,%p", crl, 0);
+      unsigned len = U_SYSCALL(i2d_X509_CRL, "%p,%p", crl, U_NULLPTR);
 
       UString encoding(len);
 
@@ -188,7 +192,8 @@ UString UCrl::getEncoded(const char* format) const
 
       U_RETURN_STRING(encoding);
       }
-   else if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0)
+
+   if (strncmp(format, U_CONSTANT_TO_PARAM("PEM")) == 0)
       {
       BIO* bio = (BIO*) U_SYSCALL(BIO_new, "%p", BIO_s_mem());
 
@@ -208,7 +213,7 @@ long UCrl::getNumber(X509_CRL* _crl)
 
    U_INTERNAL_ASSERT_POINTER(_crl)
 
-   ASN1_INTEGER* crlnum = (ASN1_INTEGER*) U_SYSCALL(X509_CRL_get_ext_d2i, "%p,%d,%p,%p", _crl, NID_crl_number, 0, 0);
+   ASN1_INTEGER* crlnum = (ASN1_INTEGER*) U_SYSCALL(X509_CRL_get_ext_d2i, "%p,%d,%p,%p", _crl, NID_crl_number, U_NULLPTR, U_NULLPTR);
 
    long result = 0;
 
@@ -282,7 +287,7 @@ const char* UCrl::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

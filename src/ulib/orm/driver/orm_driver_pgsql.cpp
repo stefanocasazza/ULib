@@ -39,8 +39,8 @@ void UOrmDriverPgSql::handlerError()
    };
    */
 
-   if (UOrmDriver::errmsg  == 0) UOrmDriver::errmsg  = U_SYSCALL(PQerrorMessage, "%p", (PGconn*)UOrmDriver::connection);
-                                 UOrmDriver::errname = "???";
+   if (UOrmDriver::errmsg == U_NULLPTR) UOrmDriver::errmsg  = U_SYSCALL(PQerrorMessage, "%p", (PGconn*)UOrmDriver::connection);
+                                        UOrmDriver::errname = "???";
 
    /*
    if (UOrmDriver::errcode < (int)U_NUM_ELEMENTS(error_value_table) &&
@@ -57,8 +57,11 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 
    UOrmDriver* pdrv;
 
-   if (UOrmDriver::connection == 0) pdrv = this;
-   else U_NEW(UOrmDriverPgSql, pdrv, UOrmDriverPgSql(*UString::str_pgsql_name));
+   if (UOrmDriver::connection == U_NULLPTR) pdrv = this;
+   else
+      {
+      U_NEW(UOrmDriverPgSql, pdrv, UOrmDriverPgSql(*UString::str_pgsql_name));
+      }
 
    // PQconnectdb accepts additional options as a string of "key=value" pairs
 
@@ -66,7 +69,7 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 
    pdrv->connection = U_SYSCALL(PQconnectdb, "%S", option.data());
 
-   if (pdrv->connection == 0)
+   if (pdrv->connection == U_NULLPTR)
       {
       pdrv->errmsg = "ran out of memory";
 
@@ -74,7 +77,7 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 
       if (UOrmDriver::connection) delete pdrv;
 
-      U_RETURN_POINTER(0, UOrmDriver);
+      U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
 
    if (PQstatus((PGconn*)pdrv->connection) != CONNECTION_OK)
@@ -85,7 +88,7 @@ UOrmDriver* UOrmDriverPgSql::handlerConnect(const UString& option)
 
       if (UOrmDriver::connection) delete pdrv;
 
-      U_RETURN_POINTER(0, UOrmDriver);
+      U_RETURN_POINTER(U_NULLPTR, UOrmDriver);
       }
 
 // (void) U_SYSCALL(PQsetClientEncoding, "%p,%S", (PGconn*)pdrv->connection, "UTF8");
@@ -101,7 +104,7 @@ void UOrmDriverPgSql::handlerDisConnect()
 
    U_SYSCALL_VOID(PQfinish, "%p", (PGconn*)UOrmDriver::connection);
 
-   UOrmDriver::connection = 0;
+   UOrmDriver::connection = U_NULLPTR;
 }
 
 bool UOrmDriverPgSql::checkExecution(PGresult* res)
@@ -110,7 +113,7 @@ bool UOrmDriverPgSql::checkExecution(PGresult* res)
 
    int resstatus;
 
-   if (res == 0) goto fail;
+   if (res == U_NULLPTR) goto fail;
 
    resstatus = U_SYSCALL(PQresultStatus, "%p", res);
 
@@ -181,9 +184,9 @@ UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(0, 0
 
    (void) stmt.shrink();
 
-   res          = 0;
-   paramValues  = 0;
-   paramFormats = paramLengths = 0;
+   res          = U_NULLPTR;
+   paramValues  = U_NULLPTR;
+   paramFormats = paramLengths = U_NULLPTR;
    resultFormat = true; // is zero to obtain results in text format, or one to obtain results in binary format
 
    if (num_bind_param == 0) paramTypes = 0;
@@ -218,8 +221,8 @@ void UPgSqlStatement::reset()
       {
       UMemoryPool::_free(paramValues, num_bind_param, sizeof(const char*));
 
-      paramValues  = 0;
-      paramLengths = 0; 
+      paramValues  = U_NULLPTR;
+      paramLengths = U_NULLPTR; 
       }
 }
 
@@ -262,7 +265,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
    int i;
 
    if (paramTypes &&
-       paramFormats == 0)
+       paramFormats == U_NULLPTR)
       {
       U_INTERNAL_ASSERT_MAJOR(num_bind_result, 0)
 
@@ -275,7 +278,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
          }
       }
 
-   if (pHandle == 0)
+   if (pHandle == U_NULLPTR)
       {
       /**
        * The function creates a prepared statement named stmtName from the query string, which must contain a single SQL command.
@@ -300,7 +303,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
          if (pHandle)
             {
             U_SYSCALL_VOID(PQclear, "%p", (PGresult*)pHandle);
-                                                     pHandle = 0;
+                                                     pHandle = U_NULLPTR;
             }
 
          U_RETURN(false);
@@ -314,10 +317,10 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
          pdrv->UOrmDriver::printError(__PRETTY_FUNCTION__);
 
          if (res) U_SYSCALL_VOID(PQclear, "%p", res);
-                                                res = 0;
+                                                res = U_NULLPTR;
 
          if (pHandle) U_SYSCALL_VOID(PQclear, "%p", (PGresult*)pHandle);
-                                                               pHandle = 0;
+                                                               pHandle = U_NULLPTR;
 
          U_RETURN(false);
          }
@@ -357,11 +360,11 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 
    if (num_bind_param)
       {
-      if (paramValues == 0)
+      if (paramValues == U_NULLPTR)
          {
          paramValues = (const char**) UMemoryPool::_malloc(num_bind_param, sizeof(const char*), false);
 
-         U_INTERNAL_ASSERT_EQUALS(paramLengths, 0)
+         U_INTERNAL_ASSERT_EQUALS(paramLengths, U_NULLPTR)
 
          paramLengths = (int*)paramTypes + num_bind_param + num_bind_param;
          }
@@ -431,7 +434,7 @@ USqlStatementBindParam* UOrmDriverPgSql::creatSqlStatementBindParam(USqlStatemen
    ((UPgSqlStatement*)pstmt)->paramValues[rebind]  = (const char*)param->buffer;
    ((UPgSqlStatement*)pstmt)->paramLengths[rebind] =              param->length;
 
-   U_RETURN_POINTER(0, USqlStatementBindParam);
+   U_RETURN_POINTER(U_NULLPTR, USqlStatementBindParam);
 }
 
 void UPgSqlStatement::setBindResult(UOrmDriver* pdrv)
@@ -631,8 +634,8 @@ unsigned long long UOrmDriverPgSql::last_insert_rowid(USqlStatement* pstmt, cons
                                           1, // 1 param
                                           0, // types
                                           &sequence, // param values
-                                          0,  // lengths
-                                          0,  // formats
+                                          U_NULLPTR, // lengths
+                                          U_NULLPTR, // formats
                                           0); // string format
 
    if (checkExecution(res))
@@ -675,7 +678,7 @@ const char* UPgSqlStatement::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UOrmDriverPgSql::dump(bool _reset) const
@@ -691,6 +694,6 @@ const char* UOrmDriverPgSql::dump(bool _reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

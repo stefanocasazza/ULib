@@ -270,8 +270,8 @@ void UXAdESUtility::outputDocument(const UString& firma)
 
       const char* add_to_filenames[32];
 
-      add_to_filenames[0] = (x ? x.c_str() : 0);
-      add_to_filenames[1] =                  0;
+      add_to_filenames[0] = (x ? x.c_str() : U_NULLPTR);
+      add_to_filenames[1] =                  U_NULLPTR;
 
       (void) UFile::writeTo(docout, firma, false, true);
 
@@ -297,7 +297,7 @@ void UXAdESUtility::outputDocument(const UString& firma)
             add_to_filenames[j++] = strdup(namefile.c_str());
             }
 
-         add_to_filenames[j] = 0;
+         add_to_filenames[j] = U_NULLPTR;
          }
 
       output = zip.archive(add_to_filenames);

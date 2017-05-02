@@ -56,7 +56,7 @@ public:
 
             if (pos == U_NOT_FOUND)
                {
-               UDirWalk dirwalk(0, U_STRING_TO_PARAM(filename));
+               UDirWalk dirwalk(U_NULLPTR, U_STRING_TO_PARAM(filename));
 
                (void) dirwalk.walk(vec);
                }

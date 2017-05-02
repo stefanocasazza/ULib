@@ -69,7 +69,7 @@ int USCGIPlugIn::handlerConfig(UFileConfig& cfg)
 
       UString x = cfg.at(U_CONSTANT_TO_PARAM("SCGI_URI_MASK"));
 
-      U_INTERNAL_ASSERT_EQUALS(UHTTP::scgi_uri_mask, 0)
+      U_INTERNAL_ASSERT_EQUALS(UHTTP::scgi_uri_mask, U_NULLPTR)
 
       if (x) U_NEW(UString, UHTTP::scgi_uri_mask, UString(x));
 
@@ -106,7 +106,7 @@ int USCGIPlugIn::handlerInit()
 #     else
          // NB: SCGI is NOT a static page...
 
-         if (UHTTP::valias == 0) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U));
+         if (UHTTP::valias == U_NULLPTR) U_NEW(UVector<UString>, UHTTP::valias, UVector<UString>(2U));
 
          UHTTP::valias->push_back(*UHTTP::scgi_uri_mask);
          UHTTP::valias->push_back(*UString::str_nostat);
@@ -116,7 +116,7 @@ int USCGIPlugIn::handlerInit()
          }
 
       delete connection;
-             connection = 0;
+             connection = U_NULLPTR;
       }
 
    U_RETURN(U_PLUGIN_HANDLER_ERROR);
@@ -139,7 +139,7 @@ int USCGIPlugIn::handlerRequest()
 
       if (UHTTP::getCGIEnvironment(environment, U_WSCGI) == false) U_RETURN(U_PLUGIN_HANDLER_ERROR);
 
-      int n = u_split(U_STRING_TO_PARAM(environment), envp, 0);
+      int n = u_split(U_STRING_TO_PARAM(environment), envp, U_NULLPTR);
 
       U_INTERNAL_ASSERT_MINOR(n, 128)
 
@@ -235,6 +235,6 @@ const char* USCGIPlugIn::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

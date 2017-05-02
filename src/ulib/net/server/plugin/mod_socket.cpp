@@ -74,7 +74,7 @@ int UWebSocketPlugIn::handlerRun()
 {
    U_TRACE_NO_PARAM(0, "UWebSocketPlugIn::handlerRun()")
 
-   U_INTERNAL_ASSERT_EQUALS(UWebSocket::rbuffer, 0)
+   U_INTERNAL_ASSERT_EQUALS(UWebSocket::rbuffer, U_NULLPTR)
 
    U_NEW(UString, UWebSocket::rbuffer, UString(U_CAPACITY));
 
@@ -106,7 +106,7 @@ int UWebSocketPlugIn::handlerRequest()
       {
       int fdmax = 0;
       fd_set fd_set_read, read_set;
-      bool bcommand = (command && on_message == 0);
+      bool bcommand = (command && on_message == U_NULLPTR);
 
       if (bcommand)
          {
@@ -146,7 +146,7 @@ int UWebSocketPlugIn::handlerRequest()
 
 loop: read_set = fd_set_read;
 
-      if (U_SYSCALL(select, "%d,%p,%p,%p,%p", fdmax, &read_set, 0, 0, 0) > 0)
+      if (U_SYSCALL(select, "%d,%p,%p,%p,%p", fdmax, &read_set, U_NULLPTR, U_NULLPTR, U_NULLPTR) > 0)
          {
          if (FD_ISSET(UProcess::filedes[2], &read_set))
             {
@@ -205,6 +205,6 @@ const char* UWebSocketPlugIn::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #endif

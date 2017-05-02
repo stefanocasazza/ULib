@@ -25,7 +25,7 @@ void UXMLElement::splitNamespaceAndName(const UString& _str, UString& _namespace
    if (nColonPos != U_NOT_FOUND)
       {
       _namespaceName = _str.substr(0U, nColonPos);
-       _accessorName  = _str.substr(nColonPos + 1, _str.length() - nColonPos - 1);
+       _accessorName = _str.substr(nColonPos + 1, _str.length() - nColonPos - 1);
       }
    else
       {
@@ -60,7 +60,7 @@ UXMLAttribute* UXMLElement::getAttribute(const UString& attributeName)
          }
       }
 
-   U_RETURN_POINTER(0, UXMLAttribute);
+   U_RETURN_POINTER(U_NULLPTR, UXMLAttribute);
 }
 
 // STREAM
@@ -123,7 +123,7 @@ const char* UXMLElement::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 #  endif
 #endif

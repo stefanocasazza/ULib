@@ -72,7 +72,7 @@ UBaseTransform::UBaseTransform()
    U_TRACE_REGISTER_OBJECT(0, UBaseTransform, "")
 
    status    = 0;
-   hereNode  = 0;
+   hereNode  = U_NULLPTR;
    operation = 0;
 }
 
@@ -109,8 +109,8 @@ UTranformInputURI::UTranformInputURI(const char* uri)
 {
    U_TRACE_REGISTER_OBJECT(0, UTranformInputURI, "%S", uri)
 
-   clbks    = 0;
-   clbksCtx = 0;
+   clbks    = U_NULLPTR;
+   clbksCtx = U_NULLPTR;
 
    /*
     * Try to find one of the input accept method accepting that scheme
@@ -118,9 +118,9 @@ UTranformInputURI::UTranformInputURI(const char* uri)
     * try with an unescaped version of the uri
     */
 
-   char* unescaped = U_SYSCALL(xmlURIUnescapeString, "%S,%d,%S", uri, 0, NULL);
+   char* unescaped = U_SYSCALL(xmlURIUnescapeString, "%S,%d,%S", uri, 0, U_NULLPTR);
 
-   if (unescaped != 0)
+   if (unescaped != U_NULLPTR)
       {
       clbks = find(unescaped);
 
@@ -131,7 +131,7 @@ UTranformInputURI::UTranformInputURI(const char* uri)
 
    // If this failed try with a non-escaped uri this may be a strange filename
 
-   if (clbks == 0)
+   if (clbks == U_NULLPTR)
       {
       clbks = find(uri);
 
@@ -154,7 +154,7 @@ UIOCallback* UTranformInputURI::find(const char* uri)
       if (callbacks->matchcallback(uri)) U_RETURN_POINTER(callbacks, UIOCallback);
       }
 
-   U_RETURN_POINTER(0, UIOCallback);
+   U_RETURN_POINTER(U_NULLPTR, UIOCallback);
 }
 
 /**
@@ -250,7 +250,7 @@ bool UTranformXPointer::execute(UString& data)
 
       xmlXPathObjectPtr xpathObj = (xmlXPathObjectPtr) U_SYSCALL(xmlXPtrEval, "%S,%p", (const xmlChar*)pdata->expr, pdata->ctx);
 
-      if (xpathObj == 0) U_RETURN(false);
+      if (xpathObj == U_NULLPTR) U_RETURN(false);
 
       // ...
       }
@@ -307,7 +307,7 @@ const char* UBaseTransform::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 const char* UIOCallback::dump(bool reset) const
@@ -324,7 +324,7 @@ const char* UIOCallback::dump(bool reset) const
       return UObjectIO::buffer_output;
       }
 
-   return 0;
+   return U_NULLPTR;
 }
 
 #endif
