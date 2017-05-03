@@ -268,7 +268,7 @@ void ULib::init(const char* mempool, char** argv)
 
 #if defined(USE_LIBSSL)
 # if OPENSSL_VERSION_NUMBER >= 0x10100003L
-   (void) U_SYSCALL(OPENSSL_init_ssl, "%llu,%S", OPENSSL_INIT_LOAD_CONFIG, 0);
+   (void) U_SYSCALL(OPENSSL_init_ssl, "%llu,%S", OPENSSL_INIT_LOAD_CONFIG, U_NULLPTR);
 # else
 #  ifdef HAVE_OPENSSL_97
    U_SYSCALL_VOID(OPENSSL_config, "%S", 0);

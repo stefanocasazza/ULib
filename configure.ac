@@ -2342,7 +2342,7 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "x$OPERATIN
 	else
 		## _FORTIFY_SOURCE is enabled by default from g++ 4.7.2
 		MAYBE_FLAGS="$MAYBE_FLAGS -Wunsafe-loop-optimizations -Wno-unused-parameter -rdynamic -fdiagnostics-color=auto -Wmisleading-indentation"
-		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wzero-as-null-pointer-constant" # -Wzero-as-null-pointer-constant"
+		CXX_MAYBE_FLAGS="$CXX_MAYBE_FLAGS -Wc++11-compat -Wzero-as-null-pointer-constant -Wimplicit-fallthrough=0"
 	fi
 
 	AC_CACHE_CHECK([for gcc supported flags], ulib_cv_flags, [

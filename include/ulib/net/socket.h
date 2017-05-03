@@ -717,7 +717,7 @@ protected:
 #  ifdef _MSWINDOWS_
       if (setSockOpt(SOL_SOCKET, type, (const char*)&timeoutMS)) U_RETURN(true);
 #  else
-      struct timeval timer = { timeoutMS / 1000, (timeoutMS % 1000) * 1000 }; // convert the timeout value (in milliseconds) into a timeval struct
+      struct timeval timer = { (long)timeoutMS / 1000L, ((long)timeoutMS % 1000L) * 1000L }; // convert the timeout value (in milliseconds) into a timeval struct
 
       U_INTERNAL_DUMP("timer = { %ld %ld }", timer.tv_sec, timer.tv_usec)
 

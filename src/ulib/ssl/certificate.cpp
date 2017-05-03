@@ -588,7 +588,7 @@ UString UCertificate::getModulus() const
 #else
    RSA* rsa = EVP_PKEY_get1_RSA(pkey);
 
-   RSA_get0_key(rsa, &bn, 0, 0);
+   RSA_get0_key(rsa, &bn, U_NULLPTR, U_NULLPTR);
 
    RSA_free(rsa);
 #endif
@@ -627,7 +627,7 @@ UString UCertificate::getExponent() const
 #else
    RSA* rsa = EVP_PKEY_get1_RSA(pkey);
 
-   RSA_get0_key(rsa, 0, &bn, 0);
+   RSA_get0_key(rsa, U_NULLPTR, &bn, U_NULLPTR);
 
    RSA_free(rsa);
 #endif

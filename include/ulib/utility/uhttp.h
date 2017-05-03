@@ -1219,7 +1219,7 @@ private:
    static inline void setUpgrade(const char* ptr) U_NO_EXPORT;
    static inline void setIfModSince(const char* ptr) U_NO_EXPORT;
    static inline void setConnection(const char* ptr) U_NO_EXPORT;
-   static inline void setAcceptEncoding(const char* ptr) U_NO_EXPORT;
+   static        void setAcceptEncoding(const char* ptr) U_NO_EXPORT;
    static inline void setContentLength(const char* ptr1, const char* ptr2) U_NO_EXPORT;
 
    static inline void setRange(const char* ptr, uint32_t len) U_NO_EXPORT;

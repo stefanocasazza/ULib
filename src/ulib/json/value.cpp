@@ -1086,21 +1086,21 @@ case_number:
 #     ifndef U_COVERITY_FALSE_POSITIVE // Control flow issues (MISSING_BREAK)
          switch (decimalDigit)
             {
-            case 15: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-15] - '0');
-            case 14: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-14] - '0');
-            case 13: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-13] - '0');
-            case 12: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-12] - '0');
-            case 11: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-11] - '0');
-            case 10: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-10] - '0');
-            case  9: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 9] - '0');
-            case  8: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 8] - '0');
-            case  7: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 7] - '0');
-            case  6: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 6] - '0');
-            case  5: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 5] - '0');
-            case  4: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 4] - '0');
-            case  3: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 3] - '0');
-            case  2: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 2] - '0');
-            case  1: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 1] - '0');
+            case 15: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-15] - '0'); /* FALLTHRU */
+            case 14: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-14] - '0'); /* FALLTHRU */
+            case 13: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-13] - '0'); /* FALLTHRU */
+            case 12: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-12] - '0'); /* FALLTHRU */
+            case 11: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-11] - '0'); /* FALLTHRU */
+            case 10: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit-10] - '0'); /* FALLTHRU */
+            case  9: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 9] - '0'); /* FALLTHRU */
+            case  8: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 8] - '0'); /* FALLTHRU */
+            case  7: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 7] - '0'); /* FALLTHRU */
+            case  6: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 6] - '0'); /* FALLTHRU */
+            case  5: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 5] - '0'); /* FALLTHRU */
+            case  4: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 4] - '0'); /* FALLTHRU */
+            case  3: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 3] - '0'); /* FALLTHRU */
+            case  2: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 2] - '0'); /* FALLTHRU */
+            case  1: integerPart = (integerPart << 3) + (integerPart << 1) + (p[decimalDigit- 1] - '0'); /* FALLTHRU */
             }
 #     endif
 

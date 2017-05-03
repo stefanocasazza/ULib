@@ -2625,7 +2625,7 @@ U_NO_EXPORT inline void UHTTP::setContentLength(const char* p1, const char* p2)
 #endif
 }
 
-U_NO_EXPORT inline void UHTTP::setAcceptEncoding(const char* ptr)
+U_NO_EXPORT void UHTTP::setAcceptEncoding(const char* ptr)
 {
    U_TRACE(0, "UHTTP::setAcceptEncoding(%p)", ptr)
 

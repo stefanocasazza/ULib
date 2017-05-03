@@ -2981,9 +2981,7 @@ void UHTTP2::writeResponse()
 
    // we must wait for a Window Update frame if the current window size is not sufficient...
 
-#ifdef DEBUG
-   Stream* pStreamEndOld = pStreamEnd;
-#endif
+   Stream* pStreamOld = pStream;
 
 loop:
    readFrame();
@@ -2993,7 +2991,10 @@ loop:
    if (nerror == NO_ERROR)
       {
       U_INTERNAL_ASSERT_MAJOR(pConnection->out_window, 0)
-      U_INTERNAL_ASSERT_EQUALS(pStreamEnd, pStreamEndOld)
+
+      U_INTERNAL_DUMP("pStreamOld = %u pStream = %u", pStreamOld, pStream)
+
+      pStream = pStreamOld;
 
       iov_vec[2].iov_len  = HTTP2_FRAME_HEADER_SIZE;
       iov_vec[3].iov_base = ptr;
@@ -3439,7 +3440,7 @@ read_request:
       pStream = pConnection->streams;
 
 loop: U_DUMP("pStream->id = %u pStream->state = (%u, %s) pStream->headers(%u) = %V pStream->clength = %u pStream->body(%u) = %V",
-              pStream->id, pStream->state, getStreamStatusDescription(), sz, pStream->headers.rep, pStream->clength, pStream->body.size(), pStream->body.rep)
+              pStream->id, pStream->state, getStreamStatusDescription(), pStream->headers.size(), pStream->headers.rep, pStream->clength, pStream->body.size(), pStream->body.rep)
 
       if (pStream->state <= STREAM_STATE_OPEN) goto read_request;
 

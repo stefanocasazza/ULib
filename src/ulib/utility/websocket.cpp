@@ -165,7 +165,9 @@ loop:
    if (rbuffer->empty() &&
        USocketExt::read(socket, *rbuffer, U_SINGLE_READ, UServer_Base::timeoutMS) == false)
       {
-      U_RETURN(STATUS_CODE_INTERNAL_ERROR);
+      status_code = STATUS_CODE_INTERNAL_ERROR;
+
+      U_RETURN(status_code);
       }
 
               block        = (unsigned char*) rbuffer->data();
@@ -187,7 +189,9 @@ loop:
                {
                // framing_state = DATA_FRAMING_CLOSE; // 6
 
-               U_RETURN(status_code = STATUS_CODE_PROTOCOL_ERROR);
+               status_code = STATUS_CODE_PROTOCOL_ERROR;
+
+               U_RETURN(status_code);
                }
 
             fin    = FRAME_GET_FIN(   block[block_offset]);
@@ -203,7 +207,9 @@ loop:
                   {
                   // framing_state = DATA_FRAMING_CLOSE; // 6
 
-                  U_RETURN(status_code = STATUS_CODE_PROTOCOL_ERROR);
+                  status_code = STATUS_CODE_PROTOCOL_ERROR;
+
+                  U_RETURN(status_code);
                   }
 
                frame             = &UWebSocket::control_frame;
@@ -220,7 +226,9 @@ loop:
                      {
                      // framing_state = DATA_FRAMING_CLOSE; // 6
 
-                     U_RETURN(status_code = STATUS_CODE_PROTOCOL_ERROR);
+                     status_code = STATUS_CODE_PROTOCOL_ERROR;
+
+                     U_RETURN(status_code);
                      }
 
                   frame->opcode     = opcode;
@@ -231,7 +239,9 @@ loop:
                   {
                   // framing_state = DATA_FRAMING_CLOSE; // 6
 
-                  U_RETURN(status_code = STATUS_CODE_PROTOCOL_ERROR);
+                  status_code = STATUS_CODE_PROTOCOL_ERROR;
+
+                  U_RETURN(status_code);
                   }
 
                frame->fin = fin;
@@ -240,7 +250,7 @@ loop:
             payload_length                 = 0;
             payload_length_bytes_remaining = 0;
 
-            if (block_offset >= block_size) break; // Only break if we need more data
+            if (block_offset >= block_size) goto next; /* FALLTHRU */
             }
 
          U_INTERNAL_DUMP("framing_state = %d", framing_state)
@@ -273,12 +283,14 @@ loop:
                {
                // framing_state = DATA_FRAMING_CLOSE; // 6
 
-               U_RETURN(status_code = STATUS_CODE_PROTOCOL_ERROR);
+               status_code = STATUS_CODE_PROTOCOL_ERROR;
+
+               U_RETURN(status_code);
                }
 
             framing_state = DATA_FRAMING_PAYLOAD_LENGTH_EXT; // 3
 
-            if (block_offset >= block_size) break; // Only break if we need more data
+            if (block_offset >= block_size) goto next; /* FALLTHRU */
             }
 
          U_INTERNAL_DUMP("framing_state = %d", framing_state)
@@ -303,7 +315,9 @@ loop:
 
                   // framing_state = DATA_FRAMING_CLOSE; // 6
 
-                  U_RETURN(status_code = STATUS_CODE_MESSAGE_TOO_LARGE); // Invalid payload length
+                  status_code = STATUS_CODE_MESSAGE_TOO_LARGE; // Invalid payload length
+
+                  U_RETURN(status_code);
                   }
 
                if (masking == 0)
@@ -316,7 +330,7 @@ loop:
                framing_state = DATA_FRAMING_MASK; // 0
                }
 
-            if (block_offset >= block_size) break; // Only break if we need more data
+            if (block_offset >= block_size) goto next; /* FALLTHRU */
             }
 
          U_INTERNAL_DUMP("framing_state = %d", framing_state)
@@ -344,9 +358,9 @@ loop:
                }
 
             U_INTERNAL_DUMP("masking = %d", masking)
-            }
 
-         // Fall through
+            /* FALLTHRU */
+            }
 
          U_INTERNAL_DUMP("framing_state = %d", framing_state)
 
@@ -367,9 +381,9 @@ loop:
 
                framing_state = DATA_FRAMING_APPLICATION_DATA; // 5
                }
-            }
 
-         // Fall through
+            /* FALLTHRU */
+            }
 
          U_INTERNAL_DUMP("framing_state = %d", framing_state)
 
@@ -462,7 +476,9 @@ loop:
                         {
                         // framing_state = DATA_FRAMING_CLOSE; // 6
 
-                        U_RETURN(status_code = STATUS_CODE_INVALID_UTF8);
+                        status_code = STATUS_CODE_INVALID_UTF8;
+
+                        U_RETURN(status_code);
                         }
 
                      message_type = MESSAGE_TYPE_TEXT;
@@ -475,7 +491,9 @@ loop:
                      {
                      // framing_state = DATA_FRAMING_CLOSE; // 6
 
-                     U_RETURN(status_code = STATUS_CODE_OK);
+                     status_code = STATUS_CODE_OK;
+
+                     U_RETURN(status_code);
                      }
 
                   case OPCODE_PING:
@@ -490,7 +508,9 @@ loop:
                      {
                      // framing_state = DATA_FRAMING_CLOSE; // 6
 
-                     U_RETURN(status_code = STATUS_CODE_PROTOCOL_ERROR);
+                     status_code = STATUS_CODE_PROTOCOL_ERROR;
+
+                     U_RETURN(status_code);
                      }
                   }
 
@@ -508,7 +528,9 @@ loop:
                                              ncount - UClientImage_Base::wbuffer->size(),
                                                       UClientImage_Base::wbuffer->size(), UClientImage_Base::wbuffer->rep)
 
-                     U_RETURN(status_code = STATUS_CODE_OK);
+                     status_code = STATUS_CODE_OK;
+
+                     U_RETURN(status_code);
                      }
 
                   frame->application_data        = U_NULLPTR;
@@ -528,12 +550,15 @@ loop:
             {
             // framing_state = DATA_FRAMING_CLOSE; // 6
 
-            U_RETURN(status_code = STATUS_CODE_PROTOCOL_ERROR);
+            status_code = STATUS_CODE_PROTOCOL_ERROR;
+
+            U_RETURN(status_code);
             }
          }
       }
    while (block_offset < block_size);
 
+next:
    U_INTERNAL_ASSERT(block_offset >= block_size)
    U_INTERNAL_ASSERT_DIFFERS(framing_state, DATA_FRAMING_CLOSE) // 6
 

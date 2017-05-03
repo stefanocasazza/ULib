@@ -70,22 +70,22 @@ __pure unsigned long u_hex2int(const char* restrict s, const char* restrict e)
 #ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues (MISSING_BREAK) */
    switch (len)
       {
-      case 16: val = (val << 4) | u__hexc2int(s[len-16]);
-      case 15: val = (val << 4) | u__hexc2int(s[len-15]);
-      case 14: val = (val << 4) | u__hexc2int(s[len-14]);
-      case 13: val = (val << 4) | u__hexc2int(s[len-13]);
-      case 12: val = (val << 4) | u__hexc2int(s[len-12]);
-      case 11: val = (val << 4) | u__hexc2int(s[len-11]);
-      case 10: val = (val << 4) | u__hexc2int(s[len-10]);
-      case  9: val = (val << 4) | u__hexc2int(s[len- 9]);
-      case  8: val = (val << 4) | u__hexc2int(s[len- 8]);
-      case  7: val = (val << 4) | u__hexc2int(s[len- 7]);
-      case  6: val = (val << 4) | u__hexc2int(s[len- 6]);
-      case  5: val = (val << 4) | u__hexc2int(s[len- 5]);
-      case  4: val = (val << 4) | u__hexc2int(s[len- 4]);
-      case  3: val = (val << 4) | u__hexc2int(s[len- 3]);
-      case  2: val = (val << 4) | u__hexc2int(s[len- 2]);
-      case  1: val = (val << 4) | u__hexc2int(s[len- 1]);
+      case 16: val = (val << 4) | u__hexc2int(s[len-16]); /* FALLTHRU */
+      case 15: val = (val << 4) | u__hexc2int(s[len-15]); /* FALLTHRU */
+      case 14: val = (val << 4) | u__hexc2int(s[len-14]); /* FALLTHRU */
+      case 13: val = (val << 4) | u__hexc2int(s[len-13]); /* FALLTHRU */
+      case 12: val = (val << 4) | u__hexc2int(s[len-12]); /* FALLTHRU */
+      case 11: val = (val << 4) | u__hexc2int(s[len-11]); /* FALLTHRU */
+      case 10: val = (val << 4) | u__hexc2int(s[len-10]); /* FALLTHRU */
+      case  9: val = (val << 4) | u__hexc2int(s[len- 9]); /* FALLTHRU */
+      case  8: val = (val << 4) | u__hexc2int(s[len- 8]); /* FALLTHRU */
+      case  7: val = (val << 4) | u__hexc2int(s[len- 7]); /* FALLTHRU */
+      case  6: val = (val << 4) | u__hexc2int(s[len- 6]); /* FALLTHRU */
+      case  5: val = (val << 4) | u__hexc2int(s[len- 5]); /* FALLTHRU */
+      case  4: val = (val << 4) | u__hexc2int(s[len- 4]); /* FALLTHRU */
+      case  3: val = (val << 4) | u__hexc2int(s[len- 3]); /* FALLTHRU */
+      case  2: val = (val << 4) | u__hexc2int(s[len- 2]); /* FALLTHRU */
+      case  1: val = (val << 4) | u__hexc2int(s[len- 1]); /* FALLTHRU */
       }
 #endif
 
@@ -109,15 +109,15 @@ __pure unsigned long u_strtoul(const char* restrict s, const char* restrict e)
 #ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues (MISSING_BREAK) */
    switch (len)
       {
-      case 10: val += (s[len-10] - '0') * 1000000000UL;
-      case  9: val += (s[len- 9] - '0') * 100000000UL;
-      case  8: val += (s[len- 8] - '0') * 10000000UL;
-      case  7: val += (s[len- 7] - '0') * 1000000UL;
-      case  6: val += (s[len- 6] - '0') * 100000UL;
-      case  5: val += (s[len- 5] - '0') * 10000UL;
-      case  4: val += (s[len- 4] - '0') * 1000UL;
-      case  3: val += (s[len- 3] - '0') * 100UL;
-      case  2: val += (s[len- 2] - '0') * 10UL;
+      case 10: val += (s[len-10] - '0') * 1000000000UL; /* FALLTHRU */
+      case  9: val += (s[len- 9] - '0') * 100000000UL; /* FALLTHRU */
+      case  8: val += (s[len- 8] - '0') * 10000000UL; /* FALLTHRU */
+      case  7: val += (s[len- 7] - '0') * 1000000UL; /* FALLTHRU */
+      case  6: val += (s[len- 6] - '0') * 100000UL; /* FALLTHRU */
+      case  5: val += (s[len- 5] - '0') * 10000UL; /* FALLTHRU */
+      case  4: val += (s[len- 4] - '0') * 1000UL; /* FALLTHRU */
+      case  3: val += (s[len- 3] - '0') * 100UL; /* FALLTHRU */
+      case  2: val += (s[len- 2] - '0') * 10UL; /* FALLTHRU */
       case  1: val += (s[len- 1] - '0');
       }
 #endif
@@ -140,26 +140,26 @@ __pure uint64_t u_strtoull(const char* restrict s, const char* restrict e)
 #ifndef U_COVERITY_FALSE_POSITIVE /* Control flow issues (MISSING_BREAK) */
    switch (len)
       {
-      case 20: val += (s[len-20] - '0') * 10000000000000000000ULL;
-      case 19: val += (s[len-19] - '0') * 1000000000000000000ULL;
-      case 18: val += (s[len-18] - '0') * 100000000000000000ULL;
-      case 17: val += (s[len-17] - '0') * 10000000000000000ULL;
-      case 16: val += (s[len-16] - '0') * 1000000000000000ULL;
-      case 15: val += (s[len-15] - '0') * 100000000000000ULL;
-      case 14: val += (s[len-14] - '0') * 10000000000000ULL;
-      case 13: val += (s[len-13] - '0') * 1000000000000ULL;
-      case 12: val += (s[len-12] - '0') * 100000000000ULL;
-      case 11: val += (s[len-11] - '0') * 10000000000ULL;
-      case 10: val += (s[len-10] - '0') * 1000000000ULL;
-      case  9: val += (s[len- 9] - '0') * 100000000ULL;
-      case  8: val += (s[len- 8] - '0') * 10000000ULL;
-      case  7: val += (s[len- 7] - '0') * 1000000ULL;
-      case  6: val += (s[len- 6] - '0') * 100000ULL;
-      case  5: val += (s[len- 5] - '0') * 10000ULL;
-      case  4: val += (s[len- 4] - '0') * 1000ULL;
-      case  3: val += (s[len- 3] - '0') * 100ULL;
-      case  2: val += (s[len- 2] - '0') * 10ULL;
-      case  1: val += (s[len- 1] - '0');
+      case 20: val += (s[len-20] - '0') * 10000000000000000000ULL; /* FALLTHRU */
+      case 19: val += (s[len-19] - '0') * 1000000000000000000ULL; /* FALLTHRU */
+      case 18: val += (s[len-18] - '0') * 100000000000000000ULL; /* FALLTHRU */
+      case 17: val += (s[len-17] - '0') * 10000000000000000ULL; /* FALLTHRU */
+      case 16: val += (s[len-16] - '0') * 1000000000000000ULL; /* FALLTHRU */
+      case 15: val += (s[len-15] - '0') * 100000000000000ULL; /* FALLTHRU */
+      case 14: val += (s[len-14] - '0') * 10000000000000ULL; /* FALLTHRU */
+      case 13: val += (s[len-13] - '0') * 1000000000000ULL; /* FALLTHRU */
+      case 12: val += (s[len-12] - '0') * 100000000000ULL; /* FALLTHRU */
+      case 11: val += (s[len-11] - '0') * 10000000000ULL; /* FALLTHRU */
+      case 10: val += (s[len-10] - '0') * 1000000000ULL; /* FALLTHRU */
+      case  9: val += (s[len- 9] - '0') * 100000000ULL; /* FALLTHRU */
+      case  8: val += (s[len- 8] - '0') * 10000000ULL; /* FALLTHRU */
+      case  7: val += (s[len- 7] - '0') * 1000000ULL; /* FALLTHRU */
+      case  6: val += (s[len- 6] - '0') * 100000ULL; /* FALLTHRU */
+      case  5: val += (s[len- 5] - '0') * 10000ULL; /* FALLTHRU */
+      case  4: val += (s[len- 4] - '0') * 1000ULL; /* FALLTHRU */
+      case  3: val += (s[len- 3] - '0') * 100ULL; /* FALLTHRU */
+      case  2: val += (s[len- 2] - '0') * 10ULL; /* FALLTHRU */
+      case  1: val += (s[len- 1] - '0');        /* FALLTHRU */
       }
 #endif
 
@@ -1897,7 +1897,7 @@ __pure bool u_dosmatch_ext(const char* restrict s, uint32_t n1, const char* rest
                }
             }
 
-         /* fall through */
+         /* FALLTHRU */
 
          default:
             {

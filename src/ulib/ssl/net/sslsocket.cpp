@@ -1612,7 +1612,7 @@ int USSLSocket::OCSP_resp_callback(SSL* _ssl, void* data)
 // U_DEBUG("ocsp: OCSP_resp_callback(%p) - U_SRV_VALID_OCSP_STAPLE = %#19D now = %#19D", _ssl, U_SRV_VALID_OCSP_STAPLE, u_now->tv_sec)
 
    if (U_SRV_LEN_OCSP_STAPLE  &&
-       U_SRV_VALID_OCSP_STAPLE >= u_now->tv_sec)
+       U_SRV_VALID_OCSP_STAPLE >= (uint32_t)u_now->tv_sec)
       {
       unsigned char* p;
 

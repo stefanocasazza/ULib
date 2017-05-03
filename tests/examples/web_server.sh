@@ -2,6 +2,8 @@
 
 . ../.function
 
+(cd benchmark; rm -f  db; creat_link FrameworkBenchmarks/ULib/db  db; sync)
+
 #DOC_ROOT=ruby/blog
  DOC_ROOT=benchmark/docroot
 
