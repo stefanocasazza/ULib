@@ -1003,6 +1003,9 @@ public:
 
    void* ptr;               // data
    UVector<UString>* array; // content, header, gzip(content, header)
+#ifndef U_HTTP2_DISABLE
+   UVector<UString>* http2; //          header, gzip(header)
+#endif
    time_t mtime;            // time of last modification
    time_t expire;           // expire time of the entry
    uint32_t size;           // size content
@@ -1109,11 +1112,41 @@ public:
 
    static UString getDataFromCache(int idx);
 
-   static UString   getBodyFromCache() { return getDataFromCache(0); }
-   static UString getHeaderFromCache() { return getDataFromCache(1); };
+   static UString getBodyFromCache()         { return getDataFromCache(0); }
+   static UString getBodyCompressFromCache() { return getDataFromCache(2); }
 
-   static UString   getBodyCompressFromCache() { return getDataFromCache(2); }
+#ifdef U_HTTP2_DISABLE
+   static UString getHeaderFromCache()         { return getDataFromCache(1); };
    static UString getHeaderCompressFromCache() { return getDataFromCache(3); };
+#else
+   static UString getHeaderFromCache()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::getHeaderFromCache()")
+
+      UString result;
+
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+           if (U_http_version != '2') result = getDataFromCache(1);
+      else if (file_data->http2)      result = file_data->http2->operator[](0);
+
+      U_RETURN_STRING(result);
+      }
+
+   static UString getHeaderCompressFromCache()
+      {
+      U_TRACE_NO_PARAM(0, "UHTTP::getHeaderCompressFromCache()")
+
+      UString result;
+
+      U_INTERNAL_DUMP("U_http_version = %C", U_http_version)
+
+           if (U_http_version != '2') result = getDataFromCache(3);
+      else if (file_data->http2)      result = file_data->http2->operator[](1);
+
+      U_RETURN_STRING(result);
+      }
+#endif
 
    static UFileCacheData* getFileInCache(const char* path, uint32_t len)
       {
@@ -1252,6 +1285,9 @@ template <> inline void u_destroy(const UHTTP::UFileCacheData* elem)
       {
       ((UHTTP::UFileCacheData*)elem)->ptr   =
       ((UHTTP::UFileCacheData*)elem)->array = U_NULLPTR;
+#  ifndef U_HTTP2_DISABLE
+      ((UHTTP::UFileCacheData*)elem)->http2 = U_NULLPTR;
+#  endif
       }
 
    delete elem;

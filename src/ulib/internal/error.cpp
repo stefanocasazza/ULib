@@ -59,7 +59,7 @@ static uint32_t execute_addr2line(char* buffer, uint32_t buffer_size, const char
 
       (void) snprintf(buf, sizeof(buf), "%p", addr);
 
-      (void) execlp("addr2line", "addr2line", buf, "-f", "-C", "-e", image, U_NULLPTR);
+      (void) execlp("addr2line", "addr2line", buf, "-f", "-C", "-e", image, (char*)U_NULLPTR); // to avoid 'warning: missing sentinel in function call'
 
       abort();
       }
@@ -140,7 +140,7 @@ void UError::stackDump()
 #     endif
          (void) dup2(fd_err, STDERR_FILENO);
 
-         (void) execlp("gdb", "gdb", "--nx", "--batch", "-ex", "thread apply all bt full", buf, name_buf, U_NULLPTR); // thread apply all bt full 20
+         (void) execlp("gdb", "gdb", "--nx", "--batch", "-ex", "thread apply all bt full", buf, name_buf, (char*)U_NULLPTR); // thread apply all bt full 20
 
          abort();
          }

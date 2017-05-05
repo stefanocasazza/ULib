@@ -574,41 +574,63 @@ int USocketExt::writev(USocket* sk, struct iovec* iov, int iovcnt, uint32_t coun
    U_INTERNAL_ASSERT_MAJOR(count, 0)
    U_INTERNAL_ASSERT(sk->isConnected())
 
+   int byte_written;
+
 #if defined(USE_LIBSSL) && !defined(_MSWINDOWS_)
    if (sk->isSSLActive())
 #endif
 #if defined(USE_LIBSSL) ||  defined(_MSWINDOWS_)
    {
-   // OpenSSL has no SSL_writev() so we copy several bufs into our buffer before the SSL_write() call to decrease a SSL overhead
-
-   U_INTERNAL_ASSERT_MINOR(iovcnt, 255)
-
-   int sz, byte_written;
-   UString buffer(count);
-   struct iovec _iov[256];
-
-   for (int i = 0; i < iovcnt; ++i)
+   if (count <= (16U * 1024U)) // OpenSSL has no SSL_writev() so we copy several bufs into our buffer (16k) before the SSL_write() call to decrease a SSL overhead
       {
-      if ((sz = _iov[i].iov_len = iov[i].iov_len)) (void) buffer.append((const char*)(_iov[i].iov_base = iov[i].iov_base), sz);
+      static char buffer[16U * 1024U];
+
+      char* ptr = buffer;
+      struct iovec _iov = { ptr, count };
+
+      for (int i = 0; i < iovcnt; ++i)
+         {
+         if (iov[i].iov_len)
+            {
+            U_MEMCPY(ptr, (const char*)iov[i].iov_base, iov[i].iov_len);
+                     ptr +=                             iov[i].iov_len;
+            }
+         }
+
+      byte_written = _writev(sk, &_iov, 1, count, timeoutMS);
+
+      if (byte_written < (int)count)
+         {
+         if (byte_written) iov_resize(iov, iovcnt, byte_written);
+         }
       }
-
-   U_INTERNAL_ASSERT_EQUALS(count, buffer.size())
-
-   _iov[iovcnt].iov_len  = count;
-   _iov[iovcnt].iov_base = buffer.data();
-
-   byte_written = _writev(sk, _iov+iovcnt, 1, count, timeoutMS);
-
-   if (byte_written < (int)count)
+   else
       {
-      if (byte_written) iov_resize(iov, iovcnt, byte_written);
+      int sz;
+      ssize_t value;
+
+      byte_written = 0;
+
+      for (int i = 0; i < iovcnt; ++i)
+         {
+         if ((sz = iov[i].iov_len))
+            {
+            value = _writev(sk, iov+i, 1, sz, timeoutMS);
+
+            byte_written += value;
+
+            if (value < sz) break;
+
+            iov[i].iov_len = 0;
+            }
+         }
       }
 
    U_RETURN(byte_written);
    }
 #endif
 
-   int byte_written = _writev(sk, iov, iovcnt, count, timeoutMS);
+   byte_written = _writev(sk, iov, iovcnt, count, timeoutMS);
 
    U_RETURN(byte_written);
 }

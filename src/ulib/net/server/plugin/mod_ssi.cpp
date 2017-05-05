@@ -1053,7 +1053,7 @@ int USSIPlugIn::handlerRequest()
             U_INTERNAL_ASSERT_POINTER(UHTTP::file_data->array)
             U_INTERNAL_ASSERT_EQUALS( UHTTP::file_data->array->size(), 2)
 
-            (void) header->append(UHTTP::getHeaderFromCache()); // NB: after now 'file_data' can change...
+            (void) header->append(UHTTP::getDataFromCache(1)); // NB: after now 'file_data' can change...
 
             *body = (UHTTP::isGETorHEAD() &&
                      *UClientImage_Base::body

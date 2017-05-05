@@ -32,6 +32,8 @@ UHTTP2::Connection*           UHTTP2::vConnection;
 UHTTP2::Connection*           UHTTP2::pConnection;
 UHTTP2::HpackHeaderTableEntry UHTTP2::hpack_static_table[61];
 
+#define U_HTTP2_TIMEOUT_MS (20L * 1000L) // 20 second timeout
+
 #ifdef DEBUG
 #  ifndef UINT16_MAX
 #  define UINT16_MAX 65535
@@ -2099,7 +2101,7 @@ loop:
       {
       if (UClientImage_Base::rbuffer->size() == UClientImage_Base::rstart) resetDataRead();
 
-      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, U_SSL_TIMEOUT_MS, UHTTP::request_read_timeout) == false)
+      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false)
          {
          nerror = ERROR_INCOMPLETE;
 
@@ -2141,7 +2143,7 @@ loop:
                                                              UClientImage_Base::rstart = 0;
          }
 
-      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, len, U_SSL_TIMEOUT_MS, UHTTP::request_read_timeout) == false)
+      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, len, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false)
          {
          nerror = ERROR_INCOMPLETE;
 
@@ -2571,6 +2573,25 @@ unsigned char* UHTTP2::hpackEncodeHeader(unsigned char* dst, const UString& name
    U_RETURN_POINTER(dst, unsigned char);
 }
 
+unsigned char* UHTTP2::setHpackHeaders(unsigned char* dst, const UString& headers)
+{
+   U_TRACE(0, "UHTTP2::setHpackHeaders(%p,%V)", dst, headers.rep)
+
+   UString row, key;
+   UVector<UString> vext(20);
+
+   for (uint32_t i = 0, n = vext.split(headers, U_CRLF); i < n; ++i)
+      {
+      row = vext[i];
+
+      uint32_t pos = row.find_first_of(':');
+
+      dst = hpackEncodeHeader(dst, row.substr(0U, pos), row.substr(pos+2)); 
+      }
+
+   U_RETURN_POINTER(dst, unsigned char);
+}
+
 void UHTTP2::handlerResponse()
 {
    U_TRACE_NO_PARAM(0, "UHTTP2::handlerResponse()")
@@ -2744,21 +2765,26 @@ void UHTTP2::handlerResponse()
 
    if (sz2)
       {
-      UString row, key;
-      UVector<UString> vext(20);
-
-      for (uint32_t i = 0, n = vext.split(*UHTTP::ext, U_CRLF); i < n; ++i)
+      if (UClientImage_Base::isRequestFileCacheProcessed())
          {
-         row = vext[i];
+         U_ASSERT_EQUALS(UHTTP::ext->isPrintable(0, true), false)
 
-         uint32_t pos = row.find_first_of(':');
+         U_MEMCPY(dst, UHTTP::ext->data(), sz2);
 
-         dst = hpackEncodeHeader(dst, row.substr(0U, pos), row.substr(pos+2)); 
+         dst += sz2;
+         }
+      else
+         {
+         U_ASSERT(UHTTP::ext->isPrintable(0, true))
+
+         dst = setHpackHeaders(dst, *UHTTP::ext);
          }
       }
-   else // content-length: 0
+   else
       {
       /**
+       * content-length: 0
+       *
        * dst = hpackEncodeInt(dst, 28, (1<<4)-1, 0x00);
        * dst = hpackEncodeString(dst, U_CONSTANT_TO_PARAM("0"), false);
        */
@@ -3346,7 +3372,7 @@ next1: // maybe we have read more data than necessary...
 
          UClientImage_Base::rbuffer->setEmptyForce();
 
-         if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, U_SSL_TIMEOUT_MS, UHTTP::request_read_timeout) == false) goto err;
+         if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false) goto err;
 
          UClientImage_Base::rstart = 0;
 

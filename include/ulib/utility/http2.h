@@ -293,6 +293,8 @@ protected:
    static void writeData(struct iovec* iov, bool bdata, bool flag);
    static void handlerDelete(UClientImage_Base* pclient, bool& bsocket_open);
 
+   static unsigned char* setHpackHeaders(unsigned char* dst, const UString& headers);
+
    static void startRequest()
       {
       U_TRACE_NO_PARAM(0, "UHTTP2::startRequest()")
@@ -303,7 +305,7 @@ protected:
 
       U_http_version = '2';
 
-      UClientImage_Base::prepareForCallToHandlerRead();
+      UClientImage_Base::resetBuffer();
       }
 
    static void resetDataRead()

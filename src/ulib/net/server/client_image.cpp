@@ -1186,10 +1186,10 @@ data_missing:
       }
 #endif
 
+   resetBuffer();
+
             size_request =
    U_ClientImage_request = 0;
-
-   prepareForCallToHandlerRead();
 
    U_ClientImage_state = callerHandlerRead();
 

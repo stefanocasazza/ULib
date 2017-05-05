@@ -303,6 +303,9 @@ UHTTP::UFileCacheData::UFileCacheData()
    U_TRACE_REGISTER_OBJECT(0, UFileCacheData, "")
 
    ptr = array = U_NULLPTR;
+#ifndef U_HTTP2_DISABLE
+   http2 = U_NULLPTR;
+#endif
    size        = 0;
    mode        = 0;
    mtime       = 0;
@@ -321,10 +324,12 @@ UHTTP::UFileCacheData::UFileCacheData(const UHTTP::UFileCacheData& elem)
    ptr        = elem.ptr;        // data
    link       = elem.link;       // true => ptr point to another entry
    array      = elem.array;      // content, header, gzip(content, header)
+#ifndef U_HTTP2_DISABLE
+   http2      = elem.http2;      //          header, gzip(header)
+#endif
    size       = elem.size;       // size content
    mtime      = elem.mtime;      // time of last modification
    mime_index = elem.mime_index; // index file mime type
-
    // check expire time of the entry
 
    expire = (u_now->tv_sec < elem.expire ? elem.expire : U_TIME_FOR_EXPIRE);
@@ -349,6 +354,9 @@ UHTTP::UFileCacheData::~UFileCacheData()
       }
 
    if (array) delete array;
+#ifndef U_HTTP2_DISABLE
+   if (http2) delete http2;
+#endif
 
 #if defined(HAVE_SYS_INOTIFY_H) && defined(U_HTTP_INOTIFY_SUPPORT)
    if (wd != -1                      &&
@@ -420,6 +428,9 @@ U_NO_EXPORT bool UHTTP::checkForInotifyDirectory(UStringRep* key, void* value)
       U_INTERNAL_ASSERT(key->isNullTerminated())
       U_INTERNAL_ASSERT_EQUALS(cptr->ptr, U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(cptr->array, U_NULLPTR)
+#  ifndef U_HTTP2_DISABLE
+      U_INTERNAL_ASSERT_EQUALS(cptr->http2, U_NULLPTR)
+#  endif
 
       cptr->wd = U_SYSCALL(inotify_add_watch, "%d,%s,%u", UServer_Base::handler_inotify->fd, key->data(), IN_ONLYDIR | IN_CREATE | IN_DELETE | IN_MODIFY);
       }
@@ -506,8 +517,7 @@ void UHTTP::in_READ()
       bool binotify_path; 
       union uuinotify_event event;
 
-      while (i < length)
-         {
+      do {
          event.p = buffer + i;
 
          i += sizeof(struct inotify_event);
@@ -620,6 +630,7 @@ void UHTTP::in_READ()
             i += event.ip->len;
             }
          }
+      while (i < length);
       }
 
    file_data = U_NULLPTR;
@@ -7719,6 +7730,9 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    const char* motivation = U_NULLPTR;
 
    U_NEW(UVector<UString>, file_data->array, UVector<UString>(4U));
+#ifndef U_HTTP2_DISABLE
+   U_NEW(UVector<UString>, file_data->http2, UVector<UString>(2U));
+#endif
 
    file_data->array->push_back(content);
 
@@ -7727,6 +7741,17 @@ U_NO_EXPORT void UHTTP::putDataInCache(const UString& fmt, UString& content)
    (void) header.shrink();
 
    file_data->array->push_back(header);
+
+#ifndef U_HTTP2_DISABLE
+   UString hpack(U_CAPACITY);
+   unsigned char* dst = UHTTP2::setHpackHeaders((unsigned char*)hpack.data(), header);
+
+   hpack.size_adjust((const char*)dst);
+
+   (void) hpack.shrink();
+
+   file_data->http2->push_back(hpack);
+#endif
 
    if (u_is_img(mime_index))
       {
@@ -7853,6 +7878,18 @@ next2:
          (void) header.shrink();
 
          file_data->array->push_back(header);
+
+#     ifndef U_HTTP2_DISABLE
+         hpack.setBuffer(U_CAPACITY);
+
+         dst = UHTTP2::setHpackHeaders((unsigned char*)hpack.data(), header);
+
+         hpack.size_adjust((const char*)dst);
+
+         (void) hpack.shrink();
+
+         file_data->http2->push_back(hpack);
+#     endif
          }
       }
 
@@ -10916,6 +10953,9 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
    d.mode  = 0;         // file type
    d.link  = false;     // true => ptr point to another entry
    d.array = U_NULLPTR;
+#ifndef U_HTTP2_DISABLE
+   d.http2 = U_NULLPTR;
+#endif
 
    if (is.good())
       {
@@ -10990,6 +11030,9 @@ U_EXPORT istream& operator>>(istream& is, UHTTP::UFileCacheData& d)
             if (vec.empty() == false)
                {
                U_NEW(UVector<UString>, d.array, UVector<UString>(4U));
+#           ifndef U_HTTP2_DISABLE
+               U_NEW(UVector<UString>, d.http2, UVector<UString>(6U));
+#           endif
 
                UString encoded, decoded;
 

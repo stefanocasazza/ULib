@@ -436,9 +436,9 @@ protected:
       U_RETURN(U_NOTIFIER_OK);
       }
 
-   static void prepareForCallToHandlerRead()
+   static void resetBuffer()
       {
-      U_TRACE_NO_PARAM(0, "UClientImage::prepareForCallToHandlerRead()")
+      U_TRACE_NO_PARAM(0, "UClientImage::resetBuffer()")
 
       body->clear();
 
