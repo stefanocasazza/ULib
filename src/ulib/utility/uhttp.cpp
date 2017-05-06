@@ -4602,10 +4602,15 @@ void UHTTP::writeUploadData(const char* ptr, uint32_t sz)
 
    U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp16(dir.data()), U_MULTICHAR_CONSTANT16('u','p'))
 
-   dest.snprintf(U_CONSTANT_TO_PARAM("%v/%v"), dir.rep, basename.rep);
+   (void) dest.append(dir);
 
-   if (UFile::writeTo(dest, *UClientImage_Base::body)) UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
-   else                                                U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+   if (dest.last_char() != '/') dest.push_back('/');
+
+   (void) dest.append(basename);
+
+   if (UFile::writeTo(dest, *UClientImage_Base::body) == false) U_http_info.nResponseCode = HTTP_INTERNAL_ERROR;
+
+   UClientImage_Base::body->clear(); // clean body to avoid writev() in response...
 }
 
 int UHTTP::processRequest()
