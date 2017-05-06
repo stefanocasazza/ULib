@@ -3468,7 +3468,24 @@ read_request:
 loop: U_DUMP("pStream->id = %u pStream->state = (%u, %s) pStream->headers(%u) = %V pStream->clength = %u pStream->body(%u) = %V",
               pStream->id, pStream->state, getStreamStatusDescription(), pStream->headers.size(), pStream->headers.rep, pStream->clength, pStream->body.size(), pStream->body.rep)
 
-      if (pStream->state <= STREAM_STATE_OPEN) goto read_request;
+      if (pStream->state <= STREAM_STATE_OPEN)
+         {
+         if (pStream->body)
+            {
+            // maybe we must wait for other DATA frames for the stream...
+
+            U_INTERNAL_DUMP("pConnection->inp_window = %d", pConnection->inp_window)
+
+            if (pConnection->inp_window < 8192) // Send Window Update if current window size is not sufficient
+               {
+               pConnection->inp_window = HTTP2_MAX_WINDOW_SIZE;
+
+               sendWindowUpdate();
+               }
+            }
+
+         goto read_request;
+         }
 
       if (pStream->headers)
          {
