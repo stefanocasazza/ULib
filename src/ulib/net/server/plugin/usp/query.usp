@@ -23,7 +23,7 @@ static void usp_fork_query()
       {
       U_NEW(UOrmStatement, pstmt_query, UOrmStatement(*psql_query, U_CONSTANT_TO_PARAM("SELECT randomNumber FROM World WHERE id = ?")));
 
-      if (pstmt_query == 0)
+      if (pstmt_query == U_NULLPTR)
          {
          U_WARNING("usp_fork_query(): we cound't connect to db");
 

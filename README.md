@@ -13,7 +13,7 @@ It include as application example a powerful search engine with relative [web in
 
 The current version offers the following features :
 
-   * HTTP/1.0 and 1.1 protocols supported and experimental implementations of HTTP/2 ([h2spec compliant](https://github.com/summerwind/h2spec)).
+   * HTTP/1.0, 1.1 and HTTP/2 ([h2spec compliant](https://github.com/summerwind/h2spec)) protocols supported.
    * Persistent connections for HTTP/1.1 and Keep-Alive support for HTTP/1.0.
    * Browser cache management (headers: If-Modified-Since/Last-modified).
    * Chunk-encoding transfers support.
@@ -42,6 +42,7 @@ The current version offers the following features :
    * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
    * Support for running Ruby on Rails applications natively (experimental).
    * Support for running natively PHP applications whith a php (embedded) library (experimental).
+   * Support for load balance support between physical server via udp brodcast (experimental).
    * Preforking mode to improve concurrency with dedicated process for long-time request.
    * Support for Windows (without preforking).
    * Customizable builds (you can remove unneeded functionality).
@@ -77,6 +78,10 @@ It is the main software component of [city of Florence wireless network](http://
 ## Benchmark
 
 userver application server is since 10th round in the [TechEmpower's web framework benchmarks](http://www.techempower.com/benchmarks). This independent work tests a large number of frameworks and platforms against a set of tests common to web applications, such as JSON serialization, database queries and templating.
+
+## Getting Started With ULib (donated generously by jonathan kelly)
+
+* [ulib.html](https://github.com/stefanocasazza/ULib/blob/master/ulib.html)
 
 ## Contributing
 

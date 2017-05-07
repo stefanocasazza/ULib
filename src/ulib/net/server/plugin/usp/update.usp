@@ -25,8 +25,8 @@ static void usp_fork_update()
       U_NEW(UOrmStatement, pstmt1, UOrmStatement(*psql_update, U_CONSTANT_TO_PARAM("SELECT randomNumber FROM World WHERE id = ?")));
       U_NEW(UOrmStatement, pstmt2, UOrmStatement(*psql_update, U_CONSTANT_TO_PARAM("UPDATE World SET randomNumber = ? WHERE id = ?")));
 
-      if (pstmt1 == 0 ||
-          pstmt2 == 0)
+      if (pstmt1 == U_NULLPTR ||
+          pstmt2 == U_NULLPTR)
          {
          U_WARNING("usp_fork_update(): we cound't connect to db");
 

@@ -3,7 +3,7 @@
 AUTOMAKE_OPTIONS = no-dependencies ## dist-shar dist-zip
 ACLOCAL_AMFLAGS = -I m4
 
-EXTRA_DIST = cdb configure.help TODO LICENSE* README* *.spec* \
+EXTRA_DIST = cdb configure.help TODO LICENSE* README* *.spec* ulib.html \
 	 			 ULib.m4 rpm.sh rpmpkgreq.lst rpmpkgreq.lst.suse openwrt \
 	 			 doc/Doxyfile doc/readme.txt shtool *.awk .travis.yml autogen.sh nativejson-benchmark \
 				 fuzz/http1-corpus fuzz/http2-corpus fuzz/build_libFuzzer.sh fuzz/Makefile.in fuzz/Makefile.am fuzz/uclient_fuzzer.cpp fuzz/uclient.cfg

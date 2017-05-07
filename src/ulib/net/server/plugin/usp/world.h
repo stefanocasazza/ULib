@@ -55,6 +55,24 @@ public:
 		json.fromJSON(U_JSON_METHOD_HANDLER(randomNumber, unsigned int));
 		}
 
+	// ORM
+
+	void bindParam(UOrmStatement* stmt)
+		{
+		U_TRACE(0, "World::bindParam(%p)", stmt)
+
+		stmt->bindParam(U_ORM_TYPE_HANDLER(id,				 unsigned int));
+		stmt->bindParam(U_ORM_TYPE_HANDLER(randomNumber, unsigned int));
+		}
+
+	void bindResult(UOrmStatement* stmt)
+		{
+		U_TRACE(0, "World::bindResult(%p)", stmt)
+
+		stmt->bindResult(U_ORM_TYPE_HANDLER(id,			  unsigned int));
+		stmt->bindResult(U_ORM_TYPE_HANDLER(randomNumber, unsigned int));
+		}
+
 #ifdef DEBUG
 	const char* dump(bool breset) const
 		{
@@ -68,34 +86,11 @@ public:
 			return UObjectIO::buffer_output;
 			}
 
-		return 0;
+		return U_NULLPTR;
 		}
 #endif
 
 private:
 	U_DISALLOW_ASSIGN(World)
-};
-
-// ORM TEMPLATE SPECIALIZATIONS
-
-template <> class U_EXPORT UOrmTypeHandler<World> : public UOrmTypeHandler_Base {
-public:
-	explicit UOrmTypeHandler(World& val) : UOrmTypeHandler_Base(&val) {}
-
-	void bindParam(UOrmStatement* stmt) const
-		{
-		U_TRACE(0, "UOrmTypeHandler<World>::bindParam(%p)", stmt)
-
-		stmt->bindParam(U_ORM_TYPE_HANDLER(World, id,				unsigned int));
-		stmt->bindParam(U_ORM_TYPE_HANDLER(World, randomNumber,	unsigned int));
-		}
-
-	void bindResult(UOrmStatement* stmt)
-		{
-		U_TRACE(0, "UOrmTypeHandler<World>::bindResult(%p)", stmt)
-
-		stmt->bindResult(U_ORM_TYPE_HANDLER(World, id,				unsigned int));
-		stmt->bindResult(U_ORM_TYPE_HANDLER(World, randomNumber,	unsigned int));
-		}
 };
 #endif

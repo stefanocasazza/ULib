@@ -87,6 +87,24 @@ public:
 		json.fromJSON(U_JSON_METHOD_HANDLER(message, UString));
 		}
 
+	// ORM
+
+	void bindParam(UOrmStatement* stmt)
+		{
+		U_TRACE(0, "Fortune::bindParam(%p)", stmt)
+
+		stmt->bindParam(U_ORM_TYPE_HANDLER(id,		  unsigned int));
+		stmt->bindParam(U_ORM_TYPE_HANDLER(message, UString));
+		}
+
+	void bindResult(UOrmStatement* stmt)
+		{
+		U_TRACE(0, "Fortune::bindResult(%p)", stmt)
+
+		stmt->bindResult(U_ORM_TYPE_HANDLER(id,		unsigned int));
+		stmt->bindResult(U_ORM_TYPE_HANDLER(message, UString));
+		}
+
 #ifdef DEBUG
 	const char* dump(bool breset) const
 		{
@@ -100,34 +118,11 @@ public:
 			return UObjectIO::buffer_output;
 			}
 
-		return 0;
+		return U_NULLPTR;
 		}
 #endif
 
 private:
 	U_DISALLOW_ASSIGN(Fortune)
-};
-
-// ORM TEMPLATE SPECIALIZATIONS
-
-template <> class U_EXPORT UOrmTypeHandler<Fortune> : public UOrmTypeHandler_Base {
-public:
-	explicit UOrmTypeHandler(Fortune& val) : UOrmTypeHandler_Base(&val) {}
-
-	void bindParam(UOrmStatement* stmt) const
-		{
-		U_TRACE(0, "UOrmTypeHandler<Fortune>::bindParam(%p)", stmt)
-
-		stmt->bindParam(U_ORM_TYPE_HANDLER(Fortune, id,		  unsigned int));
-		stmt->bindParam(U_ORM_TYPE_HANDLER(Fortune, message, UString));
-		}
-
-	void bindResult(UOrmStatement* stmt)
-		{
-		U_TRACE(0, "UOrmTypeHandler<Fortune>::bindResult(%p)", stmt)
-
-		stmt->bindResult(U_ORM_TYPE_HANDLER(Fortune, id,		unsigned int));
-		stmt->bindResult(U_ORM_TYPE_HANDLER(Fortune, message, UString));
-		}
 };
 #endif

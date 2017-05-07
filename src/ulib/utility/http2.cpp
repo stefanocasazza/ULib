@@ -2406,6 +2406,10 @@ window_update:
             pConnection->inp_window = (HTTP2_MAX_WINDOW_SIZE + pConnection->inp_window);
 
             sendWindowUpdate();
+
+            U_INTERNAL_DUMP("nerror = %u", nerror)
+
+            if (nerror != NO_ERROR) goto end;
             }
 
          goto loop;
@@ -3478,9 +3482,15 @@ loop: U_DUMP("pStream->id = %u pStream->state = (%u, %s) pStream->headers(%u) = 
 
             if (pConnection->inp_window < 8192) // Send Window Update if current window size is not sufficient
                {
-               pConnection->inp_window = HTTP2_MAX_WINDOW_SIZE;
+               pConnection->inp_window = HTTP2_MAX_WINDOW_SIZE - pConnection->inp_window;
 
                sendWindowUpdate();
+
+               U_INTERNAL_DUMP("nerror = %u", nerror)
+
+               if (nerror != NO_ERROR) goto err;
+
+               pConnection->inp_window = HTTP2_MAX_WINDOW_SIZE;
                }
             }
 

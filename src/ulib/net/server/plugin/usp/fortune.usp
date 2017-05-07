@@ -24,7 +24,7 @@ static void usp_fork_fortune()
       {
       U_NEW(UOrmStatement, pstmt_fortune, UOrmStatement(*psql_fortune, U_CONSTANT_TO_PARAM("SELECT id, message FROM Fortune")));
 
-      if (pstmt_fortune == 0)
+      if (pstmt_fortune == U_NULLPTR)
          {
          U_WARNING("usp_fork_fortune(): we cound't connect to db");
 

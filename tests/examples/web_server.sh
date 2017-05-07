@@ -68,6 +68,7 @@ userver {
 #REQ_TIMEOUT 300
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
+ ORM_DRIVER sqlite
  DOCUMENT_ROOT  benchmark/docroot
  PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs

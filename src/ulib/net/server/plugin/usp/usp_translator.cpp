@@ -36,7 +36,7 @@
 "\t\n" \
 "%s" \
 "%s" \
-"\n\tif (UHTTP::db_session == 0) UHTTP::initSession();\n" \
+"\n\tif (UHTTP::db_session == U_NULLPTR) UHTTP::initSession();\n" \
 "}"
 
 #define USP_TEMPLATE \
@@ -533,8 +533,8 @@ public:
          buffer.snprintf(U_CONSTANT_TO_PARAM(USP_SESSION_INIT),
                          size, ptr,
                          size, ptr,
-                         (bsession ? "\n\tif (UHTTP::data_session == 0)   U_NEW(UDataSession, UHTTP::data_session, UDataSession);\n\t" : ""),
-                         (bstorage ? "\n\tif (UHTTP::data_storage == 0) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)); }\n\t" : ""));
+                         (bsession ? "\n\tif (UHTTP::data_session == U_NULLPTR)   U_NEW(UDataSession, UHTTP::data_session, UDataSession);\n\t" : ""),
+                         (bstorage ? "\n\tif (UHTTP::data_storage == U_NULLPTR) { U_NEW(UDataSession, UHTTP::data_storage, UDataSession(*UString::str_storage_keyid)); }\n\t" : ""));
 
          (void) declaration.append(buffer);
          }

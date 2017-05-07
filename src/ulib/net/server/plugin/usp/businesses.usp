@@ -75,7 +75,7 @@ public:
          return UObjectIO::buffer_output;
          }
 
-      return 0;
+      return U_NULLPTR;
       }
 #endif
 
@@ -178,7 +178,7 @@ public:
          return UObjectIO::buffer_output;
          }
 
-      return 0;
+      return U_NULLPTR;
       }
 #endif
 
@@ -313,7 +313,7 @@ public:
 
    HTTP2Push() : UEventTime(15L * 60L, 0L), message(U_STRING_FROM_CONSTANT("{aps:{content-available:1},check:health}")), token(U_CAPACITY)
       {
-      U_TRACE_REGISTER_OBJECT(0, HTTP2Push, "", 0)
+      U_TRACE_REGISTER_OBJECT(0, HTTP2Push, "", U_NULLPTR)
 
 #  ifdef USE_LIBCURL
       UCURL::initHTTP2Push("https://api.development.push.apple.com", "/certificates/samplepush/development.pem", "GoGo.Hopscotch");
@@ -337,7 +337,7 @@ public:
 
       // child
 
-      token.snprintf(U_CONSTANT_TO_PARAM("dbdaeae86abcde56rtyww1859fb41d2c7b2cberrttyyy053ec48987847"), 0);
+      (void) token.assign(U_CONSTANT_TO_PARAM("dbdaeae86abcde56rtyww1859fb41d2c7b2cberrttyyy053ec48987847"));
 
 #  ifdef USE_LIBCURL
       if (UCURL::sendHTTP2Push(token, message) == false)
@@ -381,7 +381,7 @@ static void usp_fork_businesses()
 
    U_NEW(UMongoDBClient, mc, UMongoDBClient);
 
-   if (mc->connect(0,0) == false)
+   if (mc->connect(U_NULLPTR, 0) == false)
       {
       U_WARNING("usp_fork_businesses(): connection failed");
 

@@ -60,6 +60,30 @@ public:
       return (_address < p._address);
       }
 
+   void bindParam(UOrmStatement* stmt)
+      {
+      U_TRACE(0, "Person::bindParam(%p)", stmt)
+
+      // the table is defined as Person (LastName VARCHAR(30), FirstName VARCHAR(30), Address VARCHAR(30), Age INTEGER)
+
+      stmt->bindParam(U_ORM_TYPE_HANDLER(_lastName,  UString));
+      stmt->bindParam(U_ORM_TYPE_HANDLER(_firstName, UString));
+      stmt->bindParam(U_ORM_TYPE_HANDLER(_address,   UString));
+      stmt->bindParam(U_ORM_TYPE_HANDLER(_age,       int));
+      }
+
+   void bindResult(UOrmStatement* stmt)
+      {
+      U_TRACE(0, "Person::bindResult(%p)", stmt)
+
+      // the table is defined as Person (LastName VARCHAR(30), FirstName VARCHAR(30), Address VARCHAR(30), Age INTEGER)
+
+      stmt->bindResult(U_ORM_TYPE_HANDLER(_lastName,  UString));
+      stmt->bindResult(U_ORM_TYPE_HANDLER(_firstName, UString));
+      stmt->bindResult(U_ORM_TYPE_HANDLER(_address,   UString));
+      stmt->bindResult(U_ORM_TYPE_HANDLER(_age,       int));
+      }
+
 #ifdef DEBUG
    const char* dump(bool breset) const
       {
@@ -75,7 +99,7 @@ public:
          return UObjectIO::buffer_output;
          }
 
-      return 0;
+      return U_NULLPTR;
       }
 #endif
 
@@ -117,6 +141,22 @@ public:
       U_TRACE_UNREGISTER_OBJECT(5, Test1)
       }
 
+   void bindParam(UOrmStatement* stmt)
+      {
+      U_TRACE(0, "UOrmTypeHandler<Test1>::bindParam(%p)", stmt)
+
+      stmt->bindParam(U_ORM_TYPE_HANDLER(id,   int));
+      stmt->bindParam(U_ORM_TYPE_HANDLER(name, UString));
+      }
+
+   void bindResult(UOrmStatement* stmt)
+      {
+      U_TRACE(0, "UOrmTypeHandler<Test1>::bindResult(%p)", stmt)
+
+      stmt->bindResult(U_ORM_TYPE_HANDLER(id,   int));
+      stmt->bindResult(U_ORM_TYPE_HANDLER(name, UString));
+      }
+
 #ifdef DEBUG
    const char* dump(bool breset) const
       {
@@ -130,62 +170,12 @@ public:
          return UObjectIO::buffer_output;
          }
 
-      return 0;
+      return U_NULLPTR;
       }
 #endif
 
 private:
    Test1& operator=(const Test1&) { return *this; }
-};
-
-// ORM TEMPLATE SPECIALIZATIONS
-
-template <> class UOrmTypeHandler<Person> : public UOrmTypeHandler_Base {
-public:
-   explicit UOrmTypeHandler(Person& val) : UOrmTypeHandler_Base(&val) {}
-
-   // the table is defined as Person (LastName VARCHAR(30), FirstName VARCHAR(30), Address VARCHAR(30), Age INTEGER)
-
-   void bindParam(UOrmStatement* stmt) const
-      {
-      U_TRACE(0, "UOrmTypeHandler<Person>::bindParam(%p)", stmt)
-
-      stmt->bindParam(U_ORM_TYPE_HANDLER(Person, _lastName,  UString));
-      stmt->bindParam(U_ORM_TYPE_HANDLER(Person, _firstName, UString));
-      stmt->bindParam(U_ORM_TYPE_HANDLER(Person, _address,   UString));
-      stmt->bindParam(U_ORM_TYPE_HANDLER(Person, _age,       int));
-      }
-
-   void bindResult(UOrmStatement* stmt)
-      {
-      U_TRACE(0, "UOrmTypeHandler<Person>::bindResult(%p)", stmt)
-
-      stmt->bindResult(U_ORM_TYPE_HANDLER(Person, _lastName,  UString));
-      stmt->bindResult(U_ORM_TYPE_HANDLER(Person, _firstName, UString));
-      stmt->bindResult(U_ORM_TYPE_HANDLER(Person, _address,   UString));
-      stmt->bindResult(U_ORM_TYPE_HANDLER(Person, _age,       int));
-      }
-};
-
-template <> class U_EXPORT UOrmTypeHandler<Test1> : public UOrmTypeHandler_Base {
-public:
-   explicit UOrmTypeHandler(Test1& val) : UOrmTypeHandler_Base(&val) {}
-
-   void bindParam(UOrmStatement* stmt) const
-      {
-      U_TRACE(0, "UOrmTypeHandler<Test1>::bindParam(%p)", stmt)
-
-      stmt->bindParam(U_ORM_TYPE_HANDLER(Test1, id,   int));
-      stmt->bindParam(U_ORM_TYPE_HANDLER(Test1, name, UString));
-      }
-
-   void bindResult(UOrmStatement* stmt)
-      {
-      U_TRACE(0, "UOrmTypeHandler<Test1>::bindResult(%p)", stmt)
-
-      stmt->bindResult(U_ORM_TYPE_HANDLER(Test1, id,   int));
-      stmt->bindResult(U_ORM_TYPE_HANDLER(Test1, name, UString));
-      }
 };
 
 static void testBinding(UOrmSession* sql)
@@ -488,7 +478,7 @@ U_EXPORT main(int argc, char* argv[])
    value1 = 10;
    str = "Hello 'World'";
    float f = 3.1415926565;
-   time_t tt = time(NULL);
+   time_t tt = time(U_NULLPTR);
    struct tm t = *localtime(&tt);
 
    cout << asctime(&t);
