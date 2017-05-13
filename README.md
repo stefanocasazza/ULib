@@ -42,7 +42,7 @@ The current version offers the following features :
    * [C Servlet Support](http://bellard.org/tcc/) with libtcc (if available) as a backend for dynamic code generation (experimental).
    * Support for running Ruby on Rails applications natively (experimental).
    * Support for running natively PHP applications whith a php (embedded) library (experimental).
-   * Support for load balance support between physical server via udp brodcast (experimental).
+   * Support for load balance between physical server via udp brodcast (experimental).
    * Preforking mode to improve concurrency with dedicated process for long-time request.
    * Support for Windows (without preforking).
    * Customizable builds (you can remove unneeded functionality).
@@ -81,7 +81,7 @@ userver application server is since 10th round in the [TechEmpower's web framewo
 
 ## Getting Started With ULib (donated generously by jonathan kelly)
 
-* [ulib.html](https://github.com/stefanocasazza/ULib/blob/master/ulib.html)
+* [wiki](https://github.com/stefanocasazza/ULib/wiki/Getting-Started-With-ULib)
 
 ## Contributing
 

@@ -15,10 +15,13 @@
 #include <ulib/json/value.h>
 #include <ulib/utility/escape.h>
 
-int      UValue::jsonParseFlags;
-char*    UValue::pstringify;
-UValue*  UValue::pnode;
-uint32_t UValue::size;
+int                       UValue::pos;
+int                       UValue::jsonParseFlags;
+char*                     UValue::pstringify;
+uint32_t                  UValue::size;
+UValue::jval              UValue::o;
+UValue::parser_stack_data UValue::sd[U_JSON_PARSE_STACK_SIZE];
+
 #ifdef DEBUG
 uint32_t UValue::cnt_real;
 uint32_t UValue::cnt_mreal;
@@ -234,7 +237,7 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
    if (getTag() == OBJECT_VALUE)
       {
       UValue* element = toNode();
-      uint32_t sz, n = members.size();
+      uint32_t len, n = members.size();
 
       while (element)
          {
@@ -251,9 +254,9 @@ uint32_t UValue::getMemberNames(UVector<UString>& members) const
          element = element->next;
          }
 
-      sz = members.size() - n;
+      len = members.size() - n;
 
-      U_RETURN(sz);
+      U_RETURN(len);
       }
 
    U_RETURN(0);
@@ -280,11 +283,11 @@ UString UValue::getString(uint64_t value)
 
    U_INTERNAL_ASSERT_EQUALS(type, UTF_VALUE)
 
-   uint32_t sz = rep->size();
+   uint32_t len = rep->size();
 
-   UString str(sz);
+   UString str(len);
 
-   UEscape::decode(rep->data(), sz, str);
+   UEscape::decode(rep->data(), len, str);
 
    U_RETURN_STRING(str);
 }
@@ -295,11 +298,11 @@ void UValue::emitUTF(UStringRep* rep) const
 
    U_INTERNAL_DUMP("rep = %V", rep)
 
-   uint32_t sz = rep->size();
+   uint32_t len = rep->size();
 
-   UString str(sz);
+   UString str(len);
 
-   UEscape::decode(rep->data(), sz, str);
+   UEscape::decode(rep->data(), len, str);
 
    *pstringify++ = '"';
 
@@ -676,10 +679,6 @@ case_null:
    pstringify += U_CONSTANT_SIZE("null");
 }
 
-#ifndef U_JSON_PARSE_STACK_SIZE
-#define U_JSON_PARSE_STACK_SIZE 256
-#endif
-
 bool UValue::parse(const UString& document)
 {
    U_TRACE(0, "UValue::parse(%V)", document.rep)
@@ -784,28 +783,23 @@ bool UValue::parse(const UString& document)
 #ifdef DEBUG
    cnt_real  =
    cnt_mreal = 0;
+
    double tmp;
 #endif
+
    double val;
    const char* p;
-   UStringRep* rep;
    unsigned char c;
+   UStringRep* rep;
    const char* start;
+   int gexponent, type;
    uint64_t integerPart;
-   union jval o = {0ULL};
-   int pos = -1, gexponent, type;
    const char* s = document.data();
    const char* end = s + (size = document.size());
    uint32_t sz, significandDigit, decimalDigit, exponent;
    bool minus = false, colon = false, comma = false, separator = true;
 
-   struct stack_data {
-      uint64_t keys;
-      UValue* tails;
-          bool tags;
-   };
-
-   struct stack_data sd[U_JSON_PARSE_STACK_SIZE];
+   initParser();
 
    U_INTERNAL_DUMP("jsonParseFlags = %d", jsonParseFlags)
 
@@ -880,9 +874,11 @@ dquote:
       goto dquote;
 
 dquote_assign:
-      if ((sz = s++ - ++start))
+      sz = s++ - ++start;
+
+      if (sz)
          {
-         U_DUMP("type = (%d,%S) string(%u) = %.*S", type, getDataTypeDescription(type), sz, sz, start)
+         U_DUMP("type = (%d,%S)", type, getDataTypeDescription(type))
 
          if ((jsonParseFlags & STRING_COPY) == 0)
             {
@@ -1449,6 +1445,38 @@ cdefault:
    U_RETURN(false);
 }
 
+void UValue::nextParser()
+{
+   U_TRACE_NO_PARAM(0, "UValue::nextParser()")
+
+   U_INTERNAL_DUMP("UValue::pos = %d", UValue::pos)
+
+   U_INTERNAL_ASSERT_DIFFERS(UValue::pos, -1)
+
+   U_DUMP("sd[%d].tags = (%d,%S) sd[%d].tails = %p sd[%d].keys = 0x%x", pos, (sd[pos].tags ? OBJECT_VALUE : ARRAY_VALUE),
+                                   getDataTypeDescription((sd[pos].tags ? OBJECT_VALUE : ARRAY_VALUE)), pos, sd[pos].tails, pos, sd[pos].keys)
+
+   if (sd[pos].tags == false) sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
+   else
+      {
+      if (sd[pos].keys == 0)
+         {
+         sd[pos].keys = o.ival;
+
+         U_INTERNAL_DUMP("sd[%d].keys = %V",  pos, getPayload(sd[pos].keys))
+
+         return;
+         }
+
+      sd[pos].tails = insertAfter(sd[pos].tails, o.ival);
+
+      U_INTERNAL_ASSERT(isStringOrUTF(sd[pos].keys))
+
+      sd[pos].tails->pkey.ival = sd[pos].keys;
+                                 sd[pos].keys = 0;
+      }
+}
+
 // =======================================================================================================================
 // An in-place JSON element reader (@see http://www.codeproject.com/Articles/885389/jRead-an-in-place-JSON-element-reader)
 // =======================================================================================================================
@@ -1665,11 +1693,11 @@ U_NO_EXPORT UString UValue::jread_string(UTokenizer& tok)
    const char* ptr  = tok.getPointer();
    const char* end  = tok.getEnd();
    const char* last = u_find_char(ptr, end, c);
-   uint32_t sz      = (last < end ? last - ptr : 0);
+   uint32_t len     = (last < end ? last - ptr : 0);
 
-   U_INTERNAL_DUMP("c = %C sz = %u", c, sz)
+   U_INTERNAL_DUMP("c = %C len = %u", c, len)
 
-   if (sz) (void) result.assign(ptr, sz);
+   if (len) (void) result.assign(ptr, len);
 
    if (last < end) tok.setPointer(last+1);
 

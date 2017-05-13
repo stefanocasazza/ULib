@@ -4,8 +4,8 @@ Four Debian releases are available on the main site:
 Debian 7.11, or wheezy.  Access this release through dists/oldstable
 Debian 7.11 was released Saturday, 4th June 2016.
 
-Debian 8.7, or jessie.  Access this release through dists/stable
-Debian 8.7 was released Saturday, 14th January 2017.
+Debian 8.8, or jessie.  Access this release through dists/stable
+Debian 8.8 was released Saturday, 6th May 2017.
 
 Testing, or stretch.  Access this release through dists/testing.  The
 current tested development snapshot is named stretch.  Packages which

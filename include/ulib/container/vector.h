@@ -29,6 +29,7 @@
  */
 
 class UHTTP;
+class UValue;
 class UThreadPool;
 class UHttpPlugIn;
 class UFileConfig;
@@ -430,6 +431,7 @@ protected:
 private:
    U_DISALLOW_ASSIGN(UVector<void*>)
 
+   friend class UValue;
    friend class UThreadPool;
 
    template <class T> friend class UOrmTypeHandler;

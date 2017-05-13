@@ -3511,7 +3511,11 @@ process_request:
             {
             // NB: to avoid GOAWAY frame with error (6, FRAME_SIZE_ERROR) in writeResponse()...
 
-            if (u_get_unalignedp32(u_clientimage_info.http_info.user_agent) == U_MULTICHAR_CONSTANT32('S','p','o','t'))
+            if (u_get_unalignedp64(u_clientimage_info.http_info.user_agent) == U_MULTICHAR_CONSTANT64('M','o','z','i','l','l','a','/'))
+               {
+               pConnection->bug_client = "Mozilla"; // Mozilla/5.0 (iPad; CPU OS 9_3_5 like Mac OS X) AppleWebKit/601.1.46 (KHTML, like Gecko) Version/9.0 Mobile/13G36 Safari/601.1
+               }
+            else if (u_get_unalignedp32(u_clientimage_info.http_info.user_agent) == U_MULTICHAR_CONSTANT32('S','p','o','t'))
                {
                pConnection->bug_client = "Spot"; // "Spot/1.0 (iPhone; iOS 10.3.1; Scale/3.00)"
                }
