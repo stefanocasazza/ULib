@@ -69,7 +69,8 @@ userver {
 #PLUGIN "ssi http"
 #ORM_DRIVER "sqlite mysql"
  ORM_DRIVER sqlite
- DOCUMENT_ROOT  benchmark/docroot
+ DOCUMENT_ROOT  JONATHAN/docroot
+#DOCUMENT_ROOT  benchmark/docroot
  PLUGIN_DIR     ../../../../src/ulib/net/server/plugin/.libs
  ORM_DRIVER_DIR ../../../../src/ulib/orm/driver/.libs
 #DOCUMENT_ROOT  .
@@ -98,11 +99,12 @@ EOF
 export ORM_DRIVER="sqlite"
 export ELASTICSEARCH_HOST="localhost"
 export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
-export ORM_OPTION="host=localhost dbname=../db/hello_world"
+ export ORM_OPTION="host=localhost dbname=../db/fortune"
+#export ORM_OPTION="host=localhost dbname=../db/hello_world"
 
 DIR_CMD="../../examples/userver"
 
-compile_usp
+#compile_usp
 
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c inp/webserver.cfg

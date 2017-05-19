@@ -332,7 +332,7 @@ dist-hook:
 
 clean-local:
 	@cd $(top_builddir)/src/ulib/net/server/plugin/usp; $(MAKE) $(AM_MAKEFLAGS) clean 
-	-rm -rf core .libs *.bb* *.da *.la gmon.out *.gc* */*.gc* */*/*.gc* */*/*/*.gc* */*/*/*/*.gc*
+	-rm -rf core .libs *.bb* *.da *.la gmon.out
 
 ## ----------------------------------------------------------------------------------------------------
 ## usp section

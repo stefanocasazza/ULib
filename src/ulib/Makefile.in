@@ -2074,7 +2074,7 @@ dist-hook:
 
 clean-local:
 	@cd $(top_builddir)/src/ulib/net/server/plugin/usp; $(MAKE) $(AM_MAKEFLAGS) clean 
-	-rm -rf core .libs *.bb* *.da *.la gmon.out *.gc* */*.gc* */*/*.gc* */*/*/*.gc* */*/*/*/*.gc*
+	-rm -rf core .libs *.bb* *.da *.la gmon.out
 
 @CROSS_COMPILING_FALSE@net/server/plugin/usp/usp_translator$(EXEEXT):
 @CROSS_COMPILING_FALSE@	cd net/server/plugin/usp; $(MAKE) $(AM_MAKEFLAGS) ./usp_translator$(EXEEXT)

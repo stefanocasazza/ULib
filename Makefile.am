@@ -65,6 +65,11 @@ dist-hook: cleandist
 
 cleandist:
 	@rm -rf \
+		$(distdir)/*.gc* \
+		$(distdir)/*/*.gc* \
+		$(distdir)/*/*/*.gc* \
+		$(distdir)/*/*/*/*.gc* \
+		$(distdir)/*/*/*/*/*.gc* \
 		$(distdir)/*.spec \
 		$(distdir)/config.cache \
 		$(distdir)/cdb/*.o \

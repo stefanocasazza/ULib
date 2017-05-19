@@ -1,24 +1,22 @@
 #!/bin/bash
 
-fw_depends mysql ulib
+fw_depends ulib
 
 # Travis is broken
 if [ "$TRAVIS" != "true" ]; then
-MAX_THREADS=$(( 3 * $CPU_COUNT / 2 ))
+MAX_THREADS=$CPU_COUNT
 else
 MAX_THREADS=$(( 2 * $CPU_COUNT ))
 fi
 
 # 1. Change ULib Server (userver_tcp) configuration
-sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET -2|g"								  $IROOT/ULib/benchmark.cfg
+sed -i "s|TCP_LINGER_SET .*|TCP_LINGER_SET 0|g"									  $IROOT/ULib/benchmark.cfg
 sed -i "s|LISTEN_BACKLOG .*|LISTEN_BACKLOG 256|g"								  $IROOT/ULib/benchmark.cfg
 sed -i "s|PREFORK_CHILD .*|PREFORK_CHILD ${MAX_THREADS}|g"					  $IROOT/ULib/benchmark.cfg
 sed -i "s|CLIENT_FOR_PARALLELIZATION .*|CLIENT_FOR_PARALLELIZATION 100|g" $IROOT/ULib/benchmark.cfg
 
 # 2. Start ULib Server (userver_tcp)
-export ORM_DRIVER="mysql"
-export UMEMPOOL="545,0,0,49,275,-14,-13,-25,41"
-export ORM_OPTION="host=${DBHOST} user=benchmarkdbuser password=benchmarkdbpass character-set=utf8 dbname=hello_world"
+export UMEMPOOL="58,0,0,41,273,-15,-14,-20,36"
 
 # Never use setcap inside of TRAVIS 
 [ "$TRAVIS" != "true" ] || { \
