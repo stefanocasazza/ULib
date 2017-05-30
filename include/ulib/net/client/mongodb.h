@@ -119,7 +119,7 @@ public:
    bool selectCollection(const char* db, const char* name_collection) { return false; }
    bool update(uint32_t old_value, const char* key, uint32_t new_value) { return false; }
    void updateOneBulk(mongoc_bulk_operation_t* bulk, uint32_t old_value, const char* key, uint32_t new_value) {}
-   mongoc_bulk_operation_t* createBulk(bool ordered, const mongoc_write_concern_t* write_concern = 0) { return 0; }
+   mongoc_bulk_operation_t* createBulk(bool ordered, const mongoc_write_concern_t* write_concern = U_NULLPTR) { return U_NULLPTR; }
 # if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    const char* dump(bool reset) const { return ""; }
 # endif
