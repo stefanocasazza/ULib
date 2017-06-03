@@ -109,6 +109,7 @@ UOrmSession::~UOrmSession()
       pdrv->handlerDisConnect();
 
       if (UOrmDriver::vdriver->find(pdrv) == U_NOT_FOUND) delete pdrv;
+      else pdrv->vopt.clear();
       }
 #endif
 }
@@ -156,9 +157,9 @@ bool UOrmSession::query(const char* stmt, uint32_t len)
 
    U_INTERNAL_ASSERT_POINTER(pdrv)
 
-   bool result = pdrv->handlerQuery(stmt, len);
+   if (pdrv->handlerQuery(stmt, len)) U_RETURN(true);
 
-   U_RETURN(result);
+   U_RETURN(false);
 }
 
 // This function returns the number of database rows that were changed

@@ -44,12 +44,21 @@ static void GenStat(Stat& stat, const union UValue::jval val)
 			{
 			stat.arrayCount++;
 
+#		if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
 			for (auto const& i : val)
 				{
 				stat.elementCount++;
 
 				GenStat(stat, i.getValue());
 				}
+#		else
+			for (UValue* i = UValue::toNode(val.ival); i; i = i->next)
+				{
+				stat.elementCount++;
+
+				GenStat(stat, i->getValue());
+				}
+#		endif
 			}
 		break;
 
@@ -57,6 +66,7 @@ static void GenStat(Stat& stat, const union UValue::jval val)
 			{
 			stat.objectCount++;
 
+#		if defined(U_STDCPP_ENABLE) && defined(HAVE_CXX11)
 			for (auto const& i : val)
 				{
 				stat.memberCount++;
@@ -65,6 +75,16 @@ static void GenStat(Stat& stat, const union UValue::jval val)
 
 				GenStat(stat, i.getValue());
 				}
+#		else
+			for (UValue* i = UValue::toNode(val.ival); i; i = i->next)
+				{
+				stat.memberCount++;
+				stat.stringCount++; // Key
+				stat.stringLength += UValue::getStringSize(i->getKey());
+
+				GenStat(stat, i->getValue());
+				}
+#		endif
 			}
 		break;
 		}

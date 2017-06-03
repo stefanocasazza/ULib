@@ -275,6 +275,11 @@ case "$target_os" in
 		kernel=`uname -r`
 
 		case "$kernel" in
+			6.*)
+				AC_MSG_RESULT([5 family ($kernel)])
+#				AC_DEFINE([KERNEL_6], 1, [Define to 1 if you're using Linux 6.x])
+			;;
+
 			5.*)
 				AC_MSG_RESULT([5 family ($kernel)])
 #				AC_DEFINE([KERNEL_5], 1, [Define to 1 if you're using Linux 5.x])
@@ -593,15 +598,6 @@ if test "$enable_static" = "yes" -a "$enable_shared" = "no"; then
 	AC_DEFINE(U_STATIC_ONLY, [1], [we want only static linking])
 	if test -z "$enable_stdcpp"; then
 		enable_stdcpp="no"
-	fi
-	if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno -a "$target_os" != "netbsd"; then
-		if test "$enable_stdcpp" != "yes"; then
-			ULIB_LIBS="$ULIB_LIBS -lgcc"
-		else
-			gcc_lib=`gcc -print-libgcc-file-name`
-			gcc_dir=`dirname $gcc_lib`
-			ULIB_LIBS="$ULIB_LIBS $gcc_dir/libstdc++.a $gcc_lib"
-		fi
 	fi
 else
 	AM_CONDITIONAL(STATIC_ONLY, false)
@@ -2508,7 +2504,7 @@ if test -n "$posix4_lib"; then
    ULIB_LIBS="$ULIB_LIBS $posix4_lib";
 fi
 if test -n "$plib"; then
-   ULIB_LIBS="$ULIB_LIBS $plib";
+   ULIB_LIBS="$ULIB_LIBS -Wl,--no-as-needed $plib";
 fi
 if test "$enable_coverage" = "yes"; then
 	ULIB_LIBS="$ULIB_LIBS -lgcov"
@@ -2547,19 +2543,30 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 fi
 
 if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
-	AC_MSG_CHECKING([whether to use libgcc])
-	AC_ARG_ENABLE(libgcc,
-	AC_HELP_STRING([--enable-libgcc],[use libgcc when linking]),
-		[ case "$enableval" in
-		  yes)
-			 ULIB_LIBS="$ULIB_LIBS -lgcc"
-			 AC_MSG_RESULT(yes)
-			 ;;
-		  *) AC_MSG_RESULT(no)
-			 ;;
-		  esac ],
-			 AC_MSG_RESULT(no)
-		)
+	if test "$enable_static" = "yes" -a "$enable_shared" = "no" -a "$enable_stdcpp" = "yes"; then
+		gcc_lib=`gcc -print-libgcc-file-name`
+		gcc_dir=`dirname $gcc_lib`
+
+		if test -f "$gcc_dir/libstdc++.a"; then
+			ULIB_LIBS="$ULIB_LIBS $gcc_dir/libstdc++.a $gcc_lib"
+		else
+			ULIB_LIBS="$ULIB_LIBS -lstdc++ -lgcc"
+		fi
+	else
+		AC_MSG_CHECKING([whether to use libgcc])
+		AC_ARG_ENABLE(libgcc,
+		AC_HELP_STRING([--enable-libgcc],[use libgcc when linking]),
+			[ case "$enableval" in
+			  yes)
+				 ULIB_LIBS="$ULIB_LIBS -lgcc"
+				 AC_MSG_RESULT(yes)
+				 ;;
+			  *) AC_MSG_RESULT(no)
+				 ;;
+			  esac ],
+				 AC_MSG_RESULT(no)
+			)
+	fi
 fi
 ##########################
 

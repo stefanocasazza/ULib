@@ -8,8 +8,15 @@ libdir=@libdir@
 includedir=@includedir@
 exec_prefix=@exec_prefix@
 
+if [ -z "$1" ]; then
+	exit 1
+fi
+
 dirn=`dirname $1`
 basen=`basename $1`
+
+#if [ -n "$dirn" ]; then
+#fi
 
 libsuffix=$2
 test "$libsuffix" || libsuffix=so
@@ -19,8 +26,8 @@ export PATH="/sbin:/usr/sbin:/usr/local/sbin:/bin:/usr/bin:/usr/local/bin"
 
 ${prefix}/bin/usp_translator $1.usp &&
 ${prefix}/bin/usp_libtool.sh --silent --tag=CXX --mode=compile \
-	@CXX@ -I${includedir} -DHAVE_CONFIG_H @CPPFLAGS@ @CXXFLAGS@ @USP_FLAGS@ -MT $1.lo -MD -MP -c -o $1.lo $1.cpp &&
+	@CXX@ -I${includedir} -DHAVE_CONFIG_H @CPPFLAGS@ @CXXFLAGS@ @USP_FLAGS@ -MT $basen.lo -MD -MP -c -o $basen.lo $basen.cpp &&
 ${prefix}/bin/usp_libtool.sh --silent --tag=CXX --mode=link \
-	@CXX@ @CPPFLAGS@ @LDFLAGS@ @USP_LDFLAGS@ -o $1.la -rpath ${prefix}/libexec/ulib/usp \
-	-module -export-dynamic -avoid-version -no-undefined $1.lo @USP_LIBS@ -l@ULIB@ @ULIB_LIBS@ &&
-mv $1.usp ${dirn}/.libs; rm -rf $1.d $1.la $1.lo $1.o $1.cpp; mv ${dirn}/.libs/${basen}.usp ${dirn}/.libs/${basen}.$libsuffix ${dirn}; rm -rf ${dirn}/.libs
+	@CXX@ @CPPFLAGS@ @LDFLAGS@ @USP_LDFLAGS@ -o $basen.la -rpath ${prefix}/libexec/ulib/usp \
+	-module -export-dynamic -avoid-version -no-undefined $basen.lo @USP_LIBS@ -l@ULIB@ @ULIB_LIBS@ &&
+mv $1.usp .libs; rm -rf $basen.d $basen.la $basen.lo $basen.o $basen.cpp; mv .libs/${basen}.usp .libs/${basen}.$libsuffix ${dirn}; rm -rf .libs

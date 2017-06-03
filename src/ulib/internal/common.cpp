@@ -241,7 +241,7 @@ void ULib::init(const char* mempool, char** argv)
    U_INTERNAL_ASSERT_EQUALS(sizeof(UStringRep), sizeof(ustringrep))
 
 #if defined(U_STATIC_ONLY)
-   if (UStringRep::string_rep_null == 0)
+   if (UStringRep::string_rep_null == U_NULLPTR)
       {
       UString::string_null        = uustringnull.p2;
       UStringRep::string_rep_null = uustringrepnull.p2;
