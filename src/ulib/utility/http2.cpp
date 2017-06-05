@@ -1814,12 +1814,7 @@ void UHTTP2::decodeHeaders()
 
          UString value = table->at(UString::str_path->rep);
 
-         if (value)
-            {
-            U_INTERNAL_DUMP("value = %V", value.rep)
-
-            setURI(value);
-            }
+         if (value) setURI(value);
          }
 
       U_INTERNAL_DUMP("U_http_is_accept_gzip = %b U_http_method_type = %B U_http_method_num = %d U_http_host_len = %u U_HTTP_HOST = %.*S U_http_host_vlen = %u U_HTTP_VHOST = %.*S",

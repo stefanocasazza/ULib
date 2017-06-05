@@ -388,9 +388,9 @@ protected:
 
       if (U_http_info.query)
          {
-         U_http_info.query_len = U_http_info.uri_len - (U_http_info.query++ - U_http_info.uri);
+         U_http_info.uri_len = U_http_info.query++ - ptr;
 
-         U_http_info.uri_len -= U_http_info.query_len;
+         U_http_info.query_len = len - U_http_info.uri_len - 1;
 
          U_INTERNAL_DUMP("query = %.*S", U_HTTP_QUERY_TO_TRACE)
          }
