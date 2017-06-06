@@ -32,7 +32,7 @@ UHTTP2::Connection*           UHTTP2::vConnection;
 UHTTP2::Connection*           UHTTP2::pConnection;
 UHTTP2::HpackHeaderTableEntry UHTTP2::hpack_static_table[61];
 
-#define U_HTTP2_TIMEOUT_MS (20L * 1000L) // 20 second timeout
+#define U_HTTP2_TIMEOUT_MS (10L * 1000L) // 10 second timeout
 
 #ifdef DEBUG
 #  ifndef UINT16_MAX
@@ -2096,12 +2096,7 @@ loop:
       {
       if (UClientImage_Base::rbuffer->size() == UClientImage_Base::rstart) resetDataRead();
 
-      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false)
-         {
-         nerror = ERROR_INCOMPLETE;
-
-         goto end;
-         }
+      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false) return;
       }
 
     ptr = (const unsigned char*) UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
@@ -2138,12 +2133,7 @@ loop:
                                                              UClientImage_Base::rstart = 0;
          }
 
-      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, len, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false)
-         {
-         nerror = ERROR_INCOMPLETE;
-
-         goto end;
-         }
+      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, len, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false) return;
       }
 
    frame.payload = (unsigned char*) UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
@@ -3808,7 +3798,7 @@ void UHTTP2::sendGoAway(USocket* psocket)
 
    const char* descr = getFrameErrorCodeDescription(nerror);
 
-   U_SRV_LOG("send GOAWAY frame with error (%u, %s)", nerror, descr);
+   if (nerror) U_SRV_LOG("send GOAWAY frame with error (%u, %s)", nerror, descr);
 
    pConnection->state = CONN_STATE_IS_CLOSING;
 
