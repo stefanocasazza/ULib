@@ -2096,7 +2096,12 @@ loop:
       {
       if (UClientImage_Base::rbuffer->size() == UClientImage_Base::rstart) resetDataRead();
 
-      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false) return;
+      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, U_SINGLE_READ, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false)
+         {
+         if (UServer_Base::csocket->isClosed()) nerror = PROTOCOL_ERROR;
+
+         return;
+         }
       }
 
     ptr = (const unsigned char*) UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
@@ -2133,7 +2138,12 @@ loop:
                                                              UClientImage_Base::rstart = 0;
          }
 
-      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, len, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false) return;
+      if (USocketExt::read(UServer_Base::csocket, *UClientImage_Base::rbuffer, len, U_HTTP2_TIMEOUT_MS, UHTTP::request_read_timeout) == false)
+         {
+         if (UServer_Base::csocket->isClosed()) nerror = PROTOCOL_ERROR;
+
+         return;
+         }
       }
 
    frame.payload = (unsigned char*) UClientImage_Base::rbuffer->c_pointer(UClientImage_Base::rstart);
@@ -3406,6 +3416,8 @@ read_request:
 
       if (sz == 0)
          {
+         // sz = 0 U_http_info.uri_len = 0 U_http2_settings_len = 0 U_ClientImage_close = false
+
          if (U_http2_settings_len)
             {
             // NB: not OPTION upgrade...
@@ -3419,8 +3431,9 @@ read_request:
 
          U_INTERNAL_ASSERT_EQUALS(U_http_info.uri_len, 0)
 
-         if (bsetting_send &&
-             U_ClientImage_close == false)
+         if (bsetting_send                &&
+             U_ClientImage_close == false &&
+             UServer_Base::csocket->isTimeout() == false)
             {
             goto read_request; // NB: OPTION upgrade, we need a HEADERS frame...
             }
