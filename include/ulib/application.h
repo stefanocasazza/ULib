@@ -19,13 +19,13 @@
 #define U_PRINT_MEM_USAGE
 
 #ifdef DEBUG
-#define U_MAIN_END(value) return value
+#  define U_MAIN_END(value) return value
 #  ifdef U_STDCPP_ENABLE
 #     undef  U_PRINT_MEM_USAGE
 #     define U_PRINT_MEM_USAGE UApplication::printMemUsage();
 #  endif
 #else
-#define U_MAIN_END(value) ::exit(value)
+#  define U_MAIN_END(value) ::exit(value)
 #endif
 
 #define U_MAIN \

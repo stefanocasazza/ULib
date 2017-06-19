@@ -205,6 +205,9 @@ static inline uint32_t u_findEndHeader1(const char* restrict s, uint32_t n) /* f
    U_INTERNAL_TRACE("u_findEndHeader1(%.*s,%u)", U_min(n,128), s, n)
 
    U_INTERNAL_ASSERT_POINTER(s)
+   U_INTERNAL_ASSERT_MAJOR(n, 0)
+
+   if (u_get_unalignedp32(s+n-4) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) return (n-4);
 
    p = memmem(s, n, U_CONSTANT_TO_PARAM(U_CRLF2));
 

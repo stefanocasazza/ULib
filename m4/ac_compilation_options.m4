@@ -247,6 +247,17 @@ AC_DEFUN([AC_COMPILATION_OPTIONS],[
 	fi
 	AC_MSG_RESULT([$enable_throttling])
 
+	AC_MSG_CHECKING(if you want to enable to provide evasive action in the event of an HTTP DoS or DDoS attack or brute force attack)
+	AC_ARG_ENABLE(evasive,
+				[  --enable-evasive          enable server evasive action support [[default=no]]])
+	if test -z "$enable_evasive"; then
+		enable_evasive="no"
+	fi
+	if test "$enable_evasive" = "yes"; then
+		AC_DEFINE(U_EVASIVE_SUPPORT, 1, [enable server evasive action support])
+	fi
+	AC_MSG_RESULT([$enable_evasive])
+
 	AC_MSG_CHECKING(if you want to enable alias URI support)
 	AC_ARG_ENABLE(alias,
 				[  --enable-alias            enable alias URI support [[default=yes]]])

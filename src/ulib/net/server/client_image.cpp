@@ -944,6 +944,15 @@ void UClientImage_Base::prepareForRead()
       UServer_Base::client_address_len = u__strlen(UServer_Base::client_address, __PRETTY_FUNCTION__);
 
       U_INTERNAL_DUMP("UServer_Base::client_address = %.*S", U_CLIENT_ADDRESS_TO_TRACE)
+
+#  ifdef U_EVASIVE_SUPPORT
+      if (UServer_Base::checkHold(socket->remoteIPAddress().getInAddr(), U_CLIENT_ADDRESS_TO_PARAM))
+         {
+         abortive_close();
+
+         return;
+         }
+#  endif
       }
    else
       {
@@ -959,6 +968,10 @@ void UClientImage_Base::prepareForRead()
       UEventFd::fd = socket->iSockDesc;
       }
 
+#ifdef U_EVASIVE_SUPPORT
+   if (UServer_Base::checkHitSiteStats()) return;
+#endif
+
 #ifdef U_THROTTLING_SUPPORT
    UServer_Base::initThrottlingClient();
 #endif
@@ -968,15 +981,17 @@ bool UClientImage_Base::genericRead()
 {
    U_TRACE_NO_PARAM(0, "UClientImage_Base::genericRead()")
 
-#ifdef DEBUG
+#if defined(DEBUG) || defined(U_EVASIVE_SUPPORT)
    if (UNLIKELY(socket->iSockDesc == -1))
       {
+#  ifndef U_EVASIVE_SUPPORT
       U_WARNING("genericRead(): "
                 "UEventFd::fd = %d socket->iSockDesc = %d "
                 "UNotifier::num_connection = %d UNotifier::min_connection = %d "
                 "UServer_Base::isParallelizationChild() = %b sfd = %d UEventFd::op_mask = %B",
                 UEventFd::fd, socket->iSockDesc, UNotifier::num_connection, UNotifier::min_connection,
                 UServer_Base::isParallelizationChild(), sfd, UEventFd::op_mask);
+#  endif
 
       U_ClientImage_state = U_PLUGIN_HANDLER_ERROR;
 
@@ -985,6 +1000,8 @@ bool UClientImage_Base::genericRead()
 #endif
 
    U_INTERNAL_ASSERT_EQUALS(socket->iSockDesc, UEventFd::fd)
+
+   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
    startRequest();
 
@@ -1067,8 +1084,6 @@ int UClientImage_Base::handlerRead() // Connection-wide hooks
 start:
    U_INTERNAL_ASSERT_EQUALS(U_ClientImage_pipeline,     false)
    U_INTERNAL_ASSERT_EQUALS(U_ClientImage_data_missing, false)
-
-   U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
    if (genericRead() == false)
       {

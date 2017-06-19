@@ -1650,38 +1650,6 @@ __pure bool UHTTP::isValidMethod(const char* ptr)
    U_RETURN(false);
 }
 
-__pure bool UHTTP::isValidRequest(const char* ptr, uint32_t sz)
-{
-   U_TRACE(0, "UHTTP::isValidRequest(%.*S,%u)", 30, ptr, sz)
-
-   U_INTERNAL_ASSERT_MAJOR(sz, 0)
-
-   U_INTERNAL_DUMP("sz = %u UClientImage_Base::size_request = %u", sz, UClientImage_Base::size_request)
-
-   if (u_get_unalignedp32(ptr+sz-4) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) U_RETURN(true);
-
-   U_RETURN(false);
-}
-
-__pure bool UHTTP::isValidRequestExt(const char* ptr, uint32_t sz)
-{
-   U_TRACE(0, "UHTTP::isValidRequestExt(%.*S,%u)", 30, ptr, sz)
-
-   U_INTERNAL_ASSERT_MAJOR(sz, 0)
-
-   if (sz >= U_CONSTANT_SIZE("GET / HTTP/1.0\r\n\r\n")        &&
-       isValidMethod(ptr)                                     &&
-       (isValidRequest(ptr, sz)                               ||
-                           (UClientImage_Base::size_request   &&
-        isValidRequest(ptr, UClientImage_Base::size_request)) ||
-        u_findEndHeader1(ptr, sz) != U_NOT_FOUND))
-      {
-      U_RETURN(true);
-      }
-
-   U_RETURN(false);
-}
-
 bool UHTTP::scanfHeaderRequest(const char* ptr, uint32_t size)
 {
    U_TRACE(0, "UHTTP::scanfHeaderRequest(%.*S,%u)", size, ptr, size)
@@ -1998,6 +1966,7 @@ U_NO_EXPORT bool UHTTP::readHeaderRequest()
 {
    U_TRACE_NO_PARAM(0, "UHTTP::readHeaderRequest()")
 
+   void* p;
    uint32_t sz     = UClientImage_Base::request->size();
    const char* ptr = UClientImage_Base::request->data();
 
@@ -2033,9 +2002,9 @@ U_NO_EXPORT bool UHTTP::readHeaderRequest()
 
    if (u_get_unalignedp32(ptr) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) U_RETURN(true);
 
-   sz = u_findEndHeader1(ptr+2, sz-U_http_info.startHeader-2);
+   p = memmem(ptr+U_CONSTANT_SIZE(U_CRLF), sz-U_http_info.startHeader-U_CONSTANT_SIZE(U_CRLF), U_CONSTANT_TO_PARAM(U_CRLF2));
 
-   if (sz != U_NOT_FOUND) sz += U_http_info.startHeader-2;
+   if (p) sz = U_http_info.startHeader + (const char*)p - ptr;
    else
       {
 #  ifdef USE_LIBSSL
@@ -2073,6 +2042,7 @@ bool UHTTP::readHeaderResponse(USocket* sk, UString& buffer)
 
    U_INTERNAL_ASSERT_POINTER(sk)
 
+   void* p;
    const char* ptr;
    uint32_t sz = buffer.size();
 
@@ -2147,9 +2117,9 @@ loop: sz = buffer.size();
 
    U_INTERNAL_ASSERT_EQUALS(u_get_unalignedp16(ptr), U_MULTICHAR_CONSTANT16('\r','\n'))
 
-   sz = u_findEndHeader1(ptr+U_CONSTANT_SIZE(U_CRLF), sz-U_http_info.startHeader-U_CONSTANT_SIZE(U_CRLF));
+   p = memmem(ptr+U_CONSTANT_SIZE(U_CRLF), sz-U_http_info.startHeader-U_CONSTANT_SIZE(U_CRLF), U_CONSTANT_TO_PARAM(U_CRLF2));
 
-   if (sz != U_NOT_FOUND) sz += U_http_info.startHeader-U_CONSTANT_SIZE(U_CRLF);
+   if (p) sz = U_http_info.startHeader + (const char*)p - ptr;
    else
       {
       sz = USocketExt::readWhileNotToken(sk, buffer, U_CONSTANT_TO_PARAM(U_CRLF2), UServer_Base::timeoutMS);
@@ -3658,9 +3628,8 @@ bool UHTTP::handlerCache()
 
       const char* ptr1 = ptr+UClientImage_Base::size_request;
 
-      if (isValidMethod(ptr1) == false                                      ||
-          (  isValidRequest(ptr1, UClientImage_Base::size_request) == false &&
-           u_findEndHeader1(ptr1, UClientImage_Base::size_request) == U_NOT_FOUND))
+      if (isValidMethod(ptr1) == false ||
+          u_findEndHeader1(ptr1, UClientImage_Base::size_request) == U_NOT_FOUND)
          {
          U_RETURN(false);
          }
@@ -3986,7 +3955,8 @@ int UHTTP::handlerREAD()
 
    U_INTERNAL_DUMP("UClientImage_Base::size_request = %u U_http_info.clength = %u", UClientImage_Base::size_request, U_http_info.clength)
 
-   /* NB: readBodyRequest() depend on UClientImage_Base::request
+   /**
+    * NB: readBodyRequest() depend on UClientImage_Base::request
     *
     * if (UClientImage_Base::size_request < UClientImage_Base::request->size())
     * {
@@ -4314,6 +4284,10 @@ manage:
        UClientImage_Base::isRequestInFileCache()) // => 3)
       {
 file_in_cache:
+#  ifdef U_EVASIVE_SUPPORT
+      if (UServer_Base::checkHitUriStats()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+#  endif
+
 #  if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
       if (isValidation() == false) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 #  endif
@@ -4435,12 +4409,25 @@ file_exist_and_need_to_be_processed: // NB: if we can't service the content of f
          UClientImage_Base::setRequestNeedProcessing();
          }
 
+#  ifdef U_EVASIVE_SUPPORT
+      if (UServer_Base::checkHitUriStats()) U_RETURN(U_PLUGIN_HANDLER_ERROR);
+#  endif
+
 #  if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
       if (isValidation() == false) U_RETURN(U_PLUGIN_HANDLER_FINISHED);
 #  endif
 
       goto end;
       }
+
+#ifdef U_EVASIVE_SUPPORT
+   if (UClientImage_Base::isRequestNotFound()         == false && // => 4)
+       UClientImage_Base::isRequestAlreadyProcessed() == false && // => 5)
+       UServer_Base::checkHitUriStats())
+      {
+      U_RETURN(U_PLUGIN_HANDLER_ERROR);
+      }
+#endif
 
 #if defined(U_HTTP_STRICT_TRANSPORT_SECURITY) || defined(USE_LIBSSL)
    if ( UClientImage_Base::isRequestNotFound() == false && // => 4)

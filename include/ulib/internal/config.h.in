@@ -808,6 +808,9 @@
 /* enable client response partial write support */
 #undef U_CLIENT_RESPONSE_PARTIAL_WRITE_SUPPORT
 
+/* enable server evasive action support */
+#undef U_EVASIVE_SUPPORT
+
 /* enable GDB stack dump support */
 #undef U_GDB_STACK_DUMP_ENABLE
 

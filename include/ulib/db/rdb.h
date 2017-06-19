@@ -472,22 +472,9 @@ public:
       return _insertDataStorage(op);
       }
 
-   bool insertDataStorage(const UString& _key, int _flag = RDB_INSERT_WITH_PADDING)
+   bool insertDataStorage(const char* s, uint32_t n, int _flag = RDB_INSERT) // SSL session cache...
       {
-      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::insertDataStorage(%V,%d)", _key.rep, _flag)
-
-      U_CHECK_MEMORY
-
-      U_INTERNAL_ASSERT_POINTER(pDataStorage)
-
-      pDataStorage->setKeyIdDataSession(_key);
-
-      return insertDataStorage(_flag);
-      }
-
-   void insertDataStorage(const char* s, uint32_t n)
-      {
-      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::insertDataStorage(%.*S,%u)", n, s, n)
+      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::insertDataStorage(%.*S,%u,%d)", n, s, n, _flag)
 
       U_CHECK_MEMORY
 
@@ -495,7 +482,14 @@ public:
 
       pDataStorage->setKeyIdDataSession(s, n);
 
-      (void) insertDataStorage(RDB_INSERT); // SSL session cache...
+      return insertDataStorage(_flag);
+      }
+
+   bool insertDataStorage(const UString& _key, int _flag = RDB_INSERT_WITH_PADDING)
+      {
+      U_TRACE(0, "URDBObjectHandler<UDataStorage*>::insertDataStorage(%V,%d)", _key.rep, _flag)
+
+      return insertDataStorage(U_STRING_TO_PARAM(_key), _flag);
       }
 
    UString getKeyID() const { return pDataStorage->keyid; }

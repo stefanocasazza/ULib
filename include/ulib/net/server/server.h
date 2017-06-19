@@ -98,6 +98,7 @@ vClientImage = new client_type[UNotifier::max_connection]; } }
 class UHTTP;
 class UHTTP2;
 class UCommand;
+class UEvasive;
 class UDayLight;
 class UTimeStat;
 class USSLSocket;
@@ -111,6 +112,7 @@ class UHttpPlugIn;
 class UFCGIPlugIn;
 class USCGIPlugIn;
 class UThrottling;
+class USmtpClient;
 class UNoCatPlugIn;
 class UGeoIPPlugIn;
 class UClient_Base;
@@ -136,9 +138,9 @@ public:
    U_MEMORY_ALLOCATOR
    U_MEMORY_DEALLOCATOR
 
-   // -----------------------------------------------------------------------------------------------------------------------------
+   // --------------------------------------------------------------------------------------------------------------------------------------
    // UServer - configuration parameters
-   // -----------------------------------------------------------------------------------------------------------------------------
+   // --------------------------------------------------------------------------------------------------------------------------------------
    // ENABLE_IPV6  flag indicating the use of ipv6
    // SERVER       host name or ip address for the listening socket
    // PORT         port number             for the listening socket
@@ -189,7 +191,18 @@ public:
    // PREFORK_CHILD number of child server processes created at startup ( 0 - serialize, no forking
    //                                                                     1 - classic, forking after client accept
    //                                                                    >1 - pool of serialized processes plus monitoring process)
-   // -----------------------------------------------------------------------------------------------------------------------------
+   // --------------------------------------------------------------------------------------------------------------------------------------
+   // This directive are for evasive action in the event of an HTTP DoS or DDoS attack or brute force attack
+   // --------------------------------------------------------------------------------------------------------------------------------------
+   // DOS_PAGE_COUNT      this is the threshhold for the number of requests for the same page (or URI) per page interval
+   // DOS_PAGE_INTERVAL   the interval for the page count threshhold; defaults to 1 second intervals
+   // DOS_SITE_COUNT      this is the threshhold for the total number of requests for any object by the same client per site interval
+   // DOS_SITE_INTERVAL   the interval for the site count threshhold; defaults to 1 second intervals
+   // DOS_BLOCKING_PERIOD the blocking period is the amount of time (in seconds) that a client will be blocked for if they are added to the blocking list (defaults to 10)
+   // DOS_WHITE_LIST      list of comma separated IP addresses of trusted clients can be whitelisted to insure they are never denied (IPADDR[/MASK])
+   // DOS_EMAIL_NOTIFY    the email address to send a message whenever an IP address becomes blacklisted
+   // DOS_SYSTEM_COMMAND  the system command specified will be executed whenever an IP address becomes blacklisted. Use %v to denote the IP address of the blacklisted IP
+   // --------------------------------------------------------------------------------------------------------------------------------------
 
    static void run(); // loop waiting for connection
 
@@ -223,9 +236,6 @@ public:
 
 #ifdef U_WELCOME_SUPPORT
    static void setMsgWelcome(const UString& msg);
-#endif
-
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
 #endif
 
    // -------------------------------------------------------------------
@@ -283,7 +293,7 @@ public:
       char buffer4[512];
       char buffer5[512];
       char buffer6[512];
-      char buffer7[431];
+      char buffer7[402];
    // ---------------------------------
       uint8_t flag_sigterm;
    // ---------------------------------
@@ -296,12 +306,14 @@ public:
    // ---------------------------------
       sem_t lock_user1;
       sem_t lock_user2;
+      sem_t lock_evasive;
       sem_t lock_throttling;
       sem_t lock_rdb_server;
       sem_t lock_data_session;
       sem_t lock_db_not_found;
       char spinlock_user1[1];
       char spinlock_user2[1];
+      char spinlock_evasive[1];
       char spinlock_throttling[1];
       char spinlock_rdb_server[1];
       char spinlock_data_session[1];
@@ -353,6 +365,7 @@ public:
 #define U_SRV_CNT_PARALLELIZATION   UServer_Base::ptr_shared_data->cnt_parallelization
 #define U_SRV_LOCK_USER1          &(UServer_Base::ptr_shared_data->lock_user1)
 #define U_SRV_LOCK_USER2          &(UServer_Base::ptr_shared_data->lock_user2)
+#define U_SRV_LOCK_EVASIVE        &(UServer_Base::ptr_shared_data->lock_evasive)
 #define U_SRV_LOCK_THROTTLING     &(UServer_Base::ptr_shared_data->lock_throttling)
 #define U_SRV_LOCK_RDB_SERVER     &(UServer_Base::ptr_shared_data->lock_rdb_server)
 #define U_SRV_LOCK_SSL_SESSION    &(UServer_Base::ptr_shared_data->lock_ssl_session)
@@ -360,6 +373,7 @@ public:
 #define U_SRV_LOCK_DB_NOT_FOUND   &(UServer_Base::ptr_shared_data->lock_db_not_found)
 #define U_SRV_SPINLOCK_USER1        UServer_Base::ptr_shared_data->spinlock_user1
 #define U_SRV_SPINLOCK_USER2        UServer_Base::ptr_shared_data->spinlock_user2
+#define U_SRV_SPINLOCK_EVASIVE      UServer_Base::ptr_shared_data->spinlock_evasive
 #define U_SRV_SPINLOCK_THROTTLING   UServer_Base::ptr_shared_data->spinlock_throttling
 #define U_SRV_SPINLOCK_RDB_SERVER   UServer_Base::ptr_shared_data->spinlock_rdb_server
 #define U_SRV_SPINLOCK_SSL_SESSION  UServer_Base::ptr_shared_data->spinlock_ssl_session
@@ -633,6 +647,24 @@ protected:
    static void initThrottlingServer();
 #endif
 
+#ifdef U_EVASIVE_SUPPORT // provide evasive action in the event of an HTTP DoS or DDoS attack or brute force attack
+   static bool bwhitelist;
+   static UString* emailAddress;
+   static UString* whitelist_IP;
+   static UEvasive* evasive_rec;
+   static UString* systemCommand;
+   static USmtpClient* emailClient;
+   static UVector<UIPAllow*>* vwhitelist_IP;
+   static URDBObjectHandler<UDataStorage*>* db_evasive;
+   static uint32_t blocking_period, page_interval, page_count, site_interval, site_count;
+
+   static void initEvasive();
+   static bool checkHitUriStats();
+   static bool checkHitSiteStats();
+   static bool checkHitStats(const char* key, uint32_t key_len, uint32_t interval, uint32_t count);
+   static bool checkHold(in_addr_t client, const char* client_address, uint32_t client_address_len);
+#endif
+
             UServer_Base(UFileConfig* pcfg = U_NULLPTR);
    virtual ~UServer_Base();
 
@@ -716,6 +748,7 @@ private:
 
    friend class UHTTP;
    friend class UHTTP2;
+   friend class UEvasive;
    friend class UDayLight;
    friend class UTimeStat;
    friend class USSLSocket;

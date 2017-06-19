@@ -61,7 +61,7 @@ U_EXPORT main(int argc, char* argv[], char* env[])
 
    int result;
    UString host(argv[1]);
-   URDBClient<UTCPSocket> x(0);
+   URDBClient<UTCPSocket> x(U_NULLPTR);
 
    if (x.setHostPort(host, 8080) && x.connect())
       {

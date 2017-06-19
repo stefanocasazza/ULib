@@ -3015,7 +3015,7 @@ loop:
 
    if (nerror == NO_ERROR)
       {
-      U_INTERNAL_ASSERT_MAJOR(pConnection->out_window, 0)
+      if (pConnection->out_window == 0) goto loop;
 
       U_INTERNAL_DUMP("pStreamOld = %u pStream = %u", pStreamOld, pStream)
 
@@ -3416,8 +3416,6 @@ read_request:
 
       if (sz == 0)
          {
-         // sz = 0 U_http_info.uri_len = 0 U_http2_settings_len = 0 U_ClientImage_close = false
-
          if (U_http2_settings_len)
             {
             // NB: not OPTION upgrade...

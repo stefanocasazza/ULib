@@ -144,7 +144,7 @@ union uustringrep { ustringrep* p1; UStringRep* p2; };
 class U_EXPORT ULib {
 public:
     ULib(const char* mempool) { init(mempool, U_NULLPTR); }
-   ~ULib()                    {  end(); }
+   ~ULib()                    { end(); }
 
    static void end();
    static void init(const char* mempool, char** argv);

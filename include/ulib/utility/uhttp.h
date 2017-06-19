@@ -204,9 +204,39 @@ public:
    static bool scanfHeaderRequest(const char* ptr, uint32_t size);
    static bool scanfHeaderResponse(const char* ptr, uint32_t size);
    static bool readHeaderResponse(USocket* socket, UString& buffer);
-   static bool isValidRequest(   const char* ptr, uint32_t size) __pure;
-   static bool isValidRequestExt(const char* ptr, uint32_t size) __pure;
    static bool readBodyResponse(USocket* socket, UString* buffer, UString& body);
+
+   static bool isValidRequest(const char* ptr, uint32_t sz)
+      {
+      U_TRACE(0, "UHTTP::isValidRequest(%.*S,%u)", 30, ptr, sz)
+
+      U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+      U_INTERNAL_DUMP("sz = %u UClientImage_Base::size_request = %u", sz, UClientImage_Base::size_request)
+
+      if (u_get_unalignedp32(ptr+sz-4) == U_MULTICHAR_CONSTANT32('\r','\n','\r','\n')) U_RETURN(true);
+
+      U_RETURN(false);
+      }
+
+   static bool isValidRequestExt(const char* ptr, uint32_t sz)
+      {
+      U_TRACE(0, "UHTTP::isValidRequestExt(%.*S,%u)", 30, ptr, sz)
+
+      U_INTERNAL_ASSERT_MAJOR(sz, 0)
+
+      if (sz >= U_CONSTANT_SIZE("GET / HTTP/1.0\r\n\r\n")        &&
+          isValidMethod(ptr)                                     &&
+          (isValidRequest(ptr, sz)                               ||
+                              (UClientImage_Base::size_request   &&
+           isValidRequest(ptr, UClientImage_Base::size_request)) ||
+           memmem(ptr, sz, U_CONSTANT_TO_PARAM(U_CRLF2)) != U_NULLPTR))
+         {
+         U_RETURN(true);
+         }
+
+      U_RETURN(false);
+      }
 
 #ifndef U_HTTP2_DISABLE
    static bool    copyHeaders(UStringRep* key, void* elem);

@@ -100,6 +100,8 @@ done
 upload_test $2:8080
 
 kill_server userver_tcp
+$SLEEP
+pkill userver_tcp 2>/dev/null
 }
 
 # function : creat_config
@@ -117,6 +119,7 @@ userver {
  RUN_AS_USER nobody
 #MIN_SIZE_FOR_SENDFILE 2k
  REQ_TIMEOUT 30
+ DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
  LOG_FILE webserver$1.log
  LOG_FILE_SZ 1M
  LOG_MSG_SIZE -1

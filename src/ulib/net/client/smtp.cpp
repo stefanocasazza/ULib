@@ -58,9 +58,7 @@ bool USmtpClient::_connectServer(const UString& server, unsigned int port, int t
 
       U_INTERNAL_ASSERT_EQUALS(u_buffer_len, 0)
 
-      // NB: the last argument (0) is necessary...
-
-      u_buffer_len = u__snprintf(u_buffer, U_BUFFER_SIZE, U_CONSTANT_TO_PARAM("Sorry, couldn't connect to server '%v:%u'%R"), server.rep, port, 0);
+      u_buffer_len = u__snprintf(u_buffer,U_BUFFER_SIZE,U_CONSTANT_TO_PARAM("Sorry, couldn't connect to server '%v:%u'%R"),server.rep,port,0); // NB: the last argument (0) is necessary...
       }
    else
       {
@@ -91,6 +89,7 @@ bool USmtpClient::_connectServer(UFileConfig& cfg, unsigned int port, int timeou
 
    U_ASSERT_EQUALS(cfg.empty(), false)
 
+   // ----------------------------------------------------------------------------------------------------------------------
    // USmtpClient - configuration parameters
    // ----------------------------------------------------------------------------------------------------------------------
    // SMTP_SERVER host name or ip address for server

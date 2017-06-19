@@ -65,7 +65,7 @@ void UApplication::printMemUsage()
                         UServer_Base::getStats().rep,
                         (double)vsz / (1024.0 * 1024.0),
                         (double)rss / (1024.0 * 1024.0), UNotifier::max_nfd_ready, UServer_Base::max_depth, UServer_Base::nread_again, UServer_Base::nread,
-                        (UServer_Base::nread_again * 100) / UServer_Base::nread, UServer_Base::wakeup_for_nothing, UNotifier::bepollet_threshold);
+                        (UServer_Base::nread_again * 100) / (UServer_Base::nread ? UServer_Base::nread : 1), UServer_Base::wakeup_for_nothing, UNotifier::bepollet_threshold);
 
       ostrstream os(buffer + len, sizeof(buffer) - len);
 

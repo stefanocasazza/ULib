@@ -2541,17 +2541,20 @@ if test "x$ac_cv_crc32_intrinsics" = xyes; then
 		esac
 	fi
 fi
+##########################
 
 if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 	if test "$enable_static" = "yes" -a "$enable_shared" = "no" -a "$enable_stdcpp" = "yes"; then
-		gcc_lib=`gcc -print-libgcc-file-name`
-		gcc_dir=`dirname $gcc_lib`
 
-		if test -f "$gcc_dir/libstdc++.a"; then
-			ULIB_LIBS="$ULIB_LIBS $gcc_dir/libstdc++.a $gcc_lib"
-		else
-			ULIB_LIBS="$ULIB_LIBS -lstdc++ -lgcc"
-		fi
+##		if test -f "$gcc_dir/libstdc++.a"; then
+##			gcc_lib=`gcc -print-libgcc-file-name`
+##			gcc_dir=`dirname $gcc_lib`
+##			ULIB_LIBS="$ULIB_LIBS $gcc_dir/libstdc++.a $gcc_lib"
+##		else
+##			ULIB_LIBS="$ULIB_LIBS -lstdc++ -lgcc"
+##		fi
+
+		ULIB_LIBS="$ULIB_LIBS -lstdc++ -lgcc"
 	else
 		AC_MSG_CHECKING([whether to use libgcc])
 		AC_ARG_ENABLE(libgcc,
@@ -2568,7 +2571,6 @@ if test "$ac_cv_c_compiler_gnu" = "yes" -a "x$GCC_IS_CLANG" = xno; then
 			)
 	fi
 fi
-##########################
 
 # Check for availablity of "old style" C++ strstream header
 AC_CHECK_HEADERS([strstream.h])

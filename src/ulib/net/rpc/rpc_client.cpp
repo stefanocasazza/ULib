@@ -31,7 +31,7 @@ bool URPCClient_Base::readResponse(USocket* sk, UString& buffer, UString& respon
       buffer.size_adjust_force(U_TOKEN_NM);
       }
 
-   U_INTERNAL_DUMP("buffer = %V response = %V)", buffer.rep, response.rep)
+   U_INTERNAL_DUMP("buffer = %V response = %V", buffer.rep, response.rep)
 
    if (buffer) U_RETURN(true);
 

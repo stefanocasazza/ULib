@@ -43,14 +43,17 @@ URL: ftp://ftp.at.debian.org/debian/README
 See http://www.debian.org/ for information about Debian GNU/Linux.
 Four Debian releases are available on the main site:
 
-Debian 7.9, or wheezy.  Access this release through dists/oldstable
-Debian 7.9 was released Saturday, 5th September 2015.
+Debian 7.11, or wheezy.  Access this release through dists/oldoldstable
+Debian 7.11 was released Saturday, 4th June 2016.
 
-Debian 8.3, or jessie.  Access this release through dists/stable
-Debian 8.3 was released Saturday, 23rd January 2016.
+Debian 8.8, or jessie.  Access this release through dists/oldstable
+Debian 8.8 was released Saturday, 6th May 2017.
 
-Testing, or stretch.  Access this release through dists/testing.  The
-current tested development snapshot is named stretch.  Packages which
+Debian 9.0, or stretch.  Access this release through dists/stable
+Debian 9.0 was released Saturday, 17th June 2017.
+
+Testing, or buster.  Access this release through dists/testing.  The
+current tested development snapshot is named buster.  Packages which
 have been tested in unstable and passed automated tests propagate to
 this release.
 
@@ -105,7 +108,7 @@ the <a href="mailto:webmaster@unirel.com">webmaster</a>.
 <address>
   <a href="/">www.unirel.com</a><br />
   
-  <span>Wed Mar  2 18:45:49 2016<br />
+  <span>Mon Jun 19 14:01:54 2017<br />
   Apache/2.0.49 (Linux/SuSE)</span>
 </address>
 </body>

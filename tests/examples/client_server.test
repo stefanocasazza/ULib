@@ -18,8 +18,8 @@ cat <<EOF >inp/server.cf
 userver {
  PORT 10001
  WELCOME_MSG "generic server ready."
- ALLOWED_IP localhost 
-#ALLOWED_IP localhost,10.30.0.0/16
+ ALLOWED_IP 127.0.0.1 
+#ALLOWED_IP 127.0.0.1,10.30.0.0/16
  LOG_FILE server.log
  LOG_FILE_SZ 1M
  PLUGIN echo

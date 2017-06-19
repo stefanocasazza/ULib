@@ -14,7 +14,7 @@ U_EXPORT main (int argc, char* argv[], char* env[])
    U_TRACE(5,"main(%d)",argc)
 
    UFileConfig fcg;
-   UServerExample server(0);
+   UServerExample server(U_NULLPTR);
    UString plugin_dir(argv[1]), plugin_list(argv[2]);
 
    if (argv[3])

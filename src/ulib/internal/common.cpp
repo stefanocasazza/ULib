@@ -312,7 +312,6 @@ void ULib::init(const char* mempool, char** argv)
 
 void ULib::end()
 {
-   
 #if defined(U_STDCPP_ENABLE) && defined(DEBUG)
    UApplication::printMemUsage();
 #endif

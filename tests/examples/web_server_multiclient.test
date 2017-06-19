@@ -30,6 +30,7 @@ cat <<EOF >inp/webserver.cfg
 userver {
  PORT 8080
  RUN_AS_USER apache
+ DOS_WHITE_LIST 127.0.0.1,10.30.0.0/16
  LOG_FILE web_server_multiclient.log
  LOG_FILE_SZ 1M
  LOG_MSG_SIZE -1

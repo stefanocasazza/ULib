@@ -289,7 +289,8 @@ UString UStringExt::dos2unix(const UString& s, bool unix2dos)
       if (c == '\n')
          {
          if (unix2dos) *str++ = '\r';
-                       *str++ = '\n';
+
+         *str++ = '\n';
 
          continue;
          }

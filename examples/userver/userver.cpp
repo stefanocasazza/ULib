@@ -117,6 +117,17 @@ public:
       //                                                                      1 - classic, forking after accept client)
       //                                                                     >1 - pool of process serialize plus monitoring process)
       // ---------------------------------------------------------------------------------------------------------------------------------------
+      // This directive are for evasive action in the event of an HTTP DoS or DDoS attack or brute force attack
+      // ---------------------------------------------------------------------------------------------------------------------------------------
+      // DOS_PAGE_COUNT      this is the threshhold for the number of requests for the same page (or URI) per page interval
+      // DOS_PAGE_INTERVAL   the interval for the page count threshhold; defaults to 1 second intervals
+      // DOS_SITE_COUNT      this is the threshhold for the total number of requests for any object by the same client per site interval
+      // DOS_SITE_INTERVAL   the interval for the site count threshhold; defaults to 1 second intervals
+      // DOS_BLOCKING_PERIOD the blocking period is the amount of time (in seconds) that a client will be blocked for if they are added to the blocking list (defaults to 10)
+      // DOS_WHITE_LIST      list of comma separated IP addresses of trusted clients can be whitelisted to insure they are never denied (IPADDR[/MASK])
+      // DOS_EMAIL_NOTIFY    the email address to send a message whenever an IP address becomes blacklisted
+      // DOS_SYSTEM_COMMAND  the system command specified will be executed whenever an IP address becomes blacklisted. Use %v to denote the IP address of the blacklisted IP 
+      // ---------------------------------------------------------------------------------------------------------------------------------------
 
 #  ifdef U_SSL_SOCKET
       UServer_Base::bssl = true;

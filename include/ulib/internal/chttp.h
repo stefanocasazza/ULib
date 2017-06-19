@@ -145,6 +145,19 @@ typedef struct uhttpinfo {
    unsigned char flag[16];
 } uhttpinfo;
 
+/**
+ * GET     is used to retrieve a resource on the server.
+ * HEAD    is used to retrieve some information about the document, but don't need the document itself.
+ * POST    says that you are providing some information of your own (i.e., in forms). This may change the state of the server in some way, such as creating a record in a database.
+ * PUT     is used to replace or create a new document on the server.
+ * DELETE  is used to remove a document on the server.
+ * TRACE   is used for protocol debugging purposes.
+ * OPTIONS is used when the client looks for other methods which can be used on the document.
+ * CONNECT is used when a client needs to talk to an HTTPS server through a proxy server.
+ *
+ * Other HTTP methods that you may see (LINK, UNLINK, and PATCH) are less clearly defined
+ */
+
 enum HTTPMethodType {
 /* request methods */
    HTTP_GET         = 0x00000001,
