@@ -1127,7 +1127,7 @@ UThread* UServer_Base::pthread_ocsp;
  * - The IP address of the requestor is hashed into a "key". A lookup is performed in the listener's internal hash table to determine if
  *   the same host has requested more than 50 objects within the past second.
  * - The IP address of the requestor and the URI are both hashed into a "key". A lookup is performed in the listener's internal hash table
- *   to determine if the same host has requested this page more than 3 within the past 1 second.
+ *   to determine if the same host has requested this page more than 5 within the past 1 second.
  *
  * If any of the above are true, a RESET is sent. This conserves bandwidth and system resources in the event of a DoS attack. Additionally,
  * a system command and/or an email notification can also be triggered to block all the originating addresses of a DDoS attack.
@@ -1225,10 +1225,14 @@ void UServer_Base::initEvasive()
       U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
       U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
+#  ifdef USE_LIBSSL
+      db_evasive->setShared(U_NULLPTR, U_NULLPTR); // POSIX shared memory object (interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+#  else
       db_evasive->setShared(U_SRV_LOCK_EVASIVE, U_SRV_SPINLOCK_EVASIVE);
+#  endif
       }
 
-   bool result = db_evasive->open(1024 * 1024, false, true); // NB: we don't want truncate (we have only the journal)...
+   bool result = db_evasive->open(4096 * 4096, false, true); // NB: we don't want truncate (we have only the journal)...
 
    U_SRV_LOG("%sdb initialization of Evasive %s: size(%u)", (result ? "" : "WARNING: "), (result ? "success" : "failed"), db_evasive->size());
 
@@ -1297,8 +1301,8 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
          {
          char msg[256];
          uint32_t msg_len = (count == site_count
-                                 ? u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("it has requested more than %u objects within the past %u seconds"),       site_count, site_interval) 
-                                 : u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("it has requested the same page more than %u within the past %u seconds"), page_count, page_interval));
+                           ? u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("it has requested more than %u objects within the past %u seconds"),       site_count, site_interval) 
+                           : u__snprintf(msg, sizeof(msg), U_CONSTANT_TO_PARAM("it has requested the same page more than %u within the past %u seconds"), page_count, page_interval));
 
          evasive_rec->count     = 0;
          evasive_rec->timestamp = u_now->tv_sec;
@@ -1375,12 +1379,12 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
                   emailClient->setMessageSubject(U_STRING_FROM_CONSTANT("possible DoS attack"));
 
 #              ifdef USE_LIBSSL
-                  bool ok = emailClient->sendMessage(true);
+                  bool bsecure = true;
 #              else
-                  bool ok = emailClient->sendMessage(false);
+                  bool bsecure = false;
 #              endif
 
-                  if (ok == false)
+                  if (emailClient->sendMessage(bsecure) == false)
                      {
                      emailClient->setStatus();
 
@@ -2085,10 +2089,10 @@ void UServer_Base::loadConfigParam()
 #ifdef U_EVASIVE_SUPPORT
    /**
     * This is the threshhold for the number of requests for the same page (or URI) per page interval.
-    * Once the threshhold for that interval has been exceeded (defaults to 3), the IP address of the client will be added to the blocking list
+    * Once the threshhold for that interval has been exceeded (defaults to 5), the IP address of the client will be added to the blocking list
     */
 
-   page_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 3);
+   page_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 5);
 
    /**
     * The interval for the page count threshhold; defaults to 1 second intervals

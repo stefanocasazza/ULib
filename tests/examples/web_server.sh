@@ -17,7 +17,8 @@ rm -f tmp/usp_compile.sh.err /tmp/*.hpack.* \
  UTRACE_SIGNAL="0 50M -1"
 #UOBJDUMP="0 10M 100"
 #USIMERR="error.sim"
-export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL
+ UMEMUSAGE=yes
+export UTRACE UOBJDUMP USIMERR UTRACE_SIGNAL UMEMUSAGE
 
 SOCK1=tmp/fcgi.socket
 
@@ -98,7 +99,7 @@ EOF
 
 export ORM_DRIVER="sqlite"
 export ELASTICSEARCH_HOST="localhost"
-export UMEMPOOL="136,0,60,100,250,-22,-17,-23,60"
+export UMEMPOOL="750,0,123,251,305,53,-6,-26,52"
 #export ORM_OPTION="host=localhost dbname=../db/fortune"
  export ORM_OPTION="host=localhost dbname=../db/hello_world"
 
