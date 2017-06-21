@@ -52,6 +52,8 @@ void UApplication::printMemUsage()
 
    if (U_SYSCALL(getenv, "%S", "UMEMUSAGE"))
       {
+      if (UServer_Base::preforked_num_kids) U_WARNING("UMEMUSAGE must be used with PREFORK_CHILD == 0");
+
       uint32_t len;
       char buffer[4096];
       unsigned long vsz, rss;

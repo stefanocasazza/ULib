@@ -153,6 +153,9 @@ UVector<UServerPlugIn*>*          UServer_Base::vplugin_static;
 UServer_Base::shared_data*        UServer_Base::ptr_shared_data;
 UVector<UServer_Base::file_LOG*>* UServer_Base::vlog;
 
+#ifdef USE_LIBSSL
+UServer_Base::shm_data* UServer_Base::ptr_shm_data;
+#endif
 #ifdef U_WELCOME_SUPPORT
 UString* UServer_Base::msg_welcome;
 #endif
@@ -1220,27 +1223,31 @@ void UServer_Base::initEvasive()
    U_NEW(UEvasive, evasive_rec, UEvasive);
    U_NEW(URDBObjectHandler<UDataStorage*>, db_evasive, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/Evasive"), -1, evasive_rec));
 
-   if (isPreForked())
+   if (db_evasive->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
       {
+      U_SRV_LOG("db Evasive initialization success: size(%u)", db_evasive->size());
+
       U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
       U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
 
 #  ifdef USE_LIBSSL
-      db_evasive->setShared(U_NULLPTR, U_NULLPTR); // POSIX shared memory object (interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+      // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+      db_evasive->setShared(U_SHM_LOCK_EVASIVE, U_SHM_SPINLOCK_EVASIVE);
 #  else
       db_evasive->setShared(U_SRV_LOCK_EVASIVE, U_SRV_SPINLOCK_EVASIVE);
 #  endif
+
+      db_evasive->reset(); // Initialize the db to contain no entries
       }
-
-   bool result = db_evasive->open(4096 * 4096, false, true); // NB: we don't want truncate (we have only the journal)...
-
-   U_SRV_LOG("%sdb initialization of Evasive %s: size(%u)", (result ? "" : "WARNING: "), (result ? "success" : "failed"), db_evasive->size());
-
-   if (result) db_evasive->reset(); // Initialize the db to contain no entries
    else
       {
+      U_SRV_LOG("WARNING: db Evasive initialization failed");
+
       delete db_evasive;
-             db_evasive = U_NULLPTR;
+      delete    evasive_rec;
+
+             db_evasive     = U_NULLPTR;
+                evasive_rec = U_NULLPTR;
       }
 }
 
@@ -1515,8 +1522,6 @@ UServer_Base::UServer_Base(UFileConfig* pcfg)
       {
       U_WARNING("System date not updated: %#5D", u_now->tv_sec);
       }
-
-   U_DEBUG("sizeof(shared_data) = %u", sizeof(shared_data));
 
    /**
     * TMPDIR is the canonical Unix environment variable which points to user scratch space. Most Unix utilities will honor the setting of this
@@ -2939,6 +2944,15 @@ void UServer_Base::init()
 
    U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
    U_INTERNAL_ASSERT_DIFFERS(ptr_shared_data, MAP_FAILED)
+
+#if defined(U_LINUX) && defined(USE_LIBSSL)
+   // For portable use, a shared memory object should be identified by a name of the form /somename; that is, a null-terminated string of
+   // up to NAME_MAX (i.e., 255) characters consisting of an initial slash, followed by one or more characters, none of which are slashes
+
+   ptr_shm_data = (shm_data*) UFile::shm_open("/userver", sizeof(shm_data));
+
+   U_DEBUG("sizeof(shared_data) = %u sizeof(shm_data) = %u", sizeof(shared_data), sizeof(shm_data));
+#endif
 
 #if defined(USE_LOAD_BALANCE) || (defined(U_LOG_DISABLE) && !defined(USE_LIBZ))
    bool bpthread_time = true;

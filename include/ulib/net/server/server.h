@@ -387,6 +387,38 @@ public:
    static uint32_t shared_data_add, map_size;
    static bool update_date, update_date1, update_date2, update_date3;
 
+#ifdef USE_LIBSSL
+   typedef struct shm_data {
+      sem_t lock_user1;
+      sem_t lock_user2;
+      sem_t lock_user3;
+      sem_t lock_user4;
+      sem_t lock_user5;
+      sem_t lock_evasive;
+      sem_t lock_db_not_found;
+      char spinlock_user1[1];
+      char spinlock_user2[1];
+      char spinlock_user3[1];
+      char spinlock_user4[1];
+      char spinlock_user5[1];
+      char spinlock_evasive[1];
+      char spinlock_db_not_found[1];
+      char buffer[3864];
+   } shm_data;
+
+   static shm_data* ptr_shm_data;
+
+#  define U_SHM_LOCK_USER1           &(UServer_Base::ptr_shm_data->lock_user1)
+#  define U_SHM_LOCK_USER2           &(UServer_Base::ptr_shm_data->lock_user2)
+#  define U_SHM_LOCK_USER3           &(UServer_Base::ptr_shm_data->lock_user3)
+#  define U_SHM_LOCK_USER4           &(UServer_Base::ptr_shm_data->lock_user4)
+#  define U_SHM_LOCK_USER5           &(UServer_Base::ptr_shm_data->lock_user5)
+#  define U_SHM_LOCK_EVASIVE         &(UServer_Base::ptr_shm_data->lock_evasive)
+#  define U_SHM_LOCK_DB_NOT_FOUND    &(UServer_Base::ptr_shm_data->lock_db_not_found)
+#  define U_SHM_SPINLOCK_EVASIVE       UServer_Base::ptr_shm_data->spinlock_evasive
+#  define U_SHM_SPINLOCK_DB_NOT_FOUND  UServer_Base::ptr_shm_data->spinlock_db_not_found
+#endif
+
 #ifdef USE_LOAD_BALANCE
    static UString* ifname;
    static uint8_t loadavg_threshold;

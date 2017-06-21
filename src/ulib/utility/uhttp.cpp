@@ -5250,11 +5250,16 @@ void UHTTP::initDbNotFound()
 
    U_NEW(URDB, db_not_found, URDB(U_STRING_FROM_CONSTANT("../db/NotFound.http"), -1));
 
-   if (db_not_found->open(4 * 1024 * 1024, false, true)) // NB: we don't want truncate (we have only the journal)...
+   if (db_not_found->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
       {
-      U_SRV_LOG("db NotFound initialization success");
+      U_SRV_LOG("db NotFound initialization success: size(%u)", db_not_found->size());
 
-      if (UServer_Base::isPreForked()) db_not_found->setShared(U_SRV_LOCK_DB_NOT_FOUND, U_SRV_SPINLOCK_DB_NOT_FOUND);
+#  ifdef USE_LIBSSL
+      // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+      db_not_found->setShared(U_SHM_LOCK_DB_NOT_FOUND, U_SHM_SPINLOCK_DB_NOT_FOUND);
+#  else
+      db_not_found->setShared(U_SRV_LOCK_DB_NOT_FOUND, U_SRV_SPINLOCK_DB_NOT_FOUND);
+#  endif
       }
    else
       {
@@ -5277,7 +5282,7 @@ void UHTTP::initSession()
 
       U_NEW(URDBObjectHandler<UDataStorage*>, db_session, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.http"), -1, U_NULLPTR));
 
-      if (db_session->open(4 * 1024 * 1024, false, true)) // NB: we don't want truncate (we have only the journal)...
+      if (db_session->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
          {
          U_SRV_LOG("db initialization of HTTP session success");
 
@@ -5322,13 +5327,13 @@ void UHTTP::initSessionSSL()
    U_NEW(USSLSession, data_session_ssl, USSLSession);
    U_NEW(URDBObjectHandler<UDataStorage*>, db_session_ssl, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/session.ssl"), -1, data_session_ssl));
 
-   if (db_session_ssl->open(4 * 1024 * 1024, false, true)) // NB: we don't want truncate (we have only the journal)...
+   if (db_session_ssl->open(4096 * 4096, false, true)) // NB: we don't want truncate (we have only the journal)...
       {
       U_SRV_LOG("db initialization of SSL session success");
 
-      db_session_ssl->reset(); // Initialize the cache to contain no entries
-
       if (UServer_Base::isPreForked()) db_session_ssl->setShared(U_SRV_LOCK_SSL_SESSION, U_SRV_SPINLOCK_SSL_SESSION);
+
+      db_session_ssl->reset(); // Initialize the cache to contain no entries
 
       /**
        * In order to allow external session caching, synchronization with the internal session cache is realized via callback functions.

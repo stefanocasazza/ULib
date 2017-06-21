@@ -57,7 +57,7 @@
 #define U_JSON_VALUE_NAN_MASK     0x7FF8000000000000ULL
 #define U_JSON_VALUE_PAYLOAD_MASK 0x00007FFFFFFFFFFFULL
 
-#define U_JFIND(json,str,result) UValue::jfind(json,str,U_CONSTANT_SIZE(str),result)
+#define U_JFIND(json,str,result) UValue::jfind(json,#str,U_CONSTANT_SIZE(#str),result)
 
 #ifndef U_JSON_PARSE_STACK_SIZE
 #define U_JSON_PARSE_STACK_SIZE 256

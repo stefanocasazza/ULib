@@ -3906,7 +3906,7 @@ static void usp_init_wi_auth()
    U_NEW(URDBObjectHandler<UDataStorage*>, db_nodog, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthAccessPoint.cdb"),        -1, nodog_rec));
    U_NEW(URDBObjectHandler<UDataStorage*>, db_ap,    URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/WiAuthVirtualAccessPoint.cdb"), -1,   vap_rec));
 
-   // POSIX shared memory object (interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
+   // POSIX shared memory object: interprocess - can be used by unrelated processes (userver_tcp and userver_ssl)
 
       db_ap->setShared(U_NULLPTR, U_NULLPTR);
     db_user->setShared(U_NULLPTR, U_NULLPTR);

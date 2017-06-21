@@ -195,7 +195,7 @@ bool UMongoDBClient::findOne(const char* json, uint32_t len)
 
    if (bson)
       {
-      bool result = find(bson, U_NULLPTR);
+      bool result = find(bson);
 
       U_SYSCALL_VOID(bson_destroy, "%p", bson);
 

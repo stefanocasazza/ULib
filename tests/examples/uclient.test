@@ -42,6 +42,8 @@ EOF
 
 DIR_CMD="../../examples/userver"
 
+pkill userver_tcp 2>/dev/null
+
 #STRACE=$TRUSS
 start_prg_background userver_tcp -c inp/webserver.cfg
 
@@ -71,7 +73,9 @@ diff inp/PEC/PEC.log uploads/PEC.log
 RESULT=$?
 
 $SLEEP
-kill_prg userver_tcp TERM
+kill_server userver_tcp
+$SLEEP
+pkill userver_tcp 2>/dev/null
 
 # Test against expected output
 test_output_diff uclient

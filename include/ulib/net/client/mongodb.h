@@ -20,6 +20,13 @@
 typedef int bson_t;
 typedef int mongoc_write_concern_t;
 typedef int mongoc_bulk_operation_t;
+
+extern "C" {
+extern U_EXPORT void bson_destroy(bson_t* bson);
+       U_EXPORT void bson_destroy(bson_t* bson) {}
+extern U_EXPORT bson_t* bson_new();
+       U_EXPORT bson_t* bson_new() { return U_NULLPTR; }
+};
 #else
 #  include <mongoc.h>
 #endif
@@ -70,6 +77,24 @@ public:
 
    UVector<UString> vitem;
 
+   bool findOne(uint32_t value, bson_t* query)
+      {
+      U_TRACE(0, "UMongoDBClient::findOne(%u,%p)", value, query)
+
+#  ifdef USE_MONGODB
+      U_INTERNAL_ASSERT_POINTER(client)
+      U_INTERNAL_ASSERT_POINTER(collection)
+
+      U_SYSCALL_VOID(bson_init, "%p", query);
+
+      BSON_APPEND_INT32(query, "_id", value);
+
+      if (find(query)) U_RETURN(true);
+#  endif
+
+      U_RETURN(false);
+      }
+
    bool findOne(uint32_t value)
       {
       U_TRACE(0, "UMongoDBClient::findOne(%u)", value)
@@ -84,7 +109,7 @@ public:
 
       BSON_APPEND_INT32(query, "_id", value);
 
-      bool result = find(query, U_NULLPTR);
+      bool result = find(query);
 
       U_SYSCALL_VOID(bson_destroy, "%p", query);
 
@@ -104,7 +129,7 @@ public:
 
       bson_t* query = (bson_t*) U_SYSCALL_NO_PARAM(bson_new);  
 
-      bool result = find(query, U_NULLPTR);
+      bool result = find(query);
 
       U_SYSCALL_VOID(bson_destroy, "%p", query);
 
