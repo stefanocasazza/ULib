@@ -70,7 +70,7 @@ u_put_unalignedp64(ptr+8, U_MULTICHAR_CONSTANT64('N','u','m','b','e','r','"',':'
 (void) memcpy(ptr, result.data(), sz);
               ptr +=              sz;
 
-*ptr = '}';
+*ptr++ = '}';
 
 UClientImage_Base::wbuffer->size_adjust(ptr - s);
 #else

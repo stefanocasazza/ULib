@@ -3770,8 +3770,11 @@ bool UHTTP::isValidation()
 
       redirect_url.snprintf(U_CONSTANT_TO_PARAM("%s:/%v"), U_http_websocket_len ? "wss" : "https", UServer_Base::getIPAddress().rep);
 
+#  ifdef U_ALIAS
       if (global_alias) (void) redirect_url.append(*global_alias);
-      else              (void) redirect_url.append(U_HTTP_URI_QUERY_TO_PARAM);    
+      else
+#  endif
+      (void) redirect_url.append(U_HTTP_URI_QUERY_TO_PARAM);    
 
       // The Strict-Transport-Security header is ignored by the browser when your site is accessed using HTTP;
       // this is because an attacker may intercept HTTP connections and inject the header or remove it.

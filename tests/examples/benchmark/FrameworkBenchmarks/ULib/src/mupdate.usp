@@ -109,7 +109,7 @@ while (true)
 // (void) mc->executeBulk(bulk);
 
 #ifdef AS_cpoll_cppsp_DO
-*ptr = ']';
+*ptr++ = ']';
 
 UClientImage_Base::wbuffer->size_adjust(ptr - s);
 #else

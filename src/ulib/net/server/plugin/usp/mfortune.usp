@@ -99,7 +99,7 @@ for (i = 0, ++n; i < n; ++i)
 
    u_put_unalignedp64(ptr,   U_MULTICHAR_CONSTANT64('<','/','t','d','>','<','/','t'));
    u_put_unalignedp16(ptr+8, U_MULTICHAR_CONSTANT16('d','>'));
-                      ptr += 16;
+                      ptr += 10;
    }
 
 UClientImage_Base::wbuffer->size_adjust(ptr - s);
