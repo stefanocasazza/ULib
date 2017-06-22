@@ -56,7 +56,7 @@ Fortune* item;
 UString result;
 uint32_t i, n, sz;
 char* s   = UClientImage_Base::wbuffer->data();
-char* ptr = UClientImage_Base::wbuffer->end();
+char* ptr = UClientImage_Base::wbuffer->pend();
 
 U_NEW(Fortune, item, Fortune(*pfortune2add));
 

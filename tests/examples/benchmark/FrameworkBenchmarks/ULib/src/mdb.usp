@@ -55,7 +55,7 @@ UString result;
 
 #ifdef AS_cpoll_cppsp_DO
 char* s     = UClientImage_Base::wbuffer->data();
-char* ptr   = UClientImage_Base::wbuffer->end();
+char* ptr   = UClientImage_Base::wbuffer->pend();
 uint32_t sz = result.size();
 
 u_put_unalignedp32(ptr,   U_MULTICHAR_CONSTANT32('{','"','i','d'));
