@@ -98,7 +98,7 @@ for (i = 0, ++n; i < n; ++i)
                  ptr +=                 sz;
 
    u_put_unalignedp64(ptr,   U_MULTICHAR_CONSTANT64('<','/','t','d','>','<','/','t'));
-   u_put_unalignedp16(ptr+8, U_MULTICHAR_CONSTANT16('d','>'));
+   u_put_unalignedp16(ptr+8, U_MULTICHAR_CONSTANT16('r','>'));
                       ptr += 10;
    }
 
