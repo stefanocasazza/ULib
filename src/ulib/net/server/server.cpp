@@ -1246,8 +1246,8 @@ void UServer_Base::initEvasive()
       delete db_evasive;
       delete    evasive_rec;
 
-             db_evasive     = U_NULLPTR;
-                evasive_rec = U_NULLPTR;
+      db_evasive     = U_NULLPTR;
+         evasive_rec = U_NULLPTR;
       }
 }
 
@@ -1445,16 +1445,8 @@ bool UServer_Base::checkHitUriStats()
 
    if (bwhitelist == false)
       {
-      uint32_t sz     = U_http_info.uri_len;
-      const char* ptr = U_http_info.uri;
-
-#  ifdef U_ALIAS
-      if (*UClientImage_Base::request_uri) // The interpreted pathname of the original requested document (relative to the document root)
-         {
-         sz  = UClientImage_Base::request_uri->size();
-         ptr = UClientImage_Base::request_uri->data();
-         }
-#  endif
+      uint32_t sz;
+      const char* ptr = UClientImage_Base::getRequestUri(sz);
 
       UString key(UServer_Base::client_address_len + sz);
 
