@@ -65,7 +65,6 @@ int i = 0, num_queries = UHTTP::getFormFirstNumericValue(1, 500);
 #ifdef AS_cpoll_cppsp_DO
 (void) UClientImage_Base::wbuffer->reserve(36U * num_queries);
 
-char* s   = UClientImage_Base::wbuffer->data();
 char* ptr = UClientImage_Base::wbuffer->pend();
 
 *ptr++ = '[';
@@ -111,7 +110,7 @@ while (true)
 #ifdef AS_cpoll_cppsp_DO
 *ptr++ = ']';
 
-UClientImage_Base::wbuffer->size_adjust(ptr - s);
+UClientImage_Base::wbuffer->size_adjust(ptr);
 #else
 USP_OBJ_JSON_stringify(*pvworld_update);
 pvworld_update->clear();

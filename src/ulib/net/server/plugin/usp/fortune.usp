@@ -63,7 +63,6 @@ static void usp_end_fortune()
 <!doctype html><html><head><title>Fortunes</title></head><body><table><tr><th>id</th><th>message</th></tr><!--#code
 uint32_t sz;
 Fortune* item;
-char* s   = UClientImage_Base::wbuffer->data();
 char* ptr = UClientImage_Base::wbuffer->pend();
 
 U_NEW(Fortune, item, Fortune(*pfortune2add));
@@ -106,7 +105,7 @@ for (uint32_t i = 0, n = pvfortune->size(); i < n; ++i)
                       ptr += 10;
    }
 
-UClientImage_Base::wbuffer->size_adjust(ptr - s);
+UClientImage_Base::wbuffer->size_adjust(ptr);
 
 pvfortune->clear();
 --></table></body></html>
