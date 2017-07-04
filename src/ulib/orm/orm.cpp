@@ -108,8 +108,12 @@ UOrmSession::~UOrmSession()
       {
       pdrv->handlerDisConnect();
 
-      if (UOrmDriver::vdriver->find(pdrv) == U_NOT_FOUND) delete pdrv;
-      else pdrv->vopt.clear();
+      if (UOrmDriver::vdriver->find(pdrv) != U_NOT_FOUND) pdrv->vopt.clear();
+      else
+         {
+         delete pdrv;
+                pdrv = U_NULLPTR;
+         }
       }
 #endif
 }
@@ -195,14 +199,22 @@ UOrmStatement::UOrmStatement(UOrmSession& session, const char* stmt, uint32_t le
 {
    U_TRACE_REGISTER_OBJECT(0, UOrmStatement, "%p,%.*S,%u", &session, len, stmt, len)
 
-#if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   pdrv = session.pdrv;
+   pdrv     = U_NULLPTR;
+   pstmt    = U_NULLPTR;
+   psession = U_NULLPTR;
 
-        if (pdrv) pstmt = pdrv->handlerStatementCreation(stmt, len);
-   else if (UOrmDriver::env_driver_len) UOrmSession::loadDriverFail(UOrmDriver::env_driver, UOrmDriver::env_driver_len);
-#else
-   pdrv  = U_NULLPTR;
-   pstmt = U_NULLPTR;
+#if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
+   if (session.pdrv)
+      {
+      pdrv  = (psession = &session)->pdrv;
+      pstmt = pdrv->handlerStatementCreation(stmt, len);
+
+      U_INTERNAL_DUMP("psession = %p pdrv = %p", psession, pdrv)
+      }
+   else
+      {
+      if (UOrmDriver::env_driver_len) UOrmSession::loadDriverFail(UOrmDriver::env_driver, UOrmDriver::env_driver_len);
+      }
 #endif
 }
 
@@ -211,11 +223,22 @@ UOrmStatement::~UOrmStatement()
    U_TRACE_UNREGISTER_OBJECT(0, UOrmStatement)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
-
    U_INTERNAL_DUMP("pstmt = %p", pstmt)
 
-   if (pstmt) pdrv->remove(pstmt);
+   if (pstmt)
+      {
+      U_INTERNAL_DUMP("psession = %p", psession)
+
+      U_INTERNAL_ASSERT_POINTER(psession)
+
+      if (psession->pdrv == U_NULLPTR) delete pstmt;
+      else
+         {
+         U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
+
+         pdrv->remove(pstmt);
+         }
+      }
 #endif
 }
 
@@ -224,8 +247,9 @@ void UOrmStatement::execute()
    U_TRACE_NO_PARAM(0, "UOrmStatement::execute()")
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->execute(pstmt);
 #endif
@@ -238,8 +262,9 @@ unsigned long long UOrmStatement::affected()
 {
    U_TRACE_NO_PARAM(0, "UOrmStatement::affected()")
 
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    unsigned long long result = pdrv->affected(pstmt);
 
@@ -252,8 +277,9 @@ unsigned long long UOrmStatement::last_insert_rowid(const char* sequence)
 {
    U_TRACE(0, "UOrmStatement::last_insert_rowid(%S)", sequence)
 
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    unsigned long long result = pdrv->last_insert_rowid(pstmt, sequence);
 
@@ -266,8 +292,9 @@ unsigned int UOrmStatement::cols()
 {
    U_TRACE_NO_PARAM(0, "UOrmStatement::cols()")
 
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    unsigned int result = pdrv->cols(pstmt);
 
@@ -278,8 +305,9 @@ bool UOrmStatement::nextRow()
 {
    U_TRACE_NO_PARAM(0, "UOrmStatement::nextRow()")
 
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    if (pdrv->nextRow(pstmt)) U_RETURN(true);
 
@@ -292,8 +320,9 @@ void UOrmStatement::reset()
 {
    U_TRACE_NO_PARAM(0, "UOrmStatement::reset()")
 
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->reset(pstmt);
 }
@@ -305,8 +334,9 @@ void UOrmStatement::bindParam()
    U_TRACE_NO_PARAM(0, "UOrmStatement::bindParam()")
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt);
 #endif
@@ -317,8 +347,9 @@ void UOrmStatement::bindParam(bool& v)
    U_TRACE(0, "UOrmStatement::bindParam(%b)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -329,8 +360,9 @@ void UOrmStatement::bindParam(char& v)
    U_TRACE(0, "UOrmStatement::bindParam(%C)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -341,8 +373,9 @@ void UOrmStatement::bindParam(unsigned char& v)
    U_TRACE(0, "UOrmStatement::bindParam(%C)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -353,8 +386,9 @@ void UOrmStatement::bindParam(short& v)
    U_TRACE(0, "UOrmStatement::bindParam(%d)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -365,8 +399,9 @@ void UOrmStatement::bindParam(unsigned short& v)
    U_TRACE(0, "UOrmStatement::bindParam(%d)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -377,8 +412,9 @@ void UOrmStatement::bindParam(int& v)
    U_TRACE(0, "UOrmStatement::bindParam(%d)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -389,8 +425,9 @@ void UOrmStatement::bindParam(unsigned int& v)
    U_TRACE(0, "UOrmStatement::bindParam(%u)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -401,8 +438,9 @@ void UOrmStatement::bindParam(long& v)
    U_TRACE(0, "UOrmStatement::bindParam(%ld)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -413,8 +451,9 @@ void UOrmStatement::bindParam(unsigned long& v)
    U_TRACE(0, "UOrmStatement::bindParam(%lu)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -425,8 +464,9 @@ void UOrmStatement::bindParam(long long& v)
    U_TRACE(0, "UOrmStatement::bindParam(%lld)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -437,8 +477,9 @@ void UOrmStatement::bindParam(unsigned long long& v)
    U_TRACE(0, "UOrmStatement::bindParam(%llu)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -449,8 +490,9 @@ void UOrmStatement::bindParam(float& v)
    U_TRACE(0, "UOrmStatement::bindParam(%g)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -461,8 +503,9 @@ void UOrmStatement::bindParam(double& v)
    U_TRACE(0, "UOrmStatement::bindParam(%g)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -473,8 +516,9 @@ void UOrmStatement::bindParam(long double& v)
    U_TRACE(0, "UOrmStatement::bindParam(%g)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v);
 #endif
@@ -485,8 +529,9 @@ void UOrmStatement::bindParam(const char* s, int n, bool bstatic, int rebind)
    U_TRACE(0, "UOrmStatement::bindParam(%.*S,%u,%b,%d)", n, s, n, bstatic, rebind)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, s, n, bstatic, rebind);
 #endif
@@ -497,8 +542,9 @@ void UOrmStatement::bindParam(const char* v)
    U_TRACE(0, "UOrmStatement::bindParam(%S)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, v, u__strlen(v, __PRETTY_FUNCTION__), true, -1);
 #endif
@@ -509,8 +555,9 @@ void UOrmStatement::bindParam(const char* b, const char* e)
    U_TRACE(0, "UOrmStatement::bindParam(%S,%S)", b, e)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, b, e-b, false, -1);
 #endif
@@ -521,8 +568,9 @@ void UOrmStatement::bindParam(UStringRep& v)
    U_TRACE(0, "UOrmStatement::bindParam(%V)", &v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindParam(pstmt, U_STRING_TO_PARAM(v), true, -1);
 #endif
@@ -533,8 +581,9 @@ void UOrmStatement::bindParam(struct tm& v)
    U_TRACE(0, "UOrmStatement::bindParam(%p)", &v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    char buffer[32];
 
@@ -553,10 +602,11 @@ void UOrmStatement::bindParam(istream& v)
    U_TRACE(0, "UOrmStatement::bindParam(%p)", &v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
-#  ifndef HAVE_OLD_IOSTREAM
+# ifndef HAVE_OLD_IOSTREAM
    ostringstream ss;
 
    ss << v.rdbuf();
@@ -564,7 +614,7 @@ void UOrmStatement::bindParam(istream& v)
    string s = ss.str();
 
    pdrv->bindParam(pstmt, s.c_str(), s.size(), false, -1);
-#  endif
+# endif
 #endif
 }
 #endif
@@ -576,8 +626,9 @@ void UOrmStatement::bindResult(bool& v)
    U_TRACE(0, "UOrmStatement::bindResult(%b)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -588,8 +639,9 @@ void UOrmStatement::bindResult(char& v)
    U_TRACE(0, "UOrmStatement::bindResult(%C)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -600,8 +652,9 @@ void UOrmStatement::bindResult(unsigned char& v)
    U_TRACE(0, "UOrmStatement::bindResult(%C)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -612,8 +665,9 @@ void UOrmStatement::bindResult(short& v)
    U_TRACE(0, "UOrmStatement::bindResult(%d)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -624,8 +678,9 @@ void UOrmStatement::bindResult(unsigned short& v)
    U_TRACE(0, "UOrmStatement::bindResult(%d)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -636,8 +691,9 @@ void UOrmStatement::bindResult(int& v)
    U_TRACE(0, "UOrmStatement::bindResult(%d)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -648,8 +704,9 @@ void UOrmStatement::bindResult(unsigned int& v)
    U_TRACE(0, "UOrmStatement::bindResult(%u)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -660,8 +717,9 @@ void UOrmStatement::bindResult(long& v)
    U_TRACE(0, "UOrmStatement::bindResult(%ld)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -672,8 +730,9 @@ void UOrmStatement::bindResult(unsigned long& v)
    U_TRACE(0, "UOrmStatement::bindResult(%lu)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -684,8 +743,9 @@ void UOrmStatement::bindResult(long long& v)
    U_TRACE(0, "UOrmStatement::bindResult(%lld)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -696,8 +756,9 @@ void UOrmStatement::bindResult(unsigned long long& v)
    U_TRACE(0, "UOrmStatement::bindResult(%llu)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -708,8 +769,9 @@ void UOrmStatement::bindResult(float& v)
    U_TRACE(0, "UOrmStatement::bindResult(%g)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -720,8 +782,9 @@ void UOrmStatement::bindResult(double& v)
    U_TRACE(0, "UOrmStatement::bindResult(%g)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -732,8 +795,8 @@ void UOrmStatement::bindResult(long double& v)
    U_TRACE(0, "UOrmStatement::bindResult(%g)", v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -744,8 +807,9 @@ void UOrmStatement::bindResult(UStringRep& v)
    U_TRACE(0, "UOrmStatement::bindResult(%V)", &v)
 
 #if defined(USE_SQLITE) || defined(USE_MYSQL) || defined(USE_PGSQL)
-   U_INTERNAL_ASSERT_POINTER(pdrv)
    U_INTERNAL_ASSERT_POINTER(pstmt)
+   U_INTERNAL_ASSERT_POINTER(psession->pdrv)
+   U_INTERNAL_ASSERT_EQUALS(pdrv, psession->pdrv)
 
    pdrv->bindResult(pstmt, v);
 #endif
@@ -768,8 +832,9 @@ const char* UOrmSession::dump(bool _reset) const
 
 const char* UOrmStatement::dump(bool _reset) const
 {
-   *UObjectIO::os << "pstmt            " << pstmt       << '\n'
-                  << "pdrv (UOrmDriver " << (void*)pdrv << ')';
+   *UObjectIO::os << "pstmt                 " << pstmt           << '\n'
+                  << "pdrv     (UOrmDriver  " << (void*)pdrv     << ')'
+                  << "psession (UOrmSession " << (void*)psession << ')';
 
    if (_reset)
       {

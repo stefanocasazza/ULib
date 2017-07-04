@@ -124,9 +124,9 @@ U_EXPORT ostream& operator<<(ostream& os, const UPKCS10& c)
 
    (void) X509_REQ_print(bio, c.request);
 
-   UString text = UStringExt::BIOtoString(bio);
+   UString txt = UStringExt::BIOtoString(bio);
 
-   (void) os.write(text.data(), text.size());
+   (void) os.write(txt.data(), txt.size());
 
    os.put(' ');
    os.put('}');

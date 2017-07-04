@@ -38,9 +38,9 @@ if HAVE_PGSQL
 if !STATIC_ORM_DRIVER_PGSQL
 module_LTLIBRARIES  += orm_driver_pgsql.la
 orm_driver_pgsql_la_SOURCES  = orm_driver_pgsql.cpp
-orm_driver_pgsql_la_CXXFLAGS = -I@PGSQL_INCLUDE@
+orm_driver_pgsql_la_CXXFLAGS = -I@POSTGRESQL_CPPFLAGS@
 orm_driver_pgsql_la_LIBADD   = $(ulib_la)
-orm_driver_pgsql_la_LDFLAGS  = @PGSQL_LDFLAGS@ -Wl,--start-group @PGSQL_LIBS@ -Wl,--end-group -module @MODULE_LIBTOOL_OPTIONS@
+orm_driver_pgsql_la_LDFLAGS  = @POSTGRESQL_LDFLAGS@ -Wl,--start-group @POSTGRESQL_LIBS@ -Wl,--end-group -module @MODULE_LIBTOOL_OPTIONS@
 endif
 endif
 

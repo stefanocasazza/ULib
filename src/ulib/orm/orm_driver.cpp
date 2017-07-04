@@ -62,7 +62,7 @@ U_NO_EXPORT void UOrmDriver::loadStaticLinkedModules(const char* name)
 
 #if defined(U_STATIC_ORM_DRIVER_SQLITE) || defined(U_STATIC_ORM_DRIVER_MYSQL) || defined(U_STATIC_ORM_DRIVER_PGSQL)
    UString x(name);
-   UOrmDriver* _driver = 0;
+   UOrmDriver* _driver = U_NULLPTR;
 
 # ifdef U_STATIC_ORM_DRIVER_SQLITE
    if (x.equal(U_CONSTANT_TO_PARAM("sqlite"))) { U_NEW(UOrmDriverSqlite, _driver, UOrmDriverSqlite);  goto next; }

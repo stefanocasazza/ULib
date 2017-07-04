@@ -727,7 +727,11 @@ void UServer_Base::initThrottlingServer()
    U_INTERNAL_ASSERT(*throttling_mask)
    U_INTERNAL_ASSERT_EQUALS(db_throttling, U_NULLPTR)
 
-   if (bssl == false) // NB: we can't use throttling with SSL...
+   if (bssl)
+      {
+      U_WARNING("Sorry, we can't use bandwidth throttling with SSL"); // NB: we need to use sendfile()...
+      }
+   else
       {
       U_NEW(UThrottling, throttling_rec, UThrottling);
       U_NEW(URDBObjectHandler<UDataStorage*>, db_throttling, URDBObjectHandler<UDataStorage*>(U_STRING_FROM_CONSTANT("../db/BandWidthThrottling"), -1, throttling_rec));
@@ -740,20 +744,13 @@ void UServer_Base::initThrottlingServer()
          db_throttling->setShared(U_SRV_LOCK_THROTTLING, U_SRV_SPINLOCK_THROTTLING);
          }
 
-      bool result = db_throttling->open(32 * 1024, false, true); // NB: we don't want truncate (we have only the journal)...
-
-      U_SRV_LOG("%sdb initialization of BandWidthThrottling %s: size(%u)", (result ? "" : "WARNING: "), (result ? "success" : "failed"), db_throttling->size());
-
-      if (result == false)
-         {
-         delete db_throttling;
-                db_throttling = U_NULLPTR;
-         }
-      else
+      if (db_throttling->open(32 * 1024, false, true)) // NB: we don't want truncate (we have only the journal)...
          {
          char* ptr;
          UString pattern, number;
          UVector<UString> vec(*throttling_mask);
+
+         U_SRV_LOG("db initialization of BandWidthThrottling success: size(%u)", db_throttling->size());
 
          min_size_for_sendfile = 4096; // 4k
 
@@ -773,6 +770,13 @@ void UServer_Base::initThrottlingServer()
 #     ifdef DEBUG
          db_throttling->resetKeyID(); // NB: to avoid DEAD OF SOURCE STRING WITH CHILD ALIVE...
 #     endif
+         }
+      else
+         {
+         U_SRV_LOG("WARNING: db BandWidthThrottling initialization failed");
+
+         delete db_throttling;
+                db_throttling = U_NULLPTR;
          }
       }
 }
@@ -904,6 +908,8 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UTimeThread::run()")
 
+      U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (tid %u)", u_gettid());
+
 #  ifdef USE_LOAD_BALANCE
       uusockaddr addr;
       int fd_sock = -1;
@@ -940,103 +946,112 @@ public:
          }
 #  endif
 
-      struct timespec ts;
-      u_timeval.tv_sec = u_now->tv_sec;
+      u_gettimenow();
 
-      U_SRV_LOG("UTimeThread optimization for time resolution of one second activated (tid %u)", u_gettid());
+      uint32_t sec = u_now->tv_sec;
+      struct timespec ts = { 0L, 0L };
 
       while (UServer_Base::flag_loop)
          {
-         ts.tv_sec  = 1L;
-         ts.tv_nsec = 0L;
+         ts.tv_nsec = 10000L + (U_SECOND - u_now->tv_usec) * 1000L;
 
-         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR);
+         U_INTERNAL_DUMP("u_now->tv_sec = %ld u_now->tv_usec = %ld ts.tv_nsec = %ld", u_now->tv_sec, u_now->tv_usec, ts.tv_nsec)
 
+         if (U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR) == -1)
+            {
+            U_INTERNAL_ASSERT_EQUALS(errno, EINTR)
+
+            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b", UServer_Base::flag_loop)
+
+            u_gettimenow();
+
+            continue;
+            }
+            
 #     if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
          if (UServer_Base::log)                         UServer_Base::log->checkForLogRotateDataToWrite();
          if (UServer_Base::apache_like_log) UServer_Base::apache_like_log->checkForLogRotateDataToWrite();
 #     endif
 
-         U_INTERNAL_DUMP("u_timeval.tv_sec = %ld u_now->tv_sec = %ld", u_timeval.tv_sec, u_now->tv_sec)
+#     ifdef USE_LOAD_BALANCE
+         if (fd_sock > 0)
+            {
+            uint8_t my_loadavg = u_get_loadavg();
+
+            U_INTERNAL_DUMP("U_SRV_MY_LOAD = %u", my_loadavg)
+
+            int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", fd_sock, &my_loadavg, sizeof(char), MSG_DONTROUTE, (sockaddr*)&(addr.psaGeneric), sizeof(addr));
+
+            if (iBytesTransferred == sizeof(char))
+               {
+               uusockaddr saddr;
+               unsigned char datagram[4096];
+               socklen_t slDummy = sizeof(addr);
+
+               uint8_t  min_loadavg_remote    = 255;
+               uint32_t min_loadavg_remote_ip = 0;
+
+               while ((iBytesTransferred = U_SYSCALL(recvfrom,"%d,%p,%u,%u,%p,%p",fd_sock,datagram,sizeof(datagram),MSG_DONTWAIT,(sockaddr*)&(saddr.psaGeneric),&slDummy)) > 0)
+                  {
+                  U_DUMP("Received datagram from (%S:%u) = (%u,%#.*S)",
+                           UIPAddress::toString(saddr.psaIP4Addr.sin_addr.s_addr).rep, ntohs(saddr.psaIP4Addr.sin_port), iBytesTransferred, iBytesTransferred, datagram)
+
+                  if (iBytesTransferred == 1)
+                     {
+                     if (saddr.psaIP4Addr.sin_addr.s_addr == laddr &&
+                         ntohs(saddr.psaIP4Addr.sin_port) == UServer_Base::port)
+                        {
+                        continue;
+                        }
+
+                     if (datagram[0] < min_loadavg_remote)
+                        {
+                        min_loadavg_remote = datagram[0];
+
+                        u_put_unalignedp32(&min_loadavg_remote_ip, addr.psaIP4Addr.sin_addr.s_addr);
+                        }
+                     }
+                  }
+
+               U_SRV_MY_LOAD         =  my_loadavg;
+               U_SRV_MIN_LOAD_REMOTE = min_loadavg_remote;
+
+               u_put_unalignedp32(&U_SRV_MIN_LOAD_REMOTE_IP, min_loadavg_remote_ip);
+
+               U_DUMP("U_SRV_MIN_LOAD_REMOTE = %u U_SRV_MIN_LOAD_REMOTE_IP = %s", U_SRV_MIN_LOAD_REMOTE, UIPAddress::getAddressString(U_SRV_MIN_LOAD_REMOTE_IP))
+               }
+            }
+#     endif
 
          u_gettimenow();
 
-         if (u_timeval.tv_sec != u_now->tv_sec)
+         U_INTERNAL_DUMP("u_now->tv_sec = %ld u_now->tv_usec = %ld", u_now->tv_sec, u_now->tv_usec)
+
+         U_INTERNAL_ASSERT_DIFFERS(sec, u_now->tv_sec)
+
+         sec = u_now->tv_sec;
+
+         if (UServer_Base::update_date)
             {
-            u_timeval.tv_sec = u_now->tv_sec;
+#        if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+            (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
+#        endif
 
-            if (UServer_Base::update_date)
+            if ((sec % U_ONE_HOUR_IN_SECOND) != 0)
                {
-#           if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
-               (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
-#           endif
-
-               if ((u_timeval.tv_sec % U_ONE_HOUR_IN_SECOND) != 0)
-                  {
-                  if (UServer_Base::update_date1) UTimeDate::updateTime(ULog::ptr_shared_date->date1 + 12);
-                  if (UServer_Base::update_date2) UTimeDate::updateTime(ULog::ptr_shared_date->date2 + 15);
-                  if (UServer_Base::update_date3) UTimeDate::updateTime(ULog::ptr_shared_date->date3 + 26);
-                  }
-               else
-                  {
-                  if (UServer_Base::update_date1) (void) u_strftime2(ULog::ptr_shared_date->date1,     17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"),     u_timeval.tv_sec + u_now_adjust);
-                  if (UServer_Base::update_date2) (void) u_strftime2(ULog::ptr_shared_date->date2,   26-6, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T"),     u_timeval.tv_sec + u_now_adjust);
-                  if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, U_CONSTANT_TO_PARAM("%a, %d %b %Y %T"), u_timeval.tv_sec);
-                  }
-
-#           if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
-               (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
-#           endif
+               if (UServer_Base::update_date1) UTimeDate::updateTime(ULog::ptr_shared_date->date1 + 12);
+               if (UServer_Base::update_date2) UTimeDate::updateTime(ULog::ptr_shared_date->date2 + 15);
+               if (UServer_Base::update_date3) UTimeDate::updateTime(ULog::ptr_shared_date->date3 + 26);
+               }
+            else
+               {
+               if (UServer_Base::update_date1) (void) u_strftime2(ULog::ptr_shared_date->date1,     17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"),     sec + u_now_adjust);
+               if (UServer_Base::update_date2) (void) u_strftime2(ULog::ptr_shared_date->date2,   26-6, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T"),     sec + u_now_adjust);
+               if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, U_CONSTANT_TO_PARAM("%a, %d %b %Y %T"), sec);
                }
 
-#        ifdef USE_LOAD_BALANCE
-            if (fd_sock > 0)
-               {
-               uint8_t my_loadavg = u_get_loadavg();
-
-               U_INTERNAL_DUMP("U_SRV_MY_LOAD = %u", my_loadavg)
-
-               int iBytesTransferred = U_SYSCALL(sendto, "%d,%p,%u,%u,%p,%d", fd_sock, &my_loadavg, sizeof(char), MSG_DONTROUTE, (sockaddr*)&(addr.psaGeneric), sizeof(addr));
-
-               if (iBytesTransferred == sizeof(char))
-                  {
-                  uusockaddr saddr;
-                  unsigned char datagram[4096];
-                  socklen_t slDummy = sizeof(addr);
-
-                  uint8_t  min_loadavg_remote    = 255;
-                  uint32_t min_loadavg_remote_ip = 0;
-
-                  while ((iBytesTransferred = U_SYSCALL(recvfrom,"%d,%p,%u,%u,%p,%p",fd_sock,datagram,sizeof(datagram),MSG_DONTWAIT,(sockaddr*)&(saddr.psaGeneric),&slDummy)) > 0)
-                     {
-                     U_DUMP("Received datagram from (%S:%u) = (%u,%#.*S)",
-                              UIPAddress::toString(saddr.psaIP4Addr.sin_addr.s_addr).rep, ntohs(saddr.psaIP4Addr.sin_port), iBytesTransferred, iBytesTransferred, datagram)
-
-                     if (iBytesTransferred == 1)
-                        {
-                        if (saddr.psaIP4Addr.sin_addr.s_addr == laddr &&
-                            ntohs(saddr.psaIP4Addr.sin_port) == UServer_Base::port)
-                           {
-                           continue;
-                           }
-
-                        if (datagram[0] < min_loadavg_remote)
-                           {
-                           min_loadavg_remote = datagram[0];
-
-                           u_put_unalignedp32(&min_loadavg_remote_ip, addr.psaIP4Addr.sin_addr.s_addr);
-                           }
-                        }
-                     }
-
-                  U_SRV_MY_LOAD         =  my_loadavg;
-                  U_SRV_MIN_LOAD_REMOTE = min_loadavg_remote;
-
-                  u_put_unalignedp32(&U_SRV_MIN_LOAD_REMOTE_IP, min_loadavg_remote_ip);
-
-                  U_DUMP("U_SRV_MIN_LOAD_REMOTE = %u U_SRV_MIN_LOAD_REMOTE_IP = %s", U_SRV_MIN_LOAD_REMOTE, UIPAddress::getAddressString(U_SRV_MIN_LOAD_REMOTE_IP))
-                  }
-               }
+#        if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+            (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
 #        endif
             }
          }
@@ -1060,20 +1075,24 @@ public:
       {
       U_TRACE_NO_PARAM(0, "UOCSPStapling::run()")
 
-      struct timespec ts;
-
-      ts.tv_sec  =
-      ts.tv_nsec = 0L;
-
       U_SRV_LOG("SSL: OCSP Stapling thread activated (tid %u)", u_gettid());
+
+      struct timespec ts = { 0L, 50000L }, rem = { 0L, 0L };
 
       while (UServer_Base::flag_loop)
          {
-         errno = 0;
+         if (U_SYSCALL(nanosleep, "%p,%p", &ts, &rem) == -1)
+            {
+            U_INTERNAL_ASSERT_EQUALS(errno, EINTR)
 
-         (void) U_SYSCALL(nanosleep, "%p,%p", &ts, U_NULLPTR);
+            U_INTERNAL_DUMP("UServer_Base::flag_loop = %b rem.tv_sec = %ld", UServer_Base::flag_loop, rem.tv_sec)
 
-         ts.tv_sec = (errno != EINTR ? USSLSocket::doStapling() : 30L);
+            ts.tv_sec = rem.tv_sec;
+
+            continue;
+            }
+
+         ts.tv_sec = USSLSocket::doStapling();
          }
       }
 
@@ -1130,7 +1149,7 @@ UThread* UServer_Base::pthread_ocsp;
  * - The IP address of the requestor is hashed into a "key". A lookup is performed in the listener's internal hash table to determine if
  *   the same host has requested more than 50 objects within the past second.
  * - The IP address of the requestor and the URI are both hashed into a "key". A lookup is performed in the listener's internal hash table
- *   to determine if the same host has requested this page more than 5 within the past 1 second.
+ *   to determine if the same host has requested this page more than 3 within the past 1 second.
  *
  * If any of the above are true, a RESET is sent. This conserves bandwidth and system resources in the event of a DoS attack. Additionally,
  * a system command and/or an email notification can also be triggered to block all the originating addresses of a DDoS attack.
@@ -1350,54 +1369,62 @@ bool UServer_Base::checkHitStats(const char* key, uint32_t key_len, uint32_t int
                if (UCommand::exit_value) U_WARNING("DOS system command failed: EXIT_VALUE=%d RESPONSE=%V", UCommand::exit_value, output.rep);
                }
 
-            if (emailAddress)
+            if (emailAddress &&
+                count == site_count)
                {
-               UString server, rcpt;
-               uint32_t index = emailAddress->find(':');
+               static time_t last_time;
 
-               if (index == U_NOT_FOUND)
+               if ((u_now->tv_sec - last_time) > U_ONE_DAY_IN_SECOND)
                   {
-                  rcpt   = *emailAddress;
-                  server = *UString::str_localhost;
-                  }
-               else
-                  {
-                  rcpt   = emailAddress->substr(index+1);
-                  server = emailAddress->substr(0U, index).copy();
-                  }
+                  last_time = u_now->tv_sec;
 
-               if (emailClient->_connectServer(server) == false)
-                  {
-                  if (u_buffer_len)
+                  UString server, rcpt;
+                  uint32_t index = emailAddress->find(':');
+
+                  if (index == U_NOT_FOUND)
                      {
-                     U_WARNING("%.*s", u_buffer_len, u_buffer);
-
-                     u_buffer_len = 0;
+                     rcpt   = *emailAddress;
+                     server = *UString::str_localhost;
                      }
-                  }
-               else
-                  {
-                  UString body(100U);
-
-                  body.snprintf(U_CONSTANT_TO_PARAM("blacklisting address %.*S, possible DoS attack: %.*s"), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
-
-                  emailClient->setMessageBody(body);
-                  emailClient->setRecipientAddress(rcpt);
-                  emailClient->setMessageSubject(U_STRING_FROM_CONSTANT("possible DoS attack"));
-
-#              ifdef USE_LIBSSL
-                  bool bsecure = true;
-#              else
-                  bool bsecure = false;
-#              endif
-
-                  if (emailClient->sendMessage(bsecure) == false)
+                  else
                      {
-                     emailClient->setStatus();
+                     rcpt   = emailAddress->substr(index+1);
+                     server = emailAddress->substr(0U, index).copy();
+                     }
 
-                     U_WARNING("DOS email notification to %.*S failed: %.*s", U_STRING_TO_TRACE(*emailAddress), u_buffer_len, u_buffer);
+                  if (emailClient->_connectServer(server) == false)
+                     {
+                     if (u_buffer_len)
+                        {
+                        U_WARNING("%.*s", u_buffer_len, u_buffer);
 
-                     u_buffer_len = 0;
+                        u_buffer_len = 0;
+                        }
+                     }
+                  else
+                     {
+                     UString body(100U);
+
+                     body.snprintf(U_CONSTANT_TO_PARAM("blacklisting address %.*S, possible DoS attack: %.*s"), U_CLIENT_ADDRESS_TO_TRACE, msg_len, msg);
+
+                     emailClient->setMessageBody(body);
+                     emailClient->setRecipientAddress(rcpt);
+                     emailClient->setMessageSubject(U_STRING_FROM_CONSTANT("possible DoS attack"));
+
+#                 ifdef USE_LIBSSL
+                     bool bsecure = true;
+#                 else
+                     bool bsecure = false;
+#                 endif
+
+                     if (emailClient->sendMessage(bsecure) == false)
+                        {
+                        emailClient->setStatus();
+
+                        U_WARNING("DOS email notification to %.*S failed: %.*s", U_STRING_TO_TRACE(*emailAddress), u_buffer_len, u_buffer);
+
+                        u_buffer_len = 0;
+                        }
                      }
                   }
                }
@@ -2086,10 +2113,10 @@ void UServer_Base::loadConfigParam()
 #ifdef U_EVASIVE_SUPPORT
    /**
     * This is the threshhold for the number of requests for the same page (or URI) per page interval.
-    * Once the threshhold for that interval has been exceeded (defaults to 5), the IP address of the client will be added to the blocking list
+    * Once the threshhold for that interval has been exceeded (defaults to 3), the IP address of the client will be added to the blocking list
     */
 
-   page_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 5);
+   page_count = cfg->readLong(U_CONSTANT_TO_PARAM("DOS_PAGE_COUNT"), 3);
 
    /**
     * The interval for the page count threshhold; defaults to 1 second intervals
@@ -2999,12 +3026,10 @@ void UServer_Base::init()
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
    if (bpthread_time)
       {
-      U_INTERNAL_ASSERT_EQUALS(ULog::prwlock, U_NULLPTR)
+      U_INTERNAL_ASSERT_EQUALS(ULog::prwlock,  U_NULLPTR)
       U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
       U_NEW_ULIB_OBJECT(UTimeThread, u_pthread_time, UTimeThread);
-
-      U_INTERNAL_DUMP("u_pthread_time = %p", u_pthread_time)
 
       (void) UThread::initRwLock((ULog::prwlock = &(ptr_shared_data->rwlock)));
 
@@ -3449,14 +3474,20 @@ loop:
 
    CSOCKET = CLIENT_IMAGE->socket;
 
-   U_INTERNAL_DUMP("----------------------------------------", 0)
-   U_INTERNAL_DUMP("vClientImage[%d].last_event        = %#3D",  (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->last_event)
-   U_INTERNAL_DUMP("vClientImage[%u].sfd               = %d",    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->sfd)
-   U_INTERNAL_DUMP("vClientImage[%u].UEventFd::fd      = %d",    (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->UEventFd::fd)
-   U_INTERNAL_DUMP("vClientImage[%u].socket            = %p",    (CLIENT_IMAGE - vClientImage), CSOCKET)
-   U_INTERNAL_DUMP("vClientImage[%d].socket->flags     = %d %B", (CLIENT_IMAGE - vClientImage), CSOCKET->flags, CSOCKET->flags)
-   U_INTERNAL_DUMP("vClientImage[%d].socket->iSockDesc = %d",    (CLIENT_IMAGE - vClientImage), CSOCKET->iSockDesc)
-   U_INTERNAL_DUMP("----------------------------------------", 0)
+   U_INTERNAL_DUMP("----------------------------------------\n"
+                   "vClientImage[%u].last_event        = %#3D\n"
+                   "vClientImage[%u].sfd               = %d\n"
+                   "vClientImage[%u].UEventFd::fd      = %d\n"
+                   "vClientImage[%u].socket            = %p\n"
+                   "vClientImage[%u].socket->flags     = %u %B\n"
+                   "vClientImage[%u].socket->iSockDesc = %d\n"
+                   "----------------------------------------\n",
+                   (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->last_event,
+                   (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->sfd,
+                   (CLIENT_IMAGE - vClientImage), CLIENT_IMAGE->UEventFd::fd,
+                   (CLIENT_IMAGE - vClientImage), CSOCKET,
+                   (CLIENT_IMAGE - vClientImage), CSOCKET->flags, CSOCKET->flags,
+                   (CLIENT_IMAGE - vClientImage), CSOCKET->iSockDesc)
 
    if (CSOCKET->isOpen()) // busy
       {
@@ -4253,7 +4284,7 @@ void UServer_Base::run()
 #           endif
                }
 
-#          ifdef HAVE_LIBNUMA
+#           ifdef HAVE_LIBNUMA
             if (U_SYSCALL_NO_PARAM(numa_max_node))
                {
                struct bitmask* bmask = (struct bitmask*) U_SYSCALL(numa_bitmask_alloc, "%u", 16);
@@ -4263,7 +4294,7 @@ void UServer_Base::run()
                U_SYSCALL_VOID(numa_set_membind,  "%p", bmask);
                U_SYSCALL_VOID(numa_bitmask_free, "%p", bmask);
                }
-#             endif
+#           endif
 
             if (set_realtime_priority) u_switch_to_realtime_priority();
 #        endif
@@ -4295,7 +4326,7 @@ void UServer_Base::run()
          to_sleep.nanosleep();
 
 #     ifdef U_SERVER_CAPTIVE_PORTAL
-         if (proc->_pid == -1) // If the child don't start (low memory) we disable the monitoring process...
+         if (proc->_pid == -1) // If the child don't start (not enough memory) we disable the monitoring process...
             {
             monitoring_process = false;
 
@@ -4346,7 +4377,8 @@ void UServer_Base::run()
             {
             char buffer[128];
 
-            ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children"), mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
+            ULog::log(U_CONSTANT_TO_PARAM("%sWARNING: child (pid %d) exited with value %d (%s), down to %u children"),
+                        mod_name[0], pid, status, UProcess::exitInfo(buffer, status), rkids);
             }
 #     endif
          }

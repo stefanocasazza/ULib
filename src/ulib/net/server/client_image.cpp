@@ -1491,9 +1491,11 @@ bool UClientImage_Base::writeResponse()
    U_INTERNAL_ASSERT_DIFFERS(U_ClientImage_parallelization, U_PARALLELIZATION_PARENT)
 
    int iBytesWrite;
-   uint32_t sz1     = wbuffer->size(),
-            sz2     = (U_http_method_type == HTTP_HEAD ? 0 : body->size()),
-            msg_len = (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0);
+   uint32_t sz1 = wbuffer->size(),
+            sz2 = (U_http_method_type == HTTP_HEAD ? 0 : body->size());
+#ifndef U_LOG_DISABLE
+   uint32_t msg_len = (U_ClientImage_pipeline ? U_CONSTANT_SIZE("[pipeline] ") : 0);
+#endif
 
    iov_vec[2].iov_len  = sz1;
    iov_vec[2].iov_base = (caddr_t)wbuffer->data();

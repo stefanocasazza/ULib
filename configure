@@ -772,12 +772,13 @@ ZIP_TRUE
 TCC_FALSE
 TCC_TRUE
 PRG_LDFLAGS
-PGSQL_LDFLAGS
-PGSQL_INCLUDE
-PGSQL_LIBS
-PG_CONFIG
 HAVE_PGSQL_FALSE
 HAVE_PGSQL_TRUE
+POSTGRESQL_LIBS
+POSTGRESQL_LDFLAGS
+POSTGRESQL_CPPFLAGS
+POSTGRESQL_VERSION
+PG_CONFIG
 MYSQL_LDFLAGS
 MYSQL_INCLUDE
 MYSQL_LIBS
@@ -1088,8 +1089,6 @@ with_mysql_incdir
 with_mysql_libdir
 enable_mysql_threadsafe
 with_pgsql
-with_pgsql_incdir
-with_pgsql_libdir
 with_mongodb
 with_mongodb_includes
 with_mongodb_ldflags
@@ -1853,9 +1852,8 @@ Optional Packages:
   --with-mysql            Include MySQL support
   --with-mysql-incdir     Specifies where the MySQL include files are
   --with-mysql-libdir     Specifies where the MySQL libraries are
-  --with-pgsql            Include PostgreSQL support
-  --with-pgsql-incdir     Specifies where the PostgreSQL include files are
-  --with-pgsql-libdir     Specifies where the PostgreSQL libraries are
+  --with-pgsql=[ARG]      use PostgreSQL library [default=no], optionally
+                          specify path to pg_config
   --with-mongodb                 use mongodb client
   --with-mongodb-includes=PATHS  mongodb include locations
   --with-mongodb-ldflags=LDFLAGS mongodb ldflags list
@@ -28391,70 +28389,54 @@ fi
 fi
 
 
-ac_pgsql="no"
-ac_pgsql_incdir="no"
-ac_pgsql_libdir="no"
-
-# exported variables
-PGSQL_LIBS=""
-PGSQL_LDFLAGS=""
-PGSQL_INCLUDE=""
-
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL support" >&5
-$as_echo_n "checking for PostgreSQL support... " >&6; }
-
 
 # Check whether --with-pgsql was given.
 if test "${with_pgsql+set}" = set; then :
-  withval=$with_pgsql;   ac_pgsql="$withval"
-fi
-
-
-# Check whether --with-pgsql-incdir was given.
-if test "${with_pgsql_incdir+set}" = set; then :
-  withval=$with_pgsql_incdir;   ac_pgsql_incdir="$withval"
-fi
-
-
-# Check whether --with-pgsql-libdir was given.
-if test "${with_pgsql_libdir+set}" = set; then :
-  withval=$with_pgsql_libdir;   ac_pgsql_libdir="$withval"
-fi
-
-
-if test "$ac_pgsql" != "yes"; then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-	 if false; then
-  HAVE_PGSQL_TRUE=
-  HAVE_PGSQL_FALSE='#'
-else
-  HAVE_PGSQL_TRUE='#'
-  HAVE_PGSQL_FALSE=
-fi
+  withval=$with_pgsql;
+        if test "$withval" = "no"; then
+            want_postgresql="no"
+        elif test "$withval" = "yes"; then
+            want_postgresql="yes"
+        else
+            want_postgresql="no"
+            PG_CONFIG="$withval"
+        fi
 
 else
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-	if test "$ac_pgsql_incdir" = "no" || test "$ac_pgsql_libdir" = "no"; then
-	   	# Extract the first word of "pg_config", so it can be a program name with args.
+  want_postgresql="no"
+
+fi
+
+
+    POSTGRESQL_CPPFLAGS=""
+    POSTGRESQL_LDFLAGS=""
+    POSTGRESQL_LIBS=""
+    POSTGRESQL_VERSION=""
+
+
+    if test "$want_postgresql" = "yes"; then
+
+        if test -z "$PG_CONFIG" -o test; then
+            # Extract the first word of "pg_config", so it can be a program name with args.
 set dummy pg_config; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
-if ${ac_cv_prog_PG_CONFIG+:} false; then :
+if ${ac_cv_path_PG_CONFIG+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-  if test -n "$PG_CONFIG"; then
-  ac_cv_prog_PG_CONFIG="$PG_CONFIG" # Let the user override the test.
-else
-as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+  case $PG_CONFIG in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_PG_CONFIG="$PG_CONFIG" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
 do
   IFS=$as_save_IFS
   test -z "$as_dir" && as_dir=.
     for ac_exec_ext in '' $ac_executable_extensions; do
   if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_PG_CONFIG="yes"
+    ac_cv_path_PG_CONFIG="$as_dir/$ac_word$ac_exec_ext"
     $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -28462,10 +28444,10 @@ done
   done
 IFS=$as_save_IFS
 
-  test -z "$ac_cv_prog_PG_CONFIG" && ac_cv_prog_PG_CONFIG="no"
+  ;;
+esac
 fi
-fi
-PG_CONFIG=$ac_cv_prog_PG_CONFIG
+PG_CONFIG=$ac_cv_path_PG_CONFIG
 if test -n "$PG_CONFIG"; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: $PG_CONFIG" >&5
 $as_echo "$PG_CONFIG" >&6; }
@@ -28475,46 +28457,104 @@ $as_echo "no" >&6; }
 fi
 
 
-		if test "$PG_CONFIG" = "no"; then
-		   as_fn_error $? "cannot auto-configure PostgreSQL without pg_config" "$LINENO" 5
-		fi
-	fi
-	if test "$ac_pgsql_incdir" = "no"; then
-		PGSQL_INCLUDE="-I"`pg_config --includedir`" -I"`pg_config --includedir-server`
-	else
-		PGSQL_INCLUDE=-I$ac_pgsql_incdir
-	fi
-	if test "$ac_pgsql_libdir" = "no"; then
-		PGSQL_LDFLAGS="-L"`pg_config --libdir`
-	else
-		PGSQL_LDFLAGS=-L$ac_pgsql_libdir
-	fi
+        fi
 
-	PGSQL_LIBS="-lpq -lpgport"
+        if test ! -x "$PG_CONFIG"; then
+            as_fn_error $? "$PG_CONFIG does not exist or it is not an executable file" "$LINENO" 5
+            PG_CONFIG="no"
+            found_postgresql="no"
+        fi
 
-	USE_PGSQL=yes
+        if test "$PG_CONFIG" != "no"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL libraries" >&5
+$as_echo_n "checking for PostgreSQL libraries... " >&6; }
+
+            POSTGRESQL_CPPFLAGS="`$PG_CONFIG --includedir` -I`$PG_CONFIG --includedir-server`"
+            POSTGRESQL_LDFLAGS=-L"`$PG_CONFIG --libdir`"
+            POSTGRESQL_LIBS="-lpq"
+            POSTGRESQL_VERSION=`$PG_CONFIG --version | sed -e 's#PostgreSQL ##'`
+
+
+$as_echo "#define HAVE_POSTGRESQL 1" >>confdefs.h
+
+
+            found_postgresql="yes"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+            found_postgresql="no"
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+        fi
+    fi
+
+
+
+    postgresql_version_req=
+
+    if test "$found_postgresql" = "yes" -a -n "$postgresql_version_req"; then
+
+        { $as_echo "$as_me:${as_lineno-$LINENO}: checking if PostgreSQL version is >= $postgresql_version_req" >&5
+$as_echo_n "checking if PostgreSQL version is >= $postgresql_version_req... " >&6; }
+
+                        postgresql_version_req_major=`expr $postgresql_version_req : '\([0-9]*\)'`
+        postgresql_version_req_minor=`expr $postgresql_version_req : '[0-9]*\.\([0-9]*\)'`
+        postgresql_version_req_micro=`expr $postgresql_version_req : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
+        if test "x$postgresql_version_req_micro" = "x"; then
+            postgresql_version_req_micro="0"
+        fi
+
+        postgresql_version_req_number=`expr $postgresql_version_req_major \* 1000000 \
+                                   \+ $postgresql_version_req_minor \* 1000 \
+                                   \+ $postgresql_version_req_micro`
+
+                        postgresql_version_major=`expr $POSTGRESQL_VERSION : '\([0-9]*\)'`
+        postgresql_version_minor=`expr $POSTGRESQL_VERSION : '[0-9]*\.\([0-9]*\)'`
+        postgresql_version_micro=`expr $POSTGRESQL_VERSION : '[0-9]*\.[0-9]*\.\([0-9]*\)'`
+        if test "x$postgresql_version_micro" = "x"; then
+            postgresql_version_micro="0"
+        fi
+
+        postgresql_version_number=`expr $postgresql_version_major \* 1000000 \
+                                   \+ $postgresql_version_minor \* 1000 \
+                                   \+ $postgresql_version_micro`
+
+        postgresql_version_check=`expr $postgresql_version_number \>\= $postgresql_version_req_number`
+        if test "$postgresql_version_check" = "1"; then
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+        else
+            { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+
+$as_echo "#define HAVE_POSTGRESQL 0" >>confdefs.h
+
+            POSTGRESQL_CPPFLAGS=""
+            POSTGRESQL_LDFLAGS=""
+            POSTGRESQL_LIBS=""
+        fi
+    fi
+
+
+
+
+
+
+
+if test "$found_postgresql" = "yes"; then
+    if true; then
+  HAVE_PGSQL_TRUE=
+  HAVE_PGSQL_FALSE='#'
+else
+  HAVE_PGSQL_TRUE='#'
+  HAVE_PGSQL_FALSE=
+fi
+
 
 $as_echo "#define USE_PGSQL 1" >>confdefs.h
 
-	pgsql_version=$(pg_config --version 2>/dev/null | cut -d' ' -f2)
-	if test -z "${pgsql_version}"; then
-		pgsql_version="unknown"
-	fi
-
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL includes" >&5
-$as_echo_n "checking for PostgreSQL includes... " >&6; }
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $PGSQL_INCLUDE" >&5
-$as_echo "$PGSQL_INCLUDE" >&6; }
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for PostgreSQL libraries" >&5
-$as_echo_n "checking for PostgreSQL libraries... " >&6; }
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $PGSQL_LIBS" >&5
-$as_echo "$PGSQL_LIBS" >&6; }
-
-
-
-
-
-	 if true; then
+else
+    if false; then
   HAVE_PGSQL_TRUE=
   HAVE_PGSQL_FALSE='#'
 else
@@ -28523,7 +28563,6 @@ else
 fi
 
 fi
-
 
 
 
@@ -30102,7 +30141,7 @@ _ACEOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define _PGSQL_VERSION "$pgsql_version"
+#define _PGSQL_VERSION "$POSTGRESQL_VERSION"
 _ACEOF
 
 
@@ -31382,8 +31421,8 @@ if test "$USE_MYSQL" = "yes"; then
    ulib_mysql_msg="yes ( $libmysql_version )"
 fi
 
-if test "$USE_PGSQL" = "yes"; then
-   ulib_pgsql_msg="yes ( $pgsql_version )"
+if test "$found_postgresql" = "yes"; then
+   ulib_pgsql_msg="yes ( $POSTGRESQL_VERSION )"
 fi
 
 if test "$USE_LIBDBI" = "yes"; then
@@ -31724,7 +31763,7 @@ if test "$USE_MYSQL" != "yes"; then
 	drivers=`echo $drivers | sed s/mysql//`
 fi
 
-if test "$USE_PGSQL" != "yes"; then
+if test "$HAVE_POSTGRESQL" != "yes"; then
 	drivers=`echo $drivers | sed s/pgsql//`
 fi
 
@@ -31766,9 +31805,9 @@ $as_echo "#define U_STATIC_ORM_DRIVER_MYSQL /**/" >>confdefs.h
 
 		elif test "$drv" = "pgsql"; then
 			static_handler_pgsql="yes"
-         ULIB_LIBS="$ULIB_LIBS $PGSQL_LIBS"
-			LDFLAGS="$PGSQL_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$PGSQL_INCLUDE $CPPFLAGS"
+         ULIB_LIBS="$ULIB_LIBS $POSTGRESQL_LIBS"
+			LDFLAGS="$POSTGRESQL_LDFLAGS $LDFLAGS"
+			CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
 
 $as_echo "#define U_STATIC_ORM_DRIVER_PGSQL /**/" >>confdefs.h
 

@@ -40,7 +40,8 @@ void UOrmDriverPgSql::handlerError()
    */
 
    if (UOrmDriver::errmsg == U_NULLPTR) UOrmDriver::errmsg  = U_SYSCALL(PQerrorMessage, "%p", (PGconn*)UOrmDriver::connection);
-                                        UOrmDriver::errname = "???";
+
+   UOrmDriver::errname = "???";
 
    /*
    if (UOrmDriver::errcode < (int)U_NUM_ELEMENTS(error_value_table) &&
@@ -146,7 +147,7 @@ bool UOrmDriverPgSql::handlerQuery(const char* query, uint32_t query_len)
    U_RETURN(false);
 }
 
-UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(0, 0, 10), stmt(U_CAPACITY)
+UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(U_NULLPTR, 0, 10), stmt(U_CAPACITY)
 {
    U_TRACE_REGISTER_OBJECT(0, UPgSqlStatement, "%.*S,%u", n, s, n)
 
@@ -189,7 +190,7 @@ UPgSqlStatement::UPgSqlStatement(const char* s, uint32_t n) : USqlStatement(0, 0
    paramFormats = paramLengths = U_NULLPTR;
    resultFormat = true; // is zero to obtain results in text format, or one to obtain results in binary format
 
-   if (num_bind_param == 0) paramTypes = 0;
+   if (num_bind_param == 0) paramTypes = U_NULLPTR;
    else
       {
       vparam.reserve(num_bind_param);
@@ -295,7 +296,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
                                       (PGconn*)pdrv->UOrmDriver::connection,
                                       stmtName, stmt.data(), num_bind_param, paramTypes);
 
-      if (pHandle == 0 ||
+      if (pHandle == U_NULLPTR ||
           U_SYSCALL(PQresultStatus, "%p", (PGresult*)pHandle) != PGRES_COMMAND_OK)
          {
          pdrv->UOrmDriver::printError(__PRETTY_FUNCTION__);
@@ -311,7 +312,7 @@ bool UPgSqlStatement::setBindParam(UOrmDriver* pdrv)
 
       res = (PGresult*) U_SYSCALL(PQdescribePrepared, "%p,%S", (PGconn*)pdrv->UOrmDriver::connection, stmtName);
 
-      if (res == 0 ||
+      if (res == U_NULLPTR ||
           U_SYSCALL(PQresultStatus, "%p", res) != PGRES_COMMAND_OK)
          {
          pdrv->UOrmDriver::printError(__PRETTY_FUNCTION__);
@@ -519,11 +520,11 @@ void UPgSqlStatement::setBindResult(UOrmDriver* pdrv)
          {
          switch (result->type)
             {
-            case INT2OID:     *(short*)result->buffer = strtol( ptr, 0, 10); break;
-            case INT4OID:       *(int*)result->buffer = strtol( ptr, 0, 10); break;
-            case INT8OID: *(long long*)result->buffer = strtoll(ptr, 0, 10); break;
-            case FLOAT4OID:  *(float*) result->buffer = strtof( ptr, 0);     break;
-            case FLOAT8OID:  *(double*)result->buffer = strtod( ptr, 0);     break;
+            case INT2OID:     *(short*)result->buffer = strtol( ptr, U_NULLPTR, 10); break;
+            case INT4OID:       *(int*)result->buffer = strtol( ptr, U_NULLPTR, 10); break;
+            case INT8OID: *(long long*)result->buffer = strtoll(ptr, U_NULLPTR, 10); break;
+            case FLOAT4OID:  *(float*) result->buffer = strtof( ptr, U_NULLPTR);     break;
+            case FLOAT8OID:  *(double*)result->buffer = strtod( ptr, U_NULLPTR);     break;
             }
          }
       }
@@ -628,11 +629,11 @@ unsigned long long UOrmDriverPgSql::last_insert_rowid(USqlStatement* pstmt, cons
 
    unsigned long long n = 0;
 
-   PGresult* res = (PGresult*) U_SYSCALL(PQexecParams, "%p,%S,%d,%p,%p,%p,%d",
+   PGresult* res = (PGresult*) U_SYSCALL(PQexecParams, "%p,%S,%d,%p,%p,%p,%p,%d",
                                           (PGconn*)UOrmDriver::connection,
                                           "SELECT currval($1)",
                                           1, // 1 param
-                                          0, // types
+                                          U_NULLPTR, // param types
                                           &sequence, // param values
                                           U_NULLPTR, // lengths
                                           U_NULLPTR, // formats

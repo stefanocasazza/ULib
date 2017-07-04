@@ -1333,7 +1333,14 @@ AC_CHECK_PACKAGE
 
 AC_CHECK_SQLITE3
 AC_CHECK_MYSQL
-AC_CHECK_PGSQL
+AX_LIB_POSTGRESQL
+
+if test "$found_postgresql" = "yes"; then
+   AM_CONDITIONAL(HAVE_PGSQL, true)
+	AC_DEFINE(USE_PGSQL, 1, [Define if enable PostgreSQL database support])
+else
+   AM_CONDITIONAL(HAVE_PGSQL, false)
+fi
 
 AC_SUBST(PRG_LDFLAGS)
 
@@ -1774,7 +1781,7 @@ AC_DEFINE_UNQUOTED(_CURL_VERSION,		 "$libcurl_version",		[libcURL - multiprotoco
 AC_DEFINE_UNQUOTED(_MAGIC_VERSION,		 "$libmagic_version",	[libmagic - magic number recognition library version])
 AC_DEFINE_UNQUOTED(_SQLITE_VERSION,		 "$libsqlite_version",	[libsqlite - SQLITE Database System library version])
 AC_DEFINE_UNQUOTED(_MYSQL_VERSION,		 "$libmysql_version",	[libmysql - MySQL Database System library version])
-AC_DEFINE_UNQUOTED(_PGSQL_VERSION,		 "$pgsql_version",		[version of PostgreSQL database support])
+AC_DEFINE_UNQUOTED(_PGSQL_VERSION,		 "$POSTGRESQL_VERSION",	[version of PostgreSQL database support])
 AC_DEFINE_UNQUOTED(_DBI_VERSION,			 "$libdbi_version",		[libdbi - Database Independent Abstraction Layer version])
 AC_DEFINE_UNQUOTED(_LIBUUID_VERSION,	 "$libuuid_version",		[libuuid - version library to create a new UUID value])
 AC_DEFINE_UNQUOTED(_LIBEVENT_VERSION,	 "$libevent_version",	[libevent - event notification library version])
@@ -1914,8 +1921,8 @@ if test "$USE_MYSQL" = "yes"; then
    ulib_mysql_msg="yes ( $libmysql_version )"
 fi
 
-if test "$USE_PGSQL" = "yes"; then
-   ulib_pgsql_msg="yes ( $pgsql_version )"
+if test "$found_postgresql" = "yes"; then
+   ulib_pgsql_msg="yes ( $POSTGRESQL_VERSION )"
 fi
 
 if test "$USE_LIBDBI" = "yes"; then
@@ -2085,7 +2092,7 @@ if test "$USE_MYSQL" != "yes"; then
 	drivers=`echo $drivers | sed s/mysql//`
 fi
 
-if test "$USE_PGSQL" != "yes"; then
+if test "$HAVE_POSTGRESQL" != "yes"; then
 	drivers=`echo $drivers | sed s/pgsql//`
 fi
 
@@ -2119,9 +2126,9 @@ for drv in $drivers; do
 			AC_DEFINE(U_STATIC_ORM_DRIVER_MYSQL,, [STATIC_ORM_DRIVER_MYSQL])
 		elif test "$drv" = "pgsql"; then
 			static_handler_pgsql="yes"
-         ULIB_LIBS="$ULIB_LIBS $PGSQL_LIBS"
-			LDFLAGS="$PGSQL_LDFLAGS $LDFLAGS"
-			CPPFLAGS="$PGSQL_INCLUDE $CPPFLAGS"
+         ULIB_LIBS="$ULIB_LIBS $POSTGRESQL_LIBS"
+			LDFLAGS="$POSTGRESQL_LDFLAGS $LDFLAGS"
+			CPPFLAGS="$POSTGRESQL_CPPFLAGS $CPPFLAGS"
 			AC_DEFINE(U_STATIC_ORM_DRIVER_PGSQL,, [STATIC_ORM_DRIVER_PGSQL])
 		fi
 

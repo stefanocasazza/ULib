@@ -7911,9 +7911,9 @@ bool UHTTP::callInitForAllUSP(UStringRep* key, void* value)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
+#  ifdef DEBUG
       U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
-#  ifdef DEBUG
       if (usp_page->runDynamicPage)
 #  endif
       usp_page->runDynamicPage(U_DPAGE_INIT);
@@ -7937,9 +7937,9 @@ bool UHTTP::callEndForAllUSP(UStringRep* key, void* value)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
+#  ifdef DEBUG
       U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
-#  ifdef DEBUG
       if (usp_page->runDynamicPage)
 #  endif
       usp_page->runDynamicPage(U_DPAGE_DESTROY);
@@ -7963,9 +7963,9 @@ bool UHTTP::callSigHUPForAllUSP(UStringRep* key, void* value)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
+#  ifdef DEBUG
       U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
-#  ifdef DEBUG
       if (usp_page->runDynamicPage)
 #  endif
       usp_page->runDynamicPage(U_DPAGE_SIGHUP);
@@ -7989,9 +7989,9 @@ bool UHTTP::callAfterForkForAllUSP(UStringRep* key, void* value)
       {
       UServletPage* usp_page = (UServletPage*)cptr->ptr;
 
+#  ifdef DEBUG
       U_INTERNAL_DUMP("usp_page->runDynamicPage = %p", usp_page->runDynamicPage)
 
-#  ifdef DEBUG
       if (usp_page->runDynamicPage)
 #  endif
       usp_page->runDynamicPage(U_DPAGE_FORK);

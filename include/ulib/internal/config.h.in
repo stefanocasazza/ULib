@@ -338,6 +338,9 @@
 /* has posix_spawn */
 #undef HAVE_POSIX_SPAWN
 
+/* A required version of PostgreSQL is not found */
+#undef HAVE_POSTGRESQL
+
 /* has pread */
 #undef HAVE_PREAD
 

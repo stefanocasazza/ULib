@@ -338,6 +338,7 @@ public:
 protected:
    UOrmDriver* pdrv;
    USqlStatement* pstmt;
+   UOrmSession* psession;
 
 private:
    U_DISALLOW_COPY_AND_ASSIGN(UOrmStatement)

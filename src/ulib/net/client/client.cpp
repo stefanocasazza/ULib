@@ -416,7 +416,9 @@ bool UClient_Base::sendRequest(bool bread_response)
 
    for (int i = 0; i < iovcnt; ++i) ncount += iov[i].iov_len;
 
+#ifndef U_LOG_DISABLE
    const char* name = (log_shared_with_server ? UServer_Base::mod_name[0] : "");
+#endif
 
 resend:
    if (connect())
@@ -466,7 +468,7 @@ resend:
       if (log &&
           response)
          {
-         ULog::logResponse(response, name,   U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
+         ULog::logResponse(response, name, U_CONSTANT_TO_PARAM(" from %v"), host_port.rep);
          }
 #  endif
 

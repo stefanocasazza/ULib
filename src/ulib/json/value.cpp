@@ -2169,64 +2169,50 @@ bool UValue::jfind(const UString& json, const char* query, uint32_t query_len, U
    U_TRACE(0, "UValue::jfind(%V,%.*S,%u,%p)", json.rep, query_len, query, query_len, &result)
 
    U_ASSERT(result.empty())
+   U_INTERNAL_ASSERT(u_is_quoted(query, query_len))
 
-   uint32_t pos;
+   uint32_t pos = json.find(query, 0, query_len);
 
-   if (u_is_quoted(query, query_len)) pos = json.find(query, 0, query_len);
-   else
+   if (pos == U_NOT_FOUND) U_RETURN(false);
+
+   pos += query_len;
+
+   UTokenizer tok(json.substr(pos));
+
+   int sTok = jreadFindToken(tok);
+
+   U_DUMP("sTok = (%d,%S)", sTok, getDataTypeDescription(sTok))
+
+   if ( sTok != U_JR_EOL   &&
+       (sTok == U_JR_COMMA ||
+        sTok == U_JR_COLON))
       {
-      uint32_t len = query_len;
-
-      UString quoted((query_len += 2));
-
-      quoted.snprintf(U_CONSTANT_TO_PARAM("\"%.*s\""), len, query);
-
-      pos = json.find(quoted);
+      ++tok;
       }
 
-   U_INTERNAL_DUMP("pos = %d", pos)
+   tok.skipSpaces();
 
-   if (pos != U_NOT_FOUND)
+   const char* start = tok.getPointer();
+
+   if (jread_skip(tok) != -1)
       {
-      pos += query_len;
+      const char* end = tok.getPointer();
 
-      UTokenizer tok(json.substr(pos));
-
-      int sTok = jreadFindToken(tok);
-
-      U_DUMP("sTok = (%d,%S)", sTok, getDataTypeDescription(sTok))
-
-      if ( sTok != U_JR_EOL   &&
-          (sTok == U_JR_COMMA ||
-           sTok == U_JR_COLON))
+      if (u__isquote(*start))
          {
-         ++tok;
+         ++start;
+         --end;
+
+         U_INTERNAL_ASSERT(u__isquote(*end))
+         }
+      else if (u__isquote(*end)) 
+         {
+         U_RETURN(false);
          }
 
-      tok.skipSpaces();
+      (void) result.assign(start, end-start);
 
-      const char* start = tok.getPointer();
-
-      if (jread_skip(tok) != -1)
-         {
-         const char* end = tok.getPointer();
-
-         if (u__isquote(*start))
-            {
-            ++start;
-            --end;
-
-            U_INTERNAL_ASSERT(u__isquote(*end))
-            }
-         else if (u__isquote(*end)) 
-            {
-            U_RETURN(false);
-            }
-
-         (void) result.assign(start, end-start);
-
-         U_RETURN(true);
-         }
+      U_RETURN(true);
       }
 
    U_RETURN(false);
