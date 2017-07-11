@@ -32,7 +32,7 @@ bool UElasticSearchClient::connect(const char* phost, unsigned int _port)
 
       const char* env_elasticsearch_port = (const char*) U_SYSCALL(getenv, "%S", "ELASTICSEARCH_PORT");
 
-      if (env_elasticsearch_port) _port = atoi(env_elasticsearch_port);
+      if (env_elasticsearch_port) _port = u_atoi(env_elasticsearch_port);
       }
 
    if (client == U_NULLPTR) U_NEW(UHttpClient<UTCPSocket>, client, UHttpClient<UTCPSocket>(U_NULLPTR));

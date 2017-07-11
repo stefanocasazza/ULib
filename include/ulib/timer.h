@@ -71,8 +71,18 @@ public:
       U_RETURN(false);
       }
 
+   static void init(Type _mode) // initialize the timer
+      {
+      U_TRACE(0, "UTimer::init(%d)", _mode)
+
+      if ((mode = _mode) != NOSIGNAL)
+         {
+              if (_mode ==  SYNC) UInterrupt::setHandlerForSignal(SIGALRM, (sighandler_t)UTimer::handlerAlarm);
+         else if (_mode == ASYNC) UInterrupt::insert(             SIGALRM, (sighandler_t)UTimer::handlerAlarm); // async signal
+         }
+      }
+
    static void clear();                    // cancel all timers and free storage, usually in preparation for exitting
-   static void init(Type mode);            // initialize the timer package
    static void insert(UEventTime* palarm); // set up a timer, either periodic or one-shot
 
    // deschedule a timer. Note that non-periodic timers are automatically descheduled when they run, so you don't have to call this on them

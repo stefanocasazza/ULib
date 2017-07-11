@@ -41,7 +41,7 @@ bool UMongoDBClient::connect(const char* phost, unsigned int _port)
 
       const char* env_mongodb_port = (const char*) U_SYSCALL(getenv, "%S", "MONGODB_PORT");
 
-      if (env_mongodb_port) _port = atoi(env_mongodb_port);
+      if (env_mongodb_port) _port = u_atoi(env_mongodb_port);
       }
 
    uri.snprintf(U_CONSTANT_TO_PARAM("mongodb://%v:%u"), host.rep, _port ? _port : 27017);

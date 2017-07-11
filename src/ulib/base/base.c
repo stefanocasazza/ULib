@@ -64,7 +64,7 @@ void u_debug_at_exit(void);
 #  include <sys/uio.h>
 #  include <sys/utsname.h>
 #endif
-/* For TIOCGWINSZ and friends: */
+/* For TIOCGWINSZ and friends */
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
 #endif
@@ -80,17 +80,24 @@ void u_debug_at_exit(void);
 #  endif
 #endif
 
+static bool ldaylight;
+static int now_adjust; /* GMT based time */
+static struct timeval tv;
+
+bool* u_pdaylight     = &ldaylight;
+int* u_pnow_adjust    = &now_adjust;
+struct timeval* u_now = &tv;
+
 int u_num_cpu = -1;
 uint32_t u_m_w = 521288629;
 uint32_t u_m_z = 362436069;
 uint32_t u_seed_hash = 0xdeadbeef;
-struct timeval* u_now = &u_timeval;
 const char* restrict u_tmpdir = "/tmp";
-const char* u_short_units[] = { "B", "KB", "MB", "GB", "TB", 0 };
+const char* u_short_units[]  = { "B", "KB", "MB", "GB", "TB", 0 };
 const char* u_day_name[7]    = { "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" };
 const char* u_month_name[12] = { "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" };
 
-/* conversion table number to string */
+/* conversion table: number => string */
 
 const char* u_ctn2s = "00010203040506070809"
                       "10111213141516171819"
@@ -134,13 +141,9 @@ uint32_t u_buffer_len; /* signal that is busy if != 0 */
 
 /* Time services */
 
-bool   u_daylight;
 void*  u_pthread_time; /* pthread clock */
 time_t u_start_time;
-int    u_now_adjust;   /* GMT based time */
 struct tm u_strftime_tm;
-
-struct timeval u_timeval;
 
 /*
 #ifdef HAVE_CLOCK_GETTIME
@@ -348,7 +351,7 @@ static char* num2str64(uint64_t num, char* restrict cp)
 
 static char* dtoa(double num, char* restrict cp) { return cp + sprintf(cp, "%g", num); }
 
-pcPFdpc   u_dbl2str  = dtoa;
+pcPFdpc   u_dbl2str   = dtoa;
 pcPFu32pc u_num2str32 = num2str32;
 pcPFu64pc u_num2str64 = num2str64;
 
@@ -591,6 +594,8 @@ __pure unsigned u_getMonth(const char* buf)
 
    U_INTERNAL_TRACE("u_getMonth(%s)", buf)
 
+   U_INTERNAL_ASSERT_EQUALS(u__isspace(*buf), false)
+
    for (i = 0; i < 12; ++i)
       {
       const char* ptr = u_months[i];
@@ -652,6 +657,20 @@ void u_initRandom(void)
    u_set_seed_random(u_seed_hash >> 16, u_seed_hash % 4294967296);
 }
 
+time_t u_getLocalNow(time_t sec)
+{
+   time_t lnow = timegm(&u_strftime_tm); /* The timegm() function converts the broken-down time representation, expressed in Coordinated Universal Time (UTC) to calendar time */
+
+   U_INTERNAL_TRACE("u_getLocalNow()")
+
+   *u_pnow_adjust = (lnow - sec);
+
+   U_INTERNAL_PRINT("u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %b tzname[2] = { %s, %s }",
+                    *u_pnow_adjust,    timezone,      daylight,  u_is_daylight(),   tzname[0], tzname[1])
+
+   return lnow;
+}
+
 bool u_setStartTime(void)
 {
    struct tm tm;
@@ -662,21 +681,23 @@ bool u_setStartTime(void)
 
    U_INTERNAL_ASSERT_POINTER(u_now)
 
+   /* initialize time conversion information */
+
+   u_gettimenow();
+
    /**
     * calculate number of seconds between UTC to current time zone
     *
     *         time() returns the time since the Epoch (00:00:00 UTC, January 1, 1970), measured in seconds.
-    * gettimeofday() gives the number of seconds and microseconds since the Epoch (see time(2)). The tz argument is a struct timezone:
+    * gettimeofday() gives the number of seconds and microseconds since the Epoch (see time(2)).
+    *
+    * The tz argument is a struct timezone:
     *
     * struct timezone {
     *    int tz_minuteswest;  // minutes west of Greenwich
     *    int tz_dsttime;      // type of DST correction
     * };
     */
-
-   (void) gettimeofday(u_now, 0);
-
-   /* initialize time conversion information */
 
    tzset();
 
@@ -696,29 +717,14 @@ bool u_setStartTime(void)
     *
     * This variable (timezone) contains the difference between UTC and the latest local standard time, in seconds
     * west of UTC. For example, in the U.S. Eastern time zone, the value is 5*60*60. Unlike the tm_gmtoff member
-    * of the broken-down time structure, this value is not adjusted for daylight saving, and its sign is reversed.
-    * In GNU programs it is better to use tm_gmtoff, since it contains the correct offset even when it is not the latest one
+    * of the broken-down time structure, this value is not adjusted for daylight saving, and its sign is reversed
     */
 
    (void) localtime_r(&(u_now->tv_sec), &u_strftime_tm);
 
 #ifdef TM_HAVE_TM_GMTOFF
-   u_daylight = (daylight && (timezone != -u_strftime_tm.tm_gmtoff));
+   *u_pdaylight = (daylight && (timezone != -u_strftime_tm.tm_gmtoff)); /* it is better to use tm_gmtoff, since it contains the correct offset even when it is not the latest one */
 #endif
-
-   /**
-    * The timegm() function converts the broken-down time representation,
-    * expressed in Coordinated Universal Time (UTC) to calendar time
-    */
-
-   lnow = timegm(&u_strftime_tm);
-
-   u_now_adjust = (lnow - u_now->tv_sec);
-
-   U_INTERNAL_PRINT("u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %d tzname[2] = { %s, %s }",
-                     u_now_adjust,     timezone,      daylight,     u_daylight,     tzname[0], tzname[1])
-
-   U_INTERNAL_ASSERT(u_now_adjust <= ((daylight ? 3600 : 0) - timezone))
 
    /* NB: check if current date is OK (>= compilation_date) */
 
@@ -728,15 +734,21 @@ bool u_setStartTime(void)
 
    tm.tm_min   = 0;
    tm.tm_hour  = 0;
-   tm.tm_mday  =       atoi(compilation_date+4);
+   tm.tm_mday  =     u_atoi(compilation_date+4);
    tm.tm_mon   = u_getMonth(compilation_date)   -    1; /* tm relative format month - range from 0-11 */
-   tm.tm_year  =       atoi(compilation_date+7) - 1900; /* tm relative format year  - is number of years since 1900 */
+   tm.tm_year  =     u_atoi(compilation_date+7) - 1900; /* tm relative format year  - is number of years since 1900 */
    tm.tm_sec   = 1;
-   tm.tm_wday  = 0; /* day of the week */
-   tm.tm_yday  = 0; /* day in the year */
-   tm.tm_isdst = -1;
+   tm.tm_wday  = 0;  /* day of the week */
+   tm.tm_yday  = 0;  /* day in the year */
+   tm.tm_isdst = -1; /* a negative value means that use timezone information and system databases to attempt to determine whether DST is in effect at the specified time */
 
    t = mktime(&tm); /* NB: The timelocal() function is equivalent to the POSIX standard function mktime(3) */
+
+   /**
+    * The timegm() function converts the broken-down time representation, expressed in Coordinated Universal Time (UTC) to calendar time
+    */
+
+   lnow = u_getLocalNow(u_now->tv_sec);
 
    U_INTERNAL_PRINT("lnow = %ld t = %ld u_now = { %lu, %lu }", lnow, t, u_now->tv_sec, u_now->tv_usec)
 
@@ -745,7 +757,7 @@ bool u_setStartTime(void)
       {
       if (u_start_time == 0)
          {
-         u_start_time = lnow; /* u_now->tv_sec + u_now_adjust */
+         u_start_time = lnow; /* u_now->tv_sec + *u_pnow_adjust */
 
          u_initRandom();
          }
@@ -755,11 +767,11 @@ bool u_setStartTime(void)
        * determined from the contents of the other fields; if structure members are outside their valid interval, they will
        * be normalized (so that, for example, 40 October is changed into 9 November); tm_isdst is set (regardless of its
        * initial value) to a positive value or to 0, respectively, to indicate whether DST is or is not in effect at the
-       * specified time.  Calling mktime() also sets the external variable tzname with information about the current timezone
+       * specified time. Calling mktime() also sets the external variable tzname with information about the current timezone
        */
 
 #  ifndef TM_HAVE_TM_GMTOFF
-      u_daylight = (tm.tm_isdst != 0);
+      *u_pdaylight = (tm.tm_isdst != 0);
 #  endif
 
 /*
@@ -777,8 +789,8 @@ bool u_setStartTime(void)
 #  endif
 */
 
-      U_DEBUG("System date update: u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %d tzname[2] = { %s, %s }",
-                                   u_now_adjust,     timezone,      daylight,     u_daylight,     tzname[0], tzname[1])
+      U_DEBUG("System date update: u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %b tzname[2] = { %s, %s }",
+                                  *u_pnow_adjust,    timezone,      daylight,  u_is_daylight(),   tzname[0], tzname[1])
 
       return true;
       }
@@ -799,7 +811,7 @@ void u_init_ulib(char** restrict argv)
       u_progname_len = U_CONSTANT_SIZE("ULib");
 
 #  if defined(U_STATIC_ONLY)
-      if (u_now == 0) u_now = &u_timeval;
+      if (u_now == 0) u_now = &tv;
 #  endif
       }
    else
@@ -1190,13 +1202,13 @@ case_Y: /* %Y The full year, formatted with four digits to include the century *
       continue;
 
 case_Z: /* %Z Defined by ANSI C as eliciting the time zone if available */
-      n = u__strlen(tzname[u_daylight], __PRETTY_FUNCTION__);
+      n = u__strlen(tzname[u_is_daylight()], __PRETTY_FUNCTION__);
 
       U_INTERNAL_ASSERT((bp-buffer) <= (maxsize-n))
 
    /* if ((bp-buffer) >= (maxsize-n)) return 0; */
 
-      (void) u__memcpy(bp, tzname[u_daylight], n, __PRETTY_FUNCTION__);
+      (void) u__memcpy(bp, tzname[u_is_daylight()], n, __PRETTY_FUNCTION__);
 
       bp += n;
 
@@ -1362,7 +1374,7 @@ case_z: /* %z The +hhmm or -hhmm numeric timezone (that is, the hour and minute 
 
    /* if ((bp-buffer) >= (maxsize-5)) return 0; */
 
-      val = (u_now_adjust / 3600);
+      val = (*u_pnow_adjust / 3600);
 
       if (val > 0)
          {
@@ -1377,7 +1389,7 @@ case_z: /* %z The +hhmm or -hhmm numeric timezone (that is, the hour and minute 
          U_NUM2STR16(bp, -val);
          }
 
-      U_NUM2STR16(bp+2, u_now_adjust % 3600);
+      U_NUM2STR16(bp+2, *u_pnow_adjust % 3600);
 
       bp += 4;
       }
@@ -1762,7 +1774,7 @@ uint32_t u__vsnprintf(char* restrict buffer, uint32_t buffer_size, const char* r
    U_INTERNAL_ASSERT_MAJOR(fmt_size, 0)
 
    do {
-      U_INTERNAL_ERROR((bp-buffer) <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %lu buffer_size = %u format = \"%.*s\"", (bp-buffer), buffer_size, format_size_save, format);
+      U_INTERNAL_ERROR((bp-buffer) <= buffer_size, "BUFFER OVERFLOW at u__vsnprintf() ret = %lu buffer_size = %u format = \"%.*s\"",(bp-buffer),buffer_size,format_size_save,format);
 
       /* Scan the format for conversions ('%' character) */
 
@@ -2167,7 +2179,7 @@ case_D: /* extension: print date and time in various format */
          U_gettimeofday /* NB: optimization if it is enough a time resolution of one second... */
 
                          t  = u_now->tv_sec;
-         if (width != 8) t += u_now_adjust;
+         if (width != 8) t += *u_pnow_adjust;
          }
 
       /**

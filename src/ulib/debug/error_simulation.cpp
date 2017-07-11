@@ -193,7 +193,7 @@ void* USimulationError::checkForMatch(const char* call_name)
                break;
                }
 
-            errno = atoi(file_ptr);
+            errno = u_atoi(file_ptr);
 
             U_INTERNAL_PRINT("errno = %d var_arg = %d", errno, var_arg.i);
 

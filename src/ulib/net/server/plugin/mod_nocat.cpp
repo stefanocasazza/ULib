@@ -356,7 +356,7 @@ bool UNoCatPlugIn::getPeerStatus(UStringRep* key, void* value)
                    "</tr>\n"),
                    peer->user.rep,
                    peer->ip.rep,
-                   peer->connected + u_now_adjust,
+                   u_get_localtime(peer->connected),
                    how_much_connected,
                    peer->time_remain,
                    peer->traffic_done / 1024,

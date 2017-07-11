@@ -832,9 +832,9 @@ const char* UOrmSession::dump(bool _reset) const
 
 const char* UOrmStatement::dump(bool _reset) const
 {
-   *UObjectIO::os << "pstmt                 " << pstmt           << '\n'
-                  << "pdrv     (UOrmDriver  " << (void*)pdrv     << ')'
-                  << "psession (UOrmSession " << (void*)psession << ')';
+   *UObjectIO::os << "pdrv     (UOrmDriver    " << (void*)pdrv     << ")\n"
+                  << "pstmt    (USqlStatement " << (void*)pstmt    << ")\n"
+                  << "psession (UOrmSession   " << (void*)psession << ')';
 
    if (_reset)
       {

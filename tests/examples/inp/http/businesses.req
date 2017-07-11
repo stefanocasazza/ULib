@@ -1,7 +1,0 @@
-POST /servlet/businesses HTTP/1.1
-Host: localhost:8080
-Connection: Keep-Alive
-Content-Type: application/jsonrequest
-Content-Length: 106
-
-{ "token": "A619828KAIJ6D3", "type": "localesData", "radius": "near", "location": "40.7831 N, 73.9712 W" }

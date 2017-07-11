@@ -709,7 +709,7 @@ bool UIPAllow::parseMask(const UString& _spec)
    // /24   256 255.255.255.0   0xffffff00
    // /30     4 255.255.255.252 0xfffffffc
    // ------------------------------------
-   int mask_bits = atoi(_spec.c_pointer(addr_len + 1));
+   int mask_bits = u_atoi(_spec.c_pointer(addr_len + 1));
 
    U_INTERNAL_DUMP("mask_bits = %d", mask_bits)
 

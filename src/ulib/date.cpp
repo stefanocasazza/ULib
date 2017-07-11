@@ -86,26 +86,6 @@ int UTimeDate::toJulian(int day, int month, int year)
    U_RETURN(_julian);
 }
 
-__pure time_t UTimeDate::getSecondFromDayLight()
-{
-   U_TRACE(0, "UTimeDate::getSecondFromDayLight()")
-
-   time_t t, nhr, now_day_based = (u_now->tv_sec + u_now_adjust) % U_ONE_DAY_IN_SECOND;
-
-   bool hi2 = (now_day_based >= (2 * U_ONE_HOUR_IN_SECOND)),
-        hi3 = (now_day_based >= (3 * U_ONE_HOUR_IN_SECOND));
-
-        if (hi3) nhr = 26;
-   else if (hi2) nhr =  3;
-   else          nhr =  2;
-
-   U_INTERNAL_DUMP("now_day_based = %ld hi2 = %b hi3 = %b nhr = %ld", now_day_based, hi2, hi3, nhr)
-
-   t = (nhr * U_ONE_HOUR_IN_SECOND) - now_day_based + 1;
-
-   U_RETURN(t);
-}
-
 // gcc: call is unlikely and code size would grow
 
 bool UTimeDate::operator!=(UTimeDate& date) { return getJulian() != date.getJulian(); }
@@ -159,30 +139,44 @@ void UTimeDate::fromJulian(int j)
    U_INTERNAL_ASSERT(isValid())
 }
 
-void UTimeDate::fromTime(time_t tm)
+int UTimeDate::checkForDaylightSavingTime(time_t sec)
 {
-   U_TRACE(1, "UTimeDate::fromTime(%#19D)", tm)
+   U_TRACE(0, "UTimeDate::checkForDaylightSavingTime(%ld)", sec)
 
-   if (tm)
-      {
-#  if defined(DEBUG) && !defined(_MSWINDOWS_)
-      U_SYSCALL_VOID(localtime_r, "%p,%p", &tm, &u_strftime_tm);
-#  else
-                     localtime_r(          &tm, &u_strftime_tm);
-#  endif
+   U_INTERNAL_DUMP("u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %b tzname[2] = { %s, %s }",
+                   *u_pnow_adjust,    timezone,      daylight,  u_is_daylight(),   tzname[0], tzname[1])
 
-      _day   = u_strftime_tm.tm_mday;
-      _month = u_strftime_tm.tm_mon  + 1;
-      _year  = u_strftime_tm.tm_year + 1900;
-      julian = 0;
-      }
-   else
+   U_INTERNAL_ASSERT(daylight)
+   U_INTERNAL_ASSERT_EQUALS(sec % U_ONE_HOUR_IN_SECOND, 0)
+
+   int now_adjust = *u_pnow_adjust; /* GMT based time */
+
+   getLocalTime(sec);
+
+   /**
+    * The timegm() function converts the broken-down time representation, expressed in Coordinated Universal Time (UTC) to calendar time
+    */
+
+   (void) u_getLocalNow(sec);
+
+   U_INTERNAL_DUMP("now_adjust = %d *u_pnow_adjust = %d", now_adjust, *u_pnow_adjust)
+
+   if (now_adjust == *u_pnow_adjust) U_RETURN(0);
+
+   if (now_adjust < *u_pnow_adjust)
       {
-      _day   =
-      _month = 1;
-      _year  = 1970;
-      julian = 2440588;
+      *u_pdaylight = true;
+
+      U_DEBUG("DST start: %#5D", sec)
+
+      U_RETURN(1);
       }
+
+   *u_pdaylight = false;
+
+   U_DEBUG("DST end: %#5D", sec)
+
+   U_RETURN(-1);
 }
 
 // UTC is flag for date and time in Coordinated Universal Time : format YYMMDDMMSSZ
@@ -198,15 +192,11 @@ void UTimeDate::fromUTC(const char* str, const char* format)
    if (scanned == 3) setYear(year);
    else
       {
-      // Complete for the user
+      // NB: we complete on behalf of the user
 
       U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-#  if defined(DEBUG) && !defined(_MSWINDOWS_)
-      U_SYSCALL_VOID(localtime_r, "%p,%p",      &(u_now->tv_sec), &u_strftime_tm);
-#  else
-                     localtime_r((const time_t*)&(u_now->tv_sec), &u_strftime_tm);
-#  endif
+      getLocalTime(u_now->tv_sec);
 
       if (scanned == 1)
          {
@@ -222,47 +212,33 @@ void UTimeDate::fromUTC(const char* str, const char* format)
       }
 }
 
-UString UTimeDate::strftime(const char* fmt, uint32_t fmt_size)
-{
-   U_TRACE(1, "UTimeDate::strftime(%.*S,%u)", fmt_size, fmt, fmt_size)
-
-   UString result(100U);
-
-   (void) U_SYSCALL(memset, "%p,%d,%u", &u_strftime_tm, 0, sizeof(struct tm));
-
-   u_strftime_tm.tm_mday = _day;
-   u_strftime_tm.tm_mon  = _month - 1;
-   u_strftime_tm.tm_year = _year  - 1900;
-
-   result.rep->_length = u_strftime1(result.data(), result.capacity(), fmt, fmt_size);
-
-   U_RETURN_STRING(result);
-}
-
 UString UTimeDate::strftime(const char* fmt, uint32_t fmt_size, time_t t, bool blocale)
 {
    U_TRACE(0, "UTimeDate::strftime(%.*S,%u,%ld,%b)", fmt_size, fmt, fmt_size, t, blocale)
 
    UString res(100U);
 
-   res.rep->_length = u_strftime2(res.data(), res.capacity(), fmt, fmt_size, t + (blocale ? u_now_adjust : 0));
+   res.rep->_length = u_strftime2(res.data(), res.capacity(), fmt, fmt_size, t + (blocale ? *u_pnow_adjust : 0));
 
 #ifdef DEBUG
    char dbg[4096];
 
    /* NB: strftime(3) call stat("etc/localtime") everytime... */
 
-   if (blocale) (void) localtime_r(&t, &u_strftime_tm);
-   else         (void)    gmtime_r(&t, &u_strftime_tm);
+   if (blocale) getLocalTime(t);
+   else
+      {
+      (void) gmtime_r(&t, &u_strftime_tm);
+      }
 
    if (::strftime(dbg, sizeof(dbg), fmt, &u_strftime_tm))
       {
       U_INTERNAL_DUMP("res = %s", res.data())
       U_INTERNAL_DUMP("dbg = %s", dbg)
-      U_INTERNAL_DUMP("u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %d tzname[2] = { %s, %s }",
-                       u_now_adjust,     timezone,      daylight,     u_daylight,     tzname[0], tzname[1])
+      U_INTERNAL_DUMP("u_now_adjust = %d timezone = %ld daylight = %d u_daylight = %b tzname[2] = { %s, %s }",
+                      *u_pnow_adjust,    timezone,      daylight,  u_is_daylight(),   tzname[0], tzname[1])
 
-      U_INTERNAL_ASSERT_EQUALS(strcmp(res.data(),dbg),0)
+      U_INTERNAL_ASSERT_EQUALS(strcmp(res.data(),dbg), 0)
       }
 #endif
 
@@ -286,32 +262,81 @@ time_t UTimeDate::getSecondFromTime(const char* str, bool gmt, const char* fmt, 
 
    if (gmt)
       {
+      const char* ptr;
+
       if (str[3] == ',')
          {
-         /* Fri, 31 Dec 1999 23:59:59 GMT
+         /**
+          * Fri, 31 Dec 1999 23:59:59 GMT
           * |  | |  |   |    |  |  | 
           * 0  3 5  8  12   17 20 23
           */
 
-         tm->tm_mday = atoi(str+5);
-         tm->tm_mon  = u_getMonth(str+8);
-         tm->tm_year = atoi(str+12);
-         tm->tm_hour = atoi(str+17);
-         tm->tm_min  = atoi(str+20);
-         tm->tm_sec  = atoi(str+23);
+         str += 5;
+
+         ptr = str + (u__isspace(*str) || *str == '0');
+
+         U_INTERNAL_ASSERT(u__isdigit(*ptr))
+
+         while (u__isdigit(*ptr)) ++ptr;
+
+         U_INTERNAL_ASSERT(u__isspace(*ptr))
+
+         tm->tm_mday = u_strtoul(str,ptr);
+
+         tm->tm_mon = u_getMonth(str = ptr+1);
+
+         str += 4;
+
+         tm->tm_year = u_strtoul(str,str+4);
+
+         str += 5;
+
+         tm->tm_hour = u_strtoul(str, str+2);
+
+         str += 3;
+
+         tm->tm_min = u_strtoul(str, str+2);
+
+         str += 3;
+
+         tm->tm_sec = u_strtoul(str, str+2);
          }
       else if ((tm->tm_mon = u_getMonth(str)))
          {
-         /* Jan 25 11:54:00 2005 GMT
+         /**
+          * Jan 25 11:54:00 2005 GMT
           * |   |  |  |  |  |
           * 0   4  7 10 13 16
           */
 
-         tm->tm_mday = atoi(str+4);
-         tm->tm_hour = atoi(str+7);
-         tm->tm_min  = atoi(str+10);
-         tm->tm_sec  = atoi(str+13);
-         tm->tm_year = atoi(str+16);
+         str += 4;
+
+         ptr = str + (u__isspace(*str) || *str == '0');
+
+         U_INTERNAL_ASSERT(u__isdigit(*ptr))
+
+         while (u__isdigit(*ptr)) ++ptr;
+
+         U_INTERNAL_ASSERT(u__isspace(*ptr))
+
+         tm->tm_mday = u_strtoul(str,ptr);
+
+         str = ptr+1;
+
+         tm->tm_hour = u_strtoul(str, str+2);
+
+         str += 3;
+
+         tm->tm_min = u_strtoul(str, str+2);
+
+         str += 3;
+
+         tm->tm_sec = u_strtoul(str, str+2);
+
+         str += 4;
+
+         tm->tm_year = u_strtoul(str, str+4);
          }
       else
          {
@@ -334,6 +359,8 @@ scanf:
       else if (tm->tm_year < 100) { tm->tm_year += 1900; }
       }
 
+   U_INTERNAL_DUMP("tm_year = %u tm_mon = %u tm_mday = %u tm_hour = %d tm_min = %d tm_sec = %d", tm->tm_year, tm->tm_mon, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec)
+
    if ((tm->tm_year < 1900) ||
        (tm->tm_mon  < 1)    || (tm->tm_mon  > 12) ||
        (tm->tm_mday < 1)    || (tm->tm_mday > 31) ||
@@ -353,7 +380,7 @@ scanf:
 #  else
       if (t < 0L) t  =  INT_MAX;
 #endif
-      else        t += tm->tm_sec + (tm->tm_min * 60) + (tm->tm_hour * 3600);
+      else        t += tm->tm_sec + (tm->tm_min * 60) + (tm->tm_hour * U_ONE_HOUR_IN_SECOND);
 
       /*
 #  if defined(DEBUG) && !defined(_MSWINDOWS_)
@@ -439,17 +466,17 @@ void UTimeDate::addMonths(int nmonths)
    U_INTERNAL_DUMP("_day = %d, _month = %d, _year = %d", _day, _month, _year)
 }
 
-// This can be used for comments and other from of communication to tell the time ago instead of the exact time which might not be correct to some one in another time zone
+// This can be used for comments and other form of communication to tell the time ago instead of the exact time which might not be correct to someone in another time zone
 
-UString UTimeDate::_ago(time_t tm, uint32_t granularity)
+UString UTimeDate::_ago(time_t sec, uint32_t granularity)
 {
-   U_TRACE(0, "UTimeDate::_ago(%ld,%u)", tm, granularity)
+   U_TRACE(0, "UTimeDate::_ago(%ld,%u)", sec, granularity)
 
    int j = 7;
    UString result(100U);
-   uint32_t no, diff, difference = u_now->tv_sec - tm;
+   uint32_t no, diff, difference = u_now->tv_sec - sec;
 
-   U_INTERNAL_ASSERT(u_now->tv_sec >= tm)
+   U_INTERNAL_ASSERT(u_now->tv_sec >= sec)
 
    while (true)
       {

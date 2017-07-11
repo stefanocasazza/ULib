@@ -891,7 +891,7 @@ int USocketExt::readMultilineReply(USocket* sk, char* buffer, uint32_t buffer_si
    do {
       r = readLineReply(sk, buffer + r, buffer_size - r);
 
-      if (r) response = atoi(buffer);
+      if (r) response = u_atoi(buffer);
       }
    while (parseCommandResponse(buffer, r, response));
 

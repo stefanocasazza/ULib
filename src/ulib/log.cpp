@@ -216,9 +216,9 @@ void ULog::initDate()
    tv_sec_old_2 =
    tv_sec_old_3 = u_now->tv_sec;
 
-   (void) u_strftime2(date.date1, 17,               U_CONSTANT_TO_PARAM("%d/%m/%y %T"),                                                        tv_sec_old_1 + u_now_adjust);
-   (void) u_strftime2(date.date2, 26,               U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"),                                                     tv_sec_old_2 + u_now_adjust);
-   (void) u_strftime2(date.date3, 6+29+2+12+2+17+2, U_CONSTANT_TO_PARAM("Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n"), tv_sec_old_3);
+   (void) u_strftime2(date.date1, 17,               U_CONSTANT_TO_PARAM("%d/%m/%y %T"),                                                        u_get_localtime(tv_sec_old_1));
+   (void) u_strftime2(date.date2, 26,               U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"),                                                     u_get_localtime(tv_sec_old_2));
+   (void) u_strftime2(date.date3, 6+29+2+12+2+17+2, U_CONSTANT_TO_PARAM("Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n"),                 tv_sec_old_3);
 }
 
 void ULog::startup()
@@ -333,7 +333,7 @@ void ULog::updateDate1()
       if ((tv_sec - tv_sec_old_1) != 1 ||
           (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
          {
-         (void) u_strftime2(date.date1, 17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"), (tv_sec_old_1 = tv_sec) + u_now_adjust);
+         (void) u_strftime2(date.date1, 17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"), u_get_localtime(tv_sec_old_1 = tv_sec));
          }
       else
          {
@@ -405,7 +405,7 @@ void ULog::updateDate2()
       if ((tv_sec - tv_sec_old_2) != 1 ||
           (tv_sec % U_ONE_HOUR_IN_SECOND) == 0)
          {
-         (void) u_strftime2(date.date2, 26-6, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T"), (tv_sec_old_2 = tv_sec) + u_now_adjust);
+         (void) u_strftime2(date.date2, 26-6, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T"), u_get_localtime(tv_sec_old_2 = tv_sec));
          }
       else
          {

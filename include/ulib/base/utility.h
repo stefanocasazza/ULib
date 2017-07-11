@@ -493,6 +493,21 @@ U_EXPORT uint64_t      u_strtoull(const char* restrict s, const char* restrict e
 U_EXPORT long          u_strtol(  const char* restrict s, const char* restrict e) __pure;
 U_EXPORT int64_t       u_strtoll( const char* restrict s, const char* restrict e) __pure;
 
+static inline unsigned long u_atoi(const char* restrict s)
+{
+   U_INTERNAL_TRACE("u_atoi(%p)", s)
+
+   const char* restrict e;
+
+   U_INTERNAL_ASSERT_POINTER(s)
+
+   while (u__isdigit(*s) == false) ++s;
+
+   for (e = s; u__isdigit(*e); ++e) {}
+
+   return u_strtoul(s, e);
+}
+
 static inline unsigned u__octc2int(unsigned char c) { return ((c - '0') & 07); }
 
 /**

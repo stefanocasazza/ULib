@@ -290,6 +290,15 @@ protected:
    void startReport();
    void manageOptions();
 
+   static unsigned getMonth(const char* ptr)
+      {
+      U_TRACE(5, "PEC_report::getMonth(%p)", ptr)
+
+      while (u__isspace(*ptr)) ++ptr;
+
+      return u_getMonth(ptr);
+      }
+
    static bool setLine();
    static void loadFiles();
    static bool readContent();

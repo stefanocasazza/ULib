@@ -341,7 +341,7 @@ public:
             {
             char* ptr = strrchr(prefix, '.');
 
-            int n = atoi(++ptr);
+            int n = u_atoi(++ptr);
 
             (void) sprintf(ptr, "%d", ++n);
             }

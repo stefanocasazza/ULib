@@ -46,19 +46,18 @@ public:
       {
       U_TRACE_REGISTER_OBJECT(0, UTimeDate, "", 0)
 
-      julian = _day = _month = _year = 0;
+      _day   =
+      _month = 1;
+      _year  = 1970;
+      julian = 2440588;
       }
 
-   void fromTime(time_t tm);
-
-   UTimeDate(time_t tm)
+   UTimeDate(time_t sec)
       {
-      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%#19D", tm)
+      U_TRACE_REGISTER_OBJECT(0, UTimeDate, "%#19D", sec)
 
-      fromTime(tm);
+      fromTime(sec);
       }
-
-   void fromUTC(const char* str, const char* frm = "%02u%02u%02u");
 
    UTimeDate(const char* str, bool UTC = false) // UTC is flag for date and time in Coordinated Universal Time: format YYMMDDMMSSZ
       {
@@ -68,6 +67,22 @@ public:
 
       fromUTC(str, UTC ? "%02u%02u%02u" : "%d/%d/%d");
       }
+
+   void fromTime(time_t sec)
+      {
+      U_TRACE(1, "UTimeDate::fromTime(%#19D)", sec)
+
+      U_INTERNAL_ASSERT_MAJOR(sec, 0)
+
+      getLocalTime(sec);
+
+      _day   = u_strftime_tm.tm_mday;
+      _month = u_strftime_tm.tm_mon  + 1;
+      _year  = u_strftime_tm.tm_year + 1900;
+      julian = 0;
+      }
+
+   void fromUTC(const char* str, const char* frm = "%02u%02u%02u");
 
    // set the current object by year
 
@@ -228,6 +243,8 @@ public:
       U_NUM2STR16(ptr+3,u_now->tv_sec       % 60);
       }
 
+   static int checkForDaylightSavingTime(time_t sec);
+
    // The daysTo() function returns the number of days between two date
 
    int daysTo(UTimeDate& date)
@@ -272,7 +289,7 @@ public:
       U_RETURN(monthDays[_month]);
       }
 
-   // Returns the day of the year [1,366] for this date
+   // Returns the number of day for this date in the year [1,366]
 
    int getDayOfYear() __pure
       {
@@ -399,7 +416,23 @@ public:
 
    // Print date with format
 
-          UString strftime(const char* fmt, uint32_t fmt_size);
+   UString strftime(const char* fmt, uint32_t fmt_size)
+      {
+      U_TRACE(1, "UTimeDate::strftime(%.*S,%u)", fmt_size, fmt, fmt_size)
+
+      UString result(100U);
+
+      (void) U_SYSCALL(memset, "%p,%d,%u", &u_strftime_tm, 0, sizeof(struct tm));
+
+      u_strftime_tm.tm_mday = _day;
+      u_strftime_tm.tm_mon  = _month - 1;
+      u_strftime_tm.tm_year = _year  - 1900;
+
+      result.rep->_length = u_strftime1(result.data(), result.capacity(), fmt, fmt_size);
+
+      U_RETURN_STRING(result);
+      }
+
    static UString strftime(const char* fmt, uint32_t fmt_size, time_t t, bool blocale = false);
 
    time_t getSecond()
@@ -429,19 +462,29 @@ public:
       {
       U_TRACE(0, "UTimeDate::getSecondFromTime(%.*S)", 8, str)
 
+      // NB: sscanf() is VERY HEAVY...!!!
+
+      /**
+       * 23:59:59
+       * |  |  |
+       * 0  3  6
+       */
+
       U_INTERNAL_ASSERT_EQUALS(str[2], ':')
       U_INTERNAL_ASSERT_EQUALS(str[5], ':')
 
-      // NB: sscanf() is VERY HEAVY...!!!
+      time_t t = (u_strtoul(str, str+2) * U_ONE_HOUR_IN_SECOND);
 
-      time_t t = (60 * 60 * atoi(str)) + (60 * atoi(str+3)) + atoi(str+6);
+      str += 3;
+
+      t += (u_strtoul(str, str+2) * 60L);
+
+      str += 3;
+
+      t += u_strtoul(str, str+2);
 
       U_RETURN(t);
       }
-
-   static time_t getSecondFromDayLight() __pure;
-
-   static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %T GMT", struct tm* tm = U_NULLPTR);
 
    void setCurrentDate() // UNIX system time - SecsSince1Jan1970UTC
       {
@@ -459,8 +502,10 @@ public:
       date.setCurrentDate();
       }
 
-   // This can be used for comments and other from of communication to tell the time ago
-   // instead of the exact time which might not be correct to some one in another time zone
+   static time_t getSecondFromTime(const char* str, bool gmt, const char* fmt = "%a, %d %b %Y %T GMT", struct tm* tm = U_NULLPTR);
+
+   // This can be used for comments and other form of communication to tell the time ago
+   // instead of the exact time which might not be correct to someone in another time zone
 
    UString ago(uint32_t granularity = 0)
       {
@@ -469,13 +514,13 @@ public:
       return ago(getSecond(), granularity);
       }
 
-   static UString ago(time_t tm, uint32_t granularity = 0)
+   static UString ago(time_t sec, uint32_t granularity = 0)
       {
-      U_TRACE(0, "UTimeDate::ago(%ld,%u)", tm, granularity)
+      U_TRACE(0, "UTimeDate::ago(%ld,%u)", sec, granularity)
 
       U_gettimeofday // NB: optimization if it is enough a time resolution of one second...
 
-      return _ago(tm, granularity);
+      return _ago(sec, granularity);
       }
 
    // OPERATOR
@@ -584,7 +629,18 @@ protected:
 
           void fromJulian(int julian);
    static int    toJulian(int day, int month, int year);
-   static UString _ago(time_t tm, uint32_t granularity);
+   static UString _ago(time_t sec, uint32_t granularity);
+
+   static void getLocalTime(time_t sec)
+      {
+      U_TRACE(0, "UTimeDate::getLocalTime(%ld)", sec)
+
+#  if defined(DEBUG) && !defined(_MSWINDOWS_)
+      U_SYSCALL_VOID(localtime_r, "%p,%p",(const time_t*)&sec, &u_strftime_tm);
+#  else
+                     localtime_r(         (const time_t*)&sec, &u_strftime_tm);
+#  endif
+      }
 
    static uint32_t weekday_difference(uint32_t x, uint32_t y) // Returns the number of days from the weekday y to the weekday x
       {

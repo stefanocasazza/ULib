@@ -534,7 +534,7 @@ void PEC_report::setLineIdentifier()
       if (identifier->size() == 9 &&
           ptr2[3] == ' ' &&
           ptr2[6] == ' ' &&
-          u_getMonth(ptr2))
+          getMonth(ptr2))
          {
 /*
 Feb 24 19:42:21 PEC_Milter root [1542]: Feb 24 19:42:35 PEC_Milter root [1546]: E452BE9C.0004057A.F50FB719.D305B319.posta-certificata@postecert.it: tipo=posta-certificata (BustaTrasporto): mittente=ifinanziarie@pec.gdf.it: destinatari=attivitariunite@actaliscertymail.it (certificato): oggetto=Richiesta n.<jdz9yb_1wrjlt>: message-id=E452BE9C.0004057A.F50FB719.D305B319.posta-certificata@postecert.it: gestore=Postecom S.p.A.: tipo_ricevuta=sintetica
@@ -818,7 +818,7 @@ loop1:
          {
          const char* ptr = line->data();
 
-         mese1 = u_getMonth(ptr);
+         mese1 = getMonth(ptr);
 
          U_INTERNAL_DUMP("mese1 = %d", mese1)
 
@@ -846,7 +846,7 @@ loop2:
 
       while ((*end == '\n') && (++end < enddoc)) {}
 
-      mese2 = u_getMonth(end);
+      mese2 = getMonth(end);
 
       U_INTERNAL_DUMP("mese2 = %d", mese2)
 
@@ -944,7 +944,7 @@ bool PEC_report::readContent()
 
          U_INTERNAL_DUMP("scan line date: %d/%s/%d - %s", day, month, year, time)
 
-         U_INTERNAL_ASSERT_EQUALS(mese1, (int)u_getMonth(month))
+         U_INTERNAL_ASSERT_EQUALS(mese1, (int)getMonth(month))
 
          date->set(day, mese1, year);
 

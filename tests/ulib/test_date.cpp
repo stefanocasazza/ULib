@@ -3,19 +3,48 @@
 #include <ulib/log.h>
 #include <ulib/date.h>
 
+static void checkForDaylightSavingTime(const char* tz, const char* start, const char* end)
+{
+   U_TRACE(5, "::checkForDaylightSavingTime(%S,%S,%S)", tz, start, end)
+
+   (void) U_SYSCALL(putenv, "%S", (char*)tz);
+
+   if (u_setStartTime() == false)
+      {
+      U_WARNING("System date not updated: %#5D", u_now->tv_sec);
+
+      return;
+      }
+
+   int res1_exp = (u_is_daylight() ? 0 : 1);
+
+   time_t dst_start = UTimeDate::getSecondFromTime(start, true),
+          dst_end   = UTimeDate::getSecondFromTime(  end, true);
+
+   int res1 = UTimeDate::checkForDaylightSavingTime(dst_start),
+       res2 = UTimeDate::checkForDaylightSavingTime(dst_end);
+
+   U_INTERNAL_DUMP("res1 = %d res1_exp = %d", res1, res1_exp)
+
+   U_INTERNAL_ASSERT_EQUALS(res1, res1_exp)
+   U_INTERNAL_ASSERT_EQUALS(res2, -1)
+}
+
 int
-U_EXPORT main (int argc, char* argv[])
+U_EXPORT main(int argc, char* argv[])
 {
    U_ULIB_INIT(argv);
 
    U_TRACE(5,"main(%d)",argc)
 
+   /*
+   */
    UTimeDate date0(28,12,14);
 
    cout << date0.strftime(U_CONSTANT_TO_PARAM("%d/%m/%Y")) << ' '
         << date0.ago(7U) << '\n';
 
-   u_now->tv_sec = time(0);
+   u_now->tv_sec = time(U_NULLPTR);
 
    cout << UTimeDate::ago(u_now->tv_sec -  1) << ' '
         << UTimeDate::ago(u_now->tv_sec -  1, 7U) << '\n';
@@ -78,18 +107,17 @@ U_EXPORT main (int argc, char* argv[])
 
    U_ASSERT( UTimeDate::getSecondFromTime("19030314104248Z", true, "%4u%2u%2u%2u%2u%2uZ") < u_now->tv_sec )
 
-   /*
-   typedef struct log_date {
-      char date1[17+1];             // 18/06/12 18:45:56
-      char date2[26+1];             // 04/Jun/2012:18:18:37 +0200
-      char date3[6+29+2+12+2+19+1]; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
-   } log_date;
-   */
+// typedef struct log_date {
+//    char date1[17+1];             // 18/06/12 18:45:56
+//    char date2[26+1];             // 04/Jun/2012:18:18:37 +0200
+//    char date3[6+29+2+12+2+19+1]; // Date: Wed, 20 Jun 2012 11:43:17 GMT\r\nServer: ULib\r\nConnection: close\r\n
+// } log_date;
 
    ULog::log_date log_date;
+   uint32_t lnow = u_getLocalTime();
 
-   (void) u_strftime2(log_date.date1, 17,               U_CONSTANT_TO_PARAM("%d/%m/%y %T"),                                                        u_now->tv_sec + u_now_adjust);
-   (void) u_strftime2(log_date.date2, 26,               U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"),                                                     u_now->tv_sec + u_now_adjust);
+   (void) u_strftime2(log_date.date1, 17,               U_CONSTANT_TO_PARAM("%d/%m/%y %T"),                                                        lnow);
+   (void) u_strftime2(log_date.date2, 26,               U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"),                                                     lnow);
    (void) u_strftime2(log_date.date3, 6+29+2+12+2+17+2, U_CONSTANT_TO_PARAM("Date: %a, %d %b %Y %T GMT\r\nServer: ULib\r\nConnection: close\r\n"), u_now->tv_sec);
 
    U_INTERNAL_DUMP("date1 = %.17S date2 = %.26S date3+6 = %.29S", log_date.date1, log_date.date2, log_date.date3+6)
@@ -116,4 +144,42 @@ U_EXPORT main (int argc, char* argv[])
            << data1.ago()                << ' '
            << data1.ago(7U)              << '\n';
       }
+
+   checkForDaylightSavingTime("TZ=CET-1CEST-2,M3.5.0/02:00:00,M10.5.0/01:00:00", "Sun, 26 Mar 2017 01:00:00 GMT", "Sun, 29 Oct 2017 01:00:00 GMT");
+
+   /**
+    * In New Zealand, where the standard time (NZST) is 12 hours ahead of UTC, and daylight saving time (NZDT), 13 hours ahead of UTC, runs from the first Sunday in
+    * October to the third Sunday in March, and the changeovers happen at the default time of 02:00:00.
+    */
+
+   checkForDaylightSavingTime("TZ=NZST-12:00:00NZDT-13:00:00,M10.1.0,M3.3.0", "Sun, 8 Oct 2017 02:00:00 GMT", "Sun, 18 Mar 2018 02:00:00 GMT");
+
+   /**
+    * Western Greenland Time (WGT) and Western Greenland Summer Time (WGST) are 3 hours behind UTC in the winter. Its clocks follow the European Union rules of springing
+    * forward by one hour on March last Sunday at 01:00 UTC (-02:00 local time) and falling back on October last Sunday at 01:00 UTC (-01:00 local time).
+    */
+
+   checkForDaylightSavingTime("TZ=WGT3WGST,M3.5.0/-2,M10.5.0/-1", "Sun, 26 Mar 2017 01:00:00 GMT", "Sun, 29 Oct 2017 01:00:00 GMT");
+
+   /**
+    * In North American Eastern Standard Time (EST) and Eastern Daylight Time (EDT), the normal offset from UTC is 5 hours; since this is west of the prime meridian,
+    * the sign is positive. Summer time begins on March second Sunday at 2:00am, and ends on November first Sunday at 2:00am.
+
+   checkForDaylightSavingTime("TZ=EST+5EDT,M3.2.0/2,M11.1.0/2", "Sun, 12 Mar 2017 02:00:00 GMT", "Sun, 5 Nov 2017 02:00:00 GMT");
+    */
+
+   /**
+    * Israel Standard Time (IST) and Israel Daylight Time (IDT) are 2 hours ahead of the prime meridian in winter, springing forward an hour on March fourth Thursday
+    * at 26:00 (i.e., 02:00 on the first Friday on or after March 23), and falling back on October last Sunday at 02:00.
+    */
+
+   checkForDaylightSavingTime("TZ=IST-2IDT,M3.4.4/26,M10.5.0", "Fri, 24 Mar 2017 02:00:00 GMT", "Sun, 29 Oct 2017 02:00:00 GMT");
+
+   /**
+    * Western Argentina Summer Time (WARST) is 3 hours behind the prime meridian all year. There is a dummy fall-back transition on December 31 at 25:00 daylight saving
+    * time (i.e., 24:00 standard time, equivalent to January 1 at 00:00 standard time), and a simultaneous spring-forward transition on January 1 at 00:00 standard time,
+    * so daylight saving time is in effect all year and the initial WART is a placeholder.
+
+   checkForDaylightSavingTime("TZ=WART4WARST,J1/0,J365/25", "Sun, 1 Jan 2017 00:00:00 GMT", "Sun, 1 Jan 2017 00:00:00 GMT");
+    */
 }

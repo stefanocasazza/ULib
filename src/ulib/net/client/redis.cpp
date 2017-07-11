@@ -37,7 +37,7 @@ bool UREDISClient_Base::connect(const char* phost, unsigned int _port)
 
       const char* env_redis_port = (const char*) U_SYSCALL(getenv, "%S", "REDIS_PORT");
 
-      if (env_redis_port) _port = atoi(env_redis_port);
+      if (env_redis_port) _port = u_atoi(env_redis_port);
       }
 
    if (UClient_Base::setHostPort(host, _port) &&

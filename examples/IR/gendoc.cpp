@@ -57,7 +57,7 @@ U_EXPORT main(int argc, char* argv[])
 #  ifdef U_COVERITY_FALSE_POSITIVE
    num = 1000;
 #  else
-   num = atoi(argv[1]);
+   num = u_atoi(argv[1]);
 #  endif
 
    UString directory(1000U), content(1000U), filename(100U), suffix = U_STRING_FROM_CONSTANT(".xml");

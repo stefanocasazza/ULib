@@ -108,9 +108,15 @@
 #endif
 
 /* Checks define */
-#if defined(USE_LOAD_BALANCE) && defined(_MSWINDOWS_)
+
+#ifdef USE_LOAD_BALANCE
+#  ifdef _MSWINDOWS_
 #     undef USE_LOAD_BALANCE
 U_DO_PRAGMA(message ("Sorry I was compiled on Windows so I cannot use load balance"))
+#  elif !defined(ENABLE_THREAD)
+#     undef USE_LOAD_BALANCE
+U_DO_PRAGMA(message ("Sorry I was compiled without thread enabled so I cannot use load balance"))
+#  endif
 #endif
 #if defined(U_THROTTLING_SUPPORT) && !defined(U_HTTP2_DISABLE)
 #     undef U_THROTTLING_SUPPORT
@@ -138,6 +144,7 @@ U_DO_PRAGMA(message ("Sorry I was compiled with server captive portal mode enabl
 #include <limits.h>
 
 /* Defs */
+
 #include <ulib/base/color.h>
 #include <ulib/base/macro.h>
 
@@ -284,19 +291,22 @@ U_EXPORT void u_getcwd(void);
 
 /* Time services */
 
-extern U_EXPORT bool u_daylight;
-extern U_EXPORT int u_now_adjust;   /* GMT based time */
+extern U_EXPORT bool* u_pdaylight;
+extern U_EXPORT int* u_pnow_adjust;
 extern U_EXPORT time_t u_start_time;
 extern U_EXPORT void* u_pthread_time; /* pthread clock */
-
 extern U_EXPORT struct timeval* u_now;
 extern U_EXPORT struct tm u_strftime_tm;
-extern U_EXPORT struct timeval u_timeval;
 extern U_EXPORT const char* u_day_name[7];    /* "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday" */
 extern U_EXPORT const char* u_month_name[12]; /* "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December" */
 
 U_EXPORT bool     u_setStartTime(void);
+U_EXPORT time_t   u_getLocalNow(time_t sec);
 U_EXPORT unsigned u_getMonth(const char* buf) __pure;
+
+static inline bool     u_is_daylight(void)           { return *u_pdaylight; }
+static inline uint32_t u_get_localtime(uint32_t sec) { return (sec + *u_pnow_adjust); }
+static inline uint32_t u_getLocalTime(void)          { return u_get_localtime(u_now->tv_sec); }
 
 /* Services */
 

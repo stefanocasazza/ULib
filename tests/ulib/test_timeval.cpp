@@ -48,8 +48,10 @@ static void check_time(long tv_sec)
 
       if (bchangehour)
          {
-         (void) u_strftime2(start[0], 17, "%d/%m/%y %H:%M:%S",         last_sec + u_now_adjust);
-         (void) u_strftime2(start[1], 26, "%d/%b/%Y:%H:%M:%S %z",      last_sec + u_now_adjust);
+         uint32_t lnow = u_get_localtime(last_sec);
+
+         (void) u_strftime2(start[0], 17, "%d/%m/%y %H:%M:%S",         lnow);
+         (void) u_strftime2(start[1], 26, "%d/%b/%Y:%H:%M:%S %z",      lnow);
          (void) u_strftime2(start[2], 29, "%a, %d %b %Y %H:%M:%S GMT", last_sec);
          }
       else

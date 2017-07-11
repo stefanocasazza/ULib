@@ -247,40 +247,6 @@ private:
 };
 #endif
 
-class U_NO_EXPORT UDayLight : public UEventTime {
-public:
-
-   UDayLight() : UEventTime(UTimeDate::getSecondFromDayLight(), 0L)
-      {
-      U_TRACE_REGISTER_OBJECT(0, UDayLight, "", 0)
-      }
-
-   virtual ~UDayLight() U_DECL_FINAL
-      {
-      U_TRACE_UNREGISTER_OBJECT(0, UDayLight)
-      }
-
-   // define method VIRTUAL of class UEventTime
-
-   virtual int handlerTime() U_DECL_FINAL
-      {
-      U_TRACE_NO_PARAM(0, "UDayLight::handlerTime()")
-
-      UServer_Base::manageChangeOfSystemTime();
-
-      UEventTime::setTimeToExpire(UTimeDate::getSecondFromDayLight());
-
-      U_RETURN(0); // monitoring
-      }
-
-#if defined(DEBUG) && defined(U_STDCPP_ENABLE)
-   const char* dump(bool _reset) const { return UEventTime::dump(_reset); }
-#endif
-
-private:
-   U_DISALLOW_COPY_AND_ASSIGN(UDayLight)
-};
-
 class U_NO_EXPORT UTimeoutConnection : public UEventTime {
 public:
 
@@ -948,8 +914,8 @@ public:
 
       u_gettimenow();
 
-      uint32_t sec = u_now->tv_sec;
       struct timespec ts = { 0L, 0L };
+      uint32_t lnow, sec = u_now->tv_sec;
 
       while (UServer_Base::flag_loop)
          {
@@ -1031,6 +997,14 @@ public:
 
          sec = u_now->tv_sec;
 
+#     if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
+         if (daylight &&
+             (sec % U_ONE_HOUR_IN_SECOND) == 0)
+            {
+            (void) UTimeDate::checkForDaylightSavingTime(sec);
+            }
+#     endif
+
          if (UServer_Base::update_date)
             {
 #        if !defined(U_LOG_DISABLE) && defined(USE_LIBZ)
@@ -1045,8 +1019,10 @@ public:
                }
             else
                {
-               if (UServer_Base::update_date1) (void) u_strftime2(ULog::ptr_shared_date->date1,     17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"),     sec + u_now_adjust);
-               if (UServer_Base::update_date2) (void) u_strftime2(ULog::ptr_shared_date->date2,   26-6, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T"),     sec + u_now_adjust);
+               lnow = u_get_localtime(sec);
+
+               if (UServer_Base::update_date1) (void) u_strftime2(ULog::ptr_shared_date->date1,     17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"),     lnow);
+               if (UServer_Base::update_date2) (void) u_strftime2(ULog::ptr_shared_date->date2,   26-6, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T"),     lnow);
                if (UServer_Base::update_date3) (void) u_strftime2(ULog::ptr_shared_date->date3+6, 29-4, U_CONSTANT_TO_PARAM("%a, %d %b %Y %T"), sec);
                }
 
@@ -1713,35 +1689,6 @@ UServer_Base::~UServer_Base()
          UDynamic::clear();
         UNotifier::clear();
    UPlugIn<void*>::clear();
-}
-
-void UServer_Base::manageChangeOfSystemTime()
-{
-   U_TRACE_NO_PARAM(0, "UServer_Base::manageChangeOfSystemTime()")
-
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
-   int u_now_adjust_old = u_now_adjust; // GMT based time
-#endif
-
-   if (u_setStartTime() == false)
-      {
-      U_WARNING("System date update failed: %#5D", u_now->tv_sec);
-
-      return;
-      }
-
-#if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (u_now_adjust_old != u_now_adjust &&
-       update_date)
-      {
-      if (u_pthread_time) (void) U_SYSCALL(pthread_rwlock_wrlock, "%p", ULog::prwlock);
-
-      (void) u_strftime2(ULog::ptr_shared_date->date1, 17, U_CONSTANT_TO_PARAM("%d/%m/%y %T"),    u_now->tv_sec + u_now_adjust);
-      (void) u_strftime2(ULog::ptr_shared_date->date2, 26, U_CONSTANT_TO_PARAM("%d/%b/%Y:%T %z"), u_now->tv_sec + u_now_adjust);
-
-      if (u_pthread_time) (void) U_SYSCALL(pthread_rwlock_unlock, "%p", ULog::prwlock);
-      }
-#endif
 }
 
 void UServer_Base::closeLog()
@@ -2973,33 +2920,26 @@ void UServer_Base::init()
    U_DEBUG("sizeof(shared_data) = %u sizeof(shm_data) = %u", sizeof(shared_data), sizeof(shm_data));
 #endif
 
-#if defined(USE_LOAD_BALANCE) || (defined(U_LOG_DISABLE) && !defined(USE_LIBZ))
-   bool bpthread_time = true;
-#elif defined(U_LINUX) && defined(ENABLE_THREAD)
-   bool bpthread_time = (preforked_num_kids >= 4); // intuitive heuristic...
-#else
-   bool bpthread_time = false; 
-#endif
-
-   U_INTERNAL_DUMP("bpthread_time = %b", bpthread_time)
-
 #ifndef U_LOG_DISABLE
    if (isLog() == false)
 #endif
    ULog::initDate();
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (bpthread_time)
-      {
-      U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
-      U_INTERNAL_ASSERT_EQUALS(ULog::ptr_shared_date, U_NULLPTR)
+   U_INTERNAL_ASSERT_POINTER(ptr_shared_data)
+   U_INTERNAL_ASSERT_EQUALS(ULog::ptr_shared_date, U_NULLPTR)
 
-      *(u_now = &(ptr_shared_data->now_shared)) = u_timeval;
+   bool _daylight    = *u_pdaylight;
+   int now_adjust    = *u_pnow_adjust; /* GMT based time */
+   struct timeval tv = *u_now;
 
-      ULog::ptr_shared_date = &(ptr_shared_data->log_date_shared);
+   *(u_now         = &(ptr_shared_data->now_shared))        = tv;
+   *(u_pdaylight   = &(ptr_shared_data->daylight_shared))   = _daylight;
+   *(u_pnow_adjust = &(ptr_shared_data->now_adjust_shared)) = now_adjust;
 
-      U_MEMCPY(ULog::ptr_shared_date, &ULog::date, sizeof(ULog::log_date));
-      }
+   ULog::ptr_shared_date = &(ptr_shared_data->log_date_shared);
+
+   U_MEMCPY(ULog::ptr_shared_date, &ULog::date, sizeof(ULog::log_date));
 #endif
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
@@ -3024,17 +2964,14 @@ void UServer_Base::init()
    flag_loop = true; // NB: UTimeThread loop depend on this setting...
 
 #if defined(U_LINUX) && defined(ENABLE_THREAD)
-   if (bpthread_time)
-      {
-      U_INTERNAL_ASSERT_EQUALS(ULog::prwlock,  U_NULLPTR)
-      U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(ULog::prwlock,  U_NULLPTR)
+   U_INTERNAL_ASSERT_EQUALS(u_pthread_time, U_NULLPTR)
 
-      U_NEW_ULIB_OBJECT(UTimeThread, u_pthread_time, UTimeThread);
+   U_NEW_ULIB_OBJECT(UTimeThread, u_pthread_time, UTimeThread);
 
-      (void) UThread::initRwLock((ULog::prwlock = &(ptr_shared_data->rwlock)));
+   (void) UThread::initRwLock((ULog::prwlock = &(ptr_shared_data->rwlock)));
 
-      ((UTimeThread*)u_pthread_time)->start(50);
-      }
+   ((UTimeThread*)u_pthread_time)->start(50);
 #endif
 
 #ifndef U_LOG_DISABLE
@@ -3175,11 +3112,9 @@ void UServer_Base::init()
 #if !defined(USE_LIBEVENT) && !defined(USE_RUBY)
    UInterrupt::insert(               SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);   // async signal
    UInterrupt::insert(              SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM);  // async signal
-   UInterrupt::insert(             SIGWINCH, (sighandler_t)UServer_Base::handlerForSigWINCH); // async signal
 #else
    UInterrupt::setHandlerForSignal(  SIGHUP, (sighandler_t)UServer_Base::handlerForSigHUP);   //  sync signal
    UInterrupt::setHandlerForSignal( SIGTERM, (sighandler_t)UServer_Base::handlerForSigTERM);  //  sync signal
-   UInterrupt::setHandlerForSignal(SIGWINCH, (sighandler_t)UServer_Base::handlerForSigWINCH); //  sync signal
 #endif
 }
 
@@ -3239,20 +3174,6 @@ U_NO_EXPORT void UServer_Base::logMemUsage(const char* signame)
 #endif
 }
 
-RETSIGTYPE UServer_Base::handlerForSigWINCH(int signo)
-{
-   U_TRACE(0, "[SIGWINCH] UServer_Base::handlerForSigWINCH(%d)", signo)
-
-   if (proc->parent())
-      {
-      sendSignalToAllChildren(SIGWINCH, (sighandler_t)UServer_Base::handlerForSigWINCH);
-
-      return;
-      }
-
-   manageChangeOfSystemTime();
-}
-
 void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 {
    U_TRACE(0, "UServer_Base::sendSignalToAllChildren(%d,%p)", signo, handler)
@@ -3273,11 +3194,7 @@ void UServer_Base::sendSignalToAllChildren(int signo, sighandler_t handler)
 
    UInterrupt::setHandlerForSignal(signo, (sighandler_t)SIG_IGN);
 
-   if (signo != SIGWINCH) pthis->handlerSignal(signo); // manage signal before we send it to the preforked pool of children...
-   else
-      {
-      manageChangeOfSystemTime();
-      }
+   pthis->handlerSignal(signo); // manage signal before we send it to the preforked pool of children...
 
    UProcess::kill(0, signo); // signo is sent to every process in the process group of the calling process...
 
@@ -4124,12 +4041,6 @@ void UServer_Base::runLoop(const char* user)
 #  if !defined(U_LOG_DISABLE) && defined(DEBUG)
       last_event = u_now->tv_sec;
 #  endif
-
-      UEventTime* pdaylight;
-
-      U_NEW(UDayLight, pdaylight, UDayLight);
-
-      UTimer::insert(pdaylight);
       }
 
    while (flag_loop)

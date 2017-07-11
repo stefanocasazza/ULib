@@ -1552,7 +1552,7 @@ another:       ap_rec = nodog_rec->vec_access_point[index_access_point];
                              n1, uptime,
                              n1, ptr1, ptr2,
                              n1, u_now->tv_sec - nodog_rec->since,
-                             n1, nodog_rec->last_info + u_now_adjust,
+                             n1, u_get_localtime(nodog_rec->last_info),
                              ptr3, ptr4,
                              mac_mask.rep,
                              group_account_mask.rep,
@@ -3221,7 +3221,7 @@ next:
                        user_rec->_auth_domain.rep,
                        user_rec->_ip.rep,
                        user_rec->_mac.rep,
-                       user_rec->login_time + u_now_adjust,
+                       u_get_localtime(user_rec->login_time),
                        x.rep,
                        ptr1, ptr2,
                        p3, p4,
@@ -6856,7 +6856,7 @@ static void POST_admin_view_user()
 
          if (user_exist)
             {
-            last_modified = user_rec->last_modified + u_now_adjust;
+            last_modified = u_get_localtime(user_rec->last_modified);
 
             user_rec->getCounter();
 

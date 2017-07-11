@@ -374,7 +374,7 @@ int UPop3Client::getSizeMessage(uint32_t n)
          char* ptr = buffer.c_pointer(sizeof(U_POP3_OK));
 
          num_msg      = strtol(ptr, (char**)&ptr, 10);
-         int size_msg = atoi(ptr);
+         int size_msg = u_atoi(ptr);
 
          U_INTERNAL_DUMP("num_msg = %d size_msg = %d", num_msg, size_msg)
 

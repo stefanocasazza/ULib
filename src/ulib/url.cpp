@@ -119,7 +119,7 @@ unsigned int Url::getPort()
 
          url.copy(buffer, size, host_end + 1);
 
-         unsigned int port = atoi(buffer);
+         unsigned int port = u_atoi(buffer);
 
          U_RETURN(port);
          }

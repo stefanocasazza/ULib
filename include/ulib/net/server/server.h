@@ -329,10 +329,12 @@ public:
 #    endif
 #  endif
    // ------------------------------------------------------------------------------
-#  if defined(ENABLE_THREAD) && !defined(_MSWINDOWS_)
-      pthread_rwlock_t rwlock;
-      struct timeval now_shared; // => u_now
+#  if defined(U_LINUX) && defined(ENABLE_THREAD)
       ULog::log_date log_date_shared;
+      struct timeval now_shared; // => u_now
+      pthread_rwlock_t rwlock;
+      int now_adjust_shared;
+      bool daylight_shared;
 #  endif
       ULog::log_data log_data_shared;
    // -> maybe unnamed array of char for gzip compression (log rotate)
@@ -765,9 +767,7 @@ protected:
    static RETSIGTYPE handlerForSigHUP(  int signo);
    static RETSIGTYPE handlerForSigTERM( int signo);
    static RETSIGTYPE handlerForSigCHLD( int signo);
-   static RETSIGTYPE handlerForSigWINCH(int signo);
 
-   static void manageChangeOfSystemTime();
    static void sendSignalToAllChildren(int signo, sighandler_t handler);
 
 private:

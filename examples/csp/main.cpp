@@ -15,7 +15,7 @@
 
    if (client->connect() == false) goto end;
 
-   if (method) op = atoi(method);
+   if (method) op = u_atoi(method);
    else
       {
    // if (UDialog::isXdialog() == false) U_ERROR("num_method not specified and I don't find Xdialog");
@@ -84,7 +84,7 @@
             {
             ca = UString(argv[optind]);
 
-            if (argv[++optind]) days =    atoi(argv[optind]);
+            if (argv[++optind]) days =  u_atoi(argv[optind]);
             if (argv[++optind])  cnf = UString(argv[optind]);
             }
          else
@@ -187,7 +187,7 @@
             {
             ca = UString(argv[optind]);
 
-            if (argv[++optind]) compress = atoi(argv[optind]);
+            if (argv[++optind]) compress = u_atoi(argv[optind]);
             }
          else
             {
